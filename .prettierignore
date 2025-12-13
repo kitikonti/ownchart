@@ -1,0 +1,11 @@
+node_modules
+dist
+dist-ssr
+*.local
+coverage
+.nyc_output
+playwright-report
+test-results
+package-lock.json
+pnpm-lock.yaml
+yarn.lock
