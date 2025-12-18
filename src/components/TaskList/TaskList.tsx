@@ -4,6 +4,7 @@
  */
 
 import { useTaskStore } from '../../store/slices/taskSlice';
+import { TaskRow } from './TaskRow';
 
 export function TaskList(): JSX.Element {
   const tasks = useTaskStore((state) => state.tasks);
@@ -69,15 +70,7 @@ export function TaskList(): JSX.Element {
         ) : (
           <div className="task-rows">
             {tasks.map((task) => (
-              <div
-                key={task.id}
-                className="task-row p-3 border-b border-gray-100 hover:bg-gray-50"
-              >
-                <div className="font-medium text-gray-900">{task.name}</div>
-                <div className="text-sm text-gray-500 mt-1">
-                  {task.startDate} → {task.endDate} ({task.duration} days)
-                </div>
-              </div>
+              <TaskRow key={task.id} task={task} />
             ))}
           </div>
         )}
