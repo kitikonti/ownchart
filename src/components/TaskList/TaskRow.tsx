@@ -18,6 +18,7 @@ export function TaskRow({ task }: TaskRowProps): JSX.Element {
   const selectedTaskId = useTaskStore((state) => state.selectedTaskId);
   const selectTask = useTaskStore((state) => state.selectTask);
   const updateTask = useTaskStore((state) => state.updateTask);
+  const deleteTask = useTaskStore((state) => state.deleteTask);
 
   const {
     attributes,
@@ -87,6 +88,13 @@ export function TaskRow({ task }: TaskRowProps): JSX.Element {
     setEditedProgress(task.progress);
     setIsEditing(false);
     setError(null);
+  };
+
+  const handleDelete = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (window.confirm(`Delete task "${task.name}"?`)) {
+      deleteTask(task.id);
+    }
   };
 
   if (isEditing) {
@@ -183,7 +191,7 @@ export function TaskRow({ task }: TaskRowProps): JSX.Element {
     <div
       ref={setNodeRef}
       style={style}
-      className={`task-row p-3 border-b border-gray-100 cursor-pointer transition-colors ${
+      className={`task-row group p-3 border-b border-gray-100 cursor-pointer transition-colors ${
         isSelected
           ? 'bg-blue-50 border-l-4 border-l-blue-500'
           : 'hover:bg-gray-50 border-l-4 border-l-transparent'
@@ -249,6 +257,28 @@ export function TaskRow({ task }: TaskRowProps): JSX.Element {
           style={{ backgroundColor: task.color }}
           aria-label={`Task color: ${task.color}`}
         />
+
+        {/* Delete Button */}
+        <button
+          onClick={handleDelete}
+          className="delete-button ml-2 text-gray-400 hover:text-red-600 transition-colors flex-shrink-0 opacity-0 group-hover:opacity-100"
+          aria-label="Delete task"
+          title="Delete task"
+        >
+          <svg
+            className="w-5 h-5"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={2}
+              d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
+            />
+          </svg>
+        </button>
       </div>
     </div>
   );
