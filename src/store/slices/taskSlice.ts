@@ -22,6 +22,8 @@ interface TaskActions {
   addTask: (taskData: Omit<Task, 'id'>) => void;
   updateTask: (id: string, updates: Partial<Task>) => void;
   deleteTask: (id: string) => void;
+  selectTask: (id: string | null) => void;
+  reorderTasks: (fromIndex: number, toIndex: number) => void;
 }
 
 /**
@@ -62,6 +64,31 @@ export const useTaskStore = create<TaskStore>()(
     deleteTask: (id) =>
       set((state) => {
         state.tasks = state.tasks.filter((task) => task.id !== id);
+      }),
+
+    selectTask: (id) =>
+      set((state) => {
+        state.selectedTaskId = id;
+      }),
+
+    reorderTasks: (fromIndex, toIndex) =>
+      set((state) => {
+        if (
+          fromIndex < 0 ||
+          fromIndex >= state.tasks.length ||
+          toIndex < 0 ||
+          toIndex >= state.tasks.length
+        ) {
+          return;
+        }
+
+        const [movedTask] = state.tasks.splice(fromIndex, 1);
+        state.tasks.splice(toIndex, 0, movedTask);
+
+        // Update order property for all tasks
+        state.tasks.forEach((task, index) => {
+          task.order = index;
+        });
       }),
   }))
 );
