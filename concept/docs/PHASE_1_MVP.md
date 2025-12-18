@@ -197,30 +197,6 @@ interface TaskActions {
 - ✓ Validation prevents invalid data
 - ✓ Empty state shows when no tasks
 
-**🔄 IMPLEMENTATION DEVIATION (2025-12-18):**
-
-The original plan called for TaskList/TaskRow components. However, during implementation we encountered UX issues with the custom inline editing approach. After user feedback, we pivoted to **TaskTable** using react-data-grid for superior Excel-style editing.
-
-**What Changed:**
-- ❌ TaskList.tsx + TaskRow.tsx (archived to `archived/components/`)
-- ✅ TaskTable.tsx using react-data-grid v7
-- ✅ Button-based reordering (▲▼) instead of drag-and-drop handles
-- ✅ True Excel-like editing: single-click to edit, Tab to next cell, Enter to move down
-- ✅ All Sprint 1.1 acceptance criteria still met
-- ✅ 30 tests for TaskTable (replacing 35 tests for TaskList/TaskRow)
-
-**Why This Deviation is Acceptable:**
-1. Achieves the same Sprint 1.1 goal: "Enable users to create, edit, delete, and reorder tasks"
-2. Provides **better** UX than planned (true Excel-like feel)
-3. Less maintenance burden (leverages battle-tested library)
-4. All validation, CRUD operations, and store integration unchanged
-5. Test coverage maintained at 96.4%
-
-**Documentation:**
-- See `archived/README.md` for details on archived components
-- Original TaskList/TaskRow tests preserved in `archived/tests/`
-- This deviation documented in PROJECT_STATUS.md
-
 ---
 
 ### Atomic Task Breakdown (14 Tasks)
