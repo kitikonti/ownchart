@@ -4,6 +4,31 @@
  */
 
 /**
+ * Dependency type enumeration.
+ * MVP: Only Finish-to-Start (FS) is supported.
+ * Future: SS (Start-to-Start), FF (Finish-to-Finish), SF (Start-to-Finish)
+ */
+export enum DependencyType {
+  /** Finish-to-Start: Successor task starts after predecessor finishes */
+  FS = 'FS',
+}
+
+/**
+ * Represents a dependency between two tasks.
+ *
+ * @property id - Unique identifier (UUID v4)
+ * @property fromTaskId - ID of the predecessor task
+ * @property toTaskId - ID of the successor task
+ * @property type - Dependency type (FS only in MVP)
+ */
+export interface Dependency {
+  id: string;
+  fromTaskId: string;
+  toTaskId: string;
+  type: DependencyType;
+}
+
+/**
  * Represents a task in the Gantt chart.
  *
  * @property id - Unique identifier (UUID v4)
