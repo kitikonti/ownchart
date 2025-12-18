@@ -3,6 +3,8 @@
  * Aligned with FEATURE_SPECIFICATIONS.md Section 2.2
  */
 
+import type { Task } from '../types/chart.types';
+
 /**
  * Result of a validation operation.
  */
@@ -80,6 +82,125 @@ export function validateDateString(date: string): ValidationResult {
       valid: false,
       error: 'Invalid date',
     };
+  }
+
+  return { valid: true };
+}
+
+/**
+ * Validates a hex color code.
+ * Rules: Valid hex format (#RRGGBB or #RGB)
+ *
+ * @param color - Color string to validate
+ * @returns Validation result with error message if invalid
+ */
+export function validateColor(color: string): ValidationResult {
+  if (!color || color.trim().length === 0) {
+    return {
+      valid: false,
+      error: 'Color is required',
+    };
+  }
+
+  const hexColorRegex = /^#([A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$/;
+  if (!hexColorRegex.test(color)) {
+    return {
+      valid: false,
+      error: 'Color must be a valid hex code (#RRGGBB or #RGB)',
+    };
+  }
+
+  return { valid: true };
+}
+
+/**
+ * Validates progress value.
+ * Rules: Number between 0 and 100
+ *
+ * @param progress - Progress value to validate
+ * @returns Validation result with error message if invalid
+ */
+export function validateProgress(progress: number): ValidationResult {
+  if (typeof progress !== 'number' || isNaN(progress)) {
+    return {
+      valid: false,
+      error: 'Progress must be a number',
+    };
+  }
+
+  if (progress < 0 || progress > 100) {
+    return {
+      valid: false,
+      error: 'Progress must be between 0 and 100',
+    };
+  }
+
+  return { valid: true };
+}
+
+/**
+ * Validates a complete task object.
+ * Rules:
+ * - Valid name (1-200 chars)
+ * - Valid start and end dates (ISO format)
+ * - endDate >= startDate
+ * - Valid progress (0-100)
+ * - Valid color (hex code)
+ *
+ * @param task - Partial task object to validate
+ * @returns Validation result with error message if invalid
+ */
+export function validateTask(task: Partial<Task>): ValidationResult {
+  // Validate name
+  if (task.name !== undefined) {
+    const nameResult = validateTaskName(task.name);
+    if (!nameResult.valid) {
+      return nameResult;
+    }
+  }
+
+  // Validate start date
+  if (task.startDate !== undefined) {
+    const startDateResult = validateDateString(task.startDate);
+    if (!startDateResult.valid) {
+      return { valid: false, error: `Start date: ${startDateResult.error}` };
+    }
+  }
+
+  // Validate end date
+  if (task.endDate !== undefined) {
+    const endDateResult = validateDateString(task.endDate);
+    if (!endDateResult.valid) {
+      return { valid: false, error: `End date: ${endDateResult.error}` };
+    }
+  }
+
+  // Validate endDate >= startDate
+  if (task.startDate && task.endDate) {
+    const startDate = new Date(task.startDate);
+    const endDate = new Date(task.endDate);
+    if (endDate < startDate) {
+      return {
+        valid: false,
+        error: 'End date must be greater than or equal to start date',
+      };
+    }
+  }
+
+  // Validate progress
+  if (task.progress !== undefined) {
+    const progressResult = validateProgress(task.progress);
+    if (!progressResult.valid) {
+      return progressResult;
+    }
+  }
+
+  // Validate color
+  if (task.color !== undefined) {
+    const colorResult = validateColor(task.color);
+    if (!colorResult.valid) {
+      return colorResult;
+    }
   }
 
   return { valid: true };
