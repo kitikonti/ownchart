@@ -4,6 +4,8 @@
  */
 
 import { useState, useRef, useEffect } from 'react';
+import { useSortable } from '@dnd-kit/sortable';
+import { CSS } from '@dnd-kit/utilities';
 import type { Task } from '../../types/chart.types';
 import { useTaskStore } from '../../store/slices/taskSlice';
 import { validateTask } from '../../utils/validation';
@@ -16,6 +18,15 @@ export function TaskRow({ task }: TaskRowProps): JSX.Element {
   const selectedTaskId = useTaskStore((state) => state.selectedTaskId);
   const selectTask = useTaskStore((state) => state.selectTask);
   const updateTask = useTaskStore((state) => state.updateTask);
+
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    transform,
+    transition,
+    isDragging,
+  } = useSortable({ id: task.id });
 
   const [isEditing, setIsEditing] = useState(false);
   const [editedName, setEditedName] = useState(task.name);
@@ -162,8 +173,16 @@ export function TaskRow({ task }: TaskRowProps): JSX.Element {
     );
   }
 
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    opacity: isDragging ? 0.5 : 1,
+  };
+
   return (
     <div
+      ref={setNodeRef}
+      style={style}
       className={`task-row p-3 border-b border-gray-100 cursor-pointer transition-colors ${
         isSelected
           ? 'bg-blue-50 border-l-4 border-l-blue-500'
@@ -185,6 +204,17 @@ export function TaskRow({ task }: TaskRowProps): JSX.Element {
       aria-selected={isSelected}
     >
       <div className="flex items-start justify-between">
+        {/* Drag Handle */}
+        <button
+          {...attributes}
+          {...listeners}
+          className="drag-handle mr-2 text-gray-400 hover:text-gray-600 cursor-grab active:cursor-grabbing flex-shrink-0"
+          aria-label="Drag to reorder"
+        >
+          <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+            <path d="M7 2a2 2 0 1 0 .001 4.001A2 2 0 0 0 7 2zm0 6a2 2 0 1 0 .001 4.001A2 2 0 0 0 7 8zm0 6a2 2 0 1 0 .001 4.001A2 2 0 0 0 7 14zm6-8a2 2 0 1 0-.001-4.001A2 2 0 0 0 13 6zm0 2a2 2 0 1 0 .001 4.001A2 2 0 0 0 13 8zm0 6a2 2 0 1 0 .001 4.001A2 2 0 0 0 13 14z" />
+          </svg>
+        </button>
         <div className="flex-1 min-w-0">
           {/* Task Name */}
           <div className="font-medium text-gray-900 truncate">{task.name}</div>
