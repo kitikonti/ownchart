@@ -21,10 +21,11 @@
     "ci:local": "npm run lint && npm run format:check && npm run type-check && npm run test:unit && npm run build"
   },
   "dependencies": {
+    "d3": "^7.9.0",
+    "immer": "^11.0.1",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
-    "zustand": "^4.5.0",
-    "d3": "^7.9.0"
+    "zustand": "^4.5.0"
   },
   "devDependencies": {
     "@playwright/test": "^1.41.2",
