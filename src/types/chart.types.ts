@@ -52,3 +52,33 @@ export interface Task {
   order: number;
   metadata: Record<string, unknown>;
 }
+
+/**
+ * Represents a complete Gantt chart.
+ *
+ * @property id - Unique identifier for the chart (UUID v4)
+ * @property name - Chart name/title
+ * @property tasks - Array of all tasks in the chart
+ * @property dependencies - Array of all dependencies between tasks
+ * @property metadata - Extensibility field for future features
+ */
+export interface Chart {
+  id: string;
+  name: string;
+  tasks: Task[];
+  dependencies: Dependency[];
+  metadata: Record<string, unknown>;
+}
+
+/**
+ * Application state for Zustand store.
+ *
+ * @property tasks - Array of all tasks
+ * @property dependencies - Array of all dependencies
+ * @property selectedTaskId - ID of currently selected task (null if none)
+ */
+export interface AppState {
+  tasks: Task[];
+  dependencies: Dependency[];
+  selectedTaskId: string | null;
+}
