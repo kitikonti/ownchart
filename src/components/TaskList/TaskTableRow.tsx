@@ -91,13 +91,10 @@ export function TaskTableRow({ task }: TaskTableRowProps): JSX.Element {
                   onChange={(value) => updateTask(task.id, { color: value })}
                 />
               ) : (
-                <div className="flex items-center gap-2">
-                  <div
-                    className="w-6 h-6 rounded border border-gray-300"
-                    style={{ backgroundColor: task.color }}
-                  />
-                  <span className="text-xs text-gray-600">{task.color}</span>
-                </div>
+                <div
+                  className="w-6 h-6 rounded border border-gray-300"
+                  style={{ backgroundColor: task.color }}
+                />
               )}
             </Cell>
           );
