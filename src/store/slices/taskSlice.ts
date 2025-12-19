@@ -24,6 +24,10 @@ interface TaskState {
   tasks: Task[];
   selectedTaskId: string | null;
 
+  // Multi-selection state
+  selectedTaskIds: string[];
+  lastSelectedTaskId: string | null;
+
   // Cell navigation state
   activeCell: {
     taskId: string | null;
@@ -42,6 +46,12 @@ interface TaskActions {
   deleteTask: (id: string) => void;
   selectTask: (id: string | null) => void;
   reorderTasks: (fromIndex: number, toIndex: number) => void;
+
+  // Multi-selection actions
+  toggleTaskSelection: (id: string) => void;
+  selectTaskRange: (startId: string, endId: string) => void;
+  selectAllTasks: () => void;
+  clearSelection: () => void;
 
   // Cell navigation actions
   setActiveCell: (taskId: string | null, field: EditableField | null) => void;
@@ -69,6 +79,8 @@ export const useTaskStore = create<TaskStore>()(
     // State
     tasks: [] as Task[],
     selectedTaskId: null as string | null,
+    selectedTaskIds: [] as string[],
+    lastSelectedTaskId: null as string | null,
     activeCell: {
       taskId: null as string | null,
       field: null as EditableField | null,
@@ -125,6 +137,47 @@ export const useTaskStore = create<TaskStore>()(
         state.tasks.forEach((task, index) => {
           task.order = index;
         });
+      }),
+
+    // Multi-selection actions
+    toggleTaskSelection: (id) =>
+      set((state) => {
+        const index = state.selectedTaskIds.indexOf(id);
+        if (index > -1) {
+          state.selectedTaskIds.splice(index, 1);
+        } else {
+          state.selectedTaskIds.push(id);
+        }
+        state.lastSelectedTaskId = id;
+      }),
+
+    selectTaskRange: (startId, endId) =>
+      set((state) => {
+        const startIndex = state.tasks.findIndex((t) => t.id === startId);
+        const endIndex = state.tasks.findIndex((t) => t.id === endId);
+
+        if (startIndex === -1 || endIndex === -1) return;
+
+        const minIndex = Math.min(startIndex, endIndex);
+        const maxIndex = Math.max(startIndex, endIndex);
+
+        const idsToAdd = new Set(state.selectedTaskIds);
+        for (let i = minIndex; i <= maxIndex; i++) {
+          idsToAdd.add(state.tasks[i].id);
+        }
+        state.selectedTaskIds = Array.from(idsToAdd);
+        state.lastSelectedTaskId = endId;
+      }),
+
+    selectAllTasks: () =>
+      set((state) => {
+        state.selectedTaskIds = state.tasks.map((task) => task.id);
+      }),
+
+    clearSelection: () =>
+      set((state) => {
+        state.selectedTaskIds = [];
+        state.lastSelectedTaskId = null;
       }),
 
     // Cell navigation actions

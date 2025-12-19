@@ -20,7 +20,13 @@ export function TaskTableRow({ task }: TaskTableRowProps): JSX.Element {
   const deleteTask = useTaskStore((state) => state.deleteTask);
   const updateTask = useTaskStore((state) => state.updateTask);
   const columnWidths = useTaskStore((state) => state.columnWidths);
+  const selectedTaskIds = useTaskStore((state) => state.selectedTaskIds);
+  const lastSelectedTaskId = useTaskStore((state) => state.lastSelectedTaskId);
+  const toggleTaskSelection = useTaskStore((state) => state.toggleTaskSelection);
+  const selectTaskRange = useTaskStore((state) => state.selectTaskRange);
   const { isCellEditing } = useCellNavigation();
+
+  const isSelected = selectedTaskIds.includes(task.id);
 
   const {
     attributes,
@@ -54,7 +60,7 @@ export function TaskTableRow({ task }: TaskTableRowProps): JSX.Element {
     <div
       ref={setNodeRef}
       style={style}
-      className="task-table-row col-span-full grid"
+      className={`task-table-row col-span-full grid ${isSelected ? 'bg-blue-50' : ''}`}
       role="row"
     >
       {/* Drag Handle Cell */}
@@ -67,6 +73,26 @@ export function TaskTableRow({ task }: TaskTableRowProps): JSX.Element {
         <svg className="w-4 h-4 text-gray-400" fill="currentColor" viewBox="0 0 20 20">
           <path d="M7 2a2 2 0 1 0 .001 4.001A2 2 0 0 0 7 2zm0 6a2 2 0 1 0 .001 4.001A2 2 0 0 0 7 8zm0 6a2 2 0 1 0 .001 4.001A2 2 0 0 0 7 14zm6-8a2 2 0 1 0-.001-4.001A2 2 0 0 0 13 6zm0 2a2 2 0 1 0 .001 4.001A2 2 0 0 0 13 8zm0 6a2 2 0 1 0 .001 4.001A2 2 0 0 0 13 14z" />
         </svg>
+      </div>
+
+      {/* Checkbox Cell */}
+      <div
+        className="checkbox-cell flex items-center justify-center px-2 py-2 border-b border-r border-gray-200"
+        role="gridcell"
+      >
+        <input
+          type="checkbox"
+          checked={isSelected}
+          onChange={(e) => {
+            e.stopPropagation();
+            if (e.nativeEvent.shiftKey && lastSelectedTaskId) {
+              selectTaskRange(lastSelectedTaskId, task.id);
+            } else {
+              toggleTaskSelection(task.id);
+            }
+          }}
+          className="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 cursor-pointer"
+        />
       </div>
 
       {/* Data Cells */}

@@ -30,6 +30,12 @@ export function TaskTable(): JSX.Element {
   const reorderTasks = useTaskStore((state) => state.reorderTasks);
   const columnWidths = useTaskStore((state) => state.columnWidths);
   const setColumnWidth = useTaskStore((state) => state.setColumnWidth);
+  const selectedTaskIds = useTaskStore((state) => state.selectedTaskIds);
+  const selectAllTasks = useTaskStore((state) => state.selectAllTasks);
+  const clearSelection = useTaskStore((state) => state.clearSelection);
+
+  const allSelected = tasks.length > 0 && tasks.every((task) => selectedTaskIds.includes(task.id));
+  const someSelected = tasks.some((task) => selectedTaskIds.includes(task.id)) && !allSelected;
 
   const sensors = useSensors(
     useSensor(PointerSensor),
@@ -70,6 +76,14 @@ export function TaskTable(): JSX.Element {
       order: tasks.length,
       metadata: {},
     });
+  };
+
+  const handleHeaderCheckboxClick = () => {
+    if (allSelected) {
+      clearSelection();
+    } else {
+      selectAllTasks();
+    }
   };
 
   /**
@@ -202,7 +216,24 @@ export function TaskTable(): JSX.Element {
                   className="task-table-header-cell sticky top-0 z-10 px-3 py-2 bg-gray-50 border-b-2 border-r border-gray-300 text-xs font-semibold text-gray-700 uppercase tracking-wider relative"
                   role="columnheader"
                 >
-                  {column.label}
+                  {column.id === 'checkbox' ? (
+                    <div className="flex items-center justify-center">
+                      <input
+                        type="checkbox"
+                        checked={allSelected}
+                        ref={(input) => {
+                          if (input) {
+                            input.indeterminate = someSelected;
+                          }
+                        }}
+                        onChange={handleHeaderCheckboxClick}
+                        className="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 cursor-pointer"
+                        title={allSelected ? 'Deselect all' : 'Select all'}
+                      />
+                    </div>
+                  ) : (
+                    column.label
+                  )}
                   {/* Column Resizer - not on last column */}
                   {index < TASK_COLUMNS.length - 1 && (
                     <ColumnResizer

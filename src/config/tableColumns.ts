@@ -58,6 +58,13 @@ export const TASK_COLUMNS: ColumnDefinition[] = [
     renderer: 'custom',
   },
   {
+    id: 'checkbox',
+    label: '',
+    defaultWidth: '48px',
+    editable: false,
+    renderer: 'custom',
+  },
+  {
     id: 'name',
     field: 'name',
     label: 'Task Name',
