@@ -1,4 +1,4 @@
-import { TaskList } from './components/TaskList/TaskList';
+import { TaskTable } from './components/TaskList/TaskTable';
 
 function App(): JSX.Element {
   return (
@@ -8,14 +8,14 @@ function App(): JSX.Element {
         <h1 className="text-2xl font-bold text-gray-900">
           Gantt Chart Application
         </h1>
-        <p className="text-sm text-gray-600 mt-1">Sprint 1.1: Task Management MVP</p>
+        <p className="text-sm text-gray-600 mt-1">Sprint 1.1+: Excel-like Task Table</p>
       </header>
 
       {/* Main Content */}
       <div className="flex-1 flex overflow-hidden">
-        {/* Task List Panel */}
-        <div className="w-96 flex-shrink-0">
-          <TaskList />
+        {/* Task Table Panel */}
+        <div className="w-auto flex-shrink-0 min-w-[800px]">
+          <TaskTable />
         </div>
 
         {/* Placeholder for future Gantt Chart */}
