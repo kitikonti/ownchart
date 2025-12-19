@@ -35,9 +35,11 @@ export function ColumnResizer({
   useEffect(() => {
     if (!isResizing) return;
 
-    const handleMouseMove = (_e: globalThis.MouseEvent) => {
-      // Update width during drag (optional - for real-time preview)
-      // For now, we'll only update on mouse up
+    const handleMouseMove = (e: globalThis.MouseEvent) => {
+      // Live update during drag
+      const deltaX = e.clientX - startXRef.current;
+      const newWidth = Math.max(minWidth, startWidthRef.current + deltaX);
+      onResize(columnId, newWidth);
     };
 
     const handleMouseUp = (e: globalThis.MouseEvent) => {
