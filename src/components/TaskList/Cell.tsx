@@ -255,7 +255,7 @@ export function Cell({ taskId, task, field, column, children }: CellProps): JSX.
     return (
       <div
         ref={cellRef}
-        className="relative flex flex-col px-3 py-2 border-b border-r border-gray-200 min-h-[44px] outline outline-3 outline-blue-600 bg-white"
+        className="relative flex flex-col px-3 py-2 border-b border-r border-gray-200 min-h-[44px] outline outline-3 outline-blue-600 bg-white z-20"
         onClick={(e) => e.stopPropagation()}
       >
         {children ? (
@@ -289,8 +289,8 @@ export function Cell({ taskId, task, field, column, children }: CellProps): JSX.
       ref={cellRef}
       tabIndex={0}
       className={`
-        px-3 py-2 border-b border-r border-gray-200 min-h-[44px] flex items-center cursor-pointer
-        ${isActive ? 'outline outline-2 outline-blue-500 bg-blue-50' : 'hover:bg-gray-50'}
+        px-3 py-2 border-b border-r border-gray-200 min-h-[44px] flex items-center cursor-pointer relative
+        ${isActive ? 'outline outline-2 outline-blue-500 bg-blue-50 z-10' : 'hover:bg-gray-50'}
         ${!column.editable ? 'bg-gray-50 text-gray-600' : ''}
       `}
       onClick={handleClick}
