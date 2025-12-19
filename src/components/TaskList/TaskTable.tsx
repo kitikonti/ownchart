@@ -109,6 +109,44 @@ export function TaskTable(): JSX.Element {
     setColumnWidth(columnId, width);
   };
 
+  /**
+   * Calculate optimal width for a column based on content.
+   */
+  const calculateOptimalWidth = (columnId: string): number => {
+    const column = TASK_COLUMNS.find((col) => col.id === columnId);
+    if (!column || !column.field) return 100;
+
+    const field = column.field;
+
+    // Find the longest value in this column
+    let maxLength = column.label.length; // Start with header length
+
+    tasks.forEach((task) => {
+      let valueStr = '';
+
+      if (column.formatter) {
+        valueStr = column.formatter(task[field]);
+      } else {
+        valueStr = String(task[field]);
+      }
+
+      maxLength = Math.max(maxLength, valueStr.length);
+    });
+
+    // Estimate width: ~8px per character + padding (24px) + some buffer
+    const estimatedWidth = Math.max(60, maxLength * 8 + 40);
+
+    return Math.min(estimatedWidth, 400); // Cap at 400px
+  };
+
+  /**
+   * Handle auto-resize on double-click.
+   */
+  const handleAutoResize = (columnId: string) => {
+    const optimalWidth = calculateOptimalWidth(columnId);
+    setColumnWidth(columnId, optimalWidth);
+  };
+
   return (
     <div className="task-table-container h-full flex flex-col bg-white border-r border-gray-200">
       {/* Header */}
@@ -171,6 +209,7 @@ export function TaskTable(): JSX.Element {
                       columnId={column.id}
                       currentWidth={getColumnWidth(column.id)}
                       onResize={handleColumnResize}
+                      onAutoResize={handleAutoResize}
                       minWidth={40}
                     />
                   )}

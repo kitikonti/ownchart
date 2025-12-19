@@ -12,6 +12,9 @@ export interface ColumnResizerProps {
   /** Called when resize completes */
   onResize: (columnId: string, width: number) => void;
 
+  /** Called on double-click to auto-resize */
+  onAutoResize?: (columnId: string) => void;
+
   /** Current column width */
   currentWidth: number;
 
@@ -25,6 +28,7 @@ export interface ColumnResizerProps {
 export function ColumnResizer({
   columnId,
   onResize,
+  onAutoResize,
   currentWidth,
   minWidth = 60,
 }: ColumnResizerProps): JSX.Element {
@@ -68,6 +72,15 @@ export function ColumnResizer({
     setIsResizing(true);
   };
 
+  const handleDoubleClick = (e: MouseEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    e.stopPropagation();
+
+    if (onAutoResize) {
+      onAutoResize(columnId);
+    }
+  };
+
   return (
     <div
       className={`
@@ -76,7 +89,8 @@ export function ColumnResizer({
         ${isResizing ? 'bg-blue-600 w-1.5' : 'bg-transparent'}
       `}
       onMouseDown={handleMouseDown}
-      title="Drag to resize column"
+      onDoubleClick={handleDoubleClick}
+      title="Drag to resize, double-click to auto-fit"
     />
   );
 }
