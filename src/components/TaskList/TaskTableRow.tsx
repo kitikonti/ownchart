@@ -19,6 +19,7 @@ interface TaskTableRowProps {
 export function TaskTableRow({ task }: TaskTableRowProps): JSX.Element {
   const deleteTask = useTaskStore((state) => state.deleteTask);
   const updateTask = useTaskStore((state) => state.updateTask);
+  const columnWidths = useTaskStore((state) => state.columnWidths);
   const { isCellEditing } = useCellNavigation();
 
   const {
@@ -30,10 +31,17 @@ export function TaskTableRow({ task }: TaskTableRowProps): JSX.Element {
     isDragging,
   } = useSortable({ id: task.id });
 
+  // Generate grid template columns
+  const gridTemplateColumns = TASK_COLUMNS.map((col) => {
+    const customWidth = columnWidths[col.id];
+    return customWidth ? `${customWidth}px` : col.defaultWidth;
+  }).join(' ');
+
   const style = {
     transform: CSS.Transform.toString(transform),
     transition,
     opacity: isDragging ? 0.5 : 1,
+    gridTemplateColumns,
   };
 
   const handleDelete = () => {
@@ -46,7 +54,7 @@ export function TaskTableRow({ task }: TaskTableRowProps): JSX.Element {
     <div
       ref={setNodeRef}
       style={style}
-      className="task-table-row contents"
+      className="task-table-row col-span-full grid"
       role="row"
     >
       {/* Drag Handle Cell */}
