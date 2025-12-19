@@ -38,6 +38,8 @@ export function ColorCellEditor({
   useEffect(() => {
     if (inputRef.current) {
       inputRef.current.focus();
+      // Automatically open the color picker dialog on mount
+      inputRef.current.click();
     }
   }, []);
 
