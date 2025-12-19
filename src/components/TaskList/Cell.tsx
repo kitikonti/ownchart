@@ -270,7 +270,7 @@ export function Cell({ taskId, task, field, column, children }: CellProps): JSX.
             onKeyDown={handleEditKeyDown}
             onBlur={saveValue}
             autoFocus
-            className="w-full px-1 py-0.5 border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-500"
+            className="w-full px-0 py-0 border-0 focus:outline-none bg-transparent"
           />
         )}
         {error && (
