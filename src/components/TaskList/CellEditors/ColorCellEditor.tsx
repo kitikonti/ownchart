@@ -57,14 +57,16 @@ export function ColorCellEditor({
   };
 
   return (
-    <input
-      ref={inputRef}
-      type="color"
-      value={localValue}
-      onChange={(e) => handleChange(e.target.value)}
-      onKeyDown={handleKeyDown}
-      className="w-6 h-6 cursor-pointer rounded border border-gray-300"
-      title="Choose color"
-    />
+    <div className="w-6 h-6 rounded border border-gray-300 overflow-hidden">
+      <input
+        ref={inputRef}
+        type="color"
+        value={localValue}
+        onChange={(e) => handleChange(e.target.value)}
+        onKeyDown={handleKeyDown}
+        className="w-full h-full cursor-pointer block"
+        title="Choose color"
+      />
+    </div>
   );
 }
