@@ -260,7 +260,7 @@ export function Cell({ taskId, task, field, column, children }: CellProps): JSX.
       >
         {children ? (
           // Custom editor (e.g., ColorPicker)
-          <div className="flex items-center">{children}</div>
+          <div className="flex items-center flex-1">{children}</div>
         ) : (
           // Default input
           <input
