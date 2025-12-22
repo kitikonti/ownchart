@@ -24,14 +24,15 @@ This document outlines **Phase 1** of building the Gantt Chart application: impl
 
 ## Phase 1 Deliverables
 
-Phase 1 is divided into **6 Sprints**, each delivering a complete feature set:
+Phase 1 is divided into **7 Sprints**, each delivering a complete feature set:
 
-### Sprint 1.1: Basic Task Management (Week 1-1.5)
-### Sprint 1.2: Timeline & Visualization (Week 1.5-3)
-### Sprint 1.3: Dependencies (Finish-to-Start) (Week 3-4.5)
-### Sprint 1.4: File Operations (Week 4.5-5.5)
-### Sprint 1.5: Basic Undo/Redo (Week 5.5-6.5)
-### Sprint 1.6: PNG Export & Polish (Week 6.5-8)
+### Sprint 1.1: Basic Task Management (Week 1-1.5) ✅ COMPLETE
+### Sprint 1.15: Task Groups & Hierarchical Organization (Week 1.5-2) 🔄 IN PROGRESS
+### Sprint 1.2: Timeline & Visualization (Week 2-3.5)
+### Sprint 1.3: Dependencies (Finish-to-Start) (Week 3.5-5)
+### Sprint 1.4: File Operations (Week 5-6)
+### Sprint 1.5: Basic Undo/Redo (Week 6-7)
+### Sprint 1.6: PNG Export & Polish (Week 7-8.5)
 
 ---
 
@@ -308,14 +309,36 @@ This section breaks Sprint 1.1 into small, testable, committable tasks. Each tas
 
 ### Sprint 1.1 Quality Gates
 
-**Before Moving to Sprint 1.2:**
-- [ ] All 14 tasks complete and committed
-- [ ] 80%+ test coverage for Sprint 1.1 code
-- [ ] All tests passing
-- [ ] TypeScript strict mode, zero errors
-- [ ] ESLint clean, zero warnings
-- [ ] Can add 10 tasks in < 1 minute
-- [ ] Manual QA: Create, edit, delete, reorder all work
+**Before Moving to Sprint 1.15:**
+- [x] All 14 tasks complete and committed ✅
+- [x] 80%+ test coverage for Sprint 1.1 code ✅
+- [x] All tests passing ✅
+- [x] TypeScript strict mode, zero errors ✅
+- [x] ESLint clean, zero warnings ✅
+- [x] Can add 10 tasks in < 1 minute ✅
+- [x] Manual QA: Create, edit, delete, reorder all work ✅
+
+**Status:** ✅ COMPLETE (2025-12-19)
+
+---
+
+## Sprint 1.15: Task Groups & Hierarchical Organization
+
+**Duration:** 3-4 days
+**Goal:** Add hierarchical task organization with collapsible groups.
+
+**Status:** 🔄 IN PROGRESS
+
+> **Note:** This sprint was added between Sprint 1.1 and 1.2 to establish hierarchical data structure before timeline rendering. See [SPRINT_1.15_TASK_GROUPS.md](./SPRINT_1.15_TASK_GROUPS.md) for detailed implementation plan.
+
+**Key Features:**
+- Task groups/phases for organization
+- Collapsible sections (3 levels deep)
+- Nested drag-and-drop
+- Group summary bars (timeline integration in Sprint 1.2)
+- Visual hierarchy with indentation
+
+**Deliverables:** See [SPRINT_1.15_TASK_GROUPS.md](./SPRINT_1.15_TASK_GROUPS.md) for complete task breakdown.
 
 ---
 
