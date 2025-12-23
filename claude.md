@@ -43,7 +43,10 @@ app-gantt/
 ├── src/
 │   ├── components/        # React components
 │   │   ├── Toolbar.tsx
-│   │   ├── TaskList.tsx
+│   │   ├── TaskList/      # Task table components
+│   │   │   ├── TaskTable.tsx
+│   │   │   ├── TaskTableRow.tsx
+│   │   │   └── Cell.tsx
 │   │   ├── GanttCanvas.tsx
 │   │   ├── HistoryTimeline.tsx
 │   │   └── SettingsPanel.tsx

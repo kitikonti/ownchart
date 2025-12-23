@@ -13,7 +13,7 @@ describe('App', () => {
     expect(screen.getByText(/sprint 1\.1: task management mvp/i)).toBeInTheDocument();
   });
 
-  it('shows TaskList component', () => {
+  it('shows TaskTable component', () => {
     render(<App />);
     expect(screen.getByRole('heading', { name: /tasks/i })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /add new task/i })).toBeInTheDocument();

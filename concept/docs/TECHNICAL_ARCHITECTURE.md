@@ -188,9 +188,9 @@ src/
 │   │   ├── Milestone.tsx          # Milestone markers
 │   │   └── TodayMarker.tsx        # Current date indicator
 │   ├── TaskList/
-│   │   ├── TaskList.tsx           # Task list container
-│   │   ├── TaskRow.tsx            # Individual task row
-│   │   └── TaskEditor.tsx         # Inline editing
+│   │   ├── TaskTable.tsx          # Spreadsheet-like table container
+│   │   ├── TaskTableRow.tsx       # Individual table row
+│   │   └── Cell.tsx               # Excel-like cell with inline editing
 │   ├── History/
 │   │   ├── HistorySlider.tsx      # Timeline scrubber
 │   │   ├── SnapshotMarker.tsx     # Named snapshot indicators
@@ -431,7 +431,7 @@ function VirtualizedGanttChart({ tasks, viewportHeight, viewportWidth }: Virtual
       overscanCount={5} // Render 5 extra rows above/below viewport
     >
       {({ index, style }) => (
-        <TaskRow task={tasks[index]} style={style} />
+        <TaskTableRow task={tasks[index]} style={style} />
       )}
     </VariableSizeList>
   );

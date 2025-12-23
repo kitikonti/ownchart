@@ -547,7 +547,7 @@ export default App;
 - [ ] Add basic styling with TailwindCSS
 - [ ] Create placeholder components (empty)
   - `src/components/Toolbar.tsx`
-  - `src/components/TaskList.tsx`
+  - `src/components/TaskList/TaskTable.tsx`
   - `src/components/GanttCanvas.tsx`
   - `src/components/HistoryTimeline.tsx`
   - `src/components/SettingsPanel.tsx`
