@@ -4,31 +4,6 @@
  */
 
 /**
- * Dependency type enumeration.
- * MVP: Only Finish-to-Start (FS) is supported.
- * Future: SS (Start-to-Start), FF (Finish-to-Finish), SF (Start-to-Finish)
- */
-export enum DependencyType {
-  /** Finish-to-Start: Successor task starts after predecessor finishes */
-  FS = 'FS',
-}
-
-/**
- * Represents a dependency between two tasks.
- *
- * @property id - Unique identifier (UUID v4)
- * @property fromTaskId - ID of the predecessor task
- * @property toTaskId - ID of the successor task
- * @property type - Dependency type (FS only in MVP)
- */
-export interface Dependency {
-  id: string;
-  fromTaskId: string;
-  toTaskId: string;
-  type: DependencyType;
-}
-
-/**
  * Represents a task in the Gantt chart.
  *
  * @property id - Unique identifier (UUID v4)
@@ -51,34 +26,4 @@ export interface Task {
   color: string;
   order: number;
   metadata: Record<string, unknown>;
-}
-
-/**
- * Represents a complete Gantt chart.
- *
- * @property id - Unique identifier for the chart (UUID v4)
- * @property name - Chart name/title
- * @property tasks - Array of all tasks in the chart
- * @property dependencies - Array of all dependencies between tasks
- * @property metadata - Extensibility field for future features
- */
-export interface Chart {
-  id: string;
-  name: string;
-  tasks: Task[];
-  dependencies: Dependency[];
-  metadata: Record<string, unknown>;
-}
-
-/**
- * Application state for Zustand store.
- *
- * @property tasks - Array of all tasks
- * @property dependencies - Array of all dependencies
- * @property selectedTaskId - ID of currently selected task (null if none)
- */
-export interface AppState {
-  tasks: Task[];
-  dependencies: Dependency[];
-  selectedTaskId: string | null;
 }

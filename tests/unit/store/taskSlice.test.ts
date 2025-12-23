@@ -249,50 +249,6 @@ describe('Task Store - CRUD Operations', () => {
     });
   });
 
-  describe('selectTask', () => {
-    it('should select a task', () => {
-      const { addTask, selectTask } = useTaskStore.getState();
-
-      addTask({
-        name: 'Task 1',
-        startDate: '2025-12-18',
-        endDate: '2025-12-25',
-        duration: 7,
-        progress: 0,
-        color: '#3b82f6',
-        order: 0,
-        metadata: {},
-      });
-
-      const taskId = useTaskStore.getState().tasks[0].id;
-      selectTask(taskId);
-
-      expect(useTaskStore.getState().selectedTaskId).toBe(taskId);
-    });
-
-    it('should deselect by passing null', () => {
-      const { addTask, selectTask } = useTaskStore.getState();
-
-      addTask({
-        name: 'Task 1',
-        startDate: '2025-12-18',
-        endDate: '2025-12-25',
-        duration: 7,
-        progress: 0,
-        color: '#3b82f6',
-        order: 0,
-        metadata: {},
-      });
-
-      const taskId = useTaskStore.getState().tasks[0].id;
-      selectTask(taskId);
-      expect(useTaskStore.getState().selectedTaskId).toBe(taskId);
-
-      selectTask(null);
-      expect(useTaskStore.getState().selectedTaskId).toBeNull();
-    });
-  });
-
   describe('reorderTasks', () => {
     it('should reorder tasks correctly', () => {
       const { addTask, reorderTasks } = useTaskStore.getState();

@@ -22,7 +22,6 @@ export type NavigationDirection = 'up' | 'down' | 'left' | 'right';
  */
 interface TaskState {
   tasks: Task[];
-  selectedTaskId: string | null;
 
   // Multi-selection state
   selectedTaskIds: string[];
@@ -44,7 +43,6 @@ interface TaskActions {
   addTask: (taskData: Omit<Task, 'id'>) => void;
   updateTask: (id: string, updates: Partial<Task>) => void;
   deleteTask: (id: string) => void;
-  selectTask: (id: string | null) => void;
   reorderTasks: (fromIndex: number, toIndex: number) => void;
 
   // Multi-selection actions
@@ -78,7 +76,6 @@ export const useTaskStore = create<TaskStore>()(
   immer((set) => ({
     // State
     tasks: [] as Task[],
-    selectedTaskId: null as string | null,
     selectedTaskIds: [] as string[],
     lastSelectedTaskId: null as string | null,
     activeCell: {
@@ -112,11 +109,6 @@ export const useTaskStore = create<TaskStore>()(
     deleteTask: (id) =>
       set((state) => {
         state.tasks = state.tasks.filter((task) => task.id !== id);
-      }),
-
-    selectTask: (id) =>
-      set((state) => {
-        state.selectedTaskId = id;
       }),
 
     reorderTasks: (fromIndex, toIndex) =>

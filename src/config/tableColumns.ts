@@ -134,24 +134,3 @@ export const TASK_COLUMNS: ColumnDefinition[] = [
     renderer: 'custom',
   },
 ];
-
-/**
- * Get column definition by field name.
- */
-export function getColumnByField(field: EditableField): ColumnDefinition | undefined {
-  return TASK_COLUMNS.find((col) => col.field === field);
-}
-
-/**
- * Get column definition by column ID.
- */
-export function getColumnById(id: string): ColumnDefinition | undefined {
-  return TASK_COLUMNS.find((col) => col.id === id);
-}
-
-/**
- * Get all editable columns.
- */
-export function getEditableColumns(): ColumnDefinition[] {
-  return TASK_COLUMNS.filter((col) => col.editable);
-}

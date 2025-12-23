@@ -10,7 +10,7 @@ describe('App', () => {
 
   it('displays Sprint 1.1 status', () => {
     render(<App />);
-    expect(screen.getByText(/sprint 1\.1: task management mvp/i)).toBeInTheDocument();
+    expect(screen.getByText(/sprint 1\.1\+: excel-like task table/i)).toBeInTheDocument();
   });
 
   it('shows TaskTable component', () => {
