@@ -74,6 +74,7 @@ export function TaskTable(): JSX.Element {
       progress: 0,
       color: '#3b82f6',
       order: tasks.length,
+      type: 'task', // Default task type
       metadata: {},
     });
   };

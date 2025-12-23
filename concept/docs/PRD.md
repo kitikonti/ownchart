@@ -378,7 +378,87 @@ The MVP architecture includes extensibility foundations that enable future featu
 
 ---
 
-## 11. Open Questions
+## 11. Competitive Analysis Insights
+
+**Date Analyzed**: 2025-12-23
+**Primary Reference**: [COMPETITIVE_ANALYSIS.md](./COMPETITIVE_ANALYSIS.md)
+
+### 11.1 Key Findings
+
+Based on analysis of SVAR React Gantt (https://github.com/svar-widgets/react-gantt), a mature, production-ready Gantt component:
+
+**✅ Validated Decisions**:
+- Our architectural choices (Zustand, D3.js, minimal dependencies) are confirmed as sound
+- Client-side approach is viable for production applications
+- Feature set is achievable with our technology stack
+
+**📊 Enhanced Data Model** (Implemented):
+- Task type system: `task`, `summary`, `milestone` types
+- Hierarchy support: `parent`, `open` fields for task grouping
+- Baseline tracking: `baseStart`, `baseEnd` for planned vs actual comparison
+- Performance: `lazy` flag for lazy-loading children
+
+**🎯 Feature Priorities** (Based on Analysis):
+
+| Priority | Feature | Rationale |
+|----------|---------|-----------|
+| **High** | Virtual Scrolling | Critical for performance with 500+ tasks |
+| **High** | Flexible Scale System | Users need hour/day/week/month views |
+| **High** | Event Bus Architecture | Foundation for plugin system |
+| **Medium** | Context Menu & Toolbar | Standard UX expectations |
+| **Medium** | Dependency Rendering | SVG path approach is proven |
+| **Low** | Localization | Nice-to-have, not MVP-critical |
+
+### 11.2 Strategic Decision: Independent Implementation
+
+**Decision**: Build features independently rather than using SVAR as dependency
+
+**Reasons**:
+1. ❌ Vendor lock-in to proprietary @svar-ui ecosystem
+2. ❌ PRO features (Undo/Redo, Auto-Scheduling) behind paywall conflicts with open-source approach
+3. ❌ Complex integration with their state management system
+4. ✅ Our architecture is simpler and more maintainable
+5. ✅ Full control over implementation and features
+
+**Approach**: Study their patterns, implement independently
+
+### 11.3 Implementation Learnings
+
+**Patterns to Adopt**:
+- Separate components for Chart, Grid, Editor (we already do this ✅)
+- Virtual scrolling for performance (implement in Sprint 1.1)
+- Scale configuration system (implement in Sprint 1.2)
+- Event bus for plugins (implement in Sprint 1.3)
+- SVG paths with Bézier curves for dependencies (implement in Sprint 1.4)
+
+**Patterns to Avoid**:
+- Proprietary state management (we use Zustand ✅)
+- Complex dependency ecosystems (we use minimal deps ✅)
+- Dual licensing model (we're fully open-source ✅)
+
+### 11.4 Updated Technical Constraints
+
+Based on competitive analysis, adding:
+
+**Performance Targets**:
+- Support 1000+ tasks with virtual scrolling
+- Render only visible rows (viewport + buffer)
+- Smooth scrolling at 60fps
+
+**Feature Completeness**:
+- All community features from SVAR (without PRO restrictions)
+- Enhanced plugin system (more flexible than SVAR)
+- Superior undo/redo (time-travel UI, not just simple undo)
+
+**Reference Implementation**:
+- SVAR React Gantt serves as proof-of-concept
+- Study their demos for UX patterns
+- Learn from their scale/timeline implementation
+- Reference repo: https://github.com/svar-widgets/react-gantt
+
+---
+
+## 12. Open Questions
 
 1. **File Format Details**: Should we support import from other formats (MS Project, CSV)? → Defer to V2.0
 2. **Export Settings**: What customization options for PDF/SVG/PNG exports? → ✓ Resolved: Multiple options (see FR-033)
@@ -418,12 +498,20 @@ See [ROADMAP.md](./ROADMAP.md) for detailed development phases.
 
 ---
 
-**Document Version**: 1.2
-**Last Updated**: 2025-12-12
+**Document Version**: 1.3
+**Last Updated**: 2025-12-23
 **Owner**: Product Concept Team
-**Status**: Draft - Updated with extensibility and future considerations
+**Status**: Draft - Updated with competitive analysis insights
 
-**Recent Updates (v1.2)**:
+**Recent Updates (v1.3)**:
+- Added Section 11: Competitive Analysis Insights
+- Enhanced data model with task types, hierarchy, and baselines
+- Feature prioritization based on competitive analysis
+- Strategic decision to build independently
+- Updated technical constraints with performance targets
+- Reference to COMPETITIVE_ANALYSIS.md for detailed findings
+
+**Previous Updates (v1.2)**:
 - Added Section 10: Future Considerations & Extensibility
 - Outlined architectural decisions for extensibility
 - Mapped features enabled by extensible architecture
