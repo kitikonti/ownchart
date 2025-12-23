@@ -140,12 +140,12 @@ interface TaskActions {
 
 ---
 
-#### 1.1.4 TaskList UI Components (6 tasks)
+#### 1.1.4 Task Table UI Components (6 tasks)
 
 **Files to Create:**
-- `src/components/TaskList/TaskList.tsx` - Container
-- `src/components/TaskList/TaskRow.tsx` - Individual row
-- `src/components/TaskList/TaskForm.tsx` - Add/edit form (optional)
+- `src/components/TaskList/TaskTable.tsx` - Spreadsheet-like table container
+- `src/components/TaskList/TaskTableRow.tsx` - Individual table row with cells
+- `src/components/TaskList/Cell.tsx` - Excel-like cell with inline editing
 
 **Features:**
 1. **Display Mode:**
@@ -262,48 +262,47 @@ This section breaks Sprint 1.1 into small, testable, committable tasks. Each tas
   - **Test:** Selection and reordering work
   - **Commit:** `feat(store): add task selection and reordering`
 
-#### Phase 1.1.4: TaskList UI Components (6 tasks)
-- [ ] **Task 1.1.4a:** Create basic TaskList container component
-  - Create `src/components/TaskList/TaskList.tsx`
-  - Render empty state and header
+#### Phase 1.1.4: Task Table UI Components (6 tasks)
+- [x] **Task 1.1.4a:** Create basic TaskTable container component
+  - Create `src/components/TaskList/TaskTable.tsx`
+  - Render empty state and header with grid layout
   - Connect to useTaskStore
   - **Test:** Component renders without errors
-  - **Commit:** `feat(ui): add TaskList container component`
+  - **Commit:** `feat(ui): add TaskTable container component`
 
-- [ ] **Task 1.1.4b:** Create TaskRow component with display mode
-  - Create `src/components/TaskList/TaskRow.tsx`
-  - Display task name, dates, duration
-  - Add row selection on click
+- [x] **Task 1.1.4b:** Create TaskTableRow component with grid cells
+  - Create `src/components/TaskList/TaskTableRow.tsx`
+  - Display task fields in grid columns (drag handle, checkbox, name, dates, duration, progress, color, delete)
+  - Add row selection via checkbox
   - **Test:** Renders task data correctly
-  - **Commit:** `feat(ui): add TaskRow display component`
+  - **Commit:** `feat(ui): add TaskTableRow display component`
 
-- [ ] **Task 1.1.4c:** Add inline editing to TaskRow
-  - Double-click or F2 to edit
-  - Edit mode with input fields
-  - Save on Enter, cancel on Escape
+- [x] **Task 1.1.4c:** Add Cell component with Excel-like editing
+  - Create `src/components/TaskList/Cell.tsx`
+  - Click to activate, click again or F2 or type to edit
+  - Save on Enter/Tab, cancel on Escape
+  - Excel-like keyboard navigation (arrows, Tab)
   - **Test:** Inline editing works, validation applied
-  - **Commit:** `feat(ui): add inline editing to TaskRow`
+  - **Commit:** `feat(ui): add Cell component with Excel-like editing`
 
-- [ ] **Task 1.1.4d:** Create AddTaskButton component
-  - Button to add new task
-  - Opens inline add row or modal
+- [x] **Task 1.1.4d:** Add task creation button
+  - Button to add new task in TaskTable header
   - Creates task with default values
   - **Test:** Can add new task
-  - **Commit:** `feat(ui): add AddTaskButton component`
+  - **Commit:** `feat(ui): add task creation button`
 
-- [ ] **Task 1.1.4e:** Add drag-and-drop reordering with @dnd-kit
+- [x] **Task 1.1.4e:** Add drag-and-drop reordering with @dnd-kit
   - Install @dnd-kit/core and @dnd-kit/sortable
-  - Wrap TaskList with DndContext
-  - Enable drag handles on TaskRow
+  - Wrap TaskTable rows with DndContext
+  - Enable drag handles on TaskTableRow
   - **Test:** Can reorder tasks via drag-drop
   - **Commit:** `feat(ui): add drag-and-drop task reordering`
 
-- [ ] **Task 1.1.4f:** Add delete task functionality
-  - Delete button on TaskRow (trash icon)
-  - Confirm dialog for deletion
-  - Remove from store
-  - **Test:** Can delete tasks, confirmation works
-  - **Commit:** `feat(ui): add task deletion with confirmation`
+- [x] **Task 1.1.4f:** Add delete task functionality
+  - Delete button on TaskTableRow (trash icon)
+  - Remove from store on click
+  - **Test:** Can delete tasks
+  - **Commit:** `feat(ui): add task deletion`
 
 ---
 
@@ -1908,7 +1907,7 @@ Keep checklist in PROJECT_STATUS.md or use GitHub Issues:
 4. **`src/utils/dateUtils.ts`** - Date calculations
 5. **`src/utils/dependencyUtils.ts`** ⚠️ HIGHEST RISK - Graph algorithms
 6. **`src/utils/timelineUtils.ts`** - Coordinate mapping
-7. **`src/components/TaskList/TaskList.tsx`** - First visible feature
+7. **`src/components/TaskList/TaskTable.tsx`** - Spreadsheet table (first visible feature)
 8. **`src/components/GanttChart/ChartCanvas.tsx`** - Core visualization
 9. **`src/services/fileService.ts`** - Save/load
 10. **`src/store/slices/historySlice.ts`** - Undo/redo state
@@ -2021,7 +2020,7 @@ Keep checklist in PROJECT_STATUS.md or use GitHub Issues:
 ```
 feat(types): add Task interface definition
 feat(store): add task CRUD operations
-feat(ui): add TaskList container component
+feat(ui): add TaskTable spreadsheet component
 feat(utils): add circular dependency detection (DFS)
 test(utils): add complex circular dependency tests
 feat(services): add chart save functionality

@@ -85,7 +85,8 @@ export function TaskTableRow({ task }: TaskTableRowProps): JSX.Element {
           checked={isSelected}
           onChange={(e) => {
             e.stopPropagation();
-            if (e.nativeEvent.shiftKey && lastSelectedTaskId) {
+            const nativeEvent = e.nativeEvent as MouseEvent;
+            if (nativeEvent.shiftKey && lastSelectedTaskId) {
               selectTaskRange(lastSelectedTaskId, task.id);
             } else {
               toggleTaskSelection(task.id);
