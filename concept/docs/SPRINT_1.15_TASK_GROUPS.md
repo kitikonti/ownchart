@@ -790,62 +790,719 @@ export function TaskTable() {
 
 ## Drag-and-Drop Updates
 
-### Enhanced Drop Logic
+### UX Challenge: Hierarchical Drag & Drop
 
-**File:** `src/components/TaskList/TaskTable.tsx` (UPDATE)
+Hierarchical drag-and-drop presents unique UX challenges that flat reordering doesn't have:
 
-Update `handleDragEnd` to support hierarchy:
+**Problem 1: Ambiguous Drop Positions**
+- When dropping after the last child of a parent, should it be:
+  - The last child INSIDE the parent? OR
+  - The first element AFTER the parent?
+
+**Problem 2: Empty Parent Targets**
+- When a task has no children yet, how does the user know they can drop INTO it?
+- Visual feedback must indicate: BEFORE, AFTER, or INTO
+
+**Problem 3: Multi-Level Hierarchy**
+- User needs clear feedback about which level (0-3) they're dropping at
+- Horizontal position (indentation) must be clearly communicated
+
+**Solution: Hybrid Approach (SVAR + Notion Pattern)**
+
+We combine two proven patterns:
+1. **Horizontal position** determines nesting level (SVAR Gantt pattern)
+2. **Vertical position** determines drop placement (Notion/Asana pattern)
+3. **Visual zones** show clear drop feedback during drag
+
+---
+
+### Drop Zone System
+
+Each task row is divided into **three vertical zones** during drag operations:
+
+```
+┌─────────────────────────────────────────┐
+│ [BEFORE ZONE - top 40%]                 │ ← Drop BEFORE this task
+│─────────────────────────────────────────│
+│ [INTO ZONE - middle 20%]                │ ← Drop INTO as child (if allowed)
+│─────────────────────────────────────────│
+│ [AFTER ZONE - bottom 40%]               │ ← Drop AFTER this task
+└─────────────────────────────────────────┘
+```
+
+**Zone Behavior:**
+
+| Zone | Visual Indicator | Action | Condition |
+|------|------------------|--------|-----------|
+| **BEFORE** | Blue line above row | Insert before target | Always available |
+| **INTO** | Blue background + ring | Make child of target | Only if `canHaveChildren(target)` |
+| **AFTER** | Blue line below row | Insert after target | Always available |
+
+**Horizontal Position (Indentation Level):**
+
+The horizontal mouse position determines the **nesting level** of the drop:
+
+```
+Mouse position:
+0-19px     → Level 0 (root)
+20-39px    → Level 1 (child)
+40-59px    → Level 2 (grandchild)
+60-79px    → Level 3 (max depth)
+```
+
+---
+
+### Visual Feedback During Drag
+
+#### 1. Drop Indicator Types
 
 ```typescript
-const handleDragEnd = (event: DragEndEvent) => {
-  const { active, over } = event;
-  if (!over || active.id === over.id) return;
+type DropIndicator =
+  | { type: 'before'; targetId: string; level: number }
+  | { type: 'after'; targetId: string; level: number }
+  | { type: 'into'; parentId: string };
+```
 
-  const activeTask = tasks.find(t => t.id === active.id);
-  const overTask = tasks.find(t => t.id === over.id);
-  if (!activeTask || !overTask) return;
+#### 2. Visual Examples
 
-  // Check if dropping onto a summary task (to nest inside)
-  const dropZone = event.delta.y; // Vertical offset
-  const shouldNestInside =
-    overTask.type === 'summary' &&
-    Math.abs(dropZone) < 10; // Close to center of row
+**Dropping BEFORE (top 40% of row):**
+```
+━━━━━━━━━━━━━━━━━━━━━━━━  ← Blue horizontal line (2px, solid)
+  Task A
+  Task B
+```
 
-  if (shouldNestInside) {
-    // Nest inside summary
-    moveTaskToParent(activeTask.id, overTask.id);
+**Dropping INTO (middle 20%, indented position):**
+```
+  ▼ Task A
+  ┌─────────────────────────┐
+  │ [Drop as child of A]    │  ← Blue background (bg-blue-50)
+  └─────────────────────────┘  ← Blue ring (ring-2 ring-blue-300)
+    Task B (existing child)
+```
+
+**Dropping AFTER (bottom 40% of row):**
+```
+  Task A
+━━━━━━━━━━━━━━━━━━━━━━━━  ← Blue horizontal line
+  Task B
+```
+
+**Ghost Element with Indentation:**
+
+While dragging, show a semi-transparent preview at the drop position:
+
+```
+  ▼ Phase 1
+    Task A
+    [Task B] ← Ghost element (opacity: 0.4, correct indentation)
+    Task C
+```
+
+---
+
+### Special Cases
+
+#### Case 1: Last Child Ambiguity
+
+**Problem:** When hovering over the last child of a parent, should the drop be inside or outside the parent?
+
+**Solution:** Use horizontal position to disambiguate:
+
+```typescript
+const resolveLastChildDrop = (
+  overTask: Task,
+  mouseX: number,
+  rowRect: DOMRect
+) => {
+  const isLastChild = /* check if last child of parent */;
+
+  if (!isLastChild) {
+    return normalDropLogic();
+  }
+
+  // Calculate mouse indentation level
+  const mouseLevel = Math.floor((mouseX - rowRect.left) / INDENT_SIZE);
+  const taskLevel = getTaskLevel(tasks, overTask.id);
+
+  if (mouseLevel >= taskLevel) {
+    // Drop at same level as overTask (sibling - still inside parent)
+    return { type: 'after', targetId: overTask.id, level: taskLevel };
   } else {
-    // Reorder at same level
-    const oldIndex = tasks.findIndex(t => t.id === activeTask.id);
-    const newIndex = tasks.findIndex(t => t.id === overTask.id);
-    reorderTasks(oldIndex, newIndex);
+    // Drop at parent's level (outside parent, after parent)
+    const parent = tasks.find(t => t.id === overTask.parent);
+    return { type: 'after', targetId: parent!.id, level: taskLevel - 1 };
   }
 };
 ```
 
-### Visual Drop Indicators
+**Visual Example:**
 
-Add visual feedback when dragging over summary tasks:
+```
+▼ Summary A (Level 0)
+    Task 1 (Level 1)
+    Task 2 (Level 1) ← Hovering here
+
+CASE A - Mouse indented at Level 1 (20-39px):
+    Task 2
+    ━━━━━━━━━━━━━  ← Drop here = last child of Summary A
+
+CASE B - Mouse at Level 0 (0-19px):
+    Task 2
+━━━━━━━━━━━━━━━━  ← Drop here = after Summary A (sibling level)
+Task B
+```
+
+#### Case 2: Empty Parent (No Children Yet)
+
+**Problem:** A task with no children has no visual "slot" to drop into.
+
+**Solution:** Combine vertical AND horizontal position:
 
 ```typescript
-const [dropTarget, setDropTarget] = useState<string | null>(null);
+const shouldDropIntoEmptyParent = (
+  overTask: Task,
+  mouseX: number,
+  mouseY: number,
+  rowRect: DOMRect
+) => {
+  // Must be in middle zone (vertical)
+  const relativeY = mouseY - rowRect.top;
+  const isInMiddle = (
+    relativeY > rowRect.height * 0.4 &&
+    relativeY < rowRect.height * 0.6
+  );
 
-// In TaskTableRow
-<div
-  className={cn(
-    'task-row',
-    dropTarget === task.id && 'bg-blue-50 ring-2 ring-blue-300'
-  )}
-  onDragOver={(e) => {
-    if (task.type === 'summary') {
-      e.preventDefault();
-      setDropTarget(task.id);
+  // Must be indented (horizontal)
+  const mouseLevel = Math.floor((mouseX - rowRect.left) / INDENT_SIZE);
+  const taskLevel = getTaskLevel(tasks, overTask.id);
+  const isIndented = mouseLevel > taskLevel;
+
+  // Task must be able to have children
+  const canBeParent = canHaveChildren(overTask);
+
+  return isInMiddle && isIndented && canBeParent;
+};
+```
+
+**Visual Feedback:**
+
+When hovering over middle zone with indentation:
+```
+  Task A
+  ┌─────────────────────────────┐
+  │ Task B         ⬤ ← Mouse    │  ← bg-blue-50 (light blue)
+  │   [Drop as first child]     │  ← ring-2 ring-blue-300
+  └─────────────────────────────┘
+  Task C
+```
+
+#### Case 3: Collapsed Parent
+
+**Problem:** Dropping into a collapsed parent - user can't see where it will land.
+
+**Solution:** Auto-expand on hover with delay:
+
+```typescript
+const [expandOnHoverTimeout, setExpandOnHoverTimeout] = useState<NodeJS.Timeout | null>(null);
+
+const handleDragOverCollapsed = (taskId: string) => {
+  // Clear existing timeout
+  if (expandOnHoverTimeout) {
+    clearTimeout(expandOnHoverTimeout);
+  }
+
+  // Set new timeout - expand after 800ms hover
+  const timeout = setTimeout(() => {
+    expandTask(taskId);
+  }, 800);
+
+  setExpandOnHoverTimeout(timeout);
+};
+```
+
+**Visual Example:**
+
+```
+Time: 0ms - Start hovering
+▶ Phase 1 (collapsed) ← Hovering...
+  Task A
+
+Time: 800ms - Auto-expand
+▼ Phase 1 (expanded!) ← Shows children
+    [DROP ZONE]       ← Now visible
+  Task A
+```
+
+---
+
+### Implementation
+
+#### 1. Drop Position Detection
+
+**File:** `src/components/TaskList/TaskTable.tsx` (UPDATE)
+
+```typescript
+const INDENT_SIZE = 20; // pixels per level
+
+interface DropPosition {
+  indicator: DropIndicator;
+  isValid: boolean;
+  errorMessage?: string;
+}
+
+const calculateDropPosition = (
+  event: DragOverEvent,
+  overTask: Task,
+  allTasks: Task[]
+): DropPosition => {
+  const { clientX, clientY } = event;
+  const rowRect = event.over?.rect;
+
+  if (!rowRect) return { indicator: null, isValid: false };
+
+  // Calculate vertical zone (BEFORE, INTO, AFTER)
+  const relativeY = clientY - rowRect.top;
+  const rowHeight = rowRect.height;
+  const verticalZone =
+    relativeY < rowHeight * 0.4 ? 'before' :
+    relativeY > rowHeight * 0.6 ? 'after' :
+    'middle';
+
+  // Calculate horizontal level (indentation)
+  const relativeX = clientX - rowRect.left;
+  const mouseLevel = Math.max(0, Math.min(3, Math.floor(relativeX / INDENT_SIZE)));
+  const taskLevel = getTaskLevel(allTasks, overTask.id);
+
+  // Determine drop type based on zone
+  if (verticalZone === 'before') {
+    return {
+      indicator: { type: 'before', targetId: overTask.id, level: mouseLevel },
+      isValid: validateDrop(mouseLevel, overTask),
+    };
+  }
+
+  if (verticalZone === 'after') {
+    // Check for last child ambiguity
+    const isLastChild = isLastChildOfParent(overTask, allTasks);
+
+    if (isLastChild && mouseLevel < taskLevel) {
+      // Drop AFTER parent, not after this child
+      const parent = allTasks.find(t => t.id === overTask.parent);
+      if (parent) {
+        return {
+          indicator: { type: 'after', targetId: parent.id, level: taskLevel - 1 },
+          isValid: true,
+        };
+      }
     }
-  }}
-  onDragLeave={() => setDropTarget(null)}
->
-  {/* ... */}
-</div>
+
+    return {
+      indicator: { type: 'after', targetId: overTask.id, level: mouseLevel },
+      isValid: validateDrop(mouseLevel, overTask),
+    };
+  }
+
+  // Middle zone - check for INTO
+  const isIndented = mouseLevel > taskLevel;
+  const canBeParent = canHaveChildren(overTask);
+
+  if (isIndented && canBeParent) {
+    return {
+      indicator: { type: 'into', parentId: overTask.id },
+      isValid: validateDropInto(overTask, allTasks),
+    };
+  }
+
+  // Fallback to AFTER
+  return {
+    indicator: { type: 'after', targetId: overTask.id, level: mouseLevel },
+    isValid: validateDrop(mouseLevel, overTask),
+  };
+};
+```
+
+#### 2. Drop Validation
+
+```typescript
+const validateDropInto = (
+  targetParent: Task,
+  allTasks: Task[]
+): boolean => {
+  // Check if target can have children
+  if (!canHaveChildren(targetParent)) {
+    return false; // Milestones cannot be parents
+  }
+
+  // Check circular reference
+  if (wouldCreateCircularHierarchy(allTasks, activeTask.id, targetParent.id)) {
+    return false;
+  }
+
+  // Check max depth
+  const newLevel = getTaskLevel(allTasks, targetParent.id) + 1;
+  if (newLevel > 3) {
+    return false; // Max 3 levels
+  }
+
+  return true;
+};
+
+const validateDrop = (
+  targetLevel: number,
+  nearTask: Task
+): boolean => {
+  // Cannot exceed max depth
+  if (targetLevel > 3) return false;
+
+  // Cannot drop at invalid level (e.g., level 2 when no level 1 parent exists)
+  if (targetLevel > 0) {
+    const hasValidParent = findParentAtLevel(nearTask, targetLevel - 1);
+    if (!hasValidParent) return false;
+  }
+
+  return true;
+};
+```
+
+#### 3. Visual Drop Indicators
+
+**File:** `src/components/TaskList/TaskTableRow.tsx` (UPDATE)
+
+```typescript
+interface TaskTableRowProps {
+  task: Task;
+  level: number;
+  hasChildren: boolean;
+  dropIndicator?: DropIndicator | null; // NEW: Drop indicator state
+  isDragging?: boolean; // NEW: Is this task being dragged
+}
+
+export function TaskTableRow({
+  task,
+  level,
+  hasChildren,
+  dropIndicator,
+  isDragging
+}: TaskTableRowProps) {
+  const showBeforeIndicator =
+    dropIndicator?.type === 'before' && dropIndicator.targetId === task.id;
+  const showAfterIndicator =
+    dropIndicator?.type === 'after' && dropIndicator.targetId === task.id;
+  const showIntoIndicator =
+    dropIndicator?.type === 'into' && dropIndicator.parentId === task.id;
+
+  // Calculate indentation for drop indicators
+  const indicatorIndent = dropIndicator?.type !== 'into'
+    ? (dropIndicator?.level ?? 0) * INDENT_SIZE
+    : (level + 1) * INDENT_SIZE;
+
+  return (
+    <>
+      {/* BEFORE indicator */}
+      {showBeforeIndicator && (
+        <div
+          className="drop-indicator drop-indicator-before"
+          style={{ paddingLeft: `${indicatorIndent}px` }}
+        >
+          <div className="h-0.5 bg-blue-500 rounded-full" />
+        </div>
+      )}
+
+      {/* Task row */}
+      <div
+        className={cn(
+          'task-table-row contents',
+          task.type === 'summary' && 'font-semibold bg-gray-50',
+          isDragging && 'opacity-40', // Dim while dragging
+          showIntoIndicator && 'bg-blue-50 ring-2 ring-blue-300' // INTO highlight
+        )}
+        role="row"
+      >
+        {/* Checkbox column */}
+        <Cell>
+          <Checkbox checked={isSelected} onChange={handleToggle} />
+        </Cell>
+
+        {/* Name column with hierarchy */}
+        <Cell>
+          <div
+            className="flex items-center gap-1"
+            style={{ paddingLeft: `${level * INDENT_SIZE}px` }}
+          >
+            {/* Expand/collapse button */}
+            {hasChildren ? (
+              <button
+                onClick={() => toggleTaskCollapsed(task.id)}
+                className="w-4 h-4 flex items-center justify-center hover:bg-gray-200 rounded text-gray-600"
+              >
+                {isExpanded ? '▼' : '▶'}
+              </button>
+            ) : (
+              <div className="w-4" />
+            )}
+
+            {/* Task type icon */}
+            <TaskTypeIcon type={task.type} />
+
+            {/* Task name */}
+            <EditableText
+              value={task.name}
+              onChange={(name) => updateTask(task.id, { name })}
+              className={cn(
+                'flex-1',
+                task.type === 'summary' && 'font-semibold'
+              )}
+            />
+          </div>
+
+          {/* INTO zone hint */}
+          {showIntoIndicator && (
+            <div className="text-xs text-blue-600 italic mt-1">
+              Drop as child
+            </div>
+          )}
+        </Cell>
+
+        {/* Other columns... */}
+      </div>
+
+      {/* AFTER indicator */}
+      {showAfterIndicator && (
+        <div
+          className="drop-indicator drop-indicator-after"
+          style={{ paddingLeft: `${indicatorIndent}px` }}
+        >
+          <div className="h-0.5 bg-blue-500 rounded-full" />
+        </div>
+      )}
+    </>
+  );
+}
+```
+
+#### 4. Enhanced handleDragEnd
+
+**File:** `src/components/TaskList/TaskTable.tsx` (UPDATE)
+
+```typescript
+const handleDragEnd = (event: DragEndEvent) => {
+  const { active, over } = event;
+
+  // Clear drop indicators
+  setDropIndicator(null);
+
+  if (!over || active.id === over.id) return;
+
+  const activeTask = tasks.find(t => t.id === active.id);
+  const overTask = tasks.find(t => t.id === over.id);
+
+  if (!activeTask || !overTask) return;
+
+  // Get final drop position
+  const dropPosition = calculateDropPosition(event, overTask, tasks);
+
+  if (!dropPosition.isValid) {
+    // Show error message
+    console.warn('Invalid drop:', dropPosition.errorMessage);
+    return;
+  }
+
+  const { indicator } = dropPosition;
+
+  switch (indicator.type) {
+    case 'into':
+      // Nest as child of target
+      moveTaskToParent(activeTask.id, indicator.parentId);
+      break;
+
+    case 'before': {
+      // Insert before target at specified level
+      const newParent = findParentForLevel(indicator.targetId, indicator.level, tasks);
+      moveTaskToParent(activeTask.id, newParent);
+
+      // Reorder to be before target
+      const targetOrder = overTask.order;
+      reorderTask(activeTask.id, targetOrder - 0.5); // Insert between
+      break;
+    }
+
+    case 'after': {
+      // Insert after target at specified level
+      const newParent = findParentForLevel(indicator.targetId, indicator.level, tasks);
+      moveTaskToParent(activeTask.id, newParent);
+
+      // Reorder to be after target
+      const targetOrder = overTask.order;
+      reorderTask(activeTask.id, targetOrder + 0.5); // Insert between
+      break;
+    }
+  }
+};
+
+const handleDragOver = (event: DragOverEvent) => {
+  if (!event.over) {
+    setDropIndicator(null);
+    return;
+  }
+
+  const overTask = tasks.find(t => t.id === event.over.id);
+  if (!overTask) return;
+
+  // Calculate and show drop position
+  const dropPosition = calculateDropPosition(event, overTask, tasks);
+  setDropIndicator(dropPosition.isValid ? dropPosition.indicator : null);
+
+  // Handle collapsed parent auto-expand
+  if (dropPosition.indicator?.type === 'into') {
+    const parent = tasks.find(t => t.id === dropPosition.indicator.parentId);
+    if (parent && parent.open === false) {
+      handleDragOverCollapsed(parent.id);
+    }
+  }
+};
+```
+
+---
+
+### CSS Styles
+
+**File:** `src/components/TaskList/TaskTable.css` (UPDATE)
+
+```css
+/* Drop indicators */
+.drop-indicator {
+  position: relative;
+  height: 4px;
+  pointer-events: none;
+  z-index: 10;
+}
+
+.drop-indicator-before {
+  margin-top: -2px;
+}
+
+.drop-indicator-after {
+  margin-bottom: -2px;
+}
+
+/* INTO zone highlight */
+.task-table-row.bg-blue-50 {
+  background-color: rgba(59, 130, 246, 0.1);
+  transition: background-color 150ms ease;
+}
+
+.task-table-row.ring-2 {
+  box-shadow: inset 0 0 0 2px rgba(59, 130, 246, 0.3);
+  transition: box-shadow 150ms ease;
+}
+
+/* Dragging state */
+.task-table-row.opacity-40 {
+  opacity: 0.4;
+  transition: opacity 150ms ease;
+}
+
+/* Ghost element while dragging */
+.dnd-ghost {
+  opacity: 0.4;
+  background-color: #f3f4f6;
+  border: 2px dashed #9ca3af;
+}
+```
+
+---
+
+### Testing Strategy for Drag & Drop
+
+#### Manual Testing Checklist
+
+**Basic Drag Operations:**
+- [ ] Drag task BEFORE another task (top 40% of row)
+- [ ] Drag task AFTER another task (bottom 40% of row)
+- [ ] Drag task INTO summary (middle 20%, indented)
+- [ ] Drag task INTO regular task with children (middle 20%, indented)
+- [ ] Drag task INTO empty task (middle 20%, indented)
+
+**Indentation Level:**
+- [ ] Drop at level 0 (mouse at 0-19px)
+- [ ] Drop at level 1 (mouse at 20-39px)
+- [ ] Drop at level 2 (mouse at 40-59px)
+- [ ] Drop at level 3 (mouse at 60-79px)
+- [ ] Try to drop at level 4 (should be prevented)
+
+**Last Child Ambiguity:**
+- [ ] Hover over last child with mouse at child level (should drop as sibling)
+- [ ] Hover over last child with mouse at parent level (should drop after parent)
+
+**Empty Parent:**
+- [ ] Hover over empty task in middle zone, indented (should show INTO)
+- [ ] Hover over empty task in middle zone, not indented (should show AFTER)
+
+**Collapsed Parent:**
+- [ ] Hover over collapsed parent for 800ms (should auto-expand)
+- [ ] Move away before 800ms (should NOT expand)
+
+**Validation:**
+- [ ] Try to drag milestone onto another task as parent (should be rejected)
+- [ ] Try to create circular hierarchy (should be rejected)
+- [ ] Try to exceed max depth (should be rejected)
+
+**Visual Feedback:**
+- [ ] Blue line appears above row (BEFORE)
+- [ ] Blue line appears below row (AFTER)
+- [ ] Blue background + ring appears (INTO)
+- [ ] Drop indicator shows correct indentation
+- [ ] Dragged task dims (opacity 40%)
+
+#### Integration Tests
+
+**File:** `tests/integration/drag-drop-hierarchy.test.ts` (NEW)
+
+```typescript
+describe('Hierarchical Drag & Drop', () => {
+  it('should drop BEFORE when hovering top 40% of row', () => {
+    // Simulate drag to top of row
+    // Verify task inserted before target
+  });
+
+  it('should drop INTO when hovering middle 20% with indentation', () => {
+    // Simulate drag to middle of row with horizontal offset
+    // Verify task becomes child of target
+  });
+
+  it('should drop AFTER when hovering bottom 40% of row', () => {
+    // Simulate drag to bottom of row
+    // Verify task inserted after target
+  });
+
+  it('should resolve last child ambiguity based on horizontal position', () => {
+    // Setup: parent with children
+    // Drag over last child with different horizontal positions
+    // Verify correct parent assignment
+  });
+
+  it('should drop INTO empty parent when indented', () => {
+    // Setup: task with no children
+    // Drag to middle + indented
+    // Verify becomes child
+  });
+
+  it('should auto-expand collapsed parent after hover delay', async () => {
+    // Setup: collapsed parent
+    // Hover for 800ms
+    // Verify expands
+  });
+
+  it('should show correct drop indicator for each zone', () => {
+    // Test visual feedback for all zones
+  });
+
+  it('should respect max depth validation', () => {
+    // Try to drop at level 4
+    // Verify rejection
+  });
+});
 ```
 
 ---
@@ -1447,24 +2104,50 @@ describe('Delete Behavior Integration', () => {
 
 ### Phase 4: Drag-and-Drop (Day 3, Morning)
 
-- [ ] **1.15.4a**: Update DnD to support nesting
-  - Detect drops on summary tasks
-  - Call `moveTaskToParent` when nesting
-  - **Test:** Manual drag testing
-  - **Commit:** `feat(dnd): add support for nesting tasks`
+- [ ] **1.15.4a**: Implement drop zone detection system
+  - Implement `calculateDropPosition` with vertical zones (BEFORE/INTO/AFTER)
+  - Implement horizontal position detection for indentation levels
+  - Add `DropIndicator` type and state management
+  - **Test:** Manual testing with console logs for zone detection
+  - **Commit:** `feat(dnd): implement drop zone detection system`
 
-- [ ] **1.15.4b**: Add validation to DnD
-  - Prevent circular hierarchy
-  - Prevent exceeding max depth
-  - Show visual feedback for invalid drops
-  - **Test:** Try invalid moves
-  - **Commit:** `feat(dnd): add hierarchy validation`
+- [ ] **1.15.4b**: Implement special case handlers
+  - Last child ambiguity resolver (horizontal position based)
+  - Empty parent detection (middle zone + indentation)
+  - Collapsed parent auto-expand (800ms hover timeout)
+  - **Test:** Manual testing for each special case
+  - **Commit:** `feat(dnd): handle special drop cases`
 
-- [ ] **1.15.4c**: Add visual drop indicators
-  - Highlight summary when hovering to nest
-  - Drop line between tasks for reordering
-  - **Test:** Visual QA
+- [ ] **1.15.4c**: Add drop validation logic
+  - Implement `validateDropInto` (circular hierarchy, max depth, canHaveChildren)
+  - Implement `validateDrop` (level validation, parent existence)
+  - Add error messages for invalid drops
+  - **Test:** Try invalid moves (circular, milestone parent, max depth)
+  - **Commit:** `feat(dnd): add comprehensive drop validation`
+
+- [ ] **1.15.4d**: Implement visual drop indicators
+  - BEFORE indicator (blue line above row, with indentation)
+  - AFTER indicator (blue line below row, with indentation)
+  - INTO indicator (blue background + ring)
+  - Ghost element with correct indentation preview
+  - Add CSS styles for all indicators
+  - **Test:** Visual QA - all three indicator types
   - **Commit:** `feat(dnd): add visual drop indicators`
+
+- [ ] **1.15.4e**: Implement handleDragEnd logic
+  - Handle 'into' drop (moveTaskToParent)
+  - Handle 'before' drop (moveTaskToParent + reorder)
+  - Handle 'after' drop (moveTaskToParent + reorder)
+  - Clear drop indicators on end
+  - **Test:** Complete drop operations for all three types
+  - **Commit:** `feat(dnd): implement drop execution logic`
+
+- [ ] **1.15.4f**: Implement handleDragOver with real-time feedback
+  - Call `calculateDropPosition` on every drag move
+  - Update drop indicator state in real-time
+  - Trigger auto-expand for collapsed parents
+  - **Test:** Smooth visual feedback during drag
+  - **Commit:** `feat(dnd): add real-time drag feedback`
 
 ### Phase 5: Polish & Edge Cases (Day 3, Afternoon)
 
