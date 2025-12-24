@@ -887,58 +887,458 @@ const [dropTarget, setDropTarget] = useState<string | null>(null);
 
 ## Delete Behavior
 
-### Delete Task
+### Overview
 
-**Regular Task:**
-- Simply delete, no special handling
+When deleting tasks with children (both `type: 'task'` and `type: 'summary'` with children), the system must handle the hierarchy correctly to prevent orphaned tasks and data inconsistency.
 
-**Summary Task:**
+**Key Principle:** Tasks can have children regardless of type (SVAR pattern), so delete behavior applies to ANY task with children, not just summary tasks.
 
-Show confirmation dialog with options:
+### Delete Task Scenarios
+
+#### 1. Regular Task Without Children
+- **Behavior:** Simply delete, no special handling
+- **Confirmation:** Basic confirmation dialog
+- **Example:** `"Delete task 'Homepage design'?"`
+
+#### 2. Task With Children (type: 'task' or 'summary')
+
+Since both regular tasks AND summary tasks can have children (SVAR pattern), both need special delete handling.
+
+**Confirmation Dialog Options:**
 
 ```
 Delete "Phase 1"?
 
-This summary has 5 child tasks and 1 subsummary.
+This task has 5 child tasks and 1 subtask with children.
 
-○ Delete summary only (move children to parent level)
-● Delete summary and all children (5 tasks, 1 subsummary)
+○ Delete task only (move children to parent level)
+● Delete task and all children (6 tasks total) - CASCADING DELETE
 
 [Cancel] [Delete]
 ```
 
-**Implementation:**
+**Visual Feedback:**
+- Show total count of affected tasks (including nested descendants)
+- Distinguish between direct children and nested descendants
+- Default to safer option (delete only, preserve children)
+
+### Cascading Delete Implementation
+
+#### Store Action: Enhanced deleteTask
+
+**File:** `src/store/slices/taskSlice.ts` (UPDATE)
+
+Add cascading delete logic to `deleteTask` action:
 
 ```typescript
-const handleDeleteTask = (taskId: string) => {
-  const task = tasks.find(t => t.id === taskId);
-  if (!task) return;
+interface TaskActions {
+  // ... existing actions ...
 
-  if (task.type === 'summary') {
-    const children = getTaskChildren(tasks, taskId);
+  // Enhanced delete with cascading support
+  deleteTask: (id: string, cascade?: boolean) => void;
+}
 
-    if (children.length > 0) {
-      // Show confirmation dialog
-      const deleteAllChildren = confirm(
-        `Delete "${task.name}" and ${children.length} children?`
-      );
+// Implementation
+deleteTask: (id, cascade = false) =>
+  set((state) => {
+    if (!cascade) {
+      // Simple delete - just remove the task
+      state.tasks = state.tasks.filter((task) => task.id !== id);
+      return;
+    }
 
-      if (deleteAllChildren) {
-        // Delete recursively
-        const descendants = getTaskDescendants(tasks, taskId);
-        descendants.forEach(child => deleteTask(child.id));
-      } else {
-        // Move children to parent level
-        children.forEach(child =>
-          moveTaskToParent(child.id, task.parent ?? null)
-        );
+    // Cascading delete - collect all descendants recursively
+    const idsToDelete = new Set<string>([id]);
+
+    // Recursively find all children of a given parent
+    const findChildren = (parentId: string) => {
+      state.tasks.forEach((task) => {
+        if (task.parent === parentId && !idsToDelete.has(task.id)) {
+          idsToDelete.add(task.id);
+          findChildren(task.id); // Recursively find grandchildren
+        }
+      });
+    };
+
+    findChildren(id);
+
+    // Remove all collected tasks
+    state.tasks = state.tasks.filter((task) => !idsToDelete.has(task.id));
+
+    // Clear selection for deleted tasks
+    state.selectedTaskIds = state.selectedTaskIds.filter(
+      (selectedId) => !idsToDelete.has(selectedId)
+    );
+  }),
+```
+
+**Alternative Implementation (Separate Action):**
+
+```typescript
+interface TaskActions {
+  // ... existing actions ...
+
+  deleteTask: (id: string) => void;
+  deleteTaskCascading: (id: string) => void;  // NEW: Cascading delete
+}
+
+// Cascading delete action
+deleteTaskCascading: (id) =>
+  set((state) => {
+    // Collect all task IDs to delete (parent + all children recursively)
+    const idsToDelete = new Set<string>([id]);
+
+    // Recursively find all children of a given parent
+    const findChildren = (parentId: string) => {
+      state.tasks.forEach((task) => {
+        if (task.parent === parentId && !idsToDelete.has(task.id)) {
+          idsToDelete.add(task.id);
+          findChildren(task.id); // Recursively find grandchildren
+        }
+      });
+    };
+
+    findChildren(id);
+
+    // Remove all collected tasks
+    state.tasks = state.tasks.filter((task) => !idsToDelete.has(task.id));
+
+    // Clear selection for deleted tasks
+    state.selectedTaskIds = state.selectedTaskIds.filter(
+      (selectedId) => !idsToDelete.has(selectedId)
+    );
+  }),
+```
+
+#### UI Component: Enhanced Delete Handler
+
+**File:** `src/components/TaskList/TaskTableRow.tsx` (UPDATE)
+
+Update delete handler to show child count and handle both delete modes:
+
+```typescript
+const handleDelete = () => {
+  const allTasks = useTaskStore.getState().tasks;
+
+  // Count all children recursively
+  const countChildren = (parentId: string): number => {
+    let count = 0;
+    allTasks.forEach((t) => {
+      if (t.parent === parentId) {
+        count += 1 + countChildren(t.id); // Count this child + its children
       }
+    });
+    return count;
+  };
+
+  const childCount = countChildren(task.id);
+
+  if (childCount > 0) {
+    // Task has children - show enhanced dialog
+    const deleteAll = window.confirm(
+      `Delete task "${task.name}" and ${childCount} child task${childCount > 1 ? 's' : ''}?\n\n` +
+      `Click OK to delete all (cascading delete).\n` +
+      `Click Cancel to keep children and only delete "${task.name}".`
+    );
+
+    if (deleteAll) {
+      // Cascading delete
+      deleteTaskCascading(task.id);
+    } else {
+      // Move children to parent's level, then delete
+      const children = allTasks.filter(t => t.parent === task.id);
+      children.forEach(child =>
+        moveTaskToParent(child.id, task.parent ?? null)
+      );
+      deleteTask(task.id);
+    }
+  } else {
+    // No children - simple confirmation
+    if (window.confirm(`Delete task "${task.name}"?`)) {
+      deleteTask(task.id);
     }
   }
-
-  deleteTask(taskId);
 };
 ```
+
+**Alternative: Modal Dialog Component (Better UX)**
+
+For better user experience, create a dedicated delete confirmation modal:
+
+**File:** `src/components/TaskList/DeleteConfirmDialog.tsx` (NEW)
+
+```typescript
+interface DeleteConfirmDialogProps {
+  task: Task;
+  childCount: number;
+  onConfirm: (cascade: boolean) => void;
+  onCancel: () => void;
+}
+
+export function DeleteConfirmDialog({
+  task,
+  childCount,
+  onConfirm,
+  onCancel
+}: DeleteConfirmDialogProps) {
+  const [deleteMode, setDeleteMode] = useState<'only' | 'cascade'>('only');
+
+  return (
+    <div className="delete-confirm-dialog">
+      <h3>Delete Task "{task.name}"?</h3>
+
+      {childCount > 0 ? (
+        <>
+          <p>This task has {childCount} child task{childCount > 1 ? 's' : ''}.</p>
+
+          <div className="delete-options">
+            <label>
+              <input
+                type="radio"
+                value="only"
+                checked={deleteMode === 'only'}
+                onChange={() => setDeleteMode('only')}
+              />
+              Delete task only (move children to parent level)
+            </label>
+
+            <label>
+              <input
+                type="radio"
+                value="cascade"
+                checked={deleteMode === 'cascade'}
+                onChange={() => setDeleteMode('cascade')}
+              />
+              Delete task and all {childCount} children (cascading delete)
+            </label>
+          </div>
+        </>
+      ) : (
+        <p>This action cannot be undone.</p>
+      )}
+
+      <div className="dialog-actions">
+        <button onClick={onCancel}>Cancel</button>
+        <button
+          onClick={() => onConfirm(deleteMode === 'cascade')}
+          className="danger"
+        >
+          Delete
+        </button>
+      </div>
+    </div>
+  );
+}
+```
+
+### Testing Strategy for Delete Behavior
+
+#### Unit Tests
+
+**File:** `tests/unit/store/taskSlice.test.ts` (UPDATE)
+
+Add comprehensive tests for cascading delete:
+
+```typescript
+describe('deleteTask - Cascading Delete', () => {
+  it('should delete parent task with one child (cascading)', () => {
+    // Setup: parent + 1 child
+    const parentId = addTask({ name: 'Parent', type: 'summary', ... });
+    addTask({ name: 'Child', parent: parentId, ... });
+
+    expect(tasks).toHaveLength(2);
+
+    // Delete with cascade
+    deleteTaskCascading(parentId);
+
+    expect(tasks).toHaveLength(0);
+  });
+
+  it('should delete parent task with multiple children (cascading)', () => {
+    // Setup: parent + 3 children
+    const parentId = addTask({ name: 'Parent', type: 'summary', ... });
+    addTask({ name: 'Child 1', parent: parentId, ... });
+    addTask({ name: 'Child 2', parent: parentId, ... });
+    addTask({ name: 'Child 3', parent: parentId, ... });
+
+    expect(tasks).toHaveLength(4);
+
+    // Delete with cascade
+    deleteTaskCascading(parentId);
+
+    expect(tasks).toHaveLength(0);
+  });
+
+  it('should delete parent with nested hierarchy (grandchildren)', () => {
+    // Setup: grandparent -> parent -> child (3 levels)
+    const grandparentId = addTask({ name: 'Grandparent', type: 'summary', ... });
+    const parentId = addTask({ name: 'Parent', parent: grandparentId, ... });
+    addTask({ name: 'Child', parent: parentId, ... });
+
+    expect(tasks).toHaveLength(3);
+
+    // Delete grandparent with cascade
+    deleteTaskCascading(grandparentId);
+
+    expect(tasks).toHaveLength(0);
+  });
+
+  it('should only delete descendants when deleting from middle of hierarchy', () => {
+    // Setup: grandparent -> parent -> child
+    const grandparentId = addTask({ name: 'Grandparent', ... });
+    const parentId = addTask({ name: 'Parent', parent: grandparentId, ... });
+    addTask({ name: 'Child', parent: parentId, ... });
+
+    expect(tasks).toHaveLength(3);
+
+    // Delete middle parent with cascade
+    deleteTaskCascading(parentId);
+
+    // Only grandparent remains
+    expect(tasks).toHaveLength(1);
+    expect(tasks[0].name).toBe('Grandparent');
+  });
+
+  it('should not affect sibling tasks when cascading delete', () => {
+    // Setup: Two separate parent hierarchies
+    const parent1Id = addTask({ name: 'Parent 1', ... });
+    addTask({ name: 'Child of Parent 1', parent: parent1Id, ... });
+
+    const parent2Id = addTask({ name: 'Parent 2', ... });
+    addTask({ name: 'Child of Parent 2', parent: parent2Id, ... });
+
+    expect(tasks).toHaveLength(4);
+
+    // Delete first parent with cascade
+    deleteTaskCascading(parent1Id);
+
+    // Only second parent hierarchy remains
+    expect(tasks).toHaveLength(2);
+    expect(tasks[0].name).toBe('Parent 2');
+    expect(tasks[1].name).toBe('Child of Parent 2');
+  });
+
+  it('should clear selection for cascading deleted tasks', () => {
+    // Setup: parent + children, all selected
+    const parentId = addTask({ name: 'Parent', ... });
+    const child1Id = addTask({ name: 'Child 1', parent: parentId, ... });
+    const child2Id = addTask({ name: 'Child 2', parent: parentId, ... });
+
+    toggleTaskSelection(parentId);
+    toggleTaskSelection(child1Id);
+    toggleTaskSelection(child2Id);
+
+    expect(selectedTaskIds).toHaveLength(3);
+
+    // Delete parent with cascade
+    deleteTaskCascading(parentId);
+
+    // Selection should be cleared
+    expect(selectedTaskIds).toHaveLength(0);
+  });
+
+  it('should work with regular tasks that have children (SVAR pattern)', () => {
+    // Setup: Regular task (type='task') with children
+    const taskId = addTask({
+      name: 'Task with fixed deadline',
+      type: 'task',  // NOT summary!
+      ...
+    });
+    addTask({ name: 'Subtask 1', parent: taskId, ... });
+    addTask({ name: 'Subtask 2', parent: taskId, ... });
+
+    expect(tasks).toHaveLength(3);
+
+    // Should still cascade delete (type doesn't matter)
+    deleteTaskCascading(taskId);
+
+    expect(tasks).toHaveLength(0);
+  });
+});
+```
+
+#### Integration Tests
+
+**File:** `tests/integration/delete-behavior.test.ts` (NEW)
+
+Test full delete flow with UI interaction:
+
+```typescript
+describe('Delete Behavior Integration', () => {
+  it('should show child count in confirmation for tasks with children', () => {
+    // Render task table with hierarchy
+    // Click delete on parent task
+    // Verify confirmation message includes child count
+    // Verify both delete options are shown
+  });
+
+  it('should perform cascading delete when user confirms', () => {
+    // Setup hierarchy
+    // Click delete on parent
+    // Select "Delete all" option
+    // Confirm
+    // Verify all tasks removed
+  });
+
+  it('should preserve children when user chooses delete-only', () => {
+    // Setup hierarchy
+    // Click delete on parent
+    // Select "Delete only" option
+    // Confirm
+    // Verify children moved to parent level
+    // Verify parent deleted
+  });
+});
+```
+
+### Edge Cases and Validation
+
+#### Edge Cases to Handle
+
+1. **Circular Reference Prevention:**
+   - Should be impossible due to existing hierarchy validation
+   - But add defensive check in cascading delete
+
+2. **Empty Parent:**
+   - Task with `parent` field but parent doesn't exist
+   - Should already be handled by orphan cleanup
+   - Cascading delete should skip non-existent references
+
+3. **Concurrent Modifications:**
+   - User deletes parent while child is being edited
+   - Use optimistic updates with error recovery
+
+4. **Performance:**
+   - Large hierarchies (100+ descendants)
+   - Test delete performance with deep nesting
+   - Consider batch operations for very large deletes
+
+#### Validation Rules
+
+| Scenario | Validation | Expected Behavior |
+|----------|------------|-------------------|
+| Delete task without children | Basic confirmation | Simple delete |
+| Delete task with children | Enhanced confirmation | Show child count, offer options |
+| Delete with 100+ descendants | Performance warning | "This will delete 150 tasks. Continue?" |
+| Delete while child is selected | Clear selection | Remove deleted IDs from selection |
+| Delete during drag operation | Cancel drag | Abort drag, then delete |
+
+### Performance Considerations
+
+**Complexity Analysis:**
+- `countChildren`: O(n) where n = total tasks
+- `findChildren` (recursive): O(n × d) where d = max depth (3)
+- Overall delete operation: O(n) for reasonable hierarchies
+
+**Optimizations:**
+- Cache child counts if hierarchy changes infrequently
+- Use Set for O(1) lookup of IDs to delete
+- Batch state updates to minimize re-renders
+
+**Performance Targets:**
+- < 10ms for deleting hierarchy with 10 tasks
+- < 50ms for deleting hierarchy with 100 tasks
+- < 200ms for deleting hierarchy with 500 tasks
 
 ---
 
