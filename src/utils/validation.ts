@@ -146,6 +146,7 @@ export function validateProgress(progress: number): ValidationResult {
  * - endDate >= startDate
  * - Valid progress (0-100)
  * - Valid color (hex code)
+ * - Type-specific validation (summary, milestone, task)
  *
  * @param task - Partial task object to validate
  * @returns Validation result with error message if invalid
@@ -203,5 +204,33 @@ export function validateTask(task: Partial<Task>): ValidationResult {
     }
   }
 
+  // Type-specific validation
+  if (task.type === 'milestone') {
+    // Milestones must have duration 0
+    if (task.duration !== undefined && task.duration !== 0) {
+      return {
+        valid: false,
+        error: 'Milestone tasks must have duration 0',
+      };
+    }
+  }
+
   return { valid: true };
+}
+
+/**
+ * Check if a task type can have children.
+ * Only milestones cannot be parents.
+ *
+ * Based on SVAR pattern:
+ * - Tasks CAN have children (dates independent of children)
+ * - Summaries CAN have children (dates calculated from children)
+ * - Milestones CANNOT have children
+ */
+export function canHaveChildren(task: Task): boolean {
+  // Milestones cannot be parents
+  if (task.type === 'milestone') return false;
+
+  // Tasks and summaries can be parents
+  return true;
 }

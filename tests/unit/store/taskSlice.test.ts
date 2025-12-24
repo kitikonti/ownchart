@@ -10,7 +10,7 @@ describe('Task Store - CRUD Operations', () => {
 
   describe('addTask', () => {
     it('should add a new task with generated UUID', () => {
-      const { addTask, tasks } = useTaskStore.getState();
+      const { addTask } = useTaskStore.getState();
 
       const taskData: Omit<Task, 'id'> = {
         name: 'Test Task',

@@ -1,8 +1,10 @@
 /**
  * TaskTableRow component.
  * Renders a task as a spreadsheet row with individual cells.
+ * Supports hierarchy with SVAR-style indentation.
  */
 
+import { useMemo } from 'react';
 import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import type { Task } from '../../types/chart.types';
@@ -11,14 +13,27 @@ import { Cell } from './Cell';
 import { ColorCellEditor } from './CellEditors/ColorCellEditor';
 import { TASK_COLUMNS } from '../../config/tableColumns';
 import { useCellNavigation } from '../../hooks/useCellNavigation';
+import { TaskTypeIcon } from './TaskTypeIcon';
+import { calculateSummaryDates } from '../../utils/hierarchy';
+
+const INDENT_SIZE = 20; // pixels per level
 
 interface TaskTableRowProps {
   task: Task;
+  level?: number; // Nesting level (0 = root)
+  hasChildren?: boolean; // Whether task has children
 }
 
-export function TaskTableRow({ task }: TaskTableRowProps): JSX.Element {
+export function TaskTableRow({
+  task,
+  level = 0,
+  hasChildren = false,
+}: TaskTableRowProps): JSX.Element {
+  const tasks = useTaskStore((state) => state.tasks);
   const deleteTask = useTaskStore((state) => state.deleteTask);
   const updateTask = useTaskStore((state) => state.updateTask);
+  const moveTaskToParent = useTaskStore((state) => state.moveTaskToParent);
+  const toggleTaskCollapsed = useTaskStore((state) => state.toggleTaskCollapsed);
   const columnWidths = useTaskStore((state) => state.columnWidths);
   const selectedTaskIds = useTaskStore((state) => state.selectedTaskIds);
   const lastSelectedTaskId = useTaskStore((state) => state.lastSelectedTaskId);
@@ -27,6 +42,19 @@ export function TaskTableRow({ task }: TaskTableRowProps): JSX.Element {
   const { isCellEditing } = useCellNavigation();
 
   const isSelected = selectedTaskIds.includes(task.id);
+
+  // Calculate summary dates if needed
+  const displayTask = useMemo(() => {
+    if (task.type === 'summary') {
+      const summaryDates = calculateSummaryDates(tasks, task.id);
+      if (summaryDates) {
+        return { ...task, ...summaryDates };
+      }
+    }
+    return task;
+  }, [task, tasks]);
+
+  const isExpanded = task.open ?? true;
 
   const {
     attributes,
@@ -51,8 +79,41 @@ export function TaskTableRow({ task }: TaskTableRowProps): JSX.Element {
   };
 
   const handleDelete = () => {
-    if (window.confirm(`Delete task "${task.name}"?`)) {
-      deleteTask(task.id);
+    // Count all children recursively
+    const countChildren = (parentId: string): number => {
+      let count = 0;
+      tasks.forEach((t) => {
+        if (t.parent === parentId) {
+          count += 1 + countChildren(t.id); // Count this child + its children
+        }
+      });
+      return count;
+    };
+
+    const childCount = countChildren(task.id);
+
+    if (childCount > 0) {
+      // Task has children - show enhanced dialog
+      const deleteAll = window.confirm(
+        `Delete task "${task.name}" and ${childCount} child task${childCount > 1 ? 's' : ''}?\n\n` +
+          `Click OK to delete all (cascading delete).\n` +
+          `Click Cancel to keep children and only delete "${task.name}".`
+      );
+
+      if (deleteAll) {
+        // Cascading delete
+        deleteTask(task.id, true);
+      } else {
+        // Move children to parent's level, then delete
+        const children = tasks.filter((t) => t.parent === task.id);
+        children.forEach((child) => moveTaskToParent(child.id, task.parent ?? null));
+        deleteTask(task.id, false);
+      }
+    } else {
+      // No children - simple confirmation
+      if (window.confirm(`Delete task "${task.name}"?`)) {
+        deleteTask(task.id, false);
+      }
     }
   };
 
@@ -60,7 +121,9 @@ export function TaskTableRow({ task }: TaskTableRowProps): JSX.Element {
     <div
       ref={setNodeRef}
       style={style}
-      className={`task-table-row col-span-full grid ${isSelected ? 'bg-blue-50' : ''}`}
+      className={`task-table-row col-span-full grid ${
+        isSelected ? 'bg-blue-50' : task.type === 'summary' ? 'bg-gray-50' : ''
+      }`}
       role="row"
     >
       {/* Drag Handle Cell */}
@@ -100,18 +163,73 @@ export function TaskTableRow({ task }: TaskTableRowProps): JSX.Element {
       {TASK_COLUMNS.filter((col) => col.field).map((column) => {
         const field = column.field!;
 
+        // Special handling for name field with hierarchy
+        if (field === 'name') {
+          const isEditing = isCellEditing(task.id, field);
+
+          // In edit mode: no custom children, let Cell handle everything
+          if (isEditing) {
+            return (
+              <Cell key={field} taskId={task.id} task={displayTask} field={field} column={column} />
+            );
+          }
+
+          // In view mode: custom children with hierarchy elements
+          return (
+            <Cell key={field} taskId={task.id} task={displayTask} field={field} column={column}>
+              <div className="flex items-center gap-1" style={{ paddingLeft: `${level * INDENT_SIZE}px` }}>
+                {/* Expand/collapse button for any task with children */}
+                {hasChildren ? (
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      toggleTaskCollapsed(task.id);
+                    }}
+                    className="w-4 h-4 flex items-center justify-center hover:bg-gray-200 rounded text-gray-600 flex-shrink-0"
+                    aria-label={isExpanded ? 'Collapse' : 'Expand'}
+                  >
+                    {isExpanded ? '▼' : '▶'}
+                  </button>
+                ) : (
+                  <div className="w-4 flex-shrink-0" />
+                )}
+
+                {/* Task type icon */}
+                <TaskTypeIcon type={task.type} />
+
+                {/* Task name display */}
+                <span className={`flex-1 ${task.type === 'summary' ? 'font-semibold' : ''}`}>
+                  {task.name}
+                </span>
+              </div>
+            </Cell>
+          );
+        }
+
+        // Special handling for dates in summary tasks (read-only)
+        if ((field === 'startDate' || field === 'endDate') && task.type === 'summary') {
+          return (
+            <Cell key={field} taskId={task.id} task={displayTask} field={field} column={column}>
+              <span className="text-gray-500 italic">{displayTask[field]}</span>
+            </Cell>
+          );
+        }
+
+        // Special handling for duration in summary tasks (read-only)
+        if (field === 'duration' && task.type === 'summary') {
+          return (
+            <Cell key={field} taskId={task.id} task={displayTask} field={field} column={column}>
+              <span className="text-gray-500 italic">{displayTask.duration} days</span>
+            </Cell>
+          );
+        }
+
         // Special handling for color field with color picker
         if (field === 'color') {
           const isEditing = isCellEditing(task.id, field);
 
           return (
-            <Cell
-              key={field}
-              taskId={task.id}
-              task={task}
-              field={field}
-              column={column}
-            >
+            <Cell key={field} taskId={task.id} task={task} field={field} column={column}>
               {isEditing ? (
                 <ColorCellEditor
                   value={task.color}
@@ -129,13 +247,7 @@ export function TaskTableRow({ task }: TaskTableRowProps): JSX.Element {
 
         // Default cell rendering
         return (
-          <Cell
-            key={field}
-            taskId={task.id}
-            task={task}
-            field={field}
-            column={column}
-          />
+          <Cell key={field} taskId={task.id} task={task} field={field} column={column} />
         );
       })}
 

@@ -6,6 +6,11 @@
 import { create } from 'zustand';
 import { immer } from 'zustand/middleware/immer';
 import type { Task } from '../../types/chart.types';
+import {
+  wouldCreateCircularHierarchy,
+  getTaskLevel,
+} from '../../utils/hierarchy';
+import { canHaveChildren } from '../../utils/validation';
 
 /**
  * Editable field types for cell-based editing.
@@ -42,7 +47,7 @@ interface TaskState {
 interface TaskActions {
   addTask: (taskData: Omit<Task, 'id'>) => void;
   updateTask: (id: string, updates: Partial<Task>) => void;
-  deleteTask: (id: string) => void;
+  deleteTask: (id: string, cascade?: boolean) => void;
   reorderTasks: (fromIndex: number, toIndex: number) => void;
 
   // Multi-selection actions
@@ -57,6 +62,19 @@ interface TaskActions {
   startCellEdit: () => void;
   stopCellEdit: () => void;
   setColumnWidth: (columnId: string, width: number) => void;
+
+  // Hierarchy actions
+  moveTaskToParent: (taskId: string, newParentId: string | null) => void;
+  toggleTaskCollapsed: (taskId: string) => void;
+  expandTask: (taskId: string) => void;
+  collapseTask: (taskId: string) => void;
+  expandAll: () => void;
+  collapseAll: () => void;
+
+  // Summary task creation
+  createSummaryTask: (data: Omit<Task, 'id' | 'type'>) => string;
+  convertToSummary: (taskId: string) => void;
+  convertToTask: (taskId: string) => void;
 }
 
 /**
@@ -106,9 +124,38 @@ export const useTaskStore = create<TaskStore>()(
         }
       }),
 
-    deleteTask: (id) =>
+    deleteTask: (id, cascade = false) =>
       set((state) => {
-        state.tasks = state.tasks.filter((task) => task.id !== id);
+        if (!cascade) {
+          // Simple delete - just remove the task
+          state.tasks = state.tasks.filter((task) => task.id !== id);
+          // Clear selection for deleted task
+          state.selectedTaskIds = state.selectedTaskIds.filter((selectedId) => selectedId !== id);
+          return;
+        }
+
+        // Cascading delete - collect all descendants recursively
+        const idsToDelete = new Set<string>([id]);
+
+        // Recursively find all children of a given parent
+        const findChildren = (parentId: string) => {
+          state.tasks.forEach((task) => {
+            if (task.parent === parentId && !idsToDelete.has(task.id)) {
+              idsToDelete.add(task.id);
+              findChildren(task.id); // Recursively find grandchildren
+            }
+          });
+        };
+
+        findChildren(id);
+
+        // Remove all collected tasks
+        state.tasks = state.tasks.filter((task) => !idsToDelete.has(task.id));
+
+        // Clear selection for deleted tasks
+        state.selectedTaskIds = state.selectedTaskIds.filter(
+          (selectedId) => !idsToDelete.has(selectedId)
+        );
       }),
 
     reorderTasks: (fromIndex, toIndex) =>
@@ -230,6 +277,138 @@ export const useTaskStore = create<TaskStore>()(
     setColumnWidth: (columnId, width) =>
       set((state) => {
         state.columnWidths[columnId] = width;
+      }),
+
+    // Hierarchy actions
+    moveTaskToParent: (taskId, newParentId) =>
+      set((state) => {
+        const task = state.tasks.find((t) => t.id === taskId);
+        if (!task) return;
+
+        // Validate: prevent circular hierarchy
+        if (newParentId && wouldCreateCircularHierarchy(state.tasks, taskId, newParentId)) {
+          console.error('Cannot move task: would create circular hierarchy');
+          return;
+        }
+
+        // Validate: parent must be able to have children (milestones cannot be parents)
+        if (newParentId) {
+          const newParent = state.tasks.find((t) => t.id === newParentId);
+          if (newParent && !canHaveChildren(newParent)) {
+            console.error('Cannot move task: milestones cannot be parents');
+            return;
+          }
+        }
+
+        // Validate: max depth 3 levels
+        if (newParentId) {
+          const newLevel = getTaskLevel(state.tasks, newParentId) + 1;
+          if (newLevel > 3) {
+            console.error('Cannot move task: maximum nesting depth is 3 levels');
+            return;
+          }
+        }
+
+        task.parent = newParentId ?? undefined;
+      }),
+
+    toggleTaskCollapsed: (taskId) =>
+      set((state) => {
+        const task = state.tasks.find((t) => t.id === taskId);
+        if (!task) return;
+
+        // Any task with children can be collapsed (task or summary)
+        const hasChildren = state.tasks.some((t) => t.parent === taskId);
+        if (!hasChildren) return;
+
+        task.open = !(task.open ?? true);
+      }),
+
+    expandTask: (taskId) =>
+      set((state) => {
+        const task = state.tasks.find((t) => t.id === taskId);
+        if (!task) return;
+
+        const hasChildren = state.tasks.some((t) => t.parent === taskId);
+        if (hasChildren) {
+          task.open = true;
+        }
+      }),
+
+    collapseTask: (taskId) =>
+      set((state) => {
+        const task = state.tasks.find((t) => t.id === taskId);
+        if (!task) return;
+
+        const hasChildren = state.tasks.some((t) => t.parent === taskId);
+        if (hasChildren) {
+          task.open = false;
+        }
+      }),
+
+    expandAll: () =>
+      set((state) => {
+        state.tasks.forEach((task) => {
+          const hasChildren = state.tasks.some((t) => t.parent === task.id);
+          if (hasChildren) {
+            task.open = true;
+          }
+        });
+      }),
+
+    collapseAll: () =>
+      set((state) => {
+        state.tasks.forEach((task) => {
+          const hasChildren = state.tasks.some((t) => t.parent === task.id);
+          if (hasChildren) {
+            task.open = false;
+          }
+        });
+      }),
+
+    // Summary task creation
+    createSummaryTask: (data) => {
+      let newId = '';
+      set((state) => {
+        const newTask: Task = {
+          ...data,
+          id: crypto.randomUUID(),
+          type: 'summary',
+          open: true, // Expanded by default
+        };
+        newId = newTask.id;
+        state.tasks.push(newTask);
+      });
+      return newId;
+    },
+
+    convertToSummary: (taskId) =>
+      set((state) => {
+        const task = state.tasks.find((t) => t.id === taskId);
+        if (!task) return;
+
+        task.type = 'summary';
+        task.open = true;
+        // Keep existing dates as fallback until children are added
+      }),
+
+    convertToTask: (taskId) =>
+      set((state) => {
+        const task = state.tasks.find((t) => t.id === taskId);
+        if (!task) return;
+
+        // Tasks CAN have children - just switch the date calculation mode
+        // Children's dates will no longer affect this task's dates
+        task.type = 'task';
+
+        // Keep 'open' state if has children (for expand/collapse)
+        const hasChildren = state.tasks.some((t) => t.parent === taskId);
+        if (!hasChildren) {
+          task.open = undefined; // Not needed if no children
+        }
+
+        // User notification: Dates are now manual
+        console.info('Task dates are now manual. Children dates do not affect this task.');
       }),
   }))
 );

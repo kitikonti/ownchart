@@ -23,16 +23,26 @@ import { useTaskStore } from '../../store/slices/taskSlice';
 import { TaskTableRow } from './TaskTableRow';
 import { TASK_COLUMNS } from '../../config/tableColumns';
 import { ColumnResizer } from './ColumnResizer';
+import { buildFlattenedTaskList } from '../../utils/hierarchy';
 
 export function TaskTable(): JSX.Element {
   const tasks = useTaskStore((state) => state.tasks);
   const addTask = useTaskStore((state) => state.addTask);
+  const createSummaryTask = useTaskStore((state) => state.createSummaryTask);
   const reorderTasks = useTaskStore((state) => state.reorderTasks);
   const columnWidths = useTaskStore((state) => state.columnWidths);
   const setColumnWidth = useTaskStore((state) => state.setColumnWidth);
   const selectedTaskIds = useTaskStore((state) => state.selectedTaskIds);
   const selectAllTasks = useTaskStore((state) => state.selectAllTasks);
   const clearSelection = useTaskStore((state) => state.clearSelection);
+
+  // Build flattened list respecting collapsed state
+  const flattenedTasks = useMemo(() => {
+    const collapsedIds = new Set(
+      tasks.filter((t) => t.open === false).map((t) => t.id)
+    );
+    return buildFlattenedTaskList(tasks, collapsedIds);
+  }, [tasks]);
 
   const allSelected = tasks.length > 0 && tasks.every((task) => selectedTaskIds.includes(task.id));
   const someSelected = tasks.some((task) => selectedTaskIds.includes(task.id)) && !allSelected;
@@ -75,6 +85,29 @@ export function TaskTable(): JSX.Element {
       color: '#3b82f6',
       order: tasks.length,
       type: 'task', // Default task type
+      parent: undefined, // Root level task
+      metadata: {},
+    });
+  };
+
+  const handleAddSummary = () => {
+    const today = new Date();
+    const nextWeek = new Date(today);
+    nextWeek.setDate(today.getDate() + 7);
+
+    const formatDate = (date: Date): string => {
+      return date.toISOString().split('T')[0];
+    };
+
+    createSummaryTask({
+      name: 'New Phase',
+      startDate: formatDate(today),
+      endDate: formatDate(nextWeek),
+      duration: 7,
+      progress: 0,
+      color: '#3b82f6',
+      order: tasks.length,
+      parent: undefined, // Root level task
       metadata: {},
     });
   };
@@ -167,13 +200,22 @@ export function TaskTable(): JSX.Element {
       {/* Header */}
       <div className="task-table-toolbar flex items-center justify-between p-4 border-b border-gray-200">
         <h2 className="text-lg font-semibold text-gray-900">Tasks</h2>
-        <button
-          onClick={handleAddTask}
-          className="px-3 py-1.5 bg-blue-600 text-white text-sm font-medium rounded hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
-          aria-label="Add new task"
-        >
-          + Add Task
-        </button>
+        <div className="flex gap-2">
+          <button
+            onClick={handleAddTask}
+            className="px-3 py-1.5 bg-blue-600 text-white text-sm font-medium rounded hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
+            aria-label="Add new task"
+          >
+            + Add Task
+          </button>
+          <button
+            onClick={handleAddSummary}
+            className="px-3 py-1.5 bg-purple-600 text-white text-sm font-medium rounded hover:bg-purple-700 focus:outline-none focus:ring-2 focus:ring-purple-500"
+            aria-label="Add new summary"
+          >
+            + Add Summary
+          </button>
+        </div>
       </div>
 
       {/* Table Content */}
@@ -195,7 +237,7 @@ export function TaskTable(): JSX.Element {
             </svg>
             <p className="text-sm">No tasks yet</p>
             <p className="text-xs text-gray-400 mt-1">
-              Click "Add Task" to create your first task
+              Click &quot;Add Task&quot; to create your first task
             </p>
           </div>
         ) : (
@@ -256,11 +298,16 @@ export function TaskTable(): JSX.Element {
               onDragEnd={handleDragEnd}
             >
               <SortableContext
-                items={tasks.map((task) => task.id)}
+                items={flattenedTasks.map(({ task }) => task.id)}
                 strategy={verticalListSortingStrategy}
               >
-                {tasks.map((task) => (
-                  <TaskTableRow key={task.id} task={task} />
+                {flattenedTasks.map(({ task, level, hasChildren }) => (
+                  <TaskTableRow
+                    key={task.id}
+                    task={task}
+                    level={level}
+                    hasChildren={hasChildren}
+                  />
                 ))}
               </SortableContext>
             </DndContext>
