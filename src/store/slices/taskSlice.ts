@@ -9,6 +9,7 @@ import type { Task } from '../../types/chart.types';
 import {
   wouldCreateCircularHierarchy,
   getTaskLevel,
+  buildFlattenedTaskList,
 } from '../../utils/hierarchy';
 import { canHaveChildren } from '../../utils/validation';
 
@@ -70,6 +71,10 @@ interface TaskActions {
   collapseTask: (taskId: string) => void;
   expandAll: () => void;
   collapseAll: () => void;
+  indentSelectedTasks: () => void;
+  outdentSelectedTasks: () => void;
+  canIndentSelection: () => boolean;
+  canOutdentSelection: () => boolean;
 
   // Summary task creation
   createSummaryTask: (data: Omit<Task, 'id' | 'type'>) => string;
@@ -91,7 +96,7 @@ type TaskStore = TaskState & TaskActions;
 const EDITABLE_FIELDS: EditableField[] = ['name', 'startDate', 'endDate', 'duration', 'progress', 'color'];
 
 export const useTaskStore = create<TaskStore>()(
-  immer((set) => ({
+  immer((set, get) => ({
     // State
     tasks: [] as Task[],
     selectedTaskIds: [] as string[],
@@ -410,5 +415,112 @@ export const useTaskStore = create<TaskStore>()(
         // User notification: Dates are now manual
         console.info('Task dates are now manual. Children dates do not affect this task.');
       }),
+
+    // Indent/Outdent actions
+    indentSelectedTasks: () =>
+      set((state) => {
+        const { tasks, selectedTaskIds } = state;
+        if (selectedTaskIds.length === 0) return;
+
+        const flatList = buildFlattenedTaskList(tasks, new Set<string>());
+
+        // Sort selection by display order (top to bottom)
+        const sortedIds = [...selectedTaskIds].sort((a, b) => {
+          const indexA = flatList.findIndex((t) => t.task.id === a);
+          const indexB = flatList.findIndex((t) => t.task.id === b);
+          return indexA - indexB;
+        });
+
+        sortedIds.forEach((taskId) => {
+          const index = flatList.findIndex((t) => t.task.id === taskId);
+          if (index === -1) return;
+
+          const level = flatList[index].level;
+
+          // Find previous sibling (same level)
+          let newParentId: string | null = null;
+          for (let i = index - 1; i >= 0; i--) {
+            if (flatList[i].level === level) {
+              newParentId = flatList[i].task.id;
+              break;
+            }
+            if (flatList[i].level < level) break; // No sibling found
+          }
+
+          if (!newParentId) return;
+
+          const newParent = tasks.find((t) => t.id === newParentId);
+          if (!newParent) return;
+
+          // Validation
+          if (
+            canHaveChildren(newParent) &&
+            level < 2 && // Max 3 levels (0, 1, 2)
+            !wouldCreateCircularHierarchy(tasks, newParentId, taskId)
+          ) {
+            const task = state.tasks.find((t) => t.id === taskId);
+            if (task) {
+              task.parent = newParentId;
+
+              // Auto-expand parent if collapsed
+              const parent = state.tasks.find((t) => t.id === newParentId);
+              if (parent && parent.open === false) {
+                parent.open = true;
+              }
+            }
+          }
+        });
+      }),
+
+    outdentSelectedTasks: () =>
+      set((state) => {
+        const { selectedTaskIds } = state;
+        if (selectedTaskIds.length === 0) return;
+
+        selectedTaskIds.forEach((taskId) => {
+          const task = state.tasks.find((t) => t.id === taskId);
+          if (!task?.parent) return; // Already on root level
+
+          const parent = state.tasks.find((t) => t.id === task.parent);
+          const grandParent = parent?.parent;
+
+          // Move task to parent's level
+          task.parent = grandParent || undefined;
+        });
+      }),
+
+    canIndentSelection: (): boolean => {
+      const { tasks, selectedTaskIds } = get();
+      if (selectedTaskIds.length === 0) return false;
+
+      const flatList = buildFlattenedTaskList(tasks, new Set<string>());
+
+      return selectedTaskIds.some((taskId) => {
+        const index = flatList.findIndex((t) => t.task.id === taskId);
+        if (index === -1) return false;
+
+        const level = flatList[index].level;
+
+        // Check if there's a previous sibling
+        for (let i = index - 1; i >= 0; i--) {
+          if (flatList[i].level === level) {
+            const potentialParent = flatList[i].task;
+            return canHaveChildren(potentialParent) && level < 2;
+          }
+          if (flatList[i].level < level) break;
+        }
+        return false;
+      });
+    },
+
+    canOutdentSelection: (): boolean => {
+      const { tasks, selectedTaskIds } = get();
+      if (selectedTaskIds.length === 0) return false;
+
+      return selectedTaskIds.some((taskId) => {
+        const task = tasks.find((t) => t.id === taskId);
+        return task?.parent !== undefined && task?.parent !== null;
+      });
+    },
   }))
 );

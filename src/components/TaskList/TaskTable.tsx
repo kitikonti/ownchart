@@ -3,7 +3,7 @@
  * Excel-like spreadsheet table for task management.
  */
 
-import { useMemo } from 'react';
+import { useMemo, useEffect } from 'react';
 import {
   DndContext,
   closestCenter,
@@ -24,6 +24,7 @@ import { TaskTableRow } from './TaskTableRow';
 import { TASK_COLUMNS } from '../../config/tableColumns';
 import { ColumnResizer } from './ColumnResizer';
 import { buildFlattenedTaskList } from '../../utils/hierarchy';
+import { HierarchyButtons } from './HierarchyButtons';
 
 export function TaskTable(): JSX.Element {
   const tasks = useTaskStore((state) => state.tasks);
@@ -35,6 +36,10 @@ export function TaskTable(): JSX.Element {
   const selectedTaskIds = useTaskStore((state) => state.selectedTaskIds);
   const selectAllTasks = useTaskStore((state) => state.selectAllTasks);
   const clearSelection = useTaskStore((state) => state.clearSelection);
+  const indentSelectedTasks = useTaskStore((state) => state.indentSelectedTasks);
+  const outdentSelectedTasks = useTaskStore((state) => state.outdentSelectedTasks);
+  const canIndent = useTaskStore((state) => state.canIndentSelection());
+  const canOutdent = useTaskStore((state) => state.canOutdentSelection());
 
   // Build flattened list respecting collapsed state
   const flattenedTasks = useMemo(() => {
@@ -46,6 +51,29 @@ export function TaskTable(): JSX.Element {
 
   const allSelected = tasks.length > 0 && tasks.every((task) => selectedTaskIds.includes(task.id));
   const someSelected = tasks.some((task) => selectedTaskIds.includes(task.id)) && !allSelected;
+
+  // Keyboard shortcuts for indent/outdent
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      // Only handle when Ctrl (or Cmd on Mac) is pressed
+      if (!(e.ctrlKey || e.metaKey)) return;
+
+      // Indent: Ctrl+]
+      if (e.key === ']' && canIndent) {
+        e.preventDefault();
+        indentSelectedTasks();
+      }
+
+      // Outdent: Ctrl+[
+      if (e.key === '[' && canOutdent) {
+        e.preventDefault();
+        outdentSelectedTasks();
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [canIndent, canOutdent, indentSelectedTasks, outdentSelectedTasks]);
 
   const sensors = useSensors(
     useSensor(PointerSensor),
@@ -200,7 +228,8 @@ export function TaskTable(): JSX.Element {
       {/* Header */}
       <div className="task-table-toolbar flex items-center justify-between p-4 border-b border-gray-200">
         <h2 className="text-lg font-semibold text-gray-900">Tasks</h2>
-        <div className="flex gap-2">
+        <div className="flex items-center gap-2">
+          <HierarchyButtons />
           <button
             onClick={handleAddTask}
             className="px-3 py-1.5 bg-blue-600 text-white text-sm font-medium rounded hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
