@@ -199,6 +199,614 @@ interface ChartState {
 
 ---
 
+## 📦 Detailed Package Implementation
+
+> **Note:** This section contains the complete implementation plan organized as testable packages. Each package has detailed task breakdowns, code examples, and test checkpoints. The original phase-based breakdown is preserved at the end for reference.
+
+---
+
+## 📦 Package 1: Core Foundation (2 days)
+
+**Goal:** Get basic timeline rendering working. You should see tasks as colored bars on a timeline.
+
+### Tasks in This Package
+
+#### 1.1.1: Date Utilities & Timeline Math
+**File:** `src/utils/dateUtils.ts`
+**Duration:** 0.5 days
+
+**Implementation:**
+```typescript
+// Core date functions using date-fns
+export function calculateDuration(startDate: string, endDate: string): number;
+export function addDays(dateStr: string, days: number): string;
+export function formatDate(dateStr: string, format: string): string;
+export function getDateRange(tasks: Task[]): { min: string; max: string };
+export function isWeekend(dateStr: string): boolean;
+export function getBusinessDays(startDate: string, endDate: string): number;
+```
+
+**Tests:** 30 unit tests (edge cases, leap years, boundaries)
+
+**From Reviews:**
+- ✅ Use `differenceInDays()` directly for pixel calculations (Data Viz)
+- ✅ Add DST transition tests (QA)
+- ✅ Boundary testing for 100-year ranges (QA)
+
+---
+
+#### 1.1.2: Timeline Scale System
+**File:** `src/utils/timelineUtils.ts`
+**Duration:** 0.75 days
+
+**Implementation:**
+```typescript
+export interface TimelineScale {
+  minDate: string;
+  maxDate: string;
+  pixelsPerDay: number;
+  totalWidth: number;
+  totalDays: number;
+  zoom: number;
+  scales: ScaleConfig[];  // Multi-level (Year→Quarter, Month→Day)
+}
+
+export function getTimelineScale(
+  minDate: string,
+  maxDate: string,
+  containerWidth: number,
+  zoom: number
+): TimelineScale;
+
+export function dateToPixel(dateStr: string, scale: TimelineScale): number;
+export function pixelToDate(x: number, scale: TimelineScale): string;
+export function getTaskBarGeometry(task: Task, scale: TimelineScale, rowIndex: number): TaskBarGeometry;
+```
+
+**From Reviews:**
+- ✅ Smart pixel-to-date rounding (round instead of floor) (Data Viz)
+- ✅ Reversibility tests: date → pixel → date (Data Viz, QA)
+- ✅ Adaptive scale config based on zoom (SVAR pattern)
+
+**Tests:** 33 unit tests + reversibility validation
+
+---
+
+#### 1.1.3: Chart State Management
+**File:** `src/store/slices/chartSlice.ts`
+**Duration:** 0.5 days
+
+**Implementation:**
+```typescript
+import { create } from 'zustand';
+import { immer } from 'zustand/middleware/immer';
+
+interface ChartState {
+  // Scale management (CRITICAL from Architect review)
+  scale: TimelineScale | null;
+  containerWidth: number;
+
+  // View state
+  zoom: number;
+  scrollX: number;
+  scrollY: number;
+  showWeekends: boolean;
+  showTodayMarker: boolean;
+}
+
+interface ChartActions {
+  // Centralized scale lifecycle (Architect recommendation)
+  updateScale: (tasks: Task[]) => void;
+  setContainerWidth: (width: number) => void;
+
+  // View actions
+  setZoom: (zoom: number) => void;
+  setScroll: (x: number, y: number) => void;
+  resetView: () => void;
+}
+
+export const useChartStore = create<ChartState & ChartActions>()(
+  immer((set, get) => ({
+    // Implementation with proper scale lifecycle
+  }))
+);
+```
+
+**From Reviews:**
+- 🔴 **Resolve state duplication** (Architect, Frontend): NO pan/zoom in both chartSlice AND usePanZoom
+- ✅ Scale calculation centralized in chartSlice (Architect)
+- ✅ Automatic scale recalculation on container resize (Architect)
+
+**Tests:** State transitions, scale invalidation, concurrent updates
+
+---
+
+#### 1.1.4: Basic SVG Chart Container
+**File:** `src/components/GanttChart/ChartCanvas.tsx`
+**Duration:** 0.25 days
+
+**Implementation:**
+```typescript
+export function ChartCanvas({ tasks, selectedTaskIds }: ChartCanvasProps) {
+  const { containerWidth, scale, updateScale } = useChartStore();
+  const containerRef = useRef<HTMLDivElement>(null);
+
+  // ResizeObserver with debouncing (Frontend review)
+  useEffect(() => {
+    if (!containerRef.current) return;
+
+    let timeoutId: number;
+    const observer = new ResizeObserver(entries => {
+      clearTimeout(timeoutId);
+      timeoutId = window.setTimeout(() => {
+        const width = entries[0].contentRect.width;
+        useChartStore.getState().setContainerWidth(width);
+      }, 150); // Debounce 150ms
+    });
+
+    observer.observe(containerRef.current);
+    return () => {
+      observer.disconnect();
+      clearTimeout(timeoutId);
+    };
+  }, []);
+
+  // Trigger scale calculation
+  useEffect(() => {
+    updateScale(tasks);
+  }, [tasks, containerWidth, updateScale]);
+
+  return (
+    <div ref={containerRef} className="chart-canvas-container">
+      <svg width={scale?.totalWidth} height={svgHeight}>
+        {/* Layer architecture from Architect review */}
+        <g className="layer-background">
+          <GridLines scale={scale} taskCount={tasks.length} />
+        </g>
+        <g className="layer-tasks">
+          <TaskBars tasks={tasks} scale={scale} selectedIds={selectedTaskIds} />
+        </g>
+      </svg>
+    </div>
+  );
+}
+```
+
+**From Reviews:**
+- ✅ Debounced ResizeObserver (Frontend)
+- ✅ Layer architecture for future dependencies (Architect)
+- ✅ Error boundary wrapper (Frontend)
+
+---
+
+#### 1.1.5: Grid Lines with Adaptive Density
+**File:** `src/components/GanttChart/GridLines.tsx`
+**Duration:** 0.5 days
+
+**Implementation:**
+```typescript
+export function GridLines({ scale, taskCount }: GridLinesProps) {
+  // ADAPTIVE GRID DENSITY (Critical from Frontend + Data Viz reviews)
+  const gridInterval = useMemo(() => {
+    const pixelsPerDay = scale.pixelsPerDay;
+    if (pixelsPerDay < 5) return 7;  // Weekly when zoomed out
+    if (pixelsPerDay < 2) return 30; // Monthly when very zoomed out
+    return 1; // Daily at normal zoom
+  }, [scale.pixelsPerDay]);
+
+  const verticalLines = useMemo(() => {
+    const lines: Array<{ x: number; date: string }> = [];
+    let currentDate = scale.minDate;
+
+    while (currentDate <= scale.maxDate) {
+      lines.push({
+        x: dateToPixel(currentDate, scale),
+        date: currentDate
+      });
+      currentDate = addDays(currentDate, gridInterval); // Use adaptive step
+    }
+
+    return lines;
+  }, [scale, gridInterval]);
+
+  // Weekend columns (already implemented)
+  const weekendColumns = useMemo(() => { /* ... */ }, [scale]);
+
+  return (
+    <g className="grid-lines">
+      {/* Weekend highlighting */}
+      {weekendColumns.map(/* ... */)}
+
+      {/* Adaptive grid lines */}
+      {verticalLines.map(/* ... */)}
+
+      {/* Horizontal lines */}
+      {/* ... */}
+    </g>
+  );
+}
+```
+
+**From Reviews:**
+- 🔴 **Adaptive grid density** (Frontend, Data Viz): 365 lines → ~52 weekly when zoomed out
+- ✅ Weekend columns already good
+- ✅ Performance tests for 1000+ lines (QA)
+
+---
+
+#### 1.1.6: Task Bars with Progress & Clip-Path
+**File:** `src/components/GanttChart/TaskBar.tsx`
+**Duration:** 0.75 days
+
+**Implementation:**
+```typescript
+export const TaskBar = React.memo(function TaskBar({
+  task,
+  scale,
+  rowIndex,
+  isSelected
+}: TaskBarProps) {
+  const geometry = useMemo(() =>
+    getTaskBarGeometry(task, scale, rowIndex),
+    [task, scale, rowIndex]
+  );
+
+  // Milestone rendering with responsive sizing (Data Viz review)
+  if (task.type === 'milestone') {
+    const size = Math.min(20, Math.max(8, scale.pixelsPerDay / 2));
+    return <MilestoneDiamond size={size} geometry={geometry} />;
+  }
+
+  // Progress bar with clip-path fix (Data Viz review)
+  return (
+    <g className="task-bar">
+      <defs>
+        <clipPath id={`clip-${task.id}`}>
+          <rect x={geometry.x} y={geometry.y}
+                width={geometry.width} height={geometry.height}
+                rx={4} ry={4} />
+        </clipPath>
+      </defs>
+
+      {/* Background */}
+      <rect x={geometry.x} y={geometry.y}
+            width={geometry.width} height={geometry.height}
+            fill={task.color} fillOpacity={0.3} rx={4} ry={4} />
+
+      {/* Progress (no rounded corners, uses clip-path) */}
+      {task.progress > 0 && (
+        <rect x={geometry.x} y={geometry.y}
+              width={progressWidth} height={geometry.height}
+              fill={task.color} fillOpacity={1}
+              clipPath={`url(#clip-${task.id})`} />
+      )}
+
+      {/* Text with truncation (Data Viz review) */}
+      <text clipPath={`url(#clip-${task.id})`}
+            textLength={geometry.width - 16}
+            lengthAdjust="spacingAndGlyphs">
+        {task.name}
+      </text>
+    </g>
+  );
+});
+```
+
+**From Reviews:**
+- 🔴 **Clip-path for progress bar** (Data Viz): Fixes overflow artifacts
+- 🔴 **Text truncation** (Data Viz, Frontend): Prevents overflow
+- ✅ Responsive milestone size (Data Viz)
+- ✅ React.memo optimization (already had it)
+
+---
+
+#### 1.1.7: Multi-Level Timeline Header
+**File:** `src/components/GanttChart/TimelineHeader.tsx`
+**Duration:** 0.5 days
+
+(Already well-defined in original concept with weekday letters)
+
+---
+
+#### 1.1.8: Today Marker
+**File:** `src/components/GanttChart/TodayMarker.tsx`
+**Duration:** 0.25 days
+
+(Already well-defined in original concept)
+
+---
+
+### 🧪 Test Checkpoint 1: Core Foundation
+
+**STOP HERE AND TEST BEFORE CONTINUING!**
+
+#### Visual Verification
+Open the app and verify:
+- [ ] Timeline panel appears on the right side of the screen
+- [ ] Task bars render as colored rectangles
+- [ ] Task bars align with task rows in the table
+- [ ] Timeline header shows Month + Day (or Year + Month when zoomed out)
+- [ ] Weekend columns have light gray background
+- [ ] Grid lines are visible (1px, subtle)
+- [ ] Today marker shows as red dashed line with "TODAY" label
+- [ ] Progress bars show fill percentage correctly
+- [ ] Milestone tasks show as diamond shapes
+
+#### Interaction Verification
+Try these actions:
+- [ ] Add a task → bar appears on timeline
+- [ ] Delete a task → bar disappears
+- [ ] Change task dates in table → bar repositions
+- [ ] Change task color → bar color updates
+- [ ] Change task progress → fill updates
+- [ ] Select task in table → bar highlights (blue border)
+- [ ] Select task by clicking bar → table row highlights
+
+#### Regression Verification
+Ensure existing features work:
+- [ ] Task CRUD in table still works
+- [ ] Multi-selection still works
+- [ ] Hierarchy (indent/outdent) still works
+- [ ] Task type icons still work
+
+#### Performance Verification
+Test with sample data:
+- [ ] Add 100 tasks → timeline renders in < 1 second
+- [ ] No visible lag or jank
+- [ ] Scrolling feels smooth
+
+#### Known Limitations at This Stage
+- ❌ Cannot drag bars yet (Package 2)
+- ❌ Cannot zoom/pan yet (Package 3)
+- ❌ No dependency arrows yet (Package 4)
+- ❌ No keyboard navigation yet (Package 5)
+
+**🟢 GREEN LIGHT:** If all checks pass, proceed to Package 2
+**🔴 RED LIGHT:** If any check fails, fix before continuing
+
+---
+
+## 📦 Package 2: Interactive Editing (2-3 days) ⭐ CRITICAL
+
+**Goal:** Make timeline interactive. You should be able to drag task bars to change dates.
+
+**Why Critical:** Product Owner review identified this as the #1 missing feature. Without drag-to-edit, timeline is read-only visualization (not competitive).
+
+### Tasks in This Package
+
+#### 1.2.1: Drag-to-Move Task Bar
+**File:** `src/hooks/useTaskBarDrag.ts`
+**Duration:** 1 day
+
+**Implementation:** See detailed implementation in /tmp/sprint_1.2_packages.md lines 428-486
+
+**From Reviews:**
+- 🔴 **Critical feature** (Product Owner): Without this, timeline is view-only
+- ✅ Live preview during drag (UX/UI)
+- ✅ Snap to day boundaries (Data Viz)
+- ✅ Validation (prevent negative durations) (QA)
+
+**Tests:**
+- Drag bar horizontally → dates update
+- Drag with snap to grid
+- Drag validation (min/max dates)
+- Multi-select drag (bulk date changes)
+
+---
+
+#### 1.2.2: Drag-to-Resize Task Bar
+**File:** `src/hooks/useTaskBarResize.ts`
+**Duration:** 1 day
+
+**From Reviews:**
+- 🔴 **Core Gantt interaction** (Product Owner, UX/UI)
+- ✅ Visual resize handles (UX/UI)
+- ✅ Cursor change on hover (ew-resize) (UX/UI)
+- ✅ Prevent negative duration (QA)
+
+---
+
+#### 1.2.3: Drag Preview Rendering
+**File:** Update `TaskBar.tsx`
+**Duration:** 0.5 days
+
+Add dashed preview outline during drag
+
+---
+
+#### 1.2.4: Summary Task Date Auto-Calculation
+**File:** Update drag hooks
+**Duration:** 0.5 days
+
+Summary tasks should auto-calculate dates from children
+
+---
+
+### 🧪 Test Checkpoint 2: Interactive Editing
+
+**STOP HERE AND TEST BEFORE CONTINUING!**
+
+#### Visual Verification
+- [ ] Task bars have subtle hover highlight on edges
+- [ ] Cursor changes to ← → when hovering left/right edges
+- [ ] Cursor changes to ✋ (grab) when hovering bar center
+- [ ] Dashed preview outline appears during drag
+- [ ] Preview snaps to day boundaries
+- [ ] Summary task bars show lock icon (cannot drag)
+
+#### Interaction Verification
+- [ ] Drag task bar left → start/end dates shift earlier
+- [ ] Drag task bar right → start/end dates shift later
+- [ ] Drag left edge left → start date changes, end unchanged
+- [ ] Drag left edge right → start date changes (shortens task)
+- [ ] Drag right edge left → end date changes (shortens task)
+- [ ] Drag right edge right → end date changes, start unchanged
+- [ ] Try to create negative duration → prevented (validation error)
+- [ ] Try to drag summary task → prevented or auto-adjusts children
+- [ ] Drag multiple selected tasks → all move together
+- [ ] Dates update in table immediately after drop
+
+#### Regression Verification
+- [ ] Clicking bar still selects task (doesn't trigger drag)
+- [ ] Double-clicking bar opens edit modal (if implemented)
+- [ ] Table editing still works independently
+- [ ] Hierarchy still intact after drags
+
+#### Performance Verification
+- [ ] Drag feels smooth (60fps) with 100 tasks
+- [ ] No lag when dragging
+- [ ] Preview updates in real-time
+
+**🟢 GREEN LIGHT:** Proceed to Package 3
+**🔴 RED LIGHT:** Fix drag issues before continuing
+
+---
+
+## 📦 Package 3: Navigation & Scale (1-2 days)
+
+**Goal:** Add zoom and pan so users can navigate large timelines.
+
+### Tasks in This Package
+
+#### 1.3.1: Pan & Zoom Hook (Fixed from Reviews)
+**File:** `src/hooks/usePanZoom.ts`
+**Duration:** 1 day
+
+**CRITICAL FIXES from Reviews:**
+- 🔴 Spacebar + drag for pan (not left-click)
+- 🔴 Zoom centers on mouse position
+- 🔴 Single source of truth (chartSlice only)
+
+---
+
+#### 1.3.2: Zoom Controls Toolbar
+**File:** `src/components/GanttChart/ZoomToolbar.tsx`
+**Duration:** 0.5 days
+
+Toolbar with [+] [-] [Fit All] buttons and zoom level indicator
+
+---
+
+#### 1.3.3: Keyboard Shortcuts for Navigation
+**File:** Add to `usePanZoom.ts`
+**Duration:** 0.5 days
+
+- Ctrl+0: Reset zoom
+- Ctrl++: Zoom in
+- Ctrl+-: Zoom out
+- Arrow keys: Pan
+- Home: Fit to content
+
+---
+
+### 🧪 Test Checkpoint 3: Navigation & Scale
+
+#### Visual Verification
+- [ ] Zoom toolbar appears (-, 100%, +, Fit buttons)
+- [ ] Cursor changes to "grab" when spacebar pressed
+- [ ] Cursor changes to "grabbing" during pan
+- [ ] Zoom level indicator updates
+- [ ] Timeline scale changes at zoom thresholds
+
+#### Interaction Verification
+- [ ] Spacebar + drag pans the timeline
+- [ ] Ctrl + Wheel zooms centered on mouse
+- [ ] All toolbar buttons work
+- [ ] All keyboard shortcuts work
+
+**🟢 GREEN LIGHT:** Proceed to Package 4
+
+---
+
+## 📦 Package 4: Visual Dependencies (1 day)
+
+**Goal:** Show dependency arrows between connected tasks.
+
+#### 1.4.1: Dependency Arrow Rendering
+**File:** `src/components/GanttChart/DependencyArrows.tsx`
+**Duration:** 1 day
+
+Render Bézier curve arrows from task end to dependent task start.
+
+---
+
+### 🧪 Test Checkpoint 4: Dependencies
+
+- [ ] Gray arrows connect tasks with dependencies
+- [ ] Arrows have arrowheads
+- [ ] Arrows curve smoothly (Bézier)
+- [ ] Arrows update when dragging tasks
+
+**🟢 GREEN LIGHT:** Proceed to Package 5
+
+---
+
+## 📦 Package 5: Accessibility & Keyboard (1 day)
+
+**Goal:** Add keyboard navigation and screen reader support.
+
+#### 1.5.1: ARIA Labels & Semantic SVG
+**Duration:** 0.5 days
+
+Add role, aria-label, title, desc to SVG elements
+
+---
+
+#### 1.5.2: Keyboard Task Navigation
+**Duration:** 0.5 days
+
+Tab through tasks, Arrow keys to navigate, Enter to select
+
+---
+
+### 🧪 Test Checkpoint 5: Accessibility
+
+- [ ] Screen reader announces task bars
+- [ ] Tab navigates through tasks
+- [ ] Focus indicators visible
+- [ ] Color contrast passes WCAG AA
+
+**🟢 GREEN LIGHT:** Proceed to Package 6
+
+---
+
+## 📦 Package 6: Polish & Performance (1-2 days)
+
+**Goal:** Add final polish features and optimize performance.
+
+#### 1.6.1: Task Tooltips
+#### 1.6.2: Hover States
+#### 1.6.3: Sticky Timeline Header
+#### 1.6.4: Scroll Synchronization
+#### 1.6.5: Virtual Rendering (if needed)
+
+---
+
+### 🧪 Final Test Checkpoint: Complete Sprint
+
+#### Full Feature Verification
+- [ ] All features from Packages 1-6 work
+- [ ] No regressions in existing features
+- [ ] Performance targets met (100 tasks @ 60fps)
+- [ ] Visual quality high
+- [ ] Accessibility complete
+
+#### Production Readiness
+- [ ] All tests passing (unit + integration + E2E)
+- [ ] Code coverage > 70%
+- [ ] No console errors
+- [ ] Works in Chrome, Firefox, Safari
+
+**🟢 RELEASE:** Sprint 1.2 Complete!
+
+---
+
+## 📚 Reference: Original Phase-Based Breakdown
+
+> **Note:** The following section preserves the original phase-based task breakdown for reference. The package-based approach above is recommended for implementation.
+
+---
+
 ## Implementation Plan
 
 ### Phase 1: Date & Timeline Utilities (2-3 days)
