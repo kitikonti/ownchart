@@ -3,8 +3,57 @@
  * Allows users to move selected tasks between hierarchy levels.
  */
 
-import { ChevronLeftIcon, ChevronRightIcon } from '@heroicons/react/24/outline';
 import { useTaskStore } from '../../store/slices/taskSlice';
+
+/**
+ * Custom Indent icon - arrow pointing right with horizontal lines.
+ */
+function IndentIcon({ className }: { className?: string }) {
+  return (
+    <svg
+      className={className}
+      viewBox="0 0 16 16"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.5"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    >
+      {/* Top line */}
+      <line x1="2" y1="3" x2="14" y2="3" />
+      {/* Middle lines with arrow */}
+      <line x1="6" y1="8" x2="14" y2="8" />
+      <polyline points="11,6 14,8 11,10" fill="none" />
+      {/* Bottom line */}
+      <line x1="2" y1="13" x2="14" y2="13" />
+    </svg>
+  );
+}
+
+/**
+ * Custom Outdent icon - arrow pointing left with horizontal lines.
+ */
+function OutdentIcon({ className }: { className?: string }) {
+  return (
+    <svg
+      className={className}
+      viewBox="0 0 16 16"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.5"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    >
+      {/* Top line */}
+      <line x1="2" y1="3" x2="14" y2="3" />
+      {/* Middle lines with arrow */}
+      <line x1="2" y1="8" x2="10" y2="8" />
+      <polyline points="5,6 2,8 5,10" fill="none" />
+      {/* Bottom line */}
+      <line x1="2" y1="13" x2="14" y2="13" />
+    </svg>
+  );
+}
 
 export function HierarchyButtons() {
   const indentSelectedTasks = useTaskStore((state) => state.indentSelectedTasks);
@@ -27,7 +76,7 @@ export function HierarchyButtons() {
           }
         `}
       >
-        <ChevronLeftIcon className="w-4 h-4" />
+        <OutdentIcon className="w-4 h-4" />
         <span>Outdent</span>
       </button>
 
@@ -44,7 +93,7 @@ export function HierarchyButtons() {
           }
         `}
       >
-        <ChevronRightIcon className="w-4 h-4" />
+        <IndentIcon className="w-4 h-4" />
         <span>Indent</span>
       </button>
     </div>
