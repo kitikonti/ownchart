@@ -225,12 +225,27 @@ export function getBusinessDays(start: string, end: string): number {
 
 **Interfaces:**
 ```typescript
+// Scale unit types (inspired by SVAR React Gantt)
+export type ScaleUnit = 'year' | 'quarter' | 'month' | 'week' | 'day' | 'hour';
+
+// Scale configuration for a single row in the header
+export interface ScaleConfig {
+  unit: ScaleUnit;
+  step: number;
+  format: string | ((date: Date) => string);
+}
+
+// Complete timeline scale with multi-level headers
 export interface TimelineScale {
   minDate: string;           // ISO date
   maxDate: string;           // ISO date
   pixelsPerDay: number;      // Horizontal scale factor
   totalWidth: number;        // Total SVG width in pixels
   totalDays: number;         // Duration in days
+  zoom: number;              // Current zoom level (0.5 - 3.0)
+
+  // Multi-level scale configuration (inspired by SVAR)
+  scales: ScaleConfig[];     // Top-to-bottom header rows
 }
 
 export interface TaskBarGeometry {
@@ -244,22 +259,71 @@ export interface TaskBarGeometry {
 **Functions:**
 ```typescript
 /**
+ * Get appropriate scale configuration based on zoom level
+ * Inspired by SVAR React Gantt's adaptive scale system
+ */
+export function getScaleConfig(zoom: number, pixelsPerDay: number): ScaleConfig[] {
+  const effectivePixelsPerDay = pixelsPerDay * zoom;
+
+  // Very zoomed out (< 5 pixels per day): Year → Quarter
+  if (effectivePixelsPerDay < 5) {
+    return [
+      { unit: 'year', step: 1, format: 'yyyy' },
+      { unit: 'quarter', step: 1, format: (date) => `Q${Math.floor(date.getMonth() / 3) + 1}` }
+    ];
+  }
+
+  // Zoomed out (5-15 pixels per day): Year → Month
+  if (effectivePixelsPerDay < 15) {
+    return [
+      { unit: 'year', step: 1, format: 'yyyy' },
+      { unit: 'month', step: 1, format: 'MMM' }
+    ];
+  }
+
+  // Medium zoom (15-30 pixels per day): Month → Week
+  if (effectivePixelsPerDay < 30) {
+    return [
+      { unit: 'month', step: 1, format: 'MMM yyyy' },
+      { unit: 'week', step: 1, format: (date) => `W${getWeek(date)}` }
+    ];
+  }
+
+  // Zoomed in (30-60 pixels per day): Month → Day
+  if (effectivePixelsPerDay < 60) {
+    return [
+      { unit: 'month', step: 1, format: 'MMMM yyyy' },
+      { unit: 'day', step: 1, format: 'd' }
+    ];
+  }
+
+  // Very zoomed in (60+ pixels per day): Week → Day with time
+  return [
+    { unit: 'week', step: 1, format: (date) => `Week ${getWeek(date)}` },
+    { unit: 'day', step: 1, format: 'EEE d' }
+  ];
+}
+
+/**
  * Calculate timeline scale from date range and available width
  */
 export function getTimelineScale(
   minDate: string,
   maxDate: string,
-  containerWidth: number
+  containerWidth: number,
+  zoom: number = 1
 ): TimelineScale {
   const totalDays = calculateDuration(minDate, maxDate);
-  const pixelsPerDay = containerWidth / totalDays;
+  const pixelsPerDay = (containerWidth / totalDays) * zoom;
 
   return {
     minDate,
     maxDate,
     pixelsPerDay,
-    totalWidth: containerWidth,
-    totalDays
+    totalWidth: containerWidth * zoom,
+    totalDays,
+    zoom,
+    scales: getScaleConfig(zoom, containerWidth / totalDays)
   };
 }
 
@@ -451,7 +515,7 @@ export function ChartCanvas({
 
 ---
 
-#### Task 1.2.4: TimelineHeader Component
+#### Task 1.2.4: TimelineHeader Component (Multi-Level SVAR Style)
 
 **File:** `src/components/GanttChart/TimelineHeader.tsx`
 
@@ -461,77 +525,194 @@ interface TimelineHeaderProps {
   scale: TimelineScale;
 }
 
+interface ScaleCell {
+  date: Date;
+  x: number;
+  width: number;
+  label: string;
+}
+
 export function TimelineHeader({ scale }: TimelineHeaderProps) {
-  // Generate date labels based on scale
-  const dateLabels = useMemo(() => {
-    const labels: Array<{ date: string; x: number; label: string }> = [];
+  const rowHeight = 40;
 
-    // Determine label frequency based on pixels per day
-    const labelEveryNDays = scale.pixelsPerDay < 20 ? 7 : 1;
-
-    let currentDate = scale.minDate;
-    let dayIndex = 0;
-
-    while (currentDate <= scale.maxDate) {
-      if (dayIndex % labelEveryNDays === 0) {
-        labels.push({
-          date: currentDate,
-          x: dateToPixel(currentDate, scale),
-          label: formatDate(currentDate, 'MMM dd')
-        });
-      }
-
-      currentDate = addDays(currentDate, 1);
-      dayIndex++;
-    }
-
-    return labels;
+  // Generate cells for each scale row
+  const scaleRows = useMemo(() => {
+    return scale.scales.map((scaleConfig) => {
+      return generateScaleCells(scale, scaleConfig);
+    });
   }, [scale]);
 
   return (
     <g className="timeline-header">
+      {/* Background */}
       <rect
         x={0}
         y={0}
         width={scale.totalWidth}
-        height={60}
+        height={scale.scales.length * rowHeight}
         fill="#f8f9fa"
       />
-      {dateLabels.map(({ date, x, label }) => (
-        <text
-          key={date}
-          x={x}
-          y={40}
-          fontSize={12}
-          fill="#495057"
-          textAnchor="middle"
-        >
-          {label}
-        </text>
+
+      {/* Render each scale row */}
+      {scaleRows.map((cells, rowIndex) => (
+        <g key={rowIndex} className={`scale-row scale-row-${rowIndex}`}>
+          {cells.map((cell, cellIndex) => (
+            <g key={cellIndex}>
+              {/* Cell separator line */}
+              <line
+                x1={cell.x}
+                y1={rowIndex * rowHeight}
+                x2={cell.x}
+                y2={(rowIndex + 1) * rowHeight}
+                stroke="#dee2e6"
+                strokeWidth={1}
+              />
+
+              {/* Cell label */}
+              <text
+                x={cell.x + cell.width / 2}
+                y={rowIndex * rowHeight + rowHeight / 2 + 5}
+                fontSize={rowIndex === 0 ? 13 : 12}
+                fontWeight={rowIndex === 0 ? 600 : 400}
+                fill="#495057"
+                textAnchor="middle"
+              >
+                {cell.label}
+              </text>
+            </g>
+          ))}
+        </g>
       ))}
+
+      {/* Bottom border */}
       <line
         x1={0}
-        y1={60}
+        y1={scale.scales.length * rowHeight}
         x2={scale.totalWidth}
-        y2={60}
+        y2={scale.scales.length * rowHeight}
         stroke="#dee2e6"
-        strokeWidth={1}
+        strokeWidth={2}
       />
     </g>
   );
 }
+
+/**
+ * Generate cells for a scale configuration row
+ * Inspired by SVAR's scale generation logic
+ */
+function generateScaleCells(
+  scale: TimelineScale,
+  config: ScaleConfig
+): ScaleCell[] {
+  const cells: ScaleCell[] = [];
+  let currentDate = parseISO(scale.minDate);
+  const endDate = parseISO(scale.maxDate);
+
+  while (currentDate <= endDate) {
+    const cellStart = currentDate;
+    const cellEnd = getUnitEnd(currentDate, config.unit, config.step);
+
+    // Calculate cell position and width
+    const x = dateToPixel(format(cellStart, 'yyyy-MM-dd'), scale);
+    const endX = dateToPixel(
+      format(cellEnd > endDate ? endDate : cellEnd, 'yyyy-MM-dd'),
+      scale
+    );
+    const width = endX - x;
+
+    // Format label
+    const label = typeof config.format === 'function'
+      ? config.format(cellStart)
+      : format(cellStart, config.format);
+
+    cells.push({
+      date: cellStart,
+      x,
+      width,
+      label
+    });
+
+    // Move to next unit
+    currentDate = addUnit(currentDate, config.unit, config.step);
+  }
+
+  return cells;
+}
+
+/**
+ * Get the end date of a time unit
+ */
+function getUnitEnd(date: Date, unit: ScaleUnit, step: number): Date {
+  switch (unit) {
+    case 'year':
+      return endOfYear(addYears(date, step - 1));
+    case 'quarter':
+      return endOfQuarter(addQuarters(date, step - 1));
+    case 'month':
+      return endOfMonth(addMonths(date, step - 1));
+    case 'week':
+      return endOfWeek(addWeeks(date, step - 1));
+    case 'day':
+      return endOfDay(addDays(date, step - 1));
+    case 'hour':
+      return addHours(date, step);
+    default:
+      return date;
+  }
+}
+
+/**
+ * Add time unit to date
+ */
+function addUnit(date: Date, unit: ScaleUnit, step: number): Date {
+  switch (unit) {
+    case 'year': return addYears(date, step);
+    case 'quarter': return addQuarters(date, step);
+    case 'month': return addMonths(date, step);
+    case 'week': return addWeeks(date, step);
+    case 'day': return addDaysDateFns(date, step);
+    case 'hour': return addHours(date, step);
+    default: return date;
+  }
+}
 ```
 
-**Features:**
-- Adaptive label frequency (sparse when zoomed out, dense when zoomed in)
-- Month/week/day labels based on zoom level
-- Clear visual separation from chart area
+**Features (SVAR-inspired):**
+- **Multi-level scale rows** (e.g., top: months, bottom: days)
+- **Zoom-aware adaptation** (Year→Quarter, Month→Week→Day based on zoom)
+- **Cell-based rendering** (each time unit is a distinct cell)
+- **Visual hierarchy** (top row larger/bolder text)
+- **Cell separators** (vertical lines between cells)
+- **Configurable formats** (string or function)
+
+**Example Renderings:**
+
+Zoomed out (Year → Quarter):
+```
+┌─────2025─────┬─────2026─────┐
+├──Q1──┼──Q2──┼──Q3──┼──Q4──┼──Q1──┤
+```
+
+Medium (Month → Week):
+```
+┌────January 2025────┬────February 2025────┐
+├─W1─┼─W2─┼─W3─┼─W4─┼─W5─┼─W6─┼─W7─┼─W8─┤
+```
+
+Zoomed in (Month → Day):
+```
+┌─────────December 2025─────────┐
+├1┼2┼3┼4┼5┼6┼7┼8┼9┼10┼11┼12┼...┼31┤
+```
 
 **Acceptance Criteria:**
-- ✓ Labels show correct dates
+- ✓ Multi-level headers render correctly
+- ✓ Scales adapt to zoom level (SVAR pattern)
 - ✓ Labels don't overlap
-- ✓ Adapts to zoom level
+- ✓ Cell widths accurate
 - ✓ Readable at all zoom levels
+- ✓ Visual hierarchy clear (top row emphasized)
 
 ---
 
@@ -1100,6 +1281,112 @@ measureRenderTime(500); // Should be < 500ms
 
 ---
 
+## SVAR React Gantt Inspirations Adopted
+
+This sprint incorporates several excellent patterns from SVAR React Gantt competitive analysis:
+
+### ✅ 1. Multi-Level Scale System
+
+**SVAR Pattern:**
+```javascript
+const scales = [
+  { unit: 'month', step: 1, format: '%F %Y' },
+  { unit: 'day', step: 1, format: '%j' }
+];
+```
+
+**Our Implementation:**
+- `ScaleConfig` interface with unit, step, format
+- `getScaleConfig()` function for zoom-aware scale selection
+- Support for: year, quarter, month, week, day, hour
+- Multi-row timeline header (2 levels)
+
+**Benefits:**
+- Professional appearance (like MS Project, Smartsheet)
+- Clear time hierarchy at a glance
+- Automatically adapts to zoom level
+- Eliminates label overlap issues
+
+### ✅ 2. Zoom-Aware Scale Adaptation
+
+**SVAR Pattern:** Scales change based on pixels per day
+
+**Our Implementation:**
+```typescript
+// Very zoomed out: Year → Quarter
+if (pixelsPerDay < 5) { ... }
+// Zoomed out: Year → Month
+if (pixelsPerDay < 15) { ... }
+// Medium: Month → Week
+if (pixelsPerDay < 30) { ... }
+// Zoomed in: Month → Day
+if (pixelsPerDay < 60) { ... }
+```
+
+**Benefits:**
+- Always readable regardless of zoom
+- Smooth zoom transitions
+- Intuitive time navigation
+- Prevents overcrowding
+
+### ✅ 3. Cell-Based Timeline Rendering
+
+**SVAR Pattern:** Each time unit is a distinct cell with borders
+
+**Our Implementation:**
+- `generateScaleCells()` creates cells for each time period
+- Cell separators (vertical lines) between units
+- Cell-based positioning for accuracy
+- Visual hierarchy (larger units on top)
+
+**Benefits:**
+- Clear visual boundaries
+- Easier to read and navigate
+- Matches industry standards
+- Professional polish
+
+### ✅ 4. Flexible Format System
+
+**SVAR Pattern:** Format can be string or function
+
+**Our Implementation:**
+```typescript
+interface ScaleConfig {
+  format: string | ((date: Date) => string);
+}
+
+// String format
+{ unit: 'month', format: 'MMM yyyy' }
+
+// Function format (for quarters, weeks)
+{ unit: 'quarter', format: (date) => `Q${Math.floor(date.getMonth() / 3) + 1}` }
+```
+
+**Benefits:**
+- Flexible label generation
+- Custom formatting for special cases
+- Localization-ready
+- Dynamic label content
+
+### 🔜 Future SVAR Inspirations (Post-Sprint 1.2)
+
+**Virtual Scrolling** (for performance):
+- Render only visible tasks + buffer
+- SVAR pattern: `visibleCount = Math.ceil(clientHeight / cellHeight) + 1`
+- Target: Sprint 1.2+ optimization if needed
+
+**Weekend Highlighting** (visual enhancement):
+- Different background for weekend columns
+- SVAR uses CSS classes per date
+- Target: Sprint 1.2 GridLines enhancement
+
+**Baseline Comparison** (Phase 2):
+- Show planned vs actual dates
+- SVAR uses `base_start` and `base_end` fields
+- Already in our data model for future use
+
+---
+
 ## Dependencies
 
 **NPM Packages:**
@@ -1107,7 +1394,7 @@ measureRenderTime(500); // Should be < 500ms
 npm install date-fns
 ```
 
-**Version:** date-fns@^3.0.0
+**Version:** date-fns@^3.0.0 (includes getWeek, getQuarter, etc.)
 
 **Why date-fns:**
 - Modular (tree-shakeable) - only import what you use
@@ -1115,6 +1402,7 @@ npm install date-fns
 - Immutable (doesn't mutate dates)
 - Widely used and well-maintained
 - Lighter than Moment.js
+- **Includes quarter/week utilities** needed for SVAR-style scales
 
 ---
 
