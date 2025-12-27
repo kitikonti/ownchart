@@ -24,15 +24,16 @@ This document outlines **Phase 1** of building the Gantt Chart application: impl
 
 ## Phase 1 Deliverables
 
-Phase 1 is divided into **7 Sprints**, each delivering a complete feature set:
+Phase 1 is divided into **8 Sprints**, each delivering a complete feature set:
 
 ### Sprint 1.1: Basic Task Management (Week 1-1.5) ✅ COMPLETE
-### Sprint 1.15: Task Groups & Hierarchical Organization (Week 1.5-2) 🔄 IN PROGRESS
-### Sprint 1.2: Timeline & Visualization (Week 2-3.5)
-### Sprint 1.3: Dependencies (Finish-to-Start) (Week 3.5-5)
-### Sprint 1.4: File Operations (Week 5-6)
-### Sprint 1.5: Basic Undo/Redo (Week 6-7)
-### Sprint 1.6: PNG Export & Polish (Week 7-8.5)
+### Sprint 1.15: Task Groups & Hierarchical Organization (Week 1.5-2) ✅ COMPLETE
+### Sprint 1.16: Hierarchy Indent/Outdent (Week 2-2.5) ✅ COMPLETE
+### Sprint 1.2: Timeline & Visualization (Week 2.5-4)
+### Sprint 1.3: File Operations (Week 4-5) **[Moved up - was 1.4]**
+### Sprint 1.4: Dependencies (Finish-to-Start) (Week 5-6.5) **[Moved down - was 1.3]**
+### Sprint 1.5: Basic Undo/Redo (Week 6.5-7.5)
+### Sprint 1.6: PNG Export & Polish (Week 7.5-9)
 
 ---
 
@@ -323,21 +324,50 @@ This section breaks Sprint 1.1 into small, testable, committable tasks. Each tas
 
 ## Sprint 1.15: Task Groups & Hierarchical Organization
 
-**Duration:** 3-4 days
+**Duration:** 2 days
 **Goal:** Add hierarchical task organization with collapsible groups.
 
-**Status:** 🔄 IN PROGRESS
+**Status:** ✅ COMPLETE (2025-12-24)
 
 > **Note:** This sprint was added between Sprint 1.1 and 1.2 to establish hierarchical data structure before timeline rendering. See [SPRINT_1.15_TASK_GROUPS.md](./SPRINT_1.15_TASK_GROUPS.md) for detailed implementation plan.
 
 **Key Features:**
-- Task groups/phases for organization
+- Task groups/phases for organization using SVAR pattern
 - Collapsible sections (3 levels deep)
-- Nested drag-and-drop
-- Group summary bars (timeline integration in Sprint 1.2)
+- Nested drag-and-drop with drop zones (BEFORE/INTO/AFTER)
+- Summary date auto-calculation
 - Visual hierarchy with indentation
+- **Key Innovation:** Adopted SVAR pattern - type and hierarchy are independent. Regular tasks CAN have children (manual dates), summaries auto-calculate dates from children.
 
 **Deliverables:** See [SPRINT_1.15_TASK_GROUPS.md](./SPRINT_1.15_TASK_GROUPS.md) for complete task breakdown.
+
+---
+
+## Sprint 1.16: Hierarchy Indent/Outdent
+
+**Duration:** 2 days
+**Goal:** Add UI controls and keyboard shortcuts for hierarchy navigation.
+
+**Status:** ✅ COMPLETE (2025-12-27)
+
+> **Note:** This sprint emerged naturally during Sprint 1.15 implementation as a necessary UX enhancement for hierarchy management. See [SPRINT_1.16_HIERARCHY_INDENT_OUTDENT.md](./SPRINT_1.16_HIERARCHY_INDENT_OUTDENT.md) for detailed implementation plan.
+
+**Key Features:**
+- Indent button (→) - make task child of previous sibling
+- Outdent button (←) - make task sibling of parent
+- Keyboard shortcuts (Tab/Shift+Tab)
+- Multi-selection support for bulk operations
+- Smart validation (buttons disabled when invalid)
+- Snapshot-based hierarchy operations to prevent cascading bugs
+
+**Technical Work:**
+- `indentSelectedTasks()` store action
+- `outdentSelectedTasks()` store action
+- `canIndentSelection()` validator
+- `canOutdentSelection()` validator
+- HierarchyButtons component
+
+**Deliverables:** See [SPRINT_1.16_HIERARCHY_INDENT_OUTDENT.md](./SPRINT_1.16_HIERARCHY_INDENT_OUTDENT.md) for complete task breakdown.
 
 ---
 
@@ -581,12 +611,14 @@ interface TimelineScale {
 
 ---
 
-## Sprint 1.3: Dependencies (Finish-to-Start)
+## Sprint 1.4: Dependencies (Finish-to-Start) **[Moved from 1.3]**
 
 **Duration:** 1.5 weeks
 **Goal:** Create FS dependencies with circular detection and auto-date adjustment.
 
 ⚠️ **CRITICAL SPRINT** - Most complex, requires extensive testing (50-100 test cases).
+
+> **Note:** This sprint was moved after Sprint 1.3 (File Operations) to prioritize data persistence before complex dependency features.
 
 ### Deliverables
 
@@ -988,10 +1020,12 @@ function calculateArrowPath(
 
 ---
 
-## Sprint 1.4: File Operations
+## Sprint 1.3: File Operations **[Moved from 1.4]**
 
 **Duration:** 1 week
 **Goal:** Save/load charts as .gantt.json files with 6-layer validation.
+
+> **Note:** This sprint was moved before Sprint 1.4 (Dependencies) to prioritize data persistence - users need to save their work before adding complex dependency features.
 
 ### Deliverables
 

@@ -1,10 +1,11 @@
 # Sprint 1.15: Task Hierarchies with Summary Tasks
 
-**Status:** Planning (Revised after Competitive Analysis)
+**Status:** ✅ COMPLETE
 **Created:** 2025-12-19
 **Revised:** 2025-12-23
+**Completed:** 2025-12-24
 **Position:** Between Sprint 1.1 and Sprint 1.2
-**Duration:** 2-3 days
+**Duration:** 2 days (actual)
 **Goal:** Add hierarchical task organization using task types (task, summary, milestone)
 
 ---

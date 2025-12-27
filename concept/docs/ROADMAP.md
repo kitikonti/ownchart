@@ -234,7 +234,7 @@ If dependency arrows or performance validation fails, reassess approach before c
 - Copy/paste with multi-select
 - Named snapshots
 
-#### Sprint 1.1: Basic Task Management
+#### Sprint 1.1: Basic Task Management ✅ COMPLETE
 
 **Features**:
 - Create/edit/delete tasks
@@ -254,6 +254,71 @@ If dependency arrows or performance validation fails, reassess approach before c
 - Inline editing works smoothly
 - Reordering via drag-and-drop
 - Data persists in state
+
+**Status**: ✅ COMPLETE (2025-12-19)
+
+---
+
+#### Sprint 1.15: Task Groups & Hierarchical Organization ✅ COMPLETE
+
+**Duration:** 2 days
+**Goal:** Add hierarchical task organization using SVAR pattern (type decoupled from hierarchy)
+
+**Features**:
+- Task groups/phases for organization
+- Collapsible sections (3 levels deep)
+- Nested drag-and-drop
+- Visual hierarchy with indentation
+- SVAR pattern adoption (tasks CAN have children regardless of type)
+
+**Technical Work**:
+- Task type system: `task`, `summary`, `milestone`
+- Hierarchy utilities (`getChildren`, `calculateSummaryDates`, `buildFlattenedTaskList`)
+- Enhanced drag-and-drop with drop zones (BEFORE/INTO/AFTER)
+- Summary date auto-calculation
+- Circular hierarchy prevention
+
+**Acceptance Criteria**:
+- Can nest tasks 3 levels deep
+- Summary dates auto-calculate from children
+- Regular tasks with children keep manual dates (SVAR pattern)
+- Collapse/expand works smoothly
+- Drag-drop nesting works intuitively
+
+**Status**: ✅ COMPLETE (2025-12-24)
+
+**Key Innovation**: Adopted SVAR pattern - type and hierarchy are independent. Regular tasks CAN have children (manual dates), summaries auto-calculate dates from children.
+
+---
+
+#### Sprint 1.16: Hierarchy Indent/Outdent ✅ COMPLETE
+
+**Duration:** 2 days
+**Goal:** Add UI controls and keyboard shortcuts for hierarchy navigation
+
+**Features**:
+- Indent button (→) - make task child of previous sibling
+- Outdent button (←) - make task sibling of parent
+- Keyboard shortcuts (Tab/Shift+Tab)
+- Multi-selection support for bulk operations
+- Smart validation (buttons disabled when invalid)
+
+**Technical Work**:
+- `indentSelectedTasks()` store action
+- `outdentSelectedTasks()` store action
+- `canIndentSelection()` validator
+- `canOutdentSelection()` validator
+- HierarchyButtons component
+- Snapshot-based hierarchy operations to prevent cascading bugs
+
+**Acceptance Criteria**:
+- Indent/outdent buttons work correctly
+- Keyboard shortcuts functional (Tab/Shift+Tab)
+- Multi-selection processed sequentially
+- Invalid operations prevented with clear feedback
+- Parent auto-expands when child is indented
+
+**Status**: ✅ COMPLETE (2025-12-27)
 
 ---
 
@@ -279,7 +344,50 @@ If dependency arrows or performance validation fails, reassess approach before c
 
 ---
 
-#### Sprint 1.3: Dependencies (Finish-to-Start Only)
+#### Sprint 1.3: File Operations
+
+**Duration:** 1 week
+
+**Features**:
+- Save to .gantt file
+- Open .gantt file
+- New chart
+- File validation
+- 6-layer validation pipeline:
+  1. Pre-parse (size, extension)
+  2. Safe JSON parse (prevent prototype pollution)
+  3. Structure validation
+  4. Semantic validation (circular deps, valid refs)
+  5. String sanitization (DOMPurify)
+  6. Version compatibility
+- Unsaved changes dialog
+
+**Technical Work**:
+- JSON serialization (with version fields and unknown field preservation)
+- File I/O handlers
+- Validation schema
+- Error handling
+- Migration system foundation
+- Security layer (prevent XSS, prototype pollution)
+
+**Acceptance Criteria**:
+- Files save and load correctly
+- Invalid files rejected gracefully
+- Unsaved changes prompts work
+- File format documented
+- 6-layer validation prevents malicious files
+
+**Rationale for Priority**: File operations moved ahead of dependencies because:
+- Critical for usability - users need to save their work
+- Enables user testing before adding complex dependency features
+- Simpler implementation allows for quicker release
+- Logical flow: Timeline → Save/Load → Dependencies → Undo → Export
+
+---
+
+#### Sprint 1.4: Dependencies (Finish-to-Start Only)
+
+**Duration:** 1.5 weeks
 
 **Features**:
 - Create Finish-to-Start (FS) dependencies
@@ -310,29 +418,6 @@ If dependency arrows or performance validation fails, reassess approach before c
 - Complex dependency chains (A→B→C→D)
 - Circular detection (A→B→C→A)
 - Edge cases (tasks on same day, weekend handling)
-
----
-
-#### Sprint 1.4: File Operations
-
-**Features**:
-- Save to .gantt file
-- Open .gantt file
-- New chart
-- File validation
-
-**Technical Work**:
-- JSON serialization (with version fields and unknown field preservation)
-- File I/O handlers
-- Validation schema
-- Error handling
-- Migration system foundation
-
-**Acceptance Criteria**:
-- Files save and load correctly
-- Invalid files rejected gracefully
-- Unsaved changes prompts work
-- File format documented
 
 ---
 

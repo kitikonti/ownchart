@@ -1,7 +1,9 @@
 # Sprint 1.16: Hierarchie Indent/Outdent Funktionalität
 
 **Datum:** 2025-12-26
-**Status:** Planning
+**Status:** ✅ COMPLETE
+**Completed:** 2025-12-27
+**Duration:** 2 days (actual)
 **Ziel:** UI-Buttons und Keyboard Shortcuts zum Verschieben von Tasks in der Hierarchie (eine Ebene höher/tiefer)
 
 ---

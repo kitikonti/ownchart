@@ -56,7 +56,9 @@
 
 ### 2.1 Frontend Framework
 
-**Choice: React 18+ with TypeScript**
+**Choice: React 19 with TypeScript**
+
+**Current Version**: React 19.0.0 (upgraded from React 18 in December 2025)
 
 **Rationale**:
 - Component-based architecture fits UI needs
@@ -64,6 +66,7 @@
 - Strong TypeScript support for type safety
 - Excellent performance with virtual DOM
 - Widespread knowledge/community
+- React 19 improvements: better performance, enhanced compiler
 
 **Alternatives Considered**:
 - Vue.js: Good, but smaller ecosystem
@@ -123,12 +126,15 @@
 
 **Choice: Vite**
 
+**Current Version**: Vite 7.0.0 (upgraded from Vite 6 in December 2025)
+
 **Rationale**:
 - Lightning-fast dev server (ESM-based)
 - Optimized production builds
 - Excellent TypeScript/React support
 - Simple configuration
 - Growing industry standard
+- Vite 7 improvements: faster cold starts, better HMR
 
 **Alternatives Considered**:
 - Create React App: Slower, ejecting issues
@@ -137,13 +143,22 @@
 
 ### 2.6 UI Component Library
 
-**Choice: Radix UI + Tailwind CSS**
+**Choice: Radix UI + Tailwind CSS 4**
+
+**Current Versions**:
+- Tailwind CSS 4.0.0 (upgraded from v3 in December 2025)
+- Phosphor Icons 2.1.10 (adopted December 2025, replacing Heroicons)
 
 **Rationale**:
 - Radix: Unstyled, accessible components
-- Tailwind: Utility-first, fast styling
+- Tailwind 4: Utility-first, fast styling, improved performance
+- Phosphor Icons: Broader icon set, consistent design system
 - Full design control
 - Small bundle size
+
+**Icon System Change**:
+- Migrated from Heroicons to Phosphor Icons for richer icon variety
+- Phosphor provides better coverage for Gantt-specific icons (indent/outdent, hierarchy, etc.)
 - Excellent DX
 
 **Alternatives Considered**:
@@ -287,6 +302,106 @@ interface AppState {
   };
 }
 ```
+
+---
+
+### 3.3 Architectural Patterns Adopted from Competitive Analysis
+
+#### SVAR Pattern (Type-Hierarchy Decoupling)
+
+**Source**: SVAR React Gantt competitive analysis (December 2025)
+
+**Key Insight**: Task type and hierarchy capability are independent concerns.
+
+**Implementation**:
+```typescript
+interface Task {
+  id: string;
+  type: 'task' | 'summary' | 'milestone';  // Type determines data behavior
+  parent?: string;                          // Hierarchy is independent
+  children?: string[];                      // Tasks CAN have children regardless of type
+  // ...
+}
+```
+
+**Type Behavior**:
+- `type: 'task'` with children → Manual dates (fixed deadline containers)
+- `type: 'summary'` with children → Auto-calculated dates (aggregating phases)
+- `type: 'milestone'` → No children allowed (zero-duration markers)
+
+**Benefits**:
+- Simpler mental model: "summary tasks are just tasks with type='summary'"
+- Single `taskSlice` handles all task types (no separate group slice)
+- Flexible: regular tasks can act as deadline containers with manual dates
+- Consistent with professional Gantt tools (validated against SVAR)
+
+**Files**:
+- `/src/types/chart.types.ts` - Task interface with type + parent
+- `/src/store/slices/taskSlice.ts` - Single slice for all task types
+- `/src/utils/hierarchy.ts` - Hierarchy utilities (getChildren, calculateSummaryDates)
+
+#### Snapshot-Based Hierarchy Operations
+
+**Pattern**: Pre-calculate hierarchy snapshots before operations to prevent cascading bugs.
+
+**Problem**: Direct hierarchy modifications can cause cascading errors during indent/outdent operations when traversing a changing tree.
+
+**Solution**: Use snapshot-based approach:
+```typescript
+function indentSelectedTasks(selectedIds: string[]) {
+  // 1. Build snapshot of current hierarchy
+  const flatList = buildFlattenedTaskList(tasks, collapsedIds);
+
+  // 2. Calculate all changes based on snapshot
+  const changes = selectedIds.map(id => {
+    const index = flatList.findIndex(t => t.task.id === id);
+    const newParent = findPreviousSibling(flatList, index);
+    return { taskId: id, newParent };
+  });
+
+  // 3. Apply all changes atomically
+  changes.forEach(change => {
+    if (isValid(change)) {
+      moveTaskToParent(change.taskId, change.newParent);
+    }
+  });
+}
+```
+
+**Benefits**:
+- Prevents cascade errors during hierarchy modifications
+- All operations based on consistent snapshot
+- Enables safe bulk operations on multiple selected tasks
+- Clear separation: snapshot → calculate → validate → apply
+
+**Files**:
+- `/src/store/slices/taskSlice.ts` - indentSelectedTasks, outdentSelectedTasks
+- `/src/utils/hierarchy.ts` - buildFlattenedTaskList
+
+#### Computed Properties Pattern
+
+**Pattern**: Don't store derived data - calculate on-the-fly.
+
+**Example**: Summary task dates are computed, not stored:
+```typescript
+// ❌ DON'T store summary dates
+task.startDate = calculateSummaryStart(children);
+
+// ✅ DO compute on render
+const displayStartDate = task.type === 'summary'
+  ? calculateSummaryDates(task, allTasks).start
+  : task.startDate;
+```
+
+**Benefits**:
+- Single source of truth (children's dates)
+- No sync issues between summary and children dates
+- Simpler state management
+- Automatic updates when children change
+
+**Files**:
+- `/src/components/TaskList/TaskTableRow.tsx` - Uses calculateSummaryDates on render
+- `/src/utils/hierarchy.ts` - calculateSummaryDates utility
 
 ---
 
