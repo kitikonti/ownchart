@@ -422,29 +422,37 @@ export const useTaskStore = create<TaskStore>()(
         const { tasks, selectedTaskIds } = state;
         if (selectedTaskIds.length === 0) return;
 
-        const flatList = buildFlattenedTaskList(tasks, new Set<string>());
+        // Create snapshot of current hierarchy BEFORE any changes
+        const originalFlatList = buildFlattenedTaskList(tasks, new Set<string>());
 
         // Sort selection by display order (top to bottom)
         const sortedIds = [...selectedTaskIds].sort((a, b) => {
-          const indexA = flatList.findIndex((t) => t.task.id === a);
-          const indexB = flatList.findIndex((t) => t.task.id === b);
+          const indexA = originalFlatList.findIndex((t) => t.task.id === a);
+          const indexB = originalFlatList.findIndex((t) => t.task.id === b);
           return indexA - indexB;
         });
 
+        // Calculate all changes based on ORIGINAL hierarchy
+        const changes: Array<{ taskId: string; newParentId: string }> = [];
+
         sortedIds.forEach((taskId) => {
-          const index = flatList.findIndex((t) => t.task.id === taskId);
+          const index = originalFlatList.findIndex((t) => t.task.id === taskId);
           if (index === -1) return;
 
-          const level = flatList[index].level;
+          const level = originalFlatList[index].level;
 
-          // Find previous sibling (same level)
+          // Find previous sibling (same level) - skip if it's also selected
           let newParentId: string | null = null;
           for (let i = index - 1; i >= 0; i--) {
-            if (flatList[i].level === level) {
-              newParentId = flatList[i].task.id;
-              break;
+            const prevTask = originalFlatList[i];
+            if (prevTask.level === level) {
+              // Skip if this potential parent is also selected (would create cascade)
+              if (!selectedTaskIds.includes(prevTask.task.id)) {
+                newParentId = prevTask.task.id;
+                break;
+              }
             }
-            if (flatList[i].level < level) break; // No sibling found
+            if (prevTask.level < level) break; // No suitable sibling found
           }
 
           if (!newParentId) return;
@@ -452,7 +460,7 @@ export const useTaskStore = create<TaskStore>()(
           const newParent = tasks.find((t) => t.id === newParentId);
           if (!newParent) return;
 
-          // Calculate new parent's level to ensure we only jump one level
+          // Calculate new parent's level based on ORIGINAL hierarchy
           const newParentLevel = getTaskLevel(tasks, newParentId);
 
           // Validation
@@ -462,15 +470,20 @@ export const useTaskStore = create<TaskStore>()(
             !wouldCreateCircularHierarchy(tasks, newParentId, taskId) &&
             newParentLevel === level // Ensure parent is on same level (task will be level + 1)
           ) {
-            const task = state.tasks.find((t) => t.id === taskId);
-            if (task) {
-              task.parent = newParentId;
+            changes.push({ taskId, newParentId });
+          }
+        });
 
-              // Auto-expand parent if collapsed
-              const parent = state.tasks.find((t) => t.id === newParentId);
-              if (parent && parent.open === false) {
-                parent.open = true;
-              }
+        // Apply all changes at once
+        changes.forEach(({ taskId, newParentId }) => {
+          const task = state.tasks.find((t) => t.id === taskId);
+          if (task) {
+            task.parent = newParentId;
+
+            // Auto-expand parent if collapsed
+            const parent = state.tasks.find((t) => t.id === newParentId);
+            if (parent && parent.open === false) {
+              parent.open = true;
             }
           }
         });
@@ -481,25 +494,38 @@ export const useTaskStore = create<TaskStore>()(
         const { tasks, selectedTaskIds } = state;
         if (selectedTaskIds.length === 0) return;
 
+        // Create snapshot of current hierarchy BEFORE any changes
+        const originalHierarchy = new Map(
+          tasks.map((t) => [t.id, { parent: t.parent, level: getTaskLevel(tasks, t.id) }])
+        );
+
+        // Calculate all changes based on ORIGINAL hierarchy
+        const changes: Array<{ taskId: string; newParentId: string | undefined }> = [];
+
         selectedTaskIds.forEach((taskId) => {
           const task = tasks.find((t) => t.id === taskId);
           if (!task?.parent) return; // Already on root level
 
-          const currentLevel = getTaskLevel(tasks, taskId);
+          const currentLevel = originalHierarchy.get(taskId)?.level ?? 0;
           const parent = tasks.find((t) => t.id === task.parent);
           if (!parent) return;
 
           const grandParent = parent.parent;
 
-          // Calculate new level to ensure we only jump one level
-          const newLevel = grandParent ? getTaskLevel(tasks, grandParent) + 1 : 0;
+          // Calculate new level based on ORIGINAL hierarchy
+          const newLevel = grandParent ? (originalHierarchy.get(grandParent)?.level ?? 0) + 1 : 0;
 
           // Validation: Ensure task only moves exactly one level up
           if (newLevel === currentLevel - 1) {
-            const stateTask = state.tasks.find((t) => t.id === taskId);
-            if (stateTask) {
-              stateTask.parent = grandParent || undefined;
-            }
+            changes.push({ taskId, newParentId: grandParent });
+          }
+        });
+
+        // Apply all changes at once
+        changes.forEach(({ taskId, newParentId }) => {
+          const task = state.tasks.find((t) => t.id === taskId);
+          if (task) {
+            task.parent = newParentId || undefined;
           }
         });
       }),
