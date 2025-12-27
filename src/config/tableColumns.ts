@@ -74,6 +74,21 @@ export const TASK_COLUMNS: ColumnDefinition[] = [
     validator: (value) => validateTaskName(String(value)),
   },
   {
+    id: 'type',
+    field: 'type',
+    label: 'Type',
+    defaultWidth: '120px',
+    editable: true,
+    renderer: 'custom',
+    validator: (value) => {
+      const validTypes = ['task', 'summary', 'milestone'];
+      if (!validTypes.includes(String(value))) {
+        return { valid: false, error: 'Type must be task, summary, or milestone' };
+      }
+      return { valid: true };
+    },
+  },
+  {
     id: 'startDate',
     field: 'startDate',
     label: 'Start Date',

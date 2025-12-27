@@ -11,6 +11,7 @@ import type { Task } from '../../types/chart.types';
 import { useTaskStore } from '../../store/slices/taskSlice';
 import { Cell } from './Cell';
 import { ColorCellEditor } from './CellEditors/ColorCellEditor';
+import { TypeCellEditor } from './CellEditors/TypeCellEditor';
 import { TASK_COLUMNS } from '../../config/tableColumns';
 import { useCellNavigation } from '../../hooks/useCellNavigation';
 import { TaskTypeIcon } from './TaskTypeIcon';
@@ -219,6 +220,27 @@ export function TaskTableRow({
                   {task.name}
                 </span>
               </div>
+            </Cell>
+          );
+        }
+
+        // Special handling for type field with type selector
+        if (field === 'type') {
+          const isEditing = isCellEditing(task.id, field);
+
+          return (
+            <Cell key={field} taskId={task.id} task={displayTask} field={field} column={column}>
+              {isEditing ? (
+                <TypeCellEditor
+                  value={displayTask.type || 'task'}
+                  onChange={(value) => updateTask(task.id, { type: value })}
+                />
+              ) : (
+                <div className="flex items-center gap-2">
+                  <TaskTypeIcon type={displayTask.type} />
+                  <span className="capitalize">{displayTask.type || 'task'}</span>
+                </div>
+              )}
             </Cell>
           );
         }

@@ -16,7 +16,7 @@ import { canHaveChildren } from '../../utils/validation';
 /**
  * Editable field types for cell-based editing.
  */
-export type EditableField = 'name' | 'startDate' | 'endDate' | 'duration' | 'progress' | 'color';
+export type EditableField = 'name' | 'startDate' | 'endDate' | 'duration' | 'progress' | 'color' | 'type';
 
 /**
  * Cell navigation direction.
@@ -93,7 +93,7 @@ type TaskStore = TaskState & TaskActions;
 /**
  * Editable fields in order of tab navigation.
  */
-const EDITABLE_FIELDS: EditableField[] = ['name', 'startDate', 'endDate', 'duration', 'progress', 'color'];
+const EDITABLE_FIELDS: EditableField[] = ['name', 'type', 'startDate', 'endDate', 'duration', 'progress', 'color'];
 
 export const useTaskStore = create<TaskStore>()(
   immer((set, get) => ({
@@ -122,6 +122,15 @@ export const useTaskStore = create<TaskStore>()(
       set((state) => {
         const taskIndex = state.tasks.findIndex((task) => task.id === id);
         if (taskIndex !== -1) {
+          // Validate type change to milestone
+          if (updates.type === 'milestone') {
+            const hasChildren = state.tasks.some((t) => t.parent === id);
+            if (hasChildren) {
+              console.warn('Cannot convert to milestone: task has children');
+              return;
+            }
+          }
+
           state.tasks[taskIndex] = {
             ...state.tasks[taskIndex],
             ...updates,
