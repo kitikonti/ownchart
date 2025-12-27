@@ -1,10 +1,10 @@
 /**
  * TaskTypeIcon component.
- * Renders type-specific icons using Heroicons.
+ * Renders type-specific icons using Phosphor Icons.
  * Based on SVAR React Gantt pattern.
  */
 
-import { FolderIcon, DocumentIcon, FlagIcon } from '@heroicons/react/24/outline';
+import { Folder, File, Flag } from '@phosphor-icons/react';
 import type { TaskType } from '../../types/chart.types';
 
 interface TaskTypeIconProps {
@@ -14,13 +14,13 @@ interface TaskTypeIconProps {
 export function TaskTypeIcon({ type = 'task' }: TaskTypeIconProps): JSX.Element {
   switch (type) {
     case 'summary':
-      return <FolderIcon className="w-4 h-4 text-blue-600 flex-shrink-0" />;
+      return <Folder size={16} weight="regular" className="text-blue-600 flex-shrink-0" />;
 
     case 'milestone':
-      return <FlagIcon className="w-4 h-4 text-purple-600 flex-shrink-0" />;
+      return <Flag size={16} weight="regular" className="text-purple-600 flex-shrink-0" />;
 
     case 'task':
     default:
-      return <DocumentIcon className="w-4 h-4 text-gray-500 flex-shrink-0" />;
+      return <File size={16} weight="regular" className="text-gray-500 flex-shrink-0" />;
   }
 }
