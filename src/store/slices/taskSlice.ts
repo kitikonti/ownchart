@@ -129,6 +129,10 @@ export const useTaskStore = create<TaskStore>()(
               console.warn('Cannot convert to milestone: task has children');
               return;
             }
+            // Clear end date, duration, and progress for milestones
+            updates.endDate = '';
+            updates.duration = 0;
+            updates.progress = 0;
           }
 
           state.tasks[taskIndex] = {

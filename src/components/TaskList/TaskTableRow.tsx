@@ -7,6 +7,7 @@
 import { useMemo } from 'react';
 import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
+import { Trash } from '@phosphor-icons/react';
 import type { Task } from '../../types/chart.types';
 import { useTaskStore } from '../../store/slices/taskSlice';
 import { Cell } from './Cell';
@@ -136,7 +137,7 @@ export function TaskTableRow({
       ref={setNodeRef}
       style={style}
       className={`task-table-row col-span-full grid ${
-        isSelected ? 'bg-blue-50' : task.type === 'summary' ? 'bg-gray-50' : ''
+        isSelected ? 'bg-blue-50' : ''
       }`}
       role="row"
     >
@@ -216,7 +217,7 @@ export function TaskTableRow({
                 <TaskTypeIcon type={task.type} />
 
                 {/* Task name display */}
-                <span className={`flex-1 ${task.type === 'summary' ? 'font-semibold' : ''}`}>
+                <span className="flex-1">
                   {task.name}
                 </span>
               </div>
@@ -258,15 +259,33 @@ export function TaskTableRow({
           );
         }
 
-        // Special handling for duration in summary tasks (read-only)
-        if (field === 'duration' && task.type === 'summary') {
+        // Special handling for end date in milestone tasks (read-only, empty)
+        if (field === 'endDate' && task.type === 'milestone') {
           return (
             <Cell key={field} taskId={task.id} task={displayTask} field={field} column={column}>
-              {displayTask.duration > 0 ? (
+              <span></span>
+            </Cell>
+          );
+        }
+
+        // Special handling for duration in summary and milestone tasks (read-only)
+        if (field === 'duration' && (task.type === 'summary' || task.type === 'milestone')) {
+          return (
+            <Cell key={field} taskId={task.id} task={displayTask} field={field} column={column}>
+              {task.type === 'summary' && displayTask.duration > 0 ? (
                 <span className="text-gray-500 italic">{displayTask.duration} days</span>
               ) : (
                 <span></span>
               )}
+            </Cell>
+          );
+        }
+
+        // Special handling for progress in milestone tasks (read-only, empty)
+        if (field === 'progress' && task.type === 'milestone') {
+          return (
+            <Cell key={field} taskId={task.id} task={displayTask} field={field} column={column}>
+              <span></span>
             </Cell>
           );
         }
@@ -309,19 +328,7 @@ export function TaskTableRow({
           aria-label="Delete task"
           title="Delete task"
         >
-          <svg
-            className="w-4 h-4"
-            fill="none"
-            stroke="currentColor"
-            viewBox="0 0 24 24"
-          >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth={2}
-              d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
-            />
-          </svg>
+          <Trash size={16} weight="light" />
         </button>
       </div>
     </div>
