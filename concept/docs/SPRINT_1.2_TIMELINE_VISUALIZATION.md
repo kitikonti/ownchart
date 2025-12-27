@@ -972,6 +972,330 @@ export function TodayMarker({ scale }: TodayMarkerProps) {
 
 ---
 
+#### Task 1.2.8: Task Tooltips (SVAR-Inspired)
+
+**File:** `src/components/GanttChart/TaskTooltip.tsx`
+
+**Why:** SVAR shows rich tooltips on hover - essential for UX
+
+**Component:**
+```typescript
+interface TaskTooltipProps {
+  task: Task | null;
+  position: { x: number; y: number } | null;
+}
+
+export function TaskTooltip({ task, position }: TaskTooltipProps) {
+  if (!task || !position) return null;
+
+  return (
+    <div
+      className="task-tooltip"
+      style={{
+        position: 'fixed',
+        left: position.x + 10,
+        top: position.y + 10,
+        pointerEvents: 'none',
+        zIndex: 1000
+      }}
+    >
+      <div className="tooltip-content">
+        <div className="tooltip-header">
+          <strong>{task.name}</strong>
+          {task.type === 'milestone' && (
+            <span className="badge">Milestone</span>
+          )}
+        </div>
+        <div className="tooltip-body">
+          <div>Start: {formatDate(task.startDate, 'MMM dd, yyyy')}</div>
+          <div>End: {formatDate(task.endDate, 'MMM dd, yyyy')}</div>
+          <div>Duration: {calculateDuration(task.startDate, task.endDate)} days</div>
+          {task.type !== 'milestone' && (
+            <div>Progress: {task.progress}%</div>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+```
+
+**Hook for Tooltip Management:**
+```typescript
+// In TaskBar component
+const [hoveredTask, setHoveredTask] = useState<Task | null>(null);
+const [tooltipPosition, setTooltipPosition] = useState<{ x: number; y: number } | null>(null);
+
+const handleMouseEnter = (e: React.MouseEvent, task: Task) => {
+  setHoveredTask(task);
+  setTooltipPosition({ x: e.clientX, y: e.clientY });
+};
+
+const handleMouseLeave = () => {
+  setHoveredTask(null);
+  setTooltipPosition(null);
+};
+```
+
+**Styling:**
+```css
+.task-tooltip {
+  background: white;
+  border: 1px solid #dee2e6;
+  border-radius: 6px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  padding: 12px;
+  font-size: 13px;
+  max-width: 300px;
+}
+
+.tooltip-header {
+  font-size: 14px;
+  margin-bottom: 8px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid #e9ecef;
+}
+
+.tooltip-body > div {
+  margin: 4px 0;
+  color: #495057;
+}
+```
+
+**Acceptance Criteria:**
+- ✓ Tooltip appears on task hover
+- ✓ Shows task name, dates, duration, progress
+- ✓ Positioned near cursor
+- ✓ Disappears on mouse leave
+- ✓ Doesn't block interactions
+- ✓ Works for all task types
+
+---
+
+#### Task 1.2.9: Hover States & Visual Feedback
+
+**Enhancement to TaskBar component**
+
+**Feature:** Highlight tasks on hover (SVAR pattern)
+
+**Implementation:**
+```typescript
+export const TaskBar = React.memo(function TaskBar({
+  task,
+  scale,
+  rowIndex,
+  isSelected,
+  isHovered,  // NEW
+  onClick,
+  onDoubleClick,
+  onMouseEnter,  // NEW
+  onMouseLeave   // NEW
+}: TaskBarProps) {
+  // ... existing code ...
+
+  return (
+    <g
+      className={`task-bar ${task.type} ${isHovered ? 'hovered' : ''}`}
+      onClick={onClick}
+      onDoubleClick={onDoubleClick}
+      onMouseEnter={onMouseEnter}
+      onMouseLeave={onMouseLeave}
+      style={{ cursor: 'pointer' }}
+    >
+      {/* Main task bar with hover effect */}
+      <rect
+        x={geometry.x}
+        y={geometry.y}
+        width={geometry.width}
+        height={geometry.height}
+        fill={task.color}
+        fillOpacity={task.type === 'summary' ? 0.3 : isHovered ? 0.9 : 0.8}
+        stroke={isSelected ? '#228be6' : isHovered ? '#868e96' : 'none'}
+        strokeWidth={isSelected ? 2 : isHovered ? 1 : 0}
+        rx={4}
+        ry={4}
+      />
+
+      {/* ... rest of component ... */}
+    </g>
+  );
+});
+```
+
+**Hover Management in ChartCanvas:**
+```typescript
+const [hoveredTaskId, setHoveredTaskId] = useState<string | null>(null);
+
+// Pass hover state to TaskBar
+<TaskBar
+  isHovered={hoveredTaskId === task.id}
+  onMouseEnter={() => setHoveredTaskId(task.id)}
+  onMouseLeave={() => setHoveredTaskId(null)}
+/>
+```
+
+**Visual Effects:**
+- Slight opacity increase on hover
+- Subtle border appears
+- Cursor changes to pointer
+- Syncs with table row hover (optional)
+
+**Acceptance Criteria:**
+- ✓ Task highlights on hover
+- ✓ Visual feedback is subtle but clear
+- ✓ Performance: no jank with 100+ tasks
+- ✓ Hover state clears on mouse leave
+
+---
+
+#### Task 1.2.10: Sticky Timeline Header
+
+**Feature:** Timeline header stays visible during vertical scroll (SVAR pattern)
+
+**Implementation in ChartCanvas:**
+```typescript
+export function ChartCanvas({ tasks, ... }: ChartCanvasProps) {
+  const scrollContainerRef = useRef<HTMLDivElement>(null);
+  const [scrollTop, setScrollTop] = useState(0);
+
+  // Track scroll position
+  const handleScroll = useCallback((e: React.UIEvent<HTMLDivElement>) => {
+    setScrollTop(e.currentTarget.scrollTop);
+  }, []);
+
+  return (
+    <div
+      ref={scrollContainerRef}
+      className="chart-canvas-container"
+      onScroll={handleScroll}
+    >
+      <svg width={scale.totalWidth} height={svgHeight}>
+        {/* Sticky header - translate with scroll */}
+        <g transform={`translate(0, ${scrollTop})`}>
+          <TimelineHeader scale={scale} />
+        </g>
+
+        {/* Grid and tasks - fixed position */}
+        <GridLines scale={scale} taskCount={tasks.length} />
+        <g className="task-bars">
+          {tasks.map((task, index) => (
+            <TaskBar key={task.id} task={task} scale={scale} rowIndex={index} />
+          ))}
+        </g>
+
+        {/* Today marker - also translate with scroll for header section */}
+        <TodayMarker scale={scale} />
+      </svg>
+    </div>
+  );
+}
+```
+
+**Alternative CSS Approach:**
+```css
+.chart-canvas-container {
+  position: relative;
+  overflow: auto;
+}
+
+.timeline-header {
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  background: #f8f9fa;
+}
+```
+
+**Acceptance Criteria:**
+- ✓ Header stays visible when scrolling vertically
+- ✓ Header scrolls horizontally with content
+- ✓ No visual glitches or jank
+- ✓ Works smoothly with pan/zoom
+
+---
+
+#### Task 1.2.11: Scroll Synchronization (Table ↔ Chart)
+
+**Feature:** Sync vertical scroll between task table and Gantt chart (SVAR pattern)
+
+**File:** `src/hooks/useScrollSync.ts`
+
+**Hook:**
+```typescript
+export function useScrollSync() {
+  const tableRef = useRef<HTMLDivElement>(null);
+  const chartRef = useRef<HTMLDivElement>(null);
+  const isSyncing = useRef(false);
+
+  const syncScroll = useCallback((source: 'table' | 'chart', scrollTop: number) => {
+    if (isSyncing.current) return;
+
+    isSyncing.current = true;
+
+    const target = source === 'table' ? chartRef.current : tableRef.current;
+    if (target) {
+      target.scrollTop = scrollTop;
+    }
+
+    // Reset flag after scroll completes
+    requestAnimationFrame(() => {
+      isSyncing.current = false;
+    });
+  }, []);
+
+  const handleTableScroll = useCallback((e: React.UIEvent<HTMLDivElement>) => {
+    syncScroll('table', e.currentTarget.scrollTop);
+  }, [syncScroll]);
+
+  const handleChartScroll = useCallback((e: React.UIEvent<HTMLDivElement>) => {
+    syncScroll('chart', e.currentTarget.scrollTop);
+  }, [syncScroll]);
+
+  return {
+    tableRef,
+    chartRef,
+    handleTableScroll,
+    handleChartScroll
+  };
+}
+```
+
+**Usage in App.tsx:**
+```typescript
+function App() {
+  const { tableRef, chartRef, handleTableScroll, handleChartScroll } = useScrollSync();
+
+  return (
+    <div className="main-layout">
+      <div
+        ref={tableRef}
+        className="task-panel"
+        onScroll={handleTableScroll}
+      >
+        <TaskTable />
+      </div>
+
+      <div
+        ref={chartRef}
+        className="chart-panel"
+        onScroll={handleChartScroll}
+      >
+        <ChartCanvas tasks={tasks} />
+      </div>
+    </div>
+  );
+}
+```
+
+**Acceptance Criteria:**
+- ✓ Scrolling table scrolls chart (vertical only)
+- ✓ Scrolling chart scrolls table (vertical only)
+- ✓ Horizontal scroll independent
+- ✓ No infinite loop or jank
+- ✓ Smooth 60fps scrolling
+
+---
+
 ### Phase 3: Pan & Zoom (2 days)
 
 #### Task 1.2.8: usePanZoom Hook
