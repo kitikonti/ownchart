@@ -452,11 +452,15 @@ export const useTaskStore = create<TaskStore>()(
           const newParent = tasks.find((t) => t.id === newParentId);
           if (!newParent) return;
 
+          // Calculate new parent's level to ensure we only jump one level
+          const newParentLevel = getTaskLevel(tasks, newParentId);
+
           // Validation
           if (
             canHaveChildren(newParent) &&
             level < 2 && // Max 3 levels (0, 1, 2)
-            !wouldCreateCircularHierarchy(tasks, newParentId, taskId)
+            !wouldCreateCircularHierarchy(tasks, newParentId, taskId) &&
+            newParentLevel === level // Ensure parent is on same level (task will be level + 1)
           ) {
             const task = state.tasks.find((t) => t.id === taskId);
             if (task) {
@@ -474,18 +478,29 @@ export const useTaskStore = create<TaskStore>()(
 
     outdentSelectedTasks: () =>
       set((state) => {
-        const { selectedTaskIds } = state;
+        const { tasks, selectedTaskIds } = state;
         if (selectedTaskIds.length === 0) return;
 
         selectedTaskIds.forEach((taskId) => {
-          const task = state.tasks.find((t) => t.id === taskId);
+          const task = tasks.find((t) => t.id === taskId);
           if (!task?.parent) return; // Already on root level
 
-          const parent = state.tasks.find((t) => t.id === task.parent);
-          const grandParent = parent?.parent;
+          const currentLevel = getTaskLevel(tasks, taskId);
+          const parent = tasks.find((t) => t.id === task.parent);
+          if (!parent) return;
 
-          // Move task to parent's level
-          task.parent = grandParent || undefined;
+          const grandParent = parent.parent;
+
+          // Calculate new level to ensure we only jump one level
+          const newLevel = grandParent ? getTaskLevel(tasks, grandParent) + 1 : 0;
+
+          // Validation: Ensure task only moves exactly one level up
+          if (newLevel === currentLevel - 1) {
+            const stateTask = state.tasks.find((t) => t.id === taskId);
+            if (stateTask) {
+              stateTask.parent = grandParent || undefined;
+            }
+          }
         });
       }),
 
