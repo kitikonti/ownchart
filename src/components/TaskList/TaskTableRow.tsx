@@ -217,9 +217,18 @@ export function TaskTableRow({
                   type={task.type}
                   onClick={() => {
                     const currentType = task.type || 'task';
-                    const nextType =
-                      currentType === 'task' ? 'summary' :
-                      currentType === 'summary' ? 'milestone' : 'task';
+                    let nextType: Task['type'];
+
+                    if (hasChildren) {
+                      // When task has children, only allow task ↔ summary (skip milestone)
+                      nextType = currentType === 'task' ? 'summary' : 'task';
+                    } else {
+                      // When no children, cycle through all types
+                      nextType =
+                        currentType === 'task' ? 'summary' :
+                        currentType === 'summary' ? 'milestone' : 'task';
+                    }
+
                     updateTask(task.id, { type: nextType });
                   }}
                 />
