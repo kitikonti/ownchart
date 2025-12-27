@@ -39,6 +39,7 @@ export function TaskTableRow({
   const lastSelectedTaskId = useTaskStore((state) => state.lastSelectedTaskId);
   const toggleTaskSelection = useTaskStore((state) => state.toggleTaskSelection);
   const selectTaskRange = useTaskStore((state) => state.selectTaskRange);
+  const setActiveCell = useTaskStore((state) => state.setActiveCell);
   const { isCellEditing } = useCellNavigation();
 
   const isSelected = selectedTaskIds.includes(task.id);
@@ -149,6 +150,10 @@ export function TaskTableRow({
           onChange={(e) => {
             e.stopPropagation();
             const nativeEvent = e.nativeEvent as MouseEvent;
+
+            // Deactivate any active cell when selecting tasks via checkbox
+            setActiveCell(null, null);
+
             if (nativeEvent.shiftKey && lastSelectedTaskId) {
               selectTaskRange(lastSelectedTaskId, task.id);
             } else {

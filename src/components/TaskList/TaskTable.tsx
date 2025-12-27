@@ -40,6 +40,7 @@ export function TaskTable(): JSX.Element {
   const outdentSelectedTasks = useTaskStore((state) => state.outdentSelectedTasks);
   const canIndent = useTaskStore((state) => state.canIndentSelection());
   const canOutdent = useTaskStore((state) => state.canOutdentSelection());
+  const activeCell = useTaskStore((state) => state.activeCell);
 
   // Build flattened list respecting collapsed state
   const flattenedTasks = useMemo(() => {
@@ -55,25 +56,26 @@ export function TaskTable(): JSX.Element {
   // Keyboard shortcuts for indent/outdent
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      // Only handle when Ctrl (or Cmd on Mac) is pressed
-      if (!(e.ctrlKey || e.metaKey)) return;
+      // Only handle Tab shortcuts when NO cell is active
+      // (When a cell is active, Cell.tsx handles Tab for column navigation)
+      const noCellActive = !activeCell.taskId && !activeCell.field;
 
-      // Indent: Ctrl+]
-      if (e.key === ']' && canIndent) {
+      if (e.key === 'Tab' && noCellActive && selectedTaskIds.length > 0) {
         e.preventDefault();
-        indentSelectedTasks();
-      }
 
-      // Outdent: Ctrl+[
-      if (e.key === '[' && canOutdent) {
-        e.preventDefault();
-        outdentSelectedTasks();
+        if (e.shiftKey && canOutdent) {
+          // Shift+Tab: Outdent
+          outdentSelectedTasks();
+        } else if (!e.shiftKey && canIndent) {
+          // Tab: Indent
+          indentSelectedTasks();
+        }
       }
     };
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [canIndent, canOutdent, indentSelectedTasks, outdentSelectedTasks]);
+  }, [activeCell, canIndent, canOutdent, selectedTaskIds, indentSelectedTasks, outdentSelectedTasks]);
 
   const sensors = useSensors(
     useSensor(PointerSensor),

@@ -17,7 +17,7 @@ export function HierarchyButtons() {
       <button
         onClick={outdentSelectedTasks}
         disabled={!canOutdent}
-        title="Move left (outdent) - Ctrl+["
+        title="Move left (outdent) - Shift+Tab"
         className={`
           px-2 py-1 rounded border flex items-center gap-1 text-sm
           ${
@@ -34,7 +34,7 @@ export function HierarchyButtons() {
       <button
         onClick={indentSelectedTasks}
         disabled={!canIndent}
-        title="Move right (indent) - Ctrl+]"
+        title="Move right (indent) - Tab"
         className={`
           px-2 py-1 rounded border flex items-center gap-1 text-sm
           ${
