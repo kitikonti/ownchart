@@ -1,14 +1,48 @@
+import { ChartBarHorizontal } from '@phosphor-icons/react';
 import { TaskTable } from './components/TaskList/TaskTable';
+import { HierarchyButtons } from './components/TaskList/HierarchyButtons';
+import { useTaskStore } from './store/slices/taskSlice';
 
 function App(): JSX.Element {
+  const tasks = useTaskStore((state) => state.tasks);
+  const addTask = useTaskStore((state) => state.addTask);
+
+  const handleAddTask = () => {
+    const today = new Date();
+    const nextWeek = new Date(today);
+    nextWeek.setDate(today.getDate() + 7);
+
+    const formatDate = (date: Date): string => {
+      return date.toISOString().split('T')[0];
+    };
+
+    addTask({
+      name: 'New Task',
+      startDate: formatDate(today),
+      endDate: formatDate(nextWeek),
+      duration: 7,
+      progress: 0,
+      color: '#3b82f6',
+      order: tasks.length,
+      type: 'task',
+      parent: undefined,
+      metadata: {},
+    });
+  };
+
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col">
-      {/* Header */}
-      <header className="bg-white border-b border-gray-200 px-6 py-4">
-        <h1 className="text-2xl font-bold text-gray-900">
-          Gantt Chart Application
-        </h1>
-        <p className="text-sm text-gray-600 mt-1">Sprint 1.1+: Excel-like Task Table</p>
+      {/* Header Toolbar */}
+      <header className="bg-white border-b border-gray-200 px-4 py-2 flex items-center gap-3">
+        <ChartBarHorizontal size={24} weight="regular" className="text-gray-700" />
+        <button
+          onClick={handleAddTask}
+          className="px-3 py-1.5 bg-blue-600 text-white text-sm font-medium rounded hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
+          aria-label="Add new task"
+        >
+          + Add Task
+        </button>
+        <HierarchyButtons />
       </header>
 
       {/* Main Content */}

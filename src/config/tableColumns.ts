@@ -76,7 +76,7 @@ export const TASK_COLUMNS: ColumnDefinition[] = [
   {
     id: 'name',
     field: 'name',
-    label: 'Task Name',
+    label: 'Name',
     defaultWidth: 'minmax(200px, 1fr)',
     editable: true,
     renderer: 'text',

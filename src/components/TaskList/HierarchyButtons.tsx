@@ -13,22 +13,21 @@ export function HierarchyButtons() {
   const canOutdent = useTaskStore((state) => state.canOutdentSelection());
 
   return (
-    <div className="flex gap-1 border-r border-gray-300 pr-3 mr-3">
+    <div className="flex gap-1">
       <button
         onClick={outdentSelectedTasks}
         disabled={!canOutdent}
         title="Move left (outdent) - Shift+Tab"
         className={`
-          px-2 py-1 rounded border flex items-center gap-1 text-sm
+          p-1.5 rounded flex items-center justify-center
           ${
             canOutdent
-              ? 'bg-white border-gray-300 hover:bg-gray-50 text-gray-700'
-              : 'bg-gray-100 border-gray-200 text-gray-400 cursor-not-allowed'
+              ? 'hover:bg-gray-100 text-gray-700'
+              : 'text-gray-400 cursor-not-allowed'
           }
         `}
       >
         <TextOutdent size={16} weight="regular" />
-        <span>Outdent</span>
       </button>
 
       <button
@@ -36,16 +35,15 @@ export function HierarchyButtons() {
         disabled={!canIndent}
         title="Move right (indent) - Tab"
         className={`
-          px-2 py-1 rounded border flex items-center gap-1 text-sm
+          p-1.5 rounded flex items-center justify-center
           ${
             canIndent
-              ? 'bg-white border-gray-300 hover:bg-gray-50 text-gray-700'
-              : 'bg-gray-100 border-gray-200 text-gray-400 cursor-not-allowed'
+              ? 'hover:bg-gray-100 text-gray-700'
+              : 'text-gray-400 cursor-not-allowed'
           }
         `}
       >
         <TextIndent size={16} weight="regular" />
-        <span>Indent</span>
       </button>
     </div>
   );
