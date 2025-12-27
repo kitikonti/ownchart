@@ -59,7 +59,7 @@ export function ColorCellEditor({
   };
 
   return (
-    <div className="w-6 h-6 rounded border border-gray-300 overflow-hidden">
+    <div className="w-1.5 h-7 rounded overflow-hidden">
       <input
         ref={inputRef}
         type="color"

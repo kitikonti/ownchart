@@ -283,17 +283,19 @@ export function TaskTableRow({
 
           return (
             <Cell key={field} taskId={task.id} task={displayTask} field={field} column={column}>
-              {isEditing ? (
-                <ColorCellEditor
-                  value={displayTask.color}
-                  onChange={(value) => updateTask(task.id, { color: value })}
-                />
-              ) : (
-                <div
-                  className="w-6 h-6 rounded border border-gray-300"
-                  style={{ backgroundColor: displayTask.color }}
-                />
-              )}
+              <div className="flex items-center justify-center w-full h-full">
+                {isEditing ? (
+                  <ColorCellEditor
+                    value={displayTask.color}
+                    onChange={(value) => updateTask(task.id, { color: value })}
+                  />
+                ) : (
+                  <div
+                    className="w-1.5 h-7 rounded"
+                    style={{ backgroundColor: displayTask.color }}
+                  />
+                )}
+              </div>
             </Cell>
           );
         }

@@ -287,7 +287,7 @@ export function TaskTable(): JSX.Element {
               {TASK_COLUMNS.map((column, index) => (
                 <div
                   key={column.id}
-                  className="task-table-header-cell sticky top-0 z-10 px-3 py-2 bg-gray-50 border-b-2 border-r border-gray-300 text-xs font-semibold text-gray-700 uppercase tracking-wider relative"
+                  className={`task-table-header-cell sticky top-0 z-10 ${column.id === 'name' ? 'pr-3' : 'px-3'} py-2 bg-gray-50 border-b-2 ${column.id !== 'color' ? 'border-r' : ''} border-gray-300 text-xs font-semibold text-gray-700 uppercase tracking-wider relative`}
                   role="columnheader"
                 >
                   {column.id === 'checkbox' ? (
@@ -305,6 +305,8 @@ export function TaskTable(): JSX.Element {
                         title={allSelected ? 'Deselect all' : 'Select all'}
                       />
                     </div>
+                  ) : column.id === 'color' ? (
+                    ''
                   ) : (
                     column.label
                   )}

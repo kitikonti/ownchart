@@ -65,6 +65,15 @@ export const TASK_COLUMNS: ColumnDefinition[] = [
     renderer: 'custom',
   },
   {
+    id: 'color',
+    field: 'color',
+    label: '',
+    defaultWidth: '32px',
+    editable: true,
+    renderer: 'color',
+    validator: (value) => validateColor(String(value)),
+  },
+  {
     id: 'name',
     field: 'name',
     label: 'Task Name',
@@ -116,15 +125,6 @@ export const TASK_COLUMNS: ColumnDefinition[] = [
     renderer: 'number',
     validator: (value) => validateProgress(Number(value)),
     formatter: (value) => `${value}%`,
-  },
-  {
-    id: 'color',
-    field: 'color',
-    label: 'Color',
-    defaultWidth: '80px',
-    editable: true,
-    renderer: 'color',
-    validator: (value) => validateColor(String(value)),
   },
   {
     id: 'delete',
