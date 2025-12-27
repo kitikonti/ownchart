@@ -12,7 +12,6 @@ import type { Task } from '../../types/chart.types';
 import { useTaskStore } from '../../store/slices/taskSlice';
 import { Cell } from './Cell';
 import { ColorCellEditor } from './CellEditors/ColorCellEditor';
-import { TypeCellEditor } from './CellEditors/TypeCellEditor';
 import { TASK_COLUMNS } from '../../config/tableColumns';
 import { useCellNavigation } from '../../hooks/useCellNavigation';
 import { TaskTypeIcon } from './TaskTypeIcon';
@@ -213,35 +212,23 @@ export function TaskTableRow({
                   <div className="w-4 flex-shrink-0" />
                 )}
 
-                {/* Task type icon */}
-                <TaskTypeIcon type={task.type} />
+                {/* Task type icon - clickable to cycle through types */}
+                <TaskTypeIcon
+                  type={task.type}
+                  onClick={() => {
+                    const currentType = task.type || 'task';
+                    const nextType =
+                      currentType === 'task' ? 'summary' :
+                      currentType === 'summary' ? 'milestone' : 'task';
+                    updateTask(task.id, { type: nextType });
+                  }}
+                />
 
                 {/* Task name display */}
                 <span className="flex-1">
                   {task.name}
                 </span>
               </div>
-            </Cell>
-          );
-        }
-
-        // Special handling for type field with type selector
-        if (field === 'type') {
-          const isEditing = isCellEditing(task.id, field);
-
-          return (
-            <Cell key={field} taskId={task.id} task={displayTask} field={field} column={column}>
-              {isEditing ? (
-                <TypeCellEditor
-                  value={displayTask.type || 'task'}
-                  onChange={(value) => updateTask(task.id, { type: value })}
-                />
-              ) : (
-                <div className="flex items-center gap-2">
-                  <TaskTypeIcon type={displayTask.type} />
-                  <span className="capitalize">{displayTask.type || 'task'}</span>
-                </div>
-              )}
             </Cell>
           );
         }
@@ -328,7 +315,7 @@ export function TaskTableRow({
           aria-label="Delete task"
           title="Delete task"
         >
-          <Trash size={16} weight="light" />
+          <Trash size={16} weight="regular" />
         </button>
       </div>
     </div>

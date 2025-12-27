@@ -9,18 +9,29 @@ import type { TaskType } from '../../types/chart.types';
 
 interface TaskTypeIconProps {
   type?: TaskType;
+  onClick?: () => void;
+  className?: string;
 }
 
-export function TaskTypeIcon({ type = 'task' }: TaskTypeIconProps): JSX.Element {
+export function TaskTypeIcon({ type = 'task', onClick, className = '' }: TaskTypeIconProps): JSX.Element {
+  const iconClassName = `text-gray-600 flex-shrink-0 ${onClick ? 'cursor-pointer hover:text-blue-600 transition-colors' : ''} ${className}`;
+
+  const handleClick = (e: React.MouseEvent) => {
+    if (onClick) {
+      e.stopPropagation();
+      onClick();
+    }
+  };
+
   switch (type) {
     case 'summary':
-      return <Folder size={16} weight="light" className="text-gray-600 flex-shrink-0" />;
+      return <Folder size={16} weight="regular" className={iconClassName} onClick={handleClick} />;
 
     case 'milestone':
-      return <Diamond size={16} weight="light" className="text-gray-600 flex-shrink-0" />;
+      return <Diamond size={16} weight="regular" className={iconClassName} onClick={handleClick} />;
 
     case 'task':
     default:
-      return <CheckSquare size={16} weight="light" className="text-gray-600 flex-shrink-0" />;
+      return <CheckSquare size={16} weight="regular" className={iconClassName} onClick={handleClick} />;
   }
 }
