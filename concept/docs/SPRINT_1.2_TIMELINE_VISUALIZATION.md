@@ -1,9 +1,10 @@
 # Sprint 1.2: Timeline & Visualization
 
-**Date:** 2025-12-27
-**Status:** Planning
-**Duration Estimate:** 1.5 weeks (solo, 20hrs/wk) or 3-5 days (based on actual velocity)
-**Goal:** Render tasks as bars on an SVG-based Gantt timeline with pan/zoom interactions
+**Date:** 2025-12-28 (Updated after Team Review)
+**Status:** Planning (Enhanced with 6 Team Reviews)
+**Duration Estimate:** 2-2.5 weeks (solo, 20hrs/wk) or 8-10 days (based on actual velocity)
+**Goal:** Build interactive Gantt timeline with visual planning, drag-to-edit, and professional UX
+**Review Status:** ✅ Approved by UX/UI, Frontend Dev, Data Viz, Architect, Product Owner, QA
 
 ---
 
@@ -30,14 +31,110 @@ After completing Sprint 1.1 (Basic Task Management), Sprint 1.15 (Hierarchical O
 
 ---
 
-## Goals
+## Goals (Updated After Review)
 
-1. **Date Utilities**: Core date calculation functions using date-fns
-2. **Timeline Scale System**: Coordinate mapping (dates ↔ pixels)
-3. **SVG-Based Chart**: Render timeline with tasks as bars
-4. **Pan & Zoom**: Interactive timeline navigation
-5. **Today Marker**: Visual indicator for current date
-6. **Performance**: 100 tasks @ 60fps, smooth interactions
+### Primary Goals
+1. **Interactive Timeline Editor**: Drag task bars to change dates (not just visualization)
+2. **Professional UX**: Multi-level scales, keyboard navigation, accessibility
+3. **Dependency Visualization**: Show existing dependency arrows (basic rendering)
+4. **Performance**: 100 tasks @ 60fps with optimized rendering
+5. **Testable Packages**: Small, independently testable implementation units
+
+### Technical Goals
+6. **Date Utilities**: Core date calculation functions using date-fns
+7. **Timeline Scale System**: Adaptive zoom-aware coordinate mapping
+8. **SVG-Based Chart**: Layered rendering architecture
+9. **State Management**: Centralized chartSlice with clear lifecycle
+10. **Comprehensive Testing**: 70%+ coverage with visual regression
+
+---
+
+## 🎯 Implementation Strategy: Testable Packages
+
+**Key Insight from Reviews:** Break sprint into small, independently testable packages that deliver incremental value.
+
+### Package-Based Approach
+
+Each package is a **complete, testable unit** that you can verify before moving to the next. No "big bang" integration at the end.
+
+**Structure:**
+```
+Package 1: Core Foundation (2 days)
+  ├─ Test Checkpoint 1: "I can see tasks on a timeline"
+
+Package 2: Interactive Editing (2-3 days) ⭐ CRITICAL
+  ├─ Test Checkpoint 2: "I can drag bars to change dates"
+
+Package 3: Navigation & Scale (1-2 days)
+  ├─ Test Checkpoint 3: "I can zoom and pan smoothly"
+
+Package 4: Visual Dependencies (1 day)
+  ├─ Test Checkpoint 4: "I can see dependency arrows"
+
+Package 5: Accessibility & Keyboard (1 day)
+  ├─ Test Checkpoint 5: "I can navigate with keyboard"
+
+Package 6: Polish & Performance (1-2 days)
+  ├─ Test Checkpoint 6: "Everything is smooth and polished"
+```
+
+### Test Checkpoint Format
+
+After each package, you'll verify:
+- ✅ **Visual Test**: What you should see on screen
+- ✅ **Interaction Test**: What you should be able to do
+- ✅ **Regression Test**: Existing features still work
+- ✅ **Performance Test**: No lag or jank
+
+**Example Checkpoint:**
+```markdown
+## Test Checkpoint 2: Drag-to-Edit
+
+Visual:
+- Task bars have resize handles on edges (subtle border highlight)
+- Cursor changes to resize icon when hovering edges
+- Drag shows preview outline (dashed)
+
+Interaction:
+- Drag bar left/right → dates update in table
+- Drag left edge → changes start date, duration updates
+- Drag right edge → changes end date, duration updates
+- Invalid drag (negative duration) → shows validation error
+
+Regression:
+- Table still editable
+- Selection still works
+- Multi-select drag doesn't break
+
+Performance:
+- Drag feels smooth (60fps)
+- No lag when dragging with 100 tasks
+```
+
+### Why This Approach?
+
+1. **Early Feedback**: You catch issues immediately, not at the end
+2. **Risk Mitigation**: If a package fails, we haven't built on top of it
+3. **Motivation**: Visible progress after each package
+4. **Quality**: Each package is fully tested before moving forward
+5. **Flexibility**: Can stop at any package if time runs out (still shippable)
+
+---
+
+## 📦 Package Overview
+
+| Package | Duration | Priority | Test Checkpoint |
+|---------|----------|----------|-----------------|
+| **Package 1: Core Foundation** | 2 days | 🔴 Critical | "I can see tasks on timeline" |
+| **Package 2: Interactive Editing** | 2-3 days | 🔴 Critical | "I can drag bars to change dates" |
+| **Package 3: Navigation & Scale** | 1-2 days | 🟡 High | "I can zoom and pan smoothly" |
+| **Package 4: Visual Dependencies** | 1 day | 🟡 High | "I can see dependency arrows" |
+| **Package 5: Accessibility & Keyboard** | 1 day | 🟡 High | "I can navigate with keyboard" |
+| **Package 6: Polish & Performance** | 1-2 days | 🔵 Medium | "Everything is smooth and polished" |
+
+**Total Estimate:** 8-11 days (2-2.5 weeks)
+
+**IMPORTANT:** Detailed implementation for each package follows in the next section. Scroll down for complete task breakdowns, code examples, and test checkpoints.
 
 ---
 
