@@ -131,8 +131,8 @@ export function calculateSummaryDates(
 
   if (!minStart || !maxEnd) return null;
 
-  // Calculate duration in days
-  const duration = Math.ceil((maxEnd.getTime() - minStart.getTime()) / (1000 * 60 * 60 * 24));
+  // Calculate duration in days (inclusive of start and end dates)
+  const duration = Math.ceil((maxEnd.getTime() - minStart.getTime()) / (1000 * 60 * 60 * 24)) + 1;
 
   return {
     startDate: minStart.toISOString().split('T')[0],

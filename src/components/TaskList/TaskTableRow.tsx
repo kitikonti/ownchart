@@ -44,15 +44,27 @@ export function TaskTableRow({
 
   const isSelected = selectedTaskIds.includes(task.id);
 
-  // Calculate summary dates if needed
+  // Calculate summary dates if needed, and recalculate duration for all tasks
   const displayTask = useMemo(() => {
+    let updatedTask = { ...task };
+
     if (task.type === 'summary') {
       const summaryDates = calculateSummaryDates(tasks, task.id);
       if (summaryDates) {
-        return { ...task, ...summaryDates };
+        updatedTask = { ...task, ...summaryDates };
+      } else {
+        // Summary has no children - clear date fields
+        updatedTask = { ...task, startDate: '', endDate: '', duration: 0 };
       }
+    } else if (task.startDate && task.endDate) {
+      // Recalculate duration from dates to ensure consistency
+      const start = new Date(task.startDate);
+      const end = new Date(task.endDate);
+      const calculatedDuration = Math.ceil((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24)) + 1;
+      updatedTask = { ...task, duration: calculatedDuration };
     }
-    return task;
+
+    return updatedTask;
   }, [task, tasks]);
 
   const isExpanded = task.open ?? true;
@@ -215,7 +227,11 @@ export function TaskTableRow({
         if ((field === 'startDate' || field === 'endDate') && task.type === 'summary') {
           return (
             <Cell key={field} taskId={task.id} task={displayTask} field={field} column={column}>
-              <span className="text-gray-500 italic">{displayTask[field]}</span>
+              {displayTask[field] ? (
+                <span className="text-gray-500 italic">{displayTask[field]}</span>
+              ) : (
+                <span></span>
+              )}
             </Cell>
           );
         }
@@ -224,7 +240,11 @@ export function TaskTableRow({
         if (field === 'duration' && task.type === 'summary') {
           return (
             <Cell key={field} taskId={task.id} task={displayTask} field={field} column={column}>
-              <span className="text-gray-500 italic">{displayTask.duration} days</span>
+              {displayTask.duration > 0 ? (
+                <span className="text-gray-500 italic">{displayTask.duration} days</span>
+              ) : (
+                <span></span>
+              )}
             </Cell>
           );
         }
@@ -234,16 +254,16 @@ export function TaskTableRow({
           const isEditing = isCellEditing(task.id, field);
 
           return (
-            <Cell key={field} taskId={task.id} task={task} field={field} column={column}>
+            <Cell key={field} taskId={task.id} task={displayTask} field={field} column={column}>
               {isEditing ? (
                 <ColorCellEditor
-                  value={task.color}
+                  value={displayTask.color}
                   onChange={(value) => updateTask(task.id, { color: value })}
                 />
               ) : (
                 <div
                   className="w-6 h-6 rounded border border-gray-300"
-                  style={{ backgroundColor: task.color }}
+                  style={{ backgroundColor: displayTask.color }}
                 />
               )}
             </Cell>
@@ -252,7 +272,7 @@ export function TaskTableRow({
 
         // Default cell rendering
         return (
-          <Cell key={field} taskId={task.id} task={task} field={field} column={column} />
+          <Cell key={field} taskId={task.id} task={displayTask} field={field} column={column} />
         );
       })}
 
