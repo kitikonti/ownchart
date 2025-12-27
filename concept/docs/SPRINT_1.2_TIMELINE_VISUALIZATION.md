@@ -579,6 +579,20 @@ export function TimelineHeader({ scale }: TimelineHeaderProps) {
               >
                 {cell.label}
               </text>
+
+              {/* Weekday letter for day cells (S, M, T, W, T, F, S) */}
+              {scaleConfig.unit === 'day' && (
+                <text
+                  x={cell.x + cell.width / 2}
+                  y={rowIndex * rowHeight + 12}
+                  fontSize={10}
+                  fill="#868e96"
+                  textAnchor="middle"
+                  fontWeight={400}
+                >
+                  {format(cell.date, 'EEEEE')}  {/* Single letter weekday */}
+                </text>
+              )}
             </g>
           ))}
         </g>
@@ -754,8 +768,40 @@ export function GridLines({ scale, taskCount }: GridLinesProps) {
     }));
   }, [taskCount]);
 
+  // Weekend columns for background highlighting
+  const weekendColumns = useMemo(() => {
+    const columns: Array<{ x: number; date: string }> = [];
+    let currentDate = scale.minDate;
+
+    while (currentDate <= scale.maxDate) {
+      if (isWeekend(currentDate)) {
+        columns.push({
+          x: dateToPixel(currentDate, scale),
+          date: currentDate
+        });
+      }
+      currentDate = addDays(currentDate, 1);
+    }
+
+    return columns;
+  }, [scale]);
+
   return (
     <g className="grid-lines">
+      {/* Weekend background highlighting */}
+      {weekendColumns.map(({ x, date }) => (
+        <rect
+          key={`weekend-${date}`}
+          x={x}
+          y={headerHeight}
+          width={scale.pixelsPerDay}
+          height={taskCount * rowHeight}
+          fill="#f8f9fa"
+          opacity={0.5}
+          className="weekend-column"
+        />
+      ))}
+
       {/* Vertical lines */}
       {verticalLines.map(({ x, date }) => (
         <line
@@ -764,8 +810,8 @@ export function GridLines({ scale, taskCount }: GridLinesProps) {
           y1={headerHeight}
           x2={x}
           y2={headerHeight + taskCount * rowHeight}
-          stroke={isWeekend(date) ? '#f1f3f5' : '#e9ecef'}
-          strokeWidth={isWeekend(date) ? 2 : 1}
+          stroke={isWeekend(date) ? '#dee2e6' : '#e9ecef'}
+          strokeWidth={1}
           className={isWeekend(date) ? 'weekend-line' : 'day-line'}
         />
       ))}
@@ -788,13 +834,16 @@ export function GridLines({ scale, taskCount }: GridLinesProps) {
 ```
 
 **Features:**
-- Weekend highlighting (thicker/different color lines)
+- Weekend background highlighting (light gray columns for Sat/Sun)
+- Weekend line distinction (different stroke color)
 - Crisp 1px lines
 - Subtle coloring (don't distract from task bars)
+- Performance optimized with useMemo
 
 **Acceptance Criteria:**
 - ✓ Grid renders correctly
-- ✓ Weekends visually distinct
+- ✓ Weekend columns have light background
+- ✓ Weekends visually distinct from weekdays
 - ✓ Lines align with dates/rows
 - ✓ Performance: renders 100+ lines smoothly
 
@@ -895,6 +944,20 @@ export const TaskBar = React.memo(function TaskBar({
       >
         {task.name}
       </text>
+
+      {/* Duration and Progress overlay text (e.g., "5 days, 75%") */}
+      {geometry.width > 60 && task.type !== 'milestone' && (
+        <text
+          x={geometry.x + geometry.width / 2}
+          y={geometry.y - 4}
+          fontSize={10}
+          fill="#495057"
+          textAnchor="middle"
+          fontWeight={500}
+        >
+          {calculateDuration(task.startDate, task.endDate)} days, {task.progress}%
+        </text>
+      )}
     </g>
   );
 });
@@ -906,13 +969,16 @@ export const TaskBar = React.memo(function TaskBar({
   - Summary task: Semi-transparent bar
   - Milestone: Diamond shape
 - Progress indicator (filled portion of bar)
+- Duration/Progress text overlay ("5 days, 75%") above bar
 - Selection highlight (blue border)
 - Task name overlay
 - Rounded corners for polish
+- Smart text rendering (only shows overlay if bar is wide enough)
 
 **Acceptance Criteria:**
 - ✓ Tasks render at correct positions
 - ✓ Progress shown accurately
+- ✓ Duration/progress text displays above bars (when width > 60px)
 - ✓ Click/double-click events work
 - ✓ Selection state visible
 - ✓ Performance: React.memo prevents unnecessary re-renders
@@ -964,8 +1030,15 @@ export function TodayMarker({ scale }: TodayMarkerProps) {
 }
 ```
 
+**Features:**
+- Red vertical dashed line at current date
+- "TODAY" text label for clear identification
+- Spans full chart height
+- Hidden when today is outside timeline range
+
 **Acceptance Criteria:**
 - ✓ Marker shows at current date
+- ✓ "TODAY" label visible and legible
 - ✓ Spans full chart height
 - ✓ Visually distinct (red, dashed)
 - ✓ Hidden when today is out of range
@@ -1692,22 +1765,53 @@ interface ScaleConfig {
 - Localization-ready
 - Dynamic label content
 
-### 🔜 Future SVAR Inspirations (Post-Sprint 1.2)
+### ✅ 5. UI/UX Polish from Competitive Analysis
+
+**Inspired by:** Multiple Gantt apps (SVAR, Smartsheet, MS Project, ClickUp)
+
+**Visual Enhancements Implemented:**
+
+1. **Weekend Highlighting** (Task 1.2.5: GridLines)
+   - Light gray background for Saturday/Sunday columns
+   - Helps users identify work vs non-work days at a glance
+   - Pattern: `<rect>` elements for weekend columns with opacity
+
+2. **Weekday Letters** (Task 1.2.4: TimelineHeader)
+   - Day cells show weekday abbreviation: S, M, T, W, T, F, S
+   - Improves date navigation and readability
+   - Pattern: `format(date, 'EEEEE')` for single-letter weekday
+
+3. **Duration/Progress Text Overlay** (Task 1.2.6: TaskBar)
+   - Text above task bars: "5 days, 75%"
+   - Quick visual reference without hovering
+   - Smart rendering: only shows if bar width > 60px
+
+4. **Today Marker with Label** (Task 1.2.7: TodayMarker)
+   - Red dashed vertical line at current date
+   - "TODAY" text label for immediate recognition
+   - Pattern: Combination of SVG line + text element
+
+**Benefits:**
+- Professional appearance matching industry tools
+- Improved usability and date navigation
+- Reduced need for tooltips (info visible by default)
+- Visual consistency with user expectations
+
+### 🔜 Future Inspirations (Post-Sprint 1.2)
 
 **Virtual Scrolling** (for performance):
 - Render only visible tasks + buffer
 - SVAR pattern: `visibleCount = Math.ceil(clientHeight / cellHeight) + 1`
 - Target: Sprint 1.2+ optimization if needed
 
-**Weekend Highlighting** (visual enhancement):
-- Different background for weekend columns
-- SVAR uses CSS classes per date
-- Target: Sprint 1.2 GridLines enhancement
-
 **Baseline Comparison** (Phase 2):
-- Show planned vs actual dates
+- Show planned vs actual dates (dashed outline for baseline)
 - SVAR uses `base_start` and `base_end` fields
 - Already in our data model for future use
+
+**Schedule Variance Tooltips** (Phase 2):
+- Show "Finishes 2 days later" when task runs over baseline
+- Requires baseline functionality first
 
 ---
 
