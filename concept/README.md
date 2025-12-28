@@ -22,25 +22,37 @@ Create the simplest, fastest way to build professional-looking Gantt charts that
 
 ## Documentation Structure
 
-This concept documentation follows professional software development planning standards:
+This concept documentation is organized into logical categories for easy navigation:
 
-### Core Planning Documents
-- **[PRD.md](./docs/PRD.md)** - Product Requirements Document (what and why)
-- **[USER_STORIES.md](./docs/USER_STORIES.md)** - User scenarios and use cases
-- **[ROADMAP.md](./docs/ROADMAP.md)** - Development phases and timeline
+### 📋 Planning (`/planning`)
+- **[PRD.md](./planning/PRD.md)** - Product Requirements Document (what and why)
+- **[USER_STORIES.md](./planning/USER_STORIES.md)** - User scenarios and use cases
+- **[ROADMAP.md](./planning/ROADMAP.md)** - Development phases and timeline
+- **[FEATURE_SPECIFICATIONS.md](./planning/FEATURE_SPECIFICATIONS.md)** - Detailed feature descriptions
 
-### Technical Documentation
-- **[TECHNICAL_ARCHITECTURE.md](./docs/TECHNICAL_ARCHITECTURE.md)** - Technical approach and stack
-- **[DATA_MODEL.md](./docs/DATA_MODEL.md)** - Data structures and file format
-- **[EXTENSIBILITY_ARCHITECTURE.md](./docs/EXTENSIBILITY_ARCHITECTURE.md)** - Future-proofing and extensibility patterns ⭐ NEW
+### 🏗️ Architecture (`/architecture`)
+- **[TECHNICAL_ARCHITECTURE.md](./architecture/TECHNICAL_ARCHITECTURE.md)** - Technical approach and stack
+- **[DATA_MODEL.md](./architecture/DATA_MODEL.md)** - Data structures and file format
+- **[EXTENSIBILITY_ARCHITECTURE.md](./architecture/EXTENSIBILITY_ARCHITECTURE.md)** - Future-proofing and extensibility patterns
+- **[EXTENSIBILITY_SUMMARY.md](./architecture/EXTENSIBILITY_SUMMARY.md)** - Quick reference for extensibility
 
-### Design & Features
-- **[UI_UX_SPECIFICATIONS.md](./docs/UI_UX_SPECIFICATIONS.md)** - Interface design guidelines
-- **[FEATURE_SPECIFICATIONS.md](./docs/FEATURE_SPECIFICATIONS.md)** - Detailed feature descriptions
+### 🎨 Design (`/design`)
+- **[UI_UX_SPECIFICATIONS.md](./design/UI_UX_SPECIFICATIONS.md)** - Interface design guidelines
+- **[ICON_SYSTEM.md](./design/ICON_SYSTEM.md)** - Icon design system
+- **[COMPETITIVE_ANALYSIS.md](./design/COMPETITIVE_ANALYSIS.md)** - Analysis of SVAR React Gantt and other tools
 
-### Quality & Process
-- **[TESTING_STRATEGY.md](./docs/TESTING_STRATEGY.md)** - Testing approach and quality standards
-- **[CI_CD.md](./docs/CI_CD.md)** - Continuous integration and deployment
+### ⚙️ Process (`/process`)
+- **[TESTING_STRATEGY.md](./process/TESTING_STRATEGY.md)** - Testing approach and quality standards
+- **[CI_CD.md](./process/CI_CD.md)** - Continuous integration and deployment
+
+### 📦 Phases (`/phases`)
+- **[PHASE_0_FOUNDATION.md](./phases/PHASE_0_FOUNDATION.md)** - Phase 0: Project foundation and setup
+- **[PHASE_1_MVP.md](./phases/PHASE_1_MVP.md)** - Phase 1: MVP development plan
+
+### 🏃 Sprints (`/sprints`)
+- **[SPRINT_1.2_TIMELINE_VISUALIZATION.md](./sprints/SPRINT_1.2_TIMELINE_VISUALIZATION.md)** - Timeline visualization implementation
+- **[SPRINT_1.15_TASK_GROUPS.md](./sprints/SPRINT_1.15_TASK_GROUPS.md)** - Task groups and hierarchy
+- **[SPRINT_1.16_HIERARCHY_INDENT_OUTDENT.md](./sprints/SPRINT_1.16_HIERARCHY_INDENT_OUTDENT.md)** - Indent/outdent functionality
 
 ## Quick Reference
 
@@ -69,26 +81,28 @@ This concept documentation follows professional software development planning st
 - Community can build plugins and extensions
 - Can add advanced features incrementally
 
-See **[EXTENSIBILITY_ARCHITECTURE.md](./docs/EXTENSIBILITY_ARCHITECTURE.md)** for complete technical details.
+See **[EXTENSIBILITY_ARCHITECTURE.md](./architecture/EXTENSIBILITY_ARCHITECTURE.md)** for complete technical details.
 
 ## Getting Started with This Documentation
 
 **For Product Managers / Stakeholders**:
-1. Start with **[PRD.md](./docs/PRD.md)** to understand the product vision and requirements
-2. Review **[USER_STORIES.md](./docs/USER_STORIES.md)** to see how different users will interact
-3. Check **[ROADMAP.md](./docs/ROADMAP.md)** for development timeline and phases
+1. Start with **[PRD.md](./planning/PRD.md)** to understand the product vision and requirements
+2. Review **[USER_STORIES.md](./planning/USER_STORIES.md)** to see how different users will interact
+3. Check **[ROADMAP.md](./planning/ROADMAP.md)** for development timeline and phases
 
 **For Developers**:
-1. Start with **[TECHNICAL_ARCHITECTURE.md](./docs/TECHNICAL_ARCHITECTURE.md)** for implementation approach
-2. Review **[DATA_MODEL.md](./docs/DATA_MODEL.md)** for data structures and file format
-3. **Important**: Read **[EXTENSIBILITY_ARCHITECTURE.md](./docs/EXTENSIBILITY_ARCHITECTURE.md)** to understand future-proofing patterns
-4. Check **[FEATURE_SPECIFICATIONS.md](./docs/FEATURE_SPECIFICATIONS.md)** for detailed functionality
-5. See **[ROADMAP.md](./docs/ROADMAP.md)** for Phase 0 (risk validation) and MVP sprints
+1. Start with **[TECHNICAL_ARCHITECTURE.md](./architecture/TECHNICAL_ARCHITECTURE.md)** for implementation approach
+2. Review **[DATA_MODEL.md](./architecture/DATA_MODEL.md)** for data structures and file format
+3. **Important**: Read **[EXTENSIBILITY_ARCHITECTURE.md](./architecture/EXTENSIBILITY_ARCHITECTURE.md)** to understand future-proofing patterns
+4. Check **[FEATURE_SPECIFICATIONS.md](./planning/FEATURE_SPECIFICATIONS.md)** for detailed functionality
+5. See **[ROADMAP.md](./planning/ROADMAP.md)** for Phase 0 (risk validation) and MVP sprints
+6. Review **[Sprint 1.2 Timeline Visualization](./sprints/SPRINT_1.2_TIMELINE_VISUALIZATION.md)** for current implementation status
 
 **For Designers**:
-1. Review **[UI_UX_SPECIFICATIONS.md](./docs/UI_UX_SPECIFICATIONS.md)** for design guidelines
-2. Check **[USER_STORIES.md](./docs/USER_STORIES.md)** for user workflows
-3. Reference **[FEATURE_SPECIFICATIONS.md](./docs/FEATURE_SPECIFICATIONS.md)** for feature details
+1. Review **[UI_UX_SPECIFICATIONS.md](./design/UI_UX_SPECIFICATIONS.md)** for design guidelines
+2. Check **[USER_STORIES.md](./planning/USER_STORIES.md)** for user workflows
+3. Reference **[FEATURE_SPECIFICATIONS.md](./planning/FEATURE_SPECIFICATIONS.md)** for feature details
+4. See **[COMPETITIVE_ANALYSIS.md](./design/COMPETITIVE_ANALYSIS.md)** for industry analysis
 
 ## Key Architectural Decisions
 
@@ -101,24 +115,33 @@ See **[EXTENSIBILITY_ARCHITECTURE.md](./docs/EXTENSIBILITY_ARCHITECTURE.md)** fo
 
 ---
 
-**Last Updated**: 2025-12-12
-**Status**: Concept Phase - Complete with extensibility architecture
-**Version**: 1.2
+**Last Updated**: 2025-12-28
+**Status**: Phase 1 - MVP (Sprint 1.2 Package 1 Complete)
+**Version**: 1.3
 
-## Recent Updates (v1.2 - 2025-12-12)
+## Recent Updates (v1.3 - 2025-12-28)
 
-### Extensibility & Future-Proofing
-- ✅ Created comprehensive **EXTENSIBILITY_ARCHITECTURE.md** document
-- ✅ Updated data model with extensibility fields (custom fields, resources, collaboration)
-- ✅ Added plugin architecture and event system specifications
+### Sprint 1.2 Package 1 - Timeline Visualization ✅ Complete
+- ✅ Interactive SVG-based Gantt chart with multi-level timeline scales
+- ✅ Sticky headers (toolbar, table header, timeline header)
+- ✅ Synchronized scrolling between task table and timeline
+- ✅ Auto-resizing timeline on window resize
+- ✅ Weekend highlighting and today marker
+- ✅ Task type rendering (tasks, summaries, milestones)
+- ✅ Progress bars on task bars
+- ✅ Grid system with proper alignment
+
+### Documentation Reorganization
+- 🗂️ Restructured `/concept` folder into logical categories:
+  - `/planning` - Product planning documents
+  - `/architecture` - Technical architecture
+  - `/design` - UI/UX specifications
+  - `/process` - Development process
+  - `/phases` - High-level development phases
+  - `/sprints` - Sprint implementation details
+
+### Previous Updates (v1.2 - 2025-12-12)
+- ✅ Created comprehensive extensibility architecture
+- ✅ Updated data model with extensibility fields
+- ✅ Added plugin architecture and event system
 - ✅ Defined file format versioning and migration strategy
-- ✅ Added multi-project management architecture
-- ✅ Planned import/export adapter system
-- ✅ Updated roadmap with extensibility milestones
-
-### Benefits
-- 🚀 Future features can be added without breaking changes
-- 💾 User files remain compatible across all versions
-- 🔌 Community can build plugins and extensions
-- 📈 Can grow from simple tool to full platform
-- 🛡️ No rebuild required for common feature requests

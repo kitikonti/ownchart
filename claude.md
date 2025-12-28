@@ -74,6 +74,52 @@ app-gantt/
 └── public/               # Static assets
 ```
 
+## Current Implementation Status (Sprint 1.2 Package 1)
+
+### Timeline Visualization - ✅ Complete (2025-12-28)
+
+**Architecture:**
+- **Layout Pattern**: Vertical flex layout with sticky header row
+  - Sticky headers (toolbar, table header, timeline header) at App level
+  - Common vertical scroll container for synchronized scrolling
+  - Separate horizontal scroll per panel (table and timeline)
+  - `min-h-full` pattern for flexible content growth
+
+**Components Implemented:**
+- `ChartCanvas` - Main timeline container with ResizeObserver for auto-resize
+- `TimelineHeader` - Multi-level date scales (Month + Day)
+- `GridLines` - Background grid with weekend highlighting
+- `TaskBar` - Task rendering with progress visualization
+- `TodayMarker` - Current date indicator (red vertical line)
+- `TaskTableHeader` - Extracted reusable table header component
+
+**Utilities:**
+- `dateUtils.ts` - Date calculations using date-fns
+  - `getWeeksBetween`, `getDaysBetween`, `getMonthsBetween`
+  - `addBusinessDays`, `isWeekend`
+- `timelineUtils.ts` - Timeline scale system with zoom support
+  - Multi-level scale generation (Month + Day, Day + Hour, etc.)
+  - Scale calculation based on zoom level
+  - Position calculations for date-to-pixel mapping
+
+**State Management:**
+- `chartSlice.ts` - Chart state with Zustand + Immer
+  - Container width tracking with auto-recalculation
+  - Zoom level management
+  - Scale regeneration on resize/zoom changes
+
+**Key Technical Patterns:**
+1. **Sticky Positioning**: Headers are direct children of scroll container
+2. **Synchronized Scrolling**: Single `overflow-y-auto` container with nested `overflow-y-hidden` children
+3. **Responsive Timeline**: ResizeObserver with 100ms debounce triggers scale recalculation
+4. **Grid Extension**: SVG height extends to full content height, not just last task
+5. **Component Extraction**: Headers extracted to App level for sticky behavior
+
+**Pending for Package 2:**
+- Zoom controls (Ctrl+mousewheel or zoom slider)
+- Interactive editing (drag task bars to change dates)
+- Timeline scale transitions
+
 ## Core Data Model
 
 ### Task Object
@@ -494,12 +540,13 @@ npm run preview           # Test production build locally
 
 ### Documentation
 - `concept/README.md` - Documentation hub
-- `concept/docs/PRD.md` - Product requirements
-- `concept/docs/ROADMAP.md` - Development phases
-- `concept/docs/TECHNICAL_ARCHITECTURE.md` - System design
-- `concept/docs/DATA_MODEL.md` - Data structures
-- `concept/docs/TESTING_STRATEGY.md` - Test approach
-- `concept/docs/CI_CD.md` - Pipeline details
+- `concept/planning/PRD.md` - Product requirements
+- `concept/planning/ROADMAP.md` - Development phases
+- `concept/architecture/TECHNICAL_ARCHITECTURE.md` - System design
+- `concept/architecture/DATA_MODEL.md` - Data structures
+- `concept/process/TESTING_STRATEGY.md` - Test approach
+- `concept/process/CI_CD.md` - Pipeline details
+- `concept/sprints/SPRINT_1.2_TIMELINE_VISUALIZATION.md` - Current sprint details
 
 ### Source Code (to be created)
 - `src/store/taskStore.ts` - Core state management
@@ -509,13 +556,22 @@ npm run preview           # Test production build locally
 
 ## Development Phases Summary
 
-**Phase 0: Foundation** (Current)
+**Phase 0: Foundation** ✅ Complete
 - Setup project structure
 - Configure tooling
 - CI/CD pipeline
 - No features, just infrastructure
 
-**Phase 1: MVP**
+**Phase 1: MVP** (In Progress - Sprint 1.2)
+- **Sprint 1.2 Package 1** ✅ Complete (2025-12-28)
+  - Interactive SVG-based timeline with multi-level scale
+  - Sticky headers (toolbar, table header, timeline header)
+  - Synchronized scrolling between table and timeline
+  - Auto-resizing timeline on window resize
+  - Weekend highlighting and today marker
+  - Task types rendering (tasks, summaries, milestones)
+  - Progress bars on task bars
+  - Grid system with proper alignment
 - All core features functional
 - Production-ready
 - Deploy to GitHub Pages
@@ -534,7 +590,12 @@ npm run preview           # Test production build locally
 
 **Documentation:**
 - Start with `concept/README.md`
-- Check specific docs in `concept/docs/`
+- Check specific docs in organized subdirectories:
+  - `concept/planning/` - Product planning
+  - `concept/architecture/` - Technical architecture
+  - `concept/design/` - UI/UX design
+  - `concept/process/` - Development process
+  - `concept/sprints/` - Sprint details
 - Review code comments
 
 **Debugging:**
@@ -554,6 +615,6 @@ npm run preview           # Test production build locally
 
 **This file serves as a quick reference for AI assistance throughout development. It should be updated as the project evolves and architectural decisions are made.**
 
-**Last Updated:** 2025-12-13
-**Status:** Phase 0 - Foundation
-**Next Review:** After Phase 0 completion
+**Last Updated:** 2025-12-28
+**Status:** Phase 1 - MVP (Sprint 1.2 Package 1 Complete)
+**Next Review:** After Sprint 1.2 Package 2 completion

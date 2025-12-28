@@ -213,13 +213,28 @@ All checks must pass before merging.
 
 Comprehensive documentation is available in the `/concept` folder:
 
-- [Product Requirements](./concept/docs/PRD.md)
-- [Technical Architecture](./concept/docs/TECHNICAL_ARCHITECTURE.md)
-- [Data Model](./concept/docs/DATA_MODEL.md)
-- [Testing Strategy](./concept/docs/TESTING_STRATEGY.md)
-- [CI/CD Pipeline](./concept/docs/CI_CD.md)
-- [Roadmap](./concept/docs/ROADMAP.md)
-- [Competitive Analysis](./concept/docs/COMPETITIVE_ANALYSIS.md) - Analysis of SVAR React Gantt
+**Planning:**
+- [Product Requirements](./concept/planning/PRD.md)
+- [Roadmap](./concept/planning/ROADMAP.md)
+- [User Stories](./concept/planning/USER_STORIES.md)
+- [Feature Specifications](./concept/planning/FEATURE_SPECIFICATIONS.md)
+
+**Architecture:**
+- [Technical Architecture](./concept/architecture/TECHNICAL_ARCHITECTURE.md)
+- [Data Model](./concept/architecture/DATA_MODEL.md)
+- [Extensibility Architecture](./concept/architecture/EXTENSIBILITY_ARCHITECTURE.md)
+
+**Design:**
+- [UI/UX Specifications](./concept/design/UI_UX_SPECIFICATIONS.md)
+- [Icon System](./concept/design/ICON_SYSTEM.md)
+- [Competitive Analysis](./concept/design/COMPETITIVE_ANALYSIS.md) - Analysis of SVAR React Gantt
+
+**Process:**
+- [Testing Strategy](./concept/process/TESTING_STRATEGY.md)
+- [CI/CD Pipeline](./concept/process/CI_CD.md)
+
+**Sprints:**
+- [Sprint 1.2 - Timeline Visualization](./concept/sprints/SPRINT_1.2_TIMELINE_VISUALIZATION.md)
 
 ## Phase 0: Foundation
 
@@ -238,27 +253,42 @@ Phase 0 establishes the project foundation:
 
 ## Recent Updates (December 2025)
 
-### Competitive Analysis Integration
+### Sprint 1.2 Package 1 - Core Foundation ✅ COMPLETE
 
-We've analyzed [SVAR React Gantt](https://github.com/svar-widgets/react-gantt) - a mature, production-ready Gantt component. Key findings:
+**Implemented Features** (2025-12-28):
+- ✅ **Interactive Timeline**: SVG-based Gantt chart visualization
+- ✅ **Sticky Headers**: Toolbar, table header, and timeline header stay visible
+- ✅ **Synchronized Scrolling**: Table and timeline scroll together
+- ✅ **Auto-Resize**: Timeline adapts to window size changes
+- ✅ **Multi-Level Timeline**: Month + Day scale system (SVAR-inspired)
+- ✅ **Weekend Highlighting**: Visual distinction for Sat/Sun
+- ✅ **Today Marker**: Red line indicating current date
+- ✅ **Task Types**: Visual rendering for tasks, summaries, milestones
+- ✅ **Progress Bars**: Visual progress indication on task bars
+- ✅ **Grid System**: Adaptive grid with proper alignment
 
-**✅ Validated Our Approach**:
-- Our architectural choices (Zustand, D3.js, minimal dependencies) are confirmed as sound
-- Client-side-only approach is production-ready
-- Our architecture is simpler and more maintainable than commercial alternatives
+**New Components**:
+- `ChartCanvas` - Main timeline container with ResizeObserver
+- `TimelineHeader` - Multi-level date scales
+- `GridLines` - Background grid with weekend highlighting
+- `TaskBar` - Task rendering with progress visualization
+- `TodayMarker` - Current date indicator
+- `TaskTableHeader` - Extracted reusable table header
 
-**📊 Enhanced Data Model** (v0.0.1):
-- Task type system: `task`, `summary`, `milestone`
-- Hierarchy support for expandable task groups
-- Baseline tracking for planned vs actual comparison
-- Performance optimizations for large datasets
+**New Utilities**:
+- `dateUtils` - Date calculations using date-fns
+- `timelineUtils` - Timeline scale system with zoom support
 
-**🎯 Strategic Decision**: Build independently rather than using existing libraries
-- Full control over implementation
-- Avoid vendor lock-in
-- Open-source all features (including advanced ones that are typically paid)
+**State Management**:
+- `chartSlice` - Chart state with automatic scale recalculation
 
-See [COMPETITIVE_ANALYSIS.md](./concept/docs/COMPETITIVE_ANALYSIS.md) for detailed findings and implementation guidance.
+**Architecture Highlights**:
+- Vertical flex layout with sticky header row
+- Common vertical scroll container
+- Separate horizontal scroll per panel
+- ResizeObserver for responsive timeline
+
+**Next**: Sprint 1.2 Package 2 - Zoom & Interactive Editing
 
 ## Contributing
 
