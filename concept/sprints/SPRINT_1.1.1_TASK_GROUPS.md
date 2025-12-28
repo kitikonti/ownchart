@@ -1,4 +1,4 @@
-# Sprint 1.15: Task Hierarchies with Summary Tasks
+# Sprint 1.1.1: Task Hierarchies with Summary Tasks
 
 **Status:** ✅ COMPLETE
 **Created:** 2025-12-19

@@ -51,7 +51,7 @@ This document defines the icon system for the Gantt Chart application. We use **
 npm install @heroicons/react
 ```
 
-**Current Status:** Not yet installed (planned for Sprint 1.15)
+**Current Status:** Not yet installed (planned for Sprint 1.1.1)
 
 ---
 
@@ -146,7 +146,7 @@ Heroicons work seamlessly with Tailwind:
 
 ## Migration Plan
 
-### Current State (Before Sprint 1.15)
+### Current State (Before Sprint 1.1.1)
 
 Currently using **inline SVGs**:
 
@@ -162,7 +162,7 @@ Currently using **inline SVGs**:
 </svg>
 ```
 
-### After Migration (Sprint 1.15+)
+### After Migration (Sprint 1.1.1+)
 
 Replace with **Heroicons**:
 
@@ -179,7 +179,7 @@ import { Bars3Icon, TrashIcon } from '@heroicons/react/24/outline';
 
 ### Migration Tasks
 
-**Phase 1 (Sprint 1.15):**
+**Phase 1 (Sprint 1.1.1):**
 - [ ] Install Heroicons
 - [ ] Create TaskTypeIcon component
 - [ ] Add task type icons to TaskTableRow
@@ -344,10 +344,10 @@ For interactive icons (hover, active states):
 ## Related Documents
 
 - [TECHNICAL_ARCHITECTURE.md](./TECHNICAL_ARCHITECTURE.md) - Overall tech stack
-- [SPRINT_1.15_TASK_GROUPS.md](./SPRINT_1.15_TASK_GROUPS.md) - First usage of icon system
+- [SPRINT_1.1.1_TASK_GROUPS.md](../sprints/SPRINT_1.1.1_TASK_GROUPS.md) - First usage of icon system
 - [UI_STYLE_GUIDE.md](./UI_STYLE_GUIDE.md) - *(future)* Complete UI guidelines
 
 ---
 
-**Status:** Ready for implementation in Sprint 1.15
+**Status:** Ready for implementation in Sprint 1.1.1
 **Next Steps:** Install Heroicons and create TaskTypeIcon component

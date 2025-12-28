@@ -10,7 +10,7 @@
 
 ## Context
 
-After completing Sprint 1.1 (Basic Task Management), Sprint 1.15 (Hierarchical Organization), and Sprint 1.16 (Hierarchy Navigation), we now have a sophisticated Excel-like task management spreadsheet with full CRUD operations and hierarchical task organization. The next critical step is to add the **Gantt chart timeline visualization** - the core value proposition of the application.
+After completing Sprint 1.1 (Basic Task Management), Sprint 1.1.1 (Hierarchical Organization), and Sprint 1.1.2 (Hierarchy Navigation), we now have a sophisticated Excel-like task management spreadsheet with full CRUD operations and hierarchical task organization. The next critical step is to add the **Gantt chart timeline visualization** - the core value proposition of the application.
 
 **Current Situation:**
 - ✅ Task CRUD with full validation

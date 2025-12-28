@@ -1,7 +1,7 @@
 /**
  * Hierarchy utilities for task organization.
  * Implements the SVAR pattern where type and hierarchy are independent.
- * See: concept/docs/SPRINT_1.15_TASK_GROUPS.md
+ * See: concept/sprints/SPRINT_1.1.1_TASK_GROUPS.md
  */
 
 import type { Task } from '../types/chart.types';

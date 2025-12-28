@@ -398,14 +398,14 @@ git clone https://github.com/svar-widgets/react-gantt.git /tmp/react-gantt
 
 **Updated**: December 27, 2025
 
-After completing Sprint 1.15 and 1.16 (December 23-27, 2025), we successfully adopted several key insights from SVAR React Gantt competitive analysis:
+After completing Sprint 1.1.1 and 1.1.2 (December 23-27, 2025), we successfully adopted several key insights from SVAR React Gantt competitive analysis:
 
 ### ✅ SVAR Pattern (Type-Hierarchy Decoupling)
 
 **Insight Adopted**: Task type and hierarchy capability are independent concerns.
 
 **Implementation**:
-- Sprint 1.15: Implemented SVAR pattern where `type` determines data behavior, not hierarchy capability
+- Sprint 1.1.1: Implemented SVAR pattern where `type` determines data behavior, not hierarchy capability
 - Regular tasks CAN have children (manual dates as deadline containers)
 - Summary tasks auto-calculate dates from children
 - Milestones cannot have children (zero-duration markers)
@@ -425,7 +425,7 @@ After completing Sprint 1.15 and 1.16 (December 23-27, 2025), we successfully ad
 **Insight Adopted**: Pre-calculate hierarchy snapshots to prevent cascading bugs.
 
 **Implementation**:
-- Sprint 1.16: Indent/outdent operations use `buildFlattenedTaskList()` snapshot
+- Sprint 1.1.2: Indent/outdent operations use `buildFlattenedTaskList()` snapshot
 - All changes calculated against consistent snapshot before applying
 - Enables safe bulk operations on multiple selected tasks
 

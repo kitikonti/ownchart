@@ -50,9 +50,9 @@ This concept documentation is organized into logical categories for easy navigat
 - **[PHASE_1_MVP.md](./phases/PHASE_1_MVP.md)** - Phase 1: MVP development plan
 
 ### 🏃 Sprints (`/sprints`)
+- **[SPRINT_1.1.1_TASK_GROUPS.md](./sprints/SPRINT_1.1.1_TASK_GROUPS.md)** - Task groups and hierarchy (Sprint 1.1)
+- **[SPRINT_1.1.2_HIERARCHY_INDENT_OUTDENT.md](./sprints/SPRINT_1.1.2_HIERARCHY_INDENT_OUTDENT.md)** - Indent/outdent functionality (Sprint 1.1)
 - **[SPRINT_1.2_TIMELINE_VISUALIZATION.md](./sprints/SPRINT_1.2_TIMELINE_VISUALIZATION.md)** - Timeline visualization implementation
-- **[SPRINT_1.15_TASK_GROUPS.md](./sprints/SPRINT_1.15_TASK_GROUPS.md)** - Task groups and hierarchy
-- **[SPRINT_1.16_HIERARCHY_INDENT_OUTDENT.md](./sprints/SPRINT_1.16_HIERARCHY_INDENT_OUTDENT.md)** - Indent/outdent functionality
 
 ## Quick Reference
 

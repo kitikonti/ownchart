@@ -259,7 +259,7 @@ If dependency arrows or performance validation fails, reassess approach before c
 
 ---
 
-#### Sprint 1.15: Task Groups & Hierarchical Organization ✅ COMPLETE
+#### Sprint 1.1.1: Task Groups & Hierarchical Organization ✅ COMPLETE
 
 **Duration:** 2 days
 **Goal:** Add hierarchical task organization using SVAR pattern (type decoupled from hierarchy)
@@ -291,7 +291,7 @@ If dependency arrows or performance validation fails, reassess approach before c
 
 ---
 
-#### Sprint 1.16: Hierarchy Indent/Outdent ✅ COMPLETE
+#### Sprint 1.1.2: Hierarchy Indent/Outdent ✅ COMPLETE
 
 **Duration:** 2 days
 **Goal:** Add UI controls and keyboard shortcuts for hierarchy navigation

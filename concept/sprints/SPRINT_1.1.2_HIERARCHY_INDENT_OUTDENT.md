@@ -1,4 +1,4 @@
-# Sprint 1.16: Hierarchie Indent/Outdent Funktionalität
+# Sprint 1.1.2: Hierarchie Indent/Outdent Funktionalität
 
 **Datum:** 2025-12-26
 **Status:** ✅ COMPLETE
@@ -579,7 +579,7 @@ describe('Indent/Outdent Operations', () => {
 ### Verwandte Dokumentation
 
 - `concept/docs/DATA_MODEL.md` - SVAR Pattern Hierarchie-Design
-- `concept/docs/SPRINT_1.15_TASK_GROUPS.md` - Task Groups (ähnliche Hierarchie-Features)
+- `concept/sprints/SPRINT_1.1.1_TASK_GROUPS.md` - Task Groups (ähnliche Hierarchie-Features)
 - `concept/docs/TECHNICAL_ARCHITECTURE.md` - Zustand Store Architecture
 
 ---

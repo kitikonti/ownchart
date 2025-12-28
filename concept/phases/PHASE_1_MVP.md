@@ -27,8 +27,8 @@ This document outlines **Phase 1** of building the Gantt Chart application: impl
 Phase 1 is divided into **8 Sprints**, each delivering a complete feature set:
 
 ### Sprint 1.1: Basic Task Management (Week 1-1.5) ✅ COMPLETE
-### Sprint 1.15: Task Groups & Hierarchical Organization (Week 1.5-2) ✅ COMPLETE
-### Sprint 1.16: Hierarchy Indent/Outdent (Week 2-2.5) ✅ COMPLETE
+### Sprint 1.1.1: Task Groups & Hierarchical Organization (Week 1.5-2) ✅ COMPLETE
+### Sprint 1.1.2: Hierarchy Indent/Outdent (Week 2-2.5) ✅ COMPLETE
 ### Sprint 1.2: Timeline & Visualization (Week 2.5-4)
 ### Sprint 1.3: File Operations (Week 4-5) **[Moved up - was 1.4]**
 ### Sprint 1.4: Dependencies (Finish-to-Start) (Week 5-6.5) **[Moved down - was 1.3]**
@@ -309,7 +309,7 @@ This section breaks Sprint 1.1 into small, testable, committable tasks. Each tas
 
 ### Sprint 1.1 Quality Gates
 
-**Before Moving to Sprint 1.15:**
+**Before Moving to Sprint 1.1.1:**
 - [x] All 14 tasks complete and committed ✅
 - [x] 80%+ test coverage for Sprint 1.1 code ✅
 - [x] All tests passing ✅
@@ -322,14 +322,14 @@ This section breaks Sprint 1.1 into small, testable, committable tasks. Each tas
 
 ---
 
-## Sprint 1.15: Task Groups & Hierarchical Organization
+## Sprint 1.1.1: Task Groups & Hierarchical Organization
 
 **Duration:** 2 days
 **Goal:** Add hierarchical task organization with collapsible groups.
 
 **Status:** ✅ COMPLETE (2025-12-24)
 
-> **Note:** This sprint was added between Sprint 1.1 and 1.2 to establish hierarchical data structure before timeline rendering. See [SPRINT_1.15_TASK_GROUPS.md](./SPRINT_1.15_TASK_GROUPS.md) for detailed implementation plan.
+> **Note:** This sprint was added between Sprint 1.1 and 1.2 to establish hierarchical data structure before timeline rendering. See [SPRINT_1.1.1_TASK_GROUPS.md](../sprints/SPRINT_1.1.1_TASK_GROUPS.md) for detailed implementation plan.
 
 **Key Features:**
 - Task groups/phases for organization using SVAR pattern
@@ -339,18 +339,18 @@ This section breaks Sprint 1.1 into small, testable, committable tasks. Each tas
 - Visual hierarchy with indentation
 - **Key Innovation:** Adopted SVAR pattern - type and hierarchy are independent. Regular tasks CAN have children (manual dates), summaries auto-calculate dates from children.
 
-**Deliverables:** See [SPRINT_1.15_TASK_GROUPS.md](./SPRINT_1.15_TASK_GROUPS.md) for complete task breakdown.
+**Deliverables:** See [SPRINT_1.1.1_TASK_GROUPS.md](../sprints/SPRINT_1.1.1_TASK_GROUPS.md) for complete task breakdown.
 
 ---
 
-## Sprint 1.16: Hierarchy Indent/Outdent
+## Sprint 1.1.2: Hierarchy Indent/Outdent
 
 **Duration:** 2 days
 **Goal:** Add UI controls and keyboard shortcuts for hierarchy navigation.
 
 **Status:** ✅ COMPLETE (2025-12-27)
 
-> **Note:** This sprint emerged naturally during Sprint 1.15 implementation as a necessary UX enhancement for hierarchy management. See [SPRINT_1.16_HIERARCHY_INDENT_OUTDENT.md](./SPRINT_1.16_HIERARCHY_INDENT_OUTDENT.md) for detailed implementation plan.
+> **Note:** This sprint emerged naturally during Sprint 1.1.1 implementation as a necessary UX enhancement for hierarchy management. See [SPRINT_1.1.2_HIERARCHY_INDENT_OUTDENT.md](../sprints/SPRINT_1.1.2_HIERARCHY_INDENT_OUTDENT.md) for detailed implementation plan.
 
 **Key Features:**
 - Indent button (→) - make task child of previous sibling
@@ -367,7 +367,7 @@ This section breaks Sprint 1.1 into small, testable, committable tasks. Each tas
 - `canOutdentSelection()` validator
 - HierarchyButtons component
 
-**Deliverables:** See [SPRINT_1.16_HIERARCHY_INDENT_OUTDENT.md](./SPRINT_1.16_HIERARCHY_INDENT_OUTDENT.md) for complete task breakdown.
+**Deliverables:** See [SPRINT_1.1.2_HIERARCHY_INDENT_OUTDENT.md](../sprints/SPRINT_1.1.2_HIERARCHY_INDENT_OUTDENT.md) for complete task breakdown.
 
 ---
 
