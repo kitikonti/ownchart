@@ -25,7 +25,11 @@ import { TASK_COLUMNS } from '../../config/tableColumns';
 import { ColumnResizer } from './ColumnResizer';
 import { buildFlattenedTaskList } from '../../utils/hierarchy';
 
-export function TaskTable(): JSX.Element {
+interface TaskTableProps {
+  hideHeader?: boolean;
+}
+
+export function TaskTable({ hideHeader = true }: TaskTableProps): JSX.Element {
   const tasks = useTaskStore((state) => state.tasks);
   const reorderTasks = useTaskStore((state) => state.reorderTasks);
   const columnWidths = useTaskStore((state) => state.columnWidths);
@@ -178,9 +182,9 @@ export function TaskTable(): JSX.Element {
   };
 
   return (
-    <div className="task-table-container h-full flex flex-col bg-white border-r border-gray-200">
+    <div className="task-table-container bg-white border-r border-gray-200">
       {/* Table Content */}
-      <div className="task-table-wrapper flex-1 overflow-auto">
+      <div className="task-table-wrapper overflow-x-auto overflow-y-hidden">
         {tasks.length === 0 ? (
           <div className="empty-state flex flex-col items-center justify-center h-full text-gray-500">
             <svg
@@ -212,12 +216,13 @@ export function TaskTable(): JSX.Element {
             role="grid"
             aria-label="Task spreadsheet"
           >
-            {/* Header Row */}
-            <div className="task-table-header contents" role="row">
-              {TASK_COLUMNS.map((column, index) => (
+            {/* Header Row - Hidden when rendered on App level */}
+            {!hideHeader && (
+              <div className="task-table-header contents" role="row">
+                {TASK_COLUMNS.map((column, index) => (
                 <div
                   key={column.id}
-                  className={`task-table-header-cell sticky top-0 z-10 ${column.id === 'name' ? 'pr-3' : 'px-3'} py-2 bg-gray-50 border-b ${column.id !== 'color' ? 'border-r' : ''} border-gray-200 text-xs font-semibold text-gray-700 uppercase tracking-wider relative`}
+                  className={`task-table-header-cell sticky top-0 z-10 ${column.id === 'name' ? 'pr-3' : 'px-3'} py-4 bg-gray-50 border-b ${column.id !== 'color' ? 'border-r' : ''} border-gray-200 text-xs font-semibold text-gray-700 uppercase tracking-wider relative`}
                   role="columnheader"
                 >
                   {column.id === 'checkbox' ? (
@@ -251,8 +256,9 @@ export function TaskTable(): JSX.Element {
                     />
                   )}
                 </div>
-              ))}
-            </div>
+                ))}
+              </div>
+            )}
 
             {/* Task Rows with Drag and Drop */}
             <DndContext

@@ -1,11 +1,20 @@
 import { ChartBarHorizontal } from '@phosphor-icons/react';
 import { TaskTable } from './components/TaskList/TaskTable';
+import { TaskTableHeader } from './components/TaskList/TaskTableHeader';
 import { HierarchyButtons } from './components/TaskList/HierarchyButtons';
+import { ChartCanvas } from './components/GanttChart';
+import { TimelineHeader } from './components/GanttChart';
 import { useTaskStore } from './store/slices/taskSlice';
+import { useChartStore } from './store/slices/chartSlice';
 
 function App(): JSX.Element {
   const tasks = useTaskStore((state) => state.tasks);
+  const selectedTaskIds = useTaskStore((state) => state.selectedTaskIds);
+  const toggleTaskSelection = useTaskStore((state) => state.toggleTaskSelection);
   const addTask = useTaskStore((state) => state.addTask);
+
+  // Chart state for headers
+  const scale = useChartStore((state) => state.scale);
 
   const handleAddTask = () => {
     const today = new Date();
@@ -31,9 +40,9 @@ function App(): JSX.Element {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 flex flex-col">
-      {/* Header Toolbar */}
-      <header className="bg-white border-b border-gray-200 px-4 py-2 flex items-center gap-3">
+    <div className="h-screen bg-gray-50 flex flex-col overflow-hidden">
+      {/* Header Toolbar - Fixed */}
+      <header className="flex-shrink-0 bg-white border-b border-gray-200 px-4 py-2 flex items-center gap-3">
         <ChartBarHorizontal size={24} weight="regular" className="text-gray-700" />
         <button
           onClick={handleAddTask}
@@ -45,31 +54,39 @@ function App(): JSX.Element {
         <HierarchyButtons />
       </header>
 
-      {/* Main Content */}
-      <div className="flex-1 flex overflow-hidden">
-        {/* Task Table Panel */}
-        <div className="w-auto flex-shrink-0 min-w-[800px]">
-          <TaskTable />
+      {/* Main Content - Vertikales Layout mit gemeinsamen Scroll */}
+      <div className="flex-1 flex flex-col overflow-y-auto overflow-x-hidden">
+        {/* Sticky Header Row */}
+        <div className="sticky top-0 z-20 flex flex-shrink-0">
+          {/* TaskTable Header */}
+          <div className="w-auto flex-shrink-0 min-w-[800px] bg-white overflow-x-auto">
+            <TaskTableHeader />
+          </div>
+
+          {/* Timeline Header */}
+          <div className="flex-1 bg-white overflow-hidden">
+            {scale && (
+              <svg width={scale.totalWidth} height={48} className="block select-none">
+                <TimelineHeader scale={scale} />
+              </svg>
+            )}
+          </div>
         </div>
 
-        {/* Placeholder for future Gantt Chart */}
-        <div className="flex-1 flex items-center justify-center bg-gray-100">
-          <div className="text-center text-gray-500">
-            <svg
-              className="w-24 h-24 mx-auto mb-4 text-gray-300"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={1.5}
-                d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"
-              />
-            </svg>
-            <p className="text-lg font-medium mb-2">Timeline View</p>
-            <p className="text-sm">Coming in Sprint 1.2</p>
+        {/* Content Row */}
+        <div className="flex flex-1 min-h-0">
+          {/* Task Table Content */}
+          <div className="w-auto flex-shrink-0 min-w-[800px] min-h-full">
+            <TaskTable />
+          </div>
+
+          {/* Gantt Chart Content */}
+          <div className="flex-1 bg-white min-h-full">
+            <ChartCanvas
+              tasks={tasks}
+              selectedTaskIds={selectedTaskIds}
+              onTaskClick={toggleTaskSelection}
+            />
           </div>
         </div>
       </div>
