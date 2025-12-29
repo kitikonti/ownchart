@@ -2,10 +2,12 @@ import { ChartBarHorizontal } from '@phosphor-icons/react';
 import { TaskTable } from './components/TaskList/TaskTable';
 import { TaskTableHeader } from './components/TaskList/TaskTableHeader';
 import { HierarchyButtons } from './components/TaskList/HierarchyButtons';
+import { UndoRedoButtons } from './components/Toolbar/UndoRedoButtons';
 import { ChartCanvas } from './components/GanttChart';
 import { TimelineHeader } from './components/GanttChart';
 import { useTaskStore } from './store/slices/taskSlice';
 import { useChartStore } from './store/slices/chartSlice';
+import { useKeyboardShortcuts } from './hooks/useKeyboardShortcuts';
 
 function App(): JSX.Element {
   const tasks = useTaskStore((state) => state.tasks);
@@ -15,6 +17,9 @@ function App(): JSX.Element {
 
   // Chart state for headers
   const scale = useChartStore((state) => state.scale);
+
+  // Enable global keyboard shortcuts (Ctrl+Z, Ctrl+Shift+Z, Ctrl+Y)
+  useKeyboardShortcuts();
 
   const handleAddTask = () => {
     const today = new Date();
@@ -52,6 +57,7 @@ function App(): JSX.Element {
           + Add Task
         </button>
         <HierarchyButtons />
+        <UndoRedoButtons />
       </header>
 
       {/* Main Content - Vertikales Layout mit gemeinsamen Scroll */}

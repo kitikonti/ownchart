@@ -12,6 +12,8 @@ import {
   buildFlattenedTaskList,
 } from '../../utils/hierarchy';
 import { canHaveChildren } from '../../utils/validation';
+import { useHistoryStore } from './historySlice';
+import { CommandType } from '../../types/command.types';
 
 /**
  * Editable field types for cell-based editing.
@@ -109,19 +111,45 @@ export const useTaskStore = create<TaskStore>()(
     columnWidths: {} as Record<string, number>,
 
     // Actions
-    addTask: (taskData) =>
+    addTask: (taskData) => {
+      const historyStore = useHistoryStore.getState();
+      let generatedId = '';
+
       set((state) => {
         const newTask: Task = {
           ...taskData,
           id: crypto.randomUUID(),
         };
+        generatedId = newTask.id;
         state.tasks.push(newTask);
-      }),
+      });
 
-    updateTask: (id, updates) =>
+      // Record command for undo/redo
+      if (!historyStore.isUndoing && !historyStore.isRedoing) {
+        historyStore.recordCommand({
+          id: crypto.randomUUID(),
+          type: CommandType.ADD_TASK,
+          timestamp: Date.now(),
+          description: `Created task "${taskData.name}"`,
+          params: {
+            task: taskData,
+            generatedId,
+          },
+        });
+      }
+    },
+
+    updateTask: (id, updates) => {
+      const historyStore = useHistoryStore.getState();
+      let previousValues: Partial<Task> = {};
+      let taskName = '';
+
       set((state) => {
         const taskIndex = state.tasks.findIndex((task) => task.id === id);
         if (taskIndex !== -1) {
+          const currentTask = state.tasks[taskIndex];
+          taskName = currentTask.name;
+
           // Validate type change to milestone
           if (updates.type === 'milestone') {
             const hasChildren = state.tasks.some((t) => t.parent === id);
@@ -135,20 +163,56 @@ export const useTaskStore = create<TaskStore>()(
             updates.progress = 0;
           }
 
+          // Capture previous values for undo
+          Object.keys(updates).forEach((key) => {
+            (previousValues as any)[key] = (currentTask as any)[key];
+          });
+
           state.tasks[taskIndex] = {
-            ...state.tasks[taskIndex],
+            ...currentTask,
             ...updates,
           };
         }
-      }),
+      });
 
-    deleteTask: (id, cascade = false) =>
+      // Record command for undo/redo
+      if (
+        !historyStore.isUndoing &&
+        !historyStore.isRedoing &&
+        Object.keys(previousValues).length > 0
+      ) {
+        historyStore.recordCommand({
+          id: crypto.randomUUID(),
+          type: CommandType.UPDATE_TASK,
+          timestamp: Date.now(),
+          description: `Updated task "${taskName}"`,
+          params: {
+            id,
+            updates,
+            previousValues,
+          },
+        });
+      }
+    },
+
+    deleteTask: (id, cascade = false) => {
+      const historyStore = useHistoryStore.getState();
+      const deletedTasks: Task[] = [];
+
       set((state) => {
         if (!cascade) {
+          // Simple delete - capture the task before removing
+          const taskToDelete = state.tasks.find((task) => task.id === id);
+          if (taskToDelete) {
+            deletedTasks.push({ ...taskToDelete });
+          }
+
           // Simple delete - just remove the task
           state.tasks = state.tasks.filter((task) => task.id !== id);
           // Clear selection for deleted task
-          state.selectedTaskIds = state.selectedTaskIds.filter((selectedId) => selectedId !== id);
+          state.selectedTaskIds = state.selectedTaskIds.filter(
+            (selectedId) => selectedId !== id
+          );
           return;
         }
 
@@ -167,6 +231,13 @@ export const useTaskStore = create<TaskStore>()(
 
         findChildren(id);
 
+        // Capture all tasks before deleting
+        state.tasks.forEach((task) => {
+          if (idsToDelete.has(task.id)) {
+            deletedTasks.push({ ...task });
+          }
+        });
+
         // Remove all collected tasks
         state.tasks = state.tasks.filter((task) => !idsToDelete.has(task.id));
 
@@ -174,7 +245,29 @@ export const useTaskStore = create<TaskStore>()(
         state.selectedTaskIds = state.selectedTaskIds.filter(
           (selectedId) => !idsToDelete.has(selectedId)
         );
-      }),
+      });
+
+      // Record command for undo/redo
+      if (!historyStore.isUndoing && !historyStore.isRedoing && deletedTasks.length > 0) {
+        const taskName = deletedTasks[0]?.name || 'Unknown';
+        const description =
+          deletedTasks.length === 1
+            ? `Deleted task "${taskName}"`
+            : `Deleted ${deletedTasks.length} tasks`;
+
+        historyStore.recordCommand({
+          id: crypto.randomUUID(),
+          type: CommandType.DELETE_TASK,
+          timestamp: Date.now(),
+          description,
+          params: {
+            id,
+            cascade,
+            deletedTasks,
+          },
+        });
+      }
+    },
 
     reorderTasks: (fromIndex, toIndex) =>
       set((state) => {
