@@ -66,6 +66,7 @@ export function ColorCellEditor({
         value={localValue}
         onChange={(e) => handleChange(e.target.value)}
         onKeyDown={handleKeyDown}
+        onBlur={() => onSave?.()}
         className="w-full h-full cursor-pointer block"
         title="Choose color"
       />

@@ -266,6 +266,15 @@ function executeUndoCommand(command: Command): void {
       break;
     }
 
+    case 'reorderTasks': {
+      const params = command.params as any;
+      // Restore previous order
+      useTaskStore.setState({
+        tasks: params.previousOrder,
+      });
+      break;
+    }
+
     case 'toggleTaskCollapsed': {
       const params = command.params as any;
       if (params.taskId) {
@@ -358,6 +367,13 @@ function executeRedoCommand(command: Command): void {
       useTaskStore.setState({
         selectedTaskIds: [],
       });
+      break;
+    }
+
+    case 'reorderTasks': {
+      const params = command.params as any;
+      // Re-execute the reorder
+      taskStore.reorderTasks(params.fromIndex, params.toIndex);
       break;
     }
 

@@ -271,7 +271,12 @@ export const useTaskStore = create<TaskStore>()(
       }
     },
 
-    reorderTasks: (fromIndex, toIndex) =>
+    reorderTasks: (fromIndex, toIndex) => {
+      const historyStore = useHistoryStore.getState();
+
+      // Capture previous order before making changes
+      const previousOrder = JSON.parse(JSON.stringify(get().tasks));
+
       set((state) => {
         if (
           fromIndex < 0 ||
@@ -289,7 +294,24 @@ export const useTaskStore = create<TaskStore>()(
         state.tasks.forEach((task, index) => {
           task.order = index;
         });
-      }),
+      });
+
+      // Record command for undo/redo
+      if (!historyStore.isUndoing && !historyStore.isRedoing) {
+        const movedTaskName = previousOrder[fromIndex]?.name || 'Unknown';
+        historyStore.recordCommand({
+          id: crypto.randomUUID(),
+          type: CommandType.REORDER_TASKS,
+          timestamp: Date.now(),
+          description: `Reordered task "${movedTaskName}"`,
+          params: {
+            fromIndex,
+            toIndex,
+            previousOrder,
+          },
+        });
+      }
+    },
 
     // Multi-selection actions
     toggleTaskSelection: (id) =>

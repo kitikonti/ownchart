@@ -41,7 +41,7 @@ export function TaskTableRow({
   const toggleTaskSelection = useTaskStore((state) => state.toggleTaskSelection);
   const selectTaskRange = useTaskStore((state) => state.selectTaskRange);
   const setActiveCell = useTaskStore((state) => state.setActiveCell);
-  const { isCellEditing } = useCellNavigation();
+  const { isCellEditing, stopCellEdit } = useCellNavigation();
 
   const isSelected = selectedTaskIds.includes(task.id);
 
@@ -297,6 +297,8 @@ export function TaskTableRow({
                   <ColorCellEditor
                     value={displayTask.color}
                     onChange={(value) => updateTask(task.id, { color: value })}
+                    onSave={stopCellEdit}
+                    onCancel={stopCellEdit}
                   />
                 ) : (
                   <div
