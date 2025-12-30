@@ -6,6 +6,7 @@
 import { create } from 'zustand';
 import { immer } from 'zustand/middleware/immer';
 import type { Command } from '../../types/command.types';
+import { useTaskStore } from './taskSlice';
 
 interface HistoryState {
   undoStack: Command[];
@@ -182,205 +183,198 @@ export const useHistoryStore = create<HistoryStore>()(
 
 /**
  * Execute the reverse of a command (undo)
- * This function will be implemented after taskSlice integration
  */
 function executeUndoCommand(command: Command): void {
-  // Import dynamically to avoid circular dependency
-  import('./taskSlice').then(({ useTaskStore }) => {
-    const taskStore = useTaskStore.getState();
+  const taskStore = useTaskStore.getState();
 
-    switch (command.type) {
-      case 'addTask': {
-        const params = command.params as any;
-        if (params.generatedId) {
-          taskStore.deleteTask(params.generatedId, false);
-        }
-        break;
+  switch (command.type) {
+    case 'addTask': {
+      const params = command.params as any;
+      if (params.generatedId) {
+        taskStore.deleteTask(params.generatedId, false);
       }
-
-      case 'updateTask': {
-        const params = command.params as any;
-        taskStore.updateTask(params.id, params.previousValues);
-        break;
-      }
-
-      case 'deleteTask': {
-        const params = command.params as any;
-        // Re-add all deleted tasks
-        params.deletedTasks.forEach((task: any) => {
-          // Use internal method to avoid recording
-          const state = useTaskStore.getState();
-          useTaskStore.setState({
-            tasks: [...state.tasks, task],
-          });
-        });
-        break;
-      }
-
-      case 'moveTaskToParent': {
-        const params = command.params as any;
-        taskStore.moveTaskToParent(params.taskId, params.previousParentId ?? null);
-        break;
-      }
-
-      case 'indentSelectedTasks': {
-        const params = command.params as any;
-        // Restore previous parent for each task
-        params.changes.forEach((change: any) => {
-          taskStore.moveTaskToParent(change.taskId, change.oldParent ?? null);
-        });
-        break;
-      }
-
-      case 'outdentSelectedTasks': {
-        const params = command.params as any;
-        // Restore previous parent for each task
-        params.changes.forEach((change: any) => {
-          taskStore.moveTaskToParent(change.taskId, change.oldParent ?? null);
-        });
-        break;
-      }
-
-      case 'convertToSummary': {
-        const params = command.params as any;
-        taskStore.convertToTask(params.taskId);
-        break;
-      }
-
-      case 'convertToTask': {
-        const params = command.params as any;
-        taskStore.convertToSummary(params.taskId);
-        break;
-      }
-
-      case 'toggleTaskSelection': {
-        const params = command.params as any;
-        // Restore previous selection
-        useTaskStore.setState({
-          selectedTaskIds: params.previousSelection,
-        });
-        break;
-      }
-
-      case 'clearSelection': {
-        const params = command.params as any;
-        // Restore previous selection
-        useTaskStore.setState({
-          selectedTaskIds: params.previousSelection,
-        });
-        break;
-      }
-
-      case 'toggleTaskCollapsed': {
-        const params = command.params as any;
-        if (params.taskId) {
-          taskStore.toggleTaskCollapsed(params.taskId);
-        }
-        break;
-      }
-
-      default:
-        console.warn('Unknown command type for undo:', command.type);
+      break;
     }
-  });
+
+    case 'updateTask': {
+      const params = command.params as any;
+      taskStore.updateTask(params.id, params.previousValues);
+      break;
+    }
+
+    case 'deleteTask': {
+      const params = command.params as any;
+      // Re-add all deleted tasks
+      params.deletedTasks.forEach((task: any) => {
+        // Use internal method to avoid recording
+        const state = useTaskStore.getState();
+        useTaskStore.setState({
+          tasks: [...state.tasks, task],
+        });
+      });
+      break;
+    }
+
+    case 'moveTaskToParent': {
+      const params = command.params as any;
+      taskStore.moveTaskToParent(params.taskId, params.previousParentId ?? null);
+      break;
+    }
+
+    case 'indentSelectedTasks': {
+      const params = command.params as any;
+      // Restore previous parent for each task
+      params.changes.forEach((change: any) => {
+        taskStore.moveTaskToParent(change.taskId, change.oldParent ?? null);
+      });
+      break;
+    }
+
+    case 'outdentSelectedTasks': {
+      const params = command.params as any;
+      // Restore previous parent for each task
+      params.changes.forEach((change: any) => {
+        taskStore.moveTaskToParent(change.taskId, change.oldParent ?? null);
+      });
+      break;
+    }
+
+    case 'convertToSummary': {
+      const params = command.params as any;
+      taskStore.convertToTask(params.taskId);
+      break;
+    }
+
+    case 'convertToTask': {
+      const params = command.params as any;
+      taskStore.convertToSummary(params.taskId);
+      break;
+    }
+
+    case 'toggleTaskSelection': {
+      const params = command.params as any;
+      // Restore previous selection
+      useTaskStore.setState({
+        selectedTaskIds: params.previousSelection,
+      });
+      break;
+    }
+
+    case 'clearSelection': {
+      const params = command.params as any;
+      // Restore previous selection
+      useTaskStore.setState({
+        selectedTaskIds: params.previousSelection,
+      });
+      break;
+    }
+
+    case 'toggleTaskCollapsed': {
+      const params = command.params as any;
+      if (params.taskId) {
+        taskStore.toggleTaskCollapsed(params.taskId);
+      }
+      break;
+    }
+
+    default:
+      console.warn('Unknown command type for undo:', command.type);
+  }
 }
 
 /**
  * Execute a command forward (redo)
  */
 function executeRedoCommand(command: Command): void {
-  // Import dynamically to avoid circular dependency
-  import('./taskSlice').then(({ useTaskStore }) => {
-    const taskStore = useTaskStore.getState();
+  const taskStore = useTaskStore.getState();
 
-    switch (command.type) {
-      case 'addTask': {
-        const params = command.params as any;
-        const taskWithId = { ...params.task, id: params.generatedId };
-        // Use internal method to avoid recording
-        const state = useTaskStore.getState();
-        useTaskStore.setState({
-          tasks: [...state.tasks, taskWithId],
-        });
-        break;
-      }
-
-      case 'updateTask': {
-        const params = command.params as any;
-        taskStore.updateTask(params.id, params.updates);
-        break;
-      }
-
-      case 'deleteTask': {
-        const params = command.params as any;
-        taskStore.deleteTask(params.id, params.cascade);
-        break;
-      }
-
-      case 'moveTaskToParent': {
-        const params = command.params as any;
-        taskStore.moveTaskToParent(params.taskId, params.newParentId);
-        break;
-      }
-
-      case 'indentSelectedTasks': {
-        const params = command.params as any;
-        // Restore new parent for each task
-        params.changes.forEach((change: any) => {
-          taskStore.moveTaskToParent(change.taskId, change.newParent ?? null);
-        });
-        break;
-      }
-
-      case 'outdentSelectedTasks': {
-        const params = command.params as any;
-        // Restore new parent for each task
-        params.changes.forEach((change: any) => {
-          taskStore.moveTaskToParent(change.taskId, change.newParent ?? null);
-        });
-        break;
-      }
-
-      case 'convertToSummary': {
-        const params = command.params as any;
-        taskStore.convertToSummary(params.taskId);
-        break;
-      }
-
-      case 'convertToTask': {
-        const params = command.params as any;
-        taskStore.convertToTask(params.taskId);
-        break;
-      }
-
-      case 'toggleTaskSelection': {
-        const params = command.params as any;
-        // Toggle back to new selection
-        useTaskStore.setState({
-          selectedTaskIds: params.taskIds,
-        });
-        break;
-      }
-
-      case 'clearSelection': {
-        useTaskStore.setState({
-          selectedTaskIds: [],
-        });
-        break;
-      }
-
-      case 'toggleTaskCollapsed': {
-        const params = command.params as any;
-        if (params.taskId) {
-          taskStore.toggleTaskCollapsed(params.taskId);
-        }
-        break;
-      }
-
-      default:
-        console.warn('Unknown command type for redo:', command.type);
+  switch (command.type) {
+    case 'addTask': {
+      const params = command.params as any;
+      const taskWithId = { ...params.task, id: params.generatedId };
+      // Use internal method to avoid recording
+      const state = useTaskStore.getState();
+      useTaskStore.setState({
+        tasks: [...state.tasks, taskWithId],
+      });
+      break;
     }
-  });
+
+    case 'updateTask': {
+      const params = command.params as any;
+      taskStore.updateTask(params.id, params.updates);
+      break;
+    }
+
+    case 'deleteTask': {
+      const params = command.params as any;
+      taskStore.deleteTask(params.id, params.cascade);
+      break;
+    }
+
+    case 'moveTaskToParent': {
+      const params = command.params as any;
+      taskStore.moveTaskToParent(params.taskId, params.newParentId);
+      break;
+    }
+
+    case 'indentSelectedTasks': {
+      const params = command.params as any;
+      // Restore new parent for each task
+      params.changes.forEach((change: any) => {
+        taskStore.moveTaskToParent(change.taskId, change.newParent ?? null);
+      });
+      break;
+    }
+
+    case 'outdentSelectedTasks': {
+      const params = command.params as any;
+      // Restore new parent for each task
+      params.changes.forEach((change: any) => {
+        taskStore.moveTaskToParent(change.taskId, change.newParent ?? null);
+      });
+      break;
+    }
+
+    case 'convertToSummary': {
+      const params = command.params as any;
+      taskStore.convertToSummary(params.taskId);
+      break;
+    }
+
+    case 'convertToTask': {
+      const params = command.params as any;
+      taskStore.convertToTask(params.taskId);
+      break;
+    }
+
+    case 'toggleTaskSelection': {
+      const params = command.params as any;
+      // Toggle back to new selection
+      useTaskStore.setState({
+        selectedTaskIds: params.taskIds,
+      });
+      break;
+    }
+
+    case 'clearSelection': {
+      useTaskStore.setState({
+        selectedTaskIds: [],
+      });
+      break;
+    }
+
+    case 'toggleTaskCollapsed': {
+      const params = command.params as any;
+      if (params.taskId) {
+        taskStore.toggleTaskCollapsed(params.taskId);
+      }
+      break;
+    }
+
+    default:
+      console.warn('Unknown command type for redo:', command.type);
+  }
 }
 
 /**
