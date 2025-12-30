@@ -1,4 +1,5 @@
 import { ChartBarHorizontal } from '@phosphor-icons/react';
+import { Toaster } from 'react-hot-toast';
 import { TaskTable } from './components/TaskList/TaskTable';
 import { TaskTableHeader } from './components/TaskList/TaskTableHeader';
 import { HierarchyButtons } from './components/TaskList/HierarchyButtons';
@@ -45,9 +46,32 @@ function App(): JSX.Element {
   };
 
   return (
-    <div className="h-screen bg-gray-50 flex flex-col overflow-hidden">
-      {/* Header Toolbar - Fixed */}
-      <header className="flex-shrink-0 bg-white border-b border-gray-200 px-4 py-2 flex items-center gap-3">
+    <>
+      <Toaster
+        position="bottom-right"
+        toastOptions={{
+          duration: 3000,
+          style: {
+            background: '#363636',
+            color: '#fff',
+          },
+          success: {
+            iconTheme: {
+              primary: '#10b981',
+              secondary: '#fff',
+            },
+          },
+          error: {
+            iconTheme: {
+              primary: '#ef4444',
+              secondary: '#fff',
+            },
+          },
+        }}
+      />
+      <div className="h-screen bg-gray-50 flex flex-col overflow-hidden">
+        {/* Header Toolbar - Fixed */}
+        <header className="flex-shrink-0 bg-white border-b border-gray-200 px-4 py-2 flex items-center gap-3">
         <ChartBarHorizontal size={24} weight="regular" className="text-gray-700" />
         <button
           onClick={handleAddTask}
@@ -96,7 +120,8 @@ function App(): JSX.Element {
           </div>
         </div>
       </div>
-    </div>
+      </div>
+    </>
   );
 }
 

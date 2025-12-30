@@ -5,6 +5,7 @@
 
 import { create } from 'zustand';
 import { immer } from 'zustand/middleware/immer';
+import toast from 'react-hot-toast';
 import type { Command } from '../../types/command.types';
 import { useTaskStore } from './taskSlice';
 
@@ -72,7 +73,7 @@ export const useHistoryStore = create<HistoryStore>()(
       const { undoStack } = get();
       if (undoStack.length === 0) {
         // Show toast: nothing to undo
-        showToast('Nothing to undo', 'info');
+        toast('Nothing to undo', { icon: 'ℹ️' });
         return;
       }
 
@@ -96,10 +97,10 @@ export const useHistoryStore = create<HistoryStore>()(
         });
 
         // Show toast notification
-        showToast(`Undone: ${command.description}`, 'undo');
+        toast.success(`↶ ${command.description}`);
       } catch (error) {
         console.error('Undo failed:', error);
-        showToast('Undo failed', 'error');
+        toast.error('Undo failed. Please refresh the page if issues persist.');
       } finally {
         set((state) => {
           state.isUndoing = false;
@@ -111,7 +112,7 @@ export const useHistoryStore = create<HistoryStore>()(
       const { redoStack } = get();
       if (redoStack.length === 0) {
         // Show toast: nothing to redo
-        showToast('Nothing to redo', 'info');
+        toast('Nothing to redo', { icon: 'ℹ️' });
         return;
       }
 
@@ -135,10 +136,10 @@ export const useHistoryStore = create<HistoryStore>()(
         });
 
         // Show toast notification
-        showToast(`Redone: ${command.description}`, 'redo');
+        toast.success(`↷ ${command.description}`);
       } catch (error) {
         console.error('Redo failed:', error);
-        showToast('Redo failed', 'error');
+        toast.error('Redo failed. Please refresh the page if issues persist.');
       } finally {
         set((state) => {
           state.isRedoing = false;
@@ -390,10 +391,3 @@ function executeRedoCommand(command: Command): void {
   }
 }
 
-/**
- * Show toast notification (placeholder - will implement proper toast system)
- */
-function showToast(message: string, type: 'undo' | 'redo' | 'info' | 'error'): void {
-  console.log(`[${type.toUpperCase()}] ${message}`);
-  // TODO: Integrate with toast notification library (react-hot-toast or sonner)
-}

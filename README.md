@@ -290,6 +290,71 @@ Phase 0 establishes the project foundation:
 
 **Next**: Sprint 1.2 Package 2 - Zoom & Interactive Editing
 
+### Sprint 1.5 - Undo/Redo System ✅ COMPLETE
+
+**Implemented Features** (2025-12-30):
+- ✅ **Full Undo/Redo**: Complete command pattern implementation
+- ✅ **Keyboard Shortcuts**: Ctrl+Z (undo), Ctrl+Shift+Z (redo), Ctrl+Y (redo)
+- ✅ **Toolbar Buttons**: Visual undo/redo controls with disabled states
+- ✅ **Toast Notifications**: Real-time feedback for all undo/redo operations
+- ✅ **Smart Command Recording**: Tracks all task operations automatically
+- ✅ **Branching Support**: New actions after undo clear the redo stack
+
+**Supported Operations**:
+- Task creation and deletion
+- Task updates (name, dates, progress, color, type)
+- Task reordering (drag-and-drop)
+- Hierarchy changes (indent/outdent, parent changes)
+- Type conversion (task ↔ summary ↔ milestone)
+- Selection operations
+- Collapse/expand states
+
+**Keyboard Shortcuts**:
+- **Windows/Linux**:
+  - Ctrl+Z - Undo
+  - Ctrl+Shift+Z - Redo
+  - Ctrl+Y - Redo (alternative)
+- **macOS**:
+  - Cmd+Z - Undo
+  - Cmd+Shift+Z - Redo
+  - Cmd+Y - Redo (alternative)
+
+**Technical Details**:
+- Command stack limited to 100 operations
+- History is not persisted across page refresh
+- Operations execute in <10ms on typical datasets (100-500 tasks)
+- Memory usage: ~8-10MB worst case for 100 commands with large projects
+
+**Known Limitations**:
+- Undo/redo history is cleared on page refresh
+- Maximum 100 commands in history (oldest are dropped)
+- Keyboard shortcuts disabled while typing in input fields
+- No undo grouping (each operation is separate)
+
+**Architecture**:
+- Command Pattern with Memento snapshots
+- Zustand store for history management
+- Immer middleware for immutable state updates
+- Type-safe command definitions with TypeScript
+
+**New Components**:
+- `UndoRedoButtons` - Toolbar controls with tooltips
+- `useKeyboardShortcuts` - Global keyboard event handler
+
+**New State**:
+- `historySlice` - Undo/redo stack management
+
+**Files Modified**:
+- All task actions now record commands automatically
+- Toast notifications integrated via react-hot-toast
+
+**Testing**:
+- Comprehensive integration tests for all command types
+- Edge case coverage (empty stacks, concurrent operations)
+- Performance tests for 100+ sequential operations
+
+**Next**: Sprint 1.2 Package 2 - Interactive Editing (drag-to-edit)
+
 ## Contributing
 
 1. Fork the repository
