@@ -26,21 +26,21 @@ export function useKeyboardShortcuts() {
       }
 
       // Undo: Ctrl+Z or Cmd+Z (without Shift)
-      if (modKey && e.key === 'z' && !e.shiftKey) {
+      if (modKey && e.key.toLowerCase() === 'z' && !e.shiftKey) {
         e.preventDefault();
         undo();
         return;
       }
 
       // Redo: Ctrl+Shift+Z or Cmd+Shift+Z
-      if (modKey && e.key === 'z' && e.shiftKey) {
+      if (modKey && e.key.toLowerCase() === 'z' && e.shiftKey) {
         e.preventDefault();
         redo();
         return;
       }
 
       // Redo: Ctrl+Y or Cmd+Y (alternative)
-      if (modKey && e.key === 'y') {
+      if (modKey && e.key.toLowerCase() === 'y') {
         e.preventDefault();
         redo();
         return;

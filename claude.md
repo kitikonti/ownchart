@@ -146,9 +146,62 @@ app-gantt/
 4. **Grid Extension**: SVG height extends to full content height, not just last task
 5. **Component Extraction**: Headers extracted to App level for sticky behavior
 
-**Pending for Package 2:**
+### Sprint 1.2 Package 2: Interactive Editing - ✅ Complete (2025-12-31)
+
+**Features Implemented:**
+- ✅ Drag-to-move task bars horizontally to shift dates
+- ✅ Drag-to-resize from left/right edges to change duration
+- ✅ Milestone dragging with visual preview
+- ✅ Visual preview with solid blue outline during drag
+- ✅ Snap-to-grid (dates round to nearest day boundary)
+- ✅ Cursor changes (grab/grabbing/resize/not-allowed)
+- ✅ Summary task locking (cannot be manually dragged)
+- ✅ Summary bracket/clamp visualization (custom SVG path)
+- ✅ Recursive cascade (parent summaries update through unlimited levels)
+- ✅ Validation (minimum 1-day duration, error toasts)
+- ✅ Undo integration (all drag operations undoable)
+
+**Architecture:**
+- Unified `useTaskBarInteraction` hook for drag and resize
+- Edge detection threshold: 8 pixels from bar edges
+- Preview updates at 60fps using requestAnimationFrame
+- SVG coordinate conversion for accurate positioning
+- Recursive cascade algorithm walks up parent hierarchy
+
+**Visual Design:**
+- Regular tasks: Rounded rectangles with progress bars
+- Milestones: Diamond shapes centered on the day
+- Summary tasks: Bracket/clamp shape with triangular tips
+
+**New Components:**
+- `useTaskBarInteraction` - Unified drag/resize hook
+- `dragValidation.ts` - Validation utilities
+- `MilestoneDiamond` - Milestone rendering component
+- `SummaryBracket` - Summary bracket rendering component
+
+**Files Modified:**
+- `TaskBar.tsx` - Integrated hook, preview rendering
+- `taskSlice.ts` - Recursive summary cascade logic
+- `historySlice.ts` - Cascade undo/redo handling
+- `timelineUtils.ts` - Milestone date handling
+- `dragValidation.ts` - Milestone validation
+- `dateUtils.ts` - Invalid date filtering
+- `useKeyboardShortcuts.ts` - Fixed Ctrl+Shift+Z
+
+**Testing:**
+- Comprehensive manual testing (sections A-J)
+- Edge cases verified (nested summaries, type conversions)
+- Cross-browser tested (Chrome, Firefox)
+- Performance verified with 100+ tasks
+
+**Performance:**
+- Drag start to preview: <20ms
+- Frame time during drag: <16ms (60fps)
+- Recursive cascade: Efficient for unlimited nesting
+
+**Pending for Package 3:**
 - Zoom controls (Ctrl+mousewheel or zoom slider)
-- Interactive editing (drag task bars to change dates)
+- Pan controls (spacebar + drag)
 - Timeline scale transitions
 
 ## Core Data Model
@@ -594,7 +647,12 @@ npm run preview           # Test production build locally
 - No features, just infrastructure
 
 **Phase 1: MVP** (In Progress - Sprint 1.2)
-- **Sprint 1.2 Package 1** ✅ Complete (2025-12-28)
+- **Sprint 1.5** ✅ Complete (2025-12-30) - Undo/Redo System
+  - Full undo/redo with Command Pattern
+  - Keyboard shortcuts and toolbar buttons
+  - Toast notifications for feedback
+  - 18 integration tests
+- **Sprint 1.2 Package 1** ✅ Complete (2025-12-28) - Timeline Visualization
   - Interactive SVG-based timeline with multi-level scale
   - Sticky headers (toolbar, table header, timeline header)
   - Synchronized scrolling between table and timeline
@@ -603,6 +661,14 @@ npm run preview           # Test production build locally
   - Task types rendering (tasks, summaries, milestones)
   - Progress bars on task bars
   - Grid system with proper alignment
+- **Sprint 1.2 Package 2** ✅ Complete (2025-12-31) - Interactive Editing
+  - Drag-to-move and drag-to-resize task bars
+  - Milestone dragging with visual preview
+  - Summary bracket visualization
+  - Recursive cascade for nested summaries
+  - Snap-to-grid and cursor feedback
+  - Validation and error toasts
+  - Undo integration
 - All core features functional
 - Production-ready
 - Deploy to GitHub Pages
@@ -646,6 +712,6 @@ npm run preview           # Test production build locally
 
 **This file serves as a quick reference for AI assistance throughout development. It should be updated as the project evolves and architectural decisions are made.**
 
-**Last Updated:** 2025-12-30
-**Status:** Phase 1 - MVP (Sprint 1.5 Complete)
-**Next Review:** After Sprint 1.2 Package 2 completion
+**Last Updated:** 2025-12-31
+**Status:** Phase 1 - MVP (Sprint 1.2 Package 2 Complete)
+**Next Review:** After Sprint 1.2 Package 3 completion

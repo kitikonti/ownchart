@@ -10,6 +10,7 @@ import {
   wouldCreateCircularHierarchy,
   getTaskLevel,
   buildFlattenedTaskList,
+  calculateSummaryDates,
 } from '../../utils/hierarchy';
 import { canHaveChildren } from '../../utils/validation';
 import { useHistoryStore } from './historySlice';
@@ -143,8 +144,12 @@ export const useTaskStore = create<TaskStore>()(
       const historyStore = useHistoryStore.getState();
       let previousValues: Partial<Task> = {};
       let taskName = '';
+      let parentUpdates: Array<{ id: string; updates: Partial<Task>; previousValues: Partial<Task> }> = [];
 
       set((state) => {
+        // Create mutable copy to avoid read-only errors during redo
+        updates = { ...updates };
+
         const taskIndex = state.tasks.findIndex((task) => task.id === id);
         if (taskIndex !== -1) {
           const currentTask = state.tasks[taskIndex];
@@ -163,15 +168,93 @@ export const useTaskStore = create<TaskStore>()(
             updates.progress = 0;
           }
 
+          // Handle type change to summary
+          if (updates.type === 'summary') {
+            // Apply type change first so calculateSummaryDates can see it
+            state.tasks[taskIndex] = {
+              ...currentTask,
+              type: 'summary',
+            };
+
+            const hasChildren = state.tasks.some((t) => t.parent === id);
+
+            if (hasChildren) {
+              // Has children - recalculate dates from children
+              const summaryDates = calculateSummaryDates(state.tasks, id);
+              if (summaryDates) {
+                updates.startDate = summaryDates.startDate;
+                updates.endDate = summaryDates.endDate;
+                updates.duration = summaryDates.duration;
+              }
+            } else {
+              // No children - clear dates (summary should have no bar)
+              updates.startDate = '';
+              updates.endDate = '';
+              updates.duration = 0;
+            }
+            updates.open = true; // Summaries should be open by default
+          }
+
           // Capture previous values for undo
           Object.keys(updates).forEach((key) => {
             (previousValues as any)[key] = (currentTask as any)[key];
           });
 
+          // Apply update to child task
           state.tasks[taskIndex] = {
             ...currentTask,
             ...updates,
           };
+
+          // NEW: Check if parent needs recalculation (summary cascade)
+          // Recursively cascade up the hierarchy
+          if (currentTask.parent && (updates.startDate || updates.endDate)) {
+            let currentParentId: string | undefined = currentTask.parent;
+
+            // Cascade up through all ancestor summaries
+            while (currentParentId) {
+              const parent = state.tasks.find((t) => t.id === currentParentId);
+
+              if (parent && parent.type === 'summary') {
+                const summaryDates = calculateSummaryDates(state.tasks, parent.id);
+
+                if (summaryDates) {
+                  const parentIndex = state.tasks.findIndex((t) => t.id === parent.id);
+
+                  // Capture parent's previous state
+                  parentUpdates.push({
+                    id: parent.id,
+                    updates: {
+                      startDate: summaryDates.startDate,
+                      endDate: summaryDates.endDate,
+                      duration: summaryDates.duration,
+                    },
+                    previousValues: {
+                      startDate: parent.startDate,
+                      endDate: parent.endDate,
+                      duration: parent.duration,
+                    },
+                  });
+
+                  // Apply parent update
+                  if (parentIndex !== -1) {
+                    state.tasks[parentIndex] = {
+                      ...state.tasks[parentIndex],
+                      startDate: summaryDates.startDate,
+                      endDate: summaryDates.endDate,
+                      duration: summaryDates.duration,
+                    };
+                  }
+                }
+
+                // Move up to the next level
+                currentParentId = parent.parent;
+              } else {
+                // No more summary parents
+                break;
+              }
+            }
+          }
         }
       });
 
@@ -185,11 +268,12 @@ export const useTaskStore = create<TaskStore>()(
           id: crypto.randomUUID(),
           type: CommandType.UPDATE_TASK,
           timestamp: Date.now(),
-          description: `Updated task "${taskName}"`,
+          description: `Updated task "${taskName}"${parentUpdates.length > 0 ? ' (and parent)' : ''}`,
           params: {
             id,
             updates,
             previousValues,
+            cascadeUpdates: parentUpdates, // NEW: Include parent updates for proper undo
           },
         });
       }
@@ -208,12 +292,46 @@ export const useTaskStore = create<TaskStore>()(
             deletedTasks.push(JSON.parse(JSON.stringify(taskToDelete)));
           }
 
+          const parentId = taskToDelete?.parent;
+
           // Simple delete - just remove the task
           state.tasks = state.tasks.filter((task) => task.id !== id);
           // Clear selection for deleted task
           state.selectedTaskIds = state.selectedTaskIds.filter(
             (selectedId) => selectedId !== id
           );
+
+          // Recalculate parent summary dates if it was a child
+          if (parentId) {
+            const parent = state.tasks.find((t) => t.id === parentId);
+            if (parent && parent.type === 'summary') {
+              const hasChildren = state.tasks.some((t) => t.parent === parentId);
+
+              if (hasChildren) {
+                // Still has children - recalculate dates
+                const summaryDates = calculateSummaryDates(state.tasks, parentId);
+                if (summaryDates) {
+                  const parentIndex = state.tasks.findIndex((t) => t.id === parentId);
+                  state.tasks[parentIndex] = {
+                    ...state.tasks[parentIndex],
+                    startDate: summaryDates.startDate,
+                    endDate: summaryDates.endDate,
+                    duration: summaryDates.duration,
+                  };
+                }
+              } else {
+                // No more children - clear dates
+                const parentIndex = state.tasks.findIndex((t) => t.id === parentId);
+                state.tasks[parentIndex] = {
+                  ...state.tasks[parentIndex],
+                  startDate: '',
+                  endDate: '',
+                  duration: 0,
+                };
+              }
+            }
+          }
+
           return;
         }
 
@@ -444,7 +562,42 @@ export const useTaskStore = create<TaskStore>()(
           }
         }
 
+        const oldParentId = task.parent;
         task.parent = newParentId ?? undefined;
+
+        // Recalculate summary dates for new parent
+        if (newParentId) {
+          const newParent = state.tasks.find((t) => t.id === newParentId);
+          if (newParent && newParent.type === 'summary') {
+            const summaryDates = calculateSummaryDates(state.tasks, newParentId);
+            if (summaryDates) {
+              const parentIndex = state.tasks.findIndex((t) => t.id === newParentId);
+              state.tasks[parentIndex] = {
+                ...state.tasks[parentIndex],
+                startDate: summaryDates.startDate,
+                endDate: summaryDates.endDate,
+                duration: summaryDates.duration,
+              };
+            }
+          }
+        }
+
+        // Recalculate summary dates for old parent (if it still has children)
+        if (oldParentId) {
+          const oldParent = state.tasks.find((t) => t.id === oldParentId);
+          if (oldParent && oldParent.type === 'summary') {
+            const summaryDates = calculateSummaryDates(state.tasks, oldParentId);
+            if (summaryDates) {
+              const parentIndex = state.tasks.findIndex((t) => t.id === oldParentId);
+              state.tasks[parentIndex] = {
+                ...state.tasks[parentIndex],
+                startDate: summaryDates.startDate,
+                endDate: summaryDates.endDate,
+                duration: summaryDates.duration,
+              };
+            }
+          }
+        }
       }),
 
     toggleTaskCollapsed: (taskId) =>
@@ -524,7 +677,24 @@ export const useTaskStore = create<TaskStore>()(
 
         task.type = 'summary';
         task.open = true;
-        // Keep existing dates as fallback until children are added
+
+        // Check if task has children
+        const hasChildren = state.tasks.some((t) => t.parent === taskId);
+
+        if (hasChildren) {
+          // Recalculate dates from children
+          const summaryDates = calculateSummaryDates(state.tasks, taskId);
+          if (summaryDates) {
+            task.startDate = summaryDates.startDate;
+            task.endDate = summaryDates.endDate;
+            task.duration = summaryDates.duration;
+          }
+        } else {
+          // No children - clear dates (summary should have no bar)
+          task.startDate = '';
+          task.endDate = '';
+          task.duration = 0;
+        }
       }),
 
     convertToTask: (taskId) =>
@@ -617,6 +787,24 @@ export const useTaskStore = create<TaskStore>()(
             }
           }
         });
+
+        // Recalculate summary dates for all affected parents
+        const affectedParentIds = new Set(changes.map(c => c.newParentId));
+        affectedParentIds.forEach((parentId) => {
+          const parent = state.tasks.find((t) => t.id === parentId);
+          if (parent && parent.type === 'summary') {
+            const summaryDates = calculateSummaryDates(state.tasks, parentId);
+            if (summaryDates) {
+              const parentIndex = state.tasks.findIndex((t) => t.id === parentId);
+              state.tasks[parentIndex] = {
+                ...state.tasks[parentIndex],
+                startDate: summaryDates.startDate,
+                endDate: summaryDates.endDate,
+                duration: summaryDates.duration,
+              };
+            }
+          }
+        });
       }),
 
     outdentSelectedTasks: () =>
@@ -651,11 +839,51 @@ export const useTaskStore = create<TaskStore>()(
           }
         });
 
+        // Track old parents before making changes
+        const oldParents = new Set<string>();
+        changes.forEach(({ taskId }) => {
+          const task = state.tasks.find((t) => t.id === taskId);
+          if (task?.parent) {
+            oldParents.add(task.parent);
+          }
+        });
+
         // Apply all changes at once
         changes.forEach(({ taskId, newParentId }) => {
           const task = state.tasks.find((t) => t.id === taskId);
           if (task) {
             task.parent = newParentId || undefined;
+          }
+        });
+
+        // Recalculate summary dates for old parents
+        oldParents.forEach((parentId) => {
+          const parent = state.tasks.find((t) => t.id === parentId);
+          if (parent && parent.type === 'summary') {
+            const hasChildren = state.tasks.some((t) => t.parent === parentId);
+
+            if (hasChildren) {
+              // Still has children - recalculate dates
+              const summaryDates = calculateSummaryDates(state.tasks, parentId);
+              if (summaryDates) {
+                const parentIndex = state.tasks.findIndex((t) => t.id === parentId);
+                state.tasks[parentIndex] = {
+                  ...state.tasks[parentIndex],
+                  startDate: summaryDates.startDate,
+                  endDate: summaryDates.endDate,
+                  duration: summaryDates.duration,
+                };
+              }
+            } else {
+              // No more children - clear dates
+              const parentIndex = state.tasks.findIndex((t) => t.id === parentId);
+              state.tasks[parentIndex] = {
+                ...state.tasks[parentIndex],
+                startDate: '',
+                endDate: '',
+                duration: 0,
+              };
+            }
           }
         });
       }),

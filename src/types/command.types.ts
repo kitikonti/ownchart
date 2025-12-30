@@ -66,6 +66,11 @@ export interface UpdateTaskParams {
   id: string;
   updates: Partial<Task>;
   previousValues: Partial<Task>; // Store old values for undo
+  cascadeUpdates?: Array<{
+    id: string;
+    updates: Partial<Task>;
+    previousValues: Partial<Task>;
+  }>; // For summary task cascade updates
 }
 
 export interface DeleteTaskParams {

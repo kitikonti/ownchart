@@ -1,0 +1,342 @@
+/**
+ * Task bar interaction hook for drag-to-move and drag-to-resize functionality.
+ * Provides unified handling of both drag and resize modes with visual feedback.
+ */
+
+import { useState, useCallback, useRef, useEffect } from 'react';
+import toast from 'react-hot-toast';
+import type { Task } from '../types/chart.types';
+import type { TimelineScale, TaskBarGeometry } from '../utils/timelineUtils';
+import { addDays, calculateDuration } from '../utils/dateUtils';
+import { useTaskStore } from '../store/slices/taskSlice';
+import { validateDragOperation } from '../utils/dragValidation';
+
+// Edge detection threshold in pixels
+const EDGE_THRESHOLD = 8;
+
+type InteractionMode = 'idle' | 'dragging' | 'resizing-left' | 'resizing-right';
+type InteractionZone = 'left-edge' | 'right-edge' | 'center';
+type CursorType = 'grab' | 'grabbing' | 'ew-resize' | 'not-allowed' | 'pointer';
+
+interface DragState {
+  mode: InteractionMode;
+  startX: number;
+  startMouseX: number;
+  originalStartDate: string;
+  originalEndDate: string;
+  currentPreviewStart?: string;
+  currentPreviewEnd?: string;
+}
+
+export interface UseTaskBarInteractionReturn {
+  mode: InteractionMode;
+  previewGeometry: { startDate: string; endDate: string } | null;
+  cursor: CursorType;
+  isDragging: boolean; // Expose whether a drag is in progress
+  onMouseDown: (e: React.MouseEvent<SVGGElement>) => void;
+  onMouseMove: (e: React.MouseEvent<SVGGElement>) => void;
+}
+
+/**
+ * Detect which zone of the task bar the mouse is in (for edge detection).
+ */
+function detectInteractionZone(mouseX: number, geometry: TaskBarGeometry): InteractionZone {
+  const relativeX = mouseX - geometry.x;
+
+  if (relativeX < EDGE_THRESHOLD) return 'left-edge';
+  if (relativeX > geometry.width - EDGE_THRESHOLD) return 'right-edge';
+  return 'center';
+}
+
+/**
+ * Convert SVG screen coordinates to SVG element coordinates.
+ */
+function getSVGPoint(e: MouseEvent | React.MouseEvent, svg: SVGSVGElement): { x: number; y: number } {
+  const point = svg.createSVGPoint();
+  point.x = e.clientX;
+  point.y = e.clientY;
+
+  const ctm = svg.getScreenCTM();
+  if (!ctm) return { x: e.clientX, y: e.clientY };
+
+  const svgPoint = point.matrixTransform(ctm.inverse());
+  return { x: svgPoint.x, y: svgPoint.y };
+}
+
+/**
+ * Unified hook for task bar drag-to-move and drag-to-resize interactions.
+ */
+export function useTaskBarInteraction(
+  task: Task,
+  scale: TimelineScale,
+  geometry: TaskBarGeometry
+): UseTaskBarInteractionReturn {
+  const updateTask = useTaskStore((state) => state.updateTask);
+
+  const [dragState, setDragState] = useState<DragState | null>(null);
+  const dragStateRef = useRef<DragState | null>(null); // Use ref to avoid stale closures
+  const [cursor, setCursor] = useState<CursorType>('pointer');
+  const rafRef = useRef<number | null>(null);
+  const svgRef = useRef<SVGSVGElement | null>(null);
+
+  /**
+   * Handle mouse down - start drag or resize operation.
+   */
+  const handleMouseDown = useCallback((e: React.MouseEvent<SVGGElement>) => {
+    // Block summary tasks from being dragged
+    if (task.type === 'summary') {
+      toast('Summary task dates are calculated from children', {
+        icon: '🔒',
+        duration: 2000,
+      });
+      return;
+    }
+
+    // Get SVG element
+    const svg = e.currentTarget.ownerSVGElement;
+    if (!svg) return;
+
+    svgRef.current = svg;
+
+    // Convert to SVG coordinates
+    const svgPoint = getSVGPoint(e, svg);
+
+    // Detect interaction zone
+    const zone = detectInteractionZone(svgPoint.x, geometry);
+
+    // Determine mode
+    let mode: InteractionMode;
+    if (zone === 'center') {
+      mode = 'dragging';
+    } else if (zone === 'left-edge') {
+      mode = 'resizing-left';
+    } else {
+      mode = 'resizing-right';
+    }
+
+    // Initialize drag state (use both state and ref)
+    // For milestones, use startDate as endDate fallback
+    const effectiveEndDate = task.endDate || task.startDate;
+    const newDragState = {
+      mode,
+      startX: svgPoint.x,
+      startMouseX: e.clientX,
+      originalStartDate: task.startDate,
+      originalEndDate: effectiveEndDate,
+      currentPreviewStart: task.startDate,
+      currentPreviewEnd: effectiveEndDate,
+    };
+
+    setDragState(newDragState);
+    dragStateRef.current = newDragState;
+
+    // Attach global mouse listeners
+    document.addEventListener('mousemove', handleMouseMove);
+    document.addEventListener('mouseup', handleMouseUp);
+
+    // Prevent text selection and event bubbling
+    e.preventDefault();
+    e.stopPropagation();
+  }, [task, geometry, scale]);
+
+  /**
+   * Handle mouse move - update preview during drag.
+   */
+  const handleMouseMove = useCallback((e: MouseEvent) => {
+    const currentDragState = dragStateRef.current;
+    if (!currentDragState || !svgRef.current) return;
+
+    // Cancel any pending RAF
+    if (rafRef.current) {
+      cancelAnimationFrame(rafRef.current);
+    }
+
+    // Use requestAnimationFrame for smooth updates
+    rafRef.current = requestAnimationFrame(() => {
+      const deltaX = e.clientX - currentDragState.startMouseX;
+
+      if (currentDragState.mode === 'dragging') {
+        // Drag-to-move: shift both dates by same delta
+        const deltaDays = Math.round(deltaX / scale.pixelsPerDay);
+        const newStartDate = addDays(currentDragState.originalStartDate, deltaDays);
+        const newEndDate = addDays(currentDragState.originalEndDate, deltaDays);
+
+        const updatedState = {
+          ...currentDragState,
+          currentPreviewStart: newStartDate,
+          currentPreviewEnd: newEndDate,
+        };
+
+        setDragState(updatedState);
+        dragStateRef.current = updatedState;
+
+      } else if (currentDragState.mode === 'resizing-left') {
+        // Resize from left: change start date only
+        const deltaDays = Math.round(deltaX / scale.pixelsPerDay);
+        const newStartDate = addDays(currentDragState.originalStartDate, deltaDays);
+
+        // Validate minimum duration
+        const duration = calculateDuration(newStartDate, currentDragState.originalEndDate);
+        if (duration < 1) {
+          // Don't update if would create invalid duration
+          return;
+        }
+
+        const updatedState = {
+          ...currentDragState,
+          currentPreviewStart: newStartDate,
+          currentPreviewEnd: currentDragState.originalEndDate,
+        };
+
+        setDragState(updatedState);
+        dragStateRef.current = updatedState;
+
+      } else if (currentDragState.mode === 'resizing-right') {
+        // Resize from right: change end date only
+        const deltaDays = Math.round(deltaX / scale.pixelsPerDay);
+        const newEndDate = addDays(currentDragState.originalEndDate, deltaDays);
+
+        // Validate minimum duration
+        const duration = calculateDuration(currentDragState.originalStartDate, newEndDate);
+        if (duration < 1) {
+          // Don't update if would create invalid duration
+          return;
+        }
+
+        const updatedState = {
+          ...currentDragState,
+          currentPreviewStart: currentDragState.originalStartDate,
+          currentPreviewEnd: newEndDate,
+        };
+
+        setDragState(updatedState);
+        dragStateRef.current = updatedState;
+      }
+    });
+  }, [scale]);
+
+  /**
+   * Handle mouse up - complete drag operation.
+   */
+  const handleMouseUp = useCallback(() => {
+    const currentDragState = dragStateRef.current;
+    if (!currentDragState) return;
+
+    // Cancel any pending RAF
+    if (rafRef.current) {
+      cancelAnimationFrame(rafRef.current);
+      rafRef.current = null;
+    }
+
+    // Validate the drag operation
+    const validation = validateDragOperation(
+      task,
+      currentDragState.currentPreviewStart || task.startDate,
+      currentDragState.currentPreviewEnd || task.endDate
+    );
+
+    if (!validation.valid) {
+      // Show error toast
+      toast.error(validation.error!, {
+        duration: 3000,
+        position: 'bottom-center',
+      });
+    } else {
+      // Only update if dates actually changed
+      if (
+        currentDragState.currentPreviewStart !== task.startDate ||
+        currentDragState.currentPreviewEnd !== task.endDate
+      ) {
+        // For milestones, only update startDate (they don't have endDate)
+        if (task.type === 'milestone') {
+          updateTask(task.id, {
+            startDate: currentDragState.currentPreviewStart!,
+            duration: 0,
+          });
+        } else {
+          // For regular tasks, update both dates
+          updateTask(task.id, {
+            startDate: currentDragState.currentPreviewStart!,
+            endDate: currentDragState.currentPreviewEnd!,
+            duration: calculateDuration(
+              currentDragState.currentPreviewStart!,
+              currentDragState.currentPreviewEnd!
+            ),
+          });
+        }
+      }
+    }
+
+    // Cleanup
+    document.removeEventListener('mousemove', handleMouseMove);
+    document.removeEventListener('mouseup', handleMouseUp);
+    setDragState(null);
+    dragStateRef.current = null;
+    svgRef.current = null;
+  }, [task, updateTask, handleMouseMove]);
+
+  /**
+   * Handle mouse move for cursor updates (when not dragging).
+   */
+  const handleMouseMoveForCursor = useCallback((e: React.MouseEvent<SVGGElement>) => {
+    // Don't change cursor during active drag
+    if (dragState) return;
+
+    // Summary tasks always show not-allowed
+    if (task.type === 'summary') {
+      setCursor('not-allowed');
+      return;
+    }
+
+    // Milestones can only be dragged (moved), not resized
+    if (task.type === 'milestone') {
+      setCursor('grab');
+      return;
+    }
+
+    // Get SVG element and convert coordinates
+    const svg = e.currentTarget.ownerSVGElement;
+    if (!svg) return;
+
+    const svgPoint = getSVGPoint(e, svg);
+
+    // Detect zone
+    const zone = detectInteractionZone(svgPoint.x, geometry);
+
+    // Update cursor based on zone
+    if (zone === 'center') {
+      setCursor('grab');
+    } else {
+      // Left or right edge
+      setCursor('ew-resize');
+    }
+  }, [task, geometry, dragState]);
+
+  // Cleanup on unmount
+  useEffect(() => {
+    return () => {
+      if (rafRef.current) {
+        cancelAnimationFrame(rafRef.current);
+      }
+      document.removeEventListener('mousemove', handleMouseMove);
+      document.removeEventListener('mouseup', handleMouseUp);
+    };
+  }, [handleMouseMove, handleMouseUp]);
+
+  // Determine active cursor (override during drag)
+  const activeCursor = dragState?.mode === 'dragging' ? 'grabbing' : cursor;
+
+  return {
+    mode: dragState?.mode || 'idle',
+    previewGeometry: dragState?.currentPreviewStart && dragState?.currentPreviewEnd
+      ? {
+          startDate: dragState.currentPreviewStart,
+          endDate: dragState.currentPreviewEnd,
+        }
+      : null,
+    cursor: activeCursor,
+    isDragging: dragState !== null,
+    onMouseDown: handleMouseDown,
+    onMouseMove: handleMouseMoveForCursor,
+  };
+}

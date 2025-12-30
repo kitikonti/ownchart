@@ -200,6 +200,13 @@ function executeUndoCommand(command: Command): void {
     case 'updateTask': {
       const params = command.params as any;
       taskStore.updateTask(params.id, params.previousValues);
+
+      // Handle cascade updates (revert parent summary dates)
+      if (params.cascadeUpdates) {
+        params.cascadeUpdates.forEach((cascade: any) => {
+          taskStore.updateTask(cascade.id, cascade.previousValues);
+        });
+      }
       break;
     }
 
@@ -310,6 +317,13 @@ function executeRedoCommand(command: Command): void {
     case 'updateTask': {
       const params = command.params as any;
       taskStore.updateTask(params.id, params.updates);
+
+      // Handle cascade updates (reapply parent summary dates)
+      if (params.cascadeUpdates) {
+        params.cascadeUpdates.forEach((cascade: any) => {
+          taskStore.updateTask(cascade.id, cascade.updates);
+        });
+      }
       break;
     }
 

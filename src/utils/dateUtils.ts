@@ -49,15 +49,18 @@ export function formatDate(dateStr: string, formatStr: string): string {
  * @returns { min: string, max: string } in ISO format
  */
 export function getDateRange(tasks: Task[]): { min: string; max: string } {
-  if (tasks.length === 0) {
+  // Filter out tasks with invalid/empty dates (e.g., empty summaries)
+  const validTasks = tasks.filter((task) => task.startDate && task.endDate && task.startDate !== '' && task.endDate !== '');
+
+  if (validTasks.length === 0) {
     const today = format(new Date(), 'yyyy-MM-dd');
     return { min: today, max: addDays(today, 30) };
   }
 
-  let minDate = tasks[0].startDate;
-  let maxDate = tasks[0].endDate;
+  let minDate = validTasks[0].startDate;
+  let maxDate = validTasks[0].endDate;
 
-  tasks.forEach((task) => {
+  validTasks.forEach((task) => {
     if (task.startDate < minDate) minDate = task.startDate;
     if (task.endDate > maxDate) maxDate = task.endDate;
   });

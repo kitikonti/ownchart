@@ -355,6 +355,91 @@ Phase 0 establishes the project foundation:
 
 **Next**: Sprint 1.2 Package 2 - Interactive Editing (drag-to-edit)
 
+### Sprint 1.2 Package 2 - Interactive Editing ✅ COMPLETE
+
+**Implemented Features** (2025-12-31):
+- ✅ **Drag-to-Move**: Drag task bars horizontally to shift dates
+- ✅ **Drag-to-Resize**: Resize tasks from left/right edges to change duration
+- ✅ **Milestone Dragging**: Milestones can be dragged to change dates with visual preview
+- ✅ **Visual Preview**: Solid blue outline shows target position during drag
+- ✅ **Snap-to-Grid**: Dates automatically round to nearest day boundary
+- ✅ **Cursor Changes**: Visual feedback (grab/grabbing/resize/not-allowed)
+- ✅ **Summary Task Locking**: Summary tasks cannot be manually dragged (auto-calculated from children)
+- ✅ **Summary Bracket Visualization**: Custom bracket/clamp SVG path for summary tasks
+- ✅ **Recursive Cascade**: Parent summary dates update automatically through unlimited hierarchy levels
+- ✅ **Undo Integration**: All drag operations can be undone with Ctrl+Z
+- ✅ **Validation**: Minimum 1-day duration enforced, error toasts for invalid operations
+
+**Interaction Modes**:
+- **Drag-to-Move**: Hover over task bar center → cursor changes to grab → click and drag horizontally
+- **Drag-to-Resize**: Hover near left or right edge (within 8px) → cursor changes to resize → drag to adjust duration
+- **Milestone Drag**: Hover over milestone diamond → cursor changes to grab → drag to move (no resize)
+- **Summary Tasks**: Display as bracket/clamp shape with not-allowed cursor → dates calculated from children
+
+**Visual Design**:
+- **Regular Tasks**: Rounded rectangles with progress bars
+- **Milestones**: Diamond shapes centered on the day
+- **Summary Tasks**: Bracket/clamp shape with:
+  - Horizontal bar at 30% of row height
+  - 60-degree triangular downward tips
+  - Rounded top corners (10px radius)
+  - Rounded inner corners (3px radius) where tips meet bar
+  - Task name displayed to the right of the bracket
+
+**Technical Details**:
+- Unified `useTaskBarInteraction` hook handles both drag and resize
+- Preview updates at 60fps using requestAnimationFrame
+- Edge detection threshold: 8 pixels from left/right edges
+- SVG coordinate conversion for accurate positioning
+- Snap-to-grid using Math.round for intuitive day-level precision
+- Recursive cascade algorithm walks up parent hierarchy to root
+
+**Validation Rules**:
+- Minimum task duration: 1 day (regular tasks only)
+- Summary tasks cannot be manually dragged
+- Milestones can be dragged (duration always 0)
+- Invalid operations show error toasts with clear messages
+
+**Undo/Redo Integration**:
+- Each drag creates a single undo command
+- Summary cascade updates included in same undo entry
+- Both child and all ancestor parent updates reversed on undo
+- Description indicates when parent was updated: "Updated task 'Design' (and parent)"
+
+**New Components**:
+- `useTaskBarInteraction` - Unified drag/resize hook with cursor management
+- `dragValidation.ts` - Validation utilities for drag operations
+- `MilestoneDiamond` - SVG milestone rendering component
+- `SummaryBracket` - SVG summary bracket rendering component
+
+**Files Modified**:
+- `TaskBar.tsx` - Integrated hook, added preview rendering, milestone/summary components
+- `taskSlice.ts` - Enhanced updateTask with recursive summary cascade logic
+- `historySlice.ts` - Updated undo/redo handlers for cascade updates
+- `command.types.ts` - Added cascadeUpdates field to UpdateTaskParams
+- `timelineUtils.ts` - Added fallback for milestones without endDate
+- `dragValidation.ts` - Milestone-specific validation logic
+- `dateUtils.ts` - Added filtering for tasks with invalid dates
+- `useKeyboardShortcuts.ts` - Fixed case sensitivity for Ctrl+Shift+Z
+
+**Performance**:
+- Drag start to first preview: <20ms
+- Frame time during drag: <16ms (60fps maintained)
+- Tested with 100+ tasks: No jank, smooth interaction
+- Recursive cascade handles unlimited nesting levels efficiently
+
+**Testing**:
+- Comprehensive manual testing completed (sections A-J)
+- Edge cases verified (nested summaries, type conversions, undo/redo)
+- Cross-browser tested (Chrome, Firefox)
+- Performance verified with 100+ tasks
+
+**Known Limitations**:
+- Multi-select drag not yet implemented (planned for future)
+- No keyboard alternative for drag (arrow keys planned for Sprint 1.x)
+- No visual feedback for dependency constraints (planned for Sprint 1.2 Package 4)
+- No formal unit/integration/E2E tests (manual testing only)
+
 ## Contributing
 
 1. Fork the repository

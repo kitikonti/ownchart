@@ -161,7 +161,10 @@ export function getTaskBarGeometry(
   headerHeight: number = 48
 ): TaskBarGeometry {
   const x = dateToPixel(task.startDate, scale);
-  const duration = calculateDuration(task.startDate, task.endDate);
+
+  // Milestones only need startDate (they represent a point in time, not a duration)
+  const endDate = task.endDate || task.startDate;
+  const duration = calculateDuration(task.startDate, endDate);
   const width = duration * scale.pixelsPerDay;
 
   return {
