@@ -204,7 +204,8 @@ export const useTaskStore = create<TaskStore>()(
           // Simple delete - capture the task before removing
           const taskToDelete = state.tasks.find((task) => task.id === id);
           if (taskToDelete) {
-            deletedTasks.push({ ...taskToDelete });
+            // Deep clone to avoid Immer draft proxy issues
+            deletedTasks.push(JSON.parse(JSON.stringify(taskToDelete)));
           }
 
           // Simple delete - just remove the task
@@ -234,7 +235,8 @@ export const useTaskStore = create<TaskStore>()(
         // Capture all tasks before deleting
         state.tasks.forEach((task) => {
           if (idsToDelete.has(task.id)) {
-            deletedTasks.push({ ...task });
+            // Deep clone to avoid Immer draft proxy issues
+            deletedTasks.push(JSON.parse(JSON.stringify(task)));
           }
         });
 

@@ -204,13 +204,10 @@ function executeUndoCommand(command: Command): void {
 
     case 'deleteTask': {
       const params = command.params as any;
-      // Re-add all deleted tasks
-      params.deletedTasks.forEach((task: any) => {
-        // Use internal method to avoid recording
-        const state = useTaskStore.getState();
-        useTaskStore.setState({
-          tasks: [...state.tasks, task],
-        });
+      // Re-add all deleted tasks in one operation
+      const currentTasks = useTaskStore.getState().tasks;
+      useTaskStore.setState({
+        tasks: [...currentTasks, ...params.deletedTasks],
       });
       break;
     }

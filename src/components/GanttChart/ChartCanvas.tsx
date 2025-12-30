@@ -8,7 +8,6 @@ import type { Task } from '../../types/chart.types';
 import { useChartStore } from '../../store/slices/chartSlice';
 import { GridLines } from './GridLines';
 import { TaskBar } from './TaskBar';
-import { TimelineHeader } from './TimelineHeader';
 import { TodayMarker } from './TodayMarker';
 
 interface ChartCanvasProps {

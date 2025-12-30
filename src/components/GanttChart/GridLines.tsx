@@ -15,7 +15,6 @@ interface GridLinesProps {
 }
 
 const ROW_HEIGHT = 44; // Match TaskTable cell height (h-[44px] with border-box)
-const HEADER_HEIGHT = 48; // 2×24px rows (border drawn separately in SVG)
 
 export function GridLines({
   scale,
