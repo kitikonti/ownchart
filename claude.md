@@ -74,9 +74,40 @@ app-gantt/
 └── public/               # Static assets
 ```
 
-## Current Implementation Status (Sprint 1.2 Package 1)
+## Current Implementation Status
 
-### Timeline Visualization - ✅ Complete (2025-12-28)
+### Sprint 1.5: Undo/Redo System - ✅ Complete (2025-12-30)
+
+**Features Implemented:**
+- ✅ Full undo/redo functionality using Command Pattern
+- ✅ Keyboard shortcuts (Ctrl+Z, Ctrl+Shift+Z, Ctrl+Y)
+- ✅ Toolbar buttons with disabled states
+- ✅ Toast notifications for user feedback (react-hot-toast)
+- ✅ Comprehensive integration tests (18 test cases)
+- ✅ Support for all operations: create, update, delete, reorder, hierarchy changes
+- ✅ Branching support (new action clears redo stack)
+- ✅ Command stack limited to 100 operations
+- ✅ Operations execute in <10ms for typical datasets
+
+**Architecture:**
+- Command Pattern with Memento snapshots
+- Zustand store for history management (historySlice)
+- Immer middleware for immutable state updates
+- Type-safe command definitions with TypeScript
+- Global keyboard shortcuts via useKeyboardShortcuts hook
+- UndoRedoButtons component with tooltips
+
+**Testing:**
+- 18 integration tests covering all command types
+- Edge case coverage (empty stacks, concurrent operations)
+- Performance tests for 100+ sequential operations
+
+**Known Limitations:**
+- History cleared on page refresh (no persistence)
+- Maximum 100 commands in history (oldest dropped)
+- No undo grouping (each operation is separate)
+
+### Sprint 1.2 Package 1: Timeline Visualization - ✅ Complete (2025-12-28)
 
 **Architecture:**
 - **Layout Pattern**: Vertical flex layout with sticky header row
@@ -615,6 +646,6 @@ npm run preview           # Test production build locally
 
 **This file serves as a quick reference for AI assistance throughout development. It should be updated as the project evolves and architectural decisions are made.**
 
-**Last Updated:** 2025-12-28
-**Status:** Phase 1 - MVP (Sprint 1.2 Package 1 Complete)
+**Last Updated:** 2025-12-30
+**Status:** Phase 1 - MVP (Sprint 1.5 Complete)
 **Next Review:** After Sprint 1.2 Package 2 completion

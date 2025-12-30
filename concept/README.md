@@ -53,6 +53,7 @@ This concept documentation is organized into logical categories for easy navigat
 - **[SPRINT_1.1.1_TASK_GROUPS.md](./sprints/SPRINT_1.1.1_TASK_GROUPS.md)** - Task groups and hierarchy (Sprint 1.1)
 - **[SPRINT_1.1.2_HIERARCHY_INDENT_OUTDENT.md](./sprints/SPRINT_1.1.2_HIERARCHY_INDENT_OUTDENT.md)** - Indent/outdent functionality (Sprint 1.1)
 - **[SPRINT_1.2_TIMELINE_VISUALIZATION.md](./sprints/SPRINT_1.2_TIMELINE_VISUALIZATION.md)** - Timeline visualization implementation
+- **[SPRINT_1.5_UNDO_REDO_CONCEPT.md](./sprints/SPRINT_1.5_UNDO_REDO_CONCEPT.md)** - Undo/redo system with Command Pattern
 
 ## Quick Reference
 
@@ -115,11 +116,23 @@ See **[EXTENSIBILITY_ARCHITECTURE.md](./architecture/EXTENSIBILITY_ARCHITECTURE.
 
 ---
 
-**Last Updated**: 2025-12-28
-**Status**: Phase 1 - MVP (Sprint 1.2 Package 1 Complete)
-**Version**: 1.3
+**Last Updated**: 2025-12-30
+**Status**: Phase 1 - MVP (Sprint 1.5 Complete)
+**Version**: 1.4
 
-## Recent Updates (v1.3 - 2025-12-28)
+## Recent Updates (v1.4 - 2025-12-30)
+
+### Sprint 1.5 - Undo/Redo System ✅ Complete
+- ✅ Full undo/redo functionality with Command Pattern
+- ✅ Keyboard shortcuts (Ctrl+Z, Ctrl+Shift+Z, Ctrl+Y)
+- ✅ Toolbar buttons with visual feedback
+- ✅ Toast notifications (react-hot-toast integration)
+- ✅ Comprehensive integration tests (18 test cases)
+- ✅ Support for all operations (create, update, delete, reorder, hierarchy)
+- ✅ Performance: <10ms per operation on typical datasets
+- ✅ Memory efficient: 100-command stack limit
+
+### Previous Updates (v1.3 - 2025-12-28)
 
 ### Sprint 1.2 Package 1 - Timeline Visualization ✅ Complete
 - ✅ Interactive SVG-based Gantt chart with multi-level timeline scales

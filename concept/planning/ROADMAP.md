@@ -421,31 +421,43 @@ If dependency arrows or performance validation fails, reassess approach before c
 
 ---
 
-#### Sprint 1.5: Basic Undo/Redo
+#### Sprint 1.5: Basic Undo/Redo ✅ COMPLETE
+
+**Status**: ✅ COMPLETE (2025-12-30)
 
 **Features**:
-- Auto-record all changes
-- Undo/Redo (Ctrl+Z / Ctrl+Shift+Z)
-- Undo/Redo buttons in toolbar
-- Visual feedback on undo/redo
+- ✅ Auto-record all changes
+- ✅ Undo/Redo (Ctrl+Z / Ctrl+Shift+Z / Ctrl+Y)
+- ✅ Undo/Redo buttons in toolbar with disabled states
+- ✅ Visual feedback via toast notifications (react-hot-toast)
 
 **Technical Work**:
-- History data structure (simple array-based)
-- Command pattern for all mutations
-- Snapshot system (every 50 actions)
-- Undo/redo state management
+- ✅ History data structure (Command Pattern with undo/redo stacks)
+- ✅ Command pattern for all mutations (15 command types)
+- ✅ Undo/redo state management (historySlice with Zustand + Immer)
+- ✅ Global keyboard shortcuts (useKeyboardShortcuts hook)
+- ✅ UndoRedoButtons component with tooltips
 
 **Acceptance Criteria**:
-- All user actions recorded automatically
-- Undo/redo works for all operations (create, edit, delete, move, dependencies)
-- Keyboard shortcuts work (Ctrl+Z, Ctrl+Shift+Z)
-- Can undo/redo through 100+ changes without performance issues
-- Memory efficient (don't store full state on every action)
+- ✅ All user actions recorded automatically
+- ✅ Undo/redo works for all operations (create, edit, delete, move, dependencies, hierarchy)
+- ✅ Keyboard shortcuts work (Ctrl+Z, Ctrl+Shift+Z, Ctrl+Y on Windows/Mac)
+- ✅ Can undo/redo through 100+ changes without performance issues (<10ms per operation)
+- ✅ Memory efficient (100-command stack limit, oldest dropped)
+- ✅ Comprehensive integration tests (18 test cases)
+
+**Implementation Details**:
+- Command stack limited to 100 operations
+- History not persisted across page refresh
+- Branching support (new action clears redo stack)
+- Toast notifications for all undo/redo actions
+- Support for concurrent operations with isUndoing/isRedoing flags
 
 **Deferred to V1.1**:
 - History timeline slider with real-time scrubbing
 - Named snapshots
 - Timeline visualization of changes
+- History persistence to localStorage
 
 ---
 
