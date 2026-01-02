@@ -79,40 +79,34 @@ export function ChartCanvas({
     );
   }
 
-  // CRITICAL: Height calculation to fill space without causing unwanted scrollbar
-  // Strategy: Use floor to ensure we never exceed container height
+  // Height calculation: Always render full task-based height
+  // With SVAR-style layout, parent handles virtual scrolling via translateY
   const taskBasedHeight = tasks.length * ROW_HEIGHT;
 
-  let rowCount: number;
-  let contentHeight: number;
-
-  if (taskBasedHeight >= containerHeight) {
-    // Tasks need more space than container -> use task-based height (scrollbar will appear)
-    rowCount = tasks.length;
-    contentHeight = taskBasedHeight;
-  } else {
-    // Container has more space than tasks -> fill container without exceeding
-    rowCount = Math.floor(containerHeight / ROW_HEIGHT);
-    contentHeight = rowCount * ROW_HEIGHT; // Perfect multiple of ROW_HEIGHT
-  }
+  // Use task-based height, but ensure at least container height for grid lines
+  const rowCount = Math.max(tasks.length, Math.floor(containerHeight / ROW_HEIGHT));
+  const contentHeight = Math.max(taskBasedHeight, containerHeight);
 
   // Ensure timeline fills at least the container width (prevent horizontal whitespace)
   // Use the larger of scale.totalWidth or container width
   const timelineWidth = Math.max(scale.totalWidth, containerWidth);
 
   return (
-    <div ref={outerRef} className="chart-canvas-container w-full h-full bg-white relative">
+    <div
+      ref={outerRef}
+      className="chart-canvas-container w-full bg-white relative"
+    >
       {/* Zoom Indicator (Sprint 1.2 Package 3) */}
       <ZoomIndicator />
 
       {/* Chart Content Container with Pan/Zoom */}
       <div
         ref={containerRef}
-        className="w-full h-full overflow-visible relative"
+        className="w-full overflow-visible relative"
       >
         <div
           ref={svgContainerRef}
-          className="w-full h-full"
+          className="w-full"
           {...handlers}
         >
           <svg
