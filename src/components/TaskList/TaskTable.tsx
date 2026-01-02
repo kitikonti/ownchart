@@ -24,6 +24,7 @@ import { TaskTableRow } from './TaskTableRow';
 import { TASK_COLUMNS } from '../../config/tableColumns';
 import { ColumnResizer } from './ColumnResizer';
 import { buildFlattenedTaskList } from '../../utils/hierarchy';
+import { useTableDimensions } from '../../hooks/useTableDimensions';
 
 interface TaskTableProps {
   hideHeader?: boolean;
@@ -42,6 +43,9 @@ export function TaskTable({ hideHeader = true }: TaskTableProps): JSX.Element {
   const canIndent = useTaskStore((state) => state.canIndentSelection());
   const canOutdent = useTaskStore((state) => state.canOutdentSelection());
   const activeCell = useTaskStore((state) => state.activeCell);
+
+  // Get total column width for proper scrolling
+  const { totalColumnWidth } = useTableDimensions();
 
   // Build flattened list respecting collapsed state
   const flattenedTasks = useMemo(() => {
@@ -183,15 +187,15 @@ export function TaskTable({ hideHeader = true }: TaskTableProps): JSX.Element {
 
   return (
     <div className="task-table-container bg-white border-r border-gray-200">
-      {/* Table Content */}
-      <div className="task-table-wrapper overflow-x-auto overflow-y-hidden">
+      {/* Table Content - no overflow here, handled by parent */}
+      <div className="task-table-wrapper">
         {tasks.length === 0 ? (
           <div
             className="task-table"
             style={{
               display: 'grid',
               gridTemplateColumns,
-              width: '100%',
+              minWidth: totalColumnWidth,
             }}
           >
             <div className="empty-state flex flex-col items-center justify-center h-full text-gray-500" style={{ gridColumn: '1 / -1' }}>
@@ -220,7 +224,7 @@ export function TaskTable({ hideHeader = true }: TaskTableProps): JSX.Element {
             style={{
               display: 'grid',
               gridTemplateColumns,
-              width: '100%',
+              minWidth: totalColumnWidth,
             }}
             role="grid"
             aria-label="Task spreadsheet"

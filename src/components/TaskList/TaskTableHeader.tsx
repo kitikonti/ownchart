@@ -7,6 +7,7 @@ import { useMemo } from 'react';
 import { useTaskStore } from '../../store/slices/taskSlice';
 import { TASK_COLUMNS } from '../../config/tableColumns';
 import { ColumnResizer } from './ColumnResizer';
+import { useTableDimensions } from '../../hooks/useTableDimensions';
 
 export function TaskTableHeader(): JSX.Element {
   const tasks = useTaskStore((state) => state.tasks);
@@ -15,6 +16,9 @@ export function TaskTableHeader(): JSX.Element {
   const clearSelection = useTaskStore((state) => state.clearSelection);
   const columnWidths = useTaskStore((state) => state.columnWidths);
   const setColumnWidth = useTaskStore((state) => state.setColumnWidth);
+
+  // Get total column width for proper scrolling
+  const { totalColumnWidth } = useTableDimensions();
 
   const allSelected = tasks.length > 0 && tasks.every((task) => selectedTaskIds.includes(task.id));
   const someSelected = tasks.some((task) => selectedTaskIds.includes(task.id)) && !allSelected;
@@ -100,6 +104,7 @@ export function TaskTableHeader(): JSX.Element {
       style={{
         display: 'grid',
         gridTemplateColumns,
+        minWidth: totalColumnWidth,
       }}
       role="row"
     >

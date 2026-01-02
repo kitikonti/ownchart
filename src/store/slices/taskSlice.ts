@@ -43,6 +43,9 @@ interface TaskState {
   };
   isEditingCell: boolean;
   columnWidths: Record<string, number>;
+
+  // Split pane state
+  taskTableWidth: number | null; // null = auto (total column width)
 }
 
 /**
@@ -66,6 +69,9 @@ interface TaskActions {
   startCellEdit: () => void;
   stopCellEdit: () => void;
   setColumnWidth: (columnId: string, width: number) => void;
+
+  // Split pane actions
+  setTaskTableWidth: (width: number | null) => void;
 
   // Hierarchy actions
   moveTaskToParent: (taskId: string, newParentId: string | null) => void;
@@ -137,6 +143,7 @@ export const useTaskStore = create<TaskStore>()(
     },
     isEditingCell: false,
     columnWidths: {} as Record<string, number>,
+    taskTableWidth: null as number | null,
 
     // Actions
     addTask: (taskData) => {
@@ -557,6 +564,11 @@ export const useTaskStore = create<TaskStore>()(
     setColumnWidth: (columnId, width) =>
       set((state) => {
         state.columnWidths[columnId] = width;
+      }),
+
+    setTaskTableWidth: (width) =>
+      set((state) => {
+        state.taskTableWidth = width;
       }),
 
     // Hierarchy actions

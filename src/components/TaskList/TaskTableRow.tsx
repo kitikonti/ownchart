@@ -136,7 +136,7 @@ export function TaskTableRow({
       ref={setNodeRef}
       style={style}
       className={`task-table-row col-span-full grid ${
-        isSelected ? 'bg-blue-50' : ''
+        isSelected ? 'bg-blue-50' : 'bg-white'
       }`}
       role="row"
     >
