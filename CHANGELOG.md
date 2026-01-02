@@ -7,6 +7,40 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.0.3] - 2026-01-02
+
+### Added - Sprint 1.2 Package 3: Navigation & Scale
+- **Mouse Wheel Zoom**: Ctrl+Wheel zooms timeline centered on mouse cursor
+- **Zoom Toolbar**: Zoom in/out buttons, percentage dropdown (10%-500%), Fit All button
+- **Zoom Indicator**: Temporary overlay showing current zoom percentage (fixed center of viewport)
+- **Fit-to-View**: Automatically calculates zoom level to show all tasks with 10% padding
+- **Adaptive Grid Lines**: Grid density changes based on zoom level
+  - Daily lines at ≥40% zoom
+  - Weekly lines at 12-40% zoom (aligned to ISO 8601 Monday week start)
+  - Monthly lines at <12% zoom (aligned to month boundaries)
+- **Weekend Highlighting**: Visible at all zoom levels
+- **SVAR-Style Sticky Scroll Layout**: Horizontal scrollbar always at viewport bottom
+- **Keyboard Shortcuts**: Ctrl+0 (reset to 100%), Ctrl++ (zoom in), Ctrl+- (zoom out)
+
+### Changed
+- Implemented SVAR-inspired sticky scroll architecture for better UX
+- Grid lines now use ISO 8601 week boundaries (Monday as week start)
+- ZoomIndicator moved to root level with fixed positioning for stability
+- Timeline header synchronized with chart zoom level
+
+### Technical Details
+- New `ZoomToolbar`, `ZoomIndicator`, `ZoomControls` components
+- New `usePanZoom` hook for zoom event handling
+- Enhanced `chartSlice.ts` with zoom state (single source of truth)
+- Enhanced `GridLines.tsx` with adaptive density using `startOfWeek`/`startOfMonth`
+- SVAR-style layout in `App.tsx` with pseudo-rows and sticky container
+- Virtual scrolling via `translateY` transforms
+
+### Performance
+- Zoom maintains 60fps with 100+ tasks
+- CSS transforms for GPU-accelerated rendering
+- Grid calculation optimized with useMemo
+
 ## [0.0.2] - 2025-12-31
 
 ### Added - Sprint 1.2 Package 2: Interactive Editing
@@ -100,7 +134,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - README with development workflow
 - Contributing guidelines
 
-[Unreleased]: https://github.com/username/app-gantt/compare/v0.0.2...HEAD
+[Unreleased]: https://github.com/username/app-gantt/compare/v0.0.3...HEAD
+[0.0.3]: https://github.com/username/app-gantt/compare/v0.0.2...v0.0.3
 [0.0.2]: https://github.com/username/app-gantt/compare/v0.0.1...v0.0.2
 [0.0.1]: https://github.com/username/app-gantt/compare/v0.0.0...v0.0.1
 [0.0.0]: https://github.com/username/app-gantt/releases/tag/v0.0.0

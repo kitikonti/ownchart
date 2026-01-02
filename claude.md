@@ -199,10 +199,49 @@ app-gantt/
 - Frame time during drag: <16ms (60fps)
 - Recursive cascade: Efficient for unlimited nesting
 
-**Pending for Package 3:**
-- Zoom controls (Ctrl+mousewheel or zoom slider)
-- Pan controls (spacebar + drag)
-- Timeline scale transitions
+### Sprint 1.2 Package 3: Navigation & Scale - ✅ Complete (2026-01-02)
+
+**Features Implemented:**
+- ✅ Mouse wheel zoom (Ctrl+Wheel) centered on cursor
+- ✅ Zoom toolbar (in/out buttons, percentage dropdown, Fit All)
+- ✅ Zoom indicator (fixed center, temporary display)
+- ✅ Zoom range: 10% - 500% with 5% increments
+- ✅ Fit-to-view calculation with 10% padding
+- ✅ Adaptive grid lines based on zoom level
+- ✅ SVAR-style sticky scroll layout
+- ✅ Keyboard shortcuts (Ctrl+0, Ctrl++, Ctrl+-)
+
+**Architecture:**
+- SVAR-inspired sticky scroll layout pattern
+- Pseudo-rows for scroll height, sticky container for content
+- Virtual scrolling via `translateY` transforms
+- Zoom state in chartSlice (single source of truth)
+- CSS transforms for GPU-accelerated rendering
+
+**Adaptive Grid Density:**
+- ≥40% zoom: Daily grid lines
+- 12-40% zoom: Weekly lines (ISO 8601, Monday start)
+- <12% zoom: Monthly lines (month boundaries)
+- Weekend highlighting always visible
+
+**Key Components:**
+- `ZoomToolbar` - Toolbar zoom controls
+- `ZoomIndicator` - Temporary zoom percentage display
+- `ZoomControls` - Integrated control component
+- `usePanZoom` - Zoom event handling hook
+
+**Files Modified:**
+- `App.tsx` - SVAR-style sticky scroll layout
+- `chartSlice.ts` - Zoom state management
+- `ChartCanvas.tsx` - Zoom integration
+- `GridLines.tsx` - Adaptive density with ISO 8601 alignment
+- `TimelineHeader.tsx` - Zoom-aware rendering
+- `timelineUtils.ts` - Zoom-aware calculations
+
+**Implementation Notes:**
+- ZoomIndicator at root level (outside transforms) for stable positioning
+- Grid lines aligned to ISO 8601 week/month boundaries
+- Fit-to-view uses minZoom 0.1 and maxZoom 5.0 with padding
 
 ## Core Data Model
 
@@ -669,6 +708,13 @@ npm run preview           # Test production build locally
   - Snap-to-grid and cursor feedback
   - Validation and error toasts
   - Undo integration
+- **Sprint 1.2 Package 3** ✅ Complete (2026-01-02) - Navigation & Scale
+  - Mouse wheel zoom (Ctrl+Wheel) centered on cursor
+  - Zoom toolbar with percentage dropdown and Fit All
+  - SVAR-style sticky scroll layout
+  - Adaptive grid lines (daily/weekly/monthly based on zoom)
+  - ISO 8601 week boundaries for grid alignment
+  - Keyboard shortcuts for zoom control
 - All core features functional
 - Production-ready
 - Deploy to GitHub Pages
@@ -712,6 +758,6 @@ npm run preview           # Test production build locally
 
 **This file serves as a quick reference for AI assistance throughout development. It should be updated as the project evolves and architectural decisions are made.**
 
-**Last Updated:** 2025-12-31
-**Status:** Phase 1 - MVP (Sprint 1.2 Package 2 Complete)
-**Next Review:** After Sprint 1.2 Package 3 completion
+**Last Updated:** 2026-01-02
+**Status:** Phase 1 - MVP (Sprint 1.2 Package 3 Complete)
+**Next Review:** After Sprint 1.2 Package 4 completion

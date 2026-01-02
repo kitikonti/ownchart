@@ -53,7 +53,9 @@ This concept documentation is organized into logical categories for easy navigat
 - **[SPRINT_1.1.1_TASK_GROUPS.md](./sprints/SPRINT_1.1.1_TASK_GROUPS.md)** - Task groups and hierarchy (Sprint 1.1)
 - **[SPRINT_1.1.2_HIERARCHY_INDENT_OUTDENT.md](./sprints/SPRINT_1.1.2_HIERARCHY_INDENT_OUTDENT.md)** - Indent/outdent functionality (Sprint 1.1)
 - **[SPRINT_1.2_TIMELINE_VISUALIZATION.md](./sprints/SPRINT_1.2_TIMELINE_VISUALIZATION.md)** - Timeline visualization implementation
-- **[SPRINT_1.5_UNDO_REDO_CONCEPT.md](./sprints/SPRINT_1.5_UNDO_REDO_CONCEPT.md)** - Undo/redo system with Command Pattern
+- **[SPRINT_1.2_PACKAGE_2_INTERACTIVE_EDITING_CONCEPT.md](./sprints/SPRINT_1.2_PACKAGE_2_INTERACTIVE_EDITING_CONCEPT.md)** - Drag-to-edit functionality ✅
+- **[SPRINT_1.2_PACKAGE_3_NAVIGATION_SCALE_CONCEPT.md](./sprints/SPRINT_1.2_PACKAGE_3_NAVIGATION_SCALE_CONCEPT.md)** - Zoom & navigation ✅
+- **[SPRINT_1.5_UNDO_REDO_CONCEPT.md](./sprints/SPRINT_1.5_UNDO_REDO_CONCEPT.md)** - Undo/redo system with Command Pattern ✅
 
 ## Quick Reference
 
@@ -116,11 +118,27 @@ See **[EXTENSIBILITY_ARCHITECTURE.md](./architecture/EXTENSIBILITY_ARCHITECTURE.
 
 ---
 
-**Last Updated**: 2025-12-30
-**Status**: Phase 1 - MVP (Sprint 1.5 Complete)
-**Version**: 1.4
+**Last Updated**: 2026-01-02
+**Status**: Phase 1 - MVP (Sprint 1.2 Package 3 Complete)
+**Version**: 1.5
 
-## Recent Updates (v1.4 - 2025-12-30)
+## Recent Updates (v1.5 - 2026-01-02)
+
+### Sprint 1.2 Package 3 - Navigation & Scale ✅ Complete
+- ✅ Mouse wheel zoom (Ctrl+Wheel) centered on cursor position
+- ✅ Zoom toolbar (in/out buttons, percentage dropdown, Fit All)
+- ✅ Zoom indicator (temporary display, fixed center of viewport)
+- ✅ Zoom range: 10% - 500% with 5% increments
+- ✅ Fit-to-view calculation with 10% padding
+- ✅ Adaptive grid lines based on zoom level:
+  - Daily lines at ≥40% zoom
+  - Weekly lines at 12-40% zoom (ISO 8601, Monday start)
+  - Monthly lines at <12% zoom (month boundaries)
+- ✅ Weekend highlighting visible at all zoom levels
+- ✅ SVAR-style sticky scroll layout (horizontal scrollbar always at viewport bottom)
+- ✅ Keyboard shortcuts: Ctrl+0 (reset), Ctrl++ (zoom in), Ctrl+- (zoom out)
+
+### Previous Updates (v1.4 - 2025-12-30)
 
 ### Sprint 1.5 - Undo/Redo System ✅ Complete
 - ✅ Full undo/redo functionality with Command Pattern
