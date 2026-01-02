@@ -14,7 +14,6 @@ import { usePanZoom } from '../../hooks/usePanZoom';
 import { GridLines } from './GridLines';
 import { TaskBar } from './TaskBar';
 import { TodayMarker } from './TodayMarker';
-import { ZoomIndicator } from './ZoomIndicator';
 
 interface ChartCanvasProps {
   tasks: Task[];
@@ -96,9 +95,6 @@ export function ChartCanvas({
       ref={outerRef}
       className="chart-canvas-container w-full bg-white relative"
     >
-      {/* Zoom Indicator (Sprint 1.2 Package 3) */}
-      <ZoomIndicator />
-
       {/* Chart Content Container with Pan/Zoom */}
       <div
         ref={containerRef}

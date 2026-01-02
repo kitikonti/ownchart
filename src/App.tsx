@@ -8,6 +8,7 @@ import { UndoRedoButtons } from './components/Toolbar/UndoRedoButtons';
 import { ZoomControls } from './components/Toolbar/ZoomControls';
 import { ChartCanvas } from './components/GanttChart';
 import { TimelineHeader } from './components/GanttChart';
+import { ZoomIndicator } from './components/GanttChart/ZoomIndicator';
 import { useTaskStore } from './store/slices/taskSlice';
 import { useChartStore } from './store/slices/chartSlice';
 import { useKeyboardShortcuts } from './hooks/useKeyboardShortcuts';
@@ -179,6 +180,8 @@ function App(): JSX.Element {
           },
         }}
       />
+      {/* Zoom Indicator - fixed position at root level, outside all layout containers */}
+      <ZoomIndicator />
       <div className="h-screen bg-gray-50 flex flex-col overflow-hidden">
         {/* Header Toolbar - Fixed */}
         <header className="flex-shrink-0 bg-white border-b border-gray-200 px-4 py-2 flex items-center gap-3">
@@ -251,20 +254,23 @@ function App(): JSX.Element {
                     </div>
                   </div>
 
-                  {/* Gantt Chart Content - scrollable horizontally */}
-                  {/* Horizontal scrollbar will be at bottom of this container = bottom of viewport */}
-                  <div
-                    ref={chartContainerRef}
-                    className="flex-1 bg-white overflow-x-auto overflow-y-hidden"
-                  >
-                    <div style={{ transform: `translateY(-${scrollTop}px)` }}>
-                      <ChartCanvas
-                        tasks={tasks}
-                        selectedTaskIds={selectedTaskIds}
-                        onTaskClick={toggleTaskSelection}
-                        containerHeight={contentAreaHeight}
-                        containerWidth={chartContainerWidth}
-                      />
+                  {/* Gantt Chart Area */}
+                  <div className="flex-1 h-full relative">
+                    {/* Gantt Chart Content - scrollable horizontally */}
+                    {/* Horizontal scrollbar will be at bottom of this container = bottom of viewport */}
+                    <div
+                      ref={chartContainerRef}
+                      className="absolute inset-0 bg-white overflow-x-auto overflow-y-hidden"
+                    >
+                      <div style={{ transform: `translateY(-${scrollTop}px)` }}>
+                        <ChartCanvas
+                          tasks={tasks}
+                          selectedTaskIds={selectedTaskIds}
+                          onTaskClick={toggleTaskSelection}
+                          containerHeight={contentAreaHeight}
+                          containerWidth={chartContainerWidth}
+                        />
+                      </div>
                     </div>
                   </div>
                 </div>

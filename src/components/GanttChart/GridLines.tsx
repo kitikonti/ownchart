@@ -4,8 +4,9 @@
  */
 
 import { useMemo } from 'react';
+import { parseISO, format, startOfWeek, startOfMonth, addWeeks, addMonths } from 'date-fns';
 import type { TimelineScale } from '../../utils/timelineUtils';
-import { dateToPixel } from '../../utils/timelineUtils';
+import { dateToPixel, WEEK_START_DAY } from '../../utils/timelineUtils';
 import { addDays, isWeekend } from '../../utils/dateUtils';
 
 interface GridLinesProps {
@@ -26,23 +27,49 @@ export function GridLines({
   // Use provided width or fall back to scale.totalWidth
   const gridWidth = width ?? scale.totalWidth;
   // ADAPTIVE GRID DENSITY (Critical from Frontend + Data Viz reviews)
+  // Thresholds based on visual readability:
+  // - At 25 px/day (zoom 1.0): daily lines are comfortable
+  // - At 12.5 px/day (zoom 0.5): daily lines still readable
+  // - Below 10 px/day: switch to weekly lines
+  // - Below 3 px/day: switch to monthly lines
   const gridInterval = useMemo(() => {
     const pixelsPerDay = scale.pixelsPerDay;
-    if (pixelsPerDay < 2) return 30; // Monthly when very zoomed out
-    if (pixelsPerDay < 5) return 7; // Weekly when zoomed out
-    return 1; // Daily at normal zoom
+    if (pixelsPerDay < 3) return 30; // Monthly when very zoomed out (< ~12% zoom)
+    if (pixelsPerDay < 10) return 7; // Weekly when zoomed out (< ~40% zoom)
+    return 1; // Daily at normal zoom (>= 40% zoom)
   }, [scale.pixelsPerDay]);
 
+  // Weekend highlighting is always shown if enabled (regardless of zoom level)
+
+  // Determine line type for styling
+  type LineType = 'daily' | 'weekly' | 'monthly';
+  const lineType: LineType = gridInterval === 1 ? 'daily' : gridInterval === 7 ? 'weekly' : 'monthly';
+
   // Vertical lines (adaptive interval)
-  // Draw lines for entire grid width, starting from scale.minDate
+  // Aligns to proper boundaries: week start (Monday) for weekly, month start for monthly
   const verticalLines = useMemo(() => {
     const lines: Array<{ x: number; date: string; isWeekend: boolean }> = [];
-    let currentDate = scale.minDate;
+    const minDateObj = parseISO(scale.minDate);
 
     // Calculate end date based on grid width (not just scale.maxDate)
     const endX = gridWidth;
     const daysFromStart = Math.ceil(endX / scale.pixelsPerDay);
     const endDate = addDays(scale.minDate, daysFromStart);
+
+    // Determine start date based on interval type
+    let currentDateObj: Date;
+    if (gridInterval === 7) {
+      // Weekly: align to week start (Monday in ISO 8601)
+      currentDateObj = startOfWeek(minDateObj, { weekStartsOn: WEEK_START_DAY });
+    } else if (gridInterval === 30) {
+      // Monthly: align to month start
+      currentDateObj = startOfMonth(minDateObj);
+    } else {
+      // Daily: start from minDate
+      currentDateObj = minDateObj;
+    }
+
+    let currentDate = format(currentDateObj, 'yyyy-MM-dd');
 
     while (currentDate <= endDate) {
       const x = dateToPixel(currentDate, scale);
@@ -56,14 +83,22 @@ export function GridLines({
         });
       }
 
-      currentDate = addDays(currentDate, gridInterval);
+      // Advance to next interval
+      if (gridInterval === 7) {
+        currentDateObj = addWeeks(currentDateObj, 1);
+      } else if (gridInterval === 30) {
+        currentDateObj = addMonths(currentDateObj, 1);
+      } else {
+        currentDateObj = parseISO(addDays(currentDate, 1));
+      }
+      currentDate = format(currentDateObj, 'yyyy-MM-dd');
     }
 
     return lines;
   }, [scale, gridInterval, gridWidth]);
 
   // Weekend columns for background highlighting
-  // Draw weekends for entire grid width, starting from scale.minDate
+  // Always shown when enabled, regardless of zoom level
   const weekendColumns = useMemo(() => {
     if (!showWeekends) return [];
 
@@ -115,19 +150,31 @@ export function GridLines({
         />
       ))}
 
-      {/* Vertical lines */}
-      {verticalLines.map(({ x, date, isWeekend: isWeekendDay }) => (
-        <line
-          key={`vline-${date}`}
-          x1={x}
-          y1={0}
-          x2={x}
-          y2={taskCount * ROW_HEIGHT}
-          stroke={isWeekendDay ? '#dee2e6' : '#e9ecef'}
-          strokeWidth={1}
-          className={isWeekendDay ? 'weekend-line' : 'day-line'}
-        />
-      ))}
+      {/* Vertical lines - styled based on zoom level */}
+      {verticalLines.map(({ x, date, isWeekend: isWeekendDay }) => {
+        // At daily resolution: subtle lines, weekend lines slightly darker
+        // At weekly/monthly resolution: slightly more prominent lines
+        const getStroke = () => {
+          if (lineType === 'daily') {
+            return isWeekendDay ? '#dee2e6' : '#e9ecef';
+          }
+          // Weekly/monthly lines are slightly more prominent
+          return '#d1d5db';
+        };
+
+        return (
+          <line
+            key={`vline-${date}`}
+            x1={x}
+            y1={0}
+            x2={x}
+            y2={taskCount * ROW_HEIGHT}
+            stroke={getStroke()}
+            strokeWidth={1}
+            className={`${lineType}-line`}
+          />
+        );
+      })}
 
       {/* Horizontal lines */}
       {horizontalLines.map(({ y }, i) => (

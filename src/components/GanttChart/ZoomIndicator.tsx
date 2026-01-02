@@ -43,7 +43,7 @@ export function ZoomIndicator() {
 
   return (
     <div
-      className="zoom-indicator fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 px-5 py-3 bg-black bg-opacity-80 text-white rounded-lg text-2xl font-bold pointer-events-none z-50 animate-fade-in-out"
+      className="zoom-indicator fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 px-5 py-3 bg-black bg-opacity-80 text-white rounded-lg text-2xl font-bold pointer-events-none z-[9999] animate-fade-in-out"
       role="status"
       aria-live="polite"
       aria-atomic="true"
