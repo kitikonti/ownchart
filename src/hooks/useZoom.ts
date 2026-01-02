@@ -1,23 +1,21 @@
 /**
- * usePanZoom - Hook for handling zoom interactions on Gantt chart
+ * useZoom - Hook for handling zoom interactions on Gantt chart
  * Sprint 1.2 Package 3: Navigation & Scale
  *
  * Features:
  * - Ctrl/Cmd + Wheel to zoom (mouse-centered)
  * - Keyboard shortcuts (Ctrl+0, Ctrl++, Ctrl+-)
- *
- * Note: Pan feature removed - use native scroll (vertical) and Shift+scroll (horizontal)
  */
 
 import { useCallback, useEffect } from 'react';
 import { useChartStore } from '../store/slices/chartSlice';
 
-interface UsePanZoomOptions {
+interface UseZoomOptions {
   containerRef: React.RefObject<HTMLElement>;
   enabled?: boolean;
 }
 
-export function usePanZoom({ containerRef, enabled = true }: UsePanZoomOptions) {
+export function useZoom({ containerRef, enabled = true }: UseZoomOptions) {
   const {
     zoom,
     setZoom,

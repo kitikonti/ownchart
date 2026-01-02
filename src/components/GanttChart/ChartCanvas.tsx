@@ -10,7 +10,7 @@
 import { useRef, useEffect } from 'react';
 import type { Task } from '../../types/chart.types';
 import { useChartStore } from '../../store/slices/chartSlice';
-import { usePanZoom } from '../../hooks/usePanZoom';
+import { useZoom } from '../../hooks/useZoom';
 import { GridLines } from './GridLines';
 import { TaskBar } from './TaskBar';
 import { TodayMarker } from './TodayMarker';
@@ -50,7 +50,7 @@ export function ChartCanvas({
   const containerWidth = propContainerWidth;
 
   // Zoom hook (Sprint 1.2 Package 3)
-  const { handlers } = usePanZoom({
+  const { handlers } = useZoom({
     containerRef: svgContainerRef,
     enabled: true,
   });
