@@ -98,10 +98,37 @@ type TaskStore = TaskState & TaskActions;
  */
 const EDITABLE_FIELDS: EditableField[] = ['name', 'type', 'startDate', 'endDate', 'duration', 'progress', 'color'];
 
+/**
+ * Create initial demo task to avoid empty state and timeline scaling jump.
+ */
+const createInitialTask = (): Task => {
+  const today = new Date();
+  const nextWeek = new Date(today);
+  nextWeek.setDate(today.getDate() + 7);
+
+  const formatDate = (date: Date): string => {
+    return date.toISOString().split('T')[0];
+  };
+
+  return {
+    id: crypto.randomUUID(),
+    name: 'New Task',
+    startDate: formatDate(today),
+    endDate: formatDate(nextWeek),
+    duration: 7,
+    progress: 0,
+    color: '#3b82f6',
+    order: 0,
+    type: 'task',
+    parent: undefined,
+    metadata: {},
+  };
+};
+
 export const useTaskStore = create<TaskStore>()(
   immer((set, get) => ({
     // State
-    tasks: [] as Task[],
+    tasks: [createInitialTask()] as Task[],
     selectedTaskIds: [] as string[],
     lastSelectedTaskId: null as string | null,
     activeCell: {

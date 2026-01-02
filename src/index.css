@@ -51,3 +51,27 @@ input[type="color"]::-moz-color-swatch {
   border: none;
   border-radius: 0.25rem;
 }
+
+/* Zoom indicator animation (Sprint 1.2 Package 3) */
+@keyframes fadeInOut {
+  0% {
+    opacity: 0;
+    transform: translate(-50%, -50%) scale(0.9);
+  }
+  20% {
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(1);
+  }
+  80% {
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(1);
+  }
+  100% {
+    opacity: 0;
+    transform: translate(-50%, -50%) scale(0.9);
+  }
+}
+
+.animate-fade-in-out {
+  animation: fadeInOut 1.5s ease-in-out;
+}

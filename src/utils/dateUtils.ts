@@ -65,10 +65,11 @@ export function getDateRange(tasks: Task[]): { min: string; max: string } {
     if (task.endDate > maxDate) maxDate = task.endDate;
   });
 
-  // Add padding (1 week before/after)
+  // Return raw dates WITHOUT padding
+  // Padding should be added by the caller when needed (e.g., fitToView, updateScale)
   return {
-    min: addDays(minDate, -7),
-    max: addDays(maxDate, 7),
+    min: minDate,
+    max: maxDate,
   };
 }
 

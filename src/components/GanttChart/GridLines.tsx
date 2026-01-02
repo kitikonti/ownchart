@@ -12,6 +12,7 @@ interface GridLinesProps {
   scale: TimelineScale;
   taskCount: number;
   showWeekends?: boolean;
+  width?: number; // Optional override for grid width (defaults to scale.totalWidth)
 }
 
 const ROW_HEIGHT = 44; // Match TaskTable cell height (h-[44px] with border-box)
@@ -20,7 +21,10 @@ export function GridLines({
   scale,
   taskCount,
   showWeekends = true,
+  width,
 }: GridLinesProps) {
+  // Use provided width or fall back to scale.totalWidth
+  const gridWidth = width ?? scale.totalWidth;
   // ADAPTIVE GRID DENSITY (Critical from Frontend + Data Viz reviews)
   const gridInterval = useMemo(() => {
     const pixelsPerDay = scale.pixelsPerDay;
@@ -30,41 +34,63 @@ export function GridLines({
   }, [scale.pixelsPerDay]);
 
   // Vertical lines (adaptive interval)
+  // Draw lines for entire grid width, starting from scale.minDate
   const verticalLines = useMemo(() => {
     const lines: Array<{ x: number; date: string; isWeekend: boolean }> = [];
     let currentDate = scale.minDate;
 
-    while (currentDate <= scale.maxDate) {
-      lines.push({
-        x: dateToPixel(currentDate, scale),
-        date: currentDate,
-        isWeekend: isWeekend(currentDate),
-      });
+    // Calculate end date based on grid width (not just scale.maxDate)
+    const endX = gridWidth;
+    const daysFromStart = Math.ceil(endX / scale.pixelsPerDay);
+    const endDate = addDays(scale.minDate, daysFromStart);
+
+    while (currentDate <= endDate) {
+      const x = dateToPixel(currentDate, scale);
+
+      // Only add lines that are within grid width and >= 0 (visible range)
+      if (x >= 0 && x <= gridWidth) {
+        lines.push({
+          x,
+          date: currentDate,
+          isWeekend: isWeekend(currentDate),
+        });
+      }
+
       currentDate = addDays(currentDate, gridInterval);
     }
 
     return lines;
-  }, [scale, gridInterval]);
+  }, [scale, gridInterval, gridWidth]);
 
   // Weekend columns for background highlighting
+  // Draw weekends for entire grid width, starting from scale.minDate
   const weekendColumns = useMemo(() => {
     if (!showWeekends) return [];
 
     const columns: Array<{ x: number; date: string }> = [];
     let currentDate = scale.minDate;
 
-    while (currentDate <= scale.maxDate) {
-      if (isWeekend(currentDate)) {
+    // Calculate end date based on grid width
+    const endX = gridWidth;
+    const daysFromStart = Math.ceil(endX / scale.pixelsPerDay);
+    const endDate = addDays(scale.minDate, daysFromStart);
+
+    while (currentDate <= endDate) {
+      const x = dateToPixel(currentDate, scale);
+
+      // Only add weekends that are within visible range (>= 0) and grid width
+      if (x >= 0 && x <= gridWidth && isWeekend(currentDate)) {
         columns.push({
-          x: dateToPixel(currentDate, scale),
+          x,
           date: currentDate,
         });
       }
+
       currentDate = addDays(currentDate, 1);
     }
 
     return columns;
-  }, [scale, showWeekends]);
+  }, [scale, showWeekends, gridWidth]);
 
   // Horizontal lines (one per task row)
   const horizontalLines = useMemo(() => {
@@ -109,7 +135,7 @@ export function GridLines({
           key={`hline-${i}`}
           x1={0}
           y1={y}
-          x2={scale.totalWidth}
+          x2={gridWidth}
           y2={y}
           stroke="#e9ecef"
           strokeWidth={1}

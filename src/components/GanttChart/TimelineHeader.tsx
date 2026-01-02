@@ -7,10 +7,11 @@
 import { useMemo } from 'react';
 import { parseISO, format } from 'date-fns';
 import type { TimelineScale, ScaleConfig } from '../../utils/timelineUtils';
-import { dateToPixel, addUnit } from '../../utils/timelineUtils';
+import { dateToPixel, addUnit, getUnitStart } from '../../utils/timelineUtils';
 
 interface TimelineHeaderProps {
   scale: TimelineScale;
+  width?: number; // Optional override for header width (defaults to scale.totalWidth)
 }
 
 interface ScaleCell {
@@ -25,17 +26,32 @@ const ROW_HEIGHT = 24; // Match table header height exactly (2×24px + 1px borde
 /**
  * Generate cells for a scale configuration row
  * Inspired by SVAR's scale generation logic
+ * Draws cells for entire header width, not just task date range
+ * IMPORTANT: Cells are aligned to unit boundaries (e.g., weeks start on Monday)
+ * but only visible portions (>= scale.minDate) are drawn
  */
 function generateScaleCells(
   scale: TimelineScale,
-  config: ScaleConfig
+  config: ScaleConfig,
+  headerWidth: number
 ): ScaleCell[] {
   const cells: ScaleCell[] = [];
-  let currentDate = parseISO(scale.minDate);
-  const endDate = parseISO(scale.maxDate);
 
-  while (currentDate <= endDate) {
+  console.log('📊 [TimelineHeader] generateScaleCells called');
+  console.log('  📅 scale.minDate:', scale.minDate);
+  console.log('  📅 scale.maxDate:', scale.maxDate);
+  console.log('  📏 headerWidth:', headerWidth);
+  console.log('  🔧 config.unit:', config.unit);
+
+  // Start at the beginning of the unit that contains minDate
+  // This ensures weeks start on Monday, months on 1st, etc.
+  let currentDate = getUnitStart(parseISO(scale.minDate), config.unit);
+  console.log('  📍 Starting at unit boundary:', format(currentDate, 'yyyy-MM-dd'));
+
+  let iterationCount = 0;
+  while (true) {
     const cellStart = currentDate;
+    iterationCount++;
 
     // Calculate cell position and width
     const x = dateToPixel(format(cellStart, 'yyyy-MM-dd'), scale);
@@ -43,7 +59,29 @@ function generateScaleCells(
     // For proper width calculation, use the next unit's start position
     const nextUnit = addUnit(currentDate, config.unit, config.step);
     const endX = dateToPixel(format(nextUnit, 'yyyy-MM-dd'), scale);
-    const width = endX - x;
+
+    // Stop if we've exceeded the header width
+    if (x >= headerWidth) break;
+
+    // Skip cells that end before scale.minDate (outside visible range)
+    const scaleMinDate = parseISO(scale.minDate);
+    if (nextUnit < scaleMinDate) {
+      console.log(`  ⏭️  Cell #${iterationCount}: ${format(cellStart, 'yyyy-MM-dd')} SKIPPED (ends before minDate)`);
+      currentDate = addUnit(currentDate, config.unit, config.step);
+      continue;
+    }
+
+    // Clip cell to visible range [0, headerWidth]
+    const clippedX = Math.max(x, 0);
+    const clippedEndX = Math.min(endX, headerWidth);
+    const clippedWidth = clippedEndX - clippedX;
+
+    // Skip if cell is completely outside visible range
+    if (clippedWidth <= 0) {
+      console.log(`  ⏭️  Cell #${iterationCount}: ${format(cellStart, 'yyyy-MM-dd')} SKIPPED (outside visible range)`);
+      currentDate = addUnit(currentDate, config.unit, config.step);
+      continue;
+    }
 
     // Format label
     const label =
@@ -51,10 +89,15 @@ function generateScaleCells(
         ? config.format(cellStart)
         : format(cellStart, config.format);
 
+    console.log(`  ✅ Cell #${iterationCount}: ${format(cellStart, 'yyyy-MM-dd')} → ${format(nextUnit, 'yyyy-MM-dd')}`);
+    console.log(`     original: x=${x.toFixed(2)} → ${endX.toFixed(2)} (${(endX - x).toFixed(2)}px)`);
+    console.log(`     clipped:  x=${clippedX.toFixed(2)} → ${clippedEndX.toFixed(2)} (${clippedWidth.toFixed(2)}px)`);
+    console.log(`     label: "${label}"`);
+
     cells.push({
       date: cellStart,
-      x,
-      width,
+      x: clippedX,
+      width: clippedWidth,
       label,
     });
 
@@ -62,19 +105,23 @@ function generateScaleCells(
     currentDate = addUnit(currentDate, config.unit, config.step);
   }
 
+  console.log(`  📦 Generated ${cells.length} cells total`);
   return cells;
 }
 
-export function TimelineHeader({ scale }: TimelineHeaderProps) {
+export function TimelineHeader({ scale, width }: TimelineHeaderProps) {
+  // Use provided width or fall back to scale.totalWidth
+  const headerWidth = width ?? scale.totalWidth;
+
   // Generate cells for each scale row
   const scaleRows = useMemo(() => {
     return scale.scales.map((scaleConfig) => {
       return {
         config: scaleConfig,
-        cells: generateScaleCells(scale, scaleConfig),
+        cells: generateScaleCells(scale, scaleConfig, headerWidth),
       };
     });
-  }, [scale]);
+  }, [scale, headerWidth]);
 
   return (
     <g className="timeline-header">
@@ -82,7 +129,7 @@ export function TimelineHeader({ scale }: TimelineHeaderProps) {
       <rect
         x={0}
         y={0}
-        width={scale.totalWidth}
+        width={headerWidth}
         height={scale.scales.length * ROW_HEIGHT}
         fill="#f8f9fa"
       />
@@ -122,7 +169,7 @@ export function TimelineHeader({ scale }: TimelineHeaderProps) {
       <line
         x1={0}
         y1={scale.scales.length * ROW_HEIGHT}
-        x2={scale.totalWidth}
+        x2={headerWidth}
         y2={scale.scales.length * ROW_HEIGHT}
         stroke="#dee2e6"
         strokeWidth={1}

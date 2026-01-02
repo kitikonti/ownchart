@@ -11,6 +11,11 @@ import {
   addWeeks,
   addDays as addDaysDateFns,
   addHours,
+  startOfYear,
+  startOfQuarter,
+  startOfMonth,
+  startOfWeek,
+  startOfDay,
   endOfYear,
   endOfQuarter,
   endOfMonth,
@@ -19,6 +24,16 @@ import {
 } from 'date-fns';
 import type { Task } from '../types/chart.types';
 import { calculateDuration, addDays } from './dateUtils';
+
+// Fixed zoom configuration (industry standard approach)
+export const FIXED_BASE_PIXELS_PER_DAY = 25; // Comfortable standard view
+export const MIN_ZOOM = 0.05; // 5% - fit ~3 years on desktop
+export const MAX_ZOOM = 3.0;  // 300% - show at least 1 week
+
+// Week numbering configuration (ISO 8601 - European standard)
+// TODO: Make this user-configurable in settings (see /concept/week-numbering.md)
+export const WEEK_START_DAY = 1; // 0 = Sunday, 1 = Monday (ISO 8601)
+export const FIRST_WEEK_CONTAINS_DATE = 4; // Thursday (ISO 8601: week 1 has first Thursday)
 
 // Scale unit types (inspired by SVAR React Gantt)
 export type ScaleUnit = 'year' | 'quarter' | 'month' | 'week' | 'day' | 'hour';
@@ -84,7 +99,14 @@ export function getScaleConfig(
   if (effectivePixelsPerDay < 30) {
     return [
       { unit: 'month', step: 1, format: 'MMM yyyy' },
-      { unit: 'week', step: 1, format: (date) => `W${getWeek(date)}` },
+      {
+        unit: 'week',
+        step: 1,
+        format: (date) => `W${getWeek(date, {
+          weekStartsOn: WEEK_START_DAY,
+          firstWeekContainsDate: FIRST_WEEK_CONTAINS_DATE
+        })}`
+      },
     ];
   }
 
@@ -98,35 +120,54 @@ export function getScaleConfig(
 
   // Very zoomed in (60+ pixels per day): Week → Day with time
   return [
-    { unit: 'week', step: 1, format: (date) => `Week ${getWeek(date)}` },
+    {
+      unit: 'week',
+      step: 1,
+      format: (date) => `Week ${getWeek(date, {
+        weekStartsOn: WEEK_START_DAY,
+        firstWeekContainsDate: FIRST_WEEK_CONTAINS_DATE
+      })}`
+    },
     { unit: 'day', step: 1, format: 'EEE d' },
   ];
 }
 
 /**
- * Calculate timeline scale from date range and available width
- * Note: At zoom=1, timeline fills the entire container width
- *       At zoom>1, timeline expands (enables horizontal scroll)
+ * Calculate timeline scale from date range with FIXED base pixels per day
+ * Industry standard approach:
+ * - Fixed base (25 px/day) ensures consistent visual density
+ * - zoom=1: Standard view (25 px/day)
+ * - zoom>1: More pixels per day (detail view, horizontal scroll)
+ * - zoom<1: Fewer pixels per day (overview, fit more days)
+ * - NO auto-scaling when tasks change
+ * - Users manually zoom to fit their needs
  */
 export function getTimelineScale(
   minDate: string,
   maxDate: string,
-  containerWidth: number,
+  _containerWidth: number,
   zoom: number = 1
 ): TimelineScale {
   const totalDays = calculateDuration(minDate, maxDate);
 
-  // Calculate pixelsPerDay: at zoom=1, fill container; at zoom>1, expand timeline
-  const pixelsPerDay = (containerWidth / totalDays) * zoom;
+  // FIXED base pixels per day (industry standard)
+  const basePixelsPerDay = FIXED_BASE_PIXELS_PER_DAY;
+
+  // Apply zoom to pixels per day
+  const pixelsPerDay = basePixelsPerDay * zoom;
+
+  // Total width is simply days × pixels per day
+  // May be smaller OR larger than container (no auto-fill)
+  const totalWidth = totalDays * pixelsPerDay;
 
   return {
     minDate,
     maxDate,
     pixelsPerDay,
-    totalWidth: containerWidth * zoom, // At zoom=1: full width; zoom>1: wider (scrollable)
+    totalWidth,
     totalDays,
     zoom,
-    scales: getScaleConfig(zoom, containerWidth / totalDays),
+    scales: getScaleConfig(zoom, basePixelsPerDay),
   };
 }
 
@@ -176,6 +217,29 @@ export function getTaskBarGeometry(
 }
 
 /**
+ * Get the start date of a time unit (aligned to unit boundary)
+ */
+export function getUnitStart(date: Date, unit: ScaleUnit): Date {
+  switch (unit) {
+    case 'year':
+      return startOfYear(date);
+    case 'quarter':
+      return startOfQuarter(date);
+    case 'month':
+      return startOfMonth(date);
+    case 'week':
+      return startOfWeek(date, { weekStartsOn: WEEK_START_DAY });
+    case 'day':
+      return startOfDay(date);
+    case 'hour':
+      // Round down to hour
+      return new Date(date.getFullYear(), date.getMonth(), date.getDate(), date.getHours(), 0, 0, 0);
+    default:
+      return date;
+  }
+}
+
+/**
  * Get the end date of a time unit
  */
 export function getUnitEnd(date: Date, unit: ScaleUnit, step: number): Date {
@@ -187,7 +251,7 @@ export function getUnitEnd(date: Date, unit: ScaleUnit, step: number): Date {
     case 'month':
       return endOfMonth(addMonths(date, step - 1));
     case 'week':
-      return endOfWeek(addWeeks(date, step - 1));
+      return endOfWeek(addWeeks(date, step - 1), { weekStartsOn: WEEK_START_DAY });
     case 'day':
       return endOfDay(addDaysDateFns(date, step - 1));
     case 'hour':
