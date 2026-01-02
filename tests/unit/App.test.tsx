@@ -18,7 +18,7 @@ describe('App', () => {
     // Check for zoom controls from Sprint 1.2 Package 3 in the app toolbar
     expect(screen.getByTitle('Zoom In (Ctrl++)')).toBeInTheDocument();
     expect(screen.getByTitle('Zoom Out (Ctrl+-)')).toBeInTheDocument();
-    expect(screen.getByTitle('Fit all tasks in view')).toBeInTheDocument();
+    expect(screen.getByTitle('Fit to width')).toBeInTheDocument();
   });
 
   it('shows undo/redo buttons', () => {

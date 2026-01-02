@@ -7,7 +7,7 @@
 import { useMemo } from 'react';
 import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
-import { Trash } from '@phosphor-icons/react';
+import { Trash, DotsSixVertical } from '@phosphor-icons/react';
 import type { Task } from '../../types/chart.types';
 import { useTaskStore } from '../../store/slices/taskSlice';
 import { Cell } from './Cell';
@@ -147,9 +147,7 @@ export function TaskTableRow({
         {...listeners}
         role="gridcell"
       >
-        <svg className="w-4 h-4 text-gray-400" fill="currentColor" viewBox="0 0 20 20">
-          <path d="M7 2a2 2 0 1 0 .001 4.001A2 2 0 0 0 7 2zm0 6a2 2 0 1 0 .001 4.001A2 2 0 0 0 7 8zm0 6a2 2 0 1 0 .001 4.001A2 2 0 0 0 7 14zm6-8a2 2 0 1 0-.001-4.001A2 2 0 0 0 13 6zm0 2a2 2 0 1 0 .001 4.001A2 2 0 0 0 13 8zm0 6a2 2 0 1 0 .001 4.001A2 2 0 0 0 13 14z" />
-        </svg>
+        <DotsSixVertical size={16} weight="bold" className="text-gray-400" />
       </div>
 
       {/* Checkbox Cell */}

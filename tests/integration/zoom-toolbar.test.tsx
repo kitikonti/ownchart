@@ -63,7 +63,7 @@ describe('ZoomToolbar - Integration Tests', () => {
     expect(screen.getByTitle('Zoom Out (Ctrl+-)')).toBeInTheDocument();
     expect(screen.getByTitle('Zoom In (Ctrl++)')).toBeInTheDocument();
     expect(screen.getByTitle('Reset zoom to 100% (Ctrl+0)')).toBeInTheDocument();
-    expect(screen.getByTitle('Fit all tasks in view (Ctrl+9)')).toBeInTheDocument();
+    expect(screen.getByTitle('Fit to width')).toBeInTheDocument();
 
     // Check for zoom level dropdown
     expect(screen.getByLabelText('Zoom level')).toBeInTheDocument();
@@ -135,11 +135,11 @@ describe('ZoomToolbar - Integration Tests', () => {
     expect(useChartStore.getState().zoom).toBe(1.0);
   });
 
-  it('should call fitToView when clicking Fit All button', () => {
+  it('should call fitToView when clicking Fit to Width button', () => {
     render(<ZoomToolbar />);
 
-    const fitAllButton = screen.getByTitle('Fit all tasks in view (Ctrl+9)');
-    fireEvent.click(fitAllButton);
+    const fitToWidthButton = screen.getByTitle('Fit to width');
+    fireEvent.click(fitToWidthButton);
 
     const state = useChartStore.getState();
     expect(state.zoom).toBeGreaterThan(0);
@@ -147,7 +147,7 @@ describe('ZoomToolbar - Integration Tests', () => {
     expect(state.zoom).toBeLessThanOrEqual(3.0);
   });
 
-  it('should call fitToView when selecting "Fit All" from dropdown', () => {
+  it('should call fitToView when selecting "Fit to Width" from dropdown', () => {
     render(<ZoomToolbar />);
 
     const dropdown = screen.getByLabelText('Zoom level') as HTMLSelectElement;

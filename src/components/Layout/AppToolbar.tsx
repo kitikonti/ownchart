@@ -3,7 +3,7 @@
  * Contains logo, task actions, and zoom controls
  */
 
-import { ChartBarHorizontal } from '@phosphor-icons/react';
+import { ChartBarHorizontal, Plus } from '@phosphor-icons/react';
 import { HierarchyButtons } from '../TaskList/HierarchyButtons';
 import { UndoRedoButtons } from '../Toolbar/UndoRedoButtons';
 import { ZoomControls } from '../Toolbar/ZoomControls';
@@ -41,10 +41,11 @@ export function AppToolbar() {
       <ChartBarHorizontal size={24} weight="regular" className="text-gray-700" />
       <button
         onClick={handleAddTask}
-        className="px-3 py-1.5 bg-blue-600 text-white text-sm font-medium rounded hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
+        className="px-3 py-1.5 bg-blue-600 text-white text-sm font-medium rounded hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 flex items-center gap-1.5"
         aria-label="Add new task"
       >
-        + Add Task
+        <Plus size={16} weight="bold" />
+        Add Task
       </button>
       <HierarchyButtons />
       <UndoRedoButtons />

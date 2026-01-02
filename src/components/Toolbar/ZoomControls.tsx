@@ -3,6 +3,7 @@
  * Sprint 1.2 Package 3: Navigation & Scale
  */
 
+import { MagnifyingGlassPlus, MagnifyingGlassMinus, ArrowsOutLineHorizontal } from '@phosphor-icons/react';
 import { useChartStore } from '../../store/slices/chartSlice';
 import { useTaskStore } from '../../store/slices/taskSlice';
 import { MIN_ZOOM, MAX_ZOOM } from '../../utils/timelineUtils';
@@ -46,7 +47,7 @@ export function ZoomControls() {
     }
   };
 
-  const handleFitAll = () => {
+  const handleFitToWidth = () => {
     fitToView(tasks);
   };
 
@@ -60,7 +61,7 @@ export function ZoomControls() {
         title="Zoom Out (Ctrl+-)"
         aria-label="Zoom out"
       >
-        <span className="text-base font-bold leading-none">−</span>
+        <MagnifyingGlassMinus size={18} weight="regular" />
       </button>
 
       {/* Zoom Level Dropdown */}
@@ -81,7 +82,7 @@ export function ZoomControls() {
             {level}%
           </option>
         ))}
-        <option value="fit">Fit All</option>
+        <option value="fit">Fit to Width</option>
       </select>
 
       {/* Zoom In Button */}
@@ -92,17 +93,17 @@ export function ZoomControls() {
         title="Zoom In (Ctrl++)"
         aria-label="Zoom in"
       >
-        <span className="text-base font-bold leading-none">+</span>
+        <MagnifyingGlassPlus size={18} weight="regular" />
       </button>
 
-      {/* Fit All Button */}
+      {/* Fit to Width Button */}
       <button
-        className="px-2 h-7 border border-gray-300 rounded bg-white hover:bg-gray-100 transition-colors text-xs font-medium"
-        onClick={handleFitAll}
-        title="Fit all tasks in view"
-        aria-label="Fit all tasks"
+        className="p-1.5 rounded hover:bg-gray-100 transition-colors"
+        onClick={handleFitToWidth}
+        title="Fit to width"
+        aria-label="Fit to width"
       >
-        Fit All
+        <ArrowsOutLineHorizontal size={18} weight="regular" />
       </button>
 
       {/* Reset Zoom Button (Ctrl+0) */}

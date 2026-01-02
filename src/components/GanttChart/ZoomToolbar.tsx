@@ -5,11 +5,12 @@
  * Features:
  * - Zoom in/out buttons
  * - Zoom level dropdown with preset levels
- * - Fit All button to fit entire project in view
+ * - Fit to Width button to fit entire project in view
  * - Visual feedback for zoom limits
  */
 
 import React from 'react';
+import { MagnifyingGlassPlus, MagnifyingGlassMinus, ArrowsOutLineHorizontal } from '@phosphor-icons/react';
 import { useChartStore } from '../../store/slices/chartSlice';
 import { useTaskStore } from '../../store/slices/taskSlice';
 
@@ -33,7 +34,7 @@ export function ZoomToolbar() {
     }
   };
 
-  const handleFitAll = () => {
+  const handleFitToWidth = () => {
     fitToView(tasks);
   };
 
@@ -47,7 +48,7 @@ export function ZoomToolbar() {
         title="Zoom Out (Ctrl+-)"
         aria-label="Zoom out"
       >
-        <span className="text-lg font-bold leading-none">−</span>
+        <MagnifyingGlassMinus size={18} weight="regular" />
       </button>
 
       {/* Zoom Level Dropdown */}
@@ -68,7 +69,7 @@ export function ZoomToolbar() {
             {level}%
           </option>
         ))}
-        <option value="fit">Fit All</option>
+        <option value="fit">Fit to Width</option>
       </select>
 
       {/* Zoom In Button */}
@@ -79,18 +80,17 @@ export function ZoomToolbar() {
         title="Zoom In (Ctrl++)"
         aria-label="Zoom in"
       >
-        <span className="text-lg font-bold leading-none">+</span>
+        <MagnifyingGlassPlus size={18} weight="regular" />
       </button>
 
-      {/* Fit All Button */}
+      {/* Fit to Width Button */}
       <button
-        className="fit-button flex items-center gap-1.5 px-3 h-8 border border-gray-300 rounded bg-white hover:bg-gray-100 active:bg-gray-200 transition-all duration-150"
-        onClick={handleFitAll}
-        title="Fit all tasks in view (Ctrl+9)"
-        aria-label="Fit all tasks"
+        className="fit-button flex items-center justify-center w-8 h-8 p-0 border border-gray-300 rounded bg-white hover:bg-gray-100 active:bg-gray-200 transition-all duration-150"
+        onClick={handleFitToWidth}
+        title="Fit to width"
+        aria-label="Fit to width"
       >
-        <span className="text-base leading-none">⊡</span>
-        <span className="text-sm font-medium">Fit All</span>
+        <ArrowsOutLineHorizontal size={18} weight="regular" />
       </button>
 
       {/* Reset Zoom Button (Ctrl+0) */}
