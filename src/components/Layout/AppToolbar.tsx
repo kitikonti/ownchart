@@ -1,0 +1,59 @@
+/**
+ * AppToolbar - Main application toolbar
+ * Contains logo, task actions, and zoom controls
+ */
+
+import { ChartBarHorizontal } from '@phosphor-icons/react';
+import { HierarchyButtons } from '../TaskList/HierarchyButtons';
+import { UndoRedoButtons } from '../Toolbar/UndoRedoButtons';
+import { ZoomControls } from '../Toolbar/ZoomControls';
+import { useTaskStore } from '../../store/slices/taskSlice';
+
+export function AppToolbar() {
+  const tasks = useTaskStore((state) => state.tasks);
+  const addTask = useTaskStore((state) => state.addTask);
+
+  const handleAddTask = () => {
+    const today = new Date();
+    const nextWeek = new Date(today);
+    nextWeek.setDate(today.getDate() + 7);
+
+    const formatDate = (date: Date): string => {
+      return date.toISOString().split('T')[0];
+    };
+
+    addTask({
+      name: 'New Task',
+      startDate: formatDate(today),
+      endDate: formatDate(nextWeek),
+      duration: 7,
+      progress: 0,
+      color: '#3b82f6',
+      order: tasks.length,
+      type: 'task',
+      parent: undefined,
+      metadata: {},
+    });
+  };
+
+  return (
+    <header className="flex-shrink-0 bg-white border-b border-gray-200 px-4 py-2 flex items-center gap-3">
+      <ChartBarHorizontal size={24} weight="regular" className="text-gray-700" />
+      <button
+        onClick={handleAddTask}
+        className="px-3 py-1.5 bg-blue-600 text-white text-sm font-medium rounded hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
+        aria-label="Add new task"
+      >
+        + Add Task
+      </button>
+      <HierarchyButtons />
+      <UndoRedoButtons />
+
+      {/* Spacer to push zoom controls to the right */}
+      <div className="flex-1" />
+
+      {/* Zoom Controls */}
+      <ZoomControls />
+    </header>
+  );
+}
