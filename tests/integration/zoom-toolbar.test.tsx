@@ -4,7 +4,7 @@
  */
 
 import { describe, it, expect, beforeEach } from 'vitest';
-import { render, screen, fireEvent } from '@testing-library/react';
+import { render, screen, fireEvent, act } from '@testing-library/react';
 import { ZoomToolbar } from '../../src/components/GanttChart/ZoomToolbar';
 import { useChartStore } from '../../src/store/slices/chartSlice';
 import { useTaskStore } from '../../src/store/slices/taskSlice';
@@ -160,8 +160,10 @@ describe('ZoomToolbar - Integration Tests', () => {
   it('should update dropdown when zoom changes externally', () => {
     const { rerender } = render(<ZoomToolbar />);
 
-    // Change zoom externally
-    useChartStore.getState().setZoom(2.0);
+    // Change zoom externally - wrap in act() to handle state updates
+    act(() => {
+      useChartStore.getState().setZoom(2.0);
+    });
 
     // Force re-render
     rerender(<ZoomToolbar />);
