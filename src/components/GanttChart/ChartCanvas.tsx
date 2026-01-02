@@ -35,9 +35,6 @@ export function ChartCanvas({
   containerHeight = 600,
   containerWidth: propContainerWidth = 800,
 }: ChartCanvasProps) {
-  console.log('🎬 [ChartCanvas] Component RENDER START');
-  console.log('  📦 tasks received:', tasks.length, tasks.length > 0 ? tasks.map(t => t.name) : '(empty)');
-
   const outerRef = useRef<HTMLDivElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const svgContainerRef = useRef<HTMLDivElement>(null);
@@ -53,20 +50,6 @@ export function ChartCanvas({
   // Use prop as containerWidth (measured at App.tsx level to avoid feedback loop)
   const containerWidth = propContainerWidth;
 
-  console.log('📊 [ChartCanvas] State from Zustand:', {
-    containerWidth,
-    zoom,
-    scale: scale ? { totalWidth: scale.totalWidth, pixelsPerDay: scale.pixelsPerDay } : null,
-  });
-
-  // Track component lifecycle
-  useEffect(() => {
-    console.log('🚀 [ChartCanvas] Component MOUNTED');
-    return () => {
-      console.log('💀 [ChartCanvas] Component UNMOUNTED');
-    };
-  }, []);
-
   // Zoom hook (Sprint 1.2 Package 3)
   const { handlers } = usePanZoom({
     containerRef: svgContainerRef,
@@ -75,25 +58,16 @@ export function ChartCanvas({
 
   // Sync containerWidth to Zustand store (so other components can use it)
   useEffect(() => {
-    console.log('🔄 [ChartCanvas] Syncing containerWidth to Zustand store:', containerWidth);
     setContainerWidth(containerWidth);
   }, [containerWidth, setContainerWidth]);
 
   // Trigger scale calculation when tasks, container width, or zoom changes
   useEffect(() => {
-    console.log('🔄 [ChartCanvas] updateScale useEffect triggered');
-    console.log('  📦 tasks.length:', tasks.length);
-    console.log('  📏 containerWidth:', containerWidth);
-    console.log('  🔍 zoom:', zoom);
-
-    console.log('  🎯 Calling updateScale...');
     updateScale(tasks);
-    console.log('  ✅ updateScale called');
   }, [tasks, containerWidth, zoom, updateScale]);
 
   // Don't render if scale not ready
   if (!scale) {
-    console.log('⏳ [ChartCanvas] Scale is null, showing loading state');
     return (
       <div ref={outerRef} className="chart-canvas-container w-full min-h-screen">
         <div ref={containerRef} className="w-full min-h-screen">
@@ -122,23 +96,9 @@ export function ChartCanvas({
     contentHeight = rowCount * ROW_HEIGHT; // Perfect multiple of ROW_HEIGHT
   }
 
-  console.log('📐 [ChartCanvas] Height calculation:', {
-    containerHeight,
-    taskBasedHeight,
-    contentHeight,
-    rowCount,
-    willScroll: contentHeight > containerHeight,
-  });
-
   // Ensure timeline fills at least the container width (prevent horizontal whitespace)
   // Use the larger of scale.totalWidth or container width
   const timelineWidth = Math.max(scale.totalWidth, containerWidth);
-
-  console.log('🎨 [ChartCanvas] RENDERING');
-  console.log('  📏 containerWidth:', containerWidth);
-  console.log('  📐 scale.totalWidth:', scale.totalWidth);
-  console.log('  🎯 timelineWidth (max of both):', timelineWidth);
-  console.log('  📊 scale:', { minDate: scale.minDate, maxDate: scale.maxDate, pixelsPerDay: scale.pixelsPerDay });
 
   return (
     <div ref={outerRef} className="chart-canvas-container w-full h-full bg-white relative">

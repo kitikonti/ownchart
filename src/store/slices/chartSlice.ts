@@ -78,30 +78,22 @@ export const useChartStore = create<ChartState & ChartActions>()(
 
     // Centralized scale calculation
     updateScale: (tasks: Task[]) => {
-      console.log('🏪 [chartSlice] updateScale called');
       const currentState = get();
 
       // Check if scale is locked by fitToView
       if (currentState.scaleLocked) {
-        console.log('  🔒 Scale locked by fitToView, unlocking and skipping update');
         set((state) => {
           state.scaleLocked = false;
         });
         return;
       }
 
-      console.log('  📦 tasks.length:', tasks.length);
-      console.log('  📏 current containerWidth:', currentState.containerWidth);
-      console.log('  🔍 current zoom:', currentState.zoom);
-
       set((state) => {
         const dateRange = getDateRange(tasks);
-        console.log('  📅 Raw task range:', { min: dateRange.min, max: dateRange.max });
 
         // Add 7 days padding for comfortable view
         const paddedMin = addDays(dateRange.min, -7);
         const paddedMax = addDays(dateRange.max, 7);
-        console.log('  📅 Padded range:', { min: paddedMin, max: paddedMax });
 
         const newScale = getTimelineScale(
           paddedMin,
@@ -110,28 +102,17 @@ export const useChartStore = create<ChartState & ChartActions>()(
           state.zoom
         );
 
-        console.log('  📐 calculated scale.totalWidth:', newScale.totalWidth);
-        console.log('  📊 calculated scale.pixelsPerDay:', newScale.pixelsPerDay);
-
         state.scale = newScale;
       });
-
-      console.log('  ✅ updateScale complete');
     },
 
     // Set container width (scale will be recalculated by updateScale)
     setContainerWidth: (width: number) => {
-      console.log('🏪 [chartSlice] setContainerWidth called with:', width);
-      const currentState = get();
-      console.log('  📏 OLD containerWidth:', currentState.containerWidth);
-
       set((state) => {
         state.containerWidth = width;
         // Don't recalculate scale here - let updateScale (which has task data) handle it
         // This prevents using extended minDate/maxDate from previous zoom operations
       });
-
-      console.log('  ✅ setContainerWidth complete');
     },
 
     // Zoom with optional mouse centering (Sprint 1.2 Package 3)
@@ -200,8 +181,6 @@ export const useChartStore = create<ChartState & ChartActions>()(
 
     // Fit all tasks in view with 1 week padding on each side
     fitToView: (tasks: Task[]) => {
-      console.log('🎯 [chartSlice] fitToView called');
-
       if (tasks.length === 0) {
         get().resetZoom();
         get().resetPan();
@@ -209,29 +188,22 @@ export const useChartStore = create<ChartState & ChartActions>()(
       }
 
       const { min, max } = getDateRange(tasks);
-      console.log('  📅 Raw task range:', { min, max });
 
       // Add 1 week (7 days) padding before and after tasks
       const paddedMin = addDays(min, -7);
       const paddedMax = addDays(max, 7);
-      console.log('  📅 Padded range:', { min: paddedMin, max: paddedMax });
 
       const paddedDuration = calculateDuration(paddedMin, paddedMax);
-      console.log('  📊 Padded duration:', paddedDuration, 'days');
-
       const containerWidth = get().containerWidth;
-      console.log('  📏 Container width:', containerWidth, 'px');
 
       // Calculate zoom to fit padded duration exactly in container
       // Formula: totalWidth = paddedDuration × (FIXED_BASE_PIXELS_PER_DAY × zoom)
       // We want: containerWidth = paddedDuration × (25 × zoom)
       // Therefore: zoom = containerWidth / (paddedDuration × 25)
       const idealZoom = containerWidth / (paddedDuration * FIXED_BASE_PIXELS_PER_DAY);
-      console.log('  🔍 Ideal zoom:', idealZoom);
 
       // Set zoom (clamped to valid range)
       const finalZoom = Math.max(MIN_ZOOM, Math.min(MAX_ZOOM, idealZoom));
-      console.log('  🔍 Final zoom (clamped):', finalZoom);
 
       // IMPORTANT: Set zoom AND scale directly with padded dates
       // Lock scale to prevent updateScale from overriding with original task dates
@@ -241,13 +213,6 @@ export const useChartStore = create<ChartState & ChartActions>()(
         containerWidth,
         finalZoom
       );
-      console.log('  📐 New scale:', {
-        minDate: newScale.minDate,
-        maxDate: newScale.maxDate,
-        totalWidth: newScale.totalWidth,
-        totalDays: newScale.totalDays,
-        pixelsPerDay: newScale.pixelsPerDay,
-      });
 
       set((state) => {
         state.zoom = finalZoom;
@@ -255,8 +220,6 @@ export const useChartStore = create<ChartState & ChartActions>()(
         state.panOffset = { x: 0, y: 0 };
         state.scaleLocked = true; // Prevent next updateScale from overriding
       });
-
-      console.log('  ✅ fitToView complete, scaleLocked = true');
     },
 
     // Reset to default view

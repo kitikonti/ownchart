@@ -37,21 +37,12 @@ function generateScaleCells(
 ): ScaleCell[] {
   const cells: ScaleCell[] = [];
 
-  console.log('📊 [TimelineHeader] generateScaleCells called');
-  console.log('  📅 scale.minDate:', scale.minDate);
-  console.log('  📅 scale.maxDate:', scale.maxDate);
-  console.log('  📏 headerWidth:', headerWidth);
-  console.log('  🔧 config.unit:', config.unit);
-
   // Start at the beginning of the unit that contains minDate
   // This ensures weeks start on Monday, months on 1st, etc.
   let currentDate = getUnitStart(parseISO(scale.minDate), config.unit);
-  console.log('  📍 Starting at unit boundary:', format(currentDate, 'yyyy-MM-dd'));
 
-  let iterationCount = 0;
   while (true) {
     const cellStart = currentDate;
-    iterationCount++;
 
     // Calculate cell position and width
     const x = dateToPixel(format(cellStart, 'yyyy-MM-dd'), scale);
@@ -66,7 +57,6 @@ function generateScaleCells(
     // Skip cells that end before scale.minDate (outside visible range)
     const scaleMinDate = parseISO(scale.minDate);
     if (nextUnit < scaleMinDate) {
-      console.log(`  ⏭️  Cell #${iterationCount}: ${format(cellStart, 'yyyy-MM-dd')} SKIPPED (ends before minDate)`);
       currentDate = addUnit(currentDate, config.unit, config.step);
       continue;
     }
@@ -78,7 +68,6 @@ function generateScaleCells(
 
     // Skip if cell is completely outside visible range
     if (clippedWidth <= 0) {
-      console.log(`  ⏭️  Cell #${iterationCount}: ${format(cellStart, 'yyyy-MM-dd')} SKIPPED (outside visible range)`);
       currentDate = addUnit(currentDate, config.unit, config.step);
       continue;
     }
@@ -88,11 +77,6 @@ function generateScaleCells(
       typeof config.format === 'function'
         ? config.format(cellStart)
         : format(cellStart, config.format);
-
-    console.log(`  ✅ Cell #${iterationCount}: ${format(cellStart, 'yyyy-MM-dd')} → ${format(nextUnit, 'yyyy-MM-dd')}`);
-    console.log(`     original: x=${x.toFixed(2)} → ${endX.toFixed(2)} (${(endX - x).toFixed(2)}px)`);
-    console.log(`     clipped:  x=${clippedX.toFixed(2)} → ${clippedEndX.toFixed(2)} (${clippedWidth.toFixed(2)}px)`);
-    console.log(`     label: "${label}"`);
 
     cells.push({
       date: cellStart,
@@ -105,7 +89,6 @@ function generateScaleCells(
     currentDate = addUnit(currentDate, config.unit, config.step);
   }
 
-  console.log(`  📦 Generated ${cells.length} cells total`);
   return cells;
 }
 
