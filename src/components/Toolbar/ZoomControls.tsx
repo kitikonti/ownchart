@@ -17,7 +17,6 @@ export function ZoomControls() {
   const zoom = useChartStore((state) => state.zoom);
   const zoomIn = useChartStore((state) => state.zoomIn);
   const zoomOut = useChartStore((state) => state.zoomOut);
-  const resetZoom = useChartStore((state) => state.resetZoom);
   const fitToView = useChartStore((state) => state.fitToView);
   const tasks = useTaskStore((state) => state.tasks);
 
@@ -104,16 +103,6 @@ export function ZoomControls() {
         aria-label="Fit to width"
       >
         <ArrowsOutLineHorizontal size={18} weight="regular" />
-      </button>
-
-      {/* Reset Zoom Button (Ctrl+0) */}
-      <button
-        className="p-1.5 rounded hover:bg-gray-100 transition-colors"
-        onClick={resetZoom}
-        title="Reset zoom to 100% (Ctrl+0)"
-        aria-label="Reset zoom"
-      >
-        <span className="text-xs font-medium leading-none">1:1</span>
       </button>
     </div>
   );

@@ -62,7 +62,6 @@ describe('ZoomToolbar - Integration Tests', () => {
     // Check for zoom buttons
     expect(screen.getByTitle('Zoom Out (Ctrl+-)')).toBeInTheDocument();
     expect(screen.getByTitle('Zoom In (Ctrl++)')).toBeInTheDocument();
-    expect(screen.getByTitle('Reset zoom to 100% (Ctrl+0)')).toBeInTheDocument();
     expect(screen.getByTitle('Fit to width')).toBeInTheDocument();
 
     // Check for zoom level dropdown
@@ -125,16 +124,6 @@ describe('ZoomToolbar - Integration Tests', () => {
     expect(useChartStore.getState().zoom).toBe(1.5);
   });
 
-  it('should reset zoom when clicking reset button', () => {
-    useChartStore.setState({ zoom: 2.0 });
-    render(<ZoomToolbar />);
-
-    const resetButton = screen.getByTitle('Reset zoom to 100% (Ctrl+0)');
-    fireEvent.click(resetButton);
-
-    expect(useChartStore.getState().zoom).toBe(1.0);
-  });
-
   it('should call fitToView when clicking Fit to Width button', () => {
     render(<ZoomToolbar />);
 
@@ -186,11 +175,6 @@ describe('ZoomToolbar - Integration Tests', () => {
     // Zoom out once
     fireEvent.click(zoomOutButton);
     expect(useChartStore.getState().zoom).toBe(1.25);
-
-    // Reset
-    const resetButton = screen.getByTitle('Reset zoom to 100% (Ctrl+0)');
-    fireEvent.click(resetButton);
-    expect(useChartStore.getState().zoom).toBe(1.0);
   });
 
   it('should show all preset zoom levels in dropdown', () => {

@@ -17,7 +17,7 @@ import { useTaskStore } from '../../store/slices/taskSlice';
 const PRESET_ZOOM_LEVELS = [50, 75, 100, 125, 150, 200, 250, 300];
 
 export function ZoomToolbar() {
-  const { zoom, zoomIn, zoomOut, resetZoom, fitToView } = useChartStore();
+  const { zoom, zoomIn, zoomOut, fitToView } = useChartStore();
   const tasks = useTaskStore((state) => state.tasks);
 
   const zoomPercentage = Math.round(zoom * 100);
@@ -91,16 +91,6 @@ export function ZoomToolbar() {
         aria-label="Fit to width"
       >
         <ArrowsOutLineHorizontal size={18} weight="regular" />
-      </button>
-
-      {/* Reset Zoom Button (Ctrl+0) */}
-      <button
-        className="zoom-button flex items-center justify-center w-8 h-8 p-0 border border-gray-300 rounded bg-white hover:bg-gray-100 active:bg-gray-200 transition-all duration-150"
-        onClick={resetZoom}
-        title="Reset zoom to 100% (Ctrl+0)"
-        aria-label="Reset zoom"
-      >
-        <span className="text-xs font-medium leading-none">1:1</span>
       </button>
     </div>
   );
