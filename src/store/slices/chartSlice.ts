@@ -16,8 +16,12 @@ interface ChartState {
   scale: TimelineScale | null;
   containerWidth: number;
 
+  // Date range - the visible timeline bounds (with padding)
+  // This is the source of truth for scale calculation
+  dateRange: { min: string; max: string } | null;
+
   // Navigation state (SINGLE SOURCE OF TRUTH - Sprint 1.2 Package 3)
-  zoom: number; // 0.5 to 3.0 (50% to 300%)
+  zoom: number; // 0.05 to 3.0 (5% to 300%)
   panOffset: { x: number; y: number }; // Pan position in pixels
 
   // View settings
@@ -27,9 +31,6 @@ interface ChartState {
   // Transient UI state
   isZooming: boolean;
   isPanning: boolean;
-
-  // Scale lock (prevents updateScale from overriding fitToView's padded scale)
-  scaleLocked: boolean;
 }
 
 interface ChartActions {
@@ -63,55 +64,63 @@ interface ChartActions {
 
 const DEFAULT_CONTAINER_WIDTH = 800;
 
+/**
+ * Helper: Recalculate scale from dateRange, zoom, and containerWidth
+ * This is the single place where scale is derived from its dependencies
+ */
+function deriveScale(
+  dateRange: { min: string; max: string } | null,
+  containerWidth: number,
+  zoom: number
+): TimelineScale | null {
+  if (!dateRange) return null;
+
+  return getTimelineScale(
+    dateRange.min,
+    dateRange.max,
+    containerWidth,
+    zoom
+  );
+}
+
 export const useChartStore = create<ChartState & ChartActions>()(
   immer((set, get) => ({
     // Initial state
     scale: null,
     containerWidth: DEFAULT_CONTAINER_WIDTH,
+    dateRange: null,
     zoom: 1.0,
     panOffset: { x: 0, y: 0 },
     showWeekends: true,
     showTodayMarker: true,
     isZooming: false,
     isPanning: false,
-    scaleLocked: false,
 
-    // Centralized scale calculation
+    // Centralized scale calculation - updates dateRange from tasks, then derives scale
     updateScale: (tasks: Task[]) => {
-      const currentState = get();
-
-      // Check if scale is locked by fitToView
-      if (currentState.scaleLocked) {
-        set((state) => {
-          state.scaleLocked = false;
-        });
-        return;
-      }
-
       set((state) => {
-        const dateRange = getDateRange(tasks);
+        const taskDateRange = getDateRange(tasks);
 
         // Add 7 days padding for comfortable view
-        const paddedMin = addDays(dateRange.min, -7);
-        const paddedMax = addDays(dateRange.max, 7);
+        const paddedMin = addDays(taskDateRange.min, -7);
+        const paddedMax = addDays(taskDateRange.max, 7);
 
-        const newScale = getTimelineScale(
-          paddedMin,
-          paddedMax,
-          state.containerWidth,
-          state.zoom
-        );
+        // Update dateRange
+        state.dateRange = { min: paddedMin, max: paddedMax };
 
-        state.scale = newScale;
+        // Derive scale from dateRange
+        state.scale = deriveScale(state.dateRange, state.containerWidth, state.zoom);
       });
     },
 
-    // Set container width (scale will be recalculated by updateScale)
+    // Set container width and recalculate scale
     setContainerWidth: (width: number) => {
       set((state) => {
         state.containerWidth = width;
-        // Don't recalculate scale here - let updateScale (which has task data) handle it
-        // This prevents using extended minDate/maxDate from previous zoom operations
+        // Recalculate scale if we have a dateRange
+        if (state.dateRange) {
+          state.scale = deriveScale(state.dateRange, width, state.zoom);
+        }
       });
     },
 
@@ -119,14 +128,13 @@ export const useChartStore = create<ChartState & ChartActions>()(
     setZoom: (newZoom: number, _centerPoint?: { x: number; y: number }) => {
       set((state) => {
         const constrainedZoom = Math.max(MIN_ZOOM, Math.min(MAX_ZOOM, newZoom));
-
-        // Don't recalculate scale here - let updateScale (which has task data) handle it
-        // This prevents accumulating extended minDate/maxDate from previous zoom operations
-
-        // Note: centerPoint pan adjustment removed - would need scale recalculation
-        // The updateScale in ChartCanvas will trigger and recalculate correctly
-
         state.zoom = constrainedZoom;
+
+        // Recalculate scale if we have a dateRange
+        // Note: centerPoint pan adjustment not implemented yet
+        if (state.dateRange) {
+          state.scale = deriveScale(state.dateRange, state.containerWidth, constrainedZoom);
+        }
       });
     },
 
@@ -205,20 +213,15 @@ export const useChartStore = create<ChartState & ChartActions>()(
       // Set zoom (clamped to valid range)
       const finalZoom = Math.max(MIN_ZOOM, Math.min(MAX_ZOOM, idealZoom));
 
-      // IMPORTANT: Set zoom AND scale directly with padded dates
-      // Lock scale to prevent updateScale from overriding with original task dates
-      const newScale = getTimelineScale(
-        paddedMin,
-        paddedMax,
-        containerWidth,
-        finalZoom
-      );
+      // Set dateRange and zoom, then derive scale
+      // No need for scaleLocked - dateRange IS the source of truth now
+      const newDateRange = { min: paddedMin, max: paddedMax };
 
       set((state) => {
+        state.dateRange = newDateRange;
         state.zoom = finalZoom;
-        state.scale = newScale;
         state.panOffset = { x: 0, y: 0 };
-        state.scaleLocked = true; // Prevent next updateScale from overriding
+        state.scale = deriveScale(newDateRange, containerWidth, finalZoom);
       });
     },
 

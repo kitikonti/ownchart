@@ -13,6 +13,7 @@ describe('Chart Store - Pan/Zoom Navigation', () => {
     useChartStore.setState({
       scale: null,
       containerWidth: 800,
+      dateRange: null,
       zoom: 1.0,
       panOffset: { x: 0, y: 0 },
       showWeekends: true,
