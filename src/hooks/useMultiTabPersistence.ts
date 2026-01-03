@@ -89,7 +89,6 @@ export function useMultiTabPersistence(): void {
       // Don't save during initial restoration to avoid loops
       // BUT allow saves after restoration is complete
       if (isRestoringRef.current) {
-        console.log('[MultiTab] Skipping save during restoration');
         return;
       }
 
@@ -114,10 +113,6 @@ export function useMultiTabPersistence(): void {
       };
 
       saveTabChart(tabId, chartData);
-      console.log('[MultiTab] State saved to localStorage', {
-        tasks: chartData.tasks.length,
-        fileName: chartData.fileState.fileName,
-      });
     };
 
     // Subscribe to all store changes
@@ -130,7 +125,6 @@ export function useMultiTabPersistence(): void {
     const initialSaveTimer = setTimeout(() => {
       if (!isRestoringRef.current) {
         saveCurrentState();
-        console.log('[MultiTab] Initial state saved');
       }
     }, 100);
 
