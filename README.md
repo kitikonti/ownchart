@@ -9,6 +9,12 @@
 
 **OwnChart** is a browser-based Gantt chart application that respects your privacy. No cloud, no tracking, no accounts. Your data stays on your device.
 
+## 🌐 Try It Now
+
+**Live Demo**: [https://kitikonti.github.io/ownchart/](https://kitikonti.github.io/ownchart/)
+
+No installation needed - just open and start planning. Your data stays in your browser's local storage.
+
 ## ✨ Features
 
 - 🔒 **Privacy-First** - All data stays local, zero tracking
@@ -36,7 +42,9 @@ npm install
 npm run dev
 ```
 
-Open [http://localhost:5173](http://localhost:5173) and start planning!
+Open [http://localhost:5173](http://localhost:5173) in your browser to start developing!
+
+**Or use the live demo**: [https://kitikonti.github.io/ownchart/](https://kitikonti.github.io/ownchart/)
 
 ## 🏗️ Tech Stack
 
@@ -141,6 +149,7 @@ Contributions are welcome! Please read our [contributing guidelines](./CONTRIBUT
 
 ## 🔗 Links
 
+- **Live Demo**: [kitikonti.github.io/ownchart](https://kitikonti.github.io/ownchart/)
 - **Repository**: [github.com/kitikonti/ownchart](https://github.com/kitikonti/ownchart)
 - **Issues**: [Report a bug or request a feature](https://github.com/kitikonti/ownchart/issues)
 - **Changelog**: [See what's new](./CHANGELOG.md)
