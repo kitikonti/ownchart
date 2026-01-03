@@ -237,7 +237,7 @@ export const useTaskStore = create<TaskStore>()(
           // Capture previous values for undo
           Object.keys(updates).forEach((key) => {
             const typedKey = key as keyof Task;
-            previousValues[typedKey] = currentTask[typedKey] as Task[keyof Task];
+            previousValues[typedKey] = currentTask[typedKey] as any;
           });
 
           // Apply update to child task
