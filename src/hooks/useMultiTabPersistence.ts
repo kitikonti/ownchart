@@ -15,7 +15,6 @@ import {
   loadTabChart,
   saveTabChart,
   updateTabActivity,
-  removeTab,
   cleanupInactiveTabs,
   type ChartState,
   type FileState,
@@ -177,19 +176,8 @@ export function useMultiTabPersistence(): void {
     };
   }, []);
 
-  // Cleanup on tab close
-  useEffect(() => {
-    const tabId = tabIdRef.current;
-
-    const handleBeforeUnload = () => {
-      // Remove this tab's data from storage
-      removeTab(tabId);
-    };
-
-    window.addEventListener('beforeunload', handleBeforeUnload);
-
-    return () => {
-      window.removeEventListener('beforeunload', handleBeforeUnload);
-    };
-  }, []);
+  // Note: We don't cleanup on beforeunload because:
+  // - beforeunload fires on page refresh, which would delete data we want to persist
+  // - cleanupInactiveTabs() handles cleanup of truly inactive tabs (24h timeout)
+  // - Data persisting across reloads is the desired behavior
 }
