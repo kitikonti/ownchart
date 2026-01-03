@@ -127,7 +127,7 @@ export const useChartStore = create<ChartState & ChartActions>()(
     },
 
     // Zoom with optional mouse centering (Sprint 1.2 Package 3)
-    setZoom: (newZoom: number, _centerPoint?: { x: number; y: number }) => {
+    setZoom: (newZoom: number) => {
       set((state) => {
         const constrainedZoom = Math.max(MIN_ZOOM, Math.min(MAX_ZOOM, newZoom));
         state.zoom = constrainedZoom;

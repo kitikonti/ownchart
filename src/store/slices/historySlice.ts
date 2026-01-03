@@ -3,10 +3,12 @@
  * Manages command stacks and provides undo/redo operations
  */
 
+/* eslint-disable @typescript-eslint/no-explicit-any */
+
 import { create } from 'zustand';
 import { immer } from 'zustand/middleware/immer';
 import toast from 'react-hot-toast';
-import type { Command } from '../../types/command.types';
+import type { Command, AddTaskParams, UpdateTaskParams } from '../../types/command.types';
 import { useTaskStore } from './taskSlice';
 
 interface HistoryState {
@@ -190,7 +192,7 @@ function executeUndoCommand(command: Command): void {
 
   switch (command.type) {
     case 'addTask': {
-      const params = command.params as any;
+      const params = command.params as AddTaskParams;
       if (params.generatedId) {
         taskStore.deleteTask(params.generatedId, false);
       }
@@ -198,7 +200,7 @@ function executeUndoCommand(command: Command): void {
     }
 
     case 'updateTask': {
-      const params = command.params as any;
+      const params = command.params as UpdateTaskParams;
       taskStore.updateTask(params.id, params.previousValues);
 
       // Handle cascade updates (revert parent summary dates)

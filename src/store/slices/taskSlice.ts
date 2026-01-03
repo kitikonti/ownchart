@@ -237,6 +237,7 @@ export const useTaskStore = create<TaskStore>()(
           // Capture previous values for undo
           Object.keys(updates).forEach((key) => {
             const typedKey = key as keyof Task;
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
             previousValues[typedKey] = currentTask[typedKey] as any;
           });
 
