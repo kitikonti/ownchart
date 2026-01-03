@@ -38,19 +38,32 @@ export function AppToolbar() {
   };
 
   return (
-    <header className="flex-shrink-0 bg-white border-b border-gray-200 px-4 py-2 flex items-center gap-3">
-      <ChartBarHorizontal size={24} weight="regular" className="text-gray-700" />
-      <FileButtons />
+    <header className="flex-shrink-0 bg-white border-b border-gray-200 px-4 py-2 flex items-center">
+      {/* Logo */}
+      <ChartBarHorizontal size={24} weight="regular" className="text-gray-700 mr-3" />
+
+      {/* File Operations Group */}
+      <div className="mr-2">
+        <FileButtons />
+      </div>
+
+      {/* Undo/Redo Group */}
+      <div className="mr-4">
+        <UndoRedoButtons />
+      </div>
+
+      {/* Task Actions Group */}
       <button
         onClick={handleAddTask}
-        className="px-3 py-1.5 bg-blue-600 text-white text-sm font-medium rounded hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 flex items-center gap-1.5"
+        className="px-3 py-1.5 bg-blue-600 text-white text-sm font-medium rounded hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 flex items-center gap-1.5 mr-2"
         aria-label="Add new task"
       >
         <Plus size={16} weight="bold" />
         Add Task
       </button>
+
+      {/* Hierarchy Controls */}
       <HierarchyButtons />
-      <UndoRedoButtons />
 
       {/* Spacer to push zoom controls to the right */}
       <div className="flex-1" />

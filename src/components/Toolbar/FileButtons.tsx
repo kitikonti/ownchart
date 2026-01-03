@@ -40,8 +40,6 @@ export function FileButtons() {
       >
         <FloppyDisk size={18} weight={isDirty ? 'fill' : 'regular'} />
       </button>
-
-      <div className="w-px h-6 bg-gray-300 mx-1" />
     </div>
   );
 }

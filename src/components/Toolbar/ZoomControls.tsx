@@ -51,7 +51,7 @@ export function ZoomControls() {
   };
 
   return (
-    <div className="flex items-center gap-1.5 border-l pl-3 ml-3">
+    <div className="flex items-center gap-1.5">
       {/* Zoom Out Button */}
       <button
         className="p-1.5 rounded hover:bg-gray-100 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
