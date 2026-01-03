@@ -1,4 +1,4 @@
-# Contributing to Gantt Chart Application
+# Contributing to OwnChart
 
 Thank you for your interest in contributing! This document provides guidelines and instructions for contributing to the project.
 
@@ -7,8 +7,8 @@ Thank you for your interest in contributing! This document provides guidelines a
 1. **Fork the repository** on GitHub
 2. **Clone your fork** locally
    ```bash
-   git clone https://github.com/your-username/gantt-chart-app.git
-   cd gantt-chart-app
+   git clone https://github.com/your-username/ownchart.git
+   cd ownchart
    ```
 3. **Install dependencies**
    ```bash
