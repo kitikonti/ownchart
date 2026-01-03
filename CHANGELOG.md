@@ -1,11 +1,86 @@
 # Changelog
 
-All notable changes to this project will be documented in this file.
+All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
-The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
-and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
+### [0.0.2](https://github.com/martin/app-gantt/compare/v0.0.1...v0.0.2) (2026-01-03)
 
-## [Unreleased]
+
+### Features
+
+* add custom indent/outdent icons with horizontal lines 67622df
+* add editable type column to task table 8561622
+* add integration tests and toast notifications for undo/redo eb2230c
+* add localStorage persistence to preserve data after browser refresh 3f3f724
+* add validation to prevent multi-level jumps in hierarchy 662fd9b
+* complete Sprint 1.2 Package 2 - Interactive Editing (drag-to-edit) 26de088
+* complete Sprint 1.3 - File Operations with comprehensive security 0151b88
+* enable type switching via clickable icon and remove type column 9a6d9f2
+* implement automated versioning and release management 213828b
+* implement hierarchical task organization (SVAR pattern) 15a0e21
+* implement hierarchy indent/outdent functionality be04a92
+* implement resizable split pane between TaskTable and Timeline bc4631b
+* implement Sprint 1.2 Package 1 - Core Foundation c7a4eb2
+* implement Sprint 1.5 - Undo/Redo system with keyboard shortcuts 49af349
+* implement SVAR-style sticky scroll layout for timeline 4100c40
+* improve milestone handling and unify task styling 46ff348
+* integrate competitive analysis insights and enhance data model 9df604d
+* migrate from Heroicons to Phosphor Icons 2180141
+* redesign color column as compact vertical bar 195fba8
+* remove 1:1 reset zoom button 9d95448
+* **store:** add task CRUD operations 70b2e9a
+* **store:** add task selection and reordering 8894d85
+* **store:** initialize task store with Zustand 93a7bea
+* switch indent/outdent shortcuts from Ctrl+[/] to Tab/Shift+Tab 4d22ffc
+* **types:** add Chart and AppState interfaces dd230da
+* **types:** add Dependency interface 87df387
+* **types:** add Task interface definition 97c1a1c
+* **ui:** add auto-fit column width on double-click cf8734a
+* **ui:** add delete task functionality 77afa4b
+* **ui:** add drag-and-drop reordering with [@dnd-kit](undefined/dnd-kit) 1493346
+* **ui:** add inline editing to TaskRow 9edbd96
+* **ui:** add live preview for column resizing 08b0ea0
+* **ui:** add multi-selection with checkboxes 2fc945d
+* **ui:** add TaskList container component 0d902d0
+* **ui:** add TaskRow component with display mode 8ab38ce
+* **ui:** integrate TaskList into App.tsx 7714549
+* **ui:** transform TaskList into Excel-like spreadsheet table 3a90bad
+* update icons to Phosphor icons ad22795
+* **utils:** add basic validation functions b19d999
+* **utils:** add validateTask function 265f09c
+
+
+### Bug Fixes
+
+* add undo/redo support for task reordering and color changes c500ff1, closes #3 #4
+* correct duration calculation for tasks and summaries 06b4d15
+* improve zoom indicator and adaptive grid lines 8bda22d
+* prevent cascade effect when indenting multiple selected tasks 2ba6c60
+* resolve delete task undo bug with deep clone and batch setState dae0e78
+* resolve redo race condition by removing async imports ced6ff4
+* resolve zoom functionality and fit-to-view double-padding bug 0ef8448
+* skip milestone type when cycling types for tasks with children 8576c12
+* **ui:** auto-open color picker on edit mode activation ca72ff9
+* **ui:** ensure consistent color field appearance across all modes f6495ba
+* **ui:** improve drag-and-drop visual feedback in TaskTable 7ca1410
+* **ui:** prevent active cell border from being covered by hover f457db2
+* **ui:** prevent color field vertical shift in edit mode 6969f64
+* **ui:** remove text shift when entering edit mode eb2fe72
+* **ui:** simplify color column display 01c09dc
+
+
+### Code Refactoring
+
+* redesign app header and simplify UI af5d0a6
+* rename Sprint 1.15 → 1.1.1 and Sprint 1.16 → 1.1.2 a9ddd86
+* rename usePanZoom to useZoom ee41c04
+* reorganize toolbar following industry standard patterns 975f76e
+* replace scaleLocked pattern with dateRange source of truth 511808a
+* split App.tsx into sub-components e21e928
+
+
+### UI/UX
+
+* shorten progress column header to save space caba9db
 
 ## [0.0.3] - 2026-01-02
 

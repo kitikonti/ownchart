@@ -1,6 +1,6 @@
 {
   "name": "gantt-chart-app",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "type": "module",
   "description": "Browser-based, offline-first Gantt Chart application for project planning",
   "author": "Martin",
