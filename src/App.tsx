@@ -8,6 +8,7 @@ import { ZoomIndicator } from './components/GanttChart/ZoomIndicator';
 import { AppToolbar, GanttLayout } from './components/Layout';
 import { useKeyboardShortcuts } from './hooks/useKeyboardShortcuts';
 import { useUnsavedChanges } from './hooks/useUnsavedChanges';
+import { useLocalStoragePersistence } from './hooks/useLocalStoragePersistence';
 
 function App(): JSX.Element {
   // Enable global keyboard shortcuts (Ctrl+Z, Ctrl+Shift+Z, Ctrl+Y, Ctrl+S, Ctrl+O, Ctrl+Alt+N)
@@ -15,6 +16,9 @@ function App(): JSX.Element {
 
   // Warn before leaving with unsaved changes
   useUnsavedChanges();
+
+  // Persist state to localStorage and restore on load
+  useLocalStoragePersistence();
 
   return (
     <>

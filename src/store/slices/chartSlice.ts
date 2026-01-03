@@ -60,6 +60,8 @@ interface ChartActions {
   // Settings
   toggleWeekends: () => void;
   toggleTodayMarker: () => void;
+  setShowWeekends: (show: boolean) => void;
+  setShowTodayMarker: (show: boolean) => void;
 }
 
 const DEFAULT_CONTAINER_WIDTH = 800;
@@ -259,6 +261,20 @@ export const useChartStore = create<ChartState & ChartActions>()(
     toggleTodayMarker: () => {
       set((state) => {
         state.showTodayMarker = !state.showTodayMarker;
+      });
+    },
+
+    // Set weekend visibility
+    setShowWeekends: (show: boolean) => {
+      set((state) => {
+        state.showWeekends = show;
+      });
+    },
+
+    // Set today marker visibility
+    setShowTodayMarker: (show: boolean) => {
+      set((state) => {
+        state.showTodayMarker = show;
       });
     },
   }))
