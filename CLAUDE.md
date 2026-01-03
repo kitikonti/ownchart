@@ -1,10 +1,10 @@
-# Claude AI Assistant Guide - Gantt Chart App
+# Claude AI Assistant Guide - OwnChart
 
 > **This file provides context and workflow instructions for Claude AI when working on this project.**
 
 ## Project Overview
 
-**Browser-based, offline-first Gantt Chart application** for project planning.
+**OwnChart** - Privacy-first, offline Gantt chart for project planning. Own your data.
 
 - **Tech Stack**: React 18 + TypeScript + Vite + Zustand + TailwindCSS + D3.js
 - **Testing**: Vitest (unit) + Playwright (E2E) + 80%+ coverage
@@ -31,7 +31,7 @@
 ## Directory Structure
 
 ```
-app-gantt/
+ownchart/
 ├── src/
 │   ├── components/     # React components
 │   ├── store/          # Zustand stores (taskSlice, chartSlice, historySlice)

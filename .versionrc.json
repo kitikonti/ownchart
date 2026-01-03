@@ -12,7 +12,7 @@
     {"type": "ci", "hidden": true},
     {"type": "build", "hidden": true}
   ],
-  "commitUrlFormat": "https://github.com/martin/app-gantt/commit/{{hash}}",
-  "compareUrlFormat": "https://github.com/martin/app-gantt/compare/{{previousTag}}...{{currentTag}}",
-  "issueUrlFormat": "https://github.com/martin/app-gantt/issues/{{id}}"
+  "commitUrlFormat": "https://github.com/kitikonti/ownchart/commit/{{hash}}",
+  "compareUrlFormat": "https://github.com/kitikonti/ownchart/compare/{{previousTag}}...{{currentTag}}",
+  "issueUrlFormat": "https://github.com/kitikonti/ownchart/issues/{{id}}"
 }

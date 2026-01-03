@@ -1,10 +1,18 @@
 {
-  "name": "gantt-chart-app",
+  "name": "ownchart",
   "version": "0.0.2",
   "type": "module",
-  "description": "Browser-based, offline-first Gantt Chart application for project planning",
+  "description": "Privacy-first, offline Gantt chart for project planning. Own your data.",
   "author": "Martin",
   "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/kitikonti/ownchart.git"
+  },
+  "bugs": {
+    "url": "https://github.com/kitikonti/ownchart/issues"
+  },
+  "homepage": "https://github.com/kitikonti/ownchart#readme",
   "scripts": {
     "dev": "vite",
     "build": "tsc && vite build",
