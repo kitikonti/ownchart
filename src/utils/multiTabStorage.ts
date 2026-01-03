@@ -77,6 +77,82 @@ export function getTabId(): string {
 }
 
 /**
+ * Migrate from old single-tab storage (v1) to multi-tab storage (v2)
+ */
+function migrateFromV1(): MultiTabStorage {
+  try {
+    // Try to load old storage format
+    const oldKey = 'gantt-app-state';
+    const oldStored = localStorage.getItem(oldKey);
+
+    if (!oldStored) {
+      return {
+        version: STORAGE_VERSION,
+        charts: {},
+      };
+    }
+
+    const oldData = JSON.parse(oldStored) as {
+      version: number;
+      timestamp: number;
+      tasks: Task[];
+      chartState: ChartState;
+      fileState: {
+        fileName: string | null;
+        chartId: string | null;
+        lastSaved: string | null;
+      };
+    };
+
+    console.info('✓ Migrating from v1 storage to v2 multi-tab storage');
+
+    // Create new tab for migrated data
+    const migratedTabId = generateTabId();
+    const newStorage: MultiTabStorage = {
+      version: STORAGE_VERSION,
+      charts: {
+        [migratedTabId]: {
+          tabId: migratedTabId,
+          lastActive: Date.now(),
+          tasks: oldData.tasks || [],
+          chartState: oldData.chartState || {
+            zoom: 1,
+            panOffset: { x: 0, y: 0 },
+            showWeekends: true,
+            showTodayMarker: true,
+          },
+          fileState: {
+            fileName: oldData.fileState?.fileName || null,
+            chartId: oldData.fileState?.chartId || null,
+            lastSaved: oldData.fileState?.lastSaved || null,
+            isDirty: false,
+          },
+        },
+      },
+    };
+
+    // Save migrated data
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(newStorage));
+
+    // Remove old storage
+    localStorage.removeItem(oldKey);
+
+    // Set this tab's ID to the migrated tab
+    sessionStorage.setItem(TAB_ID_KEY, migratedTabId);
+
+    console.info(`✓ Migration complete - your data is preserved in tab ${migratedTabId}`);
+
+    return newStorage;
+  } catch (error) {
+    console.error('Failed to migrate v1 storage:', error);
+    return {
+      version: STORAGE_VERSION,
+      charts: {},
+    };
+  }
+}
+
+/**
  * Load entire multi-tab storage from localStorage
  */
 export function loadMultiTabStorage(): MultiTabStorage {
@@ -84,6 +160,12 @@ export function loadMultiTabStorage(): MultiTabStorage {
     const stored = localStorage.getItem(STORAGE_KEY);
 
     if (!stored) {
+      // Check if old v1 storage exists
+      const oldStored = localStorage.getItem('gantt-app-state');
+      if (oldStored) {
+        return migrateFromV1();
+      }
+
       return {
         version: STORAGE_VERSION,
         charts: {},
@@ -92,9 +174,9 @@ export function loadMultiTabStorage(): MultiTabStorage {
 
     const data = JSON.parse(stored) as MultiTabStorage;
 
-    // Version migration
+    // Version check
     if (data.version !== STORAGE_VERSION) {
-      console.warn('Storage version mismatch, migrating...');
+      console.warn('Storage version mismatch, clearing old data');
       return {
         version: STORAGE_VERSION,
         charts: {},
