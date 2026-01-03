@@ -119,8 +119,8 @@ export const TASK_COLUMNS: ColumnDefinition[] = [
   {
     id: 'progress',
     field: 'progress',
-    label: 'Progress',
-    defaultWidth: '100px',
+    label: '%',
+    defaultWidth: '70px',
     editable: true,
     renderer: 'number',
     validator: (value) => validateProgress(Number(value)),
