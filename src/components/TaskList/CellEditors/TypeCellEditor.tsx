@@ -3,9 +3,9 @@
  * Allows selecting between task, summary, and milestone types.
  */
 
-import { useState, useRef, useEffect, type KeyboardEvent } from 'react';
-import type { TaskType } from '../../../types/chart.types';
-import { TaskTypeIcon } from '../TaskTypeIcon';
+import { useState, useRef, useEffect, type KeyboardEvent } from "react";
+import type { TaskType } from "../../../types/chart.types";
+import { TaskTypeIcon } from "../TaskTypeIcon";
 
 export interface TypeCellEditorProps {
   /** Current type value */
@@ -22,9 +22,9 @@ export interface TypeCellEditorProps {
 }
 
 const TYPE_OPTIONS: { value: TaskType; label: string }[] = [
-  { value: 'task', label: 'Task' },
-  { value: 'summary', label: 'Summary' },
-  { value: 'milestone', label: 'Milestone' },
+  { value: "task", label: "Task" },
+  { value: "summary", label: "Summary" },
+  { value: "milestone", label: "Milestone" },
 ];
 
 /**
@@ -55,10 +55,10 @@ export function TypeCellEditor({
   };
 
   const handleKeyDown = (e: KeyboardEvent<HTMLSelectElement>) => {
-    if (e.key === 'Enter' && onSave) {
+    if (e.key === "Enter" && onSave) {
       e.preventDefault();
       onSave();
-    } else if (e.key === 'Escape' && onCancel) {
+    } else if (e.key === "Escape" && onCancel) {
       e.preventDefault();
       onCancel();
     }

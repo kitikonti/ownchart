@@ -3,8 +3,8 @@
  * Provides a draggable divider to adjust the width of the left panel.
  */
 
-import { useState, useEffect, useRef } from 'react';
-import { SplitPaneDivider } from './SplitPaneDivider';
+import { useState, useEffect, useRef } from "react";
+import { SplitPaneDivider } from "./SplitPaneDivider";
 
 interface SplitPaneProps {
   leftContent: React.ReactNode;
@@ -53,12 +53,12 @@ export function SplitPane({
       setIsDragging(false);
     };
 
-    document.addEventListener('mousemove', handleMouseMove);
-    document.addEventListener('mouseup', handleMouseUp);
+    document.addEventListener("mousemove", handleMouseMove);
+    document.addEventListener("mouseup", handleMouseUp);
 
     return () => {
-      document.removeEventListener('mousemove', handleMouseMove);
-      document.removeEventListener('mouseup', handleMouseUp);
+      document.removeEventListener("mousemove", handleMouseMove);
+      document.removeEventListener("mouseup", handleMouseUp);
     };
   }, [isDragging, minLeftWidth, maxLeftWidth, onLeftWidthChange]);
 
@@ -76,9 +76,7 @@ export function SplitPane({
       <SplitPaneDivider onMouseDown={handleMouseDown} isDragging={isDragging} />
 
       {/* Right Panel (Timeline) */}
-      <div className="flex-1 min-w-0">
-        {rightContent}
-      </div>
+      <div className="flex-1 min-w-0">{rightContent}</div>
     </div>
   );
 }

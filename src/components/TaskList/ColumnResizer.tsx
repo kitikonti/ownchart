@@ -3,7 +3,7 @@
  * Allows resizing columns by dragging the column border.
  */
 
-import { useState, useRef, useEffect, type MouseEvent } from 'react';
+import { useState, useRef, useEffect, type MouseEvent } from "react";
 
 export interface ColumnResizerProps {
   /** Column ID */
@@ -54,12 +54,12 @@ export function ColumnResizer({
       setIsResizing(false);
     };
 
-    document.addEventListener('mousemove', handleMouseMove);
-    document.addEventListener('mouseup', handleMouseUp);
+    document.addEventListener("mousemove", handleMouseMove);
+    document.addEventListener("mouseup", handleMouseUp);
 
     return () => {
-      document.removeEventListener('mousemove', handleMouseMove);
-      document.removeEventListener('mouseup', handleMouseUp);
+      document.removeEventListener("mousemove", handleMouseMove);
+      document.removeEventListener("mouseup", handleMouseUp);
     };
   }, [isResizing, columnId, onResize, minWidth]);
 
@@ -86,7 +86,7 @@ export function ColumnResizer({
       className={`
         absolute right-0 top-0 bottom-0 w-1 cursor-col-resize
         hover:bg-blue-500 hover:w-1.5
-        ${isResizing ? 'bg-blue-600 w-1.5' : 'bg-transparent'}
+        ${isResizing ? "bg-blue-600 w-1.5" : "bg-transparent"}
       `}
       onMouseDown={handleMouseDown}
       onDoubleClick={handleDoubleClick}

@@ -4,12 +4,21 @@
  * SINGLE SOURCE OF TRUTH for navigation state (Sprint 1.2 Package 3)
  */
 
-import { create } from 'zustand';
-import { immer } from 'zustand/middleware/immer';
-import type { TimelineScale } from '../../utils/timelineUtils';
-import { getTimelineScale, MIN_ZOOM, MAX_ZOOM, FIXED_BASE_PIXELS_PER_DAY } from '../../utils/timelineUtils';
-import { getDateRange, calculateDuration, addDays } from '../../utils/dateUtils';
-import type { Task } from '../../types/chart.types';
+import { create } from "zustand";
+import { immer } from "zustand/middleware/immer";
+import type { TimelineScale } from "../../utils/timelineUtils";
+import {
+  getTimelineScale,
+  MIN_ZOOM,
+  MAX_ZOOM,
+  FIXED_BASE_PIXELS_PER_DAY,
+} from "../../utils/timelineUtils";
+import {
+  getDateRange,
+  calculateDuration,
+  addDays,
+} from "../../utils/dateUtils";
+import type { Task } from "../../types/chart.types";
 
 interface ChartState {
   // Scale management (CRITICAL from Architect review)
@@ -77,12 +86,7 @@ function deriveScale(
 ): TimelineScale | null {
   if (!dateRange) return null;
 
-  return getTimelineScale(
-    dateRange.min,
-    dateRange.max,
-    containerWidth,
-    zoom
-  );
+  return getTimelineScale(dateRange.min, dateRange.max, containerWidth, zoom);
 }
 
 export const useChartStore = create<ChartState & ChartActions>()(
@@ -111,7 +115,11 @@ export const useChartStore = create<ChartState & ChartActions>()(
         state.dateRange = { min: paddedMin, max: paddedMax };
 
         // Derive scale from dateRange
-        state.scale = deriveScale(state.dateRange, state.containerWidth, state.zoom);
+        state.scale = deriveScale(
+          state.dateRange,
+          state.containerWidth,
+          state.zoom
+        );
       });
     },
 
@@ -135,7 +143,11 @@ export const useChartStore = create<ChartState & ChartActions>()(
         // Recalculate scale if we have a dateRange
         // Note: centerPoint pan adjustment not implemented yet
         if (state.dateRange) {
-          state.scale = deriveScale(state.dateRange, state.containerWidth, constrainedZoom);
+          state.scale = deriveScale(
+            state.dateRange,
+            state.containerWidth,
+            constrainedZoom
+          );
         }
       });
     },
@@ -164,7 +176,7 @@ export const useChartStore = create<ChartState & ChartActions>()(
         if (isFinite(offset.x) && isFinite(offset.y)) {
           state.panOffset = offset;
         } else {
-          console.error('Invalid pan offset:', offset);
+          console.error("Invalid pan offset:", offset);
         }
       });
     },
@@ -210,7 +222,8 @@ export const useChartStore = create<ChartState & ChartActions>()(
       // Formula: totalWidth = paddedDuration × (FIXED_BASE_PIXELS_PER_DAY × zoom)
       // We want: containerWidth = paddedDuration × (25 × zoom)
       // Therefore: zoom = containerWidth / (paddedDuration × 25)
-      const idealZoom = containerWidth / (paddedDuration * FIXED_BASE_PIXELS_PER_DAY);
+      const idealZoom =
+        containerWidth / (paddedDuration * FIXED_BASE_PIXELS_PER_DAY);
 
       // Set zoom (clamped to valid range)
       const finalZoom = Math.max(MIN_ZOOM, Math.min(MAX_ZOOM, idealZoom));

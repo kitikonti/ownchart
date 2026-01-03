@@ -3,10 +3,14 @@
  * Sprint 1.2 Package 3: Navigation & Scale
  */
 
-import { MagnifyingGlassPlus, MagnifyingGlassMinus, ArrowsOutLineHorizontal } from '@phosphor-icons/react';
-import { useChartStore } from '../../store/slices/chartSlice';
-import { useTaskStore } from '../../store/slices/taskSlice';
-import { MIN_ZOOM, MAX_ZOOM } from '../../utils/timelineUtils';
+import {
+  MagnifyingGlassPlus,
+  MagnifyingGlassMinus,
+  ArrowsOutLineHorizontal,
+} from "@phosphor-icons/react";
+import { useChartStore } from "../../store/slices/chartSlice";
+import { useTaskStore } from "../../store/slices/taskSlice";
+import { MIN_ZOOM, MAX_ZOOM } from "../../utils/timelineUtils";
 
 // Preset zoom levels optimized for 5%-300% range
 // Focus on lower zoom levels (5-100%) for long-term projects
@@ -28,7 +32,9 @@ export function ZoomControls() {
   const zoomOptions = [...PRESET_ZOOM_LEVELS];
   if (!PRESET_ZOOM_LEVELS.includes(zoomPercentage)) {
     // Insert current zoom in correct position (sorted)
-    const insertIndex = zoomOptions.findIndex((level) => level > zoomPercentage);
+    const insertIndex = zoomOptions.findIndex(
+      (level) => level > zoomPercentage
+    );
     if (insertIndex === -1) {
       zoomOptions.push(zoomPercentage);
     } else {
@@ -38,7 +44,7 @@ export function ZoomControls() {
 
   const handleZoomLevelChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     const value = e.target.value;
-    if (value === 'fit') {
+    if (value === "fit") {
       fitToView(tasks);
     } else {
       const newZoom = parseInt(value) / 100;
@@ -70,10 +76,10 @@ export function ZoomControls() {
         onChange={handleZoomLevelChange}
         aria-label="Zoom level"
         style={{
-          appearance: 'none',
+          appearance: "none",
           backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%23666' d='M6 9L1 4h10z'/%3E%3C/svg%3E")`,
-          backgroundRepeat: 'no-repeat',
-          backgroundPosition: 'right 6px center',
+          backgroundRepeat: "no-repeat",
+          backgroundPosition: "right 6px center",
         }}
       >
         {zoomOptions.map((level) => (

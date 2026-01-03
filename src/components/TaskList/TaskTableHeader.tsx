@@ -3,11 +3,11 @@
  * Extracted to be used on App level for synchronized scrolling
  */
 
-import { useMemo } from 'react';
-import { useTaskStore } from '../../store/slices/taskSlice';
-import { TASK_COLUMNS } from '../../config/tableColumns';
-import { ColumnResizer } from './ColumnResizer';
-import { useTableDimensions } from '../../hooks/useTableDimensions';
+import { useMemo } from "react";
+import { useTaskStore } from "../../store/slices/taskSlice";
+import { TASK_COLUMNS } from "../../config/tableColumns";
+import { ColumnResizer } from "./ColumnResizer";
+import { useTableDimensions } from "../../hooks/useTableDimensions";
 
 export function TaskTableHeader(): JSX.Element {
   const tasks = useTaskStore((state) => state.tasks);
@@ -20,8 +20,11 @@ export function TaskTableHeader(): JSX.Element {
   // Get total column width for proper scrolling
   const { totalColumnWidth } = useTableDimensions();
 
-  const allSelected = tasks.length > 0 && tasks.every((task) => selectedTaskIds.includes(task.id));
-  const someSelected = tasks.some((task) => selectedTaskIds.includes(task.id)) && !allSelected;
+  const allSelected =
+    tasks.length > 0 &&
+    tasks.every((task) => selectedTaskIds.includes(task.id));
+  const someSelected =
+    tasks.some((task) => selectedTaskIds.includes(task.id)) && !allSelected;
 
   /**
    * Generate CSS grid template columns based on column widths.
@@ -30,7 +33,7 @@ export function TaskTableHeader(): JSX.Element {
     return TASK_COLUMNS.map((col) => {
       const customWidth = columnWidths[col.id];
       return customWidth ? `${customWidth}px` : col.defaultWidth;
-    }).join(' ');
+    }).join(" ");
   }, [columnWidths]);
 
   /**
@@ -67,7 +70,7 @@ export function TaskTableHeader(): JSX.Element {
     let maxLength = column.label.length;
 
     tasks.forEach((task) => {
-      let valueStr = '';
+      let valueStr = "";
 
       if (column.formatter) {
         valueStr = column.formatter(task[field]);
@@ -102,7 +105,7 @@ export function TaskTableHeader(): JSX.Element {
     <div
       className="task-table-header-row bg-gray-50"
       style={{
-        display: 'grid',
+        display: "grid",
         gridTemplateColumns,
         minWidth: totalColumnWidth,
       }}
@@ -111,10 +114,10 @@ export function TaskTableHeader(): JSX.Element {
       {TASK_COLUMNS.map((column, index) => (
         <div
           key={column.id}
-          className={`task-table-header-cell ${column.id === 'name' ? 'pr-3' : 'px-3'} py-4 bg-gray-50 border-b ${column.id !== 'color' ? 'border-r' : ''} border-gray-200 text-xs font-semibold text-gray-700 uppercase tracking-wider relative`}
+          className={`task-table-header-cell ${column.id === "name" ? "pr-3" : "px-3"} py-4 bg-gray-50 border-b ${column.id !== "color" ? "border-r" : ""} border-gray-200 text-xs font-semibold text-gray-700 uppercase tracking-wider relative`}
           role="columnheader"
         >
-          {column.id === 'checkbox' ? (
+          {column.id === "checkbox" ? (
             <div className="flex items-center justify-center">
               <input
                 type="checkbox"
@@ -126,11 +129,11 @@ export function TaskTableHeader(): JSX.Element {
                 }}
                 onChange={handleHeaderCheckboxClick}
                 className="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 cursor-pointer"
-                title={allSelected ? 'Deselect all' : 'Select all'}
+                title={allSelected ? "Deselect all" : "Select all"}
               />
             </div>
-          ) : column.id === 'color' ? (
-            ''
+          ) : column.id === "color" ? (
+            ""
           ) : (
             column.label
           )}

@@ -1,5 +1,5 @@
-import { useEffect } from 'react';
-import { useFileStore } from '../store/slices/fileSlice';
+import { useEffect } from "react";
+import { useFileStore } from "../store/slices/fileSlice";
 
 /**
  * Custom hook to dynamically update the browser tab title
@@ -11,15 +11,15 @@ export function useDocumentTitle(): void {
   const isDirty = useFileStore((state) => state.isDirty);
 
   useEffect(() => {
-    const baseTitle = 'OwnChart';
+    const baseTitle = "OwnChart";
 
     if (fileName) {
       // Show filename with unsaved indicator if dirty
-      const dirtyIndicator = isDirty ? '• ' : '';
+      const dirtyIndicator = isDirty ? "• " : "";
       document.title = `${dirtyIndicator}${fileName} - ${baseTitle}`;
     } else {
       // Show unsaved indicator for new charts
-      const dirtyIndicator = isDirty ? '• ' : '';
+      const dirtyIndicator = isDirty ? "• " : "";
       document.title = `${dirtyIndicator}${baseTitle}`;
     }
   }, [fileName, isDirty]);

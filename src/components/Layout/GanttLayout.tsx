@@ -17,15 +17,15 @@
  * - Virtual scrolling via translateY for performance
  */
 
-import { useRef, useEffect, useState, useCallback } from 'react';
-import { TaskTable } from '../TaskList/TaskTable';
-import { TaskTableHeader } from '../TaskList/TaskTableHeader';
-import { ChartCanvas } from '../GanttChart';
-import { TimelineHeader } from '../GanttChart';
-import { useTaskStore } from '../../store/slices/taskSlice';
-import { useChartStore } from '../../store/slices/chartSlice';
-import { SplitPane } from './SplitPane';
-import { useTableDimensions } from '../../hooks/useTableDimensions';
+import { useRef, useEffect, useState, useCallback } from "react";
+import { TaskTable } from "../TaskList/TaskTable";
+import { TaskTableHeader } from "../TaskList/TaskTableHeader";
+import { ChartCanvas } from "../GanttChart";
+import { TimelineHeader } from "../GanttChart";
+import { useTaskStore } from "../../store/slices/taskSlice";
+import { useChartStore } from "../../store/slices/chartSlice";
+import { SplitPane } from "./SplitPane";
+import { useTableDimensions } from "../../hooks/useTableDimensions";
 
 const ROW_HEIGHT = 44; // Must match TaskTable row height
 const HEADER_HEIGHT = 48; // Timeline header height
@@ -48,7 +48,9 @@ export function GanttLayout() {
   // Task store
   const tasks = useTaskStore((state) => state.tasks);
   const selectedTaskIds = useTaskStore((state) => state.selectedTaskIds);
-  const toggleTaskSelection = useTaskStore((state) => state.toggleTaskSelection);
+  const toggleTaskSelection = useTaskStore(
+    (state) => state.toggleTaskSelection
+  );
   const taskTableWidth = useTaskStore((state) => state.taskTableWidth);
   const setTaskTableWidth = useTaskStore((state) => state.setTaskTableWidth);
 
@@ -73,7 +75,9 @@ export function GanttLayout() {
   const totalContentHeight = tasks.length * ROW_HEIGHT + HEADER_HEIGHT;
 
   // Ensure timeline header fills at least the container width
-  const timelineHeaderWidth = scale ? Math.max(scale.totalWidth, containerWidth) : containerWidth;
+  const timelineHeaderWidth = scale
+    ? Math.max(scale.totalWidth, containerWidth)
+    : containerWidth;
 
   // Content area height (viewport minus header)
   const contentAreaHeight = viewportHeight - HEADER_HEIGHT;
@@ -102,12 +106,12 @@ export function GanttLayout() {
     const chartToHeader = syncScroll(chartContainer, headerScroll);
     const headerToChart = syncScroll(headerScroll, chartContainer);
 
-    chartContainer.addEventListener('scroll', chartToHeader);
-    headerScroll.addEventListener('scroll', headerToChart);
+    chartContainer.addEventListener("scroll", chartToHeader);
+    headerScroll.addEventListener("scroll", headerToChart);
 
     return () => {
-      chartContainer.removeEventListener('scroll', chartToHeader);
-      headerScroll.removeEventListener('scroll', headerToChart);
+      chartContainer.removeEventListener("scroll", chartToHeader);
+      headerScroll.removeEventListener("scroll", headerToChart);
     };
   }, []);
 
@@ -127,12 +131,12 @@ export function GanttLayout() {
     const tableToHeader = syncScroll(tableContainer, headerScroll);
     const headerToTable = syncScroll(headerScroll, tableContainer);
 
-    tableContainer.addEventListener('scroll', tableToHeader);
-    headerScroll.addEventListener('scroll', headerToTable);
+    tableContainer.addEventListener("scroll", tableToHeader);
+    headerScroll.addEventListener("scroll", headerToTable);
 
     return () => {
-      tableContainer.removeEventListener('scroll', tableToHeader);
-      headerScroll.removeEventListener('scroll', headerToTable);
+      tableContainer.removeEventListener("scroll", tableToHeader);
+      headerScroll.removeEventListener("scroll", headerToTable);
     };
   }, []);
 
@@ -158,10 +162,10 @@ export function GanttLayout() {
     const timer = setTimeout(measureDimensions, 0);
 
     // Update on window resize
-    window.addEventListener('resize', measureDimensions);
+    window.addEventListener("resize", measureDimensions);
     return () => {
       clearTimeout(timer);
-      window.removeEventListener('resize', measureDimensions);
+      window.removeEventListener("resize", measureDimensions);
     };
   }, []);
 
@@ -190,12 +194,14 @@ export function GanttLayout() {
       onScroll={handleOuterScroll}
     >
       {/* Pseudo-rows - creates the total scroll height */}
-      <div style={{ height: totalContentHeight, width: '100%', minHeight: '100%' }}>
+      <div
+        style={{ height: totalContentHeight, width: "100%", minHeight: "100%" }}
+      >
         {/* Sticky container - stays at top of viewport */}
         <div
           ref={stickyContainerRef}
           className="sticky top-0 h-full max-h-screen overflow-hidden bg-gray-50"
-          style={{ height: viewportHeight || '100%' }}
+          style={{ height: viewportHeight || "100%" }}
         >
           {/* Layout - flex column with split pane */}
           <div className="flex flex-col h-full">
@@ -211,7 +217,7 @@ export function GanttLayout() {
                   <div
                     ref={taskTableHeaderScrollRef}
                     className="flex-shrink-0 bg-white border-b border-gray-200 overflow-x-auto overflow-y-hidden"
-                    style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
+                    style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}
                   >
                     <TaskTableHeader />
                   </div>
@@ -233,11 +239,18 @@ export function GanttLayout() {
                   <div
                     ref={timelineHeaderScrollRef}
                     className="flex-shrink-0 bg-white overflow-x-auto overflow-y-hidden border-b border-gray-200"
-                    style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
+                    style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}
                   >
                     {scale && (
-                      <svg width={timelineHeaderWidth} height={HEADER_HEIGHT} className="block select-none">
-                        <TimelineHeader scale={scale} width={timelineHeaderWidth} />
+                      <svg
+                        width={timelineHeaderWidth}
+                        height={HEADER_HEIGHT}
+                        className="block select-none"
+                      >
+                        <TimelineHeader
+                          scale={scale}
+                          width={timelineHeaderWidth}
+                        />
                       </svg>
                     )}
                   </div>

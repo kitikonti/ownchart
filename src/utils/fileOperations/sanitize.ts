@@ -3,8 +3,8 @@
  * Remove XSS vectors from all string fields using DOMPurify
  */
 
-import DOMPurify from 'dompurify';
-import type { GanttFile } from './types';
+import DOMPurify from "dompurify";
+import type { GanttFile } from "./types";
 
 /**
  * Sanitize all string fields in a GanttFile
@@ -20,7 +20,9 @@ export function sanitizeGanttFile(file: GanttFile): GanttFile {
         ? sanitizeString(file.chart.description)
         : file.chart.description,
       tasks: file.chart.tasks.map((task) => {
-        const taskWithDescription = task as typeof task & { description?: string };
+        const taskWithDescription = task as typeof task & {
+          description?: string;
+        };
         return {
           ...task,
           name: sanitizeString(task.name),
@@ -43,17 +45,17 @@ function sanitizeObject(obj: Record<string, unknown>): Record<string, unknown> {
   const result: Record<string, unknown> = {};
 
   for (const [key, value] of Object.entries(obj)) {
-    if (typeof value === 'string') {
+    if (typeof value === "string") {
       result[key] = sanitizeString(value);
     } else if (Array.isArray(value)) {
       result[key] = value.map((item) =>
-        typeof item === 'string'
+        typeof item === "string"
           ? sanitizeString(item)
-          : typeof item === 'object' && item !== null
+          : typeof item === "object" && item !== null
             ? sanitizeObject(item as Record<string, unknown>)
             : item
       );
-    } else if (typeof value === 'object' && value !== null) {
+    } else if (typeof value === "object" && value !== null) {
       result[key] = sanitizeObject(value as Record<string, unknown>);
     } else {
       result[key] = value;

@@ -6,8 +6,8 @@
  * Fades in/out during zoom operations
  */
 
-import { useEffect, useState } from 'react';
-import { useChartStore } from '../../store/slices/chartSlice';
+import { useEffect, useState } from "react";
+import { useChartStore } from "../../store/slices/chartSlice";
 
 export function ZoomIndicator() {
   const zoom = useChartStore((state) => state.zoom);

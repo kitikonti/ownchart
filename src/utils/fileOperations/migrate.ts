@@ -3,8 +3,8 @@
  * Handle backward/forward compatibility with different file versions
  */
 
-import type { GanttFile } from './types';
-import { FILE_VERSION } from '../../config/version';
+import type { GanttFile } from "./types";
+import { FILE_VERSION } from "../../config/version";
 
 export interface Migration {
   fromVersion: string;
@@ -97,6 +97,6 @@ export function isFromFuture(fileVersion: string): boolean {
  * Parse semantic version string to numbers
  */
 function parseVersion(version: string): [number, number, number] {
-  const parts = version.split('.').map(Number);
+  const parts = version.split(".").map(Number);
   return [parts[0] || 0, parts[1] || 0, parts[2] || 0];
 }

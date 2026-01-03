@@ -21,14 +21,14 @@ import {
   endOfMonth,
   endOfWeek,
   endOfDay,
-} from 'date-fns';
-import type { Task } from '../types/chart.types';
-import { calculateDuration, addDays } from './dateUtils';
+} from "date-fns";
+import type { Task } from "../types/chart.types";
+import { calculateDuration, addDays } from "./dateUtils";
 
 // Fixed zoom configuration (industry standard approach)
 export const FIXED_BASE_PIXELS_PER_DAY = 25; // Comfortable standard view
 export const MIN_ZOOM = 0.05; // 5% - fit ~3 years on desktop
-export const MAX_ZOOM = 3.0;  // 300% - show at least 1 week
+export const MAX_ZOOM = 3.0; // 300% - show at least 1 week
 
 // Week numbering configuration (ISO 8601 - European standard)
 // TODO: Make this user-configurable in settings (see /concept/week-numbering.md)
@@ -36,7 +36,7 @@ export const WEEK_START_DAY = 1; // 0 = Sunday, 1 = Monday (ISO 8601)
 export const FIRST_WEEK_CONTAINS_DATE = 4; // Thursday (ISO 8601: week 1 has first Thursday)
 
 // Scale unit types (inspired by SVAR React Gantt)
-export type ScaleUnit = 'year' | 'quarter' | 'month' | 'week' | 'day' | 'hour';
+export type ScaleUnit = "year" | "quarter" | "month" | "week" | "day" | "hour";
 
 // Scale configuration for a single row in the header
 export interface ScaleConfig {
@@ -78,9 +78,9 @@ export function getScaleConfig(
   // Very zoomed out (< 5 pixels per day): Year → Quarter
   if (effectivePixelsPerDay < 5) {
     return [
-      { unit: 'year', step: 1, format: 'yyyy' },
+      { unit: "year", step: 1, format: "yyyy" },
       {
-        unit: 'quarter',
+        unit: "quarter",
         step: 1,
         format: (date) => `Q${Math.floor(date.getMonth() / 3) + 1}`,
       },
@@ -90,22 +90,23 @@ export function getScaleConfig(
   // Zoomed out (5-15 pixels per day): Year → Month
   if (effectivePixelsPerDay < 15) {
     return [
-      { unit: 'year', step: 1, format: 'yyyy' },
-      { unit: 'month', step: 1, format: 'MMM' },
+      { unit: "year", step: 1, format: "yyyy" },
+      { unit: "month", step: 1, format: "MMM" },
     ];
   }
 
   // Medium zoom (15-30 pixels per day): Month → Week
   if (effectivePixelsPerDay < 30) {
     return [
-      { unit: 'month', step: 1, format: 'MMM yyyy' },
+      { unit: "month", step: 1, format: "MMM yyyy" },
       {
-        unit: 'week',
+        unit: "week",
         step: 1,
-        format: (date) => `W${getWeek(date, {
-          weekStartsOn: WEEK_START_DAY,
-          firstWeekContainsDate: FIRST_WEEK_CONTAINS_DATE
-        })}`
+        format: (date) =>
+          `W${getWeek(date, {
+            weekStartsOn: WEEK_START_DAY,
+            firstWeekContainsDate: FIRST_WEEK_CONTAINS_DATE,
+          })}`,
       },
     ];
   }
@@ -113,22 +114,23 @@ export function getScaleConfig(
   // Zoomed in (30-60 pixels per day): Month → Day
   if (effectivePixelsPerDay < 60) {
     return [
-      { unit: 'month', step: 1, format: 'MMMM yyyy' },
-      { unit: 'day', step: 1, format: 'd' },
+      { unit: "month", step: 1, format: "MMMM yyyy" },
+      { unit: "day", step: 1, format: "d" },
     ];
   }
 
   // Very zoomed in (60+ pixels per day): Week → Day with time
   return [
     {
-      unit: 'week',
+      unit: "week",
       step: 1,
-      format: (date) => `Week ${getWeek(date, {
-        weekStartsOn: WEEK_START_DAY,
-        firstWeekContainsDate: FIRST_WEEK_CONTAINS_DATE
-      })}`
+      format: (date) =>
+        `Week ${getWeek(date, {
+          weekStartsOn: WEEK_START_DAY,
+          firstWeekContainsDate: FIRST_WEEK_CONTAINS_DATE,
+        })}`,
     },
-    { unit: 'day', step: 1, format: 'EEE d' },
+    { unit: "day", step: 1, format: "EEE d" },
   ];
 }
 
@@ -221,19 +223,27 @@ export function getTaskBarGeometry(
  */
 export function getUnitStart(date: Date, unit: ScaleUnit): Date {
   switch (unit) {
-    case 'year':
+    case "year":
       return startOfYear(date);
-    case 'quarter':
+    case "quarter":
       return startOfQuarter(date);
-    case 'month':
+    case "month":
       return startOfMonth(date);
-    case 'week':
+    case "week":
       return startOfWeek(date, { weekStartsOn: WEEK_START_DAY });
-    case 'day':
+    case "day":
       return startOfDay(date);
-    case 'hour':
+    case "hour":
       // Round down to hour
-      return new Date(date.getFullYear(), date.getMonth(), date.getDate(), date.getHours(), 0, 0, 0);
+      return new Date(
+        date.getFullYear(),
+        date.getMonth(),
+        date.getDate(),
+        date.getHours(),
+        0,
+        0,
+        0
+      );
     default:
       return date;
   }
@@ -244,17 +254,19 @@ export function getUnitStart(date: Date, unit: ScaleUnit): Date {
  */
 export function getUnitEnd(date: Date, unit: ScaleUnit, step: number): Date {
   switch (unit) {
-    case 'year':
+    case "year":
       return endOfYear(addYears(date, step - 1));
-    case 'quarter':
+    case "quarter":
       return endOfQuarter(addQuarters(date, step - 1));
-    case 'month':
+    case "month":
       return endOfMonth(addMonths(date, step - 1));
-    case 'week':
-      return endOfWeek(addWeeks(date, step - 1), { weekStartsOn: WEEK_START_DAY });
-    case 'day':
+    case "week":
+      return endOfWeek(addWeeks(date, step - 1), {
+        weekStartsOn: WEEK_START_DAY,
+      });
+    case "day":
       return endOfDay(addDaysDateFns(date, step - 1));
-    case 'hour':
+    case "hour":
       return addHours(date, step);
     default:
       return date;
@@ -266,17 +278,17 @@ export function getUnitEnd(date: Date, unit: ScaleUnit, step: number): Date {
  */
 export function addUnit(date: Date, unit: ScaleUnit, step: number): Date {
   switch (unit) {
-    case 'year':
+    case "year":
       return addYears(date, step);
-    case 'quarter':
+    case "quarter":
       return addQuarters(date, step);
-    case 'month':
+    case "month":
       return addMonths(date, step);
-    case 'week':
+    case "week":
       return addWeeks(date, step);
-    case 'day':
+    case "day":
       return addDaysDateFns(date, step);
-    case 'hour':
+    case "hour":
       return addHours(date, step);
     default:
       return date;

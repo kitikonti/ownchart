@@ -12,7 +12,7 @@
  * @type summary - Parent task with children (dates computed from children)
  * @type milestone - Zero-duration task marking important date (rendered as diamond)
  */
-export type TaskType = 'task' | 'summary' | 'milestone';
+export type TaskType = "task" | "summary" | "milestone";
 
 /**
  * Represents a task in the Gantt chart.

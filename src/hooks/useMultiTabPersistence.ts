@@ -6,10 +6,10 @@
  * Tabs automatically sync via storage events.
  */
 
-import { useEffect, useRef } from 'react';
-import { useTaskStore } from '../store/slices/taskSlice';
-import { useChartStore } from '../store/slices/chartSlice';
-import { useFileStore } from '../store/slices/fileSlice';
+import { useEffect, useRef } from "react";
+import { useTaskStore } from "../store/slices/taskSlice";
+import { useChartStore } from "../store/slices/chartSlice";
+import { useFileStore } from "../store/slices/fileSlice";
 import {
   getTabId,
   loadTabChart,
@@ -18,7 +18,7 @@ import {
   cleanupInactiveTabs,
   type ChartState,
   type FileState,
-} from '../utils/multiTabStorage';
+} from "../utils/multiTabStorage";
 
 /**
  * Hook to manage multi-tab localStorage persistence
@@ -151,22 +151,22 @@ export function useMultiTabPersistence(): void {
   useEffect(() => {
     const handleStorageEvent = (e: StorageEvent) => {
       // Only react to changes in our storage key from other tabs
-      if (e.key !== 'ownchart-multi-tab-state') return;
+      if (e.key !== "ownchart-multi-tab-state") return;
       if (e.newValue === null) return;
 
       // Check if another tab updated our data
       // (This could happen if user opens same file in multiple tabs - future feature)
-      console.info('✓ Storage event detected from another tab');
+      console.info("✓ Storage event detected from another tab");
 
       // For now, we don't sync across tabs automatically
       // Each tab is independent
       // Future: Could add conflict detection if same file is opened in multiple tabs
     };
 
-    window.addEventListener('storage', handleStorageEvent);
+    window.addEventListener("storage", handleStorageEvent);
 
     return () => {
-      window.removeEventListener('storage', handleStorageEvent);
+      window.removeEventListener("storage", handleStorageEvent);
     };
   }, []);
 

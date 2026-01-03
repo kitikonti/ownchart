@@ -3,7 +3,7 @@
  * Aligned with FEATURE_SPECIFICATIONS.md Section 2.2
  */
 
-import type { Task } from '../types/chart.types';
+import type { Task } from "../types/chart.types";
 
 /**
  * Result of a validation operation.
@@ -24,14 +24,14 @@ export function validateTaskName(name: string): ValidationResult {
   if (!name || name.trim().length === 0) {
     return {
       valid: false,
-      error: 'Task name is required',
+      error: "Task name is required",
     };
   }
 
   if (name.length > 200) {
     return {
       valid: false,
-      error: 'Task name must be 200 characters or less',
+      error: "Task name must be 200 characters or less",
     };
   }
 
@@ -49,7 +49,7 @@ export function validateDateString(date: string): ValidationResult {
   if (!date || date.trim().length === 0) {
     return {
       valid: false,
-      error: 'Date is required',
+      error: "Date is required",
     };
   }
 
@@ -58,7 +58,7 @@ export function validateDateString(date: string): ValidationResult {
   if (!isoDateRegex.test(date)) {
     return {
       valid: false,
-      error: 'Date must be in ISO format (YYYY-MM-DD)',
+      error: "Date must be in ISO format (YYYY-MM-DD)",
     };
   }
 
@@ -67,12 +67,12 @@ export function validateDateString(date: string): ValidationResult {
   if (isNaN(parsedDate.getTime())) {
     return {
       valid: false,
-      error: 'Invalid date',
+      error: "Invalid date",
     };
   }
 
   // Verify the date parts match (to catch invalid dates like 2025-02-30)
-  const [year, month, day] = date.split('-').map(Number);
+  const [year, month, day] = date.split("-").map(Number);
   if (
     parsedDate.getFullYear() !== year ||
     parsedDate.getMonth() !== month - 1 ||
@@ -80,7 +80,7 @@ export function validateDateString(date: string): ValidationResult {
   ) {
     return {
       valid: false,
-      error: 'Invalid date',
+      error: "Invalid date",
     };
   }
 
@@ -98,7 +98,7 @@ export function validateColor(color: string): ValidationResult {
   if (!color || color.trim().length === 0) {
     return {
       valid: false,
-      error: 'Color is required',
+      error: "Color is required",
     };
   }
 
@@ -106,7 +106,7 @@ export function validateColor(color: string): ValidationResult {
   if (!hexColorRegex.test(color)) {
     return {
       valid: false,
-      error: 'Color must be a valid hex code (#RRGGBB or #RGB)',
+      error: "Color must be a valid hex code (#RRGGBB or #RGB)",
     };
   }
 
@@ -121,17 +121,17 @@ export function validateColor(color: string): ValidationResult {
  * @returns Validation result with error message if invalid
  */
 export function validateProgress(progress: number): ValidationResult {
-  if (typeof progress !== 'number' || isNaN(progress)) {
+  if (typeof progress !== "number" || isNaN(progress)) {
     return {
       valid: false,
-      error: 'Progress must be a number',
+      error: "Progress must be a number",
     };
   }
 
   if (progress < 0 || progress > 100) {
     return {
       valid: false,
-      error: 'Progress must be between 0 and 100',
+      error: "Progress must be between 0 and 100",
     };
   }
 
@@ -183,7 +183,7 @@ export function validateTask(task: Partial<Task>): ValidationResult {
     if (endDate < startDate) {
       return {
         valid: false,
-        error: 'End date must be greater than or equal to start date',
+        error: "End date must be greater than or equal to start date",
       };
     }
   }
@@ -205,12 +205,12 @@ export function validateTask(task: Partial<Task>): ValidationResult {
   }
 
   // Type-specific validation
-  if (task.type === 'milestone') {
+  if (task.type === "milestone") {
     // Milestones must have duration 0
     if (task.duration !== undefined && task.duration !== 0) {
       return {
         valid: false,
-        error: 'Milestone tasks must have duration 0',
+        error: "Milestone tasks must have duration 0",
       };
     }
   }
@@ -229,7 +229,7 @@ export function validateTask(task: Partial<Task>): ValidationResult {
  */
 export function canHaveChildren(task: Task): boolean {
   // Milestones cannot be parents
-  if (task.type === 'milestone') return false;
+  if (task.type === "milestone") return false;
 
   // Tasks and summaries can be parents
   return true;

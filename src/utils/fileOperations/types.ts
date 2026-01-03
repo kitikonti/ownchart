@@ -3,7 +3,7 @@
  * Forward-compatible file structure for .gantt files
  */
 
-import type { TaskType } from '../../types/chart.types';
+import type { TaskType } from "../../types/chart.types";
 
 export interface GanttFile {
   // Format identification
@@ -130,7 +130,7 @@ export interface Dependency {
   id: string;
   from: string;
   to: string;
-  type: 'FS' | 'SS' | 'FF' | 'SF';
+  type: "FS" | "SS" | "FF" | "SF";
 }
 
 export interface Resource {

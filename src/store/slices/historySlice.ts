@@ -5,11 +5,15 @@
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
-import { create } from 'zustand';
-import { immer } from 'zustand/middleware/immer';
-import toast from 'react-hot-toast';
-import type { Command, AddTaskParams, UpdateTaskParams } from '../../types/command.types';
-import { useTaskStore } from './taskSlice';
+import { create } from "zustand";
+import { immer } from "zustand/middleware/immer";
+import toast from "react-hot-toast";
+import type {
+  Command,
+  AddTaskParams,
+  UpdateTaskParams,
+} from "../../types/command.types";
+import { useTaskStore } from "./taskSlice";
 
 interface HistoryState {
   undoStack: Command[];
@@ -75,7 +79,7 @@ export const useHistoryStore = create<HistoryStore>()(
       const { undoStack } = get();
       if (undoStack.length === 0) {
         // Show toast: nothing to undo
-        toast('Nothing to undo', { icon: 'ℹ️' });
+        toast("Nothing to undo", { icon: "ℹ️" });
         return;
       }
 
@@ -101,8 +105,8 @@ export const useHistoryStore = create<HistoryStore>()(
         // Show toast notification
         toast.success(`↶ ${command.description}`);
       } catch (error) {
-        console.error('Undo failed:', error);
-        toast.error('Undo failed. Please refresh the page if issues persist.');
+        console.error("Undo failed:", error);
+        toast.error("Undo failed. Please refresh the page if issues persist.");
       } finally {
         set((state) => {
           state.isUndoing = false;
@@ -114,7 +118,7 @@ export const useHistoryStore = create<HistoryStore>()(
       const { redoStack } = get();
       if (redoStack.length === 0) {
         // Show toast: nothing to redo
-        toast('Nothing to redo', { icon: 'ℹ️' });
+        toast("Nothing to redo", { icon: "ℹ️" });
         return;
       }
 
@@ -140,8 +144,8 @@ export const useHistoryStore = create<HistoryStore>()(
         // Show toast notification
         toast.success(`↷ ${command.description}`);
       } catch (error) {
-        console.error('Redo failed:', error);
-        toast.error('Redo failed. Please refresh the page if issues persist.');
+        console.error("Redo failed:", error);
+        toast.error("Redo failed. Please refresh the page if issues persist.");
       } finally {
         set((state) => {
           state.isRedoing = false;
@@ -191,7 +195,7 @@ function executeUndoCommand(command: Command): void {
   const taskStore = useTaskStore.getState();
 
   switch (command.type) {
-    case 'addTask': {
+    case "addTask": {
       const params = command.params as AddTaskParams;
       if (params.generatedId) {
         taskStore.deleteTask(params.generatedId, false);
@@ -199,7 +203,7 @@ function executeUndoCommand(command: Command): void {
       break;
     }
 
-    case 'updateTask': {
+    case "updateTask": {
       const params = command.params as UpdateTaskParams;
       taskStore.updateTask(params.id, params.previousValues);
 
@@ -212,7 +216,7 @@ function executeUndoCommand(command: Command): void {
       break;
     }
 
-    case 'deleteTask': {
+    case "deleteTask": {
       const params = command.params as any;
       // Re-add all deleted tasks in one operation
       const currentTasks = useTaskStore.getState().tasks;
@@ -222,22 +226,16 @@ function executeUndoCommand(command: Command): void {
       break;
     }
 
-    case 'moveTaskToParent': {
+    case "moveTaskToParent": {
       const params = command.params as any;
-      taskStore.moveTaskToParent(params.taskId, params.previousParentId ?? null);
+      taskStore.moveTaskToParent(
+        params.taskId,
+        params.previousParentId ?? null
+      );
       break;
     }
 
-    case 'indentSelectedTasks': {
-      const params = command.params as any;
-      // Restore previous parent for each task
-      params.changes.forEach((change: any) => {
-        taskStore.moveTaskToParent(change.taskId, change.oldParent ?? null);
-      });
-      break;
-    }
-
-    case 'outdentSelectedTasks': {
+    case "indentSelectedTasks": {
       const params = command.params as any;
       // Restore previous parent for each task
       params.changes.forEach((change: any) => {
@@ -246,19 +244,28 @@ function executeUndoCommand(command: Command): void {
       break;
     }
 
-    case 'convertToSummary': {
+    case "outdentSelectedTasks": {
+      const params = command.params as any;
+      // Restore previous parent for each task
+      params.changes.forEach((change: any) => {
+        taskStore.moveTaskToParent(change.taskId, change.oldParent ?? null);
+      });
+      break;
+    }
+
+    case "convertToSummary": {
       const params = command.params as any;
       taskStore.convertToTask(params.taskId);
       break;
     }
 
-    case 'convertToTask': {
+    case "convertToTask": {
       const params = command.params as any;
       taskStore.convertToSummary(params.taskId);
       break;
     }
 
-    case 'toggleTaskSelection': {
+    case "toggleTaskSelection": {
       const params = command.params as any;
       // Restore previous selection
       useTaskStore.setState({
@@ -267,7 +274,7 @@ function executeUndoCommand(command: Command): void {
       break;
     }
 
-    case 'clearSelection': {
+    case "clearSelection": {
       const params = command.params as any;
       // Restore previous selection
       useTaskStore.setState({
@@ -276,7 +283,7 @@ function executeUndoCommand(command: Command): void {
       break;
     }
 
-    case 'reorderTasks': {
+    case "reorderTasks": {
       const params = command.params as any;
       // Restore previous order
       useTaskStore.setState({
@@ -285,7 +292,7 @@ function executeUndoCommand(command: Command): void {
       break;
     }
 
-    case 'toggleTaskCollapsed': {
+    case "toggleTaskCollapsed": {
       const params = command.params as any;
       if (params.taskId) {
         taskStore.toggleTaskCollapsed(params.taskId);
@@ -294,7 +301,7 @@ function executeUndoCommand(command: Command): void {
     }
 
     default:
-      console.warn('Unknown command type for undo:', command.type);
+      console.warn("Unknown command type for undo:", command.type);
   }
 }
 
@@ -305,7 +312,7 @@ function executeRedoCommand(command: Command): void {
   const taskStore = useTaskStore.getState();
 
   switch (command.type) {
-    case 'addTask': {
+    case "addTask": {
       const params = command.params as any;
       const taskWithId = { ...params.task, id: params.generatedId };
       // Use internal method to avoid recording
@@ -316,7 +323,7 @@ function executeRedoCommand(command: Command): void {
       break;
     }
 
-    case 'updateTask': {
+    case "updateTask": {
       const params = command.params as any;
       taskStore.updateTask(params.id, params.updates);
 
@@ -329,19 +336,19 @@ function executeRedoCommand(command: Command): void {
       break;
     }
 
-    case 'deleteTask': {
+    case "deleteTask": {
       const params = command.params as any;
       taskStore.deleteTask(params.id, params.cascade);
       break;
     }
 
-    case 'moveTaskToParent': {
+    case "moveTaskToParent": {
       const params = command.params as any;
       taskStore.moveTaskToParent(params.taskId, params.newParentId);
       break;
     }
 
-    case 'indentSelectedTasks': {
+    case "indentSelectedTasks": {
       const params = command.params as any;
       // Restore new parent for each task
       params.changes.forEach((change: any) => {
@@ -350,7 +357,7 @@ function executeRedoCommand(command: Command): void {
       break;
     }
 
-    case 'outdentSelectedTasks': {
+    case "outdentSelectedTasks": {
       const params = command.params as any;
       // Restore new parent for each task
       params.changes.forEach((change: any) => {
@@ -359,19 +366,19 @@ function executeRedoCommand(command: Command): void {
       break;
     }
 
-    case 'convertToSummary': {
+    case "convertToSummary": {
       const params = command.params as any;
       taskStore.convertToSummary(params.taskId);
       break;
     }
 
-    case 'convertToTask': {
+    case "convertToTask": {
       const params = command.params as any;
       taskStore.convertToTask(params.taskId);
       break;
     }
 
-    case 'toggleTaskSelection': {
+    case "toggleTaskSelection": {
       const params = command.params as any;
       // Toggle back to new selection
       useTaskStore.setState({
@@ -380,21 +387,21 @@ function executeRedoCommand(command: Command): void {
       break;
     }
 
-    case 'clearSelection': {
+    case "clearSelection": {
       useTaskStore.setState({
         selectedTaskIds: [],
       });
       break;
     }
 
-    case 'reorderTasks': {
+    case "reorderTasks": {
       const params = command.params as any;
       // Re-execute the reorder
       taskStore.reorderTasks(params.fromIndex, params.toIndex);
       break;
     }
 
-    case 'toggleTaskCollapsed': {
+    case "toggleTaskCollapsed": {
       const params = command.params as any;
       if (params.taskId) {
         taskStore.toggleTaskCollapsed(params.taskId);
@@ -403,7 +410,6 @@ function executeRedoCommand(command: Command): void {
     }
 
     default:
-      console.warn('Unknown command type for redo:', command.type);
+      console.warn("Unknown command type for redo:", command.type);
   }
 }
-

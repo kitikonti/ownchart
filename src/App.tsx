@@ -3,13 +3,13 @@
  * Composes the main layout from sub-components
  */
 
-import { Toaster } from 'react-hot-toast';
-import { ZoomIndicator } from './components/GanttChart/ZoomIndicator';
-import { AppToolbar, GanttLayout } from './components/Layout';
-import { useKeyboardShortcuts } from './hooks/useKeyboardShortcuts';
-import { useUnsavedChanges } from './hooks/useUnsavedChanges';
-import { useMultiTabPersistence } from './hooks/useMultiTabPersistence';
-import { useDocumentTitle } from './hooks/useDocumentTitle';
+import { Toaster } from "react-hot-toast";
+import { ZoomIndicator } from "./components/GanttChart/ZoomIndicator";
+import { AppToolbar, GanttLayout } from "./components/Layout";
+import { useKeyboardShortcuts } from "./hooks/useKeyboardShortcuts";
+import { useUnsavedChanges } from "./hooks/useUnsavedChanges";
+import { useMultiTabPersistence } from "./hooks/useMultiTabPersistence";
+import { useDocumentTitle } from "./hooks/useDocumentTitle";
 
 function App(): JSX.Element {
   // Enable global keyboard shortcuts (Ctrl+Z, Ctrl+Shift+Z, Ctrl+Y, Ctrl+S, Ctrl+O, Ctrl+Alt+N)
@@ -31,19 +31,19 @@ function App(): JSX.Element {
         toastOptions={{
           duration: 3000,
           style: {
-            background: '#363636',
-            color: '#fff',
+            background: "#363636",
+            color: "#fff",
           },
           success: {
             iconTheme: {
-              primary: '#10b981',
-              secondary: '#fff',
+              primary: "#10b981",
+              secondary: "#fff",
             },
           },
           error: {
             iconTheme: {
-              primary: '#ef4444',
-              secondary: '#fff',
+              primary: "#ef4444",
+              secondary: "#fff",
             },
           },
         }}

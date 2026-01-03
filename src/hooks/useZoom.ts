@@ -7,8 +7,8 @@
  * - Keyboard shortcuts (Ctrl+0, Ctrl++, Ctrl+-)
  */
 
-import { useCallback, useEffect } from 'react';
-import { useChartStore } from '../store/slices/chartSlice';
+import { useCallback, useEffect } from "react";
+import { useChartStore } from "../store/slices/chartSlice";
 
 interface UseZoomOptions {
   containerRef: React.RefObject<HTMLElement>;
@@ -16,39 +16,36 @@ interface UseZoomOptions {
 }
 
 export function useZoom({ containerRef, enabled = true }: UseZoomOptions) {
-  const {
-    zoom,
-    setZoom,
-    zoomIn,
-    zoomOut,
-    resetZoom,
-  } = useChartStore();
+  const { zoom, setZoom, zoomIn, zoomOut, resetZoom } = useChartStore();
 
   // Zoom with Ctrl/Cmd + Wheel (centered on mouse)
   // Note: preventDefault is handled by window-level capture listener below
-  const handleWheel = useCallback((e: React.WheelEvent) => {
-    if (!enabled) return;
+  const handleWheel = useCallback(
+    (e: React.WheelEvent) => {
+      if (!enabled) return;
 
-    // Only zoom with Ctrl (Windows/Linux) or Cmd (Mac)
-    if (!e.ctrlKey && !e.metaKey) return;
+      // Only zoom with Ctrl (Windows/Linux) or Cmd (Mac)
+      if (!e.ctrlKey && !e.metaKey) return;
 
-    // Don't call e.preventDefault() here - React's onWheel is passive by default
-    // The window-level capture listener (below) handles preventDefault with passive: false
+      // Don't call e.preventDefault() here - React's onWheel is passive by default
+      // The window-level capture listener (below) handles preventDefault with passive: false
 
-    const container = containerRef.current;
-    if (!container) return;
+      const container = containerRef.current;
+      if (!container) return;
 
-    const rect = container.getBoundingClientRect();
-    const mouseX = e.clientX - rect.left;
-    const mouseY = e.clientY - rect.top;
+      const rect = container.getBoundingClientRect();
+      const mouseX = e.clientX - rect.left;
+      const mouseY = e.clientY - rect.top;
 
-    // Calculate zoom direction (negative deltaY = zoom in)
-    const delta = e.deltaY > 0 ? -0.1 : 0.1;
-    const newZoom = zoom + delta;
+      // Calculate zoom direction (negative deltaY = zoom in)
+      const delta = e.deltaY > 0 ? -0.1 : 0.1;
+      const newZoom = zoom + delta;
 
-    // Set zoom with mouse centering
-    setZoom(newZoom, { x: mouseX, y: mouseY });
-  }, [enabled, zoom, setZoom, containerRef]);
+      // Set zoom with mouse centering
+      setZoom(newZoom, { x: mouseX, y: mouseY });
+    },
+    [enabled, zoom, setZoom, containerRef]
+  );
 
   // Additional global prevention of browser zoom when over timeline
   useEffect(() => {
@@ -75,10 +72,15 @@ export function useZoom({ containerRef, enabled = true }: UseZoomOptions) {
     };
 
     // Attach to window in capture phase to intercept before browser
-    window.addEventListener('wheel', preventBrowserZoom, { passive: false, capture: true });
+    window.addEventListener("wheel", preventBrowserZoom, {
+      passive: false,
+      capture: true,
+    });
 
     return () => {
-      window.removeEventListener('wheel', preventBrowserZoom, { capture: true });
+      window.removeEventListener("wheel", preventBrowserZoom, {
+        capture: true,
+      });
     };
   }, [enabled, containerRef]);
 
@@ -89,24 +91,25 @@ export function useZoom({ containerRef, enabled = true }: UseZoomOptions) {
     const handleKeyDown = (e: KeyboardEvent) => {
       // Check if target is an input element
       const target = e.target as HTMLElement;
-      const isInput = target.tagName === 'INPUT' ||
-                     target.tagName === 'TEXTAREA' ||
-                     target.isContentEditable;
+      const isInput =
+        target.tagName === "INPUT" ||
+        target.tagName === "TEXTAREA" ||
+        target.isContentEditable;
 
       // Zoom shortcuts (Ctrl/Cmd + key)
       if ((e.ctrlKey || e.metaKey) && !isInput) {
         switch (e.key) {
-          case '0':
+          case "0":
             e.preventDefault();
             resetZoom();
             break;
-          case '+':
-          case '=':
+          case "+":
+          case "=":
             e.preventDefault();
             zoomIn();
             break;
-          case '-':
-          case '_':
+          case "-":
+          case "_":
             e.preventDefault();
             zoomOut();
             break;
@@ -114,10 +117,10 @@ export function useZoom({ containerRef, enabled = true }: UseZoomOptions) {
       }
     };
 
-    window.addEventListener('keydown', handleKeyDown);
+    window.addEventListener("keydown", handleKeyDown);
 
     return () => {
-      window.removeEventListener('keydown', handleKeyDown);
+      window.removeEventListener("keydown", handleKeyDown);
     };
   }, [enabled, zoomIn, zoomOut, resetZoom]);
 

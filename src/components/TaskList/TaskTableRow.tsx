@@ -4,18 +4,18 @@
  * Supports hierarchy with SVAR-style indentation.
  */
 
-import { useMemo } from 'react';
-import { useSortable } from '@dnd-kit/sortable';
-import { CSS } from '@dnd-kit/utilities';
-import { Trash, DotsSixVertical } from '@phosphor-icons/react';
-import type { Task } from '../../types/chart.types';
-import { useTaskStore } from '../../store/slices/taskSlice';
-import { Cell } from './Cell';
-import { ColorCellEditor } from './CellEditors/ColorCellEditor';
-import { TASK_COLUMNS } from '../../config/tableColumns';
-import { useCellNavigation } from '../../hooks/useCellNavigation';
-import { TaskTypeIcon } from './TaskTypeIcon';
-import { calculateSummaryDates } from '../../utils/hierarchy';
+import { useMemo } from "react";
+import { useSortable } from "@dnd-kit/sortable";
+import { CSS } from "@dnd-kit/utilities";
+import { Trash, DotsSixVertical } from "@phosphor-icons/react";
+import type { Task } from "../../types/chart.types";
+import { useTaskStore } from "../../store/slices/taskSlice";
+import { Cell } from "./Cell";
+import { ColorCellEditor } from "./CellEditors/ColorCellEditor";
+import { TASK_COLUMNS } from "../../config/tableColumns";
+import { useCellNavigation } from "../../hooks/useCellNavigation";
+import { TaskTypeIcon } from "./TaskTypeIcon";
+import { calculateSummaryDates } from "../../utils/hierarchy";
 
 const INDENT_SIZE = 20; // pixels per level
 
@@ -34,11 +34,15 @@ export function TaskTableRow({
   const deleteTask = useTaskStore((state) => state.deleteTask);
   const updateTask = useTaskStore((state) => state.updateTask);
   const moveTaskToParent = useTaskStore((state) => state.moveTaskToParent);
-  const toggleTaskCollapsed = useTaskStore((state) => state.toggleTaskCollapsed);
+  const toggleTaskCollapsed = useTaskStore(
+    (state) => state.toggleTaskCollapsed
+  );
   const columnWidths = useTaskStore((state) => state.columnWidths);
   const selectedTaskIds = useTaskStore((state) => state.selectedTaskIds);
   const lastSelectedTaskId = useTaskStore((state) => state.lastSelectedTaskId);
-  const toggleTaskSelection = useTaskStore((state) => state.toggleTaskSelection);
+  const toggleTaskSelection = useTaskStore(
+    (state) => state.toggleTaskSelection
+  );
   const selectTaskRange = useTaskStore((state) => state.selectTaskRange);
   const setActiveCell = useTaskStore((state) => state.setActiveCell);
   const { isCellEditing, stopCellEdit } = useCellNavigation();
@@ -49,19 +53,21 @@ export function TaskTableRow({
   const displayTask = useMemo(() => {
     let updatedTask = { ...task };
 
-    if (task.type === 'summary') {
+    if (task.type === "summary") {
       const summaryDates = calculateSummaryDates(tasks, task.id);
       if (summaryDates) {
         updatedTask = { ...task, ...summaryDates };
       } else {
         // Summary has no children - clear date fields
-        updatedTask = { ...task, startDate: '', endDate: '', duration: 0 };
+        updatedTask = { ...task, startDate: "", endDate: "", duration: 0 };
       }
     } else if (task.startDate && task.endDate) {
       // Recalculate duration from dates to ensure consistency
       const start = new Date(task.startDate);
       const end = new Date(task.endDate);
-      const calculatedDuration = Math.ceil((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24)) + 1;
+      const calculatedDuration =
+        Math.ceil((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24)) +
+        1;
       updatedTask = { ...task, duration: calculatedDuration };
     }
 
@@ -83,7 +89,7 @@ export function TaskTableRow({
   const gridTemplateColumns = TASK_COLUMNS.map((col) => {
     const customWidth = columnWidths[col.id];
     return customWidth ? `${customWidth}px` : col.defaultWidth;
-  }).join(' ');
+  }).join(" ");
 
   const style = {
     transform: CSS.Transform.toString(transform),
@@ -109,7 +115,7 @@ export function TaskTableRow({
     if (childCount > 0) {
       // Task has children - show enhanced dialog
       const deleteAll = window.confirm(
-        `Delete task "${task.name}" and ${childCount} child task${childCount > 1 ? 's' : ''}?\n\n` +
+        `Delete task "${task.name}" and ${childCount} child task${childCount > 1 ? "s" : ""}?\n\n` +
           `Click OK to delete all (cascading delete).\n` +
           `Click Cancel to keep children and only delete "${task.name}".`
       );
@@ -120,7 +126,9 @@ export function TaskTableRow({
       } else {
         // Move children to parent's level, then delete
         const children = tasks.filter((t) => t.parent === task.id);
-        children.forEach((child) => moveTaskToParent(child.id, task.parent ?? null));
+        children.forEach((child) =>
+          moveTaskToParent(child.id, task.parent ?? null)
+        );
         deleteTask(task.id, false);
       }
     } else {
@@ -136,7 +144,7 @@ export function TaskTableRow({
       ref={setNodeRef}
       style={style}
       className={`task-table-row col-span-full grid ${
-        isSelected ? 'bg-blue-50' : 'bg-white'
+        isSelected ? "bg-blue-50" : "bg-white"
       }`}
       role="row"
     >
@@ -180,20 +188,35 @@ export function TaskTableRow({
         const field = column.field!;
 
         // Special handling for name field with hierarchy
-        if (field === 'name') {
+        if (field === "name") {
           const isEditing = isCellEditing(task.id, field);
 
           // In edit mode: no custom children, let Cell handle everything
           if (isEditing) {
             return (
-              <Cell key={field} taskId={task.id} task={displayTask} field={field} column={column} />
+              <Cell
+                key={field}
+                taskId={task.id}
+                task={displayTask}
+                field={field}
+                column={column}
+              />
             );
           }
 
           // In view mode: custom children with hierarchy elements
           return (
-            <Cell key={field} taskId={task.id} task={displayTask} field={field} column={column}>
-              <div className="flex items-center gap-1" style={{ paddingLeft: `${level * INDENT_SIZE}px` }}>
+            <Cell
+              key={field}
+              taskId={task.id}
+              task={displayTask}
+              field={field}
+              column={column}
+            >
+              <div
+                className="flex items-center gap-1"
+                style={{ paddingLeft: `${level * INDENT_SIZE}px` }}
+              >
                 {/* Expand/collapse button for any task with children */}
                 {hasChildren ? (
                   <button
@@ -202,9 +225,9 @@ export function TaskTableRow({
                       toggleTaskCollapsed(task.id);
                     }}
                     className="w-4 h-4 flex items-center justify-center hover:bg-gray-200 rounded text-gray-600 flex-shrink-0"
-                    aria-label={isExpanded ? 'Collapse' : 'Expand'}
+                    aria-label={isExpanded ? "Collapse" : "Expand"}
                   >
-                    {isExpanded ? '▼' : '▶'}
+                    {isExpanded ? "▼" : "▶"}
                   </button>
                 ) : (
                   <div className="w-4 flex-shrink-0" />
@@ -214,17 +237,20 @@ export function TaskTableRow({
                 <TaskTypeIcon
                   type={task.type}
                   onClick={() => {
-                    const currentType = task.type || 'task';
-                    let nextType: Task['type'];
+                    const currentType = task.type || "task";
+                    let nextType: Task["type"];
 
                     if (hasChildren) {
                       // When task has children, only allow task ↔ summary (skip milestone)
-                      nextType = currentType === 'task' ? 'summary' : 'task';
+                      nextType = currentType === "task" ? "summary" : "task";
                     } else {
                       // When no children, cycle through all types
                       nextType =
-                        currentType === 'task' ? 'summary' :
-                        currentType === 'summary' ? 'milestone' : 'task';
+                        currentType === "task"
+                          ? "summary"
+                          : currentType === "summary"
+                            ? "milestone"
+                            : "task";
                     }
 
                     updateTask(task.id, { type: nextType });
@@ -232,20 +258,29 @@ export function TaskTableRow({
                 />
 
                 {/* Task name display */}
-                <span className="flex-1">
-                  {task.name}
-                </span>
+                <span className="flex-1">{task.name}</span>
               </div>
             </Cell>
           );
         }
 
         // Special handling for dates in summary tasks (read-only)
-        if ((field === 'startDate' || field === 'endDate') && task.type === 'summary') {
+        if (
+          (field === "startDate" || field === "endDate") &&
+          task.type === "summary"
+        ) {
           return (
-            <Cell key={field} taskId={task.id} task={displayTask} field={field} column={column}>
+            <Cell
+              key={field}
+              taskId={task.id}
+              task={displayTask}
+              field={field}
+              column={column}
+            >
               {displayTask[field] ? (
-                <span className="text-gray-500 italic">{displayTask[field]}</span>
+                <span className="text-gray-500 italic">
+                  {displayTask[field]}
+                </span>
               ) : (
                 <span></span>
               )}
@@ -254,20 +289,37 @@ export function TaskTableRow({
         }
 
         // Special handling for end date in milestone tasks (read-only, empty)
-        if (field === 'endDate' && task.type === 'milestone') {
+        if (field === "endDate" && task.type === "milestone") {
           return (
-            <Cell key={field} taskId={task.id} task={displayTask} field={field} column={column}>
+            <Cell
+              key={field}
+              taskId={task.id}
+              task={displayTask}
+              field={field}
+              column={column}
+            >
               <span></span>
             </Cell>
           );
         }
 
         // Special handling for duration in summary and milestone tasks (read-only)
-        if (field === 'duration' && (task.type === 'summary' || task.type === 'milestone')) {
+        if (
+          field === "duration" &&
+          (task.type === "summary" || task.type === "milestone")
+        ) {
           return (
-            <Cell key={field} taskId={task.id} task={displayTask} field={field} column={column}>
-              {task.type === 'summary' && displayTask.duration > 0 ? (
-                <span className="text-gray-500 italic">{displayTask.duration} days</span>
+            <Cell
+              key={field}
+              taskId={task.id}
+              task={displayTask}
+              field={field}
+              column={column}
+            >
+              {task.type === "summary" && displayTask.duration > 0 ? (
+                <span className="text-gray-500 italic">
+                  {displayTask.duration} days
+                </span>
               ) : (
                 <span></span>
               )}
@@ -276,20 +328,32 @@ export function TaskTableRow({
         }
 
         // Special handling for progress in milestone tasks (read-only, empty)
-        if (field === 'progress' && task.type === 'milestone') {
+        if (field === "progress" && task.type === "milestone") {
           return (
-            <Cell key={field} taskId={task.id} task={displayTask} field={field} column={column}>
+            <Cell
+              key={field}
+              taskId={task.id}
+              task={displayTask}
+              field={field}
+              column={column}
+            >
               <span></span>
             </Cell>
           );
         }
 
         // Special handling for color field with color picker
-        if (field === 'color') {
+        if (field === "color") {
           const isEditing = isCellEditing(task.id, field);
 
           return (
-            <Cell key={field} taskId={task.id} task={displayTask} field={field} column={column}>
+            <Cell
+              key={field}
+              taskId={task.id}
+              task={displayTask}
+              field={field}
+              column={column}
+            >
               <div className="flex items-center justify-center w-full h-full">
                 {isEditing ? (
                   <ColorCellEditor
@@ -311,7 +375,13 @@ export function TaskTableRow({
 
         // Default cell rendering
         return (
-          <Cell key={field} taskId={task.id} task={displayTask} field={field} column={column} />
+          <Cell
+            key={field}
+            taskId={task.id}
+            task={displayTask}
+            field={field}
+            column={column}
+          />
         );
       })}
 

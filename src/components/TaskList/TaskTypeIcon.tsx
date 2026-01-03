@@ -4,8 +4,8 @@
  * Based on SVAR React Gantt pattern.
  */
 
-import { Folder, CheckSquare, Diamond } from '@phosphor-icons/react';
-import type { TaskType } from '../../types/chart.types';
+import { Folder, CheckSquare, Diamond } from "@phosphor-icons/react";
+import type { TaskType } from "../../types/chart.types";
 
 interface TaskTypeIconProps {
   type?: TaskType;
@@ -13,8 +13,12 @@ interface TaskTypeIconProps {
   className?: string;
 }
 
-export function TaskTypeIcon({ type = 'task', onClick, className = '' }: TaskTypeIconProps): JSX.Element {
-  const iconClassName = `text-gray-600 flex-shrink-0 ${onClick ? 'cursor-pointer hover:text-blue-600 transition-colors' : ''} ${className}`;
+export function TaskTypeIcon({
+  type = "task",
+  onClick,
+  className = "",
+}: TaskTypeIconProps): JSX.Element {
+  const iconClassName = `text-gray-600 flex-shrink-0 ${onClick ? "cursor-pointer hover:text-blue-600 transition-colors" : ""} ${className}`;
 
   const handleClick = (e: React.MouseEvent) => {
     if (onClick) {
@@ -24,14 +28,35 @@ export function TaskTypeIcon({ type = 'task', onClick, className = '' }: TaskTyp
   };
 
   switch (type) {
-    case 'summary':
-      return <Folder size={16} weight="regular" className={iconClassName} onClick={handleClick} />;
+    case "summary":
+      return (
+        <Folder
+          size={16}
+          weight="regular"
+          className={iconClassName}
+          onClick={handleClick}
+        />
+      );
 
-    case 'milestone':
-      return <Diamond size={16} weight="regular" className={iconClassName} onClick={handleClick} />;
+    case "milestone":
+      return (
+        <Diamond
+          size={16}
+          weight="regular"
+          className={iconClassName}
+          onClick={handleClick}
+        />
+      );
 
-    case 'task':
+    case "task":
     default:
-      return <CheckSquare size={16} weight="regular" className={iconClassName} onClick={handleClick} />;
+      return (
+        <CheckSquare
+          size={16}
+          weight="regular"
+          className={iconClassName}
+          onClick={handleClick}
+        />
+      );
   }
 }

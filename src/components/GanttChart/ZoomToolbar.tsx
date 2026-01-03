@@ -9,10 +9,14 @@
  * - Visual feedback for zoom limits
  */
 
-import React from 'react';
-import { MagnifyingGlassPlus, MagnifyingGlassMinus, ArrowsOutLineHorizontal } from '@phosphor-icons/react';
-import { useChartStore } from '../../store/slices/chartSlice';
-import { useTaskStore } from '../../store/slices/taskSlice';
+import React from "react";
+import {
+  MagnifyingGlassPlus,
+  MagnifyingGlassMinus,
+  ArrowsOutLineHorizontal,
+} from "@phosphor-icons/react";
+import { useChartStore } from "../../store/slices/chartSlice";
+import { useTaskStore } from "../../store/slices/taskSlice";
 
 const PRESET_ZOOM_LEVELS = [50, 75, 100, 125, 150, 200, 250, 300];
 
@@ -26,7 +30,7 @@ export function ZoomToolbar() {
 
   const handleZoomLevelChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     const value = e.target.value;
-    if (value === 'fit') {
+    if (value === "fit") {
       fitToView(tasks);
     } else {
       const newZoom = parseInt(value) / 100;
@@ -58,10 +62,10 @@ export function ZoomToolbar() {
         onChange={handleZoomLevelChange}
         aria-label="Zoom level"
         style={{
-          appearance: 'none',
+          appearance: "none",
           backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%23666' d='M6 9L1 4h10z'/%3E%3C/svg%3E")`,
-          backgroundRepeat: 'no-repeat',
-          backgroundPosition: 'right 8px center',
+          backgroundRepeat: "no-repeat",
+          backgroundPosition: "right 8px center",
         }}
       >
         {PRESET_ZOOM_LEVELS.map((level) => (

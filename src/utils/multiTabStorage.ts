@@ -20,11 +20,11 @@
  * }
  */
 
-import type { Task } from '../types/chart.types';
+import type { Task } from "../types/chart.types";
 
-const STORAGE_KEY = 'ownchart-multi-tab-state';
+const STORAGE_KEY = "ownchart-multi-tab-state";
 const STORAGE_VERSION = 2;
-const TAB_ID_KEY = 'ownchart-tab-id';
+const TAB_ID_KEY = "ownchart-tab-id";
 const TAB_TIMEOUT_MS = 1000 * 60 * 60 * 24; // 24 hours - cleanup inactive tabs
 
 export interface ChartState {
@@ -82,7 +82,7 @@ export function getTabId(): string {
 function migrateFromV1(): MultiTabStorage {
   try {
     // Try to load old storage format
-    const oldKey = 'gantt-app-state';
+    const oldKey = "gantt-app-state";
     const oldStored = localStorage.getItem(oldKey);
 
     if (!oldStored) {
@@ -104,7 +104,7 @@ function migrateFromV1(): MultiTabStorage {
       };
     };
 
-    console.info('✓ Migrating from v1 storage to v2 multi-tab storage');
+    console.info("✓ Migrating from v1 storage to v2 multi-tab storage");
 
     // Create new tab for migrated data
     const migratedTabId = generateTabId();
@@ -140,11 +140,13 @@ function migrateFromV1(): MultiTabStorage {
     // Set this tab's ID to the migrated tab
     sessionStorage.setItem(TAB_ID_KEY, migratedTabId);
 
-    console.info(`✓ Migration complete - your data is preserved in tab ${migratedTabId}`);
+    console.info(
+      `✓ Migration complete - your data is preserved in tab ${migratedTabId}`
+    );
 
     return newStorage;
   } catch (error) {
-    console.error('Failed to migrate v1 storage:', error);
+    console.error("Failed to migrate v1 storage:", error);
     return {
       version: STORAGE_VERSION,
       charts: {},
@@ -161,7 +163,7 @@ export function loadMultiTabStorage(): MultiTabStorage {
 
     if (!stored) {
       // Check if old v1 storage exists
-      const oldStored = localStorage.getItem('gantt-app-state');
+      const oldStored = localStorage.getItem("gantt-app-state");
       if (oldStored) {
         return migrateFromV1();
       }
@@ -176,7 +178,7 @@ export function loadMultiTabStorage(): MultiTabStorage {
 
     // Version check
     if (data.version !== STORAGE_VERSION) {
-      console.warn('Storage version mismatch, clearing old data');
+      console.warn("Storage version mismatch, clearing old data");
       return {
         version: STORAGE_VERSION,
         charts: {},
@@ -185,7 +187,7 @@ export function loadMultiTabStorage(): MultiTabStorage {
 
     return data;
   } catch (error) {
-    console.error('Failed to load multi-tab storage:', error);
+    console.error("Failed to load multi-tab storage:", error);
     return {
       version: STORAGE_VERSION,
       charts: {},
@@ -200,7 +202,7 @@ export function saveMultiTabStorage(storage: MultiTabStorage): void {
   try {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(storage));
   } catch (error) {
-    console.error('Failed to save multi-tab storage:', error);
+    console.error("Failed to save multi-tab storage:", error);
   }
 }
 
@@ -215,7 +217,10 @@ export function loadTabChart(tabId: string): TabChartData | null {
 /**
  * Save chart data for current tab
  */
-export function saveTabChart(tabId: string, chartData: Omit<TabChartData, 'tabId' | 'lastActive'>): void {
+export function saveTabChart(
+  tabId: string,
+  chartData: Omit<TabChartData, "tabId" | "lastActive">
+): void {
   const storage = loadMultiTabStorage();
 
   storage.charts[tabId] = {
@@ -266,7 +271,7 @@ export function cleanupInactiveTabs(): void {
 
   if (cleaned) {
     saveMultiTabStorage(storage);
-    console.info('✓ Cleaned up inactive tabs');
+    console.info("✓ Cleaned up inactive tabs");
   }
 }
 

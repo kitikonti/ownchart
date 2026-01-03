@@ -3,11 +3,18 @@
  * Features: Adaptive grid density, weekend highlighting
  */
 
-import { useMemo } from 'react';
-import { parseISO, format, startOfWeek, startOfMonth, addWeeks, addMonths } from 'date-fns';
-import type { TimelineScale } from '../../utils/timelineUtils';
-import { dateToPixel, WEEK_START_DAY } from '../../utils/timelineUtils';
-import { addDays, isWeekend } from '../../utils/dateUtils';
+import { useMemo } from "react";
+import {
+  parseISO,
+  format,
+  startOfWeek,
+  startOfMonth,
+  addWeeks,
+  addMonths,
+} from "date-fns";
+import type { TimelineScale } from "../../utils/timelineUtils";
+import { dateToPixel, WEEK_START_DAY } from "../../utils/timelineUtils";
+import { addDays, isWeekend } from "../../utils/dateUtils";
 
 interface GridLinesProps {
   scale: TimelineScale;
@@ -42,8 +49,9 @@ export function GridLines({
   // Weekend highlighting is always shown if enabled (regardless of zoom level)
 
   // Determine line type for styling
-  type LineType = 'daily' | 'weekly' | 'monthly';
-  const lineType: LineType = gridInterval === 1 ? 'daily' : gridInterval === 7 ? 'weekly' : 'monthly';
+  type LineType = "daily" | "weekly" | "monthly";
+  const lineType: LineType =
+    gridInterval === 1 ? "daily" : gridInterval === 7 ? "weekly" : "monthly";
 
   // Vertical lines (adaptive interval)
   // Aligns to proper boundaries: week start (Monday) for weekly, month start for monthly
@@ -60,7 +68,9 @@ export function GridLines({
     let currentDateObj: Date;
     if (gridInterval === 7) {
       // Weekly: align to week start (Monday in ISO 8601)
-      currentDateObj = startOfWeek(minDateObj, { weekStartsOn: WEEK_START_DAY });
+      currentDateObj = startOfWeek(minDateObj, {
+        weekStartsOn: WEEK_START_DAY,
+      });
     } else if (gridInterval === 30) {
       // Monthly: align to month start
       currentDateObj = startOfMonth(minDateObj);
@@ -69,7 +79,7 @@ export function GridLines({
       currentDateObj = minDateObj;
     }
 
-    let currentDate = format(currentDateObj, 'yyyy-MM-dd');
+    let currentDate = format(currentDateObj, "yyyy-MM-dd");
 
     while (currentDate <= endDate) {
       const x = dateToPixel(currentDate, scale);
@@ -91,7 +101,7 @@ export function GridLines({
       } else {
         currentDateObj = parseISO(addDays(currentDate, 1));
       }
-      currentDate = format(currentDateObj, 'yyyy-MM-dd');
+      currentDate = format(currentDateObj, "yyyy-MM-dd");
     }
 
     return lines;
@@ -155,11 +165,11 @@ export function GridLines({
         // At daily resolution: subtle lines, weekend lines slightly darker
         // At weekly/monthly resolution: slightly more prominent lines
         const getStroke = () => {
-          if (lineType === 'daily') {
-            return isWeekendDay ? '#dee2e6' : '#e9ecef';
+          if (lineType === "daily") {
+            return isWeekendDay ? "#dee2e6" : "#e9ecef";
           }
           // Weekly/monthly lines are slightly more prominent
-          return '#d1d5db';
+          return "#d1d5db";
         };
 
         return (

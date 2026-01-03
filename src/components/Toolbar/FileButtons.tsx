@@ -2,8 +2,8 @@
  * FileButtons - New/Open/Save file operations toolbar buttons
  */
 
-import { File, FolderOpen, FloppyDisk } from '@phosphor-icons/react';
-import { useFileOperations } from '../../hooks/useFileOperations';
+import { File, FolderOpen, FloppyDisk } from "@phosphor-icons/react";
+import { useFileOperations } from "../../hooks/useFileOperations";
 
 export function FileButtons() {
   const { handleNew, handleOpen, handleSave, isDirty } = useFileOperations();
@@ -32,13 +32,13 @@ export function FileButtons() {
         onClick={() => handleSave()}
         className={`p-1.5 rounded transition-colors ${
           isDirty
-            ? 'text-blue-600 hover:bg-blue-50'
-            : 'text-gray-700 hover:bg-gray-100'
+            ? "text-blue-600 hover:bg-blue-50"
+            : "text-gray-700 hover:bg-gray-100"
         }`}
         title="Save (Ctrl+S)"
         aria-label="Save File"
       >
-        <FloppyDisk size={18} weight={isDirty ? 'fill' : 'regular'} />
+        <FloppyDisk size={18} weight={isDirty ? "fill" : "regular"} />
       </button>
     </div>
   );

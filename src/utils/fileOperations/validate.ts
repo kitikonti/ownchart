@@ -9,7 +9,7 @@
  * Layer 6: Migration (version compatibility - in migrate.ts)
  */
 
-import type { GanttFile } from './types';
+import type { GanttFile } from "./types";
 
 const MAX_FILE_SIZE = 50 * 1024 * 1024; // 50MB
 const MAX_TASKS = 10000;
@@ -23,7 +23,7 @@ export class ValidationError extends Error {
     message: string
   ) {
     super(message);
-    this.name = 'ValidationError';
+    this.name = "ValidationError";
   }
 }
 
@@ -35,16 +35,16 @@ export async function validatePreParse(file: File): Promise<void> {
   // File size check
   if (file.size > MAX_FILE_SIZE) {
     throw new ValidationError(
-      'FILE_TOO_LARGE',
+      "FILE_TOO_LARGE",
       `File size ${(file.size / 1024 / 1024).toFixed(1)}MB exceeds limit of 50MB`
     );
   }
 
   // File extension check
-  if (!file.name.endsWith('.gantt')) {
+  if (!file.name.endsWith(".gantt")) {
     throw new ValidationError(
-      'INVALID_EXTENSION',
-      'File must have .gantt extension'
+      "INVALID_EXTENSION",
+      "File must have .gantt extension"
     );
   }
 }
@@ -57,18 +57,14 @@ export function safeJsonParse(jsonString: string): unknown {
   try {
     return JSON.parse(jsonString, (key, value) => {
       // Block prototype pollution
-      if (
-        key === '__proto__' ||
-        key === 'constructor' ||
-        key === 'prototype'
-      ) {
+      if (key === "__proto__" || key === "constructor" || key === "prototype") {
         return undefined;
       }
       return value;
     });
   } catch (e) {
     throw new ValidationError(
-      'INVALID_JSON',
+      "INVALID_JSON",
       `Invalid JSON: ${(e as Error).message}`
     );
   }
@@ -79,28 +75,25 @@ export function safeJsonParse(jsonString: string): unknown {
  * Check required fields and types
  */
 export function validateStructure(data: unknown): void {
-  if (!data || typeof data !== 'object') {
+  if (!data || typeof data !== "object") {
     throw new ValidationError(
-      'INVALID_STRUCTURE',
-      'File must be a JSON object'
+      "INVALID_STRUCTURE",
+      "File must be a JSON object"
     );
   }
 
   const file = data as Record<string, unknown>;
 
   // Required top-level fields
-  if (typeof file.fileVersion !== 'string') {
+  if (typeof file.fileVersion !== "string") {
     throw new ValidationError(
-      'MISSING_FIELD',
-      'Missing required field: fileVersion'
+      "MISSING_FIELD",
+      "Missing required field: fileVersion"
     );
   }
 
-  if (!file.chart || typeof file.chart !== 'object') {
-    throw new ValidationError(
-      'MISSING_FIELD',
-      'Missing required field: chart'
-    );
+  if (!file.chart || typeof file.chart !== "object") {
+    throw new ValidationError("MISSING_FIELD", "Missing required field: chart");
   }
 
   const chart = file.chart as Record<string, unknown>;
@@ -108,43 +101,43 @@ export function validateStructure(data: unknown): void {
   // Required chart fields
   if (!Array.isArray(chart.tasks)) {
     throw new ValidationError(
-      'INVALID_STRUCTURE',
-      'chart.tasks must be an array'
+      "INVALID_STRUCTURE",
+      "chart.tasks must be an array"
     );
   }
 
   if (chart.tasks.length > MAX_TASKS) {
     throw new ValidationError(
-      'TOO_MANY_TASKS',
+      "TOO_MANY_TASKS",
       `File contains ${chart.tasks.length} tasks (max: ${MAX_TASKS})`
     );
   }
 
   // Validate each task structure
   chart.tasks.forEach((task: unknown, index: number) => {
-    if (!task || typeof task !== 'object') {
+    if (!task || typeof task !== "object") {
       throw new ValidationError(
-        'INVALID_TASK',
+        "INVALID_TASK",
         `Task at index ${index} is not an object`
       );
     }
 
     const t = task as Record<string, unknown>;
     const required = [
-      'id',
-      'name',
-      'startDate',
-      'endDate',
-      'duration',
-      'progress',
-      'color',
-      'order',
+      "id",
+      "name",
+      "startDate",
+      "endDate",
+      "duration",
+      "progress",
+      "color",
+      "order",
     ];
 
     for (const field of required) {
       if (!(field in t)) {
         throw new ValidationError(
-          'MISSING_FIELD',
+          "MISSING_FIELD",
           `Task ${index} missing field: ${field}`
         );
       }
@@ -152,10 +145,10 @@ export function validateStructure(data: unknown): void {
   });
 
   // Validate viewSettings exists
-  if (!chart.viewSettings || typeof chart.viewSettings !== 'object') {
+  if (!chart.viewSettings || typeof chart.viewSettings !== "object") {
     throw new ValidationError(
-      'MISSING_FIELD',
-      'Missing required field: chart.viewSettings'
+      "MISSING_FIELD",
+      "Missing required field: chart.viewSettings"
     );
   }
 }
@@ -173,27 +166,30 @@ export function validateSemantics(file: GanttFile): void {
     // Validate UUID
     if (!uuidRegex.test(task.id)) {
       throw new ValidationError(
-        'INVALID_ID',
+        "INVALID_ID",
         `Task ${index} has invalid UUID: ${task.id}`
       );
     }
 
     // Check for duplicate IDs
     if (taskIds.has(task.id)) {
-      throw new ValidationError('DUPLICATE_ID', `Duplicate task ID: ${task.id}`);
+      throw new ValidationError(
+        "DUPLICATE_ID",
+        `Duplicate task ID: ${task.id}`
+      );
     }
     taskIds.add(task.id);
 
     // Validate dates
     if (!isValidISODate(task.startDate)) {
       throw new ValidationError(
-        'INVALID_DATE',
+        "INVALID_DATE",
         `Task ${index} has invalid startDate: ${task.startDate}`
       );
     }
     if (!isValidISODate(task.endDate)) {
       throw new ValidationError(
-        'INVALID_DATE',
+        "INVALID_DATE",
         `Task ${index} has invalid endDate: ${task.endDate}`
       );
     }
@@ -201,19 +197,19 @@ export function validateSemantics(file: GanttFile): void {
     // Validate date order
     if (new Date(task.endDate) < new Date(task.startDate)) {
       throw new ValidationError(
-        'INVALID_DATE_ORDER',
+        "INVALID_DATE_ORDER",
         `Task ${index}: endDate before startDate`
       );
     }
 
     // Validate progress
     if (
-      typeof task.progress !== 'number' ||
+      typeof task.progress !== "number" ||
       task.progress < 0 ||
       task.progress > 100
     ) {
       throw new ValidationError(
-        'INVALID_PROGRESS',
+        "INVALID_PROGRESS",
         `Task ${index} has invalid progress: ${task.progress}`
       );
     }
@@ -221,7 +217,7 @@ export function validateSemantics(file: GanttFile): void {
     // Validate color
     if (!isValidHexColor(task.color)) {
       throw new ValidationError(
-        'INVALID_COLOR',
+        "INVALID_COLOR",
         `Task ${index} has invalid color: ${task.color}`
       );
     }
@@ -231,7 +227,7 @@ export function validateSemantics(file: GanttFile): void {
   file.chart.tasks.forEach((task, index) => {
     if (task.parent && !taskIds.has(task.parent)) {
       throw new ValidationError(
-        'DANGLING_PARENT',
+        "DANGLING_PARENT",
         `Task ${index} references non-existent parent: ${task.parent}`
       );
     }
@@ -263,15 +259,17 @@ function isValidHexColor(color: string): boolean {
 /**
  * Detect circular hierarchy references
  */
-function detectCircularHierarchy(tasks: Array<{ id: string; parent?: string }>): void {
+function detectCircularHierarchy(
+  tasks: Array<{ id: string; parent?: string }>
+): void {
   const visited = new Set<string>();
   const recursionStack = new Set<string>();
 
   function dfs(taskId: string, path: string[]): void {
     if (recursionStack.has(taskId)) {
       throw new ValidationError(
-        'CIRCULAR_HIERARCHY',
-        `Circular reference detected: ${path.join(' -> ')} -> ${taskId}`
+        "CIRCULAR_HIERARCHY",
+        `Circular reference detected: ${path.join(" -> ")} -> ${taskId}`
       );
     }
 

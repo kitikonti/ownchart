@@ -2,22 +2,18 @@
  * Deserialization utilities for converting GanttFile JSON to app state
  */
 
-import type { Task, TaskType } from '../../types/chart.types';
-import type {
-  GanttFile,
-  SerializedTask,
-  DeserializeResult,
-} from './types';
+import type { Task, TaskType } from "../../types/chart.types";
+import type { GanttFile, SerializedTask, DeserializeResult } from "./types";
 import {
   validatePreParse,
   safeJsonParse,
   validateStructure,
   validateSemantics,
   ValidationError,
-} from './validate';
-import { sanitizeGanttFile } from './sanitize';
-import { migrateGanttFile, needsMigration, isFromFuture } from './migrate';
-import { FILE_VERSION } from '../../config/version';
+} from "./validate";
+import { sanitizeGanttFile } from "./sanitize";
+import { migrateGanttFile, needsMigration, isFromFuture } from "./migrate";
+import { FILE_VERSION } from "../../config/version";
 
 /**
  * Deserialize GanttFile JSON string to app state
@@ -49,7 +45,7 @@ export async function deserializeGanttFile(
       return {
         success: false,
         error: {
-          code: 'INVALID_JSON',
+          code: "INVALID_JSON",
           message: `Invalid JSON: ${(e as Error).message}`,
           recoverable: false,
         },
@@ -85,7 +81,7 @@ export async function deserializeGanttFile(
 
     if (isFromFuture(ganttFile.fileVersion)) {
       warnings.push(
-        'This file was created with a newer version. Some features may not work correctly.'
+        "This file was created with a newer version. Some features may not work correctly."
       );
     }
 
@@ -130,7 +126,7 @@ export async function deserializeGanttFile(
     return {
       success: false,
       error: {
-        code: 'UNKNOWN_ERROR',
+        code: "UNKNOWN_ERROR",
         message: `Unexpected error: ${(e as Error).message}`,
         recoverable: false,
       },
@@ -155,7 +151,7 @@ function deserializeTask(serialized: SerializedTask): Task & {
     progress: serialized.progress ?? 0,
     color: serialized.color,
     order: serialized.order,
-    type: (serialized.type ?? 'task') as TaskType,
+    type: (serialized.type ?? "task") as TaskType,
     parent: serialized.parent,
     open: serialized.open ?? true,
     metadata: serialized.metadata ?? {},
@@ -163,20 +159,20 @@ function deserializeTask(serialized: SerializedTask): Task & {
 
   // Preserve unknown fields for round-trip
   const knownKeys = new Set([
-    'id',
-    'name',
-    'startDate',
-    'endDate',
-    'duration',
-    'progress',
-    'color',
-    'order',
-    'type',
-    'parent',
-    'open',
-    'metadata',
-    'createdAt',
-    'updatedAt',
+    "id",
+    "name",
+    "startDate",
+    "endDate",
+    "duration",
+    "progress",
+    "color",
+    "order",
+    "type",
+    "parent",
+    "open",
+    "metadata",
+    "createdAt",
+    "updatedAt",
   ]);
 
   const unknownFields: Record<string, unknown> = {};

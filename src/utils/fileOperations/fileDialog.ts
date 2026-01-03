@@ -30,8 +30,12 @@ interface OpenFilePickerOptions {
 // Extend Window interface for File System Access API
 declare global {
   interface Window {
-    showSaveFilePicker?: (options?: SaveFilePickerOptions) => Promise<FileSystemFileHandle>;
-    showOpenFilePicker?: (options?: OpenFilePickerOptions) => Promise<FileSystemFileHandle[]>;
+    showSaveFilePicker?: (
+      options?: SaveFilePickerOptions
+    ) => Promise<FileSystemFileHandle>;
+    showOpenFilePicker?: (
+      options?: OpenFilePickerOptions
+    ) => Promise<FileSystemFileHandle[]>;
   }
 }
 
@@ -64,7 +68,7 @@ export interface OpenFileResult {
  */
 export async function saveFile(
   content: string,
-  fileName: string = 'untitled.gantt',
+  fileName: string = "untitled.gantt",
   forceNew: boolean = false
 ): Promise<SaveFileResult> {
   // Chrome/Edge: Try to re-save to existing file handle
@@ -81,14 +85,14 @@ export async function saveFile(
   }
 
   // Chrome/Edge: Show save dialog (File System Access API)
-  if ('showSaveFilePicker' in window && window.showSaveFilePicker) {
+  if ("showSaveFilePicker" in window && window.showSaveFilePicker) {
     try {
       const handle = await window.showSaveFilePicker({
         suggestedName: fileName,
         types: [
           {
-            description: 'Gantt Chart File',
-            accept: { 'application/json': ['.gantt'] },
+            description: "Gantt Chart File",
+            accept: { "application/json": [".gantt"] },
           },
         ],
       });
@@ -102,8 +106,8 @@ export async function saveFile(
 
       return { success: true, fileName: handle.name };
     } catch (e) {
-      if ((e as Error).name === 'AbortError') {
-        return { success: false, error: 'Save cancelled' };
+      if ((e as Error).name === "AbortError") {
+        return { success: false, error: "Save cancelled" };
       }
       // Fall through to fallback
     }
@@ -111,9 +115,9 @@ export async function saveFile(
 
   // Firefox/Safari Fallback: Download file
   try {
-    const blob = new Blob([content], { type: 'application/json' });
+    const blob = new Blob([content], { type: "application/json" });
     const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
+    const a = document.createElement("a");
     a.href = url;
     a.download = fileName;
     document.body.appendChild(a);
@@ -134,13 +138,13 @@ export async function saveFile(
  */
 export async function openFile(): Promise<OpenFileResult> {
   // Chrome/Edge: File System Access API
-  if ('showOpenFilePicker' in window && window.showOpenFilePicker) {
+  if ("showOpenFilePicker" in window && window.showOpenFilePicker) {
     try {
       const [handle] = await window.showOpenFilePicker({
         types: [
           {
-            description: 'Gantt Chart Files',
-            accept: { 'application/json': ['.gantt'] },
+            description: "Gantt Chart Files",
+            accept: { "application/json": [".gantt"] },
           },
         ],
         multiple: false,
@@ -157,8 +161,8 @@ export async function openFile(): Promise<OpenFileResult> {
         file: { name: file.name, content, size: file.size },
       };
     } catch (e) {
-      if ((e as Error).name === 'AbortError') {
-        return { success: false, error: 'Open cancelled' };
+      if ((e as Error).name === "AbortError") {
+        return { success: false, error: "Open cancelled" };
       }
       // Fall through to fallback
     }
@@ -166,13 +170,13 @@ export async function openFile(): Promise<OpenFileResult> {
 
   // Firefox/Safari Fallback: File input
   return new Promise((resolve) => {
-    const input = document.createElement('input');
-    input.type = 'file';
-    input.accept = '.gantt,application/json';
+    const input = document.createElement("input");
+    input.type = "file";
+    input.accept = ".gantt,application/json";
 
     input.onchange = async () => {
       if (!input.files || input.files.length === 0) {
-        resolve({ success: false, error: 'No file selected' });
+        resolve({ success: false, error: "No file selected" });
         return;
       }
 
@@ -189,7 +193,7 @@ export async function openFile(): Promise<OpenFileResult> {
     };
 
     input.oncancel = () => {
-      resolve({ success: false, error: 'Open cancelled' });
+      resolve({ success: false, error: "Open cancelled" });
     };
 
     input.click();

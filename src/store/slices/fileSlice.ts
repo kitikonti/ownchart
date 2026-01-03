@@ -3,8 +3,8 @@
  * Manages file state including name, dirty flag, and last saved timestamp.
  */
 
-import { create } from 'zustand';
-import { immer } from 'zustand/middleware/immer';
+import { create } from "zustand";
+import { immer } from "zustand/middleware/immer";
 
 /**
  * File state interface.

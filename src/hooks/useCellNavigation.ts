@@ -3,7 +3,11 @@
  * Provides Excel-like keyboard navigation functionality.
  */
 
-import { useTaskStore, type EditableField, type NavigationDirection } from '../store/slices/taskSlice';
+import {
+  useTaskStore,
+  type EditableField,
+  type NavigationDirection,
+} from "../store/slices/taskSlice";
 
 export interface UseCellNavigationReturn {
   /** Current active cell */

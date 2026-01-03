@@ -3,7 +3,7 @@
  * Every user action becomes a serializable command that can be undone/redone
  */
 
-import type { Task, TaskType } from './chart.types';
+import type { Task, TaskType } from "./chart.types";
 
 export interface Command {
   id: string; // UUID for tracking
@@ -20,29 +20,29 @@ export interface Command {
 
 export enum CommandType {
   // Task operations
-  ADD_TASK = 'addTask',
-  UPDATE_TASK = 'updateTask',
-  DELETE_TASK = 'deleteTask',
-  REORDER_TASKS = 'reorderTasks',
+  ADD_TASK = "addTask",
+  UPDATE_TASK = "updateTask",
+  DELETE_TASK = "deleteTask",
+  REORDER_TASKS = "reorderTasks",
 
   // Hierarchy operations
-  MOVE_TASK_TO_PARENT = 'moveTaskToParent',
-  INDENT_TASKS = 'indentSelectedTasks',
-  OUTDENT_TASKS = 'outdentSelectedTasks',
+  MOVE_TASK_TO_PARENT = "moveTaskToParent",
+  INDENT_TASKS = "indentSelectedTasks",
+  OUTDENT_TASKS = "outdentSelectedTasks",
 
   // Type conversions
-  CONVERT_TO_SUMMARY = 'convertToSummary',
-  CONVERT_TO_TASK = 'convertToTask',
+  CONVERT_TO_SUMMARY = "convertToSummary",
+  CONVERT_TO_TASK = "convertToTask",
 
   // Selection operations
-  TOGGLE_TASK_SELECTION = 'toggleTaskSelection',
-  SELECT_TASK_RANGE = 'selectTaskRange',
-  CLEAR_SELECTION = 'clearSelection',
+  TOGGLE_TASK_SELECTION = "toggleTaskSelection",
+  SELECT_TASK_RANGE = "selectTaskRange",
+  CLEAR_SELECTION = "clearSelection",
 
   // Collapse/expand
-  TOGGLE_TASK_COLLAPSED = 'toggleTaskCollapsed',
-  EXPAND_ALL = 'expandAll',
-  COLLAPSE_ALL = 'collapseAll',
+  TOGGLE_TASK_COLLAPSED = "toggleTaskCollapsed",
+  EXPAND_ALL = "expandAll",
+  COLLAPSE_ALL = "collapseAll",
 }
 
 export type CommandParams =
@@ -58,7 +58,7 @@ export type CommandParams =
 
 // Specific parameter types for each command
 export interface AddTaskParams {
-  task: Omit<Task, 'id'>;
+  task: Omit<Task, "id">;
   generatedId?: string; // Store the generated ID for undo
 }
 

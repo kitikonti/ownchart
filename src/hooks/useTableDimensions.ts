@@ -3,9 +3,9 @@
  * Used to determine the maximum width for the split pane.
  */
 
-import { useMemo } from 'react';
-import { useTaskStore } from '../store/slices/taskSlice';
-import { TASK_COLUMNS } from '../config/tableColumns';
+import { useMemo } from "react";
+import { useTaskStore } from "../store/slices/taskSlice";
+import { TASK_COLUMNS } from "../config/tableColumns";
 
 /**
  * Parse default width from CSS grid syntax.

@@ -4,12 +4,15 @@
  * See: concept/sprints/SPRINT_1.1.1_TASK_GROUPS.md
  */
 
-import type { Task } from '../types/chart.types';
+import type { Task } from "../types/chart.types";
 
 /**
  * Get all children of a task (direct children only).
  */
-export function getTaskChildren(tasks: Task[], parentId: string | null): Task[] {
+export function getTaskChildren(
+  tasks: Task[],
+  parentId: string | null
+): Task[] {
   return tasks
     .filter((task) => {
       // Handle both null and undefined for root level tasks
@@ -95,7 +98,7 @@ export function calculateSummaryDates(
   const summaryTask = tasks.find((t) => t.id === summaryTaskId);
 
   // Only calculate for summary type!
-  if (summaryTask?.type !== 'summary') {
+  if (summaryTask?.type !== "summary") {
     return null;
   }
 
@@ -114,7 +117,7 @@ export function calculateSummaryDates(
     let childStart: Date;
     let childEnd: Date;
 
-    if (child.type === 'summary') {
+    if (child.type === "summary") {
       const summaryDates = calculateSummaryDates(tasks, child.id);
       if (!summaryDates) continue; // Skip empty summaries
       childStart = new Date(summaryDates.startDate);
@@ -132,11 +135,13 @@ export function calculateSummaryDates(
   if (!minStart || !maxEnd) return null;
 
   // Calculate duration in days (inclusive of start and end dates)
-  const duration = Math.ceil((maxEnd.getTime() - minStart.getTime()) / (1000 * 60 * 60 * 24)) + 1;
+  const duration =
+    Math.ceil((maxEnd.getTime() - minStart.getTime()) / (1000 * 60 * 60 * 24)) +
+    1;
 
   return {
-    startDate: minStart.toISOString().split('T')[0],
-    endDate: maxEnd.toISOString().split('T')[0],
+    startDate: minStart.toISOString().split("T")[0],
+    endDate: maxEnd.toISOString().split("T")[0],
     duration,
   };
 }

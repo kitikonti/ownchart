@@ -3,7 +3,7 @@
  * Excel-like spreadsheet table for task management.
  */
 
-import { useMemo, useEffect } from 'react';
+import { useMemo, useEffect } from "react";
 import {
   DndContext,
   closestCenter,
@@ -12,19 +12,19 @@ import {
   useSensor,
   useSensors,
   type DragEndEvent,
-} from '@dnd-kit/core';
+} from "@dnd-kit/core";
 import {
   SortableContext,
   sortableKeyboardCoordinates,
   verticalListSortingStrategy,
-} from '@dnd-kit/sortable';
+} from "@dnd-kit/sortable";
 
-import { useTaskStore } from '../../store/slices/taskSlice';
-import { TaskTableRow } from './TaskTableRow';
-import { TASK_COLUMNS } from '../../config/tableColumns';
-import { ColumnResizer } from './ColumnResizer';
-import { buildFlattenedTaskList } from '../../utils/hierarchy';
-import { useTableDimensions } from '../../hooks/useTableDimensions';
+import { useTaskStore } from "../../store/slices/taskSlice";
+import { TaskTableRow } from "./TaskTableRow";
+import { TASK_COLUMNS } from "../../config/tableColumns";
+import { ColumnResizer } from "./ColumnResizer";
+import { buildFlattenedTaskList } from "../../utils/hierarchy";
+import { useTableDimensions } from "../../hooks/useTableDimensions";
 
 interface TaskTableProps {
   hideHeader?: boolean;
@@ -38,8 +38,12 @@ export function TaskTable({ hideHeader = true }: TaskTableProps): JSX.Element {
   const selectedTaskIds = useTaskStore((state) => state.selectedTaskIds);
   const selectAllTasks = useTaskStore((state) => state.selectAllTasks);
   const clearSelection = useTaskStore((state) => state.clearSelection);
-  const indentSelectedTasks = useTaskStore((state) => state.indentSelectedTasks);
-  const outdentSelectedTasks = useTaskStore((state) => state.outdentSelectedTasks);
+  const indentSelectedTasks = useTaskStore(
+    (state) => state.indentSelectedTasks
+  );
+  const outdentSelectedTasks = useTaskStore(
+    (state) => state.outdentSelectedTasks
+  );
   const canIndent = useTaskStore((state) => state.canIndentSelection());
   const canOutdent = useTaskStore((state) => state.canOutdentSelection());
   const activeCell = useTaskStore((state) => state.activeCell);
@@ -55,8 +59,11 @@ export function TaskTable({ hideHeader = true }: TaskTableProps): JSX.Element {
     return buildFlattenedTaskList(tasks, collapsedIds);
   }, [tasks]);
 
-  const allSelected = tasks.length > 0 && tasks.every((task) => selectedTaskIds.includes(task.id));
-  const someSelected = tasks.some((task) => selectedTaskIds.includes(task.id)) && !allSelected;
+  const allSelected =
+    tasks.length > 0 &&
+    tasks.every((task) => selectedTaskIds.includes(task.id));
+  const someSelected =
+    tasks.some((task) => selectedTaskIds.includes(task.id)) && !allSelected;
 
   // Keyboard shortcuts for indent/outdent
   useEffect(() => {
@@ -65,7 +72,7 @@ export function TaskTable({ hideHeader = true }: TaskTableProps): JSX.Element {
       // (When a cell is active, Cell.tsx handles Tab for column navigation)
       const noCellActive = !activeCell.taskId && !activeCell.field;
 
-      if (e.key === 'Tab' && noCellActive && selectedTaskIds.length > 0) {
+      if (e.key === "Tab" && noCellActive && selectedTaskIds.length > 0) {
         e.preventDefault();
 
         if (e.shiftKey && canOutdent) {
@@ -78,9 +85,16 @@ export function TaskTable({ hideHeader = true }: TaskTableProps): JSX.Element {
       }
     };
 
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [activeCell, canIndent, canOutdent, selectedTaskIds, indentSelectedTasks, outdentSelectedTasks]);
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [
+    activeCell,
+    canIndent,
+    canOutdent,
+    selectedTaskIds,
+    indentSelectedTasks,
+    outdentSelectedTasks,
+  ]);
 
   const sensors = useSensors(
     useSensor(PointerSensor),
@@ -117,7 +131,7 @@ export function TaskTable({ hideHeader = true }: TaskTableProps): JSX.Element {
     return TASK_COLUMNS.map((col) => {
       const customWidth = columnWidths[col.id];
       return customWidth ? `${customWidth}px` : col.defaultWidth;
-    }).join(' ');
+    }).join(" ");
   }, [columnWidths]);
 
   /**
@@ -160,7 +174,7 @@ export function TaskTable({ hideHeader = true }: TaskTableProps): JSX.Element {
     let maxLength = column.label.length; // Start with header length
 
     tasks.forEach((task) => {
-      let valueStr = '';
+      let valueStr = "";
 
       if (column.formatter) {
         valueStr = column.formatter(task[field]);
@@ -193,12 +207,15 @@ export function TaskTable({ hideHeader = true }: TaskTableProps): JSX.Element {
           <div
             className="task-table"
             style={{
-              display: 'grid',
+              display: "grid",
               gridTemplateColumns,
               minWidth: totalColumnWidth,
             }}
           >
-            <div className="empty-state flex flex-col items-center justify-center h-full text-gray-500" style={{ gridColumn: '1 / -1' }}>
+            <div
+              className="empty-state flex flex-col items-center justify-center h-full text-gray-500"
+              style={{ gridColumn: "1 / -1" }}
+            >
               <svg
                 className="w-16 h-16 mb-4 text-gray-400"
                 fill="none"
@@ -222,7 +239,7 @@ export function TaskTable({ hideHeader = true }: TaskTableProps): JSX.Element {
           <div
             className="task-table"
             style={{
-              display: 'grid',
+              display: "grid",
               gridTemplateColumns,
               minWidth: totalColumnWidth,
             }}
@@ -233,42 +250,42 @@ export function TaskTable({ hideHeader = true }: TaskTableProps): JSX.Element {
             {!hideHeader && (
               <div className="task-table-header contents" role="row">
                 {TASK_COLUMNS.map((column, index) => (
-                <div
-                  key={column.id}
-                  className={`task-table-header-cell sticky top-0 z-10 ${column.id === 'name' ? 'pr-3' : 'px-3'} py-4 bg-gray-50 border-b ${column.id !== 'color' ? 'border-r' : ''} border-gray-200 text-xs font-semibold text-gray-700 uppercase tracking-wider relative`}
-                  role="columnheader"
-                >
-                  {column.id === 'checkbox' ? (
-                    <div className="flex items-center justify-center">
-                      <input
-                        type="checkbox"
-                        checked={allSelected}
-                        ref={(input) => {
-                          if (input) {
-                            input.indeterminate = someSelected;
-                          }
-                        }}
-                        onChange={handleHeaderCheckboxClick}
-                        className="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 cursor-pointer"
-                        title={allSelected ? 'Deselect all' : 'Select all'}
+                  <div
+                    key={column.id}
+                    className={`task-table-header-cell sticky top-0 z-10 ${column.id === "name" ? "pr-3" : "px-3"} py-4 bg-gray-50 border-b ${column.id !== "color" ? "border-r" : ""} border-gray-200 text-xs font-semibold text-gray-700 uppercase tracking-wider relative`}
+                    role="columnheader"
+                  >
+                    {column.id === "checkbox" ? (
+                      <div className="flex items-center justify-center">
+                        <input
+                          type="checkbox"
+                          checked={allSelected}
+                          ref={(input) => {
+                            if (input) {
+                              input.indeterminate = someSelected;
+                            }
+                          }}
+                          onChange={handleHeaderCheckboxClick}
+                          className="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 cursor-pointer"
+                          title={allSelected ? "Deselect all" : "Select all"}
+                        />
+                      </div>
+                    ) : column.id === "color" ? (
+                      ""
+                    ) : (
+                      column.label
+                    )}
+                    {/* Column Resizer - not on last column */}
+                    {index < TASK_COLUMNS.length - 1 && (
+                      <ColumnResizer
+                        columnId={column.id}
+                        currentWidth={getColumnWidth(column.id)}
+                        onResize={handleColumnResize}
+                        onAutoResize={handleAutoResize}
+                        minWidth={40}
                       />
-                    </div>
-                  ) : column.id === 'color' ? (
-                    ''
-                  ) : (
-                    column.label
-                  )}
-                  {/* Column Resizer - not on last column */}
-                  {index < TASK_COLUMNS.length - 1 && (
-                    <ColumnResizer
-                      columnId={column.id}
-                      currentWidth={getColumnWidth(column.id)}
-                      onResize={handleColumnResize}
-                      onAutoResize={handleAutoResize}
-                      minWidth={40}
-                    />
-                  )}
-                </div>
+                    )}
+                  </div>
                 ))}
               </div>
             )}

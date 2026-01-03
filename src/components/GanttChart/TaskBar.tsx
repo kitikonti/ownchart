@@ -3,12 +3,12 @@
  * Features: Progress bars, clip-path, responsive milestone rendering, drag-to-edit
  */
 
-import React, { useMemo } from 'react';
-import type { Task } from '../../types/chart.types';
-import type { TimelineScale } from '../../utils/timelineUtils';
-import { getTaskBarGeometry, dateToPixel } from '../../utils/timelineUtils';
-import { calculateDuration } from '../../utils/dateUtils';
-import { useTaskBarInteraction } from '../../hooks/useTaskBarInteraction';
+import React, { useMemo } from "react";
+import type { Task } from "../../types/chart.types";
+import type { TimelineScale } from "../../utils/timelineUtils";
+import { getTaskBarGeometry, dateToPixel } from "../../utils/timelineUtils";
+import { calculateDuration } from "../../utils/dateUtils";
+import { useTaskBarInteraction } from "../../hooks/useTaskBarInteraction";
 
 interface TaskBarProps {
   task: Task;
@@ -51,7 +51,7 @@ function MilestoneDiamond({
       onClick={onClick}
       onMouseDown={onMouseDown}
       onMouseMove={onMouseMove}
-      style={{ cursor: cursor || 'pointer' }}
+      style={{ cursor: cursor || "pointer" }}
     >
       <path
         d={`M ${x} ${centerY}
@@ -61,7 +61,7 @@ function MilestoneDiamond({
             Z`}
         fill={color}
         fillOpacity={opacity}
-        stroke={isSelected ? '#228be6' : 'none'}
+        stroke={isSelected ? "#228be6" : "none"}
         strokeWidth={isSelected ? 2 : 0}
       />
     </g>
@@ -119,9 +119,9 @@ function SummaryBracket({
         d={bracketPath}
         fill={color}
         fillOpacity={0.9}
-        stroke={isSelected ? '#228be6' : 'none'}
+        stroke={isSelected ? "#228be6" : "none"}
         strokeWidth={isSelected ? 2 : 0}
-        style={{ cursor: 'not-allowed' }}
+        style={{ cursor: "not-allowed" }}
       />
 
       {/* Task name label - positioned to the right of the bracket */}
@@ -168,7 +168,9 @@ export const TaskBar = React.memo(function TaskBar({
     if (!previewGeometry) return null;
 
     const x = dateToPixel(previewGeometry.startDate, scale);
-    const width = calculateDuration(previewGeometry.startDate, previewGeometry.endDate) * scale.pixelsPerDay;
+    const width =
+      calculateDuration(previewGeometry.startDate, previewGeometry.endDate) *
+      scale.pixelsPerDay;
 
     return {
       x,
@@ -180,12 +182,17 @@ export const TaskBar = React.memo(function TaskBar({
 
   // Don't render if task has no valid dates (e.g., empty summary)
   // Milestones only need startDate, other types need both startDate and endDate
-  if (task.type === 'milestone') {
-    if (!task.startDate || task.startDate === '') {
+  if (task.type === "milestone") {
+    if (!task.startDate || task.startDate === "") {
       return null;
     }
   } else {
-    if (!task.startDate || !task.endDate || task.startDate === '' || task.endDate === '') {
+    if (
+      !task.startDate ||
+      !task.endDate ||
+      task.startDate === "" ||
+      task.endDate === ""
+    ) {
       return null;
     }
   }
@@ -201,7 +208,7 @@ export const TaskBar = React.memo(function TaskBar({
   const progressWidth = (geometry.width * task.progress) / 100;
 
   // Milestone rendering with responsive sizing (Data Viz review)
-  if (task.type === 'milestone') {
+  if (task.type === "milestone") {
     const size = Math.min(10, Math.max(6, scale.pixelsPerDay / 2));
     // Center the diamond in the middle of the day (offset by half day width minus diamond size)
     const centeredX = geometry.x + scale.pixelsPerDay / 2 - size;
@@ -222,7 +229,7 @@ export const TaskBar = React.memo(function TaskBar({
           onMouseDown={onMouseDown}
           onMouseMove={onMouseMoveForCursor}
           cursor={cursor}
-          opacity={mode !== 'idle' ? 0.3 : 1}
+          opacity={mode !== "idle" ? 0.3 : 1}
         />
 
         {/* Preview milestone (solid outline during drag) */}
@@ -244,7 +251,7 @@ export const TaskBar = React.memo(function TaskBar({
   }
 
   // Summary rendering with bracket/clamp shape
-  if (task.type === 'summary') {
+  if (task.type === "summary") {
     return (
       <SummaryBracket
         x={geometry.x}
@@ -292,8 +299,8 @@ export const TaskBar = React.memo(function TaskBar({
         width={geometry.width}
         height={geometry.height}
         fill={task.color}
-        fillOpacity={mode !== 'idle' ? 0.3 : 0.8}
-        stroke={isSelected ? '#228be6' : 'none'}
+        fillOpacity={mode !== "idle" ? 0.3 : 0.8}
+        stroke={isSelected ? "#228be6" : "none"}
         strokeWidth={isSelected ? 2 : 0}
         rx={4}
         ry={4}

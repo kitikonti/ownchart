@@ -2,9 +2,9 @@
  * Serialization utilities for converting app state to GanttFile JSON
  */
 
-import type { Task } from '../../types/chart.types';
-import type { GanttFile, SerializedTask, ViewSettings } from './types';
-import { APP_VERSION, FILE_VERSION } from '../../config/version';
+import type { Task } from "../../types/chart.types";
+import type { GanttFile, SerializedTask, ViewSettings } from "./types";
+import { APP_VERSION, FILE_VERSION } from "../../config/version";
 
 export interface SerializeOptions {
   chartName?: string;
@@ -34,7 +34,7 @@ export function serializeToGanttFile(
 
     chart: {
       id: options.chartId || crypto.randomUUID(),
-      name: options.chartName || 'Untitled',
+      name: options.chartName || "Untitled",
       tasks: tasks.map(serializeTask),
       viewSettings: {
         zoom: viewSettings.zoom,
@@ -93,8 +93,13 @@ function serializeTask(task: Task): SerializedTask {
   };
 
   // Preserve unknown fields from future versions
-  const taskWithUnknownFields = task as Task & { __unknownFields?: Record<string, unknown> };
-  if (taskWithUnknownFields.__unknownFields && typeof taskWithUnknownFields.__unknownFields === 'object') {
+  const taskWithUnknownFields = task as Task & {
+    __unknownFields?: Record<string, unknown>;
+  };
+  if (
+    taskWithUnknownFields.__unknownFields &&
+    typeof taskWithUnknownFields.__unknownFields === "object"
+  ) {
     Object.assign(serialized, taskWithUnknownFields.__unknownFields);
   }
 

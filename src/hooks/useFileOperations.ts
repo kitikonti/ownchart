@@ -3,15 +3,19 @@
  * Handles save, open, and new file operations
  */
 
-import { useCallback } from 'react';
-import toast from 'react-hot-toast';
-import { useTaskStore } from '../store/slices/taskSlice';
-import { useChartStore } from '../store/slices/chartSlice';
-import { useFileStore } from '../store/slices/fileSlice';
-import { useHistoryStore } from '../store/slices/historySlice';
-import { serializeToGanttFile } from '../utils/fileOperations/serialize';
-import { deserializeGanttFile } from '../utils/fileOperations/deserialize';
-import { saveFile, openFile, clearFileHandle } from '../utils/fileOperations/fileDialog';
+import { useCallback } from "react";
+import toast from "react-hot-toast";
+import { useTaskStore } from "../store/slices/taskSlice";
+import { useChartStore } from "../store/slices/chartSlice";
+import { useFileStore } from "../store/slices/fileSlice";
+import { useHistoryStore } from "../store/slices/historySlice";
+import { serializeToGanttFile } from "../utils/fileOperations/serialize";
+import { deserializeGanttFile } from "../utils/fileOperations/deserialize";
+import {
+  saveFile,
+  openFile,
+  clearFileHandle,
+} from "../utils/fileOperations/fileDialog";
 
 export function useFileOperations() {
   const tasks = useTaskStore((state) => state.tasks);
@@ -42,7 +46,7 @@ export function useFileOperations() {
             columnWidths,
           },
           {
-            chartName: fileState.fileName?.replace('.gantt', '') || 'Untitled',
+            chartName: fileState.fileName?.replace(".gantt", "") || "Untitled",
             chartId: fileState.chartId || undefined,
             prettyPrint: true,
           }
@@ -50,7 +54,7 @@ export function useFileOperations() {
 
         const result = await saveFile(
           content,
-          fileState.fileName || 'untitled.gantt',
+          fileState.fileName || "untitled.gantt",
           saveAs
         );
 
@@ -59,7 +63,7 @@ export function useFileOperations() {
           fileState.setLastSaved(new Date());
           fileState.markClean();
           toast.success(`Saved "${result.fileName}"`);
-        } else if (result.error !== 'Save cancelled') {
+        } else if (result.error !== "Save cancelled") {
           toast.error(`Save failed: ${result.error}`);
         }
       } catch (e) {
@@ -83,7 +87,7 @@ export function useFileOperations() {
     // Check unsaved changes
     if (fileState.isDirty) {
       const confirmed = window.confirm(
-        'You have unsaved changes. Do you want to continue without saving?'
+        "You have unsaved changes. Do you want to continue without saving?"
       );
       if (!confirmed) return;
     }
@@ -92,7 +96,7 @@ export function useFileOperations() {
       const result = await openFile();
 
       if (!result.success || !result.file) {
-        if (result.error !== 'Open cancelled') {
+        if (result.error !== "Open cancelled") {
           toast.error(`Open failed: ${result.error}`);
         }
         return;
@@ -120,7 +124,7 @@ export function useFileOperations() {
 
       // Show warnings
       if (parseResult.warnings) {
-        parseResult.warnings.forEach((w) => toast(w, { icon: 'ℹ️' }));
+        parseResult.warnings.forEach((w) => toast(w, { icon: "ℹ️" }));
       }
 
       toast.success(`Opened "${file.name}"`);
@@ -133,7 +137,7 @@ export function useFileOperations() {
   const handleNew = useCallback(async () => {
     if (fileState.isDirty) {
       const confirmed = window.confirm(
-        'You have unsaved changes. Do you want to create a new chart without saving?'
+        "You have unsaved changes. Do you want to create a new chart without saving?"
       );
       if (!confirmed) return;
     }
@@ -144,19 +148,19 @@ export function useFileOperations() {
     nextWeek.setDate(today.getDate() + 7);
 
     const formatDate = (date: Date): string => {
-      return date.toISOString().split('T')[0];
+      return date.toISOString().split("T")[0];
     };
 
     const initialTask = {
       id: crypto.randomUUID(),
-      name: 'New Task',
+      name: "New Task",
       startDate: formatDate(today),
       endDate: formatDate(nextWeek),
       duration: 7,
       progress: 0,
-      color: '#3b82f6',
+      color: "#3b82f6",
       order: 0,
-      type: 'task' as const,
+      type: "task" as const,
       metadata: {},
     };
 
@@ -165,7 +169,7 @@ export function useFileOperations() {
     clearFileHandle();
     fileState.reset();
 
-    toast.success('Created new chart');
+    toast.success("Created new chart");
   }, [fileState, setTasks, clearHistory]);
 
   return {

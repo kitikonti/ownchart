@@ -3,9 +3,9 @@
  * Shows a red dashed vertical line at the current date
  */
 
-import { format } from 'date-fns';
-import type { TimelineScale } from '../../utils/timelineUtils';
-import { dateToPixel } from '../../utils/timelineUtils';
+import { format } from "date-fns";
+import type { TimelineScale } from "../../utils/timelineUtils";
+import { dateToPixel } from "../../utils/timelineUtils";
 
 interface TodayMarkerProps {
   scale: TimelineScale;
@@ -13,7 +13,7 @@ interface TodayMarkerProps {
 }
 
 export function TodayMarker({ scale, svgHeight }: TodayMarkerProps) {
-  const today = format(new Date(), 'yyyy-MM-dd');
+  const today = format(new Date(), "yyyy-MM-dd");
 
   // Don't render if today is outside visible range
   if (today < scale.minDate || today > scale.maxDate) {
@@ -33,13 +33,7 @@ export function TodayMarker({ scale, svgHeight }: TodayMarkerProps) {
         strokeWidth={2}
         strokeDasharray="4 4"
       />
-      <text
-        x={x + 4}
-        y={20}
-        fontSize={11}
-        fill="#fa5252"
-        fontWeight={600}
-      >
+      <text x={x + 4} y={20} fontSize={11} fill="#fa5252" fontWeight={600}>
         TODAY
       </text>
     </g>

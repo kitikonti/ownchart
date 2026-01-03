@@ -3,11 +3,17 @@
  * Handles view/edit modes, focus management, and keyboard navigation.
  */
 
-import { useEffect, useRef, useState, type KeyboardEvent, type MouseEvent } from 'react';
-import { useTaskStore, type EditableField } from '../../store/slices/taskSlice';
-import { useCellNavigation } from '../../hooks/useCellNavigation';
-import type { Task } from '../../types/chart.types';
-import type { ColumnDefinition } from '../../config/tableColumns';
+import {
+  useEffect,
+  useRef,
+  useState,
+  type KeyboardEvent,
+  type MouseEvent,
+} from "react";
+import { useTaskStore, type EditableField } from "../../store/slices/taskSlice";
+import { useCellNavigation } from "../../hooks/useCellNavigation";
+import type { Task } from "../../types/chart.types";
+import type { ColumnDefinition } from "../../config/tableColumns";
 
 export interface CellProps {
   /** Task ID */
@@ -29,9 +35,15 @@ export interface CellProps {
 /**
  * Cell component with Excel-like navigation and editing.
  */
-export function Cell({ taskId, task, field, column, children }: CellProps): JSX.Element {
+export function Cell({
+  taskId,
+  task,
+  field,
+  column,
+  children,
+}: CellProps): JSX.Element {
   const cellRef = useRef<HTMLDivElement>(null);
-  const [localValue, setLocalValue] = useState<string>('');
+  const [localValue, setLocalValue] = useState<string>("");
   const [error, setError] = useState<string | null>(null);
   const shouldOverwriteRef = useRef<boolean>(false);
 
@@ -97,35 +109,35 @@ export function Cell({ taskId, task, field, column, children }: CellProps): JSX.
    */
   const handleNavigationKeyDown = (e: KeyboardEvent<HTMLDivElement>) => {
     // Arrow key navigation
-    if (e.key === 'ArrowUp') {
+    if (e.key === "ArrowUp") {
       e.preventDefault();
-      navigateCell('up');
-    } else if (e.key === 'ArrowDown') {
+      navigateCell("up");
+    } else if (e.key === "ArrowDown") {
       e.preventDefault();
-      navigateCell('down');
-    } else if (e.key === 'ArrowLeft') {
+      navigateCell("down");
+    } else if (e.key === "ArrowLeft") {
       e.preventDefault();
-      navigateCell('left');
-    } else if (e.key === 'ArrowRight') {
+      navigateCell("left");
+    } else if (e.key === "ArrowRight") {
       e.preventDefault();
-      navigateCell('right');
+      navigateCell("right");
     }
     // Tab navigation
-    else if (e.key === 'Tab') {
+    else if (e.key === "Tab") {
       e.preventDefault();
-      navigateCell(e.shiftKey ? 'left' : 'right');
+      navigateCell(e.shiftKey ? "left" : "right");
     }
     // Enter to start edit or navigate down
-    else if (e.key === 'Enter') {
+    else if (e.key === "Enter") {
       e.preventDefault();
       if (column.editable) {
         startCellEdit();
       } else {
-        navigateCell('down');
+        navigateCell("down");
       }
     }
     // F2 to start edit
-    else if (e.key === 'F2' && column.editable) {
+    else if (e.key === "F2" && column.editable) {
       e.preventDefault();
       startCellEdit();
     }
@@ -157,12 +169,12 @@ export function Cell({ taskId, task, field, column, children }: CellProps): JSX.
 
     const validation = column.validator(localValue);
     if (!validation.valid) {
-      setError(validation.error || 'Invalid value');
+      setError(validation.error || "Invalid value");
       return;
     }
 
     // Additional validation for dates
-    if (field === 'startDate' || field === 'endDate') {
+    if (field === "startDate" || field === "endDate") {
       const newTask = { ...task, [field]: localValue };
 
       // Calculate duration
@@ -170,22 +182,24 @@ export function Cell({ taskId, task, field, column, children }: CellProps): JSX.
       const end = new Date(newTask.endDate);
 
       if (end < start) {
-        setError('End date must be after start date');
+        setError("End date must be after start date");
         return;
       }
 
-      const duration = Math.ceil((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24)) + 1;
+      const duration =
+        Math.ceil((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24)) +
+        1;
 
       // Update both field and duration
       updateTask(taskId, { [field]: localValue, duration });
-    } else if (field === 'duration') {
+    } else if (field === "duration") {
       // Duration edited - update endDate
       const durationDays = Number(localValue);
       const startDate = new Date(task.startDate);
       const newEndDate = new Date(startDate);
       newEndDate.setDate(newEndDate.getDate() + durationDays - 1);
 
-      const endDateStr = newEndDate.toISOString().split('T')[0];
+      const endDateStr = newEndDate.toISOString().split("T")[0];
       updateTask(taskId, { duration: durationDays, endDate: endDateStr });
     } else {
       updateCellValue(localValue);
@@ -202,7 +216,7 @@ export function Cell({ taskId, task, field, column, children }: CellProps): JSX.
     let typedValue: string | number = value;
 
     // Convert to appropriate type
-    if (field === 'duration' || field === 'progress') {
+    if (field === "duration" || field === "progress") {
       typedValue = Number(value);
     }
 
@@ -222,19 +236,19 @@ export function Cell({ taskId, task, field, column, children }: CellProps): JSX.
    * Handle keyboard events in edit mode.
    */
   const handleEditKeyDown = (e: KeyboardEvent<HTMLInputElement>) => {
-    if (e.key === 'Enter') {
+    if (e.key === "Enter") {
       e.preventDefault();
       saveValue();
       if (!error) {
-        navigateCell(e.shiftKey ? 'up' : 'down');
+        navigateCell(e.shiftKey ? "up" : "down");
       }
-    } else if (e.key === 'Tab') {
+    } else if (e.key === "Tab") {
       e.preventDefault();
       saveValue();
       if (!error) {
-        navigateCell(e.shiftKey ? 'left' : 'right');
+        navigateCell(e.shiftKey ? "left" : "right");
       }
-    } else if (e.key === 'Escape') {
+    } else if (e.key === "Escape") {
       e.preventDefault();
       cancelEdit();
     }
@@ -255,7 +269,7 @@ export function Cell({ taskId, task, field, column, children }: CellProps): JSX.
     return (
       <div
         ref={cellRef}
-        className={`relative flex flex-col ${column.id === 'name' ? 'pr-3' : 'px-3'} py-2 border-b ${column.id !== 'color' ? 'border-r' : ''} border-gray-200 h-[44px] outline outline-3 outline-blue-600 bg-white z-20`}
+        className={`relative flex flex-col ${column.id === "name" ? "pr-3" : "px-3"} py-2 border-b ${column.id !== "color" ? "border-r" : ""} border-gray-200 h-[44px] outline outline-3 outline-blue-600 bg-white z-20`}
         onClick={(e) => e.stopPropagation()}
       >
         {children ? (
@@ -264,7 +278,13 @@ export function Cell({ taskId, task, field, column, children }: CellProps): JSX.
         ) : (
           // Default input
           <input
-            type={column.renderer === 'date' ? 'date' : column.renderer === 'number' ? 'number' : 'text'}
+            type={
+              column.renderer === "date"
+                ? "date"
+                : column.renderer === "number"
+                  ? "number"
+                  : "text"
+            }
             value={localValue}
             onChange={(e) => setLocalValue(e.target.value)}
             onKeyDown={handleEditKeyDown}
@@ -289,9 +309,9 @@ export function Cell({ taskId, task, field, column, children }: CellProps): JSX.
       ref={cellRef}
       tabIndex={0}
       className={`
-        ${column.id === 'name' ? 'pr-3' : 'px-3'} py-2 border-b ${column.id !== 'color' ? 'border-r' : ''} border-gray-200 h-[44px] flex items-center cursor-pointer relative
-        ${isActive ? 'outline outline-2 outline-blue-500 bg-blue-50 z-10' : 'hover:bg-gray-50'}
-        ${!column.editable ? 'bg-gray-50 text-gray-600' : ''}
+        ${column.id === "name" ? "pr-3" : "px-3"} py-2 border-b ${column.id !== "color" ? "border-r" : ""} border-gray-200 h-[44px] flex items-center cursor-pointer relative
+        ${isActive ? "outline outline-2 outline-blue-500 bg-blue-50 z-10" : "hover:bg-gray-50"}
+        ${!column.editable ? "bg-gray-50 text-gray-600" : ""}
       `}
       onClick={handleClick}
       onKeyDown={handleNavigationKeyDown}

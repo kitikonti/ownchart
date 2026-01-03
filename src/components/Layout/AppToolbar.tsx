@@ -3,12 +3,12 @@
  * Contains logo, task actions, and zoom controls
  */
 
-import { ChartBarHorizontal, Plus } from '@phosphor-icons/react';
-import { FileButtons } from '../Toolbar/FileButtons';
-import { HierarchyButtons } from '../TaskList/HierarchyButtons';
-import { UndoRedoButtons } from '../Toolbar/UndoRedoButtons';
-import { ZoomControls } from '../Toolbar/ZoomControls';
-import { useTaskStore } from '../../store/slices/taskSlice';
+import { ChartBarHorizontal, Plus } from "@phosphor-icons/react";
+import { FileButtons } from "../Toolbar/FileButtons";
+import { HierarchyButtons } from "../TaskList/HierarchyButtons";
+import { UndoRedoButtons } from "../Toolbar/UndoRedoButtons";
+import { ZoomControls } from "../Toolbar/ZoomControls";
+import { useTaskStore } from "../../store/slices/taskSlice";
 
 export function AppToolbar() {
   const tasks = useTaskStore((state) => state.tasks);
@@ -20,18 +20,18 @@ export function AppToolbar() {
     nextWeek.setDate(today.getDate() + 7);
 
     const formatDate = (date: Date): string => {
-      return date.toISOString().split('T')[0];
+      return date.toISOString().split("T")[0];
     };
 
     addTask({
-      name: 'New Task',
+      name: "New Task",
       startDate: formatDate(today),
       endDate: formatDate(nextWeek),
       duration: 7,
       progress: 0,
-      color: '#3b82f6',
+      color: "#3b82f6",
       order: tasks.length,
-      type: 'task',
+      type: "task",
       parent: undefined,
       metadata: {},
     });
@@ -40,7 +40,11 @@ export function AppToolbar() {
   return (
     <header className="flex-shrink-0 bg-white border-b border-gray-200 px-4 py-2 flex items-center">
       {/* Logo */}
-      <ChartBarHorizontal size={24} weight="regular" className="text-gray-700 mr-3" />
+      <ChartBarHorizontal
+        size={24}
+        weight="regular"
+        className="text-gray-700 mr-3"
+      />
 
       {/* File Operations Group */}
       <div className="mr-2">

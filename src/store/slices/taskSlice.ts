@@ -3,29 +3,36 @@
  * Manages task state and provides CRUD operations.
  */
 
-import { create } from 'zustand';
-import { immer } from 'zustand/middleware/immer';
-import type { Task } from '../../types/chart.types';
+import { create } from "zustand";
+import { immer } from "zustand/middleware/immer";
+import type { Task } from "../../types/chart.types";
 import {
   wouldCreateCircularHierarchy,
   getTaskLevel,
   buildFlattenedTaskList,
   calculateSummaryDates,
-} from '../../utils/hierarchy';
-import { canHaveChildren } from '../../utils/validation';
-import { useHistoryStore } from './historySlice';
-import { useFileStore } from './fileSlice';
-import { CommandType } from '../../types/command.types';
+} from "../../utils/hierarchy";
+import { canHaveChildren } from "../../utils/validation";
+import { useHistoryStore } from "./historySlice";
+import { useFileStore } from "./fileSlice";
+import { CommandType } from "../../types/command.types";
 
 /**
  * Editable field types for cell-based editing.
  */
-export type EditableField = 'name' | 'startDate' | 'endDate' | 'duration' | 'progress' | 'color' | 'type';
+export type EditableField =
+  | "name"
+  | "startDate"
+  | "endDate"
+  | "duration"
+  | "progress"
+  | "color"
+  | "type";
 
 /**
  * Cell navigation direction.
  */
-export type NavigationDirection = 'up' | 'down' | 'left' | 'right';
+export type NavigationDirection = "up" | "down" | "left" | "right";
 
 /**
  * Task state interface.
@@ -53,7 +60,7 @@ interface TaskState {
  * Task actions interface.
  */
 interface TaskActions {
-  addTask: (taskData: Omit<Task, 'id'>) => void;
+  addTask: (taskData: Omit<Task, "id">) => void;
   updateTask: (id: string, updates: Partial<Task>) => void;
   deleteTask: (id: string, cascade?: boolean) => void;
   reorderTasks: (fromIndex: number, toIndex: number) => void;
@@ -88,7 +95,7 @@ interface TaskActions {
   canOutdentSelection: () => boolean;
 
   // Summary task creation
-  createSummaryTask: (data: Omit<Task, 'id' | 'type'>) => string;
+  createSummaryTask: (data: Omit<Task, "id" | "type">) => string;
   convertToSummary: (taskId: string) => void;
   convertToTask: (taskId: string) => void;
 }
@@ -104,7 +111,15 @@ type TaskStore = TaskState & TaskActions;
 /**
  * Editable fields in order of tab navigation.
  */
-const EDITABLE_FIELDS: EditableField[] = ['name', 'type', 'startDate', 'endDate', 'duration', 'progress', 'color'];
+const EDITABLE_FIELDS: EditableField[] = [
+  "name",
+  "type",
+  "startDate",
+  "endDate",
+  "duration",
+  "progress",
+  "color",
+];
 
 /**
  * Create initial demo task to avoid empty state and timeline scaling jump.
@@ -115,19 +130,19 @@ const createInitialTask = (): Task => {
   nextWeek.setDate(today.getDate() + 7);
 
   const formatDate = (date: Date): string => {
-    return date.toISOString().split('T')[0];
+    return date.toISOString().split("T")[0];
   };
 
   return {
     id: crypto.randomUUID(),
-    name: 'New Task',
+    name: "New Task",
     startDate: formatDate(today),
     endDate: formatDate(nextWeek),
     duration: 7,
     progress: 0,
-    color: '#3b82f6',
+    color: "#3b82f6",
     order: 0,
-    type: 'task',
+    type: "task",
     parent: undefined,
     metadata: {},
   };
@@ -150,7 +165,7 @@ export const useTaskStore = create<TaskStore>()(
     // Actions
     addTask: (taskData) => {
       const historyStore = useHistoryStore.getState();
-      let generatedId = '';
+      let generatedId = "";
 
       set((state) => {
         const newTask: Task = {
@@ -182,8 +197,12 @@ export const useTaskStore = create<TaskStore>()(
     updateTask: (id, updates) => {
       const historyStore = useHistoryStore.getState();
       const previousValues: Partial<Task> = {};
-      let taskName = '';
-      const parentUpdates: Array<{ id: string; updates: Partial<Task>; previousValues: Partial<Task> }> = [];
+      let taskName = "";
+      const parentUpdates: Array<{
+        id: string;
+        updates: Partial<Task>;
+        previousValues: Partial<Task>;
+      }> = [];
 
       set((state) => {
         // Create mutable copy to avoid read-only errors during redo
@@ -195,24 +214,24 @@ export const useTaskStore = create<TaskStore>()(
           taskName = currentTask.name;
 
           // Validate type change to milestone
-          if (updates.type === 'milestone') {
+          if (updates.type === "milestone") {
             const hasChildren = state.tasks.some((t) => t.parent === id);
             if (hasChildren) {
-              console.warn('Cannot convert to milestone: task has children');
+              console.warn("Cannot convert to milestone: task has children");
               return;
             }
             // Clear end date, duration, and progress for milestones
-            updates.endDate = '';
+            updates.endDate = "";
             updates.duration = 0;
             updates.progress = 0;
           }
 
           // Handle type change to summary
-          if (updates.type === 'summary') {
+          if (updates.type === "summary") {
             // Apply type change first so calculateSummaryDates can see it
             state.tasks[taskIndex] = {
               ...currentTask,
-              type: 'summary',
+              type: "summary",
             };
 
             const hasChildren = state.tasks.some((t) => t.parent === id);
@@ -227,8 +246,8 @@ export const useTaskStore = create<TaskStore>()(
               }
             } else {
               // No children - clear dates (summary should have no bar)
-              updates.startDate = '';
-              updates.endDate = '';
+              updates.startDate = "";
+              updates.endDate = "";
               updates.duration = 0;
             }
             updates.open = true; // Summaries should be open by default
@@ -256,11 +275,16 @@ export const useTaskStore = create<TaskStore>()(
             while (currentParentId) {
               const parent = state.tasks.find((t) => t.id === currentParentId);
 
-              if (parent && parent.type === 'summary') {
-                const summaryDates = calculateSummaryDates(state.tasks, parent.id);
+              if (parent && parent.type === "summary") {
+                const summaryDates = calculateSummaryDates(
+                  state.tasks,
+                  parent.id
+                );
 
                 if (summaryDates) {
-                  const parentIndex = state.tasks.findIndex((t) => t.id === parent.id);
+                  const parentIndex = state.tasks.findIndex(
+                    (t) => t.id === parent.id
+                  );
 
                   // Capture parent's previous state
                   parentUpdates.push({
@@ -314,7 +338,7 @@ export const useTaskStore = create<TaskStore>()(
           id: crypto.randomUUID(),
           type: CommandType.UPDATE_TASK,
           timestamp: Date.now(),
-          description: `Updated task "${taskName}"${parentUpdates.length > 0 ? ' (and parent)' : ''}`,
+          description: `Updated task "${taskName}"${parentUpdates.length > 0 ? " (and parent)" : ""}`,
           params: {
             id,
             updates,
@@ -350,14 +374,21 @@ export const useTaskStore = create<TaskStore>()(
           // Recalculate parent summary dates if it was a child
           if (parentId) {
             const parent = state.tasks.find((t) => t.id === parentId);
-            if (parent && parent.type === 'summary') {
-              const hasChildren = state.tasks.some((t) => t.parent === parentId);
+            if (parent && parent.type === "summary") {
+              const hasChildren = state.tasks.some(
+                (t) => t.parent === parentId
+              );
 
               if (hasChildren) {
                 // Still has children - recalculate dates
-                const summaryDates = calculateSummaryDates(state.tasks, parentId);
+                const summaryDates = calculateSummaryDates(
+                  state.tasks,
+                  parentId
+                );
                 if (summaryDates) {
-                  const parentIndex = state.tasks.findIndex((t) => t.id === parentId);
+                  const parentIndex = state.tasks.findIndex(
+                    (t) => t.id === parentId
+                  );
                   state.tasks[parentIndex] = {
                     ...state.tasks[parentIndex],
                     startDate: summaryDates.startDate,
@@ -367,11 +398,13 @@ export const useTaskStore = create<TaskStore>()(
                 }
               } else {
                 // No more children - clear dates
-                const parentIndex = state.tasks.findIndex((t) => t.id === parentId);
+                const parentIndex = state.tasks.findIndex(
+                  (t) => t.id === parentId
+                );
                 state.tasks[parentIndex] = {
                   ...state.tasks[parentIndex],
-                  startDate: '',
-                  endDate: '',
+                  startDate: "",
+                  endDate: "",
                   duration: 0,
                 };
               }
@@ -419,8 +452,12 @@ export const useTaskStore = create<TaskStore>()(
       }
 
       // Record command for undo/redo
-      if (!historyStore.isUndoing && !historyStore.isRedoing && deletedTasks.length > 0) {
-        const taskName = deletedTasks[0]?.name || 'Unknown';
+      if (
+        !historyStore.isUndoing &&
+        !historyStore.isRedoing &&
+        deletedTasks.length > 0
+      ) {
+        const taskName = deletedTasks[0]?.name || "Unknown";
         const description =
           deletedTasks.length === 1
             ? `Deleted task "${taskName}"`
@@ -470,7 +507,7 @@ export const useTaskStore = create<TaskStore>()(
 
       // Record command for undo/redo
       if (!historyStore.isUndoing && !historyStore.isRedoing) {
-        const movedTaskName = previousOrder[fromIndex]?.name || 'Unknown';
+        const movedTaskName = previousOrder[fromIndex]?.name || "Unknown";
         historyStore.recordCommand({
           id: crypto.randomUUID(),
           type: CommandType.REORDER_TASKS,
@@ -558,17 +595,20 @@ export const useTaskStore = create<TaskStore>()(
         let newFieldIndex = fieldIndex;
 
         switch (direction) {
-          case 'up':
+          case "up":
             newTaskIndex = Math.max(0, taskIndex - 1);
             break;
-          case 'down':
+          case "down":
             newTaskIndex = Math.min(tasks.length - 1, taskIndex + 1);
             break;
-          case 'left':
+          case "left":
             newFieldIndex = Math.max(0, fieldIndex - 1);
             break;
-          case 'right':
-            newFieldIndex = Math.min(EDITABLE_FIELDS.length - 1, fieldIndex + 1);
+          case "right":
+            newFieldIndex = Math.min(
+              EDITABLE_FIELDS.length - 1,
+              fieldIndex + 1
+            );
             break;
         }
 
@@ -607,8 +647,11 @@ export const useTaskStore = create<TaskStore>()(
         if (!task) return;
 
         // Validate: prevent circular hierarchy
-        if (newParentId && wouldCreateCircularHierarchy(state.tasks, taskId, newParentId)) {
-          console.error('Cannot move task: would create circular hierarchy');
+        if (
+          newParentId &&
+          wouldCreateCircularHierarchy(state.tasks, taskId, newParentId)
+        ) {
+          console.error("Cannot move task: would create circular hierarchy");
           return;
         }
 
@@ -616,7 +659,7 @@ export const useTaskStore = create<TaskStore>()(
         if (newParentId) {
           const newParent = state.tasks.find((t) => t.id === newParentId);
           if (newParent && !canHaveChildren(newParent)) {
-            console.error('Cannot move task: milestones cannot be parents');
+            console.error("Cannot move task: milestones cannot be parents");
             return;
           }
         }
@@ -625,7 +668,9 @@ export const useTaskStore = create<TaskStore>()(
         if (newParentId) {
           const newLevel = getTaskLevel(state.tasks, newParentId) + 1;
           if (newLevel > 3) {
-            console.error('Cannot move task: maximum nesting depth is 3 levels');
+            console.error(
+              "Cannot move task: maximum nesting depth is 3 levels"
+            );
             return;
           }
         }
@@ -636,10 +681,15 @@ export const useTaskStore = create<TaskStore>()(
         // Recalculate summary dates for new parent
         if (newParentId) {
           const newParent = state.tasks.find((t) => t.id === newParentId);
-          if (newParent && newParent.type === 'summary') {
-            const summaryDates = calculateSummaryDates(state.tasks, newParentId);
+          if (newParent && newParent.type === "summary") {
+            const summaryDates = calculateSummaryDates(
+              state.tasks,
+              newParentId
+            );
             if (summaryDates) {
-              const parentIndex = state.tasks.findIndex((t) => t.id === newParentId);
+              const parentIndex = state.tasks.findIndex(
+                (t) => t.id === newParentId
+              );
               state.tasks[parentIndex] = {
                 ...state.tasks[parentIndex],
                 startDate: summaryDates.startDate,
@@ -653,10 +703,15 @@ export const useTaskStore = create<TaskStore>()(
         // Recalculate summary dates for old parent (if it still has children)
         if (oldParentId) {
           const oldParent = state.tasks.find((t) => t.id === oldParentId);
-          if (oldParent && oldParent.type === 'summary') {
-            const summaryDates = calculateSummaryDates(state.tasks, oldParentId);
+          if (oldParent && oldParent.type === "summary") {
+            const summaryDates = calculateSummaryDates(
+              state.tasks,
+              oldParentId
+            );
             if (summaryDates) {
-              const parentIndex = state.tasks.findIndex((t) => t.id === oldParentId);
+              const parentIndex = state.tasks.findIndex(
+                (t) => t.id === oldParentId
+              );
               state.tasks[parentIndex] = {
                 ...state.tasks[parentIndex],
                 startDate: summaryDates.startDate,
@@ -724,12 +779,12 @@ export const useTaskStore = create<TaskStore>()(
 
     // Summary task creation
     createSummaryTask: (data) => {
-      let newId = '';
+      let newId = "";
       set((state) => {
         const newTask: Task = {
           ...data,
           id: crypto.randomUUID(),
-          type: 'summary',
+          type: "summary",
           open: true, // Expanded by default
         };
         newId = newTask.id;
@@ -743,7 +798,7 @@ export const useTaskStore = create<TaskStore>()(
         const task = state.tasks.find((t) => t.id === taskId);
         if (!task) return;
 
-        task.type = 'summary';
+        task.type = "summary";
         task.open = true;
 
         // Check if task has children
@@ -759,8 +814,8 @@ export const useTaskStore = create<TaskStore>()(
           }
         } else {
           // No children - clear dates (summary should have no bar)
-          task.startDate = '';
-          task.endDate = '';
+          task.startDate = "";
+          task.endDate = "";
           task.duration = 0;
         }
       }),
@@ -772,7 +827,7 @@ export const useTaskStore = create<TaskStore>()(
 
         // Tasks CAN have children - just switch the date calculation mode
         // Children's dates will no longer affect this task's dates
-        task.type = 'task';
+        task.type = "task";
 
         // Keep 'open' state if has children (for expand/collapse)
         const hasChildren = state.tasks.some((t) => t.parent === taskId);
@@ -781,7 +836,9 @@ export const useTaskStore = create<TaskStore>()(
         }
 
         // User notification: Dates are now manual
-        console.info('Task dates are now manual. Children dates do not affect this task.');
+        console.info(
+          "Task dates are now manual. Children dates do not affect this task."
+        );
       }),
 
     // Indent/Outdent actions
@@ -791,7 +848,10 @@ export const useTaskStore = create<TaskStore>()(
         if (selectedTaskIds.length === 0) return;
 
         // Create snapshot of current hierarchy BEFORE any changes
-        const originalFlatList = buildFlattenedTaskList(tasks, new Set<string>());
+        const originalFlatList = buildFlattenedTaskList(
+          tasks,
+          new Set<string>()
+        );
 
         // Sort selection by display order (top to bottom)
         const sortedIds = [...selectedTaskIds].sort((a, b) => {
@@ -857,13 +917,15 @@ export const useTaskStore = create<TaskStore>()(
         });
 
         // Recalculate summary dates for all affected parents
-        const affectedParentIds = new Set(changes.map(c => c.newParentId));
+        const affectedParentIds = new Set(changes.map((c) => c.newParentId));
         affectedParentIds.forEach((parentId) => {
           const parent = state.tasks.find((t) => t.id === parentId);
-          if (parent && parent.type === 'summary') {
+          if (parent && parent.type === "summary") {
             const summaryDates = calculateSummaryDates(state.tasks, parentId);
             if (summaryDates) {
-              const parentIndex = state.tasks.findIndex((t) => t.id === parentId);
+              const parentIndex = state.tasks.findIndex(
+                (t) => t.id === parentId
+              );
               state.tasks[parentIndex] = {
                 ...state.tasks[parentIndex],
                 startDate: summaryDates.startDate,
@@ -882,11 +944,17 @@ export const useTaskStore = create<TaskStore>()(
 
         // Create snapshot of current hierarchy BEFORE any changes
         const originalHierarchy = new Map(
-          tasks.map((t) => [t.id, { parent: t.parent, level: getTaskLevel(tasks, t.id) }])
+          tasks.map((t) => [
+            t.id,
+            { parent: t.parent, level: getTaskLevel(tasks, t.id) },
+          ])
         );
 
         // Calculate all changes based on ORIGINAL hierarchy
-        const changes: Array<{ taskId: string; newParentId: string | undefined }> = [];
+        const changes: Array<{
+          taskId: string;
+          newParentId: string | undefined;
+        }> = [];
 
         selectedTaskIds.forEach((taskId) => {
           const task = tasks.find((t) => t.id === taskId);
@@ -899,7 +967,9 @@ export const useTaskStore = create<TaskStore>()(
           const grandParent = parent.parent;
 
           // Calculate new level based on ORIGINAL hierarchy
-          const newLevel = grandParent ? (originalHierarchy.get(grandParent)?.level ?? 0) + 1 : 0;
+          const newLevel = grandParent
+            ? (originalHierarchy.get(grandParent)?.level ?? 0) + 1
+            : 0;
 
           // Validation: Ensure task only moves exactly one level up
           if (newLevel === currentLevel - 1) {
@@ -927,14 +997,16 @@ export const useTaskStore = create<TaskStore>()(
         // Recalculate summary dates for old parents
         oldParents.forEach((parentId) => {
           const parent = state.tasks.find((t) => t.id === parentId);
-          if (parent && parent.type === 'summary') {
+          if (parent && parent.type === "summary") {
             const hasChildren = state.tasks.some((t) => t.parent === parentId);
 
             if (hasChildren) {
               // Still has children - recalculate dates
               const summaryDates = calculateSummaryDates(state.tasks, parentId);
               if (summaryDates) {
-                const parentIndex = state.tasks.findIndex((t) => t.id === parentId);
+                const parentIndex = state.tasks.findIndex(
+                  (t) => t.id === parentId
+                );
                 state.tasks[parentIndex] = {
                   ...state.tasks[parentIndex],
                   startDate: summaryDates.startDate,
@@ -944,11 +1016,13 @@ export const useTaskStore = create<TaskStore>()(
               }
             } else {
               // No more children - clear dates
-              const parentIndex = state.tasks.findIndex((t) => t.id === parentId);
+              const parentIndex = state.tasks.findIndex(
+                (t) => t.id === parentId
+              );
               state.tasks[parentIndex] = {
                 ...state.tasks[parentIndex],
-                startDate: '',
-                endDate: '',
+                startDate: "",
+                endDate: "",
                 duration: 0,
               };
             }

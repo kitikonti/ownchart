@@ -4,10 +4,10 @@
  * Inspired by SVAR React Gantt's scale system
  */
 
-import { useMemo } from 'react';
-import { parseISO, format } from 'date-fns';
-import type { TimelineScale, ScaleConfig } from '../../utils/timelineUtils';
-import { dateToPixel, addUnit, getUnitStart } from '../../utils/timelineUtils';
+import { useMemo } from "react";
+import { parseISO, format } from "date-fns";
+import type { TimelineScale, ScaleConfig } from "../../utils/timelineUtils";
+import { dateToPixel, addUnit, getUnitStart } from "../../utils/timelineUtils";
 
 interface TimelineHeaderProps {
   scale: TimelineScale;
@@ -46,11 +46,11 @@ function generateScaleCells(
     const cellStart = currentDate;
 
     // Calculate cell position and width
-    const x = dateToPixel(format(cellStart, 'yyyy-MM-dd'), scale);
+    const x = dateToPixel(format(cellStart, "yyyy-MM-dd"), scale);
 
     // For proper width calculation, use the next unit's start position
     const nextUnit = addUnit(currentDate, config.unit, config.step);
-    const endX = dateToPixel(format(nextUnit, 'yyyy-MM-dd'), scale);
+    const endX = dateToPixel(format(nextUnit, "yyyy-MM-dd"), scale);
 
     // Stop if we've exceeded the header width
     if (x >= headerWidth) break;
@@ -75,7 +75,7 @@ function generateScaleCells(
 
     // Format label
     const label =
-      typeof config.format === 'function'
+      typeof config.format === "function"
         ? config.format(cellStart)
         : format(cellStart, config.format);
 

@@ -3,7 +3,7 @@
  * Allows selecting a color with a visual color picker.
  */
 
-import { useState, useRef, useEffect, type KeyboardEvent } from 'react';
+import { useState, useRef, useEffect, type KeyboardEvent } from "react";
 
 export interface ColorCellEditorProps {
   /** Current color value (hex) */
@@ -49,10 +49,10 @@ export function ColorCellEditor({
   };
 
   const handleKeyDown = (e: KeyboardEvent<HTMLInputElement>) => {
-    if (e.key === 'Enter' && onSave) {
+    if (e.key === "Enter" && onSave) {
       e.preventDefault();
       onSave();
-    } else if (e.key === 'Escape' && onCancel) {
+    } else if (e.key === "Escape" && onCancel) {
       e.preventDefault();
       onCancel();
     }

@@ -3,18 +3,18 @@
  * Automatically saves state on changes and restores on app load
  */
 
-import { useEffect } from 'react';
-import { useTaskStore } from '../store/slices/taskSlice';
-import { useChartStore } from '../store/slices/chartSlice';
-import { useFileStore } from '../store/slices/fileSlice';
+import { useEffect } from "react";
+import { useTaskStore } from "../store/slices/taskSlice";
+import { useChartStore } from "../store/slices/chartSlice";
+import { useFileStore } from "../store/slices/fileSlice";
 
-const STORAGE_KEY = 'gantt-app-state';
+const STORAGE_KEY = "gantt-app-state";
 const STORAGE_VERSION = 1;
 
 interface PersistedState {
   version: number;
   timestamp: number;
-  tasks: ReturnType<typeof useTaskStore.getState>['tasks'];
+  tasks: ReturnType<typeof useTaskStore.getState>["tasks"];
   chartState: {
     zoom: number;
     panOffset: { x: number; y: number };
@@ -56,7 +56,7 @@ function saveToLocalStorage(): void {
 
     localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
   } catch (error) {
-    console.error('Failed to save state to localStorage:', error);
+    console.error("Failed to save state to localStorage:", error);
   }
 }
 
@@ -72,14 +72,14 @@ function loadFromLocalStorage(): PersistedState | null {
 
     // Version check
     if (state.version !== STORAGE_VERSION) {
-      console.warn('localStorage version mismatch, clearing old data');
+      console.warn("localStorage version mismatch, clearing old data");
       localStorage.removeItem(STORAGE_KEY);
       return null;
     }
 
     return state;
   } catch (error) {
-    console.error('Failed to load state from localStorage:', error);
+    console.error("Failed to load state from localStorage:", error);
     return null;
   }
 }
@@ -91,7 +91,7 @@ export function clearLocalStorage(): void {
   try {
     localStorage.removeItem(STORAGE_KEY);
   } catch (error) {
-    console.error('Failed to clear localStorage:', error);
+    console.error("Failed to clear localStorage:", error);
   }
 }
 
@@ -129,7 +129,7 @@ export function useLocalStoragePersistence(): void {
       setLastSaved(new Date(state.fileState.lastSaved));
     }
 
-    console.info('✓ State restored from localStorage');
+    console.info("✓ State restored from localStorage");
   }, []);
 
   // Subscribe to state changes and save to localStorage

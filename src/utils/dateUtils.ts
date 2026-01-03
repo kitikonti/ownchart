@@ -9,17 +9,14 @@ import {
   addDays as addDaysDateFns,
   format,
   getDay,
-} from 'date-fns';
-import type { Task } from '../types/chart.types';
+} from "date-fns";
+import type { Task } from "../types/chart.types";
 
 /**
  * Calculate duration between two dates in days (inclusive)
  * @example calculateDuration('2025-01-01', '2025-01-05') // 5
  */
-export function calculateDuration(
-  startDate: string,
-  endDate: string
-): number {
+export function calculateDuration(startDate: string, endDate: string): number {
   const start = parseISO(startDate);
   const end = parseISO(endDate);
   return differenceInDays(end, start) + 1; // +1 for inclusive
@@ -32,7 +29,7 @@ export function calculateDuration(
 export function addDays(dateStr: string, days: number): string {
   const date = parseISO(dateStr);
   const result = addDaysDateFns(date, days);
-  return format(result, 'yyyy-MM-dd');
+  return format(result, "yyyy-MM-dd");
 }
 
 /**
@@ -50,10 +47,16 @@ export function formatDate(dateStr: string, formatStr: string): string {
  */
 export function getDateRange(tasks: Task[]): { min: string; max: string } {
   // Filter out tasks with invalid/empty dates (e.g., empty summaries)
-  const validTasks = tasks.filter((task) => task.startDate && task.endDate && task.startDate !== '' && task.endDate !== '');
+  const validTasks = tasks.filter(
+    (task) =>
+      task.startDate &&
+      task.endDate &&
+      task.startDate !== "" &&
+      task.endDate !== ""
+  );
 
   if (validTasks.length === 0) {
-    const today = format(new Date(), 'yyyy-MM-dd');
+    const today = format(new Date(), "yyyy-MM-dd");
     return { min: today, max: addDays(today, 30) };
   }
 
@@ -92,7 +95,7 @@ export function getBusinessDays(start: string, end: string): number {
 
   let current = startDate;
   while (current <= endDate) {
-    if (!isWeekend(format(current, 'yyyy-MM-dd'))) {
+    if (!isWeekend(format(current, "yyyy-MM-dd"))) {
       count++;
     }
     current = addDaysDateFns(current, 1);
