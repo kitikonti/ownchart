@@ -41,6 +41,7 @@ function generateScaleCells(
   // This ensures weeks start on Monday, months on 1st, etc.
   let currentDate = getUnitStart(parseISO(scale.minDate), config.unit);
 
+  // eslint-disable-next-line no-constant-condition
   while (true) {
     const cellStart = currentDate;
 

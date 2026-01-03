@@ -147,18 +147,7 @@ export const TaskBar = React.memo(function TaskBar({
   onClick,
   onDoubleClick,
 }: TaskBarProps) {
-  // Don't render if task has no valid dates (e.g., empty summary)
-  // Milestones only need startDate, other types need both startDate and endDate
-  if (task.type === 'milestone') {
-    if (!task.startDate || task.startDate === '') {
-      return null;
-    }
-  } else {
-    if (!task.startDate || !task.endDate || task.startDate === '' || task.endDate === '') {
-      return null;
-    }
-  }
-
+  // All hooks must be called before any conditional returns
   const geometry = useMemo(
     () => getTaskBarGeometry(task, scale, rowIndex, 44, 0), // headerHeight = 0 (header in separate SVG)
     [task, scale, rowIndex]
@@ -174,13 +163,6 @@ export const TaskBar = React.memo(function TaskBar({
     onMouseMove: onMouseMoveForCursor,
   } = useTaskBarInteraction(task, scale, geometry);
 
-  // Prevent onClick when dragging
-  const handleClick = () => {
-    if (!isDragging && onClick) {
-      onClick();
-    }
-  };
-
   // Calculate preview geometry if dragging/resizing
   const preview = useMemo(() => {
     if (!previewGeometry) return null;
@@ -195,6 +177,25 @@ export const TaskBar = React.memo(function TaskBar({
       height: geometry.height,
     };
   }, [previewGeometry, scale, geometry]);
+
+  // Don't render if task has no valid dates (e.g., empty summary)
+  // Milestones only need startDate, other types need both startDate and endDate
+  if (task.type === 'milestone') {
+    if (!task.startDate || task.startDate === '') {
+      return null;
+    }
+  } else {
+    if (!task.startDate || !task.endDate || task.startDate === '' || task.endDate === '') {
+      return null;
+    }
+  }
+
+  // Prevent onClick when dragging
+  const handleClick = (): void => {
+    if (!isDragging && onClick) {
+      onClick();
+    }
+  };
 
   // Progress bar width
   const progressWidth = (geometry.width * task.progress) / 100;

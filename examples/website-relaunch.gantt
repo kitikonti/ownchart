@@ -1,0 +1,551 @@
+{
+  "fileVersion": "1.0.0",
+  "appVersion": "0.0.1",
+  "schemaVersion": 1,
+  "chart": {
+    "id": "a1b2c3d4-e5f6-4789-a012-3456789abcde",
+    "name": "Website Relaunch Project",
+    "description": "Complete redesign and relaunch of company website with modern tech stack",
+    "tasks": [
+      {
+        "id": "f47ac10b-58cc-4372-a567-0e02b2c3d479",
+        "name": "Planning Phase",
+        "startDate": "2026-01-06",
+        "endDate": "2026-01-24",
+        "duration": 15,
+        "progress": 100,
+        "color": "#3b82f6",
+        "order": 0,
+        "type": "summary",
+        "open": true,
+        "metadata": {
+          "phase": "planning",
+          "budget": 15000
+        },
+        "createdAt": "2026-01-02T10:00:00.000Z",
+        "updatedAt": "2026-01-02T10:00:00.000Z"
+      },
+      {
+        "id": "6ba7b810-9dad-11d1-80b4-00c04fd430c8",
+        "name": "Requirements Gathering",
+        "startDate": "2026-01-06",
+        "endDate": "2026-01-10",
+        "duration": 5,
+        "progress": 100,
+        "color": "#3b82f6",
+        "order": 1,
+        "type": "task",
+        "parent": "f47ac10b-58cc-4372-a567-0e02b2c3d479",
+        "metadata": {
+          "assignee": "Sarah Johnson",
+          "department": "Product"
+        },
+        "createdAt": "2026-01-02T10:05:00.000Z",
+        "updatedAt": "2026-01-10T17:00:00.000Z"
+      },
+      {
+        "id": "6ba7b811-9dad-11d1-80b4-00c04fd430c8",
+        "name": "Design Mockups",
+        "startDate": "2026-01-11",
+        "endDate": "2026-01-17",
+        "duration": 5,
+        "progress": 100,
+        "color": "#3b82f6",
+        "order": 2,
+        "type": "task",
+        "parent": "f47ac10b-58cc-4372-a567-0e02b2c3d479",
+        "metadata": {
+          "assignee": "Michael Chen",
+          "department": "Design",
+          "toolUsed": "Figma"
+        },
+        "createdAt": "2026-01-02T10:06:00.000Z",
+        "updatedAt": "2026-01-17T16:30:00.000Z"
+      },
+      {
+        "id": "6ba7b812-9dad-11d1-80b4-00c04fd430c8",
+        "name": "Technical Specification",
+        "startDate": "2026-01-18",
+        "endDate": "2026-01-23",
+        "duration": 4,
+        "progress": 100,
+        "color": "#3b82f6",
+        "order": 3,
+        "type": "task",
+        "parent": "f47ac10b-58cc-4372-a567-0e02b2c3d479",
+        "metadata": {
+          "assignee": "David Kumar",
+          "department": "Engineering"
+        },
+        "createdAt": "2026-01-02T10:07:00.000Z",
+        "updatedAt": "2026-01-23T14:00:00.000Z"
+      },
+      {
+        "id": "6ba7b813-9dad-11d1-80b4-00c04fd430c8",
+        "name": "Planning Approval",
+        "startDate": "2026-01-24",
+        "endDate": "2026-01-24",
+        "duration": 1,
+        "progress": 100,
+        "color": "#eab308",
+        "order": 4,
+        "type": "milestone",
+        "parent": "f47ac10b-58cc-4372-a567-0e02b2c3d479",
+        "metadata": {
+          "stakeholders": ["CTO", "CEO", "Marketing Director"]
+        },
+        "createdAt": "2026-01-02T10:08:00.000Z",
+        "updatedAt": "2026-01-24T11:00:00.000Z"
+      },
+      {
+        "id": "7c9e6679-7425-40de-944b-e07fc1f90ae7",
+        "name": "Development Phase",
+        "startDate": "2026-01-27",
+        "endDate": "2026-03-07",
+        "duration": 30,
+        "progress": 65,
+        "color": "#10b981",
+        "order": 5,
+        "type": "summary",
+        "open": true,
+        "metadata": {
+          "phase": "development",
+          "budget": 80000
+        },
+        "createdAt": "2026-01-02T10:09:00.000Z",
+        "updatedAt": "2026-01-02T10:09:00.000Z"
+      },
+      {
+        "id": "886313e1-3b8a-5372-9b90-0c9aee199e5d",
+        "name": "Frontend Development",
+        "startDate": "2026-01-27",
+        "endDate": "2026-02-21",
+        "duration": 20,
+        "progress": 75,
+        "color": "#10b981",
+        "order": 6,
+        "type": "summary",
+        "parent": "7c9e6679-7425-40de-944b-e07fc1f90ae7",
+        "open": true,
+        "metadata": {
+          "techStack": ["React", "TypeScript", "Tailwind CSS"]
+        },
+        "createdAt": "2026-01-02T10:10:00.000Z",
+        "updatedAt": "2026-01-02T10:10:00.000Z"
+      },
+      {
+        "id": "987fbc97-4bed-5078-9f07-9141ba07c9f3",
+        "name": "Component Library Setup",
+        "startDate": "2026-01-27",
+        "endDate": "2026-02-03",
+        "duration": 5,
+        "progress": 100,
+        "color": "#10b981",
+        "order": 7,
+        "type": "task",
+        "parent": "886313e1-3b8a-5372-9b90-0c9aee199e5d",
+        "metadata": {
+          "assignee": "Emma Watson",
+          "storyPoints": 8
+        },
+        "createdAt": "2026-01-02T10:11:00.000Z",
+        "updatedAt": "2026-02-03T18:00:00.000Z"
+      },
+      {
+        "id": "987fbc98-4bed-5078-9f07-9141ba07c9f3",
+        "name": "Page Implementation",
+        "startDate": "2026-02-04",
+        "endDate": "2026-02-14",
+        "duration": 9,
+        "progress": 80,
+        "color": "#10b981",
+        "order": 8,
+        "type": "task",
+        "parent": "886313e1-3b8a-5372-9b90-0c9aee199e5d",
+        "metadata": {
+          "assignee": "Emma Watson",
+          "pages": ["Home", "About", "Services", "Contact", "Blog"],
+          "storyPoints": 13
+        },
+        "createdAt": "2026-01-02T10:12:00.000Z",
+        "updatedAt": "2026-01-02T10:12:00.000Z"
+      },
+      {
+        "id": "987fbc99-4bed-5078-9f07-9141ba07c9f3",
+        "name": "Responsive Design",
+        "startDate": "2026-02-15",
+        "endDate": "2026-02-21",
+        "duration": 5,
+        "progress": 40,
+        "color": "#10b981",
+        "order": 9,
+        "type": "task",
+        "parent": "886313e1-3b8a-5372-9b90-0c9aee199e5d",
+        "metadata": {
+          "assignee": "Emma Watson",
+          "breakpoints": ["mobile", "tablet", "desktop"],
+          "storyPoints": 5
+        },
+        "createdAt": "2026-01-02T10:13:00.000Z",
+        "updatedAt": "2026-01-02T10:13:00.000Z"
+      },
+      {
+        "id": "886313e2-3b8a-5372-9b90-0c9aee199e5d",
+        "name": "Backend Development",
+        "startDate": "2026-01-27",
+        "endDate": "2026-02-28",
+        "duration": 25,
+        "progress": 60,
+        "color": "#10b981",
+        "order": 10,
+        "type": "summary",
+        "parent": "7c9e6679-7425-40de-944b-e07fc1f90ae7",
+        "open": true,
+        "metadata": {
+          "techStack": ["Node.js", "PostgreSQL", "Redis"]
+        },
+        "createdAt": "2026-01-02T10:14:00.000Z",
+        "updatedAt": "2026-01-02T10:14:00.000Z"
+      },
+      {
+        "id": "998fbc97-4bed-5078-9f07-9141ba07c9f3",
+        "name": "API Development",
+        "startDate": "2026-01-27",
+        "endDate": "2026-02-10",
+        "duration": 11,
+        "progress": 90,
+        "color": "#10b981",
+        "order": 11,
+        "type": "task",
+        "parent": "886313e2-3b8a-5372-9b90-0c9aee199e5d",
+        "metadata": {
+          "assignee": "Alex Martinez",
+          "endpoints": 24,
+          "storyPoints": 13
+        },
+        "createdAt": "2026-01-02T10:15:00.000Z",
+        "updatedAt": "2026-01-02T10:15:00.000Z"
+      },
+      {
+        "id": "998fbc98-4bed-5078-9f07-9141ba07c9f3",
+        "name": "Database Migration",
+        "startDate": "2026-02-11",
+        "endDate": "2026-02-17",
+        "duration": 5,
+        "progress": 70,
+        "color": "#10b981",
+        "order": 12,
+        "type": "task",
+        "parent": "886313e2-3b8a-5372-9b90-0c9aee199e5d",
+        "metadata": {
+          "assignee": "Alex Martinez",
+          "tables": 18,
+          "storyPoints": 8
+        },
+        "createdAt": "2026-01-02T10:16:00.000Z",
+        "updatedAt": "2026-01-02T10:16:00.000Z"
+      },
+      {
+        "id": "998fbc99-4bed-5078-9f07-9141ba07c9f3",
+        "name": "Authentication System",
+        "startDate": "2026-02-18",
+        "endDate": "2026-02-28",
+        "duration": 9,
+        "progress": 20,
+        "color": "#10b981",
+        "order": 13,
+        "type": "task",
+        "parent": "886313e2-3b8a-5372-9b90-0c9aee199e5d",
+        "metadata": {
+          "assignee": "Alex Martinez",
+          "methods": ["OAuth", "JWT", "2FA"],
+          "storyPoints": 13
+        },
+        "createdAt": "2026-01-02T10:17:00.000Z",
+        "updatedAt": "2026-01-02T10:17:00.000Z"
+      },
+      {
+        "id": "a98fbc97-4bed-5078-9f07-9141ba07c9f3",
+        "name": "Integration Testing",
+        "startDate": "2026-03-01",
+        "endDate": "2026-03-07",
+        "duration": 5,
+        "progress": 0,
+        "color": "#10b981",
+        "order": 14,
+        "type": "task",
+        "parent": "7c9e6679-7425-40de-944b-e07fc1f90ae7",
+        "metadata": {
+          "assignee": "Lisa Anderson",
+          "testCases": 156,
+          "storyPoints": 8
+        },
+        "createdAt": "2026-01-02T10:18:00.000Z",
+        "updatedAt": "2026-01-02T10:18:00.000Z"
+      },
+      {
+        "id": "b17dfd05-3bcf-4537-a053-7d39dfd30ada",
+        "name": "Content Phase",
+        "startDate": "2026-02-11",
+        "endDate": "2026-03-07",
+        "duration": 19,
+        "progress": 45,
+        "color": "#8b5cf6",
+        "order": 15,
+        "type": "summary",
+        "open": true,
+        "metadata": {
+          "phase": "content",
+          "budget": 12000
+        },
+        "createdAt": "2026-01-02T10:19:00.000Z",
+        "updatedAt": "2026-01-02T10:19:00.000Z"
+      },
+      {
+        "id": "c27dfd05-3bcf-4537-a053-7d39dfd30ada",
+        "name": "Content Writing",
+        "startDate": "2026-02-11",
+        "endDate": "2026-02-25",
+        "duration": 11,
+        "progress": 70,
+        "color": "#8b5cf6",
+        "order": 16,
+        "type": "task",
+        "parent": "b17dfd05-3bcf-4537-a053-7d39dfd30ada",
+        "metadata": {
+          "assignee": "Jennifer Lee",
+          "wordCount": 15000,
+          "pages": 12
+        },
+        "createdAt": "2026-01-02T10:20:00.000Z",
+        "updatedAt": "2026-01-02T10:20:00.000Z"
+      },
+      {
+        "id": "c27dfd06-3bcf-4537-a053-7d39dfd30ada",
+        "name": "Image Optimization",
+        "startDate": "2026-02-26",
+        "endDate": "2026-03-02",
+        "duration": 3,
+        "progress": 50,
+        "color": "#8b5cf6",
+        "order": 17,
+        "type": "task",
+        "parent": "b17dfd05-3bcf-4537-a053-7d39dfd30ada",
+        "metadata": {
+          "assignee": "Tom Harris",
+          "images": 84,
+          "formats": ["WebP", "AVIF"]
+        },
+        "createdAt": "2026-01-02T10:21:00.000Z",
+        "updatedAt": "2026-01-02T10:21:00.000Z"
+      },
+      {
+        "id": "c27dfd07-3bcf-4537-a053-7d39dfd30ada",
+        "name": "SEO Setup",
+        "startDate": "2026-03-03",
+        "endDate": "2026-03-07",
+        "duration": 5,
+        "progress": 10,
+        "color": "#8b5cf6",
+        "order": 18,
+        "type": "task",
+        "parent": "b17dfd05-3bcf-4537-a053-7d39dfd30ada",
+        "metadata": {
+          "assignee": "Jennifer Lee",
+          "keywords": 45,
+          "metaTags": true,
+          "sitemapGenerated": false
+        },
+        "createdAt": "2026-01-02T10:22:00.000Z",
+        "updatedAt": "2026-01-02T10:22:00.000Z"
+      },
+      {
+        "id": "d37eee15-4cdf-5648-b164-8e49efe41beb",
+        "name": "Launch Phase",
+        "startDate": "2026-03-08",
+        "endDate": "2026-03-21",
+        "duration": 10,
+        "progress": 0,
+        "color": "#ef4444",
+        "order": 19,
+        "type": "summary",
+        "open": true,
+        "metadata": {
+          "phase": "launch",
+          "budget": 8000
+        },
+        "createdAt": "2026-01-02T10:23:00.000Z",
+        "updatedAt": "2026-01-02T10:23:00.000Z"
+      },
+      {
+        "id": "e47fff25-5def-6759-c275-9f5afff52cfc",
+        "name": "Staging Deployment",
+        "startDate": "2026-03-08",
+        "endDate": "2026-03-10",
+        "duration": 2,
+        "progress": 0,
+        "color": "#ef4444",
+        "order": 20,
+        "type": "task",
+        "parent": "d37eee15-4cdf-5648-b164-8e49efe41beb",
+        "metadata": {
+          "assignee": "Robert Kim",
+          "environment": "staging",
+          "url": "https://staging.example.com"
+        },
+        "createdAt": "2026-01-02T10:24:00.000Z",
+        "updatedAt": "2026-01-02T10:24:00.000Z"
+      },
+      {
+        "id": "e47fff26-5def-6759-c275-9f5afff52cfc",
+        "name": "User Acceptance Testing",
+        "startDate": "2026-03-11",
+        "endDate": "2026-03-17",
+        "duration": 5,
+        "progress": 0,
+        "color": "#ef4444",
+        "order": 21,
+        "type": "task",
+        "parent": "d37eee15-4cdf-5648-b164-8e49efe41beb",
+        "metadata": {
+          "assignee": "Lisa Anderson",
+          "testers": 12,
+          "scenarios": 48
+        },
+        "createdAt": "2026-01-02T10:25:00.000Z",
+        "updatedAt": "2026-01-02T10:25:00.000Z"
+      },
+      {
+        "id": "e47fff27-5def-6759-c275-9f5afff52cfc",
+        "name": "Production Deployment",
+        "startDate": "2026-03-18",
+        "endDate": "2026-03-20",
+        "duration": 3,
+        "progress": 0,
+        "color": "#ef4444",
+        "order": 22,
+        "type": "task",
+        "parent": "d37eee15-4cdf-5648-b164-8e49efe41beb",
+        "metadata": {
+          "assignee": "Robert Kim",
+          "environment": "production",
+          "url": "https://www.example.com",
+          "rollbackPlanReady": true
+        },
+        "createdAt": "2026-01-02T10:26:00.000Z",
+        "updatedAt": "2026-01-02T10:26:00.000Z"
+      },
+      {
+        "id": "e47fff28-5def-6759-c275-9f5afff52cfc",
+        "name": "Go-Live",
+        "startDate": "2026-03-21",
+        "endDate": "2026-03-21",
+        "duration": 1,
+        "progress": 0,
+        "color": "#eab308",
+        "order": 23,
+        "type": "milestone",
+        "parent": "d37eee15-4cdf-5648-b164-8e49efe41beb",
+        "metadata": {
+          "celebration": true,
+          "pressRelease": true,
+          "stakeholders": ["All Hands Meeting"]
+        },
+        "createdAt": "2026-01-02T10:27:00.000Z",
+        "updatedAt": "2026-01-02T10:27:00.000Z"
+      },
+      {
+        "id": "f58aa038-6efa-7869-d386-ab6baaa63dad",
+        "name": "Post-Launch",
+        "startDate": "2026-03-22",
+        "endDate": "2026-04-11",
+        "duration": 15,
+        "progress": 0,
+        "color": "#6366f1",
+        "order": 24,
+        "type": "summary",
+        "open": false,
+        "metadata": {
+          "phase": "post-launch",
+          "budget": 10000
+        },
+        "createdAt": "2026-01-02T10:28:00.000Z",
+        "updatedAt": "2026-01-02T10:28:00.000Z"
+      },
+      {
+        "id": "f58aa039-6efa-7869-d386-ab6baaa63dad",
+        "name": "Monitoring & Bug Fixes",
+        "startDate": "2026-03-22",
+        "endDate": "2026-04-04",
+        "duration": 10,
+        "progress": 0,
+        "color": "#6366f1",
+        "order": 25,
+        "type": "task",
+        "parent": "f58aa038-6efa-7869-d386-ab6baaa63dad",
+        "metadata": {
+          "assignee": "Full Team",
+          "monitoringTools": ["Sentry", "DataDog", "Google Analytics"]
+        },
+        "createdAt": "2026-01-02T10:29:00.000Z",
+        "updatedAt": "2026-01-02T10:29:00.000Z"
+      },
+      {
+        "id": "f58aa040-6efa-7869-d386-ab6baaa63dad",
+        "name": "Performance Optimization",
+        "startDate": "2026-04-05",
+        "endDate": "2026-04-11",
+        "duration": 5,
+        "progress": 0,
+        "color": "#6366f1",
+        "order": 26,
+        "type": "task",
+        "parent": "f58aa038-6efa-7869-d386-ab6baaa63dad",
+        "metadata": {
+          "assignee": "Emma Watson",
+          "targets": {
+            "LCP": "< 2.5s",
+            "FID": "< 100ms",
+            "CLS": "< 0.1"
+          }
+        },
+        "createdAt": "2026-01-02T10:30:00.000Z",
+        "updatedAt": "2026-01-02T10:30:00.000Z"
+      }
+    ],
+    "viewSettings": {
+      "zoom": 1.2,
+      "panOffset": {
+        "x": -150,
+        "y": 0
+      },
+      "showWeekends": false,
+      "showTodayMarker": true,
+      "taskTableWidth": 420,
+      "columnWidths": {
+        "name": 240,
+        "startDate": 110,
+        "endDate": 110,
+        "duration": 80,
+        "progress": 90
+      }
+    },
+    "metadata": {
+      "createdAt": "2026-01-02T10:00:00.000Z",
+      "updatedAt": "2026-01-02T14:30:00.000Z"
+    }
+  },
+  "metadata": {
+    "created": "2026-01-02T10:00:00.000Z",
+    "modified": "2026-01-02T14:30:00.000Z",
+    "fileSize": 12458
+  },
+  "features": {
+    "hasHierarchy": true,
+    "hasHistory": false
+  },
+  "migrations": {
+    "appliedMigrations": [],
+    "originalVersion": "1.0.0"
+  }
+}

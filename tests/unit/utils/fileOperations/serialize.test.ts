@@ -1,0 +1,319 @@
+/**
+ * Unit tests for serialization (app state -> JSON)
+ * Tests round-trip compatibility and data preservation
+ */
+
+import { describe, it, expect } from 'vitest';
+import { serializeToGanttFile } from '../../../../src/utils/fileOperations/serialize';
+import type { Task } from '../../../../src/types/chart.types';
+import type { ViewSettings } from '../../../../src/utils/fileOperations/types';
+
+describe('File Operations - Serialization', () => {
+  const createSampleTasks = (): Task[] => [
+    {
+      id: '123e4567-e89b-12d3-a456-426614174001',
+      name: 'Task 1',
+      startDate: '2026-01-01',
+      endDate: '2026-01-05',
+      duration: 5,
+      progress: 50,
+      color: '#3b82f6',
+      order: 0,
+      type: 'task',
+      metadata: {},
+    },
+    {
+      id: '123e4567-e89b-12d3-a456-426614174002',
+      name: 'Summary Task',
+      startDate: '2026-01-06',
+      endDate: '2026-01-15',
+      duration: 10,
+      progress: 25,
+      color: '#10b981',
+      order: 1,
+      type: 'summary',
+      open: true,
+      metadata: { notes: 'Important task' },
+    },
+  ];
+
+  const createSampleViewSettings = (): ViewSettings => ({
+    zoom: 1.5,
+    panOffset: { x: -100, y: 0 },
+    showWeekends: false,
+    showTodayMarker: true,
+    taskTableWidth: 400,
+    columnWidths: { name: 200, startDate: 100 },
+  });
+
+  describe('Basic Serialization', () => {
+    it('should serialize empty task list', () => {
+      const json = serializeToGanttFile([], createSampleViewSettings());
+      const parsed = JSON.parse(json);
+
+      expect(parsed.chart.tasks).toEqual([]);
+    });
+
+    it('should serialize tasks with all fields', () => {
+      const tasks = createSampleTasks();
+      const json = serializeToGanttFile(tasks, createSampleViewSettings());
+      const parsed = JSON.parse(json);
+
+      expect(parsed.chart.tasks).toHaveLength(2);
+      expect(parsed.chart.tasks[0].name).toBe('Task 1');
+      expect(parsed.chart.tasks[0].progress).toBe(50);
+      expect(parsed.chart.tasks[1].type).toBe('summary');
+    });
+
+    it('should include file version', () => {
+      const json = serializeToGanttFile([], createSampleViewSettings());
+      const parsed = JSON.parse(json);
+
+      expect(parsed.fileVersion).toBe('1.0.0');
+    });
+
+    it('should include app version', () => {
+      const json = serializeToGanttFile([], createSampleViewSettings());
+      const parsed = JSON.parse(json);
+
+      expect(parsed.appVersion).toBe('0.0.1');
+    });
+
+    it('should include schema version', () => {
+      const json = serializeToGanttFile([], createSampleViewSettings());
+      const parsed = JSON.parse(json);
+
+      expect(parsed.schemaVersion).toBe(1);
+    });
+  });
+
+  describe('View Settings', () => {
+    it('should serialize view settings', () => {
+      const viewSettings = createSampleViewSettings();
+      const json = serializeToGanttFile([], viewSettings);
+      const parsed = JSON.parse(json);
+
+      expect(parsed.chart.viewSettings.zoom).toBe(1.5);
+      expect(parsed.chart.viewSettings.panOffset).toEqual({ x: -100, y: 0 });
+      expect(parsed.chart.viewSettings.showWeekends).toBe(false);
+      expect(parsed.chart.viewSettings.taskTableWidth).toBe(400);
+    });
+
+    it('should serialize column widths', () => {
+      const viewSettings = createSampleViewSettings();
+      const json = serializeToGanttFile([], viewSettings);
+      const parsed = JSON.parse(json);
+
+      expect(parsed.chart.viewSettings.columnWidths).toEqual({
+        name: 200,
+        startDate: 100,
+      });
+    });
+  });
+
+  describe('Metadata', () => {
+    it('should include chart metadata', () => {
+      const json = serializeToGanttFile([], createSampleViewSettings());
+      const parsed = JSON.parse(json);
+
+      expect(parsed.chart.metadata.createdAt).toBeDefined();
+      expect(parsed.chart.metadata.updatedAt).toBeDefined();
+    });
+
+    it('should include file metadata', () => {
+      const json = serializeToGanttFile([], createSampleViewSettings());
+      const parsed = JSON.parse(json);
+
+      expect(parsed.metadata.created).toBeDefined();
+      expect(parsed.metadata.modified).toBeDefined();
+    });
+
+    it('should use ISO 8601 date format', () => {
+      const json = serializeToGanttFile([], createSampleViewSettings());
+      const parsed = JSON.parse(json);
+
+      const isoRegex = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}Z$/;
+      expect(parsed.chart.metadata.createdAt).toMatch(isoRegex);
+      expect(parsed.metadata.created).toMatch(isoRegex);
+    });
+  });
+
+  describe('Options', () => {
+    it('should use custom chart name', () => {
+      const json = serializeToGanttFile([], createSampleViewSettings(), {
+        chartName: 'My Project',
+      });
+      const parsed = JSON.parse(json);
+
+      expect(parsed.chart.name).toBe('My Project');
+    });
+
+    it('should default to "Untitled" when no name provided', () => {
+      const json = serializeToGanttFile([], createSampleViewSettings());
+      const parsed = JSON.parse(json);
+
+      expect(parsed.chart.name).toBe('Untitled');
+    });
+
+    it('should use custom chart ID', () => {
+      const customId = '123e4567-e89b-12d3-a456-426614174999';
+      const json = serializeToGanttFile([], createSampleViewSettings(), {
+        chartId: customId,
+      });
+      const parsed = JSON.parse(json);
+
+      expect(parsed.chart.id).toBe(customId);
+    });
+
+    it('should generate UUID when no ID provided', () => {
+      const json = serializeToGanttFile([], createSampleViewSettings());
+      const parsed = JSON.parse(json);
+
+      const uuidRegex =
+        /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+      expect(parsed.chart.id).toMatch(uuidRegex);
+    });
+
+    it('should pretty-print when prettyPrint: true', () => {
+      const json = serializeToGanttFile([], createSampleViewSettings(), {
+        prettyPrint: true,
+      });
+
+      expect(json).toContain('\n');
+      expect(json).toContain('  ');
+    });
+
+    it('should minify when prettyPrint: false', () => {
+      const json = serializeToGanttFile([], createSampleViewSettings(), {
+        prettyPrint: false,
+      });
+
+      expect(json).not.toContain('\n  ');
+    });
+  });
+
+  describe('Forward Compatibility - Unknown Fields', () => {
+    it('should preserve __unknownFields from tasks', () => {
+      const tasks: (Task & { __unknownFields?: Record<string, unknown> })[] = [
+        {
+          ...createSampleTasks()[0],
+          __unknownFields: {
+            futureField: 'value',
+            anotherField: 123,
+          },
+        },
+      ];
+
+      const json = serializeToGanttFile(tasks, createSampleViewSettings());
+      const parsed = JSON.parse(json);
+
+      expect(parsed.chart.tasks[0].futureField).toBe('value');
+      expect(parsed.chart.tasks[0].anotherField).toBe(123);
+    });
+
+    it('should not include __unknownFields key itself', () => {
+      const tasks: (Task & { __unknownFields?: Record<string, unknown> })[] = [
+        {
+          ...createSampleTasks()[0],
+          __unknownFields: { futureField: 'value' },
+        },
+      ];
+
+      const json = serializeToGanttFile(tasks, createSampleViewSettings());
+      const parsed = JSON.parse(json);
+
+      expect(parsed.chart.tasks[0].__unknownFields).toBeUndefined();
+      expect(parsed.chart.tasks[0].futureField).toBe('value');
+    });
+  });
+
+  describe('Task Metadata', () => {
+    it('should serialize task metadata', () => {
+      const tasks = createSampleTasks();
+      const json = serializeToGanttFile(tasks, createSampleViewSettings());
+      const parsed = JSON.parse(json);
+
+      expect(parsed.chart.tasks[1].metadata).toEqual({ notes: 'Important task' });
+    });
+
+    it('should handle empty metadata', () => {
+      const tasks = createSampleTasks();
+      const json = serializeToGanttFile(tasks, createSampleViewSettings());
+      const parsed = JSON.parse(json);
+
+      expect(parsed.chart.tasks[0].metadata).toEqual({});
+    });
+  });
+
+  describe('Feature Flags', () => {
+    it('should include feature flags', () => {
+      const json = serializeToGanttFile(createSampleTasks(), createSampleViewSettings());
+      const parsed = JSON.parse(json);
+
+      expect(parsed.features).toBeDefined();
+      expect(parsed.features.hasHierarchy).toBeDefined();
+      expect(parsed.features.hasHistory).toBe(false);
+    });
+
+    it('should set hasHierarchy based on parent relationships', () => {
+      const tasks: Task[] = [
+        {
+          ...createSampleTasks()[0],
+          parent: undefined,
+        },
+        {
+          ...createSampleTasks()[1],
+          parent: '123e4567-e89b-12d3-a456-426614174001',
+        },
+      ];
+
+      const json = serializeToGanttFile(tasks, createSampleViewSettings());
+      const parsed = JSON.parse(json);
+
+      expect(parsed.features.hasHierarchy).toBe(true);
+    });
+  });
+
+  describe('Round-Trip Compatibility', () => {
+    it('should maintain data integrity in round-trip', () => {
+      const originalTasks = createSampleTasks();
+      const viewSettings = createSampleViewSettings();
+
+      const json = serializeToGanttFile(originalTasks, viewSettings);
+      const parsed = JSON.parse(json);
+
+      expect(parsed.chart.tasks[0].id).toBe(originalTasks[0].id);
+      expect(parsed.chart.tasks[0].name).toBe(originalTasks[0].name);
+      expect(parsed.chart.tasks[0].progress).toBe(originalTasks[0].progress);
+      expect(parsed.chart.viewSettings.zoom).toBe(viewSettings.zoom);
+    });
+
+    it('should handle special characters in task names', () => {
+      const tasks: Task[] = [
+        {
+          ...createSampleTasks()[0],
+          name: 'Task with "quotes" and \\backslashes\\',
+        },
+      ];
+
+      const json = serializeToGanttFile(tasks, createSampleViewSettings());
+      const parsed = JSON.parse(json);
+
+      expect(parsed.chart.tasks[0].name).toBe('Task with "quotes" and \\backslashes\\');
+    });
+
+    it('should handle unicode characters', () => {
+      const tasks: Task[] = [
+        {
+          ...createSampleTasks()[0],
+          name: 'Task with émojis 🚀 and ümlauts',
+        },
+      ];
+
+      const json = serializeToGanttFile(tasks, createSampleViewSettings());
+      const parsed = JSON.parse(json);
+
+      expect(parsed.chart.tasks[0].name).toBe('Task with émojis 🚀 and ümlauts');
+    });
+  });
+});

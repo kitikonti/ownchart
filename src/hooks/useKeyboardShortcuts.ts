@@ -1,14 +1,17 @@
 /**
  * Global keyboard shortcuts hook
  * Handles Ctrl+Z (undo), Ctrl+Shift+Z (redo), Ctrl+Y (redo alternative)
+ * Handles Ctrl+S (save), Ctrl+Shift+S (save as), Ctrl+O (open), Ctrl+N (new)
  */
 
 import { useEffect } from 'react';
 import { useHistoryStore } from '../store/slices/historySlice';
+import { useFileOperations } from './useFileOperations';
 
 export function useKeyboardShortcuts() {
   const undo = useHistoryStore((state) => state.undo);
   const redo = useHistoryStore((state) => state.redo);
+  const { handleSave, handleSaveAs, handleOpen, handleNew } = useFileOperations();
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -45,6 +48,34 @@ export function useKeyboardShortcuts() {
         redo();
         return;
       }
+
+      // Save: Ctrl+S or Cmd+S (without Shift)
+      if (modKey && e.key.toLowerCase() === 's' && !e.shiftKey) {
+        e.preventDefault();
+        handleSave();
+        return;
+      }
+
+      // Save As: Ctrl+Shift+S or Cmd+Shift+S
+      if (modKey && e.key.toLowerCase() === 's' && e.shiftKey) {
+        e.preventDefault();
+        handleSaveAs();
+        return;
+      }
+
+      // Open: Ctrl+O or Cmd+O
+      if (modKey && e.key.toLowerCase() === 'o') {
+        e.preventDefault();
+        handleOpen();
+        return;
+      }
+
+      // New: Ctrl+Alt+N or Cmd+Alt+N (Ctrl+N is blocked by browser)
+      if (modKey && e.altKey && e.key.toLowerCase() === 'n') {
+        e.preventDefault();
+        handleNew();
+        return;
+      }
     };
 
     window.addEventListener('keydown', handleKeyDown);
@@ -52,5 +83,5 @@ export function useKeyboardShortcuts() {
     return () => {
       window.removeEventListener('keydown', handleKeyDown);
     };
-  }, [undo, redo]);
+  }, [undo, redo, handleSave, handleSaveAs, handleOpen, handleNew]);
 }

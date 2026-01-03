@@ -8,6 +8,7 @@ A browser-based, offline-first Gantt Chart application for project planning and 
 - **Task Management**: Create, edit, and organize project tasks
 - **Visual Timeline**: Interactive Gantt chart with drag-and-drop
 - **Dependencies**: Link tasks with finish-to-start relationships
+- **File Operations**: Save/load charts with robust validation and security
 - **History**: Full undo/redo with time-travel capability
 - **Export**: Save as PNG, PDF, or SVG
 - **Accessible**: WCAG 2.1 AA compliant with keyboard navigation
@@ -353,7 +354,7 @@ Phase 0 establishes the project foundation:
 - Edge case coverage (empty stacks, concurrent operations)
 - Performance tests for 100+ sequential operations
 
-**Next**: Sprint 1.2 Package 3 - Navigation & Scale
+**Next**: Sprint 1.4 - Dependencies (Finish-to-Start)
 
 ### Sprint 1.2 Package 2 - Interactive Editing ✅ COMPLETE
 
@@ -482,7 +483,101 @@ Phase 0 establishes the project foundation:
 - Grid line calculation optimized with useMemo
 - CSS transforms for hardware-accelerated rendering
 
-**Next**: Sprint 1.2 Package 4 - Visual Dependencies
+**Next**: Sprint 1.4 - Dependencies (Finish-to-Start)
+
+### Sprint 1.3 - File Operations ✅ COMPLETE
+
+**Implemented Features** (2026-01-03):
+- ✅ **Save to .gantt Format**: Browser-based file save with File System Access API
+- ✅ **Open .gantt Files**: Load charts with comprehensive validation
+- ✅ **New Chart**: Create new project with unsaved changes warning
+- ✅ **Keyboard Shortcuts**: Ctrl+S (save), Ctrl+Shift+S (save as), Ctrl+O (open), Ctrl+Alt+N (new)
+- ✅ **Dirty State Tracking**: Visual indicator when changes are unsaved
+- ✅ **Unsaved Changes Warning**: Browser beforeunload prevention
+- ✅ **6-Layer Validation Pipeline**: Complete security and data integrity validation
+- ✅ **XSS Prevention**: DOMPurify integration for HTML sanitization
+- ✅ **Prototype Pollution Protection**: Dangerous keys filtered
+- ✅ **Round-Trip Integrity**: All data preserved (tasks, hierarchy, view settings, unknown fields)
+- ✅ **Browser Compatibility**: File System Access API (Chrome/Edge) + fallback (Firefox/Safari)
+
+**Security Features**:
+- **Layer 1**: Pre-parse validation (file size 50MB limit, extension check)
+- **Layer 2**: Safe JSON parsing with prototype pollution prevention
+- **Layer 3**: Structure validation (required fields, type checking)
+- **Layer 4**: Semantic validation (UUID format, date validation, circular dependency detection)
+- **Layer 5**: String sanitization via DOMPurify (XSS prevention)
+- **Layer 6**: Version compatibility and migration system
+
+**File Format** (.gantt):
+```json
+{
+  "fileVersion": "1.0.0",
+  "appVersion": "0.1.0",
+  "chart": {
+    "id": "uuid-v4",
+    "name": "Chart Name",
+    "createdAt": "ISO-8601",
+    "updatedAt": "ISO-8601",
+    "tasks": [/* Task objects */],
+    "viewSettings": {
+      "zoom": 1.0,
+      "panOffset": { "x": 0, "y": 0 },
+      "showWeekends": true,
+      "showTodayMarker": true,
+      "taskTableWidth": 400,
+      "columnWidths": { /* Column widths */ }
+    }
+  }
+}
+```
+
+**New Components**:
+- `FileButtons` - New/Open/Save toolbar buttons with dirty state indicator
+- `useFileOperations` - React hook for file I/O operations
+- `useUnsavedChanges` - Hook for beforeunload warning
+
+**New Utilities** (8 files):
+- `fileOperations/validate.ts` - 6-layer validation pipeline (31 tests)
+- `fileOperations/sanitize.ts` - XSS/HTML sanitization (23 tests)
+- `fileOperations/serialize.ts` - Chart → JSON conversion (25 tests)
+- `fileOperations/deserialize.ts` - JSON → Chart conversion (33 tests)
+- `fileOperations/fileDialog.ts` - Browser file I/O (File System Access API + fallback)
+- `fileOperations/migrate.ts` - Future schema migrations
+- `fileOperations/types.ts` - TypeScript interfaces
+- `fileOperations/index.ts` - Public API exports
+
+**State Management**:
+- `fileSlice` - File state (fileName, isDirty, lastSaved, chartId)
+
+**Modified Files**:
+- `taskSlice.ts` - Integrated dirty state tracking, added `setTasks()` action
+- `App.tsx` - Added `useUnsavedChanges()` hook
+- `AppToolbar.tsx` - Integrated FileButtons component
+- `useKeyboardShortcuts.ts` - Added file operation shortcuts (Ctrl+S/O/N)
+
+**Testing**:
+- Comprehensive unit tests (112 tests total for file operations)
+- Validation: 31 tests (all 6 layers)
+- Serialization: 25 tests (round-trip integrity)
+- Sanitization: 23 tests (XSS prevention)
+- Deserialization: 33 tests (full pipeline)
+- Integration: Undo/redo tests updated
+
+**Browser Support**:
+| Browser | Save Behavior | Open Behavior |
+|---------|---------------|---------------|
+| Chrome/Edge | File System Access API (re-save to same file) | Native file picker |
+| Firefox/Safari | Download (always new file) | File input dialog |
+
+**Known Limitations**:
+- Re-save only works in Chrome/Edge (File System Access API)
+- Firefox/Safari trigger download on every save
+- History not persisted across sessions
+- Maximum file size: 50MB
+
+**Example File**: `examples/website-relaunch.gantt` (27 tasks, 3-level hierarchy, 17 KB)
+
+**Next**: Sprint 1.4 - Dependencies (Finish-to-Start)
 
 ## Contributing
 
@@ -515,6 +610,6 @@ See [ROADMAP.md](./concept/docs/ROADMAP.md) for detailed timeline.
 
 ---
 
-**Current Version**: 0.0.3 (Pre-release)
-**Status**: Phase 1 - MVP (Sprint 1.2 Package 3 Complete)
-**Last Updated**: 2026-01-02
+**Current Version**: 0.0.4 (Pre-release)
+**Status**: Phase 1 - MVP (Sprint 1.3 File Operations Complete)
+**Last Updated**: 2026-01-03

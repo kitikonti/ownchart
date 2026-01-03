@@ -14,6 +14,7 @@ import {
 } from '../../utils/hierarchy';
 import { canHaveChildren } from '../../utils/validation';
 import { useHistoryStore } from './historySlice';
+import { useFileStore } from './fileSlice';
 import { CommandType } from '../../types/command.types';
 
 /**
@@ -56,6 +57,7 @@ interface TaskActions {
   updateTask: (id: string, updates: Partial<Task>) => void;
   deleteTask: (id: string, cascade?: boolean) => void;
   reorderTasks: (fromIndex: number, toIndex: number) => void;
+  setTasks: (tasks: Task[]) => void;
 
   // Multi-selection actions
   toggleTaskSelection: (id: string) => void;
@@ -159,6 +161,9 @@ export const useTaskStore = create<TaskStore>()(
         state.tasks.push(newTask);
       });
 
+      // Mark file as dirty
+      useFileStore.getState().markDirty();
+
       // Record command for undo/redo
       if (!historyStore.isUndoing && !historyStore.isRedoing) {
         historyStore.recordCommand({
@@ -176,9 +181,9 @@ export const useTaskStore = create<TaskStore>()(
 
     updateTask: (id, updates) => {
       const historyStore = useHistoryStore.getState();
-      let previousValues: Partial<Task> = {};
+      const previousValues: Partial<Task> = {};
       let taskName = '';
-      let parentUpdates: Array<{ id: string; updates: Partial<Task>; previousValues: Partial<Task> }> = [];
+      const parentUpdates: Array<{ id: string; updates: Partial<Task>; previousValues: Partial<Task> }> = [];
 
       set((state) => {
         // Create mutable copy to avoid read-only errors during redo
@@ -231,7 +236,8 @@ export const useTaskStore = create<TaskStore>()(
 
           // Capture previous values for undo
           Object.keys(updates).forEach((key) => {
-            (previousValues as any)[key] = (currentTask as any)[key];
+            const typedKey = key as keyof Task;
+            previousValues[typedKey] = currentTask[typedKey] as Task[keyof Task];
           });
 
           // Apply update to child task
@@ -291,6 +297,11 @@ export const useTaskStore = create<TaskStore>()(
           }
         }
       });
+
+      // Mark file as dirty
+      if (Object.keys(previousValues).length > 0) {
+        useFileStore.getState().markDirty();
+      }
 
       // Record command for undo/redo
       if (
@@ -401,6 +412,11 @@ export const useTaskStore = create<TaskStore>()(
         );
       });
 
+      // Mark file as dirty
+      if (deletedTasks.length > 0) {
+        useFileStore.getState().markDirty();
+      }
+
       // Record command for undo/redo
       if (!historyStore.isUndoing && !historyStore.isRedoing && deletedTasks.length > 0) {
         const taskName = deletedTasks[0]?.name || 'Unknown';
@@ -448,6 +464,9 @@ export const useTaskStore = create<TaskStore>()(
         });
       });
 
+      // Mark file as dirty
+      useFileStore.getState().markDirty();
+
       // Record command for undo/redo
       if (!historyStore.isUndoing && !historyStore.isRedoing) {
         const movedTaskName = previousOrder[fromIndex]?.name || 'Unknown';
@@ -464,6 +483,15 @@ export const useTaskStore = create<TaskStore>()(
         });
       }
     },
+
+    setTasks: (tasks) =>
+      set((state) => {
+        state.tasks = tasks;
+        state.selectedTaskIds = [];
+        state.lastSelectedTaskId = null;
+        state.activeCell = { taskId: null, field: null };
+        state.isEditingCell = false;
+      }),
 
     // Multi-selection actions
     toggleTaskSelection: (id) =>

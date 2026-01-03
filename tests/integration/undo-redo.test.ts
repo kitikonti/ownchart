@@ -6,7 +6,6 @@
 import { describe, it, expect, beforeEach } from 'vitest';
 import { useTaskStore } from '../../src/store/slices/taskSlice';
 import { useHistoryStore } from '../../src/store/slices/historySlice';
-import type { Task } from '../../src/types/chart.types';
 
 describe('Undo/Redo Integration Tests', () => {
   beforeEach(() => {
@@ -436,7 +435,6 @@ describe('Undo/Redo Integration Tests', () => {
 
     it('should respect maximum stack size', () => {
       const taskStore = useTaskStore.getState();
-      const historyStore = useHistoryStore.getState();
 
       // Get max stack size
       const maxSize = useHistoryStore.getState().maxStackSize;
@@ -468,8 +466,6 @@ describe('Undo/Redo Integration Tests', () => {
       const historyStore = useHistoryStore.getState();
 
       // Create 100 tasks
-      const startTime = performance.now();
-
       for (let i = 0; i < 100; i++) {
         taskStore.addTask({
           name: `Task ${i}`,
@@ -574,7 +570,6 @@ describe('Undo/Redo Integration Tests', () => {
 
     it('should not record commands while undoing', () => {
       const taskStore = useTaskStore.getState();
-      const historyStore = useHistoryStore.getState();
 
       // Create task
       taskStore.addTask({
@@ -602,7 +597,6 @@ describe('Undo/Redo Integration Tests', () => {
 
     it('should not record commands while redoing', () => {
       const taskStore = useTaskStore.getState();
-      const historyStore = useHistoryStore.getState();
 
       // Create task
       taskStore.addTask({
@@ -620,9 +614,6 @@ describe('Undo/Redo Integration Tests', () => {
 
       // Undo
       useHistoryStore.getState().undo();
-
-      // Clear undo stack to verify redo doesn't add to it
-      const redoStackLength = useHistoryStore.getState().redoStack.length;
 
       // Redo
       useHistoryStore.getState().redo();

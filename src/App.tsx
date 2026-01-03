@@ -7,10 +7,14 @@ import { Toaster } from 'react-hot-toast';
 import { ZoomIndicator } from './components/GanttChart/ZoomIndicator';
 import { AppToolbar, GanttLayout } from './components/Layout';
 import { useKeyboardShortcuts } from './hooks/useKeyboardShortcuts';
+import { useUnsavedChanges } from './hooks/useUnsavedChanges';
 
 function App(): JSX.Element {
-  // Enable global keyboard shortcuts (Ctrl+Z, Ctrl+Shift+Z, Ctrl+Y)
+  // Enable global keyboard shortcuts (Ctrl+Z, Ctrl+Shift+Z, Ctrl+Y, Ctrl+S, Ctrl+O, Ctrl+Alt+N)
   useKeyboardShortcuts();
+
+  // Warn before leaving with unsaved changes
+  useUnsavedChanges();
 
   return (
     <>
