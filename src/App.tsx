@@ -8,7 +8,7 @@ import { ZoomIndicator } from './components/GanttChart/ZoomIndicator';
 import { AppToolbar, GanttLayout } from './components/Layout';
 import { useKeyboardShortcuts } from './hooks/useKeyboardShortcuts';
 import { useUnsavedChanges } from './hooks/useUnsavedChanges';
-import { useLocalStoragePersistence } from './hooks/useLocalStoragePersistence';
+import { useMultiTabPersistence } from './hooks/useMultiTabPersistence';
 import { useDocumentTitle } from './hooks/useDocumentTitle';
 
 function App(): JSX.Element {
@@ -18,8 +18,8 @@ function App(): JSX.Element {
   // Warn before leaving with unsaved changes
   useUnsavedChanges();
 
-  // Persist state to localStorage and restore on load
-  useLocalStoragePersistence();
+  // Persist state to localStorage with multi-tab support
+  useMultiTabPersistence();
 
   // Update browser tab title with filename
   useDocumentTitle();
