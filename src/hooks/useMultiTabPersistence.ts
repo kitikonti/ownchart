@@ -87,8 +87,12 @@ export function useMultiTabPersistence(): void {
     const tabId = tabIdRef.current;
 
     const saveCurrentState = () => {
-      // Don't save during restoration to avoid loops
-      if (isRestoringRef.current) return;
+      // Don't save during initial restoration to avoid loops
+      // BUT allow saves after restoration is complete
+      if (isRestoringRef.current) {
+        console.log('[MultiTab] Skipping save during restoration');
+        return;
+      }
 
       const taskState = useTaskStore.getState();
       const chartState = useChartStore.getState();
@@ -111,6 +115,10 @@ export function useMultiTabPersistence(): void {
       };
 
       saveTabChart(tabId, chartData);
+      console.log('[MultiTab] State saved to localStorage', {
+        tasks: chartData.tasks.length,
+        fileName: chartData.fileState.fileName,
+      });
     };
 
     // Subscribe to all store changes
@@ -118,7 +126,17 @@ export function useMultiTabPersistence(): void {
     const unsubscribeChart = useChartStore.subscribe(saveCurrentState);
     const unsubscribeFile = useFileStore.subscribe(saveCurrentState);
 
+    // Initial save after mount (after restoration is complete)
+    // This ensures the state is saved even if no changes happen
+    const initialSaveTimer = setTimeout(() => {
+      if (!isRestoringRef.current) {
+        saveCurrentState();
+        console.log('[MultiTab] Initial state saved');
+      }
+    }, 100);
+
     return () => {
+      clearTimeout(initialSaveTimer);
       unsubscribeTasks();
       unsubscribeChart();
       unsubscribeFile();
