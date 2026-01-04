@@ -1588,4 +1588,330 @@ describe('Task Store - CRUD Operations', () => {
       });
     });
   });
+
+  describe('insertTaskAbove', () => {
+    it('should insert a new task above the reference task', () => {
+      const tasks: Task[] = [
+        {
+          id: 'task-1',
+          name: 'First Task',
+          startDate: '2025-01-10',
+          endDate: '2025-01-17',
+          duration: 7,
+          progress: 0,
+          color: '#3b82f6',
+          order: 0,
+          type: 'task',
+          metadata: {},
+        },
+      ];
+      useTaskStore.setState({ tasks });
+
+      const { insertTaskAbove } = useTaskStore.getState();
+      insertTaskAbove('task-1');
+
+      const updatedTasks = useTaskStore.getState().tasks;
+      expect(updatedTasks).toHaveLength(2);
+      expect(updatedTasks[0].name).toBe('New Task');
+      expect(updatedTasks[1].id).toBe('task-1');
+    });
+
+    it('should set end date one day before reference start date', () => {
+      const tasks: Task[] = [
+        {
+          id: 'task-1',
+          name: 'Reference Task',
+          startDate: '2025-01-15',
+          endDate: '2025-01-20',
+          duration: 6,
+          progress: 0,
+          color: '#3b82f6',
+          order: 0,
+          type: 'task',
+          metadata: {},
+        },
+      ];
+      useTaskStore.setState({ tasks });
+
+      const { insertTaskAbove } = useTaskStore.getState();
+      insertTaskAbove('task-1');
+
+      const newTask = useTaskStore.getState().tasks[0];
+      expect(newTask.endDate).toBe('2025-01-14'); // Day before 2025-01-15
+    });
+
+    it('should inherit parent from reference task', () => {
+      const tasks: Task[] = [
+        {
+          id: 'parent',
+          name: 'Parent',
+          startDate: '2025-01-01',
+          endDate: '2025-01-31',
+          duration: 31,
+          progress: 0,
+          color: '#3b82f6',
+          order: 0,
+          type: 'summary',
+          metadata: {},
+        },
+        {
+          id: 'child',
+          name: 'Child Task',
+          startDate: '2025-01-10',
+          endDate: '2025-01-15',
+          duration: 6,
+          progress: 0,
+          color: '#3b82f6',
+          order: 1,
+          type: 'task',
+          parent: 'parent',
+          metadata: {},
+        },
+      ];
+      useTaskStore.setState({ tasks });
+
+      const { insertTaskAbove } = useTaskStore.getState();
+      insertTaskAbove('child');
+
+      const newTask = useTaskStore.getState().tasks[1];
+      expect(newTask.parent).toBe('parent');
+    });
+
+    it('should update order for all tasks', () => {
+      const tasks: Task[] = [
+        {
+          id: 'task-1',
+          name: 'Task 1',
+          startDate: '2025-01-10',
+          endDate: '2025-01-15',
+          duration: 6,
+          progress: 0,
+          color: '#3b82f6',
+          order: 0,
+          type: 'task',
+          metadata: {},
+        },
+        {
+          id: 'task-2',
+          name: 'Task 2',
+          startDate: '2025-01-20',
+          endDate: '2025-01-25',
+          duration: 6,
+          progress: 0,
+          color: '#3b82f6',
+          order: 1,
+          type: 'task',
+          metadata: {},
+        },
+      ];
+      useTaskStore.setState({ tasks });
+
+      const { insertTaskAbove } = useTaskStore.getState();
+      insertTaskAbove('task-2');
+
+      const updatedTasks = useTaskStore.getState().tasks;
+      expect(updatedTasks[0].order).toBe(0);
+      expect(updatedTasks[1].order).toBe(1);
+      expect(updatedTasks[2].order).toBe(2);
+    });
+
+    it('should do nothing if reference task not found', () => {
+      const tasks: Task[] = [
+        {
+          id: 'task-1',
+          name: 'Task 1',
+          startDate: '2025-01-10',
+          endDate: '2025-01-15',
+          duration: 6,
+          progress: 0,
+          color: '#3b82f6',
+          order: 0,
+          type: 'task',
+          metadata: {},
+        },
+      ];
+      useTaskStore.setState({ tasks });
+
+      const { insertTaskAbove } = useTaskStore.getState();
+      insertTaskAbove('non-existent');
+
+      expect(useTaskStore.getState().tasks).toHaveLength(1);
+    });
+  });
+
+  describe('insertTaskBelow', () => {
+    it('should insert a new task below the reference task', () => {
+      const tasks: Task[] = [
+        {
+          id: 'task-1',
+          name: 'First Task',
+          startDate: '2025-01-10',
+          endDate: '2025-01-17',
+          duration: 7,
+          progress: 0,
+          color: '#3b82f6',
+          order: 0,
+          type: 'task',
+          metadata: {},
+        },
+      ];
+      useTaskStore.setState({ tasks });
+
+      const { insertTaskBelow } = useTaskStore.getState();
+      insertTaskBelow('task-1');
+
+      const updatedTasks = useTaskStore.getState().tasks;
+      expect(updatedTasks).toHaveLength(2);
+      expect(updatedTasks[0].id).toBe('task-1');
+      expect(updatedTasks[1].name).toBe('New Task');
+    });
+
+    it('should set start date one day after reference end date', () => {
+      const tasks: Task[] = [
+        {
+          id: 'task-1',
+          name: 'Reference Task',
+          startDate: '2025-01-10',
+          endDate: '2025-01-15',
+          duration: 6,
+          progress: 0,
+          color: '#3b82f6',
+          order: 0,
+          type: 'task',
+          metadata: {},
+        },
+      ];
+      useTaskStore.setState({ tasks });
+
+      const { insertTaskBelow } = useTaskStore.getState();
+      insertTaskBelow('task-1');
+
+      const newTask = useTaskStore.getState().tasks[1];
+      expect(newTask.startDate).toBe('2025-01-16'); // Day after 2025-01-15
+    });
+
+    it('should inherit parent from reference task', () => {
+      const tasks: Task[] = [
+        {
+          id: 'parent',
+          name: 'Parent',
+          startDate: '2025-01-01',
+          endDate: '2025-01-31',
+          duration: 31,
+          progress: 0,
+          color: '#3b82f6',
+          order: 0,
+          type: 'summary',
+          metadata: {},
+        },
+        {
+          id: 'child',
+          name: 'Child Task',
+          startDate: '2025-01-10',
+          endDate: '2025-01-15',
+          duration: 6,
+          progress: 0,
+          color: '#3b82f6',
+          order: 1,
+          type: 'task',
+          parent: 'parent',
+          metadata: {},
+        },
+      ];
+      useTaskStore.setState({ tasks });
+
+      const { insertTaskBelow } = useTaskStore.getState();
+      insertTaskBelow('child');
+
+      const newTask = useTaskStore.getState().tasks[2];
+      expect(newTask.parent).toBe('parent');
+    });
+
+    it('should update order for all tasks', () => {
+      const tasks: Task[] = [
+        {
+          id: 'task-1',
+          name: 'Task 1',
+          startDate: '2025-01-10',
+          endDate: '2025-01-15',
+          duration: 6,
+          progress: 0,
+          color: '#3b82f6',
+          order: 0,
+          type: 'task',
+          metadata: {},
+        },
+        {
+          id: 'task-2',
+          name: 'Task 2',
+          startDate: '2025-01-20',
+          endDate: '2025-01-25',
+          duration: 6,
+          progress: 0,
+          color: '#3b82f6',
+          order: 1,
+          type: 'task',
+          metadata: {},
+        },
+      ];
+      useTaskStore.setState({ tasks });
+
+      const { insertTaskBelow } = useTaskStore.getState();
+      insertTaskBelow('task-1');
+
+      const updatedTasks = useTaskStore.getState().tasks;
+      expect(updatedTasks[0].order).toBe(0);
+      expect(updatedTasks[1].order).toBe(1);
+      expect(updatedTasks[2].order).toBe(2);
+    });
+
+    it('should do nothing if reference task not found', () => {
+      const tasks: Task[] = [
+        {
+          id: 'task-1',
+          name: 'Task 1',
+          startDate: '2025-01-10',
+          endDate: '2025-01-15',
+          duration: 6,
+          progress: 0,
+          color: '#3b82f6',
+          order: 0,
+          type: 'task',
+          metadata: {},
+        },
+      ];
+      useTaskStore.setState({ tasks });
+
+      const { insertTaskBelow } = useTaskStore.getState();
+      insertTaskBelow('non-existent');
+
+      expect(useTaskStore.getState().tasks).toHaveLength(1);
+    });
+
+    it('should create task with default 7-day duration', () => {
+      const tasks: Task[] = [
+        {
+          id: 'task-1',
+          name: 'Reference Task',
+          startDate: '2025-01-10',
+          endDate: '2025-01-15',
+          duration: 6,
+          progress: 0,
+          color: '#3b82f6',
+          order: 0,
+          type: 'task',
+          metadata: {},
+        },
+      ];
+      useTaskStore.setState({ tasks });
+
+      const { insertTaskBelow } = useTaskStore.getState();
+      insertTaskBelow('task-1');
+
+      const newTask = useTaskStore.getState().tasks[1];
+      expect(newTask.duration).toBe(7);
+      expect(newTask.startDate).toBe('2025-01-16');
+      expect(newTask.endDate).toBe('2025-01-22'); // 7 days from 2025-01-16
+    });
+  });
 });
