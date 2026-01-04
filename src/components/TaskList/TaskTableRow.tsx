@@ -145,34 +145,25 @@ export function TaskTableRow({
     }
   };
 
-  // Build clipboard border style
-  const clipboardStyle =
-    isInClipboard && clipboardPosition
-      ? {
-          boxShadow: [
-            // Left border (always)
-            "inset 2px 0 0 0 #9ca3af",
-            // Right border (always)
-            "inset -2px 0 0 0 #9ca3af",
-            // Top border (only if first in group)
-            clipboardPosition.isFirst ? "inset 0 2px 0 0 #9ca3af" : "",
-            // Bottom border (only if last in group)
-            clipboardPosition.isLast ? "inset 0 -2px 0 0 #9ca3af" : "",
-          ]
-            .filter(Boolean)
-            .join(", "),
-        }
-      : {};
-
   return (
     <div
       ref={setNodeRef}
-      style={{ ...style, ...clipboardStyle }}
+      style={style}
       className={`task-table-row col-span-full grid ${
         isSelected ? "bg-blue-50" : "bg-white"
-      } ${isInClipboard ? "relative z-10" : ""}`}
+      } ${isInClipboard ? "relative" : ""}`}
       role="row"
     >
+      {/* Clipboard selection overlay with dashed border */}
+      {isInClipboard && clipboardPosition && (
+        <div
+          className="absolute inset-0 pointer-events-none z-20 border-2 border-dashed border-gray-400"
+          style={{
+            borderTopStyle: clipboardPosition.isFirst ? "dashed" : "none",
+            borderBottomStyle: clipboardPosition.isLast ? "dashed" : "none",
+          }}
+        />
+      )}
       {/* Drag Handle Cell */}
       <div
         className="drag-handle-cell flex items-center justify-center px-2 py-2 border-b border-r border-gray-200 bg-gray-50 cursor-grab active:cursor-grabbing"
