@@ -132,7 +132,10 @@ export function ChartCanvas({
       }
     });
 
-    return { taskGeometriesMap: geometriesMap, taskGeometriesArray: geometriesArray };
+    return {
+      taskGeometriesMap: geometriesMap,
+      taskGeometriesArray: geometriesArray,
+    };
   }, [tasks, scale]);
 
   // Sprint 1.4: Handle mouse up on task for dependency drop

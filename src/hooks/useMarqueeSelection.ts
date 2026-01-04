@@ -35,7 +35,12 @@ interface UseMarqueeSelectionResult {
   /** Current marquee rectangle (null if not dragging) */
   marqueeRect: MarqueeRect | null;
   /** Normalized rectangle for rendering (x, y, width, height) */
-  normalizedRect: { x: number; y: number; width: number; height: number } | null;
+  normalizedRect: {
+    x: number;
+    y: number;
+    width: number;
+    height: number;
+  } | null;
   /** Whether marquee selection is active */
   isSelecting: boolean;
   /** Mouse down handler for SVG */
@@ -174,7 +179,12 @@ export function useMarqueeSelection({
       document.removeEventListener("mousemove", handleMouseMove);
       document.removeEventListener("mouseup", handleMouseUp);
     },
-    [getSvgCoordinates, findIntersectingTasks, onSelectionChange, handleMouseMove]
+    [
+      getSvgCoordinates,
+      findIntersectingTasks,
+      onSelectionChange,
+      handleMouseMove,
+    ]
   );
 
   // Mouse down handler (to be attached to SVG)
