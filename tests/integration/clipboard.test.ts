@@ -43,7 +43,7 @@ describe("Clipboard Integration Tests", () => {
       isEditingCell: false,
       columnWidths: {},
       taskTableWidth: null,
-      cutTaskIds: [],
+      clipboardTaskIds: [],
       cutCell: null,
     });
 
@@ -190,7 +190,7 @@ describe("Clipboard Integration Tests", () => {
       clipboardStore.cutRows(["1"]);
 
       // Verify cut mark is set
-      expect(useTaskStore.getState().cutTaskIds).toContain("1");
+      expect(useTaskStore.getState().clipboardTaskIds).toContain("1");
 
       // Paste
       clipboardStore.pasteRows();
@@ -199,7 +199,7 @@ describe("Clipboard Integration Tests", () => {
       expect(useTaskStore.getState().tasks).toHaveLength(2);
 
       // Cut mark should be cleared
-      expect(useTaskStore.getState().cutTaskIds).toHaveLength(0);
+      expect(useTaskStore.getState().clipboardTaskIds).toHaveLength(0);
     });
 
     it("should clear cut marks after paste", () => {
@@ -212,13 +212,13 @@ describe("Clipboard Integration Tests", () => {
 
       // Cut
       clipboardStore.cutRows(["1"]);
-      expect(useTaskStore.getState().cutTaskIds).toContain("1");
+      expect(useTaskStore.getState().clipboardTaskIds).toContain("1");
 
       // Paste
       clipboardStore.pasteRows();
 
       // Cut marks should be cleared
-      expect(useTaskStore.getState().cutTaskIds).toHaveLength(0);
+      expect(useTaskStore.getState().clipboardTaskIds).toHaveLength(0);
     });
 
     it("should clear clipboard after cut-paste (one-time use)", () => {
@@ -502,7 +502,7 @@ describe("Clipboard Integration Tests", () => {
   });
 
   describe("Visual Feedback State", () => {
-    it("should set cutTaskIds for visual feedback on cut rows", () => {
+    it("should set clipboardTaskIds for visual feedback on cut rows", () => {
       useTaskStore.setState({
         tasks: [createTask("1", "Task 1", 0)],
         selectedTaskIds: ["1"],
@@ -513,7 +513,7 @@ describe("Clipboard Integration Tests", () => {
       // Cut
       clipboardStore.cutRows(["1"]);
 
-      expect(useTaskStore.getState().cutTaskIds).toEqual(["1"]);
+      expect(useTaskStore.getState().clipboardTaskIds).toEqual(["1"]);
     });
 
     it("should set cutCell for visual feedback on cut cell", () => {
@@ -532,20 +532,22 @@ describe("Clipboard Integration Tests", () => {
       });
     });
 
-    it("should clear visual feedback on copy (replacing cut)", () => {
+    it("should clear cutCell on copy (replacing cut)", () => {
       useTaskStore.setState({
         tasks: [createTask("1", "Task 1", 0)],
         selectedTaskIds: ["1"],
-        cutTaskIds: ["1"],
+        clipboardTaskIds: ["1"],
         cutCell: { taskId: "1", field: "name" },
       });
 
       const clipboardStore = useClipboardStore.getState();
 
-      // Copy (should clear cut marks)
+      // Copy (should clear cutCell, clipboardTaskIds stays with copied IDs)
       clipboardStore.copyRows(["1"]);
 
-      expect(useTaskStore.getState().cutTaskIds).toEqual([]);
+      // clipboardTaskIds now contains the copied task IDs
+      expect(useTaskStore.getState().clipboardTaskIds).toEqual(["1"]);
+      // cutCell should be cleared
       expect(useTaskStore.getState().cutCell).toBeNull();
     });
   });
