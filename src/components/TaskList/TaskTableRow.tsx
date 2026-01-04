@@ -233,8 +233,8 @@ export function TaskTableRow({
                 className="flex items-center gap-1"
                 style={{ paddingLeft: `${level * INDENT_SIZE}px` }}
               >
-                {/* Expand/collapse button for any task with children */}
-                {hasChildren ? (
+                {/* Expand/collapse button for summary tasks with children only */}
+                {hasChildren && task.type === "summary" ? (
                   <button
                     onClick={(e) => {
                       e.stopPropagation();

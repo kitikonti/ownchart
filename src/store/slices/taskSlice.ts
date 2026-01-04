@@ -800,7 +800,8 @@ export const useTaskStore = create<TaskStore>()(
         const task = state.tasks.find((t) => t.id === taskId);
         if (!task) return;
 
-        // Any task with children can be collapsed (task or summary)
+        // Only summary tasks with children can be collapsed
+        if (task.type !== "summary") return;
         const hasChildren = state.tasks.some((t) => t.parent === taskId);
         if (!hasChildren) return;
 
@@ -812,6 +813,8 @@ export const useTaskStore = create<TaskStore>()(
         const task = state.tasks.find((t) => t.id === taskId);
         if (!task) return;
 
+        // Only summary tasks can be expanded/collapsed
+        if (task.type !== "summary") return;
         const hasChildren = state.tasks.some((t) => t.parent === taskId);
         if (hasChildren) {
           task.open = true;
@@ -823,6 +826,8 @@ export const useTaskStore = create<TaskStore>()(
         const task = state.tasks.find((t) => t.id === taskId);
         if (!task) return;
 
+        // Only summary tasks can be expanded/collapsed
+        if (task.type !== "summary") return;
         const hasChildren = state.tasks.some((t) => t.parent === taskId);
         if (hasChildren) {
           task.open = false;
@@ -832,6 +837,8 @@ export const useTaskStore = create<TaskStore>()(
     expandAll: () =>
       set((state) => {
         state.tasks.forEach((task) => {
+          // Only summary tasks can be expanded
+          if (task.type !== "summary") return;
           const hasChildren = state.tasks.some((t) => t.parent === task.id);
           if (hasChildren) {
             task.open = true;
@@ -842,6 +849,8 @@ export const useTaskStore = create<TaskStore>()(
     collapseAll: () =>
       set((state) => {
         state.tasks.forEach((task) => {
+          // Only summary tasks can be collapsed
+          if (task.type !== "summary") return;
           const hasChildren = state.tasks.some((t) => t.parent === task.id);
           if (hasChildren) {
             task.open = false;
