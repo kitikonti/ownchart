@@ -2,6 +2,23 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [0.0.6](https://github.com/kitikonti/ownchart/compare/v0.0.5...v0.0.6) (2026-01-04)
+
+
+### Features
+
+* add DEL key and toolbar button to delete selected tasks ([8838294](https://github.com/kitikonti/ownchart/commit/88382945dfeeb2fae4a41e549888bcf2627e9622))
+
+
+### UI/UX
+
+* fix cell edit mode vertical centering and left padding ([41bbcd2](https://github.com/kitikonti/ownchart/commit/41bbcd2ddc691c1cfbab1f3af6bcc25183b65df0))
+* improve clipboard visual feedback ([c531b18](https://github.com/kitikonti/ownchart/commit/c531b187cea4b7dcfaa1122276877afac98bcca4))
+* match placeholder row edit styling with regular cells ([083ddde](https://github.com/kitikonti/ownchart/commit/083ddde3c9b0f42ed49ea20c3ae778be651d2d76))
+* use consistent placeholder text for new task row ([e049146](https://github.com/kitikonti/ownchart/commit/e0491461636e04ffaa89d0118612d8746058493b))
+* use dashed border overlay for clipboard selection ([b5c0edd](https://github.com/kitikonti/ownchart/commit/b5c0edd1d4027f30efd67bc35b26d7b709372068))
+* use dotted border for clipboard selection ([abef7be](https://github.com/kitikonti/ownchart/commit/abef7be517cceca9f391832d375adc6632ab43ed))
+
 ### [0.0.5](https://github.com/kitikonti/ownchart/compare/v0.0.4...v0.0.5) (2026-01-04)
 
 
