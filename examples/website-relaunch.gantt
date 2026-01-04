@@ -513,6 +513,176 @@
         "updatedAt": "2026-01-02T10:30:00.000Z"
       }
     ],
+    "dependencies": [
+      {
+        "id": "dep-001",
+        "from": "6ba7b810-9dad-11d1-80b4-00c04fd430c8",
+        "to": "6ba7b811-9dad-11d1-80b4-00c04fd430c8",
+        "type": "FS",
+        "lag": 0,
+        "createdAt": "2026-01-02T10:30:00.000Z"
+      },
+      {
+        "id": "dep-002",
+        "from": "6ba7b811-9dad-11d1-80b4-00c04fd430c8",
+        "to": "6ba7b812-9dad-11d1-80b4-00c04fd430c8",
+        "type": "FS",
+        "lag": 0,
+        "createdAt": "2026-01-02T10:30:00.000Z"
+      },
+      {
+        "id": "dep-003",
+        "from": "6ba7b812-9dad-11d1-80b4-00c04fd430c8",
+        "to": "6ba7b813-9dad-11d1-80b4-00c04fd430c8",
+        "type": "FS",
+        "lag": 0,
+        "createdAt": "2026-01-02T10:30:00.000Z"
+      },
+      {
+        "id": "dep-004",
+        "from": "6ba7b813-9dad-11d1-80b4-00c04fd430c8",
+        "to": "987fbc97-4bed-5078-9f07-9141ba07c9f3",
+        "type": "FS",
+        "lag": 1,
+        "createdAt": "2026-01-02T10:30:00.000Z"
+      },
+      {
+        "id": "dep-005",
+        "from": "6ba7b813-9dad-11d1-80b4-00c04fd430c8",
+        "to": "998fbc97-4bed-5078-9f07-9141ba07c9f3",
+        "type": "FS",
+        "lag": 1,
+        "createdAt": "2026-01-02T10:30:00.000Z"
+      },
+      {
+        "id": "dep-006",
+        "from": "987fbc97-4bed-5078-9f07-9141ba07c9f3",
+        "to": "987fbc98-4bed-5078-9f07-9141ba07c9f3",
+        "type": "FS",
+        "lag": 0,
+        "createdAt": "2026-01-02T10:30:00.000Z"
+      },
+      {
+        "id": "dep-007",
+        "from": "987fbc98-4bed-5078-9f07-9141ba07c9f3",
+        "to": "987fbc99-4bed-5078-9f07-9141ba07c9f3",
+        "type": "FS",
+        "lag": 0,
+        "createdAt": "2026-01-02T10:30:00.000Z"
+      },
+      {
+        "id": "dep-008",
+        "from": "998fbc97-4bed-5078-9f07-9141ba07c9f3",
+        "to": "998fbc98-4bed-5078-9f07-9141ba07c9f3",
+        "type": "FS",
+        "lag": 0,
+        "createdAt": "2026-01-02T10:30:00.000Z"
+      },
+      {
+        "id": "dep-009",
+        "from": "998fbc98-4bed-5078-9f07-9141ba07c9f3",
+        "to": "998fbc99-4bed-5078-9f07-9141ba07c9f3",
+        "type": "FS",
+        "lag": 0,
+        "createdAt": "2026-01-02T10:30:00.000Z"
+      },
+      {
+        "id": "dep-010",
+        "from": "987fbc99-4bed-5078-9f07-9141ba07c9f3",
+        "to": "a98fbc97-4bed-5078-9f07-9141ba07c9f3",
+        "type": "FS",
+        "lag": 0,
+        "createdAt": "2026-01-02T10:30:00.000Z"
+      },
+      {
+        "id": "dep-011",
+        "from": "998fbc99-4bed-5078-9f07-9141ba07c9f3",
+        "to": "a98fbc97-4bed-5078-9f07-9141ba07c9f3",
+        "type": "FS",
+        "lag": 0,
+        "createdAt": "2026-01-02T10:30:00.000Z"
+      },
+      {
+        "id": "dep-012",
+        "from": "6ba7b811-9dad-11d1-80b4-00c04fd430c8",
+        "to": "c27dfd05-3bcf-4537-a053-7d39dfd30ada",
+        "type": "FS",
+        "lag": 0,
+        "createdAt": "2026-01-02T10:30:00.000Z"
+      },
+      {
+        "id": "dep-013",
+        "from": "c27dfd05-3bcf-4537-a053-7d39dfd30ada",
+        "to": "c27dfd06-3bcf-4537-a053-7d39dfd30ada",
+        "type": "FS",
+        "lag": 0,
+        "createdAt": "2026-01-02T10:30:00.000Z"
+      },
+      {
+        "id": "dep-014",
+        "from": "c27dfd06-3bcf-4537-a053-7d39dfd30ada",
+        "to": "c27dfd07-3bcf-4537-a053-7d39dfd30ada",
+        "type": "FS",
+        "lag": 0,
+        "createdAt": "2026-01-02T10:30:00.000Z"
+      },
+      {
+        "id": "dep-015",
+        "from": "a98fbc97-4bed-5078-9f07-9141ba07c9f3",
+        "to": "e47fff25-5def-6759-c275-9f5afff52cfc",
+        "type": "FS",
+        "lag": 0,
+        "createdAt": "2026-01-02T10:30:00.000Z"
+      },
+      {
+        "id": "dep-016",
+        "from": "c27dfd07-3bcf-4537-a053-7d39dfd30ada",
+        "to": "e47fff25-5def-6759-c275-9f5afff52cfc",
+        "type": "FS",
+        "lag": 0,
+        "createdAt": "2026-01-02T10:30:00.000Z"
+      },
+      {
+        "id": "dep-017",
+        "from": "e47fff25-5def-6759-c275-9f5afff52cfc",
+        "to": "e47fff26-5def-6759-c275-9f5afff52cfc",
+        "type": "FS",
+        "lag": 0,
+        "createdAt": "2026-01-02T10:30:00.000Z"
+      },
+      {
+        "id": "dep-018",
+        "from": "e47fff26-5def-6759-c275-9f5afff52cfc",
+        "to": "e47fff27-5def-6759-c275-9f5afff52cfc",
+        "type": "FS",
+        "lag": 0,
+        "createdAt": "2026-01-02T10:30:00.000Z"
+      },
+      {
+        "id": "dep-019",
+        "from": "e47fff27-5def-6759-c275-9f5afff52cfc",
+        "to": "e47fff28-5def-6759-c275-9f5afff52cfc",
+        "type": "FS",
+        "lag": 0,
+        "createdAt": "2026-01-02T10:30:00.000Z"
+      },
+      {
+        "id": "dep-020",
+        "from": "e47fff28-5def-6759-c275-9f5afff52cfc",
+        "to": "f58aa039-6efa-7869-d386-ab6baaa63dad",
+        "type": "FS",
+        "lag": 0,
+        "createdAt": "2026-01-02T10:30:00.000Z"
+      },
+      {
+        "id": "dep-021",
+        "from": "f58aa039-6efa-7869-d386-ab6baaa63dad",
+        "to": "f58aa040-6efa-7869-d386-ab6baaa63dad",
+        "type": "FS",
+        "lag": 0,
+        "createdAt": "2026-01-02T10:30:00.000Z"
+      }
+    ],
     "viewSettings": {
       "zoom": 1.2,
       "panOffset": {

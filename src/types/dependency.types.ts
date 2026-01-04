@@ -1,0 +1,100 @@
+/**
+ * Dependency types for task relationships.
+ * Sprint 1.4 - Dependencies (Finish-to-Start Only)
+ *
+ * Based on DATA_MODEL.md Section 2.2
+ */
+
+/**
+ * Dependency type classification.
+ * Sprint 1.4 implements only FS (Finish-to-Start).
+ * Other types are defined for future compatibility (V1.1+).
+ *
+ * @type FS - Finish-to-Start: A finishes → B starts (most common)
+ * @type SS - Start-to-Start: A starts → B can start
+ * @type FF - Finish-to-Finish: A finishes → B can finish
+ * @type SF - Start-to-Finish: A starts → B can finish (rare)
+ */
+export type DependencyType = "FS" | "SS" | "FF" | "SF";
+
+/**
+ * Represents a dependency relationship between two tasks.
+ *
+ * @property id - Unique identifier (UUID v4)
+ * @property fromTaskId - Source task ID (predecessor)
+ * @property toTaskId - Target task ID (successor)
+ * @property type - Dependency type (FS for Sprint 1.4)
+ * @property lag - Offset days (positive = gap, negative = overlap)
+ * @property createdAt - Creation timestamp (ISO 8601)
+ */
+export interface Dependency {
+  id: string;
+  fromTaskId: string;
+  toTaskId: string;
+  type: DependencyType;
+  lag?: number;
+  createdAt: string;
+}
+
+/**
+ * Result of cycle detection algorithm.
+ */
+export interface CycleDetectionResult {
+  hasCycle: boolean;
+  cyclePath?: string[]; // Task IDs forming the cycle (e.g., ['A', 'B', 'C', 'A'])
+}
+
+/**
+ * Result of date adjustment calculation.
+ */
+export interface DateAdjustment {
+  taskId: string;
+  oldStartDate: string;
+  oldEndDate: string;
+  newStartDate: string;
+  newEndDate: string;
+}
+
+/**
+ * Arrow path calculation result for rendering.
+ */
+export interface ArrowPath {
+  path: string; // SVG path d attribute
+  arrowHead: {
+    x: number;
+    y: number;
+    angle: number; // Rotation angle in degrees
+  };
+}
+
+/**
+ * Task position for arrow routing.
+ */
+export interface TaskPosition {
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+}
+
+/**
+ * Dependency drag state for creating new dependencies.
+ */
+export interface DependencyDragState {
+  isDragging: boolean;
+  fromTaskId: string | null;
+  fromSide: "start" | "end" | null;
+  currentPosition: { x: number; y: number };
+  validTargets: Set<string>;
+  invalidTargets: Set<string>;
+}
+
+/**
+ * Result of attempting to add a dependency.
+ */
+export interface AddDependencyResult {
+  success: boolean;
+  error?: string;
+  dependency?: Dependency;
+  dateAdjustments?: DateAdjustment[];
+}

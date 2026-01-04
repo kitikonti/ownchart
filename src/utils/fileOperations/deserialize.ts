@@ -3,7 +3,13 @@
  */
 
 import type { Task, TaskType } from "../../types/chart.types";
-import type { GanttFile, SerializedTask, DeserializeResult } from "./types";
+import type { Dependency, DependencyType } from "../../types/dependency.types";
+import type {
+  GanttFile,
+  SerializedTask,
+  SerializedDependency,
+  DeserializeResult,
+} from "./types";
 import {
   validatePreParse,
   safeJsonParse,
@@ -107,12 +113,16 @@ export async function deserializeGanttFile(
 
     // Extract data for app
     const tasks = ganttFile.chart.tasks.map(deserializeTask);
+    const dependencies = (ganttFile.chart.dependencies || []).map(
+      deserializeDependency
+    );
     const viewSettings = ganttFile.chart.viewSettings;
 
     return {
       success: true,
       data: {
         tasks,
+        dependencies, // Sprint 1.4
         viewSettings,
         chartName: ganttFile.chart.name,
         chartId: ganttFile.chart.id,
@@ -190,4 +200,19 @@ function deserializeTask(serialized: SerializedTask): Task & {
   }
 
   return task;
+}
+
+/**
+ * Convert SerializedDependency to Dependency
+ * Sprint 1.4 - Dependencies
+ */
+function deserializeDependency(serialized: SerializedDependency): Dependency {
+  return {
+    id: serialized.id,
+    fromTaskId: serialized.from,
+    toTaskId: serialized.to,
+    type: serialized.type as DependencyType,
+    lag: serialized.lag,
+    createdAt: serialized.createdAt || new Date().toISOString(),
+  };
 }

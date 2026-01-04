@@ -4,6 +4,7 @@
  */
 
 import type { Task, TaskType } from "./chart.types";
+import type { Dependency, DateAdjustment } from "./dependency.types";
 
 export interface Command {
   id: string; // UUID for tracking
@@ -43,6 +44,11 @@ export enum CommandType {
   TOGGLE_TASK_COLLAPSED = "toggleTaskCollapsed",
   EXPAND_ALL = "expandAll",
   COLLAPSE_ALL = "collapseAll",
+
+  // Dependency operations (Sprint 1.4)
+  ADD_DEPENDENCY = "addDependency",
+  DELETE_DEPENDENCY = "deleteDependency",
+  UPDATE_DEPENDENCY = "updateDependency",
 }
 
 export type CommandParams =
@@ -54,7 +60,10 @@ export type CommandParams =
   | IndentOutdentParams
   | ConvertTypeParams
   | SelectionParams
-  | CollapseParams;
+  | CollapseParams
+  | AddDependencyParams
+  | DeleteDependencyParams
+  | UpdateDependencyParams;
 
 // Specific parameter types for each command
 export interface AddTaskParams {
@@ -114,4 +123,20 @@ export interface SelectionParams {
 export interface CollapseParams {
   taskId?: string; // undefined for expand/collapseAll
   previousState: boolean | Record<string, boolean>; // Single boolean or map of all tasks
+}
+
+// Dependency command params (Sprint 1.4)
+export interface AddDependencyParams {
+  dependency: Dependency;
+  dateAdjustments: DateAdjustment[]; // Store any cascading date changes for undo
+}
+
+export interface DeleteDependencyParams {
+  dependency: Dependency; // Store full dependency for redo
+}
+
+export interface UpdateDependencyParams {
+  id: string;
+  updates: Partial<Dependency>;
+  previousValues: Partial<Dependency>;
 }

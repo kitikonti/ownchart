@@ -12,8 +12,12 @@ import type {
   Command,
   AddTaskParams,
   UpdateTaskParams,
+  AddDependencyParams,
+  DeleteDependencyParams,
+  UpdateDependencyParams,
 } from "../../types/command.types";
 import { useTaskStore } from "./taskSlice";
+import { useDependencyStore } from "./dependencySlice";
 
 interface HistoryState {
   undoStack: Command[];
@@ -300,6 +304,48 @@ function executeUndoCommand(command: Command): void {
       break;
     }
 
+    // Dependency operations (Sprint 1.4)
+    case "addDependency": {
+      const params = command.params as AddDependencyParams;
+      const depStore = useDependencyStore.getState();
+
+      // Remove the dependency
+      depStore.removeDependency(params.dependency.id);
+
+      // Revert date adjustments
+      if (params.dateAdjustments) {
+        for (const adj of params.dateAdjustments) {
+          taskStore.updateTask(adj.taskId, {
+            startDate: adj.oldStartDate,
+            endDate: adj.oldEndDate,
+          });
+        }
+      }
+      break;
+    }
+
+    case "deleteDependency": {
+      const params = command.params as DeleteDependencyParams;
+      const depStore = useDependencyStore.getState();
+
+      // Re-add the dependency (without recording to history)
+      const deps = depStore.dependencies;
+      useDependencyStore.setState({
+        dependencies: [...deps, params.dependency],
+      });
+      break;
+    }
+
+    case "updateDependency": {
+      const params = command.params as UpdateDependencyParams;
+      const depStore = useDependencyStore.getState();
+      const deps = depStore.dependencies.map((d) =>
+        d.id === params.id ? { ...d, ...params.previousValues } : d
+      );
+      useDependencyStore.setState({ dependencies: deps });
+      break;
+    }
+
     default:
       console.warn("Unknown command type for undo:", command.type);
   }
@@ -406,6 +452,48 @@ function executeRedoCommand(command: Command): void {
       if (params.taskId) {
         taskStore.toggleTaskCollapsed(params.taskId);
       }
+      break;
+    }
+
+    // Dependency operations (Sprint 1.4)
+    case "addDependency": {
+      const params = command.params as AddDependencyParams;
+      const depStore = useDependencyStore.getState();
+
+      // Re-add the dependency (without recording to history)
+      const deps = depStore.dependencies;
+      useDependencyStore.setState({
+        dependencies: [...deps, params.dependency],
+      });
+
+      // Re-apply date adjustments
+      if (params.dateAdjustments) {
+        for (const adj of params.dateAdjustments) {
+          taskStore.updateTask(adj.taskId, {
+            startDate: adj.newStartDate,
+            endDate: adj.newEndDate,
+          });
+        }
+      }
+      break;
+    }
+
+    case "deleteDependency": {
+      const params = command.params as DeleteDependencyParams;
+      const depStore = useDependencyStore.getState();
+
+      // Remove the dependency again
+      depStore.removeDependency(params.dependency.id);
+      break;
+    }
+
+    case "updateDependency": {
+      const params = command.params as UpdateDependencyParams;
+      const depStore = useDependencyStore.getState();
+      const deps = depStore.dependencies.map((d) =>
+        d.id === params.id ? { ...d, ...params.updates } : d
+      );
+      useDependencyStore.setState({ dependencies: deps });
       break;
     }
 

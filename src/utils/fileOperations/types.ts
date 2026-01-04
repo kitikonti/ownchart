@@ -4,6 +4,7 @@
  */
 
 import type { TaskType } from "../../types/chart.types";
+import type { Dependency as AppDependency } from "../../types/dependency.types";
 
 export interface GanttFile {
   // Format identification
@@ -19,7 +20,7 @@ export interface GanttFile {
     tasks: SerializedTask[]; // All tasks with hierarchy
 
     // Future features (empty arrays for now)
-    dependencies?: Dependency[]; // Task dependencies (Sprint 1.4+)
+    dependencies?: SerializedDependency[]; // Task dependencies (Sprint 1.4+)
     resources?: Resource[]; // Resource assignments (future)
 
     // View state
@@ -43,6 +44,7 @@ export interface GanttFile {
   features?: {
     hasHierarchy: boolean;
     hasHistory: boolean;
+    hasDependencies: boolean; // Sprint 1.4
   };
 
   // Migration tracking
@@ -116,6 +118,7 @@ export interface DeserializeResult {
       metadata: Record<string, unknown>;
       __unknownFields?: Record<string, unknown>;
     }>;
+    dependencies: AppDependency[]; // Sprint 1.4
     viewSettings: ViewSettings;
     chartName: string;
     chartId: string;
@@ -125,14 +128,20 @@ export interface DeserializeResult {
   migrated?: boolean;
 }
 
-// Future type placeholders
-export interface Dependency {
+// Serialized dependency for file format
+export interface SerializedDependency {
   id: string;
-  from: string;
-  to: string;
+  from: string; // fromTaskId
+  to: string; // toTaskId
   type: "FS" | "SS" | "FF" | "SF";
+  lag?: number; // Offset days
+  createdAt?: string;
 }
 
+// Re-export app Dependency type for convenience
+export type { AppDependency as Dependency };
+
+// Future type placeholders
 export interface Resource {
   id: string;
   name: string;

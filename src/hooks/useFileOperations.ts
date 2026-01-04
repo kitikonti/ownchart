@@ -9,6 +9,7 @@ import { useTaskStore } from "../store/slices/taskSlice";
 import { useChartStore } from "../store/slices/chartSlice";
 import { useFileStore } from "../store/slices/fileSlice";
 import { useHistoryStore } from "../store/slices/historySlice";
+import { useDependencyStore } from "../store/slices/dependencySlice";
 import { serializeToGanttFile } from "../utils/fileOperations/serialize";
 import { deserializeGanttFile } from "../utils/fileOperations/deserialize";
 import {
@@ -27,6 +28,13 @@ export function useFileOperations() {
   const panOffset = useChartStore((state) => state.panOffset);
   const showWeekends = useChartStore((state) => state.showWeekends);
   const showTodayMarker = useChartStore((state) => state.showTodayMarker);
+
+  // Sprint 1.4: Dependency store
+  const dependencies = useDependencyStore((state) => state.dependencies);
+  const setDependencies = useDependencyStore((state) => state.setDependencies);
+  const clearDependencies = useDependencyStore(
+    (state) => state.clearDependencies
+  );
 
   const fileState = useFileStore();
   const clearHistory = useHistoryStore((state) => state.clearHistory);
@@ -49,6 +57,7 @@ export function useFileOperations() {
             chartName: fileState.fileName?.replace(".gantt", "") || "Untitled",
             chartId: fileState.chartId || undefined,
             prettyPrint: true,
+            dependencies, // Sprint 1.4
           }
         );
 
@@ -72,6 +81,7 @@ export function useFileOperations() {
     },
     [
       tasks,
+      dependencies,
       zoom,
       panOffset,
       showWeekends,
@@ -116,6 +126,7 @@ export function useFileOperations() {
 
       // Load data
       setTasks(parseResult.data!.tasks);
+      setDependencies(parseResult.data!.dependencies || []); // Sprint 1.4
       clearHistory();
       fileState.setFileName(file.name);
       fileState.setChartId(parseResult.data!.chartId);
@@ -131,7 +142,7 @@ export function useFileOperations() {
     } catch (e) {
       toast.error(`Open failed: ${(e as Error).message}`);
     }
-  }, [fileState, setTasks, clearHistory]);
+  }, [fileState, setTasks, setDependencies, clearHistory]);
 
   // New (Ctrl+N)
   const handleNew = useCallback(async () => {
@@ -165,12 +176,13 @@ export function useFileOperations() {
     };
 
     setTasks([initialTask]);
+    clearDependencies(); // Sprint 1.4
     clearHistory();
     clearFileHandle();
     fileState.reset();
 
     toast.success("Created new chart");
-  }, [fileState, setTasks, clearHistory]);
+  }, [fileState, setTasks, clearDependencies, clearHistory]);
 
   return {
     handleSave,

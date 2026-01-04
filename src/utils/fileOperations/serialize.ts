@@ -3,13 +3,20 @@
  */
 
 import type { Task } from "../../types/chart.types";
-import type { GanttFile, SerializedTask, ViewSettings } from "./types";
+import type { Dependency } from "../../types/dependency.types";
+import type {
+  GanttFile,
+  SerializedTask,
+  SerializedDependency,
+  ViewSettings,
+} from "./types";
 import { APP_VERSION, FILE_VERSION } from "../../config/version";
 
 export interface SerializeOptions {
   chartName?: string;
   chartId?: string;
   prettyPrint?: boolean;
+  dependencies?: Dependency[]; // Sprint 1.4
 }
 
 /**
@@ -27,6 +34,8 @@ export function serializeToGanttFile(
 ): string {
   const now = new Date().toISOString();
 
+  const dependencies = options.dependencies || [];
+
   const ganttFile: GanttFile = {
     fileVersion: FILE_VERSION,
     appVersion: APP_VERSION,
@@ -36,6 +45,7 @@ export function serializeToGanttFile(
       id: options.chartId || crypto.randomUUID(),
       name: options.chartName || "Untitled",
       tasks: tasks.map(serializeTask),
+      dependencies: dependencies.map(serializeDependency), // Sprint 1.4
       viewSettings: {
         zoom: viewSettings.zoom,
         panOffset: viewSettings.panOffset,
@@ -58,6 +68,7 @@ export function serializeToGanttFile(
     features: {
       hasHierarchy: tasks.some((t) => !!t.parent),
       hasHistory: false, // No history persistence in v1.0.0
+      hasDependencies: dependencies.length > 0, // Sprint 1.4
     },
   };
 
@@ -104,4 +115,19 @@ function serializeTask(task: Task): SerializedTask {
   }
 
   return serialized;
+}
+
+/**
+ * Convert Dependency to SerializedDependency for file format
+ * Sprint 1.4 - Dependencies
+ */
+function serializeDependency(dep: Dependency): SerializedDependency {
+  return {
+    id: dep.id,
+    from: dep.fromTaskId,
+    to: dep.toTaskId,
+    type: dep.type,
+    lag: dep.lag,
+    createdAt: dep.createdAt,
+  };
 }

@@ -2,18 +2,23 @@
  * ChartCanvas - Main Gantt chart SVG container
  * Features: Layer architecture, scale management, zoom navigation
  * Sprint 1.2 Package 3: Navigation & Scale
+ * Sprint 1.4: Dependencies (Finish-to-Start Only)
  *
  * Note: Container dimensions are measured at App.tsx level and passed as props
  * to avoid feedback loop when zooming (zoom -> SVG grows -> width measurement -> repeat)
  */
 
-import { useRef, useEffect } from "react";
+import { useRef, useEffect, useMemo, useState, useCallback } from "react";
 import type { Task } from "../../types/chart.types";
 import { useChartStore } from "../../store/slices/chartSlice";
 import { useZoom } from "../../hooks/useZoom";
+import { useDependencyDrag } from "../../hooks/useDependencyDrag";
 import { GridLines } from "./GridLines";
 import { TaskBar } from "./TaskBar";
 import { TodayMarker } from "./TodayMarker";
+import { DependencyArrows } from "./DependencyArrows";
+import { ConnectionHandles } from "./ConnectionHandles";
+import { getTaskBarGeometry } from "../../utils/timelineUtils";
 
 interface ChartCanvasProps {
   tasks: Task[];
@@ -37,6 +42,10 @@ export function ChartCanvas({
   const outerRef = useRef<HTMLDivElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const svgContainerRef = useRef<HTMLDivElement>(null);
+  const svgRef = useRef<SVGSVGElement>(null);
+
+  // State for tracking which task's connection handles are visible
+  const [hoveredTaskId, setHoveredTaskId] = useState<string | null>(null);
 
   // Use individual selectors for proper Zustand re-render (like ZoomIndicator)
   const scale = useChartStore((state) => state.scale);
@@ -45,6 +54,14 @@ export function ChartCanvas({
   const showTodayMarker = useChartStore((state) => state.showTodayMarker);
   const setContainerWidth = useChartStore((state) => state.setContainerWidth);
   const updateScale = useChartStore((state) => state.updateScale);
+
+  // Sprint 1.4: Dependency drag interaction
+  const { dragState, startDrag, endDrag, isValidTarget, isInvalidTarget } =
+    useDependencyDrag({
+      tasks,
+      svgRef,
+      enabled: true,
+    });
 
   // Use prop as containerWidth (measured at App.tsx level to avoid feedback loop)
   const containerWidth = propContainerWidth;
@@ -64,6 +81,47 @@ export function ChartCanvas({
   useEffect(() => {
     updateScale(tasks);
   }, [tasks, containerWidth, zoom, updateScale]);
+
+  // Sprint 1.4: Calculate task geometries for connection handles
+  const taskGeometries = useMemo(() => {
+    if (!scale)
+      return new Map<
+        string,
+        { x: number; y: number; width: number; height: number }
+      >();
+
+    const geometries = new Map<
+      string,
+      { x: number; y: number; width: number; height: number }
+    >();
+    tasks.forEach((task, index) => {
+      if (!task.startDate || (!task.endDate && task.type !== "milestone")) {
+        return;
+      }
+      if (task.type === "summary") {
+        // Summary tasks don't have connection handles
+        return;
+      }
+      const geo = getTaskBarGeometry(task, scale, index, ROW_HEIGHT, 0);
+      geometries.set(task.id, {
+        x: geo.x,
+        y: geo.y,
+        width: geo.width,
+        height: geo.height,
+      });
+    });
+    return geometries;
+  }, [tasks, scale]);
+
+  // Sprint 1.4: Handle mouse up on task for dependency drop
+  const handleTaskMouseUp = useCallback(
+    (taskId: string) => {
+      if (dragState.isDragging) {
+        endDrag(taskId);
+      }
+    },
+    [dragState.isDragging, endDrag]
+  );
 
   // Don't render if scale not ready
   if (!scale) {
@@ -105,6 +163,7 @@ export function ChartCanvas({
       <div ref={containerRef} className="w-full overflow-visible relative">
         <div ref={svgContainerRef} className="w-full" {...handlers}>
           <svg
+            ref={svgRef}
             width={timelineWidth}
             height={contentHeight}
             className="gantt-chart block select-none"
@@ -119,17 +178,55 @@ export function ChartCanvas({
               />
             </g>
 
+            {/* Layer 2.5: Dependency Arrows (behind tasks) */}
+            <DependencyArrows
+              tasks={tasks}
+              scale={scale}
+              rowHeight={ROW_HEIGHT}
+              dragState={dragState}
+            />
+
             {/* Layer 3: Task Bars */}
             <g className="layer-tasks">
               {tasks.map((task, index) => (
-                <TaskBar
+                <g
                   key={task.id}
-                  task={task}
-                  scale={scale}
-                  rowIndex={index}
-                  isSelected={selectedTaskIds.includes(task.id)}
-                  onClick={() => onTaskClick?.(task.id)}
-                  onDoubleClick={() => onTaskDoubleClick?.(task.id)}
+                  onMouseEnter={() => setHoveredTaskId(task.id)}
+                  onMouseLeave={() => setHoveredTaskId(null)}
+                  onMouseUp={() => handleTaskMouseUp(task.id)}
+                >
+                  <TaskBar
+                    task={task}
+                    scale={scale}
+                    rowIndex={index}
+                    isSelected={selectedTaskIds.includes(task.id)}
+                    onClick={() => onTaskClick?.(task.id)}
+                    onDoubleClick={() => onTaskDoubleClick?.(task.id)}
+                  />
+                </g>
+              ))}
+            </g>
+
+            {/* Layer 3.6: Connection Handles (Sprint 1.4) */}
+            <g className="layer-connection-handles">
+              {Array.from(taskGeometries.entries()).map(([taskId, geo]) => (
+                <ConnectionHandles
+                  key={`handles-${taskId}`}
+                  taskId={taskId}
+                  x={geo.x}
+                  y={geo.y}
+                  width={geo.width}
+                  height={geo.height}
+                  isVisible={hoveredTaskId === taskId && !dragState.isDragging}
+                  isValidDropTarget={
+                    dragState.isDragging && isValidTarget(taskId)
+                  }
+                  isInvalidDropTarget={
+                    dragState.isDragging && isInvalidTarget(taskId)
+                  }
+                  onDragStart={startDrag}
+                  onHover={setHoveredTaskId}
+                  onDrop={handleTaskMouseUp}
                 />
               ))}
             </g>
