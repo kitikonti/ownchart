@@ -154,13 +154,13 @@ export function TaskTableRow({
       } ${isInClipboard ? "relative" : ""}`}
       role="row"
     >
-      {/* Clipboard selection overlay with dashed border */}
+      {/* Clipboard selection overlay with dotted border */}
       {isInClipboard && clipboardPosition && (
         <div
-          className="absolute inset-0 pointer-events-none z-20 border-2 border-dashed border-gray-400"
+          className="absolute inset-0 pointer-events-none z-20 border-2 border-dotted border-gray-400"
           style={{
-            borderTopStyle: clipboardPosition.isFirst ? "dashed" : "none",
-            borderBottomStyle: clipboardPosition.isLast ? "dashed" : "none",
+            borderTopStyle: clipboardPosition.isFirst ? "dotted" : "none",
+            borderBottomStyle: clipboardPosition.isLast ? "dotted" : "none",
           }}
         />
       )}
