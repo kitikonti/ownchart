@@ -14,7 +14,6 @@ interface TaskBarProps {
   task: Task;
   scale: TimelineScale;
   rowIndex: number;
-  isSelected: boolean;
   onClick?: () => void;
   onDoubleClick?: () => void;
 }
@@ -25,7 +24,6 @@ function MilestoneDiamond({
   y,
   size,
   color,
-  isSelected,
   onClick,
   onMouseDown,
   onMouseMove,
@@ -36,7 +34,6 @@ function MilestoneDiamond({
   y: number;
   size: number;
   color: string;
-  isSelected: boolean;
   onClick?: () => void;
   onMouseDown?: (e: React.MouseEvent<SVGGElement>) => void;
   onMouseMove?: (e: React.MouseEvent<SVGGElement>) => void;
@@ -61,8 +58,6 @@ function MilestoneDiamond({
             Z`}
         fill={color}
         fillOpacity={opacity}
-        stroke={isSelected ? "#228be6" : "none"}
-        strokeWidth={isSelected ? 2 : 0}
       />
     </g>
   );
@@ -75,7 +70,6 @@ function SummaryBracket({
   width,
   height,
   color,
-  isSelected,
   onClick,
   taskName,
 }: {
@@ -84,7 +78,6 @@ function SummaryBracket({
   width: number;
   height: number;
   color: string;
-  isSelected: boolean;
   onClick?: () => void;
   taskName: string;
 }) {
@@ -119,8 +112,6 @@ function SummaryBracket({
         d={bracketPath}
         fill={color}
         fillOpacity={0.9}
-        stroke={isSelected ? "#228be6" : "none"}
-        strokeWidth={isSelected ? 2 : 0}
         style={{ cursor: "not-allowed" }}
       />
 
@@ -143,7 +134,6 @@ export const TaskBar = React.memo(function TaskBar({
   task,
   scale,
   rowIndex,
-  isSelected,
   onClick,
   onDoubleClick,
 }: TaskBarProps) {
@@ -224,7 +214,6 @@ export const TaskBar = React.memo(function TaskBar({
           y={geometry.y}
           size={size}
           color={task.color}
-          isSelected={isSelected}
           onClick={handleClick}
           onMouseDown={onMouseDown}
           onMouseMove={onMouseMoveForCursor}
@@ -259,7 +248,6 @@ export const TaskBar = React.memo(function TaskBar({
         width={geometry.width}
         height={geometry.height}
         color={task.color}
-        isSelected={isSelected}
         onClick={handleClick}
         taskName={task.name}
       />
@@ -300,8 +288,6 @@ export const TaskBar = React.memo(function TaskBar({
         height={geometry.height}
         fill={task.color}
         fillOpacity={mode !== "idle" ? 0.3 : 0.8}
-        stroke={isSelected ? "#228be6" : "none"}
-        strokeWidth={isSelected ? 2 : 0}
         rx={4}
         ry={4}
       />

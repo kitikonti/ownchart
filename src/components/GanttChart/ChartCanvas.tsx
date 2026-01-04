@@ -178,7 +178,26 @@ export function ChartCanvas({
               />
             </g>
 
-            {/* Layer 2.5: Dependency Arrows (behind tasks) */}
+            {/* Layer 2.5: Selection Highlights (full row, behind everything) */}
+            <g className="layer-selection">
+              {tasks.map((task, index) => {
+                const isSelected = selectedTaskIds.includes(task.id);
+                if (!isSelected) return null;
+                return (
+                  <rect
+                    key={`selection-${task.id}`}
+                    x={0}
+                    y={index * ROW_HEIGHT}
+                    width={timelineWidth}
+                    height={ROW_HEIGHT}
+                    fill="#dbeafe"
+                    fillOpacity={1}
+                  />
+                );
+              })}
+            </g>
+
+            {/* Layer 2.6: Dependency Arrows (behind tasks) */}
             <DependencyArrows
               tasks={tasks}
               scale={scale}
@@ -199,7 +218,6 @@ export function ChartCanvas({
                     task={task}
                     scale={scale}
                     rowIndex={index}
-                    isSelected={selectedTaskIds.includes(task.id)}
                     onClick={() => onTaskClick?.(task.id)}
                     onDoubleClick={() => onTaskDoubleClick?.(task.id)}
                   />
