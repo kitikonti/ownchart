@@ -275,7 +275,7 @@ export function Cell({
     return (
       <div
         ref={cellRef}
-        className={`relative flex flex-col ${column.id === "name" ? "pr-3" : "px-3"} py-2 border-b ${column.id !== "color" ? "border-r" : ""} border-gray-200 h-[44px] outline outline-3 outline-blue-600 bg-white z-20`}
+        className={`relative flex items-center px-3 py-2 border-b ${column.id !== "color" ? "border-r" : ""} border-gray-200 h-[44px] outline outline-3 outline-blue-600 bg-white z-20`}
         onClick={(e) => e.stopPropagation()}
       >
         {children ? (
