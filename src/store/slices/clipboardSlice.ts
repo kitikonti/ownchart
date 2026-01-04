@@ -23,6 +23,8 @@ import {
   determineInsertPosition,
   canPasteCellValue,
   getClearValueForField,
+  type SystemRowClipboardData,
+  type SystemCellClipboardData,
 } from "../../utils/clipboard";
 import {
   buildFlattenedTaskList,
@@ -63,6 +65,17 @@ interface ClipboardActions {
   pasteCell: (
     taskId: string,
     field: EditableField
+  ) => { success: boolean; error?: string };
+
+  // External clipboard operations (for cross-tab paste)
+  pasteExternalRows: (data: SystemRowClipboardData) => {
+    success: boolean;
+    error?: string;
+  };
+  pasteExternalCell: (
+    data: SystemCellClipboardData,
+    targetTaskId: string,
+    targetField: EditableField
   ) => { success: boolean; error?: string };
 
   // Helpers
@@ -643,6 +656,210 @@ export const useClipboardStore = create<ClipboardStore>()(
             sourceTaskId: null,
           };
           state.activeMode = null;
+        });
+      }
+
+      return { success: true };
+    },
+
+    pasteExternalRows: (data: SystemRowClipboardData) => {
+      const taskStore = useTaskStore.getState();
+      const depStore = useDependencyStore.getState();
+      const historyStore = useHistoryStore.getState();
+      const fileStore = useFileStore.getState();
+
+      // Validation
+      if (!data.tasks || data.tasks.length === 0) {
+        return { success: false, error: "No rows in external clipboard" };
+      }
+
+      // Build flattened list to determine visual insert position
+      const collapsedIds = new Set(
+        taskStore.tasks.filter((t) => t.open === false).map((t) => t.id)
+      );
+      const flattenedTasks = buildFlattenedTaskList(
+        taskStore.tasks,
+        collapsedIds
+      );
+
+      // Determine insert position in the flattened (visual) list
+      const insertIndex = determineInsertPosition(
+        taskStore.activeCell,
+        taskStore.selectedTaskIds,
+        flattenedTasks
+      );
+
+      // Get the actual ORDER value at the insert position
+      let insertOrder: number;
+      let targetParent: string | undefined = undefined;
+      let targetParentLevel = 0;
+
+      if (insertIndex < flattenedTasks.length) {
+        const taskAtPosition = flattenedTasks[insertIndex];
+        insertOrder = taskAtPosition.task.order;
+        targetParent = taskAtPosition.task.parent;
+        if (targetParent) {
+          targetParentLevel = getTaskLevel(taskStore.tasks, targetParent) + 1;
+        }
+      } else {
+        insertOrder = Math.max(...taskStore.tasks.map((t) => t.order), -1) + 1;
+      }
+
+      // Generate new UUIDs and remap IDs
+      const { remappedTasks, idMapping } = remapTaskIds(data.tasks);
+
+      // Calculate max depth of pasted tasks
+      const pastedTaskIds = new Set(remappedTasks.map((t) => t.id));
+      const getDepthInPasted = (task: Task): number => {
+        let depth = 0;
+        let current = task;
+        while (current.parent && pastedTaskIds.has(current.parent)) {
+          depth++;
+          const parent = remappedTasks.find((t) => t.id === current.parent);
+          if (!parent) break;
+          current = parent;
+        }
+        return depth;
+      };
+
+      const maxPastedDepth = Math.max(
+        ...remappedTasks.map(getDepthInPasted),
+        0
+      );
+      const MAX_DEPTH = 3;
+
+      if (targetParentLevel + maxPastedDepth >= MAX_DEPTH) {
+        toast.error(
+          `Cannot paste: would exceed maximum nesting depth of ${MAX_DEPTH} levels`
+        );
+        return { success: false, error: "Maximum nesting depth exceeded" };
+      }
+
+      // Remap dependencies
+      const remappedDeps = remapDependencies(data.dependencies, idMapping);
+
+      // Update order for existing tasks
+      const currentTasks = taskStore.tasks.map((t) => {
+        const cloned = { ...t };
+        if (cloned.order >= insertOrder) {
+          cloned.order += remappedTasks.length;
+        }
+        return cloned;
+      });
+
+      // Set order and parent for new tasks
+      const newTasks = remappedTasks.map((t, i) => {
+        const isRootInClipboard = !t.parent || !pastedTaskIds.has(t.parent);
+        return {
+          ...t,
+          order: insertOrder + i,
+          parent: isRootInClipboard ? targetParent : t.parent,
+        };
+      });
+
+      // Combine all tasks
+      const updatedTasks = [...currentTasks, ...newTasks];
+      useTaskStore.setState({ tasks: updatedTasks });
+
+      // Recalculate summary dates if needed
+      if (targetParent) {
+        const currentState = useTaskStore.getState();
+        const parentTask = currentState.tasks.find(
+          (t) => t.id === targetParent
+        );
+        if (parentTask && parentTask.type === "summary") {
+          const summaryDates = calculateSummaryDates(
+            currentState.tasks,
+            targetParent
+          );
+          if (summaryDates) {
+            const updatedTasksWithSummary = currentState.tasks.map((t) =>
+              t.id === targetParent
+                ? {
+                    ...t,
+                    startDate: summaryDates.startDate,
+                    endDate: summaryDates.endDate,
+                    duration: summaryDates.duration,
+                  }
+                : t
+            );
+            useTaskStore.setState({ tasks: updatedTasksWithSummary });
+          }
+        }
+      }
+
+      // Add dependencies
+      const updatedDeps = [...depStore.dependencies, ...remappedDeps];
+      useDependencyStore.setState({ dependencies: updatedDeps });
+
+      // Mark file as dirty
+      fileStore.markDirty();
+
+      // Record command
+      if (!historyStore.isUndoing && !historyStore.isRedoing) {
+        historyStore.recordCommand({
+          id: crypto.randomUUID(),
+          type: CommandType.PASTE_ROWS,
+          timestamp: Date.now(),
+          description: `Pasted ${remappedTasks.length} row(s) from external clipboard`,
+          params: {
+            pastedTasks: newTasks,
+            pastedDependencies: remappedDeps,
+            insertIndex: insertOrder,
+            idMapping,
+          },
+        });
+      }
+
+      return { success: true };
+    },
+
+    pasteExternalCell: (
+      data: SystemCellClipboardData,
+      targetTaskId: string,
+      targetField: EditableField
+    ) => {
+      const taskStore = useTaskStore.getState();
+      const historyStore = useHistoryStore.getState();
+      const fileStore = useFileStore.getState();
+
+      // Get target task
+      const task = taskStore.tasks.find((t) => t.id === targetTaskId);
+      if (!task) {
+        return { success: false, error: "Target task not found" };
+      }
+
+      // Field type matching validation
+      const validation = canPasteCellValue(data.field, targetField, task);
+      if (!validation.valid) {
+        toast.error(validation.error || "Cannot paste");
+        return { success: false, error: validation.error };
+      }
+
+      // Get current value (for undo)
+      const previousValue = task[targetField as keyof Task];
+
+      // Update target task
+      taskStore.updateTask(targetTaskId, {
+        [targetField]: data.value,
+      });
+
+      // Mark file as dirty
+      fileStore.markDirty();
+
+      // Record command
+      if (!historyStore.isUndoing && !historyStore.isRedoing) {
+        historyStore.recordCommand({
+          id: crypto.randomUUID(),
+          type: CommandType.PASTE_CELL,
+          timestamp: Date.now(),
+          description: `Pasted ${targetField} from external clipboard`,
+          params: {
+            taskId: targetTaskId,
+            field: targetField,
+            newValue: data.value,
+            previousValue,
+          },
         });
       }
 
