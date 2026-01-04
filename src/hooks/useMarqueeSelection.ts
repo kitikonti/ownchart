@@ -80,8 +80,12 @@ export function useMarqueeSelection({
   enabled = true,
 }: UseMarqueeSelectionOptions): UseMarqueeSelectionResult {
   const [marqueeRect, setMarqueeRect] = useState<MarqueeRect | null>(null);
+  const marqueeRectRef = useRef<MarqueeRect | null>(null);
   const isSelectingRef = useRef(false);
   const addToSelectionRef = useRef(false);
+
+  // Keep ref in sync with state
+  marqueeRectRef.current = marqueeRect;
 
   // Get SVG coordinates from mouse event
   const getSvgCoordinates = useCallback(
@@ -150,11 +154,12 @@ export function useMarqueeSelection({
       isSelectingRef.current = false;
 
       // Find intersecting tasks and update selection
-      if (marqueeRect) {
+      const currentRect = marqueeRectRef.current;
+      if (currentRect) {
         const coords = getSvgCoordinates(e);
         if (coords) {
           const finalRect = {
-            ...marqueeRect,
+            ...currentRect,
             currentX: coords.x,
             currentY: coords.y,
           };
@@ -169,7 +174,7 @@ export function useMarqueeSelection({
       document.removeEventListener("mousemove", handleMouseMove);
       document.removeEventListener("mouseup", handleMouseUp);
     },
-    [marqueeRect, getSvgCoordinates, findIntersectingTasks, onSelectionChange, handleMouseMove]
+    [getSvgCoordinates, findIntersectingTasks, onSelectionChange, handleMouseMove]
   );
 
   // Mouse down handler (to be attached to SVG)
