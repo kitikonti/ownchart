@@ -57,6 +57,7 @@ export function Cell({
   } = useCellNavigation();
 
   const updateTask = useTaskStore((state) => state.updateTask);
+  const clearSelection = useTaskStore((state) => state.clearSelection);
 
   const isActive = isCellActive(taskId, field);
   const isEditing = isCellEditing(taskId, field);
@@ -89,6 +90,9 @@ export function Cell({
    */
   const handleClick = (e: MouseEvent<HTMLDivElement>) => {
     e.stopPropagation();
+
+    // Clear row selection when clicking a cell (Excel behavior)
+    clearSelection();
 
     if (!column.editable) {
       setActiveCell(taskId, field);
