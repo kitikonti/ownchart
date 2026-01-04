@@ -71,6 +71,7 @@ interface TaskActions {
   selectTaskRange: (startId: string, endId: string) => void;
   selectAllTasks: () => void;
   clearSelection: () => void;
+  setSelectedTaskIds: (ids: string[], addToSelection?: boolean) => void;
 
   // Cell navigation actions
   setActiveCell: (taskId: string | null, field: EditableField | null) => void;
@@ -570,6 +571,24 @@ export const useTaskStore = create<TaskStore>()(
       set((state) => {
         state.selectedTaskIds = [];
         state.lastSelectedTaskId = null;
+      }),
+
+    setSelectedTaskIds: (ids, addToSelection = false) =>
+      set((state) => {
+        if (addToSelection) {
+          // Add to existing selection (avoid duplicates)
+          const newIds = ids.filter(
+            (id) => !state.selectedTaskIds.includes(id)
+          );
+          state.selectedTaskIds = [...state.selectedTaskIds, ...newIds];
+        } else {
+          // Replace selection
+          state.selectedTaskIds = ids;
+        }
+        // Set last selected to the last id in the list
+        if (ids.length > 0) {
+          state.lastSelectedTaskId = ids[ids.length - 1];
+        }
       }),
 
     // Cell navigation actions

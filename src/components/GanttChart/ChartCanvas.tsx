@@ -11,8 +11,13 @@
 import { useRef, useEffect, useMemo, useState, useCallback } from "react";
 import type { Task } from "../../types/chart.types";
 import { useChartStore } from "../../store/slices/chartSlice";
+import { useTaskStore } from "../../store/slices/taskSlice";
 import { useZoom } from "../../hooks/useZoom";
 import { useDependencyDrag } from "../../hooks/useDependencyDrag";
+import {
+  useMarqueeSelection,
+  type TaskGeometry,
+} from "../../hooks/useMarqueeSelection";
 import { GridLines } from "./GridLines";
 import { TaskBar } from "./TaskBar";
 import { TodayMarker } from "./TodayMarker";
@@ -55,6 +60,9 @@ export function ChartCanvas({
   const setContainerWidth = useChartStore((state) => state.setContainerWidth);
   const updateScale = useChartStore((state) => state.updateScale);
 
+  // Get setSelectedTaskIds from task store for marquee selection
+  const setSelectedTaskIds = useTaskStore((state) => state.setSelectedTaskIds);
+
   // Sprint 1.4: Dependency drag interaction
   const { dragState, startDrag, endDrag, isValidTarget, isInvalidTarget } =
     useDependencyDrag({
@@ -82,35 +90,49 @@ export function ChartCanvas({
     updateScale(tasks);
   }, [tasks, containerWidth, zoom, updateScale]);
 
-  // Sprint 1.4: Calculate task geometries for connection handles
-  const taskGeometries = useMemo(() => {
+  // Calculate task geometries for connection handles and marquee selection
+  const { taskGeometriesMap, taskGeometriesArray } = useMemo(() => {
     if (!scale)
-      return new Map<
-        string,
-        { x: number; y: number; width: number; height: number }
-      >();
+      return {
+        taskGeometriesMap: new Map<
+          string,
+          { x: number; y: number; width: number; height: number }
+        >(),
+        taskGeometriesArray: [] as TaskGeometry[],
+      };
 
-    const geometries = new Map<
+    const geometriesMap = new Map<
       string,
       { x: number; y: number; width: number; height: number }
     >();
+    const geometriesArray: TaskGeometry[] = [];
+
     tasks.forEach((task, index) => {
       if (!task.startDate || (!task.endDate && task.type !== "milestone")) {
         return;
       }
-      if (task.type === "summary") {
-        // Summary tasks don't have connection handles
-        return;
-      }
       const geo = getTaskBarGeometry(task, scale, index, ROW_HEIGHT, 0);
-      geometries.set(task.id, {
+      const geometry = {
+        id: task.id,
         x: geo.x,
         y: geo.y,
         width: geo.width,
         height: geo.height,
-      });
+      };
+      geometriesArray.push(geometry);
+
+      // Only add to map for connection handles (not for summary tasks)
+      if (task.type !== "summary") {
+        geometriesMap.set(task.id, {
+          x: geo.x,
+          y: geo.y,
+          width: geo.width,
+          height: geo.height,
+        });
+      }
     });
-    return geometries;
+
+    return { taskGeometriesMap: geometriesMap, taskGeometriesArray: geometriesArray };
   }, [tasks, scale]);
 
   // Sprint 1.4: Handle mouse up on task for dependency drop
@@ -122,6 +144,23 @@ export function ChartCanvas({
     },
     [dragState.isDragging, endDrag]
   );
+
+  // Marquee selection handler
+  const handleMarqueeSelection = useCallback(
+    (taskIds: string[], addToSelection: boolean) => {
+      setSelectedTaskIds(taskIds, addToSelection);
+    },
+    [setSelectedTaskIds]
+  );
+
+  // Marquee selection hook
+  const { normalizedRect: marqueeRect, onMouseDown: onMarqueeMouseDown } =
+    useMarqueeSelection({
+      svgRef,
+      taskGeometries: taskGeometriesArray,
+      onSelectionChange: handleMarqueeSelection,
+      enabled: !dragState.isDragging, // Disable during dependency drag
+    });
 
   // Don't render if scale not ready
   if (!scale) {
@@ -167,6 +206,7 @@ export function ChartCanvas({
             width={timelineWidth}
             height={contentHeight}
             className="gantt-chart block select-none"
+            onMouseDown={onMarqueeMouseDown}
           >
             {/* Layer 2: Background (Grid Lines) */}
             <g className="layer-background">
@@ -227,7 +267,7 @@ export function ChartCanvas({
 
             {/* Layer 3.6: Connection Handles (Sprint 1.4) */}
             <g className="layer-connection-handles">
-              {Array.from(taskGeometries.entries()).map(([taskId, geo]) => (
+              {Array.from(taskGeometriesMap.entries()).map(([taskId, geo]) => (
                 <ConnectionHandles
                   key={`handles-${taskId}`}
                   taskId={taskId}
@@ -252,6 +292,22 @@ export function ChartCanvas({
             {/* Layer 4: Today Marker */}
             {showTodayMarker && (
               <TodayMarker scale={scale} svgHeight={contentHeight} />
+            )}
+
+            {/* Layer 5: Marquee Selection Rectangle */}
+            {marqueeRect && (
+              <rect
+                x={marqueeRect.x}
+                y={marqueeRect.y}
+                width={marqueeRect.width}
+                height={marqueeRect.height}
+                fill="#3b82f6"
+                fillOpacity={0.1}
+                stroke="#3b82f6"
+                strokeWidth={1}
+                strokeDasharray="4 2"
+                pointerEvents="none"
+              />
             )}
           </svg>
         </div>
