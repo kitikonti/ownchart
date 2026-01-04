@@ -2,6 +2,26 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [0.0.4](https://github.com/kitikonti/ownchart/compare/v0.0.3...v0.0.4) (2026-01-04)
+
+
+### Features
+
+* add rectangular marquee selection in timeline view ([423036c](https://github.com/kitikonti/ownchart/commit/423036c6380b3dfbd5a41fbbbfb50675c1f47f25))
+
+
+### Bug Fixes
+
+* resolve lint errors for unused variables ([fedd225](https://github.com/kitikonti/ownchart/commit/fedd22534120f8cce0c5a521e2e5b51582fecc32))
+* resolve marquee selection closure issue ([1e47a96](https://github.com/kitikonti/ownchart/commit/1e47a96f1f1af348b38955c2db150ef4ebe2569f))
+
+
+### UI/UX
+
+* clear row selection when clicking a cell (Excel behavior) ([d64accc](https://github.com/kitikonti/ownchart/commit/d64accc0cd6a2d684b1cb985cdd125c6070a171a))
+* disable text selection in TaskTable except in edit mode ([6c6319e](https://github.com/kitikonti/ownchart/commit/6c6319e6836752c13fdb5fe7965731688e5b0f91))
+* replace task bar selection outline with full row highlight ([5944990](https://github.com/kitikonti/ownchart/commit/594499083d1abbd077f5257726e3d2c592aa53a0))
+
 ### [0.0.3](https://github.com/kitikonti/ownchart/compare/v0.0.2...v0.0.3) (2026-01-04)
 
 
