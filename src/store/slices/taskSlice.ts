@@ -104,6 +104,10 @@ interface TaskActions {
   createSummaryTask: (data: Omit<Task, "id" | "type">) => string;
   convertToSummary: (taskId: string) => void;
   convertToTask: (taskId: string) => void;
+
+  // Insert task relative to another
+  insertTaskAbove: (referenceTaskId: string) => void;
+  insertTaskBelow: (referenceTaskId: string) => void;
 }
 
 /**
@@ -921,6 +925,167 @@ export const useTaskStore = create<TaskStore>()(
           "Task dates are now manual. Children dates do not affect this task."
         );
       }),
+
+    // Insert task relative to another
+    insertTaskAbove: (referenceTaskId) => {
+      const historyStore = useHistoryStore.getState();
+      const state = get();
+
+      const refIndex = state.tasks.findIndex((t) => t.id === referenceTaskId);
+      if (refIndex === -1) return;
+
+      const refTask = state.tasks[refIndex];
+      const DEFAULT_DURATION = 7;
+
+      // Calculate dates: new task ends one day before reference starts
+      let endDate = "";
+      let startDate = "";
+
+      if (refTask.startDate) {
+        const refStart = new Date(refTask.startDate);
+        const end = new Date(refStart);
+        end.setDate(refStart.getDate() - 1); // Day before reference starts
+        endDate = end.toISOString().split("T")[0];
+
+        const start = new Date(end);
+        start.setDate(end.getDate() - DEFAULT_DURATION + 1);
+        startDate = start.toISOString().split("T")[0];
+      } else {
+        // Reference has no start date, use today
+        const today = new Date();
+        const weekAgo = new Date(today);
+        weekAgo.setDate(today.getDate() - DEFAULT_DURATION + 1);
+        startDate = weekAgo.toISOString().split("T")[0];
+        endDate = today.toISOString().split("T")[0];
+      }
+
+      const taskData: Omit<Task, "id"> = {
+        name: "New Task",
+        startDate,
+        endDate,
+        duration: DEFAULT_DURATION,
+        progress: 0,
+        color: "#3b82f6",
+        order: refIndex,
+        type: "task",
+        parent: refTask.parent, // Same hierarchy level
+        metadata: {},
+      };
+
+      const generatedId = crypto.randomUUID();
+
+      set((state) => {
+        const newTask: Task = {
+          ...taskData,
+          id: generatedId,
+        };
+
+        // Insert at reference position (pushing reference down)
+        state.tasks.splice(refIndex, 0, newTask);
+
+        // Update order for all tasks
+        state.tasks.forEach((task, index) => {
+          task.order = index;
+        });
+      });
+
+      // Mark file as dirty
+      useFileStore.getState().markDirty();
+
+      // Record command for undo/redo
+      if (!historyStore.isUndoing && !historyStore.isRedoing) {
+        historyStore.recordCommand({
+          id: crypto.randomUUID(),
+          type: CommandType.ADD_TASK,
+          timestamp: Date.now(),
+          description: "Inserted task above",
+          params: {
+            task: taskData,
+            generatedId,
+          },
+        });
+      }
+    },
+
+    insertTaskBelow: (referenceTaskId) => {
+      const historyStore = useHistoryStore.getState();
+      const state = get();
+
+      const refIndex = state.tasks.findIndex((t) => t.id === referenceTaskId);
+      if (refIndex === -1) return;
+
+      const refTask = state.tasks[refIndex];
+      const DEFAULT_DURATION = 7;
+
+      // Calculate dates: new task starts one day after reference ends
+      let startDate = "";
+      let endDate = "";
+
+      if (refTask.endDate) {
+        const refEnd = new Date(refTask.endDate);
+        const start = new Date(refEnd);
+        start.setDate(refEnd.getDate() + 1); // Day after reference ends
+        startDate = start.toISOString().split("T")[0];
+
+        const end = new Date(start);
+        end.setDate(start.getDate() + DEFAULT_DURATION - 1);
+        endDate = end.toISOString().split("T")[0];
+      } else {
+        // Reference has no end date, use today
+        const today = new Date();
+        const nextWeek = new Date(today);
+        nextWeek.setDate(today.getDate() + DEFAULT_DURATION - 1);
+        startDate = today.toISOString().split("T")[0];
+        endDate = nextWeek.toISOString().split("T")[0];
+      }
+
+      const taskData: Omit<Task, "id"> = {
+        name: "New Task",
+        startDate,
+        endDate,
+        duration: DEFAULT_DURATION,
+        progress: 0,
+        color: "#3b82f6",
+        order: refIndex + 1,
+        type: "task",
+        parent: refTask.parent, // Same hierarchy level
+        metadata: {},
+      };
+
+      const generatedId = crypto.randomUUID();
+
+      set((state) => {
+        const newTask: Task = {
+          ...taskData,
+          id: generatedId,
+        };
+
+        // Insert after reference position
+        state.tasks.splice(refIndex + 1, 0, newTask);
+
+        // Update order for all tasks
+        state.tasks.forEach((task, index) => {
+          task.order = index;
+        });
+      });
+
+      // Mark file as dirty
+      useFileStore.getState().markDirty();
+
+      // Record command for undo/redo
+      if (!historyStore.isUndoing && !historyStore.isRedoing) {
+        historyStore.recordCommand({
+          id: crypto.randomUUID(),
+          type: CommandType.ADD_TASK,
+          timestamp: Date.now(),
+          description: "Inserted task below",
+          params: {
+            task: taskData,
+            generatedId,
+          },
+        });
+      }
+    },
 
     // Indent/Outdent actions
     indentSelectedTasks: () =>

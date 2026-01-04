@@ -8,6 +8,7 @@ import { FileButtons } from "../Toolbar/FileButtons";
 import { HierarchyButtons } from "../TaskList/HierarchyButtons";
 import { UndoRedoButtons } from "../Toolbar/UndoRedoButtons";
 import { ClipboardButtons } from "../Toolbar/ClipboardButtons";
+import { InsertButtons } from "../Toolbar/InsertButtons";
 import { ZoomControls } from "../Toolbar/ZoomControls";
 import { useTaskStore } from "../../store/slices/taskSlice";
 
@@ -58,8 +59,13 @@ export function AppToolbar() {
       </div>
 
       {/* Clipboard Operations Group */}
-      <div className="mr-4">
+      <div className="mr-2">
         <ClipboardButtons />
+      </div>
+
+      {/* Insert Task Buttons */}
+      <div className="mr-4">
+        <InsertButtons />
       </div>
 
       {/* Task Actions Group */}
