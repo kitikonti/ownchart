@@ -17,7 +17,9 @@ import type {
   UpdateDependencyParams,
   PasteRowsParams,
   PasteCellParams,
+  MultiDragTasksParams,
 } from "../../types/command.types";
+import { calculateDuration } from "../../utils/dateUtils";
 import { useTaskStore } from "./taskSlice";
 import { useDependencyStore } from "./dependencySlice";
 
@@ -412,6 +414,29 @@ function executeUndoCommand(command: Command): void {
       break;
     }
 
+    case "multiDragTasks": {
+      const params = command.params as MultiDragTasksParams;
+
+      // Revert all task changes to previous values
+      params.taskChanges.forEach((change) => {
+        taskStore.updateTask(change.id, {
+          startDate: change.previousStartDate,
+          endDate: change.previousEndDate,
+          duration: calculateDuration(
+            change.previousStartDate,
+            change.previousEndDate
+          ),
+        });
+      });
+
+      // Revert cascade updates (summary parent dates)
+      params.cascadeUpdates.forEach((cascade) => {
+        taskStore.updateTask(cascade.id, cascade.previousValues);
+      });
+
+      break;
+    }
+
     default:
       console.warn("Unknown command type for undo:", command.type);
   }
@@ -633,6 +658,26 @@ function executeRedoCommand(command: Command): void {
           [params.previousCutCell.field]: clearValue,
         });
       }
+
+      break;
+    }
+
+    case "multiDragTasks": {
+      const params = command.params as MultiDragTasksParams;
+
+      // Re-apply all task changes
+      params.taskChanges.forEach((change) => {
+        taskStore.updateTask(change.id, {
+          startDate: change.newStartDate,
+          endDate: change.newEndDate,
+          duration: calculateDuration(change.newStartDate, change.newEndDate),
+        });
+      });
+
+      // Re-apply cascade updates (summary parent dates)
+      params.cascadeUpdates.forEach((cascade) => {
+        taskStore.updateTask(cascade.id, cascade.updates);
+      });
 
       break;
     }

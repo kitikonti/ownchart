@@ -49,8 +49,8 @@ export function validateDragOperation(
     };
   }
 
-  // Rule 2: Minimum duration (1 day for regular tasks, milestones don't need this check)
-  if (task.type !== "milestone") {
+  // Rule 2: Minimum duration (1 day for regular tasks, milestones and summaries don't need this check)
+  if (task.type !== "milestone" && task.type !== "summary") {
     const duration = calculateDuration(newStartDate, newEndDate);
     if (duration < 1) {
       return {
@@ -60,13 +60,8 @@ export function validateDragOperation(
     }
   }
 
-  // Rule 3: Cannot drag summary tasks (defensive check, should be caught earlier)
-  if (task.type === "summary") {
-    return {
-      valid: false,
-      error: "Summary task dates are calculated from children",
-    };
-  }
+  // Note: Summary tasks are now allowed to be dragged - their children
+  // are moved along with them, and the summary dates auto-recalculate.
 
   return { valid: true };
 }

@@ -66,6 +66,9 @@ interface TaskState {
 interface TaskActions {
   addTask: (taskData: Omit<Task, "id">) => void;
   updateTask: (id: string, updates: Partial<Task>) => void;
+  updateMultipleTasks: (
+    updates: Array<{ id: string; updates: Partial<Task> }>
+  ) => void;
   deleteTask: (id: string, cascade?: boolean) => void;
   deleteSelectedTasks: () => void;
   reorderTasks: (fromIndex: number, toIndex: number) => void;
@@ -329,6 +332,127 @@ export const useTaskStore = create<TaskStore>()(
             updates,
             previousValues,
             cascadeUpdates: parentUpdates, // NEW: Include parent updates for proper undo
+          },
+        });
+      }
+    },
+
+    updateMultipleTasks: (updates) => {
+      const historyStore = useHistoryStore.getState();
+      const taskChanges: Array<{
+        id: string;
+        previousStartDate: string;
+        previousEndDate: string;
+        newStartDate: string;
+        newEndDate: string;
+      }> = [];
+      const cascadeUpdates: Array<{
+        id: string;
+        updates: Partial<Task>;
+        previousValues: Partial<Task>;
+      }> = [];
+
+      set((state) => {
+        const affectedParentIds = new Set<string>();
+
+        // Apply all task updates
+        for (const { id, updates: taskUpdates } of updates) {
+          const taskIndex = state.tasks.findIndex((t) => t.id === id);
+          if (taskIndex === -1) continue;
+
+          const task = state.tasks[taskIndex];
+
+          // Capture previous values
+          taskChanges.push({
+            id,
+            previousStartDate: task.startDate,
+            previousEndDate: task.endDate,
+            newStartDate: taskUpdates.startDate || task.startDate,
+            newEndDate: taskUpdates.endDate || task.endDate,
+          });
+
+          // Apply update
+          state.tasks[taskIndex] = {
+            ...task,
+            ...taskUpdates,
+          };
+
+          // Track affected parents for cascade
+          if (task.parent) {
+            affectedParentIds.add(task.parent);
+          }
+        }
+
+        // Cascade up through all ancestor summaries
+        const processedParents = new Set<string>();
+        const parentQueue = Array.from(affectedParentIds);
+
+        while (parentQueue.length > 0) {
+          const parentId = parentQueue.shift()!;
+          if (processedParents.has(parentId)) continue;
+          processedParents.add(parentId);
+
+          const parent = state.tasks.find((t) => t.id === parentId);
+          if (!parent || parent.type !== "summary") continue;
+
+          const summaryDates = calculateSummaryDates(state.tasks, parentId);
+          if (summaryDates) {
+            const parentIndex = state.tasks.findIndex(
+              (t) => t.id === parentId
+            );
+
+            // Capture previous values for undo
+            cascadeUpdates.push({
+              id: parentId,
+              updates: {
+                startDate: summaryDates.startDate,
+                endDate: summaryDates.endDate,
+                duration: summaryDates.duration,
+              },
+              previousValues: {
+                startDate: parent.startDate,
+                endDate: parent.endDate,
+                duration: parent.duration,
+              },
+            });
+
+            // Apply cascade update
+            if (parentIndex !== -1) {
+              state.tasks[parentIndex] = {
+                ...state.tasks[parentIndex],
+                startDate: summaryDates.startDate,
+                endDate: summaryDates.endDate,
+                duration: summaryDates.duration,
+              };
+            }
+
+            // Continue cascading up
+            if (parent.parent) {
+              parentQueue.push(parent.parent);
+            }
+          }
+        }
+      });
+
+      // Mark file as dirty
+      if (taskChanges.length > 0) {
+        useFileStore.getState().markDirty();
+      }
+
+      // Record command for undo/redo
+      if (
+        !historyStore.isUndoing &&
+        !historyStore.isRedoing &&
+        taskChanges.length > 0
+      ) {
+        historyStore.recordCommand({
+          id: crypto.randomUUID(),
+          type: CommandType.MULTI_DRAG_TASKS,
+          timestamp: Date.now(),
+          description: `Moved ${taskChanges.length} task(s)`,
+          params: {
+            taskChanges,
+            cascadeUpdates,
           },
         });
       }

@@ -1915,3 +1915,218 @@ describe('Task Store - CRUD Operations', () => {
     });
   });
 });
+
+describe('Task Store - Multi-Task Operations', () => {
+  beforeEach(() => {
+    useTaskStore.setState({
+      tasks: [],
+      selectedTaskIds: [],
+      lastSelectedTaskId: null,
+      activeCell: { taskId: null, field: null },
+      isEditingCell: false,
+      columnWidths: {},
+      taskTableWidth: null,
+    });
+    useHistoryStore.setState({
+      undoStack: [],
+      redoStack: [],
+      isUndoing: false,
+      isRedoing: false,
+    });
+  });
+
+  describe('updateMultipleTasks', () => {
+    it('should update multiple tasks at once', () => {
+      const tasks: Task[] = [
+        {
+          id: 'task-1',
+          name: 'Task 1',
+          startDate: '2025-01-01',
+          endDate: '2025-01-05',
+          duration: 5,
+          progress: 0,
+          color: '#3b82f6',
+          order: 0,
+          type: 'task',
+          metadata: {},
+        },
+        {
+          id: 'task-2',
+          name: 'Task 2',
+          startDate: '2025-01-06',
+          endDate: '2025-01-10',
+          duration: 5,
+          progress: 0,
+          color: '#3b82f6',
+          order: 1,
+          type: 'task',
+          metadata: {},
+        },
+      ];
+      useTaskStore.setState({ tasks });
+
+      const { updateMultipleTasks } = useTaskStore.getState();
+      updateMultipleTasks([
+        { id: 'task-1', updates: { startDate: '2025-01-02', endDate: '2025-01-06' } },
+        { id: 'task-2', updates: { startDate: '2025-01-07', endDate: '2025-01-11' } },
+      ]);
+
+      const updatedTasks = useTaskStore.getState().tasks;
+      expect(updatedTasks[0].startDate).toBe('2025-01-02');
+      expect(updatedTasks[0].endDate).toBe('2025-01-06');
+      expect(updatedTasks[1].startDate).toBe('2025-01-07');
+      expect(updatedTasks[1].endDate).toBe('2025-01-11');
+    });
+
+    it('should record a single undo command for multiple task updates', () => {
+      const tasks: Task[] = [
+        {
+          id: 'task-1',
+          name: 'Task 1',
+          startDate: '2025-01-01',
+          endDate: '2025-01-05',
+          duration: 5,
+          progress: 0,
+          color: '#3b82f6',
+          order: 0,
+          type: 'task',
+          metadata: {},
+        },
+        {
+          id: 'task-2',
+          name: 'Task 2',
+          startDate: '2025-01-06',
+          endDate: '2025-01-10',
+          duration: 5,
+          progress: 0,
+          color: '#3b82f6',
+          order: 1,
+          type: 'task',
+          metadata: {},
+        },
+      ];
+      useTaskStore.setState({ tasks });
+
+      const { updateMultipleTasks } = useTaskStore.getState();
+      updateMultipleTasks([
+        { id: 'task-1', updates: { startDate: '2025-01-02', endDate: '2025-01-06' } },
+        { id: 'task-2', updates: { startDate: '2025-01-07', endDate: '2025-01-11' } },
+      ]);
+
+      const undoStack = useHistoryStore.getState().undoStack;
+      expect(undoStack).toHaveLength(1);
+      expect(undoStack[0].type).toBe('multiDragTasks');
+    });
+
+    it('should cascade updates to parent summary tasks', () => {
+      const tasks: Task[] = [
+        {
+          id: 'summary',
+          name: 'Summary',
+          startDate: '2025-01-01',
+          endDate: '2025-01-10',
+          duration: 10,
+          progress: 0,
+          color: '#3b82f6',
+          order: 0,
+          type: 'summary',
+          metadata: {},
+        },
+        {
+          id: 'child-1',
+          name: 'Child 1',
+          startDate: '2025-01-01',
+          endDate: '2025-01-05',
+          duration: 5,
+          progress: 0,
+          color: '#3b82f6',
+          order: 1,
+          type: 'task',
+          parent: 'summary',
+          metadata: {},
+        },
+        {
+          id: 'child-2',
+          name: 'Child 2',
+          startDate: '2025-01-06',
+          endDate: '2025-01-10',
+          duration: 5,
+          progress: 0,
+          color: '#3b82f6',
+          order: 2,
+          type: 'task',
+          parent: 'summary',
+          metadata: {},
+        },
+      ];
+      useTaskStore.setState({ tasks });
+
+      const { updateMultipleTasks } = useTaskStore.getState();
+      // Move both children forward by 5 days
+      updateMultipleTasks([
+        { id: 'child-1', updates: { startDate: '2025-01-06', endDate: '2025-01-10', duration: 5 } },
+        { id: 'child-2', updates: { startDate: '2025-01-11', endDate: '2025-01-15', duration: 5 } },
+      ]);
+
+      const updatedTasks = useTaskStore.getState().tasks;
+      const summary = updatedTasks.find(t => t.id === 'summary');
+
+      // Summary should have updated dates based on children
+      expect(summary?.startDate).toBe('2025-01-06');
+      expect(summary?.endDate).toBe('2025-01-15');
+    });
+
+    it('should handle empty updates array', () => {
+      const tasks: Task[] = [
+        {
+          id: 'task-1',
+          name: 'Task 1',
+          startDate: '2025-01-01',
+          endDate: '2025-01-05',
+          duration: 5,
+          progress: 0,
+          color: '#3b82f6',
+          order: 0,
+          type: 'task',
+          metadata: {},
+        },
+      ];
+      useTaskStore.setState({ tasks });
+
+      const { updateMultipleTasks } = useTaskStore.getState();
+      updateMultipleTasks([]);
+
+      // No undo command should be recorded
+      const undoStack = useHistoryStore.getState().undoStack;
+      expect(undoStack).toHaveLength(0);
+    });
+
+    it('should skip non-existent task IDs', () => {
+      const tasks: Task[] = [
+        {
+          id: 'task-1',
+          name: 'Task 1',
+          startDate: '2025-01-01',
+          endDate: '2025-01-05',
+          duration: 5,
+          progress: 0,
+          color: '#3b82f6',
+          order: 0,
+          type: 'task',
+          metadata: {},
+        },
+      ];
+      useTaskStore.setState({ tasks });
+
+      const { updateMultipleTasks } = useTaskStore.getState();
+      updateMultipleTasks([
+        { id: 'task-1', updates: { startDate: '2025-01-02', endDate: '2025-01-06' } },
+        { id: 'nonexistent', updates: { startDate: '2025-01-02', endDate: '2025-01-06' } },
+      ]);
+
+      const updatedTasks = useTaskStore.getState().tasks;
+      expect(updatedTasks).toHaveLength(1);
+      expect(updatedTasks[0].startDate).toBe('2025-01-02');
+    });
+  });
+});

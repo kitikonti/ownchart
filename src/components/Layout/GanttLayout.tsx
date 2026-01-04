@@ -49,9 +49,6 @@ export function GanttLayout() {
 
   // Task store
   const selectedTaskIds = useTaskStore((state) => state.selectedTaskIds);
-  const toggleTaskSelection = useTaskStore(
-    (state) => state.toggleTaskSelection
-  );
   const taskTableWidth = useTaskStore((state) => state.taskTableWidth);
   const setTaskTableWidth = useTaskStore((state) => state.setTaskTableWidth);
 
@@ -274,7 +271,6 @@ export function GanttLayout() {
                         <ChartCanvas
                           tasks={orderedTasks}
                           selectedTaskIds={selectedTaskIds}
-                          onTaskClick={toggleTaskSelection}
                           containerHeight={contentAreaHeight}
                           containerWidth={chartContainerWidth}
                         />

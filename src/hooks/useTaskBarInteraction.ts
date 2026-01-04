@@ -4,12 +4,13 @@
  */
 
 import { useState, useCallback, useRef, useEffect } from "react";
-import toast from "react-hot-toast";
 import type { Task } from "../types/chart.types";
 import type { TimelineScale, TaskBarGeometry } from "../utils/timelineUtils";
 import { addDays, calculateDuration } from "../utils/dateUtils";
 import { useTaskStore } from "../store/slices/taskSlice";
+import { useChartStore } from "../store/slices/chartSlice";
 import { validateDragOperation } from "../utils/dragValidation";
+import { getEffectiveTasksToMove } from "../utils/hierarchy";
 
 // Edge detection threshold in pixels
 const EDGE_THRESHOLD = 8;
@@ -78,6 +79,11 @@ export function useTaskBarInteraction(
   geometry: TaskBarGeometry
 ): UseTaskBarInteractionReturn {
   const updateTask = useTaskStore((state) => state.updateTask);
+  const updateMultipleTasks = useTaskStore(
+    (state) => state.updateMultipleTasks
+  );
+  const setSharedDragState = useChartStore((state) => state.setDragState);
+  const clearSharedDragState = useChartStore((state) => state.clearDragState);
 
   const [dragState, setDragState] = useState<DragState | null>(null);
   const dragStateRef = useRef<DragState | null>(null); // Use ref to avoid stale closures
@@ -90,15 +96,6 @@ export function useTaskBarInteraction(
    */
   const handleMouseDown = useCallback(
     (e: React.MouseEvent<SVGGElement>) => {
-      // Block summary tasks from being dragged
-      if (task.type === "summary") {
-        toast("Summary task dates are calculated from children", {
-          icon: "🔒",
-          duration: 2000,
-        });
-        return;
-      }
-
       // Get SVG element
       const svg = e.currentTarget.ownerSVGElement;
       if (!svg) return;
@@ -185,6 +182,9 @@ export function useTaskBarInteraction(
 
           setDragState(updatedState);
           dragStateRef.current = updatedState;
+
+          // Update shared drag state for multi-task preview
+          setSharedDragState(deltaDays, task.id);
         } else if (currentDragState.mode === "resizing-left") {
           // Resize from left: change start date only
           const deltaDays = Math.round(deltaX / scale.pixelsPerDay);
@@ -240,7 +240,7 @@ export function useTaskBarInteraction(
         }
       });
     },
-    [scale]
+    [scale, task.id, setSharedDragState]
   );
 
   /**
@@ -256,33 +256,90 @@ export function useTaskBarInteraction(
       rafRef.current = null;
     }
 
-    // Validate the drag operation
-    const validation = validateDragOperation(
-      task,
-      currentDragState.currentPreviewStart || task.startDate,
-      currentDragState.currentPreviewEnd || task.endDate
-    );
+    // For drag-to-move operations, use multi-drag logic
+    if (currentDragState.mode === "dragging") {
+      // Calculate deltaDays from the preview
+      const originalStart = new Date(currentDragState.originalStartDate);
+      const newStart = new Date(
+        currentDragState.currentPreviewStart || currentDragState.originalStartDate
+      );
+      const deltaDays = Math.round(
+        (newStart.getTime() - originalStart.getTime()) / (1000 * 60 * 60 * 24)
+      );
 
-    if (!validation.valid) {
-      // Show error toast
-      toast.error(validation.error!, {
-        duration: 3000,
-        position: "bottom-center",
-      });
+      // Only update if there was actual movement
+      if (deltaDays !== 0) {
+        // IMPORTANT: Get current values from store to avoid stale closure
+        const currentState = useTaskStore.getState();
+        const currentTasks = currentState.tasks;
+        const currentSelectedIds = currentState.selectedTaskIds;
+
+        // Determine which tasks to move:
+        // - If dragged task is in selection -> move all selected tasks
+        // - If dragged task is NOT in selection -> move only the dragged task
+        const tasksToMove = currentSelectedIds.includes(task.id)
+          ? currentSelectedIds
+          : [task.id];
+
+        // Get effective tasks to move (handles summary expansion and de-duplication)
+        const effectiveTaskIds = getEffectiveTasksToMove(currentTasks, tasksToMove);
+
+        // Build updates array for all affected tasks
+        const updates: Array<{ id: string; updates: Partial<Task> }> = [];
+
+        for (const taskId of effectiveTaskIds) {
+          const t = currentTasks.find((x) => x.id === taskId);
+          if (!t) continue;
+
+          // Skip summary tasks (they auto-recalculate from children)
+          if (t.type === "summary") continue;
+
+          // Validate the drag operation for this task
+          const newStartDate = addDays(t.startDate, deltaDays);
+          const newEndDate = t.endDate ? addDays(t.endDate, deltaDays) : "";
+          const validation = validateDragOperation(t, newStartDate, newEndDate);
+
+          if (!validation.valid) continue;
+
+          if (t.type === "milestone") {
+            updates.push({
+              id: taskId,
+              updates: {
+                startDate: newStartDate,
+                duration: 0,
+              },
+            });
+          } else {
+            updates.push({
+              id: taskId,
+              updates: {
+                startDate: newStartDate,
+                endDate: newEndDate,
+                duration: t.duration,
+              },
+            });
+          }
+        }
+
+        // Apply all updates via batch action
+        if (updates.length > 0) {
+          updateMultipleTasks(updates);
+        }
+      }
     } else {
-      // Only update if dates actually changed
-      if (
-        currentDragState.currentPreviewStart !== task.startDate ||
-        currentDragState.currentPreviewEnd !== task.endDate
-      ) {
-        // For milestones, only update startDate (they don't have endDate)
-        if (task.type === "milestone") {
-          updateTask(task.id, {
-            startDate: currentDragState.currentPreviewStart!,
-            duration: 0,
-          });
-        } else {
-          // For regular tasks, update both dates
+      // For resize operations, only update the single task
+      const validation = validateDragOperation(
+        task,
+        currentDragState.currentPreviewStart || task.startDate,
+        currentDragState.currentPreviewEnd || task.endDate
+      );
+
+      if (validation.valid) {
+        // Only update if dates actually changed
+        if (
+          currentDragState.currentPreviewStart !== task.startDate ||
+          currentDragState.currentPreviewEnd !== task.endDate
+        ) {
           updateTask(task.id, {
             startDate: currentDragState.currentPreviewStart!,
             endDate: currentDragState.currentPreviewEnd!,
@@ -301,7 +358,8 @@ export function useTaskBarInteraction(
     setDragState(null);
     dragStateRef.current = null;
     svgRef.current = null;
-  }, [task, updateTask, handleMouseMove]);
+    clearSharedDragState();
+  }, [task, updateTask, updateMultipleTasks, handleMouseMove, clearSharedDragState]);
 
   /**
    * Handle mouse move for cursor updates (when not dragging).
@@ -311,14 +369,8 @@ export function useTaskBarInteraction(
       // Don't change cursor during active drag
       if (dragState) return;
 
-      // Summary tasks always show not-allowed
-      if (task.type === "summary") {
-        setCursor("not-allowed");
-        return;
-      }
-
-      // Milestones can only be dragged (moved), not resized
-      if (task.type === "milestone") {
+      // Summary tasks and milestones can only be dragged (moved), not resized
+      if (task.type === "summary" || task.type === "milestone") {
         setCursor("grab");
         return;
       }

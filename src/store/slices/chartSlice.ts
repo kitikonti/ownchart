@@ -40,6 +40,12 @@ interface ChartState {
   // Transient UI state
   isZooming: boolean;
   isPanning: boolean;
+
+  // Multi-task drag state (shared for preview rendering)
+  dragState: {
+    deltaDays: number;
+    sourceTaskId: string;
+  } | null;
 }
 
 interface ChartActions {
@@ -71,6 +77,10 @@ interface ChartActions {
   toggleTodayMarker: () => void;
   setShowWeekends: (show: boolean) => void;
   setShowTodayMarker: (show: boolean) => void;
+
+  // Drag state (for multi-task preview)
+  setDragState: (deltaDays: number, sourceTaskId: string) => void;
+  clearDragState: () => void;
 }
 
 const DEFAULT_CONTAINER_WIDTH = 800;
@@ -101,6 +111,7 @@ export const useChartStore = create<ChartState & ChartActions>()(
     showTodayMarker: true,
     isZooming: false,
     isPanning: false,
+    dragState: null,
 
     // Centralized scale calculation - updates dateRange from tasks, then derives scale
     updateScale: (tasks: Task[]) => {
@@ -288,6 +299,20 @@ export const useChartStore = create<ChartState & ChartActions>()(
     setShowTodayMarker: (show: boolean) => {
       set((state) => {
         state.showTodayMarker = show;
+      });
+    },
+
+    // Set drag state (for multi-task preview)
+    setDragState: (deltaDays: number, sourceTaskId: string) => {
+      set((state) => {
+        state.dragState = { deltaDays, sourceTaskId };
+      });
+    },
+
+    // Clear drag state
+    clearDragState: () => {
+      set((state) => {
+        state.dragState = null;
       });
     },
   }))

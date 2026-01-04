@@ -59,6 +59,9 @@ export enum CommandType {
   COPY_CELL = "copyCell",
   CUT_CELL = "cutCell",
   PASTE_CELL = "pasteCell",
+
+  // Multi-task operations
+  MULTI_DRAG_TASKS = "multiDragTasks",
 }
 
 export type CommandParams =
@@ -79,7 +82,8 @@ export type CommandParams =
   | PasteRowsParams
   | CopyCellParams
   | CutCellParams
-  | PasteCellParams;
+  | PasteCellParams
+  | MultiDragTasksParams;
 
 // Specific parameter types for each command
 export interface AddTaskParams {
@@ -198,4 +202,20 @@ export interface PasteCellParams {
   newValue: unknown;
   previousValue: unknown;
   previousCutCell?: { taskId: string; field: string; value: unknown };
+}
+
+// Multi-drag command params
+export interface MultiDragTasksParams {
+  taskChanges: Array<{
+    id: string;
+    previousStartDate: string;
+    previousEndDate: string;
+    newStartDate: string;
+    newEndDate: string;
+  }>;
+  cascadeUpdates: Array<{
+    id: string;
+    updates: Partial<Task>;
+    previousValues: Partial<Task>;
+  }>;
 }

@@ -222,3 +222,70 @@ export function buildFlattenedTaskList(
 
   return result;
 }
+
+/**
+ * Get the effective set of tasks to move for multi-drag operations.
+ * Handles overlapping selections (e.g., summary + one of its children selected).
+ *
+ * Logic:
+ * 1. If a summary task is selected, all its descendants are included
+ * 2. If a child is already covered by a selected ancestor summary, skip it
+ *    (it will be moved through the summary's expansion)
+ * 3. Summary tasks are filtered out (they auto-recalculate from children)
+ *
+ * @returns Array of non-summary task IDs to move
+ */
+export function getEffectiveTasksToMove(
+  tasks: Task[],
+  selectedIds: string[]
+): string[] {
+  // For simple case with no hierarchical selections, just return selected non-summary tasks
+  if (selectedIds.length === 0) return [];
+
+  const result = new Set<string>();
+
+  // Check if any selected task is a summary that would expand to include descendants
+  const selectedSummaryIds = new Set<string>();
+  for (const id of selectedIds) {
+    const task = tasks.find((t) => t.id === id);
+    if (task?.type === "summary") {
+      selectedSummaryIds.add(id);
+    }
+  }
+
+  // For each selected ID, determine if it should be included
+  for (const id of selectedIds) {
+    const task = tasks.find((t) => t.id === id);
+    if (!task) continue;
+
+    if (task.type === "summary") {
+      // For summaries: add all their non-summary descendants
+      const descendants = getTaskDescendants(tasks, id);
+      for (const descendant of descendants) {
+        if (descendant.type !== "summary") {
+          result.add(descendant.id);
+        }
+      }
+    } else {
+      // For non-summary tasks: check if already covered by a selected summary ancestor
+      let coveredBySelectedSummary = false;
+      let currentParentId = task.parent;
+
+      while (currentParentId) {
+        if (selectedSummaryIds.has(currentParentId)) {
+          coveredBySelectedSummary = true;
+          break;
+        }
+        const parent = tasks.find((t) => t.id === currentParentId);
+        currentParentId = parent?.parent;
+      }
+
+      // Only add if not already covered by a selected summary ancestor
+      if (!coveredBySelectedSummary) {
+        result.add(id);
+      }
+    }
+  }
+
+  return Array.from(result);
+}

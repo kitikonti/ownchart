@@ -7,8 +7,10 @@ import React, { useMemo } from "react";
 import type { Task } from "../../types/chart.types";
 import type { TimelineScale } from "../../utils/timelineUtils";
 import { getTaskBarGeometry, dateToPixel } from "../../utils/timelineUtils";
-import { calculateDuration } from "../../utils/dateUtils";
+import { calculateDuration, addDays } from "../../utils/dateUtils";
 import { useTaskBarInteraction } from "../../hooks/useTaskBarInteraction";
+import { useChartStore } from "../../store/slices/chartSlice";
+import { useTaskStore } from "../../store/slices/taskSlice";
 
 interface TaskBarProps {
   task: Task;
@@ -71,6 +73,10 @@ function SummaryBracket({
   height,
   color,
   onClick,
+  onMouseDown,
+  onMouseMove,
+  cursor,
+  opacity = 1,
   taskName,
 }: {
   x: number;
@@ -79,6 +85,10 @@ function SummaryBracket({
   height: number;
   color: string;
   onClick?: () => void;
+  onMouseDown?: (e: React.MouseEvent<SVGGElement>) => void;
+  onMouseMove?: (e: React.MouseEvent<SVGGElement>) => void;
+  cursor?: string;
+  opacity?: number;
   taskName: string;
 }) {
   const tipHeight = height * 0.5; // Height of downward triangular tips (50% of bar height)
@@ -106,13 +116,18 @@ function SummaryBracket({
   `;
 
   return (
-    <g className="task-bar summary" onClick={onClick}>
+    <g
+      className="task-bar summary"
+      onClick={onClick}
+      onMouseDown={onMouseDown}
+      onMouseMove={onMouseMove}
+    >
       {/* Complete bracket (bar + tips) as single path for unified outline */}
       <path
         d={bracketPath}
         fill={color}
-        fillOpacity={0.9}
-        style={{ cursor: "not-allowed" }}
+        fillOpacity={opacity * 0.9}
+        style={{ cursor: cursor || "grab" }}
       />
 
       {/* Task name label - positioned to the right of the bracket */}
@@ -143,6 +158,10 @@ export const TaskBar = React.memo(function TaskBar({
     [task, scale, rowIndex]
   );
 
+  // Shared drag state for multi-task preview
+  const sharedDragState = useChartStore((state) => state.dragState);
+  const selectedTaskIds = useTaskStore((state) => state.selectedTaskIds);
+
   // Interaction hook for drag-to-edit functionality
   const {
     mode,
@@ -153,7 +172,7 @@ export const TaskBar = React.memo(function TaskBar({
     onMouseMove: onMouseMoveForCursor,
   } = useTaskBarInteraction(task, scale, geometry);
 
-  // Calculate preview geometry if dragging/resizing
+  // Calculate preview geometry if dragging/resizing (for the source task)
   const preview = useMemo(() => {
     if (!previewGeometry) return null;
 
@@ -169,6 +188,44 @@ export const TaskBar = React.memo(function TaskBar({
       height: geometry.height,
     };
   }, [previewGeometry, scale, geometry]);
+
+  // Calculate secondary preview for tasks that are part of selection but not the drag source
+  const secondaryPreview = useMemo(() => {
+    // Only show secondary preview if:
+    // 1. There's an active drag from another task
+    // 2. This task is in the selection
+    // 3. This task is not the drag source
+    if (!sharedDragState) return null;
+    if (sharedDragState.sourceTaskId === task.id) return null;
+    if (!selectedTaskIds.includes(task.id)) return null;
+
+    const deltaDays = sharedDragState.deltaDays;
+    if (deltaDays === 0) return null;
+
+    const newStartDate = addDays(task.startDate, deltaDays);
+    const newEndDate = task.endDate ? addDays(task.endDate, deltaDays) : "";
+
+    const x = dateToPixel(newStartDate, scale);
+    const width = task.endDate
+      ? calculateDuration(newStartDate, newEndDate) * scale.pixelsPerDay
+      : 0;
+
+    return {
+      x,
+      y: geometry.y,
+      width,
+      height: geometry.height,
+      startDate: newStartDate,
+      endDate: newEndDate,
+    };
+  }, [sharedDragState, selectedTaskIds, task, scale, geometry]);
+
+  // Determine if this task should show as "being dragged" (faded)
+  const isBeingDragged =
+    mode !== "idle" ||
+    (sharedDragState &&
+      sharedDragState.sourceTaskId !== task.id &&
+      selectedTaskIds.includes(task.id));
 
   // Don't render if task has no valid dates (e.g., empty summary)
   // Milestones only need startDate, other types need both startDate and endDate
@@ -203,8 +260,12 @@ export const TaskBar = React.memo(function TaskBar({
     // Center the diamond in the middle of the day (offset by half day width minus diamond size)
     const centeredX = geometry.x + scale.pixelsPerDay / 2 - size;
 
-    // Calculate preview position if dragging
-    const previewX = preview ? preview.x + scale.pixelsPerDay / 2 - size : null;
+    // Calculate preview position if dragging (primary or secondary)
+    const previewX = preview
+      ? preview.x + scale.pixelsPerDay / 2 - size
+      : secondaryPreview
+        ? secondaryPreview.x + scale.pixelsPerDay / 2 - size
+        : null;
 
     return (
       <g>
@@ -218,7 +279,7 @@ export const TaskBar = React.memo(function TaskBar({
           onMouseDown={onMouseDown}
           onMouseMove={onMouseMoveForCursor}
           cursor={cursor}
-          opacity={mode !== "idle" ? 0.3 : 1}
+          opacity={isBeingDragged ? 0.3 : 1}
         />
 
         {/* Preview milestone (solid outline during drag) */}
@@ -241,16 +302,45 @@ export const TaskBar = React.memo(function TaskBar({
 
   // Summary rendering with bracket/clamp shape
   if (task.type === "summary") {
+    // Calculate preview position for summaries (primary or secondary)
+    const summaryPreviewX = preview?.x ?? secondaryPreview?.x ?? null;
+    const summaryPreviewWidth =
+      preview?.width ?? secondaryPreview?.width ?? null;
+
     return (
-      <SummaryBracket
-        x={geometry.x}
-        y={geometry.y}
-        width={geometry.width}
-        height={geometry.height}
-        color={task.color}
-        onClick={handleClick}
-        taskName={task.name}
-      />
+      <g>
+        {/* Original summary bracket (faded during drag) */}
+        <SummaryBracket
+          x={geometry.x}
+          y={geometry.y}
+          width={geometry.width}
+          height={geometry.height}
+          color={task.color}
+          onClick={handleClick}
+          onMouseDown={onMouseDown}
+          onMouseMove={onMouseMoveForCursor}
+          cursor={cursor}
+          opacity={isBeingDragged ? 0.3 : 1}
+          taskName={task.name}
+        />
+
+        {/* Preview outline for summary (shown during drag) */}
+        {summaryPreviewX !== null && summaryPreviewWidth !== null && (
+          <rect
+            x={summaryPreviewX}
+            y={geometry.y}
+            width={summaryPreviewWidth}
+            height={geometry.height * 0.5}
+            fill="none"
+            stroke="#228be6"
+            strokeWidth={2}
+            strokeDasharray="4 4"
+            rx={4}
+            ry={4}
+            pointerEvents="none"
+          />
+        )}
+      </g>
     );
   }
 
@@ -287,7 +377,7 @@ export const TaskBar = React.memo(function TaskBar({
         width={geometry.width}
         height={geometry.height}
         fill={task.color}
-        fillOpacity={mode !== "idle" ? 0.3 : 0.8}
+        fillOpacity={isBeingDragged ? 0.3 : 0.8}
         rx={4}
         ry={4}
       />
@@ -300,18 +390,18 @@ export const TaskBar = React.memo(function TaskBar({
           width={progressWidth}
           height={geometry.height}
           fill={task.color}
-          fillOpacity={1}
+          fillOpacity={isBeingDragged ? 0.3 : 1}
           clipPath={`url(#${clipPathId})`}
         />
       )}
 
-      {/* Preview outline (shown during drag/resize) */}
-      {preview && (
+      {/* Preview outline (shown during drag/resize - primary or secondary) */}
+      {(preview || secondaryPreview) && (
         <rect
-          x={preview.x}
-          y={preview.y}
-          width={preview.width}
-          height={preview.height}
+          x={(preview || secondaryPreview)!.x}
+          y={(preview || secondaryPreview)!.y}
+          width={(preview || secondaryPreview)!.width}
+          height={(preview || secondaryPreview)!.height}
           fill="none"
           stroke="#228be6"
           strokeWidth={2}
