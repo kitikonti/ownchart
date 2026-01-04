@@ -392,12 +392,13 @@ If dependency arrows or performance validation fails, reassess approach before c
 
 ---
 
-#### Sprint 1.4: Dependencies (Finish-to-Start Only)
+#### Sprint 1.4: Dependencies (Finish-to-Start Only) ✅ COMPLETE
 
 **Duration:** 1.5 weeks
+**Status:** ✅ COMPLETE (2026-01-04)
 
 **Features**:
-- Create Finish-to-Start (FS) dependencies
+- ✅ Create Finish-to-Start (FS) dependencies
 - Two interaction methods:
   - Alt+Drag between tasks (keyboard users)
   - Connection handles on task bars (mouse users)

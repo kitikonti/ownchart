@@ -13,7 +13,7 @@
 
 ## Project Status
 
-**Current Version**: `0.0.1` (MVP in progress)
+**Current Version**: `0.0.2` (MVP in progress)
 
 **Completed Sprints**:
 - ✅ Sprint 1.1.1 - Task Groups & Hierarchical Organization
@@ -23,9 +23,9 @@
 - ✅ Sprint 1.2 Package 3 - Navigation & Scale
 - ✅ Sprint 1.3 - File Operations
 - ✅ Sprint 1.5 - Undo/Redo System
+- ✅ Sprint 1.4 - Dependencies (FS only)
 
 **Next Sprints**:
-- Sprint 1.4 - Dependencies (FS only)
 - Sprint 1.6 - PNG Export & Polish
 
 ## Directory Structure
