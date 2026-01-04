@@ -26,7 +26,6 @@ export function NewTaskPlaceholderRow(): JSX.Element {
   const isRowActive = activeCell.taskId === PLACEHOLDER_TASK_ID;
   const isNameActive = isRowActive && activeCell.field === "name";
   const isSelected = selectedTaskIds.includes(PLACEHOLDER_TASK_ID);
-  const isEmpty = tasks.length === 0;
 
   // Focus cell when it becomes active (not editing)
   useEffect(() => {
@@ -204,9 +203,7 @@ export function NewTaskPlaceholderRow(): JSX.Element {
                 />
               ) : (
                 <span className="text-gray-400 italic select-none">
-                  {isEmpty
-                    ? "Click here or press Enter to add your first task..."
-                    : "Add new task..."}
+                  Add new task...
                 </span>
               ))}
           </div>
