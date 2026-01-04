@@ -1,14 +1,21 @@
 /**
- * ClipboardButtons - Copy/Cut/Paste buttons for the toolbar
+ * ClipboardButtons - Copy/Cut/Paste/Delete buttons for the toolbar
  * Supports both row-level and cell-level operations
  */
 
-import { Copy, Scissors, ClipboardText } from "@phosphor-icons/react";
+import { Copy, Scissors, ClipboardText, Trash } from "@phosphor-icons/react";
 import { useClipboardOperations } from "../../hooks/useClipboardOperations";
+import { useTaskStore } from "../../store/slices/taskSlice";
 
 export function ClipboardButtons() {
   const { handleCopy, handleCut, handlePaste, canCopyOrCut, canPaste } =
     useClipboardOperations();
+  const deleteSelectedTasks = useTaskStore(
+    (state) => state.deleteSelectedTasks
+  );
+  const selectedTaskIds = useTaskStore((state) => state.selectedTaskIds);
+
+  const canDelete = selectedTaskIds.length > 0;
 
   return (
     <div className="inline-flex items-center gap-1 border-r border-gray-200 pr-2">
@@ -49,6 +56,19 @@ export function ClipboardButtons() {
         aria-label="Paste"
       >
         <ClipboardText size={18} weight="regular" className="text-gray-700" />
+      </button>
+
+      {/* Delete Button */}
+      <button
+        onClick={deleteSelectedTasks}
+        disabled={!canDelete}
+        className={`p-2 rounded hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+          !canDelete ? "opacity-40 cursor-not-allowed" : ""
+        }`}
+        title="Delete (Del)"
+        aria-label="Delete"
+      >
+        <Trash size={18} weight="regular" className="text-gray-700" />
       </button>
     </div>
   );

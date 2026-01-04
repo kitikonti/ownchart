@@ -8,6 +8,7 @@
 
 import { useEffect } from "react";
 import { useHistoryStore } from "../store/slices/historySlice";
+import { useTaskStore } from "../store/slices/taskSlice";
 import { useFileOperations } from "./useFileOperations";
 import { useClipboardOperations } from "./useClipboardOperations";
 import { useClipboardStore } from "../store/slices/clipboardSlice";
@@ -20,6 +21,8 @@ export function useKeyboardShortcuts() {
   const { handleCopy, handleCut, handlePaste } = useClipboardOperations();
   const clearClipboard = useClipboardStore((state) => state.clearClipboard);
   const clipboardMode = useClipboardStore((state) => state.activeMode);
+  const deleteSelectedTasks = useTaskStore((state) => state.deleteSelectedTasks);
+  const selectedTaskIds = useTaskStore((state) => state.selectedTaskIds);
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -127,6 +130,13 @@ export function useKeyboardShortcuts() {
         clearClipboard();
         return;
       }
+
+      // Delete: Delete selected tasks
+      if (e.key === "Delete" && selectedTaskIds.length > 0) {
+        e.preventDefault();
+        deleteSelectedTasks();
+        return;
+      }
     };
 
     window.addEventListener("keydown", handleKeyDown);
@@ -146,5 +156,7 @@ export function useKeyboardShortcuts() {
     handlePaste,
     clearClipboard,
     clipboardMode,
+    deleteSelectedTasks,
+    selectedTaskIds,
   ]);
 }

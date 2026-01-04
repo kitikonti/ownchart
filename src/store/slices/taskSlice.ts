@@ -67,6 +67,7 @@ interface TaskActions {
   addTask: (taskData: Omit<Task, "id">) => void;
   updateTask: (id: string, updates: Partial<Task>) => void;
   deleteTask: (id: string, cascade?: boolean) => void;
+  deleteSelectedTasks: () => void;
   reorderTasks: (fromIndex: number, toIndex: number) => void;
   setTasks: (tasks: Task[]) => void;
 
@@ -451,6 +452,79 @@ export const useTaskStore = create<TaskStore>()(
           params: {
             id,
             cascade,
+            deletedTasks,
+          },
+        });
+      }
+    },
+
+    deleteSelectedTasks: () => {
+      const historyStore = useHistoryStore.getState();
+      const state = get();
+      const selectedIds = state.selectedTaskIds;
+
+      if (selectedIds.length === 0) return;
+
+      // Collect all tasks to delete (including children of selected tasks)
+      const idsToDelete = new Set<string>();
+      const deletedTasks: Task[] = [];
+
+      // Recursively find all children
+      const findChildren = (parentId: string) => {
+        state.tasks.forEach((task) => {
+          if (task.parent === parentId && !idsToDelete.has(task.id)) {
+            idsToDelete.add(task.id);
+            findChildren(task.id);
+          }
+        });
+      };
+
+      // Add selected tasks and their children
+      selectedIds.forEach((id) => {
+        idsToDelete.add(id);
+        findChildren(id);
+      });
+
+      // Capture all tasks before deleting
+      state.tasks.forEach((task) => {
+        if (idsToDelete.has(task.id)) {
+          deletedTasks.push(JSON.parse(JSON.stringify(task)));
+        }
+      });
+
+      // Remove all collected tasks
+      set((s) => {
+        s.tasks = s.tasks.filter((task) => !idsToDelete.has(task.id));
+        s.selectedTaskIds = [];
+        s.clipboardTaskIds = s.clipboardTaskIds.filter(
+          (id) => !idsToDelete.has(id)
+        );
+      });
+
+      // Mark file as dirty
+      if (deletedTasks.length > 0) {
+        useFileStore.getState().markDirty();
+      }
+
+      // Record command for undo/redo
+      if (
+        !historyStore.isUndoing &&
+        !historyStore.isRedoing &&
+        deletedTasks.length > 0
+      ) {
+        const description =
+          deletedTasks.length === 1
+            ? `Deleted task "${deletedTasks[0].name}"`
+            : `Deleted ${deletedTasks.length} tasks`;
+
+        historyStore.recordCommand({
+          id: crypto.randomUUID(),
+          type: CommandType.DELETE_TASK,
+          timestamp: Date.now(),
+          description,
+          params: {
+            id: selectedIds[0],
+            cascade: true,
             deletedTasks,
           },
         });
