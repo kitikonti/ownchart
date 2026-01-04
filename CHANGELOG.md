@@ -2,6 +2,21 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [0.0.8](https://github.com/kitikonti/ownchart/compare/v0.0.7...v0.0.8) (2026-01-04)
+
+
+### Features
+
+* add cross-tab copy/paste via system clipboard ([d427d54](https://github.com/kitikonti/ownchart/commit/d427d5491f87be25f658073aed8c2bc09f9b3df6))
+* add insert task above/below toolbar buttons ([47dfb7a](https://github.com/kitikonti/ownchart/commit/47dfb7a80b93f50235ab010e60f7be3efc3af23f))
+
+
+### Bug Fixes
+
+* auto-resize name column accounts for hierarchy indent ([fcc3180](https://github.com/kitikonti/ownchart/commit/fcc3180bde92dd5fc9e56e1554e0637bf2493bdc))
+* restrict collapse/expand to summary tasks only ([4c6c2c7](https://github.com/kitikonti/ownchart/commit/4c6c2c727b8805071ad74c5dbd6d9bf74918fa87))
+* update clipboard tests to use clipboardTaskIds ([debfffb](https://github.com/kitikonti/ownchart/commit/debfffb91f44128a002bf62a667ce863570db5ef))
+
 ### [0.0.7](https://github.com/kitikonti/ownchart/compare/v0.0.6...v0.0.7) (2026-01-04)
 
 ### [0.0.6](https://github.com/kitikonti/ownchart/compare/v0.0.5...v0.0.6) (2026-01-04)
