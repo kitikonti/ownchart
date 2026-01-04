@@ -23,12 +23,17 @@ interface TaskTableRowProps {
   task: Task;
   level?: number; // Nesting level (0 = root)
   hasChildren?: boolean; // Whether task has children
+  clipboardPosition?: {
+    isFirst: boolean; // First in clipboard group (show top border)
+    isLast: boolean; // Last in clipboard group (show bottom border)
+  };
 }
 
 export function TaskTableRow({
   task,
   level = 0,
   hasChildren = false,
+  clipboardPosition,
 }: TaskTableRowProps): JSX.Element {
   const tasks = useTaskStore((state) => state.tasks);
   const deleteTask = useTaskStore((state) => state.deleteTask);
@@ -45,11 +50,10 @@ export function TaskTableRow({
   );
   const selectTaskRange = useTaskStore((state) => state.selectTaskRange);
   const setActiveCell = useTaskStore((state) => state.setActiveCell);
-  const cutTaskIds = useTaskStore((state) => state.cutTaskIds);
   const { isCellEditing, stopCellEdit } = useCellNavigation();
 
   const isSelected = selectedTaskIds.includes(task.id);
-  const isCut = cutTaskIds.includes(task.id);
+  const isInClipboard = clipboardPosition !== undefined;
 
   // Calculate summary dates if needed, and recalculate duration for all tasks
   const displayTask = useMemo(() => {
@@ -141,13 +145,32 @@ export function TaskTableRow({
     }
   };
 
+  // Build clipboard border style
+  const clipboardStyle =
+    isInClipboard && clipboardPosition
+      ? {
+          boxShadow: [
+            // Left border (always)
+            "inset 2px 0 0 0 #9ca3af",
+            // Right border (always)
+            "inset -2px 0 0 0 #9ca3af",
+            // Top border (only if first in group)
+            clipboardPosition.isFirst ? "inset 0 2px 0 0 #9ca3af" : "",
+            // Bottom border (only if last in group)
+            clipboardPosition.isLast ? "inset 0 -2px 0 0 #9ca3af" : "",
+          ]
+            .filter(Boolean)
+            .join(", "),
+        }
+      : {};
+
   return (
     <div
       ref={setNodeRef}
-      style={style}
+      style={{ ...style, ...clipboardStyle }}
       className={`task-table-row col-span-full grid ${
         isSelected ? "bg-blue-50" : "bg-white"
-      } ${isCut ? "opacity-50 outline outline-2 outline-dashed outline-gray-400 -outline-offset-2" : ""}`}
+      } ${isInClipboard ? "relative z-10" : ""}`}
       role="row"
     >
       {/* Drag Handle Cell */}

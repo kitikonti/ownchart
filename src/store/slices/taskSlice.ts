@@ -55,8 +55,8 @@ interface TaskState {
   // Split pane state
   taskTableWidth: number | null; // null = auto (total column width)
 
-  // Cut/Copy state (for visual feedback)
-  cutTaskIds: string[];
+  // Clipboard state (for visual feedback - both copy and cut)
+  clipboardTaskIds: string[];
   cutCell: { taskId: string; field: EditableField } | null;
 }
 
@@ -139,7 +139,7 @@ export const useTaskStore = create<TaskStore>()(
     isEditingCell: false,
     columnWidths: {} as Record<string, number>,
     taskTableWidth: null as number | null,
-    cutTaskIds: [] as string[],
+    clipboardTaskIds: [] as string[],
     cutCell: null as { taskId: string; field: EditableField } | null,
 
     // Actions

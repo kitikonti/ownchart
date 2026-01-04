@@ -3,12 +3,14 @@
  * Handles Ctrl+Z (undo), Ctrl+Shift+Z (redo), Ctrl+Y (redo alternative)
  * Handles Ctrl+S (save), Ctrl+Shift+S (save as), Ctrl+O (open), Ctrl+N (new)
  * Handles Ctrl+C (copy), Ctrl+X (cut), Ctrl+V (paste)
+ * Handles ESC (clear clipboard)
  */
 
 import { useEffect } from "react";
 import { useHistoryStore } from "../store/slices/historySlice";
 import { useFileOperations } from "./useFileOperations";
 import { useClipboardOperations } from "./useClipboardOperations";
+import { useClipboardStore } from "../store/slices/clipboardSlice";
 
 export function useKeyboardShortcuts() {
   const undo = useHistoryStore((state) => state.undo);
@@ -16,6 +18,8 @@ export function useKeyboardShortcuts() {
   const { handleSave, handleSaveAs, handleOpen, handleNew } =
     useFileOperations();
   const { handleCopy, handleCut, handlePaste } = useClipboardOperations();
+  const clearClipboard = useClipboardStore((state) => state.clearClipboard);
+  const clipboardMode = useClipboardStore((state) => state.activeMode);
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -116,6 +120,13 @@ export function useKeyboardShortcuts() {
         handlePaste();
         return;
       }
+
+      // ESC: Clear clipboard (like Excel)
+      if (e.key === "Escape" && clipboardMode !== null) {
+        // Don't preventDefault - let other handlers (like Cell edit cancel) also handle it
+        clearClipboard();
+        return;
+      }
     };
 
     window.addEventListener("keydown", handleKeyDown);
@@ -133,5 +144,7 @@ export function useKeyboardShortcuts() {
     handleCopy,
     handleCut,
     handlePaste,
+    clearClipboard,
+    clipboardMode,
   ]);
 }

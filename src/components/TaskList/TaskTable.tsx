@@ -48,12 +48,19 @@ export function TaskTable({ hideHeader = true }: TaskTableProps): JSX.Element {
   const canIndent = useTaskStore((state) => state.canIndentSelection());
   const canOutdent = useTaskStore((state) => state.canOutdentSelection());
   const activeCell = useTaskStore((state) => state.activeCell);
+  const clipboardTaskIds = useTaskStore((state) => state.clipboardTaskIds);
 
   // Get total column width for proper scrolling
   const { totalColumnWidth } = useTableDimensions();
 
   // Build flattened list respecting collapsed state (centralized in hook)
   const { flattenedTasks } = useFlattenedTasks();
+
+  // Build a set for quick lookup
+  const clipboardSet = useMemo(
+    () => new Set(clipboardTaskIds),
+    [clipboardTaskIds]
+  );
 
   const allSelected =
     tasks.length > 0 &&
@@ -263,14 +270,39 @@ export function TaskTable({ hideHeader = true }: TaskTableProps): JSX.Element {
               items={flattenedTasks.map(({ task }) => task.id)}
               strategy={verticalListSortingStrategy}
             >
-              {flattenedTasks.map(({ task, level, hasChildren }) => (
-                <TaskTableRow
-                  key={task.id}
-                  task={task}
-                  level={level}
-                  hasChildren={hasChildren}
-                />
-              ))}
+              {flattenedTasks.map(({ task, level, hasChildren }, index) => {
+                const isInClipboard = clipboardSet.has(task.id);
+                const prevTask = index > 0 ? flattenedTasks[index - 1] : null;
+                const nextTask =
+                  index < flattenedTasks.length - 1
+                    ? flattenedTasks[index + 1]
+                    : null;
+
+                // Check if previous/next tasks are also in clipboard
+                const prevInClipboard = prevTask
+                  ? clipboardSet.has(prevTask.task.id)
+                  : false;
+                const nextInClipboard = nextTask
+                  ? clipboardSet.has(nextTask.task.id)
+                  : false;
+
+                return (
+                  <TaskTableRow
+                    key={task.id}
+                    task={task}
+                    level={level}
+                    hasChildren={hasChildren}
+                    clipboardPosition={
+                      isInClipboard
+                        ? {
+                            isFirst: !prevInClipboard,
+                            isLast: !nextInClipboard,
+                          }
+                        : undefined
+                    }
+                  />
+                );
+              })}
             </SortableContext>
           </DndContext>
 

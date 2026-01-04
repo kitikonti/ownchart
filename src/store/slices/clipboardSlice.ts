@@ -118,8 +118,8 @@ export const useClipboardStore = create<ClipboardStore>()(
           sourceTaskId: null,
         };
 
-        // Clear previous cut marks
-        useTaskStore.setState({ cutTaskIds: [], cutCell: null });
+        // Set clipboard marks for visual feedback (copy also shows marking)
+        useTaskStore.setState({ clipboardTaskIds: taskIds, cutCell: null });
 
         // Store in row clipboard
         state.rowClipboard = {
@@ -173,8 +173,8 @@ export const useClipboardStore = create<ClipboardStore>()(
           sourceTaskId: null,
         };
 
-        // Clear previous cut cell mark
-        useTaskStore.setState({ cutCell: null });
+        // Set clipboard marks for visual feedback
+        useTaskStore.setState({ clipboardTaskIds: taskIds, cutCell: null });
 
         // Store in row clipboard
         state.rowClipboard = {
@@ -186,8 +186,6 @@ export const useClipboardStore = create<ClipboardStore>()(
         state.activeMode = "row";
       });
 
-      // Mark tasks as cut (visual feedback)
-      useTaskStore.setState({ cutTaskIds: taskIds });
 
       // Record command
       if (!historyStore.isUndoing && !historyStore.isRedoing) {
@@ -404,8 +402,8 @@ export const useClipboardStore = create<ClipboardStore>()(
           );
         useDependencyStore.setState({ dependencies: deps });
 
-        // Clear cut marks
-        useTaskStore.setState({ cutTaskIds: [] });
+        // Clear clipboard marks
+        useTaskStore.setState({ clipboardTaskIds: [] });
       }
 
       // Mark file as dirty
@@ -464,8 +462,8 @@ export const useClipboardStore = create<ClipboardStore>()(
           sourceTaskIds: [],
         };
 
-        // Clear cut marks
-        useTaskStore.setState({ cutTaskIds: [], cutCell: null });
+        // Clear clipboard marks
+        useTaskStore.setState({ clipboardTaskIds: [], cutCell: null });
 
         // Store cell value
         state.cellClipboard = {
@@ -511,8 +509,8 @@ export const useClipboardStore = create<ClipboardStore>()(
           sourceTaskIds: [],
         };
 
-        // Clear previous row cut marks
-        useTaskStore.setState({ cutTaskIds: [] });
+        // Clear previous row clipboard marks
+        useTaskStore.setState({ clipboardTaskIds: [] });
 
         // Store cell value
         state.cellClipboard = {
@@ -669,8 +667,8 @@ export const useClipboardStore = create<ClipboardStore>()(
         state.activeMode = null;
       });
 
-      // Clear cut marks
-      useTaskStore.setState({ cutTaskIds: [], cutCell: null });
+      // Clear clipboard marks
+      useTaskStore.setState({ clipboardTaskIds: [], cutCell: null });
     },
 
     getClipboardMode: () => get().activeMode,
