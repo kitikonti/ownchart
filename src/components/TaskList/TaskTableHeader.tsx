@@ -8,6 +8,7 @@ import { useTaskStore } from "../../store/slices/taskSlice";
 import { TASK_COLUMNS } from "../../config/tableColumns";
 import { ColumnResizer } from "./ColumnResizer";
 import { useTableDimensions } from "../../hooks/useTableDimensions";
+import { getTaskLevel } from "../../utils/hierarchy";
 
 export function TaskTableHeader(): JSX.Element {
   const tasks = useTaskStore((state) => state.tasks);
@@ -69,6 +70,9 @@ export function TaskTableHeader(): JSX.Element {
     const field = column.field;
     let maxLength = column.label.length;
 
+    // For name column, track max indent level
+    let maxLevel = 0;
+
     tasks.forEach((task) => {
       let valueStr = "";
 
@@ -79,10 +83,30 @@ export function TaskTableHeader(): JSX.Element {
       }
 
       maxLength = Math.max(maxLength, valueStr.length);
+
+      // Track max hierarchy level for name column
+      if (field === "name") {
+        const level = getTaskLevel(tasks, task.id);
+        maxLevel = Math.max(maxLevel, level);
+      }
     });
 
-    const estimatedWidth = Math.max(60, maxLength * 8 + 40);
-    return Math.min(estimatedWidth, 400);
+    // Base calculation: character width * length + padding
+    const charWidth = 8;
+    const basePadding = 24; // Cell padding (px-3 = 12px each side)
+    let estimatedWidth = maxLength * charWidth + basePadding;
+
+    // For name column, add space for hierarchy elements
+    if (field === "name") {
+      const INDENT_SIZE = 20; // Must match TaskTableRow
+      const indentSpace = maxLevel * INDENT_SIZE;
+      const expandButton = 16; // w-4
+      const typeIcon = 20; // TaskTypeIcon width
+      const gaps = 8; // gap-1 * 2 = 8px
+      estimatedWidth += indentSpace + expandButton + typeIcon + gaps;
+    }
+
+    return Math.max(60, Math.min(estimatedWidth, 600));
   };
 
   /**
