@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [0.0.5](https://github.com/kitikonti/ownchart/compare/v0.0.4...v0.0.5) (2026-01-04)
+
+
+### Features
+
+* add clipboard operations and placeholder row for task creation ([ba8b0b2](https://github.com/kitikonti/ownchart/commit/ba8b0b24c791f067c82d711397bfd354a52cd316))
+
 ### [0.0.4](https://github.com/kitikonti/ownchart/compare/v0.0.3...v0.0.4) (2026-01-04)
 
 
