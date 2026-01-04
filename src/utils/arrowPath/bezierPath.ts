@@ -41,6 +41,7 @@ const ELBOW_GAP_PADDING = 0;
 export function calculateArrowPath(
   fromPos: TaskPosition,
   toPos: TaskPosition,
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   _rowHeight: number = 44
 ): ArrowPath {
   // Start point: right edge of predecessor, vertically centered

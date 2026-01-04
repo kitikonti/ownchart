@@ -224,7 +224,7 @@ export function useDependencyDrag({
       updateDragPosition(e);
     };
 
-    const handleMouseUp = (_e: MouseEvent): void => {
+    const handleMouseUp = (): void => {
       // Try to find target task under cursor
       // This is a simplified version - actual implementation
       // would need access to taskPositions
