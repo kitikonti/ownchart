@@ -21,10 +21,11 @@ import {
 
 import { useTaskStore } from "../../store/slices/taskSlice";
 import { TaskTableRow } from "./TaskTableRow";
+import { NewTaskPlaceholderRow } from "./NewTaskPlaceholderRow";
 import { TASK_COLUMNS } from "../../config/tableColumns";
 import { ColumnResizer } from "./ColumnResizer";
-import { buildFlattenedTaskList } from "../../utils/hierarchy";
 import { useTableDimensions } from "../../hooks/useTableDimensions";
+import { useFlattenedTasks } from "../../hooks/useFlattenedTasks";
 
 interface TaskTableProps {
   hideHeader?: boolean;
@@ -51,13 +52,8 @@ export function TaskTable({ hideHeader = true }: TaskTableProps): JSX.Element {
   // Get total column width for proper scrolling
   const { totalColumnWidth } = useTableDimensions();
 
-  // Build flattened list respecting collapsed state
-  const flattenedTasks = useMemo(() => {
-    const collapsedIds = new Set(
-      tasks.filter((t) => t.open === false).map((t) => t.id)
-    );
-    return buildFlattenedTaskList(tasks, collapsedIds);
-  }, [tasks]);
+  // Build flattened list respecting collapsed state (centralized in hook)
+  const { flattenedTasks } = useFlattenedTasks();
 
   const allSelected =
     tasks.length > 0 &&
@@ -203,115 +199,84 @@ export function TaskTable({ hideHeader = true }: TaskTableProps): JSX.Element {
     <div className="task-table-container bg-white border-r border-gray-200 select-none">
       {/* Table Content - no overflow here, handled by parent */}
       <div className="task-table-wrapper">
-        {tasks.length === 0 ? (
-          <div
-            className="task-table"
-            style={{
-              display: "grid",
-              gridTemplateColumns,
-              minWidth: totalColumnWidth,
-            }}
-          >
-            <div
-              className="empty-state flex flex-col items-center justify-center h-full text-gray-500"
-              style={{ gridColumn: "1 / -1" }}
-            >
-              <svg
-                className="w-16 h-16 mb-4 text-gray-400"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"
-                />
-              </svg>
-              <p className="text-sm">No tasks yet</p>
-              <p className="text-xs text-gray-400 mt-1">
-                Click &quot;Add Task&quot; to create your first task
-              </p>
-            </div>
-          </div>
-        ) : (
-          <div
-            className="task-table"
-            style={{
-              display: "grid",
-              gridTemplateColumns,
-              minWidth: totalColumnWidth,
-            }}
-            role="grid"
-            aria-label="Task spreadsheet"
-          >
-            {/* Header Row - Hidden when rendered on App level */}
-            {!hideHeader && (
-              <div className="task-table-header contents" role="row">
-                {TASK_COLUMNS.map((column, index) => (
-                  <div
-                    key={column.id}
-                    className={`task-table-header-cell sticky top-0 z-10 ${column.id === "name" ? "pr-3" : "px-3"} py-4 bg-gray-50 border-b ${column.id !== "color" ? "border-r" : ""} border-gray-200 text-xs font-semibold text-gray-700 uppercase tracking-wider relative`}
-                    role="columnheader"
-                  >
-                    {column.id === "checkbox" ? (
-                      <div className="flex items-center justify-center">
-                        <input
-                          type="checkbox"
-                          checked={allSelected}
-                          ref={(input) => {
-                            if (input) {
-                              input.indeterminate = someSelected;
-                            }
-                          }}
-                          onChange={handleHeaderCheckboxClick}
-                          className="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 cursor-pointer"
-                          title={allSelected ? "Deselect all" : "Select all"}
-                        />
-                      </div>
-                    ) : column.id === "color" ? (
-                      ""
-                    ) : (
-                      column.label
-                    )}
-                    {/* Column Resizer - not on last column */}
-                    {index < TASK_COLUMNS.length - 1 && (
-                      <ColumnResizer
-                        columnId={column.id}
-                        currentWidth={getColumnWidth(column.id)}
-                        onResize={handleColumnResize}
-                        onAutoResize={handleAutoResize}
-                        minWidth={40}
+        <div
+          className="task-table"
+          style={{
+            display: "grid",
+            gridTemplateColumns,
+            minWidth: totalColumnWidth,
+          }}
+          role="grid"
+          aria-label="Task spreadsheet"
+        >
+          {/* Header Row - Hidden when rendered on App level */}
+          {!hideHeader && (
+            <div className="task-table-header contents" role="row">
+              {TASK_COLUMNS.map((column, index) => (
+                <div
+                  key={column.id}
+                  className={`task-table-header-cell sticky top-0 z-10 ${column.id === "name" ? "pr-3" : "px-3"} py-4 bg-gray-50 border-b ${column.id !== "color" ? "border-r" : ""} border-gray-200 text-xs font-semibold text-gray-700 uppercase tracking-wider relative`}
+                  role="columnheader"
+                >
+                  {column.id === "checkbox" ? (
+                    <div className="flex items-center justify-center">
+                      <input
+                        type="checkbox"
+                        checked={allSelected}
+                        ref={(input) => {
+                          if (input) {
+                            input.indeterminate = someSelected;
+                          }
+                        }}
+                        onChange={handleHeaderCheckboxClick}
+                        className="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 cursor-pointer"
+                        title={allSelected ? "Deselect all" : "Select all"}
                       />
-                    )}
-                  </div>
-                ))}
-              </div>
-            )}
+                    </div>
+                  ) : column.id === "color" ? (
+                    ""
+                  ) : (
+                    column.label
+                  )}
+                  {/* Column Resizer - not on last column */}
+                  {index < TASK_COLUMNS.length - 1 && (
+                    <ColumnResizer
+                      columnId={column.id}
+                      currentWidth={getColumnWidth(column.id)}
+                      onResize={handleColumnResize}
+                      onAutoResize={handleAutoResize}
+                      minWidth={40}
+                    />
+                  )}
+                </div>
+              ))}
+            </div>
+          )}
 
-            {/* Task Rows with Drag and Drop */}
-            <DndContext
-              sensors={sensors}
-              collisionDetection={closestCenter}
-              onDragEnd={handleDragEnd}
+          {/* Task Rows with Drag and Drop */}
+          <DndContext
+            sensors={sensors}
+            collisionDetection={closestCenter}
+            onDragEnd={handleDragEnd}
+          >
+            <SortableContext
+              items={flattenedTasks.map(({ task }) => task.id)}
+              strategy={verticalListSortingStrategy}
             >
-              <SortableContext
-                items={flattenedTasks.map(({ task }) => task.id)}
-                strategy={verticalListSortingStrategy}
-              >
-                {flattenedTasks.map(({ task, level, hasChildren }) => (
-                  <TaskTableRow
-                    key={task.id}
-                    task={task}
-                    level={level}
-                    hasChildren={hasChildren}
-                  />
-                ))}
-              </SortableContext>
-            </DndContext>
-          </div>
-        )}
+              {flattenedTasks.map(({ task, level, hasChildren }) => (
+                <TaskTableRow
+                  key={task.id}
+                  task={task}
+                  level={level}
+                  hasChildren={hasChildren}
+                />
+              ))}
+            </SortableContext>
+          </DndContext>
+
+          {/* Placeholder row for adding new tasks */}
+          <NewTaskPlaceholderRow />
+        </div>
       </div>
     </div>
   );

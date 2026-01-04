@@ -26,10 +26,12 @@ import { useTaskStore } from "../../store/slices/taskSlice";
 import { useChartStore } from "../../store/slices/chartSlice";
 import { SplitPane } from "./SplitPane";
 import { useTableDimensions } from "../../hooks/useTableDimensions";
+import { useFlattenedTasks } from "../../hooks/useFlattenedTasks";
 
 const ROW_HEIGHT = 44; // Must match TaskTable row height
 const HEADER_HEIGHT = 48; // Timeline header height
 const MIN_TABLE_WIDTH = 200; // Minimum width for task table
+const SCROLLBAR_HEIGHT = 17; // Reserve space for horizontal scrollbar
 
 export function GanttLayout() {
   // Refs for scroll synchronization and measurements
@@ -46,13 +48,15 @@ export function GanttLayout() {
   const [scrollTop, setScrollTop] = useState(0);
 
   // Task store
-  const tasks = useTaskStore((state) => state.tasks);
   const selectedTaskIds = useTaskStore((state) => state.selectedTaskIds);
   const toggleTaskSelection = useTaskStore(
     (state) => state.toggleTaskSelection
   );
   const taskTableWidth = useTaskStore((state) => state.taskTableWidth);
   const setTaskTableWidth = useTaskStore((state) => state.setTaskTableWidth);
+
+  // Build flattened task list (centralized in hook, shared with TaskTable)
+  const { flattenedTasks, orderedTasks } = useFlattenedTasks();
 
   // Table dimensions
   const { totalColumnWidth } = useTableDimensions();
@@ -71,8 +75,10 @@ export function GanttLayout() {
     }
   }, [totalColumnWidth, taskTableWidth, setTaskTableWidth]);
 
-  // Calculate total content height (all tasks)
-  const totalContentHeight = tasks.length * ROW_HEIGHT + HEADER_HEIGHT;
+  // Calculate total content height (visible tasks after flattening + placeholder row)
+  // Add scrollbar height to ensure last row isn't hidden behind horizontal scrollbar
+  const totalContentHeight =
+    (flattenedTasks.length + 1) * ROW_HEIGHT + HEADER_HEIGHT + SCROLLBAR_HEIGHT;
 
   // Ensure timeline header fills at least the container width
   const timelineHeaderWidth = scale
@@ -266,7 +272,7 @@ export function GanttLayout() {
                     >
                       <div style={{ transform: `translateY(-${scrollTop}px)` }}>
                         <ChartCanvas
-                          tasks={tasks}
+                          tasks={orderedTasks}
                           selectedTaskIds={selectedTaskIds}
                           onTaskClick={toggleTaskSelection}
                           containerHeight={contentAreaHeight}

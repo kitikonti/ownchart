@@ -7,6 +7,7 @@ import { ChartBarHorizontal, Plus } from "@phosphor-icons/react";
 import { FileButtons } from "../Toolbar/FileButtons";
 import { HierarchyButtons } from "../TaskList/HierarchyButtons";
 import { UndoRedoButtons } from "../Toolbar/UndoRedoButtons";
+import { ClipboardButtons } from "../Toolbar/ClipboardButtons";
 import { ZoomControls } from "../Toolbar/ZoomControls";
 import { useTaskStore } from "../../store/slices/taskSlice";
 
@@ -52,8 +53,13 @@ export function AppToolbar() {
       </div>
 
       {/* Undo/Redo Group */}
-      <div className="mr-4">
+      <div className="mr-2">
         <UndoRedoButtons />
+      </div>
+
+      {/* Clipboard Operations Group */}
+      <div className="mr-4">
+        <ClipboardButtons />
       </div>
 
       {/* Task Actions Group */}

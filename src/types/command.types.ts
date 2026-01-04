@@ -49,6 +49,16 @@ export enum CommandType {
   ADD_DEPENDENCY = "addDependency",
   DELETE_DEPENDENCY = "deleteDependency",
   UPDATE_DEPENDENCY = "updateDependency",
+
+  // Clipboard operations (Row-level)
+  COPY_ROWS = "copyRows",
+  CUT_ROWS = "cutRows",
+  PASTE_ROWS = "pasteRows",
+
+  // Clipboard operations (Cell-level)
+  COPY_CELL = "copyCell",
+  CUT_CELL = "cutCell",
+  PASTE_CELL = "pasteCell",
 }
 
 export type CommandParams =
@@ -63,7 +73,13 @@ export type CommandParams =
   | CollapseParams
   | AddDependencyParams
   | DeleteDependencyParams
-  | UpdateDependencyParams;
+  | UpdateDependencyParams
+  | CopyRowsParams
+  | CutRowsParams
+  | PasteRowsParams
+  | CopyCellParams
+  | CutCellParams
+  | PasteCellParams;
 
 // Specific parameter types for each command
 export interface AddTaskParams {
@@ -139,4 +155,47 @@ export interface UpdateDependencyParams {
   id: string;
   updates: Partial<Dependency>;
   previousValues: Partial<Dependency>;
+}
+
+// Clipboard command params (Row operations)
+export interface CopyRowsParams {
+  taskIds: string[];
+  tasks: Task[];
+  dependencies: Dependency[];
+}
+
+export interface CutRowsParams {
+  taskIds: string[];
+  tasks: Task[];
+  dependencies: Dependency[];
+}
+
+export interface PasteRowsParams {
+  pastedTasks: Task[];
+  pastedDependencies: Dependency[];
+  insertIndex: number;
+  idMapping: Record<string, string>; // old ID -> new ID
+  previousCutTaskIds?: string[]; // For undo of cut operation
+  deletedTasks?: Task[]; // Store deleted tasks for undo
+}
+
+// Clipboard command params (Cell operations)
+export interface CopyCellParams {
+  taskId: string;
+  field: string; // EditableField from taskSlice
+  value: unknown;
+}
+
+export interface CutCellParams {
+  taskId: string;
+  field: string;
+  value: unknown;
+}
+
+export interface PasteCellParams {
+  taskId: string;
+  field: string;
+  newValue: unknown;
+  previousValue: unknown;
+  previousCutCell?: { taskId: string; field: string; value: unknown };
 }

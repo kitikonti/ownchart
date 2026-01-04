@@ -148,7 +148,10 @@ export function calculateSummaryDates(
 
 /**
  * Build flattened list for rendering (respects collapsed state).
- * Based on SVAR React Gantt pattern - simple and clean.
+ *
+ * IMPORTANT: Uses global `order` property for sorting.
+ * Tasks are sorted strictly by `order`, and the hierarchy level is calculated
+ * separately. This ensures paste operations insert at the correct visual position.
  */
 export interface FlattenedTask {
   task: Task;
@@ -160,31 +163,62 @@ export function buildFlattenedTaskList(
   tasks: Task[],
   collapsedTaskIds: Set<string>
 ): FlattenedTask[] {
+  // Sort all tasks by order (global ordering - this is the source of truth)
+  const sortedTasks = [...tasks].sort((a, b) => a.order - b.order);
+
+  // Build helper maps
+  const taskMap = new Map<string, Task>();
+  const childrenSet = new Set<string>(); // Tasks that have children
+
+  tasks.forEach((task) => {
+    taskMap.set(task.id, task);
+    if (task.parent) {
+      childrenSet.add(task.parent);
+    }
+  });
+
+  // Calculate level for a task (how deep in hierarchy)
+  const getLevel = (task: Task): number => {
+    let level = 0;
+    let current = task;
+    while (current.parent) {
+      const parent = taskMap.get(current.parent);
+      if (!parent) break;
+      level++;
+      current = parent;
+    }
+    return level;
+  };
+
+  // Check if a task is hidden (any ancestor is collapsed)
+  const isHidden = (task: Task): boolean => {
+    let current = task;
+    while (current.parent) {
+      const parent = taskMap.get(current.parent);
+      if (!parent) break;
+      // Check if parent is collapsed
+      if (parent.open === false || collapsedTaskIds.has(parent.id)) {
+        return true;
+      }
+      current = parent;
+    }
+    return false;
+  };
+
+  // Build result: iterate in order, skip hidden tasks
   const result: FlattenedTask[] = [];
 
-  function addTaskAndChildren(
-    parentId: string | null,
-    level: number,
-    parentCollapsed: boolean
-  ): void {
-    const children = getTaskChildren(tasks, parentId);
+  sortedTasks.forEach((task) => {
+    // Skip if hidden by collapsed ancestor
+    if (isHidden(task)) {
+      return;
+    }
 
-    children.forEach((task) => {
-      const hasChildren = getTaskChildren(tasks, task.id).length > 0;
+    const level = getLevel(task);
+    const hasChildren = childrenSet.has(task.id);
 
-      // Add task if parent is not collapsed
-      if (!parentCollapsed) {
-        result.push({ task, level, hasChildren });
-      }
-
-      // Recursively add children
-      const isCollapsed = task.open === false || collapsedTaskIds.has(task.id);
-      addTaskAndChildren(task.id, level + 1, parentCollapsed || isCollapsed);
-    });
-  }
-
-  // Start from root level
-  addTaskAndChildren(null, 0, false);
+    result.push({ task, level, hasChildren });
+  });
 
   return result;
 }

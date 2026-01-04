@@ -54,6 +54,10 @@ interface TaskState {
 
   // Split pane state
   taskTableWidth: number | null; // null = auto (total column width)
+
+  // Cut/Copy state (for visual feedback)
+  cutTaskIds: string[];
+  cutCell: { taskId: string; field: EditableField } | null;
 }
 
 /**
@@ -122,37 +126,10 @@ const EDITABLE_FIELDS: EditableField[] = [
   "color",
 ];
 
-/**
- * Create initial demo task to avoid empty state and timeline scaling jump.
- */
-const createInitialTask = (): Task => {
-  const today = new Date();
-  const nextWeek = new Date(today);
-  nextWeek.setDate(today.getDate() + 7);
-
-  const formatDate = (date: Date): string => {
-    return date.toISOString().split("T")[0];
-  };
-
-  return {
-    id: crypto.randomUUID(),
-    name: "New Task",
-    startDate: formatDate(today),
-    endDate: formatDate(nextWeek),
-    duration: 7,
-    progress: 0,
-    color: "#3b82f6",
-    order: 0,
-    type: "task",
-    parent: undefined,
-    metadata: {},
-  };
-};
-
 export const useTaskStore = create<TaskStore>()(
   immer((set, get) => ({
-    // State
-    tasks: [createInitialTask()] as Task[],
+    // State (start with empty list - placeholder row allows adding new tasks)
+    tasks: [] as Task[],
     selectedTaskIds: [] as string[],
     lastSelectedTaskId: null as string | null,
     activeCell: {
@@ -162,6 +139,8 @@ export const useTaskStore = create<TaskStore>()(
     isEditingCell: false,
     columnWidths: {} as Record<string, number>,
     taskTableWidth: null as number | null,
+    cutTaskIds: [] as string[],
+    cutCell: null as { taskId: string; field: EditableField } | null,
 
     // Actions
     addTask: (taskData) => {

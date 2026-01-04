@@ -153,29 +153,8 @@ export function useFileOperations() {
       if (!confirmed) return;
     }
 
-    // Reset to initial task
-    const today = new Date();
-    const nextWeek = new Date(today);
-    nextWeek.setDate(today.getDate() + 7);
-
-    const formatDate = (date: Date): string => {
-      return date.toISOString().split("T")[0];
-    };
-
-    const initialTask = {
-      id: crypto.randomUUID(),
-      name: "New Task",
-      startDate: formatDate(today),
-      endDate: formatDate(nextWeek),
-      duration: 7,
-      progress: 0,
-      color: "#3b82f6",
-      order: 0,
-      type: "task" as const,
-      metadata: {},
-    };
-
-    setTasks([initialTask]);
+    // Reset to empty task list (placeholder row allows adding new tasks)
+    setTasks([]);
     clearDependencies(); // Sprint 1.4
     clearHistory();
     clearFileHandle();

@@ -58,9 +58,11 @@ export function Cell({
 
   const updateTask = useTaskStore((state) => state.updateTask);
   const clearSelection = useTaskStore((state) => state.clearSelection);
+  const cutCell = useTaskStore((state) => state.cutCell);
 
   const isActive = isCellActive(taskId, field);
   const isEditing = isCellEditing(taskId, field);
+  const isCut = cutCell?.taskId === taskId && cutCell?.field === field;
 
   // Get current value from task
   const currentValue = task[field];
@@ -316,6 +318,7 @@ export function Cell({
         ${column.id === "name" ? "pr-3" : "px-3"} py-2 border-b ${column.id !== "color" ? "border-r" : ""} border-gray-200 h-[44px] flex items-center cursor-pointer relative
         ${isActive ? "outline outline-2 outline-blue-500 bg-blue-50 z-10" : "hover:bg-gray-50"}
         ${!column.editable ? "bg-gray-50 text-gray-600" : ""}
+        ${isCut ? "opacity-50 outline outline-2 outline-dashed outline-gray-400 -outline-offset-2" : ""}
       `}
       onClick={handleClick}
       onKeyDown={handleNavigationKeyDown}

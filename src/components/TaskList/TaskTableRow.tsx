@@ -45,9 +45,11 @@ export function TaskTableRow({
   );
   const selectTaskRange = useTaskStore((state) => state.selectTaskRange);
   const setActiveCell = useTaskStore((state) => state.setActiveCell);
+  const cutTaskIds = useTaskStore((state) => state.cutTaskIds);
   const { isCellEditing, stopCellEdit } = useCellNavigation();
 
   const isSelected = selectedTaskIds.includes(task.id);
+  const isCut = cutTaskIds.includes(task.id);
 
   // Calculate summary dates if needed, and recalculate duration for all tasks
   const displayTask = useMemo(() => {
@@ -145,7 +147,7 @@ export function TaskTableRow({
       style={style}
       className={`task-table-row col-span-full grid ${
         isSelected ? "bg-blue-50" : "bg-white"
-      }`}
+      } ${isCut ? "opacity-50 outline outline-2 outline-dashed outline-gray-400 -outline-offset-2" : ""}`}
       role="row"
     >
       {/* Drag Handle Cell */}

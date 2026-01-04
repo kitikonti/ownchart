@@ -1,0 +1,217 @@
+/**
+ * NewTaskPlaceholderRow - Empty row at the bottom for quick task creation.
+ * When user starts typing, a new task is created.
+ * Can be selected to allow pasting at the end of the list.
+ */
+
+import { useState, useRef, useEffect, type KeyboardEvent } from "react";
+import { useTaskStore, type EditableField } from "../../store/slices/taskSlice";
+import { TASK_COLUMNS } from "../../config/tableColumns";
+
+// Special ID for the placeholder row - used by paste logic
+export const PLACEHOLDER_TASK_ID = "__new_task_placeholder__";
+
+export function NewTaskPlaceholderRow(): JSX.Element {
+  const [isEditing, setIsEditing] = useState(false);
+  const [inputValue, setInputValue] = useState("");
+  const inputRef = useRef<HTMLInputElement>(null);
+  const cellRef = useRef<HTMLDivElement>(null);
+  const addTask = useTaskStore((state) => state.addTask);
+  const tasks = useTaskStore((state) => state.tasks);
+  const activeCell = useTaskStore((state) => state.activeCell);
+  const setActiveCell = useTaskStore((state) => state.setActiveCell);
+  const selectedTaskIds = useTaskStore((state) => state.selectedTaskIds);
+  const clearSelection = useTaskStore((state) => state.clearSelection);
+
+  const isRowActive = activeCell.taskId === PLACEHOLDER_TASK_ID;
+  const isNameActive = isRowActive && activeCell.field === "name";
+  const isSelected = selectedTaskIds.includes(PLACEHOLDER_TASK_ID);
+  const isEmpty = tasks.length === 0;
+
+  // Focus cell when it becomes active (not editing)
+  useEffect(() => {
+    if (isNameActive && !isEditing && cellRef.current) {
+      cellRef.current.focus();
+    }
+  }, [isNameActive, isEditing]);
+
+  // Focus input when editing starts
+  useEffect(() => {
+    if (isEditing && inputRef.current) {
+      inputRef.current.focus();
+    }
+  }, [isEditing]);
+
+  const handleCellClick = (field: EditableField) => {
+    // Clear row selection when clicking a cell
+    if (selectedTaskIds.length > 0) {
+      clearSelection();
+    }
+
+    if (field === "name") {
+      if (isNameActive && !isEditing) {
+        // Already active, start editing (like normal cells)
+        setIsEditing(true);
+      } else if (!isNameActive) {
+        // Not active, activate it
+        setActiveCell(PLACEHOLDER_TASK_ID, field);
+      }
+    } else {
+      setActiveCell(PLACEHOLDER_TASK_ID, field);
+    }
+  };
+
+  const handleCheckboxChange = () => {
+    // Toggle selection of placeholder row
+    const store = useTaskStore.getState();
+    if (isSelected) {
+      store.setSelectedTaskIds(
+        selectedTaskIds.filter((id) => id !== PLACEHOLDER_TASK_ID),
+        false
+      );
+    } else {
+      store.setSelectedTaskIds(
+        [...selectedTaskIds, PLACEHOLDER_TASK_ID],
+        false
+      );
+    }
+    // Clear active cell when using checkbox
+    setActiveCell(null, null);
+  };
+
+  // Handle keyboard in navigation mode (cell is active but not editing)
+  const handleCellKeyDown = (e: KeyboardEvent<HTMLDivElement>) => {
+    if (isEditing) return;
+
+    // Enter or F2 to start editing
+    if (e.key === "Enter" || e.key === "F2") {
+      e.preventDefault();
+      setIsEditing(true);
+    }
+    // Any printable character starts editing and types that character
+    else if (e.key.length === 1 && !e.ctrlKey && !e.metaKey && !e.altKey) {
+      e.preventDefault();
+      setInputValue(e.key);
+      setIsEditing(true);
+    }
+    // Escape to deactivate
+    else if (e.key === "Escape") {
+      setActiveCell(null, null);
+    }
+  };
+
+  const handleInputBlur = () => {
+    if (inputValue.trim()) {
+      createNewTask();
+    } else {
+      setIsEditing(false);
+      setInputValue("");
+    }
+  };
+
+  const handleInputKeyDown = (e: KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === "Enter") {
+      e.preventDefault();
+      if (inputValue.trim()) {
+        createNewTask();
+      } else {
+        setIsEditing(false);
+        setInputValue("");
+      }
+    } else if (e.key === "Escape") {
+      setIsEditing(false);
+      setInputValue("");
+      // Re-focus the cell
+      setTimeout(() => cellRef.current?.focus(), 0);
+    }
+  };
+
+  const createNewTask = () => {
+    const today = new Date();
+    const nextWeek = new Date(today);
+    nextWeek.setDate(today.getDate() + 7);
+
+    const formatDate = (date: Date): string => {
+      return date.toISOString().split("T")[0];
+    };
+
+    // Calculate the next order value
+    const maxOrder =
+      tasks.length > 0 ? Math.max(...tasks.map((t) => t.order)) + 1 : 0;
+
+    addTask({
+      name: inputValue.trim(),
+      startDate: formatDate(today),
+      endDate: formatDate(nextWeek),
+      duration: 7,
+      progress: 0,
+      color: "#3b82f6",
+      order: maxOrder,
+      type: "task",
+      parent: undefined,
+      metadata: {},
+    });
+
+    // Reset state
+    setIsEditing(false);
+    setInputValue("");
+  };
+
+  return (
+    <div className="contents" role="row">
+      {TASK_COLUMNS.map((column) => {
+        const isActiveCell = isRowActive && activeCell.field === column.field;
+
+        return (
+          <div
+            key={column.id}
+            ref={column.id === "name" ? cellRef : undefined}
+            tabIndex={column.id === "name" && isNameActive ? 0 : -1}
+            className={`h-[44px] ${column.id !== "color" ? "border-r" : ""} border-b border-gray-200 flex items-center ${
+              column.id === "name" ? "pl-3 pr-3" : "px-3"
+            } ${isSelected ? "bg-blue-100" : isActiveCell ? "bg-blue-50" : "bg-gray-50/50"} ${
+              isActiveCell ? "ring-2 ring-inset ring-blue-500" : ""
+            } cursor-pointer outline-none`}
+            onClick={() =>
+              column.field
+                ? handleCellClick(column.field as EditableField)
+                : undefined
+            }
+            onKeyDown={column.id === "name" ? handleCellKeyDown : undefined}
+            role="gridcell"
+          >
+            {column.id === "checkbox" && (
+              <div className="flex items-center justify-center w-full">
+                <input
+                  type="checkbox"
+                  checked={isSelected}
+                  onChange={handleCheckboxChange}
+                  className="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 cursor-pointer"
+                />
+              </div>
+            )}
+            {column.id === "name" &&
+              (isEditing ? (
+                <input
+                  ref={inputRef}
+                  type="text"
+                  value={inputValue}
+                  onChange={(e) => setInputValue(e.target.value)}
+                  onBlur={handleInputBlur}
+                  onKeyDown={handleInputKeyDown}
+                  className="w-full h-full bg-transparent text-sm text-gray-900 outline-none"
+                  placeholder="Enter task name..."
+                />
+              ) : (
+                <span className="text-gray-400 italic select-none">
+                  {isEmpty
+                    ? "Click here or press Enter to add your first task..."
+                    : "Add new task..."}
+                </span>
+              ))}
+          </div>
+        );
+      })}
+    </div>
+  );
+}

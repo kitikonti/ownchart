@@ -15,6 +15,8 @@ import type {
   AddDependencyParams,
   DeleteDependencyParams,
   UpdateDependencyParams,
+  PasteRowsParams,
+  PasteCellParams,
 } from "../../types/command.types";
 import { useTaskStore } from "./taskSlice";
 import { useDependencyStore } from "./dependencySlice";
@@ -346,6 +348,70 @@ function executeUndoCommand(command: Command): void {
       break;
     }
 
+    // Clipboard operations
+    case "copyRows":
+    case "cutRows":
+    case "copyCell":
+    case "cutCell": {
+      // Copy/cut operations don't modify state, only record for consistency
+      // Nothing to undo
+      break;
+    }
+
+    case "pasteRows": {
+      const params = command.params as PasteRowsParams;
+      const depStore = useDependencyStore.getState();
+
+      // Remove pasted tasks (deep clone to avoid Immer frozen objects)
+      const currentTasks = useTaskStore.getState().tasks;
+      const pastedTaskIds = new Set(params.pastedTasks.map((t) => t.id));
+      let tasksWithoutPasted = currentTasks
+        .filter((t) => !pastedTaskIds.has(t.id))
+        .map((t) => ({ ...t }));
+
+      // If this was a cut operation, restore deleted tasks
+      if (params.deletedTasks && params.deletedTasks.length > 0) {
+        tasksWithoutPasted = [
+          ...tasksWithoutPasted,
+          ...params.deletedTasks.map((t) => ({ ...t })),
+        ];
+      }
+
+      // Update order property for all tasks
+      tasksWithoutPasted.forEach((task, index) => {
+        task.order = index;
+      });
+
+      useTaskStore.setState({ tasks: tasksWithoutPasted });
+
+      // Remove pasted dependencies
+      const pastedDepIds = new Set(params.pastedDependencies.map((d) => d.id));
+      const depsWithoutPasted = depStore.dependencies.filter(
+        (d) => !pastedDepIds.has(d.id)
+      );
+      useDependencyStore.setState({ dependencies: depsWithoutPasted });
+
+      break;
+    }
+
+    case "pasteCell": {
+      const params = command.params as PasteCellParams;
+
+      // Restore previous value
+      taskStore.updateTask(params.taskId, {
+        [params.field]: params.previousValue,
+      });
+
+      // If this was a cut operation, restore source cell
+      if (params.previousCutCell) {
+        taskStore.updateTask(params.previousCutCell.taskId, {
+          [params.previousCutCell.field]: params.previousCutCell.value,
+        });
+      }
+
+      break;
+    }
+
     default:
       console.warn("Unknown command type for undo:", command.type);
   }
@@ -494,6 +560,80 @@ function executeRedoCommand(command: Command): void {
         d.id === params.id ? { ...d, ...params.updates } : d
       );
       useDependencyStore.setState({ dependencies: deps });
+      break;
+    }
+
+    // Clipboard operations
+    case "copyRows":
+    case "cutRows":
+    case "copyCell":
+    case "cutCell": {
+      // Copy/cut operations don't modify state, only record for consistency
+      // Nothing to redo
+      break;
+    }
+
+    case "pasteRows": {
+      const params = command.params as PasteRowsParams;
+      const depStore = useDependencyStore.getState();
+
+      // Re-insert pasted tasks at the same position (deep clone to avoid Immer frozen objects)
+      const currentTasks = useTaskStore.getState().tasks;
+      let updatedTasks = [
+        ...currentTasks.slice(0, params.insertIndex).map((t) => ({ ...t })),
+        ...params.pastedTasks.map((t) => ({ ...t })),
+        ...currentTasks.slice(params.insertIndex).map((t) => ({ ...t })),
+      ];
+
+      // If this was a cut operation, delete originals again
+      if (params.deletedTasks && params.deletedTasks.length > 0) {
+        const deletedTaskIds = new Set(params.deletedTasks.map((t) => t.id));
+        updatedTasks = updatedTasks.filter((t) => !deletedTaskIds.has(t.id));
+
+        // Remove their dependencies
+        const depsWithoutDeleted = useDependencyStore
+          .getState()
+          .dependencies.filter(
+            (d) =>
+              !deletedTaskIds.has(d.fromTaskId) &&
+              !deletedTaskIds.has(d.toTaskId)
+          );
+        useDependencyStore.setState({ dependencies: depsWithoutDeleted });
+      }
+
+      // Update order property for all tasks
+      updatedTasks.forEach((task, index) => {
+        task.order = index;
+      });
+
+      useTaskStore.setState({ tasks: updatedTasks });
+
+      // Re-add pasted dependencies
+      const updatedDeps = [
+        ...depStore.dependencies,
+        ...params.pastedDependencies,
+      ];
+      useDependencyStore.setState({ dependencies: updatedDeps });
+
+      break;
+    }
+
+    case "pasteCell": {
+      const params = command.params as PasteCellParams;
+
+      // Re-apply new value
+      taskStore.updateTask(params.taskId, {
+        [params.field]: params.newValue,
+      });
+
+      // If this was a cut operation, clear source cell again
+      if (params.previousCutCell) {
+        const clearValue = params.newValue; // Use the value that was cut
+        taskStore.updateTask(params.previousCutCell.taskId, {
+          [params.previousCutCell.field]: clearValue,
+        });
+      }
+
       break;
     }
 

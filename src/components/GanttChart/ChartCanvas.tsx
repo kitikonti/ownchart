@@ -35,6 +35,7 @@ interface ChartCanvasProps {
 }
 
 const ROW_HEIGHT = 44; // Match TaskTable cell height (h-[44px] with border-box)
+const SCROLLBAR_HEIGHT = 17; // Reserve space for horizontal scrollbar
 
 export function ChartCanvas({
   tasks,
@@ -183,11 +184,14 @@ export function ChartCanvas({
 
   // Height calculation: Always render full task-based height
   // With SVAR-style layout, parent handles virtual scrolling via translateY
-  const taskBasedHeight = tasks.length * ROW_HEIGHT;
+  // +1 for placeholder row (NewTaskPlaceholderRow in TaskTable)
+  // +SCROLLBAR_HEIGHT to ensure last row isn't hidden behind horizontal scrollbar
+  const taskBasedHeight = (tasks.length + 1) * ROW_HEIGHT + SCROLLBAR_HEIGHT;
 
   // Use task-based height, but ensure at least container height for grid lines
+  // +1 for placeholder row to keep TaskTable and Timeline synchronized
   const rowCount = Math.max(
-    tasks.length,
+    tasks.length + 1,
     Math.floor(containerHeight / ROW_HEIGHT)
   );
   const contentHeight = Math.max(taskBasedHeight, containerHeight);
