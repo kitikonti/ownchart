@@ -2,6 +2,22 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [0.0.3](https://github.com/kitikonti/ownchart/compare/v0.0.2...v0.0.3) (2026-01-04)
+
+
+### Features
+
+* add task dependencies with Finish-to-Start relationships ([3b2b739](https://github.com/kitikonti/ownchart/commit/3b2b7390f07e4bba8ee453141baecc6e4b7120d0))
+* configure GitHub Pages deployment ([1b23694](https://github.com/kitikonti/ownchart/commit/1b236940049a317f7ff3b39b53637398b02d2a78))
+* implement multi-tab support for parallel chart editing ([6d06397](https://github.com/kitikonti/ownchart/commit/6d063977aa0d4c119c647b3e81d130afa2044baa))
+* rebrand to OwnChart throughout application ([9d99b1c](https://github.com/kitikonti/ownchart/commit/9d99b1c9ee4a90fd4f241cebb77201f5aa256971))
+
+
+### Bug Fixes
+
+* add automatic migration from v1 to v2 storage ([c12b87a](https://github.com/kitikonti/ownchart/commit/c12b87ab35d9c429c6859414b752709c942d4647))
+* prevent data loss on page reload by removing beforeunload cleanup ([9e17c98](https://github.com/kitikonti/ownchart/commit/9e17c98b692aca3d64acb3b2b51a08eb996b51bf))
+
 ### [0.0.2](https://github.com/kitikonti/ownchart/compare/v0.0.1...v0.0.2) (2026-01-03)
 
 
