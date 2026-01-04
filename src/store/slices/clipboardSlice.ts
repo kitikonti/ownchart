@@ -186,7 +186,6 @@ export const useClipboardStore = create<ClipboardStore>()(
         state.activeMode = "row";
       });
 
-
       // Record command
       if (!historyStore.isUndoing && !historyStore.isRedoing) {
         historyStore.recordCommand({

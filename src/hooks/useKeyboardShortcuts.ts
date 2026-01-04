@@ -21,7 +21,9 @@ export function useKeyboardShortcuts() {
   const { handleCopy, handleCut, handlePaste } = useClipboardOperations();
   const clearClipboard = useClipboardStore((state) => state.clearClipboard);
   const clipboardMode = useClipboardStore((state) => state.activeMode);
-  const deleteSelectedTasks = useTaskStore((state) => state.deleteSelectedTasks);
+  const deleteSelectedTasks = useTaskStore(
+    (state) => state.deleteSelectedTasks
+  );
   const selectedTaskIds = useTaskStore((state) => state.selectedTaskIds);
 
   useEffect(() => {
