@@ -200,7 +200,7 @@ export function TaskTable({ hideHeader = true }: TaskTableProps): JSX.Element {
   };
 
   return (
-    <div className="task-table-container bg-white border-r border-gray-200">
+    <div className="task-table-container bg-white border-r border-gray-200 select-none">
       {/* Table Content - no overflow here, handled by parent */}
       <div className="task-table-wrapper">
         {tasks.length === 0 ? (
