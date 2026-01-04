@@ -168,9 +168,15 @@ export function NewTaskPlaceholderRow(): JSX.Element {
             tabIndex={column.id === "name" && isNameActive ? 0 : -1}
             className={`h-[44px] ${column.id !== "color" ? "border-r" : ""} border-b border-gray-200 flex items-center ${
               column.id === "name" ? "pl-3 pr-3" : "px-3"
-            } ${isSelected ? "bg-blue-100" : isActiveCell ? "bg-blue-50" : "bg-gray-50/50"} ${
-              isActiveCell ? "ring-2 ring-inset ring-blue-500" : ""
-            } cursor-pointer outline-none`}
+            } ${
+              column.id === "name" && isEditing
+                ? "outline outline-3 outline-blue-600 bg-white z-20"
+                : isSelected
+                  ? "bg-blue-100"
+                  : isActiveCell
+                    ? "outline outline-2 outline-blue-500 bg-blue-50 z-10"
+                    : "bg-gray-50/50 hover:bg-gray-100"
+            } cursor-pointer`}
             onClick={() =>
               column.field
                 ? handleCellClick(column.field as EditableField)
@@ -198,8 +204,8 @@ export function NewTaskPlaceholderRow(): JSX.Element {
                   onChange={(e) => setInputValue(e.target.value)}
                   onBlur={handleInputBlur}
                   onKeyDown={handleInputKeyDown}
-                  className="w-full h-full bg-transparent text-sm text-gray-900 outline-none"
-                  placeholder="Enter task name..."
+                  autoFocus
+                  className="w-full px-0 py-0 border-0 focus:outline-none bg-transparent"
                 />
               ) : (
                 <span className="text-gray-400 italic select-none">
