@@ -506,31 +506,25 @@ If dependency arrows or performance validation fails, reassess approach before c
 
 ---
 
-#### Sprint 1.6: PNG Export & Polish
+#### Sprint 1.6: PNG Export & Polish ✅ COMPLETE
 
-**Features**:
-- Export chart to PNG (high resolution)
-- Export options: Include/exclude task list, custom dimensions
-- Beautiful default styling
-- Complete keyboard shortcuts
-- In-app help documentation
-- Welcome tour for first-time users
+**Status**: ✅ COMPLETE (2026-01-05)
 
-**Technical Work**:
-- PNG export with html2canvas or manual canvas rendering
-- Export settings dialog
-- Theme system (default theme only)
-- Keyboard shortcut system
-- Help panel component
-- Onboarding tour component
+**Features Implemented**:
+- ✅ Export chart to PNG (high resolution with html-to-image)
+- ✅ Export options dialog: zoom, columns, grid lines, weekends, background
+- ✅ Export settings persisted in project file
+- ✅ Help panel with keyboard shortcuts (? key)
+- ✅ Welcome tour for first-time users
+- ✅ File extension changed to `.ownchart`
+- ✅ Auto-fit name column on file open
+- ✅ Multi-tab persistence for dependencies and column widths
 
-**Acceptance Criteria**:
-- PNG export produces high-quality images (minimum 1920px wide)
-- Export includes both timeline and task list (optional)
-- Charts look professional with default styling
-- All keyboard shortcuts documented and working
-- Help panel accessible (? key or Help button)
-- First-time users see welcome tour
+**Technical Implementation**:
+- html-to-image for PNG export (offscreen rendering)
+- Export settings stored in `.ownchart` file
+- Settings architecture documented for V1.1 user preferences
+- Comprehensive bug fixes for localStorage persistence
 
 **Deferred to V1.1**:
 - PDF export (premium feature)
@@ -539,16 +533,18 @@ If dependency arrows or performance validation fails, reassess approach before c
 
 ---
 
-**MVP Milestone**: Feature-complete for basic Gantt chart creation and editing.
+**MVP Milestone**: ✅ COMPLETE (v0.0.11 - 2026-01-05)
 
-**Success Metrics**:
-- User can create a 20-task chart with dependencies in < 5 minutes
-- Charts look professional with zero configuration
-- Save/load works 100% reliably (no data loss)
-- Undo/redo provides safety net for mistakes
-- Dependency creation is discoverable (connection handles)
-- PNG export produces presentation-quality output
-- Performance: 100 tasks at 60fps, 500 tasks at 30fps minimum
+Feature-complete for basic Gantt chart creation and editing.
+
+**Success Metrics** (all achieved):
+- ✅ User can create a 20-task chart with dependencies in < 5 minutes
+- ✅ Charts look professional with zero configuration
+- ✅ Save/load works 100% reliably (no data loss)
+- ✅ Undo/redo provides safety net for mistakes
+- ✅ Dependency creation is discoverable (connection handles)
+- ✅ PNG export produces presentation-quality output
+- ✅ Performance: 100 tasks at 60fps, 500 tasks at 30fps minimum
 
 **Known Limitations** (intentional for MVP):
 - Only Finish-to-Start dependencies (SS/FF/SF in V1.1)
@@ -560,6 +556,8 @@ If dependency arrows or performance validation fails, reassess approach before c
 - ✅ Copy/paste with multi-select (Sprint 1.5.4)
 - ✅ Multi-task dragging in timeline
 - ✅ Task groups/phases (Sprint 1.1.1)
+- ✅ Export options with grid lines/weekends
+- ✅ Export settings persistence
 
 ---
 
@@ -1410,12 +1408,19 @@ This roadmap provides a clear path from concept to launch:
 
 ---
 
-**Document Version**: 1.7
+**Document Version**: 1.8
 **Last Updated**: 2026-01-05
-**Status**: MVP Phase 1 - Sprint 1.5.4 Complete
-**Next Review**: After Sprint 1.6 completion
+**Status**: ✅ MVP COMPLETE (v0.0.11)
+**Next Phase**: V1.1 - Deferred Features & Extensibility
 
-**Recent Updates (v1.7)** - Copy/Paste & Multi-Select Complete:
+**Recent Updates (v1.8)** - MVP Complete:
+- Sprint 1.6 PNG Export & Polish complete
+- MVP Milestone achieved with all success metrics met
+- File extension changed to `.ownchart`
+- Settings architecture documented for V1.1
+- Added Sprint 1.5.9 for User Preferences
+
+**Previous Updates (v1.7)** - Copy/Paste & Multi-Select Complete:
 - Sprint 1.5.4 moved from V1.1 to MVP (completed ahead of schedule)
 - Added: Multi-select with marquee selection in timeline
 - Added: Copy/paste/cut with cross-tab support

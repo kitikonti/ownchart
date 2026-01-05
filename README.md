@@ -3,7 +3,7 @@
 > **Privacy-first, offline Gantt chart for project planning. Own your data.**
 
 [![CI](https://github.com/kitikonti/ownchart/actions/workflows/ci.yml/badge.svg)](https://github.com/kitikonti/ownchart/actions/workflows/ci.yml)
-[![Version](https://img.shields.io/badge/version-0.0.2-blue.svg)](https://github.com/kitikonti/ownchart/releases)
+[![Version](https://img.shields.io/badge/version-0.0.11-blue.svg)](https://github.com/kitikonti/ownchart/releases)
 [![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.3-blue.svg)](https://www.typescriptlang.org/)
 [![React](https://img.shields.io/badge/React-18.3-61dafb.svg)](https://react.dev)
@@ -24,9 +24,15 @@ No installation needed - just open and start planning. Your data stays in your b
 - 💾 **Own Your Data** - Save/load `.ownchart` files on your device
 - ⚡ **Fast & Lightweight** - Built with modern web technologies
 - 🎨 **Interactive Timeline** - Drag-to-move, drag-to-resize task bars
-- 🔄 **Full Undo/Redo** - Time-travel through your changes
-- 📊 **Task Hierarchy** - Organize with summaries and milestones
+- 🔗 **Task Dependencies** - Finish-to-Start with automatic date propagation
+- 🔄 **Full Undo/Redo** - Time-travel through your changes (100 steps)
+- 📊 **Task Hierarchy** - Organize with summaries and milestones (3 levels)
+- 📋 **Multi-Select** - Select multiple tasks with Ctrl/Shift+Click or marquee
+- ✂️ **Copy/Paste** - Cross-tab clipboard support with dependencies preserved
+- 📷 **PNG Export** - High-quality export with customizable options
 - ⌨️ **Keyboard Shortcuts** - Efficient navigation and editing
+- ❓ **Help Panel** - Built-in keyboard shortcut reference
+- 🎓 **Welcome Tour** - Guided introduction for first-time users
 - 🔐 **Security-Focused** - 6-layer file validation against XSS/injection
 
 ## 🚀 Quick Start
@@ -114,20 +120,27 @@ Comprehensive documentation is available in the [`/concept`](./concept) folder:
 
 ## 🎯 Current Status
 
-**Version**: 0.0.2 (Early Development)
+**Version**: 0.0.11 (MVP Complete)
 
-**Completed Features**:
-- ✅ Task management with hierarchy (summaries, milestones)
-- ✅ Interactive timeline (drag-to-move, drag-to-resize)
-- ✅ Zoom & navigation (10%-500%)
-- ✅ File operations (save/load .ownchart format)
+**All MVP Features Complete**:
+- ✅ Task management with hierarchy (summaries, milestones, 3 levels)
+- ✅ Interactive timeline (drag-to-move, drag-to-resize, multi-task drag)
+- ✅ Zoom & navigation (5%-300%)
+- ✅ File operations (save/load `.ownchart` format)
+- ✅ Task dependencies (Finish-to-Start with date propagation)
 - ✅ Undo/redo system (100 command stack)
-- ✅ Keyboard shortcuts
+- ✅ Multi-select with marquee selection
+- ✅ Copy/paste/cut with cross-tab support
+- ✅ PNG export with customizable options
+- ✅ Help panel with keyboard shortcuts
+- ✅ Welcome tour for first-time users
+- ✅ Auto-fit columns on file open
 
-**Next Up**:
-- 🚧 Task dependencies (Finish-to-Start)
-- 🚧 PNG/PDF export
-- 🚧 Critical path visualization
+**Next Up (V1.1)**:
+- 🔜 Advanced dependencies (SS/FF/SF)
+- 🔜 PDF/SVG export
+- 🔜 User preferences (theme, date format)
+- 🔜 History timeline slider
 
 See the [Roadmap](./concept/planning/ROADMAP.md) for the full development plan.
 

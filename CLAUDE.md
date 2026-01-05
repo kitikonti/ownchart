@@ -13,7 +13,7 @@
 
 ## Project Status
 
-**Current Version**: `0.0.8` (MVP in progress)
+**Current Version**: `0.0.11` (MVP complete)
 
 **Completed Sprints**:
 - ✅ Sprint 1.1.1 - Task Groups & Hierarchical Organization
@@ -25,8 +25,9 @@
 - ✅ Sprint 1.4 - Dependencies (FS only)
 - ✅ Sprint 1.5 - Undo/Redo System
 - ✅ Sprint 1.5.4 - Copy/Paste & Multi-Select (ahead of schedule from V1.1)
+- ✅ Sprint 1.6 - PNG Export & Polish
 
-**Features Added Post-Sprint (2026-01-04/05)**:
+**MVP Features Complete (v0.0.11)**:
 - ✅ Multi-select with rectangular marquee selection in timeline
 - ✅ Copy/Cut/Paste with cross-tab clipboard support
 - ✅ Multi-task dragging (all selected tasks move together)
@@ -34,12 +35,16 @@
 - ✅ Insert task above/below toolbar buttons
 - ✅ DEL key and toolbar button for task deletion
 - ✅ Placeholder row for quick task creation
-- ✅ PNG Export with options dialog (width, task list, background)
+- ✅ PNG Export with options dialog (zoom, columns, grid lines, weekends, background)
 - ✅ Help Panel with keyboard shortcuts reference
 - ✅ Welcome Tour for first-time users
+- ✅ File extension changed to `.ownchart`
+- ✅ Auto-fit name column on file open
+- ✅ Export settings persisted in project file
+- ✅ Multi-tab persistence (dependencies, column widths)
 
-**Current Sprint**:
-- 🟢 Sprint 1.6 - PNG Export & Polish (in progress)
+**Next Phase**:
+- 🔜 Phase 1.5 (V1.1) - Deferred Features & Extensibility
 
 ## Directory Structure
 
@@ -433,6 +438,6 @@ npm run test:e2e            # E2E tests (Playwright)
 ---
 
 **Last Updated**: 2026-01-05
-**Project Version**: 0.0.8
-**Status**: Phase 1 MVP - Sprint 1.6 In Progress (PNG Export & Polish)
-**Features Implemented**: PNG Export, Help Panel, Welcome Tour
+**Project Version**: 0.0.11
+**Status**: Phase 1 MVP Complete - Ready for V1.1
+**File Extension**: `.ownchart`
