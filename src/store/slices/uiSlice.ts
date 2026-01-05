@@ -52,7 +52,7 @@ interface UIActions {
   // Welcome tour
   openWelcomeTour: () => void;
   closeWelcomeTour: () => void;
-  dismissWelcome: () => void;
+  dismissWelcome: (permanent?: boolean) => void;
   completeTour: () => void;
   checkFirstTimeUser: () => void;
 }
@@ -157,11 +157,14 @@ export const useUIStore = create<UIStore>()(
           state.isWelcomeTourOpen = false;
         }),
 
-      dismissWelcome: () =>
+      dismissWelcome: (permanent = false) =>
         set((state) => {
           state.isWelcomeTourOpen = false;
-          state.hasSeenWelcome = true;
-          localStorage.setItem(WELCOME_DISMISSED_KEY, "true");
+          // Only permanently dismiss if user checked "Don't show again"
+          if (permanent) {
+            state.hasSeenWelcome = true;
+            localStorage.setItem(WELCOME_DISMISSED_KEY, "true");
+          }
         }),
 
       completeTour: () =>

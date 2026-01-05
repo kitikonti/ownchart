@@ -129,10 +129,19 @@ describe('uiSlice', () => {
       expect(useUIStore.getState().isWelcomeTourOpen).toBe(false);
     });
 
-    it('should dismiss welcome and mark as seen', () => {
-      useUIStore.setState({ isWelcomeTourOpen: true });
+    it('should dismiss welcome without marking as seen when not permanent', () => {
+      useUIStore.setState({ isWelcomeTourOpen: true, hasSeenWelcome: false });
       const { dismissWelcome } = useUIStore.getState();
-      dismissWelcome();
+      dismissWelcome(false);
+
+      expect(useUIStore.getState().isWelcomeTourOpen).toBe(false);
+      expect(useUIStore.getState().hasSeenWelcome).toBe(false);
+    });
+
+    it('should dismiss welcome and mark as seen when permanent', () => {
+      useUIStore.setState({ isWelcomeTourOpen: true, hasSeenWelcome: false });
+      const { dismissWelcome } = useUIStore.getState();
+      dismissWelcome(true);
 
       expect(useUIStore.getState().isWelcomeTourOpen).toBe(false);
       expect(useUIStore.getState().hasSeenWelcome).toBe(true);

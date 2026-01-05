@@ -15,15 +15,19 @@ export function WelcomeTour(): JSX.Element | null {
   const [dontShowAgain, setDontShowAgain] = useState(false);
 
   const handleGetStarted = () => {
-    dismissWelcome();
+    dismissWelcome(dontShowAgain);
   };
 
   const handleShowShortcuts = () => {
-    dismissWelcome();
+    dismissWelcome(dontShowAgain);
     // Delay opening help panel to ensure welcome is closed first
     setTimeout(() => {
       openHelpPanel();
     }, 100);
+  };
+
+  const handleClose = () => {
+    dismissWelcome(dontShowAgain);
   };
 
   const footer = (
@@ -46,7 +50,7 @@ export function WelcomeTour(): JSX.Element | null {
   return (
     <Modal
       isOpen={isWelcomeTourOpen}
-      onClose={dismissWelcome}
+      onClose={handleClose}
       title="Welcome to OwnChart!"
       icon={<HandWaving size={24} weight="fill" className="text-yellow-500" />}
       footer={footer}
