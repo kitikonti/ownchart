@@ -12,15 +12,28 @@ import type { ArrowPath, TaskPosition } from "../../types/dependency.types";
 const HORIZONTAL_SEGMENT = 15;
 
 /**
- * Corner radius for 90° turns.
+ * Base corner radius for 90° turns (at comfortable/44px row height).
  */
-const CORNER_RADIUS = 8;
+const BASE_CORNER_RADIUS = 8;
+
+/**
+ * Base row height for scaling calculations.
+ */
+const BASE_ROW_HEIGHT = 44;
 
 /**
  * Extra padding added to the minimum gap calculation.
  * Increase this to switch to S-curve earlier.
  */
 const ELBOW_GAP_PADDING = 0;
+
+/**
+ * Get corner radius scaled by row height.
+ */
+function getScaledCornerRadius(rowHeight: number): number {
+  const scale = rowHeight / BASE_ROW_HEIGHT;
+  return Math.max(4, Math.round(BASE_CORNER_RADIUS * scale));
+}
 
 /**
  * Calculate the SVG path for a dependency arrow.
@@ -35,14 +48,13 @@ const ELBOW_GAP_PADDING = 0;
  *
  * @param fromPos - Position of predecessor task bar
  * @param toPos - Position of successor task bar
- * @param _rowHeight - Height of each row (unused, kept for API compatibility)
+ * @param rowHeight - Height of each row (used for scaling corners)
  * @returns ArrowPath with SVG path and arrowhead position
  */
 export function calculateArrowPath(
   fromPos: TaskPosition,
   toPos: TaskPosition,
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  _rowHeight: number = 44
+  rowHeight: number = 44
 ): ArrowPath {
   // Start point: right edge of predecessor, vertically centered
   const startX = fromPos.x + fromPos.width;
@@ -55,18 +67,21 @@ export function calculateArrowPath(
   // Calculate horizontal gap between tasks
   const horizontalGap = endX - startX;
 
+  // Get scaled corner radius for current density
+  const cornerRadius = getScaledCornerRadius(rowHeight);
+
   let path: string;
 
   // Minimum gap needed: 2x horizontal segment + 2x corner radius + padding
   const minGapForElbow =
-    HORIZONTAL_SEGMENT * 2 + CORNER_RADIUS * 2 + ELBOW_GAP_PADDING;
+    HORIZONTAL_SEGMENT * 2 + cornerRadius * 2 + ELBOW_GAP_PADDING;
 
   if (horizontalGap >= minGapForElbow) {
     // Normal case: enough space for standard elbow
-    path = calculateElbowPath(startX, startY, endX, endY);
+    path = calculateElbowPath(startX, startY, endX, endY, cornerRadius);
   } else {
     // Tight/overlap case: use S-curve routing
-    path = calculateRoutedPath(startX, startY, endX, endY);
+    path = calculateRoutedPath(startX, startY, endX, endY, rowHeight, cornerRadius);
   }
 
   return {
@@ -87,10 +102,10 @@ function calculateElbowPath(
   startX: number,
   startY: number,
   endX: number,
-  endY: number
+  endY: number,
+  r: number = BASE_CORNER_RADIUS
 ): string {
   const midX = (startX + endX) / 2;
-  const r = CORNER_RADIUS;
 
   // If same row (no vertical movement needed)
   if (Math.abs(endY - startY) < 2) {
@@ -146,7 +161,8 @@ function calculateSimpleElbow(
   startY: number,
   endX: number,
   endY: number,
-  goDown: boolean
+  goDown: boolean,
+  baseRadius: number = BASE_CORNER_RADIUS
 ): string {
   const horizontalGap = endX - startX;
   const verticalGap = Math.abs(endY - startY);
@@ -155,7 +171,7 @@ function calculateSimpleElbow(
   const maxRadiusForHorizontal = horizontalGap / 4;
   const maxRadiusForVertical = verticalGap / 4;
   const r = Math.min(
-    CORNER_RADIUS,
+    baseRadius,
     maxRadiusForHorizontal,
     maxRadiusForVertical
   );
@@ -201,24 +217,29 @@ function calculateRoutedPath(
   startX: number,
   startY: number,
   endX: number,
-  endY: number
+  endY: number,
+  rowHeight: number = BASE_ROW_HEIGHT,
+  r: number = BASE_CORNER_RADIUS
 ): string {
-  const r = CORNER_RADIUS;
-
   // Determine routing direction - go down if target is below or same level
   const goDown = endY >= startY;
 
   // Calculate the Y position for the horizontal middle segment
   // Should be vertically centered between the two tasks
   const verticalDistance = Math.abs(endY - startY);
-  const minSpaceForCurves = 4 * r; // Need room for curves at both ends
+
+  // Scale minimum space for curves based on row height
+  // At smaller row heights, we need proportionally less space
+  const minSpaceForCurves = 4 * r;
 
   let middleY: number;
   if (verticalDistance < minSpaceForCurves) {
     // Tasks too close vertically - route further out to have room for all curves
+    // Use row height to determine offset for cleaner routing
+    const offset = Math.max(minSpaceForCurves / 2, rowHeight * 0.4);
     middleY = goDown
-      ? Math.max(startY, endY) + minSpaceForCurves / 2
-      : Math.min(startY, endY) - minSpaceForCurves / 2;
+      ? Math.max(startY, endY) + offset
+      : Math.min(startY, endY) - offset;
   } else {
     // Enough vertical space - route through the exact middle
     middleY = (startY + endY) / 2;
@@ -234,7 +255,7 @@ function calculateRoutedPath(
   // If first - r <= second + r, the segment would go RIGHT instead of LEFT (wrong direction)
   // In this case, use a simple elbow path instead of S-curve
   if (firstVerticalX - r <= secondVerticalX + r) {
-    return calculateSimpleElbow(startX, startY, endX, endY, goDown);
+    return calculateSimpleElbow(startX, startY, endX, endY, goDown, r);
   }
 
   if (goDown) {
