@@ -25,6 +25,10 @@ export interface ExportOptions {
   includeTodayMarker: boolean;
   /** Include dependency arrows */
   includeDependencies: boolean;
+  /** Include grid lines */
+  includeGridLines: boolean;
+  /** Include weekend highlighting */
+  includeWeekends: boolean;
   /** Background color */
   background: "white" | "transparent";
 }
@@ -51,6 +55,8 @@ export const DEFAULT_EXPORT_OPTIONS: ExportOptions = {
   includeHeader: true,
   includeTodayMarker: true,
   includeDependencies: true,
+  includeGridLines: true,
+  includeWeekends: true,
   background: "white",
 };
 

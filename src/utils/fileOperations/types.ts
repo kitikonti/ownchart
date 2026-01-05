@@ -5,6 +5,7 @@
 
 import type { TaskType } from "../../types/chart.types";
 import type { Dependency as AppDependency } from "../../types/dependency.types";
+import type { ExportOptions } from "../export/types";
 
 export interface GanttFile {
   // Format identification
@@ -25,6 +26,9 @@ export interface GanttFile {
 
     // View state
     viewSettings: ViewSettings;
+
+    // Export settings (Sprint 1.6+)
+    exportSettings?: ExportOptions;
 
     // Chart metadata
     metadata: {
@@ -120,6 +124,7 @@ export interface DeserializeResult {
     }>;
     dependencies: AppDependency[]; // Sprint 1.4
     viewSettings: ViewSettings;
+    exportSettings?: ExportOptions; // Sprint 1.6
     chartName: string;
     chartId: string;
   };

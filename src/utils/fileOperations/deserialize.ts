@@ -117,6 +117,7 @@ export async function deserializeGanttFile(
       deserializeDependency
     );
     const viewSettings = ganttFile.chart.viewSettings;
+    const exportSettings = ganttFile.chart.exportSettings; // Sprint 1.6
 
     return {
       success: true,
@@ -124,6 +125,7 @@ export async function deserializeGanttFile(
         tasks,
         dependencies, // Sprint 1.4
         viewSettings,
+        exportSettings, // Sprint 1.6
         chartName: ganttFile.chart.name,
         chartId: ganttFile.chart.id,
       },

@@ -106,9 +106,7 @@ export function ExportOptionsForm({
 
       {/* Column Selection */}
       <div>
-        <h3 className="text-sm font-medium text-gray-700 mb-3">
-          Task List Columns
-        </h3>
+        <h3 className="text-sm font-medium text-gray-700 mb-3">List Columns</h3>
         <p className="text-xs text-gray-500 mb-3">
           Select columns to include. Leave all unchecked for timeline only.
         </p>
@@ -142,18 +140,27 @@ export function ExportOptionsForm({
         </div>
       </div>
 
-      {/* Other Options */}
+      {/* Timeline Options */}
       <div>
-        <h3 className="text-sm font-medium text-gray-700 mb-3">Options</h3>
+        <h3 className="text-sm font-medium text-gray-700 mb-3">Timeline</h3>
         <div className="space-y-2">
           <label className="flex items-center gap-3 cursor-pointer">
             <input
               type="checkbox"
-              checked={options.includeHeader}
-              onChange={(e) => onChange({ includeHeader: e.target.checked })}
+              checked={options.includeGridLines}
+              onChange={(e) => onChange({ includeGridLines: e.target.checked })}
               className="w-4 h-4 text-blue-600 rounded"
             />
-            <span className="text-sm text-gray-700">Include header row</span>
+            <span className="text-sm text-gray-700">Include grid lines</span>
+          </label>
+          <label className="flex items-center gap-3 cursor-pointer">
+            <input
+              type="checkbox"
+              checked={options.includeWeekends}
+              onChange={(e) => onChange({ includeWeekends: e.target.checked })}
+              className="w-4 h-4 text-blue-600 rounded"
+            />
+            <span className="text-sm text-gray-700">Include weekends</span>
           </label>
           <label className="flex items-center gap-3 cursor-pointer">
             <input
@@ -176,6 +183,22 @@ export function ExportOptionsForm({
               className="w-4 h-4 text-blue-600 rounded"
             />
             <span className="text-sm text-gray-700">Include dependencies</span>
+          </label>
+        </div>
+      </div>
+
+      {/* General Options */}
+      <div>
+        <h3 className="text-sm font-medium text-gray-700 mb-3">Options</h3>
+        <div className="space-y-2">
+          <label className="flex items-center gap-3 cursor-pointer">
+            <input
+              type="checkbox"
+              checked={options.includeHeader}
+              onChange={(e) => onChange({ includeHeader: e.target.checked })}
+              className="w-4 h-4 text-blue-600 rounded"
+            />
+            <span className="text-sm text-gray-700">Include header row</span>
           </label>
         </div>
       </div>

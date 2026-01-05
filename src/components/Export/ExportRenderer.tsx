@@ -313,12 +313,14 @@ export function ExportRenderer({
           style={{ backgroundColor: bgColor }}
         >
           {/* Grid lines */}
-          <GridLines
-            scale={scale}
-            taskCount={orderedTasks.length}
-            showWeekends={true}
-            width={timelineWidth}
-          />
+          {options.includeGridLines && (
+            <GridLines
+              scale={scale}
+              taskCount={orderedTasks.length}
+              showWeekends={options.includeWeekends}
+              width={timelineWidth}
+            />
+          )}
 
           {/* Dependency arrows */}
           {options.includeDependencies && (

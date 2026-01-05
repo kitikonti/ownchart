@@ -27,6 +27,8 @@ describe("DEFAULT_EXPORT_OPTIONS", () => {
     expect(DEFAULT_EXPORT_OPTIONS.includeHeader).toBe(true);
     expect(DEFAULT_EXPORT_OPTIONS.includeTodayMarker).toBe(true);
     expect(DEFAULT_EXPORT_OPTIONS.includeDependencies).toBe(true);
+    expect(DEFAULT_EXPORT_OPTIONS.includeGridLines).toBe(true);
+    expect(DEFAULT_EXPORT_OPTIONS.includeWeekends).toBe(true);
     expect(DEFAULT_EXPORT_OPTIONS.background).toBe("white");
   });
 

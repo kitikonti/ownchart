@@ -4,6 +4,7 @@
 
 import type { Task } from "../../types/chart.types";
 import type { Dependency } from "../../types/dependency.types";
+import type { ExportOptions } from "../export/types";
 import type {
   GanttFile,
   SerializedTask,
@@ -17,6 +18,7 @@ export interface SerializeOptions {
   chartId?: string;
   prettyPrint?: boolean;
   dependencies?: Dependency[]; // Sprint 1.4
+  exportSettings?: ExportOptions; // Sprint 1.6
 }
 
 /**
@@ -54,6 +56,7 @@ export function serializeToGanttFile(
         taskTableWidth: viewSettings.taskTableWidth,
         columnWidths: viewSettings.columnWidths,
       },
+      exportSettings: options.exportSettings, // Sprint 1.6
       metadata: {
         createdAt: now,
         updatedAt: now,

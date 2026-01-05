@@ -10,6 +10,7 @@ import { useChartStore } from "../store/slices/chartSlice";
 import { useFileStore } from "../store/slices/fileSlice";
 import { useHistoryStore } from "../store/slices/historySlice";
 import { useDependencyStore } from "../store/slices/dependencySlice";
+import { useUIStore } from "../store/slices/uiSlice";
 import { serializeToGanttFile } from "../utils/fileOperations/serialize";
 import { deserializeGanttFile } from "../utils/fileOperations/deserialize";
 import {
@@ -39,6 +40,10 @@ export function useFileOperations() {
   const fileState = useFileStore();
   const clearHistory = useHistoryStore((state) => state.clearHistory);
 
+  // Export options from uiSlice
+  const exportOptions = useUIStore((state) => state.exportOptions);
+  const resetExportOptions = useUIStore((state) => state.resetExportOptions);
+
   // Save (Ctrl+S) - Re-save if handle exists, otherwise show dialog
   const handleSave = useCallback(
     async (saveAs = false) => {
@@ -58,6 +63,7 @@ export function useFileOperations() {
             chartId: fileState.chartId || undefined,
             prettyPrint: true,
             dependencies, // Sprint 1.4
+            exportSettings: exportOptions, // Sprint 1.6
           }
         );
 
@@ -82,6 +88,7 @@ export function useFileOperations() {
     [
       tasks,
       dependencies,
+      exportOptions,
       zoom,
       panOffset,
       showWeekends,
@@ -127,6 +134,7 @@ export function useFileOperations() {
       // Load data
       setTasks(parseResult.data!.tasks);
       setDependencies(parseResult.data!.dependencies || []); // Sprint 1.4
+      resetExportOptions(parseResult.data!.exportSettings); // Sprint 1.6
       clearHistory();
       fileState.setFileName(file.name);
       fileState.setChartId(parseResult.data!.chartId);
@@ -142,7 +150,7 @@ export function useFileOperations() {
     } catch (e) {
       toast.error(`Open failed: ${(e as Error).message}`);
     }
-  }, [fileState, setTasks, setDependencies, clearHistory]);
+  }, [fileState, setTasks, setDependencies, resetExportOptions, clearHistory]);
 
   // New (Ctrl+N)
   const handleNew = useCallback(async () => {
@@ -156,12 +164,19 @@ export function useFileOperations() {
     // Reset to empty task list (placeholder row allows adding new tasks)
     setTasks([]);
     clearDependencies(); // Sprint 1.4
+    resetExportOptions(); // Sprint 1.6 - reset to defaults
     clearHistory();
     clearFileHandle();
     fileState.reset();
 
     toast.success("Created new chart");
-  }, [fileState, setTasks, clearDependencies, clearHistory]);
+  }, [
+    fileState,
+    setTasks,
+    clearDependencies,
+    resetExportOptions,
+    clearHistory,
+  ]);
 
   return {
     handleSave,

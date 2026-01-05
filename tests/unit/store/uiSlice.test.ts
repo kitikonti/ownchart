@@ -14,6 +14,8 @@ describe('uiSlice', () => {
         includeHeader: true,
         includeTodayMarker: true,
         includeDependencies: true,
+        includeGridLines: true,
+        includeWeekends: true,
         background: 'white',
       },
       isHelpPanelOpen: false,
@@ -110,6 +112,47 @@ describe('uiSlice', () => {
       expect(useUIStore.getState().isExportDialogOpen).toBe(false);
       expect(useUIStore.getState().isExporting).toBe(false);
       expect(useUIStore.getState().exportError).toBeNull();
+    });
+
+    it('should reset export options to defaults', () => {
+      // Modify options first
+      const { setExportOptions, resetExportOptions } = useUIStore.getState();
+      setExportOptions({
+        timelineZoom: 2.5,
+        includeHeader: false,
+        includeGridLines: false,
+      });
+
+      // Reset to defaults
+      resetExportOptions();
+
+      const state = useUIStore.getState();
+      expect(state.exportOptions.timelineZoom).toBe(1.0);
+      expect(state.exportOptions.includeHeader).toBe(true);
+      expect(state.exportOptions.includeGridLines).toBe(true);
+      expect(state.exportOptions.background).toBe('white');
+    });
+
+    it('should reset export options to provided options', () => {
+      const customOptions = {
+        timelineZoom: 1.5,
+        selectedColumns: ['name', 'startDate'] as const,
+        includeHeader: false,
+        includeTodayMarker: false,
+        includeDependencies: false,
+        includeGridLines: false,
+        includeWeekends: false,
+        background: 'transparent' as const,
+      };
+
+      const { resetExportOptions } = useUIStore.getState();
+      resetExportOptions(customOptions);
+
+      const state = useUIStore.getState();
+      expect(state.exportOptions.timelineZoom).toBe(1.5);
+      expect(state.exportOptions.selectedColumns).toEqual(['name', 'startDate']);
+      expect(state.exportOptions.includeHeader).toBe(false);
+      expect(state.exportOptions.background).toBe('transparent');
     });
   });
 

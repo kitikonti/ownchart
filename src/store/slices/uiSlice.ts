@@ -41,6 +41,7 @@ interface UIActions {
   openExportDialog: () => void;
   closeExportDialog: () => void;
   setExportOptions: (options: Partial<ExportOptions>) => void;
+  resetExportOptions: (options?: ExportOptions) => void;
   setIsExporting: (isExporting: boolean) => void;
   setExportError: (error: string | null) => void;
 
@@ -114,6 +115,13 @@ export const useUIStore = create<UIStore>()(
       setExportOptions: (options) =>
         set((state) => {
           Object.assign(state.exportOptions, options);
+        }),
+
+      resetExportOptions: (options) =>
+        set((state) => {
+          state.exportOptions = options
+            ? { ...options }
+            : { ...DEFAULT_EXPORT_OPTIONS };
         }),
 
       setIsExporting: (isExporting) =>
