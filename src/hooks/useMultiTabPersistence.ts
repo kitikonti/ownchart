@@ -10,6 +10,7 @@ import { useEffect, useRef } from "react";
 import { useTaskStore } from "../store/slices/taskSlice";
 import { useChartStore } from "../store/slices/chartSlice";
 import { useFileStore } from "../store/slices/fileSlice";
+import { useDependencyStore } from "../store/slices/dependencySlice";
 import {
   getTabId,
   loadTabChart,
@@ -47,6 +48,11 @@ export function useMultiTabPersistence(): void {
     // Restore tasks
     if (savedChart.tasks.length > 0) {
       useTaskStore.getState().setTasks(savedChart.tasks);
+    }
+
+    // Restore dependencies
+    if (savedChart.dependencies && savedChart.dependencies.length > 0) {
+      useDependencyStore.getState().setDependencies(savedChart.dependencies);
     }
 
     // Restore chart state
@@ -93,11 +99,13 @@ export function useMultiTabPersistence(): void {
       }
 
       const taskState = useTaskStore.getState();
+      const dependencyState = useDependencyStore.getState();
       const chartState = useChartStore.getState();
       const fileState = useFileStore.getState();
 
       const chartData = {
         tasks: taskState.tasks,
+        dependencies: dependencyState.dependencies,
         chartState: {
           zoom: chartState.zoom,
           panOffset: chartState.panOffset,
@@ -117,6 +125,7 @@ export function useMultiTabPersistence(): void {
 
     // Subscribe to all store changes
     const unsubscribeTasks = useTaskStore.subscribe(saveCurrentState);
+    const unsubscribeDeps = useDependencyStore.subscribe(saveCurrentState);
     const unsubscribeChart = useChartStore.subscribe(saveCurrentState);
     const unsubscribeFile = useFileStore.subscribe(saveCurrentState);
 
@@ -131,6 +140,7 @@ export function useMultiTabPersistence(): void {
     return () => {
       clearTimeout(initialSaveTimer);
       unsubscribeTasks();
+      unsubscribeDeps();
       unsubscribeChart();
       unsubscribeFile();
     };

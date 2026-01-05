@@ -21,6 +21,7 @@
  */
 
 import type { Task } from "../types/chart.types";
+import type { Dependency } from "../types/dependency.types";
 
 const STORAGE_KEY = "ownchart-multi-tab-state";
 const STORAGE_VERSION = 2;
@@ -45,6 +46,7 @@ export interface TabChartData {
   tabId: string;
   lastActive: number;
   tasks: Task[];
+  dependencies: Dependency[];
   chartState: ChartState;
   fileState: FileState;
 }
@@ -115,6 +117,7 @@ function migrateFromV1(): MultiTabStorage {
           tabId: migratedTabId,
           lastActive: Date.now(),
           tasks: oldData.tasks || [],
+          dependencies: [],
           chartState: oldData.chartState || {
             zoom: 1,
             panOffset: { x: 0, y: 0 },
