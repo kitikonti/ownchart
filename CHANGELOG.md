@@ -2,6 +2,28 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [0.0.11](https://github.com/kitikonti/ownchart/compare/v0.0.10...v0.0.11) (2026-01-05)
+
+
+### Features
+
+* auto-fit name column when opening files ([2186809](https://github.com/kitikonti/ownchart/commit/21868093b0aba81e4f014244a1abe61374b3a78d))
+* **export:** add grid lines/weekends options and persist settings in project file ([0395acb](https://github.com/kitikonti/ownchart/commit/0395acbae8d93bc16f3737d2e09ca1e46845a8f1))
+
+
+### Bug Fixes
+
+* persist column widths in multi-tab localStorage ([ec92e22](https://github.com/kitikonti/ownchart/commit/ec92e2218f046a76777ae703bf46c19fcbbcf486))
+* persist dependencies in multi-tab localStorage ([94b4f54](https://github.com/kitikonti/ownchart/commit/94b4f546d220a330ea9fa932dadfa35aafd052b9))
+* **welcome:** respect "Don't show again" checkbox ([c426186](https://github.com/kitikonti/ownchart/commit/c426186651d6bd7ddc2b7249a39ce845aa9c5bd6))
+
+
+### Code Refactoring
+
+* change file extension from .gantt to .ownchart ([4480d80](https://github.com/kitikonti/ownchart/commit/4480d80879293bd518e6dbff0482d8f46be5d22f))
+* **export:** switch to html-to-image with offscreen rendering ([4a97843](https://github.com/kitikonti/ownchart/commit/4a978435626d7514fbad9e237ac1599c03e62375))
+* restrict column resizing to name column only ([e7ff4cb](https://github.com/kitikonti/ownchart/commit/e7ff4cbaf257b25cc7227494200bc5e2874cca79))
+
 ### [0.0.10](https://github.com/kitikonti/ownchart/compare/v0.0.9...v0.0.10) (2026-01-05)
 
 
