@@ -2,25 +2,13 @@
  * Export Dialog component for PNG export with options.
  */
 
-import { useState, useCallback } from "react";
+import { useCallback, useMemo } from "react";
 import { Export, Spinner, Download } from "@phosphor-icons/react";
 import { Modal } from "../common/Modal";
 import { ExportOptionsForm } from "./ExportOptions";
 import { useUIStore } from "../../store/slices/uiSlice";
-import { exportToPng, EXPORT_WIDTH_PRESETS } from "../../utils/export";
-import type { ExportWidthPreset } from "../../utils/export/types";
-
-/**
- * Determine which preset matches the given width, or "custom" if none match.
- */
-function getPresetForWidth(width: number): ExportWidthPreset | "custom" {
-  for (const [key, value] of Object.entries(EXPORT_WIDTH_PRESETS)) {
-    if (value === width) {
-      return key as ExportWidthPreset;
-    }
-  }
-  return "custom";
-}
+import { useTaskStore } from "../../store/slices/taskSlice";
+import { exportToPng, calculateExportDimensions } from "../../utils/export";
 
 /**
  * Export Dialog component.
@@ -37,43 +25,39 @@ export function ExportDialog(): JSX.Element | null {
     setExportError,
   } = useUIStore();
 
-  const [customWidth, setCustomWidth] = useState(
-    exportOptions.width.toString()
-  );
-  const [selectedPreset, setSelectedPreset] = useState<
-    ExportWidthPreset | "custom"
-  >(() => getPresetForWidth(exportOptions.width));
+  // Get tasks from store
+  const tasks = useTaskStore((state) => state.tasks);
+  const columnWidths = useTaskStore((state) => state.columnWidths);
+
+  // Calculate estimated dimensions
+  const estimatedDimensions = useMemo(() => {
+    return calculateExportDimensions(tasks, exportOptions, columnWidths);
+  }, [tasks, exportOptions, columnWidths]);
 
   const handleExport = useCallback(async () => {
     setIsExporting(true);
     setExportError(null);
 
     try {
-      await exportToPng(exportOptions);
+      await exportToPng({
+        tasks,
+        options: exportOptions,
+        columnWidths,
+      });
       closeExportDialog();
     } catch (error) {
       const message =
         error instanceof Error ? error.message : "An unknown error occurred";
       setExportError(message);
     }
-  }, [exportOptions, closeExportDialog, setIsExporting, setExportError]);
-
-  const handlePresetChange = useCallback((preset: string | "custom") => {
-    setSelectedPreset(preset as ExportWidthPreset | "custom");
-    if (preset !== "custom") {
-      const width =
-        EXPORT_WIDTH_PRESETS[preset as keyof typeof EXPORT_WIDTH_PRESETS];
-      setCustomWidth(width.toString());
-    }
-  }, []);
-
-  const handleCustomWidthChange = useCallback((value: string) => {
-    setCustomWidth(value);
-    const numValue = parseInt(value, 10);
-    if (!isNaN(numValue) && numValue > 0) {
-      setSelectedPreset("custom");
-    }
-  }, []);
+  }, [
+    tasks,
+    exportOptions,
+    columnWidths,
+    closeExportDialog,
+    setIsExporting,
+    setExportError,
+  ]);
 
   const footer = (
     <>
@@ -114,25 +98,11 @@ export function ExportDialog(): JSX.Element | null {
       widthClass="max-w-md"
     >
       <div className="space-y-6">
-        {/* Preview placeholder */}
-        <div className="bg-gray-100 rounded-lg p-4 text-center text-sm text-gray-500 border border-gray-200">
-          <div className="h-32 flex items-center justify-center">
-            <span>
-              Export will capture the current chart view at{" "}
-              {exportOptions.width}
-              px width
-            </span>
-          </div>
-        </div>
-
         {/* Export options */}
         <ExportOptionsForm
           options={exportOptions}
           onChange={setExportOptions}
-          customWidth={customWidth}
-          onCustomWidthChange={handleCustomWidthChange}
-          selectedPreset={selectedPreset}
-          onPresetChange={handlePresetChange}
+          estimatedDimensions={estimatedDimensions}
         />
 
         {/* Error message */}

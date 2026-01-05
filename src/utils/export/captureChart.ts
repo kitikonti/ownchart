@@ -1,128 +1,123 @@
 /**
  * Chart capture utilities for PNG export.
- * Uses html2canvas to capture DOM elements to canvas.
+ * Uses html-to-image to capture offscreen-rendered chart.
  */
 
+import { createRoot } from "react-dom/client";
+import { createElement } from "react";
+import { toCanvas } from "html-to-image";
 import type { ExportOptions } from "./types";
+import type { Task } from "../../types/chart.types";
+import {
+  ExportRenderer,
+  calculateExportDimensions,
+} from "../../components/Export/ExportRenderer";
 
 /**
- * Lazily import html2canvas to reduce initial bundle size.
+ * Wait for all fonts to be loaded.
  */
-async function getHtml2Canvas(): Promise<typeof import("html2canvas").default> {
-  const module = await import("html2canvas");
-  return module.default;
+async function waitForFonts(): Promise<void> {
+  if (document.fonts && document.fonts.ready) {
+    await document.fonts.ready;
+  }
 }
 
 /**
- * Prepare element for capture by temporarily hiding scrollbars
- * and setting up styles for clean capture.
- * Returns a cleanup function to restore original state.
+ * Wait for next animation frame (ensures DOM is painted).
  */
-function prepareForCapture(element: HTMLElement): () => void {
-  const originalOverflow = element.style.overflow;
-  const originalScrollLeft = element.scrollLeft;
-  const originalScrollTop = element.scrollTop;
+function waitForPaint(): Promise<void> {
+  return new Promise((resolve) => {
+    requestAnimationFrame(() => {
+      requestAnimationFrame(() => {
+        resolve();
+      });
+    });
+  });
+}
 
-  // Reset scroll position for capture
-  element.scrollLeft = 0;
-  element.scrollTop = 0;
-
-  // Hide scrollbars during capture
-  element.style.overflow = "hidden";
-
-  return () => {
-    element.style.overflow = originalOverflow;
-    element.scrollLeft = originalScrollLeft;
-    element.scrollTop = originalScrollTop;
-  };
+export interface CaptureChartParams {
+  tasks: Task[];
+  options: ExportOptions;
+  columnWidths: Record<string, number>;
 }
 
 /**
- * Find elements to ignore during capture based on options.
- */
-function shouldIgnoreElement(
-  element: Element,
-  options: ExportOptions
-): boolean {
-  // Ignore task list if option is disabled
-  if (!options.includeTaskList && element.classList.contains("task-table")) {
-    return true;
-  }
-
-  // Ignore the resizer divider if task list is not included
-  if (!options.includeTaskList && element.classList.contains("split-divider")) {
-    return true;
-  }
-
-  // Ignore the header if option is disabled
-  if (!options.includeHeader && element.classList.contains("timeline-header")) {
-    return true;
-  }
-
-  // Always ignore zoom indicator
-  if (element.classList.contains("zoom-indicator")) {
-    return true;
-  }
-
-  // Ignore placeholder row
-  if (element.classList.contains("placeholder-row")) {
-    return true;
-  }
-
-  return false;
-}
-
-/**
- * Capture the chart element to a canvas.
+ * Capture the chart to a canvas using offscreen rendering.
+ * This renders the complete chart (including non-visible areas) at the specified zoom level.
  */
 export async function captureChart(
-  options: ExportOptions
+  params: CaptureChartParams
 ): Promise<HTMLCanvasElement> {
-  // Find the main layout element to capture
-  const chartElement = document.querySelector(
-    ".gantt-layout"
-  ) as HTMLElement | null;
+  const { tasks, options, columnWidths } = params;
 
-  if (!chartElement) {
-    throw new Error(
-      "Chart element not found. Please ensure the chart is visible."
-    );
-  }
+  // Calculate expected dimensions
+  const dimensions = calculateExportDimensions(tasks, options, columnWidths);
 
-  const html2canvas = await getHtml2Canvas();
-
-  // Calculate scale factor for target width
-  const currentWidth = chartElement.offsetWidth;
-  const scale = options.width / currentWidth;
-
-  // Use higher scale for better quality (considering device pixel ratio)
-  const finalScale = scale * Math.max(window.devicePixelRatio, 1);
-
-  // Prepare element for capture
-  const cleanup = prepareForCapture(chartElement);
+  // Create container - must be on-screen for html-to-image (uses SVG foreignObject)
+  // We use opacity: 0 and pointer-events: none to hide it from the user
+  const container = document.createElement("div");
+  container.id = "export-offscreen-container";
+  container.style.cssText = `
+    position: fixed;
+    left: 0;
+    top: 0;
+    width: ${dimensions.width}px;
+    height: ${dimensions.height}px;
+    overflow: hidden;
+    background: ${options.background === "white" ? "#ffffff" : "transparent"};
+    z-index: 99999;
+    opacity: 0;
+    pointer-events: none;
+  `;
+  document.body.appendChild(container);
 
   try {
-    const canvas = await html2canvas(chartElement, {
-      scale: finalScale,
-      backgroundColor: options.background === "white" ? "#ffffff" : null,
-      useCORS: true,
-      logging: false,
-      allowTaint: true,
-      // Filter out elements based on options
-      ignoreElements: (element) => shouldIgnoreElement(element, options),
-      // Handle SVG elements properly
-      onclone: (clonedDoc) => {
-        // Ensure SVG elements are visible in the clone
-        const svgElements = clonedDoc.querySelectorAll("svg");
-        svgElements.forEach((svg) => {
-          svg.setAttribute("xmlns", "http://www.w3.org/2000/svg");
-        });
+    // Create React root and render the export component
+    const root = createRoot(container);
+
+    await new Promise<void>((resolve) => {
+      root.render(
+        createElement(ExportRenderer, {
+          tasks,
+          options,
+          columnWidths,
+        })
+      );
+      // Wait for React to render
+      setTimeout(resolve, 100);
+    });
+
+    // Wait for fonts and paint
+    await waitForFonts();
+    await waitForPaint();
+
+    // Make visible for capture (html-to-image needs visible elements)
+    container.style.opacity = "1";
+    await waitForPaint();
+
+    // Capture the container using html-to-image
+    const canvas = await toCanvas(container, {
+      pixelRatio: Math.max(window.devicePixelRatio, 2),
+      backgroundColor: options.background === "white" ? "#ffffff" : undefined,
+      width: dimensions.width,
+      height: dimensions.height,
+      style: {
+        // Ensure the element is visible for capture
+        transform: "none",
+        left: "0",
+        top: "0",
       },
     });
 
+    // Cleanup React root
+    root.unmount();
+
     return canvas;
   } finally {
-    cleanup();
+    // Always cleanup the container
+    if (container.parentNode) {
+      container.parentNode.removeChild(container);
+    }
   }
 }
 
@@ -147,3 +142,8 @@ export async function canvasToBlob(
     );
   });
 }
+
+/**
+ * Re-export calculateExportDimensions for use in dialog.
+ */
+export { calculateExportDimensions } from "../../components/Export/ExportRenderer";
