@@ -34,9 +34,12 @@
 - ✅ Insert task above/below toolbar buttons
 - ✅ DEL key and toolbar button for task deletion
 - ✅ Placeholder row for quick task creation
+- ✅ PNG Export with options dialog (width, task list, background)
+- ✅ Help Panel with keyboard shortcuts reference
+- ✅ Welcome Tour for first-time users
 
-**Next Sprints**:
-- Sprint 1.6 - PNG Export & Polish
+**Current Sprint**:
+- 🟢 Sprint 1.6 - PNG Export & Polish (in progress)
 
 ## Directory Structure
 
@@ -79,6 +82,7 @@ ownchart/
 - `chartSlice.ts` - Timeline state, zoom, scales, drag state
 - `historySlice.ts` - Undo/redo with Command Pattern
 - `clipboardSlice.ts` - Copy/cut/paste with cross-tab support
+- `uiSlice.ts` - Export dialog, help panel, welcome tour state
 
 **Component Architecture**: Functional components with hooks
 - Extract logic to custom hooks
@@ -430,5 +434,5 @@ npm run test:e2e            # E2E tests (Playwright)
 
 **Last Updated**: 2026-01-05
 **Project Version**: 0.0.8
-**Status**: Phase 1 MVP - Sprint 1.5.4 Complete (Copy/Paste & Multi-Select)
-**Next Sprint**: Sprint 1.6 - PNG Export & Polish
+**Status**: Phase 1 MVP - Sprint 1.6 In Progress (PNG Export & Polish)
+**Features Implemented**: PNG Export, Help Panel, Welcome Tour

@@ -3,16 +3,22 @@
  * Composes the main layout from sub-components
  */
 
+import { useEffect } from "react";
 import { Toaster } from "react-hot-toast";
 import { ZoomIndicator } from "./components/GanttChart/ZoomIndicator";
 import { AppToolbar, GanttLayout } from "./components/Layout";
+import { ExportDialog } from "./components/Export";
+import { HelpPanel, WelcomeTour } from "./components/Help";
 import { useKeyboardShortcuts } from "./hooks/useKeyboardShortcuts";
 import { useUnsavedChanges } from "./hooks/useUnsavedChanges";
 import { useMultiTabPersistence } from "./hooks/useMultiTabPersistence";
 import { useDocumentTitle } from "./hooks/useDocumentTitle";
+import { useUIStore } from "./store/slices/uiSlice";
 
 function App(): JSX.Element {
-  // Enable global keyboard shortcuts (Ctrl+Z, Ctrl+Shift+Z, Ctrl+Y, Ctrl+S, Ctrl+O, Ctrl+Alt+N)
+  const checkFirstTimeUser = useUIStore((state) => state.checkFirstTimeUser);
+
+  // Enable global keyboard shortcuts (Ctrl+Z, Ctrl+Shift+Z, Ctrl+Y, Ctrl+S, Ctrl+O, Ctrl+Alt+N, Ctrl+E, ?)
   useKeyboardShortcuts();
 
   // Warn before leaving with unsaved changes
@@ -24,8 +30,22 @@ function App(): JSX.Element {
   // Update browser tab title with filename
   useDocumentTitle();
 
+  // Check for first-time user on mount
+  useEffect(() => {
+    checkFirstTimeUser();
+  }, [checkFirstTimeUser]);
+
   return (
     <>
+      {/* Export Dialog */}
+      <ExportDialog />
+
+      {/* Help Panel */}
+      <HelpPanel />
+
+      {/* Welcome Tour for first-time users */}
+      <WelcomeTour />
+
       <Toaster
         position="bottom-right"
         toastOptions={{

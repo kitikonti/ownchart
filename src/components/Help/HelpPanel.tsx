@@ -1,0 +1,179 @@
+/**
+ * Help Panel component displaying keyboard shortcuts.
+ */
+
+import { Question, Lightbulb, Command } from "@phosphor-icons/react";
+import { Modal } from "../common/Modal";
+import { useUIStore } from "../../store/slices/uiSlice";
+
+/**
+ * Detect if the user is on a Mac.
+ */
+function isMac(): boolean {
+  if (typeof navigator === "undefined") return false;
+  return navigator.platform.toLowerCase().includes("mac");
+}
+
+/**
+ * Get the modifier key label based on platform.
+ */
+function getModifierKey(): string {
+  return isMac() ? "Cmd" : "Ctrl";
+}
+
+interface ShortcutSection {
+  title: string;
+  shortcuts: { keys: string; description: string }[];
+}
+
+/**
+ * Get all keyboard shortcuts, with platform-appropriate modifier key.
+ */
+function getShortcuts(): ShortcutSection[] {
+  const mod = getModifierKey();
+
+  return [
+    {
+      title: "File Operations",
+      shortcuts: [
+        { keys: `${mod}+Alt+N`, description: "New chart" },
+        { keys: `${mod}+O`, description: "Open file" },
+        { keys: `${mod}+S`, description: "Save" },
+        { keys: `${mod}+Shift+S`, description: "Save As" },
+        { keys: `${mod}+E`, description: "Export to PNG" },
+      ],
+    },
+    {
+      title: "Edit Operations",
+      shortcuts: [
+        { keys: `${mod}+Z`, description: "Undo" },
+        { keys: `${mod}+Shift+Z`, description: "Redo" },
+        { keys: `${mod}+Y`, description: "Redo (alternative)" },
+        { keys: `${mod}+C`, description: "Copy selected tasks" },
+        { keys: `${mod}+X`, description: "Cut selected tasks" },
+        { keys: `${mod}+V`, description: "Paste tasks" },
+        { keys: `${mod}+A`, description: "Select all tasks" },
+        { keys: "Delete", description: "Delete selected tasks" },
+      ],
+    },
+    {
+      title: "Selection",
+      shortcuts: [
+        { keys: "Click", description: "Select task" },
+        { keys: `${mod}+Click`, description: "Add to selection" },
+        { keys: "Shift+Click", description: "Range select" },
+        { keys: "Drag (timeline)", description: "Marquee select" },
+        { keys: "Escape", description: "Clear selection" },
+      ],
+    },
+    {
+      title: "Hierarchy",
+      shortcuts: [
+        { keys: "Tab", description: "Indent task (make child)" },
+        { keys: "Shift+Tab", description: "Outdent task (make sibling)" },
+      ],
+    },
+    {
+      title: "View",
+      shortcuts: [
+        { keys: `${mod}+0`, description: "Reset zoom to 100%" },
+        { keys: `${mod}++`, description: "Zoom in" },
+        { keys: `${mod}+-`, description: "Zoom out" },
+        { keys: `${mod}+Wheel`, description: "Zoom at cursor" },
+      ],
+    },
+    {
+      title: "Navigation",
+      shortcuts: [
+        { keys: "?", description: "Show this help" },
+        { keys: "Escape", description: "Close dialog / Clear selection" },
+      ],
+    },
+  ];
+}
+
+/**
+ * Shortcut key badge component.
+ */
+function KeyBadge({ children }: { children: string }): JSX.Element {
+  return (
+    <kbd className="px-1.5 py-0.5 text-xs font-mono bg-gray-100 border border-gray-300 rounded text-gray-700">
+      {children}
+    </kbd>
+  );
+}
+
+/**
+ * Parse a shortcut string and render with proper badges.
+ */
+function ShortcutKeys({ keys }: { keys: string }): JSX.Element {
+  const parts = keys.split("+");
+
+  return (
+    <span className="flex items-center gap-0.5">
+      {parts.map((part, index) => (
+        <span key={index} className="flex items-center gap-0.5">
+          {index > 0 && <span className="text-gray-400 text-xs">+</span>}
+          <KeyBadge>{part}</KeyBadge>
+        </span>
+      ))}
+    </span>
+  );
+}
+
+/**
+ * Help Panel component.
+ */
+export function HelpPanel(): JSX.Element | null {
+  const { isHelpPanelOpen, closeHelpPanel } = useUIStore();
+  const shortcuts = getShortcuts();
+  const modKey = isMac() ? "Cmd" : "Ctrl";
+
+  return (
+    <Modal
+      isOpen={isHelpPanelOpen}
+      onClose={closeHelpPanel}
+      title="Keyboard Shortcuts"
+      icon={<Question size={24} weight="duotone" className="text-blue-600" />}
+      widthClass="max-w-xl"
+    >
+      <div className="space-y-6">
+        {shortcuts.map((section) => (
+          <div key={section.title}>
+            <h3 className="text-sm font-semibold text-gray-900 mb-2 pb-1 border-b border-gray-200">
+              {section.title}
+            </h3>
+            <div className="space-y-1.5">
+              {section.shortcuts.map((shortcut, index) => (
+                <div
+                  key={index}
+                  className="flex items-center justify-between py-1"
+                >
+                  <span className="text-sm text-gray-600">
+                    {shortcut.description}
+                  </span>
+                  <ShortcutKeys keys={shortcut.keys} />
+                </div>
+              ))}
+            </div>
+          </div>
+        ))}
+
+        {/* Tip */}
+        <div className="flex items-start gap-2 p-3 bg-blue-50 rounded-lg text-sm text-blue-800">
+          <Lightbulb size={18} weight="fill" className="mt-0.5 flex-shrink-0" />
+          <span>
+            {isMac() ? (
+              <>
+                <Command size={14} className="inline-block -mt-0.5" /> is the
+                Command key on Mac.
+              </>
+            ) : (
+              `Most shortcuts use ${modKey} as the modifier key.`
+            )}
+          </span>
+        </div>
+      </div>
+    </Modal>
+  );
+}

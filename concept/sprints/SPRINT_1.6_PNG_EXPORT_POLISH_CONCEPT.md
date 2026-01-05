@@ -2,8 +2,8 @@
 
 **Project:** Gantt Chart Application - OwnChart
 **Sprint:** Sprint 1.6 - PNG Export & Polish
-**Status:** 🟡 PLANNED
-**Date:** 2026-01-05 (Concept Created)
+**Status:** 🟢 IN PROGRESS
+**Date:** 2026-01-05 (Implementation Started)
 **Priority:** High (MVP Completion)
 **Estimated Duration:** 1-2 weeks
 

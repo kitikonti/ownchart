@@ -157,7 +157,7 @@ export function NewTaskPlaceholderRow(): JSX.Element {
   };
 
   return (
-    <div className="contents" role="row">
+    <div className="placeholder-row contents" role="row">
       {TASK_COLUMNS.map((column) => {
         const isActiveCell = isRowActive && activeCell.field === column.field;
 

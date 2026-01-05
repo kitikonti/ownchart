@@ -207,7 +207,7 @@ export function GanttLayout() {
           style={{ height: viewportHeight || "100%" }}
         >
           {/* Layout - flex column with split pane */}
-          <div className="flex flex-col h-full">
+          <div className="gantt-layout flex flex-col h-full">
             {/* Split Pane with Header Row and Content Row */}
             <SplitPane
               leftWidth={effectiveTableWidth}

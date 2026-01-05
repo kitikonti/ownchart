@@ -10,6 +10,8 @@ import { UndoRedoButtons } from "../Toolbar/UndoRedoButtons";
 import { ClipboardButtons } from "../Toolbar/ClipboardButtons";
 import { InsertButtons } from "../Toolbar/InsertButtons";
 import { ZoomControls } from "../Toolbar/ZoomControls";
+import { ExportButton } from "../Toolbar/ExportButton";
+import { HelpButton } from "../Toolbar/HelpButton";
 import { useTaskStore } from "../../store/slices/taskSlice";
 
 export function AppToolbar() {
@@ -81,8 +83,21 @@ export function AppToolbar() {
       {/* Hierarchy Controls */}
       <HierarchyButtons />
 
-      {/* Spacer to push zoom controls to the right */}
+      {/* Separator */}
+      <div className="mx-2 h-6 w-px bg-gray-200" />
+
+      {/* Export Button */}
+      <div className="mr-2">
+        <ExportButton />
+      </div>
+
+      {/* Spacer to push help and zoom controls to the right */}
       <div className="flex-1" />
+
+      {/* Help Button */}
+      <div className="mr-2">
+        <HelpButton />
+      </div>
 
       {/* Zoom Controls */}
       <ZoomControls />

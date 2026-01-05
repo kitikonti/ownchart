@@ -3,12 +3,15 @@
  * Handles Ctrl+Z (undo), Ctrl+Shift+Z (redo), Ctrl+Y (redo alternative)
  * Handles Ctrl+S (save), Ctrl+Shift+S (save as), Ctrl+O (open), Ctrl+N (new)
  * Handles Ctrl+C (copy), Ctrl+X (cut), Ctrl+V (paste)
- * Handles ESC (clear clipboard)
+ * Handles Ctrl+E (export to PNG)
+ * Handles ESC (clear clipboard, close dialogs)
+ * Handles ? (open help panel)
  */
 
 import { useEffect } from "react";
 import { useHistoryStore } from "../store/slices/historySlice";
 import { useTaskStore } from "../store/slices/taskSlice";
+import { useUIStore } from "../store/slices/uiSlice";
 import { useFileOperations } from "./useFileOperations";
 import { useClipboardOperations } from "./useClipboardOperations";
 import { useClipboardStore } from "../store/slices/clipboardSlice";
@@ -25,6 +28,16 @@ export function useKeyboardShortcuts() {
     (state) => state.deleteSelectedTasks
   );
   const selectedTaskIds = useTaskStore((state) => state.selectedTaskIds);
+
+  // UI state for dialogs
+  const openExportDialog = useUIStore((state) => state.openExportDialog);
+  const openHelpPanel = useUIStore((state) => state.openHelpPanel);
+  const closeExportDialog = useUIStore((state) => state.closeExportDialog);
+  const closeHelpPanel = useUIStore((state) => state.closeHelpPanel);
+  const closeWelcomeTour = useUIStore((state) => state.dismissWelcome);
+  const isExportDialogOpen = useUIStore((state) => state.isExportDialogOpen);
+  const isHelpPanelOpen = useUIStore((state) => state.isHelpPanelOpen);
+  const isWelcomeTourOpen = useUIStore((state) => state.isWelcomeTourOpen);
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -126,10 +139,38 @@ export function useKeyboardShortcuts() {
         return;
       }
 
-      // ESC: Clear clipboard (like Excel)
-      if (e.key === "Escape" && clipboardMode !== null) {
-        // Don't preventDefault - let other handlers (like Cell edit cancel) also handle it
-        clearClipboard();
+      // Export: Ctrl+E or Cmd+E
+      if (modKey && e.key.toLowerCase() === "e") {
+        e.preventDefault();
+        openExportDialog();
+        return;
+      }
+
+      // ESC: Close dialogs first, then clear clipboard
+      if (e.key === "Escape") {
+        // Close dialogs in priority order
+        if (isExportDialogOpen) {
+          e.preventDefault();
+          closeExportDialog();
+          return;
+        }
+        if (isHelpPanelOpen) {
+          e.preventDefault();
+          closeHelpPanel();
+          return;
+        }
+        if (isWelcomeTourOpen) {
+          e.preventDefault();
+          closeWelcomeTour();
+          return;
+        }
+
+        // Clear clipboard (like Excel)
+        if (clipboardMode !== null) {
+          // Don't preventDefault - let other handlers (like Cell edit cancel) also handle it
+          clearClipboard();
+          return;
+        }
         return;
       }
 
@@ -137,6 +178,13 @@ export function useKeyboardShortcuts() {
       if (e.key === "Delete" && selectedTaskIds.length > 0) {
         e.preventDefault();
         deleteSelectedTasks();
+        return;
+      }
+
+      // ? key: Open help panel (when not in text input)
+      if (e.key === "?" && !isTextInput) {
+        e.preventDefault();
+        openHelpPanel();
         return;
       }
     };
@@ -160,5 +208,13 @@ export function useKeyboardShortcuts() {
     clipboardMode,
     deleteSelectedTasks,
     selectedTaskIds,
+    openExportDialog,
+    openHelpPanel,
+    closeExportDialog,
+    closeHelpPanel,
+    closeWelcomeTour,
+    isExportDialogOpen,
+    isHelpPanelOpen,
+    isWelcomeTourOpen,
   ]);
 }
