@@ -18,6 +18,7 @@ import {
   buildFlattenedTaskList,
   type FlattenedTask,
 } from "../../utils/hierarchy";
+import { DENSITY_CONFIG } from "../../types/preferences.types";
 
 interface ExportRendererProps {
   tasks: Task[];
@@ -25,9 +26,11 @@ interface ExportRendererProps {
   columnWidths: Record<string, number>;
 }
 
-const ROW_HEIGHT = 44;
+// Export always uses comfortable density for best readability
+const EXPORT_DENSITY = DENSITY_CONFIG.comfortable;
+const ROW_HEIGHT = EXPORT_DENSITY.rowHeight;
 const HEADER_HEIGHT = 48;
-const COLOR_BAR_HEIGHT = 28; // Matches comfortable density
+const COLOR_BAR_HEIGHT = EXPORT_DENSITY.colorBarHeight;
 
 /** Column definitions for export */
 export const EXPORT_COLUMNS = [
@@ -320,6 +323,7 @@ export function ExportRenderer({
               taskCount={orderedTasks.length}
               showWeekends={options.includeWeekends}
               width={timelineWidth}
+              rowHeight={ROW_HEIGHT}
             />
           )}
 
@@ -345,6 +349,12 @@ export function ExportRenderer({
                 task={task}
                 scale={scale}
                 rowIndex={index}
+                densityOverride={{
+                  rowHeight: EXPORT_DENSITY.rowHeight,
+                  taskBarHeight: EXPORT_DENSITY.taskBarHeight,
+                  taskBarOffset: EXPORT_DENSITY.taskBarOffset,
+                  fontSizeBar: EXPORT_DENSITY.fontSizeBar,
+                }}
               />
             ))}
           </g>

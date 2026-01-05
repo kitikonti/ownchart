@@ -19,6 +19,13 @@ interface TaskBarProps {
   rowIndex: number;
   onClick?: () => void;
   onDoubleClick?: () => void;
+  /** Override density config (used for export) */
+  densityOverride?: {
+    rowHeight: number;
+    taskBarHeight: number;
+    taskBarOffset: number;
+    fontSizeBar: number;
+  };
 }
 
 // Milestone diamond component
@@ -156,9 +163,13 @@ export const TaskBar = React.memo(function TaskBar({
   rowIndex,
   onClick,
   onDoubleClick,
+  densityOverride,
 }: TaskBarProps) {
   // Get density configuration for dynamic sizing
-  const densityConfig = useDensityConfig();
+  const storeDensityConfig = useDensityConfig();
+
+  // Use override if provided (for export), otherwise use store config
+  const densityConfig = densityOverride || storeDensityConfig;
 
   // Create density geometry config for getTaskBarGeometry
   const densityGeometry: DensityGeometryConfig = useMemo(
