@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [0.0.10](https://github.com/kitikonti/ownchart/compare/v0.0.9...v0.0.10) (2026-01-05)
+
+
+### Bug Fixes
+
+* resolve accessibility lint error in Modal component ([d4e7949](https://github.com/kitikonti/ownchart/commit/d4e7949abadd34e0fab0541319d370c69c97b823))
+
 ### [0.0.9](https://github.com/kitikonti/ownchart/compare/v0.0.8...v0.0.9) (2026-01-05)
 
 
