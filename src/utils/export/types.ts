@@ -2,6 +2,8 @@
  * Types for PNG export functionality.
  */
 
+import type { UiDensity } from "../../types/preferences.types";
+
 /** Available columns for export */
 export type ExportColumnKey =
   | "color"
@@ -31,6 +33,8 @@ export interface ExportOptions {
   includeWeekends: boolean;
   /** Background color */
   background: "white" | "transparent";
+  /** UI density for export */
+  density: UiDensity;
 }
 
 /**
@@ -58,6 +62,7 @@ export const DEFAULT_EXPORT_OPTIONS: ExportOptions = {
   includeGridLines: true,
   includeWeekends: true,
   background: "white",
+  density: "comfortable",
 };
 
 /**

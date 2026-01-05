@@ -4,6 +4,14 @@
 
 import type { ExportOptions, ExportColumnKey } from "../../utils/export/types";
 import { EXPORT_ZOOM_PRESETS } from "../../utils/export/types";
+import type { UiDensity } from "../../types/preferences.types";
+
+/** Density options for the export */
+const DENSITY_OPTIONS: { key: UiDensity; label: string; description: string }[] = [
+  { key: "compact", label: "Compact", description: "28px rows, fits more tasks" },
+  { key: "normal", label: "Normal", description: "36px rows, balanced view" },
+  { key: "comfortable", label: "Comfortable", description: "44px rows, easier to read" },
+];
 
 /** Column definitions for the export options UI */
 const COLUMN_OPTIONS: { key: ExportColumnKey; label: string }[] = [
@@ -101,6 +109,34 @@ export function ExportOptionsForm({
               Expanded (200%) — maximum detail
             </span>
           </label>
+        </div>
+      </div>
+
+      {/* Row Density Options */}
+      <div>
+        <h3 className="text-sm font-medium text-gray-700 mb-3">Row Density</h3>
+        <p className="text-xs text-gray-500 mb-3">
+          Controls the vertical spacing of rows
+        </p>
+        <div className="space-y-2">
+          {DENSITY_OPTIONS.map((densityOpt) => (
+            <label
+              key={densityOpt.key}
+              className="flex items-center gap-3 cursor-pointer"
+            >
+              <input
+                type="radio"
+                name="density"
+                value={densityOpt.key}
+                checked={options.density === densityOpt.key}
+                onChange={() => onChange({ density: densityOpt.key })}
+                className="w-4 h-4 text-blue-600"
+              />
+              <span className="text-sm text-gray-700">
+                {densityOpt.label} — {densityOpt.description}
+              </span>
+            </label>
+          ))}
         </div>
       </div>
 

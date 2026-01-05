@@ -18,7 +18,7 @@ import {
   buildFlattenedTaskList,
   type FlattenedTask,
 } from "../../utils/hierarchy";
-import { DENSITY_CONFIG } from "../../types/preferences.types";
+import { DENSITY_CONFIG, type DensityConfig } from "../../types/preferences.types";
 
 interface ExportRendererProps {
   tasks: Task[];
@@ -26,11 +26,7 @@ interface ExportRendererProps {
   columnWidths: Record<string, number>;
 }
 
-// Export always uses comfortable density for best readability
-const EXPORT_DENSITY = DENSITY_CONFIG.comfortable;
-const ROW_HEIGHT = EXPORT_DENSITY.rowHeight;
 const HEADER_HEIGHT = 48;
-const COLOR_BAR_HEIGHT = EXPORT_DENSITY.colorBarHeight;
 
 /** Column definitions for export */
 export const EXPORT_COLUMNS = [
@@ -103,12 +99,18 @@ function ExportTaskTableRows({
   columnWidths,
   width,
   height,
+  rowHeight,
+  colorBarHeight,
+  indentSize,
 }: {
   flattenedTasks: FlattenedTask[];
   selectedColumns: ExportColumnKey[];
   columnWidths: Record<string, number>;
   width: number;
   height: number;
+  rowHeight: number;
+  colorBarHeight: number;
+  indentSize: number;
 }): JSX.Element {
   return (
     <div
@@ -122,7 +124,7 @@ function ExportTaskTableRows({
           <div
             key={task.id}
             className="flex border-b border-gray-100 text-sm"
-            style={{ height: ROW_HEIGHT }}
+            style={{ height: rowHeight }}
           >
             {selectedColumns.map((key) => {
               const col = EXPORT_COLUMNS.find((c) => c.key === key);
@@ -136,12 +138,12 @@ function ExportTaskTableRows({
                     className="flex items-center justify-center border-r border-gray-100"
                     style={{
                       width: colWidth,
-                      height: ROW_HEIGHT,
+                      height: rowHeight,
                     }}
                   >
                     <div
                       className="w-1.5 rounded"
-                      style={{ backgroundColor: task.color, height: COLOR_BAR_HEIGHT }}
+                      style={{ backgroundColor: task.color, height: colorBarHeight }}
                     />
                   </div>
                 );
@@ -154,9 +156,9 @@ function ExportTaskTableRows({
                     className="flex items-center gap-2 border-r border-gray-100"
                     style={{
                       width: colWidth,
-                      paddingLeft: `${12 + level * 20}px`,
+                      paddingLeft: `${12 + level * indentSize}px`,
                       paddingRight: 12,
-                      height: ROW_HEIGHT,
+                      height: rowHeight,
                       whiteSpace: "nowrap",
                     }}
                   >
@@ -180,7 +182,7 @@ function ExportTaskTableRows({
                   className="flex items-center border-r border-gray-100 text-gray-600 px-3"
                   style={{
                     width: colWidth,
-                    height: ROW_HEIGHT,
+                    height: rowHeight,
                   }}
                 >
                   {value}
@@ -203,6 +205,9 @@ export function ExportRenderer({
   options,
   columnWidths,
 }: ExportRendererProps): JSX.Element {
+  // Get density configuration based on selected density
+  const densityConfig: DensityConfig = DENSITY_CONFIG[options.density];
+
   // Build flattened task list (show all tasks, none collapsed for export)
   const flattenedTasks = useMemo(() => {
     // Empty set means nothing is collapsed - show all tasks
@@ -247,13 +252,13 @@ export function ExportRenderer({
   ];
   const hasTaskList = selectedColumns.length > 0;
 
-  // Calculate dimensions
+  // Calculate dimensions using selected density
   const taskTableWidth = hasTaskList
     ? calculateTaskTableWidth(selectedColumns, columnWidths)
     : 0;
   const timelineWidth = scale.totalWidth;
   const totalWidth = taskTableWidth + timelineWidth;
-  const contentHeight = orderedTasks.length * ROW_HEIGHT;
+  const contentHeight = orderedTasks.length * densityConfig.rowHeight;
   const totalHeight =
     (options.includeHeader ? HEADER_HEIGHT : 0) + contentHeight;
 
@@ -306,6 +311,9 @@ export function ExportRenderer({
             columnWidths={columnWidths}
             width={taskTableWidth}
             height={contentHeight}
+            rowHeight={densityConfig.rowHeight}
+            colorBarHeight={densityConfig.colorBarHeight}
+            indentSize={densityConfig.indentSize}
           />
         )}
 
@@ -323,7 +331,7 @@ export function ExportRenderer({
               taskCount={orderedTasks.length}
               showWeekends={options.includeWeekends}
               width={timelineWidth}
-              rowHeight={ROW_HEIGHT}
+              rowHeight={densityConfig.rowHeight}
             />
           )}
 
@@ -332,7 +340,7 @@ export function ExportRenderer({
             <DependencyArrows
               tasks={orderedTasks}
               scale={scale}
-              rowHeight={ROW_HEIGHT}
+              rowHeight={densityConfig.rowHeight}
               dragState={{
                 isDragging: false,
                 fromTaskId: null,
@@ -350,10 +358,10 @@ export function ExportRenderer({
                 scale={scale}
                 rowIndex={index}
                 densityOverride={{
-                  rowHeight: EXPORT_DENSITY.rowHeight,
-                  taskBarHeight: EXPORT_DENSITY.taskBarHeight,
-                  taskBarOffset: EXPORT_DENSITY.taskBarOffset,
-                  fontSizeBar: EXPORT_DENSITY.fontSizeBar,
+                  rowHeight: densityConfig.rowHeight,
+                  taskBarHeight: densityConfig.taskBarHeight,
+                  taskBarOffset: densityConfig.taskBarOffset,
+                  fontSizeBar: densityConfig.fontSizeBar,
                 }}
               />
             ))}
@@ -377,6 +385,9 @@ export function calculateExportDimensions(
   options: ExportOptions,
   columnWidths: Record<string, number> = {}
 ): { width: number; height: number } {
+  // Get density configuration based on selected density
+  const densityConfig = DENSITY_CONFIG[options.density];
+
   // Build flattened task list (all expanded for export)
   const flattenedTasks = buildFlattenedTaskList(tasks, new Set<string>());
   const orderedTasks = flattenedTasks.map((ft) => ft.task);
@@ -411,13 +422,13 @@ export function calculateExportDimensions(
   ];
   const hasTaskList = selectedColumns.length > 0;
 
-  // Calculate dimensions
+  // Calculate dimensions using selected density
   const taskTableWidth = hasTaskList
     ? calculateTaskTableWidth(selectedColumns, columnWidths)
     : 0;
   const timelineWidth = scale.totalWidth;
   const totalWidth = taskTableWidth + timelineWidth;
-  const contentHeight = orderedTasks.length * ROW_HEIGHT;
+  const contentHeight = orderedTasks.length * densityConfig.rowHeight;
   const totalHeight =
     (options.includeHeader ? HEADER_HEIGHT : 0) + contentHeight;
 
