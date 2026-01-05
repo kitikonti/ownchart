@@ -18,6 +18,7 @@ import {
   updateTabActivity,
   cleanupInactiveTabs,
   type ChartState,
+  type TableState,
   type FileState,
 } from "../utils/multiTabStorage";
 
@@ -53,6 +54,21 @@ export function useMultiTabPersistence(): void {
     // Restore dependencies
     if (savedChart.dependencies && savedChart.dependencies.length > 0) {
       useDependencyStore.getState().setDependencies(savedChart.dependencies);
+    }
+
+    // Restore table state (column widths)
+    if (savedChart.tableState) {
+      const taskStore = useTaskStore.getState();
+      if (savedChart.tableState.columnWidths) {
+        Object.entries(savedChart.tableState.columnWidths).forEach(
+          ([columnId, width]) => {
+            taskStore.setColumnWidth(columnId, width);
+          }
+        );
+      }
+      if (savedChart.tableState.taskTableWidth !== null) {
+        taskStore.setTaskTableWidth(savedChart.tableState.taskTableWidth);
+      }
     }
 
     // Restore chart state
@@ -112,6 +128,10 @@ export function useMultiTabPersistence(): void {
           showWeekends: chartState.showWeekends,
           showTodayMarker: chartState.showTodayMarker,
         } as ChartState,
+        tableState: {
+          columnWidths: taskState.columnWidths,
+          taskTableWidth: taskState.taskTableWidth,
+        } as TableState,
         fileState: {
           fileName: fileState.fileName,
           chartId: fileState.chartId,

@@ -42,12 +42,18 @@ export interface FileState {
   isDirty: boolean;
 }
 
+export interface TableState {
+  columnWidths: Record<string, number>;
+  taskTableWidth: number | null;
+}
+
 export interface TabChartData {
   tabId: string;
   lastActive: number;
   tasks: Task[];
   dependencies: Dependency[];
   chartState: ChartState;
+  tableState?: TableState; // Optional for backwards compatibility
   fileState: FileState;
 }
 
