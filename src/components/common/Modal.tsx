@@ -85,30 +85,29 @@ export function Modal({
     }
   };
 
-  // Handle backdrop click
-  const handleBackdropClick = (e: React.MouseEvent<HTMLDivElement>) => {
-    if (e.target === e.currentTarget) {
-      onClose();
-    }
-  };
-
   if (!isOpen) {
     return null;
   }
 
   return (
+    // eslint-disable-next-line jsx-a11y/no-noninteractive-element-interactions
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/50"
-      onClick={handleBackdropClick}
+      ref={modalRef}
+      className="fixed inset-0 z-50 flex items-center justify-center"
       role="dialog"
       aria-modal="true"
       aria-labelledby="modal-title"
+      tabIndex={-1}
+      onKeyDown={handleKeyDown}
     >
+      {/* Backdrop - clickable to close */}
       <div
-        ref={modalRef}
-        className={`bg-white rounded-lg shadow-xl ${widthClass} w-full mx-4 max-h-[90vh] flex flex-col`}
-        tabIndex={-1}
-        onKeyDown={handleKeyDown}
+        className="absolute inset-0 bg-black/50"
+        onClick={onClose}
+        aria-hidden="true"
+      />
+      <div
+        className={`relative bg-white rounded-lg shadow-xl ${widthClass} w-full mx-4 max-h-[90vh] flex flex-col`}
       >
         {/* Header */}
         <div className="flex items-center justify-between px-6 py-4 border-b border-gray-200">
