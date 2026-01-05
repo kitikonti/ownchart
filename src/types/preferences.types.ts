@@ -27,6 +27,7 @@ export interface DensityConfig {
   iconSize: number;
   checkboxSize: number;
   indentSize: number;
+  colorBarHeight: number;
   // Column widths
   columnWidths: {
     dragHandle: number;
@@ -82,6 +83,7 @@ export const DENSITY_CONFIG: DensityConfigMap = {
     iconSize: 14,
     checkboxSize: 14,
     indentSize: 16,
+    colorBarHeight: 20,
     columnWidths: {
       dragHandle: 32,
       checkbox: 40,
@@ -107,6 +109,7 @@ export const DENSITY_CONFIG: DensityConfigMap = {
     iconSize: 16,
     checkboxSize: 16,
     indentSize: 18,
+    colorBarHeight: 24,
     columnWidths: {
       dragHandle: 36,
       checkbox: 44,
@@ -132,6 +135,7 @@ export const DENSITY_CONFIG: DensityConfigMap = {
     iconSize: 18,
     checkboxSize: 18,
     indentSize: 20,
+    colorBarHeight: 28,
     columnWidths: {
       dragHandle: 40,
       checkbox: 48,

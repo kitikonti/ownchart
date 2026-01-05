@@ -27,6 +27,7 @@ interface ExportRendererProps {
 
 const ROW_HEIGHT = 44;
 const HEADER_HEIGHT = 48;
+const COLOR_BAR_HEIGHT = 28; // Matches comfortable density
 
 /** Column definitions for export */
 export const EXPORT_COLUMNS = [
@@ -136,8 +137,8 @@ function ExportTaskTableRows({
                     }}
                   >
                     <div
-                      className="w-1.5 h-7 rounded"
-                      style={{ backgroundColor: task.color }}
+                      className="w-1.5 rounded"
+                      style={{ backgroundColor: task.color, height: COLOR_BAR_HEIGHT }}
                     />
                   </div>
                 );

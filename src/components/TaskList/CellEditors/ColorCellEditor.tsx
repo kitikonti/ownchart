@@ -17,6 +17,9 @@ export interface ColorCellEditorProps {
 
   /** Called when cancel is requested (Escape key) */
   onCancel?: () => void;
+
+  /** Height of the color bar (density-aware) */
+  height?: number;
 }
 
 /**
@@ -27,6 +30,7 @@ export function ColorCellEditor({
   onChange,
   onSave,
   onCancel,
+  height = 28,
 }: ColorCellEditorProps): JSX.Element {
   const [localValue, setLocalValue] = useState(value);
   const inputRef = useRef<HTMLInputElement>(null);
@@ -59,7 +63,7 @@ export function ColorCellEditor({
   };
 
   return (
-    <div className="w-1.5 h-7 rounded overflow-hidden">
+    <div className="w-1.5 rounded overflow-hidden" style={{ height }}>
       <input
         ref={inputRef}
         type="color"

@@ -389,11 +389,15 @@ export function TaskTableRow({
                     onChange={(value) => updateTask(task.id, { color: value })}
                     onSave={stopCellEdit}
                     onCancel={stopCellEdit}
+                    height={densityConfig.colorBarHeight}
                   />
                 ) : (
                   <div
-                    className="w-1.5 h-7 rounded"
-                    style={{ backgroundColor: displayTask.color }}
+                    className="w-1.5 rounded"
+                    style={{
+                      backgroundColor: displayTask.color,
+                      height: densityConfig.colorBarHeight,
+                    }}
                   />
                 )}
               </div>
