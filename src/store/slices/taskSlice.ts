@@ -16,6 +16,7 @@ import { canHaveChildren } from "../../utils/validation";
 import { useHistoryStore } from "./historySlice";
 import { useFileStore } from "./fileSlice";
 import { CommandType } from "../../types/command.types";
+import { TASK_COLUMNS } from "../../config/tableColumns";
 
 /**
  * Editable field types for cell-based editing.
@@ -87,6 +88,7 @@ interface TaskActions {
   startCellEdit: () => void;
   stopCellEdit: () => void;
   setColumnWidth: (columnId: string, width: number) => void;
+  autoFitColumn: (columnId: string) => void;
 
   // Split pane actions
   setTaskTableWidth: (width: number | null) => void;
@@ -831,6 +833,43 @@ export const useTaskStore = create<TaskStore>()(
     setColumnWidth: (columnId, width) =>
       set((state) => {
         state.columnWidths[columnId] = width;
+      }),
+
+    autoFitColumn: (columnId) =>
+      set((state) => {
+        const column = TASK_COLUMNS.find((col) => col.id === columnId);
+        if (!column || !column.field) return;
+
+        const field = column.field;
+
+        // Find the longest value in this column
+        let maxLength = column.label.length; // Start with header length
+
+        state.tasks.forEach((task) => {
+          let valueStr = "";
+
+          if (column.formatter) {
+            valueStr = column.formatter(task[field]);
+          } else {
+            const value = task[field];
+            valueStr =
+              value !== undefined && value !== null ? String(value) : "";
+          }
+
+          maxLength = Math.max(maxLength, valueStr.length);
+        });
+
+        // Estimate width: ~8px per character + padding (24px for cell padding)
+        // Add extra for hierarchy indent on name column (up to 4 levels * 20px)
+        let estimatedWidth = Math.max(60, maxLength * 8 + 40);
+
+        if (columnId === "name") {
+          // Add space for hierarchy indent and type icon
+          estimatedWidth += 60;
+        }
+
+        // Cap at 400px
+        state.columnWidths[columnId] = Math.min(estimatedWidth, 400);
       }),
 
     setTaskTableWidth: (width) =>

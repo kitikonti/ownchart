@@ -22,6 +22,7 @@ import {
 export function useFileOperations() {
   const tasks = useTaskStore((state) => state.tasks);
   const setTasks = useTaskStore((state) => state.setTasks);
+  const autoFitColumn = useTaskStore((state) => state.autoFitColumn);
   const taskTableWidth = useTaskStore((state) => state.taskTableWidth);
   const columnWidths = useTaskStore((state) => state.columnWidths);
 
@@ -135,6 +136,7 @@ export function useFileOperations() {
       setTasks(parseResult.data!.tasks);
       setDependencies(parseResult.data!.dependencies || []); // Sprint 1.4
       resetExportOptions(parseResult.data!.exportSettings); // Sprint 1.6
+      autoFitColumn("name"); // Auto-fit name column to content
       clearHistory();
       fileState.setFileName(file.name);
       fileState.setChartId(parseResult.data!.chartId);
@@ -150,7 +152,14 @@ export function useFileOperations() {
     } catch (e) {
       toast.error(`Open failed: ${(e as Error).message}`);
     }
-  }, [fileState, setTasks, setDependencies, resetExportOptions, clearHistory]);
+  }, [
+    fileState,
+    setTasks,
+    setDependencies,
+    resetExportOptions,
+    autoFitColumn,
+    clearHistory,
+  ]);
 
   // New (Ctrl+N)
   const handleNew = useCallback(async () => {
