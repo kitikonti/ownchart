@@ -13,7 +13,7 @@
 
 ## Project Status
 
-**Current Version**: `0.0.2` (MVP in progress)
+**Current Version**: `0.0.8` (MVP in progress)
 
 **Completed Sprints**:
 - ✅ Sprint 1.1.1 - Task Groups & Hierarchical Organization
@@ -22,8 +22,18 @@
 - ✅ Sprint 1.2 Package 2 - Interactive Editing
 - ✅ Sprint 1.2 Package 3 - Navigation & Scale
 - ✅ Sprint 1.3 - File Operations
-- ✅ Sprint 1.5 - Undo/Redo System
 - ✅ Sprint 1.4 - Dependencies (FS only)
+- ✅ Sprint 1.5 - Undo/Redo System
+- ✅ Sprint 1.5.4 - Copy/Paste & Multi-Select (ahead of schedule from V1.1)
+
+**Features Added Post-Sprint (2026-01-04/05)**:
+- ✅ Multi-select with rectangular marquee selection in timeline
+- ✅ Copy/Cut/Paste with cross-tab clipboard support
+- ✅ Multi-task dragging (all selected tasks move together)
+- ✅ Summary task dragging (moves all children automatically)
+- ✅ Insert task above/below toolbar buttons
+- ✅ DEL key and toolbar button for task deletion
+- ✅ Placeholder row for quick task creation
 
 **Next Sprints**:
 - Sprint 1.6 - PNG Export & Polish
@@ -65,9 +75,10 @@ ownchart/
 ## Key Architectural Patterns
 
 **State Management**: Zustand slices with Immer middleware
-- `taskSlice.ts` - Task CRUD, hierarchy, validation
-- `chartSlice.ts` - Timeline state, zoom, scales
+- `taskSlice.ts` - Task CRUD, hierarchy, validation, multi-select
+- `chartSlice.ts` - Timeline state, zoom, scales, drag state
 - `historySlice.ts` - Undo/redo with Command Pattern
+- `clipboardSlice.ts` - Copy/cut/paste with cross-tab support
 
 **Component Architecture**: Functional components with hooks
 - Extract logic to custom hooks
@@ -417,7 +428,7 @@ npm run test:e2e            # E2E tests (Playwright)
 
 ---
 
-**Last Updated**: 2026-01-03
-**Project Version**: 0.0.1
-**Status**: Phase 1 MVP - Sprint 1.3 Complete
-**Next Sprint**: Sprint 1.4 - Dependencies (FS only)
+**Last Updated**: 2026-01-05
+**Project Version**: 0.0.8
+**Status**: Phase 1 MVP - Sprint 1.5.4 Complete (Copy/Paste & Multi-Select)
+**Next Sprint**: Sprint 1.6 - PNG Export & Polish

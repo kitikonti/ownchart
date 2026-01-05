@@ -50,12 +50,16 @@ This concept documentation is organized into logical categories for easy navigat
 - **[PHASE_1_MVP.md](./phases/PHASE_1_MVP.md)** - Phase 1: MVP development plan
 
 ### 🏃 Sprints (`/sprints`)
-- **[SPRINT_1.1.1_TASK_GROUPS.md](./sprints/SPRINT_1.1.1_TASK_GROUPS.md)** - Task groups and hierarchy (Sprint 1.1)
-- **[SPRINT_1.1.2_HIERARCHY_INDENT_OUTDENT.md](./sprints/SPRINT_1.1.2_HIERARCHY_INDENT_OUTDENT.md)** - Indent/outdent functionality (Sprint 1.1)
-- **[SPRINT_1.2_TIMELINE_VISUALIZATION.md](./sprints/SPRINT_1.2_TIMELINE_VISUALIZATION.md)** - Timeline visualization implementation
-- **[SPRINT_1.2_PACKAGE_2_INTERACTIVE_EDITING_CONCEPT.md](./sprints/SPRINT_1.2_PACKAGE_2_INTERACTIVE_EDITING_CONCEPT.md)** - Drag-to-edit functionality ✅
+- **[SPRINT_1.1.1_TASK_GROUPS.md](./sprints/SPRINT_1.1.1_TASK_GROUPS.md)** - Task groups and hierarchy ✅
+- **[SPRINT_1.1.2_HIERARCHY_INDENT_OUTDENT.md](./sprints/SPRINT_1.1.2_HIERARCHY_INDENT_OUTDENT.md)** - Indent/outdent functionality ✅
+- **[SPRINT_1.2_TIMELINE_VISUALIZATION.md](./sprints/SPRINT_1.2_TIMELINE_VISUALIZATION.md)** - Timeline visualization ✅
+- **[SPRINT_1.2_PACKAGE_2_INTERACTIVE_EDITING_CONCEPT.md](./sprints/SPRINT_1.2_PACKAGE_2_INTERACTIVE_EDITING_CONCEPT.md)** - Drag-to-edit ✅
 - **[SPRINT_1.2_PACKAGE_3_NAVIGATION_SCALE_CONCEPT.md](./sprints/SPRINT_1.2_PACKAGE_3_NAVIGATION_SCALE_CONCEPT.md)** - Zoom & navigation ✅
-- **[SPRINT_1.5_UNDO_REDO_CONCEPT.md](./sprints/SPRINT_1.5_UNDO_REDO_CONCEPT.md)** - Undo/redo system with Command Pattern ✅
+- **[SPRINT_1.3_FILE_OPERATIONS_CONCEPT.md](./sprints/SPRINT_1.3_FILE_OPERATIONS_CONCEPT.md)** - File save/load ✅
+- **[SPRINT_1.4_DEPENDENCIES_CONCEPT.md](./sprints/SPRINT_1.4_DEPENDENCIES_CONCEPT.md)** - Task dependencies (FS) ✅
+- **[SPRINT_1.5_UNDO_REDO_CONCEPT.md](./sprints/SPRINT_1.5_UNDO_REDO_CONCEPT.md)** - Undo/redo system ✅
+- Sprint 1.5.4 - Copy/Paste & Multi-Select ✅ (documented in ROADMAP.md)
+- **[SPRINT_1.6_PNG_EXPORT_POLISH_CONCEPT.md](./sprints/SPRINT_1.6_PNG_EXPORT_POLISH_CONCEPT.md)** - PNG export & polish 🟡
 
 ## Quick Reference
 
@@ -118,11 +122,27 @@ See **[EXTENSIBILITY_ARCHITECTURE.md](./architecture/EXTENSIBILITY_ARCHITECTURE.
 
 ---
 
-**Last Updated**: 2026-01-02
-**Status**: Phase 1 - MVP (Sprint 1.2 Package 3 Complete)
-**Version**: 1.5
+**Last Updated**: 2026-01-05
+**Status**: Phase 1 - MVP (Sprint 1.5.4 Complete)
+**Version**: 1.6
 
-## Recent Updates (v1.5 - 2026-01-02)
+## Recent Updates (v1.6 - 2026-01-05)
+
+### Sprint 1.5.4 - Copy/Paste & Multi-Select ✅ Complete (Ahead of Schedule)
+Originally planned for V1.1, completed early during MVP development:
+- ✅ Multi-select tasks (Ctrl+Click, Shift+Click, Ctrl+A)
+- ✅ Rectangular marquee selection in timeline (drag to select)
+- ✅ Copy/paste tasks (Ctrl+C, Ctrl+V) with dependencies preserved
+- ✅ Cut/paste tasks (Ctrl+X, Ctrl+V) with source deletion
+- ✅ Cross-tab copy/paste via system clipboard
+- ✅ Placeholder row for quick task creation
+- ✅ Delete selected tasks (DEL key, toolbar button)
+- ✅ Insert task above/below (toolbar buttons)
+- ✅ Multi-task dragging (all selected tasks move together)
+- ✅ Summary task dragging (moves all children automatically)
+- ✅ Bulk operations with single undo/redo
+
+### Previous Updates (v1.5 - 2026-01-02)
 
 ### Sprint 1.2 Package 3 - Navigation & Scale ✅ Complete
 - ✅ Mouse wheel zoom (Ctrl+Wheel) centered on cursor position

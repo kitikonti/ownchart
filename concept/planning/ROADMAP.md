@@ -469,6 +469,43 @@ If dependency arrows or performance validation fails, reassess approach before c
 
 ---
 
+#### Sprint 1.5.4: Copy/Paste & Multi-Select ✅ COMPLETE (Ahead of Schedule)
+
+**Status**: ✅ COMPLETE (2026-01-05) - Originally planned for Phase 1.5 (V1.1)
+
+**Note**: This sprint was completed ahead of schedule during MVP development instead of being deferred to V1.1.
+
+**Features Implemented**:
+- ✅ Multi-select tasks (Ctrl+Click, Shift+Click, Ctrl+A)
+- ✅ Rectangular marquee selection in timeline (drag to select multiple tasks)
+- ✅ Copy/paste tasks (Ctrl+C, Ctrl+V) with dependencies preserved
+- ✅ Cut/paste tasks (Ctrl+X, Ctrl+V) with source deletion
+- ✅ Cross-tab copy/paste via system clipboard
+- ✅ Paste with ID remapping (new UUIDs generated)
+- ✅ Placeholder row for quick task creation
+- ✅ Delete selected tasks (DEL key, toolbar button)
+- ✅ Insert task above/below (toolbar buttons)
+- ✅ Multi-task dragging in timeline (drag moves all selected)
+- ✅ Summary task dragging (moves all children automatically)
+- ✅ Bulk operations with single undo/redo
+
+**Technical Work**:
+- ✅ clipboardSlice with Zustand + Immer
+- ✅ Selection state management (selectedTaskIds)
+- ✅ Clipboard operations with dependency remapping
+- ✅ Cross-tab persistence via localStorage
+- ✅ MULTI_DRAG_TASKS command type for undo/redo
+- ✅ getEffectiveTasksToMove hierarchy utility
+
+**Acceptance Criteria**:
+- ✅ Can select multiple tasks with keyboard/mouse
+- ✅ Copy/paste works with dependencies preserved
+- ✅ Bulk delete/move works correctly
+- ✅ Keyboard shortcuts work (Ctrl+C/V/X, DEL, Ctrl+A)
+- ✅ Cross-tab clipboard works between browser tabs
+
+---
+
 #### Sprint 1.6: PNG Export & Polish
 
 **Features**:
@@ -517,9 +554,12 @@ If dependency arrows or performance validation fails, reassess approach before c
 - Only Finish-to-Start dependencies (SS/FF/SF in V1.1)
 - Basic undo/redo only (no history timeline in MVP)
 - PNG export only (PDF/SVG in V1.1 premium)
-- No task groups/phases (V1.1)
-- No copy/paste or multi-select (V1.1)
 - No named snapshots (V1.1)
+
+**Originally Planned for V1.1 but Completed in MVP**:
+- ✅ Copy/paste with multi-select (Sprint 1.5.4)
+- ✅ Multi-task dragging in timeline
+- ✅ Task groups/phases (Sprint 1.1.1)
 
 ---
 
@@ -602,28 +642,21 @@ These features add significant complexity relative to their value for proving th
 
 ---
 
-#### Sprint 1.5.4: Copy/Paste & Multi-Select
+#### Sprint 1.5.4: Copy/Paste & Multi-Select ✅ MOVED TO MVP
 
-**Features**:
-- Multi-select tasks (Ctrl+Click, Shift+Click)
-- Copy/paste tasks (Ctrl+C, Ctrl+V)
-- Paste with dependencies preserved
-- Duplicate tasks/groups
-- Bulk operations (delete, move)
+**Status**: ✅ Completed in MVP Phase (Sprint 1.5.4 above)
 
-**Technical Work**:
-- Selection state management
-- Clipboard operations
-- Dependency remapping on paste
-- Bulk operation logic
+This sprint was completed ahead of schedule during MVP development. See Sprint 1.5.4 in Phase 1 for implementation details.
 
-**Acceptance Criteria**:
-- Can select multiple tasks with keyboard/mouse
-- Copy/paste works with dependencies
-- Bulk delete/move works correctly
-- Keyboard shortcuts work (Ctrl+C/V/D)
+**Features Completed**:
+- ✅ Multi-select tasks (Ctrl+Click, Shift+Click)
+- ✅ Rectangular marquee selection in timeline
+- ✅ Copy/paste/cut with dependencies preserved
+- ✅ Cross-tab clipboard support
+- ✅ Bulk operations (delete, move, drag)
+- ✅ Insert task above/below
 
-**Premium Feature**: Only available in paid tier
+~~**Premium Feature**: Only available in paid tier~~ → **Now included in free tier**
 
 ---
 
@@ -1346,12 +1379,22 @@ This roadmap provides a clear path from concept to launch:
 
 ---
 
-**Document Version**: 1.6
-**Last Updated**: 2025-12-23
-**Status**: Active Planning
-**Next Review**: After Phase 0 completion
+**Document Version**: 1.7
+**Last Updated**: 2026-01-05
+**Status**: MVP Phase 1 - Sprint 1.5.4 Complete
+**Next Review**: After Sprint 1.6 completion
 
-**Recent Updates (v1.6)** - Competitive Analysis Integration:
+**Recent Updates (v1.7)** - Copy/Paste & Multi-Select Complete:
+- Sprint 1.5.4 moved from V1.1 to MVP (completed ahead of schedule)
+- Added: Multi-select with marquee selection in timeline
+- Added: Copy/paste/cut with cross-tab support
+- Added: Multi-task dragging (moves all selected tasks together)
+- Added: Summary task dragging (moves all children)
+- Added: Insert task above/below toolbar buttons
+- Added: DEL key for task deletion
+- Updated known limitations to reflect completed features
+
+**Previous Updates (v1.6)** - Competitive Analysis Integration:
 - Added Section 1.5: Competitive Analysis Integration
 - Enhanced data model implemented (task types, hierarchy, baselines)
 - Feature prioritization updated based on SVAR React Gantt analysis
