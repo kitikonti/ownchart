@@ -2,6 +2,25 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [0.0.12](https://github.com/kitikonti/ownchart/compare/v0.0.11...v0.0.12) (2026-01-05)
+
+
+### Features
+
+* add density selection to export dialog ([6bf77b6](https://github.com/kitikonti/ownchart/commit/6bf77b6b6891e10cb57fd83c9884acb83154b52f))
+* add density-aware color bar height ([cf1001d](https://github.com/kitikonti/ownchart/commit/cf1001d42a50ae34f5955fc6b8401f239965e64e))
+* add density-aware column widths ([1962c60](https://github.com/kitikonti/ownchart/commit/1962c60ae84c07d069cbae967e911f8a56f5c50f))
+* add UI density settings (compact/normal/comfortable) ([8ce1094](https://github.com/kitikonti/ownchart/commit/8ce1094448347691bb6e9709a55ebe41815733e4))
+
+
+### Bug Fixes
+
+* export now uses comfortable density regardless of user setting ([29a1d70](https://github.com/kitikonti/ownchart/commit/29a1d70207310f21d20154028aee9965e007fb58))
+* increase bar font sizes by 1px (13→12→11) ([694ae35](https://github.com/kitikonti/ownchart/commit/694ae351cc2672a345ee7fccfb38091c74dd8143))
+* restore original font sizes for comfortable density ([405e01f](https://github.com/kitikonti/ownchart/commit/405e01fcd699f24828cac3881a4712cfeda5d411))
+* scale dependency arrow corners for different densities ([2c0e05d](https://github.com/kitikonti/ownchart/commit/2c0e05d1f34cf5ef8a38473a35dc8efd467c7c8c))
+* use linear font size progression (16→15→14) ([efe900c](https://github.com/kitikonti/ownchart/commit/efe900ce2a4a84786cfe72ca75ec518398c4393d))
+
 ### [0.0.11](https://github.com/kitikonti/ownchart/compare/v0.0.10...v0.0.11) (2026-01-05)
 
 
