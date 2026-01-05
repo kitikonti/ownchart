@@ -7,8 +7,8 @@
 import { useMemo, useCallback } from "react";
 import type { Task } from "../../types/chart.types";
 import type { TaskPosition } from "../../types/dependency.types";
-import type { TimelineScale } from "../../utils/timelineUtils";
-import { getTaskBarGeometry } from "../../utils/timelineUtils";
+import type { TimelineScale, DensityGeometryConfig } from "../../utils/timelineUtils";
+import { getTaskBarGeometry, DEFAULT_DENSITY_GEOMETRY } from "../../utils/timelineUtils";
 import { useDependencyStore } from "../../store/slices/dependencySlice";
 import { DependencyArrow } from "./DependencyArrow";
 import { DependencyDragPreview } from "./DependencyDragPreview";
@@ -24,14 +24,22 @@ interface DependencyArrowsProps {
   };
 }
 
-const ROW_HEIGHT = 44;
-
 export function DependencyArrows({
   tasks,
   scale,
-  rowHeight = ROW_HEIGHT,
+  rowHeight = DEFAULT_DENSITY_GEOMETRY.rowHeight,
   dragState,
 }: DependencyArrowsProps) {
+  // Create density config from rowHeight for backwards compatibility
+  const densityGeometry: DensityGeometryConfig = useMemo(() => {
+    // Calculate proportional values based on rowHeight
+    const ratio = rowHeight / DEFAULT_DENSITY_GEOMETRY.rowHeight;
+    return {
+      rowHeight,
+      taskBarHeight: Math.round(DEFAULT_DENSITY_GEOMETRY.taskBarHeight * ratio),
+      taskBarOffset: Math.round(DEFAULT_DENSITY_GEOMETRY.taskBarOffset * ratio),
+    };
+  }, [rowHeight]);
   // Get dependencies and selection from store
   const dependencies = useDependencyStore((state) => state.dependencies);
   const selectedDependencyId = useDependencyStore(
@@ -59,7 +67,7 @@ export function DependencyArrows({
         return;
       }
 
-      const geometry = getTaskBarGeometry(task, scale, index, rowHeight, 0);
+      const geometry = getTaskBarGeometry(task, scale, index, densityGeometry, 0);
 
       positions.set(task.id, {
         x: geometry.x,
@@ -70,7 +78,7 @@ export function DependencyArrows({
     });
 
     return positions;
-  }, [tasks, scale, rowHeight]);
+  }, [tasks, scale, densityGeometry]);
 
   // Handle dependency selection
   const handleSelect = useCallback(

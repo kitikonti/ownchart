@@ -5,12 +5,13 @@
 
 import React, { useMemo } from "react";
 import type { Task } from "../../types/chart.types";
-import type { TimelineScale } from "../../utils/timelineUtils";
+import type { TimelineScale, DensityGeometryConfig } from "../../utils/timelineUtils";
 import { getTaskBarGeometry, dateToPixel } from "../../utils/timelineUtils";
 import { calculateDuration, addDays } from "../../utils/dateUtils";
 import { useTaskBarInteraction } from "../../hooks/useTaskBarInteraction";
 import { useChartStore } from "../../store/slices/chartSlice";
 import { useTaskStore } from "../../store/slices/taskSlice";
+import { useDensityConfig } from "../../store/slices/userPreferencesSlice";
 
 interface TaskBarProps {
   task: Task;
@@ -31,6 +32,7 @@ function MilestoneDiamond({
   onMouseMove,
   cursor,
   opacity = 1,
+  taskBarHeight = 26,
 }: {
   x: number;
   y: number;
@@ -41,8 +43,9 @@ function MilestoneDiamond({
   onMouseMove?: (e: React.MouseEvent<SVGGElement>) => void;
   cursor?: string;
   opacity?: number;
+  taskBarHeight?: number;
 }) {
-  const centerY = y + 16; // Center of 32px bar
+  const centerY = y + taskBarHeight / 2; // Center of task bar
 
   return (
     <g
@@ -78,6 +81,7 @@ function SummaryBracket({
   cursor,
   opacity = 1,
   taskName,
+  fontSize = 11,
 }: {
   x: number;
   y: number;
@@ -90,6 +94,7 @@ function SummaryBracket({
   cursor?: string;
   opacity?: number;
   taskName: string;
+  fontSize?: number;
 }) {
   const tipHeight = height * 0.5; // Height of downward triangular tips (50% of bar height)
   const barThickness = height * 0.3; // Horizontal bar thickness (30% of bar height)
@@ -133,8 +138,8 @@ function SummaryBracket({
       {/* Task name label - positioned to the right of the bracket */}
       <text
         x={x + width + 8}
-        y={y + height / 2 + 4}
-        fontSize={12}
+        y={y + height / 2 + fontSize / 3}
+        fontSize={fontSize}
         fill="#495057"
         fontWeight={600}
         pointerEvents="none"
@@ -152,10 +157,23 @@ export const TaskBar = React.memo(function TaskBar({
   onClick,
   onDoubleClick,
 }: TaskBarProps) {
+  // Get density configuration for dynamic sizing
+  const densityConfig = useDensityConfig();
+
+  // Create density geometry config for getTaskBarGeometry
+  const densityGeometry: DensityGeometryConfig = useMemo(
+    () => ({
+      rowHeight: densityConfig.rowHeight,
+      taskBarHeight: densityConfig.taskBarHeight,
+      taskBarOffset: densityConfig.taskBarOffset,
+    }),
+    [densityConfig.rowHeight, densityConfig.taskBarHeight, densityConfig.taskBarOffset]
+  );
+
   // All hooks must be called before any conditional returns
   const geometry = useMemo(
-    () => getTaskBarGeometry(task, scale, rowIndex, 44, 0), // headerHeight = 0 (header in separate SVG)
-    [task, scale, rowIndex]
+    () => getTaskBarGeometry(task, scale, rowIndex, densityGeometry, 0), // headerHeight = 0 (header in separate SVG)
+    [task, scale, rowIndex, densityGeometry]
   );
 
   // Shared drag state for multi-task preview
@@ -259,6 +277,7 @@ export const TaskBar = React.memo(function TaskBar({
     const size = Math.min(10, Math.max(6, scale.pixelsPerDay / 2));
     // Center the diamond in the middle of the day (offset by half day width minus diamond size)
     const centeredX = geometry.x + scale.pixelsPerDay / 2 - size;
+    const centerY = geometry.y + densityConfig.taskBarHeight / 2;
 
     // Calculate preview position if dragging (primary or secondary)
     const previewX = preview
@@ -280,15 +299,16 @@ export const TaskBar = React.memo(function TaskBar({
           onMouseMove={onMouseMoveForCursor}
           cursor={cursor}
           opacity={isBeingDragged ? 0.3 : 1}
+          taskBarHeight={densityConfig.taskBarHeight}
         />
 
         {/* Preview milestone (solid outline during drag) */}
         {previewX !== null && (
           <path
-            d={`M ${previewX} ${geometry.y + 16}
-                L ${previewX + size} ${geometry.y + 16 - size}
-                L ${previewX + size * 2} ${geometry.y + 16}
-                L ${previewX + size} ${geometry.y + 16 + size}
+            d={`M ${previewX} ${centerY}
+                L ${previewX + size} ${centerY - size}
+                L ${previewX + size * 2} ${centerY}
+                L ${previewX + size} ${centerY + size}
                 Z`}
             fill="none"
             stroke="#228be6"
@@ -322,6 +342,7 @@ export const TaskBar = React.memo(function TaskBar({
           cursor={cursor}
           opacity={isBeingDragged ? 0.3 : 1}
           taskName={task.name}
+          fontSize={densityConfig.fontSizeBar}
         />
 
         {/* Preview outline for summary (shown during drag) */}
@@ -416,8 +437,8 @@ export const TaskBar = React.memo(function TaskBar({
       {geometry.width > 40 && (
         <text
           x={geometry.x + 8}
-          y={geometry.y + geometry.height / 2 + 4}
-          fontSize={12}
+          y={geometry.y + geometry.height / 2 + densityConfig.fontSizeBar / 3}
+          fontSize={densityConfig.fontSizeBar}
           fill="#fff"
           clipPath={`url(#${clipPathId})`}
         >

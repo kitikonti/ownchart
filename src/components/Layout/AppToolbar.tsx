@@ -11,6 +11,7 @@ import { ClipboardButtons } from "../Toolbar/ClipboardButtons";
 import { InsertButtons } from "../Toolbar/InsertButtons";
 import { ZoomControls } from "../Toolbar/ZoomControls";
 import { ExportButton } from "../Toolbar/ExportButton";
+import { PreferencesButton } from "../Toolbar/PreferencesButton";
 import { HelpButton } from "../Toolbar/HelpButton";
 import { useTaskStore } from "../../store/slices/taskSlice";
 
@@ -93,6 +94,11 @@ export function AppToolbar() {
 
       {/* Spacer to push help and zoom controls to the right */}
       <div className="flex-1" />
+
+      {/* Preferences Button */}
+      <div className="mr-2">
+        <PreferencesButton />
+      </div>
 
       {/* Help Button */}
       <div className="mr-2">

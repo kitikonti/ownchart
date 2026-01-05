@@ -192,15 +192,37 @@ export function pixelToDate(x: number, scale: TimelineScale): string {
 }
 
 /**
+ * Density configuration for task bar geometry calculations.
+ * Values should come from DENSITY_CONFIG in preferences.types.ts
+ */
+export interface DensityGeometryConfig {
+  rowHeight: number;
+  taskBarHeight: number;
+  taskBarOffset: number;
+}
+
+/**
+ * Default density config (Normal mode) for backwards compatibility
+ */
+export const DEFAULT_DENSITY_GEOMETRY: DensityGeometryConfig = {
+  rowHeight: 36,
+  taskBarHeight: 26,
+  taskBarOffset: 5,
+};
+
+/**
  * Get task bar geometry for rendering
- * @param rowHeight - Height of each task row (default 44px: h-[44px] fixed height)
+ * @param task - The task to calculate geometry for
+ * @param scale - The timeline scale
+ * @param rowIndex - The row index of the task
+ * @param densityConfig - Density configuration (rowHeight, taskBarHeight, taskBarOffset)
  * @param headerHeight - Height of timeline header (default 48px: 2×24px rows)
  */
 export function getTaskBarGeometry(
   task: Task,
   scale: TimelineScale,
   rowIndex: number,
-  rowHeight: number = 44,
+  densityConfig: DensityGeometryConfig = DEFAULT_DENSITY_GEOMETRY,
   headerHeight: number = 48
 ): TaskBarGeometry {
   const x = dateToPixel(task.startDate, scale);
@@ -210,11 +232,13 @@ export function getTaskBarGeometry(
   const duration = calculateDuration(task.startDate, endDate);
   const width = duration * scale.pixelsPerDay;
 
+  const { rowHeight, taskBarHeight, taskBarOffset } = densityConfig;
+
   return {
     x,
-    y: headerHeight + rowIndex * rowHeight + 6, // Header + row offset + centering (44-32)/2 = 6px
+    y: headerHeight + rowIndex * rowHeight + taskBarOffset,
     width,
-    height: 32, // Task bar height
+    height: taskBarHeight,
   };
 }
 

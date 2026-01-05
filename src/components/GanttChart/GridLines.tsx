@@ -21,15 +21,15 @@ interface GridLinesProps {
   taskCount: number;
   showWeekends?: boolean;
   width?: number; // Optional override for grid width (defaults to scale.totalWidth)
+  rowHeight?: number; // Dynamic row height from density config
 }
-
-const ROW_HEIGHT = 44; // Match TaskTable cell height (h-[44px] with border-box)
 
 export function GridLines({
   scale,
   taskCount,
   showWeekends = true,
   width,
+  rowHeight = 36, // Default to Normal density
 }: GridLinesProps) {
   // Use provided width or fall back to scale.totalWidth
   const gridWidth = width ?? scale.totalWidth;
@@ -140,9 +140,9 @@ export function GridLines({
   // Horizontal lines (one per task row)
   const horizontalLines = useMemo(() => {
     return Array.from({ length: taskCount + 1 }, (_, i) => ({
-      y: i * ROW_HEIGHT,
+      y: i * rowHeight,
     }));
-  }, [taskCount]);
+  }, [taskCount, rowHeight]);
 
   return (
     <g className="grid-lines">
@@ -153,7 +153,7 @@ export function GridLines({
           x={x}
           y={0}
           width={scale.pixelsPerDay}
-          height={taskCount * ROW_HEIGHT}
+          height={taskCount * rowHeight}
           fill="#f1f3f5"
           opacity={0.6}
           className="weekend-column"
@@ -178,7 +178,7 @@ export function GridLines({
             x1={x}
             y1={0}
             x2={x}
-            y2={taskCount * ROW_HEIGHT}
+            y2={taskCount * rowHeight}
             stroke={getStroke()}
             strokeWidth={1}
             className={`${lineType}-line`}

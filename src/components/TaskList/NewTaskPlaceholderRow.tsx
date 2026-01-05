@@ -6,6 +6,7 @@
 
 import { useState, useRef, useEffect, type KeyboardEvent } from "react";
 import { useTaskStore, type EditableField } from "../../store/slices/taskSlice";
+import { useDensityConfig } from "../../store/slices/userPreferencesSlice";
 import { TASK_COLUMNS } from "../../config/tableColumns";
 
 // Special ID for the placeholder row - used by paste logic
@@ -22,6 +23,7 @@ export function NewTaskPlaceholderRow(): JSX.Element {
   const setActiveCell = useTaskStore((state) => state.setActiveCell);
   const selectedTaskIds = useTaskStore((state) => state.selectedTaskIds);
   const clearSelection = useTaskStore((state) => state.clearSelection);
+  const densityConfig = useDensityConfig();
 
   const isRowActive = activeCell.taskId === PLACEHOLDER_TASK_ID;
   const isNameActive = isRowActive && activeCell.field === "name";
@@ -156,6 +158,16 @@ export function NewTaskPlaceholderRow(): JSX.Element {
     setInputValue("");
   };
 
+  // Density-aware cell styles
+  const getCellStyle = (columnId: string) => ({
+    height: "var(--density-row-height)",
+    paddingTop: "var(--density-cell-padding-y)",
+    paddingBottom: "var(--density-cell-padding-y)",
+    paddingLeft: columnId === "name" ? "var(--density-cell-padding-x)" : "var(--density-cell-padding-x)",
+    paddingRight: "var(--density-cell-padding-x)",
+    fontSize: "var(--density-font-size-cell)",
+  });
+
   return (
     <div className="placeholder-row contents" role="row">
       {TASK_COLUMNS.map((column) => {
@@ -166,9 +178,7 @@ export function NewTaskPlaceholderRow(): JSX.Element {
             key={column.id}
             ref={column.id === "name" ? cellRef : undefined}
             tabIndex={column.id === "name" && isNameActive ? 0 : -1}
-            className={`h-[44px] ${column.id !== "color" ? "border-r" : ""} border-b border-gray-200 flex items-center ${
-              column.id === "name" ? "pl-3 pr-3" : "px-3"
-            } ${
+            className={`${column.id !== "color" ? "border-r" : ""} border-b border-gray-200 flex items-center ${
               column.id === "name" && isEditing
                 ? "outline outline-3 outline-blue-600 bg-white z-20"
                 : isSelected
@@ -177,6 +187,7 @@ export function NewTaskPlaceholderRow(): JSX.Element {
                     ? "outline outline-2 outline-blue-500 bg-blue-50 z-10"
                     : "bg-gray-50/50 hover:bg-gray-100"
             } cursor-pointer`}
+            style={getCellStyle(column.id)}
             onClick={() =>
               column.field
                 ? handleCellClick(column.field as EditableField)
@@ -191,7 +202,11 @@ export function NewTaskPlaceholderRow(): JSX.Element {
                   type="checkbox"
                   checked={isSelected}
                   onChange={handleCheckboxChange}
-                  className="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 cursor-pointer"
+                  className="text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 cursor-pointer"
+                  style={{
+                    width: densityConfig.checkboxSize,
+                    height: densityConfig.checkboxSize,
+                  }}
                 />
               </div>
             )}
@@ -206,6 +221,7 @@ export function NewTaskPlaceholderRow(): JSX.Element {
                   onKeyDown={handleInputKeyDown}
                   autoFocus
                   className="w-full px-0 py-0 border-0 focus:outline-none bg-transparent"
+                  style={{ fontSize: "inherit" }}
                 />
               ) : (
                 <span className="text-gray-400 italic select-none">

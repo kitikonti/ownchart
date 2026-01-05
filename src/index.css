@@ -15,6 +15,52 @@
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+
+  /* UI Density - Default: Normal (Sprint 1.5.9.1) */
+  --density-row-height: 36px;
+  --density-task-bar-height: 26px;
+  --density-task-bar-offset: 5px;
+  --density-cell-padding-y: 6px;
+  --density-cell-padding-x: 10px;
+  --density-header-padding-y: 12px;
+  --density-font-size-cell: 13px;
+  --density-font-size-bar: 11px;
+  --density-font-size-header: 11px;
+  --density-icon-size: 16px;
+  --density-checkbox-size: 16px;
+  --density-indent-size: 18px;
+}
+
+/* Compact density mode - 28px rows, shows more tasks */
+.density-compact {
+  --density-row-height: 28px;
+  --density-task-bar-height: 20px;
+  --density-task-bar-offset: 4px;
+  --density-cell-padding-y: 4px;
+  --density-cell-padding-x: 8px;
+  --density-header-padding-y: 8px;
+  --density-font-size-cell: 12px;
+  --density-font-size-bar: 10px;
+  --density-font-size-header: 10px;
+  --density-icon-size: 14px;
+  --density-checkbox-size: 14px;
+  --density-indent-size: 16px;
+}
+
+/* Comfortable density mode - 44px rows, easier to read */
+.density-comfortable {
+  --density-row-height: 44px;
+  --density-task-bar-height: 32px;
+  --density-task-bar-offset: 6px;
+  --density-cell-padding-y: 8px;
+  --density-cell-padding-x: 12px;
+  --density-header-padding-y: 16px;
+  --density-font-size-cell: 14px;
+  --density-font-size-bar: 12px;
+  --density-font-size-header: 12px;
+  --density-icon-size: 18px;
+  --density-checkbox-size: 18px;
+  --density-indent-size: 20px;
 }
 
 body {

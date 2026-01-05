@@ -8,15 +8,18 @@ import { Toaster } from "react-hot-toast";
 import { ZoomIndicator } from "./components/GanttChart/ZoomIndicator";
 import { AppToolbar, GanttLayout } from "./components/Layout";
 import { ExportDialog } from "./components/Export";
+import { PreferencesDialog } from "./components/Preferences";
 import { HelpPanel, WelcomeTour } from "./components/Help";
 import { useKeyboardShortcuts } from "./hooks/useKeyboardShortcuts";
 import { useUnsavedChanges } from "./hooks/useUnsavedChanges";
 import { useMultiTabPersistence } from "./hooks/useMultiTabPersistence";
 import { useDocumentTitle } from "./hooks/useDocumentTitle";
 import { useUIStore } from "./store/slices/uiSlice";
+import { useUserPreferencesStore } from "./store/slices/userPreferencesSlice";
 
 function App(): JSX.Element {
   const checkFirstTimeUser = useUIStore((state) => state.checkFirstTimeUser);
+  const initializeDensity = useUserPreferencesStore((state) => state.initializeDensity);
 
   // Enable global keyboard shortcuts (Ctrl+Z, Ctrl+Shift+Z, Ctrl+Y, Ctrl+S, Ctrl+O, Ctrl+Alt+N, Ctrl+E, ?)
   useKeyboardShortcuts();
@@ -30,15 +33,19 @@ function App(): JSX.Element {
   // Update browser tab title with filename
   useDocumentTitle();
 
-  // Check for first-time user on mount
+  // Check for first-time user on mount and initialize density
   useEffect(() => {
     checkFirstTimeUser();
-  }, [checkFirstTimeUser]);
+    initializeDensity();
+  }, [checkFirstTimeUser, initializeDensity]);
 
   return (
     <>
       {/* Export Dialog */}
       <ExportDialog />
+
+      {/* Preferences Dialog */}
+      <PreferencesDialog />
 
       {/* Help Panel */}
       <HelpPanel />

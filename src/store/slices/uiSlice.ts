@@ -27,6 +27,9 @@ interface UIState {
   // Help panel
   isHelpPanelOpen: boolean;
 
+  // Preferences dialog
+  isPreferencesDialogOpen: boolean;
+
   // Welcome tour
   isWelcomeTourOpen: boolean;
   hasSeenWelcome: boolean;
@@ -49,6 +52,10 @@ interface UIActions {
   openHelpPanel: () => void;
   closeHelpPanel: () => void;
   toggleHelpPanel: () => void;
+
+  // Preferences dialog
+  openPreferencesDialog: () => void;
+  closePreferencesDialog: () => void;
 
   // Welcome tour
   openWelcomeTour: () => void;
@@ -94,6 +101,7 @@ export const useUIStore = create<UIStore>()(
       isExporting: false,
       exportError: null,
       isHelpPanelOpen: false,
+      isPreferencesDialogOpen: false,
       isWelcomeTourOpen: false,
       hasSeenWelcome,
       hasTourCompleted,
@@ -152,6 +160,17 @@ export const useUIStore = create<UIStore>()(
       toggleHelpPanel: () =>
         set((state) => {
           state.isHelpPanelOpen = !state.isHelpPanelOpen;
+        }),
+
+      // Preferences dialog actions
+      openPreferencesDialog: () =>
+        set((state) => {
+          state.isPreferencesDialogOpen = true;
+        }),
+
+      closePreferencesDialog: () =>
+        set((state) => {
+          state.isPreferencesDialogOpen = false;
         }),
 
       // Welcome tour actions

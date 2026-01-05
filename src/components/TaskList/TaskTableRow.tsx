@@ -10,14 +10,13 @@ import { CSS } from "@dnd-kit/utilities";
 import { Trash, DotsSixVertical } from "@phosphor-icons/react";
 import type { Task } from "../../types/chart.types";
 import { useTaskStore } from "../../store/slices/taskSlice";
+import { useDensityConfig } from "../../store/slices/userPreferencesSlice";
 import { Cell } from "./Cell";
 import { ColorCellEditor } from "./CellEditors/ColorCellEditor";
 import { TASK_COLUMNS } from "../../config/tableColumns";
 import { useCellNavigation } from "../../hooks/useCellNavigation";
 import { TaskTypeIcon } from "./TaskTypeIcon";
 import { calculateSummaryDates } from "../../utils/hierarchy";
-
-const INDENT_SIZE = 20; // pixels per level
 
 interface TaskTableRowProps {
   task: Task;
@@ -51,6 +50,7 @@ export function TaskTableRow({
   const selectTaskRange = useTaskStore((state) => state.selectTaskRange);
   const setActiveCell = useTaskStore((state) => state.setActiveCell);
   const { isCellEditing, stopCellEdit } = useCellNavigation();
+  const densityConfig = useDensityConfig();
 
   const isSelected = selectedTaskIds.includes(task.id);
   const isInClipboard = clipboardPosition !== undefined;
@@ -166,17 +166,25 @@ export function TaskTableRow({
       )}
       {/* Drag Handle Cell */}
       <div
-        className="drag-handle-cell flex items-center justify-center px-2 py-2 border-b border-r border-gray-200 bg-gray-50 cursor-grab active:cursor-grabbing"
+        className="drag-handle-cell flex items-center justify-center border-b border-r border-gray-200 bg-gray-50 cursor-grab active:cursor-grabbing"
+        style={{
+          height: "var(--density-row-height)",
+          padding: `var(--density-cell-padding-y) var(--density-cell-padding-x)`,
+        }}
         {...attributes}
         {...listeners}
         role="gridcell"
       >
-        <DotsSixVertical size={16} weight="bold" className="text-gray-400" />
+        <DotsSixVertical size={densityConfig.iconSize} weight="bold" className="text-gray-400" />
       </div>
 
       {/* Checkbox Cell */}
       <div
-        className="checkbox-cell flex items-center justify-center px-2 py-2 border-b border-r border-gray-200"
+        className="checkbox-cell flex items-center justify-center border-b border-r border-gray-200"
+        style={{
+          height: "var(--density-row-height)",
+          padding: `var(--density-cell-padding-y) var(--density-cell-padding-x)`,
+        }}
         role="gridcell"
       >
         <input
@@ -195,7 +203,11 @@ export function TaskTableRow({
               toggleTaskSelection(task.id);
             }
           }}
-          className="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 cursor-pointer"
+          className="text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 cursor-pointer"
+          style={{
+            width: densityConfig.checkboxSize,
+            height: densityConfig.checkboxSize,
+          }}
         />
       </div>
 
@@ -231,7 +243,7 @@ export function TaskTableRow({
             >
               <div
                 className="flex items-center gap-1"
-                style={{ paddingLeft: `${level * INDENT_SIZE}px` }}
+                style={{ paddingLeft: `${level * densityConfig.indentSize}px` }}
               >
                 {/* Expand/collapse button for summary tasks with children only */}
                 {hasChildren && task.type === "summary" ? (
@@ -403,7 +415,11 @@ export function TaskTableRow({
 
       {/* Delete Button Cell */}
       <div
-        className="delete-cell flex items-center justify-center px-2 py-2 border-b border-r border-gray-200 group-hover:bg-gray-50"
+        className="delete-cell flex items-center justify-center border-b border-r border-gray-200 group-hover:bg-gray-50"
+        style={{
+          height: "var(--density-row-height)",
+          padding: `var(--density-cell-padding-y) var(--density-cell-padding-x)`,
+        }}
         role="gridcell"
       >
         <button
@@ -412,7 +428,7 @@ export function TaskTableRow({
           aria-label="Delete task"
           title="Delete task"
         >
-          <Trash size={16} weight="regular" />
+          <Trash size={densityConfig.iconSize} weight="regular" />
         </button>
       </div>
     </div>

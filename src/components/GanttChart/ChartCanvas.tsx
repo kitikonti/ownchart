@@ -12,6 +12,7 @@ import { useRef, useEffect, useMemo, useState, useCallback } from "react";
 import type { Task } from "../../types/chart.types";
 import { useChartStore } from "../../store/slices/chartSlice";
 import { useTaskStore } from "../../store/slices/taskSlice";
+import { useDensityConfig } from "../../store/slices/userPreferencesSlice";
 import { useZoom } from "../../hooks/useZoom";
 import { useDependencyDrag } from "../../hooks/useDependencyDrag";
 import {
@@ -23,7 +24,7 @@ import { TaskBar } from "./TaskBar";
 import { TodayMarker } from "./TodayMarker";
 import { DependencyArrows } from "./DependencyArrows";
 import { ConnectionHandles } from "./ConnectionHandles";
-import { getTaskBarGeometry } from "../../utils/timelineUtils";
+import { getTaskBarGeometry, type DensityGeometryConfig } from "../../utils/timelineUtils";
 
 interface ChartCanvasProps {
   tasks: Task[];
@@ -34,7 +35,6 @@ interface ChartCanvasProps {
   containerWidth?: number; // Width from parent container (viewport, not content)
 }
 
-const ROW_HEIGHT = 44; // Match TaskTable cell height (h-[44px] with border-box)
 const SCROLLBAR_HEIGHT = 17; // Reserve space for horizontal scrollbar
 
 export function ChartCanvas({
@@ -52,6 +52,20 @@ export function ChartCanvas({
 
   // State for tracking which task's connection handles are visible
   const [hoveredTaskId, setHoveredTaskId] = useState<string | null>(null);
+
+  // Get density configuration for dynamic row height
+  const densityConfig = useDensityConfig();
+  const ROW_HEIGHT = densityConfig.rowHeight;
+
+  // Create density geometry config for getTaskBarGeometry
+  const densityGeometry: DensityGeometryConfig = useMemo(
+    () => ({
+      rowHeight: densityConfig.rowHeight,
+      taskBarHeight: densityConfig.taskBarHeight,
+      taskBarOffset: densityConfig.taskBarOffset,
+    }),
+    [densityConfig.rowHeight, densityConfig.taskBarHeight, densityConfig.taskBarOffset]
+  );
 
   // Use individual selectors for proper Zustand re-render (like ZoomIndicator)
   const scale = useChartStore((state) => state.scale);
@@ -112,7 +126,7 @@ export function ChartCanvas({
       if (!task.startDate || (!task.endDate && task.type !== "milestone")) {
         return;
       }
-      const geo = getTaskBarGeometry(task, scale, index, ROW_HEIGHT, 0);
+      const geo = getTaskBarGeometry(task, scale, index, densityGeometry, 0);
       const geometry = {
         id: task.id,
         x: geo.x,
@@ -137,7 +151,7 @@ export function ChartCanvas({
       taskGeometriesMap: geometriesMap,
       taskGeometriesArray: geometriesArray,
     };
-  }, [tasks, scale]);
+  }, [tasks, scale, densityGeometry]);
 
   // Sprint 1.4: Handle mouse up on task for dependency drop
   const handleTaskMouseUp = useCallback(
@@ -222,6 +236,7 @@ export function ChartCanvas({
                 taskCount={rowCount}
                 showWeekends={showWeekends}
                 width={timelineWidth}
+                rowHeight={ROW_HEIGHT}
               />
             </g>
 

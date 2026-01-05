@@ -270,12 +270,23 @@ export function Cell({
     return String(currentValue);
   };
 
+  // Density-aware styles using CSS custom properties
+  const cellStyle = {
+    height: "var(--density-row-height)",
+    paddingTop: "var(--density-cell-padding-y)",
+    paddingBottom: "var(--density-cell-padding-y)",
+    paddingLeft: column.id === "name" ? undefined : "var(--density-cell-padding-x)",
+    paddingRight: "var(--density-cell-padding-x)",
+    fontSize: "var(--density-font-size-cell)",
+  };
+
   // Render edit mode
   if (isEditing) {
     return (
       <div
         ref={cellRef}
-        className={`relative flex items-center px-3 py-2 border-b ${column.id !== "color" ? "border-r" : ""} border-gray-200 h-[44px] outline outline-3 outline-blue-600 bg-white z-20`}
+        className={`relative flex items-center border-b ${column.id !== "color" ? "border-r" : ""} border-gray-200 outline outline-3 outline-blue-600 bg-white z-20`}
+        style={cellStyle}
         onClick={(e) => e.stopPropagation()}
       >
         {children ? (
@@ -297,6 +308,7 @@ export function Cell({
             onBlur={saveValue}
             autoFocus
             className="w-full px-0 py-0 border-0 focus:outline-none bg-transparent"
+            style={{ fontSize: "inherit" }}
           />
         )}
         {error && (
@@ -315,11 +327,12 @@ export function Cell({
       ref={cellRef}
       tabIndex={0}
       className={`
-        ${column.id === "name" ? "pr-3" : "px-3"} py-2 border-b ${column.id !== "color" ? "border-r" : ""} border-gray-200 h-[44px] flex items-center cursor-pointer relative
+        border-b ${column.id !== "color" ? "border-r" : ""} border-gray-200 flex items-center cursor-pointer relative
         ${isActive ? "outline outline-2 outline-blue-500 bg-blue-50 z-10" : "hover:bg-gray-50"}
         ${!column.editable ? "bg-gray-50 text-gray-600" : ""}
         ${isCut ? "opacity-50 outline outline-2 outline-dashed outline-gray-400 -outline-offset-2" : ""}
       `}
+      style={cellStyle}
       onClick={handleClick}
       onKeyDown={handleNavigationKeyDown}
     >
