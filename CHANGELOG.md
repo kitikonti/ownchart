@@ -2,6 +2,14 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [0.0.9](https://github.com/kitikonti/ownchart/compare/v0.0.8...v0.0.9) (2026-01-05)
+
+
+### Features
+
+* add multi-task dragging in timeline view ([8cfea20](https://github.com/kitikonti/ownchart/commit/8cfea209514c548f7bc36c8bafe78ccf41f45e73))
+* add PNG export, help panel, and welcome tour ([f5b2387](https://github.com/kitikonti/ownchart/commit/f5b2387736fcf709f2f17a8dba1b451d3b642f2e))
+
 ### [0.0.8](https://github.com/kitikonti/ownchart/compare/v0.0.7...v0.0.8) (2026-01-04)
 
 
