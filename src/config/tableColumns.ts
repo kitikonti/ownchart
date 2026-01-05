@@ -5,6 +5,7 @@
 
 import type { EditableField } from "../store/slices/taskSlice";
 import type { ValidationResult } from "../utils/validation";
+import type { DensityConfig } from "../types/preferences.types";
 import {
   validateTaskName,
   validateDateString,
@@ -134,3 +135,39 @@ export const TASK_COLUMNS: ColumnDefinition[] = [
     renderer: "custom",
   },
 ];
+
+/**
+ * Get density-aware default width for a column.
+ * Returns the width string adjusted for the current density setting.
+ */
+export function getDensityAwareWidth(
+  columnId: string,
+  densityConfig: DensityConfig
+): string {
+  const { columnWidths } = densityConfig;
+
+  switch (columnId) {
+    case "dragHandle":
+      return `${columnWidths.dragHandle}px`;
+    case "checkbox":
+      return `${columnWidths.checkbox}px`;
+    case "color":
+      return `${columnWidths.color}px`;
+    case "name":
+      return `minmax(${columnWidths.nameMin}px, 1fr)`;
+    case "startDate":
+      return `${columnWidths.startDate}px`;
+    case "endDate":
+      return `${columnWidths.endDate}px`;
+    case "duration":
+      return `${columnWidths.duration}px`;
+    case "progress":
+      return `${columnWidths.progress}px`;
+    case "delete":
+      return `${columnWidths.delete}px`;
+    default:
+      // Fallback to the original column definition
+      const col = TASK_COLUMNS.find((c) => c.id === columnId);
+      return col?.defaultWidth ?? "100px";
+  }
+}

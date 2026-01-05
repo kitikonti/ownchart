@@ -5,7 +5,8 @@
 
 import { useMemo } from "react";
 import { useTaskStore } from "../../store/slices/taskSlice";
-import { TASK_COLUMNS } from "../../config/tableColumns";
+import { useDensityConfig } from "../../store/slices/userPreferencesSlice";
+import { TASK_COLUMNS, getDensityAwareWidth } from "../../config/tableColumns";
 import { ColumnResizer } from "./ColumnResizer";
 import { useTableDimensions } from "../../hooks/useTableDimensions";
 import { getTaskLevel } from "../../utils/hierarchy";
@@ -17,6 +18,7 @@ export function TaskTableHeader(): JSX.Element {
   const clearSelection = useTaskStore((state) => state.clearSelection);
   const columnWidths = useTaskStore((state) => state.columnWidths);
   const setColumnWidth = useTaskStore((state) => state.setColumnWidth);
+  const densityConfig = useDensityConfig();
 
   // Get total column width for proper scrolling
   const { totalColumnWidth } = useTableDimensions();
@@ -29,26 +31,31 @@ export function TaskTableHeader(): JSX.Element {
 
   /**
    * Generate CSS grid template columns based on column widths.
+   * Uses density-aware widths when no custom width is set.
    */
   const gridTemplateColumns = useMemo(() => {
     return TASK_COLUMNS.map((col) => {
       const customWidth = columnWidths[col.id];
-      return customWidth ? `${customWidth}px` : col.defaultWidth;
+      return customWidth ? `${customWidth}px` : getDensityAwareWidth(col.id, densityConfig);
     }).join(" ");
-  }, [columnWidths]);
+  }, [columnWidths, densityConfig]);
 
   /**
    * Get current width of a column in pixels.
+   * Uses density-aware widths when no custom width is set.
    */
   const getColumnWidth = (columnId: string): number => {
     const customWidth = columnWidths[columnId];
     if (customWidth) return customWidth;
 
-    const column = TASK_COLUMNS.find((col) => col.id === columnId);
-    if (!column) return 100;
-
-    const match = column.defaultWidth.match(/(\d+)px/);
+    // Get density-aware default width
+    const densityWidth = getDensityAwareWidth(columnId, densityConfig);
+    const match = densityWidth.match(/(\d+)px/);
     if (match) return parseInt(match[1], 10);
+
+    // For minmax, extract the first value
+    const minmaxMatch = densityWidth.match(/minmax\((\d+)px/);
+    if (minmaxMatch) return parseInt(minmaxMatch[1], 10);
 
     return 200;
   };

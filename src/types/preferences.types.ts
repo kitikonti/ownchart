@@ -27,6 +27,18 @@ export interface DensityConfig {
   iconSize: number;
   checkboxSize: number;
   indentSize: number;
+  // Column widths
+  columnWidths: {
+    dragHandle: number;
+    checkbox: number;
+    color: number;
+    nameMin: number;
+    startDate: number;
+    endDate: number;
+    duration: number;
+    progress: number;
+    delete: number;
+  };
 }
 
 /**
@@ -70,6 +82,17 @@ export const DENSITY_CONFIG: DensityConfigMap = {
     iconSize: 14,
     checkboxSize: 14,
     indentSize: 16,
+    columnWidths: {
+      dragHandle: 32,
+      checkbox: 40,
+      color: 28,
+      nameMin: 160,
+      startDate: 105,
+      endDate: 105,
+      duration: 80,
+      progress: 56,
+      delete: 32,
+    },
   },
   normal: {
     rowHeight: 36,
@@ -84,6 +107,17 @@ export const DENSITY_CONFIG: DensityConfigMap = {
     iconSize: 16,
     checkboxSize: 16,
     indentSize: 18,
+    columnWidths: {
+      dragHandle: 36,
+      checkbox: 44,
+      color: 30,
+      nameMin: 180,
+      startDate: 118,
+      endDate: 118,
+      duration: 90,
+      progress: 62,
+      delete: 36,
+    },
   },
   comfortable: {
     rowHeight: 44,
@@ -98,5 +132,16 @@ export const DENSITY_CONFIG: DensityConfigMap = {
     iconSize: 18,
     checkboxSize: 18,
     indentSize: 20,
+    columnWidths: {
+      dragHandle: 40,
+      checkbox: 48,
+      color: 32,
+      nameMin: 200,
+      startDate: 130,
+      endDate: 130,
+      duration: 100,
+      progress: 70,
+      delete: 40,
+    },
   },
 };

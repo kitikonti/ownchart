@@ -13,7 +13,7 @@ import { useTaskStore } from "../../store/slices/taskSlice";
 import { useDensityConfig } from "../../store/slices/userPreferencesSlice";
 import { Cell } from "./Cell";
 import { ColorCellEditor } from "./CellEditors/ColorCellEditor";
-import { TASK_COLUMNS } from "../../config/tableColumns";
+import { TASK_COLUMNS, getDensityAwareWidth } from "../../config/tableColumns";
 import { useCellNavigation } from "../../hooks/useCellNavigation";
 import { TaskTypeIcon } from "./TaskTypeIcon";
 import { calculateSummaryDates } from "../../utils/hierarchy";
@@ -91,10 +91,10 @@ export function TaskTableRow({
     isDragging,
   } = useSortable({ id: task.id });
 
-  // Generate grid template columns
+  // Generate grid template columns with density-aware widths
   const gridTemplateColumns = TASK_COLUMNS.map((col) => {
     const customWidth = columnWidths[col.id];
-    return customWidth ? `${customWidth}px` : col.defaultWidth;
+    return customWidth ? `${customWidth}px` : getDensityAwareWidth(col.id, densityConfig);
   }).join(" ");
 
   const style = {

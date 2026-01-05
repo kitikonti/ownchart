@@ -20,9 +20,10 @@ import {
 } from "@dnd-kit/sortable";
 
 import { useTaskStore } from "../../store/slices/taskSlice";
+import { useDensityConfig } from "../../store/slices/userPreferencesSlice";
 import { TaskTableRow } from "./TaskTableRow";
 import { NewTaskPlaceholderRow } from "./NewTaskPlaceholderRow";
-import { TASK_COLUMNS } from "../../config/tableColumns";
+import { TASK_COLUMNS, getDensityAwareWidth } from "../../config/tableColumns";
 import { ColumnResizer } from "./ColumnResizer";
 import { useTableDimensions } from "../../hooks/useTableDimensions";
 import { useFlattenedTasks } from "../../hooks/useFlattenedTasks";
@@ -49,6 +50,7 @@ export function TaskTable({ hideHeader = true }: TaskTableProps): JSX.Element {
   const canOutdent = useTaskStore((state) => state.canOutdentSelection());
   const activeCell = useTaskStore((state) => state.activeCell);
   const clipboardTaskIds = useTaskStore((state) => state.clipboardTaskIds);
+  const densityConfig = useDensityConfig();
 
   // Get total column width for proper scrolling
   const { totalColumnWidth } = useTableDimensions();
@@ -129,31 +131,32 @@ export function TaskTable({ hideHeader = true }: TaskTableProps): JSX.Element {
 
   /**
    * Generate CSS grid template columns based on column widths.
+   * Uses density-aware widths when no custom width is set.
    */
   const gridTemplateColumns = useMemo(() => {
     return TASK_COLUMNS.map((col) => {
       const customWidth = columnWidths[col.id];
-      return customWidth ? `${customWidth}px` : col.defaultWidth;
+      return customWidth ? `${customWidth}px` : getDensityAwareWidth(col.id, densityConfig);
     }).join(" ");
-  }, [columnWidths]);
+  }, [columnWidths, densityConfig]);
 
   /**
    * Get current width of a column in pixels.
-   * Parse the default width or use custom width.
+   * Uses density-aware widths when no custom width is set.
    */
   const getColumnWidth = (columnId: string): number => {
     const customWidth = columnWidths[columnId];
     if (customWidth) return customWidth;
 
-    // Parse default width from column config
-    const column = TASK_COLUMNS.find((col) => col.id === columnId);
-    if (!column) return 100;
-
-    // Extract pixel value from defaultWidth (e.g., "130px" -> 130)
-    const match = column.defaultWidth.match(/(\d+)px/);
+    // Get density-aware default width
+    const densityWidth = getDensityAwareWidth(columnId, densityConfig);
+    const match = densityWidth.match(/(\d+)px/);
     if (match) return parseInt(match[1], 10);
 
-    // For minmax or other complex values, use a reasonable default
+    // For minmax, extract the first value
+    const minmaxMatch = densityWidth.match(/minmax\((\d+)px/);
+    if (minmaxMatch) return parseInt(minmaxMatch[1], 10);
+
     return 200;
   };
 
