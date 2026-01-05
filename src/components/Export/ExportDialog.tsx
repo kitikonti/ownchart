@@ -58,17 +58,14 @@ export function ExportDialog(): JSX.Element | null {
     }
   }, [exportOptions, closeExportDialog, setIsExporting, setExportError]);
 
-  const handlePresetChange = useCallback(
-    (preset: string | "custom") => {
-      setSelectedPreset(preset as ExportWidthPreset | "custom");
-      if (preset !== "custom") {
-        const width =
-          EXPORT_WIDTH_PRESETS[preset as keyof typeof EXPORT_WIDTH_PRESETS];
-        setCustomWidth(width.toString());
-      }
-    },
-    []
-  );
+  const handlePresetChange = useCallback((preset: string | "custom") => {
+    setSelectedPreset(preset as ExportWidthPreset | "custom");
+    if (preset !== "custom") {
+      const width =
+        EXPORT_WIDTH_PRESETS[preset as keyof typeof EXPORT_WIDTH_PRESETS];
+      setCustomWidth(width.toString());
+    }
+  }, []);
 
   const handleCustomWidthChange = useCallback((value: string) => {
     setCustomWidth(value);
@@ -121,7 +118,8 @@ export function ExportDialog(): JSX.Element | null {
         <div className="bg-gray-100 rounded-lg p-4 text-center text-sm text-gray-500 border border-gray-200">
           <div className="h-32 flex items-center justify-center">
             <span>
-              Export will capture the current chart view at {exportOptions.width}
+              Export will capture the current chart view at{" "}
+              {exportOptions.width}
               px width
             </span>
           </div>

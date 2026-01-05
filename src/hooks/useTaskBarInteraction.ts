@@ -261,7 +261,8 @@ export function useTaskBarInteraction(
       // Calculate deltaDays from the preview
       const originalStart = new Date(currentDragState.originalStartDate);
       const newStart = new Date(
-        currentDragState.currentPreviewStart || currentDragState.originalStartDate
+        currentDragState.currentPreviewStart ||
+          currentDragState.originalStartDate
       );
       const deltaDays = Math.round(
         (newStart.getTime() - originalStart.getTime()) / (1000 * 60 * 60 * 24)
@@ -282,7 +283,10 @@ export function useTaskBarInteraction(
           : [task.id];
 
         // Get effective tasks to move (handles summary expansion and de-duplication)
-        const effectiveTaskIds = getEffectiveTasksToMove(currentTasks, tasksToMove);
+        const effectiveTaskIds = getEffectiveTasksToMove(
+          currentTasks,
+          tasksToMove
+        );
 
         // Build updates array for all affected tasks
         const updates: Array<{ id: string; updates: Partial<Task> }> = [];
@@ -359,7 +363,13 @@ export function useTaskBarInteraction(
     dragStateRef.current = null;
     svgRef.current = null;
     clearSharedDragState();
-  }, [task, updateTask, updateMultipleTasks, handleMouseMove, clearSharedDragState]);
+  }, [
+    task,
+    updateTask,
+    updateMultipleTasks,
+    handleMouseMove,
+    clearSharedDragState,
+  ]);
 
   /**
    * Handle mouse move for cursor updates (when not dragging).

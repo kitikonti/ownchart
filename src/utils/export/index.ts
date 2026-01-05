@@ -3,7 +3,11 @@
  */
 
 export { captureChart, canvasToBlob } from "./captureChart";
-export { downloadBlob, downloadCanvasAsPng, generateFilename } from "./downloadPng";
+export {
+  downloadBlob,
+  downloadCanvasAsPng,
+  generateFilename,
+} from "./downloadPng";
 export {
   DEFAULT_EXPORT_OPTIONS,
   EXPORT_WIDTH_PRESETS,

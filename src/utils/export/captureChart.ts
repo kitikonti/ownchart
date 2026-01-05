@@ -84,7 +84,9 @@ export async function captureChart(
   ) as HTMLElement | null;
 
   if (!chartElement) {
-    throw new Error("Chart element not found. Please ensure the chart is visible.");
+    throw new Error(
+      "Chart element not found. Please ensure the chart is visible."
+    );
   }
 
   const html2canvas = await getHtml2Canvas();
@@ -102,8 +104,7 @@ export async function captureChart(
   try {
     const canvas = await html2canvas(chartElement, {
       scale: finalScale,
-      backgroundColor:
-        options.background === "white" ? "#ffffff" : null,
+      backgroundColor: options.background === "white" ? "#ffffff" : null,
       useCORS: true,
       logging: false,
       allowTaint: true,

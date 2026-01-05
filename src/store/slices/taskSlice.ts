@@ -397,9 +397,7 @@ export const useTaskStore = create<TaskStore>()(
 
           const summaryDates = calculateSummaryDates(state.tasks, parentId);
           if (summaryDates) {
-            const parentIndex = state.tasks.findIndex(
-              (t) => t.id === parentId
-            );
+            const parentIndex = state.tasks.findIndex((t) => t.id === parentId);
 
             // Capture previous values for undo
             cascadeUpdates.push({

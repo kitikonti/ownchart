@@ -114,7 +114,9 @@ export function WelcomeTour(): JSX.Element | null {
             onChange={(e) => setDontShowAgain(e.target.checked)}
             className="w-4 h-4 text-blue-600 rounded"
           />
-          <span className="text-sm text-gray-500">Don&apos;t show this again</span>
+          <span className="text-sm text-gray-500">
+            Don&apos;t show this again
+          </span>
         </label>
       </div>
     </Modal>

@@ -25,7 +25,8 @@ export function ExportOptionsForm({
   const handlePresetChange = (value: string) => {
     onPresetChange(value);
     if (value !== "custom") {
-      const width = EXPORT_WIDTH_PRESETS[value as keyof typeof EXPORT_WIDTH_PRESETS];
+      const width =
+        EXPORT_WIDTH_PRESETS[value as keyof typeof EXPORT_WIDTH_PRESETS];
       onChange({ width });
     }
   };
@@ -66,7 +67,8 @@ export function ExportOptionsForm({
               className="w-4 h-4 text-blue-600"
             />
             <span className="text-sm text-gray-700">
-              1920px (Full HD) - <span className="text-blue-600">Recommended</span>
+              1920px (Full HD) -{" "}
+              <span className="text-blue-600">Recommended</span>
             </span>
           </label>
 
@@ -130,7 +132,9 @@ export function ExportOptionsForm({
               onChange={(e) => onChange({ includeTaskList: e.target.checked })}
               className="w-4 h-4 text-blue-600 rounded"
             />
-            <span className="text-sm text-gray-700">Task list (left panel)</span>
+            <span className="text-sm text-gray-700">
+              Task list (left panel)
+            </span>
           </label>
 
           <label className="flex items-center gap-3 cursor-pointer">
