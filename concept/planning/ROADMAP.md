@@ -569,6 +569,9 @@ If dependency arrows or performance validation fails, reassess approach before c
 
 **Target**: Address "known limitations" from MVP, add premium features, unlock extensibility system.
 
+**Key Architecture Documents**:
+- [SETTINGS_ARCHITECTURE.md](../architecture/SETTINGS_ARCHITECTURE.md) - User Preferences vs Project Settings separation
+
 **Why These Were Deferred**:
 These features add significant complexity relative to their value for proving the core concept. By shipping MVP first, we can validate the product before investing in these enhancements.
 
@@ -619,26 +622,18 @@ These features add significant complexity relative to their value for proving th
 
 ---
 
-#### Sprint 1.5.3: Task Groups & Phases
+#### Sprint 1.5.3: Task Groups & Phases ✅ MOVED TO MVP
 
-**Features**:
-- Create task groups/phases
-- Nest tasks within groups
-- Collapse/expand groups
-- Group-level timeline bars
-- Group dependencies
+**Status**: ✅ Completed in MVP Phase (Sprint 1.1.1)
 
-**Technical Work**:
-- Hierarchical data model
-- Group rendering on timeline
-- Collapse/expand logic
-- Group-level calculations (dates, progress)
+This sprint was completed ahead of schedule during MVP development. See Sprint 1.1.1 for implementation details.
 
-**Acceptance Criteria**:
-- Can create and nest groups 3 levels deep
-- Groups display on timeline
-- Collapsing groups hides tasks
-- Group dates auto-calculate from children
+**Features Completed**:
+- ✅ Create task groups/phases with `type: 'summary'`
+- ✅ Nest tasks within groups (3 levels deep)
+- ✅ Collapse/expand groups
+- ✅ Summary bars with auto-calculated dates
+- ✅ Drag-drop with INTO/BEFORE/AFTER zones
 
 ---
 
@@ -752,6 +747,42 @@ This sprint was completed ahead of schedule during MVP development. See Sprint 1
 - Project list shows thumbnails and metadata
 
 **Note**: Data model already supports this (MVP Phase 1), just adding UI
+
+---
+
+#### Sprint 1.5.9: User Preferences & Settings Dialog
+
+**Features**:
+- Preferences dialog (Menu → Preferences...)
+- Date format selection (DD/MM/YYYY, MM/DD/YYYY, YYYY-MM-DD)
+- First day of week (Sunday/Monday)
+- UI density (Compact/Normal/Comfortable)
+- Theme selection (Light/Dark/System)
+- Default export settings with "Save as my default" checkbox
+
+**Technical Work**:
+- `userPreferencesSlice.ts` with Zustand persist middleware
+- Preferences dialog component
+- Date format utilities (apply format globally)
+- UI density CSS variables/classes
+- Theme switching (CSS variables or Tailwind dark mode)
+- Export dialog "Save as default" integration
+
+**Acceptance Criteria**:
+- Preferences persist across browser sessions (localStorage)
+- Date format applies to all date displays
+- UI density affects row heights, font sizes, spacing
+- Theme applies immediately without reload
+- Export dialog remembers user defaults
+- New projects use user preferences (not hardcoded defaults)
+
+**Architecture Reference**: See [SETTINGS_ARCHITECTURE.md](../architecture/SETTINGS_ARCHITECTURE.md) for:
+- Two-tier storage model (User Prefs vs Project Settings)
+- No override logic needed - clear separation
+- Implementation guide with code examples
+- User persona validation
+
+**Note**: This sprint implements User Stories 5.6 (UI Density), 5.7 (Date Format), 5.8 (First Day of Week)
 
 ---
 
