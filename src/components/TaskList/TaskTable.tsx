@@ -219,7 +219,7 @@ export function TaskTable({ hideHeader = true }: TaskTableProps): JSX.Element {
           {/* Header Row - Hidden when rendered on App level */}
           {!hideHeader && (
             <div className="task-table-header contents" role="row">
-              {TASK_COLUMNS.map((column, index) => (
+              {TASK_COLUMNS.map((column) => (
                 <div
                   key={column.id}
                   className={`task-table-header-cell sticky top-0 z-10 ${column.id === "name" ? "pr-3" : "px-3"} py-4 bg-gray-50 border-b ${column.id !== "color" ? "border-r" : ""} border-gray-200 text-xs font-semibold text-gray-700 uppercase tracking-wider relative`}
@@ -245,14 +245,14 @@ export function TaskTable({ hideHeader = true }: TaskTableProps): JSX.Element {
                   ) : (
                     column.label
                   )}
-                  {/* Column Resizer - not on last column */}
-                  {index < TASK_COLUMNS.length - 1 && (
+                  {/* Column Resizer - only for name column */}
+                  {column.id === "name" && (
                     <ColumnResizer
                       columnId={column.id}
                       currentWidth={getColumnWidth(column.id)}
                       onResize={handleColumnResize}
                       onAutoResize={handleAutoResize}
-                      minWidth={40}
+                      minWidth={100}
                     />
                   )}
                 </div>
