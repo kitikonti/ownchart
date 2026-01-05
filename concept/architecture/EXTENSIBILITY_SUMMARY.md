@@ -163,7 +163,7 @@ interface Task {
 - **V1.2**: Resource assignment UI (fields already in place)
 - **V2.0**: Collaboration features (user IDs already in data model)
 
-**File Compatibility**: A .gantt file created in MVP v1.0 will open perfectly in v2.0 with collaboration features, because the extensibility fields were there from the start.
+**File Compatibility**: A .ownchart file created in MVP v1.0 will open perfectly in v2.0 with collaboration features, because the extensibility fields were there from the start.
 
 ---
 

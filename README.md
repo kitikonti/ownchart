@@ -21,7 +21,7 @@ No installation needed - just open and start planning. Your data stays in your b
 - 🔒 **Privacy-First** - All data stays local, zero tracking
 - 📴 **Offline-Ready** - Works completely offline in your browser
 - 🎯 **No Setup** - Zero installation, no backend required
-- 💾 **Own Your Data** - Save/load `.gantt` files on your device
+- 💾 **Own Your Data** - Save/load `.ownchart` files on your device
 - ⚡ **Fast & Lightweight** - Built with modern web technologies
 - 🎨 **Interactive Timeline** - Drag-to-move, drag-to-resize task bars
 - 🔄 **Full Undo/Redo** - Time-travel through your changes
@@ -120,7 +120,7 @@ Comprehensive documentation is available in the [`/concept`](./concept) folder:
 - ✅ Task management with hierarchy (summaries, milestones)
 - ✅ Interactive timeline (drag-to-move, drag-to-resize)
 - ✅ Zoom & navigation (10%-500%)
-- ✅ File operations (save/load .gantt format)
+- ✅ File operations (save/load .ownchart format)
 - ✅ Undo/redo system (100 command stack)
 - ✅ Keyboard shortcuts
 

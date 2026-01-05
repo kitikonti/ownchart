@@ -1090,7 +1090,7 @@ User presses Ctrl+Z
 **4. Serialization Strategy**
 
 All commands must be JSON-serializable for:
-- Persistence in `.gantt` file format
+- Persistence in `.ownchart` file format
 - LocalStorage caching
 - Future: Network transmission (collaboration)
 
@@ -1704,7 +1704,7 @@ Test Coverage:
 - Named snapshots ("Save this version")
 - History panel showing list of all actions
 - Undo grouping (e.g., "Indent 5 tasks" = 1 undo)
-- Persist history in `.gantt` file format
+- Persist history in `.ownchart` file format
 - Collaborative undo (track who performed action)
 
 ---

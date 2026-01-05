@@ -49,7 +49,7 @@ describe('File Operations - Deserialization', () => {
   describe('Successful Deserialization', () => {
     it('should deserialize valid file', async () => {
       const content = JSON.stringify(createValidFileContent());
-      const result = await deserializeGanttFile(content, 'test.gantt');
+      const result = await deserializeGanttFile(content, 'test.ownchart');
 
       expect(result.success).toBe(true);
       expect(result.data).toBeDefined();
@@ -58,21 +58,21 @@ describe('File Operations - Deserialization', () => {
 
     it('should return chart name', async () => {
       const content = JSON.stringify(createValidFileContent());
-      const result = await deserializeGanttFile(content, 'test.gantt');
+      const result = await deserializeGanttFile(content, 'test.ownchart');
 
       expect(result.data!.chartName).toBe('Test Chart');
     });
 
     it('should return chart ID', async () => {
       const content = JSON.stringify(createValidFileContent());
-      const result = await deserializeGanttFile(content, 'test.gantt');
+      const result = await deserializeGanttFile(content, 'test.ownchart');
 
       expect(result.data!.chartId).toBe('123e4567-e89b-12d3-a456-426614174000');
     });
 
     it('should return view settings', async () => {
       const content = JSON.stringify(createValidFileContent());
-      const result = await deserializeGanttFile(content, 'test.gantt');
+      const result = await deserializeGanttFile(content, 'test.ownchart');
 
       expect(result.data!.viewSettings.zoom).toBe(1.5);
       expect(result.data!.viewSettings.showWeekends).toBe(false);
@@ -80,7 +80,7 @@ describe('File Operations - Deserialization', () => {
 
     it('should convert tasks to proper format', async () => {
       const content = JSON.stringify(createValidFileContent());
-      const result = await deserializeGanttFile(content, 'test.gantt');
+      const result = await deserializeGanttFile(content, 'test.ownchart');
 
       const task = result.data!.tasks[0];
       expect(task.id).toBe('123e4567-e89b-12d3-a456-426614174001');
@@ -93,21 +93,21 @@ describe('File Operations - Deserialization', () => {
   describe('Invalid JSON', () => {
     it('should reject malformed JSON', async () => {
       const invalid = '{not valid json}';
-      const result = await deserializeGanttFile(invalid, 'test.gantt');
+      const result = await deserializeGanttFile(invalid, 'test.ownchart');
 
       expect(result.success).toBe(false);
       expect(result.error!.code).toBe('INVALID_JSON');
     });
 
     it('should reject empty content', async () => {
-      const result = await deserializeGanttFile('', 'test.gantt');
+      const result = await deserializeGanttFile('', 'test.ownchart');
 
       expect(result.success).toBe(false);
     });
 
     it('should reject non-object JSON', async () => {
       const invalid = '["array"]';
-      const result = await deserializeGanttFile(invalid, 'test.gantt');
+      const result = await deserializeGanttFile(invalid, 'test.ownchart');
 
       expect(result.success).toBe(false);
       // Arrays are objects, so it passes structure check but fails on missing fields
@@ -123,7 +123,7 @@ describe('File Operations - Deserialization', () => {
 
       const result = await deserializeGanttFile(
         JSON.stringify(invalid),
-        'test.gantt'
+        'test.ownchart'
       );
 
       expect(result.success).toBe(false);
@@ -135,7 +135,7 @@ describe('File Operations - Deserialization', () => {
 
       const result = await deserializeGanttFile(
         JSON.stringify(invalid),
-        'test.gantt'
+        'test.ownchart'
       );
 
       expect(result.success).toBe(false);
@@ -149,7 +149,7 @@ describe('File Operations - Deserialization', () => {
 
       const result = await deserializeGanttFile(
         JSON.stringify(invalid),
-        'test.gantt'
+        'test.ownchart'
       );
 
       expect(result.success).toBe(false);
@@ -162,7 +162,7 @@ describe('File Operations - Deserialization', () => {
 
       const result = await deserializeGanttFile(
         JSON.stringify(invalid),
-        'test.gantt'
+        'test.ownchart'
       );
 
       expect(result.success).toBe(false);
@@ -176,7 +176,7 @@ describe('File Operations - Deserialization', () => {
 
       const result = await deserializeGanttFile(
         JSON.stringify(invalid),
-        'test.gantt'
+        'test.ownchart'
       );
 
       expect(result.success).toBe(false);
@@ -189,7 +189,7 @@ describe('File Operations - Deserialization', () => {
 
       const result = await deserializeGanttFile(
         JSON.stringify(invalid),
-        'test.gantt'
+        'test.ownchart'
       );
 
       expect(result.success).toBe(false);
@@ -202,7 +202,7 @@ describe('File Operations - Deserialization', () => {
 
       const result = await deserializeGanttFile(
         JSON.stringify(invalid),
-        'test.gantt'
+        'test.ownchart'
       );
 
       expect(result.success).toBe(false);
@@ -215,7 +215,7 @@ describe('File Operations - Deserialization', () => {
 
       const result = await deserializeGanttFile(
         JSON.stringify(invalid),
-        'test.gantt'
+        'test.ownchart'
       );
 
       expect(result.success).toBe(false);
@@ -228,7 +228,7 @@ describe('File Operations - Deserialization', () => {
       const content = JSON.stringify(createValidFileContent());
       const largeSize = 51 * 1024 * 1024;
 
-      const result = await deserializeGanttFile(content, 'test.gantt', largeSize);
+      const result = await deserializeGanttFile(content, 'test.ownchart', largeSize);
 
       expect(result.success).toBe(false);
       expect(result.error!.message).toContain('exceeds limit');
@@ -238,7 +238,7 @@ describe('File Operations - Deserialization', () => {
       const content = JSON.stringify(createValidFileContent());
       const validSize = 1024;
 
-      const result = await deserializeGanttFile(content, 'test.gantt', validSize);
+      const result = await deserializeGanttFile(content, 'test.ownchart', validSize);
 
       expect(result.success).toBe(true);
     });
@@ -250,7 +250,7 @@ describe('File Operations - Deserialization', () => {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       delete (file.chart.tasks[0] as any).type;
 
-      const result = await deserializeGanttFile(JSON.stringify(file), 'test.gantt');
+      const result = await deserializeGanttFile(JSON.stringify(file), 'test.ownchart');
 
       expect(result.data!.tasks[0].type).toBe('task');
     });
@@ -260,7 +260,7 @@ describe('File Operations - Deserialization', () => {
       // Set progress to 0 explicitly (or it could be undefined and defaulted)
       file.chart.tasks[0].progress = 0;
 
-      const result = await deserializeGanttFile(JSON.stringify(file), 'test.gantt');
+      const result = await deserializeGanttFile(JSON.stringify(file), 'test.ownchart');
 
       expect(result.success).toBe(true);
       expect(result.data!.tasks[0].progress).toBe(0);
@@ -271,7 +271,7 @@ describe('File Operations - Deserialization', () => {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       delete (file.chart.tasks[0] as any).open;
 
-      const result = await deserializeGanttFile(JSON.stringify(file), 'test.gantt');
+      const result = await deserializeGanttFile(JSON.stringify(file), 'test.ownchart');
 
       expect(result.data!.tasks[0].open).toBe(true);
     });
@@ -281,7 +281,7 @@ describe('File Operations - Deserialization', () => {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       delete (file.chart.tasks[0] as any).metadata;
 
-      const result = await deserializeGanttFile(JSON.stringify(file), 'test.gantt');
+      const result = await deserializeGanttFile(JSON.stringify(file), 'test.ownchart');
 
       expect(result.data!.tasks[0].metadata).toEqual({});
     });
@@ -295,7 +295,7 @@ describe('File Operations - Deserialization', () => {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       (file.chart.tasks[0] as any).customData = { nested: true };
 
-      const result = await deserializeGanttFile(JSON.stringify(file), 'test.gantt');
+      const result = await deserializeGanttFile(JSON.stringify(file), 'test.ownchart');
 
       expect(result.data!.tasks[0].__unknownFields).toBeDefined();
       expect(result.data!.tasks[0].__unknownFields!.futureField).toBe('future value');
@@ -307,7 +307,7 @@ describe('File Operations - Deserialization', () => {
     it('should not store known fields in __unknownFields', async () => {
       const file = createValidFileContent();
 
-      const result = await deserializeGanttFile(JSON.stringify(file), 'test.gantt');
+      const result = await deserializeGanttFile(JSON.stringify(file), 'test.ownchart');
 
       if (result.data!.tasks[0].__unknownFields) {
         expect(result.data!.tasks[0].__unknownFields!.id).toBeUndefined();
@@ -323,7 +323,7 @@ describe('File Operations - Deserialization', () => {
 
       const result = await deserializeGanttFile(
         JSON.stringify(malicious),
-        'test.gantt'
+        'test.ownchart'
       );
 
       expect(result.data!.tasks[0].name).not.toContain('<script>');
@@ -336,7 +336,7 @@ describe('File Operations - Deserialization', () => {
 
       const result = await deserializeGanttFile(
         JSON.stringify(malicious),
-        'test.gantt'
+        'test.ownchart'
       );
 
       expect(result.data!.chartName).not.toContain('<b>');
@@ -353,7 +353,7 @@ describe('File Operations - Deserialization', () => {
 
       const result = await deserializeGanttFile(
         JSON.stringify(malicious),
-        'test.gantt'
+        'test.ownchart'
       );
 
       expect(result.success).toBe(true);
@@ -369,7 +369,7 @@ describe('File Operations - Deserialization', () => {
 
       const result = await deserializeGanttFile(
         JSON.stringify(invalid),
-        'test.gantt'
+        'test.ownchart'
       );
 
       expect(result.success).toBe(false);
@@ -383,7 +383,7 @@ describe('File Operations - Deserialization', () => {
 
       const result = await deserializeGanttFile(
         JSON.stringify(invalid),
-        'test.gantt'
+        'test.ownchart'
       );
 
       expect(result.success).toBe(false);
@@ -406,7 +406,7 @@ describe('File Operations - Deserialization', () => {
 
       const result = await deserializeGanttFile(
         JSON.stringify(valid),
-        'test.gantt'
+        'test.ownchart'
       );
 
       expect(result.success).toBe(true);
@@ -421,7 +421,7 @@ describe('File Operations - Deserialization', () => {
       const file = createValidFileContent();
       file.chart.tasks = [];
 
-      const result = await deserializeGanttFile(JSON.stringify(file), 'test.gantt');
+      const result = await deserializeGanttFile(JSON.stringify(file), 'test.ownchart');
 
       expect(result.success).toBe(true);
       expect(result.data!.tasks).toEqual([]);
@@ -430,7 +430,7 @@ describe('File Operations - Deserialization', () => {
     it('should handle missing optional description', async () => {
       const file = createValidFileContent();
 
-      const result = await deserializeGanttFile(JSON.stringify(file), 'test.gantt');
+      const result = await deserializeGanttFile(JSON.stringify(file), 'test.ownchart');
 
       expect(result.success).toBe(true);
     });
@@ -439,7 +439,7 @@ describe('File Operations - Deserialization', () => {
       const file = createValidFileContent();
       file.chart.tasks[0].name = 'Task with émojis 🚀 and ümlauts';
 
-      const result = await deserializeGanttFile(JSON.stringify(file), 'test.gantt');
+      const result = await deserializeGanttFile(JSON.stringify(file), 'test.ownchart');
 
       expect(result.data!.tasks[0].name).toBe('Task with émojis 🚀 and ümlauts');
     });

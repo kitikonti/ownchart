@@ -3,7 +3,7 @@ import { useFileStore } from "../store/slices/fileSlice";
 
 /**
  * Custom hook to dynamically update the browser tab title
- * Shows "filename.gantt - OwnChart" when a file is loaded
+ * Shows "filename.ownchart - OwnChart" when a file is loaded
  * Shows "OwnChart" when no file is loaded
  */
 export function useDocumentTitle(): void {

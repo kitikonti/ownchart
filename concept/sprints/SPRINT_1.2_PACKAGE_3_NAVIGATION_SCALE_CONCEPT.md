@@ -2271,7 +2271,7 @@ test('should pan timeline with spacebar + drag', async ({ page }) => {
   await page.mouse.move(600, 300);
 
   // Get SVG transform
-  const svg = page.locator('svg.gantt-chart');
+  const svg = page.locator('svg.ownchart-chart');
   const transform = await svg.evaluate(el => window.getComputedStyle(el).transform);
 
   // Should have translate component

@@ -66,7 +66,7 @@ This concept documentation is organized into logical categories for easy navigat
 **Target Audience**: General users (students, freelancers, project managers, hobbyists)
 **Platform**: Web application (desktop/laptop optimized)
 **Technology Approach**: Client-side only (no backend required)
-**File Format**: JSON-based single-file storage (.gantt)
+**File Format**: JSON-based single-file storage (.ownchart)
 **Export Formats**: PDF, SVG, PNG
 **Architecture**: Extensible from day one - supports future features without breaking changes
 
@@ -115,7 +115,7 @@ See **[EXTENSIBILITY_ARCHITECTURE.md](./architecture/EXTENSIBILITY_ARCHITECTURE.
 
 ⚡ **No Backend Required**: Complete client-side operation (privacy-first)
 🔌 **Extensible by Design**: Plugin system, custom fields, alternative views
-📦 **Portable Files**: Single .gantt file contains everything
+📦 **Portable Files**: Single .ownchart file contains everything
 🔄 **Version Safe**: File format migrations ensure compatibility
 🎨 **View Agnostic**: Data model supports multiple visualization types
 🔧 **Event-Driven**: Plugin hooks for third-party extensions

@@ -21,7 +21,7 @@ Implement task dependencies allowing users to define relationships between tasks
 - [ ] Circular dependencies are detected and blocked with clear error
 - [ ] Dependent task dates auto-adjust when predecessor changes
 - [ ] Performance: 100 tasks with 50 dependencies at 60fps
-- [ ] Dependencies persist in .gantt file format
+- [ ] Dependencies persist in .ownchart file format
 - [ ] Full undo/redo support for dependency operations
 
 ### Sprint Completion Checkpoint

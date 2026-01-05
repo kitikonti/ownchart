@@ -239,7 +239,7 @@ A client-side web application that:
 
 ### 7.1 File Format
 - **Format**: JSON
-- **Extension**: `.gantt` or `.ganttflow`
+- **Extension**: `.ownchart` or `.ownchartflow`
 - **Encoding**: UTF-8
 - **Compression**: Optional (gzip for large files)
 

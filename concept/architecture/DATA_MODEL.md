@@ -389,9 +389,9 @@ interface ChartSnapshot {
 
 ## 4. File Format
 
-### 4.1 .gantt File Format
+### 4.1 .ownchart File Format
 
-The `.gantt` file is a JSON file containing the complete chart and its history.
+The `.ownchart` file is a JSON file containing the complete chart and its history.
 
 ```typescript
 interface GanttFile {
@@ -552,7 +552,7 @@ interface GanttFile {
 
 For large charts, the file can be gzip-compressed:
 
-**File Extension**: `.gantt.gz`
+**File Extension**: `.ownchart.gz`
 
 **Detection**: Check for gzip magic bytes (1f 8b) at file start
 
@@ -668,16 +668,16 @@ const fileValidation = {
 
 ## 6. JSON Schema Definition
 
-### 6.1 Complete JSON Schema for .gantt Files
+### 6.1 Complete JSON Schema for .ownchart Files
 
-The following JSON Schema defines the complete structure and validation rules for `.gantt` files. Use this schema for strict validation during file import.
+The following JSON Schema defines the complete structure and validation rules for `.ownchart` files. Use this schema for strict validation during file import.
 
 ```json
 {
   "$schema": "http://json-schema.org/draft-07/schema#",
   "$id": "https://ganttchart.app/schemas/gantt-file-v1.schema.json",
   "title": "Gantt Chart File Format",
-  "description": "JSON schema for .gantt file format version 1.x",
+  "description": "JSON schema for .ownchart file format version 1.x",
   "type": "object",
   "required": ["fileVersion", "appVersion", "chart", "history", "metadata"],
   "additionalProperties": false,
@@ -991,7 +991,7 @@ interface ValidationError {
 }
 
 /**
- * Validate .gantt file against JSON Schema
+ * Validate .ownchart file against JSON Schema
  * Run this in a Web Worker for large files
  */
 async function validateFile(fileContent: string): Promise<ValidationResult> {

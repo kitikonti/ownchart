@@ -1260,7 +1260,7 @@ const dependencyStyles = {
 
 ### 5.1 Save Chart
 
-**Description**: Export chart to .gantt file on local file system.
+**Description**: Export chart to .ownchart file on local file system.
 
 **Trigger**:
 - Click "Save" button
@@ -1268,9 +1268,9 @@ const dependencyStyles = {
 - File menu → Save
 
 **Behavior**:
-1. Generate .gantt JSON file (see Data Model)
-2. Default filename: `[ChartName]-[Date].gantt`
-   - Example: `Website-Redesign-2025-12-11.gantt`
+1. Generate .ownchart JSON file (see Data Model)
+2. Default filename: `[ChartName]-[Date].ownchart`
+   - Example: `Website-Redesign-2025-12-11.ownchart`
 3. Trigger browser download
 4. Show success notification
 5. Mark chart as "saved" (no unsaved changes indicator)
@@ -1314,7 +1314,7 @@ downloadFile(blob, filename);
 
 ### 5.2 Open Chart
 
-**Description**: Load chart from .gantt file.
+**Description**: Load chart from .ownchart file.
 
 **Trigger**:
 - Click "Open" button
@@ -1324,7 +1324,7 @@ downloadFile(blob, filename);
 
 **Behavior**:
 1. File picker opens (native OS dialog)
-2. User selects .gantt file
+2. User selects .ownchart file
 3. File validation:
    - Check file format (JSON)
    - Check file version compatibility

@@ -15,7 +15,7 @@ import {
 describe('File Operations - Validation', () => {
   describe('Layer 1: Pre-Parse Validation', () => {
     it('should reject files larger than 50MB', async () => {
-      const largeFile = new File(['x'], 'test.gantt', {
+      const largeFile = new File(['x'], 'test.ownchart', {
         type: 'application/json',
       });
       Object.defineProperty(largeFile, 'size', { value: 51 * 1024 * 1024 });
@@ -29,25 +29,25 @@ describe('File Operations - Validation', () => {
     });
 
     it('should accept files smaller than 50MB', async () => {
-      const validFile = new File(['{}'], 'test.gantt', {
+      const validFile = new File(['{}'], 'test.ownchart', {
         type: 'application/json',
       });
 
       await expect(validatePreParse(validFile)).resolves.not.toThrow();
     });
 
-    it('should reject files without .gantt extension', async () => {
+    it('should reject files without .ownchart extension', async () => {
       const wrongExtension = new File(['{}'], 'test.json', {
         type: 'application/json',
       });
 
       await expect(validatePreParse(wrongExtension)).rejects.toThrow(
-        'must have .gantt extension'
+        'must have .ownchart extension'
       );
     });
 
-    it('should accept files with .gantt extension', async () => {
-      const validFile = new File(['{}'], 'test.gantt', {
+    it('should accept files with .ownchart extension', async () => {
+      const validFile = new File(['{}'], 'test.ownchart', {
         type: 'application/json',
       });
 

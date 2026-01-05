@@ -1,6 +1,6 @@
 /**
  * GanttFile Format v1.0.0
- * Forward-compatible file structure for .gantt files
+ * Forward-compatible file structure for .ownchart files
  */
 
 import type { TaskType } from "../../types/chart.types";

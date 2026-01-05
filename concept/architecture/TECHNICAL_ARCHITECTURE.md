@@ -604,7 +604,7 @@ Export Format Decision Tree:
 ```typescript
 async function exportToSVG(options: ExportOptions): Promise<Blob> {
   // 1. Clone the chart SVG element
-  const svgElement = document.querySelector('.gantt-chart-svg') as SVGSVGElement;
+  const svgElement = document.querySelector('.ownchart-chart-svg') as SVGSVGElement;
   const svgClone = svgElement.cloneNode(true) as SVGSVGElement;
 
   // 2. Inline all CSS styles (external stylesheets won't work in standalone SVG)
@@ -802,7 +802,7 @@ if (preflight.warnings.length > 0) {
 **Primary Method: html2canvas**:
 ```typescript
 async function exportToPNG(options: ExportOptions): Promise<Blob> {
-  const chartContainer = document.querySelector('.gantt-chart-container');
+  const chartContainer = document.querySelector('.ownchart-chart-container');
 
   try {
     // html2canvas options
@@ -814,7 +814,7 @@ async function exportToPNG(options: ExportOptions): Promise<Blob> {
       logging: false,
       onclone: (clonedDoc) => {
         // Apply export-specific styles to clone
-        const clonedChart = clonedDoc.querySelector('.gantt-chart-container');
+        const clonedChart = clonedDoc.querySelector('.ownchart-chart-container');
         clonedChart.classList.add('export-mode');
       }
     });
@@ -1071,7 +1071,7 @@ Since this is a client-only application with no server component:
 - Session hijacking
 
 **Vulnerable To**:
-1. **Malicious File Import** - Crafted .gantt files causing:
+1. **Malicious File Import** - Crafted .ownchart files causing:
    - XSS via unsanitized strings
    - DoS via enormous payloads
    - Memory exhaustion
@@ -1116,8 +1116,8 @@ async function preValidateFile(file: File): Promise<void> {
   }
 
   // Extension check
-  if (!file.name.endsWith('.gantt')) {
-    throw new SecurityError('Invalid file extension. Expected .gantt');
+  if (!file.name.endsWith('.ownchart')) {
+    throw new SecurityError('Invalid file extension. Expected .ownchart');
   }
 
   // MIME type check (advisory only, can be spoofed)
@@ -1915,24 +1915,24 @@ Security Team
 
 ## Summary
 A cross-site scripting (XSS) vulnerability was discovered in the file name
-display functionality. An attacker could craft a malicious .gantt file with
+display functionality. An attacker could craft a malicious .ownchart file with
 a specially crafted task name containing JavaScript code.
 
 ## Impact
-If a user opens a malicious .gantt file, arbitrary JavaScript could execute
+If a user opens a malicious .ownchart file, arbitrary JavaScript could execute
 in their browser. This could potentially:
 - Steal data from other charts
 - Modify charts without user knowledge
 - Access browser storage
 
 ## Affected Users
-Users who opened .gantt files from untrusted sources between v1.0.0 and v1.2.3.
+Users who opened .ownchart files from untrusted sources between v1.0.0 and v1.2.3.
 
 ## Remediation
 Update to v1.2.4 or later immediately. Clear browser cache after updating.
 
 ## Workaround (if unable to update)
-Only open .gantt files from trusted sources.
+Only open .ownchart files from trusted sources.
 
 ## Timeline
 - 2025-01-01: Vulnerability reported by Jane Doe

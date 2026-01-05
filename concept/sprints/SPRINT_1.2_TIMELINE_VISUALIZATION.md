@@ -1206,7 +1206,7 @@ export function ChartCanvas({
   background: #fafafa;
 }
 
-.gantt-chart {
+.ownchart-chart {
   display: block;
   user-select: none;
 }
@@ -2599,7 +2599,7 @@ npm install date-fns
 ## Next Steps After Sprint 1.2
 
 **Sprint 1.3: File Operations** (prioritized before dependencies)
-- Save/load .gantt.json files
+- Save/load .ownchart.json files
 - Data persistence critical before adding complex features
 - Enables user testing with real projects
 

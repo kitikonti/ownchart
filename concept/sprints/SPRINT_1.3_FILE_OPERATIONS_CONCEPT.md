@@ -12,11 +12,11 @@
 ## Executive Summary
 
 ### Sprint Goal
-Implement comprehensive file operations allowing users to save their work to `.gantt` files, open existing files, and create new charts. This sprint focuses on **forward-compatible file format design** ensuring users can always open old files in future app versions.
+Implement comprehensive file operations allowing users to save their work to `.ownchart` files, open existing files, and create new charts. This sprint focuses on **forward-compatible file format design** ensuring users can always open old files in future app versions.
 
 ### Success Metrics
-- [x] Users can save their chart to a `.gantt` file ✅
-- [x] Users can open existing `.gantt` files ✅
+- [x] Users can save their chart to a `.ownchart` file ✅
+- [x] Users can open existing `.ownchart` files ✅
 - [x] Users can create a new empty chart ✅
 - [x] Unsaved changes prompt prevents accidental data loss ✅
 - [x] Invalid/malicious files are rejected with clear error messages ✅
@@ -25,9 +25,9 @@ Implement comprehensive file operations allowing users to save their work to `.g
 ### Sprint Completion Checkpoint
 **Visual Test:** "I can save and load my work"
 - User creates 5 tasks with hierarchy
-- User saves to `my-project.gantt`
+- User saves to `my-project.ownchart`
 - User closes browser tab
-- User opens app, loads `my-project.gantt`
+- User opens app, loads `my-project.ownchart`
 - All data restored exactly as saved
 - User modifies a task, tries to close tab
 - "Unsaved changes" dialog appears
@@ -79,7 +79,7 @@ Implement comprehensive file operations allowing users to save their work to `.g
 
 **User Stories:**
 - As a project manager, I want to save my Gantt chart so I don't lose my work
-- As a freelancer, I want to share a `.gantt` file with my client for review
+- As a freelancer, I want to share a `.ownchart` file with my client for review
 - As a returning user, I want to continue where I left off
 - As a cautious user, I want to be warned before losing unsaved changes
 
@@ -213,11 +213,11 @@ Total: 26 hours over 5 days
 │                    Unable to Open File                      │
 │─────────────────────────────────────────────────────────────│
 │                                                             │
-│   The file "corrupted.gantt" cannot be opened:              │
+│   The file "corrupted.ownchart" cannot be opened:              │
 │                                                             │
 │   Error: Invalid JSON structure at line 42                  │
 │                                                             │
-│   The file may be corrupted or not a valid .gantt file.     │
+│   The file may be corrupted or not a valid .ownchart file.     │
 │                                                             │
 │                                    [OK]                     │
 └─────────────────────────────────────────────────────────────┘
@@ -278,7 +278,7 @@ Saving (large file):
 
 Save Complete (toast notification):
 ┌───────────────────────────────────┐
-│ ✓  Saved "my-project.gantt"       │  ← 3-second toast
+│ ✓  Saved "my-project.ownchart"       │  ← 3-second toast
 └───────────────────────────────────┘
 
 Save Failed (toast notification):
@@ -299,7 +299,7 @@ Untitled chart (unsaved):
 
 Saved chart:
 ┌─────────────────────────────────────────────────────────────┐
-│ Gantt Chart - my-project.gantt                              │
+│ Gantt Chart - my-project.ownchart                              │
 └─────────────────────────────────────────────────────────────┘
 ```
 
@@ -496,7 +496,7 @@ function migrateFile(file: unknown, targetVersion: string): GanttFile {
 ```
 Layer 1: Pre-Parse Validation
 ├── File size check (max 50MB)
-├── File extension check (.gantt)
+├── File extension check (.ownchart)
 └── Magic bytes check (optional)
 
 Layer 2: Safe JSON Parsing
@@ -903,7 +903,7 @@ export async function saveFile(
   content: string,
   options: SaveFileOptions = {}
 ): Promise<{ success: boolean; fileName?: string; error?: string }> {
-  const fileName = options.suggestedName || 'untitled.gantt';
+  const fileName = options.suggestedName || 'untitled.ownchart';
 
   // Chrome/Edge: Try to re-save to existing file handle
   if (!options.forceNewFile && currentFileHandle && 'createWritable' in currentFileHandle) {
@@ -925,7 +925,7 @@ export async function saveFile(
         suggestedName: fileName,
         types: [{
           description: options.description || 'Gantt Chart File',
-          accept: { 'application/json': ['.gantt'] }
+          accept: { 'application/json': ['.ownchart'] }
         }]
       });
 
@@ -973,7 +973,7 @@ export async function openFile(
         multiple: options.multiple ?? false,
         types: [{
           description: 'Gantt Chart Files',
-          accept: { 'application/json': ['.gantt'] }
+          accept: { 'application/json': ['.ownchart'] }
         }]
       });
 
@@ -1003,7 +1003,7 @@ export async function openFile(
   return new Promise((resolve) => {
     const input = document.createElement('input');
     input.type = 'file';
-    input.accept = '.gantt,application/json';
+    input.accept = '.ownchart,application/json';
     input.multiple = options.multiple ?? false;
 
     input.onchange = async () => {
@@ -1076,12 +1076,12 @@ export function useFileOperations() {
 
     try {
       const content = serializeToGanttFile(tasks, viewSettings, {
-        name: fileState.fileName?.replace('.gantt', '') || 'Untitled',
+        name: fileState.fileName?.replace('.ownchart', '') || 'Untitled',
         createdAt: fileState.lastSaved?.toISOString()
       }, { prettyPrint: true });
 
       const result = await saveFile(content, {
-        suggestedName: fileState.fileName || 'untitled.gantt',
+        suggestedName: fileState.fileName || 'untitled.ownchart',
         forceNewFile: saveAs  // true = "Save As", false = re-save if possible
       });
 
@@ -1228,7 +1228,7 @@ Test Case 1.3: Save As Creates New File
 ```
 Test Case 2.1: Open Valid File
 [ ] Press Ctrl+O
-[ ] Select valid .gantt file
+[ ] Select valid .ownchart file
 [ ] Verify file loads correctly
 [ ] Verify all tasks present
 [ ] Verify hierarchy intact
@@ -1434,7 +1434,7 @@ describe('File Security', () => {
 
       const result = await deserializeGanttFile(
         JSON.stringify(maliciousFile),
-        'test.gantt'
+        'test.ownchart'
       );
 
       expect(result.success).toBe(true);
@@ -1452,7 +1452,7 @@ describe('File Security', () => {
 
       const result = await deserializeGanttFile(
         JSON.stringify(maliciousFile),
-        'test.gantt'
+        'test.ownchart'
       );
 
       expect(result.data!.tasks[0].name).not.toContain('onerror');
@@ -1466,7 +1466,7 @@ describe('File Security', () => {
         "fileVersion": "1.0.0"
       }`;
 
-      await deserializeGanttFile(maliciousFile, 'test.gantt');
+      await deserializeGanttFile(maliciousFile, 'test.ownchart');
 
       expect((Object.prototype as any).polluted).toBeUndefined();
     });
@@ -1477,7 +1477,7 @@ describe('File Security', () => {
         "fileVersion": "1.0.0"
       }`;
 
-      await deserializeGanttFile(maliciousFile, 'test.gantt');
+      await deserializeGanttFile(maliciousFile, 'test.ownchart');
 
       expect((Object.prototype as any).polluted).toBeUndefined();
     });
@@ -1486,7 +1486,7 @@ describe('File Security', () => {
   describe('File Size Limits', () => {
     it('should reject files over 50MB', async () => {
       const largeContent = 'x'.repeat(51 * 1024 * 1024);
-      const file = new File([largeContent], 'large.gantt');
+      const file = new File([largeContent], 'large.ownchart');
 
       await expect(validateFileSize(file)).rejects.toThrow('exceeds limit');
     });
@@ -1567,7 +1567,7 @@ describe('File Security', () => {
 
 **Future File Format Enhancements (V1.1+):**
 - Auto-save to browser storage
-- File compression (.gantt.gz)
+- File compression (.ownchart.gz)
 - Multi-file project support
 - Cloud sync integration
 

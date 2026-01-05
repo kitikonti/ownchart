@@ -31,9 +31,9 @@
 
 ### Save (Ctrl+S)
 - [ ] Neues Chart erstellen und speichern (Ctrl+S)
-- [ ] Datei wird im .gantt Format gespeichert
+- [ ] Datei wird im .ownchart Format gespeichert
 - [ ] Save-Icon wechselt von "fill" (blau) zu "regular" (grau) nach erfolgreichem Speichern
-- [ ] Toast Notification "Saved 'filename.gantt'" erscheint
+- [ ] Toast Notification "Saved 'filename.ownchart'" erscheint
 - [ ] isDirty Flag wird auf false gesetzt
 - [ ] **Chrome/Edge**: Zweites Speichern (Ctrl+S) öffnet KEINEN Dialog (re-save)
 - [ ] **Firefox/Safari**: Jedes Speichern löst Download aus
@@ -47,10 +47,10 @@
 
 ### Open (Ctrl+O)
 - [ ] Open Dialog öffnet sich bei Ctrl+O
-- [ ] Nur .gantt Dateien sind auswählbar
+- [ ] Nur .ownchart Dateien sind auswählbar
 - [ ] Chart wird korrekt geladen (Tasks, Hierarchie, Farben, Progress)
 - [ ] View Settings werden wiederhergestellt (Zoom, Pan, Column Widths)
-- [ ] Toast Notification "Opened 'filename.gantt'" erscheint
+- [ ] Toast Notification "Opened 'filename.ownchart'" erscheint
 - [ ] Undo/Redo History wird geleert
 - [ ] isDirty Flag wird auf false gesetzt
 
@@ -104,7 +104,7 @@
 
 ### Layer 1: Pre-Parse Validation
 - [x] **Zu große Datei (>50MB)**: Error "File size X MB exceeds limit of 50MB" ✅ *Automated: validate.test.ts*
-- [x] **Falsche Extension (.json, .txt)**: Error "File must have .gantt extension" ✅ *Automated: validate.test.ts*
+- [x] **Falsche Extension (.json, .txt)**: Error "File must have .ownchart extension" ✅ *Automated: validate.test.ts*
 
 ### Layer 2: JSON Parsing
 - [x] **Ungültiges JSON**: Error "Invalid JSON: ..." ✅ *Automated: validate.test.ts*
@@ -325,7 +325,7 @@
 ## 13. Example Files
 
 ### Provided Example
-- [x] `examples/website-relaunch.gantt` existiert ✅ *Automated: File exists (17 KB)*
+- [x] `examples/website-relaunch.ownchart` existiert ✅ *Automated: File exists (17 KB)*
 - [ ] Datei öffnet ohne Fehler ⚠️ *Manual: Requires browser testing*
 - [ ] Alle 27 Tasks werden geladen ⚠️ *Manual: Requires browser testing*
 - [ ] Hierarchie (3 Ebenen) wird korrekt dargestellt ⚠️ *Manual: Requires browser testing*

@@ -41,10 +41,10 @@ export async function validatePreParse(file: File): Promise<void> {
   }
 
   // File extension check
-  if (!file.name.endsWith(".gantt")) {
+  if (!file.name.endsWith(".ownchart")) {
     throw new ValidationError(
       "INVALID_EXTENSION",
-      "File must have .gantt extension"
+      "File must have .ownchart extension"
     );
   }
 }

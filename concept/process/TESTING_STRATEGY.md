@@ -417,7 +417,7 @@ describe('File Operations Integration', () => {
     useTaskStore.setState(initialState, true);
 
     // Load file
-    const file = new File([fileContent], 'test.gantt', { type: 'application/json' });
+    const file = new File([fileContent], 'test.ownchart', { type: 'application/json' });
     await userEvent.upload(screen.getByLabelText('Open'), file);
 
     // Verify UI and state restored
@@ -549,7 +549,7 @@ test('User creates complete project plan with dependencies', async ({ page }) =>
     page.waitForEvent('download'),
     page.click('button:has-text("Download")')
   ]);
-  expect(download.suggestedFilename()).toContain('.gantt');
+  expect(download.suggestedFilename()).toContain('.ownchart');
 
   // Step 7: Verify success message
   await expect(page.locator('text=Saved successfully')).toBeVisible();
@@ -562,7 +562,7 @@ test('User creates complete project plan with dependencies', async ({ page }) =>
 test('User exports Gantt chart to PNG', async ({ page }) => {
   // Setup: Load chart with tasks
   await page.goto('/');
-  await loadTestChart(page, 'project-plan.gantt');
+  await loadTestChart(page, 'project-plan.ownchart');
 
   // Open export dialog
   await page.click('button:has-text("Export")');
@@ -591,7 +591,7 @@ test('User exports Gantt chart to PNG', async ({ page }) => {
 ```typescript
 test('User navigates chart using only keyboard', async ({ page }) => {
   await page.goto('/');
-  await loadTestChart(page, 'sample-chart.gantt');
+  await loadTestChart(page, 'sample-chart.ownchart');
 
   // Tab to first task
   await page.keyboard.press('Tab');
@@ -654,7 +654,7 @@ Capture visual snapshots of:
 ```typescript
 test('Visual regression: Gantt chart with dependencies', async ({ page }) => {
   await page.goto('/');
-  await loadTestChart(page, 'visual-test-chart.gantt');
+  await loadTestChart(page, 'visual-test-chart.ownchart');
 
   await page.waitForSelector('[data-testid="gantt-canvas"]');
 
@@ -689,7 +689,7 @@ test('Accessibility: No violations on main page', async ({ page }) => {
 
 test('Accessibility: Gantt chart canvas is keyboard accessible', async ({ page }) => {
   await page.goto('/');
-  await loadTestChart(page, 'sample-chart.gantt');
+  await loadTestChart(page, 'sample-chart.ownchart');
 
   // Verify all interactive elements are reachable via Tab
   const focusableElements = await page.$$('[tabindex]:not([tabindex="-1"])');
@@ -791,7 +791,7 @@ describe('Security: File Validation', () => {
   });
 
   it('rejects files with invalid JSON', async () => {
-    const invalidFile = new File(['not json'], 'test.gantt');
+    const invalidFile = new File(['not json'], 'test.ownchart');
 
     await expect(loadChartFile(invalidFile)).rejects.toThrow('Invalid file format');
   });
@@ -806,7 +806,7 @@ describe('Security: File Validation', () => {
 
   it('validates against JSON Schema before loading', async () => {
     const invalidData = { version: '1.0', tasks: 'not an array' };
-    const file = new File([JSON.stringify(invalidData)], 'test.gantt');
+    const file = new File([JSON.stringify(invalidData)], 'test.ownchart');
 
     await expect(loadChartFile(file)).rejects.toThrow('Schema validation failed');
   });
@@ -937,11 +937,11 @@ export const mockTasks = {
 
 ### 11.2 Test Chart Files
 
-Provide `.gantt` files for testing:
-- `tests/fixtures/empty.gantt` - Empty chart
-- `tests/fixtures/simple-project.gantt` - 5 tasks, 2 dependencies
-- `tests/fixtures/complex-project.gantt` - 50 tasks, 30 dependencies
-- `tests/fixtures/stress-test.gantt` - 1000 tasks, 500 dependencies
+Provide `.ownchart` files for testing:
+- `tests/fixtures/empty.ownchart` - Empty chart
+- `tests/fixtures/simple-project.ownchart` - 5 tasks, 2 dependencies
+- `tests/fixtures/complex-project.ownchart` - 50 tasks, 30 dependencies
+- `tests/fixtures/stress-test.ownchart` - 1000 tasks, 500 dependencies
 
 ---
 

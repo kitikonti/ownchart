@@ -766,7 +766,7 @@ class FormatManager {
     }
 
     // Convert our format to canonical
-    const canonical = this.ganttToCanonical(chart);
+    const canonical = this.ownchartToCanonical(chart);
 
     // Convert canonical to target format
     return adapter.export(canonical);
@@ -1078,7 +1078,7 @@ describe('Plugin Contract', () => {
 // Test file format compatibility
 describe('File Format Compatibility', () => {
   it('should load v1.0 files in v2.0', async () => {
-    const v1File = loadFixture('chart-v1.0.gantt');
+    const v1File = loadFixture('chart-v1.0.ownchart');
     const loaded = await loadGanttFile(v1File);
 
     expect(loaded.tasks).toBeDefined();
@@ -1086,7 +1086,7 @@ describe('File Format Compatibility', () => {
   });
 
   it('should preserve unknown fields', async () => {
-    const futureFile = loadFixture('chart-v3.0.gantt');
+    const futureFile = loadFixture('chart-v3.0.ownchart');
     const loaded = await loadGanttFile(futureFile);
 
     expect(loaded.__unknownFields).toBeDefined();

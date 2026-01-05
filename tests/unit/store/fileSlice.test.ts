@@ -26,24 +26,24 @@ describe('File Store', () => {
     it('should set file name', () => {
       const { setFileName } = useFileStore.getState();
 
-      setFileName('test.gantt');
+      setFileName('test.ownchart');
 
-      expect(useFileStore.getState().fileName).toBe('test.gantt');
+      expect(useFileStore.getState().fileName).toBe('test.ownchart');
     });
 
     it('should update file name', () => {
       const { setFileName } = useFileStore.getState();
 
-      setFileName('first.gantt');
-      setFileName('second.gantt');
+      setFileName('first.ownchart');
+      setFileName('second.ownchart');
 
-      expect(useFileStore.getState().fileName).toBe('second.gantt');
+      expect(useFileStore.getState().fileName).toBe('second.ownchart');
     });
 
     it('should set file name to null', () => {
       const { setFileName } = useFileStore.getState();
 
-      setFileName('test.gantt');
+      setFileName('test.ownchart');
       setFileName(null);
 
       expect(useFileStore.getState().fileName).toBeNull();
@@ -160,13 +160,13 @@ describe('File Store', () => {
         useFileStore.getState();
 
       // Set all values
-      setFileName('test.gantt');
+      setFileName('test.ownchart');
       setChartId('chart-123');
       markDirty();
       setLastSaved(new Date());
 
       // Verify values are set
-      expect(useFileStore.getState().fileName).toBe('test.gantt');
+      expect(useFileStore.getState().fileName).toBe('test.ownchart');
       expect(useFileStore.getState().chartId).toBe('chart-123');
       expect(useFileStore.getState().isDirty).toBe(false); // setLastSaved marks clean
       expect(useFileStore.getState().lastSaved).not.toBeNull();
@@ -213,8 +213,8 @@ describe('File Store', () => {
       const { setFileName, markDirty, setLastSaved } = useFileStore.getState();
 
       // User creates new file
-      setFileName('project.gantt');
-      expect(useFileStore.getState().fileName).toBe('project.gantt');
+      setFileName('project.ownchart');
+      expect(useFileStore.getState().fileName).toBe('project.ownchart');
       expect(useFileStore.getState().isDirty).toBe(false);
 
       // User makes changes
@@ -233,7 +233,7 @@ describe('File Store', () => {
         useFileStore.getState();
 
       // User works on file
-      setFileName('old.gantt');
+      setFileName('old.ownchart');
       setChartId('old-id');
       markDirty();
       setLastSaved(new Date());
@@ -256,12 +256,12 @@ describe('File Store', () => {
       reset();
 
       // Open file
-      setFileName('opened.gantt');
+      setFileName('opened.ownchart');
       setChartId('opened-id');
       markClean();
 
       const state = useFileStore.getState();
-      expect(state.fileName).toBe('opened.gantt');
+      expect(state.fileName).toBe('opened.ownchart');
       expect(state.chartId).toBe('opened-id');
       expect(state.isDirty).toBe(false);
     });
@@ -285,12 +285,12 @@ describe('File Store', () => {
     it('should handle rename workflow', () => {
       const { setFileName, setChartId } = useFileStore.getState();
 
-      setFileName('original.gantt');
+      setFileName('original.ownchart');
       setChartId('original-id');
 
-      setFileName('renamed.gantt');
+      setFileName('renamed.ownchart');
 
-      expect(useFileStore.getState().fileName).toBe('renamed.gantt');
+      expect(useFileStore.getState().fileName).toBe('renamed.ownchart');
       expect(useFileStore.getState().chartId).toBe('original-id'); // ID stays same
     });
   });

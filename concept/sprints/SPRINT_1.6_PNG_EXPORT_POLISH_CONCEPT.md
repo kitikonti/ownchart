@@ -442,7 +442,7 @@ async function exportToPng(options: ExportOptions): Promise<void> {
   const { width, includeTaskList, background } = options;
 
   // 1. Get the element to capture
-  const chartElement = document.querySelector('.gantt-layout');
+  const chartElement = document.querySelector('.ownchart-layout');
   if (!chartElement) throw new Error('Chart not found');
 
   // 2. Calculate scale factor for high resolution

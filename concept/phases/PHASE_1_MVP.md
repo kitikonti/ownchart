@@ -1024,7 +1024,7 @@ function calculateArrowPath(
 
 **Duration:** 1 week
 **Status:** ✅ COMPLETE (2026-01-03)
-**Goal:** Save/load charts as .gantt files with 6-layer validation.
+**Goal:** Save/load charts as .ownchart files with 6-layer validation.
 
 > **Note:** This sprint was completed with comprehensive security validation, browser compatibility, and 112 automated tests achieving 90%+ coverage.
 
@@ -1059,7 +1059,7 @@ function calculateArrowPath(
 }
 ```
 
-**File Extension:** `.gantt.json`
+**File Extension:** `.ownchart.json`
 
 **Versioning:** Semantic versioning for schema changes
 
@@ -1078,7 +1078,7 @@ function calculateArrowPath(
 
 **Layer 1: Pre-parse validation**
 - File size < 50MB
-- Extension is `.gantt` or `.gantt.json`
+- Extension is `.ownchart` or `.ownchart.json`
 - MIME type check
 
 **Layer 2: Safe JSON parsing**
@@ -1141,7 +1141,7 @@ async function saveChart() {
   });
 
   const url = URL.createObjectURL(blob);
-  downloadFile(url, `${chart.name}.gantt.json`);
+  downloadFile(url, `${chart.name}.ownchart.json`);
 }
 ```
 
@@ -1161,7 +1161,7 @@ async function loadChart(file: File) {
 ```
 
 **Acceptance Criteria:**
-- ✓ Can save chart as .gantt.json
+- ✓ Can save chart as .ownchart.json
 - ✓ Can load valid files
 - ✓ Rejects invalid files
 - ✓ Zero data loss in save/load cycle
@@ -1242,7 +1242,7 @@ You have unsaved changes. What would you like to do?
   - `saveChart(chart): void` - serialize and download
   - Use Blob API for download
   - Add tests (5 test cases)
-  - **Test:** Can save chart as .gantt.json
+  - **Test:** Can save chart as .ownchart.json
   - **Commit:** `feat(services): add chart save functionality`
 
 - [ ] **Task 1.4.3b:** Add load functionality to file service

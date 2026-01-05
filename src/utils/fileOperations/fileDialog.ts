@@ -68,7 +68,7 @@ export interface OpenFileResult {
  */
 export async function saveFile(
   content: string,
-  fileName: string = "untitled.gantt",
+  fileName: string = "untitled.ownchart",
   forceNew: boolean = false
 ): Promise<SaveFileResult> {
   // Chrome/Edge: Try to re-save to existing file handle
@@ -91,8 +91,8 @@ export async function saveFile(
         suggestedName: fileName,
         types: [
           {
-            description: "Gantt Chart File",
-            accept: { "application/json": [".gantt"] },
+            description: "OwnChart File",
+            accept: { "application/json": [".ownchart"] },
           },
         ],
       });
@@ -143,8 +143,8 @@ export async function openFile(): Promise<OpenFileResult> {
       const [handle] = await window.showOpenFilePicker({
         types: [
           {
-            description: "Gantt Chart Files",
-            accept: { "application/json": [".gantt"] },
+            description: "OwnChart Files",
+            accept: { "application/json": [".ownchart"] },
           },
         ],
         multiple: false,
@@ -172,7 +172,7 @@ export async function openFile(): Promise<OpenFileResult> {
   return new Promise((resolve) => {
     const input = document.createElement("input");
     input.type = "file";
-    input.accept = ".gantt,application/json";
+    input.accept = ".ownchart,application/json";
 
     input.onchange = async () => {
       if (!input.files || input.files.length === 0) {

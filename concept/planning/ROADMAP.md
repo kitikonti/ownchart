@@ -221,7 +221,7 @@ If dependency arrows or performance validation fails, reassess approach before c
 - Basic task management (create, edit, delete, reorder)
 - Timeline visualization with pan/zoom
 - **Finish-to-Start dependencies only** (not SS/FF/SF)
-- File save/load (.gantt format)
+- File save/load (.ownchart format)
 - **Basic undo/redo** (not history timeline slider)
 - **PNG export only** (not PDF/SVG)
 - Keyboard shortcuts and help
@@ -350,8 +350,8 @@ If dependency arrows or performance validation fails, reassess approach before c
 **Status:** ✅ COMPLETE (2026-01-03)
 
 **Features**:
-- ✅ Save to .gantt file
-- ✅ Open .gantt file
+- ✅ Save to .ownchart file
+- ✅ Open .ownchart file
 - ✅ New chart
 - ✅ File validation
 - ✅ 6-layer validation pipeline:
@@ -382,7 +382,7 @@ If dependency arrows or performance validation fails, reassess approach before c
 - 8 utility files created in `src/utils/fileOperations/`
 - 112 automated tests (90%+ coverage)
 - Browser compatibility: Chrome/Edge (File System Access API) + Firefox/Safari (fallback)
-- Example file: `examples/website-relaunch.gantt` (27 tasks, 17 KB)
+- Example file: `examples/website-relaunch.ownchart` (27 tasks, 17 KB)
 
 **Rationale for Priority**: File operations moved ahead of dependencies because:
 - Critical for usability - users need to save their work
