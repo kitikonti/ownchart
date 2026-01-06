@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [0.0.14](https://github.com/kitikonti/ownchart/compare/v0.0.13...v0.0.14) (2026-01-06)
+
+
+### Features
+
+* configure custom domain ownchart.app ([c742e7a](https://github.com/kitikonti/ownchart/commit/c742e7ad7c919a4a2ded00c63e371921265da8a7))
+
 ### [0.0.13](https://github.com/kitikonti/ownchart/compare/v0.0.12...v0.0.13) (2026-01-06)
 
 
