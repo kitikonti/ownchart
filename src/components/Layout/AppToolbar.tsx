@@ -1,39 +1,174 @@
 /**
  * AppToolbar - Main application toolbar
- * Contains logo, task actions, and zoom controls
+ *
+ * Design: Refined utilitarian aesthetic inspired by Figma, Linear, Notion
+ *
+ * Layout Structure:
+ * ┌─────────────────────────────────────────────────────────────────────────┐
+ * │ [Logo] │ File │ History │ Clipboard │ Insert │ [Add Task] │ Hierarchy  │
+ * │        ├──────┴─────────┴───────────┴────────┴────────────┴────────────┤
+ * │        │                        ─── SPACER ───                         │
+ * │        ├────────────────────────────────────────────────────────────────┤
+ * │        │ View │ Project │ App │ Zoom                                   │
+ * └─────────────────────────────────────────────────────────────────────────┘
+ *
+ * Separator Guidelines:
+ * - Between major workflow phases (Edit → View)
+ * - After primary action (Add Task)
+ * - Before app-level settings
  */
 
-import { ChartBarHorizontal, Plus, Sliders } from "@phosphor-icons/react";
-import { FileButtons } from "../Toolbar/FileButtons";
-import { HierarchyButtons } from "../TaskList/HierarchyButtons";
-import { UndoRedoButtons } from "../Toolbar/UndoRedoButtons";
-import { ClipboardButtons } from "../Toolbar/ClipboardButtons";
-import { InsertButtons } from "../Toolbar/InsertButtons";
-import { ZoomControls } from "../Toolbar/ZoomControls";
-import { ExportButton } from "../Toolbar/ExportButton";
-import { PreferencesButton } from "../Toolbar/PreferencesButton";
-import { HelpButton } from "../Toolbar/HelpButton";
-import { QuickToggles } from "../Toolbar/QuickToggles";
+import {
+  ChartBarHorizontal,
+  Plus,
+  Sliders,
+  File,
+  FolderOpen,
+  FloppyDisk,
+  ArrowCounterClockwise,
+  ArrowClockwise,
+  Copy,
+  Scissors,
+  ClipboardText,
+  Trash,
+  RowsPlusTop,
+  RowsPlusBottom,
+  TextOutdent,
+  TextIndent,
+  Export,
+  GitBranch,
+  Gear,
+  Question,
+  MagnifyingGlassPlus,
+  MagnifyingGlassMinus,
+  ArrowsOutLineHorizontal,
+} from "@phosphor-icons/react";
+
+import {
+  ToolbarButton,
+  ToolbarGroup,
+  ToolbarSeparator,
+  ToolbarSpacer,
+  TOOLBAR_TOKENS,
+} from "../Toolbar/ToolbarPrimitives";
+
 import { useTaskStore } from "../../store/slices/taskSlice";
+import { useChartStore } from "../../store/slices/chartSlice";
+import { useHistoryStore } from "../../store/slices/historySlice";
 import { useUIStore } from "../../store/slices/uiSlice";
-import { useDensityConfig } from "../../store/slices/userPreferencesSlice";
+import { useFileOperations } from "../../hooks/useFileOperations";
+import { useClipboardOperations } from "../../hooks/useClipboardOperations";
+import { MIN_ZOOM, MAX_ZOOM } from "../../utils/timelineUtils";
+
+const ICON_SIZE = TOOLBAR_TOKENS.iconSize;
+
+// Preset zoom levels
+const PRESET_ZOOM_LEVELS = [5, 10, 25, 50, 75, 100, 150, 200, 300];
 
 export function AppToolbar() {
+  // ─────────────────────────────────────────────────────────────────────────
+  // Store Hooks
+  // ─────────────────────────────────────────────────────────────────────────
+
+  // Task store
   const tasks = useTaskStore((state) => state.tasks);
   const addTask = useTaskStore((state) => state.addTask);
+  const selectedTaskIds = useTaskStore((state) => state.selectedTaskIds);
+  const activeCell = useTaskStore((state) => state.activeCell);
+  const insertTaskAbove = useTaskStore((state) => state.insertTaskAbove);
+  const insertTaskBelow = useTaskStore((state) => state.insertTaskBelow);
+  const deleteSelectedTasks = useTaskStore(
+    (state) => state.deleteSelectedTasks
+  );
+  const indentSelectedTasks = useTaskStore(
+    (state) => state.indentSelectedTasks
+  );
+  const outdentSelectedTasks = useTaskStore(
+    (state) => state.outdentSelectedTasks
+  );
+  const canIndent = useTaskStore((state) => state.canIndentSelection());
+  const canOutdent = useTaskStore((state) => state.canOutdentSelection());
+
+  // Chart store
+  const zoom = useChartStore((state) => state.zoom);
+  const zoomIn = useChartStore((state) => state.zoomIn);
+  const zoomOut = useChartStore((state) => state.zoomOut);
+  const fitToView = useChartStore((state) => state.fitToView);
+  const showDependencies = useChartStore((state) => state.showDependencies);
+  const toggleDependencies = useChartStore((state) => state.toggleDependencies);
+
+  // History store
+  const undo = useHistoryStore((state) => state.undo);
+  const redo = useHistoryStore((state) => state.redo);
+  const canUndo = useHistoryStore((state) => state.canUndo());
+  const canRedo = useHistoryStore((state) => state.canRedo());
+  const undoDescription = useHistoryStore((state) =>
+    state.getUndoDescription()
+  );
+  const redoDescription = useHistoryStore((state) =>
+    state.getRedoDescription()
+  );
+
+  // UI store
+  const openExportDialog = useUIStore((state) => state.openExportDialog);
   const openChartSettingsDialog = useUIStore(
     (state) => state.openChartSettingsDialog
   );
-  const densityConfig = useDensityConfig();
+  const openPreferencesDialog = useUIStore(
+    (state) => state.openPreferencesDialog
+  );
+  const openHelpPanel = useUIStore((state) => state.openHelpPanel);
+
+  // File operations
+  const { handleNew, handleOpen, handleSave, isDirty } = useFileOperations();
+
+  // Clipboard operations
+  const { handleCopy, handleCut, handlePaste, canCopyOrCut, canPaste } =
+    useClipboardOperations();
+
+  // ─────────────────────────────────────────────────────────────────────────
+  // Derived State
+  // ─────────────────────────────────────────────────────────────────────────
+
+  // Single task selection for insert operations
+  const singleSelectedTaskId =
+    selectedTaskIds.length === 1
+      ? selectedTaskIds[0]
+      : selectedTaskIds.length === 0 && activeCell.taskId
+        ? activeCell.taskId
+        : null;
+
+  const canInsert = singleSelectedTaskId !== null;
+  const canDelete = selectedTaskIds.length > 0;
+
+  // Zoom state
+  const zoomPercentage = Math.round(zoom * 100);
+  const canZoomIn = zoom < MAX_ZOOM;
+  const canZoomOut = zoom > MIN_ZOOM;
+
+  // Build zoom options list
+  const zoomOptions = [...PRESET_ZOOM_LEVELS];
+  if (!PRESET_ZOOM_LEVELS.includes(zoomPercentage)) {
+    const insertIndex = zoomOptions.findIndex(
+      (level) => level > zoomPercentage
+    );
+    if (insertIndex === -1) {
+      zoomOptions.push(zoomPercentage);
+    } else {
+      zoomOptions.splice(insertIndex, 0, zoomPercentage);
+    }
+  }
+
+  // ─────────────────────────────────────────────────────────────────────────
+  // Handlers
+  // ─────────────────────────────────────────────────────────────────────────
 
   const handleAddTask = () => {
     const today = new Date();
     const nextWeek = new Date(today);
     nextWeek.setDate(today.getDate() + 7);
 
-    const formatDate = (date: Date): string => {
-      return date.toISOString().split("T")[0];
-    };
+    const formatDate = (date: Date): string => date.toISOString().split("T")[0];
 
     addTask({
       name: "New Task",
@@ -49,90 +184,241 @@ export function AppToolbar() {
     });
   };
 
+  const handleInsertAbove = () => {
+    if (singleSelectedTaskId) insertTaskAbove(singleSelectedTaskId);
+  };
+
+  const handleInsertBelow = () => {
+    if (singleSelectedTaskId) insertTaskBelow(singleSelectedTaskId);
+  };
+
+  const handleZoomLevelChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    const value = e.target.value;
+    if (value === "fit") {
+      fitToView(tasks);
+    } else {
+      useChartStore.getState().setZoom(parseInt(value) / 100);
+    }
+  };
+
+  // ─────────────────────────────────────────────────────────────────────────
+  // Render
+  // ─────────────────────────────────────────────────────────────────────────
+
   return (
-    <header className="flex-shrink-0 bg-white border-b border-gray-200 px-4 py-2 flex items-center">
-      {/* Logo */}
-      <ChartBarHorizontal
-        size={24}
-        weight="regular"
-        className="text-gray-700 mr-3"
+    <header className="flex-shrink-0 bg-white border-b border-gray-200 px-4 py-2 flex items-center gap-1">
+      {/* ─── Logo ─── */}
+      <div className="flex items-center">
+        <ChartBarHorizontal size={24} weight="regular" className="text-gray-700" />
+      </div>
+
+      <ToolbarSeparator />
+
+      {/* ─── Left Section: Editing Tools ─── */}
+
+      {/* File Operations */}
+      <ToolbarGroup label="File operations" className="mr-1">
+        <ToolbarButton
+          onClick={handleNew}
+          title="New Chart (Ctrl+Alt+N)"
+          aria-label="New Chart"
+          icon={<File size={ICON_SIZE} weight="regular" />}
+        />
+        <ToolbarButton
+          onClick={handleOpen}
+          title="Open File (Ctrl+O)"
+          aria-label="Open File"
+          icon={<FolderOpen size={ICON_SIZE} weight="regular" />}
+        />
+        <ToolbarButton
+          onClick={() => handleSave()}
+          title="Save (Ctrl+S)"
+          aria-label="Save File"
+          className={isDirty ? "text-blue-600 hover:text-blue-700" : ""}
+          icon={<FloppyDisk size={ICON_SIZE} weight={isDirty ? "fill" : "regular"} />}
+        />
+      </ToolbarGroup>
+
+      {/* History */}
+      <ToolbarGroup label="History" className="mr-1">
+        <ToolbarButton
+          onClick={undo}
+          disabled={!canUndo}
+          title={canUndo ? `Undo: ${undoDescription} (Ctrl+Z)` : "Nothing to undo"}
+          aria-label={canUndo ? `Undo: ${undoDescription}` : "Nothing to undo"}
+          icon={<ArrowCounterClockwise size={ICON_SIZE} weight="regular" />}
+        />
+        <ToolbarButton
+          onClick={redo}
+          disabled={!canRedo}
+          title={canRedo ? `Redo: ${redoDescription} (Ctrl+Shift+Z)` : "Nothing to redo"}
+          aria-label={canRedo ? `Redo: ${redoDescription}` : "Nothing to redo"}
+          icon={<ArrowClockwise size={ICON_SIZE} weight="regular" />}
+        />
+      </ToolbarGroup>
+
+      {/* Clipboard */}
+      <ToolbarGroup label="Clipboard" className="mr-1">
+        <ToolbarButton
+          onClick={handleCopy}
+          disabled={!canCopyOrCut}
+          title="Copy (Ctrl+C)"
+          aria-label="Copy"
+          icon={<Copy size={ICON_SIZE} weight="regular" />}
+        />
+        <ToolbarButton
+          onClick={handleCut}
+          disabled={!canCopyOrCut}
+          title="Cut (Ctrl+X)"
+          aria-label="Cut"
+          icon={<Scissors size={ICON_SIZE} weight="regular" />}
+        />
+        <ToolbarButton
+          onClick={handlePaste}
+          disabled={!canPaste}
+          title="Paste (Ctrl+V)"
+          aria-label="Paste"
+          icon={<ClipboardText size={ICON_SIZE} weight="regular" />}
+        />
+        <ToolbarButton
+          onClick={deleteSelectedTasks}
+          disabled={!canDelete}
+          title="Delete (Del)"
+          aria-label="Delete"
+          icon={<Trash size={ICON_SIZE} weight="regular" />}
+        />
+      </ToolbarGroup>
+
+      {/* Insert & Hierarchy */}
+      <ToolbarGroup label="Structure" className="mr-2">
+        <ToolbarButton
+          onClick={handleInsertAbove}
+          disabled={!canInsert}
+          title="Insert task above"
+          aria-label="Insert task above"
+          icon={<RowsPlusTop size={ICON_SIZE} weight="regular" />}
+        />
+        <ToolbarButton
+          onClick={handleInsertBelow}
+          disabled={!canInsert}
+          title="Insert task below"
+          aria-label="Insert task below"
+          icon={<RowsPlusBottom size={ICON_SIZE} weight="regular" />}
+        />
+        <ToolbarButton
+          onClick={outdentSelectedTasks}
+          disabled={!canOutdent}
+          title="Move left (outdent) - Shift+Tab"
+          aria-label="Outdent"
+          icon={<TextOutdent size={ICON_SIZE} weight="regular" />}
+        />
+        <ToolbarButton
+          onClick={indentSelectedTasks}
+          disabled={!canIndent}
+          title="Move right (indent) - Tab"
+          aria-label="Indent"
+          icon={<TextIndent size={ICON_SIZE} weight="regular" />}
+        />
+      </ToolbarGroup>
+
+      {/* Primary Action */}
+      <ToolbarButton
+        variant="primary"
+        onClick={handleAddTask}
+        aria-label="Add new task"
+        icon={<Plus size={16} weight="bold" />}
+        label="Add Task"
       />
 
-      {/* File Operations Group */}
-      <div className="mr-2">
-        <FileButtons />
-      </div>
+      {/* ─── Spacer ─── */}
+      <ToolbarSpacer />
 
-      {/* Undo/Redo Group */}
-      <div className="mr-2">
-        <UndoRedoButtons />
-      </div>
+      {/* ─── Right Section: View & Settings ─── */}
 
-      {/* Clipboard Operations Group */}
-      <div className="mr-2">
-        <ClipboardButtons />
-      </div>
+      {/* View Toggle */}
+      <ToolbarGroup label="View" className="mr-1">
+        <ToolbarButton
+          variant="toggle"
+          isActive={showDependencies}
+          onClick={toggleDependencies}
+          title={showDependencies ? "Hide Dependencies (D)" : "Show Dependencies (D)"}
+          aria-label={showDependencies ? "Hide Dependencies" : "Show Dependencies"}
+          icon={<GitBranch size={ICON_SIZE} weight={showDependencies ? "fill" : "regular"} />}
+        />
+      </ToolbarGroup>
 
-      {/* Insert Task Buttons */}
-      <div className="mr-4">
-        <InsertButtons />
-      </div>
+      {/* Export & Settings */}
+      <ToolbarGroup label="Project" className="mr-1">
+        <ToolbarButton
+          onClick={openExportDialog}
+          title="Export to PNG (Ctrl+E)"
+          aria-label="Export to PNG"
+          icon={<Export size={ICON_SIZE} weight="regular" />}
+        />
+        <ToolbarButton
+          onClick={openChartSettingsDialog}
+          title="Chart Settings"
+          aria-label="Chart Settings"
+          icon={<Sliders size={ICON_SIZE} weight="regular" />}
+        />
+        <ToolbarButton
+          onClick={openPreferencesDialog}
+          title="Preferences"
+          aria-label="Preferences"
+          icon={<Gear size={ICON_SIZE} weight="regular" />}
+        />
+        <ToolbarButton
+          onClick={openHelpPanel}
+          title="Help (?)"
+          aria-label="Help"
+          icon={<Question size={ICON_SIZE} weight="regular" />}
+        />
+      </ToolbarGroup>
 
-      {/* Task Actions Group */}
-      <button
-        onClick={handleAddTask}
-        className="px-3 py-1.5 bg-blue-600 text-white text-sm font-medium rounded hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 flex items-center gap-1.5 mr-2"
-        aria-label="Add new task"
-      >
-        <Plus size={16} weight="bold" />
-        Add Task
-      </button>
-
-      {/* Hierarchy Controls */}
-      <HierarchyButtons />
-
-      {/* Separator */}
-      <div className="mx-2 h-6 w-px bg-gray-200" />
-
-      {/* Export Button */}
-      <div className="mr-2">
-        <ExportButton />
-      </div>
-
-      {/* Spacer to push controls to the right */}
-      <div className="flex-1" />
-
-      {/* Quick Toggle Buttons (Dependencies) */}
-      <div className="mr-2">
-        <QuickToggles />
-      </div>
-
-      {/* Separator */}
-      <div className="mx-2 h-6 w-px bg-gray-200" />
-
-      {/* Chart Settings Button */}
-      <button
-        type="button"
-        onClick={openChartSettingsDialog}
-        aria-label="Chart Settings"
-        title="Chart Settings"
-        className="flex items-center justify-center p-1.5 mr-2 text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded transition-colors"
-      >
-        <Sliders size={densityConfig.iconSize} weight="regular" />
-      </button>
-
-      {/* Preferences Button */}
-      <div className="mr-2">
-        <PreferencesButton />
-      </div>
-
-      {/* Help Button */}
-      <div className="mr-2">
-        <HelpButton />
-      </div>
+      <ToolbarSeparator />
 
       {/* Zoom Controls */}
-      <ZoomControls />
+      <ToolbarGroup label="Zoom">
+        <ToolbarButton
+          onClick={zoomOut}
+          disabled={!canZoomOut}
+          title="Zoom Out (Ctrl+-)"
+          aria-label="Zoom out"
+          icon={<MagnifyingGlassMinus size={ICON_SIZE} weight="regular" />}
+        />
+        <select
+          className="h-7 px-2 pr-6 border border-gray-200 rounded-md bg-white text-xs font-medium cursor-pointer hover:border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors"
+          value={zoomPercentage}
+          onChange={handleZoomLevelChange}
+          aria-label="Zoom level"
+          style={{
+            appearance: "none",
+            backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='10' viewBox='0 0 10 10'%3E%3Cpath fill='%23666' d='M5 7L1 3h8z'/%3E%3C/svg%3E")`,
+            backgroundRepeat: "no-repeat",
+            backgroundPosition: "right 6px center",
+          }}
+        >
+          {zoomOptions.map((level) => (
+            <option key={level} value={level}>
+              {level}%
+            </option>
+          ))}
+          <option value="fit">Fit to Width</option>
+        </select>
+        <ToolbarButton
+          onClick={zoomIn}
+          disabled={!canZoomIn}
+          title="Zoom In (Ctrl++)"
+          aria-label="Zoom in"
+          icon={<MagnifyingGlassPlus size={ICON_SIZE} weight="regular" />}
+        />
+        <ToolbarButton
+          onClick={() => fitToView(tasks)}
+          title="Fit to width"
+          aria-label="Fit to width"
+          icon={<ArrowsOutLineHorizontal size={ICON_SIZE} weight="regular" />}
+        />
+      </ToolbarGroup>
     </header>
   );
 }
