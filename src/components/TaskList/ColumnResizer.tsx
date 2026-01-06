@@ -103,6 +103,7 @@ export function ColumnResizer({
   };
 
   return (
+    // eslint-disable-next-line jsx-a11y/no-noninteractive-element-interactions -- separator with tabIndex is interactive per ARIA spec
     <div
       className={`
         absolute right-0 top-0 bottom-0 w-1 cursor-col-resize
