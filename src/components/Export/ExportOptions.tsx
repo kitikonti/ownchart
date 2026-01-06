@@ -261,9 +261,7 @@ export function ExportOptionsForm({
 
       {/* Task Label Position */}
       <div>
-        <h3 className="text-sm font-medium text-gray-700 mb-3">
-          Task Labels
-        </h3>
+        <h3 className="text-sm font-medium text-gray-700 mb-3">Task Labels</h3>
         <p className="text-xs text-gray-500 mb-3">
           Position of task names on the timeline bars
         </p>

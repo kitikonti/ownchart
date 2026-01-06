@@ -209,7 +209,11 @@ export function AppToolbar() {
     <header className="flex-shrink-0 bg-white border-b border-gray-200 px-4 py-2 flex items-center gap-1">
       {/* ─── Logo ─── */}
       <div className="flex items-center">
-        <ChartBarHorizontal size={24} weight="regular" className="text-gray-700" />
+        <ChartBarHorizontal
+          size={24}
+          weight="regular"
+          className="text-gray-700"
+        />
       </div>
 
       <ToolbarSeparator />
@@ -235,7 +239,12 @@ export function AppToolbar() {
           title="Save (Ctrl+S)"
           aria-label="Save File"
           className={isDirty ? "text-blue-600 hover:text-blue-700" : ""}
-          icon={<FloppyDisk size={ICON_SIZE} weight={isDirty ? "fill" : "regular"} />}
+          icon={
+            <FloppyDisk
+              size={ICON_SIZE}
+              weight={isDirty ? "fill" : "regular"}
+            />
+          }
         />
       </ToolbarGroup>
 
@@ -244,14 +253,20 @@ export function AppToolbar() {
         <ToolbarButton
           onClick={undo}
           disabled={!canUndo}
-          title={canUndo ? `Undo: ${undoDescription} (Ctrl+Z)` : "Nothing to undo"}
+          title={
+            canUndo ? `Undo: ${undoDescription} (Ctrl+Z)` : "Nothing to undo"
+          }
           aria-label={canUndo ? `Undo: ${undoDescription}` : "Nothing to undo"}
           icon={<ArrowCounterClockwise size={ICON_SIZE} weight="regular" />}
         />
         <ToolbarButton
           onClick={redo}
           disabled={!canRedo}
-          title={canRedo ? `Redo: ${redoDescription} (Ctrl+Shift+Z)` : "Nothing to redo"}
+          title={
+            canRedo
+              ? `Redo: ${redoDescription} (Ctrl+Shift+Z)`
+              : "Nothing to redo"
+          }
           aria-label={canRedo ? `Redo: ${redoDescription}` : "Nothing to redo"}
           icon={<ArrowClockwise size={ICON_SIZE} weight="regular" />}
         />
@@ -341,8 +356,12 @@ export function AppToolbar() {
           variant="toggle"
           isActive={showDependencies}
           onClick={toggleDependencies}
-          title={showDependencies ? "Hide Dependencies (D)" : "Show Dependencies (D)"}
-          aria-label={showDependencies ? "Hide Dependencies" : "Show Dependencies"}
+          title={
+            showDependencies ? "Hide Dependencies (D)" : "Show Dependencies (D)"
+          }
+          aria-label={
+            showDependencies ? "Hide Dependencies" : "Show Dependencies"
+          }
           icon={<FlowArrow size={ICON_SIZE} weight="regular" />}
         />
       </ToolbarGroup>

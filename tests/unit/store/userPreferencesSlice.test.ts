@@ -3,7 +3,7 @@
  * Sprint 1.5.9: User Preferences & Settings
  */
 
-import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
+import { describe, it, expect, beforeEach, afterEach } from "vitest";
 import { act } from "@testing-library/react";
 import {
   useUserPreferencesStore,

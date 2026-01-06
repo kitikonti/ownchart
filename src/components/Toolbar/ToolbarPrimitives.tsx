@@ -101,8 +101,10 @@ export function ToolbarGroup({
 
 type ToolbarButtonVariant = "default" | "primary" | "toggle";
 
-interface ToolbarButtonProps
-  extends Omit<ButtonHTMLAttributes<HTMLButtonElement>, "className"> {
+interface ToolbarButtonProps extends Omit<
+  ButtonHTMLAttributes<HTMLButtonElement>,
+  "className"
+> {
   /** Visual variant */
   variant?: ToolbarButtonVariant;
   /** For toggle buttons: is it currently active? */

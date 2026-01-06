@@ -125,7 +125,8 @@ export function getScaleConfig(
       {
         unit: "quarter",
         step: 1,
-        format: (date) => `Q${Math.floor(date.getMonth() / 3) + 1} ${date.getFullYear()}`,
+        format: (date) =>
+          `Q${Math.floor(date.getMonth() / 3) + 1} ${date.getFullYear()}`,
       },
       { unit: "month", step: 1, format: "MMM" },
     ];
