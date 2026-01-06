@@ -748,31 +748,45 @@ This sprint was completed ahead of schedule during MVP development. See Sprint 1
 
 ---
 
-#### Sprint 1.5.9: User Preferences & Settings Dialog
+#### Sprint 1.5.9: User Preferences & Settings Dialog 🔄 IN PROGRESS
 
-**Features**:
-- Preferences dialog (Menu → Preferences...)
-- Date format selection (DD/MM/YYYY, MM/DD/YYYY, YYYY-MM-DD)
-- First day of week (Sunday/Monday)
-- UI density (Compact/Normal/Comfortable)
-- Theme selection (Light/Dark/System)
-- Default export settings with "Save as my default" checkbox
+**Status**: 🔄 IN PROGRESS (2026-01-06) - Core features complete, Working Days Mode pending
 
-**Technical Work**:
-- `userPreferencesSlice.ts` with Zustand persist middleware
-- Preferences dialog component
-- Date format utilities (apply format globally)
-- UI density CSS variables/classes
-- Theme switching (CSS variables or Tailwind dark mode)
-- Export dialog "Save as default" integration
+**Features Implemented**:
+- ✅ Preferences dialog (Menu → Preferences...)
+- ✅ Date format selection (DD/MM/YYYY, MM/DD/YYYY, YYYY-MM-DD)
+- ✅ First day of week (Sunday/Monday)
+- ✅ Week numbering system (ISO/US)
+- ✅ UI density (Compact/Normal/Comfortable) - completed in Sprint 1.5.9.1
+- ✅ Chart Settings Dialog (gear icon in toolbar)
+- ✅ Holiday Service with date-holidays library (199 countries)
+- ✅ Holiday region selection (project-specific)
+- ✅ Holiday highlighting in timeline with tooltips
+- ✅ Task Label Position (before/inside/after/none)
+- ✅ Show/Hide toggles: Today Marker, Weekends, Holidays, Dependencies, Progress
+- ✅ Keyboard shortcuts for view toggles (T, D, P, H)
+- ✅ Dependencies toggle button in toolbar (FlowArrow icon)
+- ✅ Timeline header improvements: Calendar week visible at all zoom levels
+- 🔜 Theme selection (Light/Dark/System) - V2.0
+- 🔜 Working Days Mode - Pending
 
-**Acceptance Criteria**:
-- Preferences persist across browser sessions (localStorage)
-- Date format applies to all date displays
-- UI density affects row heights, font sizes, spacing
-- Theme applies immediately without reload
-- Export dialog remembers user defaults
-- New projects use user preferences (not hardcoded defaults)
+**Technical Work Completed**:
+- ✅ `userPreferencesSlice.ts` with Zustand persist middleware
+- ✅ `holidayService.ts` singleton with caching
+- ✅ `ChartSettingsDialog.tsx` component
+- ✅ `PreferencesDialog.tsx` extended with regional settings
+- ✅ View settings in chartSlice (showHolidays, showDependencies, etc.)
+- ✅ Timeline header scale improvements for week display
+- ✅ Comprehensive test coverage (120+ new tests)
+
+**Acceptance Criteria** (most met):
+- ✅ Preferences persist across browser sessions (localStorage)
+- ✅ Date format applies to all date displays
+- ✅ UI density affects row heights, font sizes, spacing
+- ✅ Holiday highlighting works with regional selection
+- ✅ View toggles work via toolbar and keyboard shortcuts
+- 🔜 Theme applies immediately without reload (V2.0)
+- 🔜 Working Days Mode functional
 
 **Architecture Reference**: See [SETTINGS_ARCHITECTURE.md](../architecture/SETTINGS_ARCHITECTURE.md) for:
 - Two-tier storage model (User Prefs vs Project Settings)
@@ -780,7 +794,7 @@ This sprint was completed ahead of schedule during MVP development. See Sprint 1
 - Implementation guide with code examples
 - User persona validation
 
-**Note**: This sprint implements User Stories 5.6 (UI Density), 5.7 (Date Format), 5.8 (First Day of Week)
+**Test Coverage**: 786 unit tests total (120 new tests for Sprint 1.5.9)
 
 ---
 

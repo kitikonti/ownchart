@@ -27,6 +27,7 @@
 - ✅ Sprint 1.5.4 - Copy/Paste & Multi-Select (ahead of schedule from V1.1)
 - ✅ Sprint 1.6 - PNG Export & Polish
 - ✅ Sprint 1.5.9.1 - UI Density (Compact/Normal/Comfortable)
+- ✅ Sprint 1.5.9 - User Preferences & Settings (partial - core features complete)
 
 **MVP Features Complete (v0.0.12)**:
 - ✅ Multi-select with rectangular marquee selection in timeline
@@ -46,8 +47,23 @@
 - ✅ UI Density settings (Compact/Normal/Comfortable) with preferences dialog
 - ✅ Export density selection independent from app setting
 
+**Sprint 1.5.9 Features (In Progress)**:
+- ✅ Holiday Service with date-holidays library (199 countries supported)
+- ✅ User Preferences: Date Format, First Day of Week, Week Numbering System
+- ✅ Chart Settings Dialog (Timeline Display, Task Display sections)
+- ✅ Holiday region selection per project
+- ✅ Holiday highlighting in timeline with tooltips
+- ✅ Task Label Position (before/inside/after/none)
+- ✅ Show/Hide toggles: Today Marker, Weekends, Holidays, Dependencies, Progress
+- ✅ Keyboard shortcuts for view toggles (T, D, P, H)
+- ✅ Dependencies toggle button in toolbar (FlowArrow icon)
+- ✅ Timeline header improvements: Calendar week visible at all zoom levels
+- 🔜 Working Days Mode (planned)
+
+**Test Coverage**: 786 unit tests (80%+ coverage)
+
 **Next Phase**:
-- 🔜 Phase 1.5 (V1.1) - Deferred Features & Extensibility
+- 🔜 Phase 1.5 (V1.1) - Remaining Deferred Features & Extensibility
 
 ## Directory Structure
 
@@ -442,5 +458,6 @@ npm run test:e2e            # E2E tests (Playwright)
 
 **Last Updated**: 2026-01-06
 **Project Version**: 0.0.12
-**Status**: Phase 1 MVP Complete - Ready for V1.1
+**Status**: Sprint 1.5.9 In Progress - User Preferences & Settings
 **File Extension**: `.ownchart`
+**Test Count**: 786 unit tests
