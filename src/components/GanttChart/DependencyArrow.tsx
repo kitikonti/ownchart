@@ -64,7 +64,7 @@ export const DependencyArrow = memo(function DependencyArrow({
   };
 
   // Arrow colors - lighter for less visual noise
-  const strokeColor = isSelected ? "#6366f1" : "#94a3b8";
+  const strokeColor = isSelected ? "#334155" : "#94a3b8";
   const strokeWidth = isSelected ? 2.5 : 1.5;
 
   return (
@@ -108,7 +108,7 @@ export const DependencyArrow = memo(function DependencyArrow({
         <path
           d={path}
           fill="none"
-          stroke="#6366f1"
+          stroke="#334155"
           strokeWidth={6}
           strokeDasharray="4 2"
           opacity={0.3}

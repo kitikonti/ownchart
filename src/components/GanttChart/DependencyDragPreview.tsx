@@ -38,7 +38,7 @@ export const DependencyDragPreview = memo(function DependencyDragPreview({
       <path
         d={path}
         fill="none"
-        stroke="#6366f1"
+        stroke="#334155"
         strokeWidth={2}
         strokeDasharray="6 4"
         opacity={0.8}
@@ -47,13 +47,13 @@ export const DependencyDragPreview = memo(function DependencyDragPreview({
       {/* Preview arrowhead */}
       <polygon
         points={getArrowheadPoints(8)}
-        fill="#6366f1"
+        fill="#334155"
         opacity={0.8}
         transform={`translate(${endX}, ${endY}) rotate(${arrowAngle})`}
       />
 
       {/* Start point indicator */}
-      <circle cx={startX} cy={startY} r={5} fill="#6366f1" opacity={0.8} />
+      <circle cx={startX} cy={startY} r={5} fill="#334155" opacity={0.8} />
     </g>
   );
 });

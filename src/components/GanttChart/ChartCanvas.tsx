@@ -267,7 +267,7 @@ export function ChartCanvas({
                     y={index * ROW_HEIGHT}
                     width={timelineWidth}
                     height={ROW_HEIGHT}
-                    fill="#6366f1"
+                    fill="#334155"
                     fillOpacity={0.15}
                   />
                 );
@@ -347,9 +347,9 @@ export function ChartCanvas({
                 y={marqueeRect.y}
                 width={marqueeRect.width}
                 height={marqueeRect.height}
-                fill="#6366f1"
+                fill="#334155"
                 fillOpacity={0.1}
-                stroke="#6366f1"
+                stroke="#334155"
                 strokeWidth={1}
                 strokeDasharray="4 2"
                 pointerEvents="none"

@@ -176,7 +176,7 @@ export function AppToolbar() {
       endDate: formatDate(nextWeek),
       duration: 7,
       progress: 0,
-      color: "#6366f1",
+      color: "#0d9488",
       order: tasks.length,
       type: "task",
       parent: undefined,

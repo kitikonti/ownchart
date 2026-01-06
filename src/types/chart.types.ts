@@ -23,7 +23,7 @@ export type TaskType = "task" | "summary" | "milestone";
  * @property endDate - Task end date in ISO format (YYYY-MM-DD)
  * @property duration - Task duration in days (calculated from dates)
  * @property progress - Task completion percentage (0-100)
- * @property color - Task color as hex code (e.g., "#6366f1")
+ * @property color - Task color as hex code (e.g., "#0d9488")
  * @property order - Display order for task reordering (0-indexed)
  * @property metadata - Extensibility field for future features
  *
