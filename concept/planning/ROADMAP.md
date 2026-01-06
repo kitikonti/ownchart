@@ -784,6 +784,35 @@ This sprint was completed ahead of schedule during MVP development. See Sprint 1
 
 ---
 
+#### Sprint 1.5.9.1: UI Density (Compact/Normal/Comfortable) ✅ COMPLETE
+
+**Status**: ✅ COMPLETE (2026-01-06) - Implemented ahead of schedule
+
+**Features Implemented**:
+- ✅ Three UI density modes: Compact (28px), Normal (36px), Comfortable (44px)
+- ✅ Preferences dialog with density selection (gear icon in toolbar)
+- ✅ All density-related values in `DENSITY_CONFIG` object
+- ✅ CSS custom properties for density values
+- ✅ Density affects: row heights, task bar heights, font sizes, padding, spacing
+- ✅ Export density selection independent from app preference
+- ✅ Density-aware dependency arrows (scaled corner radius)
+
+**Technical Implementation**:
+- `userPreferencesSlice.ts` with Zustand persist middleware
+- `DENSITY_CONFIG` in `preferences.types.ts` with all values per mode
+- `useDensityConfig()` hook for components
+- `densityOverride` prop pattern for export
+- CSS classes: `.density-compact`, `.density-comfortable` (normal is default)
+
+**Acceptance Criteria** (all met):
+- ✅ Three density modes working correctly
+- ✅ Preferences persist across browser sessions
+- ✅ UI updates immediately without reload
+- ✅ Export can use different density than app preference
+- ✅ Dependency arrows scale correctly with density
+
+---
+
 **V1.1 Milestone**: Complete feature set for professional project planning, extensibility unlocked.
 
 **Success Metrics**:
@@ -1408,12 +1437,18 @@ This roadmap provides a clear path from concept to launch:
 
 ---
 
-**Document Version**: 1.8
-**Last Updated**: 2026-01-05
-**Status**: ✅ MVP COMPLETE (v0.0.11)
+**Document Version**: 1.9
+**Last Updated**: 2026-01-06
+**Status**: ✅ MVP COMPLETE (v0.0.12)
 **Next Phase**: V1.1 - Deferred Features & Extensibility
 
-**Recent Updates (v1.8)** - MVP Complete:
+**Recent Updates (v1.9)** - UI Density Complete:
+- Sprint 1.5.9.1 UI Density (Compact/Normal/Comfortable) complete
+- Three density modes with preferences dialog
+- Export density selection independent from app preference
+- Density-aware dependency arrows and column widths
+
+**Previous Updates (v1.8)** - MVP Complete:
 - Sprint 1.6 PNG Export & Polish complete
 - MVP Milestone achieved with all success metrics met
 - File extension changed to `.ownchart`

@@ -2,9 +2,10 @@
 
 **Sprint-ID:** 1.5.9.1
 **Parent Sprint:** 1.5.9 (User Preferences & Settings Dialog)
-**Version:** 1.0
+**Version:** 1.1
 **Erstellt:** 2026-01-05
-**Status:** Konzept
+**Abgeschlossen:** 2026-01-06
+**Status:** ✅ Abgeschlossen
 
 ---
 

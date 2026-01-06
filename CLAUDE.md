@@ -13,7 +13,7 @@
 
 ## Project Status
 
-**Current Version**: `0.0.11` (MVP complete)
+**Current Version**: `0.0.12`
 
 **Completed Sprints**:
 - ✅ Sprint 1.1.1 - Task Groups & Hierarchical Organization
@@ -26,8 +26,9 @@
 - ✅ Sprint 1.5 - Undo/Redo System
 - ✅ Sprint 1.5.4 - Copy/Paste & Multi-Select (ahead of schedule from V1.1)
 - ✅ Sprint 1.6 - PNG Export & Polish
+- ✅ Sprint 1.5.9.1 - UI Density (Compact/Normal/Comfortable)
 
-**MVP Features Complete (v0.0.11)**:
+**MVP Features Complete (v0.0.12)**:
 - ✅ Multi-select with rectangular marquee selection in timeline
 - ✅ Copy/Cut/Paste with cross-tab clipboard support
 - ✅ Multi-task dragging (all selected tasks move together)
@@ -42,6 +43,8 @@
 - ✅ Auto-fit name column on file open
 - ✅ Export settings persisted in project file
 - ✅ Multi-tab persistence (dependencies, column widths)
+- ✅ UI Density settings (Compact/Normal/Comfortable) with preferences dialog
+- ✅ Export density selection independent from app setting
 
 **Next Phase**:
 - 🔜 Phase 1.5 (V1.1) - Deferred Features & Extensibility
@@ -437,7 +440,7 @@ npm run test:e2e            # E2E tests (Playwright)
 
 ---
 
-**Last Updated**: 2026-01-05
-**Project Version**: 0.0.11
+**Last Updated**: 2026-01-06
+**Project Version**: 0.0.12
 **Status**: Phase 1 MVP Complete - Ready for V1.1
 **File Extension**: `.ownchart`
