@@ -9,7 +9,6 @@ import type { TimelineScale, TaskBarGeometry } from "../utils/timelineUtils";
 import { addDays, calculateDuration } from "../utils/dateUtils";
 import { useTaskStore } from "../store/slices/taskSlice";
 import { useChartStore } from "../store/slices/chartSlice";
-import { useUserPreferencesStore } from "../store/slices/userPreferencesSlice";
 import { validateDragOperation } from "../utils/dragValidation";
 import { getEffectiveTasksToMove } from "../utils/hierarchy";
 import {
@@ -184,8 +183,7 @@ export function useTaskBarInteraction(
 
           if (workingDaysMode && task.type !== "milestone") {
             // Calculate original working days and extend to new position
-            const holidayRegion =
-              useUserPreferencesStore.getState().preferences.holidayRegion;
+            const holidayRegion = chartState.holidayRegion;
             const originalWorkingDays = calculateWorkingDays(
               currentDragState.originalStartDate,
               currentDragState.originalEndDate,
@@ -347,8 +345,7 @@ export function useTaskBarInteraction(
             const chartState = useChartStore.getState();
             const workingDaysMode = chartState.workingDaysMode;
             const workingDaysConfig = chartState.workingDaysConfig;
-            const holidayRegion =
-              useUserPreferencesStore.getState().preferences.holidayRegion;
+            const holidayRegion = chartState.holidayRegion;
 
             let finalEndDate = newEndDate;
 

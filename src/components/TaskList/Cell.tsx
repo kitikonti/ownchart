@@ -91,9 +91,7 @@ export function Cell({
   // Working days settings
   const workingDaysMode = useChartStore((state) => state.workingDaysMode);
   const workingDaysConfig = useChartStore((state) => state.workingDaysConfig);
-  const holidayRegion = useUserPreferencesStore(
-    (state) => state.preferences.holidayRegion
-  );
+  const holidayRegion = useChartStore((state) => state.holidayRegion);
 
   // Date format preference
   const dateFormat = useUserPreferencesStore(
@@ -121,7 +119,12 @@ export function Cell({
       // Otherwise, initialize with current value
       if (!shouldOverwriteRef.current) {
         // Special handling for duration in working days mode
-        if (field === "duration" && workingDaysMode && task.startDate && task.endDate) {
+        if (
+          field === "duration" &&
+          workingDaysMode &&
+          task.startDate &&
+          task.endDate
+        ) {
           const workingDays = calculateWorkingDays(
             task.startDate,
             task.endDate,
@@ -136,7 +139,16 @@ export function Cell({
       shouldOverwriteRef.current = false; // Reset flag
       setError(null);
     }
-  }, [isEditing, currentValue, field, workingDaysMode, workingDaysConfig, holidayRegion, task.startDate, task.endDate]);
+  }, [
+    isEditing,
+    currentValue,
+    field,
+    workingDaysMode,
+    workingDaysConfig,
+    holidayRegion,
+    task.startDate,
+    task.endDate,
+  ]);
 
   /**
    * Handle cell click - activate or edit.
@@ -274,7 +286,8 @@ export function Cell({
       // Calculate actual calendar duration for storage
       const actualDuration =
         Math.ceil(
-          (new Date(endDateStr).getTime() - new Date(task.startDate).getTime()) /
+          (new Date(endDateStr).getTime() -
+            new Date(task.startDate).getTime()) /
             (1000 * 60 * 60 * 24)
         ) + 1;
 
@@ -337,7 +350,12 @@ export function Cell({
    */
   const getDisplayValue = (): string => {
     // Special handling for duration in working days mode
-    if (field === "duration" && workingDaysMode && task.startDate && task.endDate) {
+    if (
+      field === "duration" &&
+      workingDaysMode &&
+      task.startDate &&
+      task.endDate
+    ) {
       const workingDays = calculateWorkingDays(
         task.startDate,
         task.endDate,

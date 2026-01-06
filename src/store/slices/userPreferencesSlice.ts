@@ -19,9 +19,7 @@ import {
   detectLocaleDateFormat,
   detectLocaleFirstDayOfWeek,
   detectLocaleWeekNumberingSystem,
-  detectLocaleHolidayRegion,
 } from "../../types/preferences.types";
-import { holidayService } from "../../services/holidayService";
 import {
   registerFirstDayOfWeekGetter,
   registerWeekNumberingSystemGetter,
@@ -53,7 +51,6 @@ interface UserPreferencesActions {
   setDateFormat: (format: DateFormat) => void;
   setFirstDayOfWeek: (day: FirstDayOfWeek) => void;
   setWeekNumberingSystem: (system: WeekNumberingSystem) => void;
-  setHolidayRegion: (region: string) => void;
 
   // Initialization
   initializePreferences: () => void;
@@ -109,7 +106,6 @@ function migratePreferences(stored: Partial<UserPreferences>): UserPreferences {
     firstDayOfWeek: stored.firstDayOfWeek ?? detectLocaleFirstDayOfWeek(),
     weekNumberingSystem:
       stored.weekNumberingSystem ?? detectLocaleWeekNumberingSystem(),
-    holidayRegion: stored.holidayRegion ?? detectLocaleHolidayRegion(),
   };
 }
 
@@ -159,15 +155,6 @@ export const useUserPreferencesStore = create<UserPreferencesStore>()(
         });
       },
 
-      // Set holiday region
-      setHolidayRegion: (region: string) => {
-        set((state) => {
-          state.preferences.holidayRegion = region;
-        });
-        // Update holiday service with new region
-        holidayService.setRegion(region);
-      },
-
       // Initialize all preferences on app start
       // Handles migration for legacy users and new settings
       initializePreferences: () => {
@@ -201,9 +188,6 @@ export const useUserPreferencesStore = create<UserPreferencesStore>()(
 
         // Apply density CSS
         applyDensityClass(migratedPrefs.uiDensity);
-
-        // Initialize holiday service with user's region
-        holidayService.setRegion(migratedPrefs.holidayRegion);
       },
 
       // Deprecated - use initializePreferences
@@ -283,22 +267,8 @@ export function useWeekNumberingSystem(): WeekNumberingSystem {
 }
 
 /**
- * Hook to get current holiday region preference
- */
-export function useHolidayRegion(): string {
-  return useUserPreferencesStore((state) => state.preferences.holidayRegion);
-}
-
-/**
  * Selector for current date format (for non-hook usage)
  */
 export function getCurrentDateFormat(): DateFormat {
   return useUserPreferencesStore.getState().preferences.dateFormat;
-}
-
-/**
- * Selector for current holiday region (for non-hook usage)
- */
-export function getCurrentHolidayRegion(): string {
-  return useUserPreferencesStore.getState().preferences.holidayRegion;
 }

@@ -12,10 +12,7 @@ import { useRef, useEffect, useMemo, useState, useCallback } from "react";
 import type { Task } from "../../types/chart.types";
 import { useChartStore } from "../../store/slices/chartSlice";
 import { useTaskStore } from "../../store/slices/taskSlice";
-import {
-  useDensityConfig,
-  useHolidayRegion,
-} from "../../store/slices/userPreferencesSlice";
+import { useDensityConfig } from "../../store/slices/userPreferencesSlice";
 import { useZoom } from "../../hooks/useZoom";
 import { useDependencyDrag } from "../../hooks/useDependencyDrag";
 import {
@@ -88,8 +85,8 @@ export function ChartCanvas({
   const setContainerWidth = useChartStore((state) => state.setContainerWidth);
   const updateScale = useChartStore((state) => state.updateScale);
 
-  // Get holiday region from user preferences (Sprint 1.5.9)
-  const holidayRegion = useHolidayRegion();
+  // Get holiday region from chart settings (Sprint 1.5.9 - now per-project)
+  const holidayRegion = useChartStore((state) => state.holidayRegion);
 
   // Get setSelectedTaskIds from task store for marquee selection
   const setSelectedTaskIds = useTaskStore((state) => state.setSelectedTaskIds);
@@ -311,26 +308,30 @@ export function ChartCanvas({
             {/* Layer 3.6: Connection Handles (Sprint 1.4) */}
             {showDependencies && (
               <g className="layer-connection-handles">
-                {Array.from(taskGeometriesMap.entries()).map(([taskId, geo]) => (
-                  <ConnectionHandles
-                    key={`handles-${taskId}`}
-                    taskId={taskId}
-                    x={geo.x}
-                    y={geo.y}
-                    width={geo.width}
-                    height={geo.height}
-                    isVisible={hoveredTaskId === taskId && !dragState.isDragging}
-                    isValidDropTarget={
-                      dragState.isDragging && isValidTarget(taskId)
-                    }
-                    isInvalidDropTarget={
-                      dragState.isDragging && isInvalidTarget(taskId)
-                    }
-                    onDragStart={startDrag}
-                    onHover={setHoveredTaskId}
-                    onDrop={handleTaskMouseUp}
-                  />
-                ))}
+                {Array.from(taskGeometriesMap.entries()).map(
+                  ([taskId, geo]) => (
+                    <ConnectionHandles
+                      key={`handles-${taskId}`}
+                      taskId={taskId}
+                      x={geo.x}
+                      y={geo.y}
+                      width={geo.width}
+                      height={geo.height}
+                      isVisible={
+                        hoveredTaskId === taskId && !dragState.isDragging
+                      }
+                      isValidDropTarget={
+                        dragState.isDragging && isValidTarget(taskId)
+                      }
+                      isInvalidDropTarget={
+                        dragState.isDragging && isInvalidTarget(taskId)
+                      }
+                      onDragStart={startDrag}
+                      onHover={setHoveredTaskId}
+                      onDrop={handleTaskMouseUp}
+                    />
+                  )
+                )}
               </g>
             )}
 

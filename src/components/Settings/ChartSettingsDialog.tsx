@@ -5,12 +5,36 @@
  * These settings are saved in the .ownchart file and are project-specific.
  */
 
-import { Sliders, Eye, Calendar, Briefcase } from "@phosphor-icons/react";
+import { useState, useMemo } from "react";
+import {
+  Sliders,
+  Eye,
+  Calendar,
+  Briefcase,
+  Globe,
+  MagnifyingGlass,
+} from "@phosphor-icons/react";
 import { Modal } from "../common/Modal";
 import { useUIStore } from "../../store/slices/uiSlice";
 import { useChartStore } from "../../store/slices/chartSlice";
-import { useUserPreferencesStore } from "../../store/slices/userPreferencesSlice";
 import type { TaskLabelPosition } from "../../types/preferences.types";
+import { holidayService } from "../../services/holidayService";
+
+/**
+ * Popular countries to show at the top of the list
+ */
+const POPULAR_COUNTRIES = [
+  "AT",
+  "DE",
+  "CH",
+  "US",
+  "GB",
+  "FR",
+  "ES",
+  "IT",
+  "NL",
+  "BE",
+];
 
 /**
  * Task label position options
@@ -72,11 +96,49 @@ export function ChartSettingsDialog(): JSX.Element | null {
   const setWorkingDaysConfig = useChartStore(
     (state) => state.setWorkingDaysConfig
   );
+  const holidayRegion = useChartStore((state) => state.holidayRegion);
+  const setHolidayRegion = useChartStore((state) => state.setHolidayRegion);
 
-  // User preferences (for holiday region display)
-  const holidayRegion = useUserPreferencesStore(
-    (state) => state.preferences.holidayRegion
-  );
+  // Country search state
+  const [countrySearch, setCountrySearch] = useState("");
+  const [isCountryDropdownOpen, setIsCountryDropdownOpen] = useState(false);
+
+  // Get all available countries
+  const allCountries = useMemo(() => {
+    const countries = holidayService.getAvailableCountries();
+    // Sort with popular countries first
+    return countries.sort((a, b) => {
+      const aPopular = POPULAR_COUNTRIES.indexOf(a.code);
+      const bPopular = POPULAR_COUNTRIES.indexOf(b.code);
+      if (aPopular !== -1 && bPopular !== -1) return aPopular - bPopular;
+      if (aPopular !== -1) return -1;
+      if (bPopular !== -1) return 1;
+      return a.name.localeCompare(b.name);
+    });
+  }, []);
+
+  // Filter countries based on search
+  const filteredCountries = useMemo(() => {
+    if (!countrySearch) return allCountries;
+    const search = countrySearch.toLowerCase();
+    return allCountries.filter(
+      (c) =>
+        c.name.toLowerCase().includes(search) ||
+        c.code.toLowerCase().includes(search)
+    );
+  }, [allCountries, countrySearch]);
+
+  // Get current country name
+  const currentCountryName = useMemo(() => {
+    const country = allCountries.find((c) => c.code === holidayRegion);
+    return country?.name || holidayRegion;
+  }, [allCountries, holidayRegion]);
+
+  const handleCountrySelect = (code: string) => {
+    setHolidayRegion(code);
+    setIsCountryDropdownOpen(false);
+    setCountrySearch("");
+  };
 
   const footer = (
     <button
@@ -146,33 +208,111 @@ export function ChartSettingsDialog(): JSX.Element | null {
             </label>
 
             {/* Show Holidays */}
-            <label className="flex items-center gap-3 cursor-pointer">
-              <input
-                type="checkbox"
-                checked={showHolidays}
-                onChange={(e) => setShowHolidays(e.target.checked)}
-                className="h-4 w-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
-                aria-label="Show Holidays"
-              />
-              <div>
-                <span className="text-sm font-medium text-gray-900">
-                  Show Holidays
-                </span>
-                <p className="text-xs text-gray-500">
-                  Highlight holidays from: {holidayRegion}
+            <div className="space-y-2">
+              <label className="flex items-center gap-3 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={showHolidays}
+                  onChange={(e) => setShowHolidays(e.target.checked)}
+                  className="h-4 w-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                  aria-label="Show Holidays"
+                />
+                <div>
+                  <span className="text-sm font-medium text-gray-900">
+                    Show Holidays
+                  </span>
+                  <p className="text-xs text-gray-500">
+                    Highlight public holidays in the timeline
+                  </p>
+                </div>
+              </label>
+
+              {/* Holiday Region Selector */}
+              <div className="ml-7">
+                <div className="relative">
                   <button
                     type="button"
-                    onClick={() => {
-                      closeChartSettingsDialog();
-                      useUIStore.getState().openPreferencesDialog();
-                    }}
-                    className="ml-2 text-blue-600 hover:text-blue-700"
+                    onClick={() =>
+                      setIsCountryDropdownOpen(!isCountryDropdownOpen)
+                    }
+                    className="w-full flex items-center justify-between gap-2 px-3 py-2 text-sm border border-gray-300 rounded-lg hover:border-gray-400 transition-colors bg-white"
                   >
-                    Change region
+                    <div className="flex items-center gap-2">
+                      <Globe size={16} className="text-gray-500" />
+                      <span className="font-medium text-gray-900">
+                        {currentCountryName}
+                      </span>
+                      <span className="text-gray-500">({holidayRegion})</span>
+                    </div>
+                    <svg
+                      className={`w-4 h-4 text-gray-500 transition-transform ${isCountryDropdownOpen ? "rotate-180" : ""}`}
+                      fill="none"
+                      viewBox="0 0 24 24"
+                      stroke="currentColor"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M19 9l-7 7-7-7"
+                      />
+                    </svg>
                   </button>
-                </p>
+
+                  {/* Dropdown */}
+                  {isCountryDropdownOpen && (
+                    <div className="absolute z-50 mt-1 w-full bg-white border border-gray-300 rounded-lg shadow-lg">
+                      {/* Search input */}
+                      <div className="p-2 border-b border-gray-200">
+                        <div className="relative">
+                          <MagnifyingGlass
+                            size={16}
+                            className="absolute left-2 top-1/2 -translate-y-1/2 text-gray-400"
+                          />
+                          <input
+                            type="text"
+                            value={countrySearch}
+                            onChange={(e) => setCountrySearch(e.target.value)}
+                            placeholder="Search countries..."
+                            className="w-full pl-8 pr-3 py-1.5 text-sm border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+                            autoFocus
+                          />
+                        </div>
+                      </div>
+
+                      {/* Country list */}
+                      <div className="max-h-48 overflow-y-auto">
+                        {filteredCountries.length === 0 ? (
+                          <div className="px-3 py-2 text-sm text-gray-500">
+                            No countries found
+                          </div>
+                        ) : (
+                          filteredCountries.map((country) => (
+                            <button
+                              key={country.code}
+                              type="button"
+                              onClick={() => handleCountrySelect(country.code)}
+                              className={`w-full flex items-center gap-2 px-3 py-2 text-sm hover:bg-gray-100 transition-colors ${
+                                country.code === holidayRegion
+                                  ? "bg-blue-50 text-blue-700"
+                                  : "text-gray-900"
+                              }`}
+                            >
+                              <span className="font-medium">
+                                {country.name}
+                              </span>
+                              <span className="text-gray-500">
+                                ({country.code})
+                              </span>
+                            </button>
+                          ))
+                        )}
+                      </div>
+                    </div>
+                  )}
+                </div>
               </div>
-            </label>
+            </div>
 
             {/* Show Dependencies */}
             <label className="flex items-center gap-3 cursor-pointer">
@@ -347,7 +487,7 @@ export function ChartSettingsDialog(): JSX.Element | null {
                     className="h-4 w-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
                   />
                   <span className="text-sm text-gray-700">
-                    Holidays ({holidayRegion})
+                    Holidays ({currentCountryName})
                   </span>
                 </label>
               </div>

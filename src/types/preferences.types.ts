@@ -82,7 +82,9 @@ export interface UserPreferences {
   dateFormat: DateFormat;
   firstDayOfWeek: FirstDayOfWeek;
   weekNumberingSystem: WeekNumberingSystem;
-  holidayRegion: string; // ISO 3166-1 alpha-2 code (e.g., 'AT', 'DE', 'US')
+
+  // Note: holidayRegion is now a per-project setting in chartSlice
+  // (moved from user preferences to ensure consistent behavior when sharing files)
 
   // Future preferences (V2.0+):
   // theme: 'light' | 'dark' | 'system';
@@ -218,7 +220,6 @@ export const DEFAULT_PREFERENCES: UserPreferences = {
   dateFormat: detectLocaleDateFormat(),
   firstDayOfWeek: detectLocaleFirstDayOfWeek(),
   weekNumberingSystem: detectLocaleWeekNumberingSystem(),
-  holidayRegion: detectLocaleHolidayRegion(),
 };
 
 /**

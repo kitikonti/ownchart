@@ -35,9 +35,7 @@ export function useKeyboardShortcuts() {
   // View toggle shortcuts (Sprint 1.5.9)
   const toggleDependencies = useChartStore((state) => state.toggleDependencies);
   const toggleTodayMarker = useChartStore((state) => state.toggleTodayMarker);
-  const toggleProgress = useChartStore(
-    (state) => state.toggleProgress
-  );
+  const toggleProgress = useChartStore((state) => state.toggleProgress);
   const toggleHolidays = useChartStore((state) => state.toggleHolidays);
 
   // UI state for dialogs

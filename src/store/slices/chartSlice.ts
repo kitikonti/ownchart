@@ -23,7 +23,11 @@ import type {
   TaskLabelPosition,
   WorkingDaysConfig,
 } from "../../types/preferences.types";
-import { DEFAULT_WORKING_DAYS_CONFIG } from "../../types/preferences.types";
+import {
+  DEFAULT_WORKING_DAYS_CONFIG,
+  detectLocaleHolidayRegion,
+} from "../../types/preferences.types";
+import { holidayService } from "../../services/holidayService";
 
 interface ChartState {
   // Scale management (CRITICAL from Architect review)
@@ -47,6 +51,7 @@ interface ChartState {
   taskLabelPosition: TaskLabelPosition;
   workingDaysMode: boolean;
   workingDaysConfig: WorkingDaysConfig;
+  holidayRegion: string; // ISO 3166-1 alpha-2 country code (e.g., 'AT', 'DE', 'US')
 
   // Transient UI state
   isZooming: boolean;
@@ -97,6 +102,7 @@ interface ChartActions {
   setTaskLabelPosition: (position: TaskLabelPosition) => void;
   setWorkingDaysMode: (enabled: boolean) => void;
   setWorkingDaysConfig: (config: Partial<WorkingDaysConfig>) => void;
+  setHolidayRegion: (region: string) => void;
 
   // Bulk settings update (for loading from file)
   setViewSettings: (settings: Partial<ChartState>) => void;
@@ -140,6 +146,7 @@ export const useChartStore = create<ChartState & ChartActions>()(
     taskLabelPosition: "inside",
     workingDaysMode: false,
     workingDaysConfig: { ...DEFAULT_WORKING_DAYS_CONFIG },
+    holidayRegion: detectLocaleHolidayRegion(), // Default based on browser locale
 
     // Transient UI state
     isZooming: false,
@@ -401,6 +408,15 @@ export const useChartStore = create<ChartState & ChartActions>()(
       });
     },
 
+    // Set holiday region
+    setHolidayRegion: (region: string) => {
+      set((state) => {
+        state.holidayRegion = region;
+      });
+      // Update holiday service with new region
+      holidayService.setRegion(region);
+    },
+
     // Bulk settings update (for loading from file)
     setViewSettings: (settings: Partial<ChartState>) => {
       set((state) => {
@@ -423,7 +439,13 @@ export const useChartStore = create<ChartState & ChartActions>()(
           state.workingDaysMode = settings.workingDaysMode;
         if (settings.workingDaysConfig !== undefined)
           state.workingDaysConfig = settings.workingDaysConfig;
+        if (settings.holidayRegion !== undefined)
+          state.holidayRegion = settings.holidayRegion;
       });
+      // Update holiday service if region changed
+      if (settings.holidayRegion !== undefined) {
+        holidayService.setRegion(settings.holidayRegion);
+      }
     },
 
     // Set drag state (for multi-task preview)

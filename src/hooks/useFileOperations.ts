@@ -37,6 +37,7 @@ export function useFileOperations() {
   const taskLabelPosition = useChartStore((state) => state.taskLabelPosition);
   const workingDaysMode = useChartStore((state) => state.workingDaysMode);
   const workingDaysConfig = useChartStore((state) => state.workingDaysConfig);
+  const holidayRegion = useChartStore((state) => state.holidayRegion);
   const setViewSettings = useChartStore((state) => state.setViewSettings);
 
   // Sprint 1.4: Dependency store
@@ -78,6 +79,8 @@ export function useFileOperations() {
             // Working days mode
             workingDaysMode,
             workingDaysConfig,
+            // Holiday region
+            holidayRegion,
           },
           {
             chartName:
@@ -121,6 +124,7 @@ export function useFileOperations() {
       taskLabelPosition,
       workingDaysMode,
       workingDaysConfig,
+      holidayRegion,
       taskTableWidth,
       columnWidths,
       fileState,
@@ -181,6 +185,7 @@ export function useFileOperations() {
           excludeSunday: true,
           excludeHolidays: true,
         },
+        holidayRegion: loadedViewSettings.holidayRegion, // Use file's region, undefined keeps current
       });
 
       autoFitColumn("name"); // Auto-fit name column to content

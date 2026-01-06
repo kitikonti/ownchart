@@ -110,6 +110,9 @@ export interface ViewSettings {
   // Working days mode (Sprint 1.5.9)
   workingDaysMode?: boolean;
   workingDaysConfig?: WorkingDaysConfig;
+
+  // Holiday region (Sprint 1.5.9 - moved from user preferences to per-project)
+  holidayRegion?: string; // ISO 3166-1 alpha-2 country code (e.g., 'AT', 'DE', 'US')
 }
 
 // Validation error types

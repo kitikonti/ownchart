@@ -64,6 +64,8 @@ export function serializeToGanttFile(
         // Working days mode
         workingDaysMode: viewSettings.workingDaysMode,
         workingDaysConfig: viewSettings.workingDaysConfig,
+        // Holiday region
+        holidayRegion: viewSettings.holidayRegion,
       },
       exportSettings: options.exportSettings, // Sprint 1.6
       metadata: {

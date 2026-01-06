@@ -4,8 +4,7 @@
  * Sprint 1.5.9: Regional settings (date format, first day of week, holiday region)
  */
 
-import { useState, useMemo } from "react";
-import { Gear, Monitor, Globe, MagnifyingGlass } from "@phosphor-icons/react";
+import { Gear, Monitor, Globe } from "@phosphor-icons/react";
 import { Modal } from "../common/Modal";
 import { useUIStore } from "../../store/slices/uiSlice";
 import { useUserPreferencesStore } from "../../store/slices/userPreferencesSlice";
@@ -15,10 +14,6 @@ import type {
   FirstDayOfWeek,
   WeekNumberingSystem,
 } from "../../types/preferences.types";
-import {
-  holidayService,
-  type CountryInfo,
-} from "../../services/holidayService";
 
 /**
  * Density option configuration for radio buttons
@@ -102,11 +97,6 @@ const WEEK_NUMBERING_OPTIONS: WeekNumberingOption[] = [
 ];
 
 /**
- * Popular countries for quick selection
- */
-const POPULAR_COUNTRIES = ["DE", "AT", "CH", "US", "GB", "FR", "IT", "ES"];
-
-/**
  * Detect if device has touch capability
  */
 function isTouchDevice(): boolean {
@@ -129,52 +119,6 @@ export function PreferencesDialog(): JSX.Element | null {
   const setWeekNumberingSystem = useUserPreferencesStore(
     (state) => state.setWeekNumberingSystem
   );
-  const setHolidayRegion = useUserPreferencesStore(
-    (state) => state.setHolidayRegion
-  );
-
-  // Country search state
-  const [countrySearch, setCountrySearch] = useState("");
-  const [isCountryDropdownOpen, setIsCountryDropdownOpen] = useState(false);
-
-  // Get available countries
-  const allCountries = useMemo<CountryInfo[]>(
-    () => holidayService.getAvailableCountries(),
-    []
-  );
-
-  // Filter countries by search
-  const filteredCountries = useMemo(() => {
-    if (!countrySearch.trim()) {
-      // Show popular countries first, then the rest
-      const popular = allCountries.filter((c) =>
-        POPULAR_COUNTRIES.includes(c.code)
-      );
-      const others = allCountries.filter(
-        (c) => !POPULAR_COUNTRIES.includes(c.code)
-      );
-      return [...popular, ...others].slice(0, 15);
-    }
-
-    const search = countrySearch.toLowerCase();
-    return allCountries
-      .filter(
-        (c) =>
-          c.name.toLowerCase().includes(search) ||
-          c.code.toLowerCase().includes(search)
-      )
-      .slice(0, 15);
-  }, [allCountries, countrySearch]);
-
-  // Get current country name
-  const currentCountryName = useMemo(() => {
-    const country = allCountries.find(
-      (c) => c.code === preferences.holidayRegion
-    );
-    return country
-      ? `${country.name} (${country.code})`
-      : preferences.holidayRegion;
-  }, [allCountries, preferences.holidayRegion]);
 
   const handleDensityChange = (density: UiDensity) => {
     setUiDensity(density);
@@ -190,12 +134,6 @@ export function PreferencesDialog(): JSX.Element | null {
 
   const handleWeekNumberingChange = (system: WeekNumberingSystem) => {
     setWeekNumberingSystem(system);
-  };
-
-  const handleCountrySelect = (countryCode: string) => {
-    setHolidayRegion(countryCode);
-    setIsCountryDropdownOpen(false);
-    setCountrySearch("");
   };
 
   const footer = (
@@ -304,8 +242,10 @@ export function PreferencesDialog(): JSX.Element | null {
             </legend>
             <div className="space-y-2">
               {WEEK_NUMBERING_OPTIONS.map((option) => (
+                // eslint-disable-next-line jsx-a11y/label-has-associated-control
                 <label
                   key={option.value}
+                  htmlFor={`weekNumbering-${option.value}`}
                   className={`
                     flex items-start gap-3 p-3 rounded-lg border cursor-pointer transition-colors
                     ${
@@ -316,6 +256,7 @@ export function PreferencesDialog(): JSX.Element | null {
                   `}
                 >
                   <input
+                    id={`weekNumbering-${option.value}`}
                     type="radio"
                     name="weekNumbering"
                     value={option.value}
@@ -334,70 +275,6 @@ export function PreferencesDialog(): JSX.Element | null {
                 </label>
               ))}
             </div>
-          </fieldset>
-
-          {/* Holiday Region */}
-          <fieldset className="space-y-3">
-            <legend className="block text-sm font-medium text-gray-700">
-              Holiday Region
-            </legend>
-            <div className="relative">
-              {/* Country selector button */}
-              <button
-                type="button"
-                onClick={() => setIsCountryDropdownOpen(!isCountryDropdownOpen)}
-                className="w-full flex items-center justify-between px-3 py-2 text-sm text-left border border-gray-300 rounded-lg bg-white hover:border-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-              >
-                <span className="font-medium text-gray-900">
-                  {currentCountryName}
-                </span>
-                <MagnifyingGlass size={16} className="text-gray-400" />
-              </button>
-
-              {/* Country dropdown */}
-              {isCountryDropdownOpen && (
-                <div className="absolute z-10 w-full mt-1 bg-white border border-gray-200 rounded-lg shadow-lg">
-                  {/* Search input */}
-                  <div className="p-2 border-b border-gray-200">
-                    <input
-                      type="text"
-                      placeholder="Search countries..."
-                      value={countrySearch}
-                      onChange={(e) => setCountrySearch(e.target.value)}
-                      className="w-full px-3 py-2 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                      autoFocus
-                    />
-                  </div>
-
-                  {/* Country list */}
-                  <div className="max-h-48 overflow-y-auto">
-                    {filteredCountries.map((country) => (
-                      <button
-                        key={country.code}
-                        type="button"
-                        onClick={() => handleCountrySelect(country.code)}
-                        className={`
-                          w-full px-3 py-2 text-sm text-left hover:bg-gray-50 flex items-center justify-between
-                          ${
-                            preferences.holidayRegion === country.code
-                              ? "bg-blue-50 text-blue-700"
-                              : "text-gray-900"
-                          }
-                        `}
-                      >
-                        <span>{country.name}</span>
-                        <span className="text-xs text-gray-500">
-                          {country.code}
-                        </span>
-                      </button>
-                    ))}
-                  </div>
-                </div>
-              )}
-            </div>
-            <p className="text-xs text-gray-500">
-              Holidays from this region will be shown in the timeline.
-            </p>
           </fieldset>
         </div>
 
