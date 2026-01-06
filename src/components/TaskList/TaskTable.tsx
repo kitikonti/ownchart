@@ -56,12 +56,12 @@ export function TaskTable({ hideHeader = true }: TaskTableProps): JSX.Element {
   const activeCell = useTaskStore((state) => state.activeCell);
   const clipboardTaskIds = useTaskStore((state) => state.clipboardTaskIds);
   const densityConfig = useDensityConfig();
-  const showProgressColumn = useChartStore((state) => state.showProgressColumn);
+  const showProgress = useChartStore((state) => state.showProgress);
 
   // Get visible columns based on settings (Sprint 1.5.9)
   const visibleColumns = useMemo(
-    () => getVisibleColumns(showProgressColumn),
-    [showProgressColumn]
+    () => getVisibleColumns(showProgress),
+    [showProgress]
   );
 
   // Get total column width for proper scrolling

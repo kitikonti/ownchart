@@ -13,6 +13,7 @@ import type {
   UiDensity,
   DateFormat,
   FirstDayOfWeek,
+  WeekNumberingSystem,
 } from "../../types/preferences.types";
 import {
   holidayService,
@@ -79,6 +80,28 @@ const FIRST_DAY_OPTIONS: FirstDayOption[] = [
 ];
 
 /**
+ * Week numbering system options
+ */
+interface WeekNumberingOption {
+  value: WeekNumberingSystem;
+  label: string;
+  description: string;
+}
+
+const WEEK_NUMBERING_OPTIONS: WeekNumberingOption[] = [
+  {
+    value: "iso",
+    label: "ISO 8601",
+    description: "Week 1 contains first Thursday (Europe)",
+  },
+  {
+    value: "us",
+    label: "US Standard",
+    description: "Week 1 contains January 1st",
+  },
+];
+
+/**
  * Popular countries for quick selection
  */
 const POPULAR_COUNTRIES = ["DE", "AT", "CH", "US", "GB", "FR", "IT", "ES"];
@@ -102,6 +125,9 @@ export function PreferencesDialog(): JSX.Element | null {
   const setDateFormat = useUserPreferencesStore((state) => state.setDateFormat);
   const setFirstDayOfWeek = useUserPreferencesStore(
     (state) => state.setFirstDayOfWeek
+  );
+  const setWeekNumberingSystem = useUserPreferencesStore(
+    (state) => state.setWeekNumberingSystem
   );
   const setHolidayRegion = useUserPreferencesStore(
     (state) => state.setHolidayRegion
@@ -160,6 +186,10 @@ export function PreferencesDialog(): JSX.Element | null {
 
   const handleFirstDayChange = (day: FirstDayOfWeek) => {
     setFirstDayOfWeek(day);
+  };
+
+  const handleWeekNumberingChange = (system: WeekNumberingSystem) => {
+    setWeekNumberingSystem(system);
   };
 
   const handleCountrySelect = (countryCode: string) => {
@@ -262,6 +292,45 @@ export function PreferencesDialog(): JSX.Element | null {
                   <span className="font-medium text-gray-900">
                     {option.label}
                   </span>
+                </label>
+              ))}
+            </div>
+          </fieldset>
+
+          {/* Week Numbering System */}
+          <fieldset className="space-y-3 mb-4">
+            <legend className="block text-sm font-medium text-gray-700">
+              Week Numbering
+            </legend>
+            <div className="space-y-2">
+              {WEEK_NUMBERING_OPTIONS.map((option) => (
+                <label
+                  key={option.value}
+                  className={`
+                    flex items-start gap-3 p-3 rounded-lg border cursor-pointer transition-colors
+                    ${
+                      preferences.weekNumberingSystem === option.value
+                        ? "border-blue-500 bg-blue-50"
+                        : "border-gray-200 hover:border-gray-300 hover:bg-gray-50"
+                    }
+                  `}
+                >
+                  <input
+                    type="radio"
+                    name="weekNumbering"
+                    value={option.value}
+                    checked={preferences.weekNumberingSystem === option.value}
+                    onChange={() => handleWeekNumberingChange(option.value)}
+                    className="mt-0.5 h-4 w-4 text-blue-600 border-gray-300 focus:ring-blue-500"
+                  />
+                  <div className="flex-1">
+                    <span className="text-sm font-medium text-gray-900">
+                      {option.label}
+                    </span>
+                    <p className="text-xs text-gray-500 mt-0.5">
+                      {option.description}
+                    </p>
+                  </div>
                 </label>
               ))}
             </div>

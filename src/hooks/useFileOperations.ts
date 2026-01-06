@@ -33,7 +33,7 @@ export function useFileOperations() {
   const showTodayMarker = useChartStore((state) => state.showTodayMarker);
   const showHolidays = useChartStore((state) => state.showHolidays);
   const showDependencies = useChartStore((state) => state.showDependencies);
-  const showProgressColumn = useChartStore((state) => state.showProgressColumn);
+  const showProgress = useChartStore((state) => state.showProgress);
   const taskLabelPosition = useChartStore((state) => state.taskLabelPosition);
   const workingDaysMode = useChartStore((state) => state.workingDaysMode);
   const workingDaysConfig = useChartStore((state) => state.workingDaysConfig);
@@ -70,7 +70,7 @@ export function useFileOperations() {
             showTodayMarker,
             showHolidays,
             showDependencies,
-            showProgressColumn,
+            showProgress,
             taskLabelPosition,
             // Working days mode
             workingDaysMode,
@@ -114,7 +114,7 @@ export function useFileOperations() {
       showTodayMarker,
       showHolidays,
       showDependencies,
-      showProgressColumn,
+      showProgress,
       taskLabelPosition,
       workingDaysMode,
       workingDaysConfig,
@@ -170,7 +170,7 @@ export function useFileOperations() {
         showTodayMarker: loadedViewSettings.showTodayMarker,
         showHolidays: loadedViewSettings.showHolidays ?? true,
         showDependencies: loadedViewSettings.showDependencies ?? true,
-        showProgressColumn: loadedViewSettings.showProgressColumn ?? true,
+        showProgress: loadedViewSettings.showProgress ?? true,
         taskLabelPosition: loadedViewSettings.taskLabelPosition ?? "inside",
         workingDaysMode: loadedViewSettings.workingDaysMode ?? false,
         workingDaysConfig: loadedViewSettings.workingDaysConfig ?? {

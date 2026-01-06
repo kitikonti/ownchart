@@ -205,6 +205,7 @@ export const TaskBar = React.memo(function TaskBar({
 
   // Shared drag state for multi-task preview
   const sharedDragState = useChartStore((state) => state.dragState);
+  const showProgress = useChartStore((state) => state.showProgress);
   const selectedTaskIds = useTaskStore((state) => state.selectedTaskIds);
 
   // Interaction hook for drag-to-edit functionality
@@ -419,20 +420,20 @@ export const TaskBar = React.memo(function TaskBar({
         </clipPath>
       </defs>
 
-      {/* Background bar (fades during drag/resize) */}
+      {/* Background bar (fades during drag/resize, full opacity when progress hidden) */}
       <rect
         x={geometry.x}
         y={geometry.y}
         width={geometry.width}
         height={geometry.height}
         fill={task.color}
-        fillOpacity={isBeingDragged ? 0.3 : 0.8}
+        fillOpacity={isBeingDragged ? 0.3 : showProgress ? 0.8 : 1}
         rx={4}
         ry={4}
       />
 
       {/* Progress bar (uses clip-path to prevent overflow) */}
-      {task.progress > 0 && (
+      {showProgress && task.progress > 0 && (
         <rect
           x={geometry.x}
           y={geometry.y}

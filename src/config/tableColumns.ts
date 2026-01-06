@@ -141,9 +141,9 @@ export const TASK_COLUMNS: ColumnDefinition[] = [
  * Sprint 1.5.9: Allows hiding the progress column.
  */
 export function getVisibleColumns(
-  showProgressColumn: boolean
+  showProgress: boolean
 ): ColumnDefinition[] {
-  if (showProgressColumn) {
+  if (showProgress) {
     return TASK_COLUMNS;
   }
   return TASK_COLUMNS.filter((col) => col.id !== "progress");

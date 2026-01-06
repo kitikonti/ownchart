@@ -31,12 +31,12 @@ export function NewTaskPlaceholderRow(): JSX.Element {
   const selectedTaskIds = useTaskStore((state) => state.selectedTaskIds);
   const clearSelection = useTaskStore((state) => state.clearSelection);
   const densityConfig = useDensityConfig();
-  const showProgressColumn = useChartStore((state) => state.showProgressColumn);
+  const showProgress = useChartStore((state) => state.showProgress);
 
   // Get visible columns based on settings (Sprint 1.5.9)
   const visibleColumns = useMemo(
-    () => getVisibleColumns(showProgressColumn),
-    [showProgressColumn]
+    () => getVisibleColumns(showProgress),
+    [showProgress]
   );
 
   const isRowActive = activeCell.taskId === PLACEHOLDER_TASK_ID;
@@ -142,13 +142,36 @@ export function NewTaskPlaceholderRow(): JSX.Element {
   };
 
   const createNewTask = () => {
-    const today = new Date();
-    const nextWeek = new Date(today);
-    nextWeek.setDate(today.getDate() + 7);
+    const DEFAULT_DURATION = 7;
 
     const formatDate = (date: Date): string => {
       return date.toISOString().split("T")[0];
     };
+
+    // Calculate start date based on last task's end date (like insertTaskBelow)
+    let startDate: string;
+    let endDate: string;
+
+    const lastTask = tasks.length > 0 ? tasks[tasks.length - 1] : null;
+
+    if (lastTask?.endDate) {
+      // Start one day after the last task ends
+      const lastEnd = new Date(lastTask.endDate);
+      const start = new Date(lastEnd);
+      start.setDate(lastEnd.getDate() + 1);
+      startDate = formatDate(start);
+
+      const end = new Date(start);
+      end.setDate(start.getDate() + DEFAULT_DURATION - 1);
+      endDate = formatDate(end);
+    } else {
+      // No tasks or last task has no end date - use today
+      const today = new Date();
+      const nextWeek = new Date(today);
+      nextWeek.setDate(today.getDate() + DEFAULT_DURATION - 1);
+      startDate = formatDate(today);
+      endDate = formatDate(nextWeek);
+    }
 
     // Calculate the next order value
     const maxOrder =
@@ -156,9 +179,9 @@ export function NewTaskPlaceholderRow(): JSX.Element {
 
     addTask({
       name: inputValue.trim(),
-      startDate: formatDate(today),
-      endDate: formatDate(nextWeek),
-      duration: 7,
+      startDate,
+      endDate,
+      duration: DEFAULT_DURATION,
       progress: 0,
       color: "#3b82f6",
       order: maxOrder,

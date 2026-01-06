@@ -43,7 +43,7 @@ interface ChartState {
   showTodayMarker: boolean;
   showHolidays: boolean;
   showDependencies: boolean;
-  showProgressColumn: boolean;
+  showProgress: boolean;
   taskLabelPosition: TaskLabelPosition;
   workingDaysMode: boolean;
   workingDaysConfig: WorkingDaysConfig;
@@ -88,12 +88,12 @@ interface ChartActions {
   toggleTodayMarker: () => void;
   toggleHolidays: () => void;
   toggleDependencies: () => void;
-  toggleProgressColumn: () => void;
+  toggleProgress: () => void;
   setShowWeekends: (show: boolean) => void;
   setShowTodayMarker: (show: boolean) => void;
   setShowHolidays: (show: boolean) => void;
   setShowDependencies: (show: boolean) => void;
-  setShowProgressColumn: (show: boolean) => void;
+  setShowProgress: (show: boolean) => void;
   setTaskLabelPosition: (position: TaskLabelPosition) => void;
   setWorkingDaysMode: (enabled: boolean) => void;
   setWorkingDaysConfig: (config: Partial<WorkingDaysConfig>) => void;
@@ -136,7 +136,7 @@ export const useChartStore = create<ChartState & ChartActions>()(
     showTodayMarker: true,
     showHolidays: true,
     showDependencies: true,
-    showProgressColumn: true,
+    showProgress: true,
     taskLabelPosition: "inside",
     workingDaysMode: false,
     workingDaysConfig: { ...DEFAULT_WORKING_DAYS_CONFIG },
@@ -335,10 +335,10 @@ export const useChartStore = create<ChartState & ChartActions>()(
       });
     },
 
-    // Toggle progress column visibility
-    toggleProgressColumn: () => {
+    // Toggle progress visibility
+    toggleProgress: () => {
       set((state) => {
-        state.showProgressColumn = !state.showProgressColumn;
+        state.showProgress = !state.showProgress;
       });
     },
 
@@ -370,10 +370,10 @@ export const useChartStore = create<ChartState & ChartActions>()(
       });
     },
 
-    // Set progress column visibility
-    setShowProgressColumn: (show: boolean) => {
+    // Set progress visibility
+    setShowProgress: (show: boolean) => {
       set((state) => {
-        state.showProgressColumn = show;
+        state.showProgress = show;
       });
     },
 
@@ -415,8 +415,8 @@ export const useChartStore = create<ChartState & ChartActions>()(
           state.showHolidays = settings.showHolidays;
         if (settings.showDependencies !== undefined)
           state.showDependencies = settings.showDependencies;
-        if (settings.showProgressColumn !== undefined)
-          state.showProgressColumn = settings.showProgressColumn;
+        if (settings.showProgress !== undefined)
+          state.showProgress = settings.showProgress;
         if (settings.taskLabelPosition !== undefined)
           state.taskLabelPosition = settings.taskLabelPosition;
         if (settings.workingDaysMode !== undefined)

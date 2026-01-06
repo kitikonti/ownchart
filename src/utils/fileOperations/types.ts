@@ -104,7 +104,7 @@ export interface ViewSettings {
   // Display settings (Sprint 1.5.9)
   showHolidays?: boolean;
   showDependencies?: boolean;
-  showProgressColumn?: boolean;
+  showProgress?: boolean;
   taskLabelPosition?: TaskLabelPosition;
 
   // Working days mode (Sprint 1.5.9)

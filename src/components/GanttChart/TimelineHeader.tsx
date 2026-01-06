@@ -5,9 +5,19 @@
  */
 
 import { useMemo } from "react";
-import { parseISO, format } from "date-fns";
+import { parseISO, format, getWeek } from "date-fns";
 import type { TimelineScale, ScaleConfig } from "../../utils/timelineUtils";
-import { dateToPixel, addUnit, getUnitStart } from "../../utils/timelineUtils";
+import {
+  dateToPixel,
+  addUnit,
+  getUnitStart,
+  getScaleConfig,
+  FIXED_BASE_PIXELS_PER_DAY,
+} from "../../utils/timelineUtils";
+import {
+  useFirstDayOfWeek,
+  useWeekNumberingSystem,
+} from "../../store/slices/userPreferencesSlice";
 
 interface TimelineHeaderProps {
   scale: TimelineScale;
@@ -24,6 +34,42 @@ interface ScaleCell {
 const ROW_HEIGHT = 24; // Match table header height exactly (2×24px + 1px border = 49px)
 
 /**
+ * Week options for date-fns getWeek function
+ */
+interface WeekOptions {
+  weekStartsOn: 0 | 1;
+  firstWeekContainsDate: 1 | 4;
+}
+
+/**
+ * Format a label for a scale cell, using explicit week options for week units
+ */
+function formatLabel(
+  date: Date,
+  config: ScaleConfig,
+  weekOptions: WeekOptions
+): string {
+  // For week units, format with explicit week options from preferences
+  if (config.unit === "week") {
+    const weekNum = getWeek(date, weekOptions);
+    // Check if format function expects "Week X" or "WX" style
+    if (typeof config.format === "function") {
+      const sample = config.format(date);
+      if (sample.startsWith("Week ")) {
+        return `Week ${weekNum}`;
+      }
+    }
+    return `W${weekNum}`;
+  }
+
+  // For other units, use the config format
+  if (typeof config.format === "function") {
+    return config.format(date);
+  }
+  return format(date, config.format);
+}
+
+/**
  * Generate cells for a scale configuration row
  * Inspired by SVAR's scale generation logic
  * Draws cells for entire header width, not just task date range
@@ -33,7 +79,8 @@ const ROW_HEIGHT = 24; // Match table header height exactly (2×24px + 1px borde
 function generateScaleCells(
   scale: TimelineScale,
   config: ScaleConfig,
-  headerWidth: number
+  headerWidth: number,
+  weekOptions: WeekOptions
 ): ScaleCell[] {
   const cells: ScaleCell[] = [];
 
@@ -73,11 +120,8 @@ function generateScaleCells(
       continue;
     }
 
-    // Format label
-    const label =
-      typeof config.format === "function"
-        ? config.format(cellStart)
-        : format(cellStart, config.format);
+    // Format label using explicit week options
+    const label = formatLabel(cellStart, config, weekOptions);
 
     cells.push({
       date: cellStart,
@@ -97,15 +141,34 @@ export function TimelineHeader({ scale, width }: TimelineHeaderProps) {
   // Use provided width or fall back to scale.totalWidth
   const headerWidth = width ?? scale.totalWidth;
 
+  // Get regional preferences to trigger re-render when they change
+  const firstDayOfWeek = useFirstDayOfWeek();
+  const weekNumberingSystem = useWeekNumberingSystem();
+
+  // Compute week options from preferences
+  const weekOptions: WeekOptions = useMemo(
+    () => ({
+      weekStartsOn: firstDayOfWeek === "sunday" ? 0 : 1,
+      firstWeekContainsDate: weekNumberingSystem === "us" ? 1 : 4,
+    }),
+    [firstDayOfWeek, weekNumberingSystem]
+  );
+
+  // Recompute scale configs when zoom changes
+  const currentScales = useMemo(() => {
+    return getScaleConfig(scale.zoom, FIXED_BASE_PIXELS_PER_DAY);
+  }, [scale.zoom]);
+
   // Generate cells for each scale row
+  // Includes weekOptions in deps to regenerate when preferences change
   const scaleRows = useMemo(() => {
-    return scale.scales.map((scaleConfig) => {
+    return currentScales.map((scaleConfig) => {
       return {
         config: scaleConfig,
-        cells: generateScaleCells(scale, scaleConfig, headerWidth),
+        cells: generateScaleCells(scale, scaleConfig, headerWidth, weekOptions),
       };
     });
-  }, [scale, headerWidth]);
+  }, [scale, headerWidth, currentScales, weekOptions]);
 
   return (
     <g className="timeline-header">
@@ -114,7 +177,7 @@ export function TimelineHeader({ scale, width }: TimelineHeaderProps) {
         x={0}
         y={0}
         width={headerWidth}
-        height={scale.scales.length * ROW_HEIGHT}
+        height={currentScales.length * ROW_HEIGHT}
         fill="#f8f9fa"
       />
 
@@ -152,9 +215,9 @@ export function TimelineHeader({ scale, width }: TimelineHeaderProps) {
       {/* Bottom border */}
       <line
         x1={0}
-        y1={scale.scales.length * ROW_HEIGHT}
+        y1={currentScales.length * ROW_HEIGHT}
         x2={headerWidth}
-        y2={scale.scales.length * ROW_HEIGHT}
+        y2={currentScales.length * ROW_HEIGHT}
         stroke="#dee2e6"
         strokeWidth={1}
       />

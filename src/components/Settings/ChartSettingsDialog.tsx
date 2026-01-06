@@ -52,7 +52,7 @@ export function ChartSettingsDialog(): JSX.Element | null {
   const showTodayMarker = useChartStore((state) => state.showTodayMarker);
   const showHolidays = useChartStore((state) => state.showHolidays);
   const showDependencies = useChartStore((state) => state.showDependencies);
-  const showProgressColumn = useChartStore((state) => state.showProgressColumn);
+  const showProgress = useChartStore((state) => state.showProgress);
   const taskLabelPosition = useChartStore((state) => state.taskLabelPosition);
   const workingDaysMode = useChartStore((state) => state.workingDaysMode);
   const workingDaysConfig = useChartStore((state) => state.workingDaysConfig);
@@ -64,9 +64,7 @@ export function ChartSettingsDialog(): JSX.Element | null {
   const setShowDependencies = useChartStore(
     (state) => state.setShowDependencies
   );
-  const setShowProgressColumn = useChartStore(
-    (state) => state.setShowProgressColumn
-  );
+  const setShowProgress = useChartStore((state) => state.setShowProgress);
   const setTaskLabelPosition = useChartStore(
     (state) => state.setTaskLabelPosition
   );
@@ -210,21 +208,21 @@ export function ChartSettingsDialog(): JSX.Element | null {
           </div>
 
           <div className="space-y-4">
-            {/* Show Progress Column */}
+            {/* Use Progress */}
             <label className="flex items-center gap-3 cursor-pointer">
               <input
                 type="checkbox"
-                checked={showProgressColumn}
-                onChange={(e) => setShowProgressColumn(e.target.checked)}
+                checked={showProgress}
+                onChange={(e) => setShowProgress(e.target.checked)}
                 className="h-4 w-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
-                aria-label="Show Progress Column"
+                aria-label="Use Progress"
               />
               <div>
                 <span className="text-sm font-medium text-gray-900">
-                  Show Progress Column
+                  Use Progress
                 </span>
                 <p className="text-xs text-gray-500">
-                  Display progress percentage in task table
+                  Enable progress column and progress fill on task bars
                 </p>
               </div>
             </label>

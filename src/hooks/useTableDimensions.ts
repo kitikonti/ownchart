@@ -34,12 +34,12 @@ function parseWidth(widthStr: string): number {
 export function useTableDimensions() {
   const columnWidths = useTaskStore((state) => state.columnWidths);
   const densityConfig = useDensityConfig();
-  const showProgressColumn = useChartStore((state) => state.showProgressColumn);
+  const showProgress = useChartStore((state) => state.showProgress);
 
   // Get visible columns based on settings (Sprint 1.5.9)
   const visibleColumns = useMemo(
-    () => getVisibleColumns(showProgressColumn),
-    [showProgressColumn]
+    () => getVisibleColumns(showProgress),
+    [showProgress]
   );
 
   const totalColumnWidth = useMemo(() => {

@@ -14,9 +14,10 @@ import {
   addMonths,
 } from "date-fns";
 import type { TimelineScale } from "../../utils/timelineUtils";
-import { dateToPixel, WEEK_START_DAY } from "../../utils/timelineUtils";
+import { dateToPixel } from "../../utils/timelineUtils";
 import { addDays, isWeekend } from "../../utils/dateUtils";
 import { holidayService } from "../../services/holidayService";
+import { useFirstDayOfWeek } from "../../store/slices/userPreferencesSlice";
 
 interface GridLinesProps {
   scale: TimelineScale;
@@ -39,6 +40,10 @@ export function GridLines({
 }: GridLinesProps) {
   // Use provided width or fall back to scale.totalWidth
   const gridWidth = width ?? scale.totalWidth;
+
+  // Get first day of week from user preferences (0 = Sunday, 1 = Monday)
+  const firstDayOfWeek = useFirstDayOfWeek();
+  const weekStartsOn: 0 | 1 = firstDayOfWeek === "sunday" ? 0 : 1;
   // ADAPTIVE GRID DENSITY (Critical from Frontend + Data Viz reviews)
   // Thresholds based on visual readability:
   // - At 25 px/day (zoom 1.0): daily lines are comfortable
@@ -73,9 +78,9 @@ export function GridLines({
     // Determine start date based on interval type
     let currentDateObj: Date;
     if (gridInterval === 7) {
-      // Weekly: align to week start (Monday in ISO 8601)
+      // Weekly: align to week start (based on user preference)
       currentDateObj = startOfWeek(minDateObj, {
-        weekStartsOn: WEEK_START_DAY,
+        weekStartsOn,
       });
     } else if (gridInterval === 30) {
       // Monthly: align to month start
@@ -111,7 +116,7 @@ export function GridLines({
     }
 
     return lines;
-  }, [scale, gridInterval, gridWidth]);
+  }, [scale, gridInterval, gridWidth, weekStartsOn]);
 
   // Weekend columns for background highlighting
   // Always shown when enabled, regardless of zoom level

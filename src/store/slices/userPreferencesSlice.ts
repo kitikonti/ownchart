@@ -13,13 +13,19 @@ import {
   type DensityConfig,
   type DateFormat,
   type FirstDayOfWeek,
+  type WeekNumberingSystem,
   DEFAULT_PREFERENCES,
   DENSITY_CONFIG,
   detectLocaleDateFormat,
   detectLocaleFirstDayOfWeek,
+  detectLocaleWeekNumberingSystem,
   detectLocaleHolidayRegion,
 } from "../../types/preferences.types";
 import { holidayService } from "../../services/holidayService";
+import {
+  registerFirstDayOfWeekGetter,
+  registerWeekNumberingSystemGetter,
+} from "../../utils/timelineUtils";
 
 // LocalStorage key
 const PREFERENCES_KEY = "ownchart-preferences";
@@ -46,6 +52,7 @@ interface UserPreferencesActions {
   // Regional settings actions
   setDateFormat: (format: DateFormat) => void;
   setFirstDayOfWeek: (day: FirstDayOfWeek) => void;
+  setWeekNumberingSystem: (system: WeekNumberingSystem) => void;
   setHolidayRegion: (region: string) => void;
 
   // Initialization
@@ -100,6 +107,8 @@ function migratePreferences(stored: Partial<UserPreferences>): UserPreferences {
     // Regional - use locale detection for new fields
     dateFormat: stored.dateFormat ?? detectLocaleDateFormat(),
     firstDayOfWeek: stored.firstDayOfWeek ?? detectLocaleFirstDayOfWeek(),
+    weekNumberingSystem:
+      stored.weekNumberingSystem ?? detectLocaleWeekNumberingSystem(),
     holidayRegion: stored.holidayRegion ?? detectLocaleHolidayRegion(),
   };
 }
@@ -140,6 +149,13 @@ export const useUserPreferencesStore = create<UserPreferencesStore>()(
       setFirstDayOfWeek: (day: FirstDayOfWeek) => {
         set((state) => {
           state.preferences.firstDayOfWeek = day;
+        });
+      },
+
+      // Set week numbering system
+      setWeekNumberingSystem: (system: WeekNumberingSystem) => {
+        set((state) => {
+          state.preferences.weekNumberingSystem = system;
         });
       },
 
@@ -206,6 +222,17 @@ export const useUserPreferencesStore = create<UserPreferencesStore>()(
   )
 );
 
+// Register the first day of week getter for timelineUtils
+// This avoids circular dependencies while allowing timelineUtils to access the preference
+registerFirstDayOfWeekGetter(
+  () => useUserPreferencesStore.getState().preferences.firstDayOfWeek
+);
+
+// Register the week numbering system getter for timelineUtils
+registerWeekNumberingSystemGetter(
+  () => useUserPreferencesStore.getState().preferences.weekNumberingSystem
+);
+
 /**
  * Hook to get current density config values
  * Use this in components that need density-aware styling
@@ -244,6 +271,15 @@ export function useDateFormat(): DateFormat {
  */
 export function useFirstDayOfWeek(): FirstDayOfWeek {
   return useUserPreferencesStore((state) => state.preferences.firstDayOfWeek);
+}
+
+/**
+ * Hook to get current week numbering system preference
+ */
+export function useWeekNumberingSystem(): WeekNumberingSystem {
+  return useUserPreferencesStore(
+    (state) => state.preferences.weekNumberingSystem
+  );
 }
 
 /**

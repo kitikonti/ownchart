@@ -59,7 +59,7 @@ export function serializeToGanttFile(
         showTodayMarker: viewSettings.showTodayMarker,
         showHolidays: viewSettings.showHolidays,
         showDependencies: viewSettings.showDependencies,
-        showProgressColumn: viewSettings.showProgressColumn,
+        showProgress: viewSettings.showProgress,
         taskLabelPosition: viewSettings.taskLabelPosition,
         // Working days mode
         workingDaysMode: viewSettings.workingDaysMode,

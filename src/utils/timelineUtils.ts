@@ -31,9 +31,53 @@ export const MIN_ZOOM = 0.05; // 5% - fit ~3 years on desktop
 export const MAX_ZOOM = 3.0; // 300% - show at least 1 week
 
 // Week numbering configuration (ISO 8601 - European standard)
-// TODO: Make this user-configurable in settings (see /concept/week-numbering.md)
+// Default week start day - actual value comes from user preferences
 export const WEEK_START_DAY = 1; // 0 = Sunday, 1 = Monday (ISO 8601)
 export const FIRST_WEEK_CONTAINS_DATE = 4; // Thursday (ISO 8601: week 1 has first Thursday)
+
+// Store references for lazy access (set by userPreferencesSlice on init)
+let _getFirstDayOfWeek: (() => "sunday" | "monday") | null = null;
+let _getWeekNumberingSystem: (() => "iso" | "us") | null = null;
+
+/**
+ * Register the first day of week getter (called by userPreferencesSlice).
+ */
+export function registerFirstDayOfWeekGetter(
+  getter: () => "sunday" | "monday"
+): void {
+  _getFirstDayOfWeek = getter;
+}
+
+/**
+ * Register the week numbering system getter (called by userPreferencesSlice).
+ */
+export function registerWeekNumberingSystemGetter(
+  getter: () => "iso" | "us"
+): void {
+  _getWeekNumberingSystem = getter;
+}
+
+/**
+ * Get week start day from user preferences.
+ * Returns 0 for Sunday, 1 for Monday.
+ */
+export function getWeekStartDay(): 0 | 1 {
+  if (_getFirstDayOfWeek) {
+    return _getFirstDayOfWeek() === "sunday" ? 0 : 1;
+  }
+  return WEEK_START_DAY as 0 | 1; // Fallback to default
+}
+
+/**
+ * Get first week contains date from user preferences.
+ * Returns 4 for ISO 8601 (first Thursday), 1 for US (first day of year).
+ */
+export function getFirstWeekContainsDate(): 1 | 4 {
+  if (_getWeekNumberingSystem) {
+    return _getWeekNumberingSystem() === "us" ? 1 : 4;
+  }
+  return FIRST_WEEK_CONTAINS_DATE as 1 | 4; // Fallback to default (ISO)
+}
 
 // Scale unit types (inspired by SVAR React Gantt)
 export type ScaleUnit = "year" | "quarter" | "month" | "week" | "day" | "hour";
@@ -104,8 +148,8 @@ export function getScaleConfig(
         step: 1,
         format: (date) =>
           `W${getWeek(date, {
-            weekStartsOn: WEEK_START_DAY,
-            firstWeekContainsDate: FIRST_WEEK_CONTAINS_DATE,
+            weekStartsOn: getWeekStartDay(),
+            firstWeekContainsDate: getFirstWeekContainsDate(),
           })}`,
       },
     ];
@@ -126,8 +170,8 @@ export function getScaleConfig(
       step: 1,
       format: (date) =>
         `Week ${getWeek(date, {
-          weekStartsOn: WEEK_START_DAY,
-          firstWeekContainsDate: FIRST_WEEK_CONTAINS_DATE,
+          weekStartsOn: getWeekStartDay(),
+          firstWeekContainsDate: getFirstWeekContainsDate(),
         })}`,
     },
     { unit: "day", step: 1, format: "EEE d" },
@@ -254,7 +298,7 @@ export function getUnitStart(date: Date, unit: ScaleUnit): Date {
     case "month":
       return startOfMonth(date);
     case "week":
-      return startOfWeek(date, { weekStartsOn: WEEK_START_DAY });
+      return startOfWeek(date, { weekStartsOn: getWeekStartDay() });
     case "day":
       return startOfDay(date);
     case "hour":
@@ -286,7 +330,7 @@ export function getUnitEnd(date: Date, unit: ScaleUnit, step: number): Date {
       return endOfMonth(addMonths(date, step - 1));
     case "week":
       return endOfWeek(addWeeks(date, step - 1), {
-        weekStartsOn: WEEK_START_DAY,
+        weekStartsOn: getWeekStartDay(),
       });
     case "day":
       return endOfDay(addDaysDateFns(date, step - 1));

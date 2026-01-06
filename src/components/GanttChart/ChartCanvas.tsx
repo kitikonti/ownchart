@@ -83,6 +83,7 @@ export function ChartCanvas({
   const showWeekends = useChartStore((state) => state.showWeekends);
   const showTodayMarker = useChartStore((state) => state.showTodayMarker);
   const showHolidays = useChartStore((state) => state.showHolidays);
+  const showDependencies = useChartStore((state) => state.showDependencies);
   const taskLabelPosition = useChartStore((state) => state.taskLabelPosition);
   const setContainerWidth = useChartStore((state) => state.setContainerWidth);
   const updateScale = useChartStore((state) => state.updateScale);
@@ -257,7 +258,7 @@ export function ChartCanvas({
               />
             </g>
 
-            {/* Layer 2.5: Selection Highlights (full row, behind everything) */}
+            {/* Layer 2.5: Selection Highlights (full row, semi-transparent to show grid/weekends) */}
             <g className="layer-selection">
               {tasks.map((task, index) => {
                 const isSelected = selectedTaskIds.includes(task.id);
@@ -269,20 +270,22 @@ export function ChartCanvas({
                     y={index * ROW_HEIGHT}
                     width={timelineWidth}
                     height={ROW_HEIGHT}
-                    fill="#dbeafe"
-                    fillOpacity={1}
+                    fill="#3b82f6"
+                    fillOpacity={0.15}
                   />
                 );
               })}
             </g>
 
             {/* Layer 2.6: Dependency Arrows (behind tasks) */}
-            <DependencyArrows
-              tasks={tasks}
-              scale={scale}
-              rowHeight={ROW_HEIGHT}
-              dragState={dragState}
-            />
+            {showDependencies && (
+              <DependencyArrows
+                tasks={tasks}
+                scale={scale}
+                rowHeight={ROW_HEIGHT}
+                dragState={dragState}
+              />
+            )}
 
             {/* Layer 3: Task Bars */}
             <g className="layer-tasks">
@@ -306,28 +309,30 @@ export function ChartCanvas({
             </g>
 
             {/* Layer 3.6: Connection Handles (Sprint 1.4) */}
-            <g className="layer-connection-handles">
-              {Array.from(taskGeometriesMap.entries()).map(([taskId, geo]) => (
-                <ConnectionHandles
-                  key={`handles-${taskId}`}
-                  taskId={taskId}
-                  x={geo.x}
-                  y={geo.y}
-                  width={geo.width}
-                  height={geo.height}
-                  isVisible={hoveredTaskId === taskId && !dragState.isDragging}
-                  isValidDropTarget={
-                    dragState.isDragging && isValidTarget(taskId)
-                  }
-                  isInvalidDropTarget={
-                    dragState.isDragging && isInvalidTarget(taskId)
-                  }
-                  onDragStart={startDrag}
-                  onHover={setHoveredTaskId}
-                  onDrop={handleTaskMouseUp}
-                />
-              ))}
-            </g>
+            {showDependencies && (
+              <g className="layer-connection-handles">
+                {Array.from(taskGeometriesMap.entries()).map(([taskId, geo]) => (
+                  <ConnectionHandles
+                    key={`handles-${taskId}`}
+                    taskId={taskId}
+                    x={geo.x}
+                    y={geo.y}
+                    width={geo.width}
+                    height={geo.height}
+                    isVisible={hoveredTaskId === taskId && !dragState.isDragging}
+                    isValidDropTarget={
+                      dragState.isDragging && isValidTarget(taskId)
+                    }
+                    isInvalidDropTarget={
+                      dragState.isDragging && isInvalidTarget(taskId)
+                    }
+                    onDragStart={startDrag}
+                    onHover={setHoveredTaskId}
+                    onDrop={handleTaskMouseUp}
+                  />
+                ))}
+              </g>
+            )}
 
             {/* Layer 4: Today Marker */}
             {showTodayMarker && (

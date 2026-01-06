@@ -35,8 +35,8 @@ export function useKeyboardShortcuts() {
   // View toggle shortcuts (Sprint 1.5.9)
   const toggleDependencies = useChartStore((state) => state.toggleDependencies);
   const toggleTodayMarker = useChartStore((state) => state.toggleTodayMarker);
-  const toggleProgressColumn = useChartStore(
-    (state) => state.toggleProgressColumn
+  const toggleProgress = useChartStore(
+    (state) => state.toggleProgress
   );
   const toggleHolidays = useChartStore((state) => state.toggleHolidays);
 
@@ -219,7 +219,7 @@ export function useKeyboardShortcuts() {
         // P: Toggle progress column
         if (e.key.toLowerCase() === "p") {
           e.preventDefault();
-          toggleProgressColumn();
+          toggleProgress();
           return;
         }
 
@@ -261,7 +261,7 @@ export function useKeyboardShortcuts() {
     isWelcomeTourOpen,
     toggleDependencies,
     toggleTodayMarker,
-    toggleProgressColumn,
+    toggleProgress,
     toggleHolidays,
   ]);
 }

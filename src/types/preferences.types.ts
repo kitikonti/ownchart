@@ -23,6 +23,13 @@ export type DateFormat = "DD/MM/YYYY" | "MM/DD/YYYY" | "YYYY-MM-DD";
 export type FirstDayOfWeek = "sunday" | "monday";
 
 /**
+ * Week numbering system options
+ * - ISO 8601: Week 1 contains the first Thursday (used in Europe)
+ * - US: Week 1 contains January 1st (used in USA/Canada)
+ */
+export type WeekNumberingSystem = "iso" | "us";
+
+/**
  * Task label position options in the timeline
  */
 export type TaskLabelPosition = "before" | "inside" | "after" | "none";
@@ -74,6 +81,7 @@ export interface UserPreferences {
   // Regional (Sprint 1.5.9)
   dateFormat: DateFormat;
   firstDayOfWeek: FirstDayOfWeek;
+  weekNumberingSystem: WeekNumberingSystem;
   holidayRegion: string; // ISO 3166-1 alpha-2 code (e.g., 'AT', 'DE', 'US')
 
   // Future preferences (V2.0+):
@@ -153,6 +161,25 @@ export function detectLocaleFirstDayOfWeek(): FirstDayOfWeek {
 }
 
 /**
+ * Detect week numbering system from browser locale
+ * US/Canada use their own system, most other countries use ISO 8601
+ */
+export function detectLocaleWeekNumberingSystem(): WeekNumberingSystem {
+  const locale = navigator.language.toLowerCase();
+
+  // Countries that use US week numbering (Week 1 contains Jan 1)
+  const usWeekNumberingCountries = ["us", "ca"];
+
+  // Check if locale contains any US-style country code
+  if (usWeekNumberingCountries.some((code) => locale.includes(code))) {
+    return "us";
+  }
+
+  // Most countries use ISO 8601 (Week 1 contains first Thursday)
+  return "iso";
+}
+
+/**
  * Detect holiday region from browser locale
  */
 export function detectLocaleHolidayRegion(): string {
@@ -190,6 +217,7 @@ export const DEFAULT_PREFERENCES: UserPreferences = {
   uiDensity: "normal",
   dateFormat: detectLocaleDateFormat(),
   firstDayOfWeek: detectLocaleFirstDayOfWeek(),
+  weekNumberingSystem: detectLocaleWeekNumberingSystem(),
   holidayRegion: detectLocaleHolidayRegion(),
 };
 

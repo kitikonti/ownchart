@@ -9,8 +9,13 @@ import type { TimelineScale, TaskBarGeometry } from "../utils/timelineUtils";
 import { addDays, calculateDuration } from "../utils/dateUtils";
 import { useTaskStore } from "../store/slices/taskSlice";
 import { useChartStore } from "../store/slices/chartSlice";
+import { useUserPreferencesStore } from "../store/slices/userPreferencesSlice";
 import { validateDragOperation } from "../utils/dragValidation";
 import { getEffectiveTasksToMove } from "../utils/hierarchy";
+import {
+  calculateWorkingDays,
+  addWorkingDays,
+} from "../utils/workingDaysCalculator";
 
 // Edge detection threshold in pixels
 const EDGE_THRESHOLD = 8;
@@ -169,10 +174,34 @@ export function useTaskBarInteraction(
             currentDragState.originalStartDate,
             deltaDays
           );
-          const newEndDate = addDays(
-            currentDragState.originalEndDate,
-            deltaDays
-          );
+
+          // Check if working days mode is enabled
+          const chartState = useChartStore.getState();
+          const workingDaysMode = chartState.workingDaysMode;
+          const workingDaysConfig = chartState.workingDaysConfig;
+
+          let newEndDate: string;
+
+          if (workingDaysMode && task.type !== "milestone") {
+            // Calculate original working days and extend to new position
+            const holidayRegion =
+              useUserPreferencesStore.getState().preferences.holidayRegion;
+            const originalWorkingDays = calculateWorkingDays(
+              currentDragState.originalStartDate,
+              currentDragState.originalEndDate,
+              workingDaysConfig,
+              workingDaysConfig.excludeHolidays ? holidayRegion : undefined
+            );
+            newEndDate = addWorkingDays(
+              newStartDate,
+              originalWorkingDays,
+              workingDaysConfig,
+              workingDaysConfig.excludeHolidays ? holidayRegion : undefined
+            );
+          } else {
+            // Simple calendar days shift
+            newEndDate = addDays(currentDragState.originalEndDate, deltaDays);
+          }
 
           const updatedState = {
             ...currentDragState,
@@ -240,7 +269,7 @@ export function useTaskBarInteraction(
         }
       });
     },
-    [scale, task.id, setSharedDragState]
+    [scale, task.id, task.type, setSharedDragState]
   );
 
   /**
@@ -314,12 +343,40 @@ export function useTaskBarInteraction(
               },
             });
           } else {
+            // Get working days settings from stores
+            const chartState = useChartStore.getState();
+            const workingDaysMode = chartState.workingDaysMode;
+            const workingDaysConfig = chartState.workingDaysConfig;
+            const holidayRegion =
+              useUserPreferencesStore.getState().preferences.holidayRegion;
+
+            let finalEndDate = newEndDate;
+
+            // If working days mode is enabled, maintain working days duration
+            if (workingDaysMode && t.endDate) {
+              // Calculate original working days duration
+              const originalWorkingDays = calculateWorkingDays(
+                t.startDate,
+                t.endDate,
+                workingDaysConfig,
+                workingDaysConfig.excludeHolidays ? holidayRegion : undefined
+              );
+
+              // Calculate new end date to maintain same working days
+              finalEndDate = addWorkingDays(
+                newStartDate,
+                originalWorkingDays,
+                workingDaysConfig,
+                workingDaysConfig.excludeHolidays ? holidayRegion : undefined
+              );
+            }
+
             updates.push({
               id: taskId,
               updates: {
                 startDate: newStartDate,
-                endDate: newEndDate,
-                duration: t.duration,
+                endDate: finalEndDate,
+                duration: calculateDuration(newStartDate, finalEndDate),
               },
             });
           }

@@ -11,9 +11,37 @@ import {
   type MouseEvent,
 } from "react";
 import { useTaskStore, type EditableField } from "../../store/slices/taskSlice";
+import { useChartStore } from "../../store/slices/chartSlice";
+import { useUserPreferencesStore } from "../../store/slices/userPreferencesSlice";
 import { useCellNavigation } from "../../hooks/useCellNavigation";
 import type { Task } from "../../types/chart.types";
 import type { ColumnDefinition } from "../../config/tableColumns";
+import {
+  calculateWorkingDays,
+  addWorkingDays,
+} from "../../utils/workingDaysCalculator";
+import type { DateFormat } from "../../types/preferences.types";
+
+/**
+ * Format a date string according to user preferences.
+ */
+function formatDateDisplay(isoDate: string, dateFormat: DateFormat): string {
+  if (!isoDate) return "";
+
+  // Parse ISO date (YYYY-MM-DD)
+  const [year, month, day] = isoDate.split("-");
+  if (!year || !month || !day) return isoDate;
+
+  switch (dateFormat) {
+    case "DD/MM/YYYY":
+      return `${day}/${month}/${year}`;
+    case "MM/DD/YYYY":
+      return `${month}/${day}/${year}`;
+    case "YYYY-MM-DD":
+    default:
+      return isoDate;
+  }
+}
 
 export interface CellProps {
   /** Task ID */
@@ -60,6 +88,18 @@ export function Cell({
   const clearSelection = useTaskStore((state) => state.clearSelection);
   const cutCell = useTaskStore((state) => state.cutCell);
 
+  // Working days settings
+  const workingDaysMode = useChartStore((state) => state.workingDaysMode);
+  const workingDaysConfig = useChartStore((state) => state.workingDaysConfig);
+  const holidayRegion = useUserPreferencesStore(
+    (state) => state.preferences.holidayRegion
+  );
+
+  // Date format preference
+  const dateFormat = useUserPreferencesStore(
+    (state) => state.preferences.dateFormat
+  );
+
   const isActive = isCellActive(taskId, field);
   const isEditing = isCellEditing(taskId, field);
   const isCut = cutCell?.taskId === taskId && cutCell?.field === field;
@@ -80,12 +120,23 @@ export function Cell({
       // If shouldOverwrite is true, localValue was already set by typing
       // Otherwise, initialize with current value
       if (!shouldOverwriteRef.current) {
-        setLocalValue(String(currentValue));
+        // Special handling for duration in working days mode
+        if (field === "duration" && workingDaysMode && task.startDate && task.endDate) {
+          const workingDays = calculateWorkingDays(
+            task.startDate,
+            task.endDate,
+            workingDaysConfig,
+            workingDaysConfig.excludeHolidays ? holidayRegion : undefined
+          );
+          setLocalValue(String(workingDays));
+        } else {
+          setLocalValue(String(currentValue));
+        }
       }
       shouldOverwriteRef.current = false; // Reset flag
       setError(null);
     }
-  }, [isEditing, currentValue]);
+  }, [isEditing, currentValue, field, workingDaysMode, workingDaysConfig, holidayRegion, task.startDate, task.endDate]);
 
   /**
    * Handle cell click - activate or edit.
@@ -201,12 +252,33 @@ export function Cell({
     } else if (field === "duration") {
       // Duration edited - update endDate
       const durationDays = Number(localValue);
-      const startDate = new Date(task.startDate);
-      const newEndDate = new Date(startDate);
-      newEndDate.setDate(newEndDate.getDate() + durationDays - 1);
 
-      const endDateStr = newEndDate.toISOString().split("T")[0];
-      updateTask(taskId, { duration: durationDays, endDate: endDateStr });
+      let endDateStr: string;
+
+      if (workingDaysMode) {
+        // Working days mode: input is working days, calculate calendar end date
+        endDateStr = addWorkingDays(
+          task.startDate,
+          durationDays,
+          workingDaysConfig,
+          workingDaysConfig.excludeHolidays ? holidayRegion : undefined
+        );
+      } else {
+        // Calendar days mode
+        const startDate = new Date(task.startDate);
+        const newEndDate = new Date(startDate);
+        newEndDate.setDate(newEndDate.getDate() + durationDays - 1);
+        endDateStr = newEndDate.toISOString().split("T")[0];
+      }
+
+      // Calculate actual calendar duration for storage
+      const actualDuration =
+        Math.ceil(
+          (new Date(endDateStr).getTime() - new Date(task.startDate).getTime()) /
+            (1000 * 60 * 60 * 24)
+        ) + 1;
+
+      updateTask(taskId, { duration: actualDuration, endDate: endDateStr });
     } else {
       updateCellValue(localValue);
     }
@@ -264,6 +336,22 @@ export function Cell({
    * Format display value.
    */
   const getDisplayValue = (): string => {
+    // Special handling for duration in working days mode
+    if (field === "duration" && workingDaysMode && task.startDate && task.endDate) {
+      const workingDays = calculateWorkingDays(
+        task.startDate,
+        task.endDate,
+        workingDaysConfig,
+        workingDaysConfig.excludeHolidays ? holidayRegion : undefined
+      );
+      return String(workingDays);
+    }
+
+    // Format dates according to user preference
+    if ((field === "startDate" || field === "endDate") && currentValue) {
+      return formatDateDisplay(String(currentValue), dateFormat);
+    }
+
     if (column.formatter) {
       return column.formatter(currentValue);
     }
