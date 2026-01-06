@@ -9,6 +9,7 @@ import type {
   TimelineScale,
   DensityGeometryConfig,
 } from "../../utils/timelineUtils";
+import type { TaskLabelPosition } from "../../types/preferences.types";
 import { getTaskBarGeometry, dateToPixel } from "../../utils/timelineUtils";
 import { calculateDuration, addDays } from "../../utils/dateUtils";
 import { useTaskBarInteraction } from "../../hooks/useTaskBarInteraction";
@@ -29,6 +30,8 @@ interface TaskBarProps {
     taskBarOffset: number;
     fontSizeBar: number;
   };
+  /** Task label position (Sprint 1.5.9). Defaults to 'inside' */
+  labelPosition?: TaskLabelPosition;
 }
 
 // Milestone diamond component
@@ -92,6 +95,7 @@ function SummaryBracket({
   opacity = 1,
   taskName,
   fontSize = 11,
+  labelPosition = "after",
 }: {
   x: number;
   y: number;
@@ -105,6 +109,7 @@ function SummaryBracket({
   opacity?: number;
   taskName: string;
   fontSize?: number;
+  labelPosition?: TaskLabelPosition;
 }) {
   const tipHeight = height * 0.5; // Height of downward triangular tips (50% of bar height)
   const barThickness = height * 0.3; // Horizontal bar thickness (30% of bar height)
@@ -145,17 +150,20 @@ function SummaryBracket({
         style={{ cursor: cursor || "grab" }}
       />
 
-      {/* Task name label - positioned to the right of the bracket */}
-      <text
-        x={x + width + 8}
-        y={y + height / 2 + fontSize / 3}
-        fontSize={fontSize}
-        fill="#495057"
-        fontWeight={600}
-        pointerEvents="none"
-      >
-        {taskName}
-      </text>
+      {/* Task name label - position based on labelPosition */}
+      {labelPosition !== "none" && (
+        <text
+          x={labelPosition === "before" ? x - 8 : x + width + 8}
+          y={y + height / 2 + fontSize / 3}
+          fontSize={fontSize}
+          fill="#495057"
+          fontWeight={600}
+          pointerEvents="none"
+          textAnchor={labelPosition === "before" ? "end" : "start"}
+        >
+          {taskName}
+        </text>
+      )}
     </g>
   );
 }
@@ -167,6 +175,7 @@ export const TaskBar = React.memo(function TaskBar({
   onClick,
   onDoubleClick,
   densityOverride,
+  labelPosition = "inside",
 }: TaskBarProps) {
   // Get density configuration for dynamic sizing
   const storeDensityConfig = useDensityConfig();
@@ -361,6 +370,7 @@ export const TaskBar = React.memo(function TaskBar({
           opacity={isBeingDragged ? 0.3 : 1}
           taskName={task.name}
           fontSize={densityConfig.fontSizeBar}
+          labelPosition={labelPosition === "inside" ? "after" : labelPosition}
         />
 
         {/* Preview outline for summary (shown during drag) */}
@@ -451,14 +461,24 @@ export const TaskBar = React.memo(function TaskBar({
         />
       )}
 
-      {/* Task name label (with truncation via clip-path only) */}
-      {geometry.width > 40 && (
+      {/* Task name label - position based on labelPosition (Sprint 1.5.9) */}
+      {labelPosition !== "none" && (
         <text
-          x={geometry.x + 8}
+          x={
+            labelPosition === "before"
+              ? geometry.x - 8
+              : labelPosition === "after"
+                ? geometry.x + geometry.width + 8
+                : geometry.x + 8
+          }
           y={geometry.y + geometry.height / 2 + densityConfig.fontSizeBar / 3}
           fontSize={densityConfig.fontSizeBar}
-          fill="#fff"
-          clipPath={`url(#${clipPathId})`}
+          fill={labelPosition === "inside" ? "#fff" : "#495057"}
+          textAnchor={labelPosition === "before" ? "end" : "start"}
+          clipPath={
+            labelPosition === "inside" ? `url(#${clipPathId})` : undefined
+          }
+          pointerEvents="none"
         >
           {task.name}
         </text>

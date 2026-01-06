@@ -1,6 +1,7 @@
 /**
  * GridLines component for Gantt chart background
- * Features: Adaptive grid density, weekend highlighting
+ * Features: Adaptive grid density, weekend highlighting, holiday highlighting
+ * Sprint 1.5.9: Added holiday highlighting support
  */
 
 import { useMemo } from "react";
@@ -15,11 +16,14 @@ import {
 import type { TimelineScale } from "../../utils/timelineUtils";
 import { dateToPixel, WEEK_START_DAY } from "../../utils/timelineUtils";
 import { addDays, isWeekend } from "../../utils/dateUtils";
+import { holidayService } from "../../services/holidayService";
 
 interface GridLinesProps {
   scale: TimelineScale;
   taskCount: number;
   showWeekends?: boolean;
+  showHolidays?: boolean; // Sprint 1.5.9: Holiday highlighting
+  holidayRegion?: string; // Sprint 1.5.9: Holiday region code
   width?: number; // Optional override for grid width (defaults to scale.totalWidth)
   rowHeight?: number; // Dynamic row height from density config
 }
@@ -28,6 +32,8 @@ export function GridLines({
   scale,
   taskCount,
   showWeekends = true,
+  showHolidays = false,
+  holidayRegion = "",
   width,
   rowHeight = 36, // Default to Normal density
 }: GridLinesProps) {
@@ -137,6 +143,43 @@ export function GridLines({
     return columns;
   }, [scale, showWeekends, gridWidth]);
 
+  // Holiday columns for background highlighting (Sprint 1.5.9)
+  // Similar to weekend highlighting but with a different color
+  const holidayColumns = useMemo(() => {
+    if (!showHolidays || !holidayRegion) return [];
+
+    // Ensure holiday service is configured for the current region
+    holidayService.setRegion(holidayRegion);
+
+    const columns: Array<{ x: number; date: string; name: string }> = [];
+    let currentDate = scale.minDate;
+
+    // Calculate end date based on grid width
+    const endX = gridWidth;
+    const daysFromStart = Math.ceil(endX / scale.pixelsPerDay);
+    const endDate = addDays(scale.minDate, daysFromStart);
+
+    while (currentDate <= endDate) {
+      const x = dateToPixel(currentDate, scale);
+
+      // Only add holidays that are within visible range (>= 0) and grid width
+      if (x >= 0 && x <= gridWidth) {
+        const holidayInfo = holidayService.isHolidayString(currentDate);
+        if (holidayInfo) {
+          columns.push({
+            x,
+            date: currentDate,
+            name: holidayInfo.name,
+          });
+        }
+      }
+
+      currentDate = addDays(currentDate, 1);
+    }
+
+    return columns;
+  }, [scale, showHolidays, holidayRegion, gridWidth]);
+
   // Horizontal lines (one per task row)
   const horizontalLines = useMemo(() => {
     return Array.from({ length: taskCount + 1 }, (_, i) => ({
@@ -158,6 +201,22 @@ export function GridLines({
           opacity={0.6}
           className="weekend-column"
         />
+      ))}
+
+      {/* Holiday background highlighting (Sprint 1.5.9) */}
+      {holidayColumns.map(({ x, date, name }) => (
+        <rect
+          key={`holiday-${date}`}
+          x={x}
+          y={0}
+          width={scale.pixelsPerDay}
+          height={taskCount * rowHeight}
+          fill="#fce7f3"
+          opacity={0.7}
+          className="holiday-column"
+        >
+          <title>{name}</title>
+        </rect>
       ))}
 
       {/* Vertical lines - styled based on zoom level */}

@@ -12,7 +12,10 @@ import { useRef, useEffect, useMemo, useState, useCallback } from "react";
 import type { Task } from "../../types/chart.types";
 import { useChartStore } from "../../store/slices/chartSlice";
 import { useTaskStore } from "../../store/slices/taskSlice";
-import { useDensityConfig } from "../../store/slices/userPreferencesSlice";
+import {
+  useDensityConfig,
+  useHolidayRegion,
+} from "../../store/slices/userPreferencesSlice";
 import { useZoom } from "../../hooks/useZoom";
 import { useDependencyDrag } from "../../hooks/useDependencyDrag";
 import {
@@ -79,8 +82,13 @@ export function ChartCanvas({
   const zoom = useChartStore((state) => state.zoom);
   const showWeekends = useChartStore((state) => state.showWeekends);
   const showTodayMarker = useChartStore((state) => state.showTodayMarker);
+  const showHolidays = useChartStore((state) => state.showHolidays);
+  const taskLabelPosition = useChartStore((state) => state.taskLabelPosition);
   const setContainerWidth = useChartStore((state) => state.setContainerWidth);
   const updateScale = useChartStore((state) => state.updateScale);
+
+  // Get holiday region from user preferences (Sprint 1.5.9)
+  const holidayRegion = useHolidayRegion();
 
   // Get setSelectedTaskIds from task store for marquee selection
   const setSelectedTaskIds = useTaskStore((state) => state.setSelectedTaskIds);
@@ -242,6 +250,8 @@ export function ChartCanvas({
                 scale={scale}
                 taskCount={rowCount}
                 showWeekends={showWeekends}
+                showHolidays={showHolidays}
+                holidayRegion={holidayRegion}
                 width={timelineWidth}
                 rowHeight={ROW_HEIGHT}
               />
@@ -289,6 +299,7 @@ export function ChartCanvas({
                     rowIndex={index}
                     onClick={() => onTaskClick?.(task.id)}
                     onDoubleClick={() => onTaskDoubleClick?.(task.id)}
+                    labelPosition={taskLabelPosition}
                   />
                 </g>
               ))}

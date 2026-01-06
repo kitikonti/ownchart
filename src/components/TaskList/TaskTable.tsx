@@ -20,10 +20,15 @@ import {
 } from "@dnd-kit/sortable";
 
 import { useTaskStore } from "../../store/slices/taskSlice";
+import { useChartStore } from "../../store/slices/chartSlice";
 import { useDensityConfig } from "../../store/slices/userPreferencesSlice";
 import { TaskTableRow } from "./TaskTableRow";
 import { NewTaskPlaceholderRow } from "./NewTaskPlaceholderRow";
-import { TASK_COLUMNS, getDensityAwareWidth } from "../../config/tableColumns";
+import {
+  TASK_COLUMNS,
+  getDensityAwareWidth,
+  getVisibleColumns,
+} from "../../config/tableColumns";
 import { ColumnResizer } from "./ColumnResizer";
 import { useTableDimensions } from "../../hooks/useTableDimensions";
 import { useFlattenedTasks } from "../../hooks/useFlattenedTasks";
@@ -51,6 +56,13 @@ export function TaskTable({ hideHeader = true }: TaskTableProps): JSX.Element {
   const activeCell = useTaskStore((state) => state.activeCell);
   const clipboardTaskIds = useTaskStore((state) => state.clipboardTaskIds);
   const densityConfig = useDensityConfig();
+  const showProgressColumn = useChartStore((state) => state.showProgressColumn);
+
+  // Get visible columns based on settings (Sprint 1.5.9)
+  const visibleColumns = useMemo(
+    () => getVisibleColumns(showProgressColumn),
+    [showProgressColumn]
+  );
 
   // Get total column width for proper scrolling
   const { totalColumnWidth } = useTableDimensions();
@@ -132,15 +144,18 @@ export function TaskTable({ hideHeader = true }: TaskTableProps): JSX.Element {
   /**
    * Generate CSS grid template columns based on column widths.
    * Uses density-aware widths when no custom width is set.
+   * Uses visibleColumns for show/hide progress column (Sprint 1.5.9).
    */
   const gridTemplateColumns = useMemo(() => {
-    return TASK_COLUMNS.map((col) => {
-      const customWidth = columnWidths[col.id];
-      return customWidth
-        ? `${customWidth}px`
-        : getDensityAwareWidth(col.id, densityConfig);
-    }).join(" ");
-  }, [columnWidths, densityConfig]);
+    return visibleColumns
+      .map((col) => {
+        const customWidth = columnWidths[col.id];
+        return customWidth
+          ? `${customWidth}px`
+          : getDensityAwareWidth(col.id, densityConfig);
+      })
+      .join(" ");
+  }, [columnWidths, densityConfig, visibleColumns]);
 
   /**
    * Get current width of a column in pixels.
@@ -224,7 +239,7 @@ export function TaskTable({ hideHeader = true }: TaskTableProps): JSX.Element {
           {/* Header Row - Hidden when rendered on App level */}
           {!hideHeader && (
             <div className="task-table-header contents" role="row">
-              {TASK_COLUMNS.map((column) => (
+              {visibleColumns.map((column) => (
                 <div
                   key={column.id}
                   className={`task-table-header-cell sticky top-0 z-10 ${column.id === "name" ? "pr-3" : "px-3"} py-4 bg-gray-50 border-b ${column.id !== "color" ? "border-r" : ""} border-gray-200 text-xs font-semibold text-gray-700 uppercase tracking-wider relative`}

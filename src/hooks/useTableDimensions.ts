@@ -5,8 +5,12 @@
 
 import { useMemo } from "react";
 import { useTaskStore } from "../store/slices/taskSlice";
+import { useChartStore } from "../store/slices/chartSlice";
 import { useDensityConfig } from "../store/slices/userPreferencesSlice";
-import { TASK_COLUMNS, getDensityAwareWidth } from "../config/tableColumns";
+import {
+  getDensityAwareWidth,
+  getVisibleColumns,
+} from "../config/tableColumns";
 
 /**
  * Parse width from CSS grid syntax.
@@ -25,19 +29,27 @@ function parseWidth(widthStr: string): number {
  * Hook that calculates the total width of all table columns.
  * This is used to set the maximum width for the split pane.
  * Uses density-aware widths when no custom width is set.
+ * Uses visible columns for show/hide progress column (Sprint 1.5.9).
  */
 export function useTableDimensions() {
   const columnWidths = useTaskStore((state) => state.columnWidths);
   const densityConfig = useDensityConfig();
+  const showProgressColumn = useChartStore((state) => state.showProgressColumn);
+
+  // Get visible columns based on settings (Sprint 1.5.9)
+  const visibleColumns = useMemo(
+    () => getVisibleColumns(showProgressColumn),
+    [showProgressColumn]
+  );
 
   const totalColumnWidth = useMemo(() => {
-    return TASK_COLUMNS.reduce((sum, col) => {
+    return visibleColumns.reduce((sum, col) => {
       const customWidth = columnWidths[col.id];
       const width =
         customWidth ?? parseWidth(getDensityAwareWidth(col.id, densityConfig));
       return sum + width;
     }, 0);
-  }, [columnWidths, densityConfig]);
+  }, [columnWidths, densityConfig, visibleColumns]);
 
   return { totalColumnWidth };
 }

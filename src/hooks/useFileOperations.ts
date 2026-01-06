@@ -26,10 +26,18 @@ export function useFileOperations() {
   const taskTableWidth = useTaskStore((state) => state.taskTableWidth);
   const columnWidths = useTaskStore((state) => state.columnWidths);
 
+  // View settings from chartSlice
   const zoom = useChartStore((state) => state.zoom);
   const panOffset = useChartStore((state) => state.panOffset);
   const showWeekends = useChartStore((state) => state.showWeekends);
   const showTodayMarker = useChartStore((state) => state.showTodayMarker);
+  const showHolidays = useChartStore((state) => state.showHolidays);
+  const showDependencies = useChartStore((state) => state.showDependencies);
+  const showProgressColumn = useChartStore((state) => state.showProgressColumn);
+  const taskLabelPosition = useChartStore((state) => state.taskLabelPosition);
+  const workingDaysMode = useChartStore((state) => state.workingDaysMode);
+  const workingDaysConfig = useChartStore((state) => state.workingDaysConfig);
+  const setViewSettings = useChartStore((state) => state.setViewSettings);
 
   // Sprint 1.4: Dependency store
   const dependencies = useDependencyStore((state) => state.dependencies);
@@ -52,12 +60,21 @@ export function useFileOperations() {
         const content = serializeToGanttFile(
           tasks,
           {
+            // Navigation
             zoom,
             panOffset,
-            showWeekends,
-            showTodayMarker,
             taskTableWidth,
             columnWidths,
+            // Display settings
+            showWeekends,
+            showTodayMarker,
+            showHolidays,
+            showDependencies,
+            showProgressColumn,
+            taskLabelPosition,
+            // Working days mode
+            workingDaysMode,
+            workingDaysConfig,
           },
           {
             chartName:
@@ -95,6 +112,12 @@ export function useFileOperations() {
       panOffset,
       showWeekends,
       showTodayMarker,
+      showHolidays,
+      showDependencies,
+      showProgressColumn,
+      taskLabelPosition,
+      workingDaysMode,
+      workingDaysConfig,
       taskTableWidth,
       columnWidths,
       fileState,
@@ -137,6 +160,26 @@ export function useFileOperations() {
       setTasks(parseResult.data!.tasks);
       setDependencies(parseResult.data!.dependencies || []); // Sprint 1.4
       resetExportOptions(parseResult.data!.exportSettings); // Sprint 1.6
+
+      // Load view settings from file (Sprint 1.5.9)
+      const loadedViewSettings = parseResult.data!.viewSettings;
+      setViewSettings({
+        zoom: loadedViewSettings.zoom,
+        panOffset: loadedViewSettings.panOffset,
+        showWeekends: loadedViewSettings.showWeekends,
+        showTodayMarker: loadedViewSettings.showTodayMarker,
+        showHolidays: loadedViewSettings.showHolidays ?? true,
+        showDependencies: loadedViewSettings.showDependencies ?? true,
+        showProgressColumn: loadedViewSettings.showProgressColumn ?? true,
+        taskLabelPosition: loadedViewSettings.taskLabelPosition ?? "inside",
+        workingDaysMode: loadedViewSettings.workingDaysMode ?? false,
+        workingDaysConfig: loadedViewSettings.workingDaysConfig ?? {
+          excludeSaturday: true,
+          excludeSunday: true,
+          excludeHolidays: true,
+        },
+      });
+
       autoFitColumn("name"); // Auto-fit name column to content
       clearHistory();
       fileState.setFileName(file.name);
@@ -158,6 +201,7 @@ export function useFileOperations() {
     setTasks,
     setDependencies,
     resetExportOptions,
+    setViewSettings,
     autoFitColumn,
     clearHistory,
   ]);

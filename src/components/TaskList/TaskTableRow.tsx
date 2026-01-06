@@ -10,10 +10,14 @@ import { CSS } from "@dnd-kit/utilities";
 import { Trash, DotsSixVertical } from "@phosphor-icons/react";
 import type { Task } from "../../types/chart.types";
 import { useTaskStore } from "../../store/slices/taskSlice";
+import { useChartStore } from "../../store/slices/chartSlice";
 import { useDensityConfig } from "../../store/slices/userPreferencesSlice";
 import { Cell } from "./Cell";
 import { ColorCellEditor } from "./CellEditors/ColorCellEditor";
-import { TASK_COLUMNS, getDensityAwareWidth } from "../../config/tableColumns";
+import {
+  getDensityAwareWidth,
+  getVisibleColumns,
+} from "../../config/tableColumns";
 import { useCellNavigation } from "../../hooks/useCellNavigation";
 import { TaskTypeIcon } from "./TaskTypeIcon";
 import { calculateSummaryDates } from "../../utils/hierarchy";
@@ -51,6 +55,13 @@ export function TaskTableRow({
   const setActiveCell = useTaskStore((state) => state.setActiveCell);
   const { isCellEditing, stopCellEdit } = useCellNavigation();
   const densityConfig = useDensityConfig();
+  const showProgressColumn = useChartStore((state) => state.showProgressColumn);
+
+  // Get visible columns based on settings (Sprint 1.5.9)
+  const visibleColumns = useMemo(
+    () => getVisibleColumns(showProgressColumn),
+    [showProgressColumn]
+  );
 
   const isSelected = selectedTaskIds.includes(task.id);
   const isInClipboard = clipboardPosition !== undefined;
@@ -92,12 +103,15 @@ export function TaskTableRow({
   } = useSortable({ id: task.id });
 
   // Generate grid template columns with density-aware widths
-  const gridTemplateColumns = TASK_COLUMNS.map((col) => {
-    const customWidth = columnWidths[col.id];
-    return customWidth
-      ? `${customWidth}px`
-      : getDensityAwareWidth(col.id, densityConfig);
-  }).join(" ");
+  // Uses visibleColumns for show/hide progress column (Sprint 1.5.9)
+  const gridTemplateColumns = visibleColumns
+    .map((col) => {
+      const customWidth = columnWidths[col.id];
+      return customWidth
+        ? `${customWidth}px`
+        : getDensityAwareWidth(col.id, densityConfig);
+    })
+    .join(" ");
 
   const style = {
     transform: CSS.Transform.toString(transform),
@@ -217,16 +231,30 @@ export function TaskTableRow({
         />
       </div>
 
-      {/* Data Cells */}
-      {TASK_COLUMNS.filter((col) => col.field).map((column) => {
-        const field = column.field!;
+      {/* Data Cells - uses visibleColumns for show/hide progress column (Sprint 1.5.9) */}
+      {visibleColumns
+        .filter((col) => col.field)
+        .map((column) => {
+          const field = column.field!;
 
-        // Special handling for name field with hierarchy
-        if (field === "name") {
-          const isEditing = isCellEditing(task.id, field);
+          // Special handling for name field with hierarchy
+          if (field === "name") {
+            const isEditing = isCellEditing(task.id, field);
 
-          // In edit mode: no custom children, let Cell handle everything
-          if (isEditing) {
+            // In edit mode: no custom children, let Cell handle everything
+            if (isEditing) {
+              return (
+                <Cell
+                  key={field}
+                  taskId={task.id}
+                  task={displayTask}
+                  field={field}
+                  column={column}
+                />
+              );
+            }
+
+            // In view mode: custom children with hierarchy elements
             return (
               <Cell
                 key={field}
@@ -234,194 +262,186 @@ export function TaskTableRow({
                 task={displayTask}
                 field={field}
                 column={column}
-              />
+              >
+                <div
+                  className="flex items-center gap-1"
+                  style={{
+                    paddingLeft: `${level * densityConfig.indentSize}px`,
+                  }}
+                >
+                  {/* Expand/collapse button for summary tasks with children only */}
+                  {hasChildren && task.type === "summary" ? (
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        toggleTaskCollapsed(task.id);
+                      }}
+                      className="w-4 h-4 flex items-center justify-center hover:bg-gray-200 rounded text-gray-600 flex-shrink-0"
+                      aria-label={isExpanded ? "Collapse" : "Expand"}
+                    >
+                      {isExpanded ? "▼" : "▶"}
+                    </button>
+                  ) : (
+                    <div className="w-4 flex-shrink-0" />
+                  )}
+
+                  {/* Task type icon - clickable to cycle through types */}
+                  <TaskTypeIcon
+                    type={task.type}
+                    onClick={() => {
+                      const currentType = task.type || "task";
+                      let nextType: Task["type"];
+
+                      if (hasChildren) {
+                        // When task has children, only allow task ↔ summary (skip milestone)
+                        nextType = currentType === "task" ? "summary" : "task";
+                      } else {
+                        // When no children, cycle through all types
+                        nextType =
+                          currentType === "task"
+                            ? "summary"
+                            : currentType === "summary"
+                              ? "milestone"
+                              : "task";
+                      }
+
+                      updateTask(task.id, { type: nextType });
+                    }}
+                  />
+
+                  {/* Task name display */}
+                  <span className="flex-1">{task.name}</span>
+                </div>
+              </Cell>
             );
           }
 
-          // In view mode: custom children with hierarchy elements
-          return (
-            <Cell
-              key={field}
-              taskId={task.id}
-              task={displayTask}
-              field={field}
-              column={column}
-            >
-              <div
-                className="flex items-center gap-1"
-                style={{ paddingLeft: `${level * densityConfig.indentSize}px` }}
+          // Special handling for dates in summary tasks (read-only)
+          if (
+            (field === "startDate" || field === "endDate") &&
+            task.type === "summary"
+          ) {
+            return (
+              <Cell
+                key={field}
+                taskId={task.id}
+                task={displayTask}
+                field={field}
+                column={column}
               >
-                {/* Expand/collapse button for summary tasks with children only */}
-                {hasChildren && task.type === "summary" ? (
-                  <button
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      toggleTaskCollapsed(task.id);
-                    }}
-                    className="w-4 h-4 flex items-center justify-center hover:bg-gray-200 rounded text-gray-600 flex-shrink-0"
-                    aria-label={isExpanded ? "Collapse" : "Expand"}
-                  >
-                    {isExpanded ? "▼" : "▶"}
-                  </button>
+                {displayTask[field] ? (
+                  <span className="text-gray-500 italic">
+                    {displayTask[field]}
+                  </span>
                 ) : (
-                  <div className="w-4 flex-shrink-0" />
+                  <span></span>
                 )}
+              </Cell>
+            );
+          }
 
-                {/* Task type icon - clickable to cycle through types */}
-                <TaskTypeIcon
-                  type={task.type}
-                  onClick={() => {
-                    const currentType = task.type || "task";
-                    let nextType: Task["type"];
-
-                    if (hasChildren) {
-                      // When task has children, only allow task ↔ summary (skip milestone)
-                      nextType = currentType === "task" ? "summary" : "task";
-                    } else {
-                      // When no children, cycle through all types
-                      nextType =
-                        currentType === "task"
-                          ? "summary"
-                          : currentType === "summary"
-                            ? "milestone"
-                            : "task";
-                    }
-
-                    updateTask(task.id, { type: nextType });
-                  }}
-                />
-
-                {/* Task name display */}
-                <span className="flex-1">{task.name}</span>
-              </div>
-            </Cell>
-          );
-        }
-
-        // Special handling for dates in summary tasks (read-only)
-        if (
-          (field === "startDate" || field === "endDate") &&
-          task.type === "summary"
-        ) {
-          return (
-            <Cell
-              key={field}
-              taskId={task.id}
-              task={displayTask}
-              field={field}
-              column={column}
-            >
-              {displayTask[field] ? (
-                <span className="text-gray-500 italic">
-                  {displayTask[field]}
-                </span>
-              ) : (
+          // Special handling for end date in milestone tasks (read-only, empty)
+          if (field === "endDate" && task.type === "milestone") {
+            return (
+              <Cell
+                key={field}
+                taskId={task.id}
+                task={displayTask}
+                field={field}
+                column={column}
+              >
                 <span></span>
-              )}
-            </Cell>
-          );
-        }
+              </Cell>
+            );
+          }
 
-        // Special handling for end date in milestone tasks (read-only, empty)
-        if (field === "endDate" && task.type === "milestone") {
-          return (
-            <Cell
-              key={field}
-              taskId={task.id}
-              task={displayTask}
-              field={field}
-              column={column}
-            >
-              <span></span>
-            </Cell>
-          );
-        }
-
-        // Special handling for duration in summary and milestone tasks (read-only)
-        if (
-          field === "duration" &&
-          (task.type === "summary" || task.type === "milestone")
-        ) {
-          return (
-            <Cell
-              key={field}
-              taskId={task.id}
-              task={displayTask}
-              field={field}
-              column={column}
-            >
-              {task.type === "summary" && displayTask.duration > 0 ? (
-                <span className="text-gray-500 italic">
-                  {displayTask.duration} days
-                </span>
-              ) : (
-                <span></span>
-              )}
-            </Cell>
-          );
-        }
-
-        // Special handling for progress in milestone tasks (read-only, empty)
-        if (field === "progress" && task.type === "milestone") {
-          return (
-            <Cell
-              key={field}
-              taskId={task.id}
-              task={displayTask}
-              field={field}
-              column={column}
-            >
-              <span></span>
-            </Cell>
-          );
-        }
-
-        // Special handling for color field with color picker
-        if (field === "color") {
-          const isEditing = isCellEditing(task.id, field);
-
-          return (
-            <Cell
-              key={field}
-              taskId={task.id}
-              task={displayTask}
-              field={field}
-              column={column}
-            >
-              <div className="flex items-center justify-center w-full h-full">
-                {isEditing ? (
-                  <ColorCellEditor
-                    value={displayTask.color}
-                    onChange={(value) => updateTask(task.id, { color: value })}
-                    onSave={stopCellEdit}
-                    onCancel={stopCellEdit}
-                    height={densityConfig.colorBarHeight}
-                  />
+          // Special handling for duration in summary and milestone tasks (read-only)
+          if (
+            field === "duration" &&
+            (task.type === "summary" || task.type === "milestone")
+          ) {
+            return (
+              <Cell
+                key={field}
+                taskId={task.id}
+                task={displayTask}
+                field={field}
+                column={column}
+              >
+                {task.type === "summary" && displayTask.duration > 0 ? (
+                  <span className="text-gray-500 italic">
+                    {displayTask.duration} days
+                  </span>
                 ) : (
-                  <div
-                    className="w-1.5 rounded"
-                    style={{
-                      backgroundColor: displayTask.color,
-                      height: densityConfig.colorBarHeight,
-                    }}
-                  />
+                  <span></span>
                 )}
-              </div>
-            </Cell>
-          );
-        }
+              </Cell>
+            );
+          }
 
-        // Default cell rendering
-        return (
-          <Cell
-            key={field}
-            taskId={task.id}
-            task={displayTask}
-            field={field}
-            column={column}
-          />
-        );
-      })}
+          // Special handling for progress in milestone tasks (read-only, empty)
+          if (field === "progress" && task.type === "milestone") {
+            return (
+              <Cell
+                key={field}
+                taskId={task.id}
+                task={displayTask}
+                field={field}
+                column={column}
+              >
+                <span></span>
+              </Cell>
+            );
+          }
+
+          // Special handling for color field with color picker
+          if (field === "color") {
+            const isEditing = isCellEditing(task.id, field);
+
+            return (
+              <Cell
+                key={field}
+                taskId={task.id}
+                task={displayTask}
+                field={field}
+                column={column}
+              >
+                <div className="flex items-center justify-center w-full h-full">
+                  {isEditing ? (
+                    <ColorCellEditor
+                      value={displayTask.color}
+                      onChange={(value) =>
+                        updateTask(task.id, { color: value })
+                      }
+                      onSave={stopCellEdit}
+                      onCancel={stopCellEdit}
+                      height={densityConfig.colorBarHeight}
+                    />
+                  ) : (
+                    <div
+                      className="w-1.5 rounded"
+                      style={{
+                        backgroundColor: displayTask.color,
+                        height: densityConfig.colorBarHeight,
+                      }}
+                    />
+                  )}
+                </div>
+              </Cell>
+            );
+          }
+
+          // Default cell rendering
+          return (
+            <Cell
+              key={field}
+              taskId={task.id}
+              task={displayTask}
+              field={field}
+              column={column}
+            />
+          );
+        })}
 
       {/* Delete Button Cell */}
       <div

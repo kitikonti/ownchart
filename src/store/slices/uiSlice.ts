@@ -30,6 +30,9 @@ interface UIState {
   // Preferences dialog
   isPreferencesDialogOpen: boolean;
 
+  // Chart settings dialog (project-specific view settings)
+  isChartSettingsDialogOpen: boolean;
+
   // Welcome tour
   isWelcomeTourOpen: boolean;
   hasSeenWelcome: boolean;
@@ -56,6 +59,10 @@ interface UIActions {
   // Preferences dialog
   openPreferencesDialog: () => void;
   closePreferencesDialog: () => void;
+
+  // Chart settings dialog
+  openChartSettingsDialog: () => void;
+  closeChartSettingsDialog: () => void;
 
   // Welcome tour
   openWelcomeTour: () => void;
@@ -102,6 +109,7 @@ export const useUIStore = create<UIStore>()(
       exportError: null,
       isHelpPanelOpen: false,
       isPreferencesDialogOpen: false,
+      isChartSettingsDialogOpen: false,
       isWelcomeTourOpen: false,
       hasSeenWelcome,
       hasTourCompleted,
@@ -171,6 +179,17 @@ export const useUIStore = create<UIStore>()(
       closePreferencesDialog: () =>
         set((state) => {
           state.isPreferencesDialogOpen = false;
+        }),
+
+      // Chart settings dialog actions
+      openChartSettingsDialog: () =>
+        set((state) => {
+          state.isChartSettingsDialogOpen = true;
+        }),
+
+      closeChartSettingsDialog: () =>
+        set((state) => {
+          state.isChartSettingsDialogOpen = false;
         }),
 
       // Welcome tour actions

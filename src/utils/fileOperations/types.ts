@@ -6,6 +6,10 @@
 import type { TaskType } from "../../types/chart.types";
 import type { Dependency as AppDependency } from "../../types/dependency.types";
 import type { ExportOptions } from "../export/types";
+import type {
+  TaskLabelPosition,
+  WorkingDaysConfig,
+} from "../../types/preferences.types";
 
 export interface GanttFile {
   // Format identification
@@ -87,12 +91,25 @@ export interface SerializedTask {
 }
 
 export interface ViewSettings {
+  // Navigation
   zoom: number;
   panOffset: { x: number; y: number };
-  showWeekends: boolean;
-  showTodayMarker: boolean;
   taskTableWidth: number | null;
   columnWidths?: Record<string, number>;
+
+  // Display settings (existing)
+  showWeekends: boolean;
+  showTodayMarker: boolean;
+
+  // Display settings (Sprint 1.5.9)
+  showHolidays?: boolean;
+  showDependencies?: boolean;
+  showProgressColumn?: boolean;
+  taskLabelPosition?: TaskLabelPosition;
+
+  // Working days mode (Sprint 1.5.9)
+  workingDaysMode?: boolean;
+  workingDaysConfig?: WorkingDaysConfig;
 }
 
 // Validation error types

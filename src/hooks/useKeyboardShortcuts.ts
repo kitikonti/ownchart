@@ -6,11 +6,14 @@
  * Handles Ctrl+E (export to PNG)
  * Handles ESC (clear clipboard, close dialogs)
  * Handles ? (open help panel)
+ * Handles D (toggle dependencies), T (toggle today marker)
+ * Handles P (toggle progress column), H (toggle holidays)
  */
 
 import { useEffect } from "react";
 import { useHistoryStore } from "../store/slices/historySlice";
 import { useTaskStore } from "../store/slices/taskSlice";
+import { useChartStore } from "../store/slices/chartSlice";
 import { useUIStore } from "../store/slices/uiSlice";
 import { useFileOperations } from "./useFileOperations";
 import { useClipboardOperations } from "./useClipboardOperations";
@@ -28,6 +31,14 @@ export function useKeyboardShortcuts() {
     (state) => state.deleteSelectedTasks
   );
   const selectedTaskIds = useTaskStore((state) => state.selectedTaskIds);
+
+  // View toggle shortcuts (Sprint 1.5.9)
+  const toggleDependencies = useChartStore((state) => state.toggleDependencies);
+  const toggleTodayMarker = useChartStore((state) => state.toggleTodayMarker);
+  const toggleProgressColumn = useChartStore(
+    (state) => state.toggleProgressColumn
+  );
+  const toggleHolidays = useChartStore((state) => state.toggleHolidays);
 
   // UI state for dialogs
   const openExportDialog = useUIStore((state) => state.openExportDialog);
@@ -187,6 +198,38 @@ export function useKeyboardShortcuts() {
         openHelpPanel();
         return;
       }
+
+      // View toggle shortcuts (Sprint 1.5.9)
+      // Only when not in text input and no modifier keys
+      if (!isTextInput && !modKey && !e.altKey && !e.shiftKey) {
+        // D: Toggle dependencies
+        if (e.key.toLowerCase() === "d") {
+          e.preventDefault();
+          toggleDependencies();
+          return;
+        }
+
+        // T: Toggle today marker
+        if (e.key.toLowerCase() === "t") {
+          e.preventDefault();
+          toggleTodayMarker();
+          return;
+        }
+
+        // P: Toggle progress column
+        if (e.key.toLowerCase() === "p") {
+          e.preventDefault();
+          toggleProgressColumn();
+          return;
+        }
+
+        // H: Toggle holidays
+        if (e.key.toLowerCase() === "h") {
+          e.preventDefault();
+          toggleHolidays();
+          return;
+        }
+      }
     };
 
     window.addEventListener("keydown", handleKeyDown);
@@ -216,5 +259,9 @@ export function useKeyboardShortcuts() {
     isExportDialogOpen,
     isHelpPanelOpen,
     isWelcomeTourOpen,
+    toggleDependencies,
+    toggleTodayMarker,
+    toggleProgressColumn,
+    toggleHolidays,
   ]);
 }

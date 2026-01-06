@@ -49,12 +49,21 @@ export function serializeToGanttFile(
       tasks: tasks.map(serializeTask),
       dependencies: dependencies.map(serializeDependency), // Sprint 1.4
       viewSettings: {
+        // Navigation
         zoom: viewSettings.zoom,
         panOffset: viewSettings.panOffset,
-        showWeekends: viewSettings.showWeekends,
-        showTodayMarker: viewSettings.showTodayMarker,
         taskTableWidth: viewSettings.taskTableWidth,
         columnWidths: viewSettings.columnWidths,
+        // Display settings
+        showWeekends: viewSettings.showWeekends,
+        showTodayMarker: viewSettings.showTodayMarker,
+        showHolidays: viewSettings.showHolidays,
+        showDependencies: viewSettings.showDependencies,
+        showProgressColumn: viewSettings.showProgressColumn,
+        taskLabelPosition: viewSettings.taskLabelPosition,
+        // Working days mode
+        workingDaysMode: viewSettings.workingDaysMode,
+        workingDaysConfig: viewSettings.workingDaysConfig,
       },
       exportSettings: options.exportSettings, // Sprint 1.6
       metadata: {

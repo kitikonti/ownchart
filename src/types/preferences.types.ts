@@ -1,6 +1,7 @@
 /**
  * User preferences types for OwnChart
  * Sprint 1.5.9.1: UI Density settings
+ * Sprint 1.5.9: User Preferences & Settings (extended)
  */
 
 /**
@@ -10,6 +11,21 @@
  * - comfortable: 44px rows, easier to read (current default before this feature)
  */
 export type UiDensity = "compact" | "normal" | "comfortable";
+
+/**
+ * Date format options for user preference
+ */
+export type DateFormat = "DD/MM/YYYY" | "MM/DD/YYYY" | "YYYY-MM-DD";
+
+/**
+ * First day of week options
+ */
+export type FirstDayOfWeek = "sunday" | "monday";
+
+/**
+ * Task label position options in the timeline
+ */
+export type TaskLabelPosition = "before" | "inside" | "after" | "none";
 
 /**
  * Density configuration values for a single mode
@@ -49,20 +65,132 @@ export type DensityConfigMap = Record<UiDensity, DensityConfig>;
 
 /**
  * User preferences state
+ * These settings are stored in localStorage and persist across projects
  */
 export interface UserPreferences {
+  // Appearance (Sprint 1.5.9.1)
   uiDensity: UiDensity;
-  // Future preferences can be added here:
-  // dateFormat: 'DD/MM/YYYY' | 'MM/DD/YYYY' | 'YYYY-MM-DD';
-  // firstDayOfWeek: 'sunday' | 'monday';
+
+  // Regional (Sprint 1.5.9)
+  dateFormat: DateFormat;
+  firstDayOfWeek: FirstDayOfWeek;
+  holidayRegion: string; // ISO 3166-1 alpha-2 code (e.g., 'AT', 'DE', 'US')
+
+  // Future preferences (V2.0+):
   // theme: 'light' | 'dark' | 'system';
+  // language: string;
+}
+
+/**
+ * Working days configuration for project settings
+ */
+export interface WorkingDaysConfig {
+  excludeSaturday: boolean;
+  excludeSunday: boolean;
+  excludeHolidays: boolean;
+}
+
+/**
+ * Default working days configuration
+ */
+export const DEFAULT_WORKING_DAYS_CONFIG: WorkingDaysConfig = {
+  excludeSaturday: true,
+  excludeSunday: true,
+  excludeHolidays: true,
+};
+
+/**
+ * Detect locale-based date format from browser
+ */
+export function detectLocaleDateFormat(): DateFormat {
+  const locale = navigator.language.toLowerCase();
+
+  // US uses MM/DD/YYYY
+  if (locale.includes("us") || locale === "en") {
+    return "MM/DD/YYYY";
+  }
+
+  // ISO format for some locales (Japan, China, etc.)
+  if (
+    locale.startsWith("ja") ||
+    locale.startsWith("zh") ||
+    locale.startsWith("ko")
+  ) {
+    return "YYYY-MM-DD";
+  }
+
+  // Most of the world uses DD/MM/YYYY
+  return "DD/MM/YYYY";
+}
+
+/**
+ * Detect first day of week from browser locale
+ */
+export function detectLocaleFirstDayOfWeek(): FirstDayOfWeek {
+  const locale = navigator.language.toLowerCase();
+
+  // Countries that use Sunday as first day of week
+  const sundayFirstCountries = [
+    "us",
+    "ca",
+    "jp",
+    "tw",
+    "hk",
+    "il",
+    "sa",
+    "ae",
+    "eg",
+    "br",
+  ];
+
+  // Check if locale contains any Sunday-first country code
+  if (sundayFirstCountries.some((code) => locale.includes(code))) {
+    return "sunday";
+  }
+
+  // Most countries use Monday as first day
+  return "monday";
+}
+
+/**
+ * Detect holiday region from browser locale
+ */
+export function detectLocaleHolidayRegion(): string {
+  const locale = navigator.language;
+  const parts = locale.split("-");
+
+  // If locale has region (e.g., "en-US", "de-AT"), use the region
+  if (parts.length > 1) {
+    return parts[1].toUpperCase();
+  }
+
+  // Otherwise, try to map language to a country
+  const languageToCountry: Record<string, string> = {
+    de: "DE",
+    en: "US",
+    fr: "FR",
+    es: "ES",
+    it: "IT",
+    nl: "NL",
+    pt: "PT",
+    ru: "RU",
+    ja: "JP",
+    zh: "CN",
+    ko: "KR",
+  };
+
+  return languageToCountry[parts[0].toLowerCase()] || "US";
 }
 
 /**
  * Default preferences for new users
+ * Uses locale detection for regional settings
  */
 export const DEFAULT_PREFERENCES: UserPreferences = {
   uiDensity: "normal",
+  dateFormat: detectLocaleDateFormat(),
+  firstDayOfWeek: detectLocaleFirstDayOfWeek(),
+  holidayRegion: detectLocaleHolidayRegion(),
 };
 
 /**

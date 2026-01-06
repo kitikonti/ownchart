@@ -11,9 +11,15 @@ import {
   type UiDensity,
   type UserPreferences,
   type DensityConfig,
+  type DateFormat,
+  type FirstDayOfWeek,
   DEFAULT_PREFERENCES,
   DENSITY_CONFIG,
+  detectLocaleDateFormat,
+  detectLocaleFirstDayOfWeek,
+  detectLocaleHolidayRegion,
 } from "../../types/preferences.types";
+import { holidayService } from "../../services/holidayService";
 
 // LocalStorage key
 const PREFERENCES_KEY = "ownchart-preferences";
@@ -33,8 +39,18 @@ interface UserPreferencesState {
  * User preferences actions interface
  */
 interface UserPreferencesActions {
+  // Appearance actions
   setUiDensity: (density: UiDensity) => void;
   getDensityConfig: () => DensityConfig;
+
+  // Regional settings actions
+  setDateFormat: (format: DateFormat) => void;
+  setFirstDayOfWeek: (day: FirstDayOfWeek) => void;
+  setHolidayRegion: (region: string) => void;
+
+  // Initialization
+  initializePreferences: () => void;
+  /** @deprecated Use initializePreferences instead */
   initializeDensity: () => void;
 }
 
@@ -73,6 +89,22 @@ function isLegacyUser(): boolean {
 }
 
 /**
+ * Migrate stored preferences to current schema
+ * Adds missing fields with locale-detected defaults
+ */
+function migratePreferences(stored: Partial<UserPreferences>): UserPreferences {
+  return {
+    // Appearance
+    uiDensity: stored.uiDensity ?? DEFAULT_PREFERENCES.uiDensity,
+
+    // Regional - use locale detection for new fields
+    dateFormat: stored.dateFormat ?? detectLocaleDateFormat(),
+    firstDayOfWeek: stored.firstDayOfWeek ?? detectLocaleFirstDayOfWeek(),
+    holidayRegion: stored.holidayRegion ?? detectLocaleHolidayRegion(),
+  };
+}
+
+/**
  * User preferences store with localStorage persistence
  */
 export const useUserPreferencesStore = create<UserPreferencesStore>()(
@@ -97,9 +129,32 @@ export const useUserPreferencesStore = create<UserPreferencesStore>()(
         return DENSITY_CONFIG[preferences.uiDensity];
       },
 
-      // Initialize density on app start
-      // Handles migration for legacy users
-      initializeDensity: () => {
+      // Set date format
+      setDateFormat: (format: DateFormat) => {
+        set((state) => {
+          state.preferences.dateFormat = format;
+        });
+      },
+
+      // Set first day of week
+      setFirstDayOfWeek: (day: FirstDayOfWeek) => {
+        set((state) => {
+          state.preferences.firstDayOfWeek = day;
+        });
+      },
+
+      // Set holiday region
+      setHolidayRegion: (region: string) => {
+        set((state) => {
+          state.preferences.holidayRegion = region;
+        });
+        // Update holiday service with new region
+        holidayService.setRegion(region);
+      },
+
+      // Initialize all preferences on app start
+      // Handles migration for legacy users and new settings
+      initializePreferences: () => {
         const state = get();
 
         // Only run initialization once
@@ -109,24 +164,35 @@ export const useUserPreferencesStore = create<UserPreferencesStore>()(
 
         // Check if this is a legacy user who hasn't set density preference yet
         // Legacy users (before v1.1) should default to "comfortable" to maintain their experience
-        const storedPrefs = localStorage.getItem(PREFERENCES_KEY);
-        const hasStoredDensity =
-          storedPrefs && JSON.parse(storedPrefs)?.state?.preferences?.uiDensity;
+        const storedPrefsRaw = localStorage.getItem(PREFERENCES_KEY);
+        const storedPrefs = storedPrefsRaw
+          ? JSON.parse(storedPrefsRaw)?.state?.preferences
+          : null;
+        const hasStoredDensity = storedPrefs?.uiDensity;
 
+        // Migrate preferences to fill in any missing fields
+        const migratedPrefs = migratePreferences(storedPrefs || {});
+
+        // Handle legacy user density
         if (!hasStoredDensity && isLegacyUser()) {
-          // Migrate legacy user to comfortable
-          set((s) => {
-            s.preferences.uiDensity = "comfortable";
-            s.isInitialized = true;
-          });
-          applyDensityClass("comfortable");
-        } else {
-          // Apply current density setting
-          set((s) => {
-            s.isInitialized = true;
-          });
-          applyDensityClass(state.preferences.uiDensity);
+          migratedPrefs.uiDensity = "comfortable";
         }
+
+        set((s) => {
+          s.preferences = migratedPrefs;
+          s.isInitialized = true;
+        });
+
+        // Apply density CSS
+        applyDensityClass(migratedPrefs.uiDensity);
+
+        // Initialize holiday service with user's region
+        holidayService.setRegion(migratedPrefs.holidayRegion);
+      },
+
+      // Deprecated - use initializePreferences
+      initializeDensity: () => {
+        get().initializePreferences();
       },
     })),
     {
@@ -164,4 +230,39 @@ export function useUiDensity(): UiDensity {
 export function getCurrentDensityConfig(): DensityConfig {
   const density = useUserPreferencesStore.getState().preferences.uiDensity;
   return DENSITY_CONFIG[density];
+}
+
+/**
+ * Hook to get current date format preference
+ */
+export function useDateFormat(): DateFormat {
+  return useUserPreferencesStore((state) => state.preferences.dateFormat);
+}
+
+/**
+ * Hook to get current first day of week preference
+ */
+export function useFirstDayOfWeek(): FirstDayOfWeek {
+  return useUserPreferencesStore((state) => state.preferences.firstDayOfWeek);
+}
+
+/**
+ * Hook to get current holiday region preference
+ */
+export function useHolidayRegion(): string {
+  return useUserPreferencesStore((state) => state.preferences.holidayRegion);
+}
+
+/**
+ * Selector for current date format (for non-hook usage)
+ */
+export function getCurrentDateFormat(): DateFormat {
+  return useUserPreferencesStore.getState().preferences.dateFormat;
+}
+
+/**
+ * Selector for current holiday region (for non-hook usage)
+ */
+export function getCurrentHolidayRegion(): string {
+  return useUserPreferencesStore.getState().preferences.holidayRegion;
 }

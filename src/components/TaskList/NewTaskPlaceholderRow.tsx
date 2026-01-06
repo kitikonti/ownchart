@@ -4,10 +4,17 @@
  * Can be selected to allow pasting at the end of the list.
  */
 
-import { useState, useRef, useEffect, type KeyboardEvent } from "react";
+import {
+  useState,
+  useRef,
+  useEffect,
+  useMemo,
+  type KeyboardEvent,
+} from "react";
 import { useTaskStore, type EditableField } from "../../store/slices/taskSlice";
+import { useChartStore } from "../../store/slices/chartSlice";
 import { useDensityConfig } from "../../store/slices/userPreferencesSlice";
-import { TASK_COLUMNS } from "../../config/tableColumns";
+import { getVisibleColumns } from "../../config/tableColumns";
 
 // Special ID for the placeholder row - used by paste logic
 export const PLACEHOLDER_TASK_ID = "__new_task_placeholder__";
@@ -24,6 +31,13 @@ export function NewTaskPlaceholderRow(): JSX.Element {
   const selectedTaskIds = useTaskStore((state) => state.selectedTaskIds);
   const clearSelection = useTaskStore((state) => state.clearSelection);
   const densityConfig = useDensityConfig();
+  const showProgressColumn = useChartStore((state) => state.showProgressColumn);
+
+  // Get visible columns based on settings (Sprint 1.5.9)
+  const visibleColumns = useMemo(
+    () => getVisibleColumns(showProgressColumn),
+    [showProgressColumn]
+  );
 
   const isRowActive = activeCell.taskId === PLACEHOLDER_TASK_ID;
   const isNameActive = isRowActive && activeCell.field === "name";
@@ -173,7 +187,7 @@ export function NewTaskPlaceholderRow(): JSX.Element {
 
   return (
     <div className="placeholder-row contents" role="row">
-      {TASK_COLUMNS.map((column) => {
+      {visibleColumns.map((column) => {
         const isActiveCell = isRowActive && activeCell.field === column.field;
 
         return (

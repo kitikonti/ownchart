@@ -19,6 +19,11 @@ import {
   addDays,
 } from "../../utils/dateUtils";
 import type { Task } from "../../types/chart.types";
+import type {
+  TaskLabelPosition,
+  WorkingDaysConfig,
+} from "../../types/preferences.types";
+import { DEFAULT_WORKING_DAYS_CONFIG } from "../../types/preferences.types";
 
 interface ChartState {
   // Scale management (CRITICAL from Architect review)
@@ -33,9 +38,15 @@ interface ChartState {
   zoom: number; // 0.05 to 3.0 (5% to 300%)
   panOffset: { x: number; y: number }; // Pan position in pixels
 
-  // View settings
+  // View settings (Project Settings - saved in .ownchart file)
   showWeekends: boolean;
   showTodayMarker: boolean;
+  showHolidays: boolean;
+  showDependencies: boolean;
+  showProgressColumn: boolean;
+  taskLabelPosition: TaskLabelPosition;
+  workingDaysMode: boolean;
+  workingDaysConfig: WorkingDaysConfig;
 
   // Transient UI state
   isZooming: boolean;
@@ -72,11 +83,23 @@ interface ChartActions {
   setIsZooming: (isZooming: boolean) => void;
   setIsPanning: (isPanning: boolean) => void;
 
-  // Settings
+  // Settings - View toggles
   toggleWeekends: () => void;
   toggleTodayMarker: () => void;
+  toggleHolidays: () => void;
+  toggleDependencies: () => void;
+  toggleProgressColumn: () => void;
   setShowWeekends: (show: boolean) => void;
   setShowTodayMarker: (show: boolean) => void;
+  setShowHolidays: (show: boolean) => void;
+  setShowDependencies: (show: boolean) => void;
+  setShowProgressColumn: (show: boolean) => void;
+  setTaskLabelPosition: (position: TaskLabelPosition) => void;
+  setWorkingDaysMode: (enabled: boolean) => void;
+  setWorkingDaysConfig: (config: Partial<WorkingDaysConfig>) => void;
+
+  // Bulk settings update (for loading from file)
+  setViewSettings: (settings: Partial<ChartState>) => void;
 
   // Drag state (for multi-task preview)
   setDragState: (deltaDays: number, sourceTaskId: string) => void;
@@ -107,8 +130,18 @@ export const useChartStore = create<ChartState & ChartActions>()(
     dateRange: null,
     zoom: 1.0,
     panOffset: { x: 0, y: 0 },
+
+    // View settings (Project Settings)
     showWeekends: true,
     showTodayMarker: true,
+    showHolidays: true,
+    showDependencies: true,
+    showProgressColumn: true,
+    taskLabelPosition: "inside",
+    workingDaysMode: false,
+    workingDaysConfig: { ...DEFAULT_WORKING_DAYS_CONFIG },
+
+    // Transient UI state
     isZooming: false,
     isPanning: false,
     dragState: null,
@@ -288,6 +321,27 @@ export const useChartStore = create<ChartState & ChartActions>()(
       });
     },
 
+    // Toggle holidays visibility
+    toggleHolidays: () => {
+      set((state) => {
+        state.showHolidays = !state.showHolidays;
+      });
+    },
+
+    // Toggle dependencies visibility
+    toggleDependencies: () => {
+      set((state) => {
+        state.showDependencies = !state.showDependencies;
+      });
+    },
+
+    // Toggle progress column visibility
+    toggleProgressColumn: () => {
+      set((state) => {
+        state.showProgressColumn = !state.showProgressColumn;
+      });
+    },
+
     // Set weekend visibility
     setShowWeekends: (show: boolean) => {
       set((state) => {
@@ -299,6 +353,76 @@ export const useChartStore = create<ChartState & ChartActions>()(
     setShowTodayMarker: (show: boolean) => {
       set((state) => {
         state.showTodayMarker = show;
+      });
+    },
+
+    // Set holidays visibility
+    setShowHolidays: (show: boolean) => {
+      set((state) => {
+        state.showHolidays = show;
+      });
+    },
+
+    // Set dependencies visibility
+    setShowDependencies: (show: boolean) => {
+      set((state) => {
+        state.showDependencies = show;
+      });
+    },
+
+    // Set progress column visibility
+    setShowProgressColumn: (show: boolean) => {
+      set((state) => {
+        state.showProgressColumn = show;
+      });
+    },
+
+    // Set task label position
+    setTaskLabelPosition: (position: TaskLabelPosition) => {
+      set((state) => {
+        state.taskLabelPosition = position;
+      });
+    },
+
+    // Set working days mode
+    setWorkingDaysMode: (enabled: boolean) => {
+      set((state) => {
+        state.workingDaysMode = enabled;
+      });
+    },
+
+    // Set working days configuration
+    setWorkingDaysConfig: (config: Partial<WorkingDaysConfig>) => {
+      set((state) => {
+        state.workingDaysConfig = {
+          ...state.workingDaysConfig,
+          ...config,
+        };
+      });
+    },
+
+    // Bulk settings update (for loading from file)
+    setViewSettings: (settings: Partial<ChartState>) => {
+      set((state) => {
+        if (settings.zoom !== undefined) state.zoom = settings.zoom;
+        if (settings.panOffset !== undefined)
+          state.panOffset = settings.panOffset;
+        if (settings.showWeekends !== undefined)
+          state.showWeekends = settings.showWeekends;
+        if (settings.showTodayMarker !== undefined)
+          state.showTodayMarker = settings.showTodayMarker;
+        if (settings.showHolidays !== undefined)
+          state.showHolidays = settings.showHolidays;
+        if (settings.showDependencies !== undefined)
+          state.showDependencies = settings.showDependencies;
+        if (settings.showProgressColumn !== undefined)
+          state.showProgressColumn = settings.showProgressColumn;
+        if (settings.taskLabelPosition !== undefined)
+          state.taskLabelPosition = settings.taskLabelPosition;
+        if (settings.workingDaysMode !== undefined)
+          state.workingDaysMode = settings.workingDaysMode;
+        if (settings.workingDaysConfig !== undefined)
+          state.workingDaysConfig = settings.workingDaysConfig;
       });
     },
 

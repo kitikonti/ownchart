@@ -9,6 +9,7 @@ import { ZoomIndicator } from "./components/GanttChart/ZoomIndicator";
 import { AppToolbar, GanttLayout } from "./components/Layout";
 import { ExportDialog } from "./components/Export";
 import { PreferencesDialog } from "./components/Preferences";
+import { ChartSettingsDialog } from "./components/Settings/ChartSettingsDialog";
 import { HelpPanel, WelcomeTour } from "./components/Help";
 import { useKeyboardShortcuts } from "./hooks/useKeyboardShortcuts";
 import { useUnsavedChanges } from "./hooks/useUnsavedChanges";
@@ -48,6 +49,9 @@ function App(): JSX.Element {
 
       {/* Preferences Dialog */}
       <PreferencesDialog />
+
+      {/* Chart Settings Dialog */}
+      <ChartSettingsDialog />
 
       {/* Help Panel */}
       <HelpPanel />
