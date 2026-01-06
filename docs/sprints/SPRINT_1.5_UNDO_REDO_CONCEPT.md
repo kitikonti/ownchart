@@ -1741,10 +1741,10 @@ All supported command types:
 
 ### References
 
-- [Concept: ROADMAP.md Sprint 1.5](/concept/planning/ROADMAP.md#sprint-15-basic-undoredo)
-- [Concept: DATA_MODEL.md History System](/concept/architecture/DATA_MODEL.md#3-history-system)
-- [Concept: TECHNICAL_ARCHITECTURE.md Command Pattern](/concept/architecture/TECHNICAL_ARCHITECTURE.md#41-command-pattern-for-actions)
-- [Concept: USER_STORIES.md Epic 3](/concept/planning/USER_STORIES.md#epic-3-version-history)
+- [Concept: ROADMAP.md Sprint 1.5](/docs/planning/ROADMAP.md#sprint-15-basic-undoredo)
+- [Concept: DATA_MODEL.md History System](/docs/architecture/DATA_MODEL.md#3-history-system)
+- [Concept: TECHNICAL_ARCHITECTURE.md Command Pattern](/docs/architecture/TECHNICAL_ARCHITECTURE.md#41-command-pattern-for-actions)
+- [Concept: USER_STORIES.md Epic 3](/docs/planning/USER_STORIES.md#epic-3-version-history)
 - [Zustand Documentation](https://docs.pmnd.rs/zustand)
 - [Command Pattern (Refactoring Guru)](https://refactoring.guru/design-patterns/command)
 

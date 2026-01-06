@@ -77,7 +77,7 @@ After analysis, we've confirmed the decision to build independently rather than 
 
 ### Implementation Patterns to Adopt
 
-**From SVAR Analysis** (see concept/docs/COMPETITIVE_ANALYSIS.md for details):
+**From SVAR Analysis** (see docs/docs/COMPETITIVE_ANALYSIS.md for details):
 
 1. **Component Structure**: Separate Chart, Grid, Editor components (we already do this ✅)
 2. **Virtual Scrolling**: Render only visible rows + buffer
@@ -1012,7 +1012,7 @@ This sprint was completed ahead of schedule during MVP development. See Sprint 1
   - Vacation management panel (add/edit/delete)
   - Integration with Working Days Mode
   - Reference: Data model prepared in Sprint 1.5.9
-  - See: `concept/sprints/SPRINT_1.5.9_USER_PREFERENCES_SETTINGS_CONCEPT.md` Section 2.7
+  - See: `docs/sprints/SPRINT_1.5.9_USER_PREFERENCES_SETTINGS_CONCEPT.md` Section 2.7
 - Mobile viewing mode (read-only)
   - Responsive layout for tablets (768px+) and phones (375px+)
   - View-only mode (no editing on mobile)

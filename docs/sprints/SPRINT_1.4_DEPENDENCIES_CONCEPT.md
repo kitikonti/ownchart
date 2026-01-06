@@ -1989,8 +1989,8 @@ Test Coverage:
 
 ### References
 
-- [ROADMAP.md - Sprint 1.4](/concept/planning/ROADMAP.md#sprint-14-dependencies-finish-to-start-only)
-- [DATA_MODEL.md - Dependency Interface](/concept/architecture/DATA_MODEL.md#22-dependency)
+- [ROADMAP.md - Sprint 1.4](/docs/planning/ROADMAP.md#sprint-14-dependencies-finish-to-start-only)
+- [DATA_MODEL.md - Dependency Interface](/docs/architecture/DATA_MODEL.md#22-dependency)
 - [SVAR React Gantt - Links.jsx](https://github.com/svar-widgets/react-gantt/blob/master/src/components/chart/Links.jsx)
 - [Topological Sort - Kahn's Algorithm](https://en.wikipedia.org/wiki/Topological_sorting#Kahn's_algorithm)
 - [Cycle Detection - DFS](https://en.wikipedia.org/wiki/Cycle_(graph_theory)#Cycle_detection)

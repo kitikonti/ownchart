@@ -578,9 +578,9 @@ describe('Indent/Outdent Operations', () => {
 
 ### Verwandte Dokumentation
 
-- `concept/docs/DATA_MODEL.md` - SVAR Pattern Hierarchie-Design
-- `concept/sprints/SPRINT_1.1.1_TASK_GROUPS.md` - Task Groups (ähnliche Hierarchie-Features)
-- `concept/docs/TECHNICAL_ARCHITECTURE.md` - Zustand Store Architecture
+- `docs/docs/DATA_MODEL.md` - SVAR Pattern Hierarchie-Design
+- `docs/sprints/SPRINT_1.1.1_TASK_GROUPS.md` - Task Groups (ähnliche Hierarchie-Features)
+- `docs/docs/TECHNICAL_ARCHITECTURE.md` - Zustand Store Architecture
 
 ---
 

@@ -75,7 +75,7 @@ ownchart/
 │   ├── utils/          # Helper functions
 │   ├── types/          # TypeScript interfaces
 │   └── hooks/          # Custom React hooks
-├── concept/            # ALL design documentation
+├── docs/            # ALL design documentation
 │   ├── planning/       # PRD, Roadmap, User Stories
 │   ├── architecture/   # Technical Architecture, Data Model
 │   ├── sprints/        # Sprint-specific documentation
@@ -124,8 +124,8 @@ ownchart/
 
 1. **Read the concept docs** if working on a new feature:
    ```bash
-   concept/sprints/SPRINT_X.Y_*.md
-   concept/planning/ROADMAP.md
+   docs/sprints/SPRINT_X.Y_*.md
+   docs/planning/ROADMAP.md
    ```
 
 2. **Check current sprint** status in ROADMAP.md
@@ -225,8 +225,8 @@ npm run release:dry    # Preview without changes
 ### When Working on Features
 
 1. **Always check sprint documentation first**:
-   - Read `concept/sprints/SPRINT_*.md` for requirements
-   - Check `concept/planning/ROADMAP.md` for phase/status
+   - Read `docs/sprints/SPRINT_*.md` for requirements
+   - Check `docs/planning/ROADMAP.md` for phase/status
    - Review related architecture docs if needed
 
 2. **Follow the concept documentation**:
@@ -317,11 +317,11 @@ git tag -l
 - `src/components/App.tsx` - Root layout component
 
 **Documentation Hub**:
-- `concept/README.md` - Start here for all documentation
-- `concept/planning/ROADMAP.md` - Development phases and status
-- `concept/planning/PRD.md` - Product requirements
-- `concept/architecture/TECHNICAL_ARCHITECTURE.md` - System design
-- `concept/architecture/DATA_MODEL.md` - Data structures
+- `docs/README.md` - Start here for all documentation
+- `docs/planning/ROADMAP.md` - Development phases and status
+- `docs/planning/PRD.md` - Product requirements
+- `docs/architecture/TECHNICAL_ARCHITECTURE.md` - System design
+- `docs/architecture/DATA_MODEL.md` - Data structures
 
 ## Testing Requirements
 

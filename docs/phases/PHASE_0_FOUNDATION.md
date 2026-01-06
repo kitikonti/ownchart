@@ -46,7 +46,7 @@ app-gantt/
 │   ├── integration/
 │   └── e2e/
 ├── public/
-├── concept/                # Existing documentation
+├── docs/                # Existing documentation
 ├── .eslintrc.json
 ├── .prettierrc
 ├── tsconfig.json

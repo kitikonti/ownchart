@@ -183,7 +183,7 @@ Originally planned for V1.1, completed early during MVP development:
 - ✅ Grid system with proper alignment
 
 ### Documentation Reorganization
-- 🗂️ Restructured `/concept` folder into logical categories:
+- 🗂️ Restructured `/docs` folder into logical categories:
   - `/planning` - Product planning documents
   - `/architecture` - Technical architecture
   - `/design` - UI/UX specifications

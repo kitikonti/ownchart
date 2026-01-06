@@ -1616,8 +1616,8 @@ describe('File Security', () => {
 
 ### References
 
-- [DATA_MODEL.md](/concept/architecture/DATA_MODEL.md) - File format specification
-- [EXTENSIBILITY_ARCHITECTURE.md](/concept/architecture/EXTENSIBILITY_ARCHITECTURE.md) - Extensibility patterns
+- [DATA_MODEL.md](/docs/architecture/DATA_MODEL.md) - File format specification
+- [EXTENSIBILITY_ARCHITECTURE.md](/docs/architecture/EXTENSIBILITY_ARCHITECTURE.md) - Extensibility patterns
 - [File System Access API](https://developer.mozilla.org/en-US/docs/Web/API/File_System_Access_API)
 - [DOMPurify](https://github.com/cure53/DOMPurify)
 

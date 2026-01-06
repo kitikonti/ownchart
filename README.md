@@ -93,7 +93,7 @@ ownchart/
 │   ├── types/          # TypeScript definitions
 │   └── hooks/          # Custom React hooks
 ├── tests/              # Unit, integration, E2E tests
-├── concept/            # Comprehensive documentation
+├── docs/            # Comprehensive documentation
 └── CLAUDE.md           # AI assistant guide
 ```
 
@@ -101,12 +101,12 @@ ownchart/
 
 Comprehensive documentation is available in the [`/concept`](./concept) folder:
 
-- **[Product Requirements](./concept/planning/PRD.md)** - Vision and requirements
-- **[Roadmap](./concept/planning/ROADMAP.md)** - Development phases
-- **[Technical Architecture](./concept/architecture/TECHNICAL_ARCHITECTURE.md)** - System design
-- **[Data Model](./concept/architecture/DATA_MODEL.md)** - Data structures
-- **[Testing Strategy](./concept/process/TESTING_STRATEGY.md)** - QA approach
-- **[CI/CD Pipeline](./concept/process/CI_CD.md)** - Deployment process
+- **[Product Requirements](./docs/planning/PRD.md)** - Vision and requirements
+- **[Roadmap](./docs/planning/ROADMAP.md)** - Development phases
+- **[Technical Architecture](./docs/architecture/TECHNICAL_ARCHITECTURE.md)** - System design
+- **[Data Model](./docs/architecture/DATA_MODEL.md)** - Data structures
+- **[Testing Strategy](./docs/process/TESTING_STRATEGY.md)** - QA approach
+- **[CI/CD Pipeline](./docs/process/CI_CD.md)** - Deployment process
 
 ## 🔐 Security & Privacy
 
@@ -142,7 +142,7 @@ Comprehensive documentation is available in the [`/concept`](./concept) folder:
 - 🔜 User preferences (theme, date format)
 - 🔜 History timeline slider
 
-See the [Roadmap](./concept/planning/ROADMAP.md) for the full development plan.
+See the [Roadmap](./docs/planning/ROADMAP.md) for the full development plan.
 
 ## 🤝 Contributing
 

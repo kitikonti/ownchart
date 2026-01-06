@@ -296,7 +296,7 @@ Contributions should align with the current phase:
 - **Phase 2** (v1.x): Enhancements - Future
 - **Phase 3** (v2.0): Advanced - Future
 
-See [ROADMAP.md](./concept/docs/ROADMAP.md) for details.
+See [ROADMAP.md](./docs/docs/ROADMAP.md) for details.
 
 ## Community Guidelines
 
