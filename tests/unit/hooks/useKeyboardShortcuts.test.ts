@@ -6,6 +6,7 @@ import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { renderHook } from '@testing-library/react';
 import { useKeyboardShortcuts } from '../../../src/hooks/useKeyboardShortcuts';
 import { useHistoryStore } from '../../../src/store/slices/historySlice';
+import { useChartStore } from '../../../src/store/slices/chartSlice';
 
 // Mock the useFileOperations hook
 const mockHandleSave = vi.fn();
@@ -303,6 +304,69 @@ describe('useKeyboardShortcuts', () => {
 
       // Check if preventDefault was called by checking defaultPrevented
       expect(event.defaultPrevented).toBe(true);
+    });
+  });
+
+  describe('View toggle shortcuts (Sprint 1.5.9)', () => {
+    beforeEach(() => {
+      // Reset chart store state
+      useChartStore.setState({
+        showDependencies: true,
+        showTodayMarker: true,
+        showProgress: true,
+        showHolidays: true,
+      });
+    });
+
+    it('should toggle dependencies on D key', () => {
+      renderHook(() => useKeyboardShortcuts());
+      simulateKeyPress('d');
+
+      expect(useChartStore.getState().showDependencies).toBe(false);
+    });
+
+    it('should toggle today marker on T key', () => {
+      renderHook(() => useKeyboardShortcuts());
+      simulateKeyPress('t');
+
+      expect(useChartStore.getState().showTodayMarker).toBe(false);
+    });
+
+    it('should toggle progress on P key', () => {
+      renderHook(() => useKeyboardShortcuts());
+      simulateKeyPress('p');
+
+      expect(useChartStore.getState().showProgress).toBe(false);
+    });
+
+    it('should toggle holidays on H key', () => {
+      renderHook(() => useKeyboardShortcuts());
+      simulateKeyPress('h');
+
+      expect(useChartStore.getState().showHolidays).toBe(false);
+    });
+
+    it('should not toggle when modifier keys are pressed', () => {
+      renderHook(() => useKeyboardShortcuts());
+
+      // With Ctrl
+      simulateKeyPress('d', { ctrlKey: true });
+      expect(useChartStore.getState().showDependencies).toBe(true);
+
+      // With Alt
+      simulateKeyPress('d', { altKey: true });
+      expect(useChartStore.getState().showDependencies).toBe(true);
+
+      // With Shift
+      simulateKeyPress('d', { shiftKey: true });
+      expect(useChartStore.getState().showDependencies).toBe(true);
+    });
+
+    it('should work with uppercase keys', () => {
+      renderHook(() => useKeyboardShortcuts());
+      simulateKeyPress('D');
+
+      expect(useChartStore.getState().showDependencies).toBe(false);
     });
   });
 });
