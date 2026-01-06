@@ -2,6 +2,34 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [0.0.13](https://github.com/kitikonti/ownchart/compare/v0.0.12...v0.0.13) (2026-01-06)
+
+
+### Features
+
+* add holidays and task label position to export dialog ([3a85d1d](https://github.com/kitikonti/ownchart/commit/3a85d1d121301d98139c2058df6cf53b84f5a5db))
+* auto-open chart settings dialog when creating new file ([73d270d](https://github.com/kitikonti/ownchart/commit/73d270d3ecfb1efebfa69fcab44a82d4ddcd0f7f))
+* implement Sprint 1.5.9 User Preferences & Settings ([ab8a932](https://github.com/kitikonti/ownchart/commit/ab8a932da3dfb11509799f6c283ab304cdcbeeeb))
+* move holiday region from user preferences to chart settings ([ff4fc03](https://github.com/kitikonti/ownchart/commit/ff4fc03d4ca68a016c41bdad36663b8ae290eb8a))
+
+
+### Bug Fixes
+
+* resolve Sprint 1.5.9 settings bugs and add week numbering ([e68f7be](https://github.com/kitikonti/ownchart/commit/e68f7bed27d64a0d608d0faa1d934f3470f5c77a))
+* wrap default case in braces to fix lint error ([9fb5825](https://github.com/kitikonti/ownchart/commit/9fb5825086089b4ee94441483b39b46cc92d7351))
+
+
+### UI/UX
+
+* show calendar week in timeline header at lower zoom levels ([92c7296](https://github.com/kitikonti/ownchart/commit/92c7296066594d548fe3d8977b9309a47da58cc0))
+* update toolbar and settings dialog icons ([f94c155](https://github.com/kitikonti/ownchart/commit/f94c155dc0eb8848599ddd8027ceab6d1799a12f))
+
+
+### Code Refactoring
+
+* rename concept/ folder to docs/ ([2a997ec](https://github.com/kitikonti/ownchart/commit/2a997ec04bf954a2d5c690f3a12d3de9a7d3058a))
+* restructure AppToolbar with reusable primitives ([d42ce67](https://github.com/kitikonti/ownchart/commit/d42ce67bc838139e57dd98ab84dbfe3aa6fad427))
+
 ### [0.0.12](https://github.com/kitikonti/ownchart/compare/v0.0.11...v0.0.12) (2026-01-05)
 
 
