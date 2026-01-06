@@ -12,7 +12,7 @@
 
 ## 🌐 Try It Now
 
-**Live Demo**: [https://kitikonti.github.io/ownchart/](https://kitikonti.github.io/ownchart/)
+**Live Demo**: [https://ownchart.app](https://ownchart.app)
 
 No installation needed - just open and start planning. Your data stays in your browser's local storage.
 
@@ -51,7 +51,7 @@ npm run dev
 
 Open [http://localhost:5173](http://localhost:5173) in your browser to start developing!
 
-**Or use the live demo**: [https://kitikonti.github.io/ownchart/](https://kitikonti.github.io/ownchart/)
+**Or use the live demo**: [https://ownchart.app](https://ownchart.app)
 
 ## 🏗️ Tech Stack
 
@@ -163,7 +163,7 @@ Contributions are welcome! Please read our [contributing guidelines](./CONTRIBUT
 
 ## 🔗 Links
 
-- **Live Demo**: [kitikonti.github.io/ownchart](https://kitikonti.github.io/ownchart/)
+- **Live Demo**: [ownchart.app](https://ownchart.app)
 - **Repository**: [github.com/kitikonti/ownchart](https://github.com/kitikonti/ownchart)
 - **Issues**: [Report a bug or request a feature](https://github.com/kitikonti/ownchart/issues)
 - **Changelog**: [See what's new](./CHANGELOG.md)
