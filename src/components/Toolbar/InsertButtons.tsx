@@ -41,31 +41,31 @@ export function InsertButtons() {
   };
 
   return (
-    <div className="inline-flex items-center gap-1 border-r border-gray-200 pr-2">
+    <div className="inline-flex items-center gap-0.5">
       {/* Insert Above Button */}
       <button
         onClick={handleInsertAbove}
         disabled={!canInsert}
-        className={`p-2 rounded hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500 ${
-          !canInsert ? "opacity-40 cursor-not-allowed" : ""
+        className={`p-1.5 rounded-md transition-colors focus:outline-none focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-700 ${
+          !canInsert ? "text-slate-400 cursor-not-allowed" : "text-slate-600 hover:text-slate-800 hover:bg-slate-100 active:bg-slate-200"
         }`}
         title="Insert task above"
         aria-label="Insert task above"
       >
-        <RowsPlusTop size={18} weight="regular" className="text-gray-700" />
+        <RowsPlusTop size={20} weight="regular" />
       </button>
 
       {/* Insert Below Button */}
       <button
         onClick={handleInsertBelow}
         disabled={!canInsert}
-        className={`p-2 rounded hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500 ${
-          !canInsert ? "opacity-40 cursor-not-allowed" : ""
+        className={`p-1.5 rounded-md transition-colors focus:outline-none focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-700 ${
+          !canInsert ? "text-slate-400 cursor-not-allowed" : "text-slate-600 hover:text-slate-800 hover:bg-slate-100 active:bg-slate-200"
         }`}
         title="Insert task below"
         aria-label="Insert task below"
       >
-        <RowsPlusBottom size={18} weight="regular" className="text-gray-700" />
+        <RowsPlusBottom size={20} weight="regular" />
       </button>
     </div>
   );

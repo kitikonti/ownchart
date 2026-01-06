@@ -223,7 +223,7 @@ export function TaskTable({ hideHeader = true }: TaskTableProps): JSX.Element {
   };
 
   return (
-    <div className="task-table-container bg-white border-r border-gray-200 select-none">
+    <div className="task-table-container bg-white border-r border-slate-200 select-none">
       {/* Table Content - no overflow here, handled by parent */}
       <div className="task-table-wrapper">
         <div
@@ -242,7 +242,7 @@ export function TaskTable({ hideHeader = true }: TaskTableProps): JSX.Element {
               {visibleColumns.map((column) => (
                 <div
                   key={column.id}
-                  className={`task-table-header-cell sticky top-0 z-10 ${column.id === "name" ? "pr-3" : "px-3"} py-4 bg-gray-50 border-b ${column.id !== "color" ? "border-r" : ""} border-gray-200 text-xs font-semibold text-gray-700 uppercase tracking-wider relative`}
+                  className={`task-table-header-cell sticky top-0 z-10 ${column.id === "name" ? "pr-3" : "px-3"} py-4 bg-slate-50 border-b ${column.id !== "color" ? "border-r" : ""} border-slate-200 text-xs font-semibold text-slate-600 uppercase tracking-wider relative`}
                   role="columnheader"
                 >
                   {column.id === "checkbox" ? (
@@ -256,8 +256,12 @@ export function TaskTable({ hideHeader = true }: TaskTableProps): JSX.Element {
                           }
                         }}
                         onChange={handleHeaderCheckboxClick}
-                        className="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 cursor-pointer"
+                        className="cursor-pointer"
+                        style={{
+                          transform: `scale(${densityConfig.checkboxSize / 14})`,
+                        }}
                         title={allSelected ? "Deselect all" : "Select all"}
+                        aria-label={allSelected ? "Deselect all tasks" : "Select all tasks"}
                       />
                     </div>
                   ) : column.id === "color" ? (

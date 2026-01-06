@@ -166,14 +166,14 @@ export function TaskTableRow({
       ref={setNodeRef}
       style={style}
       className={`task-table-row col-span-full grid ${
-        isSelected ? "bg-blue-50" : "bg-white"
+        isSelected ? "bg-slate-100" : "bg-white"
       } ${isInClipboard ? "relative" : ""}`}
       role="row"
     >
       {/* Clipboard selection overlay with dotted border */}
       {isInClipboard && clipboardPosition && (
         <div
-          className="absolute inset-0 pointer-events-none z-20 border-2 border-dotted border-gray-400"
+          className="absolute inset-0 pointer-events-none z-20 border-2 border-dotted border-slate-500"
           style={{
             borderTopStyle: clipboardPosition.isFirst ? "dotted" : "none",
             borderBottomStyle: clipboardPosition.isLast ? "dotted" : "none",
@@ -182,7 +182,7 @@ export function TaskTableRow({
       )}
       {/* Drag Handle Cell */}
       <div
-        className="drag-handle-cell flex items-center justify-center border-b border-r border-gray-200 bg-gray-50 cursor-grab active:cursor-grabbing"
+        className="drag-handle-cell flex items-center justify-center border-b border-r border-slate-200 bg-slate-50 cursor-grab active:cursor-grabbing"
         style={{
           height: "var(--density-row-height)",
           padding: `var(--density-cell-padding-y) var(--density-cell-padding-x)`,
@@ -190,17 +190,19 @@ export function TaskTableRow({
         {...attributes}
         {...listeners}
         role="gridcell"
+        aria-label={`Drag to reorder task ${task.name}`}
       >
         <DotsSixVertical
           size={densityConfig.iconSize}
           weight="bold"
-          className="text-gray-400"
+          className="text-slate-500"
+          aria-hidden="true"
         />
       </div>
 
       {/* Checkbox Cell */}
       <div
-        className="checkbox-cell flex items-center justify-center border-b border-r border-gray-200"
+        className="checkbox-cell flex items-center justify-center border-b border-r border-slate-200"
         style={{
           height: "var(--density-row-height)",
           padding: `var(--density-cell-padding-y) var(--density-cell-padding-x)`,
@@ -223,11 +225,11 @@ export function TaskTableRow({
               toggleTaskSelection(task.id);
             }
           }}
-          className="text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 cursor-pointer"
+          className="cursor-pointer"
           style={{
-            width: densityConfig.checkboxSize,
-            height: densityConfig.checkboxSize,
+            transform: `scale(${densityConfig.checkboxSize / 14})`,
           }}
+          aria-label={`Select task ${task.name}`}
         />
       </div>
 
@@ -276,13 +278,14 @@ export function TaskTableRow({
                         e.stopPropagation();
                         toggleTaskCollapsed(task.id);
                       }}
-                      className="w-4 h-4 flex items-center justify-center hover:bg-gray-200 rounded text-gray-600 flex-shrink-0"
-                      aria-label={isExpanded ? "Collapse" : "Expand"}
+                      className="w-4 h-4 flex items-center justify-center hover:bg-slate-200 rounded text-slate-600 flex-shrink-0 focus:outline-none focus-visible:outline-2 focus-visible:outline-blue-700"
+                      aria-label={isExpanded ? `Collapse ${task.name}` : `Expand ${task.name}`}
+                      aria-expanded={isExpanded}
                     >
                       {isExpanded ? "▼" : "▶"}
                     </button>
                   ) : (
-                    <div className="w-4 flex-shrink-0" />
+                    <div className="w-4 flex-shrink-0" aria-hidden="true" />
                   )}
 
                   {/* Task type icon - clickable to cycle through types */}
@@ -330,7 +333,7 @@ export function TaskTableRow({
                 column={column}
               >
                 {displayTask[field] ? (
-                  <span className="text-gray-500 italic">
+                  <span className="text-slate-500 italic">
                     {displayTask[field]}
                   </span>
                 ) : (
@@ -369,7 +372,7 @@ export function TaskTableRow({
                 column={column}
               >
                 {task.type === "summary" && displayTask.duration > 0 ? (
-                  <span className="text-gray-500 italic">
+                  <span className="text-slate-500 italic">
                     {displayTask.duration} days
                   </span>
                 ) : (
@@ -445,7 +448,7 @@ export function TaskTableRow({
 
       {/* Delete Button Cell */}
       <div
-        className="delete-cell flex items-center justify-center border-b border-r border-gray-200 group-hover:bg-gray-50"
+        className="delete-cell flex items-center justify-center border-b border-r border-slate-200 group-hover:bg-slate-50"
         style={{
           height: "var(--density-row-height)",
           padding: `var(--density-cell-padding-y) var(--density-cell-padding-x)`,
@@ -454,8 +457,8 @@ export function TaskTableRow({
       >
         <button
           onClick={handleDelete}
-          className="text-gray-400 hover:text-red-600 transition-colors"
-          aria-label="Delete task"
+          className="text-slate-500 hover:text-red-600 transition-colors focus:outline-none focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-700 rounded"
+          aria-label={`Delete task ${task.name}`}
           title="Delete task"
         >
           <Trash size={densityConfig.iconSize} weight="regular" />

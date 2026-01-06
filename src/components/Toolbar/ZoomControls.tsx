@@ -57,30 +57,28 @@ export function ZoomControls() {
   };
 
   return (
-    <div className="flex items-center gap-1.5">
+    <div className="flex items-center gap-1">
       {/* Zoom Out Button */}
       <button
-        className="p-1.5 rounded hover:bg-gray-100 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+        className={`p-1.5 rounded-md transition-colors focus:outline-none focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-700 ${
+          !canZoomOut
+            ? "text-slate-400 cursor-not-allowed"
+            : "text-slate-600 hover:text-slate-800 hover:bg-slate-100 active:bg-slate-200"
+        }`}
         onClick={zoomOut}
         disabled={!canZoomOut}
         title="Zoom Out (Ctrl+-)"
         aria-label="Zoom out"
       >
-        <MagnifyingGlassMinus size={18} weight="regular" />
+        <MagnifyingGlassMinus size={20} weight="regular" />
       </button>
 
-      {/* Zoom Level Dropdown */}
+      {/* Zoom Level Dropdown - uses global select styles from index.css */}
       <select
-        className="h-7 px-2 pr-7 border border-gray-300 rounded bg-white text-xs font-medium cursor-pointer hover:border-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+        className="h-7"
         value={zoomPercentage}
         onChange={handleZoomLevelChange}
         aria-label="Zoom level"
-        style={{
-          appearance: "none",
-          backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%23666' d='M6 9L1 4h10z'/%3E%3C/svg%3E")`,
-          backgroundRepeat: "no-repeat",
-          backgroundPosition: "right 6px center",
-        }}
       >
         {zoomOptions.map((level) => (
           <option key={level} value={level}>
@@ -92,23 +90,27 @@ export function ZoomControls() {
 
       {/* Zoom In Button */}
       <button
-        className="p-1.5 rounded hover:bg-gray-100 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+        className={`p-1.5 rounded-md transition-colors focus:outline-none focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-700 ${
+          !canZoomIn
+            ? "text-slate-400 cursor-not-allowed"
+            : "text-slate-600 hover:text-slate-800 hover:bg-slate-100 active:bg-slate-200"
+        }`}
         onClick={zoomIn}
         disabled={!canZoomIn}
         title="Zoom In (Ctrl++)"
         aria-label="Zoom in"
       >
-        <MagnifyingGlassPlus size={18} weight="regular" />
+        <MagnifyingGlassPlus size={20} weight="regular" />
       </button>
 
       {/* Fit to Width Button */}
       <button
-        className="p-1.5 rounded hover:bg-gray-100 transition-colors"
+        className="p-1.5 rounded-md transition-colors text-slate-600 hover:text-slate-800 hover:bg-slate-100 active:bg-slate-200 focus:outline-none focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-700"
         onClick={handleFitToWidth}
         title="Fit to width"
         aria-label="Fit to width"
       >
-        <ArrowsOutLineHorizontal size={18} weight="regular" />
+        <ArrowsOutLineHorizontal size={20} weight="regular" />
       </button>
     </div>
   );

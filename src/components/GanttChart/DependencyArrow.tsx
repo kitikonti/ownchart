@@ -64,7 +64,7 @@ export const DependencyArrow = memo(function DependencyArrow({
   };
 
   // Arrow colors - lighter for less visual noise
-  const strokeColor = isSelected ? "#3b82f6" : "#94a3b8";
+  const strokeColor = isSelected ? "#6366f1" : "#94a3b8";
   const strokeWidth = isSelected ? 2.5 : 1.5;
 
   return (
@@ -92,7 +92,7 @@ export const DependencyArrow = memo(function DependencyArrow({
         fill="none"
         stroke={strokeColor}
         strokeWidth={strokeWidth}
-        className="transition-all duration-150 cursor-pointer hover:stroke-blue-500"
+        className="transition-all duration-150 cursor-pointer hover:stroke-slate-600"
       />
 
       {/* Arrowhead */}
@@ -108,7 +108,7 @@ export const DependencyArrow = memo(function DependencyArrow({
         <path
           d={path}
           fill="none"
-          stroke="#3b82f6"
+          stroke="#6366f1"
           strokeWidth={6}
           strokeDasharray="4 2"
           opacity={0.3}

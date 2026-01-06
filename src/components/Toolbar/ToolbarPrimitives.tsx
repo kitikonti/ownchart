@@ -1,17 +1,17 @@
 /**
  * Toolbar Primitives - Base building blocks for consistent toolbar design
  *
- * Design Philosophy (inspired by Figma, Linear, Notion):
- * - Clean, refined utilitarian aesthetic
- * - Consistent spacing and sizing across all elements
- * - Clear visual hierarchy with subtle separators
- * - Smooth micro-interactions on hover/active states
+ * Design Philosophy: "Refined Craft"
+ * - Professional, trustworthy aesthetic with subtle depth
+ * - Clear visual hierarchy through refined color and shadow
+ * - Smooth micro-interactions that feel polished
+ * - Consistent spacing and proportions
  */
 
 import { forwardRef, type ReactNode, type ButtonHTMLAttributes } from "react";
 
 // ============================================================================
-// Design Tokens
+// Design Tokens - Figma-like neutral design
 // ============================================================================
 
 export const TOOLBAR_TOKENS = {
@@ -23,17 +23,17 @@ export const TOOLBAR_TOKENS = {
   groupGap: 4, // gap between items within a group (px)
   sectionGap: 8, // gap between groups (px)
 
-  // Colors (Tailwind classes)
-  iconDefault: "text-gray-600",
-  iconHover: "text-gray-900",
-  iconActive: "text-blue-600",
-  iconDisabled: "text-gray-300",
+  // Colors - Neutral, Figma-like palette (WCAG AA compliant)
+  iconDefault: "text-slate-600",
+  iconHover: "text-slate-800",
+  iconActive: "text-slate-900",
+  iconDisabled: "text-slate-400", // 3.5:1 contrast - acceptable for disabled
 
-  bgHover: "bg-gray-100",
-  bgActive: "bg-blue-50",
-  bgPressed: "bg-gray-200",
+  bgHover: "bg-slate-100",
+  bgActive: "bg-slate-200",
+  bgPressed: "bg-slate-200",
 
-  separatorColor: "bg-gray-200",
+  separatorColor: "bg-slate-200",
 } as const;
 
 // ============================================================================
@@ -51,7 +51,7 @@ interface ToolbarSeparatorProps {
 export function ToolbarSeparator({ className = "" }: ToolbarSeparatorProps) {
   return (
     <div
-      className={`h-5 w-px bg-gray-200 mx-2 flex-shrink-0 ${className}`}
+      className={`h-5 w-px bg-slate-200 mx-2.5 flex-shrink-0 ${className}`}
       role="separator"
       aria-orientation="vertical"
     />
@@ -139,41 +139,43 @@ export const ToolbarButton = forwardRef<HTMLButtonElement, ToolbarButtonProps>(
     },
     ref
   ) {
-    // Base styles shared by all variants
+    // Base styles shared by all variants - Figma-like neutral design
+    // Focus ring uses high-contrast blue (#1e40af) for visibility
     const baseStyles = `
       inline-flex items-center justify-center gap-1.5
-      rounded-md transition-all duration-150 ease-out
-      focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-1
+      rounded-md transition-all duration-100 ease-out
+      focus:outline-none focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-700
       disabled:pointer-events-none
     `;
 
-    // Variant-specific styles
+    // Variant-specific styles - WCAG AA compliant colors
+    // p-1.5 with 20px icons gives ~32px touch target
     const variantStyles: Record<ToolbarButtonVariant, string> = {
       default: `
-        p-1.5 text-gray-600
-        hover:text-gray-900 hover:bg-gray-100
-        active:bg-gray-200 active:scale-[0.97]
-        disabled:text-gray-300
+        p-1.5 text-slate-600
+        hover:text-slate-800 hover:bg-slate-100
+        active:bg-slate-200 active:text-slate-900
+        disabled:text-slate-400 disabled:bg-transparent
       `,
       primary: `
-        px-2.5 py-1
-        bg-blue-600 text-white text-sm font-medium
-        hover:bg-blue-700
-        active:bg-blue-800 active:scale-[0.98]
-        disabled:bg-gray-200 disabled:text-gray-400
+        px-3 py-1.5
+        bg-slate-700 text-white text-xs font-medium
+        hover:bg-slate-600
+        active:bg-slate-800
+        disabled:bg-slate-200 disabled:text-slate-400
       `,
       toggle: isActive
         ? `
           p-1.5
-          bg-blue-100 text-blue-700
-          hover:bg-blue-200
-          active:bg-blue-300 active:scale-[0.97]
+          bg-slate-200 text-slate-900
+          hover:bg-slate-300
+          active:bg-slate-300
         `
         : `
-          p-1.5 text-gray-500
-          hover:text-gray-700 hover:bg-gray-100
-          active:bg-gray-200 active:scale-[0.97]
-          disabled:text-gray-300
+          p-1.5 text-slate-600
+          hover:text-slate-800 hover:bg-slate-100
+          active:bg-slate-200 active:text-slate-900
+          disabled:text-slate-400
         `,
     };
 

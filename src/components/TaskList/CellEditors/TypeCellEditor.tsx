@@ -72,7 +72,7 @@ export function TypeCellEditor({
         value={localValue}
         onChange={(e) => handleChange(e.target.value as TaskType)}
         onKeyDown={handleKeyDown}
-        className="flex-1 px-2 py-1 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
+        className="flex-1 px-2 py-1 border border-slate-300 rounded focus:outline-none focus:ring-2 focus:ring-slate-400 bg-white text-slate-700"
       >
         {TYPE_OPTIONS.map((option) => (
           <option key={option.value} value={option.value}>

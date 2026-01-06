@@ -1,20 +1,109 @@
+/* Self-hosted fonts via @fontsource (GDPR compliant) */
+@import '@fontsource/ibm-plex-sans/400.css';
+@import '@fontsource/ibm-plex-sans/400-italic.css';
+@import '@fontsource/ibm-plex-sans/500.css';
+@import '@fontsource/ibm-plex-sans/600.css';
+@import '@fontsource/ibm-plex-sans/700.css';
+@import '@fontsource/jetbrains-mono/400.css';
+@import '@fontsource/jetbrains-mono/500.css';
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
+/* ============================================================================
+   OwnChart Design System - "Refined Craft" Aesthetic
+   ============================================================================
+   A professional, trustworthy design language befitting a privacy-first tool.
+   Characterized by: subtle depth, refined typography, purposeful color.
+   Self-hosted fonts - GDPR compliant, no external requests.
+   ============================================================================ */
+
 :root {
-  font-family: Inter, system-ui, Avenir, Helvetica, Arial, sans-serif;
+  /* Typography - Self-hosted fonts */
+  --font-sans: 'IBM Plex Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  --font-mono: 'JetBrains Mono', ui-monospace, 'SF Mono', monospace;
+
+  font-family: var(--font-sans);
   line-height: 1.5;
   font-weight: 400;
+  letter-spacing: -0.011em;
 
-  color-scheme: light dark;
-  color: rgba(0, 0, 0, 0.87);
+  color-scheme: light;
+  color: #1e293b; /* slate-800 */
   background-color: #ffffff;
 
   font-synthesis: none;
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+
+  /* ─── Color Palette ─── */
+  /* Primary: Deep indigo - trustworthy, professional */
+  --color-primary-50: #eef2ff;
+  --color-primary-100: #e0e7ff;
+  --color-primary-200: #c7d2fe;
+  --color-primary-300: #a5b4fc;
+  --color-primary-400: #818cf8;
+  --color-primary-500: #6366f1;
+  --color-primary-600: #4f46e5;
+  --color-primary-700: #4338ca;
+  --color-primary-800: #3730a3;
+  --color-primary-900: #312e81;
+
+  /* Accent: Warm amber for highlights and actions */
+  --color-accent-400: #fbbf24;
+  --color-accent-500: #f59e0b;
+  --color-accent-600: #d97706;
+
+  /* Surface colors - subtle warmth */
+  --color-surface: #ffffff;
+  --color-surface-raised: #fafbfc;
+  --color-surface-sunken: #f1f5f9;
+  --color-surface-overlay: rgba(255, 255, 255, 0.95);
+
+  /* Borders */
+  --color-border-subtle: #e2e8f0;
+  --color-border-default: #cbd5e1;
+  --color-border-strong: #94a3b8;
+
+  /* Text colors - WCAG AA compliant (4.5:1 minimum on white) */
+  --color-text-primary: #0f172a;   /* ~16:1 contrast */
+  --color-text-secondary: #475569; /* ~7:1 contrast */
+  --color-text-tertiary: #64748b;  /* ~4.5:1 contrast - AA compliant */
+  --color-text-muted: #64748b;     /* ~4.5:1 contrast - upgraded from #94a3b8 */
+  --color-text-disabled: #9ca3af;  /* ~3:1 contrast - acceptable for disabled UI */
+  --color-text-placeholder: #6b7280; /* ~5:1 contrast - AA compliant */
+
+  /* Semantic colors */
+  --color-success: #059669;
+  --color-warning: #d97706;
+  --color-error: #dc2626;
+  --color-info: #0284c7;
+
+  /* ─── Shadows - Refined elevation system ─── */
+  --shadow-xs: 0 1px 2px rgba(15, 23, 42, 0.04);
+  --shadow-sm: 0 1px 3px rgba(15, 23, 42, 0.06), 0 1px 2px rgba(15, 23, 42, 0.04);
+  --shadow-md: 0 4px 6px -1px rgba(15, 23, 42, 0.07), 0 2px 4px -1px rgba(15, 23, 42, 0.04);
+  --shadow-lg: 0 10px 15px -3px rgba(15, 23, 42, 0.08), 0 4px 6px -2px rgba(15, 23, 42, 0.04);
+  --shadow-xl: 0 20px 25px -5px rgba(15, 23, 42, 0.1), 0 10px 10px -5px rgba(15, 23, 42, 0.04);
+  --shadow-inner: inset 0 2px 4px rgba(15, 23, 42, 0.04);
+  /* Focus ring - high visibility for accessibility */
+  --shadow-focus: 0 0 0 2px #ffffff, 0 0 0 4px #1e40af;
+
+  /* ─── Radii ─── */
+  --radius-sm: 4px;
+  --radius-md: 6px;
+  --radius-lg: 8px;
+  --radius-xl: 12px;
+  --radius-2xl: 16px;
+  --radius-full: 9999px;
+
+  /* ─── Transitions ─── */
+  --transition-fast: 100ms cubic-bezier(0.4, 0, 0.2, 1);
+  --transition-base: 150ms cubic-bezier(0.4, 0, 0.2, 1);
+  --transition-slow: 250ms cubic-bezier(0.4, 0, 0.2, 1);
+  --transition-spring: 300ms cubic-bezier(0.34, 1.56, 0.64, 1);
 
   /* UI Density - Default: Normal (Sprint 1.5.9.1) */
   --density-row-height: 36px;
@@ -98,26 +187,332 @@ input[type="color"]::-moz-color-swatch {
   border-radius: 0.25rem;
 }
 
+input[type="color"]:focus-visible {
+  outline: 2px solid #1e40af;
+  outline-offset: 2px;
+}
+
+/* ─── Custom Checkbox Styling (Figma-like) ─── */
+input[type="checkbox"] {
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  appearance: none;
+  width: 14px;
+  height: 14px;
+  border: 1.5px solid #94a3b8;
+  border-radius: 3px;
+  background: white;
+  cursor: pointer;
+  display: grid;
+  place-content: center;
+  transition: all 150ms ease;
+  flex-shrink: 0;
+}
+
+input[type="checkbox"]:hover {
+  border-color: #64748b;
+}
+
+input[type="checkbox"]:checked {
+  background: #475569;
+  border-color: #475569;
+}
+
+input[type="checkbox"]::before {
+  content: '';
+  width: 4px;
+  height: 7px;
+  border: solid white;
+  border-width: 0 1.5px 1.5px 0;
+  transform: scale(0) rotate(45deg);
+  transform-origin: center;
+  transition: transform 120ms ease-in-out;
+}
+
+input[type="checkbox"]:checked::before {
+  transform: scale(1) rotate(45deg);
+}
+
+input[type="checkbox"]:indeterminate {
+  background: #475569;
+  border-color: #475569;
+}
+
+input[type="checkbox"]:indeterminate::before {
+  width: 8px;
+  height: 1.5px;
+  background: white;
+  border: none;
+  transform: scale(1);
+}
+
+input[type="checkbox"]:focus-visible {
+  outline: 2px solid #1e40af;
+  outline-offset: 2px;
+}
+
+input[type="checkbox"]:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+/* ─── Custom Radio Button Styling (Figma-like) ─── */
+input[type="radio"] {
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  appearance: none;
+  width: 14px;
+  height: 14px;
+  border: 1.5px solid #94a3b8;
+  border-radius: 50%;
+  background: white;
+  cursor: pointer;
+  display: grid;
+  place-content: center;
+  transition: all 150ms ease;
+  flex-shrink: 0;
+}
+
+input[type="radio"]:hover {
+  border-color: #64748b;
+}
+
+input[type="radio"]:checked {
+  border-color: #475569;
+}
+
+input[type="radio"]::before {
+  content: '';
+  width: 6px;
+  height: 6px;
+  background: #475569;
+  border-radius: 50%;
+  transform: scale(0);
+  transition: transform 120ms ease-in-out;
+}
+
+input[type="radio"]:checked::before {
+  transform: scale(1);
+}
+
+input[type="radio"]:focus-visible {
+  outline: 2px solid #1e40af;
+  outline-offset: 2px;
+}
+
+/* ─── Custom Select Styling ─── */
+select {
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  appearance: none;
+  background-color: white;
+  border: 1px solid #cbd5e1;
+  border-radius: 4px;
+  padding: 4px 24px 4px 8px;
+  font-size: 12px;
+  color: #334155;
+  cursor: pointer;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='10' viewBox='0 0 10 10'%3E%3Cpath fill='%2364748b' d='M5 7L1 3h8z'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 6px center;
+  transition: border-color 150ms ease;
+}
+
+select:hover {
+  border-color: #94a3b8;
+}
+
+select:focus {
+  outline: 2px solid #1e40af;
+  outline-offset: 1px;
+  border-color: #64748b;
+}
+
+/* ─── Utility Classes ─── */
+
+/* Monospace for data/numbers */
+.font-mono {
+  font-family: var(--font-mono);
+  font-feature-settings: 'tnum' on, 'lnum' on;
+}
+
+/* Focus ring */
+.focus-ring {
+  outline: none;
+}
+.focus-ring:focus-visible {
+  box-shadow: var(--shadow-focus);
+}
+
+/* Refined button base */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.375rem;
+  font-weight: 500;
+  border-radius: var(--radius-md);
+  transition: all var(--transition-base);
+  cursor: pointer;
+}
+
+.btn:active {
+  transform: scale(0.98);
+}
+
+.btn-primary {
+  background: linear-gradient(180deg, var(--color-primary-500) 0%, var(--color-primary-600) 100%);
+  color: white;
+  box-shadow: var(--shadow-sm), inset 0 1px 0 rgba(255, 255, 255, 0.1);
+}
+
+.btn-primary:hover {
+  background: linear-gradient(180deg, var(--color-primary-400) 0%, var(--color-primary-500) 100%);
+}
+
+.btn-secondary {
+  background: white;
+  color: var(--color-text-secondary);
+  border: 1px solid var(--color-border-default);
+  box-shadow: var(--shadow-xs);
+}
+
+.btn-secondary:hover {
+  background: var(--color-surface-raised);
+  border-color: var(--color-border-strong);
+  color: var(--color-text-primary);
+}
+
+/* Refined card surface */
+.card {
+  background: var(--color-surface);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-md);
+  border: 1px solid var(--color-border-subtle);
+}
+
+/* Subtle gradient backgrounds */
+.bg-gradient-subtle {
+  background: linear-gradient(180deg, #ffffff 0%, #f8fafc 100%);
+}
+
+.bg-gradient-sidebar {
+  background: linear-gradient(180deg, #fafbfc 0%, #f1f5f9 100%);
+}
+
+/* Text utilities */
+.text-balance {
+  text-wrap: balance;
+}
+
+/* Scrollbar styling */
+.scrollbar-thin {
+  scrollbar-width: thin;
+  scrollbar-color: var(--color-border-default) transparent;
+}
+
+.scrollbar-thin::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+.scrollbar-thin::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.scrollbar-thin::-webkit-scrollbar-thumb {
+  background: var(--color-border-default);
+  border-radius: var(--radius-full);
+}
+
+.scrollbar-thin::-webkit-scrollbar-thumb:hover {
+  background: var(--color-border-strong);
+}
+
+/* ─── Animations ─── */
+
 /* Zoom indicator animation (Sprint 1.2 Package 3) */
 @keyframes fadeInOut {
   0% {
     opacity: 0;
-    transform: translate(-50%, -50%) scale(0.9);
+    transform: translate(-50%, -50%) scale(0.95);
   }
-  20% {
+  15% {
     opacity: 1;
     transform: translate(-50%, -50%) scale(1);
   }
-  80% {
+  85% {
     opacity: 1;
     transform: translate(-50%, -50%) scale(1);
   }
   100% {
     opacity: 0;
-    transform: translate(-50%, -50%) scale(0.9);
+    transform: translate(-50%, -50%) scale(0.95);
   }
 }
 
 .animate-fade-in-out {
-  animation: fadeInOut 1.5s ease-in-out;
+  animation: fadeInOut 1.5s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Fade in animation */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(-4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-fade-in {
+  animation: fadeIn var(--transition-slow) ease-out;
+}
+
+/* Modal entrance */
+@keyframes modalIn {
+  from {
+    opacity: 0;
+    transform: scale(0.96) translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+.animate-modal-in {
+  animation: modalIn 200ms cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+/* Subtle pulse for loading states */
+@keyframes pulse-subtle {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.7;
+  }
+}
+
+.animate-pulse-subtle {
+  animation: pulse-subtle 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+/* Slide in from right (for panels) */
+@keyframes slideInRight {
+  from {
+    opacity: 0;
+    transform: translateX(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+.animate-slide-in-right {
+  animation: slideInRight var(--transition-slow) ease-out;
 }

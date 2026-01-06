@@ -176,7 +176,7 @@ export function AppToolbar() {
       endDate: formatDate(nextWeek),
       duration: 7,
       progress: 0,
-      color: "#3b82f6",
+      color: "#6366f1",
       order: tasks.length,
       type: "task",
       parent: undefined,
@@ -206,14 +206,16 @@ export function AppToolbar() {
   // ─────────────────────────────────────────────────────────────────────────
 
   return (
-    <header className="flex-shrink-0 bg-white border-b border-gray-200 px-4 py-2 flex items-center gap-1">
+    <header className="flex-shrink-0 bg-white/80 backdrop-blur-sm border-b border-slate-200/80 px-4 py-2 flex items-center gap-1 shadow-xs">
       {/* ─── Logo ─── */}
-      <div className="flex items-center">
-        <ChartBarHorizontal
-          size={24}
-          weight="regular"
-          className="text-gray-700"
-        />
+      <div className="flex items-center group cursor-default">
+        <div className="p-1.5 rounded-lg bg-slate-800 shadow-sm">
+          <ChartBarHorizontal
+            size={18}
+            weight="bold"
+            className="text-white"
+          />
+        </div>
       </div>
 
       <ToolbarSeparator />
@@ -238,7 +240,7 @@ export function AppToolbar() {
           onClick={() => handleSave()}
           title="Save (Ctrl+S)"
           aria-label="Save File"
-          className={isDirty ? "text-blue-600 hover:text-blue-700" : ""}
+          className={isDirty ? "text-slate-700" : ""}
           icon={
             <FloppyDisk
               size={ICON_SIZE}
@@ -406,16 +408,10 @@ export function AppToolbar() {
           icon={<MagnifyingGlassMinus size={ICON_SIZE} weight="regular" />}
         />
         <select
-          className="h-7 px-2 pr-6 border border-gray-200 rounded-md bg-white text-xs font-medium cursor-pointer hover:border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors"
+          className="h-6"
           value={zoomPercentage}
           onChange={handleZoomLevelChange}
           aria-label="Zoom level"
-          style={{
-            appearance: "none",
-            backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='10' viewBox='0 0 10 10'%3E%3Cpath fill='%23666' d='M5 7L1 3h8z'/%3E%3C/svg%3E")`,
-            backgroundRepeat: "no-repeat",
-            backgroundPosition: "right 6px center",
-          }}
         >
           {zoomOptions.map((level) => (
             <option key={level} value={level}>

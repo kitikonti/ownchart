@@ -183,7 +183,7 @@ export function NewTaskPlaceholderRow(): JSX.Element {
       endDate,
       duration: DEFAULT_DURATION,
       progress: 0,
-      color: "#3b82f6",
+      color: "#6366f1",
       order: maxOrder,
       type: "task",
       parent: undefined,
@@ -218,14 +218,14 @@ export function NewTaskPlaceholderRow(): JSX.Element {
             key={column.id}
             ref={column.id === "name" ? cellRef : undefined}
             tabIndex={column.id === "name" && isNameActive ? 0 : -1}
-            className={`${column.id !== "color" ? "border-r" : ""} border-b border-gray-200 flex items-center ${
+            className={`${column.id !== "color" ? "border-r" : ""} border-b border-slate-200 flex items-center ${
               column.id === "name" && isEditing
-                ? "outline outline-3 outline-blue-600 bg-white z-20"
+                ? "outline outline-2 outline-slate-500 bg-white z-20"
                 : isSelected
-                  ? "bg-blue-100"
+                  ? "bg-slate-100"
                   : isActiveCell
-                    ? "outline outline-2 outline-blue-500 bg-blue-50 z-10"
-                    : "bg-gray-50/50 hover:bg-gray-100"
+                    ? "outline outline-2 outline-slate-500 bg-slate-100 z-10"
+                    : "bg-slate-50/50 hover:bg-slate-100"
             } cursor-pointer`}
             style={getCellStyle(column.id)}
             onClick={() =>
@@ -242,11 +242,11 @@ export function NewTaskPlaceholderRow(): JSX.Element {
                   type="checkbox"
                   checked={isSelected}
                   onChange={handleCheckboxChange}
-                  className="text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 cursor-pointer"
+                  className="cursor-pointer"
                   style={{
-                    width: densityConfig.checkboxSize,
-                    height: densityConfig.checkboxSize,
+                    transform: `scale(${densityConfig.checkboxSize / 14})`,
                   }}
+                  aria-label="Select new task placeholder row"
                 />
               </div>
             )}
@@ -264,7 +264,7 @@ export function NewTaskPlaceholderRow(): JSX.Element {
                   style={{ fontSize: "inherit" }}
                 />
               ) : (
-                <span className="text-gray-400 italic select-none">
+                <span className="text-slate-500 italic select-none">
                   Add new task...
                 </span>
               ))}

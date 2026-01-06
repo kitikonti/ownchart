@@ -71,7 +71,7 @@ function ExportTaskTableHeader({
 }): JSX.Element {
   return (
     <div
-      className="flex border-b border-gray-200 bg-gray-50 font-medium text-sm text-gray-700"
+      className="flex border-b border-slate-200 bg-slate-50 font-medium text-sm text-slate-700"
       style={{ width, minWidth: width, height: HEADER_HEIGHT }}
     >
       {selectedColumns.map((key) => {
@@ -80,7 +80,7 @@ function ExportTaskTableHeader({
         return (
           <div
             key={col.key}
-            className="flex items-center border-r border-gray-200 px-3"
+            className="flex items-center border-r border-slate-200 px-3"
             style={{
               width: columnWidths[col.key] || col.defaultWidth,
               height: HEADER_HEIGHT,
@@ -118,7 +118,7 @@ function ExportTaskTableRows({
 }): JSX.Element {
   return (
     <div
-      className="export-task-table bg-white border-r border-gray-200"
+      className="export-task-table bg-white border-r border-slate-200"
       style={{ width, minWidth: width, height }}
     >
       {flattenedTasks.map((flattenedTask, index) => {
@@ -127,7 +127,7 @@ function ExportTaskTableRows({
         return (
           <div
             key={task.id}
-            className="flex border-b border-gray-100 text-sm"
+            className="flex border-b border-slate-100 text-sm"
             style={{ height: rowHeight }}
           >
             {selectedColumns.map((key) => {
@@ -139,7 +139,7 @@ function ExportTaskTableRows({
                 return (
                   <div
                     key={key}
-                    className="flex items-center justify-center border-r border-gray-100"
+                    className="flex items-center justify-center border-r border-slate-100"
                     style={{
                       width: colWidth,
                       height: rowHeight,
@@ -160,7 +160,7 @@ function ExportTaskTableRows({
                 return (
                   <div
                     key={key}
-                    className="flex items-center gap-2 border-r border-gray-100"
+                    className="flex items-center gap-2 border-r border-slate-100"
                     style={{
                       width: colWidth,
                       paddingLeft: `${12 + level * indentSize}px`,
@@ -186,7 +186,7 @@ function ExportTaskTableRows({
               return (
                 <div
                   key={key}
-                  className="flex items-center border-r border-gray-100 text-gray-600 px-3"
+                  className="flex items-center border-r border-slate-100 text-slate-600 px-3"
                   style={{
                     width: colWidth,
                     height: rowHeight,

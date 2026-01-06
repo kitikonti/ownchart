@@ -143,7 +143,7 @@ export function ChartSettingsDialog(): JSX.Element | null {
   const footer = (
     <button
       onClick={closeChartSettingsDialog}
-      className="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-md hover:bg-blue-700 transition-colors"
+      className="px-4 py-2 text-sm font-medium text-white bg-slate-700 rounded-lg hover:bg-slate-600 active:bg-slate-800 transition-colors"
     >
       Done
     </button>
@@ -154,7 +154,7 @@ export function ChartSettingsDialog(): JSX.Element | null {
       isOpen={isChartSettingsDialogOpen}
       onClose={closeChartSettingsDialog}
       title="Chart Settings"
-      icon={<Sliders size={24} weight="duotone" className="text-blue-600" />}
+      icon={<Sliders size={24} weight="duotone" className="text-slate-500" />}
       footer={footer}
       widthClass="max-w-lg"
     >
@@ -162,8 +162,8 @@ export function ChartSettingsDialog(): JSX.Element | null {
         {/* Timeline Display Section */}
         <div>
           <div className="flex items-center gap-2 mb-4">
-            <GridNine size={20} weight="duotone" className="text-gray-600" />
-            <h3 className="text-sm font-semibold text-gray-900 uppercase tracking-wide">
+            <GridNine size={20} weight="duotone" className="text-slate-500" />
+            <h3 className="text-sm font-semibold text-slate-900 uppercase tracking-wide">
               Timeline Display
             </h3>
           </div>
@@ -175,14 +175,14 @@ export function ChartSettingsDialog(): JSX.Element | null {
                 type="checkbox"
                 checked={showTodayMarker}
                 onChange={(e) => setShowTodayMarker(e.target.checked)}
-                className="h-4 w-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                className=""
                 aria-label="Show Today Marker"
               />
               <div>
-                <span className="text-sm font-medium text-gray-900">
+                <span className="text-sm font-medium text-slate-800">
                   Show Today Marker
                 </span>
-                <p className="text-xs text-gray-500">
+                <p className="text-xs text-slate-500">
                   Display a vertical line marking today&apos;s date
                 </p>
               </div>
@@ -194,14 +194,14 @@ export function ChartSettingsDialog(): JSX.Element | null {
                 type="checkbox"
                 checked={showWeekends}
                 onChange={(e) => setShowWeekends(e.target.checked)}
-                className="h-4 w-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                className=""
                 aria-label="Show Weekend Highlighting"
               />
               <div>
-                <span className="text-sm font-medium text-gray-900">
+                <span className="text-sm font-medium text-slate-800">
                   Show Weekend Highlighting
                 </span>
-                <p className="text-xs text-gray-500">
+                <p className="text-xs text-slate-500">
                   Highlight Saturday and Sunday columns
                 </p>
               </div>
@@ -214,14 +214,14 @@ export function ChartSettingsDialog(): JSX.Element | null {
                   type="checkbox"
                   checked={showHolidays}
                   onChange={(e) => setShowHolidays(e.target.checked)}
-                  className="h-4 w-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                  className=""
                   aria-label="Show Holidays"
                 />
                 <div>
-                  <span className="text-sm font-medium text-gray-900">
+                  <span className="text-sm font-medium text-slate-800">
                     Show Holidays
                   </span>
-                  <p className="text-xs text-gray-500">
+                  <p className="text-xs text-slate-500">
                     Highlight public holidays in the timeline
                   </p>
                 </div>
@@ -235,17 +235,17 @@ export function ChartSettingsDialog(): JSX.Element | null {
                     onClick={() =>
                       setIsCountryDropdownOpen(!isCountryDropdownOpen)
                     }
-                    className="w-full flex items-center justify-between gap-2 px-3 py-2 text-sm border border-gray-300 rounded-lg hover:border-gray-400 transition-colors bg-white"
+                    className="w-full flex items-center justify-between gap-2 px-3 py-2 text-sm border border-slate-200 rounded-lg hover:border-slate-300 transition-all duration-150 bg-white shadow-xs"
                   >
                     <div className="flex items-center gap-2">
-                      <Globe size={16} className="text-gray-500" />
-                      <span className="font-medium text-gray-900">
+                      <Globe size={16} className="text-slate-500" />
+                      <span className="font-medium text-slate-800">
                         {currentCountryName}
                       </span>
-                      <span className="text-gray-500">({holidayRegion})</span>
+                      <span className="text-slate-500">({holidayRegion})</span>
                     </div>
                     <svg
-                      className={`w-4 h-4 text-gray-500 transition-transform ${isCountryDropdownOpen ? "rotate-180" : ""}`}
+                      className={`w-4 h-4 text-slate-500 transition-transform ${isCountryDropdownOpen ? "rotate-180" : ""}`}
                       fill="none"
                       viewBox="0 0 24 24"
                       stroke="currentColor"
@@ -261,29 +261,29 @@ export function ChartSettingsDialog(): JSX.Element | null {
 
                   {/* Dropdown */}
                   {isCountryDropdownOpen && (
-                    <div className="absolute z-50 mt-1 w-full bg-white border border-gray-300 rounded-lg shadow-lg">
+                    <div className="absolute z-50 mt-1 w-full bg-white border border-slate-200 rounded-lg shadow-lg animate-fade-in">
                       {/* Search input */}
-                      <div className="p-2 border-b border-gray-200">
+                      <div className="p-2 border-b border-slate-200">
                         <div className="relative">
                           <MagnifyingGlass
                             size={16}
-                            className="absolute left-2 top-1/2 -translate-y-1/2 text-gray-400"
+                            className="absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-400"
                           />
                           <input
                             type="text"
                             value={countrySearch}
                             onChange={(e) => setCountrySearch(e.target.value)}
                             placeholder="Search countries..."
-                            className="w-full pl-8 pr-3 py-1.5 text-sm border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+                            className="w-full pl-8 pr-3 py-1.5 text-sm border border-slate-200 rounded-md focus:outline-none focus:ring-2 focus:ring-slate-400/40 focus:border-slate-400 transition-all"
                             autoFocus
                           />
                         </div>
                       </div>
 
                       {/* Country list */}
-                      <div className="max-h-48 overflow-y-auto">
+                      <div className="max-h-48 overflow-y-auto scrollbar-thin">
                         {filteredCountries.length === 0 ? (
-                          <div className="px-3 py-2 text-sm text-gray-500">
+                          <div className="px-3 py-2 text-sm text-slate-500">
                             No countries found
                           </div>
                         ) : (
@@ -292,16 +292,16 @@ export function ChartSettingsDialog(): JSX.Element | null {
                               key={country.code}
                               type="button"
                               onClick={() => handleCountrySelect(country.code)}
-                              className={`w-full flex items-center gap-2 px-3 py-2 text-sm hover:bg-gray-100 transition-colors ${
+                              className={`w-full flex items-center gap-2 px-3 py-2 text-sm hover:bg-slate-50 transition-colors ${
                                 country.code === holidayRegion
-                                  ? "bg-blue-50 text-blue-700"
-                                  : "text-gray-900"
+                                  ? "bg-slate-100 text-slate-900"
+                                  : "text-slate-800"
                               }`}
                             >
                               <span className="font-medium">
                                 {country.name}
                               </span>
-                              <span className="text-gray-500">
+                              <span className="text-slate-500">
                                 ({country.code})
                               </span>
                             </button>
@@ -320,14 +320,14 @@ export function ChartSettingsDialog(): JSX.Element | null {
                 type="checkbox"
                 checked={showDependencies}
                 onChange={(e) => setShowDependencies(e.target.checked)}
-                className="h-4 w-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                className=""
                 aria-label="Show Dependencies"
               />
               <div>
-                <span className="text-sm font-medium text-gray-900">
+                <span className="text-sm font-medium text-slate-800">
                   Show Dependencies
                 </span>
-                <p className="text-xs text-gray-500">
+                <p className="text-xs text-slate-500">
                   Display dependency arrows between tasks
                 </p>
               </div>
@@ -336,7 +336,7 @@ export function ChartSettingsDialog(): JSX.Element | null {
         </div>
 
         {/* Divider */}
-        <div className="border-t border-gray-200" />
+        <div className="border-t border-slate-200" />
 
         {/* Task Display Section */}
         <div>
@@ -344,9 +344,9 @@ export function ChartSettingsDialog(): JSX.Element | null {
             <ChartBarHorizontal
               size={20}
               weight="duotone"
-              className="text-gray-600"
+              className="text-slate-500"
             />
-            <h3 className="text-sm font-semibold text-gray-900 uppercase tracking-wide">
+            <h3 className="text-sm font-semibold text-slate-900 uppercase tracking-wide">
               Task Display
             </h3>
           </div>
@@ -358,14 +358,14 @@ export function ChartSettingsDialog(): JSX.Element | null {
                 type="checkbox"
                 checked={showProgress}
                 onChange={(e) => setShowProgress(e.target.checked)}
-                className="h-4 w-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                className=""
                 aria-label="Use Progress"
               />
               <div>
-                <span className="text-sm font-medium text-gray-900">
+                <span className="text-sm font-medium text-slate-800">
                   Use Progress
                 </span>
-                <p className="text-xs text-gray-500">
+                <p className="text-xs text-slate-500">
                   Enable progress column and progress fill on task bars
                 </p>
               </div>
@@ -373,7 +373,7 @@ export function ChartSettingsDialog(): JSX.Element | null {
 
             {/* Task Label Position */}
             <fieldset className="space-y-2">
-              <legend className="text-sm font-medium text-gray-700">
+              <legend className="text-sm font-medium text-slate-700">
                 Task Label Position
               </legend>
               <div className="flex flex-wrap gap-2">
@@ -381,11 +381,11 @@ export function ChartSettingsDialog(): JSX.Element | null {
                   <label
                     key={option.value}
                     className={`
-                      flex items-center gap-2 px-3 py-2 rounded-lg border cursor-pointer transition-colors text-sm
+                      flex items-center gap-2 px-3 py-2 rounded-lg border-2 cursor-pointer transition-all duration-150 text-sm
                       ${
                         taskLabelPosition === option.value
-                          ? "border-blue-500 bg-blue-50"
-                          : "border-gray-200 hover:border-gray-300 hover:bg-gray-50"
+                          ? "border-slate-500 bg-slate-50"
+                          : "border-slate-200 hover:border-slate-300 hover:bg-slate-50"
                       }
                     `}
                     title={option.description}
@@ -398,14 +398,14 @@ export function ChartSettingsDialog(): JSX.Element | null {
                       onChange={() => setTaskLabelPosition(option.value)}
                       className="sr-only"
                     />
-                    <span className="font-medium text-gray-900">
+                    <span className={`font-medium ${taskLabelPosition === option.value ? "text-slate-800" : "text-slate-700"}`}>
                       {option.label}
                     </span>
                   </label>
                 ))}
               </div>
               {taskLabelPosition === "inside" && (
-                <p className="text-xs text-amber-600">
+                <p className="text-xs text-amber-600 bg-amber-50 px-3 py-2 rounded-lg">
                   Note: &quot;Inside&quot; is not available for summary tasks
                   and milestones - they will use &quot;After&quot; instead.
                 </p>
@@ -415,13 +415,13 @@ export function ChartSettingsDialog(): JSX.Element | null {
         </div>
 
         {/* Divider */}
-        <div className="border-t border-gray-200" />
+        <div className="border-t border-slate-200" />
 
         {/* Working Days Section */}
         <div>
           <div className="flex items-center gap-2 mb-4">
-            <Briefcase size={20} weight="duotone" className="text-gray-600" />
-            <h3 className="text-sm font-semibold text-gray-900 uppercase tracking-wide">
+            <Briefcase size={20} weight="duotone" className="text-slate-500" />
+            <h3 className="text-sm font-semibold text-slate-900 uppercase tracking-wide">
               Working Days
             </h3>
           </div>
@@ -433,14 +433,14 @@ export function ChartSettingsDialog(): JSX.Element | null {
                 type="checkbox"
                 checked={workingDaysMode}
                 onChange={(e) => setWorkingDaysMode(e.target.checked)}
-                className="h-4 w-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                className=""
                 aria-label="Calculate with Working Days Only"
               />
               <div>
-                <span className="text-sm font-medium text-gray-900">
+                <span className="text-sm font-medium text-slate-800">
                   Calculate with Working Days Only
                 </span>
-                <p className="text-xs text-gray-500">
+                <p className="text-xs text-slate-500">
                   Task durations automatically extend to skip non-working days
                 </p>
               </div>
@@ -448,8 +448,8 @@ export function ChartSettingsDialog(): JSX.Element | null {
 
             {/* Working Days Configuration */}
             {workingDaysMode && (
-              <div className="ml-7 p-3 bg-gray-50 rounded-lg space-y-2">
-                <p className="text-xs font-medium text-gray-700 mb-2">
+              <div className="ml-7 p-3 bg-slate-50 rounded-lg space-y-2">
+                <p className="text-xs font-medium text-slate-700 mb-2">
                   Exclude from working days:
                 </p>
 
@@ -462,9 +462,9 @@ export function ChartSettingsDialog(): JSX.Element | null {
                         excludeSaturday: e.target.checked,
                       })
                     }
-                    className="h-4 w-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                    className=""
                   />
-                  <span className="text-sm text-gray-700">Saturdays</span>
+                  <span className="text-sm text-slate-700">Saturdays</span>
                 </label>
 
                 <label className="flex items-center gap-2 cursor-pointer">
@@ -474,9 +474,9 @@ export function ChartSettingsDialog(): JSX.Element | null {
                     onChange={(e) =>
                       setWorkingDaysConfig({ excludeSunday: e.target.checked })
                     }
-                    className="h-4 w-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                    className=""
                   />
-                  <span className="text-sm text-gray-700">Sundays</span>
+                  <span className="text-sm text-slate-700">Sundays</span>
                 </label>
 
                 <label className="flex items-center gap-2 cursor-pointer">
@@ -488,9 +488,9 @@ export function ChartSettingsDialog(): JSX.Element | null {
                         excludeHolidays: e.target.checked,
                       })
                     }
-                    className="h-4 w-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                    className=""
                   />
-                  <span className="text-sm text-gray-700">
+                  <span className="text-sm text-slate-700">
                     Holidays ({currentCountryName})
                   </span>
                 </label>
@@ -500,8 +500,8 @@ export function ChartSettingsDialog(): JSX.Element | null {
         </div>
 
         {/* Info note */}
-        <div className="pt-4 border-t border-gray-200">
-          <p className="text-xs text-gray-500 text-center">
+        <div className="pt-4 border-t border-slate-200">
+          <p className="text-xs text-slate-400 text-center">
             These settings are saved with your project file
           </p>
         </div>

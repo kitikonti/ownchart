@@ -23,11 +23,11 @@ export function HierarchyButtons() {
         disabled={!canOutdent}
         title="Move left (outdent) - Shift+Tab"
         className={`
-          p-1.5 rounded flex items-center justify-center
+          p-1.5 rounded flex items-center justify-center transition-colors
           ${
             canOutdent
-              ? "hover:bg-gray-100 text-gray-700"
-              : "text-gray-400 cursor-not-allowed"
+              ? "hover:bg-slate-100 text-slate-600 hover:text-slate-900"
+              : "text-slate-400 cursor-not-allowed"
           }
         `}
       >
@@ -39,11 +39,11 @@ export function HierarchyButtons() {
         disabled={!canIndent}
         title="Move right (indent) - Tab"
         className={`
-          p-1.5 rounded flex items-center justify-center
+          p-1.5 rounded flex items-center justify-center transition-colors
           ${
             canIndent
-              ? "hover:bg-gray-100 text-gray-700"
-              : "text-gray-400 cursor-not-allowed"
+              ? "hover:bg-slate-100 text-slate-600 hover:text-slate-900"
+              : "text-slate-400 cursor-not-allowed"
           }
         `}
       >

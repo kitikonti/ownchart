@@ -97,7 +97,7 @@ function getShortcuts(): ShortcutSection[] {
  */
 function KeyBadge({ children }: { children: string }): JSX.Element {
   return (
-    <kbd className="px-1.5 py-0.5 text-xs font-mono bg-gray-100 border border-gray-300 rounded text-gray-700">
+    <kbd className="px-1.5 py-0.5 text-xs font-mono bg-slate-100 border border-slate-200 rounded text-slate-700 shadow-xs">
       {children}
     </kbd>
   );
@@ -110,10 +110,10 @@ function ShortcutKeys({ keys }: { keys: string }): JSX.Element {
   const parts = keys.split("+");
 
   return (
-    <span className="flex items-center gap-0.5">
+    <span className="flex items-center gap-1">
       {parts.map((part, index) => (
-        <span key={index} className="flex items-center gap-0.5">
-          {index > 0 && <span className="text-gray-400 text-xs">+</span>}
+        <span key={index} className="flex items-center gap-1">
+          {index > 0 && <span className="text-slate-300 text-xs">+</span>}
           <KeyBadge>{part}</KeyBadge>
         </span>
       ))}
@@ -134,22 +134,22 @@ export function HelpPanel(): JSX.Element | null {
       isOpen={isHelpPanelOpen}
       onClose={closeHelpPanel}
       title="Keyboard Shortcuts"
-      icon={<Question size={24} weight="duotone" className="text-blue-600" />}
+      icon={<Question size={24} weight="duotone" className="text-slate-500" />}
       widthClass="max-w-xl"
     >
       <div className="space-y-6">
         {shortcuts.map((section) => (
           <div key={section.title}>
-            <h3 className="text-sm font-semibold text-gray-900 mb-2 pb-1 border-b border-gray-200">
+            <h3 className="text-xs font-semibold text-slate-900 mb-2.5 pb-1.5 border-b border-slate-200 uppercase tracking-wide">
               {section.title}
             </h3>
-            <div className="space-y-1.5">
+            <div className="space-y-1">
               {section.shortcuts.map((shortcut, index) => (
                 <div
                   key={index}
-                  className="flex items-center justify-between py-1"
+                  className="flex items-center justify-between py-1.5 px-2 -mx-2 rounded-md hover:bg-slate-50 transition-colors"
                 >
-                  <span className="text-sm text-gray-600">
+                  <span className="text-sm text-slate-600">
                     {shortcut.description}
                   </span>
                   <ShortcutKeys keys={shortcut.keys} />
@@ -160,8 +160,8 @@ export function HelpPanel(): JSX.Element | null {
         ))}
 
         {/* Tip */}
-        <div className="flex items-start gap-2 p-3 bg-blue-50 rounded-lg text-sm text-blue-800">
-          <Lightbulb size={18} weight="fill" className="mt-0.5 flex-shrink-0" />
+        <div className="flex items-start gap-2.5 p-3 bg-slate-100 rounded-lg text-sm text-slate-700 border border-slate-200">
+          <Lightbulb size={18} weight="fill" className="mt-0.5 flex-shrink-0 text-slate-500" />
           <span>
             {isMac() ? (
               <>

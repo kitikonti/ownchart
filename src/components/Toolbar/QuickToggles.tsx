@@ -35,14 +35,11 @@ export function QuickToggles(): JSX.Element {
         title={
           showDependencies ? "Hide Dependencies (D)" : "Show Dependencies (D)"
         }
-        className={`
-          flex items-center justify-center p-1.5 rounded transition-colors
-          ${
-            showDependencies
-              ? "bg-blue-100 text-blue-700 hover:bg-blue-200"
-              : "text-gray-500 hover:text-gray-700 hover:bg-gray-100"
-          }
-        `}
+        className={`p-1.5 rounded-md transition-colors focus:outline-none focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-700 ${
+          showDependencies
+            ? "bg-slate-200 text-slate-900 hover:bg-slate-300"
+            : "text-slate-600 hover:text-slate-800 hover:bg-slate-100 active:bg-slate-200"
+        }`}
       >
         <FlowArrow size={iconSize} weight="regular" />
       </button>

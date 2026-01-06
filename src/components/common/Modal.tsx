@@ -93,48 +93,54 @@ export function Modal({
     // eslint-disable-next-line jsx-a11y/no-noninteractive-element-interactions
     <div
       ref={modalRef}
-      className="fixed inset-0 z-50 flex items-center justify-center"
+      className="fixed inset-0 z-50 flex items-center justify-center p-4"
       role="dialog"
       aria-modal="true"
       aria-labelledby="modal-title"
       tabIndex={-1}
       onKeyDown={handleKeyDown}
     >
-      {/* Backdrop - clickable to close */}
+      {/* Backdrop - clickable to close with blur effect */}
       <div
-        className="absolute inset-0 bg-black/50"
+        className="absolute inset-0 bg-slate-900/40 backdrop-blur-sm"
         onClick={onClose}
         aria-hidden="true"
       />
       <div
-        className={`relative bg-white rounded-lg shadow-xl ${widthClass} w-full mx-4 max-h-[90vh] flex flex-col`}
+        className={`
+          relative bg-white rounded-xl shadow-xl ${widthClass} w-full max-h-[90vh] flex flex-col
+          animate-modal-in
+          ring-1 ring-slate-200/50
+        `}
       >
         {/* Header */}
-        <div className="flex items-center justify-between px-6 py-4 border-b border-gray-200">
-          <div className="flex items-center gap-2">
+        <div className="flex items-center justify-between px-6 py-4 border-b border-slate-200/80">
+          <div className="flex items-center gap-3">
             {icon}
             <h2
               id="modal-title"
-              className="text-lg font-semibold text-gray-900"
+              className="text-lg font-semibold text-slate-900 tracking-tight"
             >
               {title}
             </h2>
           </div>
           <button
             onClick={onClose}
-            className="p-1.5 rounded hover:bg-gray-100 transition-colors text-gray-500 hover:text-gray-700"
-            aria-label="Close"
+            className="p-2 -m-1 rounded-lg hover:bg-slate-100 transition-colors text-slate-500 hover:text-slate-700 focus:outline-none focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-700"
+            aria-label="Close dialog"
           >
             <X size={20} weight="bold" />
           </button>
         </div>
 
         {/* Content */}
-        <div className="flex-1 overflow-y-auto px-6 py-4">{children}</div>
+        <div className="flex-1 overflow-y-auto px-6 py-5 scrollbar-thin">
+          {children}
+        </div>
 
         {/* Footer */}
         {footer && (
-          <div className="px-6 py-4 border-t border-gray-200 flex justify-end gap-3">
+          <div className="px-6 py-4 border-t border-slate-200/80 bg-slate-50/50 rounded-b-xl flex justify-end gap-3">
             {footer}
           </div>
         )}

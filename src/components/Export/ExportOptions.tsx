@@ -65,10 +65,10 @@ export function ExportOptionsForm({
     <div className="space-y-6">
       {/* Timeline Scale Options */}
       <div>
-        <h3 className="text-sm font-medium text-gray-700 mb-3">
+        <h3 className="text-sm font-medium text-slate-800 mb-3">
           Timeline Scale
         </h3>
-        <p className="text-xs text-gray-500 mb-3">
+        <p className="text-xs text-slate-500 mb-3">
           Controls how spread out the timeline appears horizontally
         </p>
         <div className="space-y-2">
@@ -81,9 +81,9 @@ export function ExportOptionsForm({
               onChange={() =>
                 onChange({ timelineZoom: EXPORT_ZOOM_PRESETS.COMPACT })
               }
-              className="w-4 h-4 text-blue-600"
+              className=""
             />
-            <span className="text-sm text-gray-700">
+            <span className="text-sm text-slate-700">
               Compact (50%) — fits more time in less space
             </span>
           </label>
@@ -97,11 +97,11 @@ export function ExportOptionsForm({
               onChange={() =>
                 onChange({ timelineZoom: EXPORT_ZOOM_PRESETS.STANDARD })
               }
-              className="w-4 h-4 text-blue-600"
+              className=""
             />
-            <span className="text-sm text-gray-700">
+            <span className="text-sm text-slate-700">
               Standard (100%) —{" "}
-              <span className="text-blue-600">Recommended</span>
+              <span className="text-slate-600 font-medium">Recommended</span>
             </span>
           </label>
 
@@ -114,9 +114,9 @@ export function ExportOptionsForm({
               onChange={() =>
                 onChange({ timelineZoom: EXPORT_ZOOM_PRESETS.DETAILED })
               }
-              className="w-4 h-4 text-blue-600"
+              className=""
             />
-            <span className="text-sm text-gray-700">
+            <span className="text-sm text-slate-700">
               Detailed (150%) — more space per day
             </span>
           </label>
@@ -130,9 +130,9 @@ export function ExportOptionsForm({
               onChange={() =>
                 onChange({ timelineZoom: EXPORT_ZOOM_PRESETS.EXPANDED })
               }
-              className="w-4 h-4 text-blue-600"
+              className=""
             />
-            <span className="text-sm text-gray-700">
+            <span className="text-sm text-slate-700">
               Expanded (200%) — maximum detail
             </span>
           </label>
@@ -141,8 +141,8 @@ export function ExportOptionsForm({
 
       {/* Row Density Options */}
       <div>
-        <h3 className="text-sm font-medium text-gray-700 mb-3">Row Density</h3>
-        <p className="text-xs text-gray-500 mb-3">
+        <h3 className="text-sm font-medium text-slate-800 mb-3">Row Density</h3>
+        <p className="text-xs text-slate-500 mb-3">
           Controls the vertical spacing of rows
         </p>
         <div className="space-y-2">
@@ -157,9 +157,9 @@ export function ExportOptionsForm({
                 value={densityOpt.key}
                 checked={options.density === densityOpt.key}
                 onChange={() => onChange({ density: densityOpt.key })}
-                className="w-4 h-4 text-blue-600"
+                className=""
               />
-              <span className="text-sm text-gray-700">
+              <span className="text-sm text-slate-700">
                 {densityOpt.label} — {densityOpt.description}
               </span>
             </label>
@@ -169,8 +169,8 @@ export function ExportOptionsForm({
 
       {/* Column Selection */}
       <div>
-        <h3 className="text-sm font-medium text-gray-700 mb-3">List Columns</h3>
-        <p className="text-xs text-gray-500 mb-3">
+        <h3 className="text-sm font-medium text-slate-800 mb-3">List Columns</h3>
+        <p className="text-xs text-slate-500 mb-3">
           Select columns to include. Leave all unchecked for timeline only.
         </p>
         <div className="space-y-2">
@@ -194,9 +194,9 @@ export function ExportOptionsForm({
                     ).map((c) => c.key);
                     onChange({ selectedColumns: orderedColumns });
                   }}
-                  className="w-4 h-4 text-blue-600 rounded"
+                  className=""
                 />
-                <span className="text-sm text-gray-700">{col.label}</span>
+                <span className="text-sm text-slate-700">{col.label}</span>
               </label>
             );
           })}
@@ -205,25 +205,25 @@ export function ExportOptionsForm({
 
       {/* Timeline Options */}
       <div>
-        <h3 className="text-sm font-medium text-gray-700 mb-3">Timeline</h3>
+        <h3 className="text-sm font-medium text-slate-800 mb-3">Timeline</h3>
         <div className="space-y-2">
           <label className="flex items-center gap-3 cursor-pointer">
             <input
               type="checkbox"
               checked={options.includeGridLines}
               onChange={(e) => onChange({ includeGridLines: e.target.checked })}
-              className="w-4 h-4 text-blue-600 rounded"
+              className=""
             />
-            <span className="text-sm text-gray-700">Include grid lines</span>
+            <span className="text-sm text-slate-700">Include grid lines</span>
           </label>
           <label className="flex items-center gap-3 cursor-pointer">
             <input
               type="checkbox"
               checked={options.includeWeekends}
               onChange={(e) => onChange({ includeWeekends: e.target.checked })}
-              className="w-4 h-4 text-blue-600 rounded"
+              className=""
             />
-            <span className="text-sm text-gray-700">Include weekends</span>
+            <span className="text-sm text-slate-700">Include weekends</span>
           </label>
           <label className="flex items-center gap-3 cursor-pointer">
             <input
@@ -232,9 +232,9 @@ export function ExportOptionsForm({
               onChange={(e) =>
                 onChange({ includeTodayMarker: e.target.checked })
               }
-              className="w-4 h-4 text-blue-600 rounded"
+              className=""
             />
-            <span className="text-sm text-gray-700">Include today marker</span>
+            <span className="text-sm text-slate-700">Include today marker</span>
           </label>
           <label className="flex items-center gap-3 cursor-pointer">
             <input
@@ -243,26 +243,26 @@ export function ExportOptionsForm({
               onChange={(e) =>
                 onChange({ includeDependencies: e.target.checked })
               }
-              className="w-4 h-4 text-blue-600 rounded"
+              className=""
             />
-            <span className="text-sm text-gray-700">Include dependencies</span>
+            <span className="text-sm text-slate-700">Include dependencies</span>
           </label>
           <label className="flex items-center gap-3 cursor-pointer">
             <input
               type="checkbox"
               checked={options.includeHolidays}
               onChange={(e) => onChange({ includeHolidays: e.target.checked })}
-              className="w-4 h-4 text-blue-600 rounded"
+              className=""
             />
-            <span className="text-sm text-gray-700">Include holidays</span>
+            <span className="text-sm text-slate-700">Include holidays</span>
           </label>
         </div>
       </div>
 
       {/* Task Label Position */}
       <div>
-        <h3 className="text-sm font-medium text-gray-700 mb-3">Task Labels</h3>
-        <p className="text-xs text-gray-500 mb-3">
+        <h3 className="text-sm font-medium text-slate-800 mb-3">Task Labels</h3>
+        <p className="text-xs text-slate-500 mb-3">
           Position of task names on the timeline bars
         </p>
         <div className="space-y-2">
@@ -277,9 +277,9 @@ export function ExportOptionsForm({
                 value={posOpt.key}
                 checked={options.taskLabelPosition === posOpt.key}
                 onChange={() => onChange({ taskLabelPosition: posOpt.key })}
-                className="w-4 h-4 text-blue-600"
+                className=""
               />
-              <span className="text-sm text-gray-700">
+              <span className="text-sm text-slate-700">
                 {posOpt.label} — {posOpt.description}
               </span>
             </label>
@@ -289,23 +289,23 @@ export function ExportOptionsForm({
 
       {/* General Options */}
       <div>
-        <h3 className="text-sm font-medium text-gray-700 mb-3">Options</h3>
+        <h3 className="text-sm font-medium text-slate-800 mb-3">Options</h3>
         <div className="space-y-2">
           <label className="flex items-center gap-3 cursor-pointer">
             <input
               type="checkbox"
               checked={options.includeHeader}
               onChange={(e) => onChange({ includeHeader: e.target.checked })}
-              className="w-4 h-4 text-blue-600 rounded"
+              className=""
             />
-            <span className="text-sm text-gray-700">Include header row</span>
+            <span className="text-sm text-slate-700">Include header row</span>
           </label>
         </div>
       </div>
 
       {/* Background Options */}
       <div>
-        <h3 className="text-sm font-medium text-gray-700 mb-3">Background</h3>
+        <h3 className="text-sm font-medium text-slate-800 mb-3">Background</h3>
         <div className="space-y-2">
           <label className="flex items-center gap-3 cursor-pointer">
             <input
@@ -314,9 +314,9 @@ export function ExportOptionsForm({
               value="white"
               checked={options.background === "white"}
               onChange={() => onChange({ background: "white" })}
-              className="w-4 h-4 text-blue-600"
+              className=""
             />
-            <span className="text-sm text-gray-700">White</span>
+            <span className="text-sm text-slate-700">White</span>
           </label>
 
           <label className="flex items-center gap-3 cursor-pointer">
@@ -326,19 +326,19 @@ export function ExportOptionsForm({
               value="transparent"
               checked={options.background === "transparent"}
               onChange={() => onChange({ background: "transparent" })}
-              className="w-4 h-4 text-blue-600"
+              className=""
             />
-            <span className="text-sm text-gray-700">Transparent</span>
+            <span className="text-sm text-slate-700">Transparent</span>
           </label>
         </div>
       </div>
 
       {/* Estimated Dimensions */}
       {estimatedDimensions && (
-        <div className="pt-3 border-t border-gray-200">
-          <p className="text-xs text-gray-500">
+        <div className="pt-3 border-t border-slate-200">
+          <p className="text-xs text-slate-500">
             Estimated export size:{" "}
-            <span className="font-medium text-gray-700">
+            <span className="font-medium text-slate-700 font-mono">
               {estimatedDimensions.width} × {estimatedDimensions.height} px
             </span>
           </p>

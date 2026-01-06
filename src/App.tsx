@@ -64,26 +64,32 @@ function App(): JSX.Element {
         toastOptions={{
           duration: 3000,
           style: {
-            background: "#363636",
-            color: "#fff",
+            background: "#1e293b",
+            color: "#f8fafc",
+            borderRadius: "8px",
+            boxShadow:
+              "0 10px 15px -3px rgba(15, 23, 42, 0.15), 0 4px 6px -2px rgba(15, 23, 42, 0.08)",
+            fontFamily: "var(--font-sans)",
+            fontSize: "14px",
+            padding: "12px 16px",
           },
           success: {
             iconTheme: {
-              primary: "#10b981",
-              secondary: "#fff",
+              primary: "#059669",
+              secondary: "#f8fafc",
             },
           },
           error: {
             iconTheme: {
-              primary: "#ef4444",
-              secondary: "#fff",
+              primary: "#dc2626",
+              secondary: "#f8fafc",
             },
           },
         }}
       />
       {/* Zoom Indicator - fixed position at root level */}
       <ZoomIndicator />
-      <div className="h-screen bg-gray-50 flex flex-col overflow-hidden">
+      <div className="h-screen bg-gradient-to-b from-slate-50 to-slate-100 flex flex-col overflow-hidden">
         <AppToolbar />
         <GanttLayout />
       </div>

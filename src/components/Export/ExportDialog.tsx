@@ -79,14 +79,14 @@ export function ExportDialog(): JSX.Element | null {
       <button
         onClick={closeExportDialog}
         disabled={isExporting}
-        className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+        className="px-4 py-2 text-sm font-medium text-slate-700 bg-white border border-slate-200 rounded-lg hover:bg-slate-50 hover:border-slate-300 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-150 shadow-xs"
       >
         Cancel
       </button>
       <button
         onClick={handleExport}
         disabled={isExporting}
-        className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-md hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+        className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-slate-700 rounded-lg hover:bg-slate-600 active:bg-slate-800 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
       >
         {isExporting ? (
           <>
@@ -108,7 +108,7 @@ export function ExportDialog(): JSX.Element | null {
       isOpen={isExportDialogOpen}
       onClose={closeExportDialog}
       title="Export to PNG"
-      icon={<Export size={24} weight="duotone" className="text-blue-600" />}
+      icon={<Export size={24} weight="duotone" className="text-slate-500" />}
       footer={footer}
       widthClass="max-w-md"
     >
@@ -122,7 +122,7 @@ export function ExportDialog(): JSX.Element | null {
 
         {/* Error message */}
         {exportError && (
-          <div className="p-3 text-sm text-red-700 bg-red-50 rounded-md border border-red-200">
+          <div className="p-3 text-sm text-red-700 bg-red-50 rounded-lg border border-red-200">
             {exportError}
           </div>
         )}

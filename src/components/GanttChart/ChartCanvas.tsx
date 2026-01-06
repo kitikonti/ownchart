@@ -201,7 +201,7 @@ export function ChartCanvas({
         className="chart-canvas-container w-full min-h-screen"
       >
         <div ref={containerRef} className="w-full min-h-screen">
-          <div className="flex items-center justify-center min-h-screen text-gray-500">
+          <div className="flex items-center justify-center min-h-screen text-slate-500">
             Loading timeline...
           </div>
         </div>
@@ -267,7 +267,7 @@ export function ChartCanvas({
                     y={index * ROW_HEIGHT}
                     width={timelineWidth}
                     height={ROW_HEIGHT}
-                    fill="#3b82f6"
+                    fill="#6366f1"
                     fillOpacity={0.15}
                   />
                 );
@@ -347,9 +347,9 @@ export function ChartCanvas({
                 y={marqueeRect.y}
                 width={marqueeRect.width}
                 height={marqueeRect.height}
-                fill="#3b82f6"
+                fill="#6366f1"
                 fillOpacity={0.1}
-                stroke="#3b82f6"
+                stroke="#6366f1"
                 strokeWidth={1}
                 strokeDasharray="4 2"
                 pointerEvents="none"

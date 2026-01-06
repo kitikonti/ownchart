@@ -18,57 +18,57 @@ export function ClipboardButtons() {
   const canDelete = selectedTaskIds.length > 0;
 
   return (
-    <div className="inline-flex items-center gap-1 border-r border-gray-200 pr-2">
+    <div className="inline-flex items-center gap-0.5">
       {/* Copy Button */}
       <button
         onClick={handleCopy}
         disabled={!canCopyOrCut}
-        className={`p-2 rounded hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500 ${
-          !canCopyOrCut ? "opacity-40 cursor-not-allowed" : ""
+        className={`p-1.5 rounded-md transition-colors focus:outline-none focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-700 ${
+          !canCopyOrCut ? "text-slate-400 cursor-not-allowed" : "text-slate-600 hover:text-slate-800 hover:bg-slate-100 active:bg-slate-200"
         }`}
         title="Copy (Ctrl+C)"
         aria-label="Copy"
       >
-        <Copy size={18} weight="regular" className="text-gray-700" />
+        <Copy size={20} weight="regular" />
       </button>
 
       {/* Cut Button */}
       <button
         onClick={handleCut}
         disabled={!canCopyOrCut}
-        className={`p-2 rounded hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500 ${
-          !canCopyOrCut ? "opacity-40 cursor-not-allowed" : ""
+        className={`p-1.5 rounded-md transition-colors focus:outline-none focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-700 ${
+          !canCopyOrCut ? "text-slate-400 cursor-not-allowed" : "text-slate-600 hover:text-slate-800 hover:bg-slate-100 active:bg-slate-200"
         }`}
         title="Cut (Ctrl+X)"
         aria-label="Cut"
       >
-        <Scissors size={18} weight="regular" className="text-gray-700" />
+        <Scissors size={20} weight="regular" />
       </button>
 
       {/* Paste Button */}
       <button
         onClick={handlePaste}
         disabled={!canPaste}
-        className={`p-2 rounded hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500 ${
-          !canPaste ? "opacity-40 cursor-not-allowed" : ""
+        className={`p-1.5 rounded-md transition-colors focus:outline-none focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-700 ${
+          !canPaste ? "text-slate-400 cursor-not-allowed" : "text-slate-600 hover:text-slate-800 hover:bg-slate-100 active:bg-slate-200"
         }`}
         title="Paste (Ctrl+V)"
         aria-label="Paste"
       >
-        <ClipboardText size={18} weight="regular" className="text-gray-700" />
+        <ClipboardText size={20} weight="regular" />
       </button>
 
       {/* Delete Button */}
       <button
         onClick={deleteSelectedTasks}
         disabled={!canDelete}
-        className={`p-2 rounded hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500 ${
-          !canDelete ? "opacity-40 cursor-not-allowed" : ""
+        className={`p-1.5 rounded-md transition-colors focus:outline-none focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-700 ${
+          !canDelete ? "text-slate-400 cursor-not-allowed" : "text-slate-600 hover:text-slate-800 hover:bg-slate-100 active:bg-slate-200"
         }`}
         title="Delete (Del)"
         aria-label="Delete"
       >
-        <Trash size={18} weight="regular" className="text-gray-700" />
+        <Trash size={20} weight="regular" />
       </button>
     </div>
   );

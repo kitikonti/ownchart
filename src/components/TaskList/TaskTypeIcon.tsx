@@ -18,7 +18,7 @@ export function TaskTypeIcon({
   onClick,
   className = "",
 }: TaskTypeIconProps): JSX.Element {
-  const iconClassName = `text-gray-600 flex-shrink-0 ${onClick ? "cursor-pointer hover:text-blue-600 transition-colors" : ""} ${className}`;
+  const iconClassName = `text-slate-600 flex-shrink-0 ${onClick ? "cursor-pointer hover:text-slate-800 transition-colors" : ""} ${className}`;
 
   const handleClick = (e: React.MouseEvent) => {
     if (onClick) {

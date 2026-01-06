@@ -3,7 +3,7 @@
  * Allows resizing columns by dragging the column border.
  */
 
-import { useState, useRef, useEffect, type MouseEvent } from "react";
+import { useState, useRef, useEffect, type MouseEvent, type KeyboardEvent } from "react";
 
 export interface ColumnResizerProps {
   /** Column ID */
@@ -81,16 +81,45 @@ export function ColumnResizer({
     }
   };
 
+  // Keyboard support for column resizing
+  const handleKeyDown = (e: KeyboardEvent<HTMLDivElement>) => {
+    const step = e.shiftKey ? 20 : 5; // Larger step with Shift
+
+    if (e.key === "ArrowLeft") {
+      e.preventDefault();
+      const newWidth = Math.max(minWidth, currentWidth - step);
+      onResize(columnId, newWidth);
+    } else if (e.key === "ArrowRight") {
+      e.preventDefault();
+      const newWidth = currentWidth + step;
+      onResize(columnId, newWidth);
+    } else if (e.key === "Enter" || e.key === " ") {
+      // Auto-resize on Enter or Space
+      e.preventDefault();
+      if (onAutoResize) {
+        onAutoResize(columnId);
+      }
+    }
+  };
+
   return (
     <div
       className={`
         absolute right-0 top-0 bottom-0 w-1 cursor-col-resize
-        hover:bg-blue-500 hover:w-1.5
-        ${isResizing ? "bg-blue-600 w-1.5" : "bg-transparent"}
+        hover:bg-slate-400 hover:w-1.5
+        focus:outline-none focus-visible:bg-blue-500 focus-visible:w-1.5
+        ${isResizing ? "bg-slate-500 w-1.5" : "bg-transparent"}
       `}
       onMouseDown={handleMouseDown}
       onDoubleClick={handleDoubleClick}
-      title="Drag to resize, double-click to auto-fit"
+      onKeyDown={handleKeyDown}
+      tabIndex={0}
+      role="separator"
+      aria-orientation="vertical"
+      aria-valuenow={currentWidth}
+      aria-valuemin={minWidth}
+      aria-label={`Resize ${columnId} column. Use arrow keys to resize, Enter to auto-fit.`}
+      title="Drag to resize, double-click to auto-fit. Arrow keys: resize, Enter: auto-fit"
     />
   );
 }

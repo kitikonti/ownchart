@@ -139,7 +139,7 @@ export function PreferencesDialog(): JSX.Element | null {
   const footer = (
     <button
       onClick={closePreferencesDialog}
-      className="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-md hover:bg-blue-700 transition-colors"
+      className="px-4 py-2 text-sm font-medium text-white bg-slate-700 rounded-lg hover:bg-slate-600 active:bg-slate-800 transition-colors"
     >
       Done
     </button>
@@ -150,7 +150,7 @@ export function PreferencesDialog(): JSX.Element | null {
       isOpen={isPreferencesDialogOpen}
       onClose={closePreferencesDialog}
       title="Preferences"
-      icon={<Gear size={24} weight="duotone" className="text-blue-600" />}
+      icon={<Gear size={24} weight="duotone" className="text-slate-500" />}
       footer={footer}
       widthClass="max-w-md"
     >
@@ -158,15 +158,15 @@ export function PreferencesDialog(): JSX.Element | null {
         {/* Regional Section */}
         <div>
           <div className="flex items-center gap-2 mb-4">
-            <Globe size={20} weight="duotone" className="text-gray-600" />
-            <h3 className="text-sm font-semibold text-gray-900 uppercase tracking-wide">
+            <Globe size={20} weight="duotone" className="text-slate-500" />
+            <h3 className="text-sm font-semibold text-slate-900 uppercase tracking-wide">
               Regional
             </h3>
           </div>
 
           {/* Date Format */}
           <fieldset className="space-y-3 mb-4">
-            <legend className="block text-sm font-medium text-gray-700">
+            <legend className="block text-sm font-medium text-slate-700">
               Date Format
             </legend>
             <div className="flex flex-wrap gap-2">
@@ -174,11 +174,11 @@ export function PreferencesDialog(): JSX.Element | null {
                 <label
                   key={option.value}
                   className={`
-                    flex items-center gap-2 px-3 py-2 rounded-lg border cursor-pointer transition-colors text-sm
+                    flex items-center gap-2 px-3 py-2 rounded-lg border-2 cursor-pointer transition-all duration-150 text-sm
                     ${
                       preferences.dateFormat === option.value
-                        ? "border-blue-500 bg-blue-50"
-                        : "border-gray-200 hover:border-gray-300 hover:bg-gray-50"
+                        ? "border-slate-500 bg-slate-50"
+                        : "border-slate-200 hover:border-slate-300 hover:bg-slate-50"
                     }
                   `}
                 >
@@ -190,10 +190,10 @@ export function PreferencesDialog(): JSX.Element | null {
                     onChange={() => handleDateFormatChange(option.value)}
                     className="sr-only"
                   />
-                  <span className="font-medium text-gray-900">
+                  <span className={`font-medium font-mono text-xs ${preferences.dateFormat === option.value ? "text-slate-800" : "text-slate-700"}`}>
                     {option.label}
                   </span>
-                  <span className="text-xs text-gray-500">
+                  <span className="text-xs text-slate-500">
                     ({option.example})
                   </span>
                 </label>
@@ -203,7 +203,7 @@ export function PreferencesDialog(): JSX.Element | null {
 
           {/* First Day of Week */}
           <fieldset className="space-y-3 mb-4">
-            <legend className="block text-sm font-medium text-gray-700">
+            <legend className="block text-sm font-medium text-slate-700">
               First Day of Week
             </legend>
             <div className="flex gap-2">
@@ -211,11 +211,11 @@ export function PreferencesDialog(): JSX.Element | null {
                 <label
                   key={option.value}
                   className={`
-                    flex items-center gap-2 px-3 py-2 rounded-lg border cursor-pointer transition-colors text-sm
+                    flex items-center gap-2 px-3 py-2 rounded-lg border-2 cursor-pointer transition-all duration-150 text-sm
                     ${
                       preferences.firstDayOfWeek === option.value
-                        ? "border-blue-500 bg-blue-50"
-                        : "border-gray-200 hover:border-gray-300 hover:bg-gray-50"
+                        ? "border-slate-500 bg-slate-50"
+                        : "border-slate-200 hover:border-slate-300 hover:bg-slate-50"
                     }
                   `}
                 >
@@ -227,7 +227,7 @@ export function PreferencesDialog(): JSX.Element | null {
                     onChange={() => handleFirstDayChange(option.value)}
                     className="sr-only"
                   />
-                  <span className="font-medium text-gray-900">
+                  <span className={`font-medium ${preferences.firstDayOfWeek === option.value ? "text-slate-800" : "text-slate-700"}`}>
                     {option.label}
                   </span>
                 </label>
@@ -237,7 +237,7 @@ export function PreferencesDialog(): JSX.Element | null {
 
           {/* Week Numbering System */}
           <fieldset className="space-y-3 mb-4">
-            <legend className="block text-sm font-medium text-gray-700">
+            <legend className="block text-sm font-medium text-slate-700">
               Week Numbering
             </legend>
             <div className="space-y-2">
@@ -247,11 +247,11 @@ export function PreferencesDialog(): JSX.Element | null {
                   key={option.value}
                   htmlFor={`weekNumbering-${option.value}`}
                   className={`
-                    flex items-start gap-3 p-3 rounded-lg border cursor-pointer transition-colors
+                    flex items-start gap-3 p-3 rounded-lg border-2 cursor-pointer transition-all duration-150
                     ${
                       preferences.weekNumberingSystem === option.value
-                        ? "border-blue-500 bg-blue-50"
-                        : "border-gray-200 hover:border-gray-300 hover:bg-gray-50"
+                        ? "border-slate-500 bg-slate-50"
+                        : "border-slate-200 hover:border-slate-300 hover:bg-slate-50"
                     }
                   `}
                 >
@@ -262,13 +262,13 @@ export function PreferencesDialog(): JSX.Element | null {
                     value={option.value}
                     checked={preferences.weekNumberingSystem === option.value}
                     onChange={() => handleWeekNumberingChange(option.value)}
-                    className="mt-0.5 h-4 w-4 text-blue-600 border-gray-300 focus:ring-blue-500"
+                    className="mt-0.5"
                   />
                   <div className="flex-1">
-                    <span className="text-sm font-medium text-gray-900">
+                    <span className={`text-sm font-medium ${preferences.weekNumberingSystem === option.value ? "text-slate-800" : "text-slate-700"}`}>
                       {option.label}
                     </span>
-                    <p className="text-xs text-gray-500 mt-0.5">
+                    <p className="text-xs text-slate-500 mt-0.5">
                       {option.description}
                     </p>
                   </div>
@@ -279,20 +279,20 @@ export function PreferencesDialog(): JSX.Element | null {
         </div>
 
         {/* Divider */}
-        <div className="border-t border-gray-200" />
+        <div className="border-t border-slate-200" />
 
         {/* Appearance Section */}
         <div>
           <div className="flex items-center gap-2 mb-4">
-            <Monitor size={20} weight="duotone" className="text-gray-600" />
-            <h3 className="text-sm font-semibold text-gray-900 uppercase tracking-wide">
+            <Monitor size={20} weight="duotone" className="text-slate-500" />
+            <h3 className="text-sm font-semibold text-slate-900 uppercase tracking-wide">
               Appearance
             </h3>
           </div>
 
           {/* UI Density */}
           <fieldset className="space-y-3">
-            <legend className="block text-sm font-medium text-gray-700">
+            <legend className="block text-sm font-medium text-slate-700">
               UI Density
             </legend>
             <div
@@ -306,11 +306,11 @@ export function PreferencesDialog(): JSX.Element | null {
                   key={option.value}
                   htmlFor={`density-${option.value}`}
                   className={`
-                    flex items-start gap-3 p-3 rounded-lg border cursor-pointer transition-colors
+                    flex items-start gap-3 p-3 rounded-lg border-2 cursor-pointer transition-all duration-150
                     ${
                       preferences.uiDensity === option.value
-                        ? "border-blue-500 bg-blue-50"
-                        : "border-gray-200 hover:border-gray-300 hover:bg-gray-50"
+                        ? "border-slate-500 bg-slate-50"
+                        : "border-slate-200 hover:border-slate-300 hover:bg-slate-50"
                     }
                   `}
                 >
@@ -321,18 +321,18 @@ export function PreferencesDialog(): JSX.Element | null {
                     value={option.value}
                     checked={preferences.uiDensity === option.value}
                     onChange={() => handleDensityChange(option.value)}
-                    className="mt-0.5 h-4 w-4 text-blue-600 border-gray-300 focus:ring-blue-500"
+                    className="mt-0.5"
                   />
                   <div className="flex-1">
                     <div className="flex items-center gap-2">
-                      <span className="text-sm font-medium text-gray-900">
+                      <span className={`text-sm font-medium ${preferences.uiDensity === option.value ? "text-slate-800" : "text-slate-700"}`}>
                         {option.label}
                       </span>
-                      <span className="text-xs text-gray-500">
+                      <span className="text-xs text-slate-500 font-mono">
                         ({option.rowsExample})
                       </span>
                     </div>
-                    <p className="text-xs text-gray-500 mt-0.5">
+                    <p className="text-xs text-slate-500 mt-0.5">
                       {option.description}
                     </p>
                   </div>
@@ -342,8 +342,8 @@ export function PreferencesDialog(): JSX.Element | null {
 
             {/* Touch device warning for compact mode */}
             {preferences.uiDensity === "compact" && isTouchDevice() && (
-              <p className="text-xs text-amber-600 mt-2 flex items-center gap-1">
-                <span className="text-amber-500">!</span>
+              <p className="text-xs text-amber-600 mt-2 flex items-center gap-1.5 bg-amber-50 px-3 py-2 rounded-lg">
+                <span className="text-amber-500 font-bold">!</span>
                 Compact mode may be difficult to use on touch devices.
               </p>
             )}
@@ -351,8 +351,8 @@ export function PreferencesDialog(): JSX.Element | null {
         </div>
 
         {/* Live Preview indicator */}
-        <div className="pt-4 border-t border-gray-200">
-          <p className="text-xs text-gray-500 text-center">
+        <div className="pt-4 border-t border-slate-200">
+          <p className="text-xs text-slate-400 text-center">
             Changes are applied immediately
           </p>
         </div>
