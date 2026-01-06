@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [0.0.17](https://github.com/kitikonti/ownchart/compare/v0.0.16...v0.0.17) (2026-01-06)
+
+
+### UI/UX
+
+* change default task color to teal and unify brand color ([12c25f0](https://github.com/kitikonti/ownchart/commit/12c25f082d933f4e583c928abdafaa1a4e062b98)), closes [#6366f1](https://github.com/kitikonti/ownchart/issues/6366f1) [#0d9488](https://github.com/kitikonti/ownchart/issues/0d9488) [#6366f1](https://github.com/kitikonti/ownchart/issues/6366f1) [#334155](https://github.com/kitikonti/ownchart/issues/334155)
+
 ### [0.0.16](https://github.com/kitikonti/ownchart/compare/v0.0.15...v0.0.16) (2026-01-06)
 
 ### [0.0.15](https://github.com/kitikonti/ownchart/compare/v0.0.14...v0.0.15) (2026-01-06)
