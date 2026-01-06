@@ -988,10 +988,14 @@ This sprint was completed ahead of schedule during MVP development. See Sprint 1
   - Bidirectional sync (no "original" concept)
   - Inheritance: synced groups automatically sync children
   - Decouple options: single, recursive, or dissolve group
-  - Visual indicators (link icon, dotted border)
-  - Sync group management panel
-  - Configurable synced fields
-  - Use case: Recurring phases across project timeline
+- **Vacation/Absence Management** (V1.2+) ⭐ NEW
+  - Team vacations and absences in project file
+  - Vacations treated like holidays for Working Days calculation
+  - Timeline highlighting for vacation periods
+  - Vacation management panel (add/edit/delete)
+  - Integration with Working Days Mode
+  - Reference: Data model prepared in Sprint 1.5.9
+  - See: `concept/sprints/SPRINT_1.5.9_USER_PREFERENCES_SETTINGS_CONCEPT.md` Section 2.7
 - Mobile viewing mode (read-only)
   - Responsive layout for tablets (768px+) and phones (375px+)
   - View-only mode (no editing on mobile)
