@@ -74,8 +74,6 @@ export default {
       animation: {
         'fade-in': 'fadeIn 250ms ease-out',
         'modal-in': 'modalIn 200ms cubic-bezier(0.34, 1.56, 0.64, 1)',
-        'pulse-subtle': 'pulse-subtle 2s cubic-bezier(0.4, 0, 0.6, 1) infinite',
-        'slide-in-right': 'slideInRight 250ms ease-out',
       },
     },
   },

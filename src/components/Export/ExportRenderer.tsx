@@ -285,7 +285,7 @@ export function ExportRenderer({
         display: "flex",
         flexDirection: "column",
         fontFamily:
-          'ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
+          "'IBM Plex Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
       }}
     >
       {/* Header Row */}
