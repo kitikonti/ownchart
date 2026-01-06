@@ -2,6 +2,15 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [0.0.15](https://github.com/kitikonti/ownchart/compare/v0.0.14...v0.0.15) (2026-01-06)
+
+
+### UI/UX
+
+* increase checkbox and radio button size to 16px ([4ac2d8a](https://github.com/kitikonti/ownchart/commit/4ac2d8a80c781fe453ed432f6777290870cee405))
+* refine design system with improved typography and form controls ([239a2c0](https://github.com/kitikonti/ownchart/commit/239a2c06ab9b22c7828015a8eee70eaaf53303b7))
+* replace IBM Plex Sans with Inter font ([411a255](https://github.com/kitikonti/ownchart/commit/411a2554a444d0fcc4789b5d646d8e0f06414b45))
+
 ### [0.0.14](https://github.com/kitikonti/ownchart/compare/v0.0.13...v0.0.14) (2026-01-06)
 
 
