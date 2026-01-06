@@ -165,9 +165,10 @@ export function getDensityAwareWidth(
       return `${columnWidths.progress}px`;
     case "delete":
       return `${columnWidths.delete}px`;
-    default:
+    default: {
       // Fallback to the original column definition
       const col = TASK_COLUMNS.find((c) => c.id === columnId);
       return col?.defaultWidth ?? "100px";
+    }
   }
 }
