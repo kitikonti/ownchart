@@ -22,6 +22,7 @@ import {
   DENSITY_CONFIG,
   type DensityConfig,
 } from "../../types/preferences.types";
+import { useChartStore } from "../../store/slices/chartSlice";
 
 interface ExportRendererProps {
   tasks: Task[];
@@ -214,6 +215,9 @@ export function ExportRenderer({
   // Get density configuration based on selected density
   const densityConfig: DensityConfig = DENSITY_CONFIG[options.density];
 
+  // Get holiday region from chart settings (for holiday highlighting)
+  const holidayRegion = useChartStore((state) => state.holidayRegion);
+
   // Build flattened task list (show all tasks, none collapsed for export)
   const flattenedTasks = useMemo(() => {
     // Empty set means nothing is collapsed - show all tasks
@@ -336,6 +340,8 @@ export function ExportRenderer({
               scale={scale}
               taskCount={orderedTasks.length}
               showWeekends={options.includeWeekends}
+              showHolidays={options.includeHolidays}
+              holidayRegion={holidayRegion}
               width={timelineWidth}
               rowHeight={densityConfig.rowHeight}
             />
@@ -363,6 +369,7 @@ export function ExportRenderer({
                 task={task}
                 scale={scale}
                 rowIndex={index}
+                labelPosition={options.taskLabelPosition}
                 densityOverride={{
                   rowHeight: densityConfig.rowHeight,
                   taskBarHeight: densityConfig.taskBarHeight,

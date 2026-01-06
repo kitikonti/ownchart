@@ -2,12 +2,13 @@
  * Export Dialog component for PNG export with options.
  */
 
-import { useCallback, useMemo } from "react";
+import { useCallback, useMemo, useEffect } from "react";
 import { Export, Spinner, Download } from "@phosphor-icons/react";
 import { Modal } from "../common/Modal";
 import { ExportOptionsForm } from "./ExportOptions";
 import { useUIStore } from "../../store/slices/uiSlice";
 import { useTaskStore } from "../../store/slices/taskSlice";
+import { useChartStore } from "../../store/slices/chartSlice";
 import { exportToPng, calculateExportDimensions } from "../../utils/export";
 
 /**
@@ -28,6 +29,20 @@ export function ExportDialog(): JSX.Element | null {
   // Get tasks from store
   const tasks = useTaskStore((state) => state.tasks);
   const columnWidths = useTaskStore((state) => state.columnWidths);
+
+  // Get chart settings for default values
+  const showHolidays = useChartStore((state) => state.showHolidays);
+  const taskLabelPosition = useChartStore((state) => state.taskLabelPosition);
+
+  // Sync export options with chart settings when dialog opens
+  useEffect(() => {
+    if (isExportDialogOpen) {
+      setExportOptions({
+        includeHolidays: showHolidays,
+        taskLabelPosition: taskLabelPosition,
+      });
+    }
+  }, [isExportDialogOpen, showHolidays, taskLabelPosition, setExportOptions]);
 
   // Calculate estimated dimensions
   const estimatedDimensions = useMemo(() => {

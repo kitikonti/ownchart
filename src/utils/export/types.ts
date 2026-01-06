@@ -2,7 +2,10 @@
  * Types for PNG export functionality.
  */
 
-import type { UiDensity } from "../../types/preferences.types";
+import type {
+  UiDensity,
+  TaskLabelPosition,
+} from "../../types/preferences.types";
 
 /** Available columns for export */
 export type ExportColumnKey =
@@ -31,6 +34,10 @@ export interface ExportOptions {
   includeGridLines: boolean;
   /** Include weekend highlighting */
   includeWeekends: boolean;
+  /** Include holiday highlighting (Sprint 1.5.9) */
+  includeHolidays: boolean;
+  /** Task label position on bars (Sprint 1.5.9) */
+  taskLabelPosition: TaskLabelPosition;
   /** Background color */
   background: "white" | "transparent";
   /** UI density for export */
@@ -61,6 +68,8 @@ export const DEFAULT_EXPORT_OPTIONS: ExportOptions = {
   includeDependencies: true,
   includeGridLines: true,
   includeWeekends: true,
+  includeHolidays: true,
+  taskLabelPosition: "inside",
   background: "white",
   density: "comfortable",
 };

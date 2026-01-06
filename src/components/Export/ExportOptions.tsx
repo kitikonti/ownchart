@@ -4,7 +4,10 @@
 
 import type { ExportOptions, ExportColumnKey } from "../../utils/export/types";
 import { EXPORT_ZOOM_PRESETS } from "../../utils/export/types";
-import type { UiDensity } from "../../types/preferences.types";
+import type {
+  UiDensity,
+  TaskLabelPosition,
+} from "../../types/preferences.types";
 
 /** Density options for the export */
 const DENSITY_OPTIONS: {
@@ -23,6 +26,18 @@ const DENSITY_OPTIONS: {
     label: "Comfortable",
     description: "44px rows, easier to read",
   },
+];
+
+/** Task label position options for the export */
+const LABEL_POSITION_OPTIONS: {
+  key: TaskLabelPosition;
+  label: string;
+  description: string;
+}[] = [
+  { key: "before", label: "Before bar", description: "Label to the left" },
+  { key: "inside", label: "Inside bar", description: "Label inside the bar" },
+  { key: "after", label: "After bar", description: "Label to the right" },
+  { key: "none", label: "None", description: "No labels on timeline" },
 ];
 
 /** Column definitions for the export options UI */
@@ -232,6 +247,45 @@ export function ExportOptionsForm({
             />
             <span className="text-sm text-gray-700">Include dependencies</span>
           </label>
+          <label className="flex items-center gap-3 cursor-pointer">
+            <input
+              type="checkbox"
+              checked={options.includeHolidays}
+              onChange={(e) => onChange({ includeHolidays: e.target.checked })}
+              className="w-4 h-4 text-blue-600 rounded"
+            />
+            <span className="text-sm text-gray-700">Include holidays</span>
+          </label>
+        </div>
+      </div>
+
+      {/* Task Label Position */}
+      <div>
+        <h3 className="text-sm font-medium text-gray-700 mb-3">
+          Task Labels
+        </h3>
+        <p className="text-xs text-gray-500 mb-3">
+          Position of task names on the timeline bars
+        </p>
+        <div className="space-y-2">
+          {LABEL_POSITION_OPTIONS.map((posOpt) => (
+            <label
+              key={posOpt.key}
+              className="flex items-center gap-3 cursor-pointer"
+            >
+              <input
+                type="radio"
+                name="labelPosition"
+                value={posOpt.key}
+                checked={options.taskLabelPosition === posOpt.key}
+                onChange={() => onChange({ taskLabelPosition: posOpt.key })}
+                className="w-4 h-4 text-blue-600"
+              />
+              <span className="text-sm text-gray-700">
+                {posOpt.label} — {posOpt.description}
+              </span>
+            </label>
+          ))}
         </div>
       </div>
 
