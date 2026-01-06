@@ -33,7 +33,8 @@ export function useTableDimensions() {
   const totalColumnWidth = useMemo(() => {
     return TASK_COLUMNS.reduce((sum, col) => {
       const customWidth = columnWidths[col.id];
-      const width = customWidth ?? parseWidth(getDensityAwareWidth(col.id, densityConfig));
+      const width =
+        customWidth ?? parseWidth(getDensityAwareWidth(col.id, densityConfig));
       return sum + width;
     }, 0);
   }, [columnWidths, densityConfig]);

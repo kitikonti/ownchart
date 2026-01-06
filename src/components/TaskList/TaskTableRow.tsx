@@ -94,7 +94,9 @@ export function TaskTableRow({
   // Generate grid template columns with density-aware widths
   const gridTemplateColumns = TASK_COLUMNS.map((col) => {
     const customWidth = columnWidths[col.id];
-    return customWidth ? `${customWidth}px` : getDensityAwareWidth(col.id, densityConfig);
+    return customWidth
+      ? `${customWidth}px`
+      : getDensityAwareWidth(col.id, densityConfig);
   }).join(" ");
 
   const style = {
@@ -175,7 +177,11 @@ export function TaskTableRow({
         {...listeners}
         role="gridcell"
       >
-        <DotsSixVertical size={densityConfig.iconSize} weight="bold" className="text-gray-400" />
+        <DotsSixVertical
+          size={densityConfig.iconSize}
+          weight="bold"
+          className="text-gray-400"
+        />
       </div>
 
       {/* Checkbox Cell */}

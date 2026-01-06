@@ -51,7 +51,11 @@ export function applyDensityClass(density: UiDensity): void {
   const html = document.documentElement;
 
   // Remove all density classes
-  html.classList.remove("density-compact", "density-normal", "density-comfortable");
+  html.classList.remove(
+    "density-compact",
+    "density-normal",
+    "density-comfortable"
+  );
 
   // Apply new class (normal doesn't need a class - it's the CSS default)
   if (density !== "normal") {
@@ -106,7 +110,8 @@ export const useUserPreferencesStore = create<UserPreferencesStore>()(
         // Check if this is a legacy user who hasn't set density preference yet
         // Legacy users (before v1.1) should default to "comfortable" to maintain their experience
         const storedPrefs = localStorage.getItem(PREFERENCES_KEY);
-        const hasStoredDensity = storedPrefs && JSON.parse(storedPrefs)?.state?.preferences?.uiDensity;
+        const hasStoredDensity =
+          storedPrefs && JSON.parse(storedPrefs)?.state?.preferences?.uiDensity;
 
         if (!hasStoredDensity && isLegacyUser()) {
           // Migrate legacy user to comfortable
@@ -140,7 +145,9 @@ export const useUserPreferencesStore = create<UserPreferencesStore>()(
  * Use this in components that need density-aware styling
  */
 export function useDensityConfig(): DensityConfig {
-  const density = useUserPreferencesStore((state) => state.preferences.uiDensity);
+  const density = useUserPreferencesStore(
+    (state) => state.preferences.uiDensity
+  );
   return DENSITY_CONFIG[density];
 }
 

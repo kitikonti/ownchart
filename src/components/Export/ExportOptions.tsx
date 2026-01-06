@@ -7,10 +7,22 @@ import { EXPORT_ZOOM_PRESETS } from "../../utils/export/types";
 import type { UiDensity } from "../../types/preferences.types";
 
 /** Density options for the export */
-const DENSITY_OPTIONS: { key: UiDensity; label: string; description: string }[] = [
-  { key: "compact", label: "Compact", description: "28px rows, fits more tasks" },
+const DENSITY_OPTIONS: {
+  key: UiDensity;
+  label: string;
+  description: string;
+}[] = [
+  {
+    key: "compact",
+    label: "Compact",
+    description: "28px rows, fits more tasks",
+  },
   { key: "normal", label: "Normal", description: "36px rows, balanced view" },
-  { key: "comfortable", label: "Comfortable", description: "44px rows, easier to read" },
+  {
+    key: "comfortable",
+    label: "Comfortable",
+    description: "44px rows, easier to read",
+  },
 ];
 
 /** Column definitions for the export options UI */

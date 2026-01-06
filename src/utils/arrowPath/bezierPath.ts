@@ -81,7 +81,14 @@ export function calculateArrowPath(
     path = calculateElbowPath(startX, startY, endX, endY, cornerRadius);
   } else {
     // Tight/overlap case: use S-curve routing
-    path = calculateRoutedPath(startX, startY, endX, endY, rowHeight, cornerRadius);
+    path = calculateRoutedPath(
+      startX,
+      startY,
+      endX,
+      endY,
+      rowHeight,
+      cornerRadius
+    );
   }
 
   return {
@@ -170,11 +177,7 @@ function calculateSimpleElbow(
   // Use smaller radius for tight spaces - limit by available space
   const maxRadiusForHorizontal = horizontalGap / 4;
   const maxRadiusForVertical = verticalGap / 4;
-  const r = Math.min(
-    baseRadius,
-    maxRadiusForHorizontal,
-    maxRadiusForVertical
-  );
+  const r = Math.min(baseRadius, maxRadiusForHorizontal, maxRadiusForVertical);
 
   const midX = (startX + endX) / 2;
 

@@ -24,7 +24,10 @@ import { TaskBar } from "./TaskBar";
 import { TodayMarker } from "./TodayMarker";
 import { DependencyArrows } from "./DependencyArrows";
 import { ConnectionHandles } from "./ConnectionHandles";
-import { getTaskBarGeometry, type DensityGeometryConfig } from "../../utils/timelineUtils";
+import {
+  getTaskBarGeometry,
+  type DensityGeometryConfig,
+} from "../../utils/timelineUtils";
 
 interface ChartCanvasProps {
   tasks: Task[];
@@ -64,7 +67,11 @@ export function ChartCanvas({
       taskBarHeight: densityConfig.taskBarHeight,
       taskBarOffset: densityConfig.taskBarOffset,
     }),
-    [densityConfig.rowHeight, densityConfig.taskBarHeight, densityConfig.taskBarOffset]
+    [
+      densityConfig.rowHeight,
+      densityConfig.taskBarHeight,
+      densityConfig.taskBarOffset,
+    ]
   );
 
   // Use individual selectors for proper Zustand re-render (like ZoomIndicator)

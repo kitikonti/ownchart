@@ -44,10 +44,7 @@ const DENSITY_OPTIONS: DensityOption[] = [
  * Detect if device has touch capability
  */
 function isTouchDevice(): boolean {
-  return (
-    "ontouchstart" in window ||
-    navigator.maxTouchPoints > 0
-  );
+  return "ontouchstart" in window || navigator.maxTouchPoints > 0;
 }
 
 /**
@@ -97,7 +94,11 @@ export function PreferencesDialog(): JSX.Element | null {
             <legend className="block text-sm font-medium text-gray-700">
               UI Density
             </legend>
-            <div className="space-y-2" role="radiogroup" aria-label="UI Density">
+            <div
+              className="space-y-2"
+              role="radiogroup"
+              aria-label="UI Density"
+            >
               {DENSITY_OPTIONS.map((option) => (
                 // eslint-disable-next-line jsx-a11y/label-has-associated-control
                 <label

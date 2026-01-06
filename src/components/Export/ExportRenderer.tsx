@@ -18,7 +18,10 @@ import {
   buildFlattenedTaskList,
   type FlattenedTask,
 } from "../../utils/hierarchy";
-import { DENSITY_CONFIG, type DensityConfig } from "../../types/preferences.types";
+import {
+  DENSITY_CONFIG,
+  type DensityConfig,
+} from "../../types/preferences.types";
 
 interface ExportRendererProps {
   tasks: Task[];
@@ -143,7 +146,10 @@ function ExportTaskTableRows({
                   >
                     <div
                       className="w-1.5 rounded"
-                      style={{ backgroundColor: task.color, height: colorBarHeight }}
+                      style={{
+                        backgroundColor: task.color,
+                        height: colorBarHeight,
+                      }}
                     />
                   </div>
                 );

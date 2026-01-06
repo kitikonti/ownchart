@@ -163,7 +163,10 @@ export function NewTaskPlaceholderRow(): JSX.Element {
     height: "var(--density-row-height)",
     paddingTop: "var(--density-cell-padding-y)",
     paddingBottom: "var(--density-cell-padding-y)",
-    paddingLeft: columnId === "name" ? "var(--density-cell-padding-x)" : "var(--density-cell-padding-x)",
+    paddingLeft:
+      columnId === "name"
+        ? "var(--density-cell-padding-x)"
+        : "var(--density-cell-padding-x)",
     paddingRight: "var(--density-cell-padding-x)",
     fontSize: "var(--density-font-size-cell)",
   });

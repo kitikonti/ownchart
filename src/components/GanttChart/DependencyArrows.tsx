@@ -7,8 +7,14 @@
 import { useMemo, useCallback } from "react";
 import type { Task } from "../../types/chart.types";
 import type { TaskPosition } from "../../types/dependency.types";
-import type { TimelineScale, DensityGeometryConfig } from "../../utils/timelineUtils";
-import { getTaskBarGeometry, DEFAULT_DENSITY_GEOMETRY } from "../../utils/timelineUtils";
+import type {
+  TimelineScale,
+  DensityGeometryConfig,
+} from "../../utils/timelineUtils";
+import {
+  getTaskBarGeometry,
+  DEFAULT_DENSITY_GEOMETRY,
+} from "../../utils/timelineUtils";
 import { useDependencyStore } from "../../store/slices/dependencySlice";
 import { DependencyArrow } from "./DependencyArrow";
 import { DependencyDragPreview } from "./DependencyDragPreview";
@@ -67,7 +73,13 @@ export function DependencyArrows({
         return;
       }
 
-      const geometry = getTaskBarGeometry(task, scale, index, densityGeometry, 0);
+      const geometry = getTaskBarGeometry(
+        task,
+        scale,
+        index,
+        densityGeometry,
+        0
+      );
 
       positions.set(task.id, {
         x: geometry.x,

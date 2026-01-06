@@ -275,7 +275,8 @@ export function Cell({
     height: "var(--density-row-height)",
     paddingTop: "var(--density-cell-padding-y)",
     paddingBottom: "var(--density-cell-padding-y)",
-    paddingLeft: column.id === "name" ? undefined : "var(--density-cell-padding-x)",
+    paddingLeft:
+      column.id === "name" ? undefined : "var(--density-cell-padding-x)",
     paddingRight: "var(--density-cell-padding-x)",
     fontSize: "var(--density-font-size-cell)",
   };

@@ -5,7 +5,10 @@
 
 import React, { useMemo } from "react";
 import type { Task } from "../../types/chart.types";
-import type { TimelineScale, DensityGeometryConfig } from "../../utils/timelineUtils";
+import type {
+  TimelineScale,
+  DensityGeometryConfig,
+} from "../../utils/timelineUtils";
 import { getTaskBarGeometry, dateToPixel } from "../../utils/timelineUtils";
 import { calculateDuration, addDays } from "../../utils/dateUtils";
 import { useTaskBarInteraction } from "../../hooks/useTaskBarInteraction";
@@ -178,7 +181,11 @@ export const TaskBar = React.memo(function TaskBar({
       taskBarHeight: densityConfig.taskBarHeight,
       taskBarOffset: densityConfig.taskBarOffset,
     }),
-    [densityConfig.rowHeight, densityConfig.taskBarHeight, densityConfig.taskBarOffset]
+    [
+      densityConfig.rowHeight,
+      densityConfig.taskBarHeight,
+      densityConfig.taskBarOffset,
+    ]
   );
 
   // All hooks must be called before any conditional returns

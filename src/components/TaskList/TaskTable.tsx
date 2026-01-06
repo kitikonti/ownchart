@@ -136,7 +136,9 @@ export function TaskTable({ hideHeader = true }: TaskTableProps): JSX.Element {
   const gridTemplateColumns = useMemo(() => {
     return TASK_COLUMNS.map((col) => {
       const customWidth = columnWidths[col.id];
-      return customWidth ? `${customWidth}px` : getDensityAwareWidth(col.id, densityConfig);
+      return customWidth
+        ? `${customWidth}px`
+        : getDensityAwareWidth(col.id, densityConfig);
     }).join(" ");
   }, [columnWidths, densityConfig]);
 

@@ -19,7 +19,9 @@ import { useUserPreferencesStore } from "./store/slices/userPreferencesSlice";
 
 function App(): JSX.Element {
   const checkFirstTimeUser = useUIStore((state) => state.checkFirstTimeUser);
-  const initializeDensity = useUserPreferencesStore((state) => state.initializeDensity);
+  const initializeDensity = useUserPreferencesStore(
+    (state) => state.initializeDensity
+  );
 
   // Enable global keyboard shortcuts (Ctrl+Z, Ctrl+Shift+Z, Ctrl+Y, Ctrl+S, Ctrl+O, Ctrl+Alt+N, Ctrl+E, ?)
   useKeyboardShortcuts();

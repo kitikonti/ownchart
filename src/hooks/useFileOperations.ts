@@ -60,7 +60,8 @@ export function useFileOperations() {
             columnWidths,
           },
           {
-            chartName: fileState.fileName?.replace(".ownchart", "") || "Untitled",
+            chartName:
+              fileState.fileName?.replace(".ownchart", "") || "Untitled",
             chartId: fileState.chartId || undefined,
             prettyPrint: true,
             dependencies, // Sprint 1.4

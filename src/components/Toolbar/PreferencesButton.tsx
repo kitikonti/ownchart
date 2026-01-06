@@ -6,7 +6,9 @@ import { Gear } from "@phosphor-icons/react";
 import { useUIStore } from "../../store/slices/uiSlice";
 
 export function PreferencesButton() {
-  const openPreferencesDialog = useUIStore((state) => state.openPreferencesDialog);
+  const openPreferencesDialog = useUIStore(
+    (state) => state.openPreferencesDialog
+  );
 
   return (
     <button
