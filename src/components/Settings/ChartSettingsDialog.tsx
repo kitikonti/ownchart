@@ -8,8 +8,8 @@
 import { useState, useMemo } from "react";
 import {
   Sliders,
-  Eye,
-  Calendar,
+  GridNine,
+  ChartBarHorizontal,
   Briefcase,
   Globe,
   MagnifyingGlass,
@@ -162,7 +162,7 @@ export function ChartSettingsDialog(): JSX.Element | null {
         {/* Timeline Display Section */}
         <div>
           <div className="flex items-center gap-2 mb-4">
-            <Eye size={20} weight="duotone" className="text-gray-600" />
+            <GridNine size={20} weight="duotone" className="text-gray-600" />
             <h3 className="text-sm font-semibold text-gray-900 uppercase tracking-wide">
               Timeline Display
             </h3>
@@ -341,7 +341,7 @@ export function ChartSettingsDialog(): JSX.Element | null {
         {/* Task Display Section */}
         <div>
           <div className="flex items-center gap-2 mb-4">
-            <Calendar size={20} weight="duotone" className="text-gray-600" />
+            <ChartBarHorizontal size={20} weight="duotone" className="text-gray-600" />
             <h3 className="text-sm font-semibold text-gray-900 uppercase tracking-wide">
               Task Display
             </h3>

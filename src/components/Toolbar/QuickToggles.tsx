@@ -7,7 +7,7 @@
  * - Other toggles available via keyboard shortcuts and Chart Settings
  */
 
-import { GitBranch } from "@phosphor-icons/react";
+import { FlowArrow } from "@phosphor-icons/react";
 import { useChartStore } from "../../store/slices/chartSlice";
 import { useDensityConfig } from "../../store/slices/userPreferencesSlice";
 
@@ -44,10 +44,7 @@ export function QuickToggles(): JSX.Element {
           }
         `}
       >
-        <GitBranch
-          size={iconSize}
-          weight={showDependencies ? "fill" : "regular"}
-        />
+        <FlowArrow size={iconSize} weight="regular" />
       </button>
     </div>
   );

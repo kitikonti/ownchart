@@ -36,7 +36,7 @@ import {
   TextOutdent,
   TextIndent,
   Export,
-  GitBranch,
+  FlowArrow,
   Gear,
   Question,
   MagnifyingGlassPlus,
@@ -343,7 +343,7 @@ export function AppToolbar() {
           onClick={toggleDependencies}
           title={showDependencies ? "Hide Dependencies (D)" : "Show Dependencies (D)"}
           aria-label={showDependencies ? "Hide Dependencies" : "Show Dependencies"}
-          icon={<GitBranch size={ICON_SIZE} weight={showDependencies ? "fill" : "regular"} />}
+          icon={<FlowArrow size={ICON_SIZE} weight="regular" />}
         />
       </ToolbarGroup>
 
