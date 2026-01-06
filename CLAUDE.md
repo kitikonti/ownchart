@@ -58,7 +58,7 @@
 - ✅ Keyboard shortcuts for view toggles (T, D, P, H)
 - ✅ Dependencies toggle button in toolbar (FlowArrow icon)
 - ✅ Timeline header improvements: Calendar week visible at all zoom levels
-- 🔜 Working Days Mode (planned)
+- ✅ Working Days Mode (duration editing, task drag maintains working days)
 
 **Test Coverage**: 786 unit tests (80%+ coverage)
 

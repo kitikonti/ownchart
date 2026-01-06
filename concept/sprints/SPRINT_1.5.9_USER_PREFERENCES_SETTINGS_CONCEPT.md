@@ -1,9 +1,9 @@
 # Sprint 1.5.9: User Preferences & Settings Dialog
 
 **Sprint-ID:** 1.5.9
-**Version:** 1.3
+**Version:** 1.4
 **Erstellt:** 2026-01-06
-**Status:** 🔄 IN PROGRESS - Core Features Complete, Working Days Mode Pending
+**Status:** ✅ COMPLETE - All Features Implemented
 
 ---
 
@@ -331,8 +331,8 @@ interface Vacation {
 | `showProgress` | `boolean` | `true` | Checkbox | Keyboard (P) | ✅ |
 | `taskLabelPosition` | `'before' \| 'inside' \| 'after' \| 'none'` | `'inside'` | Radio Buttons | Nein | ✅ |
 | `holidayRegion` | `string` | `'AT'` | Dropdown | Nein | ✅ |
-| `workingDaysMode` | `boolean` | `false` | Checkbox + Info | Nein | 🔜 Pending |
-| `workingDaysConfig` | `object` | see below | Checkboxes | Nein | 🔜 Pending |
+| `workingDaysMode` | `boolean` | `false` | Checkbox + Info | Nein | ✅ |
+| `workingDaysConfig` | `object` | see below | Checkboxes | Nein | ✅ |
 
 ### 3.3 Preferences Dialog Design
 
@@ -878,9 +878,9 @@ src/components/
 | **5.1.4** | Toolbar Quick-Toggles | 4h | ✅ COMPLETE |
 | **5.1.5** | Task Label Position | 4h | ✅ COMPLETE |
 | **5.1.6** | Show/Hide Progress Column | 3h | ✅ COMPLETE |
-| **5.1.7** | Working Days Mode | 12h | 🔜 PENDING |
+| **5.1.7** | Working Days Mode | 12h | ✅ COMPLETE |
 | **5.1.8** | Testing & Polish | 8h | ✅ COMPLETE (786 tests) |
-| **Total** | | **~51h** | **~39h complete** |
+| **Total** | | **~51h** | **ALL COMPLETE** |
 
 ### 5.2 Detailed Task Breakdown
 
@@ -1243,7 +1243,7 @@ function onWorkingDaysConfigChange() {
 - [x] Toolbar Quick-Toggles (D) mit Keyboard Shortcuts (T, D, P, H)
 - [x] Task Label Position (before/inside/after/none)
 - [x] Progress Column ein/ausblendbar
-- [ ] Working Days Mode funktional (PENDING)
+- [x] Working Days Mode funktional (workingDaysCalculator.ts, Cell.tsx, useTaskBarInteraction.ts)
 - [x] Alle Settings persistent (localStorage / .ownchart)
 - [x] File format migration getestet
 - [x] Unit tests (>80% Coverage für neue Module) - 786 tests total, 120 new for Sprint 1.5.9
@@ -1337,10 +1337,19 @@ npx holidays2json --pick AT,DE,CH,US,GB,FR,IT,ES --min
 
 ---
 
-**Document Version:** 1.3
+**Document Version:** 1.4
 **Last Updated:** 2026-01-06
 **Authors:** OwnChart Development Team
-**Status:** 🔄 IN PROGRESS - Core Features Complete
+**Status:** ✅ COMPLETE - All Features Implemented
+
+**Changelog v1.4:**
+- Sprint marked as COMPLETE - all features implemented
+- Working Days Mode confirmed implemented:
+  - workingDaysCalculator.ts (208 lines): isWorkingDay, calculateWorkingDays, addWorkingDays
+  - ChartSettingsDialog.tsx: UI toggle and configuration
+  - Cell.tsx: Duration column shows working days when enabled
+  - useTaskBarInteraction.ts: Task drag maintains working days duration
+- All packages marked as complete
 
 **Changelog v1.3:**
 - Updated status to reflect implementation progress
@@ -1354,7 +1363,6 @@ npx holidays2json --pick AT,DE,CH,US,GB,FR,IT,ES --min
 - Timeline header improvements: Calendar week visible at all zoom levels
 - Comprehensive test coverage: 786 tests total, 120 new for Sprint 1.5.9
 - Definition of Done updated with completion status
-- Working Days Mode still pending
 
 **Changelog v1.2:**
 - Quick Toggle Entscheidung: Option A (nur Dependencies) mit flow-arrow Icon

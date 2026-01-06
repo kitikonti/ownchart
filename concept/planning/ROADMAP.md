@@ -748,9 +748,9 @@ This sprint was completed ahead of schedule during MVP development. See Sprint 1
 
 ---
 
-#### Sprint 1.5.9: User Preferences & Settings Dialog 🔄 IN PROGRESS
+#### Sprint 1.5.9: User Preferences & Settings Dialog ✅ COMPLETE
 
-**Status**: 🔄 IN PROGRESS (2026-01-06) - Core features complete, Working Days Mode pending
+**Status**: ✅ COMPLETE (2026-01-06) - All features implemented
 
 **Features Implemented**:
 - ✅ Preferences dialog (Menu → Preferences...)
@@ -767,8 +767,8 @@ This sprint was completed ahead of schedule during MVP development. See Sprint 1
 - ✅ Keyboard shortcuts for view toggles (T, D, P, H)
 - ✅ Dependencies toggle button in toolbar (FlowArrow icon)
 - ✅ Timeline header improvements: Calendar week visible at all zoom levels
+- ✅ Working Days Mode (workingDaysCalculator, duration editing, task drag)
 - 🔜 Theme selection (Light/Dark/System) - V2.0
-- 🔜 Working Days Mode - Pending
 
 **Technical Work Completed**:
 - ✅ `userPreferencesSlice.ts` with Zustand persist middleware
@@ -777,16 +777,19 @@ This sprint was completed ahead of schedule during MVP development. See Sprint 1
 - ✅ `PreferencesDialog.tsx` extended with regional settings
 - ✅ View settings in chartSlice (showHolidays, showDependencies, etc.)
 - ✅ Timeline header scale improvements for week display
+- ✅ `workingDaysCalculator.ts` utility (208 lines)
+- ✅ Working Days Mode in Cell.tsx (duration editing)
+- ✅ Working Days Mode in useTaskBarInteraction.ts (task drag)
 - ✅ Comprehensive test coverage (120+ new tests)
 
-**Acceptance Criteria** (most met):
+**Acceptance Criteria** (all met):
 - ✅ Preferences persist across browser sessions (localStorage)
 - ✅ Date format applies to all date displays
 - ✅ UI density affects row heights, font sizes, spacing
 - ✅ Holiday highlighting works with regional selection
 - ✅ View toggles work via toolbar and keyboard shortcuts
+- ✅ Working Days Mode functional (duration editing, task drag)
 - 🔜 Theme applies immediately without reload (V2.0)
-- 🔜 Working Days Mode functional
 
 **Architecture Reference**: See [SETTINGS_ARCHITECTURE.md](../architecture/SETTINGS_ARCHITECTURE.md) for:
 - Two-tier storage model (User Prefs vs Project Settings)
@@ -1455,12 +1458,20 @@ This roadmap provides a clear path from concept to launch:
 
 ---
 
-**Document Version**: 1.9
+**Document Version**: 2.0
 **Last Updated**: 2026-01-06
-**Status**: ✅ MVP COMPLETE (v0.0.12)
-**Next Phase**: V1.1 - Deferred Features & Extensibility
+**Status**: ✅ Sprint 1.5.9 COMPLETE (v0.0.12)
+**Next Phase**: V1.1 - Remaining Deferred Features
 
-**Recent Updates (v1.9)** - UI Density Complete:
+**Recent Updates (v2.0)** - Sprint 1.5.9 Complete:
+- Sprint 1.5.9 marked as COMPLETE - all features implemented
+- Working Days Mode confirmed fully implemented:
+  - workingDaysCalculator.ts utility (208 lines)
+  - Duration column editing in working days
+  - Task drag maintains working days duration
+- All acceptance criteria met (except Theme which is V2.0)
+
+**Previous Updates (v1.9)** - UI Density Complete:
 - Sprint 1.5.9.1 UI Density (Compact/Normal/Comfortable) complete
 - Three density modes with preferences dialog
 - Export density selection independent from app preference
