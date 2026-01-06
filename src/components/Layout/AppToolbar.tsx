@@ -210,11 +210,7 @@ export function AppToolbar() {
       {/* ─── Logo ─── */}
       <div className="flex items-center group cursor-default">
         <div className="p-1.5 rounded-lg bg-slate-800 shadow-sm">
-          <ChartBarHorizontal
-            size={18}
-            weight="bold"
-            className="text-white"
-          />
+          <ChartBarHorizontal size={18} weight="bold" className="text-white" />
         </div>
       </div>
 

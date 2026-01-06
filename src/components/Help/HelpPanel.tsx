@@ -161,7 +161,11 @@ export function HelpPanel(): JSX.Element | null {
 
         {/* Tip */}
         <div className="flex items-start gap-2.5 p-3 bg-slate-100 rounded-lg text-sm text-slate-700 border border-slate-200">
-          <Lightbulb size={18} weight="fill" className="mt-0.5 flex-shrink-0 text-slate-500" />
+          <Lightbulb
+            size={18}
+            weight="fill"
+            className="mt-0.5 flex-shrink-0 text-slate-500"
+          />
           <span>
             {isMac() ? (
               <>

@@ -65,7 +65,9 @@ export function WelcomeTour(): JSX.Element | null {
 
         {/* Quick tips */}
         <div className="space-y-3">
-          <h3 className="text-sm font-semibold text-slate-900 uppercase tracking-wide">Quick tips</h3>
+          <h3 className="text-sm font-semibold text-slate-900 uppercase tracking-wide">
+            Quick tips
+          </h3>
 
           <div className="flex items-start gap-3 p-3 bg-slate-50 rounded-lg">
             <div className="p-2 bg-slate-100 rounded-lg">
@@ -97,7 +99,9 @@ export function WelcomeTour(): JSX.Element | null {
 
           <div className="flex items-start gap-3 p-3 bg-slate-50 rounded-lg">
             <div className="p-2 bg-violet-100 rounded-lg">
-              <span className="text-base font-bold text-violet-600 block w-[18px] text-center">?</span>
+              <span className="text-base font-bold text-violet-600 block w-[18px] text-center">
+                ?
+              </span>
             </div>
             <div>
               <p className="text-sm font-medium text-slate-800">

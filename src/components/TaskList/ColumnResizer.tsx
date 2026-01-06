@@ -3,7 +3,13 @@
  * Allows resizing columns by dragging the column border.
  */
 
-import { useState, useRef, useEffect, type MouseEvent, type KeyboardEvent } from "react";
+import {
+  useState,
+  useRef,
+  useEffect,
+  type MouseEvent,
+  type KeyboardEvent,
+} from "react";
 
 export interface ColumnResizerProps {
   /** Column ID */

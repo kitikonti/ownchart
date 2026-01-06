@@ -190,7 +190,9 @@ export function PreferencesDialog(): JSX.Element | null {
                     onChange={() => handleDateFormatChange(option.value)}
                     className="sr-only"
                   />
-                  <span className={`font-medium font-mono text-xs ${preferences.dateFormat === option.value ? "text-slate-800" : "text-slate-700"}`}>
+                  <span
+                    className={`font-medium font-mono text-xs ${preferences.dateFormat === option.value ? "text-slate-800" : "text-slate-700"}`}
+                  >
                     {option.label}
                   </span>
                   <span className="text-xs text-slate-500">
@@ -227,7 +229,9 @@ export function PreferencesDialog(): JSX.Element | null {
                     onChange={() => handleFirstDayChange(option.value)}
                     className="sr-only"
                   />
-                  <span className={`font-medium ${preferences.firstDayOfWeek === option.value ? "text-slate-800" : "text-slate-700"}`}>
+                  <span
+                    className={`font-medium ${preferences.firstDayOfWeek === option.value ? "text-slate-800" : "text-slate-700"}`}
+                  >
                     {option.label}
                   </span>
                 </label>
@@ -265,7 +269,9 @@ export function PreferencesDialog(): JSX.Element | null {
                     className="mt-0.5"
                   />
                   <div className="flex-1">
-                    <span className={`text-sm font-medium ${preferences.weekNumberingSystem === option.value ? "text-slate-800" : "text-slate-700"}`}>
+                    <span
+                      className={`text-sm font-medium ${preferences.weekNumberingSystem === option.value ? "text-slate-800" : "text-slate-700"}`}
+                    >
                       {option.label}
                     </span>
                     <p className="text-xs text-slate-500 mt-0.5">
@@ -325,7 +331,9 @@ export function PreferencesDialog(): JSX.Element | null {
                   />
                   <div className="flex-1">
                     <div className="flex items-center gap-2">
-                      <span className={`text-sm font-medium ${preferences.uiDensity === option.value ? "text-slate-800" : "text-slate-700"}`}>
+                      <span
+                        className={`text-sm font-medium ${preferences.uiDensity === option.value ? "text-slate-800" : "text-slate-700"}`}
+                      >
                         {option.label}
                       </span>
                       <span className="text-xs text-slate-500 font-mono">

@@ -169,7 +169,9 @@ export function ExportOptionsForm({
 
       {/* Column Selection */}
       <div>
-        <h3 className="text-sm font-medium text-slate-800 mb-3">List Columns</h3>
+        <h3 className="text-sm font-medium text-slate-800 mb-3">
+          List Columns
+        </h3>
         <p className="text-xs text-slate-500 mb-3">
           Select columns to include. Leave all unchecked for timeline only.
         </p>

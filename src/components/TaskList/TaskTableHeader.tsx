@@ -166,7 +166,9 @@ export function TaskTableHeader(): JSX.Element {
                   transform: `scale(${densityConfig.checkboxSize / 16})`,
                 }}
                 title={allSelected ? "Deselect all" : "Select all"}
-                aria-label={allSelected ? "Deselect all tasks" : "Select all tasks"}
+                aria-label={
+                  allSelected ? "Deselect all tasks" : "Select all tasks"
+                }
               />
             </div>
           ) : column.id === "color" ? (

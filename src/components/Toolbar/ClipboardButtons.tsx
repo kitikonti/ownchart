@@ -24,7 +24,9 @@ export function ClipboardButtons() {
         onClick={handleCopy}
         disabled={!canCopyOrCut}
         className={`p-1.5 rounded-md transition-colors focus:outline-none focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-700 ${
-          !canCopyOrCut ? "text-slate-400 cursor-not-allowed" : "text-slate-600 hover:text-slate-800 hover:bg-slate-100 active:bg-slate-200"
+          !canCopyOrCut
+            ? "text-slate-400 cursor-not-allowed"
+            : "text-slate-600 hover:text-slate-800 hover:bg-slate-100 active:bg-slate-200"
         }`}
         title="Copy (Ctrl+C)"
         aria-label="Copy"
@@ -37,7 +39,9 @@ export function ClipboardButtons() {
         onClick={handleCut}
         disabled={!canCopyOrCut}
         className={`p-1.5 rounded-md transition-colors focus:outline-none focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-700 ${
-          !canCopyOrCut ? "text-slate-400 cursor-not-allowed" : "text-slate-600 hover:text-slate-800 hover:bg-slate-100 active:bg-slate-200"
+          !canCopyOrCut
+            ? "text-slate-400 cursor-not-allowed"
+            : "text-slate-600 hover:text-slate-800 hover:bg-slate-100 active:bg-slate-200"
         }`}
         title="Cut (Ctrl+X)"
         aria-label="Cut"
@@ -50,7 +54,9 @@ export function ClipboardButtons() {
         onClick={handlePaste}
         disabled={!canPaste}
         className={`p-1.5 rounded-md transition-colors focus:outline-none focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-700 ${
-          !canPaste ? "text-slate-400 cursor-not-allowed" : "text-slate-600 hover:text-slate-800 hover:bg-slate-100 active:bg-slate-200"
+          !canPaste
+            ? "text-slate-400 cursor-not-allowed"
+            : "text-slate-600 hover:text-slate-800 hover:bg-slate-100 active:bg-slate-200"
         }`}
         title="Paste (Ctrl+V)"
         aria-label="Paste"
@@ -63,7 +69,9 @@ export function ClipboardButtons() {
         onClick={deleteSelectedTasks}
         disabled={!canDelete}
         className={`p-1.5 rounded-md transition-colors focus:outline-none focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-700 ${
-          !canDelete ? "text-slate-400 cursor-not-allowed" : "text-slate-600 hover:text-slate-800 hover:bg-slate-100 active:bg-slate-200"
+          !canDelete
+            ? "text-slate-400 cursor-not-allowed"
+            : "text-slate-600 hover:text-slate-800 hover:bg-slate-100 active:bg-slate-200"
         }`}
         title="Delete (Del)"
         aria-label="Delete"

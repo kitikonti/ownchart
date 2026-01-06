@@ -398,7 +398,9 @@ export function ChartSettingsDialog(): JSX.Element | null {
                       onChange={() => setTaskLabelPosition(option.value)}
                       className="sr-only"
                     />
-                    <span className={`font-medium ${taskLabelPosition === option.value ? "text-slate-800" : "text-slate-700"}`}>
+                    <span
+                      className={`font-medium ${taskLabelPosition === option.value ? "text-slate-800" : "text-slate-700"}`}
+                    >
                       {option.label}
                     </span>
                   </label>

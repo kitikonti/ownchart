@@ -25,7 +25,9 @@ export function UndoRedoButtons() {
         onClick={undo}
         disabled={!canUndo}
         className={`p-1.5 rounded-md transition-colors focus:outline-none focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-700 ${
-          !canUndo ? "text-slate-400 cursor-not-allowed" : "text-slate-600 hover:text-slate-800 hover:bg-slate-100 active:bg-slate-200"
+          !canUndo
+            ? "text-slate-400 cursor-not-allowed"
+            : "text-slate-600 hover:text-slate-800 hover:bg-slate-100 active:bg-slate-200"
         }`}
         aria-label={
           canUndo ? `Undo: ${undoDescription} (Ctrl+Z)` : "Nothing to undo"
@@ -40,7 +42,9 @@ export function UndoRedoButtons() {
         onClick={redo}
         disabled={!canRedo}
         className={`p-1.5 rounded-md transition-colors focus:outline-none focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-700 ${
-          !canRedo ? "text-slate-400 cursor-not-allowed" : "text-slate-600 hover:text-slate-800 hover:bg-slate-100 active:bg-slate-200"
+          !canRedo
+            ? "text-slate-400 cursor-not-allowed"
+            : "text-slate-600 hover:text-slate-800 hover:bg-slate-100 active:bg-slate-200"
         }`}
         aria-label={
           canRedo

@@ -47,7 +47,9 @@ export function InsertButtons() {
         onClick={handleInsertAbove}
         disabled={!canInsert}
         className={`p-1.5 rounded-md transition-colors focus:outline-none focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-700 ${
-          !canInsert ? "text-slate-400 cursor-not-allowed" : "text-slate-600 hover:text-slate-800 hover:bg-slate-100 active:bg-slate-200"
+          !canInsert
+            ? "text-slate-400 cursor-not-allowed"
+            : "text-slate-600 hover:text-slate-800 hover:bg-slate-100 active:bg-slate-200"
         }`}
         title="Insert task above"
         aria-label="Insert task above"
@@ -60,7 +62,9 @@ export function InsertButtons() {
         onClick={handleInsertBelow}
         disabled={!canInsert}
         className={`p-1.5 rounded-md transition-colors focus:outline-none focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-700 ${
-          !canInsert ? "text-slate-400 cursor-not-allowed" : "text-slate-600 hover:text-slate-800 hover:bg-slate-100 active:bg-slate-200"
+          !canInsert
+            ? "text-slate-400 cursor-not-allowed"
+            : "text-slate-600 hover:text-slate-800 hover:bg-slate-100 active:bg-slate-200"
         }`}
         title="Insert task below"
         aria-label="Insert task below"

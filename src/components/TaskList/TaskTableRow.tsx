@@ -279,7 +279,11 @@ export function TaskTableRow({
                         toggleTaskCollapsed(task.id);
                       }}
                       className="w-4 h-4 flex items-center justify-center hover:bg-slate-200 rounded text-slate-600 flex-shrink-0 focus:outline-none focus-visible:outline-2 focus-visible:outline-blue-700"
-                      aria-label={isExpanded ? `Collapse ${task.name}` : `Expand ${task.name}`}
+                      aria-label={
+                        isExpanded
+                          ? `Collapse ${task.name}`
+                          : `Expand ${task.name}`
+                      }
                       aria-expanded={isExpanded}
                     >
                       {isExpanded ? "▼" : "▶"}

@@ -1,9 +1,9 @@
 /* Self-hosted fonts via @fontsource (GDPR compliant) */
-@import '@fontsource/inter/400.css';
-@import '@fontsource/inter/400-italic.css';
-@import '@fontsource/inter/500.css';
-@import '@fontsource/inter/600.css';
-@import '@fontsource/inter/700.css';
+@import "@fontsource/inter/400.css";
+@import "@fontsource/inter/400-italic.css";
+@import "@fontsource/inter/500.css";
+@import "@fontsource/inter/600.css";
+@import "@fontsource/inter/700.css";
 
 @tailwind base;
 @tailwind components;
@@ -19,8 +19,9 @@
 
 :root {
   /* Typography - Self-hosted fonts */
-  --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-  --font-mono: ui-monospace, 'SF Mono', 'Fira Code', monospace;
+  --font-sans:
+    "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  --font-mono: ui-monospace, "SF Mono", "Fira Code", monospace;
 
   font-family: var(--font-sans);
   line-height: 1.5;
@@ -66,11 +67,11 @@
   --color-border-strong: #94a3b8;
 
   /* Text colors - WCAG AA compliant (4.5:1 minimum on white) */
-  --color-text-primary: #0f172a;   /* ~16:1 contrast */
+  --color-text-primary: #0f172a; /* ~16:1 contrast */
   --color-text-secondary: #475569; /* ~7:1 contrast */
-  --color-text-tertiary: #64748b;  /* ~4.5:1 contrast - AA compliant */
-  --color-text-muted: #64748b;     /* ~4.5:1 contrast - upgraded from #94a3b8 */
-  --color-text-disabled: #9ca3af;  /* ~3:1 contrast - acceptable for disabled UI */
+  --color-text-tertiary: #64748b; /* ~4.5:1 contrast - AA compliant */
+  --color-text-muted: #64748b; /* ~4.5:1 contrast - upgraded from #94a3b8 */
+  --color-text-disabled: #9ca3af; /* ~3:1 contrast - acceptable for disabled UI */
   --color-text-placeholder: #6b7280; /* ~5:1 contrast - AA compliant */
 
   /* Semantic colors */
@@ -81,10 +82,16 @@
 
   /* ─── Shadows - Refined elevation system ─── */
   --shadow-xs: 0 1px 2px rgba(15, 23, 42, 0.04);
-  --shadow-sm: 0 1px 3px rgba(15, 23, 42, 0.06), 0 1px 2px rgba(15, 23, 42, 0.04);
-  --shadow-md: 0 4px 6px -1px rgba(15, 23, 42, 0.07), 0 2px 4px -1px rgba(15, 23, 42, 0.04);
-  --shadow-lg: 0 10px 15px -3px rgba(15, 23, 42, 0.08), 0 4px 6px -2px rgba(15, 23, 42, 0.04);
-  --shadow-xl: 0 20px 25px -5px rgba(15, 23, 42, 0.1), 0 10px 10px -5px rgba(15, 23, 42, 0.04);
+  --shadow-sm:
+    0 1px 3px rgba(15, 23, 42, 0.06), 0 1px 2px rgba(15, 23, 42, 0.04);
+  --shadow-md:
+    0 4px 6px -1px rgba(15, 23, 42, 0.07), 0 2px 4px -1px rgba(15, 23, 42, 0.04);
+  --shadow-lg:
+    0 10px 15px -3px rgba(15, 23, 42, 0.08),
+    0 4px 6px -2px rgba(15, 23, 42, 0.04);
+  --shadow-xl:
+    0 20px 25px -5px rgba(15, 23, 42, 0.1),
+    0 10px 10px -5px rgba(15, 23, 42, 0.04);
   --shadow-inner: inset 0 2px 4px rgba(15, 23, 42, 0.04);
   /* Focus ring - high visibility for accessibility */
   --shadow-focus: 0 0 0 2px #ffffff, 0 0 0 4px #1e40af;
@@ -217,7 +224,7 @@ input[type="checkbox"]:checked {
 }
 
 input[type="checkbox"]::before {
-  content: '';
+  content: "";
   width: 5px;
   height: 9px;
   border: solid white;
@@ -280,7 +287,7 @@ input[type="radio"]:checked {
 }
 
 input[type="radio"]::before {
-  content: '';
+  content: "";
   width: 8px;
   height: 8px;
   background: #475569;
@@ -331,7 +338,9 @@ select:focus {
 /* Monospace for data/numbers */
 .font-mono {
   font-family: var(--font-mono);
-  font-feature-settings: 'tnum' on, 'lnum' on;
+  font-feature-settings:
+    "tnum" on,
+    "lnum" on;
 }
 
 /* Text utilities */
