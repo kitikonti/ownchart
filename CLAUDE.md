@@ -14,7 +14,7 @@
 
 ## Project Status
 
-**Current Version**: `0.0.14`
+**Current Version**: See `package.json` for the current version number.
 
 **Completed Sprints**:
 - ✅ Sprint 1.1.1 - Task Groups & Hierarchical Organization
@@ -30,7 +30,7 @@
 - ✅ Sprint 1.5.9.1 - UI Density (Compact/Normal/Comfortable)
 - ✅ Sprint 1.5.9 - User Preferences & Settings (partial - core features complete)
 
-**MVP Features Complete (v0.0.14)**:
+**MVP Features Complete**:
 - ✅ Multi-select with rectangular marquee selection in timeline
 - ✅ Copy/Cut/Paste with cross-tab clipboard support
 - ✅ Multi-task dragging (all selected tasks move together)
@@ -457,8 +457,6 @@ npm run test:e2e            # E2E tests (Playwright)
 
 ---
 
-**Last Updated**: 2026-01-06
-**Project Version**: 0.0.14
 **Status**: Sprint 1.5.9 In Progress - User Preferences & Settings
 **File Extension**: `.ownchart`
-**Test Count**: 786 unit tests
+**Version**: Check `package.json` for the current version
