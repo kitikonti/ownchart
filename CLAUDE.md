@@ -6,6 +6,7 @@
 
 **OwnChart** - Privacy-first, offline Gantt chart for project planning. Own your data.
 
+- **Live**: [ownchart.app](https://ownchart.app)
 - **Tech Stack**: React 18 + TypeScript + Vite + Zustand + TailwindCSS + D3.js
 - **Testing**: Vitest (unit) + Playwright (E2E) + 80%+ coverage
 - **CI/CD**: GitHub Actions + GitHub Pages
