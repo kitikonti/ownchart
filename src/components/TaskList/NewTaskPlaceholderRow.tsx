@@ -244,7 +244,7 @@ export function NewTaskPlaceholderRow(): JSX.Element {
                   onChange={handleCheckboxChange}
                   className="cursor-pointer"
                   style={{
-                    transform: `scale(${densityConfig.checkboxSize / 14})`,
+                    transform: `scale(${densityConfig.checkboxSize / 16})`,
                   }}
                   aria-label="Select new task placeholder row"
                 />

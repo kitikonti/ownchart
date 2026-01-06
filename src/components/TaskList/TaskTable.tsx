@@ -258,7 +258,7 @@ export function TaskTable({ hideHeader = true }: TaskTableProps): JSX.Element {
                         onChange={handleHeaderCheckboxClick}
                         className="cursor-pointer"
                         style={{
-                          transform: `scale(${densityConfig.checkboxSize / 14})`,
+                          transform: `scale(${densityConfig.checkboxSize / 16})`,
                         }}
                         title={allSelected ? "Deselect all" : "Select all"}
                         aria-label={allSelected ? "Deselect all tasks" : "Select all tasks"}

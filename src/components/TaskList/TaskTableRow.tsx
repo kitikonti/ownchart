@@ -227,7 +227,7 @@ export function TaskTableRow({
           }}
           className="cursor-pointer"
           style={{
-            transform: `scale(${densityConfig.checkboxSize / 14})`,
+            transform: `scale(${densityConfig.checkboxSize / 16})`,
           }}
           aria-label={`Select task ${task.name}`}
         />
