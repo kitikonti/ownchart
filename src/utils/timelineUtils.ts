@@ -119,23 +119,47 @@ export function getScaleConfig(
 ): ScaleConfig[] {
   const effectivePixelsPerDay = pixelsPerDay * zoom;
 
-  // Very zoomed out (< 5 pixels per day): Year → Quarter
-  if (effectivePixelsPerDay < 5) {
+  // Extremely zoomed out (< 3 pixels per day): Quarter+Year → Month
+  if (effectivePixelsPerDay < 3) {
     return [
-      { unit: "year", step: 1, format: "yyyy" },
       {
         unit: "quarter",
         step: 1,
-        format: (date) => `Q${Math.floor(date.getMonth() / 3) + 1}`,
+        format: (date) => `Q${Math.floor(date.getMonth() / 3) + 1} ${date.getFullYear()}`,
+      },
+      { unit: "month", step: 1, format: "MMM" },
+    ];
+  }
+
+  // Very zoomed out (3-5 pixels per day): Month+Year → Week (number only)
+  if (effectivePixelsPerDay < 5) {
+    return [
+      { unit: "month", step: 1, format: "MMM yyyy" },
+      {
+        unit: "week",
+        step: 1,
+        format: (date) =>
+          `${getWeek(date, {
+            weekStartsOn: getWeekStartDay(),
+            firstWeekContainsDate: getFirstWeekContainsDate(),
+          })}`,
       },
     ];
   }
 
-  // Zoomed out (5-15 pixels per day): Year → Month
+  // Zoomed out (5-15 pixels per day): Month+Year → Week
   if (effectivePixelsPerDay < 15) {
     return [
-      { unit: "year", step: 1, format: "yyyy" },
-      { unit: "month", step: 1, format: "MMM" },
+      { unit: "month", step: 1, format: "MMM yyyy" },
+      {
+        unit: "week",
+        step: 1,
+        format: (date) =>
+          `W${getWeek(date, {
+            weekStartsOn: getWeekStartDay(),
+            firstWeekContainsDate: getFirstWeekContainsDate(),
+          })}`,
+      },
     ];
   }
 

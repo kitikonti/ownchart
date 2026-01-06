@@ -52,11 +52,15 @@ function formatLabel(
   // For week units, format with explicit week options from preferences
   if (config.unit === "week") {
     const weekNum = getWeek(date, weekOptions);
-    // Check if format function expects "Week X" or "WX" style
+    // Check if format function expects "Week X", "WX", or just number style
     if (typeof config.format === "function") {
       const sample = config.format(date);
       if (sample.startsWith("Week ")) {
         return `Week ${weekNum}`;
+      }
+      // If format returns just a number, keep it as number only
+      if (/^\d+$/.test(sample)) {
+        return `${weekNum}`;
       }
     }
     return `W${weekNum}`;
