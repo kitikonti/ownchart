@@ -33,9 +33,6 @@ export function TodayMarker({ scale, svgHeight }: TodayMarkerProps) {
         strokeWidth={2}
         strokeDasharray="4 4"
       />
-      <text x={x + 4} y={20} fontSize={11} fill="#fa5252" fontWeight={600}>
-        TODAY
-      </text>
     </g>
   );
 }
