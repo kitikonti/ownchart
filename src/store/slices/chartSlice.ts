@@ -56,6 +56,7 @@ interface ChartState {
   // Transient UI state
   isZooming: boolean;
   isPanning: boolean;
+  lastFitToViewTime: number; // Timestamp to detect fitToView calls
 
   // Multi-task drag state (shared for preview rendering)
   dragState: {
@@ -68,6 +69,7 @@ interface ChartActions {
   // Centralized scale lifecycle (Architect recommendation)
   updateScale: (tasks: Task[]) => void;
   setContainerWidth: (width: number) => void;
+  extendDateRange: (direction: "past" | "future", days?: number) => void;
 
   // Zoom actions (Sprint 1.2 Package 3)
   setZoom: (zoom: number, centerPoint?: { x: number; y: number }) => void;
@@ -151,6 +153,7 @@ export const useChartStore = create<ChartState & ChartActions>()(
     // Transient UI state
     isZooming: false,
     isPanning: false,
+    lastFitToViewTime: 0,
     dragState: null,
 
     // Centralized scale calculation - updates dateRange from tasks, then derives scale
@@ -158,9 +161,9 @@ export const useChartStore = create<ChartState & ChartActions>()(
       set((state) => {
         const taskDateRange = getDateRange(tasks);
 
-        // Add 7 days padding for comfortable view
-        const paddedMin = addDays(taskDateRange.min, -7);
-        const paddedMax = addDays(taskDateRange.max, 7);
+        // Add 14 days padding on both sides (7 visible + 7 for scroll room)
+        const paddedMin = addDays(taskDateRange.min, -14);
+        const paddedMax = addDays(taskDateRange.max, 14);
 
         // Update dateRange
         state.dateRange = { min: paddedMin, max: paddedMax };
@@ -182,6 +185,26 @@ export const useChartStore = create<ChartState & ChartActions>()(
         if (state.dateRange) {
           state.scale = deriveScale(state.dateRange, width, state.zoom);
         }
+      });
+    },
+
+    // Extend date range for infinite scroll
+    extendDateRange: (direction: "past" | "future", days: number = 30) => {
+      set((state) => {
+        if (!state.dateRange) return;
+
+        if (direction === "past") {
+          state.dateRange.min = addDays(state.dateRange.min, -days);
+        } else {
+          state.dateRange.max = addDays(state.dateRange.max, days);
+        }
+
+        // Recalculate scale with new date range
+        state.scale = deriveScale(
+          state.dateRange,
+          state.containerWidth,
+          state.zoom
+        );
       });
     },
 
@@ -262,19 +285,20 @@ export const useChartStore = create<ChartState & ChartActions>()(
 
       const { min, max } = getDateRange(tasks);
 
-      // Add 1 week (7 days) padding before and after tasks
-      const paddedMin = addDays(min, -7);
-      const paddedMax = addDays(max, 7);
+      // Add 14 days padding on both sides (7 visible + 7 for scroll room)
+      // Same as updateScale to allow scrolling in both directions
+      const paddedMin = addDays(min, -14);
+      const paddedMax = addDays(max, 14);
 
-      const paddedDuration = calculateDuration(paddedMin, paddedMax);
+      // Calculate zoom based on visible range (7 days padding each side)
+      const visibleDuration = calculateDuration(addDays(min, -7), addDays(max, 7));
       const containerWidth = get().containerWidth;
 
-      // Calculate zoom to fit padded duration exactly in container
-      // Formula: totalWidth = paddedDuration × (FIXED_BASE_PIXELS_PER_DAY × zoom)
-      // We want: containerWidth = paddedDuration × (25 × zoom)
-      // Therefore: zoom = containerWidth / (paddedDuration × 25)
+      // Calculate zoom to fit visible duration exactly in container
+      // Formula: containerWidth = visibleDuration × (25 × zoom)
+      // Therefore: zoom = containerWidth / (visibleDuration × 25)
       const idealZoom =
-        containerWidth / (paddedDuration * FIXED_BASE_PIXELS_PER_DAY);
+        containerWidth / (visibleDuration * FIXED_BASE_PIXELS_PER_DAY);
 
       // Set zoom (clamped to valid range)
       const finalZoom = Math.max(MIN_ZOOM, Math.min(MAX_ZOOM, idealZoom));
@@ -288,6 +312,7 @@ export const useChartStore = create<ChartState & ChartActions>()(
         state.zoom = finalZoom;
         state.panOffset = { x: 0, y: 0 };
         state.scale = deriveScale(newDateRange, containerWidth, finalZoom);
+        state.lastFitToViewTime = Date.now(); // Mark that fitToView was called
       });
     },
 
