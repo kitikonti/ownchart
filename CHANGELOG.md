@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [0.0.20](https://github.com/kitikonti/ownchart/compare/v0.0.19...v0.0.20) (2026-01-08)
+
+
+### Features
+
+* **zoom:** implement exponential zoom for consistent feel at all levels ([c17a98c](https://github.com/kitikonti/ownchart/commit/c17a98ce5b92aa14adf5f886adce2d5777423abe))
+
 ### [0.0.19](https://github.com/kitikonti/ownchart/compare/v0.0.18...v0.0.19) (2026-01-08)
 
 
