@@ -249,7 +249,10 @@ export const useChartStore = create<ChartState & ChartActions>()(
           const newAnchorPixelPos = dateToPixel(anchor.anchorDate, newScale);
 
           // Calculate new scrollLeft to keep anchor at same viewport position
-          newScrollLeft = Math.max(0, Math.round(newAnchorPixelPos - anchor.anchorPixelOffset));
+          newScrollLeft = Math.max(
+            0,
+            Math.round(newAnchorPixelPos - anchor.anchorPixelOffset)
+          );
         }
       }
 
@@ -334,7 +337,10 @@ export const useChartStore = create<ChartState & ChartActions>()(
       const paddedMax = addDays(max, 90);
 
       // Calculate zoom based on visible range (7 days padding each side)
-      const visibleDuration = calculateDuration(addDays(min, -7), addDays(max, 7));
+      const visibleDuration = calculateDuration(
+        addDays(min, -7),
+        addDays(max, 7)
+      );
       const containerWidth = get().containerWidth;
 
       // Calculate zoom to fit visible duration exactly in container

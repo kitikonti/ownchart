@@ -212,7 +212,9 @@ export function AppToolbar() {
       fitToView(tasks);
     } else {
       const anchor = getViewportCenterAnchor();
-      const result = useChartStore.getState().setZoom(parseInt(value) / 100, anchor);
+      const result = useChartStore
+        .getState()
+        .setZoom(parseInt(value) / 100, anchor);
       applyScrollLeft(result.newScrollLeft);
     }
   };

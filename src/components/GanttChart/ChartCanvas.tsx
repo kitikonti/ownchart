@@ -227,7 +227,10 @@ export function ChartCanvas({
   // This enables infinite scroll to work in both directions
   // Must be > 2 * THRESHOLD (100px) + initial scroll offset (~175px) to allow scrolling both ways
   const MIN_OVERFLOW = 400;
-  const timelineWidth = Math.max(scale.totalWidth, containerWidth + MIN_OVERFLOW);
+  const timelineWidth = Math.max(
+    scale.totalWidth,
+    containerWidth + MIN_OVERFLOW
+  );
 
   return (
     <div

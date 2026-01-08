@@ -172,7 +172,8 @@ export function GanttLayout() {
     if (!chartContainer || !scale || !dateRange) return;
 
     // Check if fitToView was just called
-    const fitToViewJustCalled = lastFitToViewTime > prevFitToViewTimeRef.current;
+    const fitToViewJustCalled =
+      lastFitToViewTime > prevFitToViewTimeRef.current;
     prevFitToViewTimeRef.current = lastFitToViewTime;
 
     const dateRangeKey = `${dateRange.min}-${dateRange.max}`;
@@ -276,7 +277,8 @@ export function GanttLayout() {
             lastExtendPastRef.current = currentNow;
 
             // Capture distance from right edge (preserved during extension)
-            const distanceFromRightEdge = currentScrollWidth - currentScrollLeft;
+            const distanceFromRightEdge =
+              currentScrollWidth - currentScrollLeft;
 
             // Extend and correct
             flushSync(() => {
