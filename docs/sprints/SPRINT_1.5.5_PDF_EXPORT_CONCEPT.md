@@ -2044,8 +2044,978 @@ interface ExportAnalytics {
 
 ---
 
-**Document Version:** 2.0 (FINAL)
+## SVG Export - Detailed Concept
+
+### SVG Export Overview
+
+SVG (Scalable Vector Graphics) export provides a third export format alongside PNG and PDF, specifically targeting users who need editable vector graphics for further manipulation in design tools like Adobe Illustrator, Figma, Inkscape, or Affinity Designer.
+
+**Key Differentiators:**
+
+| Aspect | PNG | PDF | SVG |
+|--------|-----|-----|-----|
+| Format | Raster | Vector (document) | Vector (graphics) |
+| Editability | None | Limited (Acrobat) | Full (Illustrator, Inkscape) |
+| Web embedding | `<img>` | Embed/iframe | Inline or `<img>` |
+| Styling | Fixed | Fixed | CSS customizable |
+| File size | Large | Medium | Small |
+| Use case | Presentations | Print, archive | Design, web |
+| Animation support | No | No | Yes (SMIL, CSS) |
+
+**Strategic Value:**
+> "SVG export fills a gap neither PNG nor PDF addresses: designers who want to incorporate Gantt charts into custom presentations, marketing materials, or interactive web dashboards need editable vector source files."
+
+---
+
+### SVG Export - Product Owner Requirements
+
+**User Value Proposition:**
+1. **Full Editability**: Modify colors, fonts, layout in any vector editor
+2. **Web Integration**: Embed directly in web pages with CSS styling
+3. **Small File Size**: Vector format is compact for web delivery
+4. **Infinite Scalability**: No quality loss at any size
+5. **Design Workflow**: Import into Figma, Sketch, Adobe XD for mockups
+6. **Animation Potential**: Can be animated with CSS/JS (future feature)
+
+**Feature Priority:**
+1. 🔴 **Critical:** Basic SVG export with all chart elements
+2. 🔴 **Critical:** Preserve task colors, fonts, and styling
+3. 🟡 **High:** Export options (include/exclude elements)
+4. 🟡 **High:** Dimension control (width/height or auto-fit)
+5. 🟢 **Medium:** Embedded fonts vs. system fonts option
+6. 🟢 **Medium:** CSS classes for styling customization
+7. 🔵 **Low:** SVGO optimization (minification)
+8. 🔵 **Low:** Inline styles vs. stylesheet option
+
+**Acceptance Criteria:**
+- [ ] SVG opens correctly in all major design tools (Illustrator, Inkscape, Figma)
+- [ ] All chart elements render identically to screen display
+- [ ] SVG viewBox scales correctly at any size
+- [ ] Text is editable as text, not converted to paths
+- [ ] Dependencies render as proper Bézier curves
+- [ ] Colors match exactly (hex values preserved)
+- [ ] File size < 500KB for typical 100-task chart
+- [ ] Export completes in < 2 seconds for 100 tasks
+
+**User Stories:**
+- As a graphic designer, I want to export the timeline to SVG so I can customize it for a client presentation in Illustrator
+- As a web developer, I want to embed an interactive Gantt chart in our company dashboard
+- As a marketing manager, I want to include a project timeline in our annual report design
+- As a UX designer, I want to use the Gantt chart in Figma mockups for a project management app
+- As a teacher, I want to edit the timeline colors and add annotations for educational materials
+
+---
+
+### SVG Export - UX/UI Designer Specifications
+
+**Format Selector Update:**
+
+```
+┌─────────────────────────────────────────────────────────────────────────┐
+│  📤 Export Chart                                                   [✕]  │
+├─────────────────────────────────────────────────────────────────────────┤
+│                                                                          │
+│  Export Format                                                           │
+│  ─────────────────────────────────────────────────────────────────────  │
+│                                                                          │
+│  ┌──────────────┐  ┌──────────────┐  ┌──────────────┐                   │
+│  │   🖼️ PNG      │  │   📄 PDF      │  │   ✏️ SVG      │                  │
+│  │              │  │              │  │              │                   │
+│  │ Raster image │  │ Print-ready  │  │ Editable     │                   │
+│  │ Best for web │  │ Best for     │  │ Best for     │                   │
+│  │ & slides     │  │ print        │  │ design tools │                   │
+│  │              │  │              │  │              │                   │
+│  └──────────────┘  └──────────────┘  └──────────────┘                   │
+│                                                                          │
+└─────────────────────────────────────────────────────────────────────────┘
+```
+
+**SVG Export Dialog:**
+
+```
+┌─────────────────────────────────────────────────────────────────────────┐
+│  ✏️ Export to SVG                                                   [✕]  │
+├─────────────────────────────────────────────────────────────────────────┤
+│                                                                          │
+│  Dimensions                                                              │
+│  ───────────────────────────────────────────────────────────────────    │
+│                                                                          │
+│  Size: ● Auto (fit content)   ○ Custom                                  │
+│                                                                          │
+│        Width: [1200] px  ×  Height: [auto] px                           │
+│                                                                          │
+│  ☑ Preserve aspect ratio                                                │
+│                                                                          │
+│  ───────────────────────────────────────────────────────────────────    │
+│                                                                          │
+│  [▼ Content Options]                                                    │
+│                                                                          │
+│  ☑ Task list (left panel)                                               │
+│  ☑ Timeline header                                                      │
+│  ☑ Grid lines                                                           │
+│  ☑ Weekend shading                                                      │
+│  ☑ Today marker                                                         │
+│  ☑ Dependencies                                                         │
+│  ☑ Holidays                                                             │
+│                                                                          │
+│  Task Labels: [Inside ▼]        Row Density: [Comfortable ▼]            │
+│                                                                          │
+│  [▼ SVG Options]                                                        │
+│                                                                          │
+│  Text Handling:  ● Keep as text   ○ Convert to paths                    │
+│                                                                          │
+│  Styling:  ● Inline styles   ○ CSS classes                              │
+│                                                                          │
+│  ☐ Optimize SVG (smaller file, less readable)                           │
+│  ☐ Include background rectangle                                         │
+│                                                                          │
+├─────────────────────────────────────────────────────────────────────────┤
+│  💡 SVG files can be edited in Illustrator, Figma, Inkscape, etc.       │
+│                                                                          │
+│                                    [Cancel]  [📥 Export SVG]            │
+└─────────────────────────────────────────────────────────────────────────┘
+```
+
+**SVG-Specific Options Explained:**
+
+| Option | Description | Default |
+|--------|-------------|---------|
+| Keep as text | Text remains editable, requires fonts installed | ✓ Selected |
+| Convert to paths | Text converted to shapes, no font dependency | ○ |
+| Inline styles | Styles embedded in each element | ✓ Selected |
+| CSS classes | Styles in `<style>` block, customizable | ○ |
+| Optimize SVG | Run SVGO to minify (removes metadata, whitespace) | ○ |
+| Include background | Add white rectangle behind chart | ○ |
+
+**Interaction Specifications:**
+
+| Action | Trigger | Result |
+|--------|---------|--------|
+| Select SVG format | Click SVG card | SVG options appear |
+| Change dimensions | Select Custom | Width/height inputs enable |
+| Auto dimensions | Select Auto | Uses chart's natural size |
+| Export SVG | Click "Export SVG" | SVG generates and downloads |
+| Cancel | Click Cancel or Esc | Dialog closes |
+
+---
+
+### SVG Export - Frontend Developer Implementation
+
+**New Files:**
+
+```
+src/utils/export/
+├── svgExport.ts              # Main SVG export function
+├── svgSerializer.ts          # DOM SVG to string conversion
+└── svgOptimizer.ts           # Optional SVGO integration
+```
+
+**New Types:**
+
+```typescript
+/** SVG dimension mode */
+export type SvgDimensionMode = 'auto' | 'custom';
+
+/** SVG text handling */
+export type SvgTextMode = 'text' | 'paths';
+
+/** SVG styling mode */
+export type SvgStyleMode = 'inline' | 'classes';
+
+/** SVG export options */
+export interface SvgExportOptions {
+  dimensionMode: SvgDimensionMode;
+  customWidth?: number;         // pixels, for custom mode
+  customHeight?: number;        // pixels, for custom mode
+  preserveAspectRatio: boolean;
+  textMode: SvgTextMode;
+  styleMode: SvgStyleMode;
+  optimize: boolean;            // Run SVGO
+  includeBackground: boolean;   // Add white bg rectangle
+  // Shared content options (from ExportOptions)
+  includeTaskList: boolean;
+  includeTimelineHeader: boolean;
+  includeGridLines: boolean;
+  includeWeekendShading: boolean;
+  includeTodayMarker: boolean;
+  includeDependencies: boolean;
+  includeHolidays: boolean;
+  taskLabelPosition: TaskLabelPosition;
+  rowDensity: UIDensity;
+}
+
+/** Default SVG export options */
+export const DEFAULT_SVG_OPTIONS: SvgExportOptions = {
+  dimensionMode: 'auto',
+  preserveAspectRatio: true,
+  textMode: 'text',
+  styleMode: 'inline',
+  optimize: false,
+  includeBackground: false,
+  includeTaskList: true,
+  includeTimelineHeader: true,
+  includeGridLines: true,
+  includeWeekendShading: true,
+  includeTodayMarker: true,
+  includeDependencies: true,
+  includeHolidays: true,
+  taskLabelPosition: 'inside',
+  rowDensity: 'comfortable',
+};
+```
+
+**SVG Export Implementation:**
+
+```typescript
+// svgExport.ts
+import { SVGO } from 'svgo'; // Optional dependency
+
+export async function exportToSvg(
+  tasks: Task[],
+  chartState: ChartState,
+  options: SvgExportOptions,
+  onProgress?: (progress: number) => void
+): Promise<void> {
+  onProgress?.(10);
+
+  // 1. Clone the existing chart SVG from DOM
+  const chartSvg = document.querySelector('.timeline-chart svg');
+  if (!chartSvg) {
+    throw new Error('Chart SVG not found in DOM');
+  }
+
+  onProgress?.(30);
+
+  // 2. Create a new SVG document with proper namespace
+  const svgClone = chartSvg.cloneNode(true) as SVGSVGElement;
+
+  // 3. Apply export-specific transformations
+  applyExportOptions(svgClone, options);
+
+  onProgress?.(50);
+
+  // 4. Handle text mode
+  if (options.textMode === 'paths') {
+    await convertTextToPaths(svgClone);
+  }
+
+  onProgress?.(70);
+
+  // 5. Apply styling mode
+  if (options.styleMode === 'classes') {
+    extractInlineStylesToClasses(svgClone);
+  }
+
+  // 6. Set viewBox and dimensions
+  setDimensions(svgClone, options);
+
+  // 7. Add background if requested
+  if (options.includeBackground) {
+    addBackgroundRect(svgClone);
+  }
+
+  onProgress?.(80);
+
+  // 8. Serialize to string
+  let svgString = serializeSvg(svgClone);
+
+  // 9. Optimize if requested
+  if (options.optimize) {
+    svgString = await optimizeSvg(svgString);
+  }
+
+  onProgress?.(90);
+
+  // 10. Download
+  const filename = generateSvgFilename(chartState.projectName);
+  downloadSvg(svgString, filename);
+
+  onProgress?.(100);
+}
+
+function serializeSvg(svg: SVGSVGElement): string {
+  const serializer = new XMLSerializer();
+  const svgString = serializer.serializeToString(svg);
+
+  // Add XML declaration and proper DOCTYPE
+  return `<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN" "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">
+${svgString}`;
+}
+
+function setDimensions(svg: SVGSVGElement, options: SvgExportOptions): void {
+  const bbox = svg.getBBox();
+
+  if (options.dimensionMode === 'auto') {
+    // Use natural dimensions from content
+    svg.setAttribute('width', `${bbox.width}`);
+    svg.setAttribute('height', `${bbox.height}`);
+    svg.setAttribute('viewBox', `0 0 ${bbox.width} ${bbox.height}`);
+  } else {
+    // Use custom dimensions
+    const width = options.customWidth || bbox.width;
+    let height = options.customHeight;
+
+    if (options.preserveAspectRatio && !height) {
+      height = (bbox.height / bbox.width) * width;
+    }
+
+    svg.setAttribute('width', `${width}`);
+    svg.setAttribute('height', `${height || bbox.height}`);
+    svg.setAttribute('viewBox', `0 0 ${bbox.width} ${bbox.height}`);
+  }
+}
+
+function extractInlineStylesToClasses(svg: SVGSVGElement): void {
+  // Create a style element
+  const styleEl = document.createElementNS('http://www.w3.org/2000/svg', 'style');
+  const styles: Map<string, string> = new Map();
+  let classCounter = 0;
+
+  // Walk all elements and extract inline styles
+  svg.querySelectorAll('[style]').forEach((el) => {
+    const inlineStyle = el.getAttribute('style') || '';
+
+    // Check if we've seen this style before
+    let className = styles.get(inlineStyle);
+    if (!className) {
+      className = `oc-${classCounter++}`;
+      styles.set(inlineStyle, className);
+    }
+
+    el.classList.add(className);
+    el.removeAttribute('style');
+  });
+
+  // Build CSS rules
+  let css = '';
+  styles.forEach((className, style) => {
+    css += `.${className} { ${style} }\n`;
+  });
+
+  styleEl.textContent = css;
+  svg.insertBefore(styleEl, svg.firstChild);
+}
+
+function addBackgroundRect(svg: SVGSVGElement): void {
+  const bbox = svg.getBBox();
+  const rect = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
+  rect.setAttribute('x', '0');
+  rect.setAttribute('y', '0');
+  rect.setAttribute('width', `${bbox.width}`);
+  rect.setAttribute('height', `${bbox.height}`);
+  rect.setAttribute('fill', 'white');
+  svg.insertBefore(rect, svg.firstChild);
+}
+
+async function optimizeSvg(svgString: string): Promise<string> {
+  // Optional: Use SVGO for optimization
+  // This would be a dynamic import to avoid bundling if not used
+  try {
+    const { optimize } = await import('svgo');
+    const result = optimize(svgString, {
+      plugins: [
+        'removeDoctype',
+        'removeXMLProcInst',
+        'removeComments',
+        'removeMetadata',
+        'removeEditorsNSData',
+        'cleanupAttrs',
+        'mergeStyles',
+        'inlineStyles',
+        'minifyStyles',
+        'cleanupIds',
+        'removeUselessDefs',
+        'cleanupNumericValues',
+        'convertColors',
+        'removeUnknownsAndDefaults',
+        'removeNonInheritableGroupAttrs',
+        'removeUselessStrokeAndFill',
+        'removeViewBox',
+        'cleanupEnableBackground',
+        'removeHiddenElems',
+        'removeEmptyText',
+        'convertShapeToPath',
+        'convertEllipseToCircle',
+        'moveGroupAttrsToElems',
+        'collapseGroups',
+        'convertPathData',
+        'convertTransform',
+        'removeEmptyAttrs',
+        'removeEmptyContainers',
+        'mergePaths',
+        'removeUnusedNS',
+        'sortDefsChildren',
+        'removeTitle',
+        'removeDesc',
+      ],
+    });
+    return result.data;
+  } catch {
+    console.warn('SVGO not available, returning unoptimized SVG');
+    return svgString;
+  }
+}
+
+function downloadSvg(svgString: string, filename: string): void {
+  const blob = new Blob([svgString], { type: 'image/svg+xml' });
+  const url = URL.createObjectURL(blob);
+
+  const link = document.createElement('a');
+  link.href = url;
+  link.download = filename;
+  link.click();
+
+  URL.revokeObjectURL(url);
+}
+
+function generateSvgFilename(projectName: string): string {
+  const safeName = projectName
+    .replace(/[^a-zA-Z0-9-_]/g, '-')
+    .replace(/-+/g, '-')
+    .toLowerCase();
+  const timestamp = new Date().toISOString().slice(0, 10);
+  return `${safeName}-${timestamp}.svg`;
+}
+```
+
+**Component Structure:**
+
+```typescript
+// SvgExportOptions.tsx
+interface SvgExportOptionsProps {
+  options: SvgExportOptions;
+  onChange: (options: Partial<SvgExportOptions>) => void;
+  chartDimensions: { width: number; height: number };
+}
+
+export function SvgExportOptions({
+  options,
+  onChange,
+  chartDimensions,
+}: SvgExportOptionsProps): JSX.Element {
+  return (
+    <div className="space-y-6">
+      {/* Dimensions Section */}
+      <section>
+        <h3>Dimensions</h3>
+        <DimensionModeSelector
+          mode={options.dimensionMode}
+          customWidth={options.customWidth}
+          customHeight={options.customHeight}
+          preserveAspectRatio={options.preserveAspectRatio}
+          naturalDimensions={chartDimensions}
+          onChange={(mode, width, height, preserve) => onChange({
+            dimensionMode: mode,
+            customWidth: width,
+            customHeight: height,
+            preserveAspectRatio: preserve,
+          })}
+        />
+      </section>
+
+      {/* Content Options (shared with PNG) */}
+      <Collapsible title="Content Options">
+        <ContentOptions
+          options={options}
+          onChange={onChange}
+        />
+      </Collapsible>
+
+      {/* SVG-Specific Options */}
+      <Collapsible title="SVG Options">
+        <TextModeSelector
+          value={options.textMode}
+          onChange={(mode) => onChange({ textMode: mode })}
+        />
+        <StyleModeSelector
+          value={options.styleMode}
+          onChange={(mode) => onChange({ styleMode: mode })}
+        />
+        <Checkbox
+          checked={options.optimize}
+          onChange={(checked) => onChange({ optimize: checked })}
+          label="Optimize SVG (smaller file, less readable)"
+        />
+        <Checkbox
+          checked={options.includeBackground}
+          onChange={(checked) => onChange({ includeBackground: checked })}
+          label="Include background rectangle"
+        />
+      </Collapsible>
+    </div>
+  );
+}
+```
+
+---
+
+### SVG Export - Data Visualization Specialist Notes
+
+**SVG Rendering Considerations:**
+
+1. **Coordinate Precision**: Limit decimal places to 2-3 to reduce file size
+2. **ID Uniqueness**: Ensure all IDs are unique and prefixed (e.g., `oc-task-1`)
+3. **Gradient References**: Dependencies using gradients must include `<defs>` block
+4. **Font Stack**: Specify fallback fonts: `font-family="Inter, Helvetica, Arial, sans-serif"`
+5. **Color Consistency**: Use hex colors (not rgba) for maximum compatibility
+
+**SVG Structure:**
+
+```xml
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg"
+     xmlns:xlink="http://www.w3.org/1999/xlink"
+     width="1200" height="800"
+     viewBox="0 0 1200 800">
+
+  <!-- Definitions (gradients, patterns, filters) -->
+  <defs>
+    <linearGradient id="oc-progress-gradient">...</linearGradient>
+  </defs>
+
+  <!-- Background (optional) -->
+  <rect id="oc-background" fill="white" width="100%" height="100%"/>
+
+  <!-- Grid layer -->
+  <g id="oc-grid">
+    <line class="oc-grid-line" x1="0" y1="50" x2="1200" y2="50"/>
+    ...
+  </g>
+
+  <!-- Weekend shading layer -->
+  <g id="oc-weekends">
+    <rect class="oc-weekend" x="200" y="0" width="50" height="800"/>
+    ...
+  </g>
+
+  <!-- Task bars layer -->
+  <g id="oc-tasks">
+    <g id="oc-task-1" class="oc-task">
+      <rect class="oc-task-bar" x="100" y="60" width="200" height="24" rx="4"/>
+      <rect class="oc-task-progress" x="100" y="60" width="100" height="24" rx="4"/>
+      <text class="oc-task-label" x="110" y="76">Task Name</text>
+    </g>
+    ...
+  </g>
+
+  <!-- Dependencies layer -->
+  <g id="oc-dependencies">
+    <path class="oc-dependency" d="M300,72 C350,72 350,120 400,120"
+          stroke="#64748b" fill="none" marker-end="url(#oc-arrow)"/>
+    ...
+  </g>
+
+  <!-- Today marker layer -->
+  <g id="oc-today">
+    <line class="oc-today-line" x1="500" y1="0" x2="500" y2="800"/>
+  </g>
+
+  <!-- Timeline header layer -->
+  <g id="oc-timeline-header">
+    <text class="oc-month-label" x="150" y="20">January 2026</text>
+    ...
+  </g>
+
+  <!-- Task table layer (if included) -->
+  <g id="oc-task-table">
+    ...
+  </g>
+
+</svg>
+```
+
+**CSS Classes (when styleMode = 'classes'):**
+
+```css
+/* Generated CSS classes for customization */
+.oc-task-bar { fill: #14b8a6; rx: 4; }
+.oc-task-progress { fill: #0d9488; }
+.oc-task-label { font-family: Inter, sans-serif; font-size: 12px; fill: #1e293b; }
+.oc-grid-line { stroke: #e2e8f0; stroke-width: 1; }
+.oc-weekend { fill: #f8fafc; }
+.oc-today-line { stroke: #ef4444; stroke-width: 2; stroke-dasharray: 4,4; }
+.oc-dependency { stroke: #64748b; stroke-width: 1.5; fill: none; }
+.oc-milestone { fill: #f59e0b; }
+```
+
+---
+
+### SVG Export - QA Testing Requirements
+
+**Unit Tests:**
+
+```typescript
+describe('SVG Export', () => {
+  describe('svgExport', () => {
+    it('exports valid SVG with XML declaration');
+    it('includes all visible chart elements');
+    it('respects content toggle options');
+    it('sets correct viewBox and dimensions');
+    it('generates unique IDs for all elements');
+  });
+
+  describe('svgSerializer', () => {
+    it('serializes SVG to valid XML string');
+    it('preserves all attributes');
+    it('escapes special characters in text');
+    it('handles nested groups correctly');
+  });
+
+  describe('svgDimensions', () => {
+    it('auto mode uses natural chart dimensions');
+    it('custom mode applies specified width/height');
+    it('preserves aspect ratio when enabled');
+    it('handles edge case of 0 width/height');
+  });
+
+  describe('svgTextMode', () => {
+    it('keeps text as text by default');
+    it('converts text to paths when requested');
+    it('preserves text styling after conversion');
+  });
+
+  describe('svgStyleMode', () => {
+    it('uses inline styles by default');
+    it('extracts styles to CSS classes when requested');
+    it('generates unique class names');
+    it('removes inline styles after extraction');
+  });
+
+  describe('svgOptimizer', () => {
+    it('reduces file size by at least 30%');
+    it('preserves visual appearance after optimization');
+    it('gracefully handles SVGO unavailability');
+  });
+});
+
+describe('SVG Compatibility', () => {
+  it('opens correctly in Chrome');
+  it('opens correctly in Firefox');
+  it('opens correctly in Safari');
+  it('imports into Adobe Illustrator');
+  it('imports into Inkscape');
+  it('imports into Figma');
+  it('embeds correctly in HTML page');
+});
+```
+
+**Manual Testing Checklist:**
+
+SVG File Validity:
+- [ ] SVG opens in all major browsers
+- [ ] SVG passes W3C validation (validator.w3.org)
+- [ ] All text is selectable (when textMode = 'text')
+- [ ] All elements are individually selectable in design tools
+- [ ] Colors match exactly with screen display
+
+Design Tool Compatibility:
+- [ ] Adobe Illustrator CC opens and edits correctly
+- [ ] Inkscape opens and edits correctly
+- [ ] Figma imports with editable layers
+- [ ] Sketch imports correctly
+- [ ] Affinity Designer opens correctly
+
+Content Options:
+- [ ] Task list toggle works
+- [ ] Timeline header toggle works
+- [ ] Grid lines toggle works
+- [ ] Weekend shading toggle works
+- [ ] Today marker toggle works
+- [ ] Dependencies toggle works
+- [ ] Holidays toggle works
+
+Performance:
+- [ ] 10 tasks exports in < 500ms
+- [ ] 100 tasks exports in < 2 seconds
+- [ ] 500 tasks exports in < 10 seconds
+- [ ] File size < 500KB for 100 tasks
+- [ ] File size < 2MB for 500 tasks
+
+---
+
+### SVG Export - Bundle Impact
+
+**Dependencies:**
+
+| Item | Size (gzipped) | Notes |
+|------|---------------|-------|
+| svgExport.ts | ~3KB | Core export logic |
+| svgSerializer.ts | ~1KB | Serialization |
+| svgOptimizer.ts | ~1KB | SVGO wrapper |
+| SVGO (optional) | ~50KB | Only if optimization used |
+| **Total** | ~5KB core | +50KB if SVGO enabled |
+
+**Note:** SVGO is optional and only loaded dynamically when optimization is requested.
+
+---
+
+## SVG Export - Team Review (Round 1)
+
+### Product Owner Review - SVG
+
+**Reviewer:** Product Lead
+**Status:** ✅ Approved with additions
+
+**Feedback:**
+> "SVG concept is solid. Key additions needed:"
+
+1. **Add "Copy to Clipboard"** - Designers often want to paste directly into Figma/Illustrator
+2. **Layer naming** - Ensure IDs are human-readable (e.g., `task-website-redesign` not `task-1`)
+3. **Metadata embedding** - Include project name, export date as SVG metadata
+
+**Approved Features:**
+- ✅ Basic SVG export
+- ✅ Dimension control
+- ✅ Content toggles
+- ✅ Text/path mode
+- ✅ Style mode
+- ✅ Optimization option
+
+---
+
+### UX/UI Designer Review - SVG
+
+**Reviewer:** UX Designer
+**Status:** ✅ Approved with UX polish
+
+**Feedback:**
+> "Dialog design is clean. Improvements:"
+
+1. **Live preview** - Show SVG preview in dialog (like PNG)
+2. **File size estimate** - Show estimated size before export
+3. **Copy success feedback** - Toast notification when copied to clipboard
+4. **Preset options** - "Web optimized", "Print quality", "Design tool" presets
+
+---
+
+### Frontend Developer Review - SVG
+
+**Reviewer:** Frontend Dev
+**Status:** ✅ Approved with technical notes
+
+**Feedback:**
+> "Implementation is straightforward since we already render SVG. Notes:"
+
+1. **DOM cloning approach** - Good, but need to handle dynamically rendered elements
+2. **Foreign objects** - If any HTML is embedded via `<foreignObject>`, needs special handling
+3. **Font embedding** - Consider Base64 embedding fonts for standalone SVG
+
+**Code addition:**
+```typescript
+// Handle dynamic elements that might not be in DOM
+async function ensureFullChartRender(): Promise<void> {
+  // Temporarily render all collapsed sections
+  // Wait for any lazy-loaded elements
+}
+```
+
+---
+
+### Data Visualization Specialist Review - SVG
+
+**Reviewer:** Data Viz Specialist
+**Status:** ✅ Approved with rendering notes
+
+**Feedback:**
+> "SVG structure is well-organized. Ensure:"
+
+1. **Clip paths** - Task bars clipped by timeline bounds need proper `<clipPath>` definitions
+2. **Transform preservation** - Any CSS transforms must be baked into SVG transforms
+3. **Filter effects** - Drop shadows/blurs may not export well, consider simplifying
+
+---
+
+### QA Tester Review - SVG
+
+**Reviewer:** QA Lead
+**Status:** ✅ Approved with test additions
+
+**Feedback:**
+> "Test coverage looks good. Adding:"
+
+1. **RTL text test** - Hebrew/Arabic task names in SVG
+2. **Emoji test** - Emoji in task names
+3. **Very long text test** - Task names that overflow
+4. **Special characters test** - `<>&"'` in task names (XML escaping)
+
+---
+
+## SVG Export - User Persona Review
+
+### Persona 1: Alex - Graphic Designer (Agency)
+
+**Context:** Creates custom project presentations for clients. Uses Adobe Illustrator and Figma daily.
+
+**Review:**
+> "This is exactly what I've been waiting for! My feedback:"
+
+**Positive:**
+- ✅ Editable text - essential for customizing
+- ✅ CSS classes option - lets me batch-modify styles
+- ✅ Clean layer structure - easy to navigate in Illustrator
+
+**Requests:**
+1. **Artboard-ready** - Can you set the SVG to match Figma frame sizes (1440×900)?
+2. **Copy to clipboard** - I drag-drop or paste constantly between apps
+3. **Preserve gradients** - Some task bars might have gradients in the future
+4. **Export selected only** - Sometimes I just want a subset of tasks
+
+**Priority for Alex:** "Copy to clipboard is killer. That alone would make this my default export."
+
+---
+
+### Persona 2: David - Web Developer (Startup)
+
+**Context:** Embeds visualizations in React dashboards. Wants customizable, lightweight assets.
+
+**Review:**
+> "Great for embedding in web apps. Suggestions:"
+
+**Positive:**
+- ✅ CSS classes mode - perfect for theming
+- ✅ Small file size - important for web perf
+- ✅ Inline embedding - can use in React components
+
+**Requests:**
+1. **Remove xmlns declaration option** - For inline SVG in React, xmlns causes warnings
+2. **Component-ready output** - Generate as React component (JSX)?
+3. **Responsive by default** - Remove fixed width/height, just viewBox
+4. **Accessible markup** - Add `role="img"` and `aria-label`
+
+**Priority for David:** "The CSS classes mode is perfect. Responsive option would seal the deal."
+
+---
+
+### Persona 3: Prof. Chen - Academic Researcher
+
+**Context:** Creates figures for academic papers. Needs publication-quality vector graphics.
+
+**Review:**
+> "Good for publication figures. Requirements:"
+
+**Positive:**
+- ✅ Vector format - essential for journals
+- ✅ Text as text - editors require this for accessibility
+- ✅ Clean structure - easy to modify for paper style guides
+
+**Requests:**
+1. **CMYK color space** - Some journals require CMYK
+2. **Embed fonts** - Or convert to paths for guaranteed rendering
+3. **No gradients option** - Grayscale journals don't accept gradients
+4. **Title/caption slot** - Space for figure caption below chart
+
+**Priority for Prof. Chen:** "Convert to paths guarantees my figure looks right in the journal."
+
+---
+
+## SVG Export - Changes from Reviews
+
+### New Features Added (SVG)
+
+Based on team and persona feedback:
+
+1. **Copy to Clipboard** (Alex, UX Designer) - Add button in dialog
+2. **Live Preview** (UX Designer) - Show SVG preview before export
+3. **Human-readable IDs** (Product Owner) - Use task names in IDs
+4. **Responsive option** (David) - Remove fixed dimensions, viewBox only
+5. **Accessibility attributes** (David) - Add `role` and `aria-label`
+6. **Metadata embedding** (Product Owner) - Include project info
+
+### Deferred to V2.0 (SVG)
+
+1. **React component export** - Complex, niche use case
+2. **CMYK color space** - Requires color profile handling
+3. **Export selected only** - Requires selection state in export
+4. **Figma frame presets** - Can use custom dimensions instead
+
+### Updated SVG Options
+
+```typescript
+export interface SvgExportOptions {
+  // ... existing options ...
+
+  // New options from review
+  responsiveMode: boolean;      // If true, no width/height, only viewBox
+  includeAccessibility: boolean; // Add role="img" and aria-label
+  copyToClipboard: boolean;     // Copy instead of download
+  humanReadableIds: boolean;    // Use task names in IDs
+  embedMetadata: boolean;       // Include project info in SVG
+}
+
+export const DEFAULT_SVG_OPTIONS: SvgExportOptions = {
+  // ... existing defaults ...
+  responsiveMode: false,
+  includeAccessibility: true,
+  copyToClipboard: false,
+  humanReadableIds: true,
+  embedMetadata: true,
+};
+```
+
+---
+
+## SVG Export - Final Team Review (Round 2)
+
+### All Reviewers - SVG Final Approval
+
+**Status:** ✅ APPROVED
+
+**Final SVG Feature List for Sprint 1.5.5:**
+
+| Feature | Priority | Status |
+|---------|----------|--------|
+| Basic SVG export | Critical | ✅ Approved |
+| Dimension control (auto/custom) | Critical | ✅ Approved |
+| Content toggles (shared with PNG/PDF) | Critical | ✅ Approved |
+| Text mode (text/paths) | High | ✅ Approved |
+| Style mode (inline/classes) | High | ✅ Approved |
+| Copy to clipboard | High | ✅ Approved |
+| Live preview | High | ✅ Approved |
+| SVGO optimization | Medium | ✅ Approved |
+| Responsive mode | Medium | ✅ Approved |
+| Accessibility attributes | Medium | ✅ Approved |
+| Human-readable IDs | Medium | ✅ Approved |
+| Metadata embedding | Low | ✅ Approved |
+| Background rectangle | Low | ✅ Approved |
+
+**SVG-Specific Estimates:**
+
+| Metric | Value |
+|--------|-------|
+| Implementation Hours | 15-20 hours |
+| New Files | 3 files |
+| New Tests | 25 test cases |
+| Bundle Impact | +5KB (+50KB if SVGO) |
+
+---
+
+## Updated Sprint Summary (with SVG)
+
+### Final Sprint 1.5.5 Scope
+
+**Three Export Formats:**
+
+| Format | Primary Use Case | Key Feature |
+|--------|-----------------|-------------|
+| PNG | Presentations, web | Raster for universal compatibility |
+| PDF | Print, archive | Vector document with page sizes |
+| SVG | Design tools, web embed | Editable vector graphics |
+
+**Total Estimates (Updated):**
+
+| Metric | PDF Only | PDF + SVG |
+|--------|----------|-----------|
+| Total Hours | 60-70 | 75-90 |
+| Duration | 2 weeks | 2.5 weeks |
+| New Files | 8 | 11 |
+| New Tests | 50 | 75 |
+| Bundle Impact | +120KB | +125KB (+50KB SVGO) |
+
+---
+
+**Document Version:** 3.0 (FINAL with SVG)
 **Created:** 2026-01-08
-**Last Updated:** 2026-01-08 (Final Team Review)
+**Last Updated:** 2026-01-08 (SVG Concept Added)
 **Author:** Claude AI (with Martin)
 **Status:** ✅ APPROVED - Ready for Implementation
