@@ -101,21 +101,21 @@ describe('Chart Store - Pan/Zoom Navigation', () => {
   });
 
   describe('zoomIn', () => {
-    it('should increase zoom by 0.25', () => {
+    it('should increase zoom by exponential factor (×1.2)', () => {
       const { zoomIn } = useChartStore.getState();
 
       zoomIn();
-      expect(useChartStore.getState().zoom).toBe(1.25);
+      expect(useChartStore.getState().zoom).toBeCloseTo(1.2, 2);
 
       zoomIn();
-      expect(useChartStore.getState().zoom).toBe(1.5);
+      expect(useChartStore.getState().zoom).toBeCloseTo(1.44, 2);
     });
 
     it('should not exceed maximum zoom (3.0)', () => {
       const { setZoom, zoomIn } = useChartStore.getState();
 
-      setZoom(2.9);
-      zoomIn(); // Should go to 3.0
+      setZoom(2.6);
+      zoomIn(); // 2.6 × 1.2 = 3.12 → clamped to 3.0
       expect(useChartStore.getState().zoom).toBe(3.0);
 
       zoomIn(); // Should stay at 3.0
@@ -124,21 +124,21 @@ describe('Chart Store - Pan/Zoom Navigation', () => {
   });
 
   describe('zoomOut', () => {
-    it('should decrease zoom by 0.25', () => {
+    it('should decrease zoom by exponential factor (÷1.2)', () => {
       const { zoomOut } = useChartStore.getState();
 
       zoomOut();
-      expect(useChartStore.getState().zoom).toBe(0.75);
+      expect(useChartStore.getState().zoom).toBeCloseTo(0.833, 2);
 
       zoomOut();
-      expect(useChartStore.getState().zoom).toBe(0.5);
+      expect(useChartStore.getState().zoom).toBeCloseTo(0.694, 2);
     });
 
     it('should not go below minimum zoom (0.05)', () => {
       const { setZoom, zoomOut } = useChartStore.getState();
 
-      setZoom(0.15);
-      zoomOut(); // Should go to 0.05 (clamped)
+      setZoom(0.06);
+      zoomOut(); // 0.06 / 1.2 = 0.05 → clamped to 0.05
       expect(useChartStore.getState().zoom).toBe(0.05);
 
       zoomOut(); // Should stay at 0.05

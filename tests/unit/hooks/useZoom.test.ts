@@ -74,8 +74,9 @@ describe('useZoom', () => {
 
       result.current.handlers.onWheel(wheelEvent);
 
-      // Without scale, uses fallback: setZoom(zoom + delta) without anchor
-      expect(setZoomSpy).toHaveBeenCalledWith(1.1);
+      // Without scale, uses fallback: setZoom(zoom * factor) without anchor
+      // Exponential zoom: 1.0 × 1.15 = 1.15
+      expect(setZoomSpy).toHaveBeenCalledWith(1.15);
     });
 
     it('should zoom out on Ctrl+Wheel down (fallback without scale)', () => {
@@ -90,8 +91,9 @@ describe('useZoom', () => {
 
       result.current.handlers.onWheel(wheelEvent);
 
-      // Without scale, uses fallback: setZoom(zoom + delta) without anchor
-      expect(setZoomSpy).toHaveBeenCalledWith(0.9);
+      // Without scale, uses fallback: setZoom(zoom * factor) without anchor
+      // Exponential zoom: 1.0 / 1.15 ≈ 0.8696
+      expect(setZoomSpy).toHaveBeenCalledWith(expect.closeTo(0.8696, 3));
     });
 
     it('should use metaKey on Mac', () => {

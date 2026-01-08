@@ -140,6 +140,9 @@ interface ChartActions {
 
 const DEFAULT_CONTAINER_WIDTH = 800;
 
+/** Zoom factor per keyboard/toolbar step (exponential for consistent feel) */
+const KEYBOARD_ZOOM_FACTOR = 1.2;
+
 /**
  * Helper: Recalculate scale from dateRange, zoom, and containerWidth
  * This is the single place where scale is derived from its dependencies
@@ -279,16 +282,22 @@ export const useChartStore = create<ChartState & ChartActions>()(
       return { newScrollLeft };
     },
 
-    // Zoom in by 25% increment
+    // Zoom in by exponential factor (consistent feel at all zoom levels)
     zoomIn: (anchor?: ZoomAnchor): ZoomResult => {
       const current = get().zoom;
-      return get().setZoom(Math.min(MAX_ZOOM, current + 0.25), anchor);
+      return get().setZoom(
+        Math.min(MAX_ZOOM, current * KEYBOARD_ZOOM_FACTOR),
+        anchor
+      );
     },
 
-    // Zoom out by 25% decrement
+    // Zoom out by exponential factor (consistent feel at all zoom levels)
     zoomOut: (anchor?: ZoomAnchor): ZoomResult => {
       const current = get().zoom;
-      return get().setZoom(Math.max(MIN_ZOOM, current - 0.25), anchor);
+      return get().setZoom(
+        Math.max(MIN_ZOOM, current / KEYBOARD_ZOOM_FACTOR),
+        anchor
+      );
     },
 
     // Reset zoom to 100%

@@ -81,10 +81,12 @@ describe('ZoomToolbar - Integration Tests', () => {
     const zoomInButton = screen.getByTitle('Zoom In (Ctrl++)');
     fireEvent.click(zoomInButton);
 
-    expect(useChartStore.getState().zoom).toBe(1.25);
+    // Exponential zoom: 1.0 × 1.2 = 1.2
+    expect(useChartStore.getState().zoom).toBe(1.2);
 
+    // Dropdown shows nearest preset (custom value shows actual percentage)
     const dropdown = screen.getByLabelText('Zoom level') as HTMLSelectElement;
-    expect(dropdown.value).toBe('125');
+    expect(dropdown.value).toBe('120');
   });
 
   it('should zoom out when clicking zoom out button', () => {
@@ -93,10 +95,12 @@ describe('ZoomToolbar - Integration Tests', () => {
     const zoomOutButton = screen.getByTitle('Zoom Out (Ctrl+-)');
     fireEvent.click(zoomOutButton);
 
-    expect(useChartStore.getState().zoom).toBe(0.75);
+    // Exponential zoom: 1.0 / 1.2 = 0.833...
+    expect(useChartStore.getState().zoom).toBeCloseTo(0.833, 2);
 
+    // Dropdown shows actual percentage (83%)
     const dropdown = screen.getByLabelText('Zoom level') as HTMLSelectElement;
-    expect(dropdown.value).toBe('75');
+    expect(dropdown.value).toBe('83');
   });
 
   it('should disable zoom in button at maximum zoom', () => {
@@ -167,14 +171,14 @@ describe('ZoomToolbar - Integration Tests', () => {
     const zoomInButton = screen.getByTitle('Zoom In (Ctrl++)');
     const zoomOutButton = screen.getByTitle('Zoom Out (Ctrl+-)');
 
-    // Zoom in twice
+    // Zoom in twice: 1.0 × 1.2 × 1.2 = 1.44
     fireEvent.click(zoomInButton);
     fireEvent.click(zoomInButton);
-    expect(useChartStore.getState().zoom).toBe(1.5);
+    expect(useChartStore.getState().zoom).toBeCloseTo(1.44, 2);
 
-    // Zoom out once
+    // Zoom out once: 1.44 / 1.2 = 1.2
     fireEvent.click(zoomOutButton);
-    expect(useChartStore.getState().zoom).toBe(1.25);
+    expect(useChartStore.getState().zoom).toBeCloseTo(1.2, 2);
   });
 
   it('should show all preset zoom levels in dropdown', () => {

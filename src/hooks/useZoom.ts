@@ -23,6 +23,9 @@ interface UseZoomOptions {
 /** CSS class of the scrollable timeline container */
 const SCROLL_CONTAINER_CLASS = "gantt-chart-scroll-container";
 
+/** Zoom factor per mouse wheel step (exponential zoom for consistent feel) */
+const WHEEL_ZOOM_FACTOR = 1.15;
+
 /**
  * Get the scroll container element
  */
@@ -58,9 +61,9 @@ export function useZoom({ containerRef, enabled = true }: UseZoomOptions) {
 
       const scrollContainer = getScrollContainer();
       if (!scrollContainer || !scale) {
-        // Fallback: zoom without anchoring
-        const delta = e.deltaY > 0 ? -0.1 : 0.1;
-        setZoom(zoom + delta);
+        // Fallback: zoom without anchoring (exponential)
+        const factor = e.deltaY > 0 ? 1 / WHEEL_ZOOM_FACTOR : WHEEL_ZOOM_FACTOR;
+        setZoom(zoom * factor);
         return;
       }
 
@@ -75,9 +78,9 @@ export function useZoom({ containerRef, enabled = true }: UseZoomOptions) {
       // Convert pixel position to date (this is the anchor point)
       const anchorDate = pixelToDate(cursorPixelPos, scale);
 
-      // Calculate zoom direction (negative deltaY = zoom in)
-      const delta = e.deltaY > 0 ? -0.1 : 0.1;
-      const newZoom = zoom + delta;
+      // Calculate zoom factor (exponential for consistent feel at all levels)
+      const factor = e.deltaY > 0 ? 1 / WHEEL_ZOOM_FACTOR : WHEEL_ZOOM_FACTOR;
+      const newZoom = zoom * factor;
 
       // Set zoom with cursor-centered anchor
       const result = setZoom(newZoom, {

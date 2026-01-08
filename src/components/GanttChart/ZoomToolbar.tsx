@@ -82,6 +82,10 @@ export function ZoomToolbar() {
         onChange={handleZoomLevelChange}
         aria-label="Zoom level"
       >
+        {/* Show current zoom if not in presets */}
+        {!PRESET_ZOOM_LEVELS.includes(zoomPercentage) && (
+          <option value={zoomPercentage}>{zoomPercentage}%</option>
+        )}
         {PRESET_ZOOM_LEVELS.map((level) => (
           <option key={level} value={level}>
             {level}%
