@@ -2,6 +2,18 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [0.0.22](https://github.com/kitikonti/ownchart/compare/v0.0.21...v0.0.22) (2026-01-08)
+
+
+### Features
+
+* **labels:** add milestone labels and fix label clipping in fit-to-view ([67c7a0d](https://github.com/kitikonti/ownchart/commit/67c7a0d197f70ec1ea3c0aadb4d5f6ee7fe91b78))
+
+
+### Bug Fixes
+
+* **dependencies:** prevent automatic task movement when creating dependencies ([17d3033](https://github.com/kitikonti/ownchart/commit/17d303344d3a35049f4b5629d18f58b3ce28cc1d))
+
 ### [0.0.21](https://github.com/kitikonti/ownchart/compare/v0.0.20...v0.0.21) (2026-01-08)
 
 
