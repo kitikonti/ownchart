@@ -2,6 +2,18 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [0.0.21](https://github.com/kitikonti/ownchart/compare/v0.0.20...v0.0.21) (2026-01-08)
+
+
+### Features
+
+* **export:** include project name in PNG export filename ([cbafb8f](https://github.com/kitikonti/ownchart/commit/cbafb8fe3c999c6501f722f5d73bcbce34525b03))
+
+
+### Bug Fixes
+
+* **file:** restore column widths when opening files ([0d018d6](https://github.com/kitikonti/ownchart/commit/0d018d6292d5b48eb8fccf3a5d9de60d275a9bcb))
+
 ### [0.0.20](https://github.com/kitikonti/ownchart/compare/v0.0.19...v0.0.20) (2026-01-08)
 
 
