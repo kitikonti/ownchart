@@ -9,6 +9,12 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Disable browser scroll anchoring for manual scroll position control */
+/* Required for smooth infinite scroll when adding content to the left */
+.gantt-chart-scroll-container {
+  overflow-anchor: none;
+}
+
 /* ============================================================================
    OwnChart Design System - "Refined Craft" Aesthetic
    ============================================================================

@@ -161,10 +161,10 @@ export const useChartStore = create<ChartState & ChartActions>()(
       set((state) => {
         const taskDateRange = getDateRange(tasks);
 
-        // Add 45 days padding on both sides for smooth infinite scroll
-        // (7 visible + 38 for scroll room in both directions)
-        const paddedMin = addDays(taskDateRange.min, -45);
-        const paddedMax = addDays(taskDateRange.max, 45);
+        // Add 90 days padding on both sides for smooth infinite scroll
+        // (7 visible + 83 for scroll room in both directions)
+        const paddedMin = addDays(taskDateRange.min, -90);
+        const paddedMax = addDays(taskDateRange.max, 90);
 
         // Update dateRange
         state.dateRange = { min: paddedMin, max: paddedMax };
@@ -286,10 +286,10 @@ export const useChartStore = create<ChartState & ChartActions>()(
 
       const { min, max } = getDateRange(tasks);
 
-      // Add 45 days padding on both sides for smooth infinite scroll
+      // Add 90 days padding on both sides for smooth infinite scroll
       // Same as updateScale to allow scrolling in both directions
-      const paddedMin = addDays(min, -45);
-      const paddedMax = addDays(max, 45);
+      const paddedMin = addDays(min, -90);
+      const paddedMax = addDays(max, 90);
 
       // Calculate zoom based on visible range (7 days padding each side)
       const visibleDuration = calculateDuration(addDays(min, -7), addDays(max, 7));
