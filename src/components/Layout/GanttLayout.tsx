@@ -152,13 +152,16 @@ export function GanttLayout() {
   const lastExtendPastRef = useRef<number>(0);
   const lastExtendFutureRef = useRef<number>(0);
   const lastFitToViewTimeRef = useRef<number>(0); // Block infinite scroll after fitToView
+  const fitToViewScrollLockRef = useRef<boolean>(false); // Lock until user scrolls away from edge
+  const mountTimeRef = useRef<number>(Date.now()); // Track component mount time
   const EXTEND_COOLDOWN = 200; // ms between extensions
   const FIT_TO_VIEW_BLOCK_TIME = 500; // ms to block infinite scroll after fitToView
+  const INITIAL_BLOCK_TIME = 1000; // ms to block infinite scroll after mount (wait for settings to load)
 
   // Track dateRange and fitToView for scroll positioning
   const prevDateRangeRef = useRef<string | null>(null);
   const prevFitToViewTimeRef = useRef<number>(0);
-  const SCROLL_OFFSET_DAYS = 7; // Scroll past the extra padding to show 7 days before first task
+  const SCROLL_OFFSET_DAYS = 38; // Scroll past the extra padding (45 days) to show 7 days before first task
 
   // Set initial scroll position when a new file is loaded, or reset on fitToView
   useEffect(() => {
@@ -169,35 +172,60 @@ export function GanttLayout() {
     const fitToViewJustCalled = lastFitToViewTime > prevFitToViewTimeRef.current;
     prevFitToViewTimeRef.current = lastFitToViewTime;
 
+    const dateRangeKey = `${dateRange.min}-${dateRange.max}`;
+
+    console.log("[InitialScroll] useEffect triggered", {
+      fitToViewJustCalled,
+      dateRangeKey,
+      prevDateRange: prevDateRangeRef.current,
+      scrollLeft: chartContainer.scrollLeft,
+      pixelsPerDay: scale.pixelsPerDay,
+    });
+
     if (fitToViewJustCalled) {
       // fitToView: scroll to show 7-day padding (same as file load)
       // Block infinite scroll for a short time to prevent immediate re-extension
       lastFitToViewTimeRef.current = Date.now();
       // Use double rAF to ensure DOM is fully updated
       const fitScrollLeft = SCROLL_OFFSET_DAYS * scale.pixelsPerDay;
+      // If scroll position will be near edge (THRESHOLD), lock infinite scroll until user scrolls away
+      if (fitScrollLeft < 400) {
+        fitToViewScrollLockRef.current = true;
+        console.log("[InitialScroll] fitToView - scroll lock enabled (near edge)");
+      }
+      console.log("[InitialScroll] fitToView - setting scrollLeft to", fitScrollLeft);
       requestAnimationFrame(() => {
         requestAnimationFrame(() => {
+          console.log("[InitialScroll] fitToView rAF - setting scrollLeft to", fitScrollLeft);
           chartContainer.scrollLeft = fitScrollLeft;
         });
       });
-      prevDateRangeRef.current = `${dateRange.min}-${dateRange.max}`;
+      prevDateRangeRef.current = dateRangeKey;
       return;
     }
 
+    // During initial load, only respond to first dateRange, not subsequent settings changes
+    const now = Date.now();
+    const isInitialLoadPeriod = now - mountTimeRef.current < INITIAL_BLOCK_TIME;
+
     // Only set scroll on new dateRange (file load), not on infinite scroll extensions
-    const dateRangeKey = `${dateRange.min}-${dateRange.max}`;
     const isNewDateRange = prevDateRangeRef.current === null;
     const isFileLoad =
+      !isInitialLoadPeriod && // Don't treat settings changes as file load
       prevDateRangeRef.current !== null &&
       !prevDateRangeRef.current.startsWith(dateRange.min) &&
       !prevDateRangeRef.current.endsWith(dateRange.max);
+
+    console.log("[InitialScroll] checks", { isNewDateRange, isFileLoad, isInitialLoadPeriod });
 
     if (isNewDateRange || isFileLoad) {
       // Scroll to show first task with 7-day gap (skip the extra padding for scroll room)
       // Use double rAF to ensure DOM is fully updated
       const initialScrollLeft = SCROLL_OFFSET_DAYS * scale.pixelsPerDay;
+      console.log("[InitialScroll] file load - setting scrollLeft to", initialScrollLeft);
       requestAnimationFrame(() => {
         requestAnimationFrame(() => {
+          console.log("[InitialScroll] file load rAF - setting scrollLeft to", initialScrollLeft);
           chartContainer.scrollLeft = initialScrollLeft;
         });
       });
@@ -211,15 +239,37 @@ export function GanttLayout() {
     const chartContainer = chartContainerRef.current;
     if (!chartContainer || !scale) return;
 
-    const THRESHOLD = 100; // px from edge to trigger extension
+    const THRESHOLD = 350; // px from edge to trigger extension (earlier = smoother)
 
     const handleScroll = () => {
       const { scrollLeft, scrollWidth, clientWidth } = chartContainer;
       const now = Date.now();
 
+      // Block infinite scroll during initial load (wait for settings to be applied)
+      if (now - mountTimeRef.current < INITIAL_BLOCK_TIME) {
+        console.log("[InfiniteScroll] blocked - initial load", {
+          timeSinceMount: now - mountTimeRef.current,
+        });
+        return;
+      }
+
       // Block infinite scroll shortly after fitToView to prevent immediate re-extension
       if (now - lastFitToViewTimeRef.current < FIT_TO_VIEW_BLOCK_TIME) {
+        console.log("[InfiniteScroll] blocked - fitToView was recent", {
+          timeSinceFitToView: now - lastFitToViewTimeRef.current,
+        });
         return;
+      }
+
+      // If scroll lock is active, only release when user scrolls away from edge
+      if (fitToViewScrollLockRef.current) {
+        if (scrollLeft > 400) {
+          console.log("[InfiniteScroll] scroll lock released - user scrolled away from edge");
+          fitToViewScrollLockRef.current = false;
+        } else {
+          console.log("[InfiniteScroll] blocked - scroll lock active", { scrollLeft });
+          return;
+        }
       }
 
       // Near left edge? Extend into past
@@ -227,6 +277,7 @@ export function GanttLayout() {
         scrollLeft < THRESHOLD &&
         now - lastExtendPastRef.current > EXTEND_COOLDOWN
       ) {
+        console.log("[InfiniteScroll] extending PAST", { scrollLeft, scrollWidth, clientWidth });
         lastExtendPastRef.current = now;
         const oldScrollWidth = scrollWidth;
 
@@ -237,6 +288,7 @@ export function GanttLayout() {
           requestAnimationFrame(() => {
             const newScrollWidth = chartContainer.scrollWidth;
             const addedWidth = newScrollWidth - oldScrollWidth;
+            console.log("[InfiniteScroll] PAST correction", { oldScrollWidth, newScrollWidth, addedWidth, newScrollLeft: scrollLeft + addedWidth });
             if (addedWidth > 0) {
               chartContainer.scrollLeft = scrollLeft + addedWidth;
             }
@@ -249,6 +301,7 @@ export function GanttLayout() {
         scrollLeft + clientWidth > scrollWidth - THRESHOLD &&
         now - lastExtendFutureRef.current > EXTEND_COOLDOWN
       ) {
+        console.log("[InfiniteScroll] extending FUTURE", { scrollLeft, scrollWidth, clientWidth });
         lastExtendFutureRef.current = now;
         extendDateRange("future", 30);
       }
