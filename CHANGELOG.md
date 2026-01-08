@@ -2,6 +2,18 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [0.0.19](https://github.com/kitikonti/ownchart/compare/v0.0.18...v0.0.19) (2026-01-08)
+
+
+### Features
+
+* **export:** add advanced timeline scale options to PNG export ([17b2cae](https://github.com/kitikonti/ownchart/commit/17b2caec8609250b66c4bc7c74e4128a0562e413))
+
+
+### UI/UX
+
+* **export:** polish export dialog with consistent slate palette ([afc01f5](https://github.com/kitikonti/ownchart/commit/afc01f5216195158d913e7730bdab4ef1a78bf35))
+
 ### [0.0.18](https://github.com/kitikonti/ownchart/compare/v0.0.17...v0.0.18) (2026-01-08)
 
 
