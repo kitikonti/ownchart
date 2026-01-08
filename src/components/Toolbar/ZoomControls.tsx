@@ -10,6 +10,7 @@ import {
 } from "@phosphor-icons/react";
 import { useChartStore } from "../../store/slices/chartSlice";
 import { useTaskStore } from "../../store/slices/taskSlice";
+import { getViewportCenterAnchor, applyScrollLeft } from "../../hooks/useZoom";
 import { MIN_ZOOM, MAX_ZOOM } from "../../utils/timelineUtils";
 
 // Preset zoom levels optimized for 5%-300% range
@@ -42,13 +43,28 @@ export function ZoomControls() {
     }
   }
 
+  // Zoom with viewport-center anchoring
+  const handleZoomIn = () => {
+    const anchor = getViewportCenterAnchor();
+    const result = zoomIn(anchor);
+    applyScrollLeft(result.newScrollLeft);
+  };
+
+  const handleZoomOut = () => {
+    const anchor = getViewportCenterAnchor();
+    const result = zoomOut(anchor);
+    applyScrollLeft(result.newScrollLeft);
+  };
+
   const handleZoomLevelChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     const value = e.target.value;
     if (value === "fit") {
       fitToView(tasks);
     } else {
+      const anchor = getViewportCenterAnchor();
       const newZoom = parseInt(value) / 100;
-      useChartStore.getState().setZoom(newZoom);
+      const result = useChartStore.getState().setZoom(newZoom, anchor);
+      applyScrollLeft(result.newScrollLeft);
     }
   };
 
@@ -65,7 +81,7 @@ export function ZoomControls() {
             ? "text-slate-400 cursor-not-allowed"
             : "text-slate-600 hover:text-slate-800 hover:bg-slate-100 active:bg-slate-200"
         }`}
-        onClick={zoomOut}
+        onClick={handleZoomOut}
         disabled={!canZoomOut}
         title="Zoom Out (Ctrl+-)"
         aria-label="Zoom out"
@@ -95,7 +111,7 @@ export function ZoomControls() {
             ? "text-slate-400 cursor-not-allowed"
             : "text-slate-600 hover:text-slate-800 hover:bg-slate-100 active:bg-slate-200"
         }`}
-        onClick={zoomIn}
+        onClick={handleZoomIn}
         disabled={!canZoomIn}
         title="Zoom In (Ctrl++)"
         aria-label="Zoom in"

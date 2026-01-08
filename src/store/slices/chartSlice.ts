@@ -12,6 +12,7 @@ import {
   MIN_ZOOM,
   MAX_ZOOM,
   FIXED_BASE_PIXELS_PER_DAY,
+  dateToPixel,
 } from "../../utils/timelineUtils";
 import {
   getDateRange,
@@ -28,6 +29,23 @@ import {
   detectLocaleHolidayRegion,
 } from "../../types/preferences.types";
 import { holidayService } from "../../services/holidayService";
+
+/**
+ * Anchor point for zoom operations.
+ * Specifies which date should remain at a fixed pixel offset after zoom.
+ */
+export interface ZoomAnchor {
+  anchorDate: string; // ISO date string that should stay fixed
+  anchorPixelOffset: number; // Pixel offset from viewport left where anchorDate should remain
+}
+
+/**
+ * Result of zoom operations with anchor.
+ * Returns the new scrollLeft needed to maintain the anchor position.
+ */
+export interface ZoomResult {
+  newScrollLeft: number | null; // null if no anchor provided
+}
 
 interface ChartState {
   // Scale management (CRITICAL from Architect review)
@@ -72,10 +90,11 @@ interface ChartActions {
   extendDateRange: (direction: "past" | "future", days?: number) => void;
 
   // Zoom actions (Sprint 1.2 Package 3)
-  setZoom: (zoom: number, centerPoint?: { x: number; y: number }) => void;
-  zoomIn: () => void;
-  zoomOut: () => void;
-  resetZoom: () => void;
+  // All zoom functions accept optional anchor for scroll position preservation
+  setZoom: (zoom: number, anchor?: ZoomAnchor) => ZoomResult;
+  zoomIn: (anchor?: ZoomAnchor) => ZoomResult;
+  zoomOut: (anchor?: ZoomAnchor) => ZoomResult;
+  resetZoom: (anchor?: ZoomAnchor) => ZoomResult;
 
   // Pan actions (Sprint 1.2 Package 3)
   setPanOffset: (offset: { x: number; y: number }) => void;
@@ -209,14 +228,35 @@ export const useChartStore = create<ChartState & ChartActions>()(
       });
     },
 
-    // Zoom with optional mouse centering (Sprint 1.2 Package 3)
-    setZoom: (newZoom: number) => {
+    // Zoom with optional anchor point for scroll position preservation
+    setZoom: (newZoom: number, anchor?: ZoomAnchor): ZoomResult => {
+      const state = get();
+      const constrainedZoom = Math.max(MIN_ZOOM, Math.min(MAX_ZOOM, newZoom));
+
+      // Calculate new scrollLeft before updating state (if anchor provided)
+      let newScrollLeft: number | null = null;
+
+      if (anchor && state.scale && state.dateRange) {
+        // Calculate new scale with the new zoom
+        const newScale = deriveScale(
+          state.dateRange,
+          state.containerWidth,
+          constrainedZoom
+        );
+
+        if (newScale) {
+          // Calculate where the anchor date will be in the new scale
+          const newAnchorPixelPos = dateToPixel(anchor.anchorDate, newScale);
+
+          // Calculate new scrollLeft to keep anchor at same viewport position
+          newScrollLeft = Math.max(0, Math.round(newAnchorPixelPos - anchor.anchorPixelOffset));
+        }
+      }
+
+      // Update state
       set((state) => {
-        const constrainedZoom = Math.max(MIN_ZOOM, Math.min(MAX_ZOOM, newZoom));
         state.zoom = constrainedZoom;
 
-        // Recalculate scale if we have a dateRange
-        // Note: centerPoint pan adjustment not implemented yet
         if (state.dateRange) {
           state.scale = deriveScale(
             state.dateRange,
@@ -225,23 +265,25 @@ export const useChartStore = create<ChartState & ChartActions>()(
           );
         }
       });
+
+      return { newScrollLeft };
     },
 
     // Zoom in by 25% increment
-    zoomIn: () => {
+    zoomIn: (anchor?: ZoomAnchor): ZoomResult => {
       const current = get().zoom;
-      get().setZoom(Math.min(MAX_ZOOM, current + 0.25));
+      return get().setZoom(Math.min(MAX_ZOOM, current + 0.25), anchor);
     },
 
     // Zoom out by 25% decrement
-    zoomOut: () => {
+    zoomOut: (anchor?: ZoomAnchor): ZoomResult => {
       const current = get().zoom;
-      get().setZoom(Math.max(MIN_ZOOM, current - 0.25));
+      return get().setZoom(Math.max(MIN_ZOOM, current - 0.25), anchor);
     },
 
     // Reset zoom to 100%
-    resetZoom: () => {
-      get().setZoom(1.0);
+    resetZoom: (anchor?: ZoomAnchor): ZoomResult => {
+      return get().setZoom(1.0, anchor);
     },
 
     // Set pan offset (validates for NaN/Infinity)

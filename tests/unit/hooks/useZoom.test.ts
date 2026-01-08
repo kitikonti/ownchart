@@ -62,7 +62,7 @@ describe('useZoom', () => {
   });
 
   describe('Wheel zoom', () => {
-    it('should zoom in on Ctrl+Wheel up', () => {
+    it('should zoom in on Ctrl+Wheel up (fallback without scale)', () => {
       const { result } = renderHook(() => useZoom({ containerRef }));
 
       const wheelEvent = {
@@ -74,10 +74,11 @@ describe('useZoom', () => {
 
       result.current.handlers.onWheel(wheelEvent);
 
-      expect(setZoomSpy).toHaveBeenCalledWith(1.1, { x: 400, y: 250 });
+      // Without scale, uses fallback: setZoom(zoom + delta) without anchor
+      expect(setZoomSpy).toHaveBeenCalledWith(1.1);
     });
 
-    it('should zoom out on Ctrl+Wheel down', () => {
+    it('should zoom out on Ctrl+Wheel down (fallback without scale)', () => {
       const { result } = renderHook(() => useZoom({ containerRef }));
 
       const wheelEvent = {
@@ -89,7 +90,8 @@ describe('useZoom', () => {
 
       result.current.handlers.onWheel(wheelEvent);
 
-      expect(setZoomSpy).toHaveBeenCalledWith(0.9, { x: 400, y: 250 });
+      // Without scale, uses fallback: setZoom(zoom + delta) without anchor
+      expect(setZoomSpy).toHaveBeenCalledWith(0.9);
     });
 
     it('should use metaKey on Mac', () => {

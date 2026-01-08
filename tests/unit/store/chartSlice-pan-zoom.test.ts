@@ -54,7 +54,7 @@ describe('Chart Store - Pan/Zoom Navigation', () => {
       expect(useChartStore.getState().zoom).toBe(3.0);
     });
 
-    it('should accept center point parameter but not adjust pan offset (feature removed)', () => {
+    it('should accept anchor parameter and return newScrollLeft for scroll adjustment', () => {
       const { setZoom, setContainerWidth, updateScale } = useChartStore.getState();
 
       // Create minimal mock tasks for scale calculation
@@ -81,14 +81,22 @@ describe('Chart Store - Pan/Zoom Navigation', () => {
       expect(initialState.zoom).toBe(1.0);
       expect(initialState.panOffset).toEqual({ x: 0, y: 0 });
 
-      setZoom(2.0, { x: 400, y: 300 }); // Center point parameter is accepted but ignored
+      // Call setZoom with anchor parameter
+      const anchor = {
+        anchorDate: '2024-01-15',
+        anchorPixelOffset: 400,
+      };
+      const result = setZoom(2.0, anchor);
 
       const state = useChartStore.getState();
       expect(state.zoom).toBe(2.0);
 
-      // Pan offset should remain unchanged (center point adjustment was removed)
-      // See chartSlice.ts line 140 comment
+      // Pan offset should remain unchanged (only scrollLeft is returned)
       expect(state.panOffset).toEqual({ x: 0, y: 0 });
+
+      // Result should contain newScrollLeft for scroll position adjustment
+      expect(result.newScrollLeft).toBeDefined();
+      expect(typeof result.newScrollLeft).toBe('number');
     });
   });
 

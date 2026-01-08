@@ -58,6 +58,7 @@ import { useHistoryStore } from "../../store/slices/historySlice";
 import { useUIStore } from "../../store/slices/uiSlice";
 import { useFileOperations } from "../../hooks/useFileOperations";
 import { useClipboardOperations } from "../../hooks/useClipboardOperations";
+import { getViewportCenterAnchor, applyScrollLeft } from "../../hooks/useZoom";
 import { MIN_ZOOM, MAX_ZOOM } from "../../utils/timelineUtils";
 
 const ICON_SIZE = TOOLBAR_TOKENS.iconSize;
@@ -192,12 +193,27 @@ export function AppToolbar() {
     if (singleSelectedTaskId) insertTaskBelow(singleSelectedTaskId);
   };
 
+  // Zoom with viewport-center anchoring
+  const handleZoomIn = () => {
+    const anchor = getViewportCenterAnchor();
+    const result = zoomIn(anchor);
+    applyScrollLeft(result.newScrollLeft);
+  };
+
+  const handleZoomOut = () => {
+    const anchor = getViewportCenterAnchor();
+    const result = zoomOut(anchor);
+    applyScrollLeft(result.newScrollLeft);
+  };
+
   const handleZoomLevelChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     const value = e.target.value;
     if (value === "fit") {
       fitToView(tasks);
     } else {
-      useChartStore.getState().setZoom(parseInt(value) / 100);
+      const anchor = getViewportCenterAnchor();
+      const result = useChartStore.getState().setZoom(parseInt(value) / 100, anchor);
+      applyScrollLeft(result.newScrollLeft);
     }
   };
 
@@ -397,7 +413,7 @@ export function AppToolbar() {
       {/* Zoom Controls */}
       <ToolbarGroup label="Zoom">
         <ToolbarButton
-          onClick={zoomOut}
+          onClick={handleZoomOut}
           disabled={!canZoomOut}
           title="Zoom Out (Ctrl+-)"
           aria-label="Zoom out"
@@ -417,7 +433,7 @@ export function AppToolbar() {
           <option value="fit">Fit to Width</option>
         </select>
         <ToolbarButton
-          onClick={zoomIn}
+          onClick={handleZoomIn}
           disabled={!canZoomIn}
           title="Zoom In (Ctrl++)"
           aria-label="Zoom in"
