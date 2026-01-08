@@ -16,19 +16,44 @@ describe('generateFilename', () => {
     vi.useRealTimers();
   });
 
-  it('should generate filename with timestamp', () => {
+  it('should generate filename with project name and timestamp', () => {
+    const filename = generateFilename('MyProject');
+    expect(filename).toBe('MyProject-20260105-143045.png');
+  });
+
+  it('should use "untitled" when no project name provided', () => {
     const filename = generateFilename();
-    expect(filename).toBe('gantt-chart-20260105-143045.png');
+    expect(filename).toBe('untitled-20260105-143045.png');
+  });
+
+  it('should use "untitled" for empty project name', () => {
+    const filename = generateFilename('');
+    expect(filename).toBe('untitled-20260105-143045.png');
+  });
+
+  it('should sanitize project name with spaces', () => {
+    const filename = generateFilename('My Project');
+    expect(filename).toBe('My-Project-20260105-143045.png');
+  });
+
+  it('should sanitize project name with invalid characters', () => {
+    const filename = generateFilename('Project/Client:Test');
+    expect(filename).toBe('ProjectClientTest-20260105-143045.png');
   });
 
   it('should include .png extension', () => {
-    const filename = generateFilename();
+    const filename = generateFilename('Test');
     expect(filename.endsWith('.png')).toBe(true);
   });
 
-  it('should include gantt-chart prefix', () => {
-    const filename = generateFilename();
-    expect(filename.startsWith('gantt-chart-')).toBe(true);
+  it('should include date in YYYYMMDD format', () => {
+    const filename = generateFilename('Test');
+    expect(filename).toContain('20260105');
+  });
+
+  it('should include time in HHMMSS format', () => {
+    const filename = generateFilename('Test');
+    expect(filename).toContain('143045');
   });
 });
 
@@ -169,7 +194,7 @@ describe('downloadCanvasAsPng', () => {
 
     await downloadCanvasAsPng(mockCanvas);
 
-    expect(mockLink.download).toBe('gantt-chart-20260105-143045.png');
+    expect(mockLink.download).toBe('untitled-20260105-143045.png');
 
     vi.useRealTimers();
   });

@@ -42,6 +42,8 @@ export interface CaptureChartParams {
   currentAppZoom?: number;
   projectDateRange?: { start: Date; end: Date };
   visibleDateRange?: { start: Date; end: Date };
+  /** Project name for export filename */
+  projectName?: string;
 }
 
 /**

@@ -2,11 +2,16 @@
  * PNG download utilities.
  */
 
+import { sanitizeFilename } from "./sanitizeFilename";
+
 /**
  * Generate a filename for the exported chart.
- * Format: gantt-chart-YYYYMMDD-HHMMSS.png
+ * Format: {projectName}-YYYYMMDD-HHMMSS.png
+ *
+ * @param projectName - The project name (will be sanitized)
+ * @returns A valid filename for the export
  */
-export function generateFilename(): string {
+export function generateFilename(projectName?: string): string {
   const now = new Date();
   const year = now.getFullYear();
   const month = String(now.getMonth() + 1).padStart(2, "0");
@@ -15,7 +20,8 @@ export function generateFilename(): string {
   const minutes = String(now.getMinutes()).padStart(2, "0");
   const seconds = String(now.getSeconds()).padStart(2, "0");
 
-  return `gantt-chart-${year}${month}${day}-${hours}${minutes}${seconds}.png`;
+  const safeName = sanitizeFilename(projectName || "");
+  return `${safeName}-${year}${month}${day}-${hours}${minutes}${seconds}.png`;
 }
 
 /**

@@ -16,6 +16,7 @@ import { ExportOptionsForm } from "./ExportOptions";
 import { useUIStore } from "../../store/slices/uiSlice";
 import { useTaskStore } from "../../store/slices/taskSlice";
 import { useChartStore } from "../../store/slices/chartSlice";
+import { useFileStore } from "../../store/slices/fileSlice";
 import { exportToPng, calculateExportDimensions } from "../../utils/export";
 
 /**
@@ -40,6 +41,10 @@ export function ExportDialog(): JSX.Element | null {
   // Get chart settings for default values
   const showHolidays = useChartStore((state) => state.showHolidays);
   const taskLabelPosition = useChartStore((state) => state.taskLabelPosition);
+
+  // Get project name for export filename
+  const fileName = useFileStore((state) => state.fileName);
+  const projectName = fileName?.replace(".ownchart", "") || undefined;
 
   // Get current app zoom level
   const currentAppZoom = useChartStore((state) => state.zoom);
@@ -136,6 +141,7 @@ export function ExportDialog(): JSX.Element | null {
         currentAppZoom,
         projectDateRange,
         visibleDateRange,
+        projectName,
       });
       closeExportDialog();
     } catch (error) {
@@ -150,6 +156,7 @@ export function ExportDialog(): JSX.Element | null {
     currentAppZoom,
     projectDateRange,
     visibleDateRange,
+    projectName,
     closeExportDialog,
     setIsExporting,
     setExportError,

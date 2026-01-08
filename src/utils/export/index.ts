@@ -13,6 +13,7 @@ export {
   downloadCanvasAsPng,
   generateFilename,
 } from "./downloadPng";
+export { sanitizeFilename } from "./sanitizeFilename";
 export {
   DEFAULT_EXPORT_OPTIONS,
   EXPORT_ZOOM_PRESETS,
@@ -49,7 +50,7 @@ export async function exportToPng(params: CaptureChartParams): Promise<void> {
   // Convert to blob
   const blob = await canvasToBlob(canvas);
 
-  // Download the file
-  const filename = generateFilename();
+  // Download the file with project name
+  const filename = generateFilename(params.projectName);
   downloadBlob(blob, filename);
 }
