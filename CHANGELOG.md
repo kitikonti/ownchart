@@ -2,6 +2,27 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [0.0.18](https://github.com/kitikonti/ownchart/compare/v0.0.17...v0.0.18) (2026-01-08)
+
+
+### Features
+
+* add infinite scroll to timeline ([02e48a8](https://github.com/kitikonti/ownchart/commit/02e48a8b35f7cbaaae9ae57db67e81f79517cca2))
+* implement infinite scroll for timeline ([39ce070](https://github.com/kitikonti/ownchart/commit/39ce070169f106664b1dc80be9fcf4c11dde5727))
+* implement zoom anchoring for stable scroll position ([ac7a32f](https://github.com/kitikonti/ownchart/commit/ac7a32fdd27dbf8b0b36c408f42eff044babd29d))
+
+
+### Bug Fixes
+
+* disable false-positive a11y lint error for separator ([f46e9de](https://github.com/kitikonti/ownchart/commit/f46e9dee6122e51fd1bfb425f38e3b9156b0c8dd))
+* prevent dependency arrows from animating during scroll ([065f2f6](https://github.com/kitikonti/ownchart/commit/065f2f6e1ec05dbb1d7be605f826b7afb33accb5))
+* smooth left-scrolling for infinite timeline ([d3f1e35](https://github.com/kitikonti/ownchart/commit/d3f1e358cee1bf7064e58a927415a4586f258e3f))
+
+
+### UI/UX
+
+* remove TODAY label from today marker ([b4174cf](https://github.com/kitikonti/ownchart/commit/b4174cfb97fce405c0eb60b43bc2fa0a0dabee04))
+
 ### [0.0.17](https://github.com/kitikonti/ownchart/compare/v0.0.16...v0.0.17) (2026-01-06)
 
 
