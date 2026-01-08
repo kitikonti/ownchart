@@ -34,6 +34,7 @@ describe('File Operations - Deserialization', () => {
         showWeekends: false,
         showTodayMarker: true,
         taskTableWidth: 400,
+        columnWidths: { name: 250, startDate: 100 },
       },
       metadata: {
         createdAt: '2026-01-01T00:00:00.000Z',
@@ -76,6 +77,35 @@ describe('File Operations - Deserialization', () => {
 
       expect(result.data!.viewSettings.zoom).toBe(1.5);
       expect(result.data!.viewSettings.showWeekends).toBe(false);
+    });
+
+    it('should return taskTableWidth from view settings', async () => {
+      const content = JSON.stringify(createValidFileContent());
+      const result = await deserializeGanttFile(content, 'test.ownchart');
+
+      expect(result.data!.viewSettings.taskTableWidth).toBe(400);
+    });
+
+    it('should return columnWidths from view settings', async () => {
+      const content = JSON.stringify(createValidFileContent());
+      const result = await deserializeGanttFile(content, 'test.ownchart');
+
+      expect(result.data!.viewSettings.columnWidths).toEqual({
+        name: 250,
+        startDate: 100,
+      });
+    });
+
+    it('should handle missing columnWidths in file', async () => {
+      const file = createValidFileContent();
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      delete (file.chart.viewSettings as any).columnWidths;
+
+      const content = JSON.stringify(file);
+      const result = await deserializeGanttFile(content, 'test.ownchart');
+
+      expect(result.success).toBe(true);
+      expect(result.data!.viewSettings.columnWidths).toBeUndefined();
     });
 
     it('should convert tasks to proper format', async () => {

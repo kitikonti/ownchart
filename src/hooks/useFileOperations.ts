@@ -25,6 +25,8 @@ export function useFileOperations() {
   const autoFitColumn = useTaskStore((state) => state.autoFitColumn);
   const taskTableWidth = useTaskStore((state) => state.taskTableWidth);
   const columnWidths = useTaskStore((state) => state.columnWidths);
+  const setColumnWidth = useTaskStore((state) => state.setColumnWidth);
+  const setTaskTableWidth = useTaskStore((state) => state.setTaskTableWidth);
 
   // View settings from chartSlice
   const zoom = useChartStore((state) => state.zoom);
@@ -188,7 +190,25 @@ export function useFileOperations() {
         holidayRegion: loadedViewSettings.holidayRegion, // Use file's region, undefined keeps current
       });
 
-      autoFitColumn("name"); // Auto-fit name column to content
+      // Restore column widths from file
+      if (loadedViewSettings.taskTableWidth !== undefined) {
+        setTaskTableWidth(loadedViewSettings.taskTableWidth);
+      }
+      if (loadedViewSettings.columnWidths) {
+        Object.entries(loadedViewSettings.columnWidths).forEach(
+          ([columnId, width]) => {
+            setColumnWidth(columnId, width);
+          }
+        );
+      }
+
+      // Only auto-fit if no column widths were saved in file
+      if (
+        !loadedViewSettings.columnWidths ||
+        Object.keys(loadedViewSettings.columnWidths).length === 0
+      ) {
+        autoFitColumn("name");
+      }
       clearHistory();
       fileState.setFileName(file.name);
       fileState.setChartId(parseResult.data!.chartId);
@@ -210,6 +230,8 @@ export function useFileOperations() {
     setDependencies,
     resetExportOptions,
     setViewSettings,
+    setColumnWidth,
+    setTaskTableWidth,
     autoFitColumn,
     clearHistory,
   ]);
