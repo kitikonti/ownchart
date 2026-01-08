@@ -1486,12 +1486,27 @@ This roadmap provides a clear path from concept to launch:
 
 ---
 
-**Document Version**: 2.0
-**Last Updated**: 2026-01-06
-**Status**: ✅ Sprint 1.5.9 COMPLETE (v0.0.12)
+**Document Version**: 2.1
+**Last Updated**: 2026-01-08
+**Status**: ✅ Sprint 1.5.9.2 COMPLETE (v0.0.21)
 **Next Phase**: V1.1 - Remaining Deferred Features
 
-**Recent Updates (v2.0)** - Sprint 1.5.9 Complete:
+**Recent Updates (v2.1)** - v0.0.21+:
+- **Unreleased** (after v0.0.21):
+  - Dependencies no longer auto-move successor tasks on creation
+  - Milestone labels and label clipping in fit-to-view fixed
+- **v0.0.21** (2026-01-08):
+  - Export includes project name in PNG filename
+  - Column widths restored when opening files
+- **v0.0.20**: Exponential zoom for consistent feel at all zoom levels
+- **v0.0.19**: Advanced timeline scale options in PNG export
+- **v0.0.18**: Infinite scroll & zoom anchoring complete (Sprint 1.5.9.2)
+- **v0.0.17**: Default task color changed to Teal, unified brand color
+- **v0.0.15**: Inter font, improved typography and form controls
+- **v0.0.14**: Custom domain ownchart.app configured
+- **v0.0.13**: Sprint 1.5.9 User Preferences complete, auto-open chart settings on new file
+
+**Previous Updates (v2.0)** - Sprint 1.5.9 Complete:
 - Sprint 1.5.9 marked as COMPLETE - all features implemented
 - Working Days Mode confirmed fully implemented:
   - workingDaysCalculator.ts utility (208 lines)

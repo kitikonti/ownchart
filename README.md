@@ -3,7 +3,7 @@
 > **Privacy-first, offline Gantt chart for project planning. Own your data.**
 
 [![CI](https://github.com/kitikonti/ownchart/actions/workflows/ci.yml/badge.svg)](https://github.com/kitikonti/ownchart/actions/workflows/ci.yml)
-[![Version](https://img.shields.io/badge/version-0.0.11-blue.svg)](https://github.com/kitikonti/ownchart/releases)
+[![Version](https://img.shields.io/badge/version-0.0.21-blue.svg)](https://github.com/kitikonti/ownchart/releases)
 [![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.3-blue.svg)](https://www.typescriptlang.org/)
 [![React](https://img.shields.io/badge/React-18.3-61dafb.svg)](https://react.dev)
@@ -12,7 +12,7 @@
 
 ## 🌐 Try It Now
 
-**Live Demo**: [https://ownchart.app](https://ownchart.app)
+**Live**: [https://ownchart.app](https://ownchart.app)
 
 No installation needed - just open and start planning. Your data stays in your browser's local storage.
 
@@ -51,7 +51,7 @@ npm run dev
 
 Open [http://localhost:5173](http://localhost:5173) in your browser to start developing!
 
-**Or use the live demo**: [https://ownchart.app](https://ownchart.app)
+**Or try it online**: [https://ownchart.app](https://ownchart.app)
 
 ## 🏗️ Tech Stack
 
@@ -163,7 +163,7 @@ Contributions are welcome! Please read our [contributing guidelines](./CONTRIBUT
 
 ## 🔗 Links
 
-- **Live Demo**: [ownchart.app](https://ownchart.app)
+- **Live**: [ownchart.app](https://ownchart.app)
 - **Repository**: [github.com/kitikonti/ownchart](https://github.com/kitikonti/ownchart)
 - **Issues**: [Report a bug or request a feature](https://github.com/kitikonti/ownchart/issues)
 - **Changelog**: [See what's new](./CHANGELOG.md)

@@ -1,6 +1,7 @@
-# Gantt Chart Application - Concept Documentation
+# OwnChart - Concept Documentation
 
-**Application Name**: TBD (To Be Determined)
+**Application Name**: OwnChart
+**Live**: [ownchart.app](https://ownchart.app)
 
 ## Project Overview
 
@@ -59,7 +60,10 @@ This concept documentation is organized into logical categories for easy navigat
 - **[SPRINT_1.4_DEPENDENCIES_CONCEPT.md](./sprints/SPRINT_1.4_DEPENDENCIES_CONCEPT.md)** - Task dependencies (FS) ✅
 - **[SPRINT_1.5_UNDO_REDO_CONCEPT.md](./sprints/SPRINT_1.5_UNDO_REDO_CONCEPT.md)** - Undo/redo system ✅
 - Sprint 1.5.4 - Copy/Paste & Multi-Select ✅ (documented in ROADMAP.md)
-- **[SPRINT_1.6_PNG_EXPORT_POLISH_CONCEPT.md](./sprints/SPRINT_1.6_PNG_EXPORT_POLISH_CONCEPT.md)** - PNG export & polish 🟡
+- **[SPRINT_1.6_PNG_EXPORT_POLISH_CONCEPT.md](./sprints/SPRINT_1.6_PNG_EXPORT_POLISH_CONCEPT.md)** - PNG export & polish ✅
+- **[SPRINT_1.5.9_USER_PREFERENCES_SETTINGS_CONCEPT.md](./sprints/SPRINT_1.5.9_USER_PREFERENCES_SETTINGS_CONCEPT.md)** - User preferences & settings ✅
+- **[SPRINT_1.5.9.1_UI_DENSITY_CONCEPT.md](./sprints/SPRINT_1.5.9.1_UI_DENSITY_CONCEPT.md)** - UI Density settings ✅
+- Sprint 1.5.9.2 - Infinite Scroll & Zoom Anchoring ✅
 
 ## Quick Reference
 
@@ -122,11 +126,46 @@ See **[EXTENSIBILITY_ARCHITECTURE.md](./architecture/EXTENSIBILITY_ARCHITECTURE.
 
 ---
 
-**Last Updated**: 2026-01-05
-**Status**: Phase 1 - MVP (Sprint 1.5.4 Complete)
-**Version**: 1.6
+**Last Updated**: 2026-01-08
+**Status**: ✅ MVP Complete (Sprint 1.5.9.2 Complete)
+**App Version**: 0.0.21
+**Doc Version**: 1.8
 
-## Recent Updates (v1.6 - 2026-01-05)
+## Recent Updates (v1.8 - 2026-01-08)
+
+### Sprint 1.5.9.2 - Infinite Scroll & Zoom Anchoring ✅ Complete
+- ✅ Infinite Scroll for timeline (auto-extends 30 days when near edge)
+- ✅ Zoom Anchoring (cursor-centered for wheel, viewport-centered for keyboard/toolbar)
+- ✅ Smooth left-scrolling for infinite timeline
+- ✅ Dependency arrows no longer animate during scroll
+- ✅ Exponential zoom for consistent feel at all zoom levels
+
+### Latest Improvements (v0.0.13 - v0.0.21+)
+- ✅ Advanced timeline scale options in PNG export
+- ✅ Project name included in PNG export filename
+- ✅ Column widths restored when opening files
+- ✅ Milestone labels and label clipping in fit-to-view fixed
+- ✅ Dependencies no longer auto-move tasks on creation
+- ✅ Default task color changed to Teal with unified brand color
+- ✅ Inter font (replaced IBM Plex Sans) with refined typography
+- ✅ Custom domain configured: ownchart.app
+- ✅ Auto-open chart settings dialog when creating new file
+- ✅ TODAY label removed from today marker (cleaner look)
+
+### Sprint 1.5.9.1 - UI Density ✅ Complete
+- ✅ Three UI density modes: Compact (28px), Normal (36px), Comfortable (44px)
+- ✅ Preferences dialog with density selection
+- ✅ Export density selection independent from app preference
+
+### Sprint 1.5.9 - User Preferences & Settings ✅ Complete
+- ✅ Holiday Service with date-holidays library (199 countries)
+- ✅ User Preferences: Date Format, First Day of Week, Week Numbering
+- ✅ Chart Settings Dialog with Timeline Display and Task Display sections
+- ✅ Holiday highlighting in timeline with tooltips
+- ✅ Task Label Position (before/inside/after/none)
+- ✅ Working Days Mode (duration editing, task drag)
+
+### Previous Updates (v1.6 - 2026-01-05)
 
 ### Sprint 1.5.4 - Copy/Paste & Multi-Select ✅ Complete (Ahead of Schedule)
 Originally planned for V1.1, completed early during MVP development:

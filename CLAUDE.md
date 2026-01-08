@@ -68,6 +68,19 @@
 - ✅ Smooth left-scrolling for infinite timeline
 - ✅ Dependency arrows no longer animate during scroll
 
+**Latest Improvements (v0.0.13 - v0.0.21+)**:
+- ✅ Exponential zoom for consistent feel at all zoom levels
+- ✅ Advanced timeline scale options in PNG export
+- ✅ Project name included in PNG export filename
+- ✅ Column widths restored when opening files
+- ✅ Milestone labels and label clipping in fit-to-view fixed
+- ✅ Dependencies no longer auto-move tasks on creation
+- ✅ Default task color changed to Teal with unified brand color
+- ✅ Inter font (replaced IBM Plex Sans) with refined typography
+- ✅ Custom domain configured: ownchart.app
+- ✅ Auto-open chart settings dialog when creating new file
+- ✅ TODAY label removed from today marker (cleaner look)
+
 **Test Coverage**: 786 unit tests (80%+ coverage)
 
 **Next Phase**:
@@ -464,6 +477,7 @@ npm run test:e2e            # E2E tests (Playwright)
 
 ---
 
-**Status**: Sprint 1.5.9 In Progress - User Preferences & Settings
+**Status**: ✅ MVP Complete - All Sprints through 1.5.9.2 finished
+**Current Version**: 0.0.21
 **File Extension**: `.ownchart`
-**Version**: Check `package.json` for the current version
+**Last Updated**: 2026-01-08
