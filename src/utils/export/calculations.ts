@@ -4,10 +4,7 @@
  */
 
 import type { ExportOptions, ExportColumnKey } from "./types";
-import {
-  DENSITY_CONFIG,
-  type UiDensity,
-} from "../../types/preferences.types";
+import { DENSITY_CONFIG, type UiDensity } from "../../types/preferences.types";
 import { addDays } from "../dateUtils";
 
 /** Base pixels per day at 100% zoom */
@@ -113,10 +110,7 @@ export function getEffectiveDateRange(
     default:
       if (projectDateRange) {
         return {
-          min: addDays(
-            projectDateRange.start.toISOString().split("T")[0],
-            -7
-          ),
+          min: addDays(projectDateRange.start.toISOString().split("T")[0], -7),
           max: addDays(projectDateRange.end.toISOString().split("T")[0], 7),
         };
       }

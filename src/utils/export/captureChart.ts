@@ -51,7 +51,14 @@ export interface CaptureChartParams {
 export async function captureChart(
   params: CaptureChartParams
 ): Promise<HTMLCanvasElement> {
-  const { tasks, options, columnWidths, currentAppZoom, projectDateRange, visibleDateRange } = params;
+  const {
+    tasks,
+    options,
+    columnWidths,
+    currentAppZoom,
+    projectDateRange,
+    visibleDateRange,
+  } = params;
 
   // Calculate expected dimensions
   const dimensions = calculateExportDimensions(

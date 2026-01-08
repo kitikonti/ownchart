@@ -51,7 +51,6 @@ export const EXPORT_COLUMNS = [
   { key: "progress", label: "%", defaultWidth: 60 },
 ] as const;
 
-
 /**
  * Renders the task table header for export.
  */
@@ -198,7 +197,6 @@ function ExportTaskTableRows({
   );
 }
 
-
 /**
  * Main export renderer component.
  * Renders the complete chart structure for export capture.
@@ -266,7 +264,12 @@ export function ExportRenderer({
 
   // Calculate effective zoom based on zoom mode
   const effectiveZoom = useMemo(() => {
-    return calculateEffectiveZoom(options, currentAppZoom, durationDays, taskTableWidth);
+    return calculateEffectiveZoom(
+      options,
+      currentAppZoom,
+      durationDays,
+      taskTableWidth
+    );
   }, [options, currentAppZoom, durationDays, taskTableWidth]);
 
   // Calculate scale with effective zoom
@@ -280,12 +283,14 @@ export function ExportRenderer({
   }, [dateRange, effectiveZoom]);
 
   // Calculate dimensions - for fitToWidth, total width IS the target
-  const timelineWidth = options.zoomMode === "fitToWidth"
-    ? Math.max(100, options.fitToWidth - taskTableWidth)
-    : scale.totalWidth;
-  const totalWidth = options.zoomMode === "fitToWidth"
-    ? options.fitToWidth
-    : taskTableWidth + timelineWidth;
+  const timelineWidth =
+    options.zoomMode === "fitToWidth"
+      ? Math.max(100, options.fitToWidth - taskTableWidth)
+      : scale.totalWidth;
+  const totalWidth =
+    options.zoomMode === "fitToWidth"
+      ? options.fitToWidth
+      : taskTableWidth + timelineWidth;
   const contentHeight = orderedTasks.length * densityConfig.rowHeight;
   const totalHeight =
     (options.includeHeader ? HEADER_HEIGHT : 0) + contentHeight;
@@ -462,7 +467,12 @@ export function calculateExportDimensions(
     : 0;
 
   // Get effective zoom (passing taskTableWidth for fitToWidth mode)
-  const effectiveZoom = calculateEffectiveZoom(options, currentAppZoom, durationDays, taskTableWidth);
+  const effectiveZoom = calculateEffectiveZoom(
+    options,
+    currentAppZoom,
+    durationDays,
+    taskTableWidth
+  );
 
   // Calculate timeline width
   let timelineWidth: number;
