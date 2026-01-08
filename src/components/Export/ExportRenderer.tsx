@@ -237,16 +237,6 @@ export function ExportRenderer({
     };
   }, [orderedTasks, providedProjectDateRange]);
 
-  // Calculate effective date range based on mode
-  const dateRange = useMemo(() => {
-    return getEffectiveDateRange(options, projectDateRange, visibleDateRange);
-  }, [options, projectDateRange, visibleDateRange]);
-
-  // Calculate project duration in days
-  const durationDays = useMemo(() => {
-    return calculateDurationDays(dateRange);
-  }, [dateRange]);
-
   // Get selected columns (default to all if not specified)
   const selectedColumns = options.selectedColumns || [
     "name",
@@ -262,7 +252,46 @@ export function ExportRenderer({
     ? calculateTaskTableWidth(selectedColumns, columnWidths, options.density)
     : 0;
 
-  // Calculate effective zoom based on zoom mode
+  // Calculate preliminary zoom (before label padding) for label width estimation
+  const preliminaryDuration = useMemo(() => {
+    if (!projectDateRange) return 30; // Default duration
+    const ms =
+      projectDateRange.end.getTime() - projectDateRange.start.getTime();
+    return Math.ceil(ms / (1000 * 60 * 60 * 24)) + 14; // +14 for base padding
+  }, [projectDateRange]);
+
+  const preliminaryZoom = useMemo(() => {
+    return calculateEffectiveZoom(
+      options,
+      currentAppZoom,
+      preliminaryDuration,
+      taskTableWidth
+    );
+  }, [options, currentAppZoom, preliminaryDuration, taskTableWidth]);
+
+  // Calculate effective date range with label padding
+  const dateRange = useMemo(() => {
+    return getEffectiveDateRange(
+      options,
+      projectDateRange,
+      visibleDateRange,
+      orderedTasks,
+      preliminaryZoom
+    );
+  }, [
+    options,
+    projectDateRange,
+    visibleDateRange,
+    orderedTasks,
+    preliminaryZoom,
+  ]);
+
+  // Calculate final project duration in days
+  const durationDays = useMemo(() => {
+    return calculateDurationDays(dateRange);
+  }, [dateRange]);
+
+  // Calculate final effective zoom based on zoom mode
   const effectiveZoom = useMemo(() => {
     return calculateEffectiveZoom(
       options,
@@ -441,16 +470,6 @@ export function calculateExportDimensions(
     };
   }
 
-  // Get effective date range based on mode
-  const dateRange = getEffectiveDateRange(
-    options,
-    effectiveProjectDateRange,
-    visibleDateRange
-  );
-
-  // Calculate project duration for zoom calculations
-  const durationDays = calculateDurationDays(dateRange);
-
   // Get selected columns (default to all if not specified)
   const selectedColumns = options.selectedColumns || [
     "name",
@@ -465,6 +484,33 @@ export function calculateExportDimensions(
   const taskTableWidth = hasTaskList
     ? calculateTaskTableWidth(selectedColumns, columnWidths, options.density)
     : 0;
+
+  // Calculate preliminary zoom for label padding estimation
+  let preliminaryDuration = 30; // Default
+  if (effectiveProjectDateRange) {
+    const ms =
+      effectiveProjectDateRange.end.getTime() -
+      effectiveProjectDateRange.start.getTime();
+    preliminaryDuration = Math.ceil(ms / (1000 * 60 * 60 * 24)) + 14;
+  }
+  const preliminaryZoom = calculateEffectiveZoom(
+    options,
+    currentAppZoom,
+    preliminaryDuration,
+    taskTableWidth
+  );
+
+  // Get effective date range based on mode (with label padding)
+  const dateRange = getEffectiveDateRange(
+    options,
+    effectiveProjectDateRange,
+    visibleDateRange,
+    orderedTasks,
+    preliminaryZoom
+  );
+
+  // Calculate project duration for zoom calculations
+  const durationDays = calculateDurationDays(dateRange);
 
   // Get effective zoom (passing taskTableWidth for fitToWidth mode)
   const effectiveZoom = calculateEffectiveZoom(

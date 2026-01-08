@@ -6,6 +6,8 @@
 import type { ExportOptions, ExportColumnKey } from "./types";
 import { DENSITY_CONFIG, type UiDensity } from "../../types/preferences.types";
 import { addDays } from "../dateUtils";
+import { calculateLabelPaddingDays } from "../textMeasurement";
+import type { Task } from "../../types/chart.types";
 
 /** Base pixels per day at 100% zoom */
 export const BASE_PIXELS_PER_DAY = 25;
@@ -78,11 +80,15 @@ export function calculateEffectiveZoom(
 
 /**
  * Calculate the effective date range based on date range mode.
+ * When tasks and effectiveZoom are provided, label padding is calculated
+ * to ensure task labels are not clipped in the export.
  */
 export function getEffectiveDateRange(
   options: ExportOptions,
   projectDateRange: { start: Date; end: Date } | undefined,
-  visibleDateRange: { start: Date; end: Date } | undefined
+  visibleDateRange: { start: Date; end: Date } | undefined,
+  tasks?: Task[],
+  effectiveZoom?: number
 ): { min: string; max: string } {
   const today = new Date().toISOString().split("T")[0];
   const defaultRange = { min: addDays(today, -7), max: addDays(today, 30) };
@@ -109,9 +115,36 @@ export function getEffectiveDateRange(
     case "all":
     default:
       if (projectDateRange) {
+        // Base padding of 7 days
+        let leftPadding = 7;
+        let rightPadding = 7;
+
+        // Calculate additional padding for task labels if tasks and zoom provided
+        if (tasks && tasks.length > 0 && effectiveZoom && effectiveZoom > 0) {
+          const densityConfig = DENSITY_CONFIG[options.density];
+          const fontSize = densityConfig.fontSizeBar;
+          const pixelsPerDay = BASE_PIXELS_PER_DAY * effectiveZoom;
+
+          const labelPadding = calculateLabelPaddingDays(
+            tasks,
+            options.taskLabelPosition,
+            fontSize,
+            pixelsPerDay
+          );
+
+          leftPadding += labelPadding.leftDays;
+          rightPadding += labelPadding.rightDays;
+        }
+
         return {
-          min: addDays(projectDateRange.start.toISOString().split("T")[0], -7),
-          max: addDays(projectDateRange.end.toISOString().split("T")[0], 7),
+          min: addDays(
+            projectDateRange.start.toISOString().split("T")[0],
+            -leftPadding
+          ),
+          max: addDays(
+            projectDateRange.end.toISOString().split("T")[0],
+            rightPadding
+          ),
         };
       }
       return defaultRange;

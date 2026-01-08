@@ -46,6 +46,9 @@ function MilestoneDiamond({
   cursor,
   opacity = 1,
   taskBarHeight = 26,
+  taskName,
+  fontSize = 11,
+  labelPosition = "after",
 }: {
   x: number;
   y: number;
@@ -57,6 +60,9 @@ function MilestoneDiamond({
   cursor?: string;
   opacity?: number;
   taskBarHeight?: number;
+  taskName: string;
+  fontSize?: number;
+  labelPosition?: TaskLabelPosition;
 }) {
   const centerY = y + taskBarHeight / 2; // Center of task bar
 
@@ -77,6 +83,20 @@ function MilestoneDiamond({
         fill={color}
         fillOpacity={opacity}
       />
+      {/* Task name label */}
+      {labelPosition !== "none" && (
+        <text
+          x={labelPosition === "before" ? x - 8 : x + size * 2 + 8}
+          y={centerY + fontSize / 3}
+          fontSize={fontSize}
+          fill="#495057"
+          fontWeight={600}
+          pointerEvents="none"
+          textAnchor={labelPosition === "before" ? "end" : "start"}
+        >
+          {taskName}
+        </text>
+      )}
     </g>
   );
 }
@@ -328,6 +348,9 @@ export const TaskBar = React.memo(function TaskBar({
           cursor={cursor}
           opacity={isBeingDragged ? 0.3 : 1}
           taskBarHeight={densityConfig.taskBarHeight}
+          taskName={task.name}
+          fontSize={densityConfig.fontSizeBar}
+          labelPosition={labelPosition === "inside" ? "after" : labelPosition}
         />
 
         {/* Preview milestone (solid outline during drag) */}

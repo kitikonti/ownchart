@@ -29,6 +29,8 @@ import {
   detectLocaleHolidayRegion,
 } from "../../types/preferences.types";
 import { holidayService } from "../../services/holidayService";
+import { calculateLabelPaddingDays } from "../../utils/textMeasurement";
+import { getCurrentDensityConfig } from "./userPreferencesSlice";
 
 /**
  * Anchor point for zoom operations.
@@ -337,7 +339,7 @@ export const useChartStore = create<ChartState & ChartActions>()(
       });
     },
 
-    // Fit all tasks in view with 1 week padding on each side
+    // Fit all tasks in view with padding that includes task labels
     fitToView: (tasks: Task[]) => {
       if (tasks.length === 0) {
         get().resetZoom();
@@ -346,18 +348,37 @@ export const useChartStore = create<ChartState & ChartActions>()(
       }
 
       const { min, max } = getDateRange(tasks);
-
-      // Add 90 days padding on both sides for smooth infinite scroll
-      // Same as updateScale to allow scrolling in both directions
-      const paddedMin = addDays(min, -90);
-      const paddedMax = addDays(max, 90);
-
-      // Calculate zoom based on visible range (7 days padding each side)
-      const visibleDuration = calculateDuration(
-        addDays(min, -7),
-        addDays(max, 7)
-      );
       const containerWidth = get().containerWidth;
+      const taskLabelPosition = get().taskLabelPosition;
+
+      // Get font size from current density settings
+      const densityConfig = getCurrentDensityConfig();
+      const fontSize = densityConfig.fontSizeBar;
+
+      // Calculate base duration (task range only)
+      const baseDuration = calculateDuration(min, max);
+
+      // Initial zoom estimate to calculate pixelsPerDay
+      const baseZoom =
+        containerWidth / (baseDuration * FIXED_BASE_PIXELS_PER_DAY);
+      const clampedBaseZoom = Math.max(MIN_ZOOM, Math.min(MAX_ZOOM, baseZoom));
+      const pixelsPerDay = FIXED_BASE_PIXELS_PER_DAY * clampedBaseZoom;
+
+      // Calculate extra padding needed for task labels
+      const labelPadding = calculateLabelPaddingDays(
+        tasks,
+        taskLabelPosition,
+        fontSize,
+        pixelsPerDay
+      );
+
+      // Calculate visible range with base padding (7 days) plus label padding
+      const leftPadding = 7 + labelPadding.leftDays;
+      const rightPadding = 7 + labelPadding.rightDays;
+      const visibleDuration = calculateDuration(
+        addDays(min, -leftPadding),
+        addDays(max, rightPadding)
+      );
 
       // Calculate zoom to fit visible duration exactly in container
       // Formula: containerWidth = visibleDuration × (25 × zoom)
@@ -367,6 +388,11 @@ export const useChartStore = create<ChartState & ChartActions>()(
 
       // Set zoom (clamped to valid range)
       const finalZoom = Math.max(MIN_ZOOM, Math.min(MAX_ZOOM, idealZoom));
+
+      // Add 90 days padding on both sides for smooth infinite scroll
+      // Same as updateScale to allow scrolling in both directions
+      const paddedMin = addDays(min, -90);
+      const paddedMax = addDays(max, 90);
 
       // Set dateRange and zoom, then derive scale
       // No need for scaleLocked - dateRange IS the source of truth now
