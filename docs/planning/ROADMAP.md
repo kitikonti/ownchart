@@ -797,7 +797,7 @@ This sprint was completed ahead of schedule during MVP development. See Sprint 1
 - Implementation guide with code examples
 - User persona validation
 
-**Test Coverage**: 786 unit tests total (120 new tests for Sprint 1.5.9)
+**Test Coverage**: 786 unit tests total (Sprint 1.5.9 + 1.5.9.1 + 1.5.9.2)
 
 ---
 
@@ -827,6 +827,34 @@ This sprint was completed ahead of schedule during MVP development. See Sprint 1
 - ✅ UI updates immediately without reload
 - ✅ Export can use different density than app preference
 - ✅ Dependency arrows scale correctly with density
+
+---
+
+#### Sprint 1.5.9.2: Infinite Scroll & Zoom Anchoring ✅ COMPLETE
+
+**Status**: ✅ COMPLETE (2026-01-08)
+
+**Features Implemented**:
+- ✅ Infinite Scroll for timeline (auto-extends 30 days when near edge)
+- ✅ Smooth left-scrolling (scroll position maintained during date range extension)
+- ✅ Zoom Anchoring - cursor-centered zoom for Ctrl+Wheel
+- ✅ Zoom Anchoring - viewport-centered zoom for keyboard (Ctrl++/-) and toolbar
+- ✅ Dependency arrows no longer animate during scroll
+- ✅ ZoomAnchor interface with anchorDate and anchorPixelOffset
+- ✅ Exported getViewportCenterAnchor and applyScrollLeft helpers
+
+**Technical Implementation**:
+- `chartSlice.ts`: `setZoom`, `zoomIn`, `zoomOut`, `resetZoom` now accept `ZoomAnchor` parameter and return `ZoomResult` with `newScrollLeft`
+- `useZoom.ts`: Cursor-centered wheel zoom, viewport-centered keyboard zoom
+- `GanttLayout.tsx`: Infinite scroll with 500px threshold, scroll position correction
+- All zoom UI components updated (AppToolbar, ZoomToolbar, ZoomControls)
+
+**Acceptance Criteria** (all met):
+- ✅ Timeline extends automatically when scrolling near edges
+- ✅ Scroll position stays stable during zoom (date under cursor/center stays fixed)
+- ✅ Dependency arrows don't flash/animate during scroll
+- ✅ All zoom methods (wheel, keyboard, toolbar) maintain stable anchor point
+- ✅ 786 unit tests passing
 
 ---
 

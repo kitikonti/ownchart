@@ -28,7 +28,8 @@
 - ✅ Sprint 1.5.4 - Copy/Paste & Multi-Select (ahead of schedule from V1.1)
 - ✅ Sprint 1.6 - PNG Export & Polish
 - ✅ Sprint 1.5.9.1 - UI Density (Compact/Normal/Comfortable)
-- ✅ Sprint 1.5.9 - User Preferences & Settings (partial - core features complete)
+- ✅ Sprint 1.5.9 - User Preferences & Settings
+- ✅ Sprint 1.5.9.2 - Infinite Scroll & Zoom Anchoring
 
 **MVP Features Complete**:
 - ✅ Multi-select with rectangular marquee selection in timeline
@@ -48,7 +49,7 @@
 - ✅ UI Density settings (Compact/Normal/Comfortable) with preferences dialog
 - ✅ Export density selection independent from app setting
 
-**Sprint 1.5.9 Features (In Progress)**:
+**Sprint 1.5.9 Features (Complete)**:
 - ✅ Holiday Service with date-holidays library (199 countries supported)
 - ✅ User Preferences: Date Format, First Day of Week, Week Numbering System
 - ✅ Chart Settings Dialog (Timeline Display, Task Display sections)
@@ -60,6 +61,12 @@
 - ✅ Dependencies toggle button in toolbar (FlowArrow icon)
 - ✅ Timeline header improvements: Calendar week visible at all zoom levels
 - ✅ Working Days Mode (duration editing, task drag maintains working days)
+
+**Sprint 1.5.9.2 Features (Complete)**:
+- ✅ Infinite Scroll for timeline (auto-extends past/future on scroll)
+- ✅ Zoom Anchoring (cursor-centered for wheel, viewport-centered for keyboard/toolbar)
+- ✅ Smooth left-scrolling for infinite timeline
+- ✅ Dependency arrows no longer animate during scroll
 
 **Test Coverage**: 786 unit tests (80%+ coverage)
 
