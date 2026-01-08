@@ -76,6 +76,10 @@ interface ChartState {
   isPanning: boolean;
   lastFitToViewTime: number; // Timestamp to detect fitToView calls
 
+  // Viewport state (for visible range calculation in export)
+  viewportScrollLeft: number;
+  viewportWidth: number;
+
   // Multi-task drag state (shared for preview rendering)
   dragState: {
     deltaDays: number;
@@ -108,6 +112,7 @@ interface ChartActions {
   // Transient state
   setIsZooming: (isZooming: boolean) => void;
   setIsPanning: (isPanning: boolean) => void;
+  setViewport: (scrollLeft: number, width: number) => void;
 
   // Settings - View toggles
   toggleWeekends: () => void;
@@ -173,6 +178,8 @@ export const useChartStore = create<ChartState & ChartActions>()(
     isZooming: false,
     isPanning: false,
     lastFitToViewTime: 0,
+    viewportScrollLeft: 0,
+    viewportWidth: 0,
     dragState: null,
 
     // Centralized scale calculation - updates dateRange from tasks, then derives scale
@@ -385,6 +392,13 @@ export const useChartStore = create<ChartState & ChartActions>()(
     setIsPanning: (isPanning: boolean) => {
       set((state) => {
         state.isPanning = isPanning;
+      });
+    },
+
+    setViewport: (scrollLeft: number, width: number) => {
+      set((state) => {
+        state.viewportScrollLeft = scrollLeft;
+        state.viewportWidth = width;
       });
     },
 

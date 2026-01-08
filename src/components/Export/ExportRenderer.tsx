@@ -5,9 +5,15 @@
 
 import { useMemo } from "react";
 import type { Task } from "../../types/chart.types";
-import type { ExportOptions } from "../../utils/export/types";
+import type { ExportOptions, ExportColumnKey } from "../../utils/export/types";
+import {
+  calculateTaskTableWidth,
+  calculateEffectiveZoom,
+  getEffectiveDateRange,
+  calculateDurationDays,
+} from "../../utils/export";
 import { getTimelineScale } from "../../utils/timelineUtils";
-import { getDateRange, addDays } from "../../utils/dateUtils";
+import { getDateRange } from "../../utils/dateUtils";
 import { GridLines } from "../GanttChart/GridLines";
 import { TaskBar } from "../GanttChart/TaskBar";
 import { TodayMarker } from "../GanttChart/TodayMarker";
@@ -28,6 +34,9 @@ interface ExportRendererProps {
   tasks: Task[];
   options: ExportOptions;
   columnWidths: Record<string, number>;
+  currentAppZoom?: number;
+  projectDateRange?: { start: Date; end: Date };
+  visibleDateRange?: { start: Date; end: Date };
 }
 
 const HEADER_HEIGHT = 48;
@@ -42,20 +51,6 @@ export const EXPORT_COLUMNS = [
   { key: "progress", label: "%", defaultWidth: 60 },
 ] as const;
 
-export type ExportColumnKey = (typeof EXPORT_COLUMNS)[number]["key"];
-
-/**
- * Calculate total width for selected columns.
- */
-export function calculateTaskTableWidth(
-  selectedColumns: ExportColumnKey[],
-  columnWidths: Record<string, number>
-): number {
-  return selectedColumns.reduce((total, key) => {
-    const colDef = EXPORT_COLUMNS.find((c) => c.key === key);
-    return total + (columnWidths[key] || colDef?.defaultWidth || 100);
-  }, 0);
-}
 
 /**
  * Renders the task table header for export.
@@ -203,6 +198,7 @@ function ExportTaskTableRows({
   );
 }
 
+
 /**
  * Main export renderer component.
  * Renders the complete chart structure for export capture.
@@ -211,6 +207,9 @@ export function ExportRenderer({
   tasks,
   options,
   columnWidths,
+  currentAppZoom = 1,
+  projectDateRange: providedProjectDateRange,
+  visibleDateRange,
 }: ExportRendererProps): JSX.Element {
   // Get density configuration based on selected density
   const densityConfig: DensityConfig = DENSITY_CONFIG[options.density];
@@ -229,29 +228,26 @@ export function ExportRenderer({
     return flattenedTasks.map((ft) => ft.task);
   }, [flattenedTasks]);
 
-  // Calculate date range from tasks
-  const dateRange = useMemo(() => {
-    if (orderedTasks.length === 0) {
-      const today = new Date().toISOString().split("T")[0];
-      return { min: addDays(today, -7), max: addDays(today, 30) };
-    }
+  // Calculate project date range from tasks if not provided
+  const projectDateRange = useMemo(() => {
+    if (providedProjectDateRange) return providedProjectDateRange;
+    if (orderedTasks.length === 0) return undefined;
     const range = getDateRange(orderedTasks);
-    // Add padding
     return {
-      min: addDays(range.min, -7),
-      max: addDays(range.max, 7),
+      start: new Date(range.min),
+      end: new Date(range.max),
     };
-  }, [orderedTasks]);
+  }, [orderedTasks, providedProjectDateRange]);
 
-  // Calculate scale with export zoom
-  const scale = useMemo(() => {
-    return getTimelineScale(
-      dateRange.min,
-      dateRange.max,
-      1000, // containerWidth not used with fixed zoom
-      options.timelineZoom
-    );
-  }, [dateRange, options.timelineZoom]);
+  // Calculate effective date range based on mode
+  const dateRange = useMemo(() => {
+    return getEffectiveDateRange(options, projectDateRange, visibleDateRange);
+  }, [options, projectDateRange, visibleDateRange]);
+
+  // Calculate project duration in days
+  const durationDays = useMemo(() => {
+    return calculateDurationDays(dateRange);
+  }, [dateRange]);
 
   // Get selected columns (default to all if not specified)
   const selectedColumns = options.selectedColumns || [
@@ -262,12 +258,34 @@ export function ExportRenderer({
   ];
   const hasTaskList = selectedColumns.length > 0;
 
-  // Calculate dimensions using selected density
+  // Calculate task table width first (needed for fitToWidth calculation)
+  // Uses export density setting for correct column widths
   const taskTableWidth = hasTaskList
-    ? calculateTaskTableWidth(selectedColumns, columnWidths)
+    ? calculateTaskTableWidth(selectedColumns, columnWidths, options.density)
     : 0;
-  const timelineWidth = scale.totalWidth;
-  const totalWidth = taskTableWidth + timelineWidth;
+
+  // Calculate effective zoom based on zoom mode
+  const effectiveZoom = useMemo(() => {
+    return calculateEffectiveZoom(options, currentAppZoom, durationDays, taskTableWidth);
+  }, [options, currentAppZoom, durationDays, taskTableWidth]);
+
+  // Calculate scale with effective zoom
+  const scale = useMemo(() => {
+    return getTimelineScale(
+      dateRange.min,
+      dateRange.max,
+      1000, // containerWidth not used with fixed zoom
+      effectiveZoom
+    );
+  }, [dateRange, effectiveZoom]);
+
+  // Calculate dimensions - for fitToWidth, total width IS the target
+  const timelineWidth = options.zoomMode === "fitToWidth"
+    ? Math.max(100, options.fitToWidth - taskTableWidth)
+    : scale.totalWidth;
+  const totalWidth = options.zoomMode === "fitToWidth"
+    ? options.fitToWidth
+    : taskTableWidth + timelineWidth;
   const contentHeight = orderedTasks.length * densityConfig.rowHeight;
   const totalHeight =
     (options.includeHeader ? HEADER_HEIGHT : 0) + contentHeight;
@@ -396,7 +414,10 @@ export function ExportRenderer({
 export function calculateExportDimensions(
   tasks: Task[],
   options: ExportOptions,
-  columnWidths: Record<string, number> = {}
+  columnWidths: Record<string, number> = {},
+  currentAppZoom: number = 1,
+  projectDateRange?: { start: Date; end: Date },
+  visibleDateRange?: { start: Date; end: Date }
 ): { width: number; height: number } {
   // Get density configuration based on selected density
   const densityConfig = DENSITY_CONFIG[options.density];
@@ -405,26 +426,25 @@ export function calculateExportDimensions(
   const flattenedTasks = buildFlattenedTaskList(tasks, new Set<string>());
   const orderedTasks = flattenedTasks.map((ft) => ft.task);
 
-  // Calculate date range
-  let dateRange: { min: string; max: string };
-  if (orderedTasks.length === 0) {
-    const today = new Date().toISOString().split("T")[0];
-    dateRange = { min: addDays(today, -7), max: addDays(today, 30) };
-  } else {
+  // Calculate project date range from tasks if not provided
+  let effectiveProjectDateRange = projectDateRange;
+  if (!effectiveProjectDateRange && orderedTasks.length > 0) {
     const range = getDateRange(orderedTasks);
-    dateRange = {
-      min: addDays(range.min, -7),
-      max: addDays(range.max, 7),
+    effectiveProjectDateRange = {
+      start: new Date(range.min),
+      end: new Date(range.max),
     };
   }
 
-  // Calculate scale
-  const scale = getTimelineScale(
-    dateRange.min,
-    dateRange.max,
-    1000,
-    options.timelineZoom
+  // Get effective date range based on mode
+  const dateRange = getEffectiveDateRange(
+    options,
+    effectiveProjectDateRange,
+    visibleDateRange
   );
+
+  // Calculate project duration for zoom calculations
+  const durationDays = calculateDurationDays(dateRange);
 
   // Get selected columns (default to all if not specified)
   const selectedColumns = options.selectedColumns || [
@@ -435,15 +455,38 @@ export function calculateExportDimensions(
   ];
   const hasTaskList = selectedColumns.length > 0;
 
-  // Calculate dimensions using selected density
+  // Calculate task table width first (needed for fitToWidth calculation)
+  // Uses export density setting for correct column widths
   const taskTableWidth = hasTaskList
-    ? calculateTaskTableWidth(selectedColumns, columnWidths)
+    ? calculateTaskTableWidth(selectedColumns, columnWidths, options.density)
     : 0;
-  const timelineWidth = scale.totalWidth;
-  const totalWidth = taskTableWidth + timelineWidth;
+
+  // Get effective zoom (passing taskTableWidth for fitToWidth mode)
+  const effectiveZoom = calculateEffectiveZoom(options, currentAppZoom, durationDays, taskTableWidth);
+
+  // Calculate timeline width
+  let timelineWidth: number;
+  let totalWidth: number;
+
+  if (options.zoomMode === "fitToWidth") {
+    // In fitToWidth mode, total width IS the target width
+    totalWidth = options.fitToWidth;
+    timelineWidth = Math.max(100, totalWidth - taskTableWidth);
+  } else {
+    // Calculate scale with effective zoom
+    const scale = getTimelineScale(
+      dateRange.min,
+      dateRange.max,
+      1000,
+      effectiveZoom
+    );
+    timelineWidth = scale.totalWidth;
+    totalWidth = taskTableWidth + timelineWidth;
+  }
+
   const contentHeight = orderedTasks.length * densityConfig.rowHeight;
   const totalHeight =
     (options.includeHeader ? HEADER_HEIGHT : 0) + contentHeight;
 
-  return { width: totalWidth, height: totalHeight };
+  return { width: Math.round(totalWidth), height: Math.round(totalHeight) };
 }

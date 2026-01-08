@@ -34,6 +34,58 @@ export function ExportDialog(): JSX.Element | null {
   const showHolidays = useChartStore((state) => state.showHolidays);
   const taskLabelPosition = useChartStore((state) => state.taskLabelPosition);
 
+  // Get current app zoom level
+  const currentAppZoom = useChartStore((state) => state.zoom);
+
+  // Get scale and viewport for visible range calculation
+  const scale = useChartStore((state) => state.scale);
+  const viewportScrollLeft = useChartStore((state) => state.viewportScrollLeft);
+  const viewportWidth = useChartStore((state) => state.viewportWidth);
+
+  // Calculate project date range from tasks
+  const projectDateRange = useMemo(() => {
+    if (tasks.length === 0) return undefined;
+
+    let minDate: Date | null = null;
+    let maxDate: Date | null = null;
+
+    for (const task of tasks) {
+      const start = new Date(task.startDate);
+      const end = new Date(task.endDate);
+
+      if (!minDate || start < minDate) minDate = start;
+      if (!maxDate || end > maxDate) maxDate = end;
+    }
+
+    if (!minDate || !maxDate) return undefined;
+
+    return { start: minDate, end: maxDate };
+  }, [tasks]);
+
+  // Calculate visible date range from viewport scroll position
+  const visibleDateRange = useMemo(() => {
+    if (!scale || viewportWidth === 0) return undefined;
+
+    // Convert pixel positions to dates using scale
+    const pixelsPerDay = scale.pixelsPerDay;
+    const scaleStartDate = new Date(scale.minDate);
+
+    // Calculate start date from scroll position
+    const startDaysOffset = viewportScrollLeft / pixelsPerDay;
+    const visibleStartDate = new Date(scaleStartDate);
+    visibleStartDate.setDate(visibleStartDate.getDate() + Math.floor(startDaysOffset));
+
+    // Calculate end date from scroll position + viewport width
+    const endDaysOffset = (viewportScrollLeft + viewportWidth) / pixelsPerDay;
+    const visibleEndDate = new Date(scaleStartDate);
+    visibleEndDate.setDate(visibleEndDate.getDate() + Math.ceil(endDaysOffset));
+
+    return {
+      start: visibleStartDate,
+      end: visibleEndDate,
+    };
+  }, [scale, viewportScrollLeft, viewportWidth]);
+
   // Sync export options with chart settings when dialog opens
   useEffect(() => {
     if (isExportDialogOpen) {
@@ -46,8 +98,15 @@ export function ExportDialog(): JSX.Element | null {
 
   // Calculate estimated dimensions
   const estimatedDimensions = useMemo(() => {
-    return calculateExportDimensions(tasks, exportOptions, columnWidths);
-  }, [tasks, exportOptions, columnWidths]);
+    return calculateExportDimensions(
+      tasks,
+      exportOptions,
+      columnWidths,
+      currentAppZoom,
+      projectDateRange,
+      visibleDateRange
+    );
+  }, [tasks, exportOptions, columnWidths, currentAppZoom, projectDateRange, visibleDateRange]);
 
   const handleExport = useCallback(async () => {
     setIsExporting(true);
@@ -58,6 +117,9 @@ export function ExportDialog(): JSX.Element | null {
         tasks,
         options: exportOptions,
         columnWidths,
+        currentAppZoom,
+        projectDateRange,
+        visibleDateRange,
       });
       closeExportDialog();
     } catch (error) {
@@ -69,6 +131,9 @@ export function ExportDialog(): JSX.Element | null {
     tasks,
     exportOptions,
     columnWidths,
+    currentAppZoom,
+    projectDateRange,
+    visibleDateRange,
     closeExportDialog,
     setIsExporting,
     setExportError,
@@ -118,6 +183,10 @@ export function ExportDialog(): JSX.Element | null {
           options={exportOptions}
           onChange={setExportOptions}
           estimatedDimensions={estimatedDimensions}
+          currentAppZoom={currentAppZoom}
+          projectDateRange={projectDateRange}
+          visibleDateRange={visibleDateRange}
+          columnWidths={columnWidths}
         />
 
         {/* Error message */}

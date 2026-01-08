@@ -39,6 +39,9 @@ export interface CaptureChartParams {
   tasks: Task[];
   options: ExportOptions;
   columnWidths: Record<string, number>;
+  currentAppZoom?: number;
+  projectDateRange?: { start: Date; end: Date };
+  visibleDateRange?: { start: Date; end: Date };
 }
 
 /**
@@ -48,10 +51,17 @@ export interface CaptureChartParams {
 export async function captureChart(
   params: CaptureChartParams
 ): Promise<HTMLCanvasElement> {
-  const { tasks, options, columnWidths } = params;
+  const { tasks, options, columnWidths, currentAppZoom, projectDateRange, visibleDateRange } = params;
 
   // Calculate expected dimensions
-  const dimensions = calculateExportDimensions(tasks, options, columnWidths);
+  const dimensions = calculateExportDimensions(
+    tasks,
+    options,
+    columnWidths,
+    currentAppZoom,
+    projectDateRange,
+    visibleDateRange
+  );
 
   // Create container - must be on-screen for html-to-image (uses SVG foreignObject)
   // We use opacity: 0 and pointer-events: none to hide it from the user
@@ -81,6 +91,9 @@ export async function captureChart(
           tasks,
           options,
           columnWidths,
+          currentAppZoom,
+          projectDateRange,
+          visibleDateRange,
         })
       );
       // Wait for React to render

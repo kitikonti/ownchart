@@ -65,6 +65,7 @@ export function GanttLayout() {
   const extendDateRange = useChartStore((state) => state.extendDateRange);
   const dateRange = useChartStore((state) => state.dateRange);
   const lastFitToViewTime = useChartStore((state) => state.lastFitToViewTime);
+  const setViewport = useChartStore((state) => state.setViewport);
 
   // Effective table width: either manually set or total column width
   const effectiveTableWidth = taskTableWidth ?? totalColumnWidth;
@@ -359,6 +360,31 @@ export function GanttLayout() {
 
     return () => ro.disconnect();
   }, []);
+
+  // Track viewport state for export visible range calculation
+  useEffect(() => {
+    const chartContainer = chartContainerRef.current;
+    if (!chartContainer) return;
+
+    const updateViewport = () => {
+      setViewport(chartContainer.scrollLeft, chartContainer.clientWidth);
+    };
+
+    // Initial update
+    updateViewport();
+
+    // Update on scroll
+    chartContainer.addEventListener("scroll", updateViewport);
+
+    // Update on resize via ResizeObserver
+    const ro = new ResizeObserver(updateViewport);
+    ro.observe(chartContainer);
+
+    return () => {
+      chartContainer.removeEventListener("scroll", updateViewport);
+      ro.disconnect();
+    };
+  }, [setViewport]);
 
   return (
     <div

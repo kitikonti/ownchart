@@ -22,6 +22,14 @@ export {
   type ExportState,
   type ExportZoomPreset,
 } from "./types";
+export {
+  BASE_PIXELS_PER_DAY,
+  getDefaultColumnWidth,
+  calculateTaskTableWidth,
+  calculateEffectiveZoom,
+  getEffectiveDateRange,
+  calculateDurationDays,
+} from "./calculations";
 
 import {
   captureChart,

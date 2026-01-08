@@ -7,7 +7,9 @@ export { ExportOptionsForm } from "./ExportOptions";
 export {
   ExportRenderer,
   calculateExportDimensions,
-  calculateTaskTableWidth,
   EXPORT_COLUMNS,
-  type ExportColumnKey,
 } from "./ExportRenderer";
+
+// Re-export shared utilities from utils/export
+export { calculateTaskTableWidth } from "../../utils/export";
+export type { ExportColumnKey } from "../../utils/export/types";
