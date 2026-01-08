@@ -12,6 +12,7 @@ import type {
   DependencyType,
   AddDependencyResult,
   CycleDetectionResult,
+  DateAdjustment,
 } from "../../types/dependency.types";
 import type {
   AddDependencyParams,
@@ -22,7 +23,6 @@ import { useTaskStore } from "./taskSlice";
 import { useHistoryStore } from "./historySlice";
 import { useFileStore } from "./fileSlice";
 import { wouldCreateCycle } from "../../utils/graph/cycleDetection";
-import { calculateDateAdjustments } from "../../utils/graph/datePropagation";
 
 /**
  * Dependency state interface.
@@ -140,20 +140,8 @@ export const useDependencyStore = create<DependencyStore>()(
         state.dependencies.push(newDependency);
       });
 
-      // Calculate date adjustments
-      const dateAdjustments = calculateDateAdjustments(
-        taskStore.tasks,
-        [...get().dependencies],
-        fromTaskId
-      );
-
-      // Apply date adjustments
-      for (const adj of dateAdjustments) {
-        taskStore.updateTask(adj.taskId, {
-          startDate: adj.newStartDate,
-          endDate: adj.newEndDate,
-        });
-      }
+      // No automatic date adjustments - dependencies are created without moving tasks
+      const dateAdjustments: DateAdjustment[] = [];
 
       // Record to history
       if (!historyStore.isUndoing && !historyStore.isRedoing) {

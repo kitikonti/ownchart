@@ -10,9 +10,3 @@ export {
   getSuccessors,
   getPredecessors,
 } from "./topologicalSort";
-
-export {
-  calculateDateAdjustments,
-  checkDependencyViolations,
-  getEarliestStartDate,
-} from "./datePropagation";

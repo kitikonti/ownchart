@@ -266,10 +266,10 @@ describe("Dependency Store", () => {
       expect(useFileStore.getState().isDirty).toBe(true);
     });
 
-    it("should trigger date adjustments when successor starts too early", () => {
+    it("should not automatically move tasks when creating dependency", () => {
       // Task A: Jan 10-15
       // Task B: Jan 12-17 (overlaps with A)
-      // After dependency A→B, B should shift to start after A ends
+      // After dependency A→B, B should NOT be moved - dependency only marks the relationship
       const taskA = createTestTask({
         id: "task-a",
         startDate: "2026-01-10",
@@ -286,11 +286,11 @@ describe("Dependency Store", () => {
       const result = addDependency("task-a", "task-b");
 
       expect(result.success).toBe(true);
-      expect(result.dateAdjustments).toBeDefined();
-      // Task B should be adjusted since it starts before A ends
-      if (result.dateAdjustments && result.dateAdjustments.length > 0) {
-        expect(result.dateAdjustments[0].taskId).toBe("task-b");
-      }
+      expect(result.dateAdjustments).toEqual([]);
+      // Task B should remain at its original position
+      const updatedTaskB = useTaskStore.getState().tasks.find((t) => t.id === "task-b");
+      expect(updatedTaskB?.startDate).toBe("2026-01-12");
+      expect(updatedTaskB?.endDate).toBe("2026-01-17");
     });
   });
 
