@@ -25,20 +25,6 @@ This document defines the settings storage architecture for OwnChart, based on a
 | `theme` | `'light' \| 'dark' \| 'system'` | `'system'` | Personal preference |
 | `uiDensity` | `'compact' \| 'normal' \| 'comfortable'` | `'normal'` | Personal preference |
 | `language` | `string` (ISO code) | Browser locale | V2.0 feature |
-| `defaultExportOptions` | `ExportOptions` | See below | "Save as default" in export dialog |
-
-**Default Export Options:**
-```typescript
-interface DefaultExportOptions {
-  zoom: number;           // 1.0 = 100%
-  background: 'white' | 'transparent';
-  includeTaskList: boolean;
-  includeDependencies: boolean;
-  includeGridLines: boolean;
-  includeWeekends: boolean;
-  includeTodayMarker: boolean;
-}
-```
 
 ### 2. Project Settings (in .ownchart file)
 
@@ -56,7 +42,17 @@ interface DefaultExportOptions {
 | `showTodayMarker` | `boolean` | `true` | Today line |
 | `taskTableWidth` | `number \| null` | `null` | Left panel width |
 | `columnWidths` | `Record<string, number>` | `{}` | Individual column widths |
-| `exportSettings` | `ExportOptions` | `null` | Last used for THIS project |
+| `exportSettings` | `ExportSettings` | `null` | Last used export options for THIS project |
+
+**Export Settings Structure:**
+```typescript
+interface ExportSettings {
+  lastFormat: 'png' | 'pdf' | 'svg';
+  png?: PngExportOptions;
+  pdf?: PdfExportOptions;
+  svg?: SvgExportOptions;
+}
+```
 
 ---
 
@@ -79,10 +75,10 @@ interface DefaultExportOptions {
 2. **Show Weekends, Show Today Marker, Zoom** → Always Project
    - David shares projects; they must be portable
 
-3. **Export Options** → Hybrid with "Save as default" checkbox
-   - User-Prefs for personal defaults
-   - Project can override (stored in file)
-   - No complex override logic - just "use default if not set"
+3. **Export Options** → Project-only
+   - Stored in project file
+   - No user-level defaults needed
+   - Simple: use project settings or dialog defaults
 
 ### Industry Patterns Reviewed
 
@@ -113,7 +109,6 @@ interface UserPreferences {
   firstDayOfWeek: 'sunday' | 'monday';
   theme: 'light' | 'dark' | 'system';
   uiDensity: 'compact' | 'normal' | 'comfortable';
-  defaultExportOptions: ExportOptions | null;
 }
 
 const STORAGE_KEY = 'ownchart-preferences';
@@ -154,10 +149,6 @@ const useUserPreferencesStore = create<UserPreferencesState>()(
 │  Theme:              ○ Light  ○ Dark  ● System                  │
 │  UI Density:         ○ Compact  ● Normal  ○ Comfortable         │
 │                                                                 │
-│  Export Defaults                                                │
-│  ─────────────────────────────────────────────                  │
-│  [Configure Default Export Settings...]                         │
-│                                                                 │
 ├─────────────────────────────────────────────────────────────────┤
 │                                           [Cancel]  [Save]      │
 └─────────────────────────────────────────────────────────────────┘
@@ -171,20 +162,6 @@ const useUserPreferencesStore = create<UserPreferencesState>()(
   Preferences...
   <span className="text-gray-400 ml-auto">Ctrl+,</span>
 </MenuItem>
-```
-
-4. **Update Export Dialog:**
-
-Add checkbox at bottom:
-```
-[☑] Save as my default export settings
-```
-
-When checked and user clicks Export:
-```typescript
-if (saveAsDefault) {
-  userPreferencesStore.setDefaultExportOptions(currentOptions);
-}
 ```
 
 ### Phase 3: V2.0 (Theme & Language)
@@ -212,7 +189,7 @@ if (saveAsDefault) {
 3. User exports
    └─> Check: Does project have exportSettings?
        ├─> Yes: Use project's export settings as initial values
-       └─> No: Use User Preferences' defaultExportOptions
+       └─> No: Use dialog defaults
 ```
 
 ### Saving a Project
@@ -249,7 +226,6 @@ function getDefaultPreferences(): UserPreferences {
       : 'monday',
     theme: 'system',
     uiDensity: 'normal',
-    defaultExportOptions: null,
   };
 }
 ```
@@ -285,10 +261,15 @@ function getDefaultPreferences(): UserPreferences {
 - [TECHNICAL_ARCHITECTURE.md](./TECHNICAL_ARCHITECTURE.md) - State management with Zustand
 - [User Stories](../planning/USER_STORIES.md) - Stories 5.6-5.11 for settings features
 - [Roadmap](../planning/ROADMAP.md) - V1.1 sprints for settings implementation
+- [Sprint 1.5.5 PDF Export](../sprints/SPRINT_1.5.5_PDF_EXPORT_CONCEPT.md) - PDF/SVG export settings structure
 
 ---
 
-**Document Version:** 1.0
+**Document Version:** 1.1
 **Created:** 2026-01-05
+**Updated:** 2026-01-08
 **Status:** Approved for V1.1 implementation
 **Decision Makers:** Team discussion with user persona validation
+
+**Changelog:**
+- v1.1 (2026-01-08): Removed "Save as default" pattern, updated export settings structure for PNG/PDF/SVG

@@ -1,0 +1,2051 @@
+# Sprint 1.5.5: PDF Export - Team Concept
+
+**Project:** Gantt Chart Application - OwnChart
+**Sprint:** Sprint 1.5.5 - PDF Export
+**Status:** 📋 CONCEPT
+**Date:** 2026-01-08 (Created)
+**Priority:** High (V1.1 Feature)
+**Estimated Duration:** 2 weeks
+
+---
+
+## Executive Summary
+
+### Sprint Goal
+Extend export capabilities with professional PDF output, enabling users to create print-ready vector documents. PDF export complements the existing PNG export by offering superior print quality, scalable vector graphics (perfect for large format printing), and integration with document workflows.
+
+### Key Differentiators from PNG Export
+| Aspect | PNG Export | PDF Export |
+|--------|-----------|------------|
+| Format | Raster (pixels) | Vector (scalable) |
+| Scaling | Quality degrades | Perfect at any size (A4→A0) |
+| Print Quality | Resolution-dependent | Perfect at any scale |
+| File Size | Can be large | Compact for complex charts |
+| Editing | Not editable | Editable in PDF editors |
+| Use Case | Presentations, web | Print, documents, archival |
+
+### Success Metrics
+- [ ] Users can export charts to PDF with page size selection
+- [ ] PDF quality matches or exceeds commercial Gantt tools (vector-based)
+- [ ] Export options allow full customization (orientation, margins, scale)
+- [ ] PDF export works with 500+ tasks without performance issues
+- [ ] Generated PDFs are searchable (text not rasterized)
+- [ ] Vector output scales perfectly for large format printing (A4 → A0)
+
+### Sprint Completion Checkpoint
+**Visual Test:** "I can print my chart professionally"
+- User creates a 100-task chart spanning 6 months
+- User clicks Export → PDF
+- User selects A4 Landscape
+- PDF opens in viewer showing single page with entire chart
+- Print preview looks professional and crisp at any zoom
+- All text is searchable/selectable in PDF
+- User prints A4 PDF on A0 plotter → perfect quality
+
+---
+
+## Team Contributions & Responsibilities
+
+### 1. Product Owner - Strategic Vision
+
+**Name:** Product Lead
+**Role:** Define user value, prioritize features, acceptance criteria
+
+#### Key Decisions & Requirements
+
+**Strategic Rationale:**
+> "PDF export is the gold standard for professional document sharing. While PNG works for presentations and emails, PDF is essential for: formal project proposals, printed wall charts, stakeholder reports, and contractual documentation."
+
+**User Value Proposition:**
+1. **Professional Output**: Vector format ensures crisp printing at any size
+2. **Document Integration**: Embeddable in Word, contracts, reports
+3. **Scalable Vector**: Export A4, print on A0 - perfect quality
+4. **Print-Ready**: Proper margins, headers, footers
+5. **Archival Quality**: PDF/A compliant for long-term storage
+6. **Searchable Text**: Task names searchable within PDF viewers
+
+**Feature Priority Ranking:**
+1. 🔴 **Critical:** Basic PDF export with page size selection (A4, A3, Letter, Legal, Tabloid)
+2. 🔴 **Critical:** Landscape/Portrait orientation
+3. 🔴 **Critical:** Scale options (Fit to page, Custom zoom %)
+4. 🟡 **High:** Include/exclude options (same as PNG export)
+5. 🟡 **High:** Margin customization
+6. 🟢 **Medium:** Page headers/footers (project name, date)
+7. 🟢 **Medium:** PDF metadata (title, author, subject)
+8. 🔵 **Low:** PDF/A archival compliance
+9. 🔵 **Low:** Password protection (V2.0)
+
+**Note:** No multi-page support in V1. Vector PDF scales perfectly - export A4, print on A0.
+
+**Acceptance Criteria:**
+- [ ] Export button shows PNG/PDF format selector
+- [ ] PDF option opens extended dialog with page settings
+- [ ] Page sizes: A4, A3, Letter, Legal, Tabloid
+- [ ] Orientation: Landscape (default), Portrait
+- [ ] Scale modes: Fit to page, Custom zoom %
+- [ ] Entire chart fits on single page (vector scales for large prints)
+- [ ] All existing PNG export options available for PDF
+- [ ] Optional header/footer with project name, export date
+- [ ] Margin presets: Normal, Narrow, Wide, None
+- [ ] Generated PDF < 5MB for typical 100-task chart
+- [ ] Export completes in < 5 seconds for 100 tasks
+- [ ] PDF opens correctly in all major viewers (Adobe, Chrome, Preview)
+
+**User Stories:**
+- As a project manager, I want to print my Gantt chart as a wall poster for the office
+- As a consultant, I want to include my timeline in a client proposal document
+- As a contractor, I want to attach the project schedule to a formal contract
+- As a team lead, I want to distribute printed schedules in a meeting
+- As an archivist, I want to save project timelines in a format that will be readable in 10 years
+
+---
+
+### 2. Project Manager - Timeline & Risk Management
+
+**Name:** Project Coordinator
+**Role:** Schedule tracking, risk mitigation, resource allocation
+
+#### Project Planning
+
+**Time Breakdown:**
+```
+Week 1 (35 hours):
+  Day 1-2 (14 hours):
+    - 2h: Team alignment, review PNG export architecture
+    - 4h: Research jsPDF library capabilities and limitations
+    - 2h: Design PDF rendering pipeline (differs from PNG)
+    - 4h: Proof of concept - basic chart to PDF
+    - 2h: Unit tests setup for PDF utilities
+
+  Day 3-4 (14 hours):
+    - 4h: Page size and orientation handling
+    - 4h: Scale calculation (fit to page)
+    - 4h: Task bar and timeline rendering
+    - 2h: Integration with existing export options
+
+  Day 5 (7 hours):
+    - 3h: Dependency arrow rendering
+    - 2h: Format selector UI
+    - 2h: Integration tests
+
+Week 2 (30 hours):
+  Day 6-7 (12 hours):
+    - 4h: Header/footer implementation
+    - 4h: Margin customization
+    - 4h: PDF options dialog
+
+  Day 8-9 (12 hours):
+    - 4h: PDF/A compliance
+    - 4h: Grayscale mode
+    - 4h: Font embedding fixes
+
+  Day 10 (6 hours):
+    - 2h: Cross-browser testing
+    - 2h: PDF viewer compatibility testing
+    - 2h: Documentation and polish
+
+Total: 60-70 hours over 2 weeks
+```
+
+**Milestones:**
+- **M1** (End of Week 1): Basic PDF export working with all visual elements
+- **M2** (End of Week 2): All features complete, tests passing, ready for release
+
+**Risk Register:**
+
+| Risk | Probability | Impact | Mitigation Strategy |
+|------|-------------|--------|---------------------|
+| jsPDF doesn't render arrows correctly | Medium | High | Pre-render arrows to paths, test early |
+| Font rendering differs from screen | Medium | High | Embed fonts, use PDF-safe font stack |
+| Large charts cause memory issues | Low | Medium | Single page keeps it manageable |
+| PDF file size too large | Low | Medium | Vector format is compact |
+| Cross-browser PDF generation differs | Low | Medium | Use consistent jsPDF API |
+| Text not searchable in PDF | Medium | High | Ensure text drawn as text, not paths |
+| PDF/A compliance issues | Medium | Medium | Test with verapdf validator |
+
+**Dependencies:**
+- ✅ PNG export complete (Sprint 1.6)
+- ✅ Export options infrastructure exists
+- ✅ Export dialog UI exists
+- ❓ jsPDF library (needs installation: ~300KB)
+- ❓ Alternative: pdf-lib (~200KB, lower-level)
+- ❓ Optional: html2pdf.js (wraps html2canvas + jsPDF)
+
+**Quality Gates:**
+- [ ] All unit tests pass (>80% coverage on new code)
+- [ ] PDF renders correctly at all page sizes (A4, A3, Letter, etc.)
+- [ ] Export completes in < 5 seconds for 100 tasks
+- [ ] Generated PDFs open in Adobe Reader, Chrome PDF, macOS Preview
+- [ ] All text is searchable/selectable in generated PDF
+- [ ] PDF file size < 5MB for 100-task chart
+- [ ] Vector quality verified (zoom in PDF viewer = crisp)
+- [ ] No visual regressions in PNG export
+- [ ] Code reviewed and approved
+
+---
+
+### 3. UX/UI Designer - Interaction Design
+
+**Name:** UX Designer
+**Role:** User experience, visual design, interaction patterns
+
+#### Interaction Design Specifications
+
+**Design Principles:**
+1. **Familiar**: Build on existing export dialog patterns
+2. **Progressive Disclosure**: Show PDF options only when PDF selected
+3. **Smart Defaults**: A4 Landscape for most users
+4. **Preview**: Show page layout before export
+5. **Print-First**: Design for paper output, not screen
+
+**Format Selector Addition:**
+
+```
+┌─────────────────────────────────────────────────────────────────┐
+│  📤 Export Chart                                           [✕]  │
+├─────────────────────────────────────────────────────────────────┤
+│                                                                  │
+│  Export Format                                                   │
+│  ─────────────────────────────────────────────────────────────  │
+│                                                                  │
+│  ┌──────────────────┐  ┌──────────────────┐                     │
+│  │   🖼️  PNG         │  │   📄 PDF          │                    │
+│  │                   │  │                   │                    │
+│  │  Raster image    │  │  Vector document  │                    │
+│  │  Best for web    │  │  Best for print   │                    │
+│  │                   │  │                   │                    │
+│  │  [Selected]      │  │                   │                    │
+│  └──────────────────┘  └──────────────────┘                     │
+│                                                                  │
+│  [Continue with PNG →]     [Continue with PDF →]                │
+│                                                                  │
+└─────────────────────────────────────────────────────────────────┘
+```
+
+**PDF Export Dialog Design:**
+
+```
+┌─────────────────────────────────────────────────────────────────────────┐
+│  📄 Export to PDF                                                  [✕]  │
+├─────────────────────────────────────────────────────────────────────────┤
+│                                                                          │
+│  Page Setup                                                              │
+│  ───────────────────────────────────────────────────────────────────    │
+│                                                                          │
+│  Size:        [A4 ▼]         Orientation:  ● Landscape  ○ Portrait      │
+│                                                                          │
+│  ┌─────────────────────────────────────────────────────────────────┐    │
+│  │ ┌───────────────────────────────────────────────────────────┐   │    │
+│  │ │ Project Name                              Jan 2026         │   │    │
+│  │ │ ┌──────────────────────────────────────────────────────┐  │   │    │
+│  │ │ │ Task 1     ████████████                              │  │   │    │
+│  │ │ │ Task 2        ██████████████                         │  │   │    │
+│  │ │ │ Task 3                  ████████████████              │  │   │    │
+│  │ │ │ ...                                                   │  │   │    │
+│  │ │ └──────────────────────────────────────────────────────┘  │   │    │
+│  │ └───────────────────────────────────────────────────────────┘   │    │
+│  └─────────────────────────────────────────────────────────────────┘    │
+│                                                                          │
+│  Scale                                                                   │
+│  ───────────────────────────────────────────────────────────────────    │
+│  ● Fit entire chart to page          ○ Custom zoom: [___]%              │
+│                                                                          │
+│  ───────────────────────────────────────────────────────────────────    │
+│                                                                          │
+│  [▼ Advanced Options]                                                   │
+│                                                                          │
+├─────────────────────────────────────────────────────────────────────────┤
+│  💡 Vector PDF - scales perfectly for large format printing (A0, etc.)  │
+│                                                                          │
+│                                    [Cancel]  [📥 Export PDF]            │
+└─────────────────────────────────────────────────────────────────────────┘
+```
+
+**Advanced Options (Collapsed by Default):**
+
+```
+│  [▲ Advanced Options]                                                   │
+│                                                                          │
+│  Content (same as PNG)                     Layout                        │
+│  ───────────────────────                   ────────────────────          │
+│  ☑ Task list (left panel)                  Margins: [Normal ▼]          │
+│  ☑ Timeline header                                                      │
+│  ☑ Grid lines                              ┌──────────────────┐         │
+│  ☑ Weekend shading                         │ Custom Margins:  │         │
+│  ☑ Today marker                            │ Top:    [10] mm  │         │
+│  ☑ Dependencies                            │ Bottom: [10] mm  │         │
+│  ☑ Holidays                                │ Left:   [15] mm  │         │
+│                                            │ Right:  [15] mm  │         │
+│  Task Labels: [Inside ▼]                   └──────────────────┘         │
+│  Row Density: [Comfortable ▼]                                           │
+│                                                                          │
+│  Header/Footer                                                          │
+│  ───────────────────────────────────────────────────────────────────    │
+│  Header: ☑ Project name   ☐ Export date   ☐ Custom: [_________]         │
+│  Footer: ☐ Project name   ☐ Export date   ☐ Custom: [_________]         │
+│                                                                          │
+│  PDF Options                                                            │
+│  ───────────────────────────────────────────────────────────────────    │
+│  ☐ PDF/A (archival compliant)                                           │
+│  Title:  [Website Relaunch - Project Timeline]                          │
+│  Author: [_________________________]                                     │
+```
+
+**Page Size Options:**
+
+| Size | Dimensions (mm) | Dimensions (px at 150 DPI) | Region |
+|------|-----------------|---------------------------|--------|
+| A4 | 297 × 210 | 1754 × 1240 | International |
+| A3 | 420 × 297 | 2480 × 1754 | International |
+| Letter | 279 × 216 | 1650 × 1275 | US |
+| Legal | 356 × 216 | 2100 × 1275 | US |
+| Tabloid | 432 × 279 | 2551 × 1650 | US |
+| Custom | User-defined | User-defined | - |
+
+**Margin Presets:**
+
+| Preset | Top | Bottom | Left | Right |
+|--------|-----|--------|------|-------|
+| Normal | 10mm | 10mm | 15mm | 15mm |
+| Narrow | 5mm | 5mm | 5mm | 5mm |
+| Wide | 20mm | 20mm | 25mm | 25mm |
+| None | 0mm | 0mm | 0mm | 0mm |
+
+**Interaction Specifications:**
+
+| Action | Trigger | Result |
+|--------|---------|--------|
+| Select PDF format | Click PDF card | PDF options appear |
+| Change page size | Select from dropdown | Preview updates with new aspect ratio |
+| Change orientation | Click radio button | Preview rotates |
+| Change scale | Select scale option | Preview updates |
+| Expand advanced | Click "Advanced Options" | Options panel expands |
+| Export PDF | Click "Export PDF" | PDF generates with progress, then downloads |
+| Cancel | Click Cancel or Escape | Dialog closes |
+
+**Scale Mode Behavior:**
+
+| Mode | Behavior | Output |
+|------|----------|--------|
+| Fit to page | Scale entire chart to fit on single page | Single page, vector |
+| Custom zoom | User-defined percentage (e.g., 150%) | Single page, may clip if too large |
+
+**Note:** Since PDF is vector-based, users can export at any page size and print to larger formats without quality loss. Export A4 → Print A0 = perfect quality.
+
+**Keyboard Shortcuts:**
+- `Ctrl+Shift+E` - Export to PDF (direct, bypassing format selection)
+- Existing `Ctrl+E` - Opens export dialog (PNG/PDF selection)
+
+---
+
+### 4. Frontend Developer - Implementation Details
+
+**Name:** Frontend Dev
+**Role:** UI implementation, React components, state management
+
+#### Component Architecture
+
+**New Components:**
+
+```
+src/
+├── components/
+│   └── Export/
+│       ├── ExportDialog.tsx          # Extended with format selection
+│       ├── ExportFormatSelector.tsx  # NEW: PNG/PDF format cards
+│       ├── ExportOptions.tsx         # Existing PNG options
+│       ├── PdfExportOptions.tsx      # NEW: PDF-specific options (page size, margins)
+│       ├── PdfPreview.tsx            # NEW: Single-page preview
+│       └── index.ts
+├── utils/
+│   └── export/
+│       ├── index.ts
+│       ├── types.ts                  # Extended with PDF types
+│       ├── captureChart.ts           # Existing PNG capture
+│       ├── downloadPng.ts            # Existing PNG download
+│       ├── calculations.ts           # Existing calculations
+│       ├── pdfExport.ts              # NEW: Main PDF export function
+│       ├── pdfRenderer.ts            # NEW: Chart-to-PDF rendering
+│       └── pdfLayout.ts              # NEW: Page layout calculations
+└── store/
+    └── uiSlice.ts                    # Extended with PDF export state
+```
+
+**New Types (extend types.ts):**
+
+```typescript
+/** Export format selection */
+export type ExportFormat = 'png' | 'pdf';
+
+/** PDF page size options */
+export type PdfPageSize =
+  | 'a4'
+  | 'a3'
+  | 'letter'
+  | 'legal'
+  | 'tabloid'
+  | 'custom';
+
+/** PDF page orientation */
+export type PdfOrientation = 'landscape' | 'portrait';
+
+/** PDF scale mode */
+export type PdfScaleMode =
+  | 'fitToPage'
+  | 'custom';
+
+/** PDF margin preset */
+export type PdfMarginPreset = 'normal' | 'narrow' | 'wide' | 'none' | 'custom';
+
+/** PDF margin values in millimeters */
+export interface PdfMargins {
+  top: number;
+  bottom: number;
+  left: number;
+  right: number;
+}
+
+/** PDF header/footer configuration */
+export interface PdfHeaderFooter {
+  showProjectName: boolean;
+  showExportDate: boolean;
+  showPageNumbers: boolean;
+  customText?: string;
+}
+
+/** PDF-specific export options */
+export interface PdfExportOptions {
+  pageSize: PdfPageSize;
+  customPageWidth?: number;  // mm, for custom size
+  customPageHeight?: number; // mm, for custom size
+  orientation: PdfOrientation;
+  scaleMode: PdfScaleMode;
+  customScale?: number;      // percentage, for custom scale
+  marginPreset: PdfMarginPreset;
+  customMargins?: PdfMargins;
+  header: PdfHeaderFooter;
+  footer: PdfHeaderFooter;
+  pdfA: boolean;             // Archival compliance
+  compressImages: boolean;
+  metadata: {
+    title?: string;
+    author?: string;
+    subject?: string;
+  };
+}
+
+/** Combined export options */
+export interface CombinedExportOptions extends ExportOptions {
+  format: ExportFormat;
+  pdf?: PdfExportOptions;
+}
+
+/** PDF page dimensions in pixels */
+export interface PdfPageDimensions {
+  width: number;
+  height: number;
+  printableWidth: number;   // width minus margins
+  printableHeight: number;  // height minus margins
+}
+
+/** PDF export constants */
+export const PDF_PAGE_SIZES: Record<PdfPageSize, { width: number; height: number }> = {
+  a4: { width: 297, height: 210 },      // mm, landscape
+  a3: { width: 420, height: 297 },
+  letter: { width: 279, height: 216 },
+  legal: { width: 356, height: 216 },
+  tabloid: { width: 432, height: 279 },
+  custom: { width: 297, height: 210 },  // default to A4
+};
+
+export const PDF_MARGIN_PRESETS: Record<PdfMarginPreset, PdfMargins> = {
+  normal: { top: 10, bottom: 10, left: 15, right: 15 },
+  narrow: { top: 5, bottom: 5, left: 5, right: 5 },
+  wide: { top: 20, bottom: 20, left: 25, right: 25 },
+  none: { top: 0, bottom: 0, left: 0, right: 0 },
+  custom: { top: 10, bottom: 10, left: 15, right: 15 },
+};
+
+/** Default PDF export options */
+export const DEFAULT_PDF_OPTIONS: PdfExportOptions = {
+  pageSize: 'a4',
+  orientation: 'landscape',
+  scaleMode: 'fitToPage',
+  marginPreset: 'normal',
+  header: {
+    showProjectName: true,
+    showExportDate: false,
+    showPageNumbers: false,
+  },
+  footer: {
+    showProjectName: false,
+    showExportDate: false,
+    showPageNumbers: true,
+  },
+  pdfA: false,
+  compressImages: false,
+  metadata: {},
+};
+```
+
+**PdfExportOptions Component (Sketch):**
+
+```typescript
+interface PdfExportOptionsProps {
+  options: PdfExportOptions;
+  onChange: (options: Partial<PdfExportOptions>) => void;
+  chartDimensions: { width: number; height: number };
+  projectName: string;
+}
+
+export function PdfExportOptions({
+  options,
+  onChange,
+  chartDimensions,
+  projectName,
+}: PdfExportOptionsProps): JSX.Element {
+  return (
+    <div className="space-y-6">
+      {/* Page Setup Section */}
+      <section>
+        <h3>Page Setup</h3>
+        <div className="grid grid-cols-2 gap-4">
+          <PageSizeSelector
+            value={options.pageSize}
+            onChange={(size) => onChange({ pageSize: size })}
+          />
+          <OrientationSelector
+            value={options.orientation}
+            onChange={(o) => onChange({ orientation: o })}
+          />
+        </div>
+      </section>
+
+      {/* Scale Section */}
+      <section>
+        <h3>Scale</h3>
+        <ScaleModeSelector
+          value={options.scaleMode}
+          customScale={options.customScale}
+          onChange={(mode, scale) => onChange({
+            scaleMode: mode,
+            customScale: scale
+          })}
+        />
+        <VectorScaleHint />  {/* "Vector PDF scales perfectly for large prints" */}
+      </section>
+
+      {/* Advanced Options (Collapsible) */}
+      <Collapsible title="Advanced Options">
+        <ContentOptions {...} />
+        <MarginOptions {...} />
+        <HeaderFooterOptions {...} />
+        <PdfMetadataOptions {...} />
+      </Collapsible>
+    </div>
+  );
+}
+```
+
+---
+
+### 5. Data Visualization Specialist - PDF Rendering
+
+**Name:** Data Viz Specialist
+**Role:** Chart rendering, coordinate mapping, visual quality
+
+#### PDF Rendering Strategy
+
+**Rendering Pipeline:**
+
+```
+┌─────────────┐     ┌─────────────┐     ┌─────────────┐     ┌─────────────┐
+│  Calculate  │ ──▶ │  Paginate   │ ──▶ │  Render     │ ──▶ │  Assemble   │
+│  Layout     │     │  Content    │     │  Pages      │     │  PDF        │
+└─────────────┘     └─────────────┘     └─────────────┘     └─────────────┘
+      │                   │                   │                    │
+      ▼                   ▼                   ▼                    ▼
+Calculate page      Determine page      Render each page    Combine pages
+dimensions,         breaks, what        to jsPDF canvas     into final PDF
+scale factors       content per page    with headers        and download
+```
+
+**Coordinate System Mapping:**
+
+```
+Screen (pixels) → PDF (points, 1 point = 1/72 inch)
+
+A4 Landscape:
+  - Physical: 297mm × 210mm
+  - PDF points: 841.89 × 595.28 points
+  - At 150 DPI: 1754 × 1240 pixels
+
+Conversion functions:
+  mmToPt(mm) = mm * 2.835
+  pxToPt(px, dpi) = px * 72 / dpi
+  ptToMm(pt) = pt / 2.835
+```
+
+**Rendering Elements:**
+
+| Element | Rendering Method | Notes |
+|---------|-----------------|-------|
+| Task bars | jsPDF rect() with fill | Rounded corners via custom path |
+| Task labels | jsPDF text() | Font embedding required |
+| Grid lines | jsPDF line() | Thin stroke, low opacity |
+| Timeline header | jsPDF text() + rect() | Multiple layers |
+| Dependencies | jsPDF lines() with Bézier | Complex path calculation |
+| Progress bars | jsPDF rect() | Nested inside task bars |
+| Today marker | jsPDF line() | Dashed stroke |
+| Weekend shading | jsPDF rect() with alpha | Background layer |
+| Milestones | jsPDF polygon() | Diamond shape |
+| Summary brackets | jsPDF path() | Custom bracket shape |
+
+**Font Strategy:**
+
+```typescript
+// Use Inter font (already in project) with PDF embedding
+const FONT_CONFIG = {
+  regular: '/fonts/Inter-Regular.ttf',
+  medium: '/fonts/Inter-Medium.ttf',
+  semibold: '/fonts/Inter-SemiBold.ttf',
+};
+
+// Fallback stack if embedding fails
+const FALLBACK_FONTS = ['Helvetica', 'Arial', 'sans-serif'];
+
+// Font sizes in points
+const FONT_SIZES = {
+  taskLabel: 9,
+  headerDay: 8,
+  headerMonth: 10,
+  headerYear: 11,
+  pageHeader: 10,
+  pageFooter: 8,
+};
+```
+
+**Scale Calculation:**
+
+```typescript
+interface ScaleInput {
+  chartWidth: number;       // Total chart width in pixels
+  chartHeight: number;      // Total chart height in pixels
+  pageSize: PdfPageDimensions;
+  scaleMode: PdfScaleMode;
+  customScale?: number;
+}
+
+function calculateScale(input: ScaleInput): number {
+  const { chartWidth, chartHeight, pageSize, scaleMode, customScale } = input;
+
+  switch (scaleMode) {
+    case 'fitToPage':
+      // Scale to fit entire chart on single page
+      return Math.min(
+        pageSize.printableWidth / chartWidth,
+        pageSize.printableHeight / chartHeight
+      );
+    case 'custom':
+      return (customScale ?? 100) / 100;
+    default:
+      return 1.0;
+  }
+}
+```
+
+**Note:** No multi-page pagination. Entire chart is rendered on a single page. Vector format ensures quality at any print size.
+
+---
+
+### 6. Backend Developer - PDF Generation
+
+**Name:** Backend Dev (Client-Side Focus)
+**Role:** PDF generation logic, file handling, optimization
+
+#### jsPDF Integration
+
+**Library Selection:**
+
+After evaluation, recommend **jsPDF** as primary library:
+
+| Library | Size | Features | Pros | Cons |
+|---------|------|----------|------|------|
+| jsPDF | ~300KB | Full-featured | Vector graphics, fonts, compression | Larger bundle |
+| pdf-lib | ~200KB | Low-level | Smaller, more control | More code needed |
+| pdfmake | ~400KB | Declarative | Easy to use | Less flexible |
+| html2pdf.js | ~50KB | HTML→PDF | Simple | Uses html2canvas (raster) |
+
+**Recommendation:** jsPDF for vector quality and feature completeness.
+
+**jsPDF Setup:**
+
+```typescript
+import { jsPDF } from 'jspdf';
+
+// Add custom fonts
+async function initializePdf(options: PdfExportOptions): Promise<jsPDF> {
+  const doc = new jsPDF({
+    orientation: options.orientation,
+    unit: 'mm',
+    format: options.pageSize === 'custom'
+      ? [options.customPageWidth!, options.customPageHeight!]
+      : options.pageSize,
+    compress: options.compressImages,
+  });
+
+  // Load and embed Inter font
+  try {
+    const regularFont = await loadFont('/fonts/Inter-Regular.ttf');
+    const mediumFont = await loadFont('/fonts/Inter-Medium.ttf');
+
+    doc.addFileToVFS('Inter-Regular.ttf', regularFont);
+    doc.addFileToVFS('Inter-Medium.ttf', mediumFont);
+    doc.addFont('Inter-Regular.ttf', 'Inter', 'normal');
+    doc.addFont('Inter-Medium.ttf', 'Inter', 'medium');
+  } catch (e) {
+    console.warn('Failed to load Inter font, using Helvetica fallback');
+  }
+
+  // Set PDF metadata
+  doc.setProperties({
+    title: options.metadata.title || 'Gantt Chart',
+    author: options.metadata.author,
+    subject: options.metadata.subject,
+    creator: 'OwnChart - ownchart.app',
+  });
+
+  return doc;
+}
+```
+
+**PDF Export Main Function:**
+
+```typescript
+export async function exportToPdf(
+  tasks: Task[],
+  chartState: ChartState,
+  exportOptions: ExportOptions,
+  pdfOptions: PdfExportOptions,
+  onProgress?: (progress: number) => void
+): Promise<void> {
+  // 1. Initialize PDF document
+  onProgress?.(10);
+  const doc = await initializePdf(pdfOptions);
+
+  // 2. Calculate scale to fit chart on single page
+  onProgress?.(20);
+  const chartDimensions = calculateChartDimensions(tasks, chartState, exportOptions);
+  const pageSize = getPageDimensions(pdfOptions);
+  const scale = calculateScale({
+    chartWidth: chartDimensions.width,
+    chartHeight: chartDimensions.height,
+    pageSize,
+    scaleMode: pdfOptions.scaleMode,
+    customScale: pdfOptions.customScale,
+  });
+
+  // 3. Render entire chart on single page
+  onProgress?.(30);
+  await renderChart(doc, {
+    tasks,
+    chartState,
+    exportOptions,
+    pdfOptions,
+    scale,
+  });
+
+  // 4. Generate and download
+  onProgress?.(90);
+  const filename = generatePdfFilename(chartState.projectName);
+  doc.save(filename);
+
+  onProgress?.(100);
+}
+
+async function renderChart(
+  doc: jsPDF,
+  context: ChartRenderContext
+): Promise<void> {
+  const { pdfOptions, scale } = context;
+  const margins = getMargins(pdfOptions);
+
+  // Render layers in order (back to front)
+  renderBackgroundLayer(doc, context);     // Weekend shading, holidays
+  renderGridLayer(doc, context);           // Grid lines
+  renderTaskLayer(doc, context);           // Task bars, progress, labels
+  renderDependencyLayer(doc, context);     // Dependency arrows
+  renderOverlayLayer(doc, context);        // Today marker
+  renderTimelineHeader(doc, context);      // Date headers
+  renderTaskTable(doc, context);           // Left panel (if included)
+  renderPageHeader(doc, context);          // Page header (optional)
+  renderPageFooter(doc, context);          // Page footer (optional)
+}
+```
+
+**Task Bar Rendering:**
+
+```typescript
+function renderTaskBar(
+  doc: jsPDF,
+  task: Task,
+  x: number,
+  y: number,
+  width: number,
+  height: number,
+  scale: number
+): void {
+  const cornerRadius = 3 * scale;
+  const color = task.color || '#14b8a6'; // Teal default
+
+  // Draw rounded rectangle
+  doc.setFillColor(color);
+  doc.roundedRect(x, y, width, height, cornerRadius, cornerRadius, 'F');
+
+  // Draw progress overlay
+  if (task.progress > 0) {
+    const progressWidth = width * (task.progress / 100);
+    doc.setFillColor(darkenColor(color, 0.2));
+    doc.roundedRect(x, y, progressWidth, height, cornerRadius, cornerRadius, 'F');
+
+    // Fix right edge if not complete
+    if (task.progress < 100) {
+      doc.setFillColor(darkenColor(color, 0.2));
+      doc.rect(x + progressWidth - cornerRadius, y, cornerRadius, height, 'F');
+    }
+  }
+
+  // Draw label if visible
+  const labelPosition = getTaskLabelPosition(/* ... */);
+  if (labelPosition !== 'none') {
+    doc.setFontSize(9);
+    doc.setTextColor('#1e293b');
+    const labelX = calculateLabelX(x, width, labelPosition, task.name);
+    doc.text(task.name, labelX, y + height / 2, { baseline: 'middle' });
+  }
+}
+```
+
+**Dependency Arrow Rendering:**
+
+```typescript
+function renderDependencyArrow(
+  doc: jsPDF,
+  from: { x: number; y: number },
+  to: { x: number; y: number },
+  options: { color: string; lineWidth: number }
+): void {
+  doc.setDrawColor(options.color);
+  doc.setLineWidth(options.lineWidth);
+
+  // Calculate Bézier control points (same algorithm as SVG)
+  const midX = (from.x + to.x) / 2;
+  const controlPoint1 = { x: midX, y: from.y };
+  const controlPoint2 = { x: midX, y: to.y };
+
+  // Draw curved path
+  doc.moveTo(from.x, from.y);
+  doc.curveTo(controlPoint1.x, controlPoint1.y, controlPoint2.x, controlPoint2.y, to.x, to.y);
+  doc.stroke();
+
+  // Draw arrowhead
+  drawArrowhead(doc, to, calculateArrowAngle(controlPoint2, to), options);
+}
+
+function drawArrowhead(
+  doc: jsPDF,
+  tip: { x: number; y: number },
+  angle: number,
+  options: { color: string; lineWidth: number }
+): void {
+  const size = 4;
+  const wingAngle = Math.PI / 6; // 30 degrees
+
+  doc.setFillColor(options.color);
+
+  const point1 = {
+    x: tip.x - size * Math.cos(angle - wingAngle),
+    y: tip.y - size * Math.sin(angle - wingAngle),
+  };
+  const point2 = {
+    x: tip.x - size * Math.cos(angle + wingAngle),
+    y: tip.y - size * Math.sin(angle + wingAngle),
+  };
+
+  doc.triangle(tip.x, tip.y, point1.x, point1.y, point2.x, point2.y, 'F');
+}
+```
+
+---
+
+### 7. Software Architect - System Integration
+
+**Name:** Tech Lead
+**Role:** System design, architecture decisions, integration patterns
+
+#### Integration with Existing Export System
+
+**Strategy:** Extend existing export infrastructure rather than replace:
+
+```
+┌─────────────────────────────────────────────────────────────────┐
+│                        ExportDialog                              │
+│                                                                  │
+│  ┌──────────────────┐                                           │
+│  │ FormatSelector   │  → PNG / PDF                              │
+│  └──────────────────┘                                           │
+│           │                                                      │
+│           ▼                                                      │
+│  ┌──────────────────────────────────────────────────────────┐   │
+│  │                                                           │   │
+│  │   [PNG Selected]           [PDF Selected]                │   │
+│  │         │                        │                        │   │
+│  │         ▼                        ▼                        │   │
+│  │  ExportOptions.tsx        PdfExportOptions.tsx           │   │
+│  │  (existing)               (new)                          │   │
+│  │         │                        │                        │   │
+│  │         ▼                        ▼                        │   │
+│  │  captureChart.ts          pdfExport.ts                   │   │
+│  │  downloadPng.ts           pdfRenderer.ts                 │   │
+│  │                           pdfLayout.ts                   │   │
+│  │                                                           │   │
+│  └──────────────────────────────────────────────────────────┘   │
+│                                                                  │
+└─────────────────────────────────────────────────────────────────┘
+```
+
+**Shared Infrastructure:**
+
+Both PNG and PDF export share:
+- Chart state reading (tasks, dependencies, settings)
+- Export options (date range, columns, display toggles)
+- Calculation utilities (dimensions, dates)
+- UI patterns (dialog, progress, error handling)
+
+**State Management Updates:**
+
+```typescript
+// Extend uiSlice.ts
+interface ExportUIState {
+  // Existing
+  isExportDialogOpen: boolean;
+  isExporting: boolean;
+  exportProgress: number;
+  exportError: string | null;
+
+  // New for PDF
+  selectedExportFormat: ExportFormat;
+  pdfExportOptions: PdfExportOptions;
+}
+
+// Actions
+interface ExportActions {
+  // Existing
+  openExportDialog: () => void;
+  closeExportDialog: () => void;
+  setExportProgress: (progress: number) => void;
+  setExportError: (error: string | null) => void;
+
+  // New for PDF
+  setExportFormat: (format: ExportFormat) => void;
+  setPdfExportOptions: (options: Partial<PdfExportOptions>) => void;
+}
+```
+
+**Lazy Loading PDF Module:**
+
+```typescript
+// Lazy load PDF module to reduce initial bundle impact
+export async function exportChart(
+  format: ExportFormat,
+  tasks: Task[],
+  chartState: ChartState,
+  options: CombinedExportOptions,
+  onProgress?: (progress: number) => void
+): Promise<void> {
+  if (format === 'png') {
+    // Use existing PNG export
+    const { exportToPng } = await import('./captureChart');
+    return exportToPng(tasks, chartState, options, onProgress);
+  } else {
+    // Lazy load PDF module (only when needed)
+    const { exportToPdf } = await import('./pdfExport');
+    return exportToPdf(tasks, chartState, options, options.pdf!, onProgress);
+  }
+}
+```
+
+---
+
+### 8. DevOps Engineer - Build & Dependencies
+
+**Name:** DevOps Lead
+**Role:** Build pipeline, dependencies, bundle optimization
+
+#### Build Configuration
+
+**New Dependencies:**
+
+```json
+{
+  "dependencies": {
+    "jspdf": "^2.5.1"
+  }
+}
+```
+
+**Bundle Impact Analysis:**
+
+| Item | Size (gzipped) | Notes |
+|------|---------------|-------|
+| Current bundle | ~XXX KB | Before PDF |
+| jsPDF | ~100 KB | Core library |
+| jsPDF fonts | ~150 KB | If embedding fonts |
+| **Total increase** | ~250 KB | With lazy loading |
+
+**Lazy Loading Strategy:**
+
+```typescript
+// vite.config.ts - create separate chunk for PDF
+export default defineConfig({
+  build: {
+    rollupOptions: {
+      output: {
+        manualChunks: {
+          'pdf-export': ['jspdf'],
+        },
+      },
+    },
+  },
+});
+```
+
+**Expected Chunk Sizes:**
+- Main bundle: ~XXX KB (unchanged)
+- PDF chunk: ~250 KB (loaded only when PDF export used)
+
+**CI/CD Updates:**
+- Add PDF export to E2E tests
+- Test generated PDFs can be opened
+- Monitor bundle size regression
+- Add PDF viewer compatibility matrix to test suite
+
+---
+
+### 9. QA Tester - Testing Strategy
+
+**Name:** QA Lead
+**Role:** Test planning, quality assurance, compatibility testing
+
+#### Test Plan
+
+**PDF Export Testing Matrix:**
+
+| Page Size | Orientation | Scale Mode | Tasks | Expected Output | Status |
+|-----------|-------------|------------|-------|-----------------|--------|
+| A4 | Landscape | Fit to page | 10 | Single page, readable | ☐ |
+| A4 | Landscape | Fit to page | 100 | Single page, scaled | ☐ |
+| A4 | Portrait | Fit to page | 50 | Single page | ☐ |
+| A3 | Landscape | Fit to page | 100 | Single page, larger | ☐ |
+| Letter | Landscape | Fit to page | 50 | Single page | ☐ |
+| Tabloid | Landscape | Fit to page | 200 | Single page | ☐ |
+
+**Cross-Viewer Compatibility:**
+
+| Viewer | Platform | Status |
+|--------|----------|--------|
+| Adobe Acrobat Reader | Windows | ☐ |
+| Adobe Acrobat Reader | macOS | ☐ |
+| Chrome PDF Viewer | Cross-platform | ☐ |
+| Firefox PDF.js | Cross-platform | ☐ |
+| macOS Preview | macOS | ☐ |
+| Microsoft Edge | Windows | ☐ |
+| Foxit Reader | Windows | ☐ |
+
+**Unit Tests:**
+
+```typescript
+describe('PDF Export', () => {
+  describe('pdfScale', () => {
+    it('calculates fit-to-page scale correctly');
+    it('handles custom scale percentage');
+    it('scales to fit entire chart on single page');
+  });
+
+  describe('pdfRenderer', () => {
+    it('renders task bars with correct colors');
+    it('renders progress overlay correctly');
+    it('renders task labels in correct position');
+    it('renders dependency arrows with Bézier curves');
+    it('renders milestones as diamonds');
+    it('renders summary brackets correctly');
+    it('renders timeline header');
+    it('renders page headers and footers');
+  });
+
+  describe('pdfLayout', () => {
+    it('calculates margins correctly for all presets');
+    it('converts mm to PDF points correctly');
+    it('handles all page sizes (A4, A3, Letter, Legal, Tabloid)');
+    it('calculates printable area correctly');
+  });
+});
+
+describe('PDF Integration', () => {
+  it('opens format selector when export clicked');
+  it('shows PDF options when PDF selected');
+  it('updates preview when options change');
+  it('exports valid PDF file');
+  it('shows progress during export');
+  it('handles export errors gracefully');
+  it('respects margin presets');
+  it('includes header/footer when enabled');
+});
+```
+
+**Manual Testing Checklist:**
+
+PDF Generation:
+- [ ] PDF opens without errors in all target viewers
+- [ ] All text is searchable (not rasterized)
+- [ ] Colors match screen appearance
+- [ ] Task bars are crisp at all zoom levels in PDF viewer
+- [ ] Dependency arrows render correctly
+- [ ] Grid lines are visible but not dominant
+- [ ] Weekend shading appears correctly
+- [ ] Today marker renders correctly
+- [ ] Progress bars display accurately
+- [ ] Milestones render as diamonds
+- [ ] Summary brackets are complete
+- [ ] Entire chart fits on single page
+
+Vector Scaling:
+- [ ] A4 PDF printed on A0 looks sharp (vector quality)
+- [ ] Text remains crisp at any zoom level in PDF viewer
+- [ ] No pixelation when zooming in
+- [ ] File size stays reasonable (< 5MB for 100 tasks)
+
+Print Quality:
+- [ ] Printed output matches preview
+- [ ] Text is readable when printed
+- [ ] No clipping at page edges
+- [ ] Margins are correct when printed
+
+Performance:
+- [ ] 10 tasks exports in < 1 second
+- [ ] 100 tasks exports in < 5 seconds
+- [ ] 500 tasks exports in < 15 seconds
+- [ ] Memory doesn't spike excessively
+- [ ] Progress indicator updates smoothly
+
+---
+
+### 10. Data Analyst - Metrics & Success Criteria
+
+**Name:** Data Analyst
+**Role:** Success metrics, analytics, user behavior insights
+
+#### Success Metrics
+
+**Functional Metrics:**
+- [ ] PDF export success rate > 99%
+- [ ] Export time < 10s for 100-task chart
+- [ ] Generated PDF file size < 5MB for typical chart
+- [ ] Cross-viewer compatibility 100% (all target viewers)
+- [ ] Text searchability 100% (no rasterized text)
+
+**Quality Metrics:**
+- [ ] Visual accuracy 100% (matches screen rendering)
+- [ ] Print quality matches professional tools
+- [ ] Vector scaling verified (A4→A0 perfect quality)
+- [ ] Font rendering matches screen 100%
+
+**User Experience Metrics:**
+- [ ] Export dialog completion rate > 90%
+- [ ] Average time to export < 30 seconds
+- [ ] Error rate < 1%
+- [ ] User satisfaction > 4/5 stars
+
+**Usage Metrics:**
+- [ ] PDF export usage (daily, weekly)
+- [ ] Average exports per user
+- [ ] PDF vs PNG preference ratio
+
+---
+
+## Implementation Plan
+
+### Phase 1: Core PDF Export (Week 1)
+
+1. **Research & Setup** (Days 1-2)
+   - Install and evaluate jsPDF
+   - Create proof of concept (single page PDF)
+   - Test font embedding
+   - Verify vector rendering quality
+
+2. **Core PDF Generation** (Days 3-4)
+   - Page size and orientation handling
+   - Scale calculation (fit to page)
+   - Task bar rendering
+   - Timeline header rendering
+   - Dependency arrow rendering
+
+3. **Integration** (Day 5)
+   - Connect to existing export options
+   - Format selector UI
+   - Basic PDF options panel
+
+### Phase 2: Features & Polish (Week 2)
+
+4. **Advanced Features** (Days 6-7)
+   - Header/footer implementation
+   - Margin customization
+   - PDF metadata
+
+5. **Quality Features** (Days 8-9)
+   - PDF/A compliance
+   - Grayscale mode
+   - Font embedding fixes
+
+6. **Testing & Release** (Day 10)
+   - Cross-browser/viewer testing
+   - Performance verification
+   - Documentation
+   - Release
+
+---
+
+## Risk Mitigation
+
+### Technical Risks
+
+| Risk | Mitigation |
+|------|-----------|
+| jsPDF doesn't support feature | Evaluate pdf-lib as fallback |
+| Font embedding fails | Use PDF-safe font stack (Helvetica) |
+| PDF/A compliance issues | Test with verapdf validator |
+| Large chart performance | Single page keeps memory manageable |
+
+### User Experience Risks
+
+| Risk | Mitigation |
+|------|-----------|
+| Options too complex | Smart defaults, progressive disclosure |
+| Preview doesn't match export | Use same rendering engine |
+| Chart too small on page | Recommend larger page size or custom zoom |
+
+---
+
+## Definition of Done
+
+- [ ] All acceptance criteria met
+- [ ] Unit tests written and passing (>80% coverage)
+- [ ] Integration tests written and passing
+- [ ] Cross-viewer compatibility verified
+- [ ] Performance benchmarks met
+- [ ] Code reviewed and approved
+- [ ] Documentation updated
+- [ ] CHANGELOG updated
+- [ ] No critical bugs
+
+---
+
+## Appendix
+
+### A. Page Size Reference
+
+| Size | Width (mm) | Height (mm) | Aspect Ratio | Common Use |
+|------|-----------|-------------|--------------|------------|
+| A4 | 297 | 210 | 1.41:1 | International standard |
+| A3 | 420 | 297 | 1.41:1 | Large prints |
+| Letter | 279 | 216 | 1.29:1 | US standard |
+| Legal | 356 | 216 | 1.65:1 | US legal docs |
+| Tabloid | 432 | 279 | 1.55:1 | US large format |
+
+### B. Color Reference (Match PNG Export)
+
+```typescript
+const EXPORT_COLORS = {
+  taskDefault: '#14b8a6',      // Teal-500
+  taskProgress: '#0d9488',     // Teal-600
+  gridLine: '#e2e8f0',         // Slate-200
+  weekendShading: '#f8fafc',   // Slate-50
+  todayMarker: '#ef4444',      // Red-500
+  dependencyArrow: '#64748b',  // Slate-500
+  headerText: '#1e293b',       // Slate-800
+  bodyText: '#334155',         // Slate-700
+};
+```
+
+### C. jsPDF Quick Reference
+
+```typescript
+// Document creation
+const doc = new jsPDF({ orientation: 'landscape', unit: 'mm', format: 'a4' });
+
+// Drawing
+doc.setFillColor('#14b8a6');
+doc.rect(x, y, width, height, 'F');           // Filled rectangle
+doc.roundedRect(x, y, w, h, rx, ry, 'F');     // Rounded rectangle
+doc.line(x1, y1, x2, y2);                     // Line
+doc.circle(x, y, radius, 'F');                // Circle
+doc.triangle(x1, y1, x2, y2, x3, y3, 'F');   // Triangle
+
+// Text
+doc.setFontSize(10);
+doc.setTextColor('#1e293b');
+doc.text('Hello', x, y);
+doc.text('Centered', x, y, { align: 'center' });
+
+// Pages
+doc.addPage();
+doc.setPage(pageNumber);
+doc.getNumberOfPages();
+
+// Save
+doc.save('filename.pdf');
+```
+
+---
+
+## Team Review (Round 1)
+
+### Product Owner Review
+
+**Reviewer:** Product Lead
+**Status:** ✅ Approved with suggestions
+
+**Feedback:**
+> "Excellent comprehensive concept. A few additions needed:"
+
+1. **Add SVG export option** - Many users want editable vector graphics for Adobe Illustrator/Inkscape
+2. **Consider "Quick Export" mode** - One-click PDF with sensible defaults (skip dialog)
+3. **Add export history** - Users should see recently used export settings
+
+**Priority Change Suggestion:**
+- Move "PDF/A archival compliance" from Low to Medium - enterprise customers need this
+
+---
+
+### Project Manager Review
+
+**Reviewer:** Project Coordinator
+**Status:** ✅ Approved with timeline concerns
+
+**Feedback:**
+> "Timeline is realistic but tight. Add contingency:"
+
+1. **Increase buffer** - Week 3 should be 25 hours, not 20 (font issues take time)
+2. **Add parallel workstream** - UI work can start while PDF core is developed
+3. **Risk: jsPDF font embedding** - This is HIGH probability, not Medium
+4. **Milestone M1.5** - Add a checkpoint after single-page PDF works with all elements
+
+**Updated Time Estimate:** 85-90 hours (was 80)
+
+---
+
+### UX/UI Designer Review
+
+**Reviewer:** UX Designer
+**Status:** ✅ Approved with UX improvements
+
+**Feedback:**
+> "Dialog design is solid but needs polish:"
+
+1. **Add visual page thumbnails** - Show all pages in a grid, not just prev/next
+2. **Remember last settings** - Per-user preference for page size based on locale
+3. **Preview interaction** - Allow clicking on preview to see actual size crop
+4. **Loading state** - Add skeleton loader while preview generates
+5. **Error states** - Design error message for "chart too large for single page"
+
+**Preview design:**
+- Single page preview showing entire chart
+- Updates in real-time when options change
+
+---
+
+### Frontend Developer Review
+
+**Reviewer:** Frontend Dev
+**Status:** ✅ Approved with technical notes
+
+**Feedback:**
+> "Architecture is clean. Implementation notes:"
+
+1. **Web Worker consideration** - For charts > 200 tasks, render in worker thread
+2. **Preview caching** - Cache paginated preview to avoid recalculation on every option change
+3. **State persistence** - Use Zustand persist for PDF options like PNG options
+4. **SVG export path** - If adding SVG, can reuse existing chart SVG elements directly
+
+**Code improvement:**
+```typescript
+// Add AbortController for cancellable exports
+interface PdfExportContext {
+  signal: AbortSignal;
+  // ... existing
+}
+```
+
+---
+
+### Data Visualization Specialist Review
+
+**Reviewer:** Data Viz Specialist
+**Status:** ✅ Approved with rendering concerns
+
+**Feedback:**
+> "Rendering pipeline is solid. Concerns about visual fidelity:"
+
+1. **Color space** - PDF uses CMYK for print, consider RGB→CMYK conversion option
+2. **Line weight scaling** - Grid lines at small scales may become invisible (< 0.25pt)
+3. **Text truncation** - Handle task names that exceed bar width in "inside" mode
+4. **Anti-aliasing** - jsPDF doesn't anti-alias, may look jagged at low zoom
+
+**Additional rendering test cases needed:**
+- Very short tasks (1-day width at 50% scale)
+- Very long task names (50+ characters)
+- Overlapping dependency arrows
+
+---
+
+### Backend Developer Review
+
+**Reviewer:** Backend Dev
+**Status:** ✅ Approved with optimization suggestions
+
+**Feedback:**
+> "jsPDF choice is correct. Performance optimizations:"
+
+1. **Streaming PDF generation** - Use doc.output('blob') instead of data URL for large files
+2. **Font subsetting** - Only embed glyphs actually used (reduces file size significantly)
+3. **Image compression** - If embedding raster elements, use JPEG compression at 85%
+4. **Memory management** - Clear canvas after each page render
+
+**Security consideration:**
+- Sanitize all user text (project name, task names) before embedding in PDF
+
+---
+
+### Software Architect Review
+
+**Reviewer:** Tech Lead
+**Status:** ✅ Approved with architecture additions
+
+**Feedback:**
+> "Integration approach is correct. Architectural improvements:"
+
+1. **Extract shared renderer** - Create abstract ChartRenderer interface for PNG/PDF/SVG
+2. **Plugin architecture prep** - PDF export could be a plugin in future (separate bundle)
+3. **Event hooks** - Add onExportStart, onPageRendered, onExportComplete events
+4. **Future: Print API** - Consider window.print() integration for direct printing
+
+**Architecture diagram update:**
+```
+┌───────────────────────────────────────────────────────────────┐
+│                     ChartRenderer (abstract)                   │
+│                           │                                    │
+│      ┌────────────────────┼───────────────────┐               │
+│      │                    │                    │               │
+│      ▼                    ▼                    ▼               │
+│ PngRenderer          PdfRenderer          SvgRenderer         │
+│ (html-to-image)      (jsPDF)             (native SVG)         │
+└───────────────────────────────────────────────────────────────┘
+```
+
+---
+
+### DevOps Engineer Review
+
+**Reviewer:** DevOps Lead
+**Status:** ✅ Approved with CI/CD requirements
+
+**Feedback:**
+> "Bundle strategy is correct. Additional requirements:"
+
+1. **PDF validation in CI** - Use pdf-parse to verify generated PDFs are valid
+2. **Visual regression tests** - Compare PDF screenshots against baselines
+3. **Bundle size budget** - Set threshold alert if PDF chunk > 300KB
+4. **CDN caching** - PDF chunk should have long cache headers (immutable)
+
+**New test script:**
+```bash
+# Add to package.json
+"test:pdf-validation": "vitest run --grep 'PDF.*valid'"
+```
+
+---
+
+### QA Tester Review
+
+**Reviewer:** QA Lead
+**Status:** ✅ Approved with expanded test coverage
+
+**Feedback:**
+> "Test matrix is good. Additional scenarios needed:"
+
+1. **RTL language support** - Test with Hebrew/Arabic task names
+2. **Unicode handling** - Emoji in task names, special characters
+3. **Empty chart edge case** - What happens with 0 tasks?
+4. **Maximum limits** - Test with 1000 tasks, 10-page PDF
+5. **Interrupted export** - User closes dialog mid-export
+
+**New test cases:**
+```typescript
+describe('PDF Edge Cases', () => {
+  it('handles empty task list gracefully');
+  it('renders emoji in task names');
+  it('handles very long project names (100+ chars)');
+  it('cancels export cleanly when dialog closed');
+  it('recovers from jsPDF errors');
+});
+```
+
+---
+
+### Data Analyst Review
+
+**Reviewer:** Data Analyst
+**Status:** ✅ Approved with analytics requirements
+
+**Feedback:**
+> "Metrics are good. Add tracking for:"
+
+1. **Export funnel** - Track: Dialog open → Format select → Options set → Export start → Success
+2. **Option popularity** - Which page sizes, scales, options are most used
+3. **Error categorization** - Classify errors (memory, timeout, rendering, download)
+4. **Time-to-export** - Measure end-to-end time, identify bottlenecks
+
+**Analytics events to add:**
+```typescript
+// Suggested analytics events (privacy-preserving)
+trackEvent('pdf_export_started', { taskCount, pageCount });
+trackEvent('pdf_export_completed', { duration, fileSize });
+trackEvent('pdf_export_failed', { errorType });
+```
+
+---
+
+## Changes from Team Review (Round 1)
+
+Based on team feedback, the following changes are incorporated:
+
+### New Features Added
+
+1. **SVG Export Option** (Product Owner) - Added as third format option
+2. **Quick Export Mode** (Product Owner) - `Ctrl+Shift+E` for one-click PDF
+3. **Page Thumbnails** (UX Designer) - Grid view of all pages in preview
+4. **Settings Persistence** (Frontend Dev) - Remember last used PDF options
+5. **Export Cancellation** (Frontend Dev) - AbortController for cancellable exports
+
+### Technical Updates
+
+1. **Increased timeline** - 85-90 hours (was 80)
+2. **Added M1.5 milestone** - Checkpoint after single-page with all elements
+3. **Font embedding risk** - Increased to HIGH probability
+4. **Abstract ChartRenderer** - Shared interface for PNG/PDF/SVG
+5. **Web Worker support** - For charts > 200 tasks
+
+### Testing Additions
+
+1. RTL language support tests
+2. Unicode/emoji handling tests
+3. Empty chart edge case
+4. Maximum limits (1000 tasks)
+5. Export cancellation recovery
+
+### Quality/DevOps
+
+1. PDF validation in CI pipeline
+2. Visual regression tests for PDF output
+3. Bundle size budget alert (300KB threshold)
+4. Analytics events for export funnel
+
+---
+
+## User Persona Review
+
+The following personas from the user stories reviewed the concept to validate it meets real-world needs.
+
+### 1. Sarah - Project Manager (Corporate)
+
+**Context:** Manages a 50-person team at a Fortune 500 company. Creates weekly status reports for executives. Needs to print project timelines for conference room walls.
+
+**Review:**
+> "This looks great for my use cases. A few things I'd need:"
+
+**Positive:**
+- ✅ A3 page size for wall posters - exactly what I need
+- ✅ Vector format means I can print A4 on A0 - perfect for large projects
+- ✅ Page headers with project name - essential for printed copies
+
+**Concerns & Requests:**
+1. **Company logo/branding** - Can I add our company logo to the header? Even if just a text watermark?
+2. **Color printing costs** - Can I export in grayscale/B&W mode to save on printing?
+3. **Task table columns** - I need to include "Assigned To" if we add custom fields later
+4. **Confidentiality notice** - Option to add "CONFIDENTIAL - INTERNAL USE ONLY" footer
+
+**Priority for Sarah:** "PDF export is essential for my workflow."
+
+---
+
+### 2. Marcus - IT Consultant (Freelancer)
+
+**Context:** Independent consultant who creates project proposals for clients. Needs professional-looking exports to embed in Word documents and PowerPoint.
+
+**Review:**
+> "Love the vector format. Here's what would make my workflow perfect:"
+
+**Positive:**
+- ✅ Vector quality for embedding in documents
+- ✅ Transparent background option - essential for PowerPoint
+- ✅ Fit to width - exactly how I'd use this
+
+**Concerns & Requests:**
+1. **Embed directly** - Can the PDF have selectable/copyable text? I sometimes copy task names into my proposal text
+2. **Trim margins** - When embedding, I often want zero margins (borderless chart)
+3. **Landscape in portrait doc** - Need 90° rotation option for embedding landscape chart in portrait Word doc
+4. **Client branding** - Different projects, different clients - remember settings per project file, not globally
+
+**Priority for Marcus:** "The 'None' margin preset covers most of my needs. Just ensure text is selectable."
+
+---
+
+### 3. Elena - General Contractor (Construction)
+
+**Context:** Runs a construction company. Attaches project schedules to contracts and permits. Documents need to be legally valid for years.
+
+**Review:**
+> "I need rock-solid reliability. Here's my checklist:"
+
+**Positive:**
+- ✅ PDF/A archival compliance mentioned - critical for legal documents
+- ✅ Standard page sizes (Letter for US permits)
+- ✅ Date in footer - proves when schedule was created
+
+**Concerns & Requests:**
+1. **PDF/A is CRITICAL, not 'Low'** - Move to High priority. My contracts have 10-year retention requirements
+2. **Digital signature space** - Leave room for e-signatures (Adobe Sign, DocuSign)
+3. **Revision number** - Show "Revision 3 - 2026-01-08" in header
+4. **Change highlighting** - Mark tasks that changed since last export (V2.0 feature?)
+5. **Portrait mode defaults** - Legal documents are usually portrait, even if chart is landscape
+
+**Priority for Elena:** "PDF/A is non-negotiable. I can't use this without it."
+
+---
+
+### 4. James - Team Lead (Software Startup)
+
+**Context:** Leads an 8-person dev team at a startup. Prints sprint timelines for the team room and distributes in planning meetings.
+
+**Review:**
+> "Fast and easy is what I need. Here's my take:"
+
+**Positive:**
+- ✅ Quick export (Ctrl+Shift+E) - perfect for standup prep
+- ✅ Compact density option - fits more tasks on one page
+- ✅ A4 default - our office printer is A4
+
+**Concerns & Requests:**
+1. **Print directly** - Skip PDF, just open print dialog (Ctrl+P workflow)
+2. **Multiple copies** - "Print 8 copies" option for meeting handouts
+3. **Black & white mode** - Our office printer is B&W only
+4. **Simplified view** - Hide progress bars and dependencies for simpler handout
+5. **QR code** - Add QR code linking to live chart (for those who want latest version)
+
+**Priority for James:** "I'd use Quick Export daily. The simpler the better."
+
+---
+
+### 5. Dr. Amara - Research Archivist (University)
+
+**Context:** Manages research project timelines that need to be archived and accessible for 20+ years for grant compliance.
+
+**Review:**
+> "Long-term preservation is my specialty. Here are the requirements:"
+
+**Positive:**
+- ✅ PDF/A mentioned - essential for archival
+- ✅ Metadata fields (title, author) - critical for cataloging
+- ✅ Searchable text - researchers need to find projects by task keywords
+
+**Concerns & Requests:**
+1. **PDF/A-3 specifically** - PDF/A has versions. A-3 allows embedded files (the .ownchart source)
+2. **Dublin Core metadata** - Add: Creator, Date, Rights, Description fields
+3. **Embed source file** - Include the .ownchart file inside the PDF for future editing
+4. **Font embedding required** - Without embedded fonts, text may render incorrectly in 20 years
+5. **Color profile embedding** - sRGB ICC profile for consistent color reproduction
+6. **No JavaScript** - PDF/A forbids JS, ensure export doesn't include any
+
+**Priority for Dr. Amara:** "PDF/A-3 with embedded source would be groundbreaking for academic use."
+
+---
+
+## Changes from User Persona Review
+
+Based on user persona feedback, the following additions are incorporated:
+
+### New Features (Must-Have for Personas)
+
+1. **Grayscale/B&W export mode** (Sarah, James) - Add toggle for colorless export
+2. **PDF/A priority elevated** (Elena, Amara) - Moved from Low to HIGH priority
+3. **Print directly option** (James) - Add `Ctrl+P` shortcut for browser print dialog
+4. **Margin 'None' preset** (Marcus) - Already included, confirm it produces truly borderless output
+5. **Revision/version in header** (Elena) - Add optional "Rev. X" display
+
+### New Features (Should-Have)
+
+1. **Project-specific settings** (Marcus) - Store PDF options in .ownchart file, not just user prefs
+2. **Custom header text** (Sarah) - Allow custom text like "CONFIDENTIAL" in header/footer
+3. **90° rotation option** (Marcus) - For embedding landscape in portrait documents
+4. **QR code option** (James) - Link to ownchart.app with project share (future feature dependency)
+
+### New Features (Could-Have for V2.0)
+
+1. **Company logo in header** (Sarah) - Image upload for branding
+2. **Change highlighting** (Elena) - Show changed tasks since last export
+3. **PDF/A-3 with embedded .ownchart** (Amara) - Include source file in PDF
+4. **Dublin Core metadata** (Amara) - Extended metadata fields
+
+### Technical Clarifications
+
+1. **Font embedding is REQUIRED** - Not optional, always embed fonts for archival
+2. **ICC color profile** - Embed sRGB for consistent reproduction
+3. **No JavaScript in PDF** - Confirmed, jsPDF doesn't add JS
+4. **Text must be selectable** - Confirmed, render as text not paths
+
+### Updated Priority List
+
+**Critical (Sprint 1.5.5 MVP):**
+1. Basic PDF export with page sizes
+2. Orientation (landscape/portrait)
+3. Scale options (Fit to page, Custom zoom)
+4. Single-page output (vector scales for large prints)
+5. Include/exclude options
+
+**High:**
+1. **PDF/A compliance** (elevated from Low)
+2. Headers/footers
+3. Margin customization
+4. **Grayscale export mode** (new)
+5. **Font embedding** (mandatory)
+
+**Medium:**
+1. PDF metadata
+2. Custom header/footer text
+3. Project-specific PDF settings
+
+---
+
+## Final Team Review (Round 2)
+
+The team reviewed the changes from Round 1 and User Persona feedback. This round focuses on scope validation and implementation feasibility.
+
+### Product Owner - Scope Validation
+
+**Status:** ✅ APPROVED
+
+**Decision on PDF/A:**
+> "The user persona feedback is clear - PDF/A is mandatory for enterprise/legal/academic users. We're elevating it to Critical priority. This is the right call."
+
+**Scope Confirmation:**
+- ✅ SVG export added (Round 1) - Approved for Sprint 1.5.5
+- ✅ PDF/A elevated to Critical - Approved
+- ✅ Grayscale mode - Approved for Sprint 1.5.5
+- ⏸️ PDF/A-3 with embedded source - Deferred to V2.0 (complex)
+- ⏸️ Company logo - Deferred to V2.0
+- ⏸️ QR code - Deferred to V2.0 (depends on sharing feature)
+
+**Final Feature List for Sprint 1.5.5:**
+1. PDF export with page sizes (A4, A3, Letter, Legal, Tabloid)
+2. Orientation (Landscape/Portrait)
+3. Scale modes (Fit to page, Custom zoom %)
+4. Single-page output (vector scales perfectly for large prints)
+5. All PNG export options (columns, display toggles)
+6. PDF/A-1b compliance (basic archival)
+7. Headers/footers (project name, date, custom text)
+8. Margin presets + custom margins
+9. Grayscale/B&W mode
+10. Font embedding (mandatory)
+11. PDF metadata (title, author, subject)
+12. Project-specific settings storage
+13. SVG export option
+14. Quick export shortcuts
+
+---
+
+### Project Manager - Updated Timeline
+
+**Status:** ✅ APPROVED with simplified timeline
+
+**Revised Timeline:**
+Significantly reduced due to removal of multi-page pagination:
+
+```
+Week 1: 35 hours
+  - jsPDF setup and evaluation
+  - Core PDF rendering (task bars, timeline, dependencies)
+  - Page size and orientation handling
+  - Basic UI integration
+
+Week 2: 30 hours
+  - Margins and header/footer
+  - PDF/A compliance
+  - Grayscale mode
+  - Testing and polish
+
+Total: 60-70 hours over 2 weeks
+```
+
+**Milestones:**
+- **M1** (End of Week 1): Basic PDF export working
+- **M2** (End of Week 2): All features complete, tests passing
+
+**Risk Update:**
+| Risk | Status |
+|------|--------|
+| jsPDF PDF/A support | ⚠️ Needs verification - may need pdf-lib for PDF/A |
+| Font embedding | ⚠️ HIGH - Inter font must be properly subset |
+| Multi-page pagination | ✅ REMOVED - No longer a risk |
+
+---
+
+### UX/UI Designer - Final UI Approval
+
+**Status:** ✅ APPROVED
+
+**UI Updates Confirmed:**
+1. ✅ Page thumbnail grid in preview
+2. ✅ Grayscale toggle in Advanced Options
+3. ✅ Custom header/footer text fields
+4. ✅ Revision number field
+
+**Final Dialog Mockup (Updated):**
+```
+┌─────────────────────────────────────────────────────────────────────────┐
+│  Export Chart                                                      [✕]  │
+├─────────────────────────────────────────────────────────────────────────┤
+│                                                                          │
+│  Format:  [PNG]  [PDF]  [SVG]                                           │
+│                                                                          │
+│  ─────────────────────────────────────────────────────────────────────  │
+│                                                                          │
+│  Page:  [A4 ▼]  [Landscape ●] [Portrait ○]                              │
+│                                                                          │
+│  Scale: [Fit to page ▼]  Margins: [Normal ▼]                            │
+│                                                                          │
+│  [▼ Content & Display]                                                  │
+│  [▼ Headers & Footers]                                                  │
+│  [▼ PDF Options]  ← PDF/A, Grayscale, Metadata here                     │
+│                                                                          │
+├─────────────────────────────────────────────────────────────────────────┤
+│  💡 Vector PDF - scales perfectly for large format printing (A0, etc.)  │
+│                                    [Cancel]  [Export PDF]               │
+└─────────────────────────────────────────────────────────────────────────┘
+```
+
+---
+
+### Frontend Developer - Technical Approval
+
+**Status:** ✅ APPROVED with notes
+
+**Technical Notes:**
+1. **PDF/A with jsPDF** - Verified: jsPDF 2.5+ supports PDF/A-1b via plugin
+2. **Grayscale conversion** - Will use color matrix conversion on render
+3. **SVG export** - Can serialize existing DOM SVG directly
+4. **Settings storage** - Will extend .ownchart file format with `exportSettings.pdf` object
+
+**Code Structure Finalized:**
+```
+src/utils/export/
+├── index.ts                    # Export orchestrator
+├── types.ts                    # All export types (PNG, PDF, SVG)
+├── pngExport.ts               # Existing PNG (refactored)
+├── pdfExport.ts               # NEW: PDF export main
+├── pdfRenderer.ts             # NEW: Chart-to-PDF rendering
+├── pdfLayout.ts               # NEW: Page layout & scale
+├── svgExport.ts               # NEW: SVG export
+├── colorUtils.ts              # NEW: Grayscale conversion
+└── ChartRenderer.ts           # NEW: Abstract renderer interface
+```
+
+**Note:** No pdfPagination.ts needed - single page only.
+
+---
+
+### Software Architect - Architecture Approval
+
+**Status:** ✅ APPROVED
+
+**Architecture Decisions Finalized:**
+
+1. **Renderer Abstraction** - Approved
+```typescript
+interface ChartRenderer {
+  render(chart: ChartData, options: ExportOptions): Promise<Blob>;
+  getPreview(chart: ChartData, options: ExportOptions): Promise<string>; // data URL
+}
+```
+
+2. **PDF/A Compliance Strategy**
+   - Use jsPDF with PDF/A plugin for basic compliance
+   - Evaluate pdf-lib for PDF/A-3 in V2.0 if needed
+
+3. **Settings Architecture** (see [SETTINGS_ARCHITECTURE.md](../architecture/SETTINGS_ARCHITECTURE.md))
+```typescript
+// In .ownchart file format (project-specific, no user-level defaults)
+interface ProjectFile {
+  // existing fields...
+  exportSettings?: {
+    lastFormat: 'png' | 'pdf' | 'svg';
+    png?: PngExportOptions;
+    pdf?: PdfExportOptions;
+    svg?: SvgExportOptions;
+  };
+}
+```
+
+---
+
+### QA Tester - Test Plan Approval
+
+**Status:** ✅ APPROVED
+
+**Final Test Matrix:**
+
+| Category | Test Cases | Priority |
+|----------|-----------|----------|
+| PDF Generation | 20 cases | Critical |
+| PDF/A Compliance | 8 cases | High |
+| Scale & Layout | 8 cases | High |
+| Grayscale | 4 cases | High |
+| Cross-viewer | 7 viewers | High |
+| Performance | 5 benchmarks | Medium |
+| Edge cases | 8 cases | Medium |
+
+**Total: 60 test cases** (reduced - no pagination tests)
+
+**PDF/A Validation:**
+- Use Verifier (verapdf.org) for PDF/A compliance testing
+- Add to CI pipeline: `npm run test:pdf-a-validation`
+
+---
+
+### DevOps Engineer - Deployment Approval
+
+**Status:** ✅ APPROVED
+
+**Final Bundle Impact:**
+- jsPDF: ~100KB gzipped
+- jsPDF PDF/A plugin: ~15KB
+- Color utils: ~2KB
+- **Total PDF chunk: ~120KB** (under 300KB budget ✓)
+
+**CI/CD Additions:**
+```yaml
+# .github/workflows/test.yml additions
+- name: PDF Export Tests
+  run: npm run test:unit -- --grep "PDF"
+
+- name: PDF/A Validation
+  run: npm run test:pdf-a-validation
+
+- name: Bundle Size Check
+  run: npm run build && npx bundlesize
+```
+
+---
+
+### Data Analyst - Analytics Approval
+
+**Status:** ✅ APPROVED
+
+**Final Analytics Events:**
+```typescript
+// Privacy-preserving analytics
+interface ExportAnalytics {
+  event: 'export_started' | 'export_completed' | 'export_failed';
+  format: 'png' | 'pdf' | 'svg';
+  pageSize?: string;        // e.g., 'a4', 'letter'
+  pageCount?: number;
+  taskCount: number;        // Bucketed: 1-10, 11-50, 51-100, 100+
+  duration?: number;        // ms
+  errorType?: string;       // Generic error category
+}
+```
+
+---
+
+## Final Approved Scope
+
+### Sprint 1.5.5 MVP Scope (APPROVED)
+
+| Feature | Priority | Status |
+|---------|----------|--------|
+| PDF export with page sizes (A4, A3, Letter, Legal, Tabloid) | Critical | ✅ Approved |
+| Landscape/Portrait orientation | Critical | ✅ Approved |
+| Scale modes (Fit to page, Custom zoom) | Critical | ✅ Approved |
+| Single-page output (vector scales for large prints) | Critical | ✅ Approved |
+| Include/exclude options | Critical | ✅ Approved |
+| PDF/A-1b compliance | High | ✅ Approved |
+| Headers/footers | High | ✅ Approved |
+| Margin presets + custom | High | ✅ Approved |
+| Grayscale/B&W mode | High | ✅ Approved |
+| Font embedding | High | ✅ Approved |
+| PDF metadata | Medium | ✅ Approved |
+| Custom header/footer text | Medium | ✅ Approved |
+| Project-specific settings | Medium | ✅ Approved |
+| SVG export | Medium | ✅ Approved |
+| Quick export shortcuts | Medium | ✅ Approved |
+
+### Deferred to V2.0
+
+| Feature | Reason |
+|---------|--------|
+| Multi-page pagination | Complex, vector PDF scales well instead |
+| PDF/A-3 with embedded source | Complex, low initial demand |
+| Company logo in header | Image handling complexity |
+| QR code linking | Depends on sharing feature |
+| Change highlighting | Requires diff calculation |
+| Dublin Core metadata | Academic niche |
+| Digital signature space | Enterprise feature |
+
+---
+
+## Final Estimates
+
+| Metric | Value |
+|--------|-------|
+| Total Hours | 60-70 hours |
+| Duration | 2 weeks |
+| New Files | 8 files |
+| New Tests | 50 test cases |
+| Bundle Impact | +120KB (lazy loaded) |
+| Risk Level | Low (no pagination complexity) |
+
+**Note:** Estimates reduced due to removal of multi-page pagination logic.
+
+---
+
+## Approval Sign-Off
+
+| Role | Reviewer | Status | Date |
+|------|----------|--------|------|
+| Product Owner | Product Lead | ✅ Approved | 2026-01-08 |
+| Project Manager | Project Coordinator | ✅ Approved | 2026-01-08 |
+| UX/UI Designer | UX Designer | ✅ Approved | 2026-01-08 |
+| Frontend Developer | Frontend Dev | ✅ Approved | 2026-01-08 |
+| Data Viz Specialist | Data Viz Specialist | ✅ Approved | 2026-01-08 |
+| Backend Developer | Backend Dev | ✅ Approved | 2026-01-08 |
+| Software Architect | Tech Lead | ✅ Approved | 2026-01-08 |
+| DevOps Engineer | DevOps Lead | ✅ Approved | 2026-01-08 |
+| QA Tester | QA Lead | ✅ Approved | 2026-01-08 |
+| Data Analyst | Data Analyst | ✅ Approved | 2026-01-08 |
+
+---
+
+**Document Version:** 2.0 (FINAL)
+**Created:** 2026-01-08
+**Last Updated:** 2026-01-08 (Final Team Review)
+**Author:** Claude AI (with Martin)
+**Status:** ✅ APPROVED - Ready for Implementation
