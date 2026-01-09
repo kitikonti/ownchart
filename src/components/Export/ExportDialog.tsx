@@ -12,7 +12,6 @@ import {
   FilePdf,
   FileCode,
   Image,
-  ChartBar,
 } from "@phosphor-icons/react";
 import { EXPORT_MAX_SAFE_WIDTH } from "../../utils/export/types";
 import type { ExportFormat } from "../../utils/export/types";
@@ -398,7 +397,7 @@ export function ExportDialog(): JSX.Element | null {
       footer={footer}
       widthClass="max-w-xl"
     >
-      <div className="space-y-5">
+      <div className="space-y-16">
         {/* Format Selector */}
         <ExportFormatSelector
           selectedFormat={selectedExportFormat}
@@ -406,91 +405,49 @@ export function ExportDialog(): JSX.Element | null {
         />
 
         {/* Format-specific Options */}
-        <div>
-          {/* Section Header */}
-          <div className="flex items-center gap-2 mb-4">
-            {selectedExportFormat === "png" && (
-              <>
-                <Image size={20} weight="duotone" className="text-slate-600" />
-                <span className="text-base font-semibold text-slate-800">
-                  PNG Settings
-                </span>
-              </>
-            )}
-            {selectedExportFormat === "pdf" && (
-              <>
-                <FilePdf size={20} weight="duotone" className="text-slate-600" />
-                <span className="text-base font-semibold text-slate-800">
-                  PDF Settings
-                </span>
-              </>
-            )}
-            {selectedExportFormat === "svg" && (
-              <>
-                <FileCode size={20} weight="duotone" className="text-slate-600" />
-                <span className="text-base font-semibold text-slate-800">
-                  SVG Settings
-                </span>
-              </>
-            )}
-          </div>
-
-          {/* Format-specific options content */}
-          {selectedExportFormat === "png" && (
-            <PngScaleOptions
-              options={exportOptions}
-              onChange={setExportOptions}
-              currentAppZoom={currentAppZoom}
-              projectDurationDays={projectDurationDays}
-              taskTableWidth={taskTableWidth}
-            />
-          )}
-
-          {selectedExportFormat === "pdf" && (
-            <PdfExportOptions
-              options={pdfExportOptions}
-              onChange={setPdfExportOptions}
-              exportOptions={exportOptions}
-              onExportOptionsChange={setExportOptions}
-              currentAppZoom={currentAppZoom}
-              taskCount={tasks.length}
-            />
-          )}
-
-          {selectedExportFormat === "svg" && (
-            <PngScaleOptions
-              options={exportOptions}
-              onChange={setExportOptions}
-              currentAppZoom={currentAppZoom}
-              projectDurationDays={projectDurationDays}
-              taskTableWidth={taskTableWidth}
-            />
-          )}
-        </div>
-
-        {/* Chart Content Section */}
-        <div className="mt-6 pt-6 border-t border-slate-200">
-          {/* Section Header */}
-          <div className="flex items-center gap-2 mb-4">
-            <ChartBar size={20} weight="duotone" className="text-slate-600" />
-            <span className="text-base font-semibold text-slate-800">
-              Chart Content
-            </span>
-          </div>
-
-          {/* Shared options content */}
-          <SharedExportOptions
+        {selectedExportFormat === "png" && (
+          <PngScaleOptions
             options={exportOptions}
             onChange={setExportOptions}
-            format={selectedExportFormat}
-            projectDateRange={projectDateRange}
-            visibleDateRange={visibleDateRange}
+            currentAppZoom={currentAppZoom}
+            projectDurationDays={projectDurationDays}
+            taskTableWidth={taskTableWidth}
           />
-        </div>
+        )}
+
+        {selectedExportFormat === "pdf" && (
+          <PdfExportOptions
+            options={pdfExportOptions}
+            onChange={setPdfExportOptions}
+            exportOptions={exportOptions}
+            onExportOptionsChange={setExportOptions}
+            currentAppZoom={currentAppZoom}
+            taskCount={tasks.length}
+          />
+        )}
+
+        {selectedExportFormat === "svg" && (
+          <PngScaleOptions
+            options={exportOptions}
+            onChange={setExportOptions}
+            currentAppZoom={currentAppZoom}
+            projectDurationDays={projectDurationDays}
+            taskTableWidth={taskTableWidth}
+          />
+        )}
+
+        {/* Shared Options */}
+        <SharedExportOptions
+          options={exportOptions}
+          onChange={setExportOptions}
+          format={selectedExportFormat}
+          projectDateRange={projectDateRange}
+          visibleDateRange={visibleDateRange}
+        />
 
         {/* Error message */}
         {exportError && (
-          <div className="p-3 text-sm text-red-700 bg-red-50 rounded-lg border border-red-200">
+          <div className="p-3 text-sm text-red-700 bg-red-50 rounded-md">
             {exportError}
           </div>
         )}

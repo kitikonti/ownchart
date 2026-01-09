@@ -3,14 +3,6 @@
  * Contains settings common to all export formats: Date Range, Layout, Display Options.
  */
 
-import {
-  CalendarBlank,
-  Rows,
-  Columns,
-  GridNine,
-  Tag,
-  Palette,
-} from "@phosphor-icons/react";
 import type {
   ExportOptions,
   ExportColumnKey,
@@ -21,62 +13,26 @@ import type {
   TaskLabelPosition,
 } from "../../types/preferences.types";
 
-/**
- * Section header with icon.
- */
-export function SectionHeader({
-  icon: Icon,
-  title,
-  subtitle,
-}: {
-  icon: React.ElementType;
-  title: string;
-  subtitle?: string;
-}): JSX.Element {
-  return (
-    <div className="flex items-start gap-2.5 mb-4">
-      <div className="p-1.5 rounded-lg bg-slate-100 text-slate-500">
-        <Icon size={16} weight="duotone" />
-      </div>
-      <div>
-        <h3 className="text-sm font-semibold text-slate-800">{title}</h3>
-        {subtitle && (
-          <p className="text-xs text-slate-500 mt-0.5">{subtitle}</p>
-        )}
-      </div>
-    </div>
-  );
-}
-
 /** Density options for the export */
 const DENSITY_OPTIONS: {
   key: UiDensity;
   label: string;
   description: string;
 }[] = [
-  {
-    key: "compact",
-    label: "Compact",
-    description: "28px rows",
-  },
-  { key: "normal", label: "Normal", description: "36px rows" },
-  {
-    key: "comfortable",
-    label: "Comfortable",
-    description: "44px rows",
-  },
+  { key: "compact", label: "Compact", description: "28px" },
+  { key: "normal", label: "Normal", description: "36px" },
+  { key: "comfortable", label: "Comfortable", description: "44px" },
 ];
 
 /** Task label position options for the export */
 const LABEL_POSITION_OPTIONS: {
   key: TaskLabelPosition;
   label: string;
-  description: string;
 }[] = [
-  { key: "before", label: "Before", description: "Label to the left" },
-  { key: "inside", label: "Inside", description: "Label inside the bar" },
-  { key: "after", label: "After", description: "Label to the right" },
-  { key: "none", label: "None", description: "No labels on timeline" },
+  { key: "before", label: "Before" },
+  { key: "inside", label: "Inside" },
+  { key: "after", label: "After" },
+  { key: "none", label: "None" },
 ];
 
 /** Column definitions for the export options UI */
@@ -104,193 +60,160 @@ export function SharedExportOptions({
   projectDateRange,
   visibleDateRange,
 }: SharedExportOptionsProps): JSX.Element {
-  // Format date for input
-  const formatDateForInput = (date: Date | undefined): string => {
+  const formatDate = (date: Date | undefined): string => {
     if (!date) return "";
     return date.toISOString().split("T")[0];
   };
 
-  // Show background option for PNG and SVG only
   const showBackground = format === "png" || format === "svg";
 
   return (
-    <div className="space-y-5">
-      {/* Date Range Section */}
-      <div>
-        <SectionHeader
-          icon={CalendarBlank}
-          title="Date Range"
-          subtitle="Select which time period to export"
-        />
+    <div className="space-y-16">
+      {/* ============ DATE RANGE ============ */}
+      <section>
+        <h3 className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider pb-0.5 mb-3 border-b border-slate-200">
+          Date Range
+        </h3>
 
-        <div className="space-y-1.5">
+        <div className="space-y-2">
+          {/* Entire project */}
           <label
-            className={`flex items-center gap-3 cursor-pointer p-2.5 rounded-lg border transition-all duration-150 ${
+            className={`flex items-center gap-3 cursor-pointer p-3 rounded-lg border transition-all ${
               options.dateRangeMode === "all"
-                ? "bg-slate-50 border-slate-400"
-                : "border-slate-200 hover:border-slate-300 hover:bg-slate-50/50"
+                ? "bg-slate-50 border-slate-300"
+                : "border-slate-200 hover:border-slate-300"
             }`}
           >
             <input
               type="radio"
               name="dateRangeMode"
-              value="all"
               checked={options.dateRangeMode === "all"}
               onChange={() => onChange({ dateRangeMode: "all" })}
-              className="accent-slate-700"
+              className="w-4 h-4 accent-teal-600"
             />
-            <div className="flex-1 min-w-0">
-              <span className="text-sm font-medium text-slate-800">
-                Entire project
-              </span>
+            <div className="flex-1 flex items-center justify-between">
+              <span className="text-sm font-medium text-slate-800">Entire project</span>
               {projectDateRange && (
-                <span className="text-xs text-slate-500 ml-2 font-mono">
-                  {formatDateForInput(projectDateRange.start)} →{" "}
-                  {formatDateForInput(projectDateRange.end)}
+                <span className="text-xs text-slate-400 font-mono">
+                  {formatDate(projectDateRange.start)} – {formatDate(projectDateRange.end)}
                 </span>
               )}
             </div>
           </label>
 
+          {/* Visible range */}
           <label
-            className={`flex items-center gap-3 cursor-pointer p-2.5 rounded-lg border transition-all duration-150 ${
+            className={`flex items-center gap-3 cursor-pointer p-3 rounded-lg border transition-all ${
               options.dateRangeMode === "visible"
-                ? "bg-slate-50 border-slate-400"
-                : "border-slate-200 hover:border-slate-300 hover:bg-slate-50/50"
+                ? "bg-slate-50 border-slate-300"
+                : "border-slate-200 hover:border-slate-300"
             }`}
           >
             <input
               type="radio"
               name="dateRangeMode"
-              value="visible"
               checked={options.dateRangeMode === "visible"}
               onChange={() => onChange({ dateRangeMode: "visible" })}
-              className="accent-slate-700"
+              className="w-4 h-4 accent-teal-600"
             />
-            <div className="flex-1 min-w-0">
-              <span className="text-sm font-medium text-slate-800">
-                Visible range only
-              </span>
+            <div className="flex-1 flex items-center justify-between">
+              <span className="text-sm font-medium text-slate-800">Visible range</span>
               {visibleDateRange && (
-                <span className="text-xs text-slate-500 ml-2 font-mono">
-                  {formatDateForInput(visibleDateRange.start)} →{" "}
-                  {formatDateForInput(visibleDateRange.end)}
+                <span className="text-xs text-slate-400 font-mono">
+                  {formatDate(visibleDateRange.start)} – {formatDate(visibleDateRange.end)}
                 </span>
               )}
             </div>
           </label>
 
+          {/* Custom range */}
           <label
-            className={`flex items-start gap-3 cursor-pointer p-2.5 rounded-lg border transition-all duration-150 ${
+            className={`flex items-start gap-3 cursor-pointer p-3 rounded-lg border transition-all ${
               options.dateRangeMode === "custom"
-                ? "bg-slate-50 border-slate-400"
-                : "border-slate-200 hover:border-slate-300 hover:bg-slate-50/50"
+                ? "bg-slate-50 border-slate-300"
+                : "border-slate-200 hover:border-slate-300"
             }`}
           >
             <input
               type="radio"
               name="dateRangeMode"
-              value="custom"
               checked={options.dateRangeMode === "custom"}
               onChange={() => onChange({ dateRangeMode: "custom" })}
-              className="mt-0.5 accent-slate-700"
-              aria-label="Custom date range"
+              className="mt-0.5 w-4 h-4 accent-teal-600"
             />
-            <div className="flex-1 min-w-0">
-              <span className="text-sm font-medium text-slate-800">
-                Custom range
-              </span>
+            <div className="flex-1">
+              <span className="text-sm font-medium text-slate-800">Custom range</span>
 
-              <div
-                className={`overflow-hidden transition-all duration-200 ease-out ${
-                  options.dateRangeMode === "custom"
-                    ? "max-h-16 opacity-100 mt-2"
-                    : "max-h-0 opacity-0"
-                }`}
-              >
-                <div className="flex items-center gap-2">
+              {options.dateRangeMode === "custom" && (
+                <div className="flex items-center gap-2 mt-3">
                   <input
                     type="date"
                     value={options.customDateStart || ""}
-                    onChange={(e) =>
-                      onChange({ customDateStart: e.target.value })
-                    }
-                    className="px-2 py-1.5 text-sm font-mono border border-slate-200 rounded-lg focus:ring-2 focus:ring-slate-400 focus:border-slate-400 transition-shadow"
+                    onChange={(e) => onChange({ customDateStart: e.target.value })}
+                    className="px-2.5 py-1.5 text-sm font-mono bg-white border border-slate-200 rounded-md focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent"
                   />
-                  <span className="text-slate-400">→</span>
+                  <span className="text-slate-300">–</span>
                   <input
                     type="date"
                     value={options.customDateEnd || ""}
-                    onChange={(e) =>
-                      onChange({ customDateEnd: e.target.value })
-                    }
-                    className="px-2 py-1.5 text-sm font-mono border border-slate-200 rounded-lg focus:ring-2 focus:ring-slate-400 focus:border-slate-400 transition-shadow"
+                    onChange={(e) => onChange({ customDateEnd: e.target.value })}
+                    className="px-2.5 py-1.5 text-sm font-mono bg-white border border-slate-200 rounded-md focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent"
                   />
                 </div>
-              </div>
+              )}
             </div>
           </label>
         </div>
-      </div>
+      </section>
 
-      {/* Divider */}
-      <div className="border-t border-slate-200" />
+      {/* ============ LAYOUT ============ */}
+      <section>
+        <h3 className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider pb-0.5 mb-3 border-b border-slate-200">
+          Layout
+        </h3>
 
-      {/* Layout Section - Row Density + Columns */}
-      <div className="grid grid-cols-2 gap-6">
-        {/* Row Density */}
-        <div>
-          <div className="flex items-center gap-2 mb-2">
-            <Rows size={14} weight="duotone" className="text-slate-500" />
-            <h4 className="text-xs font-semibold text-slate-600 uppercase tracking-wide">
-              Row Density
-            </h4>
+        <div className="grid grid-cols-2 gap-8">
+          {/* Row Density */}
+          <div>
+            <label className="text-xs font-medium text-slate-500 mb-2.5 block">
+              Row density
+            </label>
+            <div className="space-y-1.5">
+              {DENSITY_OPTIONS.map((opt) => (
+                <label
+                  key={opt.key}
+                  className="flex items-center gap-2.5 cursor-pointer group"
+                >
+                  <input
+                    type="radio"
+                    name="density"
+                    checked={options.density === opt.key}
+                    onChange={() => onChange({ density: opt.key })}
+                    className="w-3.5 h-3.5 accent-teal-600"
+                  />
+                  <span className="text-sm text-slate-700 group-hover:text-slate-900">
+                    {opt.label}
+                  </span>
+                  <span className="text-xs text-slate-400">{opt.description}</span>
+                </label>
+              ))}
+            </div>
           </div>
-          <div className="space-y-0.5">
-            {DENSITY_OPTIONS.map((densityOpt) => (
-              <label
-                key={densityOpt.key}
-                className="flex items-center gap-2 cursor-pointer py-1 rounded hover:bg-slate-50 transition-colors"
-              >
-                <input
-                  type="radio"
-                  name="density"
-                  value={densityOpt.key}
-                  checked={options.density === densityOpt.key}
-                  onChange={() => onChange({ density: densityOpt.key })}
-                  className="accent-slate-700"
-                  aria-label={`${densityOpt.label} density`}
-                />
-                <span className="text-sm text-slate-700">
-                  {densityOpt.label}
-                </span>
-                <span className="text-xs text-slate-400">
-                  {densityOpt.description}
-                </span>
-              </label>
-            ))}
-          </div>
-        </div>
 
-        {/* Column Selection */}
-        <div>
-          <div className="flex items-center gap-2 mb-2">
-            <Columns size={14} weight="duotone" className="text-slate-500" />
-            <h4 className="text-xs font-semibold text-slate-600 uppercase tracking-wide">
-              List Columns
-            </h4>
-          </div>
-          <div className="grid grid-cols-2 gap-x-4 gap-y-0.5">
-            {COLUMN_OPTIONS.map((col) => {
-              const isSelected = options.selectedColumns.includes(col.key);
-              return (
+          {/* Columns */}
+          <div>
+            <label className="text-xs font-medium text-slate-500 mb-2.5 block">
+              Table columns
+            </label>
+            <div className="grid grid-cols-2 gap-x-4 gap-y-1.5">
+              {COLUMN_OPTIONS.map((col) => (
                 <label
                   key={col.key}
-                  className="flex items-center gap-2 cursor-pointer py-1 rounded hover:bg-slate-50 transition-colors"
+                  className="flex items-center gap-2.5 cursor-pointer group"
                 >
                   <input
                     type="checkbox"
-                    checked={isSelected}
+                    checked={options.selectedColumns.includes(col.key)}
                     onChange={(e) => {
                       const newColumns = e.target.checked
                         ? [...options.selectedColumns, col.key]
@@ -300,136 +223,122 @@ export function SharedExportOptions({
                       ).map((c) => c.key);
                       onChange({ selectedColumns: orderedColumns });
                     }}
-                    className="accent-slate-700 rounded"
+                    className="w-3.5 h-3.5 accent-teal-600 rounded"
                   />
-                  <span className="text-sm text-slate-700">{col.label}</span>
+                  <span className="text-sm text-slate-700 group-hover:text-slate-900">
+                    {col.label}
+                  </span>
                 </label>
-              );
-            })}
+              ))}
+            </div>
+            <p className="text-[10px] text-slate-400 mt-2.5">
+              Uncheck all for timeline only
+            </p>
           </div>
-          <p className="text-[10px] text-slate-400 mt-1.5">
-            Leave all unchecked for timeline only
-          </p>
         </div>
-      </div>
+      </section>
 
-      {/* Divider */}
-      <div className="border-t border-slate-200" />
+      {/* ============ DISPLAY ============ */}
+      <section>
+        <h3 className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider pb-0.5 mb-3 border-b border-slate-200">
+          Display
+        </h3>
 
-      {/* Display Options */}
-      <div>
-        <SectionHeader
-          icon={GridNine}
-          title="Display Options"
-          subtitle="Configure what elements appear in the export"
-        />
-
-        <div className="grid grid-cols-2 gap-x-6 gap-y-4">
-          {/* Timeline Toggles */}
+        <div className="grid grid-cols-2 gap-8">
+          {/* Timeline elements */}
           <div>
-            <h4 className="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-2">
-              Timeline Elements
-            </h4>
-            <div className="space-y-0.5">
+            <label className="text-xs font-medium text-slate-500 mb-2.5 block">
+              Show in timeline
+            </label>
+            <div className="space-y-1.5">
               {[
+                { key: "includeHeader", label: "Header row" },
                 { key: "includeGridLines", label: "Grid lines" },
                 { key: "includeWeekends", label: "Weekend shading" },
                 { key: "includeTodayMarker", label: "Today marker" },
                 { key: "includeDependencies", label: "Dependencies" },
                 { key: "includeHolidays", label: "Holidays" },
-                { key: "includeHeader", label: "Header row" },
               ].map((item) => (
                 <label
                   key={item.key}
-                  className="flex items-center gap-2 cursor-pointer py-1 rounded hover:bg-slate-50 transition-colors"
+                  className="flex items-center gap-2.5 cursor-pointer group"
                 >
                   <input
                     type="checkbox"
-                    checked={
-                      options[item.key as keyof ExportOptions] as boolean
-                    }
+                    checked={options[item.key as keyof ExportOptions] as boolean}
                     onChange={(e) => onChange({ [item.key]: e.target.checked })}
-                    className="accent-slate-700 rounded"
+                    className="w-3.5 h-3.5 accent-teal-600 rounded"
                   />
-                  <span className="text-sm text-slate-700">{item.label}</span>
+                  <span className="text-sm text-slate-700 group-hover:text-slate-900">
+                    {item.label}
+                  </span>
                 </label>
               ))}
             </div>
           </div>
 
-          {/* Task Labels & Background */}
-          <div className="space-y-4">
-            {/* Task Label Position */}
+          {/* Task labels & Background */}
+          <div className="space-y-6">
+            {/* Task labels */}
             <div>
-              <div className="flex items-center gap-2 mb-2">
-                <Tag size={14} weight="duotone" className="text-slate-500" />
-                <h4 className="text-xs font-semibold text-slate-500 uppercase tracking-wide">
-                  Task Labels
-                </h4>
-              </div>
-              <div className="flex flex-wrap gap-1">
-                {LABEL_POSITION_OPTIONS.map((posOpt) => (
+              <label className="text-xs font-medium text-slate-500 mb-2.5 block">
+                Task labels
+              </label>
+              <div className="flex flex-wrap gap-1.5">
+                {LABEL_POSITION_OPTIONS.map((opt) => (
                   <button
-                    key={posOpt.key}
+                    key={opt.key}
                     type="button"
-                    onClick={() => onChange({ taskLabelPosition: posOpt.key })}
-                    className={`px-2 py-1.5 text-xs rounded-md border transition-all duration-150 ${
-                      options.taskLabelPosition === posOpt.key
-                        ? "bg-slate-700 border-slate-700 text-white"
-                        : "bg-white border-slate-200 text-slate-600 hover:border-slate-300 hover:bg-slate-50"
+                    onClick={() => onChange({ taskLabelPosition: opt.key })}
+                    className={`px-2.5 py-1 text-xs rounded-md transition-colors ${
+                      options.taskLabelPosition === opt.key
+                        ? "bg-slate-700 text-white"
+                        : "bg-slate-100 text-slate-600 hover:bg-slate-200"
                     }`}
-                    title={posOpt.description}
                   >
-                    {posOpt.label}
+                    {opt.label}
                   </button>
                 ))}
               </div>
             </div>
 
-            {/* Background (PNG/SVG only) */}
+            {/* Background */}
             {showBackground && (
               <div>
-                <div className="flex items-center gap-2 mb-2">
-                  <Palette
-                    size={14}
-                    weight="duotone"
-                    className="text-slate-500"
-                  />
-                  <h4 className="text-xs font-semibold text-slate-500 uppercase tracking-wide">
-                    Background
-                  </h4>
-                </div>
+                <label className="text-xs font-medium text-slate-500 mb-2.5 block">
+                  Background
+                </label>
                 <div className="flex gap-2">
                   <button
                     type="button"
                     onClick={() => onChange({ background: "white" })}
-                    className={`flex items-center gap-2 px-3 py-2 text-xs rounded-lg border transition-all duration-150 ${
+                    className={`flex items-center gap-2 px-3 py-1.5 text-xs rounded-md transition-colors ${
                       options.background === "white"
-                        ? "bg-slate-50 border-slate-400 text-slate-800"
-                        : "bg-white border-slate-200 text-slate-600 hover:border-slate-300"
+                        ? "bg-slate-700 text-white"
+                        : "bg-slate-100 text-slate-600 hover:bg-slate-200"
                     }`}
                   >
-                    <div className="w-4 h-4 rounded border border-slate-300 bg-white" />
+                    <span className="w-3 h-3 rounded-sm bg-white border border-slate-300" />
                     White
                   </button>
                   <button
                     type="button"
                     onClick={() => onChange({ background: "transparent" })}
-                    className={`flex items-center gap-2 px-3 py-2 text-xs rounded-lg border transition-all duration-150 ${
+                    className={`flex items-center gap-2 px-3 py-1.5 text-xs rounded-md transition-colors ${
                       options.background === "transparent"
-                        ? "bg-slate-50 border-slate-400 text-slate-800"
-                        : "bg-white border-slate-200 text-slate-600 hover:border-slate-300"
+                        ? "bg-slate-700 text-white"
+                        : "bg-slate-100 text-slate-600 hover:bg-slate-200"
                     }`}
                   >
-                    <div
-                      className="w-4 h-4 rounded border border-slate-300"
+                    <span
+                      className="w-3 h-3 rounded-sm border border-slate-300"
                       style={{
-                        backgroundImage: `linear-gradient(45deg, #e2e8f0 25%, transparent 25%),
-                          linear-gradient(-45deg, #e2e8f0 25%, transparent 25%),
-                          linear-gradient(45deg, transparent 75%, #e2e8f0 75%),
-                          linear-gradient(-45deg, transparent 75%, #e2e8f0 75%)`,
-                        backgroundSize: "6px 6px",
-                        backgroundPosition: "0 0, 0 3px, 3px -3px, -3px 0px",
+                        backgroundImage: `linear-gradient(45deg, #cbd5e1 25%, transparent 25%),
+                          linear-gradient(-45deg, #cbd5e1 25%, transparent 25%),
+                          linear-gradient(45deg, transparent 75%, #cbd5e1 75%),
+                          linear-gradient(-45deg, transparent 75%, #cbd5e1 75%)`,
+                        backgroundSize: "4px 4px",
+                        backgroundPosition: "0 0, 0 2px, 2px -2px, -2px 0px",
                       }}
                     />
                     Transparent
@@ -439,7 +348,7 @@ export function SharedExportOptions({
             )}
           </div>
         </div>
-      </div>
+      </section>
     </div>
   );
 }
