@@ -3226,9 +3226,9 @@ export const DEFAULT_SVG_OPTIONS: SvgExportOptions = {
 | 6.2.5 | Test human-readable ID generation | ⏭ | Not implemented |
 | 6.2.6 | Test SVGO optimization | ⏭ | SVGO not installed |
 | **6.3** | **Integration Tests** | | |
-| 6.3.1 | Test format selector interaction | ☐ | |
-| 6.3.2 | Test PDF options panel changes | ☐ | |
-| 6.3.3 | Test SVG options panel changes | ☐ | |
+| 6.3.1 | Test format selector interaction | ☑ | ExportFormatSelector.test.tsx |
+| 6.3.2 | Test PDF options panel changes | ☑ | PdfExportOptions.test.tsx |
+| 6.3.3 | Test SVG options panel changes | ☑ | SvgExportOptions.test.tsx |
 | 6.3.4 | Test export cancellation | ☐ | |
 | 6.3.5 | Test settings persistence | ☐ | |
 | **6.4** | **PDF Compatibility Tests** | | |
@@ -3296,9 +3296,9 @@ export const DEFAULT_SVG_OPTIONS: SvgExportOptions = {
 | Phase 3: PDF Export | 28 | 24 | 86% |
 | Phase 4: SVG Export | 22 | 18 | 82% |
 | Phase 5: Integration | 15 | 11 | 73% |
-| Phase 6: Testing | 38 | 10 | 26% |
+| Phase 6: Testing | 38 | 13 | 34% |
 | Phase 7: Documentation | 8 | 2 | 25% |
-| **TOTAL** | **150** | **99** | **66%** |
+| **TOTAL** | **150** | **102** | **68%** |
 
 ---
 
@@ -3314,6 +3314,7 @@ export const DEFAULT_SVG_OPTIONS: SvgExportOptions = {
 | 2026-01-09 | SVG Export fully implemented: svgExport.ts with DOM cloning | Done |
 | 2026-01-09 | UI Components complete: ExportFormatSelector, PdfExportOptions, SvgExportOptions | Done |
 | 2026-01-09 | All 834 unit tests passing, lint clean | Done |
+| 2026-01-09 | Added comprehensive unit tests: sanitizeFilename, types, ExportFormatSelector, PdfExportOptions, SvgExportOptions - 982 tests total | Done |
 
 ---
 

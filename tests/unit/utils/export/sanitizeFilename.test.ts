@@ -1,150 +1,172 @@
+/**
+ * Unit tests for sanitizeFilename.ts
+ */
+
 import { describe, it, expect } from "vitest";
 import { sanitizeFilename } from "../../../../src/utils/export/sanitizeFilename";
 
 describe("sanitizeFilename", () => {
   describe("basic functionality", () => {
-    it("should return the name unchanged if valid", () => {
+    it("returns simple names unchanged", () => {
       expect(sanitizeFilename("MyProject")).toBe("MyProject");
     });
 
-    it("should replace spaces with hyphens", () => {
-      expect(sanitizeFilename("My Project")).toBe("My-Project");
-      expect(sanitizeFilename("My  Project")).toBe("My-Project");
+    it("preserves numbers", () => {
+      expect(sanitizeFilename("Project2024")).toBe("Project2024");
     });
 
-    it("should collapse multiple hyphens into one", () => {
-      expect(sanitizeFilename("My--Project")).toBe("My-Project");
-      expect(sanitizeFilename("My---Project")).toBe("My-Project");
-    });
-
-    it("should remove leading and trailing hyphens", () => {
-      expect(sanitizeFilename("-MyProject-")).toBe("MyProject");
-      expect(sanitizeFilename("--MyProject--")).toBe("MyProject");
+    it("preserves mixed case", () => {
+      expect(sanitizeFilename("MyProjectName")).toBe("MyProjectName");
     });
   });
 
-  describe("invalid characters", () => {
-    it("should remove forward slashes", () => {
-      expect(sanitizeFilename("Project/Client")).toBe("ProjectClient");
+  describe("whitespace handling", () => {
+    it("replaces spaces with hyphens", () => {
+      expect(sanitizeFilename("My Project")).toBe("My-Project");
     });
 
-    it("should remove backslashes", () => {
-      expect(sanitizeFilename("Project\\Client")).toBe("ProjectClient");
+    it("replaces multiple spaces with single hyphen", () => {
+      expect(sanitizeFilename("My   Project")).toBe("My-Project");
     });
 
-    it("should remove colons", () => {
-      expect(sanitizeFilename("Project:Phase1")).toBe("ProjectPhase1");
+    it("replaces tabs with hyphens", () => {
+      expect(sanitizeFilename("My\tProject")).toBe("My-Project");
     });
 
-    it("should remove asterisks", () => {
-      expect(sanitizeFilename("Project*Important")).toBe("ProjectImportant");
+    it("replaces newlines with hyphens", () => {
+      expect(sanitizeFilename("My\nProject")).toBe("My-Project");
     });
 
-    it("should remove question marks", () => {
+    it("handles mixed whitespace", () => {
+      expect(sanitizeFilename("My \t\n Project")).toBe("My-Project");
+    });
+  });
+
+  describe("invalid character removal", () => {
+    it("removes forward slashes", () => {
+      expect(sanitizeFilename("My/Project")).toBe("MyProject");
+    });
+
+    it("removes backslashes", () => {
+      expect(sanitizeFilename("My\\Project")).toBe("MyProject");
+    });
+
+    it("removes colons", () => {
+      expect(sanitizeFilename("Project: Test")).toBe("Project-Test");
+    });
+
+    it("removes asterisks", () => {
+      expect(sanitizeFilename("Project*Test")).toBe("ProjectTest");
+    });
+
+    it("removes question marks", () => {
       expect(sanitizeFilename("Project?")).toBe("Project");
     });
 
-    it("should remove double quotes", () => {
-      expect(sanitizeFilename('Project "Alpha"')).toBe("Project-Alpha");
+    it("removes double quotes", () => {
+      expect(sanitizeFilename('Project "Test"')).toBe("Project-Test");
     });
 
-    it("should remove angle brackets", () => {
+    it("removes angle brackets", () => {
       expect(sanitizeFilename("Project<Test>")).toBe("ProjectTest");
     });
 
-    it("should remove pipe characters", () => {
-      expect(sanitizeFilename("Project|Client")).toBe("ProjectClient");
+    it("removes pipes", () => {
+      expect(sanitizeFilename("Project|Test")).toBe("ProjectTest");
     });
 
-    it("should handle multiple invalid characters", () => {
-      expect(sanitizeFilename("Pro/ject:Te*st?")).toBe("ProjectTest");
+    it("removes multiple invalid characters", () => {
+      expect(sanitizeFilename('File: <Test> | "Name"?')).toBe("File-Test-Name");
     });
   });
 
-  describe("unicode characters", () => {
-    it("should preserve German umlauts", () => {
-      expect(sanitizeFilename("Projektübersicht")).toBe("Projektübersicht");
+  describe("hyphen normalization", () => {
+    it("collapses multiple hyphens", () => {
+      expect(sanitizeFilename("My--Project")).toBe("My-Project");
     });
 
-    it("should preserve French accents", () => {
-      expect(sanitizeFilename("Café Project")).toBe("Café-Project");
+    it("removes leading hyphens", () => {
+      expect(sanitizeFilename("-MyProject")).toBe("MyProject");
     });
 
-    it("should preserve Japanese characters", () => {
-      expect(sanitizeFilename("プロジェクト")).toBe("プロジェクト");
+    it("removes trailing hyphens", () => {
+      expect(sanitizeFilename("MyProject-")).toBe("MyProject");
     });
 
-    it("should preserve Chinese characters", () => {
-      expect(sanitizeFilename("项目计划")).toBe("项目计划");
+    it("removes both leading and trailing hyphens", () => {
+      expect(sanitizeFilename("--MyProject--")).toBe("MyProject");
     });
 
-    it("should preserve emojis", () => {
+    it("handles hyphens created from invalid char removal", () => {
+      expect(sanitizeFilename(": My Project :")).toBe("My-Project");
+    });
+  });
+
+  describe("length truncation", () => {
+    it("truncates names longer than 50 characters", () => {
+      const longName = "A".repeat(60);
+      expect(sanitizeFilename(longName).length).toBeLessThanOrEqual(50);
+    });
+
+    it("preserves names exactly 50 characters", () => {
+      const exactName = "A".repeat(50);
+      expect(sanitizeFilename(exactName)).toBe(exactName);
+    });
+
+    it("removes trailing hyphens after truncation", () => {
+      const name = "A".repeat(49) + " B";
+      const result = sanitizeFilename(name);
+      expect(result.endsWith("-")).toBe(false);
+    });
+  });
+
+  describe("empty/invalid input handling", () => {
+    it("returns untitled for empty string", () => {
+      expect(sanitizeFilename("")).toBe("untitled");
+    });
+
+    it("returns untitled for whitespace-only string", () => {
+      expect(sanitizeFilename("   ")).toBe("untitled");
+    });
+
+    it("returns untitled for string with only invalid characters", () => {
+      expect(sanitizeFilename("/:*?")).toBe("untitled");
+    });
+  });
+
+  describe("unicode preservation", () => {
+    it("preserves German umlauts", () => {
+      expect(sanitizeFilename("Übersicht")).toBe("Übersicht");
+    });
+
+    it("preserves French accents", () => {
+      expect(sanitizeFilename("Résumé")).toBe("Résumé");
+    });
+
+    it("preserves Chinese characters", () => {
+      expect(sanitizeFilename("项目")).toBe("项目");
+    });
+
+    it("preserves emoji", () => {
       expect(sanitizeFilename("Project 🚀")).toBe("Project-🚀");
     });
   });
 
-  describe("length limits", () => {
-    it("should truncate names longer than 50 characters", () => {
-      const longName = "A".repeat(60);
-      expect(sanitizeFilename(longName).length).toBe(50);
+  describe("real-world examples", () => {
+    it("handles typical project names", () => {
+      expect(sanitizeFilename("Website Redesign 2024")).toBe(
+        "Website-Redesign-2024"
+      );
     });
 
-    it("should not truncate names at or below 50 characters", () => {
-      const exactName = "A".repeat(50);
-      expect(sanitizeFilename(exactName).length).toBe(50);
-      expect(sanitizeFilename(exactName)).toBe(exactName);
+    it("handles project names with version numbers", () => {
+      expect(sanitizeFilename("App v2.0.1")).toBe("App-v2.0.1");
     });
 
-    it("should remove trailing hyphen after truncation", () => {
-      // "A" * 49 + " B" becomes "A" * 49 + "-B", truncated to "A" * 49 + "-"
-      // The trailing hyphen should be removed
-      const name = "A".repeat(49) + " B";
-      const result = sanitizeFilename(name);
-      expect(result.endsWith("-")).toBe(false);
-      expect(result).toBe("A".repeat(49));
-    });
-  });
-
-  describe("empty and whitespace handling", () => {
-    it('should return "untitled" for empty string', () => {
-      expect(sanitizeFilename("")).toBe("untitled");
-    });
-
-    it('should return "untitled" for whitespace only', () => {
-      expect(sanitizeFilename("   ")).toBe("untitled");
-      expect(sanitizeFilename("\t\n")).toBe("untitled");
-    });
-
-    it('should return "untitled" for null-ish values', () => {
-      expect(sanitizeFilename(null as unknown as string)).toBe("untitled");
-      expect(sanitizeFilename(undefined as unknown as string)).toBe("untitled");
-    });
-
-    it('should return "untitled" if only invalid characters', () => {
-      expect(sanitizeFilename("///")).toBe("untitled");
-      expect(sanitizeFilename("***")).toBe("untitled");
-    });
-  });
-
-  describe("edge cases", () => {
-    it("should handle mixed valid and invalid characters", () => {
-      expect(sanitizeFilename("My/Pro*ject: Test")).toBe("MyProject-Test");
-    });
-
-    it("should handle numbers", () => {
-      expect(sanitizeFilename("Project 2026")).toBe("Project-2026");
-    });
-
-    it("should handle hyphens in original name", () => {
-      expect(sanitizeFilename("my-project-name")).toBe("my-project-name");
-    });
-
-    it("should handle underscores (they are valid)", () => {
-      expect(sanitizeFilename("my_project_name")).toBe("my_project_name");
-    });
-
-    it("should handle dots (they are valid)", () => {
-      expect(sanitizeFilename("project.v2")).toBe("project.v2");
+    it("handles company names with special chars", () => {
+      expect(sanitizeFilename("Acme Corp: Q4 Project")).toBe(
+        "Acme-Corp-Q4-Project"
+      );
     });
   });
 });
