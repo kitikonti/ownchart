@@ -234,9 +234,21 @@ export function ExportDialog(): JSX.Element | null {
     ExportFormat,
     { icon: typeof Download; label: string; color: string }
   > = {
-    png: { icon: Image, label: "Export PNG", color: "bg-slate-700 hover:bg-slate-600" },
-    pdf: { icon: FilePdf, label: "Export PDF", color: "bg-red-600 hover:bg-red-500" },
-    svg: { icon: FileCode, label: "Export SVG", color: "bg-blue-600 hover:bg-blue-500" },
+    png: {
+      icon: Image,
+      label: "Export PNG",
+      color: "bg-slate-700 hover:bg-slate-600",
+    },
+    pdf: {
+      icon: FilePdf,
+      label: "Export PDF",
+      color: "bg-red-600 hover:bg-red-500",
+    },
+    svg: {
+      icon: FileCode,
+      label: "Export SVG",
+      color: "bg-blue-600 hover:bg-blue-500",
+    },
   };
 
   const currentFormat = formatConfig[selectedExportFormat];

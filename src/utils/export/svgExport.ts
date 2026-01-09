@@ -95,6 +95,7 @@ export async function exportToSvg(params: ExportToSvgParams): Promise<void> {
  */
 function createFallbackSvg(
   tasks: Task[],
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   _params: ExportToSvgParams
 ): SVGSVGElement {
   const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
@@ -149,6 +150,7 @@ function createFallbackSvg(
  */
 function applyExportOptions(
   svg: SVGSVGElement,
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   _options: SvgExportOptions
 ): void {
   // Remove any interactive elements
@@ -219,10 +221,7 @@ function addBackgroundRect(svg: SVGSVGElement): void {
 /**
  * Add accessibility attributes to the SVG.
  */
-function addAccessibilityAttrs(
-  svg: SVGSVGElement,
-  projectName?: string
-): void {
+function addAccessibilityAttrs(svg: SVGSVGElement, projectName?: string): void {
   svg.setAttribute("role", "img");
   svg.setAttribute(
     "aria-label",
@@ -331,9 +330,7 @@ function downloadSvg(svgString: string, filename: string): void {
  * Generate filename for SVG export.
  */
 function generateSvgFilename(projectName?: string): string {
-  const baseName = projectName
-    ? sanitizeFilename(projectName)
-    : "gantt-chart";
+  const baseName = projectName ? sanitizeFilename(projectName) : "gantt-chart";
   const timestamp = new Date().toISOString().slice(0, 10);
   return `${baseName}-${timestamp}.svg`;
 }

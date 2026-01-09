@@ -9,7 +9,12 @@ import type { Dependency } from "../../types/dependency.types";
 import type { TimelineScale } from "../timelineUtils";
 import type { ExportOptions, PdfExportOptions } from "./types";
 import { sanitizeFilename } from "./sanitizeFilename";
-import { getPageDimensions, getMargins, calculateScale, pxToMm } from "./pdfLayout";
+import {
+  getPageDimensions,
+  getMargins,
+  calculateScale,
+  pxToMm,
+} from "./pdfLayout";
 import { renderChartToPdf, type PdfRenderContext } from "./pdfRenderer";
 import { getTimelineScale } from "../timelineUtils";
 
@@ -38,7 +43,14 @@ const TASK_TABLE_WIDTH_PX = 150;
  * Export the chart to PDF.
  */
 export async function exportToPdf(params: ExportToPdfParams): Promise<void> {
-  const { tasks, dependencies = [], pdfOptions, projectName, onProgress, options } = params;
+  const {
+    tasks,
+    dependencies = [],
+    pdfOptions,
+    projectName,
+    onProgress,
+    options,
+  } = params;
 
   onProgress?.(5);
 
@@ -67,9 +79,13 @@ export async function exportToPdf(params: ExportToPdfParams): Promise<void> {
 
   // Calculate reserved space for header/footer
   const headerHeight =
-    pdfOptions.header.showProjectName || pdfOptions.header.showExportDate ? 8 : 0;
+    pdfOptions.header.showProjectName || pdfOptions.header.showExportDate
+      ? 8
+      : 0;
   const footerHeight =
-    pdfOptions.footer.showProjectName || pdfOptions.footer.showExportDate ? 8 : 0;
+    pdfOptions.footer.showProjectName || pdfOptions.footer.showExportDate
+      ? 8
+      : 0;
 
   // Calculate chart dimensions in pixels
   const chartScale = getChartScale(params);
@@ -136,7 +152,14 @@ export async function exportToPdf(params: ExportToPdfParams): Promise<void> {
 
   // Render footer if configured
   if (pdfOptions.footer.showProjectName || pdfOptions.footer.showExportDate) {
-    renderFooter(doc, pdfOptions, projectName, margins, pageDims.width, pageDims.height);
+    renderFooter(
+      doc,
+      pdfOptions,
+      projectName,
+      margins,
+      pageDims.width,
+      pageDims.height
+    );
   }
 
   onProgress?.(90);
@@ -172,7 +195,11 @@ function getChartScale(params: ExportToPdfParams): TimelineScale {
   if (options.dateRangeMode === "visible" && params.visibleDateRange) {
     minDate = params.visibleDateRange.start.toISOString().split("T")[0];
     maxDate = params.visibleDateRange.end.toISOString().split("T")[0];
-  } else if (options.dateRangeMode === "custom" && options.customDateStart && options.customDateEnd) {
+  } else if (
+    options.dateRangeMode === "custom" &&
+    options.customDateStart &&
+    options.customDateEnd
+  ) {
     minDate = options.customDateStart;
     maxDate = options.customDateEnd;
   } else if (projectDateRange) {
@@ -256,9 +283,7 @@ function renderFooter(
  * Generate filename for PDF export.
  */
 function generatePdfFilename(projectName?: string): string {
-  const baseName = projectName
-    ? sanitizeFilename(projectName)
-    : "gantt-chart";
+  const baseName = projectName ? sanitizeFilename(projectName) : "gantt-chart";
   const timestamp = new Date().toISOString().slice(0, 10);
   return `${baseName}-${timestamp}.pdf`;
 }

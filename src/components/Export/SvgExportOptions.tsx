@@ -43,6 +43,7 @@ export function SvgExportOptions({
         <div className="space-y-2">
           <label
             htmlFor="svg-dim-auto"
+            aria-label="Auto dimension mode"
             className={`flex items-center gap-3 cursor-pointer p-3 rounded-lg border transition-all ${
               options.dimensionMode === "auto"
                 ? "bg-slate-50 border-slate-400"
@@ -96,7 +97,10 @@ export function SvgExportOptions({
                     value={options.customWidth || 1200}
                     onChange={(e) =>
                       onChange({
-                        customWidth: Math.max(100, parseInt(e.target.value) || 1200),
+                        customWidth: Math.max(
+                          100,
+                          parseInt(e.target.value) || 1200
+                        ),
                       })
                     }
                     className="w-20 px-2 py-1.5 text-sm font-mono border border-slate-200 rounded-lg focus:ring-2 focus:ring-slate-400"
@@ -193,7 +197,9 @@ export function SvgExportOptions({
               >
                 <div className="text-center">
                   <div className="font-medium">Keep as text</div>
-                  <div className="text-xs opacity-75">Editable, needs fonts</div>
+                  <div className="text-xs opacity-75">
+                    Editable, needs fonts
+                  </div>
                 </div>
               </button>
               <button
@@ -258,6 +264,7 @@ export function SvgExportOptions({
           <div className="space-y-3">
             <label
               htmlFor="svg-include-bg"
+              aria-label="Include background"
               className="flex items-center gap-3 cursor-pointer"
             >
               <input
@@ -281,21 +288,18 @@ export function SvgExportOptions({
 
             <label
               htmlFor="svg-responsive"
+              aria-label="Responsive mode"
               className="flex items-center gap-3 cursor-pointer"
             >
               <input
                 id="svg-responsive"
                 type="checkbox"
                 checked={options.responsiveMode}
-                onChange={(e) =>
-                  onChange({ responsiveMode: e.target.checked })
-                }
+                onChange={(e) => onChange({ responsiveMode: e.target.checked })}
                 className="accent-slate-700 rounded"
               />
               <div>
-                <span className="text-sm text-slate-700">
-                  Responsive mode
-                </span>
+                <span className="text-sm text-slate-700">Responsive mode</span>
                 <p className="text-xs text-slate-500">
                   ViewBox only, no fixed dimensions
                 </p>
@@ -304,6 +308,7 @@ export function SvgExportOptions({
 
             <label
               htmlFor="svg-optimize"
+              aria-label="Optimize SVG"
               className="flex items-center gap-3 cursor-pointer"
             >
               <input
@@ -314,9 +319,7 @@ export function SvgExportOptions({
                 className="accent-slate-700 rounded"
               />
               <div>
-                <span className="text-sm text-slate-700">
-                  Optimize SVG
-                </span>
+                <span className="text-sm text-slate-700">Optimize SVG</span>
                 <p className="text-xs text-slate-500">
                   Smaller file, less readable code
                 </p>

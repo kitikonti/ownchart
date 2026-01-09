@@ -149,7 +149,8 @@ function renderBackgroundLayer(ctx: PdfRenderContext): void {
         Math.floor(
           (currentDate.getTime() - startDate.getTime()) / (24 * 60 * 60 * 1000)
         ) + 1;
-      const x = chartX + pxToMm(daysFromStart * scale.pixelsPerDay) * scaleFactor;
+      const x =
+        chartX + pxToMm(daysFromStart * scale.pixelsPerDay) * scaleFactor;
       const width = pxToMm(scale.pixelsPerDay) * scaleFactor;
 
       doc.rect(x, chartY, width, chartHeightMm, "F");
@@ -163,8 +164,16 @@ function renderBackgroundLayer(ctx: PdfRenderContext): void {
  * Render horizontal grid lines for each row.
  */
 function renderGridLayer(ctx: PdfRenderContext): void {
-  const { doc, tasks, chartX, chartY, chartWidthMm, rowHeightMm, pdfOptions, taskTableWidthMm } =
-    ctx;
+  const {
+    doc,
+    tasks,
+    chartX,
+    chartY,
+    chartWidthMm,
+    rowHeightMm,
+    pdfOptions,
+    taskTableWidthMm,
+  } = ctx;
 
   const gridColor = getColor(COLORS.grid, pdfOptions.grayscale);
   doc.setDrawColor(gridColor.r, gridColor.g, gridColor.b);
@@ -206,7 +215,9 @@ function renderTodayMarker(ctx: PdfRenderContext): void {
 
   const daysFromStart = calculateDuration(scale.minDate, today) - 1;
   const x =
-    chartX + pxToMm(daysFromStart * scale.pixelsPerDay + scale.pixelsPerDay / 2) * scaleFactor;
+    chartX +
+    pxToMm(daysFromStart * scale.pixelsPerDay + scale.pixelsPerDay / 2) *
+      scaleFactor;
 
   const todayColor = getColor(COLORS.today, pdfOptions.grayscale);
   doc.setDrawColor(todayColor.r, todayColor.g, todayColor.b);
@@ -222,8 +233,16 @@ function renderTodayMarker(ctx: PdfRenderContext): void {
  * Render timeline header with date labels.
  */
 function renderTimelineHeader(ctx: PdfRenderContext): void {
-  const { doc, scale, chartX, chartY, chartWidthMm, headerHeightMm, pdfOptions, scaleFactor } =
-    ctx;
+  const {
+    doc,
+    scale,
+    chartX,
+    chartY,
+    chartWidthMm,
+    headerHeightMm,
+    pdfOptions,
+    scaleFactor,
+  } = ctx;
 
   const textColor = getColor(COLORS.text, pdfOptions.grayscale);
   const gridColor = getColor(COLORS.grid, pdfOptions.grayscale);
@@ -281,16 +300,27 @@ interface ScaleInterval {
  */
 function generateScaleIntervals(
   scale: TimelineScale,
-  config: { unit: string; step: number; format: string | ((date: Date) => string) }
+  config: {
+    unit: string;
+    step: number;
+    format: string | ((date: Date) => string);
+  }
 ): ScaleInterval[] {
   const intervals: ScaleInterval[] = [];
   const minDate = new Date(scale.minDate);
   const maxDate = new Date(scale.maxDate);
 
-  let current = getUnitStart(minDate, config.unit as "year" | "quarter" | "month" | "week" | "day" | "hour");
+  let current = getUnitStart(
+    minDate,
+    config.unit as "year" | "quarter" | "month" | "week" | "day" | "hour"
+  );
 
   while (current < maxDate) {
-    const next = addUnit(current, config.unit as "year" | "quarter" | "month" | "week" | "day" | "hour", config.step);
+    const next = addUnit(
+      current,
+      config.unit as "year" | "quarter" | "month" | "week" | "day" | "hour",
+      config.step
+    );
 
     const startPx = Math.max(
       0,
@@ -343,20 +373,36 @@ function renderTaskLayer(ctx: PdfRenderContext): void {
 /**
  * Render a regular task bar with progress.
  */
-function renderTaskBar(ctx: PdfRenderContext, task: Task, rowIndex: number): void {
-  const { doc, scale, chartX, chartY, rowHeightMm, taskBarHeightMm, pdfOptions, scaleFactor } =
-    ctx;
+function renderTaskBar(
+  ctx: PdfRenderContext,
+  task: Task,
+  rowIndex: number
+): void {
+  const {
+    doc,
+    scale,
+    chartX,
+    chartY,
+    rowHeightMm,
+    taskBarHeightMm,
+    pdfOptions,
+    scaleFactor,
+  } = ctx;
 
   const daysFromStart = calculateDuration(scale.minDate, task.startDate) - 1;
   const duration = calculateDuration(task.startDate, task.endDate);
 
   const x = chartX + pxToMm(daysFromStart * scale.pixelsPerDay) * scaleFactor;
-  const y = chartY + rowIndex * rowHeightMm + (rowHeightMm - taskBarHeightMm) / 2;
+  const y =
+    chartY + rowIndex * rowHeightMm + (rowHeightMm - taskBarHeightMm) / 2;
   const width = pxToMm(duration * scale.pixelsPerDay) * scaleFactor;
   const height = taskBarHeightMm;
 
   // Task bar color
-  const taskColor = getColor(task.color || COLORS.taskDefault, pdfOptions.grayscale);
+  const taskColor = getColor(
+    task.color || COLORS.taskDefault,
+    pdfOptions.grayscale
+  );
   doc.setFillColor(taskColor.r, taskColor.g, taskColor.b);
 
   // Draw rounded rectangle for task bar
@@ -380,9 +426,21 @@ function renderTaskBar(ctx: PdfRenderContext, task: Task, rowIndex: number): voi
 /**
  * Render a milestone (diamond shape).
  */
-function renderMilestone(ctx: PdfRenderContext, task: Task, rowIndex: number): void {
-  const { doc, scale, chartX, chartY, rowHeightMm, taskBarHeightMm, pdfOptions, scaleFactor } =
-    ctx;
+function renderMilestone(
+  ctx: PdfRenderContext,
+  task: Task,
+  rowIndex: number
+): void {
+  const {
+    doc,
+    scale,
+    chartX,
+    chartY,
+    rowHeightMm,
+    taskBarHeightMm,
+    pdfOptions,
+    scaleFactor,
+  } = ctx;
 
   const daysFromStart = calculateDuration(scale.minDate, task.startDate) - 1;
   const centerX =
@@ -427,14 +485,23 @@ function renderSummaryBracket(
   task: Task,
   rowIndex: number
 ): void {
-  const { doc, scale, chartX, chartY, rowHeightMm, taskBarHeightMm, pdfOptions, scaleFactor } =
-    ctx;
+  const {
+    doc,
+    scale,
+    chartX,
+    chartY,
+    rowHeightMm,
+    taskBarHeightMm,
+    pdfOptions,
+    scaleFactor,
+  } = ctx;
 
   const daysFromStart = calculateDuration(scale.minDate, task.startDate) - 1;
   const duration = calculateDuration(task.startDate, task.endDate);
 
   const x = chartX + pxToMm(daysFromStart * scale.pixelsPerDay) * scaleFactor;
-  const y = chartY + rowIndex * rowHeightMm + (rowHeightMm - taskBarHeightMm) / 2;
+  const y =
+    chartY + rowIndex * rowHeightMm + (rowHeightMm - taskBarHeightMm) / 2;
   const width = pxToMm(duration * scale.pixelsPerDay) * scaleFactor;
   const height = taskBarHeightMm * 0.3;
   const bracketHeight = taskBarHeightMm * 0.4;
@@ -449,15 +516,33 @@ function renderSummaryBracket(
   doc.triangle(x, y, x + 2, y, x, y + bracketHeight, "F");
 
   // Right bracket
-  doc.triangle(x + width, y, x + width - 2, y, x + width, y + bracketHeight, "F");
+  doc.triangle(
+    x + width,
+    y,
+    x + width - 2,
+    y,
+    x + width,
+    y + bracketHeight,
+    "F"
+  );
 }
 
 /**
  * Render task labels on the timeline.
  */
 function renderTaskLabels(ctx: PdfRenderContext): void {
-  const { doc, tasks, scale, chartX, chartY, rowHeightMm, taskBarHeightMm, pdfOptions, scaleFactor, options } =
-    ctx;
+  const {
+    doc,
+    tasks,
+    scale,
+    chartX,
+    chartY,
+    rowHeightMm,
+    taskBarHeightMm,
+    pdfOptions,
+    scaleFactor,
+    options,
+  } = ctx;
 
   // Get label position from options
   const labelPosition = options.taskLabelPosition;
@@ -478,7 +563,8 @@ function renderTaskLabels(ctx: PdfRenderContext): void {
     const daysFromStart = calculateDuration(scale.minDate, task.startDate) - 1;
     const duration = calculateDuration(task.startDate, task.endDate);
 
-    const barX = chartX + pxToMm(daysFromStart * scale.pixelsPerDay) * scaleFactor;
+    const barX =
+      chartX + pxToMm(daysFromStart * scale.pixelsPerDay) * scaleFactor;
     const barWidth = pxToMm(duration * scale.pixelsPerDay) * scaleFactor;
     const barY = chartY + i * rowHeightMm + (rowHeightMm - taskBarHeightMm) / 2;
 
@@ -505,8 +591,17 @@ function renderTaskLabels(ctx: PdfRenderContext): void {
  * Render dependency arrows.
  */
 function renderDependencyLayer(ctx: PdfRenderContext): void {
-  const { doc, tasks, dependencies, scale, chartX, chartY, rowHeightMm, pdfOptions, scaleFactor } =
-    ctx;
+  const {
+    doc,
+    tasks,
+    dependencies,
+    scale,
+    chartX,
+    chartY,
+    rowHeightMm,
+    pdfOptions,
+    scaleFactor,
+  } = ctx;
 
   const depColor = getColor(COLORS.dependency, pdfOptions.grayscale);
   doc.setDrawColor(depColor.r, depColor.g, depColor.b);
@@ -529,8 +624,7 @@ function renderDependencyLayer(ctx: PdfRenderContext): void {
     const toDays = calculateDuration(scale.minDate, toTask.startDate) - 1;
 
     const fromX = chartX + pxToMm(fromDays * scale.pixelsPerDay) * scaleFactor;
-    const fromY =
-      chartY + fromData.index * rowHeightMm + rowHeightMm / 2;
+    const fromY = chartY + fromData.index * rowHeightMm + rowHeightMm / 2;
 
     const toX = chartX + pxToMm(toDays * scale.pixelsPerDay) * scaleFactor;
     const toY = chartY + toData.index * rowHeightMm + rowHeightMm / 2;
@@ -594,8 +688,16 @@ function renderDependencyArrow(
  * Render task table (left panel with task names).
  */
 function renderTaskTable(ctx: PdfRenderContext): void {
-  const { doc, tasks, chartX, chartY, taskTableWidthMm, rowHeightMm, pdfOptions, headerHeightMm } =
-    ctx;
+  const {
+    doc,
+    tasks,
+    chartX,
+    chartY,
+    taskTableWidthMm,
+    rowHeightMm,
+    pdfOptions,
+    headerHeightMm,
+  } = ctx;
 
   if (taskTableWidthMm <= 0) return;
 
@@ -645,7 +747,12 @@ function renderTaskTable(ctx: PdfRenderContext): void {
   // Vertical separator
   doc.setDrawColor(gridColor.r, gridColor.g, gridColor.b);
   doc.setLineWidth(0.2);
-  doc.line(chartX, chartY - headerHeightMm, chartX, chartY + tasks.length * rowHeightMm);
+  doc.line(
+    chartX,
+    chartY - headerHeightMm,
+    chartX,
+    chartY + tasks.length * rowHeightMm
+  );
 }
 
 /**

@@ -84,11 +84,13 @@ export function PdfExportOptions({
               }
               className="w-full px-3 py-2 text-sm bg-white border border-slate-200 rounded-lg focus:ring-2 focus:ring-slate-400 focus:border-slate-400 transition-shadow"
             >
-              {Object.entries(PAGE_SIZE_LABELS).map(([key, { label, size }]) => (
-                <option key={key} value={key}>
-                  {label} ({size})
-                </option>
-              ))}
+              {Object.entries(PAGE_SIZE_LABELS).map(
+                ([key, { label, size }]) => (
+                  <option key={key} value={key}>
+                    {label} ({size})
+                  </option>
+                )
+              )}
             </select>
           </div>
 
@@ -97,7 +99,11 @@ export function PdfExportOptions({
             <span className="block text-xs text-slate-500 mb-1.5">
               Orientation
             </span>
-            <div className="flex gap-2" role="radiogroup" aria-label="Page orientation">
+            <div
+              className="flex gap-2"
+              role="radiogroup"
+              aria-label="Page orientation"
+            >
               <button
                 type="button"
                 onClick={() => onChange({ orientation: "landscape" })}
@@ -188,7 +194,9 @@ export function PdfExportOptions({
               name="scaleMode"
               value="custom"
               checked={options.scaleMode === "custom"}
-              onChange={() => onChange({ scaleMode: "custom", customScale: 100 })}
+              onChange={() =>
+                onChange({ scaleMode: "custom", customScale: 100 })
+              }
               className="mt-0.5 accent-slate-700"
             />
             <div className="flex-1">
@@ -235,7 +243,8 @@ export function PdfExportOptions({
         {/* Vector hint */}
         <div className="mt-3 p-2 bg-teal-50 border border-teal-200 rounded-lg">
           <p className="text-xs text-teal-700">
-            Vector PDF scales perfectly for large format printing (A0, poster, etc.)
+            Vector PDF scales perfectly for large format printing (A0, poster,
+            etc.)
           </p>
         </div>
       </div>
@@ -392,6 +401,7 @@ export function PdfExportOptions({
           <div>
             <label
               htmlFor="pdf-grayscale"
+              aria-label="Grayscale mode"
               className="flex items-center gap-3 cursor-pointer"
             >
               <input
