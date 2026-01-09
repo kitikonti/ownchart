@@ -5,26 +5,13 @@
  * so we test the utilities that don't require a full DOM.
  */
 
-import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
+import { describe, it, expect, vi, afterEach } from "vitest";
 
 // We need to test the module functions, but many depend on DOM
 // For now, we test the exported function behavior with mocks
 
 describe("svgExport", () => {
-  // Store original document methods
-  let originalQuerySelector: typeof document.querySelector;
-  let originalCreateElementNS: typeof document.createElementNS;
-  let originalCreateElement: typeof document.createElement;
-
-  beforeEach(() => {
-    // Save originals
-    originalQuerySelector = document.querySelector.bind(document);
-    originalCreateElementNS = document.createElementNS.bind(document);
-    originalCreateElement = document.createElement.bind(document);
-  });
-
   afterEach(() => {
-    // Restore originals
     vi.restoreAllMocks();
   });
 

@@ -38,7 +38,7 @@ describe("export types", () => {
     });
 
     it("has all sizes in landscape orientation (width > height)", () => {
-      Object.entries(PDF_PAGE_SIZES).forEach(([size, dims]) => {
+      Object.values(PDF_PAGE_SIZES).forEach((dims) => {
         expect(dims.width).toBeGreaterThan(dims.height);
       });
     });
