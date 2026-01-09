@@ -12,12 +12,14 @@ import {
   FilePdf,
   FileCode,
   Image,
+  ChartBar,
 } from "@phosphor-icons/react";
 import { EXPORT_MAX_SAFE_WIDTH } from "../../utils/export/types";
 import type { ExportFormat } from "../../utils/export/types";
 import { Modal } from "../common/Modal";
 import { ExportFormatSelector } from "./ExportFormatSelector";
-import { ExportOptionsForm } from "./ExportOptions";
+import { SharedExportOptions } from "./SharedExportOptions";
+import { PngScaleOptions } from "./PngScaleOptions";
 import { PdfExportOptions } from "./PdfExportOptions";
 import { SvgExportOptions } from "./SvgExportOptions";
 import { useUIStore } from "../../store/slices/uiSlice";
@@ -25,7 +27,12 @@ import { useTaskStore } from "../../store/slices/taskSlice";
 import { useChartStore } from "../../store/slices/chartSlice";
 import { useFileStore } from "../../store/slices/fileSlice";
 import { useDependencyStore } from "../../store/slices/dependencySlice";
-import { exportToPng, calculateExportDimensions } from "../../utils/export";
+import {
+  exportToPng,
+  calculateExportDimensions,
+  calculateTaskTableWidth,
+  calculateDurationDays,
+} from "../../utils/export";
 
 /**
  * Export Dialog component.
@@ -148,6 +155,26 @@ export function ExportDialog(): JSX.Element | null {
     visibleDateRange,
   ]);
 
+  // Calculate project duration in days (for PNG scale options)
+  const projectDurationDays = useMemo(() => {
+    if (!projectDateRange) return 365;
+    return calculateDurationDays({
+      min: projectDateRange.start.toISOString().split("T")[0],
+      max: projectDateRange.end.toISOString().split("T")[0],
+    });
+  }, [projectDateRange]);
+
+  // Calculate task table width from selected columns (for PNG scale options)
+  const taskTableWidth = useMemo(
+    () =>
+      calculateTaskTableWidth(
+        exportOptions.selectedColumns,
+        columnWidths,
+        exportOptions.density
+      ),
+    [exportOptions.selectedColumns, columnWidths, exportOptions.density]
+  );
+
   const handleExport = useCallback(async () => {
     setIsExporting(true);
     setExportError(null);
@@ -229,7 +256,7 @@ export function ExportDialog(): JSX.Element | null {
     estimatedDimensions.width > 4000 &&
     estimatedDimensions.width <= EXPORT_MAX_SAFE_WIDTH;
 
-  // Format-specific button config
+  // Format-specific button config (unified teal color for all formats)
   const formatConfig: Record<
     ExportFormat,
     { icon: typeof Download; label: string; color: string }
@@ -237,17 +264,17 @@ export function ExportDialog(): JSX.Element | null {
     png: {
       icon: Image,
       label: "Export PNG",
-      color: "bg-slate-700 hover:bg-slate-600",
+      color: "bg-teal-600 hover:bg-teal-500",
     },
     pdf: {
       icon: FilePdf,
       label: "Export PDF",
-      color: "bg-red-600 hover:bg-red-500",
+      color: "bg-teal-600 hover:bg-teal-500",
     },
     svg: {
       icon: FileCode,
       label: "Export SVG",
-      color: "bg-blue-600 hover:bg-blue-500",
+      color: "bg-teal-600 hover:bg-teal-500",
     },
   };
 
@@ -357,42 +384,92 @@ export function ExportDialog(): JSX.Element | null {
       footer={footer}
       widthClass="max-w-xl"
     >
-      <div className="space-y-6">
+      <div className="space-y-5">
         {/* Format Selector */}
         <ExportFormatSelector
           selectedFormat={selectedExportFormat}
           onFormatChange={setExportFormat}
         />
 
-        {/* Divider */}
-        <div className="border-t border-slate-200" />
+        {/* Format-specific Options Panel */}
+        <div className="p-4 rounded-xl border border-slate-200 border-l-4 border-l-teal-500">
+          {/* Panel Header */}
+          <div className="flex items-center gap-2 mb-4 pb-3 border-b border-slate-200">
+            {selectedExportFormat === "png" && (
+              <>
+                <Image size={18} weight="duotone" className="text-teal-600" />
+                <span className="text-sm font-semibold text-slate-700 uppercase tracking-wide">
+                  PNG Settings
+                </span>
+              </>
+            )}
+            {selectedExportFormat === "pdf" && (
+              <>
+                <FilePdf size={18} weight="duotone" className="text-teal-600" />
+                <span className="text-sm font-semibold text-slate-700 uppercase tracking-wide">
+                  PDF Settings
+                </span>
+              </>
+            )}
+            {selectedExportFormat === "svg" && (
+              <>
+                <FileCode size={18} weight="duotone" className="text-teal-600" />
+                <span className="text-sm font-semibold text-slate-700 uppercase tracking-wide">
+                  SVG Settings
+                </span>
+              </>
+            )}
+          </div>
 
-        {/* Format-specific options */}
-        {selectedExportFormat === "png" && (
-          <ExportOptionsForm
+          {/* Format-specific options content */}
+          {selectedExportFormat === "png" && (
+            <PngScaleOptions
+              options={exportOptions}
+              onChange={setExportOptions}
+              currentAppZoom={currentAppZoom}
+              projectDurationDays={projectDurationDays}
+              taskTableWidth={taskTableWidth}
+            />
+          )}
+
+          {selectedExportFormat === "pdf" && (
+            <PdfExportOptions
+              options={pdfExportOptions}
+              onChange={setPdfExportOptions}
+              projectName={projectName}
+            />
+          )}
+
+          {selectedExportFormat === "svg" && (
+            <SvgExportOptions
+              options={svgExportOptions}
+              onChange={setSvgExportOptions}
+            />
+          )}
+        </div>
+
+        {/* Shared Options Panel */}
+        <div className="p-4 rounded-xl border border-slate-200 border-l-4 border-l-teal-500">
+          {/* Panel Header */}
+          <div className="flex items-center gap-2 mb-4 pb-3 border-b border-slate-200">
+            <ChartBar size={18} weight="duotone" className="text-teal-600" />
+            <span className="text-sm font-semibold text-slate-700 uppercase tracking-wide">
+              Chart Content
+            </span>
+            <span className="text-[10px] text-slate-400 bg-slate-100 px-2 py-0.5 rounded-full ml-auto">
+              All Formats
+            </span>
+          </div>
+
+          {/* Shared options content */}
+          <SharedExportOptions
             options={exportOptions}
             onChange={setExportOptions}
-            currentAppZoom={currentAppZoom}
+            format={selectedExportFormat}
             projectDateRange={projectDateRange}
             visibleDateRange={visibleDateRange}
-            columnWidths={columnWidths}
           />
-        )}
-
-        {selectedExportFormat === "pdf" && (
-          <PdfExportOptions
-            options={pdfExportOptions}
-            onChange={setPdfExportOptions}
-            projectName={projectName}
-          />
-        )}
-
-        {selectedExportFormat === "svg" && (
-          <SvgExportOptions
-            options={svgExportOptions}
-            onChange={setSvgExportOptions}
-          />
-        )}
+        </div>
 
         {/* Error message */}
         {exportError && (
