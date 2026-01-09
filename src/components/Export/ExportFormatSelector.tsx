@@ -60,18 +60,18 @@ export function ExportFormatSelector({
             onClick={() => onFormatChange(option.format)}
             className={`flex-1 flex flex-col items-center gap-1.5 p-3 rounded-lg border-2 transition-all duration-150 ${
               isSelected
-                ? "bg-slate-50 border-slate-700 shadow-sm"
-                : "bg-white border-slate-200 hover:border-slate-300 hover:bg-slate-50/50"
+                ? "bg-teal-50 border-teal-600 shadow-sm"
+                : "bg-white border-slate-200 hover:border-teal-300 hover:bg-teal-50/30"
             }`}
             aria-pressed={isSelected}
           >
             <Icon
               size={24}
               weight={isSelected ? "duotone" : "regular"}
-              className={isSelected ? "text-slate-700" : "text-slate-400"}
+              className={isSelected ? "text-teal-600" : "text-slate-400"}
             />
             <span
-              className={`text-sm font-semibold ${isSelected ? "text-slate-800" : "text-slate-600"}`}
+              className={`text-sm font-semibold ${isSelected ? "text-teal-700" : "text-slate-600"}`}
             >
               {option.label}
             </span>

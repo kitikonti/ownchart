@@ -209,8 +209,8 @@ export function ExportOptionsForm({
           <label
             className={`flex items-start gap-3 cursor-pointer p-3 rounded-lg border transition-all duration-150 ${
               options.zoomMode === "currentView"
-                ? "bg-slate-50 border-slate-400"
-                : "border-slate-200 hover:border-slate-300 hover:bg-slate-50/50"
+                ? "bg-teal-50 border-teal-300"
+                : "border-slate-200 hover:border-teal-300 hover:bg-slate-50/50"
             }`}
           >
             <input
@@ -219,7 +219,7 @@ export function ExportOptionsForm({
               value="currentView"
               checked={options.zoomMode === "currentView"}
               onChange={() => onChange({ zoomMode: "currentView" })}
-              className="mt-0.5 accent-slate-700"
+              className="mt-0.5"
               aria-label="Use current view zoom level"
             />
             <div className="flex-1 min-w-0">
@@ -248,8 +248,8 @@ export function ExportOptionsForm({
           <label
             className={`flex items-start gap-3 cursor-pointer p-3 rounded-lg border transition-all duration-150 ${
               options.zoomMode === "fitToWidth"
-                ? "bg-slate-50 border-slate-400"
-                : "border-slate-200 hover:border-slate-300 hover:bg-slate-50/50"
+                ? "bg-teal-50 border-teal-300"
+                : "border-slate-200 hover:border-teal-300 hover:bg-slate-50/50"
             }`}
           >
             <input
@@ -258,7 +258,7 @@ export function ExportOptionsForm({
               value="fitToWidth"
               checked={options.zoomMode === "fitToWidth"}
               onChange={() => onChange({ zoomMode: "fitToWidth" })}
-              className="mt-0.5 accent-slate-700"
+              className="mt-0.5"
             />
             <div className="flex-1 min-w-0">
               <div className="flex items-center gap-2">
@@ -319,8 +319,8 @@ export function ExportOptionsForm({
                         }
                         className={`px-2 py-1 text-xs rounded-md border transition-all duration-150 ${
                           options.fitToWidth === preset.targetWidth
-                            ? "bg-slate-700 border-slate-700 text-white"
-                            : "bg-white border-slate-200 text-slate-600 hover:border-slate-300 hover:bg-slate-50"
+                            ? "bg-teal-600 text-white"
+                            : "bg-white border-slate-200 text-slate-600 hover:border-teal-300 hover:bg-slate-50"
                         }`}
                         title={preset.description}
                       >
@@ -337,8 +337,8 @@ export function ExportOptionsForm({
           <label
             className={`flex items-start gap-3 cursor-pointer p-3 rounded-lg border transition-all duration-150 ${
               options.zoomMode === "custom"
-                ? "bg-slate-50 border-slate-400"
-                : "border-slate-200 hover:border-slate-300 hover:bg-slate-50/50"
+                ? "bg-teal-50 border-teal-300"
+                : "border-slate-200 hover:border-teal-300 hover:bg-slate-50/50"
             }`}
           >
             <input
@@ -347,7 +347,7 @@ export function ExportOptionsForm({
               value="custom"
               checked={options.zoomMode === "custom"}
               onChange={() => onChange({ zoomMode: "custom" })}
-              className="mt-0.5 accent-slate-700"
+              className="mt-0.5"
             />
             <div className="flex-1 min-w-0">
               <div className="flex items-center gap-2">
@@ -386,7 +386,7 @@ export function ExportOptionsForm({
                           timelineZoom: parseInt(e.target.value) / 100,
                         })
                       }
-                      className="flex-1 h-1.5 bg-slate-200 rounded-full appearance-none cursor-pointer accent-slate-700"
+                      className="flex-1 h-1.5 bg-slate-200 rounded-full appearance-none cursor-pointer"
                     />
                     <div className="flex items-center gap-1 bg-slate-100 rounded-lg px-2 py-1">
                       <input
@@ -420,8 +420,8 @@ export function ExportOptionsForm({
                         onClick={() => onChange({ timelineZoom: value })}
                         className={`px-2 py-1 text-xs font-mono rounded-md border transition-all duration-150 ${
                           options.timelineZoom === value
-                            ? "bg-slate-700 border-slate-700 text-white"
-                            : "bg-white border-slate-200 text-slate-600 hover:border-slate-300 hover:bg-slate-50"
+                            ? "bg-teal-600 text-white"
+                            : "bg-white border-slate-200 text-slate-600 hover:border-teal-300 hover:bg-slate-50"
                         }`}
                       >
                         {Math.round(value * 100)}%
@@ -469,8 +469,8 @@ export function ExportOptionsForm({
           <label
             className={`flex items-center gap-3 cursor-pointer p-2.5 rounded-lg border transition-all duration-150 ${
               options.dateRangeMode === "all"
-                ? "bg-slate-50 border-slate-400"
-                : "border-slate-200 hover:border-slate-300 hover:bg-slate-50/50"
+                ? "bg-teal-50 border-teal-300"
+                : "border-slate-200 hover:border-teal-300 hover:bg-slate-50/50"
             }`}
           >
             <input
@@ -479,7 +479,7 @@ export function ExportOptionsForm({
               value="all"
               checked={options.dateRangeMode === "all"}
               onChange={() => onChange({ dateRangeMode: "all" })}
-              className="accent-slate-700"
+              className=""
             />
             <div className="flex-1 min-w-0">
               <span className="text-sm font-medium text-slate-800">
@@ -497,8 +497,8 @@ export function ExportOptionsForm({
           <label
             className={`flex items-center gap-3 cursor-pointer p-2.5 rounded-lg border transition-all duration-150 ${
               options.dateRangeMode === "visible"
-                ? "bg-slate-50 border-slate-400"
-                : "border-slate-200 hover:border-slate-300 hover:bg-slate-50/50"
+                ? "bg-teal-50 border-teal-300"
+                : "border-slate-200 hover:border-teal-300 hover:bg-slate-50/50"
             }`}
           >
             <input
@@ -507,7 +507,7 @@ export function ExportOptionsForm({
               value="visible"
               checked={options.dateRangeMode === "visible"}
               onChange={() => onChange({ dateRangeMode: "visible" })}
-              className="accent-slate-700"
+              className=""
             />
             <div className="flex-1 min-w-0">
               <span className="text-sm font-medium text-slate-800">
@@ -525,8 +525,8 @@ export function ExportOptionsForm({
           <label
             className={`flex items-start gap-3 cursor-pointer p-2.5 rounded-lg border transition-all duration-150 ${
               options.dateRangeMode === "custom"
-                ? "bg-slate-50 border-slate-400"
-                : "border-slate-200 hover:border-slate-300 hover:bg-slate-50/50"
+                ? "bg-teal-50 border-teal-300"
+                : "border-slate-200 hover:border-teal-300 hover:bg-slate-50/50"
             }`}
           >
             <input
@@ -535,7 +535,7 @@ export function ExportOptionsForm({
               value="custom"
               checked={options.dateRangeMode === "custom"}
               onChange={() => onChange({ dateRangeMode: "custom" })}
-              className="mt-0.5 accent-slate-700"
+              className="mt-0.5"
               aria-label="Custom date range"
             />
             <div className="flex-1 min-w-0">
@@ -600,7 +600,7 @@ export function ExportOptionsForm({
                   value={densityOpt.key}
                   checked={options.density === densityOpt.key}
                   onChange={() => onChange({ density: densityOpt.key })}
-                  className="accent-slate-700"
+                  className=""
                   aria-label={`${densityOpt.label} density`}
                 />
                 <span className="text-sm text-slate-700">
@@ -642,7 +642,7 @@ export function ExportOptionsForm({
                       ).map((c) => c.key);
                       onChange({ selectedColumns: orderedColumns });
                     }}
-                    className="accent-slate-700 rounded"
+                    className="rounded"
                   />
                   <span className="text-sm text-slate-700">{col.label}</span>
                 </label>
@@ -691,7 +691,7 @@ export function ExportOptionsForm({
                       options[item.key as keyof ExportOptions] as boolean
                     }
                     onChange={(e) => onChange({ [item.key]: e.target.checked })}
-                    className="accent-slate-700 rounded"
+                    className="rounded"
                   />
                   <span className="text-sm text-slate-700">{item.label}</span>
                 </label>
@@ -717,8 +717,8 @@ export function ExportOptionsForm({
                     onClick={() => onChange({ taskLabelPosition: posOpt.key })}
                     className={`px-2 py-1.5 text-xs rounded-md border transition-all duration-150 ${
                       options.taskLabelPosition === posOpt.key
-                        ? "bg-slate-700 border-slate-700 text-white"
-                        : "bg-white border-slate-200 text-slate-600 hover:border-slate-300 hover:bg-slate-50"
+                        ? "bg-teal-600 text-white"
+                        : "bg-white border-slate-200 text-slate-600 hover:border-teal-300 hover:bg-slate-50"
                     }`}
                     title={posOpt.description}
                   >
@@ -746,8 +746,8 @@ export function ExportOptionsForm({
                   onClick={() => onChange({ background: "white" })}
                   className={`flex items-center gap-2 px-3 py-2 text-xs rounded-lg border transition-all duration-150 ${
                     options.background === "white"
-                      ? "bg-slate-50 border-slate-400 text-slate-800"
-                      : "bg-white border-slate-200 text-slate-600 hover:border-slate-300"
+                      ? "bg-teal-50 border-teal-300 text-slate-800"
+                      : "bg-white border-slate-200 text-slate-600 hover:border-teal-300"
                   }`}
                 >
                   <div className="w-4 h-4 rounded border border-slate-300 bg-white" />
@@ -758,8 +758,8 @@ export function ExportOptionsForm({
                   onClick={() => onChange({ background: "transparent" })}
                   className={`flex items-center gap-2 px-3 py-2 text-xs rounded-lg border transition-all duration-150 ${
                     options.background === "transparent"
-                      ? "bg-slate-50 border-slate-400 text-slate-800"
-                      : "bg-white border-slate-200 text-slate-600 hover:border-slate-300"
+                      ? "bg-teal-50 border-teal-300 text-slate-800"
+                      : "bg-white border-slate-200 text-slate-600 hover:border-teal-300"
                   }`}
                 >
                   <div

@@ -128,8 +128,8 @@ export function PdfExportOptions({
           <label
             className={`flex items-start gap-3 cursor-pointer p-3 rounded-lg border transition-all ${
               exportOptions.zoomMode === "currentView"
-                ? "bg-slate-50 border-slate-300"
-                : "border-slate-200 hover:border-slate-300"
+                ? "bg-teal-50 border-teal-300"
+                : "border-slate-200 hover:border-teal-300"
             }`}
           >
             <input
@@ -137,7 +137,7 @@ export function PdfExportOptions({
               name="pdfZoomMode"
               checked={exportOptions.zoomMode === "currentView"}
               onChange={() => onExportOptionsChange({ zoomMode: "currentView" })}
-              className="mt-0.5 w-4 h-4 accent-teal-600"
+              className="mt-0.5 w-4 h-4"
             />
             <div className="flex-1">
               <div className="flex items-center gap-2">
@@ -156,8 +156,8 @@ export function PdfExportOptions({
           <label
             className={`flex items-start gap-3 cursor-pointer p-3 rounded-lg border transition-all ${
               exportOptions.zoomMode === "fitToWidth"
-                ? "bg-slate-50 border-slate-300"
-                : "border-slate-200 hover:border-slate-300"
+                ? "bg-teal-50 border-teal-300"
+                : "border-slate-200 hover:border-teal-300"
             }`}
           >
             <input
@@ -165,7 +165,7 @@ export function PdfExportOptions({
               name="pdfZoomMode"
               checked={exportOptions.zoomMode === "fitToWidth"}
               onChange={() => onExportOptionsChange({ zoomMode: "fitToWidth" })}
-              className="mt-0.5 w-4 h-4 accent-teal-600"
+              className="mt-0.5 w-4 h-4"
             />
             <div className="flex-1">
               <span className="text-sm font-medium text-slate-800">Fit to page</span>
@@ -179,8 +179,8 @@ export function PdfExportOptions({
           <label
             className={`flex items-start gap-3 cursor-pointer p-3 rounded-lg border transition-all ${
               exportOptions.zoomMode === "custom"
-                ? "bg-slate-50 border-slate-300"
-                : "border-slate-200 hover:border-slate-300"
+                ? "bg-teal-50 border-teal-300"
+                : "border-slate-200 hover:border-teal-300"
             }`}
           >
             <input
@@ -188,7 +188,7 @@ export function PdfExportOptions({
               name="pdfZoomMode"
               checked={exportOptions.zoomMode === "custom"}
               onChange={() => onExportOptionsChange({ zoomMode: "custom" })}
-              className="mt-0.5 w-4 h-4 accent-teal-600"
+              className="mt-0.5 w-4 h-4"
             />
             <div className="flex-1">
               <span className="text-sm font-medium text-slate-800">Custom zoom</span>
@@ -206,7 +206,7 @@ export function PdfExportOptions({
                       step={1}
                       value={exportOptions.timelineZoom * 100}
                       onChange={(e) => onExportOptionsChange({ timelineZoom: parseInt(e.target.value) / 100 })}
-                      className="flex-1 h-1.5 bg-slate-200 rounded-full appearance-none cursor-pointer accent-teal-600"
+                      className="flex-1 h-1.5 bg-slate-200 rounded-full appearance-none cursor-pointer"
                     />
                     <div className="flex items-center gap-1 bg-slate-100 rounded-md px-2 py-1">
                       <input
@@ -233,8 +233,8 @@ export function PdfExportOptions({
                         onClick={() => onExportOptionsChange({ timelineZoom: value })}
                         className={`px-2 py-1 text-xs font-mono rounded-md transition-colors ${
                           exportOptions.timelineZoom === value
-                            ? "bg-slate-700 text-white"
-                            : "bg-slate-100 text-slate-600 hover:bg-slate-200"
+                            ? "bg-teal-600 text-white"
+                            : "bg-slate-100 text-slate-600 hover:bg-teal-100"
                         }`}
                       >
                         {Math.round(value * 100)}%
@@ -314,8 +314,8 @@ export function PdfExportOptions({
                 onClick={() => onChange({ orientation: "landscape" })}
                 className={`flex-1 flex items-center justify-center gap-2 px-3 py-2 text-xs rounded-md transition-colors ${
                   options.orientation === "landscape"
-                    ? "bg-slate-700 text-white"
-                    : "bg-slate-100 text-slate-600 hover:bg-slate-200"
+                    ? "bg-teal-600 text-white"
+                    : "bg-slate-100 text-slate-600 hover:bg-teal-100"
                 }`}
               >
                 <span className="w-4 h-2.5 border-2 border-current rounded-sm" />
@@ -326,8 +326,8 @@ export function PdfExportOptions({
                 onClick={() => onChange({ orientation: "portrait" })}
                 className={`flex-1 flex items-center justify-center gap-2 px-3 py-2 text-xs rounded-md transition-colors ${
                   options.orientation === "portrait"
-                    ? "bg-slate-700 text-white"
-                    : "bg-slate-100 text-slate-600 hover:bg-slate-200"
+                    ? "bg-teal-600 text-white"
+                    : "bg-slate-100 text-slate-600 hover:bg-teal-100"
                 }`}
               >
                 <span className="w-2.5 h-4 border-2 border-current rounded-sm" />
@@ -398,8 +398,8 @@ export function PdfExportOptions({
                   onClick={() => onChange({ marginPreset: preset })}
                   className={`px-2.5 py-1.5 text-xs rounded-md transition-colors ${
                     options.marginPreset === preset
-                      ? "bg-slate-700 text-white"
-                      : "bg-slate-100 text-slate-600 hover:bg-slate-200"
+                      ? "bg-teal-600 text-white"
+                      : "bg-slate-100 text-slate-600 hover:bg-teal-100"
                   }`}
                 >
                   {MARGIN_LABELS[preset]}
@@ -432,7 +432,7 @@ export function PdfExportOptions({
                   type="checkbox"
                   checked={options.header.showProjectName}
                   onChange={(e) => onChange({ header: { ...options.header, showProjectName: e.target.checked } })}
-                  className="w-3.5 h-3.5 accent-teal-600 rounded"
+                  className="w-3.5 h-3.5 rounded"
                 />
                 <span className="text-sm text-slate-700 group-hover:text-slate-900">Project title</span>
               </label>
@@ -441,7 +441,7 @@ export function PdfExportOptions({
                   type="checkbox"
                   checked={options.header.showAuthor}
                   onChange={(e) => onChange({ header: { ...options.header, showAuthor: e.target.checked } })}
-                  className="w-3.5 h-3.5 accent-teal-600 rounded"
+                  className="w-3.5 h-3.5 rounded"
                 />
                 <span className="text-sm text-slate-700 group-hover:text-slate-900">Author</span>
               </label>
@@ -450,7 +450,7 @@ export function PdfExportOptions({
                   type="checkbox"
                   checked={options.header.showExportDate}
                   onChange={(e) => onChange({ header: { ...options.header, showExportDate: e.target.checked } })}
-                  className="w-3.5 h-3.5 accent-teal-600 rounded"
+                  className="w-3.5 h-3.5 rounded"
                 />
                 <span className="text-sm text-slate-700 group-hover:text-slate-900">Export date</span>
               </label>
@@ -468,7 +468,7 @@ export function PdfExportOptions({
                   type="checkbox"
                   checked={options.footer.showProjectName}
                   onChange={(e) => onChange({ footer: { ...options.footer, showProjectName: e.target.checked } })}
-                  className="w-3.5 h-3.5 accent-teal-600 rounded"
+                  className="w-3.5 h-3.5 rounded"
                 />
                 <span className="text-sm text-slate-700 group-hover:text-slate-900">Project title</span>
               </label>
@@ -477,7 +477,7 @@ export function PdfExportOptions({
                   type="checkbox"
                   checked={options.footer.showAuthor}
                   onChange={(e) => onChange({ footer: { ...options.footer, showAuthor: e.target.checked } })}
-                  className="w-3.5 h-3.5 accent-teal-600 rounded"
+                  className="w-3.5 h-3.5 rounded"
                 />
                 <span className="text-sm text-slate-700 group-hover:text-slate-900">Author</span>
               </label>
@@ -486,7 +486,7 @@ export function PdfExportOptions({
                   type="checkbox"
                   checked={options.footer.showExportDate}
                   onChange={(e) => onChange({ footer: { ...options.footer, showExportDate: e.target.checked } })}
-                  className="w-3.5 h-3.5 accent-teal-600 rounded"
+                  className="w-3.5 h-3.5 rounded"
                 />
                 <span className="text-sm text-slate-700 group-hover:text-slate-900">Export date</span>
               </label>

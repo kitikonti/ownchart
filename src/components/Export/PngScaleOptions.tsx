@@ -64,8 +64,8 @@ export function PngScaleOptions({
         <label
           className={`flex items-start gap-3 cursor-pointer p-3 rounded-lg border transition-all ${
             options.zoomMode === "currentView"
-              ? "bg-slate-50 border-slate-300"
-              : "border-slate-200 hover:border-slate-300"
+              ? "bg-teal-50 border-teal-300"
+              : "border-slate-200 hover:border-teal-300"
           }`}
         >
           <input
@@ -73,7 +73,7 @@ export function PngScaleOptions({
             name="zoomMode"
             checked={options.zoomMode === "currentView"}
             onChange={() => onChange({ zoomMode: "currentView" })}
-            className="mt-0.5 w-4 h-4 accent-teal-600"
+            className="mt-0.5 w-4 h-4"
           />
           <div className="flex-1">
             <div className="flex items-center gap-2">
@@ -92,8 +92,8 @@ export function PngScaleOptions({
         <label
           className={`flex items-start gap-3 cursor-pointer p-3 rounded-lg border transition-all ${
             options.zoomMode === "fitToWidth"
-              ? "bg-slate-50 border-slate-300"
-              : "border-slate-200 hover:border-slate-300"
+              ? "bg-teal-50 border-teal-300"
+              : "border-slate-200 hover:border-teal-300"
           }`}
         >
           <input
@@ -101,7 +101,7 @@ export function PngScaleOptions({
             name="zoomMode"
             checked={options.zoomMode === "fitToWidth"}
             onChange={() => onChange({ zoomMode: "fitToWidth" })}
-            className="mt-0.5 w-4 h-4 accent-teal-600"
+            className="mt-0.5 w-4 h-4"
           />
           <div className="flex-1">
             <span className="text-sm font-medium text-slate-800">Fit to width</span>
@@ -135,8 +135,8 @@ export function PngScaleOptions({
                       onClick={() => onChange({ fitToWidth: preset.targetWidth })}
                       className={`px-2 py-1 text-xs rounded-md transition-colors ${
                         options.fitToWidth === preset.targetWidth
-                          ? "bg-slate-700 text-white"
-                          : "bg-slate-100 text-slate-600 hover:bg-slate-200"
+                          ? "bg-teal-600 text-white"
+                          : "bg-slate-100 text-slate-600 hover:bg-teal-100"
                       }`}
                       title={preset.description}
                     >
@@ -153,8 +153,8 @@ export function PngScaleOptions({
         <label
           className={`flex items-start gap-3 cursor-pointer p-3 rounded-lg border transition-all ${
             options.zoomMode === "custom"
-              ? "bg-slate-50 border-slate-300"
-              : "border-slate-200 hover:border-slate-300"
+              ? "bg-teal-50 border-teal-300"
+              : "border-slate-200 hover:border-teal-300"
           }`}
         >
           <input
@@ -162,7 +162,7 @@ export function PngScaleOptions({
             name="zoomMode"
             checked={options.zoomMode === "custom"}
             onChange={() => onChange({ zoomMode: "custom" })}
-            className="mt-0.5 w-4 h-4 accent-teal-600"
+            className="mt-0.5 w-4 h-4"
           />
           <div className="flex-1">
             <span className="text-sm font-medium text-slate-800">Custom zoom</span>
@@ -180,7 +180,7 @@ export function PngScaleOptions({
                     step={1}
                     value={options.timelineZoom * 100}
                     onChange={(e) => onChange({ timelineZoom: parseInt(e.target.value) / 100 })}
-                    className="flex-1 h-1.5 bg-slate-200 rounded-full appearance-none cursor-pointer accent-teal-600"
+                    className="flex-1 h-1.5 bg-slate-200 rounded-full appearance-none cursor-pointer"
                   />
                   <div className="flex items-center gap-1 bg-slate-100 rounded-md px-2 py-1">
                     <input
@@ -210,8 +210,8 @@ export function PngScaleOptions({
                       onClick={() => onChange({ timelineZoom: value })}
                       className={`px-2 py-1 text-xs font-mono rounded-md transition-colors ${
                         options.timelineZoom === value
-                          ? "bg-slate-700 text-white"
-                          : "bg-slate-100 text-slate-600 hover:bg-slate-200"
+                          ? "bg-teal-600 text-white"
+                          : "bg-slate-100 text-slate-600 hover:bg-teal-100"
                       }`}
                     >
                       {Math.round(value * 100)}%
