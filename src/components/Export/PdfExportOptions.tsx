@@ -128,8 +128,8 @@ export function PdfExportOptions({
           <label
             className={`flex items-start gap-3 cursor-pointer p-3 rounded-lg border transition-all ${
               exportOptions.zoomMode === "currentView"
-                ? "bg-teal-50 border-teal-300"
-                : "border-slate-200 hover:border-teal-300"
+                ? "bg-teal-50 border-[var(--color-teal-gray-400)]"
+                : "border-slate-200 hover:border-[var(--color-teal-gray-400)]"
             }`}
           >
             <input
@@ -141,12 +141,12 @@ export function PdfExportOptions({
             />
             <div className="flex-1">
               <div className="flex items-center gap-2">
-                <span className="text-sm font-medium text-slate-800">Use current view</span>
-                <span className="text-xs font-mono text-slate-500 bg-slate-100 px-1.5 py-0.5 rounded">
+                <span className={`text-sm font-medium ${exportOptions.zoomMode === "currentView" ? "text-[var(--color-teal-gray-900)]" : "text-slate-800"}`}>Use current view</span>
+                <span className={`text-xs font-mono px-1.5 py-0.5 rounded ${exportOptions.zoomMode === "currentView" ? "text-[var(--color-teal-gray-700)] bg-[var(--color-teal-gray-100)]" : "text-slate-500 bg-slate-100"}`}>
                   {Math.round(currentAppZoom * 100)}%
                 </span>
               </div>
-              <p className="text-xs text-slate-500 mt-0.5">
+              <p className={`text-xs mt-0.5 ${exportOptions.zoomMode === "currentView" ? "text-[var(--color-teal-gray-700)]" : "text-slate-500"}`}>
                 Export at your current zoom level
               </p>
             </div>
@@ -156,8 +156,8 @@ export function PdfExportOptions({
           <label
             className={`flex items-start gap-3 cursor-pointer p-3 rounded-lg border transition-all ${
               exportOptions.zoomMode === "fitToWidth"
-                ? "bg-teal-50 border-teal-300"
-                : "border-slate-200 hover:border-teal-300"
+                ? "bg-teal-50 border-[var(--color-teal-gray-400)]"
+                : "border-slate-200 hover:border-[var(--color-teal-gray-400)]"
             }`}
           >
             <input
@@ -168,8 +168,8 @@ export function PdfExportOptions({
               className="mt-0.5 w-4 h-4"
             />
             <div className="flex-1">
-              <span className="text-sm font-medium text-slate-800">Fit to page</span>
-              <p className="text-xs text-slate-500 mt-0.5">
+              <span className={`text-sm font-medium ${exportOptions.zoomMode === "fitToWidth" ? "text-[var(--color-teal-gray-900)]" : "text-slate-800"}`}>Fit to page</span>
+              <p className={`text-xs mt-0.5 ${exportOptions.zoomMode === "fitToWidth" ? "text-[var(--color-teal-gray-700)]" : "text-slate-500"}`}>
                 Automatically scale to fit page width
               </p>
             </div>
@@ -179,8 +179,8 @@ export function PdfExportOptions({
           <label
             className={`flex items-start gap-3 cursor-pointer p-3 rounded-lg border transition-all ${
               exportOptions.zoomMode === "custom"
-                ? "bg-teal-50 border-teal-300"
-                : "border-slate-200 hover:border-teal-300"
+                ? "bg-teal-50 border-[var(--color-teal-gray-400)]"
+                : "border-slate-200 hover:border-[var(--color-teal-gray-400)]"
             }`}
           >
             <input
@@ -191,8 +191,8 @@ export function PdfExportOptions({
               className="mt-0.5 w-4 h-4"
             />
             <div className="flex-1">
-              <span className="text-sm font-medium text-slate-800">Custom zoom</span>
-              <p className="text-xs text-slate-500 mt-0.5">
+              <span className={`text-sm font-medium ${exportOptions.zoomMode === "custom" ? "text-[var(--color-teal-gray-900)]" : "text-slate-800"}`}>Custom zoom</span>
+              <p className={`text-xs mt-0.5 ${exportOptions.zoomMode === "custom" ? "text-[var(--color-teal-gray-700)]" : "text-slate-500"}`}>
                 Set a specific zoom percentage
               </p>
 
@@ -206,9 +206,9 @@ export function PdfExportOptions({
                       step={1}
                       value={exportOptions.timelineZoom * 100}
                       onChange={(e) => onExportOptionsChange({ timelineZoom: parseInt(e.target.value) / 100 })}
-                      className="flex-1 h-1.5 bg-slate-200 rounded-full appearance-none cursor-pointer"
+                      className="flex-1 h-1.5 bg-[var(--color-teal-gray-200)] rounded-full appearance-none cursor-pointer"
                     />
-                    <div className="flex items-center gap-1 bg-slate-100 rounded-md px-2 py-1">
+                    <div className="flex items-center gap-1 bg-[var(--color-teal-gray-100)] rounded-md px-2 py-1">
                       <input
                         type="number"
                         value={Math.round(exportOptions.timelineZoom * 100)}
@@ -217,11 +217,11 @@ export function PdfExportOptions({
                             timelineZoom: Math.max(EXPORT_ZOOM_MIN, Math.min(EXPORT_ZOOM_MAX, parseInt(e.target.value) / 100 || 1)),
                           })
                         }
-                        className="w-10 text-sm text-center font-mono bg-transparent border-none focus:outline-none"
+                        className="w-10 text-sm text-center font-mono bg-transparent border-none focus:outline-none text-[var(--color-teal-gray-900)]"
                         min={EXPORT_ZOOM_MIN * 100}
                         max={EXPORT_ZOOM_MAX * 100}
                       />
-                      <span className="text-xs text-slate-500">%</span>
+                      <span className="text-xs text-[var(--color-teal-gray-700)]">%</span>
                     </div>
                   </div>
 
@@ -234,7 +234,7 @@ export function PdfExportOptions({
                         className={`px-2 py-1 text-xs font-mono rounded-md transition-colors ${
                           exportOptions.timelineZoom === value
                             ? "bg-teal-600 text-white"
-                            : "bg-slate-100 text-slate-600 hover:bg-teal-100"
+                            : "bg-[var(--color-teal-gray-100)] text-[var(--color-teal-gray-700)] hover:bg-[var(--color-teal-gray-200)]"
                         }`}
                       >
                         {Math.round(value * 100)}%
@@ -315,7 +315,7 @@ export function PdfExportOptions({
                 className={`flex-1 flex items-center justify-center gap-2 px-3 py-2 text-xs rounded-md transition-colors ${
                   options.orientation === "landscape"
                     ? "bg-teal-600 text-white"
-                    : "bg-slate-100 text-slate-600 hover:bg-teal-100"
+                    : "bg-slate-100 text-slate-600 hover:bg-[var(--color-teal-gray-100)] hover:text-[var(--color-teal-gray-700)]"
                 }`}
               >
                 <span className="w-4 h-2.5 border-2 border-current rounded-sm" />
@@ -327,7 +327,7 @@ export function PdfExportOptions({
                 className={`flex-1 flex items-center justify-center gap-2 px-3 py-2 text-xs rounded-md transition-colors ${
                   options.orientation === "portrait"
                     ? "bg-teal-600 text-white"
-                    : "bg-slate-100 text-slate-600 hover:bg-teal-100"
+                    : "bg-slate-100 text-slate-600 hover:bg-[var(--color-teal-gray-100)] hover:text-[var(--color-teal-gray-700)]"
                 }`}
               >
                 <span className="w-2.5 h-4 border-2 border-current rounded-sm" />
@@ -399,7 +399,7 @@ export function PdfExportOptions({
                   className={`px-2.5 py-1.5 text-xs rounded-md transition-colors ${
                     options.marginPreset === preset
                       ? "bg-teal-600 text-white"
-                      : "bg-slate-100 text-slate-600 hover:bg-teal-100"
+                      : "bg-slate-100 text-slate-600 hover:bg-[var(--color-teal-gray-100)] hover:text-[var(--color-teal-gray-700)]"
                   }`}
                 >
                   {MARGIN_LABELS[preset]}

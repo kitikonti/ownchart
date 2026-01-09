@@ -63,9 +63,8 @@ export function ExportDialog(): JSX.Element | null {
   const showHolidays = useChartStore((state) => state.showHolidays);
   const taskLabelPosition = useChartStore((state) => state.taskLabelPosition);
 
-  // Get project name for export filename
+  // Get file name for fallback export filename
   const fileName = useFileStore((state) => state.fileName);
-  const projectName = fileName?.replace(".ownchart", "") || undefined;
 
   // Get dependencies for export
   const dependencies = useDependencyStore((state) => state.dependencies);
@@ -79,6 +78,9 @@ export function ExportDialog(): JSX.Element | null {
   // Get project metadata from chart settings
   const projectTitle = useChartStore((state) => state.projectTitle);
   const projectAuthor = useChartStore((state) => state.projectAuthor);
+
+  // Project name for export filename (prefer projectTitle, fallback to file name)
+  const projectName = projectTitle || fileName?.replace(".ownchart", "") || undefined;
 
   // Get scale and viewport for visible range calculation
   const scale = useChartStore((state) => state.scale);

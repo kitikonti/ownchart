@@ -89,6 +89,14 @@
   /* Primary accent color (teal-600) */
   --color-accent: #0d9488;
 
+  /* Teal-tinted grays for text on teal backgrounds */
+  --color-teal-gray-900: hsl(175, 15%, 28%);  /* Primary text - dark */
+  --color-teal-gray-700: hsl(175, 17%, 53%);  /* Secondary text - medium */
+  --color-teal-gray-500: hsl(175, 18%, 62%);  /* Tertiary text - lighter */
+  --color-teal-gray-400: hsl(175, 20%, 70%);  /* Borders - selected state */
+  --color-teal-gray-200: hsl(175, 22%, 82%);  /* Subtle backgrounds - hover */
+  --color-teal-gray-100: hsl(175, 20%, 88%);  /* Subtle backgrounds */
+
   /* ─── Shadows - Refined elevation system ─── */
   --shadow-xs: 0 1px 2px rgba(15, 23, 42, 0.04);
   --shadow-sm:
@@ -437,4 +445,69 @@ select:focus {
 
 .animate-modal-in {
   animation: modalIn 200ms cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+/* ─── Custom Range Slider Styling ─── */
+input[type="range"] {
+  -webkit-appearance: none;
+  appearance: none;
+  background: transparent;
+  cursor: pointer;
+}
+
+/* Track styling */
+input[type="range"]::-webkit-slider-runnable-track {
+  height: 6px;
+  border-radius: 3px;
+  background: #e2e8f0; /* slate-200 default, can be overridden by class */
+}
+
+input[type="range"]::-moz-range-track {
+  height: 6px;
+  border-radius: 3px;
+  background: #e2e8f0;
+}
+
+/* Thumb styling */
+input[type="range"]::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: var(--color-accent);
+  border: 2px solid white;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+  margin-top: -5px; /* Center thumb on track */
+  transition: transform 150ms ease;
+}
+
+input[type="range"]::-moz-range-thumb {
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: var(--color-accent);
+  border: 2px solid white;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+  transition: transform 150ms ease;
+}
+
+input[type="range"]:hover::-webkit-slider-thumb {
+  transform: scale(1.1);
+}
+
+input[type="range"]:hover::-moz-range-thumb {
+  transform: scale(1.1);
+}
+
+input[type="range"]:focus-visible {
+  outline: none;
+}
+
+input[type="range"]:focus-visible::-webkit-slider-thumb {
+  box-shadow: 0 0 0 3px rgba(13, 148, 136, 0.3);
+}
+
+input[type="range"]:focus-visible::-moz-range-thumb {
+  box-shadow: 0 0 0 3px rgba(13, 148, 136, 0.3);
 }

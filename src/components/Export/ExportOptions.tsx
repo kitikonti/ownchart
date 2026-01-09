@@ -209,8 +209,8 @@ export function ExportOptionsForm({
           <label
             className={`flex items-start gap-3 cursor-pointer p-3 rounded-lg border transition-all duration-150 ${
               options.zoomMode === "currentView"
-                ? "bg-teal-50 border-teal-300"
-                : "border-slate-200 hover:border-teal-300 hover:bg-slate-50/50"
+                ? "bg-teal-50 border-[var(--color-teal-gray-400)]"
+                : "border-slate-200 hover:border-[var(--color-teal-gray-400)] hover:bg-slate-50/50"
             }`}
           >
             <input
@@ -248,8 +248,8 @@ export function ExportOptionsForm({
           <label
             className={`flex items-start gap-3 cursor-pointer p-3 rounded-lg border transition-all duration-150 ${
               options.zoomMode === "fitToWidth"
-                ? "bg-teal-50 border-teal-300"
-                : "border-slate-200 hover:border-teal-300 hover:bg-slate-50/50"
+                ? "bg-teal-50 border-[var(--color-teal-gray-400)]"
+                : "border-slate-200 hover:border-[var(--color-teal-gray-400)] hover:bg-slate-50/50"
             }`}
           >
             <input
@@ -320,7 +320,7 @@ export function ExportOptionsForm({
                         className={`px-2 py-1 text-xs rounded-md border transition-all duration-150 ${
                           options.fitToWidth === preset.targetWidth
                             ? "bg-teal-600 text-white"
-                            : "bg-white border-slate-200 text-slate-600 hover:border-teal-300 hover:bg-slate-50"
+                            : "bg-white border-slate-200 text-slate-600 hover:border-[var(--color-teal-gray-400)] hover:bg-slate-50"
                         }`}
                         title={preset.description}
                       >
@@ -337,8 +337,8 @@ export function ExportOptionsForm({
           <label
             className={`flex items-start gap-3 cursor-pointer p-3 rounded-lg border transition-all duration-150 ${
               options.zoomMode === "custom"
-                ? "bg-teal-50 border-teal-300"
-                : "border-slate-200 hover:border-teal-300 hover:bg-slate-50/50"
+                ? "bg-teal-50 border-[var(--color-teal-gray-400)]"
+                : "border-slate-200 hover:border-[var(--color-teal-gray-400)] hover:bg-slate-50/50"
             }`}
           >
             <input
@@ -421,7 +421,7 @@ export function ExportOptionsForm({
                         className={`px-2 py-1 text-xs font-mono rounded-md border transition-all duration-150 ${
                           options.timelineZoom === value
                             ? "bg-teal-600 text-white"
-                            : "bg-white border-slate-200 text-slate-600 hover:border-teal-300 hover:bg-slate-50"
+                            : "bg-white border-slate-200 text-slate-600 hover:border-[var(--color-teal-gray-400)] hover:bg-slate-50"
                         }`}
                       >
                         {Math.round(value * 100)}%
@@ -469,8 +469,8 @@ export function ExportOptionsForm({
           <label
             className={`flex items-center gap-3 cursor-pointer p-2.5 rounded-lg border transition-all duration-150 ${
               options.dateRangeMode === "all"
-                ? "bg-teal-50 border-teal-300"
-                : "border-slate-200 hover:border-teal-300 hover:bg-slate-50/50"
+                ? "bg-teal-50 border-[var(--color-teal-gray-400)]"
+                : "border-slate-200 hover:border-[var(--color-teal-gray-400)] hover:bg-slate-50/50"
             }`}
           >
             <input
@@ -497,8 +497,8 @@ export function ExportOptionsForm({
           <label
             className={`flex items-center gap-3 cursor-pointer p-2.5 rounded-lg border transition-all duration-150 ${
               options.dateRangeMode === "visible"
-                ? "bg-teal-50 border-teal-300"
-                : "border-slate-200 hover:border-teal-300 hover:bg-slate-50/50"
+                ? "bg-teal-50 border-[var(--color-teal-gray-400)]"
+                : "border-slate-200 hover:border-[var(--color-teal-gray-400)] hover:bg-slate-50/50"
             }`}
           >
             <input
@@ -525,8 +525,8 @@ export function ExportOptionsForm({
           <label
             className={`flex items-start gap-3 cursor-pointer p-2.5 rounded-lg border transition-all duration-150 ${
               options.dateRangeMode === "custom"
-                ? "bg-teal-50 border-teal-300"
-                : "border-slate-200 hover:border-teal-300 hover:bg-slate-50/50"
+                ? "bg-teal-50 border-[var(--color-teal-gray-400)]"
+                : "border-slate-200 hover:border-[var(--color-teal-gray-400)] hover:bg-slate-50/50"
             }`}
           >
             <input
@@ -718,7 +718,7 @@ export function ExportOptionsForm({
                     className={`px-2 py-1.5 text-xs rounded-md border transition-all duration-150 ${
                       options.taskLabelPosition === posOpt.key
                         ? "bg-teal-600 text-white"
-                        : "bg-white border-slate-200 text-slate-600 hover:border-teal-300 hover:bg-slate-50"
+                        : "bg-white border-slate-200 text-slate-600 hover:border-[var(--color-teal-gray-400)] hover:bg-slate-50"
                     }`}
                     title={posOpt.description}
                   >
@@ -746,8 +746,8 @@ export function ExportOptionsForm({
                   onClick={() => onChange({ background: "white" })}
                   className={`flex items-center gap-2 px-3 py-2 text-xs rounded-lg border transition-all duration-150 ${
                     options.background === "white"
-                      ? "bg-teal-50 border-teal-300 text-slate-800"
-                      : "bg-white border-slate-200 text-slate-600 hover:border-teal-300"
+                      ? "bg-teal-50 border-[var(--color-teal-gray-400)] text-slate-800"
+                      : "bg-white border-slate-200 text-slate-600 hover:border-[var(--color-teal-gray-400)]"
                   }`}
                 >
                   <div className="w-4 h-4 rounded border border-slate-300 bg-white" />
@@ -758,8 +758,8 @@ export function ExportOptionsForm({
                   onClick={() => onChange({ background: "transparent" })}
                   className={`flex items-center gap-2 px-3 py-2 text-xs rounded-lg border transition-all duration-150 ${
                     options.background === "transparent"
-                      ? "bg-teal-50 border-teal-300 text-slate-800"
-                      : "bg-white border-slate-200 text-slate-600 hover:border-teal-300"
+                      ? "bg-teal-50 border-[var(--color-teal-gray-400)] text-slate-800"
+                      : "bg-white border-slate-200 text-slate-600 hover:border-[var(--color-teal-gray-400)]"
                   }`}
                 >
                   <div

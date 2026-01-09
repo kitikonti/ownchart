@@ -80,8 +80,8 @@ export function SharedExportOptions({
           <label
             className={`flex items-center gap-3 cursor-pointer p-3 rounded-lg border transition-all ${
               options.dateRangeMode === "all"
-                ? "bg-teal-50 border-teal-300"
-                : "border-slate-200 hover:border-teal-300"
+                ? "bg-teal-50 border-[var(--color-teal-gray-400)]"
+                : "border-slate-200 hover:border-[var(--color-teal-gray-400)]"
             }`}
           >
             <input
@@ -92,9 +92,9 @@ export function SharedExportOptions({
               className="w-4 h-4"
             />
             <div className="flex-1 flex items-center justify-between">
-              <span className="text-sm font-medium text-slate-800">Entire project</span>
+              <span className={`text-sm font-medium ${options.dateRangeMode === "all" ? "text-[var(--color-teal-gray-900)]" : "text-slate-800"}`}>Entire project</span>
               {projectDateRange && (
-                <span className="text-xs text-slate-400 font-mono">
+                <span className={`text-xs font-mono ${options.dateRangeMode === "all" ? "text-[var(--color-teal-gray-700)]" : "text-slate-400"}`}>
                   {formatDate(projectDateRange.start)} – {formatDate(projectDateRange.end)}
                 </span>
               )}
@@ -105,8 +105,8 @@ export function SharedExportOptions({
           <label
             className={`flex items-center gap-3 cursor-pointer p-3 rounded-lg border transition-all ${
               options.dateRangeMode === "visible"
-                ? "bg-teal-50 border-teal-300"
-                : "border-slate-200 hover:border-teal-300"
+                ? "bg-teal-50 border-[var(--color-teal-gray-400)]"
+                : "border-slate-200 hover:border-[var(--color-teal-gray-400)]"
             }`}
           >
             <input
@@ -117,9 +117,9 @@ export function SharedExportOptions({
               className="w-4 h-4"
             />
             <div className="flex-1 flex items-center justify-between">
-              <span className="text-sm font-medium text-slate-800">Visible range</span>
+              <span className={`text-sm font-medium ${options.dateRangeMode === "visible" ? "text-[var(--color-teal-gray-900)]" : "text-slate-800"}`}>Visible range</span>
               {visibleDateRange && (
-                <span className="text-xs text-slate-400 font-mono">
+                <span className={`text-xs font-mono ${options.dateRangeMode === "visible" ? "text-[var(--color-teal-gray-700)]" : "text-slate-400"}`}>
                   {formatDate(visibleDateRange.start)} – {formatDate(visibleDateRange.end)}
                 </span>
               )}
@@ -130,8 +130,8 @@ export function SharedExportOptions({
           <label
             className={`flex items-start gap-3 cursor-pointer p-3 rounded-lg border transition-all ${
               options.dateRangeMode === "custom"
-                ? "bg-teal-50 border-teal-300"
-                : "border-slate-200 hover:border-teal-300"
+                ? "bg-teal-50 border-[var(--color-teal-gray-400)]"
+                : "border-slate-200 hover:border-[var(--color-teal-gray-400)]"
             }`}
           >
             <input
@@ -142,7 +142,7 @@ export function SharedExportOptions({
               className="mt-0.5 w-4 h-4"
             />
             <div className="flex-1">
-              <span className="text-sm font-medium text-slate-800">Custom range</span>
+              <span className={`text-sm font-medium ${options.dateRangeMode === "custom" ? "text-[var(--color-teal-gray-900)]" : "text-slate-800"}`}>Custom range</span>
 
               {options.dateRangeMode === "custom" && (
                 <div className="flex items-center gap-2 mt-3">
@@ -150,14 +150,14 @@ export function SharedExportOptions({
                     type="date"
                     value={options.customDateStart || ""}
                     onChange={(e) => onChange({ customDateStart: e.target.value })}
-                    className="px-2.5 py-1.5 text-sm font-mono bg-white border border-slate-200 rounded-md focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent"
+                    className="px-2.5 py-1.5 text-sm font-mono bg-white border border-teal-200 rounded-md focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent"
                   />
-                  <span className="text-slate-300">–</span>
+                  <span className="text-[var(--color-teal-gray-500)]">–</span>
                   <input
                     type="date"
                     value={options.customDateEnd || ""}
                     onChange={(e) => onChange({ customDateEnd: e.target.value })}
-                    className="px-2.5 py-1.5 text-sm font-mono bg-white border border-slate-200 rounded-md focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent"
+                    className="px-2.5 py-1.5 text-sm font-mono bg-white border border-teal-200 rounded-md focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent"
                   />
                 </div>
               )}
@@ -293,7 +293,7 @@ export function SharedExportOptions({
                     className={`px-2.5 py-1 text-xs rounded-md transition-colors ${
                       options.taskLabelPosition === opt.key
                         ? "bg-teal-600 text-white"
-                        : "bg-slate-100 text-slate-600 hover:bg-teal-100"
+                        : "bg-slate-100 text-slate-600 hover:bg-[var(--color-teal-gray-100)] hover:text-[var(--color-teal-gray-700)]"
                     }`}
                   >
                     {opt.label}
@@ -315,7 +315,7 @@ export function SharedExportOptions({
                     className={`flex items-center gap-2 px-3 py-1.5 text-xs rounded-md transition-colors ${
                       options.background === "white"
                         ? "bg-teal-600 text-white"
-                        : "bg-slate-100 text-slate-600 hover:bg-teal-100"
+                        : "bg-slate-100 text-slate-600 hover:bg-[var(--color-teal-gray-100)] hover:text-[var(--color-teal-gray-700)]"
                     }`}
                   >
                     <span className="w-3 h-3 rounded-sm bg-white border border-slate-300" />
@@ -327,7 +327,7 @@ export function SharedExportOptions({
                     className={`flex items-center gap-2 px-3 py-1.5 text-xs rounded-md transition-colors ${
                       options.background === "transparent"
                         ? "bg-teal-600 text-white"
-                        : "bg-slate-100 text-slate-600 hover:bg-teal-100"
+                        : "bg-slate-100 text-slate-600 hover:bg-[var(--color-teal-gray-100)] hover:text-[var(--color-teal-gray-700)]"
                     }`}
                   >
                     <span
