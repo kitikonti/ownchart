@@ -590,6 +590,10 @@ export const useChartStore = create<ChartState & ChartActions>()(
           state.workingDaysConfig = settings.workingDaysConfig;
         if (settings.holidayRegion !== undefined)
           state.holidayRegion = settings.holidayRegion;
+        if (settings.projectTitle !== undefined)
+          state.projectTitle = settings.projectTitle;
+        if (settings.projectAuthor !== undefined)
+          state.projectAuthor = settings.projectAuthor;
       });
       // Update holiday service if region changed
       if (settings.holidayRegion !== undefined) {

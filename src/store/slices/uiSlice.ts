@@ -46,6 +46,9 @@ interface UIState {
   isWelcomeTourOpen: boolean;
   hasSeenWelcome: boolean;
   hasTourCompleted: boolean;
+
+  // Hydration state (true after localStorage restoration is complete)
+  isHydrated: boolean;
 }
 
 /**
@@ -83,6 +86,9 @@ interface UIActions {
   dismissWelcome: (permanent?: boolean) => void;
   completeTour: () => void;
   checkFirstTimeUser: () => void;
+
+  // Hydration
+  setHydrated: () => void;
 }
 
 /**
@@ -130,6 +136,7 @@ export const useUIStore = create<UIStore>()(
       isWelcomeTourOpen: false,
       hasSeenWelcome,
       hasTourCompleted,
+      isHydrated: false,
 
       // Export dialog actions
       openExportDialog: () =>
@@ -270,6 +277,12 @@ export const useUIStore = create<UIStore>()(
           if (!state.hasSeenWelcome) {
             state.isWelcomeTourOpen = true;
           }
+        }),
+
+      // Hydration action - called after localStorage restoration is complete
+      setHydrated: () =>
+        set((state) => {
+          state.isHydrated = true;
         }),
     };
   })

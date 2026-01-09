@@ -16,10 +16,17 @@ import { useUnsavedChanges } from "./hooks/useUnsavedChanges";
 import { useMultiTabPersistence } from "./hooks/useMultiTabPersistence";
 import { useDocumentTitle } from "./hooks/useDocumentTitle";
 import { useUIStore } from "./store/slices/uiSlice";
+import { useFileStore } from "./store/slices/fileSlice";
 import { useUserPreferencesStore } from "./store/slices/userPreferencesSlice";
 
 function App(): JSX.Element {
   const checkFirstTimeUser = useUIStore((state) => state.checkFirstTimeUser);
+  const hasSeenWelcome = useUIStore((state) => state.hasSeenWelcome);
+  const isHydrated = useUIStore((state) => state.isHydrated);
+  const openChartSettingsDialog = useUIStore(
+    (state) => state.openChartSettingsDialog
+  );
+  const fileName = useFileStore((state) => state.fileName);
   const initializeDensity = useUserPreferencesStore(
     (state) => state.initializeDensity
   );
@@ -41,6 +48,14 @@ function App(): JSX.Element {
     checkFirstTimeUser();
     initializeDensity();
   }, [checkFirstTimeUser, initializeDensity]);
+
+  // For returning users (who have seen welcome), open chart settings if no file is loaded
+  // Wait for hydration to complete to avoid race condition with localStorage restoration
+  useEffect(() => {
+    if (isHydrated && hasSeenWelcome && fileName === null) {
+      openChartSettingsDialog();
+    }
+  }, [isHydrated, hasSeenWelcome, fileName, openChartSettingsDialog]);
 
   return (
     <>

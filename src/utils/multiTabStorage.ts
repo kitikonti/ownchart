@@ -33,6 +33,20 @@ export interface ChartState {
   panOffset: { x: number; y: number };
   showWeekends: boolean;
   showTodayMarker: boolean;
+  // Additional view settings (Sprint 1.5.9)
+  showHolidays?: boolean;
+  showDependencies?: boolean;
+  showProgress?: boolean;
+  taskLabelPosition?: "before" | "inside" | "after" | "none";
+  workingDaysMode?: boolean;
+  workingDaysConfig?: {
+    excludeSaturday: boolean;
+    excludeSunday: boolean;
+    excludeHolidays: boolean;
+  };
+  holidayRegion?: string;
+  projectTitle?: string;
+  projectAuthor?: string;
 }
 
 export interface FileState {

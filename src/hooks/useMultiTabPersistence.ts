@@ -11,6 +11,7 @@ import { useTaskStore } from "../store/slices/taskSlice";
 import { useChartStore } from "../store/slices/chartSlice";
 import { useFileStore } from "../store/slices/fileSlice";
 import { useDependencyStore } from "../store/slices/dependencySlice";
+import { useUIStore } from "../store/slices/uiSlice";
 import {
   getTabId,
   loadTabChart,
@@ -41,6 +42,8 @@ export function useMultiTabPersistence(): void {
 
     if (!savedChart) {
       console.info(`✓ New tab ${tabId} - starting fresh`);
+      // Mark as hydrated even when no saved state exists
+      useUIStore.getState().setHydrated();
       return;
     }
 
@@ -71,13 +74,41 @@ export function useMultiTabPersistence(): void {
       }
     }
 
-    // Restore chart state
-    const { setZoom, setPanOffset, setShowWeekends, setShowTodayMarker } =
-      useChartStore.getState();
-    setZoom(savedChart.chartState.zoom);
-    setPanOffset(savedChart.chartState.panOffset);
-    setShowWeekends(savedChart.chartState.showWeekends);
-    setShowTodayMarker(savedChart.chartState.showTodayMarker);
+    // Restore chart state (including all view settings)
+    const chartStore = useChartStore.getState();
+    chartStore.setZoom(savedChart.chartState.zoom);
+    chartStore.setPanOffset(savedChart.chartState.panOffset);
+    chartStore.setShowWeekends(savedChart.chartState.showWeekends);
+    chartStore.setShowTodayMarker(savedChart.chartState.showTodayMarker);
+
+    // Restore extended view settings (Sprint 1.5.9)
+    if (savedChart.chartState.showHolidays !== undefined) {
+      chartStore.setShowHolidays(savedChart.chartState.showHolidays);
+    }
+    if (savedChart.chartState.showDependencies !== undefined) {
+      chartStore.setShowDependencies(savedChart.chartState.showDependencies);
+    }
+    if (savedChart.chartState.showProgress !== undefined) {
+      chartStore.setShowProgress(savedChart.chartState.showProgress);
+    }
+    if (savedChart.chartState.taskLabelPosition !== undefined) {
+      chartStore.setTaskLabelPosition(savedChart.chartState.taskLabelPosition);
+    }
+    if (savedChart.chartState.workingDaysMode !== undefined) {
+      chartStore.setWorkingDaysMode(savedChart.chartState.workingDaysMode);
+    }
+    if (savedChart.chartState.workingDaysConfig !== undefined) {
+      chartStore.setWorkingDaysConfig(savedChart.chartState.workingDaysConfig);
+    }
+    if (savedChart.chartState.holidayRegion !== undefined) {
+      chartStore.setHolidayRegion(savedChart.chartState.holidayRegion);
+    }
+    if (savedChart.chartState.projectTitle !== undefined) {
+      chartStore.setProjectTitle(savedChart.chartState.projectTitle);
+    }
+    if (savedChart.chartState.projectAuthor !== undefined) {
+      chartStore.setProjectAuthor(savedChart.chartState.projectAuthor);
+    }
 
     // Restore file state
     const { setFileName, setChartId, setLastSaved, markDirty, markClean } =
@@ -101,6 +132,9 @@ export function useMultiTabPersistence(): void {
     console.info(`✓ Tab ${tabId} - state restored from localStorage`);
 
     isRestoringRef.current = false;
+
+    // Mark as hydrated after restoration is complete
+    useUIStore.getState().setHydrated();
   }, []);
 
   // Save state to localStorage on changes
@@ -127,6 +161,16 @@ export function useMultiTabPersistence(): void {
           panOffset: chartState.panOffset,
           showWeekends: chartState.showWeekends,
           showTodayMarker: chartState.showTodayMarker,
+          // Extended view settings (Sprint 1.5.9)
+          showHolidays: chartState.showHolidays,
+          showDependencies: chartState.showDependencies,
+          showProgress: chartState.showProgress,
+          taskLabelPosition: chartState.taskLabelPosition,
+          workingDaysMode: chartState.workingDaysMode,
+          workingDaysConfig: chartState.workingDaysConfig,
+          holidayRegion: chartState.holidayRegion,
+          projectTitle: chartState.projectTitle,
+          projectAuthor: chartState.projectAuthor,
         } as ChartState,
         tableState: {
           columnWidths: taskState.columnWidths,
