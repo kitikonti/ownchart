@@ -394,7 +394,9 @@ export function ExportDialog(): JSX.Element | null {
         />
 
         {/* Format-specific Options Panel */}
-        <div className="p-4 rounded-xl border border-slate-200 border-l-4 border-l-teal-500">
+        <div className="relative p-4 rounded-xl border border-slate-200 overflow-hidden">
+          {/* Teal accent stripe */}
+          <div className="absolute left-0 top-0 bottom-0 w-1 bg-teal-500" />
           {/* Panel Header */}
           <div className="flex items-center gap-2 mb-4 pb-3 border-b border-slate-200">
             {selectedExportFormat === "png" && (
@@ -462,7 +464,9 @@ export function ExportDialog(): JSX.Element | null {
         </div>
 
         {/* Shared Options Panel */}
-        <div className="p-4 rounded-xl border border-slate-200 border-l-4 border-l-teal-500">
+        <div className="relative p-4 rounded-xl border border-slate-200 overflow-hidden">
+          {/* Teal accent stripe */}
+          <div className="absolute left-0 top-0 bottom-0 w-1 bg-teal-500" />
           {/* Panel Header */}
           <div className="flex items-center gap-2 mb-4 pb-3 border-b border-slate-200">
             <ChartBar size={18} weight="duotone" className="text-teal-600" />

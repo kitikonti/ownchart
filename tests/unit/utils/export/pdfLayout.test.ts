@@ -28,7 +28,6 @@ import type { PdfExportOptions } from "../../../../src/utils/export/types";
 const defaultOptions: PdfExportOptions = {
   pageSize: "a4",
   orientation: "landscape",
-  scaleMode: "fitToPage",
   marginPreset: "normal",
   header: { showProjectName: false, showExportDate: false },
   footer: { showProjectName: false, showExportDate: false },
@@ -177,6 +176,36 @@ describe("pdfLayout", () => {
       expect(dims.width).toBe(432);
       expect(dims.height).toBe(279);
     });
+
+    it("returns custom page dimensions in landscape", () => {
+      const dims = getPageDimensions({
+        ...defaultOptions,
+        pageSize: "custom",
+        customPageSize: { width: 800, height: 400 },
+      });
+      expect(dims.width).toBe(800);
+      expect(dims.height).toBe(400);
+    });
+
+    it("returns custom page dimensions in portrait", () => {
+      const dims = getPageDimensions({
+        ...defaultOptions,
+        pageSize: "custom",
+        customPageSize: { width: 800, height: 400 },
+        orientation: "portrait",
+      });
+      expect(dims.width).toBe(400);
+      expect(dims.height).toBe(800);
+    });
+
+    it("returns default custom size when customPageSize is not provided", () => {
+      const dims = getPageDimensions({
+        ...defaultOptions,
+        pageSize: "custom",
+      });
+      expect(dims.width).toBe(500);
+      expect(dims.height).toBe(300);
+    });
   });
 
   describe("getMargins", () => {
@@ -264,26 +293,6 @@ describe("pdfLayout", () => {
       expect(result.chartHeight).toBeLessThanOrEqual(190); // printable height
     });
 
-    it("uses custom scale when scaleMode is custom", () => {
-      const result = calculateScale(1000, 500, {
-        ...defaultOptions,
-        scaleMode: "custom",
-        customScale: 50,
-      });
-
-      expect(result.scale).toBe(0.5);
-    });
-
-    it("defaults to 100% when customScale not provided", () => {
-      const result = calculateScale(1000, 500, {
-        ...defaultOptions,
-        scaleMode: "custom",
-        // No customScale
-      });
-
-      expect(result.scale).toBe(1);
-    });
-
     it("reserves space for header and footer", () => {
       // Use tall content where height is the limiting factor
       const withoutReserved = calculateScale(500, 2000, defaultOptions, 0, 0);
@@ -299,6 +308,19 @@ describe("pdfLayout", () => {
       // offsetX should center the chart
       const expectedCenter = (267 - result.chartWidth) / 2;
       expect(result.offsetX).toBeCloseTo(expectedCenter, 5);
+    });
+
+    it("scales chart to fit on custom page size", () => {
+      const customOptions: PdfExportOptions = {
+        ...defaultOptions,
+        pageSize: "custom",
+        customPageSize: { width: 1000, height: 500 },
+      };
+      const result = calculateScale(2000, 1000, customOptions);
+
+      expect(result.scale).toBeGreaterThan(0);
+      // Should fit within the custom page
+      expect(result.chartWidth).toBeLessThanOrEqual(1000 - 15 - 15); // width - margins
     });
   });
 

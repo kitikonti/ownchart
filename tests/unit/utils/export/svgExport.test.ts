@@ -229,21 +229,33 @@ describe("svgExport", () => {
   });
 
   describe("filename generation", () => {
-    it("generates filename with date", () => {
+    it("generates filename with date and time", () => {
       const projectName = "Test Project";
       const baseName = projectName.toLowerCase().replace(/[^a-z0-9]+/g, "-");
-      const timestamp = new Date().toISOString().slice(0, 10);
-      const filename = `${baseName}-${timestamp}.svg`;
+      const now = new Date();
+      const year = now.getFullYear();
+      const month = String(now.getMonth() + 1).padStart(2, "0");
+      const day = String(now.getDate()).padStart(2, "0");
+      const hours = String(now.getHours()).padStart(2, "0");
+      const minutes = String(now.getMinutes()).padStart(2, "0");
+      const seconds = String(now.getSeconds()).padStart(2, "0");
+      const filename = `${baseName}-${year}${month}${day}-${hours}${minutes}${seconds}.svg`;
 
-      expect(filename).toMatch(/^test-project-\d{4}-\d{2}-\d{2}\.svg$/);
+      expect(filename).toMatch(/^test-project-\d{8}-\d{6}\.svg$/);
     });
 
     it("handles empty project name", () => {
       const baseName = "gantt-chart";
-      const timestamp = new Date().toISOString().slice(0, 10);
-      const filename = `${baseName}-${timestamp}.svg`;
+      const now = new Date();
+      const year = now.getFullYear();
+      const month = String(now.getMonth() + 1).padStart(2, "0");
+      const day = String(now.getDate()).padStart(2, "0");
+      const hours = String(now.getHours()).padStart(2, "0");
+      const minutes = String(now.getMinutes()).padStart(2, "0");
+      const seconds = String(now.getSeconds()).padStart(2, "0");
+      const filename = `${baseName}-${year}${month}${day}-${hours}${minutes}${seconds}.svg`;
 
-      expect(filename).toMatch(/^gantt-chart-\d{4}-\d{2}-\d{2}\.svg$/);
+      expect(filename).toMatch(/^gantt-chart-\d{8}-\d{6}\.svg$/);
     });
 
     it("sanitizes special characters in project name", () => {

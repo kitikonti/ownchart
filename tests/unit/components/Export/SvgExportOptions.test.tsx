@@ -3,7 +3,7 @@
  */
 
 import { describe, it, expect, vi } from "vitest";
-import { render, screen, fireEvent } from "@testing-library/react";
+import { render, screen } from "@testing-library/react";
 import { SvgExportOptions } from "../../../../src/components/Export/SvgExportOptions";
 import { DEFAULT_SVG_OPTIONS } from "../../../../src/utils/export/types";
 
@@ -23,66 +23,34 @@ describe("SvgExportOptions", () => {
       expect(document.body).toBeInTheDocument();
     });
 
-    it("renders dimensions section", () => {
+    it("renders SVG hint text", () => {
       render(<SvgExportOptions {...defaultProps} />);
-      expect(screen.getByText("Dimensions")).toBeInTheDocument();
+      expect(
+        screen.getByText(/SVG files can be edited in Illustrator/i)
+      ).toBeInTheDocument();
     });
 
-    it("renders custom size option", () => {
+    it("mentions Figma and Inkscape", () => {
       render(<SvgExportOptions {...defaultProps} />);
-      expect(screen.getByText("Custom size")).toBeInTheDocument();
-    });
-
-    it("renders advanced options section", () => {
-      render(<SvgExportOptions {...defaultProps} />);
-      expect(screen.getByText("Advanced Options")).toBeInTheDocument();
-    });
-  });
-
-  describe("advanced options", () => {
-    it("shows advanced options when expanded", () => {
-      render(<SvgExportOptions {...defaultProps} />);
-
-      fireEvent.click(screen.getByText("Advanced Options"));
-
-      expect(screen.getByText("Include background")).toBeInTheDocument();
-    });
-
-    it("renders responsive mode option", () => {
-      render(<SvgExportOptions {...defaultProps} />);
-
-      fireEvent.click(screen.getByText("Advanced Options"));
-
-      expect(screen.getByText("Responsive mode")).toBeInTheDocument();
-    });
-
-    it("renders optimize option", () => {
-      render(<SvgExportOptions {...defaultProps} />);
-
-      fireEvent.click(screen.getByText("Advanced Options"));
-
-      expect(screen.getByText("Optimize SVG")).toBeInTheDocument();
+      expect(screen.getByText(/Figma/i)).toBeInTheDocument();
+      expect(screen.getByText(/Inkscape/i)).toBeInTheDocument();
     });
   });
 
   describe("props handling", () => {
-    it("accepts different options", () => {
-      render(
-        <SvgExportOptions
-          {...defaultProps}
-          options={{ ...DEFAULT_SVG_OPTIONS, dimensionMode: "custom" }}
-        />
-      );
-      expect(document.body).toBeInTheDocument();
-    });
-
-    it("handles responsive mode enabled", () => {
+    it("accepts options prop", () => {
       render(
         <SvgExportOptions
           {...defaultProps}
           options={{ ...DEFAULT_SVG_OPTIONS, responsiveMode: true }}
         />
       );
+      expect(document.body).toBeInTheDocument();
+    });
+
+    it("accepts onChange prop", () => {
+      const onChange = vi.fn();
+      render(<SvgExportOptions {...defaultProps} onChange={onChange} />);
       expect(document.body).toBeInTheDocument();
     });
   });

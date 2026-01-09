@@ -4,13 +4,7 @@
  */
 
 import { useState } from "react";
-import {
-  File,
-  ArrowsOutLineHorizontal,
-  Rows,
-  CaretDown,
-  CaretUp,
-} from "@phosphor-icons/react";
+import { File, Rows, CaretDown, CaretUp } from "@phosphor-icons/react";
 import type {
   PdfExportOptions as PdfOptions,
   PdfPageSize,
@@ -22,9 +16,13 @@ import { PDF_PAGE_SIZES, PDF_MARGIN_PRESETS } from "../../utils/export/types";
 const PAGE_SIZE_LABELS: Record<PdfPageSize, { label: string; size: string }> = {
   a4: { label: "A4", size: "297 × 210 mm" },
   a3: { label: "A3", size: "420 × 297 mm" },
+  a2: { label: "A2", size: "594 × 420 mm" },
+  a1: { label: "A1", size: "841 × 594 mm" },
+  a0: { label: "A0", size: "1189 × 841 mm" },
   letter: { label: "Letter", size: "11 × 8.5 in" },
   legal: { label: "Legal", size: "14 × 8.5 in" },
   tabloid: { label: "Tabloid", size: "17 × 11 in" },
+  custom: { label: "Custom", size: "" },
 };
 
 // Margin preset labels
@@ -50,7 +48,10 @@ export function PdfExportOptions({
   const [showAdvanced, setShowAdvanced] = useState(false);
 
   // Get current page dimensions for display
-  const pageDims = PDF_PAGE_SIZES[options.pageSize];
+  const pageDims =
+    options.pageSize === "custom"
+      ? options.customPageSize || { width: 500, height: 300 }
+      : PDF_PAGE_SIZES[options.pageSize];
   const displayWidth =
     options.orientation === "landscape" ? pageDims.width : pageDims.height;
   const displayHeight =
@@ -84,13 +85,11 @@ export function PdfExportOptions({
               }
               className="w-full px-3 py-2 text-sm bg-white border border-slate-200 rounded-lg focus:ring-2 focus:ring-slate-400 focus:border-slate-400 transition-shadow"
             >
-              {Object.entries(PAGE_SIZE_LABELS).map(
-                ([key, { label, size }]) => (
-                  <option key={key} value={key}>
-                    {label} ({size})
-                  </option>
-                )
-              )}
+              {Object.entries(PAGE_SIZE_LABELS).map(([key, { label, size }]) => (
+                <option key={key} value={key}>
+                  {size ? `${label} (${size})` : label}
+                </option>
+              ))}
             </select>
           </div>
 
@@ -136,109 +135,63 @@ export function PdfExportOptions({
           </div>
         </div>
 
-        {/* Page dimensions display */}
-        <div className="mt-2 text-xs text-slate-400 text-center">
-          {displayWidth} × {displayHeight} mm
-        </div>
-      </div>
-
-      {/* Scale Section */}
-      <div>
-        <div className="flex items-center gap-2 mb-3">
-          <ArrowsOutLineHorizontal
-            size={16}
-            weight="duotone"
-            className="text-slate-500"
-          />
-          <h4 className="text-xs font-semibold text-slate-600 uppercase tracking-wide">
-            Scale
-          </h4>
-        </div>
-
-        <div className="space-y-2">
-          <label
-            className={`flex items-center gap-3 cursor-pointer p-3 rounded-lg border transition-all ${
-              options.scaleMode === "fitToPage"
-                ? "bg-slate-50 border-slate-400"
-                : "border-slate-200 hover:border-slate-300"
-            }`}
-          >
-            <input
-              type="radio"
-              name="scaleMode"
-              value="fitToPage"
-              checked={options.scaleMode === "fitToPage"}
-              onChange={() => onChange({ scaleMode: "fitToPage" })}
-              className="accent-slate-700"
-              aria-label="Fit to page"
-            />
+        {/* Custom page size inputs */}
+        {options.pageSize === "custom" ? (
+          <div className="mt-3 grid grid-cols-2 gap-3">
             <div>
-              <span className="text-sm font-medium text-slate-800">
-                Fit entire chart to page
-              </span>
-              <p className="text-xs text-slate-500">
-                Scale chart to fit on single page
-              </p>
+              <label
+                htmlFor="pdf-custom-width"
+                className="block text-xs text-slate-500 mb-1"
+              >
+                Width (mm)
+              </label>
+              <input
+                id="pdf-custom-width"
+                type="number"
+                value={options.customPageSize?.width || 500}
+                onChange={(e) =>
+                  onChange({
+                    customPageSize: {
+                      width: Math.max(100, parseInt(e.target.value) || 500),
+                      height: options.customPageSize?.height || 300,
+                    },
+                  })
+                }
+                min={100}
+                max={5000}
+                className="w-full px-3 py-2 text-sm font-mono bg-white border border-slate-200 rounded-lg focus:ring-2 focus:ring-slate-400 focus:border-slate-400 transition-shadow"
+              />
             </div>
-          </label>
-
-          <label
-            className={`flex items-start gap-3 cursor-pointer p-3 rounded-lg border transition-all ${
-              options.scaleMode === "custom"
-                ? "bg-slate-50 border-slate-400"
-                : "border-slate-200 hover:border-slate-300"
-            }`}
-          >
-            <input
-              type="radio"
-              name="scaleMode"
-              value="custom"
-              checked={options.scaleMode === "custom"}
-              onChange={() =>
-                onChange({ scaleMode: "custom", customScale: 100 })
-              }
-              className="mt-0.5 accent-slate-700"
-            />
-            <div className="flex-1">
-              <span className="text-sm font-medium text-slate-800">
-                Custom zoom
-              </span>
-              {options.scaleMode === "custom" && (
-                <div className="flex items-center gap-2 mt-2">
-                  <input
-                    type="range"
-                    min={25}
-                    max={200}
-                    step={5}
-                    value={options.customScale || 100}
-                    onChange={(e) =>
-                      onChange({ customScale: parseInt(e.target.value) })
-                    }
-                    className="flex-1 h-1.5 bg-slate-200 rounded-full appearance-none cursor-pointer accent-slate-700"
-                  />
-                  <div className="flex items-center gap-1 bg-slate-100 rounded-lg px-2 py-1">
-                    <input
-                      type="number"
-                      value={options.customScale || 100}
-                      onChange={(e) =>
-                        onChange({
-                          customScale: Math.max(
-                            25,
-                            Math.min(200, parseInt(e.target.value) || 100)
-                          ),
-                        })
-                      }
-                      className="w-10 px-1 py-0.5 text-sm text-center font-mono bg-transparent border-none focus:ring-0 focus:outline-none"
-                      min={25}
-                      max={200}
-                    />
-                    <span className="text-xs text-slate-500">%</span>
-                  </div>
-                </div>
-              )}
+            <div>
+              <label
+                htmlFor="pdf-custom-height"
+                className="block text-xs text-slate-500 mb-1"
+              >
+                Height (mm)
+              </label>
+              <input
+                id="pdf-custom-height"
+                type="number"
+                value={options.customPageSize?.height || 300}
+                onChange={(e) =>
+                  onChange({
+                    customPageSize: {
+                      width: options.customPageSize?.width || 500,
+                      height: Math.max(100, parseInt(e.target.value) || 300),
+                    },
+                  })
+                }
+                min={100}
+                max={5000}
+                className="w-full px-3 py-2 text-sm font-mono bg-white border border-slate-200 rounded-lg focus:ring-2 focus:ring-slate-400 focus:border-slate-400 transition-shadow"
+              />
             </div>
-          </label>
-        </div>
+          </div>
+        ) : (
+          <div className="mt-2 text-xs text-slate-400 text-center">
+            {displayWidth} × {displayHeight} mm
+          </div>
+        )}
 
         {/* Vector hint */}
         <div className="mt-3 p-2 bg-teal-50 border border-teal-200 rounded-lg">

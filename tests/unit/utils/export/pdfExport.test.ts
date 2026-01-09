@@ -24,6 +24,10 @@ const mockTriangle = vi.fn();
 const mockSetLineDashPattern = vi.fn();
 const mockSetFont = vi.fn();
 
+const mockAddFileToVFS = vi.fn();
+const mockAddFont = vi.fn();
+const mockSvg = vi.fn().mockResolvedValue(undefined);
+
 const createMockJsPDF = () => ({
   save: mockSave,
   setProperties: mockSetProperties,
@@ -40,6 +44,9 @@ const createMockJsPDF = () => ({
   triangle: mockTriangle,
   setLineDashPattern: mockSetLineDashPattern,
   setFont: mockSetFont,
+  addFileToVFS: mockAddFileToVFS,
+  addFont: mockAddFont,
+  svg: mockSvg,
 });
 
 // Store constructor calls
@@ -52,12 +59,6 @@ vi.mock("jspdf", () => ({
   }),
 }));
 
-// Mock renderChartToPdf
-vi.mock("../../../../src/utils/export/pdfRenderer", () => ({
-  renderChartToPdf: vi.fn(async (_ctx, onProgress) => {
-    onProgress?.(50);
-  }),
-}));
 
 describe("pdfExport", () => {
   const createTestTask = (overrides: Partial<Task> = {}): Task => ({
@@ -141,7 +142,7 @@ describe("pdfExport", () => {
       });
 
       expect(mockSave).toHaveBeenCalledWith(
-        expect.stringMatching(/^Test-Project-\d{4}-\d{2}-\d{2}\.pdf$/)
+        expect.stringMatching(/^Test-Project-\d{8}-\d{6}\.pdf$/)
       );
     });
 
@@ -157,7 +158,7 @@ describe("pdfExport", () => {
       });
 
       expect(mockSave).toHaveBeenCalledWith(
-        expect.stringMatching(/^gantt-chart-\d{4}-\d{2}-\d{2}\.pdf$/)
+        expect.stringMatching(/^gantt-chart-\d{8}-\d{6}\.pdf$/)
       );
     });
 
@@ -203,9 +204,10 @@ describe("pdfExport", () => {
         onProgress: (progress) => progressValues.push(progress),
       });
 
+      // New SVG-to-PDF approach has different progress values
       expect(progressValues).toContain(5);
       expect(progressValues).toContain(10);
-      expect(progressValues).toContain(20);
+      expect(progressValues).toContain(25);
       expect(progressValues).toContain(100);
     });
 
@@ -389,7 +391,7 @@ describe("pdfExport", () => {
 
       // sanitizeFilename preserves case
       expect(mockSave).toHaveBeenCalledWith(
-        expect.stringMatching(/^My-Cool-Project-\d{4}-\d{2}-\d{2}\.pdf$/)
+        expect.stringMatching(/^My-Cool-Project-\d{8}-\d{6}\.pdf$/)
       );
     });
 
@@ -411,9 +413,8 @@ describe("pdfExport", () => {
   });
 
   describe("dependencies handling", () => {
-    it("passes dependencies to renderer", async () => {
+    it("exports with dependencies without errors", async () => {
       const { exportToPdf } = await import("../../../../src/utils/export/pdfExport");
-      const { renderChartToPdf } = await import("../../../../src/utils/export/pdfRenderer");
 
       const dependencies = [
         { id: "dep-1", fromTaskId: "task-1", toTaskId: "task-2", type: "FS" as const },
@@ -431,12 +432,9 @@ describe("pdfExport", () => {
         currentAppZoom: 1,
       });
 
-      expect(renderChartToPdf).toHaveBeenCalledWith(
-        expect.objectContaining({
-          dependencies,
-        }),
-        expect.any(Function)
-      );
+      // SVG-to-PDF approach uses doc.svg() to embed the chart
+      expect(mockSvg).toHaveBeenCalled();
+      expect(mockSave).toHaveBeenCalled();
     });
   });
 });

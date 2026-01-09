@@ -19,13 +19,25 @@ export type ExportFormat = "png" | "pdf" | "svg";
 // =============================================================================
 
 /** PDF page size options */
-export type PdfPageSize = "a4" | "a3" | "letter" | "legal" | "tabloid";
+export type PdfPageSize =
+  | "a4"
+  | "a3"
+  | "a2"
+  | "a1"
+  | "a0"
+  | "letter"
+  | "legal"
+  | "tabloid"
+  | "custom";
 
 /** PDF page orientation */
 export type PdfOrientation = "landscape" | "portrait";
 
-/** PDF scale mode */
-export type PdfScaleMode = "fitToPage" | "custom";
+/** Custom page dimensions in mm */
+export interface PdfCustomPageSize {
+  width: number;
+  height: number;
+}
 
 /** PDF margin preset */
 export type PdfMarginPreset = "normal" | "narrow" | "wide" | "none" | "custom";
@@ -48,9 +60,8 @@ export interface PdfHeaderFooter {
 /** PDF-specific export options */
 export interface PdfExportOptions {
   pageSize: PdfPageSize;
+  customPageSize?: PdfCustomPageSize; // for custom page size
   orientation: PdfOrientation;
-  scaleMode: PdfScaleMode;
-  customScale?: number; // percentage, for custom scale
   marginPreset: PdfMarginPreset;
   customMargins?: PdfMargins;
   header: PdfHeaderFooter;
@@ -65,11 +76,14 @@ export interface PdfExportOptions {
 
 /** PDF page dimensions in mm (landscape orientation by default) */
 export const PDF_PAGE_SIZES: Record<
-  PdfPageSize,
+  Exclude<PdfPageSize, "custom">,
   { width: number; height: number }
 > = {
   a4: { width: 297, height: 210 },
   a3: { width: 420, height: 297 },
+  a2: { width: 594, height: 420 },
+  a1: { width: 841, height: 594 },
+  a0: { width: 1189, height: 841 },
   letter: { width: 279, height: 216 },
   legal: { width: 356, height: 216 },
   tabloid: { width: 432, height: 279 },
@@ -87,8 +101,8 @@ export const PDF_MARGIN_PRESETS: Record<PdfMarginPreset, PdfMargins> = {
 /** Default PDF export options */
 export const DEFAULT_PDF_OPTIONS: PdfExportOptions = {
   pageSize: "a4",
+  customPageSize: { width: 500, height: 300 },
   orientation: "landscape",
-  scaleMode: "fitToPage",
   marginPreset: "normal",
   header: {
     showProjectName: true,

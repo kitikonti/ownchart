@@ -17,6 +17,15 @@ import {
 } from "./pdfLayout";
 import { calculateDuration, formatDate } from "../dateUtils";
 import { getUnitStart, addUnit } from "../timelineUtils";
+import {
+  TASK_RENDER_CONSTANTS,
+  SUMMARY_RENDER_CONSTANTS,
+  LABEL_RENDER_CONSTANTS,
+  DEPENDENCY_RENDER_CONSTANTS,
+  RENDER_COLORS,
+  calculateMilestoneSize,
+  getScaledCornerRadius,
+} from "./renderConstants";
 
 /** Rendering context passed to all render functions */
 export interface PdfRenderContext {
@@ -44,19 +53,19 @@ export interface PdfRenderContext {
   scaleFactor: number;
 }
 
-/** Colors used in PDF rendering */
+/** Colors used in PDF rendering - using shared render constants */
 const COLORS = {
-  grid: "#e2e8f0",
-  weekend: "#f8fafc",
-  holiday: "#fef3c7",
-  today: "#ef4444",
-  taskDefault: "#14b8a6",
-  taskProgress: "#0d9488",
-  milestone: "#f59e0b",
-  summary: "#64748b",
-  text: "#1e293b",
-  textLight: "#64748b",
-  dependency: "#94a3b8",
+  grid: RENDER_COLORS.gridLine,
+  weekend: RENDER_COLORS.weekendBackground,
+  holiday: RENDER_COLORS.holidayBackground,
+  today: RENDER_COLORS.todayMarker,
+  taskDefault: RENDER_COLORS.taskDefault,
+  text: RENDER_COLORS.tableText,
+  textLight: RENDER_COLORS.tableHeaderText,
+  textExternal: RENDER_COLORS.textExternal,
+  textInternal: RENDER_COLORS.textInternal,
+  dependency: RENDER_COLORS.dependency,
+  headerBackground: RENDER_COLORS.headerBackground,
 };
 
 /**
@@ -131,7 +140,7 @@ function renderBackgroundLayer(ctx: PdfRenderContext): void {
     ctx;
   const grayscale = pdfOptions.grayscale;
 
-  // Weekend color
+  // Weekend color - subtle gray background
   const weekendColor = getColor(COLORS.weekend, grayscale);
   doc.setFillColor(weekendColor.r, weekendColor.g, weekendColor.b);
 
@@ -140,28 +149,27 @@ function renderBackgroundLayer(ctx: PdfRenderContext): void {
   const endDate = new Date(scale.maxDate);
   const currentDate = new Date(startDate);
 
+  // Day width in mm
+  const dayWidthMm = pxToMm(scale.pixelsPerDay) * scaleFactor;
+
+  let dayIndex = 0;
   while (currentDate <= endDate) {
     const dayOfWeek = currentDate.getDay();
 
     // Weekend: Saturday (6) or Sunday (0)
     if (dayOfWeek === 0 || dayOfWeek === 6) {
-      const daysFromStart =
-        Math.floor(
-          (currentDate.getTime() - startDate.getTime()) / (24 * 60 * 60 * 1000)
-        ) + 1;
-      const x =
-        chartX + pxToMm(daysFromStart * scale.pixelsPerDay) * scaleFactor;
-      const width = pxToMm(scale.pixelsPerDay) * scaleFactor;
-
-      doc.rect(x, chartY, width, chartHeightMm, "F");
+      const x = chartX + dayIndex * dayWidthMm;
+      doc.rect(x, chartY, dayWidthMm, chartHeightMm, "F");
     }
 
     currentDate.setDate(currentDate.getDate() + 1);
+    dayIndex++;
   }
 }
 
 /**
  * Render horizontal grid lines for each row.
+ * Matches app's GridLines.tsx: very subtle horizontal lines.
  */
 function renderGridLayer(ctx: PdfRenderContext): void {
   const {
@@ -175,29 +183,23 @@ function renderGridLayer(ctx: PdfRenderContext): void {
     taskTableWidthMm,
   } = ctx;
 
-  const gridColor = getColor(COLORS.grid, pdfOptions.grayscale);
+  // Very subtle grid color matching app (#e9ecef)
+  const gridColor = getColor("#e9ecef", pdfOptions.grayscale);
   doc.setDrawColor(gridColor.r, gridColor.g, gridColor.b);
-  doc.setLineWidth(0.1);
+  doc.setLineWidth(0.08); // Very thin lines
 
-  // Draw horizontal lines for each row
+  // Draw horizontal lines for each row (subtle)
   for (let i = 0; i <= tasks.length; i++) {
     const y = chartY + i * rowHeightMm;
     doc.line(chartX - taskTableWidthMm, y, chartX + chartWidthMm, y);
   }
 
-  // Draw vertical border between task table and chart
-  if (taskTableWidthMm > 0) {
-    doc.line(
-      chartX,
-      chartY - ctx.headerHeightMm,
-      chartX,
-      chartY + tasks.length * rowHeightMm
-    );
-  }
+  // No vertical border between task table and chart - cleaner look
 }
 
 /**
  * Render today marker line.
+ * Matches app's TodayMarker.tsx: red dashed line.
  */
 function renderTodayMarker(ctx: PdfRenderContext): void {
   const { doc, scale, chartX, chartY, chartHeightMm, pdfOptions, scaleFactor } =
@@ -219,18 +221,23 @@ function renderTodayMarker(ctx: PdfRenderContext): void {
     pxToMm(daysFromStart * scale.pixelsPerDay + scale.pixelsPerDay / 2) *
       scaleFactor;
 
-  const todayColor = getColor(COLORS.today, pdfOptions.grayscale);
+  // Color matching app's TodayMarker (#fa5252)
+  const todayColor = getColor("#fa5252", pdfOptions.grayscale);
   doc.setDrawColor(todayColor.r, todayColor.g, todayColor.b);
-  doc.setLineWidth(0.5);
 
-  // Dashed line
-  doc.setLineDashPattern([1, 1], 0);
+  // Line width: app uses strokeWidth=2, convert to mm (subtle)
+  doc.setLineWidth(pxToMm(1.5) * scaleFactor);
+
+  // Dashed line matching app's strokeDasharray="4 4"
+  const dashSize = pxToMm(3) * scaleFactor;
+  doc.setLineDashPattern([dashSize, dashSize], 0);
   doc.line(x, chartY, x, chartY + chartHeightMm);
   doc.setLineDashPattern([], 0); // Reset dash pattern
 }
 
 /**
  * Render timeline header with date labels.
+ * Matches app's TimelineHeader.tsx styling.
  */
 function renderTimelineHeader(ctx: PdfRenderContext): void {
   const {
@@ -244,17 +251,14 @@ function renderTimelineHeader(ctx: PdfRenderContext): void {
     scaleFactor,
   } = ctx;
 
-  const textColor = getColor(COLORS.text, pdfOptions.grayscale);
-  const gridColor = getColor(COLORS.grid, pdfOptions.grayscale);
+  // Colors matching app's TimelineHeader.tsx
+  const textColor = getColor("#495057", pdfOptions.grayscale); // App's fill color
+  const separatorColor = getColor("#dee2e6", pdfOptions.grayscale); // App's stroke color
 
-  // Header background
-  doc.setFillColor(255, 255, 255);
+  // Header background matching app (#f8f9fa)
+  const bgColor = getColor("#f8f9fa", pdfOptions.grayscale);
+  doc.setFillColor(bgColor.r, bgColor.g, bgColor.b);
   doc.rect(chartX, chartY - headerHeightMm, chartWidthMm, headerHeightMm, "F");
-
-  // Bottom border of header
-  doc.setDrawColor(gridColor.r, gridColor.g, gridColor.b);
-  doc.setLineWidth(0.2);
-  doc.line(chartX, chartY, chartX + chartWidthMm, chartY);
 
   // Get scale configuration
   const scaleConfigs = scale.scales;
@@ -267,25 +271,34 @@ function renderTimelineHeader(ctx: PdfRenderContext): void {
     // Generate intervals for this scale level
     const intervals = generateScaleIntervals(scale, scaleConfig);
 
-    doc.setFontSize(8);
+    // Font styling matching app: row 0 is bigger/bolder
+    const fontSize = i === 0 ? 10 : 9;
+    doc.setFontSize(fontSize);
+    doc.setFont("Inter", i === 0 ? "bold" : "normal");
     doc.setTextColor(textColor.r, textColor.g, textColor.b);
 
     for (const interval of intervals) {
       const x = chartX + pxToMm(interval.startPx) * scaleFactor;
       const width = pxToMm(interval.widthPx) * scaleFactor;
 
-      // Draw separator line
-      doc.setDrawColor(gridColor.r, gridColor.g, gridColor.b);
-      doc.setLineWidth(0.1);
+      // Draw separator line (subtle, matching app)
+      doc.setDrawColor(separatorColor.r, separatorColor.g, separatorColor.b);
+      doc.setLineWidth(0.15);
       doc.line(x, rowY, x, rowY + rowHeight);
 
       // Draw label (centered)
-      const label = truncateText(interval.label, width - 2, 8);
+      const label = truncateText(interval.label, width - 2, fontSize);
       const textWidth = doc.getTextWidth(label);
       const textX = x + (width - textWidth) / 2;
-      doc.text(label, textX, rowY + rowHeight - 2);
+      const textY = rowY + rowHeight / 2 + fontSize / 3;
+      doc.text(label, textX, textY);
     }
   }
+
+  // Bottom border of header (subtle)
+  doc.setDrawColor(separatorColor.r, separatorColor.g, separatorColor.b);
+  doc.setLineWidth(0.15);
+  doc.line(chartX, chartY, chartX + chartWidthMm, chartY);
 }
 
 /** Scale interval for rendering */
@@ -372,6 +385,8 @@ function renderTaskLayer(ctx: PdfRenderContext): void {
 
 /**
  * Render a regular task bar with progress.
+ * Matches TaskBar.tsx rendering: same color for bar and progress,
+ * background has 0.8 opacity when progress shown, progress overlay is 1.0.
  */
 function renderTaskBar(
   ctx: PdfRenderContext,
@@ -387,6 +402,7 @@ function renderTaskBar(
     taskBarHeightMm,
     pdfOptions,
     scaleFactor,
+    options,
   } = ctx;
 
   const daysFromStart = calculateDuration(scale.minDate, task.startDate) - 1;
@@ -398,26 +414,47 @@ function renderTaskBar(
   const width = pxToMm(duration * scale.pixelsPerDay) * scaleFactor;
   const height = taskBarHeightMm;
 
-  // Task bar color
+  // Use task's actual color (matching the app)
   const taskColor = getColor(
     task.color || COLORS.taskDefault,
     pdfOptions.grayscale
   );
-  doc.setFillColor(taskColor.r, taskColor.g, taskColor.b);
 
-  // Draw rounded rectangle for task bar
-  const radius = Math.min(1.5, height / 4);
+  // Corner radius matches app (4px converted to mm)
+  const radius = pxToMm(TASK_RENDER_CONSTANTS.taskCornerRadius) * scaleFactor;
+
+  // Check if we should show progress
+  const showProgress = options.selectedColumns.includes("progress") || true;
+  const hasProgress = showProgress && task.progress > 0;
+
+  // Background bar - 0.8 opacity when progress is shown, 1.0 otherwise
+  // jsPDF doesn't support alpha directly, so we blend the color with white
+  if (hasProgress) {
+    // Blend color with white for 0.8 opacity effect
+    const bgOpacity = TASK_RENDER_CONSTANTS.taskBackgroundOpacity;
+    const blendedColor = {
+      r: Math.round(taskColor.r * bgOpacity + 255 * (1 - bgOpacity)),
+      g: Math.round(taskColor.g * bgOpacity + 255 * (1 - bgOpacity)),
+      b: Math.round(taskColor.b * bgOpacity + 255 * (1 - bgOpacity)),
+    };
+    doc.setFillColor(blendedColor.r, blendedColor.g, blendedColor.b);
+  } else {
+    doc.setFillColor(taskColor.r, taskColor.g, taskColor.b);
+  }
+
+  // Draw background bar with rounded corners
   doc.roundedRect(x, y, width, height, radius, radius, "F");
 
-  // Draw progress fill (always show if progress > 0)
-  if (task.progress > 0) {
+  // Draw progress overlay (full opacity, same color) if progress > 0
+  if (hasProgress) {
     const progressWidth = width * (task.progress / 100);
-    const progressColor = getColor(COLORS.taskProgress, pdfOptions.grayscale);
-    doc.setFillColor(progressColor.r, progressColor.g, progressColor.b);
+    doc.setFillColor(taskColor.r, taskColor.g, taskColor.b);
 
+    // Draw progress bar - needs to respect rounded corners on left side
     if (progressWidth >= radius * 2) {
       doc.roundedRect(x, y, progressWidth, height, radius, radius, "F");
-    } else {
+    } else if (progressWidth > 0) {
+      // Very small progress - draw simple rect that gets clipped by the visible area
       doc.rect(x, y, progressWidth, height, "F");
     }
   }
@@ -425,6 +462,8 @@ function renderTaskBar(
 
 /**
  * Render a milestone (diamond shape).
+ * Matches MilestoneDiamond component: responsive sizing based on pixelsPerDay,
+ * centered on the middle of the day.
  */
 function renderMilestone(
   ctx: PdfRenderContext,
@@ -443,42 +482,50 @@ function renderMilestone(
   } = ctx;
 
   const daysFromStart = calculateDuration(scale.minDate, task.startDate) - 1;
+
+  // Responsive size calculation matching app (min 6, max 10, based on pixelsPerDay/2)
+  const sizePx = calculateMilestoneSize(scale.pixelsPerDay);
+  const size = pxToMm(sizePx) * scaleFactor;
+
+  // Center the diamond in the middle of the day
+  const dayWidthMm = pxToMm(scale.pixelsPerDay) * scaleFactor;
   const centerX =
-    chartX + pxToMm((daysFromStart + 0.5) * scale.pixelsPerDay) * scaleFactor;
-  const centerY = chartY + rowIndex * rowHeightMm + rowHeightMm / 2;
+    chartX + pxToMm(daysFromStart * scale.pixelsPerDay) * scaleFactor + dayWidthMm / 2;
+  const centerY = chartY + rowIndex * rowHeightMm + taskBarHeightMm / 2 + (rowHeightMm - taskBarHeightMm) / 2;
 
-  const size = taskBarHeightMm * 0.7;
-  const halfSize = size / 2;
-
+  // Use task's actual color (matching the app)
   const milestoneColor = getColor(
-    task.color || COLORS.milestone,
+    task.color || COLORS.taskDefault,
     pdfOptions.grayscale
   );
   doc.setFillColor(milestoneColor.r, milestoneColor.g, milestoneColor.b);
 
-  // Draw diamond shape as a rotated square (using triangle fills)
+  // Draw diamond shape matching app's path:
+  // M centerX, centerY-size -> L centerX+size, centerY -> L centerX, centerY+size -> L centerX-size, centerY -> Z
   doc.triangle(
     centerX,
-    centerY - halfSize, // Top
-    centerX + halfSize,
+    centerY - size, // Top
+    centerX + size,
     centerY, // Right
     centerX,
-    centerY + halfSize, // Bottom
+    centerY + size, // Bottom
     "F"
   );
   doc.triangle(
     centerX,
-    centerY - halfSize, // Top
-    centerX - halfSize,
+    centerY - size, // Top
+    centerX - size,
     centerY, // Left
     centerX,
-    centerY + halfSize, // Bottom
+    centerY + size, // Bottom
     "F"
   );
 }
 
 /**
  * Render a summary task bracket.
+ * Matches SummaryBracket component: clamp shape with downward tips,
+ * rounded corners, and proper proportions.
  */
 function renderSummaryBracket(
   ctx: PdfRenderContext,
@@ -503,32 +550,55 @@ function renderSummaryBracket(
   const y =
     chartY + rowIndex * rowHeightMm + (rowHeightMm - taskBarHeightMm) / 2;
   const width = pxToMm(duration * scale.pixelsPerDay) * scaleFactor;
-  const height = taskBarHeightMm * 0.3;
-  const bracketHeight = taskBarHeightMm * 0.4;
+  const height = taskBarHeightMm;
 
-  const summaryColor = getColor(COLORS.summary, pdfOptions.grayscale);
-  doc.setFillColor(summaryColor.r, summaryColor.g, summaryColor.b);
+  // Use task's actual color (matching the app)
+  const summaryColor = getColor(
+    task.color || COLORS.taskDefault,
+    pdfOptions.grayscale
+  );
 
-  // Main bar
-  doc.rect(x, y, width, height, "F");
+  // Calculate bracket dimensions matching app constants
+  const tipHeight = height * SUMMARY_RENDER_CONSTANTS.tipHeightRatio;
+  const barThickness = height * SUMMARY_RENDER_CONSTANTS.barThicknessRatio;
+  const tipWidth = tipHeight * SUMMARY_RENDER_CONSTANTS.tipWidthFactor;
 
-  // Left bracket
-  doc.triangle(x, y, x + 2, y, x, y + bracketHeight, "F");
+  // Blend color for 0.9 opacity effect (matching app's fillOpacity={opacity * 0.9})
+  const blendedOpacity = SUMMARY_RENDER_CONSTANTS.fillOpacity;
+  const blendedColor = {
+    r: Math.round(summaryColor.r * blendedOpacity + 255 * (1 - blendedOpacity)),
+    g: Math.round(summaryColor.g * blendedOpacity + 255 * (1 - blendedOpacity)),
+    b: Math.round(summaryColor.b * blendedOpacity + 255 * (1 - blendedOpacity)),
+  };
+  doc.setFillColor(blendedColor.r, blendedColor.g, blendedColor.b);
 
-  // Right bracket
+  // Draw simplified bracket shape using jsPDF primitives
+  // Since jsPDF doesn't support complex paths with quadratic curves easily,
+  // we approximate with rectangles and triangles
+
+  // Main horizontal bar (top part of bracket)
+  doc.rect(x, y, width, barThickness, "F");
+
+  // Left tip (downward triangle)
   doc.triangle(
-    x + width,
-    y,
-    x + width - 2,
-    y,
-    x + width,
-    y + bracketHeight,
+    x, y + barThickness,                    // Top left of tip
+    x + tipWidth, y + barThickness,         // Top right of tip
+    x, y + barThickness + tipHeight,        // Bottom point
+    "F"
+  );
+
+  // Right tip (downward triangle)
+  doc.triangle(
+    x + width - tipWidth, y + barThickness, // Top left of tip
+    x + width, y + barThickness,            // Top right of tip
+    x + width, y + barThickness + tipHeight, // Bottom point
     "F"
   );
 }
 
 /**
  * Render task labels on the timeline.
+ * Matches TaskBar.tsx label positioning: vertically centered with proper offsets.
  */
 function renderTaskLabels(ctx: PdfRenderContext): void {
   const {
@@ -550,45 +620,96 @@ function renderTaskLabels(ctx: PdfRenderContext): void {
   // Skip if labels are disabled
   if (labelPosition === "none") return;
 
-  const textColor = getColor(COLORS.text, pdfOptions.grayscale);
-  doc.setTextColor(textColor.r, textColor.g, textColor.b);
-  doc.setFontSize(8);
+  // Font size - scale appropriately for PDF (use 8pt as base)
+  const fontSize = 8;
+  doc.setFontSize(fontSize);
+  doc.setFont("Inter", "normal");
+
+  // Calculate label padding in mm (matching app's 8px padding)
+  const labelPadding = pxToMm(LABEL_RENDER_CONSTANTS.padding) * scaleFactor;
 
   for (let i = 0; i < tasks.length; i++) {
     const task = tasks[i];
 
-    // Skip milestones and summaries for inline labels
-    if (task.type === "milestone" || task.type === "summary") continue;
+    // For milestones and summaries, "inside" position falls back to "after"
+    const effectivePosition: "before" | "inside" | "after" =
+      (task.type === "milestone" || task.type === "summary") &&
+      labelPosition === "inside"
+        ? "after"
+        : (labelPosition as "before" | "inside" | "after");
 
     const daysFromStart = calculateDuration(scale.minDate, task.startDate) - 1;
-    const duration = calculateDuration(task.startDate, task.endDate);
+    let barX: number;
+    let barWidth: number;
+    let barY: number;
 
-    const barX =
-      chartX + pxToMm(daysFromStart * scale.pixelsPerDay) * scaleFactor;
-    const barWidth = pxToMm(duration * scale.pixelsPerDay) * scaleFactor;
-    const barY = chartY + i * rowHeightMm + (rowHeightMm - taskBarHeightMm) / 2;
+    if (task.type === "milestone") {
+      // Milestone: position relative to diamond center
+      const dayWidthMm = pxToMm(scale.pixelsPerDay) * scaleFactor;
+      const sizePx = calculateMilestoneSize(scale.pixelsPerDay);
+      const size = pxToMm(sizePx) * scaleFactor;
+      barX = chartX + pxToMm(daysFromStart * scale.pixelsPerDay) * scaleFactor + dayWidthMm / 2 - size;
+      barWidth = size * 2;
+      barY = chartY + i * rowHeightMm + (rowHeightMm - taskBarHeightMm) / 2;
+    } else {
+      // Regular task or summary
+      const duration = calculateDuration(task.startDate, task.endDate);
+      barX = chartX + pxToMm(daysFromStart * scale.pixelsPerDay) * scaleFactor;
+      barWidth = pxToMm(duration * scale.pixelsPerDay) * scaleFactor;
+      barY = chartY + i * rowHeightMm + (rowHeightMm - taskBarHeightMm) / 2;
+    }
 
-    // Inside label (only if bar is wide enough)
-    if (labelPosition === "inside" && barWidth > 15) {
-      const label = truncateText(task.name, barWidth - 4, 8);
-      doc.setTextColor(255, 255, 255); // White text on colored bar
-      doc.text(label, barX + 2, barY + taskBarHeightMm - 2);
-      doc.setTextColor(textColor.r, textColor.g, textColor.b); // Reset
-    } else if (labelPosition === "after") {
-      // Label after the task bar
-      const label = truncateText(task.name, 50, 8);
-      doc.text(label, barX + barWidth + 2, barY + taskBarHeightMm - 2);
-    } else if (labelPosition === "before") {
-      // Label before the task bar
-      const label = truncateText(task.name, 50, 8);
-      const textWidth = doc.getTextWidth(label);
-      doc.text(label, barX - textWidth - 2, barY + taskBarHeightMm - 2);
+    // Vertical center of the task bar + font offset for visual centering
+    // Matching app: y + height/2 + fontSize/3
+    const textY = barY + taskBarHeightMm / 2 + pxToMm(fontSize * LABEL_RENDER_CONSTANTS.verticalOffsetFactor) * scaleFactor;
+
+    let textX: number;
+    let maxTextWidth: number;
+
+    switch (effectivePosition) {
+      case "before":
+        // Label before the task bar (right-aligned)
+        textX = barX - labelPadding;
+        maxTextWidth = barX - chartX - labelPadding; // Don't extend past chart edge
+        {
+          const externalColor = getColor(COLORS.textExternal, pdfOptions.grayscale);
+          doc.setTextColor(externalColor.r, externalColor.g, externalColor.b);
+          const label = truncateText(task.name, Math.max(maxTextWidth, 20), fontSize);
+          const textWidth = doc.getTextWidth(label);
+          doc.text(label, textX - textWidth, textY);
+        }
+        break;
+
+      case "inside":
+        // Label inside the task bar (white text, clipped to bar width)
+        textX = barX + labelPadding;
+        maxTextWidth = barWidth - labelPadding * 2;
+        if (maxTextWidth > pxToMm(20) * scaleFactor) {
+          const internalColor = getColor(COLORS.textInternal, pdfOptions.grayscale);
+          doc.setTextColor(internalColor.r, internalColor.g, internalColor.b);
+          const label = truncateText(task.name, maxTextWidth, fontSize);
+          doc.text(label, textX, textY);
+        }
+        break;
+
+      case "after":
+        // Label after the task bar (left-aligned)
+        textX = barX + barWidth + labelPadding;
+        maxTextWidth = 50; // Reasonable max width for after labels
+        {
+          const externalColor = getColor(COLORS.textExternal, pdfOptions.grayscale);
+          doc.setTextColor(externalColor.r, externalColor.g, externalColor.b);
+          const label = truncateText(task.name, maxTextWidth, fontSize);
+          doc.text(label, textX, textY);
+        }
+        break;
     }
   }
 }
 
 /**
  * Render dependency arrows.
+ * Matches bezierPath.ts: orthogonal routing with elbow paths and S-curves.
  */
 function renderDependencyLayer(ctx: PdfRenderContext): void {
   const {
@@ -599,13 +720,14 @@ function renderDependencyLayer(ctx: PdfRenderContext): void {
     chartX,
     chartY,
     rowHeightMm,
+    taskBarHeightMm,
     pdfOptions,
     scaleFactor,
   } = ctx;
 
   const depColor = getColor(COLORS.dependency, pdfOptions.grayscale);
   doc.setDrawColor(depColor.r, depColor.g, depColor.b);
-  doc.setLineWidth(0.3);
+  doc.setLineWidth(pxToMm(DEPENDENCY_RENDER_CONSTANTS.strokeWidth) * scaleFactor);
 
   // Build task position map
   const taskMap = new Map(tasks.map((t, i) => [t.id, { task: t, index: i }]));
@@ -619,73 +741,152 @@ function renderDependencyLayer(ctx: PdfRenderContext): void {
     const fromTask = fromData.task;
     const toTask = toData.task;
 
-    // Calculate positions
-    const fromDays = calculateDuration(scale.minDate, fromTask.endDate) - 1;
-    const toDays = calculateDuration(scale.minDate, toTask.startDate) - 1;
+    // Calculate from position: right edge of source task, vertically centered
+    const fromDuration = calculateDuration(fromTask.startDate, fromTask.endDate);
+    const fromStartDays = calculateDuration(scale.minDate, fromTask.startDate) - 1;
+    const fromTaskWidth = pxToMm(fromDuration * scale.pixelsPerDay) * scaleFactor;
+    const fromX = chartX + pxToMm(fromStartDays * scale.pixelsPerDay) * scaleFactor + fromTaskWidth;
+    const fromY = chartY + fromData.index * rowHeightMm + (rowHeightMm - taskBarHeightMm) / 2 + taskBarHeightMm / 2;
 
-    const fromX = chartX + pxToMm(fromDays * scale.pixelsPerDay) * scaleFactor;
-    const fromY = chartY + fromData.index * rowHeightMm + rowHeightMm / 2;
+    // Calculate to position: left edge of target task, vertically centered
+    const toStartDays = calculateDuration(scale.minDate, toTask.startDate) - 1;
+    const toX = chartX + pxToMm(toStartDays * scale.pixelsPerDay) * scaleFactor;
+    const toY = chartY + toData.index * rowHeightMm + (rowHeightMm - taskBarHeightMm) / 2 + taskBarHeightMm / 2;
 
-    const toX = chartX + pxToMm(toDays * scale.pixelsPerDay) * scaleFactor;
-    const toY = chartY + toData.index * rowHeightMm + rowHeightMm / 2;
-
-    // Draw simple elbow path
-    renderDependencyArrow(doc, fromX, fromY, toX, toY, depColor);
+    // Draw orthogonal path matching app's bezierPath.ts logic
+    renderOrthogonalArrow(doc, fromX, fromY, toX, toY, rowHeightMm, scaleFactor, depColor);
   }
 }
 
 /**
- * Render a single dependency arrow.
+ * Render a single dependency arrow with orthogonal routing.
+ * Matches bezierPath.ts: standard elbow or S-curve routing.
  */
-function renderDependencyArrow(
+function renderOrthogonalArrow(
   doc: jsPDF,
   fromX: number,
   fromY: number,
   toX: number,
   toY: number,
+  rowHeightMm: number,
+  scaleFactor: number,
   color: PdfColor
 ): void {
   const horizontalGap = toX - fromX;
-  const cornerRadius = 1.5;
+  const verticalGap = Math.abs(toY - fromY);
 
-  if (Math.abs(toY - fromY) < 0.5) {
-    // Same row - straight line
-    doc.line(fromX, fromY, toX, toY);
-  } else if (horizontalGap > cornerRadius * 4) {
-    // Standard elbow with corners
+  // Scale corner radius based on row height (matching app)
+  const rowHeightPx = rowHeightMm / pxToMm(1) / scaleFactor;
+  const cornerRadiusPx = getScaledCornerRadius(rowHeightPx);
+  const cornerRadius = pxToMm(cornerRadiusPx) * scaleFactor;
+
+  // Horizontal segment length (matching app's 15px)
+  const horizontalSegment = pxToMm(DEPENDENCY_RENDER_CONSTANTS.horizontalSegment) * scaleFactor;
+
+  // Arrowhead size
+  const arrowSize = pxToMm(DEPENDENCY_RENDER_CONSTANTS.arrowheadSize) * scaleFactor;
+
+  // Minimum gap for standard elbow
+  const minGapForElbow = horizontalSegment * 2 + cornerRadius * 2;
+
+  // Same row: straight line
+  if (verticalGap < 0.5) {
+    doc.line(fromX, fromY, toX - arrowSize, toY);
+    drawArrowhead(doc, toX, toY, arrowSize, color);
+    return;
+  }
+
+  const goDown = toY > fromY;
+
+  if (horizontalGap >= minGapForElbow) {
+    // Standard elbow path with two 90° turns
     const midX = (fromX + toX) / 2;
-    const goDown = toY > fromY;
 
-    // Draw path segments
+    // Horizontal from start
     doc.line(fromX, fromY, midX - cornerRadius, fromY);
 
-    // First corner (using lines for simplicity - PDF doesn't have bezier easily)
-    const vertY1 = goDown ? fromY + cornerRadius : fromY - cornerRadius;
-    const vertY2 = goDown ? toY - cornerRadius : toY + cornerRadius;
-    doc.line(midX, vertY1, midX, vertY2);
+    // First turn (approximated with short line segments since jsPDF doesn't have bezier curves easily)
+    // For simplicity, draw a corner as two connected lines
+    if (goDown) {
+      // Turn downward
+      doc.line(midX - cornerRadius, fromY, midX, fromY + cornerRadius);
+      // Vertical segment
+      doc.line(midX, fromY + cornerRadius, midX, toY - cornerRadius);
+      // Turn right
+      doc.line(midX, toY - cornerRadius, midX + cornerRadius, toY);
+    } else {
+      // Turn upward
+      doc.line(midX - cornerRadius, fromY, midX, fromY - cornerRadius);
+      // Vertical segment
+      doc.line(midX, fromY - cornerRadius, midX, toY + cornerRadius);
+      // Turn right
+      doc.line(midX, toY + cornerRadius, midX + cornerRadius, toY);
+    }
 
-    doc.line(midX + cornerRadius, toY, toX, toY);
+    // Horizontal to end (leave room for arrowhead)
+    doc.line(midX + cornerRadius, toY, toX - arrowSize, toY);
+
+  } else if (horizontalGap > 0) {
+    // Tight space - use S-curve routing
+    const firstVerticalX = fromX + horizontalSegment;
+    const secondVerticalX = toX - horizontalSegment;
+
+    // Calculate middle Y for routing between tasks
+    const minSpaceForCurves = cornerRadius * 4;
+    let middleY: number;
+    if (verticalGap < minSpaceForCurves) {
+      const offset = Math.max(minSpaceForCurves / 2, rowHeightMm * 0.4);
+      middleY = goDown
+        ? Math.max(fromY, toY) + offset
+        : Math.min(fromY, toY) - offset;
+    } else {
+      middleY = (fromY + toY) / 2;
+    }
+
+    // Draw S-curve path (simplified for PDF)
+    doc.line(fromX, fromY, firstVerticalX, fromY);
+    if (goDown) {
+      doc.line(firstVerticalX, fromY, firstVerticalX, middleY);
+      doc.line(firstVerticalX, middleY, secondVerticalX, middleY);
+      doc.line(secondVerticalX, middleY, secondVerticalX, toY);
+    } else {
+      doc.line(firstVerticalX, fromY, firstVerticalX, middleY);
+      doc.line(firstVerticalX, middleY, secondVerticalX, middleY);
+      doc.line(secondVerticalX, middleY, secondVerticalX, toY);
+    }
+    doc.line(secondVerticalX, toY, toX - arrowSize, toY);
+
   } else {
-    // Simple line for small gaps
-    doc.line(fromX, fromY, toX, toY);
+    // Overlap or backward - simple direct line
+    doc.line(fromX, fromY, toX - arrowSize, toY);
   }
 
   // Draw arrowhead
+  drawArrowhead(doc, toX, toY, arrowSize, color);
+}
+
+/**
+ * Draw arrowhead pointing right.
+ */
+function drawArrowhead(
+  doc: jsPDF,
+  x: number,
+  y: number,
+  size: number,
+  color: PdfColor
+): void {
   doc.setFillColor(color.r, color.g, color.b);
-  const arrowSize = 1.2;
   doc.triangle(
-    toX,
-    toY,
-    toX - arrowSize,
-    toY - arrowSize / 2,
-    toX - arrowSize,
-    toY + arrowSize / 2,
+    x, y,                    // Tip
+    x - size, y - size / 2,  // Top back
+    x - size, y + size / 2,  // Bottom back
     "F"
   );
 }
 
 /**
  * Render task table (left panel with task names).
+ * Includes color indicators on the left side of each row matching the app's UI.
  */
 function renderTaskTable(ctx: PdfRenderContext): void {
   const {
@@ -697,56 +898,82 @@ function renderTaskTable(ctx: PdfRenderContext): void {
     rowHeightMm,
     pdfOptions,
     headerHeightMm,
+    scaleFactor,
   } = ctx;
 
   if (taskTableWidthMm <= 0) return;
 
   const textColor = getColor(COLORS.text, pdfOptions.grayscale);
-  const gridColor = getColor(COLORS.grid, pdfOptions.grayscale);
+  const textLightColor = getColor(COLORS.textLight, pdfOptions.grayscale);
+  const headerBgColor = getColor(COLORS.headerBackground, pdfOptions.grayscale);
 
-  // Table header
-  doc.setFillColor(250, 250, 250);
+  // Color indicator width (matching app's colored bar on left)
+  const colorIndicatorWidth = pxToMm(4) * scaleFactor;
+  const tableLeftX = chartX - taskTableWidthMm;
+
+  // Table header background
+  doc.setFillColor(headerBgColor.r, headerBgColor.g, headerBgColor.b);
   doc.rect(
-    chartX - taskTableWidthMm,
+    tableLeftX,
     chartY - headerHeightMm,
     taskTableWidthMm,
     headerHeightMm,
     "F"
   );
 
+  // Header text - "Name" column header
   doc.setFontSize(8);
-  doc.setFont("helvetica", "bold");
+  doc.setFont("Inter", "bold");
+  doc.setTextColor(textLightColor.r, textLightColor.g, textLightColor.b);
+  doc.text("Name", tableLeftX + colorIndicatorWidth + 4, chartY - headerHeightMm / 2 + 1);
+
+  doc.setFont("Inter", "normal");
   doc.setTextColor(textColor.r, textColor.g, textColor.b);
-  doc.text("Task", chartX - taskTableWidthMm + 2, chartY - 3);
 
-  doc.setFont("helvetica", "normal");
+  // Indent size in mm (matching app's indent per level)
+  const indentSizeMm = pxToMm(16) * scaleFactor;
 
-  // Task names
+  // Task rows
   for (let i = 0; i < tasks.length; i++) {
     const task = tasks[i];
-    const y = chartY + i * rowHeightMm + rowHeightMm / 2 + 1;
+    const rowY = chartY + i * rowHeightMm;
 
-    // Indent for hierarchy
-    const indent = getTaskIndent(task, tasks);
-    const x = chartX - taskTableWidthMm + 2 + indent * 3;
+    // Draw color indicator bar on the left side of each row
+    const taskColor = getColor(task.color || COLORS.taskDefault, pdfOptions.grayscale);
+    doc.setFillColor(taskColor.r, taskColor.g, taskColor.b);
+    doc.rect(tableLeftX, rowY, colorIndicatorWidth, rowHeightMm, "F");
 
-    // Type indicator
-    let prefix = "";
+    // Vertically center text in row
+    const textY = rowY + rowHeightMm / 2 + 1;
+
+    // Calculate indent based on hierarchy level
+    const indentLevel = getTaskIndent(task, tasks);
+    const indentMm = indentLevel * indentSizeMm;
+    const textX = tableLeftX + colorIndicatorWidth + 4 + indentMm;
+
+    // Use bold for summary tasks to differentiate them
     if (task.type === "summary") {
-      prefix = task.open === false ? "▸ " : "▾ ";
-    } else if (task.type === "milestone") {
-      prefix = "◆ ";
+      doc.setFont("Inter", "bold");
+    } else {
+      doc.setFont("Inter", "normal");
     }
 
-    const maxWidth = taskTableWidthMm - 4 - indent * 3;
-    const label = truncateText(prefix + task.name, maxWidth, 8);
+    // Calculate available width for text (account for color indicator)
+    const maxWidth = taskTableWidthMm - colorIndicatorWidth - 8 - indentMm;
 
-    doc.text(label, x, y);
+    // Task name only (timeline shapes indicate task type)
+    const label = truncateText(task.name, maxWidth, 8);
+
+    doc.text(label, textX, textY);
   }
 
-  // Vertical separator
-  doc.setDrawColor(gridColor.r, gridColor.g, gridColor.b);
-  doc.setLineWidth(0.2);
+  // Reset font
+  doc.setFont("Inter", "normal");
+
+  // Subtle vertical separator line between table and chart
+  const separatorColor = getColor("#e9ecef", pdfOptions.grayscale);
+  doc.setDrawColor(separatorColor.r, separatorColor.g, separatorColor.b);
+  doc.setLineWidth(0.1);
   doc.line(
     chartX,
     chartY - headerHeightMm,

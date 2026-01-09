@@ -79,7 +79,11 @@ export interface PrintableArea {
  * Get page dimensions based on options.
  */
 export function getPageDimensions(options: PdfExportOptions): PageDimensions {
-  const pageSize = PDF_PAGE_SIZES[options.pageSize];
+  // Handle custom page size
+  const pageSize =
+    options.pageSize === "custom"
+      ? options.customPageSize || { width: 500, height: 300 }
+      : PDF_PAGE_SIZES[options.pageSize];
 
   // Landscape dimensions are width x height
   // Portrait dimensions are height x width
@@ -151,17 +155,10 @@ export function calculateScale(
   const contentWidthMm = pxToMm(contentWidth);
   const contentHeightMm = pxToMm(contentHeight);
 
-  let scale: number;
-
-  if (options.scaleMode === "fitToPage") {
-    // Calculate scale to fit both width and height
-    const scaleX = printable.width / contentWidthMm;
-    const scaleY = availableHeight / contentHeightMm;
-    scale = Math.min(scaleX, scaleY);
-  } else {
-    // Custom scale (percentage)
-    scale = (options.customScale || 100) / 100;
-  }
+  // Calculate scale to fit both width and height on a single page
+  const scaleX = printable.width / contentWidthMm;
+  const scaleY = availableHeight / contentHeightMm;
+  const scale = Math.min(scaleX, scaleY);
 
   // Final dimensions
   const chartWidth = contentWidthMm * scale;

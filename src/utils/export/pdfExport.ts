@@ -1,22 +1,37 @@
 /**
- * PDF Export functionality using jsPDF.
- * Generates vector PDFs from the chart data.
+ * PDF Export functionality using jsPDF + svg2pdf.js.
+ * Generates vector PDFs by converting the SVG chart to PDF.
+ *
+ * This approach ensures visual consistency between SVG and PDF exports
+ * since both use the same SVG rendering code.
  */
 
 import { jsPDF } from "jspdf";
+import "svg2pdf.js";
+import { createRoot } from "react-dom/client";
+import { createElement } from "react";
 import type { Task } from "../../types/chart.types";
 import type { Dependency } from "../../types/dependency.types";
 import type { TimelineScale } from "../timelineUtils";
-import type { ExportOptions, PdfExportOptions } from "./types";
+import type { ExportOptions, PdfExportOptions, ExportColumnKey } from "./types";
 import { sanitizeFilename } from "./sanitizeFilename";
 import {
   getPageDimensions,
   getMargins,
-  calculateScale,
-  pxToMm,
+  mmToPx,
 } from "./pdfLayout";
-import { renderChartToPdf, type PdfRenderContext } from "./pdfRenderer";
-import { getTimelineScale } from "../timelineUtils";
+import {
+  ExportRenderer,
+  calculateExportDimensions,
+  EXPORT_COLUMNS,
+} from "../../components/Export/ExportRenderer";
+import {
+  calculateTaskTableWidth,
+  getDefaultColumnWidth,
+} from "./calculations";
+import { buildFlattenedTaskList } from "../hierarchy";
+import { DENSITY_CONFIG, type UiDensity } from "../../types/preferences.types";
+import { embedInterFont } from "./fonts/fontEmbedding";
 
 /** Parameters for PDF export */
 export interface ExportToPdfParams {
@@ -33,199 +48,725 @@ export interface ExportToPdfParams {
   onProgress?: (progress: number) => void;
 }
 
-/** Row height in pixels (matches normal density) */
-const ROW_HEIGHT_PX = 36;
-const TASK_BAR_HEIGHT_PX = 26;
-const HEADER_HEIGHT_PX = 48;
-const TASK_TABLE_WIDTH_PX = 150;
+const HEADER_HEIGHT = 48;
+
+// Font family for SVG text elements
+const SVG_FONT_FAMILY = "Inter";
+
+// Tailwind slate colors
+const COLORS = {
+  textPrimary: "#1e293b",
+  textSecondary: "#475569",
+  textSummary: "#64748b",
+  textHeader: "#475569",
+  border: "#e2e8f0",
+  borderLight: "#f1f5f9",
+  headerBg: "#f8fafc",
+};
+
+// Header labels
+const HEADER_LABELS: Record<string, string> = {
+  color: "",
+  name: "Name",
+  startDate: "Start Date",
+  endDate: "End Date",
+  duration: "Duration",
+  progress: "%",
+};
 
 /**
- * Export the chart to PDF.
+ * Wait for all fonts to be loaded.
+ */
+async function waitForFonts(): Promise<void> {
+  if (document.fonts && document.fonts.ready) {
+    await document.fonts.ready;
+  }
+}
+
+/**
+ * Wait for next animation frame.
+ */
+function waitForPaint(): Promise<void> {
+  return new Promise((resolve) => {
+    requestAnimationFrame(() => {
+      requestAnimationFrame(() => resolve());
+    });
+  });
+}
+
+/**
+ * Export the chart to PDF using SVG-to-PDF conversion.
  */
 export async function exportToPdf(params: ExportToPdfParams): Promise<void> {
   const {
     tasks,
-    dependencies = [],
+    options,
     pdfOptions,
+    columnWidths,
+    currentAppZoom,
+    projectDateRange,
+    visibleDateRange,
     projectName,
     onProgress,
-    options,
   } = params;
 
   onProgress?.(5);
 
-  // Get page dimensions
-  const pageDims = getPageDimensions(pdfOptions);
-  const margins = getMargins(pdfOptions);
-
-  // Create PDF document
-  const doc = new jsPDF({
-    orientation: pdfOptions.orientation,
-    unit: "mm",
-    format: [pageDims.width, pageDims.height],
-  });
+  // Calculate dimensions
+  const dimensions = calculateExportDimensions(
+    tasks,
+    options,
+    columnWidths,
+    currentAppZoom,
+    projectDateRange,
+    visibleDateRange
+  );
 
   onProgress?.(10);
 
-  // Set metadata
-  if (pdfOptions.metadata.title || projectName) {
-    doc.setProperties({
-      title: pdfOptions.metadata.title || projectName || "Project Timeline",
-      author: pdfOptions.metadata.author || "",
-      subject: pdfOptions.metadata.subject || "Gantt Chart Export",
-      creator: "OwnChart",
+  // Create offscreen container for rendering
+  const container = document.createElement("div");
+  container.id = "export-pdf-container";
+  container.style.cssText = `
+    position: fixed;
+    left: 0;
+    top: 0;
+    width: ${dimensions.width}px;
+    height: ${dimensions.height}px;
+    overflow: hidden;
+    background: ${options.background === "white" ? "#ffffff" : "transparent"};
+    z-index: 99999;
+    opacity: 0;
+    pointer-events: none;
+  `;
+  document.body.appendChild(container);
+
+  try {
+    // Render ExportRenderer
+    const root = createRoot(container);
+
+    await new Promise<void>((resolve) => {
+      root.render(
+        createElement(ExportRenderer, {
+          tasks,
+          options,
+          columnWidths,
+          currentAppZoom,
+          projectDateRange,
+          visibleDateRange,
+        })
+      );
+      setTimeout(resolve, 100);
     });
-  }
 
-  // Calculate reserved space for header/footer
-  const headerHeight =
-    pdfOptions.header.showProjectName || pdfOptions.header.showExportDate
-      ? 8
-      : 0;
-  const footerHeight =
-    pdfOptions.footer.showProjectName || pdfOptions.footer.showExportDate
-      ? 8
-      : 0;
+    onProgress?.(25);
 
-  // Calculate chart dimensions in pixels
-  const chartScale = getChartScale(params);
-  const chartWidthPx = chartScale.totalWidth;
-  const chartHeightPx = tasks.length * ROW_HEIGHT_PX + HEADER_HEIGHT_PX;
+    await waitForFonts();
+    await waitForPaint();
 
-  // Include task table width if columns are selected
-  const hasTaskTable = options.selectedColumns.length > 0;
-  const totalWidthPx = chartWidthPx + (hasTaskTable ? TASK_TABLE_WIDTH_PX : 0);
+    container.style.opacity = "1";
+    await waitForPaint();
 
-  // Calculate scale to fit
-  const scaleResult = calculateScale(
-    totalWidthPx,
-    chartHeightPx,
-    pdfOptions,
-    headerHeight,
-    footerHeight
-  );
+    onProgress?.(40);
 
-  onProgress?.(20);
-
-  // Render header if configured
-  if (pdfOptions.header.showProjectName || pdfOptions.header.showExportDate) {
-    renderHeader(doc, pdfOptions, projectName, margins, pageDims.width);
-  }
-
-  // Calculate chart origin in mm
-  const taskTableWidthMm = hasTaskTable
-    ? pxToMm(TASK_TABLE_WIDTH_PX) * scaleResult.scale
-    : 0;
-
-  const chartX = margins.left + taskTableWidthMm + scaleResult.offsetX;
-  const chartY = margins.top + headerHeight;
-
-  // Create render context
-  const ctx: PdfRenderContext = {
-    doc,
-    scale: chartScale,
-    tasks,
-    dependencies,
-    options,
-    pdfOptions,
-    projectName,
-    chartX,
-    chartY,
-    chartWidthMm: pxToMm(chartWidthPx) * scaleResult.scale,
-    chartHeightMm: pxToMm(tasks.length * ROW_HEIGHT_PX) * scaleResult.scale,
-    taskTableWidthMm,
-    rowHeightMm: pxToMm(ROW_HEIGHT_PX) * scaleResult.scale,
-    taskBarHeightMm: pxToMm(TASK_BAR_HEIGHT_PX) * scaleResult.scale,
-    headerHeightMm: pxToMm(HEADER_HEIGHT_PX) * scaleResult.scale,
-    scaleFactor: scaleResult.scale,
-  };
-
-  onProgress?.(30);
-
-  // Render the chart
-  await renderChartToPdf(ctx, (progress) => {
-    // Map renderer progress (10-90) to overall progress (30-80)
-    onProgress?.(30 + (progress / 100) * 50);
-  });
-
-  onProgress?.(85);
-
-  // Render footer if configured
-  if (pdfOptions.footer.showProjectName || pdfOptions.footer.showExportDate) {
-    renderFooter(
-      doc,
-      pdfOptions,
-      projectName,
-      margins,
-      pageDims.width,
-      pageDims.height
+    // Extract SVG elements from the rendered DOM
+    const chartSvg = container.querySelector("svg.gantt-chart");
+    const headerSvg = container.querySelector(
+      ".export-container > div:first-child svg"
     );
+
+    if (!chartSvg) {
+      throw new Error("Could not find chart SVG element");
+    }
+
+    // Build complete SVG with task table
+    const svgElement = buildCompleteSvg(
+      chartSvg as SVGSVGElement,
+      headerSvg as SVGSVGElement | null,
+      tasks,
+      options,
+      columnWidths,
+      dimensions,
+      projectName
+    );
+
+    onProgress?.(55);
+
+    // Cleanup React
+    root.unmount();
+
+    // Get page dimensions
+    const pageDims = getPageDimensions(pdfOptions);
+    const margins = getMargins(pdfOptions);
+
+    // Calculate reserved space for header/footer
+    const headerReserved =
+      pdfOptions.header.showProjectName || pdfOptions.header.showExportDate
+        ? 10
+        : 0;
+    const footerReserved =
+      pdfOptions.footer.showProjectName || pdfOptions.footer.showExportDate
+        ? 10
+        : 0;
+
+    // Calculate available content area in mm
+    const contentWidth = pageDims.width - margins.left - margins.right;
+    const contentHeight =
+      pageDims.height -
+      margins.top -
+      margins.bottom -
+      headerReserved -
+      footerReserved;
+
+    // Calculate scale to fit SVG into content area
+    const svgWidth = dimensions.width;
+    const svgHeight = dimensions.height;
+
+    const scaleX = mmToPx(contentWidth) / svgWidth;
+    const scaleY = mmToPx(contentHeight) / svgHeight;
+    const scale = Math.min(scaleX, scaleY);
+
+    // Final dimensions in mm
+    const finalWidthMm = (svgWidth * scale) / mmToPx(1);
+    const finalHeightMm = (svgHeight * scale) / mmToPx(1);
+
+    // Center horizontally
+    const offsetX = margins.left + (contentWidth - finalWidthMm) / 2;
+    const offsetY = margins.top + headerReserved;
+
+    onProgress?.(65);
+
+    // Create PDF document
+    const doc = new jsPDF({
+      orientation: pdfOptions.orientation,
+      unit: "mm",
+      format: [pageDims.width, pageDims.height],
+    });
+
+    // Embed Inter font for svg2pdf.js
+    embedInterFont(doc);
+
+    // Set Inter as the default font for the document
+    doc.setFont("Inter", "normal");
+
+    // Set metadata
+    if (pdfOptions.metadata.title || projectName) {
+      doc.setProperties({
+        title: pdfOptions.metadata.title || projectName || "Project Timeline",
+        author: pdfOptions.metadata.author || "",
+        subject: pdfOptions.metadata.subject || "Gantt Chart Export",
+        creator: "OwnChart",
+      });
+    }
+
+    onProgress?.(70);
+
+    // Render header if configured
+    if (pdfOptions.header.showProjectName || pdfOptions.header.showExportDate) {
+      renderHeader(doc, pdfOptions, projectName, margins, pageDims.width);
+    }
+
+    // Convert SVG to PDF using svg2pdf.js
+    await doc.svg(svgElement, {
+      x: offsetX,
+      y: offsetY,
+      width: finalWidthMm,
+      height: finalHeightMm,
+      // Map all fonts to Inter
+      fontCallback: (
+        _family: string,
+        bold: boolean,
+        italic: boolean
+      ): string => {
+        // Always use Inter font
+        const style = bold ? "bold" : italic ? "italic" : "normal";
+        doc.setFont("Inter", style);
+        return "Inter";
+      },
+    });
+
+    onProgress?.(90);
+
+    // Render footer if configured
+    if (pdfOptions.footer.showProjectName || pdfOptions.footer.showExportDate) {
+      renderFooter(
+        doc,
+        pdfOptions,
+        projectName,
+        margins,
+        pageDims.width,
+        pageDims.height
+      );
+    }
+
+    // Generate filename and save
+    const filename = generatePdfFilename(projectName);
+    doc.save(filename);
+
+    onProgress?.(100);
+  } finally {
+    if (container.parentNode) {
+      container.parentNode.removeChild(container);
+    }
   }
-
-  onProgress?.(90);
-
-  // Generate filename and save
-  const filename = generatePdfFilename(projectName);
-  doc.save(filename);
-
-  onProgress?.(100);
 }
 
 /**
- * Get or create timeline scale for export.
+ * Build a complete SVG with task table rendered as native SVG elements.
  */
-function getChartScale(params: ExportToPdfParams): TimelineScale {
-  const { scale, tasks, projectDateRange, options, currentAppZoom } = params;
+function buildCompleteSvg(
+  chartSvg: SVGSVGElement,
+  headerSvg: SVGSVGElement | null,
+  tasks: Task[],
+  options: ExportOptions,
+  columnWidths: Record<string, number>,
+  dimensions: { width: number; height: number },
+  projectName?: string
+): SVGSVGElement {
+  const selectedColumns =
+    options.selectedColumns || (["name", "startDate", "endDate", "progress"] as ExportColumnKey[]);
+  const hasTaskList = selectedColumns.length > 0;
+  const taskTableWidth = hasTaskList
+    ? calculateTaskTableWidth(selectedColumns, columnWidths, options.density)
+    : 0;
 
-  // Use provided scale if available
-  if (scale) {
-    return scale;
+  const flattenedTasks = buildFlattenedTaskList(tasks, new Set<string>());
+
+  // Create root SVG
+  const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+  svg.setAttribute("xmlns", "http://www.w3.org/2000/svg");
+  svg.setAttribute("width", String(dimensions.width));
+  svg.setAttribute("height", String(dimensions.height));
+  svg.setAttribute("viewBox", `0 0 ${dimensions.width} ${dimensions.height}`);
+
+  // Title for accessibility
+  const title = document.createElementNS("http://www.w3.org/2000/svg", "title");
+  title.textContent = projectName
+    ? `Gantt chart: ${projectName}`
+    : "Gantt Chart";
+  svg.appendChild(title);
+
+  // White background
+  if (options.background === "white") {
+    const bg = document.createElementNS("http://www.w3.org/2000/svg", "rect");
+    bg.setAttribute("width", "100%");
+    bg.setAttribute("height", "100%");
+    bg.setAttribute("fill", "#ffffff");
+    svg.appendChild(bg);
   }
 
-  // Calculate scale from tasks
-  if (tasks.length === 0) {
-    const today = new Date().toISOString().split("T")[0];
-    return getTimelineScale(today, today, 1000, 1);
+  // Font declaration
+  const defs = document.createElementNS("http://www.w3.org/2000/svg", "defs");
+  const style = document.createElementNS("http://www.w3.org/2000/svg", "style");
+  style.textContent = `
+    text { font-family: Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; }
+  `;
+  defs.appendChild(style);
+  svg.appendChild(defs);
+
+  let currentY = 0;
+
+  // Render header row
+  if (options.includeHeader) {
+    if (hasTaskList) {
+      renderTaskTableHeader(
+        svg,
+        selectedColumns,
+        columnWidths,
+        taskTableWidth,
+        0,
+        0,
+        options.density
+      );
+    }
+
+    if (headerSvg) {
+      const headerGroup = document.createElementNS(
+        "http://www.w3.org/2000/svg",
+        "g"
+      );
+      headerGroup.setAttribute("transform", `translate(${taskTableWidth}, 0)`);
+      Array.from(headerSvg.childNodes).forEach((child) => {
+        headerGroup.appendChild(child.cloneNode(true));
+      });
+      setFontFamilyOnTextElements(headerGroup);
+      svg.appendChild(headerGroup);
+    }
+
+    currentY = HEADER_HEIGHT;
   }
 
-  // Get date range based on mode
-  let minDate: string;
-  let maxDate: string;
-
-  if (options.dateRangeMode === "visible" && params.visibleDateRange) {
-    minDate = params.visibleDateRange.start.toISOString().split("T")[0];
-    maxDate = params.visibleDateRange.end.toISOString().split("T")[0];
-  } else if (
-    options.dateRangeMode === "custom" &&
-    options.customDateStart &&
-    options.customDateEnd
-  ) {
-    minDate = options.customDateStart;
-    maxDate = options.customDateEnd;
-  } else if (projectDateRange) {
-    minDate = projectDateRange.start.toISOString().split("T")[0];
-    maxDate = projectDateRange.end.toISOString().split("T")[0];
-  } else {
-    // Calculate from tasks
-    minDate = tasks.reduce(
-      (min, t) => (t.startDate < min ? t.startDate : min),
-      tasks[0].startDate
+  // Render task table rows
+  if (hasTaskList) {
+    renderTaskTableRows(
+      svg,
+      flattenedTasks,
+      selectedColumns,
+      columnWidths,
+      taskTableWidth,
+      0,
+      currentY,
+      options.density
     );
-    maxDate = tasks.reduce(
-      (max, t) => (t.endDate > max ? t.endDate : max),
-      tasks[0].endDate
+  }
+
+  // Add timeline chart
+  const chartGroup = document.createElementNS(
+    "http://www.w3.org/2000/svg",
+    "g"
+  );
+  chartGroup.setAttribute(
+    "transform",
+    `translate(${taskTableWidth}, ${currentY})`
+  );
+  Array.from(chartSvg.childNodes).forEach((child) => {
+    chartGroup.appendChild(child.cloneNode(true));
+  });
+  setFontFamilyOnTextElements(chartGroup);
+  svg.appendChild(chartGroup);
+
+  return svg;
+}
+
+/**
+ * Set font-family attribute on all text and tspan elements.
+ * This ensures svg2pdf.js uses the embedded Inter font.
+ */
+function setFontFamilyOnTextElements(element: Element): void {
+  // Handle SVG namespace - tagName can be lowercase or uppercase
+  const tagName = element.tagName?.toLowerCase() || "";
+  const localName = element.localName?.toLowerCase() || tagName;
+
+  // Set font-family on text and tspan elements
+  if (localName === "text" || localName === "tspan") {
+    // Remove any existing font-family to ensure our value takes precedence
+    element.removeAttribute("font-family");
+    element.setAttribute("font-family", SVG_FONT_FAMILY);
+
+    // Also set as style to be extra sure
+    const currentStyle = element.getAttribute("style") || "";
+    if (!currentStyle.includes("font-family")) {
+      element.setAttribute(
+        "style",
+        currentStyle
+          ? `${currentStyle}; font-family: ${SVG_FONT_FAMILY};`
+          : `font-family: ${SVG_FONT_FAMILY};`
+      );
+    }
+  }
+
+  // Check for style attribute that might contain font-family
+  if (element.hasAttribute("style")) {
+    const style = element.getAttribute("style") || "";
+    // Replace any font-family in inline styles
+    const newStyle = style.replace(
+      /font-family:\s*[^;]+;?/gi,
+      `font-family: ${SVG_FONT_FAMILY};`
     );
+    if (newStyle !== style) {
+      element.setAttribute("style", newStyle);
+    }
   }
 
-  // Determine zoom level based on mode
-  let zoom: number;
-  if (options.zoomMode === "custom") {
-    zoom = options.timelineZoom;
-  } else {
-    zoom = currentAppZoom;
+  // Process all child elements
+  Array.from(element.children).forEach((child) => {
+    setFontFamilyOnTextElements(child);
+  });
+}
+
+/**
+ * Render task table header as SVG elements.
+ */
+function renderTaskTableHeader(
+  svg: SVGSVGElement,
+  selectedColumns: ExportColumnKey[],
+  columnWidths: Record<string, number>,
+  totalWidth: number,
+  x: number,
+  y: number,
+  density: UiDensity
+): void {
+  const group = document.createElementNS("http://www.w3.org/2000/svg", "g");
+  group.setAttribute("class", "task-table-header");
+
+  // Header background
+  const bg = document.createElementNS("http://www.w3.org/2000/svg", "rect");
+  bg.setAttribute("x", String(x));
+  bg.setAttribute("y", String(y));
+  bg.setAttribute("width", String(totalWidth));
+  bg.setAttribute("height", String(HEADER_HEIGHT));
+  bg.setAttribute("fill", COLORS.headerBg);
+  group.appendChild(bg);
+
+  // Header border
+  const border = document.createElementNS("http://www.w3.org/2000/svg", "line");
+  border.setAttribute("x1", String(x));
+  border.setAttribute("y1", String(y + HEADER_HEIGHT));
+  border.setAttribute("x2", String(x + totalWidth));
+  border.setAttribute("y2", String(y + HEADER_HEIGHT));
+  border.setAttribute("stroke", COLORS.border);
+  border.setAttribute("stroke-width", "1");
+  group.appendChild(border);
+
+  // Column headers
+  let colX = x;
+  for (const key of selectedColumns) {
+    const colWidth = columnWidths[key] || getDefaultColumnWidth(key, density);
+    const label = HEADER_LABELS[key] || "";
+
+    if (label) {
+      const text = document.createElementNS(
+        "http://www.w3.org/2000/svg",
+        "text"
+      );
+      text.setAttribute("x", String(colX + 12));
+      text.setAttribute("y", String(y + HEADER_HEIGHT / 2 + 4));
+      text.setAttribute("fill", COLORS.textHeader);
+      text.setAttribute("font-family", SVG_FONT_FAMILY);
+      text.setAttribute("font-size", "11");
+      text.setAttribute("font-weight", "bold");
+      text.setAttribute("letter-spacing", "0.05em");
+      text.textContent = label.toUpperCase();
+      group.appendChild(text);
+    }
+
+    // Column separator
+    const sep = document.createElementNS("http://www.w3.org/2000/svg", "line");
+    sep.setAttribute("x1", String(colX + colWidth));
+    sep.setAttribute("y1", String(y));
+    sep.setAttribute("x2", String(colX + colWidth));
+    sep.setAttribute("y2", String(y + HEADER_HEIGHT));
+    sep.setAttribute("stroke", COLORS.border);
+    sep.setAttribute("stroke-width", "1");
+    group.appendChild(sep);
+
+    colX += colWidth;
   }
 
-  return getTimelineScale(minDate, maxDate, 1000, zoom);
+  svg.appendChild(group);
+}
+
+/**
+ * Render task table rows as SVG elements.
+ */
+function renderTaskTableRows(
+  svg: SVGSVGElement,
+  flattenedTasks: Array<{ task: Task; level: number; hasChildren: boolean }>,
+  selectedColumns: ExportColumnKey[],
+  columnWidths: Record<string, number>,
+  totalWidth: number,
+  x: number,
+  startY: number,
+  density: UiDensity
+): void {
+  const densityConfig = DENSITY_CONFIG[density];
+  const rowHeight = densityConfig.rowHeight;
+  const indentSize = densityConfig.indentSize;
+  const colorBarHeight = densityConfig.colorBarHeight;
+
+  const group = document.createElementNS("http://www.w3.org/2000/svg", "g");
+  group.setAttribute("class", "task-table-rows");
+
+  // Right border
+  const tableBorder = document.createElementNS(
+    "http://www.w3.org/2000/svg",
+    "line"
+  );
+  tableBorder.setAttribute("x1", String(x + totalWidth));
+  tableBorder.setAttribute("y1", String(startY));
+  tableBorder.setAttribute(
+    "x2",
+    String(x + totalWidth)
+  );
+  tableBorder.setAttribute(
+    "y2",
+    String(startY + flattenedTasks.length * rowHeight)
+  );
+  tableBorder.setAttribute("stroke", COLORS.border);
+  tableBorder.setAttribute("stroke-width", "1");
+  group.appendChild(tableBorder);
+
+  flattenedTasks.forEach((flattenedTask, index) => {
+    const task = flattenedTask.task;
+    const level = flattenedTask.level;
+    const rowY = startY + index * rowHeight;
+
+    // Row border
+    const rowBorder = document.createElementNS(
+      "http://www.w3.org/2000/svg",
+      "line"
+    );
+    rowBorder.setAttribute("x1", String(x));
+    rowBorder.setAttribute("y1", String(rowY + rowHeight));
+    rowBorder.setAttribute("x2", String(x + totalWidth));
+    rowBorder.setAttribute("y2", String(rowY + rowHeight));
+    rowBorder.setAttribute("stroke", COLORS.borderLight);
+    rowBorder.setAttribute("stroke-width", "1");
+    group.appendChild(rowBorder);
+
+    let colX = x;
+    for (const key of selectedColumns) {
+      const col = EXPORT_COLUMNS.find((c) => c.key === key);
+      if (!col) continue;
+
+      const colWidth = columnWidths[key] || getDefaultColumnWidth(key, density);
+
+      if (key === "color") {
+        // Color indicator
+        const colorBar = document.createElementNS(
+          "http://www.w3.org/2000/svg",
+          "rect"
+        );
+        colorBar.setAttribute("x", String(colX + (colWidth - 6) / 2));
+        colorBar.setAttribute(
+          "y",
+          String(rowY + (rowHeight - colorBarHeight) / 2)
+        );
+        colorBar.setAttribute("width", "6");
+        colorBar.setAttribute("height", String(colorBarHeight));
+        colorBar.setAttribute("rx", "3");
+        colorBar.setAttribute("fill", task.color || "#14b8a6");
+        group.appendChild(colorBar);
+      } else if (key === "name") {
+        const hasChildren = flattenedTask.hasChildren;
+
+        let currentX = colX + 12 + level * indentSize;
+
+        // Expand/collapse arrow for summary tasks
+        if (hasChildren && task.type === "summary") {
+          const arrowText = document.createElementNS(
+            "http://www.w3.org/2000/svg",
+            "text"
+          );
+          arrowText.setAttribute("x", String(currentX));
+          arrowText.setAttribute("y", String(rowY + rowHeight / 2 + 4));
+          arrowText.setAttribute("fill", COLORS.textSecondary);
+          arrowText.setAttribute("font-family", SVG_FONT_FAMILY);
+          arrowText.setAttribute("font-size", "11");
+          arrowText.textContent = "▼";
+          group.appendChild(arrowText);
+        }
+        currentX += 16;
+
+        // Task type icon
+        const iconY = rowY + (rowHeight - 16) / 2;
+        const iconGroup = document.createElementNS(
+          "http://www.w3.org/2000/svg",
+          "g"
+        );
+        iconGroup.setAttribute(
+          "transform",
+          `translate(${currentX}, ${iconY}) scale(0.0625)`
+        );
+
+        const iconPath = document.createElementNS(
+          "http://www.w3.org/2000/svg",
+          "path"
+        );
+        iconPath.setAttribute("fill", COLORS.textSecondary);
+
+        if (task.type === "milestone") {
+          iconPath.setAttribute(
+            "d",
+            "M235.33,116.72,139.28,20.66a16,16,0,0,0-22.56,0l-96,96.06a16,16,0,0,0,0,22.56l96.05,96.06a16,16,0,0,0,22.56,0l96.05-96.06a16,16,0,0,0,0-22.56ZM128,224,32,128,128,32l96,96Z"
+          );
+        } else if (task.type === "summary") {
+          iconPath.setAttribute(
+            "d",
+            "M216,72H130.67L102.93,51.2a16.12,16.12,0,0,0-9.6-3.2H40A16,16,0,0,0,24,64V200a16,16,0,0,0,16,16H216a16,16,0,0,0,16-16V88A16,16,0,0,0,216,72ZM40,64H93.33l21.34,16H40ZM216,200H40V96H216Z"
+          );
+        } else {
+          iconPath.setAttribute(
+            "d",
+            "M208,32H48A16,16,0,0,0,32,48V208a16,16,0,0,0,16,16H208a16,16,0,0,0,16-16V48A16,16,0,0,0,208,32Zm0,176H48V48H208V208Zm-32.49-101.49-72,72a12,12,0,0,1-17,0l-32-32a12,12,0,0,1,17-17L96,154l63.51-63.52a12,12,0,0,1,17,17Z"
+          );
+        }
+
+        iconGroup.appendChild(iconPath);
+        group.appendChild(iconGroup);
+
+        currentX += 20;
+
+        // Task name
+        const text = document.createElementNS(
+          "http://www.w3.org/2000/svg",
+          "text"
+        );
+        text.setAttribute("x", String(currentX));
+        text.setAttribute("y", String(rowY + rowHeight / 2 + 4));
+        text.setAttribute("fill", COLORS.textPrimary);
+        text.setAttribute("font-family", SVG_FONT_FAMILY);
+        text.setAttribute("font-size", "13");
+        text.textContent = task.name || `Task ${index + 1}`;
+        group.appendChild(text);
+      } else {
+        // Other columns
+        const isSummary = task.type === "summary";
+        const isMilestone = task.type === "milestone";
+        const useSummaryStyle =
+          isSummary &&
+          (key === "startDate" || key === "endDate" || key === "duration");
+
+        let value = "";
+        if (key === "startDate") {
+          value = task.startDate || "";
+        } else if (key === "endDate") {
+          value = isMilestone ? "" : task.endDate || "";
+        } else if (key === "duration") {
+          if (isMilestone) {
+            value = "";
+          } else if (
+            isSummary &&
+            task.duration !== undefined &&
+            task.duration > 0
+          ) {
+            value = `${task.duration} days`;
+          } else if (!isSummary && task.duration !== undefined) {
+            value = `${task.duration}`;
+          }
+        } else if (key === "progress") {
+          value = task.progress !== undefined ? `${task.progress}%` : "";
+        }
+
+        if (value) {
+          const text = document.createElementNS(
+            "http://www.w3.org/2000/svg",
+            "text"
+          );
+          text.setAttribute("x", String(colX + 12));
+          text.setAttribute("y", String(rowY + rowHeight / 2 + 4));
+          text.setAttribute(
+            "fill",
+            useSummaryStyle ? COLORS.textSummary : COLORS.textSecondary
+          );
+          text.setAttribute("font-family", SVG_FONT_FAMILY);
+          text.setAttribute("font-size", "13");
+          if (useSummaryStyle) {
+            text.setAttribute("font-style", "italic");
+          }
+          text.textContent = value;
+          group.appendChild(text);
+        }
+      }
+
+      // Column separator
+      const sep = document.createElementNS(
+        "http://www.w3.org/2000/svg",
+        "line"
+      );
+      sep.setAttribute("x1", String(colX + colWidth));
+      sep.setAttribute("y1", String(rowY));
+      sep.setAttribute("x2", String(colX + colWidth));
+      sep.setAttribute("y2", String(rowY + rowHeight));
+      sep.setAttribute("stroke", COLORS.borderLight);
+      sep.setAttribute("stroke-width", "1");
+      group.appendChild(sep);
+
+      colX += colWidth;
+    }
+  });
+
+  svg.appendChild(group);
 }
 
 /**
@@ -281,9 +822,17 @@ function renderFooter(
 
 /**
  * Generate filename for PDF export.
+ * Format: {projectName}-YYYYMMDD-HHMMSS.pdf (same as PNG)
  */
 function generatePdfFilename(projectName?: string): string {
+  const now = new Date();
+  const year = now.getFullYear();
+  const month = String(now.getMonth() + 1).padStart(2, "0");
+  const day = String(now.getDate()).padStart(2, "0");
+  const hours = String(now.getHours()).padStart(2, "0");
+  const minutes = String(now.getMinutes()).padStart(2, "0");
+  const seconds = String(now.getSeconds()).padStart(2, "0");
+
   const baseName = projectName ? sanitizeFilename(projectName) : "gantt-chart";
-  const timestamp = new Date().toISOString().slice(0, 10);
-  return `${baseName}-${timestamp}.pdf`;
+  return `${baseName}-${year}${month}${day}-${hours}${minutes}${seconds}.pdf`;
 }

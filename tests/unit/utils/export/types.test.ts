@@ -37,6 +37,18 @@ describe("export types", () => {
       expect(PDF_PAGE_SIZES.tabloid).toEqual({ width: 432, height: 279 });
     });
 
+    it("contains A2 dimensions", () => {
+      expect(PDF_PAGE_SIZES.a2).toEqual({ width: 594, height: 420 });
+    });
+
+    it("contains A1 dimensions", () => {
+      expect(PDF_PAGE_SIZES.a1).toEqual({ width: 841, height: 594 });
+    });
+
+    it("contains A0 dimensions", () => {
+      expect(PDF_PAGE_SIZES.a0).toEqual({ width: 1189, height: 841 });
+    });
+
     it("has all sizes in landscape orientation (width > height)", () => {
       Object.values(PDF_PAGE_SIZES).forEach((dims) => {
         expect(dims.width).toBeGreaterThan(dims.height);
@@ -95,8 +107,11 @@ describe("export types", () => {
       expect(DEFAULT_PDF_OPTIONS.orientation).toBe("landscape");
     });
 
-    it("has fitToPage as default scale mode", () => {
-      expect(DEFAULT_PDF_OPTIONS.scaleMode).toBe("fitToPage");
+    it("has default custom page size", () => {
+      expect(DEFAULT_PDF_OPTIONS.customPageSize).toEqual({
+        width: 500,
+        height: 300,
+      });
     });
 
     it("has normal as default margin preset", () => {

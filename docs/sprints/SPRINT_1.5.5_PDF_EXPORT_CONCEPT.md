@@ -3315,10 +3315,76 @@ export const DEFAULT_SVG_OPTIONS: SvgExportOptions = {
 | 2026-01-09 | UI Components complete: ExportFormatSelector, PdfExportOptions, SvgExportOptions | Done |
 | 2026-01-09 | All 834 unit tests passing, lint clean | Done |
 | 2026-01-09 | Added comprehensive unit tests: sanitizeFilename, types, ExportFormatSelector, PdfExportOptions, SvgExportOptions - 982 tests total | Done |
+| 2026-01-09 | PDF styling differences identified: jsPDF requires manual style replication, doesn't use CSS | Issue |
+| 2026-01-09 | Embedded Inter font (Base64) for consistent typography between app and PDF | Done |
 
 ---
 
-**Document Version:** 3.2 (IMPLEMENTED)
+### Future Improvement: SVG-to-PDF Approach
+
+> **Problem:** Der aktuelle PDF-Export mit jsPDF erfordert manuelles Nachbauen aller Styles, was zu visuellen Unterschieden zwischen App und PDF führt. jsPDF versteht kein CSS.
+
+#### Alternative: svg2pdf.js
+
+Eine elegantere Lösung wäre die Verwendung von `svg2pdf.js`, einem jsPDF-Plugin, das SVG-Elemente direkt in PDF konvertiert:
+
+```typescript
+import { jsPDF } from "jspdf";
+import "svg2pdf.js";
+
+// SVG-Element aus dem DOM extrahieren (mit allen CSS-Styles)
+const svgElement = document.querySelector(".gantt-chart svg");
+
+// Direkt zu PDF konvertieren - behält alle Inline-Styles
+const doc = new jsPDF({
+  orientation: "landscape",
+  unit: "mm",
+  format: "a4"
+});
+
+await doc.svg(svgElement, {
+  x: margin,
+  y: margin,
+  width: contentWidth,
+  height: contentHeight
+});
+
+doc.save("chart.pdf");
+```
+
+#### Vorteile
+
+| Aspekt | Aktuell (jsPDF manuell) | svg2pdf.js |
+|--------|------------------------|------------|
+| Style-Konsistenz | ❌ Manuell dupliziert | ✅ Automatisch aus DOM |
+| Wartbarkeit | ❌ Zwei Code-Pfade | ✅ Single Source of Truth |
+| Vektor-Output | ✅ Ja | ✅ Ja |
+| Text selektierbar | ✅ Ja | ✅ Ja |
+| Client-side | ✅ Ja | ✅ Ja |
+
+#### Nachteile / Offene Fragen
+
+1. **SVG muss im DOM sein**: Chart muss gerendert sein (kein virtuelles Rendering)
+2. **CSS-zu-Inline**: Computed Styles müssen ggf. zu Inline-Styles konvertiert werden
+3. **Multi-Page**: Komplexer bei mehrseitigen PDFs
+4. **Performance**: Bei sehr großen Charts zu evaluieren
+
+#### Implementierungsschritte (für V2.0)
+
+1. `svg2pdf.js` als Dependency hinzufügen
+2. SVG-Element aus ChartCanvas extrahieren (mit computed styles)
+3. Task-Table separat als SVG rendern oder als jsPDF-Text beibehalten
+4. Multi-Page-Logic anpassen (SVG pro Seite)
+5. Testen mit verschiedenen Chart-Größen
+
+#### Links
+
+- [svg2pdf.js GitHub](https://github.com/yWorks/svg2pdf.js)
+- [jsPDF mit svg2pdf.js Beispiel](https://github.com/yWorks/svg2pdf.js#usage)
+
+---
+
+**Document Version:** 3.3 (IMPLEMENTED + Future Ideas)
 **Created:** 2026-01-08
 **Last Updated:** 2026-01-09 (Implementation Complete)
 **Author:** Claude AI (with Martin)
