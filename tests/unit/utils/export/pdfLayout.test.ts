@@ -15,8 +15,6 @@ import {
   getPrintableArea,
   calculateScale,
   hexToRgb,
-  toGrayscale,
-  getColor,
   truncateText,
   PT_PER_MM,
   PT_PER_PX,
@@ -31,7 +29,6 @@ const defaultOptions: PdfExportOptions = {
   marginPreset: "normal",
   header: { showProjectName: false, showExportDate: false },
   footer: { showProjectName: false, showExportDate: false },
-  grayscale: false,
   metadata: {},
 };
 
@@ -359,58 +356,6 @@ describe("pdfLayout", () => {
 
     it("returns gray for short hex format (not supported)", () => {
       expect(hexToRgb("#f00")).toEqual({ r: 128, g: 128, b: 128 });
-    });
-  });
-
-  describe("toGrayscale", () => {
-    it("converts black to black", () => {
-      expect(toGrayscale({ r: 0, g: 0, b: 0 })).toEqual({ r: 0, g: 0, b: 0 });
-    });
-
-    it("converts white to white", () => {
-      expect(toGrayscale({ r: 255, g: 255, b: 255 })).toEqual({
-        r: 255,
-        g: 255,
-        b: 255,
-      });
-    });
-
-    it("converts pure red using luminosity formula", () => {
-      const gray = toGrayscale({ r: 255, g: 0, b: 0 });
-      // 0.21 * 255 = 53.55 → 54
-      expect(gray.r).toBeCloseTo(54, 0);
-      expect(gray.g).toBe(gray.r);
-      expect(gray.b).toBe(gray.r);
-    });
-
-    it("converts pure green using luminosity formula", () => {
-      const gray = toGrayscale({ r: 0, g: 255, b: 0 });
-      // 0.72 * 255 = 183.6 → 184
-      expect(gray.r).toBeCloseTo(184, 0);
-      expect(gray.g).toBe(gray.r);
-      expect(gray.b).toBe(gray.r);
-    });
-
-    it("converts pure blue using luminosity formula", () => {
-      const gray = toGrayscale({ r: 0, g: 0, b: 255 });
-      // 0.07 * 255 = 17.85 → 18
-      expect(gray.r).toBeCloseTo(18, 0);
-      expect(gray.g).toBe(gray.r);
-      expect(gray.b).toBe(gray.r);
-    });
-  });
-
-  describe("getColor", () => {
-    it("returns original color when grayscale is false", () => {
-      const color = getColor("#ff5500", false);
-      expect(color).toEqual({ r: 255, g: 85, b: 0 });
-    });
-
-    it("returns grayscale color when grayscale is true", () => {
-      const color = getColor("#ff5500", true);
-      // All RGB values should be equal
-      expect(color.r).toBe(color.g);
-      expect(color.g).toBe(color.b);
     });
   });
 

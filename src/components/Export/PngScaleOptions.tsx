@@ -85,6 +85,18 @@ export function PngScaleOptions({
 
   return (
     <div>
+      {/* Sub-section Header */}
+      <div className="flex items-center gap-2 mb-3">
+        <SlidersHorizontal
+          size={16}
+          weight="duotone"
+          className="text-slate-500"
+        />
+        <h4 className="text-xs font-semibold text-slate-600 uppercase tracking-wide">
+          Timeline Scale
+        </h4>
+      </div>
+
       {/* Zoom Mode Selection */}
       <div className="space-y-1.5 mb-4">
         {/* Use Current View */}

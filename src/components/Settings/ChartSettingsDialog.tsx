@@ -13,6 +13,7 @@ import {
   Briefcase,
   Globe,
   MagnifyingGlass,
+  Tag,
 } from "@phosphor-icons/react";
 import { Modal } from "../common/Modal";
 import { useUIStore } from "../../store/slices/uiSlice";
@@ -99,6 +100,12 @@ export function ChartSettingsDialog(): JSX.Element | null {
   const holidayRegion = useChartStore((state) => state.holidayRegion);
   const setHolidayRegion = useChartStore((state) => state.setHolidayRegion);
 
+  // Project metadata
+  const projectTitle = useChartStore((state) => state.projectTitle);
+  const setProjectTitle = useChartStore((state) => state.setProjectTitle);
+  const projectAuthor = useChartStore((state) => state.projectAuthor);
+  const setProjectAuthor = useChartStore((state) => state.setProjectAuthor);
+
   // Country search state
   const [countrySearch, setCountrySearch] = useState("");
   const [isCountryDropdownOpen, setIsCountryDropdownOpen] = useState(false);
@@ -159,6 +166,54 @@ export function ChartSettingsDialog(): JSX.Element | null {
       widthClass="max-w-lg"
     >
       <div className="space-y-6">
+        {/* Project Metadata Section */}
+        <div>
+          <div className="flex items-center gap-2 mb-4">
+            <Tag size={20} weight="duotone" className="text-slate-500" />
+            <h3 className="text-sm font-semibold text-slate-900 uppercase tracking-wide">
+              Project Info
+            </h3>
+          </div>
+
+          <div className="space-y-3">
+            <div>
+              <label
+                htmlFor="project-title"
+                className="block text-xs text-slate-500 mb-1"
+              >
+                Title
+              </label>
+              <input
+                id="project-title"
+                type="text"
+                value={projectTitle}
+                onChange={(e) => setProjectTitle(e.target.value)}
+                placeholder="Project title (used in PDF exports)"
+                className="w-full px-3 py-2 text-sm bg-white border border-slate-200 rounded-lg focus:ring-2 focus:ring-slate-400/40 focus:border-slate-400 transition-all"
+              />
+            </div>
+            <div>
+              <label
+                htmlFor="project-author"
+                className="block text-xs text-slate-500 mb-1"
+              >
+                Author
+              </label>
+              <input
+                id="project-author"
+                type="text"
+                value={projectAuthor}
+                onChange={(e) => setProjectAuthor(e.target.value)}
+                placeholder="Your name (used in PDF metadata)"
+                className="w-full px-3 py-2 text-sm bg-white border border-slate-200 rounded-lg focus:ring-2 focus:ring-slate-400/40 focus:border-slate-400 transition-all"
+              />
+            </div>
+          </div>
+        </div>
+
+        {/* Divider */}
+        <div className="border-t border-slate-200" />
+
         {/* Timeline Display Section */}
         <div>
           <div className="flex items-center gap-2 mb-4">

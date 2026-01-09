@@ -5,13 +5,19 @@
 import { describe, it, expect, vi } from "vitest";
 import { render, screen, fireEvent } from "@testing-library/react";
 import { PdfExportOptions } from "../../../../src/components/Export/PdfExportOptions";
-import { DEFAULT_PDF_OPTIONS } from "../../../../src/utils/export/types";
+import {
+  DEFAULT_PDF_OPTIONS,
+  DEFAULT_EXPORT_OPTIONS,
+} from "../../../../src/utils/export/types";
 
 describe("PdfExportOptions", () => {
   const defaultProps = {
     options: { ...DEFAULT_PDF_OPTIONS },
     onChange: vi.fn(),
-    projectName: "Test Project",
+    exportOptions: { ...DEFAULT_EXPORT_OPTIONS },
+    onExportOptionsChange: vi.fn(),
+    currentAppZoom: 1,
+    taskCount: 10,
   };
 
   beforeEach(() => {
@@ -30,9 +36,14 @@ describe("PdfExportOptions", () => {
       expect(screen.getByText("Portrait")).toBeInTheDocument();
     });
 
-    it("renders advanced options button", () => {
+    it("renders page setup section directly", () => {
       render(<PdfExportOptions {...defaultProps} />);
-      expect(screen.getByText("Advanced Options")).toBeInTheDocument();
+      expect(screen.getByText("Page Setup")).toBeInTheDocument();
+    });
+
+    it("renders header/footer section directly", () => {
+      render(<PdfExportOptions {...defaultProps} />);
+      expect(screen.getByText("Header / Footer")).toBeInTheDocument();
     });
   });
 
@@ -60,34 +71,10 @@ describe("PdfExportOptions", () => {
     });
   });
 
-  describe("advanced options", () => {
-    it("expands advanced options when clicked", () => {
-      render(<PdfExportOptions {...defaultProps} />);
-
-      fireEvent.click(screen.getByText("Advanced Options"));
-
-      // After expanding, should show PDF Metadata
-      expect(screen.getByText("PDF Metadata")).toBeInTheDocument();
-    });
-
-    it("renders grayscale option in advanced section", () => {
-      render(<PdfExportOptions {...defaultProps} />);
-
-      fireEvent.click(screen.getByText("Advanced Options"));
-
-      expect(screen.getByText("Grayscale")).toBeInTheDocument();
-    });
-  });
-
   describe("props handling", () => {
-    it("uses provided project name", () => {
-      render(<PdfExportOptions {...defaultProps} projectName="My Project" />);
-      // Component should render with the project name available
-      expect(document.body).toBeInTheDocument();
-    });
-
-    it("handles missing project name", () => {
-      render(<PdfExportOptions {...defaultProps} projectName={undefined} />);
+    it("renders with default props", () => {
+      render(<PdfExportOptions {...defaultProps} />);
+      // Component should render without issues
       expect(document.body).toBeInTheDocument();
     });
   });

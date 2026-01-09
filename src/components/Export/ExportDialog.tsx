@@ -21,12 +21,12 @@ import { ExportFormatSelector } from "./ExportFormatSelector";
 import { SharedExportOptions } from "./SharedExportOptions";
 import { PngScaleOptions } from "./PngScaleOptions";
 import { PdfExportOptions } from "./PdfExportOptions";
-import { SvgExportOptions } from "./SvgExportOptions";
 import { useUIStore } from "../../store/slices/uiSlice";
 import { useTaskStore } from "../../store/slices/taskSlice";
 import { useChartStore } from "../../store/slices/chartSlice";
 import { useFileStore } from "../../store/slices/fileSlice";
 import { useDependencyStore } from "../../store/slices/dependencySlice";
+import { useUserPreferencesStore } from "../../store/slices/userPreferencesSlice";
 import {
   exportToPng,
   calculateExportDimensions,
@@ -51,7 +51,6 @@ export function ExportDialog(): JSX.Element | null {
     setExportFormat,
     setExportOptions,
     setPdfExportOptions,
-    setSvgExportOptions,
     setIsExporting,
     setExportProgress,
     setExportError,
@@ -72,8 +71,15 @@ export function ExportDialog(): JSX.Element | null {
   // Get dependencies for export
   const dependencies = useDependencyStore((state) => state.dependencies);
 
+  // Get date format preference
+  const dateFormat = useUserPreferencesStore((state) => state.preferences.dateFormat);
+
   // Get current app zoom level
   const currentAppZoom = useChartStore((state) => state.zoom);
+
+  // Get project metadata from chart settings
+  const projectTitle = useChartStore((state) => state.projectTitle);
+  const projectAuthor = useChartStore((state) => state.projectAuthor);
 
   // Get scale and viewport for visible range calculation
   const scale = useChartStore((state) => state.scale);
@@ -205,6 +211,9 @@ export function ExportDialog(): JSX.Element | null {
           projectDateRange,
           visibleDateRange,
           projectName,
+          projectTitle,
+          projectAuthor,
+          dateFormat,
           onProgress: setExportProgress,
         });
       } else if (selectedExportFormat === "svg") {
@@ -241,6 +250,9 @@ export function ExportDialog(): JSX.Element | null {
     projectDateRange,
     visibleDateRange,
     projectName,
+    projectTitle,
+    projectAuthor,
+    dateFormat,
     closeExportDialog,
     setIsExporting,
     setExportProgress,
@@ -393,32 +405,30 @@ export function ExportDialog(): JSX.Element | null {
           onFormatChange={setExportFormat}
         />
 
-        {/* Format-specific Options Panel */}
-        <div className="relative p-4 rounded-xl border border-slate-200 overflow-hidden">
-          {/* Teal accent stripe */}
-          <div className="absolute left-0 top-0 bottom-0 w-1 bg-teal-500" />
-          {/* Panel Header */}
-          <div className="flex items-center gap-2 mb-4 pb-3 border-b border-slate-200">
+        {/* Format-specific Options */}
+        <div>
+          {/* Section Header */}
+          <div className="flex items-center gap-2 mb-4">
             {selectedExportFormat === "png" && (
               <>
-                <Image size={18} weight="duotone" className="text-teal-600" />
-                <span className="text-sm font-semibold text-slate-700 uppercase tracking-wide">
+                <Image size={20} weight="duotone" className="text-slate-600" />
+                <span className="text-base font-semibold text-slate-800">
                   PNG Settings
                 </span>
               </>
             )}
             {selectedExportFormat === "pdf" && (
               <>
-                <FilePdf size={18} weight="duotone" className="text-teal-600" />
-                <span className="text-sm font-semibold text-slate-700 uppercase tracking-wide">
+                <FilePdf size={20} weight="duotone" className="text-slate-600" />
+                <span className="text-base font-semibold text-slate-800">
                   PDF Settings
                 </span>
               </>
             )}
             {selectedExportFormat === "svg" && (
               <>
-                <FileCode size={18} weight="duotone" className="text-teal-600" />
-                <span className="text-sm font-semibold text-slate-700 uppercase tracking-wide">
+                <FileCode size={20} weight="duotone" className="text-slate-600" />
+                <span className="text-base font-semibold text-slate-800">
                   SVG Settings
                 </span>
               </>
@@ -440,41 +450,31 @@ export function ExportDialog(): JSX.Element | null {
             <PdfExportOptions
               options={pdfExportOptions}
               onChange={setPdfExportOptions}
-              projectName={projectName}
+              exportOptions={exportOptions}
+              onExportOptionsChange={setExportOptions}
+              currentAppZoom={currentAppZoom}
+              taskCount={tasks.length}
             />
           )}
 
           {selectedExportFormat === "svg" && (
-            <div className="space-y-4">
-              {/* Timeline Scale Options (same as PNG) */}
-              <PngScaleOptions
-                options={exportOptions}
-                onChange={setExportOptions}
-                currentAppZoom={currentAppZoom}
-                projectDurationDays={projectDurationDays}
-                taskTableWidth={taskTableWidth}
-              />
-              {/* SVG-specific options */}
-              <SvgExportOptions
-                options={svgExportOptions}
-                onChange={setSvgExportOptions}
-              />
-            </div>
+            <PngScaleOptions
+              options={exportOptions}
+              onChange={setExportOptions}
+              currentAppZoom={currentAppZoom}
+              projectDurationDays={projectDurationDays}
+              taskTableWidth={taskTableWidth}
+            />
           )}
         </div>
 
-        {/* Shared Options Panel */}
-        <div className="relative p-4 rounded-xl border border-slate-200 overflow-hidden">
-          {/* Teal accent stripe */}
-          <div className="absolute left-0 top-0 bottom-0 w-1 bg-teal-500" />
-          {/* Panel Header */}
-          <div className="flex items-center gap-2 mb-4 pb-3 border-b border-slate-200">
-            <ChartBar size={18} weight="duotone" className="text-teal-600" />
-            <span className="text-sm font-semibold text-slate-700 uppercase tracking-wide">
+        {/* Chart Content Section */}
+        <div className="mt-6 pt-6 border-t border-slate-200">
+          {/* Section Header */}
+          <div className="flex items-center gap-2 mb-4">
+            <ChartBar size={20} weight="duotone" className="text-slate-600" />
+            <span className="text-base font-semibold text-slate-800">
               Chart Content
-            </span>
-            <span className="text-[10px] text-slate-400 bg-slate-100 px-2 py-0.5 rounded-full ml-auto">
-              All Formats
             </span>
           </div>
 

@@ -53,6 +53,7 @@ export interface PdfMargins {
 /** PDF header/footer configuration */
 export interface PdfHeaderFooter {
   showProjectName: boolean;
+  showAuthor: boolean;
   showExportDate: boolean;
   customText?: string;
 }
@@ -66,7 +67,6 @@ export interface PdfExportOptions {
   customMargins?: PdfMargins;
   header: PdfHeaderFooter;
   footer: PdfHeaderFooter;
-  grayscale: boolean;
   metadata: {
     title?: string;
     author?: string;
@@ -106,13 +106,14 @@ export const DEFAULT_PDF_OPTIONS: PdfExportOptions = {
   marginPreset: "normal",
   header: {
     showProjectName: true,
+    showAuthor: false,
     showExportDate: false,
   },
   footer: {
     showProjectName: false,
+    showAuthor: false,
     showExportDate: false,
   },
-  grayscale: false,
   metadata: {},
 };
 

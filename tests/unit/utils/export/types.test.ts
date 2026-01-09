@@ -118,18 +118,18 @@ describe("export types", () => {
       expect(DEFAULT_PDF_OPTIONS.marginPreset).toBe("normal");
     });
 
-    it("has grayscale disabled by default", () => {
-      expect(DEFAULT_PDF_OPTIONS.grayscale).toBe(false);
-    });
-
     it("has header configuration", () => {
       expect(DEFAULT_PDF_OPTIONS.header).toBeDefined();
       expect(DEFAULT_PDF_OPTIONS.header.showProjectName).toBe(true);
+      expect(DEFAULT_PDF_OPTIONS.header.showAuthor).toBe(false);
       expect(DEFAULT_PDF_OPTIONS.header.showExportDate).toBe(false);
     });
 
     it("has footer configuration", () => {
       expect(DEFAULT_PDF_OPTIONS.footer).toBeDefined();
+      expect(DEFAULT_PDF_OPTIONS.footer.showProjectName).toBe(false);
+      expect(DEFAULT_PDF_OPTIONS.footer.showAuthor).toBe(false);
+      expect(DEFAULT_PDF_OPTIONS.footer.showExportDate).toBe(false);
     });
 
     it("has metadata object", () => {

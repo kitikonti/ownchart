@@ -42,6 +42,24 @@ export function formatDate(dateStr: string, formatStr: string): string {
 }
 
 /**
+ * Format a Date object according to user's DateFormat preference.
+ * @param date - The date to format
+ * @param dateFormat - The user's date format preference
+ * @returns Formatted date string
+ */
+export function formatDateByPreference(
+  date: Date,
+  dateFormat: "DD/MM/YYYY" | "MM/DD/YYYY" | "YYYY-MM-DD"
+): string {
+  const formatMap = {
+    "DD/MM/YYYY": "dd/MM/yyyy",
+    "MM/DD/YYYY": "MM/dd/yyyy",
+    "YYYY-MM-DD": "yyyy-MM-dd",
+  };
+  return format(date, formatMap[dateFormat]);
+}
+
+/**
  * Get min and max dates from task list
  * @returns { min: string, max: string } in ISO format
  */

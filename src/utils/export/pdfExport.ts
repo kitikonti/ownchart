@@ -30,8 +30,9 @@ import {
   getDefaultColumnWidth,
 } from "./calculations";
 import { buildFlattenedTaskList } from "../hierarchy";
-import { DENSITY_CONFIG, type UiDensity } from "../../types/preferences.types";
+import { DENSITY_CONFIG, type UiDensity, type DateFormat } from "../../types/preferences.types";
 import { embedInterFont } from "./fonts/fontEmbedding";
+import { formatDateByPreference } from "../dateUtils";
 
 /** Parameters for PDF export */
 export interface ExportToPdfParams {
@@ -45,6 +46,9 @@ export interface ExportToPdfParams {
   projectDateRange?: { start: Date; end: Date };
   visibleDateRange?: { start: Date; end: Date };
   projectName?: string;
+  projectTitle?: string;
+  projectAuthor?: string;
+  dateFormat: DateFormat;
   onProgress?: (progress: number) => void;
 }
 
@@ -107,15 +111,68 @@ export async function exportToPdf(params: ExportToPdfParams): Promise<void> {
     projectDateRange,
     visibleDateRange,
     projectName,
+    projectTitle,
+    projectAuthor,
+    dateFormat,
     onProgress,
   } = params;
 
   onProgress?.(5);
 
-  // Calculate dimensions
+  // For PDF "fit to page" mode, calculate the optimal width based on page aspect ratio
+  let effectiveOptions = options;
+  if (options.zoomMode === "fitToWidth") {
+    // Get page dimensions and margins
+    const pageDims = getPageDimensions(pdfOptions);
+    const margins = getMargins(pdfOptions);
+
+    // Calculate reserved space for header/footer
+    const headerReserved =
+      pdfOptions.header.showProjectName || pdfOptions.header.showExportDate
+        ? 10
+        : 0;
+    const footerReserved =
+      pdfOptions.footer.showProjectName || pdfOptions.footer.showExportDate
+        ? 10
+        : 0;
+
+    // Calculate available content area in pixels
+    const availableWidthMm = pageDims.width - margins.left - margins.right;
+    const availableHeightMm =
+      pageDims.height - margins.top - margins.bottom - headerReserved - footerReserved;
+    const availableWidthPx = mmToPx(availableWidthMm);
+    const availableHeightPx = mmToPx(availableHeightMm);
+
+    // Calculate content height (fixed based on task count and density)
+    const densityConfig = DENSITY_CONFIG[options.density];
+    const contentHeaderHeight = options.includeHeader ? HEADER_HEIGHT : 0;
+    const flattenedTasks = buildFlattenedTaskList(tasks, new Set<string>());
+    const contentHeightPx = flattenedTasks.length * densityConfig.rowHeight + contentHeaderHeight;
+
+    // Calculate optimal total width based on page aspect ratio
+    // We want the content aspect ratio to match the page aspect ratio
+    // so that after scaling, both width and height fill the page exactly
+    const pageAspectRatio = availableWidthPx / availableHeightPx;
+    const optimalTotalWidthPx = contentHeightPx * pageAspectRatio;
+
+    // The timeline width is the total width minus task table
+    // But ensure we don't go smaller than the page width (use page width as minimum)
+    const optimalFitToWidth = Math.max(
+      Math.round(optimalTotalWidthPx),
+      Math.round(availableWidthPx)
+    );
+
+    // Update options with calculated fitToWidth
+    effectiveOptions = {
+      ...options,
+      fitToWidth: optimalFitToWidth,
+    };
+  }
+
+  // Calculate dimensions using effective options
   const dimensions = calculateExportDimensions(
     tasks,
-    options,
+    effectiveOptions,
     columnWidths,
     currentAppZoom,
     projectDateRange,
@@ -149,7 +206,7 @@ export async function exportToPdf(params: ExportToPdfParams): Promise<void> {
       root.render(
         createElement(ExportRenderer, {
           tasks,
-          options,
+          options: effectiveOptions,
           columnWidths,
           currentAppZoom,
           projectDateRange,
@@ -184,7 +241,7 @@ export async function exportToPdf(params: ExportToPdfParams): Promise<void> {
       chartSvg as SVGSVGElement,
       headerSvg as SVGSVGElement | null,
       tasks,
-      options,
+      effectiveOptions,
       columnWidths,
       dimensions,
       projectName
@@ -249,53 +306,47 @@ export async function exportToPdf(params: ExportToPdfParams): Promise<void> {
     // Set Inter as the default font for the document
     doc.setFont("Inter", "normal");
 
-    // Set metadata
-    if (pdfOptions.metadata.title || projectName) {
-      doc.setProperties({
-        title: pdfOptions.metadata.title || projectName || "Project Timeline",
-        author: pdfOptions.metadata.author || "",
-        subject: pdfOptions.metadata.subject || "Gantt Chart Export",
-        creator: "OwnChart",
-      });
-    }
+    // Set metadata - use projectTitle/projectAuthor from chart settings, fallback to projectName
+    const pdfTitle = projectTitle || projectName || "Project Timeline";
+    const pdfAuthor = projectAuthor || "";
+    doc.setProperties({
+      title: pdfTitle,
+      author: pdfAuthor,
+      subject: pdfOptions.metadata.subject || "Gantt Chart Export",
+      creator: "OwnChart",
+    });
 
     onProgress?.(70);
 
     // Render header if configured
-    if (pdfOptions.header.showProjectName || pdfOptions.header.showExportDate) {
-      renderHeader(doc, pdfOptions, projectName, margins, pageDims.width);
+    const hasHeader = pdfOptions.header.showProjectName || pdfOptions.header.showAuthor || pdfOptions.header.showExportDate;
+    if (hasHeader) {
+      renderHeader(doc, pdfOptions, pdfTitle, pdfAuthor, margins, pageDims.width, dateFormat);
     }
 
     // Convert SVG to PDF using svg2pdf.js
+    // Note: Fonts are already embedded via embedInterFont() and set on SVG elements
     await doc.svg(svgElement, {
       x: offsetX,
       y: offsetY,
       width: finalWidthMm,
       height: finalHeightMm,
-      // Map all fonts to Inter
-      fontCallback: (
-        _family: string,
-        bold: boolean,
-        italic: boolean
-      ): string => {
-        // Always use Inter font
-        const style = bold ? "bold" : italic ? "italic" : "normal";
-        doc.setFont("Inter", style);
-        return "Inter";
-      },
     });
 
     onProgress?.(90);
 
     // Render footer if configured
-    if (pdfOptions.footer.showProjectName || pdfOptions.footer.showExportDate) {
+    const hasFooter = pdfOptions.footer.showProjectName || pdfOptions.footer.showAuthor || pdfOptions.footer.showExportDate;
+    if (hasFooter) {
       renderFooter(
         doc,
         pdfOptions,
-        projectName,
+        pdfTitle,
+        pdfAuthor,
         margins,
         pageDims.width,
-        pageDims.height
+        pageDims.height,
+        dateFormat
       );
     }
 
@@ -775,19 +826,30 @@ function renderTaskTableRows(
 function renderHeader(
   doc: jsPDF,
   options: PdfExportOptions,
-  projectName: string | undefined,
+  projectTitle: string | undefined,
+  projectAuthor: string | undefined,
   margins: { top: number; left: number },
-  pageWidth: number
+  pageWidth: number,
+  dateFormat: DateFormat
 ): void {
   doc.setFontSize(10);
   doc.setTextColor(100, 100, 100);
 
-  if (options.header.showProjectName && projectName) {
-    doc.text(projectName, margins.left, margins.top - 3);
+  // Left side: Project name and/or author
+  const leftParts: string[] = [];
+  if (options.header.showProjectName && projectTitle) {
+    leftParts.push(projectTitle);
+  }
+  if (options.header.showAuthor && projectAuthor) {
+    leftParts.push(projectAuthor);
+  }
+  if (leftParts.length > 0) {
+    doc.text(leftParts.join(" | "), margins.left, margins.top - 3);
   }
 
+  // Right side: Export date
   if (options.header.showExportDate) {
-    const date = new Date().toLocaleDateString();
+    const date = formatDateByPreference(new Date(), dateFormat);
     const dateWidth = doc.getTextWidth(date);
     doc.text(date, pageWidth - margins.left - dateWidth, margins.top - 3);
   }
@@ -799,22 +861,33 @@ function renderHeader(
 function renderFooter(
   doc: jsPDF,
   options: PdfExportOptions,
-  projectName: string | undefined,
+  projectTitle: string | undefined,
+  projectAuthor: string | undefined,
   margins: { top: number; left: number; bottom: number },
   pageWidth: number,
-  pageHeight: number
+  pageHeight: number,
+  dateFormat: DateFormat
 ): void {
   doc.setFontSize(9);
   doc.setTextColor(128, 128, 128);
 
   const y = pageHeight - margins.bottom + 5;
 
-  if (options.footer.showProjectName && projectName) {
-    doc.text(projectName, margins.left, y);
+  // Left side: Project name and/or author
+  const leftParts: string[] = [];
+  if (options.footer.showProjectName && projectTitle) {
+    leftParts.push(projectTitle);
+  }
+  if (options.footer.showAuthor && projectAuthor) {
+    leftParts.push(projectAuthor);
+  }
+  if (leftParts.length > 0) {
+    doc.text(leftParts.join(" | "), margins.left, y);
   }
 
+  // Right side: Export date
   if (options.footer.showExportDate) {
-    const date = new Date().toLocaleDateString();
+    const date = formatDateByPreference(new Date(), dateFormat);
     const dateWidth = doc.getTextWidth(date);
     doc.text(date, pageWidth - margins.left - dateWidth, y);
   }

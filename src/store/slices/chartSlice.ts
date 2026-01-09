@@ -73,6 +73,10 @@ interface ChartState {
   workingDaysConfig: WorkingDaysConfig;
   holidayRegion: string; // ISO 3166-1 alpha-2 country code (e.g., 'AT', 'DE', 'US')
 
+  // Project metadata (saved in .ownchart file)
+  projectTitle: string;
+  projectAuthor: string;
+
   // Transient UI state
   isZooming: boolean;
   isPanning: boolean;
@@ -132,6 +136,10 @@ interface ChartActions {
   setWorkingDaysConfig: (config: Partial<WorkingDaysConfig>) => void;
   setHolidayRegion: (region: string) => void;
 
+  // Project metadata setters
+  setProjectTitle: (title: string) => void;
+  setProjectAuthor: (author: string) => void;
+
   // Bulk settings update (for loading from file)
   setViewSettings: (settings: Partial<ChartState>) => void;
 
@@ -178,6 +186,10 @@ export const useChartStore = create<ChartState & ChartActions>()(
     workingDaysMode: false,
     workingDaysConfig: { ...DEFAULT_WORKING_DAYS_CONFIG },
     holidayRegion: detectLocaleHolidayRegion(), // Default based on browser locale
+
+    // Project metadata
+    projectTitle: "",
+    projectAuthor: "",
 
     // Transient UI state
     isZooming: false,
@@ -538,6 +550,20 @@ export const useChartStore = create<ChartState & ChartActions>()(
       });
       // Update holiday service with new region
       holidayService.setRegion(region);
+    },
+
+    // Set project title
+    setProjectTitle: (title: string) => {
+      set((state) => {
+        state.projectTitle = title;
+      });
+    },
+
+    // Set project author
+    setProjectAuthor: (author: string) => {
+      set((state) => {
+        state.projectAuthor = author;
+      });
     },
 
     // Bulk settings update (for loading from file)

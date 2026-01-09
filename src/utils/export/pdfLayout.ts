@@ -201,23 +201,6 @@ export function hexToRgb(hex: string): PdfColor {
 }
 
 /**
- * Convert color to grayscale.
- */
-export function toGrayscale(color: PdfColor): PdfColor {
-  // Luminosity method: 0.21 R + 0.72 G + 0.07 B
-  const gray = Math.round(0.21 * color.r + 0.72 * color.g + 0.07 * color.b);
-  return { r: gray, g: gray, b: gray };
-}
-
-/**
- * Get color, optionally converting to grayscale.
- */
-export function getColor(hex: string, grayscale: boolean): PdfColor {
-  const color = hexToRgb(hex);
-  return grayscale ? toGrayscale(color) : color;
-}
-
-/**
  * Truncate text to fit within a given width.
  * @param text - The text to truncate
  * @param maxWidth - Maximum width in mm

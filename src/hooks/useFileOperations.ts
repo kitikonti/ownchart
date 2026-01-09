@@ -18,6 +18,21 @@ import {
   openFile,
   clearFileHandle,
 } from "../utils/fileOperations/fileDialog";
+import { sanitizeFilename } from "../utils/export/sanitizeFilename";
+
+/**
+ * Generate a suggested filename from project title and current date.
+ * Format: <chartname>_<YYYY-MM-DD>.ownchart
+ */
+function generateSuggestedFilename(projectTitle: string): string {
+  const sanitizedName = sanitizeFilename(projectTitle);
+  const now = new Date();
+  const year = now.getFullYear();
+  const month = String(now.getMonth() + 1).padStart(2, "0");
+  const day = String(now.getDate()).padStart(2, "0");
+  const dateStr = `${year}-${month}-${day}`;
+  return `${sanitizedName}_${dateStr}.ownchart`;
+}
 
 export function useFileOperations() {
   const tasks = useTaskStore((state) => state.tasks);
@@ -40,6 +55,10 @@ export function useFileOperations() {
   const workingDaysMode = useChartStore((state) => state.workingDaysMode);
   const workingDaysConfig = useChartStore((state) => state.workingDaysConfig);
   const holidayRegion = useChartStore((state) => state.holidayRegion);
+  const projectTitle = useChartStore((state) => state.projectTitle);
+  const projectAuthor = useChartStore((state) => state.projectAuthor);
+  const setProjectTitle = useChartStore((state) => state.setProjectTitle);
+  const setProjectAuthor = useChartStore((state) => state.setProjectAuthor);
   const setViewSettings = useChartStore((state) => state.setViewSettings);
 
   // Sprint 1.4: Dependency store
@@ -83,6 +102,9 @@ export function useFileOperations() {
             workingDaysConfig,
             // Holiday region
             holidayRegion,
+            // Project metadata
+            projectTitle,
+            projectAuthor,
           },
           {
             chartName:
@@ -94,11 +116,17 @@ export function useFileOperations() {
           }
         );
 
-        const result = await saveFile(
-          content,
-          fileState.fileName || "untitled.ownchart",
-          saveAs
-        );
+        // Determine suggested filename:
+        // 1. Use existing filename if available
+        // 2. Otherwise, generate from projectTitle (with date)
+        // 3. Fallback to "untitled.ownchart"
+        const suggestedFilename =
+          fileState.fileName ||
+          (projectTitle
+            ? generateSuggestedFilename(projectTitle)
+            : "untitled.ownchart");
+
+        const result = await saveFile(content, suggestedFilename, saveAs);
 
         if (result.success) {
           fileState.setFileName(result.fileName!);
@@ -127,6 +155,8 @@ export function useFileOperations() {
       workingDaysMode,
       workingDaysConfig,
       holidayRegion,
+      projectTitle,
+      projectAuthor,
       taskTableWidth,
       columnWidths,
       fileState,
@@ -188,6 +218,8 @@ export function useFileOperations() {
           excludeHolidays: true,
         },
         holidayRegion: loadedViewSettings.holidayRegion, // Use file's region, undefined keeps current
+        projectTitle: loadedViewSettings.projectTitle ?? "",
+        projectAuthor: loadedViewSettings.projectAuthor ?? "",
       });
 
       // Restore column widths from file
@@ -249,6 +281,8 @@ export function useFileOperations() {
     setTasks([]);
     clearDependencies(); // Sprint 1.4
     resetExportOptions(); // Sprint 1.6 - reset to defaults
+    setProjectTitle(""); // Reset project metadata
+    setProjectAuthor("");
     clearHistory();
     clearFileHandle();
     fileState.reset();
@@ -262,6 +296,8 @@ export function useFileOperations() {
     setTasks,
     clearDependencies,
     resetExportOptions,
+    setProjectTitle,
+    setProjectAuthor,
     clearHistory,
     openChartSettingsDialog,
   ]);

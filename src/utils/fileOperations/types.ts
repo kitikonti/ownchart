@@ -113,6 +113,10 @@ export interface ViewSettings {
 
   // Holiday region (Sprint 1.5.9 - moved from user preferences to per-project)
   holidayRegion?: string; // ISO 3166-1 alpha-2 country code (e.g., 'AT', 'DE', 'US')
+
+  // Project metadata
+  projectTitle?: string;
+  projectAuthor?: string;
 }
 
 // Validation error types

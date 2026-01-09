@@ -105,6 +105,7 @@ describe("pdfExport", () => {
         pdfOptions: { ...defaultPdfOptions, orientation: "landscape" },
         columnWidths: {},
         currentAppZoom: 1,
+        dateFormat: "YYYY-MM-DD",
       });
 
       expect(jsPDFConstructorCalls.length).toBe(1);
@@ -122,6 +123,7 @@ describe("pdfExport", () => {
         pdfOptions: { ...defaultPdfOptions, orientation: "portrait" },
         columnWidths: {},
         currentAppZoom: 1,
+        dateFormat: "YYYY-MM-DD",
       });
 
       expect(jsPDFConstructorCalls.length).toBe(1);
@@ -139,6 +141,7 @@ describe("pdfExport", () => {
         columnWidths: {},
         currentAppZoom: 1,
         projectName: "Test Project",
+        dateFormat: "YYYY-MM-DD",
       });
 
       expect(mockSave).toHaveBeenCalledWith(
@@ -155,6 +158,7 @@ describe("pdfExport", () => {
         pdfOptions: defaultPdfOptions,
         columnWidths: {},
         currentAppZoom: 1,
+        dateFormat: "YYYY-MM-DD",
       });
 
       expect(mockSave).toHaveBeenCalledWith(
@@ -162,7 +166,7 @@ describe("pdfExport", () => {
       );
     });
 
-    it("should set PDF metadata when provided", async () => {
+    it("should set PDF metadata from projectTitle and projectAuthor", async () => {
       const { exportToPdf } = await import("../../../../src/utils/export/pdfExport");
 
       await exportToPdf({
@@ -171,14 +175,15 @@ describe("pdfExport", () => {
         pdfOptions: {
           ...defaultPdfOptions,
           metadata: {
-            title: "Custom Title",
-            author: "Test Author",
             subject: "Test Subject",
           },
         },
         columnWidths: {},
         currentAppZoom: 1,
         projectName: "My Project",
+        projectTitle: "Custom Title",
+        projectAuthor: "Test Author",
+        dateFormat: "YYYY-MM-DD",
       });
 
       expect(mockSetProperties).toHaveBeenCalledWith(
@@ -227,6 +232,7 @@ describe("pdfExport", () => {
         columnWidths: {},
         currentAppZoom: 1,
         projectName: "Header Test",
+        dateFormat: "DD/MM/YYYY",
       });
 
       // Header renders text
@@ -249,6 +255,7 @@ describe("pdfExport", () => {
         columnWidths: {},
         currentAppZoom: 1,
         projectName: "Footer Test",
+        dateFormat: "MM/DD/YYYY",
       });
 
       expect(mockText).toHaveBeenCalled();
@@ -263,6 +270,7 @@ describe("pdfExport", () => {
         pdfOptions: defaultPdfOptions,
         columnWidths: {},
         currentAppZoom: 1,
+        dateFormat: "YYYY-MM-DD",
       });
 
       expect(mockSave).toHaveBeenCalled();
@@ -282,6 +290,7 @@ describe("pdfExport", () => {
         pdfOptions: defaultPdfOptions,
         columnWidths: {},
         currentAppZoom: 1,
+        dateFormat: "YYYY-MM-DD",
       });
 
       expect(mockSave).toHaveBeenCalled();
@@ -321,6 +330,7 @@ describe("pdfExport", () => {
         pdfOptions: defaultPdfOptions,
         columnWidths: {},
         currentAppZoom: 1,
+        dateFormat: "YYYY-MM-DD",
       });
 
       expect(mockSave).toHaveBeenCalled();
@@ -335,6 +345,7 @@ describe("pdfExport", () => {
         pdfOptions: { ...defaultPdfOptions, pageSize: "a4" },
         columnWidths: {},
         currentAppZoom: 1,
+        dateFormat: "YYYY-MM-DD",
       });
 
       expect(jsPDFConstructorCalls.length).toBe(1);
@@ -351,6 +362,7 @@ describe("pdfExport", () => {
         pdfOptions: { ...defaultPdfOptions, pageSize: "a3" },
         columnWidths: {},
         currentAppZoom: 1,
+        dateFormat: "YYYY-MM-DD",
       });
 
       expect(jsPDFConstructorCalls.length).toBe(1);
@@ -370,6 +382,7 @@ describe("pdfExport", () => {
         pdfOptions: defaultPdfOptions,
         columnWidths: { name: 150, startDate: 100 },
         currentAppZoom: 1,
+        dateFormat: "YYYY-MM-DD",
       });
 
       expect(mockSave).toHaveBeenCalled();
@@ -430,6 +443,7 @@ describe("pdfExport", () => {
         pdfOptions: defaultPdfOptions,
         columnWidths: {},
         currentAppZoom: 1,
+        dateFormat: "YYYY-MM-DD",
       });
 
       // SVG-to-PDF approach uses doc.svg() to embed the chart

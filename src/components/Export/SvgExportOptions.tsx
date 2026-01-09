@@ -13,15 +13,7 @@ interface SvgExportOptionsProps {
 export function SvgExportOptions({
   options: _options,
   onChange: _onChange,
-}: SvgExportOptionsProps): JSX.Element {
-  return (
-    <div>
-      {/* SVG hint */}
-      <div className="p-2 bg-blue-50 border border-blue-200 rounded-lg">
-        <p className="text-xs text-blue-700">
-          SVG files can be edited in Illustrator, Figma, Inkscape, etc.
-        </p>
-      </div>
-    </div>
-  );
+}: SvgExportOptionsProps): JSX.Element | null {
+  // No SVG-specific options currently - timeline scale is handled by PngScaleOptions
+  return null;
 }
