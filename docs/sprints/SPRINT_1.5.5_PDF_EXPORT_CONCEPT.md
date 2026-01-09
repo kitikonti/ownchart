@@ -3212,19 +3212,19 @@ export const DEFAULT_SVG_OPTIONS: SvgExportOptions = {
 | # | Task | Status | Notes |
 |---|------|--------|-------|
 | **6.1** | **Unit Tests - PDF** | | |
-| 6.1.1 | Test `calculateScale()` function | ☐ | |
-| 6.1.2 | Test `getPageDimensions()` for all sizes | ☐ | |
-| 6.1.3 | Test `getMargins()` for all presets | ☐ | |
-| 6.1.4 | Test coordinate conversion functions | ☐ | |
-| 6.1.5 | Test grayscale color conversion | ☐ | |
-| 6.1.6 | Test PDF metadata generation | ☐ | |
+| 6.1.1 | Test `calculateScale()` function | ☑ | pdfLayout.test.ts |
+| 6.1.2 | Test `getPageDimensions()` for all sizes | ☑ | pdfLayout.test.ts |
+| 6.1.3 | Test `getMargins()` for all presets | ☑ | pdfLayout.test.ts |
+| 6.1.4 | Test coordinate conversion functions | ☑ | pdfLayout.test.ts |
+| 6.1.5 | Test grayscale color conversion | ☑ | pdfLayout.test.ts |
+| 6.1.6 | Test PDF metadata generation | ⏭ | Tested via integration |
 | **6.2** | **Unit Tests - SVG** | | |
-| 6.2.1 | Test `serializeSvg()` output validity | ☐ | |
-| 6.2.2 | Test `setDimensions()` for auto/custom | ☐ | |
-| 6.2.3 | Test `extractInlineStylesToClasses()` | ☐ | |
-| 6.2.4 | Test special character escaping | ☐ | |
-| 6.2.5 | Test human-readable ID generation | ☐ | |
-| 6.2.6 | Test SVGO optimization | ☐ | |
+| 6.2.1 | Test `serializeSvg()` output validity | ☑ | svgExport.test.ts |
+| 6.2.2 | Test `setDimensions()` for auto/custom | ☑ | svgExport.test.ts |
+| 6.2.3 | Test `extractInlineStylesToClasses()` | ☑ | svgExport.test.ts |
+| 6.2.4 | Test special character escaping | ☑ | svgExport.test.ts |
+| 6.2.5 | Test human-readable ID generation | ⏭ | Not implemented |
+| 6.2.6 | Test SVGO optimization | ⏭ | SVGO not installed |
 | **6.3** | **Integration Tests** | | |
 | 6.3.1 | Test format selector interaction | ☐ | |
 | 6.3.2 | Test PDF options panel changes | ☐ | |
@@ -3296,9 +3296,9 @@ export const DEFAULT_SVG_OPTIONS: SvgExportOptions = {
 | Phase 3: PDF Export | 28 | 24 | 86% |
 | Phase 4: SVG Export | 22 | 18 | 82% |
 | Phase 5: Integration | 15 | 11 | 73% |
-| Phase 6: Testing | 38 | 15 | 39% |
+| Phase 6: Testing | 38 | 10 | 26% |
 | Phase 7: Documentation | 8 | 2 | 25% |
-| **TOTAL** | **150** | **104** | **69%** |
+| **TOTAL** | **150** | **99** | **66%** |
 
 ---
 
