@@ -16,12 +16,28 @@ export {
 export { sanitizeFilename } from "./sanitizeFilename";
 export {
   DEFAULT_EXPORT_OPTIONS,
+  DEFAULT_PDF_OPTIONS,
+  DEFAULT_SVG_OPTIONS,
   EXPORT_ZOOM_PRESETS,
   INITIAL_EXPORT_STATE,
+  PDF_PAGE_SIZES,
+  PDF_MARGIN_PRESETS,
   type ExportColumnKey,
+  type ExportFormat,
   type ExportOptions,
   type ExportState,
   type ExportZoomPreset,
+  type PdfExportOptions,
+  type PdfHeaderFooter,
+  type PdfMarginPreset,
+  type PdfMargins,
+  type PdfOrientation,
+  type PdfPageSize,
+  type PdfScaleMode,
+  type SvgDimensionMode,
+  type SvgExportOptions,
+  type SvgStyleMode,
+  type SvgTextMode,
 } from "./types";
 export {
   BASE_PIXELS_PER_DAY,

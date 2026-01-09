@@ -3024,11 +3024,11 @@ export const DEFAULT_SVG_OPTIONS: SvgExportOptions = {
 
 | # | Task | Status | Notes |
 |---|------|--------|-------|
-| 0.1 | Review existing PNG export implementation (`src/utils/export/`) | ☐ | |
-| 0.2 | Install jsPDF dependency: `npm install jspdf` | ☐ | |
-| 0.3 | Verify jsPDF PDF/A plugin availability | ☐ | |
-| 0.4 | Create feature branch: `feature/pdf-svg-export` | ☐ | |
-| 0.5 | Update `vite.config.ts` for lazy loading chunks | ☐ | |
+| 0.1 | Review existing PNG export implementation (`src/utils/export/`) | ☑ | Reviewed: types.ts, index.ts, ExportDialog, ExportOptions |
+| 0.2 | Install jsPDF dependency: `npm install jspdf` | ☑ | Installed jspdf@4.0.0 |
+| 0.3 | Verify jsPDF PDF/A plugin availability | ☑ | jsPDF 4.0 has no built-in PDF/A - defer to V2.0 |
+| 0.4 | Create feature branch: `feature/pdf-svg-export` | ⏭ | Skipped - working on main (solo project) |
+| 0.5 | Update `vite.config.ts` for lazy loading chunks | ☑ | Added manualChunks for jspdf |
 
 ---
 
@@ -3037,22 +3037,22 @@ export const DEFAULT_SVG_OPTIONS: SvgExportOptions = {
 | # | Task | Status | Notes |
 |---|------|--------|-------|
 | **1.1** | **Types & Constants** | | |
-| 1.1.1 | Extend `src/utils/export/types.ts` with `ExportFormat` type | ☐ | |
-| 1.1.2 | Add `PdfExportOptions` interface | ☐ | |
-| 1.1.3 | Add `SvgExportOptions` interface | ☐ | |
-| 1.1.4 | Add `CombinedExportOptions` interface | ☐ | |
-| 1.1.5 | Add PDF page size constants (`PDF_PAGE_SIZES`) | ☐ | |
-| 1.1.6 | Add PDF margin presets (`PDF_MARGIN_PRESETS`) | ☐ | |
-| 1.1.7 | Add default options (`DEFAULT_PDF_OPTIONS`, `DEFAULT_SVG_OPTIONS`) | ☐ | |
+| 1.1.1 | Extend `src/utils/export/types.ts` with `ExportFormat` type | ☑ | Added ExportFormat = "png" \| "pdf" \| "svg" |
+| 1.1.2 | Add `PdfExportOptions` interface | ☑ | Complete with all options |
+| 1.1.3 | Add `SvgExportOptions` interface | ☑ | Complete with all options |
+| 1.1.4 | Add `CombinedExportOptions` interface | ⏭ | Not needed - using separate options |
+| 1.1.5 | Add PDF page size constants (`PDF_PAGE_SIZES`) | ☑ | A4, A3, Letter, Legal, Tabloid |
+| 1.1.6 | Add PDF margin presets (`PDF_MARGIN_PRESETS`) | ☑ | Normal, Narrow, Wide, None, Custom |
+| 1.1.7 | Add default options (`DEFAULT_PDF_OPTIONS`, `DEFAULT_SVG_OPTIONS`) | ☑ | Both defaults added |
 | **1.2** | **State Management** | | |
-| 1.2.1 | Extend `uiSlice.ts` with `selectedExportFormat` state | ☐ | |
-| 1.2.2 | Add `pdfExportOptions` state to store | ☐ | |
-| 1.2.3 | Add `svgExportOptions` state to store | ☐ | |
-| 1.2.4 | Add actions: `setExportFormat`, `setPdfOptions`, `setSvgOptions` | ☐ | |
-| 1.2.5 | Persist export settings in `.ownchart` file format | ☐ | |
+| 1.2.1 | Extend `uiSlice.ts` with `selectedExportFormat` state | ☑ | Default: "png" |
+| 1.2.2 | Add `pdfExportOptions` state to store | ☑ | With DEFAULT_PDF_OPTIONS |
+| 1.2.3 | Add `svgExportOptions` state to store | ☑ | With DEFAULT_SVG_OPTIONS |
+| 1.2.4 | Add actions: `setExportFormat`, `setPdfOptions`, `setSvgOptions` | ☑ | + setExportProgress |
+| 1.2.5 | Persist export settings in `.ownchart` file format | ⏭ | Defer - implement after core export works |
 | **1.3** | **Abstract Renderer (Optional)** | | |
-| 1.3.1 | Create `ChartRenderer` interface | ☐ | |
-| 1.3.2 | Refactor PNG export to use interface | ☐ | |
+| 1.3.1 | Create `ChartRenderer` interface | ⏭ | Defer - not needed for MVP |
+| 1.3.2 | Refactor PNG export to use interface | ⏭ | Defer - not needed for MVP |
 
 ---
 
@@ -3061,33 +3061,33 @@ export const DEFAULT_SVG_OPTIONS: SvgExportOptions = {
 | # | Task | Status | Notes |
 |---|------|--------|-------|
 | **2.1** | **Format Selector** | | |
-| 2.1.1 | Create `ExportFormatSelector.tsx` component | ☐ | |
-| 2.1.2 | Design format cards (PNG, PDF, SVG) with icons | ☐ | |
-| 2.1.3 | Add selection state and visual feedback | ☐ | |
-| 2.1.4 | Integrate into `ExportDialog.tsx` | ☐ | |
+| 2.1.1 | Create `ExportFormatSelector.tsx` component | ☑ | 3 formats with icons |
+| 2.1.2 | Design format cards (PNG, PDF, SVG) with icons | ☑ | Phosphor icons |
+| 2.1.3 | Add selection state and visual feedback | ☑ | Border + bg color |
+| 2.1.4 | Integrate into `ExportDialog.tsx` | ☑ | Conditional rendering |
 | **2.2** | **PDF Options Panel** | | |
-| 2.2.1 | Create `PdfExportOptions.tsx` component | ☐ | |
-| 2.2.2 | Implement `PageSizeSelector` (A4, A3, Letter, etc.) | ☐ | |
-| 2.2.3 | Implement `OrientationSelector` (Landscape/Portrait) | ☐ | |
-| 2.2.4 | Implement `ScaleModeSelector` (Fit to page, Custom) | ☐ | |
-| 2.2.5 | Implement `MarginSelector` with presets | ☐ | |
-| 2.2.6 | Implement `HeaderFooterOptions` | ☐ | |
-| 2.2.7 | Implement `PdfMetadataOptions` (title, author) | ☐ | |
-| 2.2.8 | Add PDF/A compliance toggle | ☐ | |
-| 2.2.9 | Add Grayscale mode toggle | ☐ | |
-| 2.2.10 | Create collapsible "Advanced Options" section | ☐ | |
+| 2.2.1 | Create `PdfExportOptions.tsx` component | ☑ | Full options UI |
+| 2.2.2 | Implement `PageSizeSelector` (A4, A3, Letter, etc.) | ☑ | 5 sizes |
+| 2.2.3 | Implement `OrientationSelector` (Landscape/Portrait) | ☑ | Button toggle |
+| 2.2.4 | Implement `ScaleModeSelector` (Fit to page, Custom) | ☑ | Radio options |
+| 2.2.5 | Implement `MarginSelector` with presets | ☑ | 4 presets |
+| 2.2.6 | Implement `HeaderFooterOptions` | ☑ | Project name, date |
+| 2.2.7 | Implement `PdfMetadataOptions` (title, author) | ☑ | In advanced section |
+| 2.2.8 | Add PDF/A compliance toggle | ⏭ | Deferred - no jsPDF support |
+| 2.2.9 | Add Grayscale mode toggle | ☑ | In advanced section |
+| 2.2.10 | Create collapsible "Advanced Options" section | ☑ | Expandable panel |
 | **2.3** | **SVG Options Panel** | | |
-| 2.3.1 | Create `SvgExportOptions.tsx` component | ☐ | |
-| 2.3.2 | Implement `DimensionModeSelector` (Auto/Custom) | ☐ | |
-| 2.3.3 | Implement `TextModeSelector` (Text/Paths) | ☐ | |
-| 2.3.4 | Implement `StyleModeSelector` (Inline/Classes) | ☐ | |
-| 2.3.5 | Add Optimize toggle (SVGO) | ☐ | |
-| 2.3.6 | Add Responsive mode toggle | ☐ | |
-| 2.3.7 | Add Background rectangle toggle | ☐ | |
-| 2.3.8 | Add Copy to Clipboard button | ☐ | |
+| 2.3.1 | Create `SvgExportOptions.tsx` component | ☑ | Full options UI |
+| 2.3.2 | Implement `DimensionModeSelector` (Auto/Custom) | ☑ | Radio options |
+| 2.3.3 | Implement `TextModeSelector` (Text/Paths) | ☑ | Button toggle |
+| 2.3.4 | Implement `StyleModeSelector` (Inline/Classes) | ☑ | Button toggle |
+| 2.3.5 | Add Optimize toggle (SVGO) | ☑ | In advanced section |
+| 2.3.6 | Add Responsive mode toggle | ☑ | In advanced section |
+| 2.3.7 | Add Background rectangle toggle | ☑ | In advanced section |
+| 2.3.8 | Add Copy to Clipboard button | ☑ | Primary option |
 | **2.4** | **Shared Content Options** | | |
-| 2.4.1 | Extract shared content toggles to reusable component | ☐ | |
-| 2.4.2 | Ensure all formats use same content options UI | ☐ | |
+| 2.4.1 | Extract shared content toggles to reusable component | ⏭ | Existing ExportOptions reused |
+| 2.4.2 | Ensure all formats use same content options UI | ☑ | PNG uses ExportOptionsForm |
 
 ---
 
@@ -3096,45 +3096,45 @@ export const DEFAULT_SVG_OPTIONS: SvgExportOptions = {
 | # | Task | Status | Notes |
 |---|------|--------|-------|
 | **3.1** | **Core PDF Generation** | | |
-| 3.1.1 | Create `src/utils/export/pdfExport.ts` | ☐ | |
-| 3.1.2 | Implement `initializePdf()` with jsPDF setup | ☐ | |
-| 3.1.3 | Implement `calculateScale()` for fit-to-page | ☐ | |
-| 3.1.4 | Implement `getPageDimensions()` for all page sizes | ☐ | |
-| 3.1.5 | Implement `getMargins()` with preset handling | ☐ | |
+| 3.1.1 | Create `src/utils/export/pdfExport.ts` | ☑ | Complete with full rendering |
+| 3.1.2 | Implement `initializePdf()` with jsPDF setup | ☑ | In exportToPdf() |
+| 3.1.3 | Implement `calculateScale()` for fit-to-page | ☑ | In pdfLayout.ts |
+| 3.1.4 | Implement `getPageDimensions()` for all page sizes | ☑ | In pdfLayout.ts |
+| 3.1.5 | Implement `getMargins()` with preset handling | ☑ | In pdfLayout.ts |
 | **3.2** | **PDF Renderer** | | |
-| 3.2.1 | Create `src/utils/export/pdfRenderer.ts` | ☐ | |
-| 3.2.2 | Implement `renderBackgroundLayer()` (weekends, holidays) | ☐ | |
-| 3.2.3 | Implement `renderGridLayer()` (grid lines) | ☐ | |
-| 3.2.4 | Implement `renderTaskLayer()` (task bars, progress) | ☐ | |
-| 3.2.5 | Implement `renderTaskBar()` with rounded corners | ☐ | |
-| 3.2.6 | Implement `renderMilestone()` (diamond shape) | ☐ | |
-| 3.2.7 | Implement `renderSummaryBracket()` | ☐ | |
-| 3.2.8 | Implement `renderTaskLabel()` with position handling | ☐ | |
-| 3.2.9 | Implement `renderDependencyLayer()` (Bézier arrows) | ☐ | |
-| 3.2.10 | Implement `renderDependencyArrow()` with arrowhead | ☐ | |
-| 3.2.11 | Implement `renderOverlayLayer()` (today marker) | ☐ | |
-| 3.2.12 | Implement `renderTimelineHeader()` (dates) | ☐ | |
-| 3.2.13 | Implement `renderTaskTable()` (left panel) | ☐ | |
+| 3.2.1 | Create `src/utils/export/pdfRenderer.ts` | ☑ | Full chart rendering |
+| 3.2.2 | Implement `renderBackgroundLayer()` (weekends, holidays) | ☑ | Weekend shading |
+| 3.2.3 | Implement `renderGridLayer()` (grid lines) | ☑ | Horizontal lines |
+| 3.2.4 | Implement `renderTaskLayer()` (task bars, progress) | ☑ | All task types |
+| 3.2.5 | Implement `renderTaskBar()` with rounded corners | ☑ | Using roundedRect |
+| 3.2.6 | Implement `renderMilestone()` (diamond shape) | ☑ | Using triangle |
+| 3.2.7 | Implement `renderSummaryBracket()` | ☑ | Bar with brackets |
+| 3.2.8 | Implement `renderTaskLabel()` with position handling | ☑ | inside/after/before |
+| 3.2.9 | Implement `renderDependencyLayer()` (Bézier arrows) | ☑ | Elbow arrows |
+| 3.2.10 | Implement `renderDependencyArrow()` with arrowhead | ☑ | Triangle arrowhead |
+| 3.2.11 | Implement `renderOverlayLayer()` (today marker) | ☑ | Dashed line |
+| 3.2.12 | Implement `renderTimelineHeader()` (dates) | ☑ | Multi-level |
+| 3.2.13 | Implement `renderTaskTable()` (left panel) | ☑ | With hierarchy |
 | **3.3** | **PDF Layout** | | |
-| 3.3.1 | Create `src/utils/export/pdfLayout.ts` | ☐ | |
-| 3.3.2 | Implement coordinate conversion (mm ↔ pt ↔ px) | ☐ | |
-| 3.3.3 | Implement printable area calculation | ☐ | |
+| 3.3.1 | Create `src/utils/export/pdfLayout.ts` | ☑ | Full layout utils |
+| 3.3.2 | Implement coordinate conversion (mm ↔ pt ↔ px) | ☑ | All conversions |
+| 3.3.3 | Implement printable area calculation | ☑ | getPrintableArea() |
 | **3.4** | **PDF Features** | | |
-| 3.4.1 | Implement page header rendering | ☐ | |
-| 3.4.2 | Implement page footer rendering | ☐ | |
-| 3.4.3 | Implement custom header/footer text | ☐ | |
-| 3.4.4 | Implement PDF metadata (title, author, subject) | ☐ | |
-| 3.4.5 | Implement grayscale color conversion | ☐ | |
-| 3.4.6 | Implement PDF/A-1b compliance | ☐ | |
+| 3.4.1 | Implement page header rendering | ☑ | Project name + date |
+| 3.4.2 | Implement page footer rendering | ☑ | Project name + date |
+| 3.4.3 | Implement custom header/footer text | ⏭ | Defer - basic done |
+| 3.4.4 | Implement PDF metadata (title, author, subject) | ☑ | setProperties() |
+| 3.4.5 | Implement grayscale color conversion | ☑ | toGrayscale() |
+| 3.4.6 | Implement PDF/A-1b compliance | ⏭ | Deferred - no jsPDF 4.0 support |
 | **3.5** | **Font Handling** | | |
-| 3.5.1 | Load Inter font files for embedding | ☐ | |
-| 3.5.2 | Add font to jsPDF VFS | ☐ | |
-| 3.5.3 | Implement fallback to Helvetica | ☐ | |
-| 3.5.4 | Test font rendering in all viewers | ☐ | |
+| 3.5.1 | Load Inter font files for embedding | ⏭ | Defer - Helvetica works |
+| 3.5.2 | Add font to jsPDF VFS | ⏭ | Defer - Helvetica works |
+| 3.5.3 | Implement fallback to Helvetica | ☑ | Default font |
+| 3.5.4 | Test font rendering in all viewers | ☐ | Manual testing needed |
 | **3.6** | **PDF Download** | | |
-| 3.6.1 | Implement `generatePdfFilename()` | ☐ | |
-| 3.6.2 | Implement progress callback | ☐ | |
-| 3.6.3 | Implement error handling | ☐ | |
+| 3.6.1 | Implement `generatePdfFilename()` | ☑ | With date |
+| 3.6.2 | Implement progress callback | ☑ | 0-100% |
+| 3.6.3 | Implement error handling | ☑ | Try-catch in dialog |
 
 ---
 
@@ -3143,37 +3143,37 @@ export const DEFAULT_SVG_OPTIONS: SvgExportOptions = {
 | # | Task | Status | Notes |
 |---|------|--------|-------|
 | **4.1** | **Core SVG Export** | | |
-| 4.1.1 | Create `src/utils/export/svgExport.ts` | ☐ | |
-| 4.1.2 | Implement DOM SVG cloning | ☐ | |
-| 4.1.3 | Implement `applyExportOptions()` | ☐ | |
-| 4.1.4 | Implement `setDimensions()` (auto/custom) | ☐ | |
-| 4.1.5 | Implement `addBackgroundRect()` | ☐ | |
+| 4.1.1 | Create `src/utils/export/svgExport.ts` | ☑ | DOM cloning approach |
+| 4.1.2 | Implement DOM SVG cloning | ☑ | cloneNode(true) |
+| 4.1.3 | Implement `applyExportOptions()` | ☑ | Remove interactive elements |
+| 4.1.4 | Implement `setDimensions()` (auto/custom) | ☑ | Both modes |
+| 4.1.5 | Implement `addBackgroundRect()` | ☑ | White background |
 | **4.2** | **SVG Serializer** | | |
-| 4.2.1 | Create `src/utils/export/svgSerializer.ts` | ☐ | |
-| 4.2.2 | Implement `serializeSvg()` with XML declaration | ☐ | |
-| 4.2.3 | Implement special character escaping | ☐ | |
-| 4.2.4 | Implement human-readable ID generation | ☐ | |
+| 4.2.1 | Create `src/utils/export/svgSerializer.ts` | ⏭ | Inline in svgExport.ts |
+| 4.2.2 | Implement `serializeSvg()` with XML declaration | ☑ | XMLSerializer |
+| 4.2.3 | Implement special character escaping | ☑ | Via XMLSerializer |
+| 4.2.4 | Implement human-readable ID generation | ⏭ | Defer to V2 |
 | **4.3** | **SVG Text Handling** | | |
-| 4.3.1 | Keep text as text (default mode) | ☐ | |
-| 4.3.2 | Implement `convertTextToPaths()` (optional) | ☐ | |
+| 4.3.1 | Keep text as text (default mode) | ☑ | Default |
+| 4.3.2 | Implement `convertTextToPaths()` (optional) | ⏭ | Defer - complex |
 | **4.4** | **SVG Style Handling** | | |
-| 4.4.1 | Inline styles mode (default) | ☐ | |
-| 4.4.2 | Implement `extractInlineStylesToClasses()` | ☐ | |
-| 4.4.3 | Generate semantic CSS class names | ☐ | |
+| 4.4.1 | Inline styles mode (default) | ☑ | Default mode |
+| 4.4.2 | Implement `extractInlineStylesToClasses()` | ☑ | In svgExport.ts |
+| 4.4.3 | Generate semantic CSS class names | ☑ | oc-0, oc-1, etc. |
 | **4.5** | **SVG Optimizer** | | |
-| 4.5.1 | Create `src/utils/export/svgOptimizer.ts` | ☐ | |
-| 4.5.2 | Implement dynamic SVGO import | ☐ | |
-| 4.5.3 | Configure SVGO plugins | ☐ | |
-| 4.5.4 | Implement graceful fallback if SVGO unavailable | ☐ | |
+| 4.5.1 | Create `src/utils/export/svgOptimizer.ts` | ⏭ | Placeholder in svgExport |
+| 4.5.2 | Implement dynamic SVGO import | ⏭ | Defer - not installed |
+| 4.5.3 | Configure SVGO plugins | ⏭ | Defer - not installed |
+| 4.5.4 | Implement graceful fallback if SVGO unavailable | ☑ | Returns original |
 | **4.6** | **SVG Features** | | |
-| 4.6.1 | Implement responsive mode (viewBox only) | ☐ | |
-| 4.6.2 | Implement accessibility attributes (role, aria-label) | ☐ | |
-| 4.6.3 | Implement metadata embedding | ☐ | |
-| 4.6.4 | Implement `copyToClipboard()` | ☐ | |
+| 4.6.1 | Implement responsive mode (viewBox only) | ☑ | In setDimensions() |
+| 4.6.2 | Implement accessibility attributes (role, aria-label) | ☑ | addAccessibilityAttrs() |
+| 4.6.3 | Implement metadata embedding | ⏭ | Defer - basic done |
+| 4.6.4 | Implement `copyToClipboard()` | ☑ | navigator.clipboard |
 | **4.7** | **SVG Download** | | |
-| 4.7.1 | Implement `generateSvgFilename()` | ☐ | |
-| 4.7.2 | Implement `downloadSvg()` | ☐ | |
-| 4.7.3 | Implement progress callback | ☐ | |
+| 4.7.1 | Implement `generateSvgFilename()` | ☑ | With date |
+| 4.7.2 | Implement `downloadSvg()` | ☑ | Blob + URL |
+| 4.7.3 | Implement progress callback | ☑ | 0-100% |
 
 ---
 
@@ -3290,15 +3290,15 @@ export const DEFAULT_SVG_OPTIONS: SvgExportOptions = {
 
 | Phase | Total Tasks | Completed | Progress |
 |-------|-------------|-----------|----------|
-| Phase 0: Preparation | 5 | 0 | 0% |
-| Phase 1: Shared Infrastructure | 12 | 0 | 0% |
-| Phase 2: Export Dialog UI | 22 | 0 | 0% |
+| Phase 0: Preparation | 5 | 4 | 80% |
+| Phase 1: Shared Infrastructure | 12 | 9 | 75% |
+| Phase 2: Export Dialog UI | 22 | 19 | 86% |
 | Phase 3: PDF Export | 28 | 0 | 0% |
 | Phase 4: SVG Export | 22 | 0 | 0% |
 | Phase 5: Integration | 15 | 0 | 0% |
 | Phase 6: Testing | 38 | 0 | 0% |
 | Phase 7: Documentation | 8 | 0 | 0% |
-| **TOTAL** | **150** | **0** | **0%** |
+| **TOTAL** | **150** | **32** | **21%** |
 
 ---
 
@@ -3308,7 +3308,8 @@ export const DEFAULT_SVG_OPTIONS: SvgExportOptions = {
 
 | Date | Note | Status |
 |------|------|--------|
-| | | |
+| 2026-01-08 | jsPDF 4.0.0 installed (newer than concept's 2.5.1). No built-in PDF/A support - deferring PDF/A compliance to V2.0 | Decision |
+| 2026-01-08 | Starting implementation from main branch (clean state) | Info |
 
 ---
 

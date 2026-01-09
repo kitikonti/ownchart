@@ -7,7 +7,12 @@ import { create } from "zustand";
 import { immer } from "zustand/middleware/immer";
 import {
   DEFAULT_EXPORT_OPTIONS,
+  DEFAULT_PDF_OPTIONS,
+  DEFAULT_SVG_OPTIONS,
+  type ExportFormat,
   type ExportOptions,
+  type PdfExportOptions,
+  type SvgExportOptions,
 } from "../../utils/export/types";
 
 // LocalStorage keys
@@ -20,8 +25,12 @@ const TOUR_COMPLETED_KEY = "ownchart-tour-completed";
 interface UIState {
   // Export dialog
   isExportDialogOpen: boolean;
+  selectedExportFormat: ExportFormat;
   exportOptions: ExportOptions;
+  pdfExportOptions: PdfExportOptions;
+  svgExportOptions: SvgExportOptions;
   isExporting: boolean;
+  exportProgress: number;
   exportError: string | null;
 
   // Help panel
@@ -46,9 +55,13 @@ interface UIActions {
   // Export dialog
   openExportDialog: () => void;
   closeExportDialog: () => void;
+  setExportFormat: (format: ExportFormat) => void;
   setExportOptions: (options: Partial<ExportOptions>) => void;
+  setPdfExportOptions: (options: Partial<PdfExportOptions>) => void;
+  setSvgExportOptions: (options: Partial<SvgExportOptions>) => void;
   resetExportOptions: (options?: ExportOptions) => void;
   setIsExporting: (isExporting: boolean) => void;
+  setExportProgress: (progress: number) => void;
   setExportError: (error: string | null) => void;
 
   // Help panel
@@ -104,8 +117,12 @@ export const useUIStore = create<UIStore>()(
     return {
       // Initial state
       isExportDialogOpen: false,
+      selectedExportFormat: "png" as ExportFormat,
       exportOptions: { ...DEFAULT_EXPORT_OPTIONS },
+      pdfExportOptions: { ...DEFAULT_PDF_OPTIONS },
+      svgExportOptions: { ...DEFAULT_SVG_OPTIONS },
       isExporting: false,
+      exportProgress: 0,
       exportError: null,
       isHelpPanelOpen: false,
       isPreferencesDialogOpen: false,
@@ -119,13 +136,20 @@ export const useUIStore = create<UIStore>()(
         set((state) => {
           state.isExportDialogOpen = true;
           state.exportError = null;
+          state.exportProgress = 0;
         }),
 
       closeExportDialog: () =>
         set((state) => {
           state.isExportDialogOpen = false;
           state.isExporting = false;
+          state.exportProgress = 0;
           state.exportError = null;
+        }),
+
+      setExportFormat: (format) =>
+        set((state) => {
+          state.selectedExportFormat = format;
         }),
 
       setExportOptions: (options) =>
@@ -133,11 +157,23 @@ export const useUIStore = create<UIStore>()(
           Object.assign(state.exportOptions, options);
         }),
 
+      setPdfExportOptions: (options) =>
+        set((state) => {
+          Object.assign(state.pdfExportOptions, options);
+        }),
+
+      setSvgExportOptions: (options) =>
+        set((state) => {
+          Object.assign(state.svgExportOptions, options);
+        }),
+
       resetExportOptions: (options) =>
         set((state) => {
           state.exportOptions = options
             ? { ...options }
             : { ...DEFAULT_EXPORT_OPTIONS };
+          state.pdfExportOptions = { ...DEFAULT_PDF_OPTIONS };
+          state.svgExportOptions = { ...DEFAULT_SVG_OPTIONS };
         }),
 
       setIsExporting: (isExporting) =>
@@ -145,7 +181,13 @@ export const useUIStore = create<UIStore>()(
           state.isExporting = isExporting;
           if (isExporting) {
             state.exportError = null;
+            state.exportProgress = 0;
           }
+        }),
+
+      setExportProgress: (progress) =>
+        set((state) => {
+          state.exportProgress = progress;
         }),
 
       setExportError: (error) =>

@@ -8,5 +8,13 @@ export default defineConfig({
   build: {
     outDir: 'dist',
     sourcemap: true,
+    rollupOptions: {
+      output: {
+        manualChunks: {
+          // Separate chunk for PDF export (lazy loaded)
+          'pdf-export': ['jspdf'],
+        },
+      },
+    },
   },
 })
