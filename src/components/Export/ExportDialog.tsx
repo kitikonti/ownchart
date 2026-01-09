@@ -247,7 +247,9 @@ export function ExportDialog(): JSX.Element | null {
     setExportError,
   ]);
 
-  // Determine warning state for dimensions (only for PNG)
+  // Determine warning state for dimensions (for PNG and SVG)
+  const showDimensions =
+    selectedExportFormat === "png" || selectedExportFormat === "svg";
   const hasWarning =
     selectedExportFormat === "png" &&
     estimatedDimensions.width > EXPORT_MAX_SAFE_WIDTH;
@@ -283,9 +285,9 @@ export function ExportDialog(): JSX.Element | null {
 
   const footer = (
     <div className="flex items-center justify-between w-full gap-4">
-      {/* Export Size - Only show for PNG */}
+      {/* Export Size - Show for PNG and SVG */}
       <div className="flex items-center gap-3 min-w-0">
-        {selectedExportFormat === "png" ? (
+        {showDimensions ? (
           <>
             <div className="flex items-baseline gap-1.5">
               <span
@@ -301,7 +303,7 @@ export function ExportDialog(): JSX.Element | null {
               </span>
               <span className="text-xs text-slate-400 ml-0.5">px</span>
             </div>
-            {/* Warning/Info icon */}
+            {/* Warning/Info icon (PNG only) */}
             {hasWarning && (
               <div
                 className="p-1 bg-amber-100 rounded-full text-amber-600"
@@ -320,7 +322,7 @@ export function ExportDialog(): JSX.Element | null {
             )}
           </>
         ) : (
-          // Progress bar for PDF/SVG export
+          // Progress bar for PDF export
           isExporting &&
           exportProgress > 0 && (
             <div className="flex items-center gap-2">
@@ -441,10 +443,21 @@ export function ExportDialog(): JSX.Element | null {
           )}
 
           {selectedExportFormat === "svg" && (
-            <SvgExportOptions
-              options={svgExportOptions}
-              onChange={setSvgExportOptions}
-            />
+            <div className="space-y-4">
+              {/* Timeline Scale Options (same as PNG) */}
+              <PngScaleOptions
+                options={exportOptions}
+                onChange={setExportOptions}
+                currentAppZoom={currentAppZoom}
+                projectDurationDays={projectDurationDays}
+                taskTableWidth={taskTableWidth}
+              />
+              {/* SVG-specific options */}
+              <SvgExportOptions
+                options={svgExportOptions}
+                onChange={setSvgExportOptions}
+              />
+            </div>
           )}
         </div>
 

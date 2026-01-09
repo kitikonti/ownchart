@@ -283,7 +283,7 @@ export function PngScaleOptions({
                           ),
                         })
                       }
-                      className="w-10 px-1 py-0.5 text-sm text-center font-mono bg-transparent border-none focus:ring-0 focus:outline-none"
+                      className="w-12 px-1 py-0.5 text-sm text-center font-mono bg-transparent border-none focus:ring-0 focus:outline-none"
                       min={EXPORT_ZOOM_MIN * 100}
                       max={EXPORT_ZOOM_MAX * 100}
                     />
