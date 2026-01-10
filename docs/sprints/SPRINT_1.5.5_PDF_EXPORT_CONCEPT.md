@@ -3317,16 +3317,24 @@ export const DEFAULT_SVG_OPTIONS: SvgExportOptions = {
 | 2026-01-09 | Added comprehensive unit tests: sanitizeFilename, types, ExportFormatSelector, PdfExportOptions, SvgExportOptions - 982 tests total | Done |
 | 2026-01-09 | PDF styling differences identified: jsPDF requires manual style replication, doesn't use CSS | Issue |
 | 2026-01-09 | Embedded Inter font (Base64) for consistent typography between app and PDF | Done |
+| 2026-01-10 | **svg2pdf.js IMPLEMENTED**: Rewrote PDF export to use svg2pdf.js for visual consistency | Done |
+| 2026-01-10 | Rewrote SVG export with native SVG elements (no DOM cloning) | Done |
+| 2026-01-10 | Unified export dialog design with teal accent color | Done |
+| 2026-01-10 | Extracted shared code into exportShared.ts for PNG/PDF/SVG consistency | Done |
+| 2026-01-10 | Embedded Inter-Italic font for proper italic text rendering in PDF | Done |
+| 2026-01-10 | Chart settings now persist in localStorage (restored on page load) | Done |
 
 ---
 
-### Future Improvement: SVG-to-PDF Approach
+### ✅ IMPLEMENTED: SVG-to-PDF Approach (2026-01-10)
 
-> **Problem:** Der aktuelle PDF-Export mit jsPDF erfordert manuelles Nachbauen aller Styles, was zu visuellen Unterschieden zwischen App und PDF führt. jsPDF versteht kein CSS.
+> **Originally planned for V2.0 - NOW COMPLETE in v0.0.22**
+>
+> The svg2pdf.js approach was implemented to solve the visual consistency issues with the original jsPDF manual approach.
 
-#### Alternative: svg2pdf.js
+#### svg2pdf.js (NOW IMPLEMENTED)
 
-Eine elegantere Lösung wäre die Verwendung von `svg2pdf.js`, einem jsPDF-Plugin, das SVG-Elemente direkt in PDF konvertiert:
+`svg2pdf.js` is a jsPDF plugin that directly converts SVG elements to PDF, maintaining all styles:
 
 ```typescript
 import { jsPDF } from "jspdf";
@@ -3352,30 +3360,25 @@ await doc.svg(svgElement, {
 doc.save("chart.pdf");
 ```
 
-#### Vorteile
+#### Benefits (Now Realized)
 
-| Aspekt | Aktuell (jsPDF manuell) | svg2pdf.js |
+| Aspect | Old (jsPDF manual) | svg2pdf.js (Current) |
 |--------|------------------------|------------|
-| Style-Konsistenz | ❌ Manuell dupliziert | ✅ Automatisch aus DOM |
-| Wartbarkeit | ❌ Zwei Code-Pfade | ✅ Single Source of Truth |
-| Vektor-Output | ✅ Ja | ✅ Ja |
-| Text selektierbar | ✅ Ja | ✅ Ja |
-| Client-side | ✅ Ja | ✅ Ja |
+| Style Consistency | ❌ Manually duplicated | ✅ Automatic from DOM |
+| Maintainability | ❌ Two code paths | ✅ Single Source of Truth |
+| Vector Output | ✅ Yes | ✅ Yes |
+| Selectable Text | ✅ Yes | ✅ Yes |
+| Client-side | ✅ Yes | ✅ Yes |
 
-#### Nachteile / Offene Fragen
+#### Implementation Notes (Completed 2026-01-10)
 
-1. **SVG muss im DOM sein**: Chart muss gerendert sein (kein virtuelles Rendering)
-2. **CSS-zu-Inline**: Computed Styles müssen ggf. zu Inline-Styles konvertiert werden
-3. **Multi-Page**: Komplexer bei mehrseitigen PDFs
-4. **Performance**: Bei sehr großen Charts zu evaluieren
-
-#### Implementierungsschritte (für V2.0)
-
-1. `svg2pdf.js` als Dependency hinzufügen
-2. SVG-Element aus ChartCanvas extrahieren (mit computed styles)
-3. Task-Table separat als SVG rendern oder als jsPDF-Text beibehalten
-4. Multi-Page-Logic anpassen (SVG pro Seite)
-5. Testen mit verschiedenen Chart-Größen
+1. ✅ `svg2pdf.js` added as dependency
+2. ✅ SVG generated with native elements (no DOM cloning)
+3. ✅ Task table rendered as SVG with proper typography
+4. ✅ Single-page export with vector scaling (multi-page deferred)
+5. ✅ Tested with various chart sizes
+6. ✅ Inter + Inter-Italic fonts embedded for consistent typography
+7. ✅ Shared utilities in `exportShared.ts` for PNG/PDF/SVG consistency
 
 #### Links
 
@@ -3384,8 +3387,8 @@ doc.save("chart.pdf");
 
 ---
 
-**Document Version:** 3.3 (IMPLEMENTED + Future Ideas)
+**Document Version:** 3.4 (FULLY IMPLEMENTED with svg2pdf.js)
 **Created:** 2026-01-08
-**Last Updated:** 2026-01-09 (Implementation Complete)
+**Last Updated:** 2026-01-10 (svg2pdf.js rewrite complete)
 **Author:** Claude AI (with Martin)
-**Status:** ✅ APPROVED - Ready for Implementation
+**Status:** ✅ COMPLETE - All features implemented in v0.0.22

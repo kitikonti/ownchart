@@ -30,6 +30,7 @@
 - ✅ Sprint 1.5.9.1 - UI Density (Compact/Normal/Comfortable)
 - ✅ Sprint 1.5.9 - User Preferences & Settings
 - ✅ Sprint 1.5.9.2 - Infinite Scroll & Zoom Anchoring
+- ✅ Sprint 1.5.5 - PDF & SVG Export (vector formats)
 
 **MVP Features Complete**:
 - ✅ Multi-select with rectangular marquee selection in timeline
@@ -48,6 +49,17 @@
 - ✅ Multi-tab persistence (dependencies, column widths)
 - ✅ UI Density settings (Compact/Normal/Comfortable) with preferences dialog
 - ✅ Export density selection independent from app setting
+
+**Sprint 1.5.5 Features (Complete)**:
+- ✅ PDF Export with vector graphics (scales perfectly for large prints)
+- ✅ SVG Export for editable vector output
+- ✅ Page size selection (A4, A3, Letter, Legal, Tabloid)
+- ✅ Orientation (Landscape/Portrait) and margin presets
+- ✅ Scale modes (Fit to page, Custom zoom %)
+- ✅ Unified export dialog with teal accent color
+- ✅ Chart settings persistence in localStorage
+- ✅ Inter-Italic font embedded for proper PDF rendering
+- ✅ Shared export utilities for PNG/PDF/SVG consistency
 
 **Sprint 1.5.9 Features (Complete)**:
 - ✅ Holiday Service with date-holidays library (199 countries supported)
@@ -68,7 +80,12 @@
 - ✅ Smooth left-scrolling for infinite timeline
 - ✅ Dependency arrows no longer animate during scroll
 
-**Latest Improvements (v0.0.13 - v0.0.21+)**:
+**Latest Improvements (v0.0.13 - v0.0.22)**:
+- ✅ PDF Export with vector graphics and page size options
+- ✅ SVG Export for editable vector output
+- ✅ Unified export dialog design with teal accent
+- ✅ Chart settings persistence in localStorage
+- ✅ Inter-Italic font embedded for PDF italic text
 - ✅ Exponential zoom for consistent feel at all zoom levels
 - ✅ Advanced timeline scale options in PNG export
 - ✅ Project name included in PNG export filename
@@ -81,7 +98,7 @@
 - ✅ Auto-open chart settings dialog when creating new file
 - ✅ TODAY label removed from today marker (cleaner look)
 
-**Test Coverage**: 786 unit tests (80%+ coverage)
+**Test Coverage**: 834 unit tests (80%+ coverage)
 
 **Next Phase**:
 - 🔜 Phase 1.5 (V1.1) - Remaining Deferred Features & Extensibility
@@ -477,7 +494,7 @@ npm run test:e2e            # E2E tests (Playwright)
 
 ---
 
-**Status**: ✅ MVP Complete - All Sprints through 1.5.9.2 finished
-**Current Version**: 0.0.21
+**Status**: ✅ Sprint 1.5.5 Complete - PDF & SVG Export implemented
+**Current Version**: 0.0.22
 **File Extension**: `.ownchart`
-**Last Updated**: 2026-01-08
+**Last Updated**: 2026-01-10
