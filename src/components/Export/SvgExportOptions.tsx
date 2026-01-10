@@ -15,8 +15,8 @@ export interface SvgExportOptionsProps {
  * SVG-specific export options.
  * Currently returns null as timeline scale is handled by PngScaleOptions.
  */
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
-export function SvgExportOptions(_props: SvgExportOptionsProps): JSX.Element | null {
+export function SvgExportOptions(_: SvgExportOptionsProps): JSX.Element | null {
+  void _; // Acknowledge unused parameter for future use
   // No SVG-specific options currently - timeline scale is handled by PngScaleOptions
   return null;
 }

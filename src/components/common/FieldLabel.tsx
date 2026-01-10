@@ -22,7 +22,9 @@ export function FieldLabel({
   className = "",
 }: FieldLabelProps): JSX.Element {
   const baseClasses = "text-xs font-medium text-slate-500 mb-2.5 block";
-  const combinedClasses = className ? `${baseClasses} ${className}` : baseClasses;
+  const combinedClasses = className
+    ? `${baseClasses} ${className}`
+    : baseClasses;
 
   if (htmlFor) {
     return (

@@ -188,7 +188,15 @@ export function renderTaskTableRows(
       const colWidth = columnWidths[key] || getDefaultColumnWidth(key, density);
 
       if (key === "color") {
-        renderColorColumn(group, task, colX, rowY, colWidth, rowHeight, colorBarHeight);
+        renderColorColumn(
+          group,
+          task,
+          colX,
+          rowY,
+          colWidth,
+          rowHeight,
+          colorBarHeight
+        );
       } else if (key === "name") {
         renderNameColumn(
           group,
@@ -357,7 +365,8 @@ function renderDataColumn(
   const isMilestone = task.type === "milestone";
   // Summary dates/duration are styled differently (text-slate-500 italic)
   const useSummaryStyle =
-    isSummary && (key === "startDate" || key === "endDate" || key === "duration");
+    isSummary &&
+    (key === "startDate" || key === "endDate" || key === "duration");
 
   let value = "";
   if (key === "startDate") {

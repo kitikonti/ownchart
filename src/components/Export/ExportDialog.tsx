@@ -70,7 +70,9 @@ export function ExportDialog(): JSX.Element | null {
   const dependencies = useDependencyStore((state) => state.dependencies);
 
   // Get date format preference
-  const dateFormat = useUserPreferencesStore((state) => state.preferences.dateFormat);
+  const dateFormat = useUserPreferencesStore(
+    (state) => state.preferences.dateFormat
+  );
 
   // Get current app zoom level
   const currentAppZoom = useChartStore((state) => state.zoom);
@@ -80,7 +82,8 @@ export function ExportDialog(): JSX.Element | null {
   const projectAuthor = useChartStore((state) => state.projectAuthor);
 
   // Project name for export filename (prefer projectTitle, fallback to file name)
-  const projectName = projectTitle || fileName?.replace(".ownchart", "") || undefined;
+  const projectName =
+    projectTitle || fileName?.replace(".ownchart", "") || undefined;
 
   // Get scale and viewport for visible range calculation
   const scale = useChartStore((state) => state.scale);

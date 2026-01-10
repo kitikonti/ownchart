@@ -246,7 +246,10 @@ export function calculateMilestoneSize(pixelsPerDay: number): number {
  */
 export function getScaledCornerRadius(rowHeight: number): number {
   const scale = rowHeight / DEPENDENCY_RENDER_CONSTANTS.baseRowHeight;
-  return Math.max(4, Math.round(DEPENDENCY_RENDER_CONSTANTS.baseCornerRadius * scale));
+  return Math.max(
+    4,
+    Math.round(DEPENDENCY_RENDER_CONSTANTS.baseCornerRadius * scale)
+  );
 }
 
 /**
@@ -280,7 +283,9 @@ export function generateSummaryBracketPath(
     L ${x} ${y + cornerRadius}
     Q ${x} ${y} ${x + cornerRadius} ${y}
     Z
-  `.trim().replace(/\s+/g, ' ');
+  `
+    .trim()
+    .replace(/\s+/g, " ");
 }
 
 /**
@@ -298,7 +303,9 @@ export function generateMilestonePath(
     L ${centerX} ${centerY + size}
     L ${centerX - size} ${centerY}
     Z
-  `.trim().replace(/\s+/g, ' ');
+  `
+    .trim()
+    .replace(/\s+/g, " ");
 }
 
 /**

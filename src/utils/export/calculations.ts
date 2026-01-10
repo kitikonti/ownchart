@@ -6,7 +6,10 @@
 import type { ExportOptions, ExportColumnKey } from "./types";
 import { DENSITY_CONFIG, type UiDensity } from "../../types/preferences.types";
 import { addDays } from "../dateUtils";
-import { calculateLabelPaddingDays, calculateColumnWidth } from "../textMeasurement";
+import {
+  calculateLabelPaddingDays,
+  calculateColumnWidth,
+} from "../textMeasurement";
 import type { Task } from "../../types/chart.types";
 import { getTaskLevel } from "../hierarchy";
 
@@ -198,7 +201,9 @@ export function calculateOptimalColumnWidth(
 
   // Name column has only right padding (indent handles left), others have both
   const cellPadding =
-    key === "name" ? densityConfig.cellPaddingX : densityConfig.cellPaddingX * 2;
+    key === "name"
+      ? densityConfig.cellPaddingX
+      : densityConfig.cellPaddingX * 2;
 
   // Prepare cell values and extra widths
   const cellValues: string[] = [];
@@ -218,13 +223,17 @@ export function calculateOptimalColumnWidth(
         break;
       case "endDate":
         // Milestones don't show end date
-        cellValue = isMilestone ? "" : (task.endDate || "");
+        cellValue = isMilestone ? "" : task.endDate || "";
         break;
       case "duration":
         // Milestones don't show duration, summaries show "X days"
         if (isMilestone) {
           cellValue = "";
-        } else if (isSummary && task.duration !== undefined && task.duration > 0) {
+        } else if (
+          isSummary &&
+          task.duration !== undefined &&
+          task.duration > 0
+        ) {
           cellValue = `${task.duration} days`;
         } else if (!isSummary && task.duration !== undefined) {
           cellValue = `${task.duration}`;

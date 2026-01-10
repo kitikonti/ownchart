@@ -183,7 +183,9 @@ function ExportTaskTableRows({
                       <span className="w-4 flex-shrink-0" />
                     )}
                     <TaskTypeIcon type={task.type} />
-                    <span className="flex-1">{task.name || `Task ${index + 1}`}</span>
+                    <span className="flex-1">
+                      {task.name || `Task ${index + 1}`}
+                    </span>
                   </div>
                 );
               }
@@ -192,7 +194,11 @@ function ExportTaskTableRows({
               const isSummary = task.type === "summary";
               const isMilestone = task.type === "milestone";
               // Summary dates/duration are styled differently (text-slate-500 italic)
-              const useSummaryStyle = isSummary && (key === "startDate" || key === "endDate" || key === "duration");
+              const useSummaryStyle =
+                isSummary &&
+                (key === "startDate" ||
+                  key === "endDate" ||
+                  key === "duration");
 
               let value: string | null = null; // null = show "—", empty string = show nothing
               if (key === "startDate") {
@@ -208,13 +214,18 @@ function ExportTaskTableRows({
                 // Milestones don't have duration (show empty, not "—")
                 if (isMilestone) {
                   value = "";
-                } else if (isSummary && task.duration !== undefined && task.duration > 0) {
+                } else if (
+                  isSummary &&
+                  task.duration !== undefined &&
+                  task.duration > 0
+                ) {
                   value = `${task.duration} days`;
                 } else if (!isSummary && task.duration !== undefined) {
                   value = `${task.duration}`;
                 }
               } else if (key === "progress") {
-                value = task.progress !== undefined ? `${task.progress}%` : null;
+                value =
+                  task.progress !== undefined ? `${task.progress}%` : null;
               }
 
               return (
@@ -304,7 +315,11 @@ export function ExportRenderer({
   // Calculate task table width first (needed for fitToWidth calculation)
   // Uses export density setting for correct column widths
   const taskTableWidth = hasTaskList
-    ? calculateTaskTableWidth(selectedColumns, effectiveColumnWidths, options.density)
+    ? calculateTaskTableWidth(
+        selectedColumns,
+        effectiveColumnWidths,
+        options.density
+      )
     : 0;
 
   // Calculate preliminary zoom (before label padding) for label width estimation
@@ -547,7 +562,11 @@ export function calculateExportDimensions(
   // Calculate task table width first (needed for fitToWidth calculation)
   // Uses export density setting for correct column widths
   const taskTableWidth = hasTaskList
-    ? calculateTaskTableWidth(selectedColumns, effectiveColumnWidths, options.density)
+    ? calculateTaskTableWidth(
+        selectedColumns,
+        effectiveColumnWidths,
+        options.density
+      )
     : 0;
 
   // Calculate preliminary zoom for label padding estimation

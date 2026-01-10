@@ -113,7 +113,9 @@ export async function exportToSvg(params: ExportToSvgParams): Promise<void> {
 
     // Extract the timeline SVG elements from the rendered DOM
     const chartSvg = container.querySelector("svg.gantt-chart");
-    const headerSvg = container.querySelector(".export-container > div:first-child svg");
+    const headerSvg = container.querySelector(
+      ".export-container > div:first-child svg"
+    );
 
     if (!chartSvg) {
       throw new Error("Could not find chart SVG element");
@@ -167,7 +169,12 @@ function buildCompleteSvg(
   projectName?: string
 ): SVGSVGElement {
   // Calculate task table width
-  const selectedColumns = options.selectedColumns || ["name", "startDate", "endDate", "progress"];
+  const selectedColumns = options.selectedColumns || [
+    "name",
+    "startDate",
+    "endDate",
+    "progress",
+  ];
   const hasTaskList = selectedColumns.length > 0;
   const taskTableWidth = hasTaskList
     ? calculateTaskTableWidth(selectedColumns, columnWidths, options.density)
@@ -185,7 +192,9 @@ function buildCompleteSvg(
 
   // Add title for accessibility
   const title = document.createElementNS("http://www.w3.org/2000/svg", "title");
-  title.textContent = projectName ? `Gantt chart: ${projectName}` : "Gantt Chart";
+  title.textContent = projectName
+    ? `Gantt chart: ${projectName}`
+    : "Gantt Chart";
   svg.appendChild(title);
 
   // Add white background if requested
@@ -213,16 +222,27 @@ function buildCompleteSvg(
   if (options.includeHeader) {
     // Task table header
     if (hasTaskList) {
-      renderTaskTableHeader(svg, selectedColumns, columnWidths, taskTableWidth, 0, 0, options.density);
+      renderTaskTableHeader(
+        svg,
+        selectedColumns,
+        columnWidths,
+        taskTableWidth,
+        0,
+        0,
+        options.density
+      );
     }
 
     // Timeline header - clone and position
     if (headerSvg) {
-      const headerGroup = document.createElementNS("http://www.w3.org/2000/svg", "g");
+      const headerGroup = document.createElementNS(
+        "http://www.w3.org/2000/svg",
+        "g"
+      );
       headerGroup.setAttribute("transform", `translate(${taskTableWidth}, 0)`);
 
       // Clone all children from header SVG
-      Array.from(headerSvg.childNodes).forEach(child => {
+      Array.from(headerSvg.childNodes).forEach((child) => {
         headerGroup.appendChild(child.cloneNode(true));
       });
       // Set font-family on all text elements (vector apps ignore CSS style blocks)
@@ -248,11 +268,17 @@ function buildCompleteSvg(
   }
 
   // Add the timeline chart - clone and position
-  const chartGroup = document.createElementNS("http://www.w3.org/2000/svg", "g");
-  chartGroup.setAttribute("transform", `translate(${taskTableWidth}, ${currentY})`);
+  const chartGroup = document.createElementNS(
+    "http://www.w3.org/2000/svg",
+    "g"
+  );
+  chartGroup.setAttribute(
+    "transform",
+    `translate(${taskTableWidth}, ${currentY})`
+  );
 
   // Clone all children from chart SVG
-  Array.from(chartSvg.childNodes).forEach(child => {
+  Array.from(chartSvg.childNodes).forEach((child) => {
     chartGroup.appendChild(child.cloneNode(true));
   });
   // Set font-family on all text elements (vector apps ignore CSS style blocks)
@@ -261,7 +287,6 @@ function buildCompleteSvg(
 
   return svg;
 }
-
 
 /**
  * Finalize SVG with options and serialize.

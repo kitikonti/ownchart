@@ -1,7 +1,7 @@
 /**
  * Inter font data for jsPDF embedding.
  * These are Base64-encoded TTF files from the Inter font family (rsms/inter v4.0).
- * 
+ *
  * License: SIL Open Font License 1.1
  * https://github.com/rsms/inter/blob/master/LICENSE.txt
  */

@@ -87,22 +87,32 @@ export async function exportToPdf(params: ExportToPdfParams): Promise<void> {
 
     // Calculate available space for content (accounting for margins and header/footer)
     const headerReserved =
-      pdfOptions.header.showProjectName || pdfOptions.header.showExportDate ? 10 : 0;
+      pdfOptions.header.showProjectName || pdfOptions.header.showExportDate
+        ? 10
+        : 0;
     const footerReserved =
-      pdfOptions.footer.showProjectName || pdfOptions.footer.showExportDate ? 10 : 0;
+      pdfOptions.footer.showProjectName || pdfOptions.footer.showExportDate
+        ? 10
+        : 0;
     const availableWidthMm = pageDims.width - margins.left - margins.right;
     const availableHeightMm =
-      pageDims.height - margins.top - margins.bottom - headerReserved - footerReserved;
+      pageDims.height -
+      margins.top -
+      margins.bottom -
+      headerReserved -
+      footerReserved;
 
     // Convert to pixels at PNG_EXPORT_DPI for consistency with PNG presets
     const availableWidthPx = (availableWidthMm / MM_PER_INCH) * PNG_EXPORT_DPI;
-    const availableHeightPx = (availableHeightMm / MM_PER_INCH) * PNG_EXPORT_DPI;
+    const availableHeightPx =
+      (availableHeightMm / MM_PER_INCH) * PNG_EXPORT_DPI;
 
     // Calculate content height based on task count
     const densityConfig = DENSITY_CONFIG[options.density];
     const contentHeaderHeight = options.includeHeader ? HEADER_HEIGHT : 0;
     const flattenedTasks = buildFlattenedTaskList(tasks, new Set<string>());
-    const contentHeightPx = flattenedTasks.length * densityConfig.rowHeight + contentHeaderHeight;
+    const contentHeightPx =
+      flattenedTasks.length * densityConfig.rowHeight + contentHeaderHeight;
 
     // Base width matches PNG preset (full page at 150 DPI)
     const baseWidthPx = (pageDims.width / MM_PER_INCH) * PNG_EXPORT_DPI;
@@ -113,7 +123,10 @@ export async function exportToPdf(params: ExportToPdfParams): Promise<void> {
     let optimalFitToWidth = baseWidthPx;
     if (contentHeightPx > availableHeightPx) {
       const pageAspectRatio = availableWidthPx / availableHeightPx;
-      optimalFitToWidth = Math.max(baseWidthPx, Math.round(contentHeightPx * pageAspectRatio));
+      optimalFitToWidth = Math.max(
+        baseWidthPx,
+        Math.round(contentHeightPx * pageAspectRatio)
+      );
     }
 
     effectiveOptions = {
@@ -262,9 +275,20 @@ export async function exportToPdf(params: ExportToPdfParams): Promise<void> {
     onProgress?.(70);
 
     // Render header if configured
-    const hasHeader = pdfOptions.header.showProjectName || pdfOptions.header.showAuthor || pdfOptions.header.showExportDate;
+    const hasHeader =
+      pdfOptions.header.showProjectName ||
+      pdfOptions.header.showAuthor ||
+      pdfOptions.header.showExportDate;
     if (hasHeader) {
-      renderHeader(doc, pdfOptions, pdfTitle, pdfAuthor, margins, pageDims.width, dateFormat);
+      renderHeader(
+        doc,
+        pdfOptions,
+        pdfTitle,
+        pdfAuthor,
+        margins,
+        pageDims.width,
+        dateFormat
+      );
     }
 
     // Convert SVG to PDF using svg2pdf.js
@@ -279,7 +303,10 @@ export async function exportToPdf(params: ExportToPdfParams): Promise<void> {
     onProgress?.(90);
 
     // Render footer if configured
-    const hasFooter = pdfOptions.footer.showProjectName || pdfOptions.footer.showAuthor || pdfOptions.footer.showExportDate;
+    const hasFooter =
+      pdfOptions.footer.showProjectName ||
+      pdfOptions.footer.showAuthor ||
+      pdfOptions.footer.showExportDate;
     if (hasFooter) {
       renderFooter(
         doc,
@@ -316,7 +343,8 @@ function buildCompleteSvg(
   projectName?: string
 ): SVGSVGElement {
   const selectedColumns =
-    options.selectedColumns || (["name", "startDate", "endDate", "progress"] as ExportColumnKey[]);
+    options.selectedColumns ||
+    (["name", "startDate", "endDate", "progress"] as ExportColumnKey[]);
   const hasTaskList = selectedColumns.length > 0;
   const taskTableWidth = hasTaskList
     ? calculateTaskTableWidth(selectedColumns, columnWidths, options.density)
@@ -423,8 +451,6 @@ function buildCompleteSvg(
 
   return svg;
 }
-
-
 
 /**
  * Render the header on the PDF.

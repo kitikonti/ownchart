@@ -845,8 +845,9 @@ export const useTaskStore = create<TaskStore>()(
         const field = column.field;
 
         // Get density config for accurate measurements
-        const densityConfig =
-          useUserPreferencesStore.getState().getDensityConfig();
+        const densityConfig = useUserPreferencesStore
+          .getState()
+          .getDensityConfig();
         const fontSize = densityConfig.fontSizeCell;
         const indentSize = densityConfig.indentSize;
         const iconSize = densityConfig.iconSize;

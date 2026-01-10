@@ -68,14 +68,20 @@ export function ExportFormatSelector({
             <Icon
               size={24}
               weight={isSelected ? "duotone" : "regular"}
-              className={isSelected ? "text-[var(--color-teal-gray-700)]" : "text-slate-400"}
+              className={
+                isSelected
+                  ? "text-[var(--color-teal-gray-700)]"
+                  : "text-slate-400"
+              }
             />
             <span
               className={`text-sm font-semibold ${isSelected ? "text-[var(--color-teal-gray-900)]" : "text-slate-600"}`}
             >
               {option.label}
             </span>
-            <span className={`text-[10px] leading-tight text-center ${isSelected ? "text-[var(--color-teal-gray-700)]" : "text-slate-500"}`}>
+            <span
+              className={`text-[10px] leading-tight text-center ${isSelected ? "text-[var(--color-teal-gray-700)]" : "text-slate-500"}`}
+            >
               {option.bestFor}
             </span>
           </button>

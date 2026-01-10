@@ -269,7 +269,12 @@ export const EXPORT_QUICK_PRESETS: ExportQuickPreset[] = [
   // Paper sizes (calculated from mm at 150 DPI)
   createPagePreset("a4-landscape", "A4 Landscape", "a4", "landscape"),
   createPagePreset("a3-landscape", "A3 Landscape", "a3", "landscape"),
-  createPagePreset("letter-landscape", "Letter Landscape", "letter", "landscape"),
+  createPagePreset(
+    "letter-landscape",
+    "Letter Landscape",
+    "letter",
+    "landscape"
+  ),
   // Screen sizes (fixed pixel values)
   {
     key: "hd-screen",
