@@ -2,6 +2,38 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [0.0.23](https://github.com/kitikonti/ownchart/compare/v0.0.22...v0.0.23) (2026-01-10)
+
+
+### Features
+
+* **export:** embed Inter-Italic font for proper italic rendering in PDF ([f63c416](https://github.com/kitikonti/ownchart/commit/f63c416e004f6974f49c40d3e017284742a7ea26))
+* **export:** implement PDF and SVG export functionality ([783f938](https://github.com/kitikonti/ownchart/commit/783f93891303d82dceadb2126cb19f971073dbcd))
+* **export:** rewrite PDF export with svg2pdf.js for visual consistency ([24b04b0](https://github.com/kitikonti/ownchart/commit/24b04b0488084efac0b22f0b7edcd9702b2e497b))
+* **export:** rewrite SVG export with native SVG elements ([099db17](https://github.com/kitikonti/ownchart/commit/099db17cc0b56cbe4503df9dca0fcecf76118a48))
+
+
+### Bug Fixes
+
+* **export:** ensure all exports match app text formatting and layout ([6ee229f](https://github.com/kitikonti/ownchart/commit/6ee229fe6d5d925fa1bca720c7b5f47af4f6dc41))
+* **export:** fix lint errors and format PDF/SVG export code ([487974b](https://github.com/kitikonti/ownchart/commit/487974b2c1af97fffb970c781d563ec9c061954b))
+* persist all chart settings in localStorage and restore on file open ([87873fd](https://github.com/kitikonti/ownchart/commit/87873fd94301feb12753b04d44895c7c7e4c5d13))
+
+
+### UI/UX
+
+* **export:** apply teal accent color consistently to all active elements ([828176e](https://github.com/kitikonti/ownchart/commit/828176e978b2330135374f5a3d40a8b4515937a4))
+* **export:** improve visual hierarchy with section dividers ([846bf2e](https://github.com/kitikonti/ownchart/commit/846bf2e50b34f50d3b5d36340c0b88d199e70ac9))
+* **export:** simplify export dialog design ([73b5059](https://github.com/kitikonti/ownchart/commit/73b5059e5583cf47b2482909ef50b0e458fd46e9))
+* **export:** unify export dialog design with teal accent and shared settings ([a190899](https://github.com/kitikonti/ownchart/commit/a19089992fc38a0d381199effcf313a13ad3c053))
+* **export:** use teal-tinted grays on colored backgrounds ([1bf04ea](https://github.com/kitikonti/ownchart/commit/1bf04ea6ebd7d3cb1824c3cf0caa09a369e7daf2))
+
+
+### Code Refactoring
+
+* **export:** extract shared code from PDF/SVG export modules ([531d058](https://github.com/kitikonti/ownchart/commit/531d058095244099a4ba40ebae19bbff9a3231e9))
+* **export:** unify DPI calculations across PNG and PDF exports ([468eb5c](https://github.com/kitikonti/ownchart/commit/468eb5c5d5a5db7bf9a6ba2faeb31224346bf7da))
+
 ### [0.0.22](https://github.com/kitikonti/ownchart/compare/v0.0.21...v0.0.22) (2026-01-08)
 
 
