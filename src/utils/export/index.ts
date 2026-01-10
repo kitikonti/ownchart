@@ -15,6 +15,15 @@ export {
 } from "./downloadPng";
 export { sanitizeFilename } from "./sanitizeFilename";
 export {
+  INTERNAL_DPI,
+  PNG_EXPORT_DPI,
+  MM_PER_INCH,
+  mmToPxAtDpi,
+  pxToMmAtDpi,
+  calculatePixelDimensions,
+  formatDpiDescription,
+} from "./dpi";
+export {
   DEFAULT_EXPORT_OPTIONS,
   DEFAULT_PDF_OPTIONS,
   DEFAULT_SVG_OPTIONS,

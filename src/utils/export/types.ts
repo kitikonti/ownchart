@@ -6,6 +6,11 @@ import type {
   UiDensity,
   TaskLabelPosition,
 } from "../../types/preferences.types";
+import {
+  PNG_EXPORT_DPI,
+  calculatePixelDimensions,
+  formatDpiDescription,
+} from "./dpi";
 
 // =============================================================================
 // Export Format Types
@@ -233,28 +238,39 @@ export const EXPORT_ZOOM_PRESETS = {
 export type ExportZoomPreset = keyof typeof EXPORT_ZOOM_PRESETS;
 
 /**
+ * Generate a quick preset from a page size.
+ * Uses PNG_EXPORT_DPI (150) for print-quality output.
+ */
+function createPagePreset(
+  key: string,
+  label: string,
+  pageSize: keyof typeof PDF_PAGE_SIZES,
+  orientation: "landscape" | "portrait" = "landscape"
+): ExportQuickPreset {
+  const size = PDF_PAGE_SIZES[pageSize];
+  const widthMm = orientation === "landscape" ? size.width : size.height;
+  const heightMm = orientation === "landscape" ? size.height : size.width;
+  const dims = calculatePixelDimensions(widthMm, heightMm, PNG_EXPORT_DPI);
+
+  return {
+    key,
+    label,
+    description: formatDpiDescription(dims.width, dims.height, PNG_EXPORT_DPI),
+    targetWidth: dims.width,
+  };
+}
+
+/**
  * Quick presets for common export target widths.
- * Based on standard paper sizes at 150 DPI (good print quality).
+ * Paper sizes are calculated at PNG_EXPORT_DPI (150 DPI) for print quality.
+ * Screen sizes use fixed pixel values.
  */
 export const EXPORT_QUICK_PRESETS: ExportQuickPreset[] = [
-  {
-    key: "a4-landscape",
-    label: "A4 Landscape",
-    description: "1754 × 1240 px (150 DPI)",
-    targetWidth: 1754,
-  },
-  {
-    key: "a3-landscape",
-    label: "A3 Landscape",
-    description: "2480 × 1754 px (150 DPI)",
-    targetWidth: 2480,
-  },
-  {
-    key: "letter-landscape",
-    label: "Letter Landscape",
-    description: "1650 × 1275 px (150 DPI)",
-    targetWidth: 1650,
-  },
+  // Paper sizes (calculated from mm at 150 DPI)
+  createPagePreset("a4-landscape", "A4 Landscape", "a4", "landscape"),
+  createPagePreset("a3-landscape", "A3 Landscape", "a3", "landscape"),
+  createPagePreset("letter-landscape", "Letter Landscape", "letter", "landscape"),
+  // Screen sizes (fixed pixel values)
   {
     key: "hd-screen",
     label: "HD Screen",

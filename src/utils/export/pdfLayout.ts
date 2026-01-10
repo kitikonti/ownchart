@@ -5,15 +5,28 @@
 
 import type { PdfExportOptions, PdfMargins } from "./types";
 import { PDF_PAGE_SIZES, PDF_MARGIN_PRESETS } from "./types";
+import { INTERNAL_DPI, MM_PER_INCH } from "./dpi";
+
+// Re-export DPI constants for backwards compatibility
+export { INTERNAL_DPI, PNG_EXPORT_DPI, MM_PER_INCH } from "./dpi";
+export {
+  mmToPxAtDpi,
+  calculatePixelDimensions,
+  formatDpiDescription,
+} from "./dpi";
+
+// =============================================================================
+// Derived Constants for PDF
+// =============================================================================
 
 /** Points per millimeter (72 pt/inch ÷ 25.4 mm/inch) */
-export const PT_PER_MM = 72 / 25.4;
+export const PT_PER_MM = 72 / MM_PER_INCH;
 
-/** Points per pixel at 96 DPI */
-export const PT_PER_PX = 72 / 96;
+/** Points per pixel at internal DPI */
+export const PT_PER_PX = 72 / INTERNAL_DPI;
 
-/** Millimeters per pixel at 96 DPI */
-export const MM_PER_PX = 25.4 / 96;
+/** Millimeters per pixel at internal DPI */
+export const MM_PER_PX = MM_PER_INCH / INTERNAL_DPI;
 
 /**
  * Convert millimeters to points (PDF native unit).
@@ -51,7 +64,7 @@ export function pxToMm(px: number): number {
 }
 
 /**
- * Convert millimeters to pixels.
+ * Convert millimeters to pixels (at internal DPI).
  */
 export function mmToPx(mm: number): number {
   return mm / MM_PER_PX;

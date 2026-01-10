@@ -20,6 +20,7 @@ import {
   getMargins,
   mmToPx,
 } from "./pdfLayout";
+import { PNG_EXPORT_DPI, MM_PER_INCH } from "./dpi";
 import {
   ExportRenderer,
   calculateExportDimensions,
@@ -119,57 +120,50 @@ export async function exportToPdf(params: ExportToPdfParams): Promise<void> {
 
   onProgress?.(5);
 
-  // For PDF "fit to page" mode, calculate the optimal width based on page aspect ratio
+  // For "fit to page" mode, calculate optimal fitToWidth based on content and page
   let effectiveOptions = options;
   if (options.zoomMode === "fitToWidth") {
-    // Get page dimensions and margins
     const pageDims = getPageDimensions(pdfOptions);
     const margins = getMargins(pdfOptions);
 
-    // Calculate reserved space for header/footer
+    // Calculate available space for content (accounting for margins and header/footer)
     const headerReserved =
-      pdfOptions.header.showProjectName || pdfOptions.header.showExportDate
-        ? 10
-        : 0;
+      pdfOptions.header.showProjectName || pdfOptions.header.showExportDate ? 10 : 0;
     const footerReserved =
-      pdfOptions.footer.showProjectName || pdfOptions.footer.showExportDate
-        ? 10
-        : 0;
-
-    // Calculate available content area in pixels
+      pdfOptions.footer.showProjectName || pdfOptions.footer.showExportDate ? 10 : 0;
     const availableWidthMm = pageDims.width - margins.left - margins.right;
     const availableHeightMm =
       pageDims.height - margins.top - margins.bottom - headerReserved - footerReserved;
-    const availableWidthPx = mmToPx(availableWidthMm);
-    const availableHeightPx = mmToPx(availableHeightMm);
 
-    // Calculate content height (fixed based on task count and density)
+    // Convert to pixels at PNG_EXPORT_DPI for consistency with PNG presets
+    const availableWidthPx = (availableWidthMm / MM_PER_INCH) * PNG_EXPORT_DPI;
+    const availableHeightPx = (availableHeightMm / MM_PER_INCH) * PNG_EXPORT_DPI;
+
+    // Calculate content height based on task count
     const densityConfig = DENSITY_CONFIG[options.density];
     const contentHeaderHeight = options.includeHeader ? HEADER_HEIGHT : 0;
     const flattenedTasks = buildFlattenedTaskList(tasks, new Set<string>());
     const contentHeightPx = flattenedTasks.length * densityConfig.rowHeight + contentHeaderHeight;
 
-    // Calculate optimal total width based on page aspect ratio
-    // We want the content aspect ratio to match the page aspect ratio
-    // so that after scaling, both width and height fill the page exactly
-    const pageAspectRatio = availableWidthPx / availableHeightPx;
-    const optimalTotalWidthPx = contentHeightPx * pageAspectRatio;
+    // Base width matches PNG preset (full page at 150 DPI)
+    const baseWidthPx = (pageDims.width / MM_PER_INCH) * PNG_EXPORT_DPI;
 
-    // The timeline width is the total width minus task table
-    // But ensure we don't go smaller than the page width (use page width as minimum)
-    const optimalFitToWidth = Math.max(
-      Math.round(optimalTotalWidthPx),
-      Math.round(availableWidthPx)
-    );
+    // If content is taller than available space, it will be scaled down.
+    // To fill the page after scaling, we need a wider content.
+    // Formula: optimalWidth = contentHeight * (availableWidth / availableHeight)
+    let optimalFitToWidth = baseWidthPx;
+    if (contentHeightPx > availableHeightPx) {
+      const pageAspectRatio = availableWidthPx / availableHeightPx;
+      optimalFitToWidth = Math.max(baseWidthPx, Math.round(contentHeightPx * pageAspectRatio));
+    }
 
-    // Update options with calculated fitToWidth
     effectiveOptions = {
       ...options,
       fitToWidth: optimalFitToWidth,
     };
   }
 
-  // Calculate dimensions using effective options
+  // Calculate dimensions - uses same calculation as PNG export
   const dimensions = calculateExportDimensions(
     tasks,
     effectiveOptions,
