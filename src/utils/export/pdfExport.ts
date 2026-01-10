@@ -573,7 +573,7 @@ function renderTaskTableHeader(
       text.setAttribute("fill", COLORS.textHeader);
       text.setAttribute("font-family", SVG_FONT_FAMILY);
       text.setAttribute("font-size", "12"); // text-xs (matches app)
-      text.setAttribute("font-weight", "600"); // font-semibold (matches app)
+      text.setAttribute("font-weight", "bold"); // font-semibold (svg2pdf.js needs "bold" not "600")
       text.setAttribute("letter-spacing", "0.05em");
       text.textContent = label.toUpperCase();
       group.appendChild(text);
