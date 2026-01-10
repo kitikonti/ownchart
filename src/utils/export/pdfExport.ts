@@ -420,7 +420,7 @@ function buildCompleteSvg(
   // Render header row
   if (options.includeHeader) {
     if (hasTaskList) {
-      renderTaskTableHeader(
+      const headerGroup = renderTaskTableHeader(
         svg,
         selectedColumns,
         columnWidths,
@@ -429,6 +429,8 @@ function buildCompleteSvg(
         0,
         options.density
       );
+      // Ensure font-family is set on all text elements for svg2pdf.js
+      setFontFamilyOnTextElements(headerGroup);
     }
 
     if (headerSvg) {
@@ -449,7 +451,7 @@ function buildCompleteSvg(
 
   // Render task table rows
   if (hasTaskList) {
-    renderTaskTableRows(
+    const rowsGroup = renderTaskTableRows(
       svg,
       flattenedTasks,
       selectedColumns,
@@ -459,6 +461,8 @@ function buildCompleteSvg(
       currentY,
       options.density
     );
+    // Ensure font-family is set on all text elements for svg2pdf.js
+    setFontFamilyOnTextElements(rowsGroup);
   }
 
   // Add timeline chart
@@ -536,7 +540,7 @@ function renderTaskTableHeader(
   x: number,
   y: number,
   density: UiDensity
-): void {
+): SVGGElement {
   const group = document.createElementNS("http://www.w3.org/2000/svg", "g");
   group.setAttribute("class", "task-table-header");
 
@@ -574,27 +578,30 @@ function renderTaskTableHeader(
       text.setAttribute("y", String(y + HEADER_HEIGHT / 2 + 4));
       text.setAttribute("fill", COLORS.textHeader);
       text.setAttribute("font-family", SVG_FONT_FAMILY);
-      text.setAttribute("font-size", "11");
-      text.setAttribute("font-weight", "bold");
+      text.setAttribute("font-size", "12"); // text-xs (matches app)
+      text.setAttribute("font-weight", "600"); // font-semibold (matches app)
       text.setAttribute("letter-spacing", "0.05em");
       text.textContent = label.toUpperCase();
       group.appendChild(text);
     }
 
-    // Column separator
-    const sep = document.createElementNS("http://www.w3.org/2000/svg", "line");
-    sep.setAttribute("x1", String(colX + colWidth));
-    sep.setAttribute("y1", String(y));
-    sep.setAttribute("x2", String(colX + colWidth));
-    sep.setAttribute("y2", String(y + HEADER_HEIGHT));
-    sep.setAttribute("stroke", COLORS.border);
-    sep.setAttribute("stroke-width", "1");
-    group.appendChild(sep);
+    // Column separator (skip for color column - no border between color and name)
+    if (key !== "color") {
+      const sep = document.createElementNS("http://www.w3.org/2000/svg", "line");
+      sep.setAttribute("x1", String(colX + colWidth));
+      sep.setAttribute("y1", String(y));
+      sep.setAttribute("x2", String(colX + colWidth));
+      sep.setAttribute("y2", String(y + HEADER_HEIGHT));
+      sep.setAttribute("stroke", COLORS.border);
+      sep.setAttribute("stroke-width", "1");
+      group.appendChild(sep);
+    }
 
     colX += colWidth;
   }
 
   svg.appendChild(group);
+  return group;
 }
 
 /**
@@ -609,7 +616,7 @@ function renderTaskTableRows(
   x: number,
   startY: number,
   density: UiDensity
-): void {
+): SVGGElement {
   const densityConfig = DENSITY_CONFIG[density];
   const rowHeight = densityConfig.rowHeight;
   const indentSize = densityConfig.indentSize;
@@ -680,8 +687,10 @@ function renderTaskTableRows(
         group.appendChild(colorBar);
       } else if (key === "name") {
         const hasChildren = flattenedTask.hasChildren;
+        const fontSize = densityConfig.fontSizeCell;
 
-        let currentX = colX + 12 + level * indentSize;
+        // Base X position with indent (no extra padding, matches app)
+        let currentX = colX + level * indentSize;
 
         // Expand/collapse arrow for summary tasks
         if (hasChildren && task.type === "summary") {
@@ -747,7 +756,7 @@ function renderTaskTableRows(
         text.setAttribute("y", String(rowY + rowHeight / 2 + 4));
         text.setAttribute("fill", COLORS.textPrimary);
         text.setAttribute("font-family", SVG_FONT_FAMILY);
-        text.setAttribute("font-size", "13");
+        text.setAttribute("font-size", String(fontSize));
         text.textContent = task.name || `Task ${index + 1}`;
         group.appendChild(text);
       } else {
@@ -786,12 +795,13 @@ function renderTaskTableRows(
           );
           text.setAttribute("x", String(colX + 12));
           text.setAttribute("y", String(rowY + rowHeight / 2 + 4));
+          // Regular cells use textPrimary (slate-800), summary dates/duration use textSummary (slate-500)
           text.setAttribute(
             "fill",
-            useSummaryStyle ? COLORS.textSummary : COLORS.textSecondary
+            useSummaryStyle ? COLORS.textSummary : COLORS.textPrimary
           );
           text.setAttribute("font-family", SVG_FONT_FAMILY);
-          text.setAttribute("font-size", "13");
+          text.setAttribute("font-size", String(densityConfig.fontSizeCell));
           if (useSummaryStyle) {
             text.setAttribute("font-style", "italic");
           }
@@ -800,24 +810,27 @@ function renderTaskTableRows(
         }
       }
 
-      // Column separator
-      const sep = document.createElementNS(
-        "http://www.w3.org/2000/svg",
-        "line"
-      );
-      sep.setAttribute("x1", String(colX + colWidth));
-      sep.setAttribute("y1", String(rowY));
-      sep.setAttribute("x2", String(colX + colWidth));
-      sep.setAttribute("y2", String(rowY + rowHeight));
-      sep.setAttribute("stroke", COLORS.borderLight);
-      sep.setAttribute("stroke-width", "1");
-      group.appendChild(sep);
+      // Column separator (skip for color column - no border between color and name)
+      if (key !== "color") {
+        const sep = document.createElementNS(
+          "http://www.w3.org/2000/svg",
+          "line"
+        );
+        sep.setAttribute("x1", String(colX + colWidth));
+        sep.setAttribute("y1", String(rowY));
+        sep.setAttribute("x2", String(colX + colWidth));
+        sep.setAttribute("y2", String(rowY + rowHeight));
+        sep.setAttribute("stroke", COLORS.borderLight);
+        sep.setAttribute("stroke-width", "1");
+        group.appendChild(sep);
+      }
 
       colX += colWidth;
     }
   });
 
   svg.appendChild(group);
+  return group;
 }
 
 /**

@@ -6,8 +6,9 @@
 import type { Task } from "../types/chart.types";
 import type { TaskLabelPosition } from "../types/preferences.types";
 
-/** Default font family used in the app (matches Tailwind/browser defaults) */
-const DEFAULT_FONT_FAMILY = "system-ui, -apple-system, sans-serif";
+/** Default font family used in the app (matches tailwind.config.js) */
+const DEFAULT_FONT_FAMILY =
+  "Inter, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif";
 
 /** 8px gap between task bar and label */
 const LABEL_GAP = 8;
@@ -87,6 +88,44 @@ export function getMaxLabelWidth(tasks: Task[], fontSize: number): number {
  * @param pixelsPerDay - Current pixels per day (based on zoom)
  * @returns Object with leftDays and rightDays padding needed
  */
+/**
+ * Calculate optimal column width based on header and cell content.
+ * This is a pure utility function used by both autoFitColumn and export.
+ *
+ * @param headerLabel - Column header text
+ * @param cellValues - Array of formatted cell values
+ * @param fontSize - Font size in pixels for cells
+ * @param cellPadding - Total horizontal padding (left + right)
+ * @param extraWidths - Array of extra widths per cell (e.g., for indent, icons)
+ * @param headerFontSize - Font size for header (defaults to fontSize)
+ * @returns Optimal column width in pixels
+ */
+export function calculateColumnWidth(
+  headerLabel: string,
+  cellValues: string[],
+  fontSize: number,
+  cellPadding: number,
+  extraWidths: number[] = [],
+  headerFontSize: number = fontSize
+): number {
+  // Measure header text width
+  let maxWidth = measureTextWidth(headerLabel, headerFontSize);
+
+  // Measure each cell value
+  cellValues.forEach((value, index) => {
+    let textWidth = measureTextWidth(value, fontSize);
+    // Add extra width for this cell (e.g., indent + icons for name column)
+    if (extraWidths[index]) {
+      textWidth += extraWidths[index];
+    }
+    maxWidth = Math.max(maxWidth, textWidth);
+  });
+
+  // Add padding and buffer, cap at 600px
+  const finalWidth = Math.max(60, Math.ceil(maxWidth + cellPadding + 4));
+  return Math.min(finalWidth, 600);
+}
+
 export function calculateLabelPaddingDays(
   tasks: Task[],
   labelPosition: TaskLabelPosition,

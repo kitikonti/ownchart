@@ -46,6 +46,8 @@ export {
   calculateEffectiveZoom,
   getEffectiveDateRange,
   calculateDurationDays,
+  calculateOptimalColumnWidth,
+  calculateOptimalColumnWidths,
 } from "./calculations";
 
 import {

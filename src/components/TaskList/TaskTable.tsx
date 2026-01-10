@@ -25,7 +25,6 @@ import { useDensityConfig } from "../../store/slices/userPreferencesSlice";
 import { TaskTableRow } from "./TaskTableRow";
 import { NewTaskPlaceholderRow } from "./NewTaskPlaceholderRow";
 import {
-  TASK_COLUMNS,
   getDensityAwareWidth,
   getVisibleColumns,
 } from "../../config/tableColumns";
@@ -42,6 +41,7 @@ export function TaskTable({ hideHeader = true }: TaskTableProps): JSX.Element {
   const reorderTasks = useTaskStore((state) => state.reorderTasks);
   const columnWidths = useTaskStore((state) => state.columnWidths);
   const setColumnWidth = useTaskStore((state) => state.setColumnWidth);
+  const autoFitColumn = useTaskStore((state) => state.autoFitColumn);
   const selectedTaskIds = useTaskStore((state) => state.selectedTaskIds);
   const selectAllTasks = useTaskStore((state) => state.selectAllTasks);
   const clearSelection = useTaskStore((state) => state.clearSelection);
@@ -184,44 +184,6 @@ export function TaskTable({ hideHeader = true }: TaskTableProps): JSX.Element {
     setColumnWidth(columnId, width);
   };
 
-  /**
-   * Calculate optimal width for a column based on content.
-   */
-  const calculateOptimalWidth = (columnId: string): number => {
-    const column = TASK_COLUMNS.find((col) => col.id === columnId);
-    if (!column || !column.field) return 100;
-
-    const field = column.field;
-
-    // Find the longest value in this column
-    let maxLength = column.label.length; // Start with header length
-
-    tasks.forEach((task) => {
-      let valueStr = "";
-
-      if (column.formatter) {
-        valueStr = column.formatter(task[field]);
-      } else {
-        valueStr = String(task[field]);
-      }
-
-      maxLength = Math.max(maxLength, valueStr.length);
-    });
-
-    // Estimate width: ~8px per character + padding (24px) + some buffer
-    const estimatedWidth = Math.max(60, maxLength * 8 + 40);
-
-    return Math.min(estimatedWidth, 400); // Cap at 400px
-  };
-
-  /**
-   * Handle auto-resize on double-click.
-   */
-  const handleAutoResize = (columnId: string) => {
-    const optimalWidth = calculateOptimalWidth(columnId);
-    setColumnWidth(columnId, optimalWidth);
-  };
-
   return (
     <div className="task-table-container bg-white border-r border-slate-200 select-none">
       {/* Table Content - no overflow here, handled by parent */}
@@ -279,7 +241,7 @@ export function TaskTable({ hideHeader = true }: TaskTableProps): JSX.Element {
                       columnId={column.id}
                       currentWidth={getColumnWidth(column.id)}
                       onResize={handleColumnResize}
-                      onAutoResize={handleAutoResize}
+                      onAutoResize={autoFitColumn}
                       minWidth={100}
                     />
                   )}

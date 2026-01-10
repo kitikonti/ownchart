@@ -6,8 +6,19 @@
 import type { ExportOptions, ExportColumnKey } from "./types";
 import { DENSITY_CONFIG, type UiDensity } from "../../types/preferences.types";
 import { addDays } from "../dateUtils";
-import { calculateLabelPaddingDays } from "../textMeasurement";
+import { calculateLabelPaddingDays, calculateColumnWidth } from "../textMeasurement";
 import type { Task } from "../../types/chart.types";
+import { getTaskLevel } from "../hierarchy";
+
+/** Header labels for export columns (must match app's tableColumns.ts) */
+const EXPORT_HEADER_LABELS: Record<ExportColumnKey, string> = {
+  color: "",
+  name: "Name",
+  startDate: "Start Date",
+  endDate: "End Date",
+  duration: "Duration",
+  progress: "%",
+};
 
 /** Base pixels per day at 100% zoom */
 export const BASE_PIXELS_PER_DAY = 25;
@@ -161,4 +172,114 @@ export function calculateDurationDays(dateRange: {
   const durationMs =
     new Date(dateRange.max).getTime() - new Date(dateRange.min).getTime();
   return Math.ceil(durationMs / (1000 * 60 * 60 * 24));
+}
+
+/**
+ * Calculate optimal column width based on content.
+ * Uses the shared calculateColumnWidth function from textMeasurement.
+ */
+export function calculateOptimalColumnWidth(
+  key: ExportColumnKey,
+  tasks: Task[],
+  density: UiDensity
+): number {
+  const densityConfig = DENSITY_CONFIG[density];
+  const fontSize = densityConfig.fontSizeCell;
+  const indentSize = densityConfig.indentSize;
+  const iconSize = densityConfig.iconSize;
+
+  // Color column has fixed width
+  if (key === "color") {
+    return densityConfig.columnWidths.color;
+  }
+
+  // Get header label
+  const headerLabel = EXPORT_HEADER_LABELS[key];
+
+  // Name column has only right padding (indent handles left), others have both
+  const cellPadding =
+    key === "name" ? densityConfig.cellPaddingX : densityConfig.cellPaddingX * 2;
+
+  // Prepare cell values and extra widths
+  const cellValues: string[] = [];
+  const extraWidths: number[] = [];
+
+  for (const task of tasks) {
+    let cellValue = "";
+    const isSummary = task.type === "summary";
+    const isMilestone = task.type === "milestone";
+
+    switch (key) {
+      case "name":
+        cellValue = task.name || "";
+        break;
+      case "startDate":
+        cellValue = task.startDate || "";
+        break;
+      case "endDate":
+        // Milestones don't show end date
+        cellValue = isMilestone ? "" : (task.endDate || "");
+        break;
+      case "duration":
+        // Milestones don't show duration, summaries show "X days"
+        if (isMilestone) {
+          cellValue = "";
+        } else if (isSummary && task.duration !== undefined && task.duration > 0) {
+          cellValue = `${task.duration} days`;
+        } else if (!isSummary && task.duration !== undefined) {
+          cellValue = `${task.duration}`;
+        }
+        break;
+      case "progress":
+        cellValue = task.progress !== undefined ? `${task.progress}%` : "";
+        break;
+    }
+
+    cellValues.push(cellValue);
+
+    // For name column, calculate extra width for UI elements (same as autoFitColumn)
+    if (key === "name") {
+      const level = getTaskLevel(tasks, task.id);
+      const hierarchyIndent = level * indentSize;
+      const expandButton = 16; // w-4 expand/collapse button
+      const gaps = 8; // gap-1 (4px) × 2 between elements
+      const typeIcon = iconSize;
+      extraWidths.push(hierarchyIndent + expandButton + gaps + typeIcon);
+    } else {
+      extraWidths.push(0);
+    }
+  }
+
+  // Use shared utility function (same as autoFitColumn)
+  return calculateColumnWidth(
+    headerLabel,
+    cellValues,
+    fontSize,
+    cellPadding,
+    extraWidths
+  );
+}
+
+/**
+ * Calculate optimal widths for all export columns.
+ * Uses content-based measurement for accurate sizing.
+ */
+export function calculateOptimalColumnWidths(
+  selectedColumns: ExportColumnKey[],
+  tasks: Task[],
+  density: UiDensity,
+  existingWidths: Record<string, number> = {}
+): Record<string, number> {
+  const result: Record<string, number> = {};
+
+  for (const key of selectedColumns) {
+    // Use existing width if set (user customization), otherwise calculate
+    if (existingWidths[key]) {
+      result[key] = existingWidths[key];
+    } else {
+      result[key] = calculateOptimalColumnWidth(key, tasks, density);
+    }
+  }
+
+  return result;
 }

@@ -384,22 +384,24 @@ function renderTaskTableHeader(
       text.setAttribute("y", String(y + HEADER_HEIGHT / 2 + 4));
       text.setAttribute("fill", COLORS.textHeader);
       text.setAttribute("font-family", SVG_FONT_FAMILY);
-      text.setAttribute("font-size", "11"); // text-xs (12px) but slightly smaller for tracking
+      text.setAttribute("font-size", "12"); // text-xs (matches app)
       text.setAttribute("font-weight", "600"); // font-semibold
       text.setAttribute("letter-spacing", "0.05em"); // tracking-wider
       text.textContent = label.toUpperCase(); // uppercase
       group.appendChild(text);
     }
 
-    // Column separator
-    const sep = document.createElementNS("http://www.w3.org/2000/svg", "line");
-    sep.setAttribute("x1", String(colX + colWidth));
-    sep.setAttribute("y1", String(y));
-    sep.setAttribute("x2", String(colX + colWidth));
-    sep.setAttribute("y2", String(y + HEADER_HEIGHT));
-    sep.setAttribute("stroke", COLORS.border);
-    sep.setAttribute("stroke-width", "1");
-    group.appendChild(sep);
+    // Column separator (skip for color column - matches app)
+    if (key !== "color") {
+      const sep = document.createElementNS("http://www.w3.org/2000/svg", "line");
+      sep.setAttribute("x1", String(colX + colWidth));
+      sep.setAttribute("y1", String(y));
+      sep.setAttribute("x2", String(colX + colWidth));
+      sep.setAttribute("y2", String(y + HEADER_HEIGHT));
+      sep.setAttribute("stroke", COLORS.border);
+      sep.setAttribute("stroke-width", "1");
+      group.appendChild(sep);
+    }
 
     colX += colWidth;
   }
@@ -472,9 +474,10 @@ function renderTaskTableRows(
         group.appendChild(colorBar);
       } else if (key === "name") {
         const hasChildren = flattenedTask.hasChildren;
+        const fontSize = densityConfig.fontSizeCell;
 
-        // Base X position with indent
-        let currentX = colX + 12 + level * indentSize;
+        // Base X position with indent (no extra padding, matches app)
+        let currentX = colX + level * indentSize;
 
         // Expand/collapse arrow placeholder (16px wide, matches app)
         // Show "▼" for summary tasks with children (all expanded in export)
@@ -523,7 +526,7 @@ function renderTaskTableRows(
         text.setAttribute("y", String(rowY + rowHeight / 2 + 4));
         text.setAttribute("fill", COLORS.textPrimary);
         text.setAttribute("font-family", SVG_FONT_FAMILY);
-        text.setAttribute("font-size", "13");
+        text.setAttribute("font-size", String(fontSize));
         text.textContent = task.name || `Task ${index + 1}`;
         group.appendChild(text);
       } else {
@@ -557,9 +560,10 @@ function renderTaskTableRows(
           const text = document.createElementNS("http://www.w3.org/2000/svg", "text");
           text.setAttribute("x", String(colX + 12));
           text.setAttribute("y", String(rowY + rowHeight / 2 + 4));
-          text.setAttribute("fill", useSummaryStyle ? COLORS.textSummary : COLORS.textSecondary);
+          // Regular cells use textPrimary (slate-800), summary dates/duration use textSummary (slate-500)
+          text.setAttribute("fill", useSummaryStyle ? COLORS.textSummary : COLORS.textPrimary);
           text.setAttribute("font-family", SVG_FONT_FAMILY);
-          text.setAttribute("font-size", "13");
+          text.setAttribute("font-size", String(densityConfig.fontSizeCell));
           if (useSummaryStyle) {
             text.setAttribute("font-style", "italic");
           }
@@ -568,15 +572,17 @@ function renderTaskTableRows(
         }
       }
 
-      // Column separator
-      const sep = document.createElementNS("http://www.w3.org/2000/svg", "line");
-      sep.setAttribute("x1", String(colX + colWidth));
-      sep.setAttribute("y1", String(rowY));
-      sep.setAttribute("x2", String(colX + colWidth));
-      sep.setAttribute("y2", String(rowY + rowHeight));
-      sep.setAttribute("stroke", COLORS.borderLight);
-      sep.setAttribute("stroke-width", "1");
-      group.appendChild(sep);
+      // Column separator (skip for color column - matches app)
+      if (key !== "color") {
+        const sep = document.createElementNS("http://www.w3.org/2000/svg", "line");
+        sep.setAttribute("x1", String(colX + colWidth));
+        sep.setAttribute("y1", String(rowY));
+        sep.setAttribute("x2", String(colX + colWidth));
+        sep.setAttribute("y2", String(rowY + rowHeight));
+        sep.setAttribute("stroke", COLORS.borderLight);
+        sep.setAttribute("stroke-width", "1");
+        group.appendChild(sep);
+      }
 
       colX += colWidth;
     }

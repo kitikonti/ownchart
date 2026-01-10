@@ -17,6 +17,8 @@ import { useHistoryStore } from "./historySlice";
 import { useFileStore } from "./fileSlice";
 import { CommandType } from "../../types/command.types";
 import { TASK_COLUMNS } from "../../config/tableColumns";
+import { calculateColumnWidth } from "../../utils/textMeasurement";
+import { useUserPreferencesStore } from "./userPreferencesSlice";
 
 /**
  * Editable field types for cell-based editing.
@@ -842,12 +844,24 @@ export const useTaskStore = create<TaskStore>()(
 
         const field = column.field;
 
-        // Find the longest value in this column
-        let maxLength = column.label.length; // Start with header length
+        // Get density config for accurate measurements
+        const densityConfig =
+          useUserPreferencesStore.getState().getDensityConfig();
+        const fontSize = densityConfig.fontSizeCell;
+        const indentSize = densityConfig.indentSize;
+        const iconSize = densityConfig.iconSize;
+        // Name column has no left padding (handled by indent), others have both
+        const cellPadding =
+          columnId === "name"
+            ? densityConfig.cellPaddingX
+            : densityConfig.cellPaddingX * 2;
+
+        // Prepare cell values and extra widths
+        const cellValues: string[] = [];
+        const extraWidths: number[] = [];
 
         state.tasks.forEach((task) => {
           let valueStr = "";
-
           if (column.formatter) {
             valueStr = column.formatter(task[field]);
           } else {
@@ -855,21 +869,29 @@ export const useTaskStore = create<TaskStore>()(
             valueStr =
               value !== undefined && value !== null ? String(value) : "";
           }
+          cellValues.push(valueStr);
 
-          maxLength = Math.max(maxLength, valueStr.length);
+          // For name column, calculate extra width for UI elements
+          if (columnId === "name") {
+            const level = getTaskLevel(state.tasks as Task[], task.id);
+            const hierarchyIndent = level * indentSize;
+            const expandButton = 16; // w-4 expand/collapse button
+            const gaps = 8; // gap-1 (4px) × 2 between elements
+            const typeIcon = iconSize;
+            extraWidths.push(hierarchyIndent + expandButton + gaps + typeIcon);
+          } else {
+            extraWidths.push(0);
+          }
         });
 
-        // Estimate width: ~8px per character + padding (24px for cell padding)
-        // Add extra for hierarchy indent on name column (up to 4 levels * 20px)
-        let estimatedWidth = Math.max(60, maxLength * 8 + 40);
-
-        if (columnId === "name") {
-          // Add space for hierarchy indent and type icon
-          estimatedWidth += 60;
-        }
-
-        // Cap at 400px
-        state.columnWidths[columnId] = Math.min(estimatedWidth, 400);
+        // Use shared utility function for width calculation
+        state.columnWidths[columnId] = calculateColumnWidth(
+          column.label,
+          cellValues,
+          fontSize,
+          cellPadding,
+          extraWidths
+        );
       }),
 
     setTaskTableWidth: (width) =>

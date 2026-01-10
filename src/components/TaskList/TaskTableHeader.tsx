@@ -9,7 +9,6 @@ import { useDensityConfig } from "../../store/slices/userPreferencesSlice";
 import { TASK_COLUMNS, getDensityAwareWidth } from "../../config/tableColumns";
 import { ColumnResizer } from "./ColumnResizer";
 import { useTableDimensions } from "../../hooks/useTableDimensions";
-import { getTaskLevel } from "../../utils/hierarchy";
 
 export function TaskTableHeader(): JSX.Element {
   const tasks = useTaskStore((state) => state.tasks);
@@ -18,6 +17,7 @@ export function TaskTableHeader(): JSX.Element {
   const clearSelection = useTaskStore((state) => state.clearSelection);
   const columnWidths = useTaskStore((state) => state.columnWidths);
   const setColumnWidth = useTaskStore((state) => state.setColumnWidth);
+  const autoFitColumn = useTaskStore((state) => state.autoFitColumn);
   const densityConfig = useDensityConfig();
 
   // Get total column width for proper scrolling
@@ -67,63 +67,6 @@ export function TaskTableHeader(): JSX.Element {
    */
   const handleColumnResize = (columnId: string, width: number) => {
     setColumnWidth(columnId, width);
-  };
-
-  /**
-   * Calculate optimal width for a column based on content.
-   */
-  const calculateOptimalWidth = (columnId: string): number => {
-    const column = TASK_COLUMNS.find((col) => col.id === columnId);
-    if (!column || !column.field) return 100;
-
-    const field = column.field;
-    let maxLength = column.label.length;
-
-    // For name column, track max indent level
-    let maxLevel = 0;
-
-    tasks.forEach((task) => {
-      let valueStr = "";
-
-      if (column.formatter) {
-        valueStr = column.formatter(task[field]);
-      } else {
-        valueStr = String(task[field]);
-      }
-
-      maxLength = Math.max(maxLength, valueStr.length);
-
-      // Track max hierarchy level for name column
-      if (field === "name") {
-        const level = getTaskLevel(tasks, task.id);
-        maxLevel = Math.max(maxLevel, level);
-      }
-    });
-
-    // Base calculation: character width * length + padding
-    const charWidth = 8;
-    const basePadding = 24; // Cell padding (px-3 = 12px each side)
-    let estimatedWidth = maxLength * charWidth + basePadding;
-
-    // For name column, add space for hierarchy elements
-    if (field === "name") {
-      const INDENT_SIZE = 20; // Must match TaskTableRow
-      const indentSpace = maxLevel * INDENT_SIZE;
-      const expandButton = 16; // w-4
-      const typeIcon = 20; // TaskTypeIcon width
-      const gaps = 8; // gap-1 * 2 = 8px
-      estimatedWidth += indentSpace + expandButton + typeIcon + gaps;
-    }
-
-    return Math.max(60, Math.min(estimatedWidth, 600));
-  };
-
-  /**
-   * Handle auto-resize on double-click.
-   */
-  const handleAutoResize = (columnId: string) => {
-    const optimalWidth = calculateOptimalWidth(columnId);
-    setColumnWidth(columnId, optimalWidth);
   };
 
   const handleHeaderCheckboxClick = () => {
@@ -182,7 +125,7 @@ export function TaskTableHeader(): JSX.Element {
               columnId={column.id}
               currentWidth={getColumnWidth(column.id)}
               onResize={handleColumnResize}
-              onAutoResize={handleAutoResize}
+              onAutoResize={autoFitColumn}
               minWidth={100}
             />
           )}

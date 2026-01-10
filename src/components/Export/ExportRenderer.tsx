@@ -11,6 +11,7 @@ import {
   calculateEffectiveZoom,
   getEffectiveDateRange,
   calculateDurationDays,
+  calculateOptimalColumnWidths,
 } from "../../utils/export";
 import { getTimelineScale } from "../../utils/timelineUtils";
 import { getDateRange } from "../../utils/dateUtils";
@@ -41,13 +42,13 @@ interface ExportRendererProps {
 
 const HEADER_HEIGHT = 48;
 
-/** Column definitions for export */
+/** Column definitions for export (labels must match app's tableColumns.ts) */
 export const EXPORT_COLUMNS = [
   { key: "color", label: "", defaultWidth: 24 },
   { key: "name", label: "Name", defaultWidth: 200 },
-  { key: "startDate", label: "Start", defaultWidth: 100 },
-  { key: "endDate", label: "End", defaultWidth: 100 },
-  { key: "duration", label: "Days", defaultWidth: 60 },
+  { key: "startDate", label: "Start Date", defaultWidth: 110 },
+  { key: "endDate", label: "End Date", defaultWidth: 110 },
+  { key: "duration", label: "Duration", defaultWidth: 70 },
   { key: "progress", label: "%", defaultWidth: 60 },
 ] as const;
 
@@ -65,7 +66,7 @@ function ExportTaskTableHeader({
 }): JSX.Element {
   return (
     <div
-      className="flex border-b border-slate-200 bg-slate-50 font-medium text-sm text-slate-700"
+      className="flex border-b border-slate-200 bg-slate-50"
       style={{ width, minWidth: width, height: HEADER_HEIGHT }}
     >
       {selectedColumns.map((key) => {
@@ -74,7 +75,7 @@ function ExportTaskTableHeader({
         return (
           <div
             key={col.key}
-            className="flex items-center border-r border-slate-200 px-3"
+            className={`flex items-center px-3 text-xs font-semibold text-slate-600 uppercase tracking-wider ${col.key !== "color" ? "border-r border-slate-200" : ""}`}
             style={{
               width: columnWidths[col.key] || col.defaultWidth,
               height: HEADER_HEIGHT,
@@ -100,6 +101,8 @@ function ExportTaskTableRows({
   rowHeight,
   colorBarHeight,
   indentSize,
+  fontSizeCell,
+  cellPaddingX,
 }: {
   flattenedTasks: FlattenedTask[];
   selectedColumns: ExportColumnKey[];
@@ -109,6 +112,8 @@ function ExportTaskTableRows({
   rowHeight: number;
   colorBarHeight: number;
   indentSize: number;
+  fontSizeCell: number;
+  cellPaddingX: number;
 }): JSX.Element {
   return (
     <div
@@ -121,8 +126,8 @@ function ExportTaskTableRows({
         return (
           <div
             key={task.id}
-            className="flex border-b border-slate-100 text-sm"
-            style={{ height: rowHeight }}
+            className="flex border-b border-slate-100"
+            style={{ height: rowHeight, fontSize: fontSizeCell }}
           >
             {selectedColumns.map((key) => {
               const col = EXPORT_COLUMNS.find((c) => c.key === key);
@@ -133,7 +138,7 @@ function ExportTaskTableRows({
                 return (
                   <div
                     key={key}
-                    className="flex items-center justify-center border-r border-slate-100"
+                    className="flex items-center justify-center"
                     style={{
                       width: colWidth,
                       height: rowHeight,
@@ -151,42 +156,80 @@ function ExportTaskTableRows({
               }
 
               if (key === "name") {
+                // Check if task has children (for expand/collapse indicator)
+                const hasChildren = flattenedTasks.some(
+                  (ft) => ft.task.parent === task.id
+                );
+                const isSummary = task.type === "summary";
+
                 return (
                   <div
                     key={key}
-                    className="flex items-center gap-2 border-r border-slate-100"
+                    className="flex items-center gap-1 border-r border-slate-100"
                     style={{
                       width: colWidth,
-                      paddingLeft: `${12 + level * indentSize}px`,
-                      paddingRight: 12,
+                      paddingLeft: `${level * indentSize}px`,
+                      paddingRight: 10,
                       height: rowHeight,
                       whiteSpace: "nowrap",
                     }}
                   >
+                    {/* Expand/collapse placeholder - matches app's w-4 (16px) */}
+                    {hasChildren && isSummary ? (
+                      <span className="w-4 text-center text-slate-600 flex-shrink-0">
+                        ▼
+                      </span>
+                    ) : (
+                      <span className="w-4 flex-shrink-0" />
+                    )}
                     <TaskTypeIcon type={task.type} />
-                    {task.name || `Task ${index + 1}`}
+                    <span className="flex-1">{task.name || `Task ${index + 1}`}</span>
                   </div>
                 );
               }
 
-              let value: string = "—";
-              if (key === "startDate") value = task.startDate || "—";
-              else if (key === "endDate") value = task.endDate || "—";
-              else if (key === "duration")
-                value = task.duration !== undefined ? `${task.duration}` : "—";
-              else if (key === "progress")
-                value = task.progress !== undefined ? `${task.progress}%` : "—";
+              // Handle milestone and summary special cases
+              const isSummary = task.type === "summary";
+              const isMilestone = task.type === "milestone";
+              // Summary dates/duration are styled differently (text-slate-500 italic)
+              const useSummaryStyle = isSummary && (key === "startDate" || key === "endDate" || key === "duration");
+
+              let value: string | null = null; // null = show "—", empty string = show nothing
+              if (key === "startDate") {
+                value = task.startDate || null;
+              } else if (key === "endDate") {
+                // Milestones don't have an end date (show empty, not "—")
+                if (isMilestone) {
+                  value = "";
+                } else {
+                  value = task.endDate || null;
+                }
+              } else if (key === "duration") {
+                // Milestones don't have duration (show empty, not "—")
+                if (isMilestone) {
+                  value = "";
+                } else if (isSummary && task.duration !== undefined && task.duration > 0) {
+                  value = `${task.duration} days`;
+                } else if (!isSummary && task.duration !== undefined) {
+                  value = `${task.duration}`;
+                }
+              } else if (key === "progress") {
+                value = task.progress !== undefined ? `${task.progress}%` : null;
+              }
 
               return (
                 <div
                   key={key}
-                  className="flex items-center border-r border-slate-100 text-slate-600 px-3"
+                  className={`flex items-center border-r border-slate-100 ${useSummaryStyle ? "text-slate-500 italic" : ""}`}
                   style={{
                     width: colWidth,
                     height: rowHeight,
+                    paddingLeft: cellPaddingX,
+                    paddingRight: cellPaddingX,
+                    whiteSpace: "nowrap",
                   }}
                 >
-                  {value}
+                  {value === null ? "—" : value}
                 </div>
               );
             })}
@@ -246,10 +289,22 @@ export function ExportRenderer({
   ];
   const hasTaskList = selectedColumns.length > 0;
 
+  // Calculate optimal column widths based on content
+  // Uses passed columnWidths for user-customized columns (like "name"),
+  // calculates optimal width for others based on header + cell content
+  const effectiveColumnWidths = useMemo(() => {
+    return calculateOptimalColumnWidths(
+      selectedColumns,
+      orderedTasks,
+      options.density,
+      columnWidths
+    );
+  }, [selectedColumns, orderedTasks, options.density, columnWidths]);
+
   // Calculate task table width first (needed for fitToWidth calculation)
   // Uses export density setting for correct column widths
   const taskTableWidth = hasTaskList
-    ? calculateTaskTableWidth(selectedColumns, columnWidths, options.density)
+    ? calculateTaskTableWidth(selectedColumns, effectiveColumnWidths, options.density)
     : 0;
 
   // Calculate preliminary zoom (before label padding) for label width estimation
@@ -347,7 +402,7 @@ export function ExportRenderer({
           {hasTaskList && (
             <ExportTaskTableHeader
               selectedColumns={selectedColumns}
-              columnWidths={columnWidths}
+              columnWidths={effectiveColumnWidths}
               width={taskTableWidth}
             />
           )}
@@ -370,12 +425,14 @@ export function ExportRenderer({
           <ExportTaskTableRows
             flattenedTasks={flattenedTasks}
             selectedColumns={selectedColumns}
-            columnWidths={columnWidths}
+            columnWidths={effectiveColumnWidths}
             width={taskTableWidth}
             height={contentHeight}
             rowHeight={densityConfig.rowHeight}
             colorBarHeight={densityConfig.colorBarHeight}
             indentSize={densityConfig.indentSize}
+            fontSizeCell={densityConfig.fontSizeCell}
+            cellPaddingX={densityConfig.cellPaddingX}
           />
         )}
 
@@ -479,10 +536,18 @@ export function calculateExportDimensions(
   ];
   const hasTaskList = selectedColumns.length > 0;
 
+  // Calculate optimal column widths based on content
+  const effectiveColumnWidths = calculateOptimalColumnWidths(
+    selectedColumns,
+    orderedTasks,
+    options.density,
+    columnWidths
+  );
+
   // Calculate task table width first (needed for fitToWidth calculation)
   // Uses export density setting for correct column widths
   const taskTableWidth = hasTaskList
-    ? calculateTaskTableWidth(selectedColumns, columnWidths, options.density)
+    ? calculateTaskTableWidth(selectedColumns, effectiveColumnWidths, options.density)
     : 0;
 
   // Calculate preliminary zoom for label padding estimation
