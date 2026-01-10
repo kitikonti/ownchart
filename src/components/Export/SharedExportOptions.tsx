@@ -175,9 +175,9 @@ export function SharedExportOptions({
         <div className="grid grid-cols-2 gap-8">
           {/* Row Density */}
           <div>
-            <label className="text-xs font-medium text-slate-500 mb-2.5 block">
+            <span className="text-xs font-medium text-slate-500 mb-2.5 block">
               Row density
-            </label>
+            </span>
             <div className="space-y-1.5">
               {DENSITY_OPTIONS.map((opt) => (
                 <label
@@ -202,9 +202,9 @@ export function SharedExportOptions({
 
           {/* Columns */}
           <div>
-            <label className="text-xs font-medium text-slate-500 mb-2.5 block">
+            <span className="text-xs font-medium text-slate-500 mb-2.5 block">
               Table columns
-            </label>
+            </span>
             <div className="grid grid-cols-2 gap-x-4 gap-y-1.5">
               {COLUMN_OPTIONS.map((col) => (
                 <label
@@ -247,9 +247,9 @@ export function SharedExportOptions({
         <div className="grid grid-cols-2 gap-8">
           {/* Timeline elements */}
           <div>
-            <label className="text-xs font-medium text-slate-500 mb-2.5 block">
+            <span className="text-xs font-medium text-slate-500 mb-2.5 block">
               Show in timeline
-            </label>
+            </span>
             <div className="space-y-1.5">
               {[
                 { key: "includeHeader", label: "Header row" },
@@ -281,9 +281,9 @@ export function SharedExportOptions({
           <div className="space-y-6">
             {/* Task labels */}
             <div>
-              <label className="text-xs font-medium text-slate-500 mb-2.5 block">
+              <span className="text-xs font-medium text-slate-500 mb-2.5 block">
                 Task labels
-              </label>
+              </span>
               <div className="flex flex-wrap gap-1.5">
                 {LABEL_POSITION_OPTIONS.map((opt) => (
                   <button
@@ -305,9 +305,9 @@ export function SharedExportOptions({
             {/* Background */}
             {showBackground && (
               <div>
-                <label className="text-xs font-medium text-slate-500 mb-2.5 block">
+                <span className="text-xs font-medium text-slate-500 mb-2.5 block">
                   Background
-                </label>
+                </span>
                 <div className="flex gap-2">
                   <button
                     type="button"

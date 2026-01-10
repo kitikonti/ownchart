@@ -94,7 +94,7 @@ describe("pdfExport", () => {
     it("should be importable", async () => {
       const { exportToPdf } = await import("../../../../src/utils/export/pdfExport");
       expect(typeof exportToPdf).toBe("function");
-    });
+    }, 15000); // Longer timeout due to large font base64 data loading
 
     it("should create PDF with correct orientation", async () => {
       const { exportToPdf } = await import("../../../../src/utils/export/pdfExport");

@@ -138,6 +138,7 @@ export function PdfExportOptions({
               checked={exportOptions.zoomMode === "currentView"}
               onChange={() => onExportOptionsChange({ zoomMode: "currentView" })}
               className="mt-0.5 w-4 h-4"
+              aria-label="Use current view"
             />
             <div className="flex-1">
               <div className="flex items-center gap-2">
@@ -166,6 +167,7 @@ export function PdfExportOptions({
               checked={exportOptions.zoomMode === "fitToWidth"}
               onChange={() => onExportOptionsChange({ zoomMode: "fitToWidth" })}
               className="mt-0.5 w-4 h-4"
+              aria-label="Fit to page"
             />
             <div className="flex-1">
               <span className={`text-sm font-medium ${exportOptions.zoomMode === "fitToWidth" ? "text-[var(--color-teal-gray-900)]" : "text-slate-800"}`}>Fit to page</span>
@@ -282,9 +284,9 @@ export function PdfExportOptions({
         <div className="grid grid-cols-2 gap-6">
           {/* Page Size */}
           <div>
-            <label className="text-xs font-medium text-slate-500 mb-2.5 block">
+            <span className="text-xs font-medium text-slate-500 mb-2.5 block">
               Size
-            </label>
+            </span>
             <select
               value={options.pageSize}
               onChange={(e) => onChange({ pageSize: e.target.value as PdfPageSize })}
@@ -305,9 +307,9 @@ export function PdfExportOptions({
 
           {/* Orientation */}
           <div>
-            <label className="text-xs font-medium text-slate-500 mb-2.5 block">
+            <span className="text-xs font-medium text-slate-500 mb-2.5 block">
               Orientation
-            </label>
+            </span>
             <div className="flex gap-1.5">
               <button
                 type="button"
@@ -341,10 +343,11 @@ export function PdfExportOptions({
         {options.pageSize === "custom" && (
           <div className="mt-5 grid grid-cols-2 gap-4">
             <div>
-              <label className="text-xs font-medium text-slate-500 mb-2.5 block">
+              <label className="text-xs font-medium text-slate-500 mb-2.5 block" htmlFor="pdf-custom-width">
                 Width (mm)
               </label>
               <input
+                id="pdf-custom-width"
                 type="number"
                 value={options.customPageSize?.width || 500}
                 onChange={(e) =>
@@ -361,10 +364,11 @@ export function PdfExportOptions({
               />
             </div>
             <div>
-              <label className="text-xs font-medium text-slate-500 mb-2.5 block">
+              <label className="text-xs font-medium text-slate-500 mb-2.5 block" htmlFor="pdf-custom-height">
                 Height (mm)
               </label>
               <input
+                id="pdf-custom-height"
                 type="number"
                 value={options.customPageSize?.height || 300}
                 onChange={(e) =>
@@ -385,9 +389,9 @@ export function PdfExportOptions({
 
         {/* Margins */}
         <div className="mt-6">
-          <label className="text-xs font-medium text-slate-500 mb-2.5 block">
+          <span className="text-xs font-medium text-slate-500 mb-2.5 block">
             Margins
-          </label>
+          </span>
           <div className="flex flex-wrap gap-1.5">
             {(Object.keys(MARGIN_LABELS) as PdfMarginPreset[])
               .filter((key) => key !== "custom")
@@ -423,9 +427,9 @@ export function PdfExportOptions({
         <div className="grid grid-cols-2 gap-8">
           {/* Header */}
           <div>
-            <label className="text-xs font-medium text-slate-500 mb-2.5 block">
+            <span className="text-xs font-medium text-slate-500 mb-2.5 block">
               Header
-            </label>
+            </span>
             <div className="space-y-1.5">
               <label className="flex items-center gap-2.5 cursor-pointer group">
                 <input
@@ -459,9 +463,9 @@ export function PdfExportOptions({
 
           {/* Footer */}
           <div>
-            <label className="text-xs font-medium text-slate-500 mb-2.5 block">
+            <span className="text-xs font-medium text-slate-500 mb-2.5 block">
               Footer
-            </label>
+            </span>
             <div className="space-y-1.5">
               <label className="flex items-center gap-2.5 cursor-pointer group">
                 <input

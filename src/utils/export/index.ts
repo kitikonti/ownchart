@@ -1,5 +1,5 @@
 /**
- * Export utilities for PNG generation.
+ * Export utilities for PNG, PDF, and SVG generation.
  */
 
 export {
@@ -8,6 +8,32 @@ export {
   calculateExportDimensions,
   type CaptureChartParams,
 } from "./captureChart";
+
+// Shared constants
+export {
+  HEADER_HEIGHT,
+  SVG_FONT_FAMILY,
+  COLORS,
+  HEADER_LABELS,
+  TASK_TYPE_ICON_PATHS,
+} from "./constants";
+
+// Shared helpers
+export {
+  waitForFonts,
+  waitForPaint,
+  setFontFamilyOnTextElements,
+  generateExportFilename,
+  createOffscreenContainer,
+  removeOffscreenContainer,
+} from "./helpers";
+
+// Task table rendering
+export {
+  renderTaskTableHeader,
+  renderTaskTableRows,
+  type FlattenedTask,
+} from "./taskTableRenderer";
 export {
   downloadBlob,
   downloadCanvasAsPng,
