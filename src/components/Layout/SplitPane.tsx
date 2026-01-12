@@ -25,9 +25,13 @@ export function SplitPane({
 }: SplitPaneProps) {
   const [isDragging, setIsDragging] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
+  const leftPanelRef = useRef<HTMLDivElement>(null);
+  // Use ref to track width during drag - no React state updates!
+  const dragWidthRef = useRef<number>(leftWidth);
 
   const handleMouseDown = (e: React.MouseEvent) => {
     e.preventDefault();
+    dragWidthRef.current = leftWidth;
     setIsDragging(true);
   };
 
@@ -35,7 +39,7 @@ export function SplitPane({
     if (!isDragging) return;
 
     const handleMouseMove = (e: MouseEvent) => {
-      if (!containerRef.current) return;
+      if (!containerRef.current || !leftPanelRef.current) return;
 
       const containerRect = containerRef.current.getBoundingClientRect();
       const newWidth = e.clientX - containerRect.left;
@@ -46,10 +50,14 @@ export function SplitPane({
         Math.min(maxLeftWidth, newWidth)
       );
 
-      onLeftWidthChange(clampedWidth);
+      // Direct DOM manipulation - no React state update!
+      dragWidthRef.current = clampedWidth;
+      leftPanelRef.current.style.width = `${clampedWidth}px`;
     };
 
     const handleMouseUp = () => {
+      // Update store only on mouse up with final width
+      onLeftWidthChange(dragWidthRef.current);
       setIsDragging(false);
     };
 
@@ -66,6 +74,7 @@ export function SplitPane({
     <div ref={containerRef} className="flex h-full">
       {/* Left Panel (TaskTable) - overflow handled by children */}
       <div
+        ref={leftPanelRef}
         style={{ width: leftWidth }}
         className="flex-shrink-0 overflow-hidden"
       >

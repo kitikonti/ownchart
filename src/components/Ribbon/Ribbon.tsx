@@ -35,10 +35,15 @@ import {
   MagnifyingGlassPlus,
   MagnifyingGlassMinus,
   ArrowsOutLineHorizontal,
-  CalendarCheck,
-  CalendarX,
-  Flag,
-  ChartBar,
+  ArrowsOutLineVertical,
+  CalendarDot,
+  CalendarDots,
+  Island,
+  TrendUp,
+  Tag,
+  Calendar,
+  NumberSquareOne,
+  Hash,
   CaretDown,
 } from "@phosphor-icons/react";
 
@@ -58,7 +63,7 @@ import { useHistoryStore } from "../../store/slices/historySlice";
 import { useUIStore } from "../../store/slices/uiSlice";
 import { useFileStore } from "../../store/slices/fileSlice";
 import { useUserPreferencesStore } from "../../store/slices/userPreferencesSlice";
-import type { TaskLabelPosition } from "../../types/preferences.types";
+import type { TaskLabelPosition, FirstDayOfWeek, WeekNumberingSystem } from "../../types/preferences.types";
 import { useFileOperations } from "../../hooks/useFileOperations";
 import { useClipboardOperations } from "../../hooks/useClipboardOperations";
 import { getViewportCenterAnchor, applyScrollLeft } from "../../hooks/useZoom";
@@ -89,6 +94,16 @@ const DATE_FORMAT_OPTIONS: DropdownOption<"DD/MM/YYYY" | "MM/DD/YYYY" | "YYYY-MM
   { value: "DD/MM/YYYY", label: "DD/MM/YYYY" },
   { value: "MM/DD/YYYY", label: "MM/DD/YYYY" },
   { value: "YYYY-MM-DD", label: "YYYY-MM-DD" },
+];
+
+const FIRST_DAY_OF_WEEK_OPTIONS: DropdownOption<FirstDayOfWeek>[] = [
+  { value: "monday", label: "Monday" },
+  { value: "sunday", label: "Sunday" },
+];
+
+const WEEK_NUMBERING_OPTIONS: DropdownOption<WeekNumberingSystem>[] = [
+  { value: "iso", label: "ISO 8601" },
+  { value: "us", label: "US" },
 ];
 
 export function Ribbon() {
@@ -143,6 +158,10 @@ export function Ribbon() {
   const setUiDensity = useUserPreferencesStore((state) => state.setUiDensity);
   const dateFormat = useUserPreferencesStore((state) => state.preferences.dateFormat);
   const setDateFormat = useUserPreferencesStore((state) => state.setDateFormat);
+  const firstDayOfWeek = useUserPreferencesStore((state) => state.preferences.firstDayOfWeek);
+  const setFirstDayOfWeek = useUserPreferencesStore((state) => state.setFirstDayOfWeek);
+  const weekNumberingSystem = useUserPreferencesStore((state) => state.preferences.weekNumberingSystem);
+  const setWeekNumberingSystem = useUserPreferencesStore((state) => state.setWeekNumberingSystem);
 
   // History store
   const undo = useHistoryStore((state) => state.undo);
@@ -413,7 +432,7 @@ export function Ribbon() {
           onClick={toggleTodayMarker}
           title={showTodayMarker ? "Hide Today Marker (T)" : "Show Today Marker (T)"}
           aria-label={showTodayMarker ? "Hide Today Marker" : "Show Today Marker"}
-          icon={<CalendarCheck size={ICON_SIZE} weight="light" />}
+          icon={<CalendarDot size={ICON_SIZE} weight="light" />}
           label="Today"
         />
         <ToolbarButton
@@ -422,7 +441,7 @@ export function Ribbon() {
           onClick={toggleWeekends}
           title={showWeekends ? "Hide Weekends" : "Show Weekends"}
           aria-label={showWeekends ? "Hide Weekends" : "Show Weekends"}
-          icon={<CalendarX size={ICON_SIZE} weight="light" />}
+          icon={<CalendarDots size={ICON_SIZE} weight="light" />}
           label="Weekends"
         />
         <ToolbarButton
@@ -431,7 +450,7 @@ export function Ribbon() {
           onClick={toggleHolidays}
           title={showHolidays ? "Hide Holidays (H)" : "Show Holidays (H)"}
           aria-label={showHolidays ? "Hide Holidays" : "Show Holidays"}
-          icon={<Flag size={ICON_SIZE} weight="light" />}
+          icon={<Island size={ICON_SIZE} weight="light" />}
           label="Holidays"
         />
       </ToolbarGroup>
@@ -455,13 +474,14 @@ export function Ribbon() {
           onClick={toggleProgress}
           title={showProgress ? "Hide Progress (P)" : "Show Progress (P)"}
           aria-label={showProgress ? "Hide Progress" : "Show Progress"}
-          icon={<ChartBar size={ICON_SIZE} weight="light" />}
+          icon={<TrendUp size={ICON_SIZE} weight="light" />}
           label="Progress"
         />
         <ToolbarDropdown
           value={taskLabelPosition}
           options={LABEL_OPTIONS}
           onChange={setTaskLabelPosition}
+          icon={<Tag size={ICON_SIZE} weight="light" />}
           labelPrefix="Labels: "
           aria-label="Task label position"
           title="Task Label Position"
@@ -669,6 +689,7 @@ export function Ribbon() {
           value={uiDensity}
           options={DENSITY_OPTIONS}
           onChange={setUiDensity}
+          icon={<ArrowsOutLineVertical size={ICON_SIZE} weight="light" />}
           labelPrefix="Density: "
           aria-label="UI Density"
           title="UI Density"
@@ -677,9 +698,28 @@ export function Ribbon() {
           value={dateFormat}
           options={DATE_FORMAT_OPTIONS}
           onChange={setDateFormat}
+          icon={<Calendar size={ICON_SIZE} weight="light" />}
           labelPrefix="Date: "
           aria-label="Date Format"
           title="Date Format"
+        />
+        <ToolbarDropdown
+          value={firstDayOfWeek}
+          options={FIRST_DAY_OF_WEEK_OPTIONS}
+          onChange={setFirstDayOfWeek}
+          icon={<NumberSquareOne size={ICON_SIZE} weight="light" />}
+          labelPrefix="Week Start: "
+          aria-label="First Day of Week"
+          title="First Day of Week"
+        />
+        <ToolbarDropdown
+          value={weekNumberingSystem}
+          options={WEEK_NUMBERING_OPTIONS}
+          onChange={setWeekNumberingSystem}
+          icon={<Hash size={ICON_SIZE} weight="light" />}
+          labelPrefix="Week #: "
+          aria-label="Week Numbering System"
+          title="Week Numbering System"
         />
       </ToolbarGroup>
     </>

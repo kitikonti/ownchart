@@ -1,6 +1,6 @@
 /**
  * TodayMarker component
- * Shows a red dashed vertical line at the current date
+ * Shows a thin red vertical line at the current date
  */
 
 import { format } from "date-fns";
@@ -30,8 +30,7 @@ export function TodayMarker({ scale, svgHeight }: TodayMarkerProps) {
         x2={x}
         y2={svgHeight}
         stroke="#fa5252"
-        strokeWidth={2}
-        strokeDasharray="4 4"
+        strokeWidth={1}
       />
     </g>
   );
