@@ -91,6 +91,7 @@ interface TaskActions {
   stopCellEdit: () => void;
   setColumnWidth: (columnId: string, width: number) => void;
   autoFitColumn: (columnId: string) => void;
+  autoFitAllColumns: () => void;
 
   // Split pane actions
   setTaskTableWidth: (width: number | null) => void;
@@ -893,6 +894,76 @@ export const useTaskStore = create<TaskStore>()(
           cellPadding,
           extraWidths
         );
+      }),
+
+    autoFitAllColumns: () =>
+      set((state) => {
+        // Columns with variable content that need auto-fit
+        const autoFitColumnIds = [
+          "name",
+          "startDate",
+          "endDate",
+          "duration",
+          "progress",
+        ];
+
+        // Get density config for accurate measurements
+        const densityConfig = useUserPreferencesStore
+          .getState()
+          .getDensityConfig();
+        const fontSize = densityConfig.fontSizeCell;
+        const indentSize = densityConfig.indentSize;
+        const iconSize = densityConfig.iconSize;
+
+        for (const columnId of autoFitColumnIds) {
+          const column = TASK_COLUMNS.find((col) => col.id === columnId);
+          if (!column || !column.field) continue;
+
+          const field = column.field;
+
+          // Name column has no left padding (handled by indent), others have both
+          const cellPadding =
+            columnId === "name"
+              ? densityConfig.cellPaddingX
+              : densityConfig.cellPaddingX * 2;
+
+          // Prepare cell values and extra widths
+          const cellValues: string[] = [];
+          const extraWidths: number[] = [];
+
+          state.tasks.forEach((task) => {
+            let valueStr = "";
+            if (column.formatter) {
+              valueStr = column.formatter(task[field]);
+            } else {
+              const value = task[field];
+              valueStr =
+                value !== undefined && value !== null ? String(value) : "";
+            }
+            cellValues.push(valueStr);
+
+            // For name column, calculate extra width for UI elements
+            if (columnId === "name") {
+              const level = getTaskLevel(state.tasks as Task[], task.id);
+              const hierarchyIndent = level * indentSize;
+              const expandButton = 16; // w-4 expand/collapse button
+              const gaps = 8; // gap-1 (4px) × 2 between elements
+              const typeIcon = iconSize;
+              extraWidths.push(hierarchyIndent + expandButton + gaps + typeIcon);
+            } else {
+              extraWidths.push(0);
+            }
+          });
+
+          // Use shared utility function for width calculation
+          state.columnWidths[columnId] = calculateColumnWidth(
+            column.label,
+            cellValues,
+            fontSize,
+            cellPadding,
+            extraWidths
+          );
+        }
       }),
 
     setTaskTableWidth: (width) =>

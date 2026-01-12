@@ -52,16 +52,9 @@ export interface ColumnDefinition {
  */
 export const TASK_COLUMNS: ColumnDefinition[] = [
   {
-    id: "dragHandle",
+    id: "rowNumber",
     label: "",
     defaultWidth: "40px",
-    editable: false,
-    renderer: "custom",
-  },
-  {
-    id: "checkbox",
-    label: "",
-    defaultWidth: "48px",
     editable: false,
     renderer: "custom",
   },
@@ -151,10 +144,8 @@ export function getDensityAwareWidth(
   const { columnWidths } = densityConfig;
 
   switch (columnId) {
-    case "dragHandle":
-      return `${columnWidths.dragHandle}px`;
-    case "checkbox":
-      return `${columnWidths.checkbox}px`;
+    case "rowNumber":
+      return `${columnWidths.rowNumber}px`;
     case "color":
       return `${columnWidths.color}px`;
     case "name":

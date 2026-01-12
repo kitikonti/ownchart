@@ -13,7 +13,6 @@ import {
 } from "react";
 import { useTaskStore, type EditableField } from "../../store/slices/taskSlice";
 import { useChartStore } from "../../store/slices/chartSlice";
-import { useDensityConfig } from "../../store/slices/userPreferencesSlice";
 import { getVisibleColumns } from "../../config/tableColumns";
 
 // Special ID for the placeholder row - used by paste logic
@@ -30,7 +29,6 @@ export function NewTaskPlaceholderRow(): JSX.Element {
   const setActiveCell = useTaskStore((state) => state.setActiveCell);
   const selectedTaskIds = useTaskStore((state) => state.selectedTaskIds);
   const clearSelection = useTaskStore((state) => state.clearSelection);
-  const densityConfig = useDensityConfig();
   const showProgress = useChartStore((state) => state.showProgress);
 
   // Get visible columns based on settings (Sprint 1.5.9)
@@ -76,7 +74,7 @@ export function NewTaskPlaceholderRow(): JSX.Element {
     }
   };
 
-  const handleCheckboxChange = () => {
+  const handleRowNumberClick = () => {
     // Toggle selection of placeholder row
     const store = useTaskStore.getState();
     if (isSelected) {
@@ -90,7 +88,7 @@ export function NewTaskPlaceholderRow(): JSX.Element {
         false
       );
     }
-    // Clear active cell when using checkbox
+    // Clear active cell when using row number
     setActiveCell(null, null);
   };
 
@@ -236,18 +234,18 @@ export function NewTaskPlaceholderRow(): JSX.Element {
             onKeyDown={column.id === "name" ? handleCellKeyDown : undefined}
             role="gridcell"
           >
-            {column.id === "checkbox" && (
-              <div className="flex items-center justify-center w-full">
-                <input
-                  type="checkbox"
-                  checked={isSelected}
-                  onChange={handleCheckboxChange}
-                  className="cursor-pointer"
-                  style={{
-                    transform: `scale(${densityConfig.checkboxSize / 16})`,
-                  }}
-                  aria-label="Select new task placeholder row"
-                />
+            {column.id === "rowNumber" && (
+              <div
+                className="flex items-center justify-end w-full h-full cursor-pointer"
+                onClick={handleRowNumberClick}
+                style={{
+                  backgroundColor: isSelected ? "#008A99" : "#F3F3F3",
+                  margin: "-4px -8px",
+                  padding: "4px 8px",
+                }}
+                aria-label="Select new task placeholder row"
+              >
+                {/* Empty - placeholder row has no number */}
               </div>
             )}
             {column.id === "name" &&

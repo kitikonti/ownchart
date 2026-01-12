@@ -31,6 +31,7 @@ import {
 import { ColumnResizer } from "./ColumnResizer";
 import { useTableDimensions } from "../../hooks/useTableDimensions";
 import { useFlattenedTasks } from "../../hooks/useFlattenedTasks";
+import { useAutoColumnWidth } from "../../hooks/useAutoColumnWidth";
 
 interface TaskTableProps {
   hideHeader?: boolean;
@@ -70,6 +71,9 @@ export function TaskTable({ hideHeader = true }: TaskTableProps): JSX.Element {
   // Build flattened list respecting collapsed state (centralized in hook)
   const { flattenedTasks } = useFlattenedTasks();
 
+  // Auto-fit columns when density or task content changes
+  useAutoColumnWidth();
+
   // Build sets for quick lookup
   const clipboardSet = useMemo(
     () => new Set(clipboardTaskIds),
@@ -83,8 +87,6 @@ export function TaskTable({ hideHeader = true }: TaskTableProps): JSX.Element {
   const allSelected =
     tasks.length > 0 &&
     tasks.every((task) => selectedTaskIds.includes(task.id));
-  const someSelected =
-    tasks.some((task) => selectedTaskIds.includes(task.id)) && !allSelected;
 
   // Keyboard shortcuts for indent/outdent
   useEffect(() => {
@@ -211,29 +213,17 @@ export function TaskTable({ hideHeader = true }: TaskTableProps): JSX.Element {
                   className={`task-table-header-cell sticky top-0 z-10 ${column.id === "name" ? "pr-3" : "px-3"} py-4 bg-neutral-50 border-b ${column.id !== "color" ? "border-r" : ""} border-neutral-200 text-xs font-semibold text-neutral-600 uppercase tracking-wider relative`}
                   role="columnheader"
                 >
-                  {column.id === "checkbox" ? (
-                    <div className="flex items-center justify-center">
-                      <input
-                        type="checkbox"
-                        checked={allSelected}
-                        ref={(input) => {
-                          if (input) {
-                            input.indeterminate = someSelected;
-                          }
-                        }}
-                        onChange={handleHeaderCheckboxClick}
-                        className="cursor-pointer"
-                        style={{
-                          transform: `scale(${densityConfig.checkboxSize / 16})`,
-                        }}
-                        title={allSelected ? "Deselect all" : "Select all"}
-                        aria-label={
-                          allSelected
-                            ? "Deselect all tasks"
-                            : "Select all tasks"
-                        }
-                      />
-                    </div>
+                  {column.id === "rowNumber" ? (
+                    <button
+                      onClick={handleHeaderCheckboxClick}
+                      className="w-full h-full flex items-center justify-center"
+                      title={allSelected ? "Deselect all" : "Select all"}
+                      aria-label={
+                        allSelected
+                          ? "Deselect all tasks"
+                          : "Select all tasks"
+                      }
+                    />
                   ) : column.id === "color" ? (
                     ""
                   ) : (
@@ -293,6 +283,7 @@ export function TaskTable({ hideHeader = true }: TaskTableProps): JSX.Element {
                   <TaskTableRow
                     key={task.id}
                     task={task}
+                    rowIndex={index}
                     level={level}
                     hasChildren={hasChildren}
                     clipboardPosition={

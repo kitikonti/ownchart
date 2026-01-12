@@ -6,9 +6,18 @@
 import { useMemo } from "react";
 import { useTaskStore } from "../../store/slices/taskSlice";
 import { useDensityConfig } from "../../store/slices/userPreferencesSlice";
-import { TASK_COLUMNS, getDensityAwareWidth } from "../../config/tableColumns";
+import { useChartStore } from "../../store/slices/chartSlice";
+import { getVisibleColumns, getDensityAwareWidth } from "../../config/tableColumns";
 import { ColumnResizer } from "./ColumnResizer";
 import { useTableDimensions } from "../../hooks/useTableDimensions";
+
+// OwnChart brand colors for header
+const HEADER_COLORS = {
+  bg: "#F3F3F3",
+  bgHover: "#E8E8E8",
+  border: "#E1E1E1",
+  triangle: "#A6A6A6", // Light gray like Excel
+};
 
 export function TaskTableHeader(): JSX.Element {
   const tasks = useTaskStore((state) => state.tasks);
@@ -19,6 +28,13 @@ export function TaskTableHeader(): JSX.Element {
   const setColumnWidth = useTaskStore((state) => state.setColumnWidth);
   const autoFitColumn = useTaskStore((state) => state.autoFitColumn);
   const densityConfig = useDensityConfig();
+  const showProgress = useChartStore((state) => state.showProgress);
+
+  // Get visible columns based on settings (Sprint 1.5.9)
+  const visibleColumns = useMemo(
+    () => getVisibleColumns(showProgress),
+    [showProgress]
+  );
 
   // Get total column width for proper scrolling
   const { totalColumnWidth } = useTableDimensions();
@@ -26,21 +42,19 @@ export function TaskTableHeader(): JSX.Element {
   const allSelected =
     tasks.length > 0 &&
     tasks.every((task) => selectedTaskIds.includes(task.id));
-  const someSelected =
-    tasks.some((task) => selectedTaskIds.includes(task.id)) && !allSelected;
 
   /**
    * Generate CSS grid template columns based on column widths.
    * Uses density-aware widths when no custom width is set.
    */
   const gridTemplateColumns = useMemo(() => {
-    return TASK_COLUMNS.map((col) => {
+    return visibleColumns.map((col) => {
       const customWidth = columnWidths[col.id];
       return customWidth
         ? `${customWidth}px`
         : getDensityAwareWidth(col.id, densityConfig);
     }).join(" ");
-  }, [columnWidths, densityConfig]);
+  }, [columnWidths, densityConfig, visibleColumns]);
 
   /**
    * Get current width of a column in pixels.
@@ -69,7 +83,7 @@ export function TaskTableHeader(): JSX.Element {
     setColumnWidth(columnId, width);
   };
 
-  const handleHeaderCheckboxClick = () => {
+  const handleSelectAllClick = () => {
     if (allSelected) {
       clearSelection();
     } else {
@@ -79,41 +93,47 @@ export function TaskTableHeader(): JSX.Element {
 
   return (
     <div
-      className="task-table-header-row bg-neutral-50"
+      className="task-table-header-row"
       style={{
         display: "grid",
         gridTemplateColumns,
         minWidth: totalColumnWidth,
+        backgroundColor: HEADER_COLORS.bg,
       }}
       role="row"
     >
-      {TASK_COLUMNS.map((column) => (
+      {visibleColumns.map((column) => (
         <div
           key={column.id}
-          className={`task-table-header-cell ${column.id === "name" ? "pr-3" : "px-3"} py-4 bg-neutral-50 border-b ${column.id !== "color" ? "border-r" : ""} border-neutral-200 text-xs font-semibold text-neutral-600 uppercase tracking-wider relative`}
+          className={`task-table-header-cell ${column.id === "name" ? "pr-3" : "px-3"} py-4 border-b ${column.id !== "color" ? "border-r" : ""} text-xs font-semibold text-neutral-600 uppercase tracking-wider relative`}
+          style={{
+            backgroundColor: HEADER_COLORS.bg,
+            borderColor: HEADER_COLORS.border,
+          }}
           role="columnheader"
         >
-          {column.id === "checkbox" ? (
-            <div className="flex items-center justify-center">
-              <input
-                type="checkbox"
-                checked={allSelected}
-                ref={(input) => {
-                  if (input) {
-                    input.indeterminate = someSelected;
-                  }
-                }}
-                onChange={handleHeaderCheckboxClick}
-                className="cursor-pointer"
-                style={{
-                  transform: `scale(${densityConfig.checkboxSize / 16})`,
-                }}
-                title={allSelected ? "Deselect all" : "Select all"}
-                aria-label={
-                  allSelected ? "Deselect all tasks" : "Select all tasks"
-                }
-              />
-            </div>
+          {column.id === "rowNumber" ? (
+            // Excel-style select-all triangle in top-left corner
+            <button
+              onClick={handleSelectAllClick}
+              className="absolute inset-0 hover:bg-neutral-200 transition-colors"
+              style={{ cursor: "pointer" }}
+              title={allSelected ? "Deselect all" : "Select all"}
+              aria-label={allSelected ? "Deselect all tasks" : "Select all tasks"}
+            >
+              {/* Small triangle in bottom-right corner */}
+              <svg
+                width="8"
+                height="8"
+                viewBox="0 0 8 8"
+                style={{ position: "absolute", bottom: "4px", right: "4px" }}
+              >
+                <path
+                  d="M8 0 L8 8 L0 8 Z"
+                  fill={HEADER_COLORS.triangle}
+                />
+              </svg>
+            </button>
           ) : column.id === "color" ? (
             ""
           ) : (

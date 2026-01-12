@@ -53,8 +53,7 @@ export interface DensityConfig {
   colorBarHeight: number;
   // Column widths
   columnWidths: {
-    dragHandle: number;
-    checkbox: number;
+    rowNumber: number;
     color: number;
     nameMin: number;
     startDate: number;
@@ -241,8 +240,7 @@ export const DENSITY_CONFIG: DensityConfigMap = {
     indentSize: 16,
     colorBarHeight: 20,
     columnWidths: {
-      dragHandle: 32,
-      checkbox: 40,
+      rowNumber: 48,
       color: 28,
       nameMin: 160,
       startDate: 105,
@@ -266,8 +264,7 @@ export const DENSITY_CONFIG: DensityConfigMap = {
     indentSize: 18,
     colorBarHeight: 24,
     columnWidths: {
-      dragHandle: 36,
-      checkbox: 44,
+      rowNumber: 52,
       color: 30,
       nameMin: 180,
       startDate: 118,
@@ -291,8 +288,7 @@ export const DENSITY_CONFIG: DensityConfigMap = {
     indentSize: 20,
     colorBarHeight: 28,
     columnWidths: {
-      dragHandle: 40,
-      checkbox: 48,
+      rowNumber: 56,
       color: 32,
       nameMin: 200,
       startDate: 130,

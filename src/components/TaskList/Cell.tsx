@@ -390,10 +390,10 @@ export function Cell({
     fontSize: "var(--density-font-size-cell)",
   };
 
-  // Active cell style with brand color outline
+  // Active cell style with brand color inset box-shadow (doesn't affect layout)
   const activeCellStyle: React.CSSProperties = {
     ...cellStyle,
-    outlineColor: BRAND_COLOR,
+    boxShadow: `inset 0 0 0 2px ${BRAND_COLOR}`,
   };
 
   // Render edit mode
@@ -401,7 +401,7 @@ export function Cell({
     return (
       <div
         ref={cellRef}
-        className={`relative flex items-center border-b ${column.id !== "color" ? "border-r" : ""} border-neutral-200 outline outline-2 bg-white z-20`}
+        className={`relative flex items-center border-b ${column.id !== "color" ? "border-r" : ""} border-neutral-200 bg-white z-20`}
         style={activeCellStyle}
         onClick={(e) => e.stopPropagation()}
       >
@@ -444,7 +444,7 @@ export function Cell({
       tabIndex={0}
       className={`
         border-b ${column.id !== "color" ? "border-r" : ""} border-neutral-200 flex items-center cursor-pointer relative
-        ${isActive ? "outline outline-2 z-10" : "hover:bg-neutral-50"}
+        ${isActive ? "z-10" : ""}
         ${isActive && !isCut ? "bg-white" : ""}
         ${!column.editable ? "bg-neutral-50 text-neutral-500" : ""}
         ${isCut ? "opacity-50 outline outline-2 outline-dashed outline-neutral-500 -outline-offset-2" : ""}

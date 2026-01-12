@@ -7,13 +7,13 @@
 import { useMemo } from "react";
 import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
-import { DotsSixVertical } from "@phosphor-icons/react";
 import type { Task } from "../../types/chart.types";
 import { useTaskStore } from "../../store/slices/taskSlice";
 import { useChartStore } from "../../store/slices/chartSlice";
 import { useDensityConfig } from "../../store/slices/userPreferencesSlice";
 import { Cell } from "./Cell";
 import { ColorCellEditor } from "./CellEditors/ColorCellEditor";
+import { RowNumberCell, dragState } from "./RowNumberCell";
 import {
   getDensityAwareWidth,
   getVisibleColumns,
@@ -24,6 +24,7 @@ import { calculateSummaryDates } from "../../utils/hierarchy";
 
 interface TaskTableRowProps {
   task: Task;
+  rowIndex: number; // Row index for display (0-based, displayed as 1-based)
   level?: number; // Nesting level (0 = root)
   hasChildren?: boolean; // Whether task has children
   clipboardPosition?: {
@@ -38,6 +39,7 @@ interface TaskTableRowProps {
 
 export function TaskTableRow({
   task,
+  rowIndex,
   level = 0,
   hasChildren = false,
   clipboardPosition,
@@ -55,7 +57,10 @@ export function TaskTableRow({
     (state) => state.toggleTaskSelection
   );
   const selectTaskRange = useTaskStore((state) => state.selectTaskRange);
+  const setSelectedTaskIds = useTaskStore((state) => state.setSelectedTaskIds);
   const setActiveCell = useTaskStore((state) => state.setActiveCell);
+  const insertTaskAbove = useTaskStore((state) => state.insertTaskAbove);
+  const insertTaskBelow = useTaskStore((state) => state.insertTaskBelow);
   const { isCellEditing, stopCellEdit } = useCellNavigation();
   const densityConfig = useDensityConfig();
   const showProgress = useChartStore((state) => state.showProgress);
@@ -123,13 +128,20 @@ export function TaskTableRow({
     gridTemplateColumns,
   };
 
-  // Brand colors for selected row
-  const BRAND_COLOR = "#008A99";
-  const BRAND_BG_LIGHT = "rgba(0, 138, 153, 0.08)";
+  // OwnChart brand colors for selected row
+  const SELECTION_BORDER_COLOR = "#008A99"; // OwnChart teal
+  const SELECTION_BG_COLOR = "rgba(0, 138, 153, 0.08)"; // OwnChart teal light
 
   // Determine selection borders based on position in contiguous selection
   const showTopBorder = selectionPosition?.isFirstSelected ?? true;
   const showBottomBorder = selectionPosition?.isLastSelected ?? true;
+
+  // Handle mouse enter on entire row for drag selection
+  const handleRowMouseEnter = () => {
+    if (dragState.isDragging && dragState.onDragSelect) {
+      dragState.onDragSelect(task.id);
+    }
+  };
 
   return (
     <div
@@ -137,7 +149,7 @@ export function TaskTableRow({
       style={{
         ...style,
         ...(isSelected ? {
-          backgroundColor: BRAND_BG_LIGHT,
+          backgroundColor: SELECTION_BG_COLOR,
           position: "relative",
           zIndex: 5,
         } : {}),
@@ -146,6 +158,7 @@ export function TaskTableRow({
         isSelected ? "" : "bg-white"
       } ${isInClipboard || isSelected ? "relative" : ""}`}
       role="row"
+      onMouseEnter={handleRowMouseEnter}
     >
       {/* Selection overlay - renders above cell borders */}
       {isSelected && (
@@ -156,9 +169,10 @@ export function TaskTableRow({
             left: 0,
             right: 0,
             bottom: 0,
-            borderTop: showTopBorder ? `2px solid ${BRAND_COLOR}` : "none",
-            borderBottom: showBottomBorder ? `2px solid ${BRAND_COLOR}` : "none",
-            borderLeft: `2px solid ${BRAND_COLOR}`,
+            borderTop: showTopBorder ? `2px solid ${SELECTION_BORDER_COLOR}` : "none",
+            borderBottom: showBottomBorder ? `2px solid ${SELECTION_BORDER_COLOR}` : "none",
+            borderLeft: `2px solid ${SELECTION_BORDER_COLOR}`,
+            borderRadius: `${showTopBorder ? "3px" : "0"} 0 0 ${showBottomBorder ? "3px" : "0"}`,
             zIndex: 25,
           }}
         />
@@ -173,58 +187,36 @@ export function TaskTableRow({
           }}
         />
       )}
-      {/* Drag Handle Cell */}
-      <div
-        className="drag-handle-cell flex items-center justify-center border-b border-r border-neutral-200 bg-neutral-50 cursor-grab active:cursor-grabbing"
-        style={{
-          height: "var(--density-row-height)",
-          padding: `var(--density-cell-padding-y) var(--density-cell-padding-x)`,
-        }}
-        {...attributes}
-        {...listeners}
-        role="gridcell"
-        aria-label={`Drag to reorder task ${task.name}`}
-      >
-        <DotsSixVertical
-          size={densityConfig.iconSize}
-          weight="bold"
-          className="text-neutral-500"
-          aria-hidden="true"
-        />
-      </div>
-
-      {/* Checkbox Cell */}
-      <div
-        className="checkbox-cell flex items-center justify-center border-b border-r border-neutral-200"
-        style={{
-          height: "var(--density-row-height)",
-          padding: `var(--density-cell-padding-y) var(--density-cell-padding-x)`,
-        }}
-        role="gridcell"
-      >
-        <input
-          type="checkbox"
-          checked={isSelected}
-          onChange={(e) => {
-            e.stopPropagation();
-            const nativeEvent = e.nativeEvent as MouseEvent;
-
-            // Deactivate any active cell when selecting tasks via checkbox
-            setActiveCell(null, null);
-
-            if (nativeEvent.shiftKey && lastSelectedTaskId) {
-              selectTaskRange(lastSelectedTaskId, task.id);
-            } else {
-              toggleTaskSelection(task.id);
+      {/* Row Number Cell - Excel-style with hover controls */}
+      <RowNumberCell
+        rowNumber={rowIndex + 1}
+        taskId={task.id}
+        isSelected={isSelected}
+        selectionPosition={selectionPosition}
+        onSelectRow={(taskId, shiftKey, ctrlKey) => {
+          setActiveCell(null, null);
+          if (shiftKey) {
+            // Shift+Click or Drag: Range selection
+            // During drag, use dragState.startTaskId as anchor; otherwise use lastSelectedTaskId
+            const anchorTaskId = dragState.startTaskId || lastSelectedTaskId;
+            if (anchorTaskId) {
+              selectTaskRange(anchorTaskId, taskId);
             }
-          }}
-          className="cursor-pointer"
-          style={{
-            transform: `scale(${densityConfig.checkboxSize / 16})`,
-          }}
-          aria-label={`Select task ${task.name}`}
-        />
-      </div>
+          } else if (ctrlKey) {
+            // Ctrl+Click: Toggle (add/remove from selection)
+            toggleTaskSelection(taskId);
+          } else {
+            // Normal click: Replace selection with just this row
+            setSelectedTaskIds([taskId], false);
+          }
+        }}
+        onInsertAbove={() => insertTaskAbove(task.id)}
+        onInsertBelow={() => insertTaskBelow(task.id)}
+        rowHeight="var(--density-row-height)"
+        dragAttributes={attributes}
+        dragListeners={listeners}
+        taskName={task.name}
+      />
 
       {/* Data Cells - uses visibleColumns for show/hide progress column (Sprint 1.5.9) */}
       {visibleColumns
