@@ -260,21 +260,53 @@ export function ChartCanvas({
               />
             </g>
 
-            {/* Layer 2.5: Selection Highlights (full row, semi-transparent to show grid/weekends) */}
+            {/* Layer 2.5: Selection Highlights (full row, brand color) */}
             <g className="layer-selection">
               {tasks.map((task, index) => {
                 const isSelected = selectedTaskIds.includes(task.id);
                 if (!isSelected) return null;
+
+                // Check if prev/next rows are also selected for contiguous borders
+                const prevSelected = index > 0 && selectedTaskIds.includes(tasks[index - 1].id);
+                const nextSelected = index < tasks.length - 1 && selectedTaskIds.includes(tasks[index + 1].id);
+
+                const BRAND_COLOR = "#008A99";
+                const y = index * ROW_HEIGHT;
+
                 return (
-                  <rect
-                    key={`selection-${task.id}`}
-                    x={0}
-                    y={index * ROW_HEIGHT}
-                    width={timelineWidth}
-                    height={ROW_HEIGHT}
-                    fill="#334155"
-                    fillOpacity={0.15}
-                  />
+                  <g key={`selection-${task.id}`}>
+                    {/* Background fill */}
+                    <rect
+                      x={0}
+                      y={y}
+                      width={timelineWidth}
+                      height={ROW_HEIGHT}
+                      fill={BRAND_COLOR}
+                      fillOpacity={0.08}
+                    />
+                    {/* Top border (only if first in selection group) */}
+                    {!prevSelected && (
+                      <line
+                        x1={0}
+                        y1={y}
+                        x2={timelineWidth}
+                        y2={y}
+                        stroke={BRAND_COLOR}
+                        strokeWidth={2}
+                      />
+                    )}
+                    {/* Bottom border (only if last in selection group) */}
+                    {!nextSelected && (
+                      <line
+                        x1={0}
+                        y1={y + ROW_HEIGHT}
+                        x2={timelineWidth}
+                        y2={y + ROW_HEIGHT}
+                        stroke={BRAND_COLOR}
+                        strokeWidth={2}
+                      />
+                    )}
+                  </g>
                 );
               })}
             </g>

@@ -99,8 +99,16 @@ export function StatusBar() {
     <>
       {/* Status Bar */}
       <div
-        className="h-6 flex-shrink-0 flex items-center justify-between px-3 bg-white border-t border-neutral-200 select-none"
-        style={{ fontSize: "12px" }}
+        className="status-bar h-6 flex-shrink-0 flex items-center justify-between select-none"
+        style={{
+          backgroundColor: "rgb(245, 245, 245)",
+          borderTop: "1px solid rgb(225, 223, 221)",
+          color: "rgb(50, 49, 48)",
+          fontSize: "12px",
+          paddingLeft: "12px",
+          paddingRight: "12px",
+          userSelect: "none",
+        }}
       >
         {/* Left side: Task statistics */}
         <div className="flex items-center text-neutral-500">

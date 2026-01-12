@@ -70,10 +70,14 @@ export function TaskTable({ hideHeader = true }: TaskTableProps): JSX.Element {
   // Build flattened list respecting collapsed state (centralized in hook)
   const { flattenedTasks } = useFlattenedTasks();
 
-  // Build a set for quick lookup
+  // Build sets for quick lookup
   const clipboardSet = useMemo(
     () => new Set(clipboardTaskIds),
     [clipboardTaskIds]
+  );
+  const selectedSet = useMemo(
+    () => new Set(selectedTaskIds),
+    [selectedTaskIds]
   );
 
   const allSelected =
@@ -276,6 +280,15 @@ export function TaskTable({ hideHeader = true }: TaskTableProps): JSX.Element {
                   ? clipboardSet.has(nextTask.task.id)
                   : false;
 
+                // Check if previous/next tasks are also selected (for contiguous selection borders)
+                const isSelected = selectedSet.has(task.id);
+                const prevSelected = prevTask
+                  ? selectedSet.has(prevTask.task.id)
+                  : false;
+                const nextSelected = nextTask
+                  ? selectedSet.has(nextTask.task.id)
+                  : false;
+
                 return (
                   <TaskTableRow
                     key={task.id}
@@ -287,6 +300,14 @@ export function TaskTable({ hideHeader = true }: TaskTableProps): JSX.Element {
                         ? {
                             isFirst: !prevInClipboard,
                             isLast: !nextInClipboard,
+                          }
+                        : undefined
+                    }
+                    selectionPosition={
+                      isSelected
+                        ? {
+                            isFirstSelected: !prevSelected,
+                            isLastSelected: !nextSelected,
                           }
                         : undefined
                     }

@@ -376,8 +376,11 @@ export function Cell({
     return String(currentValue);
   };
 
+  // Brand color for active cell outline
+  const BRAND_COLOR = "#008A99";
+
   // Density-aware styles using CSS custom properties
-  const cellStyle = {
+  const cellStyle: React.CSSProperties = {
     height: "var(--density-row-height)",
     paddingTop: "var(--density-cell-padding-y)",
     paddingBottom: "var(--density-cell-padding-y)",
@@ -387,13 +390,19 @@ export function Cell({
     fontSize: "var(--density-font-size-cell)",
   };
 
+  // Active cell style with brand color outline
+  const activeCellStyle: React.CSSProperties = {
+    ...cellStyle,
+    outlineColor: BRAND_COLOR,
+  };
+
   // Render edit mode
   if (isEditing) {
     return (
       <div
         ref={cellRef}
-        className={`relative flex items-center border-b ${column.id !== "color" ? "border-r" : ""} border-neutral-200 outline outline-2 outline-neutral-500 bg-white z-20`}
-        style={cellStyle}
+        className={`relative flex items-center border-b ${column.id !== "color" ? "border-r" : ""} border-neutral-200 outline outline-2 bg-white z-20`}
+        style={activeCellStyle}
         onClick={(e) => e.stopPropagation()}
       >
         {children ? (
@@ -435,11 +444,12 @@ export function Cell({
       tabIndex={0}
       className={`
         border-b ${column.id !== "color" ? "border-r" : ""} border-neutral-200 flex items-center cursor-pointer relative
-        ${isActive ? "outline outline-2 outline-neutral-500 bg-neutral-100 z-10" : "hover:bg-neutral-50"}
+        ${isActive ? "outline outline-2 z-10" : "hover:bg-neutral-50"}
+        ${isActive && !isCut ? "bg-white" : ""}
         ${!column.editable ? "bg-neutral-50 text-neutral-500" : ""}
         ${isCut ? "opacity-50 outline outline-2 outline-dashed outline-neutral-500 -outline-offset-2" : ""}
       `}
-      style={cellStyle}
+      style={isActive ? activeCellStyle : cellStyle}
       onClick={handleClick}
       onKeyDown={handleNavigationKeyDown}
     >

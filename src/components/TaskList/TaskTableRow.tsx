@@ -30,6 +30,10 @@ interface TaskTableRowProps {
     isFirst: boolean; // First in clipboard group (show top border)
     isLast: boolean; // Last in clipboard group (show bottom border)
   };
+  selectionPosition?: {
+    isFirstSelected: boolean; // First in contiguous selection (show top border)
+    isLastSelected: boolean; // Last in contiguous selection (show bottom border)
+  };
 }
 
 export function TaskTableRow({
@@ -37,6 +41,7 @@ export function TaskTableRow({
   level = 0,
   hasChildren = false,
   clipboardPosition,
+  selectionPosition,
 }: TaskTableRowProps): JSX.Element {
   const tasks = useTaskStore((state) => state.tasks);
   const updateTask = useTaskStore((state) => state.updateTask);
@@ -118,15 +123,46 @@ export function TaskTableRow({
     gridTemplateColumns,
   };
 
+  // Brand colors for selected row
+  const BRAND_COLOR = "#008A99";
+  const BRAND_BG_LIGHT = "rgba(0, 138, 153, 0.08)";
+
+  // Determine selection borders based on position in contiguous selection
+  const showTopBorder = selectionPosition?.isFirstSelected ?? true;
+  const showBottomBorder = selectionPosition?.isLastSelected ?? true;
+
   return (
     <div
       ref={setNodeRef}
-      style={style}
+      style={{
+        ...style,
+        ...(isSelected ? {
+          backgroundColor: BRAND_BG_LIGHT,
+          position: "relative",
+          zIndex: 5,
+        } : {}),
+      }}
       className={`task-table-row col-span-full grid ${
-        isSelected ? "bg-neutral-100" : "bg-white"
-      } ${isInClipboard ? "relative" : ""}`}
+        isSelected ? "" : "bg-white"
+      } ${isInClipboard || isSelected ? "relative" : ""}`}
       role="row"
     >
+      {/* Selection overlay - renders above cell borders */}
+      {isSelected && (
+        <div
+          className="absolute pointer-events-none"
+          style={{
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            borderTop: showTopBorder ? `2px solid ${BRAND_COLOR}` : "none",
+            borderBottom: showBottomBorder ? `2px solid ${BRAND_COLOR}` : "none",
+            borderLeft: `2px solid ${BRAND_COLOR}`,
+            zIndex: 25,
+          }}
+        />
+      )}
       {/* Clipboard selection overlay with dotted border */}
       {isInClipboard && clipboardPosition && (
         <div

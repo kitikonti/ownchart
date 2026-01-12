@@ -420,13 +420,23 @@ select:focus {
   color: var(--color-neutral-800);
 }
 
-/* File tab - background hover effect */
+/* File tab - background hover/active effect */
 .ribbon-tab-file {
-  background-color: var(--color-neutral-50);
+  background-color: transparent;
 }
 
 .ribbon-tab-file:hover {
-  background-color: var(--color-neutral-100);
+  background-color: rgb(243, 243, 243);
+}
+
+.ribbon-tab-file.ribbon-tab-active {
+  background-color: rgb(224, 224, 224);
+  font-weight: 600;
+}
+
+/* File tab should not have underline when active */
+.ribbon-tab-file.ribbon-tab-active::after {
+  display: none;
 }
 
 /* Standard tabs - underline hover effect via ::before */
@@ -507,8 +517,20 @@ select:focus {
 
 .file-menu-divider {
   height: 1px;
-  background-color: var(--color-neutral-200);
+  background-color: rgb(225, 223, 221);
   margin: 4px 0;
+}
+
+@media (min-resolution: 144dpi), (-webkit-min-device-pixel-ratio: 1.5) {
+  .file-menu-divider {
+    height: 0.67px;
+  }
+}
+
+@media (min-resolution: 192dpi), (-webkit-min-device-pixel-ratio: 2) {
+  .file-menu-divider {
+    height: 0.5px;
+  }
 }
 
 /* ─── Animations ─── */
@@ -683,5 +705,22 @@ input[type="range"]:focus-visible::-moz-range-thumb {
 @media (min-resolution: 192dpi), (-webkit-min-device-pixel-ratio: 2) {
   .toolbar-separator {
     width: 0.5px;
+  }
+}
+
+/* ─── Status Bar (High-DPI aware) ─── */
+.status-bar {
+  border-top-width: 1px;
+}
+
+@media (min-resolution: 144dpi), (-webkit-min-device-pixel-ratio: 1.5) {
+  .status-bar {
+    border-top-width: 0.67px;
+  }
+}
+
+@media (min-resolution: 192dpi), (-webkit-min-device-pixel-ratio: 2) {
+  .status-bar {
+    border-top-width: 0.5px;
   }
 }

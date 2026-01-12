@@ -774,7 +774,7 @@ export function Ribbon() {
             {/* File Dropdown Menu */}
             {fileMenuOpen && (
               <div
-                className="absolute top-full left-0 mt-1 py-1 bg-white rounded-lg shadow-lg border border-neutral-200 min-w-56"
+                className="absolute top-full left-0 py-1 bg-white rounded-lg shadow-lg border border-neutral-200 min-w-56"
                 style={{
                   boxShadow: "0 0 2px rgba(0, 0, 0, 0.12), 0 8px 16px rgba(0, 0, 0, 0.14)",
                   zIndex: 1000,
