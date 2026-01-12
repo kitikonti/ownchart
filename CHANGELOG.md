@@ -2,6 +2,29 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [0.0.24](https://github.com/kitikonti/ownchart/compare/v0.0.23...v0.0.24) (2026-01-12)
+
+
+### Features
+
+* auto-fit column widths on density and content changes ([c47a324](https://github.com/kitikonti/ownchart/commit/c47a324965dfe7db438ebd5277d9cef5135b455f))
+
+
+### Bug Fixes
+
+* drag select now uses visible task order instead of raw array ([ef2ebaf](https://github.com/kitikonti/ownchart/commit/ef2ebafe4df3a02599176f91b325e6ce4ea3fd4e))
+
+
+### Code Refactoring
+
+* **ui:** MS Office-style Ribbon UI and cleanup ([2b71984](https://github.com/kitikonti/ownchart/commit/2b7198410a2da83c070b15ab9db59ce7569fa71d)), closes [#008A99](https://github.com/kitikonti/ownchart/issues/008A99)
+
+
+### UI/UX
+
+* MS Office-style selection and status bar improvements ([00b4ba4](https://github.com/kitikonti/ownchart/commit/00b4ba4a5692ed3e898dd59b80fa0b42b06cd353)), closes [#008A99](https://github.com/kitikonti/ownchart/issues/008A99)
+* update View tab icons and add week settings ([1bee106](https://github.com/kitikonti/ownchart/commit/1bee1068cbbe61f69305770d917c902a6ffb118c))
+
 ### [0.0.23](https://github.com/kitikonti/ownchart/compare/v0.0.22...v0.0.23) (2026-01-10)
 
 
