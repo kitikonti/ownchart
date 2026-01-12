@@ -71,6 +71,12 @@ export function TaskTable({ hideHeader = true }: TaskTableProps): JSX.Element {
   // Build flattened list respecting collapsed state (centralized in hook)
   const { flattenedTasks } = useFlattenedTasks();
 
+  // Extract visible task IDs in display order (for correct range selection)
+  const visibleTaskIds = useMemo(
+    () => flattenedTasks.map(({ task }) => task.id),
+    [flattenedTasks]
+  );
+
   // Auto-fit columns when density or task content changes
   useAutoColumnWidth();
 
@@ -286,6 +292,7 @@ export function TaskTable({ hideHeader = true }: TaskTableProps): JSX.Element {
                     rowIndex={index}
                     level={level}
                     hasChildren={hasChildren}
+                    visibleTaskIds={visibleTaskIds}
                     clipboardPosition={
                       isInClipboard
                         ? {

@@ -27,6 +27,7 @@ interface TaskTableRowProps {
   rowIndex: number; // Row index for display (0-based, displayed as 1-based)
   level?: number; // Nesting level (0 = root)
   hasChildren?: boolean; // Whether task has children
+  visibleTaskIds: string[]; // Array of task IDs in visible order (for range selection)
   clipboardPosition?: {
     isFirst: boolean; // First in clipboard group (show top border)
     isLast: boolean; // Last in clipboard group (show bottom border)
@@ -42,6 +43,7 @@ export function TaskTableRow({
   rowIndex,
   level = 0,
   hasChildren = false,
+  visibleTaskIds,
   clipboardPosition,
   selectionPosition,
 }: TaskTableRowProps): JSX.Element {
@@ -56,7 +58,6 @@ export function TaskTableRow({
   const toggleTaskSelection = useTaskStore(
     (state) => state.toggleTaskSelection
   );
-  const selectTaskRange = useTaskStore((state) => state.selectTaskRange);
   const setSelectedTaskIds = useTaskStore((state) => state.setSelectedTaskIds);
   const setActiveCell = useTaskStore((state) => state.setActiveCell);
   const insertTaskAbove = useTaskStore((state) => state.insertTaskAbove);
@@ -196,11 +197,20 @@ export function TaskTableRow({
         onSelectRow={(taskId, shiftKey, ctrlKey) => {
           setActiveCell(null, null);
           if (shiftKey) {
-            // Shift+Click or Drag: Range selection
+            // Shift+Click or Drag: Range selection using VISIBLE task order
             // During drag, use dragState.startTaskId as anchor; otherwise use lastSelectedTaskId
             const anchorTaskId = dragState.startTaskId || lastSelectedTaskId;
             if (anchorTaskId) {
-              selectTaskRange(anchorTaskId, taskId);
+              // Find indices in the VISIBLE task list, not the raw tasks array
+              const startIdx = visibleTaskIds.indexOf(anchorTaskId);
+              const endIdx = visibleTaskIds.indexOf(taskId);
+
+              if (startIdx !== -1 && endIdx !== -1) {
+                const minIdx = Math.min(startIdx, endIdx);
+                const maxIdx = Math.max(startIdx, endIdx);
+                const idsInRange = visibleTaskIds.slice(minIdx, maxIdx + 1);
+                setSelectedTaskIds(idsInRange, false);
+              }
             }
           } else if (ctrlKey) {
             // Ctrl+Click: Toggle (add/remove from selection)
