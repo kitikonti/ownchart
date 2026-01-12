@@ -3,4 +3,3 @@
  */
 
 export { Modal } from "./Modal";
-export { FieldLabel } from "./FieldLabel";

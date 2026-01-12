@@ -18,7 +18,7 @@ export function TaskTypeIcon({
   onClick,
   className = "",
 }: TaskTypeIconProps): JSX.Element {
-  const iconClassName = `text-slate-600 flex-shrink-0 ${onClick ? "cursor-pointer hover:text-slate-800 transition-colors" : ""} ${className}`;
+  const iconClassName = `text-neutral-600 flex-shrink-0 ${onClick ? "cursor-pointer hover:text-neutral-800 transition-colors" : ""} ${className}`;
 
   const handleClick = (e: React.MouseEvent) => {
     if (onClick) {
@@ -32,7 +32,7 @@ export function TaskTypeIcon({
       return (
         <Folder
           size={16}
-          weight="regular"
+          weight="light"
           className={iconClassName}
           onClick={handleClick}
         />
@@ -42,7 +42,7 @@ export function TaskTypeIcon({
       return (
         <Diamond
           size={16}
-          weight="regular"
+          weight="light"
           className={iconClassName}
           onClick={handleClick}
         />
@@ -53,7 +53,7 @@ export function TaskTypeIcon({
       return (
         <CheckSquare
           size={16}
-          weight="regular"
+          weight="light"
           className={iconClassName}
           onClick={handleClick}
         />

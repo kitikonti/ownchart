@@ -5,8 +5,9 @@
 
 import { useEffect } from "react";
 import { Toaster } from "react-hot-toast";
-import { ZoomIndicator } from "./components/GanttChart/ZoomIndicator";
-import { AppToolbar, GanttLayout } from "./components/Layout";
+import { GanttLayout } from "./components/Layout";
+import { StatusBar } from "./components/StatusBar";
+import { Ribbon } from "./components/Ribbon";
 import { ExportDialog } from "./components/Export";
 import { PreferencesDialog } from "./components/Preferences";
 import { ChartSettingsDialog } from "./components/Settings/ChartSettingsDialog";
@@ -102,11 +103,10 @@ function App(): JSX.Element {
           },
         }}
       />
-      {/* Zoom Indicator - fixed position at root level */}
-      <ZoomIndicator />
-      <div className="h-screen bg-gradient-to-b from-slate-50 to-slate-100 flex flex-col overflow-hidden">
-        <AppToolbar />
+      <div className="h-screen bg-neutral-100 flex flex-col overflow-hidden">
+        <Ribbon />
         <GanttLayout />
+        <StatusBar />
       </div>
     </>
   );

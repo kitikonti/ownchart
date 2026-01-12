@@ -134,7 +134,7 @@ export const DEPENDENCY_RENDER_CONSTANTS = {
   arrowheadSize: 8,
 
   /**
-   * Stroke color for dependency lines (slate-400)
+   * Stroke color for dependency lines (neutral-400)
    */
   strokeColor: "#94a3b8",
 
@@ -154,7 +154,7 @@ export const DEPENDENCY_RENDER_CONSTANTS = {
  */
 export const RENDER_COLORS = {
   /**
-   * Default task color (teal-500)
+   * Default task color (brand-500)
    */
   taskDefault: "#14b8a6",
 
@@ -179,7 +179,7 @@ export const RENDER_COLORS = {
   dependency: "#94a3b8",
 
   /**
-   * Weekend background color (slate-100 blended with white at 50% opacity)
+   * Weekend background color (neutral-100 blended with white at 50% opacity)
    * Original: rgba(241, 245, 249, 0.5) -> blended to #f8fafc
    */
   weekendBackground: "#f8fafc",

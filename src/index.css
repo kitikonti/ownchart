@@ -1,9 +1,5 @@
-/* Self-hosted fonts via @fontsource (GDPR compliant) */
-@import "@fontsource/inter/400.css";
-@import "@fontsource/inter/400-italic.css";
-@import "@fontsource/inter/500.css";
-@import "@fontsource/inter/600.css";
-@import "@fontsource/inter/700.css";
+/* System fonts - no external dependencies */
+/* Segoe UI (Windows), San Francisco (macOS), Roboto (Android/Linux) */
 
 @tailwind base;
 @tailwind components;
@@ -16,26 +12,27 @@
 }
 
 /* ============================================================================
-   OwnChart Design System - "Refined Craft" Aesthetic
+   OwnChart Design System - MS 365/Fluent UI Inspired
    ============================================================================
    A professional, trustworthy design language befitting a privacy-first tool.
-   Characterized by: subtle depth, refined typography, purposeful color.
-   Self-hosted fonts - GDPR compliant, no external requests.
+   - Neutral gray palette (pure grays, no blue tint)
+   - Cyan (#00CCCC) as the single brand color
+   - WCAG AA compliant contrast ratios
    ============================================================================ */
 
 :root {
-  /* Typography - Self-hosted fonts */
-  --font-sans:
-    "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  /* Typography - System fonts (MS Office style) */
+  --font-sans: "Segoe UI", -apple-system, BlinkMacSystemFont, "Roboto",
+    "Helvetica Neue", sans-serif;
   --font-mono: ui-monospace, "SF Mono", "Fira Code", monospace;
 
   font-family: var(--font-sans);
   line-height: 1.5;
   font-weight: 400;
-  letter-spacing: -0.011em;
+  letter-spacing: normal;
 
   color-scheme: light;
-  color: #1e293b; /* slate-800 */
+  color: #404040; /* neutral-700 */
   background-color: #ffffff;
 
   font-synthesis: none;
@@ -43,42 +40,52 @@
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 
-  /* ─── Color Palette ─── */
-  /* Primary: Deep indigo - trustworthy, professional */
-  --color-primary-50: #eef2ff;
-  --color-primary-100: #e0e7ff;
-  --color-primary-200: #c7d2fe;
-  --color-primary-300: #a5b4fc;
-  --color-primary-400: #818cf8;
-  --color-primary-500: #334155;
-  --color-primary-600: #4f46e5;
-  --color-primary-700: #4338ca;
-  --color-primary-800: #3730a3;
-  --color-primary-900: #312e81;
+  /* ─── Color Palette - Neutrals (MS Fluent - pure grays) ─── */
+  --color-neutral-0: #ffffff;
+  --color-neutral-50: #f5f5f5;
+  --color-neutral-100: #ebebeb;
+  --color-neutral-200: #d4d4d4;
+  --color-neutral-300: #b3b3b3;
+  --color-neutral-400: #8a8a8a;
+  --color-neutral-500: #6b6b6b;
+  --color-neutral-600: #525252;
+  --color-neutral-700: #404040;
+  --color-neutral-800: #303030;
+  --color-neutral-900: #1a1a1a;
 
-  /* Accent: Warm amber for highlights and actions */
-  --color-accent-400: #fbbf24;
-  --color-accent-500: #f59e0b;
-  --color-accent-600: #d97706;
+  /* ─── Color Palette - Brand (Cyan) ─── */
+  --color-brand-50: #e0ffff;
+  --color-brand-100: #b3ffff;
+  --color-brand-200: #80ffff;
+  --color-brand-300: #4dffff;
+  --color-brand-400: #00cccc; /* BRAND COLOR - Icons, Highlights */
+  --color-brand-500: #00AAB3; /* Button Hover (H=183°, +3° blue shift) */
+  --color-brand-600: #008A99; /* PRIMARY - Buttons, Active Tab (H=186°, +6° blue shift) */
+  --color-brand-700: #006C80; /* Links, Text (H=189°, +9° blue shift) */
+  --color-brand-800: #005266; /* Pressed state (H=192°, +12° blue shift) */
+  --color-brand-900: #00394D; /* Dark emphasis (H=195°, +15° blue shift) */
 
-  /* Surface colors - subtle warmth */
+  /* Primary accent color (brand-600 for interactive elements) */
+  --color-accent: #008A99;
+
+  /* Surface colors */
   --color-surface: #ffffff;
-  --color-surface-raised: #fafbfc;
-  --color-surface-sunken: #f1f5f9;
+  --color-surface-raised: #f5f5f5;
+  --color-surface-sunken: #ebebeb;
   --color-surface-overlay: rgba(255, 255, 255, 0.95);
 
   /* Borders */
-  --color-border-subtle: #e2e8f0;
-  --color-border-default: #cbd5e1;
-  --color-border-strong: #94a3b8;
+  --color-border-subtle: #ebebeb;
+  --color-border-default: #d4d4d4;
+  --color-border-strong: #b3b3b3;
 
   /* Text colors - WCAG AA compliant (4.5:1 minimum on white) */
-  --color-text-primary: #0f172a; /* ~16:1 contrast */
-  --color-text-secondary: #475569; /* ~7:1 contrast */
-  --color-text-tertiary: #64748b; /* ~4.5:1 contrast - AA compliant */
-  --color-text-muted: #64748b; /* ~4.5:1 contrast - upgraded from #94a3b8 */
-  --color-text-disabled: #9ca3af; /* ~3:1 contrast - acceptable for disabled UI */
-  --color-text-placeholder: #6b7280; /* ~5:1 contrast - AA compliant */
+  --color-text-primary: #1a1a1a; /* neutral-900 ~16:1 contrast */
+  --color-text-secondary: #525252; /* neutral-600 ~7:1 contrast */
+  --color-text-tertiary: #6b6b6b; /* neutral-500 ~4.5:1 contrast */
+  --color-text-muted: #8a8a8a; /* neutral-400 */
+  --color-text-disabled: #b3b3b3; /* neutral-300 */
+  --color-text-placeholder: #8a8a8a; /* neutral-400 */
 
   /* Semantic colors */
   --color-success: #059669;
@@ -86,43 +93,32 @@
   --color-error: #dc2626;
   --color-info: #0284c7;
 
-  /* Primary accent color (teal-600) */
-  --color-accent: #0d9488;
+  /* Brand-tinted grays for text on brand backgrounds */
+  --color-brand-gray-900: hsl(180, 15%, 28%); /* Primary text - dark */
+  --color-brand-gray-700: hsl(180, 17%, 53%); /* Secondary text - medium */
+  --color-brand-gray-500: hsl(180, 18%, 62%); /* Tertiary text - lighter */
+  --color-brand-gray-400: hsl(180, 20%, 70%); /* Borders - selected state */
+  --color-brand-gray-200: hsl(180, 22%, 82%); /* Subtle backgrounds - hover */
+  --color-brand-gray-100: hsl(180, 20%, 88%); /* Subtle backgrounds */
 
-  /* Teal-tinted grays for text on teal backgrounds */
-  --color-teal-gray-900: hsl(175, 15%, 28%); /* Primary text - dark */
-  --color-teal-gray-700: hsl(175, 17%, 53%); /* Secondary text - medium */
-  --color-teal-gray-500: hsl(175, 18%, 62%); /* Tertiary text - lighter */
-  --color-teal-gray-400: hsl(175, 20%, 70%); /* Borders - selected state */
-  --color-teal-gray-200: hsl(175, 22%, 82%); /* Subtle backgrounds - hover */
-  --color-teal-gray-100: hsl(175, 20%, 88%); /* Subtle backgrounds */
-
-  /* ─── Shadows - Refined elevation system ─── */
-  --shadow-xs: 0 1px 2px rgba(15, 23, 42, 0.04);
-  --shadow-sm:
-    0 1px 3px rgba(15, 23, 42, 0.06), 0 1px 2px rgba(15, 23, 42, 0.04);
-  --shadow-md:
-    0 4px 6px -1px rgba(15, 23, 42, 0.07), 0 2px 4px -1px rgba(15, 23, 42, 0.04);
-  --shadow-lg:
-    0 10px 15px -3px rgba(15, 23, 42, 0.08),
-    0 4px 6px -2px rgba(15, 23, 42, 0.04);
-  --shadow-xl:
-    0 20px 25px -5px rgba(15, 23, 42, 0.1),
-    0 10px 10px -5px rgba(15, 23, 42, 0.04);
-  --shadow-inner: inset 0 2px 4px rgba(15, 23, 42, 0.04);
+  /* ─── Shadows - MS Fluent UI (extracted from computed styles) ─── */
+  --shadow-rest: 0 0 2px rgba(0, 0, 0, 0.12), 0 2px 4px rgba(0, 0, 0, 0.14);
+  --shadow-hover: 0 0 2px rgba(0, 0, 0, 0.12), 0 4px 8px rgba(0, 0, 0, 0.14);
+  --shadow-pressed: 0 0 2px rgba(0, 0, 0, 0.12), 0 1px 2px rgba(0, 0, 0, 0.14);
+  --shadow-dropdown: 0 0 8px rgba(0, 0, 0, 0.12), 0 16px 32px rgba(0, 0, 0, 0.14);
+  --shadow-modal: 0 0 8px rgba(0, 0, 0, 0.12), 0 32px 64px rgba(0, 0, 0, 0.14);
   /* Focus ring - high visibility for accessibility */
-  --shadow-focus: 0 0 0 2px #ffffff, 0 0 0 4px #1e40af;
+  --shadow-focus: 0 0 0 2px #ffffff, 0 0 0 4px #008A99;
 
-  /* ─── Radii ─── */
-  --radius-sm: 4px;
-  --radius-md: 6px;
+  /* ─── Radii (MS style - flatter) ─── */
+  --radius-sm: 2px;
+  --radius-md: 4px;
   --radius-lg: 8px;
   --radius-xl: 12px;
-  --radius-2xl: 16px;
   --radius-full: 9999px;
 
   /* ─── Transitions ─── */
-  --transition-fast: 100ms cubic-bezier(0.4, 0, 0.2, 1);
+  --transition-fast: 100ms cubic-bezier(0.33, 0, 0.67, 1);
   --transition-base: 150ms cubic-bezier(0.4, 0, 0.2, 1);
   --transition-slow: 250ms cubic-bezier(0.4, 0, 0.2, 1);
   --transition-spring: 300ms cubic-bezier(0.34, 1.56, 0.64, 1);
@@ -201,27 +197,27 @@ input[type="color"]::-webkit-color-swatch-wrapper {
 
 input[type="color"]::-webkit-color-swatch {
   border: none;
-  border-radius: 0.25rem;
+  border-radius: var(--radius-sm);
 }
 
 input[type="color"]::-moz-color-swatch {
   border: none;
-  border-radius: 0.25rem;
+  border-radius: var(--radius-sm);
 }
 
 input[type="color"]:focus-visible {
-  outline: 2px solid #1e40af;
+  outline: 2px solid var(--color-accent);
   outline-offset: 2px;
 }
 
-/* ─── Custom Checkbox Styling (Figma-like) ─── */
+/* ─── Custom Checkbox Styling ─── */
 input[type="checkbox"] {
   -webkit-appearance: none;
   -moz-appearance: none;
   appearance: none;
   width: 16px;
   height: 16px;
-  border: 1.5px solid #94a3b8;
+  border: 1.5px solid var(--color-neutral-400);
   border-radius: 3px;
   background: white;
   cursor: pointer;
@@ -232,7 +228,7 @@ input[type="checkbox"] {
 }
 
 input[type="checkbox"]:hover {
-  border-color: #64748b;
+  border-color: var(--color-neutral-600);
 }
 
 input[type="checkbox"]:checked {
@@ -269,7 +265,7 @@ input[type="checkbox"]:indeterminate::before {
 }
 
 input[type="checkbox"]:focus-visible {
-  outline: 2px solid var(--color-accent);
+  outline: 2px solid var(--color-brand-100);
   outline-offset: 2px;
 }
 
@@ -278,14 +274,14 @@ input[type="checkbox"]:disabled {
   cursor: not-allowed;
 }
 
-/* ─── Custom Radio Button Styling (Figma-like) ─── */
+/* ─── Custom Radio Button Styling ─── */
 input[type="radio"] {
   -webkit-appearance: none;
   -moz-appearance: none;
   appearance: none;
   width: 16px;
   height: 16px;
-  border: 1.5px solid #94a3b8;
+  border: 1.5px solid var(--color-neutral-400);
   border-radius: 50%;
   background: white;
   cursor: pointer;
@@ -296,7 +292,7 @@ input[type="radio"] {
 }
 
 input[type="radio"]:hover {
-  border-color: #64748b;
+  border-color: var(--color-neutral-600);
 }
 
 input[type="radio"]:checked {
@@ -318,7 +314,7 @@ input[type="radio"]:checked::before {
 }
 
 input[type="radio"]:focus-visible {
-  outline: 2px solid var(--color-accent);
+  outline: 2px solid var(--color-brand-100);
   outline-offset: 2px;
 }
 
@@ -328,26 +324,26 @@ select {
   -moz-appearance: none;
   appearance: none;
   background-color: white;
-  border: 1px solid #cbd5e1;
-  border-radius: 4px;
+  border: 1px solid var(--color-neutral-300);
+  border-radius: var(--radius-md);
   padding: 4px 24px 4px 8px;
   font-size: 12px;
-  color: #334155;
+  color: var(--color-neutral-700);
   cursor: pointer;
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='10' viewBox='0 0 10 10'%3E%3Cpath fill='%2364748b' d='M5 7L1 3h8z'/%3E%3C/svg%3E");
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='10' viewBox='0 0 10 10'%3E%3Cpath fill='%236b6b6b' d='M5 7L1 3h8z'/%3E%3C/svg%3E");
   background-repeat: no-repeat;
   background-position: right 6px center;
   transition: border-color 150ms ease;
 }
 
 select:hover {
-  border-color: #94a3b8;
+  border-color: var(--color-neutral-400);
 }
 
 select:focus {
-  outline: 2px solid #1e40af;
+  outline: 2px solid var(--color-accent);
   outline-offset: 1px;
-  border-color: #64748b;
+  border-color: var(--color-neutral-500);
 }
 
 /* ─── Utility Classes ─── */
@@ -355,9 +351,7 @@ select:focus {
 /* Monospace for data/numbers */
 .font-mono {
   font-family: var(--font-mono);
-  font-feature-settings:
-    "tnum" on,
-    "lnum" on;
+  font-feature-settings: "tnum" on, "lnum" on;
 }
 
 /* Text utilities */
@@ -387,6 +381,134 @@ select:focus {
 
 .scrollbar-thin::-webkit-scrollbar-thumb:hover {
   background: var(--color-border-strong);
+}
+
+/* ─── Ribbon Tab Styling (MS Office style) ─── */
+
+/* Base tab button styles */
+.ribbon-tab {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  height: 31px;
+  min-width: 32px;
+  padding: 0 8px;
+  font-size: 14px;
+  line-height: 20px;
+  font-weight: 400;
+  color: var(--color-neutral-600);
+  background-color: transparent;
+  border: 0.666667px solid transparent;
+  border-radius: var(--radius-md);
+  cursor: default;
+  user-select: none;
+  overflow: hidden;
+  transition: background var(--transition-fast), border var(--transition-fast),
+    color var(--transition-fast);
+  -webkit-font-smoothing: antialiased;
+}
+
+.ribbon-tab:hover {
+  cursor: pointer;
+  color: var(--color-neutral-800);
+}
+
+/* Active tab */
+.ribbon-tab-active {
+  font-weight: 600;
+  color: var(--color-neutral-800);
+}
+
+/* File tab - background hover effect */
+.ribbon-tab-file {
+  background-color: var(--color-neutral-50);
+}
+
+.ribbon-tab-file:hover {
+  background-color: var(--color-neutral-100);
+}
+
+/* Standard tabs - underline hover effect via ::before */
+.ribbon-tab-standard::before {
+  content: "";
+  position: absolute;
+  bottom: 0;
+  left: 8px;
+  right: 8px;
+  height: 2px;
+  background-color: var(--color-neutral-300);
+  border: 0.666667px solid var(--color-neutral-300);
+  border-radius: 10000px;
+  display: none;
+}
+
+.ribbon-tab-standard:hover::before {
+  display: block;
+}
+
+/* Active tab indicator - brand color */
+.ribbon-tab-active::after {
+  content: "";
+  position: absolute;
+  bottom: 0;
+  left: 8px;
+  right: 8px;
+  height: 2px;
+  background-color: var(--color-accent);
+  border-radius: 10000px;
+}
+
+/* Toolbar button - MS Office style */
+.ribbon-toolbar-button:hover:not(:disabled) {
+  background-color: var(--color-neutral-100) !important;
+  cursor: pointer;
+}
+
+.ribbon-toolbar-button:active:not(:disabled) {
+  background-color: var(--color-neutral-200) !important;
+}
+
+.ribbon-toolbar-button:focus-visible {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 1px;
+}
+
+/* ─── File Menu Dropdown (MS Office style) ─── */
+.file-menu-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  padding: 8px 16px;
+  font-size: 14px;
+  line-height: 20px;
+  color: var(--color-neutral-800);
+  background-color: transparent;
+  border: none;
+  cursor: pointer;
+  transition: background-color var(--transition-fast);
+  text-align: left;
+}
+
+.file-menu-item:hover {
+  background-color: var(--color-neutral-50);
+}
+
+.file-menu-item:active {
+  background-color: var(--color-neutral-100);
+}
+
+.file-menu-shortcut {
+  margin-left: auto;
+  font-size: 12px;
+  color: var(--color-neutral-400);
+}
+
+.file-menu-divider {
+  height: 1px;
+  background-color: var(--color-neutral-200);
+  margin: 4px 0;
 }
 
 /* ─── Animations ─── */
@@ -459,13 +581,13 @@ input[type="range"] {
 input[type="range"]::-webkit-slider-runnable-track {
   height: 6px;
   border-radius: 3px;
-  background: #e2e8f0; /* slate-200 default, can be overridden by class */
+  background: var(--color-neutral-200);
 }
 
 input[type="range"]::-moz-range-track {
   height: 6px;
   border-radius: 3px;
-  background: #e2e8f0;
+  background: var(--color-neutral-200);
 }
 
 /* Thumb styling */
@@ -505,9 +627,61 @@ input[type="range"]:focus-visible {
 }
 
 input[type="range"]:focus-visible::-webkit-slider-thumb {
-  box-shadow: 0 0 0 3px rgba(13, 148, 136, 0.3);
+  box-shadow: 0 0 0 3px var(--color-brand-100);
 }
 
 input[type="range"]:focus-visible::-moz-range-thumb {
-  box-shadow: 0 0 0 3px rgba(13, 148, 136, 0.3);
+  box-shadow: 0 0 0 3px var(--color-brand-100);
+}
+
+/* Status Bar Slider - compact version */
+.status-bar-slider::-webkit-slider-runnable-track {
+  height: 4px;
+  border-radius: 2px;
+}
+
+.status-bar-slider::-moz-range-track {
+  height: 4px;
+  border-radius: 2px;
+}
+
+.status-bar-slider::-webkit-slider-thumb {
+  width: 10px;
+  height: 10px;
+  margin-top: -3px;
+  border-width: 1px;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.15);
+}
+
+.status-bar-slider::-moz-range-thumb {
+  width: 10px;
+  height: 10px;
+  border-width: 1px;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.15);
+}
+
+.status-bar-slider:hover::-webkit-slider-thumb {
+  transform: scale(1.15);
+}
+
+.status-bar-slider:hover::-moz-range-thumb {
+  transform: scale(1.15);
+}
+
+/* ─── Toolbar Separator (High-DPI aware) ─── */
+.toolbar-separator {
+  width: 1px;
+  background-color: rgb(210, 210, 210);
+}
+
+@media (min-resolution: 144dpi), (-webkit-min-device-pixel-ratio: 1.5) {
+  .toolbar-separator {
+    width: 0.67px;
+  }
+}
+
+@media (min-resolution: 192dpi), (-webkit-min-device-pixel-ratio: 2) {
+  .toolbar-separator {
+    width: 0.5px;
+  }
 }

@@ -62,8 +62,8 @@ export const ConnectionHandles = memo(function ConnectionHandles({
   const endHandleX = x + width + HANDLE_OFFSET;
 
   // Determine handle colors based on state - neutral by default
-  let handleFill = "#e2e8f0"; // slate-200 (neutral)
-  let handleStroke = "#94a3b8"; // slate-400
+  let handleFill = "#e2e8f0"; // neutral-200 (neutral)
+  let handleStroke = "#94a3b8"; // neutral-400
 
   if (isValidDropTarget) {
     handleFill = "#bbf7d0"; // green-200

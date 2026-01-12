@@ -92,7 +92,7 @@ export const DependencyArrow = memo(function DependencyArrow({
         fill="none"
         stroke={strokeColor}
         strokeWidth={strokeWidth}
-        className="transition-colors duration-150 cursor-pointer hover:stroke-slate-600"
+        className="transition-colors duration-150 cursor-pointer hover:stroke-neutral-600"
       />
 
       {/* Arrowhead */}

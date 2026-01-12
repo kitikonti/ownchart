@@ -156,7 +156,7 @@ export function PdfExportOptions({
     <div className="space-y-16">
       {/* ============ TIMELINE SCALE ============ */}
       <section>
-        <h3 className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider pb-0.5 mb-3 border-b border-slate-200">
+        <h3 className="text-[11px] font-semibold text-neutral-400 uppercase tracking-wider pb-0.5 mb-3 border-b border-neutral-200">
           Timeline Scale
         </h3>
 
@@ -165,8 +165,8 @@ export function PdfExportOptions({
           <label
             className={`flex items-start gap-3 cursor-pointer p-3 rounded-lg border transition-all ${
               exportOptions.zoomMode === "currentView"
-                ? "bg-teal-50 border-[var(--color-teal-gray-400)]"
-                : "border-slate-200 hover:border-[var(--color-teal-gray-400)]"
+                ? "bg-brand-50 border-[var(--color-brand-gray-400)]"
+                : "border-neutral-200 hover:border-[var(--color-brand-gray-400)]"
             }`}
           >
             <input
@@ -182,18 +182,18 @@ export function PdfExportOptions({
             <div className="flex-1">
               <div className="flex items-center gap-2">
                 <span
-                  className={`text-sm font-medium ${exportOptions.zoomMode === "currentView" ? "text-[var(--color-teal-gray-900)]" : "text-slate-800"}`}
+                  className={`text-sm font-medium ${exportOptions.zoomMode === "currentView" ? "text-[var(--color-brand-gray-900)]" : "text-neutral-800"}`}
                 >
                   Use current view
                 </span>
                 <span
-                  className={`text-xs font-mono px-1.5 py-0.5 rounded ${exportOptions.zoomMode === "currentView" ? "text-[var(--color-teal-gray-700)] bg-[var(--color-teal-gray-100)]" : "text-slate-500 bg-slate-100"}`}
+                  className={`text-xs font-mono px-1.5 py-0.5 rounded ${exportOptions.zoomMode === "currentView" ? "text-[var(--color-brand-gray-700)] bg-[var(--color-brand-gray-100)]" : "text-neutral-500 bg-neutral-100"}`}
                 >
                   {Math.round(currentAppZoom * 100)}%
                 </span>
               </div>
               <p
-                className={`text-xs mt-0.5 ${exportOptions.zoomMode === "currentView" ? "text-[var(--color-teal-gray-700)]" : "text-slate-500"}`}
+                className={`text-xs mt-0.5 ${exportOptions.zoomMode === "currentView" ? "text-[var(--color-brand-gray-700)]" : "text-neutral-500"}`}
               >
                 Export at your current zoom level
               </p>
@@ -204,8 +204,8 @@ export function PdfExportOptions({
           <label
             className={`flex items-start gap-3 cursor-pointer p-3 rounded-lg border transition-all ${
               exportOptions.zoomMode === "fitToWidth"
-                ? "bg-teal-50 border-[var(--color-teal-gray-400)]"
-                : "border-slate-200 hover:border-[var(--color-teal-gray-400)]"
+                ? "bg-brand-50 border-[var(--color-brand-gray-400)]"
+                : "border-neutral-200 hover:border-[var(--color-brand-gray-400)]"
             }`}
           >
             <input
@@ -218,12 +218,12 @@ export function PdfExportOptions({
             />
             <div className="flex-1">
               <span
-                className={`text-sm font-medium ${exportOptions.zoomMode === "fitToWidth" ? "text-[var(--color-teal-gray-900)]" : "text-slate-800"}`}
+                className={`text-sm font-medium ${exportOptions.zoomMode === "fitToWidth" ? "text-[var(--color-brand-gray-900)]" : "text-neutral-800"}`}
               >
                 Fit to page
               </span>
               <p
-                className={`text-xs mt-0.5 ${exportOptions.zoomMode === "fitToWidth" ? "text-[var(--color-teal-gray-700)]" : "text-slate-500"}`}
+                className={`text-xs mt-0.5 ${exportOptions.zoomMode === "fitToWidth" ? "text-[var(--color-brand-gray-700)]" : "text-neutral-500"}`}
               >
                 Automatically scale to fit page width
               </p>
@@ -234,8 +234,8 @@ export function PdfExportOptions({
           <label
             className={`flex items-start gap-3 cursor-pointer p-3 rounded-lg border transition-all ${
               exportOptions.zoomMode === "custom"
-                ? "bg-teal-50 border-[var(--color-teal-gray-400)]"
-                : "border-slate-200 hover:border-[var(--color-teal-gray-400)]"
+                ? "bg-brand-50 border-[var(--color-brand-gray-400)]"
+                : "border-neutral-200 hover:border-[var(--color-brand-gray-400)]"
             }`}
           >
             <input
@@ -247,12 +247,12 @@ export function PdfExportOptions({
             />
             <div className="flex-1">
               <span
-                className={`text-sm font-medium ${exportOptions.zoomMode === "custom" ? "text-[var(--color-teal-gray-900)]" : "text-slate-800"}`}
+                className={`text-sm font-medium ${exportOptions.zoomMode === "custom" ? "text-[var(--color-brand-gray-900)]" : "text-neutral-800"}`}
               >
                 Custom zoom
               </span>
               <p
-                className={`text-xs mt-0.5 ${exportOptions.zoomMode === "custom" ? "text-[var(--color-teal-gray-700)]" : "text-slate-500"}`}
+                className={`text-xs mt-0.5 ${exportOptions.zoomMode === "custom" ? "text-[var(--color-brand-gray-700)]" : "text-neutral-500"}`}
               >
                 Set a specific zoom percentage
               </p>
@@ -271,9 +271,9 @@ export function PdfExportOptions({
                           timelineZoom: parseInt(e.target.value) / 100,
                         })
                       }
-                      className="flex-1 h-1.5 bg-[var(--color-teal-gray-200)] rounded-full appearance-none cursor-pointer"
+                      className="flex-1 h-1.5 bg-[var(--color-brand-gray-200)] rounded-full appearance-none cursor-pointer"
                     />
-                    <div className="flex items-center gap-1 bg-[var(--color-teal-gray-100)] rounded-md px-2 py-1">
+                    <div className="flex items-center gap-1 bg-[var(--color-brand-gray-100)] rounded-md px-2 py-1">
                       <input
                         type="number"
                         value={Math.round(exportOptions.timelineZoom * 100)}
@@ -288,11 +288,11 @@ export function PdfExportOptions({
                             ),
                           })
                         }
-                        className="w-10 text-sm text-center font-mono bg-transparent border-none focus:outline-none text-[var(--color-teal-gray-900)]"
+                        className="w-10 text-sm text-center font-mono bg-transparent border-none focus:outline-none text-[var(--color-brand-gray-900)]"
                         min={EXPORT_ZOOM_MIN * 100}
                         max={EXPORT_ZOOM_MAX * 100}
                       />
-                      <span className="text-xs text-[var(--color-teal-gray-700)]">
+                      <span className="text-xs text-[var(--color-brand-gray-700)]">
                         %
                       </span>
                     </div>
@@ -308,8 +308,8 @@ export function PdfExportOptions({
                         }
                         className={`px-2 py-1 text-xs font-mono rounded-md transition-colors ${
                           exportOptions.timelineZoom === value
-                            ? "bg-teal-600 text-white"
-                            : "bg-[var(--color-teal-gray-100)] text-[var(--color-teal-gray-700)] hover:bg-[var(--color-teal-gray-200)]"
+                            ? "bg-brand-600 text-white"
+                            : "bg-[var(--color-brand-gray-100)] text-[var(--color-brand-gray-700)] hover:bg-[var(--color-brand-gray-200)]"
                         }`}
                       >
                         {Math.round(value * 100)}%
@@ -333,7 +333,7 @@ export function PdfExportOptions({
                   : "bg-red-50 text-red-700"
             }`}
           >
-            <StatusIcon size={14} weight="bold" />
+            <StatusIcon size={14} weight="light" />
             <span className="flex-1">{readabilityStatus.message}</span>
             <span className="font-mono font-medium">
               {Math.round(effectiveZoom * 100)}%
@@ -344,7 +344,7 @@ export function PdfExportOptions({
         {/* Scale Info */}
         {scaleInfo && (
           <div className="flex items-center gap-2 mt-4 px-3 py-2 rounded-md text-xs bg-amber-50 text-amber-700">
-            <Info size={14} weight="bold" className="flex-shrink-0" />
+            <Info size={14} weight="light" className="flex-shrink-0" />
             <span>
               Content will be scaled to {scaleInfo.scaleFactor}% to fit page
             </span>
@@ -354,14 +354,14 @@ export function PdfExportOptions({
 
       {/* ============ PAGE SETUP ============ */}
       <section>
-        <h3 className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider pb-0.5 mb-3 border-b border-slate-200">
+        <h3 className="text-[11px] font-semibold text-neutral-400 uppercase tracking-wider pb-0.5 mb-3 border-b border-neutral-200">
           Page Setup
         </h3>
 
         <div className="grid grid-cols-2 gap-6">
           {/* Page Size */}
           <div>
-            <span className="text-xs font-medium text-slate-500 mb-2.5 block">
+            <span className="text-xs font-medium text-neutral-500 mb-2.5 block">
               Size
             </span>
             <select
@@ -369,7 +369,7 @@ export function PdfExportOptions({
               onChange={(e) =>
                 onChange({ pageSize: e.target.value as PdfPageSize })
               }
-              className="w-full px-2.5 py-2 text-sm bg-white border border-slate-200 rounded-md focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent"
+              className="w-full px-2.5 py-2 text-sm bg-white border border-neutral-200 rounded-md focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent"
             >
               {Object.entries(PAGE_SIZE_LABELS).map(
                 ([key, { label, size }]) => (
@@ -380,7 +380,7 @@ export function PdfExportOptions({
               )}
             </select>
             {options.pageSize !== "custom" && (
-              <p className="text-[10px] text-slate-400 mt-1.5">
+              <p className="text-[10px] text-neutral-400 mt-1.5">
                 {displayWidth} × {displayHeight} mm
               </p>
             )}
@@ -388,7 +388,7 @@ export function PdfExportOptions({
 
           {/* Orientation */}
           <div>
-            <span className="text-xs font-medium text-slate-500 mb-2.5 block">
+            <span className="text-xs font-medium text-neutral-500 mb-2.5 block">
               Orientation
             </span>
             <div className="flex gap-1.5">
@@ -397,8 +397,8 @@ export function PdfExportOptions({
                 onClick={() => onChange({ orientation: "landscape" })}
                 className={`flex-1 flex items-center justify-center gap-2 px-3 py-2 text-xs rounded-md transition-colors ${
                   options.orientation === "landscape"
-                    ? "bg-teal-600 text-white"
-                    : "bg-slate-100 text-slate-600 hover:bg-[var(--color-teal-gray-100)] hover:text-[var(--color-teal-gray-700)]"
+                    ? "bg-brand-600 text-white"
+                    : "bg-neutral-100 text-neutral-600 hover:bg-[var(--color-brand-gray-100)] hover:text-[var(--color-brand-gray-700)]"
                 }`}
               >
                 <span className="w-4 h-2.5 border-2 border-current rounded-sm" />
@@ -409,8 +409,8 @@ export function PdfExportOptions({
                 onClick={() => onChange({ orientation: "portrait" })}
                 className={`flex-1 flex items-center justify-center gap-2 px-3 py-2 text-xs rounded-md transition-colors ${
                   options.orientation === "portrait"
-                    ? "bg-teal-600 text-white"
-                    : "bg-slate-100 text-slate-600 hover:bg-[var(--color-teal-gray-100)] hover:text-[var(--color-teal-gray-700)]"
+                    ? "bg-brand-600 text-white"
+                    : "bg-neutral-100 text-neutral-600 hover:bg-[var(--color-brand-gray-100)] hover:text-[var(--color-brand-gray-700)]"
                 }`}
               >
                 <span className="w-2.5 h-4 border-2 border-current rounded-sm" />
@@ -425,7 +425,7 @@ export function PdfExportOptions({
           <div className="mt-5 grid grid-cols-2 gap-4">
             <div>
               <label
-                className="text-xs font-medium text-slate-500 mb-2.5 block"
+                className="text-xs font-medium text-neutral-500 mb-2.5 block"
                 htmlFor="pdf-custom-width"
               >
                 Width (mm)
@@ -444,12 +444,12 @@ export function PdfExportOptions({
                 }
                 min={100}
                 max={5000}
-                className="w-full px-2.5 py-2 text-sm font-mono bg-white border border-slate-200 rounded-md focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent"
+                className="w-full px-2.5 py-2 text-sm font-mono bg-white border border-neutral-200 rounded-md focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent"
               />
             </div>
             <div>
               <label
-                className="text-xs font-medium text-slate-500 mb-2.5 block"
+                className="text-xs font-medium text-neutral-500 mb-2.5 block"
                 htmlFor="pdf-custom-height"
               >
                 Height (mm)
@@ -468,7 +468,7 @@ export function PdfExportOptions({
                 }
                 min={100}
                 max={5000}
-                className="w-full px-2.5 py-2 text-sm font-mono bg-white border border-slate-200 rounded-md focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent"
+                className="w-full px-2.5 py-2 text-sm font-mono bg-white border border-neutral-200 rounded-md focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent"
               />
             </div>
           </div>
@@ -476,7 +476,7 @@ export function PdfExportOptions({
 
         {/* Margins */}
         <div className="mt-6">
-          <span className="text-xs font-medium text-slate-500 mb-2.5 block">
+          <span className="text-xs font-medium text-neutral-500 mb-2.5 block">
             Margins
           </span>
           <div className="flex flex-wrap gap-1.5">
@@ -489,8 +489,8 @@ export function PdfExportOptions({
                   onClick={() => onChange({ marginPreset: preset })}
                   className={`px-2.5 py-1.5 text-xs rounded-md transition-colors ${
                     options.marginPreset === preset
-                      ? "bg-teal-600 text-white"
-                      : "bg-slate-100 text-slate-600 hover:bg-[var(--color-teal-gray-100)] hover:text-[var(--color-teal-gray-700)]"
+                      ? "bg-brand-600 text-white"
+                      : "bg-neutral-100 text-neutral-600 hover:bg-[var(--color-brand-gray-100)] hover:text-[var(--color-brand-gray-700)]"
                   }`}
                 >
                   {MARGIN_LABELS[preset]}
@@ -498,7 +498,7 @@ export function PdfExportOptions({
               ))}
           </div>
           {options.marginPreset !== "none" && (
-            <p className="text-[10px] text-slate-400 mt-2">
+            <p className="text-[10px] text-neutral-400 mt-2">
               {PDF_MARGIN_PRESETS[options.marginPreset].top}mm top/bottom,{" "}
               {PDF_MARGIN_PRESETS[options.marginPreset].left}mm left/right
             </p>
@@ -508,14 +508,14 @@ export function PdfExportOptions({
 
       {/* ============ HEADER / FOOTER ============ */}
       <section>
-        <h3 className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider pb-0.5 mb-3 border-b border-slate-200">
+        <h3 className="text-[11px] font-semibold text-neutral-400 uppercase tracking-wider pb-0.5 mb-3 border-b border-neutral-200">
           Header / Footer
         </h3>
 
         <div className="grid grid-cols-2 gap-8">
           {/* Header */}
           <div>
-            <span className="text-xs font-medium text-slate-500 mb-2.5 block">
+            <span className="text-xs font-medium text-neutral-500 mb-2.5 block">
               Header
             </span>
             <div className="space-y-1.5">
@@ -533,7 +533,7 @@ export function PdfExportOptions({
                   }
                   className="w-3.5 h-3.5 rounded"
                 />
-                <span className="text-sm text-slate-700 group-hover:text-slate-900">
+                <span className="text-sm text-neutral-700 group-hover:text-neutral-900">
                   Project title
                 </span>
               </label>
@@ -551,7 +551,7 @@ export function PdfExportOptions({
                   }
                   className="w-3.5 h-3.5 rounded"
                 />
-                <span className="text-sm text-slate-700 group-hover:text-slate-900">
+                <span className="text-sm text-neutral-700 group-hover:text-neutral-900">
                   Author
                 </span>
               </label>
@@ -569,7 +569,7 @@ export function PdfExportOptions({
                   }
                   className="w-3.5 h-3.5 rounded"
                 />
-                <span className="text-sm text-slate-700 group-hover:text-slate-900">
+                <span className="text-sm text-neutral-700 group-hover:text-neutral-900">
                   Export date
                 </span>
               </label>
@@ -578,7 +578,7 @@ export function PdfExportOptions({
 
           {/* Footer */}
           <div>
-            <span className="text-xs font-medium text-slate-500 mb-2.5 block">
+            <span className="text-xs font-medium text-neutral-500 mb-2.5 block">
               Footer
             </span>
             <div className="space-y-1.5">
@@ -596,7 +596,7 @@ export function PdfExportOptions({
                   }
                   className="w-3.5 h-3.5 rounded"
                 />
-                <span className="text-sm text-slate-700 group-hover:text-slate-900">
+                <span className="text-sm text-neutral-700 group-hover:text-neutral-900">
                   Project title
                 </span>
               </label>
@@ -614,7 +614,7 @@ export function PdfExportOptions({
                   }
                   className="w-3.5 h-3.5 rounded"
                 />
-                <span className="text-sm text-slate-700 group-hover:text-slate-900">
+                <span className="text-sm text-neutral-700 group-hover:text-neutral-900">
                   Author
                 </span>
               </label>
@@ -632,7 +632,7 @@ export function PdfExportOptions({
                   }
                   className="w-3.5 h-3.5 rounded"
                 />
-                <span className="text-sm text-slate-700 group-hover:text-slate-900">
+                <span className="text-sm text-neutral-700 group-hover:text-neutral-900">
                   Export date
                 </span>
               </label>
@@ -640,7 +640,7 @@ export function PdfExportOptions({
           </div>
         </div>
 
-        <p className="text-[10px] text-slate-400 mt-4">
+        <p className="text-[10px] text-neutral-400 mt-4">
           Set project title and author in Chart Settings
         </p>
       </section>

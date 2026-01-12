@@ -71,7 +71,7 @@ export function SharedExportOptions({
     <div className="space-y-16">
       {/* ============ DATE RANGE ============ */}
       <section>
-        <h3 className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider pb-0.5 mb-3 border-b border-slate-200">
+        <h3 className="text-[11px] font-semibold text-neutral-400 uppercase tracking-wider pb-0.5 mb-3 border-b border-neutral-200">
           Date Range
         </h3>
 
@@ -80,8 +80,8 @@ export function SharedExportOptions({
           <label
             className={`flex items-center gap-3 cursor-pointer p-3 rounded-lg border transition-all ${
               options.dateRangeMode === "all"
-                ? "bg-teal-50 border-[var(--color-teal-gray-400)]"
-                : "border-slate-200 hover:border-[var(--color-teal-gray-400)]"
+                ? "bg-brand-50 border-[var(--color-brand-gray-400)]"
+                : "border-neutral-200 hover:border-[var(--color-brand-gray-400)]"
             }`}
           >
             <input
@@ -93,13 +93,13 @@ export function SharedExportOptions({
             />
             <div className="flex-1 flex items-center justify-between">
               <span
-                className={`text-sm font-medium ${options.dateRangeMode === "all" ? "text-[var(--color-teal-gray-900)]" : "text-slate-800"}`}
+                className={`text-sm font-medium ${options.dateRangeMode === "all" ? "text-[var(--color-brand-gray-900)]" : "text-neutral-800"}`}
               >
                 Entire project
               </span>
               {projectDateRange && (
                 <span
-                  className={`text-xs font-mono ${options.dateRangeMode === "all" ? "text-[var(--color-teal-gray-700)]" : "text-slate-400"}`}
+                  className={`text-xs font-mono ${options.dateRangeMode === "all" ? "text-[var(--color-brand-gray-700)]" : "text-neutral-400"}`}
                 >
                   {formatDate(projectDateRange.start)} –{" "}
                   {formatDate(projectDateRange.end)}
@@ -112,8 +112,8 @@ export function SharedExportOptions({
           <label
             className={`flex items-center gap-3 cursor-pointer p-3 rounded-lg border transition-all ${
               options.dateRangeMode === "visible"
-                ? "bg-teal-50 border-[var(--color-teal-gray-400)]"
-                : "border-slate-200 hover:border-[var(--color-teal-gray-400)]"
+                ? "bg-brand-50 border-[var(--color-brand-gray-400)]"
+                : "border-neutral-200 hover:border-[var(--color-brand-gray-400)]"
             }`}
           >
             <input
@@ -125,13 +125,13 @@ export function SharedExportOptions({
             />
             <div className="flex-1 flex items-center justify-between">
               <span
-                className={`text-sm font-medium ${options.dateRangeMode === "visible" ? "text-[var(--color-teal-gray-900)]" : "text-slate-800"}`}
+                className={`text-sm font-medium ${options.dateRangeMode === "visible" ? "text-[var(--color-brand-gray-900)]" : "text-neutral-800"}`}
               >
                 Visible range
               </span>
               {visibleDateRange && (
                 <span
-                  className={`text-xs font-mono ${options.dateRangeMode === "visible" ? "text-[var(--color-teal-gray-700)]" : "text-slate-400"}`}
+                  className={`text-xs font-mono ${options.dateRangeMode === "visible" ? "text-[var(--color-brand-gray-700)]" : "text-neutral-400"}`}
                 >
                   {formatDate(visibleDateRange.start)} –{" "}
                   {formatDate(visibleDateRange.end)}
@@ -144,8 +144,8 @@ export function SharedExportOptions({
           <label
             className={`flex items-start gap-3 cursor-pointer p-3 rounded-lg border transition-all ${
               options.dateRangeMode === "custom"
-                ? "bg-teal-50 border-[var(--color-teal-gray-400)]"
-                : "border-slate-200 hover:border-[var(--color-teal-gray-400)]"
+                ? "bg-brand-50 border-[var(--color-brand-gray-400)]"
+                : "border-neutral-200 hover:border-[var(--color-brand-gray-400)]"
             }`}
           >
             <input
@@ -157,7 +157,7 @@ export function SharedExportOptions({
             />
             <div className="flex-1">
               <span
-                className={`text-sm font-medium ${options.dateRangeMode === "custom" ? "text-[var(--color-teal-gray-900)]" : "text-slate-800"}`}
+                className={`text-sm font-medium ${options.dateRangeMode === "custom" ? "text-[var(--color-brand-gray-900)]" : "text-neutral-800"}`}
               >
                 Custom range
               </span>
@@ -170,16 +170,16 @@ export function SharedExportOptions({
                     onChange={(e) =>
                       onChange({ customDateStart: e.target.value })
                     }
-                    className="px-2.5 py-1.5 text-sm font-mono bg-white border border-teal-200 rounded-md focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent"
+                    className="px-2.5 py-1.5 text-sm font-mono bg-white border border-brand-200 rounded-md focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent"
                   />
-                  <span className="text-[var(--color-teal-gray-500)]">–</span>
+                  <span className="text-[var(--color-brand-gray-500)]">–</span>
                   <input
                     type="date"
                     value={options.customDateEnd || ""}
                     onChange={(e) =>
                       onChange({ customDateEnd: e.target.value })
                     }
-                    className="px-2.5 py-1.5 text-sm font-mono bg-white border border-teal-200 rounded-md focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent"
+                    className="px-2.5 py-1.5 text-sm font-mono bg-white border border-brand-200 rounded-md focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent"
                   />
                 </div>
               )}
@@ -190,14 +190,14 @@ export function SharedExportOptions({
 
       {/* ============ LAYOUT ============ */}
       <section>
-        <h3 className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider pb-0.5 mb-3 border-b border-slate-200">
+        <h3 className="text-[11px] font-semibold text-neutral-400 uppercase tracking-wider pb-0.5 mb-3 border-b border-neutral-200">
           Layout
         </h3>
 
         <div className="grid grid-cols-2 gap-8">
           {/* Row Density */}
           <div>
-            <span className="text-xs font-medium text-slate-500 mb-2.5 block">
+            <span className="text-xs font-medium text-neutral-500 mb-2.5 block">
               Row density
             </span>
             <div className="space-y-1.5">
@@ -213,10 +213,10 @@ export function SharedExportOptions({
                     onChange={() => onChange({ density: opt.key })}
                     className="w-3.5 h-3.5"
                   />
-                  <span className="text-sm text-slate-700 group-hover:text-slate-900">
+                  <span className="text-sm text-neutral-700 group-hover:text-neutral-900">
                     {opt.label}
                   </span>
-                  <span className="text-xs text-slate-400">
+                  <span className="text-xs text-neutral-400">
                     {opt.description}
                   </span>
                 </label>
@@ -226,7 +226,7 @@ export function SharedExportOptions({
 
           {/* Columns */}
           <div>
-            <span className="text-xs font-medium text-slate-500 mb-2.5 block">
+            <span className="text-xs font-medium text-neutral-500 mb-2.5 block">
               Table columns
             </span>
             <div className="grid grid-cols-2 gap-x-4 gap-y-1.5">
@@ -249,13 +249,13 @@ export function SharedExportOptions({
                     }}
                     className="w-3.5 h-3.5 rounded"
                   />
-                  <span className="text-sm text-slate-700 group-hover:text-slate-900">
+                  <span className="text-sm text-neutral-700 group-hover:text-neutral-900">
                     {col.label}
                   </span>
                 </label>
               ))}
             </div>
-            <p className="text-[10px] text-slate-400 mt-2.5">
+            <p className="text-[10px] text-neutral-400 mt-2.5">
               Uncheck all for timeline only
             </p>
           </div>
@@ -264,14 +264,14 @@ export function SharedExportOptions({
 
       {/* ============ DISPLAY ============ */}
       <section>
-        <h3 className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider pb-0.5 mb-3 border-b border-slate-200">
+        <h3 className="text-[11px] font-semibold text-neutral-400 uppercase tracking-wider pb-0.5 mb-3 border-b border-neutral-200">
           Display
         </h3>
 
         <div className="grid grid-cols-2 gap-8">
           {/* Timeline elements */}
           <div>
-            <span className="text-xs font-medium text-slate-500 mb-2.5 block">
+            <span className="text-xs font-medium text-neutral-500 mb-2.5 block">
               Show in timeline
             </span>
             <div className="space-y-1.5">
@@ -295,7 +295,7 @@ export function SharedExportOptions({
                     onChange={(e) => onChange({ [item.key]: e.target.checked })}
                     className="w-3.5 h-3.5 rounded"
                   />
-                  <span className="text-sm text-slate-700 group-hover:text-slate-900">
+                  <span className="text-sm text-neutral-700 group-hover:text-neutral-900">
                     {item.label}
                   </span>
                 </label>
@@ -307,7 +307,7 @@ export function SharedExportOptions({
           <div className="space-y-6">
             {/* Task labels */}
             <div>
-              <span className="text-xs font-medium text-slate-500 mb-2.5 block">
+              <span className="text-xs font-medium text-neutral-500 mb-2.5 block">
                 Task labels
               </span>
               <div className="flex flex-wrap gap-1.5">
@@ -318,8 +318,8 @@ export function SharedExportOptions({
                     onClick={() => onChange({ taskLabelPosition: opt.key })}
                     className={`px-2.5 py-1 text-xs rounded-md transition-colors ${
                       options.taskLabelPosition === opt.key
-                        ? "bg-teal-600 text-white"
-                        : "bg-slate-100 text-slate-600 hover:bg-[var(--color-teal-gray-100)] hover:text-[var(--color-teal-gray-700)]"
+                        ? "bg-brand-600 text-white"
+                        : "bg-neutral-100 text-neutral-600 hover:bg-[var(--color-brand-gray-100)] hover:text-[var(--color-brand-gray-700)]"
                     }`}
                   >
                     {opt.label}
@@ -331,7 +331,7 @@ export function SharedExportOptions({
             {/* Background */}
             {showBackground && (
               <div>
-                <span className="text-xs font-medium text-slate-500 mb-2.5 block">
+                <span className="text-xs font-medium text-neutral-500 mb-2.5 block">
                   Background
                 </span>
                 <div className="flex gap-2">
@@ -340,11 +340,11 @@ export function SharedExportOptions({
                     onClick={() => onChange({ background: "white" })}
                     className={`flex items-center gap-2 px-3 py-1.5 text-xs rounded-md transition-colors ${
                       options.background === "white"
-                        ? "bg-teal-600 text-white"
-                        : "bg-slate-100 text-slate-600 hover:bg-[var(--color-teal-gray-100)] hover:text-[var(--color-teal-gray-700)]"
+                        ? "bg-brand-600 text-white"
+                        : "bg-neutral-100 text-neutral-600 hover:bg-[var(--color-brand-gray-100)] hover:text-[var(--color-brand-gray-700)]"
                     }`}
                   >
-                    <span className="w-3 h-3 rounded-sm bg-white border border-slate-300" />
+                    <span className="w-3 h-3 rounded-sm bg-white border border-neutral-300" />
                     White
                   </button>
                   <button
@@ -352,12 +352,12 @@ export function SharedExportOptions({
                     onClick={() => onChange({ background: "transparent" })}
                     className={`flex items-center gap-2 px-3 py-1.5 text-xs rounded-md transition-colors ${
                       options.background === "transparent"
-                        ? "bg-teal-600 text-white"
-                        : "bg-slate-100 text-slate-600 hover:bg-[var(--color-teal-gray-100)] hover:text-[var(--color-teal-gray-700)]"
+                        ? "bg-brand-600 text-white"
+                        : "bg-neutral-100 text-neutral-600 hover:bg-[var(--color-brand-gray-100)] hover:text-[var(--color-brand-gray-700)]"
                     }`}
                   >
                     <span
-                      className="w-3 h-3 rounded-sm border border-slate-300"
+                      className="w-3 h-3 rounded-sm border border-neutral-300"
                       style={{
                         backgroundImage: `linear-gradient(45deg, #cbd5e1 25%, transparent 25%),
                           linear-gradient(-45deg, #cbd5e1 25%, transparent 25%),

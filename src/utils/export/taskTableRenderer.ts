@@ -363,7 +363,7 @@ function renderDataColumn(
 ): void {
   const isSummary = task.type === "summary";
   const isMilestone = task.type === "milestone";
-  // Summary dates/duration are styled differently (text-slate-500 italic)
+  // Summary dates/duration are styled differently (text-neutral-500 italic)
   const useSummaryStyle =
     isSummary &&
     (key === "startDate" || key === "endDate" || key === "duration");

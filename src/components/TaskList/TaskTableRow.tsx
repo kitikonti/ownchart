@@ -7,7 +7,7 @@
 import { useMemo } from "react";
 import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
-import { Trash, DotsSixVertical } from "@phosphor-icons/react";
+import { DotsSixVertical } from "@phosphor-icons/react";
 import type { Task } from "../../types/chart.types";
 import { useTaskStore } from "../../store/slices/taskSlice";
 import { useChartStore } from "../../store/slices/chartSlice";
@@ -39,9 +39,7 @@ export function TaskTableRow({
   clipboardPosition,
 }: TaskTableRowProps): JSX.Element {
   const tasks = useTaskStore((state) => state.tasks);
-  const deleteTask = useTaskStore((state) => state.deleteTask);
   const updateTask = useTaskStore((state) => state.updateTask);
-  const moveTaskToParent = useTaskStore((state) => state.moveTaskToParent);
   const toggleTaskCollapsed = useTaskStore(
     (state) => state.toggleTaskCollapsed
   );
@@ -120,60 +118,19 @@ export function TaskTableRow({
     gridTemplateColumns,
   };
 
-  const handleDelete = () => {
-    // Count all children recursively
-    const countChildren = (parentId: string): number => {
-      let count = 0;
-      tasks.forEach((t) => {
-        if (t.parent === parentId) {
-          count += 1 + countChildren(t.id); // Count this child + its children
-        }
-      });
-      return count;
-    };
-
-    const childCount = countChildren(task.id);
-
-    if (childCount > 0) {
-      // Task has children - show enhanced dialog
-      const deleteAll = window.confirm(
-        `Delete task "${task.name}" and ${childCount} child task${childCount > 1 ? "s" : ""}?\n\n` +
-          `Click OK to delete all (cascading delete).\n` +
-          `Click Cancel to keep children and only delete "${task.name}".`
-      );
-
-      if (deleteAll) {
-        // Cascading delete
-        deleteTask(task.id, true);
-      } else {
-        // Move children to parent's level, then delete
-        const children = tasks.filter((t) => t.parent === task.id);
-        children.forEach((child) =>
-          moveTaskToParent(child.id, task.parent ?? null)
-        );
-        deleteTask(task.id, false);
-      }
-    } else {
-      // No children - simple confirmation
-      if (window.confirm(`Delete task "${task.name}"?`)) {
-        deleteTask(task.id, false);
-      }
-    }
-  };
-
   return (
     <div
       ref={setNodeRef}
       style={style}
       className={`task-table-row col-span-full grid ${
-        isSelected ? "bg-slate-100" : "bg-white"
+        isSelected ? "bg-neutral-100" : "bg-white"
       } ${isInClipboard ? "relative" : ""}`}
       role="row"
     >
       {/* Clipboard selection overlay with dotted border */}
       {isInClipboard && clipboardPosition && (
         <div
-          className="absolute inset-0 pointer-events-none z-20 border-2 border-dotted border-slate-500"
+          className="absolute inset-0 pointer-events-none z-20 border-2 border-dotted border-neutral-500"
           style={{
             borderTopStyle: clipboardPosition.isFirst ? "dotted" : "none",
             borderBottomStyle: clipboardPosition.isLast ? "dotted" : "none",
@@ -182,7 +139,7 @@ export function TaskTableRow({
       )}
       {/* Drag Handle Cell */}
       <div
-        className="drag-handle-cell flex items-center justify-center border-b border-r border-slate-200 bg-slate-50 cursor-grab active:cursor-grabbing"
+        className="drag-handle-cell flex items-center justify-center border-b border-r border-neutral-200 bg-neutral-50 cursor-grab active:cursor-grabbing"
         style={{
           height: "var(--density-row-height)",
           padding: `var(--density-cell-padding-y) var(--density-cell-padding-x)`,
@@ -195,14 +152,14 @@ export function TaskTableRow({
         <DotsSixVertical
           size={densityConfig.iconSize}
           weight="bold"
-          className="text-slate-500"
+          className="text-neutral-500"
           aria-hidden="true"
         />
       </div>
 
       {/* Checkbox Cell */}
       <div
-        className="checkbox-cell flex items-center justify-center border-b border-r border-slate-200"
+        className="checkbox-cell flex items-center justify-center border-b border-r border-neutral-200"
         style={{
           height: "var(--density-row-height)",
           padding: `var(--density-cell-padding-y) var(--density-cell-padding-x)`,
@@ -278,7 +235,7 @@ export function TaskTableRow({
                         e.stopPropagation();
                         toggleTaskCollapsed(task.id);
                       }}
-                      className="w-4 h-4 flex items-center justify-center hover:bg-slate-200 rounded text-slate-600 flex-shrink-0 focus:outline-none focus-visible:outline-2 focus-visible:outline-blue-700"
+                      className="w-4 h-4 flex items-center justify-center hover:bg-neutral-200 rounded text-neutral-600 flex-shrink-0 focus:outline-none focus-visible:outline-2 focus-visible:outline-blue-700"
                       aria-label={
                         isExpanded
                           ? `Collapse ${task.name}`
@@ -337,7 +294,7 @@ export function TaskTableRow({
                 column={column}
               >
                 {displayTask[field] ? (
-                  <span className="text-slate-500 italic">
+                  <span className="text-neutral-500 italic">
                     {displayTask[field]}
                   </span>
                 ) : (
@@ -376,7 +333,7 @@ export function TaskTableRow({
                 column={column}
               >
                 {task.type === "summary" && displayTask.duration > 0 ? (
-                  <span className="text-slate-500 italic">
+                  <span className="text-neutral-500 italic">
                     {displayTask.duration} days
                   </span>
                 ) : (
@@ -449,25 +406,6 @@ export function TaskTableRow({
             />
           );
         })}
-
-      {/* Delete Button Cell */}
-      <div
-        className="delete-cell flex items-center justify-center border-b border-r border-slate-200 group-hover:bg-slate-50"
-        style={{
-          height: "var(--density-row-height)",
-          padding: `var(--density-cell-padding-y) var(--density-cell-padding-x)`,
-        }}
-        role="gridcell"
-      >
-        <button
-          onClick={handleDelete}
-          className="text-slate-500 hover:text-red-600 transition-colors focus:outline-none focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-700 rounded"
-          aria-label={`Delete task ${task.name}`}
-          title="Delete task"
-        >
-          <Trash size={densityConfig.iconSize} weight="regular" />
-        </button>
-      </div>
     </div>
   );
 }

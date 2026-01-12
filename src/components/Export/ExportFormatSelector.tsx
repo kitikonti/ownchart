@@ -60,27 +60,27 @@ export function ExportFormatSelector({
             onClick={() => onFormatChange(option.format)}
             className={`flex-1 flex flex-col items-center gap-1.5 p-3 rounded-lg border-2 transition-all duration-150 ${
               isSelected
-                ? "bg-teal-50 border-[var(--color-teal-gray-400)] shadow-sm"
-                : "bg-white border-slate-200 hover:border-[var(--color-teal-gray-400)] hover:bg-teal-50/30"
+                ? "bg-brand-50 border-[var(--color-brand-gray-400)] shadow-sm"
+                : "bg-white border-neutral-200 hover:border-[var(--color-brand-gray-400)] hover:bg-brand-50/30"
             }`}
             aria-pressed={isSelected}
           >
             <Icon
               size={24}
-              weight={isSelected ? "duotone" : "regular"}
+              weight="light"
               className={
                 isSelected
-                  ? "text-[var(--color-teal-gray-700)]"
-                  : "text-slate-400"
+                  ? "text-[var(--color-brand-gray-700)]"
+                  : "text-neutral-400"
               }
             />
             <span
-              className={`text-sm font-semibold ${isSelected ? "text-[var(--color-teal-gray-900)]" : "text-slate-600"}`}
+              className={`text-sm font-semibold ${isSelected ? "text-[var(--color-brand-gray-900)]" : "text-neutral-600"}`}
             >
               {option.label}
             </span>
             <span
-              className={`text-[10px] leading-tight text-center ${isSelected ? "text-[var(--color-teal-gray-700)]" : "text-slate-500"}`}
+              className={`text-[10px] leading-tight text-center ${isSelected ? "text-[var(--color-brand-gray-700)]" : "text-neutral-500"}`}
             >
               {option.bestFor}
             </span>

@@ -61,7 +61,6 @@ export interface DensityConfig {
     endDate: number;
     duration: number;
     progress: number;
-    delete: number;
   };
 }
 
@@ -250,7 +249,6 @@ export const DENSITY_CONFIG: DensityConfigMap = {
       endDate: 105,
       duration: 80,
       progress: 56,
-      delete: 32,
     },
   },
   normal: {
@@ -276,7 +274,6 @@ export const DENSITY_CONFIG: DensityConfigMap = {
       endDate: 118,
       duration: 90,
       progress: 62,
-      delete: 36,
     },
   },
   comfortable: {
@@ -302,7 +299,6 @@ export const DENSITY_CONFIG: DensityConfigMap = {
       endDate: 130,
       duration: 100,
       progress: 70,
-      delete: 40,
     },
   },
 };

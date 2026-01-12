@@ -1,9 +1,11 @@
 /**
  * Reusable Modal component with backdrop, focus trap, and keyboard support.
+ *
+ * Design: MS 365/Fluent UI inspired with Cyan brand color.
  */
 
-import { useEffect, useRef, type ReactNode, type KeyboardEvent } from "react";
-import { X } from "@phosphor-icons/react";
+import { useEffect, useRef, type ReactNode, type KeyboardEvent } from 'react';
+import { X } from '@phosphor-icons/react';
 
 export interface ModalProps {
   /** Whether the modal is open */
@@ -38,7 +40,7 @@ export function Modal({
   children,
   icon,
   footer,
-  widthClass = "max-w-lg",
+  widthClass = 'max-w-lg',
 }: ModalProps): JSX.Element | null {
   const modalRef = useRef<HTMLDivElement>(null);
   const previousActiveElement = useRef<HTMLElement | null>(null);
@@ -60,13 +62,13 @@ export function Modal({
 
   // Handle keyboard events
   const handleKeyDown = (e: KeyboardEvent<HTMLDivElement>) => {
-    if (e.key === "Escape") {
+    if (e.key === 'Escape') {
       e.preventDefault();
       onClose();
     }
 
     // Focus trap
-    if (e.key === "Tab" && modalRef.current) {
+    if (e.key === 'Tab' && modalRef.current) {
       const focusableElements = modalRef.current.querySelectorAll(
         'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
       );
@@ -93,54 +95,55 @@ export function Modal({
     // eslint-disable-next-line jsx-a11y/no-noninteractive-element-interactions
     <div
       ref={modalRef}
-      className="fixed inset-0 z-50 flex items-center justify-center p-4"
+      className="fixed inset-0 z-[1000] flex items-center justify-center p-4"
       role="dialog"
       aria-modal="true"
       aria-labelledby="modal-title"
       tabIndex={-1}
       onKeyDown={handleKeyDown}
     >
-      {/* Backdrop - clickable to close with blur effect */}
+      {/* Backdrop - MS Fluent: rgba(0,0,0,0.4), no blur */}
       <div
-        className="absolute inset-0 bg-slate-900/40 backdrop-blur-sm"
+        className="absolute inset-0 bg-black/40"
         onClick={onClose}
         aria-hidden="true"
       />
+      {/* Dialog container - MS Fluent: 8px radius, specific shadow, 24px padding */}
       <div
         className={`
-          relative bg-white rounded-xl shadow-xl ${widthClass} w-full max-h-[90vh] flex flex-col
+          relative bg-white rounded-lg ${widthClass} w-full max-h-[90vh] flex flex-col
           animate-modal-in
-          ring-1 ring-slate-200/50
+          shadow-[0_0_8px_rgba(0,0,0,0.12),0_32px_64px_rgba(0,0,0,0.14)]
         `}
       >
-        {/* Header */}
-        <div className="flex items-center justify-between px-6 py-4 border-b border-slate-200/80">
+        {/* Header - MS style: no border, brand-colored title and close icon */}
+        <div className="flex items-center justify-between p-6 pb-0">
           <div className="flex items-center gap-3">
             {icon}
             <h2
               id="modal-title"
-              className="text-lg font-semibold text-slate-900 tracking-tight"
+              className="text-xl font-semibold text-brand-600 leading-7"
             >
               {title}
             </h2>
           </div>
           <button
             onClick={onClose}
-            className="p-2 -m-1 rounded-lg hover:bg-slate-100 transition-colors text-slate-500 hover:text-slate-700 focus:outline-none focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-700"
+            className="p-1.5 -m-1.5 rounded hover:bg-neutral-100 transition-colors duration-100 text-brand-600 hover:text-brand-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-100"
             aria-label="Close dialog"
           >
-            <X size={20} weight="bold" />
+            <X size={20} weight="regular" />
           </button>
         </div>
 
         {/* Content */}
-        <div className="flex-1 overflow-y-auto px-6 py-5 scrollbar-thin">
+        <div className="flex-1 overflow-y-auto p-6 scrollbar-thin">
           {children}
         </div>
 
-        {/* Footer */}
+        {/* Footer - MS style: clean, no border, no background */}
         {footer && (
-          <div className="px-6 py-4 border-t border-slate-200/80 bg-slate-50/50 rounded-b-xl flex justify-end gap-3">
+          <div className="px-6 pb-6 pt-2 flex justify-end gap-2">
             {footer}
           </div>
         )}

@@ -79,7 +79,7 @@ export function TaskTableHeader(): JSX.Element {
 
   return (
     <div
-      className="task-table-header-row bg-slate-50"
+      className="task-table-header-row bg-neutral-50"
       style={{
         display: "grid",
         gridTemplateColumns,
@@ -90,7 +90,7 @@ export function TaskTableHeader(): JSX.Element {
       {TASK_COLUMNS.map((column) => (
         <div
           key={column.id}
-          className={`task-table-header-cell ${column.id === "name" ? "pr-3" : "px-3"} py-4 bg-slate-50 border-b ${column.id !== "color" ? "border-r" : ""} border-slate-200 text-xs font-semibold text-slate-600 uppercase tracking-wider relative`}
+          className={`task-table-header-cell ${column.id === "name" ? "pr-3" : "px-3"} py-4 bg-neutral-50 border-b ${column.id !== "color" ? "border-r" : ""} border-neutral-200 text-xs font-semibold text-neutral-600 uppercase tracking-wider relative`}
           role="columnheader"
         >
           {column.id === "checkbox" ? (

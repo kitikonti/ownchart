@@ -23,8 +23,8 @@ import {
 import { calculateTaskTableWidth } from "./calculations";
 import { buildFlattenedTaskList } from "../hierarchy";
 import { DENSITY_CONFIG, type DateFormat } from "../../types/preferences.types";
-import { embedInterFont } from "./fonts/fontEmbedding";
 import { formatDateByPreference } from "../dateUtils";
+import { SVG_FONT_FAMILY } from "./constants";
 // Shared modules
 import { HEADER_HEIGHT } from "./constants";
 import {
@@ -256,11 +256,9 @@ export async function exportToPdf(params: ExportToPdfParams): Promise<void> {
       format: [pageDims.width, pageDims.height],
     });
 
-    // Embed Inter font for svg2pdf.js
-    embedInterFont(doc);
-
-    // Set Inter as the default font for the document
-    doc.setFont("Inter", "normal");
+    // Use Helvetica (built into jsPDF) as fallback for PDF text
+    // SVG elements use system font stack via SVG_FONT_FAMILY
+    doc.setFont("helvetica", "normal");
 
     // Set metadata - use projectTitle/projectAuthor from chart settings, fallback to projectName
     const pdfTitle = projectTitle || projectName || "Project Timeline";
@@ -375,11 +373,11 @@ function buildCompleteSvg(
     svg.appendChild(bg);
   }
 
-  // Font declaration
+  // Font declaration (system font stack)
   const defs = document.createElementNS("http://www.w3.org/2000/svg", "defs");
   const style = document.createElementNS("http://www.w3.org/2000/svg", "style");
   style.textContent = `
-    text { font-family: Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; }
+    text { font-family: ${SVG_FONT_FAMILY}; }
   `;
   defs.appendChild(style);
   svg.appendChild(defs);

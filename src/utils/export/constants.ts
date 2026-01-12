@@ -6,27 +6,27 @@
 /** Height of the header row in pixels */
 export const HEADER_HEIGHT = 48;
 
-/** Font family for SVG text elements */
-export const SVG_FONT_FAMILY = "Inter";
+/** Font family for SVG text elements (system font stack) */
+export const SVG_FONT_FAMILY = '"Segoe UI", -apple-system, BlinkMacSystemFont, Roboto, "Helvetica Neue", Arial, sans-serif';
 
 /**
  * Tailwind slate colors for consistent styling.
  * These match the web app's color scheme.
  */
 export const COLORS = {
-  /** slate-800 - task names, regular cell text */
+  /** neutral-800 - task names, regular cell text */
   textPrimary: "#1e293b",
-  /** slate-600 - dates, progress, icons, header labels */
+  /** neutral-600 - dates, progress, icons, header labels */
   textSecondary: "#475569",
-  /** slate-500 - summary dates/duration (lighter, italic in app) */
+  /** neutral-500 - summary dates/duration (lighter, italic in app) */
   textSummary: "#64748b",
-  /** slate-600 - header labels */
+  /** neutral-600 - header labels */
   textHeader: "#475569",
-  /** slate-200 - header borders */
+  /** neutral-200 - header borders */
   border: "#e2e8f0",
-  /** slate-100 - row borders */
+  /** neutral-100 - row borders */
   borderLight: "#f1f5f9",
-  /** slate-50 - header background */
+  /** neutral-50 - header background */
   headerBg: "#f8fafc",
 } as const;
 

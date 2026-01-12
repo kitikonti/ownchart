@@ -218,14 +218,14 @@ export function NewTaskPlaceholderRow(): JSX.Element {
             key={column.id}
             ref={column.id === "name" ? cellRef : undefined}
             tabIndex={column.id === "name" && isNameActive ? 0 : -1}
-            className={`${column.id !== "color" ? "border-r" : ""} border-b border-slate-200 flex items-center ${
+            className={`${column.id !== "color" ? "border-r" : ""} border-b border-neutral-200 flex items-center ${
               column.id === "name" && isEditing
-                ? "outline outline-2 outline-slate-500 bg-white z-20"
+                ? "outline outline-2 outline-neutral-500 bg-white z-20"
                 : isSelected
-                  ? "bg-slate-100"
+                  ? "bg-neutral-100"
                   : isActiveCell
-                    ? "outline outline-2 outline-slate-500 bg-slate-100 z-10"
-                    : "bg-slate-50/50 hover:bg-slate-100"
+                    ? "outline outline-2 outline-neutral-500 bg-neutral-100 z-10"
+                    : "bg-neutral-50/50 hover:bg-neutral-100"
             } cursor-pointer`}
             style={getCellStyle(column.id)}
             onClick={() =>
@@ -264,7 +264,7 @@ export function NewTaskPlaceholderRow(): JSX.Element {
                   style={{ fontSize: "inherit" }}
                 />
               ) : (
-                <span className="text-slate-500 italic select-none">
+                <span className="text-neutral-500 italic select-none">
                   Add new task...
                 </span>
               ))}

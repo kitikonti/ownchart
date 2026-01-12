@@ -17,7 +17,7 @@ import {
 import { calculateTaskTableWidth } from "./calculations";
 import { buildFlattenedTaskList } from "../../utils/hierarchy";
 // Shared modules
-import { HEADER_HEIGHT } from "./constants";
+import { HEADER_HEIGHT, SVG_FONT_FAMILY } from "./constants";
 import {
   waitForFonts,
   waitForPaint,
@@ -206,12 +206,12 @@ function buildCompleteSvg(
     svg.appendChild(bg);
   }
 
-  // Font declaration (no @import - doesn't work in vector apps)
-  // Vector apps will use their system font or Inter if installed
+  // Font declaration (system font stack - no @import, doesn't work in vector apps)
+  // Vector apps will use their system font (Segoe UI on Windows, SF on Mac)
   const defs = document.createElementNS("http://www.w3.org/2000/svg", "defs");
   const style = document.createElementNS("http://www.w3.org/2000/svg", "style");
   style.textContent = `
-    text { font-family: Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; }
+    text { font-family: ${SVG_FONT_FAMILY}; }
   `;
   defs.appendChild(style);
   svg.appendChild(defs);

@@ -392,7 +392,7 @@ export function Cell({
     return (
       <div
         ref={cellRef}
-        className={`relative flex items-center border-b ${column.id !== "color" ? "border-r" : ""} border-slate-200 outline outline-2 outline-slate-500 bg-white z-20`}
+        className={`relative flex items-center border-b ${column.id !== "color" ? "border-r" : ""} border-neutral-200 outline outline-2 outline-neutral-500 bg-white z-20`}
         style={cellStyle}
         onClick={(e) => e.stopPropagation()}
       >
@@ -434,10 +434,10 @@ export function Cell({
       ref={cellRef}
       tabIndex={0}
       className={`
-        border-b ${column.id !== "color" ? "border-r" : ""} border-slate-200 flex items-center cursor-pointer relative
-        ${isActive ? "outline outline-2 outline-slate-500 bg-slate-100 z-10" : "hover:bg-slate-50"}
-        ${!column.editable ? "bg-slate-50 text-slate-500" : ""}
-        ${isCut ? "opacity-50 outline outline-2 outline-dashed outline-slate-500 -outline-offset-2" : ""}
+        border-b ${column.id !== "color" ? "border-r" : ""} border-neutral-200 flex items-center cursor-pointer relative
+        ${isActive ? "outline outline-2 outline-neutral-500 bg-neutral-100 z-10" : "hover:bg-neutral-50"}
+        ${!column.editable ? "bg-neutral-50 text-neutral-500" : ""}
+        ${isCut ? "opacity-50 outline outline-2 outline-dashed outline-neutral-500 -outline-offset-2" : ""}
       `}
       style={cellStyle}
       onClick={handleClick}

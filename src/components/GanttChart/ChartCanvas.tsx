@@ -201,7 +201,7 @@ export function ChartCanvas({
         className="chart-canvas-container w-full min-h-screen"
       >
         <div ref={containerRef} className="w-full min-h-screen">
-          <div className="flex items-center justify-center min-h-screen text-slate-500">
+          <div className="flex items-center justify-center min-h-screen text-neutral-500">
             Loading timeline...
           </div>
         </div>

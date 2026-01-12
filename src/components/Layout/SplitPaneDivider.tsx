@@ -13,7 +13,7 @@ export function SplitPaneDivider({
 }: SplitPaneDividerProps) {
   return (
     <div
-      className={`split-divider w-1 cursor-col-resize flex-shrink-0 bg-slate-200 hover:bg-slate-400 transition-colors duration-150 relative group ${isDragging ? "bg-slate-500" : ""}`}
+      className={`split-divider w-1 cursor-col-resize flex-shrink-0 bg-neutral-200 hover:bg-neutral-400 transition-colors duration-150 relative group ${isDragging ? "bg-neutral-500" : ""}`}
       onMouseDown={onMouseDown}
     >
       {/* Visual indicator on hover - extends hit area */}

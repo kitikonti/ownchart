@@ -14,13 +14,13 @@ export function useDocumentTitle(): void {
     const baseTitle = "OwnChart";
 
     if (fileName) {
-      // Show filename with unsaved indicator if dirty
-      const dirtyIndicator = isDirty ? "• " : "";
-      document.title = `${dirtyIndicator}${fileName} - ${baseTitle}`;
+      // Show filename with asterisk if unsaved changes
+      const dirtyIndicator = isDirty ? "*" : "";
+      document.title = `${fileName}${dirtyIndicator} - ${baseTitle}`;
     } else {
-      // Show unsaved indicator for new charts
-      const dirtyIndicator = isDirty ? "• " : "";
-      document.title = `${dirtyIndicator}${baseTitle}`;
+      // Show asterisk for new unsaved charts
+      const dirtyIndicator = isDirty ? "*" : "";
+      document.title = `${baseTitle}${dirtyIndicator}`;
     }
   }, [fileName, isDirty]);
 }

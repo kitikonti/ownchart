@@ -16,6 +16,7 @@ import {
 import { EXPORT_MAX_SAFE_WIDTH } from "../../utils/export/types";
 import type { ExportFormat } from "../../utils/export/types";
 import { Modal } from "../common/Modal";
+import { Button } from "../common/Button";
 import { ExportFormatSelector } from "./ExportFormatSelector";
 import { SharedExportOptions } from "./SharedExportOptions";
 import { PngScaleOptions } from "./PngScaleOptions";
@@ -274,26 +275,11 @@ export function ExportDialog(): JSX.Element | null {
     estimatedDimensions.width > 4000 &&
     estimatedDimensions.width <= EXPORT_MAX_SAFE_WIDTH;
 
-  // Format-specific button config (unified teal color for all formats)
-  const formatConfig: Record<
-    ExportFormat,
-    { icon: typeof Download; label: string; color: string }
-  > = {
-    png: {
-      icon: Image,
-      label: "Export PNG",
-      color: "bg-teal-600 hover:bg-teal-500",
-    },
-    pdf: {
-      icon: FilePdf,
-      label: "Export PDF",
-      color: "bg-teal-600 hover:bg-teal-500",
-    },
-    svg: {
-      icon: FileCode,
-      label: "Export SVG",
-      color: "bg-teal-600 hover:bg-teal-500",
-    },
+  // Format-specific button config
+  const formatConfig: Record<ExportFormat, { icon: typeof Download; label: string }> = {
+    png: { icon: Image, label: "Export PNG" },
+    pdf: { icon: FilePdf, label: "Export PDF" },
+    svg: { icon: FileCode, label: "Export SVG" },
   };
 
   const currentFormat = formatConfig[selectedExportFormat];
@@ -307,17 +293,17 @@ export function ExportDialog(): JSX.Element | null {
           <>
             <div className="flex items-baseline gap-1.5">
               <span
-                className={`text-lg font-bold font-mono tabular-nums ${hasWarning ? "text-amber-700" : "text-slate-800"}`}
+                className={`text-lg font-bold font-mono tabular-nums ${hasWarning ? "text-amber-700" : "text-neutral-800"}`}
               >
                 {estimatedDimensions.width.toLocaleString()}
               </span>
-              <span className="text-slate-400">×</span>
+              <span className="text-neutral-400">×</span>
               <span
-                className={`text-lg font-bold font-mono tabular-nums ${hasWarning ? "text-amber-700" : "text-slate-800"}`}
+                className={`text-lg font-bold font-mono tabular-nums ${hasWarning ? "text-amber-700" : "text-neutral-800"}`}
               >
                 {estimatedDimensions.height.toLocaleString()}
               </span>
-              <span className="text-xs text-slate-400 ml-0.5">px</span>
+              <span className="text-xs text-neutral-400 ml-0.5">px</span>
             </div>
             {/* Warning/Info icon (PNG only) */}
             {hasWarning && (
@@ -325,15 +311,15 @@ export function ExportDialog(): JSX.Element | null {
                 className="p-1 bg-amber-100 rounded-full text-amber-600"
                 title={`Export width exceeds ${EXPORT_MAX_SAFE_WIDTH.toLocaleString()}px. Some browsers may have trouble rendering.`}
               >
-                <Warning size={14} weight="bold" />
+                <Warning size={14} weight="light" />
               </div>
             )}
             {hasInfo && (
               <div
-                className="p-1 bg-slate-100 rounded-full text-slate-500"
+                className="p-1 bg-neutral-100 rounded-full text-neutral-500"
                 title="Large export. Generation may take a moment."
               >
-                <Info size={14} weight="bold" />
+                <Info size={14} weight="light" />
               </div>
             )}
           </>
@@ -342,13 +328,13 @@ export function ExportDialog(): JSX.Element | null {
           isExporting &&
           exportProgress > 0 && (
             <div className="flex items-center gap-2">
-              <div className="w-32 h-2 bg-slate-200 rounded-full overflow-hidden">
+              <div className="w-32 h-2 bg-neutral-200 rounded-full overflow-hidden">
                 <div
-                  className="h-full bg-slate-600 transition-all duration-300"
+                  className="h-full bg-neutral-600 transition-all duration-300"
                   style={{ width: `${exportProgress}%` }}
                 />
               </div>
-              <span className="text-xs text-slate-500 font-mono">
+              <span className="text-xs text-neutral-500 font-mono">
                 {exportProgress}%
               </span>
             </div>
@@ -357,31 +343,28 @@ export function ExportDialog(): JSX.Element | null {
       </div>
 
       {/* Buttons */}
-      <div className="flex items-center gap-3">
-        <button
+      <div className="flex items-center gap-2">
+        <Button
+          variant="secondary"
           onClick={closeExportDialog}
           disabled={isExporting}
-          className="px-4 py-2 text-sm font-medium text-slate-700 bg-white border border-slate-200 rounded-lg hover:bg-slate-50 hover:border-slate-300 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-150 shadow-xs"
         >
           Cancel
-        </button>
-        <button
+        </Button>
+        <Button
+          variant="primary"
           onClick={handleExport}
           disabled={isExporting}
-          className={`flex items-center gap-2 px-4 py-2 text-sm font-medium text-white rounded-lg disabled:opacity-50 disabled:cursor-not-allowed transition-colors ${currentFormat.color}`}
-        >
-          {isExporting ? (
-            <>
+          icon={
+            isExporting ? (
               <Spinner size={16} className="animate-spin" />
-              Exporting...
-            </>
-          ) : (
-            <>
-              <FormatIcon size={16} weight="bold" />
-              {currentFormat.label}
-            </>
-          )}
-        </button>
+            ) : (
+              <FormatIcon size={16} weight="regular" />
+            )
+          }
+        >
+          {isExporting ? "Exporting..." : currentFormat.label}
+        </Button>
       </div>
     </div>
   );
@@ -398,7 +381,7 @@ export function ExportDialog(): JSX.Element | null {
       isOpen={isExportDialogOpen}
       onClose={closeExportDialog}
       title={dialogTitles[selectedExportFormat]}
-      icon={<Export size={24} weight="duotone" className="text-slate-500" />}
+      icon={<Export size={24} weight="regular" className="text-brand-600" />}
       footer={footer}
       widthClass="max-w-xl"
     >

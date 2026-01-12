@@ -16,6 +16,7 @@ import {
   Tag,
 } from "@phosphor-icons/react";
 import { Modal } from "../common/Modal";
+import { Button } from "../common/Button";
 import { useUIStore } from "../../store/slices/uiSlice";
 import { useChartStore } from "../../store/slices/chartSlice";
 import type { TaskLabelPosition } from "../../types/preferences.types";
@@ -148,12 +149,9 @@ export function ChartSettingsDialog(): JSX.Element | null {
   };
 
   const footer = (
-    <button
-      onClick={closeChartSettingsDialog}
-      className="px-4 py-2 text-sm font-medium text-white bg-slate-700 rounded-lg hover:bg-slate-600 active:bg-slate-800 transition-colors"
-    >
+    <Button variant="primary" onClick={closeChartSettingsDialog}>
       Done
-    </button>
+    </Button>
   );
 
   return (
@@ -161,7 +159,7 @@ export function ChartSettingsDialog(): JSX.Element | null {
       isOpen={isChartSettingsDialogOpen}
       onClose={closeChartSettingsDialog}
       title="Chart Settings"
-      icon={<Sliders size={24} weight="duotone" className="text-slate-500" />}
+      icon={<Sliders size={24} weight="regular" className="text-brand-600" />}
       footer={footer}
       widthClass="max-w-lg"
     >
@@ -169,8 +167,8 @@ export function ChartSettingsDialog(): JSX.Element | null {
         {/* Project Metadata Section */}
         <div>
           <div className="flex items-center gap-2 mb-4">
-            <Tag size={20} weight="duotone" className="text-slate-500" />
-            <h3 className="text-sm font-semibold text-slate-900 uppercase tracking-wide">
+            <Tag size={20} weight="light" className="text-neutral-500" />
+            <h3 className="text-sm font-semibold text-neutral-900 uppercase tracking-wide">
               Project Info
             </h3>
           </div>
@@ -179,7 +177,7 @@ export function ChartSettingsDialog(): JSX.Element | null {
             <div>
               <label
                 htmlFor="project-title"
-                className="block text-xs text-slate-500 mb-1"
+                className="block text-xs text-neutral-500 mb-1"
               >
                 Title
               </label>
@@ -189,13 +187,13 @@ export function ChartSettingsDialog(): JSX.Element | null {
                 value={projectTitle}
                 onChange={(e) => setProjectTitle(e.target.value)}
                 placeholder="Project title (used in PDF exports)"
-                className="w-full px-3 py-2 text-sm bg-white border border-slate-200 rounded-lg focus:ring-2 focus:ring-slate-400/40 focus:border-slate-400 transition-all"
+                className="w-full px-3 py-2 text-sm bg-white border border-neutral-200 rounded-lg focus:ring-2 focus:ring-neutral-400/40 focus:border-neutral-400 transition-all"
               />
             </div>
             <div>
               <label
                 htmlFor="project-author"
-                className="block text-xs text-slate-500 mb-1"
+                className="block text-xs text-neutral-500 mb-1"
               >
                 Author
               </label>
@@ -205,20 +203,20 @@ export function ChartSettingsDialog(): JSX.Element | null {
                 value={projectAuthor}
                 onChange={(e) => setProjectAuthor(e.target.value)}
                 placeholder="Your name (used in PDF metadata)"
-                className="w-full px-3 py-2 text-sm bg-white border border-slate-200 rounded-lg focus:ring-2 focus:ring-slate-400/40 focus:border-slate-400 transition-all"
+                className="w-full px-3 py-2 text-sm bg-white border border-neutral-200 rounded-lg focus:ring-2 focus:ring-neutral-400/40 focus:border-neutral-400 transition-all"
               />
             </div>
           </div>
         </div>
 
         {/* Divider */}
-        <div className="border-t border-slate-200" />
+        <div className="border-t border-neutral-200" />
 
         {/* Timeline Display Section */}
         <div>
           <div className="flex items-center gap-2 mb-4">
-            <GridNine size={20} weight="duotone" className="text-slate-500" />
-            <h3 className="text-sm font-semibold text-slate-900 uppercase tracking-wide">
+            <GridNine size={20} weight="light" className="text-neutral-500" />
+            <h3 className="text-sm font-semibold text-neutral-900 uppercase tracking-wide">
               Timeline Display
             </h3>
           </div>
@@ -234,10 +232,10 @@ export function ChartSettingsDialog(): JSX.Element | null {
                 aria-label="Show Today Marker"
               />
               <div>
-                <span className="text-sm font-medium text-slate-800">
+                <span className="text-sm font-medium text-neutral-800">
                   Show Today Marker
                 </span>
-                <p className="text-xs text-slate-500">
+                <p className="text-xs text-neutral-500">
                   Display a vertical line marking today&apos;s date
                 </p>
               </div>
@@ -253,10 +251,10 @@ export function ChartSettingsDialog(): JSX.Element | null {
                 aria-label="Show Weekend Highlighting"
               />
               <div>
-                <span className="text-sm font-medium text-slate-800">
+                <span className="text-sm font-medium text-neutral-800">
                   Show Weekend Highlighting
                 </span>
-                <p className="text-xs text-slate-500">
+                <p className="text-xs text-neutral-500">
                   Highlight Saturday and Sunday columns
                 </p>
               </div>
@@ -273,10 +271,10 @@ export function ChartSettingsDialog(): JSX.Element | null {
                   aria-label="Show Holidays"
                 />
                 <div>
-                  <span className="text-sm font-medium text-slate-800">
+                  <span className="text-sm font-medium text-neutral-800">
                     Show Holidays
                   </span>
-                  <p className="text-xs text-slate-500">
+                  <p className="text-xs text-neutral-500">
                     Highlight public holidays in the timeline
                   </p>
                 </div>
@@ -290,17 +288,17 @@ export function ChartSettingsDialog(): JSX.Element | null {
                     onClick={() =>
                       setIsCountryDropdownOpen(!isCountryDropdownOpen)
                     }
-                    className="w-full flex items-center justify-between gap-2 px-3 py-2 text-sm border border-slate-200 rounded-lg hover:border-slate-300 transition-all duration-150 bg-white shadow-xs"
+                    className="w-full flex items-center justify-between gap-2 px-3 py-2 text-sm border border-neutral-200 rounded-lg hover:border-neutral-300 transition-all duration-150 bg-white shadow-xs"
                   >
                     <div className="flex items-center gap-2">
-                      <Globe size={16} className="text-slate-500" />
-                      <span className="font-medium text-slate-800">
+                      <Globe size={16} className="text-neutral-500" />
+                      <span className="font-medium text-neutral-800">
                         {currentCountryName}
                       </span>
-                      <span className="text-slate-500">({holidayRegion})</span>
+                      <span className="text-neutral-500">({holidayRegion})</span>
                     </div>
                     <svg
-                      className={`w-4 h-4 text-slate-500 transition-transform ${isCountryDropdownOpen ? "rotate-180" : ""}`}
+                      className={`w-4 h-4 text-neutral-500 transition-transform ${isCountryDropdownOpen ? "rotate-180" : ""}`}
                       fill="none"
                       viewBox="0 0 24 24"
                       stroke="currentColor"
@@ -316,20 +314,20 @@ export function ChartSettingsDialog(): JSX.Element | null {
 
                   {/* Dropdown */}
                   {isCountryDropdownOpen && (
-                    <div className="absolute z-50 mt-1 w-full bg-white border border-slate-200 rounded-lg shadow-lg animate-fade-in">
+                    <div className="absolute z-50 mt-1 w-full bg-white border border-neutral-200 rounded-lg shadow-lg animate-fade-in">
                       {/* Search input */}
-                      <div className="p-2 border-b border-slate-200">
+                      <div className="p-2 border-b border-neutral-200">
                         <div className="relative">
                           <MagnifyingGlass
                             size={16}
-                            className="absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-400"
+                            className="absolute left-2.5 top-1/2 -translate-y-1/2 text-neutral-400"
                           />
                           <input
                             type="text"
                             value={countrySearch}
                             onChange={(e) => setCountrySearch(e.target.value)}
                             placeholder="Search countries..."
-                            className="w-full pl-8 pr-3 py-1.5 text-sm border border-slate-200 rounded-md focus:outline-none focus:ring-2 focus:ring-slate-400/40 focus:border-slate-400 transition-all"
+                            className="w-full pl-8 pr-3 py-1.5 text-sm border border-neutral-200 rounded-md focus:outline-none focus:ring-2 focus:ring-neutral-400/40 focus:border-neutral-400 transition-all"
                             autoFocus
                           />
                         </div>
@@ -338,7 +336,7 @@ export function ChartSettingsDialog(): JSX.Element | null {
                       {/* Country list */}
                       <div className="max-h-48 overflow-y-auto scrollbar-thin">
                         {filteredCountries.length === 0 ? (
-                          <div className="px-3 py-2 text-sm text-slate-500">
+                          <div className="px-3 py-2 text-sm text-neutral-500">
                             No countries found
                           </div>
                         ) : (
@@ -347,16 +345,16 @@ export function ChartSettingsDialog(): JSX.Element | null {
                               key={country.code}
                               type="button"
                               onClick={() => handleCountrySelect(country.code)}
-                              className={`w-full flex items-center gap-2 px-3 py-2 text-sm hover:bg-slate-50 transition-colors ${
+                              className={`w-full flex items-center gap-2 px-3 py-2 text-sm hover:bg-neutral-50 transition-colors ${
                                 country.code === holidayRegion
-                                  ? "bg-slate-100 text-slate-900"
-                                  : "text-slate-800"
+                                  ? "bg-neutral-100 text-neutral-900"
+                                  : "text-neutral-800"
                               }`}
                             >
                               <span className="font-medium">
                                 {country.name}
                               </span>
-                              <span className="text-slate-500">
+                              <span className="text-neutral-500">
                                 ({country.code})
                               </span>
                             </button>
@@ -379,10 +377,10 @@ export function ChartSettingsDialog(): JSX.Element | null {
                 aria-label="Show Dependencies"
               />
               <div>
-                <span className="text-sm font-medium text-slate-800">
+                <span className="text-sm font-medium text-neutral-800">
                   Show Dependencies
                 </span>
-                <p className="text-xs text-slate-500">
+                <p className="text-xs text-neutral-500">
                   Display dependency arrows between tasks
                 </p>
               </div>
@@ -391,17 +389,17 @@ export function ChartSettingsDialog(): JSX.Element | null {
         </div>
 
         {/* Divider */}
-        <div className="border-t border-slate-200" />
+        <div className="border-t border-neutral-200" />
 
         {/* Task Display Section */}
         <div>
           <div className="flex items-center gap-2 mb-4">
             <ChartBarHorizontal
               size={20}
-              weight="duotone"
-              className="text-slate-500"
+              weight="light"
+              className="text-neutral-500"
             />
-            <h3 className="text-sm font-semibold text-slate-900 uppercase tracking-wide">
+            <h3 className="text-sm font-semibold text-neutral-900 uppercase tracking-wide">
               Task Display
             </h3>
           </div>
@@ -417,10 +415,10 @@ export function ChartSettingsDialog(): JSX.Element | null {
                 aria-label="Use Progress"
               />
               <div>
-                <span className="text-sm font-medium text-slate-800">
+                <span className="text-sm font-medium text-neutral-800">
                   Use Progress
                 </span>
-                <p className="text-xs text-slate-500">
+                <p className="text-xs text-neutral-500">
                   Enable progress column and progress fill on task bars
                 </p>
               </div>
@@ -428,7 +426,7 @@ export function ChartSettingsDialog(): JSX.Element | null {
 
             {/* Task Label Position */}
             <fieldset className="space-y-2">
-              <legend className="text-sm font-medium text-slate-700">
+              <legend className="text-sm font-medium text-neutral-700">
                 Task Label Position
               </legend>
               <div className="flex flex-wrap gap-2">
@@ -439,8 +437,8 @@ export function ChartSettingsDialog(): JSX.Element | null {
                       flex items-center gap-2 px-3 py-2 rounded-lg border-2 cursor-pointer transition-all duration-150 text-sm
                       ${
                         taskLabelPosition === option.value
-                          ? "border-slate-500 bg-slate-50"
-                          : "border-slate-200 hover:border-slate-300 hover:bg-slate-50"
+                          ? "border-neutral-500 bg-neutral-50"
+                          : "border-neutral-200 hover:border-neutral-300 hover:bg-neutral-50"
                       }
                     `}
                     title={option.description}
@@ -454,7 +452,7 @@ export function ChartSettingsDialog(): JSX.Element | null {
                       className="sr-only"
                     />
                     <span
-                      className={`font-medium ${taskLabelPosition === option.value ? "text-slate-800" : "text-slate-700"}`}
+                      className={`font-medium ${taskLabelPosition === option.value ? "text-neutral-800" : "text-neutral-700"}`}
                     >
                       {option.label}
                     </span>
@@ -472,13 +470,13 @@ export function ChartSettingsDialog(): JSX.Element | null {
         </div>
 
         {/* Divider */}
-        <div className="border-t border-slate-200" />
+        <div className="border-t border-neutral-200" />
 
         {/* Working Days Section */}
         <div>
           <div className="flex items-center gap-2 mb-4">
-            <Briefcase size={20} weight="duotone" className="text-slate-500" />
-            <h3 className="text-sm font-semibold text-slate-900 uppercase tracking-wide">
+            <Briefcase size={20} weight="light" className="text-neutral-500" />
+            <h3 className="text-sm font-semibold text-neutral-900 uppercase tracking-wide">
               Working Days
             </h3>
           </div>
@@ -494,10 +492,10 @@ export function ChartSettingsDialog(): JSX.Element | null {
                 aria-label="Calculate with Working Days Only"
               />
               <div>
-                <span className="text-sm font-medium text-slate-800">
+                <span className="text-sm font-medium text-neutral-800">
                   Calculate with Working Days Only
                 </span>
-                <p className="text-xs text-slate-500">
+                <p className="text-xs text-neutral-500">
                   Task durations automatically extend to skip non-working days
                 </p>
               </div>
@@ -505,8 +503,8 @@ export function ChartSettingsDialog(): JSX.Element | null {
 
             {/* Working Days Configuration */}
             {workingDaysMode && (
-              <div className="ml-7 p-3 bg-slate-50 rounded-lg space-y-2">
-                <p className="text-xs font-medium text-slate-700 mb-2">
+              <div className="ml-7 p-3 bg-neutral-50 rounded-lg space-y-2">
+                <p className="text-xs font-medium text-neutral-700 mb-2">
                   Exclude from working days:
                 </p>
 
@@ -521,7 +519,7 @@ export function ChartSettingsDialog(): JSX.Element | null {
                     }
                     className=""
                   />
-                  <span className="text-sm text-slate-700">Saturdays</span>
+                  <span className="text-sm text-neutral-700">Saturdays</span>
                 </label>
 
                 <label className="flex items-center gap-2 cursor-pointer">
@@ -533,7 +531,7 @@ export function ChartSettingsDialog(): JSX.Element | null {
                     }
                     className=""
                   />
-                  <span className="text-sm text-slate-700">Sundays</span>
+                  <span className="text-sm text-neutral-700">Sundays</span>
                 </label>
 
                 <label className="flex items-center gap-2 cursor-pointer">
@@ -547,7 +545,7 @@ export function ChartSettingsDialog(): JSX.Element | null {
                     }
                     className=""
                   />
-                  <span className="text-sm text-slate-700">
+                  <span className="text-sm text-neutral-700">
                     Holidays ({currentCountryName})
                   </span>
                 </label>
@@ -557,8 +555,8 @@ export function ChartSettingsDialog(): JSX.Element | null {
         </div>
 
         {/* Info note */}
-        <div className="pt-4 border-t border-slate-200">
-          <p className="text-xs text-slate-400 text-center">
+        <div className="pt-4 border-t border-neutral-200">
+          <p className="text-xs text-neutral-400 text-center">
             These settings are saved with your project file
           </p>
         </div>

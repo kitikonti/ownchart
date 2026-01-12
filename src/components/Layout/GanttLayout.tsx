@@ -399,7 +399,7 @@ export function GanttLayout() {
         {/* Sticky container - stays at top of viewport */}
         <div
           ref={stickyContainerRef}
-          className="sticky top-0 h-full max-h-screen overflow-hidden bg-slate-50"
+          className="sticky top-0 h-full max-h-screen overflow-hidden bg-neutral-50"
           style={{ height: viewportHeight || "100%" }}
         >
           {/* Layout - flex column with split pane */}
@@ -415,7 +415,7 @@ export function GanttLayout() {
                   {/* TaskTable Header - scrollable but hidden scrollbar */}
                   <div
                     ref={taskTableHeaderScrollRef}
-                    className="flex-shrink-0 bg-white/90 backdrop-blur-sm border-b border-slate-200/80 overflow-x-auto overflow-y-hidden"
+                    className="flex-shrink-0 bg-white/90 backdrop-blur-sm border-b border-neutral-200/80 overflow-x-auto overflow-y-hidden"
                     style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}
                   >
                     <TaskTableHeader />
@@ -437,7 +437,7 @@ export function GanttLayout() {
                   {/* Timeline Header - scrollable and synchronized with chart */}
                   <div
                     ref={timelineHeaderScrollRef}
-                    className="flex-shrink-0 bg-white/90 backdrop-blur-sm overflow-x-auto overflow-y-hidden border-b border-slate-200/80"
+                    className="flex-shrink-0 bg-white/90 backdrop-blur-sm overflow-x-auto overflow-y-hidden border-b border-neutral-200/80"
                     style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}
                   >
                     {scale && (

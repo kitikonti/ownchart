@@ -1,39 +1,39 @@
 /**
  * Toolbar Primitives - Base building blocks for consistent toolbar design
  *
- * Design Philosophy: "Refined Craft"
- * - Professional, trustworthy aesthetic with subtle depth
- * - Clear visual hierarchy through refined color and shadow
+ * Design Philosophy: MS 365/Fluent UI Inspired
+ * - Neutral gray palette (pure grays, no blue tint)
+ * - Cyan (#008A99) as the brand color for interactive elements
  * - Smooth micro-interactions that feel polished
  * - Consistent spacing and proportions
  */
 
-import { forwardRef, type ReactNode, type ButtonHTMLAttributes } from "react";
+import { forwardRef, type ReactNode, type ButtonHTMLAttributes } from 'react';
+import { COLORS, TOOLBAR } from '../../styles/design-tokens';
 
-// ============================================================================
-// Design Tokens - Figma-like neutral design
-// ============================================================================
+// Re-export tokens for use by other components
+export { COLORS, TOOLBAR };
 
+// Legacy export for backward compatibility
 export const TOOLBAR_TOKENS = {
-  // Icon sizes (Phosphor Icons: 16px grid, optimal at 16/20/24/32)
-  iconSize: 20,
-  iconSizeSmall: 16,
-
-  // Spacing
-  groupGap: 4, // gap between items within a group (px)
-  sectionGap: 8, // gap between groups (px)
-
-  // Colors - Neutral, Figma-like palette (WCAG AA compliant)
-  iconDefault: "text-slate-600",
-  iconHover: "text-slate-800",
-  iconActive: "text-slate-900",
-  iconDisabled: "text-slate-400", // 3.5:1 contrast - acceptable for disabled
-
-  bgHover: "bg-slate-100",
-  bgActive: "bg-slate-200",
-  bgPressed: "bg-slate-200",
-
-  separatorColor: "bg-slate-200",
+  ...TOOLBAR,
+  // Colors from design tokens
+  bgToolbar: COLORS.neutral[0],
+  bgTabs: COLORS.neutral[50],
+  bgHover: COLORS.neutral[100],
+  bgActive: COLORS.neutral[200],
+  bgToggleOn: COLORS.neutral[100],
+  // Icon/Text colors - using Tailwind class names
+  iconDefault: 'text-neutral-600',
+  iconHover: 'text-neutral-800',
+  iconActive: 'text-neutral-900',
+  iconDisabled: 'text-neutral-300',
+  // Border colors
+  borderLight: COLORS.neutral[100],
+  borderMedium: COLORS.neutral[200],
+  separatorColor: 'bg-neutral-200',
+  // Tab active indicator - brand color
+  tabActiveColor: COLORS.brand[600],
 } as const;
 
 // ============================================================================
@@ -48,10 +48,10 @@ interface ToolbarSeparatorProps {
  * Subtle vertical separator between toolbar sections.
  * Use sparingly - prefer spacing for closely related groups.
  */
-export function ToolbarSeparator({ className = "" }: ToolbarSeparatorProps) {
+export function ToolbarSeparator({ className = '' }: ToolbarSeparatorProps) {
   return (
     <div
-      className={`h-5 w-px bg-slate-200 mx-2.5 flex-shrink-0 ${className}`}
+      className={`toolbar-separator h-5 mx-2 flex-shrink-0 ${className}`}
       role="separator"
       aria-orientation="vertical"
     />
@@ -79,7 +79,7 @@ export function ToolbarGroup({
   children,
   label,
   withSeparator = false,
-  className = "",
+  className = '',
 }: ToolbarGroupProps) {
   return (
     <>
@@ -99,12 +99,10 @@ export function ToolbarGroup({
 // ToolbarButton
 // ============================================================================
 
-type ToolbarButtonVariant = "default" | "primary" | "toggle";
+type ToolbarButtonVariant = 'default' | 'primary' | 'toggle';
 
-interface ToolbarButtonProps extends Omit<
-  ButtonHTMLAttributes<HTMLButtonElement>,
-  "className"
-> {
+interface ToolbarButtonProps
+  extends Omit<ButtonHTMLAttributes<HTMLButtonElement>, 'className'> {
   /** Visual variant */
   variant?: ToolbarButtonVariant;
   /** For toggle buttons: is it currently active? */
@@ -128,68 +126,86 @@ interface ToolbarButtonProps extends Omit<
 export const ToolbarButton = forwardRef<HTMLButtonElement, ToolbarButtonProps>(
   function ToolbarButton(
     {
-      variant = "default",
+      variant = 'default',
       isActive = false,
       label,
       icon,
       disabled,
-      className = "",
+      className = '',
       children,
       ...props
     },
     ref
   ) {
-    // Base styles shared by all variants - Figma-like neutral design
-    // Focus ring uses high-contrast blue (#1e40af) for visibility
-    const baseStyles = `
-      inline-flex items-center justify-center gap-1.5
-      rounded-md transition-all duration-100 ease-out
-      focus:outline-none focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-700
-      disabled:pointer-events-none
-    `;
-
-    // Variant-specific styles - WCAG AA compliant colors
-    // p-1.5 with 20px icons gives ~32px touch target
-    const variantStyles: Record<ToolbarButtonVariant, string> = {
-      default: `
-        p-1.5 text-slate-600
-        hover:text-slate-800 hover:bg-slate-100
-        active:bg-slate-200 active:text-slate-900
-        disabled:text-slate-400 disabled:bg-transparent
-      `,
-      primary: `
-        px-3 py-1.5
-        bg-slate-700 text-white text-xs font-medium
-        hover:bg-slate-600
-        active:bg-slate-800
-        disabled:bg-slate-200 disabled:text-slate-400
-      `,
-      toggle: isActive
-        ? `
-          p-1.5
-          bg-slate-200 text-slate-900
-          hover:bg-slate-300
-          active:bg-slate-300
-        `
-        : `
-          p-1.5 text-slate-600
-          hover:text-slate-800 hover:bg-slate-100
-          active:bg-slate-200 active:text-slate-900
-          disabled:text-slate-400
-        `,
+    // MS Office button base styles using design tokens
+    const baseStyle: React.CSSProperties = {
+      display: 'inline-flex',
+      alignItems: 'center',
+      justifyContent: 'center',
+      gap: '4px',
+      height: `${TOOLBAR.buttonHeight}px`,
+      minWidth: `${TOOLBAR.buttonMinWidth}px`,
+      padding: '5px 5px',
+      backgroundColor: disabled ? 'transparent' : COLORS.neutral[0],
+      color: disabled ? COLORS.neutral[300] : COLORS.neutral[700],
+      border: 'none',
+      borderRadius: '4px',
+      cursor: disabled ? 'not-allowed' : 'pointer',
+      fontSize: '14px',
+      lineHeight: '20px',
+      fontWeight: 400,
+      userSelect: 'none',
+      overflow: 'hidden',
+      transition:
+        'background 0.1s cubic-bezier(0.33, 0, 0.67, 1), border 0.1s cubic-bezier(0.33, 0, 0.67, 1), color 0.1s cubic-bezier(0.33, 0, 0.67, 1)',
+      WebkitFontSmoothing: 'antialiased',
     };
+
+    // Primary variant - brand color (cyan)
+    const primaryStyle: React.CSSProperties =
+      variant === 'primary'
+        ? {
+            backgroundColor: disabled ? COLORS.neutral[300] : COLORS.brand[600],
+            color: disabled ? COLORS.neutral[400] : COLORS.neutral[0],
+            padding: '5px 10px',
+            fontWeight: 500,
+            fontSize: '12px',
+          }
+        : {};
+
+    // Toggle active state - MS Word style with visible border
+    const toggleActiveStyle: React.CSSProperties =
+      variant === 'toggle' && isActive
+        ? {
+            backgroundColor: 'rgb(235, 235, 235)',
+            border: '1px solid rgb(97, 97, 97)',
+          }
+        : {};
+
+    const combinedStyle = { ...baseStyle, ...primaryStyle, ...toggleActiveStyle };
 
     return (
       <button
         ref={ref}
         type="button"
         disabled={disabled}
-        aria-pressed={variant === "toggle" ? isActive : undefined}
-        className={`${baseStyles} ${variantStyles[variant]} ${className}`}
+        aria-pressed={variant === 'toggle' ? isActive : undefined}
+        className={`ribbon-toolbar-button ${className}`}
+        style={combinedStyle}
         {...props}
       >
         {icon}
-        {label && <span>{label}</span>}
+        {label && (
+          <span
+            style={{
+              paddingLeft: '4px',
+              whiteSpace: 'nowrap',
+              userSelect: 'none',
+            }}
+          >
+            {label}
+          </span>
+        )}
         {children}
       </button>
     );

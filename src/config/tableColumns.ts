@@ -127,13 +127,6 @@ export const TASK_COLUMNS: ColumnDefinition[] = [
     validator: (value) => validateProgress(Number(value)),
     formatter: (value) => `${value}%`,
   },
-  {
-    id: "delete",
-    label: "",
-    defaultWidth: "40px",
-    editable: false,
-    renderer: "custom",
-  },
 ];
 
 /**
@@ -174,8 +167,6 @@ export function getDensityAwareWidth(
       return `${columnWidths.duration}px`;
     case "progress":
       return `${columnWidths.progress}px`;
-    case "delete":
-      return `${columnWidths.delete}px`;
     default: {
       // Fallback to the original column definition
       const col = TASK_COLUMNS.find((c) => c.id === columnId);

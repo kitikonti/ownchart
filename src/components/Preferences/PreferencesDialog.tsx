@@ -6,6 +6,7 @@
 
 import { Gear, Monitor, Globe } from "@phosphor-icons/react";
 import { Modal } from "../common/Modal";
+import { Button } from "../common/Button";
 import { useUIStore } from "../../store/slices/uiSlice";
 import { useUserPreferencesStore } from "../../store/slices/userPreferencesSlice";
 import type {
@@ -137,12 +138,9 @@ export function PreferencesDialog(): JSX.Element | null {
   };
 
   const footer = (
-    <button
-      onClick={closePreferencesDialog}
-      className="px-4 py-2 text-sm font-medium text-white bg-slate-700 rounded-lg hover:bg-slate-600 active:bg-slate-800 transition-colors"
-    >
+    <Button variant="primary" onClick={closePreferencesDialog}>
       Done
-    </button>
+    </Button>
   );
 
   return (
@@ -150,7 +148,7 @@ export function PreferencesDialog(): JSX.Element | null {
       isOpen={isPreferencesDialogOpen}
       onClose={closePreferencesDialog}
       title="Preferences"
-      icon={<Gear size={24} weight="duotone" className="text-slate-500" />}
+      icon={<Gear size={24} weight="regular" className="text-brand-600" />}
       footer={footer}
       widthClass="max-w-md"
     >
@@ -158,15 +156,15 @@ export function PreferencesDialog(): JSX.Element | null {
         {/* Regional Section */}
         <div>
           <div className="flex items-center gap-2 mb-4">
-            <Globe size={20} weight="duotone" className="text-slate-500" />
-            <h3 className="text-sm font-semibold text-slate-900 uppercase tracking-wide">
+            <Globe size={20} weight="light" className="text-neutral-500" />
+            <h3 className="text-sm font-semibold text-neutral-900 uppercase tracking-wide">
               Regional
             </h3>
           </div>
 
           {/* Date Format */}
           <fieldset className="space-y-3 mb-4">
-            <legend className="block text-sm font-medium text-slate-700">
+            <legend className="block text-sm font-medium text-neutral-700">
               Date Format
             </legend>
             <div className="flex flex-wrap gap-2">
@@ -177,8 +175,8 @@ export function PreferencesDialog(): JSX.Element | null {
                     flex items-center gap-2 px-3 py-2 rounded-lg border-2 cursor-pointer transition-all duration-150 text-sm
                     ${
                       preferences.dateFormat === option.value
-                        ? "border-slate-500 bg-slate-50"
-                        : "border-slate-200 hover:border-slate-300 hover:bg-slate-50"
+                        ? "border-neutral-500 bg-neutral-50"
+                        : "border-neutral-200 hover:border-neutral-300 hover:bg-neutral-50"
                     }
                   `}
                 >
@@ -191,11 +189,11 @@ export function PreferencesDialog(): JSX.Element | null {
                     className="sr-only"
                   />
                   <span
-                    className={`font-medium font-mono text-xs ${preferences.dateFormat === option.value ? "text-slate-800" : "text-slate-700"}`}
+                    className={`font-medium font-mono text-xs ${preferences.dateFormat === option.value ? "text-neutral-800" : "text-neutral-700"}`}
                   >
                     {option.label}
                   </span>
-                  <span className="text-xs text-slate-500">
+                  <span className="text-xs text-neutral-500">
                     ({option.example})
                   </span>
                 </label>
@@ -205,7 +203,7 @@ export function PreferencesDialog(): JSX.Element | null {
 
           {/* First Day of Week */}
           <fieldset className="space-y-3 mb-4">
-            <legend className="block text-sm font-medium text-slate-700">
+            <legend className="block text-sm font-medium text-neutral-700">
               First Day of Week
             </legend>
             <div className="flex gap-2">
@@ -216,8 +214,8 @@ export function PreferencesDialog(): JSX.Element | null {
                     flex items-center gap-2 px-3 py-2 rounded-lg border-2 cursor-pointer transition-all duration-150 text-sm
                     ${
                       preferences.firstDayOfWeek === option.value
-                        ? "border-slate-500 bg-slate-50"
-                        : "border-slate-200 hover:border-slate-300 hover:bg-slate-50"
+                        ? "border-neutral-500 bg-neutral-50"
+                        : "border-neutral-200 hover:border-neutral-300 hover:bg-neutral-50"
                     }
                   `}
                 >
@@ -230,7 +228,7 @@ export function PreferencesDialog(): JSX.Element | null {
                     className="sr-only"
                   />
                   <span
-                    className={`font-medium ${preferences.firstDayOfWeek === option.value ? "text-slate-800" : "text-slate-700"}`}
+                    className={`font-medium ${preferences.firstDayOfWeek === option.value ? "text-neutral-800" : "text-neutral-700"}`}
                   >
                     {option.label}
                   </span>
@@ -241,7 +239,7 @@ export function PreferencesDialog(): JSX.Element | null {
 
           {/* Week Numbering System */}
           <fieldset className="space-y-3 mb-4">
-            <legend className="block text-sm font-medium text-slate-700">
+            <legend className="block text-sm font-medium text-neutral-700">
               Week Numbering
             </legend>
             <div className="space-y-2">
@@ -254,8 +252,8 @@ export function PreferencesDialog(): JSX.Element | null {
                     flex items-start gap-3 p-3 rounded-lg border-2 cursor-pointer transition-all duration-150
                     ${
                       preferences.weekNumberingSystem === option.value
-                        ? "border-slate-500 bg-slate-50"
-                        : "border-slate-200 hover:border-slate-300 hover:bg-slate-50"
+                        ? "border-neutral-500 bg-neutral-50"
+                        : "border-neutral-200 hover:border-neutral-300 hover:bg-neutral-50"
                     }
                   `}
                 >
@@ -270,11 +268,11 @@ export function PreferencesDialog(): JSX.Element | null {
                   />
                   <div className="flex-1">
                     <span
-                      className={`text-sm font-medium ${preferences.weekNumberingSystem === option.value ? "text-slate-800" : "text-slate-700"}`}
+                      className={`text-sm font-medium ${preferences.weekNumberingSystem === option.value ? "text-neutral-800" : "text-neutral-700"}`}
                     >
                       {option.label}
                     </span>
-                    <p className="text-xs text-slate-500 mt-0.5">
+                    <p className="text-xs text-neutral-500 mt-0.5">
                       {option.description}
                     </p>
                   </div>
@@ -285,20 +283,20 @@ export function PreferencesDialog(): JSX.Element | null {
         </div>
 
         {/* Divider */}
-        <div className="border-t border-slate-200" />
+        <div className="border-t border-neutral-200" />
 
         {/* Appearance Section */}
         <div>
           <div className="flex items-center gap-2 mb-4">
-            <Monitor size={20} weight="duotone" className="text-slate-500" />
-            <h3 className="text-sm font-semibold text-slate-900 uppercase tracking-wide">
+            <Monitor size={20} weight="light" className="text-neutral-500" />
+            <h3 className="text-sm font-semibold text-neutral-900 uppercase tracking-wide">
               Appearance
             </h3>
           </div>
 
           {/* UI Density */}
           <fieldset className="space-y-3">
-            <legend className="block text-sm font-medium text-slate-700">
+            <legend className="block text-sm font-medium text-neutral-700">
               UI Density
             </legend>
             <div
@@ -315,8 +313,8 @@ export function PreferencesDialog(): JSX.Element | null {
                     flex items-start gap-3 p-3 rounded-lg border-2 cursor-pointer transition-all duration-150
                     ${
                       preferences.uiDensity === option.value
-                        ? "border-slate-500 bg-slate-50"
-                        : "border-slate-200 hover:border-slate-300 hover:bg-slate-50"
+                        ? "border-neutral-500 bg-neutral-50"
+                        : "border-neutral-200 hover:border-neutral-300 hover:bg-neutral-50"
                     }
                   `}
                 >
@@ -332,15 +330,15 @@ export function PreferencesDialog(): JSX.Element | null {
                   <div className="flex-1">
                     <div className="flex items-center gap-2">
                       <span
-                        className={`text-sm font-medium ${preferences.uiDensity === option.value ? "text-slate-800" : "text-slate-700"}`}
+                        className={`text-sm font-medium ${preferences.uiDensity === option.value ? "text-neutral-800" : "text-neutral-700"}`}
                       >
                         {option.label}
                       </span>
-                      <span className="text-xs text-slate-500 font-mono">
+                      <span className="text-xs text-neutral-500 font-mono">
                         ({option.rowsExample})
                       </span>
                     </div>
-                    <p className="text-xs text-slate-500 mt-0.5">
+                    <p className="text-xs text-neutral-500 mt-0.5">
                       {option.description}
                     </p>
                   </div>
@@ -359,8 +357,8 @@ export function PreferencesDialog(): JSX.Element | null {
         </div>
 
         {/* Live Preview indicator */}
-        <div className="pt-4 border-t border-slate-200">
-          <p className="text-xs text-slate-400 text-center">
+        <div className="pt-4 border-t border-neutral-200">
+          <p className="text-xs text-neutral-400 text-center">
             Changes are applied immediately
           </p>
         </div>
