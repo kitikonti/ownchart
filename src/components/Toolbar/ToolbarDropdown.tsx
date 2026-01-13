@@ -47,8 +47,8 @@ export function ToolbarDropdown<T extends string = string>({
   const containerRef = useRef<HTMLDivElement>(null);
   const menuRef = useRef<HTMLDivElement>(null);
 
-  const selectedOption = options.find((opt) => opt.value === value);
-  const displayLabel = labelPrefix + (selectedOption?.label ?? value);
+  // Only show the label prefix, not the selected value (MS Office style)
+  const displayLabel = labelPrefix || "Select";
 
   // Close on outside click
   useEffect(() => {

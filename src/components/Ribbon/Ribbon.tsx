@@ -514,7 +514,7 @@ export function Ribbon() {
           options={LABEL_OPTIONS}
           onChange={setTaskLabelPosition}
           icon={<Tag size={ICON_SIZE} weight="light" />}
-          labelPrefix="Labels: "
+          labelPrefix="Labels"
           aria-label="Task label position"
           title="Task Label Position"
         />
@@ -729,7 +729,7 @@ export function Ribbon() {
           options={DENSITY_OPTIONS}
           onChange={setUiDensity}
           icon={<ArrowsOutLineVertical size={ICON_SIZE} weight="light" />}
-          labelPrefix="Density: "
+          labelPrefix="Density"
           aria-label="UI Density"
           title="UI Density"
         />
@@ -738,7 +738,7 @@ export function Ribbon() {
           options={DATE_FORMAT_OPTIONS}
           onChange={setDateFormat}
           icon={<Calendar size={ICON_SIZE} weight="light" />}
-          labelPrefix="Date: "
+          labelPrefix="Date Format"
           aria-label="Date Format"
           title="Date Format"
         />
@@ -747,7 +747,7 @@ export function Ribbon() {
           options={FIRST_DAY_OF_WEEK_OPTIONS}
           onChange={setFirstDayOfWeek}
           icon={<NumberSquareOne size={ICON_SIZE} weight="light" />}
-          labelPrefix="Week Start: "
+          labelPrefix="Week Start"
           aria-label="First Day of Week"
           title="First Day of Week"
         />
@@ -756,7 +756,7 @@ export function Ribbon() {
           options={WEEK_NUMBERING_OPTIONS}
           onChange={setWeekNumberingSystem}
           icon={<Hash size={ICON_SIZE} weight="light" />}
-          labelPrefix="Week #: "
+          labelPrefix="Week"
           aria-label="Week Numbering System"
           title="Week Numbering System"
         />
