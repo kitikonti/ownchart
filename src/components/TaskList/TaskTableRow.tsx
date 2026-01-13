@@ -159,6 +159,7 @@ export function TaskTableRow({
         isSelected ? "" : "bg-white"
       } ${isInClipboard || isSelected ? "relative" : ""}`}
       role="row"
+      tabIndex={-1}
       onMouseEnter={handleRowMouseEnter}
     >
       {/* Selection overlay - renders above cell borders */}

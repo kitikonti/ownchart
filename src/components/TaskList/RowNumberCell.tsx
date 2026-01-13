@@ -180,6 +180,7 @@ export function RowNumberCell({
       }}
       onMouseDown={handleMouseDown}
       role="gridcell"
+      tabIndex={-1}
       aria-label={`Row ${rowNumber}${isSelected ? ", selected" : ""}`}
     >
       {/* Hover controls container - appears on left side */}

@@ -215,7 +215,7 @@ export function NewTaskPlaceholderRow(): JSX.Element {
           <div
             key={column.id}
             ref={column.id === "name" ? cellRef : undefined}
-            tabIndex={column.id === "name" && isNameActive ? 0 : -1}
+            tabIndex={0}
             className={`${column.id !== "color" ? "border-r" : ""} border-b border-neutral-200 flex items-center ${
               column.id === "name" && isEditing
                 ? "outline outline-2 outline-neutral-500 bg-white z-20"
