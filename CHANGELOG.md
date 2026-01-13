@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [0.0.26](https://github.com/kitikonti/ownchart/compare/v0.0.25...v0.0.26) (2026-01-13)
+
+
+### Features
+
+* add Chart Settings button to Help tab ([53a13ef](https://github.com/kitikonti/ownchart/commit/53a13ef8cb2636cee5841ae502b39c1d039f7b8f))
+
 ### [0.0.25](https://github.com/kitikonti/ownchart/compare/v0.0.24...v0.0.25) (2026-01-13)
 
 
