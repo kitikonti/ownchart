@@ -45,6 +45,7 @@ import {
   NumberSquareOne,
   Hash,
   CaretDown,
+  Sliders,
 } from "@phosphor-icons/react";
 
 import {
@@ -202,6 +203,9 @@ export function Ribbon() {
     (state) => state.openPreferencesDialog
   );
   const openHelpPanel = useUIStore((state) => state.openHelpPanel);
+  const openChartSettingsDialog = useUIStore(
+    (state) => state.openChartSettingsDialog
+  );
 
   // File store
   const fileName = useFileStore((state) => state.fileName);
@@ -774,6 +778,12 @@ export function Ribbon() {
       <ToolbarSeparator />
 
       <ToolbarGroup label="Settings">
+        <ToolbarButton
+          onClick={openChartSettingsDialog}
+          title="Chart Settings"
+          aria-label="Chart Settings"
+          icon={<Sliders size={ICON_SIZE} weight="light" />}
+        />
         <ToolbarButton
           onClick={openPreferencesDialog}
           title="Preferences"
