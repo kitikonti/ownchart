@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [0.0.27](https://github.com/kitikonti/ownchart/compare/v0.0.26...v0.0.27) (2026-01-13)
+
+
+### UI/UX
+
+* simplify View tab dropdown labels ([8c898de](https://github.com/kitikonti/ownchart/commit/8c898de9c4c7ce3390f033e7c024648f13abf95e))
+
 ### [0.0.26](https://github.com/kitikonti/ownchart/compare/v0.0.25...v0.0.26) (2026-01-13)
 
 
