@@ -2,6 +2,15 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [0.0.25](https://github.com/kitikonti/ownchart/compare/v0.0.24...v0.0.25) (2026-01-13)
+
+
+### Bug Fixes
+
+* repair broken tests after UI refactoring ([1b93d11](https://github.com/kitikonti/ownchart/commit/1b93d1189f084c0b84706a1bca6f40789fb1aa36))
+* resolve lint errors for interactive roles ([9cf5ec1](https://github.com/kitikonti/ownchart/commit/9cf5ec1715439f0d463156530f216ece64d0ca6f))
+* use div instead of nav for tablist role ([8d7ce4c](https://github.com/kitikonti/ownchart/commit/8d7ce4c68529c1a062fdf12c34ddd34a3b9be1b5))
+
 ### [0.0.24](https://github.com/kitikonti/ownchart/compare/v0.0.23...v0.0.24) (2026-01-12)
 
 

@@ -1,6 +1,6 @@
 {
   "name": "ownchart",
-  "version": "0.0.24",
+  "version": "0.0.25",
   "type": "module",
   "description": "Privacy-first, offline Gantt chart for project planning. Own your data.",
   "author": "Martin",
