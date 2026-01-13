@@ -102,24 +102,24 @@ describe("ExportFormatSelector", () => {
       render(<ExportFormatSelector {...defaultProps} selectedFormat="png" />);
 
       const pngButton = screen.getByText("PNG").closest("button");
-      expect(pngButton).toHaveClass("border-[var(--color-teal-gray-400)]");
-      expect(pngButton).toHaveClass("bg-teal-50");
+      expect(pngButton).toHaveClass("border-[var(--color-brand-gray-400)]");
+      expect(pngButton).toHaveClass("bg-brand-50");
     });
 
     it("shows PDF as selected when selectedFormat is pdf", () => {
       render(<ExportFormatSelector {...defaultProps} selectedFormat="pdf" />);
 
       const pdfButton = screen.getByText("PDF").closest("button");
-      expect(pdfButton).toHaveClass("border-[var(--color-teal-gray-400)]");
-      expect(pdfButton).toHaveClass("bg-teal-50");
+      expect(pdfButton).toHaveClass("border-[var(--color-brand-gray-400)]");
+      expect(pdfButton).toHaveClass("bg-brand-50");
     });
 
     it("shows SVG as selected when selectedFormat is svg", () => {
       render(<ExportFormatSelector {...defaultProps} selectedFormat="svg" />);
 
       const svgButton = screen.getByText("SVG").closest("button");
-      expect(svgButton).toHaveClass("border-[var(--color-teal-gray-400)]");
-      expect(svgButton).toHaveClass("bg-teal-50");
+      expect(svgButton).toHaveClass("border-[var(--color-brand-gray-400)]");
+      expect(svgButton).toHaveClass("bg-brand-50");
     });
   });
 });
