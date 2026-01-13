@@ -799,7 +799,7 @@ export function Ribbon() {
         }}
       >
         {/* Tabs - MS Office style */}
-        <nav className="flex items-center h-full" role="tablist" style={{ paddingLeft: "8px" }}>
+        <div className="flex items-center h-full" role="tablist" style={{ paddingLeft: "8px" }}>
           {/* File Button - Opens dropdown instead of switching tabs */}
           <div ref={fileMenuRef} className="relative">
             <button
@@ -886,7 +886,7 @@ export function Ribbon() {
               </button>
             );
           })}
-        </nav>
+        </div>
 
         {/* Filename - centered */}
         <div
