@@ -4,8 +4,8 @@
  * Design: MS 365/Fluent UI inspired with Cyan brand color.
  */
 
-import { useEffect, useRef, type ReactNode, type KeyboardEvent } from 'react';
-import { X } from '@phosphor-icons/react';
+import { useEffect, useRef, type ReactNode, type KeyboardEvent } from "react";
+import { X } from "@phosphor-icons/react";
 
 export interface ModalProps {
   /** Whether the modal is open */
@@ -40,7 +40,7 @@ export function Modal({
   children,
   icon,
   footer,
-  widthClass = 'max-w-lg',
+  widthClass = "max-w-lg",
 }: ModalProps): JSX.Element | null {
   const modalRef = useRef<HTMLDivElement>(null);
   const previousActiveElement = useRef<HTMLElement | null>(null);
@@ -62,13 +62,13 @@ export function Modal({
 
   // Handle keyboard events
   const handleKeyDown = (e: KeyboardEvent<HTMLDivElement>) => {
-    if (e.key === 'Escape') {
+    if (e.key === "Escape") {
       e.preventDefault();
       onClose();
     }
 
     // Focus trap
-    if (e.key === 'Tab' && modalRef.current) {
+    if (e.key === "Tab" && modalRef.current) {
       const focusableElements = modalRef.current.querySelectorAll(
         'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
       );
@@ -143,9 +143,7 @@ export function Modal({
 
         {/* Footer - MS style: clean, no border, no background */}
         {footer && (
-          <div className="px-6 pb-6 pt-2 flex justify-end gap-2">
-            {footer}
-          </div>
+          <div className="px-6 pb-6 pt-2 flex justify-end gap-2">{footer}</div>
         )}
       </div>
     </div>

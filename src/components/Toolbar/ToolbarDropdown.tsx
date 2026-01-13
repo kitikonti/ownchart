@@ -55,7 +55,10 @@ export function ToolbarDropdown<T extends string = string>({
     if (!isOpen) return;
 
     const handleClickOutside = (e: MouseEvent) => {
-      if (containerRef.current && !containerRef.current.contains(e.target as Node)) {
+      if (
+        containerRef.current &&
+        !containerRef.current.contains(e.target as Node)
+      ) {
         setIsOpen(false);
       }
     };
@@ -119,7 +122,9 @@ export function ToolbarDropdown<T extends string = string>({
           }
         }}
         onMouseLeave={(e) => {
-          e.currentTarget.style.backgroundColor = isOpen ? "rgb(230, 230, 230)" : "transparent";
+          e.currentTarget.style.backgroundColor = isOpen
+            ? "rgb(230, 230, 230)"
+            : "transparent";
         }}
       >
         {icon}

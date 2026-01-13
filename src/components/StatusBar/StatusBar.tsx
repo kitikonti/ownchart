@@ -6,11 +6,7 @@
  */
 
 import { useState, useMemo } from "react";
-import {
-  Minus,
-  Plus,
-  ArrowsOutLineHorizontal,
-} from "@phosphor-icons/react";
+import { Minus, Plus, ArrowsOutLineHorizontal } from "@phosphor-icons/react";
 import { useTaskStore } from "../../store/slices/taskSlice";
 import { useChartStore } from "../../store/slices/chartSlice";
 import { MIN_ZOOM, MAX_ZOOM } from "../../utils/timelineUtils";

@@ -149,11 +149,13 @@ export function TaskTableRow({
       ref={setNodeRef}
       style={{
         ...style,
-        ...(isSelected ? {
-          backgroundColor: SELECTION_BG_COLOR,
-          position: "relative",
-          zIndex: 5,
-        } : {}),
+        ...(isSelected
+          ? {
+              backgroundColor: SELECTION_BG_COLOR,
+              position: "relative",
+              zIndex: 5,
+            }
+          : {}),
       }}
       className={`task-table-row col-span-full grid ${
         isSelected ? "" : "bg-white"
@@ -171,8 +173,12 @@ export function TaskTableRow({
             left: 0,
             right: 0,
             bottom: 0,
-            borderTop: showTopBorder ? `2px solid ${SELECTION_BORDER_COLOR}` : "none",
-            borderBottom: showBottomBorder ? `2px solid ${SELECTION_BORDER_COLOR}` : "none",
+            borderTop: showTopBorder
+              ? `2px solid ${SELECTION_BORDER_COLOR}`
+              : "none",
+            borderBottom: showBottomBorder
+              ? `2px solid ${SELECTION_BORDER_COLOR}`
+              : "none",
             borderLeft: `2px solid ${SELECTION_BORDER_COLOR}`,
             borderRadius: `${showTopBorder ? "3px" : "0"} 0 0 ${showBottomBorder ? "3px" : "0"}`,
             zIndex: 25,

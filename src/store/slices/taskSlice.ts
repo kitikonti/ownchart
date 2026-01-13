@@ -949,7 +949,9 @@ export const useTaskStore = create<TaskStore>()(
               const expandButton = 16; // w-4 expand/collapse button
               const gaps = 8; // gap-1 (4px) × 2 between elements
               const typeIcon = iconSize;
-              extraWidths.push(hierarchyIndent + expandButton + gaps + typeIcon);
+              extraWidths.push(
+                hierarchyIndent + expandButton + gaps + typeIcon
+              );
             } else {
               extraWidths.push(0);
             }

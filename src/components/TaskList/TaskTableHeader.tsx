@@ -7,7 +7,10 @@ import { useMemo } from "react";
 import { useTaskStore } from "../../store/slices/taskSlice";
 import { useDensityConfig } from "../../store/slices/userPreferencesSlice";
 import { useChartStore } from "../../store/slices/chartSlice";
-import { getVisibleColumns, getDensityAwareWidth } from "../../config/tableColumns";
+import {
+  getVisibleColumns,
+  getDensityAwareWidth,
+} from "../../config/tableColumns";
 import { ColumnResizer } from "./ColumnResizer";
 import { useTableDimensions } from "../../hooks/useTableDimensions";
 
@@ -48,12 +51,14 @@ export function TaskTableHeader(): JSX.Element {
    * Uses density-aware widths when no custom width is set.
    */
   const gridTemplateColumns = useMemo(() => {
-    return visibleColumns.map((col) => {
-      const customWidth = columnWidths[col.id];
-      return customWidth
-        ? `${customWidth}px`
-        : getDensityAwareWidth(col.id, densityConfig);
-    }).join(" ");
+    return visibleColumns
+      .map((col) => {
+        const customWidth = columnWidths[col.id];
+        return customWidth
+          ? `${customWidth}px`
+          : getDensityAwareWidth(col.id, densityConfig);
+      })
+      .join(" ");
   }, [columnWidths, densityConfig, visibleColumns]);
 
   /**
@@ -119,7 +124,9 @@ export function TaskTableHeader(): JSX.Element {
               className="absolute inset-0 hover:bg-neutral-200 transition-colors"
               style={{ cursor: "pointer" }}
               title={allSelected ? "Deselect all" : "Select all"}
-              aria-label={allSelected ? "Deselect all tasks" : "Select all tasks"}
+              aria-label={
+                allSelected ? "Deselect all tasks" : "Select all tasks"
+              }
             >
               {/* Small triangle in bottom-right corner */}
               <svg
@@ -128,10 +135,7 @@ export function TaskTableHeader(): JSX.Element {
                 viewBox="0 0 8 8"
                 style={{ position: "absolute", bottom: "4px", right: "4px" }}
               >
-                <path
-                  d="M8 0 L8 8 L0 8 Z"
-                  fill={HEADER_COLORS.triangle}
-                />
+                <path d="M8 0 L8 8 L0 8 Z" fill={HEADER_COLORS.triangle} />
               </svg>
             </button>
           ) : column.id === "color" ? (

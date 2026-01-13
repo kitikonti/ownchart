@@ -82,7 +82,9 @@ export function RowNumberCell({
   taskName = "",
 }: RowNumberCellProps): JSX.Element {
   const [isHovered, setIsHovered] = useState(false);
-  const [hoveredControl, setHoveredControl] = useState<"drag" | "addAbove" | "addBelow" | null>(null);
+  const [hoveredControl, setHoveredControl] = useState<
+    "drag" | "addAbove" | "addBelow" | null
+  >(null);
   const cellRef = useRef<HTMLDivElement>(null);
 
   // Handle drag selection - select range as mouse moves over rows
@@ -141,7 +143,8 @@ export function RowNumberCell({
   // Determine cursor based on what's being hovered
   const getCursor = () => {
     if (hoveredControl === "drag") return "grab";
-    if (hoveredControl === "addAbove" || hoveredControl === "addBelow") return "pointer";
+    if (hoveredControl === "addAbove" || hoveredControl === "addBelow")
+      return "pointer";
     if (isHovered) return ROW_SELECT_CURSOR; // Excel-style row select cursor
     return "default";
   };
@@ -161,7 +164,11 @@ export function RowNumberCell({
       className="row-number-cell relative select-none"
       style={{
         height: rowHeight,
-        backgroundColor: isSelected ? COLORS.bgSelected : (isHovered ? COLORS.bgHover : COLORS.bgInactive),
+        backgroundColor: isSelected
+          ? COLORS.bgSelected
+          : isHovered
+            ? COLORS.bgHover
+            : COLORS.bgInactive,
         borderRight: `1px solid ${COLORS.border}`,
         borderBottom: `1px solid ${COLORS.border}`,
         borderRadius: getBorderRadius(),

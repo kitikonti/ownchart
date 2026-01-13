@@ -225,9 +225,7 @@ export function TaskTable({ hideHeader = true }: TaskTableProps): JSX.Element {
                       className="w-full h-full flex items-center justify-center"
                       title={allSelected ? "Deselect all" : "Select all"}
                       aria-label={
-                        allSelected
-                          ? "Deselect all tasks"
-                          : "Select all tasks"
+                        allSelected ? "Deselect all tasks" : "Select all tasks"
                       }
                     />
                   ) : column.id === "color" ? (

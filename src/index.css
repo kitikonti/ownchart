@@ -22,8 +22,9 @@
 
 :root {
   /* Typography - System fonts (MS Office style) */
-  --font-sans: "Segoe UI", -apple-system, BlinkMacSystemFont, "Roboto",
-    "Helvetica Neue", sans-serif;
+  --font-sans:
+    "Segoe UI", -apple-system, BlinkMacSystemFont, "Roboto", "Helvetica Neue",
+    sans-serif;
   --font-mono: ui-monospace, "SF Mono", "Fira Code", monospace;
 
   font-family: var(--font-sans);
@@ -59,14 +60,14 @@
   --color-brand-200: #80ffff;
   --color-brand-300: #4dffff;
   --color-brand-400: #00cccc; /* BRAND COLOR - Icons, Highlights */
-  --color-brand-500: #00AAB3; /* Button Hover (H=183°, +3° blue shift) */
-  --color-brand-600: #008A99; /* PRIMARY - Buttons, Active Tab (H=186°, +6° blue shift) */
-  --color-brand-700: #006C80; /* Links, Text (H=189°, +9° blue shift) */
+  --color-brand-500: #00aab3; /* Button Hover (H=183°, +3° blue shift) */
+  --color-brand-600: #008a99; /* PRIMARY - Buttons, Active Tab (H=186°, +6° blue shift) */
+  --color-brand-700: #006c80; /* Links, Text (H=189°, +9° blue shift) */
   --color-brand-800: #005266; /* Pressed state (H=192°, +12° blue shift) */
-  --color-brand-900: #00394D; /* Dark emphasis (H=195°, +15° blue shift) */
+  --color-brand-900: #00394d; /* Dark emphasis (H=195°, +15° blue shift) */
 
   /* Primary accent color (brand-600 for interactive elements) */
-  --color-accent: #008A99;
+  --color-accent: #008a99;
 
   /* Surface colors */
   --color-surface: #ffffff;
@@ -105,10 +106,11 @@
   --shadow-rest: 0 0 2px rgba(0, 0, 0, 0.12), 0 2px 4px rgba(0, 0, 0, 0.14);
   --shadow-hover: 0 0 2px rgba(0, 0, 0, 0.12), 0 4px 8px rgba(0, 0, 0, 0.14);
   --shadow-pressed: 0 0 2px rgba(0, 0, 0, 0.12), 0 1px 2px rgba(0, 0, 0, 0.14);
-  --shadow-dropdown: 0 0 8px rgba(0, 0, 0, 0.12), 0 16px 32px rgba(0, 0, 0, 0.14);
+  --shadow-dropdown:
+    0 0 8px rgba(0, 0, 0, 0.12), 0 16px 32px rgba(0, 0, 0, 0.14);
   --shadow-modal: 0 0 8px rgba(0, 0, 0, 0.12), 0 32px 64px rgba(0, 0, 0, 0.14);
   /* Focus ring - high visibility for accessibility */
-  --shadow-focus: 0 0 0 2px #ffffff, 0 0 0 4px #008A99;
+  --shadow-focus: 0 0 0 2px #ffffff, 0 0 0 4px #008a99;
 
   /* ─── Radii (MS style - flatter) ─── */
   --radius-sm: 2px;
@@ -351,7 +353,9 @@ select:focus {
 /* Monospace for data/numbers */
 .font-mono {
   font-family: var(--font-mono);
-  font-feature-settings: "tnum" on, "lnum" on;
+  font-feature-settings:
+    "tnum" on,
+    "lnum" on;
 }
 
 /* Text utilities */
@@ -404,7 +408,9 @@ select:focus {
   cursor: default;
   user-select: none;
   overflow: hidden;
-  transition: background var(--transition-fast), border var(--transition-fast),
+  transition:
+    background var(--transition-fast),
+    border var(--transition-fast),
     color var(--transition-fast);
   -webkit-font-smoothing: antialiased;
 }

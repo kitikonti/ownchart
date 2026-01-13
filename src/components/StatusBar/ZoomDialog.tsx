@@ -79,7 +79,13 @@ export function ZoomDialog({
       isOpen={isOpen}
       onClose={onClose}
       title="Zoom to"
-      icon={<MagnifyingGlass size={24} weight="regular" className="text-brand-600" />}
+      icon={
+        <MagnifyingGlass
+          size={24}
+          weight="regular"
+          className="text-brand-600"
+        />
+      }
       footer={footer}
       widthClass="max-w-xs"
     >

@@ -267,8 +267,11 @@ export function ChartCanvas({
                 if (!isSelected) return null;
 
                 // Check if prev/next rows are also selected for contiguous borders
-                const prevSelected = index > 0 && selectedTaskIds.includes(tasks[index - 1].id);
-                const nextSelected = index < tasks.length - 1 && selectedTaskIds.includes(tasks[index + 1].id);
+                const prevSelected =
+                  index > 0 && selectedTaskIds.includes(tasks[index - 1].id);
+                const nextSelected =
+                  index < tasks.length - 1 &&
+                  selectedTaskIds.includes(tasks[index + 1].id);
 
                 const BRAND_COLOR = "#008A99";
                 const y = index * ROW_HEIGHT;

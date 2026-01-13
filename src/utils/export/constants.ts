@@ -7,7 +7,8 @@
 export const HEADER_HEIGHT = 48;
 
 /** Font family for SVG text elements (system font stack) */
-export const SVG_FONT_FAMILY = '"Segoe UI", -apple-system, BlinkMacSystemFont, Roboto, "Helvetica Neue", Arial, sans-serif';
+export const SVG_FONT_FAMILY =
+  '"Segoe UI", -apple-system, BlinkMacSystemFont, Roboto, "Helvetica Neue", Arial, sans-serif';
 
 /**
  * Tailwind slate colors for consistent styling.

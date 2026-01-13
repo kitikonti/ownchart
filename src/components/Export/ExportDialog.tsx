@@ -276,7 +276,10 @@ export function ExportDialog(): JSX.Element | null {
     estimatedDimensions.width <= EXPORT_MAX_SAFE_WIDTH;
 
   // Format-specific button config
-  const formatConfig: Record<ExportFormat, { icon: typeof Download; label: string }> = {
+  const formatConfig: Record<
+    ExportFormat,
+    { icon: typeof Download; label: string }
+  > = {
     png: { icon: Image, label: "Export PNG" },
     pdf: { icon: FilePdf, label: "Export PDF" },
     svg: { icon: FileCode, label: "Export SVG" },

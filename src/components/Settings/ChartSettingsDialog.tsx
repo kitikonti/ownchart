@@ -295,7 +295,9 @@ export function ChartSettingsDialog(): JSX.Element | null {
                       <span className="font-medium text-neutral-800">
                         {currentCountryName}
                       </span>
-                      <span className="text-neutral-500">({holidayRegion})</span>
+                      <span className="text-neutral-500">
+                        ({holidayRegion})
+                      </span>
                     </div>
                     <svg
                       className={`w-4 h-4 text-neutral-500 transition-transform ${isCountryDropdownOpen ? "rotate-180" : ""}`}

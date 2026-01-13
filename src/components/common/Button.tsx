@@ -8,10 +8,10 @@
  * - Danger: Red background for destructive actions
  */
 
-import { forwardRef, type ButtonHTMLAttributes, type ReactNode } from 'react';
+import { forwardRef, type ButtonHTMLAttributes, type ReactNode } from "react";
 
-type ButtonVariant = 'primary' | 'secondary' | 'ghost' | 'danger';
-type ButtonSize = 'sm' | 'md' | 'lg';
+type ButtonVariant = "primary" | "secondary" | "ghost" | "danger";
+type ButtonSize = "sm" | "md" | "lg";
 
 interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
   /** Visual variant */
@@ -55,9 +55,9 @@ const variantStyles: Record<ButtonVariant, string> = {
 
 // MS Fluent button sizing: height ~31px, min-width 96px, padding 5px 12px
 const sizeStyles: Record<ButtonSize, string> = {
-  sm: 'h-7 min-w-[72px] px-2.5 py-1 text-xs gap-1.5',
-  md: 'h-8 min-w-[96px] px-3 py-[5px] text-sm gap-2',
-  lg: 'h-10 min-w-[120px] px-4 py-2 text-base gap-2.5',
+  sm: "h-7 min-w-[72px] px-2.5 py-1 text-xs gap-1.5",
+  md: "h-8 min-w-[96px] px-3 py-[5px] text-sm gap-2",
+  lg: "h-10 min-w-[120px] px-4 py-2 text-base gap-2.5",
 };
 
 /**
@@ -78,13 +78,13 @@ const sizeStyles: Record<ButtonSize, string> = {
 export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
   function Button(
     {
-      variant = 'primary',
-      size = 'md',
+      variant = "primary",
+      size = "md",
       icon,
       iconAfter,
       fullWidth = false,
       disabled,
-      className = '',
+      className = "",
       children,
       ...props
     },
@@ -110,7 +110,7 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
           ${baseStyles}
           ${variantStyles[variant]}
           ${sizeStyles[size]}
-          ${fullWidth ? 'w-full' : ''}
+          ${fullWidth ? "w-full" : ""}
           ${className}
         `}
         {...props}

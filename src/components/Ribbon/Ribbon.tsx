@@ -63,7 +63,11 @@ import { useHistoryStore } from "../../store/slices/historySlice";
 import { useUIStore } from "../../store/slices/uiSlice";
 import { useFileStore } from "../../store/slices/fileSlice";
 import { useUserPreferencesStore } from "../../store/slices/userPreferencesSlice";
-import type { TaskLabelPosition, FirstDayOfWeek, WeekNumberingSystem } from "../../types/preferences.types";
+import type {
+  TaskLabelPosition,
+  FirstDayOfWeek,
+  WeekNumberingSystem,
+} from "../../types/preferences.types";
 import { useFileOperations } from "../../hooks/useFileOperations";
 import { useClipboardOperations } from "../../hooks/useClipboardOperations";
 import { getViewportCenterAnchor, applyScrollLeft } from "../../hooks/useZoom";
@@ -84,13 +88,16 @@ const LABEL_OPTIONS: DropdownOption<TaskLabelPosition>[] = [
   { value: "none", label: "None" },
 ];
 
-const DENSITY_OPTIONS: DropdownOption<"compact" | "normal" | "comfortable">[] = [
-  { value: "compact", label: "Compact" },
-  { value: "normal", label: "Normal" },
-  { value: "comfortable", label: "Comfortable" },
-];
+const DENSITY_OPTIONS: DropdownOption<"compact" | "normal" | "comfortable">[] =
+  [
+    { value: "compact", label: "Compact" },
+    { value: "normal", label: "Normal" },
+    { value: "comfortable", label: "Comfortable" },
+  ];
 
-const DATE_FORMAT_OPTIONS: DropdownOption<"DD/MM/YYYY" | "MM/DD/YYYY" | "YYYY-MM-DD">[] = [
+const DATE_FORMAT_OPTIONS: DropdownOption<
+  "DD/MM/YYYY" | "MM/DD/YYYY" | "YYYY-MM-DD"
+>[] = [
   { value: "DD/MM/YYYY", label: "DD/MM/YYYY" },
   { value: "MM/DD/YYYY", label: "MM/DD/YYYY" },
   { value: "YYYY-MM-DD", label: "YYYY-MM-DD" },
@@ -151,17 +158,31 @@ export function Ribbon() {
   const showProgress = useChartStore((state) => state.showProgress);
   const toggleProgress = useChartStore((state) => state.toggleProgress);
   const taskLabelPosition = useChartStore((state) => state.taskLabelPosition);
-  const setTaskLabelPosition = useChartStore((state) => state.setTaskLabelPosition);
+  const setTaskLabelPosition = useChartStore(
+    (state) => state.setTaskLabelPosition
+  );
 
   // User preferences store
-  const uiDensity = useUserPreferencesStore((state) => state.preferences.uiDensity);
+  const uiDensity = useUserPreferencesStore(
+    (state) => state.preferences.uiDensity
+  );
   const setUiDensity = useUserPreferencesStore((state) => state.setUiDensity);
-  const dateFormat = useUserPreferencesStore((state) => state.preferences.dateFormat);
+  const dateFormat = useUserPreferencesStore(
+    (state) => state.preferences.dateFormat
+  );
   const setDateFormat = useUserPreferencesStore((state) => state.setDateFormat);
-  const firstDayOfWeek = useUserPreferencesStore((state) => state.preferences.firstDayOfWeek);
-  const setFirstDayOfWeek = useUserPreferencesStore((state) => state.setFirstDayOfWeek);
-  const weekNumberingSystem = useUserPreferencesStore((state) => state.preferences.weekNumberingSystem);
-  const setWeekNumberingSystem = useUserPreferencesStore((state) => state.setWeekNumberingSystem);
+  const firstDayOfWeek = useUserPreferencesStore(
+    (state) => state.preferences.firstDayOfWeek
+  );
+  const setFirstDayOfWeek = useUserPreferencesStore(
+    (state) => state.setFirstDayOfWeek
+  );
+  const weekNumberingSystem = useUserPreferencesStore(
+    (state) => state.preferences.weekNumberingSystem
+  );
+  const setWeekNumberingSystem = useUserPreferencesStore(
+    (state) => state.setWeekNumberingSystem
+  );
 
   // History store
   const undo = useHistoryStore((state) => state.undo);
@@ -187,7 +208,8 @@ export function Ribbon() {
   const isDirty = useFileStore((state) => state.isDirty);
 
   // File operations
-  const { handleNew, handleOpen, handleSave, handleSaveAs } = useFileOperations();
+  const { handleNew, handleOpen, handleSave, handleSaveAs } =
+    useFileOperations();
 
   // Clipboard operations
   const { handleCopy, handleCut, handlePaste, canCopyOrCut, canPaste } =
@@ -273,9 +295,7 @@ export function Ribbon() {
       fitToView(tasks);
     } else {
       const anchor = getViewportCenterAnchor();
-      const result = useChartStore
-        .getState()
-        .setZoom(level / 100, anchor);
+      const result = useChartStore.getState().setZoom(level / 100, anchor);
       applyScrollLeft(result.newScrollLeft);
     }
     setIsZoomDropdownOpen(false);
@@ -430,8 +450,12 @@ export function Ribbon() {
           variant="toggle"
           isActive={showTodayMarker}
           onClick={toggleTodayMarker}
-          title={showTodayMarker ? "Hide Today Marker (T)" : "Show Today Marker (T)"}
-          aria-label={showTodayMarker ? "Hide Today Marker" : "Show Today Marker"}
+          title={
+            showTodayMarker ? "Hide Today Marker (T)" : "Show Today Marker (T)"
+          }
+          aria-label={
+            showTodayMarker ? "Hide Today Marker" : "Show Today Marker"
+          }
           icon={<CalendarDot size={ICON_SIZE} weight="light" />}
           label="Today"
         />
@@ -463,8 +487,12 @@ export function Ribbon() {
           variant="toggle"
           isActive={showDependencies}
           onClick={toggleDependencies}
-          title={showDependencies ? "Hide Dependencies (D)" : "Show Dependencies (D)"}
-          aria-label={showDependencies ? "Hide Dependencies" : "Show Dependencies"}
+          title={
+            showDependencies ? "Hide Dependencies (D)" : "Show Dependencies (D)"
+          }
+          aria-label={
+            showDependencies ? "Hide Dependencies" : "Show Dependencies"
+          }
           icon={<FlowArrow size={ICON_SIZE} weight="light" />}
           label="Dependencies"
         />
@@ -555,7 +583,9 @@ export function Ribbon() {
               justifyContent: "center",
               width: "24px",
               height: "26px",
-              backgroundColor: isZoomDropdownOpen ? "rgb(235, 235, 235)" : "transparent",
+              backgroundColor: isZoomDropdownOpen
+                ? "rgb(235, 235, 235)"
+                : "transparent",
               borderRadius: "0 3px 3px 0",
               cursor: "default",
             }}
@@ -564,7 +594,9 @@ export function Ribbon() {
               size={12}
               weight="regular"
               style={{
-                color: isZoomDropdownOpen ? "rgb(37, 36, 35)" : "rgb(121, 119, 117)",
+                color: isZoomDropdownOpen
+                  ? "rgb(37, 36, 35)"
+                  : "rgb(121, 119, 117)",
               }}
             />
           </span>
@@ -606,7 +638,9 @@ export function Ribbon() {
                       height: "32px",
                       minHeight: "32px",
                       padding: "0 16px",
-                      backgroundColor: isSelected ? "rgb(237, 235, 233)" : "transparent",
+                      backgroundColor: isSelected
+                        ? "rgb(237, 235, 233)"
+                        : "transparent",
                       color: "rgb(50, 49, 48)",
                       border: "1px solid transparent",
                       cursor: "pointer",
@@ -617,7 +651,8 @@ export function Ribbon() {
                       whiteSpace: "nowrap",
                     }}
                     onMouseEnter={(e) => {
-                      e.currentTarget.style.backgroundColor = "rgb(243, 242, 241)";
+                      e.currentTarget.style.backgroundColor =
+                        "rgb(243, 242, 241)";
                     }}
                     onMouseLeave={(e) => {
                       e.currentTarget.style.backgroundColor = isSelected
@@ -775,7 +810,10 @@ export function Ribbon() {
   // Close file menu when clicking outside
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
-      if (fileMenuRef.current && !fileMenuRef.current.contains(event.target as Node)) {
+      if (
+        fileMenuRef.current &&
+        !fileMenuRef.current.contains(event.target as Node)
+      ) {
         setFileMenuOpen(false);
       }
     };
@@ -790,7 +828,10 @@ export function Ribbon() {
   }, [fileMenuOpen]);
 
   return (
-    <header className="flex-shrink-0 relative" style={{ zIndex: 100, backgroundColor: "#f5f5f5", paddingBottom: "8px" }}>
+    <header
+      className="flex-shrink-0 relative"
+      style={{ zIndex: 100, backgroundColor: "#f5f5f5", paddingBottom: "8px" }}
+    >
       {/* Tab Bar - Fixed at top (MS uses colorNeutralBackground3 = #f5f5f5) */}
       <div
         className="flex items-center"
@@ -799,7 +840,11 @@ export function Ribbon() {
         }}
       >
         {/* Tabs - MS Office style */}
-        <div className="flex items-center h-full" role="tablist" style={{ paddingLeft: "8px" }}>
+        <div
+          className="flex items-center h-full"
+          role="tablist"
+          style={{ paddingLeft: "8px" }}
+        >
           {/* File Button - Opens dropdown instead of switching tabs */}
           <div ref={fileMenuRef} className="relative">
             <button
@@ -816,13 +861,17 @@ export function Ribbon() {
               <div
                 className="absolute top-full left-0 py-1 bg-white rounded-lg shadow-lg border border-neutral-200 min-w-56"
                 style={{
-                  boxShadow: "0 0 2px rgba(0, 0, 0, 0.12), 0 8px 16px rgba(0, 0, 0, 0.14)",
+                  boxShadow:
+                    "0 0 2px rgba(0, 0, 0, 0.12), 0 8px 16px rgba(0, 0, 0, 0.14)",
                   zIndex: 1000,
                 }}
               >
                 <button
                   className="file-menu-item"
-                  onClick={() => { handleNew(); setFileMenuOpen(false); }}
+                  onClick={() => {
+                    handleNew();
+                    setFileMenuOpen(false);
+                  }}
                 >
                   <File size={18} weight="light" />
                   <span>New</span>
@@ -830,7 +879,10 @@ export function Ribbon() {
                 </button>
                 <button
                   className="file-menu-item"
-                  onClick={() => { handleOpen(); setFileMenuOpen(false); }}
+                  onClick={() => {
+                    handleOpen();
+                    setFileMenuOpen(false);
+                  }}
                 >
                   <FolderOpen size={18} weight="light" />
                   <span>Open</span>
@@ -838,7 +890,10 @@ export function Ribbon() {
                 </button>
                 <button
                   className="file-menu-item"
-                  onClick={() => { handleSave(); setFileMenuOpen(false); }}
+                  onClick={() => {
+                    handleSave();
+                    setFileMenuOpen(false);
+                  }}
                 >
                   <FloppyDisk size={18} weight="light" />
                   <span>Save</span>
@@ -846,7 +901,10 @@ export function Ribbon() {
                 </button>
                 <button
                   className="file-menu-item"
-                  onClick={() => { handleSaveAs(); setFileMenuOpen(false); }}
+                  onClick={() => {
+                    handleSaveAs();
+                    setFileMenuOpen(false);
+                  }}
                 >
                   <FloppyDisk size={18} weight="light" />
                   <span>Save As...</span>
@@ -855,7 +913,10 @@ export function Ribbon() {
                 <div className="file-menu-divider" />
                 <button
                   className="file-menu-item"
-                  onClick={() => { openExportDialog(); setFileMenuOpen(false); }}
+                  onClick={() => {
+                    openExportDialog();
+                    setFileMenuOpen(false);
+                  }}
                 >
                   <Export size={18} weight="light" />
                   <span>Export</span>
@@ -872,7 +933,9 @@ export function Ribbon() {
               "ribbon-tab",
               "ribbon-tab-standard",
               isActive ? "ribbon-tab-active" : "",
-            ].filter(Boolean).join(" ");
+            ]
+              .filter(Boolean)
+              .join(" ");
 
             return (
               <button
@@ -900,12 +963,16 @@ export function Ribbon() {
           {fileName ? (
             <span>
               {fileName}
-              {isDirty && <span style={{ color: "rgb(100, 100, 100)" }}>*</span>}
+              {isDirty && (
+                <span style={{ color: "rgb(100, 100, 100)" }}>*</span>
+              )}
             </span>
           ) : (
             <span>
               Untitled
-              {isDirty && <span style={{ color: "rgb(100, 100, 100)" }}>*</span>}
+              {isDirty && (
+                <span style={{ color: "rgb(100, 100, 100)" }}>*</span>
+              )}
             </span>
           )}
         </div>
@@ -914,7 +981,11 @@ export function Ribbon() {
 
         {/* Logo - right side */}
         <div className="flex items-center px-3 h-full">
-          <ChartBarHorizontal size={18} weight="light" style={{ color: "#008A99" }} />
+          <ChartBarHorizontal
+            size={18}
+            weight="light"
+            style={{ color: "#008A99" }}
+          />
         </div>
       </div>
 
@@ -924,7 +995,8 @@ export function Ribbon() {
         style={{
           height: "40px",
           backgroundColor: "#ffffff",
-          boxShadow: "0 0 2px rgba(0, 0, 0, 0.12), 0 2px 4px rgba(0, 0, 0, 0.14)",
+          boxShadow:
+            "0 0 2px rgba(0, 0, 0, 0.12), 0 2px 4px rgba(0, 0, 0, 0.14)",
           borderRadius: "8px",
           width: "calc(100% - 16px)",
           margin: "0 8px",
