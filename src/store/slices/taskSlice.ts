@@ -886,6 +886,16 @@ export const useTaskStore = create<TaskStore>()(
           }
         });
 
+        // For name column, include "Add new task..." placeholder
+        if (columnId === "name") {
+          cellValues.push("Add new task...");
+          // Placeholder row has same UI elements as a level-0 task
+          const expandButton = 16;
+          const gaps = 8;
+          const typeIcon = iconSize;
+          extraWidths.push(expandButton + gaps + typeIcon);
+        }
+
         // Use shared utility function for width calculation
         state.columnWidths[columnId] = calculateColumnWidth(
           column.label,
@@ -956,6 +966,16 @@ export const useTaskStore = create<TaskStore>()(
               extraWidths.push(0);
             }
           });
+
+          // For name column, include "Add new task..." placeholder
+          if (columnId === "name") {
+            cellValues.push("Add new task...");
+            // Placeholder row has same UI elements as a level-0 task
+            const expandButton = 16;
+            const gaps = 8;
+            const typeIcon = iconSize;
+            extraWidths.push(expandButton + gaps + typeIcon);
+          }
 
           // Use shared utility function for width calculation
           state.columnWidths[columnId] = calculateColumnWidth(
