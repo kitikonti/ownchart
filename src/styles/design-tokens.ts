@@ -57,7 +57,8 @@ export const COLORS = {
     text: "#495057", // Text in SVG
     dependencyDefault: "#94a3b8",
     dependencySelected: "#334155",
-    todayMarker: "#fa5252", // Red for today marker
+    todayMarker: "#228be6", // Blue for today marker (matches selection for consistency)
+    todayHighlight: "#e7f1fd", // Light blue for today header cell background
   },
 } as const;
 

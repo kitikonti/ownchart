@@ -5,7 +5,7 @@
  */
 
 import { useMemo } from "react";
-import { parseISO, format, getWeek } from "date-fns";
+import { parseISO, format, getWeek, isSameDay, startOfDay } from "date-fns";
 import type { TimelineScale, ScaleConfig } from "../../utils/timelineUtils";
 import {
   dateToPixel,
@@ -19,6 +19,7 @@ import {
   useFirstDayOfWeek,
   useWeekNumberingSystem,
 } from "../../store/slices/userPreferencesSlice";
+import { COLORS } from "../../styles/design-tokens";
 
 interface TimelineHeaderProps {
   scale: TimelineScale;
@@ -30,6 +31,7 @@ interface ScaleCell {
   x: number;
   width: number;
   label: string;
+  isToday: boolean;
 }
 
 const ROW_HEIGHT = 24; // Match table header height exactly (2×24px + 1px border = 49px)
@@ -85,7 +87,8 @@ function generateScaleCells(
   scale: TimelineScale,
   config: ScaleConfig,
   headerWidth: number,
-  weekOptions: WeekOptions
+  weekOptions: WeekOptions,
+  today: Date
 ): ScaleCell[] {
   const cells: ScaleCell[] = [];
 
@@ -128,11 +131,15 @@ function generateScaleCells(
     // Format label using explicit week options
     const label = formatLabel(cellStart, config, weekOptions);
 
+    // Check if this cell represents today (only relevant for day unit)
+    const isToday = config.unit === "day" && isSameDay(cellStart, today);
+
     cells.push({
       date: cellStart,
       x: clippedX,
       width: clippedWidth,
       label,
+      isToday,
     });
 
     // Move to next unit
@@ -164,16 +171,19 @@ export function TimelineHeader({ scale, width }: TimelineHeaderProps) {
     return getScaleConfig(scale.zoom, FIXED_BASE_PIXELS_PER_DAY);
   }, [scale.zoom]);
 
+  // Get today's date for highlighting (stable reference via startOfDay)
+  const today = useMemo(() => startOfDay(new Date()), []);
+
   // Generate cells for each scale row
   // Includes weekOptions in deps to regenerate when preferences change
   const scaleRows = useMemo(() => {
     return currentScales.map((scaleConfig) => {
       return {
         config: scaleConfig,
-        cells: generateScaleCells(scale, scaleConfig, headerWidth, weekOptions),
+        cells: generateScaleCells(scale, scaleConfig, headerWidth, weekOptions, today),
       };
     });
-  }, [scale, headerWidth, currentScales, weekOptions]);
+  }, [scale, headerWidth, currentScales, weekOptions, today]);
 
   return (
     <g className="timeline-header">
@@ -191,6 +201,17 @@ export function TimelineHeader({ scale, width }: TimelineHeaderProps) {
         <g key={rowIndex} className={`scale-row scale-row-${rowIndex}`}>
           {cells.map((cell, cellIndex) => (
             <g key={cellIndex}>
+              {/* Today highlight background (only for day cells) */}
+              {cell.isToday && (
+                <rect
+                  x={cell.x}
+                  y={rowIndex * ROW_HEIGHT}
+                  width={cell.width}
+                  height={ROW_HEIGHT}
+                  fill={COLORS.chart.todayHighlight}
+                />
+              )}
+
               {/* Cell separator line */}
               <line
                 x1={cell.x}
@@ -206,9 +227,9 @@ export function TimelineHeader({ scale, width }: TimelineHeaderProps) {
                 x={cell.x + cell.width / 2}
                 y={rowIndex * ROW_HEIGHT + ROW_HEIGHT / 2 + 4}
                 fontSize={rowIndex === 0 ? 12 : 11}
-                fontWeight={rowIndex === 0 ? 600 : 400}
+                fontWeight={cell.isToday ? 600 : rowIndex === 0 ? 600 : 400}
                 fontFamily={SVG_FONT_FAMILY}
-                fill="#495057"
+                fill={cell.isToday ? COLORS.chart.todayMarker : "#495057"}
                 textAnchor="middle"
               >
                 {cell.label}

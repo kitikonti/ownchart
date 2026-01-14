@@ -1,11 +1,12 @@
 /**
  * TodayMarker component
- * Shows a thin red vertical line at the current date
+ * Shows a vertical line at the current date
  */
 
 import { format } from "date-fns";
 import type { TimelineScale } from "../../utils/timelineUtils";
 import { dateToPixel } from "../../utils/timelineUtils";
+import { COLORS } from "../../styles/design-tokens";
 
 interface TodayMarkerProps {
   scale: TimelineScale;
@@ -29,7 +30,7 @@ export function TodayMarker({ scale, svgHeight }: TodayMarkerProps) {
         y1={0}
         x2={x}
         y2={svgHeight}
-        stroke="#fa5252"
+        stroke={COLORS.chart.todayMarker}
         strokeWidth={1}
       />
     </g>

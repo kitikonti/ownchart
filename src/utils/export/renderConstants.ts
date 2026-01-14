@@ -198,9 +198,14 @@ export const RENDER_COLORS = {
   gridLine: "#e2e8f0",
 
   /**
-   * Today marker color (rose-500)
+   * Today marker color (blue, matches main app)
    */
-  todayMarker: "#f43f5e",
+  todayMarker: "#228be6",
+
+  /**
+   * Today header cell highlight color (light blue)
+   */
+  todayHighlight: "#e7f1fd",
 
   /**
    * Header background color
