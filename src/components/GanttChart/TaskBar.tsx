@@ -16,6 +16,7 @@ import { useTaskBarInteraction } from "../../hooks/useTaskBarInteraction";
 import { useChartStore } from "../../store/slices/chartSlice";
 import { useTaskStore } from "../../store/slices/taskSlice";
 import { useDensityConfig } from "../../store/slices/userPreferencesSlice";
+import { SVG_FONT_FAMILY } from "../../utils/export/constants";
 
 interface TaskBarProps {
   task: Task;
@@ -89,7 +90,7 @@ function MilestoneDiamond({
           x={labelPosition === "before" ? x - 8 : x + size * 2 + 8}
           y={centerY + fontSize / 3}
           fontSize={fontSize}
-          fontFamily="Inter"
+          fontFamily={SVG_FONT_FAMILY}
           fill="#495057"
           fontWeight="bold"
           pointerEvents="none"
@@ -177,7 +178,7 @@ function SummaryBracket({
           x={labelPosition === "before" ? x - 8 : x + width + 8}
           y={y + height / 2 + fontSize / 3}
           fontSize={fontSize}
-          fontFamily="Inter"
+          fontFamily={SVG_FONT_FAMILY}
           fill="#495057"
           fontWeight="bold"
           pointerEvents="none"
@@ -499,7 +500,7 @@ export const TaskBar = React.memo(function TaskBar({
           }
           y={geometry.y + geometry.height / 2 + densityConfig.fontSizeBar / 3}
           fontSize={densityConfig.fontSizeBar}
-          fontFamily="Inter"
+          fontFamily={SVG_FONT_FAMILY}
           fill={labelPosition === "inside" ? "#fff" : "#495057"}
           textAnchor={labelPosition === "before" ? "end" : "start"}
           clipPath={

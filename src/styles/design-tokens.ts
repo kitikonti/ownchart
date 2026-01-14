@@ -85,7 +85,7 @@ export const SPACING = {
 
 export const TYPOGRAPHY = {
   fontFamily: {
-    sans: "'Segoe UI', -apple-system, BlinkMacSystemFont, 'Roboto', 'Helvetica Neue', sans-serif",
+    sans: "'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Helvetica Neue', sans-serif",
     mono: "ui-monospace, 'SF Mono', 'Fira Code', monospace",
   },
   fontSize: {

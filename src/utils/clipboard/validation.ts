@@ -78,7 +78,7 @@ export function getClearValueForField(field: EditableField): unknown {
     case "progress":
       return 0;
     case "color":
-      return "#0d9488"; // Default teal
+      return "#FAA916"; // Default amber
     case "type":
       return "task";
     default:

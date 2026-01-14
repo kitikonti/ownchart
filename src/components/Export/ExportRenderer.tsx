@@ -30,6 +30,7 @@ import {
   type DensityConfig,
 } from "../../types/preferences.types";
 import { useChartStore } from "../../store/slices/chartSlice";
+import { SVG_FONT_FAMILY } from "../../utils/export/constants";
 
 interface ExportRendererProps {
   tasks: Task[];
@@ -406,8 +407,7 @@ export function ExportRenderer({
         backgroundColor: bgColor,
         display: "flex",
         flexDirection: "column",
-        fontFamily:
-          "'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+        fontFamily: SVG_FONT_FAMILY,
       }}
     >
       {/* Header Row */}

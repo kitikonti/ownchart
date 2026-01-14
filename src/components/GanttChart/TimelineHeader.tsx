@@ -14,6 +14,7 @@ import {
   getScaleConfig,
   FIXED_BASE_PIXELS_PER_DAY,
 } from "../../utils/timelineUtils";
+import { SVG_FONT_FAMILY } from "../../utils/export/constants";
 import {
   useFirstDayOfWeek,
   useWeekNumberingSystem,
@@ -206,7 +207,7 @@ export function TimelineHeader({ scale, width }: TimelineHeaderProps) {
                 y={rowIndex * ROW_HEIGHT + ROW_HEIGHT / 2 + 4}
                 fontSize={rowIndex === 0 ? 12 : 11}
                 fontWeight={rowIndex === 0 ? "bold" : "normal"}
-                fontFamily="Inter"
+                fontFamily={SVG_FONT_FAMILY}
                 fill="#495057"
                 textAnchor="middle"
               >

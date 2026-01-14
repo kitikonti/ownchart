@@ -12,6 +12,40 @@
 - **CI/CD**: GitHub Actions + GitHub Pages
 - **Solo Project**: 100% vibe-coded by Martin
 
+## ⛔ CRITICAL SYSTEM CONSTRAINT - READ FIRST ⛔
+
+### FORBIDDEN FILES - WILL CAUSE CRASH
+The following files contain large base64 data and **WILL CRASH THIS SESSION** if you interact with them:
+```
+src/utils/export/fonts/interFontData.ts
+src/utils/export/fonts/interItalicFontData.ts
+```
+
+### BANNED COMMANDS ON THESE FILES (instant crash):
+- ❌ `Read()` / `view`
+- ❌ `head` / `tail` / `cat`
+- ❌ `grep` (even with patterns!)
+- ❌ ANY command that reads content
+
+### THE ONLY SAFE COMMANDS:
+- ✅ `ls -la <directory>` (not the file itself)
+- ✅ `rm <file>` (delete)
+- ✅ `mv <file>` (move/rename)
+
+### KNOWN EXPORT NAMES (DO NOT VERIFY - TRUST THIS):
+```typescript
+// interFontData.ts exports:
+export const INTER_REGULAR_BASE64 = "..."
+
+// interItalicFontData.ts exports:
+export const INTER_ITALIC_FONT_BASE64 = "..."
+```
+
+### IF YOU NEED INFO ABOUT THESE FILES:
+**STOP and ASK the user** to run the command and paste the result.
+
+Example: "I need to check the export name in interFontData.ts. Could you run `grep '^export' src/utils/export/fonts/interFontData.ts` and paste the result?"
+
 ## Project Status
 
 **Current Version**: See `package.json` for the current version number.

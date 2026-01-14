@@ -6,9 +6,9 @@
 /** Height of the header row in pixels */
 export const HEADER_HEIGHT = 48;
 
-/** Font family for SVG text elements (system font stack) */
+/** Font family for SVG text elements (Inter with system font fallback) */
 export const SVG_FONT_FAMILY =
-  '"Segoe UI", -apple-system, BlinkMacSystemFont, Roboto, "Helvetica Neue", Arial, sans-serif';
+  'Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif';
 
 /**
  * Tailwind slate colors for consistent styling.

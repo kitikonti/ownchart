@@ -266,7 +266,7 @@ export function Ribbon() {
       endDate: formatDate(nextWeek),
       duration: 7,
       progress: 0,
-      color: "#0d9488",
+      color: "#FAA916",
       order: tasks.length,
       type: "task",
       parent: undefined,

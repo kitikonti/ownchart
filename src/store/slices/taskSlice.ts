@@ -1222,7 +1222,7 @@ export const useTaskStore = create<TaskStore>()(
         endDate,
         duration: DEFAULT_DURATION,
         progress: 0,
-        color: "#0d9488",
+        color: "#FAA916",
         order: refIndex,
         type: "task",
         parent: refTask.parent, // Same hierarchy level
@@ -1302,7 +1302,7 @@ export const useTaskStore = create<TaskStore>()(
         endDate,
         duration: DEFAULT_DURATION,
         progress: 0,
-        color: "#0d9488",
+        color: "#FAA916",
         order: refIndex + 1,
         type: "task",
         parent: refTask.parent, // Same hierarchy level

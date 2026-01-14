@@ -8,7 +8,7 @@ import type { TaskLabelPosition } from "../types/preferences.types";
 
 /** Default font family used in the app (matches tailwind.config.js) */
 const DEFAULT_FONT_FAMILY =
-  "Inter, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif";
+  "Inter, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', sans-serif";
 
 /** 8px gap between task bar and label */
 const LABEL_GAP = 8;

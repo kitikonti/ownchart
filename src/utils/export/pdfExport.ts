@@ -25,6 +25,7 @@ import { buildFlattenedTaskList } from "../hierarchy";
 import { DENSITY_CONFIG, type DateFormat } from "../../types/preferences.types";
 import { formatDateByPreference } from "../dateUtils";
 import { SVG_FONT_FAMILY } from "./constants";
+import { registerInterFont } from "./interFont";
 // Shared modules
 import { HEADER_HEIGHT } from "./constants";
 import {
@@ -256,9 +257,9 @@ export async function exportToPdf(params: ExportToPdfParams): Promise<void> {
       format: [pageDims.width, pageDims.height],
     });
 
-    // Use Helvetica (built into jsPDF) as fallback for PDF text
-    // SVG elements use system font stack via SVG_FONT_FAMILY
-    doc.setFont("helvetica", "normal");
+    // Register and use Inter font for consistent rendering across all systems
+    registerInterFont(doc);
+    doc.setFont("Inter", "normal");
 
     // Set metadata - use projectTitle/projectAuthor from chart settings, fallback to projectName
     const pdfTitle = projectTitle || projectName || "Project Timeline";

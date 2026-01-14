@@ -181,7 +181,7 @@ export function NewTaskPlaceholderRow(): JSX.Element {
       endDate,
       duration: DEFAULT_DURATION,
       progress: 0,
-      color: "#0d9488",
+      color: "#FAA916",
       order: maxOrder,
       type: "task",
       parent: undefined,

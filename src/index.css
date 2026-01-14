@@ -1,9 +1,62 @@
-/* System fonts - no external dependencies */
-/* Segoe UI (Windows), San Francisco (macOS), Roboto (Android/Linux) */
+/* Inter - Modern open source typeface (SIL Open Font License) */
+/* Self-hosted for GDPR compliance */
 
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+/* ============================================================================
+   Inter Font Face Declarations
+   ============================================================================
+   Inter is a modern, professional typeface optimized for screens.
+   Licensed under SIL Open Font License - can be embedded in PDFs.
+   Source: https://github.com/rsms/inter
+   ============================================================================ */
+
+@font-face {
+  font-family: "Inter";
+  src: url("./assets/fonts/Inter-Regular.woff2") format("woff2"),
+    url("./assets/fonts/Inter-Regular.ttf") format("truetype");
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Inter";
+  src: url("./assets/fonts/Inter-Italic.woff2") format("woff2"),
+    url("./assets/fonts/Inter-Italic.ttf") format("truetype");
+  font-weight: 400;
+  font-style: italic;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Inter";
+  src: url("./assets/fonts/Inter-SemiBold.woff2") format("woff2"),
+    url("./assets/fonts/Inter-SemiBold.ttf") format("truetype");
+  font-weight: 600;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Inter";
+  src: url("./assets/fonts/Inter-Bold.woff2") format("woff2"),
+    url("./assets/fonts/Inter-Bold.ttf") format("truetype");
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Inter";
+  src: url("./assets/fonts/Inter-Light.woff2") format("woff2"),
+    url("./assets/fonts/Inter-Light.ttf") format("truetype");
+  font-weight: 300;
+  font-style: normal;
+  font-display: swap;
+}
 
 /* Disable browser scroll anchoring for manual scroll position control */
 /* Required for smooth infinite scroll when adding content to the left */
@@ -21,10 +74,10 @@
    ============================================================================ */
 
 :root {
-  /* Typography - System fonts (MS Office style) */
+  /* Typography - Inter (modern open source typeface) */
   --font-sans:
-    "Segoe UI", -apple-system, BlinkMacSystemFont, "Roboto", "Helvetica Neue",
-    sans-serif;
+    "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", "Roboto",
+    "Helvetica Neue", sans-serif;
   --font-mono: ui-monospace, "SF Mono", "Fira Code", monospace;
 
   font-family: var(--font-sans);
