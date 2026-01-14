@@ -19,6 +19,7 @@ The following files contain large base64 data and **WILL CRASH THIS SESSION** if
 ```
 src/utils/export/fonts/interFontData.ts
 src/utils/export/fonts/interItalicFontData.ts
+src/utils/export/fonts/interSemiBoldFontData.ts
 ```
 
 ### BANNED COMMANDS ON THESE FILES (instant crash):
@@ -39,6 +40,9 @@ export const INTER_REGULAR_BASE64 = "..."
 
 // interItalicFontData.ts exports:
 export const INTER_ITALIC_FONT_BASE64 = "..."
+
+// interSemiBoldFontData.ts exports:
+export const INTER_SEMIBOLD_BASE64 = "..."
 ```
 
 ### IF YOU NEED INFO ABOUT THESE FILES:

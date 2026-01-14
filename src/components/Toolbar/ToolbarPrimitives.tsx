@@ -170,7 +170,7 @@ export const ToolbarButton = forwardRef<HTMLButtonElement, ToolbarButtonProps>(
             backgroundColor: disabled ? COLORS.neutral[300] : COLORS.brand[600],
             color: disabled ? COLORS.neutral[400] : COLORS.neutral[0],
             padding: "5px 10px",
-            fontWeight: 500,
+            fontWeight: 600,
             fontSize: "12px",
           }
         : {};

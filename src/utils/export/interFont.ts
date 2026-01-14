@@ -6,6 +6,7 @@
 import type { jsPDF } from "jspdf";
 import { INTER_REGULAR_BASE64 } from "./fonts/interFontData";
 import { INTER_ITALIC_FONT_BASE64 } from "./fonts/interItalicFontData";
+import { INTER_SEMIBOLD_BASE64 } from "./fonts/interSemiBoldFontData";
 
 /**
  * Register Inter font with jsPDF for consistent PDF rendering.
@@ -19,4 +20,8 @@ export function registerInterFont(doc: jsPDF): void {
   // Register Inter Italic
   doc.addFileToVFS("Inter-Italic.ttf", INTER_ITALIC_FONT_BASE64);
   doc.addFont("Inter-Italic.ttf", "Inter", "italic");
+
+  // Register Inter SemiBold (weight 600)
+  doc.addFileToVFS("Inter-SemiBold.ttf", INTER_SEMIBOLD_BASE64);
+  doc.addFont("Inter-SemiBold.ttf", "Inter", "bold");
 }

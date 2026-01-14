@@ -92,7 +92,7 @@ function MilestoneDiamond({
           fontSize={fontSize}
           fontFamily={SVG_FONT_FAMILY}
           fill="#495057"
-          fontWeight="bold"
+          fontWeight={600}
           pointerEvents="none"
           textAnchor={labelPosition === "before" ? "end" : "start"}
         >
@@ -180,7 +180,7 @@ function SummaryBracket({
           fontSize={fontSize}
           fontFamily={SVG_FONT_FAMILY}
           fill="#495057"
-          fontWeight="bold"
+          fontWeight={600}
           pointerEvents="none"
           textAnchor={labelPosition === "before" ? "end" : "start"}
         >

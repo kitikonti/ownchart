@@ -206,7 +206,7 @@ export function TimelineHeader({ scale, width }: TimelineHeaderProps) {
                 x={cell.x + cell.width / 2}
                 y={rowIndex * ROW_HEIGHT + ROW_HEIGHT / 2 + 4}
                 fontSize={rowIndex === 0 ? 12 : 11}
-                fontWeight={rowIndex === 0 ? "bold" : "normal"}
+                fontWeight={rowIndex === 0 ? 600 : 400}
                 fontFamily={SVG_FONT_FAMILY}
                 fill="#495057"
                 textAnchor="middle"

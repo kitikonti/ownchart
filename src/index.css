@@ -40,23 +40,6 @@
   font-display: swap;
 }
 
-@font-face {
-  font-family: "Inter";
-  src: url("./assets/fonts/Inter-Bold.woff2") format("woff2"),
-    url("./assets/fonts/Inter-Bold.ttf") format("truetype");
-  font-weight: 700;
-  font-style: normal;
-  font-display: swap;
-}
-
-@font-face {
-  font-family: "Inter";
-  src: url("./assets/fonts/Inter-Light.woff2") format("woff2"),
-    url("./assets/fonts/Inter-Light.ttf") format("truetype");
-  font-weight: 300;
-  font-style: normal;
-  font-display: swap;
-}
 
 /* Disable browser scroll anchoring for manual scroll position control */
 /* Required for smooth infinite scroll when adding content to the left */
