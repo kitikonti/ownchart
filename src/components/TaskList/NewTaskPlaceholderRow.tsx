@@ -210,6 +210,27 @@ export function NewTaskPlaceholderRow(): JSX.Element {
     <div className="placeholder-row contents" role="row">
       {visibleColumns.map((column) => {
         const isActiveCell = isRowActive && activeCell.field === column.field;
+        const isRowNumberCell = column.id === "rowNumber";
+
+        // Row number cell has special styling and click handler
+        if (isRowNumberCell) {
+          return (
+            <div
+              key={column.id}
+              className="border-r border-b border-neutral-200 flex items-center justify-end cursor-pointer"
+              style={{
+                height: "var(--density-row-height)",
+                paddingRight: "8px",
+                backgroundColor: isSelected ? "#008A99" : "#F3F3F3",
+              }}
+              onClick={handleRowNumberClick}
+              role="gridcell"
+              aria-label="Select new task placeholder row"
+            >
+              {/* Empty - placeholder row has no number */}
+            </div>
+          );
+        }
 
         return (
           <div
@@ -234,20 +255,6 @@ export function NewTaskPlaceholderRow(): JSX.Element {
             onKeyDown={column.id === "name" ? handleCellKeyDown : undefined}
             role="gridcell"
           >
-            {column.id === "rowNumber" && (
-              <div
-                className="flex items-center justify-end w-full h-full cursor-pointer"
-                onClick={handleRowNumberClick}
-                style={{
-                  backgroundColor: isSelected ? "#008A99" : "#F3F3F3",
-                  margin: "-4px -8px",
-                  padding: "4px 8px",
-                }}
-                aria-label="Select new task placeholder row"
-              >
-                {/* Empty - placeholder row has no number */}
-              </div>
-            )}
             {column.id === "name" &&
               (isEditing ? (
                 <input
