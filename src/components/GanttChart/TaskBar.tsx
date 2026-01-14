@@ -17,6 +17,7 @@ import { useChartStore } from "../../store/slices/chartSlice";
 import { useTaskStore } from "../../store/slices/taskSlice";
 import { useDensityConfig } from "../../store/slices/userPreferencesSlice";
 import { SVG_FONT_FAMILY } from "../../utils/export/constants";
+import { getContrastTextColor } from "../../utils/colorUtils";
 
 interface TaskBarProps {
   task: Task;
@@ -501,7 +502,7 @@ export const TaskBar = React.memo(function TaskBar({
           y={geometry.y + geometry.height / 2 + densityConfig.fontSizeBar / 3}
           fontSize={densityConfig.fontSizeBar}
           fontFamily={SVG_FONT_FAMILY}
-          fill={labelPosition === "inside" ? "#fff" : "#495057"}
+          fill={labelPosition === "inside" ? getContrastTextColor(task.color) : "#495057"}
           textAnchor={labelPosition === "before" ? "end" : "start"}
           clipPath={
             labelPosition === "inside" ? `url(#${clipPathId})` : undefined

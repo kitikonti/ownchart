@@ -4,6 +4,8 @@
  * to ensure consistent rendering between app and exports.
  */
 
+import { getContrastTextColor } from "../colorUtils";
+
 /**
  * Task rendering constants - matching TaskBar.tsx exactly
  */
@@ -311,12 +313,19 @@ export function generateMilestonePath(
 /**
  * Calculate label position and styling based on position mode.
  * Returns x offset relative to task bar start, y position, text anchor, fill color, and clip flag.
+ *
+ * @param taskWidth - Width of the task bar
+ * @param taskHeight - Height of the task bar
+ * @param labelPosition - Position of the label (before, inside, after)
+ * @param fontSize - Font size for vertical offset calculation
+ * @param taskColor - Optional task background color for dynamic contrast calculation (inside labels only)
  */
 export function getLabelConfig(
   taskWidth: number,
   taskHeight: number,
   labelPosition: "before" | "inside" | "after",
-  fontSize: number
+  fontSize: number,
+  taskColor?: string
 ): {
   x: number;
   y: number;
@@ -342,7 +351,9 @@ export function getLabelConfig(
         x: padding,
         y,
         textAnchor: "start",
-        fill: LABEL_RENDER_CONSTANTS.internalColor,
+        fill: taskColor
+          ? getContrastTextColor(taskColor)
+          : LABEL_RENDER_CONSTANTS.internalColor,
         clip: true,
       };
     case "after":
