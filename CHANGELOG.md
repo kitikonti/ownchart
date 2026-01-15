@@ -2,6 +2,19 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [0.0.30](https://github.com/kitikonti/ownchart/compare/v0.0.29...v0.0.30) (2026-01-15)
+
+
+### Bug Fixes
+
+* resolve export preview flash and PDF bold font issues ([6dea551](https://github.com/kitikonti/ownchart/commit/6dea55177cb908a7bd1886aea5cd1c0b460ce8b4))
+* unify default task color to brand color ([#0](https://github.com/kitikonti/ownchart/issues/0)F6CBD) ([07fb764](https://github.com/kitikonti/ownchart/commit/07fb764b16c626dba9590f07ca9b7b8ca48015c2)), closes [#0F6](https://github.com/kitikonti/ownchart/issues/0F6) [#FAA916](https://github.com/kitikonti/ownchart/issues/FAA916) [#0F6](https://github.com/kitikonti/ownchart/issues/0F6) [#0d9488](https://github.com/kitikonti/ownchart/issues/0d9488) [#0F6](https://github.com/kitikonti/ownchart/issues/0F6) [#0F6](https://github.com/kitikonti/ownchart/issues/0F6)
+
+
+### Code Refactoring
+
+* extract reusable components from export dialogs ([dcd53a2](https://github.com/kitikonti/ownchart/commit/dcd53a23f1f506f96b41f1feafb189fe9e0c19ad))
+
 ### [0.0.29](https://github.com/kitikonti/ownchart/compare/v0.0.28...v0.0.29) (2026-01-15)
 
 
