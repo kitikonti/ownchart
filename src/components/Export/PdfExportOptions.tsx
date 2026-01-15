@@ -8,15 +8,14 @@ import type {
   PdfPageSize,
   PdfMarginPreset,
   ExportOptions,
+  ExportZoomMode,
 } from "../../utils/export/types";
 import { Checkbox } from "../common/Checkbox";
 import {
   PDF_PAGE_SIZES,
   PDF_MARGIN_PRESETS,
-  EXPORT_ZOOM_PRESETS,
-  EXPORT_ZOOM_MIN,
-  EXPORT_ZOOM_MAX,
 } from "../../utils/export/types";
+import { ZoomModeSelector } from "./ZoomModeSelector";
 
 const PAGE_SIZE_LABELS: Record<PdfPageSize, { label: string; size: string }> = {
   a4: { label: "A4", size: "297 × 210 mm" },
@@ -37,6 +36,13 @@ const MARGIN_LABELS: Record<PdfMarginPreset, string> = {
   none: "None",
   custom: "Custom",
 };
+
+/** Header/Footer checkbox options */
+const HEADER_FOOTER_OPTIONS = [
+  { key: "showProjectName", label: "Project title" },
+  { key: "showAuthor", label: "Author" },
+  { key: "showExportDate", label: "Export date" },
+] as const;
 
 interface PdfExportOptionsProps {
   options: PdfOptions;
@@ -65,161 +71,18 @@ export function PdfExportOptions({
   return (
     <div className="space-y-8">
       {/* ============ TIMELINE SCALE ============ */}
-      <section>
-        <span className="block text-sm font-semibold text-neutral-900 mb-3">
-          Timeline Scale
-        </span>
-
-        <div className="space-y-2">
-          {/* Use Current View */}
-          <label
-            className={`flex items-center gap-3.5 p-4 rounded border cursor-pointer transition-all duration-150 min-h-[44px] hover:bg-neutral-50 ${
-              exportOptions.zoomMode === "currentView"
-                ? "border-neutral-300 border-l-[3px] border-l-brand-600"
-                : "border-neutral-200 hover:border-neutral-300"
-            }`}
-          >
-            <input
-              type="radio"
-              name="pdfZoomMode"
-              checked={exportOptions.zoomMode === "currentView"}
-              onChange={() =>
-                onExportOptionsChange({ zoomMode: "currentView" })
-              }
-              className="size-4"
-              style={{ accentColor: "var(--color-brand-600)" }}
-              aria-label="Use current view"
-            />
-            <div className="flex-1">
-              <div className="flex items-center gap-2">
-                <span className="text-sm font-medium text-neutral-900">
-                  Use current view
-                </span>
-                <span className="text-xs font-mono px-1.5 py-0.5 rounded-sm bg-neutral-100 text-neutral-600">
-                  {Math.round(currentAppZoom * 100)}%
-                </span>
-              </div>
-              <p className="text-xs text-neutral-500 mt-0.5">
-                Export at your current zoom level
-              </p>
-            </div>
-          </label>
-
-          {/* Fit to Page */}
-          <label
-            className={`flex items-center gap-3.5 p-4 rounded border cursor-pointer transition-all duration-150 min-h-[44px] hover:bg-neutral-50 ${
-              exportOptions.zoomMode === "fitToWidth"
-                ? "border-neutral-300 border-l-[3px] border-l-brand-600"
-                : "border-neutral-200 hover:border-neutral-300"
-            }`}
-          >
-            <input
-              type="radio"
-              name="pdfZoomMode"
-              checked={exportOptions.zoomMode === "fitToWidth"}
-              onChange={() => onExportOptionsChange({ zoomMode: "fitToWidth" })}
-              className="size-4"
-              style={{ accentColor: "var(--color-brand-600)" }}
-              aria-label="Fit to page"
-            />
-            <div className="flex-1">
-              <span className="text-sm font-medium text-neutral-900">
-                Fit to page
-              </span>
-              <p className="text-xs text-neutral-500 mt-0.5">
-                Automatically scale to fit page width
-              </p>
-            </div>
-          </label>
-
-          {/* Custom Zoom */}
-          <label
-            className={`flex items-start gap-3.5 p-4 rounded border cursor-pointer transition-all duration-150 min-h-[44px] hover:bg-neutral-50 ${
-              exportOptions.zoomMode === "custom"
-                ? "border-neutral-300 border-l-[3px] border-l-brand-600"
-                : "border-neutral-200 hover:border-neutral-300"
-            }`}
-          >
-            <input
-              type="radio"
-              name="pdfZoomMode"
-              checked={exportOptions.zoomMode === "custom"}
-              onChange={() => onExportOptionsChange({ zoomMode: "custom" })}
-              className="size-4 mt-0.5"
-              style={{ accentColor: "var(--color-brand-600)" }}
-            />
-            <div className="flex-1">
-              <span className="text-sm font-medium text-neutral-900">
-                Custom zoom
-              </span>
-              <p className="text-xs text-neutral-500 mt-0.5">
-                Set a specific zoom percentage
-              </p>
-
-              {exportOptions.zoomMode === "custom" && (
-                <div className="mt-4 space-y-4">
-                  <div className="flex items-center gap-3">
-                    <input
-                      type="range"
-                      min={EXPORT_ZOOM_MIN * 100}
-                      max={EXPORT_ZOOM_MAX * 100}
-                      step={1}
-                      value={exportOptions.timelineZoom * 100}
-                      onChange={(e) =>
-                        onExportOptionsChange({
-                          timelineZoom: parseInt(e.target.value) / 100,
-                        })
-                      }
-                      className="flex-1 h-1.5 bg-neutral-200 rounded-full appearance-none cursor-pointer accent-brand-600"
-                    />
-                    <div className="flex items-center gap-1 bg-white border border-neutral-300 rounded px-3 py-1.5">
-                      <input
-                        type="number"
-                        value={Math.round(exportOptions.timelineZoom * 100)}
-                        onChange={(e) =>
-                          onExportOptionsChange({
-                            timelineZoom: Math.max(
-                              EXPORT_ZOOM_MIN,
-                              Math.min(
-                                EXPORT_ZOOM_MAX,
-                                parseInt(e.target.value) / 100 || 1
-                              )
-                            ),
-                          })
-                        }
-                        className="w-10 text-sm text-center font-mono bg-transparent border-none focus:outline-none text-neutral-900"
-                        min={EXPORT_ZOOM_MIN * 100}
-                        max={EXPORT_ZOOM_MAX * 100}
-                      />
-                      <span className="text-xs text-neutral-500">%</span>
-                    </div>
-                  </div>
-
-                  <div className="flex gap-1.5">
-                    {Object.entries(EXPORT_ZOOM_PRESETS).map(([key, value]) => (
-                      <button
-                        key={key}
-                        type="button"
-                        onClick={() =>
-                          onExportOptionsChange({ timelineZoom: value })
-                        }
-                        className={`px-3 py-1.5 text-xs font-mono font-medium rounded transition-colors duration-150 ${
-                          exportOptions.timelineZoom === value
-                            ? "bg-brand-600 text-white"
-                            : "bg-white border border-neutral-300 text-neutral-700 hover:border-neutral-400 hover:bg-neutral-50"
-                        }`}
-                      >
-                        {Math.round(value * 100)}%
-                      </button>
-                    ))}
-                  </div>
-                </div>
-              )}
-            </div>
-          </label>
-        </div>
-
-      </section>
+      <ZoomModeSelector
+        zoomMode={exportOptions.zoomMode}
+        onZoomModeChange={(mode: ExportZoomMode) =>
+          onExportOptionsChange({ zoomMode: mode })
+        }
+        timelineZoom={exportOptions.timelineZoom}
+        onTimelineZoomChange={(zoom: number) =>
+          onExportOptionsChange({ timelineZoom: zoom })
+        }
+        currentAppZoom={currentAppZoom}
+        format="pdf"
+      />
 
       <div className="divider-h" />
 
@@ -257,7 +120,7 @@ export function PdfExportOptions({
             )}
           </div>
 
-          {/* Orientation - Segmented Control (separate row) */}
+          {/* Orientation - Segmented Control */}
           <div>
             <span className="block text-sm font-medium text-neutral-700 mb-2">
               Orientation
@@ -393,56 +256,26 @@ export function PdfExportOptions({
             </span>
             <div className="bg-white border border-neutral-200 rounded p-3">
               <div className="space-y-2.5">
-                <label className="flex items-center gap-3 cursor-pointer group min-h-[32px]">
-                  <Checkbox
-                    checked={options.header.showProjectName}
-                    onChange={(checked) =>
-                      onChange({
-                        header: {
-                          ...options.header,
-                          showProjectName: checked,
-                        },
-                      })
-                    }
-                  />
-                  <span className="text-sm text-neutral-900">
-                    Project title
-                  </span>
-                </label>
-                <div className="divider-h-light" />
-                <label className="flex items-center gap-3 cursor-pointer group min-h-[32px]">
-                  <Checkbox
-                    checked={options.header.showAuthor}
-                    onChange={(checked) =>
-                      onChange({
-                        header: {
-                          ...options.header,
-                          showAuthor: checked,
-                        },
-                      })
-                    }
-                  />
-                  <span className="text-sm text-neutral-900">
-                    Author
-                  </span>
-                </label>
-                <div className="divider-h-light" />
-                <label className="flex items-center gap-3 cursor-pointer group min-h-[32px]">
-                  <Checkbox
-                    checked={options.header.showExportDate}
-                    onChange={(checked) =>
-                      onChange({
-                        header: {
-                          ...options.header,
-                          showExportDate: checked,
-                        },
-                      })
-                    }
-                  />
-                  <span className="text-sm text-neutral-900">
-                    Export date
-                  </span>
-                </label>
+                {HEADER_FOOTER_OPTIONS.map((opt, idx, arr) => (
+                  <div key={opt.key}>
+                    <label className="flex items-center gap-3 cursor-pointer group min-h-[32px]">
+                      <Checkbox
+                        checked={options.header[opt.key]}
+                        onChange={(checked) =>
+                          onChange({
+                            header: { ...options.header, [opt.key]: checked },
+                          })
+                        }
+                      />
+                      <span className="text-sm text-neutral-900">
+                        {opt.label}
+                      </span>
+                    </label>
+                    {idx < arr.length - 1 && (
+                      <div className="divider-h-light mt-2.5" />
+                    )}
+                  </div>
+                ))}
               </div>
             </div>
           </div>
@@ -454,56 +287,26 @@ export function PdfExportOptions({
             </span>
             <div className="bg-white border border-neutral-200 rounded p-3">
               <div className="space-y-2.5">
-                <label className="flex items-center gap-3 cursor-pointer group min-h-[32px]">
-                  <Checkbox
-                    checked={options.footer.showProjectName}
-                    onChange={(checked) =>
-                      onChange({
-                        footer: {
-                          ...options.footer,
-                          showProjectName: checked,
-                        },
-                      })
-                    }
-                  />
-                  <span className="text-sm text-neutral-900">
-                    Project title
-                  </span>
-                </label>
-                <div className="divider-h-light" />
-                <label className="flex items-center gap-3 cursor-pointer group min-h-[32px]">
-                  <Checkbox
-                    checked={options.footer.showAuthor}
-                    onChange={(checked) =>
-                      onChange({
-                        footer: {
-                          ...options.footer,
-                          showAuthor: checked,
-                        },
-                      })
-                    }
-                  />
-                  <span className="text-sm text-neutral-900">
-                    Author
-                  </span>
-                </label>
-                <div className="divider-h-light" />
-                <label className="flex items-center gap-3 cursor-pointer group min-h-[32px]">
-                  <Checkbox
-                    checked={options.footer.showExportDate}
-                    onChange={(checked) =>
-                      onChange({
-                        footer: {
-                          ...options.footer,
-                          showExportDate: checked,
-                        },
-                      })
-                    }
-                  />
-                  <span className="text-sm text-neutral-900">
-                    Export date
-                  </span>
-                </label>
+                {HEADER_FOOTER_OPTIONS.map((opt, idx, arr) => (
+                  <div key={opt.key}>
+                    <label className="flex items-center gap-3 cursor-pointer group min-h-[32px]">
+                      <Checkbox
+                        checked={options.footer[opt.key]}
+                        onChange={(checked) =>
+                          onChange({
+                            footer: { ...options.footer, [opt.key]: checked },
+                          })
+                        }
+                      />
+                      <span className="text-sm text-neutral-900">
+                        {opt.label}
+                      </span>
+                    </label>
+                    {idx < arr.length - 1 && (
+                      <div className="divider-h-light mt-2.5" />
+                    )}
+                  </div>
+                ))}
               </div>
             </div>
           </div>
