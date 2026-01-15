@@ -167,18 +167,19 @@ export function useExportPreview({
         visibleDateRange
       );
 
-      // Create container
+      // Create container - must be on-screen but hidden for html-to-image
       const container = document.createElement("div");
       container.id = `export-preview-container-${renderId}`;
       container.style.cssText = `
         position: fixed;
-        left: -9999px;
-        top: -9999px;
+        left: 0;
+        top: 0;
         width: ${fullDimensions.width}px;
         height: ${fullDimensions.height}px;
         overflow: hidden;
         background: ${options.background === "white" ? "#ffffff" : "transparent"};
-        z-index: -1;
+        z-index: 99999;
+        opacity: 0;
         pointer-events: none;
       `;
       document.body.appendChild(container);
@@ -224,10 +225,8 @@ export function useExportPreview({
         return;
       }
 
-      // Make briefly visible for capture
-      container.style.left = "0";
-      container.style.top = "0";
-      container.style.opacity = "0.001";
+      // Make visible for capture (html-to-image needs visible elements)
+      container.style.opacity = "1";
       await waitForPaint();
 
       // Capture to canvas at reduced resolution for preview
