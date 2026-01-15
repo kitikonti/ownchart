@@ -1,7 +1,7 @@
 /**
  * Reusable Modal component with backdrop, focus trap, and keyboard support.
  *
- * Design: MS 365/Fluent UI inspired with Cyan brand color.
+ * Design: MS 365/Fluent UI inspired with Outlook Blue brand color.
  */
 
 import { useEffect, useRef, type ReactNode, type KeyboardEvent } from "react";
@@ -124,10 +124,10 @@ export function Modal({
         onClick={onClose}
         aria-hidden="true"
       />
-      {/* Dialog container - MS Fluent: 8px radius, specific shadow, 24px padding */}
+      {/* Dialog container - Outlook style: 4px radius, subtle shadow */}
       <div
         className={`
-          relative bg-white rounded-lg ${widthClass} w-full max-h-[90vh] flex flex-col
+          relative bg-white rounded overflow-hidden ${widthClass} w-full max-h-[90vh] flex flex-col
           animate-modal-in
           shadow-[0_0_8px_rgba(0,0,0,0.12),0_32px_64px_rgba(0,0,0,0.14)]
         `}
@@ -160,11 +160,7 @@ export function Modal({
           </div>
           <button
             onClick={onClose}
-            className={`p-1.5 -m-1.5 rounded transition-colors duration-100 focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-100 ${
-              headerStyle === "figma"
-                ? "text-neutral-400 hover:text-neutral-700 hover:bg-neutral-100"
-                : "text-brand-600 hover:text-brand-700 hover:bg-neutral-100"
-            }`}
+            className="p-1.5 -m-1.5 rounded-sm text-neutral-500 hover:text-neutral-700 transition-colors duration-100 focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-100"
             aria-label="Close dialog"
           >
             <X size={20} weight="regular" />
@@ -181,7 +177,7 @@ export function Modal({
           <div
             className={
               footerStyle === "figma"
-                ? "px-8 py-6 border-t border-neutral-200 bg-neutral-50 flex justify-end gap-3"
+                ? "px-8 py-6 border-t border-neutral-200 bg-neutral-50 rounded-b flex justify-end gap-3"
                 : "px-6 pb-6 pt-2 flex justify-end gap-2"
             }
           >

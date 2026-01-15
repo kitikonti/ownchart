@@ -30,20 +30,18 @@ export default {
           800: '#303030',
           900: '#1a1a1a',
         },
-        // Brand (Cyan - single color for all interactive elements)
-        // Dark shades use hue rotation toward blue (180° → 195°) to maintain
-        // cyan appearance at low lightness (color theory: perceived saturation)
+        // Brand (Outlook Blue - derived from MS Fluent themePrimary #0F6CBD)
         brand: {
-          50: '#E0FFFF',   // H=180°
-          100: '#B3FFFF',  // H=180°
-          200: '#80FFFF',  // H=180°
-          300: '#4DFFFF',  // H=180°
-          400: '#00CCCC',  // H=180° (base brand color)
-          500: '#00AAB3',  // H=183° (+3° blue shift)
-          600: '#008A99',  // H=186° (+6° blue shift) - primary buttons
-          700: '#006C80',  // H=189° (+9° blue shift) - text/links
-          800: '#005266',  // H=192° (+12° blue shift) - pressed
-          900: '#00394D',  // H=195° (+15° blue shift) - dark emphasis
+          50: '#EBF3FC',   // themeLighterAlt - light backgrounds
+          100: '#CFE4FA',  // themeLighter - focus rings
+          200: '#B4D6FA',  // themeLight - disabled states
+          300: '#62ABF5',  // themeTertiary - light accents
+          400: '#2B88D8',  // themeSecondary - icons, highlights
+          500: '#115EA3',  // themeDarkAlt - hover states
+          600: '#0F6CBD',  // themePrimary - primary buttons
+          700: '#0F548C',  // themeDark - links/text
+          800: '#0C3B5E',  // themeDarker - pressed states
+          900: '#0A2E4A',  // darker - dark emphasis
         },
         // Semantic (only for status, not UI)
         success: '#059669',
@@ -79,8 +77,8 @@ export default {
         // MS Dialog shadow
         modal: '0 0 8px rgba(0,0,0,0.12), 0 32px 64px rgba(0,0,0,0.14)',
         // Focus ring
-        focus: '0 0 0 2px #B3FFFF',
-        'focus-brand': '0 0 0 2px #008A99',
+        focus: '0 0 0 2px #CFE4FA',
+        'focus-brand': '0 0 0 2px #0F6CBD',
       },
       transitionTimingFunction: {
         spring: 'cubic-bezier(0.34, 1.56, 0.64, 1)',

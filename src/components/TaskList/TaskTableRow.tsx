@@ -130,8 +130,8 @@ export function TaskTableRow({
   };
 
   // OwnChart brand colors for selected row
-  const SELECTION_BORDER_COLOR = "#008A99"; // OwnChart teal
-  const SELECTION_BG_COLOR = "rgba(0, 138, 153, 0.08)"; // OwnChart teal light
+  const SELECTION_BORDER_COLOR = "#0F6CBD"; // OwnChart brand
+  const SELECTION_BG_COLOR = "rgba(15, 108, 189, 0.08)"; // OwnChart brand light
 
   // Determine selection borders based on position in contiguous selection
   const showTopBorder = selectionPosition?.isFirstSelected ?? true;

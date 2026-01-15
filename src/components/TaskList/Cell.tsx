@@ -377,7 +377,7 @@ export function Cell({
   };
 
   // Brand color for active cell outline
-  const BRAND_COLOR = "#008A99";
+  const BRAND_COLOR = "#0F6CBD";
 
   // Density-aware styles using CSS custom properties
   const cellStyle: React.CSSProperties = {

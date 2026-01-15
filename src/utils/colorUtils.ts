@@ -4,9 +4,9 @@
  */
 
 /**
- * Default fallback color (teal - app brand color)
+ * Default fallback color (Outlook Blue - app brand color)
  */
-const DEFAULT_COLOR = '#14b8a6';
+const DEFAULT_COLOR = '#0F6CBD';
 
 /**
  * Text colors for contrast

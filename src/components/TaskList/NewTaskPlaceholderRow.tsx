@@ -221,7 +221,7 @@ export function NewTaskPlaceholderRow(): JSX.Element {
               style={{
                 height: "var(--density-row-height)",
                 paddingRight: "8px",
-                backgroundColor: isSelected ? "#008A99" : "#F3F3F3",
+                backgroundColor: isSelected ? "#0F6CBD" : "#F3F3F3",
               }}
               onClick={handleRowNumberClick}
               role="gridcell"

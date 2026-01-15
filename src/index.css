@@ -52,7 +52,7 @@
    ============================================================================
    A professional, trustworthy design language befitting a privacy-first tool.
    - Neutral gray palette (pure grays, no blue tint)
-   - Cyan (#00CCCC) as the single brand color
+   - Outlook Blue (#0F6CBD) as the single brand color
    - WCAG AA compliant contrast ratios
    ============================================================================ */
 
@@ -90,20 +90,20 @@
   --color-neutral-800: #303030;
   --color-neutral-900: #1a1a1a;
 
-  /* ─── Color Palette - Brand (Cyan) ─── */
-  --color-brand-50: #e0ffff;
-  --color-brand-100: #b3ffff;
-  --color-brand-200: #80ffff;
-  --color-brand-300: #4dffff;
-  --color-brand-400: #00cccc; /* BRAND COLOR - Icons, Highlights */
-  --color-brand-500: #00aab3; /* Button Hover (H=183°, +3° blue shift) */
-  --color-brand-600: #008a99; /* PRIMARY - Buttons, Active Tab (H=186°, +6° blue shift) */
-  --color-brand-700: #006c80; /* Links, Text (H=189°, +9° blue shift) */
-  --color-brand-800: #005266; /* Pressed state (H=192°, +12° blue shift) */
-  --color-brand-900: #00394d; /* Dark emphasis (H=195°, +15° blue shift) */
+  /* ─── Color Palette - Brand (Outlook Blue) ─── */
+  --color-brand-50: #ebf3fc;  /* themeLighterAlt - light backgrounds */
+  --color-brand-100: #cfe4fa; /* themeLighter - focus rings */
+  --color-brand-200: #b4d6fa; /* themeLight - disabled states */
+  --color-brand-300: #62abf5; /* themeTertiary - light accents */
+  --color-brand-400: #2b88d8; /* themeSecondary - icons, highlights */
+  --color-brand-500: #115ea3; /* themeDarkAlt - hover states */
+  --color-brand-600: #0f6cbd; /* themePrimary - primary buttons */
+  --color-brand-700: #0f548c; /* themeDark - links/text */
+  --color-brand-800: #0c3b5e; /* themeDarker - pressed states */
+  --color-brand-900: #0a2e4a; /* darker - dark emphasis */
 
   /* Primary accent color (brand-600 for interactive elements) */
-  --color-accent: #008a99;
+  --color-accent: #0f6cbd;
 
   /* Surface colors */
   --color-surface: #ffffff;
@@ -131,12 +131,12 @@
   --color-info: #0284c7;
 
   /* Brand-tinted grays for text on brand backgrounds */
-  --color-brand-gray-900: hsl(180, 15%, 28%); /* Primary text - dark */
-  --color-brand-gray-700: hsl(180, 17%, 53%); /* Secondary text - medium */
-  --color-brand-gray-500: hsl(180, 18%, 62%); /* Tertiary text - lighter */
-  --color-brand-gray-400: hsl(180, 20%, 70%); /* Borders - selected state */
-  --color-brand-gray-200: hsl(180, 22%, 82%); /* Subtle backgrounds - hover */
-  --color-brand-gray-100: hsl(180, 20%, 88%); /* Subtle backgrounds */
+  --color-brand-gray-900: hsl(208, 15%, 28%); /* Primary text - dark */
+  --color-brand-gray-700: hsl(208, 17%, 53%); /* Secondary text - medium */
+  --color-brand-gray-500: hsl(208, 18%, 62%); /* Tertiary text - lighter */
+  --color-brand-gray-400: hsl(208, 20%, 70%); /* Borders - selected state */
+  --color-brand-gray-200: hsl(208, 22%, 82%); /* Subtle backgrounds - hover */
+  --color-brand-gray-100: hsl(208, 20%, 88%); /* Subtle backgrounds */
 
   /* ─── Shadows - MS Fluent UI (extracted from computed styles) ─── */
   --shadow-rest: 0 0 2px rgba(0, 0, 0, 0.12), 0 2px 4px rgba(0, 0, 0, 0.14);
@@ -146,7 +146,7 @@
     0 0 8px rgba(0, 0, 0, 0.12), 0 16px 32px rgba(0, 0, 0, 0.14);
   --shadow-modal: 0 0 8px rgba(0, 0, 0, 0.12), 0 32px 64px rgba(0, 0, 0, 0.14);
   /* Focus ring - high visibility for accessibility */
-  --shadow-focus: 0 0 0 2px #ffffff, 0 0 0 4px #008a99;
+  --shadow-focus: 0 0 0 2px #ffffff, 0 0 0 4px #0f6cbd;
 
   /* ─── Radii (MS style - flatter) ─── */
   --radius-sm: 2px;
@@ -747,6 +747,31 @@ input[type="range"]:focus-visible::-moz-range-thumb {
 @media (min-resolution: 192dpi), (-webkit-min-device-pixel-ratio: 2) {
   .toolbar-separator {
     width: 0.5px;
+  }
+}
+
+/* ─── Horizontal Divider (High-DPI aware) ─── */
+.divider-h {
+  height: 1px;
+  background-color: rgb(229, 229, 229); /* neutral-200 */
+}
+
+.divider-h-light {
+  height: 1px;
+  background-color: rgb(235, 235, 235); /* ~neutral-150 - for inner separators */
+}
+
+@media (min-resolution: 144dpi), (-webkit-min-device-pixel-ratio: 1.5) {
+  .divider-h,
+  .divider-h-light {
+    height: 0.67px;
+  }
+}
+
+@media (min-resolution: 192dpi), (-webkit-min-device-pixel-ratio: 2) {
+  .divider-h,
+  .divider-h-light {
+    height: 0.5px;
   }
 }
 

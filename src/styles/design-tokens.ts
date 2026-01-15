@@ -3,7 +3,7 @@
  *
  * Based on MS 365/Fluent UI design principles:
  * - Neutral gray palette (pure grays, no blue tint)
- * - Cyan (#00CCCC) as the single brand color
+ * - Outlook Blue (#0F6CBD) as the single brand color
  * - WCAG AA compliant contrast ratios
  */
 
@@ -27,20 +27,18 @@ export const COLORS = {
     900: "#1a1a1a", // Emphasis
   },
 
-  // Brand (Cyan - SINGLE color for all interactive elements)
-  // Dark shades use hue rotation toward blue (180° → 195°) to maintain
-  // cyan appearance at low lightness (see: "Don't let lightness kill your saturation")
+  // Brand (Outlook Blue - derived from MS Fluent themePrimary #0F6CBD)
   brand: {
-    50: "#E0FFFF", // Selected backgrounds, very subtle (H=180°)
-    100: "#B3FFFF", // Focus rings, light backgrounds (H=180°)
-    200: "#80FFFF", // Disabled buttons (light) (H=180°)
-    300: "#4DFFFF", // Light accents (H=180°)
-    400: "#00CCCC", // BRAND COLOR - Icons, Highlights, Logo (H=180°)
-    500: "#00AAB3", // Button Hover (H=183°, +3° blue shift)
-    600: "#008A99", // PRIMARY BUTTONS (H=186°, +6° blue shift) WCAG AA ✓
-    700: "#006C80", // Links/Text (H=189°, +9° blue shift) WCAG AA ✓
-    800: "#005266", // Pressed/Active state (H=192°, +12° blue shift)
-    900: "#00394D", // Dark emphasis (H=195°, +15° blue shift)
+    50: "#EBF3FC", // themeLighterAlt - light backgrounds
+    100: "#CFE4FA", // themeLighter - focus rings
+    200: "#B4D6FA", // themeLight - disabled states
+    300: "#62ABF5", // themeTertiary - light accents
+    400: "#2B88D8", // themeSecondary - icons, highlights
+    500: "#115EA3", // themeDarkAlt - hover states
+    600: "#0F6CBD", // themePrimary - primary buttons
+    700: "#0F548C", // themeDark - links/text
+    800: "#0C3B5E", // themeDarker - pressed states
+    900: "#0A2E4A", // darker - dark emphasis
   },
 
   // Semantic (NOT for UI, only for status indicators)
@@ -51,14 +49,14 @@ export const COLORS = {
     info: "#0284c7", // Blue for info (rarely used)
   },
 
-  // Chart-specific colors (preserved from original)
+  // Chart-specific colors (using Outlook blue palette)
   chart: {
-    selection: "#228be6", // Blue for drag preview/selection
+    selection: "#2B88D8", // brand-400 for drag preview/selection
     text: "#495057", // Text in SVG
     dependencyDefault: "#94a3b8",
     dependencySelected: "#334155",
-    todayMarker: "#228be6", // Blue for today marker (matches selection for consistency)
-    todayHighlight: "#e7f1fd", // Light blue for today header cell background
+    todayMarker: "#0F6CBD", // brand-600 for today marker
+    todayHighlight: "#EBF3FC", // brand-50 for today header cell background
   },
 } as const;
 

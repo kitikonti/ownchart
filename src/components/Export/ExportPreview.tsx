@@ -4,12 +4,13 @@
  */
 
 import type { ExportFormat, PdfExportOptions } from "../../utils/export/types";
-import { ChartPreview } from "./ChartPreview";
+import { ChartPreview, type ReadabilityStatus } from "./ChartPreview";
 import { PdfPreview } from "./PdfPreview";
 
 export interface ExportPreviewProps {
   format: ExportFormat;
-  canvas: HTMLCanvasElement | null;
+  /** Data URL of the preview image */
+  previewDataUrl: string | null;
   dimensions: { width: number; height: number };
   isRendering: boolean;
   error: string | null;
@@ -17,6 +18,10 @@ export interface ExportPreviewProps {
   pdfOptions?: PdfExportOptions;
   projectTitle?: string;
   projectAuthor?: string;
+  /** Effective zoom for preview info */
+  effectiveZoom?: number;
+  /** Readability status for preview */
+  readabilityStatus?: ReadabilityStatus;
 }
 
 /**
@@ -24,7 +29,7 @@ export interface ExportPreviewProps {
  */
 export function ExportPreview({
   format,
-  canvas,
+  previewDataUrl,
   dimensions,
   isRendering,
   error,
@@ -32,28 +37,35 @@ export function ExportPreview({
   pdfOptions,
   projectTitle,
   projectAuthor,
+  effectiveZoom,
+  readabilityStatus,
 }: ExportPreviewProps): JSX.Element {
   if (format === "pdf" && pdfOptions) {
     return (
       <PdfPreview
-        canvas={canvas}
+        previewDataUrl={previewDataUrl}
         chartDimensions={dimensions}
         pdfOptions={pdfOptions}
         projectTitle={projectTitle}
         projectAuthor={projectAuthor}
         isRendering={isRendering}
         error={error}
+        effectiveZoom={effectiveZoom}
+        readabilityStatus={readabilityStatus}
       />
     );
   }
 
   return (
     <ChartPreview
-      canvas={canvas}
+      previewDataUrl={previewDataUrl}
       dimensions={dimensions}
       isRendering={isRendering}
       error={error}
       isTransparent={isTransparent}
+      effectiveZoom={effectiveZoom}
+      readabilityStatus={readabilityStatus}
+      formatType={format === "svg" ? "svg" : "png"}
     />
   );
 }

@@ -273,7 +273,7 @@ export function ChartCanvas({
                   index < tasks.length - 1 &&
                   selectedTaskIds.includes(tasks[index + 1].id);
 
-                const BRAND_COLOR = "#008A99";
+                const BRAND_COLOR = "#0F6CBD";
                 const y = index * ROW_HEIGHT;
 
                 return (

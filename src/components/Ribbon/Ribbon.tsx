@@ -994,7 +994,7 @@ export function Ribbon() {
           <ChartBarHorizontal
             size={18}
             weight="light"
-            style={{ color: "#008A99" }}
+            style={{ color: "#0F6CBD" }}
           />
         </div>
       </div>

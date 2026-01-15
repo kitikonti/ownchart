@@ -24,18 +24,18 @@ export const dragState = {
 // Custom cursor for row selection (Excel-style right arrow with shaft)
 const ROW_SELECT_CURSOR = `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='18' height='14' viewBox='0 0 18 14'%3E%3Cpath d='M5 5 L5 9 L10 9 L10 13 L17 7 L10 1 L10 5 Z' fill='black' stroke='white' stroke-width='1'/%3E%3C/svg%3E") 17 7, pointer`;
 
-// OwnChart brand colors (Teal)
+// OwnChart brand colors (Outlook Blue)
 const COLORS = {
   // Inactive state
   bgInactive: "#F3F3F3",
   bgHover: "#E8E8E8",
   textInactive: "#5F6368",
-  // Selected state - OwnChart teal
-  bgSelected: "#008A99",
+  // Selected state - OwnChart brand
+  bgSelected: "#0F6CBD",
   textSelected: "#FFFFFF",
-  // Hover controls - OwnChart teal
-  controlsColor: "#008A99",
-  insertLineColor: "#008A99",
+  // Hover controls - OwnChart brand
+  controlsColor: "#0F6CBD",
+  insertLineColor: "#0F6CBD",
   // Border
   border: "#E1E1E1",
 };

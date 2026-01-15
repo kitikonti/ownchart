@@ -3,25 +3,20 @@
  * Provides controls for page size, orientation, scale, margins, and more.
  */
 
-import { useMemo } from "react";
-import { CheckCircle, Warning, Info } from "@phosphor-icons/react";
 import type {
   PdfExportOptions as PdfOptions,
   PdfPageSize,
   PdfMarginPreset,
   ExportOptions,
 } from "../../utils/export/types";
+import { Checkbox } from "../common/Checkbox";
 import {
   PDF_PAGE_SIZES,
   PDF_MARGIN_PRESETS,
   EXPORT_ZOOM_PRESETS,
   EXPORT_ZOOM_MIN,
   EXPORT_ZOOM_MAX,
-  EXPORT_ZOOM_READABLE_THRESHOLD,
-  EXPORT_ZOOM_LABELS_HIDDEN_THRESHOLD,
 } from "../../utils/export/types";
-import { DENSITY_CONFIG } from "../../types/preferences.types";
-import { mmToPx } from "../../utils/export/pdfLayout";
 
 const PAGE_SIZE_LABELS: Record<PdfPageSize, { label: string; size: string }> = {
   a4: { label: "A4", size: "297 × 210 mm" },
@@ -49,29 +44,6 @@ interface PdfExportOptionsProps {
   exportOptions: ExportOptions;
   onExportOptionsChange: (options: Partial<ExportOptions>) => void;
   currentAppZoom: number;
-  taskCount: number;
-}
-
-function getReadabilityStatus(zoom: number): {
-  level: "good" | "warning" | "critical";
-  message: string;
-  icon: typeof CheckCircle;
-} {
-  if (zoom >= EXPORT_ZOOM_READABLE_THRESHOLD) {
-    return { level: "good", message: "Labels readable", icon: CheckCircle };
-  } else if (zoom >= EXPORT_ZOOM_LABELS_HIDDEN_THRESHOLD) {
-    return {
-      level: "warning",
-      message: "Labels may be hard to read",
-      icon: Warning,
-    };
-  } else {
-    return {
-      level: "critical",
-      message: "Labels will be hidden",
-      icon: Warning,
-    };
-  }
 }
 
 export function PdfExportOptions({
@@ -80,7 +52,6 @@ export function PdfExportOptions({
   exportOptions,
   onExportOptionsChange,
   currentAppZoom,
-  taskCount,
 }: PdfExportOptionsProps): JSX.Element {
   const pageDims =
     options.pageSize === "custom"
@@ -91,81 +62,20 @@ export function PdfExportOptions({
   const displayHeight =
     options.orientation === "landscape" ? pageDims.height : pageDims.width;
 
-  const scaleInfo = useMemo(() => {
-    if (exportOptions.zoomMode !== "fitToWidth") return null;
-
-    const margins = PDF_MARGIN_PRESETS[options.marginPreset];
-    const hasHeader =
-      options.header.showProjectName ||
-      options.header.showAuthor ||
-      options.header.showExportDate;
-    const hasFooter =
-      options.footer.showProjectName ||
-      options.footer.showAuthor ||
-      options.footer.showExportDate;
-    const headerReserved = hasHeader ? 10 : 0;
-    const footerReserved = hasFooter ? 10 : 0;
-
-    const availableHeightMm =
-      displayHeight -
-      margins.top -
-      margins.bottom -
-      headerReserved -
-      footerReserved;
-    const availableHeightPx = mmToPx(availableHeightMm);
-
-    const densityConfig = DENSITY_CONFIG[exportOptions.density];
-    const headerHeight = exportOptions.includeHeader ? 48 : 0;
-    const contentHeightPx = taskCount * densityConfig.rowHeight + headerHeight;
-
-    if (contentHeightPx <= availableHeightPx) return null;
-
-    const scaleFactor = availableHeightPx / contentHeightPx;
-    return { willScale: true, scaleFactor: Math.round(scaleFactor * 100) };
-  }, [
-    exportOptions.zoomMode,
-    exportOptions.density,
-    exportOptions.includeHeader,
-    options.marginPreset,
-    options.header,
-    options.footer,
-    displayHeight,
-    taskCount,
-  ]);
-
-  const effectiveZoom = useMemo(() => {
-    switch (exportOptions.zoomMode) {
-      case "currentView":
-        return currentAppZoom;
-      case "custom":
-        return exportOptions.timelineZoom;
-      case "fitToWidth":
-        return 0.5;
-      default:
-        return exportOptions.timelineZoom;
-    }
-  }, [exportOptions.zoomMode, exportOptions.timelineZoom, currentAppZoom]);
-
-  const readabilityStatus = useMemo(
-    () => getReadabilityStatus(effectiveZoom),
-    [effectiveZoom]
-  );
-  const StatusIcon = readabilityStatus.icon;
-
   return (
     <div className="space-y-8">
       {/* ============ TIMELINE SCALE ============ */}
       <section>
-        <span className="block text-xs font-bold text-neutral-500 uppercase tracking-wide mb-3">
+        <span className="block text-sm font-semibold text-neutral-900 mb-3">
           Timeline Scale
         </span>
 
-        <div className="space-y-3">
+        <div className="space-y-2">
           {/* Use Current View */}
           <label
-            className={`flex items-center gap-3.5 p-4 rounded-lg border-2 cursor-pointer transition-all duration-200 min-h-[44px] hover:bg-neutral-50 ${
+            className={`flex items-center gap-3.5 p-4 rounded border cursor-pointer transition-all duration-150 min-h-[44px] hover:bg-neutral-50 ${
               exportOptions.zoomMode === "currentView"
-                ? "border-brand-600 bg-brand-50"
+                ? "border-neutral-300 border-l-[3px] border-l-brand-600"
                 : "border-neutral-200 hover:border-neutral-300"
             }`}
           >
@@ -185,11 +95,11 @@ export function PdfExportOptions({
                 <span className="text-sm font-medium text-neutral-900">
                   Use current view
                 </span>
-                <span className="text-xs font-mono px-1.5 py-0.5 rounded bg-neutral-100 text-neutral-600">
+                <span className="text-xs font-mono px-1.5 py-0.5 rounded-sm bg-neutral-100 text-neutral-600">
                   {Math.round(currentAppZoom * 100)}%
                 </span>
               </div>
-              <p className="text-xs text-neutral-600 mt-0.5">
+              <p className="text-xs text-neutral-500 mt-0.5">
                 Export at your current zoom level
               </p>
             </div>
@@ -197,9 +107,9 @@ export function PdfExportOptions({
 
           {/* Fit to Page */}
           <label
-            className={`flex items-center gap-3.5 p-4 rounded-lg border-2 cursor-pointer transition-all duration-200 min-h-[44px] hover:bg-neutral-50 ${
+            className={`flex items-center gap-3.5 p-4 rounded border cursor-pointer transition-all duration-150 min-h-[44px] hover:bg-neutral-50 ${
               exportOptions.zoomMode === "fitToWidth"
-                ? "border-brand-600 bg-brand-50"
+                ? "border-neutral-300 border-l-[3px] border-l-brand-600"
                 : "border-neutral-200 hover:border-neutral-300"
             }`}
           >
@@ -216,7 +126,7 @@ export function PdfExportOptions({
               <span className="text-sm font-medium text-neutral-900">
                 Fit to page
               </span>
-              <p className="text-xs text-neutral-600 mt-0.5">
+              <p className="text-xs text-neutral-500 mt-0.5">
                 Automatically scale to fit page width
               </p>
             </div>
@@ -224,9 +134,9 @@ export function PdfExportOptions({
 
           {/* Custom Zoom */}
           <label
-            className={`flex items-start gap-3.5 p-4 rounded-lg border-2 cursor-pointer transition-all duration-200 min-h-[44px] hover:bg-neutral-50 ${
+            className={`flex items-start gap-3.5 p-4 rounded border cursor-pointer transition-all duration-150 min-h-[44px] hover:bg-neutral-50 ${
               exportOptions.zoomMode === "custom"
-                ? "border-brand-600 bg-brand-50"
+                ? "border-neutral-300 border-l-[3px] border-l-brand-600"
                 : "border-neutral-200 hover:border-neutral-300"
             }`}
           >
@@ -242,7 +152,7 @@ export function PdfExportOptions({
               <span className="text-sm font-medium text-neutral-900">
                 Custom zoom
               </span>
-              <p className="text-xs text-neutral-600 mt-0.5">
+              <p className="text-xs text-neutral-500 mt-0.5">
                 Set a specific zoom percentage
               </p>
 
@@ -260,9 +170,9 @@ export function PdfExportOptions({
                           timelineZoom: parseInt(e.target.value) / 100,
                         })
                       }
-                      className="flex-1 h-2 bg-neutral-200 rounded-full appearance-none cursor-pointer accent-brand-600"
+                      className="flex-1 h-1.5 bg-neutral-200 rounded-full appearance-none cursor-pointer accent-brand-600"
                     />
-                    <div className="flex items-center gap-1 bg-white border border-neutral-300 rounded-lg px-3 py-1.5">
+                    <div className="flex items-center gap-1 bg-white border border-neutral-300 rounded px-3 py-1.5">
                       <input
                         type="number"
                         value={Math.round(exportOptions.timelineZoom * 100)}
@@ -285,7 +195,7 @@ export function PdfExportOptions({
                     </div>
                   </div>
 
-                  <div className="flex gap-2">
+                  <div className="flex gap-1.5">
                     {Object.entries(EXPORT_ZOOM_PRESETS).map(([key, value]) => (
                       <button
                         key={key}
@@ -293,9 +203,9 @@ export function PdfExportOptions({
                         onClick={() =>
                           onExportOptionsChange({ timelineZoom: value })
                         }
-                        className={`px-3 py-2 text-xs font-mono font-medium rounded-lg transition-all duration-200 active:scale-[0.98] ${
+                        className={`px-3 py-1.5 text-xs font-mono font-medium rounded transition-colors duration-150 ${
                           exportOptions.timelineZoom === value
-                            ? "bg-brand-600 text-white shadow-md"
+                            ? "bg-brand-600 text-white"
                             : "bg-white border border-neutral-300 text-neutral-700 hover:border-neutral-400 hover:bg-neutral-50"
                         }`}
                       >
@@ -309,84 +219,28 @@ export function PdfExportOptions({
           </label>
         </div>
 
-        {/* Readability Indicator - Figma-style */}
-        {exportOptions.zoomMode !== "fitToWidth" && (
-          <div
-            className={`flex items-center gap-2.5 mt-4 px-4 py-3 rounded-lg ${
-              readabilityStatus.level === "good"
-                ? "bg-green-50 border border-green-200"
-                : readabilityStatus.level === "warning"
-                  ? "bg-amber-50 border border-amber-200"
-                  : "bg-red-50 border border-red-200"
-            }`}
-          >
-            <StatusIcon
-              size={16}
-              weight="fill"
-              className={
-                readabilityStatus.level === "good"
-                  ? "text-green-600"
-                  : readabilityStatus.level === "warning"
-                    ? "text-amber-600"
-                    : "text-red-600"
-              }
-            />
-            <span
-              className={`text-xs font-semibold ${
-                readabilityStatus.level === "good"
-                  ? "text-green-700"
-                  : readabilityStatus.level === "warning"
-                    ? "text-amber-700"
-                    : "text-red-700"
-              }`}
-            >
-              {readabilityStatus.message}
-            </span>
-            <span
-              className={`ml-auto text-xs font-mono font-semibold ${
-                readabilityStatus.level === "good"
-                  ? "text-green-700"
-                  : readabilityStatus.level === "warning"
-                    ? "text-amber-700"
-                    : "text-red-700"
-              }`}
-            >
-              {Math.round(effectiveZoom * 100)}%
-            </span>
-          </div>
-        )}
-
-        {/* Scale Info */}
-        {scaleInfo && (
-          <div className="flex items-center gap-2.5 mt-4 px-4 py-3 rounded-lg bg-amber-50 border border-amber-200">
-            <Info size={16} weight="fill" className="flex-shrink-0 text-amber-600" />
-            <span className="text-xs font-semibold text-amber-700">
-              Content will be scaled to {scaleInfo.scaleFactor}% to fit page
-            </span>
-          </div>
-        )}
       </section>
 
-      <div className="h-px bg-neutral-200" />
+      <div className="divider-h" />
 
       {/* ============ PAGE SETUP ============ */}
       <section>
-        <span className="block text-xs font-bold text-neutral-500 uppercase tracking-wide mb-3">
+        <span className="block text-sm font-semibold text-neutral-900 mb-3">
           Page Setup
         </span>
 
-        <div className="grid grid-cols-2 gap-6">
+        <div className="space-y-5">
           {/* Page Size */}
           <div>
             <span className="block text-sm font-medium text-neutral-700 mb-2">
-              Size
+              Page Size
             </span>
             <select
               value={options.pageSize}
               onChange={(e) =>
                 onChange({ pageSize: e.target.value as PdfPageSize })
               }
-              className="w-full px-3 py-2.5 text-sm bg-white border border-neutral-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand-600 focus:border-brand-600 transition-all duration-200 hover:border-neutral-400"
+              className="w-full px-3 py-2 text-sm bg-white border border-neutral-300 rounded focus:outline-none focus:ring-1 focus:ring-brand-600 focus:border-brand-600 transition-colors duration-150 hover:border-neutral-400"
             >
               {Object.entries(PAGE_SIZE_LABELS).map(
                 ([key, { label, size }]) => (
@@ -403,18 +257,18 @@ export function PdfExportOptions({
             )}
           </div>
 
-          {/* Orientation - Segmented Control */}
+          {/* Orientation - Segmented Control (separate row) */}
           <div>
             <span className="block text-sm font-medium text-neutral-700 mb-2">
               Orientation
             </span>
-            <div className="inline-flex rounded-lg border border-neutral-300 overflow-hidden w-full">
+            <div className="inline-flex rounded border border-neutral-300 overflow-hidden">
               <button
                 type="button"
                 onClick={() => onChange({ orientation: "landscape" })}
-                className={`flex-1 flex items-center justify-center gap-2 px-4 py-2.5 text-sm font-medium transition-all duration-200 active:scale-[0.98] ${
+                className={`flex items-center justify-center gap-2 px-4 py-2 text-sm font-medium transition-colors duration-150 ${
                   options.orientation === "landscape"
-                    ? "bg-brand-600 text-white shadow-md z-10"
+                    ? "bg-brand-600 text-white"
                     : "bg-white text-neutral-700 hover:bg-neutral-50"
                 }`}
               >
@@ -424,9 +278,9 @@ export function PdfExportOptions({
               <button
                 type="button"
                 onClick={() => onChange({ orientation: "portrait" })}
-                className={`flex-1 flex items-center justify-center gap-2 px-4 py-2.5 text-sm font-medium border-l border-neutral-300 transition-all duration-200 active:scale-[0.98] ${
+                className={`flex items-center justify-center gap-2 px-4 py-2 text-sm font-medium border-l border-neutral-300 transition-colors duration-150 ${
                   options.orientation === "portrait"
-                    ? "bg-brand-600 text-white shadow-md z-10"
+                    ? "bg-brand-600 text-white"
                     : "bg-white text-neutral-700 hover:bg-neutral-50"
                 }`}
               >
@@ -461,7 +315,7 @@ export function PdfExportOptions({
                 }
                 min={100}
                 max={5000}
-                className="w-full px-3 py-2.5 text-sm font-mono bg-white border border-neutral-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand-600 focus:border-brand-600 transition-all duration-200 hover:border-neutral-400"
+                className="w-full px-3 py-2 text-sm font-mono bg-white border border-neutral-300 rounded focus:outline-none focus:ring-1 focus:ring-brand-600 focus:border-brand-600 transition-colors duration-150 hover:border-neutral-400"
               />
             </div>
             <div>
@@ -485,7 +339,7 @@ export function PdfExportOptions({
                 }
                 min={100}
                 max={5000}
-                className="w-full px-3 py-2.5 text-sm font-mono bg-white border border-neutral-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand-600 focus:border-brand-600 transition-all duration-200 hover:border-neutral-400"
+                className="w-full px-3 py-2 text-sm font-mono bg-white border border-neutral-300 rounded focus:outline-none focus:ring-1 focus:ring-brand-600 focus:border-brand-600 transition-colors duration-150 hover:border-neutral-400"
               />
             </div>
           </div>
@@ -504,9 +358,9 @@ export function PdfExportOptions({
                   key={preset}
                   type="button"
                   onClick={() => onChange({ marginPreset: preset })}
-                  className={`px-4 py-2.5 text-sm font-medium rounded-lg border transition-all duration-200 active:scale-[0.98] ${
+                  className={`px-4 py-2 text-sm font-medium rounded border transition-colors duration-150 ${
                     options.marginPreset === preset
-                      ? "border-brand-600 bg-brand-600 text-white shadow-md"
+                      ? "border-brand-600 bg-brand-600 text-white"
                       : "border-neutral-300 bg-white text-neutral-700 hover:border-neutral-400 hover:bg-neutral-50"
                   }`}
                 >
@@ -523,11 +377,11 @@ export function PdfExportOptions({
         </div>
       </section>
 
-      <div className="h-px bg-neutral-200" />
+      <div className="divider-h" />
 
       {/* ============ HEADER / FOOTER ============ */}
       <section>
-        <span className="block text-xs font-bold text-neutral-500 uppercase tracking-wide mb-3">
+        <span className="block text-sm font-semibold text-neutral-900 mb-3">
           Header / Footer
         </span>
 
@@ -537,64 +391,55 @@ export function PdfExportOptions({
             <span className="block text-sm font-medium text-neutral-700 mb-3">
               Header
             </span>
-            <div className="bg-white border border-neutral-200 rounded-lg p-3">
+            <div className="bg-white border border-neutral-200 rounded p-3">
               <div className="space-y-2.5">
-                <label className="flex items-center gap-3 cursor-pointer group min-h-[36px]">
-                  <input
-                    type="checkbox"
+                <label className="flex items-center gap-3 cursor-pointer group min-h-[32px]">
+                  <Checkbox
                     checked={options.header.showProjectName}
-                    onChange={(e) =>
+                    onChange={(checked) =>
                       onChange({
                         header: {
                           ...options.header,
-                          showProjectName: e.target.checked,
+                          showProjectName: checked,
                         },
                       })
                     }
-                    className="size-4 rounded"
-                    style={{ accentColor: "var(--color-brand-600)" }}
                   />
-                  <span className="text-sm text-neutral-900 group-hover:text-brand-600 transition-colors duration-200">
+                  <span className="text-sm text-neutral-900">
                     Project title
                   </span>
                 </label>
-                <div className="h-px bg-neutral-200" />
-                <label className="flex items-center gap-3 cursor-pointer group min-h-[36px]">
-                  <input
-                    type="checkbox"
+                <div className="divider-h-light" />
+                <label className="flex items-center gap-3 cursor-pointer group min-h-[32px]">
+                  <Checkbox
                     checked={options.header.showAuthor}
-                    onChange={(e) =>
+                    onChange={(checked) =>
                       onChange({
                         header: {
                           ...options.header,
-                          showAuthor: e.target.checked,
+                          showAuthor: checked,
                         },
                       })
                     }
-                    className="size-4 rounded"
-                    style={{ accentColor: "var(--color-brand-600)" }}
                   />
-                  <span className="text-sm text-neutral-900 group-hover:text-brand-600 transition-colors duration-200">
+                  <span className="text-sm text-neutral-900">
                     Author
                   </span>
                 </label>
-                <div className="h-px bg-neutral-200" />
-                <label className="flex items-center gap-3 cursor-pointer group min-h-[36px]">
-                  <input
-                    type="checkbox"
+                <div className="divider-h-light" />
+                <label className="flex items-center gap-3 cursor-pointer group min-h-[32px]">
+                  <Checkbox
                     checked={options.header.showExportDate}
-                    onChange={(e) =>
+                    onChange={(checked) =>
                       onChange({
                         header: {
                           ...options.header,
-                          showExportDate: e.target.checked,
+                          showExportDate: checked,
                         },
                       })
                     }
-                    className="size-4 rounded"
-                    style={{ accentColor: "var(--color-brand-600)" }}
                   />
-                  <span className="text-sm text-neutral-900 group-hover:text-brand-600 transition-colors duration-200">
+                  <span className="text-sm text-neutral-900">
                     Export date
                   </span>
                 </label>
@@ -607,64 +452,55 @@ export function PdfExportOptions({
             <span className="block text-sm font-medium text-neutral-700 mb-3">
               Footer
             </span>
-            <div className="bg-white border border-neutral-200 rounded-lg p-3">
+            <div className="bg-white border border-neutral-200 rounded p-3">
               <div className="space-y-2.5">
-                <label className="flex items-center gap-3 cursor-pointer group min-h-[36px]">
-                  <input
-                    type="checkbox"
+                <label className="flex items-center gap-3 cursor-pointer group min-h-[32px]">
+                  <Checkbox
                     checked={options.footer.showProjectName}
-                    onChange={(e) =>
+                    onChange={(checked) =>
                       onChange({
                         footer: {
                           ...options.footer,
-                          showProjectName: e.target.checked,
+                          showProjectName: checked,
                         },
                       })
                     }
-                    className="size-4 rounded"
-                    style={{ accentColor: "var(--color-brand-600)" }}
                   />
-                  <span className="text-sm text-neutral-900 group-hover:text-brand-600 transition-colors duration-200">
+                  <span className="text-sm text-neutral-900">
                     Project title
                   </span>
                 </label>
-                <div className="h-px bg-neutral-200" />
-                <label className="flex items-center gap-3 cursor-pointer group min-h-[36px]">
-                  <input
-                    type="checkbox"
+                <div className="divider-h-light" />
+                <label className="flex items-center gap-3 cursor-pointer group min-h-[32px]">
+                  <Checkbox
                     checked={options.footer.showAuthor}
-                    onChange={(e) =>
+                    onChange={(checked) =>
                       onChange({
                         footer: {
                           ...options.footer,
-                          showAuthor: e.target.checked,
+                          showAuthor: checked,
                         },
                       })
                     }
-                    className="size-4 rounded"
-                    style={{ accentColor: "var(--color-brand-600)" }}
                   />
-                  <span className="text-sm text-neutral-900 group-hover:text-brand-600 transition-colors duration-200">
+                  <span className="text-sm text-neutral-900">
                     Author
                   </span>
                 </label>
-                <div className="h-px bg-neutral-200" />
-                <label className="flex items-center gap-3 cursor-pointer group min-h-[36px]">
-                  <input
-                    type="checkbox"
+                <div className="divider-h-light" />
+                <label className="flex items-center gap-3 cursor-pointer group min-h-[32px]">
+                  <Checkbox
                     checked={options.footer.showExportDate}
-                    onChange={(e) =>
+                    onChange={(checked) =>
                       onChange({
                         footer: {
                           ...options.footer,
-                          showExportDate: e.target.checked,
+                          showExportDate: checked,
                         },
                       })
                     }
-                    className="size-4 rounded"
-                    style={{ accentColor: "var(--color-brand-600)" }}
                   />
-                  <span className="text-sm text-neutral-900 group-hover:text-brand-600 transition-colors duration-200">
+                  <span className="text-sm text-neutral-900">
                     Export date
                   </span>
                 </label>

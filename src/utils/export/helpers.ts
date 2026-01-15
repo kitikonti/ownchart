@@ -32,9 +32,11 @@ export function waitForPaint(): Promise<void> {
 
 /**
  * Set font-family attribute on all text and tspan elements in an SVG subtree.
+ * Also normalizes font-weight for svg2pdf.js compatibility.
  * This is necessary because:
  * - Vector apps like Illustrator/Inkscape often ignore CSS style blocks
  * - svg2pdf.js needs explicit font-family attributes for proper rendering
+ * - svg2pdf.js needs "bold" string instead of numeric font-weight (600/700)
  *
  * @param element - The root element to process
  */
@@ -49,6 +51,12 @@ export function setFontFamilyOnTextElements(element: Element): void {
     element.removeAttribute("font-family");
     element.setAttribute("font-family", SVG_FONT_FAMILY);
 
+    // Normalize font-weight: svg2pdf.js needs "bold" instead of 600/700
+    const fontWeight = element.getAttribute("font-weight");
+    if (fontWeight === "600" || fontWeight === "700") {
+      element.setAttribute("font-weight", "bold");
+    }
+
     // Also set as style to be extra sure
     const currentStyle = element.getAttribute("style") || "";
     if (!currentStyle.includes("font-family")) {
@@ -61,17 +69,20 @@ export function setFontFamilyOnTextElements(element: Element): void {
     }
   }
 
-  // Check for style attribute that might contain font-family
+  // Check for style attribute that might contain font-family or font-weight
   if (element.hasAttribute("style")) {
-    const style = element.getAttribute("style") || "";
+    let style = element.getAttribute("style") || "";
     // Replace any font-family in inline styles
-    const newStyle = style.replace(
+    style = style.replace(
       /font-family:\s*[^;]+;?/gi,
       `font-family: ${SVG_FONT_FAMILY};`
     );
-    if (newStyle !== style) {
-      element.setAttribute("style", newStyle);
-    }
+    // Normalize font-weight in inline styles for svg2pdf.js
+    style = style.replace(
+      /font-weight:\s*(600|700);?/gi,
+      "font-weight: bold;"
+    );
+    element.setAttribute("style", style);
   }
 
   // Process all child elements recursively

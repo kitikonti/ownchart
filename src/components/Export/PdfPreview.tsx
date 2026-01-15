@@ -3,22 +3,27 @@
  * Shows a paper frame with correct aspect ratio, margins, header/footer.
  */
 
-import { useEffect, useRef } from "react";
-import { Spinner, WarningCircle } from "@phosphor-icons/react";
+import { Spinner, WarningCircle, Warning } from "@phosphor-icons/react";
 import type { PdfExportOptions, PdfPageSize } from "../../utils/export/types";
 import {
   PDF_PAGE_SIZES,
   PDF_MARGIN_PRESETS,
 } from "../../utils/export/types";
+import type { ReadabilityStatus } from "./ChartPreview";
 
 export interface PdfPreviewProps {
-  canvas: HTMLCanvasElement | null;
+  /** Data URL of the preview image */
+  previewDataUrl: string | null;
   chartDimensions: { width: number; height: number };
   pdfOptions: PdfExportOptions;
   projectTitle?: string;
   projectAuthor?: string;
   isRendering: boolean;
   error: string | null;
+  /** Effective zoom for timeline (for readability indicator) */
+  effectiveZoom?: number;
+  /** Readability status for labels */
+  readabilityStatus?: ReadabilityStatus;
 }
 
 /**
@@ -83,15 +88,16 @@ function formatDate(): string {
  * Shows a paper frame with header/footer and chart content.
  */
 export function PdfPreview({
-  canvas,
+  previewDataUrl,
   chartDimensions,
   pdfOptions,
   projectTitle,
   projectAuthor,
   isRendering,
   error,
+  effectiveZoom,
+  readabilityStatus,
 }: PdfPreviewProps): JSX.Element {
-  const canvasContainerRef = useRef<HTMLDivElement>(null);
 
   // Get page and margin dimensions
   const pageDims = getPageDimensions(
@@ -140,28 +146,6 @@ export function PdfPreview({
   }
   const scalePercent = Math.round(scaleFactor * 100);
 
-  // Append canvas to container
-  useEffect(() => {
-    const container = canvasContainerRef.current;
-    if (!container) return;
-
-    // Clear previous canvas
-    while (container.firstChild) {
-      container.removeChild(container.firstChild);
-    }
-
-    // Append new canvas if available
-    if (canvas) {
-      canvas.style.maxWidth = "100%";
-      canvas.style.maxHeight = "100%";
-      canvas.style.width = "auto";
-      canvas.style.height = "auto";
-      canvas.style.objectFit = "contain";
-      canvas.style.display = "block";
-      container.appendChild(canvas);
-    }
-  }, [canvas]);
-
   // Build header content
   const headerLeft: string[] = [];
   const headerRight: string[] = [];
@@ -201,7 +185,7 @@ export function PdfPreview({
       {/* Paper Frame Container */}
       <div className="flex-1 flex items-center justify-center p-2">
         <div
-          className="bg-white rounded shadow-lg border border-neutral-300 relative overflow-hidden"
+          className="bg-white border border-neutral-200 shadow-sm relative overflow-hidden"
           style={{
             aspectRatio: `${aspectRatio}`,
             maxWidth: "100%",
@@ -235,7 +219,7 @@ export function PdfPreview({
               )}
 
               {/* Chart Content Area */}
-              <div className="flex-1 flex items-center justify-center relative min-h-0 overflow-hidden">
+              <div className="flex-1 flex items-start justify-center relative min-h-0 overflow-hidden">
                 {/* Loading State */}
                 {isRendering && (
                   <div className="absolute inset-0 bg-white/80 flex flex-col items-center justify-center z-10">
@@ -260,16 +244,17 @@ export function PdfPreview({
                   </div>
                 )}
 
-                {/* Canvas Container */}
-                {!error && (
-                  <div
-                    ref={canvasContainerRef}
-                    className="flex items-center justify-center w-full h-full"
+                {/* Preview Image */}
+                {!error && previewDataUrl && (
+                  <img
+                    src={previewDataUrl}
+                    alt="Export preview"
+                    className="max-w-full max-h-full w-auto h-auto object-contain"
                   />
                 )}
 
                 {/* Placeholder */}
-                {!canvas && !isRendering && !error && (
+                {!previewDataUrl && !isRendering && !error && (
                   <div className="flex items-center justify-center">
                     <div className="w-3/4 h-1/2 bg-neutral-100 rounded flex items-center justify-center">
                       <span className="text-[7px] text-neutral-400">
@@ -296,14 +281,64 @@ export function PdfPreview({
         </div>
       </div>
 
-      {/* Page Info */}
-      <div className="mt-4 text-xs text-neutral-600 text-center">
-        <span className="font-medium text-neutral-700">
-          {formatPageSizeName(pdfOptions.pageSize)}{" "}
-          {pdfOptions.orientation === "landscape" ? "Landscape" : "Portrait"}
-        </span>
-        {scaleFactor < 1 && (
-          <span className="text-neutral-500"> · Scaled to {scalePercent}%</span>
+      {/* Info Panel - Compact */}
+      <div className="mt-4 space-y-2">
+        {/* Single row with dot separators */}
+        <div className="text-xs text-neutral-600">
+          <span className="font-medium text-neutral-900">
+            {effectiveZoom !== undefined ? `${Math.round(effectiveZoom * 100)}%` : "—"}
+          </span>
+          {" zoom"}
+          <span className="mx-1.5 text-neutral-300">·</span>
+          <span className="font-medium text-neutral-900">
+            {formatPageSizeName(pdfOptions.pageSize)}{" "}
+            {pdfOptions.orientation === "landscape" ? "Landscape" : "Portrait"}
+          </span>
+          <span className="mx-1.5 text-neutral-300">·</span>
+          <span className="font-medium text-neutral-900">
+            {pageDims.width}×{pageDims.height}
+          </span>
+          {" mm"}
+        </div>
+
+        {/* Readability Indicator - only show warnings/critical */}
+        {readabilityStatus && readabilityStatus.level !== "good" && (
+          <div
+            className={`flex items-center gap-2.5 px-4 py-3 rounded ${
+              readabilityStatus.level === "warning"
+                ? "bg-amber-50 border border-amber-200"
+                : "bg-red-50 border border-red-200"
+            }`}
+          >
+            <Warning
+              size={16}
+              weight="fill"
+              className={readabilityStatus.level === "warning" ? "text-amber-600" : "text-red-600"}
+            />
+            <span
+              className={`text-xs font-semibold ${
+                readabilityStatus.level === "warning"
+                  ? "text-amber-700"
+                  : "text-red-700"
+              }`}
+            >
+              {readabilityStatus.message}
+            </span>
+          </div>
+        )}
+
+        {/* Scale Warning - if content needs significant scaling to fit page */}
+        {scaleFactor < 0.5 && (
+          <div className="flex items-center gap-2.5 px-4 py-3 rounded bg-amber-50 border border-amber-200">
+            <WarningCircle
+              size={16}
+              weight="fill"
+              className="text-amber-600"
+            />
+            <span className="text-xs font-semibold text-amber-700">
+              Content scaled to {scalePercent}% — consider larger page size
+            </span>
+          </div>
         )}
       </div>
     </div>

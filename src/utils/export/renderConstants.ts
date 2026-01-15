@@ -156,14 +156,14 @@ export const DEPENDENCY_RENDER_CONSTANTS = {
  */
 export const RENDER_COLORS = {
   /**
-   * Default task color (brand-500)
+   * Default task color (brand-600)
    */
-  taskDefault: "#14b8a6",
+  taskDefault: "#0F6CBD",
 
   /**
-   * Preview outline color during drag (blue)
+   * Preview outline color during drag (brand-400)
    */
-  previewOutline: "#228be6",
+  previewOutline: "#2B88D8",
 
   /**
    * Text color for external labels
@@ -198,14 +198,14 @@ export const RENDER_COLORS = {
   gridLine: "#e2e8f0",
 
   /**
-   * Today marker color (blue, matches main app)
+   * Today marker color (brand-600)
    */
-  todayMarker: "#228be6",
+  todayMarker: "#0F6CBD",
 
   /**
-   * Today header cell highlight color (light blue)
+   * Today header cell highlight color (brand-50)
    */
-  todayHighlight: "#e7f1fd",
+  todayHighlight: "#EBF3FC",
 
   /**
    * Header background color

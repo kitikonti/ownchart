@@ -15,6 +15,8 @@ import type {
   UiDensity,
   TaskLabelPosition,
 } from "../../types/preferences.types";
+import { Checkbox } from "../common/Checkbox";
+import { Radio } from "../common/Radio";
 
 /** Density options for the export */
 const DENSITY_OPTIONS: {
@@ -86,33 +88,30 @@ export function SharedExportOptions({
     <div className="space-y-6">
       {/* ============ DATE RANGE ============ */}
       <section>
-        <span className="block text-xs font-bold text-neutral-500 uppercase tracking-wide mb-3">
+        <span className="block text-sm font-semibold text-neutral-900 mb-3">
           Date Range
         </span>
 
-        <div className="space-y-3">
+        <div className="space-y-2">
           {/* Entire project */}
           <label
-            className={`flex items-center gap-3.5 p-4 rounded-lg border-2 cursor-pointer transition-all duration-200 min-h-[44px] hover:bg-neutral-50 ${
+            className={`flex items-center gap-3.5 p-4 rounded border cursor-pointer transition-all duration-150 min-h-[44px] hover:bg-neutral-50 ${
               options.dateRangeMode === "all"
-                ? "border-brand-600 bg-brand-50"
+                ? "border-neutral-300 border-l-[3px] border-l-brand-600"
                 : "border-neutral-200 hover:border-neutral-300"
             }`}
           >
-            <input
-              type="radio"
-              name="dateRangeMode"
+            <Radio
               checked={options.dateRangeMode === "all"}
               onChange={() => onChange({ dateRangeMode: "all" })}
-              className="size-4"
-              style={{ accentColor: "var(--color-brand-600)" }}
+              name="dateRangeMode"
             />
             <div className="flex-1">
               <div className="text-sm font-medium text-neutral-900">
                 Entire project
               </div>
               {projectDateRange && (
-                <div className="text-xs text-neutral-600 mt-0.5 font-mono">
+                <div className="text-xs text-neutral-500 mt-0.5 font-mono">
                   {formatDate(projectDateRange.start)} –{" "}
                   {formatDate(projectDateRange.end)}
                 </div>
@@ -122,26 +121,23 @@ export function SharedExportOptions({
 
           {/* Visible range */}
           <label
-            className={`flex items-center gap-3.5 p-4 rounded-lg border-2 cursor-pointer transition-all duration-200 min-h-[44px] hover:bg-neutral-50 ${
+            className={`flex items-center gap-3.5 p-4 rounded border cursor-pointer transition-all duration-150 min-h-[44px] hover:bg-neutral-50 ${
               options.dateRangeMode === "visible"
-                ? "border-brand-600 bg-brand-50"
+                ? "border-neutral-300 border-l-[3px] border-l-brand-600"
                 : "border-neutral-200 hover:border-neutral-300"
             }`}
           >
-            <input
-              type="radio"
-              name="dateRangeMode"
+            <Radio
               checked={options.dateRangeMode === "visible"}
               onChange={() => onChange({ dateRangeMode: "visible" })}
-              className="size-4"
-              style={{ accentColor: "var(--color-brand-600)" }}
+              name="dateRangeMode"
             />
             <div className="flex-1">
               <div className="text-sm font-medium text-neutral-900">
                 Visible range
               </div>
               {visibleDateRange && (
-                <div className="text-xs text-neutral-600 mt-0.5 font-mono">
+                <div className="text-xs text-neutral-500 mt-0.5 font-mono">
                   {formatDate(visibleDateRange.start)} –{" "}
                   {formatDate(visibleDateRange.end)}
                 </div>
@@ -151,20 +147,19 @@ export function SharedExportOptions({
 
           {/* Custom range */}
           <label
-            className={`flex items-start gap-3.5 p-4 rounded-lg border-2 cursor-pointer transition-all duration-200 min-h-[44px] hover:bg-neutral-50 ${
+            className={`flex items-start gap-3.5 p-4 rounded border cursor-pointer transition-all duration-150 min-h-[44px] hover:bg-neutral-50 ${
               options.dateRangeMode === "custom"
-                ? "border-brand-600 bg-brand-50"
+                ? "border-neutral-300 border-l-[3px] border-l-brand-600"
                 : "border-neutral-200 hover:border-neutral-300"
             }`}
           >
-            <input
-              type="radio"
-              name="dateRangeMode"
-              checked={options.dateRangeMode === "custom"}
-              onChange={() => onChange({ dateRangeMode: "custom" })}
-              className="size-4 mt-0.5"
-              style={{ accentColor: "var(--color-brand-600)" }}
-            />
+            <div className="mt-0.5">
+              <Radio
+                checked={options.dateRangeMode === "custom"}
+                onChange={() => onChange({ dateRangeMode: "custom" })}
+                name="dateRangeMode"
+              />
+            </div>
             <div className="flex-1">
               <div className="text-sm font-medium text-neutral-900 mb-2">
                 Custom range
@@ -177,7 +172,7 @@ export function SharedExportOptions({
                     onChange={(e) =>
                       onChange({ customDateStart: e.target.value })
                     }
-                    className="w-full px-3 py-2.5 text-sm border border-neutral-300 rounded-lg focus:ring-2 focus:ring-brand-600 focus:border-brand-600 transition-all duration-200 hover:border-neutral-400"
+                    className="w-full px-3 py-2 text-sm border border-neutral-300 rounded focus:ring-1 focus:ring-brand-600 focus:border-brand-600 transition-colors duration-150 hover:border-neutral-400"
                     aria-label="Custom start date"
                   />
                   <input
@@ -186,7 +181,7 @@ export function SharedExportOptions({
                     onChange={(e) =>
                       onChange({ customDateEnd: e.target.value })
                     }
-                    className="w-full px-3 py-2.5 text-sm border border-neutral-300 rounded-lg focus:ring-2 focus:ring-brand-600 focus:border-brand-600 transition-all duration-200 hover:border-neutral-400"
+                    className="w-full px-3 py-2 text-sm border border-neutral-300 rounded focus:ring-1 focus:ring-brand-600 focus:border-brand-600 transition-colors duration-150 hover:border-neutral-400"
                     aria-label="Custom end date"
                   />
                 </div>
@@ -199,22 +194,19 @@ export function SharedExportOptions({
       {/* ============ BACKGROUND (PNG/SVG only) ============ */}
       {showBackground && (
         <section>
-          <label className="flex items-center gap-3.5 p-4 rounded-lg border border-neutral-200 hover:bg-neutral-50 cursor-pointer transition-all duration-200 min-h-[44px]">
-            <input
-              type="checkbox"
+          <label className="flex items-center gap-3.5 p-4 rounded border border-neutral-200 hover:bg-neutral-50 cursor-pointer transition-colors duration-150 min-h-[44px]">
+            <Checkbox
               checked={options.background === "transparent"}
-              onChange={(e) =>
-                onChange({ background: e.target.checked ? "transparent" : "white" })
+              onChange={(checked) =>
+                onChange({ background: checked ? "transparent" : "white" })
               }
-              className="size-4 rounded"
-              style={{ accentColor: "var(--color-brand-600)" }}
               aria-label="Transparent background"
             />
             <div className="flex-1">
               <span className="text-sm font-medium text-neutral-900">
                 Transparent background
               </span>
-              <span className="block text-xs text-neutral-600 mt-0.5">
+              <span className="block text-xs text-neutral-500 mt-0.5">
                 Remove white background for overlay use
               </span>
             </div>
@@ -222,16 +214,16 @@ export function SharedExportOptions({
         </section>
       )}
 
-      <div className="h-px bg-neutral-200" />
+      <div className="divider-h" />
 
       {/* ============ LAYOUT OPTIONS (Collapsible) ============ */}
       <section>
         <button
           onClick={() => setShowLayout(!showLayout)}
           aria-expanded={showLayout}
-          className="w-full flex items-center justify-between p-4 rounded-lg hover:bg-neutral-50 transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-100 focus-visible:ring-offset-2"
+          className="w-full flex items-center justify-between p-4 rounded hover:bg-neutral-50 transition-colors duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-100 focus-visible:ring-offset-2"
         >
-          <span className="text-xs font-bold text-neutral-500 uppercase tracking-wide">
+          <span className="text-sm font-semibold text-neutral-900">
             Layout Options
           </span>
           <CaretDown
@@ -243,22 +235,22 @@ export function SharedExportOptions({
         </button>
 
         {showLayout && (
-          <div className="mt-3 bg-neutral-50 rounded-lg px-6 py-4 space-y-5">
+          <div className="mt-3 bg-neutral-50 rounded px-6 py-4 space-y-5">
             {/* Row Density - Segmented Control */}
             <div>
               <span className="block text-sm font-medium text-neutral-700 mb-2">
                 Row Density
               </span>
-              <div className="inline-flex rounded-lg border border-neutral-300 overflow-hidden w-full">
+              <div className="inline-flex rounded border border-neutral-300 overflow-hidden w-full">
                 {DENSITY_OPTIONS.map((opt, index) => (
                   <button
                     key={opt.key}
                     onClick={() => onChange({ density: opt.key })}
-                    className={`flex-1 px-4 py-2.5 text-sm font-medium transition-all duration-200 active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-100 ${
+                    className={`flex-1 px-4 py-2 text-sm font-medium transition-colors duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-100 ${
                       index > 0 ? "border-l border-neutral-300" : ""
                     } ${
                       options.density === opt.key
-                        ? "bg-brand-600 text-white shadow-md z-10"
+                        ? "bg-brand-600 text-white"
                         : "bg-white text-neutral-700 hover:bg-neutral-50"
                     }`}
                   >
@@ -273,16 +265,15 @@ export function SharedExportOptions({
               <span className="block text-sm font-medium text-neutral-700 mb-3">
                 Columns to Include
               </span>
-              <div className="bg-white border border-neutral-200 rounded-lg p-3">
+              <div className="bg-white border border-neutral-200 rounded p-3">
                 <div className="space-y-2.5">
                   {COLUMN_OPTIONS.map((col, idx, arr) => (
                     <div key={col.key}>
-                      <label className="flex items-center gap-3 cursor-pointer group min-h-[36px]">
-                        <input
-                          type="checkbox"
+                      <label className="flex items-center gap-3 cursor-pointer group min-h-[32px]">
+                        <Checkbox
                           checked={options.selectedColumns.includes(col.key)}
-                          onChange={(e) => {
-                            const newColumns = e.target.checked
+                          onChange={(checked) => {
+                            const newColumns = checked
                               ? [...options.selectedColumns, col.key]
                               : options.selectedColumns.filter(
                                   (k) => k !== col.key
@@ -292,15 +283,13 @@ export function SharedExportOptions({
                             ).map((c) => c.key);
                             onChange({ selectedColumns: orderedColumns });
                           }}
-                          className="size-4 rounded"
-                          style={{ accentColor: "var(--color-brand-600)" }}
                         />
-                        <span className="text-sm text-neutral-900 group-hover:text-brand-600 transition-colors duration-200">
+                        <span className="text-sm text-neutral-900">
                           {col.label}
                         </span>
                       </label>
                       {idx < arr.length - 1 && (
-                        <div className="h-px bg-neutral-200 mt-2.5" />
+                        <div className="divider-h-light mt-2.5" />
                       )}
                     </div>
                   ))}
@@ -314,16 +303,16 @@ export function SharedExportOptions({
         )}
       </section>
 
-      <div className="h-px bg-neutral-200" />
+      <div className="divider-h" />
 
       {/* ============ DISPLAY OPTIONS (Collapsible) ============ */}
       <section>
         <button
           onClick={() => setShowDisplay(!showDisplay)}
           aria-expanded={showDisplay}
-          className="w-full flex items-center justify-between p-4 rounded-lg hover:bg-neutral-50 transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-100 focus-visible:ring-offset-2"
+          className="w-full flex items-center justify-between p-4 rounded hover:bg-neutral-50 transition-colors duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-100 focus-visible:ring-offset-2"
         >
-          <span className="text-xs font-bold text-neutral-500 uppercase tracking-wide">
+          <span className="text-sm font-semibold text-neutral-900">
             Display Options
           </span>
           <CaretDown
@@ -335,32 +324,29 @@ export function SharedExportOptions({
         </button>
 
         {showDisplay && (
-          <div className="mt-3 bg-neutral-50 rounded-lg px-6 py-4 space-y-5">
+          <div className="mt-3 bg-neutral-50 rounded px-6 py-4 space-y-5">
             {/* Timeline Elements - Checkbox Group in Card */}
             <div>
               <span className="block text-sm font-medium text-neutral-700 mb-3">
                 Show in Timeline
               </span>
-              <div className="bg-white border border-neutral-200 rounded-lg p-3">
+              <div className="bg-white border border-neutral-200 rounded p-3">
                 <div className="space-y-2.5">
                   {TIMELINE_OPTIONS.map((item, idx, arr) => (
                     <div key={item.key}>
-                      <label className="flex items-center gap-3 cursor-pointer group min-h-[36px]">
-                        <input
-                          type="checkbox"
+                      <label className="flex items-center gap-3 cursor-pointer group min-h-[32px]">
+                        <Checkbox
                           checked={options[item.key] as boolean}
-                          onChange={(e) =>
-                            onChange({ [item.key]: e.target.checked })
+                          onChange={(checked) =>
+                            onChange({ [item.key]: checked })
                           }
-                          className="size-4 rounded"
-                          style={{ accentColor: "var(--color-brand-600)" }}
                         />
-                        <span className="text-sm text-neutral-900 group-hover:text-brand-600 transition-colors duration-200">
+                        <span className="text-sm text-neutral-900">
                           {item.label}
                         </span>
                       </label>
                       {idx < arr.length - 1 && (
-                        <div className="h-px bg-neutral-200 mt-2.5" />
+                        <div className="divider-h-light mt-2.5" />
                       )}
                     </div>
                   ))}
@@ -378,9 +364,9 @@ export function SharedExportOptions({
                   <button
                     key={opt.key}
                     onClick={() => onChange({ taskLabelPosition: opt.key })}
-                    className={`px-4 py-2.5 text-sm font-medium rounded-lg border transition-all duration-200 active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-100 focus-visible:ring-offset-2 ${
+                    className={`px-4 py-2 text-sm font-medium rounded border transition-colors duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-100 focus-visible:ring-offset-2 ${
                       options.taskLabelPosition === opt.key
-                        ? "border-brand-600 bg-brand-600 text-white shadow-md"
+                        ? "border-brand-600 bg-brand-600 text-white"
                         : "border-neutral-300 bg-white text-neutral-700 hover:border-neutral-400 hover:bg-neutral-50"
                     }`}
                   >
@@ -389,7 +375,7 @@ export function SharedExportOptions({
                 ))}
               </div>
               {options.taskLabelPosition === "inside" && (
-                <div className="mt-3 text-xs text-neutral-600 bg-white rounded-lg px-3 py-2.5 border border-neutral-200">
+                <div className="mt-3 text-xs text-neutral-600 bg-white rounded px-3 py-2.5 border border-neutral-200">
                   Note: Milestones and summary tasks default to &quot;After&quot;
                   positioning
                 </div>

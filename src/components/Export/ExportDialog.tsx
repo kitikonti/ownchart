@@ -31,7 +31,13 @@ import {
   calculateExportDimensions,
   calculateTaskTableWidth,
   calculateDurationDays,
+  calculateEffectiveZoom,
 } from "../../utils/export";
+import {
+  EXPORT_ZOOM_READABLE_THRESHOLD,
+  EXPORT_ZOOM_LABELS_HIDDEN_THRESHOLD,
+} from "../../utils/export/types";
+import type { ReadabilityStatus } from "./ChartPreview";
 
 /**
  * Export Dialog component.
@@ -185,6 +191,29 @@ export function ExportDialog(): JSX.Element | null {
     [exportOptions.selectedColumns, columnWidths, exportOptions.density]
   );
 
+  // Calculate effective zoom for preview info
+  const effectiveZoom = useMemo(
+    () =>
+      calculateEffectiveZoom(
+        exportOptions,
+        currentAppZoom,
+        projectDurationDays,
+        taskTableWidth
+      ),
+    [exportOptions, currentAppZoom, projectDurationDays, taskTableWidth]
+  );
+
+  // Calculate readability status based on effective zoom
+  const readabilityStatus = useMemo((): ReadabilityStatus => {
+    if (effectiveZoom >= EXPORT_ZOOM_READABLE_THRESHOLD) {
+      return { level: "good", message: "Labels clearly readable" };
+    } else if (effectiveZoom >= EXPORT_ZOOM_LABELS_HIDDEN_THRESHOLD) {
+      return { level: "warning", message: "Labels may be hard to read" };
+    } else {
+      return { level: "critical", message: "Labels will be hidden" };
+    }
+  }, [effectiveZoom]);
+
   const handleExport = useCallback(async () => {
     setIsExporting(true);
     setExportError(null);
@@ -289,7 +318,7 @@ export function ExportDialog(): JSX.Element | null {
 
   // Generate live preview
   const {
-    previewCanvas,
+    previewDataUrl,
     previewDimensions,
     isRendering: isPreviewRendering,
     error: previewError,
@@ -323,18 +352,18 @@ export function ExportDialog(): JSX.Element | null {
       {/* Spacer when no progress */}
       {!(isExporting && exportProgress > 0) && <div className="flex-1" />}
 
-      {/* Buttons - Figma style with flex-1 */}
+      {/* Buttons - Outlook style */}
       <button
         onClick={closeExportDialog}
         disabled={isExporting}
-        className="flex-1 max-w-[140px] px-5 py-3 text-sm font-medium text-neutral-700 bg-white border border-neutral-300 rounded-lg hover:bg-neutral-50 transition-all duration-200 active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-100 focus-visible:ring-offset-2"
+        className="flex-1 max-w-[140px] px-5 py-2.5 text-sm font-medium text-neutral-700 bg-white border border-neutral-300 rounded hover:bg-neutral-50 transition-colors duration-150 disabled:opacity-50 disabled:cursor-not-allowed focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-100 focus-visible:ring-offset-2"
       >
         Cancel
       </button>
       <button
         onClick={handleExport}
         disabled={isExporting}
-        className="flex-1 max-w-[180px] px-5 py-3 text-sm font-medium text-white bg-brand-600 rounded-lg hover:bg-brand-500 transition-all duration-200 shadow-md active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-100 focus-visible:ring-offset-2"
+        className="flex-1 max-w-[180px] px-5 py-2.5 text-sm font-medium text-white bg-brand-600 rounded hover:bg-brand-500 transition-colors duration-150 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-100 focus-visible:ring-offset-2"
       >
         {isExporting ? (
           <>
@@ -369,7 +398,7 @@ export function ExportDialog(): JSX.Element | null {
         <div className="flex-1 bg-neutral-50 p-6 border-r border-neutral-200">
           <ExportPreview
             format={selectedExportFormat}
-            canvas={previewCanvas}
+            previewDataUrl={previewDataUrl}
             dimensions={previewDimensions.width > 0 ? previewDimensions : estimatedDimensions}
             isRendering={isPreviewRendering}
             error={previewError}
@@ -377,13 +406,15 @@ export function ExportDialog(): JSX.Element | null {
             pdfOptions={pdfExportOptions}
             projectTitle={projectTitle || undefined}
             projectAuthor={projectAuthor || undefined}
+            effectiveZoom={effectiveZoom}
+            readabilityStatus={readabilityStatus}
           />
 
           {/* Warnings for PNG/SVG */}
           {showDimensions && (hasWarning || hasInfo) && (
             <div className="mt-4">
               {hasWarning && (
-                <div className="flex items-center gap-2.5 px-4 py-3 rounded-lg bg-amber-50 border border-amber-200">
+                <div className="flex items-center gap-2.5 px-4 py-3 rounded bg-amber-50 border border-amber-200">
                   <Warning
                     className="size-4 text-amber-600 flex-shrink-0"
                     weight="fill"
@@ -395,7 +426,7 @@ export function ExportDialog(): JSX.Element | null {
                 </div>
               )}
               {hasInfo && !hasWarning && (
-                <div className="flex items-center gap-2.5 px-4 py-3 rounded-lg bg-neutral-100 border border-neutral-200">
+                <div className="flex items-center gap-2.5 px-4 py-3 rounded bg-neutral-100 border border-neutral-200">
                   <Info
                     className="size-4 text-neutral-500 flex-shrink-0"
                     weight="fill"
@@ -418,7 +449,7 @@ export function ExportDialog(): JSX.Element | null {
               onFormatChange={setExportFormat}
             />
 
-            <div className="h-px bg-neutral-200" />
+            <div className="divider-h" />
 
             {/* Format-specific Options */}
             {selectedExportFormat === "png" && (
@@ -438,7 +469,6 @@ export function ExportDialog(): JSX.Element | null {
                 exportOptions={exportOptions}
                 onExportOptionsChange={setExportOptions}
                 currentAppZoom={currentAppZoom}
-                taskCount={tasks.length}
               />
             )}
 
@@ -452,7 +482,7 @@ export function ExportDialog(): JSX.Element | null {
               />
             )}
 
-            <div className="h-px bg-neutral-200" />
+            <div className="divider-h" />
 
             {/* Shared Options */}
             <SharedExportOptions
@@ -465,13 +495,13 @@ export function ExportDialog(): JSX.Element | null {
 
             {/* Error message */}
             {exportError && (
-              <div className="p-4 text-sm text-red-700 bg-red-50 border border-red-200 rounded-lg">
+              <div className="p-4 text-sm text-red-700 bg-red-50 border border-red-200 rounded">
                 {exportError}
               </div>
             )}
 
             {/* Info tip */}
-            <div className="flex items-start gap-3 px-4 py-3 rounded-lg bg-blue-50 border border-blue-200">
+            <div className="flex items-start gap-3 px-4 py-3 rounded bg-blue-50 border border-blue-200">
               <Info
                 className="size-4 text-blue-600 flex-shrink-0 mt-0.5"
                 weight="fill"

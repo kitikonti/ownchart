@@ -1,20 +1,48 @@
 /**
  * PNG/SVG scale options component.
- * Contains Timeline Scale settings and readability indicator.
+ * Contains Timeline Scale settings with Figma-style dropdown for fit-to-width.
  */
 
-import { useMemo } from "react";
-import { CheckCircle, Warning } from "@phosphor-icons/react";
+import { useState } from "react";
 import type { ExportOptions } from "../../utils/export/types";
 import {
-  EXPORT_ZOOM_PRESETS,
-  EXPORT_QUICK_PRESETS,
   EXPORT_ZOOM_MIN,
   EXPORT_ZOOM_MAX,
-  EXPORT_ZOOM_READABLE_THRESHOLD,
-  EXPORT_ZOOM_LABELS_HIDDEN_THRESHOLD,
 } from "../../utils/export/types";
-import { calculateEffectiveZoom } from "../../utils/export";
+
+/** Fit to width preset option */
+interface FitToWidthPreset {
+  label: string;
+  value: number;
+}
+
+/** Fit to width preset groups (Figma-style) */
+const FIT_TO_WIDTH_GROUPS = {
+  screenSizes: {
+    label: "Screen Sizes",
+    presets: [
+      { label: "HD Screen (1920px)", value: 1920 },
+      { label: "4K Screen (3840px)", value: 3840 },
+    ] as FitToWidthPreset[],
+  },
+  print150dpi: {
+    label: "Print @ 150 DPI",
+    presets: [
+      { label: "A4 Landscape (1754px)", value: 1754 },
+      { label: "A3 Landscape (2480px)", value: 2480 },
+      { label: "Letter Landscape (1650px)", value: 1650 },
+    ] as FitToWidthPreset[],
+  },
+};
+
+/** All preset values for quick lookup */
+const ALL_PRESET_VALUES = [
+  ...FIT_TO_WIDTH_GROUPS.screenSizes.presets,
+  ...FIT_TO_WIDTH_GROUPS.print150dpi.presets,
+].map((p) => p.value);
+
+/** Custom zoom presets - includes lower values per Figma design */
+const CUSTOM_ZOOM_PRESETS = [0.1, 0.25, 0.5, 1.0, 1.5, 2.0];
 
 export interface PngScaleOptionsProps {
   options: ExportOptions;
@@ -24,64 +52,39 @@ export interface PngScaleOptionsProps {
   taskTableWidth: number;
 }
 
-function getReadabilityStatus(zoom: number): {
-  level: "good" | "warning" | "critical";
-  message: string;
-  icon: typeof CheckCircle;
-} {
-  if (zoom >= EXPORT_ZOOM_READABLE_THRESHOLD) {
-    return { level: "good", message: "Labels readable", icon: CheckCircle };
-  } else if (zoom >= EXPORT_ZOOM_LABELS_HIDDEN_THRESHOLD) {
-    return {
-      level: "warning",
-      message: "Labels may be hard to read",
-      icon: Warning,
-    };
-  } else {
-    return {
-      level: "critical",
-      message: "Labels will be hidden",
-      icon: Warning,
-    };
-  }
-}
-
 export function PngScaleOptions({
   options,
   onChange,
   currentAppZoom,
-  projectDurationDays,
-  taskTableWidth,
 }: PngScaleOptionsProps): JSX.Element {
-  const effectiveZoom = useMemo(
-    () =>
-      calculateEffectiveZoom(
-        options,
-        currentAppZoom,
-        projectDurationDays,
-        taskTableWidth
-      ),
-    [options, currentAppZoom, projectDurationDays, taskTableWidth]
+  // Track if custom width is selected (value not in presets)
+  const [isCustomWidth, setIsCustomWidth] = useState(
+    !ALL_PRESET_VALUES.includes(options.fitToWidth)
   );
 
-  const readabilityStatus = useMemo(
-    () => getReadabilityStatus(effectiveZoom),
-    [effectiveZoom]
-  );
-  const StatusIcon = readabilityStatus.icon;
+  // Handle select change
+  const handleSelectChange = (value: string): void => {
+    if (value === "custom") {
+      setIsCustomWidth(true);
+    } else {
+      const numValue = parseInt(value);
+      setIsCustomWidth(false);
+      onChange({ fitToWidth: numValue });
+    }
+  };
 
   return (
     <section>
-      <span className="block text-xs font-bold text-neutral-500 uppercase tracking-wide mb-3">
+      <span className="block text-sm font-semibold text-neutral-900 mb-3">
         Timeline Scale
       </span>
 
-      <div className="space-y-3">
+      <div className="space-y-2">
         {/* Use Current View */}
         <label
-          className={`flex items-center gap-3.5 p-4 rounded-lg border-2 cursor-pointer transition-all duration-200 min-h-[44px] hover:bg-neutral-50 ${
+          className={`flex items-center gap-3.5 p-4 rounded border cursor-pointer transition-all duration-150 min-h-[44px] hover:bg-neutral-50 ${
             options.zoomMode === "currentView"
-              ? "border-brand-600 bg-brand-50"
+              ? "border-neutral-300 border-l-[3px] border-l-brand-600"
               : "border-neutral-200 hover:border-neutral-300"
           }`}
         >
@@ -99,11 +102,11 @@ export function PngScaleOptions({
               <span className="text-sm font-medium text-neutral-900">
                 Use current view
               </span>
-              <span className="text-xs font-mono px-1.5 py-0.5 rounded bg-neutral-100 text-neutral-600">
+              <span className="text-xs font-mono px-1.5 py-0.5 rounded-sm bg-neutral-100 text-neutral-600">
                 {Math.round(currentAppZoom * 100)}%
               </span>
             </div>
-            <p className="text-xs text-neutral-600 mt-0.5">
+            <p className="text-xs text-neutral-500 mt-0.5">
               Export at your current zoom level
             </p>
           </div>
@@ -111,9 +114,9 @@ export function PngScaleOptions({
 
         {/* Fit to Width */}
         <label
-          className={`flex items-start gap-3.5 p-4 rounded-lg border-2 cursor-pointer transition-all duration-200 min-h-[44px] hover:bg-neutral-50 ${
+          className={`flex items-start gap-3.5 p-4 rounded border cursor-pointer transition-all duration-150 min-h-[44px] hover:bg-neutral-50 ${
             options.zoomMode === "fitToWidth"
-              ? "border-brand-600 bg-brand-50"
+              ? "border-neutral-300 border-l-[3px] border-l-brand-600"
               : "border-neutral-200 hover:border-neutral-300"
           }`}
         >
@@ -129,50 +132,56 @@ export function PngScaleOptions({
             <span className="text-sm font-medium text-neutral-900">
               Fit to width
             </span>
-            <p className="text-xs text-neutral-600 mt-0.5">
-              Scale to a specific pixel width
-            </p>
 
             {options.zoomMode === "fitToWidth" && (
               <div className="mt-4 space-y-3">
-                <div className="flex items-center gap-2">
-                  <input
-                    type="number"
-                    value={options.fitToWidth}
-                    onChange={(e) =>
-                      onChange({
-                        fitToWidth: Math.max(
-                          100,
-                          Math.min(20000, parseInt(e.target.value) || 1920)
-                        ),
-                      })
-                    }
-                    className="w-28 px-3 py-2.5 text-sm font-mono bg-white border border-neutral-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand-600 focus:border-brand-600 transition-all duration-200 hover:border-neutral-400"
-                    min={100}
-                    max={20000}
-                  />
-                  <span className="text-xs text-neutral-500">px</span>
-                </div>
+                {/* Select Dropdown */}
+                <select
+                  value={isCustomWidth ? "custom" : options.fitToWidth.toString()}
+                  onChange={(e) => handleSelectChange(e.target.value)}
+                  className="w-full px-3 py-2 text-sm bg-white border border-neutral-300 rounded focus:outline-none focus:ring-1 focus:ring-brand-600 focus:border-brand-600 transition-colors duration-150 hover:border-neutral-400 cursor-pointer"
+                  onClick={(e) => e.stopPropagation()}
+                >
+                  <optgroup label={FIT_TO_WIDTH_GROUPS.screenSizes.label}>
+                    {FIT_TO_WIDTH_GROUPS.screenSizes.presets.map((preset) => (
+                      <option key={preset.value} value={preset.value}>
+                        {preset.label}
+                      </option>
+                    ))}
+                  </optgroup>
+                  <optgroup label={FIT_TO_WIDTH_GROUPS.print150dpi.label}>
+                    {FIT_TO_WIDTH_GROUPS.print150dpi.presets.map((preset) => (
+                      <option key={preset.value} value={preset.value}>
+                        {preset.label}
+                      </option>
+                    ))}
+                  </optgroup>
+                  <option value="custom">Custom width...</option>
+                </select>
 
-                <div className="flex flex-wrap gap-2">
-                  {EXPORT_QUICK_PRESETS.map((preset) => (
-                    <button
-                      key={preset.key}
-                      type="button"
-                      onClick={() =>
-                        onChange({ fitToWidth: preset.targetWidth })
+                {/* Custom Width Input - shown when "Custom width..." selected */}
+                {isCustomWidth && (
+                  <div className="flex items-center gap-2">
+                    <input
+                      type="number"
+                      value={options.fitToWidth}
+                      onChange={(e) =>
+                        onChange({
+                          fitToWidth: Math.max(
+                            100,
+                            Math.min(20000, parseInt(e.target.value) || 1920)
+                          ),
+                        })
                       }
-                      className={`px-3 py-2 text-xs font-medium rounded-lg transition-all duration-200 active:scale-[0.98] ${
-                        options.fitToWidth === preset.targetWidth
-                          ? "bg-brand-600 text-white shadow-md"
-                          : "bg-white border border-neutral-300 text-neutral-700 hover:border-neutral-400 hover:bg-neutral-50"
-                      }`}
-                      title={preset.description}
-                    >
-                      {preset.label}
-                    </button>
-                  ))}
-                </div>
+                      onClick={(e) => e.stopPropagation()}
+                      className="flex-1 px-3 py-2 text-sm font-mono bg-white border border-neutral-300 rounded focus:outline-none focus:ring-1 focus:ring-brand-600 focus:border-brand-600 transition-colors duration-150 hover:border-neutral-400"
+                      min={100}
+                      max={20000}
+                      placeholder="1920"
+                    />
+                    <span className="text-sm text-neutral-500">px</span>
+                  </div>
+                )}
               </div>
             )}
           </div>
@@ -180,9 +189,9 @@ export function PngScaleOptions({
 
         {/* Custom Zoom */}
         <label
-          className={`flex items-start gap-3.5 p-4 rounded-lg border-2 cursor-pointer transition-all duration-200 min-h-[44px] hover:bg-neutral-50 ${
+          className={`flex items-start gap-3.5 p-4 rounded border cursor-pointer transition-all duration-150 min-h-[44px] hover:bg-neutral-50 ${
             options.zoomMode === "custom"
-              ? "border-brand-600 bg-brand-50"
+              ? "border-neutral-300 border-l-[3px] border-l-brand-600"
               : "border-neutral-200 hover:border-neutral-300"
           }`}
         >
@@ -198,7 +207,7 @@ export function PngScaleOptions({
             <span className="text-sm font-medium text-neutral-900">
               Custom zoom
             </span>
-            <p className="text-xs text-neutral-600 mt-0.5">
+            <p className="text-xs text-neutral-500 mt-0.5">
               Set a specific zoom percentage
             </p>
 
@@ -214,9 +223,10 @@ export function PngScaleOptions({
                     onChange={(e) =>
                       onChange({ timelineZoom: parseInt(e.target.value) / 100 })
                     }
-                    className="flex-1 h-2 bg-neutral-200 rounded-full appearance-none cursor-pointer accent-brand-600"
+                    onClick={(e) => e.stopPropagation()}
+                    className="flex-1 h-1.5 bg-neutral-200 rounded-full appearance-none cursor-pointer accent-brand-600"
                   />
-                  <div className="flex items-center gap-1 bg-white border border-neutral-300 rounded-lg px-3 py-1.5">
+                  <div className="flex items-center gap-1 bg-white border border-neutral-300 rounded px-3 py-1.5">
                     <input
                       type="number"
                       value={Math.round(options.timelineZoom * 100)}
@@ -231,6 +241,7 @@ export function PngScaleOptions({
                           ),
                         })
                       }
+                      onClick={(e) => e.stopPropagation()}
                       className="w-10 text-sm text-center font-mono bg-transparent border-none focus:outline-none text-neutral-900"
                       min={EXPORT_ZOOM_MIN * 100}
                       max={EXPORT_ZOOM_MAX * 100}
@@ -239,15 +250,19 @@ export function PngScaleOptions({
                   </div>
                 </div>
 
-                <div className="flex gap-2">
-                  {Object.entries(EXPORT_ZOOM_PRESETS).map(([key, value]) => (
+                {/* Zoom presets including lower values (10%, 25%) */}
+                <div className="flex flex-wrap gap-1.5">
+                  {CUSTOM_ZOOM_PRESETS.map((value) => (
                     <button
-                      key={key}
+                      key={value}
                       type="button"
-                      onClick={() => onChange({ timelineZoom: value })}
-                      className={`px-3 py-2 text-xs font-mono font-medium rounded-lg transition-all duration-200 active:scale-[0.98] ${
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        onChange({ timelineZoom: value });
+                      }}
+                      className={`px-3 py-1.5 text-xs font-mono font-medium rounded transition-colors duration-150 ${
                         options.timelineZoom === value
-                          ? "bg-brand-600 text-white shadow-md"
+                          ? "bg-brand-600 text-white"
                           : "bg-white border border-neutral-300 text-neutral-700 hover:border-neutral-400 hover:bg-neutral-50"
                       }`}
                     >
@@ -259,51 +274,6 @@ export function PngScaleOptions({
             )}
           </div>
         </label>
-      </div>
-
-      {/* Readability Indicator - Figma-style */}
-      <div
-        className={`flex items-center gap-2.5 mt-4 px-4 py-3 rounded-lg ${
-          readabilityStatus.level === "good"
-            ? "bg-green-50 border border-green-200"
-            : readabilityStatus.level === "warning"
-              ? "bg-amber-50 border border-amber-200"
-              : "bg-red-50 border border-red-200"
-        }`}
-      >
-        <StatusIcon
-          size={16}
-          weight="fill"
-          className={
-            readabilityStatus.level === "good"
-              ? "text-green-600"
-              : readabilityStatus.level === "warning"
-                ? "text-amber-600"
-                : "text-red-600"
-          }
-        />
-        <span
-          className={`text-xs font-semibold ${
-            readabilityStatus.level === "good"
-              ? "text-green-700"
-              : readabilityStatus.level === "warning"
-                ? "text-amber-700"
-                : "text-red-700"
-          }`}
-        >
-          {readabilityStatus.message}
-        </span>
-        <span
-          className={`ml-auto text-xs font-mono font-semibold ${
-            readabilityStatus.level === "good"
-              ? "text-green-700"
-              : readabilityStatus.level === "warning"
-                ? "text-amber-700"
-                : "text-red-700"
-          }`}
-        >
-          {Math.round(effectiveZoom * 100)}%
-        </span>
       </div>
     </section>
   );

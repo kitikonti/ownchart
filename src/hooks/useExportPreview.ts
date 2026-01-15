@@ -18,6 +18,9 @@ import {
 const DEBOUNCE_MS = 300;
 
 export interface UseExportPreviewResult {
+  /** Data URL of the preview image (use with <img src={...}>) */
+  previewDataUrl: string | null;
+  /** @deprecated Use previewDataUrl instead */
   previewCanvas: HTMLCanvasElement | null;
   previewDimensions: { width: number; height: number };
   isRendering: boolean;
@@ -108,6 +111,7 @@ export function useExportPreview({
   visibleDateRange,
   enabled = true,
 }: UseExportPreviewParams): UseExportPreviewResult {
+  const [previewDataUrl, setPreviewDataUrl] = useState<string | null>(null);
   const [previewCanvas, setPreviewCanvas] = useState<HTMLCanvasElement | null>(
     null
   );
@@ -120,6 +124,7 @@ export function useExportPreview({
 
   // Track current render for cleanup
   const containerRef = useRef<HTMLDivElement | null>(null);
+  const overlayRef = useRef<HTMLDivElement | null>(null);
   const rootRef = useRef<Root | null>(null);
   const abortRef = useRef(false);
   const renderIdRef = useRef(0);
@@ -138,11 +143,16 @@ export function useExportPreview({
       containerRef.current.parentNode.removeChild(containerRef.current);
       containerRef.current = null;
     }
+    if (overlayRef.current && overlayRef.current.parentNode) {
+      overlayRef.current.parentNode.removeChild(overlayRef.current);
+      overlayRef.current = null;
+    }
   }, []);
 
   // Render preview
   const renderPreview = useCallback(async () => {
     if (!enabled || tasks.length === 0) {
+      setPreviewDataUrl(null);
       setPreviewCanvas(null);
       setPreviewDimensions({ width: 0, height: 0 });
       return;
@@ -167,22 +177,31 @@ export function useExportPreview({
         visibleDateRange
       );
 
-      // Create container - must be on-screen but hidden for html-to-image
-      const container = document.createElement("div");
-      container.id = `export-preview-container-${renderId}`;
-      container.style.cssText = `
+      // Create wrapper with height:0 + overflow:hidden to hide content visually
+      // while still allowing html-to-image to capture it (height-overflow method)
+      const wrapper = document.createElement("div");
+      wrapper.id = `export-preview-wrapper-${renderId}`;
+      wrapper.style.cssText = `
         position: fixed;
         left: 0;
         top: 0;
+        height: 0;
+        overflow: hidden;
+        pointer-events: none;
+      `;
+      document.body.appendChild(wrapper);
+      overlayRef.current = wrapper; // reuse overlayRef for wrapper cleanup
+
+      // Create container inside wrapper - it renders but wrapper hides it
+      const container = document.createElement("div");
+      container.id = `export-preview-container-${renderId}`;
+      container.style.cssText = `
         width: ${fullDimensions.width}px;
         height: ${fullDimensions.height}px;
         overflow: hidden;
         background: ${options.background === "white" ? "#ffffff" : "transparent"};
-        z-index: 99999;
-        opacity: 0;
-        pointer-events: none;
       `;
-      document.body.appendChild(container);
+      wrapper.appendChild(container);
       containerRef.current = container;
 
       // Check if aborted
@@ -225,10 +244,6 @@ export function useExportPreview({
         return;
       }
 
-      // Make visible for capture (html-to-image needs visible elements)
-      container.style.opacity = "1";
-      await waitForPaint();
-
       // Capture to canvas at reduced resolution for preview
       const canvas = await toCanvas(container, {
         // Reduced pixel ratio for preview performance
@@ -253,7 +268,11 @@ export function useExportPreview({
       // Cleanup
       cleanup();
 
-      // Update state with the canvas and full dimensions (not preview dimensions)
+      // Convert canvas to data URL for flash-free display
+      const dataUrl = canvas.toDataURL("image/png");
+
+      // Update state with the data URL, canvas, and full dimensions
+      setPreviewDataUrl(dataUrl);
       setPreviewCanvas(canvas);
       setPreviewDimensions(fullDimensions);
     } catch (err) {
@@ -261,6 +280,7 @@ export function useExportPreview({
         const message =
           err instanceof Error ? err.message : "Preview generation failed";
         setError(message);
+        setPreviewDataUrl(null);
         setPreviewCanvas(null);
       }
       cleanup();
@@ -290,6 +310,7 @@ export function useExportPreview({
   // Debounced render effect
   useEffect(() => {
     if (!enabled) {
+      setPreviewDataUrl(null);
       setPreviewCanvas(null);
       setPreviewDimensions({ width: 0, height: 0 });
       return;
@@ -320,6 +341,7 @@ export function useExportPreview({
   }, [cleanup]);
 
   return {
+    previewDataUrl,
     previewCanvas,
     previewDimensions,
     isRendering,

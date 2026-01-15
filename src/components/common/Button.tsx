@@ -2,7 +2,7 @@
  * Button - Standard button component with design system styling
  *
  * Based on MS 365/Fluent UI design:
- * - Primary: Brand color (Cyan #008A99) background
+ * - Primary: Brand color (Outlook Blue #0F6CBD) background
  * - Secondary: White background with neutral border
  * - Ghost: Transparent background
  * - Danger: Red background for destructive actions

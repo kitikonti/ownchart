@@ -267,7 +267,7 @@ function renderColorColumn(
   colorBar.setAttribute("width", "6");
   colorBar.setAttribute("height", String(colorBarHeight));
   colorBar.setAttribute("rx", "3");
-  colorBar.setAttribute("fill", task.color || "#14b8a6");
+  colorBar.setAttribute("fill", task.color || "#0F6CBD");
   group.appendChild(colorBar);
 }
 

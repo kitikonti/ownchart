@@ -3,7 +3,7 @@
  *
  * Design Philosophy: MS 365/Fluent UI Inspired
  * - Neutral gray palette (pure grays, no blue tint)
- * - Cyan (#008A99) as the brand color for interactive elements
+ * - Outlook Blue (#0F6CBD) as the brand color for interactive elements
  * - Smooth micro-interactions that feel polished
  * - Consistent spacing and proportions
  */
@@ -163,7 +163,7 @@ export const ToolbarButton = forwardRef<HTMLButtonElement, ToolbarButtonProps>(
       WebkitFontSmoothing: "antialiased",
     };
 
-    // Primary variant - brand color (cyan)
+    // Primary variant - brand color (Outlook Blue)
     const primaryStyle: React.CSSProperties =
       variant === "primary"
         ? {

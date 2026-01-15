@@ -366,7 +366,7 @@ export const TaskBar = React.memo(function TaskBar({
                 L ${previewX + size} ${centerY + size}
                 Z`}
             fill="none"
-            stroke="#228be6"
+            stroke="#2B88D8"
             strokeWidth={2}
             pointerEvents="none"
           />
@@ -409,7 +409,7 @@ export const TaskBar = React.memo(function TaskBar({
             width={summaryPreviewWidth}
             height={geometry.height * 0.5}
             fill="none"
-            stroke="#228be6"
+            stroke="#2B88D8"
             strokeWidth={2}
             strokeDasharray="4 4"
             rx={4}
@@ -480,7 +480,7 @@ export const TaskBar = React.memo(function TaskBar({
           width={(preview || secondaryPreview)!.width}
           height={(preview || secondaryPreview)!.height}
           fill="none"
-          stroke="#228be6"
+          stroke="#2B88D8"
           strokeWidth={2}
           strokeDasharray="4 4"
           rx={4}
