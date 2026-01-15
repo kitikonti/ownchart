@@ -358,15 +358,15 @@ export function ExportDialog(): JSX.Element | null {
       title="Export Gantt Chart"
       subtitle="Choose format and customize your export"
       footer={footer}
-      widthClass="max-w-5xl"
+      widthClass="max-w-6xl"
       headerStyle="figma"
       footerStyle="figma"
       contentPadding="p-0"
     >
       {/* Two-Column Layout */}
       <div className="flex h-[65vh]">
-        {/* Left: Preview Panel (65% width) */}
-        <div className="w-[65%] flex-shrink-0 bg-neutral-50 p-6 border-r border-neutral-200">
+        {/* Left: Preview Panel (flexible) */}
+        <div className="flex-1 bg-neutral-50 p-6 border-r border-neutral-200">
           <ExportPreview
             format={selectedExportFormat}
             canvas={previewCanvas}
@@ -409,8 +409,8 @@ export function ExportDialog(): JSX.Element | null {
           )}
         </div>
 
-        {/* Right: Options Panel */}
-        <div className="flex-1 overflow-y-auto p-8 scrollbar-thin">
+        {/* Right: Options Panel (fixed width) */}
+        <div className="w-[420px] flex-shrink-0 overflow-y-auto p-8 scrollbar-thin">
           <div className="space-y-8">
             {/* Format Selector */}
             <ExportFormatSelector
