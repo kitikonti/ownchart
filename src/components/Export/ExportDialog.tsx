@@ -358,7 +358,7 @@ export function ExportDialog(): JSX.Element | null {
       title="Export Gantt Chart"
       subtitle="Choose format and customize your export"
       footer={footer}
-      widthClass="max-w-6xl"
+      widthClass="max-w-7xl"
       headerStyle="figma"
       footerStyle="figma"
       contentPadding="p-0"
@@ -410,7 +410,7 @@ export function ExportDialog(): JSX.Element | null {
         </div>
 
         {/* Right: Options Panel (fixed width) */}
-        <div className="w-[420px] flex-shrink-0 overflow-y-auto p-8 scrollbar-thin">
+        <div className="w-[480px] flex-shrink-0 overflow-y-auto p-8 scrollbar-thin">
           <div className="space-y-8">
             {/* Format Selector */}
             <ExportFormatSelector
