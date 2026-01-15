@@ -2,6 +2,21 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [0.0.29](https://github.com/kitikonti/ownchart/compare/v0.0.28...v0.0.29) (2026-01-15)
+
+
+### Bug Fixes
+
+* export preview rendering blank due to invisible container ([883fcd1](https://github.com/kitikonti/ownchart/commit/883fcd1c8ed8c39035617418ef96d14556626d8b))
+
+
+### UI/UX
+
+* adjust export dialog layout to 55/45 preview/settings ratio ([bc90d0a](https://github.com/kitikonti/ownchart/commit/bc90d0a85c1cdb65529fd1074fbc798141ce5ea0))
+* expand export dialog with larger preview, fixed settings width ([553f41a](https://github.com/kitikonti/ownchart/commit/553f41a865bcb7f92c41ec6b631ed124ed8f3892))
+* increase export preview panel to 65% width ([7c7c71c](https://github.com/kitikonti/ownchart/commit/7c7c71cf7d4158cc83f02b663a28d61b8ca9e47e))
+* widen settings panel to 480px, expand dialog to max-w-7xl ([3652702](https://github.com/kitikonti/ownchart/commit/3652702a6261dfbe94b0fab99567c53bfb9b2245))
+
 ### [0.0.28](https://github.com/kitikonti/ownchart/compare/v0.0.27...v0.0.28) (2026-01-15)
 
 
