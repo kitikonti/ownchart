@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [0.0.31](https://github.com/kitikonti/ownchart/compare/v0.0.30...v0.0.31) (2026-01-15)
+
+
+### Features
+
+* add Smart Color Management with 5 color modes ([3921849](https://github.com/kitikonti/ownchart/commit/3921849b4e6e0f92ce185ce8c2898e4b2b920a28))
+
 ### [0.0.30](https://github.com/kitikonti/ownchart/compare/v0.0.29...v0.0.30) (2026-01-15)
 
 
