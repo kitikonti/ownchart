@@ -1,9 +1,11 @@
 /**
  * Color picker cell editor.
- * Allows selecting a color with a visual color picker.
+ * Opens an enhanced color picker popover with swatches and project colors.
  */
 
 import { useState, useRef, useEffect, type KeyboardEvent } from "react";
+import { createPortal } from "react-dom";
+import { ColorPickerPopover } from "./ColorPickerPopover";
 
 export interface ColorCellEditorProps {
   /** Current color value (hex) */
@@ -24,6 +26,7 @@ export interface ColorCellEditorProps {
 
 /**
  * Color picker cell editor component.
+ * Shows a color swatch that opens an enhanced popover on click.
  */
 export function ColorCellEditor({
   value,
@@ -32,30 +35,38 @@ export function ColorCellEditor({
   onCancel,
   height = 28,
 }: ColorCellEditorProps): JSX.Element {
-  const [localValue, setLocalValue] = useState(value);
-  const inputRef = useRef<HTMLInputElement>(null);
+  const [showPopover, setShowPopover] = useState(false);
+  const [anchorRect, setAnchorRect] = useState<DOMRect | undefined>();
+  const triggerRef = useRef<HTMLButtonElement>(null);
 
+  // Auto-open popover on mount
   useEffect(() => {
-    setLocalValue(value);
-  }, [value]);
-
-  useEffect(() => {
-    if (inputRef.current) {
-      inputRef.current.focus();
-      // Automatically open the color picker dialog on mount
-      inputRef.current.click();
+    if (triggerRef.current) {
+      setAnchorRect(triggerRef.current.getBoundingClientRect());
+      setShowPopover(true);
     }
   }, []);
 
-  const handleChange = (newValue: string) => {
-    setLocalValue(newValue);
-    onChange(newValue);
+  const handleClick = () => {
+    if (triggerRef.current) {
+      setAnchorRect(triggerRef.current.getBoundingClientRect());
+      setShowPopover(true);
+    }
   };
 
-  const handleKeyDown = (e: KeyboardEvent<HTMLInputElement>) => {
-    if (e.key === "Enter" && onSave) {
+  const handleSelect = (color: string) => {
+    onChange(color);
+  };
+
+  const handleClose = () => {
+    setShowPopover(false);
+    onSave?.();
+  };
+
+  const handleKeyDown = (e: KeyboardEvent<HTMLButtonElement>) => {
+    if (e.key === "Enter") {
       e.preventDefault();
-      onSave();
+      handleClick();
     } else if (e.key === "Escape" && onCancel) {
       e.preventDefault();
       onCancel();
@@ -63,17 +74,33 @@ export function ColorCellEditor({
   };
 
   return (
-    <div className="w-1.5 rounded overflow-hidden" style={{ height }}>
-      <input
-        ref={inputRef}
-        type="color"
-        value={localValue}
-        onChange={(e) => handleChange(e.target.value)}
+    <>
+      <button
+        ref={triggerRef}
+        type="button"
+        onClick={handleClick}
         onKeyDown={handleKeyDown}
-        onBlur={() => onSave?.()}
-        className="w-full h-full cursor-pointer block"
+        className="w-full rounded overflow-hidden border-0 p-0 cursor-pointer"
+        style={{
+          height,
+          backgroundColor: value,
+          outline: "none",
+        }}
         title="Choose color"
+        aria-label="Open color picker"
       />
-    </div>
+
+      {/* Popover rendered in portal */}
+      {showPopover &&
+        createPortal(
+          <ColorPickerPopover
+            value={value}
+            onSelect={handleSelect}
+            onClose={handleClose}
+            anchorRect={anchorRect}
+          />,
+          document.body
+        )}
+    </>
   );
 }

@@ -21,6 +21,7 @@ import {
 import { useCellNavigation } from "../../hooks/useCellNavigation";
 import { TaskTypeIcon } from "./TaskTypeIcon";
 import { calculateSummaryDates } from "../../utils/hierarchy";
+import { useComputedTaskColor } from "../../hooks/useComputedTaskColor";
 
 interface TaskTableRowProps {
   task: Task;
@@ -65,6 +66,9 @@ export function TaskTableRow({
   const { isCellEditing, stopCellEdit } = useCellNavigation();
   const densityConfig = useDensityConfig();
   const showProgress = useChartStore((state) => state.showProgress);
+
+  // Get computed task color based on current color mode
+  const computedColor = useComputedTaskColor(task);
 
   // Get visible columns based on settings (Sprint 1.5.9)
   const visibleColumns = useMemo(
@@ -404,6 +408,7 @@ export function TaskTableRow({
           }
 
           // Special handling for color field with color picker
+          // Uses computed color for display (respects color mode)
           if (field === "color") {
             const isEditing = isCellEditing(task.id, field);
 
@@ -430,7 +435,7 @@ export function TaskTableRow({
                     <div
                       className="w-1.5 rounded"
                       style={{
-                        backgroundColor: displayTask.color,
+                        backgroundColor: computedColor,
                         height: densityConfig.colorBarHeight,
                       }}
                     />

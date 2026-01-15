@@ -31,6 +31,7 @@ import {
 } from "../../types/preferences.types";
 import { useChartStore } from "../../store/slices/chartSlice";
 import { SVG_FONT_FAMILY } from "../../utils/export/constants";
+import { getComputedTaskColor } from "../../hooks/useComputedTaskColor";
 
 interface ExportRendererProps {
   tasks: Task[];
@@ -104,6 +105,7 @@ function ExportTaskTableRows({
   indentSize,
   fontSizeCell,
   cellPaddingX,
+  colorMap,
 }: {
   flattenedTasks: FlattenedTask[];
   selectedColumns: ExportColumnKey[];
@@ -115,6 +117,7 @@ function ExportTaskTableRows({
   indentSize: number;
   fontSizeCell: number;
   cellPaddingX: number;
+  colorMap: Map<string, string>;
 }): JSX.Element {
   return (
     <div
@@ -136,6 +139,8 @@ function ExportTaskTableRows({
               const colWidth = columnWidths[key] || col.defaultWidth;
 
               if (key === "color") {
+                // Use computed color from colorMap (respects color mode)
+                const displayColor = colorMap.get(task.id) || task.color;
                 return (
                   <div
                     key={key}
@@ -148,7 +153,7 @@ function ExportTaskTableRows({
                     <div
                       className="w-1.5 rounded"
                       style={{
-                        backgroundColor: task.color,
+                        backgroundColor: displayColor,
                         height: colorBarHeight,
                       }}
                     />
@@ -280,6 +285,19 @@ export function ExportRenderer({
   const orderedTasks = useMemo(() => {
     return flattenedTasks.map((ft) => ft.task);
   }, [flattenedTasks]);
+
+  // Get color mode state for computing task colors
+  const colorModeState = useChartStore((state) => state.colorModeState);
+
+  // Compute color map for all tasks (respects current color mode)
+  const colorMap = useMemo(() => {
+    const map = new Map<string, string>();
+    orderedTasks.forEach((task) => {
+      const color = getComputedTaskColor(task, orderedTasks, colorModeState);
+      map.set(task.id, color);
+    });
+    return map;
+  }, [orderedTasks, colorModeState]);
 
   // Calculate project date range from tasks if not provided
   const projectDateRange = useMemo(() => {
@@ -448,6 +466,7 @@ export function ExportRenderer({
             indentSize={densityConfig.indentSize}
             fontSizeCell={densityConfig.fontSizeCell}
             cellPaddingX={densityConfig.cellPaddingX}
+            colorMap={colorMap}
           />
         )}
 

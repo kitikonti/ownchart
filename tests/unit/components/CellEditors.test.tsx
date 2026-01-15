@@ -1,10 +1,16 @@
 /**
  * Unit tests for Cell Editor components
+ * Updated for popover-based ColorCellEditor
  */
 
 import { describe, it, expect, beforeEach, vi } from 'vitest';
-import { render, screen, fireEvent } from '@testing-library/react';
+import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { ColorCellEditor } from '../../../src/components/TaskList/CellEditors/ColorCellEditor';
+
+// Mock the Zustand stores used by ColorPickerPopover
+vi.mock('../../../src/store/slices/taskSlice', () => ({
+  useTaskStore: vi.fn(() => []),
+}));
 
 describe('ColorCellEditor', () => {
   const defaultProps = {
@@ -18,100 +24,91 @@ describe('ColorCellEditor', () => {
     vi.clearAllMocks();
   });
 
-  it('should render with initial color value', () => {
+  it('should render with color swatch button', () => {
     render(<ColorCellEditor {...defaultProps} />);
 
-    const input = screen.getByTitle('Choose color') as HTMLInputElement;
-    expect(input).toBeInTheDocument();
-    expect(input.type).toBe('color');
-    expect(input.value).toBe('#3b82f6');
+    const button = screen.getByRole('button', { name: 'Open color picker' });
+    expect(button).toBeInTheDocument();
+    expect(button).toHaveStyle({ backgroundColor: '#3b82f6' });
   });
 
-  it('should call onChange when color changes', () => {
+  it('should open popover on mount', async () => {
     render(<ColorCellEditor {...defaultProps} />);
 
-    const input = screen.getByTitle('Choose color') as HTMLInputElement;
-    fireEvent.change(input, { target: { value: '#ff0000' } });
-
-    expect(defaultProps.onChange).toHaveBeenCalledWith('#ff0000');
+    // Popover opens automatically on mount
+    await waitFor(() => {
+      expect(screen.getByText('Choose Color')).toBeInTheDocument();
+    });
   });
 
-  it('should update local value when prop changes', () => {
-    const { rerender } = render(<ColorCellEditor {...defaultProps} />);
-
-    const input = screen.getByTitle('Choose color') as HTMLInputElement;
-    expect(input.value).toBe('#3b82f6');
-
-    rerender(<ColorCellEditor {...defaultProps} value="#00ff00" />);
-
-    expect(input.value).toBe('#00ff00');
-  });
-
-  it('should call onSave when Enter is pressed', () => {
+  it('should show current color in popover preview', async () => {
     render(<ColorCellEditor {...defaultProps} />);
 
-    const input = screen.getByTitle('Choose color');
-    fireEvent.keyDown(input, { key: 'Enter' });
-
-    expect(defaultProps.onSave).toHaveBeenCalledTimes(1);
+    await waitFor(() => {
+      // The popover shows the color hex value in uppercase
+      expect(screen.getByText('#3B82F6')).toBeInTheDocument();
+    });
   });
 
-  it('should call onCancel when Escape is pressed', () => {
+  it('should call onCancel when Escape is pressed on trigger', () => {
     render(<ColorCellEditor {...defaultProps} />);
 
-    const input = screen.getByTitle('Choose color');
-    fireEvent.keyDown(input, { key: 'Escape' });
+    const button = screen.getByRole('button', { name: 'Open color picker' });
+    fireEvent.keyDown(button, { key: 'Escape' });
 
     expect(defaultProps.onCancel).toHaveBeenCalledTimes(1);
-  });
-
-  it('should call onSave on blur', () => {
-    render(<ColorCellEditor {...defaultProps} />);
-
-    const input = screen.getByTitle('Choose color');
-    fireEvent.blur(input);
-
-    expect(defaultProps.onSave).toHaveBeenCalledTimes(1);
-  });
-
-  it('should not crash when onSave is undefined on Enter', () => {
-    const props = { ...defaultProps, onSave: undefined };
-    render(<ColorCellEditor {...props} />);
-
-    const input = screen.getByTitle('Choose color');
-    expect(() => fireEvent.keyDown(input, { key: 'Enter' })).not.toThrow();
   });
 
   it('should not crash when onCancel is undefined on Escape', () => {
     const props = { ...defaultProps, onCancel: undefined };
     render(<ColorCellEditor {...props} />);
 
-    const input = screen.getByTitle('Choose color');
-    expect(() => fireEvent.keyDown(input, { key: 'Escape' })).not.toThrow();
+    const button = screen.getByRole('button', { name: 'Open color picker' });
+    expect(() => fireEvent.keyDown(button, { key: 'Escape' })).not.toThrow();
   });
 
-  it('should not crash when onSave is undefined on blur', () => {
-    const props = { ...defaultProps, onSave: undefined };
-    render(<ColorCellEditor {...props} />);
-
-    const input = screen.getByTitle('Choose color');
-    expect(() => fireEvent.blur(input)).not.toThrow();
-  });
-
-  it('should handle multiple color changes', () => {
+  it('should call onSave when popover closes', async () => {
     render(<ColorCellEditor {...defaultProps} />);
 
-    const input = screen.getByTitle('Choose color') as HTMLInputElement;
+    // Wait for popover to open
+    await waitFor(() => {
+      expect(screen.getByText('Choose Color')).toBeInTheDocument();
+    });
 
-    fireEvent.change(input, { target: { value: '#ff0000' } });
+    // Click the close button in the popover
+    const closeButton = screen.getByRole('button', { name: '' }); // X icon button
+    fireEvent.click(closeButton);
+
+    expect(defaultProps.onSave).toHaveBeenCalledTimes(1);
+  });
+
+  it('should apply custom height prop', () => {
+    render(<ColorCellEditor {...defaultProps} height={40} />);
+
+    const button = screen.getByRole('button', { name: 'Open color picker' });
+    expect(button).toHaveStyle({ height: '40px' });
+  });
+
+  it('should show native color picker in popover', async () => {
+    render(<ColorCellEditor {...defaultProps} />);
+
+    await waitFor(() => {
+      const nativePicker = screen.getByTitle('Pick custom color');
+      expect(nativePicker).toBeInTheDocument();
+      expect(nativePicker).toHaveAttribute('type', 'color');
+    });
+  });
+
+  it('should call onChange when selecting from native picker', async () => {
+    render(<ColorCellEditor {...defaultProps} />);
+
+    await waitFor(() => {
+      expect(screen.getByTitle('Pick custom color')).toBeInTheDocument();
+    });
+
+    const nativePicker = screen.getByTitle('Pick custom color');
+    fireEvent.change(nativePicker, { target: { value: '#ff0000' } });
+
     expect(defaultProps.onChange).toHaveBeenCalledWith('#ff0000');
-
-    fireEvent.change(input, { target: { value: '#00ff00' } });
-    expect(defaultProps.onChange).toHaveBeenCalledWith('#00ff00');
-
-    fireEvent.change(input, { target: { value: '#0000ff' } });
-    expect(defaultProps.onChange).toHaveBeenCalledWith('#0000ff');
-
-    expect(defaultProps.onChange).toHaveBeenCalledTimes(3);
   });
 });

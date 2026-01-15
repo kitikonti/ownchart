@@ -9,6 +9,12 @@ import {
   getContrastRatio,
   isLightColor,
   getContrastTextColor,
+  hexToHSL,
+  hslToHex,
+  lightenColor,
+  darkenColor,
+  generateMonochromePalette,
+  expandPalette,
 } from "../../../src/utils/colorUtils";
 
 describe("colorUtils", () => {
@@ -226,6 +232,189 @@ describe("colorUtils", () => {
       it(`returns ${expectedText === "#ffffff" ? "white" : "dark"} text on ${name} (${hex})`, () => {
         expect(getContrastTextColor(hex)).toBe(expectedText);
       });
+    });
+  });
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // HSL COLOR UTILITIES (Smart Color Management)
+  // ═══════════════════════════════════════════════════════════════════════════
+
+  describe("hexToHSL", () => {
+    it("converts pure red to HSL", () => {
+      const hsl = hexToHSL("#ff0000");
+      expect(hsl.h).toBe(0);
+      expect(hsl.s).toBe(100);
+      expect(hsl.l).toBe(50);
+    });
+
+    it("converts pure green to HSL", () => {
+      const hsl = hexToHSL("#00ff00");
+      expect(hsl.h).toBe(120);
+      expect(hsl.s).toBe(100);
+      expect(hsl.l).toBe(50);
+    });
+
+    it("converts pure blue to HSL", () => {
+      const hsl = hexToHSL("#0000ff");
+      expect(hsl.h).toBe(240);
+      expect(hsl.s).toBe(100);
+      expect(hsl.l).toBe(50);
+    });
+
+    it("converts white to HSL", () => {
+      const hsl = hexToHSL("#ffffff");
+      expect(hsl.s).toBe(0);
+      expect(hsl.l).toBe(100);
+    });
+
+    it("converts black to HSL", () => {
+      const hsl = hexToHSL("#000000");
+      expect(hsl.s).toBe(0);
+      expect(hsl.l).toBe(0);
+    });
+
+    it("converts gray to HSL", () => {
+      const hsl = hexToHSL("#808080");
+      expect(hsl.s).toBe(0);
+      expect(hsl.l).toBe(50);
+    });
+  });
+
+  describe("hslToHex", () => {
+    it("converts pure red HSL to hex", () => {
+      expect(hslToHex({ h: 0, s: 100, l: 50 })).toBe("#FF0000");
+    });
+
+    it("converts pure green HSL to hex", () => {
+      expect(hslToHex({ h: 120, s: 100, l: 50 })).toBe("#00FF00");
+    });
+
+    it("converts pure blue HSL to hex", () => {
+      expect(hslToHex({ h: 240, s: 100, l: 50 })).toBe("#0000FF");
+    });
+
+    it("converts white HSL to hex", () => {
+      expect(hslToHex({ h: 0, s: 0, l: 100 })).toBe("#FFFFFF");
+    });
+
+    it("converts black HSL to hex", () => {
+      expect(hslToHex({ h: 0, s: 0, l: 0 })).toBe("#000000");
+    });
+
+    it("round-trips hex -> HSL -> hex", () => {
+      const original = "#0F6CBD";
+      const hsl = hexToHSL(original);
+      const result = hslToHex(hsl);
+      // Allow slight rounding differences
+      expect(result.toUpperCase()).toBe(original.toUpperCase());
+    });
+  });
+
+  describe("lightenColor", () => {
+    it("lightens a dark blue color", () => {
+      const original = hexToHSL("#0F6CBD");
+      const lightened = lightenColor("#0F6CBD", 0.2);
+      const lightenedHSL = hexToHSL(lightened);
+      expect(lightenedHSL.l).toBeGreaterThan(original.l);
+    });
+
+    it("does not exceed 100% lightness", () => {
+      const lightened = lightenColor("#CCCCCC", 0.5);
+      const hsl = hexToHSL(lightened);
+      expect(hsl.l).toBeLessThanOrEqual(100);
+    });
+
+    it("lightening by 0 returns original color", () => {
+      const original = "#0F6CBD";
+      const result = lightenColor(original, 0);
+      expect(result.toUpperCase()).toBe(original.toUpperCase());
+    });
+  });
+
+  describe("darkenColor", () => {
+    it("darkens a light color", () => {
+      const original = hexToHSL("#B4D6FA");
+      const darkened = darkenColor("#B4D6FA", 0.2);
+      const darkenedHSL = hexToHSL(darkened);
+      expect(darkenedHSL.l).toBeLessThan(original.l);
+    });
+
+    it("does not go below 0% lightness", () => {
+      const darkened = darkenColor("#333333", 0.5);
+      const hsl = hexToHSL(darkened);
+      expect(hsl.l).toBeGreaterThanOrEqual(0);
+    });
+
+    it("darkening by 0 returns original color", () => {
+      const original = "#0F6CBD";
+      const result = darkenColor(original, 0);
+      expect(result.toUpperCase()).toBe(original.toUpperCase());
+    });
+  });
+
+  describe("generateMonochromePalette", () => {
+    it("generates 5 colors", () => {
+      const palette = generateMonochromePalette("#0F6CBD");
+      expect(palette).toHaveLength(5);
+    });
+
+    it("generates valid hex colors", () => {
+      const palette = generateMonochromePalette("#0F6CBD");
+      palette.forEach((color) => {
+        expect(color).toMatch(/^#[0-9A-F]{6}$/i);
+      });
+    });
+
+    it("generates colors from dark to light", () => {
+      const palette = generateMonochromePalette("#0F6CBD");
+      const lightnesses = palette.map((c) => hexToHSL(c).l);
+      // Each color should be lighter than the previous
+      for (let i = 1; i < lightnesses.length; i++) {
+        expect(lightnesses[i]).toBeGreaterThan(lightnesses[i - 1]);
+      }
+    });
+
+    it("maintains the same hue for all colors", () => {
+      const palette = generateMonochromePalette("#0F6CBD");
+      const hues = palette.map((c) => hexToHSL(c).h);
+      // All hues should be the same (within rounding)
+      hues.forEach((h) => {
+        expect(Math.abs(h - hues[0])).toBeLessThanOrEqual(1);
+      });
+    });
+  });
+
+  describe("expandPalette", () => {
+    const basePalette = ["#0A2E4A", "#0F6CBD", "#2B88D8", "#62ABF5", "#B4D6FA"];
+
+    it("returns original palette when target <= palette length", () => {
+      const result = expandPalette(basePalette, 3);
+      expect(result).toHaveLength(3);
+      expect(result).toEqual(basePalette.slice(0, 3));
+    });
+
+    it("expands palette to target count", () => {
+      const result = expandPalette(basePalette, 10);
+      expect(result).toHaveLength(10);
+    });
+
+    it("expands palette to large count", () => {
+      const result = expandPalette(basePalette, 25);
+      expect(result).toHaveLength(25);
+    });
+
+    it("generates valid hex colors", () => {
+      const result = expandPalette(basePalette, 15);
+      result.forEach((color) => {
+        expect(color).toMatch(/^#[0-9A-F]{6}$/i);
+      });
+    });
+
+    it("generates distinct colors", () => {
+      const result = expandPalette(basePalette, 10);
+      const unique = new Set(result.map((c) => c.toUpperCase()));
+      // Most colors should be unique (allow some overlap due to rounding)
+      expect(unique.size).toBeGreaterThan(result.length * 0.7);
     });
   });
 });

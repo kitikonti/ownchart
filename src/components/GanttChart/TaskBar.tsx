@@ -18,6 +18,7 @@ import { useTaskStore } from "../../store/slices/taskSlice";
 import { useDensityConfig } from "../../store/slices/userPreferencesSlice";
 import { SVG_FONT_FAMILY } from "../../utils/export/constants";
 import { getContrastTextColor } from "../../utils/colorUtils";
+import { useComputedTaskColor } from "../../hooks/useComputedTaskColor";
 
 interface TaskBarProps {
   task: Task;
@@ -207,6 +208,9 @@ export const TaskBar = React.memo(function TaskBar({
   // Use override if provided (for export), otherwise use store config
   const densityConfig = densityOverride || storeDensityConfig;
 
+  // Get computed task color based on current color mode
+  const computedColor = useComputedTaskColor(task);
+
   // Create density geometry config for getTaskBarGeometry
   const densityGeometry: DensityGeometryConfig = useMemo(
     () => ({
@@ -345,7 +349,7 @@ export const TaskBar = React.memo(function TaskBar({
           x={centeredX}
           y={geometry.y}
           size={size}
-          color={task.color}
+          color={computedColor}
           onClick={handleClick}
           onMouseDown={onMouseDown}
           onMouseMove={onMouseMoveForCursor}
@@ -390,7 +394,7 @@ export const TaskBar = React.memo(function TaskBar({
           y={geometry.y}
           width={geometry.width}
           height={geometry.height}
-          color={task.color}
+          color={computedColor}
           onClick={handleClick}
           onMouseDown={onMouseDown}
           onMouseMove={onMouseMoveForCursor}
@@ -453,7 +457,7 @@ export const TaskBar = React.memo(function TaskBar({
         y={geometry.y}
         width={geometry.width}
         height={geometry.height}
-        fill={task.color}
+        fill={computedColor}
         fillOpacity={isBeingDragged ? 0.3 : showProgress ? 0.8 : 1}
         rx={4}
         ry={4}
@@ -466,7 +470,7 @@ export const TaskBar = React.memo(function TaskBar({
           y={geometry.y}
           width={progressWidth}
           height={geometry.height}
-          fill={task.color}
+          fill={computedColor}
           fillOpacity={isBeingDragged ? 0.3 : 1}
           clipPath={`url(#${clipPathId})`}
         />
@@ -502,7 +506,7 @@ export const TaskBar = React.memo(function TaskBar({
           y={geometry.y + geometry.height / 2 + densityConfig.fontSizeBar / 3}
           fontSize={densityConfig.fontSizeBar}
           fontFamily={SVG_FONT_FAMILY}
-          fill={labelPosition === "inside" ? getContrastTextColor(task.color) : "#495057"}
+          fill={labelPosition === "inside" ? getContrastTextColor(computedColor) : "#495057"}
           textAnchor={labelPosition === "before" ? "end" : "start"}
           clipPath={
             labelPosition === "inside" ? `url(#${clipPathId})` : undefined

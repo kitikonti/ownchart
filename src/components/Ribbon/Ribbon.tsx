@@ -57,6 +57,9 @@ import {
 } from "../Toolbar/ToolbarPrimitives";
 import { ToolbarDropdown } from "../Toolbar/ToolbarDropdown";
 import type { DropdownOption } from "../Toolbar/ToolbarDropdown";
+import { ColorModeDropdown } from "./ColorModeDropdown";
+import { ColorOptionsDropdown } from "./ColorOptionsDropdown";
+import { RegenerateButton } from "./RegenerateButton";
 
 import { useTaskStore } from "../../store/slices/taskSlice";
 import { useChartStore } from "../../store/slices/chartSlice";
@@ -432,6 +435,15 @@ export function Ribbon() {
           aria-label="Indent"
           icon={<TextIndent size={ICON_SIZE} weight="light" />}
         />
+      </ToolbarGroup>
+
+      <ToolbarSeparator />
+
+      {/* Color Mode (Smart Color Management) */}
+      <ToolbarGroup label="Colors">
+        <ColorModeDropdown />
+        <ColorOptionsDropdown />
+        <RegenerateButton />
       </ToolbarGroup>
 
       <ToolbarSeparator />

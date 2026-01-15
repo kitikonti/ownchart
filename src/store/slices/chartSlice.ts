@@ -24,6 +24,15 @@ import type {
   TaskLabelPosition,
   WorkingDaysConfig,
 } from "../../types/preferences.types";
+import type {
+  ColorModeState,
+  ColorMode,
+  ThemeModeOptions,
+  SummaryModeOptions,
+  TaskTypeModeOptions,
+  HierarchyModeOptions,
+} from "../../types/colorMode.types";
+import { DEFAULT_COLOR_MODE_STATE } from "../../types/colorMode.types";
 import {
   DEFAULT_WORKING_DAYS_CONFIG,
   detectLocaleHolidayRegion,
@@ -76,6 +85,9 @@ interface ChartState {
   // Project metadata (saved in .ownchart file)
   projectTitle: string;
   projectAuthor: string;
+
+  // Color mode state (Smart Color Management)
+  colorModeState: ColorModeState;
 
   // Transient UI state
   isZooming: boolean;
@@ -140,6 +152,14 @@ interface ChartActions {
   setProjectTitle: (title: string) => void;
   setProjectAuthor: (author: string) => void;
 
+  // Color mode actions (Smart Color Management)
+  setColorMode: (mode: ColorMode) => void;
+  setThemeOptions: (options: Partial<ThemeModeOptions>) => void;
+  setSummaryOptions: (options: Partial<SummaryModeOptions>) => void;
+  setTaskTypeOptions: (options: Partial<TaskTypeModeOptions>) => void;
+  setHierarchyOptions: (options: Partial<HierarchyModeOptions>) => void;
+  setColorModeState: (state: ColorModeState) => void;
+
   // Bulk settings update (for loading from file)
   setViewSettings: (settings: Partial<ChartState>) => void;
 
@@ -190,6 +210,9 @@ export const useChartStore = create<ChartState & ChartActions>()(
     // Project metadata
     projectTitle: "",
     projectAuthor: "",
+
+    // Color mode state (Smart Color Management)
+    colorModeState: { ...DEFAULT_COLOR_MODE_STATE },
 
     // Transient UI state
     isZooming: false,
@@ -566,6 +589,55 @@ export const useChartStore = create<ChartState & ChartActions>()(
       });
     },
 
+    // Color mode actions (Smart Color Management)
+    setColorMode: (mode: ColorMode) => {
+      set((state) => {
+        state.colorModeState.mode = mode;
+      });
+    },
+
+    setThemeOptions: (options: Partial<ThemeModeOptions>) => {
+      set((state) => {
+        state.colorModeState.themeOptions = {
+          ...state.colorModeState.themeOptions,
+          ...options,
+        };
+      });
+    },
+
+    setSummaryOptions: (options: Partial<SummaryModeOptions>) => {
+      set((state) => {
+        state.colorModeState.summaryOptions = {
+          ...state.colorModeState.summaryOptions,
+          ...options,
+        };
+      });
+    },
+
+    setTaskTypeOptions: (options: Partial<TaskTypeModeOptions>) => {
+      set((state) => {
+        state.colorModeState.taskTypeOptions = {
+          ...state.colorModeState.taskTypeOptions,
+          ...options,
+        };
+      });
+    },
+
+    setHierarchyOptions: (options: Partial<HierarchyModeOptions>) => {
+      set((state) => {
+        state.colorModeState.hierarchyOptions = {
+          ...state.colorModeState.hierarchyOptions,
+          ...options,
+        };
+      });
+    },
+
+    setColorModeState: (newState: ColorModeState) => {
+      set((state) => {
+        state.colorModeState = newState;
+      });
+    },
+
     // Bulk settings update (for loading from file)
     setViewSettings: (settings: Partial<ChartState>) => {
       set((state) => {
@@ -594,6 +666,8 @@ export const useChartStore = create<ChartState & ChartActions>()(
           state.projectTitle = settings.projectTitle;
         if (settings.projectAuthor !== undefined)
           state.projectAuthor = settings.projectAuthor;
+        if (settings.colorModeState !== undefined)
+          state.colorModeState = settings.colorModeState;
       });
       // Update holiday service if region changed
       if (settings.holidayRegion !== undefined) {

@@ -144,3 +144,173 @@ export function getPerceivedBrightness(hex: string): number {
   // Convert WCAG luminance (0-1) to brightness scale (0-255) for compatibility
   return getRelativeLuminance(hex) * 255;
 }
+
+// ═══════════════════════════════════════════════════════════════════════════
+// HSL COLOR UTILITIES (Smart Color Management)
+// ═══════════════════════════════════════════════════════════════════════════
+
+/**
+ * HSL color representation
+ */
+export interface HSL {
+  h: number; // Hue: 0-360
+  s: number; // Saturation: 0-100
+  l: number; // Lightness: 0-100
+}
+
+/**
+ * Converts a hex color to HSL
+ */
+export function hexToHSL(hex: string): HSL {
+  const { r, g, b } = hexToRgb(hex);
+  const rNorm = r / 255;
+  const gNorm = g / 255;
+  const bNorm = b / 255;
+
+  const max = Math.max(rNorm, gNorm, bNorm);
+  const min = Math.min(rNorm, gNorm, bNorm);
+  const l = (max + min) / 2;
+
+  let h = 0;
+  let s = 0;
+
+  if (max !== min) {
+    const d = max - min;
+    s = l > 0.5 ? d / (2 - max - min) : d / (max + min);
+
+    switch (max) {
+      case rNorm:
+        h = ((gNorm - bNorm) / d + (gNorm < bNorm ? 6 : 0)) / 6;
+        break;
+      case gNorm:
+        h = ((bNorm - rNorm) / d + 2) / 6;
+        break;
+      case bNorm:
+        h = ((rNorm - gNorm) / d + 4) / 6;
+        break;
+    }
+  }
+
+  return {
+    h: Math.round(h * 360),
+    s: Math.round(s * 100),
+    l: Math.round(l * 100),
+  };
+}
+
+/**
+ * Converts HSL to hex color
+ */
+export function hslToHex(hsl: HSL): string {
+  const h = hsl.h / 360;
+  const s = hsl.s / 100;
+  const l = hsl.l / 100;
+
+  let r: number, g: number, b: number;
+
+  if (s === 0) {
+    r = g = b = l;
+  } else {
+    const hue2rgb = (p: number, q: number, t: number): number => {
+      if (t < 0) t += 1;
+      if (t > 1) t -= 1;
+      if (t < 1 / 6) return p + (q - p) * 6 * t;
+      if (t < 1 / 2) return q;
+      if (t < 2 / 3) return p + (q - p) * (2 / 3 - t) * 6;
+      return p;
+    };
+
+    const q = l < 0.5 ? l * (1 + s) : l + s - l * s;
+    const p = 2 * l - q;
+
+    r = hue2rgb(p, q, h + 1 / 3);
+    g = hue2rgb(p, q, h);
+    b = hue2rgb(p, q, h - 1 / 3);
+  }
+
+  const toHex = (x: number): string => {
+    const hex = Math.round(x * 255).toString(16);
+    return hex.length === 1 ? "0" + hex : hex;
+  };
+
+  return `#${toHex(r)}${toHex(g)}${toHex(b)}`.toUpperCase();
+}
+
+/**
+ * Lightens a color by a percentage
+ * @param hex - Hex color string
+ * @param amount - Amount to lighten (0-1, e.g., 0.15 = 15%)
+ */
+export function lightenColor(hex: string, amount: number): string {
+  const hsl = hexToHSL(hex);
+  hsl.l = Math.min(100, hsl.l + amount * 100);
+  return hslToHex(hsl);
+}
+
+/**
+ * Darkens a color by a percentage
+ * @param hex - Hex color string
+ * @param amount - Amount to darken (0-1, e.g., 0.15 = 15%)
+ */
+export function darkenColor(hex: string, amount: number): string {
+  const hsl = hexToHSL(hex);
+  hsl.l = Math.max(0, hsl.l - amount * 100);
+  return hslToHex(hsl);
+}
+
+/**
+ * Generates a monochrome palette from a base color (5 shades: dark → light)
+ * @param baseColor - Hex color string
+ */
+export function generateMonochromePalette(baseColor: string): string[] {
+  const hsl = hexToHSL(baseColor);
+  const lightnessSteps = [20, 35, 50, 65, 80]; // dark → light
+
+  return lightnessSteps.map((l) => hslToHex({ h: hsl.h, s: hsl.s, l }));
+}
+
+/**
+ * Expands a palette to match a target count using lightness variations
+ * Based on Matt Ström's color formulas and Lyft ColorBox algorithm
+ * @see https://mattstromawn.com/writing/generating-color-palettes/
+ * @see https://github.com/lyft/coloralgorithm
+ */
+export function expandPalette(
+  baseColors: string[],
+  targetCount: number
+): string[] {
+  if (targetCount <= baseColors.length) {
+    return baseColors.slice(0, targetCount);
+  }
+
+  const stepsPerColor = Math.ceil(targetCount / baseColors.length);
+  const expanded: string[] = [];
+
+  for (const baseHex of baseColors) {
+    const hsl = hexToHSL(baseHex);
+
+    for (let i = 0; i < stepsPerColor; i++) {
+      const t = stepsPerColor > 1 ? i / (stepsPerColor - 1) : 0.5; // 0 → 1
+
+      // Easing for more natural transitions (easeOutQuad)
+      const eased = 1 - Math.pow(1 - t, 2);
+
+      // Lightness: dark → light (25% → 75%)
+      const lightness = 25 + eased * 50;
+
+      // Saturation: parabola (maximum in middle, formula: -4n² + 4n)
+      const satMod = 1 - Math.pow(2 * t - 1, 2) * 0.3;
+      const saturation = Math.min(100, hsl.s * satMod);
+
+      // Hue-Shift (Bezold-Brücke effect): ±3° based on lightness
+      const hueShift = (0.5 - t) * 6;
+      const hue = (hsl.h + hueShift + 360) % 360;
+
+      expanded.push(hslToHex({ h: hue, s: saturation, l: lightness }));
+    }
+
+    if (expanded.length >= targetCount) break;
+  }
+
+  return expanded.slice(0, targetCount);
+}
