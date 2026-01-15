@@ -1,6 +1,6 @@
 # Post-Sprint 1.5.5 Code Review
 
-> **Status:** IN PROGRESS
+> **Status:** ✅ ABGESCHLOSSEN
 > **Erstellt:** 2026-01-15
 > **Letztes Update:** 2026-01-15
 > **Review-Scope:** Commits nach Sprint 1.5.5 Completion (`5dd4439`)
@@ -38,10 +38,10 @@ Dieses Dokument dient als persistenter State für das Code Review. Nach jedem `/
 | # | Gruppe | Commits | Status |
 |---|--------|---------|--------|
 | 1 | MS Office Ribbon UI Refactoring | 7 | [x] Abgeschlossen |
-| 2 | Test & Accessibility Fixes | 4 | [ ] Offen |
-| 3 | Minor UI Improvements | 2 | [ ] Offen |
-| 4 | Typography & Visual Polish | 6 | [ ] Offen |
-| 5 | Export Dialog Redesign | 8 | [ ] Offen |
+| 2 | Test & Accessibility Fixes | 4 | [x] Abgeschlossen |
+| 3 | Minor UI Improvements | 2 | [x] Abgeschlossen |
+| 4 | Typography & Visual Polish | 6 | [x] Abgeschlossen |
+| 5 | Export Dialog Redesign | 8 | [x] Abgeschlossen |
 
 **Gesamt:** 27 Commits (+ 7 Release-Commits die übersprungen werden)
 
@@ -103,128 +103,220 @@ Dieses Dokument dient als persistenter State für das Code Review. Nach jedem `/
 ## Gruppe 2: Test & Accessibility Fixes
 
 **Releases:** v0.0.25
-**Status:** [ ] Offen
+**Status:** [x] Abgeschlossen
 
 ### Commits:
 
-- [ ] `1b93d11` fix: repair broken tests after UI refactoring
-- [ ] `8d7ce4c` fix: use div instead of nav for tablist role
-- [ ] `9cf5ec1` fix: resolve lint errors for interactive roles
-- [ ] `891bd2b` chore: run prettier formatting
+- [x] `1b93d11` fix: repair broken tests after UI refactoring
+- [x] `8d7ce4c` fix: use div instead of nav for tablist role
+- [x] `9cf5ec1` fix: resolve lint errors for interactive roles
+- [x] `891bd2b` chore: run prettier formatting
 
 ### Review-Checkliste:
 
-- [ ] Code-Architektur geprüft
-- [ ] Keine Bugs gefunden / Bugs gefixt
-- [ ] Kein problematischer duplizierter Code
-- [ ] Refactoring durchgeführt (falls nötig)
-- [ ] Tests ergänzt (falls nötig)
-- [ ] Docs aktualisiert (falls nötig)
+- [x] Code-Architektur geprüft
+- [x] Keine Bugs gefunden / Bugs gefixt
+- [x] Kein problematischer duplizierter Code
+- [x] Refactoring durchgeführt (falls nötig) - nicht nötig
+- [x] Tests ergänzt (falls nötig) - nicht nötig
+- [x] Docs aktualisiert (falls nötig) - nicht nötig
 
 ### Findings:
 
-_Noch nicht reviewed_
+1. **Test Setup Improvements (`1b93d11`):**
+   - Exzellenter Canvas-Context Mock für Text-Messung in jsdom
+   - `localStorage.clear()` vor jedem Test verhindert State Pollution
+   - Test-Updates für `teal` → `brand` Rename korrekt
+   - Obsolete Tests (TypeCellEditor, zoom-toolbar) korrekt entfernt
+
+2. **Accessibility Fix - nav→div (`8d7ce4c`):**
+   - Korrekte Verbesserung: `<nav>` hat semantische Navigation-Bedeutung
+   - `<div role="tablist">` ist das richtige Pattern nach ARIA-Spec
+   - jsx-a11y Lint-Fehler behoben
+
+3. **Accessibility Fix - tabIndex (`9cf5ec1`):**
+   - `tabIndex={0}` für NewTaskPlaceholderRow gridcells - alle fokussierbar
+   - `tabIndex={-1}` für RowNumberCell und TaskTableRow - programmatisch fokussierbar
+   - ARIA-konform: Elements mit interactive roles müssen fokussierbar sein
+
+4. **Prettier Formatting (`891bd2b`):**
+   - Nur Formatierungsänderungen, keine funktionalen Änderungen
 
 ### Änderungen vorgenommen:
 
-_Keine_
+_Keine - Code war bereits korrekt_
 
 ---
 
 ## Gruppe 3: Minor UI Improvements
 
 **Releases:** v0.0.26 - v0.0.27
-**Status:** [ ] Offen
+**Status:** [x] Abgeschlossen
 
 ### Commits:
 
-- [ ] `53a13ef` feat: add Chart Settings button to Help tab
-- [ ] `8c898de` ui: simplify View tab dropdown labels
+- [x] `53a13ef` feat: add Chart Settings button to Help tab
+- [x] `8c898de` ui: simplify View tab dropdown labels
 
 ### Review-Checkliste:
 
-- [ ] Code-Architektur geprüft
-- [ ] Keine Bugs gefunden / Bugs gefixt
-- [ ] Kein problematischer duplizierter Code
-- [ ] Refactoring durchgeführt (falls nötig)
-- [ ] Tests ergänzt (falls nötig)
-- [ ] Docs aktualisiert (falls nötig)
+- [x] Code-Architektur geprüft
+- [x] Keine Bugs gefunden / Bugs gefixt
+- [x] Kein problematischer duplizierter Code
+- [x] Refactoring durchgeführt (falls nötig) - nicht nötig
+- [x] Tests ergänzt (falls nötig) - nicht nötig
+- [x] Docs aktualisiert (falls nötig) - nicht nötig
 
 ### Findings:
 
-_Noch nicht reviewed_
+1. **Chart Settings Button (`53a13ef`):**
+   - Sliders Icon korrekt aus @phosphor-icons importiert
+   - Button korrekt im Help Tab → Settings Gruppe platziert
+   - openChartSettingsDialog korrekt aus UIStore verwendet
+   - Vollständig korrekt implementiert
+
+2. **View Tab Dropdown Labels (`8c898de`):**
+   - MS Office Style: Dropdowns zeigen nur Label, nicht ausgewählten Wert
+   - Alle 5 ToolbarDropdowns haben labelPrefix - kein Fallback zu "Select"
+   - Umbenennung sinnvoll: "Date: " → "Date Format", "Week #: " → "Week"
+   - ToolbarDropdown-Änderung ist sauber implementiert
 
 ### Änderungen vorgenommen:
 
-_Keine_
+_Keine - Code war bereits korrekt_
 
 ---
 
 ## Gruppe 4: Typography & Visual Polish
 
 **Releases:** v0.0.27 - v0.0.28
-**Status:** [ ] Offen
+**Status:** [x] Abgeschlossen
 
 ### Commits:
 
-- [ ] `721bd09` ui: switch to Inter font with embedded PDF support
-- [ ] `a7f934e` ui: standardize font weights to 400/600 only
-- [ ] `77fca04` fix: auto column width respects headers and placeholder text
-- [ ] `9da123c` fix: remove stray rectangle in placeholder row number cell
-- [ ] `d48c089` feat: add dynamic text color contrast for task labels
-- [ ] `83d73bc` ui: change today marker from red to blue with header highlight
+- [x] `721bd09` ui: switch to Inter font with embedded PDF support
+- [x] `a7f934e` ui: standardize font weights to 400/600 only
+- [x] `77fca04` fix: auto column width respects headers and placeholder text
+- [x] `9da123c` fix: remove stray rectangle in placeholder row number cell
+- [x] `d48c089` feat: add dynamic text color contrast for task labels
+- [x] `83d73bc` ui: change today marker from red to blue with header highlight
 
 ### Review-Checkliste:
 
-- [ ] Code-Architektur geprüft
-- [ ] Keine Bugs gefunden / Bugs gefixt
-- [ ] Kein problematischer duplizierter Code
-- [ ] Refactoring durchgeführt (falls nötig)
-- [ ] Tests ergänzt (falls nötig)
-- [ ] Docs aktualisiert (falls nötig)
+- [x] Code-Architektur geprüft
+- [x] Keine Bugs gefunden / Bugs gefixt
+- [x] Kein problematischer duplizierter Code
+- [x] Refactoring durchgeführt (falls nötig) - nicht nötig
+- [x] Tests ergänzt (falls nötig) - 40 Tests für colorUtils bereits enthalten
+- [x] Docs aktualisiert (falls nötig) - CLAUDE.md bereits aktualisiert
 
 ### Findings:
 
-_Noch nicht reviewed_
+1. **Inter Font Switch (`721bd09`):**
+   - Font-Dateien (TTF, WOFF2) korrekt hinzugefügt
+   - @font-face in index.css korrekt definiert
+   - PDF-Export nutzt embedded fonts aus interFontData.ts
+   - design-tokens.ts und tailwind.config.js korrekt aktualisiert
+   - CLAUDE.md mit Warnungen für große Font-Dateien aktualisiert
+
+2. **Font Weights Standardisierung (`a7f934e`):**
+   - Nur 400 (Regular) und 600 (SemiBold) - gute Simplifikation
+   - Unbenutzte Font-Dateien (Light, Bold) entfernt
+   - PDF-Export hat jetzt auch SemiBold embedded
+
+3. **Auto Column Width (`77fca04`):**
+   - `document.fonts.ready` API für Font-Loading-Check - exzellent
+   - Fallback für Test-Umgebungen vorhanden
+   - Fingerprint-basierte Änderungserkennung effizient
+   - Initial render wird übersprungen für gespeicherte Breiten
+
+4. **Stray Rectangle Fix (`9da123c`):**
+   - Einfacher Bug-Fix durch Entfernen unnötiger verschachtelter Elemente
+   - Density-aware Padding jetzt korrekt
+
+5. **Dynamic Text Color Contrast (`d48c089`):**
+   - WCAG 2.1 konforme Luminanz-Berechnung in colorUtils.ts
+   - Threshold 2.0:1 für White-Text - akzeptabel für Task-Labels
+   - 40 Unit-Tests bereits enthalten - hervorragend
+   - getContrastTextColor() in TaskBar.tsx korrekt verwendet
+
+6. **Today Marker (`83d73bc`):**
+   - Farbe aus design-tokens (COLORS.chart.todayMarker = #0F6CBD)
+   - Header-Highlighting mit todayHighlight (#EBF3FC)
+   - Konsistent mit Brand-Farben
 
 ### Änderungen vorgenommen:
 
-_Keine_
+_Keine - Code war bereits korrekt und gut getestet_
 
 ---
 
 ## Gruppe 5: Export Dialog Redesign
 
 **Releases:** v0.0.28 - v0.0.29
-**Status:** [ ] Offen
+**Status:** [x] Abgeschlossen
 
 ### Commits:
 
-- [ ] `4679179` feat: redesign export dialog with Figma-style layout and live preview
-- [ ] `883fcd1` fix: export preview rendering blank due to invisible container
-- [ ] `bc90d0a` ui: adjust export dialog layout to 55/45 preview/settings ratio
-- [ ] `7c7c71c` ui: increase export preview panel to 65% width
-- [ ] `553f41a` ui: expand export dialog with larger preview, fixed settings width
-- [ ] `3652702` ui: widen settings panel to 480px, expand dialog to max-w-7xl
-- [ ] `6dea551` fix: resolve export preview flash and PDF bold font issues
-- [ ] `dcd53a2` refactor: extract reusable components from export dialogs
+- [x] `4679179` feat: redesign export dialog with Figma-style layout and live preview
+- [x] `883fcd1` fix: export preview rendering blank due to invisible container
+- [x] `bc90d0a` ui: adjust export dialog layout to 55/45 preview/settings ratio
+- [x] `7c7c71c` ui: increase export preview panel to 65% width
+- [x] `553f41a` ui: expand export dialog with larger preview, fixed settings width
+- [x] `3652702` ui: widen settings panel to 480px, expand dialog to max-w-7xl
+- [x] `6dea551` fix: resolve export preview flash and PDF bold font issues
+- [x] `dcd53a2` refactor: extract reusable components from export dialogs
 
 ### Review-Checkliste:
 
-- [ ] Code-Architektur geprüft
-- [ ] Keine Bugs gefunden / Bugs gefixt
-- [ ] Kein problematischer duplizierter Code
-- [ ] Refactoring durchgeführt (falls nötig)
-- [ ] Tests ergänzt (falls nötig)
-- [ ] Docs aktualisiert (falls nötig)
+- [x] Code-Architektur geprüft
+- [x] Keine Bugs gefunden / Bugs gefixt
+- [x] Kein problematischer duplizierter Code - durch Refactoring behoben
+- [x] Refactoring durchgeführt (falls nötig) - bereits in `dcd53a2`
+- [x] Tests ergänzt (falls nötig) - ExportFormatSelector Tests aktualisiert
+- [x] Docs aktualisiert (falls nötig) - nicht nötig
 
 ### Findings:
 
-_Noch nicht reviewed_
+1. **Export Dialog Redesign (`4679179`):**
+   - Figma-style Two-Column Layout mit Live-Preview
+   - useExportPreview Hook mit 300ms Debouncing - exzellent
+   - Memory Management und Abort Handling korrekt
+   - ChartPreview/PdfPreview Komponenten gut getrennt
+   - Modal wurde sinnvoll erweitert (widthClass, headerStyle, footerStyle)
+
+2. **Preview Flash Fix (`6dea551`):**
+   - height:0 + overflow:hidden Methode statt visibility:hidden
+   - Canvas zu Data URL Konvertierung für flash-freie Anzeige
+   - PDF Bold Font Fix (font-weight 600/700 → "bold" string für svg2pdf.js)
+   - Alle Fixes sind korrekt und notwendig
+
+3. **Layout Iterations (`883fcd1`, `bc90d0a`, `7c7c71c`, `553f41a`, `3652702`):**
+   - Schrittweise Optimierung des Layouts ist nachvollziehbar
+   - Finale Lösung: Preview-Panel links, Settings rechts (480px fest)
+   - Dialog auf max-w-7xl erweitert - guter Kompromiss
+
+4. **Reusable Components Refactor (`dcd53a2`):**
+   - **ZoomModeSelector**: Unified für PNG/PDF/SVG, sehr gut strukturiert
+     - Fit to Width mit Presets (Screen Sizes, Print @ 150 DPI) und Custom
+     - Custom Zoom mit Slider, Input und Presets
+     - Input validation mit min/max Constraints
+   - **RadioOptionCard**: Saubere Komponente mit Badge, Description, Children
+   - **CollapsibleSection**: Einfach, effektiv, gute A11y (aria-expanded)
+   - **CheckboxGroup**: Checkbox-Liste mit Dividers
+   - Code-Duplikation signifikant reduziert (-774 Zeilen, +643 Zeilen = Netto -131)
+
+5. **Architektur-Bewertung:**
+   - useExportPreview Hook ist sehr gut implementiert:
+     - document.fonts.ready für Font-Loading
+     - Double requestAnimationFrame für Paint-Waiting
+     - Render ID Tracking für Race Condition Prevention
+     - Proper Cleanup auf Unmount und Abort
+   - Wiederverwendbare Komponenten ermöglichen konsistente UI
 
 ### Änderungen vorgenommen:
 
-_Keine_
+_Keine - Code war bereits korrekt und gut refactored_
 
 ---
 
@@ -236,12 +328,12 @@ _Hier werden wichtige Erkenntnisse notiert, die für nachfolgende Review-Gruppen
 
 ## Abschluss-Checkliste
 
-- [ ] Alle 5 Gruppen reviewed
-- [ ] Alle Findings dokumentiert
-- [ ] Alle notwendigen Änderungen committed
-- [ ] Tests laufen durch (`npm run ci:local`)
-- [ ] Docs auf aktuellem Stand
-- [ ] CLAUDE.md aktualisiert (falls nötig)
+- [x] Alle 5 Gruppen reviewed
+- [x] Alle Findings dokumentiert
+- [x] Alle notwendigen Änderungen committed (nur Gruppe 1 hatte Änderungen)
+- [x] Tests laufen durch (`npm run ci:local`)
+- [x] Docs auf aktuellem Stand
+- [x] CLAUDE.md aktualisiert (falls nötig) - bereits aktuell
 
 ---
 
@@ -256,13 +348,12 @@ _Hier werden die Commits eingetragen, die im Rahmen dieses Reviews erstellt wurd
 
 ## Nächster Schritt
 
-**Starte mit Gruppe 2: Test & Accessibility Fixes**
+**Review abgeschlossen!**
 
-Befehle zum Starten:
-```bash
-# Zeige alle Commits der Gruppe 2
-git show 1b93d11 --stat
-git show 8d7ce4c --stat
-git show 9cf5ec1 --stat
-git show 891bd2b --stat
-```
+Alle 5 Review-Gruppen wurden erfolgreich geprüft:
+- 27 Commits reviewed
+- 1 Bug gefunden und gefixt (inkonsistente Default-Farbe in Gruppe 1)
+- Code-Qualität insgesamt sehr gut
+- Architektur-Patterns konsistent
+
+Das Review kann archiviert werden.
