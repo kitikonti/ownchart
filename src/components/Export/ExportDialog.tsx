@@ -365,8 +365,8 @@ export function ExportDialog(): JSX.Element | null {
     >
       {/* Two-Column Layout */}
       <div className="flex h-[65vh]">
-        {/* Left: Preview Panel (60% width) */}
-        <div className="w-[55%] flex-shrink-0 bg-neutral-50 p-6 border-r border-neutral-200">
+        {/* Left: Preview Panel (65% width) */}
+        <div className="w-[65%] flex-shrink-0 bg-neutral-50 p-6 border-r border-neutral-200">
           <ExportPreview
             format={selectedExportFormat}
             canvas={previewCanvas}
