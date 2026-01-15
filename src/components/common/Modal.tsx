@@ -17,6 +17,9 @@ export interface ModalProps {
   /** Modal title */
   title: string;
 
+  /** Optional subtitle below the title */
+  subtitle?: string;
+
   /** Modal content */
   children: ReactNode;
 
@@ -28,6 +31,15 @@ export interface ModalProps {
 
   /** Modal width class (default: max-w-lg) */
   widthClass?: string;
+
+  /** Use new Figma-style header with border-bottom (default: false) */
+  headerStyle?: "default" | "figma";
+
+  /** Use new Figma-style footer with bg-neutral-50 (default: false) */
+  footerStyle?: "default" | "figma";
+
+  /** Custom padding for content area */
+  contentPadding?: string;
 }
 
 /**
@@ -37,10 +49,14 @@ export function Modal({
   isOpen,
   onClose,
   title,
+  subtitle,
   children,
   icon,
   footer,
   widthClass = "max-w-lg",
+  headerStyle = "default",
+  footerStyle = "default",
+  contentPadding = "p-6",
 }: ModalProps): JSX.Element | null {
   const modalRef = useRef<HTMLDivElement>(null);
   const previousActiveElement = useRef<HTMLElement | null>(null);
@@ -116,20 +132,39 @@ export function Modal({
           shadow-[0_0_8px_rgba(0,0,0,0.12),0_32px_64px_rgba(0,0,0,0.14)]
         `}
       >
-        {/* Header - MS style: no border, brand-colored title and close icon */}
-        <div className="flex items-center justify-between p-6 pb-0">
+        {/* Header */}
+        <div
+          className={`flex items-center justify-between ${
+            headerStyle === "figma"
+              ? "px-8 py-6 border-b border-neutral-200"
+              : "p-6 pb-0"
+          }`}
+        >
           <div className="flex items-center gap-3">
             {icon}
-            <h2
-              id="modal-title"
-              className="text-xl font-semibold text-brand-600 leading-7"
-            >
-              {title}
-            </h2>
+            <div>
+              <h2
+                id="modal-title"
+                className={`font-semibold leading-7 ${
+                  headerStyle === "figma"
+                    ? "text-xl text-neutral-900"
+                    : "text-xl text-brand-600"
+                }`}
+              >
+                {title}
+              </h2>
+              {subtitle && (
+                <p className="text-sm text-neutral-500 mt-0.5">{subtitle}</p>
+              )}
+            </div>
           </div>
           <button
             onClick={onClose}
-            className="p-1.5 -m-1.5 rounded hover:bg-neutral-100 transition-colors duration-100 text-brand-600 hover:text-brand-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-100"
+            className={`p-1.5 -m-1.5 rounded transition-colors duration-100 focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-100 ${
+              headerStyle === "figma"
+                ? "text-neutral-400 hover:text-neutral-700 hover:bg-neutral-100"
+                : "text-brand-600 hover:text-brand-700 hover:bg-neutral-100"
+            }`}
             aria-label="Close dialog"
           >
             <X size={20} weight="regular" />
@@ -137,13 +172,21 @@ export function Modal({
         </div>
 
         {/* Content */}
-        <div className="flex-1 overflow-y-auto p-6 scrollbar-thin">
+        <div className={`flex-1 overflow-y-auto ${contentPadding} scrollbar-thin`}>
           {children}
         </div>
 
-        {/* Footer - MS style: clean, no border, no background */}
+        {/* Footer */}
         {footer && (
-          <div className="px-6 pb-6 pt-2 flex justify-end gap-2">{footer}</div>
+          <div
+            className={
+              footerStyle === "figma"
+                ? "px-8 py-6 border-t border-neutral-200 bg-neutral-50 flex justify-end gap-3"
+                : "px-6 pb-6 pt-2 flex justify-end gap-2"
+            }
+          >
+            {footer}
+          </div>
         )}
       </div>
     </div>

@@ -1,17 +1,17 @@
 /**
  * Export format selector component.
  * Allows users to choose between PNG, PDF, and SVG export formats.
+ * Figma-style: Selected card has solid brand-600 background.
  */
 
-import { Image, FilePdf, FileCode } from "@phosphor-icons/react";
+import { Image, FilePdf, FileCode, Info } from "@phosphor-icons/react";
 import type { ExportFormat } from "../../utils/export/types";
 
 interface FormatOption {
   format: ExportFormat;
   icon: typeof Image;
   label: string;
-  description: string;
-  bestFor: string;
+  helpText: string;
 }
 
 const FORMAT_OPTIONS: FormatOption[] = [
@@ -19,22 +19,19 @@ const FORMAT_OPTIONS: FormatOption[] = [
     format: "png",
     icon: Image,
     label: "PNG",
-    description: "Raster image",
-    bestFor: "Best for web & slides",
+    helpText: "Best for presentations and sharing. High quality raster image.",
   },
   {
     format: "pdf",
     icon: FilePdf,
     label: "PDF",
-    description: "Vector document",
-    bestFor: "Best for print",
+    helpText: "Best for printing and professional documentation.",
   },
   {
     format: "svg",
     icon: FileCode,
     label: "SVG",
-    description: "Editable vector",
-    bestFor: "Best for design tools",
+    helpText: "Best for web and scalable graphics. Smallest file size.",
   },
 ];
 
@@ -47,46 +44,62 @@ export function ExportFormatSelector({
   selectedFormat,
   onFormatChange,
 }: ExportFormatSelectorProps): JSX.Element {
-  return (
-    <div className="flex gap-2">
-      {FORMAT_OPTIONS.map((option) => {
-        const Icon = option.icon;
-        const isSelected = selectedFormat === option.format;
+  const selectedOption = FORMAT_OPTIONS.find(
+    (opt) => opt.format === selectedFormat
+  );
 
-        return (
-          <button
-            key={option.format}
-            type="button"
-            onClick={() => onFormatChange(option.format)}
-            className={`flex-1 flex flex-col items-center gap-1.5 p-3 rounded-lg border-2 transition-all duration-150 ${
-              isSelected
-                ? "bg-brand-50 border-[var(--color-brand-gray-400)] shadow-sm"
-                : "bg-white border-neutral-200 hover:border-[var(--color-brand-gray-400)] hover:bg-brand-50/30"
-            }`}
-            aria-pressed={isSelected}
-          >
-            <Icon
-              size={24}
-              weight="light"
-              className={
+  return (
+    <div>
+      <span className="block text-xs font-bold text-neutral-500 uppercase tracking-wide mb-3">
+        Format
+      </span>
+
+      {/* Format Cards Grid */}
+      <div className="grid grid-cols-3 gap-3">
+        {FORMAT_OPTIONS.map((option) => {
+          const Icon = option.icon;
+          const isSelected = selectedFormat === option.format;
+
+          return (
+            <button
+              key={option.format}
+              type="button"
+              onClick={() => onFormatChange(option.format)}
+              className={`flex flex-col items-center gap-2.5 px-4 py-4 rounded-lg border-2 transition-all duration-200 active:scale-[0.98] min-h-[88px] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-100 focus-visible:ring-offset-2 ${
                 isSelected
-                  ? "text-[var(--color-brand-gray-700)]"
-                  : "text-neutral-400"
-              }
-            />
-            <span
-              className={`text-sm font-semibold ${isSelected ? "text-[var(--color-brand-gray-900)]" : "text-neutral-600"}`}
+                  ? "border-brand-600 bg-brand-600 shadow-md"
+                  : "border-neutral-200 hover:border-neutral-300 hover:bg-neutral-50"
+              }`}
+              aria-pressed={isSelected}
+              title={option.helpText}
             >
-              {option.label}
-            </span>
-            <span
-              className={`text-[10px] leading-tight text-center ${isSelected ? "text-[var(--color-brand-gray-700)]" : "text-neutral-500"}`}
-            >
-              {option.bestFor}
-            </span>
-          </button>
-        );
-      })}
+              <Icon
+                size={24}
+                weight="light"
+                className={isSelected ? "text-white" : "text-neutral-500"}
+              />
+              <span
+                className={`text-xs font-semibold uppercase ${
+                  isSelected ? "text-white" : "text-neutral-700"
+                }`}
+              >
+                {option.label}
+              </span>
+            </button>
+          );
+        })}
+      </div>
+
+      {/* Help Text Box */}
+      {selectedOption && (
+        <div className="mt-3 flex items-start gap-2 text-xs text-neutral-600 bg-neutral-50 rounded-lg p-3 border border-neutral-200">
+          <Info
+            className="size-4 text-neutral-500 mt-0.5 flex-shrink-0"
+            weight="fill"
+          />
+          <p>{selectedOption.helpText}</p>
+        </div>
+      )}
     </div>
   );
 }

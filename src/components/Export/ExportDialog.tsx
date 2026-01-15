@@ -4,9 +4,7 @@
 
 import { useCallback, useMemo, useEffect } from "react";
 import {
-  Export,
   Spinner,
-  Download,
   Warning,
   Info,
   FilePdf,
@@ -16,11 +14,12 @@ import {
 import { EXPORT_MAX_SAFE_WIDTH } from "../../utils/export/types";
 import type { ExportFormat } from "../../utils/export/types";
 import { Modal } from "../common/Modal";
-import { Button } from "../common/Button";
 import { ExportFormatSelector } from "./ExportFormatSelector";
 import { SharedExportOptions } from "./SharedExportOptions";
 import { PngScaleOptions } from "./PngScaleOptions";
 import { PdfExportOptions } from "./PdfExportOptions";
+import { ExportPreview } from "./ExportPreview";
+import { useExportPreview } from "../../hooks/useExportPreview";
 import { useUIStore } from "../../store/slices/uiSlice";
 import { useTaskStore } from "../../store/slices/taskSlice";
 import { useChartStore } from "../../store/slices/chartSlice";
@@ -278,7 +277,7 @@ export function ExportDialog(): JSX.Element | null {
   // Format-specific button config
   const formatConfig: Record<
     ExportFormat,
-    { icon: typeof Download; label: string }
+    { icon: typeof Image; label: string }
   > = {
     png: { icon: Image, label: "Export PNG" },
     pdf: { icon: FilePdf, label: "Export PDF" },
@@ -288,160 +287,203 @@ export function ExportDialog(): JSX.Element | null {
   const currentFormat = formatConfig[selectedExportFormat];
   const FormatIcon = currentFormat.icon;
 
+  // Generate live preview
+  const {
+    previewCanvas,
+    previewDimensions,
+    isRendering: isPreviewRendering,
+    error: previewError,
+  } = useExportPreview({
+    tasks,
+    options: exportOptions,
+    columnWidths,
+    currentAppZoom,
+    projectDateRange,
+    visibleDateRange,
+    enabled: isExportDialogOpen,
+  });
+
   const footer = (
-    <div className="flex items-center justify-between w-full gap-4">
-      {/* Export Size - Show for PNG and SVG */}
-      <div className="flex items-center gap-3 min-w-0">
-        {showDimensions ? (
+    <div className="flex items-center w-full gap-3">
+      {/* Progress bar for PDF export */}
+      {isExporting && exportProgress > 0 && (
+        <div className="flex items-center gap-2 flex-1">
+          <div className="w-32 h-2 bg-neutral-200 rounded-full overflow-hidden">
+            <div
+              className="h-full bg-brand-600 transition-all duration-300"
+              style={{ width: `${exportProgress}%` }}
+            />
+          </div>
+          <span className="text-xs text-neutral-500 font-mono">
+            {exportProgress}%
+          </span>
+        </div>
+      )}
+
+      {/* Spacer when no progress */}
+      {!(isExporting && exportProgress > 0) && <div className="flex-1" />}
+
+      {/* Buttons - Figma style with flex-1 */}
+      <button
+        onClick={closeExportDialog}
+        disabled={isExporting}
+        className="flex-1 max-w-[140px] px-5 py-3 text-sm font-medium text-neutral-700 bg-white border border-neutral-300 rounded-lg hover:bg-neutral-50 transition-all duration-200 active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-100 focus-visible:ring-offset-2"
+      >
+        Cancel
+      </button>
+      <button
+        onClick={handleExport}
+        disabled={isExporting}
+        className="flex-1 max-w-[180px] px-5 py-3 text-sm font-medium text-white bg-brand-600 rounded-lg hover:bg-brand-500 transition-all duration-200 shadow-md active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-100 focus-visible:ring-offset-2"
+      >
+        {isExporting ? (
           <>
-            <div className="flex items-baseline gap-1.5">
-              <span
-                className={`text-lg font-bold font-mono tabular-nums ${hasWarning ? "text-amber-700" : "text-neutral-800"}`}
-              >
-                {estimatedDimensions.width.toLocaleString()}
-              </span>
-              <span className="text-neutral-400">×</span>
-              <span
-                className={`text-lg font-bold font-mono tabular-nums ${hasWarning ? "text-amber-700" : "text-neutral-800"}`}
-              >
-                {estimatedDimensions.height.toLocaleString()}
-              </span>
-              <span className="text-xs text-neutral-400 ml-0.5">px</span>
-            </div>
-            {/* Warning/Info icon (PNG only) */}
-            {hasWarning && (
-              <div
-                className="p-1 bg-amber-100 rounded-full text-amber-600"
-                title={`Export width exceeds ${EXPORT_MAX_SAFE_WIDTH.toLocaleString()}px. Some browsers may have trouble rendering.`}
-              >
-                <Warning size={14} weight="light" />
-              </div>
-            )}
-            {hasInfo && (
-              <div
-                className="p-1 bg-neutral-100 rounded-full text-neutral-500"
-                title="Large export. Generation may take a moment."
-              >
-                <Info size={14} weight="light" />
-              </div>
-            )}
+            <Spinner size={16} className="animate-spin" />
+            Exporting...
           </>
         ) : (
-          // Progress bar for PDF export
-          isExporting &&
-          exportProgress > 0 && (
-            <div className="flex items-center gap-2">
-              <div className="w-32 h-2 bg-neutral-200 rounded-full overflow-hidden">
-                <div
-                  className="h-full bg-neutral-600 transition-all duration-300"
-                  style={{ width: `${exportProgress}%` }}
-                />
-              </div>
-              <span className="text-xs text-neutral-500 font-mono">
-                {exportProgress}%
-              </span>
-            </div>
-          )
+          <>
+            <FormatIcon size={16} weight="regular" />
+            {currentFormat.label}
+          </>
         )}
-      </div>
-
-      {/* Buttons */}
-      <div className="flex items-center gap-2">
-        <Button
-          variant="secondary"
-          onClick={closeExportDialog}
-          disabled={isExporting}
-        >
-          Cancel
-        </Button>
-        <Button
-          variant="primary"
-          onClick={handleExport}
-          disabled={isExporting}
-          icon={
-            isExporting ? (
-              <Spinner size={16} className="animate-spin" />
-            ) : (
-              <FormatIcon size={16} weight="regular" />
-            )
-          }
-        >
-          {isExporting ? "Exporting..." : currentFormat.label}
-        </Button>
-      </div>
+      </button>
     </div>
   );
-
-  // Dynamic title based on format
-  const dialogTitles: Record<ExportFormat, string> = {
-    png: "Export Chart",
-    pdf: "Export Chart",
-    svg: "Export Chart",
-  };
 
   return (
     <Modal
       isOpen={isExportDialogOpen}
       onClose={closeExportDialog}
-      title={dialogTitles[selectedExportFormat]}
-      icon={<Export size={24} weight="regular" className="text-brand-600" />}
+      title="Export Gantt Chart"
+      subtitle="Choose format and customize your export"
       footer={footer}
-      widthClass="max-w-xl"
+      widthClass="max-w-5xl"
+      headerStyle="figma"
+      footerStyle="figma"
+      contentPadding="p-0"
     >
-      <div className="space-y-16">
-        {/* Format Selector */}
-        <ExportFormatSelector
-          selectedFormat={selectedExportFormat}
-          onFormatChange={setExportFormat}
-        />
-
-        {/* Format-specific Options */}
-        {selectedExportFormat === "png" && (
-          <PngScaleOptions
-            options={exportOptions}
-            onChange={setExportOptions}
-            currentAppZoom={currentAppZoom}
-            projectDurationDays={projectDurationDays}
-            taskTableWidth={taskTableWidth}
+      {/* Two-Column Layout */}
+      <div className="flex h-[65vh]">
+        {/* Left: Preview Panel */}
+        <div className="w-[380px] flex-shrink-0 bg-neutral-50 p-6 border-r border-neutral-200">
+          <ExportPreview
+            format={selectedExportFormat}
+            canvas={previewCanvas}
+            dimensions={previewDimensions.width > 0 ? previewDimensions : estimatedDimensions}
+            isRendering={isPreviewRendering}
+            error={previewError}
+            isTransparent={exportOptions.background === "transparent"}
+            pdfOptions={pdfExportOptions}
+            projectTitle={projectTitle || undefined}
+            projectAuthor={projectAuthor || undefined}
           />
-        )}
 
-        {selectedExportFormat === "pdf" && (
-          <PdfExportOptions
-            options={pdfExportOptions}
-            onChange={setPdfExportOptions}
-            exportOptions={exportOptions}
-            onExportOptionsChange={setExportOptions}
-            currentAppZoom={currentAppZoom}
-            taskCount={tasks.length}
-          />
-        )}
+          {/* Warnings for PNG/SVG */}
+          {showDimensions && (hasWarning || hasInfo) && (
+            <div className="mt-4">
+              {hasWarning && (
+                <div className="flex items-center gap-2.5 px-4 py-3 rounded-lg bg-amber-50 border border-amber-200">
+                  <Warning
+                    className="size-4 text-amber-600 flex-shrink-0"
+                    weight="fill"
+                  />
+                  <span className="text-xs font-medium text-amber-700">
+                    Export exceeds {EXPORT_MAX_SAFE_WIDTH.toLocaleString()}px -
+                    may cause issues
+                  </span>
+                </div>
+              )}
+              {hasInfo && !hasWarning && (
+                <div className="flex items-center gap-2.5 px-4 py-3 rounded-lg bg-neutral-100 border border-neutral-200">
+                  <Info
+                    className="size-4 text-neutral-500 flex-shrink-0"
+                    weight="fill"
+                  />
+                  <span className="text-xs font-medium text-neutral-600">
+                    Large export - generation may take a moment
+                  </span>
+                </div>
+              )}
+            </div>
+          )}
+        </div>
 
-        {selectedExportFormat === "svg" && (
-          <PngScaleOptions
-            options={exportOptions}
-            onChange={setExportOptions}
-            currentAppZoom={currentAppZoom}
-            projectDurationDays={projectDurationDays}
-            taskTableWidth={taskTableWidth}
-          />
-        )}
+        {/* Right: Options Panel */}
+        <div className="flex-1 overflow-y-auto p-8 scrollbar-thin">
+          <div className="space-y-8">
+            {/* Format Selector */}
+            <ExportFormatSelector
+              selectedFormat={selectedExportFormat}
+              onFormatChange={setExportFormat}
+            />
 
-        {/* Shared Options */}
-        <SharedExportOptions
-          options={exportOptions}
-          onChange={setExportOptions}
-          format={selectedExportFormat}
-          projectDateRange={projectDateRange}
-          visibleDateRange={visibleDateRange}
-        />
+            <div className="h-px bg-neutral-200" />
 
-        {/* Error message */}
-        {exportError && (
-          <div className="p-3 text-sm text-red-700 bg-red-50 rounded-md">
-            {exportError}
+            {/* Format-specific Options */}
+            {selectedExportFormat === "png" && (
+              <PngScaleOptions
+                options={exportOptions}
+                onChange={setExportOptions}
+                currentAppZoom={currentAppZoom}
+                projectDurationDays={projectDurationDays}
+                taskTableWidth={taskTableWidth}
+              />
+            )}
+
+            {selectedExportFormat === "pdf" && (
+              <PdfExportOptions
+                options={pdfExportOptions}
+                onChange={setPdfExportOptions}
+                exportOptions={exportOptions}
+                onExportOptionsChange={setExportOptions}
+                currentAppZoom={currentAppZoom}
+                taskCount={tasks.length}
+              />
+            )}
+
+            {selectedExportFormat === "svg" && (
+              <PngScaleOptions
+                options={exportOptions}
+                onChange={setExportOptions}
+                currentAppZoom={currentAppZoom}
+                projectDurationDays={projectDurationDays}
+                taskTableWidth={taskTableWidth}
+              />
+            )}
+
+            <div className="h-px bg-neutral-200" />
+
+            {/* Shared Options */}
+            <SharedExportOptions
+              options={exportOptions}
+              onChange={setExportOptions}
+              format={selectedExportFormat}
+              projectDateRange={projectDateRange}
+              visibleDateRange={visibleDateRange}
+            />
+
+            {/* Error message */}
+            {exportError && (
+              <div className="p-4 text-sm text-red-700 bg-red-50 border border-red-200 rounded-lg">
+                {exportError}
+              </div>
+            )}
+
+            {/* Info tip */}
+            <div className="flex items-start gap-3 px-4 py-3 rounded-lg bg-blue-50 border border-blue-200">
+              <Info
+                className="size-4 text-blue-600 flex-shrink-0 mt-0.5"
+                weight="fill"
+              />
+              <p className="text-xs text-blue-900">
+                <strong className="font-semibold">Tip:</strong> For detailed
+                documentation, use 100% zoom. For overview posters, use 25-50%
+                zoom.
+              </p>
+            </div>
           </div>
-        )}
+        </div>
       </div>
     </Modal>
   );

@@ -1,5 +1,6 @@
 /**
  * Unit tests for ExportFormatSelector component
+ * Updated for Figma-style design with solid brand-600 selected state
  */
 
 import { describe, it, expect, vi } from "vitest";
@@ -25,12 +26,10 @@ describe("ExportFormatSelector", () => {
       expect(screen.getByText("SVG")).toBeInTheDocument();
     });
 
-    it("displays format descriptions", () => {
+    it("displays Format section header", () => {
       render(<ExportFormatSelector {...defaultProps} />);
 
-      expect(screen.getByText("Best for web & slides")).toBeInTheDocument();
-      expect(screen.getByText("Best for print")).toBeInTheDocument();
-      expect(screen.getByText("Best for design tools")).toBeInTheDocument();
+      expect(screen.getByText("Format")).toBeInTheDocument();
     });
 
     it("renders buttons with correct aria-pressed state", () => {
@@ -40,6 +39,14 @@ describe("ExportFormatSelector", () => {
       expect(buttons[0]).toHaveAttribute("aria-pressed", "true"); // PNG
       expect(buttons[1]).toHaveAttribute("aria-pressed", "false"); // PDF
       expect(buttons[2]).toHaveAttribute("aria-pressed", "false"); // SVG
+    });
+
+    it("shows help text for selected format", () => {
+      render(<ExportFormatSelector {...defaultProps} selectedFormat="png" />);
+
+      expect(
+        screen.getByText(/Best for presentations and sharing/i)
+      ).toBeInTheDocument();
     });
   });
 
@@ -102,24 +109,32 @@ describe("ExportFormatSelector", () => {
       render(<ExportFormatSelector {...defaultProps} selectedFormat="png" />);
 
       const pngButton = screen.getByText("PNG").closest("button");
-      expect(pngButton).toHaveClass("border-[var(--color-brand-gray-400)]");
-      expect(pngButton).toHaveClass("bg-brand-50");
+      expect(pngButton).toHaveClass("border-brand-600");
+      expect(pngButton).toHaveClass("bg-brand-600");
     });
 
     it("shows PDF as selected when selectedFormat is pdf", () => {
       render(<ExportFormatSelector {...defaultProps} selectedFormat="pdf" />);
 
       const pdfButton = screen.getByText("PDF").closest("button");
-      expect(pdfButton).toHaveClass("border-[var(--color-brand-gray-400)]");
-      expect(pdfButton).toHaveClass("bg-brand-50");
+      expect(pdfButton).toHaveClass("border-brand-600");
+      expect(pdfButton).toHaveClass("bg-brand-600");
     });
 
     it("shows SVG as selected when selectedFormat is svg", () => {
       render(<ExportFormatSelector {...defaultProps} selectedFormat="svg" />);
 
       const svgButton = screen.getByText("SVG").closest("button");
-      expect(svgButton).toHaveClass("border-[var(--color-brand-gray-400)]");
-      expect(svgButton).toHaveClass("bg-brand-50");
+      expect(svgButton).toHaveClass("border-brand-600");
+      expect(svgButton).toHaveClass("bg-brand-600");
+    });
+
+    it("shows unselected buttons with neutral styling", () => {
+      render(<ExportFormatSelector {...defaultProps} selectedFormat="png" />);
+
+      const pdfButton = screen.getByText("PDF").closest("button");
+      expect(pdfButton).toHaveClass("border-neutral-200");
+      expect(pdfButton).not.toHaveClass("bg-brand-600");
     });
   });
 });
