@@ -2,6 +2,27 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [0.0.28](https://github.com/kitikonti/ownchart/compare/v0.0.27...v0.0.28) (2026-01-15)
+
+
+### Features
+
+* add dynamic text color contrast for task labels ([d48c089](https://github.com/kitikonti/ownchart/commit/d48c08967a552bcf12256e95bff267a81e6a8d8f)), closes [#1e293](https://github.com/kitikonti/ownchart/issues/1e293)
+* redesign export dialog with Figma-style layout and live preview ([4679179](https://github.com/kitikonti/ownchart/commit/4679179b377ee42869a400fa8ba5e61650734c02))
+
+
+### Bug Fixes
+
+* auto column width respects headers and placeholder text ([77fca04](https://github.com/kitikonti/ownchart/commit/77fca04b45ca39c743473169bdceecd8c974247a))
+* remove stray rectangle in placeholder row number cell ([9da123c](https://github.com/kitikonti/ownchart/commit/9da123c7b4dffcd061edfd1c2ac59554b077c3c8))
+
+
+### UI/UX
+
+* change today marker from red to blue with header highlight ([83d73bc](https://github.com/kitikonti/ownchart/commit/83d73bcf799f57ba5e1e5e38f6546b8f71d5c689)), closes [#fa5252](https://github.com/kitikonti/ownchart/issues/fa5252) [#228be6](https://github.com/kitikonti/ownchart/issues/228be6) [#e7f1](https://github.com/kitikonti/ownchart/issues/e7f1)
+* standardize font weights to 400/600 only ([a7f934e](https://github.com/kitikonti/ownchart/commit/a7f934e7fe31d4dfb4c76f80599fbd6a9ee028f4))
+* switch to Inter font with embedded PDF support ([721bd09](https://github.com/kitikonti/ownchart/commit/721bd0908278aa38d3d4497fefb19cb7bd3b2a07))
+
 ### [0.0.27](https://github.com/kitikonti/ownchart/compare/v0.0.26...v0.0.27) (2026-01-13)
 
 
