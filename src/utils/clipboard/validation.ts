@@ -78,7 +78,7 @@ export function getClearValueForField(field: EditableField): unknown {
     case "progress":
       return 0;
     case "color":
-      return "#FAA916"; // Default amber
+      return "#0F6CBD"; // Default brand color (Outlook Blue)
     case "type":
       return "task";
     default:

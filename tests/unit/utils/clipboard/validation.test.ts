@@ -191,8 +191,8 @@ describe("getClearValueForField", () => {
     expect(getClearValueForField("progress")).toBe(0);
   });
 
-  it('should return default teal color for "color"', () => {
-    expect(getClearValueForField("color")).toBe("#0d9488");
+  it('should return default brand color for "color"', () => {
+    expect(getClearValueForField("color")).toBe("#0F6CBD");
   });
 
   it('should return "task" for "type"', () => {

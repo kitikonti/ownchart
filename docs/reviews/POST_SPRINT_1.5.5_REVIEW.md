@@ -37,7 +37,7 @@ Dieses Dokument dient als persistenter State für das Code Review. Nach jedem `/
 
 | # | Gruppe | Commits | Status |
 |---|--------|---------|--------|
-| 1 | MS Office Ribbon UI Refactoring | 7 | [ ] Offen |
+| 1 | MS Office Ribbon UI Refactoring | 7 | [x] Abgeschlossen |
 | 2 | Test & Accessibility Fixes | 4 | [ ] Offen |
 | 3 | Minor UI Improvements | 2 | [ ] Offen |
 | 4 | Typography & Visual Polish | 6 | [ ] Offen |
@@ -50,34 +50,53 @@ Dieses Dokument dient als persistenter State für das Code Review. Nach jedem `/
 ## Gruppe 1: MS Office Ribbon UI Refactoring
 
 **Releases:** v0.0.23 - v0.0.24
-**Status:** [ ] Offen
+**Status:** [x] Abgeschlossen
 
 ### Commits:
 
-- [ ] `590b7d7` chore: fix formatting and lint issues
-- [ ] `8ed59a9` docs: add sprint concept for export preview feature
-- [ ] `2b71984` refactor(ui): MS Office-style Ribbon UI and cleanup
-- [ ] `00b4ba4` ui: MS Office-style selection and status bar improvements
-- [ ] `c47a324` feat: auto-fit column widths on density and content changes
-- [ ] `ef2ebaf` fix: drag select now uses visible task order instead of raw array
-- [ ] `1bee106` ui: update View tab icons and add week settings
+- [x] `590b7d7` chore: fix formatting and lint issues
+- [x] `8ed59a9` docs: add sprint concept for export preview feature
+- [x] `2b71984` refactor(ui): MS Office-style Ribbon UI and cleanup
+- [x] `00b4ba4` ui: MS Office-style selection and status bar improvements
+- [x] `c47a324` feat: auto-fit column widths on density and content changes
+- [x] `ef2ebaf` fix: drag select now uses visible task order instead of raw array
+- [x] `1bee106` ui: update View tab icons and add week settings
 
 ### Review-Checkliste:
 
-- [ ] Code-Architektur geprüft
-- [ ] Keine Bugs gefunden / Bugs gefixt
-- [ ] Kein problematischer duplizierter Code
-- [ ] Refactoring durchgeführt (falls nötig)
-- [ ] Tests ergänzt (falls nötig)
-- [ ] Docs aktualisiert (falls nötig)
+- [x] Code-Architektur geprüft
+- [x] Keine Bugs gefunden / Bugs gefixt
+- [x] Kein problematischer duplizierter Code
+- [x] Refactoring durchgeführt (falls nötig)
+- [x] Tests ergänzt (falls nötig)
+- [x] Docs aktualisiert (falls nötig)
 
 ### Findings:
 
-_Noch nicht reviewed_
+1. **Bug gefunden - Inkonsistente Default-Farbe:**
+   - `Ribbon.tsx` und `validation.ts` verwendeten `#FAA916` (Amber) als Default-Farbe
+   - Rest des Codes verwendet `#0F6CBD` (Outlook Blue) aus design-tokens
+   - Test erwartete veraltetes `#0d9488` (Teal)
+   - **Gefixt:** Alle auf `#0F6CBD` vereinheitlicht
+
+2. **Architektur-Bewertung:**
+   - `Ribbon.tsx` (1024 Zeilen) ist groß aber gut strukturiert mit klaren Sektionen
+   - Neue `design-tokens.ts` ist exzellent - zentrale Styling-Quelle
+   - `StatusBar.tsx` gut separiert mit eigenem ZoomDialog
+   - `RowNumberCell.tsx` hat eigene COLORS-Konstante (akzeptabel, da UI-spezifisch)
+   - `useAutoColumnWidth.ts` korrekt implementiert mit Font-Loading-Handling
+
+3. **Positiv:**
+   - MS Office-Style konsistent umgesetzt
+   - Gute Accessibility (ARIA-Labels, keyboard nav)
+   - Design-Tokens ermöglichen einfache Theme-Änderungen
+   - Auto-fit Column Width reagiert korrekt auf Density-Änderungen
 
 ### Änderungen vorgenommen:
 
-_Keine_
+1. `src/utils/clipboard/validation.ts`: Default-Farbe von `#FAA916` auf `#0F6CBD` geändert
+2. `src/components/Ribbon/Ribbon.tsx`: handleAddTask Default-Farbe auf `#0F6CBD` geändert
+3. `tests/unit/utils/clipboard/validation.test.ts`: Test-Erwartung auf `#0F6CBD` aktualisiert
 
 ---
 
@@ -230,22 +249,20 @@ _Hier werden wichtige Erkenntnisse notiert, die für nachfolgende Review-Gruppen
 
 _Hier werden die Commits eingetragen, die im Rahmen dieses Reviews erstellt wurden:_
 
-1. _(noch keine)_
+1. `14a4a54` docs: add post-Sprint 1.5.5 code review plan
+2. `8f766c6` fix: unify default task color to brand color (#0F6CBD)
 
 ---
 
 ## Nächster Schritt
 
-**Starte mit Gruppe 1: MS Office Ribbon UI Refactoring**
+**Starte mit Gruppe 2: Test & Accessibility Fixes**
 
 Befehle zum Starten:
 ```bash
-# Zeige alle Commits der Gruppe 1
-git show 590b7d7 --stat
-git show 8ed59a9 --stat
-git show 2b71984 --stat
-git show 00b4ba4 --stat
-git show c47a324 --stat
-git show ef2ebaf --stat
-git show 1bee106 --stat
+# Zeige alle Commits der Gruppe 2
+git show 1b93d11 --stat
+git show 8d7ce4c --stat
+git show 9cf5ec1 --stat
+git show 891bd2b --stat
 ```
