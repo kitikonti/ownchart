@@ -180,7 +180,13 @@ export function TimelineHeader({ scale, width }: TimelineHeaderProps) {
     return currentScales.map((scaleConfig) => {
       return {
         config: scaleConfig,
-        cells: generateScaleCells(scale, scaleConfig, headerWidth, weekOptions, today),
+        cells: generateScaleCells(
+          scale,
+          scaleConfig,
+          headerWidth,
+          weekOptions,
+          today
+        ),
       };
     });
   }, [scale, headerWidth, currentScales, weekOptions, today]);

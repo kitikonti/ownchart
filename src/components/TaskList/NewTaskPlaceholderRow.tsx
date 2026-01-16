@@ -224,7 +224,14 @@ export function NewTaskPlaceholderRow(): JSX.Element {
                 backgroundColor: isSelected ? "#0F6CBD" : "#F3F3F3",
               }}
               onClick={handleRowNumberClick}
+              onKeyDown={(e) => {
+                if (e.key === "Enter" || e.key === " ") {
+                  e.preventDefault();
+                  handleRowNumberClick();
+                }
+              }}
               role="gridcell"
+              tabIndex={0}
               aria-label="Select new task placeholder row"
             >
               {/* Empty - placeholder row has no number */}

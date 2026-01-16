@@ -506,7 +506,11 @@ export const TaskBar = React.memo(function TaskBar({
           y={geometry.y + geometry.height / 2 + densityConfig.fontSizeBar / 3}
           fontSize={densityConfig.fontSizeBar}
           fontFamily={SVG_FONT_FAMILY}
-          fill={labelPosition === "inside" ? getContrastTextColor(computedColor) : "#495057"}
+          fill={
+            labelPosition === "inside"
+              ? getContrastTextColor(computedColor)
+              : "#495057"
+          }
           textAnchor={labelPosition === "before" ? "end" : "start"}
           clipPath={
             labelPosition === "inside" ? `url(#${clipPathId})` : undefined

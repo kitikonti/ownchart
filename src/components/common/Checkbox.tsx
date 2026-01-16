@@ -61,9 +61,7 @@ export function Checkbox({
           peer-active:scale-95
         `}
       >
-        {checked && (
-          <Check size={14} weight="bold" className="text-white" />
-        )}
+        {checked && <Check size={14} weight="bold" className="text-white" />}
       </div>
     </div>
   );

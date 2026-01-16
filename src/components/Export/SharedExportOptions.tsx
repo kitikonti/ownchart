@@ -247,7 +247,10 @@ export function SharedExportOptions({
           <span className="block text-sm font-medium text-neutral-700 mb-3">
             Show in Timeline
           </span>
-          <CheckboxGroup items={timelineItems} onChange={handleTimelineChange} />
+          <CheckboxGroup
+            items={timelineItems}
+            onChange={handleTimelineChange}
+          />
         </div>
 
         {/* Label Position - 2x2 Grid Buttons */}

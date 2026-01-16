@@ -5,10 +5,7 @@
 
 import { Spinner, WarningCircle, Warning } from "@phosphor-icons/react";
 import type { PdfExportOptions, PdfPageSize } from "../../utils/export/types";
-import {
-  PDF_PAGE_SIZES,
-  PDF_MARGIN_PRESETS,
-} from "../../utils/export/types";
+import { PDF_PAGE_SIZES, PDF_MARGIN_PRESETS } from "../../utils/export/types";
 import type { ReadabilityStatus } from "./ChartPreview";
 
 export interface PdfPreviewProps {
@@ -98,7 +95,6 @@ export function PdfPreview({
   effectiveZoom,
   readabilityStatus,
 }: PdfPreviewProps): JSX.Element {
-
   // Get page and margin dimensions
   const pageDims = getPageDimensions(
     pdfOptions.pageSize,
@@ -237,7 +233,11 @@ export function PdfPreview({
                 {/* Error State */}
                 {error && !isRendering && (
                   <div className="absolute inset-0 bg-white flex flex-col items-center justify-center z-10 p-2">
-                    <WarningCircle size={16} className="text-red-500" weight="fill" />
+                    <WarningCircle
+                      size={16}
+                      className="text-red-500"
+                      weight="fill"
+                    />
                     <p className="text-[7px] text-red-700 mt-1 text-center">
                       {error}
                     </p>
@@ -286,7 +286,9 @@ export function PdfPreview({
         {/* Single row with dot separators */}
         <div className="text-xs text-neutral-600">
           <span className="font-medium text-neutral-900">
-            {effectiveZoom !== undefined ? `${Math.round(effectiveZoom * 100)}%` : "—"}
+            {effectiveZoom !== undefined
+              ? `${Math.round(effectiveZoom * 100)}%`
+              : "—"}
           </span>
           {" zoom"}
           <span className="mx-1.5 text-neutral-300">·</span>
@@ -313,7 +315,11 @@ export function PdfPreview({
             <Warning
               size={16}
               weight="fill"
-              className={readabilityStatus.level === "warning" ? "text-amber-600" : "text-red-600"}
+              className={
+                readabilityStatus.level === "warning"
+                  ? "text-amber-600"
+                  : "text-red-600"
+              }
             />
             <span
               className={`text-xs font-semibold ${
@@ -330,11 +336,7 @@ export function PdfPreview({
         {/* Scale Warning - if content needs significant scaling to fit page */}
         {scaleFactor < 0.5 && (
           <div className="flex items-center gap-2.5 px-4 py-3 rounded bg-amber-50 border border-amber-200">
-            <WarningCircle
-              size={16}
-              weight="fill"
-              className="text-amber-600"
-            />
+            <WarningCircle size={16} weight="fill" className="text-amber-600" />
             <span className="text-xs font-semibold text-amber-700">
               Content scaled to {scalePercent}% — consider larger page size
             </span>

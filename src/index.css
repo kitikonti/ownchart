@@ -15,7 +15,8 @@
 
 @font-face {
   font-family: "Inter";
-  src: url("./assets/fonts/Inter-Regular.woff2") format("woff2"),
+  src:
+    url("./assets/fonts/Inter-Regular.woff2") format("woff2"),
     url("./assets/fonts/Inter-Regular.ttf") format("truetype");
   font-weight: 400;
   font-style: normal;
@@ -24,7 +25,8 @@
 
 @font-face {
   font-family: "Inter";
-  src: url("./assets/fonts/Inter-Italic.woff2") format("woff2"),
+  src:
+    url("./assets/fonts/Inter-Italic.woff2") format("woff2"),
     url("./assets/fonts/Inter-Italic.ttf") format("truetype");
   font-weight: 400;
   font-style: italic;
@@ -33,13 +35,13 @@
 
 @font-face {
   font-family: "Inter";
-  src: url("./assets/fonts/Inter-SemiBold.woff2") format("woff2"),
+  src:
+    url("./assets/fonts/Inter-SemiBold.woff2") format("woff2"),
     url("./assets/fonts/Inter-SemiBold.ttf") format("truetype");
   font-weight: 600;
   font-style: normal;
   font-display: swap;
 }
-
 
 /* Disable browser scroll anchoring for manual scroll position control */
 /* Required for smooth infinite scroll when adding content to the left */
@@ -91,7 +93,7 @@
   --color-neutral-900: #1a1a1a;
 
   /* ─── Color Palette - Brand (Outlook Blue) ─── */
-  --color-brand-50: #ebf3fc;  /* themeLighterAlt - light backgrounds */
+  --color-brand-50: #ebf3fc; /* themeLighterAlt - light backgrounds */
   --color-brand-100: #cfe4fa; /* themeLighter - focus rings */
   --color-brand-200: #b4d6fa; /* themeLight - disabled states */
   --color-brand-300: #62abf5; /* themeTertiary - light accents */
@@ -758,7 +760,11 @@ input[type="range"]:focus-visible::-moz-range-thumb {
 
 .divider-h-light {
   height: 1px;
-  background-color: rgb(235, 235, 235); /* ~neutral-150 - for inner separators */
+  background-color: rgb(
+    235,
+    235,
+    235
+  ); /* ~neutral-150 - for inner separators */
 }
 
 @media (min-resolution: 144dpi), (-webkit-min-device-pixel-ratio: 1.5) {

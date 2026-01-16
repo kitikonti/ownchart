@@ -6,14 +6,14 @@
 /**
  * Default fallback color (Outlook Blue - app brand color)
  */
-const DEFAULT_COLOR = '#0F6CBD';
+const DEFAULT_COLOR = "#0F6CBD";
 
 /**
  * Text colors for contrast
  * Using darker text (#1e293b = slate-800) for better readability
  */
-const LIGHT_TEXT = '#ffffff';
-const DARK_TEXT = '#1e293b'; // slate-800 - darker than previous #495057
+const LIGHT_TEXT = "#ffffff";
+const DARK_TEXT = "#1e293b"; // slate-800 - darker than previous #495057
 
 /**
  * Converts a hex color string to RGB values
@@ -24,14 +24,14 @@ export function hexToRgb(hex: string): { r: number; g: number; b: number } {
   const safeHex = hex || DEFAULT_COLOR;
 
   // Remove leading # if present
-  let cleanHex = safeHex.startsWith('#') ? safeHex.slice(1) : safeHex;
+  let cleanHex = safeHex.startsWith("#") ? safeHex.slice(1) : safeHex;
 
   // Expand 3-digit hex to 6-digit
   if (cleanHex.length === 3) {
     cleanHex = cleanHex
-      .split('')
+      .split("")
       .map((char) => char + char)
-      .join('');
+      .join("");
   }
 
   const r = parseInt(cleanHex.substring(0, 2), 16);

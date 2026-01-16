@@ -248,8 +248,7 @@ export function useExportPreview({
       const canvas = await toCanvas(container, {
         // Reduced pixel ratio for preview performance
         pixelRatio: 1,
-        backgroundColor:
-          options.background === "white" ? "#ffffff" : undefined,
+        backgroundColor: options.background === "white" ? "#ffffff" : undefined,
         width: fullDimensions.width,
         height: fullDimensions.height,
         style: {

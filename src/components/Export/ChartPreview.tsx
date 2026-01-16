@@ -66,9 +66,7 @@ export function ChartPreview({
         <h3 className="text-sm font-semibold text-neutral-700 mb-1">
           Export Preview
         </h3>
-        <p className="text-xs text-neutral-500">
-          Live preview of your export
-        </p>
+        <p className="text-xs text-neutral-500">Live preview of your export</p>
       </div>
 
       {/* Preview Area Container - centers the preview frame */}
@@ -77,9 +75,10 @@ export function ChartPreview({
         <div
           className="bg-white border border-neutral-200 shadow-sm flex items-center justify-center relative overflow-hidden"
           style={{
-            aspectRatio: dimensions.width > 0 && dimensions.height > 0
-              ? `${dimensions.width} / ${dimensions.height}`
-              : "16 / 9",
+            aspectRatio:
+              dimensions.width > 0 && dimensions.height > 0
+                ? `${dimensions.width} / ${dimensions.height}`
+                : "16 / 9",
             maxWidth: "100%",
             maxHeight: "100%",
             // For wide exports, constrain width; for tall exports, constrain height
@@ -117,14 +116,8 @@ export function ChartPreview({
           {/* Error State */}
           {error && !isRendering && (
             <div className="absolute inset-0 bg-white flex flex-col items-center justify-center z-10 p-4">
-              <WarningCircle
-                size={32}
-                className="text-red-500"
-                weight="fill"
-              />
-              <p className="text-sm text-red-700 mt-3 text-center">
-                {error}
-              </p>
+              <WarningCircle size={32} className="text-red-500" weight="fill" />
+              <p className="text-sm text-red-700 mt-3 text-center">{error}</p>
             </div>
           )}
 
@@ -147,7 +140,9 @@ export function ChartPreview({
                 Preview will render here
               </p>
               <p className="text-xs text-neutral-400 mt-1">
-                {formatType === "svg" ? "Vector image format" : "Raster image format"}
+                {formatType === "svg"
+                  ? "Vector image format"
+                  : "Raster image format"}
               </p>
             </div>
           )}
@@ -159,14 +154,17 @@ export function ChartPreview({
         {/* Single row with dot separators */}
         <div className="text-xs text-neutral-600">
           <span className="font-medium text-neutral-900">
-            {effectiveZoom !== undefined ? `${Math.round(effectiveZoom * 100)}%` : "—"}
+            {effectiveZoom !== undefined
+              ? `${Math.round(effectiveZoom * 100)}%`
+              : "—"}
           </span>
           {" zoom"}
           <span className="mx-1.5 text-neutral-300">·</span>
           {dimensions.width > 0 && dimensions.height > 0 ? (
             <>
               <span className="font-medium text-neutral-900">
-                {dimensions.width.toLocaleString()}×{dimensions.height.toLocaleString()}
+                {dimensions.width.toLocaleString()}×
+                {dimensions.height.toLocaleString()}
               </span>
               {" px"}
             </>
@@ -191,7 +189,11 @@ export function ChartPreview({
             <Warning
               size={16}
               weight="fill"
-              className={readabilityStatus.level === "warning" ? "text-amber-600" : "text-red-600"}
+              className={
+                readabilityStatus.level === "warning"
+                  ? "text-amber-600"
+                  : "text-red-600"
+              }
             />
             <span
               className={`text-xs font-semibold ${

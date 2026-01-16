@@ -65,8 +65,13 @@ function computeTaskColor(
   colorModeState: ColorModeState,
   taskIndex: number
 ): string {
-  const { mode, themeOptions, summaryOptions, taskTypeOptions, hierarchyOptions } =
-    colorModeState;
+  const {
+    mode,
+    themeOptions,
+    summaryOptions,
+    taskTypeOptions,
+    hierarchyOptions,
+  } = colorModeState;
 
   // Check for manual override (if task has colorOverride flag)
   // For now we check if the task has a custom color different from defaults
@@ -83,7 +88,9 @@ function computeTaskColor(
 
       if (themeOptions.customMonochromeBase) {
         // Use custom monochrome palette
-        paletteColors = generateMonochromePalette(themeOptions.customMonochromeBase);
+        paletteColors = generateMonochromePalette(
+          themeOptions.customMonochromeBase
+        );
       } else if (themeOptions.selectedPaletteId) {
         const palette = getPaletteById(themeOptions.selectedPaletteId);
         if (palette) {
@@ -103,10 +110,7 @@ function computeTaskColor(
 
     case "summary": {
       // Check if this is a milestone and should use accent color
-      if (
-        task.type === "milestone" &&
-        summaryOptions.useMilestoneAccent
-      ) {
+      if (task.type === "milestone" && summaryOptions.useMilestoneAccent) {
         return summaryOptions.milestoneAccentColor;
       }
 

@@ -11,7 +11,10 @@
 
 import { useState, useRef, useEffect, type KeyboardEvent } from "react";
 import { X } from "@phosphor-icons/react";
-import { useProjectColors, CURATED_SWATCHES } from "../../../hooks/useProjectColors";
+import {
+  useProjectColors,
+  CURATED_SWATCHES,
+} from "../../../hooks/useProjectColors";
 import { getContrastTextColor } from "../../../utils/colorUtils";
 
 interface ColorPickerPopoverProps {
@@ -46,7 +49,9 @@ function ColorSwatch({
         width: "24px",
         height: "24px",
         backgroundColor: color,
-        border: isSelected ? "2px solid #0F6CBD" : "1px solid rgba(0, 0, 0, 0.15)",
+        border: isSelected
+          ? "2px solid #0F6CBD"
+          : "1px solid rgba(0, 0, 0, 0.15)",
         borderRadius: "4px",
         cursor: "pointer",
         padding: 0,

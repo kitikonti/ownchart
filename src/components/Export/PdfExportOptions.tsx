@@ -11,10 +11,7 @@ import type {
   ExportZoomMode,
 } from "../../utils/export/types";
 import { Checkbox } from "../common/Checkbox";
-import {
-  PDF_PAGE_SIZES,
-  PDF_MARGIN_PRESETS,
-} from "../../utils/export/types";
+import { PDF_PAGE_SIZES, PDF_MARGIN_PRESETS } from "../../utils/export/types";
 import { ZoomModeSelector } from "./ZoomModeSelector";
 
 const PAGE_SIZE_LABELS: Record<PdfPageSize, { label: string; size: string }> = {

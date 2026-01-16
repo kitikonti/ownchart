@@ -168,7 +168,9 @@ export function Modal({
         </div>
 
         {/* Content */}
-        <div className={`flex-1 overflow-y-auto ${contentPadding} scrollbar-thin`}>
+        <div
+          className={`flex-1 overflow-y-auto ${contentPadding} scrollbar-thin`}
+        >
           {children}
         </div>
 

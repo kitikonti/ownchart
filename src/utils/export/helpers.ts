@@ -78,10 +78,7 @@ export function setFontFamilyOnTextElements(element: Element): void {
       `font-family: ${SVG_FONT_FAMILY};`
     );
     // Normalize font-weight in inline styles for svg2pdf.js
-    style = style.replace(
-      /font-weight:\s*(600|700);?/gi,
-      "font-weight: bold;"
-    );
+    style = style.replace(/font-weight:\s*(600|700);?/gi, "font-weight: bold;");
     element.setAttribute("style", style);
   }
 

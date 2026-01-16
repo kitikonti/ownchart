@@ -23,13 +23,7 @@ import { TOOLBAR } from "../../styles/design-tokens";
 /**
  * Color swatch component for palette preview
  */
-function ColorSwatch({
-  color,
-  size = 16,
-}: {
-  color: string;
-  size?: number;
-}) {
+function ColorSwatch({ color, size = 16 }: { color: string; size?: number }) {
   return (
     <span
       style={{
@@ -105,7 +99,10 @@ export function ColorOptionsDropdown() {
   }, [isOpen]);
 
   const handleSelectPalette = (paletteId: string) => {
-    setThemeOptions({ selectedPaletteId: paletteId, customMonochromeBase: null });
+    setThemeOptions({
+      selectedPaletteId: paletteId,
+      customMonochromeBase: null,
+    });
     setIsOpen(false);
   };
 
@@ -493,13 +490,14 @@ export function ColorOptionsDropdown() {
   };
 
   // Get label based on current mode
-  const getLabel = () => {
+  const getLabel = (): string => {
     switch (currentMode) {
-      case "theme":
+      case "theme": {
         const selectedPalette = COLOR_PALETTES.find(
           (p) => p.id === colorModeState.themeOptions.selectedPaletteId
         );
         return selectedPalette?.name || "Select Palette";
+      }
       case "summary":
         return "Options";
       case "taskType":

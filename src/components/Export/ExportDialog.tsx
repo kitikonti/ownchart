@@ -399,7 +399,11 @@ export function ExportDialog(): JSX.Element | null {
           <ExportPreview
             format={selectedExportFormat}
             previewDataUrl={previewDataUrl}
-            dimensions={previewDimensions.width > 0 ? previewDimensions : estimatedDimensions}
+            dimensions={
+              previewDimensions.width > 0
+                ? previewDimensions
+                : estimatedDimensions
+            }
             isRendering={isPreviewRendering}
             error={previewError}
             isTransparent={exportOptions.background === "transparent"}
