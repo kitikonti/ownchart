@@ -17,6 +17,9 @@ import {
 } from "@phosphor-icons/react";
 import { Modal } from "../common/Modal";
 import { Button } from "../common/Button";
+import { Alert } from "../common/Alert";
+import { Input } from "../common/Input";
+import { SectionHeader } from "../common/SectionHeader";
 import { LabeledCheckbox } from "../common/LabeledCheckbox";
 import { Checkbox } from "../common/Checkbox";
 import { useUIStore } from "../../store/slices/uiSlice";
@@ -170,12 +173,10 @@ export function ChartSettingsDialog(): JSX.Element | null {
       <div className="space-y-6">
         {/* Project Metadata Section */}
         <div>
-          <div className="flex items-center gap-2 mb-4">
-            <Tag size={20} weight="light" className="text-neutral-500" />
-            <h3 className="text-sm font-semibold text-neutral-900">
-              Project Info
-            </h3>
-          </div>
+          <SectionHeader
+            title="Project Info"
+            icon={<Tag size={20} weight="light" />}
+          />
 
           <div className="space-y-3">
             <div>
@@ -185,13 +186,13 @@ export function ChartSettingsDialog(): JSX.Element | null {
               >
                 Title
               </label>
-              <input
+              <Input
                 id="project-title"
                 type="text"
                 value={projectTitle}
                 onChange={(e) => setProjectTitle(e.target.value)}
                 placeholder="Project title (used in PDF exports)"
-                className="w-full px-3 py-2 text-sm bg-white border border-neutral-200 rounded focus:ring-2 focus:ring-brand-100 focus:border-brand-600 transition-all"
+                variant="figma"
               />
             </div>
             <div>
@@ -201,13 +202,13 @@ export function ChartSettingsDialog(): JSX.Element | null {
               >
                 Author
               </label>
-              <input
+              <Input
                 id="project-author"
                 type="text"
                 value={projectAuthor}
                 onChange={(e) => setProjectAuthor(e.target.value)}
                 placeholder="Your name (used in PDF metadata)"
-                className="w-full px-3 py-2 text-sm bg-white border border-neutral-200 rounded focus:ring-2 focus:ring-brand-100 focus:border-brand-600 transition-all"
+                variant="figma"
               />
             </div>
           </div>
@@ -218,12 +219,10 @@ export function ChartSettingsDialog(): JSX.Element | null {
 
         {/* Timeline Display Section */}
         <div>
-          <div className="flex items-center gap-2 mb-4">
-            <GridNine size={20} weight="light" className="text-neutral-500" />
-            <h3 className="text-sm font-semibold text-neutral-900">
-              Timeline Display
-            </h3>
-          </div>
+          <SectionHeader
+            title="Timeline Display"
+            icon={<GridNine size={20} weight="light" />}
+          />
 
           <div className="space-y-3">
             {/* Show Today Marker */}
@@ -295,12 +294,13 @@ export function ChartSettingsDialog(): JSX.Element | null {
                             size={16}
                             className="absolute left-2.5 top-1/2 -translate-y-1/2 text-neutral-400"
                           />
-                          <input
+                          <Input
                             type="text"
                             value={countrySearch}
                             onChange={(e) => setCountrySearch(e.target.value)}
                             placeholder="Search countries..."
-                            className="w-full pl-8 pr-3 py-1.5 text-sm border border-neutral-200 rounded focus:outline-none focus:ring-2 focus:ring-brand-100 focus:border-brand-600 transition-all"
+                            variant="figma"
+                            className="!pl-8 !pr-3 !py-1.5"
                             autoFocus
                           />
                         </div>
@@ -355,16 +355,10 @@ export function ChartSettingsDialog(): JSX.Element | null {
 
         {/* Task Display Section */}
         <div>
-          <div className="flex items-center gap-2 mb-4">
-            <ChartBarHorizontal
-              size={20}
-              weight="light"
-              className="text-neutral-500"
-            />
-            <h3 className="text-sm font-semibold text-neutral-900">
-              Task Display
-            </h3>
-          </div>
+          <SectionHeader
+            title="Task Display"
+            icon={<ChartBarHorizontal size={20} weight="light" />}
+          />
 
           <div className="space-y-4">
             {/* Use Progress */}
@@ -411,10 +405,10 @@ export function ChartSettingsDialog(): JSX.Element | null {
                 ))}
               </div>
               {taskLabelPosition === "inside" && (
-                <p className="text-xs text-amber-600 bg-amber-50 px-3 py-2 rounded border border-amber-200">
+                <Alert variant="warning">
                   Note: &quot;Inside&quot; is not available for summary tasks
                   and milestones - they will use &quot;After&quot; instead.
-                </p>
+                </Alert>
               )}
             </fieldset>
           </div>
@@ -425,12 +419,10 @@ export function ChartSettingsDialog(): JSX.Element | null {
 
         {/* Working Days Section */}
         <div>
-          <div className="flex items-center gap-2 mb-4">
-            <Briefcase size={20} weight="light" className="text-neutral-500" />
-            <h3 className="text-sm font-semibold text-neutral-900">
-              Working Days
-            </h3>
-          </div>
+          <SectionHeader
+            title="Working Days"
+            icon={<Briefcase size={20} weight="light" />}
+          />
 
           <div className="space-y-4">
             {/* Working Days Mode Toggle */}

@@ -17,6 +17,7 @@ import { LabeledCheckbox } from "../common/LabeledCheckbox";
 import { RadioOptionCard } from "../common/RadioOptionCard";
 import { CollapsibleSection } from "../common/CollapsibleSection";
 import { CheckboxGroup } from "../common/CheckboxGroup";
+import { Input } from "../common/Input";
 
 /** Density options for the export */
 const DENSITY_OPTIONS: {
@@ -150,20 +151,18 @@ export function SharedExportOptions({
             title="Custom range"
           >
             <div className="space-y-2">
-              <input
+              <Input
                 type="date"
                 value={options.customDateStart || ""}
                 onChange={(e) => onChange({ customDateStart: e.target.value })}
                 onClick={(e) => e.stopPropagation()}
-                className="w-full px-3 py-2 text-sm border border-neutral-300 rounded focus:ring-1 focus:ring-brand-600 focus:border-brand-600 transition-colors duration-150 hover:border-neutral-400"
                 aria-label="Custom start date"
               />
-              <input
+              <Input
                 type="date"
                 value={options.customDateEnd || ""}
                 onChange={(e) => onChange({ customDateEnd: e.target.value })}
                 onClick={(e) => e.stopPropagation()}
-                className="w-full px-3 py-2 text-sm border border-neutral-300 rounded focus:ring-1 focus:ring-brand-600 focus:border-brand-600 transition-colors duration-150 hover:border-neutral-400"
                 aria-label="Custom end date"
               />
             </div>

@@ -56,7 +56,6 @@ import {
   TOOLBAR_TOKENS,
 } from "../Toolbar/ToolbarPrimitives";
 import { ToolbarDropdown } from "../Toolbar/ToolbarDropdown";
-import type { DropdownOption } from "../Toolbar/ToolbarDropdown";
 import { ColorModeDropdown } from "./ColorModeDropdown";
 import { ColorOptionsDropdown } from "./ColorOptionsDropdown";
 import { RegenerateButton } from "./RegenerateButton";
@@ -67,15 +66,17 @@ import { useHistoryStore } from "../../store/slices/historySlice";
 import { useUIStore } from "../../store/slices/uiSlice";
 import { useFileStore } from "../../store/slices/fileSlice";
 import { useUserPreferencesStore } from "../../store/slices/userPreferencesSlice";
-import type {
-  TaskLabelPosition,
-  FirstDayOfWeek,
-  WeekNumberingSystem,
-} from "../../types/preferences.types";
 import { useFileOperations } from "../../hooks/useFileOperations";
 import { useClipboardOperations } from "../../hooks/useClipboardOperations";
 import { getViewportCenterAnchor, applyScrollLeft } from "../../hooks/useZoom";
 import { MIN_ZOOM, MAX_ZOOM } from "../../utils/timelineUtils";
+import {
+  LABEL_OPTIONS,
+  DENSITY_OPTIONS,
+  DATE_FORMAT_OPTIONS,
+  FIRST_DAY_OF_WEEK_OPTIONS,
+  WEEK_NUMBERING_OPTIONS,
+} from "../../config/preferencesOptions";
 
 const ICON_SIZE = TOOLBAR_TOKENS.iconSize;
 
@@ -83,39 +84,6 @@ type RibbonTab = "home" | "view" | "help";
 
 // Preset zoom levels
 const PRESET_ZOOM_LEVELS = [5, 10, 25, 50, 75, 100, 150, 200, 300];
-
-// Dropdown options
-const LABEL_OPTIONS: DropdownOption<TaskLabelPosition>[] = [
-  { value: "before", label: "Before" },
-  { value: "inside", label: "Inside" },
-  { value: "after", label: "After" },
-  { value: "none", label: "None" },
-];
-
-const DENSITY_OPTIONS: DropdownOption<"compact" | "normal" | "comfortable">[] =
-  [
-    { value: "compact", label: "Compact" },
-    { value: "normal", label: "Normal" },
-    { value: "comfortable", label: "Comfortable" },
-  ];
-
-const DATE_FORMAT_OPTIONS: DropdownOption<
-  "DD/MM/YYYY" | "MM/DD/YYYY" | "YYYY-MM-DD"
->[] = [
-  { value: "DD/MM/YYYY", label: "DD/MM/YYYY" },
-  { value: "MM/DD/YYYY", label: "MM/DD/YYYY" },
-  { value: "YYYY-MM-DD", label: "YYYY-MM-DD" },
-];
-
-const FIRST_DAY_OF_WEEK_OPTIONS: DropdownOption<FirstDayOfWeek>[] = [
-  { value: "monday", label: "Monday" },
-  { value: "sunday", label: "Sunday" },
-];
-
-const WEEK_NUMBERING_OPTIONS: DropdownOption<WeekNumberingSystem>[] = [
-  { value: "iso", label: "ISO 8601" },
-  { value: "us", label: "US" },
-];
 
 export function Ribbon() {
   const [activeTab, setActiveTab] = useState<RibbonTab>("home");

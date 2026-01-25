@@ -5,6 +5,7 @@
 import { useState } from "react";
 import { HandWaving, Cursor, ArrowsOutCardinal } from "@phosphor-icons/react";
 import { Modal } from "../common/Modal";
+import { Button } from "../common/Button";
 import { Checkbox } from "../common/Checkbox";
 import { useUIStore } from "../../store/slices/uiSlice";
 
@@ -53,18 +54,12 @@ export function WelcomeTour(): JSX.Element | null {
   const footer = (
     <div className="flex items-center w-full gap-3">
       <div className="flex-1" />
-      <button
-        onClick={handleShowShortcuts}
-        className="flex-1 max-w-[140px] px-5 py-2.5 text-sm font-medium text-neutral-700 bg-white border border-neutral-300 rounded hover:bg-neutral-50 transition-colors duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-100 focus-visible:ring-offset-2"
-      >
+      <Button variant="secondary" onClick={handleShowShortcuts}>
         Show Shortcuts
-      </button>
-      <button
-        onClick={handleGetStarted}
-        className="flex-1 max-w-[180px] px-5 py-2.5 text-sm font-medium text-white bg-brand-600 rounded hover:bg-brand-500 transition-colors duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-100 focus-visible:ring-offset-2"
-      >
+      </Button>
+      <Button variant="primary" onClick={handleGetStarted}>
         Get Started
-      </button>
+      </Button>
     </div>
   );
 

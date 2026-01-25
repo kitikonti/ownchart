@@ -3,14 +3,9 @@
  */
 
 import { useCallback, useMemo, useEffect } from "react";
-import {
-  Spinner,
-  Warning,
-  Info,
-  FilePdf,
-  FileCode,
-  Image,
-} from "@phosphor-icons/react";
+import { Spinner, FilePdf, FileCode, Image } from "@phosphor-icons/react";
+import { Alert } from "../common/Alert";
+import { Button } from "../common/Button";
 import { EXPORT_MAX_SAFE_WIDTH } from "../../utils/export/types";
 import type { ExportFormat } from "../../utils/export/types";
 import { Modal } from "../common/Modal";
@@ -353,30 +348,29 @@ export function ExportDialog(): JSX.Element | null {
       {!(isExporting && exportProgress > 0) && <div className="flex-1" />}
 
       {/* Buttons - Outlook style */}
-      <button
+      <Button
+        variant="secondary"
         onClick={closeExportDialog}
         disabled={isExporting}
-        className="flex-1 max-w-[140px] px-5 py-2.5 text-sm font-medium text-neutral-700 bg-white border border-neutral-300 rounded hover:bg-neutral-50 transition-colors duration-150 disabled:opacity-50 disabled:cursor-not-allowed focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-100 focus-visible:ring-offset-2"
+        className="flex-1 max-w-[140px]"
       >
         Cancel
-      </button>
-      <button
+      </Button>
+      <Button
+        variant="primary"
         onClick={handleExport}
         disabled={isExporting}
-        className="flex-1 max-w-[180px] px-5 py-2.5 text-sm font-medium text-white bg-brand-600 rounded hover:bg-brand-500 transition-colors duration-150 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-100 focus-visible:ring-offset-2"
-      >
-        {isExporting ? (
-          <>
+        icon={
+          isExporting ? (
             <Spinner size={16} className="animate-spin" />
-            Exporting...
-          </>
-        ) : (
-          <>
+          ) : (
             <FormatIcon size={16} weight="regular" />
-            {currentFormat.label}
-          </>
-        )}
-      </button>
+          )
+        }
+        className="flex-1 max-w-[180px]"
+      >
+        {isExporting ? "Exporting..." : currentFormat.label}
+      </Button>
     </div>
   );
 
@@ -418,27 +412,19 @@ export function ExportDialog(): JSX.Element | null {
           {showDimensions && (hasWarning || hasInfo) && (
             <div className="mt-4">
               {hasWarning && (
-                <div className="flex items-center gap-2.5 px-4 py-3 rounded bg-amber-50 border border-amber-200">
-                  <Warning
-                    className="size-4 text-amber-600 flex-shrink-0"
-                    weight="fill"
-                  />
-                  <span className="text-xs font-medium text-amber-700">
+                <Alert variant="warning">
+                  <span className="font-medium">
                     Export exceeds {EXPORT_MAX_SAFE_WIDTH.toLocaleString()}px -
                     may cause issues
                   </span>
-                </div>
+                </Alert>
               )}
               {hasInfo && !hasWarning && (
-                <div className="flex items-center gap-2.5 px-4 py-3 rounded bg-neutral-100 border border-neutral-200">
-                  <Info
-                    className="size-4 text-neutral-500 flex-shrink-0"
-                    weight="fill"
-                  />
-                  <span className="text-xs font-medium text-neutral-600">
+                <Alert variant="neutral">
+                  <span className="font-medium">
                     Large export - generation may take a moment
                   </span>
-                </div>
+                </Alert>
               )}
             </div>
           )}
@@ -498,24 +484,14 @@ export function ExportDialog(): JSX.Element | null {
             />
 
             {/* Error message */}
-            {exportError && (
-              <div className="p-4 text-sm text-red-700 bg-red-50 border border-red-200 rounded">
-                {exportError}
-              </div>
-            )}
+            {exportError && <Alert variant="error">{exportError}</Alert>}
 
             {/* Info tip */}
-            <div className="flex items-start gap-3 px-4 py-3 rounded bg-blue-50 border border-blue-200">
-              <Info
-                className="size-4 text-blue-600 flex-shrink-0 mt-0.5"
-                weight="fill"
-              />
-              <p className="text-xs text-blue-900">
-                <strong className="font-semibold">Tip:</strong> For detailed
-                documentation, use 100% zoom. For overview posters, use 25-50%
-                zoom.
-              </p>
-            </div>
+            <Alert variant="info">
+              <strong className="font-semibold">Tip:</strong> For detailed
+              documentation, use 100% zoom. For overview posters, use 25-50%
+              zoom.
+            </Alert>
           </div>
         </div>
       </div>

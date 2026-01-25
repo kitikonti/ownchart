@@ -6,6 +6,8 @@
 
 import { useState } from "react";
 import { RadioOptionCard } from "../common/RadioOptionCard";
+import { Input } from "../common/Input";
+import { Select } from "../common/Select";
 import {
   EXPORT_ZOOM_MIN,
   EXPORT_ZOOM_MAX,
@@ -125,11 +127,10 @@ export function ZoomModeSelector({
           {isPngOrSvg && (
             <div className="space-y-3">
               {/* Select Dropdown */}
-              <select
+              <Select
                 value={isCustomWidth ? "custom" : fitToWidth.toString()}
                 onChange={(e) => handleSelectChange(e.target.value)}
                 onClick={(e) => e.stopPropagation()}
-                className="w-full px-3 py-2 text-sm bg-white border border-neutral-300 rounded focus:outline-none focus:ring-1 focus:ring-brand-600 focus:border-brand-600 transition-colors duration-150 hover:border-neutral-400 cursor-pointer"
               >
                 <optgroup label={FIT_TO_WIDTH_GROUPS.screenSizes.label}>
                   {FIT_TO_WIDTH_GROUPS.screenSizes.presets.map((preset) => (
@@ -146,12 +147,12 @@ export function ZoomModeSelector({
                   ))}
                 </optgroup>
                 <option value="custom">Custom width...</option>
-              </select>
+              </Select>
 
               {/* Custom Width Input */}
               {isCustomWidth && (
                 <div className="flex items-center gap-2">
-                  <input
+                  <Input
                     type="number"
                     value={fitToWidth}
                     onChange={(e) =>
@@ -163,7 +164,9 @@ export function ZoomModeSelector({
                       )
                     }
                     onClick={(e) => e.stopPropagation()}
-                    className="flex-1 px-3 py-2 text-sm font-mono bg-white border border-neutral-300 rounded focus:outline-none focus:ring-1 focus:ring-brand-600 focus:border-brand-600 transition-colors duration-150 hover:border-neutral-400"
+                    fullWidth={false}
+                    className="flex-1"
+                    mono
                     min={100}
                     max={20000}
                     placeholder="1920"

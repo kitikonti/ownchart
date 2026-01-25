@@ -11,6 +11,8 @@ import type {
   ExportZoomMode,
 } from "../../utils/export/types";
 import { Checkbox } from "../common/Checkbox";
+import { Input } from "../common/Input";
+import { Select } from "../common/Select";
 import { PDF_PAGE_SIZES, PDF_MARGIN_PRESETS } from "../../utils/export/types";
 import { ZoomModeSelector } from "./ZoomModeSelector";
 
@@ -95,12 +97,11 @@ export function PdfExportOptions({
             <span className="block text-sm font-medium text-neutral-700 mb-2">
               Page Size
             </span>
-            <select
+            <Select
               value={options.pageSize}
               onChange={(e) =>
                 onChange({ pageSize: e.target.value as PdfPageSize })
               }
-              className="w-full px-3 py-2 text-sm bg-white border border-neutral-300 rounded focus:outline-none focus:ring-1 focus:ring-brand-600 focus:border-brand-600 transition-colors duration-150 hover:border-neutral-400"
             >
               {Object.entries(PAGE_SIZE_LABELS).map(
                 ([key, { label, size }]) => (
@@ -109,7 +110,7 @@ export function PdfExportOptions({
                   </option>
                 )
               )}
-            </select>
+            </Select>
             {options.pageSize !== "custom" && (
               <p className="text-xs text-neutral-500 mt-2">
                 {displayWidth} × {displayHeight} mm
@@ -161,7 +162,7 @@ export function PdfExportOptions({
               >
                 Width (mm)
               </label>
-              <input
+              <Input
                 id="pdf-custom-width"
                 type="number"
                 value={options.customPageSize?.width || 500}
@@ -175,7 +176,7 @@ export function PdfExportOptions({
                 }
                 min={100}
                 max={5000}
-                className="w-full px-3 py-2 text-sm font-mono bg-white border border-neutral-300 rounded focus:outline-none focus:ring-1 focus:ring-brand-600 focus:border-brand-600 transition-colors duration-150 hover:border-neutral-400"
+                mono
               />
             </div>
             <div>
@@ -185,7 +186,7 @@ export function PdfExportOptions({
               >
                 Height (mm)
               </label>
-              <input
+              <Input
                 id="pdf-custom-height"
                 type="number"
                 value={options.customPageSize?.height || 300}
@@ -199,7 +200,7 @@ export function PdfExportOptions({
                 }
                 min={100}
                 max={5000}
-                className="w-full px-3 py-2 text-sm font-mono bg-white border border-neutral-300 rounded focus:outline-none focus:ring-1 focus:ring-brand-600 focus:border-brand-600 transition-colors duration-150 hover:border-neutral-400"
+                mono
               />
             </div>
           </div>

@@ -7,6 +7,8 @@
 import { Gear, Monitor, Globe } from "@phosphor-icons/react";
 import { Modal } from "../common/Modal";
 import { Button } from "../common/Button";
+import { Alert } from "../common/Alert";
+import { SectionHeader } from "../common/SectionHeader";
 import { useUIStore } from "../../store/slices/uiSlice";
 import { useUserPreferencesStore } from "../../store/slices/userPreferencesSlice";
 import type {
@@ -15,87 +17,12 @@ import type {
   FirstDayOfWeek,
   WeekNumberingSystem,
 } from "../../types/preferences.types";
-
-/**
- * Density option configuration for radio buttons
- */
-interface DensityOption {
-  value: UiDensity;
-  label: string;
-  description: string;
-  rowsExample: string;
-}
-
-const DENSITY_OPTIONS: DensityOption[] = [
-  {
-    value: "compact",
-    label: "Compact",
-    description: "Shows more tasks on screen",
-    rowsExample: "28px rows",
-  },
-  {
-    value: "normal",
-    label: "Normal",
-    description: "Balanced view (recommended)",
-    rowsExample: "36px rows",
-  },
-  {
-    value: "comfortable",
-    label: "Comfortable",
-    description: "Easier to read, more spacing",
-    rowsExample: "44px rows",
-  },
-];
-
-/**
- * Date format options
- */
-interface DateFormatOption {
-  value: DateFormat;
-  label: string;
-  example: string;
-}
-
-const DATE_FORMAT_OPTIONS: DateFormatOption[] = [
-  { value: "DD/MM/YYYY", label: "DD/MM/YYYY", example: "31/12/2026" },
-  { value: "MM/DD/YYYY", label: "MM/DD/YYYY", example: "12/31/2026" },
-  { value: "YYYY-MM-DD", label: "YYYY-MM-DD", example: "2026-12-31" },
-];
-
-/**
- * First day of week options
- */
-interface FirstDayOption {
-  value: FirstDayOfWeek;
-  label: string;
-}
-
-const FIRST_DAY_OPTIONS: FirstDayOption[] = [
-  { value: "sunday", label: "Sunday" },
-  { value: "monday", label: "Monday" },
-];
-
-/**
- * Week numbering system options
- */
-interface WeekNumberingOption {
-  value: WeekNumberingSystem;
-  label: string;
-  description: string;
-}
-
-const WEEK_NUMBERING_OPTIONS: WeekNumberingOption[] = [
-  {
-    value: "iso",
-    label: "ISO 8601",
-    description: "Week 1 contains first Thursday (Europe)",
-  },
-  {
-    value: "us",
-    label: "US Standard",
-    description: "Week 1 contains January 1st",
-  },
-];
+import {
+  DENSITY_OPTIONS_EXTENDED,
+  DATE_FORMAT_OPTIONS_EXTENDED,
+  FIRST_DAY_OPTIONS,
+  WEEK_NUMBERING_OPTIONS_EXTENDED,
+} from "../../config/preferencesOptions";
 
 /**
  * Detect if device has touch capability
@@ -157,12 +84,10 @@ export function PreferencesDialog(): JSX.Element | null {
       <div className="space-y-6">
         {/* Regional Section */}
         <div>
-          <div className="flex items-center gap-2 mb-4">
-            <Globe size={20} weight="light" className="text-neutral-500" />
-            <h3 className="text-sm font-semibold text-neutral-900">
-              Regional
-            </h3>
-          </div>
+          <SectionHeader
+            title="Regional"
+            icon={<Globe size={20} weight="light" />}
+          />
 
           {/* Date Format */}
           <fieldset className="space-y-3 mb-4">
@@ -170,7 +95,7 @@ export function PreferencesDialog(): JSX.Element | null {
               Date Format
             </legend>
             <div className="flex flex-wrap gap-2">
-              {DATE_FORMAT_OPTIONS.map((option) => (
+              {DATE_FORMAT_OPTIONS_EXTENDED.map((option) => (
                 <label
                   key={option.value}
                   className={`
@@ -245,7 +170,7 @@ export function PreferencesDialog(): JSX.Element | null {
               Week Numbering
             </legend>
             <div className="space-y-2">
-              {WEEK_NUMBERING_OPTIONS.map((option) => (
+              {WEEK_NUMBERING_OPTIONS_EXTENDED.map((option) => (
                 // eslint-disable-next-line jsx-a11y/label-has-associated-control
                 <label
                   key={option.value}
@@ -289,12 +214,10 @@ export function PreferencesDialog(): JSX.Element | null {
 
         {/* Appearance Section */}
         <div>
-          <div className="flex items-center gap-2 mb-4">
-            <Monitor size={20} weight="light" className="text-neutral-500" />
-            <h3 className="text-sm font-semibold text-neutral-900">
-              Appearance
-            </h3>
-          </div>
+          <SectionHeader
+            title="Appearance"
+            icon={<Monitor size={20} weight="light" />}
+          />
 
           {/* UI Density */}
           <fieldset className="space-y-3">
@@ -306,7 +229,7 @@ export function PreferencesDialog(): JSX.Element | null {
               role="radiogroup"
               aria-label="UI Density"
             >
-              {DENSITY_OPTIONS.map((option) => (
+              {DENSITY_OPTIONS_EXTENDED.map((option) => (
                 // eslint-disable-next-line jsx-a11y/label-has-associated-control
                 <label
                   key={option.value}
@@ -350,10 +273,9 @@ export function PreferencesDialog(): JSX.Element | null {
 
             {/* Touch device warning for compact mode */}
             {preferences.uiDensity === "compact" && isTouchDevice() && (
-              <p className="text-xs text-amber-600 mt-2 flex items-center gap-1.5 bg-amber-50 px-3 py-2 rounded border border-amber-200">
-                <span className="text-amber-500 font-bold">!</span>
+              <Alert variant="warning" className="mt-2">
                 Compact mode may be difficult to use on touch devices.
-              </p>
+              </Alert>
             )}
           </fieldset>
         </div>

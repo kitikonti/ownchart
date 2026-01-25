@@ -2,9 +2,10 @@
  * Help Panel component displaying keyboard shortcuts.
  */
 
-import { Question, Lightbulb, Command } from "@phosphor-icons/react";
+import { Question, Command } from "@phosphor-icons/react";
 import { Modal } from "../common/Modal";
 import { Button } from "../common/Button";
+import { Alert } from "../common/Alert";
 import { useUIStore } from "../../store/slices/uiSlice";
 
 /**
@@ -170,13 +171,8 @@ export function HelpPanel(): JSX.Element | null {
         ))}
 
         {/* Tip */}
-        <div className="flex items-start gap-3 px-4 py-3 bg-blue-50 rounded border border-blue-200">
-          <Lightbulb
-            size={18}
-            weight="fill"
-            className="mt-0.5 flex-shrink-0 text-blue-600"
-          />
-          <span className="text-sm text-blue-900">
+        <Alert variant="info">
+          <span className="text-sm">
             {isMac() ? (
               <>
                 <Command size={14} className="inline-block -mt-0.5" /> is the
@@ -186,7 +182,7 @@ export function HelpPanel(): JSX.Element | null {
               `Most shortcuts use ${modKey} as the modifier key.`
             )}
           </span>
-        </div>
+        </Alert>
       </div>
     </Modal>
   );
