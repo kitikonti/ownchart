@@ -2,6 +2,24 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [0.0.32](https://github.com/kitikonti/ownchart/compare/v0.0.31...v0.0.32) (2026-01-25)
+
+
+### Bug Fixes
+
+* resolve lint errors for CI ([6ad63bf](https://github.com/kitikonti/ownchart/commit/6ad63bf3837e8c611c10b3ba199aecff5243342d))
+
+
+### UI/UX
+
+* align all dialogs with export dialog design system ([95b7d8b](https://github.com/kitikonti/ownchart/commit/95b7d8b0e5ed965eec8ebbdf8111a2cf9b8f9701))
+
+
+### Code Refactoring
+
+* extract reusable UI components to reduce code duplication ([9b5f5cb](https://github.com/kitikonti/ownchart/commit/9b5f5cb32f8718ecfbef094373db2db73a4d9842))
+* improve component consistency and reduce ESLint suppressions ([9e99b3d](https://github.com/kitikonti/ownchart/commit/9e99b3dbfb81049332dbb4e10025a742065f116d))
+
 ### [0.0.31](https://github.com/kitikonti/ownchart/compare/v0.0.30...v0.0.31) (2026-01-15)
 
 
