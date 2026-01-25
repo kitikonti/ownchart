@@ -5,6 +5,7 @@
 import { useState } from "react";
 import { HandWaving, Cursor, ArrowsOutCardinal } from "@phosphor-icons/react";
 import { Modal } from "../common/Modal";
+import { Checkbox } from "../common/Checkbox";
 import { useUIStore } from "../../store/slices/uiSlice";
 
 /**
@@ -50,20 +51,21 @@ export function WelcomeTour(): JSX.Element | null {
   };
 
   const footer = (
-    <>
+    <div className="flex items-center w-full gap-3">
+      <div className="flex-1" />
       <button
         onClick={handleShowShortcuts}
-        className="px-4 py-2 text-sm font-medium text-neutral-700 bg-white border border-neutral-200 rounded-lg hover:bg-neutral-50 hover:border-neutral-300 transition-all duration-150 shadow-xs"
+        className="flex-1 max-w-[140px] px-5 py-2.5 text-sm font-medium text-neutral-700 bg-white border border-neutral-300 rounded hover:bg-neutral-50 transition-colors duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-100 focus-visible:ring-offset-2"
       >
         Show Shortcuts
       </button>
       <button
         onClick={handleGetStarted}
-        className="px-4 py-2 text-sm font-medium text-white bg-neutral-700 rounded-lg hover:bg-neutral-600 active:bg-neutral-800 transition-colors"
+        className="flex-1 max-w-[180px] px-5 py-2.5 text-sm font-medium text-white bg-brand-600 rounded hover:bg-brand-500 transition-colors duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-100 focus-visible:ring-offset-2"
       >
         Get Started
       </button>
-    </>
+    </div>
   );
 
   return (
@@ -74,6 +76,8 @@ export function WelcomeTour(): JSX.Element | null {
       icon={<HandWaving size={24} weight="light" className="text-amber-500" />}
       footer={footer}
       widthClass="max-w-md"
+      headerStyle="figma"
+      footerStyle="figma"
     >
       <div className="space-y-5">
         {/* Description */}
@@ -84,12 +88,12 @@ export function WelcomeTour(): JSX.Element | null {
 
         {/* Quick tips */}
         <div className="space-y-3">
-          <h3 className="text-sm font-semibold text-neutral-900 uppercase tracking-wide">
+          <h3 className="text-sm font-semibold text-neutral-900">
             Quick tips
           </h3>
 
-          <div className="flex items-start gap-3 p-3 bg-neutral-50 rounded-lg">
-            <div className="p-2 bg-neutral-100 rounded-lg">
+          <div className="flex items-start gap-3 p-3 bg-neutral-50 rounded border border-neutral-200">
+            <div className="p-2 bg-neutral-100 rounded">
               <Cursor size={18} className="text-neutral-600" />
             </div>
             <div>
@@ -102,8 +106,8 @@ export function WelcomeTour(): JSX.Element | null {
             </div>
           </div>
 
-          <div className="flex items-start gap-3 p-3 bg-neutral-50 rounded-lg">
-            <div className="p-2 bg-emerald-100 rounded-lg">
+          <div className="flex items-start gap-3 p-3 bg-neutral-50 rounded border border-neutral-200">
+            <div className="p-2 bg-emerald-100 rounded">
               <ArrowsOutCardinal size={18} className="text-emerald-600" />
             </div>
             <div>
@@ -116,8 +120,8 @@ export function WelcomeTour(): JSX.Element | null {
             </div>
           </div>
 
-          <div className="flex items-start gap-3 p-3 bg-neutral-50 rounded-lg">
-            <div className="p-2 bg-violet-100 rounded-lg">
+          <div className="flex items-start gap-3 p-3 bg-neutral-50 rounded border border-neutral-200">
+            <div className="p-2 bg-violet-100 rounded">
               <span className="text-base font-bold text-violet-600 block w-[18px] text-center">
                 ?
               </span>
@@ -134,12 +138,12 @@ export function WelcomeTour(): JSX.Element | null {
         </div>
 
         {/* Don't show again checkbox */}
-        <label className="flex items-center gap-2.5 pt-2 cursor-pointer group">
-          <input
-            type="checkbox"
+        {/* eslint-disable-next-line jsx-a11y/label-has-associated-control */}
+        <label className="flex items-center gap-3 pt-2 cursor-pointer group">
+          <Checkbox
             checked={dontShowAgain}
-            onChange={(e) => setDontShowAgain(e.target.checked)}
-            className=""
+            onChange={setDontShowAgain}
+            aria-label="Don't show this again"
           />
           <span className="text-sm text-neutral-500 group-hover:text-neutral-600 transition-colors">
             Don&apos;t show this again

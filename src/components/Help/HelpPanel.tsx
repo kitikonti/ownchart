@@ -4,6 +4,7 @@
 
 import { Question, Lightbulb, Command } from "@phosphor-icons/react";
 import { Modal } from "../common/Modal";
+import { Button } from "../common/Button";
 import { useUIStore } from "../../store/slices/uiSlice";
 
 /**
@@ -129,6 +130,12 @@ export function HelpPanel(): JSX.Element | null {
   const shortcuts = getShortcuts();
   const modKey = isMac() ? "Cmd" : "Ctrl";
 
+  const footer = (
+    <Button variant="primary" onClick={closeHelpPanel}>
+      Done
+    </Button>
+  );
+
   return (
     <Modal
       isOpen={isHelpPanelOpen}
@@ -136,18 +143,21 @@ export function HelpPanel(): JSX.Element | null {
       title="Keyboard Shortcuts"
       icon={<Question size={24} weight="light" className="text-neutral-500" />}
       widthClass="max-w-xl"
+      headerStyle="figma"
+      footerStyle="figma"
+      footer={footer}
     >
       <div className="space-y-6">
         {shortcuts.map((section) => (
           <div key={section.title}>
-            <h3 className="text-xs font-semibold text-neutral-900 mb-2.5 pb-1.5 border-b border-neutral-200 uppercase tracking-wide">
+            <h3 className="text-sm font-semibold text-neutral-900 mb-2.5 pb-1.5 border-b border-neutral-200">
               {section.title}
             </h3>
             <div className="space-y-1">
               {section.shortcuts.map((shortcut, index) => (
                 <div
                   key={index}
-                  className="flex items-center justify-between py-1.5 px-2 -mx-2 rounded-md hover:bg-neutral-50 transition-colors"
+                  className="flex items-center justify-between py-1.5 px-2 -mx-2 rounded hover:bg-neutral-50 transition-colors"
                 >
                   <span className="text-sm text-neutral-600">
                     {shortcut.description}
@@ -160,13 +170,13 @@ export function HelpPanel(): JSX.Element | null {
         ))}
 
         {/* Tip */}
-        <div className="flex items-start gap-2.5 p-3 bg-neutral-100 rounded-lg text-sm text-neutral-700 border border-neutral-200">
+        <div className="flex items-start gap-3 px-4 py-3 bg-blue-50 rounded border border-blue-200">
           <Lightbulb
             size={18}
-            weight="light"
-            className="mt-0.5 flex-shrink-0 text-neutral-500"
+            weight="fill"
+            className="mt-0.5 flex-shrink-0 text-blue-600"
           />
-          <span>
+          <span className="text-sm text-blue-900">
             {isMac() ? (
               <>
                 <Command size={14} className="inline-block -mt-0.5" /> is the

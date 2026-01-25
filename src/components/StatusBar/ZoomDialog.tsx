@@ -8,6 +8,7 @@ import { useState, useEffect } from "react";
 import { MagnifyingGlass } from "@phosphor-icons/react";
 import { Modal } from "../common/Modal";
 import { Button } from "../common/Button";
+import { Radio } from "../common/Radio";
 
 interface ZoomDialogProps {
   isOpen: boolean;
@@ -88,20 +89,20 @@ export function ZoomDialog({
       }
       footer={footer}
       widthClass="max-w-xs"
+      headerStyle="figma"
+      footerStyle="figma"
     >
       <div className="space-y-1">
         {ZOOM_PRESETS.map((preset) => (
           <label
             key={String(preset.value)}
-            className="flex items-center gap-3 px-2 py-2 rounded-md cursor-pointer hover:bg-neutral-50 transition-colors"
+            className="flex items-center gap-3 px-3 py-2.5 rounded cursor-pointer hover:bg-neutral-50 transition-colors duration-150"
           >
-            <input
-              type="radio"
+            <Radio
               name="zoom-preset"
-              value={String(preset.value)}
               checked={selectedValue === preset.value}
               onChange={() => setSelectedValue(preset.value)}
-              className="w-4 h-4 text-brand-600 border-neutral-300 focus:ring-brand-100"
+              aria-label={preset.label}
             />
             <span className="text-sm text-neutral-800">{preset.label}</span>
           </label>

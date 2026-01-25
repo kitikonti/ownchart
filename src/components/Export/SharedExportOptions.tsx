@@ -13,7 +13,7 @@ import type {
   UiDensity,
   TaskLabelPosition,
 } from "../../types/preferences.types";
-import { Checkbox } from "../common/Checkbox";
+import { LabeledCheckbox } from "../common/LabeledCheckbox";
 import { RadioOptionCard } from "../common/RadioOptionCard";
 import { CollapsibleSection } from "../common/CollapsibleSection";
 import { CheckboxGroup } from "../common/CheckboxGroup";
@@ -174,27 +174,15 @@ export function SharedExportOptions({
       {/* ============ BACKGROUND (PNG/SVG only) ============ */}
       {showBackground && (
         <section>
-          <label
-            htmlFor="export-transparent-bg"
-            className="flex items-center gap-3.5 p-4 rounded border border-neutral-200 hover:bg-neutral-50 cursor-pointer transition-colors duration-150 min-h-[44px]"
-          >
-            <Checkbox
-              id="export-transparent-bg"
-              checked={options.background === "transparent"}
-              onChange={(checked) =>
-                onChange({ background: checked ? "transparent" : "white" })
-              }
-              aria-label="Transparent background"
-            />
-            <div className="flex-1">
-              <span className="text-sm font-medium text-neutral-900">
-                Transparent background
-              </span>
-              <span className="block text-xs text-neutral-500 mt-0.5">
-                Remove white background for overlay use
-              </span>
-            </div>
-          </label>
+          <LabeledCheckbox
+            id="export-transparent-bg"
+            checked={options.background === "transparent"}
+            onChange={(checked) =>
+              onChange({ background: checked ? "transparent" : "white" })
+            }
+            title="Transparent background"
+            description="Remove white background for overlay use"
+          />
         </section>
       )}
 

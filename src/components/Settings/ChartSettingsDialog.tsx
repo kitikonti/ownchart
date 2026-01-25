@@ -17,6 +17,8 @@ import {
 } from "@phosphor-icons/react";
 import { Modal } from "../common/Modal";
 import { Button } from "../common/Button";
+import { LabeledCheckbox } from "../common/LabeledCheckbox";
+import { Checkbox } from "../common/Checkbox";
 import { useUIStore } from "../../store/slices/uiSlice";
 import { useChartStore } from "../../store/slices/chartSlice";
 import type { TaskLabelPosition } from "../../types/preferences.types";
@@ -162,13 +164,15 @@ export function ChartSettingsDialog(): JSX.Element | null {
       icon={<Sliders size={24} weight="regular" className="text-brand-600" />}
       footer={footer}
       widthClass="max-w-lg"
+      headerStyle="figma"
+      footerStyle="figma"
     >
       <div className="space-y-6">
         {/* Project Metadata Section */}
         <div>
           <div className="flex items-center gap-2 mb-4">
             <Tag size={20} weight="light" className="text-neutral-500" />
-            <h3 className="text-sm font-semibold text-neutral-900 uppercase tracking-wide">
+            <h3 className="text-sm font-semibold text-neutral-900">
               Project Info
             </h3>
           </div>
@@ -187,7 +191,7 @@ export function ChartSettingsDialog(): JSX.Element | null {
                 value={projectTitle}
                 onChange={(e) => setProjectTitle(e.target.value)}
                 placeholder="Project title (used in PDF exports)"
-                className="w-full px-3 py-2 text-sm bg-white border border-neutral-200 rounded-lg focus:ring-2 focus:ring-neutral-400/40 focus:border-neutral-400 transition-all"
+                className="w-full px-3 py-2 text-sm bg-white border border-neutral-200 rounded focus:ring-2 focus:ring-brand-100 focus:border-brand-600 transition-all"
               />
             </div>
             <div>
@@ -203,82 +207,49 @@ export function ChartSettingsDialog(): JSX.Element | null {
                 value={projectAuthor}
                 onChange={(e) => setProjectAuthor(e.target.value)}
                 placeholder="Your name (used in PDF metadata)"
-                className="w-full px-3 py-2 text-sm bg-white border border-neutral-200 rounded-lg focus:ring-2 focus:ring-neutral-400/40 focus:border-neutral-400 transition-all"
+                className="w-full px-3 py-2 text-sm bg-white border border-neutral-200 rounded focus:ring-2 focus:ring-brand-100 focus:border-brand-600 transition-all"
               />
             </div>
           </div>
         </div>
 
         {/* Divider */}
-        <div className="border-t border-neutral-200" />
+        <div className="divider-h" />
 
         {/* Timeline Display Section */}
         <div>
           <div className="flex items-center gap-2 mb-4">
             <GridNine size={20} weight="light" className="text-neutral-500" />
-            <h3 className="text-sm font-semibold text-neutral-900 uppercase tracking-wide">
+            <h3 className="text-sm font-semibold text-neutral-900">
               Timeline Display
             </h3>
           </div>
 
           <div className="space-y-3">
             {/* Show Today Marker */}
-            <label className="flex items-center gap-3 cursor-pointer">
-              <input
-                type="checkbox"
-                checked={showTodayMarker}
-                onChange={(e) => setShowTodayMarker(e.target.checked)}
-                className=""
-                aria-label="Show Today Marker"
-              />
-              <div>
-                <span className="text-sm font-medium text-neutral-800">
-                  Show Today Marker
-                </span>
-                <p className="text-xs text-neutral-500">
-                  Display a vertical line marking today&apos;s date
-                </p>
-              </div>
-            </label>
+            <LabeledCheckbox
+              checked={showTodayMarker}
+              onChange={setShowTodayMarker}
+              title="Show Today Marker"
+              description="Display a vertical line marking today's date"
+            />
 
             {/* Show Weekend Highlighting */}
-            <label className="flex items-center gap-3 cursor-pointer">
-              <input
-                type="checkbox"
-                checked={showWeekends}
-                onChange={(e) => setShowWeekends(e.target.checked)}
-                className=""
-                aria-label="Show Weekend Highlighting"
-              />
-              <div>
-                <span className="text-sm font-medium text-neutral-800">
-                  Show Weekend Highlighting
-                </span>
-                <p className="text-xs text-neutral-500">
-                  Highlight Saturday and Sunday columns
-                </p>
-              </div>
-            </label>
+            <LabeledCheckbox
+              checked={showWeekends}
+              onChange={setShowWeekends}
+              title="Show Weekend Highlighting"
+              description="Highlight Saturday and Sunday columns"
+            />
 
             {/* Show Holidays */}
             <div className="space-y-2">
-              <label className="flex items-center gap-3 cursor-pointer">
-                <input
-                  type="checkbox"
-                  checked={showHolidays}
-                  onChange={(e) => setShowHolidays(e.target.checked)}
-                  className=""
-                  aria-label="Show Holidays"
-                />
-                <div>
-                  <span className="text-sm font-medium text-neutral-800">
-                    Show Holidays
-                  </span>
-                  <p className="text-xs text-neutral-500">
-                    Highlight public holidays in the timeline
-                  </p>
-                </div>
-              </label>
+              <LabeledCheckbox
+                checked={showHolidays}
+                onChange={setShowHolidays}
+                title="Show Holidays"
+                description="Highlight public holidays in the timeline"
+              />
 
               {/* Holiday Region Selector */}
               <div className="ml-7">
@@ -288,7 +259,7 @@ export function ChartSettingsDialog(): JSX.Element | null {
                     onClick={() =>
                       setIsCountryDropdownOpen(!isCountryDropdownOpen)
                     }
-                    className="w-full flex items-center justify-between gap-2 px-3 py-2 text-sm border border-neutral-200 rounded-lg hover:border-neutral-300 transition-all duration-150 bg-white shadow-xs"
+                    className="w-full flex items-center justify-between gap-2 px-3 py-2 text-sm border border-neutral-200 rounded hover:border-neutral-300 transition-all duration-150 bg-white shadow-xs"
                   >
                     <div className="flex items-center gap-2">
                       <Globe size={16} className="text-neutral-500" />
@@ -316,7 +287,7 @@ export function ChartSettingsDialog(): JSX.Element | null {
 
                   {/* Dropdown */}
                   {isCountryDropdownOpen && (
-                    <div className="absolute z-50 mt-1 w-full bg-white border border-neutral-200 rounded-lg shadow-lg animate-fade-in">
+                    <div className="absolute z-50 mt-1 w-full bg-white border border-neutral-200 rounded shadow-lg animate-fade-in">
                       {/* Search input */}
                       <div className="p-2 border-b border-neutral-200">
                         <div className="relative">
@@ -329,7 +300,7 @@ export function ChartSettingsDialog(): JSX.Element | null {
                             value={countrySearch}
                             onChange={(e) => setCountrySearch(e.target.value)}
                             placeholder="Search countries..."
-                            className="w-full pl-8 pr-3 py-1.5 text-sm border border-neutral-200 rounded-md focus:outline-none focus:ring-2 focus:ring-neutral-400/40 focus:border-neutral-400 transition-all"
+                            className="w-full pl-8 pr-3 py-1.5 text-sm border border-neutral-200 rounded focus:outline-none focus:ring-2 focus:ring-brand-100 focus:border-brand-600 transition-all"
                             autoFocus
                           />
                         </div>
@@ -370,28 +341,17 @@ export function ChartSettingsDialog(): JSX.Element | null {
             </div>
 
             {/* Show Dependencies */}
-            <label className="flex items-center gap-3 cursor-pointer">
-              <input
-                type="checkbox"
-                checked={showDependencies}
-                onChange={(e) => setShowDependencies(e.target.checked)}
-                className=""
-                aria-label="Show Dependencies"
-              />
-              <div>
-                <span className="text-sm font-medium text-neutral-800">
-                  Show Dependencies
-                </span>
-                <p className="text-xs text-neutral-500">
-                  Display dependency arrows between tasks
-                </p>
-              </div>
-            </label>
+            <LabeledCheckbox
+              checked={showDependencies}
+              onChange={setShowDependencies}
+              title="Show Dependencies"
+              description="Display dependency arrows between tasks"
+            />
           </div>
         </div>
 
         {/* Divider */}
-        <div className="border-t border-neutral-200" />
+        <div className="divider-h" />
 
         {/* Task Display Section */}
         <div>
@@ -401,30 +361,19 @@ export function ChartSettingsDialog(): JSX.Element | null {
               weight="light"
               className="text-neutral-500"
             />
-            <h3 className="text-sm font-semibold text-neutral-900 uppercase tracking-wide">
+            <h3 className="text-sm font-semibold text-neutral-900">
               Task Display
             </h3>
           </div>
 
           <div className="space-y-4">
             {/* Use Progress */}
-            <label className="flex items-center gap-3 cursor-pointer">
-              <input
-                type="checkbox"
-                checked={showProgress}
-                onChange={(e) => setShowProgress(e.target.checked)}
-                className=""
-                aria-label="Use Progress"
-              />
-              <div>
-                <span className="text-sm font-medium text-neutral-800">
-                  Use Progress
-                </span>
-                <p className="text-xs text-neutral-500">
-                  Enable progress column and progress fill on task bars
-                </p>
-              </div>
-            </label>
+            <LabeledCheckbox
+              checked={showProgress}
+              onChange={setShowProgress}
+              title="Use Progress"
+              description="Enable progress column and progress fill on task bars"
+            />
 
             {/* Task Label Position */}
             <fieldset className="space-y-2">
@@ -436,10 +385,10 @@ export function ChartSettingsDialog(): JSX.Element | null {
                   <label
                     key={option.value}
                     className={`
-                      flex items-center gap-2 px-3 py-2 rounded-lg border-2 cursor-pointer transition-all duration-150 text-sm
+                      flex items-center gap-2 px-3 py-2 rounded border cursor-pointer transition-all duration-150 text-sm
                       ${
                         taskLabelPosition === option.value
-                          ? "border-neutral-500 bg-neutral-50"
+                          ? "border-brand-600 bg-brand-50"
                           : "border-neutral-200 hover:border-neutral-300 hover:bg-neutral-50"
                       }
                     `}
@@ -454,7 +403,7 @@ export function ChartSettingsDialog(): JSX.Element | null {
                       className="sr-only"
                     />
                     <span
-                      className={`font-medium ${taskLabelPosition === option.value ? "text-neutral-800" : "text-neutral-700"}`}
+                      className={`font-medium ${taskLabelPosition === option.value ? "text-brand-700" : "text-neutral-700"}`}
                     >
                       {option.label}
                     </span>
@@ -462,7 +411,7 @@ export function ChartSettingsDialog(): JSX.Element | null {
                 ))}
               </div>
               {taskLabelPosition === "inside" && (
-                <p className="text-xs text-amber-600 bg-amber-50 px-3 py-2 rounded-lg">
+                <p className="text-xs text-amber-600 bg-amber-50 px-3 py-2 rounded border border-amber-200">
                   Note: &quot;Inside&quot; is not available for summary tasks
                   and milestones - they will use &quot;After&quot; instead.
                 </p>
@@ -472,80 +421,65 @@ export function ChartSettingsDialog(): JSX.Element | null {
         </div>
 
         {/* Divider */}
-        <div className="border-t border-neutral-200" />
+        <div className="divider-h" />
 
         {/* Working Days Section */}
         <div>
           <div className="flex items-center gap-2 mb-4">
             <Briefcase size={20} weight="light" className="text-neutral-500" />
-            <h3 className="text-sm font-semibold text-neutral-900 uppercase tracking-wide">
+            <h3 className="text-sm font-semibold text-neutral-900">
               Working Days
             </h3>
           </div>
 
           <div className="space-y-4">
             {/* Working Days Mode Toggle */}
-            <label className="flex items-center gap-3 cursor-pointer">
-              <input
-                type="checkbox"
-                checked={workingDaysMode}
-                onChange={(e) => setWorkingDaysMode(e.target.checked)}
-                className=""
-                aria-label="Calculate with Working Days Only"
-              />
-              <div>
-                <span className="text-sm font-medium text-neutral-800">
-                  Calculate with Working Days Only
-                </span>
-                <p className="text-xs text-neutral-500">
-                  Task durations automatically extend to skip non-working days
-                </p>
-              </div>
-            </label>
+            <LabeledCheckbox
+              checked={workingDaysMode}
+              onChange={setWorkingDaysMode}
+              title="Calculate with Working Days Only"
+              description="Task durations automatically extend to skip non-working days"
+            />
 
             {/* Working Days Configuration */}
             {workingDaysMode && (
-              <div className="ml-7 p-3 bg-neutral-50 rounded-lg space-y-2">
+              <div className="ml-7 p-3 bg-neutral-50 rounded space-y-2.5">
                 <p className="text-xs font-medium text-neutral-700 mb-2">
                   Exclude from working days:
                 </p>
 
-                <label className="flex items-center gap-2 cursor-pointer">
-                  <input
-                    type="checkbox"
+                {/* eslint-disable-next-line jsx-a11y/label-has-associated-control */}
+                <label className="flex items-center gap-3 cursor-pointer">
+                  <Checkbox
                     checked={workingDaysConfig.excludeSaturday}
-                    onChange={(e) =>
-                      setWorkingDaysConfig({
-                        excludeSaturday: e.target.checked,
-                      })
+                    onChange={(checked) =>
+                      setWorkingDaysConfig({ excludeSaturday: checked })
                     }
-                    className=""
+                    aria-label="Exclude Saturdays"
                   />
                   <span className="text-sm text-neutral-700">Saturdays</span>
                 </label>
 
-                <label className="flex items-center gap-2 cursor-pointer">
-                  <input
-                    type="checkbox"
+                {/* eslint-disable-next-line jsx-a11y/label-has-associated-control */}
+                <label className="flex items-center gap-3 cursor-pointer">
+                  <Checkbox
                     checked={workingDaysConfig.excludeSunday}
-                    onChange={(e) =>
-                      setWorkingDaysConfig({ excludeSunday: e.target.checked })
+                    onChange={(checked) =>
+                      setWorkingDaysConfig({ excludeSunday: checked })
                     }
-                    className=""
+                    aria-label="Exclude Sundays"
                   />
                   <span className="text-sm text-neutral-700">Sundays</span>
                 </label>
 
-                <label className="flex items-center gap-2 cursor-pointer">
-                  <input
-                    type="checkbox"
+                { }
+                <label className="flex items-center gap-3 cursor-pointer">
+                  <Checkbox
                     checked={workingDaysConfig.excludeHolidays}
-                    onChange={(e) =>
-                      setWorkingDaysConfig({
-                        excludeHolidays: e.target.checked,
-                      })
+                    onChange={(checked) =>
+                      setWorkingDaysConfig({ excludeHolidays: checked })
                     }
-                    className=""
+                    aria-label="Exclude Holidays"
                   />
                   <span className="text-sm text-neutral-700">
                     Holidays ({currentCountryName})
@@ -557,7 +491,8 @@ export function ChartSettingsDialog(): JSX.Element | null {
         </div>
 
         {/* Info note */}
-        <div className="pt-4 border-t border-neutral-200">
+        <div className="divider-h" />
+        <div className="pt-4">
           <p className="text-xs text-neutral-400 text-center">
             These settings are saved with your project file
           </p>

@@ -151,13 +151,15 @@ export function PreferencesDialog(): JSX.Element | null {
       icon={<Gear size={24} weight="regular" className="text-brand-600" />}
       footer={footer}
       widthClass="max-w-md"
+      headerStyle="figma"
+      footerStyle="figma"
     >
       <div className="space-y-6">
         {/* Regional Section */}
         <div>
           <div className="flex items-center gap-2 mb-4">
             <Globe size={20} weight="light" className="text-neutral-500" />
-            <h3 className="text-sm font-semibold text-neutral-900 uppercase tracking-wide">
+            <h3 className="text-sm font-semibold text-neutral-900">
               Regional
             </h3>
           </div>
@@ -172,10 +174,10 @@ export function PreferencesDialog(): JSX.Element | null {
                 <label
                   key={option.value}
                   className={`
-                    flex items-center gap-2 px-3 py-2 rounded-lg border-2 cursor-pointer transition-all duration-150 text-sm
+                    flex items-center gap-2 px-3 py-2 rounded border cursor-pointer transition-all duration-150 text-sm
                     ${
                       preferences.dateFormat === option.value
-                        ? "border-neutral-500 bg-neutral-50"
+                        ? "border-brand-600 bg-brand-50"
                         : "border-neutral-200 hover:border-neutral-300 hover:bg-neutral-50"
                     }
                   `}
@@ -211,10 +213,10 @@ export function PreferencesDialog(): JSX.Element | null {
                 <label
                   key={option.value}
                   className={`
-                    flex items-center gap-2 px-3 py-2 rounded-lg border-2 cursor-pointer transition-all duration-150 text-sm
+                    flex items-center gap-2 px-3 py-2 rounded border cursor-pointer transition-all duration-150 text-sm
                     ${
                       preferences.firstDayOfWeek === option.value
-                        ? "border-neutral-500 bg-neutral-50"
+                        ? "border-brand-600 bg-brand-50"
                         : "border-neutral-200 hover:border-neutral-300 hover:bg-neutral-50"
                     }
                   `}
@@ -249,10 +251,10 @@ export function PreferencesDialog(): JSX.Element | null {
                   key={option.value}
                   htmlFor={`weekNumbering-${option.value}`}
                   className={`
-                    flex items-start gap-3 p-3 rounded-lg border-2 cursor-pointer transition-all duration-150
+                    flex items-start gap-3 p-3 rounded border cursor-pointer transition-all duration-150
                     ${
                       preferences.weekNumberingSystem === option.value
-                        ? "border-neutral-500 bg-neutral-50"
+                        ? "border-brand-600 bg-brand-50"
                         : "border-neutral-200 hover:border-neutral-300 hover:bg-neutral-50"
                     }
                   `}
@@ -283,13 +285,13 @@ export function PreferencesDialog(): JSX.Element | null {
         </div>
 
         {/* Divider */}
-        <div className="border-t border-neutral-200" />
+        <div className="divider-h" />
 
         {/* Appearance Section */}
         <div>
           <div className="flex items-center gap-2 mb-4">
             <Monitor size={20} weight="light" className="text-neutral-500" />
-            <h3 className="text-sm font-semibold text-neutral-900 uppercase tracking-wide">
+            <h3 className="text-sm font-semibold text-neutral-900">
               Appearance
             </h3>
           </div>
@@ -310,10 +312,10 @@ export function PreferencesDialog(): JSX.Element | null {
                   key={option.value}
                   htmlFor={`density-${option.value}`}
                   className={`
-                    flex items-start gap-3 p-3 rounded-lg border-2 cursor-pointer transition-all duration-150
+                    flex items-start gap-3 p-3 rounded border cursor-pointer transition-all duration-150
                     ${
                       preferences.uiDensity === option.value
-                        ? "border-neutral-500 bg-neutral-50"
+                        ? "border-brand-600 bg-brand-50"
                         : "border-neutral-200 hover:border-neutral-300 hover:bg-neutral-50"
                     }
                   `}
@@ -348,7 +350,7 @@ export function PreferencesDialog(): JSX.Element | null {
 
             {/* Touch device warning for compact mode */}
             {preferences.uiDensity === "compact" && isTouchDevice() && (
-              <p className="text-xs text-amber-600 mt-2 flex items-center gap-1.5 bg-amber-50 px-3 py-2 rounded-lg">
+              <p className="text-xs text-amber-600 mt-2 flex items-center gap-1.5 bg-amber-50 px-3 py-2 rounded border border-amber-200">
                 <span className="text-amber-500 font-bold">!</span>
                 Compact mode may be difficult to use on touch devices.
               </p>
@@ -357,7 +359,8 @@ export function PreferencesDialog(): JSX.Element | null {
         </div>
 
         {/* Live Preview indicator */}
-        <div className="pt-4 border-t border-neutral-200">
+        <div className="divider-h" />
+        <div className="pt-4">
           <p className="text-xs text-neutral-400 text-center">
             Changes are applied immediately
           </p>
