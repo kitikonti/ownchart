@@ -90,30 +90,20 @@ export const WEEK_NUMBERING_OPTIONS_EXTENDED: WeekNumberingOption[] = [
 ];
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Simple dropdown options (for ToolbarDropdown)
+// Simple dropdown options (derived from extended options for single source of truth)
 // ─────────────────────────────────────────────────────────────────────────────
 
-export const DENSITY_OPTIONS: DropdownOption<UiDensity>[] = [
-  { value: "compact", label: "Compact" },
-  { value: "normal", label: "Normal" },
-  { value: "comfortable", label: "Comfortable" },
-];
+export const DENSITY_OPTIONS: DropdownOption<UiDensity>[] =
+  DENSITY_OPTIONS_EXTENDED.map(({ value, label }) => ({ value, label }));
 
-export const DATE_FORMAT_OPTIONS: DropdownOption<DateFormat>[] = [
-  { value: "DD/MM/YYYY", label: "DD/MM/YYYY" },
-  { value: "MM/DD/YYYY", label: "MM/DD/YYYY" },
-  { value: "YYYY-MM-DD", label: "YYYY-MM-DD" },
-];
+export const DATE_FORMAT_OPTIONS: DropdownOption<DateFormat>[] =
+  DATE_FORMAT_OPTIONS_EXTENDED.map(({ value, label }) => ({ value, label }));
 
-export const FIRST_DAY_OF_WEEK_OPTIONS: DropdownOption<FirstDayOfWeek>[] = [
-  { value: "monday", label: "Monday" },
-  { value: "sunday", label: "Sunday" },
-];
+export const FIRST_DAY_OF_WEEK_OPTIONS: DropdownOption<FirstDayOfWeek>[] =
+  FIRST_DAY_OPTIONS.map(({ value, label }) => ({ value, label }));
 
-export const WEEK_NUMBERING_OPTIONS: DropdownOption<WeekNumberingSystem>[] = [
-  { value: "iso", label: "ISO 8601" },
-  { value: "us", label: "US" },
-];
+export const WEEK_NUMBERING_OPTIONS: DropdownOption<WeekNumberingSystem>[] =
+  WEEK_NUMBERING_OPTIONS_EXTENDED.map(({ value, label }) => ({ value, label }));
 
 export const LABEL_OPTIONS: DropdownOption<TaskLabelPosition>[] = [
   { value: "before", label: "Before" },

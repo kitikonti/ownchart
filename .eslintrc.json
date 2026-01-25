@@ -32,7 +32,16 @@
     "jsx-a11y/no-static-element-interactions": "warn",
     "jsx-a11y/click-events-have-key-events": "warn",
     "jsx-a11y/no-autofocus": "warn",
-    "jsx-a11y/no-noninteractive-tabindex": "warn"
+    "jsx-a11y/no-noninteractive-tabindex": "warn",
+    "jsx-a11y/label-has-associated-control": [
+      "error",
+      {
+        "labelComponents": ["label"],
+        "labelAttributes": ["htmlFor"],
+        "controlComponents": ["Checkbox", "Input", "Select", "input", "select", "textarea"],
+        "depth": 3
+      }
+    ]
   },
   "settings": {
     "react": {

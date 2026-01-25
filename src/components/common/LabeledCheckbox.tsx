@@ -5,6 +5,7 @@
  * Style matches the export dialog's "Transparent background" checkbox pattern.
  */
 
+import { useId } from "react";
 import { Checkbox } from "./Checkbox";
 
 export interface LabeledCheckboxProps {
@@ -18,7 +19,7 @@ export interface LabeledCheckboxProps {
   description?: string;
   /** Whether the checkbox is disabled */
   disabled?: boolean;
-  /** Optional ID for the checkbox input */
+  /** Optional ID for the checkbox input (auto-generated if not provided) */
   id?: string;
 }
 
@@ -28,8 +29,11 @@ export function LabeledCheckbox({
   title,
   description,
   disabled,
-  id,
+  id: providedId,
 }: LabeledCheckboxProps): JSX.Element {
+  const generatedId = useId();
+  const id = providedId ?? generatedId;
+
   return (
     <label
       htmlFor={id}

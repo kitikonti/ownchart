@@ -133,7 +133,6 @@ export function WelcomeTour(): JSX.Element | null {
         </div>
 
         {/* Don't show again checkbox */}
-        {/* eslint-disable-next-line jsx-a11y/label-has-associated-control */}
         <label className="flex items-center gap-3 pt-2 cursor-pointer group">
           <Checkbox
             checked={dontShowAgain}

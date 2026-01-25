@@ -171,7 +171,6 @@ export function PreferencesDialog(): JSX.Element | null {
             </legend>
             <div className="space-y-2">
               {WEEK_NUMBERING_OPTIONS_EXTENDED.map((option) => (
-                // eslint-disable-next-line jsx-a11y/label-has-associated-control
                 <label
                   key={option.value}
                   htmlFor={`weekNumbering-${option.value}`}
@@ -230,7 +229,6 @@ export function PreferencesDialog(): JSX.Element | null {
               aria-label="UI Density"
             >
               {DENSITY_OPTIONS_EXTENDED.map((option) => (
-                // eslint-disable-next-line jsx-a11y/label-has-associated-control
                 <label
                   key={option.value}
                   htmlFor={`density-${option.value}`}

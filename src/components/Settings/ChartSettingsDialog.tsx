@@ -440,7 +440,6 @@ export function ChartSettingsDialog(): JSX.Element | null {
                   Exclude from working days:
                 </p>
 
-                {/* eslint-disable-next-line jsx-a11y/label-has-associated-control */}
                 <label className="flex items-center gap-3 cursor-pointer">
                   <Checkbox
                     checked={workingDaysConfig.excludeSaturday}
@@ -452,7 +451,6 @@ export function ChartSettingsDialog(): JSX.Element | null {
                   <span className="text-sm text-neutral-700">Saturdays</span>
                 </label>
 
-                {/* eslint-disable-next-line jsx-a11y/label-has-associated-control */}
                 <label className="flex items-center gap-3 cursor-pointer">
                   <Checkbox
                     checked={workingDaysConfig.excludeSunday}
