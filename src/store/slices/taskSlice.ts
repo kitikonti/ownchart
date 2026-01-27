@@ -1367,74 +1367,82 @@ export const useTaskStore = create<TaskStore>()(
     },
 
     // Indent/Outdent actions
-    indentSelectedTasks: () =>
-      set((state) => {
-        const { tasks, selectedTaskIds } = state;
-        if (selectedTaskIds.length === 0) return;
+    indentSelectedTasks: () => {
+      const historyStore = useHistoryStore.getState();
+      const { tasks, selectedTaskIds } = get();
+      if (selectedTaskIds.length === 0) return;
 
-        // Create snapshot of current hierarchy BEFORE any changes
-        const originalFlatList = buildFlattenedTaskList(
-          tasks,
-          new Set<string>()
-        );
+      // Create snapshot of current hierarchy BEFORE any changes
+      const originalFlatList = buildFlattenedTaskList(tasks, new Set<string>());
 
-        // Sort selection by display order (top to bottom)
-        const sortedIds = [...selectedTaskIds].sort((a, b) => {
-          const indexA = originalFlatList.findIndex((t) => t.task.id === a);
-          const indexB = originalFlatList.findIndex((t) => t.task.id === b);
-          return indexA - indexB;
-        });
+      // Sort selection by display order (top to bottom)
+      const sortedIds = [...selectedTaskIds].sort((a, b) => {
+        const indexA = originalFlatList.findIndex((t) => t.task.id === a);
+        const indexB = originalFlatList.findIndex((t) => t.task.id === b);
+        return indexA - indexB;
+      });
 
-        // Calculate all changes based on ORIGINAL hierarchy
-        const changes: Array<{ taskId: string; newParentId: string }> = [];
+      // Calculate all changes based on ORIGINAL hierarchy (capture oldParent)
+      const changes: Array<{
+        taskId: string;
+        oldParent: string | undefined;
+        newParent: string | undefined;
+      }> = [];
 
-        sortedIds.forEach((taskId) => {
-          const index = originalFlatList.findIndex((t) => t.task.id === taskId);
-          if (index === -1) return;
+      sortedIds.forEach((taskId) => {
+        const index = originalFlatList.findIndex((t) => t.task.id === taskId);
+        if (index === -1) return;
 
-          const level = originalFlatList[index].level;
+        const task = tasks.find((t) => t.id === taskId);
+        if (!task) return;
 
-          // Find previous sibling (same level) - skip if it's also selected
-          let newParentId: string | null = null;
-          for (let i = index - 1; i >= 0; i--) {
-            const prevTask = originalFlatList[i];
-            if (prevTask.level === level) {
-              // Skip if this potential parent is also selected (would create cascade)
-              if (!selectedTaskIds.includes(prevTask.task.id)) {
-                newParentId = prevTask.task.id;
-                break;
-              }
+        const level = originalFlatList[index].level;
+        const oldParent = task.parent;
+
+        // Find previous sibling (same level) - skip if it's also selected
+        let newParentId: string | null = null;
+        for (let i = index - 1; i >= 0; i--) {
+          const prevTask = originalFlatList[i];
+          if (prevTask.level === level) {
+            // Skip if this potential parent is also selected (would create cascade)
+            if (!selectedTaskIds.includes(prevTask.task.id)) {
+              newParentId = prevTask.task.id;
+              break;
             }
-            if (prevTask.level < level) break; // No suitable sibling found
           }
+          if (prevTask.level < level) break; // No suitable sibling found
+        }
 
-          if (!newParentId) return;
+        if (!newParentId) return;
 
-          const newParent = tasks.find((t) => t.id === newParentId);
-          if (!newParent) return;
+        const newParent = tasks.find((t) => t.id === newParentId);
+        if (!newParent) return;
 
-          // Calculate new parent's level based on ORIGINAL hierarchy
-          const newParentLevel = getTaskLevel(tasks, newParentId);
+        // Calculate new parent's level based on ORIGINAL hierarchy
+        const newParentLevel = getTaskLevel(tasks, newParentId);
 
-          // Validation
-          if (
-            canHaveChildren(newParent) &&
-            level < 2 && // Max 3 levels (0, 1, 2)
-            !wouldCreateCircularHierarchy(tasks, newParentId, taskId) &&
-            newParentLevel === level // Ensure parent is on same level (task will be level + 1)
-          ) {
-            changes.push({ taskId, newParentId });
-          }
-        });
+        // Validation
+        if (
+          canHaveChildren(newParent) &&
+          level < 2 && // Max 3 levels (0, 1, 2)
+          !wouldCreateCircularHierarchy(tasks, newParentId, taskId) &&
+          newParentLevel === level // Ensure parent is on same level (task will be level + 1)
+        ) {
+          changes.push({ taskId, oldParent, newParent: newParentId });
+        }
+      });
 
-        // Apply all changes at once
-        changes.forEach(({ taskId, newParentId }) => {
+      if (changes.length === 0) return;
+
+      // Apply all changes at once
+      set((state) => {
+        changes.forEach(({ taskId, newParent }) => {
           const task = state.tasks.find((t) => t.id === taskId);
-          if (task) {
-            task.parent = newParentId;
+          if (task && newParent) {
+            task.parent = newParent;
 
             // Auto-expand parent if collapsed
-            const parent = state.tasks.find((t) => t.id === newParentId);
+            const parent = state.tasks.find((t) => t.id === newParent);
             if (parent && parent.open === false) {
               parent.open = true;
             }
@@ -1442,11 +1450,13 @@ export const useTaskStore = create<TaskStore>()(
         });
 
         // Recalculate summary dates for all affected parents
-        const affectedParentIds = new Set(changes.map((c) => c.newParentId));
+        const affectedParentIds = new Set(
+          changes.map((c) => c.newParent).filter(Boolean)
+        );
         affectedParentIds.forEach((parentId) => {
           const parent = state.tasks.find((t) => t.id === parentId);
           if (parent && parent.type === "summary") {
-            const summaryDates = calculateSummaryDates(state.tasks, parentId);
+            const summaryDates = calculateSummaryDates(state.tasks, parentId!);
             if (summaryDates) {
               const parentIndex = state.tasks.findIndex(
                 (t) => t.id === parentId
@@ -1460,67 +1470,94 @@ export const useTaskStore = create<TaskStore>()(
             }
           }
         });
-      }),
+      });
 
-    outdentSelectedTasks: () =>
+      // Mark file as dirty
+      useFileStore.getState().markDirty();
+
+      // Record command for undo/redo
+      if (!historyStore.isUndoing && !historyStore.isRedoing) {
+        const description =
+          changes.length === 1
+            ? `Indented task`
+            : `Indented ${changes.length} tasks`;
+
+        historyStore.recordCommand({
+          id: crypto.randomUUID(),
+          type: CommandType.INDENT_TASKS,
+          timestamp: Date.now(),
+          description,
+          params: {
+            taskIds: changes.map((c) => c.taskId),
+            changes,
+          },
+        });
+      }
+    },
+
+    outdentSelectedTasks: () => {
+      const historyStore = useHistoryStore.getState();
+      const { tasks, selectedTaskIds } = get();
+      if (selectedTaskIds.length === 0) return;
+
+      // Create snapshot of current hierarchy BEFORE any changes
+      const originalHierarchy = new Map(
+        tasks.map((t) => [
+          t.id,
+          { parent: t.parent, level: getTaskLevel(tasks, t.id) },
+        ])
+      );
+
+      // Calculate all changes based on ORIGINAL hierarchy (capture oldParent)
+      const changes: Array<{
+        taskId: string;
+        oldParent: string | undefined;
+        newParent: string | undefined;
+      }> = [];
+
+      selectedTaskIds.forEach((taskId) => {
+        const task = tasks.find((t) => t.id === taskId);
+        if (!task?.parent) return; // Already on root level
+
+        const currentLevel = originalHierarchy.get(taskId)?.level ?? 0;
+        const parent = tasks.find((t) => t.id === task.parent);
+        if (!parent) return;
+
+        const oldParent = task.parent;
+        const grandParent = parent.parent;
+
+        // Calculate new level based on ORIGINAL hierarchy
+        const newLevel = grandParent
+          ? (originalHierarchy.get(grandParent)?.level ?? 0) + 1
+          : 0;
+
+        // Validation: Ensure task only moves exactly one level up
+        if (newLevel === currentLevel - 1) {
+          changes.push({ taskId, oldParent, newParent: grandParent });
+        }
+      });
+
+      if (changes.length === 0) return;
+
+      // Track old parents for summary date recalculation
+      const oldParentIds = new Set<string>();
+      changes.forEach(({ oldParent }) => {
+        if (oldParent) {
+          oldParentIds.add(oldParent);
+        }
+      });
+
+      // Apply all changes at once
       set((state) => {
-        const { tasks, selectedTaskIds } = state;
-        if (selectedTaskIds.length === 0) return;
-
-        // Create snapshot of current hierarchy BEFORE any changes
-        const originalHierarchy = new Map(
-          tasks.map((t) => [
-            t.id,
-            { parent: t.parent, level: getTaskLevel(tasks, t.id) },
-          ])
-        );
-
-        // Calculate all changes based on ORIGINAL hierarchy
-        const changes: Array<{
-          taskId: string;
-          newParentId: string | undefined;
-        }> = [];
-
-        selectedTaskIds.forEach((taskId) => {
-          const task = tasks.find((t) => t.id === taskId);
-          if (!task?.parent) return; // Already on root level
-
-          const currentLevel = originalHierarchy.get(taskId)?.level ?? 0;
-          const parent = tasks.find((t) => t.id === task.parent);
-          if (!parent) return;
-
-          const grandParent = parent.parent;
-
-          // Calculate new level based on ORIGINAL hierarchy
-          const newLevel = grandParent
-            ? (originalHierarchy.get(grandParent)?.level ?? 0) + 1
-            : 0;
-
-          // Validation: Ensure task only moves exactly one level up
-          if (newLevel === currentLevel - 1) {
-            changes.push({ taskId, newParentId: grandParent });
-          }
-        });
-
-        // Track old parents before making changes
-        const oldParents = new Set<string>();
-        changes.forEach(({ taskId }) => {
-          const task = state.tasks.find((t) => t.id === taskId);
-          if (task?.parent) {
-            oldParents.add(task.parent);
-          }
-        });
-
-        // Apply all changes at once
-        changes.forEach(({ taskId, newParentId }) => {
+        changes.forEach(({ taskId, newParent }) => {
           const task = state.tasks.find((t) => t.id === taskId);
           if (task) {
-            task.parent = newParentId || undefined;
+            task.parent = newParent || undefined;
           }
         });
 
         // Recalculate summary dates for old parents
-        oldParents.forEach((parentId) => {
+        oldParentIds.forEach((parentId) => {
           const parent = state.tasks.find((t) => t.id === parentId);
           if (parent && parent.type === "summary") {
             const hasChildren = state.tasks.some((t) => t.parent === parentId);
@@ -1553,7 +1590,30 @@ export const useTaskStore = create<TaskStore>()(
             }
           }
         });
-      }),
+      });
+
+      // Mark file as dirty
+      useFileStore.getState().markDirty();
+
+      // Record command for undo/redo
+      if (!historyStore.isUndoing && !historyStore.isRedoing) {
+        const description =
+          changes.length === 1
+            ? `Outdented task`
+            : `Outdented ${changes.length} tasks`;
+
+        historyStore.recordCommand({
+          id: crypto.randomUUID(),
+          type: CommandType.OUTDENT_TASKS,
+          timestamp: Date.now(),
+          description,
+          params: {
+            taskIds: changes.map((c) => c.taskId),
+            changes,
+          },
+        });
+      }
+    },
 
     canIndentSelection: (): boolean => {
       const { tasks, selectedTaskIds } = get();
