@@ -475,7 +475,12 @@ function executeRedoCommand(command: Command): void {
 
     case "deleteTask": {
       const params = command.params as any;
-      taskStore.deleteTask(params.id, params.cascade);
+      // Use deletedIds to delete ALL tasks (fixes multi-task deletion redo)
+      const idsToDelete = new Set(params.deletedIds || [params.id]);
+      const currentTasks = useTaskStore.getState().tasks;
+      useTaskStore.setState({
+        tasks: currentTasks.filter((t) => !idsToDelete.has(t.id)),
+      });
       break;
     }
 

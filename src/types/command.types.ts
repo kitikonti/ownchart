@@ -103,7 +103,8 @@ export interface UpdateTaskParams {
 }
 
 export interface DeleteTaskParams {
-  id: string;
+  id: string; // Deprecated: Use deletedIds instead
+  deletedIds: string[]; // All task IDs that were deleted
   cascade: boolean;
   deletedTasks: Task[]; // Store all deleted tasks for undo
 }

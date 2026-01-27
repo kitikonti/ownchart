@@ -582,6 +582,7 @@ export const useTaskStore = create<TaskStore>()(
           description,
           params: {
             id,
+            deletedIds: deletedTasks.map((t) => t.id),
             cascade,
             deletedTasks,
           },
@@ -655,6 +656,7 @@ export const useTaskStore = create<TaskStore>()(
           description,
           params: {
             id: selectedIds[0],
+            deletedIds: Array.from(idsToDelete),
             cascade: true,
             deletedTasks,
           },

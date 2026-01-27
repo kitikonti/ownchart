@@ -295,6 +295,98 @@ describe('Undo/Redo Integration Tests', () => {
       expect(tasks.find(t => t.name === 'Child Task 1')).toBeDefined();
       expect(tasks.find(t => t.name === 'Child Task 2')).toBeDefined();
     });
+
+    it('should not duplicate tasks during undo/redo cycles of multi-task deletion (GitHub #4)', () => {
+      const taskStore = useTaskStore.getState();
+      const historyStore = useHistoryStore.getState();
+
+      // Clear any existing tasks and history
+      useTaskStore.setState({ tasks: [], selectedTaskIds: [] });
+      useHistoryStore.setState({ undoStack: [], redoStack: [] });
+
+      // Create 3 independent tasks
+      taskStore.addTask({
+        name: 'Task A',
+        startDate: '2025-01-01',
+        endDate: '2025-01-05',
+        duration: 5,
+        progress: 0,
+        color: '#3b82f6',
+        order: 0,
+        type: 'task',
+        parent: undefined,
+        metadata: {},
+      });
+
+      taskStore.addTask({
+        name: 'Task B',
+        startDate: '2025-01-06',
+        endDate: '2025-01-10',
+        duration: 5,
+        progress: 0,
+        color: '#3b82f6',
+        order: 1,
+        type: 'task',
+        parent: undefined,
+        metadata: {},
+      });
+
+      taskStore.addTask({
+        name: 'Task C',
+        startDate: '2025-01-11',
+        endDate: '2025-01-15',
+        duration: 5,
+        progress: 0,
+        color: '#3b82f6',
+        order: 2,
+        type: 'task',
+        parent: undefined,
+        metadata: {},
+      });
+
+      expect(useTaskStore.getState().tasks).toHaveLength(3);
+
+      // Get task IDs for selection
+      const tasks = useTaskStore.getState().tasks;
+      const taskAId = tasks.find(t => t.name === 'Task A')!.id;
+      const taskBId = tasks.find(t => t.name === 'Task B')!.id;
+
+      // Clear history from task creation
+      useHistoryStore.setState({ undoStack: [], redoStack: [] });
+
+      // Select Task A and Task B (not C)
+      useTaskStore.setState({ selectedTaskIds: [taskAId, taskBId] });
+
+      // Delete selected tasks (A and B)
+      taskStore.deleteSelectedTasks();
+
+      // Verify only Task C remains
+      expect(useTaskStore.getState().tasks).toHaveLength(1);
+      expect(useTaskStore.getState().tasks[0].name).toBe('Task C');
+
+      // Undo - both tasks should return
+      historyStore.undo();
+      expect(useTaskStore.getState().tasks).toHaveLength(3);
+
+      // Redo - both tasks should be deleted again (not just one!)
+      historyStore.redo();
+      expect(useTaskStore.getState().tasks).toHaveLength(1);
+      expect(useTaskStore.getState().tasks[0].name).toBe('Task C');
+
+      // Undo again - should still have exactly 3 tasks (no duplicates!)
+      historyStore.undo();
+      expect(useTaskStore.getState().tasks).toHaveLength(3);
+
+      // Redo again - should still have exactly 1 task
+      historyStore.redo();
+      expect(useTaskStore.getState().tasks).toHaveLength(1);
+
+      // One more cycle to verify no exponential duplication
+      historyStore.undo();
+      expect(useTaskStore.getState().tasks).toHaveLength(3);
+      historyStore.redo();
+      expect(useTaskStore.getState().tasks).toHaveLength(1);
+    });
   });
 
   describe('Task Reordering', () => {
