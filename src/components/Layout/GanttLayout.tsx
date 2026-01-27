@@ -65,6 +65,7 @@ export function GanttLayout() {
   const extendDateRange = useChartStore((state) => state.extendDateRange);
   const dateRange = useChartStore((state) => state.dateRange);
   const lastFitToViewTime = useChartStore((state) => state.lastFitToViewTime);
+  const fileLoadCounter = useChartStore((state) => state.fileLoadCounter);
   const setViewport = useChartStore((state) => state.setViewport);
 
   // Effective table width: either manually set or total column width
@@ -162,9 +163,10 @@ export function GanttLayout() {
   const INITIAL_BLOCK_TIME = 1000; // ms to block infinite scroll after mount (wait for settings to load)
   const SCROLL_IDLE_TIME = 150; // ms to wait after scroll stops before extending left
 
-  // Track dateRange and fitToView for scroll positioning
+  // Track dateRange, fitToView, and file load for scroll positioning
   const prevDateRangeRef = useRef<string | null>(null);
   const prevFitToViewTimeRef = useRef<number>(0);
+  const prevFileLoadCounterRef = useRef<number>(fileLoadCounter);
   const SCROLL_OFFSET_DAYS = 83; // Scroll past the extra padding (90 days) to show 7 days before first task
 
   // Set initial scroll position when a new file is loaded, or reset on fitToView
@@ -176,6 +178,10 @@ export function GanttLayout() {
     const fitToViewJustCalled =
       lastFitToViewTime > prevFitToViewTimeRef.current;
     prevFitToViewTimeRef.current = lastFitToViewTime;
+
+    // Check if a file was just loaded (explicit signal from useFileOperations)
+    const fileJustLoaded = fileLoadCounter > prevFileLoadCounterRef.current;
+    prevFileLoadCounterRef.current = fileLoadCounter;
 
     const dateRangeKey = `${dateRange.min}-${dateRange.max}`;
 
@@ -198,19 +204,10 @@ export function GanttLayout() {
       return;
     }
 
-    // During initial load, only respond to first dateRange, not subsequent settings changes
-    const now = Date.now();
-    const isInitialLoadPeriod = now - mountTimeRef.current < INITIAL_BLOCK_TIME;
-
-    // Only set scroll on new dateRange (file load), not on infinite scroll extensions
+    // Scroll to show first task on initial load (first dateRange) or when a new file is opened
     const isNewDateRange = prevDateRangeRef.current === null;
-    const isFileLoad =
-      !isInitialLoadPeriod && // Don't treat settings changes as file load
-      prevDateRangeRef.current !== null &&
-      !prevDateRangeRef.current.startsWith(dateRange.min) &&
-      !prevDateRangeRef.current.endsWith(dateRange.max);
 
-    if (isNewDateRange || isFileLoad) {
+    if (isNewDateRange || fileJustLoaded) {
       // Scroll to show first task with 7-day gap (skip the extra padding for scroll room)
       const initialScrollLeft = SCROLL_OFFSET_DAYS * scale.pixelsPerDay;
       requestAnimationFrame(() => {
@@ -221,7 +218,7 @@ export function GanttLayout() {
     }
 
     prevDateRangeRef.current = dateRangeKey;
-  }, [dateRange, scale, lastFitToViewTime]);
+  }, [dateRange, scale, lastFitToViewTime, fileLoadCounter]);
 
   // Infinite scroll detection - extend timeline when near edges
   useEffect(() => {

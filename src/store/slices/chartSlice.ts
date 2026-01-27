@@ -103,6 +103,9 @@ interface ChartState {
     deltaDays: number;
     sourceTaskId: string;
   } | null;
+
+  // File load signal (for scroll positioning on file open)
+  fileLoadCounter: number;
 }
 
 interface ChartActions {
@@ -166,6 +169,9 @@ interface ChartActions {
   // Drag state (for multi-task preview)
   setDragState: (deltaDays: number, sourceTaskId: string) => void;
   clearDragState: () => void;
+
+  // File load signal (for scroll positioning)
+  signalFileLoaded: () => void;
 }
 
 const DEFAULT_CONTAINER_WIDTH = 800;
@@ -221,6 +227,7 @@ export const useChartStore = create<ChartState & ChartActions>()(
     viewportScrollLeft: 0,
     viewportWidth: 0,
     dragState: null,
+    fileLoadCounter: 0,
 
     // Centralized scale calculation - updates dateRange from tasks, then derives scale
     updateScale: (tasks: Task[]) => {
@@ -686,6 +693,13 @@ export const useChartStore = create<ChartState & ChartActions>()(
     clearDragState: () => {
       set((state) => {
         state.dragState = null;
+      });
+    },
+
+    // Signal that a file was loaded (triggers scroll positioning)
+    signalFileLoaded: () => {
+      set((state) => {
+        state.fileLoadCounter += 1;
       });
     },
   }))

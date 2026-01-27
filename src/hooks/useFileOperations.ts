@@ -60,6 +60,8 @@ export function useFileOperations() {
   const setProjectTitle = useChartStore((state) => state.setProjectTitle);
   const setProjectAuthor = useChartStore((state) => state.setProjectAuthor);
   const setViewSettings = useChartStore((state) => state.setViewSettings);
+  const signalFileLoaded = useChartStore((state) => state.signalFileLoaded);
+  const updateScale = useChartStore((state) => state.updateScale);
 
   // Sprint 1.4: Dependency store
   const dependencies = useDependencyStore((state) => state.dependencies);
@@ -222,6 +224,13 @@ export function useFileOperations() {
         projectAuthor: loadedViewSettings.projectAuthor ?? "",
       });
 
+      // Update scale immediately with new tasks and zoom (before signalFileLoaded)
+      // This ensures GanttLayout sees the correct scale when positioning the scroll
+      updateScale(parseResult.data!.tasks);
+
+      // Signal that a file was loaded (triggers scroll positioning in GanttLayout)
+      signalFileLoaded();
+
       // Restore column widths from file
       if (loadedViewSettings.taskTableWidth !== undefined) {
         setTaskTableWidth(loadedViewSettings.taskTableWidth);
@@ -262,6 +271,8 @@ export function useFileOperations() {
     setDependencies,
     resetExportOptions,
     setViewSettings,
+    updateScale,
+    signalFileLoaded,
     setColumnWidth,
     setTaskTableWidth,
     autoFitColumn,
