@@ -8,6 +8,7 @@
  * Handles ? (open help panel)
  * Handles D (toggle dependencies), T (toggle today marker)
  * Handles P (toggle progress column), H (toggle holidays)
+ * Handles F (fit to view)
  */
 
 import { useEffect } from "react";
@@ -37,6 +38,8 @@ export function useKeyboardShortcuts() {
   const toggleTodayMarker = useChartStore((state) => state.toggleTodayMarker);
   const toggleProgress = useChartStore((state) => state.toggleProgress);
   const toggleHolidays = useChartStore((state) => state.toggleHolidays);
+  const fitToView = useChartStore((state) => state.fitToView);
+  const tasks = useTaskStore((state) => state.tasks);
 
   // UI state for dialogs
   const openExportDialog = useUIStore((state) => state.openExportDialog);
@@ -227,6 +230,13 @@ export function useKeyboardShortcuts() {
           toggleHolidays();
           return;
         }
+
+        // F: Fit to view (fit timeline to show all tasks)
+        if (e.key.toLowerCase() === "f") {
+          e.preventDefault();
+          fitToView(tasks);
+          return;
+        }
       }
     };
 
@@ -261,5 +271,7 @@ export function useKeyboardShortcuts() {
     toggleTodayMarker,
     toggleProgress,
     toggleHolidays,
+    fitToView,
+    tasks,
   ]);
 }

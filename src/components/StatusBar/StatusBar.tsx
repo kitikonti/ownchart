@@ -170,7 +170,7 @@ export function StatusBar() {
             onClick={handleFitToView}
             className="p-0.5 text-neutral-500 hover:text-neutral-700 transition-colors"
             aria-label="Fit to view"
-            title="Fit to View"
+            title="Fit to View (F)"
           >
             <ArrowsOutLineHorizontal size={16} weight="bold" />
           </button>

@@ -694,7 +694,7 @@ export function Ribbon() {
         />
         <ToolbarButton
           onClick={() => fitToView(tasks)}
-          title="Fit to width"
+          title="Fit to width (F)"
           aria-label="Fit to width"
           icon={<ArrowsOutLineHorizontal size={ICON_SIZE} weight="light" />}
         />
