@@ -83,9 +83,7 @@ export function WelcomeTour(): JSX.Element | null {
 
         {/* Quick tips */}
         <div className="space-y-3">
-          <h3 className="text-sm font-semibold text-neutral-900">
-            Quick tips
-          </h3>
+          <h3 className="text-sm font-semibold text-neutral-900">Quick tips</h3>
 
           <div className="flex items-start gap-3 p-3 bg-neutral-50 rounded border border-neutral-200">
             <div className="p-2 bg-neutral-100 rounded">

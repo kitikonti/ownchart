@@ -9,8 +9,10 @@
 import type { InputHTMLAttributes } from "react";
 import { forwardRef } from "react";
 
-export interface InputProps
-  extends Omit<InputHTMLAttributes<HTMLInputElement>, "className"> {
+export interface InputProps extends Omit<
+  InputHTMLAttributes<HTMLInputElement>,
+  "className"
+> {
   /** Style variant */
   variant?: "default" | "figma";
   /** Use monospace font */
@@ -33,7 +35,13 @@ const variantClasses = {
 
 export const Input = forwardRef<HTMLInputElement, InputProps>(
   (
-    { variant = "default", mono = false, fullWidth = true, className = "", ...props },
+    {
+      variant = "default",
+      mono = false,
+      fullWidth = true,
+      className = "",
+      ...props
+    },
     ref
   ) => {
     const classes = [

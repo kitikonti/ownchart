@@ -462,7 +462,7 @@ export function ChartSettingsDialog(): JSX.Element | null {
                   <span className="text-sm text-neutral-700">Sundays</span>
                 </label>
 
-                { }
+                {}
                 <label className="flex items-center gap-3 cursor-pointer">
                   <Checkbox
                     checked={workingDaysConfig.excludeHolidays}

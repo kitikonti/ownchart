@@ -11,8 +11,10 @@
 import type { SelectHTMLAttributes, ReactNode } from "react";
 import { forwardRef } from "react";
 
-export interface SelectProps
-  extends Omit<SelectHTMLAttributes<HTMLSelectElement>, "className"> {
+export interface SelectProps extends Omit<
+  SelectHTMLAttributes<HTMLSelectElement>,
+  "className"
+> {
   /** Children (option elements, optgroups) */
   children: ReactNode;
   /** Style variant */

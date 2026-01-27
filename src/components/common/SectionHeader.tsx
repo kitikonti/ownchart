@@ -47,9 +47,7 @@ export function SectionHeader({
   // default variant with icon
   return (
     <div className="flex items-center gap-2 mb-4">
-      {icon && (
-        <span className="text-neutral-500 flex-shrink-0">{icon}</span>
-      )}
+      {icon && <span className="text-neutral-500 flex-shrink-0">{icon}</span>}
       <Element className="text-sm font-semibold text-neutral-900">
         {title}
       </Element>
