@@ -114,7 +114,10 @@ export function useTaskBarInteraction(
 
       // Determine mode
       let mode: InteractionMode;
-      if (zone === "center") {
+      if (task.type === "summary" || task.type === "milestone") {
+        // Summary tasks and milestones cannot be resized - only moved
+        mode = "dragging";
+      } else if (zone === "center") {
         mode = "dragging";
       } else if (zone === "left-edge") {
         mode = "resizing-left";
@@ -337,6 +340,7 @@ export function useTaskBarInteraction(
               id: taskId,
               updates: {
                 startDate: newStartDate,
+                endDate: newStartDate,
                 duration: 0,
               },
             });
