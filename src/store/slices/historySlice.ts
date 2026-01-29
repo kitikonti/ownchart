@@ -22,6 +22,7 @@ import type {
 import { calculateDuration } from "../../utils/dateUtils";
 import { useTaskStore } from "./taskSlice";
 import { useDependencyStore } from "./dependencySlice";
+import { recalculateSummaryAncestors } from "../../utils/hierarchy";
 
 interface HistoryState {
   undoStack: Command[];
@@ -228,9 +229,24 @@ function executeUndoCommand(command: Command): void {
       const params = command.params as any;
       // Re-add all deleted tasks in one operation
       const currentTasks = useTaskStore.getState().tasks;
-      useTaskStore.setState({
-        tasks: [...currentTasks, ...params.deletedTasks],
-      });
+      const restoredTasks = [...currentTasks, ...params.deletedTasks];
+
+      // Revert cascade updates (restore parent summary dates to pre-delete state)
+      if (params.cascadeUpdates) {
+        for (const cascade of params.cascadeUpdates) {
+          const parentIndex = restoredTasks.findIndex(
+            (t: any) => t.id === cascade.id
+          );
+          if (parentIndex !== -1) {
+            restoredTasks[parentIndex] = {
+              ...restoredTasks[parentIndex],
+              ...cascade.previousValues,
+            };
+          }
+        }
+      }
+
+      useTaskStore.setState({ tasks: restoredTasks });
       break;
     }
 
@@ -477,10 +493,27 @@ function executeRedoCommand(command: Command): void {
       const params = command.params as any;
       // Use deletedIds to delete ALL tasks (fixes multi-task deletion redo)
       const idsToDelete = new Set(params.deletedIds || [params.id]);
-      const currentTasks = useTaskStore.getState().tasks;
-      useTaskStore.setState({
-        tasks: currentTasks.filter((t) => !idsToDelete.has(t.id)),
-      });
+
+      // Collect parent IDs of deleted tasks that aren't themselves deleted
+      const affectedParentIds = new Set<string>();
+      if (params.deletedTasks) {
+        for (const task of params.deletedTasks) {
+          if (task.parent && !idsToDelete.has(task.parent)) {
+            affectedParentIds.add(task.parent);
+          }
+        }
+      }
+
+      const currentTasks = useTaskStore
+        .getState()
+        .tasks.filter((t) => !idsToDelete.has(t.id));
+
+      // Recalculate affected parent summaries
+      if (affectedParentIds.size > 0) {
+        recalculateSummaryAncestors(currentTasks, affectedParentIds);
+      }
+
+      useTaskStore.setState({ tasks: currentTasks });
       break;
     }
 

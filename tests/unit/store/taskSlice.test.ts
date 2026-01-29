@@ -2230,4 +2230,180 @@ describe('Task Store - Multi-Task Operations', () => {
       expect(updatedTasks[0].startDate).toBe('2025-01-02');
     });
   });
+
+  describe('deleteSelectedTasks - summary recalculation', () => {
+    it('should recalculate parent summary dates after deleting a child', () => {
+      const tasks: Task[] = [
+        {
+          id: 'summary-1',
+          name: 'Summary',
+          startDate: '2025-01-01',
+          endDate: '2025-01-20',
+          duration: 20,
+          progress: 0,
+          color: '#3b82f6',
+          order: 0,
+          type: 'summary',
+          open: true,
+          metadata: {},
+        },
+        {
+          id: 'child-1',
+          name: 'Child 1',
+          startDate: '2025-01-01',
+          endDate: '2025-01-10',
+          duration: 10,
+          progress: 0,
+          color: '#3b82f6',
+          order: 1,
+          type: 'task',
+          parent: 'summary-1',
+          metadata: {},
+        },
+        {
+          id: 'child-2',
+          name: 'Child 2',
+          startDate: '2025-01-11',
+          endDate: '2025-01-20',
+          duration: 10,
+          progress: 0,
+          color: '#3b82f6',
+          order: 2,
+          type: 'task',
+          parent: 'summary-1',
+          metadata: {},
+        },
+      ];
+
+      useTaskStore.setState({ tasks, selectedTaskIds: ['child-2'] });
+
+      const { deleteSelectedTasks } = useTaskStore.getState();
+      deleteSelectedTasks();
+
+      const updatedTasks = useTaskStore.getState().tasks;
+      const summary = updatedTasks.find(t => t.id === 'summary-1');
+      expect(summary).toBeDefined();
+      expect(summary!.startDate).toBe('2025-01-01');
+      expect(summary!.endDate).toBe('2025-01-10');
+      expect(summary!.duration).toBe(10);
+    });
+
+    it('should clear summary dates when last child is deleted', () => {
+      const tasks: Task[] = [
+        {
+          id: 'summary-1',
+          name: 'Summary',
+          startDate: '2025-01-01',
+          endDate: '2025-01-10',
+          duration: 10,
+          progress: 0,
+          color: '#3b82f6',
+          order: 0,
+          type: 'summary',
+          open: true,
+          metadata: {},
+        },
+        {
+          id: 'child-1',
+          name: 'Child 1',
+          startDate: '2025-01-01',
+          endDate: '2025-01-10',
+          duration: 10,
+          progress: 0,
+          color: '#3b82f6',
+          order: 1,
+          type: 'task',
+          parent: 'summary-1',
+          metadata: {},
+        },
+      ];
+
+      useTaskStore.setState({ tasks, selectedTaskIds: ['child-1'] });
+
+      const { deleteSelectedTasks } = useTaskStore.getState();
+      deleteSelectedTasks();
+
+      const updatedTasks = useTaskStore.getState().tasks;
+      const summary = updatedTasks.find(t => t.id === 'summary-1');
+      expect(summary).toBeDefined();
+      expect(summary!.startDate).toBe('');
+      expect(summary!.endDate).toBe('');
+      expect(summary!.duration).toBe(0);
+    });
+
+    it('should cascade up nested summaries after child deletion', () => {
+      const tasks: Task[] = [
+        {
+          id: 'grandparent',
+          name: 'Grandparent',
+          startDate: '2025-01-01',
+          endDate: '2025-01-30',
+          duration: 30,
+          progress: 0,
+          color: '#3b82f6',
+          order: 0,
+          type: 'summary',
+          open: true,
+          metadata: {},
+        },
+        {
+          id: 'parent',
+          name: 'Parent',
+          startDate: '2025-01-01',
+          endDate: '2025-01-20',
+          duration: 20,
+          progress: 0,
+          color: '#3b82f6',
+          order: 1,
+          type: 'summary',
+          parent: 'grandparent',
+          open: true,
+          metadata: {},
+        },
+        {
+          id: 'child-1',
+          name: 'Child 1',
+          startDate: '2025-01-01',
+          endDate: '2025-01-10',
+          duration: 10,
+          progress: 0,
+          color: '#3b82f6',
+          order: 2,
+          type: 'task',
+          parent: 'parent',
+          metadata: {},
+        },
+        {
+          id: 'child-2',
+          name: 'Child 2',
+          startDate: '2025-01-11',
+          endDate: '2025-01-20',
+          duration: 10,
+          progress: 0,
+          color: '#3b82f6',
+          order: 3,
+          type: 'task',
+          parent: 'parent',
+          metadata: {},
+        },
+      ];
+
+      useTaskStore.setState({ tasks, selectedTaskIds: ['child-2'] });
+
+      const { deleteSelectedTasks } = useTaskStore.getState();
+      deleteSelectedTasks();
+
+      const updatedTasks = useTaskStore.getState().tasks;
+
+      // Parent summary should shrink
+      const parent = updatedTasks.find(t => t.id === 'parent');
+      expect(parent!.startDate).toBe('2025-01-01');
+      expect(parent!.endDate).toBe('2025-01-10');
+
+      // Grandparent summary should also shrink (cascade)
+      const grandparent = updatedTasks.find(t => t.id === 'grandparent');
+      expect(grandparent!.startDate).toBe('2025-01-01');
+      expect(grandparent!.endDate).toBe('2025-01-10');
+    });
+  });
 });

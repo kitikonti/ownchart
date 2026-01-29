@@ -224,6 +224,104 @@ export function buildFlattenedTaskList(
 }
 
 /**
+ * Summary date fields used for cascade recalculation.
+ */
+export interface SummaryDateUpdates {
+  startDate: string;
+  endDate: string;
+  duration: number;
+}
+
+/**
+ * Result of a single summary recalculation, capturing previous values for undo.
+ */
+export interface SummaryCascadeEntry {
+  id: string;
+  updates: SummaryDateUpdates;
+  previousValues: SummaryDateUpdates;
+}
+
+/**
+ * Recalculate summary dates for a set of parent IDs, cascading up the hierarchy.
+ * Mutates the tasks array in place (designed for use inside Immer drafts).
+ *
+ * @param tasks - The tasks array (mutable, e.g. Immer draft)
+ * @param parentIds - Set of parent IDs whose summary dates may need recalculation
+ * @returns Array of cascade entries with previous values for undo tracking
+ */
+export function recalculateSummaryAncestors(
+  tasks: Task[],
+  parentIds: Set<string>
+): SummaryCascadeEntry[] {
+  const cascadeUpdates: SummaryCascadeEntry[] = [];
+  const processed = new Set<string>();
+  const queue = Array.from(parentIds);
+
+  while (queue.length > 0) {
+    const parentId = queue.shift()!;
+    if (processed.has(parentId)) continue;
+    processed.add(parentId);
+
+    const parentIndex = tasks.findIndex((t) => t.id === parentId);
+    if (parentIndex === -1) continue;
+
+    const parent = tasks[parentIndex];
+    if (parent.type !== "summary") continue;
+
+    const previousValues: SummaryDateUpdates = {
+      startDate: parent.startDate,
+      endDate: parent.endDate,
+      duration: parent.duration,
+    };
+
+    const hasChildren = tasks.some((t) => t.parent === parentId);
+
+    if (hasChildren) {
+      const summaryDates = calculateSummaryDates(tasks, parentId);
+      if (summaryDates) {
+        const updates: SummaryDateUpdates = {
+          startDate: summaryDates.startDate,
+          endDate: summaryDates.endDate,
+          duration: summaryDates.duration,
+        };
+
+        cascadeUpdates.push({ id: parentId, updates, previousValues });
+
+        tasks[parentIndex] = {
+          ...tasks[parentIndex],
+          startDate: summaryDates.startDate,
+          endDate: summaryDates.endDate,
+          duration: summaryDates.duration,
+        };
+      }
+    } else {
+      // No more children - clear dates
+      const updates: SummaryDateUpdates = {
+        startDate: "",
+        endDate: "",
+        duration: 0,
+      };
+
+      cascadeUpdates.push({ id: parentId, updates, previousValues });
+
+      tasks[parentIndex] = {
+        ...tasks[parentIndex],
+        startDate: "",
+        endDate: "",
+        duration: 0,
+      };
+    }
+
+    // Continue cascading up
+    if (parent.parent) {
+      queue.push(parent.parent);
+    }
+  }
+
+  return cascadeUpdates;
+}
+
+/**
  * Get the effective set of tasks to move for multi-drag operations.
  * Handles overlapping selections (e.g., summary + one of its children selected).
  *

@@ -3,6 +3,7 @@ import {
   getEffectiveTasksToMove,
   getTaskDescendants,
   getTaskChildren,
+  recalculateSummaryAncestors,
 } from "../../../src/utils/hierarchy";
 import type { Task } from "../../../src/types/chart.types";
 
@@ -239,5 +240,167 @@ describe("getTaskChildren", () => {
     expect(result).toHaveLength(2);
     expect(result.map((t) => t.id)).toContain("root1");
     expect(result.map((t) => t.id)).toContain("root2");
+  });
+});
+
+describe("recalculateSummaryAncestors", () => {
+  it("should recalculate summary dates from remaining children", () => {
+    const tasks: Task[] = [
+      createTask("summary1", "Summary", {
+        type: "summary",
+        startDate: "2025-01-01",
+        endDate: "2025-01-15",
+        duration: 15,
+        order: 0,
+      }),
+      createTask("child1", "Child 1", {
+        parent: "summary1",
+        startDate: "2025-01-05",
+        endDate: "2025-01-10",
+        duration: 6,
+        order: 1,
+      }),
+    ];
+
+    const result = recalculateSummaryAncestors(
+      tasks,
+      new Set(["summary1"])
+    );
+
+    expect(result).toHaveLength(1);
+    expect(result[0].id).toBe("summary1");
+    expect(result[0].updates.startDate).toBe("2025-01-05");
+    expect(result[0].updates.endDate).toBe("2025-01-10");
+    expect(result[0].previousValues.startDate).toBe("2025-01-01");
+    expect(result[0].previousValues.endDate).toBe("2025-01-15");
+
+    // Should mutate in place
+    expect(tasks[0].startDate).toBe("2025-01-05");
+    expect(tasks[0].endDate).toBe("2025-01-10");
+  });
+
+  it("should clear dates when summary has no children", () => {
+    const tasks: Task[] = [
+      createTask("summary1", "Summary", {
+        type: "summary",
+        startDate: "2025-01-01",
+        endDate: "2025-01-15",
+        duration: 15,
+        order: 0,
+      }),
+    ];
+
+    const result = recalculateSummaryAncestors(
+      tasks,
+      new Set(["summary1"])
+    );
+
+    expect(result).toHaveLength(1);
+    expect(result[0].updates.startDate).toBe("");
+    expect(result[0].updates.endDate).toBe("");
+    expect(result[0].updates.duration).toBe(0);
+    expect(tasks[0].startDate).toBe("");
+  });
+
+  it("should cascade up through nested summaries", () => {
+    const tasks: Task[] = [
+      createTask("grandparent", "Grandparent", {
+        type: "summary",
+        startDate: "2025-01-01",
+        endDate: "2025-01-31",
+        duration: 31,
+        order: 0,
+      }),
+      createTask("parent", "Parent", {
+        type: "summary",
+        parent: "grandparent",
+        startDate: "2025-01-01",
+        endDate: "2025-01-20",
+        duration: 20,
+        order: 1,
+      }),
+      createTask("child1", "Child 1", {
+        parent: "parent",
+        startDate: "2025-01-10",
+        endDate: "2025-01-15",
+        duration: 6,
+        order: 2,
+      }),
+    ];
+
+    const result = recalculateSummaryAncestors(
+      tasks,
+      new Set(["parent"])
+    );
+
+    // Should update both parent and grandparent
+    expect(result).toHaveLength(2);
+    expect(result[0].id).toBe("parent");
+    expect(result[0].updates.startDate).toBe("2025-01-10");
+    expect(result[0].updates.endDate).toBe("2025-01-15");
+    expect(result[1].id).toBe("grandparent");
+    expect(result[1].updates.startDate).toBe("2025-01-10");
+    expect(result[1].updates.endDate).toBe("2025-01-15");
+  });
+
+  it("should skip non-summary parents", () => {
+    const tasks: Task[] = [
+      createTask("parent", "Parent", {
+        type: "task",
+        startDate: "2025-01-01",
+        endDate: "2025-01-15",
+        duration: 15,
+        order: 0,
+      }),
+      createTask("child1", "Child 1", {
+        parent: "parent",
+        startDate: "2025-01-05",
+        endDate: "2025-01-10",
+        order: 1,
+      }),
+    ];
+
+    const result = recalculateSummaryAncestors(
+      tasks,
+      new Set(["parent"])
+    );
+
+    expect(result).toHaveLength(0);
+    // Parent task dates should not be changed
+    expect(tasks[0].startDate).toBe("2025-01-01");
+  });
+
+  it("should not process the same parent twice", () => {
+    const tasks: Task[] = [
+      createTask("summary1", "Summary", {
+        type: "summary",
+        startDate: "2025-01-01",
+        endDate: "2025-01-15",
+        duration: 15,
+        order: 0,
+      }),
+      createTask("child1", "Child 1", {
+        parent: "summary1",
+        startDate: "2025-01-05",
+        endDate: "2025-01-10",
+        order: 1,
+      }),
+      createTask("child2", "Child 2", {
+        parent: "summary1",
+        startDate: "2025-01-08",
+        endDate: "2025-01-12",
+        order: 2,
+      }),
+    ];
+
+    // Both children point to same parent
+    const result = recalculateSummaryAncestors(
+      tasks,
+      new Set(["summary1", "summary1"])
+    );
+
+    expect(result).toHaveLength(1);
+    expect(result[0].updates.startDate).toBe("2025-01-05");
+    expect(result[0].updates.endDate).toBe("2025-01-12");
   });
 });

@@ -11,6 +11,7 @@ import {
   getTaskLevel,
   buildFlattenedTaskList,
   calculateSummaryDates,
+  recalculateSummaryAncestors,
 } from "../../utils/hierarchy";
 import { canHaveChildren } from "../../utils/validation";
 import { useHistoryStore } from "./historySlice";
@@ -275,59 +276,13 @@ export const useTaskStore = create<TaskStore>()(
             ...updates,
           };
 
-          // NEW: Check if parent needs recalculation (summary cascade)
-          // Recursively cascade up the hierarchy
+          // Check if parent needs recalculation (summary cascade)
           if (currentTask.parent && (updates.startDate || updates.endDate)) {
-            let currentParentId: string | undefined = currentTask.parent;
-
-            // Cascade up through all ancestor summaries
-            while (currentParentId) {
-              const parent = state.tasks.find((t) => t.id === currentParentId);
-
-              if (parent && parent.type === "summary") {
-                const summaryDates = calculateSummaryDates(
-                  state.tasks,
-                  parent.id
-                );
-
-                if (summaryDates) {
-                  const parentIndex = state.tasks.findIndex(
-                    (t) => t.id === parent.id
-                  );
-
-                  // Capture parent's previous state
-                  parentUpdates.push({
-                    id: parent.id,
-                    updates: {
-                      startDate: summaryDates.startDate,
-                      endDate: summaryDates.endDate,
-                      duration: summaryDates.duration,
-                    },
-                    previousValues: {
-                      startDate: parent.startDate,
-                      endDate: parent.endDate,
-                      duration: parent.duration,
-                    },
-                  });
-
-                  // Apply parent update
-                  if (parentIndex !== -1) {
-                    state.tasks[parentIndex] = {
-                      ...state.tasks[parentIndex],
-                      startDate: summaryDates.startDate,
-                      endDate: summaryDates.endDate,
-                      duration: summaryDates.duration,
-                    };
-                  }
-                }
-
-                // Move up to the next level
-                currentParentId = parent.parent;
-              } else {
-                // No more summary parents
-                break;
-              }
-            }
+            const cascadeResults = recalculateSummaryAncestors(
+              state.tasks,
+              new Set([currentTask.parent])
+            );
+            parentUpdates.push(...cascadeResults);
           }
         }
       });
@@ -405,52 +360,11 @@ export const useTaskStore = create<TaskStore>()(
         }
 
         // Cascade up through all ancestor summaries
-        const processedParents = new Set<string>();
-        const parentQueue = Array.from(affectedParentIds);
-
-        while (parentQueue.length > 0) {
-          const parentId = parentQueue.shift()!;
-          if (processedParents.has(parentId)) continue;
-          processedParents.add(parentId);
-
-          const parent = state.tasks.find((t) => t.id === parentId);
-          if (!parent || parent.type !== "summary") continue;
-
-          const summaryDates = calculateSummaryDates(state.tasks, parentId);
-          if (summaryDates) {
-            const parentIndex = state.tasks.findIndex((t) => t.id === parentId);
-
-            // Capture previous values for undo
-            cascadeUpdates.push({
-              id: parentId,
-              updates: {
-                startDate: summaryDates.startDate,
-                endDate: summaryDates.endDate,
-                duration: summaryDates.duration,
-              },
-              previousValues: {
-                startDate: parent.startDate,
-                endDate: parent.endDate,
-                duration: parent.duration,
-              },
-            });
-
-            // Apply cascade update
-            if (parentIndex !== -1) {
-              state.tasks[parentIndex] = {
-                ...state.tasks[parentIndex],
-                startDate: summaryDates.startDate,
-                endDate: summaryDates.endDate,
-                duration: summaryDates.duration,
-              };
-            }
-
-            // Continue cascading up
-            if (parent.parent) {
-              parentQueue.push(parent.parent);
-            }
-          }
-        }
+        const cascadeResults = recalculateSummaryAncestors(
+          state.tasks,
+          affectedParentIds
+        );
+        cascadeUpdates.push(...cascadeResults);
       });
 
       // Mark file as dirty
@@ -501,42 +415,7 @@ export const useTaskStore = create<TaskStore>()(
 
           // Recalculate parent summary dates if it was a child
           if (parentId) {
-            const parent = state.tasks.find((t) => t.id === parentId);
-            if (parent && parent.type === "summary") {
-              const hasChildren = state.tasks.some(
-                (t) => t.parent === parentId
-              );
-
-              if (hasChildren) {
-                // Still has children - recalculate dates
-                const summaryDates = calculateSummaryDates(
-                  state.tasks,
-                  parentId
-                );
-                if (summaryDates) {
-                  const parentIndex = state.tasks.findIndex(
-                    (t) => t.id === parentId
-                  );
-                  state.tasks[parentIndex] = {
-                    ...state.tasks[parentIndex],
-                    startDate: summaryDates.startDate,
-                    endDate: summaryDates.endDate,
-                    duration: summaryDates.duration,
-                  };
-                }
-              } else {
-                // No more children - clear dates
-                const parentIndex = state.tasks.findIndex(
-                  (t) => t.id === parentId
-                );
-                state.tasks[parentIndex] = {
-                  ...state.tasks[parentIndex],
-                  startDate: "",
-                  endDate: "",
-                  duration: 0,
-                };
-              }
-            }
+            recalculateSummaryAncestors(state.tasks, new Set([parentId]));
           }
 
           return;
@@ -640,12 +519,36 @@ export const useTaskStore = create<TaskStore>()(
         }
       });
 
-      // Remove all collected tasks
+      // Collect parent IDs of deleted tasks that are NOT themselves deleted
+      const affectedParentIds = new Set<string>();
+      deletedTasks.forEach((task) => {
+        if (task.parent && !idsToDelete.has(task.parent)) {
+          affectedParentIds.add(task.parent);
+        }
+      });
+
+      // Remove all collected tasks and recalculate summaries
+      let cascadeUpdates: Array<{
+        id: string;
+        updates: { startDate: string; endDate: string; duration: number };
+        previousValues: {
+          startDate: string;
+          endDate: string;
+          duration: number;
+        };
+      }> = [];
+
       set((s) => {
         s.tasks = s.tasks.filter((task) => !idsToDelete.has(task.id));
         s.selectedTaskIds = [];
         s.clipboardTaskIds = s.clipboardTaskIds.filter(
           (id) => !idsToDelete.has(id)
+        );
+
+        // Recalculate summary ancestors for affected parents
+        cascadeUpdates = recalculateSummaryAncestors(
+          s.tasks,
+          affectedParentIds
         );
       });
 
@@ -675,6 +578,7 @@ export const useTaskStore = create<TaskStore>()(
             deletedIds: Array.from(idsToDelete),
             cascade: true,
             deletedTasks,
+            cascadeUpdates,
           },
         });
       }
@@ -1049,48 +953,12 @@ export const useTaskStore = create<TaskStore>()(
         const oldParentId = task.parent;
         task.parent = newParentId ?? undefined;
 
-        // Recalculate summary dates for new parent
-        if (newParentId) {
-          const newParent = state.tasks.find((t) => t.id === newParentId);
-          if (newParent && newParent.type === "summary") {
-            const summaryDates = calculateSummaryDates(
-              state.tasks,
-              newParentId
-            );
-            if (summaryDates) {
-              const parentIndex = state.tasks.findIndex(
-                (t) => t.id === newParentId
-              );
-              state.tasks[parentIndex] = {
-                ...state.tasks[parentIndex],
-                startDate: summaryDates.startDate,
-                endDate: summaryDates.endDate,
-                duration: summaryDates.duration,
-              };
-            }
-          }
-        }
-
-        // Recalculate summary dates for old parent (if it still has children)
-        if (oldParentId) {
-          const oldParent = state.tasks.find((t) => t.id === oldParentId);
-          if (oldParent && oldParent.type === "summary") {
-            const summaryDates = calculateSummaryDates(
-              state.tasks,
-              oldParentId
-            );
-            if (summaryDates) {
-              const parentIndex = state.tasks.findIndex(
-                (t) => t.id === oldParentId
-              );
-              state.tasks[parentIndex] = {
-                ...state.tasks[parentIndex],
-                startDate: summaryDates.startDate,
-                endDate: summaryDates.endDate,
-                duration: summaryDates.duration,
-              };
-            }
-          }
+        // Recalculate summary dates for affected parents
+        const affectedParents = new Set<string>();
+        if (newParentId) affectedParents.add(newParentId);
+        if (oldParentId) affectedParents.add(oldParentId);
+        if (affectedParents.size > 0) {
+          recalculateSummaryAncestors(state.tasks, affectedParents);
         }
       }),
 
@@ -1467,25 +1335,11 @@ export const useTaskStore = create<TaskStore>()(
 
         // Recalculate summary dates for all affected parents
         const affectedParentIds = new Set(
-          changes.map((c) => c.newParent).filter(Boolean)
+          changes
+            .map((c) => c.newParent)
+            .filter((id): id is string => id !== undefined)
         );
-        affectedParentIds.forEach((parentId) => {
-          const parent = state.tasks.find((t) => t.id === parentId);
-          if (parent && parent.type === "summary") {
-            const summaryDates = calculateSummaryDates(state.tasks, parentId!);
-            if (summaryDates) {
-              const parentIndex = state.tasks.findIndex(
-                (t) => t.id === parentId
-              );
-              state.tasks[parentIndex] = {
-                ...state.tasks[parentIndex],
-                startDate: summaryDates.startDate,
-                endDate: summaryDates.endDate,
-                duration: summaryDates.duration,
-              };
-            }
-          }
-        });
+        recalculateSummaryAncestors(state.tasks, affectedParentIds);
       });
 
       // Mark file as dirty
@@ -1573,39 +1427,7 @@ export const useTaskStore = create<TaskStore>()(
         });
 
         // Recalculate summary dates for old parents
-        oldParentIds.forEach((parentId) => {
-          const parent = state.tasks.find((t) => t.id === parentId);
-          if (parent && parent.type === "summary") {
-            const hasChildren = state.tasks.some((t) => t.parent === parentId);
-
-            if (hasChildren) {
-              // Still has children - recalculate dates
-              const summaryDates = calculateSummaryDates(state.tasks, parentId);
-              if (summaryDates) {
-                const parentIndex = state.tasks.findIndex(
-                  (t) => t.id === parentId
-                );
-                state.tasks[parentIndex] = {
-                  ...state.tasks[parentIndex],
-                  startDate: summaryDates.startDate,
-                  endDate: summaryDates.endDate,
-                  duration: summaryDates.duration,
-                };
-              }
-            } else {
-              // No more children - clear dates
-              const parentIndex = state.tasks.findIndex(
-                (t) => t.id === parentId
-              );
-              state.tasks[parentIndex] = {
-                ...state.tasks[parentIndex],
-                startDate: "",
-                endDate: "",
-                duration: 0,
-              };
-            }
-          }
-        });
+        recalculateSummaryAncestors(state.tasks, oldParentIds);
       });
 
       // Mark file as dirty
