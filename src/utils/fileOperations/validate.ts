@@ -188,10 +188,15 @@ export function validateSemantics(file: GanttFile): void {
       );
     }
     if (!isValidISODate(task.endDate)) {
-      throw new ValidationError(
-        "INVALID_DATE",
-        `Task ${index} has invalid endDate: ${task.endDate}`
-      );
+      // Backward compat: milestones saved with endDate "" get auto-fixed
+      if (task.type === "milestone" && task.endDate === "") {
+        task.endDate = task.startDate;
+      } else {
+        throw new ValidationError(
+          "INVALID_DATE",
+          `Task ${index} has invalid endDate: ${task.endDate}`
+        );
+      }
     }
 
     // Validate date order

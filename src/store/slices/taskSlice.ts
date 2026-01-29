@@ -213,8 +213,14 @@ export const useTaskStore = create<TaskStore>()(
               console.warn("Cannot convert to milestone: task has children");
               return;
             }
-            // Clear end date, duration, and progress for milestones
-            updates.endDate = "";
+            // Milestone is a point in time: endDate = startDate
+            const currentStart =
+              (updates.startDate as string) || currentTask.startDate;
+            updates.endDate =
+              currentStart || new Date().toISOString().split("T")[0];
+            if (!currentStart) {
+              updates.startDate = updates.endDate;
+            }
             updates.duration = 0;
             updates.progress = 0;
           }

@@ -465,6 +465,20 @@ describe('File Operations - Deserialization', () => {
       expect(result.success).toBe(true);
     });
 
+    it('should fix milestone with empty endDate on load', async () => {
+      const file = createValidFileContent();
+      file.chart.tasks[0].type = 'milestone';
+      file.chart.tasks[0].startDate = '2026-01-01';
+      file.chart.tasks[0].endDate = '';
+      file.chart.tasks[0].duration = 0;
+      file.chart.tasks[0].progress = 0;
+
+      const result = await deserializeGanttFile(JSON.stringify(file), 'test.ownchart');
+
+      expect(result.success).toBe(true);
+      expect(result.data!.tasks[0].endDate).toBe('2026-01-01');
+    });
+
     it('should handle unicode in task names', async () => {
       const file = createValidFileContent();
       file.chart.tasks[0].name = 'Task with émojis 🚀 and ümlauts';

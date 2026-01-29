@@ -298,6 +298,16 @@ npm run release:dry    # Preview without changes
 
 ## Claude AI Workflow Instructions
 
+### ⛔ MANDATORY: Pre-Push CI Check
+
+**Before EVERY `git push`**, run the full local CI check and fix any failures:
+
+```bash
+npm run ci:local
+```
+
+This includes linting, formatting, type-checking, and all unit tests. Do NOT push if any of these fail. Fix the issues first, amend or create a new commit, and re-run `ci:local` until it passes. Only then push.
+
 ### When Working on Features
 
 1. **Always check sprint documentation first**:

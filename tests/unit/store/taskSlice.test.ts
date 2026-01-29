@@ -1411,7 +1411,7 @@ describe('Task Store - CRUD Operations', () => {
         consoleWarnSpy.mockRestore();
       });
 
-      it('should clear dates and progress when converting to milestone', () => {
+      it('should set endDate equal to startDate when converting to milestone', () => {
         const tasks: Task[] = [
           {
             id: 'task-1',
@@ -1435,7 +1435,7 @@ describe('Task Store - CRUD Operations', () => {
 
         const task = useTaskStore.getState().tasks.find((t) => t.id === 'task-1');
         expect(task?.type).toBe('milestone');
-        expect(task?.endDate).toBe('');
+        expect(task?.endDate).toBe('2025-01-01');
         expect(task?.duration).toBe(0);
         expect(task?.progress).toBe(0);
       });

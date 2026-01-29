@@ -261,6 +261,17 @@ describe('File Operations - Validation', () => {
       expect(() => validateSemantics(invalid)).toThrow('invalid endDate');
     });
 
+    it('should auto-fix milestone with empty endDate to startDate', () => {
+      const file = createValidFile();
+      file.chart.tasks[0].type = 'milestone';
+      file.chart.tasks[0].endDate = '';
+      file.chart.tasks[0].startDate = '2026-01-01';
+      file.chart.tasks[0].duration = 0;
+
+      expect(() => validateSemantics(file)).not.toThrow();
+      expect(file.chart.tasks[0].endDate).toBe('2026-01-01');
+    });
+
     it('should reject endDate before startDate', () => {
       const invalid = createValidFile();
       invalid.chart.tasks[0].startDate = '2026-01-10';

@@ -153,12 +153,18 @@ export async function deserializeGanttFile(
 function deserializeTask(serialized: SerializedTask): Task & {
   __unknownFields?: Record<string, unknown>;
 } {
+  // Migrate milestones with empty endDate (pre-fix backward compat)
+  const endDate =
+    serialized.type === "milestone" && !serialized.endDate
+      ? serialized.startDate
+      : serialized.endDate;
+
   // Extract known fields
   const task: Task & { __unknownFields?: Record<string, unknown> } = {
     id: serialized.id,
     name: serialized.name,
     startDate: serialized.startDate,
-    endDate: serialized.endDate,
+    endDate: endDate,
     duration: serialized.duration,
     progress: serialized.progress ?? 0,
     color: serialized.color,
