@@ -225,6 +225,18 @@ export const useTaskStore = create<TaskStore>()(
             updates.progress = 0;
           }
 
+          // Handle type change from milestone to task
+          if (updates.type === "task" && currentTask.type === "milestone") {
+            const milestoneDate = currentTask.startDate;
+            if (milestoneDate) {
+              updates.startDate = milestoneDate;
+              const end = new Date(milestoneDate);
+              end.setDate(end.getDate() + 6); // 7 calendar days total
+              updates.endDate = end.toISOString().split("T")[0];
+              updates.duration = 7;
+            }
+          }
+
           // Handle type change to summary
           if (updates.type === "summary") {
             // Apply type change first so calculateSummaryDates can see it
@@ -244,10 +256,8 @@ export const useTaskStore = create<TaskStore>()(
                 updates.duration = summaryDates.duration;
               }
             } else {
-              // No children - clear dates (summary should have no bar)
-              updates.startDate = "";
-              updates.endDate = "";
-              updates.duration = 0;
+              // No children - keep existing dates so they survive type cycling
+              // (dates will be recalculated when children are added)
             }
             updates.open = true; // Summaries should be open by default
           }

@@ -1441,6 +1441,107 @@ describe('Task Store - CRUD Operations', () => {
       });
     });
 
+    describe('updateTask - date preservation during type switching', () => {
+      it('should preserve dates when converting task to summary without children', () => {
+        const tasks: Task[] = [
+          {
+            id: 'task-1',
+            name: 'Task 1',
+            startDate: '2025-03-01',
+            endDate: '2025-03-15',
+            duration: 15,
+            progress: 50,
+            color: '#3b82f6',
+            order: 0,
+            type: 'task',
+            parent: undefined,
+            metadata: {},
+          },
+        ];
+        useTaskStore.setState({ tasks });
+
+        const { updateTask } = useTaskStore.getState();
+        updateTask('task-1', { type: 'summary' });
+
+        const task = useTaskStore.getState().tasks.find((t) => t.id === 'task-1');
+        expect(task?.type).toBe('summary');
+        expect(task?.startDate).toBe('2025-03-01');
+        expect(task?.endDate).toBe('2025-03-15');
+        expect(task?.duration).toBe(15);
+      });
+
+      it('should set 7-day duration when converting milestone to task', () => {
+        const tasks: Task[] = [
+          {
+            id: 'ms-1',
+            name: 'Milestone 1',
+            startDate: '2025-06-10',
+            endDate: '2025-06-10',
+            duration: 0,
+            progress: 0,
+            color: '#3b82f6',
+            order: 0,
+            type: 'milestone',
+            parent: undefined,
+            metadata: {},
+          },
+        ];
+        useTaskStore.setState({ tasks });
+
+        const { updateTask } = useTaskStore.getState();
+        updateTask('ms-1', { type: 'task' });
+
+        const task = useTaskStore.getState().tasks.find((t) => t.id === 'ms-1');
+        expect(task?.type).toBe('task');
+        expect(task?.startDate).toBe('2025-06-10');
+        expect(task?.endDate).toBe('2025-06-16');
+        expect(task?.duration).toBe(7);
+      });
+
+      it('should preserve dates through full type cycle: task → summary → milestone → task', () => {
+        const tasks: Task[] = [
+          {
+            id: 'cycle-1',
+            name: 'Cycle Test',
+            startDate: '2025-04-01',
+            endDate: '2025-04-10',
+            duration: 10,
+            progress: 30,
+            color: '#3b82f6',
+            order: 0,
+            type: 'task',
+            parent: undefined,
+            metadata: {},
+          },
+        ];
+        useTaskStore.setState({ tasks });
+
+        const { updateTask } = useTaskStore.getState();
+
+        // task → summary (no children, dates preserved)
+        updateTask('cycle-1', { type: 'summary' });
+        let task = useTaskStore.getState().tasks.find((t) => t.id === 'cycle-1');
+        expect(task?.type).toBe('summary');
+        expect(task?.startDate).toBe('2025-04-01');
+
+        // summary → milestone (startDate preserved)
+        updateTask('cycle-1', { type: 'milestone' });
+        task = useTaskStore.getState().tasks.find((t) => t.id === 'cycle-1');
+        expect(task?.type).toBe('milestone');
+        expect(task?.startDate).toBe('2025-04-01');
+        expect(task?.endDate).toBe('2025-04-01');
+        expect(task?.duration).toBe(0);
+
+        // milestone → task (gets 7-day duration from milestone date)
+        updateTask('cycle-1', { type: 'task' });
+        task = useTaskStore.getState().tasks.find((t) => t.id === 'cycle-1');
+        expect(task?.type).toBe('task');
+        expect(task?.startDate).toBe('2025-04-01');
+        expect(task?.endDate).toBe('2025-04-07');
+        expect(task?.duration).toBe(7);
+      });
+    });
+
     describe('deleteTask - cascade and parent recalculation', () => {
       it('should cascade delete children', () => {
         const tasks: Task[] = [
