@@ -272,6 +272,8 @@ export const TaskBar = React.memo(function TaskBar({
     if (!sharedDragState) return null;
     if (sharedDragState.sourceTaskId === task.id) return null;
     if (!selectedTaskIds.includes(task.id)) return null;
+    // Only show secondary preview if the drag source is also in the selection
+    if (!selectedTaskIds.includes(sharedDragState.sourceTaskId)) return null;
 
     const deltaDays = sharedDragState.deltaDays;
     if (deltaDays === 0) return null;
@@ -299,7 +301,8 @@ export const TaskBar = React.memo(function TaskBar({
     mode !== "idle" ||
     (sharedDragState &&
       sharedDragState.sourceTaskId !== task.id &&
-      selectedTaskIds.includes(task.id));
+      selectedTaskIds.includes(task.id) &&
+      selectedTaskIds.includes(sharedDragState.sourceTaskId));
 
   // Don't render if task has no valid dates (e.g., empty summary)
   // Milestones only need startDate, other types need both startDate and endDate
