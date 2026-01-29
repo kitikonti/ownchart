@@ -1838,6 +1838,53 @@ describe('Task Store - CRUD Operations', () => {
 
       expect(useTaskStore.getState().tasks).toHaveLength(1);
     });
+
+    it('should recalculate parent summary dates when inserting above a child', () => {
+      const tasks: Task[] = [
+        {
+          id: 'summary-1',
+          name: 'Summary',
+          startDate: '2025-01-10',
+          endDate: '2025-01-20',
+          duration: 10,
+          progress: 0,
+          color: '#3b82f6',
+          order: 0,
+          type: 'summary',
+          metadata: {},
+        },
+        {
+          id: 'child-1',
+          name: 'Child Task',
+          startDate: '2025-01-10',
+          endDate: '2025-01-20',
+          duration: 10,
+          progress: 0,
+          color: '#3b82f6',
+          order: 1,
+          type: 'task',
+          parent: 'summary-1',
+          metadata: {},
+        },
+      ];
+      useTaskStore.setState({ tasks });
+
+      const { insertTaskAbove } = useTaskStore.getState();
+      insertTaskAbove('child-1');
+
+      const state = useTaskStore.getState();
+      const summary = state.tasks.find((t) => t.id === 'summary-1');
+      const newTask = state.tasks.find(
+        (t) => t.id !== 'summary-1' && t.id !== 'child-1'
+      );
+
+      // New task inserted above child-1 should end the day before child-1 starts (2025-01-09)
+      // and start 7 days before that
+      expect(newTask).toBeDefined();
+      expect(newTask!.parent).toBe('summary-1');
+      // Summary should now start at the new task's earlier start date
+      expect(summary!.startDate).toBe(newTask!.startDate);
+    });
   });
 
   describe('insertTaskBelow', () => {
@@ -2013,6 +2060,53 @@ describe('Task Store - CRUD Operations', () => {
       expect(newTask.duration).toBe(7);
       expect(newTask.startDate).toBe('2025-01-16');
       expect(newTask.endDate).toBe('2025-01-22'); // 7 days from 2025-01-16
+    });
+
+    it('should recalculate parent summary dates when inserting below a child', () => {
+      const tasks: Task[] = [
+        {
+          id: 'summary-1',
+          name: 'Summary',
+          startDate: '2025-01-10',
+          endDate: '2025-01-20',
+          duration: 10,
+          progress: 0,
+          color: '#3b82f6',
+          order: 0,
+          type: 'summary',
+          metadata: {},
+        },
+        {
+          id: 'child-1',
+          name: 'Child Task',
+          startDate: '2025-01-10',
+          endDate: '2025-01-20',
+          duration: 10,
+          progress: 0,
+          color: '#3b82f6',
+          order: 1,
+          type: 'task',
+          parent: 'summary-1',
+          metadata: {},
+        },
+      ];
+      useTaskStore.setState({ tasks });
+
+      const { insertTaskBelow } = useTaskStore.getState();
+      insertTaskBelow('child-1');
+
+      const state = useTaskStore.getState();
+      const summary = state.tasks.find((t) => t.id === 'summary-1');
+      const newTask = state.tasks.find(
+        (t) => t.id !== 'summary-1' && t.id !== 'child-1'
+      );
+
+      // New task inserted below child-1 should start the day after child-1 ends (2025-01-21)
+      expect(newTask).toBeDefined();
+      expect(newTask!.parent).toBe('summary-1');
+      expect(newTask!.startDate).toBe('2025-01-21');
+      // Summary should now end at the new task's later end date
+      expect(summary!.endDate).toBe(newTask!.endDate);
     });
   });
 });

@@ -1152,6 +1152,13 @@ export const useTaskStore = create<TaskStore>()(
         });
       });
 
+      // Recalculate parent summary dates
+      if (taskData.parent) {
+        set((state) => {
+          recalculateSummaryAncestors(state.tasks, new Set([taskData.parent!]));
+        });
+      }
+
       // Mark file as dirty
       useFileStore.getState().markDirty();
 
@@ -1231,6 +1238,13 @@ export const useTaskStore = create<TaskStore>()(
           task.order = index;
         });
       });
+
+      // Recalculate parent summary dates
+      if (taskData.parent) {
+        set((state) => {
+          recalculateSummaryAncestors(state.tasks, new Set([taskData.parent!]));
+        });
+      }
 
       // Mark file as dirty
       useFileStore.getState().markDirty();
