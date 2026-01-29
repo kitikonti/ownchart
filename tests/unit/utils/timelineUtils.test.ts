@@ -69,12 +69,12 @@ describe("timelineUtils", () => {
         expect(config[1].unit).toBe("week");
       });
 
-      it("should return Month -> Day at normal zoom (30-60 px/day)", () => {
+      it("should return Week -> Day at normal zoom (30-60 px/day)", () => {
         // 150% zoom = 25 * 1.5 = 37.5 px/day
         const config = getScaleConfig(1.5, basePixelsPerDay);
 
         expect(config).toHaveLength(2);
-        expect(config[0].unit).toBe("month");
+        expect(config[0].unit).toBe("week");
         expect(config[1].unit).toBe("day");
       });
 
@@ -327,15 +327,16 @@ describe("timelineUtils", () => {
       const below = getScaleConfig(1.19, basePixelsPerDay); // 29.75 px/day
       expect(below[1].unit).toBe("week");
 
-      // At/above 30 px/day -> Month -> Day
+      // At/above 30 px/day -> Week -> Day
       const above = getScaleConfig(1.2, basePixelsPerDay); // 30 px/day
+      expect(above[0].unit).toBe("week");
       expect(above[1].unit).toBe("day");
     });
 
     it("should switch at exactly 60 px/day boundary", () => {
-      // Just below 60 px/day -> Month -> Day
+      // Just below 60 px/day -> Week -> Day
       const below = getScaleConfig(2.39, basePixelsPerDay); // 59.75 px/day
-      expect(below[0].unit).toBe("month");
+      expect(below[0].unit).toBe("week");
 
       // At/above 60 px/day -> Week -> Day with weekday
       const above = getScaleConfig(2.4, basePixelsPerDay); // 60 px/day

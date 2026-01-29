@@ -5,6 +5,7 @@
 
 import {
   getWeek,
+  format,
   addYears,
   addQuarters,
   addMonths,
@@ -180,10 +181,20 @@ export function getScaleConfig(
     ];
   }
 
-  // Zoomed in (30-60 pixels per day): Month → Day
+  // Zoomed in (30-60 pixels per day): Week → Day
   if (effectivePixelsPerDay < 60) {
     return [
-      { unit: "month", step: 1, format: "MMMM yyyy" },
+      {
+        unit: "week",
+        step: 1,
+        format: (date: Date) => {
+          const wn = getWeek(date, {
+            weekStartsOn: getWeekStartDay(),
+            firstWeekContainsDate: getFirstWeekContainsDate(),
+          });
+          return `Week ${wn}, ${format(date, "MMM yyyy")}`;
+        },
+      },
       { unit: "day", step: 1, format: "d" },
     ];
   }
@@ -193,11 +204,13 @@ export function getScaleConfig(
     {
       unit: "week",
       step: 1,
-      format: (date) =>
-        `Week ${getWeek(date, {
+      format: (date: Date) => {
+        const wn = getWeek(date, {
           weekStartsOn: getWeekStartDay(),
           firstWeekContainsDate: getFirstWeekContainsDate(),
-        })}`,
+        });
+        return `Week ${wn}, ${format(date, "MMM yyyy")}`;
+      },
     },
     { unit: "day", step: 1, format: "EEE d" },
   ];
