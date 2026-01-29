@@ -99,8 +99,10 @@ export function ExportDialog(): JSX.Element | null {
     let maxDate: Date | null = null;
 
     for (const task of tasks) {
+      if (!task.startDate || !task.endDate) continue;
       const start = new Date(task.startDate);
       const end = new Date(task.endDate);
+      if (isNaN(start.getTime()) || isNaN(end.getTime())) continue;
 
       if (!minDate || start < minDate) minDate = start;
       if (!maxDate || end > maxDate) maxDate = end;
