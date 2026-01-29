@@ -12,9 +12,9 @@
 - **CI/CD**: GitHub Actions + GitHub Pages
 - **Solo Project**: 100% vibe-coded by Martin
 
-## Screenshots
+## File References
 
-When the user pastes a screenshot without providing a file path, always look for it in `/tmp/`.
+When the user references a file (screenshot, image, document, etc.) without providing a full path, always look for it in `/tmp/`.
 
 ## ⛔ CRITICAL SYSTEM CONSTRAINT - READ FIRST ⛔
 
