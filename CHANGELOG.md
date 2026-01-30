@@ -2,6 +2,36 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [0.0.33](https://github.com/kitikonti/ownchart/compare/v0.0.32...v0.0.33) (2026-01-30)
+
+
+### Features
+
+* add "F" keyboard shortcut for fit to view ([84b000b](https://github.com/kitikonti/ownchart/commit/84b000bb0c4ca7e73efaf0f47e80c100a738dfe2)), closes [#7](https://github.com/kitikonti/ownchart/issues/7)
+
+
+### Bug Fixes
+
+* add undo/redo support for indent/outdent operations ([bdba8d4](https://github.com/kitikonti/ownchart/commit/bdba8d4af4a85c4c4490b3f9d2f4017a640aaf78)), closes [#1](https://github.com/kitikonti/ownchart/issues/1)
+* persist colorModeState to .ownchart files ([#13](https://github.com/kitikonti/ownchart/issues/13)) ([094822f](https://github.com/kitikonti/ownchart/commit/094822fb14774ab5b9dc8092cd8666062781bb00))
+* preserve dates during task type switching ([e968070](https://github.com/kitikonti/ownchart/commit/e968070302ac78083b39bc87f600fba17fb791c6)), closes [#8](https://github.com/kitikonti/ownchart/issues/8) [#9](https://github.com/kitikonti/ownchart/issues/9) [#8](https://github.com/kitikonti/ownchart/issues/8) [#9](https://github.com/kitikonti/ownchart/issues/9)
+* prevent ghost preview and fading on selected tasks when dragging unselected task ([962e33d](https://github.com/kitikonti/ownchart/commit/962e33d119aa09a41b2f05b359a46df76a09780d))
+* prevent summary/milestone resize and sync milestone endDate on drag ([a34a0fb](https://github.com/kitikonti/ownchart/commit/a34a0fbdcab230cd67c4a36a5b025b8b2a37fcb8))
+* prevent TaskTable/Timeline vertical desync when adding tasks via placeholder ([#16](https://github.com/kitikonti/ownchart/issues/16)) ([8f3df30](https://github.com/kitikonti/ownchart/commit/8f3df30d521a543b08c0fd19338edecd4189a80d))
+* recalculate summary dates after deleteSelectedTasks and refactor cascade logic ([71f387e](https://github.com/kitikonti/ownchart/commit/71f387ed9f92aa1698381071ff13a86a92130286))
+* recalculate summary dates after insertTaskAbove/Below ([8660b37](https://github.com/kitikonti/ownchart/commit/8660b3748f06b234d17019470bd70f673092faca))
+* resolve undo/redo task duplication when deleting multiple tasks ([860669e](https://github.com/kitikonti/ownchart/commit/860669eb8ec1743fe7416458551f1842e2a7e8bb)), closes [#4](https://github.com/kitikonti/ownchart/issues/4)
+* scroll timeline to project when opening a second file ([a99eddf](https://github.com/kitikonti/ownchart/commit/a99eddfdf526f0cee9c8ef2ec2b54e3f42de2a91))
+* set milestone endDate to startDate instead of empty string ([7ae52d5](https://github.com/kitikonti/ownchart/commit/7ae52d56f18b379184831b1fd9b342ad955b144d))
+* skip tasks with invalid dates in export date range calculation ([5e248ba](https://github.com/kitikonti/ownchart/commit/5e248bacb4ba4480671a2a4461d8385c03c02b72)), closes [#11](https://github.com/kitikonti/ownchart/issues/11)
+* suppress single-key shortcuts when a table cell is active ([92d2d1b](https://github.com/kitikonti/ownchart/commit/92d2d1b7dfbb263a55b695b8a51c5777035bbd59))
+* tree-walk ordering for hierarchy and normalize task order after mutations ([4fa4df1](https://github.com/kitikonti/ownchart/commit/4fa4df1483c30106986b53563d57dbed85b6fd0b))
+
+
+### UI/UX
+
+* show "Week N, Mon YYYY" in timeline header top row at 30-60+ px/day zoom ([3f75a2d](https://github.com/kitikonti/ownchart/commit/3f75a2d17d69efdb45720e55e5c24420cd3119b0))
+
 ### [0.0.32](https://github.com/kitikonti/ownchart/compare/v0.0.31...v0.0.32) (2026-01-25)
 
 
