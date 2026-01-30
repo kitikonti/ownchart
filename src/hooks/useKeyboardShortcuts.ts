@@ -32,6 +32,7 @@ export function useKeyboardShortcuts() {
     (state) => state.deleteSelectedTasks
   );
   const selectedTaskIds = useTaskStore((state) => state.selectedTaskIds);
+  const activeCell = useTaskStore((state) => state.activeCell);
 
   // View toggle shortcuts (Sprint 1.5.9)
   const toggleDependencies = useChartStore((state) => state.toggleDependencies);
@@ -63,6 +64,9 @@ export function useKeyboardShortcuts() {
         target.isContentEditable ||
         (target.tagName === "INPUT" &&
           (target as HTMLInputElement).type !== "checkbox");
+      // When a table cell is active, single-key shortcuts must be
+      // suppressed so the keypress can start cell editing instead.
+      const isCellActive = activeCell.taskId !== null;
 
       // For clipboard operations, allow even when checkbox is focused
       const isClipboardShortcut =
@@ -194,15 +198,21 @@ export function useKeyboardShortcuts() {
       }
 
       // ? key: Open help panel (when not in text input)
-      if (e.key === "?" && !isTextInput) {
+      if (e.key === "?" && !isTextInput && !isCellActive) {
         e.preventDefault();
         openHelpPanel();
         return;
       }
 
       // View toggle shortcuts (Sprint 1.5.9)
-      // Only when not in text input and no modifier keys
-      if (!isTextInput && !modKey && !e.altKey && !e.shiftKey) {
+      // Only when not in text input/gridcell and no modifier keys
+      if (
+        !isTextInput &&
+        !isCellActive &&
+        !modKey &&
+        !e.altKey &&
+        !e.shiftKey
+      ) {
         // D: Toggle dependencies
         if (e.key.toLowerCase() === "d") {
           e.preventDefault();
@@ -273,5 +283,6 @@ export function useKeyboardShortcuts() {
     toggleHolidays,
     fitToView,
     tasks,
+    activeCell,
   ]);
 }
