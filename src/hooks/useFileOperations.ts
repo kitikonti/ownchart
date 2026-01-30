@@ -19,6 +19,7 @@ import {
   clearFileHandle,
 } from "../utils/fileOperations/fileDialog";
 import { sanitizeFilename } from "../utils/export/sanitizeFilename";
+import { DEFAULT_COLOR_MODE_STATE } from "../types/colorMode.types";
 
 /**
  * Generate a suggested filename from project title and current date.
@@ -55,6 +56,7 @@ export function useFileOperations() {
   const workingDaysMode = useChartStore((state) => state.workingDaysMode);
   const workingDaysConfig = useChartStore((state) => state.workingDaysConfig);
   const holidayRegion = useChartStore((state) => state.holidayRegion);
+  const colorModeState = useChartStore((state) => state.colorModeState);
   const projectTitle = useChartStore((state) => state.projectTitle);
   const projectAuthor = useChartStore((state) => state.projectAuthor);
   const setProjectTitle = useChartStore((state) => state.setProjectTitle);
@@ -107,6 +109,8 @@ export function useFileOperations() {
             // Project metadata
             projectTitle,
             projectAuthor,
+            // Color mode
+            colorModeState,
           },
           {
             chartName:
@@ -157,6 +161,7 @@ export function useFileOperations() {
       workingDaysMode,
       workingDaysConfig,
       holidayRegion,
+      colorModeState,
       projectTitle,
       projectAuthor,
       taskTableWidth,
@@ -222,6 +227,8 @@ export function useFileOperations() {
         holidayRegion: loadedViewSettings.holidayRegion, // Use file's region, undefined keeps current
         projectTitle: loadedViewSettings.projectTitle ?? "",
         projectAuthor: loadedViewSettings.projectAuthor ?? "",
+        colorModeState:
+          loadedViewSettings.colorModeState ?? DEFAULT_COLOR_MODE_STATE,
       });
 
       // Update scale immediately with new tasks and zoom (before signalFileLoaded)

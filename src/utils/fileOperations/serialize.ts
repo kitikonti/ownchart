@@ -69,6 +69,8 @@ export function serializeToGanttFile(
         // Project metadata
         projectTitle: viewSettings.projectTitle,
         projectAuthor: viewSettings.projectAuthor,
+        // Color mode
+        colorModeState: viewSettings.colorModeState,
       },
       exportSettings: options.exportSettings, // Sprint 1.6
       metadata: {

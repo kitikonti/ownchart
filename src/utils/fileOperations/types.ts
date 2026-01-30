@@ -10,6 +10,7 @@ import type {
   TaskLabelPosition,
   WorkingDaysConfig,
 } from "../../types/preferences.types";
+import type { ColorModeState } from "../../types/colorMode.types";
 
 export interface GanttFile {
   // Format identification
@@ -117,6 +118,9 @@ export interface ViewSettings {
   // Project metadata
   projectTitle?: string;
   projectAuthor?: string;
+
+  // Color mode (Smart Color Management)
+  colorModeState?: ColorModeState;
 }
 
 // Validation error types
