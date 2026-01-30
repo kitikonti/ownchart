@@ -108,7 +108,7 @@ export function Cell({
   // Focus cell when it becomes active
   useEffect(() => {
     if (isActive && cellRef.current && !isEditing) {
-      cellRef.current.focus();
+      cellRef.current.focus({ preventScroll: true });
     }
   }, [isActive, isEditing]);
 

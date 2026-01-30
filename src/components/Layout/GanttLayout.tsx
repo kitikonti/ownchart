@@ -28,8 +28,8 @@ import { useChartStore } from "../../store/slices/chartSlice";
 import { SplitPane } from "./SplitPane";
 import { useTableDimensions } from "../../hooks/useTableDimensions";
 import { useFlattenedTasks } from "../../hooks/useFlattenedTasks";
+import { useDensityConfig } from "../../store/slices/userPreferencesSlice";
 
-const ROW_HEIGHT = 44; // Must match TaskTable row height
 const HEADER_HEIGHT = 48; // Timeline header height
 const MIN_TABLE_WIDTH = 200; // Minimum width for task table
 const SCROLLBAR_HEIGHT = 17; // Reserve space for horizontal scrollbar
@@ -55,6 +55,10 @@ export function GanttLayout() {
 
   // Build flattened task list (centralized in hook, shared with TaskTable)
   const { flattenedTasks, orderedTasks } = useFlattenedTasks();
+
+  // Get density-aware row height (must match TaskTable and ChartCanvas)
+  const densityConfig = useDensityConfig();
+  const ROW_HEIGHT = densityConfig.rowHeight;
 
   // Table dimensions
   const { totalColumnWidth } = useTableDimensions();
@@ -92,6 +96,21 @@ export function GanttLayout() {
 
   // Content area height (viewport minus header)
   const contentAreaHeight = viewportHeight - HEADER_HEIGHT;
+
+  // Prevent taskTableScrollRef from scrolling vertically (GitHub #16)
+  // Browser focus() can scroll overflow containers even with overflow-y:clip in Chromium.
+  // Reset any unwanted vertical scroll immediately.
+  useEffect(() => {
+    const el = taskTableScrollRef.current;
+    if (!el) return;
+    const resetScroll = (): void => {
+      if (el.scrollTop !== 0) {
+        el.scrollTop = 0;
+      }
+    };
+    el.addEventListener("scroll", resetScroll);
+    return () => el.removeEventListener("scroll", resetScroll);
+  }, []);
 
   // Handle vertical scroll from outer container
   const handleOuterScroll = useCallback(() => {
@@ -420,8 +439,8 @@ export function GanttLayout() {
                   {/* Task Table Content with virtual scrolling and horizontal scroll */}
                   <div
                     ref={taskTableScrollRef}
-                    className="flex-1 overflow-x-auto overflow-y-hidden scrollbar-thin"
-                    style={{ height: contentAreaHeight }}
+                    className="flex-1 overflow-x-auto scrollbar-thin"
+                    style={{ height: contentAreaHeight, overflowY: "clip" }}
                   >
                     <div style={{ transform: `translateY(-${scrollTop}px)` }}>
                       <TaskTable />
@@ -458,7 +477,8 @@ export function GanttLayout() {
                     {/* Gantt Chart Content - scrollable horizontally */}
                     <div
                       ref={chartContainerRef}
-                      className="gantt-chart-scroll-container absolute inset-0 bg-white overflow-x-auto overflow-y-hidden scrollbar-thin"
+                      className="gantt-chart-scroll-container absolute inset-0 bg-white overflow-x-auto scrollbar-thin"
+                      style={{ overflowY: "clip" }}
                     >
                       <div style={{ transform: `translateY(-${scrollTop}px)` }}>
                         <ChartCanvas

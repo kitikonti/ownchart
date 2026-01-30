@@ -41,17 +41,38 @@ export function NewTaskPlaceholderRow(): JSX.Element {
   const isNameActive = isRowActive && activeCell.field === "name";
   const isSelected = selectedTaskIds.includes(PLACEHOLDER_TASK_ID);
 
+  // Scroll the outerScrollRef (vertical scroll driver) so the placeholder is visible.
+  // We must NOT use el.scrollIntoView() because that scrolls the wrong container
+  // (taskTableScrollRef) which desyncs TaskTable from Timeline (GitHub #16).
+  // Instead, we scroll the outerScrollRef which drives translateY for both panels.
+  const scrollPlaceholderIntoView = useRef(() => {
+    const el = cellRef.current;
+    if (!el) return;
+    const outerScroll = el.closest(".flex-1.overflow-y-auto");
+    if (!outerScroll) return;
+    const outerRect = outerScroll.getBoundingClientRect();
+    const elRect = el.getBoundingClientRect();
+    // If element is below the visible area, scroll down
+    if (elRect.bottom > outerRect.bottom) {
+      outerScroll.scrollTop += elRect.bottom - outerRect.bottom;
+    }
+  });
+
   // Focus cell when it becomes active (not editing)
+  // preventScroll: true prevents the browser from scrolling taskTableScrollRef
+  // which would desync TaskTable from Timeline (GitHub #16)
   useEffect(() => {
     if (isNameActive && !isEditing && cellRef.current) {
-      cellRef.current.focus();
+      cellRef.current.focus({ preventScroll: true });
+      scrollPlaceholderIntoView.current();
     }
   }, [isNameActive, isEditing]);
 
   // Focus input when editing starts
   useEffect(() => {
     if (isEditing && inputRef.current) {
-      inputRef.current.focus();
+      inputRef.current.focus({ preventScroll: true });
+      scrollPlaceholderIntoView.current();
     }
   }, [isEditing]);
 
@@ -113,7 +134,7 @@ export function NewTaskPlaceholderRow(): JSX.Element {
     }
   };
 
-  const handleInputBlur = () => {
+  const handleInputBlur = (): void => {
     if (inputValue.trim()) {
       createNewTask();
     } else {
@@ -135,11 +156,11 @@ export function NewTaskPlaceholderRow(): JSX.Element {
       setIsEditing(false);
       setInputValue("");
       // Re-focus the cell
-      setTimeout(() => cellRef.current?.focus(), 0);
+      setTimeout(() => cellRef.current?.focus({ preventScroll: true }), 0);
     }
   };
 
-  const createNewTask = () => {
+  const createNewTask = (): void => {
     const DEFAULT_DURATION = 7;
 
     const formatDate = (date: Date): string => {
@@ -271,7 +292,6 @@ export function NewTaskPlaceholderRow(): JSX.Element {
                   onChange={(e) => setInputValue(e.target.value)}
                   onBlur={handleInputBlur}
                   onKeyDown={handleInputKeyDown}
-                  autoFocus
                   className="w-full px-0 py-0 border-0 focus:outline-none bg-transparent"
                   style={{ fontSize: "inherit" }}
                 />

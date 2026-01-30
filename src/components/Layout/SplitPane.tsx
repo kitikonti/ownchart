@@ -76,7 +76,7 @@ export function SplitPane({
       <div
         ref={leftPanelRef}
         style={{ width: leftWidth }}
-        className="flex-shrink-0 overflow-hidden"
+        className="flex-shrink-0 overflow-clip"
       >
         {leftContent}
       </div>
