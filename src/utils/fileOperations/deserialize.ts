@@ -20,6 +20,7 @@ import {
 import { sanitizeGanttFile } from "./sanitize";
 import { migrateGanttFile, needsMigration, isFromFuture } from "./migrate";
 import { FILE_VERSION } from "../../config/version";
+import { normalizeTaskOrder } from "../../utils/hierarchy";
 
 /**
  * Deserialize GanttFile JSON string to app state
@@ -113,6 +114,10 @@ export async function deserializeGanttFile(
 
     // Extract data for app
     const tasks = ganttFile.chart.tasks.map(deserializeTask);
+
+    // Normalize order values so children follow their parents
+    normalizeTaskOrder(tasks);
+
     const dependencies = (ganttFile.chart.dependencies || []).map(
       deserializeDependency
     );

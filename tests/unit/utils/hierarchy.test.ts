@@ -4,6 +4,8 @@ import {
   getTaskDescendants,
   getTaskChildren,
   recalculateSummaryAncestors,
+  buildFlattenedTaskList,
+  normalizeTaskOrder,
 } from "../../../src/utils/hierarchy";
 import type { Task } from "../../../src/types/chart.types";
 
@@ -402,5 +404,189 @@ describe("recalculateSummaryAncestors", () => {
     expect(result).toHaveLength(1);
     expect(result[0].updates.startDate).toBe("2025-01-05");
     expect(result[0].updates.endDate).toBe("2025-01-12");
+  });
+});
+
+describe("buildFlattenedTaskList", () => {
+  it("should place children directly below their parent (tree-walk)", () => {
+    const tasks: Task[] = [
+      createTask("root1", "Root 1", { order: 0 }),
+      createTask("root2", "Root 2", { order: 1, type: "summary" }),
+      createTask("child1", "Child 1", { order: 10, parent: "root2" }),
+      createTask("child2", "Child 2", { order: 11, parent: "root2" }),
+      createTask("root3", "Root 3", { order: 2 }),
+    ];
+
+    const result = buildFlattenedTaskList(tasks, new Set());
+    const ids = result.map((r) => r.task.id);
+
+    expect(ids).toEqual(["root1", "root2", "child1", "child2", "root3"]);
+  });
+
+  it("should handle children with non-sequential order values", () => {
+    // Simulates the bug: children have high order values after indent
+    const tasks: Task[] = [
+      createTask("summary", "Summary", { order: 5, type: "summary" }),
+      createTask("childA", "Child A", { order: 27, parent: "summary" }),
+      createTask("childB", "Child B", { order: 28, parent: "summary" }),
+      createTask("other", "Other Task", { order: 6 }),
+    ];
+
+    const result = buildFlattenedTaskList(tasks, new Set());
+    const ids = result.map((r) => r.task.id);
+
+    // Children must appear right after their parent, not at the bottom
+    expect(ids).toEqual(["summary", "childA", "childB", "other"]);
+  });
+
+  it("should respect collapsed state", () => {
+    const tasks: Task[] = [
+      createTask("parent", "Parent", { order: 0, type: "summary" }),
+      createTask("child", "Child", { order: 1, parent: "parent" }),
+      createTask("other", "Other", { order: 2 }),
+    ];
+
+    const result = buildFlattenedTaskList(tasks, new Set(["parent"]));
+    const ids = result.map((r) => r.task.id);
+
+    expect(ids).toEqual(["parent", "other"]);
+  });
+
+  it("should respect task.open === false", () => {
+    const tasks: Task[] = [
+      createTask("parent", "Parent", { order: 0, type: "summary", open: false }),
+      createTask("child", "Child", { order: 1, parent: "parent" }),
+      createTask("other", "Other", { order: 2 }),
+    ];
+
+    const result = buildFlattenedTaskList(tasks, new Set());
+    const ids = result.map((r) => r.task.id);
+
+    expect(ids).toEqual(["parent", "other"]);
+  });
+
+  it("should handle nested hierarchy with correct levels", () => {
+    const tasks: Task[] = [
+      createTask("root", "Root", { order: 0, type: "summary" }),
+      createTask("child", "Child", { order: 1, parent: "root", type: "summary" }),
+      createTask("grandchild", "Grandchild", { order: 2, parent: "child" }),
+    ];
+
+    const result = buildFlattenedTaskList(tasks, new Set());
+
+    expect(result).toHaveLength(3);
+    expect(result[0].level).toBe(0);
+    expect(result[1].level).toBe(1);
+    expect(result[2].level).toBe(2);
+  });
+
+  it("should set hasChildren correctly", () => {
+    const tasks: Task[] = [
+      createTask("parent", "Parent", { order: 0, type: "summary" }),
+      createTask("child", "Child", { order: 1, parent: "parent" }),
+      createTask("leaf", "Leaf", { order: 2 }),
+    ];
+
+    const result = buildFlattenedTaskList(tasks, new Set());
+
+    expect(result[0].hasChildren).toBe(true);
+    expect(result[1].hasChildren).toBe(false);
+    expect(result[2].hasChildren).toBe(false);
+  });
+
+  it("should treat orphan tasks as root-level (parent ID not found)", () => {
+    const tasks: Task[] = [
+      createTask("root", "Root", { order: 0 }),
+      createTask("orphan", "Orphan", { order: 1, parent: "deleted-parent" }),
+      createTask("other", "Other", { order: 2 }),
+    ];
+
+    const result = buildFlattenedTaskList(tasks, new Set());
+    const ids = result.map((r) => r.task.id);
+
+    // Orphan must not disappear — should appear at root level
+    expect(ids).toContain("orphan");
+    expect(ids).toHaveLength(3);
+    // Orphan should be at level 0 (root)
+    const orphanEntry = result.find((r) => r.task.id === "orphan");
+    expect(orphanEntry!.level).toBe(0);
+  });
+
+  it("should not mark non-existent parent as having children", () => {
+    const tasks: Task[] = [
+      createTask("orphan", "Orphan", { order: 0, parent: "ghost" }),
+    ];
+
+    const result = buildFlattenedTaskList(tasks, new Set());
+
+    expect(result).toHaveLength(1);
+    expect(result[0].hasChildren).toBe(false);
+  });
+
+  it("should sort siblings by order within each parent group", () => {
+    const tasks: Task[] = [
+      createTask("parent", "Parent", { order: 0, type: "summary" }),
+      createTask("childB", "Child B", { order: 3, parent: "parent" }),
+      createTask("childA", "Child A", { order: 1, parent: "parent" }),
+      createTask("childC", "Child C", { order: 5, parent: "parent" }),
+    ];
+
+    const result = buildFlattenedTaskList(tasks, new Set());
+    const ids = result.map((r) => r.task.id);
+
+    expect(ids).toEqual(["parent", "childA", "childB", "childC"]);
+  });
+});
+
+describe("normalizeTaskOrder", () => {
+  it("should assign sequential order values based on tree-walk", () => {
+    const tasks: Task[] = [
+      createTask("root1", "Root 1", { order: 0 }),
+      createTask("root2", "Root 2", { order: 5, type: "summary" }),
+      createTask("child1", "Child 1", { order: 27, parent: "root2" }),
+      createTask("child2", "Child 2", { order: 28, parent: "root2" }),
+      createTask("root3", "Root 3", { order: 6 }),
+    ];
+
+    normalizeTaskOrder(tasks);
+
+    expect(tasks.find((t) => t.id === "root1")!.order).toBe(0);
+    expect(tasks.find((t) => t.id === "root2")!.order).toBe(1);
+    expect(tasks.find((t) => t.id === "child1")!.order).toBe(2);
+    expect(tasks.find((t) => t.id === "child2")!.order).toBe(3);
+    expect(tasks.find((t) => t.id === "root3")!.order).toBe(4);
+  });
+
+  it("should handle empty task list", () => {
+    const tasks: Task[] = [];
+    normalizeTaskOrder(tasks);
+    expect(tasks).toEqual([]);
+  });
+
+  it("should fix the real-world bug scenario", () => {
+    // "Welding Frames & Sheet Metal" (order=9) with children at order=27,28,29
+    const tasks: Task[] = [
+      createTask("task1", "Task 1", { order: 0 }),
+      createTask("task2", "Task 2", { order: 1 }),
+      createTask("welding", "Welding Frames", { order: 9, type: "summary" }),
+      createTask("task10", "Task 10", { order: 10 }),
+      createTask("weld1", "Sub-Weld 1", { order: 27, parent: "welding" }),
+      createTask("weld2", "Sub-Weld 2", { order: 28, parent: "welding" }),
+      createTask("weld3", "Sub-Weld 3", { order: 29, parent: "welding" }),
+    ];
+
+    normalizeTaskOrder(tasks);
+
+    // After normalization, children should follow parent sequentially
+    const welding = tasks.find((t) => t.id === "welding")!;
+    const weld1 = tasks.find((t) => t.id === "weld1")!;
+    const weld2 = tasks.find((t) => t.id === "weld2")!;
+    const weld3 = tasks.find((t) => t.id === "weld3")!;
+    const task10 = tasks.find((t) => t.id === "task10")!;
+
+    expect(weld1.order).toBe(welding.order + 1);
+    expect(weld2.order).toBe(welding.order + 2);
+    expect(weld3.order).toBe(welding.order + 3);
+    expect(task10.order).toBeGreaterThan(weld3.order);
   });
 });

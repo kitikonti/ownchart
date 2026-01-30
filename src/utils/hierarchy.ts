@@ -149,9 +149,8 @@ export function calculateSummaryDates(
 /**
  * Build flattened list for rendering (respects collapsed state).
  *
- * IMPORTANT: Uses global `order` property for sorting.
- * Tasks are sorted strictly by `order`, and the hierarchy level is calculated
- * separately. This ensures paste operations insert at the correct visual position.
+ * Uses recursive tree-walk to ensure children always appear directly
+ * below their parent, sorted by `order` within each sibling group.
  */
 export interface FlattenedTask {
   task: Task;
@@ -163,64 +162,73 @@ export function buildFlattenedTaskList(
   tasks: Task[],
   collapsedTaskIds: Set<string>
 ): FlattenedTask[] {
-  // Sort all tasks by order (global ordering - this is the source of truth)
-  const sortedTasks = [...tasks].sort((a, b) => a.order - b.order);
-
-  // Build helper maps
-  const taskMap = new Map<string, Task>();
+  // Build children map: parentId → children sorted by order
+  const childrenMap = new Map<string | undefined, Task[]>();
   const childrenSet = new Set<string>(); // Tasks that have children
+  const taskIds = new Set(tasks.map((t) => t.id));
 
-  tasks.forEach((task) => {
-    taskMap.set(task.id, task);
-    if (task.parent) {
+  for (const task of tasks) {
+    // Orphan safety: if parent doesn't exist, treat as root
+    const parentKey =
+      task.parent && taskIds.has(task.parent) ? task.parent : undefined;
+    let siblings = childrenMap.get(parentKey);
+    if (!siblings) {
+      siblings = [];
+      childrenMap.set(parentKey, siblings);
+    }
+    siblings.push(task);
+    if (task.parent && taskIds.has(task.parent)) {
       childrenSet.add(task.parent);
     }
-  });
+  }
 
-  // Calculate level for a task (how deep in hierarchy)
-  const getLevel = (task: Task): number => {
-    let level = 0;
-    let current = task;
-    while (current.parent) {
-      const parent = taskMap.get(current.parent);
-      if (!parent) break;
-      level++;
-      current = parent;
-    }
-    return level;
-  };
+  // Sort each sibling group by order
+  for (const siblings of childrenMap.values()) {
+    siblings.sort((a, b) => a.order - b.order);
+  }
 
-  // Check if a task is hidden (any ancestor is collapsed)
-  const isHidden = (task: Task): boolean => {
-    let current = task;
-    while (current.parent) {
-      const parent = taskMap.get(current.parent);
-      if (!parent) break;
-      // Check if parent is collapsed
-      if (parent.open === false || collapsedTaskIds.has(parent.id)) {
-        return true;
-      }
-      current = parent;
-    }
-    return false;
-  };
-
-  // Build result: iterate in order, skip hidden tasks
+  // Recursive tree-walk
   const result: FlattenedTask[] = [];
 
-  sortedTasks.forEach((task) => {
-    // Skip if hidden by collapsed ancestor
-    if (isHidden(task)) {
-      return;
+  function walk(parentId: string | undefined, level: number): void {
+    const children = childrenMap.get(parentId);
+    if (!children) return;
+
+    for (const task of children) {
+      const hasChildren = childrenSet.has(task.id);
+      result.push({ task, level, hasChildren });
+
+      // Recurse into children if not collapsed
+      const isCollapsed = task.open === false || collapsedTaskIds.has(task.id);
+      if (hasChildren && !isCollapsed) {
+        walk(task.id, level + 1);
+      }
     }
+  }
 
-    const level = getLevel(task);
-    const hasChildren = childrenSet.has(task.id);
-
-    result.push({ task, level, hasChildren });
-  });
-
+  walk(undefined, 0);
   return result;
+}
+
+/**
+ * Normalize task order values using tree-walk order.
+ * Assigns sequential order values (0, 1, 2, ...) based on the hierarchical
+ * tree-walk position. Mutates tasks in-place (Immer-compatible).
+ *
+ * Note: uses the existing sibling `order` values as input (for intra-group
+ * sorting inside buildFlattenedTaskList) and produces globally sequential
+ * order values as output.
+ */
+export function normalizeTaskOrder(tasks: Task[]): void {
+  const flattened = buildFlattenedTaskList(tasks, new Set<string>());
+  const taskMap = new Map(tasks.map((t) => [t.id, t]));
+  let order = 0;
+  for (const { task } of flattened) {
+    const original = taskMap.get(task.id);
+    if (original) {
+      original.order = order++;
+    }
+  }
 }
 
 /**

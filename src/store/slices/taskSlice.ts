@@ -12,6 +12,7 @@ import {
   buildFlattenedTaskList,
   calculateSummaryDates,
   recalculateSummaryAncestors,
+  normalizeTaskOrder,
 } from "../../utils/hierarchy";
 import { canHaveChildren } from "../../utils/validation";
 import { useHistoryStore } from "./historySlice";
@@ -960,6 +961,9 @@ export const useTaskStore = create<TaskStore>()(
         if (affectedParents.size > 0) {
           recalculateSummaryAncestors(state.tasks, affectedParents);
         }
+
+        // Normalize order so children follow their parent
+        normalizeTaskOrder(state.tasks);
       }),
 
     toggleTaskCollapsed: (taskId) =>
@@ -1354,6 +1358,9 @@ export const useTaskStore = create<TaskStore>()(
             .filter((id): id is string => id !== undefined)
         );
         recalculateSummaryAncestors(state.tasks, affectedParentIds);
+
+        // Normalize order so children follow their parent
+        normalizeTaskOrder(state.tasks);
       });
 
       // Mark file as dirty
@@ -1442,6 +1449,9 @@ export const useTaskStore = create<TaskStore>()(
 
         // Recalculate summary dates for old parents
         recalculateSummaryAncestors(state.tasks, oldParentIds);
+
+        // Normalize order so children follow their parent
+        normalizeTaskOrder(state.tasks);
       });
 
       // Mark file as dirty
