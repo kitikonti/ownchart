@@ -622,11 +622,13 @@ select:focus {
 }
 
 .dropdown-item-selected {
-  background-color: rgb(235, 245, 255);
+  background-color: rgb(245, 245, 245);
+  border: 0.667px solid rgb(166, 166, 166) !important;
+  border-radius: 4px !important;
 }
 
 .dropdown-item-selected:hover {
-  background-color: rgb(225, 240, 255);
+  background-color: rgb(240, 240, 240);
 }
 
 /* Zoom combobox - border darkens on hover */

@@ -45,7 +45,7 @@ export function DropdownItem({
       role={role}
       aria-selected={ariaSelected ?? isSelected}
       onClick={onClick}
-      className="dropdown-item"
+      className={`dropdown-item${isSelected ? " dropdown-item-selected" : ""}`}
       style={{
         display: "flex",
         alignItems: "center",
@@ -54,8 +54,8 @@ export function DropdownItem({
           ? { minHeight: "36px", padding: "6px 12px 6px 8px" }
           : { height: "32px", padding: "0 15px 0 9px" }),
         color: "rgb(36, 36, 36)",
-        border: "none",
-        borderRadius: "0",
+        border: isSelected ? undefined : "none",
+        borderRadius: isSelected ? undefined : "0",
         cursor: "pointer",
         fontSize: "14px",
         ...(hasDescription ? {} : { lineHeight: "32px" }),
@@ -89,7 +89,7 @@ export function DropdownItem({
       {/* Content */}
       {hasDescription ? (
         <div style={{ flex: 1 }}>
-          <div style={{ fontWeight: isSelected ? 600 : 400 }}>{children}</div>
+          <div>{children}</div>
           <div
             style={{
               fontSize: "12px",

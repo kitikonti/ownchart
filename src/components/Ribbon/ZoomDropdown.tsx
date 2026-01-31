@@ -3,9 +3,11 @@
  * Extracted from Ribbon.tsx for modularity.
  */
 
+import type { MouseEvent } from "react";
 import { CaretDown } from "@phosphor-icons/react";
 import { useDropdown } from "../../hooks/useDropdown";
 import { DropdownPanel } from "../Toolbar/DropdownPanel";
+import { DropdownItem } from "../Toolbar/DropdownItem";
 
 interface ZoomDropdownProps {
   zoomPercentage: number;
@@ -25,6 +27,12 @@ export function ZoomDropdown({
     close();
   };
 
+  const handleContainerClick = (e: MouseEvent): void => {
+    // Don't toggle when clicking inside the dropdown panel
+    if ((e.target as HTMLElement).closest(".dropdown-panel")) return;
+    toggle();
+  };
+
   return (
     <div
       ref={containerRef}
@@ -33,7 +41,7 @@ export function ZoomDropdown({
       aria-expanded={isOpen}
       aria-haspopup="listbox"
       aria-label="Zoom level"
-      onClick={toggle}
+      onClick={handleContainerClick}
       onKeyDown={(e) => {
         if (e.key === "Enter" || e.key === " ") {
           e.preventDefault();
@@ -105,64 +113,23 @@ export function ZoomDropdown({
           {zoomOptions.map((level) => {
             const isSelected = level === zoomPercentage;
             return (
-              <button
+              <DropdownItem
                 key={level}
-                type="button"
-                role="option"
-                aria-selected={isSelected}
-                onClick={(e) => {
-                  e.stopPropagation();
-                  handleSelect(level);
-                }}
-                className={`dropdown-item${isSelected ? " dropdown-item-selected" : ""}`}
-                style={{
-                  display: "block",
-                  width: "100%",
-                  height: "32px",
-                  minHeight: "32px",
-                  padding: "0 16px",
-                  color: "rgb(50, 49, 48)",
-                  border: "1px solid transparent",
-                  cursor: "pointer",
-                  fontSize: "14px",
-                  fontWeight: isSelected ? 600 : 400,
-                  lineHeight: "20px",
-                  textAlign: "left",
-                  whiteSpace: "nowrap",
-                }}
+                isSelected={isSelected}
+                showCheckmark={false}
+                onClick={() => handleSelect(level)}
               >
                 {level}%
-              </button>
+              </DropdownItem>
             );
           })}
           {/* Fit option */}
-          <button
-            type="button"
-            role="option"
-            aria-selected={false}
-            onClick={(e) => {
-              e.stopPropagation();
-              handleSelect("fit");
-            }}
-            className="dropdown-item"
-            style={{
-              display: "block",
-              width: "100%",
-              height: "32px",
-              minHeight: "32px",
-              padding: "0 16px",
-              color: "rgb(50, 49, 48)",
-              border: "1px solid transparent",
-              cursor: "pointer",
-              fontSize: "14px",
-              fontWeight: 400,
-              lineHeight: "20px",
-              textAlign: "left",
-              whiteSpace: "nowrap",
-            }}
+          <DropdownItem
+            showCheckmark={false}
+            onClick={() => handleSelect("fit")}
           >
             Fit
-          </button>
+          </DropdownItem>
         </DropdownPanel>
       )}
     </div>

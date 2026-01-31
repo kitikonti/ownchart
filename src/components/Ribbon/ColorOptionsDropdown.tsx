@@ -15,6 +15,7 @@ import { useChartStore } from "../../store/slices/chartSlice";
 import { useDropdown } from "../../hooks/useDropdown";
 import { DropdownTrigger } from "../Toolbar/DropdownTrigger";
 import { DropdownPanel } from "../Toolbar/DropdownPanel";
+import { DropdownItem } from "../Toolbar/DropdownItem";
 import {
   COLOR_PALETTES,
   CATEGORY_LABELS,
@@ -121,28 +122,15 @@ export function ColorOptionsDropdown(): JSX.Element {
               const isSelected =
                 colorModeState.themeOptions.selectedPaletteId === palette.id;
               return (
-                <button
+                <DropdownItem
                   key={palette.id}
-                  type="button"
+                  isSelected={isSelected}
+                  showCheckmark={false}
                   onClick={() => handleSelectPalette(palette.id)}
-                  className={`dropdown-item${isSelected ? " dropdown-item-selected" : ""}`}
-                  style={{
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "space-between",
-                    width: "100%",
-                    padding: "6px 12px",
-                    border: "none",
-                    cursor: "pointer",
-                    fontSize: "13px",
-                    textAlign: "left",
-                  }}
+                  trailing={<PalettePreview colors={palette.colors} />}
                 >
-                  <span style={{ fontWeight: isSelected ? 600 : 400 }}>
-                    {palette.name}
-                  </span>
-                  <PalettePreview colors={palette.colors} />
-                </button>
+                  {palette.name}
+                </DropdownItem>
               );
             })}
           </div>
