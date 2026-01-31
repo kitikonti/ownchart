@@ -35,7 +35,7 @@ export function ZoomDialog({
   onClose,
   currentZoom,
   onSelect,
-}: ZoomDialogProps) {
+}: ZoomDialogProps): JSX.Element {
   // Find the closest preset to current zoom, or null if using "fit"
   const findClosestPreset = (zoom: number): number | "fit" => {
     // Find exact match first
@@ -60,7 +60,7 @@ export function ZoomDialog({
     }
   }, [isOpen, currentZoom]);
 
-  const handleOk = () => {
+  const handleOk = (): void => {
     onSelect(selectedValue);
   };
 

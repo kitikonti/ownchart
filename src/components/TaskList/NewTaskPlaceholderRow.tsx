@@ -76,7 +76,7 @@ export function NewTaskPlaceholderRow(): JSX.Element {
     }
   }, [isEditing]);
 
-  const handleCellClick = (field: EditableField) => {
+  const handleCellClick = (field: EditableField): void => {
     // Clear row selection when clicking a cell
     if (selectedTaskIds.length > 0) {
       clearSelection();
@@ -95,7 +95,7 @@ export function NewTaskPlaceholderRow(): JSX.Element {
     }
   };
 
-  const handleRowNumberClick = () => {
+  const handleRowNumberClick = (): void => {
     // Toggle selection of placeholder row
     const store = useTaskStore.getState();
     if (isSelected) {
@@ -114,7 +114,7 @@ export function NewTaskPlaceholderRow(): JSX.Element {
   };
 
   // Handle keyboard in navigation mode (cell is active but not editing)
-  const handleCellKeyDown = (e: KeyboardEvent<HTMLDivElement>) => {
+  const handleCellKeyDown = (e: KeyboardEvent<HTMLDivElement>): void => {
     if (isEditing) return;
 
     // Enter or F2 to start editing
@@ -143,7 +143,7 @@ export function NewTaskPlaceholderRow(): JSX.Element {
     }
   };
 
-  const handleInputKeyDown = (e: KeyboardEvent<HTMLInputElement>) => {
+  const handleInputKeyDown = (e: KeyboardEvent<HTMLInputElement>): void => {
     if (e.key === "Enter") {
       e.preventDefault();
       if (inputValue.trim()) {
@@ -215,7 +215,7 @@ export function NewTaskPlaceholderRow(): JSX.Element {
   };
 
   // Density-aware cell styles
-  const getCellStyle = (columnId: string) => ({
+  const getCellStyle = (columnId: string): React.CSSProperties => ({
     height: "var(--density-row-height)",
     paddingTop: "var(--density-cell-padding-y)",
     paddingBottom: "var(--density-cell-padding-y)",

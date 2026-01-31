@@ -7,7 +7,7 @@ import { describe, it, expect } from 'vitest';
 import { deserializeGanttFile } from '../../../../src/utils/fileOperations/deserialize';
 
 describe('File Operations - Deserialization', () => {
-  const createValidFileContent = () => ({
+  const createValidFileContent = (): Record<string, unknown> => ({
     fileVersion: '1.0.0',
     appVersion: '0.0.1',
     schemaVersion: 1,

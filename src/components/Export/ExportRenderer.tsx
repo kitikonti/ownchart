@@ -311,12 +311,11 @@ export function ExportRenderer({
   }, [orderedTasks, providedProjectDateRange]);
 
   // Get selected columns (default to all if not specified)
-  const selectedColumns = options.selectedColumns || [
-    "name",
-    "startDate",
-    "endDate",
-    "progress",
-  ];
+  const selectedColumns = useMemo(
+    () =>
+      options.selectedColumns || ["name", "startDate", "endDate", "progress"],
+    [options.selectedColumns]
+  );
   const hasTaskList = selectedColumns.length > 0;
 
   // Calculate optimal column widths based on content

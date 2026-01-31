@@ -88,14 +88,14 @@ export function RowNumberCell({
   const cellRef = useRef<HTMLDivElement>(null);
 
   // Handle drag selection - select range as mouse moves over rows
-  const handleDragSelect = (targetTaskId: string) => {
+  const handleDragSelect = (targetTaskId: string): void => {
     if (dragState.startTaskId) {
       onSelectRow(targetTaskId, true, false); // Shift-style range selection
     }
   };
 
   // Start drag selection on mousedown
-  const handleMouseDown = (e: MouseEvent) => {
+  const handleMouseDown = (e: MouseEvent): void => {
     // Only handle left mouse button on the number area, not on controls
     if (e.button !== 0 || hoveredControl === "drag") return;
 
@@ -109,7 +109,7 @@ export function RowNumberCell({
   };
 
   // Extend selection when mouse enters during drag
-  const handleMouseEnter = () => {
+  const handleMouseEnter = (): void => {
     setIsHovered(true);
 
     // If dragging, extend selection to this row
@@ -120,28 +120,30 @@ export function RowNumberCell({
 
   // End drag selection on mouseup (global listener)
   useEffect(() => {
-    const handleMouseUp = () => {
+    const handleMouseUp = (): void => {
       dragState.isDragging = false;
       dragState.startTaskId = null;
       dragState.onDragSelect = null;
     };
 
     window.addEventListener("mouseup", handleMouseUp);
-    return () => window.removeEventListener("mouseup", handleMouseUp);
+    return (): void => {
+      window.removeEventListener("mouseup", handleMouseUp);
+    };
   }, []);
 
-  const handleInsertAbove = (e: MouseEvent) => {
+  const handleInsertAbove = (e: MouseEvent): void => {
     e.stopPropagation();
     onInsertAbove?.();
   };
 
-  const handleInsertBelow = (e: MouseEvent) => {
+  const handleInsertBelow = (e: MouseEvent): void => {
     e.stopPropagation();
     onInsertBelow?.();
   };
 
   // Determine cursor based on what's being hovered
-  const getCursor = () => {
+  const getCursor = (): string => {
     if (hoveredControl === "drag") return "grab";
     if (hoveredControl === "addAbove" || hoveredControl === "addBelow")
       return "pointer";
@@ -150,7 +152,7 @@ export function RowNumberCell({
   };
 
   // Calculate border-radius for selected cells
-  const getBorderRadius = () => {
+  const getBorderRadius = (): string | undefined => {
     if (!isSelected) return undefined;
     const radius = "3px";
     const isFirst = selectionPosition?.isFirstSelected ?? true;

@@ -167,7 +167,7 @@ export const useDependencyStore = create<DependencyStore>()(
       };
     },
 
-    removeDependency: (id: string) => {
+    removeDependency: (id: string): void => {
       const historyStore = useHistoryStore.getState();
       const taskStore = useTaskStore.getState();
       const fileStore = useFileStore.getState();
@@ -206,7 +206,7 @@ export const useDependencyStore = create<DependencyStore>()(
       fileStore.markDirty();
     },
 
-    updateDependency: (id: string, updates: Partial<Dependency>) => {
+    updateDependency: (id: string, updates: Partial<Dependency>): void => {
       const historyStore = useHistoryStore.getState();
       const fileStore = useFileStore.getState();
 
@@ -244,13 +244,13 @@ export const useDependencyStore = create<DependencyStore>()(
       fileStore.markDirty();
     },
 
-    setDependencies: (dependencies: Dependency[]) => {
+    setDependencies: (dependencies: Dependency[]): void => {
       set((state) => {
         state.dependencies = dependencies;
       });
     },
 
-    clearDependencies: () => {
+    clearDependencies: (): void => {
       set((state) => {
         state.dependencies = [];
         state.selectedDependencyId = null;
@@ -283,13 +283,15 @@ export const useDependencyStore = create<DependencyStore>()(
       return toRemove;
     },
 
-    selectDependency: (id: string | null) => {
+    selectDependency: (id: string | null): void => {
       set((state) => {
         state.selectedDependencyId = id;
       });
     },
 
-    getDependenciesForTask: (taskId: string) => {
+    getDependenciesForTask: (
+      taskId: string
+    ): { predecessors: Dependency[]; successors: Dependency[] } => {
       const deps = get().dependencies;
       return {
         predecessors: deps.filter((d) => d.toTaskId === taskId),
@@ -297,11 +299,11 @@ export const useDependencyStore = create<DependencyStore>()(
       };
     },
 
-    getDependencyById: (id: string) => {
+    getDependencyById: (id: string): Dependency | undefined => {
       return get().dependencies.find((d) => d.id === id);
     },
 
-    hasDependency: (fromTaskId: string, toTaskId: string) => {
+    hasDependency: (fromTaskId: string, toTaskId: string): boolean => {
       return get().dependencies.some(
         (d) => d.fromTaskId === fromTaskId && d.toTaskId === toTaskId
       );

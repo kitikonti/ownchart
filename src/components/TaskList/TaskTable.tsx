@@ -96,7 +96,7 @@ export function TaskTable({ hideHeader = true }: TaskTableProps): JSX.Element {
 
   // Keyboard shortcuts for indent/outdent
   useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
+    const handleKeyDown = (e: KeyboardEvent): void => {
       // Only handle Tab shortcuts when NO cell is active
       // (When a cell is active, Cell.tsx handles Tab for column navigation)
       const noCellActive = !activeCell.taskId && !activeCell.field;
@@ -115,7 +115,9 @@ export function TaskTable({ hideHeader = true }: TaskTableProps): JSX.Element {
     };
 
     window.addEventListener("keydown", handleKeyDown);
-    return () => window.removeEventListener("keydown", handleKeyDown);
+    return (): void => {
+      window.removeEventListener("keydown", handleKeyDown);
+    };
   }, [
     activeCell,
     canIndent,
@@ -132,7 +134,7 @@ export function TaskTable({ hideHeader = true }: TaskTableProps): JSX.Element {
     })
   );
 
-  const handleDragEnd = (event: DragEndEvent) => {
+  const handleDragEnd = (event: DragEndEvent): void => {
     const { active, over } = event;
 
     if (over && active.id !== over.id) {
@@ -145,7 +147,7 @@ export function TaskTable({ hideHeader = true }: TaskTableProps): JSX.Element {
     }
   };
 
-  const handleHeaderCheckboxClick = () => {
+  const handleHeaderCheckboxClick = (): void => {
     if (allSelected) {
       clearSelection();
     } else {
@@ -192,7 +194,7 @@ export function TaskTable({ hideHeader = true }: TaskTableProps): JSX.Element {
   /**
    * Handle column resize.
    */
-  const handleColumnResize = (columnId: string, width: number) => {
+  const handleColumnResize = (columnId: string, width: number): void => {
     setColumnWidth(columnId, width);
   };
 

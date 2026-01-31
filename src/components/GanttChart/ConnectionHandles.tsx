@@ -75,11 +75,12 @@ export const ConnectionHandles = memo(function ConnectionHandles({
 
   // Handle mouse down to start drag
   const handleMouseDown = useCallback(
-    (side: "start" | "end") => (e: React.MouseEvent) => {
-      e.stopPropagation();
-      e.preventDefault();
-      onDragStart(taskId, side, e);
-    },
+    (side: "start" | "end") =>
+      (e: React.MouseEvent): void => {
+        e.stopPropagation();
+        e.preventDefault();
+        onDragStart(taskId, side, e);
+      },
     [taskId, onDragStart]
   );
 

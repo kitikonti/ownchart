@@ -13,7 +13,10 @@ interface TodayMarkerProps {
   svgHeight: number;
 }
 
-export function TodayMarker({ scale, svgHeight }: TodayMarkerProps) {
+export function TodayMarker({
+  scale,
+  svgHeight,
+}: TodayMarkerProps): JSX.Element | null {
   const today = format(new Date(), "yyyy-MM-dd");
 
   // Don't render if today is outside visible range

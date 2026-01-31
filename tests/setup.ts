@@ -23,11 +23,11 @@ global.ResizeObserver = vi.fn().mockImplementation(() => ({
 }));
 
 // Mock HTMLCanvasElement.getContext for text measurement in jsdom
-HTMLCanvasElement.prototype.getContext = vi.fn().mockImplementation((contextType: string) => {
+HTMLCanvasElement.prototype.getContext = vi.fn().mockImplementation((contextType: string): unknown => {
   if (contextType === '2d') {
     let currentFont = '12px sans-serif';
     return {
-      get font() { return currentFont; },
+      get font(): string { return currentFont; },
       set font(value: string) { currentFont = value; },
       measureText: vi.fn().mockImplementation((text: string) => {
         // Extract font size from current font string (e.g., "16px Inter")

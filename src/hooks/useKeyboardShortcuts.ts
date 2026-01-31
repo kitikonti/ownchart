@@ -20,7 +20,7 @@ import { useFileOperations } from "./useFileOperations";
 import { useClipboardOperations } from "./useClipboardOperations";
 import { useClipboardStore } from "../store/slices/clipboardSlice";
 
-export function useKeyboardShortcuts() {
+export function useKeyboardShortcuts(): void {
   const undo = useHistoryStore((state) => state.undo);
   const redo = useHistoryStore((state) => state.redo);
   const { handleSave, handleSaveAs, handleOpen, handleNew } =
@@ -53,7 +53,7 @@ export function useKeyboardShortcuts() {
   const isWelcomeTourOpen = useUIStore((state) => state.isWelcomeTourOpen);
 
   useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
+    const handleKeyDown = (e: KeyboardEvent): void => {
       const isMac = navigator.platform.toUpperCase().indexOf("MAC") >= 0;
       const modKey = isMac ? e.metaKey : e.ctrlKey;
 
@@ -252,7 +252,7 @@ export function useKeyboardShortcuts() {
 
     window.addEventListener("keydown", handleKeyDown);
 
-    return () => {
+    return (): void => {
       window.removeEventListener("keydown", handleKeyDown);
     };
   }, [

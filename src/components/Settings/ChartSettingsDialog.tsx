@@ -147,7 +147,7 @@ export function ChartSettingsDialog(): JSX.Element | null {
     return country?.name || holidayRegion;
   }, [allCountries, holidayRegion]);
 
-  const handleCountrySelect = (code: string) => {
+  const handleCountrySelect = (code: string): void => {
     setHolidayRegion(code);
     setIsCountryDropdownOpen(false);
     setCountrySearch("");
@@ -301,6 +301,7 @@ export function ChartSettingsDialog(): JSX.Element | null {
                             placeholder="Search countries..."
                             variant="figma"
                             className="!pl-8 !pr-3 !py-1.5"
+                            /* eslint-disable-next-line jsx-a11y/no-autofocus -- intentional autofocus for search field in dropdown */
                             autoFocus
                           />
                         </div>

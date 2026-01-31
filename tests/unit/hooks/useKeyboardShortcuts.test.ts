@@ -15,7 +15,7 @@ const mockHandleOpen = vi.fn();
 const mockHandleNew = vi.fn();
 
 vi.mock('../../../src/hooks/useFileOperations', () => ({
-  useFileOperations: () => ({
+  useFileOperations: (): Record<string, unknown> => ({
     handleSave: mockHandleSave,
     handleSaveAs: mockHandleSaveAs,
     handleOpen: mockHandleOpen,
@@ -51,7 +51,7 @@ describe('useKeyboardShortcuts', () => {
     vi.restoreAllMocks();
   });
 
-  const simulateKeyPress = (key: string, options: Partial<KeyboardEventInit> = {}) => {
+  const simulateKeyPress = (key: string, options: Partial<KeyboardEventInit> = {}): KeyboardEvent => {
     const event = new KeyboardEvent('keydown', {
       key,
       bubbles: true,

@@ -28,7 +28,7 @@ const mockAddFileToVFS = vi.fn();
 const mockAddFont = vi.fn();
 const mockSvg = vi.fn().mockResolvedValue(undefined);
 
-const createMockJsPDF = () => ({
+const createMockJsPDF = (): Record<string, unknown> => ({
   save: mockSave,
   setProperties: mockSetProperties,
   setFontSize: mockSetFontSize,

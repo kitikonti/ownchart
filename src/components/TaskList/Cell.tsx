@@ -153,7 +153,7 @@ export function Cell({
   /**
    * Handle cell click - activate or edit.
    */
-  const handleClick = (e: MouseEvent<HTMLDivElement>) => {
+  const handleClick = (e: MouseEvent<HTMLDivElement>): void => {
     e.stopPropagation();
 
     // Clear row selection when clicking a cell (Excel behavior)
@@ -176,7 +176,7 @@ export function Cell({
   /**
    * Handle keyboard navigation in navigation mode.
    */
-  const handleNavigationKeyDown = (e: KeyboardEvent<HTMLDivElement>) => {
+  const handleNavigationKeyDown = (e: KeyboardEvent<HTMLDivElement>): void => {
     // Arrow key navigation
     if (e.key === "ArrowUp") {
       e.preventDefault();
@@ -229,7 +229,7 @@ export function Cell({
   /**
    * Validate and save the cell value.
    */
-  const saveValue = () => {
+  const saveValue = (): void => {
     if (!column.validator) {
       // No validator, save directly
       updateCellValue(localValue);
@@ -303,7 +303,7 @@ export function Cell({
   /**
    * Update cell value in store.
    */
-  const updateCellValue = (value: string) => {
+  const updateCellValue = (value: string): void => {
     let typedValue: string | number = value;
 
     // Convert to appropriate type
@@ -317,7 +317,7 @@ export function Cell({
   /**
    * Cancel edit mode without saving.
    */
-  const cancelEdit = () => {
+  const cancelEdit = (): void => {
     setError(null);
     setLocalValue(String(currentValue));
     stopCellEdit();
@@ -326,7 +326,7 @@ export function Cell({
   /**
    * Handle keyboard events in edit mode.
    */
-  const handleEditKeyDown = (e: KeyboardEvent<HTMLInputElement>) => {
+  const handleEditKeyDown = (e: KeyboardEvent<HTMLInputElement>): void => {
     if (e.key === "Enter") {
       e.preventDefault();
       saveValue();
@@ -399,6 +399,7 @@ export function Cell({
   // Render edit mode
   if (isEditing) {
     return (
+      // eslint-disable-next-line jsx-a11y/click-events-have-key-events, jsx-a11y/no-static-element-interactions -- edit mode container, keyboard handled by inner input
       <div
         ref={cellRef}
         className={`relative flex items-center border-b ${column.id !== "color" ? "border-r" : ""} border-neutral-200 bg-white z-20`}
@@ -422,6 +423,7 @@ export function Cell({
             onChange={(e) => setLocalValue(e.target.value)}
             onKeyDown={handleEditKeyDown}
             onBlur={saveValue}
+            /* eslint-disable-next-line jsx-a11y/no-autofocus -- intentional autofocus when entering edit mode */
             autoFocus
             className="w-full px-0 py-0 border-0 focus:outline-none bg-transparent"
             style={{ fontSize: "inherit" }}
@@ -441,6 +443,7 @@ export function Cell({
   return (
     <div
       ref={cellRef}
+      role="gridcell"
       tabIndex={0}
       className={`
         border-b ${column.id !== "color" ? "border-r" : ""} border-neutral-200 flex items-center cursor-pointer relative

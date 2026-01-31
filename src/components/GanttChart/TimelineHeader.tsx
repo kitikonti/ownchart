@@ -150,7 +150,10 @@ function generateScaleCells(
   return cells;
 }
 
-export function TimelineHeader({ scale, width }: TimelineHeaderProps) {
+export function TimelineHeader({
+  scale,
+  width,
+}: TimelineHeaderProps): JSX.Element {
   // Use provided width or fall back to scale.totalWidth
   const headerWidth = width ?? scale.totalWidth;
 

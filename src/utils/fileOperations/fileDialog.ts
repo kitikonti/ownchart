@@ -174,7 +174,7 @@ export async function openFile(): Promise<OpenFileResult> {
     input.type = "file";
     input.accept = ".ownchart,application/json";
 
-    input.onchange = async () => {
+    input.onchange = async (): Promise<void> => {
       if (!input.files || input.files.length === 0) {
         resolve({ success: false, error: "No file selected" });
         return;
@@ -192,7 +192,7 @@ export async function openFile(): Promise<OpenFileResult> {
       });
     };
 
-    input.oncancel = () => {
+    input.oncancel = (): void => {
       resolve({ success: false, error: "Open cancelled" });
     };
 

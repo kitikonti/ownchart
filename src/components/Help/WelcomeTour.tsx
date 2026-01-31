@@ -30,13 +30,13 @@ export function WelcomeTour(): JSX.Element | null {
   } = useUIStore();
   const [dontShowAgain, setDontShowAgain] = useState(false);
 
-  const handleGetStarted = () => {
+  const handleGetStarted = (): void => {
     dismissWelcome(dontShowAgain);
     // Open chart settings dialog for new project configuration
     openChartSettingsAfterDelay(openChartSettingsDialog);
   };
 
-  const handleShowShortcuts = () => {
+  const handleShowShortcuts = (): void => {
     dismissWelcome(dontShowAgain);
     // Delay opening help panel to ensure welcome is closed first
     setTimeout(() => {
@@ -45,7 +45,7 @@ export function WelcomeTour(): JSX.Element | null {
     // Note: Don't open chart settings when showing shortcuts - user can access it later
   };
 
-  const handleClose = () => {
+  const handleClose = (): void => {
     dismissWelcome(dontShowAgain);
     // Open chart settings dialog for new project configuration
     openChartSettingsAfterDelay(openChartSettingsDialog);

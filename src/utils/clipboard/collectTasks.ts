@@ -28,7 +28,7 @@ export function collectTasksWithChildren(
   /**
    * Recursively collect children of a collapsed task.
    */
-  const collectChildrenOfCollapsed = (taskId: string) => {
+  const collectChildrenOfCollapsed = (taskId: string): void => {
     const children = getTaskChildren(allTasks, taskId);
     children.forEach((child) => {
       if (collected.has(child.id)) return;

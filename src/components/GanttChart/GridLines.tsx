@@ -37,7 +37,7 @@ export function GridLines({
   holidayRegion = "",
   width,
   rowHeight = 36, // Default to Normal density
-}: GridLinesProps) {
+}: GridLinesProps): JSX.Element {
   // Use provided width or fall back to scale.totalWidth
   const gridWidth = width ?? scale.totalWidth;
 
@@ -228,7 +228,7 @@ export function GridLines({
       {verticalLines.map(({ x, date, isWeekend: isWeekendDay }) => {
         // At daily resolution: subtle lines, weekend lines slightly darker
         // At weekly/monthly resolution: slightly more prominent lines
-        const getStroke = () => {
+        const getStroke = (): string => {
           if (lineType === "daily") {
             return isWeekendDay ? "#dee2e6" : "#e9ecef";
           }

@@ -120,7 +120,7 @@ export const useUserPreferencesStore = create<UserPreferencesStore>()(
       isInitialized: false,
 
       // Set UI density
-      setUiDensity: (density: UiDensity) => {
+      setUiDensity: (density: UiDensity): void => {
         set((state) => {
           state.preferences.uiDensity = density;
         });
@@ -135,21 +135,21 @@ export const useUserPreferencesStore = create<UserPreferencesStore>()(
       },
 
       // Set date format
-      setDateFormat: (format: DateFormat) => {
+      setDateFormat: (format: DateFormat): void => {
         set((state) => {
           state.preferences.dateFormat = format;
         });
       },
 
       // Set first day of week
-      setFirstDayOfWeek: (day: FirstDayOfWeek) => {
+      setFirstDayOfWeek: (day: FirstDayOfWeek): void => {
         set((state) => {
           state.preferences.firstDayOfWeek = day;
         });
       },
 
       // Set week numbering system
-      setWeekNumberingSystem: (system: WeekNumberingSystem) => {
+      setWeekNumberingSystem: (system: WeekNumberingSystem): void => {
         set((state) => {
           state.preferences.weekNumberingSystem = system;
         });
@@ -157,7 +157,7 @@ export const useUserPreferencesStore = create<UserPreferencesStore>()(
 
       // Initialize all preferences on app start
       // Handles migration for legacy users and new settings
-      initializePreferences: () => {
+      initializePreferences: (): void => {
         const state = get();
 
         // Only run initialization once
@@ -191,7 +191,7 @@ export const useUserPreferencesStore = create<UserPreferencesStore>()(
       },
 
       // Deprecated - use initializePreferences
-      initializeDensity: () => {
+      initializeDensity: (): void => {
         get().initializePreferences();
       },
     })),

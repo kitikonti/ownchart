@@ -34,7 +34,7 @@ const HEADER_HEIGHT = 48; // Timeline header height
 const MIN_TABLE_WIDTH = 200; // Minimum width for task table
 const SCROLLBAR_HEIGHT = 17; // Reserve space for horizontal scrollbar
 
-export function GanttLayout() {
+export function GanttLayout(): JSX.Element {
   // Refs for scroll synchronization and measurements
   const outerScrollRef = useRef<HTMLDivElement>(null);
   const stickyContainerRef = useRef<HTMLDivElement>(null);
@@ -113,7 +113,7 @@ export function GanttLayout() {
   }, []);
 
   // Handle vertical scroll from outer container
-  const handleOuterScroll = useCallback(() => {
+  const handleOuterScroll = useCallback((): void => {
     const el = outerScrollRef.current;
     if (el) {
       setScrollTop(el.scrollTop);
@@ -127,8 +127,11 @@ export function GanttLayout() {
 
     if (!chartContainer || !headerScroll) return;
 
-    const syncScroll = (source: HTMLElement, target: HTMLElement) => {
-      return () => {
+    const syncScroll = (
+      source: HTMLElement,
+      target: HTMLElement
+    ): (() => void) => {
+      return (): void => {
         target.scrollLeft = source.scrollLeft;
       };
     };
@@ -139,7 +142,7 @@ export function GanttLayout() {
     chartContainer.addEventListener("scroll", chartToHeader);
     headerScroll.addEventListener("scroll", headerToChart);
 
-    return () => {
+    return (): void => {
       chartContainer.removeEventListener("scroll", chartToHeader);
       headerScroll.removeEventListener("scroll", headerToChart);
     };
@@ -152,8 +155,11 @@ export function GanttLayout() {
 
     if (!tableContainer || !headerScroll) return;
 
-    const syncScroll = (source: HTMLElement, target: HTMLElement) => {
-      return () => {
+    const syncScroll = (
+      source: HTMLElement,
+      target: HTMLElement
+    ): (() => void) => {
+      return (): void => {
         target.scrollLeft = source.scrollLeft;
       };
     };
@@ -164,7 +170,7 @@ export function GanttLayout() {
     tableContainer.addEventListener("scroll", tableToHeader);
     headerScroll.addEventListener("scroll", headerToTable);
 
-    return () => {
+    return (): void => {
       tableContainer.removeEventListener("scroll", tableToHeader);
       headerScroll.removeEventListener("scroll", headerToTable);
     };
@@ -246,7 +252,7 @@ export function GanttLayout() {
 
     const THRESHOLD = 500; // px from edge to trigger extension (earlier = smoother)
 
-    const handleScroll = () => {
+    const handleScroll = (): void => {
       const { scrollLeft, scrollWidth, clientWidth } = chartContainer;
       const now = Date.now();
 
@@ -320,7 +326,7 @@ export function GanttLayout() {
     };
 
     chartContainer.addEventListener("scroll", handleScroll);
-    return () => {
+    return (): void => {
       chartContainer.removeEventListener("scroll", handleScroll);
       // Clear any pending extension timeout
       if (pendingPastExtensionRef.current) {
@@ -332,7 +338,7 @@ export function GanttLayout() {
 
   // Measure viewport dimensions on mount and window resize
   useEffect(() => {
-    const measureDimensions = () => {
+    const measureDimensions = (): void => {
       if (outerScrollRef.current) {
         const height = outerScrollRef.current.getBoundingClientRect().height;
         if (height > 100) {
@@ -353,7 +359,7 @@ export function GanttLayout() {
 
     // Update on window resize
     window.addEventListener("resize", measureDimensions);
-    return () => {
+    return (): void => {
       clearTimeout(timer);
       window.removeEventListener("resize", measureDimensions);
     };
@@ -366,7 +372,7 @@ export function GanttLayout() {
 
     if (!outerScroll || !chartContainer) return;
 
-    const ro = new ResizeObserver(() => {
+    const ro = new ResizeObserver((): void => {
       setViewportHeight(outerScroll.offsetHeight);
       setChartContainerWidth(chartContainer.offsetWidth);
     });
@@ -374,7 +380,9 @@ export function GanttLayout() {
     ro.observe(outerScroll);
     ro.observe(chartContainer);
 
-    return () => ro.disconnect();
+    return (): void => {
+      ro.disconnect();
+    };
   }, []);
 
   // Track viewport state for export visible range calculation
@@ -382,7 +390,7 @@ export function GanttLayout() {
     const chartContainer = chartContainerRef.current;
     if (!chartContainer) return;
 
-    const updateViewport = () => {
+    const updateViewport = (): void => {
       setViewport(chartContainer.scrollLeft, chartContainer.clientWidth);
     };
 
@@ -396,7 +404,7 @@ export function GanttLayout() {
     const ro = new ResizeObserver(updateViewport);
     ro.observe(chartContainer);
 
-    return () => {
+    return (): void => {
       chartContainer.removeEventListener("scroll", updateViewport);
       ro.disconnect();
     };

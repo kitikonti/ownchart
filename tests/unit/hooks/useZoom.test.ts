@@ -28,9 +28,9 @@ describe('useZoom', () => {
       height: 500,
       x: 100,
       y: 50,
-      toJSON: () => {},
+      toJSON: (): Record<string, never> => ({}),
     }));
-    (containerRef as any).current = mockElement;
+    (containerRef as { current: HTMLDivElement }).current = mockElement;
 
     // Create spies
     setZoomSpy = vi.fn();
@@ -160,7 +160,7 @@ describe('useZoom', () => {
   });
 
   describe('Keyboard shortcuts', () => {
-    const simulateKeyPress = (key: string, options: Partial<KeyboardEventInit> = {}) => {
+    const simulateKeyPress = (key: string, options: Partial<KeyboardEventInit> = {}): KeyboardEvent => {
       const event = new KeyboardEvent('keydown', {
         key,
         bubbles: true,
@@ -339,7 +339,7 @@ describe('useZoom', () => {
     it('should handle multiple keyboard shortcuts', () => {
       renderHook(() => useZoom({ containerRef }));
 
-      const simulateKeyPress = (key: string, options: Partial<KeyboardEventInit> = {}) => {
+      const simulateKeyPress = (key: string, options: Partial<KeyboardEventInit> = {}): void => {
         window.dispatchEvent(
           new KeyboardEvent('keydown', {
             key,

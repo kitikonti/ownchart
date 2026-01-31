@@ -49,7 +49,7 @@ const COLOR_MODE_OPTIONS: ColorModeOption[] = [
   },
 ];
 
-export function ColorModeDropdown() {
+export function ColorModeDropdown(): JSX.Element {
   const [isOpen, setIsOpen] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
 
@@ -63,7 +63,7 @@ export function ColorModeDropdown() {
   useEffect(() => {
     if (!isOpen) return;
 
-    const handleClickOutside = (e: MouseEvent) => {
+    const handleClickOutside = (e: MouseEvent): void => {
       if (
         containerRef.current &&
         !containerRef.current.contains(e.target as Node)
@@ -73,24 +73,28 @@ export function ColorModeDropdown() {
     };
 
     document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
+    return (): void => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
   }, [isOpen]);
 
   // Close on Escape
   useEffect(() => {
     if (!isOpen) return;
 
-    const handleKeyDown = (e: KeyboardEvent) => {
+    const handleKeyDown = (e: KeyboardEvent): void => {
       if (e.key === "Escape") {
         setIsOpen(false);
       }
     };
 
     document.addEventListener("keydown", handleKeyDown);
-    return () => document.removeEventListener("keydown", handleKeyDown);
+    return (): void => {
+      document.removeEventListener("keydown", handleKeyDown);
+    };
   }, [isOpen]);
 
-  const handleSelect = (mode: ColorMode) => {
+  const handleSelect = (mode: ColorMode): void => {
     setColorMode(mode);
     setIsOpen(false);
   };

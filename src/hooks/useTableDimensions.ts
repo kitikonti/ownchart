@@ -31,7 +31,7 @@ function parseWidth(widthStr: string): number {
  * Uses density-aware widths when no custom width is set.
  * Uses visible columns for show/hide progress column (Sprint 1.5.9).
  */
-export function useTableDimensions() {
+export function useTableDimensions(): { totalColumnWidth: number } {
   const columnWidths = useTaskStore((state) => state.columnWidths);
   const densityConfig = useDensityConfig();
   const showProgress = useChartStore((state) => state.showProgress);

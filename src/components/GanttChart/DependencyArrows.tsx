@@ -35,7 +35,7 @@ export function DependencyArrows({
   scale,
   rowHeight = DEFAULT_DENSITY_GEOMETRY.rowHeight,
   dragState,
-}: DependencyArrowsProps) {
+}: DependencyArrowsProps): JSX.Element {
   // Create density config from rowHeight for backwards compatibility
   const densityGeometry: DensityGeometryConfig = useMemo(() => {
     // Calculate proportional values based on rowHeight

@@ -141,7 +141,7 @@ export function useMultiTabPersistence(): void {
   useEffect(() => {
     const tabId = tabIdRef.current;
 
-    const saveCurrentState = () => {
+    const saveCurrentState = (): void => {
       // Don't save during initial restoration to avoid loops
       // BUT allow saves after restoration is complete
       if (isRestoringRef.current) {
@@ -223,7 +223,7 @@ export function useMultiTabPersistence(): void {
 
   // Listen for storage events from other tabs
   useEffect(() => {
-    const handleStorageEvent = (e: StorageEvent) => {
+    const handleStorageEvent = (e: StorageEvent): void => {
       // Only react to changes in our storage key from other tabs
       if (e.key !== "ownchart-multi-tab-state") return;
       if (e.newValue === null) return;

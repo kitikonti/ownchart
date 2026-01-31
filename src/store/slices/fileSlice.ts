@@ -45,33 +45,33 @@ export const useFileStore = create<FileStore>()(
     chartId: null,
 
     // Actions
-    setFileName: (name) =>
+    setFileName: (name): void =>
       set((state) => {
         state.fileName = name;
       }),
 
-    setChartId: (id) =>
+    setChartId: (id): void =>
       set((state) => {
         state.chartId = id;
       }),
 
-    markDirty: () =>
+    markDirty: (): void =>
       set((state) => {
         state.isDirty = true;
       }),
 
-    markClean: () =>
+    markClean: (): void =>
       set((state) => {
         state.isDirty = false;
       }),
 
-    setLastSaved: (date) =>
+    setLastSaved: (date): void =>
       set((state) => {
         state.lastSaved = date;
         state.isDirty = false;
       }),
 
-    reset: () =>
+    reset: (): void =>
       set((state) => {
         state.fileName = null;
         state.isDirty = false;

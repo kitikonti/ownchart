@@ -45,7 +45,11 @@ function applyScrollLeft(newScrollLeft: number | null): void {
   }
 }
 
-export function useZoom({ containerRef, enabled = true }: UseZoomOptions) {
+export function useZoom({ containerRef, enabled = true }: UseZoomOptions): {
+  handlers: {
+    onWheel: (e: React.WheelEvent) => void;
+  };
+} {
   const { zoom, scale, setZoom, zoomIn, zoomOut, resetZoom } = useChartStore();
 
   // Zoom with Ctrl/Cmd + Wheel (centered on cursor position)
@@ -101,7 +105,7 @@ export function useZoom({ containerRef, enabled = true }: UseZoomOptions) {
   useEffect(() => {
     if (!enabled) return;
 
-    const preventBrowserZoom = (e: WheelEvent) => {
+    const preventBrowserZoom = (e: WheelEvent): void => {
       // If Ctrl/Cmd is pressed, prevent browser zoom globally
       // This ensures consistent Ctrl+Wheel behavior across the entire app
       if (e.ctrlKey || e.metaKey) {
@@ -115,7 +119,7 @@ export function useZoom({ containerRef, enabled = true }: UseZoomOptions) {
       capture: true,
     });
 
-    return () => {
+    return (): void => {
       window.removeEventListener("wheel", preventBrowserZoom, {
         capture: true,
       });
@@ -126,7 +130,7 @@ export function useZoom({ containerRef, enabled = true }: UseZoomOptions) {
   useEffect(() => {
     if (!enabled) return;
 
-    const handleKeyDown = (e: KeyboardEvent) => {
+    const handleKeyDown = (e: KeyboardEvent): void => {
       // Check if target is an input element
       const target = e.target as HTMLElement;
       const isInput =
@@ -137,7 +141,9 @@ export function useZoom({ containerRef, enabled = true }: UseZoomOptions) {
       // Zoom shortcuts (Ctrl/Cmd + key)
       if ((e.ctrlKey || e.metaKey) && !isInput) {
         // Get viewport center anchor for keyboard zoom
-        const getViewportCenterAnchor = () => {
+        const getViewportCenterAnchor = ():
+          | { anchorDate: string; anchorPixelOffset: number }
+          | undefined => {
           const scrollContainer = getScrollContainer();
           const currentScale = useChartStore.getState().scale;
 
@@ -185,7 +191,7 @@ export function useZoom({ containerRef, enabled = true }: UseZoomOptions) {
 
     window.addEventListener("keydown", handleKeyDown);
 
-    return () => {
+    return (): void => {
       window.removeEventListener("keydown", handleKeyDown);
     };
   }, [enabled, zoomIn, zoomOut, resetZoom]);
@@ -201,7 +207,9 @@ export function useZoom({ containerRef, enabled = true }: UseZoomOptions) {
 /**
  * Helper to get viewport center anchor for external use (e.g., toolbar buttons)
  */
-export function getViewportCenterAnchor() {
+export function getViewportCenterAnchor():
+  | { anchorDate: string; anchorPixelOffset: number }
+  | undefined {
   const scrollContainer = getScrollContainer();
   const scale = useChartStore.getState().scale;
 

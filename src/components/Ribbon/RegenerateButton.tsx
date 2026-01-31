@@ -14,14 +14,14 @@ import { ArrowsClockwise } from "@phosphor-icons/react";
 import { useChartStore } from "../../store/slices/chartSlice";
 import { TOOLBAR } from "../../styles/design-tokens";
 
-export function RegenerateButton() {
+export function RegenerateButton(): JSX.Element {
   const [isHovered, setIsHovered] = useState(false);
 
   const colorModeState = useChartStore((state) => state.colorModeState);
   const currentMode = colorModeState.mode;
 
   // Get tooltip text based on current mode
-  const getTooltip = () => {
+  const getTooltip = (): string => {
     switch (currentMode) {
       case "theme":
         return "Re-distribute palette colors to all tasks";
@@ -37,7 +37,7 @@ export function RegenerateButton() {
     }
   };
 
-  const handleClick = () => {
+  const handleClick = (): void => {
     // TODO: Implement regeneration logic in useComputedTaskColor hook
     // For now, this is a placeholder that will trigger re-computation
     // The actual logic will be implemented when we create the hook

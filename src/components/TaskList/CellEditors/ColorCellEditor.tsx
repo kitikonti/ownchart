@@ -47,23 +47,23 @@ export function ColorCellEditor({
     }
   }, []);
 
-  const handleClick = () => {
+  const handleClick = (): void => {
     if (triggerRef.current) {
       setAnchorRect(triggerRef.current.getBoundingClientRect());
       setShowPopover(true);
     }
   };
 
-  const handleSelect = (color: string) => {
+  const handleSelect = (color: string): void => {
     onChange(color);
   };
 
-  const handleClose = () => {
+  const handleClose = (): void => {
     setShowPopover(false);
     onSave?.();
   };
 
-  const handleKeyDown = (e: KeyboardEvent<HTMLButtonElement>) => {
+  const handleKeyDown = (e: KeyboardEvent<HTMLButtonElement>): void => {
     if (e.key === "Enter") {
       e.preventDefault();
       handleClick();

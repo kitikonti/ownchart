@@ -198,7 +198,7 @@ describe('File Operations - Validation', () => {
   });
 
   describe('Layer 4: Semantic Validation', () => {
-    const createValidFile = () => ({
+    const createValidFile = (): Record<string, unknown> => ({
       fileVersion: '1.0.0',
       chart: {
         id: '123e4567-e89b-12d3-a456-426614174000',

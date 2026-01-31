@@ -23,7 +23,13 @@ import { TOOLBAR } from "../../styles/design-tokens";
 /**
  * Color swatch component for palette preview
  */
-function ColorSwatch({ color, size = 16 }: { color: string; size?: number }) {
+function ColorSwatch({
+  color,
+  size = 16,
+}: {
+  color: string;
+  size?: number;
+}): JSX.Element {
   return (
     <span
       style={{
@@ -42,7 +48,7 @@ function ColorSwatch({ color, size = 16 }: { color: string; size?: number }) {
 /**
  * Palette preview row showing 5 color swatches
  */
-function PalettePreview({ colors }: { colors: string[] }) {
+function PalettePreview({ colors }: { colors: string[] }): JSX.Element {
   return (
     <div style={{ display: "flex", gap: "2px" }}>
       {colors.slice(0, 5).map((color, i) => (
@@ -52,7 +58,7 @@ function PalettePreview({ colors }: { colors: string[] }) {
   );
 }
 
-export function ColorOptionsDropdown() {
+export function ColorOptionsDropdown(): JSX.Element {
   const [isOpen, setIsOpen] = useState(false);
   const [customMonoInput, setCustomMonoInput] = useState("#0F6CBD");
   const containerRef = useRef<HTMLDivElement>(null);
@@ -71,7 +77,7 @@ export function ColorOptionsDropdown() {
   useEffect(() => {
     if (!isOpen) return;
 
-    const handleClickOutside = (e: MouseEvent) => {
+    const handleClickOutside = (e: MouseEvent): void => {
       if (
         containerRef.current &&
         !containerRef.current.contains(e.target as Node)
@@ -81,24 +87,28 @@ export function ColorOptionsDropdown() {
     };
 
     document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
+    return (): void => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
   }, [isOpen]);
 
   // Close on Escape
   useEffect(() => {
     if (!isOpen) return;
 
-    const handleKeyDown = (e: KeyboardEvent) => {
+    const handleKeyDown = (e: KeyboardEvent): void => {
       if (e.key === "Escape") {
         setIsOpen(false);
       }
     };
 
     document.addEventListener("keydown", handleKeyDown);
-    return () => document.removeEventListener("keydown", handleKeyDown);
+    return (): void => {
+      document.removeEventListener("keydown", handleKeyDown);
+    };
   }, [isOpen]);
 
-  const handleSelectPalette = (paletteId: string) => {
+  const handleSelectPalette = (paletteId: string): void => {
     setThemeOptions({
       selectedPaletteId: paletteId,
       customMonochromeBase: null,
@@ -106,7 +116,7 @@ export function ColorOptionsDropdown() {
     setIsOpen(false);
   };
 
-  const handleCreateMonochrome = () => {
+  const handleCreateMonochrome = (): void => {
     setThemeOptions({
       selectedPaletteId: null,
       customMonochromeBase: customMonoInput,
@@ -121,7 +131,7 @@ export function ColorOptionsDropdown() {
     creative: COLOR_PALETTES.filter((p) => p.category === "creative"),
   };
 
-  const renderThemeOptions = () => (
+  const renderThemeOptions = (): JSX.Element => (
     <div style={{ padding: "8px 0" }}>
       {(["corporate", "nature", "creative"] as PaletteCategory[]).map(
         (category) => (
@@ -246,7 +256,7 @@ export function ColorOptionsDropdown() {
     </div>
   );
 
-  const renderSummaryOptions = () => (
+  const renderSummaryOptions = (): JSX.Element => (
     <div style={{ padding: "12px" }}>
       <label
         style={{
@@ -294,7 +304,7 @@ export function ColorOptionsDropdown() {
     </div>
   );
 
-  const renderTaskTypeOptions = () => (
+  const renderTaskTypeOptions = (): JSX.Element => (
     <div style={{ padding: "12px" }}>
       {/* Summary Color */}
       <div
@@ -374,7 +384,7 @@ export function ColorOptionsDropdown() {
     </div>
   );
 
-  const renderHierarchyOptions = () => (
+  const renderHierarchyOptions = (): JSX.Element => (
     <div style={{ padding: "12px" }}>
       {/* Base Color */}
       <div
@@ -459,7 +469,7 @@ export function ColorOptionsDropdown() {
     </div>
   );
 
-  const renderManualOptions = () => (
+  const renderManualOptions = (): JSX.Element => (
     <div style={{ padding: "12px" }}>
       <div
         style={{
@@ -473,7 +483,7 @@ export function ColorOptionsDropdown() {
     </div>
   );
 
-  const renderContent = () => {
+  const renderContent = (): JSX.Element => {
     switch (currentMode) {
       case "theme":
         return renderThemeOptions();

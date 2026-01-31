@@ -48,7 +48,9 @@ interface ToolbarSeparatorProps {
  * Subtle vertical separator between toolbar sections.
  * Use sparingly - prefer spacing for closely related groups.
  */
-export function ToolbarSeparator({ className = "" }: ToolbarSeparatorProps) {
+export function ToolbarSeparator({
+  className = "",
+}: ToolbarSeparatorProps): JSX.Element {
   return (
     <div
       className={`toolbar-separator h-5 mx-2 flex-shrink-0 ${className}`}
@@ -80,7 +82,7 @@ export function ToolbarGroup({
   label,
   withSeparator = false,
   className = "",
-}: ToolbarGroupProps) {
+}: ToolbarGroupProps): JSX.Element {
   return (
     <>
       <div
@@ -225,6 +227,6 @@ export const ToolbarButton = forwardRef<HTMLButtonElement, ToolbarButtonProps>(
 /**
  * Flexible spacer to push elements to the right.
  */
-export function ToolbarSpacer() {
+export function ToolbarSpacer(): JSX.Element {
   return <div className="flex-1 min-w-4" />;
 }

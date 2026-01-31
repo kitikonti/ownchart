@@ -105,7 +105,7 @@ export const useClipboardStore = create<ClipboardStore>()(
     activeMode: null,
 
     // Actions
-    copyRows: (taskIds) => {
+    copyRows: (taskIds): void => {
       const taskStore = useTaskStore.getState();
       const depStore = useDependencyStore.getState();
       const historyStore = useHistoryStore.getState();
@@ -160,7 +160,7 @@ export const useClipboardStore = create<ClipboardStore>()(
       }
     },
 
-    cutRows: (taskIds) => {
+    cutRows: (taskIds): void => {
       const taskStore = useTaskStore.getState();
       const depStore = useDependencyStore.getState();
       const historyStore = useHistoryStore.getState();
@@ -215,7 +215,7 @@ export const useClipboardStore = create<ClipboardStore>()(
       }
     },
 
-    pasteRows: () => {
+    pasteRows: (): { success: boolean; error?: string } => {
       const { rowClipboard, activeMode } = get();
       const taskStore = useTaskStore.getState();
       const depStore = useDependencyStore.getState();
@@ -456,7 +456,7 @@ export const useClipboardStore = create<ClipboardStore>()(
       return { success: true };
     },
 
-    copyCell: (taskId, field) => {
+    copyCell: (taskId, field): void => {
       const taskStore = useTaskStore.getState();
       const historyStore = useHistoryStore.getState();
 
@@ -503,7 +503,7 @@ export const useClipboardStore = create<ClipboardStore>()(
       }
     },
 
-    cutCell: (taskId, field) => {
+    cutCell: (taskId, field): void => {
       const taskStore = useTaskStore.getState();
       const historyStore = useHistoryStore.getState();
 
@@ -553,7 +553,10 @@ export const useClipboardStore = create<ClipboardStore>()(
       }
     },
 
-    pasteCell: (targetTaskId, targetField) => {
+    pasteCell: (
+      targetTaskId,
+      targetField
+    ): { success: boolean; error?: string } => {
       const { cellClipboard, activeMode } = get();
       const taskStore = useTaskStore.getState();
       const historyStore = useHistoryStore.getState();
@@ -662,7 +665,9 @@ export const useClipboardStore = create<ClipboardStore>()(
       return { success: true };
     },
 
-    pasteExternalRows: (data: SystemRowClipboardData) => {
+    pasteExternalRows: (
+      data: SystemRowClipboardData
+    ): { success: boolean; error?: string } => {
       const taskStore = useTaskStore.getState();
       const depStore = useDependencyStore.getState();
       const historyStore = useHistoryStore.getState();
@@ -818,7 +823,7 @@ export const useClipboardStore = create<ClipboardStore>()(
       data: SystemCellClipboardData,
       targetTaskId: string,
       targetField: EditableField
-    ) => {
+    ): { success: boolean; error?: string } => {
       const taskStore = useTaskStore.getState();
       const historyStore = useHistoryStore.getState();
       const fileStore = useFileStore.getState();
@@ -866,7 +871,7 @@ export const useClipboardStore = create<ClipboardStore>()(
       return { success: true };
     },
 
-    clearClipboard: () => {
+    clearClipboard: (): void => {
       set((state) => {
         state.rowClipboard = {
           tasks: [],
@@ -887,14 +892,14 @@ export const useClipboardStore = create<ClipboardStore>()(
       useTaskStore.setState({ clipboardTaskIds: [], cutCell: null });
     },
 
-    getClipboardMode: () => get().activeMode,
+    getClipboardMode: (): "row" | "cell" | null => get().activeMode,
 
-    canPasteRows: () => {
+    canPasteRows: (): boolean => {
       const { rowClipboard, activeMode } = get();
       return activeMode === "row" && rowClipboard.operation !== null;
     },
 
-    canPasteCell: (targetField) => {
+    canPasteCell: (targetField): boolean => {
       const { cellClipboard, activeMode } = get();
       return (
         activeMode === "cell" &&

@@ -45,14 +45,14 @@ export function ColumnResizer({
   useEffect(() => {
     if (!isResizing) return;
 
-    const handleMouseMove = (e: globalThis.MouseEvent) => {
+    const handleMouseMove = (e: globalThis.MouseEvent): void => {
       // Live update during drag
       const deltaX = e.clientX - startXRef.current;
       const newWidth = Math.max(minWidth, startWidthRef.current + deltaX);
       onResize(columnId, newWidth);
     };
 
-    const handleMouseUp = (e: globalThis.MouseEvent) => {
+    const handleMouseUp = (e: globalThis.MouseEvent): void => {
       const deltaX = e.clientX - startXRef.current;
       const newWidth = Math.max(minWidth, startWidthRef.current + deltaX);
 
@@ -63,13 +63,13 @@ export function ColumnResizer({
     document.addEventListener("mousemove", handleMouseMove);
     document.addEventListener("mouseup", handleMouseUp);
 
-    return () => {
+    return (): void => {
       document.removeEventListener("mousemove", handleMouseMove);
       document.removeEventListener("mouseup", handleMouseUp);
     };
   }, [isResizing, columnId, onResize, minWidth]);
 
-  const handleMouseDown = (e: MouseEvent<HTMLDivElement>) => {
+  const handleMouseDown = (e: MouseEvent<HTMLDivElement>): void => {
     e.preventDefault();
     e.stopPropagation();
 
@@ -78,7 +78,7 @@ export function ColumnResizer({
     setIsResizing(true);
   };
 
-  const handleDoubleClick = (e: MouseEvent<HTMLDivElement>) => {
+  const handleDoubleClick = (e: MouseEvent<HTMLDivElement>): void => {
     e.preventDefault();
     e.stopPropagation();
 
@@ -88,7 +88,7 @@ export function ColumnResizer({
   };
 
   // Keyboard support for column resizing
-  const handleKeyDown = (e: KeyboardEvent<HTMLDivElement>) => {
+  const handleKeyDown = (e: KeyboardEvent<HTMLDivElement>): void => {
     const step = e.shiftKey ? 20 : 5; // Larger step with Shift
 
     if (e.key === "ArrowLeft") {
@@ -120,6 +120,7 @@ export function ColumnResizer({
       onMouseDown={handleMouseDown}
       onDoubleClick={handleDoubleClick}
       onKeyDown={handleKeyDown}
+      // eslint-disable-next-line jsx-a11y/no-noninteractive-tabindex -- separator is keyboard-operable resize handle
       tabIndex={0}
       role="separator"
       aria-orientation="vertical"

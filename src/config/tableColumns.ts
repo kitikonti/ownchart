@@ -101,7 +101,7 @@ export const TASK_COLUMNS: ColumnDefinition[] = [
     defaultWidth: "100px",
     editable: true, // Editable per user request
     renderer: "number",
-    validator: (value) => {
+    validator: (value): ValidationResult => {
       const num = Number(value);
       if (isNaN(num) || num < 1) {
         return { valid: false, error: "Duration must be at least 1 day" };

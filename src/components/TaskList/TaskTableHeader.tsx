@@ -84,11 +84,11 @@ export function TaskTableHeader(): JSX.Element {
   /**
    * Handle column resize.
    */
-  const handleColumnResize = (columnId: string, width: number) => {
+  const handleColumnResize = (columnId: string, width: number): void => {
     setColumnWidth(columnId, width);
   };
 
-  const handleSelectAllClick = () => {
+  const handleSelectAllClick = (): void => {
     if (allSelected) {
       clearSelection();
     } else {

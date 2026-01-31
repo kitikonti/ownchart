@@ -47,7 +47,7 @@ export function ChartCanvas({
   onTaskDoubleClick,
   containerHeight = 600,
   containerWidth: propContainerWidth = 800,
-}: ChartCanvasProps) {
+}: ChartCanvasProps): JSX.Element {
   const outerRef = useRef<HTMLDivElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const svgContainerRef = useRef<HTMLDivElement>(null);

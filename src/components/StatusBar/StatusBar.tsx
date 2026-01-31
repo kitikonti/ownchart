@@ -13,7 +13,7 @@ import { MIN_ZOOM, MAX_ZOOM } from "../../utils/timelineUtils";
 import { getViewportCenterAnchor, applyScrollLeft } from "../../hooks/useZoom";
 import { ZoomDialog } from "./ZoomDialog";
 
-export function StatusBar() {
+export function StatusBar(): JSX.Element {
   const [isZoomDialogOpen, setIsZoomDialogOpen] = useState(false);
 
   // Task store
@@ -53,7 +53,7 @@ export function StatusBar() {
   const isAtMaxZoom = zoom >= MAX_ZOOM;
 
   // Handle zoom slider change
-  const handleSliderChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleSliderChange = (e: React.ChangeEvent<HTMLInputElement>): void => {
     const newZoomPercent = parseInt(e.target.value, 10);
     const newZoom = newZoomPercent / 100;
     const anchor = getViewportCenterAnchor();
@@ -62,25 +62,25 @@ export function StatusBar() {
   };
 
   // Handle zoom in/out buttons
-  const handleZoomIn = () => {
+  const handleZoomIn = (): void => {
     const anchor = getViewportCenterAnchor();
     const result = zoomIn(anchor);
     applyScrollLeft(result.newScrollLeft);
   };
 
-  const handleZoomOut = () => {
+  const handleZoomOut = (): void => {
     const anchor = getViewportCenterAnchor();
     const result = zoomOut(anchor);
     applyScrollLeft(result.newScrollLeft);
   };
 
   // Handle fit to view
-  const handleFitToView = () => {
+  const handleFitToView = (): void => {
     fitToView(tasks);
   };
 
   // Handle zoom dialog selection
-  const handleZoomSelect = (newZoom: number | "fit") => {
+  const handleZoomSelect = (newZoom: number | "fit"): void => {
     if (newZoom === "fit") {
       fitToView(tasks);
     } else {

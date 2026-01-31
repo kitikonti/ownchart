@@ -39,7 +39,7 @@ function ColorSwatch({
   color: string;
   isSelected: boolean;
   onClick: () => void;
-}) {
+}): JSX.Element {
   return (
     <button
       type="button"
@@ -71,7 +71,11 @@ function ColorSwatch({
 /**
  * Section header with subtle styling
  */
-function SectionHeader({ children }: { children: React.ReactNode }) {
+function SectionHeader({
+  children,
+}: {
+  children: React.ReactNode;
+}): JSX.Element {
   return (
     <div
       style={{
@@ -100,7 +104,7 @@ function SwatchGrid({
   colors: string[];
   selectedColor: string;
   onSelect: (color: string) => void;
-}) {
+}): JSX.Element {
   const normalizedSelected = selectedColor.toUpperCase();
 
   return (
@@ -128,7 +132,7 @@ export function ColorPickerPopover({
   onSelect,
   onClose,
   anchorRect,
-}: ColorPickerPopoverProps) {
+}: ColorPickerPopoverProps): JSX.Element {
   const [localColor, setLocalColor] = useState(value);
   const popoverRef = useRef<HTMLDivElement>(null);
   const nativePickerRef = useRef<HTMLInputElement>(null);
@@ -138,7 +142,7 @@ export function ColorPickerPopover({
 
   // Close on outside click
   useEffect(() => {
-    const handleClickOutside = (e: MouseEvent) => {
+    const handleClickOutside = (e: MouseEvent): void => {
       if (
         popoverRef.current &&
         !popoverRef.current.contains(e.target as Node)
@@ -148,11 +152,13 @@ export function ColorPickerPopover({
     };
 
     document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
+    return (): void => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
   }, [onClose]);
 
   // Handle keyboard
-  const handleKeyDown = (e: KeyboardEvent) => {
+  const handleKeyDown = (e: KeyboardEvent): void => {
     if (e.key === "Escape") {
       e.preventDefault();
       onClose();
@@ -160,14 +166,16 @@ export function ColorPickerPopover({
   };
 
   // Handle color selection
-  const handleColorSelect = (color: string) => {
+  const handleColorSelect = (color: string): void => {
     setLocalColor(color);
     onSelect(color);
     onClose();
   };
 
   // Handle native picker change
-  const handleNativePickerChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleNativePickerChange = (
+    e: React.ChangeEvent<HTMLInputElement>
+  ): void => {
     const color = e.target.value;
     setLocalColor(color);
     onSelect(color);
@@ -197,8 +205,11 @@ export function ColorPickerPopover({
   }
 
   return (
+    // eslint-disable-next-line jsx-a11y/no-noninteractive-element-interactions -- dialog needs keyboard handling for Escape
     <div
       ref={popoverRef}
+      role="dialog"
+      aria-label="Color picker"
       style={popoverStyle}
       onKeyDown={handleKeyDown}
       tabIndex={-1}

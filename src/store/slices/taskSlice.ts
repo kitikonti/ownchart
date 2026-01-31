@@ -158,7 +158,7 @@ export const useTaskStore = create<TaskStore>()(
     cutCell: null as { taskId: string; field: EditableField } | null,
 
     // Actions
-    addTask: (taskData) => {
+    addTask: (taskData): void => {
       const historyStore = useHistoryStore.getState();
       let generatedId = "";
 
@@ -189,7 +189,7 @@ export const useTaskStore = create<TaskStore>()(
       }
     },
 
-    updateTask: (id, updates) => {
+    updateTask: (id, updates): void => {
       const historyStore = useHistoryStore.getState();
       const previousValues: Partial<Task> = {};
       let taskName = "";
@@ -314,7 +314,7 @@ export const useTaskStore = create<TaskStore>()(
       }
     },
 
-    updateMultipleTasks: (updates) => {
+    updateMultipleTasks: (updates): void => {
       const historyStore = useHistoryStore.getState();
       const taskChanges: Array<{
         id: string;
@@ -392,7 +392,7 @@ export const useTaskStore = create<TaskStore>()(
       }
     },
 
-    deleteTask: (id, cascade = false) => {
+    deleteTask: (id, cascade = false): void => {
       const historyStore = useHistoryStore.getState();
       const deletedTasks: Task[] = [];
 
@@ -426,7 +426,7 @@ export const useTaskStore = create<TaskStore>()(
         const idsToDelete = new Set<string>([id]);
 
         // Recursively find all children of a given parent
-        const findChildren = (parentId: string) => {
+        const findChildren = (parentId: string): void => {
           state.tasks.forEach((task) => {
             if (task.parent === parentId && !idsToDelete.has(task.id)) {
               idsToDelete.add(task.id);
@@ -486,7 +486,7 @@ export const useTaskStore = create<TaskStore>()(
       }
     },
 
-    deleteSelectedTasks: () => {
+    deleteSelectedTasks: (): void => {
       const historyStore = useHistoryStore.getState();
       const state = get();
       const selectedIds = state.selectedTaskIds;
@@ -498,7 +498,7 @@ export const useTaskStore = create<TaskStore>()(
       const deletedTasks: Task[] = [];
 
       // Recursively find all children
-      const findChildren = (parentId: string) => {
+      const findChildren = (parentId: string): void => {
         state.tasks.forEach((task) => {
           if (task.parent === parentId && !idsToDelete.has(task.id)) {
             idsToDelete.add(task.id);
@@ -585,7 +585,7 @@ export const useTaskStore = create<TaskStore>()(
       }
     },
 
-    reorderTasks: (fromIndex, toIndex) => {
+    reorderTasks: (fromIndex, toIndex): void => {
       const historyStore = useHistoryStore.getState();
 
       // Capture previous order before making changes
@@ -630,7 +630,7 @@ export const useTaskStore = create<TaskStore>()(
       }
     },
 
-    setTasks: (tasks) =>
+    setTasks: (tasks): void =>
       set((state) => {
         state.tasks = tasks;
         state.selectedTaskIds = [];
@@ -640,7 +640,7 @@ export const useTaskStore = create<TaskStore>()(
       }),
 
     // Multi-selection actions
-    toggleTaskSelection: (id) =>
+    toggleTaskSelection: (id): void =>
       set((state) => {
         const index = state.selectedTaskIds.indexOf(id);
         if (index > -1) {
@@ -651,7 +651,7 @@ export const useTaskStore = create<TaskStore>()(
         state.lastSelectedTaskId = id;
       }),
 
-    selectTaskRange: (startId, endId) =>
+    selectTaskRange: (startId, endId): void =>
       set((state) => {
         const startIndex = state.tasks.findIndex((t) => t.id === startId);
         const endIndex = state.tasks.findIndex((t) => t.id === endId);
@@ -669,18 +669,18 @@ export const useTaskStore = create<TaskStore>()(
         state.lastSelectedTaskId = endId;
       }),
 
-    selectAllTasks: () =>
+    selectAllTasks: (): void =>
       set((state) => {
         state.selectedTaskIds = state.tasks.map((task) => task.id);
       }),
 
-    clearSelection: () =>
+    clearSelection: (): void =>
       set((state) => {
         state.selectedTaskIds = [];
         state.lastSelectedTaskId = null;
       }),
 
-    setSelectedTaskIds: (ids, addToSelection = false) =>
+    setSelectedTaskIds: (ids, addToSelection = false): void =>
       set((state) => {
         if (addToSelection) {
           // Add to existing selection (avoid duplicates)
@@ -699,14 +699,14 @@ export const useTaskStore = create<TaskStore>()(
       }),
 
     // Cell navigation actions
-    setActiveCell: (taskId, field) =>
+    setActiveCell: (taskId, field): void =>
       set((state) => {
         state.activeCell.taskId = taskId;
         state.activeCell.field = field;
         state.isEditingCell = false;
       }),
 
-    navigateCell: (direction) =>
+    navigateCell: (direction): void =>
       set((state) => {
         const { activeCell, tasks } = state;
         if (!activeCell.taskId || !activeCell.field) return;
@@ -746,22 +746,22 @@ export const useTaskStore = create<TaskStore>()(
         state.isEditingCell = false;
       }),
 
-    startCellEdit: () =>
+    startCellEdit: (): void =>
       set((state) => {
         state.isEditingCell = true;
       }),
 
-    stopCellEdit: () =>
+    stopCellEdit: (): void =>
       set((state) => {
         state.isEditingCell = false;
       }),
 
-    setColumnWidth: (columnId, width) =>
+    setColumnWidth: (columnId, width): void =>
       set((state) => {
         state.columnWidths[columnId] = width;
       }),
 
-    autoFitColumn: (columnId) =>
+    autoFitColumn: (columnId): void =>
       set((state) => {
         const column = TASK_COLUMNS.find((col) => col.id === columnId);
         if (!column || !column.field) return;
@@ -829,7 +829,7 @@ export const useTaskStore = create<TaskStore>()(
         );
       }),
 
-    autoFitAllColumns: () =>
+    autoFitAllColumns: (): void =>
       set((state) => {
         // Columns with variable content that need auto-fit
         const autoFitColumnIds = [
@@ -911,13 +911,13 @@ export const useTaskStore = create<TaskStore>()(
         }
       }),
 
-    setTaskTableWidth: (width) =>
+    setTaskTableWidth: (width): void =>
       set((state) => {
         state.taskTableWidth = width;
       }),
 
     // Hierarchy actions
-    moveTaskToParent: (taskId, newParentId) =>
+    moveTaskToParent: (taskId, newParentId): void =>
       set((state) => {
         const task = state.tasks.find((t) => t.id === taskId);
         if (!task) return;
@@ -966,7 +966,7 @@ export const useTaskStore = create<TaskStore>()(
         normalizeTaskOrder(state.tasks);
       }),
 
-    toggleTaskCollapsed: (taskId) =>
+    toggleTaskCollapsed: (taskId): void =>
       set((state) => {
         const task = state.tasks.find((t) => t.id === taskId);
         if (!task) return;
@@ -979,7 +979,7 @@ export const useTaskStore = create<TaskStore>()(
         task.open = !(task.open ?? true);
       }),
 
-    expandTask: (taskId) =>
+    expandTask: (taskId): void =>
       set((state) => {
         const task = state.tasks.find((t) => t.id === taskId);
         if (!task) return;
@@ -992,7 +992,7 @@ export const useTaskStore = create<TaskStore>()(
         }
       }),
 
-    collapseTask: (taskId) =>
+    collapseTask: (taskId): void =>
       set((state) => {
         const task = state.tasks.find((t) => t.id === taskId);
         if (!task) return;
@@ -1005,7 +1005,7 @@ export const useTaskStore = create<TaskStore>()(
         }
       }),
 
-    expandAll: () =>
+    expandAll: (): void =>
       set((state) => {
         state.tasks.forEach((task) => {
           // Only summary tasks can be expanded
@@ -1017,7 +1017,7 @@ export const useTaskStore = create<TaskStore>()(
         });
       }),
 
-    collapseAll: () =>
+    collapseAll: (): void =>
       set((state) => {
         state.tasks.forEach((task) => {
           // Only summary tasks can be collapsed
@@ -1030,7 +1030,7 @@ export const useTaskStore = create<TaskStore>()(
       }),
 
     // Summary task creation
-    createSummaryTask: (data) => {
+    createSummaryTask: (data): string => {
       let newId = "";
       set((state) => {
         const newTask: Task = {
@@ -1045,7 +1045,7 @@ export const useTaskStore = create<TaskStore>()(
       return newId;
     },
 
-    convertToSummary: (taskId) =>
+    convertToSummary: (taskId): void =>
       set((state) => {
         const task = state.tasks.find((t) => t.id === taskId);
         if (!task) return;
@@ -1072,7 +1072,7 @@ export const useTaskStore = create<TaskStore>()(
         }
       }),
 
-    convertToTask: (taskId) =>
+    convertToTask: (taskId): void =>
       set((state) => {
         const task = state.tasks.find((t) => t.id === taskId);
         if (!task) return;
@@ -1094,7 +1094,7 @@ export const useTaskStore = create<TaskStore>()(
       }),
 
     // Insert task relative to another
-    insertTaskAbove: (referenceTaskId) => {
+    insertTaskAbove: (referenceTaskId): void => {
       const historyStore = useHistoryStore.getState();
       const state = get();
 
@@ -1181,7 +1181,7 @@ export const useTaskStore = create<TaskStore>()(
       }
     },
 
-    insertTaskBelow: (referenceTaskId) => {
+    insertTaskBelow: (referenceTaskId): void => {
       const historyStore = useHistoryStore.getState();
       const state = get();
 
@@ -1269,7 +1269,7 @@ export const useTaskStore = create<TaskStore>()(
     },
 
     // Indent/Outdent actions
-    indentSelectedTasks: () => {
+    indentSelectedTasks: (): void => {
       const historyStore = useHistoryStore.getState();
       const { tasks, selectedTaskIds } = get();
       if (selectedTaskIds.length === 0) return;
@@ -1386,7 +1386,7 @@ export const useTaskStore = create<TaskStore>()(
       }
     },
 
-    outdentSelectedTasks: () => {
+    outdentSelectedTasks: (): void => {
       const historyStore = useHistoryStore.getState();
       const { tasks, selectedTaskIds } = get();
       if (selectedTaskIds.length === 0) return;

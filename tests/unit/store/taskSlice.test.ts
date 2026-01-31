@@ -460,7 +460,7 @@ describe('Task Store - CRUD Operations', () => {
   });
 
   describe('Multi-selection', () => {
-    const setupTasks = () => {
+    const setupTasks = (): void => {
       const tasks: Task[] = [
         {
           id: 'task-1',

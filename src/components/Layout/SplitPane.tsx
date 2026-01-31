@@ -3,7 +3,7 @@
  * Provides a draggable divider to adjust the width of the left panel.
  */
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { SplitPaneDivider } from "./SplitPaneDivider";
 
 interface SplitPaneProps {
@@ -22,23 +22,34 @@ export function SplitPane({
   minLeftWidth,
   maxLeftWidth,
   onLeftWidthChange,
-}: SplitPaneProps) {
+}: SplitPaneProps): JSX.Element {
   const [isDragging, setIsDragging] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
   const leftPanelRef = useRef<HTMLDivElement>(null);
   // Use ref to track width during drag - no React state updates!
   const dragWidthRef = useRef<number>(leftWidth);
 
-  const handleMouseDown = (e: React.MouseEvent) => {
+  const handleMouseDown = (e: React.MouseEvent): void => {
     e.preventDefault();
     dragWidthRef.current = leftWidth;
     setIsDragging(true);
   };
 
+  const handleKeyboardResize = useCallback(
+    (delta: number): void => {
+      const newWidth = Math.max(
+        minLeftWidth,
+        Math.min(maxLeftWidth, leftWidth + delta)
+      );
+      onLeftWidthChange(newWidth);
+    },
+    [leftWidth, minLeftWidth, maxLeftWidth, onLeftWidthChange]
+  );
+
   useEffect(() => {
     if (!isDragging) return;
 
-    const handleMouseMove = (e: MouseEvent) => {
+    const handleMouseMove = (e: MouseEvent): void => {
       if (!containerRef.current || !leftPanelRef.current) return;
 
       const containerRect = containerRef.current.getBoundingClientRect();
@@ -55,7 +66,7 @@ export function SplitPane({
       leftPanelRef.current.style.width = `${clampedWidth}px`;
     };
 
-    const handleMouseUp = () => {
+    const handleMouseUp = (): void => {
       // Update store only on mouse up with final width
       onLeftWidthChange(dragWidthRef.current);
       setIsDragging(false);
@@ -64,7 +75,7 @@ export function SplitPane({
     document.addEventListener("mousemove", handleMouseMove);
     document.addEventListener("mouseup", handleMouseUp);
 
-    return () => {
+    return (): void => {
       document.removeEventListener("mousemove", handleMouseMove);
       document.removeEventListener("mouseup", handleMouseUp);
     };
@@ -82,7 +93,11 @@ export function SplitPane({
       </div>
 
       {/* Resize Handle */}
-      <SplitPaneDivider onMouseDown={handleMouseDown} isDragging={isDragging} />
+      <SplitPaneDivider
+        onMouseDown={handleMouseDown}
+        onResize={handleKeyboardResize}
+        isDragging={isDragging}
+      />
 
       {/* Right Panel (Timeline) */}
       <div className="flex-1 min-w-0">{rightContent}</div>

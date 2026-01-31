@@ -66,7 +66,7 @@ export const useHistoryStore = create<HistoryStore>()(
     isRedoing: false,
 
     // Actions
-    recordCommand: (command) => {
+    recordCommand: (command): void => {
       set((state) => {
         // Don't record if we're currently undoing/redoing
         if (state.isUndoing || state.isRedoing) return;
@@ -84,7 +84,7 @@ export const useHistoryStore = create<HistoryStore>()(
       });
     },
 
-    undo: () => {
+    undo: (): void => {
       const { undoStack } = get();
       if (undoStack.length === 0) {
         // Show toast: nothing to undo
@@ -123,7 +123,7 @@ export const useHistoryStore = create<HistoryStore>()(
       }
     },
 
-    redo: () => {
+    redo: (): void => {
       const { redoStack } = get();
       if (redoStack.length === 0) {
         // Show toast: nothing to redo
@@ -162,35 +162,35 @@ export const useHistoryStore = create<HistoryStore>()(
       }
     },
 
-    clearHistory: () => {
+    clearHistory: (): void => {
       set((state) => {
         state.undoStack = [];
         state.redoStack = [];
       });
     },
 
-    canUndo: () => get().undoStack.length > 0,
-    canRedo: () => get().redoStack.length > 0,
+    canUndo: (): boolean => get().undoStack.length > 0,
+    canRedo: (): boolean => get().redoStack.length > 0,
 
-    getUndoDescription: () => {
+    getUndoDescription: (): string | null => {
       const { undoStack } = get();
       return undoStack.length > 0
         ? undoStack[undoStack.length - 1].description
         : null;
     },
 
-    getRedoDescription: () => {
+    getRedoDescription: (): string | null => {
       const { redoStack } = get();
       return redoStack.length > 0
         ? redoStack[redoStack.length - 1].description
         : null;
     },
 
-    setUndoing: (value) =>
+    setUndoing: (value): void =>
       set((state) => {
         state.isUndoing = value;
       }),
-    setRedoing: (value) =>
+    setRedoing: (value): void =>
       set((state) => {
         state.isRedoing = value;
       }),

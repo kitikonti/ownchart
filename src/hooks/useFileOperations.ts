@@ -35,7 +35,15 @@ function generateSuggestedFilename(projectTitle: string): string {
   return `${sanitizedName}_${dateStr}.ownchart`;
 }
 
-export function useFileOperations() {
+export function useFileOperations(): {
+  handleSave: (saveAs?: boolean) => Promise<void>;
+  handleSaveAs: () => Promise<void>;
+  handleOpen: () => Promise<void>;
+  handleNew: () => Promise<void>;
+  fileName: string | null;
+  isDirty: boolean;
+  lastSaved: Date | null;
+} {
   const tasks = useTaskStore((state) => state.tasks);
   const setTasks = useTaskStore((state) => state.setTasks);
   const autoFitColumn = useTaskStore((state) => state.autoFitColumn);
@@ -322,7 +330,7 @@ export function useFileOperations() {
 
   return {
     handleSave,
-    handleSaveAs: () => handleSave(true),
+    handleSaveAs: (): Promise<void> => handleSave(true),
     handleOpen,
     handleNew,
     fileName: fileState.fileName,

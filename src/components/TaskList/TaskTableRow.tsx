@@ -142,7 +142,7 @@ export function TaskTableRow({
   const showBottomBorder = selectionPosition?.isLastSelected ?? true;
 
   // Handle mouse enter on entire row for drag selection
-  const handleRowMouseEnter = () => {
+  const handleRowMouseEnter = (): void => {
     if (dragState.isDragging && dragState.onDragSelect) {
       dragState.onDragSelect(task.id);
     }

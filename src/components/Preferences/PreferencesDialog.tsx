@@ -48,19 +48,19 @@ export function PreferencesDialog(): JSX.Element | null {
     (state) => state.setWeekNumberingSystem
   );
 
-  const handleDensityChange = (density: UiDensity) => {
+  const handleDensityChange = (density: UiDensity): void => {
     setUiDensity(density);
   };
 
-  const handleDateFormatChange = (format: DateFormat) => {
+  const handleDateFormatChange = (format: DateFormat): void => {
     setDateFormat(format);
   };
 
-  const handleFirstDayChange = (day: FirstDayOfWeek) => {
+  const handleFirstDayChange = (day: FirstDayOfWeek): void => {
     setFirstDayOfWeek(day);
   };
 
-  const handleWeekNumberingChange = (system: WeekNumberingSystem) => {
+  const handleWeekNumberingChange = (system: WeekNumberingSystem): void => {
     setWeekNumberingSystem(system);
   };
 

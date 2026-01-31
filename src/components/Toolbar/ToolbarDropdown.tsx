@@ -42,7 +42,7 @@ export function ToolbarDropdown<T extends string = string>({
   labelPrefix = "",
   "aria-label": ariaLabel,
   title,
-}: ToolbarDropdownProps<T>) {
+}: ToolbarDropdownProps<T>): JSX.Element {
   const [isOpen, setIsOpen] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
   const menuRef = useRef<HTMLDivElement>(null);
@@ -54,7 +54,7 @@ export function ToolbarDropdown<T extends string = string>({
   useEffect(() => {
     if (!isOpen) return;
 
-    const handleClickOutside = (e: MouseEvent) => {
+    const handleClickOutside = (e: MouseEvent): void => {
       if (
         containerRef.current &&
         !containerRef.current.contains(e.target as Node)
@@ -64,24 +64,28 @@ export function ToolbarDropdown<T extends string = string>({
     };
 
     document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
+    return (): void => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
   }, [isOpen]);
 
   // Close on Escape
   useEffect(() => {
     if (!isOpen) return;
 
-    const handleKeyDown = (e: KeyboardEvent) => {
+    const handleKeyDown = (e: KeyboardEvent): void => {
       if (e.key === "Escape") {
         setIsOpen(false);
       }
     };
 
     document.addEventListener("keydown", handleKeyDown);
-    return () => document.removeEventListener("keydown", handleKeyDown);
+    return (): void => {
+      document.removeEventListener("keydown", handleKeyDown);
+    };
   }, [isOpen]);
 
-  const handleSelect = (optionValue: T) => {
+  const handleSelect = (optionValue: T): void => {
     onChange(optionValue);
     setIsOpen(false);
   };

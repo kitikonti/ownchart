@@ -85,7 +85,7 @@ type RibbonTab = "home" | "view" | "help";
 // Preset zoom levels
 const PRESET_ZOOM_LEVELS = [5, 10, 25, 50, 75, 100, 150, 200, 300];
 
-export function Ribbon() {
+export function Ribbon(): JSX.Element {
   const [activeTab, setActiveTab] = useState<RibbonTab>("home");
   const [fileMenuOpen, setFileMenuOpen] = useState(false);
   const [isZoomDropdownOpen, setIsZoomDropdownOpen] = useState(false);
@@ -224,7 +224,7 @@ export function Ribbon() {
   // Handlers
   // ─────────────────────────────────────────────────────────────────────────
 
-  const handleAddTask = () => {
+  const handleAddTask = (): void => {
     const today = new Date();
     const nextWeek = new Date(today);
     nextWeek.setDate(today.getDate() + 7);
@@ -245,27 +245,27 @@ export function Ribbon() {
     });
   };
 
-  const handleInsertAbove = () => {
+  const handleInsertAbove = (): void => {
     if (singleSelectedTaskId) insertTaskAbove(singleSelectedTaskId);
   };
 
-  const handleInsertBelow = () => {
+  const handleInsertBelow = (): void => {
     if (singleSelectedTaskId) insertTaskBelow(singleSelectedTaskId);
   };
 
-  const handleZoomIn = () => {
+  const handleZoomIn = (): void => {
     const anchor = getViewportCenterAnchor();
     const result = zoomIn(anchor);
     applyScrollLeft(result.newScrollLeft);
   };
 
-  const handleZoomOut = () => {
+  const handleZoomOut = (): void => {
     const anchor = getViewportCenterAnchor();
     const result = zoomOut(anchor);
     applyScrollLeft(result.newScrollLeft);
   };
 
-  const handleZoomLevelSelect = (level: number | "fit") => {
+  const handleZoomLevelSelect = (level: number | "fit"): void => {
     if (level === "fit") {
       fitToView(tasks);
     } else {
@@ -280,7 +280,7 @@ export function Ribbon() {
   useEffect(() => {
     if (!isZoomDropdownOpen) return;
 
-    const handleClickOutside = (e: MouseEvent) => {
+    const handleClickOutside = (e: MouseEvent): void => {
       if (
         zoomDropdownRef.current &&
         !zoomDropdownRef.current.contains(e.target as Node)
@@ -290,28 +290,32 @@ export function Ribbon() {
     };
 
     document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
+    return (): void => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
   }, [isZoomDropdownOpen]);
 
   // Close zoom dropdown on Escape
   useEffect(() => {
     if (!isZoomDropdownOpen) return;
 
-    const handleKeyDown = (e: KeyboardEvent) => {
+    const handleKeyDown = (e: KeyboardEvent): void => {
       if (e.key === "Escape") {
         setIsZoomDropdownOpen(false);
       }
     };
 
     document.addEventListener("keydown", handleKeyDown);
-    return () => document.removeEventListener("keydown", handleKeyDown);
+    return (): void => {
+      document.removeEventListener("keydown", handleKeyDown);
+    };
   }, [isZoomDropdownOpen]);
 
   // ─────────────────────────────────────────────────────────────────────────
   // Tab Content Renderers
   // ─────────────────────────────────────────────────────────────────────────
 
-  const renderHomeTab = () => (
+  const renderHomeTab = (): JSX.Element => (
     <>
       {/* History */}
       <ToolbarGroup label="History">
@@ -426,7 +430,7 @@ export function Ribbon() {
     </>
   );
 
-  const renderViewTab = () => (
+  const renderViewTab = (): JSX.Element => (
     <>
       {/* Timeline Toggles */}
       <ToolbarGroup label="Timeline">
@@ -514,7 +518,18 @@ export function Ribbon() {
         {/* Zoom Level Dropdown - MS Project style */}
         <div
           ref={zoomDropdownRef}
+          role="button"
+          tabIndex={0}
+          aria-expanded={isZoomDropdownOpen}
+          aria-haspopup="listbox"
+          aria-label="Zoom level"
           onClick={() => setIsZoomDropdownOpen(!isZoomDropdownOpen)}
+          onKeyDown={(e) => {
+            if (e.key === "Enter" || e.key === " ") {
+              e.preventDefault();
+              setIsZoomDropdownOpen(!isZoomDropdownOpen);
+            }
+          }}
           style={{
             position: "relative",
             display: "block",
@@ -523,7 +538,7 @@ export function Ribbon() {
             backgroundColor: "#ffffff",
             border: "1px solid rgb(209, 209, 209)",
             borderRadius: "4px",
-            cursor: "text",
+            cursor: "pointer",
             userSelect: "none",
           }}
           onMouseEnter={(e) => {
@@ -744,7 +759,7 @@ export function Ribbon() {
     </>
   );
 
-  const renderHelpTab = () => (
+  const renderHelpTab = (): JSX.Element => (
     <>
       <ToolbarGroup label="Help">
         <ToolbarButton
@@ -774,7 +789,7 @@ export function Ribbon() {
     </>
   );
 
-  const renderTabContent = () => {
+  const renderTabContent = (): JSX.Element => {
     switch (activeTab) {
       case "home":
         return renderHomeTab();
@@ -799,7 +814,7 @@ export function Ribbon() {
 
   // Close file menu when clicking outside
   useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
+    const handleClickOutside = (event: MouseEvent): void => {
       if (
         fileMenuRef.current &&
         !fileMenuRef.current.contains(event.target as Node)
@@ -812,7 +827,7 @@ export function Ribbon() {
       document.addEventListener("mousedown", handleClickOutside);
     }
 
-    return () => {
+    return (): void => {
       document.removeEventListener("mousedown", handleClickOutside);
     };
   }, [fileMenuOpen]);

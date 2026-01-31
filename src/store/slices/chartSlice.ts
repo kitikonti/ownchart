@@ -230,7 +230,7 @@ export const useChartStore = create<ChartState & ChartActions>()(
     fileLoadCounter: 0,
 
     // Centralized scale calculation - updates dateRange from tasks, then derives scale
-    updateScale: (tasks: Task[]) => {
+    updateScale: (tasks: Task[]): void => {
       set((state) => {
         const taskDateRange = getDateRange(tasks);
 
@@ -252,7 +252,7 @@ export const useChartStore = create<ChartState & ChartActions>()(
     },
 
     // Set container width and recalculate scale
-    setContainerWidth: (width: number) => {
+    setContainerWidth: (width: number): void => {
       set((state) => {
         state.containerWidth = width;
         // Recalculate scale if we have a dateRange
@@ -263,7 +263,10 @@ export const useChartStore = create<ChartState & ChartActions>()(
     },
 
     // Extend date range for infinite scroll
-    extendDateRange: (direction: "past" | "future", days: number = 30) => {
+    extendDateRange: (
+      direction: "past" | "future",
+      days: number = 30
+    ): void => {
       set((state) => {
         if (!state.dateRange) return;
 
@@ -350,7 +353,7 @@ export const useChartStore = create<ChartState & ChartActions>()(
     },
 
     // Set pan offset (validates for NaN/Infinity)
-    setPanOffset: (offset: { x: number; y: number }) => {
+    setPanOffset: (offset: { x: number; y: number }): void => {
       set((state) => {
         // Validate to prevent NaN or Infinity
         if (isFinite(offset.x) && isFinite(offset.y)) {
@@ -362,7 +365,7 @@ export const useChartStore = create<ChartState & ChartActions>()(
     },
 
     // Pan by delta amount
-    panBy: (delta: { x: number; y: number }) => {
+    panBy: (delta: { x: number; y: number }): void => {
       set((state) => {
         const newX = state.panOffset.x + delta.x;
         const newY = state.panOffset.y + delta.y;
@@ -375,14 +378,14 @@ export const useChartStore = create<ChartState & ChartActions>()(
     },
 
     // Reset pan to origin
-    resetPan: () => {
+    resetPan: (): void => {
       set((state) => {
         state.panOffset = { x: 0, y: 0 };
       });
     },
 
     // Fit all tasks in view with padding that includes task labels
-    fitToView: (tasks: Task[]) => {
+    fitToView: (tasks: Task[]): void => {
       if (tasks.length === 0) {
         get().resetZoom();
         get().resetPan();
@@ -450,7 +453,7 @@ export const useChartStore = create<ChartState & ChartActions>()(
     },
 
     // Reset to default view
-    resetView: () => {
+    resetView: (): void => {
       set((state) => {
         state.zoom = 1.0;
         state.panOffset = { x: 0, y: 0 };
@@ -460,19 +463,19 @@ export const useChartStore = create<ChartState & ChartActions>()(
     },
 
     // Transient state setters
-    setIsZooming: (isZooming: boolean) => {
+    setIsZooming: (isZooming: boolean): void => {
       set((state) => {
         state.isZooming = isZooming;
       });
     },
 
-    setIsPanning: (isPanning: boolean) => {
+    setIsPanning: (isPanning: boolean): void => {
       set((state) => {
         state.isPanning = isPanning;
       });
     },
 
-    setViewport: (scrollLeft: number, width: number) => {
+    setViewport: (scrollLeft: number, width: number): void => {
       set((state) => {
         state.viewportScrollLeft = scrollLeft;
         state.viewportWidth = width;
@@ -480,91 +483,91 @@ export const useChartStore = create<ChartState & ChartActions>()(
     },
 
     // Toggle weekend visibility
-    toggleWeekends: () => {
+    toggleWeekends: (): void => {
       set((state) => {
         state.showWeekends = !state.showWeekends;
       });
     },
 
     // Toggle today marker visibility
-    toggleTodayMarker: () => {
+    toggleTodayMarker: (): void => {
       set((state) => {
         state.showTodayMarker = !state.showTodayMarker;
       });
     },
 
     // Toggle holidays visibility
-    toggleHolidays: () => {
+    toggleHolidays: (): void => {
       set((state) => {
         state.showHolidays = !state.showHolidays;
       });
     },
 
     // Toggle dependencies visibility
-    toggleDependencies: () => {
+    toggleDependencies: (): void => {
       set((state) => {
         state.showDependencies = !state.showDependencies;
       });
     },
 
     // Toggle progress visibility
-    toggleProgress: () => {
+    toggleProgress: (): void => {
       set((state) => {
         state.showProgress = !state.showProgress;
       });
     },
 
     // Set weekend visibility
-    setShowWeekends: (show: boolean) => {
+    setShowWeekends: (show: boolean): void => {
       set((state) => {
         state.showWeekends = show;
       });
     },
 
     // Set today marker visibility
-    setShowTodayMarker: (show: boolean) => {
+    setShowTodayMarker: (show: boolean): void => {
       set((state) => {
         state.showTodayMarker = show;
       });
     },
 
     // Set holidays visibility
-    setShowHolidays: (show: boolean) => {
+    setShowHolidays: (show: boolean): void => {
       set((state) => {
         state.showHolidays = show;
       });
     },
 
     // Set dependencies visibility
-    setShowDependencies: (show: boolean) => {
+    setShowDependencies: (show: boolean): void => {
       set((state) => {
         state.showDependencies = show;
       });
     },
 
     // Set progress visibility
-    setShowProgress: (show: boolean) => {
+    setShowProgress: (show: boolean): void => {
       set((state) => {
         state.showProgress = show;
       });
     },
 
     // Set task label position
-    setTaskLabelPosition: (position: TaskLabelPosition) => {
+    setTaskLabelPosition: (position: TaskLabelPosition): void => {
       set((state) => {
         state.taskLabelPosition = position;
       });
     },
 
     // Set working days mode
-    setWorkingDaysMode: (enabled: boolean) => {
+    setWorkingDaysMode: (enabled: boolean): void => {
       set((state) => {
         state.workingDaysMode = enabled;
       });
     },
 
     // Set working days configuration
-    setWorkingDaysConfig: (config: Partial<WorkingDaysConfig>) => {
+    setWorkingDaysConfig: (config: Partial<WorkingDaysConfig>): void => {
       set((state) => {
         state.workingDaysConfig = {
           ...state.workingDaysConfig,
@@ -574,7 +577,7 @@ export const useChartStore = create<ChartState & ChartActions>()(
     },
 
     // Set holiday region
-    setHolidayRegion: (region: string) => {
+    setHolidayRegion: (region: string): void => {
       set((state) => {
         state.holidayRegion = region;
       });
@@ -583,27 +586,27 @@ export const useChartStore = create<ChartState & ChartActions>()(
     },
 
     // Set project title
-    setProjectTitle: (title: string) => {
+    setProjectTitle: (title: string): void => {
       set((state) => {
         state.projectTitle = title;
       });
     },
 
     // Set project author
-    setProjectAuthor: (author: string) => {
+    setProjectAuthor: (author: string): void => {
       set((state) => {
         state.projectAuthor = author;
       });
     },
 
     // Color mode actions (Smart Color Management)
-    setColorMode: (mode: ColorMode) => {
+    setColorMode: (mode: ColorMode): void => {
       set((state) => {
         state.colorModeState.mode = mode;
       });
     },
 
-    setThemeOptions: (options: Partial<ThemeModeOptions>) => {
+    setThemeOptions: (options: Partial<ThemeModeOptions>): void => {
       set((state) => {
         state.colorModeState.themeOptions = {
           ...state.colorModeState.themeOptions,
@@ -612,7 +615,7 @@ export const useChartStore = create<ChartState & ChartActions>()(
       });
     },
 
-    setSummaryOptions: (options: Partial<SummaryModeOptions>) => {
+    setSummaryOptions: (options: Partial<SummaryModeOptions>): void => {
       set((state) => {
         state.colorModeState.summaryOptions = {
           ...state.colorModeState.summaryOptions,
@@ -621,7 +624,7 @@ export const useChartStore = create<ChartState & ChartActions>()(
       });
     },
 
-    setTaskTypeOptions: (options: Partial<TaskTypeModeOptions>) => {
+    setTaskTypeOptions: (options: Partial<TaskTypeModeOptions>): void => {
       set((state) => {
         state.colorModeState.taskTypeOptions = {
           ...state.colorModeState.taskTypeOptions,
@@ -630,7 +633,7 @@ export const useChartStore = create<ChartState & ChartActions>()(
       });
     },
 
-    setHierarchyOptions: (options: Partial<HierarchyModeOptions>) => {
+    setHierarchyOptions: (options: Partial<HierarchyModeOptions>): void => {
       set((state) => {
         state.colorModeState.hierarchyOptions = {
           ...state.colorModeState.hierarchyOptions,
@@ -639,14 +642,14 @@ export const useChartStore = create<ChartState & ChartActions>()(
       });
     },
 
-    setColorModeState: (newState: ColorModeState) => {
+    setColorModeState: (newState: ColorModeState): void => {
       set((state) => {
         state.colorModeState = newState;
       });
     },
 
     // Bulk settings update (for loading from file)
-    setViewSettings: (settings: Partial<ChartState>) => {
+    setViewSettings: (settings: Partial<ChartState>): void => {
       set((state) => {
         if (settings.zoom !== undefined) state.zoom = settings.zoom;
         if (settings.panOffset !== undefined)
@@ -683,21 +686,21 @@ export const useChartStore = create<ChartState & ChartActions>()(
     },
 
     // Set drag state (for multi-task preview)
-    setDragState: (deltaDays: number, sourceTaskId: string) => {
+    setDragState: (deltaDays: number, sourceTaskId: string): void => {
       set((state) => {
         state.dragState = { deltaDays, sourceTaskId };
       });
     },
 
     // Clear drag state
-    clearDragState: () => {
+    clearDragState: (): void => {
       set((state) => {
         state.dragState = null;
       });
     },
 
     // Signal that a file was loaded (triggers scroll positioning)
-    signalFileLoaded: () => {
+    signalFileLoaded: (): void => {
       set((state) => {
         state.fileLoadCounter += 1;
       });

@@ -77,7 +77,7 @@ export function Modal({
   }, [isOpen]);
 
   // Handle keyboard events
-  const handleKeyDown = (e: KeyboardEvent<HTMLDivElement>) => {
+  const handleKeyDown = (e: KeyboardEvent<HTMLDivElement>): void => {
     if (e.key === "Escape") {
       e.preventDefault();
       onClose();

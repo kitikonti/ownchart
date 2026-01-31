@@ -187,7 +187,7 @@ export function getScaleConfig(
       {
         unit: "week",
         step: 1,
-        format: (date: Date) => {
+        format: (date: Date): string => {
           const wn = getWeek(date, {
             weekStartsOn: getWeekStartDay(),
             firstWeekContainsDate: getFirstWeekContainsDate(),
@@ -204,7 +204,7 @@ export function getScaleConfig(
     {
       unit: "week",
       step: 1,
-      format: (date: Date) => {
+      format: (date: Date): string => {
         const wn = getWeek(date, {
           weekStartsOn: getWeekStartDay(),
           firstWeekContainsDate: getFirstWeekContainsDate(),

@@ -149,6 +149,7 @@ export function useTaskBarInteraction(
       e.preventDefault();
       e.stopPropagation();
     },
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- handleMouseMove/handleMouseUp are defined later; refs ensure fresh values
     [task, geometry, scale]
   );
 

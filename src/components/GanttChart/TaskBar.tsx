@@ -66,7 +66,7 @@ function MilestoneDiamond({
   taskName: string;
   fontSize?: number;
   labelPosition?: TaskLabelPosition;
-}) {
+}): JSX.Element {
   const centerY = y + taskBarHeight / 2; // Center of task bar
 
   return (
@@ -134,7 +134,7 @@ function SummaryBracket({
   taskName: string;
   fontSize?: number;
   labelPosition?: TaskLabelPosition;
-}) {
+}): JSX.Element {
   const tipHeight = height * 0.5; // Height of downward triangular tips (50% of bar height)
   const barThickness = height * 0.3; // Horizontal bar thickness (30% of bar height)
   const tipWidth = tipHeight * 0.577; // For 60-degree angle (tipHeight / tan(60°))

@@ -139,14 +139,14 @@ export const useUIStore = create<UIStore>()(
       isHydrated: false,
 
       // Export dialog actions
-      openExportDialog: () =>
+      openExportDialog: (): void =>
         set((state) => {
           state.isExportDialogOpen = true;
           state.exportError = null;
           state.exportProgress = 0;
         }),
 
-      closeExportDialog: () =>
+      closeExportDialog: (): void =>
         set((state) => {
           state.isExportDialogOpen = false;
           state.isExporting = false;
@@ -154,27 +154,27 @@ export const useUIStore = create<UIStore>()(
           state.exportError = null;
         }),
 
-      setExportFormat: (format) =>
+      setExportFormat: (format): void =>
         set((state) => {
           state.selectedExportFormat = format;
         }),
 
-      setExportOptions: (options) =>
+      setExportOptions: (options): void =>
         set((state) => {
           Object.assign(state.exportOptions, options);
         }),
 
-      setPdfExportOptions: (options) =>
+      setPdfExportOptions: (options): void =>
         set((state) => {
           Object.assign(state.pdfExportOptions, options);
         }),
 
-      setSvgExportOptions: (options) =>
+      setSvgExportOptions: (options): void =>
         set((state) => {
           Object.assign(state.svgExportOptions, options);
         }),
 
-      resetExportOptions: (options) =>
+      resetExportOptions: (options): void =>
         set((state) => {
           state.exportOptions = options
             ? { ...options }
@@ -183,7 +183,7 @@ export const useUIStore = create<UIStore>()(
           state.svgExportOptions = { ...DEFAULT_SVG_OPTIONS };
         }),
 
-      setIsExporting: (isExporting) =>
+      setIsExporting: (isExporting): void =>
         set((state) => {
           state.isExporting = isExporting;
           if (isExporting) {
@@ -192,67 +192,67 @@ export const useUIStore = create<UIStore>()(
           }
         }),
 
-      setExportProgress: (progress) =>
+      setExportProgress: (progress): void =>
         set((state) => {
           state.exportProgress = progress;
         }),
 
-      setExportError: (error) =>
+      setExportError: (error): void =>
         set((state) => {
           state.exportError = error;
           state.isExporting = false;
         }),
 
       // Help panel actions
-      openHelpPanel: () =>
+      openHelpPanel: (): void =>
         set((state) => {
           state.isHelpPanelOpen = true;
         }),
 
-      closeHelpPanel: () =>
+      closeHelpPanel: (): void =>
         set((state) => {
           state.isHelpPanelOpen = false;
         }),
 
-      toggleHelpPanel: () =>
+      toggleHelpPanel: (): void =>
         set((state) => {
           state.isHelpPanelOpen = !state.isHelpPanelOpen;
         }),
 
       // Preferences dialog actions
-      openPreferencesDialog: () =>
+      openPreferencesDialog: (): void =>
         set((state) => {
           state.isPreferencesDialogOpen = true;
         }),
 
-      closePreferencesDialog: () =>
+      closePreferencesDialog: (): void =>
         set((state) => {
           state.isPreferencesDialogOpen = false;
         }),
 
       // Chart settings dialog actions
-      openChartSettingsDialog: () =>
+      openChartSettingsDialog: (): void =>
         set((state) => {
           state.isChartSettingsDialogOpen = true;
         }),
 
-      closeChartSettingsDialog: () =>
+      closeChartSettingsDialog: (): void =>
         set((state) => {
           state.isChartSettingsDialogOpen = false;
         }),
 
       // Welcome tour actions
-      openWelcomeTour: () =>
+      openWelcomeTour: (): void =>
         set((state) => {
           state.isWelcomeTourOpen = true;
         }),
 
-      closeWelcomeTour: () =>
+      closeWelcomeTour: (): void =>
         set((state) => {
           state.isWelcomeTourOpen = false;
         }),
 
-      dismissWelcome: (permanent = false) =>
+      dismissWelcome: (permanent = false): void =>
         set((state) => {
           state.isWelcomeTourOpen = false;
           // Only permanently dismiss if user checked "Don't show again"
@@ -262,7 +262,7 @@ export const useUIStore = create<UIStore>()(
           }
         }),
 
-      completeTour: () =>
+      completeTour: (): void =>
         set((state) => {
           state.isWelcomeTourOpen = false;
           state.hasSeenWelcome = true;
@@ -271,7 +271,7 @@ export const useUIStore = create<UIStore>()(
           localStorage.setItem(TOUR_COMPLETED_KEY, "true");
         }),
 
-      checkFirstTimeUser: () =>
+      checkFirstTimeUser: (): void =>
         set((state) => {
           // Only show welcome if user hasn't seen it before
           if (!state.hasSeenWelcome) {
@@ -280,7 +280,7 @@ export const useUIStore = create<UIStore>()(
         }),
 
       // Hydration action - called after localStorage restoration is complete
-      setHydrated: () =>
+      setHydrated: (): void =>
         set((state) => {
           state.isHydrated = true;
         }),

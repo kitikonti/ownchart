@@ -14,7 +14,7 @@ import { useUserPreferencesStore } from "../store/slices/userPreferencesSlice";
  * Uses a fingerprint of task data to detect content changes efficiently.
  * Waits for fonts to load before measuring to ensure accurate widths.
  */
-export function useAutoColumnWidth() {
+export function useAutoColumnWidth(): void {
   const uiDensity = useUserPreferencesStore(
     (state) => state.preferences.uiDensity
   );
