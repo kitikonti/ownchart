@@ -81,6 +81,7 @@ export function ExportDialog(): JSX.Element | null {
   // Get project metadata from chart settings
   const projectTitle = useChartStore((state) => state.projectTitle);
   const projectAuthor = useChartStore((state) => state.projectAuthor);
+  const setProjectAuthor = useChartStore((state) => state.setProjectAuthor);
 
   // Project name for export filename (prefer projectTitle, fallback to file name)
   const projectName =
@@ -461,6 +462,8 @@ export function ExportDialog(): JSX.Element | null {
                 exportOptions={exportOptions}
                 onExportOptionsChange={setExportOptions}
                 currentAppZoom={currentAppZoom}
+                projectAuthor={projectAuthor}
+                onProjectAuthorChange={setProjectAuthor}
               />
             )}
 

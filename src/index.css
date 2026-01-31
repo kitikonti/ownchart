@@ -577,6 +577,69 @@ select:focus {
   }
 }
 
+/* ─── Dropdown Panel, Trigger & Item (shared across ALL toolbar dropdowns) ─── */
+/* Single source of truth: edit here to change every dropdown at once */
+.dropdown-panel {
+  position: absolute;
+  top: 100%;
+  margin-top: 2px;
+  background-color: #ffffff;
+  border-radius: 2px;
+  box-shadow: rgba(0, 0, 0, 0.1) 0px 4px 8px 0px;
+  padding: 4px 0;
+  z-index: 1000;
+  overflow: hidden;
+}
+
+.dropdown-trigger {
+  background-color: transparent;
+  transition: background-color 0.1s cubic-bezier(0.33, 0, 0.67, 1);
+}
+
+.dropdown-trigger:hover {
+  background-color: rgb(243, 243, 243);
+}
+
+.dropdown-trigger[aria-expanded="true"] {
+  background-color: rgb(230, 230, 230);
+}
+
+.dropdown-trigger[aria-expanded="true"]:hover {
+  background-color: rgb(230, 230, 230);
+}
+
+.dropdown-trigger-active {
+  background-color: rgba(212, 212, 212, 0.6);
+}
+
+.dropdown-item {
+  background-color: transparent;
+  transition: background-color 0.1s;
+}
+
+.dropdown-item:hover {
+  background-color: rgb(245, 245, 245);
+}
+
+.dropdown-item-selected {
+  background-color: rgb(235, 245, 255);
+}
+
+.dropdown-item-selected:hover {
+  background-color: rgb(225, 240, 255);
+}
+
+/* Zoom combobox - border darkens on hover */
+.zoom-combobox {
+  background-color: #ffffff;
+  border: 1px solid rgb(209, 209, 209);
+  transition: border-color 0.1s;
+}
+
+.zoom-combobox:hover {
+  border-color: rgb(140, 140, 140);
+}
+
 /* ─── Animations ─── */
 
 /* Zoom indicator animation (Sprint 1.2 Package 3) */

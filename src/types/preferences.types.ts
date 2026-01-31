@@ -107,118 +107,14 @@ export const DEFAULT_WORKING_DAYS_CONFIG: WorkingDaysConfig = {
   excludeHolidays: true,
 };
 
-/**
- * Detect locale-based date format from browser
- */
-export function detectLocaleDateFormat(): DateFormat {
-  const locale = navigator.language.toLowerCase();
-
-  // US uses MM/DD/YYYY
-  if (locale.includes("us") || locale === "en") {
-    return "MM/DD/YYYY";
-  }
-
-  // ISO format for some locales (Japan, China, etc.)
-  if (
-    locale.startsWith("ja") ||
-    locale.startsWith("zh") ||
-    locale.startsWith("ko")
-  ) {
-    return "YYYY-MM-DD";
-  }
-
-  // Most of the world uses DD/MM/YYYY
-  return "DD/MM/YYYY";
-}
-
-/**
- * Detect first day of week from browser locale
- */
-export function detectLocaleFirstDayOfWeek(): FirstDayOfWeek {
-  const locale = navigator.language.toLowerCase();
-
-  // Countries that use Sunday as first day of week
-  const sundayFirstCountries = [
-    "us",
-    "ca",
-    "jp",
-    "tw",
-    "hk",
-    "il",
-    "sa",
-    "ae",
-    "eg",
-    "br",
-  ];
-
-  // Check if locale contains any Sunday-first country code
-  if (sundayFirstCountries.some((code) => locale.includes(code))) {
-    return "sunday";
-  }
-
-  // Most countries use Monday as first day
-  return "monday";
-}
-
-/**
- * Detect week numbering system from browser locale
- * US/Canada use their own system, most other countries use ISO 8601
- */
-export function detectLocaleWeekNumberingSystem(): WeekNumberingSystem {
-  const locale = navigator.language.toLowerCase();
-
-  // Countries that use US week numbering (Week 1 contains Jan 1)
-  const usWeekNumberingCountries = ["us", "ca"];
-
-  // Check if locale contains any US-style country code
-  if (usWeekNumberingCountries.some((code) => locale.includes(code))) {
-    return "us";
-  }
-
-  // Most countries use ISO 8601 (Week 1 contains first Thursday)
-  return "iso";
-}
-
-/**
- * Detect holiday region from browser locale
- */
-export function detectLocaleHolidayRegion(): string {
-  const locale = navigator.language;
-  const parts = locale.split("-");
-
-  // If locale has region (e.g., "en-US", "de-AT"), use the region
-  if (parts.length > 1) {
-    return parts[1].toUpperCase();
-  }
-
-  // Otherwise, try to map language to a country
-  const languageToCountry: Record<string, string> = {
-    de: "DE",
-    en: "US",
-    fr: "FR",
-    es: "ES",
-    it: "IT",
-    nl: "NL",
-    pt: "PT",
-    ru: "RU",
-    ja: "JP",
-    zh: "CN",
-    ko: "KR",
-  };
-
-  return languageToCountry[parts[0].toLowerCase()] || "US";
-}
-
-/**
- * Default preferences for new users
- * Uses locale detection for regional settings
- */
-export const DEFAULT_PREFERENCES: UserPreferences = {
-  uiDensity: "normal",
-  dateFormat: detectLocaleDateFormat(),
-  firstDayOfWeek: detectLocaleFirstDayOfWeek(),
-  weekNumberingSystem: detectLocaleWeekNumberingSystem(),
-};
+// Re-export locale detection functions from their dedicated module
+export {
+  detectLocaleDateFormat,
+  detectLocaleFirstDayOfWeek,
+  detectLocaleWeekNumberingSystem,
+  detectLocaleHolidayRegion,
+  DEFAULT_PREFERENCES,
+} from "../utils/localeDetection";
 
 /**
  * Density configuration values for each mode

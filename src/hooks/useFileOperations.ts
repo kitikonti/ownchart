@@ -86,9 +86,6 @@ export function useFileOperations(): {
   // Export options from uiSlice
   const exportOptions = useUIStore((state) => state.exportOptions);
   const resetExportOptions = useUIStore((state) => state.resetExportOptions);
-  const openChartSettingsDialog = useUIStore(
-    (state) => state.openChartSettingsDialog
-  );
 
   // Save (Ctrl+S) - Re-save if handle exists, otherwise show dialog
   const handleSave = useCallback(
@@ -313,9 +310,6 @@ export function useFileOperations(): {
     clearFileHandle();
     fileState.reset();
 
-    // Open chart settings dialog to configure the new project
-    openChartSettingsDialog();
-
     toast.success("Created new chart");
   }, [
     fileState,
@@ -325,7 +319,6 @@ export function useFileOperations(): {
     setProjectTitle,
     setProjectAuthor,
     clearHistory,
-    openChartSettingsDialog,
   ]);
 
   return {

@@ -36,12 +36,6 @@ interface UIState {
   // Help panel
   isHelpPanelOpen: boolean;
 
-  // Preferences dialog
-  isPreferencesDialogOpen: boolean;
-
-  // Chart settings dialog (project-specific view settings)
-  isChartSettingsDialogOpen: boolean;
-
   // Welcome tour
   isWelcomeTourOpen: boolean;
   hasSeenWelcome: boolean;
@@ -71,14 +65,6 @@ interface UIActions {
   openHelpPanel: () => void;
   closeHelpPanel: () => void;
   toggleHelpPanel: () => void;
-
-  // Preferences dialog
-  openPreferencesDialog: () => void;
-  closePreferencesDialog: () => void;
-
-  // Chart settings dialog
-  openChartSettingsDialog: () => void;
-  closeChartSettingsDialog: () => void;
 
   // Welcome tour
   openWelcomeTour: () => void;
@@ -131,8 +117,6 @@ export const useUIStore = create<UIStore>()(
       exportProgress: 0,
       exportError: null,
       isHelpPanelOpen: false,
-      isPreferencesDialogOpen: false,
-      isChartSettingsDialogOpen: false,
       isWelcomeTourOpen: false,
       hasSeenWelcome,
       hasTourCompleted,
@@ -217,28 +201,6 @@ export const useUIStore = create<UIStore>()(
       toggleHelpPanel: (): void =>
         set((state) => {
           state.isHelpPanelOpen = !state.isHelpPanelOpen;
-        }),
-
-      // Preferences dialog actions
-      openPreferencesDialog: (): void =>
-        set((state) => {
-          state.isPreferencesDialogOpen = true;
-        }),
-
-      closePreferencesDialog: (): void =>
-        set((state) => {
-          state.isPreferencesDialogOpen = false;
-        }),
-
-      // Chart settings dialog actions
-      openChartSettingsDialog: (): void =>
-        set((state) => {
-          state.isChartSettingsDialogOpen = true;
-        }),
-
-      closeChartSettingsDialog: (): void =>
-        set((state) => {
-          state.isChartSettingsDialogOpen = false;
         }),
 
       // Welcome tour actions

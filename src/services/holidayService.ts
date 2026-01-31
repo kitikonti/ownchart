@@ -205,33 +205,5 @@ class HolidayServiceClass {
  */
 export const holidayService = new HolidayServiceClass();
 
-/**
- * Detect user's likely holiday region from browser locale
- * @returns ISO 3166-1 alpha-2 country code
- */
-export function detectLocaleHolidayRegion(): string {
-  const locale = navigator.language;
-  const parts = locale.split("-");
-
-  // If locale has region (e.g., "en-US", "de-AT"), use the region
-  if (parts.length > 1) {
-    return parts[1].toUpperCase();
-  }
-
-  // Otherwise, try to map language to a country
-  const languageToCountry: Record<string, string> = {
-    de: "DE",
-    en: "US",
-    fr: "FR",
-    es: "ES",
-    it: "IT",
-    nl: "NL",
-    pt: "PT",
-    ru: "RU",
-    ja: "JP",
-    zh: "CN",
-    ko: "KR",
-  };
-
-  return languageToCountry[parts[0].toLowerCase()] || "US";
-}
+// Re-export from localeDetection (single source of truth)
+export { detectLocaleHolidayRegion } from "../utils/localeDetection";

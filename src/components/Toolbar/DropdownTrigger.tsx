@@ -1,0 +1,74 @@
+/**
+ * DropdownTrigger - Standard trigger button for toolbar dropdowns.
+ *
+ * Renders an inline-flex button with icon, label, and CaretDown chevron.
+ * Hover/open states handled via CSS class .dropdown-trigger
+ * (no inline backgroundColor so CSS :hover works).
+ */
+
+import type { ReactNode } from "react";
+import { CaretDown } from "@phosphor-icons/react";
+import { TOOLBAR } from "../../styles/design-tokens";
+
+interface DropdownTriggerProps {
+  /** Whether the dropdown is currently open */
+  isOpen: boolean;
+  /** Click handler (typically from useDropdown.toggle) */
+  onClick: () => void;
+  /** Icon element shown before label */
+  icon?: ReactNode;
+  /** Text label */
+  label: string;
+  /** Accessible label */
+  "aria-label"?: string;
+  /** Tooltip */
+  title?: string;
+  /** ARIA haspopup value */
+  "aria-haspopup"?: "true" | "listbox" | "menu";
+  /** Visual border state for active config (e.g. WorkingDays) */
+  isActive?: boolean;
+}
+
+export function DropdownTrigger({
+  isOpen,
+  onClick,
+  icon,
+  label,
+  "aria-label": ariaLabel,
+  title,
+  "aria-haspopup": ariaHaspopup = "true",
+  isActive = false,
+}: DropdownTriggerProps): JSX.Element {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      aria-label={ariaLabel}
+      aria-haspopup={ariaHaspopup}
+      aria-expanded={isOpen}
+      title={title}
+      className={`dropdown-trigger${isActive && !isOpen ? " dropdown-trigger-active" : ""}`}
+      style={{
+        display: "inline-flex",
+        alignItems: "center",
+        justifyContent: "center",
+        gap: "4px",
+        height: `${TOOLBAR.buttonHeight}px`,
+        padding: "5px 6px",
+        color: "rgb(66, 66, 66)",
+        border: isActive && !isOpen ? "1px solid rgb(160, 160, 160)" : "none",
+        borderRadius: "4px",
+        cursor: "pointer",
+        fontSize: "14px",
+        lineHeight: "20px",
+        fontWeight: 400,
+        userSelect: "none",
+        whiteSpace: "nowrap",
+      }}
+    >
+      {icon}
+      <span>{label}</span>
+      <CaretDown size={12} weight="bold" style={{ marginLeft: "2px" }} />
+    </button>
+  );
+}

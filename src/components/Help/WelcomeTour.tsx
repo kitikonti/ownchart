@@ -10,30 +10,14 @@ import { Checkbox } from "../common/Checkbox";
 import { useUIStore } from "../../store/slices/uiSlice";
 
 /**
- * Opens chart settings dialog after a short delay to ensure welcome modal is closed first.
- */
-function openChartSettingsAfterDelay(openFn: () => void): void {
-  setTimeout(() => {
-    openFn();
-  }, 100);
-}
-
-/**
  * Welcome Tour component.
  */
 export function WelcomeTour(): JSX.Element | null {
-  const {
-    isWelcomeTourOpen,
-    dismissWelcome,
-    openHelpPanel,
-    openChartSettingsDialog,
-  } = useUIStore();
+  const { isWelcomeTourOpen, dismissWelcome, openHelpPanel } = useUIStore();
   const [dontShowAgain, setDontShowAgain] = useState(false);
 
   const handleGetStarted = (): void => {
     dismissWelcome(dontShowAgain);
-    // Open chart settings dialog for new project configuration
-    openChartSettingsAfterDelay(openChartSettingsDialog);
   };
 
   const handleShowShortcuts = (): void => {
@@ -42,13 +26,10 @@ export function WelcomeTour(): JSX.Element | null {
     setTimeout(() => {
       openHelpPanel();
     }, 100);
-    // Note: Don't open chart settings when showing shortcuts - user can access it later
   };
 
   const handleClose = (): void => {
     dismissWelcome(dontShowAgain);
-    // Open chart settings dialog for new project configuration
-    openChartSettingsAfterDelay(openChartSettingsDialog);
   };
 
   const footer = (

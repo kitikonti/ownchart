@@ -49,6 +49,8 @@ interface PdfExportOptionsProps {
   exportOptions: ExportOptions;
   onExportOptionsChange: (options: Partial<ExportOptions>) => void;
   currentAppZoom: number;
+  projectAuthor: string;
+  onProjectAuthorChange: (author: string) => void;
 }
 
 export function PdfExportOptions({
@@ -57,6 +59,8 @@ export function PdfExportOptions({
   exportOptions,
   onExportOptionsChange,
   currentAppZoom,
+  projectAuthor,
+  onProjectAuthorChange,
 }: PdfExportOptionsProps): JSX.Element {
   const pageDims =
     options.pageSize === "custom"
@@ -310,9 +314,24 @@ export function PdfExportOptions({
           </div>
         </div>
 
-        <p className="text-xs text-neutral-500 mt-4">
-          Set project title and author in Chart Settings
-        </p>
+        {/* Inline Author input - shown when any "Author" checkbox is enabled */}
+        {(options.header.showAuthor || options.footer.showAuthor) && (
+          <div className="mt-4">
+            <label
+              htmlFor="pdf-author"
+              className="block text-sm font-medium text-neutral-700 mb-2"
+            >
+              Author
+            </label>
+            <Input
+              id="pdf-author"
+              type="text"
+              value={projectAuthor}
+              onChange={(e) => onProjectAuthorChange(e.target.value)}
+              placeholder="Your name"
+            />
+          </div>
+        )}
       </section>
     </div>
   );

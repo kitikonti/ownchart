@@ -9,16 +9,18 @@
  * - Hierarchy: Base color and lightness settings
  */
 
-import { useState, useRef, useEffect } from "react";
-import { CaretDown, Sliders } from "@phosphor-icons/react";
+import { useState } from "react";
+import { Sliders } from "@phosphor-icons/react";
 import { useChartStore } from "../../store/slices/chartSlice";
+import { useDropdown } from "../../hooks/useDropdown";
+import { DropdownTrigger } from "../Toolbar/DropdownTrigger";
+import { DropdownPanel } from "../Toolbar/DropdownPanel";
 import {
   COLOR_PALETTES,
   CATEGORY_LABELS,
   type PaletteCategory,
 } from "../../utils/colorPalettes";
 import { generateMonochromePalette } from "../../utils/colorUtils";
-import { TOOLBAR } from "../../styles/design-tokens";
 
 /**
  * Color swatch component for palette preview
@@ -59,9 +61,8 @@ function PalettePreview({ colors }: { colors: string[] }): JSX.Element {
 }
 
 export function ColorOptionsDropdown(): JSX.Element {
-  const [isOpen, setIsOpen] = useState(false);
   const [customMonoInput, setCustomMonoInput] = useState("#0F6CBD");
-  const containerRef = useRef<HTMLDivElement>(null);
+  const { isOpen, toggle, close, containerRef } = useDropdown();
 
   const colorModeState = useChartStore((state) => state.colorModeState);
   const setThemeOptions = useChartStore((state) => state.setThemeOptions);
@@ -73,47 +74,12 @@ export function ColorOptionsDropdown(): JSX.Element {
 
   const currentMode = colorModeState.mode;
 
-  // Close on outside click
-  useEffect(() => {
-    if (!isOpen) return;
-
-    const handleClickOutside = (e: MouseEvent): void => {
-      if (
-        containerRef.current &&
-        !containerRef.current.contains(e.target as Node)
-      ) {
-        setIsOpen(false);
-      }
-    };
-
-    document.addEventListener("mousedown", handleClickOutside);
-    return (): void => {
-      document.removeEventListener("mousedown", handleClickOutside);
-    };
-  }, [isOpen]);
-
-  // Close on Escape
-  useEffect(() => {
-    if (!isOpen) return;
-
-    const handleKeyDown = (e: KeyboardEvent): void => {
-      if (e.key === "Escape") {
-        setIsOpen(false);
-      }
-    };
-
-    document.addEventListener("keydown", handleKeyDown);
-    return (): void => {
-      document.removeEventListener("keydown", handleKeyDown);
-    };
-  }, [isOpen]);
-
   const handleSelectPalette = (paletteId: string): void => {
     setThemeOptions({
       selectedPaletteId: paletteId,
       customMonochromeBase: null,
     });
-    setIsOpen(false);
+    close();
   };
 
   const handleCreateMonochrome = (): void => {
@@ -121,7 +87,7 @@ export function ColorOptionsDropdown(): JSX.Element {
       selectedPaletteId: null,
       customMonochromeBase: customMonoInput,
     });
-    setIsOpen(false);
+    close();
   };
 
   // Group palettes by category
@@ -159,30 +125,17 @@ export function ColorOptionsDropdown(): JSX.Element {
                   key={palette.id}
                   type="button"
                   onClick={() => handleSelectPalette(palette.id)}
+                  className={`dropdown-item${isSelected ? " dropdown-item-selected" : ""}`}
                   style={{
                     display: "flex",
                     alignItems: "center",
                     justifyContent: "space-between",
                     width: "100%",
                     padding: "6px 12px",
-                    backgroundColor: isSelected
-                      ? "rgb(235, 245, 255)"
-                      : "transparent",
                     border: "none",
                     cursor: "pointer",
                     fontSize: "13px",
                     textAlign: "left",
-                    transition: "background 0.1s",
-                  }}
-                  onMouseEnter={(e) => {
-                    e.currentTarget.style.backgroundColor = isSelected
-                      ? "rgb(235, 245, 255)"
-                      : "rgb(245, 245, 245)";
-                  }}
-                  onMouseLeave={(e) => {
-                    e.currentTarget.style.backgroundColor = isSelected
-                      ? "rgb(235, 245, 255)"
-                      : "transparent";
                   }}
                 >
                   <span style={{ fontWeight: isSelected ? 600 : 400 }}>
@@ -522,69 +475,22 @@ export function ColorOptionsDropdown(): JSX.Element {
 
   return (
     <div ref={containerRef} className="relative">
-      {/* Trigger Button */}
-      <button
-        type="button"
-        onClick={() => setIsOpen(!isOpen)}
+      <DropdownTrigger
+        isOpen={isOpen}
+        onClick={toggle}
+        icon={<Sliders size={18} weight="light" />}
+        label={getLabel()}
         aria-label="Color Options"
-        aria-haspopup="true"
-        aria-expanded={isOpen}
         title="Color mode options"
-        style={{
-          display: "inline-flex",
-          alignItems: "center",
-          justifyContent: "center",
-          gap: "4px",
-          height: `${TOOLBAR.buttonHeight}px`,
-          padding: "5px 8px",
-          backgroundColor: isOpen ? "rgb(230, 230, 230)" : "transparent",
-          color: "rgb(66, 66, 66)",
-          border: "none",
-          borderRadius: "4px",
-          cursor: "pointer",
-          fontSize: "14px",
-          lineHeight: "20px",
-          fontWeight: 400,
-          userSelect: "none",
-          whiteSpace: "nowrap",
-          transition: "background 0.1s cubic-bezier(0.33, 0, 0.67, 1)",
-        }}
-        onMouseEnter={(e) => {
-          if (!isOpen) {
-            e.currentTarget.style.backgroundColor = "rgb(243, 243, 243)";
-          }
-        }}
-        onMouseLeave={(e) => {
-          e.currentTarget.style.backgroundColor = isOpen
-            ? "rgb(230, 230, 230)"
-            : "transparent";
-        }}
-      >
-        <Sliders size={18} weight="light" />
-        <span>{getLabel()}</span>
-        <CaretDown size={12} weight="bold" style={{ marginLeft: "2px" }} />
-      </button>
+      />
 
-      {/* Dropdown Menu */}
       {isOpen && (
-        <div
-          style={{
-            position: "absolute",
-            top: "100%",
-            left: 0,
-            marginTop: "2px",
-            backgroundColor: "#ffffff",
-            borderRadius: "4px",
-            boxShadow:
-              "0 0 2px rgba(0, 0, 0, 0.12), 0 8px 16px rgba(0, 0, 0, 0.14)",
-            zIndex: 1000,
-            minWidth: currentMode === "theme" ? "280px" : "200px",
-            maxHeight: "400px",
-            overflowY: "auto",
-          }}
+        <DropdownPanel
+          minWidth={currentMode === "theme" ? "280px" : "200px"}
+          maxHeight="400px"
         >
           {renderContent()}
-        </div>
+        </DropdownPanel>
       )}
     </div>
   );
