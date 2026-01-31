@@ -8,7 +8,7 @@
 
 import type { ReactNode } from "react";
 import { CaretDown } from "@phosphor-icons/react";
-import { TOOLBAR } from "../../styles/design-tokens";
+import { COLORS, TOOLBAR } from "../../styles/design-tokens";
 
 interface DropdownTriggerProps {
   /** Whether the dropdown is currently open */
@@ -55,8 +55,9 @@ export function DropdownTrigger({
         gap: "4px",
         height: `${TOOLBAR.buttonHeight}px`,
         padding: "5px 6px",
-        color: "rgb(66, 66, 66)",
-        border: isActive && !isOpen ? "1px solid rgb(160, 160, 160)" : "none",
+        color: COLORS.neutral[800],
+        border: "0.667px solid transparent",
+        borderColor: isActive && !isOpen ? "rgb(97, 97, 97)" : "transparent",
         borderRadius: "4px",
         cursor: "pointer",
         fontSize: "14px",

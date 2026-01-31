@@ -20,7 +20,7 @@ export const TOOLBAR_TOKENS = {
   // Colors from design tokens
   bgToolbar: COLORS.neutral[0],
   bgTabs: COLORS.neutral[50],
-  bgHover: COLORS.neutral[100],
+  bgHover: COLORS.neutral[50],
   bgActive: COLORS.neutral[200],
   bgToggleOn: COLORS.neutral[100],
   // Icon/Text colors - using Tailwind class names
@@ -150,9 +150,10 @@ export const ToolbarButton = forwardRef<HTMLButtonElement, ToolbarButtonProps>(
       height: `${TOOLBAR.buttonHeight}px`,
       minWidth: `${TOOLBAR.buttonMinWidth}px`,
       padding: "5px 5px",
-      backgroundColor: disabled ? "transparent" : COLORS.neutral[0],
-      color: disabled ? COLORS.neutral[300] : COLORS.neutral[700],
-      border: "none",
+      backgroundColor: "transparent",
+      color: disabled ? COLORS.neutral[300] : COLORS.neutral[800],
+      border: "0.667px solid transparent",
+      borderColor: "transparent",
       borderRadius: "4px",
       cursor: disabled ? "not-allowed" : "pointer",
       fontSize: "14px",
@@ -182,7 +183,7 @@ export const ToolbarButton = forwardRef<HTMLButtonElement, ToolbarButtonProps>(
       variant === "toggle" && isActive
         ? {
             backgroundColor: "rgb(235, 235, 235)",
-            border: "1px solid rgb(97, 97, 97)",
+            borderColor: "rgb(97, 97, 97)",
           }
         : {};
 

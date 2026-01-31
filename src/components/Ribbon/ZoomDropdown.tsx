@@ -5,6 +5,7 @@
 
 import type { MouseEvent } from "react";
 import { CaretDown } from "@phosphor-icons/react";
+import { COLORS } from "../../styles/design-tokens";
 import { useDropdown } from "../../hooks/useDropdown";
 import { DropdownPanel } from "../Toolbar/DropdownPanel";
 import { DropdownItem } from "../Toolbar/DropdownItem";
@@ -67,7 +68,7 @@ export function ZoomDropdown({
           height: "26px",
           lineHeight: "26px",
           paddingLeft: "8px",
-          color: "rgb(36, 36, 36)",
+          color: COLORS.neutral[800],
           fontSize: "14px",
           fontWeight: 400,
           whiteSpace: "nowrap",
@@ -96,7 +97,7 @@ export function ZoomDropdown({
       >
         <CaretDown
           size={12}
-          weight="regular"
+          weight="bold"
           style={{
             color: isOpen ? "rgb(37, 36, 35)" : "rgb(121, 119, 117)",
           }}

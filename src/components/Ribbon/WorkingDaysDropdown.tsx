@@ -11,6 +11,7 @@ import { holidayService } from "../../services/holidayService";
 import { useDropdown } from "../../hooks/useDropdown";
 import { DropdownTrigger } from "../Toolbar/DropdownTrigger";
 import { DropdownPanel } from "../Toolbar/DropdownPanel";
+import { TOOLBAR } from "../../styles/design-tokens";
 
 export function WorkingDaysDropdown(): JSX.Element {
   const { isOpen, toggle, containerRef } = useDropdown();
@@ -54,7 +55,7 @@ export function WorkingDaysDropdown(): JSX.Element {
       <DropdownTrigger
         isOpen={isOpen}
         onClick={toggle}
-        icon={<Briefcase size={16} weight="light" />}
+        icon={<Briefcase size={TOOLBAR.iconSize} weight="light" />}
         label="Working Days"
         aria-label="Working Days"
         title="Working Days configuration"

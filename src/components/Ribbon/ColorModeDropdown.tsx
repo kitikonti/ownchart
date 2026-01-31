@@ -15,6 +15,7 @@ import { useDropdown } from "../../hooks/useDropdown";
 import { DropdownTrigger } from "../Toolbar/DropdownTrigger";
 import { DropdownPanel } from "../Toolbar/DropdownPanel";
 import { DropdownItem } from "../Toolbar/DropdownItem";
+import { TOOLBAR } from "../../styles/design-tokens";
 import type { ColorMode } from "../../types/colorMode.types";
 
 interface ColorModeOption {
@@ -70,7 +71,7 @@ export function ColorModeDropdown(): JSX.Element {
       <DropdownTrigger
         isOpen={isOpen}
         onClick={toggle}
-        icon={<Palette size={18} weight="light" />}
+        icon={<Palette size={TOOLBAR.iconSize} weight="light" />}
         label={currentOption?.label || "Color"}
         aria-label="Color Mode"
         aria-haspopup="listbox"

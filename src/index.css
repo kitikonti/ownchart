@@ -515,8 +515,13 @@ select:focus {
 
 /* Toolbar button - MS Office style */
 .ribbon-toolbar-button:hover:not(:disabled) {
-  background-color: var(--color-neutral-100) !important;
+  background-color: var(--color-neutral-50) !important;
   cursor: pointer;
+}
+
+.ribbon-toolbar-button[aria-pressed="true"]:hover:not(:disabled) {
+  background-color: var(--color-neutral-50) !important;
+  border-color: transparent !important;
 }
 
 .ribbon-toolbar-button:active:not(:disabled) {
@@ -597,7 +602,7 @@ select:focus {
 }
 
 .dropdown-trigger:hover {
-  background-color: rgb(243, 243, 243);
+  background-color: var(--color-neutral-50);
 }
 
 .dropdown-trigger[aria-expanded="true"] {
@@ -609,7 +614,12 @@ select:focus {
 }
 
 .dropdown-trigger-active {
-  background-color: rgba(212, 212, 212, 0.6);
+  background-color: rgb(235, 235, 235);
+}
+
+.dropdown-trigger-active:hover {
+  background-color: var(--color-neutral-50);
+  border-color: transparent !important;
 }
 
 .dropdown-item {
