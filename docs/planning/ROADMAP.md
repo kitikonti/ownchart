@@ -1495,10 +1495,38 @@ This roadmap provides a clear path from concept to launch:
 
 ---
 
-**Document Version**: 2.2
-**Last Updated**: 2026-01-10
-**Status**: ✅ Sprint 1.5.5 COMPLETE (v0.0.22)
+**Document Version**: 2.3
+**Last Updated**: 2026-02-04
+**Status**: ✅ Sprint 1.5.5 COMPLETE + UI/UX Polish (v0.0.33)
 **Next Phase**: V1.1 - Remaining Deferred Features
+
+**Recent Updates (v2.3)** - v0.0.23 to v0.0.33:
+- **v0.0.33** (2026-01-30) - UI Polish & Bug Fixes:
+  - Ribbon UI refinements with MS Office hover styling
+  - Unified dropdown styling across components
+  - Fixed 326 ESLint warnings across codebase
+  - "F" keyboard shortcut for fit to view
+  - Color mode state persisted to .ownchart files
+  - Undo/redo support for indent/outdent operations
+  - Fixed task date preservation during type switching
+  - Fixed ghost preview on drag and vertical desync issues
+  - Timeline header shows "Week N, Mon YYYY" at 30-60+ px/day zoom
+- **v0.0.31** (2026-01-15) - Smart Color Management:
+  - 5 color modes: Manual (default), By Type, By Progress, By Duration, Random
+  - Automatic color assignment based on task properties
+  - Color picker integration with mode system
+  - Color state persisted in project files
+- **v0.0.28** (2026-01-15) - Export Dialog Redesign:
+  - Figma-style export dialog with live preview
+  - Preview panel shows real-time export appearance
+  - Dynamic text color contrast for task labels
+  - Today marker changed from red to blue with header highlight
+  - Inter font with embedded PDF support
+- **v0.0.24** (2026-01-12) - MS Office-style Ribbon UI:
+  - Complete toolbar redesign matching MS Project/Office aesthetics
+  - Tabbed ribbon interface (File, Task, View, Help)
+  - Settings consolidated into ribbon structure
+  - Auto-fit column widths on density and content changes
 
 **Recent Updates (v2.2)** - v0.0.22:
 - **v0.0.22** (2026-01-10) - Sprint 1.5.5 Complete:

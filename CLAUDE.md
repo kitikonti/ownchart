@@ -122,23 +122,39 @@ Example: "I need to check the export name in interFontData.ts. Could you run `gr
 - ✅ Smooth left-scrolling for infinite timeline
 - ✅ Dependency arrows no longer animate during scroll
 
-**Latest Improvements (v0.0.13 - v0.0.22)**:
+**Post-Sprint UI/UX Enhancements (v0.0.23 - v0.0.33)**:
+- ✅ Smart Color Management with 5 color modes (Manual, By Type, By Progress, By Duration, Random)
+- ✅ Export dialog redesigned with Figma-style live preview
+- ✅ MS Office-style Ribbon UI (tabbed interface: File, Task, View, Help)
+- ✅ Dynamic text color contrast for task labels
+- ✅ Today marker changed from red to blue with header highlight
+- ✅ Unified dropdown styling across components
+- ✅ Auto-fit column widths on density and content changes
+- ✅ "F" keyboard shortcut for fit to view
+- ✅ Color mode state persisted to .ownchart files
+- ✅ Undo/redo support for indent/outdent operations
+- ✅ Timeline header shows "Week N, Mon YYYY" at medium zoom levels
+
+**Latest Improvements (v0.0.13 - v0.0.33)**:
+- ✅ Smart Color Management (5 modes: Manual, By Type, By Progress, By Duration, Random)
+- ✅ MS Office-style Ribbon UI with tabbed interface
+- ✅ Export dialog redesign with Figma-style live preview
 - ✅ PDF Export with vector graphics and page size options
 - ✅ SVG Export for editable vector output
-- ✅ Unified export dialog design with teal accent
+- ✅ Dynamic text color contrast for task labels
+- ✅ Today marker changed to blue with header highlight
+- ✅ Unified dropdown and dialog styling
+- ✅ Auto-fit column widths on density changes
+- ✅ Inter font with embedded PDF support (replaced IBM Plex Sans)
 - ✅ Chart settings persistence in localStorage
-- ✅ Inter-Italic font embedded for PDF italic text
 - ✅ Exponential zoom for consistent feel at all zoom levels
-- ✅ Advanced timeline scale options in PNG export
+- ✅ Color mode state persisted in .ownchart files
+- ✅ Undo/redo support for indent/outdent operations
+- ✅ "F" keyboard shortcut for fit to view
 - ✅ Project name included in PNG export filename
 - ✅ Column widths restored when opening files
-- ✅ Milestone labels and label clipping in fit-to-view fixed
 - ✅ Dependencies no longer auto-move tasks on creation
-- ✅ Default task color changed to Teal with unified brand color
-- ✅ Inter font (replaced IBM Plex Sans) with refined typography
 - ✅ Custom domain configured: ownchart.app
-- ✅ Auto-open chart settings dialog when creating new file
-- ✅ TODAY label removed from today marker (cleaner look)
 
 **Test Coverage**: 834 unit tests (80%+ coverage)
 
@@ -546,7 +562,7 @@ npm run test:e2e            # E2E tests (Playwright)
 
 ---
 
-**Status**: ✅ Sprint 1.5.5 Complete - PDF & SVG Export implemented
-**Current Version**: 0.0.22
+**Status**: ✅ Sprint 1.5.5 Complete + UI/UX Polish (Smart Color Management, Ribbon UI, Export Preview)
+**Current Version**: 0.0.33
 **File Extension**: `.ownchart`
-**Last Updated**: 2026-01-10
+**Last Updated**: 2026-02-04

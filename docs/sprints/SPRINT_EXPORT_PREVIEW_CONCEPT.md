@@ -6,7 +6,7 @@
 **Variante**: Standard (skalierte Preview mit Debounce und Memory Management)
 **Geschätzter Aufwand**: 7-11 Tage (5 Phasen)
 **Priorität**: Enhancement
-**Status**: Konzept erstellt
+**Status**: ✅ IMPLEMENTED (v0.0.28 - 2026-01-15)
 
 ### Aufwand-Übersicht
 | Phase | Beschreibung | Tage |
@@ -428,3 +428,32 @@ npm run test:unit -- --grep "ChartPreview"
 npm run test:unit -- --grep "PdfPreview"
 npm run test:unit -- --grep "ExportPreview"
 ```
+
+
+---
+
+## Implementation Status
+
+**Status**: ✅ IMPLEMENTED (v0.0.28 - 2026-01-15)
+
+### What Was Implemented:
+- Figma-style export dialog with live preview panel
+- Preview shows real-time export appearance for PNG/PDF/SVG
+- Settings panel with all export options
+- Preview updates with debouncing on settings changes
+- 55/45 preview/settings split layout with larger preview area
+
+### Key Features Delivered:
+- Live preview for all export formats (PNG, PDF, SVG)
+- Real-time updates when changing export settings
+- Preview panel showing exact export output (scaled)
+- Dimension display below preview
+- Clean, modern UI matching Figma-style layout
+
+### Notes:
+- Implementation went beyond concept with additional UI polish
+- Export dialog expanded to max-w-7xl for better preview visibility
+- Preview panel width increased to 65% for optimal viewing
+- All success criteria met
+
+**Last Updated**: 2026-02-04

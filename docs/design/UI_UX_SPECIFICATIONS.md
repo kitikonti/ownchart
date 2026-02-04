@@ -1,5 +1,11 @@
 # UI/UX Specifications
 
+> **Note**: This document reflects the original design specifications. The current implementation (v0.0.33) includes additional UI enhancements not fully documented here:
+> - MS Office-style Ribbon UI (tabbed interface: File, Task, View, Help)
+> - Smart Color Management with 5 color modes
+> - Export dialog with Figma-style live preview
+> - See CHANGELOG.md for complete implementation details
+
 ## 1. Design Principles
 
 ### 1.1 Core Principles
