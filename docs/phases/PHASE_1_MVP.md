@@ -2024,10 +2024,10 @@ Keep checklist in PROJECT_STATUS.md or use GitHub Issues:
 
 **V1.1 Roadmap** (4-6 weeks after MVP):
 1. History timeline slider with real-time scrubbing
-2. Advanced dependencies (SS, FF, SF) - Premium feature
-3. Task groups & phases
-4. Copy/paste & multi-select - Premium feature
-5. PDF/SVG export - Premium feature
+2. Advanced dependencies (SS, FF, SF)
+3. ~~Task groups & phases~~ → ✅ COMPLETE (Sprint 1.1.1)
+4. ~~Copy/paste & multi-select~~ → ✅ COMPLETE (Sprint 1.5.4)
+5. ~~PDF/SVG export~~ → ✅ COMPLETE (Sprint 1.5.5)
 6. Named snapshots
 
 ---

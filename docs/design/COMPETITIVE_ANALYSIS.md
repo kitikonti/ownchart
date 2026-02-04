@@ -63,7 +63,7 @@ Dependencies:
 
 ### PRO Edition (Commercial License)
 
-**Note**: These features are behind a paywall, which conflicts with our open-source approach.
+**Note**: Some advanced features are in a PRO edition, demonstrating that advanced functionality is technically feasible.
 
 | Feature | Status |
 |---------|--------|
@@ -76,7 +76,7 @@ Dependencies:
 | Unscheduled Tasks | PRO only |
 | Undo/Redo | PRO only |
 
-**Impact on Our Project**: We will implement these features ourselves (especially Undo/Redo, which is critical and already planned for Phase 1).
+**Impact on Our Project**: We are implementing these features ourselves, with Undo/Redo already completed in Phase 1.
 
 ## Architectural Insights
 
@@ -175,39 +175,38 @@ api.on('task-updated', (task) => { /* handle */ });
 
 ## Why NOT to Use as Dependency
 
-### ❌ Reasons Against Integration
+### Technical Reasons Against Integration
 
 1. **Vendor Lock-in**
-   - Proprietary @svar-ui ecosystem
+   - Proprietary @svar-ui ecosystem with 10+ packages
    - Complex internal dependencies
    - Limited control over architecture
+   - Future changes outside our control
 
-2. **Business Model Conflict**
-   - Critical features (Undo/Redo, Auto-Scheduling) are PRO-only
-   - Conflicts with our open-source, offline-first approach
-   - Uncertain future licensing changes
+2. **Architectural Mismatch**
+   - Our architecture uses Zustand (simple, performant state management)
+   - SVAR uses proprietary state management system
+   - Integration would require significant adaptation
+   - Would compromise our clean, minimal dependency approach
 
-3. **Architectural Mismatch**
-   - We use Zustand (simple, performant)
-   - They use proprietary state system
-   - Integration would be unnatural and complex
+3. **Dependency Overhead**
+   - Large package footprint (10+ @svar-ui packages)
+   - Significantly increases bundle size
+   - We only need a subset of their functionality
+   - Maintenance burden for unused features
 
-4. **Dependency Overhead**
-   - 10+ @svar-ui packages
-   - Adds significant bundle size
-   - We don't need most of their ecosystem
+4. **Loss of Control**
+   - Black-box implementation reduces flexibility
+   - Hard to customize behavior deeply
+   - Debugging becomes more difficult
+   - Limited ability to optimize for our specific use case
 
-5. **Loss of Control**
-   - Black-box implementation
-   - Hard to customize deeply
-   - Debugging becomes difficult
+### ✅ Our Approach
 
-### ✅ What We DO Instead
-
-- Learn from their patterns
-- Implement features independently
-- Keep our flexible architecture
-- Maintain full control
+- **Study their patterns**: Learn from proven implementation approaches
+- **Implement independently**: Build features tailored to our architecture
+- **Maintain flexibility**: Keep our simple, maintainable codebase
+- **Full control**: Optimize and customize without constraints
 
 ## Implementation Recommendations
 
@@ -457,18 +456,19 @@ After completing Sprint 1.1.1 and 1.1.2 (December 23-27, 2025), we successfully 
 
 ### 🎯 Validation of Independent Implementation
 
-**Decision Validated**: Building independently (not using SVAR as dependency) was correct.
+**Decision Validated**: Building independently (not using SVAR as dependency) was the correct technical choice.
 
 **Evidence**:
-- Our architecture is simpler (single task slice vs complex SVAR state management)
-- No vendor lock-in to @svar-ui ecosystem
-- Full control over implementation patterns
-- All core features (undo/redo, auto-scheduling) remain free/open-source
+- Our architecture is simpler (single task slice vs complex proprietary state management)
+- No vendor lock-in to external ecosystem
+- Full control over implementation patterns and optimization
+- Cleaner codebase with minimal dependencies
 
 **Impact**:
 - Development velocity: 3-4x faster than estimated (aided by excellent planning docs)
-- Sprints 1.15 + 1.16 completed in 4 days (estimated 3-4 weeks combined)
-- Zero technical debt from dependencies
+- Sprints 1.1.1 + 1.1.2 completed in 4 days (estimated 3-4 weeks combined)
+- Zero technical debt from unnecessary dependencies
+- Better performance through targeted optimizations
 
 ### 📊 Metrics
 

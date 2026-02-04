@@ -60,7 +60,7 @@ Complete the MVP with professional PNG export capabilities and polish features t
 5. 🟢 **Medium:** Welcome tour for first-time users
 6. 🟢 **Medium:** Export preview before download
 7. 🔵 **Low:** Custom watermark option (V1.1)
-8. 🔵 **Low:** PDF export (V1.1 premium)
+8. 🔵 **Low:** PDF export (V1.1)
 
 **Acceptance Criteria:**
 - [ ] Export button in toolbar (Phosphor Export icon)

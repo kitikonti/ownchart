@@ -65,7 +65,7 @@ Implement task dependencies allowing users to define relationships between tasks
 7. **High:** Full undo/redo support
 8. **Medium:** Lag/lead time input (offset days) - defer if time-constrained
 9. **Low:** Dependency list panel (V1.1)
-10. **Deferred:** Advanced types (SS, FF, SF) - V1.1 Premium feature
+10. **Deferred:** Advanced types (SS, FF, SF) - V1.1 feature
 
 **Acceptance Criteria:**
 - [ ] Connection handles appear when hovering task bar (small circles at start/end)
@@ -1950,7 +1950,7 @@ Test Coverage:
 - Final polish before MVP completion
 
 **Future Enhancements (V1.1+):**
-- Advanced dependency types (SS, FF, SF) - Premium feature
+- Advanced dependency types (SS, FF, SF) - Deferred to V1.1
 - Lag/lead time input in UI
 - Dependency list panel
 - Critical path highlighting

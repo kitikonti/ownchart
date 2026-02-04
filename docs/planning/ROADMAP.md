@@ -15,8 +15,7 @@ This roadmap outlines the phased development approach for the Gantt Chart applic
 1. **Simplify MVP** - Reduce scope to core features only (6-8 week MVP instead of 12-14 weeks)
 2. **Add risk validation** - Prototype high-risk components before committing
 3. **Realistic timeline** - Buffer for integration, testing, and unexpected issues
-4. **Freemium model** - Plan for free core + paid premium features
-5. **Quality-first** - Adequate time for testing, accessibility, security
+4. **Quality-first** - Adequate time for testing, accessibility, security
 
 **Key Changes from v1.3**:
 - Moved history timeline slider to V1.1 (complexity vs value)
@@ -68,10 +67,9 @@ After analysis, we've confirmed the decision to build independently rather than 
 
 **Reasons**:
 1. ❌ SVAR has vendor lock-in to @svar-ui ecosystem (10+ packages)
-2. ❌ PRO features (Undo/Redo, Auto-Scheduling) behind paywall - conflicts with our open-source approach
-3. ❌ Their complex state management would require major integration effort
-4. ✅ Our architecture is simpler, more maintainable, and more flexible
-5. ✅ We maintain full control
+2. ❌ Their complex state management would require major integration effort
+3. ✅ Our architecture is simpler, more maintainable, and more flexible
+4. ✅ We maintain full control
 
 **Approach**: Study their patterns, learn from their demos, implement independently.
 
@@ -114,34 +112,7 @@ Key files to reference:
 
 ---
 
-## 2. Business Model (Freemium)
-
-**Free Tier** (Open Source):
-- Unlimited tasks and charts
-- Basic dependencies (Finish-to-Start)
-- PNG export
-- Local file storage
-- All core features
-
-**Premium Tier** (Paid):
-- Advanced dependency types (SS, FF, SF)
-- ~~PDF/SVG export with customization~~ → Now included in free tier (v0.0.22)
-- Cloud sync (optional - privacy maintained)
-- Priority support
-- Advanced themes
-- Bulk operations
-
-**Pricing** (TBD): ~$5-10/month or ~$29-49 one-time
-
-This model ensures:
-- Free tier is genuinely useful (not crippled)
-- Premium features justify cost
-- Sustainability for ongoing development
-- Privacy-first approach maintained
-
----
-
-## 3. Development Phases
+## 2. Development Phases
 
 ### Phase 0: Foundation & Risk Validation (2-3 weeks)
 
@@ -527,8 +498,6 @@ If dependency arrows or performance validation fails, reassess approach before c
 - Comprehensive bug fixes for localStorage persistence
 
 **Deferred to V1.1**:
-- PDF export (premium feature)
-- SVG export (premium feature)
 - Export customization (colors, fonts, branding)
 
 ---
@@ -547,9 +516,7 @@ Feature-complete for basic Gantt chart creation and editing.
 - ✅ Performance: 100 tasks at 60fps, 500 tasks at 30fps minimum
 
 **Known Limitations** (intentional for MVP):
-- Only Finish-to-Start dependencies (SS/FF/SF in V1.1)
 - Basic undo/redo only (no history timeline in MVP)
-- PNG export only (PDF/SVG in V1.1 premium)
 - No named snapshots (V1.1)
 
 **Originally Planned for V1.1 but Completed in MVP**:
@@ -565,7 +532,7 @@ Feature-complete for basic Gantt chart creation and editing.
 
 **Goal**: Add features deferred from MVP to create a more complete V1.1 release, enable extensibility features.
 
-**Target**: Address "known limitations" from MVP, add premium features, unlock extensibility system.
+**Target**: Address "known limitations" from MVP, unlock extensibility system.
 
 **Key Architecture Documents**:
 - [SETTINGS_ARCHITECTURE.md](../architecture/SETTINGS_ARCHITECTURE.md) - User Preferences vs Project Settings separation
@@ -616,8 +583,6 @@ These features add significant complexity relative to their value for proving th
 - Visual differentiation between types
 - Comprehensive test coverage (100+ test cases)
 
-**Premium Feature**: Only available in paid tier
-
 ---
 
 #### Sprint 1.5.3: Task Groups & Phases ✅ MOVED TO MVP
@@ -648,8 +613,6 @@ This sprint was completed ahead of schedule during MVP development. See Sprint 1
 - ✅ Cross-tab clipboard support
 - ✅ Bulk operations (delete, move, drag)
 - ✅ Insert task above/below
-
-~~**Premium Feature**: Only available in paid tier~~ → **Now included in free tier**
 
 ---
 
@@ -871,8 +834,6 @@ This sprint was completed ahead of schedule during MVP development. See Sprint 1
 
 **Success Metrics**:
 - All deferred features working reliably
-- Premium features provide clear value
-- Free tier remains genuinely useful
 - Performance maintained with added features
 - Custom fields system functional
 - Multi-project management working
@@ -1607,18 +1568,17 @@ This roadmap provides a clear path from concept to launch:
 **Previous Updates (v1.4)** - Based on 10-Person Professional Team Review:
 
 **Major Changes**:
-1. **Added Freemium Business Model** - Defined free vs premium feature split
-2. **Simplified MVP** - Reduced from 16 features to 8 core features
-3. **Added Phase 0 Risk Validation** - Validate dependency arrows and performance before committing
-4. **Moved Complex Features to V1.1** - Timeline slider, advanced dependencies (SS/FF/SF), task groups, copy/paste, PDF/SVG export
-5. **Added CI/CD Infrastructure** - GitHub Actions, testing requirements, security scanning
-6. **Realistic Timeline Estimates** - Increased from 14 weeks to 25 weeks for quality
-7. **Added Testing Focus** - 50-100 test cases for dependency logic
-8. **Connection Handles UI** - Make dependency creation discoverable
+1. **Simplified MVP** - Reduced from 16 features to 8 core features
+2. **Added Phase 0 Risk Validation** - Validate dependency arrows and performance before committing
+3. **Moved Complex Features to V1.1** - Timeline slider, task groups, copy/paste, PDF/SVG export
+4. **Added CI/CD Infrastructure** - GitHub Actions, testing requirements, security scanning
+5. **Realistic Timeline Estimates** - Increased from 14 weeks to 25 weeks for quality
+6. **Added Testing Focus** - 50-100 test cases for dependency logic
+7. **Connection Handles UI** - Make dependency creation discoverable
+8. **Business strategy removed** - Focused on technical implementation only
 
 **Deferred to Phase 1.5 (V1.1)**:
 - History timeline slider → Basic undo/redo in MVP
-- Advanced dependency types (SS/FF/SF) → FS-only in MVP
 - ~~Task groups/phases~~ → ✅ COMPLETE (Sprint 1.1.1)
 - ~~Copy/paste with multi-select~~ → ✅ COMPLETE (Sprint 1.5.4)
 - ~~PDF/SVG export~~ → ✅ COMPLETE (Sprint 1.5.5, v0.0.22)
