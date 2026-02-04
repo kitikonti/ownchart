@@ -3,7 +3,7 @@
 > **Privacy-first, offline Gantt chart for project planning. Own your data.**
 
 [![CI](https://github.com/kitikonti/ownchart/actions/workflows/ci.yml/badge.svg)](https://github.com/kitikonti/ownchart/actions/workflows/ci.yml)
-[![Version](https://img.shields.io/badge/version-0.0.21-blue.svg)](https://github.com/kitikonti/ownchart/releases)
+[![Version](https://img.shields.io/badge/version-0.0.33-blue.svg)](https://github.com/kitikonti/ownchart/releases)
 [![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.3-blue.svg)](https://www.typescriptlang.org/)
 [![React](https://img.shields.io/badge/React-18.3-61dafb.svg)](https://react.dev)
@@ -29,7 +29,12 @@ No installation needed - just open and start planning. Your data stays in your b
 - 📊 **Task Hierarchy** - Organize with summaries and milestones (3 levels)
 - 📋 **Multi-Select** - Select multiple tasks with Ctrl/Shift+Click or marquee
 - ✂️ **Copy/Paste** - Cross-tab clipboard support with dependencies preserved
-- 📷 **PNG Export** - High-quality export with customizable options
+- 📄 **PDF/SVG/PNG Export** - Vector and raster export with live preview
+- 🎨 **Smart Color Management** - 5 color modes (Manual, By Type, Progress, Duration, Random)
+- 📐 **UI Density Modes** - Compact, Normal, Comfortable row heights
+- 📅 **Holiday Support** - 199 countries with timeline highlighting
+- ⚙️ **Working Days Mode** - Business day calculations for scheduling
+- 🎀 **MS Office UI** - Familiar ribbon interface with tabbed workflow
 - ⌨️ **Keyboard Shortcuts** - Efficient navigation and editing
 - ❓ **Help Panel** - Built-in keyboard shortcut reference
 - 🎓 **Welcome Tour** - Guided introduction for first-time users
@@ -99,7 +104,7 @@ ownchart/
 
 ## 📖 Documentation
 
-Comprehensive documentation is available in the [`/concept`](./concept) folder:
+Comprehensive documentation is available in the [`/docs`](./docs) folder:
 
 - **[Product Requirements](./docs/planning/PRD.md)** - Vision and requirements
 - **[Roadmap](./docs/planning/ROADMAP.md)** - Development phases
@@ -120,27 +125,34 @@ Comprehensive documentation is available in the [`/concept`](./concept) folder:
 
 ## 🎯 Current Status
 
-**Version**: 0.0.11 (MVP Complete)
+**Version**: 0.0.33
 
-**All MVP Features Complete**:
+**Core Features**:
 - ✅ Task management with hierarchy (summaries, milestones, 3 levels)
 - ✅ Interactive timeline (drag-to-move, drag-to-resize, multi-task drag)
-- ✅ Zoom & navigation (5%-300%)
-- ✅ File operations (save/load `.ownchart` format)
-- ✅ Task dependencies (Finish-to-Start with date propagation)
-- ✅ Undo/redo system (100 command stack)
-- ✅ Multi-select with marquee selection
-- ✅ Copy/paste/cut with cross-tab support
-- ✅ PNG export with customizable options
-- ✅ Help panel with keyboard shortcuts
+- ✅ Zoom & navigation (5%-300%) with cursor-centered anchoring
+- ✅ File operations (save/load `.ownchart` format with 6-layer validation)
+- ✅ Task dependencies (Finish-to-Start with automatic date propagation)
+- ✅ Undo/redo system (100 command stack with indent/outdent support)
+- ✅ Multi-select with rectangular marquee selection
+- ✅ Copy/paste/cut with cross-tab clipboard support
+- ✅ PDF/SVG/PNG export with Figma-style live preview
+- ✅ Smart Color Management (5 modes: Manual, By Type, Progress, Duration, Random)
+- ✅ UI Density settings (Compact/Normal/Comfortable)
+- ✅ User preferences (date format, first day of week, week numbering)
+- ✅ Holiday support (199 countries) with timeline highlighting
+- ✅ Working Days Mode for business day calculations
+- ✅ MS Office-style ribbon UI (File, Task, View, Help tabs)
+- ✅ Help panel with keyboard shortcuts reference
 - ✅ Welcome tour for first-time users
-- ✅ Auto-fit columns on file open
+- ✅ Infinite scroll timeline with smooth navigation
 
 **Next Up (V1.1)**:
-- 🔜 Advanced dependencies (SS/FF/SF)
-- 🔜 PDF/SVG export
-- 🔜 User preferences (theme, date format)
-- 🔜 History timeline slider
+- 🔜 Advanced dependencies (Start-to-Start, Finish-to-Finish, Start-to-Finish)
+- 🔜 Custom fields UI
+- 🔜 Multi-project management
+- 🔜 History timeline slider with real-time scrubbing
+- 🔜 Named snapshots
 
 See the [Roadmap](./docs/planning/ROADMAP.md) for the full development plan.
 
