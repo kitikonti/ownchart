@@ -1,9 +1,9 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 240 240">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16">
   <path
-    d="M138.633 17.995H28.782c1.825 89.543-23.357 148.38 94.158 204.009 56.436-26.716 79.961-54.171 89.372-85.412h-75.789M75.724 77.294h94.432"
+    d="M8.88 1.2H1.92v5.52c0 2.88 1.21 5.173 6 7.44 3.612-1.71 5.158-3.521 5.76-5.52H8.64M5.04 5.04h5.76"
     fill="none"
     stroke="currentColor"
-    stroke-width="32.05"
+    stroke-width="1.92"
     stroke-linecap="round"
     stroke-linejoin="round"
   />
