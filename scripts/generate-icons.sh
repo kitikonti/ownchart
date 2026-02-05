@@ -7,8 +7,8 @@ OUTPUT="./public/icons"
 echo "Generating OwnChart icons from $SOURCE..."
 mkdir -p "$OUTPUT"
 
-# Copy optimized SVG
-cp "/home/martin/Projects/app-gantt/src/assets/logo.svg" "$OUTPUT/favicon.svg"
+# Copy SVG with explicit color for favicon (currentColor doesn't work in favicons)
+cp "$SOURCE" "$OUTPUT/favicon.svg"
 
 # Generate PNG favicons with high quality (render at 2x and downsample for sharpness)
 convert -density 600 -background none "$SOURCE" -resize 32x32 -resize 16x16 -quality 100 "$OUTPUT/favicon-16x16.png"
