@@ -15,12 +15,12 @@ convert -density 600 -background none "$SOURCE" -resize 32x32 -resize 16x16 -def
 convert -density 600 -background none "$SOURCE" -resize 64x64 -resize 32x32 -define png:color-type=6 -quality 100 "$OUTPUT/favicon-32x32.png"
 convert -density 600 -background none "$SOURCE" -resize 96x96 -resize 48x48 -define png:color-type=6 -quality 100 "$OUTPUT/favicon-48x48.png"
 
-# Generate multi-resolution ICO with transparency
+# Generate multi-resolution ICO with full alpha transparency (32-bit RGBA)
+# Use -define icon:auto-resize to create multi-resolution ICO
+# Avoid -colors 256 as it converts alpha transparency to 1-bit
 convert -density 600 -background none "$SOURCE" \
-  \( -clone 0 -resize 32x32 -resize 16x16 \) \
-  \( -clone 0 -resize 64x64 -resize 32x32 \) \
-  \( -clone 0 -resize 96x96 -resize 48x48 \) \
-  -delete 0 -colors 256 "$OUTPUT/favicon.ico"
+  -define icon:auto-resize=48,32,16 \
+  "$OUTPUT/favicon.ico"
 
 # Generate Apple Touch Icon (high quality with full alpha)
 convert -density 600 -background none "$SOURCE" -resize 360x360 -resize 180x180 -define png:color-type=6 -quality 100 "$OUTPUT/apple-touch-icon.png"
