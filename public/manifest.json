@@ -1,0 +1,40 @@
+{
+  "name": "OwnChart",
+  "short_name": "OwnChart",
+  "description": "Privacy-first, offline Gantt chart for project planning. Own your data.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#0F6CBD",
+  "orientation": "any",
+  "icons": [
+    {
+      "src": "/icons/icon-192x192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/icons/icon-512x512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/icons/icon-maskable-512x512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
+  ],
+  "categories": ["productivity", "business"],
+  "shortcuts": [
+    {
+      "name": "New Project",
+      "short_name": "New",
+      "description": "Create a new Gantt chart",
+      "url": "/?action=new",
+      "icons": [{"src": "/icons/icon-192x192.png", "sizes": "192x192"}]
+    }
+  ]
+}

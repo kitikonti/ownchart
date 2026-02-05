@@ -13,7 +13,6 @@
 
 import { useState } from "react";
 import {
-  ChartBarHorizontal,
   Plus,
   ArrowCounterClockwise,
   ArrowClockwise,
@@ -40,6 +39,8 @@ import {
   NumberSquareOne,
   Hash,
 } from "@phosphor-icons/react";
+
+import OwnChartLogo from "../../assets/logo.svg?react";
 
 import {
   ToolbarButton,
@@ -623,10 +624,11 @@ export function Ribbon(): JSX.Element {
 
         {/* Logo - right side */}
         <div className="flex items-center px-3 h-full">
-          <ChartBarHorizontal
-            size={18}
-            weight="light"
+          <OwnChartLogo
+            width={18}
+            height={18}
             style={{ color: "#0F6CBD" }}
+            aria-label="OwnChart"
           />
         </div>
       </div>
