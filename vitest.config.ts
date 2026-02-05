@@ -1,17 +1,12 @@
 import { defineConfig } from 'vitest/config';
 import react from '@vitejs/plugin-react';
+import svgr from 'vite-plugin-svgr';
 
 export default defineConfig({
   plugins: [
-    react({
-      jsxRuntime: 'automatic',
-    }),
+    svgr(),
+    react(),
   ],
-  resolve: {
-    alias: {
-      '../../assets/logo.svg?react': '/tests/__mocks__/logo.tsx',
-    },
-  },
   test: {
     globals: true,
     environment: 'jsdom',
