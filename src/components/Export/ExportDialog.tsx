@@ -63,6 +63,7 @@ export function ExportDialog(): JSX.Element | null {
   // Get chart settings for default values
   const showHolidays = useChartStore((state) => state.showHolidays);
   const taskLabelPosition = useChartStore((state) => state.taskLabelPosition);
+  const colorModeState = useChartStore((state) => state.colorModeState);
 
   // Get file name for fallback export filename
   const fileName = useFileStore((state) => state.fileName);
@@ -245,6 +246,7 @@ export function ExportDialog(): JSX.Element | null {
           projectTitle,
           projectAuthor,
           dateFormat,
+          colorModeState,
           onProgress: setExportProgress,
         });
       } else if (selectedExportFormat === "svg") {
@@ -259,6 +261,7 @@ export function ExportDialog(): JSX.Element | null {
           projectDateRange,
           visibleDateRange,
           projectName,
+          colorModeState,
           onProgress: setExportProgress,
         });
       }
@@ -284,6 +287,7 @@ export function ExportDialog(): JSX.Element | null {
     projectTitle,
     projectAuthor,
     dateFormat,
+    colorModeState,
     closeExportDialog,
     setIsExporting,
     setExportProgress,

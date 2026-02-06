@@ -30,6 +30,7 @@ import {
   renderTaskTableHeader,
   renderTaskTableRows,
 } from "./taskTableRenderer";
+import type { ColorModeState } from "../../types/colorMode.types";
 
 /** Parameters for SVG export */
 export interface ExportToSvgParams {
@@ -41,6 +42,7 @@ export interface ExportToSvgParams {
   projectDateRange?: { start: Date; end: Date };
   visibleDateRange?: { start: Date; end: Date };
   projectName?: string;
+  colorModeState: ColorModeState;
   onProgress?: (progress: number) => void;
 }
 
@@ -58,6 +60,7 @@ export async function exportToSvg(params: ExportToSvgParams): Promise<void> {
     projectDateRange,
     visibleDateRange,
     projectName,
+    colorModeState,
     onProgress,
   } = params;
 
@@ -129,6 +132,7 @@ export async function exportToSvg(params: ExportToSvgParams): Promise<void> {
       options,
       columnWidths,
       dimensions,
+      colorModeState,
       projectName
     );
 
@@ -166,6 +170,7 @@ function buildCompleteSvg(
   options: ExportOptions,
   columnWidths: Record<string, number>,
   dimensions: { width: number; height: number },
+  colorModeState: ColorModeState,
   projectName?: string
 ): SVGSVGElement {
   // Calculate task table width
@@ -263,7 +268,8 @@ function buildCompleteSvg(
       taskTableWidth,
       0,
       currentY,
-      options.density
+      options.density,
+      colorModeState
     );
   }
 

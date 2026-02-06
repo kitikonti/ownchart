@@ -40,6 +40,7 @@ import {
   renderTaskTableHeader,
   renderTaskTableRows,
 } from "./taskTableRenderer";
+import type { ColorModeState } from "../../types/colorMode.types";
 
 /** Parameters for PDF export */
 export interface ExportToPdfParams {
@@ -56,6 +57,7 @@ export interface ExportToPdfParams {
   projectTitle?: string;
   projectAuthor?: string;
   dateFormat: DateFormat;
+  colorModeState: ColorModeState;
   onProgress?: (progress: number) => void;
 }
 
@@ -75,6 +77,7 @@ export async function exportToPdf(params: ExportToPdfParams): Promise<void> {
     projectTitle,
     projectAuthor,
     dateFormat,
+    colorModeState,
     onProgress,
   } = params;
 
@@ -201,6 +204,7 @@ export async function exportToPdf(params: ExportToPdfParams): Promise<void> {
       effectiveOptions,
       columnWidths,
       dimensions,
+      colorModeState,
       projectName
     );
 
@@ -339,6 +343,7 @@ function buildCompleteSvg(
   options: ExportOptions,
   columnWidths: Record<string, number>,
   dimensions: { width: number; height: number },
+  colorModeState: ColorModeState,
   projectName?: string
 ): SVGSVGElement {
   const selectedColumns =
@@ -427,7 +432,8 @@ function buildCompleteSvg(
       taskTableWidth,
       0,
       currentY,
-      options.density
+      options.density,
+      colorModeState
     );
     // Ensure font-family is set on all text elements for svg2pdf.js
     setFontFamilyOnTextElements(rowsGroup);

@@ -16,6 +16,8 @@ import {
   HEADER_LABELS,
   TASK_TYPE_ICON_PATHS,
 } from "./constants";
+import type { ColorModeState } from "../../types/colorMode.types";
+import { getComputedTaskColor } from "../../hooks/useComputedTaskColor";
 
 /**
  * Render task table header as SVG elements.
@@ -126,6 +128,7 @@ export interface FlattenedTask {
  * @param x - X offset
  * @param startY - Y offset for first row
  * @param density - UI density setting
+ * @param colorModeState - Color mode state for computing task colors
  * @returns The created group element
  */
 export function renderTaskTableRows(
@@ -136,7 +139,8 @@ export function renderTaskTableRows(
   totalWidth: number,
   x: number,
   startY: number,
-  density: UiDensity
+  density: UiDensity,
+  colorModeState: ColorModeState
 ): SVGGElement {
   const densityConfig = DENSITY_CONFIG[density];
   const rowHeight = densityConfig.rowHeight;
@@ -161,6 +165,9 @@ export function renderTaskTableRows(
   tableBorder.setAttribute("stroke", COLORS.border);
   tableBorder.setAttribute("stroke-width", "1");
   group.appendChild(tableBorder);
+
+  // Extract just the Task objects for color computation
+  const allTasks = flattenedTasks.map((ft) => ft.task);
 
   flattenedTasks.forEach((flattenedTask, index) => {
     const task = flattenedTask.task;
@@ -191,6 +198,8 @@ export function renderTaskTableRows(
         renderColorColumn(
           group,
           task,
+          allTasks,
+          colorModeState,
           colX,
           rowY,
           colWidth,
@@ -252,12 +261,17 @@ export function renderTaskTableRows(
 function renderColorColumn(
   group: SVGGElement,
   task: Task,
+  allTasks: Task[],
+  colorModeState: ColorModeState,
   colX: number,
   rowY: number,
   colWidth: number,
   rowHeight: number,
   colorBarHeight: number
 ): void {
+  // Compute the actual display color based on color mode
+  const displayColor = getComputedTaskColor(task, allTasks, colorModeState);
+
   const colorBar = document.createElementNS(
     "http://www.w3.org/2000/svg",
     "rect"
@@ -267,7 +281,7 @@ function renderColorColumn(
   colorBar.setAttribute("width", "6");
   colorBar.setAttribute("height", String(colorBarHeight));
   colorBar.setAttribute("rx", "3");
-  colorBar.setAttribute("fill", task.color || "#0F6CBD");
+  colorBar.setAttribute("fill", displayColor);
   group.appendChild(colorBar);
 }
 
