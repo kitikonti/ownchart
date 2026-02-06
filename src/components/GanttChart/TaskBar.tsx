@@ -461,7 +461,9 @@ export const TaskBar = React.memo(function TaskBar({
         width={geometry.width}
         height={geometry.height}
         fill={computedColor}
-        fillOpacity={isBeingDragged ? 0.3 : showProgress ? 0.8 : 1}
+        fillOpacity={
+          isBeingDragged ? 0.3 : showProgress && task.progress > 0 ? 0.65 : 1
+        }
         rx={4}
         ry={4}
       />

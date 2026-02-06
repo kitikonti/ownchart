@@ -18,7 +18,7 @@ export const TASK_RENDER_CONSTANTS = {
   /**
    * Background opacity when progress is shown
    */
-  taskBackgroundOpacity: 0.8,
+  taskBackgroundOpacity: 0.65,
 
   /**
    * Progress bar uses full opacity

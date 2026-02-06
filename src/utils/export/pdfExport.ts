@@ -91,11 +91,15 @@ export async function exportToPdf(params: ExportToPdfParams): Promise<void> {
 
     // Calculate available space for content (accounting for margins and header/footer)
     const headerReserved =
-      pdfOptions.header.showProjectName || pdfOptions.header.showAuthor || pdfOptions.header.showExportDate
+      pdfOptions.header.showProjectName ||
+      pdfOptions.header.showAuthor ||
+      pdfOptions.header.showExportDate
         ? 10
         : 0;
     const footerReserved =
-      pdfOptions.footer.showProjectName || pdfOptions.footer.showAuthor || pdfOptions.footer.showExportDate
+      pdfOptions.footer.showProjectName ||
+      pdfOptions.footer.showAuthor ||
+      pdfOptions.footer.showExportDate
         ? 10
         : 0;
     const availableWidthMm = pageDims.width - margins.left - margins.right;
@@ -219,11 +223,15 @@ export async function exportToPdf(params: ExportToPdfParams): Promise<void> {
 
     // Calculate reserved space for header/footer
     const headerReserved =
-      pdfOptions.header.showProjectName || pdfOptions.header.showAuthor || pdfOptions.header.showExportDate
+      pdfOptions.header.showProjectName ||
+      pdfOptions.header.showAuthor ||
+      pdfOptions.header.showExportDate
         ? 10
         : 0;
     const footerReserved =
-      pdfOptions.footer.showProjectName || pdfOptions.footer.showAuthor || pdfOptions.footer.showExportDate
+      pdfOptions.footer.showProjectName ||
+      pdfOptions.footer.showAuthor ||
+      pdfOptions.footer.showExportDate
         ? 10
         : 0;
 
@@ -498,7 +506,12 @@ function renderHeader(
   // Separator line below header
   doc.setDrawColor(226, 232, 240); // #e2e8f0 - matches COLORS.border
   doc.setLineWidth(0.1);
-  doc.line(margins.left, margins.top + headerReserved, pageWidth - margins.right, margins.top + headerReserved);
+  doc.line(
+    margins.left,
+    margins.top + headerReserved,
+    pageWidth - margins.right,
+    margins.top + headerReserved
+  );
 }
 
 /**
