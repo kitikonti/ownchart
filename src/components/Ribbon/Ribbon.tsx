@@ -60,6 +60,8 @@ import { ColumnsDropdown } from "./ColumnsDropdown";
 import { InlineProjectTitle } from "./InlineProjectTitle";
 import { ZoomDropdown } from "./ZoomDropdown";
 import { FileMenu } from "./FileMenu";
+import { RibbonCollapseProvider } from "./RibbonCollapseContext";
+import { useRibbonCollapse } from "../../hooks/useRibbonCollapse";
 
 import { useTaskStore } from "../../store/slices/taskSlice";
 import { useChartStore } from "../../store/slices/chartSlice";
@@ -80,13 +82,16 @@ import {
 
 const ICON_SIZE = TOOLBAR_TOKENS.iconSize;
 
-type RibbonTab = "home" | "view" | "help";
+type RibbonTab = "home" | "view" | "format" | "help";
 
 // Preset zoom levels
 const PRESET_ZOOM_LEVELS = [5, 10, 25, 50, 75, 100, 150, 200, 300];
 
 export function Ribbon(): JSX.Element {
   const [activeTab, setActiveTab] = useState<RibbonTab>("home");
+
+  // Smart Labels — responsive collapse
+  const { collapseLevel, toolbarRef } = useRibbonCollapse(activeTab);
 
   // ─────────────────────────────────────────────────────────────────────────
   // Store Hooks
@@ -380,8 +385,8 @@ export function Ribbon(): JSX.Element {
 
       {/* Color Mode (Smart Color Management) */}
       <ToolbarGroup label="Colors">
-        <ColorModeDropdown />
-        <ColorOptionsDropdown />
+        <ColorModeDropdown labelPriority={3} />
+        <ColorOptionsDropdown labelPriority={3} />
         <RegenerateButton />
       </ToolbarGroup>
     </>
@@ -389,8 +394,8 @@ export function Ribbon(): JSX.Element {
 
   const renderViewTab = (): JSX.Element => (
     <>
-      {/* Timeline Toggles */}
-      <ToolbarGroup label="Timeline">
+      {/* Show/Hide Toggles */}
+      <ToolbarGroup label="Show/Hide">
         <ToolbarButton
           variant="toggle"
           isActive={showTodayMarker}
@@ -403,6 +408,7 @@ export function Ribbon(): JSX.Element {
           }
           icon={<CalendarDot size={ICON_SIZE} weight="light" />}
           label="Today"
+          labelPriority={1}
         />
         <ToolbarButton
           variant="toggle"
@@ -412,6 +418,7 @@ export function Ribbon(): JSX.Element {
           aria-label={showWeekends ? "Hide Weekends" : "Show Weekends"}
           icon={<CalendarDots size={ICON_SIZE} weight="light" />}
           label="Weekends"
+          labelPriority={1}
         />
         <ToolbarButton
           variant="toggle"
@@ -421,14 +428,9 @@ export function Ribbon(): JSX.Element {
           aria-label={showHolidays ? "Hide Holidays" : "Show Holidays"}
           icon={<Island size={ICON_SIZE} weight="light" />}
           label="Holidays"
+          labelPriority={1}
         />
         <HolidayRegionPopover />
-      </ToolbarGroup>
-
-      <ToolbarSeparator />
-
-      {/* Task Display Toggles */}
-      <ToolbarGroup label="Tasks">
         <ToolbarButton
           variant="toggle"
           isActive={showDependencies}
@@ -441,6 +443,7 @@ export function Ribbon(): JSX.Element {
           }
           icon={<FlowArrow size={ICON_SIZE} weight="light" />}
           label="Dependencies"
+          labelPriority={2}
         />
         <ToolbarButton
           variant="toggle"
@@ -450,28 +453,7 @@ export function Ribbon(): JSX.Element {
           aria-label={showProgress ? "Hide Progress" : "Show Progress"}
           icon={<TrendUp size={ICON_SIZE} weight="light" />}
           label="Progress"
-        />
-        <ToolbarDropdown
-          value={taskLabelPosition}
-          options={LABEL_OPTIONS}
-          onChange={setTaskLabelPosition}
-          icon={<Tag size={ICON_SIZE} weight="light" />}
-          labelPrefix="Labels"
-          aria-label="Task label position"
-          title="Task Label Position"
-        />
-        <WorkingDaysDropdown />
-        <ColumnsDropdown />
-        <ToolbarButton
-          variant="toggle"
-          isActive={!isTaskTableCollapsed}
-          onClick={() => setTaskTableCollapsed(!isTaskTableCollapsed)}
-          title={isTaskTableCollapsed ? "Show Task Table" : "Hide Task Table"}
-          aria-label={
-            isTaskTableCollapsed ? "Show Task Table" : "Hide Task Table"
-          }
-          icon={<SidebarSimple size={ICON_SIZE} weight="light" />}
-          label="Table"
+          labelPriority={2}
         />
       </ToolbarGroup>
 
@@ -508,8 +490,62 @@ export function Ribbon(): JSX.Element {
 
       <ToolbarSeparator />
 
-      {/* Format Settings */}
-      <ToolbarGroup label="Format">
+      {/* Layout */}
+      <ToolbarGroup label="Layout">
+        <ToolbarButton
+          variant="toggle"
+          isActive={!isTaskTableCollapsed}
+          onClick={() => setTaskTableCollapsed(!isTaskTableCollapsed)}
+          title={isTaskTableCollapsed ? "Show Task Table" : "Hide Task Table"}
+          aria-label={
+            isTaskTableCollapsed ? "Show Task Table" : "Hide Task Table"
+          }
+          icon={<SidebarSimple size={ICON_SIZE} weight="light" />}
+          label="Table"
+          labelPriority={3}
+        />
+        <ColumnsDropdown labelPriority={3} />
+      </ToolbarGroup>
+    </>
+  );
+
+  const renderFormatTab = (): JSX.Element => (
+    <>
+      {/* Labels */}
+      <ToolbarGroup label="Labels">
+        <ToolbarDropdown
+          value={taskLabelPosition}
+          options={LABEL_OPTIONS}
+          onChange={setTaskLabelPosition}
+          icon={<Tag size={ICON_SIZE} weight="light" />}
+          labelPrefix="Labels"
+          aria-label="Task label position"
+          title="Task Label Position"
+          labelPriority={2}
+        />
+      </ToolbarGroup>
+
+      <ToolbarSeparator />
+
+      {/* Calendar */}
+      <ToolbarGroup label="Calendar">
+        <WorkingDaysDropdown labelPriority={2} />
+        <ToolbarDropdown
+          value={firstDayOfWeek}
+          options={FIRST_DAY_OF_WEEK_OPTIONS}
+          onChange={setFirstDayOfWeek}
+          icon={<NumberSquareOne size={ICON_SIZE} weight="light" />}
+          labelPrefix="Week Start"
+          aria-label="First Day of Week"
+          title="First Day of Week"
+          labelPriority={2}
+        />
+      </ToolbarGroup>
+
+      <ToolbarSeparator />
+
+      {/* Display */}
+      <ToolbarGroup label="Display">
         <ToolbarDropdown
           value={uiDensity}
           options={DENSITY_OPTIONS}
@@ -518,6 +554,7 @@ export function Ribbon(): JSX.Element {
           labelPrefix="Density"
           aria-label="UI Density"
           title="UI Density"
+          labelPriority={2}
         />
         <ToolbarDropdown
           value={dateFormat}
@@ -527,15 +564,7 @@ export function Ribbon(): JSX.Element {
           labelPrefix="Date Format"
           aria-label="Date Format"
           title="Date Format"
-        />
-        <ToolbarDropdown
-          value={firstDayOfWeek}
-          options={FIRST_DAY_OF_WEEK_OPTIONS}
-          onChange={setFirstDayOfWeek}
-          icon={<NumberSquareOne size={ICON_SIZE} weight="light" />}
-          labelPrefix="Week Start"
-          aria-label="First Day of Week"
-          title="First Day of Week"
+          labelPriority={2}
         />
         <ToolbarDropdown
           value={weekNumberingSystem}
@@ -545,6 +574,7 @@ export function Ribbon(): JSX.Element {
           labelPrefix="Week"
           aria-label="Week Numbering System"
           title="Week Numbering System"
+          labelPriority={2}
         />
       </ToolbarGroup>
     </>
@@ -570,6 +600,8 @@ export function Ribbon(): JSX.Element {
         return renderHomeTab();
       case "view":
         return renderViewTab();
+      case "format":
+        return renderFormatTab();
       case "help":
         return renderHelpTab();
     }
@@ -582,6 +614,7 @@ export function Ribbon(): JSX.Element {
   const tabs: { id: RibbonTab; label: string }[] = [
     { id: "home", label: "Home" },
     { id: "view", label: "View" },
+    { id: "format", label: "Format" },
     { id: "help", label: "Help" },
   ];
 
@@ -655,6 +688,7 @@ export function Ribbon(): JSX.Element {
 
       {/* Floating Toolbar - MS Office style */}
       <div
+        ref={toolbarRef}
         className="flex items-center justify-between px-3 gap-1"
         style={{
           height: "40px",
@@ -667,9 +701,12 @@ export function Ribbon(): JSX.Element {
           position: "relative",
           zIndex: 2,
           transition: "height 150ms cubic-bezier(0.1, 0.9, 0.2, 1)",
+          overflow: "hidden",
         }}
       >
-        {renderTabContent()}
+        <RibbonCollapseProvider value={collapseLevel}>
+          {renderTabContent()}
+        </RibbonCollapseProvider>
         <ToolbarSpacer />
       </div>
     </header>

@@ -47,6 +47,14 @@ describe('App', () => {
     expect(screen.getByTitle('Fit to width (F)')).toBeInTheDocument();
   });
 
+  it('shows format controls in Format tab', () => {
+    render(<App />);
+    const formatTab = screen.getByRole('tab', { name: /format/i });
+    fireEvent.click(formatTab);
+    expect(screen.getByTitle('UI Density')).toBeInTheDocument();
+    expect(screen.getByTitle('Date Format')).toBeInTheDocument();
+  });
+
   it('shows undo/redo buttons', () => {
     render(<App />);
     expect(screen.getByLabelText(/nothing to undo/i)).toBeInTheDocument();
