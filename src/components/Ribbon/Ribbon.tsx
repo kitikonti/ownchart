@@ -212,7 +212,7 @@ export function Ribbon(): JSX.Element {
   const handleAddTask = (): void => {
     const today = new Date();
     const nextWeek = new Date(today);
-    nextWeek.setDate(today.getDate() + 7);
+    nextWeek.setDate(today.getDate() + 6);
 
     const formatDate = (date: Date): string => date.toISOString().split("T")[0];
 
