@@ -91,11 +91,11 @@ export async function exportToPdf(params: ExportToPdfParams): Promise<void> {
 
     // Calculate available space for content (accounting for margins and header/footer)
     const headerReserved =
-      pdfOptions.header.showProjectName || pdfOptions.header.showExportDate
+      pdfOptions.header.showProjectName || pdfOptions.header.showAuthor || pdfOptions.header.showExportDate
         ? 10
         : 0;
     const footerReserved =
-      pdfOptions.footer.showProjectName || pdfOptions.footer.showExportDate
+      pdfOptions.footer.showProjectName || pdfOptions.footer.showAuthor || pdfOptions.footer.showExportDate
         ? 10
         : 0;
     const availableWidthMm = pageDims.width - margins.left - margins.right;
@@ -219,11 +219,11 @@ export async function exportToPdf(params: ExportToPdfParams): Promise<void> {
 
     // Calculate reserved space for header/footer
     const headerReserved =
-      pdfOptions.header.showProjectName || pdfOptions.header.showExportDate
+      pdfOptions.header.showProjectName || pdfOptions.header.showAuthor || pdfOptions.header.showExportDate
         ? 10
         : 0;
     const footerReserved =
-      pdfOptions.footer.showProjectName || pdfOptions.footer.showExportDate
+      pdfOptions.footer.showProjectName || pdfOptions.footer.showAuthor || pdfOptions.footer.showExportDate
         ? 10
         : 0;
 
@@ -277,7 +277,18 @@ export async function exportToPdf(params: ExportToPdfParams): Promise<void> {
 
     onProgress?.(70);
 
-    // Render header if configured
+    // Convert SVG to PDF using svg2pdf.js
+    // Note: Fonts are already embedded via embedInterFont() and set on SVG elements
+    await doc.svg(svgElement, {
+      x: offsetX,
+      y: offsetY,
+      width: finalWidthMm,
+      height: finalHeightMm,
+    });
+
+    onProgress?.(90);
+
+    // Render header/footer AFTER chart SVG so lines draw on top of content
     const hasHeader =
       pdfOptions.header.showProjectName ||
       pdfOptions.header.showAuthor ||
@@ -290,22 +301,11 @@ export async function exportToPdf(params: ExportToPdfParams): Promise<void> {
         pdfAuthor,
         margins,
         pageDims.width,
+        headerReserved,
         dateFormat
       );
     }
 
-    // Convert SVG to PDF using svg2pdf.js
-    // Note: Fonts are already embedded via embedInterFont() and set on SVG elements
-    await doc.svg(svgElement, {
-      x: offsetX,
-      y: offsetY,
-      width: finalWidthMm,
-      height: finalHeightMm,
-    });
-
-    onProgress?.(90);
-
-    // Render footer if configured
     const hasFooter =
       pdfOptions.footer.showProjectName ||
       pdfOptions.footer.showAuthor ||
@@ -319,6 +319,7 @@ export async function exportToPdf(params: ExportToPdfParams): Promise<void> {
         margins,
         pageDims.width,
         pageDims.height,
+        footerReserved,
         dateFormat
       );
     }
@@ -465,31 +466,39 @@ function renderHeader(
   options: PdfExportOptions,
   projectTitle: string | undefined,
   projectAuthor: string | undefined,
-  margins: { top: number; left: number },
+  margins: { top: number; left: number; right: number },
   pageWidth: number,
+  headerReserved: number,
   dateFormat: DateFormat
 ): void {
-  doc.setFontSize(10);
-  doc.setTextColor(100, 100, 100);
+  doc.setFontSize(9);
+  doc.setTextColor(71, 85, 105); // #475569 - matches COLORS.textSecondary
 
-  // Left side: Project name and/or author
-  const leftParts: string[] = [];
+  const textY = margins.top + 6;
+
+  // Left side: Project title
   if (options.header.showProjectName && projectTitle) {
-    leftParts.push(projectTitle);
-  }
-  if (options.header.showAuthor && projectAuthor) {
-    leftParts.push(projectAuthor);
-  }
-  if (leftParts.length > 0) {
-    doc.text(leftParts.join(" | "), margins.left, margins.top - 3);
+    doc.text(projectTitle, margins.left, textY);
   }
 
-  // Right side: Export date
-  if (options.header.showExportDate) {
-    const date = formatDateByPreference(new Date(), dateFormat);
-    const dateWidth = doc.getTextWidth(date);
-    doc.text(date, pageWidth - margins.left - dateWidth, margins.top - 3);
+  // Right side: Author and/or date, joined with " · "
+  const rightParts: string[] = [];
+  if (options.header.showAuthor && projectAuthor) {
+    rightParts.push(projectAuthor);
   }
+  if (options.header.showExportDate) {
+    rightParts.push(formatDateByPreference(new Date(), dateFormat));
+  }
+  if (rightParts.length > 0) {
+    const rightText = rightParts.join(" \u00B7 ");
+    const rightWidth = doc.getTextWidth(rightText);
+    doc.text(rightText, pageWidth - margins.right - rightWidth, textY);
+  }
+
+  // Separator line below header
+  doc.setDrawColor(226, 232, 240); // #e2e8f0 - matches COLORS.border
+  doc.setLineWidth(0.1);
+  doc.line(margins.left, margins.top + headerReserved, pageWidth - margins.right, margins.top + headerReserved);
 }
 
 /**
@@ -500,32 +509,39 @@ function renderFooter(
   options: PdfExportOptions,
   projectTitle: string | undefined,
   projectAuthor: string | undefined,
-  margins: { top: number; left: number; bottom: number },
+  margins: { top: number; left: number; bottom: number; right: number },
   pageWidth: number,
   pageHeight: number,
+  footerReserved: number,
   dateFormat: DateFormat
 ): void {
   doc.setFontSize(9);
-  doc.setTextColor(128, 128, 128);
+  doc.setTextColor(71, 85, 105); // #475569 - matches COLORS.textSecondary
 
-  const y = pageHeight - margins.bottom + 5;
+  const footerLineY = pageHeight - margins.bottom - footerReserved;
+  const textY = pageHeight - margins.bottom - 4;
 
-  // Left side: Project name and/or author
-  const leftParts: string[] = [];
+  // Separator line above footer
+  doc.setDrawColor(226, 232, 240); // #e2e8f0 - matches COLORS.border
+  doc.setLineWidth(0.1);
+  doc.line(margins.left, footerLineY, pageWidth - margins.right, footerLineY);
+
+  // Left side: Project title
   if (options.footer.showProjectName && projectTitle) {
-    leftParts.push(projectTitle);
-  }
-  if (options.footer.showAuthor && projectAuthor) {
-    leftParts.push(projectAuthor);
-  }
-  if (leftParts.length > 0) {
-    doc.text(leftParts.join(" | "), margins.left, y);
+    doc.text(projectTitle, margins.left, textY);
   }
 
-  // Right side: Export date
+  // Right side: Author and/or date, joined with " · "
+  const rightParts: string[] = [];
+  if (options.footer.showAuthor && projectAuthor) {
+    rightParts.push(projectAuthor);
+  }
   if (options.footer.showExportDate) {
-    const date = formatDateByPreference(new Date(), dateFormat);
-    const dateWidth = doc.getTextWidth(date);
-    doc.text(date, pageWidth - margins.left - dateWidth, y);
+    rightParts.push(formatDateByPreference(new Date(), dateFormat));
+  }
+  if (rightParts.length > 0) {
+    const rightText = rightParts.join(" \u00B7 ");
+    const rightWidth = doc.getTextWidth(rightText);
+    doc.text(rightText, pageWidth - margins.right - rightWidth, textY);
   }
 }

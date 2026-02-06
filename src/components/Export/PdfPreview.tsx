@@ -123,9 +123,9 @@ export function PdfPreview({
     pdfOptions.footer.showAuthor ||
     pdfOptions.footer.showExportDate;
 
-  // Header/footer take up space in mm (approximate)
-  const headerHeightMm = hasHeader ? 8 : 0;
-  const footerHeightMm = hasFooter ? 8 : 0;
+  // Header/footer take up space in mm (must match pdfExport.ts reserved space)
+  const headerHeightMm = hasHeader ? 10 : 0;
+  const footerHeightMm = hasFooter ? 10 : 0;
   const chartAreaHeightMm = contentHeightMm - headerHeightMm - footerHeightMm;
 
   // Calculate scale factor if chart needs to be scaled down
@@ -155,14 +155,14 @@ export function PdfPreview({
     headerRight.push(formatDate());
   }
 
-  // Build footer content
+  // Build footer content (same layout as header: title left, author+date right)
   const footerLeft: string[] = [];
   const footerRight: string[] = [];
   if (pdfOptions.footer.showProjectName && projectTitle) {
     footerLeft.push(projectTitle);
   }
   if (pdfOptions.footer.showAuthor && projectAuthor) {
-    footerLeft.push(projectAuthor);
+    footerRight.push(projectAuthor);
   }
   if (pdfOptions.footer.showExportDate) {
     footerRight.push(formatDate());
@@ -204,12 +204,12 @@ export function PdfPreview({
             <div className="flex flex-col h-full">
               {/* Header */}
               {hasHeader && (
-                <div className="flex items-center justify-between px-1 py-0.5 border-b border-neutral-100 shrink-0">
-                  <span className="text-[6px] text-neutral-500 truncate">
-                    {headerLeft.join(" • ")}
+                <div className="flex items-center justify-between px-1 py-0.5 border-b border-neutral-200 shrink-0">
+                  <span className="text-[6px] text-neutral-600 truncate">
+                    {headerLeft.join(" \u00B7 ")}
                   </span>
-                  <span className="text-[6px] text-neutral-400 truncate">
-                    {headerRight.join(" • ")}
+                  <span className="text-[6px] text-neutral-600 truncate">
+                    {headerRight.join(" \u00B7 ")}
                   </span>
                 </div>
               )}
@@ -267,12 +267,12 @@ export function PdfPreview({
 
               {/* Footer */}
               {hasFooter && (
-                <div className="flex items-center justify-between px-1 py-0.5 border-t border-neutral-100 shrink-0">
-                  <span className="text-[6px] text-neutral-500 truncate">
-                    {footerLeft.join(" • ")}
+                <div className="flex items-center justify-between px-1 py-0.5 border-t border-neutral-200 shrink-0">
+                  <span className="text-[6px] text-neutral-600 truncate">
+                    {footerLeft.join(" \u00B7 ")}
                   </span>
-                  <span className="text-[6px] text-neutral-400 truncate">
-                    {footerRight.join(" • ")}
+                  <span className="text-[6px] text-neutral-600 truncate">
+                    {footerRight.join(" \u00B7 ")}
                   </span>
                 </div>
               )}
