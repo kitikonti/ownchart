@@ -266,6 +266,16 @@ export function Ribbon(): JSX.Element {
 
   const renderHomeTab = (): JSX.Element => (
     <>
+      {/* Primary Action - Prominent (Outlook-style) */}
+      <ToolbarButton
+        variant="primary"
+        size="large"
+        onClick={handleAddTask}
+        aria-label="Add new task"
+        icon={<Plus size={20} weight="regular" />}
+        label="Add Task"
+      />
+
       {/* History */}
       <ToolbarGroup label="History">
         <ToolbarButton
@@ -366,16 +376,6 @@ export function Ribbon(): JSX.Element {
         <ColorOptionsDropdown />
         <RegenerateButton />
       </ToolbarGroup>
-
-      <ToolbarSeparator />
-
-      {/* Primary Action */}
-      <ToolbarButton
-        onClick={handleAddTask}
-        aria-label="Add new task"
-        icon={<Plus size={ICON_SIZE} weight="light" />}
-        label="Add Task"
-      />
     </>
   );
 

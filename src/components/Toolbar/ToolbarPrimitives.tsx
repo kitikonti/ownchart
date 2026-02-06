@@ -102,6 +102,7 @@ export function ToolbarGroup({
 // ============================================================================
 
 type ToolbarButtonVariant = "default" | "primary" | "toggle";
+type ToolbarButtonSize = "default" | "large";
 
 interface ToolbarButtonProps extends Omit<
   ButtonHTMLAttributes<HTMLButtonElement>,
@@ -109,6 +110,8 @@ interface ToolbarButtonProps extends Omit<
 > {
   /** Visual variant */
   variant?: ToolbarButtonVariant;
+  /** Button size */
+  size?: ToolbarButtonSize;
   /** For toggle buttons: is it currently active? */
   isActive?: boolean;
   /** Show text label next to icon */
@@ -131,6 +134,7 @@ export const ToolbarButton = forwardRef<HTMLButtonElement, ToolbarButtonProps>(
   function ToolbarButton(
     {
       variant = "default",
+      size = "default",
       isActive = false,
       label,
       icon,
@@ -149,7 +153,7 @@ export const ToolbarButton = forwardRef<HTMLButtonElement, ToolbarButtonProps>(
       gap: "4px",
       height: `${TOOLBAR.buttonHeight}px`,
       minWidth: `${TOOLBAR.buttonMinWidth}px`,
-      padding: "5px 5px",
+      padding: size === "large" ? "5px 12px" : "5px 5px",
       backgroundColor: "transparent",
       color: disabled ? COLORS.neutral[300] : COLORS.neutral[800],
       border: "0.667px solid transparent",
@@ -172,9 +176,11 @@ export const ToolbarButton = forwardRef<HTMLButtonElement, ToolbarButtonProps>(
         ? {
             backgroundColor: disabled ? COLORS.neutral[300] : COLORS.brand[600],
             color: disabled ? COLORS.neutral[400] : COLORS.neutral[0],
-            padding: "5px 10px",
-            fontWeight: 600,
-            fontSize: "12px",
+            border: "none", // Override baseStyle border for primary only
+            borderRadius: "3px", // Subtler corners for primary only
+            fontWeight: 400,
+            fontSize: "14px",
+            boxShadow: "none", // NO shadow in idle (Outlook style)
           }
         : {};
 
@@ -198,6 +204,7 @@ export const ToolbarButton = forwardRef<HTMLButtonElement, ToolbarButtonProps>(
         ref={ref}
         type="button"
         disabled={disabled}
+        data-variant={variant}
         aria-pressed={variant === "toggle" ? isActive : undefined}
         className={`ribbon-toolbar-button ${className}`}
         style={combinedStyle}

@@ -519,6 +519,22 @@ select:focus {
   cursor: pointer;
 }
 
+/* Primary button hover - darker brand color with subtle shadow (Outlook style) */
+.ribbon-toolbar-button[data-variant="primary"]:hover:not(:disabled) {
+  background-color: rgb(17, 94, 163) !important; /* #115EA3 - brand-500 */
+  box-shadow:
+    0 1px 3px rgba(0, 0, 0, 0.12),
+    0 1px 2px rgba(0, 0, 0, 0.08) !important;
+}
+
+/* Primary button active - even darker with depressed shadow */
+.ribbon-toolbar-button[data-variant="primary"]:active:not(:disabled) {
+  background-color: rgb(12, 59, 94) !important; /* #0C3B5E - brand-800 */
+  box-shadow:
+    0 1px 2px rgba(0, 0, 0, 0.14),
+    0 0 2px rgba(0, 0, 0, 0.12) !important;
+}
+
 .ribbon-toolbar-button[aria-pressed="true"]:hover:not(:disabled) {
   background-color: var(--color-neutral-50) !important;
   border-color: transparent !important;
