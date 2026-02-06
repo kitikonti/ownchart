@@ -38,6 +38,7 @@ import {
   Calendar,
   NumberSquareOne,
   Hash,
+  SidebarSimple,
 } from "@phosphor-icons/react";
 
 import OwnChartLogo from "../../assets/logo.svg?react";
@@ -55,6 +56,7 @@ import { ColorOptionsDropdown } from "./ColorOptionsDropdown";
 import { RegenerateButton } from "./RegenerateButton";
 import { HolidayRegionPopover } from "./HolidayRegionPopover";
 import { WorkingDaysDropdown } from "./WorkingDaysDropdown";
+import { ColumnsDropdown } from "./ColumnsDropdown";
 import { InlineProjectTitle } from "./InlineProjectTitle";
 import { ZoomDropdown } from "./ZoomDropdown";
 import { FileMenu } from "./FileMenu";
@@ -127,6 +129,12 @@ export function Ribbon(): JSX.Element {
   const taskLabelPosition = useChartStore((state) => state.taskLabelPosition);
   const setTaskLabelPosition = useChartStore(
     (state) => state.setTaskLabelPosition
+  );
+  const isTaskTableCollapsed = useChartStore(
+    (state) => state.isTaskTableCollapsed
+  );
+  const setTaskTableCollapsed = useChartStore(
+    (state) => state.setTaskTableCollapsed
   );
 
   // User preferences store
@@ -453,6 +461,18 @@ export function Ribbon(): JSX.Element {
           title="Task Label Position"
         />
         <WorkingDaysDropdown />
+        <ColumnsDropdown />
+        <ToolbarButton
+          variant="toggle"
+          isActive={!isTaskTableCollapsed}
+          onClick={() => setTaskTableCollapsed(!isTaskTableCollapsed)}
+          title={isTaskTableCollapsed ? "Show Task Table" : "Hide Task Table"}
+          aria-label={
+            isTaskTableCollapsed ? "Show Task Table" : "Hide Task Table"
+          }
+          icon={<SidebarSimple size={ICON_SIZE} weight="light" />}
+          label="Table"
+        />
       </ToolbarGroup>
 
       <ToolbarSeparator />

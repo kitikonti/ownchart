@@ -40,6 +40,7 @@ import {
 import { holidayService } from "../../services/holidayService";
 import { calculateLabelPaddingDays } from "../../utils/textMeasurement";
 import { getCurrentDensityConfig } from "./userPreferencesSlice";
+import { TASK_COLUMNS } from "../../config/tableColumns";
 
 /**
  * Anchor point for zoom operations.
@@ -85,6 +86,12 @@ interface ChartState {
   // Project metadata (saved in .ownchart file)
   projectTitle: string;
   projectAuthor: string;
+
+  // Column visibility (user-hidden date/duration columns)
+  hiddenColumns: string[];
+
+  // Task table collapse state
+  isTaskTableCollapsed: boolean;
 
   // Color mode state (Smart Color Management)
   colorModeState: ColorModeState;
@@ -155,6 +162,13 @@ interface ChartActions {
   setProjectTitle: (title: string) => void;
   setProjectAuthor: (author: string) => void;
 
+  // Column visibility actions
+  toggleColumnVisibility: (columnId: string) => void;
+  setHiddenColumns: (columns: string[]) => void;
+
+  // Task table collapse actions
+  setTaskTableCollapsed: (collapsed: boolean) => void;
+
   // Color mode actions (Smart Color Management)
   setColorMode: (mode: ColorMode) => void;
   setThemeOptions: (options: Partial<ThemeModeOptions>) => void;
@@ -216,6 +230,12 @@ export const useChartStore = create<ChartState & ChartActions>()(
     // Project metadata
     projectTitle: "",
     projectAuthor: "",
+
+    // Column visibility
+    hiddenColumns: [] as string[],
+
+    // Task table collapse state
+    isTaskTableCollapsed: false,
 
     // Color mode state (Smart Color Management)
     colorModeState: { ...DEFAULT_COLOR_MODE_STATE },
@@ -599,6 +619,35 @@ export const useChartStore = create<ChartState & ChartActions>()(
       });
     },
 
+    // Column visibility actions
+    toggleColumnVisibility: (columnId: string): void => {
+      // Only allow toggling hideable columns
+      const column = TASK_COLUMNS.find((c) => c.id === columnId);
+      if (!column?.hideable) return;
+
+      set((state) => {
+        const idx = state.hiddenColumns.indexOf(columnId);
+        if (idx > -1) {
+          state.hiddenColumns.splice(idx, 1);
+        } else {
+          state.hiddenColumns.push(columnId);
+        }
+      });
+    },
+
+    setHiddenColumns: (columns: string[]): void => {
+      set((state) => {
+        state.hiddenColumns = columns;
+      });
+    },
+
+    // Task table collapse actions
+    setTaskTableCollapsed: (collapsed: boolean): void => {
+      set((state) => {
+        state.isTaskTableCollapsed = collapsed;
+      });
+    },
+
     // Color mode actions (Smart Color Management)
     setColorMode: (mode: ColorMode): void => {
       set((state) => {
@@ -678,6 +727,10 @@ export const useChartStore = create<ChartState & ChartActions>()(
           state.projectAuthor = settings.projectAuthor;
         if (settings.colorModeState !== undefined)
           state.colorModeState = settings.colorModeState;
+        if (settings.hiddenColumns !== undefined)
+          state.hiddenColumns = settings.hiddenColumns;
+        if (settings.isTaskTableCollapsed !== undefined)
+          state.isTaskTableCollapsed = settings.isTaskTableCollapsed;
       });
       // Update holiday service if region changed
       if (settings.holidayRegion !== undefined) {

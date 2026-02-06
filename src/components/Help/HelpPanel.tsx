@@ -87,6 +87,14 @@ function getShortcuts(): ShortcutSection[] {
         { keys: "D", description: "Toggle dependencies" },
         { keys: "P", description: "Toggle progress" },
         { keys: "H", description: "Toggle holidays" },
+        {
+          keys: "View > Columns",
+          description: "Show/hide date columns",
+        },
+        {
+          keys: "View > Table",
+          description: "Collapse/expand task table",
+        },
       ],
     },
     {

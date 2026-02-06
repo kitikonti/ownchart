@@ -21,6 +21,7 @@ import { CommandType } from "../../types/command.types";
 import { TASK_COLUMNS } from "../../config/tableColumns";
 import { calculateColumnWidth } from "../../utils/textMeasurement";
 import { useUserPreferencesStore } from "./userPreferencesSlice";
+import { useChartStore } from "./chartSlice";
 
 /**
  * Editable field types for cell-based editing.
@@ -714,7 +715,17 @@ export const useTaskStore = create<TaskStore>()(
         const taskIndex = tasks.findIndex((t) => t.id === activeCell.taskId);
         if (taskIndex === -1) return;
 
-        const fieldIndex = EDITABLE_FIELDS.indexOf(activeCell.field);
+        // Build visible fields list by filtering out hidden columns and progress
+        const chartState = useChartStore.getState();
+        const hiddenColumns = chartState.hiddenColumns;
+        const showProgress = chartState.showProgress;
+        const visibleFields = EDITABLE_FIELDS.filter((field) => {
+          if (field === "progress") return showProgress;
+          if (hiddenColumns.includes(field)) return false;
+          return true;
+        });
+
+        const fieldIndex = visibleFields.indexOf(activeCell.field);
         if (fieldIndex === -1) return;
 
         let newTaskIndex = taskIndex;
@@ -731,15 +742,12 @@ export const useTaskStore = create<TaskStore>()(
             newFieldIndex = Math.max(0, fieldIndex - 1);
             break;
           case "right":
-            newFieldIndex = Math.min(
-              EDITABLE_FIELDS.length - 1,
-              fieldIndex + 1
-            );
+            newFieldIndex = Math.min(visibleFields.length - 1, fieldIndex + 1);
             break;
         }
 
         const newTaskId = tasks[newTaskIndex]?.id || null;
-        const newField = EDITABLE_FIELDS[newFieldIndex];
+        const newField = visibleFields[newFieldIndex];
 
         state.activeCell.taskId = newTaskId;
         state.activeCell.field = newField;

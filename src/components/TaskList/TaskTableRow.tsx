@@ -66,14 +66,15 @@ export function TaskTableRow({
   const { isCellEditing, stopCellEdit } = useCellNavigation();
   const densityConfig = useDensityConfig();
   const showProgress = useChartStore((state) => state.showProgress);
+  const hiddenColumns = useChartStore((state) => state.hiddenColumns);
 
   // Get computed task color based on current color mode
   const computedColor = useComputedTaskColor(task);
 
-  // Get visible columns based on settings (Sprint 1.5.9)
+  // Get visible columns based on settings
   const visibleColumns = useMemo(
-    () => getVisibleColumns(showProgress),
-    [showProgress]
+    () => getVisibleColumns(hiddenColumns, showProgress),
+    [hiddenColumns, showProgress]
   );
 
   const isSelected = selectedTaskIds.includes(task.id);

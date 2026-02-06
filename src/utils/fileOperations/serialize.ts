@@ -71,6 +71,10 @@ export function serializeToGanttFile(
         projectAuthor: viewSettings.projectAuthor,
         // Color mode
         colorModeState: viewSettings.colorModeState,
+        // Column visibility
+        hiddenColumns: viewSettings.hiddenColumns,
+        // Task table collapse
+        isTaskTableCollapsed: viewSettings.isTaskTableCollapsed,
       },
       exportSettings: options.exportSettings, // Sprint 1.6
       metadata: {

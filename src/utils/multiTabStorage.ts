@@ -47,6 +47,8 @@ export interface ChartState {
   holidayRegion?: string;
   projectTitle?: string;
   projectAuthor?: string;
+  hiddenColumns?: string[];
+  isTaskTableCollapsed?: boolean;
 }
 
 export interface FileState {

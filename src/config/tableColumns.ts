@@ -37,6 +37,9 @@ export interface ColumnDefinition {
   /** Whether the column is editable */
   editable: boolean;
 
+  /** Whether the column can be hidden by the user */
+  hideable?: boolean;
+
   /** Cell renderer type */
   renderer?: CellRenderer;
 
@@ -82,6 +85,7 @@ export const TASK_COLUMNS: ColumnDefinition[] = [
     label: "Start Date",
     defaultWidth: "130px",
     editable: true,
+    hideable: true,
     renderer: "date",
     validator: (value) => validateDateString(String(value)),
   },
@@ -91,6 +95,7 @@ export const TASK_COLUMNS: ColumnDefinition[] = [
     label: "End Date",
     defaultWidth: "130px",
     editable: true,
+    hideable: true,
     renderer: "date",
     validator: (value) => validateDateString(String(value)),
   },
@@ -100,6 +105,7 @@ export const TASK_COLUMNS: ColumnDefinition[] = [
     label: "Duration",
     defaultWidth: "100px",
     editable: true, // Editable per user request
+    hideable: true,
     renderer: "number",
     validator: (value): ValidationResult => {
       const num = Number(value);
@@ -124,13 +130,26 @@ export const TASK_COLUMNS: ColumnDefinition[] = [
 
 /**
  * Get visible columns based on view settings.
- * Sprint 1.5.9: Allows hiding the progress column.
+ * Filters out user-hidden columns (hideable only) and progress column.
  */
-export function getVisibleColumns(showProgress: boolean): ColumnDefinition[] {
-  if (showProgress) {
-    return TASK_COLUMNS;
-  }
-  return TASK_COLUMNS.filter((col) => col.id !== "progress");
+export function getVisibleColumns(
+  hiddenColumns: string[],
+  showProgress: boolean
+): ColumnDefinition[] {
+  return TASK_COLUMNS.filter((col) => {
+    // Progress column controlled by showProgress toggle
+    if (col.id === "progress") return showProgress;
+    // Only hideable columns can be hidden by the user
+    if (col.hideable && hiddenColumns.includes(col.id)) return false;
+    return true;
+  });
+}
+
+/**
+ * Get columns that can be toggled by the user.
+ */
+export function getHideableColumns(): ColumnDefinition[] {
+  return TASK_COLUMNS.filter((col) => col.hideable);
 }
 
 /**

@@ -121,6 +121,12 @@ export interface ViewSettings {
 
   // Color mode (Smart Color Management)
   colorModeState?: ColorModeState;
+
+  // Column visibility (user-hidden date/duration columns)
+  hiddenColumns?: string[];
+
+  // Task table collapse state
+  isTaskTableCollapsed?: boolean;
 }
 
 // Validation error types

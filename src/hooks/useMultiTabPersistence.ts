@@ -109,6 +109,14 @@ export function useMultiTabPersistence(): void {
     if (savedChart.chartState.projectAuthor !== undefined) {
       chartStore.setProjectAuthor(savedChart.chartState.projectAuthor);
     }
+    if (savedChart.chartState.hiddenColumns !== undefined) {
+      chartStore.setHiddenColumns(savedChart.chartState.hiddenColumns);
+    }
+    if (savedChart.chartState.isTaskTableCollapsed !== undefined) {
+      chartStore.setTaskTableCollapsed(
+        savedChart.chartState.isTaskTableCollapsed
+      );
+    }
 
     // Restore file state
     const { setFileName, setChartId, setLastSaved, markDirty, markClean } =
@@ -171,6 +179,8 @@ export function useMultiTabPersistence(): void {
           holidayRegion: chartState.holidayRegion,
           projectTitle: chartState.projectTitle,
           projectAuthor: chartState.projectAuthor,
+          hiddenColumns: chartState.hiddenColumns,
+          isTaskTableCollapsed: chartState.isTaskTableCollapsed,
         } as ChartState,
         tableState: {
           columnWidths: taskState.columnWidths,

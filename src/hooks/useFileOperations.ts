@@ -65,6 +65,10 @@ export function useFileOperations(): {
   const workingDaysConfig = useChartStore((state) => state.workingDaysConfig);
   const holidayRegion = useChartStore((state) => state.holidayRegion);
   const colorModeState = useChartStore((state) => state.colorModeState);
+  const hiddenColumns = useChartStore((state) => state.hiddenColumns);
+  const isTaskTableCollapsed = useChartStore(
+    (state) => state.isTaskTableCollapsed
+  );
   const projectTitle = useChartStore((state) => state.projectTitle);
   const projectAuthor = useChartStore((state) => state.projectAuthor);
   const setProjectTitle = useChartStore((state) => state.setProjectTitle);
@@ -116,6 +120,10 @@ export function useFileOperations(): {
             projectAuthor,
             // Color mode
             colorModeState,
+            // Column visibility
+            hiddenColumns,
+            // Task table collapse
+            isTaskTableCollapsed,
           },
           {
             chartName:
@@ -167,6 +175,8 @@ export function useFileOperations(): {
       workingDaysConfig,
       holidayRegion,
       colorModeState,
+      hiddenColumns,
+      isTaskTableCollapsed,
       projectTitle,
       projectAuthor,
       taskTableWidth,
@@ -234,6 +244,8 @@ export function useFileOperations(): {
         projectAuthor: loadedViewSettings.projectAuthor ?? "",
         colorModeState:
           loadedViewSettings.colorModeState ?? DEFAULT_COLOR_MODE_STATE,
+        hiddenColumns: loadedViewSettings.hiddenColumns ?? [],
+        isTaskTableCollapsed: loadedViewSettings.isTaskTableCollapsed ?? false,
       });
 
       // Update scale immediately with new tasks and zoom (before signalFileLoaded)

@@ -72,6 +72,14 @@ export function GanttLayout(): JSX.Element {
   const fileLoadCounter = useChartStore((state) => state.fileLoadCounter);
   const setViewport = useChartStore((state) => state.setViewport);
 
+  // Task table collapse state
+  const isTaskTableCollapsed = useChartStore(
+    (state) => state.isTaskTableCollapsed
+  );
+  const setTaskTableCollapsed = useChartStore(
+    (state) => state.setTaskTableCollapsed
+  );
+
   // Effective table width: either manually set or total column width
   const effectiveTableWidth = taskTableWidth ?? totalColumnWidth;
 
@@ -434,6 +442,8 @@ export function GanttLayout(): JSX.Element {
               minLeftWidth={MIN_TABLE_WIDTH}
               maxLeftWidth={totalColumnWidth}
               onLeftWidthChange={setTaskTableWidth}
+              isCollapsed={isTaskTableCollapsed}
+              onCollapsedChange={setTaskTableCollapsed}
               leftContent={
                 <div className="flex flex-col h-full">
                   {/* TaskTable Header - scrollable but hidden scrollbar */}
