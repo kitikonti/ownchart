@@ -34,6 +34,8 @@ interface ToolbarDropdownProps<T extends string = string> {
   "aria-label"?: string;
   /** Tooltip */
   title?: string;
+  /** Collapse priority: lower numbers hide first. Omit to never collapse. */
+  labelPriority?: number;
 }
 
 export function ToolbarDropdown<T extends string = string>({
@@ -44,6 +46,7 @@ export function ToolbarDropdown<T extends string = string>({
   labelPrefix = "",
   "aria-label": ariaLabel,
   title,
+  labelPriority,
 }: ToolbarDropdownProps<T>): JSX.Element {
   const { isOpen, toggle, close, containerRef } = useDropdown();
 
@@ -64,6 +67,7 @@ export function ToolbarDropdown<T extends string = string>({
         aria-label={ariaLabel}
         aria-haspopup="listbox"
         title={title}
+        labelPriority={labelPriority}
       />
 
       {isOpen && (

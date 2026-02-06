@@ -91,7 +91,7 @@ export function Ribbon(): JSX.Element {
   const [activeTab, setActiveTab] = useState<RibbonTab>("home");
 
   // Smart Labels — responsive collapse
-  const { collapseLevel, toolbarRef } = useRibbonCollapse(activeTab);
+  const { collapseLevel, contentRef } = useRibbonCollapse(activeTab);
 
   // ─────────────────────────────────────────────────────────────────────────
   // Store Hooks
@@ -385,8 +385,8 @@ export function Ribbon(): JSX.Element {
 
       {/* Color Mode (Smart Color Management) */}
       <ToolbarGroup label="Colors">
-        <ColorModeDropdown labelPriority={3} />
-        <ColorOptionsDropdown labelPriority={3} />
+        <ColorModeDropdown labelPriority={1} />
+        <ColorOptionsDropdown labelPriority={1} />
         <RegenerateButton />
       </ToolbarGroup>
     </>
@@ -521,7 +521,7 @@ export function Ribbon(): JSX.Element {
           labelPrefix="Labels"
           aria-label="Task label position"
           title="Task Label Position"
-          labelPriority={2}
+          labelPriority={1}
         />
       </ToolbarGroup>
 
@@ -529,7 +529,7 @@ export function Ribbon(): JSX.Element {
 
       {/* Calendar */}
       <ToolbarGroup label="Calendar">
-        <WorkingDaysDropdown labelPriority={2} />
+        <WorkingDaysDropdown labelPriority={1} />
         <ToolbarDropdown
           value={firstDayOfWeek}
           options={FIRST_DAY_OF_WEEK_OPTIONS}
@@ -538,7 +538,7 @@ export function Ribbon(): JSX.Element {
           labelPrefix="Week Start"
           aria-label="First Day of Week"
           title="First Day of Week"
-          labelPriority={2}
+          labelPriority={1}
         />
       </ToolbarGroup>
 
@@ -688,7 +688,6 @@ export function Ribbon(): JSX.Element {
 
       {/* Floating Toolbar - MS Office style */}
       <div
-        ref={toolbarRef}
         className="flex items-center justify-between px-3 gap-1"
         style={{
           height: "40px",
@@ -701,13 +700,13 @@ export function Ribbon(): JSX.Element {
           position: "relative",
           zIndex: 2,
           transition: "height 150ms cubic-bezier(0.1, 0.9, 0.2, 1)",
-          overflow: "hidden",
         }}
       >
-        <RibbonCollapseProvider value={collapseLevel}>
-          {renderTabContent()}
-        </RibbonCollapseProvider>
-        <ToolbarSpacer />
+        <div ref={contentRef} className="flex items-center gap-1">
+          <RibbonCollapseProvider value={collapseLevel}>
+            {renderTabContent()}
+          </RibbonCollapseProvider>
+        </div>
       </div>
     </header>
   );

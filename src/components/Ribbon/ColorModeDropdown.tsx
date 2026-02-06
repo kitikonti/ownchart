@@ -52,7 +52,13 @@ const COLOR_MODE_OPTIONS: ColorModeOption[] = [
   },
 ];
 
-export function ColorModeDropdown(): JSX.Element {
+interface ColorModeDropdownProps {
+  labelPriority?: number;
+}
+
+export function ColorModeDropdown({
+  labelPriority,
+}: ColorModeDropdownProps = {}): JSX.Element {
   const { isOpen, toggle, close, containerRef } = useDropdown();
 
   const colorModeState = useChartStore((state) => state.colorModeState);
@@ -76,6 +82,7 @@ export function ColorModeDropdown(): JSX.Element {
         aria-label="Color Mode"
         aria-haspopup="listbox"
         title="Select color mode"
+        labelPriority={labelPriority}
       />
 
       {isOpen && (

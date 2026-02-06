@@ -9,6 +9,10 @@
 import type { ReactNode } from "react";
 import { CaretDown } from "@phosphor-icons/react";
 import { COLORS, TOOLBAR } from "../../styles/design-tokens";
+import {
+  useCollapseLevel,
+  shouldShowLabel,
+} from "../Ribbon/RibbonCollapseContext";
 
 interface DropdownTriggerProps {
   /** Whether the dropdown is currently open */
@@ -27,6 +31,8 @@ interface DropdownTriggerProps {
   "aria-haspopup"?: "true" | "listbox" | "menu";
   /** Visual border state for active config (e.g. WorkingDays) */
   isActive?: boolean;
+  /** Collapse priority: lower numbers hide first. Omit to never collapse. */
+  labelPriority?: number;
 }
 
 export function DropdownTrigger({
@@ -38,7 +44,14 @@ export function DropdownTrigger({
   title,
   "aria-haspopup": ariaHaspopup = "true",
   isActive = false,
+  labelPriority,
 }: DropdownTriggerProps): JSX.Element {
+  const collapseLevel = useCollapseLevel();
+  const showLabel = shouldShowLabel(labelPriority, collapseLevel);
+
+  // When label is hidden, use label text as tooltip fallback
+  const effectiveTitle = !showLabel && !title ? label : title;
+
   return (
     <button
       type="button"
@@ -46,7 +59,7 @@ export function DropdownTrigger({
       aria-label={ariaLabel}
       aria-haspopup={ariaHaspopup}
       aria-expanded={isOpen}
-      title={title}
+      title={effectiveTitle}
       className={`dropdown-trigger${isActive && !isOpen ? " dropdown-trigger-active" : ""}`}
       style={{
         display: "inline-flex",
@@ -68,8 +81,12 @@ export function DropdownTrigger({
       }}
     >
       {icon}
-      <span>{label}</span>
-      <CaretDown size={12} weight="bold" style={{ marginLeft: "2px" }} />
+      {showLabel && <span>{label}</span>}
+      <CaretDown
+        size={12}
+        weight="bold"
+        style={{ marginLeft: showLabel ? "2px" : "0px" }}
+      />
     </button>
   );
 }

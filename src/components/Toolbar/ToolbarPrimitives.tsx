@@ -10,6 +10,10 @@
 
 import { forwardRef, type ReactNode, type ButtonHTMLAttributes } from "react";
 import { COLORS, TOOLBAR } from "../../styles/design-tokens";
+import {
+  useCollapseLevel,
+  shouldShowLabel,
+} from "../Ribbon/RibbonCollapseContext";
 
 // Re-export tokens for use by other components
 export { COLORS, TOOLBAR };
@@ -120,6 +124,8 @@ interface ToolbarButtonProps extends Omit<
   icon?: ReactNode;
   /** Additional classes */
   className?: string;
+  /** Collapse priority: lower numbers hide first. Omit to never collapse. */
+  labelPriority?: number;
 }
 
 /**
@@ -141,10 +147,13 @@ export const ToolbarButton = forwardRef<HTMLButtonElement, ToolbarButtonProps>(
       disabled,
       className = "",
       children,
+      labelPriority,
       ...props
     },
     ref
   ) {
+    const collapseLevel = useCollapseLevel();
+    const showLabel = shouldShowLabel(labelPriority, collapseLevel);
     // MS Office button base styles using design tokens
     const baseStyle: React.CSSProperties = {
       display: "inline-flex",
@@ -199,6 +208,10 @@ export const ToolbarButton = forwardRef<HTMLButtonElement, ToolbarButtonProps>(
       ...toggleActiveStyle,
     };
 
+    // When label is hidden, use label text as tooltip fallback
+    const titleProp =
+      !showLabel && label && !props.title ? { title: label } : {};
+
     return (
       <button
         ref={ref}
@@ -208,10 +221,11 @@ export const ToolbarButton = forwardRef<HTMLButtonElement, ToolbarButtonProps>(
         aria-pressed={variant === "toggle" ? isActive : undefined}
         className={`ribbon-toolbar-button ${className}`}
         style={combinedStyle}
+        {...titleProp}
         {...props}
       >
         {icon}
-        {label && (
+        {label && showLabel && (
           <span
             style={{
               paddingLeft: "4px",

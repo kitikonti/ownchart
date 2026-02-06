@@ -61,7 +61,13 @@ function PalettePreview({ colors }: { colors: string[] }): JSX.Element {
   );
 }
 
-export function ColorOptionsDropdown(): JSX.Element {
+interface ColorOptionsDropdownProps {
+  labelPriority?: number;
+}
+
+export function ColorOptionsDropdown({
+  labelPriority,
+}: ColorOptionsDropdownProps = {}): JSX.Element {
   const [customMonoInput, setCustomMonoInput] = useState("#0F6CBD");
   const { isOpen, toggle, close, containerRef } = useDropdown();
 
@@ -470,6 +476,7 @@ export function ColorOptionsDropdown(): JSX.Element {
         label={getLabel()}
         aria-label="Color Options"
         title="Color mode options"
+        labelPriority={labelPriority}
       />
 
       {isOpen && (

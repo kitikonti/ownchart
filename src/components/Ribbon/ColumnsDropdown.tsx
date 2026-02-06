@@ -14,7 +14,13 @@ import { getHideableColumns } from "../../config/tableColumns";
 
 const HIDEABLE_COLUMNS = getHideableColumns();
 
-export function ColumnsDropdown(): JSX.Element {
+interface ColumnsDropdownProps {
+  labelPriority?: number;
+}
+
+export function ColumnsDropdown({
+  labelPriority,
+}: ColumnsDropdownProps = {}): JSX.Element {
   const { isOpen, toggle, containerRef } = useDropdown();
   const hiddenColumns = useChartStore((state) => state.hiddenColumns);
   const toggleColumnVisibility = useChartStore(
@@ -31,6 +37,7 @@ export function ColumnsDropdown(): JSX.Element {
         aria-label="Column visibility"
         aria-haspopup="listbox"
         title="Show/Hide table columns"
+        labelPriority={labelPriority}
       />
 
       {isOpen && (

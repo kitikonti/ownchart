@@ -13,7 +13,13 @@ import { DropdownTrigger } from "../Toolbar/DropdownTrigger";
 import { DropdownPanel } from "../Toolbar/DropdownPanel";
 import { TOOLBAR } from "../../styles/design-tokens";
 
-export function WorkingDaysDropdown(): JSX.Element {
+interface WorkingDaysDropdownProps {
+  labelPriority?: number;
+}
+
+export function WorkingDaysDropdown({
+  labelPriority,
+}: WorkingDaysDropdownProps = {}): JSX.Element {
   const { isOpen, toggle, containerRef } = useDropdown();
 
   const workingDaysConfig = useChartStore((state) => state.workingDaysConfig);
@@ -60,6 +66,7 @@ export function WorkingDaysDropdown(): JSX.Element {
         aria-label="Working Days"
         title="Working Days configuration"
         isActive={isAnyExcluded}
+        labelPriority={labelPriority}
       />
 
       {isOpen && (
