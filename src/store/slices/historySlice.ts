@@ -206,7 +206,16 @@ function executeUndoCommand(command: Command): void {
   switch (command.type) {
     case "addTask": {
       const params = command.params as AddTaskParams;
-      if (params.generatedId) {
+      if (params.generatedIds && params.generatedIds.length > 0) {
+        // Batch undo: remove all generated tasks
+        const idsToRemove = new Set(params.generatedIds);
+        const currentTasks = useTaskStore.getState().tasks;
+        const filtered = currentTasks.filter((t) => !idsToRemove.has(t.id));
+        filtered.forEach((task, index) => {
+          task.order = index;
+        });
+        useTaskStore.setState({ tasks: filtered });
+      } else if (params.generatedId) {
         taskStore.deleteTask(params.generatedId, false);
       }
       break;
@@ -467,12 +476,31 @@ function executeRedoCommand(command: Command): void {
   switch (command.type) {
     case "addTask": {
       const params = command.params as any;
-      const taskWithId = { ...params.task, id: params.generatedId };
-      // Use internal method to avoid recording
-      const state = useTaskStore.getState();
-      useTaskStore.setState({
-        tasks: [...state.tasks, taskWithId],
-      });
+      if (
+        params.tasks &&
+        params.generatedIds &&
+        params.generatedIds.length > 0
+      ) {
+        // Batch redo: re-add all tasks at their original positions
+        const state = useTaskStore.getState();
+        const newTasks = params.tasks.map((t: any, i: number) => ({
+          ...t,
+          id: params.generatedIds[i],
+        }));
+        const allTasks = [...state.tasks, ...newTasks];
+        allTasks.sort((a: any, b: any) => a.order - b.order);
+        allTasks.forEach((task: any, index: number) => {
+          task.order = index;
+        });
+        useTaskStore.setState({ tasks: allTasks });
+      } else {
+        const taskWithId = { ...params.task, id: params.generatedId };
+        // Use internal method to avoid recording
+        const state = useTaskStore.getState();
+        useTaskStore.setState({
+          tasks: [...state.tasks, taskWithId],
+        });
+      }
       break;
     }
 

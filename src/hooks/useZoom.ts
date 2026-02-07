@@ -4,7 +4,7 @@
  *
  * Features:
  * - Ctrl/Cmd + Wheel to zoom (cursor-centered)
- * - Keyboard shortcuts (Ctrl+0, Ctrl++, Ctrl+-) (viewport-centered)
+ * - Keyboard shortcuts (Ctrl+0) (viewport-centered)
  *
  * Zoom Anchoring:
  * - Wheel zoom: keeps the date under cursor at the same position
@@ -50,7 +50,7 @@ export function useZoom({ containerRef, enabled = true }: UseZoomOptions): {
     onWheel: (e: React.WheelEvent) => void;
   };
 } {
-  const { zoom, scale, setZoom, zoomIn, zoomOut, resetZoom } = useChartStore();
+  const { zoom, scale, setZoom, resetZoom } = useChartStore();
 
   // Zoom with Ctrl/Cmd + Wheel (centered on cursor position)
   const handleWheel = useCallback(
@@ -169,22 +169,6 @@ export function useZoom({ containerRef, enabled = true }: UseZoomOptions): {
             applyScrollLeft(result?.newScrollLeft ?? null);
             break;
           }
-          case "+":
-          case "=": {
-            e.preventDefault();
-            const anchor = getViewportCenterAnchor();
-            const result = zoomIn(anchor);
-            applyScrollLeft(result?.newScrollLeft ?? null);
-            break;
-          }
-          case "-":
-          case "_": {
-            e.preventDefault();
-            const anchor = getViewportCenterAnchor();
-            const result = zoomOut(anchor);
-            applyScrollLeft(result?.newScrollLeft ?? null);
-            break;
-          }
         }
       }
     };
@@ -194,7 +178,7 @@ export function useZoom({ containerRef, enabled = true }: UseZoomOptions): {
     return (): void => {
       window.removeEventListener("keydown", handleKeyDown);
     };
-  }, [enabled, zoomIn, zoomOut, resetZoom]);
+  }, [enabled, resetZoom]);
 
   return {
     // Event handlers

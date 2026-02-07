@@ -55,7 +55,8 @@ function getShortcuts(): ShortcutSection[] {
         { keys: `${mod}+X`, description: "Cut selected tasks" },
         { keys: `${mod}+V`, description: "Paste tasks" },
         { keys: `${mod}+A`, description: "Select all tasks" },
-        { keys: "Delete", description: "Delete selected tasks" },
+        { keys: `Delete / ${mod}+-`, description: "Delete selected tasks" },
+        { keys: `${mod}++`, description: "Insert row(s) above" },
       ],
     },
     {
@@ -79,8 +80,6 @@ function getShortcuts(): ShortcutSection[] {
       title: "View",
       shortcuts: [
         { keys: `${mod}+0`, description: "Reset zoom to 100%" },
-        { keys: `${mod}++`, description: "Zoom in" },
-        { keys: `${mod}+-`, description: "Zoom out" },
         { keys: `${mod}+Wheel`, description: "Zoom at cursor" },
         { keys: "F", description: "Fit timeline to tasks" },
         { keys: "T", description: "Toggle today marker" },

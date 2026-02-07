@@ -33,6 +33,11 @@ export function useKeyboardShortcuts(): void {
   );
   const selectedTaskIds = useTaskStore((state) => state.selectedTaskIds);
   const activeCell = useTaskStore((state) => state.activeCell);
+  const isEditingCell = useTaskStore((state) => state.isEditingCell);
+  const insertTaskAbove = useTaskStore((state) => state.insertTaskAbove);
+  const insertMultipleTasksAbove = useTaskStore(
+    (state) => state.insertMultipleTasksAbove
+  );
 
   // View toggle shortcuts (Sprint 1.5.9)
   const toggleDependencies = useChartStore((state) => state.toggleDependencies);
@@ -197,6 +202,46 @@ export function useKeyboardShortcuts(): void {
         return;
       }
 
+      // Ctrl+-: Delete selected tasks (Excel-style)
+      // Always preventDefault to block browser zoom
+      if (modKey && (e.key === "-" || e.key === "_") && !isEditingCell) {
+        e.preventDefault();
+        if (selectedTaskIds.length > 0) {
+          deleteSelectedTasks();
+        }
+        return;
+      }
+
+      // Ctrl++: Insert row(s) above (Excel-style)
+      if (modKey && (e.key === "+" || e.key === "=") && !isEditingCell) {
+        e.preventDefault();
+        const count = Math.max(selectedTaskIds.length, 1);
+        // Find topmost selected task (lowest index in tasks array)
+        const currentTasks = useTaskStore.getState().tasks;
+        let referenceTaskId: string | null = null;
+        if (selectedTaskIds.length > 0) {
+          const selectedSet = new Set(selectedTaskIds);
+          for (const task of currentTasks) {
+            if (selectedSet.has(task.id)) {
+              referenceTaskId = task.id;
+              break;
+            }
+          }
+        }
+        // Fallback to activeCell task
+        if (!referenceTaskId && activeCell.taskId) {
+          referenceTaskId = activeCell.taskId;
+        }
+        if (referenceTaskId) {
+          if (count === 1) {
+            insertTaskAbove(referenceTaskId);
+          } else {
+            insertMultipleTasksAbove(referenceTaskId, count);
+          }
+        }
+        return;
+      }
+
       // ? key: Open help panel (when not in text input)
       if (e.key === "?" && !isTextInput && !isCellActive) {
         e.preventDefault();
@@ -269,6 +314,9 @@ export function useKeyboardShortcuts(): void {
     clipboardMode,
     deleteSelectedTasks,
     selectedTaskIds,
+    isEditingCell,
+    insertTaskAbove,
+    insertMultipleTasksAbove,
     openExportDialog,
     openHelpPanel,
     closeExportDialog,

@@ -1887,6 +1887,172 @@ describe('Task Store - CRUD Operations', () => {
     });
   });
 
+  describe('insertMultipleTasksAbove', () => {
+    it('should insert correct number of tasks', () => {
+      const tasks: Task[] = [
+        {
+          id: 'task-1',
+          name: 'First Task',
+          startDate: '2025-01-10',
+          endDate: '2025-01-17',
+          duration: 7,
+          progress: 0,
+          color: '#3b82f6',
+          order: 0,
+          type: 'task',
+          metadata: {},
+        },
+      ];
+      useTaskStore.setState({ tasks });
+
+      const { insertMultipleTasksAbove } = useTaskStore.getState();
+      insertMultipleTasksAbove('task-1', 3);
+
+      const updatedTasks = useTaskStore.getState().tasks;
+      expect(updatedTasks).toHaveLength(4);
+      expect(updatedTasks[3].id).toBe('task-1');
+      // All new tasks should be named "New Task"
+      expect(updatedTasks[0].name).toBe('New Task');
+      expect(updatedTasks[1].name).toBe('New Task');
+      expect(updatedTasks[2].name).toBe('New Task');
+    });
+
+    it('should assign correct parent from reference task', () => {
+      const tasks: Task[] = [
+        {
+          id: 'parent',
+          name: 'Parent',
+          startDate: '2025-01-01',
+          endDate: '2025-01-31',
+          duration: 31,
+          progress: 0,
+          color: '#3b82f6',
+          order: 0,
+          type: 'summary',
+          metadata: {},
+        },
+        {
+          id: 'child',
+          name: 'Child',
+          startDate: '2025-01-10',
+          endDate: '2025-01-17',
+          duration: 7,
+          progress: 0,
+          color: '#3b82f6',
+          order: 1,
+          type: 'task',
+          parent: 'parent',
+          metadata: {},
+        },
+      ];
+      useTaskStore.setState({ tasks });
+
+      const { insertMultipleTasksAbove } = useTaskStore.getState();
+      insertMultipleTasksAbove('child', 2);
+
+      const updatedTasks = useTaskStore.getState().tasks;
+      expect(updatedTasks).toHaveLength(4);
+      // Both new tasks should have the same parent
+      expect(updatedTasks[1].parent).toBe('parent');
+      expect(updatedTasks[2].parent).toBe('parent');
+    });
+
+    it('should give tasks sequential dates before reference', () => {
+      const tasks: Task[] = [
+        {
+          id: 'task-1',
+          name: 'Task',
+          startDate: '2025-02-01',
+          endDate: '2025-02-08',
+          duration: 7,
+          progress: 0,
+          color: '#3b82f6',
+          order: 0,
+          type: 'task',
+          metadata: {},
+        },
+      ];
+      useTaskStore.setState({ tasks });
+
+      const { insertMultipleTasksAbove } = useTaskStore.getState();
+      insertMultipleTasksAbove('task-1', 2);
+
+      const updatedTasks = useTaskStore.getState().tasks;
+      expect(updatedTasks).toHaveLength(3);
+      // The second inserted task (closer to reference) should end before reference starts
+      const closerTask = updatedTasks[1];
+      expect(closerTask.endDate).toBe('2025-01-31');
+      // The first inserted task should end before the second inserted task
+      const fartherTask = updatedTasks[0];
+      expect(new Date(fartherTask.endDate!).getTime()).toBeLessThan(
+        new Date(closerTask.startDate!).getTime()
+      );
+    });
+
+    it('should normalize task order after insert', () => {
+      const tasks: Task[] = [
+        {
+          id: 'task-1',
+          name: 'First',
+          startDate: '2025-01-10',
+          endDate: '2025-01-17',
+          duration: 7,
+          progress: 0,
+          color: '#3b82f6',
+          order: 0,
+          type: 'task',
+          metadata: {},
+        },
+        {
+          id: 'task-2',
+          name: 'Second',
+          startDate: '2025-01-18',
+          endDate: '2025-01-25',
+          duration: 7,
+          progress: 0,
+          color: '#3b82f6',
+          order: 1,
+          type: 'task',
+          metadata: {},
+        },
+      ];
+      useTaskStore.setState({ tasks });
+
+      const { insertMultipleTasksAbove } = useTaskStore.getState();
+      insertMultipleTasksAbove('task-2', 2);
+
+      const updatedTasks = useTaskStore.getState().tasks;
+      expect(updatedTasks).toHaveLength(4);
+      // Order should be sequential
+      updatedTasks.forEach((task, index) => {
+        expect(task.order).toBe(index);
+      });
+    });
+
+    it('should do nothing for non-existent reference task', () => {
+      const tasks: Task[] = [
+        {
+          id: 'task-1',
+          name: 'First',
+          startDate: '2025-01-10',
+          endDate: '2025-01-17',
+          duration: 7,
+          progress: 0,
+          color: '#3b82f6',
+          order: 0,
+          type: 'task',
+          metadata: {},
+        },
+      ];
+      useTaskStore.setState({ tasks });
+
+      const { insertMultipleTasksAbove } = useTaskStore.getState();
+      insertMultipleTasksAbove('non-existent', 2);
+
+      expect(useTaskStore.getState().tasks).toHaveLength(1);
+    });
+  });
+
   describe('insertTaskBelow', () => {
     it('should insert a new task below the reference task', () => {
       const tasks: Task[] = [

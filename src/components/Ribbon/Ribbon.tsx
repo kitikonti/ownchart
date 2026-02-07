@@ -341,7 +341,7 @@ export function Ribbon(): JSX.Element {
         <ToolbarButton
           onClick={deleteSelectedTasks}
           disabled={!canDelete}
-          title="Delete (Del)"
+          title="Delete (Del / Ctrl+-)"
           aria-label="Delete"
           icon={<Trash size={ICON_SIZE} weight="light" />}
         />
@@ -354,7 +354,7 @@ export function Ribbon(): JSX.Element {
         <ToolbarButton
           onClick={handleInsertAbove}
           disabled={!canInsert}
-          title="Insert task above"
+          title="Insert task above (Ctrl++)"
           aria-label="Insert task above"
           icon={<RowsPlusTop size={ICON_SIZE} weight="light" />}
         />
@@ -464,7 +464,7 @@ export function Ribbon(): JSX.Element {
         <ToolbarButton
           onClick={handleZoomOut}
           disabled={!canZoomOut}
-          title="Zoom Out (Ctrl+-)"
+          title="Zoom Out"
           aria-label="Zoom out"
           icon={<MagnifyingGlassMinus size={ICON_SIZE} weight="light" />}
         />
@@ -476,7 +476,7 @@ export function Ribbon(): JSX.Element {
         <ToolbarButton
           onClick={handleZoomIn}
           disabled={!canZoomIn}
-          title="Zoom In (Ctrl++)"
+          title="Zoom In"
           aria-label="Zoom in"
           icon={<MagnifyingGlassPlus size={ICON_SIZE} weight="light" />}
         />

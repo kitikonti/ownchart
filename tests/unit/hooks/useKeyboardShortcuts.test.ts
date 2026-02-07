@@ -7,6 +7,8 @@ import { renderHook } from '@testing-library/react';
 import { useKeyboardShortcuts } from '../../../src/hooks/useKeyboardShortcuts';
 import { useHistoryStore } from '../../../src/store/slices/historySlice';
 import { useChartStore } from '../../../src/store/slices/chartSlice';
+import { useTaskStore } from '../../../src/store/slices/taskSlice';
+import type { Task } from '../../../src/types/chart.types';
 
 // Mock the useFileOperations hook
 const mockHandleSave = vi.fn();
@@ -367,6 +369,143 @@ describe('useKeyboardShortcuts', () => {
       simulateKeyPress('D');
 
       expect(useChartStore.getState().showDependencies).toBe(false);
+    });
+  });
+
+  describe('Ctrl++ / Ctrl+- row insert/delete shortcuts', () => {
+    const makeTasks = (count: number): Task[] =>
+      Array.from({ length: count }, (_, i) => ({
+        id: `task-${i + 1}`,
+        name: `Task ${i + 1}`,
+        startDate: '2025-01-10',
+        endDate: '2025-01-17',
+        duration: 7,
+        progress: 0,
+        color: '#3b82f6',
+        order: i,
+        type: 'task' as const,
+        metadata: {},
+      }));
+
+    beforeEach(() => {
+      useTaskStore.setState({
+        tasks: makeTasks(3),
+        selectedTaskIds: [],
+        lastSelectedTaskId: null,
+        activeCell: { taskId: null, field: null },
+        isEditingCell: false,
+      });
+    });
+
+    it('should insert one row above when single task is selected via Ctrl++', () => {
+      useTaskStore.setState({ selectedTaskIds: ['task-2'] });
+      renderHook(() => useKeyboardShortcuts());
+
+      simulateKeyPress('+', { ctrlKey: true });
+
+      const tasks = useTaskStore.getState().tasks;
+      expect(tasks).toHaveLength(4);
+      expect(tasks[1].name).toBe('New Task');
+      expect(tasks[2].id).toBe('task-2');
+    });
+
+    it('should insert N rows when N tasks are selected via Ctrl++', () => {
+      useTaskStore.setState({ selectedTaskIds: ['task-1', 'task-2', 'task-3'] });
+      renderHook(() => useKeyboardShortcuts());
+
+      simulateKeyPress('=', { ctrlKey: true });
+
+      const tasks = useTaskStore.getState().tasks;
+      expect(tasks).toHaveLength(6); // 3 original + 3 new
+    });
+
+    it('should use topmost selected task as reference for Ctrl++', () => {
+      // Select tasks 2 and 3 — topmost is task-2 (index 1)
+      useTaskStore.setState({ selectedTaskIds: ['task-3', 'task-2'] });
+      renderHook(() => useKeyboardShortcuts());
+
+      simulateKeyPress('+', { ctrlKey: true });
+
+      const tasks = useTaskStore.getState().tasks;
+      // 2 new tasks inserted above task-2 (at index 1)
+      expect(tasks).toHaveLength(5);
+      expect(tasks[0].id).toBe('task-1');
+      expect(tasks[1].name).toBe('New Task');
+      expect(tasks[2].name).toBe('New Task');
+      expect(tasks[3].id).toBe('task-2');
+    });
+
+    it('should fallback to activeCell.taskId for Ctrl++ when no selection', () => {
+      useTaskStore.setState({
+        selectedTaskIds: [],
+        activeCell: { taskId: 'task-2', field: 'name' },
+      });
+      renderHook(() => useKeyboardShortcuts());
+
+      simulateKeyPress('+', { ctrlKey: true });
+
+      const tasks = useTaskStore.getState().tasks;
+      expect(tasks).toHaveLength(4);
+    });
+
+    it('should do nothing for Ctrl++ when no task selected and no active cell', () => {
+      useTaskStore.setState({
+        selectedTaskIds: [],
+        activeCell: { taskId: null, field: null },
+      });
+      renderHook(() => useKeyboardShortcuts());
+
+      simulateKeyPress('+', { ctrlKey: true });
+
+      const tasks = useTaskStore.getState().tasks;
+      expect(tasks).toHaveLength(3);
+    });
+
+    it('should not insert when editing a cell via Ctrl++', () => {
+      useTaskStore.setState({
+        selectedTaskIds: ['task-1'],
+        isEditingCell: true,
+      });
+      renderHook(() => useKeyboardShortcuts());
+
+      simulateKeyPress('+', { ctrlKey: true });
+
+      const tasks = useTaskStore.getState().tasks;
+      expect(tasks).toHaveLength(3);
+    });
+
+    it('should delete selected tasks via Ctrl+-', () => {
+      useTaskStore.setState({ selectedTaskIds: ['task-2'] });
+      renderHook(() => useKeyboardShortcuts());
+
+      simulateKeyPress('-', { ctrlKey: true });
+
+      const tasks = useTaskStore.getState().tasks;
+      expect(tasks).toHaveLength(2);
+      expect(tasks.find(t => t.id === 'task-2')).toBeUndefined();
+    });
+
+    it('should not delete when editing a cell via Ctrl+-', () => {
+      useTaskStore.setState({
+        selectedTaskIds: ['task-1'],
+        isEditingCell: true,
+      });
+      renderHook(() => useKeyboardShortcuts());
+
+      simulateKeyPress('-', { ctrlKey: true });
+
+      const tasks = useTaskStore.getState().tasks;
+      expect(tasks).toHaveLength(3);
+    });
+
+    it('should not delete when no tasks are selected via Ctrl+-', () => {
+      useTaskStore.setState({ selectedTaskIds: [] });
+      renderHook(() => useKeyboardShortcuts());
+
+      simulateKeyPress('-', { ctrlKey: true });
+
+      const tasks = useTaskStore.getState().tasks;
+      expect(tasks).toHaveLength(3);
     });
   });
 });

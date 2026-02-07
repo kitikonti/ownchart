@@ -179,38 +179,6 @@ describe('useZoom', () => {
       expect(resetZoomSpy).toHaveBeenCalledTimes(1);
     });
 
-    it('should zoom in on Ctrl++', () => {
-      renderHook(() => useZoom({ containerRef }));
-
-      simulateKeyPress('+', { ctrlKey: true });
-
-      expect(zoomInSpy).toHaveBeenCalledTimes(1);
-    });
-
-    it('should zoom in on Ctrl+=', () => {
-      renderHook(() => useZoom({ containerRef }));
-
-      simulateKeyPress('=', { ctrlKey: true });
-
-      expect(zoomInSpy).toHaveBeenCalledTimes(1);
-    });
-
-    it('should zoom out on Ctrl+-', () => {
-      renderHook(() => useZoom({ containerRef }));
-
-      simulateKeyPress('-', { ctrlKey: true });
-
-      expect(zoomOutSpy).toHaveBeenCalledTimes(1);
-    });
-
-    it('should zoom out on Ctrl+_', () => {
-      renderHook(() => useZoom({ containerRef }));
-
-      simulateKeyPress('_', { ctrlKey: true });
-
-      expect(zoomOutSpy).toHaveBeenCalledTimes(1);
-    });
-
     it('should work with metaKey (Mac)', () => {
       renderHook(() => useZoom({ containerRef }));
 
@@ -247,14 +215,14 @@ describe('useZoom', () => {
       textarea.focus();
 
       const event = new KeyboardEvent('keydown', {
-        key: '+',
+        key: '0',
         ctrlKey: true,
         bubbles: true,
         cancelable: true,
       });
       textarea.dispatchEvent(event);
 
-      expect(zoomInSpy).not.toHaveBeenCalled();
+      expect(resetZoomSpy).not.toHaveBeenCalled();
 
       document.body.removeChild(textarea);
     });
@@ -269,14 +237,14 @@ describe('useZoom', () => {
       div.focus();
 
       const event = new KeyboardEvent('keydown', {
-        key: '-',
+        key: '0',
         ctrlKey: true,
         bubbles: true,
         cancelable: true,
       });
       div.dispatchEvent(event);
 
-      expect(zoomOutSpy).not.toHaveBeenCalled();
+      expect(resetZoomSpy).not.toHaveBeenCalled();
 
       document.body.removeChild(div);
     });
@@ -350,14 +318,10 @@ describe('useZoom', () => {
         );
       };
 
-      simulateKeyPress('+', { ctrlKey: true });
-      simulateKeyPress('+', { ctrlKey: true });
-      simulateKeyPress('-', { ctrlKey: true });
+      simulateKeyPress('0', { ctrlKey: true });
       simulateKeyPress('0', { ctrlKey: true });
 
-      expect(zoomInSpy).toHaveBeenCalledTimes(2);
-      expect(zoomOutSpy).toHaveBeenCalledTimes(1);
-      expect(resetZoomSpy).toHaveBeenCalledTimes(1);
+      expect(resetZoomSpy).toHaveBeenCalledTimes(2);
     });
   });
 });

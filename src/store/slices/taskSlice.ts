@@ -119,6 +119,7 @@ interface TaskActions {
   // Insert task relative to another
   insertTaskAbove: (referenceTaskId: string) => void;
   insertTaskBelow: (referenceTaskId: string) => void;
+  insertMultipleTasksAbove: (referenceTaskId: string, count: number) => void;
 }
 
 /**
@@ -1184,6 +1185,105 @@ export const useTaskStore = create<TaskStore>()(
           params: {
             task: taskData,
             generatedId,
+          },
+        });
+      }
+    },
+
+    insertMultipleTasksAbove: (referenceTaskId, count): void => {
+      const historyStore = useHistoryStore.getState();
+      const state = get();
+
+      const refIndex = state.tasks.findIndex((t) => t.id === referenceTaskId);
+      if (refIndex === -1 || count < 1) return;
+
+      const refTask = state.tasks[refIndex];
+      const DEFAULT_DURATION = 7;
+
+      const tasksToInsert: Array<Omit<Task, "id">> = [];
+      const generatedIds: string[] = [];
+
+      // Build tasks from closest-to-reference backwards
+      for (let i = 0; i < count; i++) {
+        let endDate = "";
+        let startDate = "";
+
+        if (refTask.startDate) {
+          const refStart = new Date(refTask.startDate);
+          // Each task stacks further before the reference
+          const end = new Date(refStart);
+          end.setDate(refStart.getDate() - 1 - i * (DEFAULT_DURATION + 1));
+          endDate = end.toISOString().split("T")[0];
+
+          const start = new Date(end);
+          start.setDate(end.getDate() - DEFAULT_DURATION + 1);
+          startDate = start.toISOString().split("T")[0];
+        } else {
+          const today = new Date();
+          const weekAgo = new Date(today);
+          weekAgo.setDate(today.getDate() - DEFAULT_DURATION + 1);
+          startDate = weekAgo.toISOString().split("T")[0];
+          endDate = today.toISOString().split("T")[0];
+        }
+
+        const taskData: Omit<Task, "id"> = {
+          name: "New Task",
+          startDate,
+          endDate,
+          duration: DEFAULT_DURATION,
+          progress: 0,
+          color: "#0F6CBD",
+          order: refIndex + i, // Will be normalized
+          type: "task",
+          parent: refTask.parent,
+          metadata: {},
+        };
+
+        tasksToInsert.push(taskData);
+        generatedIds.push(crypto.randomUUID());
+      }
+
+      // Reverse so earliest task comes first in the array (farthest from reference is first)
+      tasksToInsert.reverse();
+      generatedIds.reverse();
+
+      set((state) => {
+        const newTasks: Task[] = tasksToInsert.map((taskData, i) => ({
+          ...taskData,
+          id: generatedIds[i],
+        }));
+
+        // Insert all at reference position
+        state.tasks.splice(refIndex, 0, ...newTasks);
+
+        // Assign sequential order so normalizeTaskOrder preserves splice position
+        state.tasks.forEach((task, index) => {
+          task.order = index;
+        });
+        normalizeTaskOrder(state.tasks);
+      });
+
+      // Recalculate parent summary dates
+      if (refTask.parent) {
+        set((state) => {
+          recalculateSummaryAncestors(state.tasks, new Set([refTask.parent!]));
+        });
+      }
+
+      // Mark file as dirty
+      useFileStore.getState().markDirty();
+
+      // Record single command for undo/redo
+      if (!historyStore.isUndoing && !historyStore.isRedoing) {
+        historyStore.recordCommand({
+          id: crypto.randomUUID(),
+          type: CommandType.ADD_TASK,
+          timestamp: Date.now(),
+          description: `Inserted ${count} tasks above`,
+          params: {
+            task: tasksToInsert[0],
+            tasks: tasksToInsert,
+            generatedIds,
           },
         });
       }

@@ -42,8 +42,8 @@ describe('App', () => {
     const viewTab = screen.getByRole('tab', { name: /view/i });
     fireEvent.click(viewTab);
     // Check for zoom controls from Sprint 1.2 Package 3 in the app toolbar
-    expect(screen.getByTitle('Zoom In (Ctrl++)')).toBeInTheDocument();
-    expect(screen.getByTitle('Zoom Out (Ctrl+-)')).toBeInTheDocument();
+    expect(screen.getByTitle('Zoom In')).toBeInTheDocument();
+    expect(screen.getByTitle('Zoom Out')).toBeInTheDocument();
     expect(screen.getByTitle('Fit to width (F)')).toBeInTheDocument();
   });
 

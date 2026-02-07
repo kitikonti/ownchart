@@ -89,6 +89,9 @@ export type CommandParams =
 export interface AddTaskParams {
   task: Omit<Task, "id">;
   generatedId?: string; // Store the generated ID for undo
+  // Batch insert support (multi-row Ctrl++)
+  tasks?: Array<Omit<Task, "id">>;
+  generatedIds?: string[];
 }
 
 export interface UpdateTaskParams {
