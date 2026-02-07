@@ -20,7 +20,7 @@ interface ColumnsDropdownProps {
 
 export function ColumnsDropdown({
   labelPriority,
-}: ColumnsDropdownProps = {}): JSX.Element {
+}: ColumnsDropdownProps): JSX.Element {
   const { isOpen, toggle, containerRef } = useDropdown();
   const hiddenColumns = useChartStore((state) => state.hiddenColumns);
   const toggleColumnVisibility = useChartStore(

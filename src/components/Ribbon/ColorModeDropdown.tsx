@@ -58,7 +58,7 @@ interface ColorModeDropdownProps {
 
 export function ColorModeDropdown({
   labelPriority,
-}: ColorModeDropdownProps = {}): JSX.Element {
+}: ColorModeDropdownProps): JSX.Element {
   const { isOpen, toggle, close, containerRef } = useDropdown();
 
   const colorModeState = useChartStore((state) => state.colorModeState);

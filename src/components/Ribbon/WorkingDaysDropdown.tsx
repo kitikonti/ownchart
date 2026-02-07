@@ -19,7 +19,7 @@ interface WorkingDaysDropdownProps {
 
 export function WorkingDaysDropdown({
   labelPriority,
-}: WorkingDaysDropdownProps = {}): JSX.Element {
+}: WorkingDaysDropdownProps): JSX.Element {
   const { isOpen, toggle, containerRef } = useDropdown();
 
   const workingDaysConfig = useChartStore((state) => state.workingDaysConfig);

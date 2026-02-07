@@ -67,7 +67,7 @@ interface ColorOptionsDropdownProps {
 
 export function ColorOptionsDropdown({
   labelPriority,
-}: ColorOptionsDropdownProps = {}): JSX.Element {
+}: ColorOptionsDropdownProps): JSX.Element {
   const [customMonoInput, setCustomMonoInput] = useState("#0F6CBD");
   const { isOpen, toggle, close, containerRef } = useDropdown();
 
