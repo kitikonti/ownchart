@@ -101,8 +101,13 @@ export function RowNumberCell({
 
     // Start drag selection
     dragState.isDragging = true;
-    dragState.startTaskId = taskId;
     dragState.onDragSelect = handleDragSelect;
+
+    // Only set anchor when NOT shift-clicking, so shift+click uses
+    // the previous anchor (lastSelectedTaskId) for correct range selection
+    if (!e.shiftKey) {
+      dragState.startTaskId = taskId;
+    }
 
     // Select this row (replace selection on normal click)
     onSelectRow(taskId, e.shiftKey, e.ctrlKey || e.metaKey);

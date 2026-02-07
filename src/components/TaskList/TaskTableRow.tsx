@@ -223,6 +223,9 @@ export function TaskTableRow({
                 const idsInRange = visibleTaskIds.slice(minIdx, maxIdx + 1);
                 setSelectedTaskIds(idsInRange, false);
               }
+            } else {
+              // No anchor yet (first interaction) — just select this row
+              setSelectedTaskIds([taskId], false);
             }
           } else if (ctrlKey) {
             // Ctrl+Click: Toggle (add/remove from selection)
