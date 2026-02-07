@@ -31,6 +31,7 @@ export function useKeyboardShortcuts(): void {
   const deleteSelectedTasks = useTaskStore(
     (state) => state.deleteSelectedTasks
   );
+  const deleteTask = useTaskStore((state) => state.deleteTask);
   const selectedTaskIds = useTaskStore((state) => state.selectedTaskIds);
   const activeCell = useTaskStore((state) => state.activeCell);
   const isEditingCell = useTaskStore((state) => state.isEditingCell);
@@ -208,6 +209,8 @@ export function useKeyboardShortcuts(): void {
         e.preventDefault();
         if (selectedTaskIds.length > 0) {
           deleteSelectedTasks();
+        } else if (activeCell.taskId) {
+          deleteTask(activeCell.taskId, true);
         }
         return;
       }
@@ -313,6 +316,7 @@ export function useKeyboardShortcuts(): void {
     clearClipboard,
     clipboardMode,
     deleteSelectedTasks,
+    deleteTask,
     selectedTaskIds,
     isEditingCell,
     insertTaskAbove,

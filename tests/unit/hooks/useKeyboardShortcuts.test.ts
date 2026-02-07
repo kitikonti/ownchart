@@ -498,8 +498,25 @@ describe('useKeyboardShortcuts', () => {
       expect(tasks).toHaveLength(3);
     });
 
-    it('should not delete when no tasks are selected via Ctrl+-', () => {
-      useTaskStore.setState({ selectedTaskIds: [] });
+    it('should delete active cell task via Ctrl+- when no selection', () => {
+      useTaskStore.setState({
+        selectedTaskIds: [],
+        activeCell: { taskId: 'task-2', field: 'name' },
+      });
+      renderHook(() => useKeyboardShortcuts());
+
+      simulateKeyPress('-', { ctrlKey: true });
+
+      const tasks = useTaskStore.getState().tasks;
+      expect(tasks).toHaveLength(2);
+      expect(tasks.find(t => t.id === 'task-2')).toBeUndefined();
+    });
+
+    it('should not delete when no selection and no active cell via Ctrl+-', () => {
+      useTaskStore.setState({
+        selectedTaskIds: [],
+        activeCell: { taskId: null, field: null },
+      });
       renderHook(() => useKeyboardShortcuts());
 
       simulateKeyPress('-', { ctrlKey: true });
