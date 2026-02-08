@@ -113,8 +113,8 @@ export interface DeleteTaskParams {
 }
 
 export interface ReorderTasksParams {
-  fromIndex: number;
-  toIndex: number;
+  activeTaskId: string;
+  overTaskId: string;
   previousOrder: Task[]; // Store previous order for undo
 }
 

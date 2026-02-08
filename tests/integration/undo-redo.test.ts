@@ -417,22 +417,27 @@ describe('Undo/Redo Integration Tests', () => {
       const taskStore = useTaskStore.getState();
       const historyStore = useHistoryStore.getState();
 
+      // Get tasks by name to find IDs
+      const allTasks = useTaskStore.getState().tasks;
+      const task1Id = allTasks.find(t => t.name === 'Task 1')!.id;
+      const task3Id = allTasks.find(t => t.name === 'Task 3')!.id;
+
       // Get original order
-      const originalOrder = useTaskStore.getState().tasks.map(t => t.name);
+      const originalOrder = [...allTasks].sort((a, b) => a.order - b.order).map(t => t.name);
       expect(originalOrder).toEqual(['Task 0', 'Task 1', 'Task 2', 'Task 3', 'Task 4']);
 
-      // Reorder: move task from index 1 to index 3
-      taskStore.reorderTasks(1, 3);
+      // Reorder: drag Task 1 onto Task 3 (move down)
+      taskStore.reorderTasks(task1Id, task3Id);
 
       // Verify reorder
-      const reorderedTasks = useTaskStore.getState().tasks.map(t => t.name);
+      const reorderedTasks = [...useTaskStore.getState().tasks].sort((a, b) => a.order - b.order).map(t => t.name);
       expect(reorderedTasks).toEqual(['Task 0', 'Task 2', 'Task 3', 'Task 1', 'Task 4']);
 
       // Undo
       historyStore.undo();
 
       // Verify original order restored
-      const restoredTasks = useTaskStore.getState().tasks.map(t => t.name);
+      const restoredTasks = [...useTaskStore.getState().tasks].sort((a, b) => a.order - b.order).map(t => t.name);
       expect(restoredTasks).toEqual(['Task 0', 'Task 1', 'Task 2', 'Task 3', 'Task 4']);
     });
 
@@ -440,8 +445,13 @@ describe('Undo/Redo Integration Tests', () => {
       const taskStore = useTaskStore.getState();
       const historyStore = useHistoryStore.getState();
 
-      // Reorder
-      taskStore.reorderTasks(0, 4);
+      // Get tasks by name to find IDs
+      const allTasks = useTaskStore.getState().tasks;
+      const task0Id = allTasks.find(t => t.name === 'Task 0')!.id;
+      const task4Id = allTasks.find(t => t.name === 'Task 4')!.id;
+
+      // Reorder: drag Task 0 onto Task 4 (move down)
+      taskStore.reorderTasks(task0Id, task4Id);
 
       // Undo
       historyStore.undo();
@@ -450,7 +460,7 @@ describe('Undo/Redo Integration Tests', () => {
       historyStore.redo();
 
       // Verify reordered state
-      const tasks = useTaskStore.getState().tasks.map(t => t.name);
+      const tasks = [...useTaskStore.getState().tasks].sort((a, b) => a.order - b.order).map(t => t.name);
       expect(tasks).toEqual(['Task 1', 'Task 2', 'Task 3', 'Task 4', 'Task 0']);
     });
   });

@@ -600,7 +600,7 @@ function executeRedoCommand(command: Command): void {
     case "reorderTasks": {
       const params = command.params as any;
       // Re-execute the reorder
-      taskStore.reorderTasks(params.fromIndex, params.toIndex);
+      taskStore.reorderTasks(params.activeTaskId, params.overTaskId);
       break;
     }
 

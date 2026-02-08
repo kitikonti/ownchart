@@ -9,12 +9,15 @@ import type { Task } from "../../types/chart.types";
 import {
   wouldCreateCircularHierarchy,
   getTaskLevel,
+  getTaskDescendants,
+  getTaskChildren,
   buildFlattenedTaskList,
   calculateSummaryDates,
   recalculateSummaryAncestors,
   normalizeTaskOrder,
 } from "../../utils/hierarchy";
 import { canHaveChildren } from "../../utils/validation";
+import toast from "react-hot-toast";
 import { useHistoryStore } from "./historySlice";
 import { useFileStore } from "./fileSlice";
 import { CommandType } from "../../types/command.types";
@@ -77,7 +80,7 @@ interface TaskActions {
   ) => void;
   deleteTask: (id: string, cascade?: boolean) => void;
   deleteSelectedTasks: () => void;
-  reorderTasks: (fromIndex: number, toIndex: number) => void;
+  reorderTasks: (activeTaskId: string, overTaskId: string) => void;
   setTasks: (tasks: Task[]) => void;
 
   // Multi-selection actions
@@ -587,45 +590,127 @@ export const useTaskStore = create<TaskStore>()(
       }
     },
 
-    reorderTasks: (fromIndex, toIndex): void => {
+    reorderTasks: (activeTaskId, overTaskId): void => {
       const historyStore = useHistoryStore.getState();
 
       // Capture previous order before making changes
       const previousOrder = JSON.parse(JSON.stringify(get().tasks));
 
+      let changed = false;
+      let movedTaskName = "Unknown";
+
       set((state) => {
-        if (
-          fromIndex < 0 ||
-          fromIndex >= state.tasks.length ||
-          toIndex < 0 ||
-          toIndex >= state.tasks.length
-        ) {
-          return;
+        const activeTask = state.tasks.find((t) => t.id === activeTaskId);
+        const overTask = state.tasks.find((t) => t.id === overTaskId);
+        if (!activeTask || !overTask) return;
+
+        movedTaskName = activeTask.name;
+
+        const oldParent = activeTask.parent ?? null;
+        const newParent = overTask.parent ?? null;
+
+        // Cross-parent guards
+        if (oldParent !== newParent) {
+          // Circular hierarchy check
+          if (
+            wouldCreateCircularHierarchy(state.tasks, activeTaskId, newParent)
+          ) {
+            return;
+          }
+
+          // Max depth check (3 levels = indices 0, 1, 2)
+          const targetLevel = getTaskLevel(state.tasks, overTaskId);
+          const descendants = getTaskDescendants(state.tasks, activeTaskId);
+          let activeSubtreeDepth = 0;
+          for (const desc of descendants) {
+            const descLevel =
+              getTaskLevel(state.tasks, desc.id) -
+              getTaskLevel(state.tasks, activeTaskId);
+            if (descLevel > activeSubtreeDepth) activeSubtreeDepth = descLevel;
+          }
+          if (targetLevel + activeSubtreeDepth >= 3) {
+            toast.error(
+              "Cannot move: maximum nesting depth of 3 levels would be exceeded"
+            );
+            return;
+          }
         }
 
-        const [movedTask] = state.tasks.splice(fromIndex, 1);
-        state.tasks.splice(toIndex, 0, movedTask);
+        // Build flattened list to determine visual positions BEFORE re-parenting
+        const flatBefore = buildFlattenedTaskList(
+          state.tasks,
+          new Set<string>()
+        );
+        const activeVisualIdx = flatBefore.findIndex(
+          (f) => f.task.id === activeTaskId
+        );
+        const overVisualIdx = flatBefore.findIndex(
+          (f) => f.task.id === overTaskId
+        );
 
-        // Update order property for all tasks
-        state.tasks.forEach((task, index) => {
-          task.order = index;
-        });
+        // Re-parent if needed
+        if (oldParent !== newParent) {
+          activeTask.parent = newParent ?? undefined;
+        }
+
+        // Get target sibling group (same parent as over, excluding active), sorted by order
+        const siblings = getTaskChildren(state.tasks, newParent).filter(
+          (t) => t.id !== activeTaskId
+        );
+
+        // Find position of overTask within siblings
+        const overIdxInSiblings = siblings.findIndex(
+          (t) => t.id === overTaskId
+        );
+
+        // Determine insert position: before or after over
+        let insertIdx: number;
+        if (activeVisualIdx < overVisualIdx) {
+          // Moving down → insert AFTER over
+          insertIdx = overIdxInSiblings + 1;
+        } else {
+          // Moving up → insert BEFORE over
+          insertIdx = overIdxInSiblings;
+        }
+
+        // Insert active task into siblings at the determined position
+        siblings.splice(insertIdx, 0, activeTask);
+
+        // Reassign order values for the sibling group
+        for (let i = 0; i < siblings.length; i++) {
+          const t = state.tasks.find((task) => task.id === siblings[i].id);
+          if (t) t.order = i;
+        }
+
+        // Normalize all task orders globally for consistency
+        normalizeTaskOrder(state.tasks);
+
+        // If parent changed, recalculate summary dates for old and new parents
+        if (oldParent !== newParent) {
+          const affectedParents = new Set<string>();
+          if (oldParent) affectedParents.add(oldParent);
+          if (newParent) affectedParents.add(newParent);
+          recalculateSummaryAncestors(state.tasks, affectedParents);
+        }
+
+        changed = true;
       });
+
+      if (!changed) return;
 
       // Mark file as dirty
       useFileStore.getState().markDirty();
 
       // Record command for undo/redo
       if (!historyStore.isUndoing && !historyStore.isRedoing) {
-        const movedTaskName = previousOrder[fromIndex]?.name || "Unknown";
         historyStore.recordCommand({
           id: crypto.randomUUID(),
           type: CommandType.REORDER_TASKS,
           timestamp: Date.now(),
           description: `Reordered task "${movedTaskName}"`,
           params: {
-            fromIndex,
-            toIndex,
+            activeTaskId,
+            overTaskId,
             previousOrder,
           },
         });

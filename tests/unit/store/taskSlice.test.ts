@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { useTaskStore } from '../../../src/store/slices/taskSlice';
 import { useHistoryStore } from '../../../src/store/slices/historySlice';
-import type { Task } from '../../../src/types/chart.types';
+import type { Task, TaskType } from '../../../src/types/chart.types';
 
 describe('Task Store - CRUD Operations', () => {
   beforeEach(() => {
@@ -301,13 +301,16 @@ describe('Task Store - CRUD Operations', () => {
         metadata: {},
       });
 
-      // Move first task to last position
-      reorderTasks(0, 2);
+      const allTasks = useTaskStore.getState().tasks;
+      const task1Id = allTasks.find(t => t.name === 'Task 1')!.id;
+      const task3Id = allTasks.find(t => t.name === 'Task 3')!.id;
+
+      // Move first task to last position (drag Task 1 onto Task 3)
+      reorderTasks(task1Id, task3Id);
 
       const tasks = useTaskStore.getState().tasks;
-      expect(tasks[0].name).toBe('Task 2');
-      expect(tasks[1].name).toBe('Task 3');
-      expect(tasks[2].name).toBe('Task 1');
+      const names = [...tasks].sort((a, b) => a.order - b.order).map(t => t.name);
+      expect(names).toEqual(['Task 2', 'Task 3', 'Task 1']);
     });
 
     it('should update order property', () => {
@@ -335,14 +338,19 @@ describe('Task Store - CRUD Operations', () => {
         metadata: {},
       });
 
-      reorderTasks(0, 1);
+      const allTasks = useTaskStore.getState().tasks;
+      const task1Id = allTasks.find(t => t.name === 'Task 1')!.id;
+      const task2Id = allTasks.find(t => t.name === 'Task 2')!.id;
+
+      reorderTasks(task1Id, task2Id);
 
       const tasks = useTaskStore.getState().tasks;
-      expect(tasks[0].order).toBe(0);
-      expect(tasks[1].order).toBe(1);
+      const sorted = [...tasks].sort((a, b) => a.order - b.order);
+      expect(sorted[0].order).toBe(0);
+      expect(sorted[1].order).toBe(1);
     });
 
-    it('should handle invalid indices gracefully', () => {
+    it('should handle invalid IDs gracefully', () => {
       const { addTask, reorderTasks } = useTaskStore.getState();
 
       addTask({
@@ -356,15 +364,374 @@ describe('Task Store - CRUD Operations', () => {
         metadata: {},
       });
 
-      const originalTasks = [...useTaskStore.getState().tasks];
+      const originalTasks = useTaskStore.getState().tasks.map(t => ({ ...t }));
 
-      // Invalid indices
-      reorderTasks(-1, 0);
-      reorderTasks(0, 5);
-      reorderTasks(5, 0);
+      // Non-existent IDs
+      reorderTasks('nonexistent-1', 'nonexistent-2');
+      reorderTasks(originalTasks[0].id, 'nonexistent');
+      reorderTasks('nonexistent', originalTasks[0].id);
 
       const tasks = useTaskStore.getState().tasks;
-      expect(tasks).toEqual(originalTasks);
+      expect(tasks.length).toBe(originalTasks.length);
+      expect(tasks[0].name).toBe(originalTasks[0].name);
+    });
+  });
+
+  describe('reorderTasks - hierarchy', () => {
+    const taskTemplate = {
+      startDate: '2025-12-01',
+      endDate: '2025-12-10',
+      duration: 10,
+      progress: 0,
+      color: '#3b82f6',
+      metadata: {},
+    };
+
+    /**
+     * Helper: creates tasks and returns a map of name → id.
+     * Clears undo stack after creation.
+     */
+    function setupTasks(taskDefs: Array<{ name: string; parent?: string; order: number; type?: string }>): Record<string, string> {
+      const { addTask } = useTaskStore.getState();
+      const nameToId: Record<string, string> = {};
+
+      for (const def of taskDefs) {
+        addTask({
+          ...taskTemplate,
+          name: def.name,
+          order: def.order,
+          type: (def.type as TaskType) ?? 'task',
+          parent: def.parent ? nameToId[def.parent] : undefined,
+        });
+        const tasks = useTaskStore.getState().tasks;
+        const created = tasks.find(t => t.name === def.name);
+        if (created) nameToId[def.name] = created.id;
+      }
+
+      // Clear undo stack from task creations
+      useHistoryStore.setState({ undoStack: [], redoStack: [] });
+      return nameToId;
+    }
+
+    function getOrderedNames(parentId?: string | null): string[] {
+      const tasks = useTaskStore.getState().tasks;
+      return tasks
+        .filter(t => {
+          if (parentId === undefined) return true;
+          if (parentId === null) return !t.parent;
+          return t.parent === parentId;
+        })
+        .sort((a, b) => a.order - b.order)
+        .map(t => t.name);
+    }
+
+    describe('within same parent group', () => {
+      it('should move task forward within group', () => {
+        const ids = setupTasks([
+          { name: 'A', order: 0 },
+          { name: 'B', order: 1 },
+          { name: 'C', order: 2 },
+        ]);
+
+        // Drag A onto C (move down)
+        useTaskStore.getState().reorderTasks(ids['A'], ids['C']);
+
+        expect(getOrderedNames(null)).toEqual(['B', 'C', 'A']);
+      });
+
+      it('should move task backward within group', () => {
+        const ids = setupTasks([
+          { name: 'A', order: 0 },
+          { name: 'B', order: 1 },
+          { name: 'C', order: 2 },
+        ]);
+
+        // Drag C onto A (move up)
+        useTaskStore.getState().reorderTasks(ids['C'], ids['A']);
+
+        expect(getOrderedNames(null)).toEqual(['C', 'A', 'B']);
+      });
+
+      it('should swap adjacent siblings', () => {
+        const ids = setupTasks([
+          { name: 'A', order: 0 },
+          { name: 'B', order: 1 },
+        ]);
+
+        // Drag A onto B
+        useTaskStore.getState().reorderTasks(ids['A'], ids['B']);
+
+        expect(getOrderedNames(null)).toEqual(['B', 'A']);
+      });
+
+      it('should move within child group without affecting root', () => {
+        const ids = setupTasks([
+          { name: 'Parent', order: 0, type: 'summary' },
+          { name: 'Child1', order: 0, parent: 'Parent' },
+          { name: 'Child2', order: 1, parent: 'Parent' },
+          { name: 'Child3', order: 2, parent: 'Parent' },
+          { name: 'Root2', order: 1 },
+        ]);
+
+        // Drag Child1 onto Child3 (move down within Parent's children)
+        useTaskStore.getState().reorderTasks(ids['Child1'], ids['Child3']);
+
+        expect(getOrderedNames(ids['Parent'])).toEqual(['Child2', 'Child3', 'Child1']);
+        // Root level unchanged
+        expect(getOrderedNames(null)).toEqual(['Parent', 'Root2']);
+      });
+    });
+
+    describe('isolation - core bug verification', () => {
+      it('should not affect Engineering children when reordering within Procurement', () => {
+        const ids = setupTasks([
+          { name: 'Procurement', order: 0, type: 'summary' },
+          { name: 'P-Alpha', order: 0, parent: 'Procurement' },
+          { name: 'P-Beta', order: 1, parent: 'Procurement' },
+          { name: 'P-Gamma', order: 2, parent: 'Procurement' },
+          { name: 'Engineering', order: 1, type: 'summary' },
+          { name: 'E-Alpha', order: 0, parent: 'Engineering' },
+          { name: 'E-Beta', order: 1, parent: 'Engineering' },
+        ]);
+
+        // Reorder within Procurement: drag P-Alpha onto P-Gamma
+        useTaskStore.getState().reorderTasks(ids['P-Alpha'], ids['P-Gamma']);
+
+        // Procurement children reordered
+        expect(getOrderedNames(ids['Procurement'])).toEqual(['P-Beta', 'P-Gamma', 'P-Alpha']);
+
+        // Engineering children UNCHANGED
+        expect(getOrderedNames(ids['Engineering'])).toEqual(['E-Alpha', 'E-Beta']);
+
+        // Root level unchanged
+        expect(getOrderedNames(null)).toEqual(['Procurement', 'Engineering']);
+      });
+
+      it('should not affect Procurement children when reordering within Engineering', () => {
+        const ids = setupTasks([
+          { name: 'Procurement', order: 0, type: 'summary' },
+          { name: 'P-Alpha', order: 0, parent: 'Procurement' },
+          { name: 'P-Beta', order: 1, parent: 'Procurement' },
+          { name: 'Engineering', order: 1, type: 'summary' },
+          { name: 'E-Alpha', order: 0, parent: 'Engineering' },
+          { name: 'E-Beta', order: 1, parent: 'Engineering' },
+          { name: 'E-Gamma', order: 2, parent: 'Engineering' },
+        ]);
+
+        // Reorder within Engineering: drag E-Gamma onto E-Alpha
+        useTaskStore.getState().reorderTasks(ids['E-Gamma'], ids['E-Alpha']);
+
+        // Engineering children reordered
+        expect(getOrderedNames(ids['Engineering'])).toEqual(['E-Gamma', 'E-Alpha', 'E-Beta']);
+
+        // Procurement children UNCHANGED
+        expect(getOrderedNames(ids['Procurement'])).toEqual(['P-Alpha', 'P-Beta']);
+      });
+
+      it('root-level reorder should not change children parent references', () => {
+        const ids = setupTasks([
+          { name: 'GroupA', order: 0, type: 'summary' },
+          { name: 'A-Child', order: 0, parent: 'GroupA' },
+          { name: 'GroupB', order: 1, type: 'summary' },
+          { name: 'B-Child', order: 0, parent: 'GroupB' },
+        ]);
+
+        // Reorder root: drag GroupA onto GroupB
+        useTaskStore.getState().reorderTasks(ids['GroupA'], ids['GroupB']);
+
+        const tasks = useTaskStore.getState().tasks;
+        const aChild = tasks.find(t => t.name === 'A-Child')!;
+        const bChild = tasks.find(t => t.name === 'B-Child')!;
+
+        expect(aChild.parent).toBe(ids['GroupA']);
+        expect(bChild.parent).toBe(ids['GroupB']);
+      });
+
+      it('three-group test: only target group changes', () => {
+        const ids = setupTasks([
+          { name: 'G1', order: 0, type: 'summary' },
+          { name: 'G1-A', order: 0, parent: 'G1' },
+          { name: 'G1-B', order: 1, parent: 'G1' },
+          { name: 'G2', order: 1, type: 'summary' },
+          { name: 'G2-A', order: 0, parent: 'G2' },
+          { name: 'G2-B', order: 1, parent: 'G2' },
+          { name: 'G3', order: 2, type: 'summary' },
+          { name: 'G3-A', order: 0, parent: 'G3' },
+          { name: 'G3-B', order: 1, parent: 'G3' },
+        ]);
+
+        // Reorder within G2 only
+        useTaskStore.getState().reorderTasks(ids['G2-A'], ids['G2-B']);
+
+        expect(getOrderedNames(ids['G1'])).toEqual(['G1-A', 'G1-B']);
+        expect(getOrderedNames(ids['G2'])).toEqual(['G2-B', 'G2-A']);
+        expect(getOrderedNames(ids['G3'])).toEqual(['G3-A', 'G3-B']);
+      });
+    });
+
+    describe('cross-parent drag (re-parenting)', () => {
+      it('should move task from one parent to another', () => {
+        const ids = setupTasks([
+          { name: 'ParentA', order: 0, type: 'summary' },
+          { name: 'A-Child1', order: 0, parent: 'ParentA' },
+          { name: 'A-Child2', order: 1, parent: 'ParentA' },
+          { name: 'ParentB', order: 1, type: 'summary' },
+          { name: 'B-Child1', order: 0, parent: 'ParentB' },
+        ]);
+
+        // Drag A-Child1 onto B-Child1 → A-Child1 moves to ParentB
+        useTaskStore.getState().reorderTasks(ids['A-Child1'], ids['B-Child1']);
+
+        const tasks = useTaskStore.getState().tasks;
+        const moved = tasks.find(t => t.name === 'A-Child1')!;
+        expect(moved.parent).toBe(ids['ParentB']);
+
+        expect(getOrderedNames(ids['ParentA'])).toEqual(['A-Child2']);
+        expect(getOrderedNames(ids['ParentB'])).toContain('A-Child1');
+        expect(getOrderedNames(ids['ParentB'])).toContain('B-Child1');
+      });
+
+      it('should prevent circular hierarchy', () => {
+        const ids = setupTasks([
+          { name: 'Parent', order: 0, type: 'summary' },
+          { name: 'Child', order: 0, parent: 'Parent' },
+          { name: 'Grandchild', order: 0, parent: 'Child' },
+        ]);
+
+        // Drag Parent onto Grandchild → would create circular, should be no-op
+        useTaskStore.getState().reorderTasks(ids['Parent'], ids['Grandchild']);
+
+        const tasks = useTaskStore.getState().tasks;
+        const parent = tasks.find(t => t.name === 'Parent')!;
+        expect(parent.parent).toBeUndefined();
+      });
+
+      it('should prevent exceeding max depth', () => {
+        const ids = setupTasks([
+          { name: 'L0', order: 0, type: 'summary' },
+          { name: 'L1', order: 0, parent: 'L0', type: 'summary' },
+          { name: 'L2', order: 0, parent: 'L1' },
+          { name: 'SummaryWithChild', order: 1, type: 'summary' },
+          { name: 'SWC-Child', order: 0, parent: 'SummaryWithChild' },
+        ]);
+
+        // Drag SummaryWithChild onto L2 → would put SWC-Child at level 4, exceeding max 3
+        useTaskStore.getState().reorderTasks(ids['SummaryWithChild'], ids['L2']);
+
+        const tasks = useTaskStore.getState().tasks;
+        const swc = tasks.find(t => t.name === 'SummaryWithChild')!;
+        // Should still be root level (no-op)
+        expect(swc.parent).toBeUndefined();
+      });
+
+      it('should allow leaf task move within depth limits', () => {
+        const ids = setupTasks([
+          { name: 'L0', order: 0, type: 'summary' },
+          { name: 'L1', order: 0, parent: 'L0', type: 'summary' },
+          { name: 'L2', order: 0, parent: 'L1' },
+          { name: 'LeafToMove', order: 1 },
+        ]);
+
+        // Drag LeafToMove onto L2 → both at level 2 under L1, within limits
+        useTaskStore.getState().reorderTasks(ids['LeafToMove'], ids['L2']);
+
+        const tasks = useTaskStore.getState().tasks;
+        const leaf = tasks.find(t => t.name === 'LeafToMove')!;
+        expect(leaf.parent).toBe(ids['L1']);
+      });
+    });
+
+    describe('summary tasks', () => {
+      it('should move summary at root level while keeping children', () => {
+        const ids = setupTasks([
+          { name: 'Summary1', order: 0, type: 'summary' },
+          { name: 'S1-Child', order: 0, parent: 'Summary1' },
+          { name: 'Summary2', order: 1, type: 'summary' },
+          { name: 'S2-Child', order: 0, parent: 'Summary2' },
+        ]);
+
+        // Move Summary1 after Summary2
+        useTaskStore.getState().reorderTasks(ids['Summary1'], ids['Summary2']);
+
+        expect(getOrderedNames(null)).toEqual(['Summary2', 'Summary1']);
+
+        // Children parent refs unchanged
+        const tasks = useTaskStore.getState().tasks;
+        expect(tasks.find(t => t.name === 'S1-Child')!.parent).toBe(ids['Summary1']);
+        expect(tasks.find(t => t.name === 'S2-Child')!.parent).toBe(ids['Summary2']);
+      });
+    });
+
+    describe('edge cases', () => {
+      it('should handle non-sequential order values', () => {
+        const ids = setupTasks([
+          { name: 'A', order: 0 },
+          { name: 'B', order: 5 },
+          { name: 'C', order: 10 },
+        ]);
+
+        useTaskStore.getState().reorderTasks(ids['C'], ids['A']);
+
+        const tasks = useTaskStore.getState().tasks;
+        const sorted = [...tasks].sort((a, b) => a.order - b.order);
+        // Verify orders are normalized (sequential)
+        expect(sorted[0].order).toBe(0);
+        expect(sorted[1].order).toBe(1);
+        expect(sorted[2].order).toBe(2);
+        expect(sorted.map(t => t.name)).toEqual(['C', 'A', 'B']);
+      });
+    });
+
+    describe('undo/redo', () => {
+      it('should undo reorder within same parent', () => {
+        const ids = setupTasks([
+          { name: 'A', order: 0 },
+          { name: 'B', order: 1 },
+          { name: 'C', order: 2 },
+        ]);
+
+        useTaskStore.getState().reorderTasks(ids['A'], ids['C']);
+        expect(getOrderedNames(null)).toEqual(['B', 'C', 'A']);
+
+        useHistoryStore.getState().undo();
+        expect(getOrderedNames(null)).toEqual(['A', 'B', 'C']);
+      });
+
+      it('should redo reorder', () => {
+        const ids = setupTasks([
+          { name: 'A', order: 0 },
+          { name: 'B', order: 1 },
+          { name: 'C', order: 2 },
+        ]);
+
+        useTaskStore.getState().reorderTasks(ids['A'], ids['C']);
+        useHistoryStore.getState().undo();
+        useHistoryStore.getState().redo();
+
+        expect(getOrderedNames(null)).toEqual(['B', 'C', 'A']);
+      });
+
+      it('should undo cross-parent move and restore old parent', () => {
+        const ids = setupTasks([
+          { name: 'ParentA', order: 0, type: 'summary' },
+          { name: 'A-Child', order: 0, parent: 'ParentA' },
+          { name: 'ParentB', order: 1, type: 'summary' },
+          { name: 'B-Child', order: 0, parent: 'ParentB' },
+        ]);
+
+        // Move A-Child to ParentB
+        useTaskStore.getState().reorderTasks(ids['A-Child'], ids['B-Child']);
+
+        const tasks1 = useTaskStore.getState().tasks;
+        expect(tasks1.find(t => t.name === 'A-Child')!.parent).toBe(ids['ParentB']);
+
+        // Undo
+        useHistoryStore.getState().undo();
+
+        const tasks2 = useTaskStore.getState().tasks;
+        expect(tasks2.find(t => t.name === 'A-Child')!.parent).toBe(ids['ParentA']);
+        expect(getOrderedNames(ids['ParentA'])).toEqual(['A-Child']);
+      });
     });
   });
 

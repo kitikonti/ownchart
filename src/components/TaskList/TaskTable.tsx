@@ -97,12 +97,7 @@ export function TaskTable({ hideHeader = true }: TaskTableProps): JSX.Element {
     const { active, over } = event;
 
     if (over && active.id !== over.id) {
-      const oldIndex = tasks.findIndex((task) => task.id === active.id);
-      const newIndex = tasks.findIndex((task) => task.id === over.id);
-
-      if (oldIndex !== -1 && newIndex !== -1) {
-        reorderTasks(oldIndex, newIndex);
-      }
+      reorderTasks(String(active.id), String(over.id));
     }
   };
 
