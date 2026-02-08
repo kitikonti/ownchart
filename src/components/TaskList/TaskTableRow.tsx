@@ -288,7 +288,7 @@ export function TaskTableRow({
                         e.stopPropagation();
                         toggleTaskCollapsed(task.id);
                       }}
-                      className="w-4 h-4 flex items-center justify-center hover:bg-neutral-200 rounded text-neutral-600 flex-shrink-0 focus:outline-none focus-visible:outline-2 focus-visible:outline-blue-700"
+                      className="w-4 h-4 flex items-center justify-center hover:bg-neutral-200 rounded text-neutral-600 flex-shrink-0"
                       aria-label={
                         isExpanded
                           ? `Collapse ${task.name}`

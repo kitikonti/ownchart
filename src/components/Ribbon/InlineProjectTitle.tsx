@@ -58,7 +58,7 @@ export function InlineProjectTitle(): JSX.Element {
           onChange={(e) => setDraft(e.target.value)}
           onBlur={handleSave}
           onKeyDown={handleKeyDown}
-          className="bg-white border border-brand-400 rounded px-2 py-0.5 text-sm text-neutral-800 outline-none focus:ring-1 focus:ring-brand-400"
+          className="bg-white border border-brand-400 rounded px-2 py-0.5 text-sm text-neutral-800 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-brand-400"
           style={{
             width: `${Math.max(80, draft.length * 8 + 24)}px`,
             maxWidth: "300px",

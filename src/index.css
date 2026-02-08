@@ -210,6 +210,22 @@
   --density-indent-size: 20px;
 }
 
+/* Focus Management: Remove browser defaults, provide keyboard-only indicator */
+*:focus {
+  outline: none;
+}
+
+*:focus-visible {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 2px;
+}
+
+/* TaskTable cells: Active Cell inset shadow is the only focus indicator needed */
+[role="gridcell"]:focus-visible,
+[role="gridcell"]:focus {
+  outline: none;
+}
+
 body {
   margin: 0;
   display: flex;
@@ -380,7 +396,7 @@ select:hover {
   border-color: var(--color-neutral-400);
 }
 
-select:focus {
+select:focus-visible {
   outline: 2px solid var(--color-accent);
   outline-offset: 1px;
   border-color: var(--color-neutral-500);

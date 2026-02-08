@@ -28,9 +28,9 @@ const baseClasses =
 
 const variantClasses = {
   default:
-    "border-neutral-300 focus:outline-none focus:ring-1 focus:ring-brand-600 focus:border-brand-600 hover:border-neutral-400",
+    "border-neutral-300 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-brand-600 focus-visible:border-brand-600 hover:border-neutral-400",
   figma:
-    "border-neutral-200 focus:outline-none focus:ring-2 focus:ring-brand-100 focus:border-brand-600",
+    "border-neutral-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-100 focus-visible:border-brand-600",
 };
 
 export const Input = forwardRef<HTMLInputElement, InputProps>(

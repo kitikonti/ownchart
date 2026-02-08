@@ -268,14 +268,21 @@ export function NewTaskPlaceholderRow(): JSX.Element {
             tabIndex={0}
             className={`${column.id !== "color" ? "border-r" : ""} border-b border-neutral-200 flex items-center ${
               column.id === "name" && isEditing
-                ? "outline outline-2 outline-neutral-500 bg-white z-20"
+                ? "bg-white z-20"
                 : isSelected
                   ? "bg-neutral-100"
                   : isActiveCell
-                    ? "outline outline-2 outline-neutral-500 bg-neutral-100 z-10"
+                    ? "bg-neutral-100 z-10"
                     : "bg-neutral-50/50 hover:bg-neutral-100"
             } cursor-pointer`}
-            style={getCellStyle(column.id)}
+            style={{
+              ...getCellStyle(column.id),
+              ...(column.id === "name" && isEditing
+                ? { boxShadow: "inset 0 0 0 2px #0F6CBD" }
+                : isActiveCell
+                  ? { boxShadow: "inset 0 0 0 2px #0F6CBD" }
+                  : {}),
+            }}
             onClick={() =>
               column.field
                 ? handleCellClick(column.field as EditableField)
