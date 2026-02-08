@@ -6,7 +6,15 @@ import { useState, useRef, useEffect } from "react";
 import { useChartStore } from "../../store/slices/chartSlice";
 import { useFileStore } from "../../store/slices/fileSlice";
 
-export function InlineProjectTitle(): JSX.Element {
+interface InlineProjectTitleProps {
+  triggerEdit?: boolean;
+  onEditTriggered?: () => void;
+}
+
+export function InlineProjectTitle({
+  triggerEdit,
+  onEditTriggered,
+}: InlineProjectTitleProps): JSX.Element {
   const [isEditing, setIsEditing] = useState(false);
   const [draft, setDraft] = useState("");
   const inputRef = useRef<HTMLInputElement>(null);
@@ -36,6 +44,15 @@ export function InlineProjectTitle(): JSX.Element {
       setIsEditing(false);
     }
   };
+
+  // Enter edit mode when triggered externally (e.g. File > Rename or F2)
+  useEffect(() => {
+    if (triggerEdit) {
+      handleClick();
+      onEditTriggered?.();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [triggerEdit]);
 
   // Focus and select input when editing starts
   useEffect(() => {

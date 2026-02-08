@@ -11,7 +11,7 @@
  * └─────────────────────────────────────────────────────────────────────────┘
  */
 
-import { useState } from "react";
+import { useState, useEffect, useCallback } from "react";
 import {
   Plus,
   ArrowCounterClockwise,
@@ -89,6 +89,7 @@ const PRESET_ZOOM_LEVELS = [5, 10, 25, 50, 75, 100, 150, 200, 300];
 
 export function Ribbon(): JSX.Element {
   const [activeTab, setActiveTab] = useState<RibbonTab>("home");
+  const [renameRequested, setRenameRequested] = useState(false);
 
   // Smart Labels — responsive collapse
   const { collapseLevel, contentRef } = useRibbonCollapse(activeTab);
@@ -217,6 +218,26 @@ export function Ribbon(): JSX.Element {
       zoomOptions.splice(insertIndex, 0, zoomPercentage);
     }
   }
+
+  // ─────────────────────────────────────────────────────────────────────────
+  // F2 Keyboard Shortcut → Rename
+  // ─────────────────────────────────────────────────────────────────────────
+
+  const handleF2 = useCallback((e: KeyboardEvent): void => {
+    if (e.key === "F2") {
+      const tag = (e.target as HTMLElement).tagName;
+      if (tag === "INPUT" || tag === "TEXTAREA" || tag === "SELECT") return;
+      // Don't trigger rename when a table cell is active — F2 means "edit cell" there
+      if (useTaskStore.getState().activeCell.taskId) return;
+      e.preventDefault();
+      setRenameRequested(true);
+    }
+  }, []);
+
+  useEffect(() => {
+    window.addEventListener("keydown", handleF2);
+    return () => window.removeEventListener("keydown", handleF2);
+  }, [handleF2]);
 
   // ─────────────────────────────────────────────────────────────────────────
   // Handlers
@@ -642,6 +663,7 @@ export function Ribbon(): JSX.Element {
             onOpen={handleOpen}
             onSave={handleSave}
             onSaveAs={handleSaveAs}
+            onRename={() => setRenameRequested(true)}
             onExport={openExportDialog}
           />
 
@@ -671,7 +693,10 @@ export function Ribbon(): JSX.Element {
         </div>
 
         {/* Project title - centered, inline-editable (Figma-style) */}
-        <InlineProjectTitle />
+        <InlineProjectTitle
+          triggerEdit={renameRequested}
+          onEditTriggered={() => setRenameRequested(false)}
+        />
 
         <ToolbarSpacer />
 

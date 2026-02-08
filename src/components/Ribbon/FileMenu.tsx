@@ -3,7 +3,13 @@
  * Extracted from Ribbon.tsx for modularity.
  */
 
-import { File, FolderOpen, FloppyDisk, Export } from "@phosphor-icons/react";
+import {
+  File,
+  FolderOpen,
+  FloppyDisk,
+  PencilSimple,
+  Export,
+} from "@phosphor-icons/react";
 import { useDropdown } from "../../hooks/useDropdown";
 import { DropdownPanel } from "../Toolbar/DropdownPanel";
 
@@ -12,6 +18,7 @@ interface FileMenuProps {
   onOpen: () => void;
   onSave: () => void;
   onSaveAs: () => void;
+  onRename: () => void;
   onExport: () => void;
 }
 
@@ -20,6 +27,7 @@ export function FileMenu({
   onOpen,
   onSave,
   onSaveAs,
+  onRename,
   onExport,
 }: FileMenuProps): JSX.Element {
   const { isOpen, toggle, close, containerRef } = useDropdown();
@@ -61,6 +69,11 @@ export function FileMenu({
             <FloppyDisk size={18} weight="light" />
             <span>Save As...</span>
             <span className="file-menu-shortcut">Ctrl+Shift+S</span>
+          </button>
+          <button className="file-menu-item" onClick={handleAction(onRename)}>
+            <PencilSimple size={18} weight="light" />
+            <span>Rename</span>
+            <span className="file-menu-shortcut">F2</span>
           </button>
           <div className="file-menu-divider" />
           <button className="file-menu-item" onClick={handleAction(onExport)}>

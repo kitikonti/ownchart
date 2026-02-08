@@ -224,6 +224,11 @@ export function Cell({
       shouldOverwriteRef.current = true;
       startCellEdit();
     }
+    // Escape to deactivate cell (exit navigation mode)
+    else if (e.key === "Escape") {
+      e.preventDefault();
+      setActiveCell(null, null);
+    }
   };
 
   /**
