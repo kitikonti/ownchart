@@ -740,8 +740,12 @@ export const useTaskStore = create<TaskStore>()(
 
     selectTaskRange: (startId, endId): void =>
       set((state) => {
-        const startIndex = state.tasks.findIndex((t) => t.id === startId);
-        const endIndex = state.tasks.findIndex((t) => t.id === endId);
+        const collapsedIds = new Set(
+          state.tasks.filter((t) => t.open === false).map((t) => t.id)
+        );
+        const flatList = buildFlattenedTaskList(state.tasks, collapsedIds);
+        const startIndex = flatList.findIndex((ft) => ft.task.id === startId);
+        const endIndex = flatList.findIndex((ft) => ft.task.id === endId);
 
         if (startIndex === -1 || endIndex === -1) return;
 
@@ -750,7 +754,7 @@ export const useTaskStore = create<TaskStore>()(
 
         const idsToAdd = new Set(state.selectedTaskIds);
         for (let i = minIndex; i <= maxIndex; i++) {
-          idsToAdd.add(state.tasks[i].id);
+          idsToAdd.add(flatList[i].task.id);
         }
         state.selectedTaskIds = Array.from(idsToAdd);
         state.lastSelectedTaskId = endId;
@@ -798,9 +802,6 @@ export const useTaskStore = create<TaskStore>()(
         const { activeCell, tasks } = state;
         if (!activeCell.taskId || !activeCell.field) return;
 
-        const taskIndex = tasks.findIndex((t) => t.id === activeCell.taskId);
-        if (taskIndex === -1) return;
-
         // Build visible fields list by filtering out hidden columns and progress
         const chartState = useChartStore.getState();
         const hiddenColumns = chartState.hiddenColumns;
@@ -814,16 +815,27 @@ export const useTaskStore = create<TaskStore>()(
         const fieldIndex = visibleFields.indexOf(activeCell.field);
         if (fieldIndex === -1) return;
 
-        let newTaskIndex = taskIndex;
         let newFieldIndex = fieldIndex;
+        let newTaskId: string | null = activeCell.taskId;
 
         switch (direction) {
           case "up":
-            newTaskIndex = Math.max(0, taskIndex - 1);
+          case "down": {
+            const collapsedIds = new Set(
+              tasks.filter((t) => t.open === false).map((t) => t.id)
+            );
+            const flatList = buildFlattenedTaskList(tasks, collapsedIds);
+            const visualIndex = flatList.findIndex(
+              (ft) => ft.task.id === activeCell.taskId
+            );
+            if (visualIndex === -1) return;
+            const newIndex =
+              direction === "up"
+                ? Math.max(0, visualIndex - 1)
+                : Math.min(flatList.length - 1, visualIndex + 1);
+            newTaskId = flatList[newIndex]?.task.id || null;
             break;
-          case "down":
-            newTaskIndex = Math.min(tasks.length - 1, taskIndex + 1);
-            break;
+          }
           case "left":
             newFieldIndex = Math.max(0, fieldIndex - 1);
             break;
@@ -832,11 +844,8 @@ export const useTaskStore = create<TaskStore>()(
             break;
         }
 
-        const newTaskId = tasks[newTaskIndex]?.id || null;
-        const newField = visibleFields[newFieldIndex];
-
         state.activeCell.taskId = newTaskId;
-        state.activeCell.field = newField;
+        state.activeCell.field = visibleFields[newFieldIndex];
         state.isEditingCell = false;
       }),
 

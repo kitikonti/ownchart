@@ -1116,6 +1116,142 @@ describe('Task Store - CRUD Operations', () => {
         expect(state.activeCell.taskId).toBe('task-1');
         expect(state.activeCell.field).toBe('name');
       });
+
+      it('should navigate in visual (hierarchy) order, not raw array order', () => {
+        // Array order: parentA, parentB, childA1, childA2
+        // Visual order: parentA, childA1, childA2, parentB
+        const tasks: Task[] = [
+          {
+            id: 'parentA', name: 'Parent A', startDate: '2025-01-01', endDate: '2025-01-10',
+            duration: 10, progress: 0, color: '#3b82f6', order: 0, type: 'summary', parent: undefined, metadata: {},
+          },
+          {
+            id: 'parentB', name: 'Parent B', startDate: '2025-01-01', endDate: '2025-01-10',
+            duration: 10, progress: 0, color: '#3b82f6', order: 1, type: 'task', parent: undefined, metadata: {},
+          },
+          {
+            id: 'childA1', name: 'Child A1', startDate: '2025-01-01', endDate: '2025-01-05',
+            duration: 5, progress: 0, color: '#3b82f6', order: 0, type: 'task', parent: 'parentA', metadata: {},
+          },
+          {
+            id: 'childA2', name: 'Child A2', startDate: '2025-01-06', endDate: '2025-01-10',
+            duration: 5, progress: 0, color: '#3b82f6', order: 1, type: 'task', parent: 'parentA', metadata: {},
+          },
+        ];
+        useTaskStore.setState({ tasks });
+
+        const { setActiveCell, navigateCell } = useTaskStore.getState();
+
+        // Start at parentA, go down → should be childA1 (not parentB)
+        setActiveCell('parentA', 'name');
+        navigateCell('down');
+        expect(useTaskStore.getState().activeCell.taskId).toBe('childA1');
+
+        // From childA1, go down → childA2
+        navigateCell('down');
+        expect(useTaskStore.getState().activeCell.taskId).toBe('childA2');
+
+        // From childA2, go down → parentB
+        navigateCell('down');
+        expect(useTaskStore.getState().activeCell.taskId).toBe('parentB');
+
+        // From parentB, go up → childA2
+        navigateCell('up');
+        expect(useTaskStore.getState().activeCell.taskId).toBe('childA2');
+      });
+
+      it('should skip collapsed children when navigating', () => {
+        const tasks: Task[] = [
+          {
+            id: 'parentA', name: 'Parent A', startDate: '2025-01-01', endDate: '2025-01-10',
+            duration: 10, progress: 0, color: '#3b82f6', order: 0, type: 'summary', parent: undefined, metadata: {}, open: false,
+          },
+          {
+            id: 'parentB', name: 'Parent B', startDate: '2025-01-11', endDate: '2025-01-20',
+            duration: 10, progress: 0, color: '#3b82f6', order: 1, type: 'task', parent: undefined, metadata: {},
+          },
+          {
+            id: 'childA1', name: 'Child A1', startDate: '2025-01-01', endDate: '2025-01-05',
+            duration: 5, progress: 0, color: '#3b82f6', order: 0, type: 'task', parent: 'parentA', metadata: {},
+          },
+        ];
+        useTaskStore.setState({ tasks });
+
+        const { setActiveCell, navigateCell } = useTaskStore.getState();
+
+        // parentA is collapsed, so down from parentA should skip childA1 → parentB
+        setActiveCell('parentA', 'name');
+        navigateCell('down');
+        expect(useTaskStore.getState().activeCell.taskId).toBe('parentB');
+
+        // Up from parentB should go to parentA (skipping collapsed children)
+        navigateCell('up');
+        expect(useTaskStore.getState().activeCell.taskId).toBe('parentA');
+      });
+
+      it('should not navigate beyond boundaries with hierarchy', () => {
+        const tasks: Task[] = [
+          {
+            id: 'parentA', name: 'Parent A', startDate: '2025-01-01', endDate: '2025-01-10',
+            duration: 10, progress: 0, color: '#3b82f6', order: 0, type: 'summary', parent: undefined, metadata: {},
+          },
+          {
+            id: 'childA1', name: 'Child A1', startDate: '2025-01-01', endDate: '2025-01-05',
+            duration: 5, progress: 0, color: '#3b82f6', order: 0, type: 'task', parent: 'parentA', metadata: {},
+          },
+        ];
+        useTaskStore.setState({ tasks });
+
+        const { setActiveCell, navigateCell } = useTaskStore.getState();
+
+        // At last visible task (childA1), down should stay
+        setActiveCell('childA1', 'name');
+        navigateCell('down');
+        expect(useTaskStore.getState().activeCell.taskId).toBe('childA1');
+
+        // At first visible task (parentA), up should stay
+        setActiveCell('parentA', 'name');
+        navigateCell('up');
+        expect(useTaskStore.getState().activeCell.taskId).toBe('parentA');
+      });
+    });
+
+    describe('selectTaskRange with hierarchy', () => {
+      it('should select range in visual order', () => {
+        // Array order: parentA, parentB, childA1, childA2
+        // Visual order: parentA, childA1, childA2, parentB
+        const tasks: Task[] = [
+          {
+            id: 'parentA', name: 'Parent A', startDate: '2025-01-01', endDate: '2025-01-10',
+            duration: 10, progress: 0, color: '#3b82f6', order: 0, type: 'summary', parent: undefined, metadata: {},
+          },
+          {
+            id: 'parentB', name: 'Parent B', startDate: '2025-01-11', endDate: '2025-01-20',
+            duration: 10, progress: 0, color: '#3b82f6', order: 1, type: 'task', parent: undefined, metadata: {},
+          },
+          {
+            id: 'childA1', name: 'Child A1', startDate: '2025-01-01', endDate: '2025-01-05',
+            duration: 5, progress: 0, color: '#3b82f6', order: 0, type: 'task', parent: 'parentA', metadata: {},
+          },
+          {
+            id: 'childA2', name: 'Child A2', startDate: '2025-01-06', endDate: '2025-01-10',
+            duration: 5, progress: 0, color: '#3b82f6', order: 1, type: 'task', parent: 'parentA', metadata: {},
+          },
+        ];
+        useTaskStore.setState({ tasks });
+
+        const { selectTaskRange } = useTaskStore.getState();
+
+        // Select from parentA to parentB → should include childA1, childA2 (visual order)
+        selectTaskRange('parentA', 'parentB');
+
+        const state = useTaskStore.getState();
+        expect(state.selectedTaskIds).toContain('parentA');
+        expect(state.selectedTaskIds).toContain('childA1');
+        expect(state.selectedTaskIds).toContain('childA2');
+        expect(state.selectedTaskIds).toContain('parentB');
+        expect(state.selectedTaskIds).toHaveLength(4);
+      });
     });
 
     describe('startCellEdit / stopCellEdit', () => {

@@ -19,6 +19,7 @@ import { useUIStore } from "../store/slices/uiSlice";
 import { useFileOperations } from "./useFileOperations";
 import { useClipboardOperations } from "./useClipboardOperations";
 import { useClipboardStore } from "../store/slices/clipboardSlice";
+import { buildFlattenedTaskList } from "../utils/hierarchy";
 
 export function useKeyboardShortcuts(): void {
   const undo = useHistoryStore((state) => state.undo);
@@ -225,14 +226,18 @@ export function useKeyboardShortcuts(): void {
       if (modKey && (e.key === "+" || e.key === "=") && !isEditingCell) {
         e.preventDefault();
         const count = Math.max(selectedTaskIds.length, 1);
-        // Find topmost selected task (lowest index in tasks array)
+        // Find topmost selected task (lowest index in visual order)
         const currentTasks = useTaskStore.getState().tasks;
+        const collapsedIds = new Set(
+          currentTasks.filter((t) => t.open === false).map((t) => t.id)
+        );
+        const flatList = buildFlattenedTaskList(currentTasks, collapsedIds);
         let referenceTaskId: string | null = null;
         if (selectedTaskIds.length > 0) {
           const selectedSet = new Set(selectedTaskIds);
-          for (const task of currentTasks) {
-            if (selectedSet.has(task.id)) {
-              referenceTaskId = task.id;
+          for (const ft of flatList) {
+            if (selectedSet.has(ft.task.id)) {
+              referenceTaskId = ft.task.id;
               break;
             }
           }
