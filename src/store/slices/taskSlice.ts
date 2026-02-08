@@ -137,13 +137,13 @@ type TaskStore = TaskState & TaskActions;
  * Editable fields in order of tab navigation.
  */
 const EDITABLE_FIELDS: EditableField[] = [
+  "color",
   "name",
   "type",
   "startDate",
   "endDate",
   "duration",
   "progress",
-  "color",
 ];
 
 export const useTaskStore = create<TaskStore>()(

@@ -1108,13 +1108,13 @@ describe('Task Store - CRUD Operations', () => {
       it('should not navigate beyond boundaries', () => {
         const { setActiveCell, navigateCell } = useTaskStore.getState();
 
-        setActiveCell('task-1', 'name');
+        setActiveCell('task-1', 'color');
         navigateCell('up'); // Already at top
         navigateCell('left'); // Already at leftmost
 
         const state = useTaskStore.getState();
         expect(state.activeCell.taskId).toBe('task-1');
-        expect(state.activeCell.field).toBe('name');
+        expect(state.activeCell.field).toBe('color');
       });
 
       it('should navigate in visual (hierarchy) order, not raw array order', () => {

@@ -399,12 +399,29 @@ export function Cell({
   // Render edit mode
   if (isEditing) {
     return (
-      // eslint-disable-next-line jsx-a11y/click-events-have-key-events, jsx-a11y/no-static-element-interactions -- edit mode container, keyboard handled by inner input
+      // eslint-disable-next-line jsx-a11y/no-static-element-interactions -- edit mode container, keyboard handled by inner input or onKeyDown
       <div
         ref={cellRef}
         className={`relative flex items-center border-b ${column.id !== "color" ? "border-r" : ""} border-neutral-200 bg-white z-20`}
         style={activeCellStyle}
         onClick={(e) => e.stopPropagation()}
+        onKeyDown={(e) => {
+          // Handle Tab/Enter for custom editors (e.g., color picker)
+          // Default inputs handle their own keyboard events via handleEditKeyDown
+          if (!children) return;
+          if (e.key === "Tab") {
+            e.preventDefault();
+            stopCellEdit();
+            navigateCell(e.shiftKey ? "left" : "right");
+          } else if (e.key === "Enter") {
+            e.preventDefault();
+            stopCellEdit();
+            navigateCell(e.shiftKey ? "up" : "down");
+          } else if (e.key === "Escape") {
+            e.preventDefault();
+            cancelEdit();
+          }
+        }}
       >
         {children ? (
           // Custom editor (e.g., ColorPicker)
