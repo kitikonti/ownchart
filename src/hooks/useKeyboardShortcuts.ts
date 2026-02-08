@@ -39,6 +39,12 @@ export function useKeyboardShortcuts(): void {
   const insertMultipleTasksAbove = useTaskStore(
     (state) => state.insertMultipleTasksAbove
   );
+  const indentSelectedTasks = useTaskStore(
+    (state) => state.indentSelectedTasks
+  );
+  const outdentSelectedTasks = useTaskStore(
+    (state) => state.outdentSelectedTasks
+  );
 
   // View toggle shortcuts (Sprint 1.5.9)
   const toggleDependencies = useChartStore((state) => state.toggleDependencies);
@@ -245,6 +251,20 @@ export function useKeyboardShortcuts(): void {
         return;
       }
 
+      // Alt+Shift+Right: Indent (MS Project style)
+      if (e.altKey && e.shiftKey && e.key === "ArrowRight" && !isEditingCell) {
+        e.preventDefault();
+        indentSelectedTasks();
+        return;
+      }
+
+      // Alt+Shift+Left: Outdent (MS Project style)
+      if (e.altKey && e.shiftKey && e.key === "ArrowLeft" && !isEditingCell) {
+        e.preventDefault();
+        outdentSelectedTasks();
+        return;
+      }
+
       // ? key: Open help panel (when not in text input)
       if (e.key === "?" && !isTextInput && !isCellActive) {
         e.preventDefault();
@@ -321,6 +341,8 @@ export function useKeyboardShortcuts(): void {
     isEditingCell,
     insertTaskAbove,
     insertMultipleTasksAbove,
+    indentSelectedTasks,
+    outdentSelectedTasks,
     openExportDialog,
     openHelpPanel,
     closeExportDialog,

@@ -525,4 +525,124 @@ describe('useKeyboardShortcuts', () => {
       expect(tasks).toHaveLength(3);
     });
   });
+
+  describe('Alt+Shift+Right/Left indent/outdent shortcuts', () => {
+    const makeTasks = (count: number): Task[] =>
+      Array.from({ length: count }, (_, i) => ({
+        id: `task-${i + 1}`,
+        name: `Task ${i + 1}`,
+        startDate: '2025-01-10',
+        endDate: '2025-01-17',
+        duration: 7,
+        progress: 0,
+        color: '#3b82f6',
+        order: i,
+        type: 'task' as const,
+        metadata: {},
+      }));
+
+    beforeEach(() => {
+      useTaskStore.setState({
+        tasks: makeTasks(3),
+        selectedTaskIds: [],
+        lastSelectedTaskId: null,
+        activeCell: { taskId: null, field: null },
+        isEditingCell: false,
+      });
+    });
+
+    it('should indent task via Alt+Shift+Right with row selection', () => {
+      useTaskStore.setState({ selectedTaskIds: ['task-2'] });
+      renderHook(() => useKeyboardShortcuts());
+
+      simulateKeyPress('ArrowRight', { altKey: true, shiftKey: true });
+
+      const tasks = useTaskStore.getState().tasks;
+      const task2 = tasks.find(t => t.id === 'task-2');
+      expect(task2?.parent).toBe('task-1');
+    });
+
+    it('should indent task via Alt+Shift+Right with active cell (no row selection)', () => {
+      useTaskStore.setState({
+        selectedTaskIds: [],
+        activeCell: { taskId: 'task-2', field: 'name' },
+      });
+      renderHook(() => useKeyboardShortcuts());
+
+      simulateKeyPress('ArrowRight', { altKey: true, shiftKey: true });
+
+      const tasks = useTaskStore.getState().tasks;
+      const task2 = tasks.find(t => t.id === 'task-2');
+      expect(task2?.parent).toBe('task-1');
+    });
+
+    it('should outdent task via Alt+Shift+Left with active cell', () => {
+      // First indent task-2 under task-1
+      const tasks = makeTasks(3);
+      tasks[1].parent = 'task-1';
+      useTaskStore.setState({
+        tasks,
+        selectedTaskIds: [],
+        activeCell: { taskId: 'task-2', field: 'name' },
+      });
+      renderHook(() => useKeyboardShortcuts());
+
+      simulateKeyPress('ArrowLeft', { altKey: true, shiftKey: true });
+
+      const updatedTasks = useTaskStore.getState().tasks;
+      const task2 = updatedTasks.find(t => t.id === 'task-2');
+      expect(task2?.parent).toBeUndefined();
+    });
+
+    it('should not indent/outdent when editing a cell', () => {
+      useTaskStore.setState({
+        selectedTaskIds: ['task-2'],
+        isEditingCell: true,
+      });
+      renderHook(() => useKeyboardShortcuts());
+
+      simulateKeyPress('ArrowRight', { altKey: true, shiftKey: true });
+
+      const tasks = useTaskStore.getState().tasks;
+      const task2 = tasks.find(t => t.id === 'task-2');
+      expect(task2?.parent).toBeUndefined();
+    });
+
+    it('should do nothing when no task selected and no active cell', () => {
+      useTaskStore.setState({
+        selectedTaskIds: [],
+        activeCell: { taskId: null, field: null },
+      });
+      renderHook(() => useKeyboardShortcuts());
+
+      simulateKeyPress('ArrowRight', { altKey: true, shiftKey: true });
+
+      const tasks = useTaskStore.getState().tasks;
+      // All tasks should remain unchanged (no parent)
+      tasks.forEach(t => {
+        expect(t.parent).toBeUndefined();
+      });
+    });
+
+    it('should preventDefault for Alt+Shift+Right', () => {
+      useTaskStore.setState({ selectedTaskIds: ['task-2'] });
+      renderHook(() => useKeyboardShortcuts());
+
+      const event = simulateKeyPress('ArrowRight', { altKey: true, shiftKey: true });
+      expect(event.defaultPrevented).toBe(true);
+    });
+
+    it('should preventDefault for Alt+Shift+Left', () => {
+      const tasks = makeTasks(3);
+      tasks[1].parent = 'task-1';
+      useTaskStore.setState({
+        tasks,
+        selectedTaskIds: ['task-2'],
+      });
+      renderHook(() => useKeyboardShortcuts());
+
+      const event = simulateKeyPress('ArrowLeft', { altKey: true, shiftKey: true });
+      expect(event.defaultPrevented).toBe(true);
+    });
+  });
 });

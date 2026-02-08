@@ -1379,14 +1379,20 @@ export const useTaskStore = create<TaskStore>()(
     // Indent/Outdent actions
     indentSelectedTasks: (): void => {
       const historyStore = useHistoryStore.getState();
-      const { tasks, selectedTaskIds } = get();
-      if (selectedTaskIds.length === 0) return;
+      const { tasks, selectedTaskIds, activeCell } = get();
+      const taskIds =
+        selectedTaskIds.length > 0
+          ? selectedTaskIds
+          : activeCell.taskId
+            ? [activeCell.taskId]
+            : [];
+      if (taskIds.length === 0) return;
 
       // Create snapshot of current hierarchy BEFORE any changes
       const originalFlatList = buildFlattenedTaskList(tasks, new Set<string>());
 
       // Sort selection by display order (top to bottom)
-      const sortedIds = [...selectedTaskIds].sort((a, b) => {
+      const sortedIds = [...taskIds].sort((a, b) => {
         const indexA = originalFlatList.findIndex((t) => t.task.id === a);
         const indexB = originalFlatList.findIndex((t) => t.task.id === b);
         return indexA - indexB;
@@ -1415,7 +1421,7 @@ export const useTaskStore = create<TaskStore>()(
           const prevTask = originalFlatList[i];
           if (prevTask.level === level) {
             // Skip if this potential parent is also selected (would create cascade)
-            if (!selectedTaskIds.includes(prevTask.task.id)) {
+            if (!taskIds.includes(prevTask.task.id)) {
               newParentId = prevTask.task.id;
               break;
             }
@@ -1496,8 +1502,14 @@ export const useTaskStore = create<TaskStore>()(
 
     outdentSelectedTasks: (): void => {
       const historyStore = useHistoryStore.getState();
-      const { tasks, selectedTaskIds } = get();
-      if (selectedTaskIds.length === 0) return;
+      const { tasks, selectedTaskIds, activeCell } = get();
+      const taskIds =
+        selectedTaskIds.length > 0
+          ? selectedTaskIds
+          : activeCell.taskId
+            ? [activeCell.taskId]
+            : [];
+      if (taskIds.length === 0) return;
 
       // Create snapshot of current hierarchy BEFORE any changes
       const originalHierarchy = new Map(
@@ -1514,7 +1526,7 @@ export const useTaskStore = create<TaskStore>()(
         newParent: string | undefined;
       }> = [];
 
-      selectedTaskIds.forEach((taskId) => {
+      taskIds.forEach((taskId) => {
         const task = tasks.find((t) => t.id === taskId);
         if (!task?.parent) return; // Already on root level
 
@@ -1586,12 +1598,18 @@ export const useTaskStore = create<TaskStore>()(
     },
 
     canIndentSelection: (): boolean => {
-      const { tasks, selectedTaskIds } = get();
-      if (selectedTaskIds.length === 0) return false;
+      const { tasks, selectedTaskIds, activeCell } = get();
+      const taskIds =
+        selectedTaskIds.length > 0
+          ? selectedTaskIds
+          : activeCell.taskId
+            ? [activeCell.taskId]
+            : [];
+      if (taskIds.length === 0) return false;
 
       const flatList = buildFlattenedTaskList(tasks, new Set<string>());
 
-      return selectedTaskIds.some((taskId) => {
+      return taskIds.some((taskId) => {
         const index = flatList.findIndex((t) => t.task.id === taskId);
         if (index === -1) return false;
 
@@ -1610,10 +1628,16 @@ export const useTaskStore = create<TaskStore>()(
     },
 
     canOutdentSelection: (): boolean => {
-      const { tasks, selectedTaskIds } = get();
-      if (selectedTaskIds.length === 0) return false;
+      const { tasks, selectedTaskIds, activeCell } = get();
+      const taskIds =
+        selectedTaskIds.length > 0
+          ? selectedTaskIds
+          : activeCell.taskId
+            ? [activeCell.taskId]
+            : [];
+      if (taskIds.length === 0) return false;
 
-      return selectedTaskIds.some((taskId) => {
+      return taskIds.some((taskId) => {
         const task = tasks.find((t) => t.id === taskId);
         return task?.parent !== undefined && task?.parent !== null;
       });

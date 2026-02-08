@@ -3,7 +3,7 @@
  * Excel-like spreadsheet table for task management.
  */
 
-import { useMemo, useEffect } from "react";
+import { useMemo } from "react";
 import {
   DndContext,
   closestCenter,
@@ -46,15 +46,6 @@ export function TaskTable({ hideHeader = true }: TaskTableProps): JSX.Element {
   const selectedTaskIds = useTaskStore((state) => state.selectedTaskIds);
   const selectAllTasks = useTaskStore((state) => state.selectAllTasks);
   const clearSelection = useTaskStore((state) => state.clearSelection);
-  const indentSelectedTasks = useTaskStore(
-    (state) => state.indentSelectedTasks
-  );
-  const outdentSelectedTasks = useTaskStore(
-    (state) => state.outdentSelectedTasks
-  );
-  const canIndent = useTaskStore((state) => state.canIndentSelection());
-  const canOutdent = useTaskStore((state) => state.canOutdentSelection());
-  const activeCell = useTaskStore((state) => state.activeCell);
   const clipboardTaskIds = useTaskStore((state) => state.clipboardTaskIds);
   const densityConfig = useDensityConfig();
   const showProgress = useChartStore((state) => state.showProgress);
@@ -94,39 +85,6 @@ export function TaskTable({ hideHeader = true }: TaskTableProps): JSX.Element {
   const allSelected =
     tasks.length > 0 &&
     tasks.every((task) => selectedTaskIds.includes(task.id));
-
-  // Keyboard shortcuts for indent/outdent
-  useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent): void => {
-      // Only handle Tab shortcuts when NO cell is active
-      // (When a cell is active, Cell.tsx handles Tab for column navigation)
-      const noCellActive = !activeCell.taskId && !activeCell.field;
-
-      if (e.key === "Tab" && noCellActive && selectedTaskIds.length > 0) {
-        e.preventDefault();
-
-        if (e.shiftKey && canOutdent) {
-          // Shift+Tab: Outdent
-          outdentSelectedTasks();
-        } else if (!e.shiftKey && canIndent) {
-          // Tab: Indent
-          indentSelectedTasks();
-        }
-      }
-    };
-
-    window.addEventListener("keydown", handleKeyDown);
-    return (): void => {
-      window.removeEventListener("keydown", handleKeyDown);
-    };
-  }, [
-    activeCell,
-    canIndent,
-    canOutdent,
-    selectedTaskIds,
-    indentSelectedTasks,
-    outdentSelectedTasks,
-  ]);
 
   const sensors = useSensors(
     useSensor(PointerSensor),

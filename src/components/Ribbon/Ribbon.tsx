@@ -368,14 +368,14 @@ export function Ribbon(): JSX.Element {
         <ToolbarButton
           onClick={outdentSelectedTasks}
           disabled={!canOutdent}
-          title="Move left (outdent) - Shift+Tab"
+          title="Move left (outdent) - Alt+Shift+Left"
           aria-label="Outdent"
           icon={<TextOutdent size={ICON_SIZE} weight="light" />}
         />
         <ToolbarButton
           onClick={indentSelectedTasks}
           disabled={!canIndent}
-          title="Move right (indent) - Tab"
+          title="Move right (indent) - Alt+Shift+Right"
           aria-label="Indent"
           icon={<TextIndent size={ICON_SIZE} weight="light" />}
         />

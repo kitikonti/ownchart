@@ -72,8 +72,8 @@ function getShortcuts(): ShortcutSection[] {
     {
       title: "Hierarchy",
       shortcuts: [
-        { keys: "Tab", description: "Indent task (make child)" },
-        { keys: "Shift+Tab", description: "Outdent task (make sibling)" },
+        { keys: "Alt+Shift+Right", description: "Indent task (make child)" },
+        { keys: "Alt+Shift+Left", description: "Outdent task (make sibling)" },
       ],
     },
     {
