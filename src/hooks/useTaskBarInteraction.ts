@@ -15,6 +15,7 @@ import {
   calculateWorkingDays,
   addWorkingDays,
 } from "../utils/workingDaysCalculator";
+import { getSVGPoint } from "../utils/svgUtils";
 
 // Edge detection threshold in pixels
 const EDGE_THRESHOLD = 8;
@@ -54,24 +55,6 @@ function detectInteractionZone(
   if (relativeX < EDGE_THRESHOLD) return "left-edge";
   if (relativeX > geometry.width - EDGE_THRESHOLD) return "right-edge";
   return "center";
-}
-
-/**
- * Convert SVG screen coordinates to SVG element coordinates.
- */
-function getSVGPoint(
-  e: MouseEvent | React.MouseEvent,
-  svg: SVGSVGElement
-): { x: number; y: number } {
-  const point = svg.createSVGPoint();
-  point.x = e.clientX;
-  point.y = e.clientY;
-
-  const ctm = svg.getScreenCTM();
-  if (!ctm) return { x: e.clientX, y: e.clientY };
-
-  const svgPoint = point.matrixTransform(ctm.inverse());
-  return { x: svgPoint.x, y: svgPoint.y };
 }
 
 /**

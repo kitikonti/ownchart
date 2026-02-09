@@ -904,3 +904,15 @@ input[type="range"]:focus-visible::-moz-range-thumb {
     border-top-width: 0.5px;
   }
 }
+
+/* ─── Progress Drag Handle ─── */
+/* Visible on task bar hover, always visible during drag */
+.task-bar .progress-handle {
+  opacity: 0;
+  transition: opacity 150ms ease;
+}
+
+.task-bar:hover .progress-handle,
+.task-bar .progress-handle.dragging {
+  opacity: 1;
+}

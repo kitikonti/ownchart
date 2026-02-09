@@ -13,6 +13,7 @@ import type { TaskLabelPosition } from "../../types/preferences.types";
 import { getTaskBarGeometry, dateToPixel } from "../../utils/timelineUtils";
 import { calculateDuration, addDays } from "../../utils/dateUtils";
 import { useTaskBarInteraction } from "../../hooks/useTaskBarInteraction";
+import { useProgressDrag } from "../../hooks/useProgressDrag";
 import { useChartStore } from "../../store/slices/chartSlice";
 import { useTaskStore } from "../../store/slices/taskSlice";
 import { useDensityConfig } from "../../store/slices/userPreferencesSlice";
@@ -246,6 +247,9 @@ export const TaskBar = React.memo(function TaskBar({
     onMouseMove: onMouseMoveForCursor,
   } = useTaskBarInteraction(task, scale, geometry);
 
+  // Progress drag hook (no-ops for milestones/summaries and when showProgress is off)
+  const progressDrag = useProgressDrag(task, geometry, showProgress);
+
   // Calculate preview geometry if dragging/resizing (for the source task)
   const preview = useMemo(() => {
     if (!previewGeometry) return null;
@@ -328,8 +332,9 @@ export const TaskBar = React.memo(function TaskBar({
     }
   };
 
-  // Progress bar width
-  const progressWidth = (geometry.width * task.progress) / 100;
+  // Progress bar width (use preview during drag)
+  const effectiveProgress = progressDrag.previewProgress ?? task.progress;
+  const progressWidth = (geometry.width * effectiveProgress) / 100;
 
   // Milestone rendering with responsive sizing (Data Viz review)
   if (task.type === "milestone") {
@@ -467,7 +472,7 @@ export const TaskBar = React.memo(function TaskBar({
       />
 
       {/* Progress bar (uses clip-path to prevent overflow) */}
-      {showProgress && task.progress > 0 && (
+      {showProgress && effectiveProgress > 0 && (
         <rect
           x={geometry.x}
           y={geometry.y}
@@ -477,6 +482,32 @@ export const TaskBar = React.memo(function TaskBar({
           fillOpacity={isBeingDragged ? 0.3 : 1}
           clipPath={`url(#${clipPathId})`}
         />
+      )}
+
+      {/* Progress drag handle (bottom triangle + invisible hitzone) */}
+      {showProgress && geometry.width >= 30 && (
+        <>
+          {/* Invisible hitzone for easier grabbing */}
+          <rect
+            x={geometry.x + progressWidth - 9}
+            y={geometry.y + geometry.height - 2}
+            width={18}
+            height={12}
+            fill="transparent"
+            cursor="col-resize"
+            pointerEvents="all"
+            onMouseDown={progressDrag.onHandleMouseDown}
+          />
+          {/* Visible triangle handle — tip points UP, touching bar bottom edge */}
+          <polygon
+            points={`${geometry.x + progressWidth},${geometry.y + geometry.height} ${geometry.x + progressWidth - 6},${geometry.y + geometry.height + 8} ${geometry.x + progressWidth + 6},${geometry.y + geometry.height + 8}`}
+            fill="#e2e8f0"
+            stroke="#94a3b8"
+            strokeWidth={1.5}
+            className={`progress-handle${progressDrag.isDragging ? " dragging" : ""}`}
+            pointerEvents="none"
+          />
+        </>
       )}
 
       {/* Preview outline (shown during drag/resize - primary or secondary) */}
@@ -497,30 +528,41 @@ export const TaskBar = React.memo(function TaskBar({
       )}
 
       {/* Task name label - position based on labelPosition (Sprint 1.5.9) */}
+      {/* During progress drag, show percentage inside the bar instead of name */}
       {labelPosition !== "none" && (
         <text
           x={
-            labelPosition === "before"
-              ? geometry.x - 8
-              : labelPosition === "after"
-                ? geometry.x + geometry.width + 8
-                : geometry.x + 8
+            progressDrag.isDragging
+              ? geometry.x + 8
+              : labelPosition === "before"
+                ? geometry.x - 8
+                : labelPosition === "after"
+                  ? geometry.x + geometry.width + 8
+                  : geometry.x + 8
           }
           y={geometry.y + geometry.height / 2 + densityConfig.fontSizeBar / 3}
           fontSize={densityConfig.fontSizeBar}
           fontFamily={SVG_FONT_FAMILY}
           fill={
-            labelPosition === "inside"
+            progressDrag.isDragging || labelPosition === "inside"
               ? getContrastTextColor(computedColor)
               : "#495057"
           }
-          textAnchor={labelPosition === "before" ? "end" : "start"}
+          textAnchor={
+            progressDrag.isDragging
+              ? "start"
+              : labelPosition === "before"
+                ? "end"
+                : "start"
+          }
           clipPath={
-            labelPosition === "inside" ? `url(#${clipPathId})` : undefined
+            progressDrag.isDragging || labelPosition === "inside"
+              ? `url(#${clipPathId})`
+              : undefined
           }
           pointerEvents="none"
         >
-          {task.name}
+          {progressDrag.isDragging ? `${effectiveProgress}%` : task.name}
         </text>
       )}
     </g>
