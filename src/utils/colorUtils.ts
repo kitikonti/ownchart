@@ -275,12 +275,12 @@ export function darkenColor(hex: string, amount: number): string {
 }
 
 /**
- * Generates a monochrome palette from a base color (5 shades: dark → light)
+ * Generates a monochrome palette from a base color (10 shades: dark → light)
  * @param baseColor - Hex color string
  */
 export function generateMonochromePalette(baseColor: string): string[] {
   const hsl = hexToHSL(baseColor);
-  const lightnessSteps = [20, 35, 50, 65, 80]; // dark → light
+  const lightnessSteps = [15, 22, 30, 37, 44, 52, 59, 66, 73, 80]; // dark → light
 
   return lightnessSteps.map((l) => hslToHex({ h: hsl.h, s: hsl.s, l }));
 }

@@ -353,9 +353,9 @@ describe("colorUtils", () => {
   });
 
   describe("generateMonochromePalette", () => {
-    it("generates 5 colors", () => {
+    it("generates 10 colors", () => {
       const palette = generateMonochromePalette("#0F6CBD");
-      expect(palette).toHaveLength(5);
+      expect(palette).toHaveLength(10);
     });
 
     it("generates valid hex colors", () => {

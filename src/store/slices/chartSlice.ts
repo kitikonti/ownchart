@@ -659,8 +659,7 @@ export const useChartStore = create<ChartState & ChartActions>()(
           !state.colorModeState.themeOptions.selectedPaletteId &&
           !state.colorModeState.themeOptions.customMonochromeBase
         ) {
-          state.colorModeState.themeOptions.selectedPaletteId =
-            "corporate-blue";
+          state.colorModeState.themeOptions.selectedPaletteId = "tableau-10";
         }
       });
     },

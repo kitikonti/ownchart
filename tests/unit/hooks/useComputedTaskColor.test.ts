@@ -113,7 +113,7 @@ describe("getComputedTaskColor - colorOverride", () => {
       const state = makeState({
         mode,
         themeOptions: {
-          selectedPaletteId: "corporate-blue",
+          selectedPaletteId: "tableau-10",
           customMonochromeBase: null,
         },
       });
@@ -227,7 +227,7 @@ describe("getComputedTaskColor - theme mode", () => {
   const state = makeState({
     mode: "theme",
     themeOptions: {
-      selectedPaletteId: "corporate-blue",
+      selectedPaletteId: "tableau-10",
       customMonochromeBase: null,
     },
   });
@@ -245,7 +245,7 @@ describe("getComputedTaskColor - theme mode", () => {
     const task = makeTask({ id: "1", color: "#000000" });
     const result = getComputedTaskColor(task, [task], state);
     // Should be a valid hex color from the palette (not the original color)
-    expect(result).toMatch(/^#[0-9A-F]{6}$/);
+    expect(result).toMatch(/^#[0-9A-Fa-f]{6}$/);
   });
 
   it("color is stable across task additions (hash-based)", () => {
@@ -263,46 +263,54 @@ describe("getComputedTaskColor - theme mode", () => {
     expect(color1After).toBe(color1);
   });
 
-  it("children under same summary share color family (same hue range)", () => {
-    const summary = makeTask({
-      id: "summary-1",
+  it("children under same color-giver share color family (same hue range)", () => {
+    // Use single-root structure with a level-1 color-giver and deeper children
+    // root → groupA (color-giver) → child1, child2
+    const root = makeTask({
+      id: "root",
       type: "summary",
+      color: "#000000",
+    });
+    const groupA = makeTask({
+      id: "groupA",
+      type: "summary",
+      parent: "root",
       color: "#000000",
     });
     const child1 = makeTask({
       id: "child-1",
-      parent: "summary-1",
+      parent: "groupA",
       color: "#000000",
     });
     const child2 = makeTask({
       id: "child-2",
-      parent: "summary-1",
+      parent: "groupA",
       color: "#000000",
     });
-    const allTasks = [summary, child1, child2];
+    const allTasks = [root, groupA, child1, child2];
 
-    const summaryColor = getComputedTaskColor(summary, allTasks, state);
+    const groupAColor = getComputedTaskColor(groupA, allTasks, state);
     const child1Color = getComputedTaskColor(child1, allTasks, state);
     const child2Color = getComputedTaskColor(child2, allTasks, state);
 
     // All should be valid hex colors
-    expect(summaryColor).toMatch(/^#[0-9A-F]{6}$/);
-    expect(child1Color).toMatch(/^#[0-9A-F]{6}$/);
-    expect(child2Color).toMatch(/^#[0-9A-F]{6}$/);
+    expect(groupAColor).toMatch(/^#[0-9A-Fa-f]{6}$/);
+    expect(child1Color).toMatch(/^#[0-9A-Fa-f]{6}$/);
+    expect(child2Color).toMatch(/^#[0-9A-Fa-f]{6}$/);
 
-    // Children should be in the same hue range as the summary (±5° accounting for rounding)
-    const summaryHsl = hexToHSL(summaryColor);
+    // Children should be in the same hue range as their color-giver (±5°)
+    const groupAHsl = hexToHSL(groupAColor);
     const child1Hsl = hexToHSL(child1Color);
     const child2Hsl = hexToHSL(child2Color);
 
-    const hueDiff1 = Math.abs(child1Hsl.h - summaryHsl.h);
-    const hueDiff2 = Math.abs(child2Hsl.h - summaryHsl.h);
+    const hueDiff1 = Math.abs(child1Hsl.h - groupAHsl.h);
+    const hueDiff2 = Math.abs(child2Hsl.h - groupAHsl.h);
     expect(Math.min(hueDiff1, 360 - hueDiff1)).toBeLessThanOrEqual(5);
     expect(Math.min(hueDiff2, 360 - hueDiff2)).toBeLessThanOrEqual(5);
 
-    // Children should be lighter than the summary
-    expect(child1Hsl.l).toBeGreaterThanOrEqual(summaryHsl.l);
-    expect(child2Hsl.l).toBeGreaterThanOrEqual(summaryHsl.l);
+    // Children should be lighter than the color-giver
+    expect(child1Hsl.l).toBeGreaterThanOrEqual(groupAHsl.l);
+    expect(child2Hsl.l).toBeGreaterThanOrEqual(groupAHsl.l);
   });
 
   it("single root summary: level-1 children become color-givers", () => {
@@ -333,8 +341,8 @@ describe("getComputedTaskColor - theme mode", () => {
 
     // groupA and groupB should get different base colors (from their hash)
     // (unless they hash to the same palette index, which is unlikely with different IDs)
-    expect(groupAColor).toMatch(/^#[0-9A-F]{6}$/);
-    expect(groupBColor).toMatch(/^#[0-9A-F]{6}$/);
+    expect(groupAColor).toMatch(/^#[0-9A-Fa-f]{6}$/);
+    expect(groupBColor).toMatch(/^#[0-9A-Fa-f]{6}$/);
   });
 
   it("multiple roots: nested descendants all use root ancestor as color-giver", () => {
@@ -402,10 +410,10 @@ describe("getComputedTaskColor - theme mode", () => {
   it("deconflicts hash collisions: 5 roots with known-colliding IDs get 5 different colors", () => {
     // These are the actual IDs from examples/website-relaunch.ownchart.
     // Without deconfliction, Planning+Launch collide (idx 3) and Development+Content collide (idx 1).
-    const candyState = makeState({
+    const deconflictState = makeState({
       mode: "theme",
       themeOptions: {
-        selectedPaletteId: "candy",
+        selectedPaletteId: "tableau-10",
         customMonochromeBase: null,
       },
     });
@@ -439,7 +447,7 @@ describe("getComputedTaskColor - theme mode", () => {
     const allTasks = [planning, development, content, launch, postLaunch];
 
     const colors = allTasks.map((t) =>
-      getComputedTaskColor(t, allTasks, candyState)
+      getComputedTaskColor(t, allTasks, deconflictState)
     );
 
     // All 5 roots must get 5 DIFFERENT palette colors
@@ -534,9 +542,9 @@ describe("getComputedTaskColor - hierarchy mode", () => {
     const l2Color = getComputedTaskColor(level2, allTasks, state);
 
     // All should be valid hex
-    expect(rootColor).toMatch(/^#[0-9A-F]{6}$/);
-    expect(l1Color).toMatch(/^#[0-9A-F]{6}$/);
-    expect(l2Color).toMatch(/^#[0-9A-F]{6}$/);
+    expect(rootColor).toMatch(/^#[0-9A-Fa-f]{6}$/);
+    expect(l1Color).toMatch(/^#[0-9A-Fa-f]{6}$/);
+    expect(l2Color).toMatch(/^#[0-9A-Fa-f]{6}$/);
 
     // Root should be the base color
     expect(rootColor).toBe(state.hierarchyOptions.baseColor.toUpperCase());

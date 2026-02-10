@@ -29,6 +29,7 @@ import type { ColorMode } from "../../types/colorMode.types";
 import {
   COLOR_PALETTES,
   CATEGORY_LABELS,
+  PALETTE_CATEGORIES,
   type PaletteCategory,
 } from "../../utils/colorPalettes";
 
@@ -92,13 +93,13 @@ function ColorSwatch({
 }
 
 /**
- * Palette preview row showing 5 color swatches
+ * Palette preview row showing all color swatches
  */
 function PalettePreview({ colors }: { colors: string[] }): JSX.Element {
   return (
-    <div style={{ display: "flex", gap: "2px" }}>
-      {colors.slice(0, 5).map((color, i) => (
-        <ColorSwatch key={i} color={color} />
+    <div style={{ display: "flex", gap: "1px" }}>
+      {colors.map((color, i) => (
+        <ColorSwatch key={i} color={color} size={10} />
       ))}
     </div>
   );
@@ -125,11 +126,12 @@ export function ColorDropdown({
   const currentMode = colorModeState.mode;
 
   // Group palettes by category
-  const palettesByCategory: Record<PaletteCategory, typeof COLOR_PALETTES> = {
-    corporate: COLOR_PALETTES.filter((p) => p.category === "corporate"),
-    nature: COLOR_PALETTES.filter((p) => p.category === "nature"),
-    creative: COLOR_PALETTES.filter((p) => p.category === "creative"),
-  };
+  const palettesByCategory = Object.fromEntries(
+    PALETTE_CATEGORIES.map((cat) => [
+      cat,
+      COLOR_PALETTES.filter((p) => p.category === cat),
+    ])
+  ) as Record<PaletteCategory, typeof COLOR_PALETTES>;
 
   const handleModeSelect = (mode: ColorMode): void => {
     setColorMode(mode);
@@ -162,41 +164,38 @@ export function ColorDropdown({
 
   const renderThemeOptions = (): JSX.Element => (
     <div style={{ padding: "8px 0" }}>
-      {(["corporate", "nature", "creative"] as PaletteCategory[]).map(
-        (category) => (
-          <div key={category} style={{ marginBottom: "8px" }}>
-            <div
-              style={{
-                padding: "4px 12px",
-                fontSize: "11px",
-                fontWeight: 600,
-                color: "rgb(100, 100, 100)",
-                textTransform: "uppercase",
-                letterSpacing: "0.5px",
-              }}
-            >
-              {CATEGORY_LABELS[category]}
-            </div>
-
-            {palettesByCategory[category].map((palette) => {
-              const isSelected =
-                colorModeState.themeOptions.selectedPaletteId === palette.id;
-              return (
-                <DropdownItem
-                  key={palette.id}
-                  isSelected={isSelected}
-                  showCheckmark={false}
-                  onClick={() => handleSelectPalette(palette.id)}
-                  trailing={<PalettePreview colors={palette.colors} />}
-                >
-                  {palette.name}
-                </DropdownItem>
-              );
-            })}
+      {PALETTE_CATEGORIES.map((category) => (
+        <div key={category} style={{ marginBottom: "8px" }}>
+          <div
+            style={{
+              padding: "4px 12px",
+              fontSize: "11px",
+              fontWeight: 600,
+              color: "rgb(100, 100, 100)",
+              textTransform: "uppercase",
+              letterSpacing: "0.5px",
+            }}
+          >
+            {CATEGORY_LABELS[category]}
           </div>
-        )
-      )}
 
+          {palettesByCategory[category].map((palette) => {
+            const isSelected =
+              colorModeState.themeOptions.selectedPaletteId === palette.id;
+            return (
+              <DropdownItem
+                key={palette.id}
+                isSelected={isSelected}
+                showCheckmark={false}
+                onClick={() => handleSelectPalette(palette.id)}
+                trailing={<PalettePreview colors={palette.colors} />}
+              >
+                {palette.name}
+              </DropdownItem>
+            );
+          })}
+        </div>
+      ))}
     </div>
   );
 
