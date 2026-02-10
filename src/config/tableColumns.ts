@@ -122,6 +122,7 @@ export const TASK_COLUMNS: ColumnDefinition[] = [
     label: "%",
     defaultWidth: "70px",
     editable: true,
+    hideable: true,
     renderer: "number",
     validator: (value) => validateProgress(Number(value)),
     formatter: (value) => `${value}%`,
@@ -130,15 +131,10 @@ export const TASK_COLUMNS: ColumnDefinition[] = [
 
 /**
  * Get visible columns based on view settings.
- * Filters out user-hidden columns (hideable only) and progress column.
+ * Filters out user-hidden columns (hideable only).
  */
-export function getVisibleColumns(
-  hiddenColumns: string[],
-  showProgress: boolean
-): ColumnDefinition[] {
+export function getVisibleColumns(hiddenColumns: string[]): ColumnDefinition[] {
   return TASK_COLUMNS.filter((col) => {
-    // Progress column controlled by showProgress toggle
-    if (col.id === "progress") return showProgress;
     // Only hideable columns can be hidden by the user
     if (col.hideable && hiddenColumns.includes(col.id)) return false;
     return true;

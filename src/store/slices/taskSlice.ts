@@ -802,12 +802,10 @@ export const useTaskStore = create<TaskStore>()(
         const { activeCell, tasks } = state;
         if (!activeCell.taskId || !activeCell.field) return;
 
-        // Build visible fields list by filtering out hidden columns and progress
+        // Build visible fields list by filtering out hidden columns
         const chartState = useChartStore.getState();
         const hiddenColumns = chartState.hiddenColumns;
-        const showProgress = chartState.showProgress;
         const visibleFields = EDITABLE_FIELDS.filter((field) => {
-          if (field === "progress") return showProgress;
           if (hiddenColumns.includes(field)) return false;
           return true;
         });

@@ -65,7 +65,6 @@ export function TaskTableRow({
   const insertTaskBelow = useTaskStore((state) => state.insertTaskBelow);
   const { isCellEditing, stopCellEdit } = useCellNavigation();
   const densityConfig = useDensityConfig();
-  const showProgress = useChartStore((state) => state.showProgress);
   const hiddenColumns = useChartStore((state) => state.hiddenColumns);
 
   // Get computed task color based on current color mode
@@ -73,8 +72,8 @@ export function TaskTableRow({
 
   // Get visible columns based on settings
   const visibleColumns = useMemo(
-    () => getVisibleColumns(hiddenColumns, showProgress),
-    [hiddenColumns, showProgress]
+    () => getVisibleColumns(hiddenColumns),
+    [hiddenColumns]
   );
 
   const isSelected = selectedTaskIds.includes(task.id);

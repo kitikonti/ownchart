@@ -29,13 +29,12 @@ export function NewTaskPlaceholderRow(): JSX.Element {
   const setActiveCell = useTaskStore((state) => state.setActiveCell);
   const selectedTaskIds = useTaskStore((state) => state.selectedTaskIds);
   const clearSelection = useTaskStore((state) => state.clearSelection);
-  const showProgress = useChartStore((state) => state.showProgress);
   const hiddenColumns = useChartStore((state) => state.hiddenColumns);
 
   // Get visible columns based on settings
   const visibleColumns = useMemo(
-    () => getVisibleColumns(hiddenColumns, showProgress),
-    [hiddenColumns, showProgress]
+    () => getVisibleColumns(hiddenColumns),
+    [hiddenColumns]
   );
 
   const isRowActive = activeCell.taskId === PLACEHOLDER_TASK_ID;

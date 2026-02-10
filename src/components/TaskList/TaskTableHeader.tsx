@@ -31,13 +31,12 @@ export function TaskTableHeader(): JSX.Element {
   const setColumnWidth = useTaskStore((state) => state.setColumnWidth);
   const autoFitColumn = useTaskStore((state) => state.autoFitColumn);
   const densityConfig = useDensityConfig();
-  const showProgress = useChartStore((state) => state.showProgress);
   const hiddenColumns = useChartStore((state) => state.hiddenColumns);
 
   // Get visible columns based on settings
   const visibleColumns = useMemo(
-    () => getVisibleColumns(hiddenColumns, showProgress),
-    [hiddenColumns, showProgress]
+    () => getVisibleColumns(hiddenColumns),
+    [hiddenColumns]
   );
 
   // Get total column width for proper scrolling

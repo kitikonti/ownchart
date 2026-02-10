@@ -34,13 +34,12 @@ function parseWidth(widthStr: string): number {
 export function useTableDimensions(): { totalColumnWidth: number } {
   const columnWidths = useTaskStore((state) => state.columnWidths);
   const densityConfig = useDensityConfig();
-  const showProgress = useChartStore((state) => state.showProgress);
   const hiddenColumns = useChartStore((state) => state.hiddenColumns);
 
   // Get visible columns based on settings
   const visibleColumns = useMemo(
-    () => getVisibleColumns(hiddenColumns, showProgress),
-    [hiddenColumns, showProgress]
+    () => getVisibleColumns(hiddenColumns),
+    [hiddenColumns]
   );
 
   const totalColumnWidth = useMemo(() => {
