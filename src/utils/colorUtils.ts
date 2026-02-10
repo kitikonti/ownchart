@@ -146,6 +146,22 @@ export function getPerceivedBrightness(hex: string): number {
 }
 
 // ═══════════════════════════════════════════════════════════════════════════
+// STABLE HASH (for deterministic color assignment)
+// ═══════════════════════════════════════════════════════════════════════════
+
+/**
+ * DJB2 hash function for deterministic, stable color assignment.
+ * Produces a positive integer from a string (e.g., task ID).
+ */
+export function stableHash(str: string): number {
+  let hash = 5381;
+  for (let i = 0; i < str.length; i++) {
+    hash = ((hash << 5) + hash + str.charCodeAt(i)) & 0x7fffffff;
+  }
+  return hash;
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
 // HSL COLOR UTILITIES (Smart Color Management)
 // ═══════════════════════════════════════════════════════════════════════════
 

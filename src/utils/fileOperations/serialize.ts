@@ -121,6 +121,7 @@ function serializeTask(task: Task): SerializedTask {
     type: task.type,
     parent: task.parent,
     open: task.open,
+    colorOverride: task.colorOverride,
     metadata: task.metadata,
     createdAt: new Date().toISOString(),
     updatedAt: new Date().toISOString(),

@@ -66,6 +66,7 @@ export function TaskTableRow({
   const { isCellEditing, stopCellEdit } = useCellNavigation();
   const densityConfig = useDensityConfig();
   const hiddenColumns = useChartStore((state) => state.hiddenColumns);
+  const colorModeState = useChartStore((state) => state.colorModeState);
 
   // Get computed task color based on current color mode
   const computedColor = useComputedTaskColor(task);
@@ -427,8 +428,20 @@ export function TaskTableRow({
                   {isEditing ? (
                     <ColorCellEditor
                       value={displayTask.color}
-                      onChange={(value) =>
-                        updateTask(task.id, { color: value })
+                      computedColor={computedColor}
+                      colorMode={colorModeState.mode}
+                      hasOverride={!!task.colorOverride}
+                      onChange={(value) => {
+                        if (colorModeState.mode === "manual") {
+                          updateTask(task.id, { color: value });
+                        } else {
+                          updateTask(task.id, { colorOverride: value });
+                        }
+                      }}
+                      onResetOverride={() =>
+                        updateTask(task.id, {
+                          colorOverride: undefined,
+                        })
                       }
                       onSave={stopCellEdit}
                       onCancel={stopCellEdit}

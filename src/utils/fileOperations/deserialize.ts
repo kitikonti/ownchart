@@ -177,6 +177,7 @@ function deserializeTask(serialized: SerializedTask): Task & {
     type: (serialized.type ?? "task") as TaskType,
     parent: serialized.parent,
     open: serialized.open ?? true,
+    colorOverride: serialized.colorOverride,
     metadata: serialized.metadata ?? {},
   };
 
@@ -193,6 +194,7 @@ function deserializeTask(serialized: SerializedTask): Task & {
     "type",
     "parent",
     "open",
+    "colorOverride",
     "metadata",
     "createdAt",
     "updatedAt",

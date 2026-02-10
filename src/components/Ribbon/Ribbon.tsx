@@ -51,9 +51,7 @@ import {
   TOOLBAR_TOKENS,
 } from "../Toolbar/ToolbarPrimitives";
 import { ToolbarDropdown } from "../Toolbar/ToolbarDropdown";
-import { ColorModeDropdown } from "./ColorModeDropdown";
-import { ColorOptionsDropdown } from "./ColorOptionsDropdown";
-import { RegenerateButton } from "./RegenerateButton";
+import { ColorDropdown } from "./ColorDropdown";
 import { HolidayRegionPopover } from "./HolidayRegionPopover";
 import { WorkingDaysDropdown } from "./WorkingDaysDropdown";
 import { ColumnsDropdown } from "./ColumnsDropdown";
@@ -406,9 +404,7 @@ export function Ribbon(): JSX.Element {
 
       {/* Color Mode (Smart Color Management) */}
       <ToolbarGroup label="Colors">
-        <ColorModeDropdown labelPriority={1} />
-        <ColorOptionsDropdown labelPriority={1} />
-        <RegenerateButton />
+        <ColorDropdown labelPriority={1} />
       </ToolbarGroup>
     </>
   );

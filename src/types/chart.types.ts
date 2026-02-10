@@ -53,4 +53,7 @@ export interface Task {
   lazy?: boolean;
   baseStart?: string;
   baseEnd?: string;
+
+  // Color override for manual overrides in automatic color modes
+  colorOverride?: string;
 }

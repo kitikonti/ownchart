@@ -1,6 +1,6 @@
 {
   "fileVersion": "1.0.0",
-  "appVersion": "0.0.1",
+  "appVersion": "0.0.34",
   "schemaVersion": 1,
   "chart": {
     "id": "a1b2c3d4-e5f6-4789-a012-3456789abcde",
@@ -691,6 +691,11 @@
       },
       "showWeekends": false,
       "showTodayMarker": true,
+      "showHolidays": false,
+      "showDependencies": true,
+      "showProgress": true,
+      "taskLabelPosition": "after",
+      "workingDaysMode": false,
       "taskTableWidth": 420,
       "columnWidths": {
         "name": 240,
@@ -712,7 +717,8 @@
   },
   "features": {
     "hasHierarchy": true,
-    "hasHistory": false
+    "hasHistory": false,
+    "hasDependencies": true
   },
   "migrations": {
     "appliedMigrations": [],

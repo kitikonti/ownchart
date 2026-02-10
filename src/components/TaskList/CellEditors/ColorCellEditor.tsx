@@ -1,18 +1,32 @@
 /**
  * Color picker cell editor.
  * Opens an enhanced color picker popover with swatches and project colors.
+ * Override-aware: in automatic color modes, writes to colorOverride.
  */
 
 import { useState, useRef, useEffect, type KeyboardEvent } from "react";
 import { createPortal } from "react-dom";
 import { ColorPickerPopover } from "./ColorPickerPopover";
+import type { ColorMode } from "../../../types/colorMode.types";
 
 export interface ColorCellEditorProps {
-  /** Current color value (hex) */
+  /** Current task.color value (hex) */
   value: string;
+
+  /** Computed display color (may differ from value in auto modes) */
+  computedColor?: string;
+
+  /** Current color mode */
+  colorMode?: ColorMode;
+
+  /** Whether this task has a colorOverride set */
+  hasOverride?: boolean;
 
   /** Called when color changes */
   onChange: (value: string) => void;
+
+  /** Called to reset colorOverride back to automatic */
+  onResetOverride?: () => void;
 
   /** Called when save is requested (Enter key) */
   onSave?: () => void;
@@ -30,7 +44,11 @@ export interface ColorCellEditorProps {
  */
 export function ColorCellEditor({
   value,
+  computedColor,
+  colorMode = "manual",
+  hasOverride = false,
   onChange,
+  onResetOverride,
   onSave,
   onCancel,
   height = 28,
@@ -38,6 +56,9 @@ export function ColorCellEditor({
   const [showPopover, setShowPopover] = useState(false);
   const [anchorRect, setAnchorRect] = useState<DOMRect | undefined>();
   const triggerRef = useRef<HTMLButtonElement>(null);
+
+  // The display color: in auto modes use computed, in manual use task.color
+  const displayColor = computedColor || value;
 
   // Auto-open popover on mount
   useEffect(() => {
@@ -83,7 +104,7 @@ export function ColorCellEditor({
         className="w-full rounded overflow-hidden border-0 p-0 cursor-pointer"
         style={{
           height,
-          backgroundColor: value,
+          backgroundColor: displayColor,
           outline: "none",
         }}
         title="Choose color"
@@ -94,10 +115,13 @@ export function ColorCellEditor({
       {showPopover &&
         createPortal(
           <ColorPickerPopover
-            value={value}
+            value={displayColor}
             onSelect={handleSelect}
             onClose={handleClose}
             anchorRect={anchorRect}
+            colorMode={colorMode}
+            hasOverride={hasOverride}
+            onResetOverride={onResetOverride}
           />,
           document.body
         )}

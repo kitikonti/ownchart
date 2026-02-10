@@ -1,21 +1,32 @@
 /**
- * ColorOptionsDropdown - Context-dependent color options
+ * ColorDropdown - Merged Color Mode + Options dropdown
  *
- * Shows different options based on selected color mode:
- * - Manual: Quick swatches from project colors
- * - Theme: Palette selection with categories
- * - Summary: Milestone accent toggle
- * - Task Type: Color pickers for each type
- * - Hierarchy: Base color and lightness settings
+ * Single dropdown combining mode selection and mode-specific options.
+ * Panel stays open on mode switch so users can immediately see the effect.
+ *
+ * Layout:
+ * ┌──────────────────────────┐
+ * │ Mode Selection (fixed)   │
+ * │  ✓ None                  │
+ * │    Theme                 │
+ * │    Summary Group         │
+ * │    Task Type             │
+ * │    Hierarchy             │
+ * ├──────────────────────────┤
+ * │ Mode Options (scrollable)│
+ * │  (varies by mode)        │
+ * └──────────────────────────┘
  */
 
 import { useState } from "react";
-import { Sliders } from "@phosphor-icons/react";
+import { Palette } from "@phosphor-icons/react";
 import { useChartStore } from "../../store/slices/chartSlice";
 import { useDropdown } from "../../hooks/useDropdown";
 import { DropdownTrigger } from "../Toolbar/DropdownTrigger";
 import { DropdownPanel } from "../Toolbar/DropdownPanel";
 import { DropdownItem } from "../Toolbar/DropdownItem";
+import { TOOLBAR } from "../../styles/design-tokens";
+import type { ColorMode } from "../../types/colorMode.types";
 import {
   COLOR_PALETTES,
   CATEGORY_LABELS,
@@ -23,12 +34,46 @@ import {
 } from "../../utils/colorPalettes";
 import { generateMonochromePalette } from "../../utils/colorUtils";
 
+interface ColorModeOption {
+  value: ColorMode;
+  label: string;
+  description: string;
+}
+
+const COLOR_MODE_OPTIONS: ColorModeOption[] = [
+  {
+    value: "manual",
+    label: "None",
+    description: "No automatic coloring",
+  },
+  {
+    value: "theme",
+    label: "Theme",
+    description: "One-click palette themes",
+  },
+  {
+    value: "summary",
+    label: "Summary Group",
+    description: "Children inherit parent color",
+  },
+  {
+    value: "taskType",
+    label: "Task Type",
+    description: "Color by Summary/Task/Milestone",
+  },
+  {
+    value: "hierarchy",
+    label: "Hierarchy",
+    description: "Darker\u2192lighter by depth",
+  },
+];
+
 /**
- * Color swatch component for palette preview
+ * Color swatch for palette preview
  */
 function ColorSwatch({
   color,
-  size = 16,
+  size = 14,
 }: {
   color: string;
   size?: number;
@@ -55,23 +100,24 @@ function PalettePreview({ colors }: { colors: string[] }): JSX.Element {
   return (
     <div style={{ display: "flex", gap: "2px" }}>
       {colors.slice(0, 5).map((color, i) => (
-        <ColorSwatch key={i} color={color} size={14} />
+        <ColorSwatch key={i} color={color} />
       ))}
     </div>
   );
 }
 
-interface ColorOptionsDropdownProps {
+interface ColorDropdownProps {
   labelPriority?: number;
 }
 
-export function ColorOptionsDropdown({
+export function ColorDropdown({
   labelPriority,
-}: ColorOptionsDropdownProps): JSX.Element {
+}: ColorDropdownProps): JSX.Element {
   const [customMonoInput, setCustomMonoInput] = useState("#0F6CBD");
   const { isOpen, toggle, close, containerRef } = useDropdown();
 
   const colorModeState = useChartStore((state) => state.colorModeState);
+  const setColorMode = useChartStore((state) => state.setColorMode);
   const setThemeOptions = useChartStore((state) => state.setThemeOptions);
   const setSummaryOptions = useChartStore((state) => state.setSummaryOptions);
   const setTaskTypeOptions = useChartStore((state) => state.setTaskTypeOptions);
@@ -80,6 +126,18 @@ export function ColorOptionsDropdown({
   );
 
   const currentMode = colorModeState.mode;
+
+  // Group palettes by category
+  const palettesByCategory: Record<PaletteCategory, typeof COLOR_PALETTES> = {
+    corporate: COLOR_PALETTES.filter((p) => p.category === "corporate"),
+    nature: COLOR_PALETTES.filter((p) => p.category === "nature"),
+    creative: COLOR_PALETTES.filter((p) => p.category === "creative"),
+  };
+
+  const handleModeSelect = (mode: ColorMode): void => {
+    setColorMode(mode);
+    // Panel stays open — don't call close()
+  };
 
   const handleSelectPalette = (paletteId: string): void => {
     setThemeOptions({
@@ -97,19 +155,27 @@ export function ColorOptionsDropdown({
     close();
   };
 
-  // Group palettes by category
-  const palettesByCategory: Record<PaletteCategory, typeof COLOR_PALETTES> = {
-    corporate: COLOR_PALETTES.filter((p) => p.category === "corporate"),
-    nature: COLOR_PALETTES.filter((p) => p.category === "nature"),
-    creative: COLOR_PALETTES.filter((p) => p.category === "creative"),
-  };
+  // ── Mode-specific option renderers ─────────────────────────────────────
+
+  const renderManualOptions = (): JSX.Element => (
+    <div style={{ padding: "12px" }}>
+      <div
+        style={{
+          fontSize: "13px",
+          color: "rgb(100, 100, 100)",
+          textAlign: "center",
+        }}
+      >
+        Use the color picker in the task list to set individual task colors.
+      </div>
+    </div>
+  );
 
   const renderThemeOptions = (): JSX.Element => (
     <div style={{ padding: "8px 0" }}>
       {(["corporate", "nature", "creative"] as PaletteCategory[]).map(
         (category) => (
           <div key={category} style={{ marginBottom: "8px" }}>
-            {/* Category Header */}
             <div
               style={{
                 padding: "4px 12px",
@@ -123,7 +189,6 @@ export function ColorOptionsDropdown({
               {CATEGORY_LABELS[category]}
             </div>
 
-            {/* Palettes in category */}
             {palettesByCategory[category].map((palette) => {
               const isSelected =
                 colorModeState.themeOptions.selectedPaletteId === palette.id;
@@ -253,7 +318,6 @@ export function ColorOptionsDropdown({
 
   const renderTaskTypeOptions = (): JSX.Element => (
     <div style={{ padding: "12px" }}>
-      {/* Summary Color */}
       <div
         style={{
           display: "flex",
@@ -277,8 +341,6 @@ export function ColorOptionsDropdown({
           }}
         />
       </div>
-
-      {/* Task Color */}
       <div
         style={{
           display: "flex",
@@ -302,8 +364,6 @@ export function ColorOptionsDropdown({
           }}
         />
       </div>
-
-      {/* Milestone Color */}
       <div
         style={{
           display: "flex",
@@ -333,7 +393,6 @@ export function ColorOptionsDropdown({
 
   const renderHierarchyOptions = (): JSX.Element => (
     <div style={{ padding: "12px" }}>
-      {/* Base Color */}
       <div
         style={{
           display: "flex",
@@ -357,8 +416,6 @@ export function ColorOptionsDropdown({
           }}
         />
       </div>
-
-      {/* Lightening per level */}
       <div style={{ marginBottom: "12px" }}>
         <div
           style={{
@@ -386,8 +443,6 @@ export function ColorOptionsDropdown({
           style={{ width: "100%", cursor: "pointer" }}
         />
       </div>
-
-      {/* Max lightening */}
       <div>
         <div
           style={{
@@ -416,21 +471,7 @@ export function ColorOptionsDropdown({
     </div>
   );
 
-  const renderManualOptions = (): JSX.Element => (
-    <div style={{ padding: "12px" }}>
-      <div
-        style={{
-          fontSize: "13px",
-          color: "rgb(100, 100, 100)",
-          textAlign: "center",
-        }}
-      >
-        Use the color picker in the task list to set individual task colors.
-      </div>
-    </div>
-  );
-
-  const renderContent = (): JSX.Element => {
+  const renderOptions = (): JSX.Element => {
     switch (currentMode) {
       case "theme":
         return renderThemeOptions();
@@ -446,45 +487,46 @@ export function ColorOptionsDropdown({
     }
   };
 
-  // Get label based on current mode
-  const getLabel = (): string => {
-    switch (currentMode) {
-      case "theme": {
-        const selectedPalette = COLOR_PALETTES.find(
-          (p) => p.id === colorModeState.themeOptions.selectedPaletteId
-        );
-        return selectedPalette?.name || "Select Palette";
-      }
-      case "summary":
-        return "Options";
-      case "taskType":
-        return "Type Colors";
-      case "hierarchy":
-        return "Settings";
-      case "manual":
-      default:
-        return "Options";
-    }
-  };
-
   return (
     <div ref={containerRef} className="relative">
       <DropdownTrigger
         isOpen={isOpen}
         onClick={toggle}
-        icon={<Sliders size={18} weight="light" />}
-        label={getLabel()}
-        aria-label="Color Options"
-        title="Color mode options"
+        icon={<Palette size={TOOLBAR.iconSize} weight="light" />}
+        label="Color"
+        aria-label="Color"
+        aria-haspopup="listbox"
+        title="Color mode and options"
         labelPriority={labelPriority}
       />
 
       {isOpen && (
-        <DropdownPanel
-          minWidth={currentMode === "theme" ? "280px" : "200px"}
-          maxHeight="400px"
-        >
-          {renderContent()}
+        <DropdownPanel minWidth="280px" maxHeight="500px">
+          {/* Mode selection (fixed) */}
+          {COLOR_MODE_OPTIONS.map((option) => (
+            <DropdownItem
+              key={option.value}
+              isSelected={option.value === currentMode}
+              onClick={() => handleModeSelect(option.value)}
+              description={option.description}
+            >
+              {option.label}
+            </DropdownItem>
+          ))}
+
+          {/* Divider */}
+          <div
+            style={{
+              height: "1px",
+              backgroundColor: "rgb(230, 230, 230)",
+              margin: "4px 0",
+            }}
+          />
+
+          {/* Mode-specific options (scrollable) */}
+          <div style={{ overflowY: "auto", maxHeight: "320px" }}>
+            {renderOptions()}
+          </div>
         </DropdownPanel>
       )}
     </div>

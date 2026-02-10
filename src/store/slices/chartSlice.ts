@@ -652,6 +652,16 @@ export const useChartStore = create<ChartState & ChartActions>()(
     setColorMode: (mode: ColorMode): void => {
       set((state) => {
         state.colorModeState.mode = mode;
+
+        // Auto-select default palette when switching to theme mode without one
+        if (
+          mode === "theme" &&
+          !state.colorModeState.themeOptions.selectedPaletteId &&
+          !state.colorModeState.themeOptions.customMonochromeBase
+        ) {
+          state.colorModeState.themeOptions.selectedPaletteId =
+            "corporate-blue";
+        }
       });
     },
 

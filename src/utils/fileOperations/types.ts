@@ -81,6 +81,7 @@ export interface SerializedTask {
   type?: TaskType;
   parent?: string;
   open?: boolean;
+  colorOverride?: string;
   metadata?: Record<string, unknown>;
 
   // Timestamps

@@ -5,17 +5,19 @@
  * - Project colors (colors already used in current project)
  * - Curated color swatches by category
  * - Native color picker for custom colors
+ * - Reset-to-automatic button when colorOverride is active
  * - Click-outside to close
  * - Keyboard navigation (Escape to close)
  */
 
 import { useState, useRef, useEffect, type KeyboardEvent } from "react";
-import { X } from "@phosphor-icons/react";
+import { X, ArrowCounterClockwise } from "@phosphor-icons/react";
 import {
   useProjectColors,
   CURATED_SWATCHES,
 } from "../../../hooks/useProjectColors";
 import { getContrastTextColor } from "../../../utils/colorUtils";
+import type { ColorMode } from "../../../types/colorMode.types";
 
 interface ColorPickerPopoverProps {
   /** Current color value (hex) */
@@ -26,6 +28,12 @@ interface ColorPickerPopoverProps {
   onClose: () => void;
   /** Position of the popover trigger element */
   anchorRect?: DOMRect;
+  /** Current color mode (for showing reset button) */
+  colorMode?: ColorMode;
+  /** Whether task has a colorOverride */
+  hasOverride?: boolean;
+  /** Called to reset colorOverride */
+  onResetOverride?: () => void;
 }
 
 /**
@@ -132,6 +140,9 @@ export function ColorPickerPopover({
   onSelect,
   onClose,
   anchorRect,
+  colorMode = "manual",
+  hasOverride = false,
+  onResetOverride,
 }: ColorPickerPopoverProps): JSX.Element {
   const [localColor, setLocalColor] = useState(value);
   const popoverRef = useRef<HTMLDivElement>(null);
@@ -139,6 +150,10 @@ export function ColorPickerPopover({
 
   // Get project colors
   const projectColors = useProjectColors(8);
+
+  // Show reset button when in auto mode and override is active
+  const showResetButton =
+    colorMode !== "manual" && hasOverride && onResetOverride;
 
   // Close on outside click
   useEffect(() => {
@@ -179,6 +194,12 @@ export function ColorPickerPopover({
     const color = e.target.value;
     setLocalColor(color);
     onSelect(color);
+  };
+
+  // Handle reset to automatic
+  const handleReset = (): void => {
+    onResetOverride?.();
+    onClose();
   };
 
   // Calculate popover position
@@ -277,14 +298,39 @@ export function ColorPickerPopover({
         >
           Aa
         </div>
-        <div>
+        <div style={{ flex: 1 }}>
           <div style={{ fontWeight: 500, fontSize: "13px" }}>
             {localColor.toUpperCase()}
           </div>
           <div style={{ fontSize: "11px", color: "rgb(120, 120, 120)" }}>
-            Current color
+            {showResetButton ? "Manual override" : "Current color"}
           </div>
         </div>
+        {/* Reset to automatic button */}
+        {showResetButton && (
+          <button
+            type="button"
+            onClick={handleReset}
+            title="Reset to automatic color"
+            style={{
+              display: "flex",
+              alignItems: "center",
+              gap: "4px",
+              padding: "4px 8px",
+              fontSize: "11px",
+              color: "rgb(15, 108, 189)",
+              backgroundColor: "rgb(235, 245, 255)",
+              border: "1px solid rgb(190, 220, 250)",
+              borderRadius: "4px",
+              cursor: "pointer",
+              fontWeight: 500,
+              whiteSpace: "nowrap",
+            }}
+          >
+            <ArrowCounterClockwise size={12} weight="bold" />
+            Reset
+          </button>
+        )}
       </div>
 
       {/* Project colors (if any) */}
