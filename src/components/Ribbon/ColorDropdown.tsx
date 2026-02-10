@@ -501,7 +501,7 @@ export function ColorDropdown({
       />
 
       {isOpen && (
-        <DropdownPanel minWidth="280px" maxHeight="500px">
+        <DropdownPanel minWidth="280px">
           {/* Mode selection (fixed) */}
           {COLOR_MODE_OPTIONS.map((option) => (
             <DropdownItem
