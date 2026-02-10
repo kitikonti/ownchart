@@ -18,7 +18,6 @@
  * └──────────────────────────┘
  */
 
-import { useState } from "react";
 import { Palette } from "@phosphor-icons/react";
 import { useChartStore } from "../../store/slices/chartSlice";
 import { useDropdown } from "../../hooks/useDropdown";
@@ -32,7 +31,6 @@ import {
   CATEGORY_LABELS,
   type PaletteCategory,
 } from "../../utils/colorPalettes";
-import { generateMonochromePalette } from "../../utils/colorUtils";
 
 interface ColorModeOption {
   value: ColorMode;
@@ -113,7 +111,6 @@ interface ColorDropdownProps {
 export function ColorDropdown({
   labelPriority,
 }: ColorDropdownProps): JSX.Element {
-  const [customMonoInput, setCustomMonoInput] = useState("#0F6CBD");
   const { isOpen, toggle, close, containerRef } = useDropdown();
 
   const colorModeState = useChartStore((state) => state.colorModeState);
@@ -143,14 +140,6 @@ export function ColorDropdown({
     setThemeOptions({
       selectedPaletteId: paletteId,
       customMonochromeBase: null,
-    });
-    close();
-  };
-
-  const handleCreateMonochrome = (): void => {
-    setThemeOptions({
-      selectedPaletteId: null,
-      customMonochromeBase: customMonoInput,
     });
     close();
   };
@@ -208,63 +197,6 @@ export function ColorDropdown({
         )
       )}
 
-      {/* Divider */}
-      <div
-        style={{
-          height: "1px",
-          backgroundColor: "rgb(230, 230, 230)",
-          margin: "8px 12px",
-        }}
-      />
-
-      {/* Custom Monochrome */}
-      <div style={{ padding: "8px 12px" }}>
-        <div
-          style={{
-            fontSize: "11px",
-            fontWeight: 600,
-            color: "rgb(100, 100, 100)",
-            textTransform: "uppercase",
-            letterSpacing: "0.5px",
-            marginBottom: "8px",
-          }}
-        >
-          Custom Monochrome
-        </div>
-        <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-          <input
-            type="color"
-            value={customMonoInput}
-            onChange={(e) => setCustomMonoInput(e.target.value)}
-            style={{
-              width: "28px",
-              height: "28px",
-              border: "1px solid rgb(200, 200, 200)",
-              borderRadius: "4px",
-              cursor: "pointer",
-              padding: "2px",
-            }}
-            title="Pick base color"
-          />
-          <PalettePreview colors={generateMonochromePalette(customMonoInput)} />
-          <button
-            type="button"
-            onClick={handleCreateMonochrome}
-            style={{
-              padding: "4px 10px",
-              fontSize: "12px",
-              backgroundColor: "rgb(15, 108, 189)",
-              color: "white",
-              border: "none",
-              borderRadius: "4px",
-              cursor: "pointer",
-              fontWeight: 500,
-            }}
-          >
-            Apply
-          </button>
-        </div>
-      </div>
     </div>
   );
 
