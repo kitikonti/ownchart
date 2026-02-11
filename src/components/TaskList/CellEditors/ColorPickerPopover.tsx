@@ -215,10 +215,26 @@ export function ColorPickerPopover({
     overflowY: "auto",
   };
 
-  // Position below anchor if provided
+  // Position relative to anchor with viewport-aware flipping
   if (anchorRect) {
-    popoverStyle.top = anchorRect.bottom + 4;
-    popoverStyle.left = Math.max(8, anchorRect.left);
+    const popoverHeight = 400; // matches maxHeight
+    const spaceBelow = window.innerHeight - anchorRect.bottom;
+    const spaceAbove = anchorRect.top;
+    const gap = 4;
+
+    // Flip upward if not enough space below but enough above
+    if (spaceBelow < popoverHeight + gap && spaceAbove > spaceBelow) {
+      popoverStyle.bottom = window.innerHeight - anchorRect.top + gap;
+    } else {
+      popoverStyle.top = anchorRect.bottom + gap;
+    }
+
+    // Horizontal: keep within viewport
+    const popoverWidth = 280; // matches width
+    popoverStyle.left = Math.min(
+      Math.max(8, anchorRect.left),
+      window.innerWidth - popoverWidth - 8
+    );
   } else {
     popoverStyle.top = "50%";
     popoverStyle.left = "50%";
