@@ -158,7 +158,6 @@ export function ColorDropdown({
         style={{
           fontSize: "13px",
           color: "rgb(100, 100, 100)",
-          textAlign: "center",
         }}
       >
         Use the color picker in the task list to set individual task colors.
@@ -205,6 +204,15 @@ export function ColorDropdown({
 
   const renderSummaryOptions = (): JSX.Element => (
     <div style={{ padding: "12px" }}>
+      <div
+        style={{
+          fontSize: "13px",
+          color: "rgb(100, 100, 100)",
+          marginBottom: "12px",
+        }}
+      >
+        Set colors on summary tasks — children inherit automatically.
+      </div>
       <label
         style={{
           display: "flex",

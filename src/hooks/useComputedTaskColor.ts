@@ -313,7 +313,7 @@ function computeTaskColor(
       // Non-summary children inherit from nearest summary parent
       const summaryParent = getNearestSummaryParent(task, allTasks);
       if (summaryParent) {
-        return summaryParent.color;
+        return summaryParent.colorOverride || summaryParent.color;
       }
 
       // Root level tasks keep their own color

@@ -434,6 +434,14 @@ export function TaskTableRow({
                       onChange={(value) => {
                         if (colorModeState.mode === "manual") {
                           updateTask(task.id, { color: value });
+                        } else if (
+                          colorModeState.mode === "summary" &&
+                          task.type === "summary"
+                        ) {
+                          updateTask(task.id, {
+                            color: value,
+                            colorOverride: undefined,
+                          });
                         } else {
                           updateTask(task.id, { colorOverride: value });
                         }
