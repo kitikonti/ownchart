@@ -512,6 +512,7 @@ export function ExportRenderer({
                 scale={scale}
                 rowIndex={index}
                 labelPosition={options.taskLabelPosition}
+                isExport
                 densityOverride={{
                   rowHeight: densityConfig.rowHeight,
                   taskBarHeight: densityConfig.taskBarHeight,

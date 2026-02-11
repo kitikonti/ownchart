@@ -36,6 +36,8 @@ interface TaskBarProps {
   };
   /** Task label position (Sprint 1.5.9). Defaults to 'inside' */
   labelPosition?: TaskLabelPosition;
+  /** Hide interactive handles (used for export) */
+  isExport?: boolean;
 }
 
 // Milestone diamond component
@@ -202,6 +204,7 @@ export const TaskBar = React.memo(function TaskBar({
   onDoubleClick,
   densityOverride,
   labelPosition = "inside",
+  isExport,
 }: TaskBarProps) {
   // Get density configuration for dynamic sizing
   const storeDensityConfig = useDensityConfig();
@@ -485,7 +488,7 @@ export const TaskBar = React.memo(function TaskBar({
       )}
 
       {/* Progress drag handle (bottom triangle + invisible hitzone) */}
-      {showProgress && geometry.width >= 30 && (
+      {showProgress && geometry.width >= 30 && !isExport && (
         <>
           {/* Invisible hitzone for easier grabbing */}
           <rect
