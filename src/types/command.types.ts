@@ -5,6 +5,7 @@
 
 import type { Task, TaskType } from "./chart.types";
 import type { Dependency, DateAdjustment } from "./dependency.types";
+import type { ColorModeState } from "./colorMode.types";
 
 export interface Command {
   id: string; // UUID for tracking
@@ -62,6 +63,9 @@ export enum CommandType {
 
   // Multi-task operations
   MULTI_DRAG_TASKS = "multiDragTasks",
+
+  // Color operations
+  APPLY_COLORS_TO_MANUAL = "applyColorsToManual",
 }
 
 export type CommandParams =
@@ -83,7 +87,8 @@ export type CommandParams =
   | CopyCellParams
   | CutCellParams
   | PasteCellParams
-  | MultiDragTasksParams;
+  | MultiDragTasksParams
+  | ApplyColorsToManualParams;
 
 // Specific parameter types for each command
 export interface AddTaskParams {
@@ -221,5 +226,16 @@ export interface MultiDragTasksParams {
     id: string;
     updates: Partial<Task>;
     previousValues: Partial<Task>;
+  }>;
+}
+
+// Apply colors to manual params
+export interface ApplyColorsToManualParams {
+  previousColorModeState: ColorModeState;
+  colorChanges: Array<{
+    id: string;
+    previousColor: string;
+    previousColorOverride: string | undefined;
+    newColor: string;
   }>;
 }

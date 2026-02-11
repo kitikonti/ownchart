@@ -41,6 +41,12 @@ import { holidayService } from "../../services/holidayService";
 import { calculateLabelPaddingDays } from "../../utils/textMeasurement";
 import { getCurrentDensityConfig } from "./userPreferencesSlice";
 import { TASK_COLUMNS } from "../../config/tableColumns";
+import { getComputedTaskColor } from "../../hooks/useComputedTaskColor";
+import { CommandType } from "../../types/command.types";
+import type { ApplyColorsToManualParams } from "../../types/command.types";
+import { useTaskStore } from "./taskSlice";
+import { useHistoryStore } from "./historySlice";
+import { useFileStore } from "./fileSlice";
 
 /**
  * Anchor point for zoom operations.
@@ -176,6 +182,7 @@ interface ChartActions {
   setTaskTypeOptions: (options: Partial<TaskTypeModeOptions>) => void;
   setHierarchyOptions: (options: Partial<HierarchyModeOptions>) => void;
   setColorModeState: (state: ColorModeState) => void;
+  applyColorsToManual: () => void;
 
   // Bulk settings update (for loading from file)
   setViewSettings: (settings: Partial<ChartState>) => void;
@@ -703,6 +710,60 @@ export const useChartStore = create<ChartState & ChartActions>()(
     setColorModeState: (newState: ColorModeState): void => {
       set((state) => {
         state.colorModeState = newState;
+      });
+    },
+
+    applyColorsToManual: (): void => {
+      const colorModeState = get().colorModeState;
+
+      // Guard: no-op if already in manual mode
+      if (colorModeState.mode === "manual") return;
+
+      const tasks = useTaskStore.getState().tasks;
+
+      // Capture previous state and compute new colors
+      const previousColorModeState = structuredClone(colorModeState);
+      const colorChanges: ApplyColorsToManualParams["colorChanges"] = [];
+
+      for (const task of tasks) {
+        const computedColor = getComputedTaskColor(task, tasks, colorModeState);
+        colorChanges.push({
+          id: task.id,
+          previousColor: task.color,
+          previousColorOverride: task.colorOverride,
+          newColor: computedColor,
+        });
+      }
+
+      // Apply colors to task store directly (avoid per-task history entries)
+      useTaskStore.setState((state: { tasks: Task[] }) => {
+        for (const change of colorChanges) {
+          const task = state.tasks.find((t: Task) => t.id === change.id);
+          if (task) {
+            task.color = change.newColor;
+            task.colorOverride = undefined;
+          }
+        }
+      });
+
+      // Switch to manual mode
+      set((state) => {
+        state.colorModeState.mode = "manual";
+      });
+
+      // Mark file dirty
+      useFileStore.getState().markDirty();
+
+      // Record history command
+      useHistoryStore.getState().recordCommand({
+        id: crypto.randomUUID(),
+        type: CommandType.APPLY_COLORS_TO_MANUAL,
+        timestamp: Date.now(),
+        description: "Apply colors to manual",
+        params: {
+          previousColorModeState,
+          colorChanges,
+        } as ApplyColorsToManualParams,
       });
     },
 

@@ -18,13 +18,14 @@
  * └──────────────────────────┘
  */
 
-import { Palette } from "@phosphor-icons/react";
+import { Palette, PaintBucket } from "@phosphor-icons/react";
 import { useChartStore } from "../../store/slices/chartSlice";
 import { useDropdown } from "../../hooks/useDropdown";
 import { DropdownTrigger } from "../Toolbar/DropdownTrigger";
 import { DropdownPanel } from "../Toolbar/DropdownPanel";
 import { DropdownItem } from "../Toolbar/DropdownItem";
 import { TOOLBAR } from "../../styles/design-tokens";
+import { Button } from "../common/Button";
 import type { ColorMode } from "../../types/colorMode.types";
 import {
   COLOR_PALETTES,
@@ -121,6 +122,9 @@ export function ColorDropdown({
   const setTaskTypeOptions = useChartStore((state) => state.setTaskTypeOptions);
   const setHierarchyOptions = useChartStore(
     (state) => state.setHierarchyOptions
+  );
+  const applyColorsToManual = useChartStore(
+    (state) => state.applyColorsToManual
   );
 
   const currentMode = colorModeState.mode;
@@ -458,6 +462,29 @@ export function ColorDropdown({
           <div style={{ overflowY: "auto", maxHeight: "320px" }}>
             {renderOptions()}
           </div>
+
+          {/* Apply Colors to Manual footer (only in auto modes) */}
+          {currentMode !== "manual" && (
+            <div
+              style={{
+                borderTop: "1px solid rgb(230, 230, 230)",
+                padding: "8px",
+              }}
+            >
+              <Button
+                variant="secondary"
+                fullWidth
+                icon={<PaintBucket size={16} weight="light" />}
+                onClick={() => {
+                  applyColorsToManual();
+                  close();
+                }}
+                title="Write current colors into each task and switch to manual mode"
+              >
+                Apply Colors to Manual
+              </Button>
+            </div>
+          )}
         </DropdownPanel>
       )}
     </div>

@@ -18,10 +18,12 @@ import type {
   PasteRowsParams,
   PasteCellParams,
   MultiDragTasksParams,
+  ApplyColorsToManualParams,
 } from "../../types/command.types";
 import { calculateDuration } from "../../utils/dateUtils";
 import { useTaskStore } from "./taskSlice";
 import { useDependencyStore } from "./dependencySlice";
+import { useChartStore } from "./chartSlice";
 import { recalculateSummaryAncestors } from "../../utils/hierarchy";
 
 interface HistoryState {
@@ -462,6 +464,22 @@ function executeUndoCommand(command: Command): void {
       break;
     }
 
+    case "applyColorsToManual": {
+      const params = command.params as ApplyColorsToManualParams;
+
+      // Restore previous color mode
+      useChartStore.getState().setColorModeState(params.previousColorModeState);
+
+      // Restore all task colors
+      params.colorChanges.forEach((change) => {
+        taskStore.updateTask(change.id, {
+          color: change.previousColor,
+          colorOverride: change.previousColorOverride,
+        });
+      });
+      break;
+    }
+
     default:
       console.warn("Unknown command type for undo:", command.type);
   }
@@ -745,6 +763,20 @@ function executeRedoCommand(command: Command): void {
         taskStore.updateTask(cascade.id, cascade.updates);
       });
 
+      break;
+    }
+
+    case "applyColorsToManual": {
+      const params = command.params as ApplyColorsToManualParams;
+
+      // Re-apply computed colors and switch to manual
+      params.colorChanges.forEach((change) => {
+        taskStore.updateTask(change.id, {
+          color: change.newColor,
+          colorOverride: undefined,
+        });
+      });
+      useChartStore.getState().setColorMode("manual");
       break;
     }
 
