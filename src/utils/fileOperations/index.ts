@@ -9,3 +9,4 @@ export * from "./validate";
 export * from "./sanitize";
 export * from "./migrate";
 export * from "./fileDialog";
+export * from "./loadFromFile";

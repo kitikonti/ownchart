@@ -12,14 +12,13 @@ import { useHistoryStore } from "../store/slices/historySlice";
 import { useDependencyStore } from "../store/slices/dependencySlice";
 import { useUIStore } from "../store/slices/uiSlice";
 import { serializeToGanttFile } from "../utils/fileOperations/serialize";
-import { deserializeGanttFile } from "../utils/fileOperations/deserialize";
 import {
   saveFile,
   openFile,
   clearFileHandle,
 } from "../utils/fileOperations/fileDialog";
+import { loadFileIntoApp } from "../utils/fileOperations/loadFromFile";
 import { sanitizeFilename } from "../utils/export/sanitizeFilename";
-import { DEFAULT_COLOR_MODE_STATE } from "../types/colorMode.types";
 
 /**
  * Generate a suggested filename from project title and current date.
@@ -46,11 +45,8 @@ export function useFileOperations(): {
 } {
   const tasks = useTaskStore((state) => state.tasks);
   const setTasks = useTaskStore((state) => state.setTasks);
-  const autoFitColumn = useTaskStore((state) => state.autoFitColumn);
   const taskTableWidth = useTaskStore((state) => state.taskTableWidth);
   const columnWidths = useTaskStore((state) => state.columnWidths);
-  const setColumnWidth = useTaskStore((state) => state.setColumnWidth);
-  const setTaskTableWidth = useTaskStore((state) => state.setTaskTableWidth);
 
   // View settings from chartSlice
   const zoom = useChartStore((state) => state.zoom);
@@ -73,13 +69,9 @@ export function useFileOperations(): {
   const projectAuthor = useChartStore((state) => state.projectAuthor);
   const setProjectTitle = useChartStore((state) => state.setProjectTitle);
   const setProjectAuthor = useChartStore((state) => state.setProjectAuthor);
-  const setViewSettings = useChartStore((state) => state.setViewSettings);
-  const signalFileLoaded = useChartStore((state) => state.signalFileLoaded);
-  const updateScale = useChartStore((state) => state.updateScale);
 
   // Sprint 1.4: Dependency store
   const dependencies = useDependencyStore((state) => state.dependencies);
-  const setDependencies = useDependencyStore((state) => state.setDependencies);
   const clearDependencies = useDependencyStore(
     (state) => state.clearDependencies
   );
@@ -205,103 +197,11 @@ export function useFileOperations(): {
         return;
       }
 
-      const { file } = result;
-      const parseResult = await deserializeGanttFile(
-        file.content,
-        file.name,
-        file.size
-      );
-
-      if (!parseResult.success) {
-        toast.error(parseResult.error!.message);
-        return;
-      }
-
-      // Load data
-      setTasks(parseResult.data!.tasks);
-      setDependencies(parseResult.data!.dependencies || []); // Sprint 1.4
-      resetExportOptions(parseResult.data!.exportSettings); // Sprint 1.6
-
-      // Load view settings from file (Sprint 1.5.9)
-      const loadedViewSettings = parseResult.data!.viewSettings;
-      setViewSettings({
-        zoom: loadedViewSettings.zoom,
-        panOffset: loadedViewSettings.panOffset,
-        showWeekends: loadedViewSettings.showWeekends,
-        showTodayMarker: loadedViewSettings.showTodayMarker,
-        showHolidays: loadedViewSettings.showHolidays ?? true,
-        showDependencies: loadedViewSettings.showDependencies ?? true,
-        showProgress: loadedViewSettings.showProgress ?? true,
-        taskLabelPosition: loadedViewSettings.taskLabelPosition ?? "inside",
-        workingDaysMode: loadedViewSettings.workingDaysMode ?? false,
-        workingDaysConfig: loadedViewSettings.workingDaysConfig ?? {
-          excludeSaturday: true,
-          excludeSunday: true,
-          excludeHolidays: true,
-        },
-        holidayRegion: loadedViewSettings.holidayRegion, // Use file's region, undefined keeps current
-        projectTitle: loadedViewSettings.projectTitle ?? "",
-        projectAuthor: loadedViewSettings.projectAuthor ?? "",
-        colorModeState:
-          loadedViewSettings.colorModeState ?? DEFAULT_COLOR_MODE_STATE,
-        hiddenColumns: loadedViewSettings.hiddenColumns ?? [],
-        isTaskTableCollapsed: loadedViewSettings.isTaskTableCollapsed ?? false,
-      });
-
-      // Update scale immediately with new tasks and zoom (before signalFileLoaded)
-      // This ensures GanttLayout sees the correct scale when positioning the scroll
-      updateScale(parseResult.data!.tasks);
-
-      // Signal that a file was loaded (triggers scroll positioning in GanttLayout)
-      signalFileLoaded();
-
-      // Restore column widths from file
-      if (loadedViewSettings.taskTableWidth !== undefined) {
-        setTaskTableWidth(loadedViewSettings.taskTableWidth);
-      }
-      if (loadedViewSettings.columnWidths) {
-        Object.entries(loadedViewSettings.columnWidths).forEach(
-          ([columnId, width]) => {
-            setColumnWidth(columnId, width);
-          }
-        );
-      }
-
-      // Only auto-fit if no column widths were saved in file
-      if (
-        !loadedViewSettings.columnWidths ||
-        Object.keys(loadedViewSettings.columnWidths).length === 0
-      ) {
-        autoFitColumn("name");
-      }
-      clearHistory();
-      fileState.setFileName(file.name);
-      fileState.setChartId(parseResult.data!.chartId);
-      fileState.setLastSaved(new Date());
-      fileState.markClean();
-
-      // Show warnings
-      if (parseResult.warnings) {
-        parseResult.warnings.forEach((w) => toast(w, { icon: "ℹ️" }));
-      }
-
-      toast.success(`Opened "${file.name}"`);
+      await loadFileIntoApp(result.file);
     } catch (e) {
       toast.error(`Open failed: ${(e as Error).message}`);
     }
-  }, [
-    fileState,
-    setTasks,
-    setDependencies,
-    resetExportOptions,
-    setViewSettings,
-    updateScale,
-    signalFileLoaded,
-    setColumnWidth,
-    setTaskTableWidth,
-    autoFitColumn,
-    clearHistory,
-  ]);
+  }, [fileState]);
 
   // New (Ctrl+N)
   const handleNew = useCallback(async () => {

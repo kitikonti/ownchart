@@ -14,6 +14,7 @@ import { useKeyboardShortcuts } from "./hooks/useKeyboardShortcuts";
 import { useUnsavedChanges } from "./hooks/useUnsavedChanges";
 import { useMultiTabPersistence } from "./hooks/useMultiTabPersistence";
 import { useDocumentTitle } from "./hooks/useDocumentTitle";
+import { useLaunchQueue } from "./hooks/useLaunchQueue";
 import { useUIStore } from "./store/slices/uiSlice";
 import { useUserPreferencesStore } from "./store/slices/userPreferencesSlice";
 
@@ -34,6 +35,9 @@ function App(): JSX.Element {
 
   // Update browser tab title with filename
   useDocumentTitle();
+
+  // Handle OS file association via PWA LaunchQueue API
+  useLaunchQueue();
 
   // Check for first-time user on mount and initialize density
   useEffect(() => {
