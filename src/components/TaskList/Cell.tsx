@@ -71,6 +71,7 @@ export function Cell({
   children,
 }: CellProps): JSX.Element {
   const cellRef = useRef<HTMLDivElement>(null);
+  const inputRef = useRef<HTMLInputElement>(null);
   const [localValue, setLocalValue] = useState<string>("");
   const [error, setError] = useState<string | null>(null);
   const shouldOverwriteRef = useRef<boolean>(false);
@@ -111,6 +112,13 @@ export function Cell({
       cellRef.current.focus({ preventScroll: true });
     }
   }, [isActive, isEditing]);
+
+  // Focus input when entering edit mode (preventScroll avoids horizontal jump)
+  useEffect(() => {
+    if (isEditing && inputRef.current) {
+      inputRef.current.focus({ preventScroll: true });
+    }
+  }, [isEditing]);
 
   // Initialize local value when entering edit mode
   useEffect(() => {
@@ -434,6 +442,7 @@ export function Cell({
         ) : (
           // Default input
           <input
+            ref={inputRef}
             type={
               column.renderer === "date"
                 ? "date"
@@ -445,8 +454,6 @@ export function Cell({
             onChange={(e) => setLocalValue(e.target.value)}
             onKeyDown={handleEditKeyDown}
             onBlur={saveValue}
-            /* eslint-disable-next-line jsx-a11y/no-autofocus -- intentional autofocus when entering edit mode */
-            autoFocus
             className="w-full px-0 py-0 border-0 focus:outline-none bg-transparent"
             style={{ fontSize: "inherit" }}
           />
