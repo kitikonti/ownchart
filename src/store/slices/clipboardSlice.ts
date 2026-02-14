@@ -30,6 +30,7 @@ import {
   buildFlattenedTaskList,
   getTaskLevel,
   calculateSummaryDates,
+  MAX_HIERARCHY_DEPTH,
 } from "../../utils/hierarchy";
 
 interface ClipboardState {
@@ -283,12 +284,10 @@ export const useClipboardStore = create<ClipboardStore>()(
         ...remappedTasks.map(getDepthInPasted),
         0
       );
-      const MAX_DEPTH = 3; // 0, 1, 2 (3 levels total)
-
-      // Validate depth: targetParentLevel + maxPastedDepth must be < MAX_DEPTH
-      if (targetParentLevel + maxPastedDepth >= MAX_DEPTH) {
+      // Validate depth: targetParentLevel + maxPastedDepth must be < MAX_HIERARCHY_DEPTH
+      if (targetParentLevel + maxPastedDepth >= MAX_HIERARCHY_DEPTH) {
         toast.error(
-          `Cannot paste: would exceed maximum nesting depth of ${MAX_DEPTH} levels`
+          `Cannot paste: would exceed maximum nesting depth of ${MAX_HIERARCHY_DEPTH} levels`
         );
         return { success: false, error: "Maximum nesting depth exceeded" };
       }
@@ -731,11 +730,9 @@ export const useClipboardStore = create<ClipboardStore>()(
         ...remappedTasks.map(getDepthInPasted),
         0
       );
-      const MAX_DEPTH = 3;
-
-      if (targetParentLevel + maxPastedDepth >= MAX_DEPTH) {
+      if (targetParentLevel + maxPastedDepth >= MAX_HIERARCHY_DEPTH) {
         toast.error(
-          `Cannot paste: would exceed maximum nesting depth of ${MAX_DEPTH} levels`
+          `Cannot paste: would exceed maximum nesting depth of ${MAX_HIERARCHY_DEPTH} levels`
         );
         return { success: false, error: "Maximum nesting depth exceeded" };
       }

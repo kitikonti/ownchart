@@ -7,6 +7,12 @@
 import type { Task } from "../types/chart.types";
 
 /**
+ * Maximum hierarchy depth (number of levels: 0, 1, 2).
+ * Used by clipboard paste validation and group-selection validation.
+ */
+export const MAX_HIERARCHY_DEPTH = 3;
+
+/**
  * Get all children of a task (direct children only).
  */
 export function getTaskChildren(
