@@ -24,6 +24,7 @@ import { calculateDuration } from "../../utils/dateUtils";
 import { useTaskStore } from "./taskSlice";
 import { useDependencyStore } from "./dependencySlice";
 import { useChartStore } from "./chartSlice";
+import { useFileStore } from "./fileSlice";
 import { recalculateSummaryAncestors } from "../../utils/hierarchy";
 
 interface HistoryState {
@@ -57,6 +58,17 @@ interface HistoryActions {
 type HistoryStore = HistoryState & HistoryActions;
 
 const MAX_STACK_SIZE = 100; // Limit to prevent memory issues
+
+// Command types that don't modify persisted data (clipboard snapshots, selection state)
+const NON_DATA_COMMANDS = new Set([
+  "copyRows",
+  "cutRows",
+  "copyCell",
+  "cutCell",
+  "toggleTaskSelection",
+  "selectTaskRange",
+  "clearSelection",
+]);
 
 export const useHistoryStore = create<HistoryStore>()(
   immer((set, get) => ({
@@ -113,6 +125,11 @@ export const useHistoryStore = create<HistoryStore>()(
           }
         });
 
+        // Mark file dirty for data-modifying operations
+        if (!NON_DATA_COMMANDS.has(command.type)) {
+          useFileStore.getState().markDirty();
+        }
+
         // Show toast notification
         toast.success(`↶ ${command.description}`);
       } catch (error) {
@@ -151,6 +168,11 @@ export const useHistoryStore = create<HistoryStore>()(
             state.undoStack.push(cmd);
           }
         });
+
+        // Mark file dirty for data-modifying operations
+        if (!NON_DATA_COMMANDS.has(command.type)) {
+          useFileStore.getState().markDirty();
+        }
 
         // Show toast notification
         toast.success(`↷ ${command.description}`);
