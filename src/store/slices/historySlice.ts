@@ -19,13 +19,17 @@ import type {
   PasteCellParams,
   MultiDragTasksParams,
   ApplyColorsToManualParams,
+  GroupTasksParams,
 } from "../../types/command.types";
 import { calculateDuration } from "../../utils/dateUtils";
 import { useTaskStore } from "./taskSlice";
 import { useDependencyStore } from "./dependencySlice";
 import { useChartStore } from "./chartSlice";
 import { useFileStore } from "./fileSlice";
-import { recalculateSummaryAncestors } from "../../utils/hierarchy";
+import {
+  recalculateSummaryAncestors,
+  normalizeTaskOrder,
+} from "../../utils/hierarchy";
 
 interface HistoryState {
   undoStack: Command[];
@@ -502,6 +506,43 @@ function executeUndoCommand(command: Command): void {
       break;
     }
 
+    case "groupTasks": {
+      const params = command.params as GroupTasksParams;
+
+      // Deep clone to avoid Immer frozen objects, then remove summary
+      const currentTasks = useTaskStore
+        .getState()
+        .tasks.filter((t) => t.id !== params.summaryTaskId)
+        .map((t) => ({ ...t }));
+
+      // Restore each child's old parent
+      for (const change of params.changes) {
+        const task = currentTasks.find((t) => t.id === change.taskId);
+        if (task) {
+          task.parent = change.oldParent;
+        }
+      }
+
+      // Restore previous order
+      for (const orderEntry of params.previousOrder) {
+        const task = currentTasks.find((t) => t.id === orderEntry.id);
+        if (task) {
+          task.order = orderEntry.order;
+        }
+      }
+
+      // Revert cascade updates
+      for (const cascade of params.cascadeUpdates) {
+        const task = currentTasks.find((t) => t.id === cascade.id);
+        if (task) {
+          Object.assign(task, cascade.previousValues);
+        }
+      }
+
+      useTaskStore.setState({ tasks: currentTasks });
+      break;
+    }
+
     default:
       console.warn("Unknown command type for undo:", command.type);
   }
@@ -799,6 +840,32 @@ function executeRedoCommand(command: Command): void {
         });
       });
       useChartStore.getState().setColorMode("manual");
+      break;
+    }
+
+    case "groupTasks": {
+      const params = command.params as GroupTasksParams;
+
+      // Re-add the summary task and reparent children
+      const currentTasks = useTaskStore.getState().tasks.map((t) => ({ ...t }));
+      currentTasks.push({ ...params.summaryTask });
+
+      // Reparent children under summary
+      for (const change of params.changes) {
+        const task = currentTasks.find((t) => t.id === change.taskId);
+        if (task) {
+          task.parent = params.summaryTaskId;
+        }
+      }
+
+      // Normalize order and recalculate summaries
+      normalizeTaskOrder(currentTasks);
+      const affectedParents = new Set<string>([params.summaryTaskId]);
+      if (params.summaryTask.parent)
+        affectedParents.add(params.summaryTask.parent);
+      recalculateSummaryAncestors(currentTasks, affectedParents);
+
+      useTaskStore.setState({ tasks: currentTasks });
       break;
     }
 

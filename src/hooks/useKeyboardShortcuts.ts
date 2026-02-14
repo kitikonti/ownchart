@@ -46,6 +46,7 @@ export function useKeyboardShortcuts(): void {
   const outdentSelectedTasks = useTaskStore(
     (state) => state.outdentSelectedTasks
   );
+  const groupSelectedTasks = useTaskStore((state) => state.groupSelectedTasks);
 
   // View toggle shortcuts (Sprint 1.5.9)
   const toggleDependencies = useChartStore((state) => state.toggleDependencies);
@@ -270,6 +271,13 @@ export function useKeyboardShortcuts(): void {
         return;
       }
 
+      // Ctrl+G: Group selected tasks
+      if (modKey && e.key.toLowerCase() === "g" && !isEditingCell) {
+        e.preventDefault();
+        groupSelectedTasks();
+        return;
+      }
+
       // ? key: Open help panel (when not in text input)
       if (e.key === "?" && !isTextInput && !isCellActive) {
         e.preventDefault();
@@ -348,6 +356,7 @@ export function useKeyboardShortcuts(): void {
     insertMultipleTasksAbove,
     indentSelectedTasks,
     outdentSelectedTasks,
+    groupSelectedTasks,
     openExportDialog,
     openHelpPanel,
     closeExportDialog,

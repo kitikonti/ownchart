@@ -57,6 +57,7 @@ export const COLORS = {
     dependencySelected: "#334155",
     todayMarker: "#0F6CBD", // brand-600 for today marker
     todayHighlight: "#EBF3FC", // brand-50 for today header cell background
+    taskDefault: "#0F6CBD", // brand-600 for new tasks
   },
 } as const;
 

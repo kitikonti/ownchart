@@ -10,6 +10,7 @@ import {
   wouldCreateCircularHierarchy,
   getTaskLevel,
   getTaskDescendants,
+  MAX_HIERARCHY_DEPTH,
   getTaskChildren,
   buildFlattenedTaskList,
   calculateSummaryDates,
@@ -25,6 +26,7 @@ import { TASK_COLUMNS } from "../../config/tableColumns";
 import { calculateColumnWidth } from "../../utils/textMeasurement";
 import { useUserPreferencesStore } from "./userPreferencesSlice";
 import { useChartStore } from "./chartSlice";
+import { COLORS } from "../../styles/design-tokens";
 
 /**
  * Editable field types for cell-based editing.
@@ -113,6 +115,8 @@ interface TaskActions {
   outdentSelectedTasks: () => void;
   canIndentSelection: () => boolean;
   canOutdentSelection: () => boolean;
+  groupSelectedTasks: () => void;
+  canGroupSelection: () => boolean;
 
   // Summary task creation
   createSummaryTask: (data: Omit<Task, "id" | "type">) => string;
@@ -129,6 +133,105 @@ interface TaskActions {
  * Combined store interface.
  */
 type TaskStore = TaskState & TaskActions;
+
+/**
+ * Given a set of selected task IDs, returns only the topmost ancestors.
+ * If a parent and its child are both selected, only the parent is kept.
+ */
+function getRootSelectedIds(tasks: Task[], selectedIds: string[]): string[] {
+  const selectedSet = new Set(selectedIds);
+  return selectedIds.filter((id) => {
+    let current = tasks.find((t) => t.id === id);
+    while (current?.parent) {
+      if (selectedSet.has(current.parent)) return false;
+      current = tasks.find((t) => t.id === current!.parent);
+    }
+    return true;
+  });
+}
+
+/**
+ * Validates whether the current selection can be grouped.
+ * Returns root IDs on success, or an error message string on failure.
+ */
+function validateGroupSelection(
+  tasks: Task[],
+  selectedIds: string[]
+): { rootIds: string[] } | { error: string } {
+  if (selectedIds.length === 0) return { error: "No tasks selected" };
+
+  const rootIds = getRootSelectedIds(tasks, selectedIds);
+  if (rootIds.length === 0) return { error: "No root tasks in selection" };
+
+  // All must share the same parent
+  const parents = new Set(
+    rootIds.map((id) => tasks.find((t) => t.id === id)?.parent)
+  );
+  if (parents.size !== 1) {
+    return { error: "Cannot group: selected tasks must share the same parent" };
+  }
+
+  // Check nesting depth: grouping pushes tasks one level deeper
+  for (const id of rootIds) {
+    const level = getTaskLevel(tasks, id);
+    if (level + 1 >= MAX_HIERARCHY_DEPTH) {
+      return {
+        error: "Cannot group: maximum nesting depth would be exceeded",
+      };
+    }
+    const descendants = getTaskDescendants(tasks, id);
+    for (const desc of descendants) {
+      if (getTaskLevel(tasks, desc.id) + 1 >= MAX_HIERARCHY_DEPTH) {
+        return {
+          error: "Cannot group: maximum nesting depth would be exceeded",
+        };
+      }
+    }
+  }
+
+  return { rootIds };
+}
+
+/**
+ * Calculate the date span across tasks and their descendants.
+ */
+function calculateGroupDates(
+  tasks: Task[],
+  rootIds: string[]
+): { startDate: string; endDate: string; duration: number } {
+  const allDates: { start: string; end: string }[] = [];
+
+  for (const id of rootIds) {
+    const task = tasks.find((t) => t.id === id);
+    if (task?.startDate && task.endDate) {
+      allDates.push({ start: task.startDate, end: task.endDate });
+    }
+    const descs = getTaskDescendants(tasks, id);
+    for (const d of descs) {
+      if (d.startDate && d.endDate) {
+        allDates.push({ start: d.startDate, end: d.endDate });
+      }
+    }
+  }
+
+  if (allDates.length === 0) {
+    return { startDate: "", endDate: "", duration: 0 };
+  }
+
+  const startDate = allDates.reduce(
+    (min, d) => (d.start < min ? d.start : min),
+    allDates[0].start
+  );
+  const endDate = allDates.reduce(
+    (max, d) => (d.end > max ? d.end : max),
+    allDates[0].end
+  );
+  const startMs = new Date(startDate).getTime();
+  const endMs = new Date(endDate).getTime();
+  const duration = Math.round((endMs - startMs) / (1000 * 60 * 60 * 24)) + 1;
+
+  return { startDate, endDate, duration };
+}
 
 /**
  * Task store hook with immer middleware for immutable updates.
@@ -1233,7 +1336,7 @@ export const useTaskStore = create<TaskStore>()(
         endDate,
         duration: DEFAULT_DURATION,
         progress: 0,
-        color: "#0F6CBD",
+        color: COLORS.chart.taskDefault,
         order: refIndex,
         type: "task",
         parent: refTask.parent, // Same hierarchy level
@@ -1324,7 +1427,7 @@ export const useTaskStore = create<TaskStore>()(
           endDate,
           duration: DEFAULT_DURATION,
           progress: 0,
-          color: "#0F6CBD",
+          color: COLORS.chart.taskDefault,
           order: refIndex + i, // Will be normalized
           type: "task",
           parent: refTask.parent,
@@ -1419,7 +1522,7 @@ export const useTaskStore = create<TaskStore>()(
         endDate,
         duration: DEFAULT_DURATION,
         progress: 0,
-        color: "#0F6CBD",
+        color: COLORS.chart.taskDefault,
         order: refIndex + 1,
         type: "task",
         parent: refTask.parent, // Same hierarchy level
@@ -1733,6 +1836,126 @@ export const useTaskStore = create<TaskStore>()(
         const task = tasks.find((t) => t.id === taskId);
         return task?.parent !== undefined && task?.parent !== null;
       });
+    },
+
+    canGroupSelection: (): boolean => {
+      const { tasks, selectedTaskIds } = get();
+      const result = validateGroupSelection(tasks, selectedTaskIds);
+      return "rootIds" in result;
+    },
+
+    groupSelectedTasks: (): void => {
+      const historyStore = useHistoryStore.getState();
+      const { tasks, selectedTaskIds } = get();
+
+      const validation = validateGroupSelection(tasks, selectedTaskIds);
+      if ("error" in validation) {
+        if (selectedTaskIds.length > 0) {
+          toast.error(validation.error);
+        }
+        return;
+      }
+
+      const { rootIds } = validation;
+      const commonParent = tasks.find((t) => t.id === rootIds[0])?.parent;
+
+      // Find insertion position: topmost selected task in visual order
+      const flatList = buildFlattenedTaskList(tasks, new Set<string>());
+      const rootIdSet = new Set(rootIds);
+      let insertVisualIndex = flatList.length;
+      for (let i = 0; i < flatList.length; i++) {
+        if (rootIdSet.has(flatList[i].task.id)) {
+          insertVisualIndex = i;
+          break;
+        }
+      }
+
+      // Calculate summary dates from selected tasks and their descendants
+      const dates = calculateGroupDates(tasks, rootIds);
+
+      // Capture snapshots for undo
+      const previousOrder = tasks.map((t) => ({ id: t.id, order: t.order }));
+      const changes = rootIds.map((id) => {
+        const task = tasks.find((t) => t.id === id);
+        return {
+          taskId: id,
+          oldParent: task?.parent,
+          oldOrder: task?.order ?? 0,
+        };
+      });
+
+      // Create summary task
+      const summaryId = crypto.randomUUID();
+      const insertOrder =
+        insertVisualIndex < flatList.length
+          ? flatList[insertVisualIndex].task.order
+          : tasks.length;
+
+      const summaryTask: Task = {
+        id: summaryId,
+        name: "New Group",
+        startDate: dates.startDate,
+        endDate: dates.endDate,
+        duration: dates.duration,
+        progress: 0,
+        color: COLORS.chart.taskDefault,
+        order: insertOrder,
+        type: "summary",
+        parent: commonParent,
+        open: true,
+        metadata: {},
+      };
+
+      const cascadeUpdates: Array<{
+        id: string;
+        updates: Partial<Task>;
+        previousValues: Partial<Task>;
+      }> = [];
+
+      set((state) => {
+        state.tasks.push(summaryTask);
+
+        for (const id of rootIds) {
+          const task = state.tasks.find((t) => t.id === id);
+          if (task) {
+            task.parent = summaryId;
+          }
+        }
+
+        normalizeTaskOrder(state.tasks);
+
+        const affectedParents = new Set<string>([summaryId]);
+        if (commonParent) affectedParents.add(commonParent);
+        const results = recalculateSummaryAncestors(
+          state.tasks,
+          affectedParents
+        );
+        cascadeUpdates.push(...results);
+
+        state.activeCell = { taskId: summaryId, field: "name" };
+        state.selectedTaskIds = [];
+      });
+
+      useFileStore.getState().markDirty();
+
+      if (!historyStore.isUndoing && !historyStore.isRedoing) {
+        historyStore.recordCommand({
+          id: crypto.randomUUID(),
+          type: CommandType.GROUP_TASKS,
+          timestamp: Date.now(),
+          description:
+            rootIds.length === 1
+              ? "Grouped 1 task"
+              : `Grouped ${rootIds.length} tasks`,
+          params: {
+            summaryTaskId: summaryId,
+            summaryTask,
+            changes,
+            previousOrder,
+            cascadeUpdates,
+          },
+        });
+      }
     },
   }))
 );

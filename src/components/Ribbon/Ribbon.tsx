@@ -24,6 +24,7 @@ import {
   RowsPlusBottom,
   TextOutdent,
   TextIndent,
+  BoundingBox,
   FlowArrow,
   Question,
   MagnifyingGlassPlus,
@@ -69,6 +70,7 @@ import { useUserPreferencesStore } from "../../store/slices/userPreferencesSlice
 import { useFileOperations } from "../../hooks/useFileOperations";
 import { useClipboardOperations } from "../../hooks/useClipboardOperations";
 import { getViewportCenterAnchor, applyScrollLeft } from "../../hooks/useZoom";
+import { COLORS } from "../../styles/design-tokens";
 import { MIN_ZOOM, MAX_ZOOM } from "../../utils/timelineUtils";
 import {
   LABEL_OPTIONS,
@@ -114,6 +116,8 @@ export function Ribbon(): JSX.Element {
   );
   const canIndent = useTaskStore((state) => state.canIndentSelection());
   const canOutdent = useTaskStore((state) => state.canOutdentSelection());
+  const groupSelectedTasks = useTaskStore((state) => state.groupSelectedTasks);
+  const canGroup = useTaskStore((state) => state.canGroupSelection());
 
   // Chart store
   const zoom = useChartStore((state) => state.zoom);
@@ -254,7 +258,7 @@ export function Ribbon(): JSX.Element {
       endDate: formatDate(nextWeek),
       duration: 7,
       progress: 0,
-      color: "#0F6CBD",
+      color: COLORS.chart.taskDefault,
       order: tasks.length,
       type: "task",
       parent: undefined,
@@ -397,6 +401,13 @@ export function Ribbon(): JSX.Element {
           title="Move right (indent) - Alt+Shift+Right"
           aria-label="Indent"
           icon={<TextIndent size={ICON_SIZE} weight="light" />}
+        />
+        <ToolbarButton
+          onClick={groupSelectedTasks}
+          disabled={!canGroup}
+          title="Group selected tasks (Ctrl+G)"
+          aria-label="Group selected tasks"
+          icon={<BoundingBox size={ICON_SIZE} weight="light" />}
         />
       </ToolbarGroup>
 

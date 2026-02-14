@@ -117,6 +117,11 @@ export function Cell({
   useEffect(() => {
     if (isEditing && inputRef.current) {
       inputRef.current.focus({ preventScroll: true });
+      // Select all text for programmatic edit entry (e.g. Enter, F2, group action).
+      // Skip when user typed a character — shouldOverwrite already set the value.
+      if (!shouldOverwriteRef.current) {
+        inputRef.current.select();
+      }
     }
   }, [isEditing]);
 

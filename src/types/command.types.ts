@@ -31,6 +31,7 @@ export enum CommandType {
   MOVE_TASK_TO_PARENT = "moveTaskToParent",
   INDENT_TASKS = "indentSelectedTasks",
   OUTDENT_TASKS = "outdentSelectedTasks",
+  GROUP_TASKS = "groupTasks",
 
   // Type conversions
   CONVERT_TO_SUMMARY = "convertToSummary",
@@ -88,7 +89,8 @@ export type CommandParams =
   | CutCellParams
   | PasteCellParams
   | MultiDragTasksParams
-  | ApplyColorsToManualParams;
+  | ApplyColorsToManualParams
+  | GroupTasksParams;
 
 // Specific parameter types for each command
 export interface AddTaskParams {
@@ -237,5 +239,22 @@ export interface ApplyColorsToManualParams {
     previousColor: string;
     previousColorOverride: string | undefined;
     newColor: string;
+  }>;
+}
+
+// Group tasks params
+export interface GroupTasksParams {
+  summaryTaskId: string;
+  summaryTask: Task;
+  changes: Array<{
+    taskId: string;
+    oldParent: string | undefined;
+    oldOrder: number;
+  }>;
+  previousOrder: Array<{ id: string; order: number }>;
+  cascadeUpdates: Array<{
+    id: string;
+    updates: Partial<Task>;
+    previousValues: Partial<Task>;
   }>;
 }
