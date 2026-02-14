@@ -543,7 +543,7 @@ export function calculateExportDimensions(
   currentAppZoom: number = 1,
   projectDateRange?: { start: Date; end: Date },
   visibleDateRange?: { start: Date; end: Date }
-): { width: number; height: number } {
+): { width: number; height: number; effectiveZoom: number } {
   // Get density configuration based on selected density
   const densityConfig = DENSITY_CONFIG[options.density];
 
@@ -647,5 +647,9 @@ export function calculateExportDimensions(
   const totalHeight =
     (options.includeHeader ? HEADER_HEIGHT : 0) + contentHeight;
 
-  return { width: Math.round(totalWidth), height: Math.round(totalHeight) };
+  return {
+    width: Math.round(totalWidth),
+    height: Math.round(totalHeight),
+    effectiveZoom,
+  };
 }

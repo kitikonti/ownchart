@@ -84,6 +84,7 @@ export {
   calculateOptimalColumnWidth,
   calculateOptimalColumnWidths,
 } from "./calculations";
+export { calculatePdfFitToWidth } from "./pdfLayout";
 
 import {
   captureChart,

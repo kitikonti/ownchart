@@ -14,15 +14,19 @@ import type { Task } from "../../types/chart.types";
 import type { Dependency } from "../../types/dependency.types";
 import type { TimelineScale } from "../timelineUtils";
 import type { ExportOptions, PdfExportOptions, ExportColumnKey } from "./types";
-import { getPageDimensions, getMargins, mmToPx } from "./pdfLayout";
-import { PNG_EXPORT_DPI, MM_PER_INCH } from "./dpi";
+import {
+  getPageDimensions,
+  getMargins,
+  mmToPx,
+  calculatePdfFitToWidth,
+} from "./pdfLayout";
 import {
   ExportRenderer,
   calculateExportDimensions,
 } from "../../components/Export/ExportRenderer";
 import { calculateTaskTableWidth } from "./calculations";
 import { buildFlattenedTaskList } from "../hierarchy";
-import { DENSITY_CONFIG, type DateFormat } from "../../types/preferences.types";
+import { type DateFormat } from "../../types/preferences.types";
 import { formatDateByPreference } from "../dateUtils";
 import { SVG_FONT_FAMILY } from "./constants";
 import { registerInterFont } from "./interFont";
@@ -86,57 +90,11 @@ export async function exportToPdf(params: ExportToPdfParams): Promise<void> {
   // For "fit to page" mode, calculate optimal fitToWidth based on content and page
   let effectiveOptions = options;
   if (options.zoomMode === "fitToWidth") {
-    const pageDims = getPageDimensions(pdfOptions);
-    const margins = getMargins(pdfOptions);
-
-    // Calculate available space for content (accounting for margins and header/footer)
-    const headerReserved =
-      pdfOptions.header.showProjectName ||
-      pdfOptions.header.showAuthor ||
-      pdfOptions.header.showExportDate
-        ? 10
-        : 0;
-    const footerReserved =
-      pdfOptions.footer.showProjectName ||
-      pdfOptions.footer.showAuthor ||
-      pdfOptions.footer.showExportDate
-        ? 10
-        : 0;
-    const availableWidthMm = pageDims.width - margins.left - margins.right;
-    const availableHeightMm =
-      pageDims.height -
-      margins.top -
-      margins.bottom -
-      headerReserved -
-      footerReserved;
-
-    // Convert to pixels at PNG_EXPORT_DPI for consistency with PNG presets
-    const availableWidthPx = (availableWidthMm / MM_PER_INCH) * PNG_EXPORT_DPI;
-    const availableHeightPx =
-      (availableHeightMm / MM_PER_INCH) * PNG_EXPORT_DPI;
-
-    // Calculate content height based on task count
-    const densityConfig = DENSITY_CONFIG[options.density];
-    const contentHeaderHeight = options.includeHeader ? HEADER_HEIGHT : 0;
-    const flattenedTasks = buildFlattenedTaskList(tasks, new Set<string>());
-    const contentHeightPx =
-      flattenedTasks.length * densityConfig.rowHeight + contentHeaderHeight;
-
-    // Base width matches PNG preset (full page at 150 DPI)
-    const baseWidthPx = (pageDims.width / MM_PER_INCH) * PNG_EXPORT_DPI;
-
-    // If content is taller than available space, it will be scaled down.
-    // To fill the page after scaling, we need a wider content.
-    // Formula: optimalWidth = contentHeight * (availableWidth / availableHeight)
-    let optimalFitToWidth = baseWidthPx;
-    if (contentHeightPx > availableHeightPx) {
-      const pageAspectRatio = availableWidthPx / availableHeightPx;
-      optimalFitToWidth = Math.max(
-        baseWidthPx,
-        Math.round(contentHeightPx * pageAspectRatio)
-      );
-    }
-
+    const optimalFitToWidth = calculatePdfFitToWidth(
+      tasks,
+      options,
+      pdfOptions
+    );
     effectiveOptions = {
       ...options,
       fitToWidth: optimalFitToWidth,

@@ -3,9 +3,13 @@
  * Handles coordinate conversion and printable area calculation.
  */
 
-import type { PdfExportOptions, PdfMargins } from "./types";
+import type { PdfExportOptions, PdfMargins, ExportOptions } from "./types";
 import { PDF_PAGE_SIZES, PDF_MARGIN_PRESETS } from "./types";
-import { INTERNAL_DPI, MM_PER_INCH } from "./dpi";
+import { INTERNAL_DPI, MM_PER_INCH, PNG_EXPORT_DPI } from "./dpi";
+import type { Task } from "../../types/chart.types";
+import { buildFlattenedTaskList } from "../hierarchy";
+import { DENSITY_CONFIG } from "../../types/preferences.types";
+import { HEADER_HEIGHT } from "./constants";
 
 // Re-export DPI constants for backwards compatibility
 export { INTERNAL_DPI, PNG_EXPORT_DPI, MM_PER_INCH } from "./dpi";
@@ -238,4 +242,76 @@ export function truncateText(
 
   // Truncate with ellipsis
   return text.substring(0, maxChars - 3) + "...";
+}
+
+/**
+ * Calculate the optimal fitToWidth for PDF "Fit to Page" mode.
+ *
+ * In PDF export, the rendered content is scaled to fit the printable area.
+ * When content is taller than the page, scaling down reduces the effective width.
+ * This function calculates a wider fitToWidth so that after scaling, the content
+ * fills the page width.
+ *
+ * @param tasks - All tasks to export
+ * @param options - Export options (for density, header, etc.)
+ * @param pdfOptions - PDF-specific options (page size, margins, header/footer)
+ * @returns Optimal fitToWidth in pixels
+ */
+export function calculatePdfFitToWidth(
+  tasks: Task[],
+  options: ExportOptions,
+  pdfOptions: PdfExportOptions
+): number {
+  const pageDims = getPageDimensions(pdfOptions);
+  const margins = getMargins(pdfOptions);
+
+  // Calculate reserved space for PDF header/footer
+  const headerReserved =
+    pdfOptions.header.showProjectName ||
+    pdfOptions.header.showAuthor ||
+    pdfOptions.header.showExportDate
+      ? 10
+      : 0;
+  const footerReserved =
+    pdfOptions.footer.showProjectName ||
+    pdfOptions.footer.showAuthor ||
+    pdfOptions.footer.showExportDate
+      ? 10
+      : 0;
+
+  const availableWidthMm = pageDims.width - margins.left - margins.right;
+  const availableHeightMm =
+    pageDims.height -
+    margins.top -
+    margins.bottom -
+    headerReserved -
+    footerReserved;
+
+  // Convert to pixels at PNG_EXPORT_DPI for consistency with PNG presets
+  const availableWidthPx = (availableWidthMm / MM_PER_INCH) * PNG_EXPORT_DPI;
+  const availableHeightPx = (availableHeightMm / MM_PER_INCH) * PNG_EXPORT_DPI;
+
+  // Calculate content height based on task count
+  const densityConfig = DENSITY_CONFIG[options.density];
+  const contentHeaderHeight = options.includeHeader ? HEADER_HEIGHT : 0;
+  const flattenedTasks = buildFlattenedTaskList(tasks, new Set<string>());
+  const contentHeightPx =
+    flattenedTasks.length * densityConfig.rowHeight + contentHeaderHeight;
+
+  // Base width matches PNG preset (full page at 150 DPI)
+  const baseWidthPx = (pageDims.width / MM_PER_INCH) * PNG_EXPORT_DPI;
+
+  // If content is taller than available space, it will be scaled down.
+  // To fill the page after scaling, we need a wider content.
+  // Formula: optimalWidth = contentHeight * (availableWidth / availableHeight)
+  let optimalFitToWidth = baseWidthPx;
+  if (contentHeightPx > availableHeightPx) {
+    const pageAspectRatio = availableWidthPx / availableHeightPx;
+    optimalFitToWidth = Math.max(
+      baseWidthPx,
+      Math.round(contentHeightPx * pageAspectRatio)
+    );
+  }
+
+  return optimalFitToWidth;
 }

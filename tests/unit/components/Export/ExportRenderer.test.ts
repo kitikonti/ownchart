@@ -1,7 +1,12 @@
 import { describe, it, expect } from "vitest";
-import { EXPORT_COLUMNS } from "../../../../src/components/Export/ExportRenderer";
+import {
+  EXPORT_COLUMNS,
+  calculateExportDimensions,
+} from "../../../../src/components/Export/ExportRenderer";
 import { calculateTaskTableWidth } from "../../../../src/utils/export";
 import { DENSITY_CONFIG } from "../../../../src/types/preferences.types";
+import { DEFAULT_EXPORT_OPTIONS } from "../../../../src/utils/export/types";
+import type { Task } from "../../../../src/types/chart.types";
 
 describe("EXPORT_COLUMNS", () => {
   it("should have all required columns", () => {
@@ -138,5 +143,105 @@ describe("calculateTaskTableWidth", () => {
     expect(compactWidth).toBe(compactExpected);
     expect(normalWidth).toBe(normalExpected);
     expect(comfortableWidth).toBe(comfortableExpected);
+  });
+});
+
+describe("calculateExportDimensions", () => {
+  function createTasks(count: number): Task[] {
+    return Array.from({ length: count }, (_, i) => ({
+      id: `task-${i}`,
+      name: `Task ${i}`,
+      startDate: "2025-01-01",
+      endDate: "2025-03-01",
+      duration: 59,
+      progress: 0,
+      type: "task" as const,
+      color: "#4299e1",
+    }));
+  }
+
+  it("returns width, height, and effectiveZoom", () => {
+    const tasks = createTasks(5);
+    const result = calculateExportDimensions(tasks, DEFAULT_EXPORT_OPTIONS);
+
+    expect(result).toHaveProperty("width");
+    expect(result).toHaveProperty("height");
+    expect(result).toHaveProperty("effectiveZoom");
+    expect(typeof result.width).toBe("number");
+    expect(typeof result.height).toBe("number");
+    expect(typeof result.effectiveZoom).toBe("number");
+  });
+
+  it("fitToWidth mode: width equals fitToWidth value", () => {
+    const tasks = createTasks(5);
+    const options = {
+      ...DEFAULT_EXPORT_OPTIONS,
+      zoomMode: "fitToWidth" as const,
+      fitToWidth: 1920,
+    };
+    const result = calculateExportDimensions(tasks, options);
+
+    expect(result.width).toBe(1920);
+  });
+
+  it("effectiveZoom is positive", () => {
+    const tasks = createTasks(10);
+    const result = calculateExportDimensions(tasks, DEFAULT_EXPORT_OPTIONS);
+
+    expect(result.effectiveZoom).toBeGreaterThan(0);
+  });
+
+  it("is deterministic (same inputs produce same outputs)", () => {
+    const tasks = createTasks(10);
+    const projectDateRange = {
+      start: new Date("2025-01-01"),
+      end: new Date("2025-03-01"),
+    };
+
+    const result1 = calculateExportDimensions(
+      tasks,
+      DEFAULT_EXPORT_OPTIONS,
+      {},
+      1.0,
+      projectDateRange
+    );
+
+    const result2 = calculateExportDimensions(
+      tasks,
+      DEFAULT_EXPORT_OPTIONS,
+      {},
+      1.0,
+      projectDateRange
+    );
+
+    expect(result1.width).toBe(result2.width);
+    expect(result1.height).toBe(result2.height);
+    expect(result1.effectiveZoom).toBe(result2.effectiveZoom);
+  });
+
+  it("header adds 48px to height", () => {
+    const tasks = createTasks(5);
+    const projectDateRange = {
+      start: new Date("2025-01-01"),
+      end: new Date("2025-03-01"),
+    };
+
+    const withHeader = calculateExportDimensions(
+      tasks,
+      { ...DEFAULT_EXPORT_OPTIONS, includeHeader: true },
+      {},
+      1.0,
+      projectDateRange
+    );
+
+    const withoutHeader = calculateExportDimensions(
+      tasks,
+      { ...DEFAULT_EXPORT_OPTIONS, includeHeader: false },
+      {},
+      1.0,
+      projectDateRange
+    );
+
+    expect(withHeader.height - withoutHeader.height).toBe(48);
   });
 });

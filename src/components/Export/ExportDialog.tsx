@@ -25,9 +25,8 @@ import {
   exportToPng,
   calculateExportDimensions,
   calculateTaskTableWidth,
-  calculateDurationDays,
-  calculateEffectiveZoom,
 } from "../../utils/export";
+import { calculatePdfFitToWidth } from "../../utils/export/pdfLayout";
 import {
   EXPORT_ZOOM_READABLE_THRESHOLD,
   EXPORT_ZOOM_LABELS_HIDDEN_THRESHOLD,
@@ -151,11 +150,27 @@ export function ExportDialog(): JSX.Element | null {
     }
   }, [isExportDialogOpen, showHolidays, taskLabelPosition, setExportOptions]);
 
-  // Calculate estimated dimensions
+  // For PDF "Fit to Page", compute the actual fitToWidth that pdfExport will use
+  const effectiveExportOptions = useMemo(() => {
+    if (
+      selectedExportFormat === "pdf" &&
+      exportOptions.zoomMode === "fitToWidth"
+    ) {
+      const pdfFitToWidth = calculatePdfFitToWidth(
+        tasks,
+        exportOptions,
+        pdfExportOptions
+      );
+      return { ...exportOptions, fitToWidth: pdfFitToWidth };
+    }
+    return exportOptions;
+  }, [selectedExportFormat, exportOptions, pdfExportOptions, tasks]);
+
+  // Calculate estimated dimensions using effective options (PDF-aware)
   const estimatedDimensions = useMemo(() => {
     return calculateExportDimensions(
       tasks,
-      exportOptions,
+      effectiveExportOptions,
       columnWidths,
       currentAppZoom,
       projectDateRange,
@@ -163,21 +178,12 @@ export function ExportDialog(): JSX.Element | null {
     );
   }, [
     tasks,
-    exportOptions,
+    effectiveExportOptions,
     columnWidths,
     currentAppZoom,
     projectDateRange,
     visibleDateRange,
   ]);
-
-  // Calculate project duration in days (for PNG scale options)
-  const projectDurationDays = useMemo(() => {
-    if (!projectDateRange) return 365;
-    return calculateDurationDays({
-      min: projectDateRange.start.toISOString().split("T")[0],
-      max: projectDateRange.end.toISOString().split("T")[0],
-    });
-  }, [projectDateRange]);
 
   // Calculate task table width from selected columns (for PNG scale options)
   const taskTableWidth = useMemo(
@@ -190,17 +196,9 @@ export function ExportDialog(): JSX.Element | null {
     [exportOptions.selectedColumns, columnWidths, exportOptions.density]
   );
 
-  // Calculate effective zoom for preview info
-  const effectiveZoom = useMemo(
-    () =>
-      calculateEffectiveZoom(
-        exportOptions,
-        currentAppZoom,
-        projectDurationDays,
-        taskTableWidth
-      ),
-    [exportOptions, currentAppZoom, projectDurationDays, taskTableWidth]
-  );
+  // Use effectiveZoom from calculateExportDimensions (single source of truth)
+  // This accounts for padded date ranges and PDF-specific fitToWidth
+  const effectiveZoom = estimatedDimensions.effectiveZoom;
 
   // Calculate readability status based on effective zoom
   const readabilityStatus = useMemo((): ReadabilityStatus => {
@@ -326,7 +324,7 @@ export function ExportDialog(): JSX.Element | null {
     error: previewError,
   } = useExportPreview({
     tasks,
-    options: exportOptions,
+    options: effectiveExportOptions,
     columnWidths,
     currentAppZoom,
     projectDateRange,
@@ -454,7 +452,6 @@ export function ExportDialog(): JSX.Element | null {
                 options={exportOptions}
                 onChange={setExportOptions}
                 currentAppZoom={currentAppZoom}
-                projectDurationDays={projectDurationDays}
                 taskTableWidth={taskTableWidth}
               />
             )}
@@ -476,7 +473,6 @@ export function ExportDialog(): JSX.Element | null {
                 options={exportOptions}
                 onChange={setExportOptions}
                 currentAppZoom={currentAppZoom}
-                projectDurationDays={projectDurationDays}
                 taskTableWidth={taskTableWidth}
               />
             )}

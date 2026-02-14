@@ -10,7 +10,6 @@ export interface PngScaleOptionsProps {
   options: ExportOptions;
   onChange: (options: Partial<ExportOptions>) => void;
   currentAppZoom: number;
-  projectDurationDays: number;
   taskTableWidth: number;
 }
 
