@@ -15,8 +15,9 @@ export default defineConfig({
     rollupOptions: {
       output: {
         manualChunks: {
-          // Separate chunk for PDF export (lazy loaded)
-          'pdf-export': ['jspdf'],
+          'react-vendor': ['react', 'react-dom'],
+          'date-vendor': ['date-fns', 'date-holidays'],
+          'pdf-export': ['jspdf', 'svg2pdf.js'],
         },
       },
     },

@@ -357,3 +357,4 @@ describe("detectLocaleHolidayRegion", () => {
     expect(detectLocaleHolidayRegion()).toBe("US");
   });
 });
+
