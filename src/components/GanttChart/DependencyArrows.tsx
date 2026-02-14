@@ -23,6 +23,8 @@ interface DependencyArrowsProps {
   tasks: Task[];
   scale: TimelineScale;
   rowHeight?: number;
+  /** Per-task Y offsets for hidden row indicator gaps */
+  taskYOffsets?: number[];
   dragState?: {
     isDragging: boolean;
     fromTaskId: string | null;
@@ -34,6 +36,7 @@ export function DependencyArrows({
   tasks,
   scale,
   rowHeight = DEFAULT_DENSITY_GEOMETRY.rowHeight,
+  taskYOffsets = [],
   dragState,
 }: DependencyArrowsProps): JSX.Element {
   // Create density config from rowHeight for backwards compatibility
@@ -63,7 +66,7 @@ export function DependencyArrows({
     return new Map(tasks.map((t) => [t.id, t]));
   }, [tasks]);
 
-  // Calculate positions for all tasks
+  // Calculate positions for all tasks (including hidden row Y offsets)
   const taskPositions = useMemo(() => {
     const positions = new Map<string, TaskPosition>();
 
@@ -81,16 +84,17 @@ export function DependencyArrows({
         0
       );
 
+      const yOffset = taskYOffsets[index] || 0;
       positions.set(task.id, {
         x: geometry.x,
-        y: geometry.y,
+        y: geometry.y + yOffset,
         width: geometry.width,
         height: geometry.height,
       });
     });
 
     return positions;
-  }, [tasks, scale, densityGeometry]);
+  }, [tasks, scale, densityGeometry, taskYOffsets]);
 
   // Handle dependency selection
   const handleSelect = useCallback(

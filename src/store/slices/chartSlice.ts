@@ -39,6 +39,7 @@ import {
 } from "../../types/preferences.types";
 import { holidayService } from "../../services/holidayService";
 import { calculateLabelPaddingDays } from "../../utils/textMeasurement";
+import { getTaskDescendants } from "../../utils/hierarchy";
 import { getCurrentDensityConfig } from "./userPreferencesSlice";
 import { TASK_COLUMNS } from "../../config/tableColumns";
 import { getComputedTaskColor } from "../../hooks/useComputedTaskColor";
@@ -98,6 +99,9 @@ interface ChartState {
 
   // Task table collapse state
   isTaskTableCollapsed: boolean;
+
+  // Hidden task IDs (Hide/Show Rows feature)
+  hiddenTaskIds: string[];
 
   // Color mode state (Smart Color Management)
   colorModeState: ColorModeState;
@@ -175,6 +179,12 @@ interface ChartActions {
   // Task table collapse actions
   setTaskTableCollapsed: (collapsed: boolean) => void;
 
+  // Hidden tasks actions (Hide/Show Rows)
+  hideTasks: (taskIds: string[]) => void;
+  unhideTasks: (taskIds: string[]) => void;
+  unhideAll: () => void;
+  setHiddenTaskIds: (ids: string[]) => void;
+
   // Color mode actions (Smart Color Management)
   setColorMode: (mode: ColorMode) => void;
   setThemeOptions: (options: Partial<ThemeModeOptions>) => void;
@@ -243,6 +253,9 @@ export const useChartStore = create<ChartState & ChartActions>()(
 
     // Task table collapse state
     isTaskTableCollapsed: false,
+
+    // Hidden task IDs
+    hiddenTaskIds: [] as string[],
 
     // Color mode state (Smart Color Management)
     colorModeState: { ...DEFAULT_COLOR_MODE_STATE },
@@ -655,6 +668,45 @@ export const useChartStore = create<ChartState & ChartActions>()(
       });
     },
 
+    // Hidden tasks actions (Hide/Show Rows)
+    hideTasks: (taskIds: string[]): void => {
+      const allTasks = useTaskStore.getState().tasks;
+      const allIdsToHide = new Set<string>();
+      for (const id of taskIds) {
+        allIdsToHide.add(id);
+        // Summary: also hide all descendants
+        const descendants = getTaskDescendants(allTasks, id);
+        descendants.forEach((d) => allIdsToHide.add(d.id));
+      }
+      set((state) => {
+        const newHidden = [
+          ...new Set([...state.hiddenTaskIds, ...allIdsToHide]),
+        ];
+        state.hiddenTaskIds = newHidden;
+      });
+    },
+
+    unhideTasks: (taskIds: string[]): void => {
+      set((state) => {
+        const idsToUnhide = new Set(taskIds);
+        state.hiddenTaskIds = state.hiddenTaskIds.filter(
+          (id) => !idsToUnhide.has(id)
+        );
+      });
+    },
+
+    unhideAll: (): void => {
+      set((state) => {
+        state.hiddenTaskIds = [];
+      });
+    },
+
+    setHiddenTaskIds: (ids: string[]): void => {
+      set((state) => {
+        state.hiddenTaskIds = ids;
+      });
+    },
+
     // Color mode actions (Smart Color Management)
     setColorMode: (mode: ColorMode): void => {
       set((state) => {
@@ -801,6 +853,8 @@ export const useChartStore = create<ChartState & ChartActions>()(
           state.hiddenColumns = settings.hiddenColumns;
         if (settings.isTaskTableCollapsed !== undefined)
           state.isTaskTableCollapsed = settings.isTaskTableCollapsed;
+        if (settings.hiddenTaskIds !== undefined)
+          state.hiddenTaskIds = settings.hiddenTaskIds;
       });
       // Update holiday service if region changed
       if (settings.holidayRegion !== undefined) {

@@ -49,6 +49,7 @@ export interface ChartState {
   projectAuthor?: string;
   hiddenColumns?: string[];
   isTaskTableCollapsed?: boolean;
+  hiddenTaskIds?: string[];
 }
 
 export interface FileState {

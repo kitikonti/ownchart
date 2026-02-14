@@ -65,6 +65,7 @@ export function useFileOperations(): {
   const isTaskTableCollapsed = useChartStore(
     (state) => state.isTaskTableCollapsed
   );
+  const hiddenTaskIds = useChartStore((state) => state.hiddenTaskIds);
   const projectTitle = useChartStore((state) => state.projectTitle);
   const projectAuthor = useChartStore((state) => state.projectAuthor);
   const setProjectTitle = useChartStore((state) => state.setProjectTitle);
@@ -116,6 +117,8 @@ export function useFileOperations(): {
             hiddenColumns,
             // Task table collapse
             isTaskTableCollapsed,
+            // Hidden task IDs
+            hiddenTaskIds,
           },
           {
             chartName:
@@ -169,6 +172,7 @@ export function useFileOperations(): {
       colorModeState,
       hiddenColumns,
       isTaskTableCollapsed,
+      hiddenTaskIds,
       projectTitle,
       projectAuthor,
       taskTableWidth,

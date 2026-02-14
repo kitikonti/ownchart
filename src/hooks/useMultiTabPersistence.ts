@@ -117,6 +117,9 @@ export function useMultiTabPersistence(): void {
         savedChart.chartState.isTaskTableCollapsed
       );
     }
+    if (savedChart.chartState.hiddenTaskIds !== undefined) {
+      chartStore.setHiddenTaskIds(savedChart.chartState.hiddenTaskIds);
+    }
 
     // Restore file state
     const { setFileName, setChartId, setLastSaved, markDirty, markClean } =
@@ -181,6 +184,7 @@ export function useMultiTabPersistence(): void {
           projectAuthor: chartState.projectAuthor,
           hiddenColumns: chartState.hiddenColumns,
           isTaskTableCollapsed: chartState.isTaskTableCollapsed,
+          hiddenTaskIds: chartState.hiddenTaskIds,
         } as ChartState,
         tableState: {
           columnWidths: taskState.columnWidths,

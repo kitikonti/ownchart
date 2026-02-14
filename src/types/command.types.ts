@@ -67,6 +67,10 @@ export enum CommandType {
 
   // Color operations
   APPLY_COLORS_TO_MANUAL = "applyColorsToManual",
+
+  // Hide/Show operations
+  HIDE_TASKS = "hideTasks",
+  UNHIDE_TASKS = "unhideTasks",
 }
 
 export type CommandParams =
@@ -90,7 +94,9 @@ export type CommandParams =
   | PasteCellParams
   | MultiDragTasksParams
   | ApplyColorsToManualParams
-  | GroupTasksParams;
+  | GroupTasksParams
+  | HideTasksParams
+  | UnhideTasksParams;
 
 // Specific parameter types for each command
 export interface AddTaskParams {
@@ -257,4 +263,15 @@ export interface GroupTasksParams {
     updates: Partial<Task>;
     previousValues: Partial<Task>;
   }>;
+}
+
+// Hide/Show tasks params
+export interface HideTasksParams {
+  taskIds: string[]; // IDs that were explicitly hidden (including descendants)
+  previousHiddenTaskIds: string[]; // Previous state for undo
+}
+
+export interface UnhideTasksParams {
+  taskIds: string[]; // IDs that were unhidden
+  previousHiddenTaskIds: string[]; // Previous state for undo
 }

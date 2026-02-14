@@ -9,6 +9,7 @@
  * Handles D (toggle dependencies), T (toggle today marker)
  * Handles P (toggle progress column), H (toggle holidays)
  * Handles F (fit to view)
+ * Handles Ctrl+H (hide selected rows), Ctrl+Shift+H (show all hidden rows)
  */
 
 import { useEffect } from "react";
@@ -18,6 +19,7 @@ import { useChartStore } from "../store/slices/chartSlice";
 import { useUIStore } from "../store/slices/uiSlice";
 import { useFileOperations } from "./useFileOperations";
 import { useClipboardOperations } from "./useClipboardOperations";
+import { useHideOperations } from "./useHideOperations";
 import { useClipboardStore } from "../store/slices/clipboardSlice";
 import { buildFlattenedTaskList } from "../utils/hierarchy";
 
@@ -55,6 +57,9 @@ export function useKeyboardShortcuts(): void {
   const toggleHolidays = useChartStore((state) => state.toggleHolidays);
   const fitToView = useChartStore((state) => state.fitToView);
   const tasks = useTaskStore((state) => state.tasks);
+
+  // Hide/Show rows
+  const { hideRows, showAll } = useHideOperations();
 
   // UI state for dialogs
   const openExportDialog = useUIStore((state) => state.openExportDialog);
@@ -278,6 +283,22 @@ export function useKeyboardShortcuts(): void {
         return;
       }
 
+      // Ctrl+Shift+H: Show all hidden rows
+      if (modKey && e.shiftKey && e.key.toLowerCase() === "h") {
+        e.preventDefault();
+        showAll();
+        return;
+      }
+
+      // Ctrl+H: Hide selected rows
+      if (modKey && e.key.toLowerCase() === "h" && !e.shiftKey) {
+        e.preventDefault();
+        if (selectedTaskIds.length > 0) {
+          hideRows(selectedTaskIds);
+        }
+        return;
+      }
+
       // ? key: Open help panel (when not in text input)
       if (e.key === "?" && !isTextInput && !isCellActive) {
         e.preventDefault();
@@ -372,5 +393,7 @@ export function useKeyboardShortcuts(): void {
     fitToView,
     tasks,
     activeCell,
+    hideRows,
+    showAll,
   ]);
 }

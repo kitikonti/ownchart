@@ -70,6 +70,7 @@ export async function loadFileIntoApp(file: {
       loadedViewSettings.colorModeState ?? DEFAULT_COLOR_MODE_STATE,
     hiddenColumns: loadedViewSettings.hiddenColumns ?? [],
     isTaskTableCollapsed: loadedViewSettings.isTaskTableCollapsed ?? false,
+    hiddenTaskIds: loadedViewSettings.hiddenTaskIds ?? [],
   });
 
   // Update scale immediately with new tasks and zoom (before signalFileLoaded)

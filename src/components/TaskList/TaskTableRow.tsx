@@ -25,7 +25,7 @@ import { useComputedTaskColor } from "../../hooks/useComputedTaskColor";
 
 interface TaskTableRowProps {
   task: Task;
-  rowIndex: number; // Row index for display (0-based, displayed as 1-based)
+  globalRowNumber: number; // 1-based position in full (non-hidden-filtered) list for Excel-style display
   level?: number; // Nesting level (0 = root)
   hasChildren?: boolean; // Whether task has children
   visibleTaskIds: string[]; // Array of task IDs in visible order (for range selection)
@@ -41,7 +41,7 @@ interface TaskTableRowProps {
 
 export function TaskTableRow({
   task,
-  rowIndex,
+  globalRowNumber,
   level = 0,
   hasChildren = false,
   visibleTaskIds,
@@ -202,7 +202,7 @@ export function TaskTableRow({
       )}
       {/* Row Number Cell - Excel-style with hover controls */}
       <RowNumberCell
-        rowNumber={rowIndex + 1}
+        rowNumber={globalRowNumber}
         taskId={task.id}
         isSelected={isSelected}
         selectionPosition={selectionPosition}

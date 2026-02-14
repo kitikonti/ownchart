@@ -20,6 +20,8 @@ import type {
   MultiDragTasksParams,
   ApplyColorsToManualParams,
   GroupTasksParams,
+  HideTasksParams,
+  UnhideTasksParams,
 } from "../../types/command.types";
 import { calculateDuration } from "../../utils/dateUtils";
 import { useTaskStore } from "./taskSlice";
@@ -543,6 +545,18 @@ function executeUndoCommand(command: Command): void {
       break;
     }
 
+    case "hideTasks": {
+      const params = command.params as HideTasksParams;
+      useChartStore.getState().setHiddenTaskIds(params.previousHiddenTaskIds);
+      break;
+    }
+
+    case "unhideTasks": {
+      const params = command.params as UnhideTasksParams;
+      useChartStore.getState().setHiddenTaskIds(params.previousHiddenTaskIds);
+      break;
+    }
+
     default:
       console.warn("Unknown command type for undo:", command.type);
   }
@@ -866,6 +880,27 @@ function executeRedoCommand(command: Command): void {
       recalculateSummaryAncestors(currentTasks, affectedParents);
 
       useTaskStore.setState({ tasks: currentTasks });
+      break;
+    }
+
+    case "hideTasks": {
+      const params = command.params as HideTasksParams;
+      // Re-apply hiding: set to the state after hiding (previous + newly hidden)
+      const newHidden = [
+        ...new Set([...params.previousHiddenTaskIds, ...params.taskIds]),
+      ];
+      useChartStore.getState().setHiddenTaskIds(newHidden);
+      break;
+    }
+
+    case "unhideTasks": {
+      const params = command.params as UnhideTasksParams;
+      // Re-apply unhiding: remove the unhidden IDs from previous state
+      const idsToUnhide = new Set(params.taskIds);
+      const newHidden = params.previousHiddenTaskIds.filter(
+        (id) => !idsToUnhide.has(id)
+      );
+      useChartStore.getState().setHiddenTaskIds(newHidden);
       break;
     }
 

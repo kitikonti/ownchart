@@ -75,6 +75,8 @@ export function serializeToGanttFile(
         hiddenColumns: viewSettings.hiddenColumns,
         // Task table collapse
         isTaskTableCollapsed: viewSettings.isTaskTableCollapsed,
+        // Hidden task IDs
+        hiddenTaskIds: viewSettings.hiddenTaskIds,
       },
       exportSettings: options.exportSettings, // Sprint 1.6
       metadata: {

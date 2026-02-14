@@ -40,6 +40,8 @@ import {
   NumberSquareOne,
   Hash,
   SidebarSimple,
+  EyeSlash,
+  Eye,
 } from "@phosphor-icons/react";
 
 import OwnChartLogo from "../../assets/logo.svg?react";
@@ -69,6 +71,7 @@ import { useUIStore } from "../../store/slices/uiSlice";
 import { useUserPreferencesStore } from "../../store/slices/userPreferencesSlice";
 import { useFileOperations } from "../../hooks/useFileOperations";
 import { useClipboardOperations } from "../../hooks/useClipboardOperations";
+import { useHideOperations } from "../../hooks/useHideOperations";
 import { getViewportCenterAnchor, applyScrollLeft } from "../../hooks/useZoom";
 import { COLORS } from "../../styles/design-tokens";
 import { MIN_ZOOM, MAX_ZOOM } from "../../utils/timelineUtils";
@@ -144,6 +147,12 @@ export function Ribbon(): JSX.Element {
   const setTaskTableCollapsed = useChartStore(
     (state) => state.setTaskTableCollapsed
   );
+
+  // Hidden tasks
+  const hiddenTaskIds = useChartStore((state) => state.hiddenTaskIds);
+  const hasHiddenTasks = hiddenTaskIds.length > 0;
+  const { hideRows: handleHideRows, showAll: handleShowAll } =
+    useHideOperations();
 
   // User preferences store
   const uiDensity = useUserPreferencesStore(
@@ -409,6 +418,13 @@ export function Ribbon(): JSX.Element {
           aria-label="Group selected tasks"
           icon={<BoundingBox size={ICON_SIZE} weight="light" />}
         />
+        <ToolbarButton
+          onClick={() => handleHideRows(selectedTaskIds)}
+          disabled={selectedTaskIds.length === 0}
+          title="Hide selected rows (Ctrl+H)"
+          aria-label="Hide selected rows"
+          icon={<EyeSlash size={ICON_SIZE} weight="light" />}
+        />
       </ToolbarGroup>
 
       <ToolbarSeparator />
@@ -533,6 +549,16 @@ export function Ribbon(): JSX.Element {
           labelPriority={3}
         />
         <ColumnsDropdown labelPriority={3} />
+        {hasHiddenTasks && (
+          <ToolbarButton
+            onClick={handleShowAll}
+            title="Show all hidden rows (Ctrl+Shift+H)"
+            aria-label="Show all hidden rows"
+            icon={<Eye size={ICON_SIZE} weight="light" />}
+            label="Show All"
+            labelPriority={3}
+          />
+        )}
       </ToolbarGroup>
     </>
   );

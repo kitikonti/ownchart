@@ -162,6 +162,8 @@ export interface FlattenedTask {
   task: Task;
   level: number;
   hasChildren: boolean;
+  /** 1-based position in the full (non-hidden-filtered) list. Used for Excel-style row number gaps. */
+  globalRowNumber: number;
 }
 
 export function buildFlattenedTaskList(
@@ -202,7 +204,7 @@ export function buildFlattenedTaskList(
 
     for (const task of children) {
       const hasChildren = childrenSet.has(task.id);
-      result.push({ task, level, hasChildren });
+      result.push({ task, level, hasChildren, globalRowNumber: 0 });
 
       // Recurse into children if not collapsed
       const isCollapsed = task.open === false || collapsedTaskIds.has(task.id);
@@ -213,6 +215,12 @@ export function buildFlattenedTaskList(
   }
 
   walk(undefined, 0);
+
+  // Assign globalRowNumber (1-based sequential)
+  for (let i = 0; i < result.length; i++) {
+    result[i].globalRowNumber = i + 1;
+  }
+
   return result;
 }
 

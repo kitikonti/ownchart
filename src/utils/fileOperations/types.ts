@@ -128,6 +128,9 @@ export interface ViewSettings {
 
   // Task table collapse state
   isTaskTableCollapsed?: boolean;
+
+  // Hidden task IDs (Hide/Show Rows)
+  hiddenTaskIds?: string[];
 }
 
 // Validation error types
