@@ -2,6 +2,72 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [0.0.35](https://github.com/kitikonti/ownchart/compare/v0.0.33...v0.0.35) (2026-02-14)
+
+
+### Features
+
+* add "Apply Colors to Manual" button in color dropdown ([2fb5d8d](https://github.com/kitikonti/ownchart/commit/2fb5d8db568f4265dc4a87683ed230cf0af09a0d))
+* add Alt+Shift+Right/Left indent/outdent shortcuts and remove Tab indent ([#2](https://github.com/kitikonti/ownchart/issues/2)) ([6a1c667](https://github.com/kitikonti/ownchart/commit/6a1c66795713c42dbf0efcfe61e709ef245aa43d))
+* add column visibility toggle and task table snap-to-collapse ([#37](https://github.com/kitikonti/ownchart/issues/37)) ([4b78391](https://github.com/kitikonti/ownchart/commit/4b783912f19ae91f1124b156f17f6ab0c2316cbb))
+* add draggable progress handle on task bars ([#24](https://github.com/kitikonti/ownchart/issues/24)) ([7ab154e](https://github.com/kitikonti/ownchart/commit/7ab154e2631554f3da80918040f06e584ce87f4c))
+* add Excel-style Ctrl++/Ctrl+- row insert and delete shortcuts ([#36](https://github.com/kitikonti/ownchart/issues/36)) ([173a01f](https://github.com/kitikonti/ownchart/commit/173a01f56387d929ab45313008dae15f11fb2160))
+* add file icons and LaunchQueue support for PWA file handling ([d9f04a7](https://github.com/kitikonti/ownchart/commit/d9f04a783a88b8be582c0d680ac2a73a94bd0063))
+* add Format tab and reorganize View tab in ribbon toolbar ([5e281eb](https://github.com/kitikonti/ownchart/commit/5e281ebaef69edc12169f2f0e64f90b6f683d05c))
+* add progress column toggle to Columns dropdown ([c65f345](https://github.com/kitikonti/ownchart/commit/c65f345eadd134e22c183523b5517a827f24c3a6))
+* add Smart Labels responsive collapse to ribbon toolbar ([02412c0](https://github.com/kitikonti/ownchart/commit/02412c0b536869238daef7e876d4ea18ff648dda))
+* consolidate color dropdowns and improve theme coloring algorithm ([4cb40e9](https://github.com/kitikonti/ownchart/commit/4cb40e93f83b45de7e9c058abcbf3eef306eed36))
+* integrate custom OwnChart logo and PWA infrastructure ([6ccd913](https://github.com/kitikonti/ownchart/commit/6ccd913e175c253ddd48dac22421c689ccb4ea2d))
+* replace 12 monochrome palettes with 27 multi-hue palettes ([bbebd5b](https://github.com/kitikonti/ownchart/commit/bbebd5bef44f4e00a98090f9597763c9d14ac844))
+
+
+### Bug Fixes
+
+* 0% progress task no longer looks identical to 100% ([891bbb4](https://github.com/kitikonti/ownchart/commit/891bbb4d8b230724e634c318c373a10e08591b96))
+* add vite-plugin-svgr for proper SVG React component imports ([58a37d7](https://github.com/kitikonti/ownchart/commit/58a37d712a7ab08bd97a4851104cf1a2be362d9a))
+* align PDF export header/footer with preview and app color scheme ([#39](https://github.com/kitikonti/ownchart/issues/39)) ([2f389fa](https://github.com/kitikonti/ownchart/commit/2f389fadeb8a9a491fdcb31175beeb6ef2f33d31)), closes [#475569](https://github.com/kitikonti/ownchart/issues/475569) [#e2e8f0](https://github.com/kitikonti/ownchart/issues/e2e8f0)
+* cell navigation and range selection use visual order instead of raw array index ([70efc71](https://github.com/kitikonti/ownchart/commit/70efc7104622fc6ddff8e8d82aad2eaf46cdc6d6))
+* color column in PDF/PNG/SVG exports now respects color themes ([650eb37](https://github.com/kitikonti/ownchart/commit/650eb3707e93ad85217fcbf21394d13fcf29e779)), closes [#42](https://github.com/kitikonti/ownchart/issues/42)
+* drag-and-drop row reordering no longer corrupts task hierarchy ([316f9e3](https://github.com/kitikonti/ownchart/commit/316f9e3e40a04d7ea297c578e77fa7b823ca3ecf))
+* ensure true transparency in favicon.ico ([3ba93d7](https://github.com/kitikonti/ownchart/commit/3ba93d7bfe1d9d8f249c3ddc467e0b2e087c5c3a))
+* F2 shortcut conflict resolved, Escape deactivates active cell ([5546b84](https://github.com/kitikonti/ownchart/commit/5546b84bd9d926842a8d9043912c277e93a375ee))
+* flip color picker popover upward when near bottom of viewport ([c06720a](https://github.com/kitikonti/ownchart/commit/c06720a975ca8dd595f58cf80415863ed372397d))
+* force RGBA format for PNGs to ensure transparent background ([d56fc20](https://github.com/kitikonti/ownchart/commit/d56fc206c20768816732aec00497bdd8e1a0730b))
+* hide progress drag triangles in export output ([cf7cbc9](https://github.com/kitikonti/ownchart/commit/cf7cbc94726fe7247552a1fc102998b25929e0cf))
+* improve logo quality and transparency ([d9d8805](https://github.com/kitikonti/ownchart/commit/d9d880599a0e035f40a1de173b72067a87b56624))
+* improve progress bar visibility on task bars ([#38](https://github.com/kitikonti/ownchart/issues/38)) ([90c29ab](https://github.com/kitikonti/ownchart/commit/90c29ab641015c43cb94e03870fb03b6c7d3175a))
+* make Ctrl+- delete active cell task when no row selected ([#36](https://github.com/kitikonti/ownchart/issues/36)) ([86e1ff8](https://github.com/kitikonti/ownchart/commit/86e1ff832833a875478da048ad02a6e8a5218c26))
+* PDF export preview now matches actual export in Fit to Page mode ([741af08](https://github.com/kitikonti/ownchart/commit/741af086ed8382e8b7034f5d0b408092865ea42b)), closes [#39](https://github.com/kitikonti/ownchart/issues/39)
+* prevent horizontal scroll when cell enters edit mode ([9578291](https://github.com/kitikonti/ownchart/commit/9578291c1ce272c8713d7fc2fe525dcae9d0e088))
+* remove double scrollbar in color dropdown theme view ([18c3987](https://github.com/kitikonti/ownchart/commit/18c398721d4b20b8b667af24de408b2b0f51c24c))
+* replace browser-default focus outlines with consistent focus-visible styles ([c480c81](https://github.com/kitikonti/ownchart/commit/c480c81f6d7a4e43b3e48018bcc06ccc29236466))
+* shift+click range selection in row number cells ([#29](https://github.com/kitikonti/ownchart/issues/29)) ([e947807](https://github.com/kitikonti/ownchart/commit/e947807613b889986d61d19097d643caed80663c))
+* summary color mode writes directly to task.color for summary tasks ([1000035](https://github.com/kitikonti/ownchart/commit/1000035340aac064f5815bfa64ffa3d670acda04))
+* Tab navigation from color cell follows visual column order ([2a994de](https://github.com/kitikonti/ownchart/commit/2a994ded38634de1ebae79669c91ee67323cf20b))
+* toolbar 'Add Task' button now creates tasks with 7 calendar days (not 8) ([4a256e0](https://github.com/kitikonti/ownchart/commit/4a256e061c8bc5d283e082fefedcb59c3528ddce))
+* use consistent default task color ([#0](https://github.com/kitikonti/ownchart/issues/0)F6CBD) across all task creation methods ([5e7c31d](https://github.com/kitikonti/ownchart/commit/5e7c31deb2e9cdfdb750daf5ec49a07c01e94b47)), closes [#0F6](https://github.com/kitikonti/ownchart/issues/0F6) [#17](https://github.com/kitikonti/ownchart/issues/17) [#0F6](https://github.com/kitikonti/ownchart/issues/0F6) [#FAA916](https://github.com/kitikonti/ownchart/issues/FAA916)
+* use explicit color in favicon.svg instead of currentColor ([9ffce8e](https://github.com/kitikonti/ownchart/commit/9ffce8e413510402fa2581eb0ef598dd3ddbe0cf)), closes [#0f6](https://github.com/kitikonti/ownchart/issues/0f6)
+
+
+### Performance Improvements
+
+* optimize bundle splitting and remove unused d3 dependency ([9d9f2ac](https://github.com/kitikonti/ownchart/commit/9d9f2ac1f32e70a4dcac69a3b4567b9a5b4bd66d))
+* optimize logo for pixel-perfect rendering at small sizes ([8de6291](https://github.com/kitikonti/ownchart/commit/8de6291324f53644c226708bc878be097f31177f))
+
+
+### Code Refactoring
+
+* unify dropdown styling with shared components and consolidate settings into ribbon ([a83ec9c](https://github.com/kitikonti/ownchart/commit/a83ec9cbbf5b82942f4a857392f2e1ab133f4f01))
+* use DropdownItem in ZoomDropdown/ColorOptionsDropdown and match MS Project selected styling ([88ab7fd](https://github.com/kitikonti/ownchart/commit/88ab7fdb089476ad544446069970a3b6eb3b4922))
+
+
+### UI/UX
+
+* align hover styling with MS Office (neutral-50 bg, sub-pixel border, darker text) ([3f18718](https://github.com/kitikonti/ownchart/commit/3f18718ef7a2b76ea5ff3068a3cdbb95873e1045)), closes [#f5f5f5](https://github.com/kitikonti/ownchart/issues/f5f5f5) [#303030](https://github.com/kitikonti/ownchart/issues/303030)
+* refine primary button styling to match Outlook design ([f1732ff](https://github.com/kitikonti/ownchart/commit/f1732ff600529e18c119fe59194adc54045ef073))
+* remove custom monochrome option from color dropdown ([bc16fab](https://github.com/kitikonti/ownchart/commit/bc16fab457b06873f7c01a062e841e9bd2e0fe78))
+* update favicon and app icons ([5838633](https://github.com/kitikonti/ownchart/commit/5838633e5a74f7564e13a094b097220ccb4a3f8b))
+
 ### [0.0.33](https://github.com/kitikonti/ownchart/compare/v0.0.32...v0.0.33) (2026-01-30)
 
 
