@@ -673,6 +673,81 @@ select:focus-visible {
   background-color: rgb(240, 240, 240);
 }
 
+/* ─── Context Menu (MS 365 Style) ─── */
+.context-menu-container {
+  background-color: #ffffff;
+  border-radius: 8px;
+  box-shadow:
+    0 0 2px rgba(0, 0, 0, 0.12),
+    0 8px 16px rgba(0, 0, 0, 0.14);
+  padding: 6px 0;
+}
+
+.context-menu-item {
+  display: flex;
+  align-items: center;
+  column-gap: 8px;
+  width: calc(100% - 12px);
+  height: 32px;
+  min-height: 32px;
+  padding: 0 6px;
+  margin: 0 6px;
+  border-radius: 4px;
+  font-size: 14px;
+  line-height: 20px;
+  color: #242424;
+  background-color: transparent;
+  cursor: pointer;
+  user-select: none;
+  flex-shrink: 0;
+  transition: background-color 0.1s;
+}
+
+.context-menu-item:hover,
+.context-menu-item:focus-visible {
+  background-color: rgb(245, 245, 245);
+}
+
+.context-menu-item:disabled {
+  color: #b3b3b3;
+  cursor: default;
+  background-color: transparent;
+}
+
+.context-menu-item-icon {
+  width: 20px;
+  height: 20px;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 0;
+}
+
+.context-menu-item-label {
+  flex: 1 0 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.context-menu-item-shortcut {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  column-gap: 2px;
+  font-size: 12px;
+  color: #616161;
+  padding-left: 4px;
+  flex-shrink: 0;
+}
+
+.context-menu-separator {
+  border-bottom: 0.667px solid #e0e0e0;
+  margin: 3px 0;
+  height: 0;
+}
+
 /* Zoom combobox - border darkens on hover */
 .zoom-combobox {
   background-color: #ffffff;

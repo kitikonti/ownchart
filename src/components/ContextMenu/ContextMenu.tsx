@@ -11,6 +11,7 @@ export interface ContextMenuItem {
   id: string;
   label: string;
   icon?: React.ReactNode;
+  shortcut?: string;
   onClick: () => void;
   disabled?: boolean;
   /** Visual separator after this item */
@@ -140,7 +141,7 @@ export function ContextMenu({
   return createPortal(
     <div
       ref={menuRef}
-      className="fixed z-[1000] bg-white rounded-lg shadow-lg border border-neutral-200 py-1 min-w-[180px]"
+      className="context-menu-container fixed z-[1000] min-w-[180px]"
       style={{
         left: position.x,
         top: position.y,
@@ -157,11 +158,7 @@ export function ContextMenu({
             role="menuitem"
             tabIndex={-1}
             disabled={item.disabled}
-            className={`w-full text-left px-3 py-1.5 text-sm flex items-center gap-2 outline-none ${
-              item.disabled
-                ? "text-neutral-400 cursor-default"
-                : "text-neutral-700 hover:bg-neutral-100 focus:bg-neutral-100 cursor-pointer"
-            }`}
+            className="context-menu-item text-left outline-none"
             onClick={() => {
               if (!item.disabled) {
                 item.onClick();
@@ -170,15 +167,16 @@ export function ContextMenu({
             }}
           >
             {item.icon && (
-              <span className="w-4 h-4 flex-shrink-0 flex items-center justify-center">
-                {item.icon}
+              <span className="context-menu-item-icon">{item.icon}</span>
+            )}
+            <span className="context-menu-item-label">{item.label}</span>
+            {item.shortcut && (
+              <span className="context-menu-item-shortcut">
+                {item.shortcut}
               </span>
             )}
-            {item.label}
           </button>
-          {item.separator && (
-            <div className="my-1 border-t border-neutral-200" />
-          )}
+          {item.separator && <div className="context-menu-separator" />}
         </div>
       ))}
     </div>,

@@ -59,7 +59,7 @@ export function useKeyboardShortcuts(): void {
   const tasks = useTaskStore((state) => state.tasks);
 
   // Hide/Show rows
-  const { hideRows, showAll } = useHideOperations();
+  const { hideRows, unhideSelection } = useHideOperations();
 
   // UI state for dialogs
   const openExportDialog = useUIStore((state) => state.openExportDialog);
@@ -248,10 +248,10 @@ export function useKeyboardShortcuts(): void {
         groupSelectedTasks();
         return true;
       }
-      // Ctrl+Shift+H: Show all hidden rows
+      // Ctrl+Shift+H: Unhide hidden rows within selection range
       if (modKey && e.shiftKey && e.key.toLowerCase() === "h") {
         e.preventDefault();
-        showAll();
+        unhideSelection(selectedTaskIds);
         return true;
       }
       // Ctrl+H: Hide selected rows
@@ -386,6 +386,6 @@ export function useKeyboardShortcuts(): void {
     tasks,
     activeCell,
     hideRows,
-    showAll,
+    unhideSelection,
   ]);
 }

@@ -34,6 +34,7 @@ import { useTableDimensions } from "../../hooks/useTableDimensions";
 import { useFlattenedTasks } from "../../hooks/useFlattenedTasks";
 import { useAutoColumnWidth } from "../../hooks/useAutoColumnWidth";
 import { useTaskTableContextMenu } from "../../hooks/useTaskTableContextMenu";
+import { useHideOperations } from "../../hooks/useHideOperations";
 import { ContextMenu } from "../ContextMenu/ContextMenu";
 import { COLORS } from "../../styles/design-tokens";
 
@@ -73,13 +74,11 @@ export function TaskTable({ hideHeader = true }: TaskTableProps): JSX.Element {
     contextMenuItems,
     handleRowContextMenu,
     closeContextMenu,
-    showAll,
     unhideRange,
-  } = useTaskTableContextMenu(
-    selectedTaskIds,
-    flattenedTasks,
-    allFlattenedTasks
-  );
+  } = useTaskTableContextMenu(selectedTaskIds);
+
+  // Emergency "show all" for when every task is hidden (user can't select anything)
+  const { showAll } = useHideOperations();
 
   // Extract visible task IDs in display order (for correct range selection)
   const visibleTaskIds = useMemo(

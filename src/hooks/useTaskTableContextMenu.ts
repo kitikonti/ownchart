@@ -3,14 +3,13 @@
  * Extracts menu item logic from TaskTable to reduce component complexity.
  */
 
-import { useMemo, useState, useCallback } from "react";
+import { useMemo, useState, useCallback, createElement } from "react";
+import { EyeSlash, Eye } from "@phosphor-icons/react";
 import type {
   ContextMenuItem,
   ContextMenuPosition,
 } from "../components/ContextMenu/ContextMenu";
-import { useChartStore } from "../store/slices/chartSlice";
 import { useHideOperations } from "./useHideOperations";
-import type { FlattenedTask } from "../utils/hierarchy";
 
 interface ContextMenuState {
   position: ContextMenuPosition;
@@ -23,17 +22,15 @@ interface UseTaskTableContextMenuResult {
   handleRowContextMenu: (e: React.MouseEvent, taskId: string) => void;
   closeContextMenu: () => void;
   hideRows: (taskIds: string[]) => void;
-  showAll: () => void;
+  unhideSelection: (selectedTaskIds: string[]) => void;
   unhideRange: (fromRowNum: number, toRowNum: number) => void;
 }
 
 export function useTaskTableContextMenu(
-  selectedTaskIds: string[],
-  flattenedTasks: FlattenedTask[],
-  allFlattenedTasks: FlattenedTask[]
+  selectedTaskIds: string[]
 ): UseTaskTableContextMenuResult {
-  const hiddenTaskIds = useChartStore((state) => state.hiddenTaskIds);
-  const { hideRows, showAll, unhideRange } = useHideOperations();
+  const { hideRows, unhideRange, unhideSelection, getHiddenInSelectionCount } =
+    useHideOperations();
 
   const [contextMenu, setContextMenu] = useState<ContextMenuState | null>(null);
 
@@ -66,38 +63,25 @@ export function useTaskTableContextMenu(
     items.push({
       id: "hide",
       label: count > 1 ? `Hide ${count} Rows` : "Hide Row",
+      icon: createElement(EyeSlash, { size: 20, weight: "light" }),
+      shortcut: "Ctrl+H",
       onClick: () => hideRows(taskIdsToHide),
     });
 
     // Check if selection spans hidden rows — offer Unhide like Excel
+    const hiddenInRangeCount = getHiddenInSelectionCount(selectedTaskIds);
     if (
+      hiddenInRangeCount > 0 &&
       selectedTaskIds.length >= 2 &&
       selectedTaskIds.includes(contextMenu.taskId)
     ) {
-      const selectedRowNums = flattenedTasks
-        .filter(({ task }) => selectedTaskIds.includes(task.id))
-        .map(({ globalRowNumber }) => globalRowNumber)
-        .sort((a, b) => a - b);
-
-      if (selectedRowNums.length >= 2) {
-        const firstRow = selectedRowNums[0];
-        const lastRow = selectedRowNums[selectedRowNums.length - 1];
-        const hiddenSet = new Set(hiddenTaskIds);
-        const hiddenInRangeCount = allFlattenedTasks.filter(
-          (item) =>
-            item.globalRowNumber >= firstRow &&
-            item.globalRowNumber <= lastRow &&
-            hiddenSet.has(item.task.id)
-        ).length;
-
-        if (hiddenInRangeCount > 0) {
-          items.push({
-            id: "unhide",
-            label: `Unhide ${hiddenInRangeCount} Row${hiddenInRangeCount !== 1 ? "s" : ""}`,
-            onClick: (): void => unhideRange(firstRow - 1, lastRow + 1),
-          });
-        }
-      }
+      items.push({
+        id: "unhide",
+        label: `Unhide ${hiddenInRangeCount} Row${hiddenInRangeCount !== 1 ? "s" : ""}`,
+        icon: createElement(Eye, { size: 20, weight: "light" }),
+        shortcut: "Ctrl+Shift+H",
+        onClick: (): void => unhideSelection(selectedTaskIds),
+      });
     }
 
     return items;
@@ -105,10 +89,8 @@ export function useTaskTableContextMenu(
     contextMenu,
     selectedTaskIds,
     hideRows,
-    unhideRange,
-    flattenedTasks,
-    allFlattenedTasks,
-    hiddenTaskIds,
+    unhideSelection,
+    getHiddenInSelectionCount,
   ]);
 
   return {
@@ -117,7 +99,7 @@ export function useTaskTableContextMenu(
     handleRowContextMenu,
     closeContextMenu,
     hideRows,
-    showAll,
+    unhideSelection,
     unhideRange,
   };
 }

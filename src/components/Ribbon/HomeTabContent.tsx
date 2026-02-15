@@ -79,9 +79,12 @@ export function HomeTabContent(): JSX.Element {
 
   // Hidden tasks
   const hiddenTaskIds = useChartStore((state) => state.hiddenTaskIds);
-  const hasHiddenTasks = hiddenTaskIds.length > 0;
-  const { hideRows: handleHideRows, showAll: handleShowAll } =
-    useHideOperations();
+  const {
+    hideRows: handleHideRows,
+    unhideSelection: handleUnhideSelection,
+    getHiddenInSelectionCount,
+  } = useHideOperations();
+  const hiddenInSelectionCount = getHiddenInSelectionCount(selectedTaskIds);
 
   // Derived state
   const singleSelectedTaskId =
@@ -241,14 +244,14 @@ export function HomeTabContent(): JSX.Element {
           icon={<EyeSlash size={ICON_SIZE} weight="light" />}
         />
         <ToolbarButton
-          onClick={handleShowAll}
-          disabled={!hasHiddenTasks}
-          title="Show all hidden rows (Ctrl+Shift+H)"
-          aria-label="Show all hidden rows"
+          onClick={() => handleUnhideSelection(selectedTaskIds)}
+          disabled={hiddenInSelectionCount === 0}
+          title="Unhide rows in selection (Ctrl+Shift+H)"
+          aria-label="Unhide rows in selection"
           icon={
             <span className="relative inline-flex">
               <Eye size={ICON_SIZE} weight="light" />
-              {hasHiddenTasks && (
+              {hiddenTaskIds.length > 0 && (
                 <span
                   className="absolute -top-0.5 -right-1 text-white text-[8px] font-semibold min-w-[12px] h-3 rounded-full flex items-center justify-center px-0.5 leading-none"
                   style={{ backgroundColor: COLORS.brand[600] }}

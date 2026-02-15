@@ -24,11 +24,15 @@ interface UseHideOperationsResult {
   showAll: () => void;
   /** Unhide tasks whose globalRowNumber falls within a gap range. Records undo command. */
   unhideRange: (fromRowNum: number, toRowNum: number) => void;
+  /** Unhide hidden tasks spanned by the current selection (≥2 selected rows). */
+  unhideSelection: (selectedTaskIds: string[]) => void;
+  /** Count how many hidden tasks are spanned by the current selection. */
+  getHiddenInSelectionCount: (selectedTaskIds: string[]) => number;
 }
 
 export function useHideOperations(): UseHideOperationsResult {
   const hideTasks = useChartStore((state) => state.hideTasks);
-  const { allFlattenedTasks } = useFlattenedTasks();
+  const { flattenedTasks, allFlattenedTasks } = useFlattenedTasks();
 
   const hideRows = useCallback(
     (taskIds: string[]): void => {
@@ -112,5 +116,71 @@ export function useHideOperations(): UseHideOperationsResult {
     [allFlattenedTasks]
   );
 
-  return { hideRows, showAll, unhideRange };
+  /** Find the row range spanned by selectedTaskIds and return hidden task IDs within. */
+  const getHiddenIdsInSelection = useCallback(
+    (selectedTaskIds: string[]): string[] => {
+      if (selectedTaskIds.length < 2) return [];
+
+      const selectedRowNums = flattenedTasks
+        .filter(({ task }) => selectedTaskIds.includes(task.id))
+        .map(({ globalRowNumber }) => globalRowNumber)
+        .sort((a, b) => a - b);
+
+      if (selectedRowNums.length < 2) return [];
+
+      const firstRow = selectedRowNums[0];
+      const lastRow = selectedRowNums[selectedRowNums.length - 1];
+      const hiddenSet = new Set(useChartStore.getState().hiddenTaskIds);
+
+      return allFlattenedTasks
+        .filter(
+          (item) =>
+            item.globalRowNumber >= firstRow &&
+            item.globalRowNumber <= lastRow &&
+            hiddenSet.has(item.task.id)
+        )
+        .map((item) => item.task.id);
+    },
+    [flattenedTasks, allFlattenedTasks]
+  );
+
+  const getHiddenInSelectionCount = useCallback(
+    (selectedTaskIds: string[]): number => {
+      return getHiddenIdsInSelection(selectedTaskIds).length;
+    },
+    [getHiddenIdsInSelection]
+  );
+
+  const unhideSelection = useCallback(
+    (selectedTaskIds: string[]): void => {
+      const idsToUnhide = getHiddenIdsInSelection(selectedTaskIds);
+      if (idsToUnhide.length === 0) return;
+
+      const previousHiddenTaskIds = [...useChartStore.getState().hiddenTaskIds];
+      useChartStore.getState().unhideTasks(idsToUnhide);
+      useFileStore.getState().markDirty();
+
+      useHistoryStore.getState().recordCommand({
+        id: crypto.randomUUID(),
+        type: CommandType.UNHIDE_TASKS,
+        timestamp: Date.now(),
+        description: `Show ${pluralize(idsToUnhide.length, "hidden task")}`,
+        params: {
+          taskIds: idsToUnhide,
+          previousHiddenTaskIds,
+        },
+      });
+
+      toast.success(`${pluralize(idsToUnhide.length, "task")} shown`);
+    },
+    [getHiddenIdsInSelection]
+  );
+
+  return {
+    hideRows,
+    showAll,
+    unhideRange,
+    unhideSelection,
+    getHiddenInSelectionCount,
+  };
 }
