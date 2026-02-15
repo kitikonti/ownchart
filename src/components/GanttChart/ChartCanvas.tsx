@@ -28,6 +28,7 @@ import {
   getTaskBarGeometry,
   type DensityGeometryConfig,
 } from "../../utils/timelineUtils";
+import { COLORS } from "../../styles/design-tokens";
 
 interface ChartCanvasProps {
   tasks: Task[];
@@ -119,6 +120,12 @@ export function ChartCanvas({
   }, [tasks, containerWidth, zoom, updateScale]);
 
   // Calculate task geometries for connection handles and marquee selection
+  // Set for O(1) selection checks (avoids O(n²) in render loop)
+  const selectedSet = useMemo(
+    () => new Set(selectedTaskIds),
+    [selectedTaskIds]
+  );
+
   const { taskGeometriesMap, taskGeometriesArray } = useMemo(() => {
     if (!scale)
       return {
@@ -263,17 +270,17 @@ export function ChartCanvas({
             {/* Layer 2.5: Selection Highlights (full row, brand color) */}
             <g className="layer-selection">
               {tasks.map((task, index) => {
-                const isSelected = selectedTaskIds.includes(task.id);
+                const isSelected = selectedSet.has(task.id);
                 if (!isSelected) return null;
 
                 // Check if prev/next rows are also selected for contiguous borders
                 const prevSelected =
-                  index > 0 && selectedTaskIds.includes(tasks[index - 1].id);
+                  index > 0 && selectedSet.has(tasks[index - 1].id);
                 const nextSelected =
                   index < tasks.length - 1 &&
-                  selectedTaskIds.includes(tasks[index + 1].id);
+                  selectedSet.has(tasks[index + 1].id);
 
-                const BRAND_COLOR = "#0F6CBD";
+                const BRAND_COLOR = COLORS.brand[600];
                 const y = index * ROW_HEIGHT;
 
                 return (

@@ -222,6 +222,7 @@ export function useFileOperations(): {
     resetExportOptions(); // Sprint 1.6 - reset to defaults
     setProjectTitle(""); // Reset project metadata
     setProjectAuthor("");
+    useChartStore.getState().setHiddenTaskIds([]); // Clear hidden rows from previous chart
     clearHistory();
     clearFileHandle();
     fileState.reset();

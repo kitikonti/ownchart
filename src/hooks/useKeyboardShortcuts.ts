@@ -72,152 +72,124 @@ export function useKeyboardShortcuts(): void {
   const isWelcomeTourOpen = useUIStore((state) => state.isWelcomeTourOpen);
 
   useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent): void => {
-      const isMac = navigator.platform.toUpperCase().indexOf("MAC") >= 0;
-      const modKey = isMac ? e.metaKey : e.ctrlKey;
+    // ─── Sub-handlers (each returns true if the event was consumed) ───
 
-      // Check if we're in a text input context
-      const target = e.target as HTMLElement;
-      const isTextInput =
-        target.tagName === "TEXTAREA" ||
-        target.isContentEditable ||
-        (target.tagName === "INPUT" &&
-          (target as HTMLInputElement).type !== "checkbox");
-      // When a table cell is active, single-key shortcuts must be
-      // suppressed so the keypress can start cell editing instead.
-      const isCellActive = activeCell.taskId !== null;
-
-      // For clipboard operations, allow even when checkbox is focused
-      const isClipboardShortcut =
-        modKey &&
-        (e.key.toLowerCase() === "c" ||
-          e.key.toLowerCase() === "x" ||
-          e.key.toLowerCase() === "v");
-
-      // Ignore non-clipboard shortcuts if typing in text input
-      if (isTextInput && !isClipboardShortcut) {
-        return;
-      }
-
-      // For clipboard shortcuts in text inputs (not checkbox), use native behavior
-      if (isTextInput && isClipboardShortcut) {
-        return;
-      }
-
-      // Undo: Ctrl+Z or Cmd+Z (without Shift)
-      if (modKey && e.key.toLowerCase() === "z" && !e.shiftKey) {
+    const handleUndoRedo = (e: KeyboardEvent, modKey: boolean): boolean => {
+      if (!modKey) return false;
+      const key = e.key.toLowerCase();
+      if (key === "z" && !e.shiftKey) {
         e.preventDefault();
         undo();
-        return;
+        return true;
       }
-
-      // Redo: Ctrl+Shift+Z or Cmd+Shift+Z
-      if (modKey && e.key.toLowerCase() === "z" && e.shiftKey) {
+      if (key === "z" && e.shiftKey) {
         e.preventDefault();
         redo();
-        return;
+        return true;
       }
-
-      // Redo: Ctrl+Y or Cmd+Y (alternative)
-      if (modKey && e.key.toLowerCase() === "y") {
+      if (key === "y") {
         e.preventDefault();
         redo();
-        return;
+        return true;
       }
+      return false;
+    };
 
-      // Save: Ctrl+S or Cmd+S (without Shift)
-      if (modKey && e.key.toLowerCase() === "s" && !e.shiftKey) {
+    const handleFileShortcuts = (
+      e: KeyboardEvent,
+      modKey: boolean
+    ): boolean => {
+      if (!modKey) return false;
+      const key = e.key.toLowerCase();
+      if (key === "s" && !e.shiftKey) {
         e.preventDefault();
         handleSave();
-        return;
+        return true;
       }
-
-      // Save As: Ctrl+Shift+S or Cmd+Shift+S
-      if (modKey && e.key.toLowerCase() === "s" && e.shiftKey) {
+      if (key === "s" && e.shiftKey) {
         e.preventDefault();
         handleSaveAs();
-        return;
+        return true;
       }
-
-      // Open: Ctrl+O or Cmd+O
-      if (modKey && e.key.toLowerCase() === "o") {
+      if (key === "o") {
         e.preventDefault();
         handleOpen();
-        return;
+        return true;
       }
-
-      // New: Ctrl+Alt+N or Cmd+Alt+N (Ctrl+N is blocked by browser)
-      if (modKey && e.altKey && e.key.toLowerCase() === "n") {
+      if (key === "n" && e.altKey) {
         e.preventDefault();
         handleNew();
-        return;
+        return true;
       }
-
-      // Copy: Ctrl+C or Cmd+C
-      if (modKey && e.key.toLowerCase() === "c") {
-        e.preventDefault();
-        handleCopy();
-        return;
-      }
-
-      // Cut: Ctrl+X or Cmd+X
-      if (modKey && e.key.toLowerCase() === "x") {
-        e.preventDefault();
-        handleCut();
-        return;
-      }
-
-      // Paste: Ctrl+V or Cmd+V
-      if (modKey && e.key.toLowerCase() === "v") {
-        e.preventDefault();
-        handlePaste();
-        return;
-      }
-
-      // Export: Ctrl+E or Cmd+E
-      if (modKey && e.key.toLowerCase() === "e") {
+      if (key === "e") {
         e.preventDefault();
         openExportDialog();
-        return;
+        return true;
       }
+      return false;
+    };
 
-      // ESC: Close dialogs first, then clear clipboard
-      if (e.key === "Escape") {
-        // Close dialogs in priority order
-        if (isExportDialogOpen) {
-          e.preventDefault();
-          closeExportDialog();
-          return;
-        }
-        if (isHelpPanelOpen) {
-          e.preventDefault();
-          closeHelpPanel();
-          return;
-        }
-        if (isWelcomeTourOpen) {
-          e.preventDefault();
-          closeWelcomeTour();
-          return;
-        }
-
-        // Clear clipboard (like Excel)
-        if (clipboardMode !== null) {
-          // Don't preventDefault - let other handlers (like Cell edit cancel) also handle it
-          clearClipboard();
-          return;
-        }
-        return;
+    const handleClipboardShortcuts = (
+      e: KeyboardEvent,
+      modKey: boolean
+    ): boolean => {
+      if (!modKey) return false;
+      const key = e.key.toLowerCase();
+      if (key === "c") {
+        e.preventDefault();
+        handleCopy();
+        return true;
       }
+      if (key === "x") {
+        e.preventDefault();
+        handleCut();
+        return true;
+      }
+      if (key === "v") {
+        e.preventDefault();
+        handlePaste();
+        return true;
+      }
+      return false;
+    };
 
+    const handleEscapeKey = (e: KeyboardEvent): boolean => {
+      if (e.key !== "Escape") return false;
+      // Close dialogs in priority order
+      if (isExportDialogOpen) {
+        e.preventDefault();
+        closeExportDialog();
+        return true;
+      }
+      if (isHelpPanelOpen) {
+        e.preventDefault();
+        closeHelpPanel();
+        return true;
+      }
+      if (isWelcomeTourOpen) {
+        e.preventDefault();
+        closeWelcomeTour();
+        return true;
+      }
+      // Clear clipboard (like Excel)
+      if (clipboardMode !== null) {
+        clearClipboard();
+        return true;
+      }
+      return false;
+    };
+
+    const handleStructureShortcuts = (
+      e: KeyboardEvent,
+      modKey: boolean
+    ): boolean => {
       // Delete: Delete selected tasks
       if (e.key === "Delete" && selectedTaskIds.length > 0) {
         e.preventDefault();
         deleteSelectedTasks();
-        return;
+        return true;
       }
-
       // Ctrl+-: Delete selected tasks (Excel-style)
-      // Always preventDefault to block browser zoom
       if (modKey && (e.key === "-" || e.key === "_") && !isEditingCell) {
         e.preventDefault();
         if (selectedTaskIds.length > 0) {
@@ -225,14 +197,12 @@ export function useKeyboardShortcuts(): void {
         } else if (activeCell.taskId) {
           deleteTask(activeCell.taskId, true);
         }
-        return;
+        return true;
       }
-
       // Ctrl++: Insert row(s) above (Excel-style)
       if (modKey && (e.key === "+" || e.key === "=") && !isEditingCell) {
         e.preventDefault();
         const count = Math.max(selectedTaskIds.length, 1);
-        // Find topmost selected task (lowest index in visual order)
         const currentTasks = useTaskStore.getState().tasks;
         const collapsedIds = new Set(
           currentTasks.filter((t) => t.open === false).map((t) => t.id)
@@ -248,7 +218,6 @@ export function useKeyboardShortcuts(): void {
             }
           }
         }
-        // Fallback to activeCell task
         if (!referenceTaskId && activeCell.taskId) {
           referenceTaskId = activeCell.taskId;
         }
@@ -259,97 +228,120 @@ export function useKeyboardShortcuts(): void {
             insertMultipleTasksAbove(referenceTaskId, count);
           }
         }
-        return;
+        return true;
       }
-
       // Alt+Shift+Right: Indent (MS Project style)
       if (e.altKey && e.shiftKey && e.key === "ArrowRight" && !isEditingCell) {
         e.preventDefault();
         indentSelectedTasks();
-        return;
+        return true;
       }
-
       // Alt+Shift+Left: Outdent (MS Project style)
       if (e.altKey && e.shiftKey && e.key === "ArrowLeft" && !isEditingCell) {
         e.preventDefault();
         outdentSelectedTasks();
-        return;
+        return true;
       }
-
       // Ctrl+G: Group selected tasks
       if (modKey && e.key.toLowerCase() === "g" && !isEditingCell) {
         e.preventDefault();
         groupSelectedTasks();
-        return;
+        return true;
       }
-
       // Ctrl+Shift+H: Show all hidden rows
       if (modKey && e.shiftKey && e.key.toLowerCase() === "h") {
         e.preventDefault();
         showAll();
-        return;
+        return true;
       }
-
       // Ctrl+H: Hide selected rows
       if (modKey && e.key.toLowerCase() === "h" && !e.shiftKey) {
         e.preventDefault();
         if (selectedTaskIds.length > 0) {
           hideRows(selectedTaskIds);
         }
-        return;
+        return true;
       }
+      return false;
+    };
 
-      // ? key: Open help panel (when not in text input)
-      if (e.key === "?" && !isTextInput && !isCellActive) {
+    const handleViewToggles = (
+      e: KeyboardEvent,
+      isCellActive: boolean,
+      isTextInput: boolean,
+      modKey: boolean
+    ): boolean => {
+      if (isTextInput || isCellActive || modKey || e.altKey || e.shiftKey)
+        return false;
+
+      // ? key: Open help panel
+      if (e.key === "?") {
         e.preventDefault();
         openHelpPanel();
-        return;
+        return true;
       }
-
-      // View toggle shortcuts (Sprint 1.5.9)
-      // Only when not in text input/gridcell and no modifier keys
-      if (
-        !isTextInput &&
-        !isCellActive &&
-        !modKey &&
-        !e.altKey &&
-        !e.shiftKey
-      ) {
-        // D: Toggle dependencies
-        if (e.key.toLowerCase() === "d") {
-          e.preventDefault();
-          toggleDependencies();
-          return;
-        }
-
-        // T: Toggle today marker
-        if (e.key.toLowerCase() === "t") {
-          e.preventDefault();
-          toggleTodayMarker();
-          return;
-        }
-
-        // P: Toggle progress column
-        if (e.key.toLowerCase() === "p") {
-          e.preventDefault();
-          toggleProgress();
-          return;
-        }
-
-        // H: Toggle holidays
-        if (e.key.toLowerCase() === "h") {
-          e.preventDefault();
-          toggleHolidays();
-          return;
-        }
-
-        // F: Fit to view (fit timeline to show all tasks)
-        if (e.key.toLowerCase() === "f") {
-          e.preventDefault();
-          fitToView(tasks);
-          return;
-        }
+      const key = e.key.toLowerCase();
+      if (key === "d") {
+        e.preventDefault();
+        toggleDependencies();
+        return true;
       }
+      if (key === "t") {
+        e.preventDefault();
+        toggleTodayMarker();
+        return true;
+      }
+      if (key === "p") {
+        e.preventDefault();
+        toggleProgress();
+        return true;
+      }
+      if (key === "h") {
+        e.preventDefault();
+        toggleHolidays();
+        return true;
+      }
+      if (key === "f") {
+        e.preventDefault();
+        fitToView(tasks);
+        return true;
+      }
+      return false;
+    };
+
+    // ─── Main dispatcher ───
+
+    const handleKeyDown = (e: KeyboardEvent): void => {
+      const isMac = navigator.platform.toUpperCase().indexOf("MAC") >= 0;
+      const modKey = isMac ? e.metaKey : e.ctrlKey;
+
+      // Check if we're in a text input context
+      const target = e.target as HTMLElement;
+      const isTextInput =
+        target.tagName === "TEXTAREA" ||
+        target.isContentEditable ||
+        (target.tagName === "INPUT" &&
+          (target as HTMLInputElement).type !== "checkbox");
+      const isCellActive = activeCell.taskId !== null;
+
+      // For clipboard operations, allow even when checkbox is focused
+      const isClipboardShortcut =
+        modKey &&
+        (e.key.toLowerCase() === "c" ||
+          e.key.toLowerCase() === "x" ||
+          e.key.toLowerCase() === "v");
+
+      // Ignore non-clipboard shortcuts if typing in text input
+      if (isTextInput && !isClipboardShortcut) return;
+      // For clipboard shortcuts in text inputs (not checkbox), use native behavior
+      if (isTextInput && isClipboardShortcut) return;
+
+      if (handleUndoRedo(e, modKey)) return;
+      if (handleFileShortcuts(e, modKey)) return;
+      if (handleClipboardShortcuts(e, modKey)) return;
+      if (handleEscapeKey(e)) return;
+      if (handleStructureShortcuts(e, modKey)) return;
+      if (handleViewToggles(e, isCellActive, isTextInput, modKey)) return;
     };
 
     window.addEventListener("keydown", handleKeyDown);

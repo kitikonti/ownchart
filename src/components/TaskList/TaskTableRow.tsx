@@ -11,17 +11,15 @@ import type { Task } from "../../types/chart.types";
 import { useTaskStore } from "../../store/slices/taskSlice";
 import { useChartStore } from "../../store/slices/chartSlice";
 import { useDensityConfig } from "../../store/slices/userPreferencesSlice";
-import { Cell } from "./Cell";
-import { ColorCellEditor } from "./CellEditors/ColorCellEditor";
 import { RowNumberCell, dragState } from "./RowNumberCell";
+import { TaskDataCells } from "./TaskDataCells";
 import {
   getDensityAwareWidth,
   getVisibleColumns,
 } from "../../config/tableColumns";
-import { useCellNavigation } from "../../hooks/useCellNavigation";
-import { TaskTypeIcon } from "./TaskTypeIcon";
 import { calculateSummaryDates } from "../../utils/hierarchy";
 import { useComputedTaskColor } from "../../hooks/useComputedTaskColor";
+import { COLORS } from "../../styles/design-tokens";
 
 interface TaskTableRowProps {
   task: Task;
@@ -55,10 +53,6 @@ export function TaskTableRow({
   selectionPosition,
 }: TaskTableRowProps): JSX.Element {
   const tasks = useTaskStore((state) => state.tasks);
-  const updateTask = useTaskStore((state) => state.updateTask);
-  const toggleTaskCollapsed = useTaskStore(
-    (state) => state.toggleTaskCollapsed
-  );
   const columnWidths = useTaskStore((state) => state.columnWidths);
   const selectedTaskIds = useTaskStore((state) => state.selectedTaskIds);
   const lastSelectedTaskId = useTaskStore((state) => state.lastSelectedTaskId);
@@ -69,10 +63,8 @@ export function TaskTableRow({
   const setActiveCell = useTaskStore((state) => state.setActiveCell);
   const insertTaskAbove = useTaskStore((state) => state.insertTaskAbove);
   const insertTaskBelow = useTaskStore((state) => state.insertTaskBelow);
-  const { isCellEditing, stopCellEdit } = useCellNavigation();
   const densityConfig = useDensityConfig();
   const hiddenColumns = useChartStore((state) => state.hiddenColumns);
-  const colorModeState = useChartStore((state) => state.colorModeState);
 
   // Get computed task color based on current color mode
   const computedColor = useComputedTaskColor(task);
@@ -123,7 +115,6 @@ export function TaskTableRow({
   } = useSortable({ id: task.id });
 
   // Generate grid template columns with density-aware widths
-  // Uses visibleColumns for show/hide progress column (Sprint 1.5.9)
   const gridTemplateColumns = visibleColumns
     .map((col) => {
       const customWidth = columnWidths[col.id];
@@ -141,8 +132,8 @@ export function TaskTableRow({
   };
 
   // OwnChart brand colors for selected row
-  const SELECTION_BORDER_COLOR = "#0F6CBD"; // OwnChart brand
-  const SELECTION_BG_COLOR = "rgba(15, 108, 189, 0.08)"; // OwnChart brand light
+  const SELECTION_BORDER_COLOR = COLORS.brand[600];
+  const SELECTION_BG_COLOR = `${COLORS.brand[600]}14`; // brand-600 at ~8% opacity
 
   // Determine selection borders based on position in contiguous selection
   const showTopBorder = selectionPosition?.isFirstSelected ?? true;
@@ -152,6 +143,37 @@ export function TaskTableRow({
   const handleRowMouseEnter = (): void => {
     if (dragState.isDragging && dragState.onDragSelect) {
       dragState.onDragSelect(task.id);
+    }
+  };
+
+  // Handle row selection via RowNumberCell
+  const handleSelectRow = (
+    taskId: string,
+    shiftKey: boolean,
+    ctrlKey: boolean
+  ): void => {
+    setActiveCell(null, null);
+    if (shiftKey) {
+      // Shift+Click or Drag: Range selection using VISIBLE task order
+      const anchorTaskId = dragState.startTaskId || lastSelectedTaskId;
+      if (anchorTaskId) {
+        const startIdx = visibleTaskIds.indexOf(anchorTaskId);
+        const endIdx = visibleTaskIds.indexOf(taskId);
+
+        if (startIdx !== -1 && endIdx !== -1) {
+          const minIdx = Math.min(startIdx, endIdx);
+          const maxIdx = Math.max(startIdx, endIdx);
+          const idsInRange = visibleTaskIds.slice(minIdx, maxIdx + 1);
+          setSelectedTaskIds(idsInRange, false);
+        }
+      } else {
+        // No anchor yet — just select this row
+        setSelectedTaskIds([taskId], false);
+      }
+    } else if (ctrlKey) {
+      toggleTaskSelection(taskId);
+    } else {
+      setSelectedTaskIds([taskId], false);
     }
   };
 
@@ -215,35 +237,7 @@ export function TaskTableRow({
         hasHiddenBelow={hasHiddenBelow}
         hiddenBelowCount={hiddenBelowCount}
         onUnhideBelow={onUnhideBelow}
-        onSelectRow={(taskId, shiftKey, ctrlKey) => {
-          setActiveCell(null, null);
-          if (shiftKey) {
-            // Shift+Click or Drag: Range selection using VISIBLE task order
-            // During drag, use dragState.startTaskId as anchor; otherwise use lastSelectedTaskId
-            const anchorTaskId = dragState.startTaskId || lastSelectedTaskId;
-            if (anchorTaskId) {
-              // Find indices in the VISIBLE task list, not the raw tasks array
-              const startIdx = visibleTaskIds.indexOf(anchorTaskId);
-              const endIdx = visibleTaskIds.indexOf(taskId);
-
-              if (startIdx !== -1 && endIdx !== -1) {
-                const minIdx = Math.min(startIdx, endIdx);
-                const maxIdx = Math.max(startIdx, endIdx);
-                const idsInRange = visibleTaskIds.slice(minIdx, maxIdx + 1);
-                setSelectedTaskIds(idsInRange, false);
-              }
-            } else {
-              // No anchor yet (first interaction) — just select this row
-              setSelectedTaskIds([taskId], false);
-            }
-          } else if (ctrlKey) {
-            // Ctrl+Click: Toggle (add/remove from selection)
-            toggleTaskSelection(taskId);
-          } else {
-            // Normal click: Replace selection with just this row
-            setSelectedTaskIds([taskId], false);
-          }
-        }}
+        onSelectRow={handleSelectRow}
         onInsertAbove={() => insertTaskAbove(task.id)}
         onInsertBelow={() => insertTaskBelow(task.id)}
         rowHeight="var(--density-row-height)"
@@ -252,243 +246,16 @@ export function TaskTableRow({
         taskName={task.name}
       />
 
-      {/* Data Cells - uses visibleColumns for show/hide progress column (Sprint 1.5.9) */}
-      {visibleColumns
-        .filter((col) => col.field)
-        .map((column) => {
-          const field = column.field!;
-
-          // Special handling for name field with hierarchy
-          if (field === "name") {
-            const isEditing = isCellEditing(task.id, field);
-
-            // In edit mode: no custom children, let Cell handle everything
-            if (isEditing) {
-              return (
-                <Cell
-                  key={field}
-                  taskId={task.id}
-                  task={displayTask}
-                  field={field}
-                  column={column}
-                />
-              );
-            }
-
-            // In view mode: custom children with hierarchy elements
-            return (
-              <Cell
-                key={field}
-                taskId={task.id}
-                task={displayTask}
-                field={field}
-                column={column}
-              >
-                <div
-                  className="flex items-center gap-1"
-                  style={{
-                    paddingLeft: `${level * densityConfig.indentSize}px`,
-                  }}
-                >
-                  {/* Expand/collapse button for summary tasks with children only */}
-                  {hasChildren && task.type === "summary" ? (
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        toggleTaskCollapsed(task.id);
-                      }}
-                      className="w-4 h-4 flex items-center justify-center hover:bg-neutral-200 rounded text-neutral-600 flex-shrink-0"
-                      aria-label={
-                        isExpanded
-                          ? `Collapse ${task.name}`
-                          : `Expand ${task.name}`
-                      }
-                      aria-expanded={isExpanded}
-                    >
-                      {isExpanded ? "▼" : "▶"}
-                    </button>
-                  ) : (
-                    <div className="w-4 flex-shrink-0" aria-hidden="true" />
-                  )}
-
-                  {/* Task type icon - clickable to cycle through types */}
-                  <TaskTypeIcon
-                    type={task.type}
-                    onClick={() => {
-                      const currentType = task.type || "task";
-                      let nextType: Task["type"];
-
-                      if (hasChildren) {
-                        // When task has children, only allow task ↔ summary (skip milestone)
-                        nextType = currentType === "task" ? "summary" : "task";
-                      } else {
-                        // When no children, cycle through all types
-                        nextType =
-                          currentType === "task"
-                            ? "summary"
-                            : currentType === "summary"
-                              ? "milestone"
-                              : "task";
-                      }
-
-                      updateTask(task.id, { type: nextType });
-                    }}
-                  />
-
-                  {/* Task name display */}
-                  <span className="flex-1">{task.name}</span>
-                </div>
-              </Cell>
-            );
-          }
-
-          // Special handling for dates in summary tasks (read-only)
-          if (
-            (field === "startDate" || field === "endDate") &&
-            task.type === "summary"
-          ) {
-            return (
-              <Cell
-                key={field}
-                taskId={task.id}
-                task={displayTask}
-                field={field}
-                column={column}
-              >
-                {displayTask[field] ? (
-                  <span className="text-neutral-500 italic">
-                    {displayTask[field]}
-                  </span>
-                ) : (
-                  <span></span>
-                )}
-              </Cell>
-            );
-          }
-
-          // Special handling for end date in milestone tasks (read-only, empty)
-          if (field === "endDate" && task.type === "milestone") {
-            return (
-              <Cell
-                key={field}
-                taskId={task.id}
-                task={displayTask}
-                field={field}
-                column={column}
-              >
-                <span></span>
-              </Cell>
-            );
-          }
-
-          // Special handling for duration in summary and milestone tasks (read-only)
-          if (
-            field === "duration" &&
-            (task.type === "summary" || task.type === "milestone")
-          ) {
-            return (
-              <Cell
-                key={field}
-                taskId={task.id}
-                task={displayTask}
-                field={field}
-                column={column}
-              >
-                {task.type === "summary" && displayTask.duration > 0 ? (
-                  <span className="text-neutral-500 italic">
-                    {displayTask.duration} days
-                  </span>
-                ) : (
-                  <span></span>
-                )}
-              </Cell>
-            );
-          }
-
-          // Special handling for progress in milestone tasks (read-only, empty)
-          if (field === "progress" && task.type === "milestone") {
-            return (
-              <Cell
-                key={field}
-                taskId={task.id}
-                task={displayTask}
-                field={field}
-                column={column}
-              >
-                <span></span>
-              </Cell>
-            );
-          }
-
-          // Special handling for color field with color picker
-          // Uses computed color for display (respects color mode)
-          if (field === "color") {
-            const isEditing = isCellEditing(task.id, field);
-
-            return (
-              <Cell
-                key={field}
-                taskId={task.id}
-                task={displayTask}
-                field={field}
-                column={column}
-              >
-                <div className="flex items-center justify-center w-full h-full">
-                  {isEditing ? (
-                    <ColorCellEditor
-                      value={displayTask.color}
-                      computedColor={computedColor}
-                      colorMode={colorModeState.mode}
-                      hasOverride={!!task.colorOverride}
-                      onChange={(value) => {
-                        if (colorModeState.mode === "manual") {
-                          updateTask(task.id, { color: value });
-                        } else if (
-                          colorModeState.mode === "summary" &&
-                          task.type === "summary"
-                        ) {
-                          updateTask(task.id, {
-                            color: value,
-                            colorOverride: undefined,
-                          });
-                        } else {
-                          updateTask(task.id, { colorOverride: value });
-                        }
-                      }}
-                      onResetOverride={() =>
-                        updateTask(task.id, {
-                          colorOverride: undefined,
-                        })
-                      }
-                      onSave={stopCellEdit}
-                      onCancel={stopCellEdit}
-                      height={densityConfig.colorBarHeight}
-                    />
-                  ) : (
-                    <div
-                      className="w-1.5 rounded"
-                      style={{
-                        backgroundColor: computedColor,
-                        height: densityConfig.colorBarHeight,
-                      }}
-                    />
-                  )}
-                </div>
-              </Cell>
-            );
-          }
-
-          // Default cell rendering
-          return (
-            <Cell
-              key={field}
-              taskId={task.id}
-              task={displayTask}
-              field={field}
-              column={column}
-            />
-          );
-        })}
+      {/* Data Cells */}
+      <TaskDataCells
+        task={task}
+        displayTask={displayTask}
+        visibleColumns={visibleColumns}
+        level={level}
+        hasChildren={hasChildren}
+        isExpanded={isExpanded}
+        computedColor={computedColor}
+      />
     </div>
   );
 }

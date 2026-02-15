@@ -3,8 +3,6 @@
  * Manages command stacks and provides undo/redo operations
  */
 
-/* eslint-disable @typescript-eslint/no-explicit-any */
-
 import { create } from "zustand";
 import { immer } from "zustand/middleware/immer";
 import toast from "react-hot-toast";
@@ -229,7 +227,11 @@ export const useHistoryStore = create<HistoryStore>()(
 
 /**
  * Execute the reverse of a command (undo)
+ *
+ * Uses `any` casts for legacy command params that predate typed params interfaces.
+ * New command types (hideTasks, unhideTasks, groupTasks, etc.) use proper types.
  */
+/* eslint-disable @typescript-eslint/no-explicit-any */
 function executeUndoCommand(command: Command): void {
   const taskStore = useTaskStore.getState();
 
@@ -908,3 +910,4 @@ function executeRedoCommand(command: Command): void {
       console.warn("Unknown command type for redo:", command.type);
   }
 }
+/* eslint-enable @typescript-eslint/no-explicit-any */

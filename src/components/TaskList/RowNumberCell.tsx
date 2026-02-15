@@ -14,6 +14,7 @@ import type { DraggableAttributes } from "@dnd-kit/core";
 import type { SyntheticListenerMap } from "@dnd-kit/core/dist/hooks/utilities";
 import { useDensityConfig } from "../../store/slices/userPreferencesSlice";
 import { HiddenRowIndicator } from "./HiddenRowIndicator";
+import { COLORS } from "../../styles/design-tokens";
 
 // Global drag selection state (shared between all RowNumberCell instances)
 // Exported so TaskTableRow can also respond to drag selection
@@ -26,18 +27,18 @@ export const dragState = {
 // Custom cursor for row selection (Excel-style right arrow with shaft)
 const ROW_SELECT_CURSOR = `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='18' height='14' viewBox='0 0 18 14'%3E%3Cpath d='M5 5 L5 9 L10 9 L10 13 L17 7 L10 1 L10 5 Z' fill='black' stroke='white' stroke-width='1'/%3E%3C/svg%3E") 17 7, pointer`;
 
-// OwnChart brand colors (Outlook Blue)
-const COLORS = {
+// Row number cell colors (Outlook Blue theme)
+const ROW_COLORS = {
   // Inactive state
   bgInactive: "#F3F3F3",
   bgHover: "#E8E8E8",
   textInactive: "#5F6368",
   // Selected state - OwnChart brand
-  bgSelected: "#0F6CBD",
+  bgSelected: COLORS.brand[600],
   textSelected: "#FFFFFF",
   // Hover controls - OwnChart brand
-  controlsColor: "#0F6CBD",
-  insertLineColor: "#0F6CBD",
+  controlsColor: COLORS.brand[600],
+  insertLineColor: COLORS.brand[600],
   // Border
   border: "#E1E1E1",
   // Hidden row indicator (neutral-400)
@@ -187,12 +188,12 @@ export function RowNumberCell({
       style={{
         height: rowHeight,
         backgroundColor: isSelected
-          ? COLORS.bgSelected
+          ? ROW_COLORS.bgSelected
           : isHovered
-            ? COLORS.bgHover
-            : COLORS.bgInactive,
-        borderRight: `1px solid ${COLORS.border}`,
-        borderBottom: `1px solid ${COLORS.border}`,
+            ? ROW_COLORS.bgHover
+            : ROW_COLORS.bgInactive,
+        borderRight: `1px solid ${ROW_COLORS.border}`,
+        borderBottom: `1px solid ${ROW_COLORS.border}`,
         borderRadius: getBorderRadius(),
         cursor: getCursor(),
         display: "flex",
@@ -242,13 +243,17 @@ export function RowNumberCell({
                   height: "14px",
                   borderRadius: "50%",
                   backgroundColor: "white",
-                  border: `1px solid ${COLORS.controlsColor}`,
+                  border: `1px solid ${ROW_COLORS.controlsColor}`,
                   display: "flex",
                   alignItems: "center",
                   justifyContent: "center",
                 }}
               >
-                <Plus size={10} weight="bold" color={COLORS.controlsColor} />
+                <Plus
+                  size={10}
+                  weight="bold"
+                  color={ROW_COLORS.controlsColor}
+                />
               </div>
             ) : (
               // Normal state: small ring
@@ -258,7 +263,7 @@ export function RowNumberCell({
                   height: "7px",
                   borderRadius: "50%",
                   backgroundColor: "white",
-                  border: `1px solid ${COLORS.controlsColor}`,
+                  border: `1px solid ${ROW_COLORS.controlsColor}`,
                 }}
               />
             )}
@@ -279,7 +284,9 @@ export function RowNumberCell({
             <DotsSixVertical
               size={16}
               weight="bold"
-              color={isSelected ? COLORS.textSelected : COLORS.textInactive}
+              color={
+                isSelected ? ROW_COLORS.textSelected : ROW_COLORS.textInactive
+              }
             />
           </div>
 
@@ -307,13 +314,17 @@ export function RowNumberCell({
                   height: "14px",
                   borderRadius: "50%",
                   backgroundColor: "white",
-                  border: `1px solid ${COLORS.controlsColor}`,
+                  border: `1px solid ${ROW_COLORS.controlsColor}`,
                   display: "flex",
                   alignItems: "center",
                   justifyContent: "center",
                 }}
               >
-                <Plus size={10} weight="bold" color={COLORS.controlsColor} />
+                <Plus
+                  size={10}
+                  weight="bold"
+                  color={ROW_COLORS.controlsColor}
+                />
               </div>
             ) : (
               // Normal state: small ring
@@ -323,7 +334,7 @@ export function RowNumberCell({
                   height: "7px",
                   borderRadius: "50%",
                   backgroundColor: "white",
-                  border: `1px solid ${COLORS.controlsColor}`,
+                  border: `1px solid ${ROW_COLORS.controlsColor}`,
                 }}
               />
             )}
@@ -340,7 +351,7 @@ export function RowNumberCell({
             left: "18px", // Start after the circle
             right: "-2000px", // Extend across entire table
             height: "2px",
-            backgroundColor: COLORS.insertLineColor,
+            backgroundColor: ROW_COLORS.insertLineColor,
             zIndex: 60,
           }}
         />
@@ -355,7 +366,7 @@ export function RowNumberCell({
             left: "18px", // Start after the circle
             right: "-2000px", // Extend across entire table
             height: "2px",
-            backgroundColor: COLORS.insertLineColor,
+            backgroundColor: ROW_COLORS.insertLineColor,
             zIndex: 60,
           }}
         />
@@ -364,7 +375,7 @@ export function RowNumberCell({
       {/* Row number */}
       <span
         style={{
-          color: isSelected ? COLORS.textSelected : COLORS.textInactive,
+          color: isSelected ? ROW_COLORS.textSelected : ROW_COLORS.textInactive,
           fontWeight: isSelected ? 600 : 400,
           fontSize: "13px",
           userSelect: "none",
@@ -379,8 +390,8 @@ export function RowNumberCell({
           rowHeight={densityConfig.rowHeight}
           hiddenBelowCount={hiddenBelowCount}
           onUnhideBelow={onUnhideBelow}
-          controlsColor={COLORS.controlsColor}
-          indicatorColor={COLORS.hiddenIndicator}
+          controlsColor={ROW_COLORS.controlsColor}
+          indicatorColor={ROW_COLORS.hiddenIndicator}
         />
       )}
     </div>
