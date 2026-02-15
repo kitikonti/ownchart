@@ -9,9 +9,10 @@
  */
 
 import { useState, useRef, useEffect, type MouseEvent } from "react";
-import { DotsSixVertical, Plus } from "@phosphor-icons/react";
+import { DotsSixVertical, Plus, CaretUpDown } from "@phosphor-icons/react";
 import type { DraggableAttributes } from "@dnd-kit/core";
 import type { SyntheticListenerMap } from "@dnd-kit/core/dist/hooks/utilities";
+import { useDensityConfig } from "../../store/slices/userPreferencesSlice";
 
 // Global drag selection state (shared between all RowNumberCell instances)
 // Exported so TaskTableRow can also respond to drag selection
@@ -38,6 +39,8 @@ const COLORS = {
   insertLineColor: "#0F6CBD",
   // Border
   border: "#E1E1E1",
+  // Hidden row indicator (neutral-400)
+  hiddenIndicator: "#9ca3af",
 };
 
 interface RowNumberCellProps {
@@ -52,6 +55,12 @@ interface RowNumberCellProps {
     isFirstSelected: boolean;
     isLastSelected: boolean;
   };
+  /** Hidden rows exist below this row (Excel-style double-line at bottom) */
+  hasHiddenBelow?: boolean;
+  /** Number of hidden rows below (for tooltip text) */
+  hiddenBelowCount?: number;
+  /** Callback to unhide hidden rows below */
+  onUnhideBelow?: () => void;
   /** Select this row (Excel-style: normal=replace, Shift=range, Ctrl=toggle) */
   onSelectRow: (taskId: string, shiftKey: boolean, ctrlKey: boolean) => void;
   /** Insert a new row above this one */
@@ -73,6 +82,9 @@ export function RowNumberCell({
   taskId,
   isSelected,
   selectionPosition,
+  hasHiddenBelow = false,
+  hiddenBelowCount,
+  onUnhideBelow,
   onSelectRow,
   onInsertAbove,
   onInsertBelow,
@@ -81,10 +93,16 @@ export function RowNumberCell({
   dragListeners,
   taskName = "",
 }: RowNumberCellProps): JSX.Element {
+  const densityConfig = useDensityConfig();
+  // Scale indicator height with density: compact=6, normal=8, comfortable=10
+  const indicatorHeight =
+    densityConfig.rowHeight <= 28 ? 6 : densityConfig.rowHeight <= 36 ? 8 : 10;
+
   const [isHovered, setIsHovered] = useState(false);
   const [hoveredControl, setHoveredControl] = useState<
-    "drag" | "addAbove" | "addBelow" | null
+    "drag" | "addAbove" | "addBelow" | "unhide" | null
   >(null);
+  const [showUnhideButton, setShowUnhideButton] = useState(false);
   const cellRef = useRef<HTMLDivElement>(null);
 
   // Handle drag selection - select range as mouse moves over rows
@@ -191,6 +209,7 @@ export function RowNumberCell({
       onMouseLeave={() => {
         setIsHovered(false);
         setHoveredControl(null);
+        setShowUnhideButton(false);
       }}
       onMouseDown={handleMouseDown}
       role="gridcell"
@@ -212,7 +231,7 @@ export function RowNumberCell({
               position: "absolute",
               top: "-9px",
               left: "1px",
-              zIndex: 30,
+              zIndex: 45,
             }}
             onMouseEnter={() => setHoveredControl("addAbove")}
             onMouseLeave={() => setHoveredControl(null)}
@@ -277,7 +296,7 @@ export function RowNumberCell({
               position: "absolute",
               bottom: "-9px",
               left: "1px",
-              zIndex: 30,
+              zIndex: 45,
             }}
             onMouseEnter={() => setHoveredControl("addBelow")}
             onMouseLeave={() => setHoveredControl(null)}
@@ -357,6 +376,106 @@ export function RowNumberCell({
       >
         {rowNumber}
       </span>
+
+      {/* Excel-style double-line indicator for hidden rows below */}
+      {hasHiddenBelow && (
+        <>
+          {/* Double-line */}
+          <div
+            className="absolute left-0 right-0 pointer-events-none"
+            style={{
+              bottom: `${-(indicatorHeight / 2 + 1)}px`,
+              height: `${indicatorHeight}px`,
+              backgroundColor: "white",
+              borderTop: `1.5px solid ${COLORS.hiddenIndicator}`,
+              borderBottom: `1.5px solid ${COLORS.hiddenIndicator}`,
+              zIndex: 40,
+            }}
+          />
+          {/* Hover zone — covers double-line area + extends right for button */}
+          {onUnhideBelow && (
+            <div
+              data-unhide-zone
+              className="absolute"
+              style={{
+                left: 0,
+                right: "-21px",
+                bottom: `${-(densityConfig.rowHeight * 0.45)}px`,
+                height: `${densityConfig.rowHeight * 0.9}px`,
+                zIndex: 42,
+              }}
+              onMouseEnter={() => setShowUnhideButton(true)}
+              onMouseLeave={(e) => {
+                const related = e.relatedTarget as HTMLElement | null;
+                if (
+                  related?.closest?.("[data-unhide-zone], [data-unhide-button]")
+                )
+                  return;
+                setShowUnhideButton(false);
+                setHoveredControl(null);
+              }}
+            >
+              {showUnhideButton && (
+                <div
+                  data-unhide-button
+                  className="absolute flex items-center justify-center"
+                  style={{
+                    right: 0,
+                    top: 0,
+                    bottom: 0,
+                    width: "20px",
+                    backgroundColor:
+                      hoveredControl === "unhide"
+                        ? COLORS.controlsColor
+                        : "white",
+                    border: `1px solid ${COLORS.controlsColor}`,
+                    borderRadius: "3px",
+                    cursor: "pointer",
+                    zIndex: 50,
+                  }}
+                  role="button"
+                  tabIndex={0}
+                  title={`${hiddenBelowCount ?? 0} hidden — click to unhide`}
+                  aria-label={`Unhide ${hiddenBelowCount ?? 0} hidden rows`}
+                  onMouseEnter={() => setHoveredControl("unhide")}
+                  onMouseLeave={(e) => {
+                    setHoveredControl(null);
+                    const related = e.relatedTarget as HTMLElement | null;
+                    if (
+                      related?.closest?.(
+                        "[data-unhide-zone], [data-unhide-button]"
+                      )
+                    )
+                      return;
+                    setShowUnhideButton(false);
+                  }}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onUnhideBelow();
+                  }}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter" || e.key === " ") {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      onUnhideBelow();
+                    }
+                  }}
+                >
+                  <CaretUpDown
+                    size={20}
+                    weight="fill"
+                    color={
+                      hoveredControl === "unhide"
+                        ? "white"
+                        : COLORS.controlsColor
+                    }
+                  />
+                </div>
+              )}
+            </div>
+          )}
+        </>
+      )}
     </div>
   );
 }

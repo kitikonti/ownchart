@@ -4,7 +4,7 @@
  * Supports hidden rows with Excel-style row number gaps and indicator lines.
  */
 
-import { useMemo, useState, useCallback, Fragment } from "react";
+import { useMemo, useState, useCallback } from "react";
 import {
   DndContext,
   closestCenter,
@@ -19,14 +19,13 @@ import {
   sortableKeyboardCoordinates,
   verticalListSortingStrategy,
 } from "@dnd-kit/sortable";
-import { EyeSlash } from "@phosphor-icons/react";
+import { EyeSlash, Eye } from "@phosphor-icons/react";
 
 import { useTaskStore } from "../../store/slices/taskSlice";
 import { useChartStore } from "../../store/slices/chartSlice";
 import { useDensityConfig } from "../../store/slices/userPreferencesSlice";
 import { TaskTableRow } from "./TaskTableRow";
 import { NewTaskPlaceholderRow } from "./NewTaskPlaceholderRow";
-import { HiddenRowsIndicator } from "./HiddenRowsIndicator";
 import {
   getDensityAwareWidth,
   getVisibleColumns,
@@ -58,7 +57,6 @@ export function TaskTable({ hideHeader = true }: TaskTableProps): JSX.Element {
   const densityConfig = useDensityConfig();
   const hiddenColumns = useChartStore((state) => state.hiddenColumns);
   const hiddenTaskIds = useChartStore((state) => state.hiddenTaskIds);
-
   // Centralized hide/unhide operations (command recording, dirty, toast)
   const { hideRows, showAll, unhideRange } = useHideOperations();
 
@@ -158,10 +156,49 @@ export function TaskTable({ hideHeader = true }: TaskTableProps): JSX.Element {
         icon: <EyeSlash size={14} weight="regular" />,
         onClick: () => hideRows(taskIdsToHide),
       });
+
+      // Check if selection spans hidden rows — offer Unhide like Excel
+      if (
+        selectedTaskIds.length >= 2 &&
+        selectedTaskIds.includes(contextMenu.taskId)
+      ) {
+        const selectedRowNums = flattenedTasks
+          .filter(({ task }) => selectedTaskIds.includes(task.id))
+          .map(({ globalRowNumber }) => globalRowNumber)
+          .sort((a, b) => a - b);
+
+        if (selectedRowNums.length >= 2) {
+          const firstRow = selectedRowNums[0];
+          const lastRow = selectedRowNums[selectedRowNums.length - 1];
+          const hiddenInRange = allFlattenedTasks.filter(
+            (item) =>
+              item.globalRowNumber >= firstRow &&
+              item.globalRowNumber <= lastRow &&
+              hiddenTaskIds.includes(item.task.id)
+          );
+
+          if (hiddenInRange.length > 0) {
+            items.push({
+              id: "unhide",
+              label: `Unhide ${hiddenInRange.length} Row${hiddenInRange.length !== 1 ? "s" : ""}`,
+              icon: <Eye size={14} weight="regular" />,
+              onClick: (): void => unhideRange(firstRow - 1, lastRow + 1),
+            });
+          }
+        }
+      }
     }
 
     return items;
-  }, [contextMenu, selectedTaskIds, hideRows]);
+  }, [
+    contextMenu,
+    selectedTaskIds,
+    hideRows,
+    unhideRange,
+    flattenedTasks,
+    allFlattenedTasks,
+    hiddenTaskIds,
+  ]);
 
   /**
    * Generate CSS grid template columns based on column widths.
@@ -197,13 +234,6 @@ export function TaskTable({ hideHeader = true }: TaskTableProps): JSX.Element {
   const handleColumnResize = (columnId: string, width: number): void => {
     setColumnWidth(columnId, width);
   };
-
-  // Compute trailing gap (hidden rows after last visible task)
-  const trailingGap = useMemo(() => {
-    if (flattenedTasks.length === 0) return 0;
-    const lastVisible = flattenedTasks[flattenedTasks.length - 1];
-    return allFlattenedTasks.length - lastVisible.globalRowNumber;
-  }, [flattenedTasks, allFlattenedTasks]);
 
   return (
     <div className="task-table-container bg-white border-r border-neutral-200 select-none">
@@ -293,75 +323,76 @@ export function TaskTable({ hideHeader = true }: TaskTableProps): JSX.Element {
                     ? selectedSet.has(nextTask.task.id)
                     : false;
 
-                  // Detect gap before this row (hidden rows indicator)
-                  const prevRowNum = prevTask ? prevTask.globalRowNumber : 0;
-                  const gap = globalRowNumber - prevRowNum - 1;
+                  // Detect gaps caused by hidden rows
+                  const nextRowNum = nextTask
+                    ? nextTask.globalRowNumber
+                    : allFlattenedTasks.length + 1;
+                  const gapAfter = nextRowNum - globalRowNumber - 1;
+
+                  const hasHiddenBelow = gapAfter > 0;
+
+                  // Count of hidden rows below (gapAfter already includes trailing gap for last row)
+                  const hiddenBelowCount = hasHiddenBelow ? gapAfter : 0;
 
                   return (
-                    <Fragment key={task.id}>
-                      {gap > 0 && (
-                        <HiddenRowsIndicator
-                          count={gap}
-                          onUnhide={() =>
-                            unhideRange(prevRowNum, globalRowNumber)
-                          }
-                        />
-                      )}
-                      <div
-                        onContextMenu={(e) => handleRowContextMenu(e, task.id)}
-                        className="contents"
-                      >
-                        <TaskTableRow
-                          task={task}
-                          globalRowNumber={globalRowNumber}
-                          level={level}
-                          hasChildren={hasChildren}
-                          visibleTaskIds={visibleTaskIds}
-                          clipboardPosition={
-                            isInClipboard
-                              ? {
-                                  isFirst: !prevInClipboard,
-                                  isLast: !nextInClipboard,
-                                }
-                              : undefined
-                          }
-                          selectionPosition={
-                            isSelected
-                              ? {
-                                  isFirstSelected: !prevSelected,
-                                  isLastSelected: !nextSelected,
-                                }
-                              : undefined
-                          }
-                        />
-                      </div>
-                    </Fragment>
+                    <div
+                      key={task.id}
+                      onContextMenu={(e) => handleRowContextMenu(e, task.id)}
+                      className="contents"
+                    >
+                      <TaskTableRow
+                        task={task}
+                        globalRowNumber={globalRowNumber}
+                        level={level}
+                        hasChildren={hasChildren}
+                        visibleTaskIds={visibleTaskIds}
+                        hasHiddenBelow={hasHiddenBelow}
+                        hiddenBelowCount={hiddenBelowCount}
+                        onUnhideBelow={
+                          hasHiddenBelow
+                            ? (): void =>
+                                unhideRange(globalRowNumber, nextRowNum)
+                            : undefined
+                        }
+                        clipboardPosition={
+                          isInClipboard
+                            ? {
+                                isFirst: !prevInClipboard,
+                                isLast: !nextInClipboard,
+                              }
+                            : undefined
+                        }
+                        selectionPosition={
+                          isSelected
+                            ? {
+                                isFirstSelected: !prevSelected,
+                                isLastSelected: !nextSelected,
+                              }
+                            : undefined
+                        }
+                      />
+                    </div>
                   );
                 }
               )}
             </SortableContext>
           </DndContext>
 
-          {/* Hidden rows at the end (after last visible task) */}
-          {trailingGap > 0 && (
-            <HiddenRowsIndicator
-              count={trailingGap}
-              onUnhide={() => {
-                const lastVisible = flattenedTasks[flattenedTasks.length - 1];
-                unhideRange(
-                  lastVisible.globalRowNumber,
-                  allFlattenedTasks.length + 1
-                );
-              }}
-            />
-          )}
-
-          {/* All tasks hidden — show single indicator to unhide all */}
+          {/* All tasks hidden — show message with unhide action */}
           {flattenedTasks.length === 0 && hiddenTaskIds.length > 0 && (
-            <HiddenRowsIndicator
-              count={hiddenTaskIds.length}
-              onUnhide={showAll}
-            />
+            <div
+              className="col-span-full flex items-center justify-center text-neutral-500 text-sm"
+              style={{ height: densityConfig.rowHeight }}
+            >
+              {hiddenTaskIds.length} row{hiddenTaskIds.length !== 1 ? "s" : ""}{" "}
+              hidden —{" "}
+              <button
+                className="text-[#0F6CBD] hover:underline ml-1"
+                onClick={showAll}
+              >
+                show all
+              </button>
+            </div>
           )}
 
           {/* Placeholder row for adding new tasks */}

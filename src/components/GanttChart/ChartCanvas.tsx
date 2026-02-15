@@ -28,11 +28,6 @@ import {
   getTaskBarGeometry,
   type DensityGeometryConfig,
 } from "../../utils/timelineUtils";
-import {
-  HIDDEN_INDICATOR_HEIGHT,
-  HIDDEN_INDICATOR_COLOR,
-  type HiddenRowGap,
-} from "../TaskList/HiddenRowsIndicator";
 
 interface ChartCanvasProps {
   tasks: Task[];
@@ -41,10 +36,6 @@ interface ChartCanvasProps {
   onTaskDoubleClick?: (taskId: string) => void;
   containerHeight?: number; // Height from parent container
   containerWidth?: number; // Width from parent container (viewport, not content)
-  /** Gaps from hidden rows, for rendering synchronized indicator lines */
-  hiddenRowGaps?: HiddenRowGap[];
-  /** Total number of hidden indicator lines (for height calculation) */
-  hiddenIndicatorCount?: number;
 }
 
 const SCROLLBAR_HEIGHT = 17; // Reserve space for horizontal scrollbar
@@ -56,8 +47,6 @@ export function ChartCanvas({
   onTaskDoubleClick,
   containerHeight = 600,
   containerWidth: propContainerWidth = 800,
-  hiddenRowGaps = [],
-  hiddenIndicatorCount = 0,
 }: ChartCanvasProps): JSX.Element {
   const outerRef = useRef<HTMLDivElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
@@ -129,25 +118,6 @@ export function ChartCanvas({
     updateScale(tasks);
   }, [tasks, containerWidth, zoom, updateScale]);
 
-  // Compute cumulative Y offset for each task index based on hidden row indicators.
-  // Single-pass O(n): iterate tasks, increment offset when crossing a gap boundary.
-  const taskYOffsets = useMemo(() => {
-    const offsets = new Array(tasks.length).fill(0);
-    let gapIdx = 0;
-    let cumulativeOffset = 0;
-    for (let i = 0; i < tasks.length; i++) {
-      while (
-        gapIdx < hiddenRowGaps.length &&
-        hiddenRowGaps[gapIdx].afterVisibleIndex <= i
-      ) {
-        cumulativeOffset += HIDDEN_INDICATOR_HEIGHT;
-        gapIdx++;
-      }
-      offsets[i] = cumulativeOffset;
-    }
-    return offsets;
-  }, [tasks.length, hiddenRowGaps]);
-
   // Calculate task geometries for connection handles and marquee selection
   const { taskGeometriesMap, taskGeometriesArray } = useMemo(() => {
     if (!scale)
@@ -169,12 +139,11 @@ export function ChartCanvas({
       if (!task.startDate || (!task.endDate && task.type !== "milestone")) {
         return;
       }
-      const yOffset = taskYOffsets[index] || 0;
       const geo = getTaskBarGeometry(task, scale, index, densityGeometry, 0);
       const geometry = {
         id: task.id,
         x: geo.x,
-        y: geo.y + yOffset,
+        y: geo.y,
         width: geo.width,
         height: geo.height,
       };
@@ -184,7 +153,7 @@ export function ChartCanvas({
       if (task.type !== "summary") {
         geometriesMap.set(task.id, {
           x: geo.x,
-          y: geo.y + yOffset,
+          y: geo.y,
           width: geo.width,
           height: geo.height,
         });
@@ -195,7 +164,7 @@ export function ChartCanvas({
       taskGeometriesMap: geometriesMap,
       taskGeometriesArray: geometriesArray,
     };
-  }, [tasks, scale, densityGeometry, taskYOffsets]);
+  }, [tasks, scale, densityGeometry]);
 
   // Sprint 1.4: Handle mouse up on task for dependency drop
   const handleTaskMouseUp = useCallback(
@@ -244,10 +213,7 @@ export function ChartCanvas({
   // With SVAR-style layout, parent handles virtual scrolling via translateY
   // +1 for placeholder row (NewTaskPlaceholderRow in TaskTable)
   // +SCROLLBAR_HEIGHT to ensure last row isn't hidden behind horizontal scrollbar
-  // +hiddenIndicatorCount * HIDDEN_INDICATOR_HEIGHT for synchronized hidden row indicators
-  const indicatorTotalHeight = hiddenIndicatorCount * HIDDEN_INDICATOR_HEIGHT;
-  const taskBasedHeight =
-    (tasks.length + 1) * ROW_HEIGHT + indicatorTotalHeight + SCROLLBAR_HEIGHT;
+  const taskBasedHeight = (tasks.length + 1) * ROW_HEIGHT + SCROLLBAR_HEIGHT;
 
   // Use task-based height, but ensure at least container height for grid lines
   // +1 for placeholder row to keep TaskTable and Timeline synchronized
@@ -308,8 +274,7 @@ export function ChartCanvas({
                   selectedTaskIds.includes(tasks[index + 1].id);
 
                 const BRAND_COLOR = "#0F6CBD";
-                const yOffset = taskYOffsets[index] || 0;
-                const y = index * ROW_HEIGHT + yOffset;
+                const y = index * ROW_HEIGHT;
 
                 return (
                   <g key={`selection-${task.id}`}>
@@ -355,48 +320,19 @@ export function ChartCanvas({
                 tasks={tasks}
                 scale={scale}
                 rowHeight={ROW_HEIGHT}
-                taskYOffsets={taskYOffsets}
                 dragState={dragState}
               />
-            )}
-
-            {/* Layer 2.7: Hidden Row Indicator Lines (synchronized with table) */}
-            {hiddenRowGaps.length > 0 && (
-              <g className="layer-hidden-indicators">
-                {hiddenRowGaps.map((gap, gapIndex) => {
-                  // Y = rows above * ROW_HEIGHT + indicators above * INDICATOR_HEIGHT + half indicator
-                  const y =
-                    gap.afterVisibleIndex * ROW_HEIGHT +
-                    gapIndex * HIDDEN_INDICATOR_HEIGHT +
-                    HIDDEN_INDICATOR_HEIGHT / 2;
-                  return (
-                    <line
-                      key={`hidden-${gap.afterVisibleIndex}`}
-                      x1={0}
-                      y1={y}
-                      x2={timelineWidth}
-                      y2={y}
-                      stroke={HIDDEN_INDICATOR_COLOR}
-                      strokeWidth={1}
-                      strokeDasharray="4 3"
-                      opacity={0.6}
-                    />
-                  );
-                })}
-              </g>
             )}
 
             {/* Layer 3: Task Bars */}
             <g className="layer-tasks">
               {tasks.map((task, index) => {
-                const yOffset = taskYOffsets[index] || 0;
                 return (
                   <g
                     key={task.id}
                     onMouseEnter={() => setHoveredTaskId(task.id)}
                     onMouseLeave={() => setHoveredTaskId(null)}
                     onMouseUp={() => handleTaskMouseUp(task.id)}
-                    transform={yOffset ? `translate(0, ${yOffset})` : undefined}
                   >
                     <TaskBar
                       task={task}

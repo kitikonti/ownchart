@@ -87,12 +87,13 @@ export function ContextMenu({
       }
     };
     // Use setTimeout to avoid the same click that opened the menu closing it
+    // Use capture phase so DnD libraries can't swallow the event
     const timer = setTimeout(() => {
-      document.addEventListener("mousedown", handleClick);
+      document.addEventListener("mousedown", handleClick, true);
     }, 0);
     return () => {
       clearTimeout(timer);
-      document.removeEventListener("mousedown", handleClick);
+      document.removeEventListener("mousedown", handleClick, true);
     };
   }, [onClose]);
 

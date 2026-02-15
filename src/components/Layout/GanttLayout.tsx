@@ -17,7 +17,7 @@
  * - Virtual scrolling via translateY for performance
  */
 
-import { useRef, useEffect, useState, useCallback, useMemo } from "react";
+import { useRef, useEffect, useState, useCallback } from "react";
 import { flushSync } from "react-dom";
 import { TaskTable } from "../TaskList/TaskTable";
 import { TaskTableHeader } from "../TaskList/TaskTableHeader";
@@ -29,10 +29,6 @@ import { SplitPane } from "./SplitPane";
 import { useTableDimensions } from "../../hooks/useTableDimensions";
 import { useFlattenedTasks } from "../../hooks/useFlattenedTasks";
 import { useDensityConfig } from "../../store/slices/userPreferencesSlice";
-import {
-  HIDDEN_INDICATOR_HEIGHT,
-  type HiddenRowGap,
-} from "../TaskList/HiddenRowsIndicator";
 
 const HEADER_HEIGHT = 48; // Timeline header height
 const MIN_TABLE_WIDTH = 200; // Minimum width for task table
@@ -58,33 +54,7 @@ export function GanttLayout(): JSX.Element {
   const setTaskTableWidth = useTaskStore((state) => state.setTaskTableWidth);
 
   // Build flattened task list (centralized in hook, shared with TaskTable)
-  const { flattenedTasks, allFlattenedTasks, orderedTasks } =
-    useFlattenedTasks();
-
-  // Compute hidden row gaps for ChartCanvas timeline indicator synchronization
-  const { hiddenRowGaps, hiddenIndicatorCount } = useMemo(() => {
-    const gaps: HiddenRowGap[] = [];
-    for (let i = 0; i < flattenedTasks.length; i++) {
-      const prevRowNum = i > 0 ? flattenedTasks[i - 1].globalRowNumber : 0;
-      const gap = flattenedTasks[i].globalRowNumber - prevRowNum - 1;
-      if (gap > 0) {
-        gaps.push({ afterVisibleIndex: i, count: gap });
-      }
-    }
-    // Trailing gap
-    if (flattenedTasks.length > 0) {
-      const lastVisible = flattenedTasks[flattenedTasks.length - 1];
-      const totalRows = allFlattenedTasks.length;
-      const trailingGap = totalRows - lastVisible.globalRowNumber;
-      if (trailingGap > 0) {
-        gaps.push({
-          afterVisibleIndex: flattenedTasks.length,
-          count: trailingGap,
-        });
-      }
-    }
-    return { hiddenRowGaps: gaps, hiddenIndicatorCount: gaps.length };
-  }, [flattenedTasks, allFlattenedTasks]);
+  const { flattenedTasks, orderedTasks } = useFlattenedTasks();
 
   // Get density-aware row height (must match TaskTable and ChartCanvas)
   const densityConfig = useDensityConfig();
@@ -122,13 +92,8 @@ export function GanttLayout(): JSX.Element {
 
   // Calculate total content height (visible tasks after flattening + placeholder row)
   // Add scrollbar height to ensure last row isn't hidden behind horizontal scrollbar
-  // Add indicator heights for hidden row gap lines
-  const indicatorTotalHeight = hiddenIndicatorCount * HIDDEN_INDICATOR_HEIGHT;
   const totalContentHeight =
-    (flattenedTasks.length + 1) * ROW_HEIGHT +
-    indicatorTotalHeight +
-    HEADER_HEIGHT +
-    SCROLLBAR_HEIGHT;
+    (flattenedTasks.length + 1) * ROW_HEIGHT + HEADER_HEIGHT + SCROLLBAR_HEIGHT;
 
   // Ensure timeline header is always wider than container to guarantee horizontal scrollbar
   // This enables infinite scroll to work in both directions
@@ -539,8 +504,6 @@ export function GanttLayout(): JSX.Element {
                           selectedTaskIds={selectedTaskIds}
                           containerHeight={contentAreaHeight}
                           containerWidth={chartContainerWidth}
-                          hiddenRowGaps={hiddenRowGaps}
-                          hiddenIndicatorCount={hiddenIndicatorCount}
                         />
                       </div>
                     </div>

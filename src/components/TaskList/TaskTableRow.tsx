@@ -29,6 +29,9 @@ interface TaskTableRowProps {
   level?: number; // Nesting level (0 = root)
   hasChildren?: boolean; // Whether task has children
   visibleTaskIds: string[]; // Array of task IDs in visible order (for range selection)
+  hasHiddenBelow?: boolean; // Hidden rows below (double-line on RowNumberCell bottom)
+  hiddenBelowCount?: number; // Number of hidden rows below (for tooltip)
+  onUnhideBelow?: () => void; // Callback to unhide hidden rows below
   clipboardPosition?: {
     isFirst: boolean; // First in clipboard group (show top border)
     isLast: boolean; // Last in clipboard group (show bottom border)
@@ -45,6 +48,9 @@ export function TaskTableRow({
   level = 0,
   hasChildren = false,
   visibleTaskIds,
+  hasHiddenBelow = false,
+  hiddenBelowCount,
+  onUnhideBelow,
   clipboardPosition,
   selectionPosition,
 }: TaskTableRowProps): JSX.Element {
@@ -206,6 +212,9 @@ export function TaskTableRow({
         taskId={task.id}
         isSelected={isSelected}
         selectionPosition={selectionPosition}
+        hasHiddenBelow={hasHiddenBelow}
+        hiddenBelowCount={hiddenBelowCount}
+        onUnhideBelow={onUnhideBelow}
         onSelectRow={(taskId, shiftKey, ctrlKey) => {
           setActiveCell(null, null);
           if (shiftKey) {

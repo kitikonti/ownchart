@@ -425,6 +425,22 @@ export function Ribbon(): JSX.Element {
           aria-label="Hide selected rows"
           icon={<EyeSlash size={ICON_SIZE} weight="light" />}
         />
+        <ToolbarButton
+          onClick={handleShowAll}
+          disabled={!hasHiddenTasks}
+          title="Show all hidden rows (Ctrl+Shift+H)"
+          aria-label="Show all hidden rows"
+          icon={
+            <span className="relative inline-flex">
+              <Eye size={ICON_SIZE} weight="light" />
+              {hasHiddenTasks && (
+                <span className="absolute -top-0.5 -right-1 bg-[#0F6CBD] text-white text-[8px] font-semibold min-w-[12px] h-3 rounded-full flex items-center justify-center px-0.5 leading-none">
+                  {hiddenTaskIds.length}
+                </span>
+              )}
+            </span>
+          }
+        />
       </ToolbarGroup>
 
       <ToolbarSeparator />
@@ -549,16 +565,6 @@ export function Ribbon(): JSX.Element {
           labelPriority={3}
         />
         <ColumnsDropdown labelPriority={3} />
-        {hasHiddenTasks && (
-          <ToolbarButton
-            onClick={handleShowAll}
-            title="Show all hidden rows (Ctrl+Shift+H)"
-            aria-label="Show all hidden rows"
-            icon={<Eye size={ICON_SIZE} weight="light" />}
-            label="Show All"
-            labelPriority={3}
-          />
-        )}
       </ToolbarGroup>
     </>
   );
