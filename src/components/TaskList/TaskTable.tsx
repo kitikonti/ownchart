@@ -4,7 +4,7 @@
  * Supports hidden rows with Excel-style row number gaps and indicator lines.
  */
 
-import { useMemo, useState, useCallback } from "react";
+import { useMemo } from "react";
 import {
   DndContext,
   closestCenter,
@@ -19,7 +19,6 @@ import {
   sortableKeyboardCoordinates,
   verticalListSortingStrategy,
 } from "@dnd-kit/sortable";
-import { EyeSlash, Eye } from "@phosphor-icons/react";
 
 import { useTaskStore } from "../../store/slices/taskSlice";
 import { useChartStore } from "../../store/slices/chartSlice";
@@ -34,11 +33,9 @@ import { ColumnResizer } from "./ColumnResizer";
 import { useTableDimensions } from "../../hooks/useTableDimensions";
 import { useFlattenedTasks } from "../../hooks/useFlattenedTasks";
 import { useAutoColumnWidth } from "../../hooks/useAutoColumnWidth";
-import { useHideOperations } from "../../hooks/useHideOperations";
-import {
-  ContextMenu,
-  type ContextMenuPosition,
-} from "../ContextMenu/ContextMenu";
+import { useTaskTableContextMenu } from "../../hooks/useTaskTableContextMenu";
+import { ContextMenu } from "../ContextMenu/ContextMenu";
+import { COLORS } from "../../styles/design-tokens";
 
 interface TaskTableProps {
   hideHeader?: boolean;
@@ -57,14 +54,6 @@ export function TaskTable({ hideHeader = true }: TaskTableProps): JSX.Element {
   const densityConfig = useDensityConfig();
   const hiddenColumns = useChartStore((state) => state.hiddenColumns);
   const hiddenTaskIds = useChartStore((state) => state.hiddenTaskIds);
-  // Centralized hide/unhide operations (command recording, dirty, toast)
-  const { hideRows, showAll, unhideRange } = useHideOperations();
-
-  // Context menu state
-  const [contextMenu, setContextMenu] = useState<{
-    position: ContextMenuPosition;
-    taskId?: string;
-  } | null>(null);
 
   // Get visible columns based on settings
   const visibleColumns = useMemo(
@@ -77,6 +66,20 @@ export function TaskTable({ hideHeader = true }: TaskTableProps): JSX.Element {
 
   // Build flattened list respecting collapsed state (centralized in hook)
   const { flattenedTasks, allFlattenedTasks } = useFlattenedTasks();
+
+  // Context menu with hide/unhide operations
+  const {
+    contextMenu,
+    contextMenuItems,
+    handleRowContextMenu,
+    closeContextMenu,
+    showAll,
+    unhideRange,
+  } = useTaskTableContextMenu(
+    selectedTaskIds,
+    flattenedTasks,
+    allFlattenedTasks
+  );
 
   // Extract visible task IDs in display order (for correct range selection)
   const visibleTaskIds = useMemo(
@@ -123,82 +126,6 @@ export function TaskTable({ hideHeader = true }: TaskTableProps): JSX.Element {
       selectAllTasks();
     }
   };
-
-  /** Handle right-click on a task row */
-  const handleRowContextMenu = useCallback(
-    (e: React.MouseEvent, taskId: string): void => {
-      e.preventDefault();
-      setContextMenu({
-        position: { x: e.clientX, y: e.clientY },
-        taskId,
-      });
-    },
-    []
-  );
-
-  /** Build context menu items */
-  const contextMenuItems = useMemo(() => {
-    if (!contextMenu) return [];
-
-    const items = [];
-
-    if (contextMenu.taskId) {
-      const taskIdsToHide =
-        selectedTaskIds.length > 0 &&
-        selectedTaskIds.includes(contextMenu.taskId)
-          ? selectedTaskIds
-          : [contextMenu.taskId];
-
-      const count = taskIdsToHide.length;
-      items.push({
-        id: "hide",
-        label: count > 1 ? `Hide ${count} Rows` : "Hide Row",
-        icon: <EyeSlash size={14} weight="regular" />,
-        onClick: () => hideRows(taskIdsToHide),
-      });
-
-      // Check if selection spans hidden rows — offer Unhide like Excel
-      if (
-        selectedTaskIds.length >= 2 &&
-        selectedTaskIds.includes(contextMenu.taskId)
-      ) {
-        const selectedRowNums = flattenedTasks
-          .filter(({ task }) => selectedTaskIds.includes(task.id))
-          .map(({ globalRowNumber }) => globalRowNumber)
-          .sort((a, b) => a - b);
-
-        if (selectedRowNums.length >= 2) {
-          const firstRow = selectedRowNums[0];
-          const lastRow = selectedRowNums[selectedRowNums.length - 1];
-          const hiddenInRange = allFlattenedTasks.filter(
-            (item) =>
-              item.globalRowNumber >= firstRow &&
-              item.globalRowNumber <= lastRow &&
-              hiddenTaskIds.includes(item.task.id)
-          );
-
-          if (hiddenInRange.length > 0) {
-            items.push({
-              id: "unhide",
-              label: `Unhide ${hiddenInRange.length} Row${hiddenInRange.length !== 1 ? "s" : ""}`,
-              icon: <Eye size={14} weight="regular" />,
-              onClick: (): void => unhideRange(firstRow - 1, lastRow + 1),
-            });
-          }
-        }
-      }
-    }
-
-    return items;
-  }, [
-    contextMenu,
-    selectedTaskIds,
-    hideRows,
-    unhideRange,
-    flattenedTasks,
-    allFlattenedTasks,
-    hiddenTaskIds,
-  ]);
 
   /**
    * Generate CSS grid template columns based on column widths.
@@ -387,7 +314,8 @@ export function TaskTable({ hideHeader = true }: TaskTableProps): JSX.Element {
               {hiddenTaskIds.length} row{hiddenTaskIds.length !== 1 ? "s" : ""}{" "}
               hidden —{" "}
               <button
-                className="text-[#0F6CBD] hover:underline ml-1"
+                className="hover:underline ml-1"
+                style={{ color: COLORS.brand[600] }}
                 onClick={showAll}
               >
                 show all
@@ -405,7 +333,7 @@ export function TaskTable({ hideHeader = true }: TaskTableProps): JSX.Element {
         <ContextMenu
           items={contextMenuItems}
           position={contextMenu.position}
-          onClose={() => setContextMenu(null)}
+          onClose={closeContextMenu}
         />
       )}
     </div>

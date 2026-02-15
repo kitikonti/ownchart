@@ -12,6 +12,11 @@ import { useFlattenedTasks } from "./useFlattenedTasks";
 import { CommandType } from "../types/command.types";
 import toast from "react-hot-toast";
 
+/** Simple pluralization: pluralize(3, "task") → "3 tasks" */
+function pluralize(count: number, word: string): string {
+  return `${count} ${word}${count !== 1 ? "s" : ""}`;
+}
+
 interface UseHideOperationsResult {
   /** Hide tasks by IDs (includes descendants for summary tasks). Records undo command. */
   hideRows: (taskIds: string[]) => void;
@@ -43,16 +48,14 @@ export function useHideOperations(): UseHideOperationsResult {
         id: crypto.randomUUID(),
         type: CommandType.HIDE_TASKS,
         timestamp: Date.now(),
-        description: `Hide ${newlyHidden} task${newlyHidden !== 1 ? "s" : ""}`,
+        description: `Hide ${pluralize(newlyHidden, "task")}`,
         params: {
           taskIds: newHiddenIds.filter((id) => !prevSet.has(id)),
           previousHiddenTaskIds,
         },
       });
 
-      toast.success(
-        `${newlyHidden} task${newlyHidden !== 1 ? "s" : ""} hidden`
-      );
+      toast.success(`${pluralize(newlyHidden, "task")} hidden`);
     },
     [hiddenTaskIds, hideTasks]
   );
@@ -97,16 +100,14 @@ export function useHideOperations(): UseHideOperationsResult {
         id: crypto.randomUUID(),
         type: CommandType.UNHIDE_TASKS,
         timestamp: Date.now(),
-        description: `Show ${idsToUnhide.length} hidden task${idsToUnhide.length !== 1 ? "s" : ""}`,
+        description: `Show ${pluralize(idsToUnhide.length, "hidden task")}`,
         params: {
           taskIds: idsToUnhide,
           previousHiddenTaskIds,
         },
       });
 
-      toast.success(
-        `${idsToUnhide.length} task${idsToUnhide.length !== 1 ? "s" : ""} shown`
-      );
+      toast.success(`${pluralize(idsToUnhide.length, "task")} shown`);
     },
     [allFlattenedTasks, hiddenTaskIds]
   );
