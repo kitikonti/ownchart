@@ -27,7 +27,6 @@ interface UseHideOperationsResult {
 }
 
 export function useHideOperations(): UseHideOperationsResult {
-  const hiddenTaskIds = useChartStore((state) => state.hiddenTaskIds);
   const hideTasks = useChartStore((state) => state.hideTasks);
   const { allFlattenedTasks } = useFlattenedTasks();
 
@@ -35,7 +34,7 @@ export function useHideOperations(): UseHideOperationsResult {
     (taskIds: string[]): void => {
       if (taskIds.length === 0) return;
 
-      const previousHiddenTaskIds = [...hiddenTaskIds];
+      const previousHiddenTaskIds = [...useChartStore.getState().hiddenTaskIds];
       hideTasks(taskIds);
       useFileStore.getState().markDirty();
 
@@ -57,10 +56,11 @@ export function useHideOperations(): UseHideOperationsResult {
 
       toast.success(`${pluralize(newlyHidden, "task")} hidden`);
     },
-    [hiddenTaskIds, hideTasks]
+    [hideTasks]
   );
 
   const showAll = useCallback((): void => {
+    const hiddenTaskIds = useChartStore.getState().hiddenTaskIds;
     if (hiddenTaskIds.length === 0) return;
 
     const previousHiddenTaskIds = [...hiddenTaskIds];
@@ -79,7 +79,7 @@ export function useHideOperations(): UseHideOperationsResult {
     });
 
     toast.success("All tasks shown");
-  }, [hiddenTaskIds]);
+  }, []);
 
   const unhideRange = useCallback(
     (fromRowNum: number, toRowNum: number): void => {
@@ -92,7 +92,7 @@ export function useHideOperations(): UseHideOperationsResult {
 
       if (idsToUnhide.length === 0) return;
 
-      const previousHiddenTaskIds = [...hiddenTaskIds];
+      const previousHiddenTaskIds = [...useChartStore.getState().hiddenTaskIds];
       useChartStore.getState().unhideTasks(idsToUnhide);
       useFileStore.getState().markDirty();
 
@@ -109,7 +109,7 @@ export function useHideOperations(): UseHideOperationsResult {
 
       toast.success(`${pluralize(idsToUnhide.length, "task")} shown`);
     },
-    [allFlattenedTasks, hiddenTaskIds]
+    [allFlattenedTasks]
   );
 
   return { hideRows, showAll, unhideRange };

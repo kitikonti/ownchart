@@ -87,6 +87,8 @@ function getShortcuts(): ShortcutSection[] {
         { keys: "D", description: "Toggle dependencies" },
         { keys: "P", description: "Toggle progress" },
         { keys: "H", description: "Toggle holidays" },
+        { keys: `${mod}+H`, description: "Hide selected rows" },
+        { keys: `${mod}+Shift+H`, description: "Show all hidden rows" },
         {
           keys: "View > Columns",
           description: "Show/hide date columns",

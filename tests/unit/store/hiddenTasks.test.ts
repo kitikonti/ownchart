@@ -9,6 +9,7 @@ import { useChartStore } from "../../../src/store/slices/chartSlice";
 import { useTaskStore } from "../../../src/store/slices/taskSlice";
 import { useHistoryStore } from "../../../src/store/slices/historySlice";
 import { buildFlattenedTaskList } from "../../../src/utils/hierarchy";
+import { CommandType } from "../../../src/types/command.types";
 import type { Task } from "../../../src/types/chart.types";
 
 // Helper to create a minimal task
@@ -287,7 +288,7 @@ describe("undo/redo for hide/unhide", () => {
 
     useHistoryStore.getState().recordCommand({
       id: "test-hide",
-      type: "hideTasks" as never,
+      type: CommandType.HIDE_TASKS,
       timestamp: Date.now(),
       description: "Hide 1 task",
       params: {
@@ -310,7 +311,7 @@ describe("undo/redo for hide/unhide", () => {
 
     useHistoryStore.getState().recordCommand({
       id: "test-hide",
-      type: "hideTasks" as never,
+      type: CommandType.HIDE_TASKS,
       timestamp: Date.now(),
       description: "Hide 1 task",
       params: {
@@ -337,7 +338,7 @@ describe("undo/redo for hide/unhide", () => {
 
     useHistoryStore.getState().recordCommand({
       id: "test-unhide",
-      type: "unhideTasks" as never,
+      type: CommandType.UNHIDE_TASKS,
       timestamp: Date.now(),
       description: "Show 1 task",
       params: {
@@ -363,7 +364,7 @@ describe("undo/redo for hide/unhide", () => {
 
     useHistoryStore.getState().recordCommand({
       id: "test-unhide",
-      type: "unhideTasks" as never,
+      type: CommandType.UNHIDE_TASKS,
       timestamp: Date.now(),
       description: "Show 1 task",
       params: {

@@ -71,6 +71,7 @@ export function ContextMenu({
 
     el.style.left = `${Math.max(0, x)}px`;
     el.style.top = `${Math.max(0, y)}px`;
+    el.style.visibility = "visible";
 
     // Focus first enabled item
     const firstEnabled = getFirstEnabledIndex();
@@ -143,6 +144,7 @@ export function ContextMenu({
       style={{
         left: position.x,
         top: position.y,
+        visibility: "hidden",
       }}
       role="menu"
       tabIndex={-1}
