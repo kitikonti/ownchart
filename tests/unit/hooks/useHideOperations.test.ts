@@ -136,6 +136,70 @@ function simulateUnhideRange(fromRowNum: number, toRowNum: number): void {
   });
 }
 
+/**
+ * Simulate what useHideOperations.getHiddenIdsInSelection does.
+ */
+function simulateGetHiddenIdsInSelection(
+  selectedTaskIds: string[]
+): string[] {
+  if (selectedTaskIds.length < 2) return [];
+
+  const tasks = useTaskStore.getState().tasks;
+  const collapsedIds = new Set(
+    tasks.filter((t) => t.open === false).map((t) => t.id)
+  );
+  const allFlattenedTasks = buildFlattenedTaskList(tasks, collapsedIds);
+  const hiddenSet = new Set(useChartStore.getState().hiddenTaskIds);
+  const flattenedTasks = allFlattenedTasks.filter(
+    (item) => !hiddenSet.has(item.task.id)
+  );
+
+  const selectedSet = new Set(selectedTaskIds);
+  const selectedRowNums = flattenedTasks
+    .filter(({ task }) => selectedSet.has(task.id))
+    .map(({ globalRowNumber }) => globalRowNumber)
+    .sort((a, b) => a - b);
+
+  if (selectedRowNums.length < 2) return [];
+
+  const firstRow = selectedRowNums[0];
+  const lastRow = selectedRowNums[selectedRowNums.length - 1];
+
+  return allFlattenedTasks
+    .filter(
+      (item) =>
+        item.globalRowNumber >= firstRow &&
+        item.globalRowNumber <= lastRow &&
+        hiddenSet.has(item.task.id)
+    )
+    .map((item) => item.task.id);
+}
+
+/**
+ * Simulate what useHideOperations.unhideSelection does.
+ */
+function simulateUnhideSelection(selectedTaskIds: string[]): void {
+  const idsToUnhide = simulateGetHiddenIdsInSelection(selectedTaskIds);
+  if (idsToUnhide.length === 0) return;
+
+  const previousHiddenTaskIds = [
+    ...useChartStore.getState().hiddenTaskIds,
+  ];
+  useChartStore.getState().unhideTasks(idsToUnhide);
+  useFileStore.getState().markDirty();
+
+  useHistoryStore.getState().recordCommand({
+    id: "test-cmd",
+    type: CommandType.UNHIDE_TASKS,
+    timestamp: Date.now(),
+    description: `Show ${idsToUnhide.length} hidden task${idsToUnhide.length !== 1 ? "s" : ""}`,
+    params: {
+      taskIds: idsToUnhide,
+      previousHiddenTaskIds,
+    },
+  });
+}
+
 describe("useHideOperations orchestration", () => {
   beforeEach(() => {
     useChartStore.setState({ hiddenTaskIds: [] });
@@ -313,6 +377,87 @@ describe("useHideOperations orchestration", () => {
 
       simulateUnhideRange(1, 4);
       expect(useChartStore.getState().hiddenTaskIds).toEqual([]);
+
+      useHistoryStore.getState().undo();
+      expect(useChartStore.getState().hiddenTaskIds).toEqual(prevHidden);
+    });
+  });
+
+  describe("getHiddenInSelectionCount", () => {
+    it("should return 0 when fewer than 2 tasks are selected", () => {
+      useChartStore.getState().hideTasks(["2"]);
+
+      expect(simulateGetHiddenIdsInSelection([]).length).toBe(0);
+      expect(simulateGetHiddenIdsInSelection(["1"]).length).toBe(0);
+    });
+
+    it("should return 0 when no hidden tasks exist in selection range", () => {
+      // Tasks 1,2,3 visible, select 1 and 3 — nothing hidden between
+      expect(simulateGetHiddenIdsInSelection(["1", "3"]).length).toBe(0);
+    });
+
+    it("should count hidden tasks spanned by selection", () => {
+      // Hide task 3, then select tasks 2 and 4 (spanning the hidden task 3)
+      useChartStore.getState().hideTasks(["3"]);
+
+      const count = simulateGetHiddenIdsInSelection(["2", "4"]).length;
+      expect(count).toBe(1);
+    });
+
+    it("should count multiple hidden tasks in range", () => {
+      // Hide tasks 2 and 3, select tasks 1 and 4
+      useChartStore.getState().hideTasks(["2", "3"]);
+
+      const count = simulateGetHiddenIdsInSelection(["1", "4"]).length;
+      expect(count).toBe(2);
+    });
+
+    it("should not count hidden tasks outside selection range", () => {
+      // Hide tasks 2 and 5, select tasks 1 and 3 — only task 2 is in range
+      useChartStore.getState().hideTasks(["2", "5"]);
+
+      const count = simulateGetHiddenIdsInSelection(["1", "3"]).length;
+      expect(count).toBe(1);
+    });
+  });
+
+  describe("unhideSelection", () => {
+    it("should unhide hidden tasks within selection range", () => {
+      useChartStore.getState().hideTasks(["3"]);
+      useFileStore.getState().markClean();
+
+      simulateUnhideSelection(["2", "4"]);
+
+      expect(useChartStore.getState().hiddenTaskIds).not.toContain("3");
+      expect(useFileStore.getState().isDirty).toBe(true);
+
+      const undoStack = useHistoryStore.getState().undoStack;
+      expect(undoStack).toHaveLength(1);
+      expect(undoStack[0].type).toBe(CommandType.UNHIDE_TASKS);
+      expect(undoStack[0].params.taskIds).toEqual(["3"]);
+    });
+
+    it("should not act when fewer than 2 tasks selected", () => {
+      useChartStore.getState().hideTasks(["2"]);
+
+      simulateUnhideSelection(["1"]);
+
+      expect(useChartStore.getState().hiddenTaskIds).toContain("2");
+      expect(useHistoryStore.getState().undoStack).toHaveLength(0);
+    });
+
+    it("should not act when no hidden tasks in selection range", () => {
+      simulateUnhideSelection(["1", "3"]);
+
+      expect(useHistoryStore.getState().undoStack).toHaveLength(0);
+    });
+
+    it("should undo unhideSelection and restore hidden state", () => {
+      useChartStore.getState().hideTasks(["3"]);
+      const prevHidden = [...useChartStore.getState().hiddenTaskIds];
+
+      simulateUnhideSelection(["2", "4"]);
+      expect(useChartStore.getState().hiddenTaskIds).not.toContain("3");
 
       useHistoryStore.getState().undo();
       expect(useChartStore.getState().hiddenTaskIds).toEqual(prevHidden);

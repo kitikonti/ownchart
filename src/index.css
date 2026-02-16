@@ -71,8 +71,8 @@
   letter-spacing: normal;
 
   color-scheme: light;
-  color: #404040; /* neutral-700 */
-  background-color: #ffffff;
+  color: var(--color-neutral-700);
+  background-color: var(--color-surface);
 
   font-synthesis: none;
   text-rendering: optimizeLegibility;
@@ -146,9 +146,11 @@
   --shadow-pressed: 0 0 2px rgba(0, 0, 0, 0.12), 0 1px 2px rgba(0, 0, 0, 0.14);
   --shadow-dropdown:
     0 0 8px rgba(0, 0, 0, 0.12), 0 16px 32px rgba(0, 0, 0, 0.14);
+  --shadow-context-menu:
+    0 0 2px rgba(0, 0, 0, 0.12), 0 8px 16px rgba(0, 0, 0, 0.14);
   --shadow-modal: 0 0 8px rgba(0, 0, 0, 0.12), 0 32px 64px rgba(0, 0, 0, 0.14);
   /* Focus ring - high visibility for accessibility */
-  --shadow-focus: 0 0 0 2px #ffffff, 0 0 0 4px #0f6cbd;
+  --shadow-focus: 0 0 0 2px var(--color-surface), 0 0 0 4px var(--color-accent);
 
   /* ─── Radii (MS style - flatter) ─── */
   --radius-sm: 2px;
@@ -275,7 +277,7 @@ input[type="checkbox"] {
   height: 16px;
   border: 1.5px solid var(--color-neutral-400);
   border-radius: 3px;
-  background: white;
+  background: var(--color-surface);
   cursor: pointer;
   display: grid;
   place-content: center;
@@ -296,7 +298,7 @@ input[type="checkbox"]::before {
   content: "";
   width: 5px;
   height: 9px;
-  border: solid white;
+  border: solid var(--color-surface);
   border-width: 0 2px 2px 0;
   transform: scale(0) rotate(45deg);
   transform-origin: center;
@@ -315,7 +317,7 @@ input[type="checkbox"]:indeterminate {
 input[type="checkbox"]:indeterminate::before {
   width: 10px;
   height: 2px;
-  background: white;
+  background: var(--color-surface);
   border: none;
   transform: scale(1);
 }
@@ -339,7 +341,7 @@ input[type="radio"] {
   height: 16px;
   border: 1.5px solid var(--color-neutral-400);
   border-radius: 50%;
-  background: white;
+  background: var(--color-surface);
   cursor: pointer;
   display: grid;
   place-content: center;
@@ -379,7 +381,7 @@ select {
   -webkit-appearance: none;
   -moz-appearance: none;
   appearance: none;
-  background-color: white;
+  background-color: var(--color-surface);
   border: 1px solid var(--color-neutral-300);
   border-radius: var(--radius-md);
   padding: 4px 24px 4px 8px;
@@ -486,11 +488,11 @@ select:focus-visible {
 }
 
 .ribbon-tab-file:hover {
-  background-color: rgb(243, 243, 243);
+  background-color: var(--color-neutral-50);
 }
 
 .ribbon-tab-file.ribbon-tab-active {
-  background-color: rgb(224, 224, 224);
+  background-color: var(--color-neutral-200);
   font-weight: 600;
 }
 
@@ -537,7 +539,7 @@ select:focus-visible {
 
 /* Primary button hover - darker brand color with subtle shadow (Outlook style) */
 .ribbon-toolbar-button[data-variant="primary"]:hover:not(:disabled) {
-  background-color: rgb(17, 94, 163) !important; /* #115EA3 - brand-500 */
+  background-color: var(--color-brand-500) !important;
   box-shadow:
     0 1px 3px rgba(0, 0, 0, 0.12),
     0 1px 2px rgba(0, 0, 0, 0.08) !important;
@@ -545,7 +547,7 @@ select:focus-visible {
 
 /* Primary button active - even darker with depressed shadow */
 .ribbon-toolbar-button[data-variant="primary"]:active:not(:disabled) {
-  background-color: rgb(12, 59, 94) !important; /* #0C3B5E - brand-800 */
+  background-color: var(--color-brand-800) !important;
   box-shadow:
     0 1px 2px rgba(0, 0, 0, 0.14),
     0 0 2px rgba(0, 0, 0, 0.12) !important;
@@ -598,7 +600,7 @@ select:focus-visible {
 
 .file-menu-divider {
   height: 1px;
-  background-color: rgb(225, 223, 221);
+  background-color: var(--color-border-subtle);
   margin: 4px 0;
 }
 
@@ -620,7 +622,7 @@ select:focus-visible {
   position: absolute;
   top: 100%;
   margin-top: 2px;
-  background-color: #ffffff;
+  background-color: var(--color-surface);
   border-radius: 2px;
   box-shadow: rgba(0, 0, 0, 0.1) 0px 4px 8px 0px;
   padding: 4px 0;
@@ -638,15 +640,15 @@ select:focus-visible {
 }
 
 .dropdown-trigger[aria-expanded="true"] {
-  background-color: rgb(230, 230, 230);
+  background-color: var(--color-neutral-100);
 }
 
 .dropdown-trigger[aria-expanded="true"]:hover {
-  background-color: rgb(230, 230, 230);
+  background-color: var(--color-neutral-100);
 }
 
 .dropdown-trigger-active {
-  background-color: rgb(235, 235, 235);
+  background-color: var(--color-neutral-100);
 }
 
 .dropdown-trigger-active:hover {
@@ -660,26 +662,24 @@ select:focus-visible {
 }
 
 .dropdown-item:hover {
-  background-color: rgb(245, 245, 245);
+  background-color: var(--color-neutral-50);
 }
 
 .dropdown-item-selected {
-  background-color: rgb(245, 245, 245);
-  border: 0.667px solid rgb(166, 166, 166) !important;
+  background-color: var(--color-neutral-50);
+  border: 0.667px solid var(--color-border-strong) !important;
   border-radius: 4px !important;
 }
 
 .dropdown-item-selected:hover {
-  background-color: rgb(240, 240, 240);
+  background-color: var(--color-neutral-100);
 }
 
 /* ─── Context Menu (MS 365 Style) ─── */
 .context-menu-container {
-  background-color: #ffffff;
+  background-color: var(--color-surface);
   border-radius: 8px;
-  box-shadow:
-    0 0 2px rgba(0, 0, 0, 0.12),
-    0 8px 16px rgba(0, 0, 0, 0.14);
+  box-shadow: var(--shadow-context-menu);
   padding: 6px 0;
 }
 
@@ -695,7 +695,7 @@ select:focus-visible {
   border-radius: 4px;
   font-size: 14px;
   line-height: 20px;
-  color: #242424;
+  color: var(--color-text-primary);
   background-color: transparent;
   cursor: pointer;
   user-select: none;
@@ -705,11 +705,11 @@ select:focus-visible {
 
 .context-menu-item:hover,
 .context-menu-item:focus-visible {
-  background-color: rgb(245, 245, 245);
+  background-color: var(--color-neutral-50);
 }
 
 .context-menu-item:disabled {
-  color: #b3b3b3;
+  color: var(--color-text-disabled);
   cursor: default;
   background-color: transparent;
 }
@@ -737,26 +737,26 @@ select:focus-visible {
   justify-content: flex-end;
   column-gap: 2px;
   font-size: 12px;
-  color: #616161;
+  color: var(--color-text-tertiary);
   padding-left: 4px;
   flex-shrink: 0;
 }
 
 .context-menu-separator {
-  border-bottom: 0.667px solid #e0e0e0;
+  border-bottom: 0.667px solid var(--color-border-subtle);
   margin: 3px 0;
   height: 0;
 }
 
 /* Zoom combobox - border darkens on hover */
 .zoom-combobox {
-  background-color: #ffffff;
-  border: 1px solid rgb(209, 209, 209);
+  background-color: var(--color-surface);
+  border: 1px solid var(--color-border-default);
   transition: border-color 0.1s;
 }
 
 .zoom-combobox:hover {
-  border-color: rgb(140, 140, 140);
+  border-color: var(--color-neutral-400);
 }
 
 /* ─── Animations ─── */
@@ -846,7 +846,7 @@ input[type="range"]::-webkit-slider-thumb {
   height: 16px;
   border-radius: 50%;
   background: var(--color-accent);
-  border: 2px solid white;
+  border: 2px solid var(--color-surface);
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
   margin-top: -5px; /* Center thumb on track */
   transition: transform 150ms ease;
@@ -857,7 +857,7 @@ input[type="range"]::-moz-range-thumb {
   height: 16px;
   border-radius: 50%;
   background: var(--color-accent);
-  border: 2px solid white;
+  border: 2px solid var(--color-surface);
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
   transition: transform 150ms ease;
 }
@@ -919,7 +919,7 @@ input[type="range"]:focus-visible::-moz-range-thumb {
 /* ─── Toolbar Separator (High-DPI aware) ─── */
 .toolbar-separator {
   width: 1px;
-  background-color: rgb(210, 210, 210);
+  background-color: var(--color-border-default);
 }
 
 @media (min-resolution: 144dpi), (-webkit-min-device-pixel-ratio: 1.5) {
@@ -937,16 +937,12 @@ input[type="range"]:focus-visible::-moz-range-thumb {
 /* ─── Horizontal Divider (High-DPI aware) ─── */
 .divider-h {
   height: 1px;
-  background-color: rgb(229, 229, 229); /* neutral-200 */
+  background-color: var(--color-border-subtle);
 }
 
 .divider-h-light {
   height: 1px;
-  background-color: rgb(
-    235,
-    235,
-    235
-  ); /* ~neutral-150 - for inner separators */
+  background-color: var(--color-neutral-100);
 }
 
 @media (min-resolution: 144dpi), (-webkit-min-device-pixel-ratio: 1.5) {

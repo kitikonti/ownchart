@@ -17,6 +17,28 @@ function pluralize(count: number, word: string): string {
   return `${count} ${word}${count !== 1 ? "s" : ""}`;
 }
 
+/** Shared logic for unhiding specific task IDs: update store, record command, show toast. */
+function performUnhide(idsToUnhide: string[]): void {
+  if (idsToUnhide.length === 0) return;
+
+  const previousHiddenTaskIds = [...useChartStore.getState().hiddenTaskIds];
+  useChartStore.getState().unhideTasks(idsToUnhide);
+  useFileStore.getState().markDirty();
+
+  useHistoryStore.getState().recordCommand({
+    id: crypto.randomUUID(),
+    type: CommandType.UNHIDE_TASKS,
+    timestamp: Date.now(),
+    description: `Show ${pluralize(idsToUnhide.length, "hidden task")}`,
+    params: {
+      taskIds: idsToUnhide,
+      previousHiddenTaskIds,
+    },
+  });
+
+  toast.success(`${pluralize(idsToUnhide.length, "task")} shown`);
+}
+
 interface UseHideOperationsResult {
   /** Hide tasks by IDs (includes descendants for summary tasks). Records undo command. */
   hideRows: (taskIds: string[]) => void;
@@ -93,25 +115,7 @@ export function useHideOperations(): UseHideOperationsResult {
             item.globalRowNumber > fromRowNum && item.globalRowNumber < toRowNum
         )
         .map((item) => item.task.id);
-
-      if (idsToUnhide.length === 0) return;
-
-      const previousHiddenTaskIds = [...useChartStore.getState().hiddenTaskIds];
-      useChartStore.getState().unhideTasks(idsToUnhide);
-      useFileStore.getState().markDirty();
-
-      useHistoryStore.getState().recordCommand({
-        id: crypto.randomUUID(),
-        type: CommandType.UNHIDE_TASKS,
-        timestamp: Date.now(),
-        description: `Show ${pluralize(idsToUnhide.length, "hidden task")}`,
-        params: {
-          taskIds: idsToUnhide,
-          previousHiddenTaskIds,
-        },
-      });
-
-      toast.success(`${pluralize(idsToUnhide.length, "task")} shown`);
+      performUnhide(idsToUnhide);
     },
     [allFlattenedTasks]
   );
@@ -121,8 +125,9 @@ export function useHideOperations(): UseHideOperationsResult {
     (selectedTaskIds: string[]): string[] => {
       if (selectedTaskIds.length < 2) return [];
 
+      const selectedSet = new Set(selectedTaskIds);
       const selectedRowNums = flattenedTasks
-        .filter(({ task }) => selectedTaskIds.includes(task.id))
+        .filter(({ task }) => selectedSet.has(task.id))
         .map(({ globalRowNumber }) => globalRowNumber)
         .sort((a, b) => a - b);
 
@@ -153,25 +158,7 @@ export function useHideOperations(): UseHideOperationsResult {
 
   const unhideSelection = useCallback(
     (selectedTaskIds: string[]): void => {
-      const idsToUnhide = getHiddenIdsInSelection(selectedTaskIds);
-      if (idsToUnhide.length === 0) return;
-
-      const previousHiddenTaskIds = [...useChartStore.getState().hiddenTaskIds];
-      useChartStore.getState().unhideTasks(idsToUnhide);
-      useFileStore.getState().markDirty();
-
-      useHistoryStore.getState().recordCommand({
-        id: crypto.randomUUID(),
-        type: CommandType.UNHIDE_TASKS,
-        timestamp: Date.now(),
-        description: `Show ${pluralize(idsToUnhide.length, "hidden task")}`,
-        params: {
-          taskIds: idsToUnhide,
-          previousHiddenTaskIds,
-        },
-      });
-
-      toast.success(`${pluralize(idsToUnhide.length, "task")} shown`);
+      performUnhide(getHiddenIdsInSelection(selectedTaskIds));
     },
     [getHiddenIdsInSelection]
   );

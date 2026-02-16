@@ -9,7 +9,7 @@
  * Handles D (toggle dependencies), T (toggle today marker)
  * Handles P (toggle progress column), H (toggle holidays)
  * Handles F (fit to view)
- * Handles Ctrl+H (hide selected rows), Ctrl+Shift+H (show all hidden rows)
+ * Handles Ctrl+H (hide selected rows), Ctrl+Shift+H (unhide hidden rows in selection)
  */
 
 import { useEffect } from "react";

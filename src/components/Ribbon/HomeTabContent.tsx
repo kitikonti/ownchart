@@ -5,6 +5,7 @@
  * and Color Mode controls.
  */
 
+import { useMemo } from "react";
 import {
   Plus,
   ArrowCounterClockwise,
@@ -84,7 +85,10 @@ export function HomeTabContent(): JSX.Element {
     unhideSelection: handleUnhideSelection,
     getHiddenInSelectionCount,
   } = useHideOperations();
-  const hiddenInSelectionCount = getHiddenInSelectionCount(selectedTaskIds);
+  const hiddenInSelectionCount = useMemo(
+    () => getHiddenInSelectionCount(selectedTaskIds),
+    [getHiddenInSelectionCount, selectedTaskIds]
+  );
 
   // Derived state
   const singleSelectedTaskId =
