@@ -2,6 +2,36 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [0.0.36](https://github.com/kitikonti/ownchart/compare/v0.0.35...v0.0.36) (2026-02-16)
+
+
+### Features
+
+* add /review skill for comprehensive code reviews (Issue [#44](https://github.com/kitikonti/ownchart/issues/44)) ([6fb3e88](https://github.com/kitikonti/ownchart/commit/6fb3e88a2c56312d37f14b0a53cf6fe97cd0558c))
+* add group selected tasks (Ctrl+G) ([a29fc5e](https://github.com/kitikonti/ownchart/commit/a29fc5e22ecd40d6d2fc5ea252e1719ac7300fe9))
+* add hide/show rows in task table (Issue [#47](https://github.com/kitikonti/ownchart/issues/47)) ([225ef65](https://github.com/kitikonti/ownchart/commit/225ef65b00f383754b0080421541d004e2ab630b))
+
+
+### Bug Fixes
+
+* mark file dirty on undo/redo for data-modifying operations ([04a2c0a](https://github.com/kitikonti/ownchart/commit/04a2c0aba5953c88d3714aa80a8a5cddd1761897))
+* resolve stale closure, test casts, and UI issues in hide/show feature ([3a6f7a5](https://github.com/kitikonti/ownchart/commit/3a6f7a534df0275092ff900581aeea04bec07227))
+* update jspdf to 4.1.0 to resolve high-severity security vulnerabilities ([3aca2e1](https://github.com/kitikonti/ownchart/commit/3aca2e126f838064d680f296cca2e096be130951))
+
+
+### UI/UX
+
+* restyle context menu to MS 365 style and unify unhide behavior ([85f6057](https://github.com/kitikonti/ownchart/commit/85f60571a06a8459574693be5fa8801066c89a51))
+
+
+### Code Refactoring
+
+* extract components and fix review findings from hide/show feature ([3dee573](https://github.com/kitikonti/ownchart/commit/3dee573de0ee5d271d35886807281defa345b4f5)), closes [#0F6](https://github.com/kitikonti/ownchart/issues/0F6)
+* extract components and improve code organization ([c4bfc80](https://github.com/kitikonti/ownchart/commit/c4bfc805511c76f29a6e6cd5d565c03b03c39a73)), closes [#0F6](https://github.com/kitikonti/ownchart/issues/0F6)
+* extract MAX_HIERARCHY_DEPTH constant to shared hierarchy module ([f27b421](https://github.com/kitikonti/ownchart/commit/f27b421babf68b33c48f85e2f6d03dd9d24c0673))
+* replace HiddenRowsIndicator with Excel-style double-line on RowNumberCell ([be7db2b](https://github.com/kitikonti/ownchart/commit/be7db2bb8f98fdcec3248a0d1e578719cc86e6ae)), closes [#a3a3a3](https://github.com/kitikonti/ownchart/issues/a3a3a3)
+* review fixes — extract helper, tokenize CSS colors, add tests ([d3d33da](https://github.com/kitikonti/ownchart/commit/d3d33da64fa382af139a3c9c151d018d1a68ffcc))
+
 ### [0.0.35](https://github.com/kitikonti/ownchart/compare/v0.0.33...v0.0.35) (2026-02-14)
 
 
