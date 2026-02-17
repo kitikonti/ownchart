@@ -11,7 +11,7 @@ import type {
   SerializedDependency,
   ViewSettings,
 } from "./types";
-import { APP_VERSION, FILE_VERSION } from "../../config/version";
+import { FILE_VERSION } from "../../config/version";
 
 export interface SerializeOptions {
   chartName?: string;
@@ -40,7 +40,7 @@ export function serializeToGanttFile(
 
   const ganttFile: GanttFile = {
     fileVersion: FILE_VERSION,
-    appVersion: APP_VERSION,
+    appVersion: __APP_VERSION__,
     schemaVersion: 1,
 
     chart: {

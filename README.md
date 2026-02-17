@@ -3,7 +3,7 @@
 > **Privacy-first, offline Gantt chart for project planning. Own your data.**
 
 [![CI](https://github.com/kitikonti/ownchart/actions/workflows/ci.yml/badge.svg)](https://github.com/kitikonti/ownchart/actions/workflows/ci.yml)
-[![Version](https://img.shields.io/badge/version-0.0.33-blue.svg)](https://github.com/kitikonti/ownchart/releases)
+[![Version](https://img.shields.io/github/v/tag/kitikonti/ownchart?label=version)](https://github.com/kitikonti/ownchart/releases)
 [![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.3-blue.svg)](https://www.typescriptlang.org/)
 [![React](https://img.shields.io/badge/React-18.3-61dafb.svg)](https://react.dev)
@@ -126,7 +126,7 @@ Comprehensive documentation is available in the [`/docs`](./docs) folder:
 
 ## 🎯 Current Status
 
-**Version**: 0.0.33
+**Version**: [Latest Release](https://github.com/kitikonti/ownchart/releases/latest)
 
 **Core Features**:
 - ✅ Task management with hierarchy (summaries, milestones, 3 levels)

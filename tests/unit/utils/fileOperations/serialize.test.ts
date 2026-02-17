@@ -76,7 +76,7 @@ describe('File Operations - Serialization', () => {
       const json = serializeToGanttFile([], createSampleViewSettings());
       const parsed = JSON.parse(json);
 
-      expect(parsed.appVersion).toBe('0.0.1');
+      expect(parsed.appVersion).toBe(__APP_VERSION__);
     });
 
     it('should include schema version', () => {

@@ -571,6 +571,6 @@ npm run test:e2e            # E2E tests (Playwright)
 ---
 
 **Status**: ✅ Sprint 1.5.5 Complete + UI/UX Polish + Branding (Custom Logo, PWA, Social Meta Tags)
-**Current Version**: 0.0.34
+**Current Version**: See `package.json`
 **File Extension**: `.ownchart`
 **Last Updated**: 2026-02-05
