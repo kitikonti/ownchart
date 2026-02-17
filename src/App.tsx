@@ -9,7 +9,7 @@ import { GanttLayout } from "./components/Layout";
 import { StatusBar } from "./components/StatusBar";
 import { Ribbon } from "./components/Ribbon";
 import { ExportDialog } from "./components/Export";
-import { HelpPanel, WelcomeTour } from "./components/Help";
+import { AboutDialog, HelpPanel, WelcomeTour } from "./components/Help";
 import { useKeyboardShortcuts } from "./hooks/useKeyboardShortcuts";
 import { useUnsavedChanges } from "./hooks/useUnsavedChanges";
 import { useMultiTabPersistence } from "./hooks/useMultiTabPersistence";
@@ -52,6 +52,9 @@ function App(): JSX.Element {
 
       {/* Help Panel */}
       <HelpPanel />
+
+      {/* About Dialog */}
+      <AboutDialog />
 
       {/* Welcome Tour for first-time users */}
       <WelcomeTour />

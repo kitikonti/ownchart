@@ -12,7 +12,7 @@
  */
 
 import { useState, useEffect, useCallback } from "react";
-import { Question } from "@phosphor-icons/react";
+import { Info, Question } from "@phosphor-icons/react";
 
 import OwnChartLogo from "../../assets/logo.svg?react";
 
@@ -48,6 +48,7 @@ export function Ribbon(): JSX.Element {
   // UI store
   const openExportDialog = useUIStore((state) => state.openExportDialog);
   const openHelpPanel = useUIStore((state) => state.openHelpPanel);
+  const openAboutDialog = useUIStore((state) => state.openAboutDialog);
 
   // File operations
   const { handleNew, handleOpen, handleSave, handleSaveAs } =
@@ -94,6 +95,13 @@ export function Ribbon(): JSX.Element {
               aria-label="Help"
               icon={<Question size={ICON_SIZE} weight="light" />}
               label="Help"
+            />
+            <ToolbarButton
+              onClick={openAboutDialog}
+              title="About OwnChart"
+              aria-label="About"
+              icon={<Info size={ICON_SIZE} weight="light" />}
+              label="About"
             />
           </ToolbarGroup>
         );

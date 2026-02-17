@@ -9,12 +9,16 @@ import { useState, useMemo } from "react";
 import { Minus, Plus, ArrowsOutLineHorizontal } from "@phosphor-icons/react";
 import { useTaskStore } from "../../store/slices/taskSlice";
 import { useChartStore } from "../../store/slices/chartSlice";
+import { useUIStore } from "../../store/slices/uiSlice";
 import { MIN_ZOOM, MAX_ZOOM } from "../../utils/timelineUtils";
 import { getViewportCenterAnchor, applyScrollLeft } from "../../hooks/useZoom";
 import { ZoomDialog } from "./ZoomDialog";
 
 export function StatusBar(): JSX.Element {
   const [isZoomDialogOpen, setIsZoomDialogOpen] = useState(false);
+
+  // UI store
+  const openAboutDialog = useUIStore((state) => state.openAboutDialog);
 
   // Task store
   const tasks = useTaskStore((state) => state.tasks);
@@ -106,8 +110,16 @@ export function StatusBar(): JSX.Element {
           userSelect: "none",
         }}
       >
-        {/* Left side: Task statistics */}
+        {/* Left side: Version + Task statistics */}
         <div className="flex items-center text-neutral-500">
+          <button
+            onClick={openAboutDialog}
+            className="text-neutral-400 hover:text-neutral-600 cursor-pointer text-xs transition-colors"
+            aria-label="About OwnChart"
+          >
+            OwnChart v{__APP_VERSION__}
+          </button>
+          <span className="mx-1.5 text-neutral-300">·</span>
           <span>{totalTasks} Tasks</span>
           {showProgress && (
             <>

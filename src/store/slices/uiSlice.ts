@@ -36,6 +36,9 @@ interface UIState {
   // Help panel
   isHelpPanelOpen: boolean;
 
+  // About dialog
+  isAboutDialogOpen: boolean;
+
   // Welcome tour
   isWelcomeTourOpen: boolean;
   hasSeenWelcome: boolean;
@@ -65,6 +68,10 @@ interface UIActions {
   openHelpPanel: () => void;
   closeHelpPanel: () => void;
   toggleHelpPanel: () => void;
+
+  // About dialog
+  openAboutDialog: () => void;
+  closeAboutDialog: () => void;
 
   // Welcome tour
   openWelcomeTour: () => void;
@@ -117,6 +124,7 @@ export const useUIStore = create<UIStore>()(
       exportProgress: 0,
       exportError: null,
       isHelpPanelOpen: false,
+      isAboutDialogOpen: false,
       isWelcomeTourOpen: false,
       hasSeenWelcome,
       hasTourCompleted,
@@ -201,6 +209,17 @@ export const useUIStore = create<UIStore>()(
       toggleHelpPanel: (): void =>
         set((state) => {
           state.isHelpPanelOpen = !state.isHelpPanelOpen;
+        }),
+
+      // About dialog actions
+      openAboutDialog: (): void =>
+        set((state) => {
+          state.isAboutDialogOpen = true;
+        }),
+
+      closeAboutDialog: (): void =>
+        set((state) => {
+          state.isAboutDialogOpen = false;
         }),
 
       // Welcome tour actions
