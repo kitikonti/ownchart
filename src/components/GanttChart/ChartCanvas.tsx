@@ -416,9 +416,9 @@ export function ChartCanvas({
                 y={marqueeRect.y}
                 width={marqueeRect.width}
                 height={marqueeRect.height}
-                fill="#334155"
+                fill={COLORS.chart.marquee}
                 fillOpacity={0.1}
-                stroke="#334155"
+                stroke={COLORS.chart.marquee}
                 strokeWidth={1}
                 strokeDasharray="4 2"
                 pointerEvents="none"

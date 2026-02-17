@@ -15,14 +15,7 @@ import { ColumnResizer } from "./ColumnResizer";
 import { useTableDimensions } from "../../hooks/useTableDimensions";
 import { useTableHeaderContextMenu } from "../../hooks/useTableHeaderContextMenu";
 import { ContextMenu } from "../ContextMenu/ContextMenu";
-
-// OwnChart brand colors for header
-const HEADER_COLORS = {
-  bg: "#F3F3F3",
-  bgHover: "#E8E8E8",
-  border: "#E1E1E1",
-  triangle: "#A6A6A6", // Light gray like Excel
-};
+import { TABLE_HEADER } from "../../styles/design-tokens";
 
 export function TaskTableHeader(): JSX.Element {
   const tasks = useTaskStore((state) => state.tasks);
@@ -114,7 +107,7 @@ export function TaskTableHeader(): JSX.Element {
           display: "grid",
           gridTemplateColumns,
           minWidth: totalColumnWidth,
-          backgroundColor: HEADER_COLORS.bg,
+          backgroundColor: TABLE_HEADER.bg,
         }}
         role="row"
       >
@@ -123,8 +116,8 @@ export function TaskTableHeader(): JSX.Element {
             key={column.id}
             className={`task-table-header-cell ${column.id === "name" ? "pr-3" : "px-3"} py-4 border-b ${column.id !== "color" ? "border-r" : ""} text-xs font-semibold text-neutral-600 uppercase tracking-wider whitespace-nowrap relative`}
             style={{
-              backgroundColor: HEADER_COLORS.bg,
-              borderColor: HEADER_COLORS.border,
+              backgroundColor: TABLE_HEADER.bg,
+              borderColor: TABLE_HEADER.border,
             }}
             role="columnheader"
             tabIndex={-1}
@@ -148,7 +141,7 @@ export function TaskTableHeader(): JSX.Element {
                   viewBox="0 0 8 8"
                   style={{ position: "absolute", bottom: "4px", right: "4px" }}
                 >
-                  <path d="M8 0 L8 8 L0 8 Z" fill={HEADER_COLORS.triangle} />
+                  <path d="M8 0 L8 8 L0 8 Z" fill={TABLE_HEADER.triangle} />
                 </svg>
               </button>
             ) : column.id === "color" ? (

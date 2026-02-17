@@ -72,7 +72,7 @@ export function useTaskTableRowContextMenu(): UseTaskTableRowContextMenuResult {
 
       // Right-click selection logic:
       // If task is not in current selection, switch selection to this task
-      if (!selectedTaskIds.includes(taskId)) {
+      if (!useTaskStore.getState().selectedTaskIds.includes(taskId)) {
         setSelectedTaskIds([taskId]);
       }
 
@@ -81,7 +81,7 @@ export function useTaskTableRowContextMenu(): UseTaskTableRowContextMenuResult {
         taskId,
       });
     },
-    [selectedTaskIds, setSelectedTaskIds]
+    [setSelectedTaskIds]
   );
 
   const closeContextMenu = useCallback((): void => {

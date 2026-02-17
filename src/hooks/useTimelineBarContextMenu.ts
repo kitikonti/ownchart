@@ -53,7 +53,7 @@ export function useTimelineBarContextMenu(): UseTimelineBarContextMenuResult {
       e.stopPropagation(); // Prevent timeline area context menu
 
       // Right-click selection logic
-      if (!selectedTaskIds.includes(taskId)) {
+      if (!useTaskStore.getState().selectedTaskIds.includes(taskId)) {
         setSelectedTaskIds([taskId]);
       }
 
@@ -62,7 +62,7 @@ export function useTimelineBarContextMenu(): UseTimelineBarContextMenuResult {
         taskId,
       });
     },
-    [selectedTaskIds, setSelectedTaskIds]
+    [setSelectedTaskIds]
   );
 
   const closeContextMenu = useCallback((): void => {

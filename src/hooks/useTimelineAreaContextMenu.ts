@@ -24,7 +24,6 @@ interface UseTimelineAreaContextMenuResult {
 export function useTimelineAreaContextMenu(): UseTimelineAreaContextMenuResult {
   const { handlePaste, canPaste } = useClipboardOperations();
   const fitToView = useChartStore((state) => state.fitToView);
-  const tasks = useTaskStore((state) => state.tasks);
 
   const [contextMenu, setContextMenu] = useState<ContextMenuPosition | null>(
     null
@@ -63,10 +62,10 @@ export function useTimelineAreaContextMenu(): UseTimelineAreaContextMenuResult {
           weight: CONTEXT_MENU.iconWeight,
         }),
         shortcut: "F",
-        onClick: () => fitToView(tasks),
+        onClick: () => fitToView(useTaskStore.getState().tasks),
       },
     ];
-  }, [contextMenu, canPaste, handlePaste, fitToView, tasks]);
+  }, [contextMenu, canPaste, handlePaste, fitToView]);
 
   return {
     contextMenu,

@@ -58,6 +58,7 @@ export const COLORS = {
     todayMarker: "#0F6CBD", // brand-600 for today marker
     todayHighlight: "#EBF3FC", // brand-50 for today header cell background
     taskDefault: "#0F6CBD", // brand-600 for new tasks
+    marquee: "#334155", // Marquee selection rectangle
   },
 } as const;
 
@@ -179,6 +180,17 @@ export const CONTEXT_MENU = {
 } as const;
 
 // =============================================================================
+// TABLE HEADER TOKENS
+// =============================================================================
+
+export const TABLE_HEADER = {
+  bg: "#F3F3F3",
+  bgHover: "#E8E8E8",
+  border: "#E1E1E1",
+  triangle: "#A6A6A6",
+} as const;
+
+// =============================================================================
 // DENSITY SYSTEM (unchanged from original)
 // =============================================================================
 
@@ -215,4 +227,5 @@ export type ShadowToken = typeof SHADOWS;
 export type TransitionToken = typeof TRANSITIONS;
 export type ToolbarToken = typeof TOOLBAR;
 export type ContextMenuToken = typeof CONTEXT_MENU;
+export type TableHeaderToken = typeof TABLE_HEADER;
 export type DensityToken = typeof DENSITY;
