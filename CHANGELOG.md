@@ -2,6 +2,21 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [0.0.39](https://github.com/kitikonti/ownchart/compare/v0.0.38...v0.0.39) (2026-02-17)
+
+
+### Features
+
+* add About dialog with open-source attribution and sponsor link ([8b27fd3](https://github.com/kitikonti/ownchart/commit/8b27fd3fd8c7f4f240bc1b41fccf394956d93a57))
+* add timeline header date range selection with zoom-to-selection ([#54](https://github.com/kitikonti/ownchart/issues/54)) ([5682113](https://github.com/kitikonti/ownchart/commit/56821134975f4d2f318377e8943e932d5e2d2a12))
+
+
+### Bug Fixes
+
+* address review findings from About dialog feature ([25fcaea](https://github.com/kitikonti/ownchart/commit/25fcaeab529e0043378ae5faae55b1feacde6318)), closes [#0F6](https://github.com/kitikonti/ownchart/issues/0F6)
+* address review findings from header date selection ([#54](https://github.com/kitikonti/ownchart/issues/54)) ([c242de8](https://github.com/kitikonti/ownchart/commit/c242de893abb0ab7ab38767c72bab1f5f1de1e89))
+* synchronize app version from package.json at build time ([882ff82](https://github.com/kitikonti/ownchart/commit/882ff82189b0955f7ecc1fbb1e45f67d9cd01d8a))
+
 ### [0.0.38](https://github.com/kitikonti/ownchart/compare/v0.0.37...v0.0.38) (2026-02-17)
 
 
