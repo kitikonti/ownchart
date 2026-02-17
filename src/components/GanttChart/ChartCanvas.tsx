@@ -40,6 +40,8 @@ interface ChartCanvasProps {
   onTaskDoubleClick?: (taskId: string) => void;
   containerHeight?: number; // Height from parent container
   containerWidth?: number; // Width from parent container (viewport, not content)
+  /** Header date selection highlight (x, width in pixels) */
+  headerSelectionRect?: { x: number; width: number } | null;
 }
 
 const SCROLLBAR_HEIGHT = 17; // Reserve space for horizontal scrollbar
@@ -51,6 +53,7 @@ export function ChartCanvas({
   onTaskDoubleClick,
   containerHeight = 600,
   containerWidth: propContainerWidth = 800,
+  headerSelectionRect,
 }: ChartCanvasProps): JSX.Element {
   const outerRef = useRef<HTMLDivElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
@@ -80,7 +83,6 @@ export function ChartCanvas({
 
   // Use individual selectors for proper Zustand re-render (like ZoomIndicator)
   const scale = useChartStore((state) => state.scale);
-  const zoom = useChartStore((state) => state.zoom);
   const showWeekends = useChartStore((state) => state.showWeekends);
   const showTodayMarker = useChartStore((state) => state.showTodayMarker);
   const showHolidays = useChartStore((state) => state.showHolidays);
@@ -117,10 +119,13 @@ export function ChartCanvas({
     setContainerWidth(containerWidth);
   }, [containerWidth, setContainerWidth]);
 
-  // Trigger scale calculation when tasks, container width, or zoom changes
+  // Trigger scale calculation when tasks change.
+  // Note: zoom and containerWidth changes are handled by setZoom/setContainerWidth
+  // which derive scale internally. Calling updateScale on zoom changes would
+  // overwrite dateRange set by zoomToDateRange/fitToView.
   useEffect(() => {
     updateScale(tasks);
-  }, [tasks, containerWidth, zoom, updateScale]);
+  }, [tasks, updateScale]);
 
   // Calculate task geometries for connection handles and marquee selection
   // Set for O(1) selection checks (avoids O(n²) in render loop)
@@ -285,6 +290,38 @@ export function ChartCanvas({
                 rowHeight={ROW_HEIGHT}
               />
             </g>
+
+            {/* Layer 2.1: Header date selection (marquee style, vertical borders only) */}
+            {headerSelectionRect && (
+              <g pointerEvents="none">
+                <rect
+                  x={headerSelectionRect.x}
+                  y={0}
+                  width={headerSelectionRect.width}
+                  height={contentHeight}
+                  fill={COLORS.chart.marquee}
+                  fillOpacity={0.1}
+                />
+                <line
+                  x1={headerSelectionRect.x}
+                  y1={0}
+                  x2={headerSelectionRect.x}
+                  y2={contentHeight}
+                  stroke={COLORS.chart.marquee}
+                  strokeWidth={1}
+                  strokeDasharray="4 2"
+                />
+                <line
+                  x1={headerSelectionRect.x + headerSelectionRect.width}
+                  y1={0}
+                  x2={headerSelectionRect.x + headerSelectionRect.width}
+                  y2={contentHeight}
+                  stroke={COLORS.chart.marquee}
+                  strokeWidth={1}
+                  strokeDasharray="4 2"
+                />
+              </g>
+            )}
 
             {/* Layer 2.5: Selection Highlights (full row, brand color) */}
             <g className="layer-selection">

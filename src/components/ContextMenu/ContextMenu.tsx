@@ -41,11 +41,6 @@ export function ContextMenu({
   const menuRef = useRef<HTMLDivElement>(null);
   const focusedIndexRef = useRef(0);
 
-  // Find first non-disabled item
-  const getFirstEnabledIndex = useCallback((): number => {
-    return items.findIndex((item) => !item.disabled);
-  }, [items]);
-
   // Focus management
   const focusItem = useCallback((index: number): void => {
     const el = menuRef.current?.querySelector(
@@ -78,12 +73,15 @@ export function ContextMenu({
     el.style.top = `${Math.max(0, y)}px`;
     el.style.visibility = "visible";
 
-    // Focus first enabled item
-    const firstEnabled = getFirstEnabledIndex();
+    // Focus first enabled item for keyboard navigation.
+    // No visible focus ring — CSS uses :focus-visible (keyboard only).
+    const firstEnabled = items.findIndex((item) => !item.disabled);
     if (firstEnabled >= 0) {
       focusItem(firstEnabled);
+    } else {
+      el.focus();
     }
-  }, [position, getFirstEnabledIndex, focusItem]);
+  }, [position, items, focusItem]);
 
   // Close on outside click
   useEffect(() => {

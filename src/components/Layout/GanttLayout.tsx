@@ -23,12 +23,15 @@ import { TaskTable } from "../TaskList/TaskTable";
 import { TaskTableHeader } from "../TaskList/TaskTableHeader";
 import { ChartCanvas } from "../GanttChart";
 import { TimelineHeader } from "../GanttChart";
+import { ContextMenu } from "../ContextMenu/ContextMenu";
 import { useTaskStore } from "../../store/slices/taskSlice";
 import { useChartStore } from "../../store/slices/chartSlice";
 import { SplitPane } from "./SplitPane";
 import { useTableDimensions } from "../../hooks/useTableDimensions";
 import { useFlattenedTasks } from "../../hooks/useFlattenedTasks";
+import { useHeaderDateSelection } from "../../hooks/useHeaderDateSelection";
 import { useDensityConfig } from "../../store/slices/userPreferencesSlice";
+import { COLORS } from "../../styles/design-tokens";
 
 const HEADER_HEIGHT = 48; // Timeline header height
 const MIN_TABLE_WIDTH = 200; // Minimum width for task table
@@ -42,6 +45,7 @@ export function GanttLayout(): JSX.Element {
   const timelineHeaderScrollRef = useRef<HTMLDivElement>(null);
   const taskTableScrollRef = useRef<HTMLDivElement>(null);
   const taskTableHeaderScrollRef = useRef<HTMLDivElement>(null);
+  const headerSvgRef = useRef<SVGSVGElement>(null);
 
   // State for dimensions and scroll
   const [viewportHeight, setViewportHeight] = useState(600);
@@ -71,6 +75,19 @@ export function GanttLayout(): JSX.Element {
   const lastFitToViewTime = useChartStore((state) => state.lastFitToViewTime);
   const fileLoadCounter = useChartStore((state) => state.fileLoadCounter);
   const setViewport = useChartStore((state) => state.setViewport);
+
+  // Header date selection (drag-to-select + context menu)
+  const {
+    selectionPixelRect,
+    contextMenu: headerContextMenu,
+    contextMenuItems: headerContextMenuItems,
+    closeContextMenu: closeHeaderContextMenu,
+    onMouseDown: handleHeaderMouseDown,
+    onContextMenu: handleHeaderContextMenu,
+  } = useHeaderDateSelection({
+    headerSvgRef,
+    scale,
+  });
 
   // Task table collapse state
   const isTaskTableCollapsed = useChartStore(
@@ -476,15 +493,59 @@ export function GanttLayout(): JSX.Element {
                   >
                     {scale && (
                       <svg
+                        ref={headerSvgRef}
                         width={timelineHeaderWidth}
                         height={HEADER_HEIGHT}
                         className="block select-none"
+                        onMouseDown={handleHeaderMouseDown}
+                        onContextMenu={handleHeaderContextMenu}
                       >
                         <TimelineHeader
                           scale={scale}
                           width={timelineHeaderWidth}
                         />
+                        {selectionPixelRect && (
+                          <g pointerEvents="none">
+                            <rect
+                              x={selectionPixelRect.x}
+                              y={0}
+                              width={selectionPixelRect.width}
+                              height={HEADER_HEIGHT}
+                              fill={COLORS.chart.marquee}
+                              fillOpacity={0.1}
+                            />
+                            <line
+                              x1={selectionPixelRect.x}
+                              y1={0}
+                              x2={selectionPixelRect.x}
+                              y2={HEADER_HEIGHT}
+                              stroke={COLORS.chart.marquee}
+                              strokeWidth={1}
+                              strokeDasharray="4 2"
+                            />
+                            <line
+                              x1={
+                                selectionPixelRect.x + selectionPixelRect.width
+                              }
+                              y1={0}
+                              x2={
+                                selectionPixelRect.x + selectionPixelRect.width
+                              }
+                              y2={HEADER_HEIGHT}
+                              stroke={COLORS.chart.marquee}
+                              strokeWidth={1}
+                              strokeDasharray="4 2"
+                            />
+                          </g>
+                        )}
                       </svg>
+                    )}
+                    {headerContextMenu && (
+                      <ContextMenu
+                        items={headerContextMenuItems}
+                        position={headerContextMenu}
+                        onClose={closeHeaderContextMenu}
+                      />
                     )}
                   </div>
                   {/* Gantt Chart Area */}
@@ -504,6 +565,7 @@ export function GanttLayout(): JSX.Element {
                           selectedTaskIds={selectedTaskIds}
                           containerHeight={contentAreaHeight}
                           containerWidth={chartContainerWidth}
+                          headerSelectionRect={selectionPixelRect}
                         />
                       </div>
                     </div>

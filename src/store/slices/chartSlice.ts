@@ -145,6 +145,7 @@ interface ChartActions {
 
   // Combined navigation
   fitToView: (tasks: Task[]) => void;
+  zoomToDateRange: (startDate: string, endDate: string) => void;
   resetView: () => void;
 
   // Transient state
@@ -274,15 +275,23 @@ export const useChartStore = create<ChartState & ChartActions>()(
       set((state) => {
         const taskDateRange = getDateRange(tasks);
 
-        // Add 90 days padding on both sides for smooth infinite scroll
-        // (7 visible + 83 for scroll room in both directions)
-        const paddedMin = addDays(taskDateRange.min, -90);
-        const paddedMax = addDays(taskDateRange.max, 90);
+        // Only recalculate dateRange when tasks extend beyond it or no range exists.
+        // This preserves custom dateRange set by zoomToDateRange/fitToView —
+        // without this guard, any task edit (name, indent, etc.) would overwrite
+        // the dateRange and cause the viewport to jump back to the default position.
+        if (
+          !state.dateRange ||
+          taskDateRange.min < state.dateRange.min ||
+          taskDateRange.max > state.dateRange.max
+        ) {
+          // Add 90 days padding on both sides for smooth infinite scroll
+          // (7 visible + 83 for scroll room in both directions)
+          const paddedMin = addDays(taskDateRange.min, -90);
+          const paddedMax = addDays(taskDateRange.max, 90);
+          state.dateRange = { min: paddedMin, max: paddedMax };
+        }
 
-        // Update dateRange
-        state.dateRange = { min: paddedMin, max: paddedMax };
-
-        // Derive scale from dateRange
+        // Always re-derive scale (task count may have changed)
         state.scale = deriveScale(
           state.dateRange,
           state.containerWidth,
@@ -489,6 +498,37 @@ export const useChartStore = create<ChartState & ChartActions>()(
         state.panOffset = { x: 0, y: 0 };
         state.scale = deriveScale(newDateRange, containerWidth, finalZoom);
         state.lastFitToViewTime = Date.now(); // Mark that fitToView was called
+      });
+    },
+
+    // Zoom to a specific date range (e.g. from header date selection)
+    zoomToDateRange: (startDate: string, endDate: string): void => {
+      const containerWidth = get().containerWidth;
+
+      // Add 2 days padding on each side for visual breathing room
+      const paddedStart = addDays(startDate, -2);
+      const paddedEnd = addDays(endDate, 2);
+
+      const visibleDuration = calculateDuration(paddedStart, paddedEnd);
+
+      // Calculate zoom: containerWidth = visibleDuration × FIXED_BASE_PIXELS_PER_DAY × zoom
+      const idealZoom =
+        containerWidth / (visibleDuration * FIXED_BASE_PIXELS_PER_DAY);
+      const finalZoom = Math.max(MIN_ZOOM, Math.min(MAX_ZOOM, idealZoom));
+
+      // Scroll padding: GanttLayout scrolls to SCROLL_OFFSET_DAYS (83) × pixelsPerDay.
+      // With 85 days left padding, viewport starts at startDate - 85 + 83 = startDate - 2,
+      // exactly matching the 2-day visual padding.
+      const scrollPaddedMin = addDays(startDate, -85);
+      const scrollPaddedMax = addDays(endDate, 90);
+      const newDateRange = { min: scrollPaddedMin, max: scrollPaddedMax };
+
+      set((state) => {
+        state.dateRange = newDateRange;
+        state.zoom = finalZoom;
+        state.panOffset = { x: 0, y: 0 };
+        state.scale = deriveScale(newDateRange, containerWidth, finalZoom);
+        state.lastFitToViewTime = Date.now();
       });
     },
 
