@@ -33,7 +33,7 @@ import { ColumnResizer } from "./ColumnResizer";
 import { useTableDimensions } from "../../hooks/useTableDimensions";
 import { useFlattenedTasks } from "../../hooks/useFlattenedTasks";
 import { useAutoColumnWidth } from "../../hooks/useAutoColumnWidth";
-import { useTaskTableContextMenu } from "../../hooks/useTaskTableContextMenu";
+import { useTaskTableRowContextMenu } from "../../hooks/useTaskTableRowContextMenu";
 import { useHideOperations } from "../../hooks/useHideOperations";
 import { ContextMenu } from "../ContextMenu/ContextMenu";
 import { COLORS } from "../../styles/design-tokens";
@@ -68,17 +68,16 @@ export function TaskTable({ hideHeader = true }: TaskTableProps): JSX.Element {
   // Build flattened list respecting collapsed state (centralized in hook)
   const { flattenedTasks, allFlattenedTasks } = useFlattenedTasks();
 
-  // Context menu with hide/unhide operations
+  // Context menu with all row operations (Zone 1)
   const {
     contextMenu,
     contextMenuItems,
     handleRowContextMenu,
     closeContextMenu,
-    unhideRange,
-  } = useTaskTableContextMenu(selectedTaskIds);
+  } = useTaskTableRowContextMenu();
 
-  // Emergency "show all" for when every task is hidden (user can't select anything)
-  const { showAll } = useHideOperations();
+  // Emergency "show all" + unhide range for gap indicators
+  const { showAll, unhideRange } = useHideOperations();
 
   // Extract visible task IDs in display order (for correct range selection)
   const visibleTaskIds = useMemo(

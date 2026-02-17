@@ -13,6 +13,8 @@ import {
 } from "../../config/tableColumns";
 import { ColumnResizer } from "./ColumnResizer";
 import { useTableDimensions } from "../../hooks/useTableDimensions";
+import { useTableHeaderContextMenu } from "../../hooks/useTableHeaderContextMenu";
+import { ContextMenu } from "../ContextMenu/ContextMenu";
 
 // OwnChart brand colors for header
 const HEADER_COLORS = {
@@ -32,6 +34,14 @@ export function TaskTableHeader(): JSX.Element {
   const autoFitColumn = useTaskStore((state) => state.autoFitColumn);
   const densityConfig = useDensityConfig();
   const hiddenColumns = useChartStore((state) => state.hiddenColumns);
+
+  // Context menu for column headers (Zone 2)
+  const {
+    contextMenu,
+    contextMenuItems,
+    handleHeaderContextMenu,
+    closeContextMenu,
+  } = useTableHeaderContextMenu();
 
   // Get visible columns based on settings
   const visibleColumns = useMemo(
@@ -97,64 +107,77 @@ export function TaskTableHeader(): JSX.Element {
   };
 
   return (
-    <div
-      className="task-table-header-row"
-      style={{
-        display: "grid",
-        gridTemplateColumns,
-        minWidth: totalColumnWidth,
-        backgroundColor: HEADER_COLORS.bg,
-      }}
-      role="row"
-    >
-      {visibleColumns.map((column) => (
-        <div
-          key={column.id}
-          className={`task-table-header-cell ${column.id === "name" ? "pr-3" : "px-3"} py-4 border-b ${column.id !== "color" ? "border-r" : ""} text-xs font-semibold text-neutral-600 uppercase tracking-wider whitespace-nowrap relative`}
-          style={{
-            backgroundColor: HEADER_COLORS.bg,
-            borderColor: HEADER_COLORS.border,
-          }}
-          role="columnheader"
-        >
-          {column.id === "rowNumber" ? (
-            // Excel-style select-all triangle in top-left corner
-            <button
-              onClick={handleSelectAllClick}
-              className="absolute inset-0 hover:bg-neutral-200 transition-colors"
-              style={{ cursor: "pointer" }}
-              title={allSelected ? "Deselect all" : "Select all"}
-              aria-label={
-                allSelected ? "Deselect all tasks" : "Select all tasks"
-              }
-            >
-              {/* Small triangle in bottom-right corner */}
-              <svg
-                width="8"
-                height="8"
-                viewBox="0 0 8 8"
-                style={{ position: "absolute", bottom: "4px", right: "4px" }}
+    <>
+      <div
+        className="task-table-header-row"
+        style={{
+          display: "grid",
+          gridTemplateColumns,
+          minWidth: totalColumnWidth,
+          backgroundColor: HEADER_COLORS.bg,
+        }}
+        role="row"
+      >
+        {visibleColumns.map((column) => (
+          <div
+            key={column.id}
+            className={`task-table-header-cell ${column.id === "name" ? "pr-3" : "px-3"} py-4 border-b ${column.id !== "color" ? "border-r" : ""} text-xs font-semibold text-neutral-600 uppercase tracking-wider whitespace-nowrap relative`}
+            style={{
+              backgroundColor: HEADER_COLORS.bg,
+              borderColor: HEADER_COLORS.border,
+            }}
+            role="columnheader"
+            tabIndex={-1}
+            onContextMenu={(e) => handleHeaderContextMenu(e, column.id)}
+          >
+            {column.id === "rowNumber" ? (
+              // Excel-style select-all triangle in top-left corner
+              <button
+                onClick={handleSelectAllClick}
+                className="absolute inset-0 hover:bg-neutral-200 transition-colors"
+                style={{ cursor: "pointer" }}
+                title={allSelected ? "Deselect all" : "Select all"}
+                aria-label={
+                  allSelected ? "Deselect all tasks" : "Select all tasks"
+                }
               >
-                <path d="M8 0 L8 8 L0 8 Z" fill={HEADER_COLORS.triangle} />
-              </svg>
-            </button>
-          ) : column.id === "color" ? (
-            ""
-          ) : (
-            column.label
-          )}
-          {/* Column Resizer - only for name column */}
-          {column.id === "name" && (
-            <ColumnResizer
-              columnId={column.id}
-              currentWidth={getColumnWidth(column.id)}
-              onResize={handleColumnResize}
-              onAutoResize={autoFitColumn}
-              minWidth={100}
-            />
-          )}
-        </div>
-      ))}
-    </div>
+                {/* Small triangle in bottom-right corner */}
+                <svg
+                  width="8"
+                  height="8"
+                  viewBox="0 0 8 8"
+                  style={{ position: "absolute", bottom: "4px", right: "4px" }}
+                >
+                  <path d="M8 0 L8 8 L0 8 Z" fill={HEADER_COLORS.triangle} />
+                </svg>
+              </button>
+            ) : column.id === "color" ? (
+              ""
+            ) : (
+              column.label
+            )}
+            {/* Column Resizer - only for name column */}
+            {column.id === "name" && (
+              <ColumnResizer
+                columnId={column.id}
+                currentWidth={getColumnWidth(column.id)}
+                onResize={handleColumnResize}
+                onAutoResize={autoFitColumn}
+                minWidth={100}
+              />
+            )}
+          </div>
+        ))}
+      </div>
+
+      {/* Context Menu */}
+      {contextMenu && contextMenuItems.length > 0 && (
+        <ContextMenu
+          items={contextMenuItems}
+          position={contextMenu.position}
+          onClose={closeContextMenu}
+        />
+      )}
+    </>
   );
 }

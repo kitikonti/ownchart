@@ -29,6 +29,9 @@ import {
   type DensityGeometryConfig,
 } from "../../utils/timelineUtils";
 import { COLORS } from "../../styles/design-tokens";
+import { useTimelineBarContextMenu } from "../../hooks/useTimelineBarContextMenu";
+import { useTimelineAreaContextMenu } from "../../hooks/useTimelineAreaContextMenu";
+import { ContextMenu } from "../ContextMenu/ContextMenu";
 
 interface ChartCanvasProps {
   tasks: Task[];
@@ -200,6 +203,21 @@ export function ChartCanvas({
       enabled: !dragState.isDragging, // Disable during dependency drag
     });
 
+  // Context menus for timeline (Zone 3: task bars, Zone 4: empty area)
+  const {
+    contextMenu: barContextMenu,
+    contextMenuItems: barContextMenuItems,
+    handleBarContextMenu,
+    closeContextMenu: closeBarContextMenu,
+  } = useTimelineBarContextMenu();
+
+  const {
+    contextMenu: areaContextMenu,
+    contextMenuItems: areaContextMenuItems,
+    handleAreaContextMenu,
+    closeContextMenu: closeAreaContextMenu,
+  } = useTimelineAreaContextMenu();
+
   // Don't render if scale not ready
   if (!scale) {
     return (
@@ -253,6 +271,7 @@ export function ChartCanvas({
             height={contentHeight}
             className="gantt-chart block select-none"
             onMouseDown={onMarqueeMouseDown}
+            onContextMenu={handleAreaContextMenu}
           >
             {/* Layer 2: Background (Grid Lines) */}
             <g className="layer-background">
@@ -340,6 +359,7 @@ export function ChartCanvas({
                     onMouseEnter={() => setHoveredTaskId(task.id)}
                     onMouseLeave={() => setHoveredTaskId(null)}
                     onMouseUp={() => handleTaskMouseUp(task.id)}
+                    onContextMenu={(e) => handleBarContextMenu(e, task.id)}
                   >
                     <TaskBar
                       task={task}
@@ -407,6 +427,24 @@ export function ChartCanvas({
           </svg>
         </div>
       </div>
+
+      {/* Context Menu - Zone 3: Task Bar */}
+      {barContextMenu && barContextMenuItems.length > 0 && (
+        <ContextMenu
+          items={barContextMenuItems}
+          position={barContextMenu.position}
+          onClose={closeBarContextMenu}
+        />
+      )}
+
+      {/* Context Menu - Zone 4: Empty Area */}
+      {areaContextMenu && areaContextMenuItems.length > 0 && (
+        <ContextMenu
+          items={areaContextMenuItems}
+          position={areaContextMenu}
+          onClose={closeAreaContextMenu}
+        />
+      )}
     </div>
   );
 }
