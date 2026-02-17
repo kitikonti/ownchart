@@ -19,6 +19,7 @@ describe('uiSlice', () => {
         background: 'white',
       },
       isHelpPanelOpen: false,
+      isAboutDialogOpen: false,
       isWelcomeTourOpen: false,
       hasSeenWelcome: false,
       hasTourCompleted: false,
@@ -49,6 +50,23 @@ describe('uiSlice', () => {
 
       toggleHelpPanel();
       expect(useUIStore.getState().isHelpPanelOpen).toBe(false);
+    });
+  });
+
+  describe('about dialog', () => {
+    it('should open about dialog', () => {
+      const { openAboutDialog } = useUIStore.getState();
+      openAboutDialog();
+
+      expect(useUIStore.getState().isAboutDialogOpen).toBe(true);
+    });
+
+    it('should close about dialog', () => {
+      useUIStore.setState({ isAboutDialogOpen: true });
+      const { closeAboutDialog } = useUIStore.getState();
+      closeAboutDialog();
+
+      expect(useUIStore.getState().isAboutDialogOpen).toBe(false);
     });
   });
 

@@ -45,7 +45,7 @@ export function AboutDialog(): JSX.Element | null {
         <OwnChartLogo
           width={36}
           height={36}
-          style={{ color: "#0F6CBD" }}
+          className="text-brand-600"
           aria-hidden="true"
         />
         <h3 className="mt-3 text-lg font-semibold text-neutral-900">
@@ -66,7 +66,7 @@ export function AboutDialog(): JSX.Element | null {
         <ExternalLink
           href={APP_CONFIG.githubUrl}
           icon={<GithubLogo size={18} weight="regular" />}
-          label="Open Source (MIT License)"
+          label={`Open Source (${APP_CONFIG.license} License)`}
           sublabel="GitHub Repository"
         />
         <ExternalLink

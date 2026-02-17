@@ -185,7 +185,7 @@ export function Ribbon(): JSX.Element {
           <OwnChartLogo
             width={18}
             height={18}
-            style={{ color: "#0F6CBD" }}
+            className="text-brand-600"
             aria-label="OwnChart"
           />
         </div>
