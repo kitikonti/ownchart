@@ -31,6 +31,15 @@ export const FIXED_BASE_PIXELS_PER_DAY = 25; // Comfortable standard view
 export const MIN_ZOOM = 0.05; // 5% - fit ~3 years on desktop
 export const MAX_ZOOM = 3.0; // 300% - show at least 1 week
 
+// Scroll/date-range padding constants (shared between GanttLayout and chartSlice)
+/** Days of padding added before/after task range for infinite scroll room */
+export const DATE_RANGE_PADDING_DAYS = 90;
+/** Days to scroll past from dateRange.min to reach visible content start.
+ *  = DATE_RANGE_PADDING_DAYS - 7 (visible pre-task days) */
+export const SCROLL_OFFSET_DAYS = 83;
+/** Visual breathing room (days) added on each side by zoomToDateRange */
+export const ZOOM_VISUAL_PADDING_DAYS = 2;
+
 // Week numbering configuration (ISO 8601 - European standard)
 // Default week start day - actual value comes from user preferences
 export const WEEK_START_DAY = 1; // 0 = Sunday, 1 = Monday (ISO 8601)

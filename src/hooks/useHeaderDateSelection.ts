@@ -17,6 +17,9 @@ import {
 import { MagnifyingGlassPlus } from "@phosphor-icons/react";
 import type { TimelineScale } from "../utils/timelineUtils";
 import { dateToPixel, pixelToDate } from "../utils/timelineUtils";
+
+/** Minimum pixel width for a selection to be rendered (ignores single-click without drag) */
+const MIN_SELECTION_WIDTH_PX = 2;
 import { useChartStore } from "../store/slices/chartSlice";
 import type { ContextMenuPosition } from "../components/ContextMenu/ContextMenu";
 import type { ContextMenuItem } from "../components/ContextMenu/ContextMenu";
@@ -88,7 +91,7 @@ export function useHeaderDateSelection({
     const xEnd = dateToPixel(selection.endDate, scale);
     const width = xEnd - x;
     // Don't render if width is too small (single-click without drag)
-    if (width < 2) return null;
+    if (width < MIN_SELECTION_WIDTH_PX) return null;
     return { x, width };
   }, [selection, scale]);
 
@@ -136,7 +139,8 @@ export function useHeaderDateSelection({
 
       const svgX = clientXToSvgX(e.clientX, svg);
       const currentDate = pixelToDate(svgX, scale);
-      const startDate = dragStartDateRef.current!;
+      const startDate = dragStartDateRef.current;
+      if (!startDate) return;
 
       setSelection(normalizeSelection(startDate, currentDate));
     },

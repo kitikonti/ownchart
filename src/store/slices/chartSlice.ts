@@ -12,6 +12,9 @@ import {
   MIN_ZOOM,
   MAX_ZOOM,
   FIXED_BASE_PIXELS_PER_DAY,
+  DATE_RANGE_PADDING_DAYS,
+  SCROLL_OFFSET_DAYS,
+  ZOOM_VISUAL_PADDING_DAYS,
   dateToPixel,
 } from "../../utils/timelineUtils";
 import {
@@ -284,10 +287,13 @@ export const useChartStore = create<ChartState & ChartActions>()(
           taskDateRange.min < state.dateRange.min ||
           taskDateRange.max > state.dateRange.max
         ) {
-          // Add 90 days padding on both sides for smooth infinite scroll
-          // (7 visible + 83 for scroll room in both directions)
-          const paddedMin = addDays(taskDateRange.min, -90);
-          const paddedMax = addDays(taskDateRange.max, 90);
+          // Add padding on both sides for smooth infinite scroll
+          // (7 visible + SCROLL_OFFSET_DAYS for scroll room in both directions)
+          const paddedMin = addDays(
+            taskDateRange.min,
+            -DATE_RANGE_PADDING_DAYS
+          );
+          const paddedMax = addDays(taskDateRange.max, DATE_RANGE_PADDING_DAYS);
           state.dateRange = { min: paddedMin, max: paddedMax };
         }
 
@@ -483,10 +489,10 @@ export const useChartStore = create<ChartState & ChartActions>()(
       // Set zoom (clamped to valid range)
       const finalZoom = Math.max(MIN_ZOOM, Math.min(MAX_ZOOM, idealZoom));
 
-      // Add 90 days padding on both sides for smooth infinite scroll
+      // Add padding on both sides for smooth infinite scroll
       // Same as updateScale to allow scrolling in both directions
-      const paddedMin = addDays(min, -90);
-      const paddedMax = addDays(max, 90);
+      const paddedMin = addDays(min, -DATE_RANGE_PADDING_DAYS);
+      const paddedMax = addDays(max, DATE_RANGE_PADDING_DAYS);
 
       // Set dateRange and zoom, then derive scale
       // No need for scaleLocked - dateRange IS the source of truth now
@@ -505,9 +511,9 @@ export const useChartStore = create<ChartState & ChartActions>()(
     zoomToDateRange: (startDate: string, endDate: string): void => {
       const containerWidth = get().containerWidth;
 
-      // Add 2 days padding on each side for visual breathing room
-      const paddedStart = addDays(startDate, -2);
-      const paddedEnd = addDays(endDate, 2);
+      // Add visual breathing room on each side
+      const paddedStart = addDays(startDate, -ZOOM_VISUAL_PADDING_DAYS);
+      const paddedEnd = addDays(endDate, ZOOM_VISUAL_PADDING_DAYS);
 
       const visibleDuration = calculateDuration(paddedStart, paddedEnd);
 
@@ -516,11 +522,14 @@ export const useChartStore = create<ChartState & ChartActions>()(
         containerWidth / (visibleDuration * FIXED_BASE_PIXELS_PER_DAY);
       const finalZoom = Math.max(MIN_ZOOM, Math.min(MAX_ZOOM, idealZoom));
 
-      // Scroll padding: GanttLayout scrolls to SCROLL_OFFSET_DAYS (83) × pixelsPerDay.
-      // With 85 days left padding, viewport starts at startDate - 85 + 83 = startDate - 2,
-      // exactly matching the 2-day visual padding.
-      const scrollPaddedMin = addDays(startDate, -85);
-      const scrollPaddedMax = addDays(endDate, 90);
+      // Scroll padding: GanttLayout scrolls to SCROLL_OFFSET_DAYS × pixelsPerDay.
+      // With (SCROLL_OFFSET_DAYS + ZOOM_VISUAL_PADDING_DAYS) days left padding,
+      // viewport starts at startDate - ZOOM_VISUAL_PADDING_DAYS, matching the visual padding.
+      const scrollPaddedMin = addDays(
+        startDate,
+        -(SCROLL_OFFSET_DAYS + ZOOM_VISUAL_PADDING_DAYS)
+      );
+      const scrollPaddedMax = addDays(endDate, DATE_RANGE_PADDING_DAYS);
       const newDateRange = { min: scrollPaddedMin, max: scrollPaddedMax };
 
       set((state) => {

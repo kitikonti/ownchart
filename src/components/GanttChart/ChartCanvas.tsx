@@ -32,6 +32,7 @@ import { COLORS } from "../../styles/design-tokens";
 import { useTimelineBarContextMenu } from "../../hooks/useTimelineBarContextMenu";
 import { useTimelineAreaContextMenu } from "../../hooks/useTimelineAreaContextMenu";
 import { ContextMenu } from "../ContextMenu/ContextMenu";
+import { SelectionHighlight } from "./SelectionHighlight";
 
 interface ChartCanvasProps {
   tasks: Task[];
@@ -292,36 +293,10 @@ export function ChartCanvas({
             </g>
 
             {/* Layer 2.1: Header date selection (marquee style, vertical borders only) */}
-            {headerSelectionRect && (
-              <g pointerEvents="none">
-                <rect
-                  x={headerSelectionRect.x}
-                  y={0}
-                  width={headerSelectionRect.width}
-                  height={contentHeight}
-                  fill={COLORS.chart.marquee}
-                  fillOpacity={0.1}
-                />
-                <line
-                  x1={headerSelectionRect.x}
-                  y1={0}
-                  x2={headerSelectionRect.x}
-                  y2={contentHeight}
-                  stroke={COLORS.chart.marquee}
-                  strokeWidth={1}
-                  strokeDasharray="4 2"
-                />
-                <line
-                  x1={headerSelectionRect.x + headerSelectionRect.width}
-                  y1={0}
-                  x2={headerSelectionRect.x + headerSelectionRect.width}
-                  y2={contentHeight}
-                  stroke={COLORS.chart.marquee}
-                  strokeWidth={1}
-                  strokeDasharray="4 2"
-                />
-              </g>
-            )}
+            <SelectionHighlight
+              rect={headerSelectionRect ?? null}
+              height={contentHeight}
+            />
 
             {/* Layer 2.5: Selection Highlights (full row, brand color) */}
             <g className="layer-selection">

@@ -21,8 +21,7 @@ import { useRef, useEffect, useState, useCallback } from "react";
 import { flushSync } from "react-dom";
 import { TaskTable } from "../TaskList/TaskTable";
 import { TaskTableHeader } from "../TaskList/TaskTableHeader";
-import { ChartCanvas } from "../GanttChart";
-import { TimelineHeader } from "../GanttChart";
+import { ChartCanvas, TimelineHeader, SelectionHighlight } from "../GanttChart";
 import { ContextMenu } from "../ContextMenu/ContextMenu";
 import { useTaskStore } from "../../store/slices/taskSlice";
 import { useChartStore } from "../../store/slices/chartSlice";
@@ -31,7 +30,7 @@ import { useTableDimensions } from "../../hooks/useTableDimensions";
 import { useFlattenedTasks } from "../../hooks/useFlattenedTasks";
 import { useHeaderDateSelection } from "../../hooks/useHeaderDateSelection";
 import { useDensityConfig } from "../../store/slices/userPreferencesSlice";
-import { COLORS } from "../../styles/design-tokens";
+import { SCROLL_OFFSET_DAYS } from "../../utils/timelineUtils";
 
 const HEADER_HEIGHT = 48; // Timeline header height
 const MIN_TABLE_WIDTH = 200; // Minimum width for task table
@@ -217,7 +216,6 @@ export function GanttLayout(): JSX.Element {
   const prevDateRangeRef = useRef<string | null>(null);
   const prevFitToViewTimeRef = useRef<number>(0);
   const prevFileLoadCounterRef = useRef<number>(fileLoadCounter);
-  const SCROLL_OFFSET_DAYS = 83; // Scroll past the extra padding (90 days) to show 7 days before first task
 
   // Set initial scroll position when a new file is loaded, or reset on fitToView
   useEffect(() => {
@@ -504,40 +502,10 @@ export function GanttLayout(): JSX.Element {
                           scale={scale}
                           width={timelineHeaderWidth}
                         />
-                        {selectionPixelRect && (
-                          <g pointerEvents="none">
-                            <rect
-                              x={selectionPixelRect.x}
-                              y={0}
-                              width={selectionPixelRect.width}
-                              height={HEADER_HEIGHT}
-                              fill={COLORS.chart.marquee}
-                              fillOpacity={0.1}
-                            />
-                            <line
-                              x1={selectionPixelRect.x}
-                              y1={0}
-                              x2={selectionPixelRect.x}
-                              y2={HEADER_HEIGHT}
-                              stroke={COLORS.chart.marquee}
-                              strokeWidth={1}
-                              strokeDasharray="4 2"
-                            />
-                            <line
-                              x1={
-                                selectionPixelRect.x + selectionPixelRect.width
-                              }
-                              y1={0}
-                              x2={
-                                selectionPixelRect.x + selectionPixelRect.width
-                              }
-                              y2={HEADER_HEIGHT}
-                              stroke={COLORS.chart.marquee}
-                              strokeWidth={1}
-                              strokeDasharray="4 2"
-                            />
-                          </g>
-                        )}
+                        <SelectionHighlight
+                          rect={selectionPixelRect}
+                          height={HEADER_HEIGHT}
+                        />
                       </svg>
                     )}
                     {headerContextMenu && (

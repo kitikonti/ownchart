@@ -4,7 +4,12 @@
 
 import { describe, it, expect, beforeEach } from 'vitest';
 import { useChartStore } from '../../../src/store/slices/chartSlice';
-import { FIXED_BASE_PIXELS_PER_DAY } from '../../../src/utils/timelineUtils';
+import {
+  FIXED_BASE_PIXELS_PER_DAY,
+  DATE_RANGE_PADDING_DAYS,
+  SCROLL_OFFSET_DAYS,
+  ZOOM_VISUAL_PADDING_DAYS,
+} from '../../../src/utils/timelineUtils';
 import { calculateDuration, addDays } from '../../../src/utils/dateUtils';
 import type { Task } from '../../../src/types/chart.types';
 
@@ -43,25 +48,25 @@ describe('chartSlice - zoomToDateRange', () => {
 
     const state = useChartStore.getState();
 
-    // Expected: 28 days + 4 days padding = 32 days visible
-    const paddedStart = addDays('2025-02-01', -2);
-    const paddedEnd = addDays('2025-02-28', 2);
+    // Expected: 28 days + 2 × ZOOM_VISUAL_PADDING_DAYS padding
+    const paddedStart = addDays('2025-02-01', -ZOOM_VISUAL_PADDING_DAYS);
+    const paddedEnd = addDays('2025-02-28', ZOOM_VISUAL_PADDING_DAYS);
     const visibleDuration = calculateDuration(paddedStart, paddedEnd);
     const expectedZoom = 1000 / (visibleDuration * FIXED_BASE_PIXELS_PER_DAY);
 
     expect(state.zoom).toBeCloseTo(expectedZoom, 5);
   });
 
-  it('should set dateRange with 85/90 days scroll padding', () => {
+  it('should set dateRange with scroll padding constants', () => {
     const { zoomToDateRange } = useChartStore.getState();
 
     zoomToDateRange('2025-02-01', '2025-02-28');
 
     const state = useChartStore.getState();
     expect(state.dateRange).not.toBeNull();
-    // Left: 85 days so GanttLayout's SCROLL_OFFSET_DAYS (83) lands at startDate - 2
-    expect(state.dateRange!.min).toBe(addDays('2025-02-01', -85));
-    expect(state.dateRange!.max).toBe(addDays('2025-02-28', 90));
+    // Left: SCROLL_OFFSET_DAYS + ZOOM_VISUAL_PADDING_DAYS so GanttLayout's scroll lands at startDate - ZOOM_VISUAL_PADDING_DAYS
+    expect(state.dateRange!.min).toBe(addDays('2025-02-01', -(SCROLL_OFFSET_DAYS + ZOOM_VISUAL_PADDING_DAYS)));
+    expect(state.dateRange!.max).toBe(addDays('2025-02-28', DATE_RANGE_PADDING_DAYS));
   });
 
   it('should reset pan offset to zero', () => {
@@ -100,7 +105,7 @@ describe('chartSlice - zoomToDateRange', () => {
     zoomToDateRange('2025-02-15', '2025-02-15');
 
     const state = useChartStore.getState();
-    // Should still produce a valid zoom (4 days padding: -2 to +2)
+    // Should still produce a valid zoom (2 × ZOOM_VISUAL_PADDING_DAYS padding)
     expect(state.zoom).toBeGreaterThan(0);
     expect(state.scale).not.toBeNull();
   });
