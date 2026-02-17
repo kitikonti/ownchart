@@ -2,6 +2,19 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [0.0.37](https://github.com/kitikonti/ownchart/compare/v0.0.36...v0.0.37) (2026-02-17)
+
+
+### Features
+
+* expand context menu to 4 zones — table row, header, timeline bar, empty area (Issue [#48](https://github.com/kitikonti/ownchart/issues/48)) ([839911a](https://github.com/kitikonti/ownchart/commit/839911ac9237da4f95165870ef01c9947ad49a2a))
+
+
+### Code Refactoring
+
+* DRY context menu hooks — extract shared builders, tokenize constants, test with renderHook ([6ead121](https://github.com/kitikonti/ownchart/commit/6ead1217dd584ebe83378c3738fd5047546ae4d1))
+* tokenize remaining hardcoded colors and stabilize context menu callbacks ([ac3d5c9](https://github.com/kitikonti/ownchart/commit/ac3d5c94a1a55bbe2cf7f9ec1a47073e6dd37977)), closes [#334155](https://github.com/kitikonti/ownchart/issues/334155)
+
 ### [0.0.36](https://github.com/kitikonti/ownchart/compare/v0.0.35...v0.0.36) (2026-02-16)
 
 
