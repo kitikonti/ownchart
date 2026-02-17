@@ -155,6 +155,8 @@ export function getHideableColumns(): ColumnDefinition[] {
 /**
  * Get the current pixel width for a column.
  * Reads from store columnWidths if available, falls back to density-aware defaults.
+ * Note: Primarily used for hideable columns (startDate, endDate, duration, progress).
+ * The "name" column uses minmax() and falls through to the default (100px).
  */
 export function getColumnPixelWidth(
   columnId: string,

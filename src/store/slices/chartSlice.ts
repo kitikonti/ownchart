@@ -647,29 +647,29 @@ export const useChartStore = create<ChartState & ChartActions>()(
 
       const taskState = useTaskStore.getState();
       const densityConfig = getCurrentDensityConfig();
+      const isCurrentlyHidden = get().hiddenColumns.includes(columnId);
 
       set((state) => {
-        const isCurrentlyHidden = state.hiddenColumns.includes(columnId);
         const idx = state.hiddenColumns.indexOf(columnId);
         if (idx > -1) {
           state.hiddenColumns.splice(idx, 1);
         } else {
           state.hiddenColumns.push(columnId);
         }
-
-        // Adjust SplitPane width
-        if (taskState.taskTableWidth !== null) {
-          const colWidth = getColumnPixelWidth(
-            columnId,
-            taskState.columnWidths,
-            densityConfig
-          );
-          const newWidth = isCurrentlyHidden
-            ? taskState.taskTableWidth + colWidth // showing: expand
-            : taskState.taskTableWidth - colWidth; // hiding: shrink
-          taskState.setTaskTableWidth(Math.max(200, newWidth));
-        }
       });
+
+      // Adjust SplitPane width OUTSIDE set() — consistent with setHiddenColumns
+      if (taskState.taskTableWidth !== null) {
+        const colWidth = getColumnPixelWidth(
+          columnId,
+          taskState.columnWidths,
+          densityConfig
+        );
+        const newWidth = isCurrentlyHidden
+          ? taskState.taskTableWidth + colWidth // showing: expand
+          : taskState.taskTableWidth - colWidth; // hiding: shrink
+        taskState.setTaskTableWidth(Math.max(200, newWidth));
+      }
     },
 
     setHiddenColumns: (columns: string[]): void => {

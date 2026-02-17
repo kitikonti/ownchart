@@ -159,7 +159,8 @@ export function ContextMenu({
         <div key={item.id}>
           <button
             data-index={index}
-            role="menuitem"
+            role={item.checked !== undefined ? "menuitemcheckbox" : "menuitem"}
+            aria-checked={item.checked !== undefined ? item.checked : undefined}
             tabIndex={-1}
             disabled={item.disabled}
             className="context-menu-item text-left outline-none"
