@@ -4,8 +4,10 @@
  * Future-proof: can be extended with Cut/Copy/Paste, Delete, Indent/Outdent, etc.
  */
 
-import { useEffect, useRef, useCallback } from "react";
+import { useEffect, useRef, useCallback, createElement } from "react";
 import { createPortal } from "react-dom";
+import { Check } from "@phosphor-icons/react";
+import { CONTEXT_MENU } from "../../styles/design-tokens";
 
 export interface ContextMenuItem {
   id: string;
@@ -16,6 +18,8 @@ export interface ContextMenuItem {
   disabled?: boolean;
   /** Visual separator after this item */
   separator?: boolean;
+  /** When defined, renders a checkmark area instead of icon. true = Check icon, false = empty spacer */
+  checked?: boolean;
 }
 
 export interface ContextMenuPosition {
@@ -166,8 +170,18 @@ export function ContextMenu({
               }
             }}
           >
-            {item.icon && (
-              <span className="context-menu-item-icon">{item.icon}</span>
+            {item.checked !== undefined ? (
+              <span className="context-menu-item-check">
+                {item.checked &&
+                  createElement(Check, {
+                    size: CONTEXT_MENU.iconSize,
+                    weight: CONTEXT_MENU.iconWeight,
+                  })}
+              </span>
+            ) : (
+              item.icon && (
+                <span className="context-menu-item-icon">{item.icon}</span>
+              )
             )}
             <span className="context-menu-item-label">{item.label}</span>
             {item.shortcut && (

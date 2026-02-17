@@ -724,6 +724,16 @@ select:focus-visible {
   line-height: 0;
 }
 
+.context-menu-item-check {
+  width: 20px;
+  height: 20px;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 0;
+}
+
 .context-menu-item-label {
   flex: 1 0 0;
   overflow: hidden;

@@ -41,7 +41,7 @@ import { holidayService } from "../../services/holidayService";
 import { calculateLabelPaddingDays } from "../../utils/textMeasurement";
 import { getTaskDescendants } from "../../utils/hierarchy";
 import { getCurrentDensityConfig } from "./userPreferencesSlice";
-import { TASK_COLUMNS } from "../../config/tableColumns";
+import { TASK_COLUMNS, getColumnPixelWidth } from "../../config/tableColumns";
 import { getComputedTaskColor } from "../../hooks/useComputedTaskColor";
 import { CommandType } from "../../types/command.types";
 import type { ApplyColorsToManualParams } from "../../types/command.types";
@@ -645,20 +645,69 @@ export const useChartStore = create<ChartState & ChartActions>()(
       const column = TASK_COLUMNS.find((c) => c.id === columnId);
       if (!column?.hideable) return;
 
+      const taskState = useTaskStore.getState();
+      const densityConfig = getCurrentDensityConfig();
+
       set((state) => {
+        const isCurrentlyHidden = state.hiddenColumns.includes(columnId);
         const idx = state.hiddenColumns.indexOf(columnId);
         if (idx > -1) {
           state.hiddenColumns.splice(idx, 1);
         } else {
           state.hiddenColumns.push(columnId);
         }
+
+        // Adjust SplitPane width
+        if (taskState.taskTableWidth !== null) {
+          const colWidth = getColumnPixelWidth(
+            columnId,
+            taskState.columnWidths,
+            densityConfig
+          );
+          const newWidth = isCurrentlyHidden
+            ? taskState.taskTableWidth + colWidth // showing: expand
+            : taskState.taskTableWidth - colWidth; // hiding: shrink
+          taskState.setTaskTableWidth(Math.max(200, newWidth));
+        }
       });
     },
 
     setHiddenColumns: (columns: string[]): void => {
+      const taskState = useTaskStore.getState();
+      const densityConfig = getCurrentDensityConfig();
+      const oldHidden = get().hiddenColumns;
+
       set((state) => {
         state.hiddenColumns = columns;
       });
+
+      // Adjust SplitPane width for the delta
+      if (taskState.taskTableWidth !== null) {
+        const nowShown = oldHidden.filter((id) => !columns.includes(id));
+        const nowHidden = columns.filter((id) => !oldHidden.includes(id));
+
+        let delta = 0;
+        for (const id of nowShown) {
+          delta += getColumnPixelWidth(
+            id,
+            taskState.columnWidths,
+            densityConfig
+          );
+        }
+        for (const id of nowHidden) {
+          delta -= getColumnPixelWidth(
+            id,
+            taskState.columnWidths,
+            densityConfig
+          );
+        }
+
+        if (delta !== 0) {
+          taskState.setTaskTableWidth(
+            Math.max(200, taskState.taskTableWidth + delta)
+          );
+        }
+      }
     },
 
     // Task table collapse actions

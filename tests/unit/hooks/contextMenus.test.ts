@@ -330,7 +330,7 @@ describe("Zone 1: Task Table Row Context Menu", () => {
   });
 });
 
-// ─── Zone 2: Task Table Header Context Menu ───
+// ─── Zone 2: Task Table Header Context Menu (Explorer-style) ───
 
 describe("Zone 2: Task Table Header Context Menu", () => {
   // eslint-disable-next-line @typescript-eslint/explicit-function-return-type
@@ -347,95 +347,142 @@ describe("Zone 2: Task Table Header Context Menu", () => {
     return result;
   }
 
-  it("should have 3 items in 2 groups", () => {
+  it("should have 7 items in 3 groups", () => {
     const result = openHeaderMenu("startDate");
 
-    expect(result.current.contextMenuItems).toHaveLength(3);
+    expect(result.current.contextMenuItems).toHaveLength(7);
     expect(result.current.contextMenuItems.map((i) => i.id)).toEqual([
-      "hideColumn",
+      "sizeToFit",
+      "sizeAllToFit",
+      "toggle_startDate",
+      "toggle_endDate",
+      "toggle_duration",
+      "toggle_progress",
       "showAllColumns",
-      "autoFitWidth",
     ]);
   });
 
-  it("should show column name in hide label", () => {
+  it("should show column name in size-to-fit label", () => {
     const result = openHeaderMenu("startDate");
     expect(result.current.contextMenuItems[0].label).toBe(
-      'Hide Column "Start Date"'
+      'Size "Start Date" to Fit'
     );
   });
 
-  it("should show column name for end date", () => {
-    const result = openHeaderMenu("endDate");
-    expect(result.current.contextMenuItems[0].label).toBe(
-      'Hide Column "End Date"'
-    );
-  });
-
-  it("should disable hide for non-hideable columns", () => {
+  it("should show column name for name column", () => {
     const result = openHeaderMenu("name");
-    expect(result.current.contextMenuItems[0].disabled).toBe(true);
+    expect(result.current.contextMenuItems[0].label).toBe(
+      'Size "Name" to Fit'
+    );
   });
 
-  it("should disable hide for rowNumber column", () => {
+  it("should disable size-to-fit for rowNumber", () => {
     const result = openHeaderMenu("rowNumber");
     expect(result.current.contextMenuItems[0].disabled).toBe(true);
   });
 
-  it("should disable hide for color column", () => {
+  it("should disable size-to-fit for color", () => {
     const result = openHeaderMenu("color");
     expect(result.current.contextMenuItems[0].disabled).toBe(true);
   });
 
-  it("should enable hide for hideable column", () => {
+  it("should enable size-to-fit for name column", () => {
+    const result = openHeaderMenu("name");
+    expect(result.current.contextMenuItems[0].disabled).toBe(false);
+  });
+
+  it("should enable size-to-fit for startDate column", () => {
     const result = openHeaderMenu("startDate");
     expect(result.current.contextMenuItems[0].disabled).toBe(false);
   });
 
-  it("should disable hide when last visible hideable column", () => {
+  it("should have separator after sizeAllToFit", () => {
+    const result = openHeaderMenu("startDate");
+    expect(result.current.contextMenuItems[1].separator).toBe(true);
+  });
+
+  it("should show all hideable columns as checked when none hidden", () => {
+    const result = openHeaderMenu("startDate");
+    const toggleItems = result.current.contextMenuItems.filter((i) =>
+      i.id.startsWith("toggle_")
+    );
+
+    expect(toggleItems).toHaveLength(4);
+    expect(toggleItems.every((i) => i.checked === true)).toBe(true);
+  });
+
+  it("should show hidden column as unchecked", () => {
+    useChartStore.getState().setHiddenColumns(["endDate"]);
+
+    const result = openHeaderMenu("startDate");
+    const endDateToggle = result.current.contextMenuItems.find(
+      (i) => i.id === "toggle_endDate"
+    );
+
+    expect(endDateToggle?.checked).toBe(false);
+  });
+
+  it("should allow hiding all hideable columns (Name is always visible)", () => {
     useChartStore
       .getState()
       .setHiddenColumns(["endDate", "duration", "progress"]);
 
     const result = openHeaderMenu("startDate");
-    expect(result.current.contextMenuItems[0].disabled).toBe(true);
+    const startDateToggle = result.current.contextMenuItems.find(
+      (i) => i.id === "toggle_startDate"
+    );
+
+    // Not disabled — Name column is always visible, so all hideable can be hidden
+    expect(startDateToggle?.disabled).toBeUndefined();
+  });
+
+  it("should use menuLabel for progress column", () => {
+    const result = openHeaderMenu("startDate");
+    const progressToggle = result.current.contextMenuItems.find(
+      (i) => i.id === "toggle_progress"
+    );
+
+    expect(progressToggle?.label).toBe("Progress");
+  });
+
+  it("should have separator after last toggle item", () => {
+    const result = openHeaderMenu("startDate");
+    const progressToggle = result.current.contextMenuItems.find(
+      (i) => i.id === "toggle_progress"
+    );
+
+    expect(progressToggle?.separator).toBe(true);
   });
 
   it("should disable show all when no columns hidden", () => {
     const result = openHeaderMenu("startDate");
-    expect(result.current.contextMenuItems[1].disabled).toBe(true);
+    const showAll = result.current.contextMenuItems.find(
+      (i) => i.id === "showAllColumns"
+    );
+
+    expect(showAll?.disabled).toBe(true);
   });
 
   it("should enable show all when columns are hidden", () => {
     useChartStore.getState().setHiddenColumns(["endDate"]);
 
     const result = openHeaderMenu("startDate");
-    expect(result.current.contextMenuItems[1].disabled).toBe(false);
+    const showAll = result.current.contextMenuItems.find(
+      (i) => i.id === "showAllColumns"
+    );
+
+    expect(showAll?.disabled).toBe(false);
   });
 
-  it("should have separator after showAllColumns", () => {
-    const result = openHeaderMenu("startDate");
-    expect(result.current.contextMenuItems[1].separator).toBe(true);
-  });
+  it("should produce identical menu regardless of which column is right-clicked", () => {
+    const resultA = openHeaderMenu("startDate");
+    const idsA = resultA.current.contextMenuItems.map((i) => i.id);
 
-  it("should disable auto-fit for rowNumber", () => {
-    const result = openHeaderMenu("rowNumber");
-    expect(result.current.contextMenuItems[2].disabled).toBe(true);
-  });
+    const resultB = openHeaderMenu("name");
+    const idsB = resultB.current.contextMenuItems.map((i) => i.id);
 
-  it("should disable auto-fit for color", () => {
-    const result = openHeaderMenu("color");
-    expect(result.current.contextMenuItems[2].disabled).toBe(true);
-  });
-
-  it("should enable auto-fit for name column", () => {
-    const result = openHeaderMenu("name");
-    expect(result.current.contextMenuItems[2].disabled).toBe(false);
-  });
-
-  it("should enable auto-fit for startDate column", () => {
-    const result = openHeaderMenu("startDate");
-    expect(result.current.contextMenuItems[2].disabled).toBe(false);
+    // Same item IDs (except sizeToFit label differs)
+    expect(idsA).toEqual(idsB);
   });
 });
 

@@ -1,21 +1,17 @@
 /**
  * Hook for building table header context menu items (Zone 2).
- * Column management: hide/show columns, auto-fit width.
+ * Windows Explorer-style: Size to Fit, column checkmarks, Show All.
  */
 
 import { useMemo, useState, useCallback, createElement } from "react";
-import { EyeSlash, Eye, ArrowsHorizontal } from "@phosphor-icons/react";
+import { Eye, ArrowsHorizontal } from "@phosphor-icons/react";
 import type {
   ContextMenuItem,
   ContextMenuPosition,
 } from "../components/ContextMenu/ContextMenu";
 import { useChartStore } from "../store/slices/chartSlice";
 import { useTaskStore } from "../store/slices/taskSlice";
-import {
-  TASK_COLUMNS,
-  getHideableColumns,
-  getVisibleColumns,
-} from "../config/tableColumns";
+import { TASK_COLUMNS, getHideableColumns } from "../config/tableColumns";
 import { CONTEXT_MENU } from "../styles/design-tokens";
 
 interface ContextMenuState {
@@ -37,6 +33,7 @@ export function useTableHeaderContextMenu(): UseTableHeaderContextMenuResult {
   );
   const setHiddenColumns = useChartStore((state) => state.setHiddenColumns);
   const autoFitColumn = useTaskStore((state) => state.autoFitColumn);
+  const autoFitAllColumns = useTaskStore((state) => state.autoFitAllColumns);
 
   const [contextMenu, setContextMenu] = useState<ContextMenuState | null>(null);
 
@@ -64,28 +61,49 @@ export function useTableHeaderContextMenu(): UseTableHeaderContextMenuResult {
 
     const items: ContextMenuItem[] = [];
     const hideableColumns = getHideableColumns();
-    const visibleHideable = hideableColumns.filter(
-      (c) => !hiddenColumns.includes(c.id)
-    );
 
-    // ── Group 1: Column visibility ──
-    const isHideable = column.hideable === true;
-    const isLastVisibleHideable =
-      isHideable &&
-      visibleHideable.length <= 1 &&
-      !hiddenColumns.includes(columnId);
+    // ── Group 1: Size to Fit ──
+    const canAutoFit = columnId !== "rowNumber" && columnId !== "color";
+    const displayLabel = column.menuLabel || column.label || columnId;
 
     items.push({
-      id: "hideColumn",
-      label: `Hide Column "${column.label}"`,
-      icon: createElement(EyeSlash, {
+      id: "sizeToFit",
+      label: `Size "${displayLabel}" to Fit`,
+      icon: createElement(ArrowsHorizontal, {
         size: CONTEXT_MENU.iconSize,
         weight: CONTEXT_MENU.iconWeight,
       }),
-      onClick: () => toggleColumnVisibility(columnId),
-      disabled: !isHideable || isLastVisibleHideable,
+      onClick: () => autoFitColumn(columnId),
+      disabled: !canAutoFit,
     });
 
+    items.push({
+      id: "sizeAllToFit",
+      label: "Size All Columns to Fit",
+      icon: createElement(ArrowsHorizontal, {
+        size: CONTEXT_MENU.iconSize,
+        weight: CONTEXT_MENU.iconWeight,
+      }),
+      onClick: () => autoFitAllColumns(),
+      separator: true,
+    });
+
+    // ── Group 2: Column visibility checkmarks ──
+    for (let i = 0; i < hideableColumns.length; i++) {
+      const col = hideableColumns[i];
+      const isVisible = !hiddenColumns.includes(col.id);
+      const isLast = i === hideableColumns.length - 1;
+
+      items.push({
+        id: `toggle_${col.id}`,
+        label: col.menuLabel || col.label,
+        checked: isVisible,
+        onClick: () => toggleColumnVisibility(col.id),
+        separator: isLast,
+      });
+    }
+
+    // ── Group 3: Show All ──
     items.push({
       id: "showAllColumns",
       label: "Show All Columns",
@@ -95,24 +113,6 @@ export function useTableHeaderContextMenu(): UseTableHeaderContextMenuResult {
       }),
       onClick: () => setHiddenColumns([]),
       disabled: hiddenColumns.length === 0,
-      separator: true,
-    });
-
-    // ── Group 2: Size ──
-    // Auto-fit is currently only meaningful for resizable columns (name),
-    // but we show it for all columns for future extensibility
-    const visibleColumns = getVisibleColumns(hiddenColumns);
-    const isVisible = visibleColumns.some((c) => c.id === columnId);
-
-    items.push({
-      id: "autoFitWidth",
-      label: "Auto-fit Column Width",
-      icon: createElement(ArrowsHorizontal, {
-        size: CONTEXT_MENU.iconSize,
-        weight: CONTEXT_MENU.iconWeight,
-      }),
-      onClick: () => autoFitColumn(columnId),
-      disabled: !isVisible || columnId === "rowNumber" || columnId === "color",
     });
 
     return items;
@@ -122,6 +122,7 @@ export function useTableHeaderContextMenu(): UseTableHeaderContextMenuResult {
     toggleColumnVisibility,
     setHiddenColumns,
     autoFitColumn,
+    autoFitAllColumns,
   ]);
 
   return {

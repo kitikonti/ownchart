@@ -48,6 +48,9 @@ export interface ColumnDefinition {
 
   /** Formatter function to display value */
   formatter?: (value: unknown) => string;
+
+  /** Full label for menus/dropdowns (falls back to label if not set) */
+  menuLabel?: string;
 }
 
 /**
@@ -120,6 +123,7 @@ export const TASK_COLUMNS: ColumnDefinition[] = [
     id: "progress",
     field: "progress",
     label: "%",
+    menuLabel: "Progress",
     defaultWidth: "70px",
     editable: true,
     hideable: true,
@@ -146,6 +150,39 @@ export function getVisibleColumns(hiddenColumns: string[]): ColumnDefinition[] {
  */
 export function getHideableColumns(): ColumnDefinition[] {
   return TASK_COLUMNS.filter((col) => col.hideable);
+}
+
+/**
+ * Get the current pixel width for a column.
+ * Reads from store columnWidths if available, falls back to density-aware defaults.
+ */
+export function getColumnPixelWidth(
+  columnId: string,
+  columnWidths: Record<string, number>,
+  densityConfig: DensityConfig
+): number {
+  // Use stored width if available
+  if (columnWidths[columnId] !== undefined) {
+    return columnWidths[columnId];
+  }
+  // Fall back to density defaults
+  const defaults = densityConfig.columnWidths;
+  switch (columnId) {
+    case "rowNumber":
+      return defaults.rowNumber;
+    case "color":
+      return defaults.color;
+    case "startDate":
+      return defaults.startDate;
+    case "endDate":
+      return defaults.endDate;
+    case "duration":
+      return defaults.duration;
+    case "progress":
+      return defaults.progress;
+    default:
+      return 100;
+  }
 }
 
 /**

@@ -23,7 +23,6 @@ import {
   TOOLBAR_TOKENS,
 } from "../Toolbar/ToolbarPrimitives";
 import { HolidayRegionPopover } from "./HolidayRegionPopover";
-import { ColumnsDropdown } from "./ColumnsDropdown";
 import { ZoomDropdown } from "./ZoomDropdown";
 
 import { useTaskStore } from "../../store/slices/taskSlice";
@@ -214,7 +213,6 @@ export function ViewTabContent(): JSX.Element {
           label="Table"
           labelPriority={3}
         />
-        <ColumnsDropdown labelPriority={3} />
       </ToolbarGroup>
     </>
   );
