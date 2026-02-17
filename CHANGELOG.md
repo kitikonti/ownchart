@@ -2,6 +2,24 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [0.0.38](https://github.com/kitikonti/ownchart/compare/v0.0.37...v0.0.38) (2026-02-17)
+
+
+### Features
+
+* add ungroup (dissolve summary) with Ctrl+Shift+G ([3acf50a](https://github.com/kitikonti/ownchart/commit/3acf50a6b082681f6dfdd411e79249a1af6f52f7))
+
+
+### Bug Fixes
+
+* address review findings from header context menu refactor ([2033b96](https://github.com/kitikonti/ownchart/commit/2033b96989972a39bd3ddb4149c683e7a4db4c35))
+* address review findings from ungroup feature ([0761a84](https://github.com/kitikonti/ownchart/commit/0761a8468540a66b75b825c7fe63395362be9bf6))
+
+
+### Code Refactoring
+
+* replace Columns dropdown with Explorer-style header context menu ([db8d108](https://github.com/kitikonti/ownchart/commit/db8d108f78a0008af181d753f1b2db92c771699f))
+
 ### [0.0.37](https://github.com/kitikonti/ownchart/compare/v0.0.36...v0.0.37) (2026-02-17)
 
 
