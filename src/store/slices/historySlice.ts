@@ -22,6 +22,7 @@ import type {
   HideTasksParams,
   UnhideTasksParams,
 } from "../../types/command.types";
+import type { Dependency } from "../../types/dependency.types";
 import { calculateDuration } from "../../utils/dateUtils";
 import { useTaskStore } from "./taskSlice";
 import { useDependencyStore } from "./dependencySlice";
@@ -554,6 +555,7 @@ function executeUndoCommand(command: Command): void {
       // Re-add all deleted summaries and restore children's parents
       const currentTasks = useTaskStore.getState().tasks.map((t) => ({ ...t }));
 
+      const allRestoredDeps: Dependency[] = [];
       for (const entry of params.ungroupedSummaries) {
         // Re-add the summary task
         currentTasks.push({ ...entry.summaryTask });
@@ -566,12 +568,15 @@ function executeUndoCommand(command: Command): void {
           }
         }
 
-        // Restore removed dependencies
-        if (entry.removedDependencies.length > 0) {
-          const depStore = useDependencyStore.getState();
-          const deps = [...depStore.dependencies, ...entry.removedDependencies];
-          useDependencyStore.setState({ dependencies: deps });
-        }
+        allRestoredDeps.push(...entry.removedDependencies);
+      }
+
+      // Batch-restore all removed dependencies
+      if (allRestoredDeps.length > 0) {
+        const depStore = useDependencyStore.getState();
+        useDependencyStore.setState({
+          dependencies: [...depStore.dependencies, ...allRestoredDeps],
+        });
       }
 
       // Restore previous order
@@ -941,6 +946,7 @@ function executeRedoCommand(command: Command): void {
         params.ungroupedSummaries.map((e) => e.summaryTask.id)
       );
 
+      const allDepIdsToRemove = new Set<string>();
       for (const entry of params.ungroupedSummaries) {
         // Reparent children to summary's parent
         for (const change of entry.childChanges) {
@@ -950,16 +956,19 @@ function executeRedoCommand(command: Command): void {
           }
         }
 
-        // Remove dependencies for this summary
-        if (entry.removedDependencies.length > 0) {
-          const depIds = new Set(entry.removedDependencies.map((d) => d.id));
-          const depStore = useDependencyStore.getState();
-          useDependencyStore.setState({
-            dependencies: depStore.dependencies.filter(
-              (d) => !depIds.has(d.id)
-            ),
-          });
+        for (const dep of entry.removedDependencies) {
+          allDepIdsToRemove.add(dep.id);
         }
+      }
+
+      // Batch-remove all dependencies for ungrouped summaries
+      if (allDepIdsToRemove.size > 0) {
+        const depStore = useDependencyStore.getState();
+        useDependencyStore.setState({
+          dependencies: depStore.dependencies.filter(
+            (d) => !allDepIdsToRemove.has(d.id)
+          ),
+        });
       }
 
       // Remove summaries

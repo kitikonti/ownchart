@@ -6,6 +6,7 @@
 import { create } from "zustand";
 import { immer } from "zustand/middleware/immer";
 import type { Task } from "../../types/chart.types";
+import type { Dependency } from "../../types/dependency.types";
 import {
   wouldCreateCircularHierarchy,
   getTaskLevel,
@@ -22,7 +23,7 @@ import toast from "react-hot-toast";
 import { useHistoryStore } from "./historySlice";
 import { useDependencyStore } from "./dependencySlice";
 import { useFileStore } from "./fileSlice";
-import { CommandType } from "../../types/command.types";
+import { CommandType, UngroupTasksParams } from "../../types/command.types";
 import { TASK_COLUMNS } from "../../config/tableColumns";
 import { calculateColumnWidth } from "../../utils/textMeasurement";
 import { useUserPreferencesStore } from "./userPreferencesSlice";
@@ -234,6 +235,45 @@ function calculateGroupDates(
   const duration = Math.round((endMs - startMs) / (1000 * 60 * 60 * 24)) + 1;
 
   return { startDate, endDate, duration };
+}
+
+/**
+ * Build undo data for ungroup: captures each summary's state,
+ * child parent/order changes, and dependencies to remove.
+ */
+function buildUngroupUndoData(
+  tasks: Task[],
+  sortedSummaries: Task[],
+  dependencies: Dependency[]
+): {
+  ungroupedSummaries: UngroupTasksParams["ungroupedSummaries"];
+  childIdsAll: string[];
+} {
+  const ungroupedSummaries: UngroupTasksParams["ungroupedSummaries"] = [];
+  const childIdsAll: string[] = [];
+
+  for (const summary of sortedSummaries) {
+    const children = getTaskChildren(tasks, summary.id);
+    const childChanges = children.map((child) => ({
+      taskId: child.id,
+      oldParent: child.parent,
+      oldOrder: child.order,
+    }));
+
+    const deps = dependencies.filter(
+      (d) => d.fromTaskId === summary.id || d.toTaskId === summary.id
+    );
+
+    ungroupedSummaries.push({
+      summaryTask: JSON.parse(JSON.stringify(summary)),
+      childChanges,
+      removedDependencies: JSON.parse(JSON.stringify(deps)),
+    });
+
+    childIdsAll.push(...children.map((c) => c.id));
+  }
+
+  return { ungroupedSummaries, childIdsAll };
 }
 
 /**
@@ -1999,40 +2039,13 @@ export const useTaskStore = create<TaskStore>()(
       const previousOrder = tasks.map((t) => ({ id: t.id, order: t.order }));
 
       // Build undo data for each summary
-      const ungroupedSummaries: Array<{
-        summaryTask: Task;
-        childChanges: Array<{
-          taskId: string;
-          oldParent: string | undefined;
-          oldOrder: number;
-        }>;
-        removedDependencies: import("../../types/dependency.types").Dependency[];
-      }> = [];
+      const { ungroupedSummaries, childIdsAll } = buildUngroupUndoData(
+        tasks,
+        sortedSummaries,
+        depStore.dependencies
+      );
 
       const summaryIds = new Set(sortedSummaries.map((s) => s.id));
-      const childIdsAll: string[] = [];
-
-      for (const summary of sortedSummaries) {
-        const children = getTaskChildren(tasks, summary.id);
-        const childChanges = children.map((child) => ({
-          taskId: child.id,
-          oldParent: child.parent,
-          oldOrder: child.order,
-        }));
-
-        // Capture dependencies that will be removed
-        const deps = depStore.dependencies.filter(
-          (d) => d.fromTaskId === summary.id || d.toTaskId === summary.id
-        );
-
-        ungroupedSummaries.push({
-          summaryTask: JSON.parse(JSON.stringify(summary)),
-          childChanges,
-          removedDependencies: JSON.parse(JSON.stringify(deps)),
-        });
-
-        childIdsAll.push(...children.map((c) => c.id));
-      }
 
       // Collect affected parent IDs for cascade recalculation
       const affectedParentIds = new Set<string>();
