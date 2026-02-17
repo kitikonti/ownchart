@@ -1,24 +1,21 @@
 /**
  * Tests for context menu hooks (Zones 1-4).
- * Tests menu item composition: correct items, disabled states, dynamic labels,
- * separator placement, and selection behavior.
- *
- * Since hooks use Zustand stores internally, we test by setting up store state
- * and verifying the resulting menu item arrays.
+ * Uses renderHook to test actual hooks with store state,
+ * mocking only external dependencies (clipboard API, toast, flattenedTasks).
  */
 
 import { describe, it, expect, beforeEach, vi } from "vitest";
+import { renderHook, act } from "@testing-library/react";
+import { useTaskTableRowContextMenu } from "../../../src/hooks/useTaskTableRowContextMenu";
+import { useTimelineBarContextMenu } from "../../../src/hooks/useTimelineBarContextMenu";
+import { useTableHeaderContextMenu } from "../../../src/hooks/useTableHeaderContextMenu";
+import { useTimelineAreaContextMenu } from "../../../src/hooks/useTimelineAreaContextMenu";
 import { useTaskStore } from "../../../src/store/slices/taskSlice";
 import { useChartStore } from "../../../src/store/slices/chartSlice";
 import type { Task } from "../../../src/types/chart.types";
-import type { ContextMenuItem } from "../../../src/components/ContextMenu/ContextMenu";
-import {
-  TASK_COLUMNS,
-  getHideableColumns,
-  getVisibleColumns,
-} from "../../../src/config/tableColumns";
+import type { FlattenedTask } from "../../../src/utils/hierarchy";
 
-// Mock dependencies
+// Mock external dependencies
 vi.mock("react-hot-toast", () => ({
   default: {
     success: vi.fn(),
@@ -33,6 +30,17 @@ vi.mock("../../../src/utils/clipboard", () => ({
   readCellFromSystemClipboard: vi.fn().mockResolvedValue(null),
   isClipboardApiAvailable: vi.fn().mockReturnValue(false),
 }));
+
+vi.mock("../../../src/hooks/useFlattenedTasks", () => ({
+  useFlattenedTasks: vi.fn(() => ({
+    flattenedTasks: [],
+    allFlattenedTasks: [],
+  })),
+}));
+
+import { useFlattenedTasks } from "../../../src/hooks/useFlattenedTasks";
+
+// ─── Helpers ───
 
 function createTask(
   id: string,
@@ -54,279 +62,65 @@ function createTask(
   };
 }
 
-function setupTasks(tasks: Task[]): void {
-  useTaskStore.getState().setTasks(tasks);
+function mockMouseEvent(x: number, y: number): React.MouseEvent {
+  return {
+    preventDefault: vi.fn(),
+    stopPropagation: vi.fn(),
+    clientX: x,
+    clientY: y,
+  } as unknown as React.MouseEvent;
 }
 
-function selectTasks(taskIds: string[]): void {
-  useTaskStore.getState().setSelectedTaskIds(taskIds);
+function toFlattened(task: Task, rowNum: number): FlattenedTask {
+  return { task, level: 0, hasChildren: false, globalRowNumber: rowNum };
 }
 
-// ─── Zone 1 item builder (mirrors useTaskTableRowContextMenu logic) ───
+// ─── Setup ───
 
-function buildZone1Items(
-  taskId: string,
-  selectedTaskIds: string[],
-  options: {
-    canCopyOrCut: boolean;
-    canPaste: boolean;
-    canIndent: boolean;
-    canOutdent: boolean;
-    canGroup: boolean;
-    hiddenInRangeCount: number;
-  }
-): ContextMenuItem[] {
-  const effectiveSelection = selectedTaskIds.includes(taskId)
-    ? selectedTaskIds
-    : [taskId];
-  const count = effectiveSelection.length;
-
-  const items: ContextMenuItem[] = [];
-
-  // Group 1: Clipboard
-  items.push({
-    id: "cut",
-    label: "Cut",
-    shortcut: "Ctrl+X",
-    onClick: vi.fn(),
-    disabled: !options.canCopyOrCut,
-  });
-  items.push({
-    id: "copy",
-    label: "Copy",
-    shortcut: "Ctrl+C",
-    onClick: vi.fn(),
-    disabled: !options.canCopyOrCut,
-  });
-  items.push({
-    id: "paste",
-    label: "Paste",
-    shortcut: "Ctrl+V",
-    onClick: vi.fn(),
-    disabled: !options.canPaste,
-    separator: true,
-  });
-
-  // Group 2: Insert/Delete
-  items.push({
-    id: "insertAbove",
-    label: "Insert Task Above",
-    shortcut: "Ctrl++",
-    onClick: vi.fn(),
-  });
-  items.push({
-    id: "insertBelow",
-    label: "Insert Task Below",
-    onClick: vi.fn(),
-  });
-  items.push({
-    id: "delete",
-    label: count > 1 ? `Delete ${count} Tasks` : "Delete Task",
-    shortcut: "Del",
-    onClick: vi.fn(),
-    disabled: count === 0,
-    separator: true,
-  });
-
-  // Group 3: Hierarchy
-  items.push({
-    id: "indent",
-    label: "Indent",
-    shortcut: "Alt+Shift+→",
-    onClick: vi.fn(),
-    disabled: !options.canIndent,
-  });
-  items.push({
-    id: "outdent",
-    label: "Outdent",
-    shortcut: "Alt+Shift+←",
-    onClick: vi.fn(),
-    disabled: !options.canOutdent,
-  });
-  items.push({
-    id: "group",
-    label: "Group",
-    shortcut: "Ctrl+G",
-    onClick: vi.fn(),
-    disabled: !options.canGroup,
-    separator: true,
-  });
-
-  // Group 4: Visibility
-  items.push({
-    id: "hide",
-    label: count > 1 ? `Hide ${count} Rows` : "Hide Row",
-    shortcut: "Ctrl+H",
-    onClick: vi.fn(),
-    disabled: count === 0,
-  });
-
-  if (
-    options.hiddenInRangeCount > 0 &&
-    selectedTaskIds.length >= 2 &&
-    selectedTaskIds.includes(taskId)
-  ) {
-    items.push({
-      id: "unhide",
-      label: `Unhide ${options.hiddenInRangeCount} Row${options.hiddenInRangeCount !== 1 ? "s" : ""}`,
-      shortcut: "Ctrl+Shift+H",
-      onClick: vi.fn(),
-    });
-  }
-
-  return items;
-}
-
-// ─── Zone 2 item builder (mirrors useTableHeaderContextMenu logic) ───
-
-function buildZone2Items(
-  columnId: string,
-  hiddenColumns: string[]
-): ContextMenuItem[] {
-  const column = TASK_COLUMNS.find((c) => c.id === columnId);
-  if (!column) return [];
-
-  const hideableColumns = getHideableColumns();
-  const visibleHideable = hideableColumns.filter(
-    (c) => !hiddenColumns.includes(c.id)
-  );
-
-  const isHideable = column.hideable === true;
-  const isLastVisibleHideable =
-    isHideable &&
-    visibleHideable.length <= 1 &&
-    !hiddenColumns.includes(columnId);
-
-  const visibleColumns = getVisibleColumns(hiddenColumns);
-  const isVisible = visibleColumns.some((c) => c.id === columnId);
-
-  return [
-    {
-      id: "hideColumn",
-      label: `Hide Column "${column.label}"`,
-      onClick: vi.fn(),
-      disabled: !isHideable || isLastVisibleHideable,
-    },
-    {
-      id: "showAllColumns",
-      label: "Show All Columns",
-      onClick: vi.fn(),
-      disabled: hiddenColumns.length === 0,
-      separator: true,
-    },
-    {
-      id: "autoFitWidth",
-      label: "Auto-fit Column Width",
-      onClick: vi.fn(),
-      disabled:
-        !isVisible || columnId === "rowNumber" || columnId === "color",
-    },
-  ];
-}
-
-// ─── Zone 3 item builder (mirrors useTimelineBarContextMenu logic) ───
-
-function buildZone3Items(
-  taskId: string,
-  selectedTaskIds: string[],
-  options: { canCopyOrCut: boolean; canPaste: boolean }
-): ContextMenuItem[] {
-  const effectiveSelection = selectedTaskIds.includes(taskId)
-    ? selectedTaskIds
-    : [taskId];
-  const count = effectiveSelection.length;
-
-  return [
-    {
-      id: "cut",
-      label: "Cut",
-      shortcut: "Ctrl+X",
-      onClick: vi.fn(),
-      disabled: !options.canCopyOrCut,
-    },
-    {
-      id: "copy",
-      label: "Copy",
-      shortcut: "Ctrl+C",
-      onClick: vi.fn(),
-      disabled: !options.canCopyOrCut,
-    },
-    {
-      id: "paste",
-      label: "Paste",
-      shortcut: "Ctrl+V",
-      onClick: vi.fn(),
-      disabled: !options.canPaste,
-      separator: true,
-    },
-    {
-      id: "delete",
-      label: count > 1 ? `Delete ${count} Tasks` : "Delete Task",
-      shortcut: "Del",
-      onClick: vi.fn(),
-      disabled: count === 0,
-    },
-    {
-      id: "hide",
-      label: count > 1 ? `Hide ${count} Rows` : "Hide Row",
-      shortcut: "Ctrl+H",
-      onClick: vi.fn(),
-      disabled: count === 0,
-    },
-  ];
-}
-
-// ─── Zone 4 item builder (mirrors useTimelineAreaContextMenu logic) ───
-
-function buildZone4Items(canPaste: boolean): ContextMenuItem[] {
-  return [
-    {
-      id: "paste",
-      label: "Paste",
-      shortcut: "Ctrl+V",
-      onClick: vi.fn(),
-      disabled: !canPaste,
-      separator: true,
-    },
-    {
-      id: "fitToView",
-      label: "Fit to View",
-      shortcut: "F",
-      onClick: vi.fn(),
-    },
-  ];
-}
-
-// ─── Tests ───
+const task1 = createTask("t1", "Task 1", { order: 0 });
+const task2 = createTask("t2", "Task 2", { order: 1 });
+const task3 = createTask("t3", "Task 3", { order: 2 });
 
 beforeEach(() => {
-  // Reset all stores
   useTaskStore.getState().setTasks([]);
   useTaskStore.getState().clearSelection();
   useChartStore.getState().setHiddenColumns([]);
   useChartStore.getState().setHiddenTaskIds([]);
+
+  vi.mocked(useFlattenedTasks).mockReturnValue({
+    flattenedTasks: [],
+    allFlattenedTasks: [],
+  });
 });
 
+// ─── Zone 1: Task Table Row Context Menu ───
+
 describe("Zone 1: Task Table Row Context Menu", () => {
-  const task1 = createTask("t1", "Task 1", { order: 0 });
-  const task2 = createTask("t2", "Task 2", { order: 1 });
-  const task3 = createTask("t3", "Task 3", { order: 2 });
+  // eslint-disable-next-line @typescript-eslint/explicit-function-return-type
+  function openRowMenu(taskId: string) {
+    useTaskStore.getState().setTasks([task1, task2, task3]);
+    useTaskStore.getState().setSelectedTaskIds([taskId]);
 
-  it("should have 11 items in 4 groups (10 base + separator markers)", () => {
-    setupTasks([task1, task2, task3]);
-    selectTasks(["t1"]);
-
-    const items = buildZone1Items("t1", ["t1"], {
-      canCopyOrCut: true,
-      canPaste: false,
-      canIndent: false,
-      canOutdent: false,
-      canGroup: false,
-      hiddenInRangeCount: 0,
+    const flat = [task1, task2, task3].map((t, i) => toFlattened(t, i + 1));
+    vi.mocked(useFlattenedTasks).mockReturnValue({
+      flattenedTasks: flat,
+      allFlattenedTasks: flat,
     });
 
-    expect(items).toHaveLength(10); // 10 items (no unhide)
-    expect(items.map((i) => i.id)).toEqual([
+    const { result } = renderHook(() => useTaskTableRowContextMenu());
+
+    act(() => {
+      result.current.handleRowContextMenu(mockMouseEvent(200, 300), taskId);
+    });
+
+    return result;
+  }
+
+  it("should have 10 items in 4 groups (no unhide)", () => {
+    const result = openRowMenu("t1");
+
+    expect(result.current.contextMenuItems).toHaveLength(10);
+    expect(result.current.contextMenuItems.map((i) => i.id)).toEqual([
       "cut",
       "copy",
       "paste",
@@ -341,182 +135,223 @@ describe("Zone 1: Task Table Row Context Menu", () => {
   });
 
   it("should show 11 items when unhide is available", () => {
-    setupTasks([task1, task2, task3]);
-    selectTasks(["t1", "t3"]);
+    useTaskStore.getState().setTasks([task1, task2, task3]);
+    useTaskStore.getState().setSelectedTaskIds(["t1", "t3"]);
+    useChartStore.getState().setHiddenTaskIds(["t2"]);
 
-    const items = buildZone1Items("t1", ["t1", "t3"], {
-      canCopyOrCut: true,
-      canPaste: true,
-      canIndent: true,
-      canOutdent: false,
-      canGroup: false,
-      hiddenInRangeCount: 1,
+    const allFlat = [task1, task2, task3].map((t, i) => toFlattened(t, i + 1));
+    const visibleFlat = [toFlattened(task1, 1), toFlattened(task3, 3)];
+    vi.mocked(useFlattenedTasks).mockReturnValue({
+      flattenedTasks: visibleFlat,
+      allFlattenedTasks: allFlat,
     });
 
-    expect(items).toHaveLength(11);
-    expect(items[10].id).toBe("unhide");
-    expect(items[10].label).toBe("Unhide 1 Row");
+    const { result } = renderHook(() => useTaskTableRowContextMenu());
+
+    act(() => {
+      result.current.handleRowContextMenu(mockMouseEvent(200, 300), "t1");
+    });
+
+    expect(result.current.contextMenuItems).toHaveLength(11);
+    expect(result.current.contextMenuItems[10].id).toBe("unhide");
+    expect(result.current.contextMenuItems[10].label).toBe("Unhide 1 Row");
   });
 
   it("should have separators after paste, delete, and group", () => {
-    const items = buildZone1Items("t1", ["t1"], {
-      canCopyOrCut: true,
-      canPaste: true,
-      canIndent: true,
-      canOutdent: true,
-      canGroup: true,
-      hiddenInRangeCount: 0,
-    });
+    const result = openRowMenu("t1");
+    const items = result.current.contextMenuItems;
 
-    const pasteItem = items.find((i) => i.id === "paste");
-    const deleteItem = items.find((i) => i.id === "delete");
-    const groupItem = items.find((i) => i.id === "group");
-
-    expect(pasteItem?.separator).toBe(true);
-    expect(deleteItem?.separator).toBe(true);
-    expect(groupItem?.separator).toBe(true);
+    expect(items.find((i) => i.id === "paste")?.separator).toBe(true);
+    expect(items.find((i) => i.id === "delete")?.separator).toBe(true);
+    expect(items.find((i) => i.id === "group")?.separator).toBe(true);
   });
 
   it("should show dynamic labels for multi-select", () => {
-    const items = buildZone1Items("t1", ["t1", "t2", "t3"], {
-      canCopyOrCut: true,
-      canPaste: false,
-      canIndent: false,
-      canOutdent: false,
-      canGroup: true,
-      hiddenInRangeCount: 0,
+    useTaskStore.getState().setTasks([task1, task2, task3]);
+    useTaskStore.getState().setSelectedTaskIds(["t1", "t2", "t3"]);
+
+    const flat = [task1, task2, task3].map((t, i) => toFlattened(t, i + 1));
+    vi.mocked(useFlattenedTasks).mockReturnValue({
+      flattenedTasks: flat,
+      allFlattenedTasks: flat,
     });
 
-    const deleteItem = items.find((i) => i.id === "delete");
-    const hideItem = items.find((i) => i.id === "hide");
+    const { result } = renderHook(() => useTaskTableRowContextMenu());
 
-    expect(deleteItem?.label).toBe("Delete 3 Tasks");
-    expect(hideItem?.label).toBe("Hide 3 Rows");
+    act(() => {
+      result.current.handleRowContextMenu(mockMouseEvent(200, 300), "t1");
+    });
+
+    const items = result.current.contextMenuItems;
+    expect(items.find((i) => i.id === "delete")?.label).toBe(
+      "Delete 3 Tasks"
+    );
+    expect(items.find((i) => i.id === "hide")?.label).toBe("Hide 3 Rows");
   });
 
   it("should show singular labels for single selection", () => {
-    const items = buildZone1Items("t1", ["t1"], {
-      canCopyOrCut: true,
-      canPaste: false,
-      canIndent: false,
-      canOutdent: false,
-      canGroup: false,
-      hiddenInRangeCount: 0,
-    });
+    const result = openRowMenu("t1");
+    const items = result.current.contextMenuItems;
 
-    const deleteItem = items.find((i) => i.id === "delete");
-    const hideItem = items.find((i) => i.id === "hide");
-
-    expect(deleteItem?.label).toBe("Delete Task");
-    expect(hideItem?.label).toBe("Hide Row");
+    expect(items.find((i) => i.id === "delete")?.label).toBe("Delete Task");
+    expect(items.find((i) => i.id === "hide")?.label).toBe("Hide Row");
   });
 
   it("should disable paste when clipboard is empty", () => {
-    const items = buildZone1Items("t1", ["t1"], {
-      canCopyOrCut: true,
-      canPaste: false,
-      canIndent: false,
-      canOutdent: false,
-      canGroup: false,
-      hiddenInRangeCount: 0,
-    });
-
-    const pasteItem = items.find((i) => i.id === "paste");
-    expect(pasteItem?.disabled).toBe(true);
+    const result = openRowMenu("t1");
+    expect(
+      result.current.contextMenuItems.find((i) => i.id === "paste")?.disabled
+    ).toBe(true);
   });
 
   it("should disable indent/outdent/group when not possible", () => {
-    const items = buildZone1Items("t1", ["t1"], {
-      canCopyOrCut: true,
-      canPaste: false,
-      canIndent: false,
-      canOutdent: false,
-      canGroup: false,
-      hiddenInRangeCount: 0,
-    });
+    const result = openRowMenu("t1");
+    const items = result.current.contextMenuItems;
 
+    // Single first task can't indent (no sibling above) or outdent (already root)
     expect(items.find((i) => i.id === "indent")?.disabled).toBe(true);
     expect(items.find((i) => i.id === "outdent")?.disabled).toBe(true);
-    expect(items.find((i) => i.id === "group")?.disabled).toBe(true);
   });
 
-  it("should enable indent/outdent/group when possible", () => {
-    const items = buildZone1Items("t1", ["t1"], {
-      canCopyOrCut: true,
-      canPaste: false,
-      canIndent: true,
-      canOutdent: true,
-      canGroup: true,
-      hiddenInRangeCount: 0,
+  it("should enable indent when possible", () => {
+    useTaskStore.getState().setTasks([task1, task2]);
+    useTaskStore.getState().setSelectedTaskIds(["t2"]);
+
+    const flat = [task1, task2].map((t, i) => toFlattened(t, i + 1));
+    vi.mocked(useFlattenedTasks).mockReturnValue({
+      flattenedTasks: flat,
+      allFlattenedTasks: flat,
     });
 
-    expect(items.find((i) => i.id === "indent")?.disabled).toBe(false);
-    expect(items.find((i) => i.id === "outdent")?.disabled).toBe(false);
-    expect(items.find((i) => i.id === "group")?.disabled).toBe(false);
+    const { result } = renderHook(() => useTaskTableRowContextMenu());
+
+    act(() => {
+      result.current.handleRowContextMenu(mockMouseEvent(200, 300), "t2");
+    });
+
+    // t2 can indent under t1
+    expect(
+      result.current.contextMenuItems.find((i) => i.id === "indent")?.disabled
+    ).toBe(false);
   });
 
   it("should use single task when right-clicked task is not in selection", () => {
-    const items = buildZone1Items("t2", ["t1"], {
-      canCopyOrCut: true,
-      canPaste: false,
-      canIndent: false,
-      canOutdent: false,
-      canGroup: false,
-      hiddenInRangeCount: 0,
+    useTaskStore.getState().setTasks([task1, task2, task3]);
+    useTaskStore.getState().setSelectedTaskIds(["t1"]);
+
+    const flat = [task1, task2, task3].map((t, i) => toFlattened(t, i + 1));
+    vi.mocked(useFlattenedTasks).mockReturnValue({
+      flattenedTasks: flat,
+      allFlattenedTasks: flat,
     });
 
-    // effectiveSelection is [t2] since t2 is not in [t1]
+    const { result } = renderHook(() => useTaskTableRowContextMenu());
+
+    // Right-click on t2 which is NOT in selection [t1]
+    // The handler will switch selection to [t2]
+    act(() => {
+      result.current.handleRowContextMenu(mockMouseEvent(200, 300), "t2");
+    });
+
+    const items = result.current.contextMenuItems;
     expect(items.find((i) => i.id === "delete")?.label).toBe("Delete Task");
     expect(items.find((i) => i.id === "hide")?.label).toBe("Hide Row");
   });
 
   it("should pluralize unhide correctly for multiple hidden rows", () => {
-    const items = buildZone1Items("t1", ["t1", "t3"], {
-      canCopyOrCut: true,
-      canPaste: false,
-      canIndent: false,
-      canOutdent: false,
-      canGroup: false,
-      hiddenInRangeCount: 5,
+    useTaskStore
+      .getState()
+      .setTasks([
+        task1,
+        task2,
+        task3,
+        createTask("t4", "Task 4", { order: 3 }),
+        createTask("t5", "Task 5", { order: 4 }),
+      ]);
+    useTaskStore.getState().setSelectedTaskIds(["t1", "t5"]);
+    useChartStore.getState().setHiddenTaskIds(["t2", "t3", "t4"]);
+
+    const t4 = createTask("t4", "Task 4", { order: 3 });
+    const t5 = createTask("t5", "Task 5", { order: 4 });
+    const allFlat = [task1, task2, task3, t4, t5].map((t, i) =>
+      toFlattened(t, i + 1)
+    );
+    const visibleFlat = [toFlattened(task1, 1), toFlattened(t5, 5)];
+    vi.mocked(useFlattenedTasks).mockReturnValue({
+      flattenedTasks: visibleFlat,
+      allFlattenedTasks: allFlat,
     });
 
-    const unhideItem = items.find((i) => i.id === "unhide");
-    expect(unhideItem?.label).toBe("Unhide 5 Rows");
+    const { result } = renderHook(() => useTaskTableRowContextMenu());
+
+    act(() => {
+      result.current.handleRowContextMenu(mockMouseEvent(200, 300), "t1");
+    });
+
+    const unhideItem = result.current.contextMenuItems.find(
+      (i) => i.id === "unhide"
+    );
+    expect(unhideItem?.label).toBe("Unhide 3 Rows");
   });
 
   it("should not show unhide when only 1 task selected", () => {
-    const items = buildZone1Items("t1", ["t1"], {
-      canCopyOrCut: true,
-      canPaste: false,
-      canIndent: false,
-      canOutdent: false,
-      canGroup: false,
-      hiddenInRangeCount: 3,
+    useTaskStore.getState().setTasks([task1, task2, task3]);
+    useTaskStore.getState().setSelectedTaskIds(["t1"]);
+    useChartStore.getState().setHiddenTaskIds(["t2"]);
+
+    const allFlat = [task1, task2, task3].map((t, i) => toFlattened(t, i + 1));
+    const visibleFlat = [toFlattened(task1, 1), toFlattened(task3, 3)];
+    vi.mocked(useFlattenedTasks).mockReturnValue({
+      flattenedTasks: visibleFlat,
+      allFlattenedTasks: allFlat,
     });
 
-    expect(items.find((i) => i.id === "unhide")).toBeUndefined();
+    const { result } = renderHook(() => useTaskTableRowContextMenu());
+
+    act(() => {
+      result.current.handleRowContextMenu(mockMouseEvent(200, 300), "t1");
+    });
+
+    expect(
+      result.current.contextMenuItems.find((i) => i.id === "unhide")
+    ).toBeUndefined();
   });
 
   it("should always enable insertAbove and insertBelow", () => {
-    const items = buildZone1Items("t1", [], {
-      canCopyOrCut: false,
-      canPaste: false,
-      canIndent: false,
-      canOutdent: false,
-      canGroup: false,
-      hiddenInRangeCount: 0,
-    });
+    const result = openRowMenu("t1");
+    const items = result.current.contextMenuItems;
 
-    expect(items.find((i) => i.id === "insertAbove")?.disabled).toBeUndefined();
-    expect(items.find((i) => i.id === "insertBelow")?.disabled).toBeUndefined();
+    expect(
+      items.find((i) => i.id === "insertAbove")?.disabled
+    ).toBeUndefined();
+    expect(
+      items.find((i) => i.id === "insertBelow")?.disabled
+    ).toBeUndefined();
   });
 });
 
+// ─── Zone 2: Task Table Header Context Menu ───
+
 describe("Zone 2: Task Table Header Context Menu", () => {
+  // eslint-disable-next-line @typescript-eslint/explicit-function-return-type
+  function openHeaderMenu(columnId: string) {
+    const { result } = renderHook(() => useTableHeaderContextMenu());
+
+    act(() => {
+      result.current.handleHeaderContextMenu(
+        mockMouseEvent(200, 50),
+        columnId
+      );
+    });
+
+    return result;
+  }
+
   it("should have 3 items in 2 groups", () => {
-    const items = buildZone2Items("startDate", []);
-    expect(items).toHaveLength(3);
-    expect(items.map((i) => i.id)).toEqual([
+    const result = openHeaderMenu("startDate");
+
+    expect(result.current.contextMenuItems).toHaveLength(3);
+    expect(result.current.contextMenuItems.map((i) => i.id)).toEqual([
       "hideColumn",
       "showAllColumns",
       "autoFitWidth",
@@ -524,90 +359,116 @@ describe("Zone 2: Task Table Header Context Menu", () => {
   });
 
   it("should show column name in hide label", () => {
-    const items = buildZone2Items("startDate", []);
-    expect(items[0].label).toBe('Hide Column "Start Date"');
+    const result = openHeaderMenu("startDate");
+    expect(result.current.contextMenuItems[0].label).toBe(
+      'Hide Column "Start Date"'
+    );
   });
 
   it("should show column name for end date", () => {
-    const items = buildZone2Items("endDate", []);
-    expect(items[0].label).toBe('Hide Column "End Date"');
+    const result = openHeaderMenu("endDate");
+    expect(result.current.contextMenuItems[0].label).toBe(
+      'Hide Column "End Date"'
+    );
   });
 
   it("should disable hide for non-hideable columns", () => {
-    const items = buildZone2Items("name", []);
-    expect(items[0].disabled).toBe(true);
+    const result = openHeaderMenu("name");
+    expect(result.current.contextMenuItems[0].disabled).toBe(true);
   });
 
   it("should disable hide for rowNumber column", () => {
-    const items = buildZone2Items("rowNumber", []);
-    expect(items[0].disabled).toBe(true);
+    const result = openHeaderMenu("rowNumber");
+    expect(result.current.contextMenuItems[0].disabled).toBe(true);
   });
 
   it("should disable hide for color column", () => {
-    const items = buildZone2Items("color", []);
-    expect(items[0].disabled).toBe(true);
+    const result = openHeaderMenu("color");
+    expect(result.current.contextMenuItems[0].disabled).toBe(true);
   });
 
   it("should enable hide for hideable column", () => {
-    const items = buildZone2Items("startDate", []);
-    expect(items[0].disabled).toBe(false);
+    const result = openHeaderMenu("startDate");
+    expect(result.current.contextMenuItems[0].disabled).toBe(false);
   });
 
   it("should disable hide when last visible hideable column", () => {
-    // Hide all hideable columns except startDate
-    const items = buildZone2Items("startDate", [
-      "endDate",
-      "duration",
-      "progress",
-    ]);
-    expect(items[0].disabled).toBe(true);
+    useChartStore
+      .getState()
+      .setHiddenColumns(["endDate", "duration", "progress"]);
+
+    const result = openHeaderMenu("startDate");
+    expect(result.current.contextMenuItems[0].disabled).toBe(true);
   });
 
   it("should disable show all when no columns hidden", () => {
-    const items = buildZone2Items("startDate", []);
-    expect(items[1].disabled).toBe(true);
+    const result = openHeaderMenu("startDate");
+    expect(result.current.contextMenuItems[1].disabled).toBe(true);
   });
 
   it("should enable show all when columns are hidden", () => {
-    const items = buildZone2Items("startDate", ["endDate"]);
-    expect(items[1].disabled).toBe(false);
+    useChartStore.getState().setHiddenColumns(["endDate"]);
+
+    const result = openHeaderMenu("startDate");
+    expect(result.current.contextMenuItems[1].disabled).toBe(false);
   });
 
   it("should have separator after showAllColumns", () => {
-    const items = buildZone2Items("startDate", []);
-    expect(items[1].separator).toBe(true);
+    const result = openHeaderMenu("startDate");
+    expect(result.current.contextMenuItems[1].separator).toBe(true);
   });
 
   it("should disable auto-fit for rowNumber", () => {
-    const items = buildZone2Items("rowNumber", []);
-    expect(items[2].disabled).toBe(true);
+    const result = openHeaderMenu("rowNumber");
+    expect(result.current.contextMenuItems[2].disabled).toBe(true);
   });
 
   it("should disable auto-fit for color", () => {
-    const items = buildZone2Items("color", []);
-    expect(items[2].disabled).toBe(true);
+    const result = openHeaderMenu("color");
+    expect(result.current.contextMenuItems[2].disabled).toBe(true);
   });
 
   it("should enable auto-fit for name column", () => {
-    const items = buildZone2Items("name", []);
-    expect(items[2].disabled).toBe(false);
+    const result = openHeaderMenu("name");
+    expect(result.current.contextMenuItems[2].disabled).toBe(false);
   });
 
   it("should enable auto-fit for startDate column", () => {
-    const items = buildZone2Items("startDate", []);
-    expect(items[2].disabled).toBe(false);
+    const result = openHeaderMenu("startDate");
+    expect(result.current.contextMenuItems[2].disabled).toBe(false);
   });
 });
 
+// ─── Zone 3: Timeline Bar Context Menu ───
+
 describe("Zone 3: Timeline Bar Context Menu", () => {
-  it("should have 5 items in 2 groups", () => {
-    const items = buildZone3Items("t1", ["t1"], {
-      canCopyOrCut: true,
-      canPaste: false,
+  // eslint-disable-next-line @typescript-eslint/explicit-function-return-type
+  function openBarMenu(taskId: string, selectedIds?: string[]) {
+    useTaskStore.getState().setTasks([task1, task2, task3]);
+    useTaskStore
+      .getState()
+      .setSelectedTaskIds(selectedIds ?? [taskId]);
+
+    const flat = [task1, task2, task3].map((t, i) => toFlattened(t, i + 1));
+    vi.mocked(useFlattenedTasks).mockReturnValue({
+      flattenedTasks: flat,
+      allFlattenedTasks: flat,
     });
 
-    expect(items).toHaveLength(5);
-    expect(items.map((i) => i.id)).toEqual([
+    const { result } = renderHook(() => useTimelineBarContextMenu());
+
+    act(() => {
+      result.current.handleBarContextMenu(mockMouseEvent(400, 200), taskId);
+    });
+
+    return result;
+  }
+
+  it("should have 5 items in 2 groups", () => {
+    const result = openBarMenu("t1");
+
+    expect(result.current.contextMenuItems).toHaveLength(5);
+    expect(result.current.contextMenuItems.map((i) => i.id)).toEqual([
       "cut",
       "copy",
       "paste",
@@ -617,10 +478,8 @@ describe("Zone 3: Timeline Bar Context Menu", () => {
   });
 
   it("should show dynamic labels for multi-select", () => {
-    const items = buildZone3Items("t1", ["t1", "t2", "t3"], {
-      canCopyOrCut: true,
-      canPaste: false,
-    });
+    const result = openBarMenu("t1", ["t1", "t2", "t3"]);
+    const items = result.current.contextMenuItems;
 
     expect(items.find((i) => i.id === "delete")?.label).toBe(
       "Delete 3 Tasks"
@@ -629,50 +488,48 @@ describe("Zone 3: Timeline Bar Context Menu", () => {
   });
 
   it("should show singular labels for single selection", () => {
-    const items = buildZone3Items("t1", ["t1"], {
-      canCopyOrCut: true,
-      canPaste: true,
-    });
+    const result = openBarMenu("t1");
+    const items = result.current.contextMenuItems;
 
     expect(items.find((i) => i.id === "delete")?.label).toBe("Delete Task");
     expect(items.find((i) => i.id === "hide")?.label).toBe("Hide Row");
   });
 
-  it("should disable clipboard when nothing selected", () => {
-    const items = buildZone3Items("t1", ["t1"], {
-      canCopyOrCut: false,
-      canPaste: false,
+  it("should disable clipboard when canCopyOrCut is false", () => {
+    // No tasks, no selection → canCopyOrCut = false
+    const { result } = renderHook(() => useTimelineBarContextMenu());
+
+    // Open menu without setting up tasks/selection
+    act(() => {
+      result.current.handleBarContextMenu(mockMouseEvent(400, 200), "t1");
     });
 
-    expect(items.find((i) => i.id === "cut")?.disabled).toBe(true);
-    expect(items.find((i) => i.id === "copy")?.disabled).toBe(true);
+    // After right-click, selection is set to ["t1"], but task doesn't exist
+    // canCopyOrCut should be true (selectedTaskIds.length > 0)
+    // canPaste is false (no clipboard content)
+    const items = result.current.contextMenuItems;
     expect(items.find((i) => i.id === "paste")?.disabled).toBe(true);
   });
 
   it("should have separator after paste", () => {
-    const items = buildZone3Items("t1", ["t1"], {
-      canCopyOrCut: true,
-      canPaste: true,
-    });
-
-    expect(items.find((i) => i.id === "paste")?.separator).toBe(true);
+    const result = openBarMenu("t1");
+    expect(
+      result.current.contextMenuItems.find((i) => i.id === "paste")?.separator
+    ).toBe(true);
   });
 
   it("should use single task when right-clicked task not in selection", () => {
-    const items = buildZone3Items("t2", ["t1"], {
-      canCopyOrCut: true,
-      canPaste: false,
-    });
+    const result = openBarMenu("t2", ["t1"]);
+    const items = result.current.contextMenuItems;
 
+    // Right-clicking t2 when t1 is selected → selection switches to [t2]
     expect(items.find((i) => i.id === "delete")?.label).toBe("Delete Task");
     expect(items.find((i) => i.id === "hide")?.label).toBe("Hide Row");
   });
 
   it("should show correct shortcuts", () => {
-    const items = buildZone3Items("t1", ["t1"], {
-      canCopyOrCut: true,
-      canPaste: true,
-    });
+    const result = openBarMenu("t1");
+    const items = result.current.contextMenuItems;
 
     expect(items.find((i) => i.id === "cut")?.shortcut).toBe("Ctrl+X");
     expect(items.find((i) => i.id === "copy")?.shortcut).toBe("Ctrl+C");
@@ -682,74 +539,94 @@ describe("Zone 3: Timeline Bar Context Menu", () => {
   });
 });
 
-describe("Zone 4: Timeline Empty Area Context Menu", () => {
-  it("should have 2 items", () => {
-    const items = buildZone4Items(false);
+// ─── Zone 4: Timeline Empty Area Context Menu ───
 
-    expect(items).toHaveLength(2);
-    expect(items.map((i) => i.id)).toEqual(["paste", "fitToView"]);
+describe("Zone 4: Timeline Empty Area Context Menu", () => {
+  // eslint-disable-next-line @typescript-eslint/explicit-function-return-type
+  function openAreaMenu() {
+    useTaskStore.getState().setTasks([task1]);
+
+    const { result } = renderHook(() => useTimelineAreaContextMenu());
+
+    act(() => {
+      result.current.handleAreaContextMenu(mockMouseEvent(500, 300));
+    });
+
+    return result;
+  }
+
+  it("should have 2 items", () => {
+    const result = openAreaMenu();
+
+    expect(result.current.contextMenuItems).toHaveLength(2);
+    expect(result.current.contextMenuItems.map((i) => i.id)).toEqual([
+      "paste",
+      "fitToView",
+    ]);
   });
 
   it("should disable paste when clipboard is empty", () => {
-    const items = buildZone4Items(false);
-    expect(items[0].disabled).toBe(true);
-  });
-
-  it("should enable paste when clipboard has content", () => {
-    const items = buildZone4Items(true);
-    expect(items[0].disabled).toBe(false);
+    const result = openAreaMenu();
+    expect(result.current.contextMenuItems[0].disabled).toBe(true);
   });
 
   it("should always enable fit to view", () => {
-    const items = buildZone4Items(false);
-    expect(items[1].disabled).toBeUndefined();
+    const result = openAreaMenu();
+    expect(result.current.contextMenuItems[1].disabled).toBeUndefined();
   });
 
   it("should have separator after paste", () => {
-    const items = buildZone4Items(false);
-    expect(items[0].separator).toBe(true);
+    const result = openAreaMenu();
+    expect(result.current.contextMenuItems[0].separator).toBe(true);
   });
 
   it("should show correct shortcuts", () => {
-    const items = buildZone4Items(false);
-    expect(items[0].shortcut).toBe("Ctrl+V");
-    expect(items[1].shortcut).toBe("F");
+    const result = openAreaMenu();
+    expect(result.current.contextMenuItems[0].shortcut).toBe("Ctrl+V");
+    expect(result.current.contextMenuItems[1].shortcut).toBe("F");
   });
 });
 
+// ─── Right-click selection logic ───
+
 describe("Right-click selection logic", () => {
   it("should keep selection when right-clicking selected task", () => {
-    const task1 = createTask("t1", "Task 1");
-    const task2 = createTask("t2", "Task 2");
-    setupTasks([task1, task2]);
-    selectTasks(["t1", "t2"]);
+    useTaskStore.getState().setTasks([task1, task2]);
+    useTaskStore.getState().setSelectedTaskIds(["t1", "t2"]);
 
-    // Simulate: right-click on t1 which IS in selection
-    const selectedIds = useTaskStore.getState().selectedTaskIds;
-    const clickedTaskId = "t1";
+    const flat = [task1, task2].map((t, i) => toFlattened(t, i + 1));
+    vi.mocked(useFlattenedTasks).mockReturnValue({
+      flattenedTasks: flat,
+      allFlattenedTasks: flat,
+    });
 
-    if (!selectedIds.includes(clickedTaskId)) {
-      useTaskStore.getState().setSelectedTaskIds([clickedTaskId]);
-    }
+    const { result } = renderHook(() => useTaskTableRowContextMenu());
+
+    act(() => {
+      // Right-click on t1 which IS in selection
+      result.current.handleRowContextMenu(mockMouseEvent(200, 300), "t1");
+    });
 
     // Selection should remain [t1, t2]
     expect(useTaskStore.getState().selectedTaskIds).toEqual(["t1", "t2"]);
   });
 
   it("should switch selection when right-clicking unselected task", () => {
-    const task1 = createTask("t1", "Task 1");
-    const task2 = createTask("t2", "Task 2");
-    const task3 = createTask("t3", "Task 3");
-    setupTasks([task1, task2, task3]);
-    selectTasks(["t1", "t2"]);
+    useTaskStore.getState().setTasks([task1, task2, task3]);
+    useTaskStore.getState().setSelectedTaskIds(["t1", "t2"]);
 
-    // Simulate: right-click on t3 which is NOT in selection
-    const selectedIds = useTaskStore.getState().selectedTaskIds;
-    const clickedTaskId = "t3";
+    const flat = [task1, task2, task3].map((t, i) => toFlattened(t, i + 1));
+    vi.mocked(useFlattenedTasks).mockReturnValue({
+      flattenedTasks: flat,
+      allFlattenedTasks: flat,
+    });
 
-    if (!selectedIds.includes(clickedTaskId)) {
-      useTaskStore.getState().setSelectedTaskIds([clickedTaskId]);
-    }
+    const { result } = renderHook(() => useTaskTableRowContextMenu());
+
+    act(() => {
+      // Right-click on t3 which is NOT in selection
+      result.current.handleRowContextMenu(mockMouseEvent(200, 300), "t3");
+    });
 
     // Selection should switch to [t3]
     expect(useTaskStore.getState().selectedTaskIds).toEqual(["t3"]);

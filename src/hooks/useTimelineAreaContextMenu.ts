@@ -12,9 +12,7 @@ import type {
 import { useClipboardOperations } from "./useClipboardOperations";
 import { useChartStore } from "../store/slices/chartSlice";
 import { useTaskStore } from "../store/slices/taskSlice";
-
-const ICON_SIZE = 20;
-const ICON_WEIGHT = "light" as const;
+import { CONTEXT_MENU } from "../styles/design-tokens";
 
 interface UseTimelineAreaContextMenuResult {
   contextMenu: ContextMenuPosition | null;
@@ -49,8 +47,8 @@ export function useTimelineAreaContextMenu(): UseTimelineAreaContextMenuResult {
         id: "paste",
         label: "Paste",
         icon: createElement(ClipboardText, {
-          size: ICON_SIZE,
-          weight: ICON_WEIGHT,
+          size: CONTEXT_MENU.iconSize,
+          weight: CONTEXT_MENU.iconWeight,
         }),
         shortcut: "Ctrl+V",
         onClick: () => void handlePaste(),
@@ -61,8 +59,8 @@ export function useTimelineAreaContextMenu(): UseTimelineAreaContextMenuResult {
         id: "fitToView",
         label: "Fit to View",
         icon: createElement(ArrowsOut, {
-          size: ICON_SIZE,
-          weight: ICON_WEIGHT,
+          size: CONTEXT_MENU.iconSize,
+          weight: CONTEXT_MENU.iconWeight,
         }),
         shortcut: "F",
         onClick: () => fitToView(tasks),

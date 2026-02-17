@@ -170,6 +170,15 @@ export const TOOLBAR = {
 } as const;
 
 // =============================================================================
+// CONTEXT MENU TOKENS
+// =============================================================================
+
+export const CONTEXT_MENU = {
+  iconSize: 20,
+  iconWeight: "light" as const,
+} as const;
+
+// =============================================================================
 // DENSITY SYSTEM (unchanged from original)
 // =============================================================================
 
@@ -205,4 +214,5 @@ export type RadiusToken = typeof RADIUS;
 export type ShadowToken = typeof SHADOWS;
 export type TransitionToken = typeof TRANSITIONS;
 export type ToolbarToken = typeof TOOLBAR;
+export type ContextMenuToken = typeof CONTEXT_MENU;
 export type DensityToken = typeof DENSITY;

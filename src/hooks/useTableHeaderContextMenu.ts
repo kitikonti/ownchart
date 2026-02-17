@@ -16,9 +16,7 @@ import {
   getHideableColumns,
   getVisibleColumns,
 } from "../config/tableColumns";
-
-const ICON_SIZE = 20;
-const ICON_WEIGHT = "light" as const;
+import { CONTEXT_MENU } from "../styles/design-tokens";
 
 interface ContextMenuState {
   position: ContextMenuPosition;
@@ -80,7 +78,10 @@ export function useTableHeaderContextMenu(): UseTableHeaderContextMenuResult {
     items.push({
       id: "hideColumn",
       label: `Hide Column "${column.label}"`,
-      icon: createElement(EyeSlash, { size: ICON_SIZE, weight: ICON_WEIGHT }),
+      icon: createElement(EyeSlash, {
+        size: CONTEXT_MENU.iconSize,
+        weight: CONTEXT_MENU.iconWeight,
+      }),
       onClick: () => toggleColumnVisibility(columnId),
       disabled: !isHideable || isLastVisibleHideable,
     });
@@ -88,7 +89,10 @@ export function useTableHeaderContextMenu(): UseTableHeaderContextMenuResult {
     items.push({
       id: "showAllColumns",
       label: "Show All Columns",
-      icon: createElement(Eye, { size: ICON_SIZE, weight: ICON_WEIGHT }),
+      icon: createElement(Eye, {
+        size: CONTEXT_MENU.iconSize,
+        weight: CONTEXT_MENU.iconWeight,
+      }),
       onClick: () => setHiddenColumns([]),
       disabled: hiddenColumns.length === 0,
       separator: true,
@@ -104,8 +108,8 @@ export function useTableHeaderContextMenu(): UseTableHeaderContextMenuResult {
       id: "autoFitWidth",
       label: "Auto-fit Column Width",
       icon: createElement(ArrowsHorizontal, {
-        size: ICON_SIZE,
-        weight: ICON_WEIGHT,
+        size: CONTEXT_MENU.iconSize,
+        weight: CONTEXT_MENU.iconWeight,
       }),
       onClick: () => autoFitColumn(columnId),
       disabled: !isVisible || columnId === "rowNumber" || columnId === "color",

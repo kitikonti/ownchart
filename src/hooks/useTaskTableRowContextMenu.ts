@@ -17,24 +17,21 @@ import {
   EyeSlash,
   Eye,
 } from "@phosphor-icons/react";
-import type {
-  ContextMenuItem,
-  ContextMenuPosition,
-} from "../components/ContextMenu/ContextMenu";
+import type { ContextMenuItem } from "../components/ContextMenu/ContextMenu";
 import { useClipboardOperations } from "./useClipboardOperations";
 import { useHideOperations } from "./useHideOperations";
 import { useTaskStore } from "../store/slices/taskSlice";
-
-const ICON_SIZE = 20;
-const ICON_WEIGHT = "light" as const;
-
-interface ContextMenuState {
-  position: ContextMenuPosition;
-  taskId: string;
-}
+import { CONTEXT_MENU } from "../styles/design-tokens";
+import type { TaskContextMenuState } from "./contextMenuItemBuilders";
+import {
+  getEffectiveSelection,
+  buildClipboardItems,
+  buildDeleteItem,
+  buildHideItem,
+} from "./contextMenuItemBuilders";
 
 interface UseTaskTableRowContextMenuResult {
-  contextMenu: ContextMenuState | null;
+  contextMenu: TaskContextMenuState | null;
   contextMenuItems: ContextMenuItem[];
   handleRowContextMenu: (e: React.MouseEvent, taskId: string) => void;
   closeContextMenu: () => void;
@@ -65,7 +62,9 @@ export function useTaskTableRowContextMenu(): UseTaskTableRowContextMenuResult {
   const { hideRows, unhideSelection, getHiddenInSelectionCount } =
     useHideOperations();
 
-  const [contextMenu, setContextMenu] = useState<ContextMenuState | null>(null);
+  const [contextMenu, setContextMenu] = useState<TaskContextMenuState | null>(
+    null
+  );
 
   const handleRowContextMenu = useCallback(
     (e: React.MouseEvent, taskId: string): void => {
@@ -93,90 +92,62 @@ export function useTaskTableRowContextMenu(): UseTaskTableRowContextMenuResult {
     if (!contextMenu) return [];
 
     const taskId = contextMenu.taskId;
+    const { effectiveSelection, count } = getEffectiveSelection(
+      taskId,
+      selectedTaskIds
+    );
 
-    // Effective selection: if right-clicked task is in selection, use selection;
-    // otherwise just this one task (selection already switched in handleRowContextMenu)
-    const effectiveSelection = selectedTaskIds.includes(taskId)
-      ? selectedTaskIds
-      : [taskId];
-    const count = effectiveSelection.length;
+    const iconProps = {
+      size: CONTEXT_MENU.iconSize,
+      weight: CONTEXT_MENU.iconWeight,
+    };
 
     const items: ContextMenuItem[] = [];
 
     // ── Group 1: Clipboard ──
-    items.push({
-      id: "cut",
-      label: "Cut",
-      icon: createElement(Scissors, { size: ICON_SIZE, weight: ICON_WEIGHT }),
-      shortcut: "Ctrl+X",
-      onClick: handleCut,
-      disabled: !canCopyOrCut,
-    });
-    items.push({
-      id: "copy",
-      label: "Copy",
-      icon: createElement(Copy, { size: ICON_SIZE, weight: ICON_WEIGHT }),
-      shortcut: "Ctrl+C",
-      onClick: handleCopy,
-      disabled: !canCopyOrCut,
-    });
-    items.push({
-      id: "paste",
-      label: "Paste",
-      icon: createElement(ClipboardText, {
-        size: ICON_SIZE,
-        weight: ICON_WEIGHT,
-      }),
-      shortcut: "Ctrl+V",
-      onClick: () => void handlePaste(),
-      disabled: !canPaste,
-      separator: true,
-    });
+    items.push(
+      ...buildClipboardItems({
+        handleCut,
+        handleCopy,
+        handlePaste,
+        canCopyOrCut,
+        canPaste,
+        cutIcon: createElement(Scissors, iconProps),
+        copyIcon: createElement(Copy, iconProps),
+        pasteIcon: createElement(ClipboardText, iconProps),
+      })
+    );
 
     // ── Group 2: Insert / Delete ──
     items.push({
       id: "insertAbove",
       label: "Insert Task Above",
-      icon: createElement(RowsPlusTop, {
-        size: ICON_SIZE,
-        weight: ICON_WEIGHT,
-      }),
+      icon: createElement(RowsPlusTop, iconProps),
       shortcut: "Ctrl++",
       onClick: () => insertTaskAbove(taskId),
     });
     items.push({
       id: "insertBelow",
       label: "Insert Task Below",
-      icon: createElement(RowsPlusBottom, {
-        size: ICON_SIZE,
-        weight: ICON_WEIGHT,
-      }),
+      icon: createElement(RowsPlusBottom, iconProps),
       onClick: () => insertTaskBelow(taskId),
     });
-    items.push({
-      id: "delete",
-      label: count > 1 ? `Delete ${count} Tasks` : "Delete Task",
-      icon: createElement(Trash, { size: ICON_SIZE, weight: ICON_WEIGHT }),
-      shortcut: "Del",
-      onClick: () => {
-        if (count > 1) {
-          deleteSelectedTasks();
-        } else {
-          deleteTask(taskId, true);
-        }
-      },
-      disabled: count === 0,
-      separator: true,
-    });
+    items.push(
+      buildDeleteItem({
+        count,
+        taskId,
+        deleteSelectedTasks,
+        deleteTask,
+        icon: createElement(Trash, iconProps),
+        separator: true,
+      })
+    );
 
     // ── Group 3: Hierarchy ──
     items.push({
       id: "indent",
       label: "Indent",
-      icon: createElement(TextIndent, {
-        size: ICON_SIZE,
-        weight: ICON_WEIGHT,
-      }),
+      icon: createElement(TextIndent, iconProps),
       shortcut: "Alt+Shift+→",
       onClick: indentSelectedTasks,
       disabled: !canIndent,
@@ -184,10 +155,7 @@ export function useTaskTableRowContextMenu(): UseTaskTableRowContextMenuResult {
     items.push({
       id: "outdent",
       label: "Outdent",
-      icon: createElement(TextOutdent, {
-        size: ICON_SIZE,
-        weight: ICON_WEIGHT,
-      }),
+      icon: createElement(TextOutdent, iconProps),
       shortcut: "Alt+Shift+←",
       onClick: outdentSelectedTasks,
       disabled: !canOutdent,
@@ -195,10 +163,7 @@ export function useTaskTableRowContextMenu(): UseTaskTableRowContextMenuResult {
     items.push({
       id: "group",
       label: "Group",
-      icon: createElement(BoundingBox, {
-        size: ICON_SIZE,
-        weight: ICON_WEIGHT,
-      }),
+      icon: createElement(BoundingBox, iconProps),
       shortcut: "Ctrl+G",
       onClick: groupSelectedTasks,
       disabled: !canGroup,
@@ -206,14 +171,14 @@ export function useTaskTableRowContextMenu(): UseTaskTableRowContextMenuResult {
     });
 
     // ── Group 4: Visibility ──
-    items.push({
-      id: "hide",
-      label: count > 1 ? `Hide ${count} Rows` : "Hide Row",
-      icon: createElement(EyeSlash, { size: ICON_SIZE, weight: ICON_WEIGHT }),
-      shortcut: "Ctrl+H",
-      onClick: () => hideRows(effectiveSelection),
-      disabled: count === 0,
-    });
+    items.push(
+      buildHideItem({
+        count,
+        effectiveSelection,
+        hideRows,
+        icon: createElement(EyeSlash, iconProps),
+      })
+    );
 
     // Unhide — only visible when hidden rows exist in selection range
     const hiddenInRangeCount = getHiddenInSelectionCount(selectedTaskIds);
@@ -225,7 +190,7 @@ export function useTaskTableRowContextMenu(): UseTaskTableRowContextMenuResult {
       items.push({
         id: "unhide",
         label: `Unhide ${hiddenInRangeCount} Row${hiddenInRangeCount !== 1 ? "s" : ""}`,
-        icon: createElement(Eye, { size: ICON_SIZE, weight: ICON_WEIGHT }),
+        icon: createElement(Eye, iconProps),
         shortcut: "Ctrl+Shift+H",
         onClick: () => unhideSelection(selectedTaskIds),
       });
