@@ -18,10 +18,11 @@ import {
   RowsPlusBottom,
   TextOutdent,
   TextIndent,
-  BoundingBox,
   EyeSlash,
   Eye,
 } from "@phosphor-icons/react";
+import GroupIcon from "../../assets/icons/group-light.svg?react";
+import UngroupIcon from "../../assets/icons/ungroup-light.svg?react";
 
 import {
   ToolbarButton,
@@ -61,6 +62,10 @@ export function HomeTabContent(): JSX.Element {
   const canOutdent = useTaskStore((state) => state.canOutdentSelection());
   const groupSelectedTasks = useTaskStore((state) => state.groupSelectedTasks);
   const canGroup = useTaskStore((state) => state.canGroupSelection());
+  const ungroupSelectedTasks = useTaskStore(
+    (state) => state.ungroupSelectedTasks
+  );
+  const canUngroup = useTaskStore((state) => state.canUngroupSelection());
 
   // History store
   const undo = useHistoryStore((state) => state.undo);
@@ -238,7 +243,14 @@ export function HomeTabContent(): JSX.Element {
           disabled={!canGroup}
           title="Group selected tasks (Ctrl+G)"
           aria-label="Group selected tasks"
-          icon={<BoundingBox size={ICON_SIZE} weight="light" />}
+          icon={<GroupIcon width={ICON_SIZE} height={ICON_SIZE} />}
+        />
+        <ToolbarButton
+          onClick={ungroupSelectedTasks}
+          disabled={!canUngroup}
+          title="Ungroup selected tasks (Ctrl+Shift+G)"
+          aria-label="Ungroup selected tasks"
+          icon={<UngroupIcon width={ICON_SIZE} height={ICON_SIZE} />}
         />
         <ToolbarButton
           onClick={() => handleHideRows(selectedTaskIds)}

@@ -32,6 +32,7 @@ export enum CommandType {
   INDENT_TASKS = "indentSelectedTasks",
   OUTDENT_TASKS = "outdentSelectedTasks",
   GROUP_TASKS = "groupTasks",
+  UNGROUP_TASKS = "ungroupTasks",
 
   // Type conversions
   CONVERT_TO_SUMMARY = "convertToSummary",
@@ -95,6 +96,7 @@ export type CommandParams =
   | MultiDragTasksParams
   | ApplyColorsToManualParams
   | GroupTasksParams
+  | UngroupTasksParams
   | HideTasksParams
   | UnhideTasksParams;
 
@@ -256,6 +258,25 @@ export interface GroupTasksParams {
     taskId: string;
     oldParent: string | undefined;
     oldOrder: number;
+  }>;
+  previousOrder: Array<{ id: string; order: number }>;
+  cascadeUpdates: Array<{
+    id: string;
+    updates: Partial<Task>;
+    previousValues: Partial<Task>;
+  }>;
+}
+
+// Ungroup tasks params
+export interface UngroupTasksParams {
+  ungroupedSummaries: Array<{
+    summaryTask: Task;
+    childChanges: Array<{
+      taskId: string;
+      oldParent: string | undefined;
+      oldOrder: number;
+    }>;
+    removedDependencies: Dependency[];
   }>;
   previousOrder: Array<{ id: string; order: number }>;
   cascadeUpdates: Array<{

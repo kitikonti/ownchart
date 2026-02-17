@@ -75,6 +75,10 @@ function getShortcuts(): ShortcutSection[] {
         { keys: "Alt+Shift+Right", description: "Indent task (make child)" },
         { keys: "Alt+Shift+Left", description: "Outdent task (make sibling)" },
         { keys: `${mod}+G`, description: "Group selected tasks" },
+        {
+          keys: `${mod}+Shift+G`,
+          description: "Ungroup (dissolve summary)",
+        },
       ],
     },
     {

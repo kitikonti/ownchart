@@ -13,10 +13,11 @@ import {
   Trash,
   TextIndent,
   TextOutdent,
-  BoundingBox,
   EyeSlash,
   Eye,
 } from "@phosphor-icons/react";
+import GroupIcon from "../assets/icons/group-light.svg?react";
+import UngroupIcon from "../assets/icons/ungroup-light.svg?react";
 import type { ContextMenuItem } from "../components/ContextMenu/ContextMenu";
 import { useClipboardOperations } from "./useClipboardOperations";
 import { useHideOperations } from "./useHideOperations";
@@ -53,9 +54,13 @@ export function useTaskTableRowContextMenu(): UseTaskTableRowContextMenuResult {
     (state) => state.outdentSelectedTasks
   );
   const groupSelectedTasks = useTaskStore((state) => state.groupSelectedTasks);
+  const ungroupSelectedTasks = useTaskStore(
+    (state) => state.ungroupSelectedTasks
+  );
   const canIndent = useTaskStore((state) => state.canIndentSelection());
   const canOutdent = useTaskStore((state) => state.canOutdentSelection());
   const canGroup = useTaskStore((state) => state.canGroupSelection());
+  const canUngroup = useTaskStore((state) => state.canUngroupSelection());
 
   const { handleCopy, handleCut, handlePaste, canCopyOrCut, canPaste } =
     useClipboardOperations();
@@ -100,6 +105,10 @@ export function useTaskTableRowContextMenu(): UseTaskTableRowContextMenuResult {
     const iconProps = {
       size: CONTEXT_MENU.iconSize,
       weight: CONTEXT_MENU.iconWeight,
+    };
+    const svgIconProps = {
+      width: CONTEXT_MENU.iconSize,
+      height: CONTEXT_MENU.iconSize,
     };
 
     const items: ContextMenuItem[] = [];
@@ -163,10 +172,18 @@ export function useTaskTableRowContextMenu(): UseTaskTableRowContextMenuResult {
     items.push({
       id: "group",
       label: "Group",
-      icon: createElement(BoundingBox, iconProps),
+      icon: createElement(GroupIcon, svgIconProps),
       shortcut: "Ctrl+G",
       onClick: groupSelectedTasks,
       disabled: !canGroup,
+    });
+    items.push({
+      id: "ungroup",
+      label: "Ungroup",
+      icon: createElement(UngroupIcon, svgIconProps),
+      shortcut: "Ctrl+Shift+G",
+      onClick: ungroupSelectedTasks,
+      disabled: !canUngroup,
       separator: true,
     });
 
@@ -205,6 +222,7 @@ export function useTaskTableRowContextMenu(): UseTaskTableRowContextMenuResult {
     canIndent,
     canOutdent,
     canGroup,
+    canUngroup,
     handleCopy,
     handleCut,
     handlePaste,
@@ -215,6 +233,7 @@ export function useTaskTableRowContextMenu(): UseTaskTableRowContextMenuResult {
     indentSelectedTasks,
     outdentSelectedTasks,
     groupSelectedTasks,
+    ungroupSelectedTasks,
     hideRows,
     unhideSelection,
     getHiddenInSelectionCount,

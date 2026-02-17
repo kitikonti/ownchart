@@ -20,6 +20,7 @@ import {
 import { canHaveChildren } from "../../utils/validation";
 import toast from "react-hot-toast";
 import { useHistoryStore } from "./historySlice";
+import { useDependencyStore } from "./dependencySlice";
 import { useFileStore } from "./fileSlice";
 import { CommandType } from "../../types/command.types";
 import { TASK_COLUMNS } from "../../config/tableColumns";
@@ -117,6 +118,8 @@ interface TaskActions {
   canOutdentSelection: () => boolean;
   groupSelectedTasks: () => void;
   canGroupSelection: () => boolean;
+  ungroupSelectedTasks: () => void;
+  canUngroupSelection: () => boolean;
 
   // Summary task creation
   createSummaryTask: (data: Omit<Task, "id" | "type">) => string;
@@ -1951,6 +1954,143 @@ export const useTaskStore = create<TaskStore>()(
             summaryTaskId: summaryId,
             summaryTask,
             changes,
+            previousOrder,
+            cascadeUpdates,
+          },
+        });
+      }
+    },
+
+    canUngroupSelection: (): boolean => {
+      const { tasks, selectedTaskIds } = get();
+      return selectedTaskIds.some((id) => {
+        const task = tasks.find((t) => t.id === id);
+        return (
+          task?.type === "summary" && tasks.some((t) => t.parent === task.id)
+        );
+      });
+    },
+
+    ungroupSelectedTasks: (): void => {
+      const historyStore = useHistoryStore.getState();
+      const depStore = useDependencyStore.getState();
+      const { tasks, selectedTaskIds } = get();
+
+      // Filter to summaries with children
+      const summariesToUngroup = selectedTaskIds
+        .map((id) => tasks.find((t) => t.id === id))
+        .filter(
+          (t): t is Task =>
+            t !== undefined &&
+            t.type === "summary" &&
+            tasks.some((child) => child.parent === t.id)
+        );
+
+      if (summariesToUngroup.length === 0) return;
+
+      // Sort bottom-up: deepest summaries first to avoid parent invalidation
+      const sortedSummaries = [...summariesToUngroup].sort((a, b) => {
+        const levelA = getTaskLevel(tasks, a.id);
+        const levelB = getTaskLevel(tasks, b.id);
+        return levelB - levelA;
+      });
+
+      // Capture previous order for undo
+      const previousOrder = tasks.map((t) => ({ id: t.id, order: t.order }));
+
+      // Build undo data for each summary
+      const ungroupedSummaries: Array<{
+        summaryTask: Task;
+        childChanges: Array<{
+          taskId: string;
+          oldParent: string | undefined;
+          oldOrder: number;
+        }>;
+        removedDependencies: import("../../types/dependency.types").Dependency[];
+      }> = [];
+
+      const summaryIds = new Set(sortedSummaries.map((s) => s.id));
+      const childIdsAll: string[] = [];
+
+      for (const summary of sortedSummaries) {
+        const children = getTaskChildren(tasks, summary.id);
+        const childChanges = children.map((child) => ({
+          taskId: child.id,
+          oldParent: child.parent,
+          oldOrder: child.order,
+        }));
+
+        // Capture dependencies that will be removed
+        const deps = depStore.dependencies.filter(
+          (d) => d.fromTaskId === summary.id || d.toTaskId === summary.id
+        );
+
+        ungroupedSummaries.push({
+          summaryTask: JSON.parse(JSON.stringify(summary)),
+          childChanges,
+          removedDependencies: JSON.parse(JSON.stringify(deps)),
+        });
+
+        childIdsAll.push(...children.map((c) => c.id));
+      }
+
+      // Collect affected parent IDs for cascade recalculation
+      const affectedParentIds = new Set<string>();
+      for (const summary of sortedSummaries) {
+        if (summary.parent) affectedParentIds.add(summary.parent);
+      }
+
+      let cascadeUpdates: Array<{
+        id: string;
+        updates: Partial<Task>;
+        previousValues: Partial<Task>;
+      }> = [];
+
+      set((state) => {
+        for (const summary of sortedSummaries) {
+          const children = state.tasks.filter((t) => t.parent === summary.id);
+          // Reparent children to summary's parent
+          for (const child of children) {
+            child.parent = summary.parent;
+          }
+        }
+
+        // Remove all ungrouped summaries
+        state.tasks = state.tasks.filter((t) => !summaryIds.has(t.id));
+
+        normalizeTaskOrder(state.tasks);
+
+        // Recalculate ancestor summaries
+        cascadeUpdates = recalculateSummaryAncestors(
+          state.tasks,
+          affectedParentIds
+        );
+
+        // Update selection: select the former children
+        state.selectedTaskIds = childIdsAll;
+        state.clipboardTaskIds = state.clipboardTaskIds.filter(
+          (id) => !summaryIds.has(id)
+        );
+      });
+
+      // Remove dependencies for deleted summaries
+      for (const summary of sortedSummaries) {
+        depStore.removeDependenciesForTask(summary.id);
+      }
+
+      useFileStore.getState().markDirty();
+
+      if (!historyStore.isUndoing && !historyStore.isRedoing) {
+        historyStore.recordCommand({
+          id: crypto.randomUUID(),
+          type: CommandType.UNGROUP_TASKS,
+          timestamp: Date.now(),
+          description:
+            summariesToUngroup.length === 1
+              ? "Ungrouped 1 task"
+              : `Ungrouped ${summariesToUngroup.length} tasks`,
+          params: {
+            ungroupedSummaries,
             previousOrder,
             cascadeUpdates,
           },

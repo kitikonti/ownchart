@@ -116,10 +116,10 @@ describe("Zone 1: Task Table Row Context Menu", () => {
     return result;
   }
 
-  it("should have 10 items in 4 groups (no unhide)", () => {
+  it("should have 11 items in 4 groups (no unhide)", () => {
     const result = openRowMenu("t1");
 
-    expect(result.current.contextMenuItems).toHaveLength(10);
+    expect(result.current.contextMenuItems).toHaveLength(11);
     expect(result.current.contextMenuItems.map((i) => i.id)).toEqual([
       "cut",
       "copy",
@@ -130,11 +130,12 @@ describe("Zone 1: Task Table Row Context Menu", () => {
       "indent",
       "outdent",
       "group",
+      "ungroup",
       "hide",
     ]);
   });
 
-  it("should show 11 items when unhide is available", () => {
+  it("should show 12 items when unhide is available", () => {
     useTaskStore.getState().setTasks([task1, task2, task3]);
     useTaskStore.getState().setSelectedTaskIds(["t1", "t3"]);
     useChartStore.getState().setHiddenTaskIds(["t2"]);
@@ -152,9 +153,9 @@ describe("Zone 1: Task Table Row Context Menu", () => {
       result.current.handleRowContextMenu(mockMouseEvent(200, 300), "t1");
     });
 
-    expect(result.current.contextMenuItems).toHaveLength(11);
-    expect(result.current.contextMenuItems[10].id).toBe("unhide");
-    expect(result.current.contextMenuItems[10].label).toBe("Unhide 1 Row");
+    expect(result.current.contextMenuItems).toHaveLength(12);
+    expect(result.current.contextMenuItems[11].id).toBe("unhide");
+    expect(result.current.contextMenuItems[11].label).toBe("Unhide 1 Row");
   });
 
   it("should have separators after paste, delete, and group", () => {
@@ -163,7 +164,7 @@ describe("Zone 1: Task Table Row Context Menu", () => {
 
     expect(items.find((i) => i.id === "paste")?.separator).toBe(true);
     expect(items.find((i) => i.id === "delete")?.separator).toBe(true);
-    expect(items.find((i) => i.id === "group")?.separator).toBe(true);
+    expect(items.find((i) => i.id === "ungroup")?.separator).toBe(true);
   });
 
   it("should show dynamic labels for multi-select", () => {
