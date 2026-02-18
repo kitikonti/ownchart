@@ -1688,6 +1688,13 @@ export const useTaskStore = create<TaskStore>()(
 
       if (changes.length === 0) return;
 
+      // Capture task order snapshot BEFORE changes
+      const previousTaskSnapshot = tasks.map((t) => ({
+        id: t.id,
+        parent: t.parent,
+        order: t.order,
+      }));
+
       // Apply all changes at once
       set((state) => {
         changes.forEach(({ taskId, newParent }) => {
@@ -1715,6 +1722,13 @@ export const useTaskStore = create<TaskStore>()(
         normalizeTaskOrder(state.tasks);
       });
 
+      // Capture task order snapshot AFTER changes
+      const afterTaskSnapshot = get().tasks.map((t) => ({
+        id: t.id,
+        parent: t.parent,
+        order: t.order,
+      }));
+
       // Mark file as dirty
       useFileStore.getState().markDirty();
 
@@ -1733,6 +1747,8 @@ export const useTaskStore = create<TaskStore>()(
           params: {
             taskIds: changes.map((c) => c.taskId),
             changes,
+            previousTaskSnapshot,
+            afterTaskSnapshot,
           },
         });
       }
@@ -1788,6 +1804,13 @@ export const useTaskStore = create<TaskStore>()(
 
       if (changes.length === 0) return;
 
+      // Capture task order snapshot BEFORE changes
+      const previousTaskSnapshot = tasks.map((t) => ({
+        id: t.id,
+        parent: t.parent,
+        order: t.order,
+      }));
+
       // Track old parents for summary date recalculation
       const oldParentIds = new Set<string>();
       changes.forEach(({ oldParent }) => {
@@ -1812,6 +1835,13 @@ export const useTaskStore = create<TaskStore>()(
         normalizeTaskOrder(state.tasks);
       });
 
+      // Capture task order snapshot AFTER changes
+      const afterTaskSnapshot = get().tasks.map((t) => ({
+        id: t.id,
+        parent: t.parent,
+        order: t.order,
+      }));
+
       // Mark file as dirty
       useFileStore.getState().markDirty();
 
@@ -1830,6 +1860,8 @@ export const useTaskStore = create<TaskStore>()(
           params: {
             taskIds: changes.map((c) => c.taskId),
             changes,
+            previousTaskSnapshot,
+            afterTaskSnapshot,
           },
         });
       }

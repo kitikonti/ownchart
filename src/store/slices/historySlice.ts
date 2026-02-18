@@ -10,6 +10,7 @@ import type {
   Command,
   AddTaskParams,
   UpdateTaskParams,
+  IndentOutdentParams,
   AddDependencyParams,
   DeleteDependencyParams,
   UpdateDependencyParams,
@@ -302,21 +303,29 @@ function executeUndoCommand(command: Command): void {
       break;
     }
 
-    case "indentSelectedTasks": {
-      const params = command.params as any;
-      // Restore previous parent for each task
-      params.changes.forEach((change: any) => {
-        taskStore.moveTaskToParent(change.taskId, change.oldParent ?? null);
-      });
-      break;
-    }
-
+    case "indentSelectedTasks":
     case "outdentSelectedTasks": {
-      const params = command.params as any;
-      // Restore previous parent for each task
-      params.changes.forEach((change: any) => {
-        taskStore.moveTaskToParent(change.taskId, change.oldParent ?? null);
+      const params = command.params as IndentOutdentParams;
+      const currentTasks = useTaskStore.getState().tasks.map((t) => ({ ...t }));
+
+      // Restore parent + order from pre-operation snapshot
+      for (const snapshot of params.previousTaskSnapshot) {
+        const task = currentTasks.find((t) => t.id === snapshot.id);
+        if (task) {
+          task.parent = snapshot.parent;
+          task.order = snapshot.order;
+        }
+      }
+
+      // Recalculate summary dates for affected parents
+      const affectedParentIds = new Set<string>();
+      params.changes.forEach((change) => {
+        if (change.oldParent) affectedParentIds.add(change.oldParent);
+        if (change.newParent) affectedParentIds.add(change.newParent);
       });
+      recalculateSummaryAncestors(currentTasks, affectedParentIds);
+
+      useTaskStore.setState({ tasks: currentTasks });
       break;
     }
 
@@ -700,21 +709,29 @@ function executeRedoCommand(command: Command): void {
       break;
     }
 
-    case "indentSelectedTasks": {
-      const params = command.params as any;
-      // Restore new parent for each task
-      params.changes.forEach((change: any) => {
-        taskStore.moveTaskToParent(change.taskId, change.newParent ?? null);
-      });
-      break;
-    }
-
+    case "indentSelectedTasks":
     case "outdentSelectedTasks": {
-      const params = command.params as any;
-      // Restore new parent for each task
-      params.changes.forEach((change: any) => {
-        taskStore.moveTaskToParent(change.taskId, change.newParent ?? null);
+      const params = command.params as IndentOutdentParams;
+      const currentTasks = useTaskStore.getState().tasks.map((t) => ({ ...t }));
+
+      // Restore parent + order from post-operation snapshot
+      for (const snapshot of params.afterTaskSnapshot) {
+        const task = currentTasks.find((t) => t.id === snapshot.id);
+        if (task) {
+          task.parent = snapshot.parent;
+          task.order = snapshot.order;
+        }
+      }
+
+      // Recalculate summary dates for affected parents
+      const affectedParentIds = new Set<string>();
+      params.changes.forEach((change) => {
+        if (change.oldParent) affectedParentIds.add(change.oldParent);
+        if (change.newParent) affectedParentIds.add(change.newParent);
       });
+      recalculateSummaryAncestors(currentTasks, affectedParentIds);
+
+      useTaskStore.setState({ tasks: currentTasks });
       break;
     }
 

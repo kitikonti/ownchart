@@ -146,6 +146,16 @@ export interface IndentOutdentParams {
     oldParent: string | undefined;
     newParent: string | undefined;
   }>;
+  previousTaskSnapshot: Array<{
+    id: string;
+    parent: string | undefined;
+    order: number;
+  }>;
+  afterTaskSnapshot: Array<{
+    id: string;
+    parent: string | undefined;
+    order: number;
+  }>;
 }
 
 export interface ConvertTypeParams {
