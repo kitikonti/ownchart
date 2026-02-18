@@ -1878,11 +1878,9 @@ export const useTaskStore = create<TaskStore>()(
         for (let i = index - 1; i >= 0; i--) {
           if (flatList[i].level === level) {
             const potentialParent = flatList[i].task;
+            if (!canHaveChildren(potentialParent)) return false;
             const maxDescLevel = getMaxDescendantLevel(tasks, taskId);
-            return (
-              canHaveChildren(potentialParent) &&
-              maxDescLevel + 1 < MAX_HIERARCHY_DEPTH
-            );
+            return maxDescLevel + 1 < MAX_HIERARCHY_DEPTH;
           }
           if (flatList[i].level < level) break;
         }
