@@ -9,18 +9,11 @@ import { Modal } from "../common/Modal";
 import { Button } from "../common/Button";
 import { Alert } from "../common/Alert";
 import { useUIStore } from "../../store/slices/uiSlice";
-import {
-  type HelpTabId,
-  getHelpTabs,
-  isMac,
-  getModKey,
-} from "../../config/helpContent";
+import { getHelpTabs, isMac, getModKey } from "../../config/helpContent";
 import { useHelpSearch } from "../../hooks/useHelpSearch";
 import { HelpSearchInput } from "./HelpSearchInput";
 import { HelpSectionList } from "./HelpSectionList";
 import { GettingStartedTab } from "./GettingStartedTab";
-
-const TAB_IDS: HelpTabId[] = ["getting-started", "shortcuts", "features"];
 
 export function HelpDialog(): JSX.Element | null {
   const isOpen = useUIStore((state) => state.isHelpPanelOpen);
@@ -136,6 +129,3 @@ export function HelpDialog(): JSX.Element | null {
     </Modal>
   );
 }
-
-// Re-export TAB_IDS for use in tests
-export { TAB_IDS };

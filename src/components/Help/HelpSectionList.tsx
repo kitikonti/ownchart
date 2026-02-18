@@ -68,19 +68,11 @@ function SectionAccordion({
 
       {isOpen && (
         <div className="pl-3 pr-1 pb-2">
-          {compact ? (
-            <div className="space-y-0.5">
-              {section.topics.map((topic) => (
-                <HelpTopicCard key={topic.id} topic={topic} compact />
-              ))}
-            </div>
-          ) : (
-            <div className="space-y-0.5">
-              {section.topics.map((topic) => (
-                <HelpTopicCard key={topic.id} topic={topic} />
-              ))}
-            </div>
-          )}
+          <div className="space-y-0.5">
+            {section.topics.map((topic) => (
+              <HelpTopicCard key={topic.id} topic={topic} compact={compact} />
+            ))}
+          </div>
         </div>
       )}
     </section>

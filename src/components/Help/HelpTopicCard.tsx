@@ -87,7 +87,7 @@ export function HelpTopicCard({
           {isMac() && topic.tip.includes("{mod}") ? (
             <>
               <Command size={11} className="inline-block flex-shrink-0" />
-              {resolveShortcut(topic.tip.replace("{mod}", "Cmd"))}
+              {resolveShortcut(topic.tip)}
             </>
           ) : (
             <>Tip: {resolveShortcut(topic.tip)}</>

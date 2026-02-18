@@ -9,8 +9,7 @@ import {
   FloppyDisk,
   Keyboard,
 } from "@phosphor-icons/react";
-import { type HelpSection } from "../../config/helpContent";
-import { resolveShortcut } from "../../config/helpContent";
+import { type HelpSection, resolveShortcut } from "../../config/helpContent";
 
 const ICONS: Record<string, { icon: React.ReactNode; bg: string }> = {
   "gs-create-task": {
