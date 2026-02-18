@@ -307,10 +307,11 @@ function executeUndoCommand(command: Command): void {
     case "outdentSelectedTasks": {
       const params = command.params as IndentOutdentParams;
       const currentTasks = useTaskStore.getState().tasks.map((t) => ({ ...t }));
+      const taskMap = new Map(currentTasks.map((t) => [t.id, t]));
 
       // Restore parent + order from pre-operation snapshot
       for (const snapshot of params.previousTaskSnapshot) {
-        const task = currentTasks.find((t) => t.id === snapshot.id);
+        const task = taskMap.get(snapshot.id);
         if (task) {
           task.parent = snapshot.parent;
           task.order = snapshot.order;
@@ -713,10 +714,11 @@ function executeRedoCommand(command: Command): void {
     case "outdentSelectedTasks": {
       const params = command.params as IndentOutdentParams;
       const currentTasks = useTaskStore.getState().tasks.map((t) => ({ ...t }));
+      const taskMap = new Map(currentTasks.map((t) => [t.id, t]));
 
       // Restore parent + order from post-operation snapshot
       for (const snapshot of params.afterTaskSnapshot) {
-        const task = currentTasks.find((t) => t.id === snapshot.id);
+        const task = taskMap.get(snapshot.id);
         if (task) {
           task.parent = snapshot.parent;
           task.order = snapshot.order;

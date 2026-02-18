@@ -422,3 +422,189 @@ describe("History Store - MULTI_DRAG_TASKS", () => {
     });
   });
 });
+
+describe("History Store - INDENT/OUTDENT", () => {
+  const makeTasks = (): Task[] => [
+    {
+      id: "task-a",
+      name: "Task A",
+      startDate: "2025-01-01",
+      endDate: "2025-01-10",
+      duration: 10,
+      progress: 0,
+      color: "#3b82f6",
+      order: 0,
+      type: "task",
+      parent: undefined,
+      metadata: {},
+    },
+    {
+      id: "task-b",
+      name: "Task B",
+      startDate: "2025-01-11",
+      endDate: "2025-01-20",
+      duration: 10,
+      progress: 0,
+      color: "#3b82f6",
+      order: 1,
+      type: "task",
+      parent: undefined,
+      metadata: {},
+    },
+    {
+      id: "task-c",
+      name: "Task C",
+      startDate: "2025-01-21",
+      endDate: "2025-01-30",
+      duration: 10,
+      progress: 0,
+      color: "#3b82f6",
+      order: 2,
+      type: "task",
+      parent: undefined,
+      metadata: {},
+    },
+  ];
+
+  beforeEach(() => {
+    useTaskStore.setState({
+      tasks: makeTasks(),
+      selectedTaskIds: [],
+      lastSelectedTaskId: null,
+      activeCell: { taskId: null, field: null },
+      isEditingCell: false,
+      columnWidths: {},
+      taskTableWidth: null,
+    });
+    useHistoryStore.setState({
+      undoStack: [],
+      redoStack: [],
+      isUndoing: false,
+      isRedoing: false,
+    });
+  });
+
+  describe("indent undo", () => {
+    it("should restore original parent and order on undo", () => {
+      // Record original state
+      const originalTasks = useTaskStore.getState().tasks.map((t) => ({
+        id: t.id,
+        parent: t.parent,
+        order: t.order,
+      }));
+
+      // Select task-b and indent it (becomes child of task-a)
+      useTaskStore.getState().toggleTaskSelection("task-b");
+      useTaskStore.getState().indentSelectedTasks();
+
+      // Verify indent happened
+      const afterIndent = useTaskStore.getState().tasks;
+      const taskB = afterIndent.find((t) => t.id === "task-b")!;
+      expect(taskB.parent).toBe("task-a");
+
+      // Undo
+      useHistoryStore.getState().undo();
+
+      // Verify parent AND order are fully restored
+      const afterUndo = useTaskStore.getState().tasks;
+      for (const original of originalTasks) {
+        const restored = afterUndo.find((t) => t.id === original.id)!;
+        expect(restored.parent).toBe(original.parent);
+        expect(restored.order).toBe(original.order);
+      }
+    });
+
+    it("should restore correct order when multiple tasks are indented", () => {
+      // Select task-b and task-c, indent both
+      useTaskStore.getState().toggleTaskSelection("task-b");
+      useTaskStore.getState().toggleTaskSelection("task-c");
+
+      const originalTasks = useTaskStore.getState().tasks.map((t) => ({
+        id: t.id,
+        parent: t.parent,
+        order: t.order,
+      }));
+
+      useTaskStore.getState().indentSelectedTasks();
+
+      // Verify both indented
+      const afterIndent = useTaskStore.getState().tasks;
+      expect(afterIndent.find((t) => t.id === "task-b")!.parent).toBe("task-a");
+      expect(afterIndent.find((t) => t.id === "task-c")!.parent).toBe("task-a");
+
+      // Undo
+      useHistoryStore.getState().undo();
+
+      // Verify full restoration
+      const afterUndo = useTaskStore.getState().tasks;
+      for (const original of originalTasks) {
+        const restored = afterUndo.find((t) => t.id === original.id)!;
+        expect(restored.parent).toBe(original.parent);
+        expect(restored.order).toBe(original.order);
+      }
+    });
+  });
+
+  describe("outdent undo", () => {
+    it("should restore original parent and order on undo", () => {
+      // First indent task-b to make it a child of task-a
+      useTaskStore.getState().toggleTaskSelection("task-b");
+      useTaskStore.getState().indentSelectedTasks();
+
+      // Clear undo stack so we only track the outdent
+      useHistoryStore.setState({ undoStack: [], redoStack: [] });
+
+      // Record state before outdent
+      const beforeOutdent = useTaskStore.getState().tasks.map((t) => ({
+        id: t.id,
+        parent: t.parent,
+        order: t.order,
+      }));
+
+      // Outdent task-b back to root
+      useTaskStore.getState().outdentSelectedTasks();
+
+      // Verify outdent happened
+      const taskB = useTaskStore.getState().tasks.find((t) => t.id === "task-b")!;
+      expect(taskB.parent).toBeUndefined();
+
+      // Undo the outdent
+      useHistoryStore.getState().undo();
+
+      // Verify parent AND order are restored to the pre-outdent state
+      const afterUndo = useTaskStore.getState().tasks;
+      for (const before of beforeOutdent) {
+        const restored = afterUndo.find((t) => t.id === before.id)!;
+        expect(restored.parent).toBe(before.parent);
+        expect(restored.order).toBe(before.order);
+      }
+    });
+  });
+
+  describe("indent redo", () => {
+    it("should re-apply indent after undo+redo", () => {
+      // Indent task-b
+      useTaskStore.getState().toggleTaskSelection("task-b");
+      useTaskStore.getState().indentSelectedTasks();
+
+      const afterIndent = useTaskStore.getState().tasks.map((t) => ({
+        id: t.id,
+        parent: t.parent,
+        order: t.order,
+      }));
+
+      // Undo
+      useHistoryStore.getState().undo();
+      // Redo
+      useHistoryStore.getState().redo();
+
+      // Verify redo matches the post-indent state
+      const afterRedo = useTaskStore.getState().tasks;
+      for (const expected of afterIndent) {
+        const actual = afterRedo.find((t) => t.id === expected.id)!;
+        expect(actual.parent).toBe(expected.parent);
+        expect(actual.order).toBe(expected.order);
+      }
+    });
+  });
+});

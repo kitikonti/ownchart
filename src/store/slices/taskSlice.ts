@@ -30,6 +30,13 @@ import { useUserPreferencesStore } from "./userPreferencesSlice";
 import { useChartStore } from "./chartSlice";
 import { COLORS } from "../../styles/design-tokens";
 
+/** Capture a lightweight snapshot of task hierarchy (parent + order) for undo/redo. */
+function captureHierarchySnapshot(
+  tasks: ReadonlyArray<Task>
+): Array<{ id: string; parent: string | undefined; order: number }> {
+  return tasks.map((t) => ({ id: t.id, parent: t.parent, order: t.order }));
+}
+
 /**
  * Editable field types for cell-based editing.
  */
@@ -1688,12 +1695,7 @@ export const useTaskStore = create<TaskStore>()(
 
       if (changes.length === 0) return;
 
-      // Capture task order snapshot BEFORE changes
-      const previousTaskSnapshot = tasks.map((t) => ({
-        id: t.id,
-        parent: t.parent,
-        order: t.order,
-      }));
+      const previousTaskSnapshot = captureHierarchySnapshot(tasks);
 
       // Apply all changes at once
       set((state) => {
@@ -1722,12 +1724,7 @@ export const useTaskStore = create<TaskStore>()(
         normalizeTaskOrder(state.tasks);
       });
 
-      // Capture task order snapshot AFTER changes
-      const afterTaskSnapshot = get().tasks.map((t) => ({
-        id: t.id,
-        parent: t.parent,
-        order: t.order,
-      }));
+      const afterTaskSnapshot = captureHierarchySnapshot(get().tasks);
 
       // Mark file as dirty
       useFileStore.getState().markDirty();
@@ -1804,12 +1801,7 @@ export const useTaskStore = create<TaskStore>()(
 
       if (changes.length === 0) return;
 
-      // Capture task order snapshot BEFORE changes
-      const previousTaskSnapshot = tasks.map((t) => ({
-        id: t.id,
-        parent: t.parent,
-        order: t.order,
-      }));
+      const previousTaskSnapshot = captureHierarchySnapshot(tasks);
 
       // Track old parents for summary date recalculation
       const oldParentIds = new Set<string>();
@@ -1835,12 +1827,7 @@ export const useTaskStore = create<TaskStore>()(
         normalizeTaskOrder(state.tasks);
       });
 
-      // Capture task order snapshot AFTER changes
-      const afterTaskSnapshot = get().tasks.map((t) => ({
-        id: t.id,
-        parent: t.parent,
-        order: t.order,
-      }));
+      const afterTaskSnapshot = captureHierarchySnapshot(get().tasks);
 
       // Mark file as dirty
       useFileStore.getState().markDirty();
