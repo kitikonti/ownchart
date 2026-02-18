@@ -42,7 +42,6 @@ export function useTimelineAreaContextMenu(
 
   const { handlePaste, canPaste } = useClipboardOperations();
   const fitToView = useChartStore((state) => state.fitToView);
-  const selectedTaskIds = useTaskStore((state) => state.selectedTaskIds);
   const { buildItems } = useFullTaskContextMenuItems();
 
   const [contextMenu, setContextMenu] = useState<AreaContextMenuState | null>(
@@ -63,7 +62,8 @@ export function useTimelineAreaContextMenu(
 
         if (rowIndex >= 0 && rowIndex < tasks.length) {
           const taskId = tasks[rowIndex].id;
-          if (selectedTaskIds.includes(taskId)) {
+          const currentSelected = useTaskStore.getState().selectedTaskIds;
+          if (currentSelected.includes(taskId)) {
             setContextMenu({ position, taskId });
             return;
           }
@@ -73,7 +73,7 @@ export function useTimelineAreaContextMenu(
       // Default: no task targeted
       setContextMenu({ position });
     },
-    [svgRef, tasks, rowHeight, selectedTaskIds]
+    [svgRef, tasks, rowHeight]
   );
 
   const closeContextMenu = useCallback((): void => {

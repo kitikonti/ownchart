@@ -768,6 +768,41 @@ describe("Zone 4: Timeline Empty Area Context Menu", () => {
       "fitToView",
     ]);
   });
+
+  it("should show unhide item when clicking selected row with hidden rows in range", () => {
+    const t4 = createTask("t4", "Task 4", { order: 3 });
+    useTaskStore.getState().setTasks([task1, task2, task3, t4]);
+    useTaskStore.getState().setSelectedTaskIds(["t1", "t4"]);
+    useChartStore.getState().setHiddenTaskIds(["t2", "t3"]);
+
+    const allFlat = [task1, task2, task3, t4].map((t, i) =>
+      toFlattened(t, i + 1)
+    );
+    const visibleFlat = [toFlattened(task1, 1), toFlattened(t4, 4)];
+    vi.mocked(useFlattenedTasks).mockReturnValue({
+      flattenedTasks: visibleFlat,
+      allFlattenedTasks: allFlat,
+    });
+
+    const { result } = renderHook(() =>
+      useTimelineAreaContextMenu({
+        svgRef,
+        tasks: [task1, t4],
+        rowHeight: ROW_HEIGHT,
+      })
+    );
+
+    act(() => {
+      // y=10 → row index 0 → task1, which is selected
+      result.current.handleAreaContextMenu(mockMouseEvent(500, 10));
+    });
+
+    expect(result.current.contextMenuItems).toHaveLength(12);
+    const unhideItem = result.current.contextMenuItems.find(
+      (i) => i.id === "unhide"
+    );
+    expect(unhideItem?.label).toBe("Unhide 2 Rows");
+  });
 });
 
 // ─── Right-click selection logic ───
