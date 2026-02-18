@@ -14,6 +14,7 @@ import {
   type PdfExportOptions,
   type SvgExportOptions,
 } from "../../utils/export/types";
+import type { HelpTabId } from "../../config/helpContent";
 
 // LocalStorage keys
 const WELCOME_DISMISSED_KEY = "ownchart-welcome-dismissed";
@@ -35,6 +36,7 @@ interface UIState {
 
   // Help panel
   isHelpPanelOpen: boolean;
+  helpDialogActiveTab: HelpTabId;
 
   // About dialog
   isAboutDialogOpen: boolean;
@@ -68,6 +70,7 @@ interface UIActions {
   openHelpPanel: () => void;
   closeHelpPanel: () => void;
   toggleHelpPanel: () => void;
+  setHelpDialogActiveTab: (tab: HelpTabId) => void;
 
   // About dialog
   openAboutDialog: () => void;
@@ -124,6 +127,7 @@ export const useUIStore = create<UIStore>()(
       exportProgress: 0,
       exportError: null,
       isHelpPanelOpen: false,
+      helpDialogActiveTab: "getting-started" as HelpTabId,
       isAboutDialogOpen: false,
       isWelcomeTourOpen: false,
       hasSeenWelcome,
@@ -209,6 +213,11 @@ export const useUIStore = create<UIStore>()(
       toggleHelpPanel: (): void =>
         set((state) => {
           state.isHelpPanelOpen = !state.isHelpPanelOpen;
+        }),
+
+      setHelpDialogActiveTab: (tab): void =>
+        set((state) => {
+          state.helpDialogActiveTab = tab;
         }),
 
       // About dialog actions

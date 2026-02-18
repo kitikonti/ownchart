@@ -19,6 +19,13 @@ Checkliste für Code-Dokumentation, Self-Documenting Code und Commit-Standards.
 - [ ] Prüfe dass Konstanten-Namen Bedeutung erklären: `MAX_TASK_DEPTH = 10` nicht `MAX = 10`, `SCROLL_DEBOUNCE_MS = 150` nicht `DELAY = 150`
 - [ ] Prüfe dass Enum/Union-Werte selbsterklärend sind: `'fit-to-page' | 'custom-zoom'` nicht `'mode1' | 'mode2'`
 
+## Help Documentation Completeness
+
+- [ ] New user-facing features have a HelpTopic in `src/config/helpContent.ts`
+- [ ] Changed shortcuts are reflected in the shortcuts tab data in `helpContent.ts`
+- [ ] Removed features don't have stale help topics
+- [ ] Help topic descriptions match current implementation
+
 ## Commit Messages
 
 - [ ] Prüfe dass Conventional Commits Format eingehalten wird (feat:, fix:, refactor:, perf:, test:, docs:, chore:, ui:)

@@ -3,5 +3,5 @@
  */
 
 export { AboutDialog } from "./AboutDialog";
-export { HelpPanel } from "./HelpPanel";
+export { HelpDialog } from "./HelpDialog";
 export { WelcomeTour } from "./WelcomeTour";

@@ -358,6 +358,11 @@ This includes linting, formatting, type-checking, and all unit tests. Do NOT pus
    - Be descriptive but concise
    - One logical change per commit
 
+5. **Update help documentation**:
+   - New user-facing feature → add HelpTopic to `src/config/helpContent.ts`
+   - Changed shortcuts → update shortcuts section + helpContent.ts
+   - Removed feature → remove its help topic
+
 ### When Fixing Bugs
 
 1. **Reproduce the bug** with a test if possible
