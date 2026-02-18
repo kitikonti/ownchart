@@ -78,6 +78,25 @@ export function wouldCreateCircularHierarchy(
 }
 
 /**
+ * Get the deepest absolute level among a task's descendants (including the task itself).
+ * Returns the task's own level if it has no descendants.
+ */
+export function getMaxDescendantLevel(tasks: Task[], taskId: string): number {
+  const taskLevel = getTaskLevel(tasks, taskId);
+  const descendants = getTaskDescendants(tasks, taskId);
+
+  if (descendants.length === 0) return taskLevel;
+
+  let maxLevel = taskLevel;
+  for (const desc of descendants) {
+    const level = getTaskLevel(tasks, desc.id);
+    if (level > maxLevel) maxLevel = level;
+  }
+
+  return maxLevel;
+}
+
+/**
  * Get max nesting depth in hierarchy.
  */
 export function getMaxDepth(tasks: Task[]): number {

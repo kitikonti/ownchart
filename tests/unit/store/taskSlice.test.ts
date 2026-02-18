@@ -1863,6 +1863,152 @@ describe('Task Store - CRUD Operations', () => {
 
         expect(canOutdentSelection()).toBe(false);
       });
+
+      it('should return false when indent would push descendants beyond MAX_HIERARCHY_DEPTH', () => {
+        // Setup: Alpha (L0) > Beta (L1) > Gamma (L2)
+        // Beta is at level 1 with children at level 2 (max allowed).
+        // Indenting Beta would make it level 2 and Gamma level 3 (forbidden).
+        const tasks: Task[] = [
+          {
+            id: 'alpha',
+            name: 'Alpha',
+            startDate: '2025-01-01',
+            endDate: '2025-01-10',
+            duration: 10,
+            progress: 0,
+            color: '#3b82f6',
+            order: 0,
+            type: 'summary',
+            parent: undefined,
+            metadata: {},
+          },
+          {
+            id: 'beta',
+            name: 'Beta',
+            startDate: '2025-01-01',
+            endDate: '2025-01-10',
+            duration: 10,
+            progress: 0,
+            color: '#3b82f6',
+            order: 1,
+            type: 'summary',
+            parent: undefined,
+            metadata: {},
+          },
+          {
+            id: 'gamma',
+            name: 'Gamma',
+            startDate: '2025-01-01',
+            endDate: '2025-01-05',
+            duration: 5,
+            progress: 0,
+            color: '#3b82f6',
+            order: 2,
+            type: 'task',
+            parent: 'beta',
+            metadata: {},
+          },
+        ];
+        useTaskStore.setState({ tasks });
+
+        const { toggleTaskSelection, canIndentSelection } = useTaskStore.getState();
+        toggleTaskSelection('beta');
+
+        // Beta has children at level 1 (Gamma). Indenting Beta under Alpha
+        // would make Gamma level 2 — still OK.
+        expect(canIndentSelection()).toBe(true);
+
+        // Now add a grandchild to make the subtree deeper
+        const deeperTasks: Task[] = [
+          ...tasks,
+          {
+            id: 'delta',
+            name: 'Delta',
+            startDate: '2025-01-01',
+            endDate: '2025-01-03',
+            duration: 3,
+            progress: 0,
+            color: '#3b82f6',
+            order: 3,
+            type: 'task',
+            parent: 'gamma',
+            metadata: {},
+          },
+        ];
+        // Gamma needs to be summary to have children
+        deeperTasks[2] = { ...deeperTasks[2], type: 'summary' };
+        useTaskStore.setState({ tasks: deeperTasks, selectedTaskIds: ['beta'] });
+
+        // Beta (L0) > Gamma (L1) > Delta (L2)
+        // Indenting Beta under Alpha would make Delta L3 (exceeds MAX_HIERARCHY_DEPTH=3)
+        expect(useTaskStore.getState().canIndentSelection()).toBe(false);
+      });
+
+      it('should block indentSelectedTasks when descendants would exceed max depth', () => {
+        // Alpha (L0), Beta (L0, summary) > Gamma (L1, summary) > Delta (L2)
+        const tasks: Task[] = [
+          {
+            id: 'alpha',
+            name: 'Alpha',
+            startDate: '2025-01-01',
+            endDate: '2025-01-10',
+            duration: 10,
+            progress: 0,
+            color: '#3b82f6',
+            order: 0,
+            type: 'summary',
+            parent: undefined,
+            metadata: {},
+          },
+          {
+            id: 'beta',
+            name: 'Beta',
+            startDate: '2025-01-01',
+            endDate: '2025-01-10',
+            duration: 10,
+            progress: 0,
+            color: '#3b82f6',
+            order: 1,
+            type: 'summary',
+            parent: undefined,
+            metadata: {},
+          },
+          {
+            id: 'gamma',
+            name: 'Gamma',
+            startDate: '2025-01-01',
+            endDate: '2025-01-05',
+            duration: 5,
+            progress: 0,
+            color: '#3b82f6',
+            order: 2,
+            type: 'summary',
+            parent: 'beta',
+            metadata: {},
+          },
+          {
+            id: 'delta',
+            name: 'Delta',
+            startDate: '2025-01-01',
+            endDate: '2025-01-03',
+            duration: 3,
+            progress: 0,
+            color: '#3b82f6',
+            order: 3,
+            type: 'task',
+            parent: 'gamma',
+            metadata: {},
+          },
+        ];
+        useTaskStore.setState({ tasks, selectedTaskIds: ['beta'] });
+
+        // Try to indent — should be blocked
+        useTaskStore.getState().indentSelectedTasks();
+
+        // Beta should still be at root level (no parent)
+        const beta = useTaskStore.getState().tasks.find((t) => t.id === 'beta');
+        expect(beta?.parent).toBeUndefined();
+      });
     });
   });
 

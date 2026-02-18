@@ -17,6 +17,7 @@ import {
   calculateSummaryDates,
   recalculateSummaryAncestors,
   normalizeTaskOrder,
+  getMaxDescendantLevel,
 } from "../../utils/hierarchy";
 import { canHaveChildren } from "../../utils/validation";
 import toast from "react-hot-toast";
@@ -1682,10 +1683,11 @@ export const useTaskStore = create<TaskStore>()(
         // Calculate new parent's level based on ORIGINAL hierarchy
         const newParentLevel = getTaskLevel(tasks, newParentId);
 
-        // Validation
+        // Validation: check deepest descendant won't exceed MAX_HIERARCHY_DEPTH
+        const maxDescLevel = getMaxDescendantLevel(tasks, taskId);
         if (
           canHaveChildren(newParent) &&
-          level < 2 && // Max 3 levels (0, 1, 2)
+          maxDescLevel + 1 < MAX_HIERARCHY_DEPTH &&
           !wouldCreateCircularHierarchy(tasks, newParentId, taskId) &&
           newParentLevel === level // Ensure parent is on same level (task will be level + 1)
         ) {
@@ -1876,7 +1878,11 @@ export const useTaskStore = create<TaskStore>()(
         for (let i = index - 1; i >= 0; i--) {
           if (flatList[i].level === level) {
             const potentialParent = flatList[i].task;
-            return canHaveChildren(potentialParent) && level < 2;
+            const maxDescLevel = getMaxDescendantLevel(tasks, taskId);
+            return (
+              canHaveChildren(potentialParent) &&
+              maxDescLevel + 1 < MAX_HIERARCHY_DEPTH
+            );
           }
           if (flatList[i].level < level) break;
         }

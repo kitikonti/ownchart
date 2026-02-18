@@ -3,6 +3,7 @@ import {
   getEffectiveTasksToMove,
   getTaskDescendants,
   getTaskChildren,
+  getMaxDescendantLevel,
   recalculateSummaryAncestors,
   buildFlattenedTaskList,
   normalizeTaskOrder,
@@ -242,6 +243,53 @@ describe("getTaskChildren", () => {
     expect(result).toHaveLength(2);
     expect(result.map((t) => t.id)).toContain("root1");
     expect(result.map((t) => t.id)).toContain("root2");
+  });
+});
+
+describe("getMaxDescendantLevel", () => {
+  it("should return the task's own level when it has no descendants", () => {
+    const tasks: Task[] = [
+      createTask("root", "Root", { order: 0 }),
+      createTask("child", "Child", { parent: "root", order: 1 }),
+    ];
+
+    expect(getMaxDescendantLevel(tasks, "child")).toBe(1);
+  });
+
+  it("should return 0 for a root task without children", () => {
+    const tasks: Task[] = [createTask("root", "Root", { order: 0 })];
+
+    expect(getMaxDescendantLevel(tasks, "root")).toBe(0);
+  });
+
+  it("should return deepest descendant level for a summary with children", () => {
+    // Root (0) -> Child (1) -> Grandchild (2)
+    const tasks: Task[] = [
+      createTask("root", "Root", { type: "summary", order: 0 }),
+      createTask("child", "Child", { parent: "root", type: "summary", order: 1 }),
+      createTask("grandchild", "Grandchild", { parent: "child", order: 2 }),
+    ];
+
+    expect(getMaxDescendantLevel(tasks, "root")).toBe(2);
+    expect(getMaxDescendantLevel(tasks, "child")).toBe(2);
+    expect(getMaxDescendantLevel(tasks, "grandchild")).toBe(2);
+  });
+
+  it("should handle mixed depth subtrees", () => {
+    // Root (0)
+    //   Alpha (1) — no children
+    //   Beta (1)
+    //     Gamma (2) — deepest
+    const tasks: Task[] = [
+      createTask("root", "Root", { type: "summary", order: 0 }),
+      createTask("alpha", "Alpha", { parent: "root", order: 1 }),
+      createTask("beta", "Beta", { parent: "root", type: "summary", order: 2 }),
+      createTask("gamma", "Gamma", { parent: "beta", order: 3 }),
+    ];
+
+    expect(getMaxDescendantLevel(tasks, "root")).toBe(2);
+    expect(getMaxDescendantLevel(tasks, "beta")).toBe(2);
+    expect(getMaxDescendantLevel(tasks, "alpha")).toBe(1);
   });
 });
 
