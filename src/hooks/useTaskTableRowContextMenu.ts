@@ -1,35 +1,14 @@
 /**
  * Hook for building task table row context menu items (Zone 1).
  * Full context menu with clipboard, insert, hierarchy, and visibility groups.
+ * Delegates item building to useFullTaskContextMenuItems.
  */
 
-import { useMemo, useState, useCallback, createElement } from "react";
-import {
-  Scissors,
-  Copy,
-  ClipboardText,
-  RowsPlusTop,
-  RowsPlusBottom,
-  Trash,
-  TextIndent,
-  TextOutdent,
-  EyeSlash,
-  Eye,
-} from "@phosphor-icons/react";
-import GroupIcon from "../assets/icons/group-light.svg?react";
-import UngroupIcon from "../assets/icons/ungroup-light.svg?react";
+import { useMemo, useState, useCallback } from "react";
 import type { ContextMenuItem } from "../components/ContextMenu/ContextMenu";
-import { useClipboardOperations } from "./useClipboardOperations";
-import { useHideOperations } from "./useHideOperations";
 import { useTaskStore } from "../store/slices/taskSlice";
-import { CONTEXT_MENU } from "../styles/design-tokens";
 import type { TaskContextMenuState } from "./contextMenuItemBuilders";
-import {
-  getEffectiveSelection,
-  buildClipboardItems,
-  buildDeleteItem,
-  buildHideItem,
-} from "./contextMenuItemBuilders";
+import { useFullTaskContextMenuItems } from "./useFullTaskContextMenuItems";
 
 interface UseTaskTableRowContextMenuResult {
   contextMenu: TaskContextMenuState | null;
@@ -39,33 +18,8 @@ interface UseTaskTableRowContextMenuResult {
 }
 
 export function useTaskTableRowContextMenu(): UseTaskTableRowContextMenuResult {
-  const selectedTaskIds = useTaskStore((state) => state.selectedTaskIds);
   const setSelectedTaskIds = useTaskStore((state) => state.setSelectedTaskIds);
-  const insertTaskAbove = useTaskStore((state) => state.insertTaskAbove);
-  const insertTaskBelow = useTaskStore((state) => state.insertTaskBelow);
-  const deleteSelectedTasks = useTaskStore(
-    (state) => state.deleteSelectedTasks
-  );
-  const deleteTask = useTaskStore((state) => state.deleteTask);
-  const indentSelectedTasks = useTaskStore(
-    (state) => state.indentSelectedTasks
-  );
-  const outdentSelectedTasks = useTaskStore(
-    (state) => state.outdentSelectedTasks
-  );
-  const groupSelectedTasks = useTaskStore((state) => state.groupSelectedTasks);
-  const ungroupSelectedTasks = useTaskStore(
-    (state) => state.ungroupSelectedTasks
-  );
-  const canIndent = useTaskStore((state) => state.canIndentSelection());
-  const canOutdent = useTaskStore((state) => state.canOutdentSelection());
-  const canGroup = useTaskStore((state) => state.canGroupSelection());
-  const canUngroup = useTaskStore((state) => state.canUngroupSelection());
-
-  const { handleCopy, handleCut, handlePaste, canCopyOrCut, canPaste } =
-    useClipboardOperations();
-  const { hideRows, unhideSelection, getHiddenInSelectionCount } =
-    useHideOperations();
+  const { buildItems } = useFullTaskContextMenuItems();
 
   const [contextMenu, setContextMenu] = useState<TaskContextMenuState | null>(
     null
@@ -95,149 +49,8 @@ export function useTaskTableRowContextMenu(): UseTaskTableRowContextMenuResult {
 
   const contextMenuItems = useMemo((): ContextMenuItem[] => {
     if (!contextMenu) return [];
-
-    const taskId = contextMenu.taskId;
-    const { effectiveSelection, count } = getEffectiveSelection(
-      taskId,
-      selectedTaskIds
-    );
-
-    const iconProps = {
-      size: CONTEXT_MENU.iconSize,
-      weight: CONTEXT_MENU.iconWeight,
-    };
-    const svgIconProps = {
-      width: CONTEXT_MENU.iconSize,
-      height: CONTEXT_MENU.iconSize,
-    };
-
-    const items: ContextMenuItem[] = [];
-
-    // ── Group 1: Clipboard ──
-    items.push(
-      ...buildClipboardItems({
-        handleCut,
-        handleCopy,
-        handlePaste,
-        canCopyOrCut,
-        canPaste,
-        cutIcon: createElement(Scissors, iconProps),
-        copyIcon: createElement(Copy, iconProps),
-        pasteIcon: createElement(ClipboardText, iconProps),
-      })
-    );
-
-    // ── Group 2: Insert / Delete ──
-    items.push({
-      id: "insertAbove",
-      label: "Insert Task Above",
-      icon: createElement(RowsPlusTop, iconProps),
-      shortcut: "Ctrl++",
-      onClick: () => insertTaskAbove(taskId),
-    });
-    items.push({
-      id: "insertBelow",
-      label: "Insert Task Below",
-      icon: createElement(RowsPlusBottom, iconProps),
-      onClick: () => insertTaskBelow(taskId),
-    });
-    items.push(
-      buildDeleteItem({
-        count,
-        taskId,
-        deleteSelectedTasks,
-        deleteTask,
-        icon: createElement(Trash, iconProps),
-        separator: true,
-      })
-    );
-
-    // ── Group 3: Hierarchy ──
-    items.push({
-      id: "indent",
-      label: "Indent",
-      icon: createElement(TextIndent, iconProps),
-      shortcut: "Alt+Shift+→",
-      onClick: indentSelectedTasks,
-      disabled: !canIndent,
-    });
-    items.push({
-      id: "outdent",
-      label: "Outdent",
-      icon: createElement(TextOutdent, iconProps),
-      shortcut: "Alt+Shift+←",
-      onClick: outdentSelectedTasks,
-      disabled: !canOutdent,
-    });
-    items.push({
-      id: "group",
-      label: "Group",
-      icon: createElement(GroupIcon, svgIconProps),
-      shortcut: "Ctrl+G",
-      onClick: groupSelectedTasks,
-      disabled: !canGroup,
-    });
-    items.push({
-      id: "ungroup",
-      label: "Ungroup",
-      icon: createElement(UngroupIcon, svgIconProps),
-      shortcut: "Ctrl+Shift+G",
-      onClick: ungroupSelectedTasks,
-      disabled: !canUngroup,
-      separator: true,
-    });
-
-    // ── Group 4: Visibility ──
-    items.push(
-      buildHideItem({
-        count,
-        effectiveSelection,
-        hideRows,
-        icon: createElement(EyeSlash, iconProps),
-      })
-    );
-
-    // Unhide — only visible when hidden rows exist in selection range
-    const hiddenInRangeCount = getHiddenInSelectionCount(selectedTaskIds);
-    if (
-      hiddenInRangeCount > 0 &&
-      selectedTaskIds.length >= 2 &&
-      selectedTaskIds.includes(taskId)
-    ) {
-      items.push({
-        id: "unhide",
-        label: `Unhide ${hiddenInRangeCount} Row${hiddenInRangeCount !== 1 ? "s" : ""}`,
-        icon: createElement(Eye, iconProps),
-        shortcut: "Ctrl+Shift+H",
-        onClick: () => unhideSelection(selectedTaskIds),
-      });
-    }
-
-    return items;
-  }, [
-    contextMenu,
-    selectedTaskIds,
-    canCopyOrCut,
-    canPaste,
-    canIndent,
-    canOutdent,
-    canGroup,
-    canUngroup,
-    handleCopy,
-    handleCut,
-    handlePaste,
-    insertTaskAbove,
-    insertTaskBelow,
-    deleteSelectedTasks,
-    deleteTask,
-    indentSelectedTasks,
-    outdentSelectedTasks,
-    groupSelectedTasks,
-    ungroupSelectedTasks,
-    hideRows,
-    unhideSelection,
-    getHiddenInSelectionCount,
-  ]);
+    return buildItems(contextMenu.taskId);
+  }, [contextMenu, buildItems]);
 
   return {
     contextMenu,

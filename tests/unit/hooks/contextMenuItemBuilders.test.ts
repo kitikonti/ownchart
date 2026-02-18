@@ -9,6 +9,9 @@ import {
   buildClipboardItems,
   buildDeleteItem,
   buildHideItem,
+  buildInsertItems,
+  buildHierarchyItems,
+  buildUnhideItem,
 } from "../../../src/hooks/contextMenuItemBuilders";
 
 describe("getEffectiveSelection", () => {
@@ -244,5 +247,177 @@ describe("buildHideItem", () => {
       icon: "eye-slash-icon",
     });
     expect(item.shortcut).toBe("Ctrl+H");
+  });
+});
+
+describe("buildInsertItems", () => {
+  const defaultParams = {
+    taskId: "t1",
+    insertTaskAbove: vi.fn(),
+    insertTaskBelow: vi.fn(),
+    insertAboveIcon: "above-icon",
+    insertBelowIcon: "below-icon",
+  };
+
+  it("should return 2 items: insertAbove, insertBelow", () => {
+    const items = buildInsertItems(defaultParams);
+    expect(items).toHaveLength(2);
+    expect(items.map((i) => i.id)).toEqual(["insertAbove", "insertBelow"]);
+  });
+
+  it("should have correct labels", () => {
+    const items = buildInsertItems(defaultParams);
+    expect(items[0].label).toBe("Insert Task Above");
+    expect(items[1].label).toBe("Insert Task Below");
+  });
+
+  it("should have Ctrl++ shortcut on insertAbove only", () => {
+    const items = buildInsertItems(defaultParams);
+    expect(items[0].shortcut).toBe("Ctrl++");
+    expect(items[1].shortcut).toBeUndefined();
+  });
+
+  it("should call insertTaskAbove with taskId on click", () => {
+    const items = buildInsertItems(defaultParams);
+    items[0].onClick();
+    expect(defaultParams.insertTaskAbove).toHaveBeenCalledWith("t1");
+  });
+
+  it("should call insertTaskBelow with taskId on click", () => {
+    const items = buildInsertItems(defaultParams);
+    items[1].onClick();
+    expect(defaultParams.insertTaskBelow).toHaveBeenCalledWith("t1");
+  });
+
+  it("should pass icons through", () => {
+    const items = buildInsertItems(defaultParams);
+    expect(items[0].icon).toBe("above-icon");
+    expect(items[1].icon).toBe("below-icon");
+  });
+});
+
+describe("buildHierarchyItems", () => {
+  const defaultParams = {
+    canIndent: true,
+    canOutdent: false,
+    canGroup: true,
+    canUngroup: false,
+    indentSelectedTasks: vi.fn(),
+    outdentSelectedTasks: vi.fn(),
+    groupSelectedTasks: vi.fn(),
+    ungroupSelectedTasks: vi.fn(),
+    indentIcon: "indent-icon",
+    outdentIcon: "outdent-icon",
+    groupIcon: "group-icon",
+    ungroupIcon: "ungroup-icon",
+  };
+
+  it("should return 4 items: indent, outdent, group, ungroup", () => {
+    const items = buildHierarchyItems(defaultParams);
+    expect(items).toHaveLength(4);
+    expect(items.map((i) => i.id)).toEqual([
+      "indent",
+      "outdent",
+      "group",
+      "ungroup",
+    ]);
+  });
+
+  it("should respect disabled states", () => {
+    const items = buildHierarchyItems(defaultParams);
+    expect(items[0].disabled).toBe(false); // canIndent = true
+    expect(items[1].disabled).toBe(true); // canOutdent = false
+    expect(items[2].disabled).toBe(false); // canGroup = true
+    expect(items[3].disabled).toBe(true); // canUngroup = false
+  });
+
+  it("should have correct shortcuts", () => {
+    const items = buildHierarchyItems(defaultParams);
+    expect(items[0].shortcut).toBe("Alt+Shift+→");
+    expect(items[1].shortcut).toBe("Alt+Shift+←");
+    expect(items[2].shortcut).toBe("Ctrl+G");
+    expect(items[3].shortcut).toBe("Ctrl+Shift+G");
+  });
+
+  it("should have separator on ungroup", () => {
+    const items = buildHierarchyItems(defaultParams);
+    expect(items[3].separator).toBe(true);
+  });
+
+  it("should call correct actions on click", () => {
+    const items = buildHierarchyItems(defaultParams);
+    items[0].onClick();
+    expect(defaultParams.indentSelectedTasks).toHaveBeenCalled();
+    items[1].onClick();
+    expect(defaultParams.outdentSelectedTasks).toHaveBeenCalled();
+    items[2].onClick();
+    expect(defaultParams.groupSelectedTasks).toHaveBeenCalled();
+    items[3].onClick();
+    expect(defaultParams.ungroupSelectedTasks).toHaveBeenCalled();
+  });
+});
+
+describe("buildUnhideItem", () => {
+  it("should return null when hiddenCount is 0", () => {
+    const item = buildUnhideItem({
+      hiddenCount: 0,
+      unhideSelection: vi.fn(),
+      selectedTaskIds: ["t1", "t2"],
+      icon: "eye-icon",
+    });
+    expect(item).toBeNull();
+  });
+
+  it("should return null when fewer than 2 tasks selected", () => {
+    const item = buildUnhideItem({
+      hiddenCount: 1,
+      unhideSelection: vi.fn(),
+      selectedTaskIds: ["t1"],
+      icon: "eye-icon",
+    });
+    expect(item).toBeNull();
+  });
+
+  it("should return item with singular label for 1 hidden row", () => {
+    const item = buildUnhideItem({
+      hiddenCount: 1,
+      unhideSelection: vi.fn(),
+      selectedTaskIds: ["t1", "t2"],
+      icon: "eye-icon",
+    });
+    expect(item).not.toBeNull();
+    expect(item!.label).toBe("Unhide 1 Row");
+  });
+
+  it("should return item with plural label for multiple hidden rows", () => {
+    const item = buildUnhideItem({
+      hiddenCount: 3,
+      unhideSelection: vi.fn(),
+      selectedTaskIds: ["t1", "t2"],
+      icon: "eye-icon",
+    });
+    expect(item!.label).toBe("Unhide 3 Rows");
+  });
+
+  it("should call unhideSelection with selectedTaskIds on click", () => {
+    const unhideSelection = vi.fn();
+    const item = buildUnhideItem({
+      hiddenCount: 1,
+      unhideSelection,
+      selectedTaskIds: ["t1", "t3"],
+      icon: "eye-icon",
+    });
+    item!.onClick();
+    expect(unhideSelection).toHaveBeenCalledWith(["t1", "t3"]);
+  });
+
+  it("should have Ctrl+Shift+H shortcut", () => {
+    const item = buildUnhideItem({
+      hiddenCount: 1,
+      unhideSelection: vi.fn(),
+      selectedTaskIds: ["t1", "t2"],
+      icon: "eye-icon",
+    });
+    expect(item!.shortcut).toBe("Ctrl+Shift+H");
   });
 });

@@ -222,7 +222,11 @@ export function ChartCanvas({
     contextMenuItems: areaContextMenuItems,
     handleAreaContextMenu,
     closeContextMenu: closeAreaContextMenu,
-  } = useTimelineAreaContextMenu();
+  } = useTimelineAreaContextMenu({
+    svgRef,
+    tasks,
+    rowHeight: ROW_HEIGHT,
+  });
 
   // Don't render if scale not ready
   if (!scale) {

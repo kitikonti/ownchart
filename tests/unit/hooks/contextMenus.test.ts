@@ -512,15 +512,21 @@ describe("Zone 3: Timeline Bar Context Menu", () => {
     return result;
   }
 
-  it("should have 5 items in 2 groups", () => {
+  it("should have 11 items in 4 groups (same as Zone 1)", () => {
     const result = openBarMenu("t1");
 
-    expect(result.current.contextMenuItems).toHaveLength(5);
+    expect(result.current.contextMenuItems).toHaveLength(11);
     expect(result.current.contextMenuItems.map((i) => i.id)).toEqual([
       "cut",
       "copy",
       "paste",
+      "insertAbove",
+      "insertBelow",
       "delete",
+      "indent",
+      "outdent",
+      "group",
+      "ungroup",
       "hide",
     ]);
   });
@@ -589,22 +595,60 @@ describe("Zone 3: Timeline Bar Context Menu", () => {
 
 // ─── Zone 4: Timeline Empty Area Context Menu ───
 
+/** Create a mock SVG ref with a configurable bounding rect. */
+function createMockSvgRef(
+  top = 0
+): React.RefObject<SVGSVGElement | null> {
+  return {
+    current: {
+      getBoundingClientRect: () => ({
+        top,
+        left: 0,
+        right: 1000,
+        bottom: 600,
+        width: 1000,
+        height: 600,
+        x: 0,
+        y: top,
+        toJSON: () => ({}),
+      }),
+    } as unknown as SVGSVGElement,
+  };
+}
+
+const ROW_HEIGHT = 36;
+
 describe("Zone 4: Timeline Empty Area Context Menu", () => {
+  const svgRef = createMockSvgRef(0);
+
   // eslint-disable-next-line @typescript-eslint/explicit-function-return-type
-  function openAreaMenu() {
+  function openAreaMenu(x = 500, y = 300) {
     useTaskStore.getState().setTasks([task1]);
 
-    const { result } = renderHook(() => useTimelineAreaContextMenu());
+    const flat = [toFlattened(task1, 1)];
+    vi.mocked(useFlattenedTasks).mockReturnValue({
+      flattenedTasks: flat,
+      allFlattenedTasks: flat,
+    });
+
+    const { result } = renderHook(() =>
+      useTimelineAreaContextMenu({
+        svgRef,
+        tasks: [task1],
+        rowHeight: ROW_HEIGHT,
+      })
+    );
 
     act(() => {
-      result.current.handleAreaContextMenu(mockMouseEvent(500, 300));
+      result.current.handleAreaContextMenu(mockMouseEvent(x, y));
     });
 
     return result;
   }
 
-  it("should have 2 items", () => {
-    const result = openAreaMenu();
+  it("should have 2 items when clicking outside task rows", () => {
+    // y=300 → row index 300/36 = 8, which is beyond tasks.length=1
+    const result = openAreaMenu(500, 300);
 
     expect(result.current.contextMenuItems).toHaveLength(2);
     expect(result.current.contextMenuItems.map((i) => i.id)).toEqual([
@@ -614,24 +658,115 @@ describe("Zone 4: Timeline Empty Area Context Menu", () => {
   });
 
   it("should disable paste when clipboard is empty", () => {
-    const result = openAreaMenu();
+    const result = openAreaMenu(500, 300);
     expect(result.current.contextMenuItems[0].disabled).toBe(true);
   });
 
   it("should always enable fit to view", () => {
-    const result = openAreaMenu();
+    const result = openAreaMenu(500, 300);
     expect(result.current.contextMenuItems[1].disabled).toBeUndefined();
   });
 
   it("should have separator after paste", () => {
-    const result = openAreaMenu();
+    const result = openAreaMenu(500, 300);
     expect(result.current.contextMenuItems[0].separator).toBe(true);
   });
 
   it("should show correct shortcuts", () => {
-    const result = openAreaMenu();
+    const result = openAreaMenu(500, 300);
     expect(result.current.contextMenuItems[0].shortcut).toBe("Ctrl+V");
     expect(result.current.contextMenuItems[1].shortcut).toBe("F");
+  });
+
+  it("should show full task menu when clicking on a selected task row", () => {
+    useTaskStore.getState().setTasks([task1, task2, task3]);
+    useTaskStore.getState().setSelectedTaskIds(["t1"]);
+
+    const flat = [task1, task2, task3].map((t, i) => toFlattened(t, i + 1));
+    vi.mocked(useFlattenedTasks).mockReturnValue({
+      flattenedTasks: flat,
+      allFlattenedTasks: flat,
+    });
+
+    const { result } = renderHook(() =>
+      useTimelineAreaContextMenu({
+        svgRef,
+        tasks: [task1, task2, task3],
+        rowHeight: ROW_HEIGHT,
+      })
+    );
+
+    act(() => {
+      // y=10 → row index 10/36 = 0 → task1, which is selected
+      result.current.handleAreaContextMenu(mockMouseEvent(500, 10));
+    });
+
+    expect(result.current.contextMenuItems).toHaveLength(11);
+    expect(result.current.contextMenuItems.map((i) => i.id)).toEqual([
+      "cut",
+      "copy",
+      "paste",
+      "insertAbove",
+      "insertBelow",
+      "delete",
+      "indent",
+      "outdent",
+      "group",
+      "ungroup",
+      "hide",
+    ]);
+  });
+
+  it("should show default menu when clicking on a non-selected task row", () => {
+    useTaskStore.getState().setTasks([task1, task2]);
+    useTaskStore.getState().setSelectedTaskIds(["t2"]);
+
+    const flat = [task1, task2].map((t, i) => toFlattened(t, i + 1));
+    vi.mocked(useFlattenedTasks).mockReturnValue({
+      flattenedTasks: flat,
+      allFlattenedTasks: flat,
+    });
+
+    const { result } = renderHook(() =>
+      useTimelineAreaContextMenu({
+        svgRef,
+        tasks: [task1, task2],
+        rowHeight: ROW_HEIGHT,
+      })
+    );
+
+    act(() => {
+      // y=10 → row index 0 → task1, which is NOT selected
+      result.current.handleAreaContextMenu(mockMouseEvent(500, 10));
+    });
+
+    expect(result.current.contextMenuItems).toHaveLength(2);
+    expect(result.current.contextMenuItems.map((i) => i.id)).toEqual([
+      "paste",
+      "fitToView",
+    ]);
+  });
+
+  it("should show default menu when no tasks exist", () => {
+    useTaskStore.getState().setTasks([]);
+
+    const { result } = renderHook(() =>
+      useTimelineAreaContextMenu({
+        svgRef,
+        tasks: [],
+        rowHeight: ROW_HEIGHT,
+      })
+    );
+
+    act(() => {
+      result.current.handleAreaContextMenu(mockMouseEvent(500, 10));
+    });
+
+    expect(result.current.contextMenuItems).toHaveLength(2);
+    expect(result.current.contextMenuItems.map((i) => i.id)).toEqual([
+      "paste",
+      "fitToView",
+    ]);
   });
 });
 
