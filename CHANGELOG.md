@@ -2,6 +2,54 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [0.0.40](https://github.com/kitikonti/ownchart/compare/v0.0.39...v0.0.40) (2026-02-19)
+
+
+### Features
+
+* add comprehensive in-app help documentation ([#21](https://github.com/kitikonti/ownchart/issues/21)) ([5e5816b](https://github.com/kitikonti/ownchart/commit/5e5816b60e006ca4e931e82648d54606ef4bbaff))
+* add context menu with Paste action to placeholder row (Issue [#53](https://github.com/kitikonti/ownchart/issues/53)) ([e831b04](https://github.com/kitikonti/ownchart/commit/e831b04bcc161fed9302256b74905d722a866871))
+* add mobile device block screen ([d08d659](https://github.com/kitikonti/ownchart/commit/d08d659f031b887d25916f88e2c130da354face7)), closes [#27](https://github.com/kitikonti/ownchart/issues/27)
+* unify context menus across TaskTable and Timeline zones ([934af93](https://github.com/kitikonti/ownchart/commit/934af93810fad525e978b4722359b8f4a21bb488))
+
+
+### Bug Fixes
+
+* address review findings from context menu unification ([28649bd](https://github.com/kitikonti/ownchart/commit/28649bdd304ffb3121a1100c26ea25817b6eff16))
+* address review findings from help documentation ([#21](https://github.com/kitikonti/ownchart/issues/21)) ([f690627](https://github.com/kitikonti/ownchart/commit/f690627434737b4c4b4f4ca8ecd6533a56dd41e2))
+* address review findings from indent/outdent undo ([b3d66ca](https://github.com/kitikonti/ownchart/commit/b3d66ca2976529b0c66cee04b30972c9b2bfb0ed))
+* correct depth checks and delete cascade undo ([d1752fc](https://github.com/kitikonti/ownchart/commit/d1752fcaedef1550bd641d3a5febf4f873341ad0))
+* early-return in canIndentSelection before expensive descendant check ([98d9a72](https://github.com/kitikonti/ownchart/commit/98d9a726539f7a27523678ab85a0d3804a0bc08e))
+* improve a11y on mobile block screen dismiss button ([40f4c7b](https://github.com/kitikonti/ownchart/commit/40f4c7b60e97d0c99d7a7008ac781752189442cd))
+* indent validation now checks descendant depth, not just task level ([9aee544](https://github.com/kitikonti/ownchart/commit/9aee5445d27aede340895e9ce81a454dfa7a5307))
+* restore original task position on indent/outdent undo ([b9403a3](https://github.com/kitikonti/ownchart/commit/b9403a3d100f3f73f32bd9b7db79f368a5157e83))
+
+
+### Code Refactoring
+
+* add grid, handle, row number, and toast design tokens ([edfd5eb](https://github.com/kitikonti/ownchart/commit/edfd5eb02967dc21f99fb1341e7ecfb9c4f3443f))
+* clean up taskSlice code quality issues ([710ab35](https://github.com/kitikonti/ownchart/commit/710ab3544211fb4fb59dab8aa7a51225bd0cb9ed))
+* consolidate insert methods into insertTasksRelative helper ([b80f7da](https://github.com/kitikonti/ownchart/commit/b80f7daac7eb5877678bf256979de6f3699ebf3b))
+* extract grouping and insertion actions from taskSlice ([72214cf](https://github.com/kitikonti/ownchart/commit/72214cf720ed75faa35fc99a7bb2c299e3eb5924))
+* extract indent/outdent actions from taskSlice ([b2106e9](https://github.com/kitikonti/ownchart/commit/b2106e9c9608ac07558d5085c95244edb1eb1eff))
+* extract magic numbers and hardcoded strings to constants ([8864405](https://github.com/kitikonti/ownchart/commit/88644054c05ef15a558b840bcffa7705adc1c059))
+* extract PLACEHOLDER_TASK_ID to shared config, fix test isolation ([42e7eeb](https://github.com/kitikonti/ownchart/commit/42e7eeb066c907d5d3c0919f3a2169d8e3310a59))
+* extract recordCommand helper to reduce undo boilerplate ([b0bc058](https://github.com/kitikonti/ownchart/commit/b0bc05835708a16fa141642948be5b87f26e3763))
+* extract selection, expansion, and column actions from taskSlice ([e9fbad3](https://github.com/kitikonti/ownchart/commit/e9fbad305ae6b8dbfb0b5d9c5dc48c272701f518))
+* extract shared helpers and constants to taskSliceHelpers.ts ([c750796](https://github.com/kitikonti/ownchart/commit/c7507968f2618957d7af00194e45b4b9860ea0ab))
+* extract shared helpers and reduce duplication ([ce18b27](https://github.com/kitikonti/ownchart/commit/ce18b27344c3f2342be3914e1607e338f5eb0240))
+* extract type-change logic and harden previousValues capture in updateTask ([3f74fe9](https://github.com/kitikonti/ownchart/commit/3f74fe9fb0cbd2a72ba69d5679f8a7c539106abb))
+* fourth-pass review fixes for taskSlice ([8a464ee](https://github.com/kitikonti/ownchart/commit/8a464ee87fe0dcf275c98ad906d8cfd1d152445c))
+* remove toast.error from reorderTasks in taskSlice ([a558945](https://github.com/kitikonti/ownchart/commit/a5589451b0ce3843748cfad8a6eb4fab8e5b19de))
+* remove unused command types and dead undo/redo handlers ([2d20246](https://github.com/kitikonti/ownchart/commit/2d202464fdc976864610ee93a91b5e5f363c6158))
+* remove unused get parameter from action creators and format ([570aaca](https://github.com/kitikonti/ownchart/commit/570aaca25334fc740df3273c13943efdb946ead9))
+* replace any casts with proper param types in historySlice ([7298aa5](https://github.com/kitikonti/ownchart/commit/7298aa504dd7f255a97936f7d29190fe861cb78a))
+* replace hardcoded hex colors with design tokens in 11 component files ([bc7ae1c](https://github.com/kitikonti/ownchart/commit/bc7ae1c8108aefe5c57c826cbb56778af2b3319a))
+* review fixes for extracted taskSlice action modules ([4bdf04c](https://github.com/kitikonti/ownchart/commit/4bdf04c5a02c1f17020bf5b2c959e74b41b3cc0f))
+* structuredClone, remove console, merge set calls ([b912649](https://github.com/kitikonti/ownchart/commit/b912649ab8084ee601acebd726d76cebb70deafa))
+* third-pass review fixes for taskSlice ([210bf51](https://github.com/kitikonti/ownchart/commit/210bf5140452e3d6ef33cc11b4cb21482b322d90))
+* use lightweight hierarchy snapshot for reorderTasks undo ([6c36bce](https://github.com/kitikonti/ownchart/commit/6c36bcea2d582c17aa7f00ab3f36cfabacd61baf))
+
 ### [0.0.39](https://github.com/kitikonti/ownchart/compare/v0.0.38...v0.0.39) (2026-02-17)
 
 
