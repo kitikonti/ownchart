@@ -554,6 +554,11 @@ export const useTaskStore = create<TaskStore>()(
     deleteTask: (id, cascade = false): void => {
       const historyStore = useHistoryStore.getState();
       const deletedTasks: Task[] = [];
+      let cascadeUpdates: Array<{
+        id: string;
+        updates: Partial<Task>;
+        previousValues: Partial<Task>;
+      }> = [];
 
       set((state) => {
         if (!cascade) {
@@ -575,7 +580,10 @@ export const useTaskStore = create<TaskStore>()(
 
           // Recalculate parent summary dates if it was a child
           if (parentId) {
-            recalculateSummaryAncestors(state.tasks, new Set([parentId]));
+            cascadeUpdates = recalculateSummaryAncestors(
+              state.tasks,
+              new Set([parentId])
+            );
           }
 
           return;
@@ -604,6 +612,10 @@ export const useTaskStore = create<TaskStore>()(
           }
         });
 
+        // Find the parent of the root deleted task (for cascade recalculation)
+        const rootDeletedTask = state.tasks.find((task) => task.id === id);
+        const rootParentId = rootDeletedTask?.parent;
+
         // Remove all collected tasks
         state.tasks = state.tasks.filter((task) => !idsToDelete.has(task.id));
 
@@ -611,6 +623,14 @@ export const useTaskStore = create<TaskStore>()(
         state.selectedTaskIds = state.selectedTaskIds.filter(
           (selectedId) => !idsToDelete.has(selectedId)
         );
+
+        // Recalculate parent summary dates if the root task had a parent
+        if (rootParentId && !idsToDelete.has(rootParentId)) {
+          cascadeUpdates = recalculateSummaryAncestors(
+            state.tasks,
+            new Set([rootParentId])
+          );
+        }
       });
 
       // Mark file as dirty
@@ -640,6 +660,7 @@ export const useTaskStore = create<TaskStore>()(
             deletedIds: deletedTasks.map((t) => t.id),
             cascade,
             deletedTasks,
+            cascadeUpdates,
           },
         });
       }
@@ -782,9 +803,9 @@ export const useTaskStore = create<TaskStore>()(
               getTaskLevel(state.tasks, activeTaskId);
             if (descLevel > activeSubtreeDepth) activeSubtreeDepth = descLevel;
           }
-          if (targetLevel + activeSubtreeDepth >= 3) {
+          if (targetLevel + activeSubtreeDepth >= MAX_HIERARCHY_DEPTH) {
             toast.error(
-              "Cannot move: maximum nesting depth of 3 levels would be exceeded"
+              `Cannot move: maximum nesting depth of ${MAX_HIERARCHY_DEPTH} levels would be exceeded`
             );
             return;
           }

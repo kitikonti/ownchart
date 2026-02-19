@@ -125,6 +125,11 @@ export interface DeleteTaskParams {
   deletedIds: string[]; // All task IDs that were deleted
   cascade: boolean;
   deletedTasks: Task[]; // Store all deleted tasks for undo
+  cascadeUpdates?: Array<{
+    id: string;
+    updates: Partial<Task>;
+    previousValues: Partial<Task>;
+  }>;
 }
 
 export interface ReorderTasksParams {
