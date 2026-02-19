@@ -1,6 +1,7 @@
 /**
  * App - Root application component
- * Composes the main layout from sub-components
+ * Composes the main layout from sub-components.
+ * Gates mobile devices with a block screen before mounting the full app.
  */
 
 import { useEffect } from "react";
@@ -10,15 +11,27 @@ import { StatusBar } from "./components/StatusBar";
 import { Ribbon } from "./components/Ribbon";
 import { ExportDialog } from "./components/Export";
 import { AboutDialog, HelpDialog, WelcomeTour } from "./components/Help";
+import { MobileBlockScreen } from "./components/MobileBlockScreen";
 import { useKeyboardShortcuts } from "./hooks/useKeyboardShortcuts";
 import { useUnsavedChanges } from "./hooks/useUnsavedChanges";
 import { useMultiTabPersistence } from "./hooks/useMultiTabPersistence";
 import { useDocumentTitle } from "./hooks/useDocumentTitle";
 import { useLaunchQueue } from "./hooks/useLaunchQueue";
+import { useDeviceDetection } from "./hooks/useDeviceDetection";
 import { useUIStore } from "./store/slices/uiSlice";
 import { useUserPreferencesStore } from "./store/slices/userPreferencesSlice";
 
 function App(): JSX.Element {
+  const { shouldShowMobileBlock, dismiss } = useDeviceDetection();
+
+  if (shouldShowMobileBlock) {
+    return <MobileBlockScreen onDismiss={dismiss} />;
+  }
+
+  return <AppContent />;
+}
+
+function AppContent(): JSX.Element {
   const checkFirstTimeUser = useUIStore((state) => state.checkFirstTimeUser);
   const initializeDensity = useUserPreferencesStore(
     (state) => state.initializeDensity
