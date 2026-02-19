@@ -64,13 +64,13 @@ cd ../app-gantt-review
 
 ### Priority: HIGH — Store Slices (Kern-Zustandslogik)
 - [x] `src/store/slices/taskSlice.ts` (~730 LOC) — reviewed (5 passes), 3 bugs fixed, dead code removed, constants extracted, helpers deduplicated, code quality cleanup, type-change logic extracted
-- [ ] `src/store/slices/groupingActions.ts` (372 LOC) — extracted from taskSlice
-- [ ] `src/store/slices/indentOutdentActions.ts` (285 LOC) — extracted from taskSlice
-- [ ] `src/store/slices/insertionActions.ts` (156 LOC) — extracted from taskSlice
-- [ ] `src/store/slices/taskSliceHelpers.ts` (138 LOC) — extracted from taskSlice
-- [ ] `src/store/slices/columnActions.ts` (100 LOC) — extracted from taskSlice
-- [ ] `src/store/slices/expansionActions.ts` (97 LOC) — extracted from taskSlice
-- [ ] `src/store/slices/selectionActions.ts` (78 LOC) — extracted from taskSlice
+- [x] `src/store/slices/groupingActions.ts` (372 LOC) — cascadeUpdates pattern unified to const+push
+- [x] `src/store/slices/indentOutdentActions.ts` (285 LOC) — computeIndentChanges helper extracted, forEach→for...of
+- [x] `src/store/slices/insertionActions.ts` (156 LOC) — computeInsertionDates helper extracted, 8x toISODateString fix
+- [x] `src/store/slices/taskSliceHelpers.ts` (138 LOC) — clean, no findings
+- [x] `src/store/slices/columnActions.ts` (100 LOC) — cross-store getState() moved outside set(), forEach→for...of
+- [x] `src/store/slices/expansionActions.ts` (97 LOC) — forEach→for...of
+- [x] `src/store/slices/selectionActions.ts` (78 LOC) — clean, no findings
 - [ ] `src/store/slices/historySlice.ts` (1035 LOC) — 23x any
 - [ ] `src/store/slices/chartSlice.ts` (984 LOC)
 - [ ] `src/store/slices/clipboardSlice.ts` (908 LOC)
@@ -313,6 +313,6 @@ Entscheidungen aus bisherigen Reviews die fuer zukuenftige Dateien gelten.
 
 ## Technical Debt Metrics
 - Dateien gesamt: 193 (+ 3 Font-Dateien, nicht reviewbar)
-- Dateien reviewed: 1 / 193
+- Dateien reviewed: 8 / 193
 - Kritische Issues bekannt: 23 any-Casts (historySlice), 38 Hex-Farben
 - Test-Coverage: 80%+
