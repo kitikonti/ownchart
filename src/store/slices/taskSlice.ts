@@ -969,9 +969,6 @@ export const useTaskStore = create<TaskStore>()(
                 activeSubtreeDepth = descLevel;
             }
             if (targetLevel + activeSubtreeDepth >= MAX_HIERARCHY_DEPTH) {
-              toast.error(
-                `Cannot move: maximum nesting depth of ${MAX_HIERARCHY_DEPTH} levels would be exceeded`
-              );
               return;
             }
           }
