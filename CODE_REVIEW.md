@@ -309,7 +309,7 @@ cd ../app-gantt-review
   - Missing: expand/collapse now calls markDirty() (was silently not persisting)
   - Cleanup: JSON.parse(JSON.stringify()) → structuredClone/current(immer)
   - Cleanup: Merged double set() calls in 3 insert methods
-  - DEFERRED: Insert method consolidation (insertAbove/Below/Multiple → shared helper)
+  - DONE: Insert method consolidation (insertAbove/Below/Multiple → shared `insertTasksRelative` helper)
   - Pass 2 (code quality cleanup):
     - Variable shadowing: `current` → `ancestor` in getRootSelectedIds (shadowed Immer import)
     - DRY: extracted `getEffectiveTaskIds` helper (4x duplicated selection pattern)
@@ -317,9 +317,9 @@ cd ../app-gantt-review
     - Extracted inline strings "New Group", "Unknown" to constants
     - `autoFitAllColumns` column list now derived from TASK_COLUMNS (was hardcoded)
     - Idiomatic Immer: Object.assign instead of spread in updateTask
-    - DEFERRED: Toast in store (WARNING #3) — UI side effect, requires cross-file refactor
-    - DEFERRED: reorderTasks heavy undo data (WARNING #8) — requires historySlice change
-    - DEFERRED: 11 methods >50 lines (WARNING #4) — systemic, Undo boilerplate is main cause
+    - DONE: Toast in reorderTasks removed (silent return). Toast in groupSelectedTasks kept (user feedback).
+    - DONE: reorderTasks uses captureHierarchySnapshot instead of structuredClone(tasks)
+    - DONE: `recordCommand` helper eliminates undo boilerplate across 13 methods (~100 LOC saved)
 
 ---
 
