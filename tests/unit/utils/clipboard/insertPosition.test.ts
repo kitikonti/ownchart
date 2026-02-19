@@ -2,9 +2,7 @@ import { describe, it, expect } from "vitest";
 import { determineInsertPosition } from "../../../../src/utils/clipboard/insertPosition";
 import type { Task } from "../../../../src/types/chart.types";
 import type { FlattenedTask } from "../../../../src/utils/hierarchy";
-
-// Special placeholder ID (must match the one in insertPosition.ts)
-const PLACEHOLDER_TASK_ID = "__new_task_placeholder__";
+import { PLACEHOLDER_TASK_ID } from "../../../../src/config/placeholderRow";
 
 // Helper to create test tasks
 const createTask = (id: string, name: string): Task => ({

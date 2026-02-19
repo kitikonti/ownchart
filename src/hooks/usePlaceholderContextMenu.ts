@@ -13,7 +13,7 @@ import type {
 import { useClipboardOperations } from "./useClipboardOperations";
 import { useTaskStore } from "../store/slices/taskSlice";
 import { CONTEXT_MENU } from "../styles/design-tokens";
-import { PLACEHOLDER_TASK_ID } from "../components/TaskList/NewTaskPlaceholderRow";
+import { PLACEHOLDER_TASK_ID } from "../config/placeholderRow";
 
 interface UsePlaceholderContextMenuResult {
   contextMenu: ContextMenuPosition | null;

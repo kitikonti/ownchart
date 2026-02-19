@@ -16,7 +16,7 @@ import { useChartStore } from "../../../src/store/slices/chartSlice";
 import { useClipboardStore } from "../../../src/store/slices/clipboardSlice";
 import type { Task } from "../../../src/types/chart.types";
 import type { FlattenedTask } from "../../../src/utils/hierarchy";
-import { PLACEHOLDER_TASK_ID } from "../../../src/components/TaskList/NewTaskPlaceholderRow";
+import { PLACEHOLDER_TASK_ID } from "../../../src/config/placeholderRow";
 
 // Mock external dependencies
 vi.mock("react-hot-toast", () => ({
@@ -89,6 +89,7 @@ beforeEach(() => {
   useTaskStore.getState().clearSelection();
   useChartStore.getState().setHiddenColumns([]);
   useChartStore.getState().setHiddenTaskIds([]);
+  useClipboardStore.setState({ activeMode: null });
 
   vi.mocked(useFlattenedTasks).mockReturnValue({
     flattenedTasks: [],

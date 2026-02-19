@@ -16,9 +16,7 @@ import { useChartStore } from "../../store/slices/chartSlice";
 import { getVisibleColumns } from "../../config/tableColumns";
 import { usePlaceholderContextMenu } from "../../hooks/usePlaceholderContextMenu";
 import { ContextMenu } from "../ContextMenu/ContextMenu";
-
-// Special ID for the placeholder row - used by paste logic
-export const PLACEHOLDER_TASK_ID = "__new_task_placeholder__";
+import { PLACEHOLDER_TASK_ID } from "../../config/placeholderRow";
 
 export function NewTaskPlaceholderRow(): JSX.Element {
   const [isEditing, setIsEditing] = useState(false);

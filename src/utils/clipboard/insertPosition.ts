@@ -4,9 +4,7 @@
  */
 
 import type { FlattenedTask } from "../hierarchy";
-
-// Special ID for the placeholder row
-const PLACEHOLDER_TASK_ID = "__new_task_placeholder__";
+import { PLACEHOLDER_TASK_ID } from "../../config/placeholderRow";
 
 /**
  * Determine where to insert pasted rows based on the flattened (visual) list.
