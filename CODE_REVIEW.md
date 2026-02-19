@@ -31,13 +31,17 @@ cd ../app-gantt-review
 
 ### Eine Datei reviewen
 1. Neue Session im Worktree-Verzeichnis starten
-2. CODE_REVIEW.md lesen (fuer Kontext und vorherige Findings)
+2. CODE_REVIEW.md lesen (Cross-Cutting Concerns + Decisions beachten)
 3. `/review src/path/to/file.ts` ausfuehren (Full Review)
    - Oder `/review <category> src/path/to/file.ts` fuer fokussiertes Review
 4. Findings lesen, Fixes implementieren
 5. `npm run ci:local` — Tests muessen gruen sein
 6. Atomic Commit(s) mit Conventional Commits
-7. CODE_REVIEW.md aktualisieren: Checkbox abhaken, kritische Findings notieren
+7. CODE_REVIEW.md aktualisieren:
+   - Checkbox abhaken + Kurzfassung in der Index-Zeile (1 Zeile)
+   - Neue Cross-Cutting Concerns ergaenzen (Patterns die mehrere Dateien betreffen)
+   - Neue Decisions ergaenzen (Praezedenzfaelle fuer zukuenftige Reviews)
+   - **KEINE Detail-Findings pro Datei** — die sind in der Git-History
 
 ### Mehrere Dateien in einer Session
 - `/review src/file1.ts src/file2.ts` fuer zusammenhaengende Dateien
@@ -53,18 +57,6 @@ cd ../app-gantt-review
 - `/review testing` — Coverage, Error Handling, Best Practices
 - `/review docs` — Kommentare, Naming, Help Content
 - `/review ownchart` — Zustand Patterns, File Format, Undo/Redo
-
-## Bereits bekannte Findings
-
-### `any`-Casts (24 Stueck)
-- `src/store/slices/historySlice.ts` — 23x `as any` / `(x: any)` in executeUndo/RedoCommand
-- `src/store/slices/taskSlice.ts` — 1x Zeile 429 (legitimiertes TS-Limit)
-- `src/types/command.types.ts` — `DeleteTaskParams` `cascadeUpdates` Feld hinzugefuegt (fixed)
-
-### Hardcoded Hex-Farben (38 Stueck in 10 .tsx-Dateien)
-- `design-tokens.ts` existiert, wird aber von SVG-Komponenten nicht genutzt
-- Brand-Farbe `#0F6CBD` in 4+ Komponenten als Raw-String
-- Detailliste bei den jeweiligen Dateien im Index unten
 
 ---
 
@@ -289,67 +281,31 @@ cd ../app-gantt-review
 
 ---
 
-## Cross-File Findings & Refactoring Backlog
-(Wird waehrend Reviews befuellt)
+## Cross-Cutting Concerns
 
-### Bekannte Cross-Cutting Concerns
-- **Hardcoded Hex-Farben**: 38 Stueck in 10 .tsx-Dateien → `design-tokens.ts` erweitern
-- **`any`-Casts in historySlice**: Betrifft auch `command.types.ts` (fehlende Felder)
-- **taskSlice Groesse**: ~730 LOC (reduced from 2137 → 1720 → 730 through 5 review passes + action extraction)
-- **`toISODateString` Utility**: Existiert in dateUtils.ts, wird bisher nur in taskSliceHelpers genutzt. ~18 weitere `toISOString().split("T")[0]` Vorkommen in 7 Dateien noch nicht umgestellt (insertionActions, hierarchy, calculations, Cell, HomeTabContent, NewTaskPlaceholderRow, SharedExportOptions)
-- **taskSlice Review Findings** (cleanup/code-review branch):
-  - BUG: Hardcoded depth `3` in reorderTasks → replaced with MAX_HIERARCHY_DEPTH
-  - BUG: deleteTask cascade didn't capture cascadeUpdates for undo → fixed both paths
-  - Dead code: moveTaskToParent, createSummaryTask, convertToSummary, convertToTask removed
-  - Dead code: 9 unused CommandType enum values + 4 unused interfaces removed
-  - Dead code: 6 unused undo/redo switch cases removed from historySlice
-  - Constants: DEFAULT_TASK_DURATION, MS_PER_DAY, DEFAULT_TASK_NAME, etc. extracted
-  - Dedup: collectDescendantIds shared helper in hierarchy.ts
-  - Dedup: fitColumnToContent helper eliminates ~100 LOC of duplicated autoFit code
-  - Dedup: setTaskOpen/setAllTasksOpen helpers for expand/collapse
-  - Missing: expand/collapse now calls markDirty() (was silently not persisting)
-  - Cleanup: JSON.parse(JSON.stringify()) → structuredClone/current(immer)
-  - Cleanup: Merged double set() calls in 3 insert methods
-  - DONE: Insert method consolidation (insertAbove/Below/Multiple → shared `insertTasksRelative` helper)
-  - Pass 2 (code quality cleanup):
-    - Variable shadowing: `current` → `ancestor` in getRootSelectedIds (shadowed Immer import)
-    - DRY: extracted `getEffectiveTaskIds` helper (4x duplicated selection pattern)
-    - Simplified redundant filter lambda in navigateCell
-    - Extracted inline strings "New Group", "Unknown" to constants
-    - `autoFitAllColumns` column list now derived from TASK_COLUMNS (was hardcoded)
-    - Idiomatic Immer: Object.assign instead of spread in updateTask
-    - DONE: Toast in reorderTasks removed (silent return). Toast in groupSelectedTasks kept (user feedback).
-    - DONE: reorderTasks uses captureHierarchySnapshot instead of structuredClone(tasks)
-    - DONE: `recordCommand` helper eliminates undo boilerplate across 13 methods (~100 LOC saved)
-  - Pass 3 (third-pass review via /review skill):
-    - BUG: activeCell not cleared on task deletion (deleteTask + deleteSelectedTasks) → stale reference fixed
-    - Cross-store read (useChartStore.getState()) moved outside Immer set() in navigateCell
-    - Empty visibleFields guard added in navigateCell (prevents undefined field assignment)
-    - Immer anti-pattern: spread `{...task, ...updates}` → Object.assign in updateMultipleTasks
-    - O(n*m) depth check in validateGroupSelection → replaced with getMaxDescendantLevel
-    - Command description consistency: indent/outdent now use "Indented 1 task" / "Outdented 1 task" (matches group/ungroup pattern)
-    - NOTE: Fix 3 (redundant order normalization) was NOT applied — normalizeTaskOrder depends on sequential order values as input
-  - Pass 4 (fourth-pass review via /review skill):
-    - Redundant `getTaskLevel(activeTaskId)` inside loop in reorderTasks → hoisted + replaced with `getMaxDescendantLevel`
-    - Orphaned JSDoc comment removed (stale "Task store hook" above EDITABLE_FIELDS)
-    - Stale comment "3 levels = indices 0, 1, 2" removed from reorderTasks
-    - O(n) `Array.includes` in `setSelectedTaskIds` → Set-based O(1) dedup
-    - Redundant `as` type casts on initial state removed (store is already typed as TaskStore)
-    - DECISION: Relative imports are acceptable — max depth is `../../`, absolute imports would require tsconfig paths + vite alias + vitest config for no real gain
-  - Pass 5 (fifth-pass review via /review skill):
-    - Extracted `computeTypeChangeEffects` helper to taskSliceHelpers.ts (~53 LOC type-change logic out of updateTask)
-    - Fixed fragile previousValues capture: `originalType` saved explicitly before helper may mutate Immer draft, eliminating brittle spread-replace trick
-    - Replaced `as string` type assertion with nullish coalescing (`??`) in milestone handling
-    - Added `toISODateString(date)` utility to dateUtils.ts (replaces `toISOString().split("T")[0]` pattern)
-    - Replaced unnecessary `structuredClone` with shallow clone `{ ...task }` in deleteSelectedTasks (state from `get()` is already frozen)
-    - Renamed `s` → `state` in deleteSelectedTasks set callback for naming consistency
-    - Removed `calculateSummaryDates` and `DEFAULT_TASK_DURATION` from taskSlice imports (moved to helper)
-    - REMAINING: deleteTask (99 LOC) and deleteSelectedTasks (80 LOC) still exceed 50-line limit — borderline, not worth splitting further
+Patterns die mehrere Dateien betreffen. Beim Review jeder Datei pruefen ob sie betroffen ist.
+
+- **Hardcoded Hex-Farben** (38 Stueck in 10 .tsx-Dateien): `design-tokens.ts` existiert, wird aber von SVG-Komponenten nicht genutzt. Brand-Farbe `#0F6CBD` in 4+ Komponenten als Raw-String. Betroffene Dateien sind im Index markiert.
+- **`any`-Casts in historySlice** (23x): Betrifft auch `command.types.ts` (fehlende Felder). taskSlice hat 1x legitimiertes `as any` (TS-Limit bei dynamischen Keys).
+- **`toISODateString()` nicht ueberall genutzt**: Utility existiert in `dateUtils.ts`, wird bisher nur in `taskSliceHelpers` verwendet. ~18 weitere `toISOString().split("T")[0]` in: insertionActions, hierarchy, calculations, Cell, HomeTabContent, NewTaskPlaceholderRow, SharedExportOptions. Bei Review dieser Dateien umstellen.
+
+---
+
+## Decisions & Precedents
+
+Entscheidungen aus bisherigen Reviews die fuer zukuenftige Dateien gelten.
+
+- **Relative Imports sind OK**: Max Tiefe ist `../../`. Absolute Imports wuerden tsconfig paths + vite alias + vitest config brauchen — kein Gewinn.
+- **Methoden 50-100 LOC sind akzeptabel** wenn die Logik kohaesiv ist und weitere Aufspaltung die Lesbarkeit verschlechtern wuerde (z.B. deleteTask, deleteSelectedTasks).
+- **Cross-Store-Zugriff via `getState()` AUSSERHALB von Immer `set()`**: Korrekte Pattern. Innerhalb von `set()` ist ein Anti-Pattern.
+- **Immer-Idiome**: `Object.assign(draft, updates)` statt Spread `{...draft, ...updates}`. Direkte Draft-Mutation ist korrekt und gewollt.
+- **`structuredClone` vs `current()` vs Shallow Clone**: Innerhalb Immer `set()` → `current()`. Ausserhalb (von `get()`) → `{ ...obj }` reicht (frozen objects, shallow clone genuegt fuer flache Task-Objekte).
+- **recordCommand aussen, nicht innen**: Undo/Redo-Recording nach `set()`, nicht innerhalb. Ermoeglicht saubere Trennung von State-Mutation und History-Tracking.
 
 ---
 
 ## Technical Debt Metrics
 - Dateien gesamt: 186 (+ 3 Font-Dateien, nicht reviewbar)
 - Dateien reviewed: 1 / 186
-- Kritische Issues bekannt: 24 any-Casts, 38 Hex-Farben
+- Kritische Issues bekannt: 23 any-Casts (historySlice), 38 Hex-Farben
 - Test-Coverage: 80%+
