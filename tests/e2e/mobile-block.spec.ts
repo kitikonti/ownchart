@@ -1,7 +1,11 @@
 import { test, expect, devices } from "@playwright/test";
 
 test.describe("Mobile block screen", () => {
-  test("shows block screen on mobile device", async ({ browser }) => {
+  test("shows block screen on mobile device", async ({
+    browser,
+    browserName,
+  }) => {
+    test.skip(browserName === "firefox", "Firefox does not support isMobile");
     const context = await browser.newContext({
       ...devices["iPhone 13"],
     });
@@ -16,7 +20,11 @@ test.describe("Mobile block screen", () => {
     await context.close();
   });
 
-  test("'Continue anyway' dismisses block screen", async ({ browser }) => {
+  test("'Continue anyway' dismisses block screen", async ({
+    browser,
+    browserName,
+  }) => {
+    test.skip(browserName === "firefox", "Firefox does not support isMobile");
     const context = await browser.newContext({
       ...devices["iPhone 13"],
     });
