@@ -31,6 +31,13 @@ import { useUserPreferencesStore } from "./userPreferencesSlice";
 import { useChartStore } from "./chartSlice";
 import { COLORS } from "../../styles/design-tokens";
 
+const DEFAULT_TASK_DURATION = 7;
+const MS_PER_DAY = 1000 * 60 * 60 * 24;
+const DEFAULT_TASK_NAME = "New Task";
+const PLACEHOLDER_TEXT = "Add new task...";
+const EXPAND_BUTTON_WIDTH = 16;
+const CELL_GAP_SIZE = 8;
+
 /** Capture a lightweight snapshot of task hierarchy (parent + order) for undo/redo. */
 function captureHierarchySnapshot(
   tasks: ReadonlyArray<Task>
@@ -234,7 +241,7 @@ function calculateGroupDates(
   );
   const startMs = new Date(startDate).getTime();
   const endMs = new Date(endDate).getTime();
-  const duration = Math.round((endMs - startMs) / (1000 * 60 * 60 * 24)) + 1;
+  const duration = Math.round((endMs - startMs) / MS_PER_DAY) + 1;
 
   return { startDate, endDate, duration };
 }
@@ -386,9 +393,9 @@ export const useTaskStore = create<TaskStore>()(
             if (milestoneDate) {
               updates.startDate = milestoneDate;
               const end = new Date(milestoneDate);
-              end.setDate(end.getDate() + 6); // 7 calendar days total
+              end.setDate(end.getDate() + (DEFAULT_TASK_DURATION - 1));
               updates.endDate = end.toISOString().split("T")[0];
-              updates.duration = 7;
+              updates.duration = DEFAULT_TASK_DURATION;
             }
           }
 
@@ -1070,8 +1077,8 @@ export const useTaskStore = create<TaskStore>()(
           if (columnId === "name") {
             const level = getTaskLevel(state.tasks as Task[], task.id);
             const hierarchyIndent = level * indentSize;
-            const expandButton = 16; // w-4 expand/collapse button
-            const gaps = 8; // gap-1 (4px) × 2 between elements
+            const expandButton = EXPAND_BUTTON_WIDTH;
+            const gaps = CELL_GAP_SIZE;
             const typeIcon = iconSize;
             extraWidths.push(hierarchyIndent + expandButton + gaps + typeIcon);
           } else {
@@ -1081,10 +1088,10 @@ export const useTaskStore = create<TaskStore>()(
 
         // For name column, include "Add new task..." placeholder
         if (columnId === "name") {
-          cellValues.push("Add new task...");
+          cellValues.push(PLACEHOLDER_TEXT);
           // Placeholder row has same UI elements as a level-0 task
-          const expandButton = 16;
-          const gaps = 8;
+          const expandButton = EXPAND_BUTTON_WIDTH;
+          const gaps = CELL_GAP_SIZE;
           const typeIcon = iconSize;
           extraWidths.push(expandButton + gaps + typeIcon);
         }
@@ -1162,10 +1169,10 @@ export const useTaskStore = create<TaskStore>()(
 
           // For name column, include "Add new task..." placeholder
           if (columnId === "name") {
-            cellValues.push("Add new task...");
+            cellValues.push(PLACEHOLDER_TEXT);
             // Placeholder row has same UI elements as a level-0 task
-            const expandButton = 16;
-            const gaps = 8;
+            const expandButton = EXPAND_BUTTON_WIDTH;
+            const gaps = CELL_GAP_SIZE;
             const typeIcon = iconSize;
             extraWidths.push(expandButton + gaps + typeIcon);
           }
@@ -1259,7 +1266,6 @@ export const useTaskStore = create<TaskStore>()(
       if (refIndex === -1) return;
 
       const refTask = state.tasks[refIndex];
-      const DEFAULT_DURATION = 7;
 
       // Calculate dates: new task ends one day before reference starts
       let endDate = "";
@@ -1272,22 +1278,22 @@ export const useTaskStore = create<TaskStore>()(
         endDate = end.toISOString().split("T")[0];
 
         const start = new Date(end);
-        start.setDate(end.getDate() - DEFAULT_DURATION + 1);
+        start.setDate(end.getDate() - DEFAULT_TASK_DURATION + 1);
         startDate = start.toISOString().split("T")[0];
       } else {
         // Reference has no start date, use today
         const today = new Date();
         const weekAgo = new Date(today);
-        weekAgo.setDate(today.getDate() - DEFAULT_DURATION + 1);
+        weekAgo.setDate(today.getDate() - DEFAULT_TASK_DURATION + 1);
         startDate = weekAgo.toISOString().split("T")[0];
         endDate = today.toISOString().split("T")[0];
       }
 
       const taskData: Omit<Task, "id"> = {
-        name: "New Task",
+        name: DEFAULT_TASK_NAME,
         startDate,
         endDate,
-        duration: DEFAULT_DURATION,
+        duration: DEFAULT_TASK_DURATION,
         progress: 0,
         color: COLORS.chart.taskDefault,
         order: refIndex,
@@ -1346,7 +1352,6 @@ export const useTaskStore = create<TaskStore>()(
       if (refIndex === -1 || count < 1) return;
 
       const refTask = state.tasks[refIndex];
-      const DEFAULT_DURATION = 7;
 
       const tasksToInsert: Array<Omit<Task, "id">> = [];
       const generatedIds: string[] = [];
@@ -1360,25 +1365,25 @@ export const useTaskStore = create<TaskStore>()(
           const refStart = new Date(refTask.startDate);
           // Each task stacks further before the reference
           const end = new Date(refStart);
-          end.setDate(refStart.getDate() - 1 - i * (DEFAULT_DURATION + 1));
+          end.setDate(refStart.getDate() - 1 - i * (DEFAULT_TASK_DURATION + 1));
           endDate = end.toISOString().split("T")[0];
 
           const start = new Date(end);
-          start.setDate(end.getDate() - DEFAULT_DURATION + 1);
+          start.setDate(end.getDate() - DEFAULT_TASK_DURATION + 1);
           startDate = start.toISOString().split("T")[0];
         } else {
           const today = new Date();
           const weekAgo = new Date(today);
-          weekAgo.setDate(today.getDate() - DEFAULT_DURATION + 1);
+          weekAgo.setDate(today.getDate() - DEFAULT_TASK_DURATION + 1);
           startDate = weekAgo.toISOString().split("T")[0];
           endDate = today.toISOString().split("T")[0];
         }
 
         const taskData: Omit<Task, "id"> = {
-          name: "New Task",
+          name: DEFAULT_TASK_NAME,
           startDate,
           endDate,
-          duration: DEFAULT_DURATION,
+          duration: DEFAULT_TASK_DURATION,
           progress: 0,
           color: COLORS.chart.taskDefault,
           order: refIndex + i, // Will be normalized
@@ -1445,7 +1450,6 @@ export const useTaskStore = create<TaskStore>()(
       if (refIndex === -1) return;
 
       const refTask = state.tasks[refIndex];
-      const DEFAULT_DURATION = 7;
 
       // Calculate dates: new task starts one day after reference ends
       let startDate = "";
@@ -1458,22 +1462,22 @@ export const useTaskStore = create<TaskStore>()(
         startDate = start.toISOString().split("T")[0];
 
         const end = new Date(start);
-        end.setDate(start.getDate() + DEFAULT_DURATION - 1);
+        end.setDate(start.getDate() + DEFAULT_TASK_DURATION - 1);
         endDate = end.toISOString().split("T")[0];
       } else {
         // Reference has no end date, use today
         const today = new Date();
         const nextWeek = new Date(today);
-        nextWeek.setDate(today.getDate() + DEFAULT_DURATION - 1);
+        nextWeek.setDate(today.getDate() + DEFAULT_TASK_DURATION - 1);
         startDate = today.toISOString().split("T")[0];
         endDate = nextWeek.toISOString().split("T")[0];
       }
 
       const taskData: Omit<Task, "id"> = {
-        name: "New Task",
+        name: DEFAULT_TASK_NAME,
         startDate,
         endDate,
-        duration: DEFAULT_DURATION,
+        duration: DEFAULT_TASK_DURATION,
         progress: 0,
         color: COLORS.chart.taskDefault,
         order: refIndex + 1,
