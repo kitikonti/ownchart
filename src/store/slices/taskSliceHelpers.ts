@@ -5,6 +5,8 @@
 import type { Task } from "../../types/chart.types";
 import type { CommandParams, CommandType } from "../../types/command.types";
 import { useHistoryStore } from "./historySlice";
+import { calculateSummaryDates } from "../../utils/hierarchy";
+import { toISODateString } from "../../utils/dateUtils";
 
 // =============================================================================
 // Constants
@@ -77,4 +79,60 @@ export function getRootSelectedIds(
     }
     return true;
   });
+}
+
+/**
+ * Validate and enrich updates for type-change side effects.
+ * For summary type, mutates the draft task's type (required by calculateSummaryDates).
+ * Returns null if the type change is invalid (e.g., milestone with children).
+ */
+export function computeTypeChangeEffects(
+  tasks: Task[],
+  taskId: string,
+  task: Task, // Immer draft — type may be mutated for summary
+  updates: Partial<Task>
+): Partial<Task> | null {
+  if (updates.type === undefined) return updates;
+
+  const enriched = { ...updates };
+
+  if (enriched.type === "milestone") {
+    const hasChildren = tasks.some((t) => t.parent === taskId);
+    if (hasChildren) return null;
+
+    // Milestone is a point in time: endDate = startDate
+    const currentStart = enriched.startDate ?? task.startDate;
+    enriched.endDate = currentStart || toISODateString(new Date());
+    if (!currentStart) {
+      enriched.startDate = enriched.endDate;
+    }
+    enriched.duration = 0;
+    enriched.progress = 0;
+  } else if (enriched.type === "task" && task.type === "milestone") {
+    const milestoneDate = task.startDate;
+    if (milestoneDate) {
+      enriched.startDate = milestoneDate;
+      const end = new Date(milestoneDate);
+      end.setDate(end.getDate() + (DEFAULT_TASK_DURATION - 1));
+      enriched.endDate = toISODateString(end);
+      enriched.duration = DEFAULT_TASK_DURATION;
+    }
+  } else if (enriched.type === "summary") {
+    // Set type on draft so calculateSummaryDates can check it
+    task.type = "summary";
+
+    const hasChildren = tasks.some((t) => t.parent === taskId);
+    if (hasChildren) {
+      const summaryDates = calculateSummaryDates(tasks, taskId);
+      if (summaryDates) {
+        enriched.startDate = summaryDates.startDate;
+        enriched.endDate = summaryDates.endDate;
+        enriched.duration = summaryDates.duration;
+      }
+    }
+    // No children: keep existing dates (recalculated when children are added)
+    enriched.open = true;
+  }
+
+  return enriched;
 }

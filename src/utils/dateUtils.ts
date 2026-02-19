@@ -13,6 +13,14 @@ import {
 import type { Task } from "../types/chart.types";
 
 /**
+ * Convert a Date to ISO date string (YYYY-MM-DD).
+ * Replaces the common `date.toISOString().split("T")[0]` pattern.
+ */
+export function toISODateString(date: Date): string {
+  return date.toISOString().split("T")[0];
+}
+
+/**
  * Calculate duration between two dates in days (inclusive)
  * @example calculateDuration('2025-01-01', '2025-01-05') // 5
  */

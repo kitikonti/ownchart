@@ -13,7 +13,6 @@ import {
   MAX_HIERARCHY_DEPTH,
   getTaskChildren,
   buildFlattenedTaskList,
-  calculateSummaryDates,
   recalculateSummaryAncestors,
   normalizeTaskOrder,
   getMaxDescendantLevel,
@@ -23,10 +22,10 @@ import { useFileStore } from "./fileSlice";
 import { CommandType } from "../../types/command.types";
 import { useChartStore } from "./chartSlice";
 import {
-  DEFAULT_TASK_DURATION,
   UNKNOWN_TASK_NAME,
   captureHierarchySnapshot,
   recordCommand,
+  computeTypeChangeEffects,
 } from "./taskSliceHelpers";
 import { createSelectionActions } from "./selectionActions";
 import { createExpansionActions } from "./expansionActions";
@@ -207,80 +206,46 @@ export const useTaskStore = create<TaskStore>()(
 
         const taskIndex = state.tasks.findIndex((task) => task.id === id);
         if (taskIndex !== -1) {
-          const currentTask = state.tasks[taskIndex];
-          taskName = currentTask.name;
+          const task = state.tasks[taskIndex];
+          taskName = task.name;
 
-          // Validate type change to milestone
-          if (updates.type === "milestone") {
-            const hasChildren = state.tasks.some((t) => t.parent === id);
-            if (hasChildren) {
-              return;
-            }
-            // Milestone is a point in time: endDate = startDate
-            const currentStart =
-              (updates.startDate as string) || currentTask.startDate;
-            updates.endDate =
-              currentStart || new Date().toISOString().split("T")[0];
-            if (!currentStart) {
-              updates.startDate = updates.endDate;
-            }
-            updates.duration = 0;
-            updates.progress = 0;
-          }
+          // Save original type before type-change logic
+          // (computeTypeChangeEffects may mutate task.type for summary)
+          const originalType = task.type;
 
-          // Handle type change from milestone to task
-          if (updates.type === "task" && currentTask.type === "milestone") {
-            const milestoneDate = currentTask.startDate;
-            if (milestoneDate) {
-              updates.startDate = milestoneDate;
-              const end = new Date(milestoneDate);
-              end.setDate(end.getDate() + (DEFAULT_TASK_DURATION - 1));
-              updates.endDate = end.toISOString().split("T")[0];
-              updates.duration = DEFAULT_TASK_DURATION;
-            }
-          }
+          // Validate and enrich updates for type-change side effects
+          const enriched = computeTypeChangeEffects(
+            state.tasks,
+            id,
+            task,
+            updates
+          );
+          if (!enriched) return; // Type change rejected (e.g., milestone with children)
+          updates = enriched;
 
-          // Handle type change to summary
-          if (updates.type === "summary") {
-            // Spread-replace (not direct mutation) so `currentTask` ref retains
-            // original values for previousValues capture below
-            state.tasks[taskIndex] = {
-              ...currentTask,
-              type: "summary",
-            };
-
-            const hasChildren = state.tasks.some((t) => t.parent === id);
-
-            if (hasChildren) {
-              // Has children - recalculate dates from children
-              const summaryDates = calculateSummaryDates(state.tasks, id);
-              if (summaryDates) {
-                updates.startDate = summaryDates.startDate;
-                updates.endDate = summaryDates.endDate;
-                updates.duration = summaryDates.duration;
-              }
-            } else {
-              // No children - keep existing dates so they survive type cycling
-              // (dates will be recalculated when children are added)
-            }
-            updates.open = true; // Summaries should be open by default
-          }
-
-          // Capture previous values for undo
-          Object.keys(updates).forEach((key) => {
+          // Capture previous values for undo (type uses saved original since
+          // computeTypeChangeEffects may have mutated task.type for summary)
+          for (const key of Object.keys(updates)) {
             const typedKey = key as keyof Task;
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            previousValues[typedKey] = currentTask[typedKey] as any;
-          });
+            if (typedKey === "type") {
+              previousValues.type = originalType;
+            } else {
+              // eslint-disable-next-line @typescript-eslint/no-explicit-any
+              previousValues[typedKey] = task[typedKey] as any;
+            }
+          }
 
-          // Apply update — uses Object.assign to mutate the existing draft/object
-          Object.assign(state.tasks[taskIndex], updates);
+          // Capture parent before applying updates
+          const parentId = task.parent;
+
+          // Apply update — uses Object.assign to mutate the existing draft
+          Object.assign(task, updates);
 
           // Check if parent needs recalculation (summary cascade)
-          if (currentTask.parent && (updates.startDate || updates.endDate)) {
+          if (parentId && (updates.startDate || updates.endDate)) {
             const cascadeResults = recalculateSummaryAncestors(
               state.tasks,
-              new Set([currentTask.parent])
+              new Set([parentId])
             );
             parentUpdates.push(...cascadeResults);
           }
@@ -493,7 +458,7 @@ export const useTaskStore = create<TaskStore>()(
       // Capture all tasks before deleting
       state.tasks.forEach((task) => {
         if (idsToDelete.has(task.id)) {
-          deletedTasks.push(structuredClone(task));
+          deletedTasks.push({ ...task });
         }
       });
 
@@ -516,20 +481,23 @@ export const useTaskStore = create<TaskStore>()(
         };
       }> = [];
 
-      set((s) => {
-        s.tasks = s.tasks.filter((task) => !idsToDelete.has(task.id));
-        s.selectedTaskIds = [];
-        s.clipboardTaskIds = s.clipboardTaskIds.filter(
+      set((state) => {
+        state.tasks = state.tasks.filter((task) => !idsToDelete.has(task.id));
+        state.selectedTaskIds = [];
+        state.clipboardTaskIds = state.clipboardTaskIds.filter(
           (id) => !idsToDelete.has(id)
         );
         // Clear active cell if it referenced a deleted task
-        if (s.activeCell.taskId && idsToDelete.has(s.activeCell.taskId)) {
-          s.activeCell = { taskId: null, field: null };
+        if (
+          state.activeCell.taskId &&
+          idsToDelete.has(state.activeCell.taskId)
+        ) {
+          state.activeCell = { taskId: null, field: null };
         }
 
         // Recalculate summary ancestors for affected parents
         cascadeUpdates = recalculateSummaryAncestors(
-          s.tasks,
+          state.tasks,
           affectedParentIds
         );
       });
