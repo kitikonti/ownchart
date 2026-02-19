@@ -334,6 +334,7 @@ cd ../app-gantt-review
     - Stale comment "3 levels = indices 0, 1, 2" removed from reorderTasks
     - O(n) `Array.includes` in `setSelectedTaskIds` → Set-based O(1) dedup
     - Redundant `as` type casts on initial state removed (store is already typed as TaskStore)
+    - DECISION: Relative imports are acceptable — max depth is `../../`, absolute imports would require tsconfig paths + vite alias + vitest config for no real gain
 
 ---
 
