@@ -37,6 +37,8 @@ const DEFAULT_TASK_DURATION = 7;
 const MS_PER_DAY = 1000 * 60 * 60 * 24;
 const DEFAULT_TASK_NAME = "New Task";
 const PLACEHOLDER_TEXT = "Add new task...";
+const DEFAULT_GROUP_NAME = "New Group";
+const UNKNOWN_TASK_NAME = "Unknown";
 const EXPAND_BUTTON_WIDTH = 16;
 const CELL_GAP_SIZE = 8;
 
@@ -156,10 +158,10 @@ type TaskStore = TaskState & TaskActions;
 function getRootSelectedIds(tasks: Task[], selectedIds: string[]): string[] {
   const selectedSet = new Set(selectedIds);
   return selectedIds.filter((id) => {
-    let current = tasks.find((t) => t.id === id);
-    while (current?.parent) {
-      if (selectedSet.has(current.parent)) return false;
-      current = tasks.find((t) => t.id === current!.parent);
+    let ancestor = tasks.find((t) => t.id === id);
+    while (ancestor?.parent) {
+      if (selectedSet.has(ancestor.parent)) return false;
+      ancestor = tasks.find((t) => t.id === ancestor!.parent);
     }
     return true;
   });
@@ -315,6 +317,16 @@ function setTaskOpen(state: TaskState, taskId: string, open: boolean): boolean {
   if (currentOpen === open) return false;
   task.open = open;
   return true;
+}
+
+/**
+ * Get the effective task IDs from selection or active cell.
+ * Returns selected task IDs if any, otherwise the active cell's task ID.
+ */
+function getEffectiveTaskIds(state: TaskState): string[] {
+  if (state.selectedTaskIds.length > 0) return state.selectedTaskIds;
+  if (state.activeCell.taskId) return [state.activeCell.taskId];
+  return [];
 }
 
 /**
@@ -490,7 +502,8 @@ export const useTaskStore = create<TaskStore>()(
 
           // Handle type change to summary
           if (updates.type === "summary") {
-            // Apply type change first so calculateSummaryDates can see it
+            // Spread-replace (not direct mutation) so `currentTask` ref retains
+            // original values for previousValues capture below
             state.tasks[taskIndex] = {
               ...currentTask,
               type: "summary",
@@ -520,11 +533,8 @@ export const useTaskStore = create<TaskStore>()(
             previousValues[typedKey] = currentTask[typedKey] as any;
           });
 
-          // Apply update to child task
-          state.tasks[taskIndex] = {
-            ...currentTask,
-            ...updates,
-          };
+          // Apply update — uses Object.assign to mutate the existing draft/object
+          Object.assign(state.tasks[taskIndex], updates);
 
           // Check if parent needs recalculation (summary cascade)
           if (currentTask.parent && (updates.startDate || updates.endDate)) {
@@ -721,7 +731,7 @@ export const useTaskStore = create<TaskStore>()(
         !historyStore.isRedoing &&
         deletedTasks.length > 0
       ) {
-        const taskName = deletedTasks[0]?.name || "Unknown";
+        const taskName = deletedTasks[0]?.name || UNKNOWN_TASK_NAME;
         const description =
           deletedTasks.length === 1
             ? `Deleted task "${taskName}"`
@@ -839,7 +849,7 @@ export const useTaskStore = create<TaskStore>()(
       const previousOrder = structuredClone(get().tasks);
 
       let changed = false;
-      let movedTaskName = "Unknown";
+      let movedTaskName = UNKNOWN_TASK_NAME;
 
       set((state) => {
         const activeTask = state.tasks.find((t) => t.id === activeTaskId);
@@ -1047,10 +1057,9 @@ export const useTaskStore = create<TaskStore>()(
         // Build visible fields list by filtering out hidden columns
         const chartState = useChartStore.getState();
         const hiddenColumns = chartState.hiddenColumns;
-        const visibleFields = EDITABLE_FIELDS.filter((field) => {
-          if (hiddenColumns.includes(field)) return false;
-          return true;
-        });
+        const visibleFields = EDITABLE_FIELDS.filter(
+          (field) => !hiddenColumns.includes(field)
+        );
 
         const fieldIndex = visibleFields.indexOf(activeCell.field);
         if (fieldIndex === -1) return;
@@ -1111,13 +1120,9 @@ export const useTaskStore = create<TaskStore>()(
 
     autoFitAllColumns: (): void =>
       set((state) => {
-        const autoFitColumnIds = [
-          "name",
-          "startDate",
-          "endDate",
-          "duration",
-          "progress",
-        ];
+        const autoFitColumnIds = TASK_COLUMNS.filter(
+          (col) => col.field && col.id !== "color"
+        ).map((col) => col.id);
         for (const colId of autoFitColumnIds) {
           fitColumnToContent(state, colId);
         }
@@ -1442,14 +1447,10 @@ export const useTaskStore = create<TaskStore>()(
     // Indent/Outdent actions
     indentSelectedTasks: (): void => {
       const historyStore = useHistoryStore.getState();
-      const { tasks, selectedTaskIds, activeCell } = get();
-      const taskIds =
-        selectedTaskIds.length > 0
-          ? selectedTaskIds
-          : activeCell.taskId
-            ? [activeCell.taskId]
-            : [];
+      const state = get();
+      const taskIds = getEffectiveTaskIds(state);
       if (taskIds.length === 0) return;
+      const { tasks } = state;
 
       // Create snapshot of current hierarchy BEFORE any changes
       const originalFlatList = buildFlattenedTaskList(tasks, new Set<string>());
@@ -1572,14 +1573,10 @@ export const useTaskStore = create<TaskStore>()(
 
     outdentSelectedTasks: (): void => {
       const historyStore = useHistoryStore.getState();
-      const { tasks, selectedTaskIds, activeCell } = get();
-      const taskIds =
-        selectedTaskIds.length > 0
-          ? selectedTaskIds
-          : activeCell.taskId
-            ? [activeCell.taskId]
-            : [];
+      const state = get();
+      const taskIds = getEffectiveTaskIds(state);
       if (taskIds.length === 0) return;
+      const { tasks } = state;
 
       // Create snapshot of current hierarchy BEFORE any changes
       const originalHierarchy = new Map(
@@ -1674,14 +1671,10 @@ export const useTaskStore = create<TaskStore>()(
     },
 
     canIndentSelection: (): boolean => {
-      const { tasks, selectedTaskIds, activeCell } = get();
-      const taskIds =
-        selectedTaskIds.length > 0
-          ? selectedTaskIds
-          : activeCell.taskId
-            ? [activeCell.taskId]
-            : [];
+      const state = get();
+      const taskIds = getEffectiveTaskIds(state);
       if (taskIds.length === 0) return false;
+      const { tasks } = state;
 
       const flatList = buildFlattenedTaskList(tasks, new Set<string>());
 
@@ -1706,14 +1699,10 @@ export const useTaskStore = create<TaskStore>()(
     },
 
     canOutdentSelection: (): boolean => {
-      const { tasks, selectedTaskIds, activeCell } = get();
-      const taskIds =
-        selectedTaskIds.length > 0
-          ? selectedTaskIds
-          : activeCell.taskId
-            ? [activeCell.taskId]
-            : [];
+      const state = get();
+      const taskIds = getEffectiveTaskIds(state);
       if (taskIds.length === 0) return false;
+      const { tasks } = state;
 
       return taskIds.some((taskId) => {
         const task = tasks.find((t) => t.id === taskId);
@@ -1776,7 +1765,7 @@ export const useTaskStore = create<TaskStore>()(
 
       const summaryTask: Task = {
         id: summaryId,
-        name: "New Group",
+        name: DEFAULT_GROUP_NAME,
         startDate: dates.startDate,
         endDate: dates.endDate,
         duration: dates.duration,
