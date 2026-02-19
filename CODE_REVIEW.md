@@ -71,7 +71,7 @@ cd ../app-gantt-review
 ## File Review Index
 
 ### Priority: HIGH — Store Slices (Kern-Zustandslogik)
-- [x] `src/store/slices/taskSlice.ts` (~1920 LOC) — reviewed, 2 bugs fixed, dead code removed, constants extracted, helpers deduplicated
+- [x] `src/store/slices/taskSlice.ts` (~1920 LOC) — reviewed (2 passes), 2 bugs fixed, dead code removed, constants extracted, helpers deduplicated, code quality cleanup
 - [ ] `src/store/slices/historySlice.ts` (1035 LOC) — 23x any
 - [ ] `src/store/slices/chartSlice.ts` (984 LOC)
 - [ ] `src/store/slices/clipboardSlice.ts` (908 LOC)
@@ -310,6 +310,16 @@ cd ../app-gantt-review
   - Cleanup: JSON.parse(JSON.stringify()) → structuredClone/current(immer)
   - Cleanup: Merged double set() calls in 3 insert methods
   - DEFERRED: Insert method consolidation (insertAbove/Below/Multiple → shared helper)
+  - Pass 2 (code quality cleanup):
+    - Variable shadowing: `current` → `ancestor` in getRootSelectedIds (shadowed Immer import)
+    - DRY: extracted `getEffectiveTaskIds` helper (4x duplicated selection pattern)
+    - Simplified redundant filter lambda in navigateCell
+    - Extracted inline strings "New Group", "Unknown" to constants
+    - `autoFitAllColumns` column list now derived from TASK_COLUMNS (was hardcoded)
+    - Idiomatic Immer: Object.assign instead of spread in updateTask
+    - DEFERRED: Toast in store (WARNING #3) — UI side effect, requires cross-file refactor
+    - DEFERRED: reorderTasks heavy undo data (WARNING #8) — requires historySlice change
+    - DEFERRED: 11 methods >50 lines (WARNING #4) — systemic, Undo boilerplate is main cause
 
 ---
 
