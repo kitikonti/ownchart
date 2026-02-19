@@ -59,7 +59,7 @@ cd ../app-gantt-review
 ### `any`-Casts (24 Stueck)
 - `src/store/slices/historySlice.ts` — 23x `as any` / `(x: any)` in executeUndo/RedoCommand
 - `src/store/slices/taskSlice.ts` — 1x Zeile 429 (legitimiertes TS-Limit)
-- `src/types/command.types.ts` — `DeleteTaskParams` fehlt `cascadeUpdates` Feld
+- `src/types/command.types.ts` — `DeleteTaskParams` `cascadeUpdates` Feld hinzugefuegt (fixed)
 
 ### Hardcoded Hex-Farben (38 Stueck in 10 .tsx-Dateien)
 - `design-tokens.ts` existiert, wird aber von SVG-Komponenten nicht genutzt
@@ -71,7 +71,7 @@ cd ../app-gantt-review
 ## File Review Index
 
 ### Priority: HIGH — Store Slices (Kern-Zustandslogik)
-- [ ] `src/store/slices/taskSlice.ts` (2137 LOC) — 1x any, groesste Datei
+- [x] `src/store/slices/taskSlice.ts` (~1920 LOC) — reviewed, 2 bugs fixed, dead code removed, constants extracted, helpers deduplicated
 - [ ] `src/store/slices/historySlice.ts` (1035 LOC) — 23x any
 - [ ] `src/store/slices/chartSlice.ts` (984 LOC)
 - [ ] `src/store/slices/clipboardSlice.ts` (908 LOC)
@@ -81,7 +81,7 @@ cd ../app-gantt-review
 - [ ] `src/store/slices/fileSlice.ts` (82 LOC)
 
 ### Priority: HIGH — Core Types & Config
-- [ ] `src/types/command.types.ts` (308 LOC) — DeleteTaskParams unvollstaendig
+- [ ] `src/types/command.types.ts` (~250 LOC) — DeleteTaskParams fixed, dead types removed (partial review during taskSlice work)
 - [ ] `src/types/preferences.types.ts` (196 LOC)
 - [ ] `src/types/dependency.types.ts` (100 LOC)
 - [ ] `src/types/colorMode.types.ts` (84 LOC)
@@ -295,12 +295,26 @@ cd ../app-gantt-review
 ### Bekannte Cross-Cutting Concerns
 - **Hardcoded Hex-Farben**: 38 Stueck in 10 .tsx-Dateien → `design-tokens.ts` erweitern
 - **`any`-Casts in historySlice**: Betrifft auch `command.types.ts` (fehlende Felder)
-- **taskSlice Groesse**: 2137 LOC → Split-Kandidat nach Review
+- **taskSlice Groesse**: ~1920 LOC (reduced from 2137) → Split-Kandidat nach Review
+- **taskSlice Review Findings** (cleanup/code-review branch):
+  - BUG: Hardcoded depth `3` in reorderTasks → replaced with MAX_HIERARCHY_DEPTH
+  - BUG: deleteTask cascade didn't capture cascadeUpdates for undo → fixed both paths
+  - Dead code: moveTaskToParent, createSummaryTask, convertToSummary, convertToTask removed
+  - Dead code: 9 unused CommandType enum values + 4 unused interfaces removed
+  - Dead code: 6 unused undo/redo switch cases removed from historySlice
+  - Constants: DEFAULT_TASK_DURATION, MS_PER_DAY, DEFAULT_TASK_NAME, etc. extracted
+  - Dedup: collectDescendantIds shared helper in hierarchy.ts
+  - Dedup: fitColumnToContent helper eliminates ~100 LOC of duplicated autoFit code
+  - Dedup: setTaskOpen/setAllTasksOpen helpers for expand/collapse
+  - Missing: expand/collapse now calls markDirty() (was silently not persisting)
+  - Cleanup: JSON.parse(JSON.stringify()) → structuredClone/current(immer)
+  - Cleanup: Merged double set() calls in 3 insert methods
+  - DEFERRED: Insert method consolidation (insertAbove/Below/Multiple → shared helper)
 
 ---
 
 ## Technical Debt Metrics
 - Dateien gesamt: 186 (+ 3 Font-Dateien, nicht reviewbar)
-- Dateien reviewed: 0 / 186
+- Dateien reviewed: 1 / 186
 - Kritische Issues bekannt: 24 any-Casts, 38 Hex-Farben
 - Test-Coverage: 80%+
