@@ -328,6 +328,12 @@ cd ../app-gantt-review
     - O(n*m) depth check in validateGroupSelection → replaced with getMaxDescendantLevel
     - Command description consistency: indent/outdent now use "Indented 1 task" / "Outdented 1 task" (matches group/ungroup pattern)
     - NOTE: Fix 3 (redundant order normalization) was NOT applied — normalizeTaskOrder depends on sequential order values as input
+  - Pass 4 (fourth-pass review via /review skill):
+    - Redundant `getTaskLevel(activeTaskId)` inside loop in reorderTasks → hoisted + replaced with `getMaxDescendantLevel`
+    - Orphaned JSDoc comment removed (stale "Task store hook" above EDITABLE_FIELDS)
+    - Stale comment "3 levels = indices 0, 1, 2" removed from reorderTasks
+    - O(n) `Array.includes` in `setSelectedTaskIds` → Set-based O(1) dedup
+    - Redundant `as` type casts on initial state removed (store is already typed as TaskStore)
 
 ---
 

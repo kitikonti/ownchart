@@ -302,9 +302,6 @@ function buildUngroupUndoData(
 }
 
 /**
- * Task store hook with immer middleware for immutable updates.
- */
-/**
  * Editable fields in order of tab navigation.
  */
 const EDITABLE_FIELDS: EditableField[] = [
@@ -537,18 +534,18 @@ export const useTaskStore = create<TaskStore>()(
 
     return {
       // State (start with empty list - placeholder row allows adding new tasks)
-      tasks: [] as Task[],
-      selectedTaskIds: [] as string[],
-      lastSelectedTaskId: null as string | null,
+      tasks: [],
+      selectedTaskIds: [],
+      lastSelectedTaskId: null,
       activeCell: {
-        taskId: null as string | null,
-        field: null as EditableField | null,
+        taskId: null,
+        field: null,
       },
       isEditingCell: false,
-      columnWidths: {} as Record<string, number>,
-      taskTableWidth: null as number | null,
-      clipboardTaskIds: [] as string[],
-      cutCell: null as { taskId: string; field: EditableField } | null,
+      columnWidths: {},
+      taskTableWidth: null,
+      clipboardTaskIds: [],
+      cutCell: null,
 
       // Actions
       addTask: (taskData): void => {
@@ -961,17 +958,11 @@ export const useTaskStore = create<TaskStore>()(
               return;
             }
 
-            // Max depth check (3 levels = indices 0, 1, 2)
+            // Max depth check
             const targetLevel = getTaskLevel(state.tasks, overTaskId);
-            const descendants = getTaskDescendants(state.tasks, activeTaskId);
-            let activeSubtreeDepth = 0;
-            for (const desc of descendants) {
-              const descLevel =
-                getTaskLevel(state.tasks, desc.id) -
-                getTaskLevel(state.tasks, activeTaskId);
-              if (descLevel > activeSubtreeDepth)
-                activeSubtreeDepth = descLevel;
-            }
+            const activeLevel = getTaskLevel(state.tasks, activeTaskId);
+            const activeSubtreeDepth =
+              getMaxDescendantLevel(state.tasks, activeTaskId) - activeLevel;
             if (targetLevel + activeSubtreeDepth >= MAX_HIERARCHY_DEPTH) {
               return;
             }
@@ -1107,9 +1098,8 @@ export const useTaskStore = create<TaskStore>()(
         set((state) => {
           if (addToSelection) {
             // Add to existing selection (avoid duplicates)
-            const newIds = ids.filter(
-              (id) => !state.selectedTaskIds.includes(id)
-            );
+            const existingSet = new Set(state.selectedTaskIds);
+            const newIds = ids.filter((id) => !existingSet.has(id));
             state.selectedTaskIds = [...state.selectedTaskIds, ...newIds];
           } else {
             // Replace selection
