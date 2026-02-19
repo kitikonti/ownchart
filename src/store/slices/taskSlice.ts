@@ -115,7 +115,6 @@ interface TaskActions {
   setTaskTableWidth: (width: number | null) => void;
 
   // Hierarchy actions
-  moveTaskToParent: (taskId: string, newParentId: string | null) => void;
   toggleTaskCollapsed: (taskId: string) => void;
   expandTask: (taskId: string) => void;
   collapseTask: (taskId: string) => void;
@@ -129,11 +128,6 @@ interface TaskActions {
   canGroupSelection: () => boolean;
   ungroupSelectedTasks: () => void;
   canUngroupSelection: () => boolean;
-
-  // Summary task creation
-  createSummaryTask: (data: Omit<Task, "id" | "type">) => string;
-  convertToSummary: (taskId: string) => void;
-  convertToTask: (taskId: string) => void;
 
   // Insert task relative to another
   insertTaskAbove: (referenceTaskId: string) => void;
@@ -1193,55 +1187,6 @@ export const useTaskStore = create<TaskStore>()(
       }),
 
     // Hierarchy actions
-    moveTaskToParent: (taskId, newParentId): void =>
-      set((state) => {
-        const task = state.tasks.find((t) => t.id === taskId);
-        if (!task) return;
-
-        // Validate: prevent circular hierarchy
-        if (
-          newParentId &&
-          wouldCreateCircularHierarchy(state.tasks, taskId, newParentId)
-        ) {
-          console.error("Cannot move task: would create circular hierarchy");
-          return;
-        }
-
-        // Validate: parent must be able to have children (milestones cannot be parents)
-        if (newParentId) {
-          const newParent = state.tasks.find((t) => t.id === newParentId);
-          if (newParent && !canHaveChildren(newParent)) {
-            console.error("Cannot move task: milestones cannot be parents");
-            return;
-          }
-        }
-
-        // Validate: max depth 3 levels
-        if (newParentId) {
-          const newLevel = getTaskLevel(state.tasks, newParentId) + 1;
-          if (newLevel > 3) {
-            console.error(
-              "Cannot move task: maximum nesting depth is 3 levels"
-            );
-            return;
-          }
-        }
-
-        const oldParentId = task.parent;
-        task.parent = newParentId ?? undefined;
-
-        // Recalculate summary dates for affected parents
-        const affectedParents = new Set<string>();
-        if (newParentId) affectedParents.add(newParentId);
-        if (oldParentId) affectedParents.add(oldParentId);
-        if (affectedParents.size > 0) {
-          recalculateSummaryAncestors(state.tasks, affectedParents);
-        }
-
-        // Normalize order so children follow their parent
-        normalizeTaskOrder(state.tasks);
-      }),
-
     toggleTaskCollapsed: (taskId): void =>
       set((state) => {
         const task = state.tasks.find((t) => t.id === taskId);
@@ -1303,70 +1248,6 @@ export const useTaskStore = create<TaskStore>()(
             task.open = false;
           }
         });
-      }),
-
-    // Summary task creation
-    createSummaryTask: (data): string => {
-      let newId = "";
-      set((state) => {
-        const newTask: Task = {
-          ...data,
-          id: crypto.randomUUID(),
-          type: "summary",
-          open: true, // Expanded by default
-        };
-        newId = newTask.id;
-        state.tasks.push(newTask);
-      });
-      return newId;
-    },
-
-    convertToSummary: (taskId): void =>
-      set((state) => {
-        const task = state.tasks.find((t) => t.id === taskId);
-        if (!task) return;
-
-        task.type = "summary";
-        task.open = true;
-
-        // Check if task has children
-        const hasChildren = state.tasks.some((t) => t.parent === taskId);
-
-        if (hasChildren) {
-          // Recalculate dates from children
-          const summaryDates = calculateSummaryDates(state.tasks, taskId);
-          if (summaryDates) {
-            task.startDate = summaryDates.startDate;
-            task.endDate = summaryDates.endDate;
-            task.duration = summaryDates.duration;
-          }
-        } else {
-          // No children - clear dates (summary should have no bar)
-          task.startDate = "";
-          task.endDate = "";
-          task.duration = 0;
-        }
-      }),
-
-    convertToTask: (taskId): void =>
-      set((state) => {
-        const task = state.tasks.find((t) => t.id === taskId);
-        if (!task) return;
-
-        // Tasks CAN have children - just switch the date calculation mode
-        // Children's dates will no longer affect this task's dates
-        task.type = "task";
-
-        // Keep 'open' state if has children (for expand/collapse)
-        const hasChildren = state.tasks.some((t) => t.parent === taskId);
-        if (!hasChildren) {
-          task.open = undefined; // Not needed if no children
-        }
-
-        // User notification: Dates are now manual
-        console.info(
-          "Task dates are now manual. Children dates do not affect this task."
-        );
       }),
 
     // Insert task relative to another

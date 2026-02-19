@@ -72,9 +72,6 @@ const NON_DATA_COMMANDS = new Set([
   "cutRows",
   "copyCell",
   "cutCell",
-  "toggleTaskSelection",
-  "selectTaskRange",
-  "clearSelection",
 ]);
 
 export const useHistoryStore = create<HistoryStore>()(
@@ -294,15 +291,6 @@ function executeUndoCommand(command: Command): void {
       break;
     }
 
-    case "moveTaskToParent": {
-      const params = command.params as any;
-      taskStore.moveTaskToParent(
-        params.taskId,
-        params.previousParentId ?? null
-      );
-      break;
-    }
-
     case "indentSelectedTasks":
     case "outdentSelectedTasks": {
       const params = command.params as IndentOutdentParams;
@@ -330,50 +318,12 @@ function executeUndoCommand(command: Command): void {
       break;
     }
 
-    case "convertToSummary": {
-      const params = command.params as any;
-      taskStore.convertToTask(params.taskId);
-      break;
-    }
-
-    case "convertToTask": {
-      const params = command.params as any;
-      taskStore.convertToSummary(params.taskId);
-      break;
-    }
-
-    case "toggleTaskSelection": {
-      const params = command.params as any;
-      // Restore previous selection
-      useTaskStore.setState({
-        selectedTaskIds: params.previousSelection,
-      });
-      break;
-    }
-
-    case "clearSelection": {
-      const params = command.params as any;
-      // Restore previous selection
-      useTaskStore.setState({
-        selectedTaskIds: params.previousSelection,
-      });
-      break;
-    }
-
     case "reorderTasks": {
       const params = command.params as any;
       // Restore previous order
       useTaskStore.setState({
         tasks: params.previousOrder,
       });
-      break;
-    }
-
-    case "toggleTaskCollapsed": {
-      const params = command.params as any;
-      if (params.taskId) {
-        taskStore.toggleTaskCollapsed(params.taskId);
-      }
       break;
     }
 
@@ -704,12 +654,6 @@ function executeRedoCommand(command: Command): void {
       break;
     }
 
-    case "moveTaskToParent": {
-      const params = command.params as any;
-      taskStore.moveTaskToParent(params.taskId, params.newParentId);
-      break;
-    }
-
     case "indentSelectedTasks":
     case "outdentSelectedTasks": {
       const params = command.params as IndentOutdentParams;
@@ -737,46 +681,10 @@ function executeRedoCommand(command: Command): void {
       break;
     }
 
-    case "convertToSummary": {
-      const params = command.params as any;
-      taskStore.convertToSummary(params.taskId);
-      break;
-    }
-
-    case "convertToTask": {
-      const params = command.params as any;
-      taskStore.convertToTask(params.taskId);
-      break;
-    }
-
-    case "toggleTaskSelection": {
-      const params = command.params as any;
-      // Toggle back to new selection
-      useTaskStore.setState({
-        selectedTaskIds: params.taskIds,
-      });
-      break;
-    }
-
-    case "clearSelection": {
-      useTaskStore.setState({
-        selectedTaskIds: [],
-      });
-      break;
-    }
-
     case "reorderTasks": {
       const params = command.params as any;
       // Re-execute the reorder
       taskStore.reorderTasks(params.activeTaskId, params.overTaskId);
-      break;
-    }
-
-    case "toggleTaskCollapsed": {
-      const params = command.params as any;
-      if (params.taskId) {
-        taskStore.toggleTaskCollapsed(params.taskId);
-      }
       break;
     }
 

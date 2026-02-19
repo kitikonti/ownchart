@@ -3,7 +3,7 @@
  * Every user action becomes a serializable command that can be undone/redone
  */
 
-import type { Task, TaskType } from "./chart.types";
+import type { Task } from "./chart.types";
 import type { Dependency, DateAdjustment } from "./dependency.types";
 import type { ColorModeState } from "./colorMode.types";
 
@@ -28,25 +28,10 @@ export enum CommandType {
   REORDER_TASKS = "reorderTasks",
 
   // Hierarchy operations
-  MOVE_TASK_TO_PARENT = "moveTaskToParent",
   INDENT_TASKS = "indentSelectedTasks",
   OUTDENT_TASKS = "outdentSelectedTasks",
   GROUP_TASKS = "groupTasks",
   UNGROUP_TASKS = "ungroupTasks",
-
-  // Type conversions
-  CONVERT_TO_SUMMARY = "convertToSummary",
-  CONVERT_TO_TASK = "convertToTask",
-
-  // Selection operations
-  TOGGLE_TASK_SELECTION = "toggleTaskSelection",
-  SELECT_TASK_RANGE = "selectTaskRange",
-  CLEAR_SELECTION = "clearSelection",
-
-  // Collapse/expand
-  TOGGLE_TASK_COLLAPSED = "toggleTaskCollapsed",
-  EXPAND_ALL = "expandAll",
-  COLLAPSE_ALL = "collapseAll",
 
   // Dependency operations (Sprint 1.4)
   ADD_DEPENDENCY = "addDependency",
@@ -79,11 +64,7 @@ export type CommandParams =
   | UpdateTaskParams
   | DeleteTaskParams
   | ReorderTasksParams
-  | MoveTaskParams
   | IndentOutdentParams
-  | ConvertTypeParams
-  | SelectionParams
-  | CollapseParams
   | AddDependencyParams
   | DeleteDependencyParams
   | UpdateDependencyParams
@@ -138,12 +119,6 @@ export interface ReorderTasksParams {
   previousOrder: Task[]; // Store previous order for undo
 }
 
-export interface MoveTaskParams {
-  taskId: string;
-  newParentId: string | null;
-  previousParentId: string | null; // For undo
-}
-
 export interface IndentOutdentParams {
   taskIds: string[];
   changes: Array<{
@@ -161,22 +136,6 @@ export interface IndentOutdentParams {
     parent: string | undefined;
     order: number;
   }>;
-}
-
-export interface ConvertTypeParams {
-  taskId: string;
-  newType: TaskType;
-  previousType: TaskType;
-}
-
-export interface SelectionParams {
-  taskIds: string[];
-  previousSelection: string[]; // For undo
-}
-
-export interface CollapseParams {
-  taskId?: string; // undefined for expand/collapseAll
-  previousState: boolean | Record<string, boolean>; // Single boolean or map of all tasks
 }
 
 // Dependency command params (Sprint 1.4)
