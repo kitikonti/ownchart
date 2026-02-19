@@ -23,52 +23,28 @@ import {
 } from "../../utils/hierarchy";
 import { canHaveChildren } from "../../utils/validation";
 import toast from "react-hot-toast";
-import { useHistoryStore } from "./historySlice";
 import { useDependencyStore } from "./dependencySlice";
 import { useFileStore } from "./fileSlice";
-import {
-  CommandType,
-  type CommandParams,
-  UngroupTasksParams,
-} from "../../types/command.types";
+import { CommandType, type UngroupTasksParams } from "../../types/command.types";
 import { TASK_COLUMNS } from "../../config/tableColumns";
 import { calculateColumnWidth } from "../../utils/textMeasurement";
 import { useUserPreferencesStore } from "./userPreferencesSlice";
 import { useChartStore } from "./chartSlice";
 import { COLORS } from "../../styles/design-tokens";
-
-const DEFAULT_TASK_DURATION = 7;
-const MS_PER_DAY = 1000 * 60 * 60 * 24;
-const DEFAULT_TASK_NAME = "New Task";
-const PLACEHOLDER_TEXT = "Add new task...";
-const DEFAULT_GROUP_NAME = "New Group";
-const UNKNOWN_TASK_NAME = "Unknown";
-const EXPAND_BUTTON_WIDTH = 16;
-const CELL_GAP_SIZE = 8;
-
-/** Capture a lightweight snapshot of task hierarchy (parent + order) for undo/redo. */
-function captureHierarchySnapshot(
-  tasks: ReadonlyArray<Task>
-): Array<{ id: string; parent: string | undefined; order: number }> {
-  return tasks.map((t) => ({ id: t.id, parent: t.parent, order: t.order }));
-}
-
-/** Record a command for undo/redo. No-op during undo/redo replay. */
-function recordCommand(
-  type: CommandType,
-  description: string,
-  params: CommandParams
-): void {
-  const historyStore = useHistoryStore.getState();
-  if (historyStore.isUndoing || historyStore.isRedoing) return;
-  historyStore.recordCommand({
-    id: crypto.randomUUID(),
-    type,
-    timestamp: Date.now(),
-    description,
-    params,
-  });
-}
+import {
+  DEFAULT_TASK_DURATION,
+  MS_PER_DAY,
+  DEFAULT_TASK_NAME,
+  PLACEHOLDER_TEXT,
+  DEFAULT_GROUP_NAME,
+  UNKNOWN_TASK_NAME,
+  EXPAND_BUTTON_WIDTH,
+  CELL_GAP_SIZE,
+  captureHierarchySnapshot,
+  recordCommand,
+  getEffectiveTaskIds,
+  getRootSelectedIds,
+} from "./taskSliceHelpers";
 
 /**
  * Editable field types for cell-based editing.
@@ -171,22 +147,6 @@ interface TaskActions {
  * Combined store interface.
  */
 type TaskStore = TaskState & TaskActions;
-
-/**
- * Given a set of selected task IDs, returns only the topmost ancestors.
- * If a parent and its child are both selected, only the parent is kept.
- */
-function getRootSelectedIds(tasks: Task[], selectedIds: string[]): string[] {
-  const selectedSet = new Set(selectedIds);
-  return selectedIds.filter((id) => {
-    let ancestor = tasks.find((t) => t.id === id);
-    while (ancestor?.parent) {
-      if (selectedSet.has(ancestor.parent)) return false;
-      ancestor = tasks.find((t) => t.id === ancestor!.parent);
-    }
-    return true;
-  });
-}
 
 /**
  * Validates whether the current selection can be grouped.
@@ -326,16 +286,6 @@ function setTaskOpen(state: TaskState, taskId: string, open: boolean): boolean {
   if (currentOpen === open) return false;
   task.open = open;
   return true;
-}
-
-/**
- * Get the effective task IDs from selection or active cell.
- * Returns selected task IDs if any, otherwise the active cell's task ID.
- */
-function getEffectiveTaskIds(state: TaskState): string[] {
-  if (state.selectedTaskIds.length > 0) return state.selectedTaskIds;
-  if (state.activeCell.taskId) return [state.activeCell.taskId];
-  return [];
 }
 
 /**
