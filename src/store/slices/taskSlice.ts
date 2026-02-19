@@ -7,11 +7,9 @@ import { create } from "zustand";
 import { immer } from "zustand/middleware/immer";
 import { current } from "immer";
 import type { Task } from "../../types/chart.types";
-import type { Dependency } from "../../types/dependency.types";
 import {
   wouldCreateCircularHierarchy,
   getTaskLevel,
-  getTaskDescendants,
   MAX_HIERARCHY_DEPTH,
   getTaskChildren,
   buildFlattenedTaskList,
@@ -21,26 +19,21 @@ import {
   getMaxDescendantLevel,
   collectDescendantIds,
 } from "../../utils/hierarchy";
-import toast from "react-hot-toast";
-import { useDependencyStore } from "./dependencySlice";
 import { useFileStore } from "./fileSlice";
-import { CommandType, type UngroupTasksParams } from "../../types/command.types";
+import { CommandType } from "../../types/command.types";
 import { useChartStore } from "./chartSlice";
-import { COLORS } from "../../styles/design-tokens";
 import {
   DEFAULT_TASK_DURATION,
-  MS_PER_DAY,
-  DEFAULT_TASK_NAME,
-  DEFAULT_GROUP_NAME,
   UNKNOWN_TASK_NAME,
   captureHierarchySnapshot,
   recordCommand,
-  getRootSelectedIds,
 } from "./taskSliceHelpers";
 import { createSelectionActions } from "./selectionActions";
 import { createExpansionActions } from "./expansionActions";
 import { createColumnActions } from "./columnActions";
 import { createIndentOutdentActions } from "./indentOutdentActions";
+import { createGroupingActions } from "./groupingActions";
+import { createInsertionActions } from "./insertionActions";
 
 /**
  * Editable field types for cell-based editing.
@@ -150,119 +143,6 @@ export type TaskSliceSet = (fn: (state: TaskStore) => void) => void;
 export type TaskSliceGet = () => TaskStore;
 
 /**
- * Validates whether the current selection can be grouped.
- * Returns root IDs on success, or an error message string on failure.
- */
-function validateGroupSelection(
-  tasks: Task[],
-  selectedIds: string[]
-): { rootIds: string[] } | { error: string } {
-  if (selectedIds.length === 0) return { error: "No tasks selected" };
-
-  const rootIds = getRootSelectedIds(tasks, selectedIds);
-  if (rootIds.length === 0) return { error: "No root tasks in selection" };
-
-  // All must share the same parent
-  const parents = new Set(
-    rootIds.map((id) => tasks.find((t) => t.id === id)?.parent)
-  );
-  if (parents.size !== 1) {
-    return { error: "Cannot group: selected tasks must share the same parent" };
-  }
-
-  // Check nesting depth: grouping pushes tasks one level deeper
-  for (const id of rootIds) {
-    if (getMaxDescendantLevel(tasks, id) + 1 >= MAX_HIERARCHY_DEPTH) {
-      return {
-        error: "Cannot group: maximum nesting depth would be exceeded",
-      };
-    }
-  }
-
-  return { rootIds };
-}
-
-/**
- * Calculate the date span across tasks and their descendants.
- */
-function calculateGroupDates(
-  tasks: Task[],
-  rootIds: string[]
-): { startDate: string; endDate: string; duration: number } {
-  const allDates: { start: string; end: string }[] = [];
-
-  for (const id of rootIds) {
-    const task = tasks.find((t) => t.id === id);
-    if (task?.startDate && task.endDate) {
-      allDates.push({ start: task.startDate, end: task.endDate });
-    }
-    const descs = getTaskDescendants(tasks, id);
-    for (const d of descs) {
-      if (d.startDate && d.endDate) {
-        allDates.push({ start: d.startDate, end: d.endDate });
-      }
-    }
-  }
-
-  if (allDates.length === 0) {
-    return { startDate: "", endDate: "", duration: 0 };
-  }
-
-  const startDate = allDates.reduce(
-    (min, d) => (d.start < min ? d.start : min),
-    allDates[0].start
-  );
-  const endDate = allDates.reduce(
-    (max, d) => (d.end > max ? d.end : max),
-    allDates[0].end
-  );
-  const startMs = new Date(startDate).getTime();
-  const endMs = new Date(endDate).getTime();
-  const duration = Math.round((endMs - startMs) / MS_PER_DAY) + 1;
-
-  return { startDate, endDate, duration };
-}
-
-/**
- * Build undo data for ungroup: captures each summary's state,
- * child parent/order changes, and dependencies to remove.
- */
-function buildUngroupUndoData(
-  tasks: Task[],
-  sortedSummaries: Task[],
-  dependencies: Dependency[]
-): {
-  ungroupedSummaries: UngroupTasksParams["ungroupedSummaries"];
-  childIdsAll: string[];
-} {
-  const ungroupedSummaries: UngroupTasksParams["ungroupedSummaries"] = [];
-  const childIdsAll: string[] = [];
-
-  for (const summary of sortedSummaries) {
-    const children = getTaskChildren(tasks, summary.id);
-    const childChanges = children.map((child) => ({
-      taskId: child.id,
-      oldParent: child.parent,
-      oldOrder: child.order,
-    }));
-
-    const deps = dependencies.filter(
-      (d) => d.fromTaskId === summary.id || d.toTaskId === summary.id
-    );
-
-    ungroupedSummaries.push({
-      summaryTask: structuredClone(summary),
-      childChanges,
-      removedDependencies: structuredClone(deps),
-    });
-
-    childIdsAll.push(...children.map((c) => c.id));
-  }
-
-  return { ungroupedSummaries, childIdsAll };
-}
-
-/**
  * Editable fields in order of tab navigation.
  */
 const EDITABLE_FIELDS: EditableField[] = [
@@ -276,126 +156,7 @@ const EDITABLE_FIELDS: EditableField[] = [
 ];
 
 export const useTaskStore = create<TaskStore>()(
-  immer((set, get) => {
-    /** Insert tasks above or below a reference task. */
-    function insertTasksRelative(
-      referenceTaskId: string,
-      direction: "above" | "below",
-      count = 1
-    ): void {
-      const state = get();
-      const refIndex = state.tasks.findIndex((t) => t.id === referenceTaskId);
-      if (refIndex === -1 || count < 1) return;
-
-      const refTask = state.tasks[refIndex];
-      const spliceIndex = direction === "above" ? refIndex : refIndex + 1;
-
-      const tasksToInsert: Array<Omit<Task, "id">> = [];
-      const generatedIds: string[] = [];
-
-      for (let i = 0; i < count; i++) {
-        let startDate = "";
-        let endDate = "";
-
-        if (direction === "above") {
-          if (refTask.startDate) {
-            const refStart = new Date(refTask.startDate);
-            const end = new Date(refStart);
-            end.setDate(
-              refStart.getDate() - 1 - i * (DEFAULT_TASK_DURATION + 1)
-            );
-            endDate = end.toISOString().split("T")[0];
-            const start = new Date(end);
-            start.setDate(end.getDate() - DEFAULT_TASK_DURATION + 1);
-            startDate = start.toISOString().split("T")[0];
-          } else {
-            const today = new Date();
-            const weekAgo = new Date(today);
-            weekAgo.setDate(today.getDate() - DEFAULT_TASK_DURATION + 1);
-            startDate = weekAgo.toISOString().split("T")[0];
-            endDate = today.toISOString().split("T")[0];
-          }
-        } else {
-          if (refTask.endDate) {
-            const refEnd = new Date(refTask.endDate);
-            const start = new Date(refEnd);
-            start.setDate(
-              refEnd.getDate() + 1 + i * (DEFAULT_TASK_DURATION + 1)
-            );
-            startDate = start.toISOString().split("T")[0];
-            const end = new Date(start);
-            end.setDate(start.getDate() + DEFAULT_TASK_DURATION - 1);
-            endDate = end.toISOString().split("T")[0];
-          } else {
-            const today = new Date();
-            const nextWeek = new Date(today);
-            nextWeek.setDate(today.getDate() + DEFAULT_TASK_DURATION - 1);
-            startDate = today.toISOString().split("T")[0];
-            endDate = nextWeek.toISOString().split("T")[0];
-          }
-        }
-
-        tasksToInsert.push({
-          name: DEFAULT_TASK_NAME,
-          startDate,
-          endDate,
-          duration: DEFAULT_TASK_DURATION,
-          progress: 0,
-          color: COLORS.chart.taskDefault,
-          order: spliceIndex + i,
-          type: "task",
-          parent: refTask.parent,
-          metadata: {},
-        });
-        generatedIds.push(crypto.randomUUID());
-      }
-
-      // For "above" with multiple tasks: reverse so earliest comes first
-      if (direction === "above" && count > 1) {
-        tasksToInsert.reverse();
-        generatedIds.reverse();
-      }
-
-      set((state) => {
-        const newTasks: Task[] = tasksToInsert.map((taskData, i) => ({
-          ...taskData,
-          id: generatedIds[i],
-        }));
-
-        state.tasks.splice(spliceIndex, 0, ...newTasks);
-        // Set sequential order so normalizeTaskOrder can sort correctly
-        state.tasks.forEach((task, index) => {
-          task.order = index;
-        });
-        normalizeTaskOrder(state.tasks);
-
-        if (refTask.parent) {
-          recalculateSummaryAncestors(state.tasks, new Set([refTask.parent]));
-        }
-      });
-
-      useFileStore.getState().markDirty();
-
-      const description =
-        count === 1
-          ? `Inserted task ${direction}`
-          : `Inserted ${count} tasks ${direction}`;
-
-      if (count === 1) {
-        recordCommand(CommandType.ADD_TASK, description, {
-          task: tasksToInsert[0],
-          generatedId: generatedIds[0],
-        });
-      } else {
-        recordCommand(CommandType.ADD_TASK, description, {
-          task: tasksToInsert[0],
-          tasks: tasksToInsert,
-          generatedIds,
-        });
-      }
-    }
-
-    return {
+  immer((set, get) => ({
       // State (start with empty list - placeholder row allows adding new tasks)
       tasks: [],
       selectedTaskIds: [],
@@ -997,232 +758,13 @@ export const useTaskStore = create<TaskStore>()(
       // Expansion actions (extracted)
       ...createExpansionActions(set, get),
 
-      // Insert task relative to another
-      insertTaskAbove: (referenceTaskId): void =>
-        insertTasksRelative(referenceTaskId, "above"),
-
-      insertMultipleTasksAbove: (referenceTaskId, count): void =>
-        insertTasksRelative(referenceTaskId, "above", count),
-
-      insertTaskBelow: (referenceTaskId): void =>
-        insertTasksRelative(referenceTaskId, "below"),
+      // Insertion actions (extracted)
+      ...createInsertionActions(set, get),
 
       // Indent/Outdent actions (extracted)
       ...createIndentOutdentActions(set, get),
 
-      canGroupSelection: (): boolean => {
-        const { tasks, selectedTaskIds } = get();
-        const result = validateGroupSelection(tasks, selectedTaskIds);
-        return "rootIds" in result;
-      },
-
-      groupSelectedTasks: (): void => {
-        const { tasks, selectedTaskIds } = get();
-
-        const validation = validateGroupSelection(tasks, selectedTaskIds);
-        if ("error" in validation) {
-          if (selectedTaskIds.length > 0) {
-            toast.error(validation.error);
-          }
-          return;
-        }
-
-        const { rootIds } = validation;
-        const commonParent = tasks.find((t) => t.id === rootIds[0])?.parent;
-
-        // Find insertion position: topmost selected task in visual order
-        const flatList = buildFlattenedTaskList(tasks, new Set<string>());
-        const rootIdSet = new Set(rootIds);
-        let insertVisualIndex = flatList.length;
-        for (let i = 0; i < flatList.length; i++) {
-          if (rootIdSet.has(flatList[i].task.id)) {
-            insertVisualIndex = i;
-            break;
-          }
-        }
-
-        // Calculate summary dates from selected tasks and their descendants
-        const dates = calculateGroupDates(tasks, rootIds);
-
-        // Capture snapshots for undo
-        const previousOrder = tasks.map((t) => ({ id: t.id, order: t.order }));
-        const changes = rootIds.map((id) => {
-          const task = tasks.find((t) => t.id === id);
-          return {
-            taskId: id,
-            oldParent: task?.parent,
-            oldOrder: task?.order ?? 0,
-          };
-        });
-
-        // Create summary task
-        const summaryId = crypto.randomUUID();
-        const insertOrder =
-          insertVisualIndex < flatList.length
-            ? flatList[insertVisualIndex].task.order
-            : tasks.length;
-
-        const summaryTask: Task = {
-          id: summaryId,
-          name: DEFAULT_GROUP_NAME,
-          startDate: dates.startDate,
-          endDate: dates.endDate,
-          duration: dates.duration,
-          progress: 0,
-          color: COLORS.chart.taskDefault,
-          order: insertOrder,
-          type: "summary",
-          parent: commonParent,
-          open: true,
-          metadata: {},
-        };
-
-        const cascadeUpdates: Array<{
-          id: string;
-          updates: Partial<Task>;
-          previousValues: Partial<Task>;
-        }> = [];
-
-        set((state) => {
-          state.tasks.push(summaryTask);
-
-          for (const id of rootIds) {
-            const task = state.tasks.find((t) => t.id === id);
-            if (task) {
-              task.parent = summaryId;
-            }
-          }
-
-          normalizeTaskOrder(state.tasks);
-
-          const affectedParents = new Set<string>([summaryId]);
-          if (commonParent) affectedParents.add(commonParent);
-          const results = recalculateSummaryAncestors(
-            state.tasks,
-            affectedParents
-          );
-          cascadeUpdates.push(...results);
-
-          state.activeCell = { taskId: summaryId, field: "name" };
-          state.selectedTaskIds = [];
-        });
-
-        useFileStore.getState().markDirty();
-
-        recordCommand(
-          CommandType.GROUP_TASKS,
-          rootIds.length === 1
-            ? "Grouped 1 task"
-            : `Grouped ${rootIds.length} tasks`,
-          {
-            summaryTaskId: summaryId,
-            summaryTask,
-            changes,
-            previousOrder,
-            cascadeUpdates,
-          }
-        );
-      },
-
-      canUngroupSelection: (): boolean => {
-        const { tasks, selectedTaskIds } = get();
-        return selectedTaskIds.some((id) => {
-          const task = tasks.find((t) => t.id === id);
-          return (
-            task?.type === "summary" && tasks.some((t) => t.parent === task.id)
-          );
-        });
-      },
-
-      ungroupSelectedTasks: (): void => {
-        const depStore = useDependencyStore.getState();
-        const { tasks, selectedTaskIds } = get();
-
-        // Filter to summaries with children
-        const summariesToUngroup = selectedTaskIds
-          .map((id) => tasks.find((t) => t.id === id))
-          .filter(
-            (t): t is Task =>
-              t !== undefined &&
-              t.type === "summary" &&
-              tasks.some((child) => child.parent === t.id)
-          );
-
-        if (summariesToUngroup.length === 0) return;
-
-        // Sort bottom-up: deepest summaries first to avoid parent invalidation
-        const sortedSummaries = [...summariesToUngroup].sort((a, b) => {
-          const levelA = getTaskLevel(tasks, a.id);
-          const levelB = getTaskLevel(tasks, b.id);
-          return levelB - levelA;
-        });
-
-        // Capture previous order for undo
-        const previousOrder = tasks.map((t) => ({ id: t.id, order: t.order }));
-
-        // Build undo data for each summary
-        const { ungroupedSummaries, childIdsAll } = buildUngroupUndoData(
-          tasks,
-          sortedSummaries,
-          depStore.dependencies
-        );
-
-        const summaryIds = new Set(sortedSummaries.map((s) => s.id));
-
-        // Collect affected parent IDs for cascade recalculation
-        const affectedParentIds = new Set<string>();
-        for (const summary of sortedSummaries) {
-          if (summary.parent) affectedParentIds.add(summary.parent);
-        }
-
-        let cascadeUpdates: Array<{
-          id: string;
-          updates: Partial<Task>;
-          previousValues: Partial<Task>;
-        }> = [];
-
-        set((state) => {
-          for (const summary of sortedSummaries) {
-            const children = state.tasks.filter((t) => t.parent === summary.id);
-            // Reparent children to summary's parent
-            for (const child of children) {
-              child.parent = summary.parent;
-            }
-          }
-
-          // Remove all ungrouped summaries
-          state.tasks = state.tasks.filter((t) => !summaryIds.has(t.id));
-
-          normalizeTaskOrder(state.tasks);
-
-          // Recalculate ancestor summaries
-          cascadeUpdates = recalculateSummaryAncestors(
-            state.tasks,
-            affectedParentIds
-          );
-
-          // Update selection: select the former children
-          state.selectedTaskIds = childIdsAll;
-          state.clipboardTaskIds = state.clipboardTaskIds.filter(
-            (id) => !summaryIds.has(id)
-          );
-        });
-
-        // Remove dependencies for deleted summaries
-        for (const summary of sortedSummaries) {
-          depStore.removeDependenciesForTask(summary.id);
-        }
-
-        useFileStore.getState().markDirty();
-
-        recordCommand(
-          CommandType.UNGROUP_TASKS,
-          summariesToUngroup.length === 1
-            ? "Ungrouped 1 task"
-            : `Ungrouped ${summariesToUngroup.length} tasks`,
-          { ungroupedSummaries, previousOrder, cascadeUpdates }
-        );
-      },
-    };
-  })
+      // Grouping actions (extracted)
+      ...createGroupingActions(set, get),
+    }))
 );
