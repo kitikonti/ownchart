@@ -10,6 +10,7 @@ import type {
   Command,
   AddTaskParams,
   UpdateTaskParams,
+  DeleteTaskParams,
   IndentOutdentParams,
   ReorderTasksParams,
   AddDependencyParams,
@@ -228,11 +229,7 @@ export const useHistoryStore = create<HistoryStore>()(
 
 /**
  * Execute the reverse of a command (undo)
- *
- * Uses `any` casts for legacy command params that predate typed params interfaces.
- * New command types (hideTasks, unhideTasks, groupTasks, etc.) use proper types.
  */
-/* eslint-disable @typescript-eslint/no-explicit-any */
 function executeUndoCommand(command: Command): void {
   const taskStore = useTaskStore.getState();
 
@@ -260,7 +257,7 @@ function executeUndoCommand(command: Command): void {
 
       // Handle cascade updates (revert parent summary dates)
       if (params.cascadeUpdates) {
-        params.cascadeUpdates.forEach((cascade: any) => {
+        params.cascadeUpdates.forEach((cascade) => {
           taskStore.updateTask(cascade.id, cascade.previousValues);
         });
       }
@@ -268,7 +265,7 @@ function executeUndoCommand(command: Command): void {
     }
 
     case "deleteTask": {
-      const params = command.params as any;
+      const params = command.params as DeleteTaskParams;
       // Re-add all deleted tasks in one operation
       const currentTasks = useTaskStore.getState().tasks;
       const restoredTasks = [...currentTasks, ...params.deletedTasks];
@@ -277,7 +274,7 @@ function executeUndoCommand(command: Command): void {
       if (params.cascadeUpdates) {
         for (const cascade of params.cascadeUpdates) {
           const parentIndex = restoredTasks.findIndex(
-            (t: any) => t.id === cascade.id
+            (t) => t.id === cascade.id
           );
           if (parentIndex !== -1) {
             restoredTasks[parentIndex] = {
@@ -601,7 +598,7 @@ function executeRedoCommand(command: Command): void {
 
   switch (command.type) {
     case "addTask": {
-      const params = command.params as any;
+      const params = command.params as AddTaskParams;
       if (
         params.tasks &&
         params.generatedIds &&
@@ -609,18 +606,18 @@ function executeRedoCommand(command: Command): void {
       ) {
         // Batch redo: re-add all tasks at their original positions
         const state = useTaskStore.getState();
-        const newTasks = params.tasks.map((t: any, i: number) => ({
+        const newTasks = params.tasks.map((t, i) => ({
           ...t,
-          id: params.generatedIds[i],
+          id: params.generatedIds![i],
         }));
         const allTasks = [...state.tasks, ...newTasks];
-        allTasks.sort((a: any, b: any) => a.order - b.order);
-        allTasks.forEach((task: any, index: number) => {
+        allTasks.sort((a, b) => a.order - b.order);
+        allTasks.forEach((task, index) => {
           task.order = index;
         });
         useTaskStore.setState({ tasks: allTasks });
       } else {
-        const taskWithId = { ...params.task, id: params.generatedId };
+        const taskWithId = { ...params.task, id: params.generatedId! };
         // Use internal method to avoid recording
         const state = useTaskStore.getState();
         useTaskStore.setState({
@@ -631,12 +628,12 @@ function executeRedoCommand(command: Command): void {
     }
 
     case "updateTask": {
-      const params = command.params as any;
+      const params = command.params as UpdateTaskParams;
       taskStore.updateTask(params.id, params.updates);
 
       // Handle cascade updates (reapply parent summary dates)
       if (params.cascadeUpdates) {
-        params.cascadeUpdates.forEach((cascade: any) => {
+        params.cascadeUpdates.forEach((cascade) => {
           taskStore.updateTask(cascade.id, cascade.updates);
         });
       }
@@ -644,7 +641,7 @@ function executeRedoCommand(command: Command): void {
     }
 
     case "deleteTask": {
-      const params = command.params as any;
+      const params = command.params as DeleteTaskParams;
       // Use deletedIds to delete ALL tasks (fixes multi-task deletion redo)
       const idsToDelete = new Set(params.deletedIds || [params.id]);
 
@@ -699,7 +696,7 @@ function executeRedoCommand(command: Command): void {
     }
 
     case "reorderTasks": {
-      const params = command.params as any;
+      const params = command.params as ReorderTasksParams;
       // Re-execute the reorder
       taskStore.reorderTasks(params.activeTaskId, params.overTaskId);
       break;
@@ -957,4 +954,3 @@ function executeRedoCommand(command: Command): void {
       console.warn("Unknown command type for redo:", command.type);
   }
 }
-/* eslint-enable @typescript-eslint/no-explicit-any */
