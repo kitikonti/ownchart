@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach, vi } from 'vitest';
+import { describe, it, expect, beforeEach } from 'vitest';
 import { useTaskStore } from '../../../src/store/slices/taskSlice';
 import { useHistoryStore } from '../../../src/store/slices/historySlice';
 import type { Task, TaskType } from '../../../src/types/chart.types';
@@ -1747,18 +1747,11 @@ describe('Task Store - CRUD Operations', () => {
         useTaskStore.setState({ tasks });
 
         const { updateTask } = useTaskStore.getState();
-        const consoleWarnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
 
         updateTask('parent', { type: 'milestone' });
 
         const parent = useTaskStore.getState().tasks.find((t) => t.id === 'parent');
         expect(parent?.type).toBe('task'); // Should not change
-
-        expect(consoleWarnSpy).toHaveBeenCalledWith(
-          expect.stringContaining('Cannot convert to milestone')
-        );
-
-        consoleWarnSpy.mockRestore();
       });
 
       it('should set endDate equal to startDate when converting to milestone', () => {

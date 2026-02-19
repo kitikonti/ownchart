@@ -5,6 +5,7 @@
 
 import { create } from "zustand";
 import { immer } from "zustand/middleware/immer";
+import { current } from "immer";
 import type { Task } from "../../types/chart.types";
 import type { Dependency } from "../../types/dependency.types";
 import {
@@ -275,9 +276,9 @@ function buildUngroupUndoData(
     );
 
     ungroupedSummaries.push({
-      summaryTask: JSON.parse(JSON.stringify(summary)),
+      summaryTask: structuredClone(summary),
       childChanges,
-      removedDependencies: JSON.parse(JSON.stringify(deps)),
+      removedDependencies: structuredClone(deps),
     });
 
     childIdsAll.push(...children.map((c) => c.id));
@@ -461,7 +462,6 @@ export const useTaskStore = create<TaskStore>()(
           if (updates.type === "milestone") {
             const hasChildren = state.tasks.some((t) => t.parent === id);
             if (hasChildren) {
-              console.warn("Cannot convert to milestone: task has children");
               return;
             }
             // Milestone is a point in time: endDate = startDate
@@ -655,8 +655,7 @@ export const useTaskStore = create<TaskStore>()(
           // Simple delete - capture the task before removing
           const taskToDelete = state.tasks.find((task) => task.id === id);
           if (taskToDelete) {
-            // Deep clone to avoid Immer draft proxy issues
-            deletedTasks.push(JSON.parse(JSON.stringify(taskToDelete)));
+            deletedTasks.push(current(taskToDelete));
           }
 
           const parentId = taskToDelete?.parent;
@@ -686,8 +685,7 @@ export const useTaskStore = create<TaskStore>()(
         // Capture all tasks before deleting
         state.tasks.forEach((task) => {
           if (idsToDelete.has(task.id)) {
-            // Deep clone to avoid Immer draft proxy issues
-            deletedTasks.push(JSON.parse(JSON.stringify(task)));
+            deletedTasks.push(current(task));
           }
         });
 
@@ -765,7 +763,7 @@ export const useTaskStore = create<TaskStore>()(
       // Capture all tasks before deleting
       state.tasks.forEach((task) => {
         if (idsToDelete.has(task.id)) {
-          deletedTasks.push(JSON.parse(JSON.stringify(task)));
+          deletedTasks.push(structuredClone(task));
         }
       });
 
@@ -838,7 +836,7 @@ export const useTaskStore = create<TaskStore>()(
       const historyStore = useHistoryStore.getState();
 
       // Capture previous order before making changes
-      const previousOrder = JSON.parse(JSON.stringify(get().tasks));
+      const previousOrder = structuredClone(get().tasks);
 
       let changed = false;
       let movedTaskName = "Unknown";
@@ -1236,14 +1234,12 @@ export const useTaskStore = create<TaskStore>()(
         state.tasks.forEach((task, index) => {
           task.order = index;
         });
-      });
 
-      // Recalculate parent summary dates
-      if (taskData.parent) {
-        set((state) => {
+        // Recalculate parent summary dates
+        if (taskData.parent) {
           recalculateSummaryAncestors(state.tasks, new Set([taskData.parent!]));
-        });
-      }
+        }
+      });
 
       // Mark file as dirty
       useFileStore.getState().markDirty();
@@ -1333,14 +1329,12 @@ export const useTaskStore = create<TaskStore>()(
           task.order = index;
         });
         normalizeTaskOrder(state.tasks);
-      });
 
-      // Recalculate parent summary dates
-      if (refTask.parent) {
-        set((state) => {
+        // Recalculate parent summary dates
+        if (refTask.parent) {
           recalculateSummaryAncestors(state.tasks, new Set([refTask.parent!]));
-        });
-      }
+        }
+      });
 
       // Mark file as dirty
       useFileStore.getState().markDirty();
@@ -1420,14 +1414,12 @@ export const useTaskStore = create<TaskStore>()(
         state.tasks.forEach((task, index) => {
           task.order = index;
         });
-      });
 
-      // Recalculate parent summary dates
-      if (taskData.parent) {
-        set((state) => {
+        // Recalculate parent summary dates
+        if (taskData.parent) {
           recalculateSummaryAncestors(state.tasks, new Set([taskData.parent!]));
-        });
-      }
+        }
+      });
 
       // Mark file as dirty
       useFileStore.getState().markDirty();
