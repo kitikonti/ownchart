@@ -191,6 +191,63 @@ export const TABLE_HEADER = {
 } as const;
 
 // =============================================================================
+// GRID TOKENS (timeline background)
+// =============================================================================
+
+export const GRID = {
+  weekendBg: "#f1f3f5",
+  holidayBg: "#fce7f3",
+  lineDaily: "#e9ecef",
+  lineWeeklyMonthly: "#d1d5db",
+  lineDailyWeekend: "#dee2e6",
+  lineHorizontal: "#e9ecef",
+} as const;
+
+// =============================================================================
+// TIMELINE HEADER TOKENS
+// =============================================================================
+
+export const TIMELINE_HEADER = {
+  bg: "#f8f9fa",
+  border: "#dee2e6",
+} as const;
+
+// =============================================================================
+// CONNECTION HANDLE TOKENS (dependency + progress handles)
+// =============================================================================
+
+export const CONNECTION_HANDLE = {
+  neutralFill: "#e2e8f0",
+  neutralStroke: "#94a3b8",
+  validFill: "#bbf7d0",
+  validStroke: "#22c55e",
+  invalidFill: "#fecaca",
+  invalidStroke: "#ef4444",
+} as const;
+
+// =============================================================================
+// ROW NUMBER TOKENS
+// =============================================================================
+
+export const ROW_NUMBER = {
+  bgInactive: "#F3F3F3",
+  bgHover: "#E8E8E8",
+  textInactive: "#5F6368",
+  textSelected: "#FFFFFF",
+  border: "#E1E1E1",
+  hiddenIndicator: "#9ca3af",
+} as const;
+
+// =============================================================================
+// TOAST TOKENS
+// =============================================================================
+
+export const TOAST = {
+  bg: "#1e293b",
+  text: "#f8fafc",
+} as const;
+
+// =============================================================================
 // DENSITY SYSTEM (unchanged from original)
 // =============================================================================
 
@@ -228,4 +285,9 @@ export type TransitionToken = typeof TRANSITIONS;
 export type ToolbarToken = typeof TOOLBAR;
 export type ContextMenuToken = typeof CONTEXT_MENU;
 export type TableHeaderToken = typeof TABLE_HEADER;
+export type GridToken = typeof GRID;
+export type TimelineHeaderToken = typeof TIMELINE_HEADER;
+export type ConnectionHandleToken = typeof CONNECTION_HANDLE;
+export type RowNumberToken = typeof ROW_NUMBER;
+export type ToastToken = typeof TOAST;
 export type DensityToken = typeof DENSITY;
