@@ -8,6 +8,7 @@ import React, { memo, useMemo } from "react";
 import type { Dependency, TaskPosition } from "../../types/dependency.types";
 import type { Task } from "../../types/chart.types";
 import { calculateArrowPath, getArrowheadPoints } from "../../utils/arrowPath";
+import { COLORS } from "../../styles/design-tokens";
 
 interface DependencyArrowProps {
   dependency: Dependency;
@@ -64,7 +65,7 @@ export const DependencyArrow = memo(function DependencyArrow({
   };
 
   // Arrow colors - lighter for less visual noise
-  const strokeColor = isSelected ? "#334155" : "#94a3b8";
+  const strokeColor = isSelected ? COLORS.chart.dependencySelected : COLORS.chart.dependencyDefault;
   const strokeWidth = isSelected ? 2.5 : 1.5;
 
   return (
@@ -108,7 +109,7 @@ export const DependencyArrow = memo(function DependencyArrow({
         <path
           d={path}
           fill="none"
-          stroke="#334155"
+          stroke={COLORS.chart.dependencySelected}
           strokeWidth={6}
           strokeDasharray="4 2"
           opacity={0.3}

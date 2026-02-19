@@ -5,6 +5,7 @@
  */
 
 import React, { memo, useState, useCallback } from "react";
+import { CONNECTION_HANDLE } from "../../styles/design-tokens";
 
 /** Distance from task edge to handle center */
 const HANDLE_OFFSET = 10;
@@ -62,15 +63,15 @@ export const ConnectionHandles = memo(function ConnectionHandles({
   const endHandleX = x + width + HANDLE_OFFSET;
 
   // Determine handle colors based on state - neutral by default
-  let handleFill = "#e2e8f0"; // neutral-200 (neutral)
-  let handleStroke = "#94a3b8"; // neutral-400
+  let handleFill: string = CONNECTION_HANDLE.neutralFill;
+  let handleStroke: string = CONNECTION_HANDLE.neutralStroke;
 
   if (isValidDropTarget) {
-    handleFill = "#bbf7d0"; // green-200
-    handleStroke = "#22c55e"; // green-500
+    handleFill = CONNECTION_HANDLE.validFill;
+    handleStroke = CONNECTION_HANDLE.validStroke;
   } else if (isInvalidDropTarget) {
-    handleFill = "#fecaca"; // red-200
-    handleStroke = "#ef4444"; // red-500
+    handleFill = CONNECTION_HANDLE.invalidFill;
+    handleStroke = CONNECTION_HANDLE.invalidStroke;
   }
 
   // Handle mouse down to start drag
@@ -169,7 +170,7 @@ export const ConnectionHandles = memo(function ConnectionHandles({
             cy={handleCenterY}
             r={handleRadius + 4}
             fill="none"
-            stroke={isValidDropTarget ? "#22c55e" : "#ef4444"}
+            stroke={isValidDropTarget ? CONNECTION_HANDLE.validStroke : CONNECTION_HANDLE.invalidStroke}
             strokeWidth={2}
             opacity={0.6}
             pointerEvents="none"
@@ -180,7 +181,7 @@ export const ConnectionHandles = memo(function ConnectionHandles({
             cy={handleCenterY}
             r={handleRadius + 4}
             fill="none"
-            stroke={isValidDropTarget ? "#22c55e" : "#ef4444"}
+            stroke={isValidDropTarget ? CONNECTION_HANDLE.validStroke : CONNECTION_HANDLE.invalidStroke}
             strokeWidth={2}
             opacity={0.6}
             pointerEvents="none"

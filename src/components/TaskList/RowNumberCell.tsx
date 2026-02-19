@@ -14,7 +14,7 @@ import type { DraggableAttributes } from "@dnd-kit/core";
 import type { SyntheticListenerMap } from "@dnd-kit/core/dist/hooks/utilities";
 import { useDensityConfig } from "../../store/slices/userPreferencesSlice";
 import { HiddenRowIndicator } from "./HiddenRowIndicator";
-import { COLORS } from "../../styles/design-tokens";
+import { COLORS, ROW_NUMBER } from "../../styles/design-tokens";
 
 // Global drag selection state (shared between all RowNumberCell instances)
 // Exported so TaskTableRow can also respond to drag selection
@@ -30,19 +30,19 @@ const ROW_SELECT_CURSOR = `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.o
 // Row number cell colors (Outlook Blue theme)
 const ROW_COLORS = {
   // Inactive state
-  bgInactive: "#F3F3F3",
-  bgHover: "#E8E8E8",
-  textInactive: "#5F6368",
+  bgInactive: ROW_NUMBER.bgInactive,
+  bgHover: ROW_NUMBER.bgHover,
+  textInactive: ROW_NUMBER.textInactive,
   // Selected state - OwnChart brand
   bgSelected: COLORS.brand[600],
-  textSelected: "#FFFFFF",
+  textSelected: ROW_NUMBER.textSelected,
   // Hover controls - OwnChart brand
   controlsColor: COLORS.brand[600],
   insertLineColor: COLORS.brand[600],
   // Border
-  border: "#E1E1E1",
+  border: ROW_NUMBER.border,
   // Hidden row indicator (neutral-400)
-  hiddenIndicator: "#9ca3af",
+  hiddenIndicator: ROW_NUMBER.hiddenIndicator,
 };
 
 interface RowNumberCellProps {

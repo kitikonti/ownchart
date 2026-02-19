@@ -19,7 +19,7 @@ import {
   useFirstDayOfWeek,
   useWeekNumberingSystem,
 } from "../../store/slices/userPreferencesSlice";
-import { COLORS } from "../../styles/design-tokens";
+import { COLORS, TIMELINE_HEADER } from "../../styles/design-tokens";
 
 interface TimelineHeaderProps {
   scale: TimelineScale;
@@ -203,7 +203,7 @@ export function TimelineHeader({
         y={0}
         width={headerWidth}
         height={currentScales.length * ROW_HEIGHT}
-        fill="#f8f9fa"
+        fill={TIMELINE_HEADER.bg}
       />
 
       {/* Render each scale row */}
@@ -228,7 +228,7 @@ export function TimelineHeader({
                 y1={rowIndex * ROW_HEIGHT}
                 x2={cell.x}
                 y2={(rowIndex + 1) * ROW_HEIGHT}
-                stroke="#dee2e6"
+                stroke={TIMELINE_HEADER.border}
                 strokeWidth={1}
               />
 
@@ -239,7 +239,7 @@ export function TimelineHeader({
                 fontSize={rowIndex === 0 ? 12 : 11}
                 fontWeight={cell.isToday ? 600 : rowIndex === 0 ? 600 : 400}
                 fontFamily={SVG_FONT_FAMILY}
-                fill={cell.isToday ? COLORS.chart.todayMarker : "#495057"}
+                fill={cell.isToday ? COLORS.chart.todayMarker : COLORS.chart.text}
                 textAnchor="middle"
               >
                 {cell.label}
@@ -255,7 +255,7 @@ export function TimelineHeader({
         y1={currentScales.length * ROW_HEIGHT}
         x2={headerWidth}
         y2={currentScales.length * ROW_HEIGHT}
-        stroke="#dee2e6"
+        stroke={TIMELINE_HEADER.border}
         strokeWidth={1}
       />
     </g>

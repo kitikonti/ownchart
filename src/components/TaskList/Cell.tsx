@@ -21,6 +21,7 @@ import {
   addWorkingDays,
 } from "../../utils/workingDaysCalculator";
 import type { DateFormat } from "../../types/preferences.types";
+import { COLORS } from "../../styles/design-tokens";
 
 /**
  * Format a date string according to user preferences.
@@ -395,7 +396,7 @@ export function Cell({
   };
 
   // Brand color for active cell outline
-  const BRAND_COLOR = "#0F6CBD";
+  const BRAND_COLOR = COLORS.brand[600];
 
   // Density-aware styles using CSS custom properties
   const cellStyle: React.CSSProperties = {

@@ -18,6 +18,7 @@ import { dateToPixel } from "../../utils/timelineUtils";
 import { addDays, isWeekend } from "../../utils/dateUtils";
 import { holidayService } from "../../services/holidayService";
 import { useFirstDayOfWeek } from "../../store/slices/userPreferencesSlice";
+import { GRID } from "../../styles/design-tokens";
 
 interface GridLinesProps {
   scale: TimelineScale;
@@ -202,7 +203,7 @@ export function GridLines({
           y={0}
           width={scale.pixelsPerDay}
           height={taskCount * rowHeight}
-          fill="#f1f3f5"
+          fill={GRID.weekendBg}
           opacity={0.6}
           className="weekend-column"
         />
@@ -216,7 +217,7 @@ export function GridLines({
           y={0}
           width={scale.pixelsPerDay}
           height={taskCount * rowHeight}
-          fill="#fce7f3"
+          fill={GRID.holidayBg}
           opacity={0.7}
           className="holiday-column"
         >
@@ -230,10 +231,10 @@ export function GridLines({
         // At weekly/monthly resolution: slightly more prominent lines
         const getStroke = (): string => {
           if (lineType === "daily") {
-            return isWeekendDay ? "#dee2e6" : "#e9ecef";
+            return isWeekendDay ? GRID.lineDailyWeekend : GRID.lineDaily;
           }
           // Weekly/monthly lines are slightly more prominent
-          return "#d1d5db";
+          return GRID.lineWeeklyMonthly;
         };
 
         return (
@@ -258,7 +259,7 @@ export function GridLines({
           y1={y}
           x2={gridWidth}
           y2={y}
-          stroke="#e9ecef"
+          stroke={GRID.lineHorizontal}
           strokeWidth={1}
         />
       ))}

@@ -20,6 +20,7 @@ import { useLaunchQueue } from "./hooks/useLaunchQueue";
 import { useDeviceDetection } from "./hooks/useDeviceDetection";
 import { useUIStore } from "./store/slices/uiSlice";
 import { useUserPreferencesStore } from "./store/slices/userPreferencesSlice";
+import { COLORS, TOAST } from "./styles/design-tokens";
 
 function App(): JSX.Element {
   const { shouldShowMobileBlock, dismiss } = useDeviceDetection();
@@ -77,8 +78,8 @@ function AppContent(): JSX.Element {
         toastOptions={{
           duration: 3000,
           style: {
-            background: "#1e293b",
-            color: "#f8fafc",
+            background: TOAST.bg,
+            color: TOAST.text,
             borderRadius: "8px",
             boxShadow:
               "0 10px 15px -3px rgba(15, 23, 42, 0.15), 0 4px 6px -2px rgba(15, 23, 42, 0.08)",
@@ -88,14 +89,14 @@ function AppContent(): JSX.Element {
           },
           success: {
             iconTheme: {
-              primary: "#059669",
-              secondary: "#f8fafc",
+              primary: COLORS.semantic.success,
+              secondary: TOAST.text,
             },
           },
           error: {
             iconTheme: {
-              primary: "#dc2626",
-              secondary: "#f8fafc",
+              primary: COLORS.semantic.error,
+              secondary: TOAST.text,
             },
           },
         }}

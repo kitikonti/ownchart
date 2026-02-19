@@ -18,6 +18,7 @@ import {
 } from "../../../hooks/useProjectColors";
 import { getContrastTextColor } from "../../../utils/colorUtils";
 import type { ColorMode } from "../../../types/colorMode.types";
+import { COLORS } from "../../../styles/design-tokens";
 
 interface ColorPickerPopoverProps {
   /** Current color value (hex) */
@@ -58,7 +59,7 @@ function ColorSwatch({
         height: "24px",
         backgroundColor: color,
         border: isSelected
-          ? "2px solid #0F6CBD"
+          ? `2px solid ${COLORS.brand[600]}`
           : "1px solid rgba(0, 0, 0, 0.15)",
         borderRadius: "4px",
         cursor: "pointer",

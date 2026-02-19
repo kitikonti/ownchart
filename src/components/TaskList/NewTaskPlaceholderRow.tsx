@@ -17,6 +17,7 @@ import { getVisibleColumns } from "../../config/tableColumns";
 import { usePlaceholderContextMenu } from "../../hooks/usePlaceholderContextMenu";
 import { ContextMenu } from "../ContextMenu/ContextMenu";
 import { PLACEHOLDER_TASK_ID } from "../../config/placeholderRow";
+import { COLORS, ROW_NUMBER } from "../../styles/design-tokens";
 
 export function NewTaskPlaceholderRow(): JSX.Element {
   const [isEditing, setIsEditing] = useState(false);
@@ -209,7 +210,7 @@ export function NewTaskPlaceholderRow(): JSX.Element {
       endDate,
       duration: DEFAULT_DURATION,
       progress: 0,
-      color: "#0F6CBD",
+      color: COLORS.brand[600],
       order: maxOrder,
       type: "task",
       parent: undefined,
@@ -249,7 +250,7 @@ export function NewTaskPlaceholderRow(): JSX.Element {
               style={{
                 height: "var(--density-row-height)",
                 paddingRight: "8px",
-                backgroundColor: isSelected ? "#0F6CBD" : "#F3F3F3",
+                backgroundColor: isSelected ? COLORS.brand[600] : ROW_NUMBER.bgInactive,
               }}
               onClick={handleRowNumberClick}
               onContextMenu={handlePlaceholderContextMenu}
@@ -285,9 +286,9 @@ export function NewTaskPlaceholderRow(): JSX.Element {
             style={{
               ...getCellStyle(column.id),
               ...(column.id === "name" && isEditing
-                ? { boxShadow: "inset 0 0 0 2px #0F6CBD" }
+                ? { boxShadow: `inset 0 0 0 2px ${COLORS.brand[600]}` }
                 : isActiveCell
-                  ? { boxShadow: "inset 0 0 0 2px #0F6CBD" }
+                  ? { boxShadow: `inset 0 0 0 2px ${COLORS.brand[600]}` }
                   : {}),
             }}
             onClick={() =>

@@ -20,6 +20,7 @@ import { useDensityConfig } from "../../store/slices/userPreferencesSlice";
 import { SVG_FONT_FAMILY } from "../../utils/export/constants";
 import { getContrastTextColor } from "../../utils/colorUtils";
 import { useComputedTaskColor } from "../../hooks/useComputedTaskColor";
+import { COLORS, CONNECTION_HANDLE } from "../../styles/design-tokens";
 
 interface TaskBarProps {
   task: Task;
@@ -96,7 +97,7 @@ function MilestoneDiamond({
           y={centerY + fontSize / 3}
           fontSize={fontSize}
           fontFamily={SVG_FONT_FAMILY}
-          fill="#495057"
+          fill={COLORS.chart.text}
           fontWeight={600}
           pointerEvents="none"
           textAnchor={labelPosition === "before" ? "end" : "start"}
@@ -184,7 +185,7 @@ function SummaryBracket({
           y={y + height / 2 + fontSize / 3}
           fontSize={fontSize}
           fontFamily={SVG_FONT_FAMILY}
-          fill="#495057"
+          fill={COLORS.chart.text}
           fontWeight={600}
           pointerEvents="none"
           textAnchor={labelPosition === "before" ? "end" : "start"}
@@ -381,7 +382,7 @@ export const TaskBar = React.memo(function TaskBar({
                 L ${previewX + size} ${centerY + size}
                 Z`}
             fill="none"
-            stroke="#2B88D8"
+            stroke={COLORS.chart.selection}
             strokeWidth={2}
             pointerEvents="none"
           />
@@ -424,7 +425,7 @@ export const TaskBar = React.memo(function TaskBar({
             width={summaryPreviewWidth}
             height={geometry.height * 0.5}
             fill="none"
-            stroke="#2B88D8"
+            stroke={COLORS.chart.selection}
             strokeWidth={2}
             strokeDasharray="4 4"
             rx={4}
@@ -504,8 +505,8 @@ export const TaskBar = React.memo(function TaskBar({
           {/* Visible triangle handle — tip points UP, touching bar bottom edge */}
           <polygon
             points={`${geometry.x + progressWidth},${geometry.y + geometry.height} ${geometry.x + progressWidth - 6},${geometry.y + geometry.height + 8} ${geometry.x + progressWidth + 6},${geometry.y + geometry.height + 8}`}
-            fill="#e2e8f0"
-            stroke="#94a3b8"
+            fill={CONNECTION_HANDLE.neutralFill}
+            stroke={CONNECTION_HANDLE.neutralStroke}
             strokeWidth={1.5}
             className={`progress-handle${progressDrag.isDragging ? " dragging" : ""}`}
             pointerEvents="none"
@@ -521,7 +522,7 @@ export const TaskBar = React.memo(function TaskBar({
           width={(preview || secondaryPreview)!.width}
           height={(preview || secondaryPreview)!.height}
           fill="none"
-          stroke="#2B88D8"
+          stroke={COLORS.chart.selection}
           strokeWidth={2}
           strokeDasharray="4 4"
           rx={4}
@@ -549,7 +550,7 @@ export const TaskBar = React.memo(function TaskBar({
           fill={
             progressDrag.isDragging || labelPosition === "inside"
               ? getContrastTextColor(computedColor)
-              : "#495057"
+              : COLORS.chart.text
           }
           textAnchor={
             progressDrag.isDragging
