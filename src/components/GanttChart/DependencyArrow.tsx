@@ -65,7 +65,9 @@ export const DependencyArrow = memo(function DependencyArrow({
   };
 
   // Arrow colors - lighter for less visual noise
-  const strokeColor = isSelected ? COLORS.chart.dependencySelected : COLORS.chart.dependencyDefault;
+  const strokeColor = isSelected
+    ? COLORS.chart.dependencySelected
+    : COLORS.chart.dependencyDefault;
   const strokeWidth = isSelected ? 2.5 : 1.5;
 
   return (

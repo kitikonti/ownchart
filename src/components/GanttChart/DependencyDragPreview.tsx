@@ -54,7 +54,13 @@ export const DependencyDragPreview = memo(function DependencyDragPreview({
       />
 
       {/* Start point indicator */}
-      <circle cx={startX} cy={startY} r={5} fill={COLORS.chart.dependencySelected} opacity={0.8} />
+      <circle
+        cx={startX}
+        cy={startY}
+        r={5}
+        fill={COLORS.chart.dependencySelected}
+        opacity={0.8}
+      />
     </g>
   );
 });

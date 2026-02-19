@@ -49,9 +49,7 @@ function insertTasksRelative(
       if (refTask.startDate) {
         const refStart = new Date(refTask.startDate);
         const end = new Date(refStart);
-        end.setDate(
-          refStart.getDate() - 1 - i * (DEFAULT_TASK_DURATION + 1)
-        );
+        end.setDate(refStart.getDate() - 1 - i * (DEFAULT_TASK_DURATION + 1));
         endDate = end.toISOString().split("T")[0];
         const start = new Date(end);
         start.setDate(end.getDate() - DEFAULT_TASK_DURATION + 1);
@@ -67,9 +65,7 @@ function insertTasksRelative(
       if (refTask.endDate) {
         const refEnd = new Date(refTask.endDate);
         const start = new Date(refEnd);
-        start.setDate(
-          refEnd.getDate() + 1 + i * (DEFAULT_TASK_DURATION + 1)
-        );
+        start.setDate(refEnd.getDate() + 1 + i * (DEFAULT_TASK_DURATION + 1));
         startDate = start.toISOString().split("T")[0];
         const end = new Date(start);
         end.setDate(start.getDate() + DEFAULT_TASK_DURATION - 1);

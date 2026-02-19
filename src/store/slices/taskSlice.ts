@@ -157,614 +157,611 @@ const EDITABLE_FIELDS: EditableField[] = [
 
 export const useTaskStore = create<TaskStore>()(
   immer((set, get) => ({
-      // State (start with empty list - placeholder row allows adding new tasks)
-      tasks: [],
-      selectedTaskIds: [],
-      lastSelectedTaskId: null,
-      activeCell: {
-        taskId: null,
-        field: null,
-      },
-      isEditingCell: false,
-      columnWidths: {},
-      taskTableWidth: null,
-      clipboardTaskIds: [],
-      cutCell: null,
+    // State (start with empty list - placeholder row allows adding new tasks)
+    tasks: [],
+    selectedTaskIds: [],
+    lastSelectedTaskId: null,
+    activeCell: {
+      taskId: null,
+      field: null,
+    },
+    isEditingCell: false,
+    columnWidths: {},
+    taskTableWidth: null,
+    clipboardTaskIds: [],
+    cutCell: null,
 
-      // Actions
-      addTask: (taskData): void => {
-        let generatedId = "";
+    // Actions
+    addTask: (taskData): void => {
+      let generatedId = "";
 
-        set((state) => {
-          const newTask: Task = {
-            ...taskData,
-            id: crypto.randomUUID(),
-          };
-          generatedId = newTask.id;
-          state.tasks.push(newTask);
-        });
+      set((state) => {
+        const newTask: Task = {
+          ...taskData,
+          id: crypto.randomUUID(),
+        };
+        generatedId = newTask.id;
+        state.tasks.push(newTask);
+      });
 
-        useFileStore.getState().markDirty();
+      useFileStore.getState().markDirty();
 
-        recordCommand(CommandType.ADD_TASK, `Created task "${taskData.name}"`, {
-          task: taskData,
-          generatedId,
-        });
-      },
+      recordCommand(CommandType.ADD_TASK, `Created task "${taskData.name}"`, {
+        task: taskData,
+        generatedId,
+      });
+    },
 
-      updateTask: (id, updates): void => {
-        const previousValues: Partial<Task> = {};
-        let taskName = "";
-        const parentUpdates: Array<{
-          id: string;
-          updates: Partial<Task>;
-          previousValues: Partial<Task>;
-        }> = [];
+    updateTask: (id, updates): void => {
+      const previousValues: Partial<Task> = {};
+      let taskName = "";
+      const parentUpdates: Array<{
+        id: string;
+        updates: Partial<Task>;
+        previousValues: Partial<Task>;
+      }> = [];
 
-        set((state) => {
-          // Create mutable copy to avoid read-only errors during redo
-          updates = { ...updates };
+      set((state) => {
+        // Create mutable copy to avoid read-only errors during redo
+        updates = { ...updates };
 
-          const taskIndex = state.tasks.findIndex((task) => task.id === id);
-          if (taskIndex !== -1) {
-            const currentTask = state.tasks[taskIndex];
-            taskName = currentTask.name;
+        const taskIndex = state.tasks.findIndex((task) => task.id === id);
+        if (taskIndex !== -1) {
+          const currentTask = state.tasks[taskIndex];
+          taskName = currentTask.name;
 
-            // Validate type change to milestone
-            if (updates.type === "milestone") {
-              const hasChildren = state.tasks.some((t) => t.parent === id);
-              if (hasChildren) {
-                return;
-              }
-              // Milestone is a point in time: endDate = startDate
-              const currentStart =
-                (updates.startDate as string) || currentTask.startDate;
-              updates.endDate =
-                currentStart || new Date().toISOString().split("T")[0];
-              if (!currentStart) {
-                updates.startDate = updates.endDate;
-              }
-              updates.duration = 0;
-              updates.progress = 0;
+          // Validate type change to milestone
+          if (updates.type === "milestone") {
+            const hasChildren = state.tasks.some((t) => t.parent === id);
+            if (hasChildren) {
+              return;
             }
-
-            // Handle type change from milestone to task
-            if (updates.type === "task" && currentTask.type === "milestone") {
-              const milestoneDate = currentTask.startDate;
-              if (milestoneDate) {
-                updates.startDate = milestoneDate;
-                const end = new Date(milestoneDate);
-                end.setDate(end.getDate() + (DEFAULT_TASK_DURATION - 1));
-                updates.endDate = end.toISOString().split("T")[0];
-                updates.duration = DEFAULT_TASK_DURATION;
-              }
+            // Milestone is a point in time: endDate = startDate
+            const currentStart =
+              (updates.startDate as string) || currentTask.startDate;
+            updates.endDate =
+              currentStart || new Date().toISOString().split("T")[0];
+            if (!currentStart) {
+              updates.startDate = updates.endDate;
             }
-
-            // Handle type change to summary
-            if (updates.type === "summary") {
-              // Spread-replace (not direct mutation) so `currentTask` ref retains
-              // original values for previousValues capture below
-              state.tasks[taskIndex] = {
-                ...currentTask,
-                type: "summary",
-              };
-
-              const hasChildren = state.tasks.some((t) => t.parent === id);
-
-              if (hasChildren) {
-                // Has children - recalculate dates from children
-                const summaryDates = calculateSummaryDates(state.tasks, id);
-                if (summaryDates) {
-                  updates.startDate = summaryDates.startDate;
-                  updates.endDate = summaryDates.endDate;
-                  updates.duration = summaryDates.duration;
-                }
-              } else {
-                // No children - keep existing dates so they survive type cycling
-                // (dates will be recalculated when children are added)
-              }
-              updates.open = true; // Summaries should be open by default
-            }
-
-            // Capture previous values for undo
-            Object.keys(updates).forEach((key) => {
-              const typedKey = key as keyof Task;
-              // eslint-disable-next-line @typescript-eslint/no-explicit-any
-              previousValues[typedKey] = currentTask[typedKey] as any;
-            });
-
-            // Apply update — uses Object.assign to mutate the existing draft/object
-            Object.assign(state.tasks[taskIndex], updates);
-
-            // Check if parent needs recalculation (summary cascade)
-            if (currentTask.parent && (updates.startDate || updates.endDate)) {
-              const cascadeResults = recalculateSummaryAncestors(
-                state.tasks,
-                new Set([currentTask.parent])
-              );
-              parentUpdates.push(...cascadeResults);
-            }
+            updates.duration = 0;
+            updates.progress = 0;
           }
-        });
 
-        // Mark file as dirty
-        if (Object.keys(previousValues).length > 0) {
-          useFileStore.getState().markDirty();
-        }
-
-        // Record command for undo/redo
-        if (Object.keys(previousValues).length > 0) {
-          recordCommand(
-            CommandType.UPDATE_TASK,
-            `Updated task "${taskName}"${parentUpdates.length > 0 ? " (and parent)" : ""}`,
-            {
-              id,
-              updates,
-              previousValues,
-              cascadeUpdates: parentUpdates,
-            }
-          );
-        }
-      },
-
-      updateMultipleTasks: (updates): void => {
-        const taskChanges: Array<{
-          id: string;
-          previousStartDate: string;
-          previousEndDate: string;
-          newStartDate: string;
-          newEndDate: string;
-        }> = [];
-        const cascadeUpdates: Array<{
-          id: string;
-          updates: Partial<Task>;
-          previousValues: Partial<Task>;
-        }> = [];
-
-        set((state) => {
-          const affectedParentIds = new Set<string>();
-
-          // Apply all task updates
-          for (const { id, updates: taskUpdates } of updates) {
-            const taskIndex = state.tasks.findIndex((t) => t.id === id);
-            if (taskIndex === -1) continue;
-
-            const task = state.tasks[taskIndex];
-
-            // Capture previous values
-            taskChanges.push({
-              id,
-              previousStartDate: task.startDate,
-              previousEndDate: task.endDate,
-              newStartDate: taskUpdates.startDate || task.startDate,
-              newEndDate: taskUpdates.endDate || task.endDate,
-            });
-
-            // Apply update — mutate the Immer draft directly
-            Object.assign(state.tasks[taskIndex], taskUpdates);
-
-            // Track affected parents for cascade
-            if (task.parent) {
-              affectedParentIds.add(task.parent);
+          // Handle type change from milestone to task
+          if (updates.type === "task" && currentTask.type === "milestone") {
+            const milestoneDate = currentTask.startDate;
+            if (milestoneDate) {
+              updates.startDate = milestoneDate;
+              const end = new Date(milestoneDate);
+              end.setDate(end.getDate() + (DEFAULT_TASK_DURATION - 1));
+              updates.endDate = end.toISOString().split("T")[0];
+              updates.duration = DEFAULT_TASK_DURATION;
             }
           }
 
-          // Cascade up through all ancestor summaries
-          const cascadeResults = recalculateSummaryAncestors(
-            state.tasks,
-            affectedParentIds
-          );
-          cascadeUpdates.push(...cascadeResults);
-        });
+          // Handle type change to summary
+          if (updates.type === "summary") {
+            // Spread-replace (not direct mutation) so `currentTask` ref retains
+            // original values for previousValues capture below
+            state.tasks[taskIndex] = {
+              ...currentTask,
+              type: "summary",
+            };
 
-        // Mark file as dirty
-        if (taskChanges.length > 0) {
-          useFileStore.getState().markDirty();
-        }
+            const hasChildren = state.tasks.some((t) => t.parent === id);
 
-        // Record command for undo/redo
-        if (taskChanges.length > 0) {
-          recordCommand(
-            CommandType.MULTI_DRAG_TASKS,
-            `Moved ${taskChanges.length} task(s)`,
-            { taskChanges, cascadeUpdates }
-          );
-        }
-      },
-
-      deleteTask: (id, cascade = false): void => {
-        const deletedTasks: Task[] = [];
-        let cascadeUpdates: Array<{
-          id: string;
-          updates: Partial<Task>;
-          previousValues: Partial<Task>;
-        }> = [];
-
-        set((state) => {
-          if (!cascade) {
-            // Simple delete - capture the task before removing
-            const taskToDelete = state.tasks.find((task) => task.id === id);
-            if (taskToDelete) {
-              deletedTasks.push(current(taskToDelete));
+            if (hasChildren) {
+              // Has children - recalculate dates from children
+              const summaryDates = calculateSummaryDates(state.tasks, id);
+              if (summaryDates) {
+                updates.startDate = summaryDates.startDate;
+                updates.endDate = summaryDates.endDate;
+                updates.duration = summaryDates.duration;
+              }
+            } else {
+              // No children - keep existing dates so they survive type cycling
+              // (dates will be recalculated when children are added)
             }
-
-            const parentId = taskToDelete?.parent;
-
-            // Simple delete - just remove the task
-            state.tasks = state.tasks.filter((task) => task.id !== id);
-            // Clear selection for deleted task
-            state.selectedTaskIds = state.selectedTaskIds.filter(
-              (selectedId) => selectedId !== id
-            );
-            // Clear active cell if it referenced the deleted task
-            if (state.activeCell.taskId === id) {
-              state.activeCell = { taskId: null, field: null };
-            }
-
-            // Recalculate parent summary dates if it was a child
-            if (parentId) {
-              cascadeUpdates = recalculateSummaryAncestors(
-                state.tasks,
-                new Set([parentId])
-              );
-            }
-
-            return;
+            updates.open = true; // Summaries should be open by default
           }
 
-          // Cascading delete - collect all descendants recursively
-          const idsToDelete = collectDescendantIds(state.tasks, id);
-          idsToDelete.add(id);
-
-          // Capture all tasks before deleting
-          state.tasks.forEach((task) => {
-            if (idsToDelete.has(task.id)) {
-              deletedTasks.push(current(task));
-            }
+          // Capture previous values for undo
+          Object.keys(updates).forEach((key) => {
+            const typedKey = key as keyof Task;
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            previousValues[typedKey] = currentTask[typedKey] as any;
           });
 
-          // Find the parent of the root deleted task (for cascade recalculation)
-          const rootDeletedTask = state.tasks.find((task) => task.id === id);
-          const rootParentId = rootDeletedTask?.parent;
+          // Apply update — uses Object.assign to mutate the existing draft/object
+          Object.assign(state.tasks[taskIndex], updates);
 
-          // Remove all collected tasks
-          state.tasks = state.tasks.filter((task) => !idsToDelete.has(task.id));
+          // Check if parent needs recalculation (summary cascade)
+          if (currentTask.parent && (updates.startDate || updates.endDate)) {
+            const cascadeResults = recalculateSummaryAncestors(
+              state.tasks,
+              new Set([currentTask.parent])
+            );
+            parentUpdates.push(...cascadeResults);
+          }
+        }
+      });
 
-          // Clear selection for deleted tasks
+      // Mark file as dirty
+      if (Object.keys(previousValues).length > 0) {
+        useFileStore.getState().markDirty();
+      }
+
+      // Record command for undo/redo
+      if (Object.keys(previousValues).length > 0) {
+        recordCommand(
+          CommandType.UPDATE_TASK,
+          `Updated task "${taskName}"${parentUpdates.length > 0 ? " (and parent)" : ""}`,
+          {
+            id,
+            updates,
+            previousValues,
+            cascadeUpdates: parentUpdates,
+          }
+        );
+      }
+    },
+
+    updateMultipleTasks: (updates): void => {
+      const taskChanges: Array<{
+        id: string;
+        previousStartDate: string;
+        previousEndDate: string;
+        newStartDate: string;
+        newEndDate: string;
+      }> = [];
+      const cascadeUpdates: Array<{
+        id: string;
+        updates: Partial<Task>;
+        previousValues: Partial<Task>;
+      }> = [];
+
+      set((state) => {
+        const affectedParentIds = new Set<string>();
+
+        // Apply all task updates
+        for (const { id, updates: taskUpdates } of updates) {
+          const taskIndex = state.tasks.findIndex((t) => t.id === id);
+          if (taskIndex === -1) continue;
+
+          const task = state.tasks[taskIndex];
+
+          // Capture previous values
+          taskChanges.push({
+            id,
+            previousStartDate: task.startDate,
+            previousEndDate: task.endDate,
+            newStartDate: taskUpdates.startDate || task.startDate,
+            newEndDate: taskUpdates.endDate || task.endDate,
+          });
+
+          // Apply update — mutate the Immer draft directly
+          Object.assign(state.tasks[taskIndex], taskUpdates);
+
+          // Track affected parents for cascade
+          if (task.parent) {
+            affectedParentIds.add(task.parent);
+          }
+        }
+
+        // Cascade up through all ancestor summaries
+        const cascadeResults = recalculateSummaryAncestors(
+          state.tasks,
+          affectedParentIds
+        );
+        cascadeUpdates.push(...cascadeResults);
+      });
+
+      // Mark file as dirty
+      if (taskChanges.length > 0) {
+        useFileStore.getState().markDirty();
+      }
+
+      // Record command for undo/redo
+      if (taskChanges.length > 0) {
+        recordCommand(
+          CommandType.MULTI_DRAG_TASKS,
+          `Moved ${taskChanges.length} task(s)`,
+          { taskChanges, cascadeUpdates }
+        );
+      }
+    },
+
+    deleteTask: (id, cascade = false): void => {
+      const deletedTasks: Task[] = [];
+      let cascadeUpdates: Array<{
+        id: string;
+        updates: Partial<Task>;
+        previousValues: Partial<Task>;
+      }> = [];
+
+      set((state) => {
+        if (!cascade) {
+          // Simple delete - capture the task before removing
+          const taskToDelete = state.tasks.find((task) => task.id === id);
+          if (taskToDelete) {
+            deletedTasks.push(current(taskToDelete));
+          }
+
+          const parentId = taskToDelete?.parent;
+
+          // Simple delete - just remove the task
+          state.tasks = state.tasks.filter((task) => task.id !== id);
+          // Clear selection for deleted task
           state.selectedTaskIds = state.selectedTaskIds.filter(
-            (selectedId) => !idsToDelete.has(selectedId)
+            (selectedId) => selectedId !== id
           );
-          // Clear active cell if it referenced a deleted task
-          if (
-            state.activeCell.taskId &&
-            idsToDelete.has(state.activeCell.taskId)
-          ) {
+          // Clear active cell if it referenced the deleted task
+          if (state.activeCell.taskId === id) {
             state.activeCell = { taskId: null, field: null };
           }
 
-          // Recalculate parent summary dates if the root task had a parent
-          if (rootParentId && !idsToDelete.has(rootParentId)) {
+          // Recalculate parent summary dates if it was a child
+          if (parentId) {
             cascadeUpdates = recalculateSummaryAncestors(
               state.tasks,
-              new Set([rootParentId])
+              new Set([parentId])
             );
           }
-        });
 
-        // Mark file as dirty
-        if (deletedTasks.length > 0) {
-          useFileStore.getState().markDirty();
+          return;
         }
 
-        // Record command for undo/redo
-        if (deletedTasks.length > 0) {
-          const taskName = deletedTasks[0]?.name || UNKNOWN_TASK_NAME;
-          const description =
-            deletedTasks.length === 1
-              ? `Deleted task "${taskName}"`
-              : `Deleted ${deletedTasks.length} tasks`;
-
-          recordCommand(CommandType.DELETE_TASK, description, {
-            id,
-            deletedIds: deletedTasks.map((t) => t.id),
-            cascade,
-            deletedTasks,
-            cascadeUpdates,
-          });
-        }
-      },
-
-      deleteSelectedTasks: (): void => {
-        const state = get();
-        const selectedIds = state.selectedTaskIds;
-
-        if (selectedIds.length === 0) return;
-
-        // Collect all tasks to delete (including children of selected tasks)
-        const idsToDelete = new Set<string>();
-        const deletedTasks: Task[] = [];
-
-        // Add selected tasks and their children
-        selectedIds.forEach((id) => {
-          idsToDelete.add(id);
-          collectDescendantIds(state.tasks, id, idsToDelete);
-        });
+        // Cascading delete - collect all descendants recursively
+        const idsToDelete = collectDescendantIds(state.tasks, id);
+        idsToDelete.add(id);
 
         // Capture all tasks before deleting
         state.tasks.forEach((task) => {
           if (idsToDelete.has(task.id)) {
-            deletedTasks.push(structuredClone(task));
+            deletedTasks.push(current(task));
           }
         });
 
-        // Collect parent IDs of deleted tasks that are NOT themselves deleted
-        const affectedParentIds = new Set<string>();
-        deletedTasks.forEach((task) => {
-          if (task.parent && !idsToDelete.has(task.parent)) {
-            affectedParentIds.add(task.parent);
-          }
-        });
+        // Find the parent of the root deleted task (for cascade recalculation)
+        const rootDeletedTask = state.tasks.find((task) => task.id === id);
+        const rootParentId = rootDeletedTask?.parent;
 
-        // Remove all collected tasks and recalculate summaries
-        let cascadeUpdates: Array<{
-          id: string;
-          updates: { startDate: string; endDate: string; duration: number };
-          previousValues: {
-            startDate: string;
-            endDate: string;
-            duration: number;
-          };
-        }> = [];
+        // Remove all collected tasks
+        state.tasks = state.tasks.filter((task) => !idsToDelete.has(task.id));
 
-        set((s) => {
-          s.tasks = s.tasks.filter((task) => !idsToDelete.has(task.id));
-          s.selectedTaskIds = [];
-          s.clipboardTaskIds = s.clipboardTaskIds.filter(
-            (id) => !idsToDelete.has(id)
-          );
-          // Clear active cell if it referenced a deleted task
-          if (s.activeCell.taskId && idsToDelete.has(s.activeCell.taskId)) {
-            s.activeCell = { taskId: null, field: null };
-          }
-
-          // Recalculate summary ancestors for affected parents
-          cascadeUpdates = recalculateSummaryAncestors(
-            s.tasks,
-            affectedParentIds
-          );
-        });
-
-        // Mark file as dirty
-        if (deletedTasks.length > 0) {
-          useFileStore.getState().markDirty();
-        }
-
-        // Record command for undo/redo
-        if (deletedTasks.length > 0) {
-          const description =
-            deletedTasks.length === 1
-              ? `Deleted task "${deletedTasks[0].name}"`
-              : `Deleted ${deletedTasks.length} tasks`;
-
-          recordCommand(CommandType.DELETE_TASK, description, {
-            id: selectedIds[0],
-            deletedIds: Array.from(idsToDelete),
-            cascade: true,
-            deletedTasks,
-            cascadeUpdates,
-          });
-        }
-      },
-
-      reorderTasks: (activeTaskId, overTaskId): void => {
-        // Capture previous order before making changes
-        const previousOrder = captureHierarchySnapshot(get().tasks);
-
-        let changed = false;
-        let movedTaskName = UNKNOWN_TASK_NAME;
-
-        set((state) => {
-          const activeTask = state.tasks.find((t) => t.id === activeTaskId);
-          const overTask = state.tasks.find((t) => t.id === overTaskId);
-          if (!activeTask || !overTask) return;
-
-          movedTaskName = activeTask.name;
-
-          const oldParent = activeTask.parent ?? null;
-          const newParent = overTask.parent ?? null;
-
-          // Cross-parent guards
-          if (oldParent !== newParent) {
-            // Circular hierarchy check
-            if (
-              wouldCreateCircularHierarchy(state.tasks, activeTaskId, newParent)
-            ) {
-              return;
-            }
-
-            // Max depth check
-            const targetLevel = getTaskLevel(state.tasks, overTaskId);
-            const activeLevel = getTaskLevel(state.tasks, activeTaskId);
-            const activeSubtreeDepth =
-              getMaxDescendantLevel(state.tasks, activeTaskId) - activeLevel;
-            if (targetLevel + activeSubtreeDepth >= MAX_HIERARCHY_DEPTH) {
-              return;
-            }
-          }
-
-          // Build flattened list to determine visual positions BEFORE re-parenting
-          const flatBefore = buildFlattenedTaskList(
-            state.tasks,
-            new Set<string>()
-          );
-          const activeVisualIdx = flatBefore.findIndex(
-            (f) => f.task.id === activeTaskId
-          );
-          const overVisualIdx = flatBefore.findIndex(
-            (f) => f.task.id === overTaskId
-          );
-
-          // Re-parent if needed
-          if (oldParent !== newParent) {
-            activeTask.parent = newParent ?? undefined;
-          }
-
-          // Get target sibling group (same parent as over, excluding active), sorted by order
-          const siblings = getTaskChildren(state.tasks, newParent).filter(
-            (t) => t.id !== activeTaskId
-          );
-
-          // Find position of overTask within siblings
-          const overIdxInSiblings = siblings.findIndex(
-            (t) => t.id === overTaskId
-          );
-
-          // Determine insert position: before or after over
-          let insertIdx: number;
-          if (activeVisualIdx < overVisualIdx) {
-            // Moving down → insert AFTER over
-            insertIdx = overIdxInSiblings + 1;
-          } else {
-            // Moving up → insert BEFORE over
-            insertIdx = overIdxInSiblings;
-          }
-
-          // Insert active task into siblings at the determined position
-          siblings.splice(insertIdx, 0, activeTask);
-
-          // Reassign order values for the sibling group
-          for (let i = 0; i < siblings.length; i++) {
-            const t = state.tasks.find((task) => task.id === siblings[i].id);
-            if (t) t.order = i;
-          }
-
-          // Normalize all task orders globally for consistency
-          normalizeTaskOrder(state.tasks);
-
-          // If parent changed, recalculate summary dates for old and new parents
-          if (oldParent !== newParent) {
-            const affectedParents = new Set<string>();
-            if (oldParent) affectedParents.add(oldParent);
-            if (newParent) affectedParents.add(newParent);
-            recalculateSummaryAncestors(state.tasks, affectedParents);
-          }
-
-          changed = true;
-        });
-
-        if (!changed) return;
-
-        // Mark file as dirty
-        useFileStore.getState().markDirty();
-
-        recordCommand(
-          CommandType.REORDER_TASKS,
-          `Reordered task "${movedTaskName}"`,
-          { activeTaskId, overTaskId, previousOrder }
+        // Clear selection for deleted tasks
+        state.selectedTaskIds = state.selectedTaskIds.filter(
+          (selectedId) => !idsToDelete.has(selectedId)
         );
-      },
-
-      setTasks: (tasks): void =>
-        set((state) => {
-          state.tasks = tasks;
-          state.selectedTaskIds = [];
-          state.lastSelectedTaskId = null;
+        // Clear active cell if it referenced a deleted task
+        if (
+          state.activeCell.taskId &&
+          idsToDelete.has(state.activeCell.taskId)
+        ) {
           state.activeCell = { taskId: null, field: null };
-          state.isEditingCell = false;
-        }),
+        }
 
-      // Selection actions (extracted)
-      ...createSelectionActions(set, get),
+        // Recalculate parent summary dates if the root task had a parent
+        if (rootParentId && !idsToDelete.has(rootParentId)) {
+          cascadeUpdates = recalculateSummaryAncestors(
+            state.tasks,
+            new Set([rootParentId])
+          );
+        }
+      });
 
-      // Cell navigation actions
-      setActiveCell: (taskId, field): void =>
-        set((state) => {
-          state.activeCell.taskId = taskId;
-          state.activeCell.field = field;
-          state.isEditingCell = false;
-        }),
+      // Mark file as dirty
+      if (deletedTasks.length > 0) {
+        useFileStore.getState().markDirty();
+      }
 
-      navigateCell: (direction): void => {
-        // Read cross-store state before set() to avoid anti-pattern
-        const hiddenColumns = useChartStore.getState().hiddenColumns;
-        const visibleFields = EDITABLE_FIELDS.filter(
-          (field) => !hiddenColumns.includes(field)
+      // Record command for undo/redo
+      if (deletedTasks.length > 0) {
+        const taskName = deletedTasks[0]?.name || UNKNOWN_TASK_NAME;
+        const description =
+          deletedTasks.length === 1
+            ? `Deleted task "${taskName}"`
+            : `Deleted ${deletedTasks.length} tasks`;
+
+        recordCommand(CommandType.DELETE_TASK, description, {
+          id,
+          deletedIds: deletedTasks.map((t) => t.id),
+          cascade,
+          deletedTasks,
+          cascadeUpdates,
+        });
+      }
+    },
+
+    deleteSelectedTasks: (): void => {
+      const state = get();
+      const selectedIds = state.selectedTaskIds;
+
+      if (selectedIds.length === 0) return;
+
+      // Collect all tasks to delete (including children of selected tasks)
+      const idsToDelete = new Set<string>();
+      const deletedTasks: Task[] = [];
+
+      // Add selected tasks and their children
+      selectedIds.forEach((id) => {
+        idsToDelete.add(id);
+        collectDescendantIds(state.tasks, id, idsToDelete);
+      });
+
+      // Capture all tasks before deleting
+      state.tasks.forEach((task) => {
+        if (idsToDelete.has(task.id)) {
+          deletedTasks.push(structuredClone(task));
+        }
+      });
+
+      // Collect parent IDs of deleted tasks that are NOT themselves deleted
+      const affectedParentIds = new Set<string>();
+      deletedTasks.forEach((task) => {
+        if (task.parent && !idsToDelete.has(task.parent)) {
+          affectedParentIds.add(task.parent);
+        }
+      });
+
+      // Remove all collected tasks and recalculate summaries
+      let cascadeUpdates: Array<{
+        id: string;
+        updates: { startDate: string; endDate: string; duration: number };
+        previousValues: {
+          startDate: string;
+          endDate: string;
+          duration: number;
+        };
+      }> = [];
+
+      set((s) => {
+        s.tasks = s.tasks.filter((task) => !idsToDelete.has(task.id));
+        s.selectedTaskIds = [];
+        s.clipboardTaskIds = s.clipboardTaskIds.filter(
+          (id) => !idsToDelete.has(id)
         );
-        if (visibleFields.length === 0) return;
+        // Clear active cell if it referenced a deleted task
+        if (s.activeCell.taskId && idsToDelete.has(s.activeCell.taskId)) {
+          s.activeCell = { taskId: null, field: null };
+        }
 
-        set((state) => {
-          const { activeCell, tasks } = state;
-          if (!activeCell.taskId || !activeCell.field) return;
+        // Recalculate summary ancestors for affected parents
+        cascadeUpdates = recalculateSummaryAncestors(
+          s.tasks,
+          affectedParentIds
+        );
+      });
 
-          const fieldIndex = visibleFields.indexOf(activeCell.field);
-          if (fieldIndex === -1) return;
+      // Mark file as dirty
+      if (deletedTasks.length > 0) {
+        useFileStore.getState().markDirty();
+      }
 
-          let newFieldIndex = fieldIndex;
-          let newTaskId: string | null = activeCell.taskId;
+      // Record command for undo/redo
+      if (deletedTasks.length > 0) {
+        const description =
+          deletedTasks.length === 1
+            ? `Deleted task "${deletedTasks[0].name}"`
+            : `Deleted ${deletedTasks.length} tasks`;
 
-          switch (direction) {
-            case "up":
-            case "down": {
-              const collapsedIds = new Set(
-                tasks.filter((t) => t.open === false).map((t) => t.id)
-              );
-              const flatList = buildFlattenedTaskList(tasks, collapsedIds);
-              const visualIndex = flatList.findIndex(
-                (ft) => ft.task.id === activeCell.taskId
-              );
-              if (visualIndex === -1) return;
-              const newIndex =
-                direction === "up"
-                  ? Math.max(0, visualIndex - 1)
-                  : Math.min(flatList.length - 1, visualIndex + 1);
-              newTaskId = flatList[newIndex]?.task.id || null;
-              break;
-            }
-            case "left":
-              newFieldIndex = Math.max(0, fieldIndex - 1);
-              break;
-            case "right":
-              newFieldIndex = Math.min(
-                visibleFields.length - 1,
-                fieldIndex + 1
-              );
-              break;
+        recordCommand(CommandType.DELETE_TASK, description, {
+          id: selectedIds[0],
+          deletedIds: Array.from(idsToDelete),
+          cascade: true,
+          deletedTasks,
+          cascadeUpdates,
+        });
+      }
+    },
+
+    reorderTasks: (activeTaskId, overTaskId): void => {
+      // Capture previous order before making changes
+      const previousOrder = captureHierarchySnapshot(get().tasks);
+
+      let changed = false;
+      let movedTaskName = UNKNOWN_TASK_NAME;
+
+      set((state) => {
+        const activeTask = state.tasks.find((t) => t.id === activeTaskId);
+        const overTask = state.tasks.find((t) => t.id === overTaskId);
+        if (!activeTask || !overTask) return;
+
+        movedTaskName = activeTask.name;
+
+        const oldParent = activeTask.parent ?? null;
+        const newParent = overTask.parent ?? null;
+
+        // Cross-parent guards
+        if (oldParent !== newParent) {
+          // Circular hierarchy check
+          if (
+            wouldCreateCircularHierarchy(state.tasks, activeTaskId, newParent)
+          ) {
+            return;
           }
 
-          state.activeCell.taskId = newTaskId;
-          state.activeCell.field = visibleFields[newFieldIndex];
-          state.isEditingCell = false;
-        });
-      },
+          // Max depth check
+          const targetLevel = getTaskLevel(state.tasks, overTaskId);
+          const activeLevel = getTaskLevel(state.tasks, activeTaskId);
+          const activeSubtreeDepth =
+            getMaxDescendantLevel(state.tasks, activeTaskId) - activeLevel;
+          if (targetLevel + activeSubtreeDepth >= MAX_HIERARCHY_DEPTH) {
+            return;
+          }
+        }
 
-      startCellEdit: (): void =>
-        set((state) => {
-          state.isEditingCell = true;
-        }),
+        // Build flattened list to determine visual positions BEFORE re-parenting
+        const flatBefore = buildFlattenedTaskList(
+          state.tasks,
+          new Set<string>()
+        );
+        const activeVisualIdx = flatBefore.findIndex(
+          (f) => f.task.id === activeTaskId
+        );
+        const overVisualIdx = flatBefore.findIndex(
+          (f) => f.task.id === overTaskId
+        );
 
-      stopCellEdit: (): void =>
-        set((state) => {
-          state.isEditingCell = false;
-        }),
+        // Re-parent if needed
+        if (oldParent !== newParent) {
+          activeTask.parent = newParent ?? undefined;
+        }
 
-      // Column actions (extracted)
-      ...createColumnActions(set, get),
+        // Get target sibling group (same parent as over, excluding active), sorted by order
+        const siblings = getTaskChildren(state.tasks, newParent).filter(
+          (t) => t.id !== activeTaskId
+        );
 
-      setTaskTableWidth: (width): void =>
-        set((state) => {
-          state.taskTableWidth = width;
-        }),
+        // Find position of overTask within siblings
+        const overIdxInSiblings = siblings.findIndex(
+          (t) => t.id === overTaskId
+        );
 
-      // Expansion actions (extracted)
-      ...createExpansionActions(set, get),
+        // Determine insert position: before or after over
+        let insertIdx: number;
+        if (activeVisualIdx < overVisualIdx) {
+          // Moving down → insert AFTER over
+          insertIdx = overIdxInSiblings + 1;
+        } else {
+          // Moving up → insert BEFORE over
+          insertIdx = overIdxInSiblings;
+        }
 
-      // Insertion actions (extracted)
-      ...createInsertionActions(set, get),
+        // Insert active task into siblings at the determined position
+        siblings.splice(insertIdx, 0, activeTask);
 
-      // Indent/Outdent actions (extracted)
-      ...createIndentOutdentActions(set, get),
+        // Reassign order values for the sibling group
+        for (let i = 0; i < siblings.length; i++) {
+          const t = state.tasks.find((task) => task.id === siblings[i].id);
+          if (t) t.order = i;
+        }
 
-      // Grouping actions (extracted)
-      ...createGroupingActions(set, get),
-    }))
+        // Normalize all task orders globally for consistency
+        normalizeTaskOrder(state.tasks);
+
+        // If parent changed, recalculate summary dates for old and new parents
+        if (oldParent !== newParent) {
+          const affectedParents = new Set<string>();
+          if (oldParent) affectedParents.add(oldParent);
+          if (newParent) affectedParents.add(newParent);
+          recalculateSummaryAncestors(state.tasks, affectedParents);
+        }
+
+        changed = true;
+      });
+
+      if (!changed) return;
+
+      // Mark file as dirty
+      useFileStore.getState().markDirty();
+
+      recordCommand(
+        CommandType.REORDER_TASKS,
+        `Reordered task "${movedTaskName}"`,
+        { activeTaskId, overTaskId, previousOrder }
+      );
+    },
+
+    setTasks: (tasks): void =>
+      set((state) => {
+        state.tasks = tasks;
+        state.selectedTaskIds = [];
+        state.lastSelectedTaskId = null;
+        state.activeCell = { taskId: null, field: null };
+        state.isEditingCell = false;
+      }),
+
+    // Selection actions (extracted)
+    ...createSelectionActions(set),
+
+    // Cell navigation actions
+    setActiveCell: (taskId, field): void =>
+      set((state) => {
+        state.activeCell.taskId = taskId;
+        state.activeCell.field = field;
+        state.isEditingCell = false;
+      }),
+
+    navigateCell: (direction): void => {
+      // Read cross-store state before set() to avoid anti-pattern
+      const hiddenColumns = useChartStore.getState().hiddenColumns;
+      const visibleFields = EDITABLE_FIELDS.filter(
+        (field) => !hiddenColumns.includes(field)
+      );
+      if (visibleFields.length === 0) return;
+
+      set((state) => {
+        const { activeCell, tasks } = state;
+        if (!activeCell.taskId || !activeCell.field) return;
+
+        const fieldIndex = visibleFields.indexOf(activeCell.field);
+        if (fieldIndex === -1) return;
+
+        let newFieldIndex = fieldIndex;
+        let newTaskId: string | null = activeCell.taskId;
+
+        switch (direction) {
+          case "up":
+          case "down": {
+            const collapsedIds = new Set(
+              tasks.filter((t) => t.open === false).map((t) => t.id)
+            );
+            const flatList = buildFlattenedTaskList(tasks, collapsedIds);
+            const visualIndex = flatList.findIndex(
+              (ft) => ft.task.id === activeCell.taskId
+            );
+            if (visualIndex === -1) return;
+            const newIndex =
+              direction === "up"
+                ? Math.max(0, visualIndex - 1)
+                : Math.min(flatList.length - 1, visualIndex + 1);
+            newTaskId = flatList[newIndex]?.task.id || null;
+            break;
+          }
+          case "left":
+            newFieldIndex = Math.max(0, fieldIndex - 1);
+            break;
+          case "right":
+            newFieldIndex = Math.min(visibleFields.length - 1, fieldIndex + 1);
+            break;
+        }
+
+        state.activeCell.taskId = newTaskId;
+        state.activeCell.field = visibleFields[newFieldIndex];
+        state.isEditingCell = false;
+      });
+    },
+
+    startCellEdit: (): void =>
+      set((state) => {
+        state.isEditingCell = true;
+      }),
+
+    stopCellEdit: (): void =>
+      set((state) => {
+        state.isEditingCell = false;
+      }),
+
+    // Column actions (extracted)
+    ...createColumnActions(set),
+
+    setTaskTableWidth: (width): void =>
+      set((state) => {
+        state.taskTableWidth = width;
+      }),
+
+    // Expansion actions (extracted)
+    ...createExpansionActions(set),
+
+    // Insertion actions (extracted)
+    ...createInsertionActions(set, get),
+
+    // Indent/Outdent actions (extracted)
+    ...createIndentOutdentActions(set, get),
+
+    // Grouping actions (extracted)
+    ...createGroupingActions(set, get),
+  }))
 );

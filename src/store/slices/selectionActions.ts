@@ -4,7 +4,7 @@
  */
 
 import { buildFlattenedTaskList } from "../../utils/hierarchy";
-import type { TaskSliceSet, TaskSliceGet, TaskActions } from "./taskSlice";
+import type { TaskSliceSet, TaskActions } from "./taskSlice";
 
 type SelectionActions = Pick<
   TaskActions,
@@ -15,10 +15,7 @@ type SelectionActions = Pick<
   | "setSelectedTaskIds"
 >;
 
-export function createSelectionActions(
-  set: TaskSliceSet,
-  _get: TaskSliceGet
-): SelectionActions {
+export function createSelectionActions(set: TaskSliceSet): SelectionActions {
   return {
     toggleTaskSelection: (id): void =>
       set((state) => {

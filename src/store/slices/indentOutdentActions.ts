@@ -42,10 +42,7 @@ export function createIndentOutdentActions(
       const { tasks } = state;
 
       // Create snapshot of current hierarchy BEFORE any changes
-      const originalFlatList = buildFlattenedTaskList(
-        tasks,
-        new Set<string>()
-      );
+      const originalFlatList = buildFlattenedTaskList(tasks, new Set<string>());
 
       // Sort selection by display order (top to bottom)
       const sortedIds = [...taskIds].sort((a, b) => {

@@ -13,12 +13,7 @@ import {
   EXPAND_BUTTON_WIDTH,
   CELL_GAP_SIZE,
 } from "./taskSliceHelpers";
-import type {
-  TaskSliceSet,
-  TaskSliceGet,
-  TaskActions,
-  TaskState,
-} from "./taskSlice";
+import type { TaskSliceSet, TaskActions, TaskState } from "./taskSlice";
 
 type ColumnActions = Pick<
   TaskActions,
@@ -80,10 +75,7 @@ function fitColumnToContent(state: TaskState, columnId: string): void {
   );
 }
 
-export function createColumnActions(
-  set: TaskSliceSet,
-  _get: TaskSliceGet
-): ColumnActions {
+export function createColumnActions(set: TaskSliceSet): ColumnActions {
   return {
     setColumnWidth: (columnId, width): void =>
       set((state) => {

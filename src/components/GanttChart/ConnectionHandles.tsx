@@ -170,7 +170,11 @@ export const ConnectionHandles = memo(function ConnectionHandles({
             cy={handleCenterY}
             r={handleRadius + 4}
             fill="none"
-            stroke={isValidDropTarget ? CONNECTION_HANDLE.validStroke : CONNECTION_HANDLE.invalidStroke}
+            stroke={
+              isValidDropTarget
+                ? CONNECTION_HANDLE.validStroke
+                : CONNECTION_HANDLE.invalidStroke
+            }
             strokeWidth={2}
             opacity={0.6}
             pointerEvents="none"
@@ -181,7 +185,11 @@ export const ConnectionHandles = memo(function ConnectionHandles({
             cy={handleCenterY}
             r={handleRadius + 4}
             fill="none"
-            stroke={isValidDropTarget ? CONNECTION_HANDLE.validStroke : CONNECTION_HANDLE.invalidStroke}
+            stroke={
+              isValidDropTarget
+                ? CONNECTION_HANDLE.validStroke
+                : CONNECTION_HANDLE.invalidStroke
+            }
             strokeWidth={2}
             opacity={0.6}
             pointerEvents="none"

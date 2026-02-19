@@ -4,16 +4,15 @@
  */
 
 import { useFileStore } from "./fileSlice";
-import type {
-  TaskSliceSet,
-  TaskSliceGet,
-  TaskActions,
-  TaskState,
-} from "./taskSlice";
+import type { TaskSliceSet, TaskActions, TaskState } from "./taskSlice";
 
 type ExpansionActions = Pick<
   TaskActions,
-  "toggleTaskCollapsed" | "expandTask" | "collapseTask" | "expandAll" | "collapseAll"
+  | "toggleTaskCollapsed"
+  | "expandTask"
+  | "collapseTask"
+  | "expandAll"
+  | "collapseAll"
 >;
 
 /**
@@ -48,10 +47,7 @@ function setAllTasksOpen(state: TaskState, open: boolean): boolean {
   return changed;
 }
 
-export function createExpansionActions(
-  set: TaskSliceSet,
-  _get: TaskSliceGet
-): ExpansionActions {
+export function createExpansionActions(set: TaskSliceSet): ExpansionActions {
   return {
     toggleTaskCollapsed: (taskId): void => {
       let changed = false;

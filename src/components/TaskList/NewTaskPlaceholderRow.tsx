@@ -250,7 +250,9 @@ export function NewTaskPlaceholderRow(): JSX.Element {
               style={{
                 height: "var(--density-row-height)",
                 paddingRight: "8px",
-                backgroundColor: isSelected ? COLORS.brand[600] : ROW_NUMBER.bgInactive,
+                backgroundColor: isSelected
+                  ? COLORS.brand[600]
+                  : ROW_NUMBER.bgInactive,
               }}
               onClick={handleRowNumberClick}
               onContextMenu={handlePlaceholderContextMenu}

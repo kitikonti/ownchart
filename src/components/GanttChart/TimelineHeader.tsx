@@ -239,7 +239,9 @@ export function TimelineHeader({
                 fontSize={rowIndex === 0 ? 12 : 11}
                 fontWeight={cell.isToday ? 600 : rowIndex === 0 ? 600 : 400}
                 fontFamily={SVG_FONT_FAMILY}
-                fill={cell.isToday ? COLORS.chart.todayMarker : COLORS.chart.text}
+                fill={
+                  cell.isToday ? COLORS.chart.todayMarker : COLORS.chart.text
+                }
                 textAnchor="middle"
               >
                 {cell.label}
