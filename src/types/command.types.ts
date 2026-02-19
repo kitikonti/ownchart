@@ -199,6 +199,7 @@ export interface PasteCellParams {
   newValue: unknown;
   previousValue: unknown;
   previousCutCell?: { taskId: string; field: string; value: unknown };
+  cutClearValue?: unknown; // Value source cell was set to after cut (for redo)
 }
 
 // Multi-drag command params

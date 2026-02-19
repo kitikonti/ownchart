@@ -71,7 +71,7 @@ cd ../app-gantt-review
 - [x] `src/store/slices/columnActions.ts` (100 LOC) — cross-store getState() moved outside set(), forEach→for...of
 - [x] `src/store/slices/expansionActions.ts` (97 LOC) — forEach→for...of
 - [x] `src/store/slices/selectionActions.ts` (78 LOC) — clean, no findings
-- [ ] `src/store/slices/historySlice.ts` (1035 LOC) — 23x any
+- [x] `src/store/slices/historySlice.ts` (1035→875 LOC) — CRITICAL pasteCell redo bug fixed, handlers extracted, forEach→for...of, O(n²)→Map, maxStackSize/console.warn cleanup; 32x `as`-Casts bleiben (Discriminated Union deferred)
 - [ ] `src/store/slices/chartSlice.ts` (984 LOC)
 - [ ] `src/store/slices/clipboardSlice.ts` (908 LOC)
 - [ ] `src/store/slices/dependencySlice.ts` (341 LOC)
@@ -293,7 +293,7 @@ cd ../app-gantt-review
 Patterns die mehrere Dateien betreffen. Beim Review jeder Datei pruefen ob sie betroffen ist.
 
 - **Hardcoded Hex-Farben** (38 Stueck in 10 .tsx-Dateien): `design-tokens.ts` existiert, wird aber von SVG-Komponenten nicht genutzt. Brand-Farbe `#0F6CBD` in 4+ Komponenten als Raw-String. Betroffene Dateien sind im Index markiert.
-- **`any`-Casts in historySlice** (23x): Betrifft auch `command.types.ts` (fehlende Felder). taskSlice hat 1x legitimiertes `as any` (TS-Limit bei dynamischen Keys).
+- **`as`-Casts in historySlice** (32x): Jeder Command-Handler castet `command.params as SomeParams`. Loesung: `Command` in command.types.ts zu Discriminated Union refactoren → eigener Branch. taskSlice hat 1x legitimiertes `as any` (TS-Limit bei dynamischen Keys).
 - **`toISODateString()` nicht ueberall genutzt**: Utility existiert in `dateUtils.ts`, wird bisher nur in `taskSliceHelpers` verwendet. ~18 weitere `toISOString().split("T")[0]` in: insertionActions, hierarchy, calculations, Cell, HomeTabContent, NewTaskPlaceholderRow, SharedExportOptions. Bei Review dieser Dateien umstellen.
 
 ---
@@ -308,11 +308,13 @@ Entscheidungen aus bisherigen Reviews die fuer zukuenftige Dateien gelten.
 - **Immer-Idiome**: `Object.assign(draft, updates)` statt Spread `{...draft, ...updates}`. Direkte Draft-Mutation ist korrekt und gewollt.
 - **`structuredClone` vs `current()` vs Shallow Clone**: Innerhalb Immer `set()` → `current()`. Ausserhalb (von `get()`) → `{ ...obj }` reicht (frozen objects, shallow clone genuegt fuer flache Task-Objekte).
 - **recordCommand aussen, nicht innen**: Undo/Redo-Recording nach `set()`, nicht innerhalb. Ermoeglicht saubere Trennung von State-Mutation und History-Tracking.
+- **Frozen-Object-Safety bei getState()**: Tasks aus `getState().tasks` sind Immer-frozen. Vor Mutation IMMER `.map(t => ({...t}))` oder `.filter().map()` verwenden. Nur `.filter()` allein reicht NICHT — die Elemente bleiben frozen.
+- **Handler-Extraction fuer grosse Switch-Statements**: Bei >50 LOC pro Switch-Case jeden Case in benannte Funktion extrahieren. Switch bleibt als duenner Dispatcher. Shared Patterns (Map-Build, Snapshot-Apply) als Helpers.
 
 ---
 
 ## Technical Debt Metrics
 - Dateien gesamt: 193 (+ 3 Font-Dateien, nicht reviewbar)
-- Dateien reviewed: 8 / 193
-- Kritische Issues bekannt: 23 any-Casts (historySlice), 38 Hex-Farben
+- Dateien reviewed: 9 / 193
+- Kritische Issues bekannt: 32 as-Casts (historySlice, Discriminated Union deferred), 38 Hex-Farben
 - Test-Coverage: 80%+

@@ -644,6 +644,10 @@ export const useClipboardStore = create<ClipboardStore>()(
             newValue: cellClipboard.value,
             previousValue,
             previousCutCell,
+            cutClearValue:
+              cellClipboard.operation === "cut" && cellClipboard.field
+                ? getClearValueForField(cellClipboard.field)
+                : undefined,
           },
         });
       }

@@ -539,7 +539,7 @@ describe('Undo/Redo Integration Tests', () => {
       const taskStore = useTaskStore.getState();
 
       // Get max stack size
-      const maxSize = useHistoryStore.getState().maxStackSize;
+      const maxSize = 100; // MAX_STACK_SIZE constant in historySlice
 
       // Create more tasks than max stack size
       for (let i = 0; i < maxSize + 10; i++) {
