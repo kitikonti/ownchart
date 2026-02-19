@@ -26,25 +26,22 @@ import toast from "react-hot-toast";
 import { useDependencyStore } from "./dependencySlice";
 import { useFileStore } from "./fileSlice";
 import { CommandType, type UngroupTasksParams } from "../../types/command.types";
-import { TASK_COLUMNS } from "../../config/tableColumns";
-import { calculateColumnWidth } from "../../utils/textMeasurement";
-import { useUserPreferencesStore } from "./userPreferencesSlice";
 import { useChartStore } from "./chartSlice";
 import { COLORS } from "../../styles/design-tokens";
 import {
   DEFAULT_TASK_DURATION,
   MS_PER_DAY,
   DEFAULT_TASK_NAME,
-  PLACEHOLDER_TEXT,
   DEFAULT_GROUP_NAME,
   UNKNOWN_TASK_NAME,
-  EXPAND_BUTTON_WIDTH,
-  CELL_GAP_SIZE,
   captureHierarchySnapshot,
   recordCommand,
   getEffectiveTaskIds,
   getRootSelectedIds,
 } from "./taskSliceHelpers";
+import { createSelectionActions } from "./selectionActions";
+import { createExpansionActions } from "./expansionActions";
+import { createColumnActions } from "./columnActions";
 
 /**
  * Editable field types for cell-based editing.
@@ -66,7 +63,7 @@ export type NavigationDirection = "up" | "down" | "left" | "right";
 /**
  * Task state interface.
  */
-interface TaskState {
+export interface TaskState {
   tasks: Task[];
 
   // Multi-selection state
@@ -92,7 +89,7 @@ interface TaskState {
 /**
  * Task actions interface.
  */
-interface TaskActions {
+export interface TaskActions {
   addTask: (taskData: Omit<Task, "id">) => void;
   updateTask: (id: string, updates: Partial<Task>) => void;
   updateMultipleTasks: (
@@ -146,7 +143,12 @@ interface TaskActions {
 /**
  * Combined store interface.
  */
-type TaskStore = TaskState & TaskActions;
+export type TaskStore = TaskState & TaskActions;
+
+/** Zustand set function (Immer-style: mutate draft directly). */
+export type TaskSliceSet = (fn: (state: TaskStore) => void) => void;
+/** Zustand get function. */
+export type TaskSliceGet = () => TaskStore;
 
 /**
  * Validates whether the current selection can be grouped.
@@ -273,94 +275,6 @@ const EDITABLE_FIELDS: EditableField[] = [
   "duration",
   "progress",
 ];
-
-/**
- * Set a single task's open state. Returns true if state changed.
- */
-function setTaskOpen(state: TaskState, taskId: string, open: boolean): boolean {
-  const task = state.tasks.find((t) => t.id === taskId);
-  if (!task || task.type !== "summary") return false;
-  const hasChildren = state.tasks.some((t) => t.parent === taskId);
-  if (!hasChildren) return false;
-  const currentOpen = task.open ?? true;
-  if (currentOpen === open) return false;
-  task.open = open;
-  return true;
-}
-
-/**
- * Set all summary tasks to open or closed. Returns true if any changed.
- */
-function setAllTasksOpen(state: TaskState, open: boolean): boolean {
-  let changed = false;
-  state.tasks.forEach((task) => {
-    if (task.type !== "summary") return;
-    const hasChildren = state.tasks.some((t) => t.parent === task.id);
-    if (!hasChildren) return;
-    const currentOpen = task.open ?? true;
-    if (currentOpen !== open) {
-      task.open = open;
-      changed = true;
-    }
-  });
-  return changed;
-}
-
-/**
- * Measure and set the optimal width for a single column.
- * Shared by autoFitColumn and autoFitAllColumns.
- */
-function fitColumnToContent(state: TaskState, columnId: string): void {
-  const column = TASK_COLUMNS.find((col) => col.id === columnId);
-  if (!column || !column.field) return;
-
-  const field = column.field;
-  const densityConfig = useUserPreferencesStore.getState().getDensityConfig();
-  const fontSize = densityConfig.fontSizeCell;
-  const indentSize = densityConfig.indentSize;
-  const iconSize = densityConfig.iconSize;
-  const cellPadding =
-    columnId === "name"
-      ? densityConfig.cellPaddingX
-      : densityConfig.cellPaddingX * 2;
-
-  const cellValues: string[] = [];
-  const extraWidths: number[] = [];
-
-  state.tasks.forEach((task) => {
-    let valueStr = "";
-    if (column.formatter) {
-      valueStr = column.formatter(task[field]);
-    } else {
-      const value = task[field];
-      valueStr = value !== undefined && value !== null ? String(value) : "";
-    }
-    cellValues.push(valueStr);
-
-    if (columnId === "name") {
-      const level = getTaskLevel(state.tasks as Task[], task.id);
-      const hierarchyIndent = level * indentSize;
-      extraWidths.push(
-        hierarchyIndent + EXPAND_BUTTON_WIDTH + CELL_GAP_SIZE + iconSize
-      );
-    } else {
-      extraWidths.push(0);
-    }
-  });
-
-  if (columnId === "name") {
-    cellValues.push(PLACEHOLDER_TEXT);
-    extraWidths.push(EXPAND_BUTTON_WIDTH + CELL_GAP_SIZE + iconSize);
-  }
-
-  state.columnWidths[columnId] = calculateColumnWidth(
-    column.label,
-    cellValues,
-    fontSize,
-    cellPadding,
-    extraWidths
-  );
-}
 
 export const useTaskStore = create<TaskStore>()(
   immer((set, get) => {
@@ -999,67 +913,8 @@ export const useTaskStore = create<TaskStore>()(
           state.isEditingCell = false;
         }),
 
-      // Multi-selection actions
-      toggleTaskSelection: (id): void =>
-        set((state) => {
-          const index = state.selectedTaskIds.indexOf(id);
-          if (index > -1) {
-            state.selectedTaskIds.splice(index, 1);
-          } else {
-            state.selectedTaskIds.push(id);
-          }
-          state.lastSelectedTaskId = id;
-        }),
-
-      selectTaskRange: (startId, endId): void =>
-        set((state) => {
-          const collapsedIds = new Set(
-            state.tasks.filter((t) => t.open === false).map((t) => t.id)
-          );
-          const flatList = buildFlattenedTaskList(state.tasks, collapsedIds);
-          const startIndex = flatList.findIndex((ft) => ft.task.id === startId);
-          const endIndex = flatList.findIndex((ft) => ft.task.id === endId);
-
-          if (startIndex === -1 || endIndex === -1) return;
-
-          const minIndex = Math.min(startIndex, endIndex);
-          const maxIndex = Math.max(startIndex, endIndex);
-
-          const idsToAdd = new Set(state.selectedTaskIds);
-          for (let i = minIndex; i <= maxIndex; i++) {
-            idsToAdd.add(flatList[i].task.id);
-          }
-          state.selectedTaskIds = Array.from(idsToAdd);
-          state.lastSelectedTaskId = endId;
-        }),
-
-      selectAllTasks: (): void =>
-        set((state) => {
-          state.selectedTaskIds = state.tasks.map((task) => task.id);
-        }),
-
-      clearSelection: (): void =>
-        set((state) => {
-          state.selectedTaskIds = [];
-          state.lastSelectedTaskId = null;
-        }),
-
-      setSelectedTaskIds: (ids, addToSelection = false): void =>
-        set((state) => {
-          if (addToSelection) {
-            // Add to existing selection (avoid duplicates)
-            const existingSet = new Set(state.selectedTaskIds);
-            const newIds = ids.filter((id) => !existingSet.has(id));
-            state.selectedTaskIds = [...state.selectedTaskIds, ...newIds];
-          } else {
-            // Replace selection
-            state.selectedTaskIds = ids;
-          }
-          // Set last selected to the last id in the list
-          if (ids.length > 0) {
-            state.lastSelectedTaskId = ids[ids.length - 1];
-          }
-        }),
+      // Selection actions (extracted)
+      ...createSelectionActions(set, get),
 
       // Cell navigation actions
       setActiveCell: (taskId, field): void =>
@@ -1132,76 +987,16 @@ export const useTaskStore = create<TaskStore>()(
           state.isEditingCell = false;
         }),
 
-      setColumnWidth: (columnId, width): void =>
-        set((state) => {
-          state.columnWidths[columnId] = width;
-        }),
-
-      autoFitColumn: (columnId): void =>
-        set((state) => {
-          fitColumnToContent(state, columnId);
-        }),
-
-      autoFitAllColumns: (): void =>
-        set((state) => {
-          const autoFitColumnIds = TASK_COLUMNS.filter(
-            (col) => col.field && col.id !== "color"
-          ).map((col) => col.id);
-          for (const colId of autoFitColumnIds) {
-            fitColumnToContent(state, colId);
-          }
-        }),
+      // Column actions (extracted)
+      ...createColumnActions(set, get),
 
       setTaskTableWidth: (width): void =>
         set((state) => {
           state.taskTableWidth = width;
         }),
 
-      // Hierarchy actions
-      toggleTaskCollapsed: (taskId): void => {
-        let changed = false;
-        set((state) => {
-          const task = state.tasks.find((t) => t.id === taskId);
-          if (!task || task.type !== "summary") return;
-          const hasChildren = state.tasks.some((t) => t.parent === taskId);
-          if (!hasChildren) return;
-          task.open = !(task.open ?? true);
-          changed = true;
-        });
-        if (changed) useFileStore.getState().markDirty();
-      },
-
-      expandTask: (taskId): void => {
-        let changed = false;
-        set((state) => {
-          changed = setTaskOpen(state, taskId, true);
-        });
-        if (changed) useFileStore.getState().markDirty();
-      },
-
-      collapseTask: (taskId): void => {
-        let changed = false;
-        set((state) => {
-          changed = setTaskOpen(state, taskId, false);
-        });
-        if (changed) useFileStore.getState().markDirty();
-      },
-
-      expandAll: (): void => {
-        let changed = false;
-        set((state) => {
-          changed = setAllTasksOpen(state, true);
-        });
-        if (changed) useFileStore.getState().markDirty();
-      },
-
-      collapseAll: (): void => {
-        let changed = false;
-        set((state) => {
-          changed = setAllTasksOpen(state, false);
-        });
-        if (changed) useFileStore.getState().markDirty();
-      },
+      // Expansion actions (extracted)
+      ...createExpansionActions(set, get),
 
       // Insert task relative to another
       insertTaskAbove: (referenceTaskId): void =>
