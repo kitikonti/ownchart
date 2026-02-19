@@ -26,7 +26,11 @@ import toast from "react-hot-toast";
 import { useHistoryStore } from "./historySlice";
 import { useDependencyStore } from "./dependencySlice";
 import { useFileStore } from "./fileSlice";
-import { CommandType, UngroupTasksParams } from "../../types/command.types";
+import {
+  CommandType,
+  type CommandParams,
+  UngroupTasksParams,
+} from "../../types/command.types";
 import { TASK_COLUMNS } from "../../config/tableColumns";
 import { calculateColumnWidth } from "../../utils/textMeasurement";
 import { useUserPreferencesStore } from "./userPreferencesSlice";
@@ -47,6 +51,23 @@ function captureHierarchySnapshot(
   tasks: ReadonlyArray<Task>
 ): Array<{ id: string; parent: string | undefined; order: number }> {
   return tasks.map((t) => ({ id: t.id, parent: t.parent, order: t.order }));
+}
+
+/** Record a command for undo/redo. No-op during undo/redo replay. */
+function recordCommand(
+  type: CommandType,
+  description: string,
+  params: CommandParams
+): void {
+  const historyStore = useHistoryStore.getState();
+  if (historyStore.isUndoing || historyStore.isRedoing) return;
+  historyStore.recordCommand({
+    id: crypto.randomUUID(),
+    type,
+    timestamp: Date.now(),
+    description,
+    params,
+  });
 }
 
 /**
@@ -421,7 +442,6 @@ export const useTaskStore = create<TaskStore>()(
 
     // Actions
     addTask: (taskData): void => {
-      const historyStore = useHistoryStore.getState();
       let generatedId = "";
 
       set((state) => {
@@ -433,26 +453,15 @@ export const useTaskStore = create<TaskStore>()(
         state.tasks.push(newTask);
       });
 
-      // Mark file as dirty
       useFileStore.getState().markDirty();
 
-      // Record command for undo/redo
-      if (!historyStore.isUndoing && !historyStore.isRedoing) {
-        historyStore.recordCommand({
-          id: crypto.randomUUID(),
-          type: CommandType.ADD_TASK,
-          timestamp: Date.now(),
-          description: `Created task "${taskData.name}"`,
-          params: {
-            task: taskData,
-            generatedId,
-          },
-        });
-      }
+      recordCommand(CommandType.ADD_TASK, `Created task "${taskData.name}"`, {
+        task: taskData,
+        generatedId,
+      });
     },
 
     updateTask: (id, updates): void => {
-      const historyStore = useHistoryStore.getState();
       const previousValues: Partial<Task> = {};
       let taskName = "";
       const parentUpdates: Array<{
@@ -553,28 +562,21 @@ export const useTaskStore = create<TaskStore>()(
       }
 
       // Record command for undo/redo
-      if (
-        !historyStore.isUndoing &&
-        !historyStore.isRedoing &&
-        Object.keys(previousValues).length > 0
-      ) {
-        historyStore.recordCommand({
-          id: crypto.randomUUID(),
-          type: CommandType.UPDATE_TASK,
-          timestamp: Date.now(),
-          description: `Updated task "${taskName}"${parentUpdates.length > 0 ? " (and parent)" : ""}`,
-          params: {
+      if (Object.keys(previousValues).length > 0) {
+        recordCommand(
+          CommandType.UPDATE_TASK,
+          `Updated task "${taskName}"${parentUpdates.length > 0 ? " (and parent)" : ""}`,
+          {
             id,
             updates,
             previousValues,
-            cascadeUpdates: parentUpdates, // NEW: Include parent updates for proper undo
-          },
-        });
+            cascadeUpdates: parentUpdates,
+          }
+        );
       }
     },
 
     updateMultipleTasks: (updates): void => {
-      const historyStore = useHistoryStore.getState();
       const taskChanges: Array<{
         id: string;
         previousStartDate: string;
@@ -633,26 +635,16 @@ export const useTaskStore = create<TaskStore>()(
       }
 
       // Record command for undo/redo
-      if (
-        !historyStore.isUndoing &&
-        !historyStore.isRedoing &&
-        taskChanges.length > 0
-      ) {
-        historyStore.recordCommand({
-          id: crypto.randomUUID(),
-          type: CommandType.MULTI_DRAG_TASKS,
-          timestamp: Date.now(),
-          description: `Moved ${taskChanges.length} task(s)`,
-          params: {
-            taskChanges,
-            cascadeUpdates,
-          },
-        });
+      if (taskChanges.length > 0) {
+        recordCommand(
+          CommandType.MULTI_DRAG_TASKS,
+          `Moved ${taskChanges.length} task(s)`,
+          { taskChanges, cascadeUpdates }
+        );
       }
     },
 
     deleteTask: (id, cascade = false): void => {
-      const historyStore = useHistoryStore.getState();
       const deletedTasks: Task[] = [];
       let cascadeUpdates: Array<{
         id: string;
@@ -726,35 +718,24 @@ export const useTaskStore = create<TaskStore>()(
       }
 
       // Record command for undo/redo
-      if (
-        !historyStore.isUndoing &&
-        !historyStore.isRedoing &&
-        deletedTasks.length > 0
-      ) {
+      if (deletedTasks.length > 0) {
         const taskName = deletedTasks[0]?.name || UNKNOWN_TASK_NAME;
         const description =
           deletedTasks.length === 1
             ? `Deleted task "${taskName}"`
             : `Deleted ${deletedTasks.length} tasks`;
 
-        historyStore.recordCommand({
-          id: crypto.randomUUID(),
-          type: CommandType.DELETE_TASK,
-          timestamp: Date.now(),
-          description,
-          params: {
-            id,
-            deletedIds: deletedTasks.map((t) => t.id),
-            cascade,
-            deletedTasks,
-            cascadeUpdates,
-          },
+        recordCommand(CommandType.DELETE_TASK, description, {
+          id,
+          deletedIds: deletedTasks.map((t) => t.id),
+          cascade,
+          deletedTasks,
+          cascadeUpdates,
         });
       }
     },
 
     deleteSelectedTasks: (): void => {
-      const historyStore = useHistoryStore.getState();
       const state = get();
       const selectedIds = state.selectedTaskIds;
 
@@ -816,35 +797,23 @@ export const useTaskStore = create<TaskStore>()(
       }
 
       // Record command for undo/redo
-      if (
-        !historyStore.isUndoing &&
-        !historyStore.isRedoing &&
-        deletedTasks.length > 0
-      ) {
+      if (deletedTasks.length > 0) {
         const description =
           deletedTasks.length === 1
             ? `Deleted task "${deletedTasks[0].name}"`
             : `Deleted ${deletedTasks.length} tasks`;
 
-        historyStore.recordCommand({
-          id: crypto.randomUUID(),
-          type: CommandType.DELETE_TASK,
-          timestamp: Date.now(),
-          description,
-          params: {
-            id: selectedIds[0],
-            deletedIds: Array.from(idsToDelete),
-            cascade: true,
-            deletedTasks,
-            cascadeUpdates,
-          },
+        recordCommand(CommandType.DELETE_TASK, description, {
+          id: selectedIds[0],
+          deletedIds: Array.from(idsToDelete),
+          cascade: true,
+          deletedTasks,
+          cascadeUpdates,
         });
       }
     },
 
     reorderTasks: (activeTaskId, overTaskId): void => {
-      const historyStore = useHistoryStore.getState();
-
       // Capture previous order before making changes
       const previousOrder = structuredClone(get().tasks);
 
@@ -953,20 +922,11 @@ export const useTaskStore = create<TaskStore>()(
       // Mark file as dirty
       useFileStore.getState().markDirty();
 
-      // Record command for undo/redo
-      if (!historyStore.isUndoing && !historyStore.isRedoing) {
-        historyStore.recordCommand({
-          id: crypto.randomUUID(),
-          type: CommandType.REORDER_TASKS,
-          timestamp: Date.now(),
-          description: `Reordered task "${movedTaskName}"`,
-          params: {
-            activeTaskId,
-            overTaskId,
-            previousOrder,
-          },
-        });
-      }
+      recordCommand(
+        CommandType.REORDER_TASKS,
+        `Reordered task "${movedTaskName}"`,
+        { activeTaskId, overTaskId, previousOrder }
+      );
     },
 
     setTasks: (tasks): void =>
@@ -1181,7 +1141,6 @@ export const useTaskStore = create<TaskStore>()(
 
     // Insert task relative to another
     insertTaskAbove: (referenceTaskId): void => {
-      const historyStore = useHistoryStore.getState();
       const state = get();
 
       const refIndex = state.tasks.findIndex((t) => t.id === referenceTaskId);
@@ -1249,23 +1208,13 @@ export const useTaskStore = create<TaskStore>()(
       // Mark file as dirty
       useFileStore.getState().markDirty();
 
-      // Record command for undo/redo
-      if (!historyStore.isUndoing && !historyStore.isRedoing) {
-        historyStore.recordCommand({
-          id: crypto.randomUUID(),
-          type: CommandType.ADD_TASK,
-          timestamp: Date.now(),
-          description: "Inserted task above",
-          params: {
-            task: taskData,
-            generatedId,
-          },
-        });
-      }
+      recordCommand(CommandType.ADD_TASK, "Inserted task above", {
+        task: taskData,
+        generatedId,
+      });
     },
 
     insertMultipleTasksAbove: (referenceTaskId, count): void => {
-      const historyStore = useHistoryStore.getState();
       const state = get();
 
       const refIndex = state.tasks.findIndex((t) => t.id === referenceTaskId);
@@ -1344,24 +1293,14 @@ export const useTaskStore = create<TaskStore>()(
       // Mark file as dirty
       useFileStore.getState().markDirty();
 
-      // Record single command for undo/redo
-      if (!historyStore.isUndoing && !historyStore.isRedoing) {
-        historyStore.recordCommand({
-          id: crypto.randomUUID(),
-          type: CommandType.ADD_TASK,
-          timestamp: Date.now(),
-          description: `Inserted ${count} tasks above`,
-          params: {
-            task: tasksToInsert[0],
-            tasks: tasksToInsert,
-            generatedIds,
-          },
-        });
-      }
+      recordCommand(CommandType.ADD_TASK, `Inserted ${count} tasks above`, {
+        task: tasksToInsert[0],
+        tasks: tasksToInsert,
+        generatedIds,
+      });
     },
 
     insertTaskBelow: (referenceTaskId): void => {
-      const historyStore = useHistoryStore.getState();
       const state = get();
 
       const refIndex = state.tasks.findIndex((t) => t.id === referenceTaskId);
@@ -1429,24 +1368,14 @@ export const useTaskStore = create<TaskStore>()(
       // Mark file as dirty
       useFileStore.getState().markDirty();
 
-      // Record command for undo/redo
-      if (!historyStore.isUndoing && !historyStore.isRedoing) {
-        historyStore.recordCommand({
-          id: crypto.randomUUID(),
-          type: CommandType.ADD_TASK,
-          timestamp: Date.now(),
-          description: "Inserted task below",
-          params: {
-            task: taskData,
-            generatedId,
-          },
-        });
-      }
+      recordCommand(CommandType.ADD_TASK, "Inserted task below", {
+        task: taskData,
+        generatedId,
+      });
     },
 
     // Indent/Outdent actions
     indentSelectedTasks: (): void => {
-      const historyStore = useHistoryStore.getState();
       const state = get();
       const taskIds = getEffectiveTaskIds(state);
       if (taskIds.length === 0) return;
@@ -1549,30 +1478,21 @@ export const useTaskStore = create<TaskStore>()(
       // Mark file as dirty
       useFileStore.getState().markDirty();
 
-      // Record command for undo/redo
-      if (!historyStore.isUndoing && !historyStore.isRedoing) {
-        const description =
-          changes.length === 1
-            ? `Indented task`
-            : `Indented ${changes.length} tasks`;
-
-        historyStore.recordCommand({
-          id: crypto.randomUUID(),
-          type: CommandType.INDENT_TASKS,
-          timestamp: Date.now(),
-          description,
-          params: {
-            taskIds: changes.map((c) => c.taskId),
-            changes,
-            previousTaskSnapshot,
-            afterTaskSnapshot,
-          },
-        });
-      }
+      recordCommand(
+        CommandType.INDENT_TASKS,
+        changes.length === 1
+          ? `Indented task`
+          : `Indented ${changes.length} tasks`,
+        {
+          taskIds: changes.map((c) => c.taskId),
+          changes,
+          previousTaskSnapshot,
+          afterTaskSnapshot,
+        }
+      );
     },
 
     outdentSelectedTasks: (): void => {
-      const historyStore = useHistoryStore.getState();
       const state = get();
       const taskIds = getEffectiveTaskIds(state);
       if (taskIds.length === 0) return;
@@ -1648,26 +1568,18 @@ export const useTaskStore = create<TaskStore>()(
       // Mark file as dirty
       useFileStore.getState().markDirty();
 
-      // Record command for undo/redo
-      if (!historyStore.isUndoing && !historyStore.isRedoing) {
-        const description =
-          changes.length === 1
-            ? `Outdented task`
-            : `Outdented ${changes.length} tasks`;
-
-        historyStore.recordCommand({
-          id: crypto.randomUUID(),
-          type: CommandType.OUTDENT_TASKS,
-          timestamp: Date.now(),
-          description,
-          params: {
-            taskIds: changes.map((c) => c.taskId),
-            changes,
-            previousTaskSnapshot,
-            afterTaskSnapshot,
-          },
-        });
-      }
+      recordCommand(
+        CommandType.OUTDENT_TASKS,
+        changes.length === 1
+          ? `Outdented task`
+          : `Outdented ${changes.length} tasks`,
+        {
+          taskIds: changes.map((c) => c.taskId),
+          changes,
+          previousTaskSnapshot,
+          afterTaskSnapshot,
+        }
+      );
     },
 
     canIndentSelection: (): boolean => {
@@ -1717,7 +1629,6 @@ export const useTaskStore = create<TaskStore>()(
     },
 
     groupSelectedTasks: (): void => {
-      const historyStore = useHistoryStore.getState();
       const { tasks, selectedTaskIds } = get();
 
       const validation = validateGroupSelection(tasks, selectedTaskIds);
@@ -1810,24 +1721,19 @@ export const useTaskStore = create<TaskStore>()(
 
       useFileStore.getState().markDirty();
 
-      if (!historyStore.isUndoing && !historyStore.isRedoing) {
-        historyStore.recordCommand({
-          id: crypto.randomUUID(),
-          type: CommandType.GROUP_TASKS,
-          timestamp: Date.now(),
-          description:
-            rootIds.length === 1
-              ? "Grouped 1 task"
-              : `Grouped ${rootIds.length} tasks`,
-          params: {
-            summaryTaskId: summaryId,
-            summaryTask,
-            changes,
-            previousOrder,
-            cascadeUpdates,
-          },
-        });
-      }
+      recordCommand(
+        CommandType.GROUP_TASKS,
+        rootIds.length === 1
+          ? "Grouped 1 task"
+          : `Grouped ${rootIds.length} tasks`,
+        {
+          summaryTaskId: summaryId,
+          summaryTask,
+          changes,
+          previousOrder,
+          cascadeUpdates,
+        }
+      );
     },
 
     canUngroupSelection: (): boolean => {
@@ -1841,7 +1747,6 @@ export const useTaskStore = create<TaskStore>()(
     },
 
     ungroupSelectedTasks: (): void => {
-      const historyStore = useHistoryStore.getState();
       const depStore = useDependencyStore.getState();
       const { tasks, selectedTaskIds } = get();
 
@@ -1922,22 +1827,13 @@ export const useTaskStore = create<TaskStore>()(
 
       useFileStore.getState().markDirty();
 
-      if (!historyStore.isUndoing && !historyStore.isRedoing) {
-        historyStore.recordCommand({
-          id: crypto.randomUUID(),
-          type: CommandType.UNGROUP_TASKS,
-          timestamp: Date.now(),
-          description:
-            summariesToUngroup.length === 1
-              ? "Ungrouped 1 task"
-              : `Ungrouped ${summariesToUngroup.length} tasks`,
-          params: {
-            ungroupedSummaries,
-            previousOrder,
-            cascadeUpdates,
-          },
-        });
-      }
+      recordCommand(
+        CommandType.UNGROUP_TASKS,
+        summariesToUngroup.length === 1
+          ? "Ungrouped 1 task"
+          : `Ungrouped ${summariesToUngroup.length} tasks`,
+        { ungroupedSummaries, previousOrder, cascadeUpdates }
+      );
     },
   }))
 );
