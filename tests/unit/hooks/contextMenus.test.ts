@@ -10,10 +10,13 @@ import { useTaskTableRowContextMenu } from "../../../src/hooks/useTaskTableRowCo
 import { useTimelineBarContextMenu } from "../../../src/hooks/useTimelineBarContextMenu";
 import { useTableHeaderContextMenu } from "../../../src/hooks/useTableHeaderContextMenu";
 import { useTimelineAreaContextMenu } from "../../../src/hooks/useTimelineAreaContextMenu";
+import { usePlaceholderContextMenu } from "../../../src/hooks/usePlaceholderContextMenu";
 import { useTaskStore } from "../../../src/store/slices/taskSlice";
 import { useChartStore } from "../../../src/store/slices/chartSlice";
+import { useClipboardStore } from "../../../src/store/slices/clipboardSlice";
 import type { Task } from "../../../src/types/chart.types";
 import type { FlattenedTask } from "../../../src/utils/hierarchy";
+import { PLACEHOLDER_TASK_ID } from "../../../src/components/TaskList/NewTaskPlaceholderRow";
 
 // Mock external dependencies
 vi.mock("react-hot-toast", () => ({
@@ -848,5 +851,93 @@ describe("Right-click selection logic", () => {
 
     // Selection should switch to [t3]
     expect(useTaskStore.getState().selectedTaskIds).toEqual(["t3"]);
+  });
+});
+
+// ─── Zone 5: Placeholder Row Context Menu ───
+
+describe("Zone 5: Placeholder Row Context Menu", () => {
+  // eslint-disable-next-line @typescript-eslint/explicit-function-return-type
+  function openPlaceholderMenu(x = 200, y = 400) {
+    const { result } = renderHook(() => usePlaceholderContextMenu());
+
+    act(() => {
+      result.current.handlePlaceholderContextMenu(mockMouseEvent(x, y));
+    });
+
+    return result;
+  }
+
+  it("should start with null contextMenu and empty items", () => {
+    const { result } = renderHook(() => usePlaceholderContextMenu());
+
+    expect(result.current.contextMenu).toBeNull();
+    expect(result.current.contextMenuItems).toEqual([]);
+  });
+
+  it("should open on right-click with correct position", () => {
+    const result = openPlaceholderMenu(150, 350);
+
+    expect(result.current.contextMenu).toEqual({ x: 150, y: 350 });
+    expect(result.current.contextMenuItems).toHaveLength(1);
+  });
+
+  it("should have exactly 1 item: Paste", () => {
+    const result = openPlaceholderMenu();
+    const items = result.current.contextMenuItems;
+
+    expect(items).toHaveLength(1);
+    expect(items[0].id).toBe("paste");
+    expect(items[0].label).toBe("Paste");
+    expect(items[0].shortcut).toBe("Ctrl+V");
+    expect(items[0].icon).toBeTruthy();
+  });
+
+  it("should disable paste when clipboard is empty", () => {
+    const result = openPlaceholderMenu();
+
+    expect(result.current.contextMenuItems[0].disabled).toBe(true);
+  });
+
+  it("should enable paste when clipboard has content", () => {
+    // Directly set clipboard state to simulate having copied rows
+    // (avoids calling copyRows which hits the clipboard utility mock)
+    useClipboardStore.setState({ activeMode: "row" });
+
+    const result = openPlaceholderMenu();
+
+    expect(result.current.contextMenuItems[0].disabled).toBe(false);
+  });
+
+  it("should select placeholder row on right-click", () => {
+    openPlaceholderMenu();
+
+    expect(useTaskStore.getState().selectedTaskIds).toEqual([
+      PLACEHOLDER_TASK_ID,
+    ]);
+  });
+
+  it("should clear active cell on right-click", () => {
+    // Set an active cell first
+    useTaskStore.getState().setActiveCell("t1", "name");
+
+    openPlaceholderMenu();
+
+    const { activeCell } = useTaskStore.getState();
+    expect(activeCell.taskId).toBeNull();
+    expect(activeCell.field).toBeNull();
+  });
+
+  it("should reset contextMenu to null on close", () => {
+    const result = openPlaceholderMenu();
+
+    expect(result.current.contextMenu).not.toBeNull();
+
+    act(() => {
+      result.current.closeContextMenu();
+    });
+
+    expect(result.current.contextMenu).toBeNull();
+    expect(result.current.contextMenuItems).toEqual([]);
   });
 });

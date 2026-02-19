@@ -14,6 +14,8 @@ import {
 import { useTaskStore, type EditableField } from "../../store/slices/taskSlice";
 import { useChartStore } from "../../store/slices/chartSlice";
 import { getVisibleColumns } from "../../config/tableColumns";
+import { usePlaceholderContextMenu } from "../../hooks/usePlaceholderContextMenu";
+import { ContextMenu } from "../ContextMenu/ContextMenu";
 
 // Special ID for the placeholder row - used by paste logic
 export const PLACEHOLDER_TASK_ID = "__new_task_placeholder__";
@@ -30,6 +32,13 @@ export function NewTaskPlaceholderRow(): JSX.Element {
   const selectedTaskIds = useTaskStore((state) => state.selectedTaskIds);
   const clearSelection = useTaskStore((state) => state.clearSelection);
   const hiddenColumns = useChartStore((state) => state.hiddenColumns);
+
+  const {
+    contextMenu: placeholderContextMenu,
+    contextMenuItems: placeholderContextMenuItems,
+    handlePlaceholderContextMenu,
+    closeContextMenu: closePlaceholderContextMenu,
+  } = usePlaceholderContextMenu();
 
   // Get visible columns based on settings
   const visibleColumns = useMemo(
@@ -245,6 +254,7 @@ export function NewTaskPlaceholderRow(): JSX.Element {
                 backgroundColor: isSelected ? "#0F6CBD" : "#F3F3F3",
               }}
               onClick={handleRowNumberClick}
+              onContextMenu={handlePlaceholderContextMenu}
               onKeyDown={(e) => {
                 if (e.key === "Enter" || e.key === " ") {
                   e.preventDefault();
@@ -287,6 +297,7 @@ export function NewTaskPlaceholderRow(): JSX.Element {
                 ? handleCellClick(column.field as EditableField)
                 : undefined
             }
+            onContextMenu={handlePlaceholderContextMenu}
             onKeyDown={column.id === "name" ? handleCellKeyDown : undefined}
             role="gridcell"
           >
@@ -310,6 +321,13 @@ export function NewTaskPlaceholderRow(): JSX.Element {
           </div>
         );
       })}
+      {placeholderContextMenu && (
+        <ContextMenu
+          items={placeholderContextMenuItems}
+          position={placeholderContextMenu}
+          onClose={closePlaceholderContextMenu}
+        />
+      )}
     </div>
   );
 }
