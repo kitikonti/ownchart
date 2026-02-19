@@ -116,7 +116,11 @@ export interface DeleteTaskParams {
 export interface ReorderTasksParams {
   activeTaskId: string;
   overTaskId: string;
-  previousOrder: Task[]; // Store previous order for undo
+  previousOrder: Array<{
+    id: string;
+    parent: string | undefined;
+    order: number;
+  }>; // Lightweight snapshot for undo
 }
 
 export interface IndentOutdentParams {

@@ -933,7 +933,7 @@ export const useTaskStore = create<TaskStore>()(
 
       reorderTasks: (activeTaskId, overTaskId): void => {
         // Capture previous order before making changes
-        const previousOrder = structuredClone(get().tasks);
+        const previousOrder = captureHierarchySnapshot(get().tasks);
 
         let changed = false;
         let movedTaskName = UNKNOWN_TASK_NAME;

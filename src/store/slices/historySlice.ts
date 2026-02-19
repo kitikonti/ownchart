@@ -11,6 +11,7 @@ import type {
   AddTaskParams,
   UpdateTaskParams,
   IndentOutdentParams,
+  ReorderTasksParams,
   AddDependencyParams,
   DeleteDependencyParams,
   UpdateDependencyParams,
@@ -319,11 +320,27 @@ function executeUndoCommand(command: Command): void {
     }
 
     case "reorderTasks": {
-      const params = command.params as any;
-      // Restore previous order
-      useTaskStore.setState({
-        tasks: params.previousOrder,
+      const params = command.params as ReorderTasksParams;
+      // Restore parent + order from lightweight snapshot
+      const currentTasks = useTaskStore.getState().tasks.map((t) => ({ ...t }));
+      const taskMap = new Map(currentTasks.map((t) => [t.id, t]));
+
+      for (const snapshot of params.previousOrder) {
+        const task = taskMap.get(snapshot.id);
+        if (task) {
+          task.parent = snapshot.parent;
+          task.order = snapshot.order;
+        }
+      }
+
+      // Recalculate summary dates for affected parents
+      const affectedParentIds = new Set<string>();
+      currentTasks.forEach((t) => {
+        if (t.parent) affectedParentIds.add(t.parent);
       });
+      recalculateSummaryAncestors(currentTasks, affectedParentIds);
+
+      useTaskStore.setState({ tasks: currentTasks });
       break;
     }
 
