@@ -53,7 +53,7 @@ export function MobileBlockScreen({
 
       <button
         onClick={onDismiss}
-        className="mt-10 text-xs text-neutral-400 hover:text-neutral-600 transition-colors"
+        className="mt-10 text-xs text-neutral-500 hover:text-neutral-600 focus-visible:ring-2 focus-visible:ring-neutral-400 focus-visible:rounded transition-colors"
       >
         Continue anyway
       </button>
