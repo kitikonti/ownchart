@@ -71,7 +71,7 @@ cd ../app-gantt-review
 ## File Review Index
 
 ### Priority: HIGH — Store Slices (Kern-Zustandslogik)
-- [x] `src/store/slices/taskSlice.ts` (~1720 LOC) — reviewed (3 passes), 3 bugs fixed, dead code removed, constants extracted, helpers deduplicated, code quality cleanup
+- [x] `src/store/slices/taskSlice.ts` (~730 LOC) — reviewed (5 passes), 3 bugs fixed, dead code removed, constants extracted, helpers deduplicated, code quality cleanup, type-change logic extracted
 - [ ] `src/store/slices/historySlice.ts` (1035 LOC) — 23x any
 - [ ] `src/store/slices/chartSlice.ts` (984 LOC)
 - [ ] `src/store/slices/clipboardSlice.ts` (908 LOC)
@@ -295,7 +295,8 @@ cd ../app-gantt-review
 ### Bekannte Cross-Cutting Concerns
 - **Hardcoded Hex-Farben**: 38 Stueck in 10 .tsx-Dateien → `design-tokens.ts` erweitern
 - **`any`-Casts in historySlice**: Betrifft auch `command.types.ts` (fehlende Felder)
-- **taskSlice Groesse**: ~1720 LOC (reduced from 2137) → Split-Kandidat nach Review
+- **taskSlice Groesse**: ~730 LOC (reduced from 2137 → 1720 → 730 through 5 review passes + action extraction)
+- **`toISODateString` Utility**: Existiert in dateUtils.ts, wird bisher nur in taskSliceHelpers genutzt. ~18 weitere `toISOString().split("T")[0]` Vorkommen in 7 Dateien noch nicht umgestellt (insertionActions, hierarchy, calculations, Cell, HomeTabContent, NewTaskPlaceholderRow, SharedExportOptions)
 - **taskSlice Review Findings** (cleanup/code-review branch):
   - BUG: Hardcoded depth `3` in reorderTasks → replaced with MAX_HIERARCHY_DEPTH
   - BUG: deleteTask cascade didn't capture cascadeUpdates for undo → fixed both paths
@@ -335,6 +336,15 @@ cd ../app-gantt-review
     - O(n) `Array.includes` in `setSelectedTaskIds` → Set-based O(1) dedup
     - Redundant `as` type casts on initial state removed (store is already typed as TaskStore)
     - DECISION: Relative imports are acceptable — max depth is `../../`, absolute imports would require tsconfig paths + vite alias + vitest config for no real gain
+  - Pass 5 (fifth-pass review via /review skill):
+    - Extracted `computeTypeChangeEffects` helper to taskSliceHelpers.ts (~53 LOC type-change logic out of updateTask)
+    - Fixed fragile previousValues capture: `originalType` saved explicitly before helper may mutate Immer draft, eliminating brittle spread-replace trick
+    - Replaced `as string` type assertion with nullish coalescing (`??`) in milestone handling
+    - Added `toISODateString(date)` utility to dateUtils.ts (replaces `toISOString().split("T")[0]` pattern)
+    - Replaced unnecessary `structuredClone` with shallow clone `{ ...task }` in deleteSelectedTasks (state from `get()` is already frozen)
+    - Renamed `s` → `state` in deleteSelectedTasks set callback for naming consistency
+    - Removed `calculateSummaryDates` and `DEFAULT_TASK_DURATION` from taskSlice imports (moved to helper)
+    - REMAINING: deleteTask (99 LOC) and deleteSelectedTasks (80 LOC) still exceed 50-line limit — borderline, not worth splitting further
 
 ---
 
