@@ -14,10 +14,6 @@ import type {
   CycleDetectionResult,
   DateAdjustment,
 } from "../../types/dependency.types";
-import type {
-  AddDependencyParams,
-  DeleteDependencyParams,
-} from "../../types/command.types";
 import { CommandType } from "../../types/command.types";
 import { useTaskStore } from "./taskSlice";
 import { useHistoryStore } from "./historySlice";
@@ -153,7 +149,7 @@ export const useDependencyStore = create<DependencyStore>()(
           params: {
             dependency: newDependency,
             dateAdjustments,
-          } as AddDependencyParams,
+          },
         });
       }
 
@@ -198,7 +194,7 @@ export const useDependencyStore = create<DependencyStore>()(
           description: `Removed dependency: ${fromTask?.name || "?"} → ${toTask?.name || "?"}`,
           params: {
             dependency,
-          } as DeleteDependencyParams,
+          },
         });
       }
 

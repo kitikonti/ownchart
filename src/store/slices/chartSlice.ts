@@ -913,7 +913,7 @@ export const useChartStore = create<ChartState & ChartActions>()(
         params: {
           previousColorModeState,
           colorChanges,
-        } as ApplyColorsToManualParams,
+        },
       });
     },
 

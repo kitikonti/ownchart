@@ -3,7 +3,11 @@
  */
 
 import type { Task } from "../../types/chart.types";
-import type { CommandParams, CommandType } from "../../types/command.types";
+import type {
+  Command,
+  CommandParamsMap,
+  CommandType,
+} from "../../types/command.types";
 import { useHistoryStore } from "./historySlice";
 import { calculateSummaryDates } from "../../utils/hierarchy";
 import { toISODateString } from "../../utils/dateUtils";
@@ -33,10 +37,10 @@ export function captureHierarchySnapshot(
 }
 
 /** Record a command for undo/redo. No-op during undo/redo replay. */
-export function recordCommand(
-  type: CommandType,
+export function recordCommand<T extends CommandType>(
+  type: T,
   description: string,
-  params: CommandParams
+  params: CommandParamsMap[T]
 ): void {
   const historyStore = useHistoryStore.getState();
   if (historyStore.isUndoing || historyStore.isRedoing) return;
@@ -46,7 +50,7 @@ export function recordCommand(
     timestamp: Date.now(),
     description,
     params,
-  });
+  } as Command);
 }
 
 /**

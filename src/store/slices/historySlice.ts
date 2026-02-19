@@ -778,89 +778,85 @@ function redoUnhideTasks(params: UnhideTasksParams): void {
 function executeUndoCommand(command: Command): void {
   switch (command.type) {
     case "addTask":
-      return undoAddTask(command.params as AddTaskParams);
+      return undoAddTask(command.params);
     case "updateTask":
-      return undoUpdateTask(command.params as UpdateTaskParams);
+      return undoUpdateTask(command.params);
     case "deleteTask":
-      return undoDeleteTask(command.params as DeleteTaskParams);
+      return undoDeleteTask(command.params);
     case "indentSelectedTasks":
     case "outdentSelectedTasks":
-      return undoIndentOutdent(command.params as IndentOutdentParams);
+      return undoIndentOutdent(command.params);
     case "reorderTasks":
-      return undoReorderTasks(command.params as ReorderTasksParams);
+      return undoReorderTasks(command.params);
     case "addDependency":
-      return undoAddDependency(command.params as AddDependencyParams);
+      return undoAddDependency(command.params);
     case "deleteDependency":
-      return undoDeleteDependency(command.params as DeleteDependencyParams);
+      return undoDeleteDependency(command.params);
     case "updateDependency":
-      return undoUpdateDependency(command.params as UpdateDependencyParams);
+      return undoUpdateDependency(command.params);
     case "copyRows":
     case "cutRows":
     case "copyCell":
     case "cutCell":
       return;
     case "pasteRows":
-      return undoPasteRows(command.params as PasteRowsParams);
+      return undoPasteRows(command.params);
     case "pasteCell":
-      return undoPasteCell(command.params as PasteCellParams);
+      return undoPasteCell(command.params);
     case "multiDragTasks":
-      return undoMultiDragTasks(command.params as MultiDragTasksParams);
+      return undoMultiDragTasks(command.params);
     case "applyColorsToManual":
-      return undoApplyColorsToManual(
-        command.params as ApplyColorsToManualParams
-      );
+      return undoApplyColorsToManual(command.params);
     case "groupTasks":
-      return undoGroupTasks(command.params as GroupTasksParams);
+      return undoGroupTasks(command.params);
     case "ungroupTasks":
-      return undoUngroupTasks(command.params as UngroupTasksParams);
+      return undoUngroupTasks(command.params);
     case "hideTasks":
-      return undoHideTasks(command.params as HideTasksParams);
+      return undoHideTasks(command.params);
     case "unhideTasks":
-      return undoUnhideTasks(command.params as UnhideTasksParams);
+      return undoUnhideTasks(command.params);
   }
 }
 
 function executeRedoCommand(command: Command): void {
   switch (command.type) {
     case "addTask":
-      return redoAddTask(command.params as AddTaskParams);
+      return redoAddTask(command.params);
     case "updateTask":
-      return redoUpdateTask(command.params as UpdateTaskParams);
+      return redoUpdateTask(command.params);
     case "deleteTask":
-      return redoDeleteTask(command.params as DeleteTaskParams);
+      return redoDeleteTask(command.params);
     case "indentSelectedTasks":
     case "outdentSelectedTasks":
-      return redoIndentOutdent(command.params as IndentOutdentParams);
+      return redoIndentOutdent(command.params);
     case "reorderTasks":
-      return redoReorderTasks(command.params as ReorderTasksParams);
+      return redoReorderTasks(command.params);
     case "addDependency":
-      return redoAddDependency(command.params as AddDependencyParams);
+      return redoAddDependency(command.params);
     case "deleteDependency":
-      return redoDeleteDependency(command.params as DeleteDependencyParams);
+      return redoDeleteDependency(command.params);
     case "updateDependency":
-      return redoUpdateDependency(command.params as UpdateDependencyParams);
+      return redoUpdateDependency(command.params);
     case "copyRows":
     case "cutRows":
     case "copyCell":
     case "cutCell":
       return;
     case "pasteRows":
-      return redoPasteRows(command.params as PasteRowsParams);
+      return redoPasteRows(command.params);
     case "pasteCell":
-      return redoPasteCell(command.params as PasteCellParams);
+      return redoPasteCell(command.params);
     case "multiDragTasks":
-      return redoMultiDragTasks(command.params as MultiDragTasksParams);
+      return redoMultiDragTasks(command.params);
     case "applyColorsToManual":
-      return redoApplyColorsToManual(
-        command.params as ApplyColorsToManualParams
-      );
+      return redoApplyColorsToManual(command.params);
     case "groupTasks":
-      return redoGroupTasks(command.params as GroupTasksParams);
+      return redoGroupTasks(command.params);
     case "ungroupTasks":
-      return redoUngroupTasks(command.params as UngroupTasksParams);
+      return redoUngroupTasks(command.params);
     case "hideTasks":
-      return redoHideTasks(command.params as HideTasksParams);
+      return redoHideTasks(command.params);
     case "unhideTasks":
-      return redoUnhideTasks(command.params as UnhideTasksParams);
+      return redoUnhideTasks(command.params);
   }
 }

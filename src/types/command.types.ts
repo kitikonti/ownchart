@@ -7,18 +7,92 @@ import type { Task } from "./chart.types";
 import type { Dependency, DateAdjustment } from "./dependency.types";
 import type { ColorModeState } from "./colorMode.types";
 
-export interface Command {
+interface CommandBase {
   id: string; // UUID for tracking
-  type: CommandType; // Action type
   timestamp: number; // When executed
   description: string; // Human-readable (e.g., "Created task 'Design'")
-
-  // Serializable parameters
-  params: CommandParams;
 
   // Optional: For complex commands that need context
   metadata?: Record<string, unknown>;
 }
+
+export type Command =
+  | (CommandBase & { type: CommandType.ADD_TASK; params: AddTaskParams })
+  | (CommandBase & { type: CommandType.UPDATE_TASK; params: UpdateTaskParams })
+  | (CommandBase & { type: CommandType.DELETE_TASK; params: DeleteTaskParams })
+  | (CommandBase & {
+      type: CommandType.REORDER_TASKS;
+      params: ReorderTasksParams;
+    })
+  | (CommandBase & {
+      type: CommandType.INDENT_TASKS;
+      params: IndentOutdentParams;
+    })
+  | (CommandBase & {
+      type: CommandType.OUTDENT_TASKS;
+      params: IndentOutdentParams;
+    })
+  | (CommandBase & { type: CommandType.GROUP_TASKS; params: GroupTasksParams })
+  | (CommandBase & {
+      type: CommandType.UNGROUP_TASKS;
+      params: UngroupTasksParams;
+    })
+  | (CommandBase & {
+      type: CommandType.ADD_DEPENDENCY;
+      params: AddDependencyParams;
+    })
+  | (CommandBase & {
+      type: CommandType.DELETE_DEPENDENCY;
+      params: DeleteDependencyParams;
+    })
+  | (CommandBase & {
+      type: CommandType.UPDATE_DEPENDENCY;
+      params: UpdateDependencyParams;
+    })
+  | (CommandBase & { type: CommandType.COPY_ROWS; params: CopyRowsParams })
+  | (CommandBase & { type: CommandType.CUT_ROWS; params: CutRowsParams })
+  | (CommandBase & { type: CommandType.PASTE_ROWS; params: PasteRowsParams })
+  | (CommandBase & { type: CommandType.COPY_CELL; params: CopyCellParams })
+  | (CommandBase & { type: CommandType.CUT_CELL; params: CutCellParams })
+  | (CommandBase & { type: CommandType.PASTE_CELL; params: PasteCellParams })
+  | (CommandBase & {
+      type: CommandType.MULTI_DRAG_TASKS;
+      params: MultiDragTasksParams;
+    })
+  | (CommandBase & {
+      type: CommandType.APPLY_COLORS_TO_MANUAL;
+      params: ApplyColorsToManualParams;
+    })
+  | (CommandBase & { type: CommandType.HIDE_TASKS; params: HideTasksParams })
+  | (CommandBase & {
+      type: CommandType.UNHIDE_TASKS;
+      params: UnhideTasksParams;
+    });
+
+// Type mapping for generic recordCommand helper
+export type CommandParamsMap = {
+  [CommandType.ADD_TASK]: AddTaskParams;
+  [CommandType.UPDATE_TASK]: UpdateTaskParams;
+  [CommandType.DELETE_TASK]: DeleteTaskParams;
+  [CommandType.REORDER_TASKS]: ReorderTasksParams;
+  [CommandType.INDENT_TASKS]: IndentOutdentParams;
+  [CommandType.OUTDENT_TASKS]: IndentOutdentParams;
+  [CommandType.GROUP_TASKS]: GroupTasksParams;
+  [CommandType.UNGROUP_TASKS]: UngroupTasksParams;
+  [CommandType.ADD_DEPENDENCY]: AddDependencyParams;
+  [CommandType.DELETE_DEPENDENCY]: DeleteDependencyParams;
+  [CommandType.UPDATE_DEPENDENCY]: UpdateDependencyParams;
+  [CommandType.COPY_ROWS]: CopyRowsParams;
+  [CommandType.CUT_ROWS]: CutRowsParams;
+  [CommandType.PASTE_ROWS]: PasteRowsParams;
+  [CommandType.COPY_CELL]: CopyCellParams;
+  [CommandType.CUT_CELL]: CutCellParams;
+  [CommandType.PASTE_CELL]: PasteCellParams;
+  [CommandType.MULTI_DRAG_TASKS]: MultiDragTasksParams;
+  [CommandType.APPLY_COLORS_TO_MANUAL]: ApplyColorsToManualParams;
+  [CommandType.HIDE_TASKS]: HideTasksParams;
+  [CommandType.UNHIDE_TASKS]: UnhideTasksParams;
+};
 
 export enum CommandType {
   // Task operations
