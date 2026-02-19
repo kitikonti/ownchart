@@ -7,6 +7,7 @@ import type { Task } from "../../types/chart.types";
 import { getTaskLevel } from "../../utils/hierarchy";
 import { TASK_COLUMNS } from "../../config/tableColumns";
 import { calculateColumnWidth } from "../../utils/textMeasurement";
+import type { DensityConfig } from "../../types/preferences.types";
 import { useUserPreferencesStore } from "./userPreferencesSlice";
 import {
   PLACEHOLDER_TEXT,
@@ -23,12 +24,15 @@ type ColumnActions = Pick<
 /**
  * Measure and set the optimal width for a single column.
  */
-function fitColumnToContent(state: TaskState, columnId: string): void {
+function fitColumnToContent(
+  state: TaskState,
+  columnId: string,
+  densityConfig: DensityConfig
+): void {
   const column = TASK_COLUMNS.find((col) => col.id === columnId);
   if (!column || !column.field) return;
 
   const field = column.field;
-  const densityConfig = useUserPreferencesStore.getState().getDensityConfig();
   const fontSize = densityConfig.fontSizeCell;
   const indentSize = densityConfig.indentSize;
   const iconSize = densityConfig.iconSize;
@@ -40,7 +44,10 @@ function fitColumnToContent(state: TaskState, columnId: string): void {
   const cellValues: string[] = [];
   const extraWidths: number[] = [];
 
-  state.tasks.forEach((task) => {
+  // Cast: WritableDraft<Task> is read-compatible with Task
+  const tasks = state.tasks as Task[];
+
+  for (const task of tasks) {
     let valueStr = "";
     if (column.formatter) {
       valueStr = column.formatter(task[field]);
@@ -51,7 +58,7 @@ function fitColumnToContent(state: TaskState, columnId: string): void {
     cellValues.push(valueStr);
 
     if (columnId === "name") {
-      const level = getTaskLevel(state.tasks as Task[], task.id);
+      const level = getTaskLevel(tasks, task.id);
       const hierarchyIndent = level * indentSize;
       extraWidths.push(
         hierarchyIndent + EXPAND_BUTTON_WIDTH + CELL_GAP_SIZE + iconSize
@@ -59,7 +66,7 @@ function fitColumnToContent(state: TaskState, columnId: string): void {
     } else {
       extraWidths.push(0);
     }
-  });
+  }
 
   if (columnId === "name") {
     cellValues.push(PLACEHOLDER_TEXT);
@@ -82,19 +89,27 @@ export function createColumnActions(set: TaskSliceSet): ColumnActions {
         state.columnWidths[columnId] = width;
       }),
 
-    autoFitColumn: (columnId): void =>
+    autoFitColumn: (columnId): void => {
+      const densityConfig = useUserPreferencesStore
+        .getState()
+        .getDensityConfig();
       set((state) => {
-        fitColumnToContent(state, columnId);
-      }),
+        fitColumnToContent(state, columnId, densityConfig);
+      });
+    },
 
-    autoFitAllColumns: (): void =>
+    autoFitAllColumns: (): void => {
+      const densityConfig = useUserPreferencesStore
+        .getState()
+        .getDensityConfig();
       set((state) => {
         const autoFitColumnIds = TASK_COLUMNS.filter(
           (col) => col.field && col.id !== "color"
         ).map((col) => col.id);
         for (const colId of autoFitColumnIds) {
-          fitColumnToContent(state, colId);
+          fitColumnToContent(state, colId, densityConfig);
         }
-      }),
+      });
+    },
   };
 }

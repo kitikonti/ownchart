@@ -8,6 +8,7 @@ import {
   recalculateSummaryAncestors,
   normalizeTaskOrder,
 } from "../../utils/hierarchy";
+import { toISODateString } from "../../utils/dateUtils";
 import { useFileStore } from "./fileSlice";
 import { CommandType } from "../../types/command.types";
 import { COLORS } from "../../styles/design-tokens";
@@ -22,6 +23,55 @@ type InsertionActions = Pick<
   TaskActions,
   "insertTaskAbove" | "insertTaskBelow" | "insertMultipleTasksAbove"
 >;
+
+/**
+ * Compute start/end dates for an inserted task relative to a reference task.
+ */
+function computeInsertionDates(
+  refTask: Task,
+  direction: "above" | "below",
+  offset: number
+): { startDate: string; endDate: string } {
+  if (direction === "above") {
+    if (refTask.startDate) {
+      const refStart = new Date(refTask.startDate);
+      const end = new Date(refStart);
+      end.setDate(
+        refStart.getDate() - 1 - offset * (DEFAULT_TASK_DURATION + 1)
+      );
+      const start = new Date(end);
+      start.setDate(end.getDate() - DEFAULT_TASK_DURATION + 1);
+      return {
+        startDate: toISODateString(start),
+        endDate: toISODateString(end),
+      };
+    }
+    const today = new Date();
+    const weekAgo = new Date(today);
+    weekAgo.setDate(today.getDate() - DEFAULT_TASK_DURATION + 1);
+    return {
+      startDate: toISODateString(weekAgo),
+      endDate: toISODateString(today),
+    };
+  }
+
+  // direction === "below"
+  if (refTask.endDate) {
+    const refEnd = new Date(refTask.endDate);
+    const start = new Date(refEnd);
+    start.setDate(refEnd.getDate() + 1 + offset * (DEFAULT_TASK_DURATION + 1));
+    const end = new Date(start);
+    end.setDate(start.getDate() + DEFAULT_TASK_DURATION - 1);
+    return { startDate: toISODateString(start), endDate: toISODateString(end) };
+  }
+  const today = new Date();
+  const nextWeek = new Date(today);
+  nextWeek.setDate(today.getDate() + DEFAULT_TASK_DURATION - 1);
+  return {
+    startDate: toISODateString(today),
+    endDate: toISODateString(nextWeek),
+  };
+}
 
 /** Insert tasks above or below a reference task. */
 function insertTasksRelative(
@@ -42,42 +92,7 @@ function insertTasksRelative(
   const generatedIds: string[] = [];
 
   for (let i = 0; i < count; i++) {
-    let startDate = "";
-    let endDate = "";
-
-    if (direction === "above") {
-      if (refTask.startDate) {
-        const refStart = new Date(refTask.startDate);
-        const end = new Date(refStart);
-        end.setDate(refStart.getDate() - 1 - i * (DEFAULT_TASK_DURATION + 1));
-        endDate = end.toISOString().split("T")[0];
-        const start = new Date(end);
-        start.setDate(end.getDate() - DEFAULT_TASK_DURATION + 1);
-        startDate = start.toISOString().split("T")[0];
-      } else {
-        const today = new Date();
-        const weekAgo = new Date(today);
-        weekAgo.setDate(today.getDate() - DEFAULT_TASK_DURATION + 1);
-        startDate = weekAgo.toISOString().split("T")[0];
-        endDate = today.toISOString().split("T")[0];
-      }
-    } else {
-      if (refTask.endDate) {
-        const refEnd = new Date(refTask.endDate);
-        const start = new Date(refEnd);
-        start.setDate(refEnd.getDate() + 1 + i * (DEFAULT_TASK_DURATION + 1));
-        startDate = start.toISOString().split("T")[0];
-        const end = new Date(start);
-        end.setDate(start.getDate() + DEFAULT_TASK_DURATION - 1);
-        endDate = end.toISOString().split("T")[0];
-      } else {
-        const today = new Date();
-        const nextWeek = new Date(today);
-        nextWeek.setDate(today.getDate() + DEFAULT_TASK_DURATION - 1);
-        startDate = today.toISOString().split("T")[0];
-        endDate = nextWeek.toISOString().split("T")[0];
-      }
-    }
+    const { startDate, endDate } = computeInsertionDates(refTask, direction, i);
 
     tasksToInsert.push({
       name: DEFAULT_TASK_NAME,
@@ -108,9 +123,9 @@ function insertTasksRelative(
 
     state.tasks.splice(spliceIndex, 0, ...newTasks);
     // Set sequential order so normalizeTaskOrder can sort correctly
-    state.tasks.forEach((task, index) => {
-      task.order = index;
-    });
+    for (let i = 0; i < state.tasks.length; i++) {
+      state.tasks[i].order = i;
+    }
     normalizeTaskOrder(state.tasks);
 
     if (refTask.parent) {

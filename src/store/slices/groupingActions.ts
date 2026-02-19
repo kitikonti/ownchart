@@ -320,7 +320,7 @@ export function createGroupingActions(
         if (summary.parent) affectedParentIds.add(summary.parent);
       }
 
-      let cascadeUpdates: Array<{
+      const cascadeUpdates: Array<{
         id: string;
         updates: Partial<Task>;
         previousValues: Partial<Task>;
@@ -341,9 +341,8 @@ export function createGroupingActions(
         normalizeTaskOrder(state.tasks);
 
         // Recalculate ancestor summaries
-        cascadeUpdates = recalculateSummaryAncestors(
-          state.tasks,
-          affectedParentIds
+        cascadeUpdates.push(
+          ...recalculateSummaryAncestors(state.tasks, affectedParentIds)
         );
 
         // Update selection: select the former children

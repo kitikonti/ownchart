@@ -34,16 +34,16 @@ function setTaskOpen(state: TaskState, taskId: string, open: boolean): boolean {
  */
 function setAllTasksOpen(state: TaskState, open: boolean): boolean {
   let changed = false;
-  state.tasks.forEach((task) => {
-    if (task.type !== "summary") return;
+  for (const task of state.tasks) {
+    if (task.type !== "summary") continue;
     const hasChildren = state.tasks.some((t) => t.parent === task.id);
-    if (!hasChildren) return;
+    if (!hasChildren) continue;
     const currentOpen = task.open ?? true;
     if (currentOpen !== open) {
       task.open = open;
       changed = true;
     }
-  });
+  }
   return changed;
 }
 
