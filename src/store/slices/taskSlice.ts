@@ -211,19 +211,10 @@ function validateGroupSelection(
 
   // Check nesting depth: grouping pushes tasks one level deeper
   for (const id of rootIds) {
-    const level = getTaskLevel(tasks, id);
-    if (level + 1 >= MAX_HIERARCHY_DEPTH) {
+    if (getMaxDescendantLevel(tasks, id) + 1 >= MAX_HIERARCHY_DEPTH) {
       return {
         error: "Cannot group: maximum nesting depth would be exceeded",
       };
-    }
-    const descendants = getTaskDescendants(tasks, id);
-    for (const desc of descendants) {
-      if (getTaskLevel(tasks, desc.id) + 1 >= MAX_HIERARCHY_DEPTH) {
-        return {
-          error: "Cannot group: maximum nesting depth would be exceeded",
-        };
-      }
     }
   }
 
@@ -512,6 +503,7 @@ export const useTaskStore = create<TaskStore>()(
         }));
 
         state.tasks.splice(spliceIndex, 0, ...newTasks);
+        // Set sequential order so normalizeTaskOrder can sort correctly
         state.tasks.forEach((task, index) => {
           task.order = index;
         });
@@ -727,11 +719,8 @@ export const useTaskStore = create<TaskStore>()(
               newEndDate: taskUpdates.endDate || task.endDate,
             });
 
-            // Apply update
-            state.tasks[taskIndex] = {
-              ...task,
-              ...taskUpdates,
-            };
+            // Apply update — mutate the Immer draft directly
+            Object.assign(state.tasks[taskIndex], taskUpdates);
 
             // Track affected parents for cascade
             if (task.parent) {
@@ -786,6 +775,10 @@ export const useTaskStore = create<TaskStore>()(
             state.selectedTaskIds = state.selectedTaskIds.filter(
               (selectedId) => selectedId !== id
             );
+            // Clear active cell if it referenced the deleted task
+            if (state.activeCell.taskId === id) {
+              state.activeCell = { taskId: null, field: null };
+            }
 
             // Recalculate parent summary dates if it was a child
             if (parentId) {
@@ -820,6 +813,13 @@ export const useTaskStore = create<TaskStore>()(
           state.selectedTaskIds = state.selectedTaskIds.filter(
             (selectedId) => !idsToDelete.has(selectedId)
           );
+          // Clear active cell if it referenced a deleted task
+          if (
+            state.activeCell.taskId &&
+            idsToDelete.has(state.activeCell.taskId)
+          ) {
+            state.activeCell = { taskId: null, field: null };
+          }
 
           // Recalculate parent summary dates if the root task had a parent
           if (rootParentId && !idsToDelete.has(rootParentId)) {
@@ -901,6 +901,10 @@ export const useTaskStore = create<TaskStore>()(
           s.clipboardTaskIds = s.clipboardTaskIds.filter(
             (id) => !idsToDelete.has(id)
           );
+          // Clear active cell if it referenced a deleted task
+          if (s.activeCell.taskId && idsToDelete.has(s.activeCell.taskId)) {
+            s.activeCell = { taskId: null, field: null };
+          }
 
           // Recalculate summary ancestors for affected parents
           cascadeUpdates = recalculateSummaryAncestors(
@@ -1125,17 +1129,17 @@ export const useTaskStore = create<TaskStore>()(
           state.isEditingCell = false;
         }),
 
-      navigateCell: (direction): void =>
+      navigateCell: (direction): void => {
+        // Read cross-store state before set() to avoid anti-pattern
+        const hiddenColumns = useChartStore.getState().hiddenColumns;
+        const visibleFields = EDITABLE_FIELDS.filter(
+          (field) => !hiddenColumns.includes(field)
+        );
+        if (visibleFields.length === 0) return;
+
         set((state) => {
           const { activeCell, tasks } = state;
           if (!activeCell.taskId || !activeCell.field) return;
-
-          // Build visible fields list by filtering out hidden columns
-          const chartState = useChartStore.getState();
-          const hiddenColumns = chartState.hiddenColumns;
-          const visibleFields = EDITABLE_FIELDS.filter(
-            (field) => !hiddenColumns.includes(field)
-          );
 
           const fieldIndex = visibleFields.indexOf(activeCell.field);
           if (fieldIndex === -1) return;
@@ -1175,7 +1179,8 @@ export const useTaskStore = create<TaskStore>()(
           state.activeCell.taskId = newTaskId;
           state.activeCell.field = visibleFields[newFieldIndex];
           state.isEditingCell = false;
-        }),
+        });
+      },
 
       startCellEdit: (): void =>
         set((state) => {
@@ -1378,7 +1383,7 @@ export const useTaskStore = create<TaskStore>()(
         recordCommand(
           CommandType.INDENT_TASKS,
           changes.length === 1
-            ? `Indented task`
+            ? "Indented 1 task"
             : `Indented ${changes.length} tasks`,
           {
             taskIds: changes.map((c) => c.taskId),
@@ -1468,7 +1473,7 @@ export const useTaskStore = create<TaskStore>()(
         recordCommand(
           CommandType.OUTDENT_TASKS,
           changes.length === 1
-            ? `Outdented task`
+            ? "Outdented 1 task"
             : `Outdented ${changes.length} tasks`,
           {
             taskIds: changes.map((c) => c.taskId),

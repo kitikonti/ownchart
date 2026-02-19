@@ -71,7 +71,7 @@ cd ../app-gantt-review
 ## File Review Index
 
 ### Priority: HIGH — Store Slices (Kern-Zustandslogik)
-- [x] `src/store/slices/taskSlice.ts` (~1920 LOC) — reviewed (2 passes), 2 bugs fixed, dead code removed, constants extracted, helpers deduplicated, code quality cleanup
+- [x] `src/store/slices/taskSlice.ts` (~1720 LOC) — reviewed (3 passes), 3 bugs fixed, dead code removed, constants extracted, helpers deduplicated, code quality cleanup
 - [ ] `src/store/slices/historySlice.ts` (1035 LOC) — 23x any
 - [ ] `src/store/slices/chartSlice.ts` (984 LOC)
 - [ ] `src/store/slices/clipboardSlice.ts` (908 LOC)
@@ -295,7 +295,7 @@ cd ../app-gantt-review
 ### Bekannte Cross-Cutting Concerns
 - **Hardcoded Hex-Farben**: 38 Stueck in 10 .tsx-Dateien → `design-tokens.ts` erweitern
 - **`any`-Casts in historySlice**: Betrifft auch `command.types.ts` (fehlende Felder)
-- **taskSlice Groesse**: ~1920 LOC (reduced from 2137) → Split-Kandidat nach Review
+- **taskSlice Groesse**: ~1720 LOC (reduced from 2137) → Split-Kandidat nach Review
 - **taskSlice Review Findings** (cleanup/code-review branch):
   - BUG: Hardcoded depth `3` in reorderTasks → replaced with MAX_HIERARCHY_DEPTH
   - BUG: deleteTask cascade didn't capture cascadeUpdates for undo → fixed both paths
@@ -320,6 +320,14 @@ cd ../app-gantt-review
     - DONE: Toast in reorderTasks removed (silent return). Toast in groupSelectedTasks kept (user feedback).
     - DONE: reorderTasks uses captureHierarchySnapshot instead of structuredClone(tasks)
     - DONE: `recordCommand` helper eliminates undo boilerplate across 13 methods (~100 LOC saved)
+  - Pass 3 (third-pass review via /review skill):
+    - BUG: activeCell not cleared on task deletion (deleteTask + deleteSelectedTasks) → stale reference fixed
+    - Cross-store read (useChartStore.getState()) moved outside Immer set() in navigateCell
+    - Empty visibleFields guard added in navigateCell (prevents undefined field assignment)
+    - Immer anti-pattern: spread `{...task, ...updates}` → Object.assign in updateMultipleTasks
+    - O(n*m) depth check in validateGroupSelection → replaced with getMaxDescendantLevel
+    - Command description consistency: indent/outdent now use "Indented 1 task" / "Outdented 1 task" (matches group/ungroup pattern)
+    - NOTE: Fix 3 (redundant order normalization) was NOT applied — normalizeTaskOrder depends on sequential order values as input
 
 ---
 
