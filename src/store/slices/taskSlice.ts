@@ -18,6 +18,7 @@ import {
   recalculateSummaryAncestors,
   normalizeTaskOrder,
   getMaxDescendantLevel,
+  collectDescendantIds,
 } from "../../utils/hierarchy";
 import { canHaveChildren } from "../../utils/validation";
 import toast from "react-hot-toast";
@@ -300,6 +301,94 @@ const EDITABLE_FIELDS: EditableField[] = [
   "duration",
   "progress",
 ];
+
+/**
+ * Set a single task's open state. Returns true if state changed.
+ */
+function setTaskOpen(state: TaskState, taskId: string, open: boolean): boolean {
+  const task = state.tasks.find((t) => t.id === taskId);
+  if (!task || task.type !== "summary") return false;
+  const hasChildren = state.tasks.some((t) => t.parent === taskId);
+  if (!hasChildren) return false;
+  const currentOpen = task.open ?? true;
+  if (currentOpen === open) return false;
+  task.open = open;
+  return true;
+}
+
+/**
+ * Set all summary tasks to open or closed. Returns true if any changed.
+ */
+function setAllTasksOpen(state: TaskState, open: boolean): boolean {
+  let changed = false;
+  state.tasks.forEach((task) => {
+    if (task.type !== "summary") return;
+    const hasChildren = state.tasks.some((t) => t.parent === task.id);
+    if (!hasChildren) return;
+    const currentOpen = task.open ?? true;
+    if (currentOpen !== open) {
+      task.open = open;
+      changed = true;
+    }
+  });
+  return changed;
+}
+
+/**
+ * Measure and set the optimal width for a single column.
+ * Shared by autoFitColumn and autoFitAllColumns.
+ */
+function fitColumnToContent(state: TaskState, columnId: string): void {
+  const column = TASK_COLUMNS.find((col) => col.id === columnId);
+  if (!column || !column.field) return;
+
+  const field = column.field;
+  const densityConfig = useUserPreferencesStore.getState().getDensityConfig();
+  const fontSize = densityConfig.fontSizeCell;
+  const indentSize = densityConfig.indentSize;
+  const iconSize = densityConfig.iconSize;
+  const cellPadding =
+    columnId === "name"
+      ? densityConfig.cellPaddingX
+      : densityConfig.cellPaddingX * 2;
+
+  const cellValues: string[] = [];
+  const extraWidths: number[] = [];
+
+  state.tasks.forEach((task) => {
+    let valueStr = "";
+    if (column.formatter) {
+      valueStr = column.formatter(task[field]);
+    } else {
+      const value = task[field];
+      valueStr = value !== undefined && value !== null ? String(value) : "";
+    }
+    cellValues.push(valueStr);
+
+    if (columnId === "name") {
+      const level = getTaskLevel(state.tasks as Task[], task.id);
+      const hierarchyIndent = level * indentSize;
+      extraWidths.push(
+        hierarchyIndent + EXPAND_BUTTON_WIDTH + CELL_GAP_SIZE + iconSize
+      );
+    } else {
+      extraWidths.push(0);
+    }
+  });
+
+  if (columnId === "name") {
+    cellValues.push(PLACEHOLDER_TEXT);
+    extraWidths.push(EXPAND_BUTTON_WIDTH + CELL_GAP_SIZE + iconSize);
+  }
+
+  state.columnWidths[columnId] = calculateColumnWidth(
+    column.label,
+    cellValues,
+    fontSize,
+    cellPadding,
+    extraWidths
+  );
+}
 
 export const useTaskStore = create<TaskStore>()(
   immer((set, get) => ({
@@ -591,19 +680,8 @@ export const useTaskStore = create<TaskStore>()(
         }
 
         // Cascading delete - collect all descendants recursively
-        const idsToDelete = new Set<string>([id]);
-
-        // Recursively find all children of a given parent
-        const findChildren = (parentId: string): void => {
-          state.tasks.forEach((task) => {
-            if (task.parent === parentId && !idsToDelete.has(task.id)) {
-              idsToDelete.add(task.id);
-              findChildren(task.id); // Recursively find grandchildren
-            }
-          });
-        };
-
-        findChildren(id);
+        const idsToDelete = collectDescendantIds(state.tasks, id);
+        idsToDelete.add(id);
 
         // Capture all tasks before deleting
         state.tasks.forEach((task) => {
@@ -678,20 +756,10 @@ export const useTaskStore = create<TaskStore>()(
       const idsToDelete = new Set<string>();
       const deletedTasks: Task[] = [];
 
-      // Recursively find all children
-      const findChildren = (parentId: string): void => {
-        state.tasks.forEach((task) => {
-          if (task.parent === parentId && !idsToDelete.has(task.id)) {
-            idsToDelete.add(task.id);
-            findChildren(task.id);
-          }
-        });
-      };
-
       // Add selected tasks and their children
       selectedIds.forEach((id) => {
         idsToDelete.add(id);
-        findChildren(id);
+        collectDescendantIds(state.tasks, id, idsToDelete);
       });
 
       // Capture all tasks before deleting
@@ -1040,75 +1108,11 @@ export const useTaskStore = create<TaskStore>()(
 
     autoFitColumn: (columnId): void =>
       set((state) => {
-        const column = TASK_COLUMNS.find((col) => col.id === columnId);
-        if (!column || !column.field) return;
-
-        const field = column.field;
-
-        // Get density config for accurate measurements
-        const densityConfig = useUserPreferencesStore
-          .getState()
-          .getDensityConfig();
-        const fontSize = densityConfig.fontSizeCell;
-        const indentSize = densityConfig.indentSize;
-        const iconSize = densityConfig.iconSize;
-        // Name column has no left padding (handled by indent), others have both
-        const cellPadding =
-          columnId === "name"
-            ? densityConfig.cellPaddingX
-            : densityConfig.cellPaddingX * 2;
-
-        // Prepare cell values and extra widths
-        const cellValues: string[] = [];
-        const extraWidths: number[] = [];
-
-        state.tasks.forEach((task) => {
-          let valueStr = "";
-          if (column.formatter) {
-            valueStr = column.formatter(task[field]);
-          } else {
-            const value = task[field];
-            valueStr =
-              value !== undefined && value !== null ? String(value) : "";
-          }
-          cellValues.push(valueStr);
-
-          // For name column, calculate extra width for UI elements
-          if (columnId === "name") {
-            const level = getTaskLevel(state.tasks as Task[], task.id);
-            const hierarchyIndent = level * indentSize;
-            const expandButton = EXPAND_BUTTON_WIDTH;
-            const gaps = CELL_GAP_SIZE;
-            const typeIcon = iconSize;
-            extraWidths.push(hierarchyIndent + expandButton + gaps + typeIcon);
-          } else {
-            extraWidths.push(0);
-          }
-        });
-
-        // For name column, include "Add new task..." placeholder
-        if (columnId === "name") {
-          cellValues.push(PLACEHOLDER_TEXT);
-          // Placeholder row has same UI elements as a level-0 task
-          const expandButton = EXPAND_BUTTON_WIDTH;
-          const gaps = CELL_GAP_SIZE;
-          const typeIcon = iconSize;
-          extraWidths.push(expandButton + gaps + typeIcon);
-        }
-
-        // Use shared utility function for width calculation
-        state.columnWidths[columnId] = calculateColumnWidth(
-          column.label,
-          cellValues,
-          fontSize,
-          cellPadding,
-          extraWidths
-        );
+        fitColumnToContent(state, columnId);
       }),
 
     autoFitAllColumns: (): void =>
       set((state) => {
-        // Columns with variable content that need auto-fit
         const autoFitColumnIds = [
           "name",
           "startDate",
@@ -1116,75 +1120,8 @@ export const useTaskStore = create<TaskStore>()(
           "duration",
           "progress",
         ];
-
-        // Get density config for accurate measurements
-        const densityConfig = useUserPreferencesStore
-          .getState()
-          .getDensityConfig();
-        const fontSize = densityConfig.fontSizeCell;
-        const indentSize = densityConfig.indentSize;
-        const iconSize = densityConfig.iconSize;
-
-        for (const columnId of autoFitColumnIds) {
-          const column = TASK_COLUMNS.find((col) => col.id === columnId);
-          if (!column || !column.field) continue;
-
-          const field = column.field;
-
-          // Name column has no left padding (handled by indent), others have both
-          const cellPadding =
-            columnId === "name"
-              ? densityConfig.cellPaddingX
-              : densityConfig.cellPaddingX * 2;
-
-          // Prepare cell values and extra widths
-          const cellValues: string[] = [];
-          const extraWidths: number[] = [];
-
-          state.tasks.forEach((task) => {
-            let valueStr = "";
-            if (column.formatter) {
-              valueStr = column.formatter(task[field]);
-            } else {
-              const value = task[field];
-              valueStr =
-                value !== undefined && value !== null ? String(value) : "";
-            }
-            cellValues.push(valueStr);
-
-            // For name column, calculate extra width for UI elements
-            if (columnId === "name") {
-              const level = getTaskLevel(state.tasks as Task[], task.id);
-              const hierarchyIndent = level * indentSize;
-              const expandButton = 16; // w-4 expand/collapse button
-              const gaps = 8; // gap-1 (4px) × 2 between elements
-              const typeIcon = iconSize;
-              extraWidths.push(
-                hierarchyIndent + expandButton + gaps + typeIcon
-              );
-            } else {
-              extraWidths.push(0);
-            }
-          });
-
-          // For name column, include "Add new task..." placeholder
-          if (columnId === "name") {
-            cellValues.push(PLACEHOLDER_TEXT);
-            // Placeholder row has same UI elements as a level-0 task
-            const expandButton = EXPAND_BUTTON_WIDTH;
-            const gaps = CELL_GAP_SIZE;
-            const typeIcon = iconSize;
-            extraWidths.push(expandButton + gaps + typeIcon);
-          }
-
-          // Use shared utility function for width calculation
-          state.columnWidths[columnId] = calculateColumnWidth(
-            column.label,
-            cellValues,
-            fontSize,
-            cellPadding,
-            extraWidths
-          );
+        for (const colId of autoFitColumnIds) {
+          fitColumnToContent(state, colId);
         }
       }),
 
@@ -1194,68 +1131,50 @@ export const useTaskStore = create<TaskStore>()(
       }),
 
     // Hierarchy actions
-    toggleTaskCollapsed: (taskId): void =>
+    toggleTaskCollapsed: (taskId): void => {
+      let changed = false;
       set((state) => {
         const task = state.tasks.find((t) => t.id === taskId);
-        if (!task) return;
-
-        // Only summary tasks with children can be collapsed
-        if (task.type !== "summary") return;
+        if (!task || task.type !== "summary") return;
         const hasChildren = state.tasks.some((t) => t.parent === taskId);
         if (!hasChildren) return;
-
         task.open = !(task.open ?? true);
-      }),
+        changed = true;
+      });
+      if (changed) useFileStore.getState().markDirty();
+    },
 
-    expandTask: (taskId): void =>
+    expandTask: (taskId): void => {
+      let changed = false;
       set((state) => {
-        const task = state.tasks.find((t) => t.id === taskId);
-        if (!task) return;
+        changed = setTaskOpen(state, taskId, true);
+      });
+      if (changed) useFileStore.getState().markDirty();
+    },
 
-        // Only summary tasks can be expanded/collapsed
-        if (task.type !== "summary") return;
-        const hasChildren = state.tasks.some((t) => t.parent === taskId);
-        if (hasChildren) {
-          task.open = true;
-        }
-      }),
-
-    collapseTask: (taskId): void =>
+    collapseTask: (taskId): void => {
+      let changed = false;
       set((state) => {
-        const task = state.tasks.find((t) => t.id === taskId);
-        if (!task) return;
+        changed = setTaskOpen(state, taskId, false);
+      });
+      if (changed) useFileStore.getState().markDirty();
+    },
 
-        // Only summary tasks can be expanded/collapsed
-        if (task.type !== "summary") return;
-        const hasChildren = state.tasks.some((t) => t.parent === taskId);
-        if (hasChildren) {
-          task.open = false;
-        }
-      }),
-
-    expandAll: (): void =>
+    expandAll: (): void => {
+      let changed = false;
       set((state) => {
-        state.tasks.forEach((task) => {
-          // Only summary tasks can be expanded
-          if (task.type !== "summary") return;
-          const hasChildren = state.tasks.some((t) => t.parent === task.id);
-          if (hasChildren) {
-            task.open = true;
-          }
-        });
-      }),
+        changed = setAllTasksOpen(state, true);
+      });
+      if (changed) useFileStore.getState().markDirty();
+    },
 
-    collapseAll: (): void =>
+    collapseAll: (): void => {
+      let changed = false;
       set((state) => {
-        state.tasks.forEach((task) => {
-          // Only summary tasks can be collapsed
-          if (task.type !== "summary") return;
-          const hasChildren = state.tasks.some((t) => t.parent === task.id);
-          if (hasChildren) {
-            task.open = false;
-          }
-        });
-      }),
+        changed = setAllTasksOpen(state, false);
+      });
+      if (changed) useFileStore.getState().markDirty();
+    },
 
     // Insert task relative to another
     insertTaskAbove: (referenceTaskId): void => {

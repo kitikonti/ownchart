@@ -428,3 +428,23 @@ export function getEffectiveTasksToMove(
 
   return Array.from(result);
 }
+
+/**
+ * Collect all descendant IDs of a given root task.
+ * Recurses through the parent relationship to find all children, grandchildren, etc.
+ * Optionally accepts an existing Set to accumulate into.
+ */
+export function collectDescendantIds(
+  tasks: ReadonlyArray<Task>,
+  rootId: string,
+  result?: Set<string>
+): Set<string> {
+  const ids = result ?? new Set<string>();
+  for (const task of tasks) {
+    if (task.parent === rootId && !ids.has(task.id)) {
+      ids.add(task.id);
+      collectDescendantIds(tasks, task.id, ids);
+    }
+  }
+  return ids;
+}
