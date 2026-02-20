@@ -6,24 +6,25 @@
 import { create } from "zustand";
 import { immer } from "zustand/middleware/immer";
 import toast from "react-hot-toast";
-import type {
-  Command,
-  AddTaskParams,
-  UpdateTaskParams,
-  DeleteTaskParams,
-  IndentOutdentParams,
-  ReorderTasksParams,
-  AddDependencyParams,
-  DeleteDependencyParams,
-  UpdateDependencyParams,
-  PasteRowsParams,
-  PasteCellParams,
-  MultiDragTasksParams,
-  ApplyColorsToManualParams,
-  GroupTasksParams,
-  UngroupTasksParams,
-  HideTasksParams,
-  UnhideTasksParams,
+import {
+  CommandType,
+  type Command,
+  type AddTaskParams,
+  type UpdateTaskParams,
+  type DeleteTaskParams,
+  type IndentOutdentParams,
+  type ReorderTasksParams,
+  type AddDependencyParams,
+  type DeleteDependencyParams,
+  type UpdateDependencyParams,
+  type PasteRowsParams,
+  type PasteCellParams,
+  type MultiDragTasksParams,
+  type ApplyColorsToManualParams,
+  type GroupTasksParams,
+  type UngroupTasksParams,
+  type HideTasksParams,
+  type UnhideTasksParams,
 } from "../../types/command.types";
 import type { Task } from "../../types/chart.types";
 import type { Dependency } from "../../types/dependency.types";
@@ -116,10 +117,10 @@ function executeStackAction(
 
 // Command types that don't modify persisted data (clipboard snapshots, selection state)
 const NON_DATA_COMMANDS = new Set([
-  "copyRows",
-  "cutRows",
-  "copyCell",
-  "cutCell",
+  CommandType.COPY_ROWS,
+  CommandType.CUT_ROWS,
+  CommandType.COPY_CELL,
+  CommandType.CUT_CELL,
 ]);
 
 export const useHistoryStore = create<HistoryStore>()(
@@ -203,6 +204,14 @@ function buildTaskMap(tasks: Task[]): Map<string, Task> {
   return new Map(tasks.map((t) => [t.id, t]));
 }
 
+function getTasksCopy(): Task[] {
+  return useTaskStore.getState().tasks.map((t) => ({ ...t }));
+}
+
+function assertNever(x: never): never {
+  throw new Error(`Unhandled command type: ${(x as Command).type}`);
+}
+
 function applySnapshot(
   taskMap: Map<string, Task>,
   snapshot: ReadonlyArray<{
@@ -239,7 +248,7 @@ function collectAffectedParents(
 // ---------------------------------------------------------------------------
 
 function undoAddTask(params: AddTaskParams): void {
-  if (params.generatedIds && params.generatedIds.length > 0) {
+  if (params.mode === "batch") {
     const idsToRemove = new Set(params.generatedIds);
     const currentTasks = useTaskStore.getState().tasks;
     const filtered = currentTasks
@@ -249,7 +258,7 @@ function undoAddTask(params: AddTaskParams): void {
       filtered[i].order = i;
     }
     useTaskStore.setState({ tasks: filtered });
-  } else if (params.generatedId) {
+  } else {
     useTaskStore.getState().deleteTask(params.generatedId, false);
   }
 }
@@ -270,13 +279,11 @@ function undoDeleteTask(params: DeleteTaskParams): void {
   const restoredTasks = [...currentTasks, ...params.deletedTasks];
 
   if (params.cascadeUpdates) {
+    const taskMap = buildTaskMap(restoredTasks);
     for (const cascade of params.cascadeUpdates) {
-      const parentIndex = restoredTasks.findIndex((t) => t.id === cascade.id);
-      if (parentIndex !== -1) {
-        restoredTasks[parentIndex] = {
-          ...restoredTasks[parentIndex],
-          ...cascade.previousValues,
-        };
+      const task = taskMap.get(cascade.id);
+      if (task) {
+        Object.assign(task, cascade.previousValues);
       }
     }
   }
@@ -292,7 +299,7 @@ function undoDeleteTask(params: DeleteTaskParams): void {
 }
 
 function undoIndentOutdent(params: IndentOutdentParams): void {
-  const currentTasks = useTaskStore.getState().tasks.map((t) => ({ ...t }));
+  const currentTasks = getTasksCopy();
   const taskMap = buildTaskMap(currentTasks);
 
   applySnapshot(taskMap, params.previousTaskSnapshot);
@@ -304,7 +311,7 @@ function undoIndentOutdent(params: IndentOutdentParams): void {
 }
 
 function undoReorderTasks(params: ReorderTasksParams): void {
-  const currentTasks = useTaskStore.getState().tasks.map((t) => ({ ...t }));
+  const currentTasks = getTasksCopy();
   const taskMap = buildTaskMap(currentTasks);
 
   applySnapshot(taskMap, params.previousOrder);
@@ -443,6 +450,7 @@ function undoGroupTasks(params: GroupTasksParams): void {
     }
   }
 
+  // cascadeUpdates contain arbitrary Partial<Task> — use Object.assign
   for (const cascade of params.cascadeUpdates) {
     const task = taskMap.get(cascade.id);
     if (task) {
@@ -454,7 +462,7 @@ function undoGroupTasks(params: GroupTasksParams): void {
 }
 
 function undoUngroupTasks(params: UngroupTasksParams): void {
-  const currentTasks = useTaskStore.getState().tasks.map((t) => ({ ...t }));
+  const currentTasks = getTasksCopy();
 
   // Re-add all deleted summary tasks first
   const allRestoredDeps: Dependency[] = [];
@@ -511,12 +519,11 @@ function undoHideStateChange(params: {
 // ---------------------------------------------------------------------------
 
 function redoAddTask(params: AddTaskParams): void {
-  const { generatedIds } = params;
-  if (params.tasks && generatedIds && generatedIds.length > 0) {
+  if (params.mode === "batch") {
     const state = useTaskStore.getState();
     const newTasks = params.tasks.map((t, i) => ({
       ...t,
-      id: generatedIds[i],
+      id: params.generatedIds[i],
     }));
     const allTasks = [...state.tasks.map((t) => ({ ...t })), ...newTasks];
     allTasks.sort((a, b) => a.order - b.order);
@@ -524,7 +531,7 @@ function redoAddTask(params: AddTaskParams): void {
       allTasks[i].order = i;
     }
     useTaskStore.setState({ tasks: allTasks });
-  } else if (params.generatedId) {
+  } else {
     const taskWithId = { ...params.task, id: params.generatedId };
     const state = useTaskStore.getState();
     const allTasks = [...state.tasks.map((t) => ({ ...t })), taskWithId];
@@ -577,7 +584,7 @@ function redoDeleteTask(params: DeleteTaskParams): void {
 }
 
 function redoIndentOutdent(params: IndentOutdentParams): void {
-  const currentTasks = useTaskStore.getState().tasks.map((t) => ({ ...t }));
+  const currentTasks = getTasksCopy();
   const taskMap = buildTaskMap(currentTasks);
 
   applySnapshot(taskMap, params.afterTaskSnapshot);
@@ -697,7 +704,7 @@ function redoApplyColorsToManual(params: ApplyColorsToManualParams): void {
 }
 
 function redoGroupTasks(params: GroupTasksParams): void {
-  const currentTasks = useTaskStore.getState().tasks.map((t) => ({ ...t }));
+  const currentTasks = getTasksCopy();
   currentTasks.push({ ...params.summaryTask });
 
   const taskMap = buildTaskMap(currentTasks);
@@ -720,7 +727,7 @@ function redoGroupTasks(params: GroupTasksParams): void {
 }
 
 function redoUngroupTasks(params: UngroupTasksParams): void {
-  const currentTasks = useTaskStore.getState().tasks.map((t) => ({ ...t }));
+  const currentTasks = getTasksCopy();
   const summaryIds = new Set(
     params.ungroupedSummaries.map((e) => e.summaryTask.id)
   );
@@ -786,86 +793,90 @@ function redoUnhideTasks(params: UnhideTasksParams): void {
 
 function executeUndoCommand(command: Command): void {
   switch (command.type) {
-    case "addTask":
+    case CommandType.ADD_TASK:
       return undoAddTask(command.params);
-    case "updateTask":
+    case CommandType.UPDATE_TASK:
       return undoUpdateTask(command.params);
-    case "deleteTask":
+    case CommandType.DELETE_TASK:
       return undoDeleteTask(command.params);
-    case "indentSelectedTasks":
-    case "outdentSelectedTasks":
+    case CommandType.INDENT_TASKS:
+    case CommandType.OUTDENT_TASKS:
       return undoIndentOutdent(command.params);
-    case "reorderTasks":
+    case CommandType.REORDER_TASKS:
       return undoReorderTasks(command.params);
-    case "addDependency":
+    case CommandType.ADD_DEPENDENCY:
       return undoAddDependency(command.params);
-    case "deleteDependency":
+    case CommandType.DELETE_DEPENDENCY:
       return undoDeleteDependency(command.params);
-    case "updateDependency":
+    case CommandType.UPDATE_DEPENDENCY:
       return undoUpdateDependency(command.params);
-    case "copyRows":
-    case "cutRows":
-    case "copyCell":
-    case "cutCell":
+    case CommandType.COPY_ROWS:
+    case CommandType.CUT_ROWS:
+    case CommandType.COPY_CELL:
+    case CommandType.CUT_CELL:
       return;
-    case "pasteRows":
+    case CommandType.PASTE_ROWS:
       return undoPasteRows(command.params);
-    case "pasteCell":
+    case CommandType.PASTE_CELL:
       return undoPasteCell(command.params);
-    case "multiDragTasks":
+    case CommandType.MULTI_DRAG_TASKS:
       return undoMultiDragTasks(command.params);
-    case "applyColorsToManual":
+    case CommandType.APPLY_COLORS_TO_MANUAL:
       return undoApplyColorsToManual(command.params);
-    case "groupTasks":
+    case CommandType.GROUP_TASKS:
       return undoGroupTasks(command.params);
-    case "ungroupTasks":
+    case CommandType.UNGROUP_TASKS:
       return undoUngroupTasks(command.params);
-    case "hideTasks":
+    case CommandType.HIDE_TASKS:
       return undoHideStateChange(command.params);
-    case "unhideTasks":
+    case CommandType.UNHIDE_TASKS:
       return undoHideStateChange(command.params);
+    default:
+      return assertNever(command);
   }
 }
 
 function executeRedoCommand(command: Command): void {
   switch (command.type) {
-    case "addTask":
+    case CommandType.ADD_TASK:
       return redoAddTask(command.params);
-    case "updateTask":
+    case CommandType.UPDATE_TASK:
       return redoUpdateTask(command.params);
-    case "deleteTask":
+    case CommandType.DELETE_TASK:
       return redoDeleteTask(command.params);
-    case "indentSelectedTasks":
-    case "outdentSelectedTasks":
+    case CommandType.INDENT_TASKS:
+    case CommandType.OUTDENT_TASKS:
       return redoIndentOutdent(command.params);
-    case "reorderTasks":
+    case CommandType.REORDER_TASKS:
       return redoReorderTasks(command.params);
-    case "addDependency":
+    case CommandType.ADD_DEPENDENCY:
       return redoAddDependency(command.params);
-    case "deleteDependency":
+    case CommandType.DELETE_DEPENDENCY:
       return redoDeleteDependency(command.params);
-    case "updateDependency":
+    case CommandType.UPDATE_DEPENDENCY:
       return redoUpdateDependency(command.params);
-    case "copyRows":
-    case "cutRows":
-    case "copyCell":
-    case "cutCell":
+    case CommandType.COPY_ROWS:
+    case CommandType.CUT_ROWS:
+    case CommandType.COPY_CELL:
+    case CommandType.CUT_CELL:
       return;
-    case "pasteRows":
+    case CommandType.PASTE_ROWS:
       return redoPasteRows(command.params);
-    case "pasteCell":
+    case CommandType.PASTE_CELL:
       return redoPasteCell(command.params);
-    case "multiDragTasks":
+    case CommandType.MULTI_DRAG_TASKS:
       return redoMultiDragTasks(command.params);
-    case "applyColorsToManual":
+    case CommandType.APPLY_COLORS_TO_MANUAL:
       return redoApplyColorsToManual(command.params);
-    case "groupTasks":
+    case CommandType.GROUP_TASKS:
       return redoGroupTasks(command.params);
-    case "ungroupTasks":
+    case CommandType.UNGROUP_TASKS:
       return redoUngroupTasks(command.params);
-    case "hideTasks":
+    case CommandType.HIDE_TASKS:
       return redoHideTasks(command.params);
-    case "unhideTasks":
+    case CommandType.UNHIDE_TASKS:
       return redoUnhideTasks(command.params);
+    default:
+      return assertNever(command);
   }
 }

@@ -187,6 +187,7 @@ export const useTaskStore = create<TaskStore>()(
       useFileStore.getState().markDirty();
 
       recordCommand(CommandType.ADD_TASK, `Created task "${taskData.name}"`, {
+        mode: "single",
         task: taskData,
         generatedId,
       });

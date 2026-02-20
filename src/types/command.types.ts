@@ -156,12 +156,19 @@ export type CommandParams =
   | UnhideTasksParams;
 
 // Specific parameter types for each command
-export interface AddTaskParams {
+export type AddTaskParams = SingleAddTaskParams | BatchAddTaskParams;
+
+export interface SingleAddTaskParams {
+  mode: "single";
   task: Omit<Task, "id">;
-  generatedId?: string; // Store the generated ID for undo
-  // Batch insert support (multi-row Ctrl++)
-  tasks?: Array<Omit<Task, "id">>;
-  generatedIds?: string[];
+  generatedId: string;
+}
+
+export interface BatchAddTaskParams {
+  mode: "batch";
+  task: Omit<Task, "id">;
+  tasks: Array<Omit<Task, "id">>;
+  generatedIds: string[];
 }
 
 export interface UpdateTaskParams {

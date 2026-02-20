@@ -8,6 +8,8 @@ import { CommandType } from "../../../src/types/command.types";
 import type { Command } from "../../../src/types/command.types";
 import type { Task } from "../../../src/types/chart.types";
 import type { Dependency } from "../../../src/types/dependency.types";
+import type { ColorModeState } from "../../../src/types/colorMode.types";
+import { DEFAULT_COLOR_MODE_STATE } from "../../../src/types/colorMode.types";
 
 // Mock react-hot-toast as a callable function with .success/.error
 const toastMock = vi.hoisted(() =>
@@ -267,6 +269,7 @@ describe("History Store - ADD_TASK undo/redo", () => {
     useTaskStore.setState({ tasks: [task] });
 
     const cmd = makeCommand(CommandType.ADD_TASK, 'Created task "New Task"', {
+      mode: "single",
       task: { ...task, id: undefined },
       generatedId: "gen-1",
     });
@@ -283,6 +286,7 @@ describe("History Store - ADD_TASK undo/redo", () => {
     useTaskStore.setState({ tasks: [t1, t2, existing] });
 
     const cmd = makeCommand(CommandType.ADD_TASK, "Created 2 tasks", {
+      mode: "batch",
       task: { name: "Task A" },
       tasks: [
         { ...t1, id: undefined },
@@ -303,6 +307,7 @@ describe("History Store - ADD_TASK undo/redo", () => {
     useTaskStore.setState({ tasks: [task] });
 
     const cmd = makeCommand(CommandType.ADD_TASK, 'Created task "New Task"', {
+      mode: "single",
       task: { ...task, id: undefined },
       generatedId: "gen-1",
     });
@@ -322,6 +327,7 @@ describe("History Store - ADD_TASK undo/redo", () => {
     useTaskStore.setState({ tasks: [t1, t2] });
 
     const cmd = makeCommand(CommandType.ADD_TASK, "Created 2 tasks", {
+      mode: "batch",
       task: { name: "Task A" },
       tasks: [
         { ...t1, id: undefined },
@@ -1271,6 +1277,259 @@ describe("History Store - INDENT/OUTDENT", () => {
         expect(actual.order).toBe(expected.order);
       }
     });
+  });
+});
+
+describe("History Store - GROUP_TASKS undo/redo", () => {
+  beforeEach(resetStores);
+
+  it("undo removes summary task and restores children parents/order", () => {
+    const childA = createTask("child-a", "Child A", {
+      order: 0,
+      parent: "summary-1",
+    });
+    const childB = createTask("child-b", "Child B", {
+      order: 1,
+      parent: "summary-1",
+    });
+    const summaryTask = createTask("summary-1", "Summary", {
+      order: 0,
+      type: "summary",
+    });
+    useTaskStore.setState({ tasks: [summaryTask, childA, childB] });
+
+    const cmd = makeCommand(CommandType.GROUP_TASKS, "Grouped tasks", {
+      summaryTaskId: "summary-1",
+      summaryTask,
+      changes: [
+        { taskId: "child-a", oldParent: undefined, oldOrder: 0 },
+        { taskId: "child-b", oldParent: undefined, oldOrder: 1 },
+      ],
+      previousOrder: [
+        { id: "child-a", order: 0 },
+        { id: "child-b", order: 1 },
+      ],
+      cascadeUpdates: [],
+    });
+    useHistoryStore.getState().recordCommand(cmd);
+    useHistoryStore.getState().undo();
+
+    const tasks = useTaskStore.getState().tasks;
+    expect(tasks.find((t) => t.id === "summary-1")).toBeUndefined();
+    expect(tasks.find((t) => t.id === "child-a")?.parent).toBeUndefined();
+    expect(tasks.find((t) => t.id === "child-b")?.parent).toBeUndefined();
+  });
+
+  it("redo re-inserts summary and reparents children", () => {
+    const childA = createTask("child-a", "Child A", {
+      order: 0,
+      parent: "summary-1",
+    });
+    const childB = createTask("child-b", "Child B", {
+      order: 1,
+      parent: "summary-1",
+    });
+    const summaryTask = createTask("summary-1", "Summary", {
+      order: 0,
+      type: "summary",
+    });
+    useTaskStore.setState({ tasks: [summaryTask, childA, childB] });
+
+    const cmd = makeCommand(CommandType.GROUP_TASKS, "Grouped tasks", {
+      summaryTaskId: "summary-1",
+      summaryTask,
+      changes: [
+        { taskId: "child-a", oldParent: undefined, oldOrder: 0 },
+        { taskId: "child-b", oldParent: undefined, oldOrder: 1 },
+      ],
+      previousOrder: [
+        { id: "child-a", order: 0 },
+        { id: "child-b", order: 1 },
+      ],
+      cascadeUpdates: [],
+    });
+    useHistoryStore.getState().recordCommand(cmd);
+    useHistoryStore.getState().undo();
+    useHistoryStore.getState().redo();
+
+    const tasks = useTaskStore.getState().tasks;
+    expect(tasks.find((t) => t.id === "summary-1")).toBeDefined();
+    expect(tasks.find((t) => t.id === "child-a")?.parent).toBe("summary-1");
+    expect(tasks.find((t) => t.id === "child-b")?.parent).toBe("summary-1");
+  });
+});
+
+describe("History Store - UNGROUP_TASKS undo/redo", () => {
+  beforeEach(resetStores);
+
+  it("undo restores summary tasks and reparents children back", () => {
+    const childA = createTask("child-a", "Child A", {
+      order: 0,
+      parent: undefined,
+    });
+    const childB = createTask("child-b", "Child B", {
+      order: 1,
+      parent: undefined,
+    });
+    // After ungrouping, summary is gone — children have no parent
+    useTaskStore.setState({ tasks: [childA, childB] });
+
+    const summaryTask = createTask("summary-1", "Summary", {
+      order: 0,
+      type: "summary",
+    });
+    const dep = createDependency("dep-1", "summary-1", "child-a");
+
+    const cmd = makeCommand(CommandType.UNGROUP_TASKS, "Ungrouped tasks", {
+      ungroupedSummaries: [
+        {
+          summaryTask,
+          childChanges: [
+            { taskId: "child-a", oldParent: "summary-1", oldOrder: 0 },
+            { taskId: "child-b", oldParent: "summary-1", oldOrder: 1 },
+          ],
+          removedDependencies: [dep],
+        },
+      ],
+      previousOrder: [
+        { id: "summary-1", order: 0 },
+        { id: "child-a", order: 1 },
+        { id: "child-b", order: 2 },
+      ],
+      cascadeUpdates: [],
+    });
+    useHistoryStore.getState().recordCommand(cmd);
+    useHistoryStore.getState().undo();
+
+    const tasks = useTaskStore.getState().tasks;
+    expect(tasks.find((t) => t.id === "summary-1")).toBeDefined();
+    expect(tasks.find((t) => t.id === "child-a")?.parent).toBe("summary-1");
+    expect(tasks.find((t) => t.id === "child-b")?.parent).toBe("summary-1");
+    expect(useDependencyStore.getState().dependencies).toHaveLength(1);
+    expect(useDependencyStore.getState().dependencies[0].id).toBe("dep-1");
+  });
+
+  it("redo removes summaries and reparents children", () => {
+    const childA = createTask("child-a", "Child A", {
+      order: 0,
+      parent: undefined,
+    });
+    const childB = createTask("child-b", "Child B", {
+      order: 1,
+      parent: undefined,
+    });
+    useTaskStore.setState({ tasks: [childA, childB] });
+
+    const summaryTask = createTask("summary-1", "Summary", {
+      order: 0,
+      type: "summary",
+    });
+
+    const cmd = makeCommand(CommandType.UNGROUP_TASKS, "Ungrouped tasks", {
+      ungroupedSummaries: [
+        {
+          summaryTask,
+          childChanges: [
+            { taskId: "child-a", oldParent: "summary-1", oldOrder: 0 },
+            { taskId: "child-b", oldParent: "summary-1", oldOrder: 1 },
+          ],
+          removedDependencies: [],
+        },
+      ],
+      previousOrder: [
+        { id: "summary-1", order: 0 },
+        { id: "child-a", order: 1 },
+        { id: "child-b", order: 2 },
+      ],
+      cascadeUpdates: [],
+    });
+    useHistoryStore.getState().recordCommand(cmd);
+    useHistoryStore.getState().undo();
+    useHistoryStore.getState().redo();
+
+    const tasks = useTaskStore.getState().tasks;
+    expect(tasks.find((t) => t.id === "summary-1")).toBeUndefined();
+    expect(tasks.find((t) => t.id === "child-a")?.parent).toBe(
+      summaryTask.parent
+    );
+    expect(tasks.find((t) => t.id === "child-b")?.parent).toBe(
+      summaryTask.parent
+    );
+  });
+});
+
+describe("History Store - APPLY_COLORS_TO_MANUAL undo/redo", () => {
+  beforeEach(resetStores);
+
+  it("undo restores previous ColorModeState and task colors", () => {
+    const task = createTask("t1", "Task 1", {
+      color: "#ff0000",
+      order: 0,
+    });
+    useTaskStore.setState({ tasks: [task] });
+
+    const previousColorModeState: ColorModeState = {
+      ...DEFAULT_COLOR_MODE_STATE,
+      mode: "taskType",
+    };
+
+    useChartStore.getState().setColorMode("manual");
+
+    const cmd = makeCommand(
+      CommandType.APPLY_COLORS_TO_MANUAL,
+      "Applied colors to manual",
+      {
+        previousColorModeState,
+        colorChanges: [
+          {
+            id: "t1",
+            previousColor: "#3b82f6",
+            previousColorOverride: undefined,
+            newColor: "#ff0000",
+          },
+        ],
+      }
+    );
+    useHistoryStore.getState().recordCommand(cmd);
+    useHistoryStore.getState().undo();
+
+    expect(useTaskStore.getState().tasks[0].color).toBe("#3b82f6");
+    expect(useChartStore.getState().colorModeState.mode).toBe("taskType");
+  });
+
+  it("redo reapplies colors and switches to manual mode", () => {
+    const task = createTask("t1", "Task 1", {
+      color: "#3b82f6",
+      order: 0,
+    });
+    useTaskStore.setState({ tasks: [task] });
+
+    const previousColorModeState: ColorModeState = {
+      ...DEFAULT_COLOR_MODE_STATE,
+      mode: "taskType",
+    };
+
+    const cmd = makeCommand(
+      CommandType.APPLY_COLORS_TO_MANUAL,
+      "Applied colors to manual",
+      {
+        previousColorModeState,
+        colorChanges: [
+          {
+            id: "t1",
+            previousColor: "#3b82f6",
+            previousColorOverride: undefined,
+            newColor: "#ff0000",
+          },
+        ],
+      }
+    );
+    useHistoryStore.getState().recordCommand(cmd);
+    useHistoryStore.getState().undo();
+    useHistoryStore.getState().redo();
+
+    expect(useTaskStore.getState().tasks[0].color).toBe("#ff0000");
+    expect(useChartStore.getState().colorModeState.mode).toBe("manual");
   });
 });
 
