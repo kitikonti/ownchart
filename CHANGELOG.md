@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [0.0.42](https://github.com/kitikonti/ownchart/compare/v0.0.41...v0.0.42) (2026-02-20)
+
+
+### Bug Fixes
+
+* update jspdf and lodash to resolve security vulnerabilities ([4b01c8f](https://github.com/kitikonti/ownchart/commit/4b01c8f3ff047f6da5bd28aa2d026a7cd01a8437))
+
 ### [0.0.41](https://github.com/kitikonti/ownchart/compare/v0.0.40...v0.0.41) (2026-02-20)
 
 
