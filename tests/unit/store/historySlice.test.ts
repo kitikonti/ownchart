@@ -694,6 +694,43 @@ describe("History Store - Dependency commands", () => {
     expect(useDependencyStore.getState().dependencies[0].id).toBe("dep-1");
   });
 
+  it("undo ADD_DEPENDENCY restores previous dates from dateAdjustments", () => {
+    const t1 = createTask("t1", "Task 1", {
+      order: 0,
+      startDate: "2025-01-06",
+      endDate: "2025-01-10",
+    });
+    const t2 = createTask("t2", "Task 2", {
+      order: 1,
+      startDate: "2025-01-11",
+      endDate: "2025-01-15",
+    });
+    useTaskStore.setState({ tasks: [t1, t2] });
+
+    const dep = createDependency("dep-1", "t1", "t2");
+    useDependencyStore.setState({ dependencies: [dep] });
+
+    const cmd = makeCommand(CommandType.ADD_DEPENDENCY, "Created dep", {
+      dependency: dep,
+      dateAdjustments: [
+        {
+          taskId: "t2",
+          oldStartDate: "2025-01-06",
+          oldEndDate: "2025-01-10",
+          newStartDate: "2025-01-11",
+          newEndDate: "2025-01-15",
+        },
+      ],
+    });
+    useHistoryStore.getState().recordCommand(cmd);
+    useHistoryStore.getState().undo();
+
+    expect(useDependencyStore.getState().dependencies).toHaveLength(0);
+    const task2 = useTaskStore.getState().tasks.find((t) => t.id === "t2")!;
+    expect(task2.startDate).toBe("2025-01-06");
+    expect(task2.endDate).toBe("2025-01-10");
+  });
+
   it("undo DELETE_DEPENDENCY restores the dependency", () => {
     const dep = createDependency("dep-1", "t1", "t2");
     useDependencyStore.setState({ dependencies: [] }); // already deleted
@@ -929,6 +966,53 @@ describe("History Store - Error handling", () => {
     useHistoryStore.getState().undo();
     expect(toastMock.success).toHaveBeenCalled();
     expect(useHistoryStore.getState().undoStack).toHaveLength(0);
+  });
+
+  it("removes broken command from redo stack after failure so next redo proceeds", () => {
+    const task = createTask("t1", "Task 1");
+    useTaskStore.setState({ tasks: [task] });
+
+    // Record two commands, then undo both to fill redo stack
+    const cmd1 = makeCommand(CommandType.UPDATE_TASK, "First update", {
+      id: "t1",
+      updates: { name: "After1" },
+      previousValues: { name: "Task 1" },
+    });
+    const cmd2 = makeCommand(CommandType.UPDATE_TASK, "Second update", {
+      id: "t1",
+      updates: { name: "After2" },
+      previousValues: { name: "After1" },
+    });
+    useHistoryStore.getState().recordCommand(cmd1);
+    useHistoryStore.getState().recordCommand(cmd2);
+    useHistoryStore.getState().undo();
+    useHistoryStore.getState().undo();
+
+    expect(useHistoryStore.getState().redoStack).toHaveLength(2);
+
+    // Mock updateTask to throw (simulates broken redo of cmd1)
+    const original = useTaskStore.getState().updateTask;
+    useTaskStore.setState({
+      updateTask: () => {
+        throw new Error("Simulated failure");
+      },
+    });
+
+    // First redo fails — broken cmd1 should be removed from redo stack
+    useHistoryStore.getState().redo();
+    expect(toastMock.error).toHaveBeenCalledWith(
+      "Redo failed. Please refresh the page if issues persist."
+    );
+    expect(useHistoryStore.getState().redoStack).toHaveLength(1);
+    expect(useHistoryStore.getState().isRedoing).toBe(false);
+
+    // Restore real updateTask
+    useTaskStore.setState({ updateTask: original });
+
+    // Second redo should succeed with cmd2
+    useHistoryStore.getState().redo();
+    expect(toastMock.success).toHaveBeenCalled();
+    expect(useHistoryStore.getState().redoStack).toHaveLength(0);
   });
 });
 
@@ -1464,6 +1548,55 @@ describe("History Store - GROUP_TASKS undo/redo", () => {
     expect(tasks.find((t) => t.id === "child-b")?.parent).toBeUndefined();
   });
 
+  it("undo restores cascadeUpdates on summary parent dates", () => {
+    const summaryTask = createTask("summary-1", "Summary", {
+      order: 0,
+      type: "summary",
+      startDate: "2025-01-06",
+      endDate: "2025-01-15",
+    });
+    const childA = createTask("child-a", "Child A", {
+      order: 1,
+      parent: "summary-1",
+      startDate: "2025-01-06",
+      endDate: "2025-01-10",
+    });
+    const childB = createTask("child-b", "Child B", {
+      order: 2,
+      parent: "summary-1",
+      startDate: "2025-01-11",
+      endDate: "2025-01-15",
+    });
+    useTaskStore.setState({ tasks: [summaryTask, childA, childB] });
+
+    const cmd = makeCommand(CommandType.GROUP_TASKS, "Grouped tasks", {
+      summaryTaskId: "summary-1",
+      summaryTask,
+      changes: [
+        { taskId: "child-a", oldParent: undefined, oldOrder: 0 },
+        { taskId: "child-b", oldParent: undefined, oldOrder: 1 },
+      ],
+      previousOrder: [
+        { id: "child-a", order: 0 },
+        { id: "child-b", order: 1 },
+      ],
+      cascadeUpdates: [
+        {
+          id: "child-a",
+          updates: { startDate: "2025-01-06", endDate: "2025-01-10" },
+          previousValues: { startDate: "2025-01-01", endDate: "2025-01-05" },
+        },
+      ],
+    });
+    useHistoryStore.getState().recordCommand(cmd);
+    useHistoryStore.getState().undo();
+
+    const tasks = useTaskStore.getState().tasks;
+    const restoredChild = tasks.find((t) => t.id === "child-a")!;
+    expect(restoredChild.startDate).toBe("2025-01-01");
+    expect(restoredChild.endDate).toBe("2025-01-05");
+  });
+
   it("redo re-inserts summary and reparents children", () => {
     const childA = createTask("child-a", "Child A", {
       order: 0,
@@ -1551,6 +1684,61 @@ describe("History Store - UNGROUP_TASKS undo/redo", () => {
     expect(tasks.find((t) => t.id === "child-b")?.parent).toBe("summary-1");
     expect(useDependencyStore.getState().dependencies).toHaveLength(1);
     expect(useDependencyStore.getState().dependencies[0].id).toBe("dep-1");
+  });
+
+  it("undo restores cascadeUpdates on surviving tasks", () => {
+    const childA = createTask("child-a", "Child A", {
+      order: 0,
+      parent: undefined,
+      startDate: "2025-01-06",
+      endDate: "2025-01-10",
+    });
+    const childB = createTask("child-b", "Child B", {
+      order: 1,
+      parent: undefined,
+      startDate: "2025-01-11",
+      endDate: "2025-01-15",
+    });
+    useTaskStore.setState({ tasks: [childA, childB] });
+
+    const summaryTask = createTask("summary-1", "Summary", {
+      order: 0,
+      type: "summary",
+      startDate: "2025-01-06",
+      endDate: "2025-01-15",
+    });
+
+    const cmd = makeCommand(CommandType.UNGROUP_TASKS, "Ungrouped tasks", {
+      ungroupedSummaries: [
+        {
+          summaryTask,
+          childChanges: [
+            { taskId: "child-a", oldParent: "summary-1", oldOrder: 1 },
+            { taskId: "child-b", oldParent: "summary-1", oldOrder: 2 },
+          ],
+          removedDependencies: [],
+        },
+      ],
+      previousOrder: [
+        { id: "summary-1", order: 0 },
+        { id: "child-a", order: 1 },
+        { id: "child-b", order: 2 },
+      ],
+      cascadeUpdates: [
+        {
+          id: "child-a",
+          updates: { startDate: "2025-01-06", endDate: "2025-01-10" },
+          previousValues: { startDate: "2025-01-01", endDate: "2025-01-05" },
+        },
+      ],
+    });
+    useHistoryStore.getState().recordCommand(cmd);
+    useHistoryStore.getState().undo();
+
+    const tasks = useTaskStore.getState().tasks;
+    const restoredChild = tasks.find((t) => t.id === "child-a")!;
+    expect(restoredChild.startDate).toBe("2025-01-01");
+    expect(restoredChild.endDate).toBe("2025-01-05");
   });
 
   it("redo removes summaries and reparents children", () => {
