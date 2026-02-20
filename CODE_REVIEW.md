@@ -75,7 +75,7 @@ cd ../app-gantt-review
 
 ### Priority: HIGH — Store Slices (Kern-Zustandslogik)
 - [x] `src/store/slices/chartSlice.ts` (984 LOC) — Spread→Object.assign (5×), magic numbers→constants, SettableViewFields type, console.error entfernt, +34 neue Tests
-- [ ] `src/store/slices/clipboardSlice.ts` (908 LOC)
+- [x] `src/store/slices/clipboardSlice.ts` (552 LOC) — Redundanten null-Check in canPasteCell entfernt, fehlenden Test fuer pasteCell-Guard ergaenzt
 - [ ] `src/store/slices/dependencySlice.ts` (341 LOC)
 - [ ] `src/store/slices/uiSlice.ts` (279 LOC)
 - [ ] `src/store/slices/userPreferencesSlice.ts` (274 LOC)
@@ -319,6 +319,6 @@ Entscheidungen aus bisherigen Reviews die fuer zukuenftige Dateien gelten.
 
 ## Progress
 
-- Reviewed: 10 / 193 Dateien
+- Reviewed: 11 / 193 Dateien
 - Offene Issues: 38 Hex-Farben, ~18 toISODateString-Umstellungen
 - Test-Coverage: 80%+
