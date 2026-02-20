@@ -935,7 +935,7 @@ describe("History Store - Error handling", () => {
     });
 
     useTaskStore.setState({
-      tasks: [createTask({ id: "t1", name: "After2" })],
+      tasks: [createTask("t1", "After2")],
     });
     useHistoryStore.getState().recordCommand(cmd1);
     useHistoryStore.getState().recordCommand(cmd2);

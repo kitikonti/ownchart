@@ -216,6 +216,18 @@ function assertNever(x: never): never {
   throw new Error(`Unhandled command type: ${(x as Command).type}`);
 }
 
+function applyCascadePreviousValues(
+  taskMap: Map<string, Task>,
+  cascades: ReadonlyArray<{ id: string; previousValues: Partial<Task> }>
+): void {
+  for (const cascade of cascades) {
+    const task = taskMap.get(cascade.id);
+    if (task) {
+      Object.assign(task, cascade.previousValues);
+    }
+  }
+}
+
 function applySnapshot(
   taskMap: Map<string, Task>,
   snapshot: ReadonlyArray<{
@@ -282,13 +294,10 @@ function undoDeleteTask(params: DeleteTaskParams): void {
   const restoredTasks = [...getTasksCopy(), ...params.deletedTasks];
 
   if (params.cascadeUpdates) {
-    const taskMap = buildTaskMap(restoredTasks);
-    for (const cascade of params.cascadeUpdates) {
-      const task = taskMap.get(cascade.id);
-      if (task) {
-        Object.assign(task, cascade.previousValues);
-      }
-    }
+    applyCascadePreviousValues(
+      buildTaskMap(restoredTasks),
+      params.cascadeUpdates
+    );
   }
 
   useTaskStore.setState({ tasks: restoredTasks });
@@ -453,13 +462,7 @@ function undoGroupTasks(params: GroupTasksParams): void {
     }
   }
 
-  // cascadeUpdates contain arbitrary Partial<Task> — use Object.assign
-  for (const cascade of params.cascadeUpdates) {
-    const task = taskMap.get(cascade.id);
-    if (task) {
-      Object.assign(task, cascade.previousValues);
-    }
-  }
+  applyCascadePreviousValues(taskMap, params.cascadeUpdates);
 
   useTaskStore.setState({ tasks: currentTasks });
 }
@@ -501,12 +504,7 @@ function undoUngroupTasks(params: UngroupTasksParams): void {
     }
   }
 
-  for (const cascade of params.cascadeUpdates) {
-    const task = taskMap.get(cascade.id);
-    if (task) {
-      Object.assign(task, cascade.previousValues);
-    }
-  }
+  applyCascadePreviousValues(taskMap, params.cascadeUpdates);
 
   useTaskStore.setState({ tasks: currentTasks });
 }
@@ -690,7 +688,9 @@ function redoApplyColorsToManual(params: ApplyColorsToManualParams): void {
       colorOverride: undefined,
     });
   }
-  useChartStore.getState().setColorMode("manual");
+  useChartStore
+    .getState()
+    .setColorModeState({ ...params.previousColorModeState, mode: "manual" });
 }
 
 function redoGroupTasks(params: GroupTasksParams): void {
