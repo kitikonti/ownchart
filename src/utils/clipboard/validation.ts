@@ -5,6 +5,7 @@
 
 import type { Task } from "../../types/chart.types";
 import type { EditableField } from "../../store/slices/taskSlice";
+import { COLORS } from "../../styles/design-tokens";
 
 /**
  * Validate if a cell value can be pasted into a target field.
@@ -78,7 +79,7 @@ export function getClearValueForField(field: EditableField): unknown {
     case "progress":
       return 0;
     case "color":
-      return "#0F6CBD"; // Default brand color (Outlook Blue)
+      return COLORS.chart.taskDefault;
     case "type":
       return "task";
     default:
