@@ -158,6 +158,238 @@ function performCellCopyOrCut(
   });
 }
 
+interface RowPasteParams {
+  clipboardTasks: Task[];
+  clipboardDependencies: Dependency[];
+  /** Set to "cut" + provide sourceTaskIds when pasting from an internal cut. */
+  operation?: "copy" | "cut" | null;
+  sourceTaskIds?: string[];
+  /** Immer `set` — only needed when operation is "cut" (to clear clipboard). */
+  set?: (fn: (state: ClipboardState) => void) => void;
+  description: string;
+}
+
+function executeRowPaste(
+  params: RowPasteParams
+): { success: boolean; error?: string } {
+  const {
+    clipboardTasks,
+    clipboardDependencies,
+    operation,
+    sourceTaskIds = [],
+    set,
+    description,
+  } = params;
+  const taskStore = useTaskStore.getState();
+  const depStore = useDependencyStore.getState();
+  const historyStore = useHistoryStore.getState();
+  const fileStore = useFileStore.getState();
+
+  // Prepare paste data
+  const result = prepareRowPaste({
+    clipboardTasks,
+    clipboardDependencies,
+    currentTasks: taskStore.tasks,
+    activeCell: taskStore.activeCell,
+    selectedTaskIds: taskStore.selectedTaskIds,
+  });
+
+  if ("error" in result) {
+    return { success: false, error: result.error };
+  }
+
+  const {
+    mergedTasks,
+    newTasks,
+    remappedDependencies,
+    idMapping,
+    insertOrder,
+    targetParent,
+  } = result;
+
+  // Store deleted tasks for undo (if cut operation)
+  let deletedTasks: Task[] = [];
+  let previousCutTaskIds: string[] = [];
+
+  if (operation === "cut") {
+    previousCutTaskIds = sourceTaskIds;
+    deletedTasks = previousCutTaskIds
+      .map((id) => taskStore.tasks.find((t) => t.id === id))
+      .filter((t): t is Task => t !== undefined);
+  }
+
+  // Apply summary recalculation
+  let finalTasks = applySummaryRecalculation(mergedTasks, targetParent);
+
+  // If cut operation, remove originals and rebuild order
+  if (operation === "cut") {
+    const cutIds = new Set(previousCutTaskIds);
+
+    finalTasks = finalTasks
+      .filter((t) => !cutIds.has(t.id))
+      .map((t) => ({ ...t }));
+
+    // Rebuild order from flattened list
+    const collapsedIdsAfterCut = new Set(
+      finalTasks.filter((t) => t.open === false).map((t) => t.id)
+    );
+    const flattenedAfterCut = buildFlattenedTaskList(
+      finalTasks,
+      collapsedIdsAfterCut
+    );
+    const orderMap = new Map<string, number>();
+    flattenedAfterCut.forEach(({ task }, index) => {
+      orderMap.set(task.id, index);
+    });
+    finalTasks.forEach((task) => {
+      const newOrder = orderMap.get(task.id);
+      if (newOrder !== undefined) {
+        task.order = newOrder;
+      }
+    });
+
+    // Remove dependencies for deleted tasks and add new ones
+    const updatedDeps = [
+      ...depStore.dependencies,
+      ...remappedDependencies,
+    ].filter((d) => !cutIds.has(d.fromTaskId) && !cutIds.has(d.toTaskId));
+
+    useTaskStore.setState({ tasks: finalTasks, clipboardTaskIds: [] });
+    useDependencyStore.setState({ dependencies: updatedDeps });
+  } else {
+    useTaskStore.setState({ tasks: finalTasks });
+    const updatedDeps = [...depStore.dependencies, ...remappedDependencies];
+    useDependencyStore.setState({ dependencies: updatedDeps });
+  }
+
+  fileStore.markDirty();
+
+  historyStore.recordCommand({
+    id: crypto.randomUUID(),
+    type: CommandType.PASTE_ROWS,
+    timestamp: Date.now(),
+    description,
+    params: {
+      pastedTasks: newTasks,
+      pastedDependencies: remappedDependencies,
+      insertIndex: insertOrder,
+      idMapping,
+      previousCutTaskIds:
+        previousCutTaskIds.length > 0 ? previousCutTaskIds : undefined,
+      deletedTasks: deletedTasks.length > 0 ? deletedTasks : undefined,
+    },
+  });
+
+  // Clear clipboard if it was a cut
+  if (operation === "cut" && set) {
+    set((state) => {
+      state.rowClipboard = { ...EMPTY_ROW_CLIPBOARD };
+      state.activeMode = null;
+    });
+  }
+
+  return { success: true };
+}
+
+interface CellPasteParams {
+  value: unknown;
+  sourceField: EditableField;
+  targetTaskId: string;
+  targetField: EditableField;
+  /** Set when pasting from an internal cut operation. */
+  cutSource?: { taskId: string; field: EditableField };
+  /** Immer `set` — only needed for cut operations (to clear clipboard). */
+  set?: (fn: (state: ClipboardState) => void) => void;
+  description: string;
+}
+
+function executeCellPaste(
+  params: CellPasteParams
+): { success: boolean; error?: string } {
+  const {
+    value,
+    sourceField,
+    targetTaskId,
+    targetField,
+    cutSource,
+    set,
+    description,
+  } = params;
+  const taskStore = useTaskStore.getState();
+  const historyStore = useHistoryStore.getState();
+  const fileStore = useFileStore.getState();
+
+  // Get target task
+  const task = taskStore.tasks.find((t) => t.id === targetTaskId);
+  if (!task) {
+    return { success: false, error: "Target task not found" };
+  }
+
+  // Field type matching validation
+  const validation = canPasteCellValue(sourceField, targetField, task);
+  if (!validation.valid) {
+    return { success: false, error: validation.error };
+  }
+
+  // Get current value (for undo)
+  const previousValue = task[targetField as keyof Task];
+
+  // Store cut cell info for undo
+  let previousCutCell:
+    | { taskId: string; field: string; value: unknown }
+    | undefined;
+
+  if (cutSource) {
+    const sourceTask = taskStore.tasks.find((t) => t.id === cutSource.taskId);
+    if (sourceTask) {
+      previousCutCell = {
+        taskId: cutSource.taskId,
+        field: cutSource.field,
+        value: sourceTask[cutSource.field as keyof Task],
+      };
+    }
+  }
+
+  // Update target task
+  taskStore.updateTask(targetTaskId, { [targetField]: value });
+
+  // If cut operation, clear source cell
+  if (cutSource) {
+    const clearValue = getClearValueForField(cutSource.field);
+    taskStore.updateTask(cutSource.taskId, { [cutSource.field]: clearValue });
+    useTaskStore.setState({ cutCell: null });
+  }
+
+  fileStore.markDirty();
+
+  historyStore.recordCommand({
+    id: crypto.randomUUID(),
+    type: CommandType.PASTE_CELL,
+    timestamp: Date.now(),
+    description,
+    params: {
+      taskId: targetTaskId,
+      field: targetField,
+      newValue: value,
+      previousValue,
+      previousCutCell,
+      cutClearValue: cutSource
+        ? getClearValueForField(cutSource.field)
+        : undefined,
+    },
+  });
+
+  // Clear clipboard if it was a cut
+  if (cutSource && set) {
+    set((state) => {
+      state.cellClipboard = { ...EMPTY_CELL_CLIPBOARD };
+      state.activeMode = null;
+    });
+  }
+
+  return { success: true };
+}
+
 export const useClipboardStore = create<ClipboardStore>()(
   immer((set, get) => ({
     // State
@@ -171,124 +403,17 @@ export const useClipboardStore = create<ClipboardStore>()(
 
     pasteRows: (): { success: boolean; error?: string } => {
       const { rowClipboard, activeMode } = get();
-      const taskStore = useTaskStore.getState();
-      const depStore = useDependencyStore.getState();
-      const historyStore = useHistoryStore.getState();
-      const fileStore = useFileStore.getState();
-
-      // Validation
       if (activeMode !== "row" || !rowClipboard.operation) {
         return { success: false, error: "No rows in clipboard" };
       }
-
-      // Prepare paste data
-      const result = prepareRowPaste({
+      return executeRowPaste({
         clipboardTasks: rowClipboard.tasks,
         clipboardDependencies: rowClipboard.dependencies,
-        currentTasks: taskStore.tasks,
-        activeCell: taskStore.activeCell,
-        selectedTaskIds: taskStore.selectedTaskIds,
+        operation: rowClipboard.operation,
+        sourceTaskIds: rowClipboard.sourceTaskIds,
+        set,
+        description: "Pasted row(s)",
       });
-
-      if ("error" in result) {
-        return { success: false, error: result.error };
-      }
-
-      const {
-        mergedTasks,
-        newTasks,
-        remappedDependencies,
-        idMapping,
-        insertOrder,
-        targetParent,
-      } = result;
-
-      // Store deleted tasks for undo (if cut operation)
-      let deletedTasks: Task[] = [];
-      let previousCutTaskIds: string[] = [];
-
-      if (rowClipboard.operation === "cut") {
-        previousCutTaskIds = rowClipboard.sourceTaskIds;
-        deletedTasks = previousCutTaskIds
-          .map((id) => taskStore.tasks.find((t) => t.id === id))
-          .filter((t): t is Task => t !== undefined);
-      }
-
-      // Apply summary recalculation
-      let finalTasks = applySummaryRecalculation(mergedTasks, targetParent);
-
-      // If cut operation, remove originals and rebuild order
-      if (rowClipboard.operation === "cut") {
-        const cutIds = new Set(previousCutTaskIds); // N1: Set instead of Array.includes
-
-        finalTasks = finalTasks
-          .filter((t) => !cutIds.has(t.id))
-          .map((t) => ({ ...t }));
-
-        // Rebuild order from flattened list
-        const collapsedIdsAfterCut = new Set(
-          finalTasks.filter((t) => t.open === false).map((t) => t.id)
-        );
-        const flattenedAfterCut = buildFlattenedTaskList(
-          finalTasks,
-          collapsedIdsAfterCut
-        );
-        const orderMap = new Map<string, number>();
-        flattenedAfterCut.forEach(({ task }, index) => {
-          orderMap.set(task.id, index);
-        });
-        finalTasks.forEach((task) => {
-          const newOrder = orderMap.get(task.id);
-          if (newOrder !== undefined) {
-            task.order = newOrder;
-          }
-        });
-
-        // Remove dependencies for deleted tasks and add new ones
-        const updatedDeps = [
-          ...depStore.dependencies,
-          ...remappedDependencies,
-        ].filter((d) => !cutIds.has(d.fromTaskId) && !cutIds.has(d.toTaskId));
-
-        // W7: Single atomic setState for cut path
-        useTaskStore.setState({ tasks: finalTasks, clipboardTaskIds: [] });
-        useDependencyStore.setState({ dependencies: updatedDeps });
-      } else {
-        // W7: Single atomic setState for copy path
-        useTaskStore.setState({ tasks: finalTasks });
-        const updatedDeps = [...depStore.dependencies, ...remappedDependencies];
-        useDependencyStore.setState({ dependencies: updatedDeps });
-      }
-
-      // Mark file as dirty
-      fileStore.markDirty();
-
-      // Record command (historySlice.recordCommand has internal undo/redo guard)
-      historyStore.recordCommand({
-        id: crypto.randomUUID(),
-        type: CommandType.PASTE_ROWS,
-        timestamp: Date.now(),
-        description: `Pasted ${newTasks.length} row(s)`,
-        params: {
-          pastedTasks: newTasks,
-          pastedDependencies: remappedDependencies,
-          insertIndex: insertOrder,
-          idMapping,
-          previousCutTaskIds:
-            previousCutTaskIds.length > 0 ? previousCutTaskIds : undefined,
-          deletedTasks: deletedTasks.length > 0 ? deletedTasks : undefined,
-        },
-      });
-
-      // Clear clipboard if it was a cut
-      if (rowClipboard.operation === "cut") {
-        set((state) => {
-          state.rowClipboard = { ...EMPTY_ROW_CLIPBOARD };
-          state.activeMode = null;
-        });
-      }
-
-      return { success: true };
     },
 
     copyCell: (taskId, field): void =>
@@ -301,220 +426,55 @@ export const useClipboardStore = create<ClipboardStore>()(
       targetField
     ): { success: boolean; error?: string } => {
       const { cellClipboard, activeMode } = get();
-      const taskStore = useTaskStore.getState();
-      const historyStore = useHistoryStore.getState();
-      const fileStore = useFileStore.getState();
-
-      // Validation
       if (activeMode !== "cell" || !cellClipboard.operation) {
         return { success: false, error: "No cell in clipboard" };
       }
-
-      // Get target task
-      const task = taskStore.tasks.find((t) => t.id === targetTaskId);
-      if (!task) {
-        return { success: false, error: "Target task not found" };
+      if (!cellClipboard.field) {
+        return { success: false, error: "No cell field in clipboard" };
       }
-
-      // Field type matching validation
-      if (cellClipboard.field) {
-        const validation = canPasteCellValue(
-          cellClipboard.field,
-          targetField,
-          task
-        );
-        if (!validation.valid) {
-          return { success: false, error: validation.error };
-        }
-      }
-
-      // Get current value (for undo)
-      const previousValue = task[targetField as keyof Task];
-
-      // Store cut cell info for undo
-      let previousCutCell:
-        | { taskId: string; field: string; value: unknown }
-        | undefined;
-
-      // If cut operation, prepare to clear source cell
-      if (cellClipboard.operation === "cut" && cellClipboard.sourceTaskId) {
-        const sourceTask = taskStore.tasks.find(
-          (t) => t.id === cellClipboard.sourceTaskId
-        );
-        if (sourceTask && cellClipboard.field) {
-          previousCutCell = {
-            taskId: cellClipboard.sourceTaskId,
-            field: cellClipboard.field,
-            value: sourceTask[cellClipboard.field as keyof Task],
-          };
-        }
-      }
-
-      // Update target task
-      taskStore.updateTask(targetTaskId, {
-        [targetField]: cellClipboard.value,
-      });
-
-      // If cut operation, clear source cell
-      if (
-        cellClipboard.operation === "cut" &&
-        cellClipboard.sourceTaskId &&
-        cellClipboard.field
-      ) {
-        const clearValue = getClearValueForField(cellClipboard.field);
-        taskStore.updateTask(cellClipboard.sourceTaskId, {
-          [cellClipboard.field]: clearValue,
-        });
-
-        // Clear cut mark
-        useTaskStore.setState({ cutCell: null });
-      }
-
-      // Mark file as dirty
-      fileStore.markDirty();
-
-      // Record command (historySlice.recordCommand has internal undo/redo guard)
-      historyStore.recordCommand({
-        id: crypto.randomUUID(),
-        type: CommandType.PASTE_CELL,
-        timestamp: Date.now(),
+      const cutSource =
+        cellClipboard.operation === "cut" && cellClipboard.sourceTaskId
+          ? {
+              taskId: cellClipboard.sourceTaskId,
+              field: cellClipboard.field,
+            }
+          : undefined;
+      return executeCellPaste({
+        value: cellClipboard.value,
+        sourceField: cellClipboard.field,
+        targetTaskId,
+        targetField,
+        cutSource,
+        set,
         description: `Pasted ${targetField}`,
-        params: {
-          taskId: targetTaskId,
-          field: targetField,
-          newValue: cellClipboard.value,
-          previousValue,
-          previousCutCell,
-          cutClearValue:
-            cellClipboard.operation === "cut" && cellClipboard.field
-              ? getClearValueForField(cellClipboard.field)
-              : undefined,
-        },
       });
-
-      // Clear clipboard if it was a cut
-      if (cellClipboard.operation === "cut") {
-        set((state) => {
-          state.cellClipboard = { ...EMPTY_CELL_CLIPBOARD };
-          state.activeMode = null;
-        });
-      }
-
-      return { success: true };
     },
 
     pasteExternalRows: (
       data: SystemRowClipboardData
     ): { success: boolean; error?: string } => {
-      const taskStore = useTaskStore.getState();
-      const depStore = useDependencyStore.getState();
-      const historyStore = useHistoryStore.getState();
-      const fileStore = useFileStore.getState();
-
-      // Validation
       if (!data.tasks || data.tasks.length === 0) {
         return { success: false, error: "No rows in external clipboard" };
       }
-
-      // Prepare paste data
-      const result = prepareRowPaste({
+      return executeRowPaste({
         clipboardTasks: data.tasks,
         clipboardDependencies: data.dependencies,
-        currentTasks: taskStore.tasks,
-        activeCell: taskStore.activeCell,
-        selectedTaskIds: taskStore.selectedTaskIds,
+        description: "Pasted row(s) from external clipboard",
       });
-
-      if ("error" in result) {
-        return { success: false, error: result.error };
-      }
-
-      const {
-        mergedTasks,
-        newTasks,
-        remappedDependencies,
-        idMapping,
-        insertOrder,
-        targetParent,
-      } = result;
-
-      // Apply summary recalculation and set state atomically
-      const finalTasks = applySummaryRecalculation(mergedTasks, targetParent);
-      useTaskStore.setState({ tasks: finalTasks });
-
-      // Add dependencies
-      useDependencyStore.setState({
-        dependencies: [...depStore.dependencies, ...remappedDependencies],
-      });
-
-      // Mark file as dirty
-      fileStore.markDirty();
-
-      // Record command (historySlice.recordCommand has internal undo/redo guard)
-      historyStore.recordCommand({
-        id: crypto.randomUUID(),
-        type: CommandType.PASTE_ROWS,
-        timestamp: Date.now(),
-        description: `Pasted ${newTasks.length} row(s) from external clipboard`,
-        params: {
-          pastedTasks: newTasks,
-          pastedDependencies: remappedDependencies,
-          insertIndex: insertOrder,
-          idMapping,
-        },
-      });
-
-      return { success: true };
     },
 
     pasteExternalCell: (
       data: SystemCellClipboardData,
       targetTaskId: string,
       targetField: EditableField
-    ): { success: boolean; error?: string } => {
-      const taskStore = useTaskStore.getState();
-      const historyStore = useHistoryStore.getState();
-      const fileStore = useFileStore.getState();
-
-      // Get target task
-      const task = taskStore.tasks.find((t) => t.id === targetTaskId);
-      if (!task) {
-        return { success: false, error: "Target task not found" };
-      }
-
-      // Field type matching validation
-      const validation = canPasteCellValue(data.field, targetField, task);
-      if (!validation.valid) {
-        return { success: false, error: validation.error };
-      }
-
-      // Get current value (for undo)
-      const previousValue = task[targetField as keyof Task];
-
-      // Update target task
-      taskStore.updateTask(targetTaskId, {
-        [targetField]: data.value,
-      });
-
-      // Mark file as dirty
-      fileStore.markDirty();
-
-      // Record command (historySlice.recordCommand has internal undo/redo guard)
-      historyStore.recordCommand({
-        id: crypto.randomUUID(),
-        type: CommandType.PASTE_CELL,
-        timestamp: Date.now(),
+    ): { success: boolean; error?: string } =>
+      executeCellPaste({
+        value: data.value,
+        sourceField: data.field,
+        targetTaskId,
+        targetField,
         description: `Pasted ${targetField} from external clipboard`,
-        params: {
-          taskId: targetTaskId,
-          field: targetField,
-          newValue: data.value,
-          previousValue,
-        },
-      });
-
-      return { success: true };
-    },
+      }),
 
     clearClipboard: (): void => {
       set((state) => {
