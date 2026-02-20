@@ -61,6 +61,59 @@ type HistoryStore = HistoryState & HistoryActions;
 
 const MAX_STACK_SIZE = 100;
 
+interface StackActionConfig {
+  sourceStack: "undoStack" | "redoStack";
+  destStack: "undoStack" | "redoStack";
+  activeFlag: "isUndoing" | "isRedoing";
+  executor: (command: Command) => void;
+  emoji: string;
+  actionName: string;
+}
+
+function executeStackAction(
+  get: () => HistoryStore,
+  set: (fn: (state: HistoryState) => void) => void,
+  config: StackActionConfig
+): void {
+  const stack = get()[config.sourceStack];
+  if (stack.length === 0) {
+    toast(`Nothing to ${config.actionName.toLowerCase()}`, { icon: "ℹ️" });
+    return;
+  }
+
+  const command = stack[stack.length - 1];
+
+  set((state) => {
+    state[config.activeFlag] = true;
+  });
+
+  try {
+    config.executor(command);
+
+    set((state) => {
+      const cmd = state[config.sourceStack].pop();
+      if (cmd) {
+        state[config.destStack].push(cmd);
+      }
+    });
+
+    if (!NON_DATA_COMMANDS.has(command.type)) {
+      useFileStore.getState().markDirty();
+    }
+
+    toast.success(`${config.emoji} ${command.description}`);
+  } catch (error) {
+    console.error(`${config.actionName} failed:`, error);
+    toast.error(
+      `${config.actionName} failed. Please refresh the page if issues persist.`
+    );
+  } finally {
+    set((state) => {
+      state[config.activeFlag] = false;
+    });
+  }
+}
+
 // Command types that don't modify persisted data (clipboard snapshots, selection state)
 const NON_DATA_COMMANDS = new Set([
   "copyRows",
@@ -87,81 +140,25 @@ export const useHistoryStore = create<HistoryStore>()(
       });
     },
 
-    undo: (): void => {
-      const { undoStack } = get();
-      if (undoStack.length === 0) {
-        toast("Nothing to undo", { icon: "ℹ️" });
-        return;
-      }
+    undo: (): void =>
+      executeStackAction(get, set, {
+        sourceStack: "undoStack",
+        destStack: "redoStack",
+        activeFlag: "isUndoing",
+        executor: executeUndoCommand,
+        emoji: "↶",
+        actionName: "Undo",
+      }),
 
-      const command = undoStack[undoStack.length - 1];
-
-      set((state) => {
-        state.isUndoing = true;
-      });
-
-      try {
-        executeUndoCommand(command);
-
-        set((state) => {
-          const cmd = state.undoStack.pop();
-          if (cmd) {
-            state.redoStack.push(cmd);
-          }
-        });
-
-        if (!NON_DATA_COMMANDS.has(command.type)) {
-          useFileStore.getState().markDirty();
-        }
-
-        toast.success(`↶ ${command.description}`);
-      } catch (error) {
-        console.error("Undo failed:", error);
-        toast.error("Undo failed. Please refresh the page if issues persist.");
-      } finally {
-        set((state) => {
-          state.isUndoing = false;
-        });
-      }
-    },
-
-    redo: (): void => {
-      const { redoStack } = get();
-      if (redoStack.length === 0) {
-        toast("Nothing to redo", { icon: "ℹ️" });
-        return;
-      }
-
-      const command = redoStack[redoStack.length - 1];
-
-      set((state) => {
-        state.isRedoing = true;
-      });
-
-      try {
-        executeRedoCommand(command);
-
-        set((state) => {
-          const cmd = state.redoStack.pop();
-          if (cmd) {
-            state.undoStack.push(cmd);
-          }
-        });
-
-        if (!NON_DATA_COMMANDS.has(command.type)) {
-          useFileStore.getState().markDirty();
-        }
-
-        toast.success(`↷ ${command.description}`);
-      } catch (error) {
-        console.error("Redo failed:", error);
-        toast.error("Redo failed. Please refresh the page if issues persist.");
-      } finally {
-        set((state) => {
-          state.isRedoing = false;
-        });
-      }
-    },
+    redo: (): void =>
+      executeStackAction(get, set, {
+        sourceStack: "redoStack",
+        destStack: "undoStack",
+        activeFlag: "isRedoing",
+        executor: executeRedoCommand,
+        emoji: "↷",
+        actionName: "Redo",
+      }),
 
     clearHistory: (): void => {
       set((state) => {
