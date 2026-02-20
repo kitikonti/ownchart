@@ -135,6 +135,7 @@ export const useHistoryStore = create<HistoryStore>()(
     isRedoing: false,
 
     recordCommand: (command): void => {
+      if (NON_DATA_COMMANDS.has(command.type)) return;
       set((state) => {
         if (state.isUndoing || state.isRedoing) return;
         state.undoStack.push(command);

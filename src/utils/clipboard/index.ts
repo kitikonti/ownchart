@@ -14,6 +14,13 @@ export { determineInsertPosition } from "./insertPosition";
 export { canPasteCellValue, getClearValueForField } from "./validation";
 
 export {
+  prepareRowPaste,
+  applySummaryRecalculation,
+  type PrepareRowPasteInput,
+  type PrepareRowPasteResult,
+} from "./prepareRowPaste";
+
+export {
   writeRowsToSystemClipboard,
   writeCellToSystemClipboard,
   readRowsFromSystemClipboard,

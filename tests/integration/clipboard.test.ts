@@ -551,4 +551,84 @@ describe("Clipboard Integration Tests", () => {
       expect(useTaskStore.getState().cutCell).toBeNull();
     });
   });
+
+  describe("W6: Copy/Cut should not pollute undo stack", () => {
+    it("should not add undo entry for copyRows", () => {
+      useTaskStore.setState({
+        tasks: [createTask("1", "Task 1", 0)],
+        selectedTaskIds: ["1"],
+      });
+
+      const clipboardStore = useClipboardStore.getState();
+      clipboardStore.copyRows(["1"]);
+
+      expect(useHistoryStore.getState().undoStack).toHaveLength(0);
+    });
+
+    it("should not add undo entry for cutRows", () => {
+      useTaskStore.setState({
+        tasks: [createTask("1", "Task 1", 0)],
+        selectedTaskIds: ["1"],
+      });
+
+      const clipboardStore = useClipboardStore.getState();
+      clipboardStore.cutRows(["1"]);
+
+      expect(useHistoryStore.getState().undoStack).toHaveLength(0);
+    });
+
+    it("should not add undo entry for copyCell", () => {
+      useTaskStore.setState({
+        tasks: [createTask("1", "Task 1", 0)],
+      });
+
+      const clipboardStore = useClipboardStore.getState();
+      clipboardStore.copyCell("1", "name");
+
+      expect(useHistoryStore.getState().undoStack).toHaveLength(0);
+    });
+
+    it("should not add undo entry for cutCell", () => {
+      useTaskStore.setState({
+        tasks: [createTask("1", "Task 1", 0)],
+      });
+
+      const clipboardStore = useClipboardStore.getState();
+      clipboardStore.cutCell("1", "name");
+
+      expect(useHistoryStore.getState().undoStack).toHaveLength(0);
+    });
+  });
+
+  describe("W7: Cut-paste produces correct atomic state", () => {
+    it("should produce correct final state after cut-paste", () => {
+      useTaskStore.setState({
+        tasks: [
+          createTask("1", "Task 1", 0),
+          createTask("2", "Task 2", 1),
+          createTask("3", "Task 3", 2),
+        ],
+        selectedTaskIds: ["1"],
+        activeCell: { taskId: "3", field: "name" },
+      });
+
+      const clipboardStore = useClipboardStore.getState();
+
+      // Cut task 1
+      clipboardStore.cutRows(["1"]);
+
+      // Paste (before task 3)
+      const result = clipboardStore.pasteRows();
+      expect(result.success).toBe(true);
+
+      const tasks = useTaskStore.getState().tasks;
+
+      // Original task 1 should be removed, a new copy should exist
+      expect(tasks.find((t) => t.id === "1")).toBeUndefined();
+      // 3 tasks total (removed original, added copy)
+      expect(tasks).toHaveLength(3);
+      // Clipboard marks should be cleared
+      expect(useTaskStore.getState().clipboardTaskIds).toHaveLength(0);
+    });
+  });
 });
