@@ -105,6 +105,7 @@ const EMPTY_CELL_CLIPBOARD: ClipboardState["cellClipboard"] = {
 
 /** Type-safe accessor for EditableField values on a Task. */
 function getTaskFieldValue(task: Task, field: EditableField): unknown {
+  // EditableField is a subset of keyof Task — safe cast
   return task[field as keyof Task];
 }
 
@@ -516,10 +517,8 @@ export const useClipboardStore = create<ClipboardStore>()(
         const task = useTaskStore
           .getState()
           .tasks.find((t) => t.id === targetTaskId);
-        if (task) {
-          return canPasteCellValue(cellClipboard.field, targetField, task)
-            .valid;
-        }
+        if (!task) return false;
+        return canPasteCellValue(cellClipboard.field, targetField, task).valid;
       }
       return true;
     },

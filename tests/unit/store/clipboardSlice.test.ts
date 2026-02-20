@@ -962,6 +962,18 @@ describe("clipboardSlice", () => {
         useClipboardStore.getState().canPasteCell("name", "2")
       ).toBe(true);
     });
+
+    it("should return false when targetTaskId does not exist", () => {
+      useTaskStore.setState({
+        tasks: [createTask("1", "Task", 0)],
+      });
+
+      useClipboardStore.getState().copyCell("1", "name");
+
+      expect(
+        useClipboardStore.getState().canPasteCell("name", "nonexistent")
+      ).toBe(false);
+    });
   });
 
   // ---------------------------------------------------------------------------
