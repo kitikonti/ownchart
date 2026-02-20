@@ -639,6 +639,23 @@ describe("clipboardSlice", () => {
       expect(result.error).toBe("No cell in clipboard");
     });
 
+    it("should return error when cell field is null in clipboard", () => {
+      // Force an impossible state: activeMode=cell but field=null
+      useClipboardStore.setState({
+        activeMode: "cell",
+        cellClipboard: {
+          value: "test",
+          field: null,
+          operation: "copy",
+          sourceTaskId: "1",
+        },
+      });
+
+      const result = useClipboardStore.getState().pasteCell("1", "name");
+      expect(result.success).toBe(false);
+      expect(result.error).toBe("No cell field in clipboard");
+    });
+
     it("should paste copied cell value to target", () => {
       useTaskStore.setState({
         tasks: [

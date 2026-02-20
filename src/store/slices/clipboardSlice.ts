@@ -538,7 +538,7 @@ export const useClipboardStore = create<ClipboardStore>()(
       ) {
         return false;
       }
-      if (targetTaskId && cellClipboard.field) {
+      if (targetTaskId) {
         const task = useTaskStore
           .getState()
           .tasks.find((t) => t.id === targetTaskId);
