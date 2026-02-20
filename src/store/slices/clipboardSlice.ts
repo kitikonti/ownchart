@@ -83,6 +83,24 @@ interface ClipboardActions {
 type ClipboardStore = ClipboardState & ClipboardActions;
 
 // ---------------------------------------------------------------------------
+// Empty clipboard constants (avoid repetitive object literals)
+// ---------------------------------------------------------------------------
+
+const EMPTY_ROW_CLIPBOARD: ClipboardState["rowClipboard"] = {
+  tasks: [],
+  dependencies: [],
+  operation: null,
+  sourceTaskIds: [],
+};
+
+const EMPTY_CELL_CLIPBOARD: ClipboardState["cellClipboard"] = {
+  value: null,
+  field: null,
+  operation: null,
+  sourceTaskId: null,
+};
+
+// ---------------------------------------------------------------------------
 // Shared helpers (standalone, used by store actions)
 // ---------------------------------------------------------------------------
 
@@ -102,13 +120,9 @@ function performRowCopyOrCut(
   );
 
   set((state) => {
-    state.cellClipboard = {
-      value: null,
-      field: null,
-      operation: null,
-      sourceTaskId: null,
-    };
+    state.cellClipboard = { ...EMPTY_CELL_CLIPBOARD };
     state.rowClipboard = {
+      ...EMPTY_ROW_CLIPBOARD,
       tasks: clonedTasks,
       dependencies: internalDeps,
       operation,
@@ -133,12 +147,7 @@ function performCellCopyOrCut(
   const value = task[field as keyof Task];
 
   set((state) => {
-    state.rowClipboard = {
-      tasks: [],
-      dependencies: [],
-      operation: null,
-      sourceTaskIds: [],
-    };
+    state.rowClipboard = { ...EMPTY_ROW_CLIPBOARD };
     state.cellClipboard = { value, field, operation, sourceTaskId: taskId };
     state.activeMode = "cell";
   });
@@ -153,18 +162,8 @@ function performCellCopyOrCut(
 export const useClipboardStore = create<ClipboardStore>()(
   immer((set, get) => ({
     // State
-    rowClipboard: {
-      tasks: [],
-      dependencies: [],
-      operation: null,
-      sourceTaskIds: [],
-    },
-    cellClipboard: {
-      value: null,
-      field: null,
-      operation: null,
-      sourceTaskId: null,
-    },
+    rowClipboard: { ...EMPTY_ROW_CLIPBOARD },
+    cellClipboard: { ...EMPTY_CELL_CLIPBOARD },
     activeMode: null,
 
     // Actions
@@ -288,12 +287,7 @@ export const useClipboardStore = create<ClipboardStore>()(
       // Clear clipboard if it was a cut
       if (rowClipboard.operation === "cut") {
         set((state) => {
-          state.rowClipboard = {
-            tasks: [],
-            dependencies: [],
-            operation: null,
-            sourceTaskIds: [],
-          };
+          state.rowClipboard = { ...EMPTY_ROW_CLIPBOARD };
           state.activeMode = null;
         });
       }
@@ -409,12 +403,7 @@ export const useClipboardStore = create<ClipboardStore>()(
       // Clear clipboard if it was a cut
       if (cellClipboard.operation === "cut") {
         set((state) => {
-          state.cellClipboard = {
-            value: null,
-            field: null,
-            operation: null,
-            sourceTaskId: null,
-          };
+          state.cellClipboard = { ...EMPTY_CELL_CLIPBOARD };
           state.activeMode = null;
         });
       }
@@ -543,18 +532,8 @@ export const useClipboardStore = create<ClipboardStore>()(
 
     clearClipboard: (): void => {
       set((state) => {
-        state.rowClipboard = {
-          tasks: [],
-          dependencies: [],
-          operation: null,
-          sourceTaskIds: [],
-        };
-        state.cellClipboard = {
-          value: null,
-          field: null,
-          operation: null,
-          sourceTaskId: null,
-        };
+        state.rowClipboard = { ...EMPTY_ROW_CLIPBOARD };
+        state.cellClipboard = { ...EMPTY_CELL_CLIPBOARD };
         state.activeMode = null;
       });
 
