@@ -15,6 +15,7 @@ import {
   DATE_RANGE_PADDING_DAYS,
   SCROLL_OFFSET_DAYS,
   ZOOM_VISUAL_PADDING_DAYS,
+  FIT_TO_VIEW_PADDING_DAYS,
   dateToPixel,
 } from "../../utils/timelineUtils";
 import {
@@ -46,6 +47,8 @@ import { getTaskDescendants } from "../../utils/hierarchy";
 import { getCurrentDensityConfig } from "./userPreferencesSlice";
 import { TASK_COLUMNS, getColumnPixelWidth } from "../../config/tableColumns";
 import { getComputedTaskColor } from "../../hooks/useComputedTaskColor";
+import { MIN_TABLE_WIDTH } from "../../config/layoutConstants";
+import { DEFAULT_PALETTE_ID } from "../../utils/colorPalettes";
 import { CommandType } from "../../types/command.types";
 import type { ApplyColorsToManualParams } from "../../types/command.types";
 import { useTaskStore } from "./taskSlice";
@@ -128,6 +131,28 @@ interface ChartState {
   fileLoadCounter: number;
 }
 
+/** Fields that can be bulk-set from file load */
+type SettableViewFields = Pick<
+  ChartState,
+  | "zoom"
+  | "panOffset"
+  | "showWeekends"
+  | "showTodayMarker"
+  | "showHolidays"
+  | "showDependencies"
+  | "showProgress"
+  | "taskLabelPosition"
+  | "workingDaysMode"
+  | "workingDaysConfig"
+  | "holidayRegion"
+  | "projectTitle"
+  | "projectAuthor"
+  | "colorModeState"
+  | "hiddenColumns"
+  | "isTaskTableCollapsed"
+  | "hiddenTaskIds"
+>;
+
 interface ChartActions {
   // Centralized scale lifecycle (Architect recommendation)
   updateScale: (tasks: Task[]) => void;
@@ -199,7 +224,7 @@ interface ChartActions {
   applyColorsToManual: () => void;
 
   // Bulk settings update (for loading from file)
-  setViewSettings: (settings: Partial<ChartState>) => void;
+  setViewSettings: (settings: Partial<SettableViewFields>) => void;
 
   // Drag state (for multi-task preview)
   setDragState: (deltaDays: number, sourceTaskId: string) => void;
@@ -410,11 +435,9 @@ export const useChartStore = create<ChartState & ChartActions>()(
     // Set pan offset (validates for NaN/Infinity)
     setPanOffset: (offset: { x: number; y: number }): void => {
       set((state) => {
-        // Validate to prevent NaN or Infinity
+        // Validate to prevent NaN or Infinity — silently ignore invalid values
         if (isFinite(offset.x) && isFinite(offset.y)) {
           state.panOffset = offset;
-        } else {
-          console.error("Invalid pan offset:", offset);
         }
       });
     },
@@ -472,9 +495,9 @@ export const useChartStore = create<ChartState & ChartActions>()(
         pixelsPerDay
       );
 
-      // Calculate visible range with base padding (7 days) plus label padding
-      const leftPadding = 7 + labelPadding.leftDays;
-      const rightPadding = 7 + labelPadding.rightDays;
+      // Calculate visible range with base padding plus label padding
+      const leftPadding = FIT_TO_VIEW_PADDING_DAYS + labelPadding.leftDays;
+      const rightPadding = FIT_TO_VIEW_PADDING_DAYS + labelPadding.rightDays;
       const visibleDuration = calculateDuration(
         addDays(min, -leftPadding),
         addDays(max, rightPadding)
@@ -658,10 +681,7 @@ export const useChartStore = create<ChartState & ChartActions>()(
     // Set working days configuration
     setWorkingDaysConfig: (config: Partial<WorkingDaysConfig>): void => {
       set((state) => {
-        state.workingDaysConfig = {
-          ...state.workingDaysConfig,
-          ...config,
-        };
+        Object.assign(state.workingDaysConfig, config);
       });
     },
 
@@ -717,7 +737,7 @@ export const useChartStore = create<ChartState & ChartActions>()(
         const newWidth = isCurrentlyHidden
           ? taskState.taskTableWidth + colWidth // showing: expand
           : taskState.taskTableWidth - colWidth; // hiding: shrink
-        taskState.setTaskTableWidth(Math.max(200, newWidth));
+        taskState.setTaskTableWidth(Math.max(MIN_TABLE_WIDTH, newWidth));
       }
     },
 
@@ -753,7 +773,7 @@ export const useChartStore = create<ChartState & ChartActions>()(
 
         if (delta !== 0) {
           taskState.setTaskTableWidth(
-            Math.max(200, taskState.taskTableWidth + delta)
+            Math.max(MIN_TABLE_WIDTH, taskState.taskTableWidth + delta)
           );
         }
       }
@@ -816,44 +836,33 @@ export const useChartStore = create<ChartState & ChartActions>()(
           !state.colorModeState.themeOptions.selectedPaletteId &&
           !state.colorModeState.themeOptions.customMonochromeBase
         ) {
-          state.colorModeState.themeOptions.selectedPaletteId = "tableau-10";
+          state.colorModeState.themeOptions.selectedPaletteId =
+            DEFAULT_PALETTE_ID;
         }
       });
     },
 
     setThemeOptions: (options: Partial<ThemeModeOptions>): void => {
       set((state) => {
-        state.colorModeState.themeOptions = {
-          ...state.colorModeState.themeOptions,
-          ...options,
-        };
+        Object.assign(state.colorModeState.themeOptions, options);
       });
     },
 
     setSummaryOptions: (options: Partial<SummaryModeOptions>): void => {
       set((state) => {
-        state.colorModeState.summaryOptions = {
-          ...state.colorModeState.summaryOptions,
-          ...options,
-        };
+        Object.assign(state.colorModeState.summaryOptions, options);
       });
     },
 
     setTaskTypeOptions: (options: Partial<TaskTypeModeOptions>): void => {
       set((state) => {
-        state.colorModeState.taskTypeOptions = {
-          ...state.colorModeState.taskTypeOptions,
-          ...options,
-        };
+        Object.assign(state.colorModeState.taskTypeOptions, options);
       });
     },
 
     setHierarchyOptions: (options: Partial<HierarchyModeOptions>): void => {
       set((state) => {
-        state.colorModeState.hierarchyOptions = {
-          ...state.colorModeState.hierarchyOptions,
-          ...options,
-        };
+        Object.assign(state.colorModeState.hierarchyOptions, options);
       });
     },
 
@@ -918,7 +927,7 @@ export const useChartStore = create<ChartState & ChartActions>()(
     },
 
     // Bulk settings update (for loading from file)
-    setViewSettings: (settings: Partial<ChartState>): void => {
+    setViewSettings: (settings: Partial<SettableViewFields>): void => {
       set((state) => {
         if (settings.zoom !== undefined) state.zoom = settings.zoom;
         if (settings.panOffset !== undefined)

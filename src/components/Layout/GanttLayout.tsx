@@ -31,9 +31,9 @@ import { useFlattenedTasks } from "../../hooks/useFlattenedTasks";
 import { useHeaderDateSelection } from "../../hooks/useHeaderDateSelection";
 import { useDensityConfig } from "../../store/slices/userPreferencesSlice";
 import { SCROLL_OFFSET_DAYS } from "../../utils/timelineUtils";
+import { MIN_TABLE_WIDTH } from "../../config/layoutConstants";
 
 const HEADER_HEIGHT = 48; // Timeline header height
-const MIN_TABLE_WIDTH = 200; // Minimum width for task table
 const SCROLLBAR_HEIGHT = 17; // Reserve space for horizontal scrollbar
 
 export function GanttLayout(): JSX.Element {
