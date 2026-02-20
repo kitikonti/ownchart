@@ -169,9 +169,10 @@ interface RowPasteParams {
   description: string;
 }
 
-function executeRowPaste(
-  params: RowPasteParams
-): { success: boolean; error?: string } {
+function executeRowPaste(params: RowPasteParams): {
+  success: boolean;
+  error?: string;
+} {
   const {
     clipboardTasks,
     clipboardDependencies,
@@ -303,9 +304,10 @@ interface CellPasteParams {
   description: string;
 }
 
-function executeCellPaste(
-  params: CellPasteParams
-): { success: boolean; error?: string } {
+function executeCellPaste(params: CellPasteParams): {
+  success: boolean;
+  error?: string;
+} {
   const {
     value,
     sourceField,
