@@ -291,7 +291,10 @@ function undoUpdateTask(params: UpdateTaskParams): void {
 }
 
 function undoDeleteTask(params: DeleteTaskParams): void {
-  const restoredTasks = [...getTasksCopy(), ...params.deletedTasks];
+  const restoredTasks = [
+    ...getTasksCopy(),
+    ...params.deletedTasks.map((t) => ({ ...t })),
+  ];
 
   if (params.cascadeUpdates) {
     applyCascadePreviousValues(
