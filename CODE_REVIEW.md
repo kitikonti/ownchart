@@ -1,7 +1,7 @@
 # Code Review Progress — OwnChart
 
 > Systematic, file-by-file code review tracking document (Issue #44).
-> 186 source files / ~37,000 LOC (excluding font data files).
+> 193 source files / ~37,000 LOC (excluding font data files).
 
 ## Git Worktree Setup (vor dem ersten Review)
 
@@ -62,16 +62,18 @@ cd ../app-gantt-review
 
 ## File Review Index
 
+### Already reviewed (9 Dateien)
+- [x] `src/store/slices/taskSlice.ts`
+- [x] `src/store/slices/groupingActions.ts`
+- [x] `src/store/slices/indentOutdentActions.ts`
+- [x] `src/store/slices/insertionActions.ts`
+- [x] `src/store/slices/taskSliceHelpers.ts`
+- [x] `src/store/slices/columnActions.ts`
+- [x] `src/store/slices/expansionActions.ts`
+- [x] `src/store/slices/selectionActions.ts`
+- [x] `src/store/slices/historySlice.ts`
+
 ### Priority: HIGH — Store Slices (Kern-Zustandslogik)
-- [x] `src/store/slices/taskSlice.ts` (~730 LOC) — reviewed (5 passes), 3 bugs fixed, dead code removed, constants extracted, helpers deduplicated, code quality cleanup, type-change logic extracted
-- [x] `src/store/slices/groupingActions.ts` (372 LOC) — cascadeUpdates pattern unified to const+push
-- [x] `src/store/slices/indentOutdentActions.ts` (285 LOC) — computeIndentChanges helper extracted, forEach→for...of
-- [x] `src/store/slices/insertionActions.ts` (156 LOC) — computeInsertionDates helper extracted, 8x toISODateString fix
-- [x] `src/store/slices/taskSliceHelpers.ts` (138 LOC) — clean, no findings
-- [x] `src/store/slices/columnActions.ts` (100 LOC) — cross-store getState() moved outside set(), forEach→for...of
-- [x] `src/store/slices/expansionActions.ts` (97 LOC) — forEach→for...of
-- [x] `src/store/slices/selectionActions.ts` (78 LOC) — clean, no findings
-- [x] `src/store/slices/historySlice.ts` (1035→875 LOC) — CRITICAL pasteCell redo bug fixed, handlers extracted, forEach→for...of, O(n²)→Map, maxStackSize/console.warn cleanup; 32x `as`-Casts bleiben (Discriminated Union deferred)
 - [ ] `src/store/slices/chartSlice.ts` (984 LOC)
 - [ ] `src/store/slices/clipboardSlice.ts` (908 LOC)
 - [ ] `src/store/slices/dependencySlice.ts` (341 LOC)
@@ -80,7 +82,7 @@ cd ../app-gantt-review
 - [ ] `src/store/slices/fileSlice.ts` (82 LOC)
 
 ### Priority: HIGH — Core Types & Config
-- [ ] `src/types/command.types.ts` (~250 LOC) — DeleteTaskParams fixed, dead types removed (partial review during taskSlice work)
+- [ ] `src/types/command.types.ts` (~250 LOC)
 - [ ] `src/types/preferences.types.ts` (196 LOC)
 - [ ] `src/types/dependency.types.ts` (100 LOC)
 - [ ] `src/types/colorMode.types.ts` (84 LOC)
@@ -293,8 +295,7 @@ cd ../app-gantt-review
 Patterns die mehrere Dateien betreffen. Beim Review jeder Datei pruefen ob sie betroffen ist.
 
 - **Hardcoded Hex-Farben** (38 Stueck in 10 .tsx-Dateien): `design-tokens.ts` existiert, wird aber von SVG-Komponenten nicht genutzt. Brand-Farbe `#0F6CBD` in 4+ Komponenten als Raw-String. Betroffene Dateien sind im Index markiert.
-- **`as`-Casts in historySlice** (32x): Jeder Command-Handler castet `command.params as SomeParams`. Loesung: `Command` in command.types.ts zu Discriminated Union refactoren → eigener Branch. taskSlice hat 1x legitimiertes `as any` (TS-Limit bei dynamischen Keys).
-- **`toISODateString()` nicht ueberall genutzt**: Utility existiert in `dateUtils.ts`, wird bisher nur in `taskSliceHelpers` verwendet. ~18 weitere `toISOString().split("T")[0]` in: insertionActions, hierarchy, calculations, Cell, HomeTabContent, NewTaskPlaceholderRow, SharedExportOptions. Bei Review dieser Dateien umstellen.
+- **`toISODateString()` nicht ueberall genutzt**: Utility existiert in `dateUtils.ts`. ~18 weitere `toISOString().split("T")[0]` in: insertionActions, hierarchy, calculations, Cell, HomeTabContent, NewTaskPlaceholderRow, SharedExportOptions. Bei Review dieser Dateien umstellen.
 
 ---
 
@@ -313,8 +314,8 @@ Entscheidungen aus bisherigen Reviews die fuer zukuenftige Dateien gelten.
 
 ---
 
-## Technical Debt Metrics
-- Dateien gesamt: 193 (+ 3 Font-Dateien, nicht reviewbar)
-- Dateien reviewed: 9 / 193
-- Kritische Issues bekannt: 32 as-Casts (historySlice, Discriminated Union deferred), 38 Hex-Farben
+## Progress
+
+- Reviewed: 9 / 193 Dateien
+- Offene Issues: 38 Hex-Farben, ~18 toISODateString-Umstellungen
 - Test-Coverage: 80%+
