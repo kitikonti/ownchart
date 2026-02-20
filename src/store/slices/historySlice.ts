@@ -500,11 +500,9 @@ function undoUngroupTasks(params: UngroupTasksParams): void {
   useTaskStore.setState({ tasks: currentTasks });
 }
 
-function undoHideTasks(params: HideTasksParams): void {
-  useChartStore.getState().setHiddenTaskIds(params.previousHiddenTaskIds);
-}
-
-function undoUnhideTasks(params: UnhideTasksParams): void {
+function undoHideStateChange(params: {
+  previousHiddenTaskIds: string[];
+}): void {
   useChartStore.getState().setHiddenTaskIds(params.previousHiddenTaskIds);
 }
 
@@ -513,11 +511,12 @@ function undoUnhideTasks(params: UnhideTasksParams): void {
 // ---------------------------------------------------------------------------
 
 function redoAddTask(params: AddTaskParams): void {
-  if (params.tasks && params.generatedIds && params.generatedIds.length > 0) {
+  const { generatedIds } = params;
+  if (params.tasks && generatedIds && generatedIds.length > 0) {
     const state = useTaskStore.getState();
     const newTasks = params.tasks.map((t, i) => ({
       ...t,
-      id: params.generatedIds![i],
+      id: generatedIds[i],
     }));
     const allTasks = [...state.tasks.map((t) => ({ ...t })), ...newTasks];
     allTasks.sort((a, b) => a.order - b.order);
@@ -822,9 +821,9 @@ function executeUndoCommand(command: Command): void {
     case "ungroupTasks":
       return undoUngroupTasks(command.params);
     case "hideTasks":
-      return undoHideTasks(command.params);
+      return undoHideStateChange(command.params);
     case "unhideTasks":
-      return undoUnhideTasks(command.params);
+      return undoHideStateChange(command.params);
   }
 }
 
