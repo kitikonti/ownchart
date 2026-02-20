@@ -104,6 +104,10 @@ function executeStackAction(
 
     toast.success(`${config.emoji} ${command.description}`);
   } catch (error) {
+    // Remove the broken command so subsequent undo/redo can proceed
+    set((state) => {
+      state[config.sourceStack].pop();
+    });
     console.error(`${config.actionName} failed:`, error);
     toast.error(
       `${config.actionName} failed. Please refresh the page if issues persist.`
@@ -316,8 +320,8 @@ function undoReorderTasks(params: ReorderTasksParams): void {
   applySnapshot(taskMap, params.previousOrder);
 
   const affectedParentIds = new Set<string>();
-  for (const t of currentTasks) {
-    if (t.parent) affectedParentIds.add(t.parent);
+  for (const entry of params.previousOrder) {
+    if (entry.parent) affectedParentIds.add(entry.parent);
   }
   recalculateSummaryAncestors(currentTasks, affectedParentIds);
 

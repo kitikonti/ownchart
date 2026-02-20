@@ -883,6 +883,53 @@ describe("History Store - Error handling", () => {
       icon: "ℹ️",
     });
   });
+
+  it("removes broken command from undo stack after failure so next undo proceeds", () => {
+    // Record two commands
+    const cmd1 = makeCommand(CommandType.UPDATE_TASK, "First update", {
+      id: "t1",
+      updates: { name: "After1" },
+      previousValues: { name: "Original" },
+    });
+    const cmd2 = makeCommand(CommandType.UPDATE_TASK, "Second update", {
+      id: "t1",
+      updates: { name: "After2" },
+      previousValues: { name: "After1" },
+    });
+
+    useTaskStore.setState({
+      tasks: [createTask({ id: "t1", name: "After2" })],
+    });
+    useHistoryStore.getState().recordCommand(cmd1);
+    useHistoryStore.getState().recordCommand(cmd2);
+
+    expect(useHistoryStore.getState().undoStack).toHaveLength(2);
+
+    // Mock updateTask to throw (simulates broken undo of cmd2)
+    const original = useTaskStore.getState().updateTask;
+    useTaskStore.setState({
+      updateTask: () => {
+        throw new Error("Simulated failure");
+      },
+    });
+
+    // First undo fails — broken cmd2 should be removed from stack
+    useHistoryStore.getState().undo();
+    expect(toastMock.error).toHaveBeenCalledWith(
+      "Undo failed. Please refresh the page if issues persist."
+    );
+    expect(useHistoryStore.getState().undoStack).toHaveLength(1);
+    // Broken command must NOT end up on the redo stack
+    expect(useHistoryStore.getState().redoStack).toHaveLength(0);
+
+    // Restore real updateTask
+    useTaskStore.setState({ updateTask: original });
+
+    // Second undo should succeed with cmd1
+    useHistoryStore.getState().undo();
+    expect(toastMock.success).toHaveBeenCalled();
+    expect(useHistoryStore.getState().undoStack).toHaveLength(0);
+  });
 });
 
 describe("History Store - MULTI_DRAG_TASKS", () => {
