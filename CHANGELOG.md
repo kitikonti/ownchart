@@ -2,6 +2,29 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [0.0.41](https://github.com/kitikonti/ownchart/compare/v0.0.40...v0.0.41) (2026-02-20)
+
+
+### Bug Fixes
+
+* clean up dependencies on deleteTask undo/redo ([8bda139](https://github.com/kitikonti/ownchart/commit/8bda139169371985ed4a8dc8b9c3dfd2fb4d0979))
+* clone deletedTasks in undoDeleteTask to prevent frozen-object mutation ([3efdb22](https://github.com/kitikonti/ownchart/commit/3efdb22e146cad2c0b76d7672e4e8b7b04a4882d))
+* clone filtered tasks in redoDeleteTask to prevent frozen-object mutation ([4d1a917](https://github.com/kitikonti/ownchart/commit/4d1a9173557a89fcfe9953a9c715e2f624c15047))
+* remove broken command from undo stack on failure, scope parent collection in undoReorderTasks ([49c9631](https://github.com/kitikonti/ownchart/commit/49c96316ff17635c12e099582b51dddc1ae27873))
+* skip mobile E2E tests on Firefox (isMobile not supported) ([b392959](https://github.com/kitikonti/ownchart/commit/b3929596f655b4aacce1603300e18b4bb385ee5c))
+* use fresh dependency state in redoPasteRows to prevent stale data ([7d1f172](https://github.com/kitikonti/ownchart/commit/7d1f172a0c27b355190e581b84c1b0821c784183))
+
+
+### Code Refactoring
+
+* extract shared executeStackAction helper for undo/redo ([692d642](https://github.com/kitikonti/ownchart/commit/692d642f037aee98af25f75430e420a2902427ee))
+* fix all code review findings for historySlice ([a3c42a5](https://github.com/kitikonti/ownchart/commit/a3c42a5fefff34c2faf423af4d9211b58df90c44))
+* fix code review findings for historySlice ([876488f](https://github.com/kitikonti/ownchart/commit/876488f47099342867c2c299d13c72e6fec2ef51))
+* fix code review findings for historySlice ([f4581ae](https://github.com/kitikonti/ownchart/commit/f4581ae8bde37abef69a6cfb09530096e0442534))
+* merge identical undoHide handlers, remove non-null assertion ([b5e79f6](https://github.com/kitikonti/ownchart/commit/b5e79f63d9f583cdb5fea083d2c0502ac311424c))
+* replace Command interface with discriminated union, eliminating 35 as-casts ([e69085a](https://github.com/kitikonti/ownchart/commit/e69085a16355c3ef2334f7db0d4042cf122ebb8b))
+* review fixes for historySlice — bug fix, handler extraction, code quality ([75e971d](https://github.com/kitikonti/ownchart/commit/75e971d42d930a897b705458736c8d91b08d71a8))
+
 ### [0.0.40](https://github.com/kitikonti/ownchart/compare/v0.0.39...v0.0.40) (2026-02-19)
 
 
