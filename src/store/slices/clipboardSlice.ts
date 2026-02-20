@@ -103,6 +103,11 @@ const EMPTY_CELL_CLIPBOARD: ClipboardState["cellClipboard"] = {
 // Shared helpers (standalone, used by store actions)
 // ---------------------------------------------------------------------------
 
+/** Type-safe accessor for EditableField values on a Task. */
+function getTaskFieldValue(task: Task, field: EditableField): unknown {
+  return task[field as keyof Task];
+}
+
 function performRowCopyOrCut(
   taskIds: string[],
   operation: "copy" | "cut",
@@ -119,9 +124,8 @@ function performRowCopyOrCut(
   );
 
   set((state) => {
-    state.cellClipboard = { ...EMPTY_CELL_CLIPBOARD };
+    state.cellClipboard = EMPTY_CELL_CLIPBOARD;
     state.rowClipboard = {
-      ...EMPTY_ROW_CLIPBOARD,
       tasks: clonedTasks,
       dependencies: internalDeps,
       operation,
@@ -143,10 +147,10 @@ function performCellCopyOrCut(
   const task = useTaskStore.getState().tasks.find((t) => t.id === taskId);
   if (!task) return;
 
-  const value = task[field as keyof Task];
+  const value = getTaskFieldValue(task, field);
 
   set((state) => {
-    state.rowClipboard = { ...EMPTY_ROW_CLIPBOARD };
+    state.rowClipboard = EMPTY_ROW_CLIPBOARD;
     state.cellClipboard = { value, field, operation, sourceTaskId: taskId };
     state.activeMode = "cell";
   });
@@ -162,11 +166,45 @@ interface RowPasteParams {
   clipboardTasks: Task[];
   clipboardDependencies: Dependency[];
   /** Set to "cut" + provide sourceTaskIds when pasting from an internal cut. */
-  operation?: "copy" | "cut" | null;
+  operation?: "copy" | "cut";
   sourceTaskIds?: string[];
   /** Immer `set` — only needed when operation is "cut" (to clear clipboard). */
   set?: (fn: (state: ClipboardState) => void) => void;
   description: string;
+}
+
+/** Remove cut source tasks, rebuild order, and update dependencies. */
+function applyCutDeletion(
+  tasks: Task[],
+  cutIds: Set<string>,
+  existingDeps: Dependency[],
+  remappedDependencies: Dependency[]
+): { tasks: Task[]; dependencies: Dependency[] } {
+  const filtered = tasks
+    .filter((t) => !cutIds.has(t.id))
+    .map((t) => ({ ...t }));
+
+  // Rebuild order from flattened list
+  const collapsedIds = new Set(
+    filtered.filter((t) => t.open === false).map((t) => t.id)
+  );
+  const flattened = buildFlattenedTaskList(filtered, collapsedIds);
+  const orderMap = new Map<string, number>();
+  flattened.forEach(({ task }, index) => {
+    orderMap.set(task.id, index);
+  });
+  filtered.forEach((task) => {
+    const newOrder = orderMap.get(task.id);
+    if (newOrder !== undefined) {
+      task.order = newOrder;
+    }
+  });
+
+  const dependencies = [...existingDeps, ...remappedDependencies].filter(
+    (d) => !cutIds.has(d.fromTaskId) && !cutIds.has(d.toTaskId)
+  );
+
+  return { tasks: filtered, dependencies };
 }
 
 function executeRowPaste(params: RowPasteParams): {
@@ -186,7 +224,6 @@ function executeRowPaste(params: RowPasteParams): {
   const historyStore = useHistoryStore.getState();
   const fileStore = useFileStore.getState();
 
-  // Prepare paste data
   const result = prepareRowPaste({
     clipboardTasks,
     clipboardDependencies,
@@ -208,7 +245,7 @@ function executeRowPaste(params: RowPasteParams): {
     targetParent,
   } = result;
 
-  // Store deleted tasks for undo (if cut operation)
+  // Collect undo data for cut operations
   let deletedTasks: Task[] = [];
   let previousCutTaskIds: string[] = [];
 
@@ -219,48 +256,22 @@ function executeRowPaste(params: RowPasteParams): {
       .filter((t): t is Task => t !== undefined);
   }
 
-  // Apply summary recalculation
-  let finalTasks = applySummaryRecalculation(mergedTasks, targetParent);
+  const finalTasks = applySummaryRecalculation(mergedTasks, targetParent);
 
-  // If cut operation, remove originals and rebuild order
   if (operation === "cut") {
-    const cutIds = new Set(previousCutTaskIds);
-
-    finalTasks = finalTasks
-      .filter((t) => !cutIds.has(t.id))
-      .map((t) => ({ ...t }));
-
-    // Rebuild order from flattened list
-    const collapsedIdsAfterCut = new Set(
-      finalTasks.filter((t) => t.open === false).map((t) => t.id)
-    );
-    const flattenedAfterCut = buildFlattenedTaskList(
+    const cutResult = applyCutDeletion(
       finalTasks,
-      collapsedIdsAfterCut
+      new Set(previousCutTaskIds),
+      depStore.dependencies,
+      remappedDependencies
     );
-    const orderMap = new Map<string, number>();
-    flattenedAfterCut.forEach(({ task }, index) => {
-      orderMap.set(task.id, index);
-    });
-    finalTasks.forEach((task) => {
-      const newOrder = orderMap.get(task.id);
-      if (newOrder !== undefined) {
-        task.order = newOrder;
-      }
-    });
-
-    // Remove dependencies for deleted tasks and add new ones
-    const updatedDeps = [
-      ...depStore.dependencies,
-      ...remappedDependencies,
-    ].filter((d) => !cutIds.has(d.fromTaskId) && !cutIds.has(d.toTaskId));
-
-    useTaskStore.setState({ tasks: finalTasks, clipboardTaskIds: [] });
-    useDependencyStore.setState({ dependencies: updatedDeps });
+    useTaskStore.setState({ tasks: cutResult.tasks, clipboardTaskIds: [] });
+    useDependencyStore.setState({ dependencies: cutResult.dependencies });
   } else {
     useTaskStore.setState({ tasks: finalTasks });
-    const updatedDeps = [...depStore.dependencies, ...remappedDependencies];
-    useDependencyStore.setState({ dependencies: updatedDeps });
+    useDependencyStore.setState({
+      dependencies: [...depStore.dependencies, ...remappedDependencies],
+    });
   }
 
   fileStore.markDirty();
@@ -281,10 +292,9 @@ function executeRowPaste(params: RowPasteParams): {
     },
   });
 
-  // Clear clipboard if it was a cut
   if (operation === "cut" && set) {
     set((state) => {
-      state.rowClipboard = { ...EMPTY_ROW_CLIPBOARD };
+      state.rowClipboard = EMPTY_ROW_CLIPBOARD;
       state.activeMode = null;
     });
   }
@@ -304,6 +314,20 @@ interface CellPasteParams {
   description: string;
 }
 
+/** Collect previous cut-cell value for undo support. */
+function collectCutCellUndoData(
+  tasks: Task[],
+  cutSource: { taskId: string; field: EditableField }
+): { taskId: string; field: string; value: unknown } | undefined {
+  const sourceTask = tasks.find((t) => t.id === cutSource.taskId);
+  if (!sourceTask) return undefined;
+  return {
+    taskId: cutSource.taskId,
+    field: cutSource.field,
+    value: getTaskFieldValue(sourceTask, cutSource.field),
+  };
+}
+
 function executeCellPaste(params: CellPasteParams): {
   success: boolean;
   error?: string;
@@ -321,41 +345,24 @@ function executeCellPaste(params: CellPasteParams): {
   const historyStore = useHistoryStore.getState();
   const fileStore = useFileStore.getState();
 
-  // Get target task
   const task = taskStore.tasks.find((t) => t.id === targetTaskId);
   if (!task) {
     return { success: false, error: "Target task not found" };
   }
 
-  // Field type matching validation
   const validation = canPasteCellValue(sourceField, targetField, task);
   if (!validation.valid) {
     return { success: false, error: validation.error };
   }
 
-  // Get current value (for undo)
-  const previousValue = task[targetField as keyof Task];
+  const previousValue = getTaskFieldValue(task, targetField);
+  const previousCutCell = cutSource
+    ? collectCutCellUndoData(taskStore.tasks, cutSource)
+    : undefined;
 
-  // Store cut cell info for undo
-  let previousCutCell:
-    | { taskId: string; field: string; value: unknown }
-    | undefined;
-
-  if (cutSource) {
-    const sourceTask = taskStore.tasks.find((t) => t.id === cutSource.taskId);
-    if (sourceTask) {
-      previousCutCell = {
-        taskId: cutSource.taskId,
-        field: cutSource.field,
-        value: sourceTask[cutSource.field as keyof Task],
-      };
-    }
-  }
-
-  // Update target task
+  // Apply mutations
   taskStore.updateTask(targetTaskId, { [targetField]: value });
 
-  // If cut operation, clear source cell
   if (cutSource) {
     const clearValue = getClearValueForField(cutSource.field);
     taskStore.updateTask(cutSource.taskId, { [cutSource.field]: clearValue });
@@ -381,10 +388,9 @@ function executeCellPaste(params: CellPasteParams): {
     },
   });
 
-  // Clear clipboard if it was a cut
   if (cutSource && set) {
     set((state) => {
-      state.cellClipboard = { ...EMPTY_CELL_CLIPBOARD };
+      state.cellClipboard = EMPTY_CELL_CLIPBOARD;
       state.activeMode = null;
     });
   }
@@ -395,8 +401,8 @@ function executeCellPaste(params: CellPasteParams): {
 export const useClipboardStore = create<ClipboardStore>()(
   immer((set, get) => ({
     // State
-    rowClipboard: { ...EMPTY_ROW_CLIPBOARD },
-    cellClipboard: { ...EMPTY_CELL_CLIPBOARD },
+    rowClipboard: EMPTY_ROW_CLIPBOARD,
+    cellClipboard: EMPTY_CELL_CLIPBOARD,
     activeMode: null,
 
     // Actions
@@ -480,8 +486,8 @@ export const useClipboardStore = create<ClipboardStore>()(
 
     clearClipboard: (): void => {
       set((state) => {
-        state.rowClipboard = { ...EMPTY_ROW_CLIPBOARD };
-        state.cellClipboard = { ...EMPTY_CELL_CLIPBOARD };
+        state.rowClipboard = EMPTY_ROW_CLIPBOARD;
+        state.cellClipboard = EMPTY_CELL_CLIPBOARD;
         state.activeMode = null;
       });
 

@@ -1,6 +1,7 @@
 /**
  * Unit tests for clipboardSlice store actions.
- * Covers: clearClipboard, canPasteRows, canPasteCell, pasteExternalRows, pasteExternalCell.
+ * Covers all clipboard operations: copy, cut, paste (internal + external),
+ * clearClipboard, canPasteRows, canPasteCell.
  */
 
 import { describe, it, expect, beforeEach } from "vitest";
@@ -331,6 +332,413 @@ describe("clipboardSlice", () => {
 
       expect(result.success).toBe(false);
       expect(result.error).toContain("summary");
+    });
+  });
+
+  // ---------------------------------------------------------------------------
+  // copyRows
+  // ---------------------------------------------------------------------------
+  describe("copyRows", () => {
+    it("should set row clipboard with cloned tasks", () => {
+      useTaskStore.setState({
+        tasks: [createTask("1", "Task 1", 0), createTask("2", "Task 2", 1)],
+        selectedTaskIds: ["1"],
+      });
+
+      useClipboardStore.getState().copyRows(["1"]);
+
+      const state = useClipboardStore.getState();
+      expect(state.activeMode).toBe("row");
+      expect(state.rowClipboard.operation).toBe("copy");
+      expect(state.rowClipboard.tasks).toHaveLength(1);
+      expect(state.rowClipboard.tasks[0].name).toBe("Task 1");
+      expect(state.rowClipboard.sourceTaskIds).toEqual(["1"]);
+    });
+
+    it("should set clipboardTaskIds for visual feedback", () => {
+      useTaskStore.setState({
+        tasks: [createTask("1", "Task 1", 0)],
+        selectedTaskIds: ["1"],
+      });
+
+      useClipboardStore.getState().copyRows(["1"]);
+
+      expect(useTaskStore.getState().clipboardTaskIds).toEqual(["1"]);
+    });
+
+    it("should clear previous cell clipboard when copying rows", () => {
+      useTaskStore.setState({
+        tasks: [createTask("1", "Task 1", 0)],
+      });
+
+      // First copy a cell
+      useClipboardStore.getState().copyCell("1", "name");
+      expect(useClipboardStore.getState().activeMode).toBe("cell");
+
+      // Then copy rows — should switch mode
+      useClipboardStore.getState().copyRows(["1"]);
+      const state = useClipboardStore.getState();
+      expect(state.activeMode).toBe("row");
+      expect(state.cellClipboard.operation).toBeNull();
+    });
+
+    it("should copy multiple rows", () => {
+      useTaskStore.setState({
+        tasks: [createTask("1", "Task 1", 0), createTask("2", "Task 2", 1)],
+        selectedTaskIds: ["1", "2"],
+      });
+
+      useClipboardStore.getState().copyRows(["1", "2"]);
+
+      const state = useClipboardStore.getState();
+      expect(state.rowClipboard.tasks).toHaveLength(2);
+      expect(state.rowClipboard.sourceTaskIds).toEqual(["1", "2"]);
+    });
+  });
+
+  // ---------------------------------------------------------------------------
+  // cutRows
+  // ---------------------------------------------------------------------------
+  describe("cutRows", () => {
+    it("should set row clipboard with cut operation", () => {
+      useTaskStore.setState({
+        tasks: [createTask("1", "Task 1", 0)],
+        selectedTaskIds: ["1"],
+      });
+
+      useClipboardStore.getState().cutRows(["1"]);
+
+      const state = useClipboardStore.getState();
+      expect(state.activeMode).toBe("row");
+      expect(state.rowClipboard.operation).toBe("cut");
+      expect(state.rowClipboard.sourceTaskIds).toEqual(["1"]);
+    });
+
+    it("should set clipboardTaskIds for visual feedback", () => {
+      useTaskStore.setState({
+        tasks: [createTask("1", "Task 1", 0)],
+        selectedTaskIds: ["1"],
+      });
+
+      useClipboardStore.getState().cutRows(["1"]);
+
+      expect(useTaskStore.getState().clipboardTaskIds).toEqual(["1"]);
+    });
+  });
+
+  // ---------------------------------------------------------------------------
+  // pasteRows (internal)
+  // ---------------------------------------------------------------------------
+  describe("pasteRows", () => {
+    it("should return error when no rows in clipboard", () => {
+      const result = useClipboardStore.getState().pasteRows();
+      expect(result.success).toBe(false);
+      expect(result.error).toBe("No rows in clipboard");
+    });
+
+    it("should paste copied rows successfully", () => {
+      useTaskStore.setState({
+        tasks: [createTask("1", "Task 1", 0)],
+        selectedTaskIds: ["1"],
+        activeCell: { taskId: null, field: null },
+      });
+
+      useClipboardStore.getState().copyRows(["1"]);
+      const result = useClipboardStore.getState().pasteRows();
+
+      expect(result.success).toBe(true);
+      expect(useTaskStore.getState().tasks).toHaveLength(2);
+    });
+
+    it("should mark file as dirty and record history", () => {
+      useTaskStore.setState({
+        tasks: [createTask("1", "Task 1", 0)],
+        selectedTaskIds: ["1"],
+        activeCell: { taskId: null, field: null },
+      });
+
+      useClipboardStore.getState().copyRows(["1"]);
+      useClipboardStore.getState().pasteRows();
+
+      expect(useFileStore.getState().isDirty).toBe(true);
+      expect(useHistoryStore.getState().undoStack).toHaveLength(1);
+    });
+
+    it("should remove source tasks after cut-paste", () => {
+      useTaskStore.setState({
+        tasks: [createTask("1", "Task 1", 0), createTask("2", "Task 2", 1)],
+        selectedTaskIds: ["1"],
+        activeCell: { taskId: "2", field: "name" },
+      });
+
+      useClipboardStore.getState().cutRows(["1"]);
+      const result = useClipboardStore.getState().pasteRows();
+
+      expect(result.success).toBe(true);
+      // Original "1" removed, new copy inserted — still 2 tasks total
+      const tasks = useTaskStore.getState().tasks;
+      expect(tasks).toHaveLength(2);
+      // Original task ID should no longer exist
+      expect(tasks.find((t) => t.id === "1")).toBeUndefined();
+    });
+
+    it("should clear clipboard after cut-paste", () => {
+      useTaskStore.setState({
+        tasks: [createTask("1", "Task 1", 0), createTask("2", "Task 2", 1)],
+        selectedTaskIds: ["1"],
+        activeCell: { taskId: "2", field: "name" },
+      });
+
+      useClipboardStore.getState().cutRows(["1"]);
+      useClipboardStore.getState().pasteRows();
+
+      const state = useClipboardStore.getState();
+      expect(state.activeMode).toBeNull();
+      expect(state.rowClipboard.operation).toBeNull();
+    });
+
+    it("should keep clipboard after copy-paste (allow multiple pastes)", () => {
+      useTaskStore.setState({
+        tasks: [createTask("1", "Task 1", 0)],
+        selectedTaskIds: ["1"],
+        activeCell: { taskId: null, field: null },
+      });
+
+      useClipboardStore.getState().copyRows(["1"]);
+      useClipboardStore.getState().pasteRows();
+
+      const state = useClipboardStore.getState();
+      expect(state.activeMode).toBe("row");
+      expect(state.rowClipboard.operation).toBe("copy");
+    });
+  });
+
+  // ---------------------------------------------------------------------------
+  // copyCell
+  // ---------------------------------------------------------------------------
+  describe("copyCell", () => {
+    it("should set cell clipboard with copied value", () => {
+      useTaskStore.setState({
+        tasks: [createTask("1", "Task 1", 0)],
+      });
+
+      useClipboardStore.getState().copyCell("1", "name");
+
+      const state = useClipboardStore.getState();
+      expect(state.activeMode).toBe("cell");
+      expect(state.cellClipboard.operation).toBe("copy");
+      expect(state.cellClipboard.value).toBe("Task 1");
+      expect(state.cellClipboard.field).toBe("name");
+      expect(state.cellClipboard.sourceTaskId).toBe("1");
+    });
+
+    it("should clear previous row clipboard when copying a cell", () => {
+      useTaskStore.setState({
+        tasks: [createTask("1", "Task 1", 0)],
+        selectedTaskIds: ["1"],
+      });
+
+      // First copy rows
+      useClipboardStore.getState().copyRows(["1"]);
+      expect(useClipboardStore.getState().activeMode).toBe("row");
+
+      // Then copy cell — should switch mode
+      useClipboardStore.getState().copyCell("1", "name");
+      const state = useClipboardStore.getState();
+      expect(state.activeMode).toBe("cell");
+      expect(state.rowClipboard.operation).toBeNull();
+    });
+
+    it("should not set cutCell mark for copy operation", () => {
+      useTaskStore.setState({
+        tasks: [createTask("1", "Task 1", 0)],
+      });
+
+      useClipboardStore.getState().copyCell("1", "name");
+
+      expect(useTaskStore.getState().cutCell).toBeNull();
+    });
+
+    it("should do nothing for nonexistent task", () => {
+      useTaskStore.setState({ tasks: [] });
+
+      useClipboardStore.getState().copyCell("nonexistent", "name");
+
+      expect(useClipboardStore.getState().activeMode).toBeNull();
+    });
+
+    it("should copy progress value", () => {
+      useTaskStore.setState({
+        tasks: [createTask("1", "Task 1", 0, { progress: 75 })],
+      });
+
+      useClipboardStore.getState().copyCell("1", "progress");
+
+      expect(useClipboardStore.getState().cellClipboard.value).toBe(75);
+      expect(useClipboardStore.getState().cellClipboard.field).toBe("progress");
+    });
+  });
+
+  // ---------------------------------------------------------------------------
+  // cutCell
+  // ---------------------------------------------------------------------------
+  describe("cutCell", () => {
+    it("should set cell clipboard with cut operation", () => {
+      useTaskStore.setState({
+        tasks: [createTask("1", "Task 1", 0)],
+      });
+
+      useClipboardStore.getState().cutCell("1", "name");
+
+      const state = useClipboardStore.getState();
+      expect(state.activeMode).toBe("cell");
+      expect(state.cellClipboard.operation).toBe("cut");
+      expect(state.cellClipboard.value).toBe("Task 1");
+      expect(state.cellClipboard.field).toBe("name");
+    });
+
+    it("should set cutCell visual feedback mark", () => {
+      useTaskStore.setState({
+        tasks: [createTask("1", "Task 1", 0)],
+      });
+
+      useClipboardStore.getState().cutCell("1", "name");
+
+      const cutCell = useTaskStore.getState().cutCell;
+      expect(cutCell).toEqual({ taskId: "1", field: "name" });
+    });
+
+    it("should clear clipboardTaskIds when cutting a cell", () => {
+      useTaskStore.setState({
+        tasks: [createTask("1", "Task 1", 0)],
+        clipboardTaskIds: ["1"],
+      });
+
+      useClipboardStore.getState().cutCell("1", "name");
+
+      expect(useTaskStore.getState().clipboardTaskIds).toHaveLength(0);
+    });
+  });
+
+  // ---------------------------------------------------------------------------
+  // pasteCell (internal)
+  // ---------------------------------------------------------------------------
+  describe("pasteCell", () => {
+    it("should return error when no cell in clipboard", () => {
+      const result = useClipboardStore.getState().pasteCell("1", "name");
+      expect(result.success).toBe(false);
+      expect(result.error).toBe("No cell in clipboard");
+    });
+
+    it("should paste copied cell value to target", () => {
+      useTaskStore.setState({
+        tasks: [
+          createTask("1", "Source", 0),
+          createTask("2", "Target", 1),
+        ],
+      });
+
+      useClipboardStore.getState().copyCell("1", "name");
+      const result = useClipboardStore.getState().pasteCell("2", "name");
+
+      expect(result.success).toBe(true);
+      expect(useTaskStore.getState().tasks[1].name).toBe("Source");
+    });
+
+    it("should mark file as dirty and record history on paste", () => {
+      useTaskStore.setState({
+        tasks: [
+          createTask("1", "Source", 0),
+          createTask("2", "Target", 1),
+        ],
+      });
+
+      useClipboardStore.getState().copyCell("1", "name");
+      useClipboardStore.getState().pasteCell("2", "name");
+
+      expect(useFileStore.getState().isDirty).toBe(true);
+      expect(
+        useHistoryStore.getState().undoStack.length
+      ).toBeGreaterThanOrEqual(1);
+    });
+
+    it("should clear source cell after cut-paste", () => {
+      useTaskStore.setState({
+        tasks: [
+          createTask("1", "Source", 0),
+          createTask("2", "Target", 1),
+        ],
+      });
+
+      useClipboardStore.getState().cutCell("1", "name");
+      const result = useClipboardStore.getState().pasteCell("2", "name");
+
+      expect(result.success).toBe(true);
+      expect(useTaskStore.getState().tasks[1].name).toBe("Source");
+      // Source cell should be cleared to default
+      expect(useTaskStore.getState().tasks[0].name).toBe("");
+    });
+
+    it("should clear clipboard after cut-paste", () => {
+      useTaskStore.setState({
+        tasks: [
+          createTask("1", "Source", 0),
+          createTask("2", "Target", 1),
+        ],
+      });
+
+      useClipboardStore.getState().cutCell("1", "name");
+      useClipboardStore.getState().pasteCell("2", "name");
+
+      const state = useClipboardStore.getState();
+      expect(state.activeMode).toBeNull();
+      expect(state.cellClipboard.operation).toBeNull();
+    });
+
+    it("should keep clipboard after copy-paste", () => {
+      useTaskStore.setState({
+        tasks: [
+          createTask("1", "Source", 0),
+          createTask("2", "Target", 1),
+        ],
+      });
+
+      useClipboardStore.getState().copyCell("1", "name");
+      useClipboardStore.getState().pasteCell("2", "name");
+
+      const state = useClipboardStore.getState();
+      expect(state.activeMode).toBe("cell");
+      expect(state.cellClipboard.operation).toBe("copy");
+    });
+
+    it("should clear cutCell visual mark after cut-paste", () => {
+      useTaskStore.setState({
+        tasks: [
+          createTask("1", "Source", 0),
+          createTask("2", "Target", 1),
+        ],
+      });
+
+      useClipboardStore.getState().cutCell("1", "name");
+      expect(useTaskStore.getState().cutCell).not.toBeNull();
+
+      useClipboardStore.getState().pasteCell("2", "name");
+      expect(useTaskStore.getState().cutCell).toBeNull();
+    });
+
+    it("should reject paste when field types do not match", () => {
+      useTaskStore.setState({
+        tasks: [
+          createTask("1", "Source", 0),
+          createTask("2", "Target", 1),
+        ],
+      });
+
+      useClipboardStore.getState().copyCell("1", "name");
+      const result = useClipboardStore.getState().pasteCell("2", "progress");
+
+      // canPasteCell would return false, but pasteCell checks activeMode+field
+      expect(result.success).toBe(false);
     });
   });
 });
