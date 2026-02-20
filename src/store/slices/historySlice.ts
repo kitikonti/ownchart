@@ -613,7 +613,6 @@ function redoUpdateDependency(params: UpdateDependencyParams): void {
 }
 
 function redoPasteRows(params: PasteRowsParams): void {
-  const depStore = useDependencyStore.getState();
   const currentTasks = useTaskStore.getState().tasks;
   let updatedTasks = [
     ...currentTasks.slice(0, params.insertIndex).map((t) => ({ ...t })),
@@ -640,8 +639,9 @@ function redoPasteRows(params: PasteRowsParams): void {
 
   useTaskStore.setState({ tasks: updatedTasks });
 
+  const currentDeps = useDependencyStore.getState().dependencies;
   useDependencyStore.setState({
-    dependencies: [...depStore.dependencies, ...params.pastedDependencies],
+    dependencies: [...currentDeps, ...params.pastedDependencies],
   });
 }
 
