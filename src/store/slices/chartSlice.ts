@@ -242,6 +242,9 @@ const KEYBOARD_ZOOM_FACTOR = 1.2;
 /** Default number of days to extend date range for infinite scroll */
 const DEFAULT_EXTEND_DAYS = 30;
 
+/** Default zoom level (100%) */
+const DEFAULT_ZOOM = 1.0;
+
 /**
  * Helper: Recalculate scale from dateRange, zoom, and containerWidth
  * This is the single place where scale is derived from its dependencies
@@ -262,7 +265,7 @@ export const useChartStore = create<ChartState & ChartActions>()(
     scale: null,
     containerWidth: DEFAULT_CONTAINER_WIDTH,
     dateRange: null,
-    zoom: 1.0,
+    zoom: DEFAULT_ZOOM,
     panOffset: { x: 0, y: 0 },
 
     // View settings (Project Settings)
@@ -432,7 +435,7 @@ export const useChartStore = create<ChartState & ChartActions>()(
 
     // Reset zoom to 100%
     resetZoom: (anchor?: ZoomAnchor): ZoomResult => {
-      return get().setZoom(1.0, anchor);
+      return get().setZoom(DEFAULT_ZOOM, anchor);
     },
 
     // Set pan offset (validates for NaN/Infinity)
@@ -570,7 +573,7 @@ export const useChartStore = create<ChartState & ChartActions>()(
     // Reset to default view
     resetView: (): void => {
       set((state) => {
-        state.zoom = 1.0;
+        state.zoom = DEFAULT_ZOOM;
         state.panOffset = { x: 0, y: 0 };
 
         // Don't recalculate scale here - let updateScale handle it
@@ -899,11 +902,12 @@ export const useChartStore = create<ChartState & ChartActions>()(
 
       // Apply colors to task store directly (avoid per-task history entries)
       useTaskStore.setState((state) => {
+        const taskById = new Map(state.tasks.map((t, i) => [t.id, i]));
         for (const change of colorChanges) {
-          const task = state.tasks.find((t) => t.id === change.id);
-          if (task) {
-            task.color = change.newColor;
-            task.colorOverride = undefined;
+          const idx = taskById.get(change.id);
+          if (idx !== undefined) {
+            state.tasks[idx].color = change.newColor;
+            state.tasks[idx].colorOverride = undefined;
           }
         }
       });
