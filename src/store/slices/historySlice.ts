@@ -556,7 +556,8 @@ function redoDeleteTask(params: DeleteTaskParams): void {
 
   const currentTasks = useTaskStore
     .getState()
-    .tasks.filter((t) => !idsToDelete.has(t.id));
+    .tasks.filter((t) => !idsToDelete.has(t.id))
+    .map((t) => ({ ...t }));
 
   if (affectedParentIds.size > 0) {
     recalculateSummaryAncestors(currentTasks, affectedParentIds);
