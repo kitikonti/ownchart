@@ -2,6 +2,15 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [0.0.43](https://github.com/kitikonti/ownchart/compare/v0.0.42...v0.0.43) (2026-02-20)
+
+
+### Code Refactoring
+
+* fix all review findings for chartSlice.ts ([2fd75be](https://github.com/kitikonti/ownchart/commit/2fd75bef98d36849d431dff9fa922f3a3c5ffd64))
+* fix final review findings for chartSlice.ts ([6d9cc48](https://github.com/kitikonti/ownchart/commit/6d9cc4841a08beeb3a900b7d78bb52e4c4cfcab3))
+* fix remaining review findings for chartSlice.ts ([57adc9d](https://github.com/kitikonti/ownchart/commit/57adc9d5d878cb1c77c8640adcd890f222dbcf1f))
+
 ### [0.0.42](https://github.com/kitikonti/ownchart/compare/v0.0.41...v0.0.42) (2026-02-20)
 
 
