@@ -31,7 +31,7 @@ import {
 } from "../../types/preferences.types";
 import { useChartStore } from "../../store/slices/chartSlice";
 import { SVG_FONT_FAMILY } from "../../utils/export/constants";
-import { getComputedTaskColor } from "../../hooks/useComputedTaskColor";
+import { getComputedTaskColor } from "../../utils/computeTaskColor";
 
 interface ExportRendererProps {
   tasks: Task[];

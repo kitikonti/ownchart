@@ -296,6 +296,7 @@ Patterns die mehrere Dateien betreffen. Beim Review jeder Datei pruefen ob sie b
 
 - **Hardcoded Hex-Farben** (38 Stueck in 10 .tsx-Dateien): `design-tokens.ts` existiert, wird aber von SVG-Komponenten nicht genutzt. Brand-Farbe `#0F6CBD` in 4+ Komponenten als Raw-String. Betroffene Dateien sind im Index markiert.
 - **`toISODateString()` nicht ueberall genutzt**: Utility existiert in `dateUtils.ts`. ~18 weitere `toISOString().split("T")[0]` in: insertionActions, hierarchy, calculations, Cell, HomeTabContent, NewTaskPlaceholderRow, SharedExportOptions. Bei Review dieser Dateien umstellen.
+- **Zirkulaere Imports zwischen Store-Slices**: chartSlice ↔ taskSlice und chartSlice ↔ historySlice importieren sich gegenseitig. Runtime-sicher, da alle Cross-Store-Zugriffe ueber `getState()` in Action-Handlern erfolgen (nicht bei Module-Initialisierung). Pattern ist korrekt fuer Zustand Cross-Store-Kommunikation, aber bei neuen Slices beachten: KEIN module-level Zugriff auf andere Stores.
 
 ---
 

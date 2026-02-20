@@ -46,7 +46,7 @@ import { calculateLabelPaddingDays } from "../../utils/textMeasurement";
 import { getTaskDescendants } from "../../utils/hierarchy";
 import { getCurrentDensityConfig } from "./userPreferencesSlice";
 import { TASK_COLUMNS, getColumnPixelWidth } from "../../config/tableColumns";
-import { getComputedTaskColor } from "../../hooks/useComputedTaskColor";
+import { getComputedTaskColor } from "../../utils/computeTaskColor";
 import { MIN_TABLE_WIDTH } from "../../config/layoutConstants";
 import { DEFAULT_PALETTE_ID } from "../../utils/colorPalettes";
 import { CommandType } from "../../types/command.types";
@@ -239,6 +239,9 @@ const DEFAULT_CONTAINER_WIDTH = 800;
 /** Zoom factor per keyboard/toolbar step (exponential for consistent feel) */
 const KEYBOARD_ZOOM_FACTOR = 1.2;
 
+/** Default number of days to extend date range for infinite scroll */
+const DEFAULT_EXTEND_DAYS = 30;
+
 /**
  * Helper: Recalculate scale from dateRange, zoom, and containerWidth
  * This is the single place where scale is derived from its dependencies
@@ -345,7 +348,7 @@ export const useChartStore = create<ChartState & ChartActions>()(
     // Extend date range for infinite scroll
     extendDateRange: (
       direction: "past" | "future",
-      days: number = 30
+      days: number = DEFAULT_EXTEND_DAYS
     ): void => {
       set((state) => {
         if (!state.dateRange) return;
@@ -895,9 +898,9 @@ export const useChartStore = create<ChartState & ChartActions>()(
       }
 
       // Apply colors to task store directly (avoid per-task history entries)
-      useTaskStore.setState((state: { tasks: Task[] }) => {
+      useTaskStore.setState((state) => {
         for (const change of colorChanges) {
-          const task = state.tasks.find((t: Task) => t.id === change.id);
+          const task = state.tasks.find((t) => t.id === change.id);
           if (task) {
             task.color = change.newColor;
             task.colorOverride = undefined;
