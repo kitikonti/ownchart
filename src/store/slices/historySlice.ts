@@ -275,8 +275,7 @@ function undoUpdateTask(params: UpdateTaskParams): void {
 }
 
 function undoDeleteTask(params: DeleteTaskParams): void {
-  const currentTasks = useTaskStore.getState().tasks;
-  const restoredTasks = [...currentTasks, ...params.deletedTasks];
+  const restoredTasks = [...getTasksCopy(), ...params.deletedTasks];
 
   if (params.cascadeUpdates) {
     const taskMap = buildTaskMap(restoredTasks);
@@ -328,7 +327,7 @@ function undoReorderTasks(params: ReorderTasksParams): void {
 function undoAddDependency(params: AddDependencyParams): void {
   useDependencyStore.getState().removeDependency(params.dependency.id);
 
-  if (params.dateAdjustments) {
+  if (params.dateAdjustments.length > 0) {
     const taskStore = useTaskStore.getState();
     for (const adj of params.dateAdjustments) {
       taskStore.updateTask(adj.taskId, {
@@ -519,28 +518,15 @@ function undoHideStateChange(params: {
 // ---------------------------------------------------------------------------
 
 function redoAddTask(params: AddTaskParams): void {
-  if (params.mode === "batch") {
-    const state = useTaskStore.getState();
-    const newTasks = params.tasks.map((t, i) => ({
-      ...t,
-      id: params.generatedIds[i],
-    }));
-    const allTasks = [...state.tasks.map((t) => ({ ...t })), ...newTasks];
-    allTasks.sort((a, b) => a.order - b.order);
-    for (let i = 0; i < allTasks.length; i++) {
-      allTasks[i].order = i;
-    }
-    useTaskStore.setState({ tasks: allTasks });
-  } else {
-    const taskWithId = { ...params.task, id: params.generatedId };
-    const state = useTaskStore.getState();
-    const allTasks = [...state.tasks.map((t) => ({ ...t })), taskWithId];
-    allTasks.sort((a, b) => a.order - b.order);
-    for (let i = 0; i < allTasks.length; i++) {
-      allTasks[i].order = i;
-    }
-    useTaskStore.setState({ tasks: allTasks });
-  }
+  const newTasks =
+    params.mode === "batch"
+      ? params.tasks.map((t, i) => ({ ...t, id: params.generatedIds[i] }))
+      : [{ ...params.task, id: params.generatedId }];
+
+  const allTasks = [...getTasksCopy(), ...newTasks];
+  allTasks.sort((a, b) => a.order - b.order);
+  for (let i = 0; i < allTasks.length; i++) allTasks[i].order = i;
+  useTaskStore.setState({ tasks: allTasks });
 }
 
 function redoUpdateTask(params: UpdateTaskParams): void {
@@ -555,7 +541,7 @@ function redoUpdateTask(params: UpdateTaskParams): void {
 }
 
 function redoDeleteTask(params: DeleteTaskParams): void {
-  const idsToDelete = new Set(params.deletedIds || [params.id]);
+  const idsToDelete = new Set(params.deletedIds);
 
   const affectedParentIds = new Set<string>();
   if (params.deletedTasks) {
@@ -605,7 +591,7 @@ function redoAddDependency(params: AddDependencyParams): void {
     dependencies: [...depStore.dependencies, params.dependency],
   });
 
-  if (params.dateAdjustments) {
+  if (params.dateAdjustments.length > 0) {
     const taskStore = useTaskStore.getState();
     for (const adj of params.dateAdjustments) {
       taskStore.updateTask(adj.taskId, {

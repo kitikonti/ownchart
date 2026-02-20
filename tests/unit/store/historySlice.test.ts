@@ -417,6 +417,53 @@ describe("History Store - DELETE_TASK undo/redo", () => {
     expect(useTaskStore.getState().tasks).toHaveLength(1);
     expect(useDependencyStore.getState().dependencies).toHaveLength(0);
   });
+
+  it("undo restores cascadeUpdates on surviving parent (frozen-object regression)", () => {
+    // Setup: summary parent + child, child deleted, cascadeUpdates restores parent dates
+    const parent = createTask("parent", "Summary Parent", {
+      order: 0,
+      type: "summary",
+      startDate: "2025-01-01",
+      endDate: "2025-01-10",
+    });
+    const child = createTask("child", "Child Task", {
+      order: 1,
+      parent: "parent",
+      startDate: "2025-01-01",
+      endDate: "2025-01-10",
+    });
+
+    // After deletion: child is gone, parent remains with recalculated dates
+    useTaskStore.setState({
+      tasks: [
+        { ...parent, startDate: "2025-01-01", endDate: "2025-01-01" },
+      ],
+    });
+
+    const cmd = makeCommand(CommandType.DELETE_TASK, "Deleted child", {
+      id: "child",
+      deletedIds: ["child"],
+      cascade: false,
+      deletedTasks: [child],
+      deletedDependencies: [],
+      cascadeUpdates: [
+        {
+          id: "parent",
+          updates: { startDate: "2025-01-01", endDate: "2025-01-01" },
+          previousValues: { startDate: "2025-01-01", endDate: "2025-01-10" },
+        },
+      ],
+    });
+    useHistoryStore.getState().recordCommand(cmd);
+    useHistoryStore.getState().undo();
+
+    const tasks = useTaskStore.getState().tasks;
+    expect(tasks).toHaveLength(2);
+    const restoredParent = tasks.find((t) => t.id === "parent")!;
+    // cascadeUpdates should have restored the parent's original dates
+    expect(restoredParent.startDate).toBe("2025-01-01");
+    expect(restoredParent.endDate).toBe("2025-01-10");
+  });
 });
 
 describe("History Store - UPDATE_TASK undo/redo", () => {
@@ -1277,6 +1324,56 @@ describe("History Store - INDENT/OUTDENT", () => {
         expect(actual.order).toBe(expected.order);
       }
     });
+  });
+});
+
+describe("History Store - REORDER_TASKS undo/redo", () => {
+  beforeEach(resetStores);
+
+  it("undo restores original task order", () => {
+    const t1 = createTask("t1", "Task 1", { order: 0 });
+    const t2 = createTask("t2", "Task 2", { order: 1 });
+    const t3 = createTask("t3", "Task 3", { order: 2 });
+    useTaskStore.setState({ tasks: [t1, t2, t3] });
+
+    // Reorder: move t3 before t1
+    useTaskStore.getState().reorderTasks("t3", "t1");
+
+    const afterReorder = useTaskStore.getState().tasks;
+    const t3After = afterReorder.find((t) => t.id === "t3")!;
+    expect(t3After.order).toBeLessThan(
+      afterReorder.find((t) => t.id === "t1")!.order
+    );
+
+    useHistoryStore.getState().undo();
+
+    const afterUndo = useTaskStore.getState().tasks;
+    expect(afterUndo.find((t) => t.id === "t1")!.order).toBe(0);
+    expect(afterUndo.find((t) => t.id === "t2")!.order).toBe(1);
+    expect(afterUndo.find((t) => t.id === "t3")!.order).toBe(2);
+  });
+
+  it("redo re-applies the reorder via reorderTasks", () => {
+    const t1 = createTask("t1", "Task 1", { order: 0 });
+    const t2 = createTask("t2", "Task 2", { order: 1 });
+    const t3 = createTask("t3", "Task 3", { order: 2 });
+    useTaskStore.setState({ tasks: [t1, t2, t3] });
+
+    useTaskStore.getState().reorderTasks("t3", "t1");
+
+    const afterReorder = useTaskStore
+      .getState()
+      .tasks.map((t) => ({ id: t.id, order: t.order }));
+
+    useHistoryStore.getState().undo();
+    useHistoryStore.getState().redo();
+
+    const afterRedo = useTaskStore.getState().tasks;
+    for (const expected of afterReorder) {
+      expect(afterRedo.find((t) => t.id === expected.id)!.order).toBe(
+        expected.order
+      );
+    }
   });
 });
 
