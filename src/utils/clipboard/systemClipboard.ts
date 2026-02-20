@@ -11,6 +11,24 @@ import type { EditableField } from "../../store/slices/taskSlice";
 const OWNCHART_ROW_PREFIX = "OWNCHART_ROWS:";
 const OWNCHART_CELL_PREFIX = "OWNCHART_CELL:";
 
+// Valid EditableField values (duplicated here to avoid circular import from store)
+const VALID_EDITABLE_FIELDS = new Set<string>([
+  "name",
+  "startDate",
+  "endDate",
+  "duration",
+  "progress",
+  "color",
+  "type",
+]);
+
+/** Validate that a parsed object has the minimum required Task shape. */
+function isValidTaskShape(obj: unknown): boolean {
+  if (typeof obj !== "object" || obj === null) return false;
+  const t = obj as Record<string, unknown>;
+  return typeof t.id === "string" && typeof t.name === "string";
+}
+
 /**
  * Data structure for row clipboard in system clipboard
  */
@@ -81,8 +99,13 @@ export async function readRowsFromSystemClipboard(): Promise<SystemRowClipboardD
     const jsonStr = text.slice(OWNCHART_ROW_PREFIX.length);
     const data = JSON.parse(jsonStr) as SystemRowClipboardData;
 
-    // Basic validation
+    // Structural validation
     if (!Array.isArray(data.tasks) || !Array.isArray(data.dependencies)) {
+      return null;
+    }
+
+    // Verify each task has the minimum required shape
+    if (!data.tasks.every(isValidTaskShape)) {
       return null;
     }
 
@@ -108,8 +131,8 @@ export async function readCellFromSystemClipboard(): Promise<SystemCellClipboard
     const jsonStr = text.slice(OWNCHART_CELL_PREFIX.length);
     const data = JSON.parse(jsonStr) as SystemCellClipboardData;
 
-    // Basic validation
-    if (data.field === undefined || data.value === undefined) {
+    // Validate field is a known EditableField value
+    if (!VALID_EDITABLE_FIELDS.has(data.field) || data.value === undefined) {
       return null;
     }
 

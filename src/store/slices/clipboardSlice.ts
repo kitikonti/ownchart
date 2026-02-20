@@ -21,6 +21,7 @@ import {
   applySummaryRecalculation,
   canPasteCellValue,
   getClearValueForField,
+  type PrepareRowPasteResult,
   type SystemRowClipboardData,
   type SystemCellClipboardData,
 } from "../../utils/clipboard";
@@ -51,26 +52,20 @@ interface ClipboardActions {
   // Row operations
   copyRows: (taskIds: string[]) => void;
   cutRows: (taskIds: string[]) => void;
-  pasteRows: () => { success: boolean; error?: string };
+  pasteRows: () => PasteResult;
 
   // Cell operations
   copyCell: (taskId: string, field: EditableField) => void;
   cutCell: (taskId: string, field: EditableField) => void;
-  pasteCell: (
-    taskId: string,
-    field: EditableField
-  ) => { success: boolean; error?: string };
+  pasteCell: (taskId: string, field: EditableField) => PasteResult;
 
   // External clipboard operations (for cross-tab paste)
-  pasteExternalRows: (data: SystemRowClipboardData) => {
-    success: boolean;
-    error?: string;
-  };
+  pasteExternalRows: (data: SystemRowClipboardData) => PasteResult;
   pasteExternalCell: (
     data: SystemCellClipboardData,
     targetTaskId: string,
     targetField: EditableField
-  ) => { success: boolean; error?: string };
+  ) => PasteResult;
 
   // Helpers
   clearClipboard: () => void;
@@ -79,6 +74,8 @@ interface ClipboardActions {
   canPasteCell: (targetField: EditableField, targetTaskId?: string) => boolean;
 }
 
+type ClipboardSetter = (fn: (state: ClipboardState) => void) => void;
+type PasteResult = { success: boolean; error?: string };
 type ClipboardStore = ClipboardState & ClipboardActions;
 
 // ---------------------------------------------------------------------------
@@ -112,7 +109,7 @@ function getTaskFieldValue(task: Task, field: EditableField): unknown {
 function performRowCopyOrCut(
   taskIds: string[],
   operation: "copy" | "cut",
-  set: (fn: (state: ClipboardState) => void) => void
+  set: ClipboardSetter
 ): void {
   const taskStore = useTaskStore.getState();
   const depStore = useDependencyStore.getState();
@@ -143,7 +140,7 @@ function performCellCopyOrCut(
   taskId: string,
   field: EditableField,
   operation: "copy" | "cut",
-  set: (fn: (state: ClipboardState) => void) => void
+  set: ClipboardSetter
 ): void {
   const task = useTaskStore.getState().tasks.find((t) => t.id === taskId);
   if (!task) return;
@@ -170,8 +167,76 @@ interface RowPasteParams {
   operation?: "copy" | "cut";
   sourceTaskIds?: string[];
   /** Immer `set` — only needed when operation is "cut" (to clear clipboard). */
-  set?: (fn: (state: ClipboardState) => void) => void;
+  set?: ClipboardSetter;
   description: string;
+}
+
+/** Collect undo data needed when pasting from a cut operation. */
+function collectRowCutUndoData(
+  operation: "copy" | "cut" | undefined,
+  sourceTaskIds: string[],
+  tasks: Task[]
+): { previousCutTaskIds: string[]; deletedTasks: Task[] } {
+  if (operation !== "cut") {
+    return { previousCutTaskIds: [], deletedTasks: [] };
+  }
+  const deletedTasks = sourceTaskIds
+    .map((id) => tasks.find((t) => t.id === id))
+    .filter((t): t is Task => t !== undefined);
+  return { previousCutTaskIds: sourceTaskIds, deletedTasks };
+}
+
+/** Apply paste results to task and dependency stores (handles cut vs copy). */
+function applyRowPasteToStores(
+  operation: "copy" | "cut" | undefined,
+  finalTasks: Task[],
+  cutTaskIds: string[],
+  existingDeps: Dependency[],
+  remappedDependencies: Dependency[]
+): void {
+  if (operation === "cut") {
+    const cutResult = applyCutDeletion(
+      finalTasks,
+      new Set(cutTaskIds),
+      existingDeps,
+      remappedDependencies
+    );
+    useTaskStore.setState({ tasks: cutResult.tasks, clipboardTaskIds: [] });
+    useDependencyStore.setState({ dependencies: cutResult.dependencies });
+  } else {
+    useTaskStore.setState({ tasks: finalTasks });
+    useDependencyStore.setState({
+      dependencies: [...existingDeps, ...remappedDependencies],
+    });
+  }
+}
+
+/** Record a row-paste command in the undo/redo history. */
+function recordRowPasteCommand(
+  description: string,
+  pasteData: PrepareRowPasteResult,
+  cutUndoData: { previousCutTaskIds: string[]; deletedTasks: Task[] }
+): void {
+  useHistoryStore.getState().recordCommand({
+    id: crypto.randomUUID(),
+    type: CommandType.PASTE_ROWS,
+    timestamp: Date.now(),
+    description,
+    params: {
+      pastedTasks: pasteData.newTasks,
+      pastedDependencies: pasteData.remappedDependencies,
+      insertIndex: pasteData.insertOrder,
+      idMapping: pasteData.idMapping,
+      previousCutTaskIds:
+        cutUndoData.previousCutTaskIds.length > 0
+          ? cutUndoData.previousCutTaskIds
+          : undefined,
+      deletedTasks:
+        cutUndoData.deletedTasks.length > 0
+          ? cutUndoData.deletedTasks
+          : undefined,
+    },
+  });
 }
 
 /** Remove cut source tasks, rebuild order, and update dependencies. */
@@ -209,10 +274,7 @@ function applyCutDeletion(
   return { tasks: filtered, dependencies };
 }
 
-function executeRowPaste(params: RowPasteParams): {
-  success: boolean;
-  error?: string;
-} {
+function executeRowPaste(params: RowPasteParams): PasteResult {
   const {
     clipboardTasks,
     clipboardDependencies,
@@ -223,7 +285,6 @@ function executeRowPaste(params: RowPasteParams): {
   } = params;
   const taskStore = useTaskStore.getState();
   const depStore = useDependencyStore.getState();
-  const historyStore = useHistoryStore.getState();
   const fileStore = useFileStore.getState();
 
   const result = prepareRowPaste({
@@ -238,61 +299,25 @@ function executeRowPaste(params: RowPasteParams): {
     return { success: false, error: result.error };
   }
 
-  const {
-    mergedTasks,
-    newTasks,
-    remappedDependencies,
-    idMapping,
-    insertOrder,
-    targetParent,
-  } = result;
+  const cutUndoData = collectRowCutUndoData(
+    operation,
+    sourceTaskIds,
+    taskStore.tasks
+  );
+  const finalTasks = applySummaryRecalculation(
+    result.mergedTasks,
+    result.targetParent
+  );
 
-  // Collect undo data for cut operations
-  let deletedTasks: Task[] = [];
-  let previousCutTaskIds: string[] = [];
-
-  if (operation === "cut") {
-    previousCutTaskIds = sourceTaskIds;
-    deletedTasks = previousCutTaskIds
-      .map((id) => taskStore.tasks.find((t) => t.id === id))
-      .filter((t): t is Task => t !== undefined);
-  }
-
-  const finalTasks = applySummaryRecalculation(mergedTasks, targetParent);
-
-  if (operation === "cut") {
-    const cutResult = applyCutDeletion(
-      finalTasks,
-      new Set(previousCutTaskIds),
-      depStore.dependencies,
-      remappedDependencies
-    );
-    useTaskStore.setState({ tasks: cutResult.tasks, clipboardTaskIds: [] });
-    useDependencyStore.setState({ dependencies: cutResult.dependencies });
-  } else {
-    useTaskStore.setState({ tasks: finalTasks });
-    useDependencyStore.setState({
-      dependencies: [...depStore.dependencies, ...remappedDependencies],
-    });
-  }
-
+  applyRowPasteToStores(
+    operation,
+    finalTasks,
+    cutUndoData.previousCutTaskIds,
+    depStore.dependencies,
+    result.remappedDependencies
+  );
   fileStore.markDirty();
-
-  historyStore.recordCommand({
-    id: crypto.randomUUID(),
-    type: CommandType.PASTE_ROWS,
-    timestamp: Date.now(),
-    description,
-    params: {
-      pastedTasks: newTasks,
-      pastedDependencies: remappedDependencies,
-      insertIndex: insertOrder,
-      idMapping,
-      previousCutTaskIds:
-        previousCutTaskIds.length > 0 ? previousCutTaskIds : undefined,
-      deletedTasks: deletedTasks.length > 0 ? deletedTasks : undefined,
-    },
-  });
+  recordRowPasteCommand(description, result, cutUndoData);
 
   if (operation === "cut" && set) {
     set((state) => {
@@ -312,8 +337,25 @@ interface CellPasteParams {
   /** Set when pasting from an internal cut operation. */
   cutSource?: { taskId: string; field: EditableField };
   /** Immer `set` — only needed for cut operations (to clear clipboard). */
-  set?: (fn: (state: ClipboardState) => void) => void;
+  set?: ClipboardSetter;
   description: string;
+}
+
+/** Apply cell value mutation and clear cut source if applicable. */
+function applyCellMutations(
+  targetTaskId: string,
+  targetField: EditableField,
+  value: unknown,
+  cutSource?: { taskId: string; field: EditableField }
+): void {
+  const taskStore = useTaskStore.getState();
+  taskStore.updateTask(targetTaskId, { [targetField]: value });
+
+  if (cutSource) {
+    const clearValue = getClearValueForField(cutSource.field);
+    taskStore.updateTask(cutSource.taskId, { [cutSource.field]: clearValue });
+    useTaskStore.setState({ cutCell: null });
+  }
 }
 
 /** Collect previous cut-cell value for undo support. */
@@ -330,10 +372,7 @@ function collectCutCellUndoData(
   };
 }
 
-function executeCellPaste(params: CellPasteParams): {
-  success: boolean;
-  error?: string;
-} {
+function executeCellPaste(params: CellPasteParams): PasteResult {
   const {
     value,
     sourceField,
@@ -344,7 +383,6 @@ function executeCellPaste(params: CellPasteParams): {
     description,
   } = params;
   const taskStore = useTaskStore.getState();
-  const historyStore = useHistoryStore.getState();
   const fileStore = useFileStore.getState();
 
   const task = taskStore.tasks.find((t) => t.id === targetTaskId);
@@ -362,18 +400,10 @@ function executeCellPaste(params: CellPasteParams): {
     ? collectCutCellUndoData(taskStore.tasks, cutSource)
     : undefined;
 
-  // Apply mutations
-  taskStore.updateTask(targetTaskId, { [targetField]: value });
-
-  if (cutSource) {
-    const clearValue = getClearValueForField(cutSource.field);
-    taskStore.updateTask(cutSource.taskId, { [cutSource.field]: clearValue });
-    useTaskStore.setState({ cutCell: null });
-  }
-
+  applyCellMutations(targetTaskId, targetField, value, cutSource);
   fileStore.markDirty();
 
-  historyStore.recordCommand({
+  useHistoryStore.getState().recordCommand({
     id: crypto.randomUUID(),
     type: CommandType.PASTE_CELL,
     timestamp: Date.now(),
@@ -411,7 +441,7 @@ export const useClipboardStore = create<ClipboardStore>()(
     copyRows: (taskIds): void => performRowCopyOrCut(taskIds, "copy", set),
     cutRows: (taskIds): void => performRowCopyOrCut(taskIds, "cut", set),
 
-    pasteRows: (): { success: boolean; error?: string } => {
+    pasteRows: (): PasteResult => {
       const { rowClipboard, activeMode } = get();
       if (activeMode !== "row" || !rowClipboard.operation) {
         return { success: false, error: "No rows in clipboard" };
@@ -431,10 +461,7 @@ export const useClipboardStore = create<ClipboardStore>()(
     cutCell: (taskId, field): void =>
       performCellCopyOrCut(taskId, field, "cut", set),
 
-    pasteCell: (
-      targetTaskId,
-      targetField
-    ): { success: boolean; error?: string } => {
+    pasteCell: (targetTaskId, targetField): PasteResult => {
       const { cellClipboard, activeMode } = get();
       if (activeMode !== "cell" || !cellClipboard.operation) {
         return { success: false, error: "No cell in clipboard" };
@@ -460,9 +487,7 @@ export const useClipboardStore = create<ClipboardStore>()(
       });
     },
 
-    pasteExternalRows: (
-      data: SystemRowClipboardData
-    ): { success: boolean; error?: string } => {
+    pasteExternalRows: (data: SystemRowClipboardData): PasteResult => {
       if (!data.tasks || data.tasks.length === 0) {
         return { success: false, error: "No rows in external clipboard" };
       }
@@ -477,7 +502,7 @@ export const useClipboardStore = create<ClipboardStore>()(
       data: SystemCellClipboardData,
       targetTaskId: string,
       targetField: EditableField
-    ): { success: boolean; error?: string } =>
+    ): PasteResult =>
       executeCellPaste({
         value: data.value,
         sourceField: data.field,

@@ -213,6 +213,33 @@ describe("systemClipboard", () => {
       expect(result).toBeNull();
     });
 
+    it("should return null when tasks have invalid shape (missing id)", async () => {
+      clipboardContent =
+        'OWNCHART_ROWS:{"tasks":[{"name":"No ID"}],"dependencies":[]}';
+
+      const result = await readRowsFromSystemClipboard();
+
+      expect(result).toBeNull();
+    });
+
+    it("should return null when tasks have invalid shape (missing name)", async () => {
+      clipboardContent =
+        'OWNCHART_ROWS:{"tasks":[{"id":"1"}],"dependencies":[]}';
+
+      const result = await readRowsFromSystemClipboard();
+
+      expect(result).toBeNull();
+    });
+
+    it("should return null when tasks contain non-object entries", async () => {
+      clipboardContent =
+        'OWNCHART_ROWS:{"tasks":["not-a-task"],"dependencies":[]}';
+
+      const result = await readRowsFromSystemClipboard();
+
+      expect(result).toBeNull();
+    });
+
     it("should return null on clipboard read failure", async () => {
       mockClipboard.readText.mockRejectedValueOnce(new Error("Permission denied"));
 
@@ -260,6 +287,15 @@ describe("systemClipboard", () => {
 
     it("should return null if field is missing", async () => {
       clipboardContent = 'OWNCHART_CELL:{"value":"test"}';
+
+      const result = await readCellFromSystemClipboard();
+
+      expect(result).toBeNull();
+    });
+
+    it("should return null for invalid field name", async () => {
+      clipboardContent =
+        'OWNCHART_CELL:{"value":"test","field":"invalidField"}';
 
       const result = await readCellFromSystemClipboard();
 

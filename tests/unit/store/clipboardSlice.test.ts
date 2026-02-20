@@ -584,6 +584,14 @@ describe("clipboardSlice", () => {
   // cutCell
   // ---------------------------------------------------------------------------
   describe("cutCell", () => {
+    it("should do nothing for nonexistent task", () => {
+      useTaskStore.setState({ tasks: [] });
+
+      useClipboardStore.getState().cutCell("nonexistent", "name");
+
+      expect(useClipboardStore.getState().activeMode).toBeNull();
+    });
+
     it("should set cell clipboard with cut operation", () => {
       useTaskStore.setState({
         tasks: [createTask("1", "Task 1", 0)],
@@ -725,6 +733,18 @@ describe("clipboardSlice", () => {
 
       useClipboardStore.getState().pasteCell("2", "name");
       expect(useTaskStore.getState().cutCell).toBeNull();
+    });
+
+    it("should return error when target task does not exist", () => {
+      useTaskStore.setState({
+        tasks: [createTask("1", "Source", 0)],
+      });
+
+      useClipboardStore.getState().copyCell("1", "name");
+      const result = useClipboardStore.getState().pasteCell("nonexistent", "name");
+
+      expect(result.success).toBe(false);
+      expect(result.error).toBe("Target task not found");
     });
 
     it("should reject paste when field types do not match", () => {
