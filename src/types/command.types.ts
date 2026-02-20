@@ -180,6 +180,7 @@ export interface DeleteTaskParams {
   deletedIds: string[]; // All task IDs that were deleted
   cascade: boolean;
   deletedTasks: Task[]; // Store all deleted tasks for undo
+  deletedDependencies: Dependency[]; // Dependencies removed with the deleted tasks
   cascadeUpdates?: Array<{
     id: string;
     updates: Partial<Task>;

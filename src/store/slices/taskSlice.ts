@@ -19,6 +19,7 @@ import {
   collectDescendantIds,
 } from "../../utils/hierarchy";
 import { useFileStore } from "./fileSlice";
+import { useDependencyStore } from "./dependencySlice";
 import { CommandType } from "../../types/command.types";
 import { useChartStore } from "./chartSlice";
 import {
@@ -416,6 +417,25 @@ export const useTaskStore = create<TaskStore>()(
         }
       });
 
+      // Remove dependencies referencing deleted tasks and capture them for undo
+      let deletedDependencies: import("../../types/dependency.types").Dependency[] =
+        [];
+      if (deletedTasks.length > 0) {
+        const depStore = useDependencyStore.getState();
+        for (const dt of deletedTasks) {
+          deletedDependencies.push(
+            ...depStore.removeDependenciesForTask(dt.id)
+          );
+        }
+        // Deduplicate (a dep may reference two deleted tasks)
+        const seen = new Set<string>();
+        deletedDependencies = deletedDependencies.filter((d) => {
+          if (seen.has(d.id)) return false;
+          seen.add(d.id);
+          return true;
+        });
+      }
+
       // Mark file as dirty
       if (deletedTasks.length > 0) {
         useFileStore.getState().markDirty();
@@ -434,6 +454,7 @@ export const useTaskStore = create<TaskStore>()(
           deletedIds: deletedTasks.map((t) => t.id),
           cascade,
           deletedTasks,
+          deletedDependencies,
           cascadeUpdates,
         });
       }
@@ -502,6 +523,25 @@ export const useTaskStore = create<TaskStore>()(
         );
       });
 
+      // Remove dependencies referencing deleted tasks and capture them for undo
+      let deletedDependencies: import("../../types/dependency.types").Dependency[] =
+        [];
+      if (deletedTasks.length > 0) {
+        const depStore = useDependencyStore.getState();
+        for (const dt of deletedTasks) {
+          deletedDependencies.push(
+            ...depStore.removeDependenciesForTask(dt.id)
+          );
+        }
+        // Deduplicate (a dep may reference two deleted tasks)
+        const seen = new Set<string>();
+        deletedDependencies = deletedDependencies.filter((d) => {
+          if (seen.has(d.id)) return false;
+          seen.add(d.id);
+          return true;
+        });
+      }
+
       // Mark file as dirty
       if (deletedTasks.length > 0) {
         useFileStore.getState().markDirty();
@@ -519,6 +559,7 @@ export const useTaskStore = create<TaskStore>()(
           deletedIds: Array.from(idsToDelete),
           cascade: true,
           deletedTasks,
+          deletedDependencies,
           cascadeUpdates,
         });
       }

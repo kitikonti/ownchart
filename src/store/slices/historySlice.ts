@@ -285,6 +285,13 @@ function undoDeleteTask(params: DeleteTaskParams): void {
   }
 
   useTaskStore.setState({ tasks: restoredTasks });
+
+  if (params.deletedDependencies?.length) {
+    const depStore = useDependencyStore.getState();
+    useDependencyStore.setState({
+      dependencies: [...depStore.dependencies, ...params.deletedDependencies],
+    });
+  }
 }
 
 function undoIndentOutdent(params: IndentOutdentParams): void {
@@ -565,6 +572,12 @@ function redoDeleteTask(params: DeleteTaskParams): void {
   }
 
   useTaskStore.setState({ tasks: currentTasks });
+
+  const depStore = useDependencyStore.getState();
+  const cleanedDeps = depStore.dependencies.filter(
+    (d) => !idsToDelete.has(d.fromTaskId) && !idsToDelete.has(d.toTaskId)
+  );
+  useDependencyStore.setState({ dependencies: cleanedDeps });
 }
 
 function redoIndentOutdent(params: IndentOutdentParams): void {
