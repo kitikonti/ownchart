@@ -76,7 +76,7 @@ interface ClipboardActions {
   clearClipboard: () => void;
   getClipboardMode: () => "row" | "cell" | null;
   canPasteRows: () => boolean;
-  canPasteCell: (targetField: EditableField) => boolean;
+  canPasteCell: (targetField: EditableField, targetTaskId?: string) => boolean;
 }
 
 type ClipboardStore = ClipboardState & ClipboardActions;
@@ -184,11 +184,12 @@ function applyCutDeletion(
     .filter((t) => !cutIds.has(t.id))
     .map((t) => ({ ...t }));
 
-  // Rebuild order from flattened list
-  const collapsedIds = new Set(
-    filtered.filter((t) => t.open === false).map((t) => t.id)
+  // Rebuild order from flattened list — force all tasks expanded so ALL tasks
+  // (including children of collapsed parents) get correct order values.
+  const allExpanded = filtered.map((t) =>
+    t.open === false ? { ...t, open: true } : t
   );
-  const flattened = buildFlattenedTaskList(filtered, collapsedIds);
+  const flattened = buildFlattenedTaskList(allExpanded, new Set<string>());
   const orderMap = new Map<string, number>();
   flattened.forEach(({ task }, index) => {
     orderMap.set(task.id, index);
@@ -502,13 +503,25 @@ export const useClipboardStore = create<ClipboardStore>()(
       return activeMode === "row" && rowClipboard.operation !== null;
     },
 
-    canPasteCell: (targetField): boolean => {
+    canPasteCell: (targetField, targetTaskId): boolean => {
       const { cellClipboard, activeMode } = get();
-      return (
-        activeMode === "cell" &&
-        cellClipboard.operation !== null &&
-        cellClipboard.field === targetField
-      );
+      if (
+        activeMode !== "cell" ||
+        cellClipboard.operation === null ||
+        cellClipboard.field !== targetField
+      ) {
+        return false;
+      }
+      if (targetTaskId && cellClipboard.field) {
+        const task = useTaskStore
+          .getState()
+          .tasks.find((t) => t.id === targetTaskId);
+        if (task) {
+          return canPasteCellValue(cellClipboard.field, targetField, task)
+            .valid;
+        }
+      }
+      return true;
     },
   }))
 );

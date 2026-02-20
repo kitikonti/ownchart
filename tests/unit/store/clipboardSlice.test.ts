@@ -11,6 +11,7 @@ import { useClipboardStore } from "../../../src/store/slices/clipboardSlice";
 import { useDependencyStore } from "../../../src/store/slices/dependencySlice";
 import { useFileStore } from "../../../src/store/slices/fileSlice";
 import type { Task } from "../../../src/types/chart.types";
+import type { Dependency } from "../../../src/types/dependency.types";
 
 const createTask = (
   id: string,
@@ -737,8 +738,272 @@ describe("clipboardSlice", () => {
       useClipboardStore.getState().copyCell("1", "name");
       const result = useClipboardStore.getState().pasteCell("2", "progress");
 
-      // canPasteCell would return false, but pasteCell checks activeMode+field
+      // Field mismatch is caught by canPasteCellValue inside executeCellPaste
       expect(result.success).toBe(false);
+    });
+  });
+
+  // ---------------------------------------------------------------------------
+  // getClipboardMode
+  // ---------------------------------------------------------------------------
+  describe("getClipboardMode", () => {
+    it("should return null when clipboard is empty", () => {
+      expect(useClipboardStore.getState().getClipboardMode()).toBeNull();
+    });
+
+    it("should return 'row' after copyRows", () => {
+      useTaskStore.setState({
+        tasks: [createTask("1", "Task 1", 0)],
+        selectedTaskIds: ["1"],
+      });
+      useClipboardStore.getState().copyRows(["1"]);
+
+      expect(useClipboardStore.getState().getClipboardMode()).toBe("row");
+    });
+
+    it("should return 'cell' after copyCell", () => {
+      useTaskStore.setState({
+        tasks: [createTask("1", "Task 1", 0)],
+      });
+      useClipboardStore.getState().copyCell("1", "name");
+
+      expect(useClipboardStore.getState().getClipboardMode()).toBe("cell");
+    });
+  });
+
+  // ---------------------------------------------------------------------------
+  // copyRows with hierarchy (children)
+  // ---------------------------------------------------------------------------
+  describe("copyRows with hierarchy", () => {
+    it("should include children when copying a collapsed parent task", () => {
+      useTaskStore.setState({
+        tasks: [
+          createTask("parent", "Parent", 0, {
+            type: "summary",
+            open: false,
+          }),
+          createTask("child1", "Child 1", 1, { parent: "parent" }),
+          createTask("child2", "Child 2", 2, { parent: "parent" }),
+          createTask("other", "Other", 3),
+        ],
+        selectedTaskIds: ["parent"],
+      });
+
+      useClipboardStore.getState().copyRows(["parent"]);
+
+      const state = useClipboardStore.getState();
+      expect(state.rowClipboard.tasks).toHaveLength(3);
+      const names = state.rowClipboard.tasks.map((t) => t.name);
+      expect(names).toContain("Parent");
+      expect(names).toContain("Child 1");
+      expect(names).toContain("Child 2");
+    });
+
+    it("should NOT include children when parent is expanded (only selected tasks)", () => {
+      useTaskStore.setState({
+        tasks: [
+          createTask("parent", "Parent", 0, { type: "summary" }),
+          createTask("child1", "Child 1", 1, { parent: "parent" }),
+          createTask("other", "Other", 2),
+        ],
+        selectedTaskIds: ["parent"],
+      });
+
+      useClipboardStore.getState().copyRows(["parent"]);
+
+      const state = useClipboardStore.getState();
+      expect(state.rowClipboard.tasks).toHaveLength(1);
+      expect(state.rowClipboard.tasks[0].name).toBe("Parent");
+    });
+
+    it("should deep-clone tasks so mutations do not affect clipboard", () => {
+      useTaskStore.setState({
+        tasks: [createTask("1", "Task 1", 0)],
+        selectedTaskIds: ["1"],
+      });
+
+      useClipboardStore.getState().copyRows(["1"]);
+      const clipboardTask = useClipboardStore.getState().rowClipboard.tasks[0];
+      const storeTask = useTaskStore.getState().tasks[0];
+
+      expect(clipboardTask).not.toBe(storeTask);
+      expect(clipboardTask.name).toBe(storeTask.name);
+    });
+  });
+
+  // ---------------------------------------------------------------------------
+  // copyRows with dependencies
+  // ---------------------------------------------------------------------------
+  describe("copyRows with dependencies", () => {
+    it("should collect internal dependencies between copied tasks", () => {
+      const dep: Dependency = {
+        id: "dep-1",
+        fromTaskId: "1",
+        toTaskId: "2",
+        type: "finish-to-start",
+        createdAt: "2025-01-01T00:00:00.000Z",
+      };
+      useTaskStore.setState({
+        tasks: [createTask("1", "Task 1", 0), createTask("2", "Task 2", 1)],
+        selectedTaskIds: ["1", "2"],
+      });
+      useDependencyStore.setState({ dependencies: [dep] });
+
+      useClipboardStore.getState().copyRows(["1", "2"]);
+
+      const state = useClipboardStore.getState();
+      expect(state.rowClipboard.dependencies).toHaveLength(1);
+      expect(state.rowClipboard.dependencies[0].fromTaskId).toBe("1");
+    });
+
+    it("should NOT collect external dependencies (only one endpoint copied)", () => {
+      const dep: Dependency = {
+        id: "dep-1",
+        fromTaskId: "1",
+        toTaskId: "3",
+        type: "finish-to-start",
+        createdAt: "2025-01-01T00:00:00.000Z",
+      };
+      useTaskStore.setState({
+        tasks: [
+          createTask("1", "Task 1", 0),
+          createTask("2", "Task 2", 1),
+          createTask("3", "Task 3", 2),
+        ],
+        selectedTaskIds: ["1", "2"],
+      });
+      useDependencyStore.setState({ dependencies: [dep] });
+
+      useClipboardStore.getState().copyRows(["1", "2"]);
+
+      expect(useClipboardStore.getState().rowClipboard.dependencies).toHaveLength(0);
+    });
+  });
+
+  // ---------------------------------------------------------------------------
+  // pasteRows depth validation
+  // ---------------------------------------------------------------------------
+  describe("pasteRows depth validation", () => {
+    it("should return error when paste would exceed max hierarchy depth", () => {
+      // MAX_HIERARCHY_DEPTH is 3, so level 0 → 1 → 2 is max.
+      // Create a depth-2 parent chain, then try to paste a parent+child (depth 1)
+      // into the deepest level, which would exceed depth 3.
+      useTaskStore.setState({
+        tasks: [
+          createTask("L0", "Level 0", 0, { type: "summary" }),
+          createTask("L1", "Level 1", 1, { type: "summary", parent: "L0" }),
+          createTask("L2", "Level 2", 2, { parent: "L1" }),
+        ],
+        activeCell: { taskId: "L2", field: "name" },
+        selectedTaskIds: [],
+      });
+
+      // Paste a parent+child subtree (depth 1 internally)
+      const result = useClipboardStore.getState().pasteExternalRows({
+        tasks: [
+          createTask("ext-p", "Ext Parent", 0, { type: "summary" }),
+          createTask("ext-c", "Ext Child", 1, { parent: "ext-p" }),
+        ],
+        dependencies: [],
+      });
+
+      expect(result.success).toBe(false);
+      expect(result.error).toContain("maximum nesting depth");
+    });
+  });
+
+  // ---------------------------------------------------------------------------
+  // canPasteCell with task-type validation
+  // ---------------------------------------------------------------------------
+  describe("canPasteCell with targetTaskId", () => {
+    it("should return false for startDate paste into summary task", () => {
+      useTaskStore.setState({
+        tasks: [
+          createTask("1", "Task", 0),
+          createTask("2", "Summary", 1, { type: "summary" }),
+        ],
+      });
+
+      useClipboardStore.getState().copyCell("1", "startDate");
+
+      expect(useClipboardStore.getState().canPasteCell("startDate")).toBe(true);
+      expect(
+        useClipboardStore.getState().canPasteCell("startDate", "2")
+      ).toBe(false);
+    });
+
+    it("should return false for progress paste into milestone task", () => {
+      useTaskStore.setState({
+        tasks: [
+          createTask("1", "Task", 0, { progress: 50 }),
+          createTask("2", "Milestone", 1, { type: "milestone" }),
+        ],
+      });
+
+      useClipboardStore.getState().copyCell("1", "progress");
+
+      expect(useClipboardStore.getState().canPasteCell("progress")).toBe(true);
+      expect(
+        useClipboardStore.getState().canPasteCell("progress", "2")
+      ).toBe(false);
+    });
+
+    it("should return true when targetTaskId allows the paste", () => {
+      useTaskStore.setState({
+        tasks: [
+          createTask("1", "Source", 0),
+          createTask("2", "Target", 1),
+        ],
+      });
+
+      useClipboardStore.getState().copyCell("1", "name");
+
+      expect(
+        useClipboardStore.getState().canPasteCell("name", "2")
+      ).toBe(true);
+    });
+  });
+
+  // ---------------------------------------------------------------------------
+  // cut-paste with collapsed groups (order rebuild)
+  // ---------------------------------------------------------------------------
+  describe("cut-paste with collapsed groups", () => {
+    it("should correctly reorder tasks including collapsed children after cut", () => {
+      // Set up: parent with collapsed children, then cut a standalone task
+      // and paste it after "target". The collapsed children must get valid
+      // (non-stale, non-duplicate) order values after the cut deletion.
+      useTaskStore.setState({
+        tasks: [
+          createTask("group", "Group", 0, { type: "summary", open: false }),
+          createTask("child1", "Child 1", 1, { parent: "group" }),
+          createTask("child2", "Child 2", 2, { parent: "group" }),
+          createTask("standalone", "Standalone", 3),
+          createTask("target", "Target", 4),
+        ],
+        selectedTaskIds: ["standalone"],
+        activeCell: { taskId: "target", field: "name" },
+      });
+
+      useClipboardStore.getState().cutRows(["standalone"]);
+      const result = useClipboardStore.getState().pasteRows();
+
+      expect(result.success).toBe(true);
+
+      const tasks = useTaskStore.getState().tasks;
+
+      // "standalone" was cut and re-inserted with new ID — still 5 tasks total
+      expect(tasks).toHaveLength(5);
+
+      // All orders must be unique (no duplicates from stale collapsed children)
+      const orders = tasks.map((t) => t.order).sort((a, b) => a - b);
+      const uniqueOrders = [...new Set(orders)];
+      expect(uniqueOrders).toHaveLength(orders.length);
+
+      // Collapsed children must still exist
+      const child1 = tasks.find((t) => t.name === "Child 1");
+      const child2 = tasks.find((t) => t.name === "Child 2");
+      expect(child1).toBeDefined();
+      expect(child2).toBeDefined();
     });
   });
 });
