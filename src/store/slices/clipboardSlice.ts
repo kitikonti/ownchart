@@ -5,7 +5,6 @@
 
 import { create } from "zustand";
 import { immer } from "zustand/middleware/immer";
-import toast from "react-hot-toast";
 import type { Task } from "../../types/chart.types";
 import type { Dependency } from "../../types/dependency.types";
 import type { EditableField } from "./taskSlice";
@@ -192,7 +191,6 @@ export const useClipboardStore = create<ClipboardStore>()(
       });
 
       if ("error" in result) {
-        toast.error(result.error);
         return { success: false, error: result.error };
       }
 
@@ -311,7 +309,6 @@ export const useClipboardStore = create<ClipboardStore>()(
 
       // Validation
       if (activeMode !== "cell" || !cellClipboard.operation) {
-        toast.error("No cell value in clipboard");
         return { success: false, error: "No cell in clipboard" };
       }
 
@@ -329,7 +326,6 @@ export const useClipboardStore = create<ClipboardStore>()(
           task
         );
         if (!validation.valid) {
-          toast.error(validation.error || "Cannot paste");
           return { success: false, error: validation.error };
         }
       }
@@ -434,7 +430,6 @@ export const useClipboardStore = create<ClipboardStore>()(
       });
 
       if ("error" in result) {
-        toast.error(result.error);
         return { success: false, error: result.error };
       }
 
@@ -496,7 +491,6 @@ export const useClipboardStore = create<ClipboardStore>()(
       // Field type matching validation
       const validation = canPasteCellValue(data.field, targetField, task);
       if (!validation.valid) {
-        toast.error(validation.error || "Cannot paste");
         return { success: false, error: validation.error };
       }
 

@@ -181,6 +181,8 @@ export function useClipboardOperations(): ClipboardOperations {
             );
             if (result.success) {
               toast.success(`Pasted ${activeCell.field} from clipboard`);
+            } else if (result.error) {
+              toast.error(result.error);
             }
             return;
           }
@@ -208,8 +210,9 @@ export function useClipboardOperations(): ClipboardOperations {
       const result = pasteCell(activeCell.taskId, activeCell.field);
       if (result.success) {
         toast.success(`Pasted ${activeCell.field}`);
+      } else if (result.error) {
+        toast.error(result.error);
       }
-      // Errors are already shown by pasteCell
     } else {
       toast("Nothing to paste", { icon: "ℹ️" });
     }
