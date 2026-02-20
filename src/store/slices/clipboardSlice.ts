@@ -263,24 +263,22 @@ export const useClipboardStore = create<ClipboardStore>()(
       // Mark file as dirty
       fileStore.markDirty();
 
-      // Record command
-      if (!historyStore.isUndoing && !historyStore.isRedoing) {
-        historyStore.recordCommand({
-          id: crypto.randomUUID(),
-          type: CommandType.PASTE_ROWS,
-          timestamp: Date.now(),
-          description: `Pasted ${newTasks.length} row(s)`,
-          params: {
-            pastedTasks: newTasks,
-            pastedDependencies: remappedDependencies,
-            insertIndex: insertOrder,
-            idMapping,
-            previousCutTaskIds:
-              previousCutTaskIds.length > 0 ? previousCutTaskIds : undefined,
-            deletedTasks: deletedTasks.length > 0 ? deletedTasks : undefined,
-          },
-        });
-      }
+      // Record command (historySlice.recordCommand has internal undo/redo guard)
+      historyStore.recordCommand({
+        id: crypto.randomUUID(),
+        type: CommandType.PASTE_ROWS,
+        timestamp: Date.now(),
+        description: `Pasted ${newTasks.length} row(s)`,
+        params: {
+          pastedTasks: newTasks,
+          pastedDependencies: remappedDependencies,
+          insertIndex: insertOrder,
+          idMapping,
+          previousCutTaskIds:
+            previousCutTaskIds.length > 0 ? previousCutTaskIds : undefined,
+          deletedTasks: deletedTasks.length > 0 ? deletedTasks : undefined,
+        },
+      });
 
       // Clear clipboard if it was a cut
       if (rowClipboard.operation === "cut") {
@@ -375,26 +373,24 @@ export const useClipboardStore = create<ClipboardStore>()(
       // Mark file as dirty
       fileStore.markDirty();
 
-      // Record command
-      if (!historyStore.isUndoing && !historyStore.isRedoing) {
-        historyStore.recordCommand({
-          id: crypto.randomUUID(),
-          type: CommandType.PASTE_CELL,
-          timestamp: Date.now(),
-          description: `Pasted ${targetField}`,
-          params: {
-            taskId: targetTaskId,
-            field: targetField,
-            newValue: cellClipboard.value,
-            previousValue,
-            previousCutCell,
-            cutClearValue:
-              cellClipboard.operation === "cut" && cellClipboard.field
-                ? getClearValueForField(cellClipboard.field)
-                : undefined,
-          },
-        });
-      }
+      // Record command (historySlice.recordCommand has internal undo/redo guard)
+      historyStore.recordCommand({
+        id: crypto.randomUUID(),
+        type: CommandType.PASTE_CELL,
+        timestamp: Date.now(),
+        description: `Pasted ${targetField}`,
+        params: {
+          taskId: targetTaskId,
+          field: targetField,
+          newValue: cellClipboard.value,
+          previousValue,
+          previousCutCell,
+          cutClearValue:
+            cellClipboard.operation === "cut" && cellClipboard.field
+              ? getClearValueForField(cellClipboard.field)
+              : undefined,
+        },
+      });
 
       // Clear clipboard if it was a cut
       if (cellClipboard.operation === "cut") {
@@ -454,21 +450,19 @@ export const useClipboardStore = create<ClipboardStore>()(
       // Mark file as dirty
       fileStore.markDirty();
 
-      // Record command
-      if (!historyStore.isUndoing && !historyStore.isRedoing) {
-        historyStore.recordCommand({
-          id: crypto.randomUUID(),
-          type: CommandType.PASTE_ROWS,
-          timestamp: Date.now(),
-          description: `Pasted ${newTasks.length} row(s) from external clipboard`,
-          params: {
-            pastedTasks: newTasks,
-            pastedDependencies: remappedDependencies,
-            insertIndex: insertOrder,
-            idMapping,
-          },
-        });
-      }
+      // Record command (historySlice.recordCommand has internal undo/redo guard)
+      historyStore.recordCommand({
+        id: crypto.randomUUID(),
+        type: CommandType.PASTE_ROWS,
+        timestamp: Date.now(),
+        description: `Pasted ${newTasks.length} row(s) from external clipboard`,
+        params: {
+          pastedTasks: newTasks,
+          pastedDependencies: remappedDependencies,
+          insertIndex: insertOrder,
+          idMapping,
+        },
+      });
 
       return { success: true };
     },
@@ -505,21 +499,19 @@ export const useClipboardStore = create<ClipboardStore>()(
       // Mark file as dirty
       fileStore.markDirty();
 
-      // Record command
-      if (!historyStore.isUndoing && !historyStore.isRedoing) {
-        historyStore.recordCommand({
-          id: crypto.randomUUID(),
-          type: CommandType.PASTE_CELL,
-          timestamp: Date.now(),
-          description: `Pasted ${targetField} from external clipboard`,
-          params: {
-            taskId: targetTaskId,
-            field: targetField,
-            newValue: data.value,
-            previousValue,
-          },
-        });
-      }
+      // Record command (historySlice.recordCommand has internal undo/redo guard)
+      historyStore.recordCommand({
+        id: crypto.randomUUID(),
+        type: CommandType.PASTE_CELL,
+        timestamp: Date.now(),
+        description: `Pasted ${targetField} from external clipboard`,
+        params: {
+          taskId: targetTaskId,
+          field: targetField,
+          newValue: data.value,
+          previousValue,
+        },
+      });
 
       return { success: true };
     },
