@@ -17,7 +17,7 @@ import {
   TASK_TYPE_ICON_PATHS,
 } from "./constants";
 import type { ColorModeState } from "../../types/colorMode.types";
-import { getComputedTaskColor } from "../../hooks/useComputedTaskColor";
+import { getComputedTaskColor } from "../computeTaskColor";
 
 /**
  * Render task table header as SVG elements.

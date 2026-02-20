@@ -74,7 +74,7 @@ cd ../app-gantt-review
 - [x] `src/store/slices/historySlice.ts`
 
 ### Priority: HIGH — Store Slices (Kern-Zustandslogik)
-- [ ] `src/store/slices/chartSlice.ts` (984 LOC)
+- [x] `src/store/slices/chartSlice.ts` (984 LOC) — Spread→Object.assign (5×), magic numbers→constants, SettableViewFields type, console.error entfernt, +34 neue Tests
 - [ ] `src/store/slices/clipboardSlice.ts` (908 LOC)
 - [ ] `src/store/slices/dependencySlice.ts` (341 LOC)
 - [ ] `src/store/slices/uiSlice.ts` (279 LOC)
@@ -296,6 +296,7 @@ Patterns die mehrere Dateien betreffen. Beim Review jeder Datei pruefen ob sie b
 
 - **Hardcoded Hex-Farben** (38 Stueck in 10 .tsx-Dateien): `design-tokens.ts` existiert, wird aber von SVG-Komponenten nicht genutzt. Brand-Farbe `#0F6CBD` in 4+ Komponenten als Raw-String. Betroffene Dateien sind im Index markiert.
 - **`toISODateString()` nicht ueberall genutzt**: Utility existiert in `dateUtils.ts`. ~18 weitere `toISOString().split("T")[0]` in: insertionActions, hierarchy, calculations, Cell, HomeTabContent, NewTaskPlaceholderRow, SharedExportOptions. Bei Review dieser Dateien umstellen.
+- **Zirkulaere Imports zwischen Store-Slices**: chartSlice ↔ taskSlice und chartSlice ↔ historySlice importieren sich gegenseitig. Runtime-sicher, da alle Cross-Store-Zugriffe ueber `getState()` in Action-Handlern erfolgen (nicht bei Module-Initialisierung). Pattern ist korrekt fuer Zustand Cross-Store-Kommunikation, aber bei neuen Slices beachten: KEIN module-level Zugriff auf andere Stores.
 
 ---
 
@@ -311,11 +312,13 @@ Entscheidungen aus bisherigen Reviews die fuer zukuenftige Dateien gelten.
 - **recordCommand aussen, nicht innen**: Undo/Redo-Recording nach `set()`, nicht innerhalb. Ermoeglicht saubere Trennung von State-Mutation und History-Tracking.
 - **Frozen-Object-Safety bei getState()**: Tasks aus `getState().tasks` sind Immer-frozen. Vor Mutation IMMER `.map(t => ({...t}))` oder `.filter().map()` verwenden. Nur `.filter()` allein reicht NICHT — die Elemente bleiben frozen.
 - **Handler-Extraction fuer grosse Switch-Statements**: Bei >50 LOC pro Switch-Case jeden Case in benannte Funktion extrahieren. Switch bleibt als duenner Dispatcher. Shared Patterns (Map-Build, Snapshot-Apply) als Helpers.
+- **Toggle/Setter Boilerplate akzeptabel**: Einfache <5 LOC Methoden mit semantischen Namen (toggleWeekends, setShowWeekends etc.) nicht in generischen Helper abstrahieren — Lesbarkeit und Typsicherheit ueberwiegen DRY. (chartSlice Finding #8)
+- **Grosse Slice-Dateien splitten erst bei Wachstum**: chartSlice.ts (~990 LOC) ist gross aber kohaesiv. Split analog taskSlice→groupingActions erst wenn die Datei weiter waechst. (chartSlice Finding #9)
 
 ---
 
 ## Progress
 
-- Reviewed: 9 / 193 Dateien
+- Reviewed: 10 / 193 Dateien
 - Offene Issues: 38 Hex-Farben, ~18 toISODateString-Umstellungen
 - Test-Coverage: 80%+

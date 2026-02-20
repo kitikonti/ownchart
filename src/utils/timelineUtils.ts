@@ -39,6 +39,8 @@ export const DATE_RANGE_PADDING_DAYS = 90;
 export const SCROLL_OFFSET_DAYS = 83;
 /** Visual breathing room (days) added on each side by zoomToDateRange */
 export const ZOOM_VISUAL_PADDING_DAYS = 2;
+/** Base padding (days) added on each side by fitToView before label padding */
+export const FIT_TO_VIEW_PADDING_DAYS = 7;
 
 // Week numbering configuration (ISO 8601 - European standard)
 // Default week start day - actual value comes from user preferences

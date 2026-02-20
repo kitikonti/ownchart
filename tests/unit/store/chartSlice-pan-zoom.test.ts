@@ -169,18 +169,14 @@ describe('Chart Store - Pan/Zoom Navigation', () => {
       expect(useChartStore.getState().panOffset).toEqual({ x: -200, y: -150 });
     });
 
-    it('should reject NaN or Infinity values', () => {
+    it('should silently reject NaN or Infinity values', () => {
       const { setPanOffset } = useChartStore.getState();
-      const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
 
       setPanOffset({ x: NaN, y: 50 });
       expect(useChartStore.getState().panOffset).toEqual({ x: 0, y: 0 }); // Should not change
-      expect(consoleSpy).toHaveBeenCalled();
 
       setPanOffset({ x: 100, y: Infinity });
       expect(useChartStore.getState().panOffset).toEqual({ x: 0, y: 0 }); // Should not change
-
-      consoleSpy.mockRestore();
     });
   });
 

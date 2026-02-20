@@ -24,6 +24,9 @@ export interface ColorPalette {
   colors: string[]; // 8-10 categorical hex colors
 }
 
+/** Default palette ID used when switching to theme mode without a selection */
+export const DEFAULT_PALETTE_ID = "tableau-10";
+
 /**
  * All curated palettes organized by category
  */

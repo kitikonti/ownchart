@@ -12,7 +12,7 @@
  */
 
 import { describe, it, expect } from "vitest";
-import { getComputedTaskColor } from "../../../src/hooks/useComputedTaskColor";
+import { getComputedTaskColor } from "../../../src/utils/computeTaskColor";
 import { hexToHSL, stableHash } from "../../../src/utils/colorUtils";
 import type { Task } from "../../../src/types/chart.types";
 import type { ColorModeState } from "../../../src/types/colorMode.types";

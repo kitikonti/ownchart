@@ -15,6 +15,7 @@ import {
   DATE_RANGE_PADDING_DAYS,
   SCROLL_OFFSET_DAYS,
   ZOOM_VISUAL_PADDING_DAYS,
+  FIT_TO_VIEW_PADDING_DAYS,
   dateToPixel,
 } from "../../utils/timelineUtils";
 import {
@@ -45,7 +46,9 @@ import { calculateLabelPaddingDays } from "../../utils/textMeasurement";
 import { getTaskDescendants } from "../../utils/hierarchy";
 import { getCurrentDensityConfig } from "./userPreferencesSlice";
 import { TASK_COLUMNS, getColumnPixelWidth } from "../../config/tableColumns";
-import { getComputedTaskColor } from "../../hooks/useComputedTaskColor";
+import { getComputedTaskColor } from "../../utils/computeTaskColor";
+import { MIN_TABLE_WIDTH } from "../../config/layoutConstants";
+import { DEFAULT_PALETTE_ID } from "../../utils/colorPalettes";
 import { CommandType } from "../../types/command.types";
 import type { ApplyColorsToManualParams } from "../../types/command.types";
 import { useTaskStore } from "./taskSlice";
@@ -128,6 +131,28 @@ interface ChartState {
   fileLoadCounter: number;
 }
 
+/** Fields that can be bulk-set from file load */
+type SettableViewFields = Pick<
+  ChartState,
+  | "zoom"
+  | "panOffset"
+  | "showWeekends"
+  | "showTodayMarker"
+  | "showHolidays"
+  | "showDependencies"
+  | "showProgress"
+  | "taskLabelPosition"
+  | "workingDaysMode"
+  | "workingDaysConfig"
+  | "holidayRegion"
+  | "projectTitle"
+  | "projectAuthor"
+  | "colorModeState"
+  | "hiddenColumns"
+  | "isTaskTableCollapsed"
+  | "hiddenTaskIds"
+>;
+
 interface ChartActions {
   // Centralized scale lifecycle (Architect recommendation)
   updateScale: (tasks: Task[]) => void;
@@ -199,7 +224,7 @@ interface ChartActions {
   applyColorsToManual: () => void;
 
   // Bulk settings update (for loading from file)
-  setViewSettings: (settings: Partial<ChartState>) => void;
+  setViewSettings: (settings: Partial<SettableViewFields>) => void;
 
   // Drag state (for multi-task preview)
   setDragState: (deltaDays: number, sourceTaskId: string) => void;
@@ -213,6 +238,12 @@ const DEFAULT_CONTAINER_WIDTH = 800;
 
 /** Zoom factor per keyboard/toolbar step (exponential for consistent feel) */
 const KEYBOARD_ZOOM_FACTOR = 1.2;
+
+/** Default number of days to extend date range for infinite scroll */
+const DEFAULT_EXTEND_DAYS = 30;
+
+/** Default zoom level (100%) */
+const DEFAULT_ZOOM = 1.0;
 
 /**
  * Helper: Recalculate scale from dateRange, zoom, and containerWidth
@@ -234,7 +265,7 @@ export const useChartStore = create<ChartState & ChartActions>()(
     scale: null,
     containerWidth: DEFAULT_CONTAINER_WIDTH,
     dateRange: null,
-    zoom: 1.0,
+    zoom: DEFAULT_ZOOM,
     panOffset: { x: 0, y: 0 },
 
     // View settings (Project Settings)
@@ -320,7 +351,7 @@ export const useChartStore = create<ChartState & ChartActions>()(
     // Extend date range for infinite scroll
     extendDateRange: (
       direction: "past" | "future",
-      days: number = 30
+      days: number = DEFAULT_EXTEND_DAYS
     ): void => {
       set((state) => {
         if (!state.dateRange) return;
@@ -404,17 +435,15 @@ export const useChartStore = create<ChartState & ChartActions>()(
 
     // Reset zoom to 100%
     resetZoom: (anchor?: ZoomAnchor): ZoomResult => {
-      return get().setZoom(1.0, anchor);
+      return get().setZoom(DEFAULT_ZOOM, anchor);
     },
 
     // Set pan offset (validates for NaN/Infinity)
     setPanOffset: (offset: { x: number; y: number }): void => {
       set((state) => {
-        // Validate to prevent NaN or Infinity
+        // Validate to prevent NaN or Infinity — silently ignore invalid values
         if (isFinite(offset.x) && isFinite(offset.y)) {
           state.panOffset = offset;
-        } else {
-          console.error("Invalid pan offset:", offset);
         }
       });
     },
@@ -472,9 +501,9 @@ export const useChartStore = create<ChartState & ChartActions>()(
         pixelsPerDay
       );
 
-      // Calculate visible range with base padding (7 days) plus label padding
-      const leftPadding = 7 + labelPadding.leftDays;
-      const rightPadding = 7 + labelPadding.rightDays;
+      // Calculate visible range with base padding plus label padding
+      const leftPadding = FIT_TO_VIEW_PADDING_DAYS + labelPadding.leftDays;
+      const rightPadding = FIT_TO_VIEW_PADDING_DAYS + labelPadding.rightDays;
       const visibleDuration = calculateDuration(
         addDays(min, -leftPadding),
         addDays(max, rightPadding)
@@ -544,7 +573,7 @@ export const useChartStore = create<ChartState & ChartActions>()(
     // Reset to default view
     resetView: (): void => {
       set((state) => {
-        state.zoom = 1.0;
+        state.zoom = DEFAULT_ZOOM;
         state.panOffset = { x: 0, y: 0 };
 
         // Don't recalculate scale here - let updateScale handle it
@@ -658,10 +687,7 @@ export const useChartStore = create<ChartState & ChartActions>()(
     // Set working days configuration
     setWorkingDaysConfig: (config: Partial<WorkingDaysConfig>): void => {
       set((state) => {
-        state.workingDaysConfig = {
-          ...state.workingDaysConfig,
-          ...config,
-        };
+        Object.assign(state.workingDaysConfig, config);
       });
     },
 
@@ -717,7 +743,7 @@ export const useChartStore = create<ChartState & ChartActions>()(
         const newWidth = isCurrentlyHidden
           ? taskState.taskTableWidth + colWidth // showing: expand
           : taskState.taskTableWidth - colWidth; // hiding: shrink
-        taskState.setTaskTableWidth(Math.max(200, newWidth));
+        taskState.setTaskTableWidth(Math.max(MIN_TABLE_WIDTH, newWidth));
       }
     },
 
@@ -753,7 +779,7 @@ export const useChartStore = create<ChartState & ChartActions>()(
 
         if (delta !== 0) {
           taskState.setTaskTableWidth(
-            Math.max(200, taskState.taskTableWidth + delta)
+            Math.max(MIN_TABLE_WIDTH, taskState.taskTableWidth + delta)
           );
         }
       }
@@ -816,44 +842,33 @@ export const useChartStore = create<ChartState & ChartActions>()(
           !state.colorModeState.themeOptions.selectedPaletteId &&
           !state.colorModeState.themeOptions.customMonochromeBase
         ) {
-          state.colorModeState.themeOptions.selectedPaletteId = "tableau-10";
+          state.colorModeState.themeOptions.selectedPaletteId =
+            DEFAULT_PALETTE_ID;
         }
       });
     },
 
     setThemeOptions: (options: Partial<ThemeModeOptions>): void => {
       set((state) => {
-        state.colorModeState.themeOptions = {
-          ...state.colorModeState.themeOptions,
-          ...options,
-        };
+        Object.assign(state.colorModeState.themeOptions, options);
       });
     },
 
     setSummaryOptions: (options: Partial<SummaryModeOptions>): void => {
       set((state) => {
-        state.colorModeState.summaryOptions = {
-          ...state.colorModeState.summaryOptions,
-          ...options,
-        };
+        Object.assign(state.colorModeState.summaryOptions, options);
       });
     },
 
     setTaskTypeOptions: (options: Partial<TaskTypeModeOptions>): void => {
       set((state) => {
-        state.colorModeState.taskTypeOptions = {
-          ...state.colorModeState.taskTypeOptions,
-          ...options,
-        };
+        Object.assign(state.colorModeState.taskTypeOptions, options);
       });
     },
 
     setHierarchyOptions: (options: Partial<HierarchyModeOptions>): void => {
       set((state) => {
-        state.colorModeState.hierarchyOptions = {
-          ...state.colorModeState.hierarchyOptions,
-          ...options,
-        };
+        Object.assign(state.colorModeState.hierarchyOptions, options);
       });
     },
 
@@ -886,12 +901,13 @@ export const useChartStore = create<ChartState & ChartActions>()(
       }
 
       // Apply colors to task store directly (avoid per-task history entries)
-      useTaskStore.setState((state: { tasks: Task[] }) => {
+      useTaskStore.setState((state) => {
+        const taskById = new Map(state.tasks.map((t, i) => [t.id, i]));
         for (const change of colorChanges) {
-          const task = state.tasks.find((t: Task) => t.id === change.id);
-          if (task) {
-            task.color = change.newColor;
-            task.colorOverride = undefined;
+          const idx = taskById.get(change.id);
+          if (idx !== undefined) {
+            state.tasks[idx].color = change.newColor;
+            state.tasks[idx].colorOverride = undefined;
           }
         }
       });
@@ -918,7 +934,7 @@ export const useChartStore = create<ChartState & ChartActions>()(
     },
 
     // Bulk settings update (for loading from file)
-    setViewSettings: (settings: Partial<ChartState>): void => {
+    setViewSettings: (settings: Partial<SettableViewFields>): void => {
       set((state) => {
         if (settings.zoom !== undefined) state.zoom = settings.zoom;
         if (settings.panOffset !== undefined)
