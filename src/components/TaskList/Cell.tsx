@@ -64,11 +64,13 @@ export function Cell({
   } = useCellNavigation();
 
   const clearSelection = useTaskStore((state) => state.clearSelection);
-  const cutCell = useTaskStore((state) => state.cutCell);
+  const isCut = useTaskStore(
+    (state) =>
+      state.cutCell?.taskId === taskId && state.cutCell?.field === field
+  );
 
   const isActive = isCellActive(taskId, field);
   const isEditing = isCellEditing(taskId, field);
-  const isCut = cutCell?.taskId === taskId && cutCell?.field === field;
 
   const {
     localValue,
@@ -106,6 +108,24 @@ export function Cell({
       startCellEdit();
     } else if (!isActive) {
       setActiveCell(taskId, field);
+    }
+  };
+
+  /** Handle keyboard in edit mode for custom editors (e.g., color picker). */
+  const handleEditModeKeyDown = (e: KeyboardEvent<HTMLDivElement>): void => {
+    // Default inputs handle their own keyboard events via handleEditKeyDown
+    if (!children) return;
+    if (e.key === "Tab") {
+      e.preventDefault();
+      stopCellEdit();
+      navigateCell(e.shiftKey ? "left" : "right");
+    } else if (e.key === "Enter") {
+      e.preventDefault();
+      stopCellEdit();
+      navigateCell(e.shiftKey ? "up" : "down");
+    } else if (e.key === "Escape") {
+      e.preventDefault();
+      cancelEdit();
     }
   };
 
@@ -149,6 +169,8 @@ export function Cell({
     }
   };
 
+  const borderRight = column.showRightBorder !== false ? "border-r" : "";
+
   // Density-aware styles using CSS custom properties
   const cellStyle: React.CSSProperties = {
     height: "var(--density-row-height)",
@@ -173,26 +195,10 @@ export function Cell({
         ref={cellRef}
         role="gridcell"
         tabIndex={-1}
-        className={`relative flex items-center border-b ${column.id !== "color" ? "border-r" : ""} border-neutral-200 bg-white z-20`}
+        className={`relative flex items-center border-b ${borderRight} border-neutral-200 bg-white z-20`}
         style={activeCellStyle}
         onClick={(e) => e.stopPropagation()}
-        onKeyDown={(e) => {
-          // Handle Tab/Enter for custom editors (e.g., color picker)
-          // Default inputs handle their own keyboard events via handleEditKeyDown
-          if (!children) return;
-          if (e.key === "Tab") {
-            e.preventDefault();
-            stopCellEdit();
-            navigateCell(e.shiftKey ? "left" : "right");
-          } else if (e.key === "Enter") {
-            e.preventDefault();
-            stopCellEdit();
-            navigateCell(e.shiftKey ? "up" : "down");
-          } else if (e.key === "Escape") {
-            e.preventDefault();
-            cancelEdit();
-          }
-        }}
+        onKeyDown={handleEditModeKeyDown}
       >
         {children ? (
           <div className="flex items-center flex-1">{children}</div>
@@ -232,9 +238,9 @@ export function Cell({
     <div
       ref={cellRef}
       role="gridcell"
-      tabIndex={0}
+      tabIndex={isActive ? 0 : -1}
       className={`
-        border-b ${column.id !== "color" ? "border-r" : ""} border-neutral-200 flex items-center cursor-pointer relative
+        border-b ${borderRight} border-neutral-200 flex items-center cursor-pointer relative
         ${isActive ? "z-10" : ""}
         ${isActive && !isCut ? "bg-white" : ""}
         ${!column.editable ? "bg-neutral-50 text-neutral-500" : ""}

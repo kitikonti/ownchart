@@ -65,6 +65,9 @@ export interface ColumnDefinition {
 
   /** Full label for menus/dropdowns (falls back to label if not set) */
   menuLabel?: string;
+
+  /** Whether to show right border (default: true). Set false for borderless columns like color. */
+  showRightBorder?: boolean;
 }
 
 /** Wrap a string validator with a typeof guard. */
@@ -108,6 +111,7 @@ export const TASK_COLUMNS: ColumnDefinition[] = [
     editable: true,
     renderer: "color",
     validator: stringValidator(validateColor),
+    showRightBorder: false,
   },
   {
     id: "name",

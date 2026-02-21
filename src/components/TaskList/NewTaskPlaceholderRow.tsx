@@ -276,7 +276,7 @@ export function NewTaskPlaceholderRow(): JSX.Element {
             key={column.id}
             ref={column.id === "name" ? cellRef : undefined}
             tabIndex={0}
-            className={`${column.id !== "color" ? "border-r" : ""} border-b border-neutral-200 flex items-center ${
+            className={`${column.showRightBorder !== false ? "border-r" : ""} border-b border-neutral-200 flex items-center ${
               column.id === "name" && isEditing
                 ? "bg-white z-20"
                 : isSelected

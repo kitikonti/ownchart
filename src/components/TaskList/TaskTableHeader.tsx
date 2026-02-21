@@ -114,7 +114,7 @@ export function TaskTableHeader(): JSX.Element {
         {visibleColumns.map((column) => (
           <div
             key={column.id}
-            className={`task-table-header-cell ${column.id === "name" ? "pr-3" : "px-3"} py-4 border-b ${column.id !== "color" ? "border-r" : ""} text-xs font-semibold text-neutral-600 uppercase tracking-wider whitespace-nowrap relative`}
+            className={`task-table-header-cell ${column.id === "name" ? "pr-3" : "px-3"} py-4 border-b ${column.showRightBorder !== false ? "border-r" : ""} text-xs font-semibold text-neutral-600 uppercase tracking-wider whitespace-nowrap relative`}
             style={{
               backgroundColor: TABLE_HEADER.bg,
               borderColor: TABLE_HEADER.border,

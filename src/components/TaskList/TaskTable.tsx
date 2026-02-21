@@ -180,7 +180,7 @@ export function TaskTable({ hideHeader = true }: TaskTableProps): JSX.Element {
               {visibleColumns.map((column) => (
                 <div
                   key={column.id}
-                  className={`task-table-header-cell sticky top-0 z-10 ${column.id === "name" ? "pr-3" : "px-3"} py-4 bg-neutral-50 border-b ${column.id !== "color" ? "border-r" : ""} border-neutral-200 text-xs font-semibold text-neutral-600 uppercase tracking-wider relative`}
+                  className={`task-table-header-cell sticky top-0 z-10 ${column.id === "name" ? "pr-3" : "px-3"} py-4 bg-neutral-50 border-b ${column.showRightBorder !== false ? "border-r" : ""} border-neutral-200 text-xs font-semibold text-neutral-600 uppercase tracking-wider relative`}
                   role="columnheader"
                 >
                   {column.id === "rowNumber" ? (
