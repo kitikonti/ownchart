@@ -20,7 +20,11 @@ import { useDensityConfig } from "../../store/slices/userPreferencesSlice";
 import { SVG_FONT_FAMILY } from "../../utils/export/constants";
 import { getContrastTextColor } from "../../utils/colorUtils";
 import { useComputedTaskColor } from "../../hooks/useComputedTaskColor";
-import { COLORS, CONNECTION_HANDLE } from "../../styles/design-tokens";
+import {
+  COLORS,
+  CONNECTION_HANDLE,
+  TYPOGRAPHY,
+} from "../../styles/design-tokens";
 
 // =============================================================================
 // CONSTANTS
@@ -35,6 +39,15 @@ const MILESTONE_SIZE_MAX = 10;
 
 /** Corner radius for regular task bars and preview outlines */
 const TASK_BAR_RADIUS = 4;
+
+/** Opacity when a task is being dragged (faded original) */
+const DRAG_OPACITY = 0.3;
+
+/** Background opacity for the unfilled portion of a progress bar */
+const PROGRESS_BG_OPACITY = 0.65;
+
+/** Fill opacity for summary bracket shapes */
+const SUMMARY_FILL_OPACITY = 0.9;
 
 /** Progress drag handle dimensions */
 const PROGRESS_HANDLE = {
@@ -112,7 +125,7 @@ function TaskShapeLabel({
       fontSize={fontSize}
       fontFamily={SVG_FONT_FAMILY}
       fill={COLORS.chart.text}
-      fontWeight={600}
+      fontWeight={TYPOGRAPHY.fontWeight.semibold}
       pointerEvents="none"
       textAnchor={isBefore ? "end" : "start"}
     >
@@ -228,7 +241,7 @@ function SummaryBracket({
       <path
         d={bracketPath}
         fill={color}
-        fillOpacity={opacity * 0.9}
+        fillOpacity={opacity * SUMMARY_FILL_OPACITY}
         style={{ cursor: cursor || "grab" }}
       />
 
@@ -410,7 +423,7 @@ export const TaskBar = React.memo(function TaskBar({
           onMouseDown={onMouseDown}
           onMouseMove={onMouseMoveForCursor}
           cursor={cursor}
-          opacity={isBeingDragged ? 0.3 : 1}
+          opacity={isBeingDragged ? DRAG_OPACITY : 1}
           taskBarHeight={densityConfig.taskBarHeight}
           taskName={task.name}
           fontSize={densityConfig.fontSizeBar}
@@ -455,7 +468,7 @@ export const TaskBar = React.memo(function TaskBar({
           onMouseDown={onMouseDown}
           onMouseMove={onMouseMoveForCursor}
           cursor={cursor}
-          opacity={isBeingDragged ? 0.3 : 1}
+          opacity={isBeingDragged ? DRAG_OPACITY : 1}
           taskName={task.name}
           fontSize={densityConfig.fontSizeBar}
           labelPosition={labelPosition === "inside" ? "after" : labelPosition}
@@ -515,7 +528,9 @@ export const TaskBar = React.memo(function TaskBar({
         width={geometry.width}
         height={geometry.height}
         fill={computedColor}
-        fillOpacity={isBeingDragged ? 0.3 : showProgress ? 0.65 : 1}
+        fillOpacity={
+          isBeingDragged ? DRAG_OPACITY : showProgress ? PROGRESS_BG_OPACITY : 1
+        }
         rx={TASK_BAR_RADIUS}
         ry={TASK_BAR_RADIUS}
       />
@@ -528,7 +543,7 @@ export const TaskBar = React.memo(function TaskBar({
           width={progressWidth}
           height={geometry.height}
           fill={computedColor}
-          fillOpacity={isBeingDragged ? 0.3 : 1}
+          fillOpacity={isBeingDragged ? DRAG_OPACITY : 1}
           clipPath={`url(#${clipPathId})`}
         />
       )}

@@ -103,7 +103,7 @@ cd ../app-gantt-review
 - [ ] `src/utils/fileOperations/index.ts` (12 LOC)
 
 ### Priority: MEDIUM — GanttChart Komponenten
-- [x] `src/components/GanttChart/TaskBar.tsx` (573 LOC) — Magic numbers→Constants, shared TaskShapeProps+TaskShapeLabel, redundante Checks vereinfacht, non-null assertion entfernt. Hex-Werte waren bereits in design-tokens.
+- [x] `src/components/GanttChart/TaskBar.tsx` (573 LOC) — Magic numbers→Constants, shared TaskShapeProps+TaskShapeLabel, redundante Checks vereinfacht, non-null assertion entfernt. Hex-Werte waren bereits in design-tokens. 2. Review: Opacity magic numbers→DRAG_OPACITY/PROGRESS_BG_OPACITY/SUMMARY_FILL_OPACITY, fontWeight→TYPOGRAPHY token, +27 Unit-Tests.
 - [ ] `src/components/GanttChart/ChartCanvas.tsx` (466 LOC)
 - [ ] `src/components/GanttChart/GridLines.tsx` (267 LOC) — 5 Hex-Werte
 - [ ] `src/components/GanttChart/TimelineHeader.tsx` (263 LOC) — 3 Hex-Werte
