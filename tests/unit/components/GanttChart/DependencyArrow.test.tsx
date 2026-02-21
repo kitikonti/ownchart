@@ -7,7 +7,6 @@
 import { describe, it, expect, vi } from "vitest";
 import { render, fireEvent } from "@testing-library/react";
 import { DependencyArrow } from "../../../../src/components/GanttChart/DependencyArrow";
-import type { Task } from "../../../../src/types/chart.types";
 import type { Dependency, TaskPosition } from "../../../../src/types/dependency.types";
 import { COLORS } from "../../../../src/styles/design-tokens";
 
@@ -28,31 +27,8 @@ vi.mock("../../../../src/utils/arrowPath", () => ({
 // Helpers
 // ---------------------------------------------------------------------------
 
-const fromTask: Task = {
-  id: "task-1",
-  name: "From Task",
-  startDate: "2025-01-06",
-  endDate: "2025-01-10",
-  duration: 5,
-  progress: 0,
-  color: "#0F6CBD",
-  order: 0,
-  metadata: {},
-  type: "task",
-};
-
-const toTask: Task = {
-  id: "task-2",
-  name: "To Task",
-  startDate: "2025-01-13",
-  endDate: "2025-01-17",
-  duration: 5,
-  progress: 0,
-  color: "#0F6CBD",
-  order: 1,
-  metadata: {},
-  type: "task",
-};
+const fromTaskName = "From Task";
+const toTaskName = "To Task";
 
 const dependency: Dependency = {
   id: "dep-1",
@@ -74,8 +50,8 @@ function renderArrow(
 ): ReturnType<typeof render> {
   const defaults = {
     dependency,
-    fromTask,
-    toTask,
+    fromTaskName,
+    toTaskName,
     taskPositions: makePositions(),
     rowHeight: 36,
     isSelected: false,

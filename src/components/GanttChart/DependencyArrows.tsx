@@ -141,8 +141,8 @@ export function DependencyArrows({
           <DependencyArrow
             key={dep.id}
             dependency={dep}
-            fromTask={fromTask}
-            toTask={toTask}
+            fromTaskName={fromTask.name}
+            toTaskName={toTask.name}
             taskPositions={taskPositions}
             rowHeight={rowHeight}
             isSelected={selectedDependencyId === dep.id}

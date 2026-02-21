@@ -24,7 +24,7 @@ interface TodayMarkerProps {
 export const TodayMarker = memo(function TodayMarker({
   scale,
   svgHeight,
-}: TodayMarkerProps): JSX.Element | null {
+}: TodayMarkerProps) {
   const today = format(new Date(), "yyyy-MM-dd");
 
   // Don't render if today is outside visible range

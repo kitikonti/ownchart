@@ -6,7 +6,6 @@
 
 import React, { memo, useMemo, useState } from "react";
 import type { Dependency, TaskPosition } from "../../types/dependency.types";
-import type { Task } from "../../types/chart.types";
 import {
   ARROWHEAD_SIZE,
   calculateArrowPath,
@@ -33,8 +32,8 @@ const SELECTION_OPACITY = 0.3;
 
 interface DependencyArrowProps {
   dependency: Dependency;
-  fromTask: Task;
-  toTask: Task;
+  fromTaskName: string;
+  toTaskName: string;
   taskPositions: Map<string, TaskPosition>;
   rowHeight: number;
   isSelected: boolean;
@@ -44,8 +43,8 @@ interface DependencyArrowProps {
 
 export const DependencyArrow = memo(function DependencyArrow({
   dependency,
-  fromTask,
-  toTask,
+  fromTaskName,
+  toTaskName,
   taskPositions,
   rowHeight,
   isSelected,
@@ -108,7 +107,7 @@ export const DependencyArrow = memo(function DependencyArrow({
       onMouseLeave={() => setIsHovered(false)}
       tabIndex={0}
       role="graphics-symbol"
-      aria-label={`Dependency from ${fromTask.name} to ${toTask.name}`}
+      aria-label={`Dependency from ${fromTaskName} to ${toTaskName}`}
     >
       {/* Invisible wider hit area for easier clicking */}
       <path

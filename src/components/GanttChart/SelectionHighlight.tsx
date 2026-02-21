@@ -26,7 +26,7 @@ interface SelectionHighlightProps {
 export const SelectionHighlight = memo(function SelectionHighlight({
   rect,
   height,
-}: SelectionHighlightProps): JSX.Element | null {
+}: SelectionHighlightProps) {
   if (!rect) return null;
 
   return (
