@@ -119,7 +119,7 @@ export const useUIStore = create<UIStore>()(
     return {
       // Initial state
       isExportDialogOpen: false,
-      selectedExportFormat: "png" as ExportFormat,
+      selectedExportFormat: "png",
       exportOptions: { ...DEFAULT_EXPORT_OPTIONS },
       pdfExportOptions: { ...DEFAULT_PDF_OPTIONS },
       svgExportOptions: { ...DEFAULT_SVG_OPTIONS },
@@ -127,7 +127,7 @@ export const useUIStore = create<UIStore>()(
       exportProgress: 0,
       exportError: null,
       isHelpPanelOpen: false,
-      helpDialogActiveTab: "getting-started" as HelpTabId,
+      helpDialogActiveTab: "getting-started",
       isAboutDialogOpen: false,
       isWelcomeTourOpen: false,
       hasSeenWelcome,
@@ -242,24 +242,28 @@ export const useUIStore = create<UIStore>()(
           state.isWelcomeTourOpen = false;
         }),
 
-      dismissWelcome: (permanent = false): void =>
+      dismissWelcome: (permanent = false): void => {
         set((state) => {
           state.isWelcomeTourOpen = false;
           // Only permanently dismiss if user checked "Don't show again"
           if (permanent) {
             state.hasSeenWelcome = true;
-            localStorage.setItem(WELCOME_DISMISSED_KEY, "true");
           }
-        }),
+        });
+        if (permanent) {
+          localStorage.setItem(WELCOME_DISMISSED_KEY, "true");
+        }
+      },
 
-      completeTour: (): void =>
+      completeTour: (): void => {
         set((state) => {
           state.isWelcomeTourOpen = false;
           state.hasSeenWelcome = true;
           state.hasTourCompleted = true;
-          localStorage.setItem(WELCOME_DISMISSED_KEY, "true");
-          localStorage.setItem(TOUR_COMPLETED_KEY, "true");
-        }),
+        });
+        localStorage.setItem(WELCOME_DISMISSED_KEY, "true");
+        localStorage.setItem(TOUR_COMPLETED_KEY, "true");
+      },
 
       checkFirstTimeUser: (): void =>
         set((state) => {

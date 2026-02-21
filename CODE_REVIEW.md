@@ -62,7 +62,7 @@ cd ../app-gantt-review
 
 ## File Review Index
 
-### Already reviewed (9 Dateien)
+### Already reviewed (10 Dateien)
 - [x] `src/store/slices/taskSlice.ts`
 - [x] `src/store/slices/groupingActions.ts`
 - [x] `src/store/slices/indentOutdentActions.ts`
@@ -77,7 +77,7 @@ cd ../app-gantt-review
 - [x] `src/store/slices/chartSlice.ts` (984 LOC) — Spread→Object.assign (5×), magic numbers→constants, SettableViewFields type, console.error entfernt, +34 neue Tests
 - [x] `src/store/slices/clipboardSlice.ts` (552 LOC) — Redundanten null-Check in canPasteCell entfernt, fehlenden Test fuer pasteCell-Guard ergaenzt
 - [x] `src/store/slices/dependencySlice.ts` (333 LOC) — Sauber, +4 fehlende undo/redo-Guard-Tests fuer removeDependency und updateDependency ergaenzt
-- [ ] `src/store/slices/uiSlice.ts` (279 LOC)
+- [x] `src/store/slices/uiSlice.ts` (279 LOC) — localStorage-Side-Effects aus Immer set() verschoben, redundante Type Assertions entfernt, +14 fehlende Tests ergaenzt
 - [ ] `src/store/slices/userPreferencesSlice.ts` (274 LOC)
 - [ ] `src/store/slices/fileSlice.ts` (82 LOC)
 
@@ -319,6 +319,6 @@ Entscheidungen aus bisherigen Reviews die fuer zukuenftige Dateien gelten.
 
 ## Progress
 
-- Reviewed: 12 / 193 Dateien
+- Reviewed: 13 / 193 Dateien
 - Offene Issues: 38 Hex-Farben, ~18 toISODateString-Umstellungen
 - Test-Coverage: 80%+

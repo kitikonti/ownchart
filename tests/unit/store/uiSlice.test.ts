@@ -1,28 +1,32 @@
 import { describe, it, expect, beforeEach } from 'vitest';
 import { useUIStore } from '../../../src/store/slices/uiSlice';
+import {
+  DEFAULT_EXPORT_OPTIONS,
+  DEFAULT_PDF_OPTIONS,
+  DEFAULT_SVG_OPTIONS,
+} from '../../../src/utils/export/types';
 
 describe('uiSlice', () => {
   beforeEach(() => {
+    localStorage.clear();
+
     // Reset store before each test
     useUIStore.setState({
       isExportDialogOpen: false,
+      selectedExportFormat: 'png',
       isExporting: false,
       exportError: null,
-      exportOptions: {
-        timelineZoom: 1.0,
-        selectedColumns: [],
-        includeHeader: true,
-        includeTodayMarker: true,
-        includeDependencies: true,
-        includeGridLines: true,
-        includeWeekends: true,
-        background: 'white',
-      },
+      exportProgress: 0,
+      exportOptions: { ...DEFAULT_EXPORT_OPTIONS },
+      pdfExportOptions: { ...DEFAULT_PDF_OPTIONS },
+      svgExportOptions: { ...DEFAULT_SVG_OPTIONS },
       isHelpPanelOpen: false,
+      helpDialogActiveTab: 'getting-started',
       isAboutDialogOpen: false,
       isWelcomeTourOpen: false,
       hasSeenWelcome: false,
       hasTourCompleted: false,
+      isHydrated: false,
     });
   });
 
@@ -206,6 +210,132 @@ describe('uiSlice', () => {
 
       expect(useUIStore.getState().isWelcomeTourOpen).toBe(false);
       expect(useUIStore.getState().hasSeenWelcome).toBe(true);
+    });
+
+    it('should persist dismissal to localStorage when permanent', () => {
+      useUIStore.setState({ isWelcomeTourOpen: true });
+      const { dismissWelcome } = useUIStore.getState();
+      dismissWelcome(true);
+
+      expect(localStorage.getItem('ownchart-welcome-dismissed')).toBe('true');
+    });
+
+    it('should not persist dismissal to localStorage when not permanent', () => {
+      useUIStore.setState({ isWelcomeTourOpen: true });
+      const { dismissWelcome } = useUIStore.getState();
+      dismissWelcome(false);
+
+      expect(localStorage.getItem('ownchart-welcome-dismissed')).toBeNull();
+    });
+
+    it('should complete tour and persist to localStorage', () => {
+      useUIStore.setState({ isWelcomeTourOpen: true });
+      const { completeTour } = useUIStore.getState();
+      completeTour();
+
+      const state = useUIStore.getState();
+      expect(state.isWelcomeTourOpen).toBe(false);
+      expect(state.hasSeenWelcome).toBe(true);
+      expect(state.hasTourCompleted).toBe(true);
+      expect(localStorage.getItem('ownchart-welcome-dismissed')).toBe('true');
+      expect(localStorage.getItem('ownchart-tour-completed')).toBe('true');
+    });
+
+    it('should show welcome tour for first-time users', () => {
+      useUIStore.setState({ hasSeenWelcome: false, isWelcomeTourOpen: false });
+      const { checkFirstTimeUser } = useUIStore.getState();
+      checkFirstTimeUser();
+
+      expect(useUIStore.getState().isWelcomeTourOpen).toBe(true);
+    });
+
+    it('should not show welcome tour if already seen', () => {
+      useUIStore.setState({ hasSeenWelcome: true, isWelcomeTourOpen: false });
+      const { checkFirstTimeUser } = useUIStore.getState();
+      checkFirstTimeUser();
+
+      expect(useUIStore.getState().isWelcomeTourOpen).toBe(false);
+    });
+  });
+
+  describe('export format', () => {
+    it('should set export format', () => {
+      const { setExportFormat } = useUIStore.getState();
+      setExportFormat('pdf');
+
+      expect(useUIStore.getState().selectedExportFormat).toBe('pdf');
+    });
+  });
+
+  describe('export progress', () => {
+    it('should set export progress', () => {
+      const { setExportProgress } = useUIStore.getState();
+      setExportProgress(50);
+
+      expect(useUIStore.getState().exportProgress).toBe(50);
+    });
+
+    it('should reset progress when starting export', () => {
+      useUIStore.setState({ exportProgress: 75 });
+      const { setIsExporting } = useUIStore.getState();
+      setIsExporting(true);
+
+      expect(useUIStore.getState().exportProgress).toBe(0);
+    });
+
+    it('should stop exporting when setting error', () => {
+      useUIStore.setState({ isExporting: true });
+      const { setExportError } = useUIStore.getState();
+      setExportError('Something went wrong');
+
+      expect(useUIStore.getState().isExporting).toBe(false);
+      expect(useUIStore.getState().exportError).toBe('Something went wrong');
+    });
+  });
+
+  describe('PDF export options', () => {
+    it('should update PDF export options partially', () => {
+      const { setPdfExportOptions } = useUIStore.getState();
+      setPdfExportOptions({ pageSize: 'a3', orientation: 'portrait' });
+
+      const state = useUIStore.getState();
+      expect(state.pdfExportOptions.pageSize).toBe('a3');
+      expect(state.pdfExportOptions.orientation).toBe('portrait');
+      // Other options should remain unchanged
+      expect(state.pdfExportOptions.marginPreset).toBe('normal');
+    });
+  });
+
+  describe('SVG export options', () => {
+    it('should update SVG export options partially', () => {
+      const { setSvgExportOptions } = useUIStore.getState();
+      setSvgExportOptions({ optimize: true, textMode: 'path' });
+
+      const state = useUIStore.getState();
+      expect(state.svgExportOptions.optimize).toBe(true);
+      expect(state.svgExportOptions.textMode).toBe('path');
+      // Other options should remain unchanged
+      expect(state.svgExportOptions.preserveAspectRatio).toBe(true);
+    });
+  });
+
+  describe('help dialog tab', () => {
+    it('should set active help tab', () => {
+      const { setHelpDialogActiveTab } = useUIStore.getState();
+      setHelpDialogActiveTab('shortcuts');
+
+      expect(useUIStore.getState().helpDialogActiveTab).toBe('shortcuts');
+    });
+  });
+
+  describe('hydration', () => {
+    it('should set hydrated state', () => {
+      expect(useUIStore.getState().isHydrated).toBe(false);
+
+      const { setHydrated } = useUIStore.getState();
+      setHydrated();
+
+      expect(useUIStore.getState().isHydrated).toBe(true);
     });
   });
 });
