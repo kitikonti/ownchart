@@ -2,6 +2,70 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [0.0.44](https://github.com/kitikonti/ownchart/compare/v0.0.43...v0.0.44) (2026-02-21)
+
+
+### Bug Fixes
+
+* repair order rebuild for collapsed groups and improve canPasteCell validation ([f9f50e3](https://github.com/kitikonti/ownchart/commit/f9f50e37c3f655428bfedafbe1a0b2d2a7039638))
+* return false from canPasteCell when target task does not exist ([746e056](https://github.com/kitikonti/ownchart/commit/746e056f801c1abdc429e41071c010bd8ab9703b))
+
+
+### UI/UX
+
+* replace OG social preview image with new 1200x630 JPG ([c70fd55](https://github.com/kitikonti/ownchart/commit/c70fd550514ee4f87ee893c69125cf71b33ac6e3))
+
+
+### Code Refactoring
+
+* add HexColor and PaletteId types for compile-time safety ([ec84590](https://github.com/kitikonti/ownchart/commit/ec845908fc0b29b6b0907319d2b927a3398f25f4))
+* add type guards to column validators, remove unsafe coercions ([9bbe578](https://github.com/kitikonti/ownchart/commit/9bbe578906ecc8e9e597f940f6cafbc1382476a6))
+* DependencyArrow accepts task names instead of full Task objects, remove deprecated JSX.Element return types ([70e793b](https://github.com/kitikonti/ownchart/commit/70e793b449281c66bb71f6edc2e11c47ab52b897))
+* derive Command union from CommandParamsMap, replace unknown with Task[EditableField] ([ed3235b](https://github.com/kitikonti/ownchart/commit/ed3235b23c2293becb848e15a6103cf4c5dfe17a))
+* DRY ConnectionHandles via .map(), per-handle hover radius, remove handleDelete wrapper ([8fd88ce](https://github.com/kitikonti/ownchart/commit/8fd88cee0f67bb10c6a8d61e184a4adf4a4f1c31))
+* extract CascadeUpdate/ParentChange types, remove dead code in command.types.ts ([db094d9](https://github.com/kitikonti/ownchart/commit/db094d9b36d0d38659d294c9117fba47b5ecf54c))
+* extract coolGray and slate scales in design-tokens, clarify brand ordering ([fb6ce9a](https://github.com/kitikonti/ownchart/commit/fb6ce9a87e2b6904772e34b7a0b8d339357db22b))
+* extract DEFAULT_COLOR_MODE_STATE to config layer, fix stale doc path ([e925d29](https://github.com/kitikonti/ownchart/commit/e925d296e3b8fad0e075ebb9e8b20becb9a85cd9))
+* extract EditableField to task.types.ts, strengthen typing in command.types.ts ([7f001cb](https://github.com/kitikonti/ownchart/commit/7f001cbdb761a8d43c10afe3ad8aa82ac0ae875f))
+* extract empty clipboard constants in clipboardSlice ([e4d0bc4](https://github.com/kitikonti/ownchart/commit/e4d0bc4b30610855b12884017cac96df862e7534))
+* extract executeRowPaste and executeCellPaste helpers ([5c92209](https://github.com/kitikonti/ownchart/commit/5c92209d1524f101353436af618eee4e7992dded))
+* extract helpers from clipboardSlice and add clipboard data validation ([8c677fe](https://github.com/kitikonti/ownchart/commit/8c677fe765380e211deeda3f5a064532b89edb1b))
+* extract initialState constant in fileSlice, remove redundant comments ([6fdd085](https://github.com/kitikonti/ownchart/commit/6fdd085f43d00a6225f7a1e7c575b52c8094540b))
+* extract runtime constants from preferences.types.ts into config layer ([98912cc](https://github.com/kitikonti/ownchart/commit/98912ccbeab2a2f0282647b71d4269cd25925364))
+* extract snapshot types, remove dead data in command.types.ts ([a1f702f](https://github.com/kitikonti/ownchart/commit/a1f702f8ba262941a93ec2f995306b22e7c91ec5))
+* extract validator guards in tableColumns, add color source comments in design-tokens ([50a0d94](https://github.com/kitikonti/ownchart/commit/50a0d94b062ec7c727b15386fb3f897e4b9189b4))
+* fix all review findings for clipboardSlice.ts ([ab7b975](https://github.com/kitikonti/ownchart/commit/ab7b97563720bc4879ce67a5906c4772df31cd53))
+* improve clipboardSlice code quality and add missing tests ([65f367c](https://github.com/kitikonti/ownchart/commit/65f367c7dfac14a09481377e9e7486739e8316b4))
+* improve dependencySlice type safety and remove dead code ([7e17414](https://github.com/kitikonti/ownchart/commit/7e17414ed4d37b36ec39e1a54f667f45b2d52872))
+* move toast notifications from clipboardSlice to hook ([9c8c985](https://github.com/kitikonti/ownchart/commit/9c8c985f95c13428a73415e1f15be6580aca5139))
+* remove redundant getDensityConfig action, add runtime validation for localStorage ([bdcd0a3](https://github.com/kitikonti/ownchart/commit/bdcd0a33de461dbf66c51872eb9b973ff1536506))
+* remove redundant isUndoing/isRedoing guards in clipboardSlice ([f48e51b](https://github.com/kitikonti/ownchart/commit/f48e51bbcb0f38141f201486d7042cb541739bab))
+* remove redundant null check in canPasteCell and add missing test ([b289548](https://github.com/kitikonti/ownchart/commit/b289548551586d79c26d9442bca77e6077135949))
+* remove stale sprint references from dependency.types.ts ([be72540](https://github.com/kitikonti/ownchart/commit/be72540f725a31e3863cf5e804cf923fe298a106))
+* remove unsafe as-cast in getDensityDefault ([cd69b6b](https://github.com/kitikonti/ownchart/commit/cd69b6bdd44dafb34f2ed07aa05839e978391438))
+* remove unused refs and redundant callback wrapper in ChartCanvas ([bc4584a](https://github.com/kitikonti/ownchart/commit/bc4584ae88fc10bd7f96d534dad71614cef9d454))
+* reorder declarations in command.types.ts for readability ([b27d09c](https://github.com/kitikonti/ownchart/commit/b27d09c6718e8156c924bc4d57d9189644fc57b6))
+* review ChartCanvas — shared constants, SelectionRows extraction, opacity tokens ([7d11211](https://github.com/kitikonti/ownchart/commit/7d112111e3dec405213582e705cd3ab866ddd2b9))
+* review Core Types & Config — extract validateDuration, improve docs ([c34df96](https://github.com/kitikonti/ownchart/commit/c34df969a2e4b3142fe47afa94267ac466df1c7b))
+* review Core Types & Config batch 2 — ColumnId type, remove dead code ([6cf13c8](https://github.com/kitikonti/ownchart/commit/6cf13c8e2a2a06e216f16d6a2a45b6ac455ef15c))
+* review Core Types & Config batch 3 — deduplicate design tokens, remove dead code ([775828b](https://github.com/kitikonti/ownchart/commit/775828bad7132b7782facb0e776fddb6f92501a5))
+* review DependencyArrow, DependencyDragPreview, SelectionHighlight, TodayMarker — a11y fixes, shared ARROWHEAD_SIZE, hardcoded values→constants, +5 tests ([25503a4](https://github.com/kitikonti/ownchart/commit/25503a4dd501bb0b6a2c9b717819bc9be51026e6))
+* review DependencyArrow, DependencyDragPreview, SelectionHighlight, TodayMarker, index — magic numbers→constants, DependencyArrows barrel export, +43 tests ([ca24638](https://github.com/kitikonti/ownchart/commit/ca24638af78775fabf3572d2fc39dc7fc693f131))
+* review dependencySlice — remove dead code and add missing tests ([e1d9ff8](https://github.com/kitikonti/ownchart/commit/e1d9ff8ba14b627dc13f83d821720ac95f237ff9))
+* review GridLines — gridHeight DRY, daily-branch parse fix, +21 tests ([e7604e6](https://github.com/kitikonti/ownchart/commit/e7604e672ab5f6a383e446a71f7a6e8f7595088c))
+* review GridLines — shared constants, DRY endDate, opacity tokens ([059549f](https://github.com/kitikonti/ownchart/commit/059549f801f01aa98057a2375b1408b49bd16ee1))
+* review TaskBar — DRY fillOpacity, diamondPath helper, preview constants, +1 test ([60a09c7](https://github.com/kitikonti/ownchart/commit/60a09c7264f9ec655913b584c37847ba28367621))
+* review TaskBar — extract constants, shared interface, deduplicate labels ([e4d6adf](https://github.com/kitikonti/ownchart/commit/e4d6adf4322fadecbb9887e910ed6cbde57d971e))
+* review TaskBar — extract progress handle strokeWidth constant ([bb9d11a](https://github.com/kitikonti/ownchart/commit/bb9d11a0c99c83ff9e4881f4f33d01ab3766b1da))
+* review TaskBar — opacity constants, TYPOGRAPHY token, +27 tests ([daaead7](https://github.com/kitikonti/ownchart/commit/daaead7ca0527a17089975b05d03fb9f4e024dba))
+* review TaskBar — shared bracket constants, hitzone offset, return type ([bc85f0c](https://github.com/kitikonti/ownchart/commit/bc85f0c6eb067163f9ce3846b0bb3dc44ce57a09))
+* review TimelineHeader, ConnectionHandles, DependencyArrows — magic numbers→constants, dead code removed, non-null assertions→guards, +47 tests ([fce29c1](https://github.com/kitikonti/ownchart/commit/fce29c197ba9841a2c0353fc1a0a6f265491f775))
+* review uiSlice — move side effects out of Immer and add missing tests ([e0e7302](https://github.com/kitikonti/ownchart/commit/e0e7302655110af459754aedcf228f867fbc37c6))
+* review userPreferencesSlice — fix unsafe JSON.parse, remove dead code, move side effects ([19d4cbb](https://github.com/kitikonti/ownchart/commit/19d4cbb62a1e0dc451be54deda24758e21934041))
+* sort GanttChart barrel exports alphabetically ([2cb5631](https://github.com/kitikonti/ownchart/commit/2cb5631af20c8407f6dc48dc2b09e64a369400cf))
+* type-safe validation sets in userPreferencesSlice, remove redundant comments ([6899764](https://github.com/kitikonti/ownchart/commit/68997641ce0d0cbc32ef0e1b13b836b5d14472cf))
+* use design token for default task color in validation ([f11c776](https://github.com/kitikonti/ownchart/commit/f11c77676de72640307cb66f6710e62986dbe005)), closes [#0F6](https://github.com/kitikonti/ownchart/issues/0F6)
+
 ### [0.0.43](https://github.com/kitikonti/ownchart/compare/v0.0.42...v0.0.43) (2026-02-20)
 
 
