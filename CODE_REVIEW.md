@@ -88,7 +88,7 @@ cd ../app-gantt-review
 ### Priority: HIGH — Core Types & Config
 - [x] `src/types/command.types.ts`
 - [x] `src/types/preferences.types.ts`
-- [ ] `src/types/dependency.types.ts` (100 LOC)
+- [x] `src/types/dependency.types.ts` (100 LOC)
 - [ ] `src/types/colorMode.types.ts` (84 LOC)
 - [ ] `src/types/chart.types.ts` (59 LOC)
 - [ ] `src/types/launchQueue.d.ts` (12 LOC)

@@ -1,14 +1,11 @@
 /**
  * Dependency types for task relationships.
- * Sprint 1.4 - Dependencies (Finish-to-Start Only)
- *
- * Based on DATA_MODEL.md Section 2.2
+ * See DATA_MODEL.md Section 2.2
  */
 
 /**
  * Dependency type classification.
- * Sprint 1.4 implements only FS (Finish-to-Start).
- * Other types are defined for future compatibility (V1.1+).
+ * Currently only FS (Finish-to-Start) is implemented.
  *
  * @type FS - Finish-to-Start: A finishes → B starts (most common)
  * @type SS - Start-to-Start: A starts → B can start
@@ -23,7 +20,7 @@ export type DependencyType = "FS" | "SS" | "FF" | "SF";
  * @property id - Unique identifier (UUID v4)
  * @property fromTaskId - Source task ID (predecessor)
  * @property toTaskId - Target task ID (successor)
- * @property type - Dependency type (FS for Sprint 1.4)
+ * @property type - Dependency type (currently only FS)
  * @property lag - Offset days (positive = gap, negative = overlap)
  * @property createdAt - Creation timestamp (ISO 8601)
  */
