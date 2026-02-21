@@ -28,7 +28,7 @@ export const SelectionHighlight = memo(function SelectionHighlight({
         width={rect.width}
         height={height}
         fill={COLORS.chart.marquee}
-        fillOpacity={0.1}
+        fillOpacity={COLORS.chart.marqueeFillOpacity}
       />
       <line
         x1={rect.x}

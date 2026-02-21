@@ -59,6 +59,9 @@ export const COLORS = {
     todayHighlight: "#EBF3FC", // brand-50 for today header cell background
     taskDefault: "#0F6CBD", // brand-600 for new tasks
     marquee: "#334155", // Marquee selection rectangle
+    /** Fill opacity for selected-row highlight and marquee overlay */
+    selectionFillOpacity: 0.08,
+    marqueeFillOpacity: 0.1,
   },
 } as const;
 
