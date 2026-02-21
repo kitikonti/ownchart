@@ -1,48 +1,29 @@
 /**
  * Generic cell component for the task table.
  * Handles view/edit modes, focus management, and keyboard navigation.
+ *
+ * Edit state and logic are delegated to the useCellEdit hook.
  */
 
-import {
-  useEffect,
-  useRef,
-  useState,
-  type KeyboardEvent,
-  type MouseEvent,
-} from "react";
+import { useRef, type KeyboardEvent, type MouseEvent } from "react";
 import { useTaskStore, type EditableField } from "../../store/slices/taskSlice";
-import { useChartStore } from "../../store/slices/chartSlice";
-import { useUserPreferencesStore } from "../../store/slices/userPreferencesSlice";
 import { useCellNavigation } from "../../hooks/useCellNavigation";
+import { useCellEdit } from "../../hooks/useCellEdit";
 import type { Task } from "../../types/chart.types";
+import type { NavigationDirection } from "../../types/task.types";
 import type { ColumnDefinition } from "../../config/tableColumns";
-import {
-  calculateWorkingDays,
-  addWorkingDays,
-} from "../../utils/workingDaysCalculator";
-import type { DateFormat } from "../../types/preferences.types";
 import { COLORS } from "../../styles/design-tokens";
 
-/**
- * Format a date string according to user preferences.
- */
-function formatDateDisplay(isoDate: string, dateFormat: DateFormat): string {
-  if (!isoDate) return "";
+/** Brand color for active cell outline. */
+const ACTIVE_CELL_BORDER = COLORS.brand[600];
 
-  // Parse ISO date (YYYY-MM-DD)
-  const [year, month, day] = isoDate.split("-");
-  if (!year || !month || !day) return isoDate;
-
-  switch (dateFormat) {
-    case "DD/MM/YYYY":
-      return `${day}/${month}/${year}`;
-    case "MM/DD/YYYY":
-      return `${month}/${day}/${year}`;
-    case "YYYY-MM-DD":
-    default:
-      return isoDate;
-  }
-}
+/** Arrow keys mapped to navigation directions. */
+const ARROW_NAV: Record<string, NavigationDirection> = {
+  ArrowUp: "up",
+  ArrowDown: "down",
+  ArrowLeft: "left",
+  ArrowRight: "right",
+};
 
 export interface CellProps {
   /** Task ID */
@@ -72,10 +53,6 @@ export function Cell({
   children,
 }: CellProps): JSX.Element {
   const cellRef = useRef<HTMLDivElement>(null);
-  const inputRef = useRef<HTMLInputElement>(null);
-  const [localValue, setLocalValue] = useState<string>("");
-  const [error, setError] = useState<string | null>(null);
-  const shouldOverwriteRef = useRef<boolean>(false);
 
   const {
     isCellActive,
@@ -86,91 +63,38 @@ export function Cell({
     navigateCell,
   } = useCellNavigation();
 
-  const updateTask = useTaskStore((state) => state.updateTask);
   const clearSelection = useTaskStore((state) => state.clearSelection);
   const cutCell = useTaskStore((state) => state.cutCell);
-
-  // Working days settings
-  const workingDaysMode = useChartStore((state) => state.workingDaysMode);
-  const workingDaysConfig = useChartStore((state) => state.workingDaysConfig);
-  const holidayRegion = useChartStore((state) => state.holidayRegion);
-
-  // Date format preference
-  const dateFormat = useUserPreferencesStore(
-    (state) => state.preferences.dateFormat
-  );
 
   const isActive = isCellActive(taskId, field);
   const isEditing = isCellEditing(taskId, field);
   const isCut = cutCell?.taskId === taskId && cutCell?.field === field;
 
-  // Get current value from task
-  const currentValue = task[field];
-
-  // Focus cell when it becomes active
-  useEffect(() => {
-    if (isActive && cellRef.current && !isEditing) {
-      cellRef.current.focus({ preventScroll: true });
-    }
-  }, [isActive, isEditing]);
-
-  // Focus input when entering edit mode (preventScroll avoids horizontal jump)
-  useEffect(() => {
-    if (isEditing && inputRef.current) {
-      inputRef.current.focus({ preventScroll: true });
-      // Select all text for programmatic edit entry (e.g. Enter, F2, group action).
-      // Skip when user typed a character — shouldOverwrite already set the value.
-      if (!shouldOverwriteRef.current) {
-        inputRef.current.select();
-      }
-    }
-  }, [isEditing]);
-
-  // Initialize local value when entering edit mode
-  useEffect(() => {
-    if (isEditing) {
-      // If shouldOverwrite is true, localValue was already set by typing
-      // Otherwise, initialize with current value
-      if (!shouldOverwriteRef.current) {
-        // Special handling for duration in working days mode
-        if (
-          field === "duration" &&
-          workingDaysMode &&
-          task.startDate &&
-          task.endDate
-        ) {
-          const workingDays = calculateWorkingDays(
-            task.startDate,
-            task.endDate,
-            workingDaysConfig,
-            workingDaysConfig.excludeHolidays ? holidayRegion : undefined
-          );
-          setLocalValue(String(workingDays));
-        } else {
-          setLocalValue(String(currentValue));
-        }
-      }
-      shouldOverwriteRef.current = false; // Reset flag
-      setError(null);
-    }
-  }, [
-    isEditing,
-    currentValue,
+  const {
+    localValue,
+    setLocalValue,
+    error,
+    inputRef,
+    shouldOverwriteRef,
+    saveValue,
+    cancelEdit,
+    handleEditKeyDown,
+    displayValue,
+  } = useCellEdit({
+    taskId,
+    task,
     field,
-    workingDaysMode,
-    workingDaysConfig,
-    holidayRegion,
-    task.startDate,
-    task.endDate,
-  ]);
+    column,
+    isActive,
+    isEditing,
+    cellRef,
+    stopCellEdit,
+    navigateCell,
+  });
 
-  /**
-   * Handle cell click - activate or edit.
-   */
+  /** Handle cell click — activate or enter edit mode. */
   const handleClick = (e: MouseEvent<HTMLDivElement>): void => {
     e.stopPropagation();
-
-    // Clear row selection when clicking a cell (Excel behavior)
     clearSelection();
 
     if (!column.editable) {
@@ -179,224 +103,51 @@ export function Cell({
     }
 
     if (isActive && !isEditing) {
-      // Already active, start editing
       startCellEdit();
     } else if (!isActive) {
-      // Not active, activate it
       setActiveCell(taskId, field);
     }
   };
 
-  /**
-   * Handle keyboard navigation in navigation mode.
-   */
+  /** Handle keyboard navigation in view mode. */
   const handleNavigationKeyDown = (e: KeyboardEvent<HTMLDivElement>): void => {
-    // Arrow key navigation
-    if (e.key === "ArrowUp") {
+    const direction = ARROW_NAV[e.key];
+    if (direction) {
       e.preventDefault();
-      navigateCell("up");
-    } else if (e.key === "ArrowDown") {
-      e.preventDefault();
-      navigateCell("down");
-    } else if (e.key === "ArrowLeft") {
-      e.preventDefault();
-      navigateCell("left");
-    } else if (e.key === "ArrowRight") {
-      e.preventDefault();
-      navigateCell("right");
+      navigateCell(direction);
+      return;
     }
-    // Tab navigation
-    else if (e.key === "Tab") {
+
+    if (e.key === "Tab") {
       e.preventDefault();
       navigateCell(e.shiftKey ? "left" : "right");
-    }
-    // Enter to start edit or navigate down
-    else if (e.key === "Enter") {
+    } else if (e.key === "Enter") {
       e.preventDefault();
       if (column.editable) {
         startCellEdit();
       } else {
         navigateCell("down");
       }
-    }
-    // F2 to start edit
-    else if (e.key === "F2" && column.editable) {
+    } else if (e.key === "F2" && column.editable) {
       e.preventDefault();
       startCellEdit();
-    }
-    // Any alphanumeric key starts editing and overwrites value (Excel behavior)
-    else if (
+    } else if (
       column.editable &&
       e.key.length === 1 &&
       !e.ctrlKey &&
       !e.metaKey &&
       !e.altKey
     ) {
+      // Any printable character starts editing and overwrites (Excel behavior)
       e.preventDefault();
-      // Start with the typed character (Excel behavior - typing overwrites)
       setLocalValue(e.key);
       shouldOverwriteRef.current = true;
       startCellEdit();
-    }
-    // Escape to deactivate cell (exit navigation mode)
-    else if (e.key === "Escape") {
+    } else if (e.key === "Escape") {
       e.preventDefault();
       setActiveCell(null, null);
     }
   };
-
-  /**
-   * Validate and save the cell value.
-   */
-  const saveValue = (): void => {
-    if (!column.validator) {
-      // No validator, save directly
-      updateCellValue(localValue);
-      return;
-    }
-
-    const validation = column.validator(localValue);
-    if (!validation.valid) {
-      setError(validation.error || "Invalid value");
-      return;
-    }
-
-    // Additional validation for dates
-    if (field === "startDate" || field === "endDate") {
-      const newTask = { ...task, [field]: localValue };
-
-      // Calculate duration
-      const start = new Date(newTask.startDate);
-      const end = new Date(newTask.endDate);
-
-      if (end < start) {
-        setError("End date must be after start date");
-        return;
-      }
-
-      const duration =
-        Math.ceil((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24)) +
-        1;
-
-      // Update both field and duration
-      updateTask(taskId, { [field]: localValue, duration });
-    } else if (field === "duration") {
-      // Duration edited - update endDate
-      const durationDays = Number(localValue);
-
-      let endDateStr: string;
-
-      if (workingDaysMode) {
-        // Working days mode: input is working days, calculate calendar end date
-        endDateStr = addWorkingDays(
-          task.startDate,
-          durationDays,
-          workingDaysConfig,
-          workingDaysConfig.excludeHolidays ? holidayRegion : undefined
-        );
-      } else {
-        // Calendar days mode
-        const startDate = new Date(task.startDate);
-        const newEndDate = new Date(startDate);
-        newEndDate.setDate(newEndDate.getDate() + durationDays - 1);
-        endDateStr = newEndDate.toISOString().split("T")[0];
-      }
-
-      // Calculate actual calendar duration for storage
-      const actualDuration =
-        Math.ceil(
-          (new Date(endDateStr).getTime() -
-            new Date(task.startDate).getTime()) /
-            (1000 * 60 * 60 * 24)
-        ) + 1;
-
-      updateTask(taskId, { duration: actualDuration, endDate: endDateStr });
-    } else {
-      updateCellValue(localValue);
-    }
-
-    setError(null);
-    stopCellEdit();
-  };
-
-  /**
-   * Update cell value in store.
-   */
-  const updateCellValue = (value: string): void => {
-    let typedValue: string | number = value;
-
-    // Convert to appropriate type
-    if (field === "duration" || field === "progress") {
-      typedValue = Number(value);
-    }
-
-    updateTask(taskId, { [field]: typedValue });
-  };
-
-  /**
-   * Cancel edit mode without saving.
-   */
-  const cancelEdit = (): void => {
-    setError(null);
-    setLocalValue(String(currentValue));
-    stopCellEdit();
-  };
-
-  /**
-   * Handle keyboard events in edit mode.
-   */
-  const handleEditKeyDown = (e: KeyboardEvent<HTMLInputElement>): void => {
-    if (e.key === "Enter") {
-      e.preventDefault();
-      saveValue();
-      if (!error) {
-        navigateCell(e.shiftKey ? "up" : "down");
-      }
-    } else if (e.key === "Tab") {
-      e.preventDefault();
-      saveValue();
-      if (!error) {
-        navigateCell(e.shiftKey ? "left" : "right");
-      }
-    } else if (e.key === "Escape") {
-      e.preventDefault();
-      cancelEdit();
-    }
-  };
-
-  /**
-   * Format display value.
-   */
-  const getDisplayValue = (): string => {
-    // Special handling for duration in working days mode
-    if (
-      field === "duration" &&
-      workingDaysMode &&
-      task.startDate &&
-      task.endDate
-    ) {
-      const workingDays = calculateWorkingDays(
-        task.startDate,
-        task.endDate,
-        workingDaysConfig,
-        workingDaysConfig.excludeHolidays ? holidayRegion : undefined
-      );
-      return String(workingDays);
-    }
-
-    // Format dates according to user preference
-    if ((field === "startDate" || field === "endDate") && currentValue) {
-      return formatDateDisplay(String(currentValue), dateFormat);
-    }
-
-    if (column.formatter) {
-      return column.formatter(currentValue);
-    }
-    return String(currentValue);
-  };
-
-  // Brand color for active cell outline
-  const BRAND_COLOR = COLORS.brand[600];
 
   // Density-aware styles using CSS custom properties
   const cellStyle: React.CSSProperties = {
@@ -412,15 +163,16 @@ export function Cell({
   // Active cell style with brand color inset box-shadow (doesn't affect layout)
   const activeCellStyle: React.CSSProperties = {
     ...cellStyle,
-    boxShadow: `inset 0 0 0 2px ${BRAND_COLOR}`,
+    boxShadow: `inset 0 0 0 2px ${ACTIVE_CELL_BORDER}`,
   };
 
   // Render edit mode
   if (isEditing) {
     return (
-      // eslint-disable-next-line jsx-a11y/no-static-element-interactions -- edit mode container, keyboard handled by inner input or onKeyDown
       <div
         ref={cellRef}
+        role="gridcell"
+        tabIndex={-1}
         className={`relative flex items-center border-b ${column.id !== "color" ? "border-r" : ""} border-neutral-200 bg-white z-20`}
         style={activeCellStyle}
         onClick={(e) => e.stopPropagation()}
@@ -443,10 +195,8 @@ export function Cell({
         }}
       >
         {children ? (
-          // Custom editor (e.g., ColorPicker)
           <div className="flex items-center flex-1">{children}</div>
         ) : (
-          // Default input
           <input
             ref={inputRef}
             type={
@@ -465,8 +215,11 @@ export function Cell({
           />
         )}
         {error && (
-          <div className="absolute left-0 top-full mt-1 text-xs text-red-600 flex items-center gap-1 z-10 bg-white px-2 py-1 rounded shadow-md">
-            <span>⚠</span>
+          <div
+            className="absolute left-0 top-full mt-1 text-xs text-red-600 flex items-center gap-1 z-10 bg-white px-2 py-1 rounded shadow-md"
+            role="alert"
+          >
+            <span aria-hidden="true">⚠</span>
             <span>{error}</span>
           </div>
         )}
@@ -491,7 +244,7 @@ export function Cell({
       onClick={handleClick}
       onKeyDown={handleNavigationKeyDown}
     >
-      {children || <span>{getDisplayValue()}</span>}
+      {children || <span>{displayValue}</span>}
     </div>
   );
 }

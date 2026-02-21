@@ -11,6 +11,7 @@ import {
   getDay,
 } from "date-fns";
 import type { Task } from "../types/chart.types";
+import type { DateFormat } from "../types/preferences.types";
 
 /**
  * Convert a Date to ISO date string (YYYY-MM-DD).
@@ -50,21 +51,23 @@ export function formatDate(dateStr: string, formatStr: string): string {
 }
 
 /**
- * Format a Date object according to user's DateFormat preference.
- * @param date - The date to format
+ * Format a date according to user's DateFormat preference.
+ * Accepts both Date objects and ISO date strings (YYYY-MM-DD).
+ * @param date - The date to format (Date object or ISO string)
  * @param dateFormat - The user's date format preference
  * @returns Formatted date string
  */
 export function formatDateByPreference(
-  date: Date,
-  dateFormat: "DD/MM/YYYY" | "MM/DD/YYYY" | "YYYY-MM-DD"
+  date: Date | string,
+  dateFormat: DateFormat
 ): string {
   const formatMap = {
     "DD/MM/YYYY": "dd/MM/yyyy",
     "MM/DD/YYYY": "MM/dd/yyyy",
     "YYYY-MM-DD": "yyyy-MM-dd",
   };
-  return format(date, formatMap[dateFormat]);
+  const d = typeof date === "string" ? parseISO(date) : date;
+  return format(d, formatMap[dateFormat]);
 }
 
 /**
