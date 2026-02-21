@@ -96,8 +96,8 @@ cd ../app-gantt-review
 - [x] `src/styles/design-tokens.ts` (283 LOC)
 
 ### Priority: HIGH — File Operations (kritischer Pfad)
-- [ ] `src/utils/fileOperations/validate.ts` (299 LOC)
-- [ ] `src/utils/fileOperations/deserialize.ts` (233 LOC)
+- [x] `src/utils/fileOperations/validate.ts` (299 LOC)
+- [x] `src/utils/fileOperations/deserialize.ts` (233 LOC)
 - [ ] `src/utils/fileOperations/fileDialog.ts` (215 LOC)
 - [ ] `src/utils/fileOperations/types.ts` (192 LOC)
 - [ ] `src/utils/fileOperations/serialize.ts` (159 LOC)
@@ -326,6 +326,6 @@ Entscheidungen aus bisherigen Reviews die fuer zukuenftige Dateien gelten.
 
 ## Progress
 
-- Reviewed: 34 / 193 Dateien
+- Reviewed: 36 / 193 Dateien
 - Offene Issues: 38 Hex-Farben in 10 .tsx-Dateien, ~18 toISODateString-Umstellungen
 - Test-Coverage: 80%+
