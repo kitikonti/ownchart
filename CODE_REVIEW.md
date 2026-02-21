@@ -82,7 +82,7 @@ cd ../app-gantt-review
 - [x] `src/store/slices/fileSlice.ts` (64 LOC) — Sauber, keine Findings, vorbildliche Slice-Referenz
 
 ### Priority: HIGH — Core Types & Config
-- [ ] `src/types/command.types.ts` (~250 LOC)
+- [x] `src/types/command.types.ts` (~250 LOC) — CascadeUpdate/ParentChange extrahiert (DRY), deprecated DeleteTaskParams.id entfernt, ungenutzten CommandParams-Union entfernt, stale Sprint-Comments bereinigt
 - [ ] `src/types/preferences.types.ts` (196 LOC)
 - [ ] `src/types/dependency.types.ts` (100 LOC)
 - [ ] `src/types/colorMode.types.ts` (84 LOC)
