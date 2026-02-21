@@ -451,7 +451,6 @@ export const useTaskStore = create<TaskStore>()(
             : `Deleted ${deletedTasks.length} tasks`;
 
         recordCommand(CommandType.DELETE_TASK, description, {
-          id,
           deletedIds: deletedTasks.map((t) => t.id),
           cascade,
           deletedTasks,
@@ -556,7 +555,6 @@ export const useTaskStore = create<TaskStore>()(
             : `Deleted ${deletedTasks.length} tasks`;
 
         recordCommand(CommandType.DELETE_TASK, description, {
-          id: selectedIds[0],
           deletedIds: Array.from(idsToDelete),
           cascade: true,
           deletedTasks,

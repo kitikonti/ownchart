@@ -11,6 +11,18 @@ import type {
 } from "./dependency.types";
 import type { ColorModeState } from "./colorMode.types";
 
+export type CascadeUpdate = {
+  id: string;
+  updates: Partial<Task>;
+  previousValues: Partial<Task>;
+};
+
+export type ParentChange = {
+  taskId: string;
+  oldParent: string | undefined;
+  oldOrder: number;
+};
+
 interface CommandBase {
   id: string; // UUID for tracking
   timestamp: number; // When executed
@@ -111,7 +123,7 @@ export enum CommandType {
   GROUP_TASKS = "groupTasks",
   UNGROUP_TASKS = "ungroupTasks",
 
-  // Dependency operations (Sprint 1.4)
+  // Dependency operations
   ADD_DEPENDENCY = "addDependency",
   DELETE_DEPENDENCY = "deleteDependency",
   UPDATE_DEPENDENCY = "updateDependency",
@@ -137,28 +149,6 @@ export enum CommandType {
   UNHIDE_TASKS = "unhideTasks",
 }
 
-export type CommandParams =
-  | AddTaskParams
-  | UpdateTaskParams
-  | DeleteTaskParams
-  | ReorderTasksParams
-  | IndentOutdentParams
-  | AddDependencyParams
-  | DeleteDependencyParams
-  | UpdateDependencyParams
-  | CopyRowsParams
-  | CutRowsParams
-  | PasteRowsParams
-  | CopyCellParams
-  | CutCellParams
-  | PasteCellParams
-  | MultiDragTasksParams
-  | ApplyColorsToManualParams
-  | GroupTasksParams
-  | UngroupTasksParams
-  | HideTasksParams
-  | UnhideTasksParams;
-
 // Specific parameter types for each command
 export type AddTaskParams = SingleAddTaskParams | BatchAddTaskParams;
 
@@ -179,24 +169,15 @@ export interface UpdateTaskParams {
   id: string;
   updates: Partial<Task>;
   previousValues: Partial<Task>; // Store old values for undo
-  cascadeUpdates?: Array<{
-    id: string;
-    updates: Partial<Task>;
-    previousValues: Partial<Task>;
-  }>; // For summary task cascade updates
+  cascadeUpdates?: CascadeUpdate[];
 }
 
 export interface DeleteTaskParams {
-  id: string; // Deprecated: Use deletedIds instead
-  deletedIds: string[]; // All task IDs that were deleted
+  deletedIds: string[];
   cascade: boolean;
-  deletedTasks: Task[]; // Store all deleted tasks for undo
-  deletedDependencies: Dependency[]; // Dependencies removed with the deleted tasks
-  cascadeUpdates?: Array<{
-    id: string;
-    updates: Partial<Task>;
-    previousValues: Partial<Task>;
-  }>;
+  deletedTasks: Task[];
+  deletedDependencies: Dependency[];
+  cascadeUpdates?: CascadeUpdate[];
 }
 
 export interface ReorderTasksParams {
@@ -228,7 +209,6 @@ export interface IndentOutdentParams {
   }>;
 }
 
-// Dependency command params (Sprint 1.4)
 export interface AddDependencyParams {
   dependency: Dependency;
   dateAdjustments: DateAdjustment[]; // Store any cascading date changes for undo
@@ -288,7 +268,6 @@ export interface PasteCellParams {
   cutClearValue?: unknown; // Value source cell was set to after cut (for redo)
 }
 
-// Multi-drag command params
 export interface MultiDragTasksParams {
   taskChanges: Array<{
     id: string;
@@ -297,11 +276,7 @@ export interface MultiDragTasksParams {
     newStartDate: string;
     newEndDate: string;
   }>;
-  cascadeUpdates: Array<{
-    id: string;
-    updates: Partial<Task>;
-    previousValues: Partial<Task>;
-  }>;
+  cascadeUpdates: CascadeUpdate[];
 }
 
 // Apply colors to manual params
@@ -315,43 +290,24 @@ export interface ApplyColorsToManualParams {
   }>;
 }
 
-// Group tasks params
 export interface GroupTasksParams {
   summaryTaskId: string;
   summaryTask: Task;
-  changes: Array<{
-    taskId: string;
-    oldParent: string | undefined;
-    oldOrder: number;
-  }>;
+  changes: ParentChange[];
   previousOrder: Array<{ id: string; order: number }>;
-  cascadeUpdates: Array<{
-    id: string;
-    updates: Partial<Task>;
-    previousValues: Partial<Task>;
-  }>;
+  cascadeUpdates: CascadeUpdate[];
 }
 
-// Ungroup tasks params
 export interface UngroupTasksParams {
   ungroupedSummaries: Array<{
     summaryTask: Task;
-    childChanges: Array<{
-      taskId: string;
-      oldParent: string | undefined;
-      oldOrder: number;
-    }>;
+    childChanges: ParentChange[];
     removedDependencies: Dependency[];
   }>;
   previousOrder: Array<{ id: string; order: number }>;
-  cascadeUpdates: Array<{
-    id: string;
-    updates: Partial<Task>;
-    previousValues: Partial<Task>;
-  }>;
+  cascadeUpdates: CascadeUpdate[];
 }
 
-// Hide/Show tasks params
 export interface HideTasksParams {
   taskIds: string[]; // IDs that were explicitly hidden (including descendants)
   previousHiddenTaskIds: string[]; // Previous state for undo
