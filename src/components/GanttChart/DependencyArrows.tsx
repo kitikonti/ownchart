@@ -100,14 +100,6 @@ export function DependencyArrows({
     [selectDependency, selectedDependencyId]
   );
 
-  // Handle dependency deletion
-  const handleDelete = useCallback(
-    (id: string) => {
-      removeDependency(id);
-    },
-    [removeDependency]
-  );
-
   // Filter dependencies to only render those where both tasks are visible
   const visibleDependencies = useMemo(() => {
     return dependencies.filter((dep) => {
@@ -155,7 +147,7 @@ export function DependencyArrows({
             rowHeight={rowHeight}
             isSelected={selectedDependencyId === dep.id}
             onSelect={handleSelect}
-            onDelete={handleDelete}
+            onDelete={removeDependency}
           />
         );
       })}

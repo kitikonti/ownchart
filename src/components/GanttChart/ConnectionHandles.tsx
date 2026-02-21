@@ -64,11 +64,10 @@ export const ConnectionHandles = memo(function ConnectionHandles({
 
   // Handle positions - offset outside the task bar to avoid conflict with resize handles
   const handleCenterY = y + height / 2;
-  const handleRadius = hoveredHandle
-    ? HANDLE_RADIUS_HOVER
-    : HANDLE_RADIUS_NORMAL;
-  const startHandleX = x - HANDLE_OFFSET;
-  const endHandleX = x + width + HANDLE_OFFSET;
+  const handles: { cx: number; side: "start" | "end" }[] = [
+    { cx: x - HANDLE_OFFSET, side: "start" },
+    { cx: x + width + HANDLE_OFFSET, side: "end" },
+  ];
 
   // Determine handle colors based on state - neutral by default
   let handleFill: string = CONNECTION_HANDLE.neutralFill;
@@ -108,99 +107,62 @@ export const ConnectionHandles = memo(function ConnectionHandles({
     return null;
   }
 
+  // Ring stroke color (only needed when drop target)
+  const ringStroke = isValidDropTarget
+    ? CONNECTION_HANDLE.validStroke
+    : CONNECTION_HANDLE.invalidStroke;
+  const showRings = isValidDropTarget || isInvalidDropTarget;
+
   return (
     <g
       className="connection-handles"
       onMouseEnter={handleMouseEnter}
       onMouseUp={handleMouseUp}
     >
-      {/* Start handle (left side) - positioned outside task bar */}
-      <g
-        onMouseEnter={() => setHoveredHandle("start")}
-        onMouseLeave={() => setHoveredHandle(null)}
-        onMouseDown={handleMouseDown("start")}
-      >
-        {/* Larger invisible hit area */}
-        <circle
-          cx={startHandleX}
-          cy={handleCenterY}
-          r={HANDLE_HIT_AREA_RADIUS}
-          fill="transparent"
-          className="cursor-crosshair"
-        />
-        {/* Visible handle */}
-        <circle
-          cx={startHandleX}
-          cy={handleCenterY}
-          r={handleRadius}
-          fill={handleFill}
-          stroke={handleStroke}
-          strokeWidth={HANDLE_STROKE_WIDTH}
-          className="cursor-crosshair transition-all duration-150"
-        />
-      </g>
-
-      {/* End handle (right side) - positioned outside task bar, primary for FS dependencies */}
-      <g
-        onMouseEnter={() => setHoveredHandle("end")}
-        onMouseLeave={() => setHoveredHandle(null)}
-        onMouseDown={handleMouseDown("end")}
-      >
-        {/* Larger invisible hit area */}
-        <circle
-          cx={endHandleX}
-          cy={handleCenterY}
-          r={HANDLE_HIT_AREA_RADIUS}
-          fill="transparent"
-          className="cursor-crosshair"
-        />
-        {/* Visible handle */}
-        <circle
-          cx={endHandleX}
-          cy={handleCenterY}
-          r={handleRadius}
-          fill={handleFill}
-          stroke={handleStroke}
-          strokeWidth={HANDLE_STROKE_WIDTH}
-          className="cursor-crosshair transition-all duration-150"
-        />
-      </g>
-
-      {/* Drop target indicator rings (when task is a valid/invalid target) */}
-      {(isValidDropTarget || isInvalidDropTarget) && (
-        <>
-          {/* Start handle ring */}
-          <circle
-            cx={startHandleX}
-            cy={handleCenterY}
-            r={handleRadius + RING_OFFSET}
-            fill="none"
-            stroke={
-              isValidDropTarget
-                ? CONNECTION_HANDLE.validStroke
-                : CONNECTION_HANDLE.invalidStroke
-            }
-            strokeWidth={RING_STROKE_WIDTH}
-            opacity={RING_OPACITY}
-            pointerEvents="none"
-          />
-          {/* End handle ring */}
-          <circle
-            cx={endHandleX}
-            cy={handleCenterY}
-            r={handleRadius + RING_OFFSET}
-            fill="none"
-            stroke={
-              isValidDropTarget
-                ? CONNECTION_HANDLE.validStroke
-                : CONNECTION_HANDLE.invalidStroke
-            }
-            strokeWidth={RING_STROKE_WIDTH}
-            opacity={RING_OPACITY}
-            pointerEvents="none"
-          />
-        </>
-      )}
+      {handles.map(({ cx, side }) => {
+        const radius =
+          hoveredHandle === side ? HANDLE_RADIUS_HOVER : HANDLE_RADIUS_NORMAL;
+        return (
+          <g
+            key={side}
+            onMouseEnter={() => setHoveredHandle(side)}
+            onMouseLeave={() => setHoveredHandle(null)}
+            onMouseDown={handleMouseDown(side)}
+          >
+            {/* Invisible hit area */}
+            <circle
+              cx={cx}
+              cy={handleCenterY}
+              r={HANDLE_HIT_AREA_RADIUS}
+              fill="transparent"
+              className="cursor-crosshair"
+            />
+            {/* Visible handle */}
+            <circle
+              cx={cx}
+              cy={handleCenterY}
+              r={radius}
+              fill={handleFill}
+              stroke={handleStroke}
+              strokeWidth={HANDLE_STROKE_WIDTH}
+              className="cursor-crosshair transition-all duration-150"
+            />
+            {/* Drop target ring */}
+            {showRings && (
+              <circle
+                cx={cx}
+                cy={handleCenterY}
+                r={radius + RING_OFFSET}
+                fill="none"
+                stroke={ringStroke}
+                strokeWidth={RING_STROKE_WIDTH}
+                opacity={RING_OPACITY}
+                pointerEvents="none"
+              />
+            )}
+          </g>
+        );
+      })}
     </g>
   );
 });

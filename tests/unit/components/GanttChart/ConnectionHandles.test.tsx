@@ -92,7 +92,7 @@ describe("ConnectionHandles", () => {
       expect(circles).toHaveLength(4);
     });
 
-    it("renders 8 circles when drop target (4 handles + 2 rings)", () => {
+    it("renders 6 circles when drop target (2 hit areas + 2 visible + 2 rings)", () => {
       const { container } = renderHandles({ isValidDropTarget: true });
       const circles = container.querySelectorAll(
         ".connection-handles circle",
