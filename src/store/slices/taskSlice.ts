@@ -7,6 +7,10 @@ import { create } from "zustand";
 import { immer } from "zustand/middleware/immer";
 import { current } from "immer";
 import type { Task } from "../../types/chart.types";
+import type {
+  EditableField,
+  NavigationDirection,
+} from "../../types/task.types";
 import {
   wouldCreateCircularHierarchy,
   getTaskLevel,
@@ -35,22 +39,11 @@ import { createIndentOutdentActions } from "./indentOutdentActions";
 import { createGroupingActions } from "./groupingActions";
 import { createInsertionActions } from "./insertionActions";
 
-/**
- * Editable field types for cell-based editing.
- */
-export type EditableField =
-  | "name"
-  | "startDate"
-  | "endDate"
-  | "duration"
-  | "progress"
-  | "color"
-  | "type";
-
-/**
- * Cell navigation direction.
- */
-export type NavigationDirection = "up" | "down" | "left" | "right";
+// Re-export types for backwards compatibility
+export type {
+  EditableField,
+  NavigationDirection,
+} from "../../types/task.types";
 
 /**
  * Task state interface.

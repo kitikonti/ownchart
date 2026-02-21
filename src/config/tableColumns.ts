@@ -3,7 +3,7 @@
  * Defines column properties, widths, and editing behavior.
  */
 
-import type { EditableField } from "../store/slices/taskSlice";
+import type { EditableField } from "../types/task.types";
 import type { ValidationResult } from "../utils/validation";
 import type { DensityConfig } from "../types/preferences.types";
 import {

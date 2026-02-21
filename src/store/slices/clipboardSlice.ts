@@ -7,7 +7,7 @@ import { create } from "zustand";
 import { immer } from "zustand/middleware/immer";
 import type { Task } from "../../types/chart.types";
 import type { Dependency } from "../../types/dependency.types";
-import type { EditableField } from "./taskSlice";
+import type { EditableField } from "../../types/task.types";
 import { useTaskStore } from "./taskSlice";
 import { useDependencyStore } from "./dependencySlice";
 import { useHistoryStore } from "./historySlice";
@@ -362,7 +362,7 @@ function applyCellMutations(
 function collectCutCellUndoData(
   tasks: Task[],
   cutSource: { taskId: string; field: EditableField }
-): { taskId: string; field: string; value: unknown } | undefined {
+): { taskId: string; field: EditableField; value: unknown } | undefined {
   const sourceTask = tasks.find((t) => t.id === cutSource.taskId);
   if (!sourceTask) return undefined;
   return {

@@ -5,7 +5,7 @@
 
 import type { Task } from "../../types/chart.types";
 import type { Dependency } from "../../types/dependency.types";
-import type { EditableField } from "../../store/slices/taskSlice";
+import type { EditableField } from "../../types/task.types";
 
 // Prefix to identify OwnChart data in the clipboard
 const OWNCHART_ROW_PREFIX = "OWNCHART_ROWS:";

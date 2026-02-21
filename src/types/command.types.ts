@@ -10,18 +10,19 @@ import type {
   DependencyUpdatableFields,
 } from "./dependency.types";
 import type { ColorModeState } from "./colorMode.types";
+import type { EditableField } from "./task.types";
 
-export type CascadeUpdate = {
+export interface CascadeUpdate {
   id: string;
   updates: Partial<Task>;
   previousValues: Partial<Task>;
-};
+}
 
-export type ParentChange = {
+export interface ParentChange {
   taskId: string;
   oldParent: string | undefined;
   oldOrder: number;
-};
+}
 
 interface CommandBase {
   id: string; // UUID for tracking
@@ -231,11 +232,7 @@ export interface CopyRowsParams {
   dependencies: Dependency[];
 }
 
-export interface CutRowsParams {
-  taskIds: string[];
-  tasks: Task[];
-  dependencies: Dependency[];
-}
+export type CutRowsParams = CopyRowsParams;
 
 export interface PasteRowsParams {
   pastedTasks: Task[];
@@ -249,22 +246,18 @@ export interface PasteRowsParams {
 // Clipboard command params (Cell operations)
 export interface CopyCellParams {
   taskId: string;
-  field: string; // EditableField from taskSlice
+  field: EditableField;
   value: unknown;
 }
 
-export interface CutCellParams {
-  taskId: string;
-  field: string;
-  value: unknown;
-}
+export type CutCellParams = CopyCellParams;
 
 export interface PasteCellParams {
   taskId: string;
-  field: string;
+  field: EditableField;
   newValue: unknown;
   previousValue: unknown;
-  previousCutCell?: { taskId: string; field: string; value: unknown };
+  previousCutCell?: { taskId: string; field: EditableField; value: unknown };
   cutClearValue?: unknown; // Value source cell was set to after cut (for redo)
 }
 
