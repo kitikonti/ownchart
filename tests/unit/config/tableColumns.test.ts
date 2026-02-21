@@ -198,8 +198,50 @@ describe("getDensityAwareWidth", () => {
 // ── Column validators ────────────────────────────────────────────────────────
 
 describe("column validators", () => {
+  const colorCol = TASK_COLUMNS.find((c) => c.id === "color");
+  const nameCol = TASK_COLUMNS.find((c) => c.id === "name");
+  const startDateCol = TASK_COLUMNS.find((c) => c.id === "startDate");
+  const endDateCol = TASK_COLUMNS.find((c) => c.id === "endDate");
   const durationCol = TASK_COLUMNS.find((c) => c.id === "duration");
   const progressCol = TASK_COLUMNS.find((c) => c.id === "progress");
+
+  // String validators — reject non-string values
+  it.each([
+    ["color", colorCol],
+    ["name", nameCol],
+    ["startDate", startDateCol],
+    ["endDate", endDateCol],
+  ])("%s validator should reject non-string values", (_label, col) => {
+    const validate = col!.validator!;
+    expect(validate(null).valid).toBe(false);
+    expect(validate(undefined).valid).toBe(false);
+    expect(validate(123).valid).toBe(false);
+  });
+
+  it("should accept valid color string", () => {
+    expect(colorCol!.validator!("#FF0000")).toEqual({ valid: true });
+  });
+
+  it("should accept valid name string", () => {
+    expect(nameCol!.validator!("My Task")).toEqual({ valid: true });
+  });
+
+  it("should accept valid date strings", () => {
+    expect(startDateCol!.validator!("2025-01-15")).toEqual({ valid: true });
+    expect(endDateCol!.validator!("2025-01-20")).toEqual({ valid: true });
+  });
+
+  // Number validators — reject non-number values
+  it.each([
+    ["duration", durationCol],
+    ["progress", progressCol],
+  ])("%s validator should reject non-number values", (_label, col) => {
+    const validate = col!.validator!;
+    expect(validate("abc").valid).toBe(false);
+    expect(validate(null).valid).toBe(false);
+    expect(validate(undefined).valid).toBe(false);
+    expect(validate(NaN).valid).toBe(false);
+  });
 
   it("should validate duration >= 1", () => {
     const validate = durationCol!.validator!;
@@ -207,7 +249,15 @@ describe("column validators", () => {
     expect(validate(1)).toEqual({ valid: true });
     expect(validate(0).valid).toBe(false);
     expect(validate(-1).valid).toBe(false);
-    expect(validate("abc").valid).toBe(false);
+  });
+
+  it("should validate progress 0-100", () => {
+    const validate = progressCol!.validator!;
+    expect(validate(0)).toEqual({ valid: true });
+    expect(validate(50)).toEqual({ valid: true });
+    expect(validate(100)).toEqual({ valid: true });
+    expect(validate(-1).valid).toBe(false);
+    expect(validate(101).valid).toBe(false);
   });
 
   it("should format duration with correct pluralization", () => {

@@ -85,7 +85,11 @@ export const TASK_COLUMNS: ColumnDefinition[] = [
     defaultWidth: "32px",
     editable: true,
     renderer: "color",
-    validator: (value) => validateColor(String(value)),
+    validator: (value) => {
+      if (typeof value !== "string")
+        return { valid: false, error: "Expected string" };
+      return validateColor(value);
+    },
   },
   {
     id: "name",
@@ -94,7 +98,11 @@ export const TASK_COLUMNS: ColumnDefinition[] = [
     defaultWidth: "minmax(200px, 1fr)",
     editable: true,
     renderer: "text",
-    validator: (value) => validateTaskName(String(value)),
+    validator: (value) => {
+      if (typeof value !== "string")
+        return { valid: false, error: "Expected string" };
+      return validateTaskName(value);
+    },
   },
   {
     id: "startDate",
@@ -104,7 +112,11 @@ export const TASK_COLUMNS: ColumnDefinition[] = [
     editable: true,
     hideable: true,
     renderer: "date",
-    validator: (value) => validateDateString(String(value)),
+    validator: (value) => {
+      if (typeof value !== "string")
+        return { valid: false, error: "Expected string" };
+      return validateDateString(value);
+    },
   },
   {
     id: "endDate",
@@ -114,7 +126,11 @@ export const TASK_COLUMNS: ColumnDefinition[] = [
     editable: true,
     hideable: true,
     renderer: "date",
-    validator: (value) => validateDateString(String(value)),
+    validator: (value) => {
+      if (typeof value !== "string")
+        return { valid: false, error: "Expected string" };
+      return validateDateString(value);
+    },
   },
   {
     id: "duration",
@@ -124,7 +140,11 @@ export const TASK_COLUMNS: ColumnDefinition[] = [
     editable: true, // User-editable, recalculates end date
     hideable: true,
     renderer: "number",
-    validator: (value) => validateDuration(Number(value)),
+    validator: (value) => {
+      if (typeof value !== "number" || Number.isNaN(value))
+        return { valid: false, error: "Expected number" };
+      return validateDuration(value);
+    },
     formatter: (value) => `${value} ${Number(value) === 1 ? "day" : "days"}`,
   },
   {
@@ -136,7 +156,11 @@ export const TASK_COLUMNS: ColumnDefinition[] = [
     editable: true,
     hideable: true,
     renderer: "number",
-    validator: (value) => validateProgress(Number(value)),
+    validator: (value) => {
+      if (typeof value !== "number" || Number.isNaN(value))
+        return { valid: false, error: "Expected number" };
+      return validateProgress(value);
+    },
     formatter: (value) => `${value}%`,
   },
 ];
