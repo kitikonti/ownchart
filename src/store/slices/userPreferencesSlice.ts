@@ -45,7 +45,6 @@ interface UserPreferencesState {
 interface UserPreferencesActions {
   // Appearance actions
   setUiDensity: (density: UiDensity) => void;
-  getDensityConfig: () => DensityConfig;
 
   // Regional settings actions
   setDateFormat: (format: DateFormat) => void;
@@ -90,20 +89,54 @@ function isLegacyUser(): boolean {
   return localStorage.getItem(LEGACY_USER_KEY) === "true";
 }
 
-/**
- * Migrate stored preferences to current schema
- * Adds missing fields with locale-detected defaults
- */
-function migratePreferences(stored: Partial<UserPreferences>): UserPreferences {
-  return {
-    // Appearance
-    uiDensity: stored.uiDensity ?? DEFAULT_PREFERENCES.uiDensity,
+// Valid values for runtime validation of localStorage data
+const VALID_DENSITIES: ReadonlySet<string> = new Set([
+  "compact",
+  "normal",
+  "comfortable",
+]);
+const VALID_DATE_FORMATS: ReadonlySet<string> = new Set([
+  "DD/MM/YYYY",
+  "MM/DD/YYYY",
+  "YYYY-MM-DD",
+]);
+const VALID_FIRST_DAYS: ReadonlySet<string> = new Set(["sunday", "monday"]);
+const VALID_WEEK_SYSTEMS: ReadonlySet<string> = new Set(["iso", "us"]);
 
-    // Regional - use locale detection for new fields
-    dateFormat: stored.dateFormat ?? detectLocaleDateFormat(),
-    firstDayOfWeek: stored.firstDayOfWeek ?? detectLocaleFirstDayOfWeek(),
+/**
+ * Validate a stored value against a set of valid options.
+ * Returns the value if valid, undefined otherwise.
+ */
+function validateStored<T extends string>(
+  value: unknown,
+  validSet: ReadonlySet<string>
+): T | undefined {
+  return typeof value === "string" && validSet.has(value)
+    ? (value as T)
+    : undefined;
+}
+
+/**
+ * Migrate stored preferences to current schema.
+ * Validates types at runtime (localStorage data is untrusted)
+ * and adds missing fields with locale-detected defaults.
+ */
+function migratePreferences(stored: Record<string, unknown>): UserPreferences {
+  return {
+    uiDensity:
+      validateStored<UiDensity>(stored.uiDensity, VALID_DENSITIES) ??
+      DEFAULT_PREFERENCES.uiDensity,
+    dateFormat:
+      validateStored<DateFormat>(stored.dateFormat, VALID_DATE_FORMATS) ??
+      detectLocaleDateFormat(),
+    firstDayOfWeek:
+      validateStored<FirstDayOfWeek>(stored.firstDayOfWeek, VALID_FIRST_DAYS) ??
+      detectLocaleFirstDayOfWeek(),
     weekNumberingSystem:
-      stored.weekNumberingSystem ?? detectLocaleWeekNumberingSystem(),
+      validateStored<WeekNumberingSystem>(
+        stored.weekNumberingSystem,
+        VALID_WEEK_SYSTEMS
+      ) ?? detectLocaleWeekNumberingSystem(),
   };
 }
 
@@ -122,12 +155,6 @@ export const useUserPreferencesStore = create<UserPreferencesStore>()(
         set((state) => {
           state.preferences.uiDensity = density;
         });
-      },
-
-      // Get current density configuration values
-      getDensityConfig: (): DensityConfig => {
-        const { preferences } = get();
-        return DENSITY_CONFIG[preferences.uiDensity];
       },
 
       // Set date format
@@ -164,16 +191,31 @@ export const useUserPreferencesStore = create<UserPreferencesStore>()(
         // Check if this is a legacy user who hasn't set density preference yet
         // Legacy users (before v1.1) should default to "comfortable" to maintain their experience
         const storedPrefsRaw = localStorage.getItem(PREFERENCES_KEY);
-        let storedPrefs = null;
+        let storedPrefs: Record<string, unknown> | null = null;
         if (storedPrefsRaw) {
           try {
-            storedPrefs = JSON.parse(storedPrefsRaw)?.state?.preferences;
+            const parsed: unknown = JSON.parse(storedPrefsRaw);
+            const prefs =
+              typeof parsed === "object" && parsed !== null
+                ? (parsed as Record<string, unknown>)["state"]
+                : undefined;
+            const prefsObj =
+              typeof prefs === "object" && prefs !== null
+                ? (prefs as Record<string, unknown>)["preferences"]
+                : undefined;
+            storedPrefs =
+              typeof prefsObj === "object" && prefsObj !== null
+                ? (prefsObj as Record<string, unknown>)
+                : null;
           } catch {
             // Corrupt localStorage data — fall back to defaults
             storedPrefs = null;
           }
         }
-        const hasStoredDensity = storedPrefs?.uiDensity;
+        const hasStoredDensity =
+          storedPrefs !== null &&
+          validateStored<UiDensity>(storedPrefs.uiDensity, VALID_DENSITIES) !==
+            undefined;
 
         // Migrate preferences to fill in any missing fields
         const migratedPrefs = migratePreferences(storedPrefs || {});

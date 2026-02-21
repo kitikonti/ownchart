@@ -8,7 +8,7 @@ import { getTaskLevel } from "../../utils/hierarchy";
 import { TASK_COLUMNS } from "../../config/tableColumns";
 import { calculateColumnWidth } from "../../utils/textMeasurement";
 import type { DensityConfig } from "../../types/preferences.types";
-import { useUserPreferencesStore } from "./userPreferencesSlice";
+import { getCurrentDensityConfig } from "./userPreferencesSlice";
 import {
   PLACEHOLDER_TEXT,
   EXPAND_BUTTON_WIDTH,
@@ -90,18 +90,14 @@ export function createColumnActions(set: TaskSliceSet): ColumnActions {
       }),
 
     autoFitColumn: (columnId): void => {
-      const densityConfig = useUserPreferencesStore
-        .getState()
-        .getDensityConfig();
+      const densityConfig = getCurrentDensityConfig();
       set((state) => {
         fitColumnToContent(state, columnId, densityConfig);
       });
     },
 
     autoFitAllColumns: (): void => {
-      const densityConfig = useUserPreferencesStore
-        .getState()
-        .getDensityConfig();
+      const densityConfig = getCurrentDensityConfig();
       set((state) => {
         const autoFitColumnIds = TASK_COLUMNS.filter(
           (col) => col.field && col.id !== "color"

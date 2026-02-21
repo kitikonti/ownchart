@@ -103,37 +103,6 @@ describe("userPreferencesSlice", () => {
     });
   });
 
-  describe("getDensityConfig", () => {
-    it("should return config for current density", () => {
-      act(() => {
-        useUserPreferencesStore.getState().setUiDensity("compact");
-      });
-
-      const config = useUserPreferencesStore.getState().getDensityConfig();
-
-      expect(config).toEqual(DENSITY_CONFIG.compact);
-      expect(config.rowHeight).toBe(28);
-    });
-
-    it("should return normal config by default", () => {
-      const config = useUserPreferencesStore.getState().getDensityConfig();
-
-      expect(config).toEqual(DENSITY_CONFIG.normal);
-      expect(config.rowHeight).toBe(36);
-    });
-
-    it("should return comfortable config when set", () => {
-      act(() => {
-        useUserPreferencesStore.getState().setUiDensity("comfortable");
-      });
-
-      const config = useUserPreferencesStore.getState().getDensityConfig();
-
-      expect(config).toEqual(DENSITY_CONFIG.comfortable);
-      expect(config.rowHeight).toBe(44);
-    });
-  });
-
   describe("setDateFormat", () => {
     it("should set date format to DD/MM/YYYY", () => {
       act(() => {
@@ -304,6 +273,145 @@ describe("userPreferencesSlice", () => {
 
       expect(useUserPreferencesStore.getState().preferences.uiDensity).toBe(
         DEFAULT_PREFERENCES.uiDensity
+      );
+    });
+
+    it("should migrate partial preferences (only dateFormat stored)", () => {
+      localStorage.setItem(
+        "ownchart-preferences",
+        JSON.stringify({
+          state: { preferences: { dateFormat: "DD/MM/YYYY" } },
+        })
+      );
+
+      act(() => {
+        useUserPreferencesStore.getState().initializePreferences();
+      });
+
+      const prefs = useUserPreferencesStore.getState().preferences;
+      expect(prefs.dateFormat).toBe("DD/MM/YYYY");
+      // Missing fields should get defaults
+      expect(prefs.uiDensity).toBe(DEFAULT_PREFERENCES.uiDensity);
+    });
+
+    it("should reject invalid uiDensity type and fall back to default", () => {
+      localStorage.setItem(
+        "ownchart-preferences",
+        JSON.stringify({
+          state: { preferences: { uiDensity: 42 } },
+        })
+      );
+
+      act(() => {
+        useUserPreferencesStore.getState().initializePreferences();
+      });
+
+      expect(useUserPreferencesStore.getState().preferences.uiDensity).toBe(
+        DEFAULT_PREFERENCES.uiDensity
+      );
+    });
+
+    it("should reject invalid uiDensity string and fall back to default", () => {
+      localStorage.setItem(
+        "ownchart-preferences",
+        JSON.stringify({
+          state: { preferences: { uiDensity: "extra-large" } },
+        })
+      );
+
+      act(() => {
+        useUserPreferencesStore.getState().initializePreferences();
+      });
+
+      expect(useUserPreferencesStore.getState().preferences.uiDensity).toBe(
+        DEFAULT_PREFERENCES.uiDensity
+      );
+    });
+
+    it("should reject invalid dateFormat and fall back to locale detection", () => {
+      localStorage.setItem(
+        "ownchart-preferences",
+        JSON.stringify({
+          state: { preferences: { dateFormat: true } },
+        })
+      );
+
+      act(() => {
+        useUserPreferencesStore.getState().initializePreferences();
+      });
+
+      // Should be a valid DateFormat (from locale detection), not boolean
+      const format = useUserPreferencesStore.getState().preferences.dateFormat;
+      expect(["DD/MM/YYYY", "MM/DD/YYYY", "YYYY-MM-DD"]).toContain(format);
+    });
+
+    it("should reject invalid weekNumberingSystem and fall back", () => {
+      localStorage.setItem(
+        "ownchart-preferences",
+        JSON.stringify({
+          state: { preferences: { weekNumberingSystem: "metric" } },
+        })
+      );
+
+      act(() => {
+        useUserPreferencesStore.getState().initializePreferences();
+      });
+
+      const system =
+        useUserPreferencesStore.getState().preferences.weekNumberingSystem;
+      expect(["iso", "us"]).toContain(system);
+    });
+
+    it("should handle localStorage with non-object preferences gracefully", () => {
+      localStorage.setItem(
+        "ownchart-preferences",
+        JSON.stringify({
+          state: { preferences: "not-an-object" },
+        })
+      );
+
+      act(() => {
+        useUserPreferencesStore.getState().initializePreferences();
+      });
+
+      expect(useUserPreferencesStore.getState().isInitialized).toBe(true);
+      expect(useUserPreferencesStore.getState().preferences.uiDensity).toBe(
+        DEFAULT_PREFERENCES.uiDensity
+      );
+    });
+
+    it("should handle localStorage with missing state key gracefully", () => {
+      localStorage.setItem(
+        "ownchart-preferences",
+        JSON.stringify({ version: 1 })
+      );
+
+      act(() => {
+        useUserPreferencesStore.getState().initializePreferences();
+      });
+
+      expect(useUserPreferencesStore.getState().isInitialized).toBe(true);
+      expect(useUserPreferencesStore.getState().preferences.uiDensity).toBe(
+        DEFAULT_PREFERENCES.uiDensity
+      );
+    });
+
+    it("should treat invalid stored density as unset for legacy user detection", () => {
+      // Legacy user with an invalid density value — should get "comfortable"
+      localStorage.setItem("ownchart-welcome-dismissed", "true");
+      localStorage.setItem(
+        "ownchart-preferences",
+        JSON.stringify({
+          state: { preferences: { uiDensity: 999 } },
+        })
+      );
+
+      act(() => {
+        useUserPreferencesStore.getState().initializePreferences();
+      });
+
+      expect(useUserPreferencesStore.getState().preferences.uiDensity).toBe(
+        "comfortable"
       );
     });
   });
