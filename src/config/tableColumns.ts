@@ -15,6 +15,19 @@ import {
 } from "../utils/validation";
 
 /**
+ * Known column identifiers.
+ * Store/file-format boundaries use `string` for forward compatibility.
+ */
+export type ColumnId =
+  | "rowNumber"
+  | "color"
+  | "name"
+  | "startDate"
+  | "endDate"
+  | "duration"
+  | "progress";
+
+/**
  * Column renderer types.
  */
 export type CellRenderer = "text" | "date" | "number" | "color" | "custom";
@@ -24,7 +37,7 @@ export type CellRenderer = "text" | "date" | "number" | "color" | "custom";
  */
 export interface ColumnDefinition {
   /** Unique column identifier */
-  id: string;
+  id: ColumnId;
 
   /** Task field name (null for non-data columns like drag handle) */
   field?: EditableField;
@@ -131,9 +144,12 @@ export const TASK_COLUMNS: ColumnDefinition[] = [
 /** Default pixel width for columns without a density-specific default */
 const DEFAULT_COLUMN_WIDTH_PX = 100;
 
-/** Maps column IDs to their corresponding density config key */
+/**
+ * Maps column IDs to their corresponding density config key.
+ * 'name' is excluded — it uses minmax() and is handled separately in getDensityAwareWidth.
+ */
 const DENSITY_COLUMN_KEY: Partial<
-  Record<string, keyof DensityConfig["columnWidths"]>
+  Record<ColumnId, keyof DensityConfig["columnWidths"]>
 > = {
   rowNumber: "rowNumber",
   color: "color",
@@ -151,7 +167,7 @@ function getDensityDefault(
   columnId: string,
   densityConfig: DensityConfig
 ): number | undefined {
-  const key = DENSITY_COLUMN_KEY[columnId];
+  const key = DENSITY_COLUMN_KEY[columnId as ColumnId];
   return key ? densityConfig.columnWidths[key] : undefined;
 }
 

@@ -21,7 +21,7 @@ export type TaskType = "task" | "summary" | "milestone";
  * @property name - Task name (1-200 characters)
  * @property startDate - Task start date in ISO format (YYYY-MM-DD)
  * @property endDate - Task end date in ISO format (YYYY-MM-DD)
- * @property duration - Task duration in days (calculated from dates)
+ * @property duration - Task duration in days (calculated from dates, also user-editable — recalculates end date)
  * @property progress - Task completion percentage (0-100)
  * @property color - Task color as hex code (e.g., "#FAA916")
  * @property order - Display order for task reordering (0-indexed)
@@ -31,7 +31,6 @@ export type TaskType = "task" | "summary" | "milestone";
  * @property type - Task type classification (default: 'task')
  * @property parent - Parent task ID for hierarchical tasks (optional)
  * @property open - Expanded/collapsed state for summary tasks (default: true)
- * @property lazy - Lazy-load children flag for performance (optional)
  * @property baseStart - Original planned start date for baseline comparison (Phase 2)
  * @property baseEnd - Original planned end date for baseline comparison (Phase 2)
  */
@@ -50,7 +49,6 @@ export interface Task {
   type?: TaskType;
   parent?: string;
   open?: boolean;
-  lazy?: boolean;
   baseStart?: string;
   baseEnd?: string;
 

@@ -254,28 +254,3 @@ export const TOAST = {
   bg: "#1e293b",
   text: "#f8fafc",
 } as const;
-
-// =============================================================================
-// DENSITY SYSTEM (unchanged from original)
-// =============================================================================
-
-export const DENSITY = {
-  compact: {
-    rowHeight: 28,
-    taskBarHeight: 20,
-    cellPaddingY: 4,
-    iconSize: 14,
-  },
-  normal: {
-    rowHeight: 36,
-    taskBarHeight: 26,
-    cellPaddingY: 6,
-    iconSize: 16,
-  },
-  comfortable: {
-    rowHeight: 44,
-    taskBarHeight: 32,
-    cellPaddingY: 8,
-    iconSize: 18,
-  },
-} as const;
