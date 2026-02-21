@@ -172,8 +172,9 @@ const DEFAULT_COLUMN_WIDTH_PX = 100;
  * Maps column IDs to their corresponding density config key.
  * 'name' is excluded — it uses minmax() and is handled separately in getDensityAwareWidth.
  */
-const DENSITY_COLUMN_KEY: Partial<
-  Record<ColumnId, keyof DensityConfig["columnWidths"]>
+const DENSITY_COLUMN_KEY: Record<
+  string,
+  keyof DensityConfig["columnWidths"] | undefined
 > = {
   rowNumber: "rowNumber",
   color: "color",
@@ -191,7 +192,7 @@ function getDensityDefault(
   columnId: string,
   densityConfig: DensityConfig
 ): number | undefined {
-  const key = DENSITY_COLUMN_KEY[columnId as ColumnId];
+  const key = DENSITY_COLUMN_KEY[columnId];
   return key ? densityConfig.columnWidths[key] : undefined;
 }
 
