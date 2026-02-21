@@ -199,7 +199,9 @@ export const TABLE_HEADER = {
 
 export const GRID = {
   weekendBg: "#f1f3f5",
+  weekendOpacity: 0.6,
   holidayBg: "#fce7f3",
+  holidayOpacity: 0.7,
   lineDaily: "#e9ecef",
   lineWeeklyMonthly: "#d1d5db",
   lineDailyWeekend: "#dee2e6",
