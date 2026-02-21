@@ -1,14 +1,6 @@
-/**
- * File slice for Zustand store.
- * Manages file state including name, dirty flag, and last saved timestamp.
- */
-
 import { create } from "zustand";
 import { immer } from "zustand/middleware/immer";
 
-/**
- * File state interface.
- */
 interface FileState {
   fileName: string | null;
   isDirty: boolean;
@@ -16,9 +8,6 @@ interface FileState {
   chartId: string | null;
 }
 
-/**
- * File actions interface.
- */
 interface FileActions {
   setFileName: (name: string | null) => void;
   setChartId: (id: string | null) => void;
@@ -28,23 +17,19 @@ interface FileActions {
   reset: () => void;
 }
 
-/**
- * Combined store interface.
- */
 type FileStore = FileState & FileActions;
 
-/**
- * File store hook with immer middleware for immutable updates.
- */
+const initialState: FileState = {
+  fileName: null,
+  isDirty: false,
+  lastSaved: null,
+  chartId: null,
+};
+
 export const useFileStore = create<FileStore>()(
   immer((set) => ({
-    // State
-    fileName: null,
-    isDirty: false,
-    lastSaved: null,
-    chartId: null,
+    ...initialState,
 
-    // Actions
     setFileName: (name): void =>
       set((state) => {
         state.fileName = name;
@@ -73,10 +58,7 @@ export const useFileStore = create<FileStore>()(
 
     reset: (): void =>
       set((state) => {
-        state.fileName = null;
-        state.isDirty = false;
-        state.lastSaved = null;
-        state.chartId = null;
+        Object.assign(state, initialState);
       }),
   }))
 );
