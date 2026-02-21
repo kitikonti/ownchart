@@ -25,10 +25,8 @@ import {
   buildFlattenedTaskList,
   type FlattenedTask,
 } from "../../utils/hierarchy";
-import {
-  DENSITY_CONFIG,
-  type DensityConfig,
-} from "../../types/preferences.types";
+import type { DensityConfig } from "../../types/preferences.types";
+import { DENSITY_CONFIG } from "../../config/densityConfig";
 import { useChartStore } from "../../store/slices/chartSlice";
 import { SVG_FONT_FAMILY } from "../../utils/export/constants";
 import { getComputedTaskColor } from "../../utils/computeTaskColor";

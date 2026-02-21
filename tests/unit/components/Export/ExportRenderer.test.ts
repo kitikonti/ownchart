@@ -4,7 +4,7 @@ import {
   calculateExportDimensions,
 } from "../../../../src/components/Export/ExportRenderer";
 import { calculateTaskTableWidth } from "../../../../src/utils/export";
-import { DENSITY_CONFIG } from "../../../../src/types/preferences.types";
+import { DENSITY_CONFIG } from "../../../../src/config/densityConfig";
 import { DEFAULT_EXPORT_OPTIONS } from "../../../../src/utils/export/types";
 import type { Task } from "../../../../src/types/chart.types";
 

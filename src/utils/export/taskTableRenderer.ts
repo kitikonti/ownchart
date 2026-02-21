@@ -5,7 +5,7 @@
 
 import type { Task } from "../../types/chart.types";
 import type { UiDensity } from "../../types/preferences.types";
-import { DENSITY_CONFIG } from "../../types/preferences.types";
+import { DENSITY_CONFIG } from "../../config/densityConfig";
 import type { ExportColumnKey } from "./types";
 import { EXPORT_COLUMNS } from "../../components/Export/ExportRenderer";
 import { getDefaultColumnWidth } from "./calculations";

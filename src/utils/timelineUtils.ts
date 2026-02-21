@@ -286,7 +286,7 @@ export function pixelToDate(x: number, scale: TimelineScale): string {
 
 /**
  * Density configuration for task bar geometry calculations.
- * Values should come from DENSITY_CONFIG in preferences.types.ts
+ * Values should come from DENSITY_CONFIG in config/densityConfig.ts
  */
 export interface DensityGeometryConfig {
   rowHeight: number;

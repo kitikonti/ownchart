@@ -12,7 +12,7 @@ import type { PdfExportOptions } from "../../../../src/utils/export/types";
 import { DEFAULT_EXPORT_OPTIONS } from "../../../../src/utils/export/types";
 import type { ExportOptions } from "../../../../src/utils/export/types";
 import type { Task } from "../../../../src/types/chart.types";
-import { DENSITY_CONFIG } from "../../../../src/types/preferences.types";
+import { DENSITY_CONFIG } from "../../../../src/config/densityConfig";
 
 const defaultPdfOptions: PdfExportOptions = {
   pageSize: "a4",

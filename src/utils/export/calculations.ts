@@ -4,7 +4,8 @@
  */
 
 import type { ExportOptions, ExportColumnKey } from "./types";
-import { DENSITY_CONFIG, type UiDensity } from "../../types/preferences.types";
+import type { UiDensity } from "../../types/preferences.types";
+import { DENSITY_CONFIG } from "../../config/densityConfig";
 import { addDays } from "../dateUtils";
 import {
   calculateLabelPaddingDays,

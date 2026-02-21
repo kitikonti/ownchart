@@ -1,0 +1,81 @@
+/**
+ * Density configuration values for each UI density mode.
+ * Based on SPRINT_1.5.9.1_UI_DENSITY_CONCEPT.md Section 3.1
+ */
+
+import type { DensityConfigMap } from "../types/preferences.types";
+
+export const DENSITY_CONFIG: DensityConfigMap = {
+  compact: {
+    rowHeight: 28,
+    taskBarHeight: 20,
+    taskBarOffset: 4,
+    cellPaddingY: 4,
+    cellPaddingX: 8,
+    headerPaddingY: 8,
+    fontSizeCell: 14,
+    fontSizeBar: 11,
+    fontSizeHeader: 10,
+    iconSize: 14,
+    checkboxSize: 14,
+    indentSize: 16,
+    colorBarHeight: 20,
+    columnWidths: {
+      rowNumber: 48,
+      color: 28,
+      nameMin: 160,
+      startDate: 105,
+      endDate: 105,
+      duration: 80,
+      progress: 56,
+    },
+  },
+  normal: {
+    rowHeight: 36,
+    taskBarHeight: 26,
+    taskBarOffset: 5,
+    cellPaddingY: 6,
+    cellPaddingX: 10,
+    headerPaddingY: 12,
+    fontSizeCell: 15,
+    fontSizeBar: 12,
+    fontSizeHeader: 11,
+    iconSize: 16,
+    checkboxSize: 16,
+    indentSize: 18,
+    colorBarHeight: 24,
+    columnWidths: {
+      rowNumber: 52,
+      color: 30,
+      nameMin: 180,
+      startDate: 118,
+      endDate: 118,
+      duration: 90,
+      progress: 62,
+    },
+  },
+  comfortable: {
+    rowHeight: 44,
+    taskBarHeight: 32,
+    taskBarOffset: 6,
+    cellPaddingY: 8,
+    cellPaddingX: 12,
+    headerPaddingY: 16,
+    fontSizeCell: 16,
+    fontSizeBar: 13,
+    fontSizeHeader: 12,
+    iconSize: 18,
+    checkboxSize: 18,
+    indentSize: 20,
+    colorBarHeight: 28,
+    columnWidths: {
+      rowNumber: 56,
+      color: 32,
+      nameMin: 200,
+      startDate: 130,
+      endDate: 130,
+      duration: 100,
+      progress: 70,
+    },
+  },
+};

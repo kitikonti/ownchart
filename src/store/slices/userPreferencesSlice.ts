@@ -7,19 +7,21 @@
 import { create } from "zustand";
 import { persist, createJSONStorage } from "zustand/middleware";
 import { immer } from "zustand/middleware/immer";
+import type {
+  UiDensity,
+  UserPreferences,
+  DensityConfig,
+  DateFormat,
+  FirstDayOfWeek,
+  WeekNumberingSystem,
+} from "../../types/preferences.types";
+import { DENSITY_CONFIG } from "../../config/densityConfig";
 import {
-  type UiDensity,
-  type UserPreferences,
-  type DensityConfig,
-  type DateFormat,
-  type FirstDayOfWeek,
-  type WeekNumberingSystem,
   DEFAULT_PREFERENCES,
-  DENSITY_CONFIG,
   detectLocaleDateFormat,
   detectLocaleFirstDayOfWeek,
   detectLocaleWeekNumberingSystem,
-} from "../../types/preferences.types";
+} from "../../utils/localeDetection";
 import {
   registerFirstDayOfWeekGetter,
   registerWeekNumberingSystemGetter,

@@ -8,7 +8,7 @@ import { PDF_PAGE_SIZES, PDF_MARGIN_PRESETS } from "./types";
 import { INTERNAL_DPI, MM_PER_INCH, PNG_EXPORT_DPI } from "./dpi";
 import type { Task } from "../../types/chart.types";
 import { buildFlattenedTaskList } from "../hierarchy";
-import { DENSITY_CONFIG } from "../../types/preferences.types";
+import { DENSITY_CONFIG } from "../../config/densityConfig";
 import { HEADER_HEIGHT } from "./constants";
 
 // Re-export DPI constants for backwards compatibility

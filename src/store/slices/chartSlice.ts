@@ -37,10 +37,8 @@ import type {
   HierarchyModeOptions,
 } from "../../types/colorMode.types";
 import { DEFAULT_COLOR_MODE_STATE } from "../../types/colorMode.types";
-import {
-  DEFAULT_WORKING_DAYS_CONFIG,
-  detectLocaleHolidayRegion,
-} from "../../types/preferences.types";
+import { DEFAULT_WORKING_DAYS_CONFIG } from "../../config/workingDaysConfig";
+import { detectLocaleHolidayRegion } from "../../utils/localeDetection";
 import { holidayService } from "../../services/holidayService";
 import { calculateLabelPaddingDays } from "../../utils/textMeasurement";
 import { getTaskDescendants } from "../../utils/hierarchy";

@@ -11,10 +11,8 @@ import {
   getCurrentDensityConfig,
   getCurrentDateFormat,
 } from "../../../src/store/slices/userPreferencesSlice";
-import {
-  DENSITY_CONFIG,
-  DEFAULT_PREFERENCES,
-} from "../../../src/types/preferences.types";
+import { DENSITY_CONFIG } from "../../../src/config/densityConfig";
+import { DEFAULT_PREFERENCES } from "../../../src/utils/localeDetection";
 
 describe("userPreferencesSlice", () => {
   // Store the original document element classes
