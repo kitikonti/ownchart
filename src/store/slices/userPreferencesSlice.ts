@@ -89,19 +89,27 @@ function isLegacyUser(): boolean {
   return localStorage.getItem(LEGACY_USER_KEY) === "true";
 }
 
-// Valid values for runtime validation of localStorage data
+// Valid values for runtime validation of localStorage data.
+// Arrays are typed with the union type so TypeScript errors if a value is added
+// to the union but not to the validation set.
 const VALID_DENSITIES: ReadonlySet<string> = new Set([
   "compact",
   "normal",
   "comfortable",
-]);
+] as const satisfies readonly UiDensity[]);
 const VALID_DATE_FORMATS: ReadonlySet<string> = new Set([
   "DD/MM/YYYY",
   "MM/DD/YYYY",
   "YYYY-MM-DD",
-]);
-const VALID_FIRST_DAYS: ReadonlySet<string> = new Set(["sunday", "monday"]);
-const VALID_WEEK_SYSTEMS: ReadonlySet<string> = new Set(["iso", "us"]);
+] as const satisfies readonly DateFormat[]);
+const VALID_FIRST_DAYS: ReadonlySet<string> = new Set([
+  "sunday",
+  "monday",
+] as const satisfies readonly FirstDayOfWeek[]);
+const VALID_WEEK_SYSTEMS: ReadonlySet<string> = new Set([
+  "iso",
+  "us",
+] as const satisfies readonly WeekNumberingSystem[]);
 
 /**
  * Validate a stored value against a set of valid options.
@@ -150,28 +158,24 @@ export const useUserPreferencesStore = create<UserPreferencesStore>()(
       preferences: DEFAULT_PREFERENCES,
       isInitialized: false,
 
-      // Set UI density
       setUiDensity: (density: UiDensity): void => {
         set((state) => {
           state.preferences.uiDensity = density;
         });
       },
 
-      // Set date format
       setDateFormat: (format: DateFormat): void => {
         set((state) => {
           state.preferences.dateFormat = format;
         });
       },
 
-      // Set first day of week
       setFirstDayOfWeek: (day: FirstDayOfWeek): void => {
         set((state) => {
           state.preferences.firstDayOfWeek = day;
         });
       },
 
-      // Set week numbering system
       setWeekNumberingSystem: (system: WeekNumberingSystem): void => {
         set((state) => {
           state.preferences.weekNumberingSystem = system;
