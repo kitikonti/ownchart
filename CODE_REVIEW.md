@@ -79,7 +79,7 @@ cd ../app-gantt-review
 - [x] `src/store/slices/dependencySlice.ts` (333 LOC) — Sauber, +4 fehlende undo/redo-Guard-Tests fuer removeDependency und updateDependency ergaenzt
 - [x] `src/store/slices/uiSlice.ts` (279 LOC) — localStorage-Side-Effects aus Immer set() verschoben, redundante Type Assertions entfernt, +14 fehlende Tests ergaenzt
 - [x] `src/store/slices/userPreferencesSlice.ts` (274 LOC) — Validation Sets typsicher via satisfies, redundante Kommentare entfernt
-- [ ] `src/store/slices/fileSlice.ts` (82 LOC)
+- [x] `src/store/slices/fileSlice.ts` (64 LOC) — Sauber, keine Findings, vorbildliche Slice-Referenz
 
 ### Priority: HIGH — Core Types & Config
 - [ ] `src/types/command.types.ts` (~250 LOC)
@@ -319,6 +319,6 @@ Entscheidungen aus bisherigen Reviews die fuer zukuenftige Dateien gelten.
 
 ## Progress
 
-- Reviewed: 14 / 193 Dateien
+- Reviewed: 15 / 193 Dateien
 - Offene Issues: 38 Hex-Farben, ~18 toISODateString-Umstellungen
 - Test-Coverage: 80%+
