@@ -34,8 +34,8 @@ function App(): JSX.Element {
 
 function AppContent(): JSX.Element {
   const checkFirstTimeUser = useUIStore((state) => state.checkFirstTimeUser);
-  const initializeDensity = useUserPreferencesStore(
-    (state) => state.initializeDensity
+  const initializePreferences = useUserPreferencesStore(
+    (state) => state.initializePreferences
   );
 
   // Enable global keyboard shortcuts (Ctrl+Z, Ctrl+Shift+Z, Ctrl+Y, Ctrl+S, Ctrl+O, Ctrl+Alt+N, Ctrl+E, ?)
@@ -53,11 +53,11 @@ function AppContent(): JSX.Element {
   // Handle OS file association via PWA LaunchQueue API
   useLaunchQueue();
 
-  // Check for first-time user on mount and initialize density
+  // Check for first-time user on mount and initialize preferences
   useEffect(() => {
     checkFirstTimeUser();
-    initializeDensity();
-  }, [checkFirstTimeUser, initializeDensity]);
+    initializePreferences();
+  }, [checkFirstTimeUser, initializePreferences]);
 
   return (
     <>

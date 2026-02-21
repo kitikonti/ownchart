@@ -1,7 +1,7 @@
 /**
  * User Preferences slice for Zustand store.
  * Manages user preferences with localStorage persistence.
- * Sprint 1.5.9.1: UI Density settings
+ * Includes: UI Density, Date Format, First Day of Week, Week Numbering.
  */
 
 import { create } from "zustand";
@@ -54,8 +54,6 @@ interface UserPreferencesActions {
 
   // Initialization
   initializePreferences: () => void;
-  /** @deprecated Use initializePreferences instead */
-  initializeDensity: () => void;
 }
 
 /**
@@ -124,8 +122,6 @@ export const useUserPreferencesStore = create<UserPreferencesStore>()(
         set((state) => {
           state.preferences.uiDensity = density;
         });
-        // Apply CSS class to document
-        applyDensityClass(density);
       },
 
       // Get current density configuration values
@@ -168,9 +164,15 @@ export const useUserPreferencesStore = create<UserPreferencesStore>()(
         // Check if this is a legacy user who hasn't set density preference yet
         // Legacy users (before v1.1) should default to "comfortable" to maintain their experience
         const storedPrefsRaw = localStorage.getItem(PREFERENCES_KEY);
-        const storedPrefs = storedPrefsRaw
-          ? JSON.parse(storedPrefsRaw)?.state?.preferences
-          : null;
+        let storedPrefs = null;
+        if (storedPrefsRaw) {
+          try {
+            storedPrefs = JSON.parse(storedPrefsRaw)?.state?.preferences;
+          } catch {
+            // Corrupt localStorage data — fall back to defaults
+            storedPrefs = null;
+          }
+        }
         const hasStoredDensity = storedPrefs?.uiDensity;
 
         // Migrate preferences to fill in any missing fields
@@ -185,14 +187,6 @@ export const useUserPreferencesStore = create<UserPreferencesStore>()(
           s.preferences = migratedPrefs;
           s.isInitialized = true;
         });
-
-        // Apply density CSS
-        applyDensityClass(migratedPrefs.uiDensity);
-      },
-
-      // Deprecated - use initializePreferences
-      initializeDensity: (): void => {
-        get().initializePreferences();
       },
     })),
     {
@@ -205,6 +199,16 @@ export const useUserPreferencesStore = create<UserPreferencesStore>()(
     }
   )
 );
+
+// Apply density CSS class whenever uiDensity changes (side effect kept out of Immer)
+let _prevDensity: UiDensity | null = null;
+useUserPreferencesStore.subscribe((state) => {
+  const density = state.preferences.uiDensity;
+  if (density !== _prevDensity) {
+    _prevDensity = density;
+    applyDensityClass(density);
+  }
+});
 
 // Register the first day of week getter for timelineUtils
 // This avoids circular dependencies while allowing timelineUtils to access the preference

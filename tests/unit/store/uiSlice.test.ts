@@ -121,6 +121,15 @@ describe('uiSlice', () => {
       expect(useUIStore.getState().isExportDialogOpen).toBe(true);
     });
 
+    it('should clear error and reset progress when opening export dialog', () => {
+      useUIStore.setState({ exportError: 'Previous error', exportProgress: 75 });
+      const { openExportDialog } = useUIStore.getState();
+      openExportDialog();
+
+      expect(useUIStore.getState().exportError).toBeNull();
+      expect(useUIStore.getState().exportProgress).toBe(0);
+    });
+
     it('should close export dialog and reset state', () => {
       useUIStore.setState({
         isExportDialogOpen: true,

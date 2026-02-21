@@ -249,6 +249,63 @@ describe("userPreferencesSlice", () => {
         true
       );
     });
+
+    it("should set comfortable density for legacy users without stored density", () => {
+      // Simulate a legacy user who dismissed the welcome tour but has no density pref
+      localStorage.setItem("ownchart-welcome-dismissed", "true");
+
+      act(() => {
+        useUserPreferencesStore.getState().initializePreferences();
+      });
+
+      expect(useUserPreferencesStore.getState().preferences.uiDensity).toBe(
+        "comfortable"
+      );
+    });
+
+    it("should not override stored density for legacy users", () => {
+      // Simulate a legacy user who already chose compact
+      localStorage.setItem("ownchart-welcome-dismissed", "true");
+      localStorage.setItem(
+        "ownchart-preferences",
+        JSON.stringify({
+          state: { preferences: { uiDensity: "compact" } },
+        })
+      );
+
+      act(() => {
+        useUserPreferencesStore.getState().initializePreferences();
+      });
+
+      expect(useUserPreferencesStore.getState().preferences.uiDensity).toBe(
+        "compact"
+      );
+    });
+
+    it("should handle corrupt localStorage data gracefully", () => {
+      localStorage.setItem("ownchart-preferences", "not-valid-json{{{");
+
+      act(() => {
+        useUserPreferencesStore.getState().initializePreferences();
+      });
+
+      // Should initialize with defaults without crashing
+      expect(useUserPreferencesStore.getState().isInitialized).toBe(true);
+      expect(useUserPreferencesStore.getState().preferences.uiDensity).toBe(
+        DEFAULT_PREFERENCES.uiDensity
+      );
+    });
+
+    it("should use default density for new users (not legacy)", () => {
+      // No welcome-dismissed key = new user
+      act(() => {
+        useUserPreferencesStore.getState().initializePreferences();
+      });
+
+      expect(useUserPreferencesStore.getState().preferences.uiDensity).toBe(
+        DEFAULT_PREFERENCES.uiDensity
+      );
+    });
   });
 });
 
