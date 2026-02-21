@@ -3,6 +3,11 @@
 > Systematic, file-by-file code review tracking document (Issue #44).
 > 193 source files / ~37,000 LOC (excluding font data files).
 
+> **WICHTIG**: Diese Datei enthaelt NUR Informationen die fuer **zukuenftige Reviews nuetzlich** sind.
+> Detail-Findings einzelner Dateien gehoeren in die **Git-History**, NICHT hierher.
+> Bei reviewed Dateien: Checkbox abhaken, **keine Zusammenfassung** der Findings.
+> Nur Cross-Cutting Concerns und Decisions ergaenzen — also Dinge die **mehrere Dateien betreffen**.
+
 ## Git Worktree Setup (vor dem ersten Review)
 
 ```bash
@@ -38,10 +43,9 @@ cd ../app-gantt-review
 5. `npm run ci:local` — Tests muessen gruen sein
 6. Atomic Commit(s) mit Conventional Commits
 7. CODE_REVIEW.md aktualisieren:
-   - Checkbox abhaken + Kurzfassung in der Index-Zeile (1 Zeile)
+   - Checkbox abhaken (NUR Checkbox, KEINE Zusammenfassung der Findings)
    - Neue Cross-Cutting Concerns ergaenzen (Patterns die mehrere Dateien betreffen)
    - Neue Decisions ergaenzen (Praezedenzfaelle fuer zukuenftige Reviews)
-   - **KEINE Detail-Findings pro Datei** — die sind in der Git-History
 
 ### Mehrere Dateien in einer Session
 - `/review src/file1.ts src/file2.ts` fuer zusammenhaengende Dateien
@@ -74,15 +78,15 @@ cd ../app-gantt-review
 - [x] `src/store/slices/historySlice.ts`
 
 ### Priority: HIGH — Store Slices (Kern-Zustandslogik)
-- [x] `src/store/slices/chartSlice.ts` (984 LOC) — Spread→Object.assign (5×), magic numbers→constants, SettableViewFields type, console.error entfernt, +34 neue Tests
-- [x] `src/store/slices/clipboardSlice.ts` (552 LOC) — Redundanten null-Check in canPasteCell entfernt, fehlenden Test fuer pasteCell-Guard ergaenzt
-- [x] `src/store/slices/dependencySlice.ts` (333 LOC) — Sauber, +4 fehlende undo/redo-Guard-Tests fuer removeDependency und updateDependency ergaenzt
-- [x] `src/store/slices/uiSlice.ts` (279 LOC) — localStorage-Side-Effects aus Immer set() verschoben, redundante Type Assertions entfernt, +14 fehlende Tests ergaenzt
-- [x] `src/store/slices/userPreferencesSlice.ts` (274 LOC) — Validation Sets typsicher via satisfies, redundante Kommentare entfernt
-- [x] `src/store/slices/fileSlice.ts` (64 LOC) — Sauber, keine Findings, vorbildliche Slice-Referenz
+- [x] `src/store/slices/chartSlice.ts`
+- [x] `src/store/slices/clipboardSlice.ts`
+- [x] `src/store/slices/dependencySlice.ts`
+- [x] `src/store/slices/uiSlice.ts`
+- [x] `src/store/slices/userPreferencesSlice.ts`
+- [x] `src/store/slices/fileSlice.ts`
 
 ### Priority: HIGH — Core Types & Config
-- [x] `src/types/command.types.ts` (~250 LOC) — CascadeUpdate/ParentChange extrahiert (DRY), deprecated DeleteTaskParams.id entfernt, ungenutzten CommandParams-Union entfernt, stale Sprint-Comments bereinigt
+- [x] `src/types/command.types.ts`
 - [ ] `src/types/preferences.types.ts` (196 LOC)
 - [ ] `src/types/dependency.types.ts` (100 LOC)
 - [ ] `src/types/colorMode.types.ts` (84 LOC)
