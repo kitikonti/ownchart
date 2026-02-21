@@ -88,16 +88,16 @@ Erstelle den Report im definierten Output-Format (siehe unten).
 ### [Dateiname]
 
 #### CRITICAL
-- **[Checklist-Item]** (Zeile X-Y): [Beschreibung des Problems]
+- **[F001]** **[Checklist-Item]** (Zeile X-Y): [Beschreibung des Problems]
   - **Impact**: [Was kann passieren]
   - **Fix**: [Konkreter Lösungsvorschlag]
 
 #### WARNING
-- **[Checklist-Item]** (Zeile X-Y): [Beschreibung]
+- **[F002]** **[Checklist-Item]** (Zeile X-Y): [Beschreibung]
   - **Fix**: [Lösungsvorschlag]
 
 #### NOTE
-- **[Checklist-Item]** (Zeile X-Y): [Beschreibung]
+- **[F003]** **[Checklist-Item]** (Zeile X-Y): [Beschreibung]
 
 ### [Nächste Datei...]
 
@@ -106,10 +106,18 @@ Erstelle den Report im definierten Output-Format (siehe unten).
 - [Gemeinsame Patterns die refactored werden sollten]
 
 ## Prioritized Recommendations
-1. [Wichtigste Änderung zuerst]
-2. [Zweitwichtigste]
+1. [F00X] [Wichtigste Änderung zuerst]
+2. [F00Y] [Zweitwichtigste]
 3. [...]
 ```
+
+## Finding-IDs
+
+Jedes Finding bekommt eine eindeutige ID im Format `[FXXX]` (z.B. `[F001]`, `[F002]`, ...).
+
+- **Fortlaufend nummeriert** über den gesamten Report hinweg (nicht pro Datei oder Severity)
+- **Reihenfolge**: Findings werden in der Reihenfolge nummeriert, in der sie im Report erscheinen (erst Datei 1 CRITICAL → WARNING → NOTE, dann Datei 2, etc.)
+- **Zweck**: Der User kann gezielt auf Findings reagieren, z.B. "fix F003" oder "ignoriere F007"
 
 ## Severity Guide
 

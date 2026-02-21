@@ -131,7 +131,7 @@ Example: "I need to check the export name in interFontData.ts. Could you run `gr
 - ✅ E2E tests for branding infrastructure
 
 **Post-Sprint UI/UX Enhancements (v0.0.23 - v0.0.33)**:
-- ✅ Smart Color Management with 5 color modes (Manual, By Type, By Progress, By Duration, Random)
+- ✅ Smart Color Management with 5 color modes (Manual, Theme, Summary Group, Task Type, Hierarchy)
 - ✅ Export dialog redesigned with Figma-style live preview
 - ✅ MS Office-style Ribbon UI (tabbed interface: File, Task, View, Help)
 - ✅ Dynamic text color contrast for task labels
@@ -144,7 +144,7 @@ Example: "I need to check the export name in interFontData.ts. Could you run `gr
 - ✅ Timeline header shows "Week N, Mon YYYY" at medium zoom levels
 
 **Latest Improvements (v0.0.13 - v0.0.33)**:
-- ✅ Smart Color Management (5 modes: Manual, By Type, By Progress, By Duration, Random)
+- ✅ Smart Color Management (5 modes: Manual, Theme, Summary Group, Task Type, Hierarchy)
 - ✅ MS Office-style Ribbon UI with tabbed interface
 - ✅ Export dialog redesign with Figma-style live preview
 - ✅ PDF Export with vector graphics and page size options
