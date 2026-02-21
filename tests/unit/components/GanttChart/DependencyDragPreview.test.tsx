@@ -13,6 +13,7 @@ import { COLORS } from "../../../../src/styles/design-tokens";
 // ---------------------------------------------------------------------------
 
 vi.mock("../../../../src/utils/arrowPath", () => ({
+  ARROWHEAD_SIZE: 8,
   calculateDragPath: vi.fn(() => "M 10 20 C 55 20 55 80 100 80"),
   getArrowheadPoints: vi.fn((size: number) => `0,${-size} ${size},0 0,${size}`),
 }));

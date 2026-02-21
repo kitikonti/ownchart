@@ -3,17 +3,25 @@
  * Shows a vertical line at the current date
  */
 
+import { memo } from "react";
 import { format } from "date-fns";
 import type { TimelineScale } from "../../utils/timelineUtils";
 import { dateToPixel } from "../../utils/timelineUtils";
 import { COLORS } from "../../styles/design-tokens";
+
+// ---------------------------------------------------------------------------
+// Geometry constants
+// ---------------------------------------------------------------------------
+
+/** Stroke width for the today marker line */
+const STROKE_WIDTH = 1;
 
 interface TodayMarkerProps {
   scale: TimelineScale;
   svgHeight: number;
 }
 
-export function TodayMarker({
+export const TodayMarker = memo(function TodayMarker({
   scale,
   svgHeight,
 }: TodayMarkerProps): JSX.Element | null {
@@ -34,8 +42,8 @@ export function TodayMarker({
         x2={x}
         y2={svgHeight}
         stroke={COLORS.chart.todayMarker}
-        strokeWidth={1}
+        strokeWidth={STROKE_WIDTH}
       />
     </g>
   );
-}
+});

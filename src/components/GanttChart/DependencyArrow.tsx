@@ -4,10 +4,14 @@
  * Sprint 1.4 - Dependencies (Finish-to-Start Only)
  */
 
-import React, { memo, useMemo } from "react";
+import React, { memo, useMemo, useState } from "react";
 import type { Dependency, TaskPosition } from "../../types/dependency.types";
 import type { Task } from "../../types/chart.types";
-import { calculateArrowPath, getArrowheadPoints } from "../../utils/arrowPath";
+import {
+  ARROWHEAD_SIZE,
+  calculateArrowPath,
+  getArrowheadPoints,
+} from "../../utils/arrowPath";
 import { COLORS } from "../../styles/design-tokens";
 
 // ---------------------------------------------------------------------------
@@ -16,8 +20,6 @@ import { COLORS } from "../../styles/design-tokens";
 
 /** Invisible hit area width around the arrow path for easier clicking */
 const HIT_AREA_STROKE_WIDTH = 14;
-/** Arrowhead polygon size (px) */
-const ARROWHEAD_SIZE = 8;
 /** Default arrow stroke width (unselected) */
 const STROKE_WIDTH_DEFAULT = 1.5;
 /** Selected arrow stroke width */
@@ -50,6 +52,8 @@ export const DependencyArrow = memo(function DependencyArrow({
   onSelect,
   onDelete,
 }: DependencyArrowProps) {
+  const [isHovered, setIsHovered] = useState(false);
+
   const fromPos = taskPositions.get(dependency.fromTaskId);
   const toPos = taskPositions.get(dependency.toTaskId);
 
@@ -74,6 +78,10 @@ export const DependencyArrow = memo(function DependencyArrow({
   };
 
   const handleKeyDown = (e: React.KeyboardEvent): void => {
+    if (e.key === "Enter" || e.key === " ") {
+      e.preventDefault();
+      onSelect(dependency.id);
+    }
     if (e.key === "Delete" || e.key === "Backspace") {
       e.preventDefault();
       onDelete(dependency.id);
@@ -86,18 +94,21 @@ export const DependencyArrow = memo(function DependencyArrow({
   // Arrow colors - lighter for less visual noise
   const strokeColor = isSelected
     ? COLORS.chart.dependencySelected
-    : COLORS.chart.dependencyDefault;
+    : isHovered
+      ? COLORS.chart.dependencyHover
+      : COLORS.chart.dependencyDefault;
   const strokeWidth = isSelected ? STROKE_WIDTH_SELECTED : STROKE_WIDTH_DEFAULT;
 
   return (
     <g
-      className="dependency-arrow"
+      className="dependency-arrow outline-none focus-visible:outline-blue-500"
       onClick={handleClick}
       onKeyDown={handleKeyDown}
+      onMouseEnter={() => setIsHovered(true)}
+      onMouseLeave={() => setIsHovered(false)}
       tabIndex={0}
       role="graphics-symbol"
       aria-label={`Dependency from ${fromTask.name} to ${toTask.name}`}
-      style={{ outline: "none" }}
     >
       {/* Invisible wider hit area for easier clicking */}
       <path
@@ -114,7 +125,7 @@ export const DependencyArrow = memo(function DependencyArrow({
         fill="none"
         stroke={strokeColor}
         strokeWidth={strokeWidth}
-        className="transition-colors duration-150 cursor-pointer hover:stroke-neutral-600"
+        className="transition-colors duration-150 cursor-pointer"
       />
 
       {/* Arrowhead */}

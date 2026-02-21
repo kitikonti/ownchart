@@ -4,6 +4,7 @@
  */
 
 export {
+  ARROWHEAD_SIZE,
   calculateArrowPath,
   calculateDragPath,
   getArrowheadPoints,

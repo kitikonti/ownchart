@@ -54,6 +54,7 @@ export const COLORS = {
     selection: "#2B88D8", // brand-400 for drag preview/selection
     text: "#495057", // Text in SVG
     dependencyDefault: "#94a3b8",
+    dependencyHover: "#64748b", // slate-500 — between default and selected
     dependencySelected: "#334155",
     todayMarker: "#0F6CBD", // brand-600 for today marker
     todayHighlight: "#EBF3FC", // brand-50 for today header cell background

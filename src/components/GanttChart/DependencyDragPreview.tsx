@@ -5,15 +5,17 @@
  */
 
 import { memo, useMemo } from "react";
-import { calculateDragPath, getArrowheadPoints } from "../../utils/arrowPath";
+import {
+  ARROWHEAD_SIZE,
+  calculateDragPath,
+  getArrowheadPoints,
+} from "../../utils/arrowPath";
 import { COLORS } from "../../styles/design-tokens";
 
 // ---------------------------------------------------------------------------
 // Geometry constants
 // ---------------------------------------------------------------------------
 
-/** Arrowhead polygon size (px) — matches DependencyArrow */
-const ARROWHEAD_SIZE = 8;
 /** Drag preview line stroke width */
 const PREVIEW_STROKE_WIDTH = 2;
 /** Drag preview dash pattern */

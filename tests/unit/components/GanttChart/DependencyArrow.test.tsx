@@ -16,6 +16,7 @@ import { COLORS } from "../../../../src/styles/design-tokens";
 // ---------------------------------------------------------------------------
 
 vi.mock("../../../../src/utils/arrowPath", () => ({
+  ARROWHEAD_SIZE: 8,
   calculateArrowPath: vi.fn(() => ({
     path: "M 0 0 L 100 100",
     arrowHead: { x: 100, y: 100, angle: 45 },
@@ -203,6 +204,51 @@ describe("DependencyArrow", () => {
       g.dispatchEvent(event);
       expect(spy).toHaveBeenCalled();
     });
+
+    it("uses hover color on mouseEnter", () => {
+      const { container } = renderArrow({ isSelected: false });
+      const g = container.querySelector(".dependency-arrow")!;
+      fireEvent.mouseEnter(g);
+      const arrowPath = container.querySelectorAll("path")[1];
+      expect(arrowPath.getAttribute("stroke")).toBe(
+        COLORS.chart.dependencyHover,
+      );
+    });
+
+    it("reverts to default color on mouseLeave", () => {
+      const { container } = renderArrow({ isSelected: false });
+      const g = container.querySelector(".dependency-arrow")!;
+      fireEvent.mouseEnter(g);
+      fireEvent.mouseLeave(g);
+      const arrowPath = container.querySelectorAll("path")[1];
+      expect(arrowPath.getAttribute("stroke")).toBe(
+        COLORS.chart.dependencyDefault,
+      );
+    });
+
+    it("keeps selected color on hover when selected", () => {
+      const { container } = renderArrow({ isSelected: true });
+      const g = container.querySelector(".dependency-arrow")!;
+      fireEvent.mouseEnter(g);
+      const arrowPath = container.querySelectorAll("path")[1];
+      expect(arrowPath.getAttribute("stroke")).toBe(
+        COLORS.chart.dependencySelected,
+      );
+    });
+  });
+
+  // -------------------------------------------------------------------------
+  // Focus visibility (a11y)
+  // -------------------------------------------------------------------------
+
+  describe("focus visibility", () => {
+    it("has focus-visible outline class instead of inline outline:none", () => {
+      const { container } = renderArrow();
+      const g = container.querySelector(".dependency-arrow")!;
+      expect(g.classList.contains("outline-none")).toBe(true);
+      expect(g.classList.contains("focus-visible:outline-blue-500")).toBe(true);
+      expect(g.getAttribute("style")).toBeNull();
+    });
   });
 
   // -------------------------------------------------------------------------
@@ -210,6 +256,22 @@ describe("DependencyArrow", () => {
   // -------------------------------------------------------------------------
 
   describe("keyboard interaction", () => {
+    it("calls onSelect on Enter key", () => {
+      const onSelect = vi.fn();
+      const { container } = renderArrow({ onSelect });
+      const g = container.querySelector(".dependency-arrow")!;
+      fireEvent.keyDown(g, { key: "Enter" });
+      expect(onSelect).toHaveBeenCalledWith("dep-1");
+    });
+
+    it("calls onSelect on Space key", () => {
+      const onSelect = vi.fn();
+      const { container } = renderArrow({ onSelect });
+      const g = container.querySelector(".dependency-arrow")!;
+      fireEvent.keyDown(g, { key: " " });
+      expect(onSelect).toHaveBeenCalledWith("dep-1");
+    });
+
     it("calls onDelete on Delete key", () => {
       const onDelete = vi.fn();
       const { container } = renderArrow({ onDelete });
@@ -239,7 +301,7 @@ describe("DependencyArrow", () => {
       const onDelete = vi.fn();
       const { container } = renderArrow({ onSelect, onDelete });
       const g = container.querySelector(".dependency-arrow")!;
-      fireEvent.keyDown(g, { key: "Enter" });
+      fireEvent.keyDown(g, { key: "Tab" });
       expect(onSelect).not.toHaveBeenCalled();
       expect(onDelete).not.toHaveBeenCalled();
     });

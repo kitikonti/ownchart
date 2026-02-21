@@ -7,6 +7,15 @@
 import { memo } from "react";
 import { COLORS } from "../../styles/design-tokens";
 
+// ---------------------------------------------------------------------------
+// Geometry constants
+// ---------------------------------------------------------------------------
+
+/** Stroke width for dashed vertical border lines */
+const BORDER_STROKE_WIDTH = 1;
+/** Dash pattern for vertical border lines */
+const BORDER_DASH_PATTERN = "4 2";
+
 interface SelectionHighlightProps {
   /** Pixel rect (x and width) of the selection */
   rect: { x: number; width: number } | null;
@@ -36,8 +45,8 @@ export const SelectionHighlight = memo(function SelectionHighlight({
         x2={rect.x}
         y2={height}
         stroke={COLORS.chart.marquee}
-        strokeWidth={1}
-        strokeDasharray="4 2"
+        strokeWidth={BORDER_STROKE_WIDTH}
+        strokeDasharray={BORDER_DASH_PATTERN}
       />
       <line
         x1={rect.x + rect.width}
@@ -45,8 +54,8 @@ export const SelectionHighlight = memo(function SelectionHighlight({
         x2={rect.x + rect.width}
         y2={height}
         stroke={COLORS.chart.marquee}
-        strokeWidth={1}
-        strokeDasharray="4 2"
+        strokeWidth={BORDER_STROKE_WIDTH}
+        strokeDasharray={BORDER_DASH_PATTERN}
       />
     </g>
   );
