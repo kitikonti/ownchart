@@ -321,6 +321,9 @@ Entscheidungen aus bisherigen Reviews die fuer zukuenftige Dateien gelten.
 - **Grosse Slice-Dateien splitten erst bei Wachstum**: chartSlice.ts (~990 LOC) ist gross aber kohaesiv. Split analog taskSlice→groupingActions erst wenn die Datei weiter waechst. (chartSlice Finding #9)
 - **Typisierte IDs im Config-Layer, `string` an Boundaries**: `ColumnId` Union-Type in `tableColumns.ts` fuer Typsicherheit in der Spalten-Konfiguration. Store-State (`hiddenColumns`, `columnWidths`) und File-Format behalten `string` fuer Forward-Kompatibilitaet. Lookup in `Partial<Record<ColumnId, ...>>` mit `as ColumnId` Cast ist sicher wenn der Fallback `undefined` handled.
 - **Unbenutzte Phase-2 Properties entfernen**: Interface-Properties die nur "fuer spaeter" deklariert sind aber keinen Consumer haben (z.B. `Task.lazy`) werden entfernt. Koennen bei Bedarf via Git-History wiederhergestellt werden.
+- **Milestone endDate-Vertrag**: Validation (validate.ts) erlaubt leeren `endDate` fuer Milestones, Deserialization (deserialize.ts) fixt ihn zu `startDate`. Impliziter Cross-File-Vertrag — bei Aenderungen an einer Seite die andere mitpruefen.
+- **KNOWN_TASK_KEYS nur fuer gemappte Felder**: Nur Felder die `deserializeTask()` tatsaechlich in das `Task`-Objekt uebernimmt gehoeren in `KNOWN_TASK_KEYS`. Alles andere landet in `__unknownFields` fuer Round-Trip-Kompatibilitaet. Timestamps (`createdAt`/`updatedAt`) sind NICHT gemappt und muessen round-trippen.
+- **Runtime-Validation fuer alle File-Format-Felder**: TypeScript-Typen genuegen NICHT fuer Daten aus JSON-Dateien. Jedes Feld das via `as` gecastet wird muss vorher runtime-validiert sein (z.B. `task.type` gegen `VALID_TASK_TYPES`, `colorOverride` gegen Hex-Regex).
 
 ---
 
