@@ -197,7 +197,34 @@ describe("Dependency Store", () => {
       // C → A would create cycle
       const result = addDependency("task-c", "task-a");
       expect(result.success).toBe(false);
-      expect(result.error).toContain("circular dependency");
+      if (!result.success) {
+        expect(result.error).toContain("circular dependency");
+      }
+    });
+
+    it("should fall back to task ID in cycle error when intermediate task is not in task list", () => {
+      // Set up dependencies A → B → C with B missing from the task store.
+      // Validation only checks fromTask and toTask existence, not intermediates.
+      const taskA = createTestTask({ id: "task-a", name: "Task A" });
+      const taskB = createTestTask({ id: "task-b", name: "Task B" });
+      const taskC = createTestTask({ id: "task-c", name: "Task C" });
+      useTaskStore.setState({ tasks: [taskA, taskB, taskC] });
+
+      const { addDependency } = useDependencyStore.getState();
+      addDependency("task-a", "task-b"); // A → B
+      addDependency("task-b", "task-c"); // B → C
+
+      // Remove intermediate task B from the store
+      useTaskStore.setState({ tasks: [taskA, taskC] });
+
+      // C → A would create cycle: A → B → C → A — but B is not in task list
+      const result = addDependency("task-c", "task-a");
+      expect(result.success).toBe(false);
+      if (!result.success) {
+        // task-b falls back to its ID since it's not in the task list
+        expect(result.error).toContain("task-b");
+        expect(result.error).toContain("circular dependency");
+      }
     });
 
     it("should record command to history", () => {
@@ -267,8 +294,7 @@ describe("Dependency Store", () => {
     });
 
     it("should not automatically move tasks when creating dependency", () => {
-      // Task A: Jan 10-15
-      // Task B: Jan 12-17 (overlaps with A)
+      // Task A: Jan 10-15, Task B: Jan 12-17 (overlaps with A)
       // After dependency A→B, B should NOT be moved - dependency only marks the relationship
       const taskA = createTestTask({
         id: "task-a",
@@ -286,7 +312,6 @@ describe("Dependency Store", () => {
       const result = addDependency("task-a", "task-b");
 
       expect(result.success).toBe(true);
-      expect(result.dateAdjustments).toEqual([]);
       // Task B should remain at its original position
       const updatedTaskB = useTaskStore.getState().tasks.find((t) => t.id === "task-b");
       expect(updatedTaskB?.startDate).toBe("2026-01-12");
@@ -388,6 +413,24 @@ describe("Dependency Store", () => {
       updateDependency("non-existent", { lag: 5 });
 
       expect(useDependencyStore.getState().dependencies[0].lag).toBe(0);
+    });
+
+    it("should update dependency type", () => {
+      const dep = createTestDependency({ id: "dep-1", type: "FS" });
+      useDependencyStore.setState({ dependencies: [dep] });
+
+      const { updateDependency } = useDependencyStore.getState();
+      updateDependency("dep-1", { type: "SS" });
+
+      const updated = useDependencyStore.getState().dependencies[0];
+      expect(updated.type).toBe("SS");
+
+      const history = useHistoryStore.getState();
+      expect(history.undoStack[0].params).toMatchObject({
+        id: "dep-1",
+        updates: { type: "SS" },
+        previousValues: { type: "FS" },
+      });
     });
 
     it("should record command to history with previous values", () => {
@@ -693,37 +736,7 @@ describe("Dependency Store", () => {
       );
 
       expect(toast.default.success).toHaveBeenCalledWith(
-        expect.stringContaining("Task A → Task B")
-      );
-    });
-
-    it("should show success toast with date adjustment info", async () => {
-      const toast = await import("react-hot-toast");
-
-      // Setup task that will be referenced in the toast
-      const adjustedTask = createTestTask({ id: "adjusted-task", name: "Adjusted Task" });
-      useTaskStore.setState({ tasks: [adjustedTask] });
-
-      showDependencyToast(
-        {
-          success: true,
-          dependency: createTestDependency(),
-          dateAdjustments: [
-            {
-              taskId: "adjusted-task",
-              oldStartDate: "2026-01-10",
-              oldEndDate: "2026-01-15",
-              newStartDate: "2026-01-20",
-              newEndDate: "2026-01-25",
-            },
-          ],
-        },
-        "Task A",
-        "Task B"
-      );
-
-      expect(toast.default.success).toHaveBeenCalledWith(
-        expect.stringContaining("Adjusted Task shifted to 2026-01-20")
+        "Dependency created: Task A → Task B"
       );
     });
 
@@ -737,14 +750,6 @@ describe("Dependency Store", () => {
       );
 
       expect(toast.default.error).toHaveBeenCalledWith("Some error");
-    });
-
-    it("should show default error message if none provided", async () => {
-      const toast = await import("react-hot-toast");
-
-      showDependencyToast({ success: false }, "Task A", "Task B");
-
-      expect(toast.default.error).toHaveBeenCalledWith("Failed to create dependency");
     });
   });
 });

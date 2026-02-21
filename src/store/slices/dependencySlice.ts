@@ -10,15 +10,62 @@ import toast from "react-hot-toast";
 import type {
   Dependency,
   DependencyType,
+  DependencyUpdatableFields,
   AddDependencyResult,
   CycleDetectionResult,
-  DateAdjustment,
 } from "../../types/dependency.types";
+import type { Task } from "../../types/chart.types";
 import { CommandType } from "../../types/command.types";
 import { useTaskStore } from "./taskSlice";
 import { useHistoryStore } from "./historySlice";
 import { useFileStore } from "./fileSlice";
 import { wouldCreateCycle } from "../../utils/graph/cycleDetection";
+
+/**
+ * Validates whether a new dependency can be created.
+ * Checks self-dependency, task existence, duplicates, and cycles.
+ */
+function validateNewDependency(
+  fromTaskId: string,
+  toTaskId: string,
+  tasks: Task[],
+  dependencies: Dependency[]
+):
+  | { valid: true; fromTask: Task; toTask: Task }
+  | { valid: false; error: string } {
+  if (fromTaskId === toTaskId) {
+    return { valid: false, error: "Task cannot depend on itself" };
+  }
+
+  const fromTask = tasks.find((t) => t.id === fromTaskId);
+  const toTask = tasks.find((t) => t.id === toTaskId);
+  if (!fromTask || !toTask) {
+    return { valid: false, error: "One or both tasks not found" };
+  }
+
+  if (
+    dependencies.some(
+      (d) => d.fromTaskId === fromTaskId && d.toTaskId === toTaskId
+    )
+  ) {
+    return { valid: false, error: "Dependency already exists" };
+  }
+
+  const cycleCheck = wouldCreateCycle(dependencies, fromTaskId, toTaskId);
+  if (cycleCheck.hasCycle) {
+    const taskNames =
+      cycleCheck.cyclePath?.map((id) => {
+        const task = tasks.find((t) => t.id === id);
+        return task?.name || id;
+      }) || [];
+    return {
+      valid: false,
+      error: `Would create circular dependency: ${taskNames.join(" → ")}`,
+    };
+  }
+
+  return { valid: true, fromTask, toTask };
+}
 
 /**
  * Dependency state interface.
@@ -40,7 +87,7 @@ interface DependencyActions {
     lag?: number
   ) => AddDependencyResult;
   removeDependency: (id: string) => void;
-  updateDependency: (id: string, updates: Partial<Dependency>) => void;
+  updateDependency: (id: string, updates: DependencyUpdatableFields) => void;
 
   // Bulk operations
   setDependencies: (dependencies: Dependency[]) => void;
@@ -90,38 +137,16 @@ export const useDependencyStore = create<DependencyStore>()(
       const taskStore = useTaskStore.getState();
       const fileStore = useFileStore.getState();
 
-      // Validation: Can't depend on self
-      if (fromTaskId === toTaskId) {
-        return { success: false, error: "Task cannot depend on itself" };
+      const validation = validateNewDependency(
+        fromTaskId,
+        toTaskId,
+        taskStore.tasks,
+        get().dependencies
+      );
+      if (!validation.valid) {
+        return { success: false, error: validation.error };
       }
 
-      // Validation: Check tasks exist
-      const fromTask = taskStore.tasks.find((t) => t.id === fromTaskId);
-      const toTask = taskStore.tasks.find((t) => t.id === toTaskId);
-      if (!fromTask || !toTask) {
-        return { success: false, error: "One or both tasks not found" };
-      }
-
-      // Validation: Check for duplicate
-      if (get().hasDependency(fromTaskId, toTaskId)) {
-        return { success: false, error: "Dependency already exists" };
-      }
-
-      // Validation: Check for cycle
-      const cycleCheck = get().checkWouldCreateCycle(fromTaskId, toTaskId);
-      if (cycleCheck.hasCycle) {
-        const taskNames =
-          cycleCheck.cyclePath?.map((id) => {
-            const task = taskStore.tasks.find((t) => t.id === id);
-            return task?.name || id;
-          }) || [];
-        return {
-          success: false,
-          error: `Would create circular dependency: ${taskNames.join(" → ")}`,
-        };
-      }
-
-      // Create dependency
       const newDependency: Dependency = {
         id: crypto.randomUUID(),
         fromTaskId,
@@ -131,36 +156,26 @@ export const useDependencyStore = create<DependencyStore>()(
         createdAt: new Date().toISOString(),
       };
 
-      // Add to state
       set((state) => {
         state.dependencies.push(newDependency);
       });
 
-      // No automatic date adjustments - dependencies are created without moving tasks
-      const dateAdjustments: DateAdjustment[] = [];
-
-      // Record to history
       if (!historyStore.isUndoing && !historyStore.isRedoing) {
         historyStore.recordCommand({
           id: crypto.randomUUID(),
           type: CommandType.ADD_DEPENDENCY,
           timestamp: Date.now(),
-          description: `Created dependency: ${fromTask.name} → ${toTask.name}`,
+          description: `Created dependency: ${validation.fromTask.name} → ${validation.toTask.name}`,
           params: {
             dependency: newDependency,
-            dateAdjustments,
+            dateAdjustments: [],
           },
         });
       }
 
-      // Mark file as dirty
       fileStore.markDirty();
 
-      return {
-        success: true,
-        dependency: newDependency,
-        dateAdjustments,
-      };
+      return { success: true, dependency: newDependency };
     },
 
     removeDependency: (id: string): void => {
@@ -202,22 +217,24 @@ export const useDependencyStore = create<DependencyStore>()(
       fileStore.markDirty();
     },
 
-    updateDependency: (id: string, updates: Partial<Dependency>): void => {
+    updateDependency: (
+      id: string,
+      updates: DependencyUpdatableFields
+    ): void => {
       const historyStore = useHistoryStore.getState();
       const fileStore = useFileStore.getState();
 
       const dependency = get().dependencies.find((d) => d.id === id);
       if (!dependency) return;
 
-      const previousValues: Partial<Dependency> = {};
-      for (const key of Object.keys(updates) as Array<keyof Dependency>) {
-        previousValues[key] = dependency[key] as never;
-      }
+      const previousValues: DependencyUpdatableFields = {};
+      if ("type" in updates) previousValues.type = dependency.type;
+      if ("lag" in updates) previousValues.lag = dependency.lag;
 
       set((state) => {
         const idx = state.dependencies.findIndex((d) => d.id === id);
         if (idx !== -1) {
-          state.dependencies[idx] = { ...state.dependencies[idx], ...updates };
+          Object.assign(state.dependencies[idx], updates);
         }
       });
 
@@ -253,6 +270,7 @@ export const useDependencyStore = create<DependencyStore>()(
       });
     },
 
+    /** @internal Called by task deletion — does NOT record history (caller is responsible). */
     removeDependenciesForTask: (taskId: string): Dependency[] => {
       const toRemove = get().dependencies.filter(
         (d) => d.fromTaskId === taskId || d.toTaskId === taskId
@@ -323,15 +341,8 @@ export function showDependencyToast(
   toTaskName: string
 ): void {
   if (result.success) {
-    let message = `Dependency created: ${fromTaskName} → ${toTaskName}`;
-    if (result.dateAdjustments && result.dateAdjustments.length > 0) {
-      const task = useTaskStore
-        .getState()
-        .tasks.find((t) => t.id === result.dateAdjustments![0].taskId);
-      message += `. ${task?.name || "Task"} shifted to ${result.dateAdjustments[0].newStartDate}`;
-    }
-    toast.success(message);
+    toast.success(`Dependency created: ${fromTaskName} → ${toTaskName}`);
   } else {
-    toast.error(result.error || "Failed to create dependency");
+    toast.error(result.error);
   }
 }

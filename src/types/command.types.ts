@@ -4,7 +4,11 @@
  */
 
 import type { Task } from "./chart.types";
-import type { Dependency, DateAdjustment } from "./dependency.types";
+import type {
+  Dependency,
+  DateAdjustment,
+  DependencyUpdatableFields,
+} from "./dependency.types";
 import type { ColorModeState } from "./colorMode.types";
 
 interface CommandBase {
@@ -236,8 +240,8 @@ export interface DeleteDependencyParams {
 
 export interface UpdateDependencyParams {
   id: string;
-  updates: Partial<Dependency>;
-  previousValues: Partial<Dependency>;
+  updates: DependencyUpdatableFields;
+  previousValues: DependencyUpdatableFields;
 }
 
 // Clipboard command params (Row operations)

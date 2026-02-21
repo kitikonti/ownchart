@@ -145,20 +145,13 @@ export function useDependencyDrag({
           const result = addDependency(fromId, toId);
 
           if (result.success) {
-            // Find task names for toast
             const fromTask = tasks.find((t) => t.id === fromId);
             const toTask = tasks.find((t) => t.id === toId);
-
-            let message = `Dependency created: ${fromTask?.name || "?"} → ${toTask?.name || "?"}`;
-            if (result.dateAdjustments && result.dateAdjustments.length > 0) {
-              const adjustedTask = tasks.find(
-                (t) => t.id === result.dateAdjustments![0].taskId
-              );
-              message += `. ${adjustedTask?.name || "Task"} shifted to ${result.dateAdjustments[0].newStartDate}`;
-            }
-            toast.success(message);
+            toast.success(
+              `Dependency created: ${fromTask?.name || "?"} → ${toTask?.name || "?"}`
+            );
           } else {
-            toast.error(result.error || "Failed to create dependency");
+            toast.error(result.error);
           }
         } else if (invalidTargets.has(targetTaskId)) {
           toast.error("Cannot create: Would create circular dependency");

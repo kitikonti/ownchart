@@ -90,11 +90,18 @@ export interface DependencyDragState {
 }
 
 /**
- * Result of attempting to add a dependency.
+ * Fields that are safe to update on an existing dependency.
+ * Excludes id, fromTaskId, toTaskId, and createdAt to prevent
+ * bypassing cycle detection or breaking referential integrity.
  */
-export interface AddDependencyResult {
-  success: boolean;
-  error?: string;
-  dependency?: Dependency;
-  dateAdjustments?: DateAdjustment[];
-}
+export type DependencyUpdatableFields = Partial<
+  Pick<Dependency, "type" | "lag">
+>;
+
+/**
+ * Result of attempting to add a dependency.
+ * Discriminated union on `success` for safe type narrowing.
+ */
+export type AddDependencyResult =
+  | { success: true; dependency: Dependency }
+  | { success: false; error: string };
