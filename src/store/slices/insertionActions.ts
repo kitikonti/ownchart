@@ -149,7 +149,6 @@ function insertTasksRelative(
   } else {
     recordCommand(CommandType.ADD_TASK, description, {
       mode: "batch",
-      task: tasksToInsert[0],
       tasks: tasksToInsert,
       generatedIds,
     });

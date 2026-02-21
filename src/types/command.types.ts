@@ -24,6 +24,14 @@ export interface ParentChange {
   oldOrder: number;
 }
 
+export type TaskHierarchySnapshot = Array<{
+  id: string;
+  parent: string | undefined;
+  order: number;
+}>;
+
+export type TaskOrderSnapshot = Array<{ id: string; order: number }>;
+
 interface CommandBase {
   id: string; // UUID for tracking
   timestamp: number; // When executed
@@ -161,7 +169,6 @@ export interface SingleAddTaskParams {
 
 export interface BatchAddTaskParams {
   mode: "batch";
-  task: Omit<Task, "id">;
   tasks: Array<Omit<Task, "id">>;
   generatedIds: string[];
 }
@@ -184,11 +191,7 @@ export interface DeleteTaskParams {
 export interface ReorderTasksParams {
   activeTaskId: string;
   overTaskId: string;
-  previousOrder: Array<{
-    id: string;
-    parent: string | undefined;
-    order: number;
-  }>; // Lightweight snapshot for undo
+  previousOrder: TaskHierarchySnapshot; // Lightweight snapshot for undo
 }
 
 export interface IndentOutdentParams {
@@ -198,16 +201,8 @@ export interface IndentOutdentParams {
     oldParent: string | undefined;
     newParent: string | undefined;
   }>;
-  previousTaskSnapshot: Array<{
-    id: string;
-    parent: string | undefined;
-    order: number;
-  }>;
-  afterTaskSnapshot: Array<{
-    id: string;
-    parent: string | undefined;
-    order: number;
-  }>;
+  previousTaskSnapshot: TaskHierarchySnapshot;
+  afterTaskSnapshot: TaskHierarchySnapshot;
 }
 
 export interface AddDependencyParams {
@@ -257,7 +252,7 @@ export interface PasteCellParams {
   field: EditableField;
   newValue: unknown;
   previousValue: unknown;
-  previousCutCell?: { taskId: string; field: EditableField; value: unknown };
+  previousCutCell?: CopyCellParams;
   cutClearValue?: unknown; // Value source cell was set to after cut (for redo)
 }
 
@@ -287,7 +282,7 @@ export interface GroupTasksParams {
   summaryTaskId: string;
   summaryTask: Task;
   changes: ParentChange[];
-  previousOrder: Array<{ id: string; order: number }>;
+  previousOrder: TaskOrderSnapshot;
   cascadeUpdates: CascadeUpdate[];
 }
 
@@ -297,7 +292,7 @@ export interface UngroupTasksParams {
     childChanges: ParentChange[];
     removedDependencies: Dependency[];
   }>;
-  previousOrder: Array<{ id: string; order: number }>;
+  previousOrder: TaskOrderSnapshot;
   cascadeUpdates: CascadeUpdate[];
 }
 

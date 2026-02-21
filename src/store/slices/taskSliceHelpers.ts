@@ -7,6 +7,7 @@ import type {
   Command,
   CommandParamsMap,
   CommandType,
+  TaskHierarchySnapshot,
 } from "../../types/command.types";
 import { useHistoryStore } from "./historySlice";
 import { calculateSummaryDates } from "../../utils/hierarchy";
@@ -32,7 +33,7 @@ export const CELL_GAP_SIZE = 8;
 /** Capture a lightweight snapshot of task hierarchy (parent + order) for undo/redo. */
 export function captureHierarchySnapshot(
   tasks: ReadonlyArray<Task>
-): Array<{ id: string; parent: string | undefined; order: number }> {
+): TaskHierarchySnapshot {
   return tasks.map((t) => ({ id: t.id, parent: t.parent, order: t.order }));
 }
 
