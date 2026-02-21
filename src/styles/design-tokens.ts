@@ -35,8 +35,8 @@ const neutral = {
 } as const;
 
 // Brand (Outlook Blue - derived from MS Fluent themePrimary #0F6CBD)
-// NOTE: Scale follows Fluent theme slot mapping, NOT linear lightness.
-// Specifically, 500 (themeDarkAlt) is darker than 600 (themePrimary).
+// ⚠️  NOTE: Scale follows Fluent theme slot mapping, NOT linear lightness.
+// brand[500] (themeDarkAlt) is DARKER than brand[600] (themePrimary).
 // Primary brand color = brand[600].
 const brand = {
   50: "#EBF3FC", // themeLighterAlt - light backgrounds
@@ -49,6 +49,26 @@ const brand = {
   700: "#0F548C", // themeDark - links/text
   800: "#0C3B5E", // themeDarker - pressed states
   900: "#0A2E4A", // darker - dark emphasis
+} as const;
+
+// Cool gray (Bootstrap/Tailwind cool-gray family — slight blue tint)
+// Used for chart/grid areas for visual softness vs. pure neutral UI chrome.
+const coolGray = {
+  50: "#f8f9fa",
+  100: "#f1f3f5",
+  200: "#e9ecef",
+  250: "#dee2e6",
+  400: "#d1d5db",
+} as const;
+
+// Slate (Tailwind Slate family — stronger blue-gray tint)
+// Used for dependency arrows, connection handles, toasts, and chart overlays.
+const slate = {
+  100: "#f8fafc",
+  200: "#e2e8f0",
+  400: "#94a3b8",
+  700: "#334155",
+  800: "#1e293b",
 } as const;
 
 export const COLORS = {
@@ -67,12 +87,12 @@ export const COLORS = {
   chart: {
     selection: brand[400], // drag preview/selection
     text: "#495057", // Text in SVG (Bootstrap gray-700)
-    dependencyDefault: "#94a3b8",
-    dependencySelected: "#334155",
+    dependencyDefault: slate[400],
+    dependencySelected: slate[700],
     todayMarker: brand[600], // today marker
     todayHighlight: brand[50], // today header cell background
     taskDefault: brand[600], // new tasks
-    marquee: "#334155", // Marquee selection rectangle
+    marquee: slate[700], // Marquee selection rectangle
   },
 } as const;
 
@@ -209,12 +229,12 @@ export const TABLE_HEADER = {
 // =============================================================================
 
 export const GRID = {
-  weekendBg: "#f1f3f5",
-  holidayBg: "#fce7f3",
-  lineDaily: "#e9ecef",
-  lineWeeklyMonthly: "#d1d5db",
-  lineDailyWeekend: "#dee2e6",
-  lineHorizontal: "#e9ecef",
+  weekendBg: coolGray[100],
+  holidayBg: "#fce7f3", // Pink — not gray
+  lineDaily: coolGray[200],
+  lineWeeklyMonthly: coolGray[400],
+  lineDailyWeekend: coolGray[250],
+  lineHorizontal: coolGray[200],
 } as const;
 
 // =============================================================================
@@ -222,8 +242,8 @@ export const GRID = {
 // =============================================================================
 
 export const TIMELINE_HEADER = {
-  bg: "#f8f9fa",
-  border: "#dee2e6",
+  bg: coolGray[50],
+  border: coolGray[250],
 } as const;
 
 // =============================================================================
@@ -231,8 +251,8 @@ export const TIMELINE_HEADER = {
 // =============================================================================
 
 export const CONNECTION_HANDLE = {
-  neutralFill: "#e2e8f0",
-  neutralStroke: "#94a3b8",
+  neutralFill: slate[200],
+  neutralStroke: slate[400],
   validFill: "#bbf7d0",
   validStroke: "#22c55e",
   invalidFill: "#fecaca",
@@ -257,6 +277,6 @@ export const ROW_NUMBER = {
 // =============================================================================
 
 export const TOAST = {
-  bg: "#1e293b",
-  text: "#f8fafc",
+  bg: slate[800],
+  text: slate[100],
 } as const;
