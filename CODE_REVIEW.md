@@ -104,7 +104,7 @@ cd ../app-gantt-review
 
 ### Priority: MEDIUM — GanttChart Komponenten
 - [x] `src/components/GanttChart/TaskBar.tsx` (573 LOC) — Magic numbers→Constants, shared TaskShapeProps+TaskShapeLabel, redundante Checks vereinfacht, non-null assertion entfernt. Hex-Werte waren bereits in design-tokens. 2. Review: Opacity magic numbers→DRAG_OPACITY/PROGRESS_BG_OPACITY/SUMMARY_FILL_OPACITY, fontWeight→TYPOGRAPHY token, +27 Unit-Tests. 3. Review: SummaryBracket-Geometrie→SUMMARY_BRACKET shared const (DRY mit renderConstants.ts), hitzoneYOffset→PROGRESS_HANDLE, expliziter Return-Type. 4. Review: SUMMARY_FILL_OPACITY in SUMMARY_BRACKET konsolidiert (DRY mit renderConstants.ts), diamondPath() Helper extrahiert, Preview-Konstanten (PREVIEW_STROKE_WIDTH/PREVIEW_DASH), +1 Test (summary labelPosition=none). 5. Review: Letzte Magic Number strokeWidth→PROGRESS_HANDLE.strokeWidth. **Review-complete — 0 offene Findings.**
-- [ ] `src/components/GanttChart/ChartCanvas.tsx` (466 LOC)
+- [x] `src/components/GanttChart/ChartCanvas.tsx` (466 LOC) — SCROLLBAR_HEIGHT+MIN_OVERFLOW→layoutConstants (DRY mit GanttLayout), Opacity magic numbers→design-tokens, SelectionRows memoized sub-component extrahiert, redundantes containerWidth-Alias entfernt. **Review-complete — 0 offene Findings.**
 - [ ] `src/components/GanttChart/GridLines.tsx` (267 LOC) — 5 Hex-Werte
 - [ ] `src/components/GanttChart/TimelineHeader.tsx` (263 LOC) — 3 Hex-Werte
 - [ ] `src/components/GanttChart/ConnectionHandles.tsx` (192 LOC) — 8 Hex-Werte
@@ -319,6 +319,6 @@ Entscheidungen aus bisherigen Reviews die fuer zukuenftige Dateien gelten.
 
 ## Progress
 
-- Reviewed: 14 / 193 Dateien
+- Reviewed: 15 / 193 Dateien
 - Offene Issues: 38 Hex-Farben (TaskBar.tsx hatte 0 verbleibende), ~18 toISODateString-Umstellungen
 - Test-Coverage: 80%+
