@@ -78,7 +78,7 @@ cd ../app-gantt-review
 - [x] `src/store/slices/clipboardSlice.ts` (552 LOC) — Redundanten null-Check in canPasteCell entfernt, fehlenden Test fuer pasteCell-Guard ergaenzt
 - [x] `src/store/slices/dependencySlice.ts` (333 LOC) — Sauber, +4 fehlende undo/redo-Guard-Tests fuer removeDependency und updateDependency ergaenzt
 - [x] `src/store/slices/uiSlice.ts` (279 LOC) — localStorage-Side-Effects aus Immer set() verschoben, redundante Type Assertions entfernt, +14 fehlende Tests ergaenzt
-- [ ] `src/store/slices/userPreferencesSlice.ts` (274 LOC)
+- [x] `src/store/slices/userPreferencesSlice.ts` (274 LOC) — Validation Sets typsicher via satisfies, redundante Kommentare entfernt
 - [ ] `src/store/slices/fileSlice.ts` (82 LOC)
 
 ### Priority: HIGH — Core Types & Config
@@ -319,6 +319,6 @@ Entscheidungen aus bisherigen Reviews die fuer zukuenftige Dateien gelten.
 
 ## Progress
 
-- Reviewed: 13 / 193 Dateien
+- Reviewed: 14 / 193 Dateien
 - Offene Issues: 38 Hex-Farben, ~18 toISODateString-Umstellungen
 - Test-Coverage: 80%+
