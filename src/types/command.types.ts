@@ -41,36 +41,6 @@ interface CommandBase {
   metadata?: Record<string, unknown>;
 }
 
-// Type mapping — single source of truth for CommandType → Params
-export type CommandParamsMap = {
-  [CommandType.ADD_TASK]: AddTaskParams;
-  [CommandType.UPDATE_TASK]: UpdateTaskParams;
-  [CommandType.DELETE_TASK]: DeleteTaskParams;
-  [CommandType.REORDER_TASKS]: ReorderTasksParams;
-  [CommandType.INDENT_TASKS]: IndentOutdentParams;
-  [CommandType.OUTDENT_TASKS]: IndentOutdentParams;
-  [CommandType.GROUP_TASKS]: GroupTasksParams;
-  [CommandType.UNGROUP_TASKS]: UngroupTasksParams;
-  [CommandType.ADD_DEPENDENCY]: AddDependencyParams;
-  [CommandType.DELETE_DEPENDENCY]: DeleteDependencyParams;
-  [CommandType.UPDATE_DEPENDENCY]: UpdateDependencyParams;
-  [CommandType.COPY_ROWS]: CopyRowsParams;
-  [CommandType.CUT_ROWS]: CutRowsParams;
-  [CommandType.PASTE_ROWS]: PasteRowsParams;
-  [CommandType.COPY_CELL]: CopyCellParams;
-  [CommandType.CUT_CELL]: CutCellParams;
-  [CommandType.PASTE_CELL]: PasteCellParams;
-  [CommandType.MULTI_DRAG_TASKS]: MultiDragTasksParams;
-  [CommandType.APPLY_COLORS_TO_MANUAL]: ApplyColorsToManualParams;
-  [CommandType.HIDE_TASKS]: HideTasksParams;
-  [CommandType.UNHIDE_TASKS]: UnhideTasksParams;
-};
-
-// Derived discriminated union — adding a new CommandType only requires updating CommandParamsMap
-export type Command = {
-  [K in CommandType]: CommandBase & { type: K; params: CommandParamsMap[K] };
-}[CommandType];
-
 export enum CommandType {
   // Task operations
   ADD_TASK = "addTask",
@@ -110,7 +80,39 @@ export enum CommandType {
   UNHIDE_TASKS = "unhideTasks",
 }
 
-// Specific parameter types for each command
+// Type mapping — single source of truth for CommandType → Params
+export type CommandParamsMap = {
+  [CommandType.ADD_TASK]: AddTaskParams;
+  [CommandType.UPDATE_TASK]: UpdateTaskParams;
+  [CommandType.DELETE_TASK]: DeleteTaskParams;
+  [CommandType.REORDER_TASKS]: ReorderTasksParams;
+  [CommandType.INDENT_TASKS]: IndentOutdentParams;
+  [CommandType.OUTDENT_TASKS]: IndentOutdentParams;
+  [CommandType.GROUP_TASKS]: GroupTasksParams;
+  [CommandType.UNGROUP_TASKS]: UngroupTasksParams;
+  [CommandType.ADD_DEPENDENCY]: AddDependencyParams;
+  [CommandType.DELETE_DEPENDENCY]: DeleteDependencyParams;
+  [CommandType.UPDATE_DEPENDENCY]: UpdateDependencyParams;
+  [CommandType.COPY_ROWS]: CopyRowsParams;
+  [CommandType.CUT_ROWS]: CutRowsParams;
+  [CommandType.PASTE_ROWS]: PasteRowsParams;
+  [CommandType.COPY_CELL]: CopyCellParams;
+  [CommandType.CUT_CELL]: CutCellParams;
+  [CommandType.PASTE_CELL]: PasteCellParams;
+  [CommandType.MULTI_DRAG_TASKS]: MultiDragTasksParams;
+  [CommandType.APPLY_COLORS_TO_MANUAL]: ApplyColorsToManualParams;
+  [CommandType.HIDE_TASKS]: HideTasksParams;
+  [CommandType.UNHIDE_TASKS]: UnhideTasksParams;
+};
+
+// Derived discriminated union — adding a new CommandType only requires updating CommandParamsMap
+export type Command = {
+  [K in CommandType]: CommandBase & { type: K; params: CommandParamsMap[K] };
+}[CommandType];
+
+// --- Param types (ordered by CommandType grouping) ---
+
+// Task operations
 export type AddTaskParams = SingleAddTaskParams | BatchAddTaskParams;
 
 export interface SingleAddTaskParams {
@@ -146,6 +148,7 @@ export interface ReorderTasksParams {
   previousOrder: TaskHierarchySnapshot; // Lightweight snapshot for undo
 }
 
+// Hierarchy operations
 export interface IndentOutdentParams {
   taskIds: string[];
   changes: Array<{
@@ -155,78 +158,6 @@ export interface IndentOutdentParams {
   }>;
   previousTaskSnapshot: TaskHierarchySnapshot;
   afterTaskSnapshot: TaskHierarchySnapshot;
-}
-
-export interface AddDependencyParams {
-  dependency: Dependency;
-  dateAdjustments: DateAdjustment[]; // Store any cascading date changes for undo
-}
-
-export interface DeleteDependencyParams {
-  dependency: Dependency; // Store full dependency for redo
-}
-
-export interface UpdateDependencyParams {
-  id: string;
-  updates: DependencyUpdatableFields;
-  previousValues: DependencyUpdatableFields;
-}
-
-// Clipboard command params (Row operations)
-export interface CopyRowsParams {
-  taskIds: string[];
-  tasks: Task[];
-  dependencies: Dependency[];
-}
-
-export type CutRowsParams = CopyRowsParams;
-
-export interface PasteRowsParams {
-  pastedTasks: Task[];
-  pastedDependencies: Dependency[];
-  insertIndex: number;
-  idMapping: Record<string, string>; // old ID -> new ID
-  previousCutTaskIds?: string[]; // For undo of cut operation
-  deletedTasks?: Task[]; // Store deleted tasks for undo
-}
-
-// Clipboard command params (Cell operations)
-export interface CopyCellParams {
-  taskId: string;
-  field: EditableField;
-  value: Task[EditableField];
-}
-
-export type CutCellParams = CopyCellParams;
-
-export interface PasteCellParams {
-  taskId: string;
-  field: EditableField;
-  newValue: Task[EditableField];
-  previousValue: Task[EditableField];
-  previousCutCell?: CopyCellParams;
-  cutClearValue?: Task[EditableField]; // Value source cell was set to after cut (for redo)
-}
-
-export interface MultiDragTasksParams {
-  taskChanges: Array<{
-    id: string;
-    previousStartDate: string;
-    previousEndDate: string;
-    newStartDate: string;
-    newEndDate: string;
-  }>;
-  cascadeUpdates: CascadeUpdate[];
-}
-
-export interface ApplyColorsToManualParams {
-  previousColorModeState: ColorModeState;
-  colorChanges: Array<{
-    id: string;
-    previousColor: string;
-    previousColorOverride: string | undefined;
-    newColor: string;
-  }>;
 }
 
 export interface GroupTasksParams {
@@ -247,6 +178,82 @@ export interface UngroupTasksParams {
   cascadeUpdates: CascadeUpdate[];
 }
 
+// Dependency operations
+export interface AddDependencyParams {
+  dependency: Dependency;
+  dateAdjustments: DateAdjustment[]; // Store any cascading date changes for undo
+}
+
+export interface DeleteDependencyParams {
+  dependency: Dependency; // Store full dependency for redo
+}
+
+export interface UpdateDependencyParams {
+  id: string;
+  updates: DependencyUpdatableFields;
+  previousValues: DependencyUpdatableFields;
+}
+
+// Clipboard operations (Row-level)
+export interface CopyRowsParams {
+  taskIds: string[];
+  tasks: Task[];
+  dependencies: Dependency[];
+}
+
+export type CutRowsParams = CopyRowsParams;
+
+export interface PasteRowsParams {
+  pastedTasks: Task[];
+  pastedDependencies: Dependency[];
+  insertIndex: number;
+  idMapping: Record<string, string>; // old ID -> new ID
+  previousCutTaskIds?: string[]; // For undo of cut operation
+  deletedTasks?: Task[]; // Store deleted tasks for undo
+}
+
+// Clipboard operations (Cell-level)
+export interface CopyCellParams {
+  taskId: string;
+  field: EditableField;
+  value: Task[EditableField];
+}
+
+export type CutCellParams = CopyCellParams;
+
+export interface PasteCellParams {
+  taskId: string;
+  field: EditableField;
+  newValue: Task[EditableField];
+  previousValue: Task[EditableField];
+  previousCutCell?: CopyCellParams;
+  cutClearValue?: Task[EditableField]; // Value source cell was set to after cut (for redo)
+}
+
+// Multi-task operations
+export interface MultiDragTasksParams {
+  taskChanges: Array<{
+    id: string;
+    previousStartDate: string;
+    previousEndDate: string;
+    newStartDate: string;
+    newEndDate: string;
+  }>;
+  cascadeUpdates: CascadeUpdate[];
+}
+
+// Color operations
+export interface ApplyColorsToManualParams {
+  previousColorModeState: ColorModeState;
+  colorChanges: Array<{
+    id: string;
+    previousColor: string;
+    previousColorOverride: string | undefined;
+    newColor: string;
+  }>;
+}
+
+// Hide/Show operations
 export interface HideTasksParams {
   taskIds: string[]; // IDs that were explicitly hidden (including descendants)
   previousHiddenTaskIds: string[]; // Previous state for undo
