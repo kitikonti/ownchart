@@ -23,6 +23,65 @@ import { migrateGanttFile, needsMigration, isFromFuture } from "./migrate";
 import { FILE_VERSION } from "../../config/version";
 import { normalizeTaskOrder } from "../../utils/hierarchy";
 
+const KNOWN_TASK_KEYS = new Set([
+  "id",
+  "name",
+  "startDate",
+  "endDate",
+  "duration",
+  "progress",
+  "color",
+  "order",
+  "type",
+  "parent",
+  "open",
+  "colorOverride",
+  "metadata",
+  "createdAt",
+  "updatedAt",
+]);
+
+/** Create a failed DeserializeResult */
+function errorResult(code: string, message: string): DeserializeResult {
+  return { success: false, error: { code, message, recoverable: false } };
+}
+
+/**
+ * Run validation layers 1-3 and return parsed GanttFile or error
+ */
+async function parseAndValidate(
+  content: string,
+  fileName: string,
+  fileSize?: number
+): Promise<{ ganttFile: GanttFile } | { error: DeserializeResult }> {
+  // Layer 1: Pre-parse validation (file size, extension)
+  if (fileSize !== undefined) {
+    await validatePreParse({ name: fileName, size: fileSize });
+  }
+
+  // Layer 2: Safe JSON parsing
+  let parsed: unknown;
+  try {
+    parsed = safeJsonParse(content);
+  } catch (e) {
+    return {
+      error: errorResult("INVALID_JSON", `Invalid JSON: ${(e as Error).message}`),
+    };
+  }
+
+  // Layer 3: Structure validation
+  try {
+    validateStructure(parsed);
+  } catch (e) {
+    if (e instanceof ValidationError) {
+      return { error: errorResult(e.code, e.message) };
+    }
+    throw e;
+  }
+
+  return { ganttFile: parsed as GanttFile };
+}
+
 /**
  * Deserialize GanttFile JSON string to app state
  * Applies all 6 validation layers + migration + sanitization
@@ -40,46 +99,12 @@ export async function deserializeGanttFile(
   const warnings: string[] = [];
 
   try {
-    // Layer 1: Pre-parse validation (file size, extension)
-    if (fileSize !== undefined) {
-      await validatePreParse({ name: fileName, size: fileSize } as File);
-    }
+    const parseResult = await parseAndValidate(content, fileName, fileSize);
+    if ("error" in parseResult) return parseResult.error;
 
-    // Layer 2: Safe JSON parsing
-    let parsed: unknown;
-    try {
-      parsed = safeJsonParse(content);
-    } catch (e) {
-      return {
-        success: false,
-        error: {
-          code: "INVALID_JSON",
-          message: `Invalid JSON: ${(e as Error).message}`,
-          recoverable: false,
-        },
-      };
-    }
+    let ganttFile = parseResult.ganttFile;
 
-    // Layer 3: Structure validation
-    try {
-      validateStructure(parsed);
-    } catch (e) {
-      if (e instanceof ValidationError) {
-        return {
-          success: false,
-          error: {
-            code: e.code,
-            message: e.message,
-            recoverable: false,
-          },
-        };
-      }
-      throw e;
-    }
-
-    let ganttFile = parsed as GanttFile;
-
-    // Layer 6: Version compatibility & migration
+    // Migration (before semantic validation so migrated data gets validated)
     if (needsMigration(ganttFile.fileVersion)) {
       ganttFile = migrateGanttFile(ganttFile);
       warnings.push(
@@ -93,45 +118,33 @@ export async function deserializeGanttFile(
       );
     }
 
-    // Layer 4: Semantic validation
+    // Semantic validation
     try {
       validateSemantics(ganttFile);
     } catch (e) {
       if (e instanceof ValidationError) {
-        return {
-          success: false,
-          error: {
-            code: e.code,
-            message: e.message,
-            recoverable: false,
-          },
-        };
+        return errorResult(e.code, e.message);
       }
       throw e;
     }
 
-    // Layer 5: Sanitization
+    // Sanitization
     ganttFile = sanitizeGanttFile(ganttFile);
 
-    // Extract data for app
     const tasks = ganttFile.chart.tasks.map(deserializeTask);
-
-    // Normalize order values so children follow their parents
     normalizeTaskOrder(tasks);
 
     const dependencies = (ganttFile.chart.dependencies || []).map(
       deserializeDependency
     );
-    const viewSettings = ganttFile.chart.viewSettings;
-    const exportSettings = ganttFile.chart.exportSettings; // Sprint 1.6
 
     return {
       success: true,
       data: {
         tasks,
-        dependencies, // Sprint 1.4
-        viewSettings,
-        exportSettings, // Sprint 1.6
+        dependencies,
+        viewSettings: ganttFile.chart.viewSettings,
+        exportSettings: ganttFile.chart.exportSettings,
         chartName: ganttFile.chart.name,
         chartId: ganttFile.chart.id,
       },
@@ -141,14 +154,10 @@ export async function deserializeGanttFile(
       ),
     };
   } catch (e) {
-    return {
-      success: false,
-      error: {
-        code: "UNKNOWN_ERROR",
-        message: `Unexpected error: ${(e as Error).message}`,
-        recoverable: false,
-      },
-    };
+    return errorResult(
+      "UNKNOWN_ERROR",
+      `Unexpected error: ${(e as Error).message}`
+    );
   }
 }
 
@@ -159,13 +168,11 @@ export async function deserializeGanttFile(
 function deserializeTask(serialized: SerializedTask): Task & {
   __unknownFields?: Record<string, unknown>;
 } {
-  // Migrate milestones with empty endDate (pre-fix backward compat)
   const endDate =
     serialized.type === "milestone" && !serialized.endDate
       ? serialized.startDate
       : serialized.endDate;
 
-  // Extract known fields
   const task: Task & { __unknownFields?: Record<string, unknown> } = {
     id: serialized.id,
     name: serialized.name,
@@ -182,37 +189,15 @@ function deserializeTask(serialized: SerializedTask): Task & {
     metadata: serialized.metadata ?? {},
   };
 
-  // Preserve unknown fields for round-trip
-  const knownKeys = new Set([
-    "id",
-    "name",
-    "startDate",
-    "endDate",
-    "duration",
-    "progress",
-    "color",
-    "order",
-    "type",
-    "parent",
-    "open",
-    "colorOverride",
-    "metadata",
-    "createdAt",
-    "updatedAt",
-  ]);
-
   const unknownFields: Record<string, unknown> = {};
   for (const [key, value] of Object.entries(serialized)) {
-    if (!knownKeys.has(key)) {
+    if (!KNOWN_TASK_KEYS.has(key)) {
       unknownFields[key] = value;
     }
   }
 
   if (Object.keys(unknownFields).length > 0) {
-    return {
-      ...task,
-      __unknownFields: unknownFields,
-    };
+    return { ...task, __unknownFields: unknownFields };
   }
 
   return task;
@@ -220,7 +205,6 @@ function deserializeTask(serialized: SerializedTask): Task & {
 
 /**
  * Convert SerializedDependency to Dependency
- * Sprint 1.4 - Dependencies
  */
 function deserializeDependency(serialized: SerializedDependency): Dependency {
   return {
@@ -229,6 +213,6 @@ function deserializeDependency(serialized: SerializedDependency): Dependency {
     toTaskId: serialized.to,
     type: serialized.type as DependencyType,
     lag: serialized.lag,
-    createdAt: serialized.createdAt || new Date().toISOString(),
+    createdAt: serialized.createdAt ?? "",
   };
 }

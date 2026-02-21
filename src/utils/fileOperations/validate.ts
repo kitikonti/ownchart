@@ -13,6 +13,16 @@ import type { GanttFile } from "./types";
 
 const MAX_FILE_SIZE = 50 * 1024 * 1024; // 50MB
 const MAX_TASKS = 10000;
+const REQUIRED_TASK_FIELDS = [
+  "id",
+  "name",
+  "startDate",
+  "endDate",
+  "duration",
+  "progress",
+  "color",
+  "order",
+];
 
 /**
  * Custom validation error class
@@ -31,7 +41,10 @@ export class ValidationError extends Error {
  * Layer 1: Pre-Parse Validation
  * Check file size and extension before parsing
  */
-export async function validatePreParse(file: File): Promise<void> {
+export async function validatePreParse(file: {
+  name: string;
+  size: number;
+}): Promise<void> {
   // File size check
   if (file.size > MAX_FILE_SIZE) {
     throw new ValidationError(
@@ -114,35 +127,9 @@ export function validateStructure(data: unknown): void {
   }
 
   // Validate each task structure
-  chart.tasks.forEach((task: unknown, index: number) => {
-    if (!task || typeof task !== "object") {
-      throw new ValidationError(
-        "INVALID_TASK",
-        `Task at index ${index} is not an object`
-      );
-    }
-
-    const t = task as Record<string, unknown>;
-    const required = [
-      "id",
-      "name",
-      "startDate",
-      "endDate",
-      "duration",
-      "progress",
-      "color",
-      "order",
-    ];
-
-    for (const field of required) {
-      if (!(field in t)) {
-        throw new ValidationError(
-          "MISSING_FIELD",
-          `Task ${index} missing field: ${field}`
-        );
-      }
-    }
-  });
+  chart.tasks.forEach((task: unknown, index: number) =>
+    validateTaskStructure(task, index)
+  );
 
   // Validate viewSettings exists
   if (!chart.viewSettings || typeof chart.viewSettings !== "object") {
@@ -154,78 +141,37 @@ export function validateStructure(data: unknown): void {
 }
 
 /**
+ * Validate a single task's structure (required fields present)
+ */
+function validateTaskStructure(task: unknown, index: number): void {
+  if (!task || typeof task !== "object") {
+    throw new ValidationError(
+      "INVALID_TASK",
+      `Task at index ${index} is not an object`
+    );
+  }
+
+  const t = task as Record<string, unknown>;
+  for (const field of REQUIRED_TASK_FIELDS) {
+    if (!(field in t)) {
+      throw new ValidationError(
+        "MISSING_FIELD",
+        `Task ${index} missing field: ${field}`
+      );
+    }
+  }
+}
+
+/**
  * Layer 4: Semantic Validation
  * Check data integrity (IDs, dates, hierarchy)
  */
 export function validateSemantics(file: GanttFile): void {
   const taskIds = new Set<string>();
-  const uuidRegex =
-    /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
   file.chart.tasks.forEach((task, index) => {
-    // Validate UUID
-    if (!uuidRegex.test(task.id)) {
-      throw new ValidationError(
-        "INVALID_ID",
-        `Task ${index} has invalid UUID: ${task.id}`
-      );
-    }
-
-    // Check for duplicate IDs
-    if (taskIds.has(task.id)) {
-      throw new ValidationError(
-        "DUPLICATE_ID",
-        `Duplicate task ID: ${task.id}`
-      );
-    }
+    validateTaskSemantics(task, index, taskIds);
     taskIds.add(task.id);
-
-    // Validate dates
-    if (!isValidISODate(task.startDate)) {
-      throw new ValidationError(
-        "INVALID_DATE",
-        `Task ${index} has invalid startDate: ${task.startDate}`
-      );
-    }
-    if (!isValidISODate(task.endDate)) {
-      // Backward compat: milestones saved with endDate "" get auto-fixed
-      if (task.type === "milestone" && task.endDate === "") {
-        task.endDate = task.startDate;
-      } else {
-        throw new ValidationError(
-          "INVALID_DATE",
-          `Task ${index} has invalid endDate: ${task.endDate}`
-        );
-      }
-    }
-
-    // Validate date order
-    if (new Date(task.endDate) < new Date(task.startDate)) {
-      throw new ValidationError(
-        "INVALID_DATE_ORDER",
-        `Task ${index}: endDate before startDate`
-      );
-    }
-
-    // Validate progress
-    if (
-      typeof task.progress !== "number" ||
-      task.progress < 0 ||
-      task.progress > 100
-    ) {
-      throw new ValidationError(
-        "INVALID_PROGRESS",
-        `Task ${index} has invalid progress: ${task.progress}`
-      );
-    }
-
-    // Validate color
-    if (!isValidHexColor(task.color)) {
-      throw new ValidationError(
-        "INVALID_COLOR",
-        `Task ${index} has invalid color: ${task.color}`
-      );
-    }
   });
 
   // Validate hierarchy (no dangling parents)
@@ -238,8 +184,110 @@ export function validateSemantics(file: GanttFile): void {
     }
   });
 
-  // Check for circular references
   detectCircularHierarchy(file.chart.tasks);
+
+  if (file.chart.dependencies) {
+    validateDependencies(file.chart.dependencies, taskIds);
+  }
+}
+
+const UUID_REGEX =
+  /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+/**
+ * Validate a single task's semantic integrity (ID, dates, progress, color)
+ */
+function validateTaskSemantics(
+  task: { id: string; startDate: string; endDate: string; type?: string; progress: number; color: string },
+  index: number,
+  taskIds: Set<string>
+): void {
+  if (!UUID_REGEX.test(task.id)) {
+    throw new ValidationError(
+      "INVALID_ID",
+      `Task ${index} has invalid UUID: ${task.id}`
+    );
+  }
+
+  if (taskIds.has(task.id)) {
+    throw new ValidationError("DUPLICATE_ID", `Duplicate task ID: ${task.id}`);
+  }
+
+  if (!isValidISODate(task.startDate)) {
+    throw new ValidationError(
+      "INVALID_DATE",
+      `Task ${index} has invalid startDate: ${task.startDate}`
+    );
+  }
+
+  if (!isValidISODate(task.endDate)) {
+    // Milestones with empty endDate are auto-fixed during deserialization
+    if (!(task.type === "milestone" && task.endDate === "")) {
+      throw new ValidationError(
+        "INVALID_DATE",
+        `Task ${index} has invalid endDate: ${task.endDate}`
+      );
+    }
+  }
+
+  if (
+    isValidISODate(task.endDate) &&
+    new Date(task.endDate) < new Date(task.startDate)
+  ) {
+    throw new ValidationError(
+      "INVALID_DATE_ORDER",
+      `Task ${index}: endDate before startDate`
+    );
+  }
+
+  if (
+    typeof task.progress !== "number" ||
+    task.progress < 0 ||
+    task.progress > 100
+  ) {
+    throw new ValidationError(
+      "INVALID_PROGRESS",
+      `Task ${index} has invalid progress: ${task.progress}`
+    );
+  }
+
+  if (!isValidHexColor(task.color)) {
+    throw new ValidationError(
+      "INVALID_COLOR",
+      `Task ${index} has invalid color: ${task.color}`
+    );
+  }
+}
+
+const VALID_DEPENDENCY_TYPES = new Set(["FS", "SS", "FF", "SF"]);
+
+/**
+ * Validate dependency entries
+ */
+function validateDependencies(
+  dependencies: Array<{ id: string; from: string; to: string; type: string }>,
+  taskIds: Set<string>
+): void {
+  dependencies.forEach((dep, index) => {
+    if (!VALID_DEPENDENCY_TYPES.has(dep.type)) {
+      throw new ValidationError(
+        "INVALID_DEPENDENCY_TYPE",
+        `Dependency ${index} has invalid type: ${dep.type}`
+      );
+    }
+    if (!taskIds.has(dep.from)) {
+      throw new ValidationError(
+        "DANGLING_DEPENDENCY",
+        `Dependency ${index} references non-existent source task: ${dep.from}`
+      );
+    }
+    if (!taskIds.has(dep.to)) {
+      throw new ValidationError(
+        "DANGLING_DEPENDENCY",
+        `Dependency ${index} references non-existent target task: ${dep.to}`
+      );
+    }
+  });
 }
 
 /**
@@ -267,6 +315,7 @@ function isValidHexColor(color: string): boolean {
 function detectCircularHierarchy(
   tasks: Array<{ id: string; parent?: string }>
 ): void {
+  const taskMap = new Map(tasks.map((t) => [t.id, t]));
   const visited = new Set<string>();
   const recursionStack = new Set<string>();
 
@@ -283,7 +332,7 @@ function detectCircularHierarchy(
     visited.add(taskId);
     recursionStack.add(taskId);
 
-    const task = tasks.find((t) => t.id === taskId);
+    const task = taskMap.get(taskId);
     if (task?.parent) {
       dfs(task.parent, [...path, taskId]);
     }
