@@ -67,6 +67,7 @@ const slate = {
   100: "#f8fafc",
   200: "#e2e8f0",
   400: "#94a3b8",
+  500: "#64748b", // dependency hover (between default and selected)
   700: "#334155",
   800: "#1e293b",
 } as const;
@@ -88,11 +89,15 @@ export const COLORS = {
     selection: brand[400], // drag preview/selection
     text: "#495057", // Text in SVG (Bootstrap gray-700)
     dependencyDefault: slate[400],
+    dependencyHover: slate[500], // between default and selected
     dependencySelected: slate[700],
     todayMarker: brand[600], // today marker
     todayHighlight: brand[50], // today header cell background
     taskDefault: brand[600], // new tasks
     marquee: slate[700], // Marquee selection rectangle
+    /** Fill opacity for selected-row highlight and marquee overlay */
+    selectionFillOpacity: 0.08,
+    marqueeFillOpacity: 0.1,
   },
 } as const;
 
@@ -230,7 +235,9 @@ export const TABLE_HEADER = {
 
 export const GRID = {
   weekendBg: coolGray[100],
+  weekendOpacity: 0.6,
   holidayBg: "#fce7f3", // Tailwind pink-100
+  holidayOpacity: 0.7,
   lineDaily: coolGray[200],
   lineWeeklyMonthly: coolGray[400],
   lineDailyWeekend: coolGray[250],

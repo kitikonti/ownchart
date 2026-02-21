@@ -4,16 +4,36 @@
  * Sprint 1.4 - Dependencies (Finish-to-Start Only)
  */
 
-import React, { memo, useMemo } from "react";
+import React, { memo, useMemo, useState } from "react";
 import type { Dependency, TaskPosition } from "../../types/dependency.types";
-import type { Task } from "../../types/chart.types";
-import { calculateArrowPath, getArrowheadPoints } from "../../utils/arrowPath";
+import {
+  ARROWHEAD_SIZE,
+  calculateArrowPath,
+  getArrowheadPoints,
+} from "../../utils/arrowPath";
 import { COLORS } from "../../styles/design-tokens";
+
+// ---------------------------------------------------------------------------
+// Geometry constants
+// ---------------------------------------------------------------------------
+
+/** Invisible hit area width around the arrow path for easier clicking */
+const HIT_AREA_STROKE_WIDTH = 14;
+/** Default arrow stroke width (unselected) */
+const STROKE_WIDTH_DEFAULT = 1.5;
+/** Selected arrow stroke width */
+const STROKE_WIDTH_SELECTED = 2.5;
+/** Selected-state dashed overlay stroke width */
+const SELECTION_OVERLAY_WIDTH = 6;
+/** Selected-state dashed overlay dash pattern */
+const SELECTION_DASH = "4 2";
+/** Selected-state dashed overlay opacity */
+const SELECTION_OPACITY = 0.3;
 
 interface DependencyArrowProps {
   dependency: Dependency;
-  fromTask: Task;
-  toTask: Task;
+  fromTaskName: string;
+  toTaskName: string;
   taskPositions: Map<string, TaskPosition>;
   rowHeight: number;
   isSelected: boolean;
@@ -23,14 +43,16 @@ interface DependencyArrowProps {
 
 export const DependencyArrow = memo(function DependencyArrow({
   dependency,
-  fromTask,
-  toTask,
+  fromTaskName,
+  toTaskName,
   taskPositions,
   rowHeight,
   isSelected,
   onSelect,
   onDelete,
 }: DependencyArrowProps) {
+  const [isHovered, setIsHovered] = useState(false);
+
   const fromPos = taskPositions.get(dependency.fromTaskId);
   const toPos = taskPositions.get(dependency.toTaskId);
 
@@ -55,6 +77,10 @@ export const DependencyArrow = memo(function DependencyArrow({
   };
 
   const handleKeyDown = (e: React.KeyboardEvent): void => {
+    if (e.key === "Enter" || e.key === " ") {
+      e.preventDefault();
+      onSelect(dependency.id);
+    }
     if (e.key === "Delete" || e.key === "Backspace") {
       e.preventDefault();
       onDelete(dependency.id);
@@ -67,25 +93,28 @@ export const DependencyArrow = memo(function DependencyArrow({
   // Arrow colors - lighter for less visual noise
   const strokeColor = isSelected
     ? COLORS.chart.dependencySelected
-    : COLORS.chart.dependencyDefault;
-  const strokeWidth = isSelected ? 2.5 : 1.5;
+    : isHovered
+      ? COLORS.chart.dependencyHover
+      : COLORS.chart.dependencyDefault;
+  const strokeWidth = isSelected ? STROKE_WIDTH_SELECTED : STROKE_WIDTH_DEFAULT;
 
   return (
     <g
-      className="dependency-arrow"
+      className="dependency-arrow outline-none focus-visible:outline-blue-500"
       onClick={handleClick}
       onKeyDown={handleKeyDown}
+      onMouseEnter={() => setIsHovered(true)}
+      onMouseLeave={() => setIsHovered(false)}
       tabIndex={0}
       role="graphics-symbol"
-      aria-label={`Dependency from ${fromTask.name} to ${toTask.name}`}
-      style={{ outline: "none" }}
+      aria-label={`Dependency from ${fromTaskName} to ${toTaskName}`}
     >
       {/* Invisible wider hit area for easier clicking */}
       <path
         d={path}
         fill="none"
         stroke="transparent"
-        strokeWidth={14}
+        strokeWidth={HIT_AREA_STROKE_WIDTH}
         className="cursor-pointer"
       />
 
@@ -95,12 +124,12 @@ export const DependencyArrow = memo(function DependencyArrow({
         fill="none"
         stroke={strokeColor}
         strokeWidth={strokeWidth}
-        className="transition-colors duration-150 cursor-pointer hover:stroke-neutral-600"
+        className="transition-colors duration-150 cursor-pointer"
       />
 
       {/* Arrowhead */}
       <polygon
-        points={getArrowheadPoints(8)}
+        points={getArrowheadPoints(ARROWHEAD_SIZE)}
         fill={strokeColor}
         transform={`translate(${arrowHead.x}, ${arrowHead.y}) rotate(${arrowHead.angle})`}
         className="transition-colors duration-150"
@@ -112,9 +141,9 @@ export const DependencyArrow = memo(function DependencyArrow({
           d={path}
           fill="none"
           stroke={COLORS.chart.dependencySelected}
-          strokeWidth={6}
-          strokeDasharray="4 2"
-          opacity={0.3}
+          strokeWidth={SELECTION_OVERLAY_WIDTH}
+          strokeDasharray={SELECTION_DASH}
+          opacity={SELECTION_OPACITY}
           pointerEvents="none"
         />
       )}

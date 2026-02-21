@@ -10,6 +10,7 @@ import {
   format,
   startOfWeek,
   startOfMonth,
+  addDays as addDaysFns,
   addWeeks,
   addMonths,
 } from "date-fns";
@@ -20,14 +21,36 @@ import { holidayService } from "../../services/holidayService";
 import { useFirstDayOfWeek } from "../../store/slices/userPreferencesSlice";
 import { GRID } from "../../styles/design-tokens";
 
+// Grid density thresholds (pixels per day)
+const MONTHLY_THRESHOLD_PX = 3; // Below: monthly grid lines only
+const WEEKLY_THRESHOLD_PX = 10; // Below: weekly grid lines
+
+// Grid interval constants (days)
+const DAILY_INTERVAL = 1;
+const WEEKLY_INTERVAL = 7;
+const MONTHLY_INTERVAL = 30;
+
+type LineType = "daily" | "weekly" | "monthly";
+
+/** Resolve the vertical-line stroke color based on zoom level and day type. */
+export function getVerticalLineStroke(
+  lineType: LineType,
+  isWeekendDay: boolean
+): string {
+  if (lineType === "daily") {
+    return isWeekendDay ? GRID.lineDailyWeekend : GRID.lineDaily;
+  }
+  return GRID.lineWeeklyMonthly;
+}
+
 interface GridLinesProps {
   scale: TimelineScale;
   taskCount: number;
   showWeekends?: boolean;
-  showHolidays?: boolean; // Sprint 1.5.9: Holiday highlighting
-  holidayRegion?: string; // Sprint 1.5.9: Holiday region code
-  width?: number; // Optional override for grid width (defaults to scale.totalWidth)
-  rowHeight?: number; // Dynamic row height from density config
+  showHolidays?: boolean;
+  holidayRegion?: string;
+  width?: number;
+  rowHeight?: number;
 }
 
 export function GridLines({
@@ -37,57 +60,57 @@ export function GridLines({
   showHolidays = false,
   holidayRegion = "",
   width,
-  rowHeight = 36, // Default to Normal density
+  rowHeight = 36,
 }: GridLinesProps): JSX.Element {
-  // Use provided width or fall back to scale.totalWidth
   const gridWidth = width ?? scale.totalWidth;
 
-  // Get first day of week from user preferences (0 = Sunday, 1 = Monday)
   const firstDayOfWeek = useFirstDayOfWeek();
   const weekStartsOn: 0 | 1 = firstDayOfWeek === "sunday" ? 0 : 1;
-  // ADAPTIVE GRID DENSITY (Critical from Frontend + Data Viz reviews)
+
+  // Configure holiday service region (idempotent — no-op when region unchanged)
+  if (showHolidays && holidayRegion) {
+    holidayService.setRegion(holidayRegion);
+  }
+
+  // Shared end-date derived from grid pixel width
+  const endDate = useMemo(() => {
+    const daysFromStart = Math.ceil(gridWidth / scale.pixelsPerDay);
+    return addDays(scale.minDate, daysFromStart);
+  }, [scale.minDate, scale.pixelsPerDay, gridWidth]);
+
+  // ADAPTIVE GRID DENSITY
   // Thresholds based on visual readability:
   // - At 25 px/day (zoom 1.0): daily lines are comfortable
   // - At 12.5 px/day (zoom 0.5): daily lines still readable
-  // - Below 10 px/day: switch to weekly lines
-  // - Below 3 px/day: switch to monthly lines
+  // - Below WEEKLY_THRESHOLD_PX: switch to weekly lines
+  // - Below MONTHLY_THRESHOLD_PX: switch to monthly lines
   const gridInterval = useMemo(() => {
     const pixelsPerDay = scale.pixelsPerDay;
-    if (pixelsPerDay < 3) return 30; // Monthly when very zoomed out (< ~12% zoom)
-    if (pixelsPerDay < 10) return 7; // Weekly when zoomed out (< ~40% zoom)
-    return 1; // Daily at normal zoom (>= 40% zoom)
+    if (pixelsPerDay < MONTHLY_THRESHOLD_PX) return MONTHLY_INTERVAL;
+    if (pixelsPerDay < WEEKLY_THRESHOLD_PX) return WEEKLY_INTERVAL;
+    return DAILY_INTERVAL;
   }, [scale.pixelsPerDay]);
 
-  // Weekend highlighting is always shown if enabled (regardless of zoom level)
-
-  // Determine line type for styling
-  type LineType = "daily" | "weekly" | "monthly";
   const lineType: LineType =
-    gridInterval === 1 ? "daily" : gridInterval === 7 ? "weekly" : "monthly";
+    gridInterval === DAILY_INTERVAL
+      ? "daily"
+      : gridInterval === WEEKLY_INTERVAL
+        ? "weekly"
+        : "monthly";
 
   // Vertical lines (adaptive interval)
-  // Aligns to proper boundaries: week start (Monday) for weekly, month start for monthly
+  // Aligns to proper boundaries: week start for weekly, month start for monthly
   const verticalLines = useMemo(() => {
     const lines: Array<{ x: number; date: string; isWeekend: boolean }> = [];
     const minDateObj = parseISO(scale.minDate);
 
-    // Calculate end date based on grid width (not just scale.maxDate)
-    const endX = gridWidth;
-    const daysFromStart = Math.ceil(endX / scale.pixelsPerDay);
-    const endDate = addDays(scale.minDate, daysFromStart);
-
     // Determine start date based on interval type
     let currentDateObj: Date;
-    if (gridInterval === 7) {
-      // Weekly: align to week start (based on user preference)
-      currentDateObj = startOfWeek(minDateObj, {
-        weekStartsOn,
-      });
-    } else if (gridInterval === 30) {
-      // Monthly: align to month start
+    if (gridInterval === WEEKLY_INTERVAL) {
+      currentDateObj = startOfWeek(minDateObj, { weekStartsOn });
+    } else if (gridInterval === MONTHLY_INTERVAL) {
       currentDateObj = startOfMonth(minDateObj);
     } else {
-      // Daily: start from minDate
       currentDateObj = minDateObj;
     }
 
@@ -96,7 +119,6 @@ export function GridLines({
     while (currentDate <= endDate) {
       const x = dateToPixel(currentDate, scale);
 
-      // Only add lines that are within grid width and >= 0 (visible range)
       if (x >= 0 && x <= gridWidth) {
         lines.push({
           x,
@@ -106,77 +128,53 @@ export function GridLines({
       }
 
       // Advance to next interval
-      if (gridInterval === 7) {
+      if (gridInterval === WEEKLY_INTERVAL) {
         currentDateObj = addWeeks(currentDateObj, 1);
-      } else if (gridInterval === 30) {
+      } else if (gridInterval === MONTHLY_INTERVAL) {
         currentDateObj = addMonths(currentDateObj, 1);
       } else {
-        currentDateObj = parseISO(addDays(currentDate, 1));
+        currentDateObj = addDaysFns(currentDateObj, 1);
       }
       currentDate = format(currentDateObj, "yyyy-MM-dd");
     }
 
     return lines;
-  }, [scale, gridInterval, gridWidth, weekStartsOn]);
+  }, [scale, gridInterval, gridWidth, weekStartsOn, endDate]);
 
   // Weekend columns for background highlighting
-  // Always shown when enabled, regardless of zoom level
   const weekendColumns = useMemo(() => {
     if (!showWeekends) return [];
 
     const columns: Array<{ x: number; date: string }> = [];
     let currentDate = scale.minDate;
 
-    // Calculate end date based on grid width
-    const endX = gridWidth;
-    const daysFromStart = Math.ceil(endX / scale.pixelsPerDay);
-    const endDate = addDays(scale.minDate, daysFromStart);
-
     while (currentDate <= endDate) {
       const x = dateToPixel(currentDate, scale);
 
-      // Only add weekends that are within visible range (>= 0) and grid width
       if (x >= 0 && x <= gridWidth && isWeekend(currentDate)) {
-        columns.push({
-          x,
-          date: currentDate,
-        });
+        columns.push({ x, date: currentDate });
       }
 
       currentDate = addDays(currentDate, 1);
     }
 
     return columns;
-  }, [scale, showWeekends, gridWidth]);
+  }, [scale, showWeekends, gridWidth, endDate]);
 
-  // Holiday columns for background highlighting (Sprint 1.5.9)
-  // Similar to weekend highlighting but with a different color
+  // Holiday columns for background highlighting
   const holidayColumns = useMemo(() => {
     if (!showHolidays || !holidayRegion) return [];
-
-    // Ensure holiday service is configured for the current region
-    holidayService.setRegion(holidayRegion);
 
     const columns: Array<{ x: number; date: string; name: string }> = [];
     let currentDate = scale.minDate;
 
-    // Calculate end date based on grid width
-    const endX = gridWidth;
-    const daysFromStart = Math.ceil(endX / scale.pixelsPerDay);
-    const endDate = addDays(scale.minDate, daysFromStart);
-
     while (currentDate <= endDate) {
       const x = dateToPixel(currentDate, scale);
 
-      // Only add holidays that are within visible range (>= 0) and grid width
       if (x >= 0 && x <= gridWidth) {
         const holidayInfo = holidayService.isHolidayString(currentDate);
         if (holidayInfo) {
-          columns.push({
-            x,
-            date: currentDate,
-            name: holidayInfo.name,
-          });
+          columns.push({ x, date: currentDate, name: holidayInfo.name });
         }
       }
 
@@ -184,7 +182,7 @@ export function GridLines({
     }
 
     return columns;
-  }, [scale, showHolidays, holidayRegion, gridWidth]);
+  }, [scale, showHolidays, holidayRegion, gridWidth, endDate]);
 
   // Horizontal lines (one per task row)
   const horizontalLines = useMemo(() => {
@@ -192,6 +190,8 @@ export function GridLines({
       y: i * rowHeight,
     }));
   }, [taskCount, rowHeight]);
+
+  const gridHeight = taskCount * rowHeight;
 
   return (
     <g className="grid-lines">
@@ -202,23 +202,23 @@ export function GridLines({
           x={x}
           y={0}
           width={scale.pixelsPerDay}
-          height={taskCount * rowHeight}
+          height={gridHeight}
           fill={GRID.weekendBg}
-          opacity={0.6}
+          opacity={GRID.weekendOpacity}
           className="weekend-column"
         />
       ))}
 
-      {/* Holiday background highlighting (Sprint 1.5.9) */}
+      {/* Holiday background highlighting */}
       {holidayColumns.map(({ x, date, name }) => (
         <rect
           key={`holiday-${date}`}
           x={x}
           y={0}
           width={scale.pixelsPerDay}
-          height={taskCount * rowHeight}
+          height={gridHeight}
           fill={GRID.holidayBg}
-          opacity={0.7}
+          opacity={GRID.holidayOpacity}
           className="holiday-column"
         >
           <title>{name}</title>
@@ -226,30 +226,18 @@ export function GridLines({
       ))}
 
       {/* Vertical lines - styled based on zoom level */}
-      {verticalLines.map(({ x, date, isWeekend: isWeekendDay }) => {
-        // At daily resolution: subtle lines, weekend lines slightly darker
-        // At weekly/monthly resolution: slightly more prominent lines
-        const getStroke = (): string => {
-          if (lineType === "daily") {
-            return isWeekendDay ? GRID.lineDailyWeekend : GRID.lineDaily;
-          }
-          // Weekly/monthly lines are slightly more prominent
-          return GRID.lineWeeklyMonthly;
-        };
-
-        return (
-          <line
-            key={`vline-${date}`}
-            x1={x}
-            y1={0}
-            x2={x}
-            y2={taskCount * rowHeight}
-            stroke={getStroke()}
-            strokeWidth={1}
-            className={`${lineType}-line`}
-          />
-        );
-      })}
+      {verticalLines.map(({ x, date, isWeekend: isWeekendDay }) => (
+        <line
+          key={`vline-${date}`}
+          x1={x}
+          y1={0}
+          x2={x}
+          y2={gridHeight}
+          stroke={getVerticalLineStroke(lineType, isWeekendDay)}
+          strokeWidth={1}
+          className={`${lineType}-line`}
+        />
+      ))}
 
       {/* Horizontal lines */}
       {horizontalLines.map(({ y }, i) => (

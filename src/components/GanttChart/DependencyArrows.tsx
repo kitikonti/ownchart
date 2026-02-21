@@ -78,7 +78,7 @@ export function DependencyArrows({
         scale,
         index,
         densityGeometry,
-        0
+        0 // headerHeight = 0 (header in separate SVG)
       );
 
       positions.set(task.id, {
@@ -98,14 +98,6 @@ export function DependencyArrows({
       selectDependency(id === selectedDependencyId ? null : id);
     },
     [selectDependency, selectedDependencyId]
-  );
-
-  // Handle dependency deletion
-  const handleDelete = useCallback(
-    (id: string) => {
-      removeDependency(id);
-    },
-    [removeDependency]
   );
 
   // Filter dependencies to only render those where both tasks are visible
@@ -141,20 +133,21 @@ export function DependencyArrows({
     <g className="layer-dependencies">
       {/* Render all visible dependency arrows */}
       {visibleDependencies.map((dep) => {
-        const fromTask = taskMap.get(dep.fromTaskId)!;
-        const toTask = taskMap.get(dep.toTaskId)!;
+        const fromTask = taskMap.get(dep.fromTaskId);
+        const toTask = taskMap.get(dep.toTaskId);
+        if (!fromTask || !toTask) return null;
 
         return (
           <DependencyArrow
             key={dep.id}
             dependency={dep}
-            fromTask={fromTask}
-            toTask={toTask}
+            fromTaskName={fromTask.name}
+            toTaskName={toTask.name}
             taskPositions={taskPositions}
             rowHeight={rowHeight}
             isSelected={selectedDependencyId === dep.id}
             onSelect={handleSelect}
-            onDelete={handleDelete}
+            onDelete={removeDependency}
           />
         );
       })}

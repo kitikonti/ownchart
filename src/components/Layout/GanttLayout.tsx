@@ -31,10 +31,13 @@ import { useFlattenedTasks } from "../../hooks/useFlattenedTasks";
 import { useHeaderDateSelection } from "../../hooks/useHeaderDateSelection";
 import { useDensityConfig } from "../../store/slices/userPreferencesSlice";
 import { SCROLL_OFFSET_DAYS } from "../../utils/timelineUtils";
-import { MIN_TABLE_WIDTH } from "../../config/layoutConstants";
+import {
+  MIN_TABLE_WIDTH,
+  SCROLLBAR_HEIGHT,
+  MIN_OVERFLOW,
+} from "../../config/layoutConstants";
 
 const HEADER_HEIGHT = 48; // Timeline header height
-const SCROLLBAR_HEIGHT = 17; // Reserve space for horizontal scrollbar
 
 export function GanttLayout(): JSX.Element {
   // Refs for scroll synchronization and measurements
@@ -111,9 +114,6 @@ export function GanttLayout(): JSX.Element {
   const totalContentHeight =
     (flattenedTasks.length + 1) * ROW_HEIGHT + HEADER_HEIGHT + SCROLLBAR_HEIGHT;
 
-  // Ensure timeline header is always wider than container to guarantee horizontal scrollbar
-  // This enables infinite scroll to work in both directions
-  const MIN_OVERFLOW = 400; // Must match ChartCanvas MIN_OVERFLOW
   const timelineHeaderWidth = scale
     ? Math.max(scale.totalWidth, containerWidth + MIN_OVERFLOW)
     : containerWidth + MIN_OVERFLOW;

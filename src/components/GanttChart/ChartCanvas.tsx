@@ -8,7 +8,7 @@
  * to avoid feedback loop when zooming (zoom -> SVG grows -> width measurement -> repeat)
  */
 
-import { useRef, useEffect, useMemo, useState, useCallback } from "react";
+import { useRef, useEffect, useMemo, useState, useCallback, memo } from "react";
 import type { Task } from "../../types/chart.types";
 import { useChartStore } from "../../store/slices/chartSlice";
 import { useTaskStore } from "../../store/slices/taskSlice";
@@ -29,10 +29,81 @@ import {
   type DensityGeometryConfig,
 } from "../../utils/timelineUtils";
 import { COLORS } from "../../styles/design-tokens";
+import { SCROLLBAR_HEIGHT, MIN_OVERFLOW } from "../../config/layoutConstants";
 import { useTimelineBarContextMenu } from "../../hooks/useTimelineBarContextMenu";
 import { useTimelineAreaContextMenu } from "../../hooks/useTimelineAreaContextMenu";
 import { ContextMenu } from "../ContextMenu/ContextMenu";
 import { SelectionHighlight } from "./SelectionHighlight";
+
+// ---------------------------------------------------------------------------
+// SelectionRows — memoized sub-component for Layer 2.5 selection highlights
+// ---------------------------------------------------------------------------
+
+interface SelectionRowsProps {
+  tasks: Task[];
+  selectedSet: Set<string>;
+  rowHeight: number;
+  timelineWidth: number;
+}
+
+const BRAND_COLOR = COLORS.brand[600];
+
+const SelectionRows = memo(function SelectionRows({
+  tasks,
+  selectedSet,
+  rowHeight,
+  timelineWidth,
+}: SelectionRowsProps): JSX.Element {
+  return (
+    <g className="layer-selection">
+      {tasks.map((task, index) => {
+        if (!selectedSet.has(task.id)) return null;
+
+        const prevSelected = index > 0 && selectedSet.has(tasks[index - 1].id);
+        const nextSelected =
+          index < tasks.length - 1 && selectedSet.has(tasks[index + 1].id);
+        const y = index * rowHeight;
+
+        return (
+          <g key={`selection-${task.id}`}>
+            <rect
+              x={0}
+              y={y}
+              width={timelineWidth}
+              height={rowHeight}
+              fill={BRAND_COLOR}
+              fillOpacity={COLORS.chart.selectionFillOpacity}
+            />
+            {!prevSelected && (
+              <line
+                x1={0}
+                y1={y}
+                x2={timelineWidth}
+                y2={y}
+                stroke={BRAND_COLOR}
+                strokeWidth={2}
+              />
+            )}
+            {!nextSelected && (
+              <line
+                x1={0}
+                y1={y + rowHeight}
+                x2={timelineWidth}
+                y2={y + rowHeight}
+                stroke={BRAND_COLOR}
+                strokeWidth={2}
+              />
+            )}
+          </g>
+        );
+      })}
+    </g>
+  );
+});
+
+// ---------------------------------------------------------------------------
+// ChartCanvas
+// ---------------------------------------------------------------------------
 
 interface ChartCanvasProps {
   tasks: Task[];
@@ -40,12 +111,10 @@ interface ChartCanvasProps {
   onTaskClick?: (taskId: string) => void;
   onTaskDoubleClick?: (taskId: string) => void;
   containerHeight?: number; // Height from parent container
-  containerWidth?: number; // Width from parent container (viewport, not content)
+  containerWidth?: number; // Width from parent (viewport, not content)
   /** Header date selection highlight (x, width in pixels) */
   headerSelectionRect?: { x: number; width: number } | null;
 }
-
-const SCROLLBAR_HEIGHT = 17; // Reserve space for horizontal scrollbar
 
 export function ChartCanvas({
   tasks,
@@ -53,11 +122,9 @@ export function ChartCanvas({
   onTaskClick,
   onTaskDoubleClick,
   containerHeight = 600,
-  containerWidth: propContainerWidth = 800,
+  containerWidth = 800,
   headerSelectionRect,
 }: ChartCanvasProps): JSX.Element {
-  const outerRef = useRef<HTMLDivElement>(null);
-  const containerRef = useRef<HTMLDivElement>(null);
   const svgContainerRef = useRef<HTMLDivElement>(null);
   const svgRef = useRef<SVGSVGElement>(null);
 
@@ -105,9 +172,6 @@ export function ChartCanvas({
       svgRef,
       enabled: true,
     });
-
-  // Use prop as containerWidth (measured at App.tsx level to avoid feedback loop)
-  const containerWidth = propContainerWidth;
 
   // Zoom hook (Sprint 1.2 Package 3)
   const { handlers } = useZoom({
@@ -192,20 +256,12 @@ export function ChartCanvas({
     [dragState.isDragging, endDrag]
   );
 
-  // Marquee selection handler
-  const handleMarqueeSelection = useCallback(
-    (taskIds: string[], addToSelection: boolean) => {
-      setSelectedTaskIds(taskIds, addToSelection);
-    },
-    [setSelectedTaskIds]
-  );
-
   // Marquee selection hook
   const { normalizedRect: marqueeRect, onMouseDown: onMarqueeMouseDown } =
     useMarqueeSelection({
       svgRef,
       taskGeometries: taskGeometriesArray,
-      onSelectionChange: handleMarqueeSelection,
+      onSelectionChange: setSelectedTaskIds,
       enabled: !dragState.isDragging, // Disable during dependency drag
     });
 
@@ -231,11 +287,8 @@ export function ChartCanvas({
   // Don't render if scale not ready
   if (!scale) {
     return (
-      <div
-        ref={outerRef}
-        className="chart-canvas-container w-full min-h-screen"
-      >
-        <div ref={containerRef} className="w-full min-h-screen">
+      <div className="chart-canvas-container w-full min-h-screen">
+        <div className="w-full min-h-screen">
           <div className="flex items-center justify-center min-h-screen text-neutral-500">
             Loading timeline...
           </div>
@@ -258,22 +311,15 @@ export function ChartCanvas({
   );
   const contentHeight = Math.max(taskBasedHeight, containerHeight);
 
-  // Ensure timeline is always wider than container to guarantee horizontal scrollbar
-  // This enables infinite scroll to work in both directions
-  // Must be > 2 * THRESHOLD (100px) + initial scroll offset (~175px) to allow scrolling both ways
-  const MIN_OVERFLOW = 400;
   const timelineWidth = Math.max(
     scale.totalWidth,
     containerWidth + MIN_OVERFLOW
   );
 
   return (
-    <div
-      ref={outerRef}
-      className="chart-canvas-container w-full bg-white relative"
-    >
+    <div className="chart-canvas-container w-full bg-white relative">
       {/* Chart Content Container with Pan/Zoom */}
-      <div ref={containerRef} className="w-full overflow-visible relative">
+      <div className="w-full overflow-visible relative">
         <div ref={svgContainerRef} className="w-full" {...handlers}>
           <svg
             ref={svgRef}
@@ -303,58 +349,12 @@ export function ChartCanvas({
             />
 
             {/* Layer 2.5: Selection Highlights (full row, brand color) */}
-            <g className="layer-selection">
-              {tasks.map((task, index) => {
-                const isSelected = selectedSet.has(task.id);
-                if (!isSelected) return null;
-
-                // Check if prev/next rows are also selected for contiguous borders
-                const prevSelected =
-                  index > 0 && selectedSet.has(tasks[index - 1].id);
-                const nextSelected =
-                  index < tasks.length - 1 &&
-                  selectedSet.has(tasks[index + 1].id);
-
-                const BRAND_COLOR = COLORS.brand[600];
-                const y = index * ROW_HEIGHT;
-
-                return (
-                  <g key={`selection-${task.id}`}>
-                    {/* Background fill */}
-                    <rect
-                      x={0}
-                      y={y}
-                      width={timelineWidth}
-                      height={ROW_HEIGHT}
-                      fill={BRAND_COLOR}
-                      fillOpacity={0.08}
-                    />
-                    {/* Top border (only if first in selection group) */}
-                    {!prevSelected && (
-                      <line
-                        x1={0}
-                        y1={y}
-                        x2={timelineWidth}
-                        y2={y}
-                        stroke={BRAND_COLOR}
-                        strokeWidth={2}
-                      />
-                    )}
-                    {/* Bottom border (only if last in selection group) */}
-                    {!nextSelected && (
-                      <line
-                        x1={0}
-                        y1={y + ROW_HEIGHT}
-                        x2={timelineWidth}
-                        y2={y + ROW_HEIGHT}
-                        stroke={BRAND_COLOR}
-                        strokeWidth={2}
-                      />
-                    )}
-                  </g>
-                );
-              })}
-            </g>
+            <SelectionRows
+              tasks={tasks}
+              selectedSet={selectedSet}
+              rowHeight={ROW_HEIGHT}
+              timelineWidth={timelineWidth}
+            />
 
             {/* Layer 2.6: Dependency Arrows (behind tasks) */}
             {showDependencies && (
@@ -433,7 +433,7 @@ export function ChartCanvas({
                 width={marqueeRect.width}
                 height={marqueeRect.height}
                 fill={COLORS.chart.marquee}
-                fillOpacity={0.1}
+                fillOpacity={COLORS.chart.marqueeFillOpacity}
                 stroke={COLORS.chart.marquee}
                 strokeWidth={1}
                 strokeDasharray="4 2"

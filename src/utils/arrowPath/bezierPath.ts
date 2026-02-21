@@ -6,6 +6,9 @@
 
 import type { ArrowPath, TaskPosition } from "../../types/dependency.types";
 
+/** Arrowhead polygon size (px) — shared by DependencyArrow and DependencyDragPreview */
+export const ARROWHEAD_SIZE = 8;
+
 /**
  * Horizontal segment length coming out of/into tasks.
  */
@@ -336,6 +339,6 @@ export function calculateDragPath(
  * @param size - Size of the arrowhead (default 8px)
  * @returns SVG polygon points string
  */
-export function getArrowheadPoints(size: number = 8): string {
+export function getArrowheadPoints(size: number = ARROWHEAD_SIZE): string {
   return `${-size},-${size / 2} 0,0 ${-size},${size / 2}`;
 }

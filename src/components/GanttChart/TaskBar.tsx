@@ -20,7 +20,80 @@ import { useDensityConfig } from "../../store/slices/userPreferencesSlice";
 import { SVG_FONT_FAMILY } from "../../utils/export/constants";
 import { getContrastTextColor } from "../../utils/colorUtils";
 import { useComputedTaskColor } from "../../hooks/useComputedTaskColor";
-import { COLORS, CONNECTION_HANDLE } from "../../styles/design-tokens";
+import {
+  COLORS,
+  CONNECTION_HANDLE,
+  TYPOGRAPHY,
+} from "../../styles/design-tokens";
+
+// =============================================================================
+// CONSTANTS
+// =============================================================================
+
+/** Padding between task shape edge and label text */
+const LABEL_PADDING = 8;
+
+/** Milestone diamond size bounds (responsive to zoom level) */
+const MILESTONE_SIZE_MIN = 6;
+const MILESTONE_SIZE_MAX = 10;
+
+/** Corner radius for regular task bars and preview outlines */
+const TASK_BAR_RADIUS = 4;
+
+/** Opacity when a task is being dragged (faded original) */
+const DRAG_OPACITY = 0.3;
+
+/** Background opacity for the unfilled portion of a progress bar */
+const PROGRESS_BG_OPACITY = 0.65;
+
+/** Summary bracket shape geometry (shared with export renderer) */
+export const SUMMARY_BRACKET = {
+  /** Horizontal bar thickness as ratio of total height (30%) */
+  barThicknessRatio: 0.3,
+  /** Downward tip height as ratio of total height (50%) */
+  tipHeightRatio: 0.5,
+  /** Tip width factor for 60° angle (1/tan(60°) ≈ 0.577) */
+  tipWidthFactor: 0.577,
+  /** Radius for top corners of the bracket bar */
+  cornerRadius: 10,
+  /** Radius for inner corners where tips meet the bar */
+  innerRadius: 3,
+  /** Fill opacity for summary bracket shapes */
+  fillOpacity: 0.9,
+} as const;
+
+/** Stroke width for drag preview outlines */
+const PREVIEW_STROKE_WIDTH = 2;
+
+/** Dash pattern for drag preview outlines */
+const PREVIEW_DASH = "4 4";
+
+/** Progress drag handle dimensions */
+const PROGRESS_HANDLE = {
+  hitzoneHalfWidth: 9,
+  hitzoneHeight: 12,
+  triangleHalfWidth: 6,
+  triangleHeight: 8,
+  /** Vertical offset from bar bottom for hitzone positioning */
+  hitzoneYOffset: 2,
+  /** Minimum bar width to show the progress handle */
+  minBarWidth: 30,
+  /** Stroke width for the visible triangle indicator */
+  strokeWidth: 1.5,
+} as const;
+
+// =============================================================================
+// HELPERS
+// =============================================================================
+
+/** Build SVG path for a diamond shape given the left-tip x, vertical center, and half-size */
+function diamondPath(leftX: number, centerY: number, size: number): string {
+  return `M ${leftX} ${centerY} L ${leftX + size} ${centerY - size} L ${leftX + size * 2} ${centerY} L ${leftX + size} ${centerY + size} Z`;
+}
+
+// =============================================================================
+// TYPES
+// =============================================================================
 
 interface TaskBarProps {
   task: Task;
@@ -41,6 +114,58 @@ interface TaskBarProps {
   isExport?: boolean;
 }
 
+/** Shared props for task shape subcomponents (MilestoneDiamond, SummaryBracket) */
+interface TaskShapeProps {
+  color: string;
+  onClick?: () => void;
+  onMouseDown?: (e: React.MouseEvent<SVGGElement>) => void;
+  onMouseMove?: (e: React.MouseEvent<SVGGElement>) => void;
+  cursor?: string;
+  opacity?: number;
+  taskName: string;
+  fontSize?: number;
+  labelPosition?: TaskLabelPosition;
+}
+
+// =============================================================================
+// SUBCOMPONENTS
+// =============================================================================
+
+/** Shared label for milestone and summary shapes (outside the bar) */
+function TaskShapeLabel({
+  anchorX,
+  centerY,
+  taskName,
+  fontSize = 11,
+  labelPosition = "after",
+}: {
+  /** X coordinate of the shape edge closest to the label */
+  anchorX: number;
+  centerY: number;
+  taskName: string;
+  fontSize?: number;
+  labelPosition?: TaskLabelPosition;
+}): React.ReactElement | null {
+  if (labelPosition === "none") return null;
+
+  const isBefore = labelPosition === "before";
+
+  return (
+    <text
+      x={isBefore ? anchorX - LABEL_PADDING : anchorX + LABEL_PADDING}
+      y={centerY + fontSize / 3}
+      fontSize={fontSize}
+      fontFamily={SVG_FONT_FAMILY}
+      fill={COLORS.chart.text}
+      fontWeight={TYPOGRAPHY.fontWeight.semibold}
+      pointerEvents="none"
+      textAnchor={isBefore ? "end" : "start"}
+    >
+      {taskName}
+    </text>
+  );
+}
+
 // Milestone diamond component
 function MilestoneDiamond({
   x,
@@ -56,22 +181,13 @@ function MilestoneDiamond({
   taskName,
   fontSize = 11,
   labelPosition = "after",
-}: {
+}: TaskShapeProps & {
   x: number;
   y: number;
   size: number;
-  color: string;
-  onClick?: () => void;
-  onMouseDown?: (e: React.MouseEvent<SVGGElement>) => void;
-  onMouseMove?: (e: React.MouseEvent<SVGGElement>) => void;
-  cursor?: string;
-  opacity?: number;
   taskBarHeight?: number;
-  taskName: string;
-  fontSize?: number;
-  labelPosition?: TaskLabelPosition;
-}): JSX.Element {
-  const centerY = y + taskBarHeight / 2; // Center of task bar
+}): React.ReactElement {
+  const centerY = y + taskBarHeight / 2;
 
   return (
     <g
@@ -82,29 +198,17 @@ function MilestoneDiamond({
       style={{ cursor: cursor || "pointer" }}
     >
       <path
-        d={`M ${x} ${centerY}
-            L ${x + size} ${centerY - size}
-            L ${x + size * 2} ${centerY}
-            L ${x + size} ${centerY + size}
-            Z`}
+        d={diamondPath(x, centerY, size)}
         fill={color}
         fillOpacity={opacity}
       />
-      {/* Task name label */}
-      {labelPosition !== "none" && (
-        <text
-          x={labelPosition === "before" ? x - 8 : x + size * 2 + 8}
-          y={centerY + fontSize / 3}
-          fontSize={fontSize}
-          fontFamily={SVG_FONT_FAMILY}
-          fill={COLORS.chart.text}
-          fontWeight={600}
-          pointerEvents="none"
-          textAnchor={labelPosition === "before" ? "end" : "start"}
-        >
-          {taskName}
-        </text>
-      )}
+      <TaskShapeLabel
+        anchorX={labelPosition === "before" ? x : x + size * 2}
+        centerY={centerY}
+        taskName={taskName}
+        fontSize={fontSize}
+        labelPosition={labelPosition}
+      />
     </g>
   );
 }
@@ -124,26 +228,16 @@ function SummaryBracket({
   taskName,
   fontSize = 11,
   labelPosition = "after",
-}: {
+}: TaskShapeProps & {
   x: number;
   y: number;
   width: number;
   height: number;
-  color: string;
-  onClick?: () => void;
-  onMouseDown?: (e: React.MouseEvent<SVGGElement>) => void;
-  onMouseMove?: (e: React.MouseEvent<SVGGElement>) => void;
-  cursor?: string;
-  opacity?: number;
-  taskName: string;
-  fontSize?: number;
-  labelPosition?: TaskLabelPosition;
-}): JSX.Element {
-  const tipHeight = height * 0.5; // Height of downward triangular tips (50% of bar height)
-  const barThickness = height * 0.3; // Horizontal bar thickness (30% of bar height)
-  const tipWidth = tipHeight * 0.577; // For 60-degree angle (tipHeight / tan(60°))
-  const cornerRadius = 10; // Radius for top corners
-  const innerRadius = 3; // Radius for inner corners where tips meet bar
+}): React.ReactElement {
+  const tipHeight = height * SUMMARY_BRACKET.tipHeightRatio;
+  const barThickness = height * SUMMARY_BRACKET.barThicknessRatio;
+  const tipWidth = tipHeight * SUMMARY_BRACKET.tipWidthFactor;
+  const { cornerRadius, innerRadius } = SUMMARY_BRACKET;
 
   // Combined path for entire bracket (bar + both tips) with rounded inner corners
   const bracketPath = `
@@ -174,28 +268,24 @@ function SummaryBracket({
       <path
         d={bracketPath}
         fill={color}
-        fillOpacity={opacity * 0.9}
+        fillOpacity={opacity * SUMMARY_BRACKET.fillOpacity}
         style={{ cursor: cursor || "grab" }}
       />
 
-      {/* Task name label - position based on labelPosition */}
-      {labelPosition !== "none" && (
-        <text
-          x={labelPosition === "before" ? x - 8 : x + width + 8}
-          y={y + height / 2 + fontSize / 3}
-          fontSize={fontSize}
-          fontFamily={SVG_FONT_FAMILY}
-          fill={COLORS.chart.text}
-          fontWeight={600}
-          pointerEvents="none"
-          textAnchor={labelPosition === "before" ? "end" : "start"}
-        >
-          {taskName}
-        </text>
-      )}
+      <TaskShapeLabel
+        anchorX={labelPosition === "before" ? x : x + width}
+        centerY={y + height / 2}
+        taskName={taskName}
+        fontSize={fontSize}
+        labelPosition={labelPosition}
+      />
     </g>
   );
 }
+
+// =============================================================================
+// MAIN COMPONENT
+// =============================================================================
 
 export const TaskBar = React.memo(function TaskBar({
   task,
@@ -206,7 +296,7 @@ export const TaskBar = React.memo(function TaskBar({
   densityOverride,
   labelPosition = "inside",
   isExport,
-}: TaskBarProps) {
+}: TaskBarProps): React.ReactElement | null {
   // Get density configuration for dynamic sizing
   const storeDensityConfig = useDensityConfig();
 
@@ -315,18 +405,9 @@ export const TaskBar = React.memo(function TaskBar({
   // Don't render if task has no valid dates (e.g., empty summary)
   // Milestones only need startDate, other types need both startDate and endDate
   if (task.type === "milestone") {
-    if (!task.startDate || task.startDate === "") {
-      return null;
-    }
+    if (!task.startDate) return null;
   } else {
-    if (
-      !task.startDate ||
-      !task.endDate ||
-      task.startDate === "" ||
-      task.endDate === ""
-    ) {
-      return null;
-    }
+    if (!task.startDate || !task.endDate) return null;
   }
 
   // Prevent onClick when dragging
@@ -342,7 +423,10 @@ export const TaskBar = React.memo(function TaskBar({
 
   // Milestone rendering with responsive sizing (Data Viz review)
   if (task.type === "milestone") {
-    const size = Math.min(10, Math.max(6, scale.pixelsPerDay / 2));
+    const size = Math.min(
+      MILESTONE_SIZE_MAX,
+      Math.max(MILESTONE_SIZE_MIN, scale.pixelsPerDay / 2)
+    );
     // Center the diamond in the middle of the day (offset by half day width minus diamond size)
     const centeredX = geometry.x + scale.pixelsPerDay / 2 - size;
     const centerY = geometry.y + densityConfig.taskBarHeight / 2;
@@ -366,7 +450,7 @@ export const TaskBar = React.memo(function TaskBar({
           onMouseDown={onMouseDown}
           onMouseMove={onMouseMoveForCursor}
           cursor={cursor}
-          opacity={isBeingDragged ? 0.3 : 1}
+          opacity={isBeingDragged ? DRAG_OPACITY : 1}
           taskBarHeight={densityConfig.taskBarHeight}
           taskName={task.name}
           fontSize={densityConfig.fontSizeBar}
@@ -376,14 +460,10 @@ export const TaskBar = React.memo(function TaskBar({
         {/* Preview milestone (solid outline during drag) */}
         {previewX !== null && (
           <path
-            d={`M ${previewX} ${centerY}
-                L ${previewX + size} ${centerY - size}
-                L ${previewX + size * 2} ${centerY}
-                L ${previewX + size} ${centerY + size}
-                Z`}
+            d={diamondPath(previewX, centerY, size)}
             fill="none"
             stroke={COLORS.chart.selection}
-            strokeWidth={2}
+            strokeWidth={PREVIEW_STROKE_WIDTH}
             pointerEvents="none"
           />
         )}
@@ -411,7 +491,7 @@ export const TaskBar = React.memo(function TaskBar({
           onMouseDown={onMouseDown}
           onMouseMove={onMouseMoveForCursor}
           cursor={cursor}
-          opacity={isBeingDragged ? 0.3 : 1}
+          opacity={isBeingDragged ? DRAG_OPACITY : 1}
           taskName={task.name}
           fontSize={densityConfig.fontSizeBar}
           labelPosition={labelPosition === "inside" ? "after" : labelPosition}
@@ -423,13 +503,13 @@ export const TaskBar = React.memo(function TaskBar({
             x={summaryPreviewX}
             y={geometry.y}
             width={summaryPreviewWidth}
-            height={geometry.height * 0.5}
+            height={geometry.height * SUMMARY_BRACKET.tipHeightRatio}
             fill="none"
             stroke={COLORS.chart.selection}
-            strokeWidth={2}
-            strokeDasharray="4 4"
-            rx={4}
-            ry={4}
+            strokeWidth={PREVIEW_STROKE_WIDTH}
+            strokeDasharray={PREVIEW_DASH}
+            rx={TASK_BAR_RADIUS}
+            ry={TASK_BAR_RADIUS}
             pointerEvents="none"
           />
         )}
@@ -437,8 +517,9 @@ export const TaskBar = React.memo(function TaskBar({
     );
   }
 
-  // Unique clip-path ID for this task
+  // Regular task bar rendering
   const clipPathId = `clip-${task.id}`;
+  const activePreview = preview ?? secondaryPreview;
 
   return (
     <g
@@ -457,8 +538,8 @@ export const TaskBar = React.memo(function TaskBar({
             y={geometry.y}
             width={geometry.width}
             height={geometry.height}
-            rx={4}
-            ry={4}
+            rx={TASK_BAR_RADIUS}
+            ry={TASK_BAR_RADIUS}
           />
         </clipPath>
       </defs>
@@ -470,9 +551,11 @@ export const TaskBar = React.memo(function TaskBar({
         width={geometry.width}
         height={geometry.height}
         fill={computedColor}
-        fillOpacity={isBeingDragged ? 0.3 : showProgress ? 0.65 : 1}
-        rx={4}
-        ry={4}
+        fillOpacity={
+          isBeingDragged ? DRAG_OPACITY : showProgress ? PROGRESS_BG_OPACITY : 1
+        }
+        rx={TASK_BAR_RADIUS}
+        ry={TASK_BAR_RADIUS}
       />
 
       {/* Progress bar (uses clip-path to prevent overflow) */}
@@ -483,50 +566,52 @@ export const TaskBar = React.memo(function TaskBar({
           width={progressWidth}
           height={geometry.height}
           fill={computedColor}
-          fillOpacity={isBeingDragged ? 0.3 : 1}
+          fillOpacity={isBeingDragged ? DRAG_OPACITY : 1}
           clipPath={`url(#${clipPathId})`}
         />
       )}
 
       {/* Progress drag handle (bottom triangle + invisible hitzone) */}
-      {showProgress && geometry.width >= 30 && !isExport && (
-        <>
-          {/* Invisible hitzone for easier grabbing */}
-          <rect
-            x={geometry.x + progressWidth - 9}
-            y={geometry.y + geometry.height - 2}
-            width={18}
-            height={12}
-            fill="transparent"
-            cursor="col-resize"
-            pointerEvents="all"
-            onMouseDown={progressDrag.onHandleMouseDown}
-          />
-          {/* Visible triangle handle — tip points UP, touching bar bottom edge */}
-          <polygon
-            points={`${geometry.x + progressWidth},${geometry.y + geometry.height} ${geometry.x + progressWidth - 6},${geometry.y + geometry.height + 8} ${geometry.x + progressWidth + 6},${geometry.y + geometry.height + 8}`}
-            fill={CONNECTION_HANDLE.neutralFill}
-            stroke={CONNECTION_HANDLE.neutralStroke}
-            strokeWidth={1.5}
-            className={`progress-handle${progressDrag.isDragging ? " dragging" : ""}`}
-            pointerEvents="none"
-          />
-        </>
-      )}
+      {showProgress &&
+        geometry.width >= PROGRESS_HANDLE.minBarWidth &&
+        !isExport && (
+          <>
+            {/* Invisible hitzone for easier grabbing */}
+            <rect
+              x={geometry.x + progressWidth - PROGRESS_HANDLE.hitzoneHalfWidth}
+              y={geometry.y + geometry.height - PROGRESS_HANDLE.hitzoneYOffset}
+              width={PROGRESS_HANDLE.hitzoneHalfWidth * 2}
+              height={PROGRESS_HANDLE.hitzoneHeight}
+              fill="transparent"
+              cursor="col-resize"
+              pointerEvents="all"
+              onMouseDown={progressDrag.onHandleMouseDown}
+            />
+            {/* Visible triangle handle — tip points UP, touching bar bottom edge */}
+            <polygon
+              points={`${geometry.x + progressWidth},${geometry.y + geometry.height} ${geometry.x + progressWidth - PROGRESS_HANDLE.triangleHalfWidth},${geometry.y + geometry.height + PROGRESS_HANDLE.triangleHeight} ${geometry.x + progressWidth + PROGRESS_HANDLE.triangleHalfWidth},${geometry.y + geometry.height + PROGRESS_HANDLE.triangleHeight}`}
+              fill={CONNECTION_HANDLE.neutralFill}
+              stroke={CONNECTION_HANDLE.neutralStroke}
+              strokeWidth={PROGRESS_HANDLE.strokeWidth}
+              className={`progress-handle${progressDrag.isDragging ? " dragging" : ""}`}
+              pointerEvents="none"
+            />
+          </>
+        )}
 
-      {/* Preview outline (shown during drag/resize - primary or secondary) */}
-      {(preview || secondaryPreview) && (
+      {/* Preview outline (shown during drag/resize) */}
+      {activePreview && (
         <rect
-          x={(preview || secondaryPreview)!.x}
-          y={(preview || secondaryPreview)!.y}
-          width={(preview || secondaryPreview)!.width}
-          height={(preview || secondaryPreview)!.height}
+          x={activePreview.x}
+          y={activePreview.y}
+          width={activePreview.width}
+          height={activePreview.height}
           fill="none"
           stroke={COLORS.chart.selection}
-          strokeWidth={2}
-          strokeDasharray="4 4"
-          rx={4}
-          ry={4}
+          strokeWidth={PREVIEW_STROKE_WIDTH}
+          strokeDasharray={PREVIEW_DASH}
+          rx={TASK_BAR_RADIUS}
+          ry={TASK_BAR_RADIUS}
           pointerEvents="none"
         />
       )}
@@ -537,12 +622,12 @@ export const TaskBar = React.memo(function TaskBar({
         <text
           x={
             progressDrag.isDragging
-              ? geometry.x + 8
+              ? geometry.x + LABEL_PADDING
               : labelPosition === "before"
-                ? geometry.x - 8
+                ? geometry.x - LABEL_PADDING
                 : labelPosition === "after"
-                  ? geometry.x + geometry.width + 8
-                  : geometry.x + 8
+                  ? geometry.x + geometry.width + LABEL_PADDING
+                  : geometry.x + LABEL_PADDING
           }
           y={geometry.y + geometry.height / 2 + densityConfig.fontSizeBar / 3}
           fontSize={densityConfig.fontSizeBar}
