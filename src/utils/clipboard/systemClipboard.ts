@@ -41,7 +41,7 @@ export interface SystemRowClipboardData {
  * Data structure for cell clipboard in system clipboard
  */
 export interface SystemCellClipboardData {
-  value: unknown;
+  value: Task[EditableField];
   field: EditableField;
 }
 
@@ -69,7 +69,7 @@ export async function writeRowsToSystemClipboard(
  * Write cell data to system clipboard.
  */
 export async function writeCellToSystemClipboard(
-  value: unknown,
+  value: Task[EditableField],
   field: EditableField
 ): Promise<boolean> {
   try {

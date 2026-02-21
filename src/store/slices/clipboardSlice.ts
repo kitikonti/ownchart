@@ -12,7 +12,7 @@ import { useTaskStore } from "./taskSlice";
 import { useDependencyStore } from "./dependencySlice";
 import { useHistoryStore } from "./historySlice";
 import { useFileStore } from "./fileSlice";
-import { CommandType } from "../../types/command.types";
+import { CommandType, type CopyCellParams } from "../../types/command.types";
 import {
   collectTasksWithChildren,
   deepCloneTasks,
@@ -38,7 +38,7 @@ interface ClipboardState {
 
   // Cell clipboard (for individual field values)
   cellClipboard: {
-    value: unknown;
+    value: Task[EditableField] | null;
     field: EditableField | null;
     operation: "copy" | "cut" | null;
     sourceTaskId: string | null;
@@ -101,9 +101,11 @@ const EMPTY_CELL_CLIPBOARD: ClipboardState["cellClipboard"] = {
 // ---------------------------------------------------------------------------
 
 /** Type-safe accessor for EditableField values on a Task. */
-function getTaskFieldValue(task: Task, field: EditableField): unknown {
-  // EditableField is a subset of keyof Task — safe cast
-  return task[field as keyof Task];
+function getTaskFieldValue(
+  task: Task,
+  field: EditableField
+): Task[EditableField] {
+  return task[field];
 }
 
 function performRowCopyOrCut(
@@ -330,7 +332,7 @@ function executeRowPaste(params: RowPasteParams): PasteResult {
 }
 
 interface CellPasteParams {
-  value: unknown;
+  value: Task[EditableField];
   sourceField: EditableField;
   targetTaskId: string;
   targetField: EditableField;
@@ -345,7 +347,7 @@ interface CellPasteParams {
 function applyCellMutations(
   targetTaskId: string,
   targetField: EditableField,
-  value: unknown,
+  value: Task[EditableField],
   cutSource?: { taskId: string; field: EditableField }
 ): void {
   const taskStore = useTaskStore.getState();
@@ -362,7 +364,7 @@ function applyCellMutations(
 function collectCutCellUndoData(
   tasks: Task[],
   cutSource: { taskId: string; field: EditableField }
-): { taskId: string; field: EditableField; value: unknown } | undefined {
+): CopyCellParams | undefined {
   const sourceTask = tasks.find((t) => t.id === cutSource.taskId);
   if (!sourceTask) return undefined;
   return {
@@ -466,7 +468,7 @@ export const useClipboardStore = create<ClipboardStore>()(
       if (activeMode !== "cell" || !cellClipboard.operation) {
         return { success: false, error: "No cell in clipboard" };
       }
-      if (!cellClipboard.field) {
+      if (!cellClipboard.field || cellClipboard.value == null) {
         return { success: false, error: "No cell field in clipboard" };
       }
       const cutSource =

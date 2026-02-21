@@ -79,7 +79,10 @@ export function useClipboardOperations(): ClipboardOperations {
       // Also write to system clipboard (fire-and-forget)
       if (isClipboardApiAvailable()) {
         const clipboardState = useClipboardStore.getState();
-        if (clipboardState.cellClipboard.field) {
+        if (
+          clipboardState.cellClipboard.field &&
+          clipboardState.cellClipboard.value != null
+        ) {
           writeCellToSystemClipboard(
             clipboardState.cellClipboard.value,
             clipboardState.cellClipboard.field
@@ -119,7 +122,10 @@ export function useClipboardOperations(): ClipboardOperations {
       // Also write to system clipboard (fire-and-forget)
       if (isClipboardApiAvailable()) {
         const clipboardState = useClipboardStore.getState();
-        if (clipboardState.cellClipboard.field) {
+        if (
+          clipboardState.cellClipboard.field &&
+          clipboardState.cellClipboard.value != null
+        ) {
           writeCellToSystemClipboard(
             clipboardState.cellClipboard.value,
             clipboardState.cellClipboard.field

@@ -66,7 +66,9 @@ export function canPasteCellValue(
  * @param field - Field to get clear value for
  * @returns Appropriate default/empty value for the field type
  */
-export function getClearValueForField(field: EditableField): unknown {
+export function getClearValueForField(
+  field: EditableField
+): Task[EditableField] {
   switch (field) {
     case "name":
       return "";

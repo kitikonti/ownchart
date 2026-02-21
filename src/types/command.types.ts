@@ -41,60 +41,7 @@ interface CommandBase {
   metadata?: Record<string, unknown>;
 }
 
-export type Command =
-  | (CommandBase & { type: CommandType.ADD_TASK; params: AddTaskParams })
-  | (CommandBase & { type: CommandType.UPDATE_TASK; params: UpdateTaskParams })
-  | (CommandBase & { type: CommandType.DELETE_TASK; params: DeleteTaskParams })
-  | (CommandBase & {
-      type: CommandType.REORDER_TASKS;
-      params: ReorderTasksParams;
-    })
-  | (CommandBase & {
-      type: CommandType.INDENT_TASKS;
-      params: IndentOutdentParams;
-    })
-  | (CommandBase & {
-      type: CommandType.OUTDENT_TASKS;
-      params: IndentOutdentParams;
-    })
-  | (CommandBase & { type: CommandType.GROUP_TASKS; params: GroupTasksParams })
-  | (CommandBase & {
-      type: CommandType.UNGROUP_TASKS;
-      params: UngroupTasksParams;
-    })
-  | (CommandBase & {
-      type: CommandType.ADD_DEPENDENCY;
-      params: AddDependencyParams;
-    })
-  | (CommandBase & {
-      type: CommandType.DELETE_DEPENDENCY;
-      params: DeleteDependencyParams;
-    })
-  | (CommandBase & {
-      type: CommandType.UPDATE_DEPENDENCY;
-      params: UpdateDependencyParams;
-    })
-  | (CommandBase & { type: CommandType.COPY_ROWS; params: CopyRowsParams })
-  | (CommandBase & { type: CommandType.CUT_ROWS; params: CutRowsParams })
-  | (CommandBase & { type: CommandType.PASTE_ROWS; params: PasteRowsParams })
-  | (CommandBase & { type: CommandType.COPY_CELL; params: CopyCellParams })
-  | (CommandBase & { type: CommandType.CUT_CELL; params: CutCellParams })
-  | (CommandBase & { type: CommandType.PASTE_CELL; params: PasteCellParams })
-  | (CommandBase & {
-      type: CommandType.MULTI_DRAG_TASKS;
-      params: MultiDragTasksParams;
-    })
-  | (CommandBase & {
-      type: CommandType.APPLY_COLORS_TO_MANUAL;
-      params: ApplyColorsToManualParams;
-    })
-  | (CommandBase & { type: CommandType.HIDE_TASKS; params: HideTasksParams })
-  | (CommandBase & {
-      type: CommandType.UNHIDE_TASKS;
-      params: UnhideTasksParams;
-    });
-
-// Type mapping for generic recordCommand helper
+// Type mapping — single source of truth for CommandType → Params
 export type CommandParamsMap = {
   [CommandType.ADD_TASK]: AddTaskParams;
   [CommandType.UPDATE_TASK]: UpdateTaskParams;
@@ -118,6 +65,11 @@ export type CommandParamsMap = {
   [CommandType.HIDE_TASKS]: HideTasksParams;
   [CommandType.UNHIDE_TASKS]: UnhideTasksParams;
 };
+
+// Derived discriminated union — adding a new CommandType only requires updating CommandParamsMap
+export type Command = {
+  [K in CommandType]: CommandBase & { type: K; params: CommandParamsMap[K] };
+}[CommandType];
 
 export enum CommandType {
   // Task operations
@@ -242,7 +194,7 @@ export interface PasteRowsParams {
 export interface CopyCellParams {
   taskId: string;
   field: EditableField;
-  value: unknown;
+  value: Task[EditableField];
 }
 
 export type CutCellParams = CopyCellParams;
@@ -250,10 +202,10 @@ export type CutCellParams = CopyCellParams;
 export interface PasteCellParams {
   taskId: string;
   field: EditableField;
-  newValue: unknown;
-  previousValue: unknown;
+  newValue: Task[EditableField];
+  previousValue: Task[EditableField];
   previousCutCell?: CopyCellParams;
-  cutClearValue?: unknown; // Value source cell was set to after cut (for redo)
+  cutClearValue?: Task[EditableField]; // Value source cell was set to after cut (for redo)
 }
 
 export interface MultiDragTasksParams {
@@ -267,7 +219,6 @@ export interface MultiDragTasksParams {
   cascadeUpdates: CascadeUpdate[];
 }
 
-// Apply colors to manual params
 export interface ApplyColorsToManualParams {
   previousColorModeState: ColorModeState;
   colorChanges: Array<{
