@@ -89,11 +89,11 @@ cd ../app-gantt-review
 - [x] `src/types/command.types.ts`
 - [x] `src/types/preferences.types.ts`
 - [x] `src/types/dependency.types.ts` (100 LOC)
-- [ ] `src/types/colorMode.types.ts` (84 LOC)
-- [ ] `src/types/chart.types.ts` (59 LOC)
-- [ ] `src/types/launchQueue.d.ts` (12 LOC)
-- [ ] `src/config/tableColumns.ts` (221 LOC)
-- [ ] `src/styles/design-tokens.ts` (231 LOC)
+- [x] `src/types/colorMode.types.ts` (84 LOC)
+- [x] `src/types/chart.types.ts` (59 LOC)
+- [x] `src/types/launchQueue.d.ts` (12 LOC)
+- [x] `src/config/tableColumns.ts` (221 LOC)
+- [x] `src/styles/design-tokens.ts` (231 LOC)
 
 ### Priority: HIGH — File Operations (kritischer Pfad)
 - [ ] `src/utils/fileOperations/validate.ts` (299 LOC)

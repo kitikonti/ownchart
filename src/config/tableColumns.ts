@@ -9,6 +9,7 @@ import type { DensityConfig } from "../types/preferences.types";
 import {
   validateTaskName,
   validateDateString,
+  validateDuration,
   validateProgress,
   validateColor,
 } from "../utils/validation";
@@ -107,16 +108,10 @@ export const TASK_COLUMNS: ColumnDefinition[] = [
     field: "duration",
     label: "Duration",
     defaultWidth: "100px",
-    editable: true, // Editable per user request
+    editable: true, // User-editable, recalculates end date
     hideable: true,
     renderer: "number",
-    validator: (value): ValidationResult => {
-      const num = Number(value);
-      if (isNaN(num) || num < 1) {
-        return { valid: false, error: "Duration must be at least 1 day" };
-      }
-      return { valid: true };
-    },
+    validator: (value) => validateDuration(Number(value)),
     formatter: (value) => `${value} ${Number(value) === 1 ? "day" : "days"}`,
   },
   {
@@ -132,6 +127,33 @@ export const TASK_COLUMNS: ColumnDefinition[] = [
     formatter: (value) => `${value}%`,
   },
 ];
+
+/** Default pixel width for columns without a density-specific default */
+const DEFAULT_COLUMN_WIDTH_PX = 100;
+
+/** Maps column IDs to their corresponding density config key */
+const DENSITY_COLUMN_KEY: Partial<
+  Record<string, keyof DensityConfig["columnWidths"]>
+> = {
+  rowNumber: "rowNumber",
+  color: "color",
+  startDate: "startDate",
+  endDate: "endDate",
+  duration: "duration",
+  progress: "progress",
+};
+
+/**
+ * Get the density-aware default width (px) for a column.
+ * Returns undefined if the column has no density mapping.
+ */
+function getDensityDefault(
+  columnId: string,
+  densityConfig: DensityConfig
+): number | undefined {
+  const key = DENSITY_COLUMN_KEY[columnId];
+  return key ? densityConfig.columnWidths[key] : undefined;
+}
 
 /**
  * Get visible columns based on view settings.
@@ -156,35 +178,17 @@ export function getHideableColumns(): ColumnDefinition[] {
  * Get the current pixel width for a column.
  * Reads from store columnWidths if available, falls back to density-aware defaults.
  * Note: Primarily used for hideable columns (startDate, endDate, duration, progress).
- * The "name" column uses minmax() and falls through to the default (100px).
+ * The "name" column uses minmax() and falls through to the default.
  */
 export function getColumnPixelWidth(
   columnId: string,
   columnWidths: Record<string, number>,
   densityConfig: DensityConfig
 ): number {
-  // Use stored width if available
   if (columnWidths[columnId] !== undefined) {
     return columnWidths[columnId];
   }
-  // Fall back to density defaults
-  const defaults = densityConfig.columnWidths;
-  switch (columnId) {
-    case "rowNumber":
-      return defaults.rowNumber;
-    case "color":
-      return defaults.color;
-    case "startDate":
-      return defaults.startDate;
-    case "endDate":
-      return defaults.endDate;
-    case "duration":
-      return defaults.duration;
-    case "progress":
-      return defaults.progress;
-    default:
-      return 100;
-  }
+  return getDensityDefault(columnId, densityConfig) ?? DEFAULT_COLUMN_WIDTH_PX;
 }
 
 /**
@@ -195,27 +199,16 @@ export function getDensityAwareWidth(
   columnId: string,
   densityConfig: DensityConfig
 ): string {
-  const { columnWidths } = densityConfig;
-
-  switch (columnId) {
-    case "rowNumber":
-      return `${columnWidths.rowNumber}px`;
-    case "color":
-      return `${columnWidths.color}px`;
-    case "name":
-      return `minmax(${columnWidths.nameMin}px, 1fr)`;
-    case "startDate":
-      return `${columnWidths.startDate}px`;
-    case "endDate":
-      return `${columnWidths.endDate}px`;
-    case "duration":
-      return `${columnWidths.duration}px`;
-    case "progress":
-      return `${columnWidths.progress}px`;
-    default: {
-      // Fallback to the original column definition
-      const col = TASK_COLUMNS.find((c) => c.id === columnId);
-      return col?.defaultWidth ?? "100px";
-    }
+  if (columnId === "name") {
+    return `minmax(${densityConfig.columnWidths.nameMin}px, 1fr)`;
   }
+
+  const defaultPx = getDensityDefault(columnId, densityConfig);
+  if (defaultPx !== undefined) {
+    return `${defaultPx}px`;
+  }
+
+  // Fallback to the original column definition
+  const col = TASK_COLUMNS.find((c) => c.id === columnId);
+  return col?.defaultWidth ?? `${DEFAULT_COLUMN_WIDTH_PX}px`;
 }

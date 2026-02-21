@@ -114,6 +114,31 @@ export function validateColor(color: string): ValidationResult {
 }
 
 /**
+ * Validates a duration value.
+ * Rules: Positive integer, at least 1 day
+ *
+ * @param duration - Duration value to validate
+ * @returns Validation result with error message if invalid
+ */
+export function validateDuration(duration: number): ValidationResult {
+  if (typeof duration !== "number" || isNaN(duration)) {
+    return {
+      valid: false,
+      error: "Duration must be a number",
+    };
+  }
+
+  if (duration < 1) {
+    return {
+      valid: false,
+      error: "Duration must be at least 1 day",
+    };
+  }
+
+  return { valid: true };
+}
+
+/**
  * Validates progress value.
  * Rules: Number between 0 and 100
  *

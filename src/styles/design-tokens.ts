@@ -2,9 +2,14 @@
  * Design Tokens - Single Source of Truth for OwnChart Design System
  *
  * Based on MS 365/Fluent UI design principles:
- * - Neutral gray palette (pure grays, no blue tint)
  * - Outlook Blue (#0F6CBD) as the single brand color
  * - WCAG AA compliant contrast ratios
+ *
+ * Color systems:
+ * - COLORS.neutral: Pure grays (no blue tint) — used for Ribbon, toolbars, UI chrome
+ * - COLORS.brand: Outlook Blue scale — mapped from Fluent theme slots (see note below)
+ * - Section tokens (GRID, TIMELINE_HEADER, etc.): Cool grays with slight blue tint —
+ *   used for chart/grid areas for visual softness, sourced from Bootstrap/Tailwind palettes
  */
 
 // =============================================================================
@@ -28,6 +33,9 @@ export const COLORS = {
   },
 
   // Brand (Outlook Blue - derived from MS Fluent themePrimary #0F6CBD)
+  // NOTE: Scale follows Fluent theme slot mapping, NOT linear lightness.
+  // Specifically, 500 (themeDarkAlt) is darker than 600 (themePrimary).
+  // Primary brand color = brand[600].
   brand: {
     50: "#EBF3FC", // themeLighterAlt - light backgrounds
     100: "#CFE4FA", // themeLighter - focus rings
@@ -271,23 +279,3 @@ export const DENSITY = {
     iconSize: 18,
   },
 } as const;
-
-// =============================================================================
-// TYPE EXPORTS
-// =============================================================================
-
-export type ColorToken = typeof COLORS;
-export type SpacingToken = typeof SPACING;
-export type TypographyToken = typeof TYPOGRAPHY;
-export type RadiusToken = typeof RADIUS;
-export type ShadowToken = typeof SHADOWS;
-export type TransitionToken = typeof TRANSITIONS;
-export type ToolbarToken = typeof TOOLBAR;
-export type ContextMenuToken = typeof CONTEXT_MENU;
-export type TableHeaderToken = typeof TABLE_HEADER;
-export type GridToken = typeof GRID;
-export type TimelineHeaderToken = typeof TIMELINE_HEADER;
-export type ConnectionHandleToken = typeof CONNECTION_HANDLE;
-export type RowNumberToken = typeof ROW_NUMBER;
-export type ToastToken = typeof TOAST;
-export type DensityToken = typeof DENSITY;

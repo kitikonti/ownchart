@@ -3,6 +3,7 @@ import {
   validateTaskName,
   validateDateString,
   validateColor,
+  validateDuration,
   validateProgress,
   validateTask,
 } from '../../../src/utils/validation';
@@ -120,6 +121,32 @@ describe('validateProgress', () => {
     const result = validateProgress(NaN);
     expect(result.valid).toBe(false);
     expect(result.error).toBe('Progress must be a number');
+  });
+});
+
+describe('validateDuration', () => {
+  it('should accept valid duration values', () => {
+    expect(validateDuration(1)).toEqual({ valid: true });
+    expect(validateDuration(5)).toEqual({ valid: true });
+    expect(validateDuration(365)).toEqual({ valid: true });
+  });
+
+  it('should reject values less than 1', () => {
+    const result = validateDuration(0);
+    expect(result.valid).toBe(false);
+    expect(result.error).toBe('Duration must be at least 1 day');
+  });
+
+  it('should reject negative values', () => {
+    const result = validateDuration(-5);
+    expect(result.valid).toBe(false);
+    expect(result.error).toBe('Duration must be at least 1 day');
+  });
+
+  it('should reject non-number values', () => {
+    const result = validateDuration(NaN);
+    expect(result.valid).toBe(false);
+    expect(result.error).toBe('Duration must be a number');
   });
 });
 
