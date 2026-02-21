@@ -103,7 +103,7 @@ cd ../app-gantt-review
 - [ ] `src/utils/fileOperations/index.ts` (12 LOC)
 
 ### Priority: MEDIUM — GanttChart Komponenten
-- [ ] `src/components/GanttChart/TaskBar.tsx` (573 LOC) — 6 Hex-Werte
+- [x] `src/components/GanttChart/TaskBar.tsx` (573 LOC) — Magic numbers→Constants, shared TaskShapeProps+TaskShapeLabel, redundante Checks vereinfacht, non-null assertion entfernt. Hex-Werte waren bereits in design-tokens.
 - [ ] `src/components/GanttChart/ChartCanvas.tsx` (466 LOC)
 - [ ] `src/components/GanttChart/GridLines.tsx` (267 LOC) — 5 Hex-Werte
 - [ ] `src/components/GanttChart/TimelineHeader.tsx` (263 LOC) — 3 Hex-Werte
@@ -319,6 +319,6 @@ Entscheidungen aus bisherigen Reviews die fuer zukuenftige Dateien gelten.
 
 ## Progress
 
-- Reviewed: 13 / 193 Dateien
-- Offene Issues: 38 Hex-Farben, ~18 toISODateString-Umstellungen
+- Reviewed: 14 / 193 Dateien
+- Offene Issues: 38 Hex-Farben (TaskBar.tsx hatte 0 verbleibende), ~18 toISODateString-Umstellungen
 - Test-Coverage: 80%+
