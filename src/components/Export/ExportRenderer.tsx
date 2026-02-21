@@ -32,6 +32,7 @@ import type { DensityConfig } from "../../types/preferences.types";
 import { DENSITY_CONFIG } from "../../config/densityConfig";
 import { useChartStore } from "../../store/slices/chartSlice";
 import { HEADER_HEIGHT, SVG_FONT_FAMILY } from "../../utils/export/constants";
+import { EXPORT_COLUMN_MAP } from "../../utils/export/columns";
 import { getComputedTaskColor } from "../../utils/computeTaskColor";
 import { COLORS } from "../../styles/design-tokens";
 
@@ -79,22 +80,63 @@ interface ExportLayout {
 // Constants
 // =============================================================================
 
-/** Column definitions for export (labels must match app's tableColumns.ts) */
-export const EXPORT_COLUMNS = [
-  { key: "color", label: "", defaultWidth: 24 },
-  { key: "name", label: "Name", defaultWidth: 200 },
-  { key: "startDate", label: "Start Date", defaultWidth: 110 },
-  { key: "endDate", label: "End Date", defaultWidth: 110 },
-  { key: "duration", label: "Duration", defaultWidth: 70 },
-  { key: "progress", label: "%", defaultWidth: 60 },
-] as const;
+/** Default duration in days when no project date range is available */
+const DEFAULT_DURATION_DAYS = 30;
 
-/** Pre-computed column lookup for O(1) access */
-const EXPORT_COLUMN_MAP = new Map(EXPORT_COLUMNS.map((col) => [col.key, col]));
+/** Extra days added to date range for preliminary zoom estimation */
+const DATE_RANGE_PADDING_DAYS = 14;
+
+/** Minimum timeline width in pixels (prevents degenerate layouts) */
+const MIN_TIMELINE_WIDTH = 100;
+
+/** Milliseconds per day */
+const MS_PER_DAY = 1000 * 60 * 60 * 24;
 
 // =============================================================================
 // Shared Layout Computation
 // =============================================================================
+
+/**
+ * Estimate project duration in days, adding padding for zoom calculation.
+ * Used as a preliminary step before the final date range is computed.
+ */
+function estimatePreliminaryDuration(
+  projectDateRange: { start: Date; end: Date } | undefined
+): number {
+  if (!projectDateRange) return DEFAULT_DURATION_DAYS;
+  const ms = projectDateRange.end.getTime() - projectDateRange.start.getTime();
+  return Math.ceil(ms / MS_PER_DAY) + DATE_RANGE_PADDING_DAYS;
+}
+
+/**
+ * Compute final timeline and total dimensions from scale and options.
+ */
+function computeFinalDimensions(
+  options: ExportOptions,
+  scale: TimelineScale,
+  taskTableWidth: number,
+  orderedTaskCount: number,
+  rowHeight: number
+): {
+  timelineWidth: number;
+  totalWidth: number;
+  contentHeight: number;
+  totalHeight: number;
+} {
+  const timelineWidth =
+    options.zoomMode === "fitToWidth"
+      ? Math.max(MIN_TIMELINE_WIDTH, options.fitToWidth - taskTableWidth)
+      : scale.totalWidth;
+  const totalWidth =
+    options.zoomMode === "fitToWidth"
+      ? options.fitToWidth
+      : taskTableWidth + timelineWidth;
+  const contentHeight = orderedTaskCount * rowHeight;
+  const totalHeight =
+    (options.includeHeader ? HEADER_HEIGHT : 0) + contentHeight;
+
+  return { timelineWidth, totalWidth, contentHeight, totalHeight };
+}
 
 /**
  * Computes the full export layout geometry from tasks and options.
@@ -152,12 +194,7 @@ function computeExportLayout(
     : 0;
 
   // Calculate preliminary zoom for label padding estimation
-  let preliminaryDuration = 30;
-  if (projectDateRange) {
-    const ms =
-      projectDateRange.end.getTime() - projectDateRange.start.getTime();
-    preliminaryDuration = Math.ceil(ms / (1000 * 60 * 60 * 24)) + 14;
-  }
+  const preliminaryDuration = estimatePreliminaryDuration(projectDateRange);
   const preliminaryZoom = calculateEffectiveZoom(
     options,
     currentAppZoom,
@@ -174,7 +211,7 @@ function computeExportLayout(
     preliminaryZoom
   );
 
-  // Calculate final zoom
+  // Calculate final zoom and scale
   const durationDays = calculateDurationDays(dateRange);
   const effectiveZoom = calculateEffectiveZoom(
     options,
@@ -183,25 +220,21 @@ function computeExportLayout(
     taskTableWidth
   );
 
-  // Calculate scale and dimensions
   const scale = getTimelineScale(
     dateRange.min,
     dateRange.max,
-    1000,
+    MIN_TIMELINE_WIDTH,
     effectiveZoom
   );
 
-  const timelineWidth =
-    options.zoomMode === "fitToWidth"
-      ? Math.max(100, options.fitToWidth - taskTableWidth)
-      : scale.totalWidth;
-  const totalWidth =
-    options.zoomMode === "fitToWidth"
-      ? options.fitToWidth
-      : taskTableWidth + timelineWidth;
-  const contentHeight = orderedTasks.length * densityConfig.rowHeight;
-  const totalHeight =
-    (options.includeHeader ? HEADER_HEIGHT : 0) + contentHeight;
+  const { timelineWidth, totalWidth, contentHeight, totalHeight } =
+    computeFinalDimensions(
+      options,
+      scale,
+      taskTableWidth,
+      orderedTasks.length,
+      densityConfig.rowHeight
+    );
 
   return {
     flattenedTasks,
@@ -332,7 +365,7 @@ function ExportTaskTableRows({
                     style={{
                       width: colWidth,
                       paddingLeft: `${level * indentSize}px`,
-                      paddingRight: 10,
+                      paddingRight: cellPaddingX,
                       height: rowHeight,
                       whiteSpace: "nowrap",
                     }}

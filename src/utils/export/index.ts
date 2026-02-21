@@ -14,9 +14,16 @@ export {
   HEADER_HEIGHT,
   SVG_FONT_FAMILY,
   COLORS,
-  HEADER_LABELS,
   TASK_TYPE_ICON_PATHS,
 } from "./constants";
+
+// Column definitions (single source of truth)
+export {
+  EXPORT_COLUMNS,
+  EXPORT_COLUMN_MAP,
+  HEADER_LABELS,
+  type ExportColumn,
+} from "./columns";
 
 // Shared helpers
 export {

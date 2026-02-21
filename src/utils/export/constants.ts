@@ -32,19 +32,6 @@ export const COLORS = {
 } as const;
 
 /**
- * Header labels matching the app's TASK_COLUMNS.
- * Keys correspond to ExportColumnKey values.
- */
-export const HEADER_LABELS: Record<string, string> = {
-  color: "",
-  name: "Name",
-  startDate: "Start Date",
-  endDate: "End Date",
-  duration: "Duration",
-  progress: "%",
-};
-
-/**
  * Phosphor icon SVG paths for task types (256x256 viewBox).
  * These are used in task table rendering for SVG/PDF export.
  */

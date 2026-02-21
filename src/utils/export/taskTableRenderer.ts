@@ -7,13 +7,12 @@ import type { Task } from "../../types/chart.types";
 import type { UiDensity } from "../../types/preferences.types";
 import { DENSITY_CONFIG } from "../../config/densityConfig";
 import type { ExportColumnKey } from "./types";
-import { EXPORT_COLUMNS } from "../../components/Export/ExportRenderer";
+import { EXPORT_COLUMN_MAP, HEADER_LABELS } from "./columns";
 import { getDefaultColumnWidth } from "./calculations";
 import {
   HEADER_HEIGHT,
   SVG_FONT_FAMILY,
   COLORS,
-  HEADER_LABELS,
   TASK_TYPE_ICON_PATHS,
 } from "./constants";
 import type { ColorModeState } from "../../types/colorMode.types";
@@ -189,7 +188,7 @@ export function renderTaskTableRows(
 
     let colX = x;
     for (const key of selectedColumns) {
-      const col = EXPORT_COLUMNS.find((c) => c.key === key);
+      const col = EXPORT_COLUMN_MAP.get(key);
       if (!col) continue;
 
       const colWidth = columnWidths[key] || getDefaultColumnWidth(key, density);

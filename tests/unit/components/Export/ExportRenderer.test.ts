@@ -1,8 +1,6 @@
 import { describe, it, expect } from "vitest";
-import {
-  EXPORT_COLUMNS,
-  calculateExportDimensions,
-} from "../../../../src/components/Export/ExportRenderer";
+import { calculateExportDimensions } from "../../../../src/components/Export/ExportRenderer";
+import { EXPORT_COLUMNS } from "../../../../src/utils/export/columns";
 import { calculateTaskTableWidth } from "../../../../src/utils/export";
 import { DENSITY_CONFIG } from "../../../../src/config/densityConfig";
 import { DEFAULT_EXPORT_OPTIONS } from "../../../../src/utils/export/types";
