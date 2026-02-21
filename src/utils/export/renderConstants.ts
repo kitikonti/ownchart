@@ -29,12 +29,9 @@ export const TASK_RENDER_CONSTANTS = {
 
 /**
  * Summary bracket constants — re-exported from TaskBar.tsx (single source of truth).
- * fillOpacity is export-specific and kept here.
  */
 export const SUMMARY_RENDER_CONSTANTS = {
   ...SUMMARY_BRACKET,
-  /** Fill opacity for summary brackets */
-  fillOpacity: 0.9,
 } as const;
 
 /**

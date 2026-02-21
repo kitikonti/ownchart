@@ -46,9 +46,6 @@ const DRAG_OPACITY = 0.3;
 /** Background opacity for the unfilled portion of a progress bar */
 const PROGRESS_BG_OPACITY = 0.65;
 
-/** Fill opacity for summary bracket shapes */
-const SUMMARY_FILL_OPACITY = 0.9;
-
 /** Summary bracket shape geometry (shared with export renderer) */
 export const SUMMARY_BRACKET = {
   /** Horizontal bar thickness as ratio of total height (30%) */
@@ -61,7 +58,15 @@ export const SUMMARY_BRACKET = {
   cornerRadius: 10,
   /** Radius for inner corners where tips meet the bar */
   innerRadius: 3,
+  /** Fill opacity for summary bracket shapes */
+  fillOpacity: 0.9,
 } as const;
+
+/** Stroke width for drag preview outlines */
+const PREVIEW_STROKE_WIDTH = 2;
+
+/** Dash pattern for drag preview outlines */
+const PREVIEW_DASH = "4 4";
 
 /** Progress drag handle dimensions */
 const PROGRESS_HANDLE = {
@@ -74,6 +79,15 @@ const PROGRESS_HANDLE = {
   /** Minimum bar width to show the progress handle */
   minBarWidth: 30,
 } as const;
+
+// =============================================================================
+// HELPERS
+// =============================================================================
+
+/** Build SVG path for a diamond shape given the left-tip x, vertical center, and half-size */
+function diamondPath(leftX: number, centerY: number, size: number): string {
+  return `M ${leftX} ${centerY} L ${leftX + size} ${centerY - size} L ${leftX + size * 2} ${centerY} L ${leftX + size} ${centerY + size} Z`;
+}
 
 // =============================================================================
 // TYPES
@@ -182,11 +196,7 @@ function MilestoneDiamond({
       style={{ cursor: cursor || "pointer" }}
     >
       <path
-        d={`M ${x} ${centerY}
-            L ${x + size} ${centerY - size}
-            L ${x + size * 2} ${centerY}
-            L ${x + size} ${centerY + size}
-            Z`}
+        d={diamondPath(x, centerY, size)}
         fill={color}
         fillOpacity={opacity}
       />
@@ -256,7 +266,7 @@ function SummaryBracket({
       <path
         d={bracketPath}
         fill={color}
-        fillOpacity={opacity * SUMMARY_FILL_OPACITY}
+        fillOpacity={opacity * SUMMARY_BRACKET.fillOpacity}
         style={{ cursor: cursor || "grab" }}
       />
 
@@ -448,14 +458,10 @@ export const TaskBar = React.memo(function TaskBar({
         {/* Preview milestone (solid outline during drag) */}
         {previewX !== null && (
           <path
-            d={`M ${previewX} ${centerY}
-                L ${previewX + size} ${centerY - size}
-                L ${previewX + size * 2} ${centerY}
-                L ${previewX + size} ${centerY + size}
-                Z`}
+            d={diamondPath(previewX, centerY, size)}
             fill="none"
             stroke={COLORS.chart.selection}
-            strokeWidth={2}
+            strokeWidth={PREVIEW_STROKE_WIDTH}
             pointerEvents="none"
           />
         )}
@@ -498,8 +504,8 @@ export const TaskBar = React.memo(function TaskBar({
             height={geometry.height * SUMMARY_BRACKET.tipHeightRatio}
             fill="none"
             stroke={COLORS.chart.selection}
-            strokeWidth={2}
-            strokeDasharray="4 4"
+            strokeWidth={PREVIEW_STROKE_WIDTH}
+            strokeDasharray={PREVIEW_DASH}
             rx={TASK_BAR_RADIUS}
             ry={TASK_BAR_RADIUS}
             pointerEvents="none"
@@ -600,8 +606,8 @@ export const TaskBar = React.memo(function TaskBar({
           height={activePreview.height}
           fill="none"
           stroke={COLORS.chart.selection}
-          strokeWidth={2}
-          strokeDasharray="4 4"
+          strokeWidth={PREVIEW_STROKE_WIDTH}
+          strokeDasharray={PREVIEW_DASH}
           rx={TASK_BAR_RADIUS}
           ry={TASK_BAR_RADIUS}
           pointerEvents="none"

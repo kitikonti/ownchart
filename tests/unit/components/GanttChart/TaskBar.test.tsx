@@ -277,6 +277,15 @@ describe("TaskBar", () => {
       const text = container.querySelector("text");
       expect(text).toBeNull();
     });
+
+    it("should hide summary label when labelPosition is 'none'", () => {
+      const { container } = renderTaskBar({
+        task: createTask({ type: "summary" }),
+        labelPosition: "none",
+      });
+      const text = container.querySelector("text");
+      expect(text).toBeNull();
+    });
   });
 
   // -------------------------------------------------------------------------
