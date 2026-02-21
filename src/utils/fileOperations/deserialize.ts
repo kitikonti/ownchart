@@ -3,6 +3,7 @@
  */
 
 import type { Task, TaskType } from "../../types/chart.types";
+import type { HexColor } from "../../types/branded.types";
 import type { Dependency, DependencyType } from "../../types/dependency.types";
 import type {
   GanttFile,
@@ -172,12 +173,12 @@ function deserializeTask(serialized: SerializedTask): Task & {
     endDate: endDate,
     duration: serialized.duration,
     progress: serialized.progress ?? 0,
-    color: serialized.color,
+    color: serialized.color as HexColor,
     order: serialized.order,
     type: (serialized.type ?? "task") as TaskType,
     parent: serialized.parent,
     open: serialized.open ?? true,
-    colorOverride: serialized.colorOverride,
+    colorOverride: serialized.colorOverride as HexColor | undefined,
     metadata: serialized.metadata ?? {},
   };
 

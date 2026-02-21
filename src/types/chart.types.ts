@@ -3,6 +3,8 @@
  * Aligned with DATA_MODEL.md Section 3.1
  */
 
+import type { HexColor } from "./branded.types";
+
 /**
  * Task type classification.
  * Based on competitive analysis of SVAR React Gantt.
@@ -39,7 +41,7 @@ export interface Task {
   endDate: string;
   duration: number;
   progress: number;
-  color: string;
+  color: HexColor;
   order: number;
   metadata: Record<string, unknown>;
 
@@ -49,5 +51,5 @@ export interface Task {
   open?: boolean;
 
   // Color override for manual overrides in automatic color modes
-  colorOverride?: string;
+  colorOverride?: HexColor;
 }

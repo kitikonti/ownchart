@@ -47,6 +47,7 @@ import { TASK_COLUMNS, getColumnPixelWidth } from "../../config/tableColumns";
 import { getComputedTaskColor } from "../../utils/computeTaskColor";
 import { MIN_TABLE_WIDTH } from "../../config/layoutConstants";
 import { DEFAULT_PALETTE_ID } from "../../utils/colorPalettes";
+import type { HexColor, PaletteId } from "../../types/branded.types";
 import { CommandType } from "../../types/command.types";
 import type { ApplyColorsToManualParams } from "../../types/command.types";
 import { useTaskStore } from "./taskSlice";
@@ -841,7 +842,7 @@ export const useChartStore = create<ChartState & ChartActions>()(
           !state.colorModeState.themeOptions.customMonochromeBase
         ) {
           state.colorModeState.themeOptions.selectedPaletteId =
-            DEFAULT_PALETTE_ID;
+            DEFAULT_PALETTE_ID as PaletteId;
         }
       });
     },
@@ -894,7 +895,7 @@ export const useChartStore = create<ChartState & ChartActions>()(
           id: task.id,
           previousColor: task.color,
           previousColorOverride: task.colorOverride,
-          newColor: computedColor,
+          newColor: computedColor as HexColor,
         });
       }
 

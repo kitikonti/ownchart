@@ -11,6 +11,7 @@ import type {
 } from "./dependency.types";
 import type { ColorModeState } from "./colorMode.types";
 import type { EditableField } from "./task.types";
+import type { HexColor } from "./branded.types";
 
 export interface CascadeUpdate {
   id: string;
@@ -247,9 +248,9 @@ export interface ApplyColorsToManualParams {
   previousColorModeState: ColorModeState;
   colorChanges: Array<{
     id: string;
-    previousColor: string;
-    previousColorOverride: string | undefined;
-    newColor: string;
+    previousColor: HexColor;
+    previousColorOverride: HexColor | undefined;
+    newColor: HexColor;
   }>;
 }
 

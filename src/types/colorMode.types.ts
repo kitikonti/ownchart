@@ -3,6 +3,8 @@
  * Defines the 5 color modes and their options
  */
 
+import type { HexColor, PaletteId } from "./branded.types";
+
 /**
  * Available color modes
  */
@@ -17,8 +19,8 @@ export type ColorMode =
  * Theme mode options - selected palette and custom monochrome
  */
 export interface ThemeModeOptions {
-  selectedPaletteId: string | null;
-  customMonochromeBase: string | null; // Hex color for custom monochrome palette
+  selectedPaletteId: PaletteId | null;
+  customMonochromeBase: HexColor | null;
 }
 
 /**
@@ -26,23 +28,23 @@ export interface ThemeModeOptions {
  */
 export interface SummaryModeOptions {
   useMilestoneAccent: boolean;
-  milestoneAccentColor: string; // Hex color for milestone accent
+  milestoneAccentColor: HexColor;
 }
 
 /**
  * Task type mode options - fixed colors per type
  */
 export interface TaskTypeModeOptions {
-  summaryColor: string;
-  taskColor: string;
-  milestoneColor: string;
+  summaryColor: HexColor;
+  taskColor: HexColor;
+  milestoneColor: HexColor;
 }
 
 /**
  * Hierarchy mode options
  */
 export interface HierarchyModeOptions {
-  baseColor: string;
+  baseColor: HexColor;
   lightenPercentPerLevel: number; // e.g., 12 for 12%
   maxLightenPercent: number; // e.g., 36 for max 36% lightening
 }

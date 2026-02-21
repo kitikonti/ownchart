@@ -12,6 +12,7 @@
  */
 
 import type { Task } from "../../types/chart.types";
+import type { HexColor } from "../../types/branded.types";
 import type { ColumnDefinition } from "../../config/tableColumns";
 import { useTaskStore } from "../../store/slices/taskSlice";
 import { useChartStore } from "../../store/slices/chartSlice";
@@ -295,18 +296,19 @@ function ColorCell({
             colorMode={colorModeState.mode}
             hasOverride={!!task.colorOverride}
             onChange={(value) => {
+              const hex = value as HexColor;
               if (colorModeState.mode === "manual") {
-                updateTask(task.id, { color: value });
+                updateTask(task.id, { color: hex });
               } else if (
                 colorModeState.mode === "summary" &&
                 task.type === "summary"
               ) {
                 updateTask(task.id, {
-                  color: value,
+                  color: hex,
                   colorOverride: undefined,
                 });
               } else {
-                updateTask(task.id, { colorOverride: value });
+                updateTask(task.id, { colorOverride: hex });
               }
             }}
             onResetOverride={() =>

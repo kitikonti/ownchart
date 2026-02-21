@@ -27,6 +27,7 @@ import { DropdownItem } from "../Toolbar/DropdownItem";
 import { TOOLBAR } from "../../styles/design-tokens";
 import { Button } from "../common/Button";
 import type { ColorMode } from "../../types/colorMode.types";
+import type { HexColor, PaletteId } from "../../types/branded.types";
 import {
   COLOR_PALETTES,
   CATEGORY_LABELS,
@@ -144,7 +145,7 @@ export function ColorDropdown({
 
   const handleSelectPalette = (paletteId: string): void => {
     setThemeOptions({
-      selectedPaletteId: paletteId,
+      selectedPaletteId: paletteId as PaletteId,
       customMonochromeBase: null,
     });
     close();
@@ -242,7 +243,9 @@ export function ColorDropdown({
             type="color"
             value={colorModeState.summaryOptions.milestoneAccentColor}
             onChange={(e) =>
-              setSummaryOptions({ milestoneAccentColor: e.target.value })
+              setSummaryOptions({
+                milestoneAccentColor: e.target.value as HexColor,
+              })
             }
             style={{
               width: "28px",
@@ -273,7 +276,9 @@ export function ColorDropdown({
         <input
           type="color"
           value={colorModeState.taskTypeOptions.summaryColor}
-          onChange={(e) => setTaskTypeOptions({ summaryColor: e.target.value })}
+          onChange={(e) =>
+            setTaskTypeOptions({ summaryColor: e.target.value as HexColor })
+          }
           style={{
             width: "32px",
             height: "24px",
@@ -296,7 +301,9 @@ export function ColorDropdown({
         <input
           type="color"
           value={colorModeState.taskTypeOptions.taskColor}
-          onChange={(e) => setTaskTypeOptions({ taskColor: e.target.value })}
+          onChange={(e) =>
+            setTaskTypeOptions({ taskColor: e.target.value as HexColor })
+          }
           style={{
             width: "32px",
             height: "24px",
@@ -319,7 +326,9 @@ export function ColorDropdown({
           type="color"
           value={colorModeState.taskTypeOptions.milestoneColor}
           onChange={(e) =>
-            setTaskTypeOptions({ milestoneColor: e.target.value })
+            setTaskTypeOptions({
+              milestoneColor: e.target.value as HexColor,
+            })
           }
           style={{
             width: "32px",
@@ -348,7 +357,9 @@ export function ColorDropdown({
         <input
           type="color"
           value={colorModeState.hierarchyOptions.baseColor}
-          onChange={(e) => setHierarchyOptions({ baseColor: e.target.value })}
+          onChange={(e) =>
+            setHierarchyOptions({ baseColor: e.target.value as HexColor })
+          }
           style={{
             width: "32px",
             height: "24px",

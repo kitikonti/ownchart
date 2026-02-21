@@ -4,6 +4,7 @@
  */
 
 import type { TaskType } from "../../types/chart.types";
+import type { HexColor } from "../../types/branded.types";
 import type { Dependency as AppDependency } from "../../types/dependency.types";
 import type { ExportOptions } from "../export/types";
 import type {
@@ -152,7 +153,7 @@ export interface DeserializeResult {
       endDate: string;
       duration: number;
       progress: number;
-      color: string;
+      color: HexColor;
       order: number;
       type?: TaskType;
       parent?: string;
