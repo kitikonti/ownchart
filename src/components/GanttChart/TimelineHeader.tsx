@@ -19,7 +19,11 @@ import {
   useFirstDayOfWeek,
   useWeekNumberingSystem,
 } from "../../store/slices/userPreferencesSlice";
-import { COLORS, TIMELINE_HEADER } from "../../styles/design-tokens";
+import {
+  COLORS,
+  TIMELINE_HEADER,
+  TYPOGRAPHY,
+} from "../../styles/design-tokens";
 
 interface TimelineHeaderProps {
   scale: TimelineScale;
@@ -35,6 +39,10 @@ interface ScaleCell {
 }
 
 const ROW_HEIGHT = 24; // Match table header height exactly (2×24px + 1px border = 49px)
+const PRIMARY_FONT_SIZE = 12;
+const SECONDARY_FONT_SIZE = 11;
+/** Vertical offset to visually center text within ROW_HEIGHT */
+const TEXT_BASELINE_OFFSET = 4;
 
 /**
  * Week options for date-fns getWeek function
@@ -92,10 +100,11 @@ function generateScaleCells(
   today: Date
 ): ScaleCell[] {
   const cells: ScaleCell[] = [];
+  const scaleMinDate = parseISO(scale.minDate);
 
   // Start at the beginning of the unit that contains minDate
   // This ensures weeks start on Monday, months on 1st, etc.
-  let currentDate = getUnitStart(parseISO(scale.minDate), config.unit);
+  let currentDate = getUnitStart(scaleMinDate, config.unit);
 
   // eslint-disable-next-line no-constant-condition
   while (true) {
@@ -112,7 +121,6 @@ function generateScaleCells(
     if (x >= headerWidth) break;
 
     // Skip cells that end before scale.minDate (outside visible range)
-    const scaleMinDate = parseISO(scale.minDate);
     if (nextUnit < scaleMinDate) {
       currentDate = addUnit(currentDate, config.unit, config.step);
       continue;
@@ -235,9 +243,19 @@ export function TimelineHeader({
               {/* Cell label */}
               <text
                 x={cell.x + cell.width / 2}
-                y={rowIndex * ROW_HEIGHT + ROW_HEIGHT / 2 + 4}
-                fontSize={rowIndex === 0 ? 12 : 11}
-                fontWeight={cell.isToday ? 600 : rowIndex === 0 ? 600 : 400}
+                y={
+                  rowIndex * ROW_HEIGHT + ROW_HEIGHT / 2 + TEXT_BASELINE_OFFSET
+                }
+                fontSize={
+                  rowIndex === 0 ? PRIMARY_FONT_SIZE : SECONDARY_FONT_SIZE
+                }
+                fontWeight={
+                  cell.isToday
+                    ? TYPOGRAPHY.fontWeight.semibold
+                    : rowIndex === 0
+                      ? TYPOGRAPHY.fontWeight.semibold
+                      : TYPOGRAPHY.fontWeight.normal
+                }
                 fontFamily={SVG_FONT_FAMILY}
                 fill={
                   cell.isToday ? COLORS.chart.todayMarker : COLORS.chart.text

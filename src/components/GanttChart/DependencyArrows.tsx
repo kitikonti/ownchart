@@ -78,7 +78,7 @@ export function DependencyArrows({
         scale,
         index,
         densityGeometry,
-        0
+        0 // headerHeight = 0 (header in separate SVG)
       );
 
       positions.set(task.id, {
@@ -141,8 +141,9 @@ export function DependencyArrows({
     <g className="layer-dependencies">
       {/* Render all visible dependency arrows */}
       {visibleDependencies.map((dep) => {
-        const fromTask = taskMap.get(dep.fromTaskId)!;
-        const toTask = taskMap.get(dep.toTaskId)!;
+        const fromTask = taskMap.get(dep.fromTaskId);
+        const toTask = taskMap.get(dep.toTaskId);
+        if (!fromTask || !toTask) return null;
 
         return (
           <DependencyArrow

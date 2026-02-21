@@ -19,6 +19,14 @@ const HANDLE_RADIUS_HOVER = 7;
 /** Invisible hit area radius for easier clicking */
 const HANDLE_HIT_AREA_RADIUS = 12;
 
+/** Stroke width for handle circles */
+const HANDLE_STROKE_WIDTH = 1.5;
+
+/** Drop target ring settings */
+const RING_OFFSET = 4;
+const RING_OPACITY = 0.6;
+const RING_STROKE_WIDTH = 2;
+
 interface ConnectionHandlesProps {
   taskId: string;
   x: number;
@@ -100,12 +108,9 @@ export const ConnectionHandles = memo(function ConnectionHandles({
     return null;
   }
 
-  const opacity = isVisible || isValidDropTarget || isInvalidDropTarget ? 1 : 0;
-
   return (
     <g
       className="connection-handles"
-      style={{ opacity, transition: "opacity 150ms" }}
       onMouseEnter={handleMouseEnter}
       onMouseUp={handleMouseUp}
     >
@@ -130,7 +135,7 @@ export const ConnectionHandles = memo(function ConnectionHandles({
           r={handleRadius}
           fill={handleFill}
           stroke={handleStroke}
-          strokeWidth={1.5}
+          strokeWidth={HANDLE_STROKE_WIDTH}
           className="cursor-crosshair transition-all duration-150"
         />
       </g>
@@ -156,7 +161,7 @@ export const ConnectionHandles = memo(function ConnectionHandles({
           r={handleRadius}
           fill={handleFill}
           stroke={handleStroke}
-          strokeWidth={1.5}
+          strokeWidth={HANDLE_STROKE_WIDTH}
           className="cursor-crosshair transition-all duration-150"
         />
       </g>
@@ -168,30 +173,30 @@ export const ConnectionHandles = memo(function ConnectionHandles({
           <circle
             cx={startHandleX}
             cy={handleCenterY}
-            r={handleRadius + 4}
+            r={handleRadius + RING_OFFSET}
             fill="none"
             stroke={
               isValidDropTarget
                 ? CONNECTION_HANDLE.validStroke
                 : CONNECTION_HANDLE.invalidStroke
             }
-            strokeWidth={2}
-            opacity={0.6}
+            strokeWidth={RING_STROKE_WIDTH}
+            opacity={RING_OPACITY}
             pointerEvents="none"
           />
           {/* End handle ring */}
           <circle
             cx={endHandleX}
             cy={handleCenterY}
-            r={handleRadius + 4}
+            r={handleRadius + RING_OFFSET}
             fill="none"
             stroke={
               isValidDropTarget
                 ? CONNECTION_HANDLE.validStroke
                 : CONNECTION_HANDLE.invalidStroke
             }
-            strokeWidth={2}
-            opacity={0.6}
+            strokeWidth={RING_STROKE_WIDTH}
+            opacity={RING_OPACITY}
             pointerEvents="none"
           />
         </>
