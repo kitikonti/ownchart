@@ -89,11 +89,11 @@ cd ../app-gantt-review
 - [x] `src/types/command.types.ts`
 - [x] `src/types/preferences.types.ts`
 - [x] `src/types/dependency.types.ts` (100 LOC)
-- [x] `src/types/colorMode.types.ts` (84 LOC)
-- [x] `src/types/chart.types.ts` (59 LOC)
-- [x] `src/types/launchQueue.d.ts` (12 LOC)
-- [x] `src/config/tableColumns.ts` (221 LOC)
-- [x] `src/styles/design-tokens.ts` (231 LOC)
+- [x] `src/types/colorMode.types.ts` (62 LOC)
+- [x] `src/types/chart.types.ts` (55 LOC)
+- [x] `src/types/launchQueue.d.ts` (17 LOC)
+- [x] `src/config/tableColumns.ts` (256 LOC)
+- [x] `src/styles/design-tokens.ts` (283 LOC)
 
 ### Priority: HIGH — File Operations (kritischer Pfad)
 - [ ] `src/utils/fileOperations/validate.ts` (299 LOC)
@@ -326,6 +326,6 @@ Entscheidungen aus bisherigen Reviews die fuer zukuenftige Dateien gelten.
 
 ## Progress
 
-- Reviewed: 20 / 193 Dateien
+- Reviewed: 25 / 193 Dateien
 - Offene Issues: 38 Hex-Farben, ~18 toISODateString-Umstellungen
 - Test-Coverage: 80%+

@@ -67,6 +67,28 @@ export interface ColumnDefinition {
   menuLabel?: string;
 }
 
+/** Wrap a string validator with a typeof guard. */
+function stringValidator(
+  validate: (v: string) => ValidationResult
+): (value: unknown) => ValidationResult {
+  return (value) => {
+    if (typeof value !== "string")
+      return { valid: false, error: "Expected string" };
+    return validate(value);
+  };
+}
+
+/** Wrap a number validator with a typeof + NaN guard. */
+function numberValidator(
+  validate: (v: number) => ValidationResult
+): (value: unknown) => ValidationResult {
+  return (value) => {
+    if (typeof value !== "number" || Number.isNaN(value))
+      return { valid: false, error: "Expected number" };
+    return validate(value);
+  };
+}
+
 /**
  * Task table column definitions.
  */
@@ -85,11 +107,7 @@ export const TASK_COLUMNS: ColumnDefinition[] = [
     defaultWidth: "32px",
     editable: true,
     renderer: "color",
-    validator: (value) => {
-      if (typeof value !== "string")
-        return { valid: false, error: "Expected string" };
-      return validateColor(value);
-    },
+    validator: stringValidator(validateColor),
   },
   {
     id: "name",
@@ -98,11 +116,7 @@ export const TASK_COLUMNS: ColumnDefinition[] = [
     defaultWidth: "minmax(200px, 1fr)",
     editable: true,
     renderer: "text",
-    validator: (value) => {
-      if (typeof value !== "string")
-        return { valid: false, error: "Expected string" };
-      return validateTaskName(value);
-    },
+    validator: stringValidator(validateTaskName),
   },
   {
     id: "startDate",
@@ -112,11 +126,7 @@ export const TASK_COLUMNS: ColumnDefinition[] = [
     editable: true,
     hideable: true,
     renderer: "date",
-    validator: (value) => {
-      if (typeof value !== "string")
-        return { valid: false, error: "Expected string" };
-      return validateDateString(value);
-    },
+    validator: stringValidator(validateDateString),
   },
   {
     id: "endDate",
@@ -126,11 +136,7 @@ export const TASK_COLUMNS: ColumnDefinition[] = [
     editable: true,
     hideable: true,
     renderer: "date",
-    validator: (value) => {
-      if (typeof value !== "string")
-        return { valid: false, error: "Expected string" };
-      return validateDateString(value);
-    },
+    validator: stringValidator(validateDateString),
   },
   {
     id: "duration",
@@ -140,11 +146,7 @@ export const TASK_COLUMNS: ColumnDefinition[] = [
     editable: true, // User-editable, recalculates end date
     hideable: true,
     renderer: "number",
-    validator: (value) => {
-      if (typeof value !== "number" || Number.isNaN(value))
-        return { valid: false, error: "Expected number" };
-      return validateDuration(value);
-    },
+    validator: numberValidator(validateDuration),
     formatter: (value) => `${value} ${Number(value) === 1 ? "day" : "days"}`,
   },
   {
@@ -156,11 +158,7 @@ export const TASK_COLUMNS: ColumnDefinition[] = [
     editable: true,
     hideable: true,
     renderer: "number",
-    validator: (value) => {
-      if (typeof value !== "number" || Number.isNaN(value))
-        return { valid: false, error: "Expected number" };
-      return validateProgress(value);
-    },
+    validator: numberValidator(validateProgress),
     formatter: (value) => `${value}%`,
   },
 ];

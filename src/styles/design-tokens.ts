@@ -230,7 +230,7 @@ export const TABLE_HEADER = {
 
 export const GRID = {
   weekendBg: coolGray[100],
-  holidayBg: "#fce7f3", // Pink — not gray
+  holidayBg: "#fce7f3", // Tailwind pink-100
   lineDaily: coolGray[200],
   lineWeeklyMonthly: coolGray[400],
   lineDailyWeekend: coolGray[250],
@@ -248,15 +248,16 @@ export const TIMELINE_HEADER = {
 
 // =============================================================================
 // CONNECTION HANDLE TOKENS (dependency + progress handles)
+// Intentionally brighter/lighter shades than COLORS.semantic (status text).
 // =============================================================================
 
 export const CONNECTION_HANDLE = {
   neutralFill: slate[200],
   neutralStroke: slate[400],
-  validFill: "#bbf7d0",
-  validStroke: "#22c55e",
-  invalidFill: "#fecaca",
-  invalidStroke: "#ef4444",
+  validFill: "#bbf7d0", // Tailwind green-200
+  validStroke: "#22c55e", // Tailwind green-500
+  invalidFill: "#fecaca", // Tailwind red-200
+  invalidStroke: "#ef4444", // Tailwind red-500
 } as const;
 
 // =============================================================================
@@ -266,10 +267,10 @@ export const CONNECTION_HANDLE = {
 export const ROW_NUMBER = {
   bgInactive: TABLE_HEADER.bg,
   bgHover: TABLE_HEADER.bgHover,
-  textInactive: "#5F6368",
+  textInactive: "#5F6368", // Google Material gray
   textSelected: neutral[0],
   border: TABLE_HEADER.border,
-  hiddenIndicator: "#9ca3af",
+  hiddenIndicator: "#9ca3af", // Tailwind gray-400
 } as const;
 
 // =============================================================================
