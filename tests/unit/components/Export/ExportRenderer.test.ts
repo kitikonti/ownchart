@@ -158,6 +158,150 @@ describe("calculateExportDimensions", () => {
     }));
   }
 
+  // --- Edge cases ---
+
+  it("handles empty task list without error", () => {
+    const result = calculateExportDimensions([], DEFAULT_EXPORT_OPTIONS);
+
+    expect(result.width).toBeGreaterThan(0);
+    expect(result.height).toBeGreaterThanOrEqual(0);
+    expect(result.effectiveZoom).toBeGreaterThan(0);
+  });
+
+  it("handles empty task list with header — height equals header height", () => {
+    const result = calculateExportDimensions([], {
+      ...DEFAULT_EXPORT_OPTIONS,
+      includeHeader: true,
+    });
+
+    // Only header, no content rows
+    expect(result.height).toBe(48);
+  });
+
+  it("handles empty task list without header — height is zero", () => {
+    const result = calculateExportDimensions([], {
+      ...DEFAULT_EXPORT_OPTIONS,
+      includeHeader: false,
+    });
+
+    expect(result.height).toBe(0);
+  });
+
+  it("handles tasks without dates gracefully", () => {
+    const tasks: Task[] = [
+      {
+        id: "1",
+        name: "No dates",
+        startDate: "",
+        endDate: "",
+        duration: 0,
+        progress: 0,
+        type: "task",
+        color: "#4299e1",
+      },
+    ];
+
+    // Should not throw
+    const result = calculateExportDimensions(tasks, DEFAULT_EXPORT_OPTIONS);
+    expect(result.width).toBeGreaterThan(0);
+    expect(result.effectiveZoom).toBeGreaterThan(0);
+  });
+
+  it("fitToWidth with narrow width still produces valid dimensions", () => {
+    const tasks = createTasks(3);
+    const options = {
+      ...DEFAULT_EXPORT_OPTIONS,
+      zoomMode: "fitToWidth" as const,
+      fitToWidth: 200,
+      selectedColumns: ["name" as const],
+    };
+
+    const result = calculateExportDimensions(tasks, options);
+
+    expect(result.width).toBe(200);
+    expect(result.height).toBeGreaterThan(0);
+  });
+
+  it("no selected columns means no task table width", () => {
+    const tasks = createTasks(3);
+    const projectDateRange = {
+      start: new Date("2025-01-01"),
+      end: new Date("2025-03-01"),
+    };
+
+    const withColumns = calculateExportDimensions(
+      tasks,
+      { ...DEFAULT_EXPORT_OPTIONS, selectedColumns: ["name", "startDate"] },
+      {},
+      1.0,
+      projectDateRange
+    );
+
+    const withoutColumns = calculateExportDimensions(
+      tasks,
+      { ...DEFAULT_EXPORT_OPTIONS, selectedColumns: [] },
+      {},
+      1.0,
+      projectDateRange
+    );
+
+    expect(withColumns.width).toBeGreaterThan(withoutColumns.width);
+  });
+
+  it("height scales linearly with task count", () => {
+    const projectDateRange = {
+      start: new Date("2025-01-01"),
+      end: new Date("2025-03-01"),
+    };
+    const options = { ...DEFAULT_EXPORT_OPTIONS, includeHeader: false };
+
+    const result5 = calculateExportDimensions(
+      createTasks(5),
+      options,
+      {},
+      1.0,
+      projectDateRange
+    );
+    const result10 = calculateExportDimensions(
+      createTasks(10),
+      options,
+      {},
+      1.0,
+      projectDateRange
+    );
+
+    expect(result10.height).toBe(result5.height * 2);
+  });
+
+  it("respects density setting for row heights", () => {
+    const tasks = createTasks(5);
+    const projectDateRange = {
+      start: new Date("2025-01-01"),
+      end: new Date("2025-03-01"),
+    };
+
+    const compact = calculateExportDimensions(
+      tasks,
+      { ...DEFAULT_EXPORT_OPTIONS, density: "compact", includeHeader: false },
+      {},
+      1.0,
+      projectDateRange
+    );
+    const comfortable = calculateExportDimensions(
+      tasks,
+      {
+        ...DEFAULT_EXPORT_OPTIONS,
+        density: "comfortable",
+        includeHeader: false,
+      },
+      {},
+      1.0,
+      projectDateRange
+    );
+
+    expect(compact.height).toBeLessThan(comfortable.height);
+  });
+
   it("returns width, height, and effectiveZoom", () => {
     const tasks = createTasks(5);
     const result = calculateExportDimensions(tasks, DEFAULT_EXPORT_OPTIONS);

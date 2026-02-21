@@ -92,6 +92,13 @@ const MIN_TIMELINE_WIDTH = 100;
 /** Milliseconds per day */
 const MS_PER_DAY = 1000 * 60 * 60 * 24;
 
+/** Static drag state for export (no interaction possible) */
+const EXPORT_DRAG_STATE = {
+  isDragging: false,
+  fromTaskId: null,
+  currentPosition: { x: 0, y: 0 },
+} as const;
+
 // =============================================================================
 // Shared Layout Computation
 // =============================================================================
@@ -293,6 +300,35 @@ function ExportTaskTableHeader({
   );
 }
 
+/** Maps a column key to its display value for a given task. */
+function getColumnDisplayValue(
+  task: Task,
+  key: ExportColumnKey
+): string | null {
+  if (key === "startDate") return task.startDate || null;
+
+  const isMilestone = task.type === "milestone";
+  const isSummary = task.type === "summary";
+
+  if (key === "endDate") {
+    return isMilestone ? "" : task.endDate || null;
+  }
+  if (key === "duration") {
+    if (isMilestone) return "";
+    if (isSummary && task.duration !== undefined && task.duration > 0) {
+      return `${task.duration} days`;
+    }
+    if (!isSummary && task.duration !== undefined) {
+      return `${task.duration}`;
+    }
+    return null;
+  }
+  if (key === "progress") {
+    return task.progress !== undefined ? `${task.progress}%` : null;
+  }
+  return null;
+}
+
 /** Renders the task table rows for export (without header). */
 function ExportTaskTableRows({
   flattenedTasks,
@@ -386,39 +422,13 @@ function ExportTaskTableRows({
               }
 
               // Handle milestone and summary special cases
-              const isSummary = task.type === "summary";
-              const isMilestone = task.type === "milestone";
               const useSummaryStyle =
-                isSummary &&
+                task.type === "summary" &&
                 (key === "startDate" ||
                   key === "endDate" ||
                   key === "duration");
 
-              let value: string | null = null;
-              if (key === "startDate") {
-                value = task.startDate || null;
-              } else if (key === "endDate") {
-                if (isMilestone) {
-                  value = "";
-                } else {
-                  value = task.endDate || null;
-                }
-              } else if (key === "duration") {
-                if (isMilestone) {
-                  value = "";
-                } else if (
-                  isSummary &&
-                  task.duration !== undefined &&
-                  task.duration > 0
-                ) {
-                  value = `${task.duration} days`;
-                } else if (!isSummary && task.duration !== undefined) {
-                  value = `${task.duration}`;
-                }
-              } else if (key === "progress") {
-                value =
-                  task.progress !== undefined ? `${task.progress}%` : null;
-              }
+              const value = getColumnDisplayValue(task, key);
 
               return (
                 <div
@@ -496,14 +506,14 @@ export function ExportRenderer({
   // Compute color map for all tasks (respects current color mode)
   const colorMap = useMemo(() => {
     const map = new Map<string, string>();
-    layout.orderedTasks.forEach((task) => {
+    for (const task of layout.orderedTasks) {
       const color = getComputedTaskColor(
         task,
         layout.orderedTasks,
         colorModeState
       );
       map.set(task.id, color);
-    });
+    }
     return map;
   }, [layout.orderedTasks, colorModeState]);
 
@@ -588,11 +598,7 @@ export function ExportRenderer({
               tasks={layout.orderedTasks}
               scale={layout.scale}
               rowHeight={densityConfig.rowHeight}
-              dragState={{
-                isDragging: false,
-                fromTaskId: null,
-                currentPosition: { x: 0, y: 0 },
-              }}
+              dragState={EXPORT_DRAG_STATE}
             />
           )}
 
