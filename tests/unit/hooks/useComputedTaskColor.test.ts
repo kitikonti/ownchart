@@ -16,7 +16,7 @@ import { getComputedTaskColor } from "../../../src/utils/computeTaskColor";
 import { hexToHSL, stableHash } from "../../../src/utils/colorUtils";
 import type { Task } from "../../../src/types/chart.types";
 import type { ColorModeState } from "../../../src/types/colorMode.types";
-import { DEFAULT_COLOR_MODE_STATE } from "../../../src/types/colorMode.types";
+import { DEFAULT_COLOR_MODE_STATE } from "../../../src/config/colorModeDefaults";
 
 // ── Helpers ────────────────────────────────────────────────────────────────
 

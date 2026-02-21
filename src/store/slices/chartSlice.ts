@@ -36,7 +36,7 @@ import type {
   TaskTypeModeOptions,
   HierarchyModeOptions,
 } from "../../types/colorMode.types";
-import { DEFAULT_COLOR_MODE_STATE } from "../../types/colorMode.types";
+import { DEFAULT_COLOR_MODE_STATE } from "../../config/colorModeDefaults";
 import { DEFAULT_WORKING_DAYS_CONFIG } from "../../config/workingDaysConfig";
 import { detectLocaleHolidayRegion } from "../../utils/localeDetection";
 import { holidayService } from "../../services/holidayService";

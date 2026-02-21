@@ -9,7 +9,7 @@ import type { Command } from "../../../src/types/command.types";
 import type { Task } from "../../../src/types/chart.types";
 import type { Dependency } from "../../../src/types/dependency.types";
 import type { ColorModeState } from "../../../src/types/colorMode.types";
-import { DEFAULT_COLOR_MODE_STATE } from "../../../src/types/colorMode.types";
+import { DEFAULT_COLOR_MODE_STATE } from "../../../src/config/colorModeDefaults";
 
 // Mock react-hot-toast as a callable function with .success/.error
 const toastMock = vi.hoisted(() =>

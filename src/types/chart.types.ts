@@ -6,7 +6,7 @@
 /**
  * Task type classification.
  * Based on competitive analysis of SVAR React Gantt.
- * See: concept/docs/COMPETITIVE_ANALYSIS.md
+ * See: docs/design/COMPETITIVE_ANALYSIS.md
  *
  * @type task - Regular task with start/end dates
  * @type summary - Parent task with children (dates computed from children)

@@ -12,7 +12,7 @@ import { useHistoryStore } from "../../store/slices/historySlice";
 import { useDependencyStore } from "../../store/slices/dependencySlice";
 import { useUIStore } from "../../store/slices/uiSlice";
 import { deserializeGanttFile } from "./deserialize";
-import { DEFAULT_COLOR_MODE_STATE } from "../../types/colorMode.types";
+import { DEFAULT_COLOR_MODE_STATE } from "../../config/colorModeDefaults";
 
 /**
  * Load file content into the application stores.

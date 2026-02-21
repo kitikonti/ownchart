@@ -6,7 +6,7 @@
 import { describe, it, expect, beforeEach } from "vitest";
 import { act } from "@testing-library/react";
 import { useChartStore } from "../../../src/store/slices/chartSlice";
-import { DEFAULT_COLOR_MODE_STATE } from "../../../src/types/colorMode.types";
+import { DEFAULT_COLOR_MODE_STATE } from "../../../src/config/colorModeDefaults";
 import type { ColorModeState } from "../../../src/types/colorMode.types";
 
 describe("Chart Store - Misc Setters", () => {

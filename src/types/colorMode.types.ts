@@ -57,28 +57,3 @@ export interface ColorModeState {
   taskTypeOptions: TaskTypeModeOptions;
   hierarchyOptions: HierarchyModeOptions;
 }
-
-/**
- * Default color mode state
- */
-export const DEFAULT_COLOR_MODE_STATE: ColorModeState = {
-  mode: "manual",
-  themeOptions: {
-    selectedPaletteId: null,
-    customMonochromeBase: null,
-  },
-  summaryOptions: {
-    useMilestoneAccent: true,
-    milestoneAccentColor: "#CA8A04", // Gold
-  },
-  taskTypeOptions: {
-    summaryColor: "#0A2E4A", // Dark blue
-    taskColor: "#0F6CBD", // Brand blue
-    milestoneColor: "#CA8A04", // Gold
-  },
-  hierarchyOptions: {
-    baseColor: "#0F6CBD", // Brand blue
-    lightenPercentPerLevel: 12,
-    maxLightenPercent: 36,
-  },
-};

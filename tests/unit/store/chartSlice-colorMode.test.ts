@@ -9,7 +9,7 @@ import { useChartStore } from "../../../src/store/slices/chartSlice";
 import { useTaskStore } from "../../../src/store/slices/taskSlice";
 import { useHistoryStore } from "../../../src/store/slices/historySlice";
 import { useFileStore } from "../../../src/store/slices/fileSlice";
-import { DEFAULT_COLOR_MODE_STATE } from "../../../src/types/colorMode.types";
+import { DEFAULT_COLOR_MODE_STATE } from "../../../src/config/colorModeDefaults";
 import { DEFAULT_PALETTE_ID } from "../../../src/utils/colorPalettes";
 import { CommandType } from "../../../src/types/command.types";
 import type { Task } from "../../../src/types/chart.types";
