@@ -125,8 +125,6 @@ export function ChartCanvas({
   containerWidth = 800,
   headerSelectionRect,
 }: ChartCanvasProps): JSX.Element {
-  const outerRef = useRef<HTMLDivElement>(null);
-  const containerRef = useRef<HTMLDivElement>(null);
   const svgContainerRef = useRef<HTMLDivElement>(null);
   const svgRef = useRef<SVGSVGElement>(null);
 
@@ -258,20 +256,12 @@ export function ChartCanvas({
     [dragState.isDragging, endDrag]
   );
 
-  // Marquee selection handler
-  const handleMarqueeSelection = useCallback(
-    (taskIds: string[], addToSelection: boolean) => {
-      setSelectedTaskIds(taskIds, addToSelection);
-    },
-    [setSelectedTaskIds]
-  );
-
   // Marquee selection hook
   const { normalizedRect: marqueeRect, onMouseDown: onMarqueeMouseDown } =
     useMarqueeSelection({
       svgRef,
       taskGeometries: taskGeometriesArray,
-      onSelectionChange: handleMarqueeSelection,
+      onSelectionChange: setSelectedTaskIds,
       enabled: !dragState.isDragging, // Disable during dependency drag
     });
 
@@ -297,11 +287,8 @@ export function ChartCanvas({
   // Don't render if scale not ready
   if (!scale) {
     return (
-      <div
-        ref={outerRef}
-        className="chart-canvas-container w-full min-h-screen"
-      >
-        <div ref={containerRef} className="w-full min-h-screen">
+      <div className="chart-canvas-container w-full min-h-screen">
+        <div className="w-full min-h-screen">
           <div className="flex items-center justify-center min-h-screen text-neutral-500">
             Loading timeline...
           </div>
@@ -330,12 +317,9 @@ export function ChartCanvas({
   );
 
   return (
-    <div
-      ref={outerRef}
-      className="chart-canvas-container w-full bg-white relative"
-    >
+    <div className="chart-canvas-container w-full bg-white relative">
       {/* Chart Content Container with Pan/Zoom */}
-      <div ref={containerRef} className="w-full overflow-visible relative">
+      <div className="w-full overflow-visible relative">
         <div ref={svgContainerRef} className="w-full" {...handlers}>
           <svg
             ref={svgRef}
