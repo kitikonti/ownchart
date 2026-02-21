@@ -78,6 +78,8 @@ const PROGRESS_HANDLE = {
   hitzoneYOffset: 2,
   /** Minimum bar width to show the progress handle */
   minBarWidth: 30,
+  /** Stroke width for the visible triangle indicator */
+  strokeWidth: 1.5,
 } as const;
 
 // =============================================================================
@@ -590,7 +592,7 @@ export const TaskBar = React.memo(function TaskBar({
               points={`${geometry.x + progressWidth},${geometry.y + geometry.height} ${geometry.x + progressWidth - PROGRESS_HANDLE.triangleHalfWidth},${geometry.y + geometry.height + PROGRESS_HANDLE.triangleHeight} ${geometry.x + progressWidth + PROGRESS_HANDLE.triangleHalfWidth},${geometry.y + geometry.height + PROGRESS_HANDLE.triangleHeight}`}
               fill={CONNECTION_HANDLE.neutralFill}
               stroke={CONNECTION_HANDLE.neutralStroke}
-              strokeWidth={1.5}
+              strokeWidth={PROGRESS_HANDLE.strokeWidth}
               className={`progress-handle${progressDrag.isDragging ? " dragging" : ""}`}
               pointerEvents="none"
             />
