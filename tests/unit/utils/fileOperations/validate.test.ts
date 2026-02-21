@@ -14,44 +14,40 @@ import {
 
 describe('File Operations - Validation', () => {
   describe('Layer 1: Pre-Parse Validation', () => {
-    it('should reject files larger than 50MB', async () => {
+    it('should reject files larger than 50MB', () => {
       const largeFile = new File(['x'], 'test.ownchart', {
         type: 'application/json',
       });
       Object.defineProperty(largeFile, 'size', { value: 51 * 1024 * 1024 });
 
-      await expect(validatePreParse(largeFile)).rejects.toThrow(
-        ValidationError
-      );
-      await expect(validatePreParse(largeFile)).rejects.toThrow(
-        'exceeds limit of 50MB'
-      );
+      expect(() => validatePreParse(largeFile)).toThrow(ValidationError);
+      expect(() => validatePreParse(largeFile)).toThrow('exceeds limit of 50MB');
     });
 
-    it('should accept files smaller than 50MB', async () => {
+    it('should accept files smaller than 50MB', () => {
       const validFile = new File(['{}'], 'test.ownchart', {
         type: 'application/json',
       });
 
-      await expect(validatePreParse(validFile)).resolves.not.toThrow();
+      expect(() => validatePreParse(validFile)).not.toThrow();
     });
 
-    it('should reject files without .ownchart extension', async () => {
+    it('should reject files without .ownchart extension', () => {
       const wrongExtension = new File(['{}'], 'test.json', {
         type: 'application/json',
       });
 
-      await expect(validatePreParse(wrongExtension)).rejects.toThrow(
+      expect(() => validatePreParse(wrongExtension)).toThrow(
         'must have .ownchart extension'
       );
     });
 
-    it('should accept files with .ownchart extension', async () => {
+    it('should accept files with .ownchart extension', () => {
       const validFile = new File(['{}'], 'test.ownchart', {
         type: 'application/json',
       });
 
-      await expect(validatePreParse(validFile)).resolves.not.toThrow();
+      expect(() => validatePreParse(validFile)).not.toThrow();
     });
   });
 
@@ -261,15 +257,15 @@ describe('File Operations - Validation', () => {
       expect(() => validateSemantics(invalid)).toThrow('invalid endDate');
     });
 
-    it('should auto-fix milestone with empty endDate to startDate', () => {
+    it('should allow milestone with empty endDate (auto-fixed in deserialization)', () => {
       const file = createValidFile();
       file.chart.tasks[0].type = 'milestone';
       file.chart.tasks[0].endDate = '';
       file.chart.tasks[0].startDate = '2026-01-01';
       file.chart.tasks[0].duration = 0;
 
+      // Validation permits empty endDate for milestones; deserializeTask() fixes it
       expect(() => validateSemantics(file)).not.toThrow();
-      expect(file.chart.tasks[0].endDate).toBe('2026-01-01');
     });
 
     it('should reject endDate before startDate', () => {
@@ -391,6 +387,46 @@ describe('File Operations - Validation', () => {
           parent: parentId,
         },
       ];
+
+      expect(() => validateSemantics(valid)).not.toThrow();
+    });
+
+    it('should reject date overflow (e.g. Feb 30)', () => {
+      const invalid = createValidFile();
+      invalid.chart.tasks[0].endDate = '2026-02-30';
+
+      expect(() => validateSemantics(invalid)).toThrow('invalid endDate');
+    });
+
+    it('should reject invalid task type', () => {
+      const invalid = createValidFile();
+      invalid.chart.tasks[0].type = 'invalid_type';
+
+      expect(() => validateSemantics(invalid)).toThrow('invalid type');
+    });
+
+    it('should accept valid task types (task, summary, milestone)', () => {
+      for (const type of ['task', 'summary', 'milestone']) {
+        const valid = createValidFile();
+        valid.chart.tasks[0].type = type;
+        if (type === 'milestone') {
+          valid.chart.tasks[0].endDate = valid.chart.tasks[0].startDate;
+          valid.chart.tasks[0].duration = 0;
+        }
+        expect(() => validateSemantics(valid)).not.toThrow();
+      }
+    });
+
+    it('should reject invalid colorOverride', () => {
+      const invalid = createValidFile();
+      invalid.chart.tasks[0].colorOverride = 'not-a-color';
+
+      expect(() => validateSemantics(invalid)).toThrow('invalid colorOverride');
+    });
+
+    it('should accept valid colorOverride', () => {
+      const valid = createValidFile();
+      valid.chart.tasks[0].colorOverride = '#FF5733';
 
       expect(() => validateSemantics(valid)).not.toThrow();
     });

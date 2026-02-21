@@ -9,7 +9,7 @@
  * Layer 6: Migration (version compatibility - in migrate.ts)
  */
 
-import type { GanttFile } from "./types";
+import type { GanttFile, SerializedTask } from "./types";
 
 const MAX_FILE_SIZE = 50 * 1024 * 1024; // 50MB
 const MAX_TASKS = 10000;
@@ -23,6 +23,8 @@ const REQUIRED_TASK_FIELDS = [
   "color",
   "order",
 ];
+
+const VALID_TASK_TYPES = new Set(["task", "summary", "milestone"]);
 
 /**
  * Custom validation error class
@@ -41,10 +43,7 @@ export class ValidationError extends Error {
  * Layer 1: Pre-Parse Validation
  * Check file size and extension before parsing
  */
-export async function validatePreParse(file: {
-  name: string;
-  size: number;
-}): Promise<void> {
+export function validatePreParse(file: { name: string; size: number }): void {
   // File size check
   if (file.size > MAX_FILE_SIZE) {
     throw new ValidationError(
@@ -198,7 +197,7 @@ const UUID_REGEX =
  * Validate a single task's semantic integrity (ID, dates, progress, color)
  */
 function validateTaskSemantics(
-  task: { id: string; startDate: string; endDate: string; type?: string; progress: number; color: string },
+  task: SerializedTask,
   index: number,
   taskIds: Set<string>
 ): void {
@@ -257,6 +256,23 @@ function validateTaskSemantics(
       `Task ${index} has invalid color: ${task.color}`
     );
   }
+
+  if (task.type && !VALID_TASK_TYPES.has(task.type)) {
+    throw new ValidationError(
+      "INVALID_TASK_TYPE",
+      `Task ${index} has invalid type: ${task.type}`
+    );
+  }
+
+  if (
+    typeof task.colorOverride === "string" &&
+    !isValidHexColor(task.colorOverride)
+  ) {
+    throw new ValidationError(
+      "INVALID_COLOR",
+      `Task ${index} has invalid colorOverride: ${task.colorOverride}`
+    );
+  }
 }
 
 const VALID_DEPENDENCY_TYPES = new Set(["FS", "SS", "FF", "SF"]);
@@ -297,8 +313,15 @@ function isValidISODate(dateStr: string): boolean {
   const isoDateRegex = /^\d{4}-\d{2}-\d{2}$/;
   if (!isoDateRegex.test(dateStr)) return false;
 
-  const date = new Date(dateStr);
-  return !isNaN(date.getTime());
+  const [year, month, day] = dateStr.split("-").map(Number);
+  const date = new Date(Date.UTC(year, month - 1, day));
+
+  // Guard against Date overflow (e.g. "2026-02-30" silently rolls to March 2)
+  return (
+    date.getUTCFullYear() === year &&
+    date.getUTCMonth() === month - 1 &&
+    date.getUTCDate() === day
+  );
 }
 
 /**

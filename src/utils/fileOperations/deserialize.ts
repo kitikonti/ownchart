@@ -37,8 +37,6 @@ const KNOWN_TASK_KEYS = new Set([
   "open",
   "colorOverride",
   "metadata",
-  "createdAt",
-  "updatedAt",
 ]);
 
 /** Create a failed DeserializeResult */
@@ -49,14 +47,21 @@ function errorResult(code: string, message: string): DeserializeResult {
 /**
  * Run validation layers 1-3 and return parsed GanttFile or error
  */
-async function parseAndValidate(
+function parseAndValidate(
   content: string,
   fileName: string,
   fileSize?: number
-): Promise<{ ganttFile: GanttFile } | { error: DeserializeResult }> {
+): { ganttFile: GanttFile } | { error: DeserializeResult } {
   // Layer 1: Pre-parse validation (file size, extension)
   if (fileSize !== undefined) {
-    await validatePreParse({ name: fileName, size: fileSize });
+    try {
+      validatePreParse({ name: fileName, size: fileSize });
+    } catch (e) {
+      if (e instanceof ValidationError) {
+        return { error: errorResult(e.code, e.message) };
+      }
+      throw e;
+    }
   }
 
   // Layer 2: Safe JSON parsing
@@ -64,8 +69,14 @@ async function parseAndValidate(
   try {
     parsed = safeJsonParse(content);
   } catch (e) {
+    if (e instanceof ValidationError) {
+      return { error: errorResult(e.code, e.message) };
+    }
     return {
-      error: errorResult("INVALID_JSON", `Invalid JSON: ${(e as Error).message}`),
+      error: errorResult(
+        "INVALID_JSON",
+        `Invalid JSON: ${(e as Error).message}`
+      ),
     };
   }
 
@@ -99,16 +110,19 @@ export async function deserializeGanttFile(
   const warnings: string[] = [];
 
   try {
-    const parseResult = await parseAndValidate(content, fileName, fileSize);
+    const parseResult = parseAndValidate(content, fileName, fileSize);
     if ("error" in parseResult) return parseResult.error;
 
     let ganttFile = parseResult.ganttFile;
+    let wasMigrated = false;
 
     // Migration (before semantic validation so migrated data gets validated)
     if (needsMigration(ganttFile.fileVersion)) {
+      const originalVersion = ganttFile.fileVersion;
       ganttFile = migrateGanttFile(ganttFile);
+      wasMigrated = true;
       warnings.push(
-        `File migrated from v${ganttFile.migrations?.originalVersion || ganttFile.fileVersion} to v${FILE_VERSION}`
+        `File migrated from v${originalVersion} to v${FILE_VERSION}`
       );
     }
 
@@ -149,9 +163,7 @@ export async function deserializeGanttFile(
         chartId: ganttFile.chart.id,
       },
       warnings: warnings.length > 0 ? warnings : undefined,
-      migrated: needsMigration(
-        ganttFile.migrations?.originalVersion || ganttFile.fileVersion
-      ),
+      migrated: wasMigrated,
     };
   } catch (e) {
     return errorResult(
