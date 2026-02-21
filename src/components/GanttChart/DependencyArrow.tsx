@@ -10,6 +10,25 @@ import type { Task } from "../../types/chart.types";
 import { calculateArrowPath, getArrowheadPoints } from "../../utils/arrowPath";
 import { COLORS } from "../../styles/design-tokens";
 
+// ---------------------------------------------------------------------------
+// Geometry constants
+// ---------------------------------------------------------------------------
+
+/** Invisible hit area width around the arrow path for easier clicking */
+const HIT_AREA_STROKE_WIDTH = 14;
+/** Arrowhead polygon size (px) */
+const ARROWHEAD_SIZE = 8;
+/** Default arrow stroke width (unselected) */
+const STROKE_WIDTH_DEFAULT = 1.5;
+/** Selected arrow stroke width */
+const STROKE_WIDTH_SELECTED = 2.5;
+/** Selected-state dashed overlay stroke width */
+const SELECTION_OVERLAY_WIDTH = 6;
+/** Selected-state dashed overlay dash pattern */
+const SELECTION_DASH = "4 2";
+/** Selected-state dashed overlay opacity */
+const SELECTION_OPACITY = 0.3;
+
 interface DependencyArrowProps {
   dependency: Dependency;
   fromTask: Task;
@@ -68,7 +87,7 @@ export const DependencyArrow = memo(function DependencyArrow({
   const strokeColor = isSelected
     ? COLORS.chart.dependencySelected
     : COLORS.chart.dependencyDefault;
-  const strokeWidth = isSelected ? 2.5 : 1.5;
+  const strokeWidth = isSelected ? STROKE_WIDTH_SELECTED : STROKE_WIDTH_DEFAULT;
 
   return (
     <g
@@ -85,7 +104,7 @@ export const DependencyArrow = memo(function DependencyArrow({
         d={path}
         fill="none"
         stroke="transparent"
-        strokeWidth={14}
+        strokeWidth={HIT_AREA_STROKE_WIDTH}
         className="cursor-pointer"
       />
 
@@ -100,7 +119,7 @@ export const DependencyArrow = memo(function DependencyArrow({
 
       {/* Arrowhead */}
       <polygon
-        points={getArrowheadPoints(8)}
+        points={getArrowheadPoints(ARROWHEAD_SIZE)}
         fill={strokeColor}
         transform={`translate(${arrowHead.x}, ${arrowHead.y}) rotate(${arrowHead.angle})`}
         className="transition-colors duration-150"
@@ -112,9 +131,9 @@ export const DependencyArrow = memo(function DependencyArrow({
           d={path}
           fill="none"
           stroke={COLORS.chart.dependencySelected}
-          strokeWidth={6}
-          strokeDasharray="4 2"
-          opacity={0.3}
+          strokeWidth={SELECTION_OVERLAY_WIDTH}
+          strokeDasharray={SELECTION_DASH}
+          opacity={SELECTION_OPACITY}
           pointerEvents="none"
         />
       )}

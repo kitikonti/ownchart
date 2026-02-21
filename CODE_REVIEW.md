@@ -109,11 +109,11 @@ cd ../app-gantt-review
 - [x] `src/components/GanttChart/TimelineHeader.tsx` (263 LOC) — Hex-Werte waren bereits in TIMELINE_HEADER/COLORS-Tokens. Magic numbers→PRIMARY/SECONDARY_FONT_SIZE+TEXT_BASELINE_OFFSET, fontWeight→TYPOGRAPHY tokens, parseISO(scale.minDate) aus while-Loop gehoisted (DRY), +14 Unit-Tests. **Review-complete — 0 offene Findings.**
 - [x] `src/components/GanttChart/ConnectionHandles.tsx` (192 LOC) — Hex-Werte waren bereits in CONNECTION_HANDLE-Tokens. Dead code entfernt (opacity immer 1 nach Guard), Magic numbers→HANDLE_STROKE_WIDTH/RING_OFFSET/RING_OPACITY/RING_STROKE_WIDTH, +18 Unit-Tests. 2. Review: DRY Start/End-Handle-Gruppen via .map() (207→169 LOC), per-handle hover radius (hoveredHandle===side statt Boolean), Rings in Handle-<g> gruppiert, Test-Beschreibung korrigiert ("8 circles"→"6 circles"). **Review-complete — 0 offene Findings.**
 - [x] `src/components/GanttChart/DependencyArrows.tsx` (173 LOC) — Non-null assertions (!) durch sichere Guards ersetzt, headerHeight=0 dokumentiert (wie TaskBar.tsx), +15 Unit-Tests. 2. Review: Redundanten handleDelete-useCallback-Wrapper entfernt, removeDependency direkt uebergeben (175→167 LOC). **Review-complete — 0 offene Findings.**
-- [ ] `src/components/GanttChart/DependencyArrow.tsx` (120 LOC) — 2 Hex-Werte
-- [ ] `src/components/GanttChart/DependencyDragPreview.tsx` (59 LOC) — 1 Hex-Wert
-- [ ] `src/components/GanttChart/SelectionHighlight.tsx` (53 LOC)
-- [ ] `src/components/GanttChart/TodayMarker.tsx` (41 LOC)
-- [ ] `src/components/GanttChart/index.ts` (10 LOC)
+- [x] `src/components/GanttChart/DependencyArrow.tsx` (120 LOC) — Hex-Werte waren bereits in COLORS-Tokens. Magic numbers→Konstanten (HIT_AREA_STROKE_WIDTH, ARROWHEAD_SIZE, STROKE_WIDTH_DEFAULT/SELECTED, SELECTION_OVERLAY_WIDTH/DASH/OPACITY), +15 Unit-Tests. **Review-complete — 0 offene Findings.**
+- [x] `src/components/GanttChart/DependencyDragPreview.tsx` (59 LOC) — Hex-Werte waren bereits in COLORS-Tokens. Magic numbers→Konstanten (ARROWHEAD_SIZE, PREVIEW_STROKE_WIDTH/DASH/OPACITY, START_POINT_RADIUS), +11 Unit-Tests. **Review-complete — 0 offene Findings.**
+- [x] `src/components/GanttChart/SelectionHighlight.tsx` (53 LOC) — Sauber, alle Farben aus Tokens, +9 Unit-Tests. **Review-complete — 0 offene Findings.**
+- [x] `src/components/GanttChart/TodayMarker.tsx` (41 LOC) — Sauber, alle Farben aus Tokens, +8 Unit-Tests. **Review-complete — 0 offene Findings.**
+- [x] `src/components/GanttChart/index.ts` (10 LOC) — DependencyArrows zum Barrel-Export ergaenzt (wird von ExportRenderer aus anderem Verzeichnis importiert). **Review-complete — 0 offene Findings.**
 
 ### Priority: MEDIUM — TaskList Komponenten
 - [ ] `src/components/TaskList/Cell.tsx` (496 LOC) — 1 Hex-Wert (BRAND_COLOR)
@@ -319,6 +319,6 @@ Entscheidungen aus bisherigen Reviews die fuer zukuenftige Dateien gelten.
 
 ## Progress
 
-- Reviewed: 19 / 193 Dateien
-- Offene Issues: 38 Hex-Farben (TimelineHeader/ConnectionHandles/DependencyArrows waren bereits in Tokens), ~18 toISODateString-Umstellungen
+- Reviewed: 24 / 193 Dateien
+- Offene Issues: 38 Hex-Farben (TimelineHeader/ConnectionHandles/DependencyArrows/DependencyArrow/DependencyDragPreview waren bereits in Tokens), ~18 toISODateString-Umstellungen
 - Test-Coverage: 80%+

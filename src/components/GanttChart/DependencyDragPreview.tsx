@@ -8,6 +8,21 @@ import { memo, useMemo } from "react";
 import { calculateDragPath, getArrowheadPoints } from "../../utils/arrowPath";
 import { COLORS } from "../../styles/design-tokens";
 
+// ---------------------------------------------------------------------------
+// Geometry constants
+// ---------------------------------------------------------------------------
+
+/** Arrowhead polygon size (px) — matches DependencyArrow */
+const ARROWHEAD_SIZE = 8;
+/** Drag preview line stroke width */
+const PREVIEW_STROKE_WIDTH = 2;
+/** Drag preview dash pattern */
+const PREVIEW_DASH = "6 4";
+/** Drag preview opacity for line, arrowhead, and start indicator */
+const PREVIEW_OPACITY = 0.8;
+/** Start point indicator circle radius */
+const START_POINT_RADIUS = 5;
+
 interface DependencyDragPreviewProps {
   startX: number;
   startY: number;
@@ -40,16 +55,16 @@ export const DependencyDragPreview = memo(function DependencyDragPreview({
         d={path}
         fill="none"
         stroke={COLORS.chart.dependencySelected}
-        strokeWidth={2}
-        strokeDasharray="6 4"
-        opacity={0.8}
+        strokeWidth={PREVIEW_STROKE_WIDTH}
+        strokeDasharray={PREVIEW_DASH}
+        opacity={PREVIEW_OPACITY}
       />
 
       {/* Preview arrowhead */}
       <polygon
-        points={getArrowheadPoints(8)}
+        points={getArrowheadPoints(ARROWHEAD_SIZE)}
         fill={COLORS.chart.dependencySelected}
-        opacity={0.8}
+        opacity={PREVIEW_OPACITY}
         transform={`translate(${endX}, ${endY}) rotate(${arrowAngle})`}
       />
 
@@ -57,9 +72,9 @@ export const DependencyDragPreview = memo(function DependencyDragPreview({
       <circle
         cx={startX}
         cy={startY}
-        r={5}
+        r={START_POINT_RADIUS}
         fill={COLORS.chart.dependencySelected}
-        opacity={0.8}
+        opacity={PREVIEW_OPACITY}
       />
     </g>
   );
