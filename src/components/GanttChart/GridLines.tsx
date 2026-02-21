@@ -10,6 +10,7 @@ import {
   format,
   startOfWeek,
   startOfMonth,
+  addDays as addDaysFns,
   addWeeks,
   addMonths,
 } from "date-fns";
@@ -32,7 +33,7 @@ const MONTHLY_INTERVAL = 30;
 type LineType = "daily" | "weekly" | "monthly";
 
 /** Resolve the vertical-line stroke color based on zoom level and day type. */
-function getVerticalLineStroke(
+export function getVerticalLineStroke(
   lineType: LineType,
   isWeekendDay: boolean
 ): string {
@@ -132,7 +133,7 @@ export function GridLines({
       } else if (gridInterval === MONTHLY_INTERVAL) {
         currentDateObj = addMonths(currentDateObj, 1);
       } else {
-        currentDateObj = parseISO(addDays(currentDate, 1));
+        currentDateObj = addDaysFns(currentDateObj, 1);
       }
       currentDate = format(currentDateObj, "yyyy-MM-dd");
     }
@@ -190,6 +191,8 @@ export function GridLines({
     }));
   }, [taskCount, rowHeight]);
 
+  const gridHeight = taskCount * rowHeight;
+
   return (
     <g className="grid-lines">
       {/* Weekend background highlighting */}
@@ -199,7 +202,7 @@ export function GridLines({
           x={x}
           y={0}
           width={scale.pixelsPerDay}
-          height={taskCount * rowHeight}
+          height={gridHeight}
           fill={GRID.weekendBg}
           opacity={GRID.weekendOpacity}
           className="weekend-column"
@@ -213,7 +216,7 @@ export function GridLines({
           x={x}
           y={0}
           width={scale.pixelsPerDay}
-          height={taskCount * rowHeight}
+          height={gridHeight}
           fill={GRID.holidayBg}
           opacity={GRID.holidayOpacity}
           className="holiday-column"
@@ -229,7 +232,7 @@ export function GridLines({
           x1={x}
           y1={0}
           x2={x}
-          y2={taskCount * rowHeight}
+          y2={gridHeight}
           stroke={getVerticalLineStroke(lineType, isWeekendDay)}
           strokeWidth={1}
           className={`${lineType}-line`}
