@@ -10,44 +10,50 @@
  * - COLORS.brand: Outlook Blue scale — mapped from Fluent theme slots (see note below)
  * - Section tokens (GRID, TIMELINE_HEADER, etc.): Cool grays with slight blue tint —
  *   used for chart/grid areas for visual softness, sourced from Bootstrap/Tailwind palettes
+ * - TABLE_HEADER / ROW_NUMBER: MS Fluent-derived grays (#F3F3F3 etc.) — neither
+ *   cool-tinted nor matching the neutral scale; shared via TABLE_HEADER references
  */
 
 // =============================================================================
 // COLORS
 // =============================================================================
 
-export const COLORS = {
-  // Neutrals (MS Fluent - pure grays, no blue tint)
-  neutral: {
-    0: "#ffffff",
-    50: "#f5f5f5", // Tab bar, subtle bg
-    100: "#ebebeb", // Hover states
-    200: "#d4d4d4", // Borders, separators
-    300: "#b3b3b3", // Disabled text
-    400: "#8a8a8a", // Placeholder
-    500: "#6b6b6b", // Secondary text
-    600: "#525252", // Icons default
-    700: "#404040", // Primary text
-    800: "#303030", // Headings
-    900: "#1a1a1a", // Emphasis
-  },
+// Standalone scales — referenced by COLORS.chart to avoid duplicated hex values.
 
-  // Brand (Outlook Blue - derived from MS Fluent themePrimary #0F6CBD)
-  // NOTE: Scale follows Fluent theme slot mapping, NOT linear lightness.
-  // Specifically, 500 (themeDarkAlt) is darker than 600 (themePrimary).
-  // Primary brand color = brand[600].
-  brand: {
-    50: "#EBF3FC", // themeLighterAlt - light backgrounds
-    100: "#CFE4FA", // themeLighter - focus rings
-    200: "#B4D6FA", // themeLight - disabled states
-    300: "#62ABF5", // themeTertiary - light accents
-    400: "#2B88D8", // themeSecondary - icons, highlights
-    500: "#115EA3", // themeDarkAlt - hover states
-    600: "#0F6CBD", // themePrimary - primary buttons
-    700: "#0F548C", // themeDark - links/text
-    800: "#0C3B5E", // themeDarker - pressed states
-    900: "#0A2E4A", // darker - dark emphasis
-  },
+const neutral = {
+  0: "#ffffff",
+  50: "#f5f5f5", // Tab bar, subtle bg
+  100: "#ebebeb", // Hover states
+  200: "#d4d4d4", // Borders, separators
+  300: "#b3b3b3", // Disabled text
+  400: "#8a8a8a", // Placeholder
+  500: "#6b6b6b", // Secondary text
+  600: "#525252", // Icons default
+  700: "#404040", // Primary text
+  800: "#303030", // Headings
+  900: "#1a1a1a", // Emphasis
+} as const;
+
+// Brand (Outlook Blue - derived from MS Fluent themePrimary #0F6CBD)
+// NOTE: Scale follows Fluent theme slot mapping, NOT linear lightness.
+// Specifically, 500 (themeDarkAlt) is darker than 600 (themePrimary).
+// Primary brand color = brand[600].
+const brand = {
+  50: "#EBF3FC", // themeLighterAlt - light backgrounds
+  100: "#CFE4FA", // themeLighter - focus rings
+  200: "#B4D6FA", // themeLight - disabled states
+  300: "#62ABF5", // themeTertiary - light accents
+  400: "#2B88D8", // themeSecondary - icons, highlights
+  500: "#115EA3", // themeDarkAlt - hover states
+  600: "#0F6CBD", // themePrimary - primary buttons
+  700: "#0F548C", // themeDark - links/text
+  800: "#0C3B5E", // themeDarker - pressed states
+  900: "#0A2E4A", // darker - dark emphasis
+} as const;
+
+export const COLORS = {
+  neutral,
+  brand,
 
   // Semantic (NOT for UI, only for status indicators)
   semantic: {
@@ -57,15 +63,15 @@ export const COLORS = {
     info: "#0284c7", // Blue for info (rarely used)
   },
 
-  // Chart-specific colors (using Outlook blue palette)
+  // Chart-specific colors (referencing brand scale where applicable)
   chart: {
-    selection: "#2B88D8", // brand-400 for drag preview/selection
-    text: "#495057", // Text in SVG
+    selection: brand[400], // drag preview/selection
+    text: "#495057", // Text in SVG (Bootstrap gray-700)
     dependencyDefault: "#94a3b8",
     dependencySelected: "#334155",
-    todayMarker: "#0F6CBD", // brand-600 for today marker
-    todayHighlight: "#EBF3FC", // brand-50 for today header cell background
-    taskDefault: "#0F6CBD", // brand-600 for new tasks
+    todayMarker: brand[600], // today marker
+    todayHighlight: brand[50], // today header cell background
+    taskDefault: brand[600], // new tasks
     marquee: "#334155", // Marquee selection rectangle
   },
 } as const;
@@ -146,7 +152,7 @@ export const SHADOWS = {
   // MS Dialog shadow: extracted from computed styles
   modal: "0 0 8px rgba(0,0,0,0.12), 0 32px 64px rgba(0,0,0,0.14)",
   // Focus ring (for accessibility)
-  focus: `0 0 0 2px ${COLORS.brand[100]}`,
+  focus: `0 0 0 2px ${brand[100]}`,
 } as const;
 
 // =============================================================================
@@ -238,11 +244,11 @@ export const CONNECTION_HANDLE = {
 // =============================================================================
 
 export const ROW_NUMBER = {
-  bgInactive: "#F3F3F3",
-  bgHover: "#E8E8E8",
+  bgInactive: TABLE_HEADER.bg,
+  bgHover: TABLE_HEADER.bgHover,
   textInactive: "#5F6368",
-  textSelected: "#FFFFFF",
-  border: "#E1E1E1",
+  textSelected: neutral[0],
+  border: TABLE_HEADER.border,
   hiddenIndicator: "#9ca3af",
 } as const;
 

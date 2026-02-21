@@ -31,8 +31,6 @@ export type TaskType = "task" | "summary" | "milestone";
  * @property type - Task type classification (default: 'task')
  * @property parent - Parent task ID for hierarchical tasks (optional)
  * @property open - Expanded/collapsed state for summary tasks (default: true)
- * @property baseStart - Original planned start date for baseline comparison (Phase 2)
- * @property baseEnd - Original planned end date for baseline comparison (Phase 2)
  */
 export interface Task {
   id: string;
@@ -49,8 +47,6 @@ export interface Task {
   type?: TaskType;
   parent?: string;
   open?: boolean;
-  baseStart?: string;
-  baseEnd?: string;
 
   // Color override for manual overrides in automatic color modes
   colorOverride?: string;
