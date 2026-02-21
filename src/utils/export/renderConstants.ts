@@ -5,6 +5,7 @@
  */
 
 import { getContrastTextColor } from "../colorUtils";
+import { SUMMARY_BRACKET } from "../../components/GanttChart/TaskBar";
 
 /**
  * Task rendering constants - matching TaskBar.tsx exactly
@@ -27,37 +28,12 @@ export const TASK_RENDER_CONSTANTS = {
 } as const;
 
 /**
- * Summary bracket constants - matching SummaryBracket component
+ * Summary bracket constants — re-exported from TaskBar.tsx (single source of truth).
+ * fillOpacity is export-specific and kept here.
  */
 export const SUMMARY_RENDER_CONSTANTS = {
-  /**
-   * Horizontal bar thickness as ratio of total height (30%)
-   */
-  barThicknessRatio: 0.3,
-
-  /**
-   * Downward tip height as ratio of total height (50%)
-   */
-  tipHeightRatio: 0.5,
-
-  /**
-   * Tip width factor for 60° angle (tan(60°) ≈ 1.732, so 1/tan(60°) ≈ 0.577)
-   */
-  tipWidthFactor: 0.577,
-
-  /**
-   * Radius for top corners of the bracket bar
-   */
-  cornerRadius: 10,
-
-  /**
-   * Radius for inner corners where tips meet the bar
-   */
-  innerRadius: 3,
-
-  /**
-   * Fill opacity for summary brackets
-   */
+  ...SUMMARY_BRACKET,
+  /** Fill opacity for summary brackets */
   fillOpacity: 0.9,
 } as const;
 

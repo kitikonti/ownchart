@@ -49,12 +49,28 @@ const PROGRESS_BG_OPACITY = 0.65;
 /** Fill opacity for summary bracket shapes */
 const SUMMARY_FILL_OPACITY = 0.9;
 
+/** Summary bracket shape geometry (shared with export renderer) */
+export const SUMMARY_BRACKET = {
+  /** Horizontal bar thickness as ratio of total height (30%) */
+  barThicknessRatio: 0.3,
+  /** Downward tip height as ratio of total height (50%) */
+  tipHeightRatio: 0.5,
+  /** Tip width factor for 60° angle (1/tan(60°) ≈ 0.577) */
+  tipWidthFactor: 0.577,
+  /** Radius for top corners of the bracket bar */
+  cornerRadius: 10,
+  /** Radius for inner corners where tips meet the bar */
+  innerRadius: 3,
+} as const;
+
 /** Progress drag handle dimensions */
 const PROGRESS_HANDLE = {
   hitzoneHalfWidth: 9,
   hitzoneHeight: 12,
   triangleHalfWidth: 6,
   triangleHeight: 8,
+  /** Vertical offset from bar bottom for hitzone positioning */
+  hitzoneYOffset: 2,
   /** Minimum bar width to show the progress handle */
   minBarWidth: 30,
 } as const;
@@ -206,11 +222,10 @@ function SummaryBracket({
   width: number;
   height: number;
 }): React.ReactElement {
-  const tipHeight = height * 0.5; // Height of downward triangular tips (50% of bar height)
-  const barThickness = height * 0.3; // Horizontal bar thickness (30% of bar height)
-  const tipWidth = tipHeight * 0.577; // For 60-degree angle (tipHeight / tan(60°))
-  const cornerRadius = 10; // Radius for top corners
-  const innerRadius = 3; // Radius for inner corners where tips meet bar
+  const tipHeight = height * SUMMARY_BRACKET.tipHeightRatio;
+  const barThickness = height * SUMMARY_BRACKET.barThicknessRatio;
+  const tipWidth = tipHeight * SUMMARY_BRACKET.tipWidthFactor;
+  const { cornerRadius, innerRadius } = SUMMARY_BRACKET;
 
   // Combined path for entire bracket (bar + both tips) with rounded inner corners
   const bracketPath = `
@@ -269,7 +284,7 @@ export const TaskBar = React.memo(function TaskBar({
   densityOverride,
   labelPosition = "inside",
   isExport,
-}: TaskBarProps) {
+}: TaskBarProps): React.ReactElement | null {
   // Get density configuration for dynamic sizing
   const storeDensityConfig = useDensityConfig();
 
@@ -480,7 +495,7 @@ export const TaskBar = React.memo(function TaskBar({
             x={summaryPreviewX}
             y={geometry.y}
             width={summaryPreviewWidth}
-            height={geometry.height * 0.5}
+            height={geometry.height * SUMMARY_BRACKET.tipHeightRatio}
             fill="none"
             stroke={COLORS.chart.selection}
             strokeWidth={2}
@@ -556,7 +571,7 @@ export const TaskBar = React.memo(function TaskBar({
             {/* Invisible hitzone for easier grabbing */}
             <rect
               x={geometry.x + progressWidth - PROGRESS_HANDLE.hitzoneHalfWidth}
-              y={geometry.y + geometry.height - 2}
+              y={geometry.y + geometry.height - PROGRESS_HANDLE.hitzoneYOffset}
               width={PROGRESS_HANDLE.hitzoneHalfWidth * 2}
               height={PROGRESS_HANDLE.hitzoneHeight}
               fill="transparent"
