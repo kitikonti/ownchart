@@ -6,7 +6,6 @@
 
 import { create } from "zustand";
 import { immer } from "zustand/middleware/immer";
-import toast from "react-hot-toast";
 import type {
   Dependency,
   DependencyType,
@@ -331,18 +330,3 @@ export const useDependencyStore = create<DependencyStore>()(
     },
   }))
 );
-
-/**
- * Helper function to show dependency-related toasts.
- */
-export function showDependencyToast(
-  result: AddDependencyResult,
-  fromTaskName: string,
-  toTaskName: string
-): void {
-  if (result.success) {
-    toast.success(`Dependency created: ${fromTaskName} → ${toTaskName}`);
-  } else {
-    toast.error(result.error);
-  }
-}

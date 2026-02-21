@@ -1,19 +1,11 @@
-import { describe, it, expect, beforeEach, vi } from "vitest";
-import { useDependencyStore, showDependencyToast } from "../../../src/store/slices/dependencySlice";
+import { describe, it, expect, beforeEach } from "vitest";
+import { useDependencyStore } from "../../../src/store/slices/dependencySlice";
 import { useTaskStore } from "../../../src/store/slices/taskSlice";
 import { useHistoryStore } from "../../../src/store/slices/historySlice";
 import { useFileStore } from "../../../src/store/slices/fileSlice";
 import type { Dependency } from "../../../src/types/dependency.types";
 import type { Task } from "../../../src/types/chart.types";
 import { CommandType } from "../../../src/types/command.types";
-
-// Mock react-hot-toast
-vi.mock("react-hot-toast", () => ({
-  default: {
-    success: vi.fn(),
-    error: vi.fn(),
-  },
-}));
 
 /**
  * Helper to create a minimal task for testing.
@@ -382,6 +374,28 @@ describe("Dependency Store", () => {
       expect(history.undoStack[0].type).toBe(CommandType.DELETE_DEPENDENCY);
     });
 
+    it("should not record to history when undoing", () => {
+      const dep = createTestDependency({ id: "dep-1" });
+      useDependencyStore.setState({ dependencies: [dep] });
+      useHistoryStore.setState({ isUndoing: true });
+
+      const { removeDependency } = useDependencyStore.getState();
+      removeDependency("dep-1");
+
+      expect(useHistoryStore.getState().undoStack).toHaveLength(0);
+    });
+
+    it("should not record to history when redoing", () => {
+      const dep = createTestDependency({ id: "dep-1" });
+      useDependencyStore.setState({ dependencies: [dep] });
+      useHistoryStore.setState({ isRedoing: true });
+
+      const { removeDependency } = useDependencyStore.getState();
+      removeDependency("dep-1");
+
+      expect(useHistoryStore.getState().undoStack).toHaveLength(0);
+    });
+
     it("should mark file as dirty", () => {
       const dep = createTestDependency({ id: "dep-1" });
       useDependencyStore.setState({ dependencies: [dep] });
@@ -448,6 +462,28 @@ describe("Dependency Store", () => {
         updates: { lag: 5 },
         previousValues: { lag: 0 },
       });
+    });
+
+    it("should not record to history when undoing", () => {
+      const dep = createTestDependency({ id: "dep-1", lag: 0 });
+      useDependencyStore.setState({ dependencies: [dep] });
+      useHistoryStore.setState({ isUndoing: true });
+
+      const { updateDependency } = useDependencyStore.getState();
+      updateDependency("dep-1", { lag: 5 });
+
+      expect(useHistoryStore.getState().undoStack).toHaveLength(0);
+    });
+
+    it("should not record to history when redoing", () => {
+      const dep = createTestDependency({ id: "dep-1", lag: 0 });
+      useDependencyStore.setState({ dependencies: [dep] });
+      useHistoryStore.setState({ isRedoing: true });
+
+      const { updateDependency } = useDependencyStore.getState();
+      updateDependency("dep-1", { lag: 5 });
+
+      expect(useHistoryStore.getState().undoStack).toHaveLength(0);
     });
 
     it("should mark file as dirty", () => {
@@ -725,31 +761,4 @@ describe("Dependency Store", () => {
     });
   });
 
-  describe("showDependencyToast", () => {
-    it("should show success toast", async () => {
-      const toast = await import("react-hot-toast");
-
-      showDependencyToast(
-        { success: true, dependency: createTestDependency() },
-        "Task A",
-        "Task B"
-      );
-
-      expect(toast.default.success).toHaveBeenCalledWith(
-        "Dependency created: Task A → Task B"
-      );
-    });
-
-    it("should show error toast on failure", async () => {
-      const toast = await import("react-hot-toast");
-
-      showDependencyToast(
-        { success: false, error: "Some error" },
-        "Task A",
-        "Task B"
-      );
-
-      expect(toast.default.error).toHaveBeenCalledWith("Some error");
-    });
-  });
 });
