@@ -113,7 +113,7 @@ cd ../app-gantt-review
 - [x] `src/components/GanttChart/DependencyDragPreview.tsx` (59 LOC) — Hex-Werte waren bereits in COLORS-Tokens. Magic numbers→Konstanten (ARROWHEAD_SIZE, PREVIEW_STROKE_WIDTH/DASH/OPACITY, START_POINT_RADIUS), +11 Unit-Tests. **Review-complete — 0 offene Findings.**
 - [x] `src/components/GanttChart/SelectionHighlight.tsx` (53 LOC) — Sauber, alle Farben aus Tokens, +9 Unit-Tests. **Review-complete — 0 offene Findings.**
 - [x] `src/components/GanttChart/TodayMarker.tsx` (41 LOC) — Sauber, alle Farben aus Tokens, +8 Unit-Tests. **Review-complete — 0 offene Findings.**
-- [x] `src/components/GanttChart/index.ts` (10 LOC) — DependencyArrows zum Barrel-Export ergaenzt (wird von ExportRenderer aus anderem Verzeichnis importiert). **Review-complete — 0 offene Findings.**
+- [x] `src/components/GanttChart/index.ts` (10 LOC) — DependencyArrows zum Barrel-Export ergaenzt, Exports alphabetisch sortiert. **Review-complete — 0 offene Findings.**
 
 ### Priority: MEDIUM — TaskList Komponenten
 - [ ] `src/components/TaskList/Cell.tsx` (496 LOC) — 1 Hex-Wert (BRAND_COLOR)
