@@ -50,13 +50,14 @@ interface ExportRendererProps {
 }
 
 /** Density-related layout props for export table rows */
-interface DensityLayoutProps {
-  rowHeight: number;
-  colorBarHeight: number;
-  indentSize: number;
-  fontSizeCell: number;
-  cellPaddingX: number;
-}
+type DensityLayoutProps = Pick<
+  DensityConfig,
+  | "rowHeight"
+  | "colorBarHeight"
+  | "indentSize"
+  | "fontSizeCell"
+  | "cellPaddingX"
+>;
 
 /** Result of computing the full export layout geometry */
 interface ExportLayout {
@@ -174,13 +175,7 @@ function computeExportLayout(
     };
   }
 
-  // Get selected columns (default to all if not specified)
-  const selectedColumns: ExportColumnKey[] = options.selectedColumns || [
-    "name",
-    "startDate",
-    "endDate",
-    "progress",
-  ];
+  const selectedColumns = options.selectedColumns;
   const hasTaskList = selectedColumns.length > 0;
 
   // Calculate optimal column widths based on content
@@ -301,7 +296,7 @@ function ExportTaskTableHeader({
 }
 
 /** Maps a column key to its display value for a given task. */
-function getColumnDisplayValue(
+export function getColumnDisplayValue(
   task: Task,
   key: ExportColumnKey
 ): string | null {
