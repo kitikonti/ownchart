@@ -40,7 +40,6 @@ import {
 export function GanttLayout(): JSX.Element {
   // Refs for scroll synchronization and measurements
   const outerScrollRef = useRef<HTMLDivElement>(null);
-  const stickyContainerRef = useRef<HTMLDivElement>(null);
   const chartContainerRef = useRef<HTMLDivElement>(null);
   const timelineHeaderScrollRef = useRef<HTMLDivElement>(null);
   const taskTableScrollRef = useRef<HTMLDivElement>(null);
@@ -58,7 +57,7 @@ export function GanttLayout(): JSX.Element {
 
   // Get density-aware row height (must match TaskTable and ChartCanvas)
   const densityConfig = useDensityConfig();
-  const ROW_HEIGHT = densityConfig.rowHeight;
+  const rowHeight = densityConfig.rowHeight;
 
   // Table dimensions
   const { totalColumnWidth } = useTableDimensions();
@@ -131,7 +130,7 @@ export function GanttLayout(): JSX.Element {
   const { totalContentHeight, timelineHeaderWidth, contentAreaHeight } =
     calculateLayoutDimensions({
       taskCount: flattenedTasks.length,
-      rowHeight: ROW_HEIGHT,
+      rowHeight,
       viewportHeight,
       scaleTotalWidth: scale?.totalWidth ?? null,
       containerWidth,
@@ -148,7 +147,6 @@ export function GanttLayout(): JSX.Element {
       >
         {/* Sticky container - stays at top of viewport */}
         <div
-          ref={stickyContainerRef}
           className="sticky top-0 h-full max-h-screen overflow-hidden bg-neutral-50"
           style={{ height: viewportHeight || "100%" }}
         >
