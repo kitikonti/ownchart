@@ -4,7 +4,13 @@
  * Override-aware: in automatic color modes, writes to colorOverride.
  */
 
-import { useState, useRef, useEffect, useCallback, type KeyboardEvent } from "react";
+import {
+  useState,
+  useRef,
+  useEffect,
+  useCallback,
+  type KeyboardEvent,
+} from "react";
 import { createPortal } from "react-dom";
 import { ColorPickerPopover } from "./ColorPickerPopover";
 import type { ColorMode } from "../../../types/colorMode.types";

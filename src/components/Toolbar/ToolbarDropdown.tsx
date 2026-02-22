@@ -77,6 +77,7 @@ export function ToolbarDropdown<T extends string = string>({
               key={option.value}
               isSelected={option.value === value}
               onClick={() => handleSelect(option.value)}
+              role="option"
             >
               {option.label}
             </DropdownItem>

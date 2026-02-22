@@ -342,10 +342,7 @@ function computePopoverStyle(anchorRect?: DOMRect): React.CSSProperties {
   const spaceBelow = window.innerHeight - anchorRect.bottom;
   const spaceAbove = anchorRect.top;
 
-  if (
-    spaceBelow < POPOVER_MAX_HEIGHT + ANCHOR_GAP &&
-    spaceAbove > spaceBelow
-  ) {
+  if (spaceBelow < POPOVER_MAX_HEIGHT + ANCHOR_GAP && spaceAbove > spaceBelow) {
     style.bottom = window.innerHeight - anchorRect.top + ANCHOR_GAP;
   } else {
     style.top = anchorRect.bottom + ANCHOR_GAP;

@@ -10,3 +10,13 @@ export type HexColor = `#${string}`;
 
 /** Color palette identifier. Branded type — requires explicit cast from plain string. */
 export type PaletteId = string & { readonly __brand: "PaletteId" };
+
+/** Create a HexColor from a string value (e.g. from a color input element). */
+export function toHexColor(value: string): HexColor {
+  return value as HexColor;
+}
+
+/** Create a PaletteId from a plain string. */
+export function toPaletteId(value: string): PaletteId {
+  return value as PaletteId;
+}

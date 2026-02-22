@@ -119,6 +119,7 @@ export function ZoomDropdown({
                 isSelected={isSelected}
                 showCheckmark={false}
                 onClick={() => handleSelect(level)}
+                role="option"
               >
                 {level}%
               </DropdownItem>
@@ -128,6 +129,7 @@ export function ZoomDropdown({
           <DropdownItem
             showCheckmark={false}
             onClick={() => handleSelect("fit")}
+            role="option"
           >
             Fit
           </DropdownItem>
