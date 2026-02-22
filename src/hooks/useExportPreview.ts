@@ -9,10 +9,8 @@ import { createElement } from "react";
 import { toCanvas } from "html-to-image";
 import type { Task } from "../types/chart.types";
 import type { ExportOptions } from "../utils/export/types";
-import {
-  ExportRenderer,
-  calculateExportDimensions,
-} from "../components/Export/ExportRenderer";
+import { ExportRenderer } from "../components/Export/ExportRenderer";
+import { calculateExportDimensions } from "../utils/export/exportLayout";
 
 /** Debounce delay in milliseconds */
 const DEBOUNCE_MS = 300;
@@ -168,14 +166,14 @@ export function useExportPreview({
 
     try {
       // Calculate full dimensions
-      const fullDimensions = calculateExportDimensions(
+      const fullDimensions = calculateExportDimensions({
         tasks,
         options,
         columnWidths,
         currentAppZoom,
         projectDateRange,
-        visibleDateRange
-      );
+        visibleDateRange,
+      });
 
       // Create wrapper with height:0 + overflow:hidden to hide content visually
       // while still allowing html-to-image to capture it (height-overflow method)

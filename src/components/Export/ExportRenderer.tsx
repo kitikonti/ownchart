@@ -1,35 +1,25 @@
 /**
  * ExportRenderer - Offscreen renderer for full chart export.
  * Renders the complete chart without scroll limits for PNG export.
+ *
+ * Layout computation lives in utils/export/exportLayout.ts.
  */
 
 import { useMemo } from "react";
 import type { Task } from "../../types/chart.types";
-import type { ExportOptions, ExportColumnKey } from "../../utils/export/types";
-import {
-  calculateTaskTableWidth,
-  calculateEffectiveZoom,
-  getEffectiveDateRange,
-  calculateDurationDays,
-  calculateOptimalColumnWidths,
-} from "../../utils/export";
-import {
-  getTimelineScale,
-  type TimelineScale,
-} from "../../utils/timelineUtils";
-import { getDateRange } from "../../utils/dateUtils";
+import type {
+  ExportColumnKey,
+  ExportLayoutInput,
+} from "../../utils/export/types";
+import { computeExportLayout } from "../../utils/export/exportLayout";
 import { GridLines } from "../GanttChart/GridLines";
 import { TaskBar } from "../GanttChart/TaskBar";
 import { TodayMarker } from "../GanttChart/TodayMarker";
 import { DependencyArrows } from "../GanttChart/DependencyArrows";
 import { TimelineHeader } from "../GanttChart/TimelineHeader";
 import { TaskTypeIcon } from "../TaskList/TaskTypeIcon";
-import {
-  buildFlattenedTaskList,
-  type FlattenedTask,
-} from "../../utils/hierarchy";
+import type { FlattenedTask } from "../../utils/hierarchy";
 import type { DensityConfig } from "../../types/preferences.types";
-import { DENSITY_CONFIG } from "../../config/densityConfig";
 import { useChartStore } from "../../store/slices/chartSlice";
 import { HEADER_HEIGHT, SVG_FONT_FAMILY } from "../../utils/export/constants";
 import { EXPORT_COLUMN_MAP } from "../../utils/export/columns";
@@ -40,16 +30,11 @@ import { COLORS } from "../../styles/design-tokens";
 // Types
 // =============================================================================
 
-interface ExportRendererProps {
-  tasks: Task[];
-  options: ExportOptions;
+interface ExportRendererProps extends ExportLayoutInput {
   columnWidths: Record<string, number>;
-  currentAppZoom?: number;
-  projectDateRange?: { start: Date; end: Date };
-  visibleDateRange?: { start: Date; end: Date };
 }
 
-/** Density-related layout props for export table rows */
+/** Density-related layout props for export table cells */
 type DensityLayoutProps = Pick<
   DensityConfig,
   | "rowHeight"
@@ -59,39 +44,9 @@ type DensityLayoutProps = Pick<
   | "cellPaddingX"
 >;
 
-/** Result of computing the full export layout geometry */
-interface ExportLayout {
-  flattenedTasks: FlattenedTask[];
-  orderedTasks: Task[];
-  selectedColumns: ExportColumnKey[];
-  hasTaskList: boolean;
-  effectiveColumnWidths: Record<string, number>;
-  taskTableWidth: number;
-  dateRange: { min: string; max: string };
-  effectiveZoom: number;
-  scale: TimelineScale;
-  timelineWidth: number;
-  totalWidth: number;
-  contentHeight: number;
-  totalHeight: number;
-  densityConfig: DensityConfig;
-}
-
 // =============================================================================
 // Constants
 // =============================================================================
-
-/** Default duration in days when no project date range is available */
-const DEFAULT_DURATION_DAYS = 30;
-
-/** Extra days added to date range for preliminary zoom estimation */
-const DATE_RANGE_PADDING_DAYS = 14;
-
-/** Minimum timeline width in pixels (prevents degenerate layouts) */
-const MIN_TIMELINE_WIDTH = 100;
-
-/** Milliseconds per day */
-const MS_PER_DAY = 1000 * 60 * 60 * 24;
 
 /** Static drag state for export (no interaction possible) */
 const EXPORT_DRAG_STATE = {
@@ -99,212 +54,6 @@ const EXPORT_DRAG_STATE = {
   fromTaskId: null,
   currentPosition: { x: 0, y: 0 },
 } as const;
-
-// =============================================================================
-// Shared Layout Computation
-// =============================================================================
-
-/**
- * Estimate project duration in days, adding padding for zoom calculation.
- * Used as a preliminary step before the final date range is computed.
- */
-function estimatePreliminaryDuration(
-  projectDateRange: { start: Date; end: Date } | undefined
-): number {
-  if (!projectDateRange) return DEFAULT_DURATION_DAYS;
-  const ms = projectDateRange.end.getTime() - projectDateRange.start.getTime();
-  return Math.ceil(ms / MS_PER_DAY) + DATE_RANGE_PADDING_DAYS;
-}
-
-/**
- * Compute final timeline and total dimensions from scale and options.
- */
-function computeFinalDimensions(
-  options: ExportOptions,
-  scale: TimelineScale,
-  taskTableWidth: number,
-  orderedTaskCount: number,
-  rowHeight: number
-): {
-  timelineWidth: number;
-  totalWidth: number;
-  contentHeight: number;
-  totalHeight: number;
-} {
-  const timelineWidth =
-    options.zoomMode === "fitToWidth"
-      ? Math.max(MIN_TIMELINE_WIDTH, options.fitToWidth - taskTableWidth)
-      : scale.totalWidth;
-  const totalWidth =
-    options.zoomMode === "fitToWidth"
-      ? options.fitToWidth
-      : taskTableWidth + timelineWidth;
-  const contentHeight = orderedTaskCount * rowHeight;
-  const totalHeight =
-    (options.includeHeader ? HEADER_HEIGHT : 0) + contentHeight;
-
-  return { timelineWidth, totalWidth, contentHeight, totalHeight };
-}
-
-/**
- * Resolve the project date range from an explicit value or from task dates.
- */
-function resolveProjectDateRange(
-  provided: { start: Date; end: Date } | undefined,
-  orderedTasks: Task[]
-): { start: Date; end: Date } | undefined {
-  if (provided) return provided;
-  if (orderedTasks.length === 0) return undefined;
-  const range = getDateRange(orderedTasks);
-  return { start: new Date(range.min), end: new Date(range.max) };
-}
-
-/**
- * Compute task table column widths and total table width.
- */
-function computeTaskTableLayout(
-  selectedColumns: ExportColumnKey[],
-  orderedTasks: Task[],
-  options: ExportOptions,
-  columnWidths: Record<string, number>
-): {
-  hasTaskList: boolean;
-  effectiveColumnWidths: Record<string, number>;
-  taskTableWidth: number;
-} {
-  const hasTaskList = selectedColumns.length > 0;
-  const effectiveColumnWidths = calculateOptimalColumnWidths(
-    selectedColumns,
-    orderedTasks,
-    options.density,
-    columnWidths
-  );
-  const taskTableWidth = hasTaskList
-    ? calculateTaskTableWidth(
-        selectedColumns,
-        effectiveColumnWidths,
-        options.density
-      )
-    : 0;
-  return { hasTaskList, effectiveColumnWidths, taskTableWidth };
-}
-
-/**
- * Compute zoom, date range, and timeline scale from task data and options.
- */
-function computeTimelineLayout(
-  options: ExportOptions,
-  currentAppZoom: number,
-  orderedTasks: Task[],
-  taskTableWidth: number,
-  projectDateRange: { start: Date; end: Date } | undefined,
-  visibleDateRange: { start: Date; end: Date } | undefined
-): {
-  dateRange: { min: string; max: string };
-  effectiveZoom: number;
-  scale: TimelineScale;
-} {
-  const preliminaryDuration = estimatePreliminaryDuration(projectDateRange);
-  const preliminaryZoom = calculateEffectiveZoom(
-    options,
-    currentAppZoom,
-    preliminaryDuration,
-    taskTableWidth
-  );
-
-  const dateRange = getEffectiveDateRange(
-    options,
-    projectDateRange,
-    visibleDateRange,
-    orderedTasks,
-    preliminaryZoom
-  );
-
-  const durationDays = calculateDurationDays(dateRange);
-  const effectiveZoom = calculateEffectiveZoom(
-    options,
-    currentAppZoom,
-    durationDays,
-    taskTableWidth
-  );
-
-  const scale = getTimelineScale(
-    dateRange.min,
-    dateRange.max,
-    MIN_TIMELINE_WIDTH,
-    effectiveZoom
-  );
-
-  return { dateRange, effectiveZoom, scale };
-}
-
-/**
- * Computes the full export layout geometry from tasks and options.
- * Pure function shared by both ExportRenderer (via useMemo) and
- * calculateExportDimensions to eliminate duplication.
- */
-function computeExportLayout(
-  tasks: Task[],
-  options: ExportOptions,
-  columnWidths: Record<string, number>,
-  currentAppZoom: number,
-  providedProjectDateRange?: { start: Date; end: Date },
-  visibleDateRange?: { start: Date; end: Date }
-): ExportLayout {
-  const densityConfig = DENSITY_CONFIG[options.density];
-
-  const flattenedTasks = buildFlattenedTaskList(tasks, new Set<string>());
-  const orderedTasks = flattenedTasks.map((ft) => ft.task);
-  const selectedColumns = options.selectedColumns;
-
-  const projectDateRange = resolveProjectDateRange(
-    providedProjectDateRange,
-    orderedTasks
-  );
-
-  const { hasTaskList, effectiveColumnWidths, taskTableWidth } =
-    computeTaskTableLayout(
-      selectedColumns,
-      orderedTasks,
-      options,
-      columnWidths
-    );
-
-  const { dateRange, effectiveZoom, scale } = computeTimelineLayout(
-    options,
-    currentAppZoom,
-    orderedTasks,
-    taskTableWidth,
-    projectDateRange,
-    visibleDateRange
-  );
-
-  const { timelineWidth, totalWidth, contentHeight, totalHeight } =
-    computeFinalDimensions(
-      options,
-      scale,
-      taskTableWidth,
-      orderedTasks.length,
-      densityConfig.rowHeight
-    );
-
-  return {
-    flattenedTasks,
-    orderedTasks,
-    selectedColumns,
-    hasTaskList,
-    effectiveColumnWidths,
-    taskTableWidth,
-    dateRange,
-    effectiveZoom,
-    scale,
-    timelineWidth,
-    totalWidth,
-    contentHeight,
-    totalHeight,
-    densityConfig,
-  };
-}
 
 // =============================================================================
 // Sub-Components
@@ -315,10 +64,12 @@ function ExportTaskTableHeader({
   selectedColumns,
   columnWidths,
   width,
+  cellPaddingX,
 }: {
   selectedColumns: ExportColumnKey[];
   columnWidths: Record<string, number>;
   width: number;
+  cellPaddingX: number;
 }): JSX.Element {
   return (
     <div
@@ -331,10 +82,12 @@ function ExportTaskTableHeader({
         return (
           <div
             key={col.key}
-            className={`flex items-center px-3 text-xs font-semibold text-neutral-600 uppercase tracking-wider ${col.key !== "color" ? "border-r border-neutral-200" : ""}`}
+            className={`flex items-center text-xs font-semibold text-neutral-600 uppercase tracking-wider ${col.key !== "color" ? "border-r border-neutral-200" : ""}`}
             style={{
               width: columnWidths[col.key] || col.defaultWidth,
               height: HEADER_HEIGHT,
+              paddingLeft: cellPaddingX,
+              paddingRight: cellPaddingX,
             }}
           >
             {col.label}
@@ -374,6 +127,95 @@ export function getColumnDisplayValue(
   return null;
 }
 
+/** Renders a single cell in the export task table. */
+function ExportTableCell({
+  task,
+  columnKey,
+  colWidth,
+  level,
+  index,
+  parentIds,
+  densityLayout,
+  colorMap,
+}: {
+  task: Task;
+  columnKey: ExportColumnKey;
+  colWidth: number;
+  level: number;
+  index: number;
+  parentIds: Set<string>;
+  densityLayout: DensityLayoutProps;
+  colorMap: Map<string, string>;
+}): JSX.Element {
+  const { rowHeight, colorBarHeight, indentSize, cellPaddingX } = densityLayout;
+
+  if (columnKey === "color") {
+    const displayColor = colorMap.get(task.id) || task.color;
+    return (
+      <div
+        className="flex items-center justify-center"
+        style={{ width: colWidth, height: rowHeight }}
+      >
+        <div
+          className="w-1.5 rounded"
+          style={{ backgroundColor: displayColor, height: colorBarHeight }}
+        />
+      </div>
+    );
+  }
+
+  if (columnKey === "name") {
+    const hasChildren = parentIds.has(task.id);
+    const isSummary = task.type === "summary";
+    return (
+      <div
+        className="flex items-center gap-1 border-r border-neutral-100"
+        style={{
+          width: colWidth,
+          paddingLeft: `${level * indentSize}px`,
+          paddingRight: cellPaddingX,
+          height: rowHeight,
+          whiteSpace: "nowrap",
+        }}
+      >
+        {hasChildren && isSummary ? (
+          <span className="w-4 text-center text-neutral-600 flex-shrink-0">
+            ▼
+          </span>
+        ) : (
+          <span className="w-4 flex-shrink-0" />
+        )}
+        <TaskTypeIcon type={task.type} />
+        <span className="flex-1">{task.name || `Task ${index + 1}`}</span>
+      </div>
+    );
+  }
+
+  // Data column (startDate, endDate, duration, progress)
+  const useSummaryStyle =
+    task.type === "summary" &&
+    (columnKey === "startDate" ||
+      columnKey === "endDate" ||
+      columnKey === "duration");
+
+  const value = getColumnDisplayValue(task, columnKey);
+
+  return (
+    <div
+      className={`flex items-center border-r border-neutral-100 ${useSummaryStyle ? "text-neutral-500 italic" : ""}`}
+      style={{
+        width: colWidth,
+        height: rowHeight,
+        paddingLeft: cellPaddingX,
+        paddingRight: cellPaddingX,
+        whiteSpace: "nowrap",
+      }}
+    >
+      {value === null ? "—" : value}
+    </div>
+  );
+}
+
 /** Renders the task table rows for export (without header). */
 function ExportTaskTableRows({
   flattenedTasks,
@@ -394,9 +236,6 @@ function ExportTaskTableRows({
   densityLayout: DensityLayoutProps;
   colorMap: Map<string, string>;
 }): JSX.Element {
-  const { rowHeight, colorBarHeight, indentSize, fontSizeCell, cellPaddingX } =
-    densityLayout;
-
   return (
     <div
       className="export-task-table bg-white border-r border-neutral-200"
@@ -404,91 +243,30 @@ function ExportTaskTableRows({
     >
       {flattenedTasks.map((flattenedTask, index) => {
         const task = flattenedTask.task;
-        const level = flattenedTask.level;
         return (
           <div
             key={task.id}
             className="flex border-b border-neutral-100"
-            style={{ height: rowHeight, fontSize: fontSizeCell }}
+            style={{
+              height: densityLayout.rowHeight,
+              fontSize: densityLayout.fontSizeCell,
+            }}
           >
             {selectedColumns.map((key) => {
               const col = EXPORT_COLUMN_MAP.get(key);
               if (!col) return null;
-              const colWidth = columnWidths[key] || col.defaultWidth;
-
-              if (key === "color") {
-                const displayColor = colorMap.get(task.id) || task.color;
-                return (
-                  <div
-                    key={key}
-                    className="flex items-center justify-center"
-                    style={{ width: colWidth, height: rowHeight }}
-                  >
-                    <div
-                      className="w-1.5 rounded"
-                      style={{
-                        backgroundColor: displayColor,
-                        height: colorBarHeight,
-                      }}
-                    />
-                  </div>
-                );
-              }
-
-              if (key === "name") {
-                const hasChildren = parentIds.has(task.id);
-                const isSummary = task.type === "summary";
-
-                return (
-                  <div
-                    key={key}
-                    className="flex items-center gap-1 border-r border-neutral-100"
-                    style={{
-                      width: colWidth,
-                      paddingLeft: `${level * indentSize}px`,
-                      paddingRight: cellPaddingX,
-                      height: rowHeight,
-                      whiteSpace: "nowrap",
-                    }}
-                  >
-                    {hasChildren && isSummary ? (
-                      <span className="w-4 text-center text-neutral-600 flex-shrink-0">
-                        ▼
-                      </span>
-                    ) : (
-                      <span className="w-4 flex-shrink-0" />
-                    )}
-                    <TaskTypeIcon type={task.type} />
-                    <span className="flex-1">
-                      {task.name || `Task ${index + 1}`}
-                    </span>
-                  </div>
-                );
-              }
-
-              // Handle milestone and summary special cases
-              const useSummaryStyle =
-                task.type === "summary" &&
-                (key === "startDate" ||
-                  key === "endDate" ||
-                  key === "duration");
-
-              const value = getColumnDisplayValue(task, key);
-
               return (
-                <div
+                <ExportTableCell
                   key={key}
-                  className={`flex items-center border-r border-neutral-100 ${useSummaryStyle ? "text-neutral-500 italic" : ""}`}
-                  style={{
-                    width: colWidth,
-                    height: rowHeight,
-                    paddingLeft: cellPaddingX,
-                    paddingRight: cellPaddingX,
-                    whiteSpace: "nowrap",
-                  }}
-                >
-                  {value === null ? "—" : value}
-                </div>
+                  task={task}
+                  columnKey={key}
+                  colWidth={columnWidths[key] || col.defaultWidth}
+                  level={flattenedTask.level}
+                  index={index}
+                  parentIds={parentIds}
+                  densityLayout={densityLayout}
+                  colorMap={colorMap}
+                />
               );
             })}
           </div>
@@ -521,14 +299,14 @@ export function ExportRenderer({
   // Compute full layout geometry (shared with calculateExportDimensions)
   const layout = useMemo(
     () =>
-      computeExportLayout(
+      computeExportLayout({
         tasks,
         options,
         columnWidths,
         currentAppZoom,
         projectDateRange,
-        visibleDateRange
-      ),
+        visibleDateRange,
+      }),
     [
       tasks,
       options,
@@ -586,6 +364,7 @@ export function ExportRenderer({
               selectedColumns={layout.selectedColumns}
               columnWidths={layout.effectiveColumnWidths}
               width={layout.taskTableWidth}
+              cellPaddingX={densityConfig.cellPaddingX}
             />
           )}
           <svg
@@ -676,36 +455,4 @@ export function ExportRenderer({
       </div>
     </div>
   );
-}
-
-// =============================================================================
-// Dimension Calculator (public API for non-React callers)
-// =============================================================================
-
-/**
- * Calculate the export dimensions based on options.
- * Delegates to computeExportLayout for all geometry calculations.
- */
-export function calculateExportDimensions(
-  tasks: Task[],
-  options: ExportOptions,
-  columnWidths: Record<string, number> = {},
-  currentAppZoom: number = 1,
-  projectDateRange?: { start: Date; end: Date },
-  visibleDateRange?: { start: Date; end: Date }
-): { width: number; height: number; effectiveZoom: number } {
-  const layout = computeExportLayout(
-    tasks,
-    options,
-    columnWidths,
-    currentAppZoom,
-    projectDateRange,
-    visibleDateRange
-  );
-
-  return {
-    width: Math.round(layout.totalWidth),
-    height: Math.round(layout.totalHeight),
-    effectiveZoom: layout.effectiveZoom,
-  };
 }

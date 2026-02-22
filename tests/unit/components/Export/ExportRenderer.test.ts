@@ -1,8 +1,6 @@
 import { describe, it, expect } from "vitest";
-import {
-  calculateExportDimensions,
-  getColumnDisplayValue,
-} from "../../../../src/components/Export/ExportRenderer";
+import { getColumnDisplayValue } from "../../../../src/components/Export/ExportRenderer";
+import { calculateExportDimensions } from "../../../../src/utils/export/exportLayout";
 import { EXPORT_COLUMNS } from "../../../../src/utils/export/columns";
 import { calculateTaskTableWidth } from "../../../../src/utils/export";
 import { DENSITY_CONFIG } from "../../../../src/config/densityConfig";
@@ -164,7 +162,10 @@ describe("calculateExportDimensions", () => {
   // --- Edge cases ---
 
   it("handles empty task list without error", () => {
-    const result = calculateExportDimensions([], DEFAULT_EXPORT_OPTIONS);
+    const result = calculateExportDimensions({
+      tasks: [],
+      options: DEFAULT_EXPORT_OPTIONS,
+    });
 
     expect(result.width).toBeGreaterThan(0);
     expect(result.height).toBeGreaterThanOrEqual(0);
@@ -172,9 +173,9 @@ describe("calculateExportDimensions", () => {
   });
 
   it("handles empty task list with header — height equals header height", () => {
-    const result = calculateExportDimensions([], {
-      ...DEFAULT_EXPORT_OPTIONS,
-      includeHeader: true,
+    const result = calculateExportDimensions({
+      tasks: [],
+      options: { ...DEFAULT_EXPORT_OPTIONS, includeHeader: true },
     });
 
     // Only header, no content rows
@@ -182,9 +183,9 @@ describe("calculateExportDimensions", () => {
   });
 
   it("handles empty task list without header — height is zero", () => {
-    const result = calculateExportDimensions([], {
-      ...DEFAULT_EXPORT_OPTIONS,
-      includeHeader: false,
+    const result = calculateExportDimensions({
+      tasks: [],
+      options: { ...DEFAULT_EXPORT_OPTIONS, includeHeader: false },
     });
 
     expect(result.height).toBe(0);
@@ -205,7 +206,10 @@ describe("calculateExportDimensions", () => {
     ];
 
     // Should not throw
-    const result = calculateExportDimensions(tasks, DEFAULT_EXPORT_OPTIONS);
+    const result = calculateExportDimensions({
+      tasks,
+      options: DEFAULT_EXPORT_OPTIONS,
+    });
     expect(result.width).toBeGreaterThan(0);
     expect(result.effectiveZoom).toBeGreaterThan(0);
   });
@@ -219,7 +223,7 @@ describe("calculateExportDimensions", () => {
       selectedColumns: ["name" as const],
     };
 
-    const result = calculateExportDimensions(tasks, options);
+    const result = calculateExportDimensions({ tasks, options });
 
     expect(result.width).toBe(200);
     expect(result.height).toBeGreaterThan(0);
@@ -232,21 +236,22 @@ describe("calculateExportDimensions", () => {
       end: new Date("2025-03-01"),
     };
 
-    const withColumns = calculateExportDimensions(
+    const withColumns = calculateExportDimensions({
       tasks,
-      { ...DEFAULT_EXPORT_OPTIONS, selectedColumns: ["name", "startDate"] },
-      {},
-      1.0,
-      projectDateRange
-    );
+      options: {
+        ...DEFAULT_EXPORT_OPTIONS,
+        selectedColumns: ["name", "startDate"],
+      },
+      currentAppZoom: 1.0,
+      projectDateRange,
+    });
 
-    const withoutColumns = calculateExportDimensions(
+    const withoutColumns = calculateExportDimensions({
       tasks,
-      { ...DEFAULT_EXPORT_OPTIONS, selectedColumns: [] },
-      {},
-      1.0,
-      projectDateRange
-    );
+      options: { ...DEFAULT_EXPORT_OPTIONS, selectedColumns: [] },
+      currentAppZoom: 1.0,
+      projectDateRange,
+    });
 
     expect(withColumns.width).toBeGreaterThan(withoutColumns.width);
   });
@@ -258,20 +263,18 @@ describe("calculateExportDimensions", () => {
     };
     const options = { ...DEFAULT_EXPORT_OPTIONS, includeHeader: false };
 
-    const result5 = calculateExportDimensions(
-      createTasks(5),
+    const result5 = calculateExportDimensions({
+      tasks: createTasks(5),
       options,
-      {},
-      1.0,
-      projectDateRange
-    );
-    const result10 = calculateExportDimensions(
-      createTasks(10),
+      currentAppZoom: 1.0,
+      projectDateRange,
+    });
+    const result10 = calculateExportDimensions({
+      tasks: createTasks(10),
       options,
-      {},
-      1.0,
-      projectDateRange
-    );
+      currentAppZoom: 1.0,
+      projectDateRange,
+    });
 
     expect(result10.height).toBe(result5.height * 2);
   });
@@ -283,31 +286,36 @@ describe("calculateExportDimensions", () => {
       end: new Date("2025-03-01"),
     };
 
-    const compact = calculateExportDimensions(
+    const compact = calculateExportDimensions({
       tasks,
-      { ...DEFAULT_EXPORT_OPTIONS, density: "compact", includeHeader: false },
-      {},
-      1.0,
-      projectDateRange
-    );
-    const comfortable = calculateExportDimensions(
+      options: {
+        ...DEFAULT_EXPORT_OPTIONS,
+        density: "compact",
+        includeHeader: false,
+      },
+      currentAppZoom: 1.0,
+      projectDateRange,
+    });
+    const comfortable = calculateExportDimensions({
       tasks,
-      {
+      options: {
         ...DEFAULT_EXPORT_OPTIONS,
         density: "comfortable",
         includeHeader: false,
       },
-      {},
-      1.0,
-      projectDateRange
-    );
+      currentAppZoom: 1.0,
+      projectDateRange,
+    });
 
     expect(compact.height).toBeLessThan(comfortable.height);
   });
 
   it("returns width, height, and effectiveZoom", () => {
     const tasks = createTasks(5);
-    const result = calculateExportDimensions(tasks, DEFAULT_EXPORT_OPTIONS);
+    const result = calculateExportDimensions({
+      tasks,
+      options: DEFAULT_EXPORT_OPTIONS,
+    });
 
     expect(result).toHaveProperty("width");
     expect(result).toHaveProperty("height");
@@ -324,14 +332,17 @@ describe("calculateExportDimensions", () => {
       zoomMode: "fitToWidth" as const,
       fitToWidth: 1920,
     };
-    const result = calculateExportDimensions(tasks, options);
+    const result = calculateExportDimensions({ tasks, options });
 
     expect(result.width).toBe(1920);
   });
 
   it("effectiveZoom is positive", () => {
     const tasks = createTasks(10);
-    const result = calculateExportDimensions(tasks, DEFAULT_EXPORT_OPTIONS);
+    const result = calculateExportDimensions({
+      tasks,
+      options: DEFAULT_EXPORT_OPTIONS,
+    });
 
     expect(result.effectiveZoom).toBeGreaterThan(0);
   });
@@ -343,21 +354,19 @@ describe("calculateExportDimensions", () => {
       end: new Date("2025-03-01"),
     };
 
-    const result1 = calculateExportDimensions(
+    const result1 = calculateExportDimensions({
       tasks,
-      DEFAULT_EXPORT_OPTIONS,
-      {},
-      1.0,
-      projectDateRange
-    );
+      options: DEFAULT_EXPORT_OPTIONS,
+      currentAppZoom: 1.0,
+      projectDateRange,
+    });
 
-    const result2 = calculateExportDimensions(
+    const result2 = calculateExportDimensions({
       tasks,
-      DEFAULT_EXPORT_OPTIONS,
-      {},
-      1.0,
-      projectDateRange
-    );
+      options: DEFAULT_EXPORT_OPTIONS,
+      currentAppZoom: 1.0,
+      projectDateRange,
+    });
 
     expect(result1.width).toBe(result2.width);
     expect(result1.height).toBe(result2.height);
@@ -371,21 +380,19 @@ describe("calculateExportDimensions", () => {
       end: new Date("2025-03-01"),
     };
 
-    const withHeader = calculateExportDimensions(
+    const withHeader = calculateExportDimensions({
       tasks,
-      { ...DEFAULT_EXPORT_OPTIONS, includeHeader: true },
-      {},
-      1.0,
-      projectDateRange
-    );
+      options: { ...DEFAULT_EXPORT_OPTIONS, includeHeader: true },
+      currentAppZoom: 1.0,
+      projectDateRange,
+    });
 
-    const withoutHeader = calculateExportDimensions(
+    const withoutHeader = calculateExportDimensions({
       tasks,
-      { ...DEFAULT_EXPORT_OPTIONS, includeHeader: false },
-      {},
-      1.0,
-      projectDateRange
-    );
+      options: { ...DEFAULT_EXPORT_OPTIONS, includeHeader: false },
+      currentAppZoom: 1.0,
+      projectDateRange,
+    });
 
     expect(withHeader.height - withoutHeader.height).toBe(48);
   });
@@ -482,7 +489,10 @@ describe("getColumnDisplayValue", () => {
 
   it("returns null for unknown column key", () => {
     expect(
-      getColumnDisplayValue(baseTask, "name" as Parameters<typeof getColumnDisplayValue>[1])
+      getColumnDisplayValue(
+        baseTask,
+        "name" as Parameters<typeof getColumnDisplayValue>[1]
+      )
     ).toBeNull();
   });
 });

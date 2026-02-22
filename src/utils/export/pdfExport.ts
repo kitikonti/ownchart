@@ -20,10 +20,8 @@ import {
   mmToPx,
   calculatePdfFitToWidth,
 } from "./pdfLayout";
-import {
-  ExportRenderer,
-  calculateExportDimensions,
-} from "../../components/Export/ExportRenderer";
+import { ExportRenderer } from "../../components/Export/ExportRenderer";
+import { calculateExportDimensions } from "./exportLayout";
 import { calculateTaskTableWidth } from "./calculations";
 import { buildFlattenedTaskList } from "../hierarchy";
 import { type DateFormat } from "../../types/preferences.types";
@@ -102,14 +100,14 @@ export async function exportToPdf(params: ExportToPdfParams): Promise<void> {
   }
 
   // Calculate dimensions - uses same calculation as PNG export
-  const dimensions = calculateExportDimensions(
+  const dimensions = calculateExportDimensions({
     tasks,
-    effectiveOptions,
+    options: effectiveOptions,
     columnWidths,
     currentAppZoom,
     projectDateRange,
-    visibleDateRange
-  );
+    visibleDateRange,
+  });
 
   onProgress?.(10);
 

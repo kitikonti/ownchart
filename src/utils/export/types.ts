@@ -6,6 +6,7 @@ import type {
   UiDensity,
   TaskLabelPosition,
 } from "../../types/preferences.types";
+import type { Task } from "../../types/chart.types";
 import {
   PNG_EXPORT_DPI,
   calculatePixelDimensions,
@@ -342,3 +343,17 @@ export const INITIAL_EXPORT_STATE: ExportState = {
   progress: 0,
   error: null,
 };
+
+// =============================================================================
+// Export Layout Input
+// =============================================================================
+
+/** Common input parameters for export layout computation and dimension calculation. */
+export interface ExportLayoutInput {
+  tasks: Task[];
+  options: ExportOptions;
+  columnWidths?: Record<string, number>;
+  currentAppZoom?: number;
+  projectDateRange?: { start: Date; end: Date };
+  visibleDateRange?: { start: Date; end: Date };
+}

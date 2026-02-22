@@ -5,9 +5,15 @@
 export {
   captureChart,
   canvasToBlob,
-  calculateExportDimensions,
   type CaptureChartParams,
 } from "./captureChart";
+
+// Layout computation (pure functions, no React)
+export {
+  calculateExportDimensions,
+  computeExportLayout,
+  type ExportLayout,
+} from "./exportLayout";
 
 // Shared constants
 export {
@@ -66,6 +72,7 @@ export {
   PDF_MARGIN_PRESETS,
   type ExportColumnKey,
   type ExportFormat,
+  type ExportLayoutInput,
   type ExportOptions,
   type ExportState,
   type ExportZoomPreset,
