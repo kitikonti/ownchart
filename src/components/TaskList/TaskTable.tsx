@@ -4,7 +4,7 @@
  * Supports hidden rows with Excel-style row number gaps and indicator lines.
  */
 
-import { useEffect, useMemo } from "react";
+import { useCallback, useEffect, useMemo } from "react";
 import {
   DndContext,
   closestCenter,
@@ -41,17 +41,17 @@ import type { FlattenedTask } from "../../utils/hierarchy";
 
 // ── Helper functions for taskRowData computation ────────────────────────────
 
-interface ClipboardPosition {
+export interface ClipboardPosition {
   isFirst: boolean;
   isLast: boolean;
 }
 
-interface SelectionPosition {
+export interface SelectionPosition {
   isFirstSelected: boolean;
   isLastSelected: boolean;
 }
 
-function getClipboardPosition(
+export function getClipboardPosition(
   taskId: string,
   prevTaskId: string | undefined,
   nextTaskId: string | undefined,
@@ -64,7 +64,7 @@ function getClipboardPosition(
   };
 }
 
-function getSelectionPosition(
+export function getSelectionPosition(
   taskId: string,
   prevTaskId: string | undefined,
   nextTaskId: string | undefined,
@@ -77,7 +77,7 @@ function getSelectionPosition(
   };
 }
 
-function getHiddenGap(
+export function getHiddenGap(
   globalRowNumber: number,
   nextGlobalRowNumber: number
 ): { hasHiddenBelow: boolean; hiddenBelowCount: number } {
@@ -205,13 +205,16 @@ export function TaskTable(): JSX.Element {
     })
   );
 
-  const handleDragEnd = (event: DragEndEvent): void => {
-    const { active, over } = event;
+  const handleDragEnd = useCallback(
+    (event: DragEndEvent): void => {
+      const { active, over } = event;
 
-    if (over && active.id !== over.id) {
-      reorderTasks(String(active.id), String(over.id));
-    }
-  };
+      if (over && active.id !== over.id) {
+        reorderTasks(String(active.id), String(over.id));
+      }
+    },
+    [reorderTasks]
+  );
 
   const gridTemplateColumns = useMemo(() => {
     return visibleColumns
@@ -245,28 +248,26 @@ export function TaskTable(): JSX.Element {
             onDragEnd={handleDragEnd}
           >
             <SortableContext
-              items={flattenedTasks.map(({ task }) => task.id)}
+              items={visibleTaskIds}
               strategy={verticalListSortingStrategy}
             >
               {taskRowData.map((row) => (
-                <div
+                <TaskTableRow
                   key={row.task.id}
-                  onContextMenu={(e) => handleRowContextMenu(e, row.task.id)}
-                  className="contents"
-                >
-                  <TaskTableRow
-                    task={row.task}
-                    globalRowNumber={row.globalRowNumber}
-                    level={row.level}
-                    hasChildren={row.hasChildren}
-                    visibleTaskIds={visibleTaskIds}
-                    hasHiddenBelow={row.hasHiddenBelow}
-                    hiddenBelowCount={row.hiddenBelowCount}
-                    onUnhideBelow={row.onUnhideBelow}
-                    clipboardPosition={row.clipboardPosition}
-                    selectionPosition={row.selectionPosition}
-                  />
-                </div>
+                  task={row.task}
+                  globalRowNumber={row.globalRowNumber}
+                  level={row.level}
+                  hasChildren={row.hasChildren}
+                  visibleTaskIds={visibleTaskIds}
+                  visibleColumns={visibleColumns}
+                  gridTemplateColumns={gridTemplateColumns}
+                  hasHiddenBelow={row.hasHiddenBelow}
+                  hiddenBelowCount={row.hiddenBelowCount}
+                  onUnhideBelow={row.onUnhideBelow}
+                  onContextMenu={handleRowContextMenu}
+                  clipboardPosition={row.clipboardPosition}
+                  selectionPosition={row.selectionPosition}
+                />
               ))}
             </SortableContext>
           </DndContext>

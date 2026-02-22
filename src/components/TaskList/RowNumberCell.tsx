@@ -85,10 +85,14 @@ export const RowNumberCell = memo(function RowNumberCell({
     "drag" | "addAbove" | "addBelow" | null
   >(null);
 
-  // Handle drag selection - select range as mouse moves over rows
+  // Handle drag selection — select range as mouse moves over rows.
+  // This callback is stored in dragState.onDragSelect during mousedown on THIS row,
+  // then invoked by OTHER rows on mouseEnter. It captures THIS row's onSelectRow,
+  // which works correctly because onSelectRow is a store-backed action that accepts
+  // any taskId (it's not specific to this row).
   const handleDragSelect = (targetTaskId: string): void => {
     if (dragState.startTaskId) {
-      onSelectRow(targetTaskId, true, false); // Shift-style range selection
+      onSelectRow(targetTaskId, true, false);
     }
   };
 
