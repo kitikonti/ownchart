@@ -288,6 +288,33 @@ function finitePositiveOr(value: unknown, fallback: null): number | null {
     : fallback;
 }
 
+/** Sanitize columnWidths — keep only entries with finite positive number values */
+function sanitizeColumnWidths(
+  raw: Record<string, number> | undefined
+): Record<string, number> | undefined {
+  if (!raw || typeof raw !== "object" || Array.isArray(raw)) {
+    return undefined;
+  }
+  const cleaned: Record<string, number> = {};
+  for (const [key, value] of Object.entries(raw)) {
+    if (typeof value === "number" && Number.isFinite(value) && value > 0) {
+      cleaned[key] = value;
+    }
+  }
+  return Object.keys(cleaned).length > 0 ? cleaned : undefined;
+}
+
+/** Filter an array to contain only string elements, return undefined if not an array */
+function filterStringArray(raw: string[] | undefined): string[] | undefined {
+  if (!Array.isArray(raw)) {
+    return undefined;
+  }
+  const filtered = raw.filter(
+    (item): item is string => typeof item === "string"
+  );
+  return filtered.length > 0 ? filtered : undefined;
+}
+
 /**
  * Sanitize viewSettings — clamp/fix invalid values rather than rejecting the file.
  * Protects against NaN/Infinity/wrong types propagating into app state.
@@ -309,6 +336,7 @@ function sanitizeViewSettings(raw: ViewSettings): ViewSettings {
       raw.taskTableWidth === null
         ? null
         : finitePositiveOr(raw.taskTableWidth, null),
+    columnWidths: sanitizeColumnWidths(raw.columnWidths),
     showWeekends:
       typeof raw.showWeekends === "boolean" ? raw.showWeekends : true,
     showTodayMarker:
@@ -329,6 +357,8 @@ function sanitizeViewSettings(raw: ViewSettings): ViewSettings {
       typeof raw.isTaskTableCollapsed === "boolean"
         ? raw.isTaskTableCollapsed
         : undefined,
+    hiddenColumns: filterStringArray(raw.hiddenColumns),
+    hiddenTaskIds: filterStringArray(raw.hiddenTaskIds),
   };
 }
 

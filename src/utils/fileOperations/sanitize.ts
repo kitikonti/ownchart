@@ -19,6 +19,15 @@ export function sanitizeGanttFile(file: GanttFile): GanttFile {
       description: file.chart.description
         ? sanitizeString(file.chart.description)
         : file.chart.description,
+      viewSettings: {
+        ...file.chart.viewSettings,
+        projectTitle: file.chart.viewSettings.projectTitle
+          ? sanitizeString(file.chart.viewSettings.projectTitle)
+          : file.chart.viewSettings.projectTitle,
+        projectAuthor: file.chart.viewSettings.projectAuthor
+          ? sanitizeString(file.chart.viewSettings.projectAuthor)
+          : file.chart.viewSettings.projectAuthor,
+      },
       tasks: file.chart.tasks.map((task) => {
         const taskWithDescription = task as typeof task & {
           description?: string;

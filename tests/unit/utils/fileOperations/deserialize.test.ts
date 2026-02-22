@@ -904,6 +904,218 @@ describe('File Operations - Deserialization', () => {
     });
   });
 
+  describe('ColumnWidths Sanitization', () => {
+    it('should preserve valid columnWidths', () => {
+      const file = createValidFileContent();
+      file.chart.viewSettings.columnWidths = { name: 250, startDate: 100 };
+
+      const result = deserializeGanttFile(JSON.stringify(file), 'test.ownchart');
+
+      expect(result.success).toBe(true);
+      expect(result.data!.viewSettings.columnWidths).toEqual({ name: 250, startDate: 100 });
+    });
+
+    it('should filter out non-number columnWidths values', () => {
+      const file = createValidFileContent();
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      (file.chart.viewSettings as any).columnWidths = { name: 250, bad: 'string', broken: null };
+
+      const result = deserializeGanttFile(JSON.stringify(file), 'test.ownchart');
+
+      expect(result.success).toBe(true);
+      expect(result.data!.viewSettings.columnWidths).toEqual({ name: 250 });
+    });
+
+    it('should filter out NaN and Infinity columnWidths values', () => {
+      const file = createValidFileContent();
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      (file.chart.viewSettings as any).columnWidths = { name: NaN, startDate: Infinity };
+
+      const result = deserializeGanttFile(JSON.stringify(file), 'test.ownchart');
+
+      expect(result.success).toBe(true);
+      expect(result.data!.viewSettings.columnWidths).toBeUndefined();
+    });
+
+    it('should filter out non-positive columnWidths values', () => {
+      const file = createValidFileContent();
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      (file.chart.viewSettings as any).columnWidths = { name: 0, startDate: -100 };
+
+      const result = deserializeGanttFile(JSON.stringify(file), 'test.ownchart');
+
+      expect(result.success).toBe(true);
+      expect(result.data!.viewSettings.columnWidths).toBeUndefined();
+    });
+
+    it('should return undefined for non-object columnWidths', () => {
+      const file = createValidFileContent();
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      (file.chart.viewSettings as any).columnWidths = 'invalid';
+
+      const result = deserializeGanttFile(JSON.stringify(file), 'test.ownchart');
+
+      expect(result.success).toBe(true);
+      expect(result.data!.viewSettings.columnWidths).toBeUndefined();
+    });
+  });
+
+  describe('HiddenColumns / HiddenTaskIds Sanitization', () => {
+    it('should preserve valid string arrays', () => {
+      const file = createValidFileContent();
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const vs = file.chart.viewSettings as any;
+      vs.hiddenColumns = ['startDate', 'endDate'];
+      vs.hiddenTaskIds = ['123e4567-e89b-12d3-a456-426614174001'];
+
+      const result = deserializeGanttFile(JSON.stringify(file), 'test.ownchart');
+
+      expect(result.success).toBe(true);
+      expect(result.data!.viewSettings.hiddenColumns).toEqual(['startDate', 'endDate']);
+      expect(result.data!.viewSettings.hiddenTaskIds).toEqual(['123e4567-e89b-12d3-a456-426614174001']);
+    });
+
+    it('should filter out non-string elements', () => {
+      const file = createValidFileContent();
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const vs = file.chart.viewSettings as any;
+      vs.hiddenColumns = ['startDate', 42, null, true, 'endDate'];
+
+      const result = deserializeGanttFile(JSON.stringify(file), 'test.ownchart');
+
+      expect(result.success).toBe(true);
+      expect(result.data!.viewSettings.hiddenColumns).toEqual(['startDate', 'endDate']);
+    });
+
+    it('should return undefined for non-array values', () => {
+      const file = createValidFileContent();
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const vs = file.chart.viewSettings as any;
+      vs.hiddenColumns = 'not-an-array';
+      vs.hiddenTaskIds = 42;
+
+      const result = deserializeGanttFile(JSON.stringify(file), 'test.ownchart');
+
+      expect(result.success).toBe(true);
+      expect(result.data!.viewSettings.hiddenColumns).toBeUndefined();
+      expect(result.data!.viewSettings.hiddenTaskIds).toBeUndefined();
+    });
+
+    it('should return undefined for empty arrays after filtering', () => {
+      const file = createValidFileContent();
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const vs = file.chart.viewSettings as any;
+      vs.hiddenColumns = [42, null, true];
+
+      const result = deserializeGanttFile(JSON.stringify(file), 'test.ownchart');
+
+      expect(result.success).toBe(true);
+      expect(result.data!.viewSettings.hiddenColumns).toBeUndefined();
+    });
+  });
+
+  describe('ViewSettings String Sanitization', () => {
+    it('should sanitize projectTitle with HTML', () => {
+      const file = createValidFileContent();
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const vs = file.chart.viewSettings as any;
+      vs.projectTitle = '<script>alert("XSS")</script>My Project';
+
+      const result = deserializeGanttFile(JSON.stringify(file), 'test.ownchart');
+
+      expect(result.success).toBe(true);
+      expect(result.data!.viewSettings.projectTitle).not.toContain('<script>');
+      expect(result.data!.viewSettings.projectTitle).toContain('My Project');
+    });
+
+    it('should sanitize projectAuthor with HTML', () => {
+      const file = createValidFileContent();
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const vs = file.chart.viewSettings as any;
+      vs.projectAuthor = '<img onerror="alert(1)">Martin';
+
+      const result = deserializeGanttFile(JSON.stringify(file), 'test.ownchart');
+
+      expect(result.success).toBe(true);
+      expect(result.data!.viewSettings.projectAuthor).not.toContain('<img');
+      expect(result.data!.viewSettings.projectAuthor).toContain('Martin');
+    });
+
+    it('should preserve clean projectTitle/projectAuthor', () => {
+      const file = createValidFileContent();
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const vs = file.chart.viewSettings as any;
+      vs.projectTitle = 'My Clean Project';
+      vs.projectAuthor = 'Martin';
+
+      const result = deserializeGanttFile(JSON.stringify(file), 'test.ownchart');
+
+      expect(result.success).toBe(true);
+      expect(result.data!.viewSettings.projectTitle).toBe('My Clean Project');
+      expect(result.data!.viewSettings.projectAuthor).toBe('Martin');
+    });
+  });
+
+  describe('Dependency Lag Validation', () => {
+    it('should reject dependency with non-number lag', () => {
+      const file = createValidFileContent();
+      file.chart.tasks.push({
+        id: '123e4567-e89b-12d3-a456-426614174002',
+        name: 'Task 2',
+        startDate: '2026-01-06',
+        endDate: '2026-01-10',
+        duration: 5,
+        progress: 0,
+        color: '#10b981',
+        order: 1,
+      });
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      (file.chart as any).dependencies = [
+        {
+          id: '123e4567-e89b-12d3-a456-426614174010',
+          from: '123e4567-e89b-12d3-a456-426614174001',
+          to: '123e4567-e89b-12d3-a456-426614174002',
+          type: 'FS',
+          lag: 'five',
+        },
+      ];
+
+      const result = deserializeGanttFile(JSON.stringify(file), 'test.ownchart');
+
+      expect(result.success).toBe(false);
+      expect(result.error!.message).toContain('invalid lag');
+    });
+
+    it('should accept dependency with valid numeric lag', () => {
+      const file = createValidFileContent();
+      file.chart.tasks.push({
+        id: '123e4567-e89b-12d3-a456-426614174002',
+        name: 'Task 2',
+        startDate: '2026-01-06',
+        endDate: '2026-01-10',
+        duration: 5,
+        progress: 0,
+        color: '#10b981',
+        order: 1,
+      });
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      (file.chart as any).dependencies = [
+        {
+          id: '123e4567-e89b-12d3-a456-426614174010',
+          from: '123e4567-e89b-12d3-a456-426614174001',
+          to: '123e4567-e89b-12d3-a456-426614174002',
+          type: 'FS',
+          lag: -2,
+        },
+      ];
+
+      const result = deserializeGanttFile(JSON.stringify(file), 'test.ownchart');
+
+      expect(result.success).toBe(true);
+      expect(result.data!.dependencies[0].lag).toBe(-2);
+    });
+  });
+
   describe('Future Version Warning', () => {
     it('should add warning for files from future versions', () => {
       const file = createValidFileContent();

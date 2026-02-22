@@ -674,6 +674,58 @@ describe('File Operations - Validation', () => {
         expect(() => validateSemantics(file)).not.toThrow();
       }
     });
+
+    it('should reject dependency with non-number lag', () => {
+      const file = createFileWithDeps();
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      (file.chart.dependencies[0] as any).lag = 'five';
+
+      expect(() => validateSemantics(file)).toThrow('invalid lag');
+    });
+
+    it('should reject dependency with NaN lag', () => {
+      const file = createFileWithDeps();
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      (file.chart.dependencies[0] as any).lag = NaN;
+
+      expect(() => validateSemantics(file)).toThrow('invalid lag');
+    });
+
+    it('should reject dependency with Infinity lag', () => {
+      const file = createFileWithDeps();
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      (file.chart.dependencies[0] as any).lag = Infinity;
+
+      expect(() => validateSemantics(file)).toThrow('invalid lag');
+    });
+
+    it('should accept dependency with valid numeric lag', () => {
+      const file = createFileWithDeps();
+      file.chart.dependencies[0].lag = 3;
+
+      expect(() => validateSemantics(file)).not.toThrow();
+    });
+
+    it('should accept dependency with negative lag (overlap)', () => {
+      const file = createFileWithDeps();
+      file.chart.dependencies[0].lag = -2;
+
+      expect(() => validateSemantics(file)).not.toThrow();
+    });
+
+    it('should accept dependency with zero lag', () => {
+      const file = createFileWithDeps();
+      file.chart.dependencies[0].lag = 0;
+
+      expect(() => validateSemantics(file)).not.toThrow();
+    });
+
+    it('should accept dependency without lag (undefined)', () => {
+      const file = createFileWithDeps();
+      delete file.chart.dependencies[0].lag;
+
+      expect(() => validateSemantics(file)).not.toThrow();
+    });
   });
 
   describe('Layer 3: Array rejection', () => {

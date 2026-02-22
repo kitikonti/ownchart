@@ -362,6 +362,16 @@ function validateDependencies(
       );
     }
 
+    if (
+      dep.lag !== undefined &&
+      (typeof dep.lag !== "number" || !Number.isFinite(dep.lag))
+    ) {
+      throw new ValidationError(
+        "INVALID_LAG",
+        `Dependency ${index} has invalid lag: ${dep.lag}`
+      );
+    }
+
     if (dep.from === dep.to) {
       throw new ValidationError(
         "SELF_DEPENDENCY",
