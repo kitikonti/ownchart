@@ -13,6 +13,11 @@ import type {
   ViewSettings,
 } from "./types";
 import type { ExportOptions } from "../export/types";
+import type {
+  TaskLabelPosition,
+  WorkingDaysConfig,
+} from "../../types/preferences.types";
+import type { ColorModeState } from "../../types/colorMode.types";
 import {
   validatePreParse,
   safeJsonParse,
@@ -276,17 +281,80 @@ function deserializeDependency(
   return dep;
 }
 
+// =============================================================================
+// Sanitization helpers
+// =============================================================================
+
 /** Check that a value is a finite number, otherwise return the fallback */
 function finiteOr(value: unknown, fallback: number): number {
   return typeof value === "number" && Number.isFinite(value) ? value : fallback;
 }
 
-/** Check that a value is a finite positive number, otherwise return the fallback */
-function finitePositiveOr(value: unknown, fallback: null): number | null {
+/** Check that a value is a finite positive number, otherwise return null */
+function finitePositiveOrNull(value: unknown): number | null {
   return typeof value === "number" && Number.isFinite(value) && value > 0
     ? value
+    : null;
+}
+
+/** Check that a value is a boolean, otherwise return the fallback */
+function booleanOr(value: unknown, fallback: boolean): boolean {
+  return typeof value === "boolean" ? value : fallback;
+}
+
+/** Check that a value is a boolean, otherwise return undefined */
+function optionalBoolean(value: unknown): boolean | undefined {
+  return typeof value === "boolean" ? value : undefined;
+}
+
+/** Check that a value is a valid enum member, otherwise return the fallback */
+function enumOr<T extends string>(
+  value: unknown,
+  validValues: Set<string>,
+  fallback: T
+): T {
+  return typeof value === "string" && validValues.has(value)
+    ? (value as T)
     : fallback;
 }
+
+// =============================================================================
+// Valid enum sets for sanitization
+// =============================================================================
+
+const VALID_TASK_LABEL_POSITIONS = new Set([
+  "before",
+  "inside",
+  "after",
+  "none",
+]);
+const VALID_COLOR_MODES = new Set([
+  "manual",
+  "theme",
+  "summary",
+  "taskType",
+  "hierarchy",
+]);
+const VALID_EXPORT_ZOOM_MODES = new Set([
+  "currentView",
+  "custom",
+  "fitToWidth",
+]);
+const VALID_EXPORT_DATE_RANGE_MODES = new Set(["all", "visible", "custom"]);
+const VALID_EXPORT_BACKGROUNDS = new Set(["white", "transparent"]);
+const VALID_EXPORT_DENSITIES = new Set(["compact", "normal", "comfortable"]);
+const VALID_EXPORT_COLUMNS = new Set([
+  "color",
+  "name",
+  "startDate",
+  "endDate",
+  "duration",
+  "progress",
+]);
+
+// =============================================================================
+// Field-level sanitizers
+// =============================================================================
 
 /** Sanitize columnWidths — keep only entries with finite positive number values */
 function sanitizeColumnWidths(
@@ -315,6 +383,54 @@ function filterStringArray(raw: string[] | undefined): string[] | undefined {
   return filtered.length > 0 ? filtered : undefined;
 }
 
+/** Sanitize colorModeState — validate mode enum and sub-object shapes */
+function sanitizeColorModeState(raw: unknown): ColorModeState | undefined {
+  if (!raw || typeof raw !== "object" || Array.isArray(raw)) {
+    return undefined;
+  }
+  const obj = raw as Record<string, unknown>;
+  if (!VALID_COLOR_MODES.has(obj.mode as string)) {
+    return undefined;
+  }
+  // Sub-objects are validated at consumption; ensure they're at least objects
+  const subKeys = [
+    "themeOptions",
+    "summaryOptions",
+    "taskTypeOptions",
+    "hierarchyOptions",
+  ] as const;
+  for (const key of subKeys) {
+    if (
+      obj[key] !== undefined &&
+      (typeof obj[key] !== "object" ||
+        obj[key] === null ||
+        Array.isArray(obj[key]))
+    ) {
+      return undefined;
+    }
+  }
+  return raw as ColorModeState;
+}
+
+/** Sanitize workingDaysConfig — validate boolean fields with defaults */
+function sanitizeWorkingDaysConfig(
+  raw: unknown
+): WorkingDaysConfig | undefined {
+  if (!raw || typeof raw !== "object" || Array.isArray(raw)) {
+    return undefined;
+  }
+  const obj = raw as Record<string, unknown>;
+  return {
+    excludeSaturday: booleanOr(obj.excludeSaturday, true),
+    excludeSunday: booleanOr(obj.excludeSunday, true),
+    excludeHolidays: booleanOr(obj.excludeHolidays, false),
+  };
+}
+
+// =============================================================================
+// ViewSettings & ExportSettings sanitization
+// =============================================================================
+
 /**
  * Sanitize viewSettings — clamp/fix invalid values rather than rejecting the file.
  * Protects against NaN/Infinity/wrong types propagating into app state.
@@ -335,35 +451,30 @@ function sanitizeViewSettings(raw: ViewSettings): ViewSettings {
     taskTableWidth:
       raw.taskTableWidth === null
         ? null
-        : finitePositiveOr(raw.taskTableWidth, null),
+        : finitePositiveOrNull(raw.taskTableWidth),
     columnWidths: sanitizeColumnWidths(raw.columnWidths),
-    showWeekends:
-      typeof raw.showWeekends === "boolean" ? raw.showWeekends : true,
-    showTodayMarker:
-      typeof raw.showTodayMarker === "boolean" ? raw.showTodayMarker : true,
-    showHolidays:
-      typeof raw.showHolidays === "boolean" ? raw.showHolidays : undefined,
-    showDependencies:
-      typeof raw.showDependencies === "boolean"
-        ? raw.showDependencies
-        : undefined,
-    showProgress:
-      typeof raw.showProgress === "boolean" ? raw.showProgress : undefined,
-    workingDaysMode:
-      typeof raw.workingDaysMode === "boolean"
-        ? raw.workingDaysMode
-        : undefined,
-    isTaskTableCollapsed:
-      typeof raw.isTaskTableCollapsed === "boolean"
-        ? raw.isTaskTableCollapsed
-        : undefined,
+    showWeekends: booleanOr(raw.showWeekends, true),
+    showTodayMarker: booleanOr(raw.showTodayMarker, true),
+    showHolidays: optionalBoolean(raw.showHolidays),
+    showDependencies: optionalBoolean(raw.showDependencies),
+    showProgress: optionalBoolean(raw.showProgress),
+    taskLabelPosition: enumOr<TaskLabelPosition>(
+      raw.taskLabelPosition,
+      VALID_TASK_LABEL_POSITIONS,
+      "inside"
+    ),
+    workingDaysMode: optionalBoolean(raw.workingDaysMode),
+    workingDaysConfig: sanitizeWorkingDaysConfig(raw.workingDaysConfig),
+    isTaskTableCollapsed: optionalBoolean(raw.isTaskTableCollapsed),
+    colorModeState: sanitizeColorModeState(raw.colorModeState),
     hiddenColumns: filterStringArray(raw.hiddenColumns),
     hiddenTaskIds: filterStringArray(raw.hiddenTaskIds),
   };
 }
 
 /**
- * Sanitize exportSettings — drop entirely if not a valid object.
+ * Sanitize exportSettings — validate each field, use defaults for invalid values.
+ * Protects against malformed values propagating into app state.
  */
 function sanitizeExportSettings(
   raw: ExportOptions | undefined
@@ -371,5 +482,41 @@ function sanitizeExportSettings(
   if (!raw || typeof raw !== "object" || Array.isArray(raw)) {
     return undefined;
   }
-  return raw;
+
+  // Cast through unknown — ExportOptions has no index signature
+  const obj = raw as unknown as Record<string, unknown>;
+
+  return {
+    zoomMode: enumOr(obj.zoomMode, VALID_EXPORT_ZOOM_MODES, "currentView"),
+    timelineZoom: finiteOr(obj.timelineZoom, 1),
+    fitToWidth: finiteOr(obj.fitToWidth, 1920),
+    dateRangeMode: enumOr(
+      obj.dateRangeMode,
+      VALID_EXPORT_DATE_RANGE_MODES,
+      "all"
+    ),
+    customDateStart:
+      typeof obj.customDateStart === "string" ? obj.customDateStart : undefined,
+    customDateEnd:
+      typeof obj.customDateEnd === "string" ? obj.customDateEnd : undefined,
+    selectedColumns: Array.isArray(obj.selectedColumns)
+      ? (obj.selectedColumns as unknown[]).filter(
+          (c): c is ExportOptions["selectedColumns"][number] =>
+            typeof c === "string" && VALID_EXPORT_COLUMNS.has(c)
+        )
+      : [],
+    includeHeader: booleanOr(obj.includeHeader, true),
+    includeTodayMarker: booleanOr(obj.includeTodayMarker, true),
+    includeDependencies: booleanOr(obj.includeDependencies, true),
+    includeGridLines: booleanOr(obj.includeGridLines, true),
+    includeWeekends: booleanOr(obj.includeWeekends, true),
+    includeHolidays: booleanOr(obj.includeHolidays, true),
+    taskLabelPosition: enumOr<TaskLabelPosition>(
+      obj.taskLabelPosition,
+      VALID_TASK_LABEL_POSITIONS,
+      "inside"
+    ),
+    background: enumOr(obj.background, VALID_EXPORT_BACKGROUNDS, "white"),
+    density: enumOr(obj.density, VALID_EXPORT_DENSITIES, "comfortable"),
+  };
 }

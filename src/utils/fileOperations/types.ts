@@ -146,7 +146,9 @@ export interface DeserializeResult {
   success: boolean;
   data?: {
     tasks: Array<Task & { __unknownFields?: Record<string, unknown> }>;
-    dependencies: AppDependency[]; // Sprint 1.4
+    dependencies: Array<
+      AppDependency & { __unknownFields?: Record<string, unknown> }
+    >; // Sprint 1.4
     viewSettings: ViewSettings;
     exportSettings?: ExportOptions; // Sprint 1.6
     chartName: string;

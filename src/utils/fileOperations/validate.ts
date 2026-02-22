@@ -101,7 +101,6 @@ export function validateStructure(data: unknown): void {
 
   const file = data as Record<string, unknown>;
 
-  // Required top-level fields
   if (typeof file.fileVersion !== "string") {
     throw new ValidationError(
       "MISSING_FIELD",
@@ -113,8 +112,13 @@ export function validateStructure(data: unknown): void {
     throw new ValidationError("MISSING_FIELD", "Missing required field: chart");
   }
 
-  const chart = file.chart as Record<string, unknown>;
+  validateChartStructure(file.chart as Record<string, unknown>);
+}
 
+/**
+ * Validate chart-level structure (id, name, tasks, viewSettings)
+ */
+function validateChartStructure(chart: Record<string, unknown>): void {
   if (typeof chart.id !== "string") {
     throw new ValidationError(
       "MISSING_FIELD",
@@ -129,7 +133,6 @@ export function validateStructure(data: unknown): void {
     );
   }
 
-  // Required chart fields
   if (!Array.isArray(chart.tasks)) {
     throw new ValidationError(
       "INVALID_STRUCTURE",
@@ -144,12 +147,10 @@ export function validateStructure(data: unknown): void {
     );
   }
 
-  // Validate each task structure
   chart.tasks.forEach((task: unknown, index: number) =>
     validateTaskStructure(task, index)
   );
 
-  // Validate viewSettings exists
   if (!chart.viewSettings || typeof chart.viewSettings !== "object") {
     throw new ValidationError(
       "MISSING_FIELD",
@@ -340,58 +341,70 @@ function validateDependencies(
   const depIds = new Set<string>();
 
   dependencies.forEach((dep, index) => {
-    if (!UUID_REGEX.test(dep.id)) {
-      throw new ValidationError(
-        "INVALID_ID",
-        `Dependency ${index} has invalid UUID: ${dep.id}`
-      );
-    }
-
-    if (depIds.has(dep.id)) {
-      throw new ValidationError(
-        "DUPLICATE_ID",
-        `Duplicate dependency ID: ${dep.id}`
-      );
-    }
+    validateSingleDependency(dep, index, depIds, taskIds);
     depIds.add(dep.id);
-
-    if (!VALID_DEPENDENCY_TYPES.has(dep.type)) {
-      throw new ValidationError(
-        "INVALID_DEPENDENCY_TYPE",
-        `Dependency ${index} has invalid type: ${dep.type}`
-      );
-    }
-
-    if (
-      dep.lag !== undefined &&
-      (typeof dep.lag !== "number" || !Number.isFinite(dep.lag))
-    ) {
-      throw new ValidationError(
-        "INVALID_LAG",
-        `Dependency ${index} has invalid lag: ${dep.lag}`
-      );
-    }
-
-    if (dep.from === dep.to) {
-      throw new ValidationError(
-        "SELF_DEPENDENCY",
-        `Dependency ${index} is a self-reference: ${dep.from}`
-      );
-    }
-
-    if (!taskIds.has(dep.from)) {
-      throw new ValidationError(
-        "DANGLING_DEPENDENCY",
-        `Dependency ${index} references non-existent source task: ${dep.from}`
-      );
-    }
-    if (!taskIds.has(dep.to)) {
-      throw new ValidationError(
-        "DANGLING_DEPENDENCY",
-        `Dependency ${index} references non-existent target task: ${dep.to}`
-      );
-    }
   });
+}
+
+/**
+ * Validate a single dependency's integrity (ID, type, lag, references)
+ */
+function validateSingleDependency(
+  dep: SerializedDependency,
+  index: number,
+  depIds: Set<string>,
+  taskIds: Set<string>
+): void {
+  if (!UUID_REGEX.test(dep.id)) {
+    throw new ValidationError(
+      "INVALID_ID",
+      `Dependency ${index} has invalid UUID: ${dep.id}`
+    );
+  }
+
+  if (depIds.has(dep.id)) {
+    throw new ValidationError(
+      "DUPLICATE_ID",
+      `Duplicate dependency ID: ${dep.id}`
+    );
+  }
+
+  if (!VALID_DEPENDENCY_TYPES.has(dep.type)) {
+    throw new ValidationError(
+      "INVALID_DEPENDENCY_TYPE",
+      `Dependency ${index} has invalid type: ${dep.type}`
+    );
+  }
+
+  if (
+    dep.lag !== undefined &&
+    (typeof dep.lag !== "number" || !Number.isFinite(dep.lag))
+  ) {
+    throw new ValidationError(
+      "INVALID_LAG",
+      `Dependency ${index} has invalid lag: ${dep.lag}`
+    );
+  }
+
+  if (dep.from === dep.to) {
+    throw new ValidationError(
+      "SELF_DEPENDENCY",
+      `Dependency ${index} is a self-reference: ${dep.from}`
+    );
+  }
+
+  if (!taskIds.has(dep.from)) {
+    throw new ValidationError(
+      "DANGLING_DEPENDENCY",
+      `Dependency ${index} references non-existent source task: ${dep.from}`
+    );
+  }
+  if (!taskIds.has(dep.to)) {
+    throw new ValidationError(
+      "DANGLING_DEPENDENCY",
+      `Dependency ${index} references non-existent target task: ${dep.to}`
+    );
+  }
 }
 
 /**
