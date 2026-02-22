@@ -15,6 +15,9 @@ export const MIN_OVERFLOW = 400;
 /** Height of the timeline/table header row in pixels */
 export const HEADER_HEIGHT = 48;
 
+/** Extra rows beyond the task list (placeholder row for quick task creation) */
+export const PLACEHOLDER_ROW_COUNT = 1;
+
 // --- Infinite scroll constants ---
 
 /** Milliseconds between infinite scroll extensions */

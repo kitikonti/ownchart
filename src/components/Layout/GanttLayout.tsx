@@ -14,10 +14,10 @@
  * - Resizable split between TaskTable and Timeline
  * - Horizontal scrollbar in TaskTable when content wider than split width
  * - Synchronized scrolling between timeline header and chart
- * - Virtual scrolling via translateY for performance
+ * - Virtual scrolling via direct DOM translateY for performance
  */
 
-import { useRef, useEffect, useState, useCallback } from "react";
+import { useRef, useEffect } from "react";
 import { TaskTable } from "../TaskList/TaskTable";
 import { TaskTableHeader } from "../TaskList/TaskTableHeader";
 import { ChartCanvas, TimelineHeader, SelectionHighlight } from "../GanttChart";
@@ -31,11 +31,11 @@ import { useHeaderDateSelection } from "../../hooks/useHeaderDateSelection";
 import { useSyncScroll } from "../../hooks/useSyncScroll";
 import { useInfiniteScroll } from "../../hooks/useInfiniteScroll";
 import { useContainerDimensions } from "../../hooks/useContainerDimensions";
+import { usePreventVerticalScroll } from "../../hooks/usePreventVerticalScroll";
 import { useDensityConfig } from "../../store/slices/userPreferencesSlice";
+import { calculateLayoutDimensions } from "../../utils/layoutCalculations";
 import {
   MIN_TABLE_WIDTH,
-  SCROLLBAR_HEIGHT,
-  MIN_OVERFLOW,
   HEADER_HEIGHT,
   HIDDEN_SCROLLBAR_STYLE,
 } from "../../config/layoutConstants";
@@ -49,8 +49,9 @@ export function GanttLayout(): JSX.Element {
   const taskTableScrollRef = useRef<HTMLDivElement>(null);
   const taskTableHeaderScrollRef = useRef<HTMLDivElement>(null);
   const headerSvgRef = useRef<SVGSVGElement>(null);
-
-  const [scrollTop, setScrollTop] = useState(0);
+  // Refs for direct DOM translateY updates (avoids React re-render on scroll)
+  const taskTableTranslateRef = useRef<HTMLDivElement>(null);
+  const chartTranslateRef = useRef<HTMLDivElement>(null);
 
   // Task store
   const selectedTaskIds = useTaskStore((state) => state.selectedTaskIds);
@@ -107,23 +108,21 @@ export function GanttLayout(): JSX.Element {
   // --- Scroll synchronization ---
   useSyncScroll(chartContainerRef, timelineHeaderScrollRef);
   useSyncScroll(taskTableScrollRef, taskTableHeaderScrollRef);
+  usePreventVerticalScroll(taskTableScrollRef);
 
-  // Prevent taskTableScrollRef from scrolling vertically (GitHub #16)
-  // Browser focus() can scroll overflow containers even with overflow-y:clip in Chromium.
+  // Vertical scroll: direct DOM updates to avoid React re-render per scroll tick
   useEffect(() => {
-    const el = taskTableScrollRef.current;
-    if (!el) return;
-    const resetScroll = (): void => {
-      if (el.scrollTop !== 0) el.scrollTop = 0;
-    };
-    el.addEventListener("scroll", resetScroll);
-    return () => el.removeEventListener("scroll", resetScroll);
-  }, []);
-
-  // Handle vertical scroll from outer container
-  const handleOuterScroll = useCallback((): void => {
     const el = outerScrollRef.current;
-    if (el) setScrollTop(el.scrollTop);
+    if (!el) return;
+    const handleScroll = (): void => {
+      const top = el.scrollTop;
+      if (taskTableTranslateRef.current)
+        taskTableTranslateRef.current.style.transform = `translateY(-${top}px)`;
+      if (chartTranslateRef.current)
+        chartTranslateRef.current.style.transform = `translateY(-${top}px)`;
+    };
+    el.addEventListener("scroll", handleScroll);
+    return () => el.removeEventListener("scroll", handleScroll);
   }, []);
 
   // --- Dimension measurement + viewport tracking ---
@@ -144,20 +143,19 @@ export function GanttLayout(): JSX.Element {
   });
 
   // --- Derived layout values ---
-  const totalContentHeight =
-    (flattenedTasks.length + 1) * ROW_HEIGHT + HEADER_HEIGHT + SCROLLBAR_HEIGHT;
-
-  const timelineHeaderWidth = scale
-    ? Math.max(scale.totalWidth, containerWidth + MIN_OVERFLOW)
-    : containerWidth + MIN_OVERFLOW;
-
-  const contentAreaHeight = viewportHeight - HEADER_HEIGHT;
+  const { totalContentHeight, timelineHeaderWidth, contentAreaHeight } =
+    calculateLayoutDimensions({
+      taskCount: flattenedTasks.length,
+      rowHeight: ROW_HEIGHT,
+      viewportHeight,
+      scaleTotalWidth: scale?.totalWidth ?? null,
+      containerWidth,
+    });
 
   return (
     <div
       ref={outerScrollRef}
       className="flex-1 overflow-y-auto overflow-x-hidden"
-      onScroll={handleOuterScroll}
     >
       {/* Pseudo-rows - creates the total scroll height */}
       <div
@@ -171,7 +169,6 @@ export function GanttLayout(): JSX.Element {
         >
           {/* Layout - flex column with split pane */}
           <div className="gantt-layout flex flex-col h-full">
-            {/* Split Pane with Header Row and Content Row */}
             <SplitPane
               leftWidth={effectiveTableWidth}
               minLeftWidth={MIN_TABLE_WIDTH}
@@ -181,7 +178,6 @@ export function GanttLayout(): JSX.Element {
               onCollapsedChange={setTaskTableCollapsed}
               leftContent={
                 <div className="flex flex-col h-full">
-                  {/* TaskTable Header - scrollable but hidden scrollbar */}
                   <div
                     ref={taskTableHeaderScrollRef}
                     className="flex-shrink-0 bg-white/90 backdrop-blur-sm border-b border-neutral-200/80 overflow-x-auto overflow-y-hidden"
@@ -189,13 +185,12 @@ export function GanttLayout(): JSX.Element {
                   >
                     <TaskTableHeader />
                   </div>
-                  {/* Task Table Content with virtual scrolling and horizontal scroll */}
                   <div
                     ref={taskTableScrollRef}
                     className="flex-1 overflow-x-auto scrollbar-thin"
                     style={{ height: contentAreaHeight, overflowY: "clip" }}
                   >
-                    <div style={{ transform: `translateY(-${scrollTop}px)` }}>
+                    <div ref={taskTableTranslateRef}>
                       <TaskTable />
                     </div>
                   </div>
@@ -203,7 +198,6 @@ export function GanttLayout(): JSX.Element {
               }
               rightContent={
                 <div className="flex flex-col h-full">
-                  {/* Timeline Header - scrollable and synchronized with chart */}
                   <div
                     ref={timelineHeaderScrollRef}
                     className="flex-shrink-0 bg-white/90 backdrop-blur-sm overflow-x-auto overflow-y-hidden border-b border-neutral-200/80"
@@ -238,18 +232,16 @@ export function GanttLayout(): JSX.Element {
                       />
                     )}
                   </div>
-                  {/* Gantt Chart Area */}
                   <div
                     className="flex-1 h-full relative"
                     style={{ height: contentAreaHeight }}
                   >
-                    {/* Gantt Chart Content - scrollable horizontally */}
                     <div
                       ref={chartContainerRef}
                       className="gantt-chart-scroll-container absolute inset-0 bg-white overflow-x-auto scrollbar-thin"
                       style={{ overflowY: "clip" }}
                     >
-                      <div style={{ transform: `translateY(-${scrollTop}px)` }}>
+                      <div ref={chartTranslateRef}>
                         <ChartCanvas
                           tasks={orderedTasks}
                           selectedTaskIds={selectedTaskIds}
