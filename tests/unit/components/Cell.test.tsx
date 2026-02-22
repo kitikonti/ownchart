@@ -57,30 +57,21 @@ const mockNavigateCell = vi.fn();
 const mockUpdateTask = vi.fn();
 const mockClearSelection = vi.fn();
 
-vi.mock("../../../src/hooks/useCellNavigation", () => ({
-  useCellNavigation: vi.fn(() => ({
-    activeCell: mockActiveCell,
-    isEditingCell: mockIsEditing,
-    setActiveCell: mockSetActiveCell,
-    startCellEdit: mockStartCellEdit,
-    stopCellEdit: mockStopCellEdit,
-    navigateCell: mockNavigateCell,
-    isCellActive: (taskId: string, field: string): boolean =>
-      mockActiveCell.taskId === taskId && mockActiveCell.field === field,
-    isCellEditing: (taskId: string, field: string): boolean =>
-      mockActiveCell.taskId === taskId &&
-      mockActiveCell.field === field &&
-      mockIsEditing,
-  })),
-}));
+const mockTaskStoreState = (): Record<string, unknown> => ({
+  activeCell: mockActiveCell,
+  isEditingCell: mockIsEditing,
+  setActiveCell: mockSetActiveCell,
+  startCellEdit: mockStartCellEdit,
+  stopCellEdit: mockStopCellEdit,
+  navigateCell: mockNavigateCell,
+  updateTask: mockUpdateTask,
+  clearSelection: mockClearSelection,
+  cutCell: null,
+});
 
 vi.mock("../../../src/store/slices/taskSlice", () => ({
   useTaskStore: vi.fn((selector: (s: Record<string, unknown>) => unknown) =>
-    selector({
-      updateTask: mockUpdateTask,
-      clearSelection: mockClearSelection,
-      cutCell: null,
-    })
+    selector(mockTaskStoreState())
   ),
 }));
 
@@ -419,8 +410,7 @@ describe("Cell", () => {
       vi.mocked(useTaskStore).mockImplementation(
         (selector: (s: Record<string, unknown>) => unknown) =>
           selector({
-            updateTask: mockUpdateTask,
-            clearSelection: mockClearSelection,
+            ...mockTaskStoreState(),
             cutCell: { taskId: "task-1", field: "name" },
           }) as ReturnType<typeof selector>
       );
@@ -431,6 +421,19 @@ describe("Cell", () => {
       const cell = screen.getByRole("gridcell");
       expect(cell.className).toContain("opacity-50");
       expect(cell.className).toContain("outline-dashed");
+    });
+  });
+
+  describe("accessibility", () => {
+    it("renders input with aria-label in edit mode", () => {
+      mockActiveCell = { taskId: "task-1", field: "name" };
+      mockIsEditing = true;
+
+      render(
+        <Cell taskId="task-1" task={task} field="name" column={column} />
+      );
+      const input = screen.getByRole("textbox");
+      expect(input).toHaveAttribute("aria-label", "Edit Name");
     });
   });
 });

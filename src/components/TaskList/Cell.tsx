@@ -5,9 +5,8 @@
  * Edit state and logic are delegated to the useCellEdit hook.
  */
 
-import { useRef, type KeyboardEvent, type MouseEvent } from "react";
+import { memo, useRef, type KeyboardEvent, type MouseEvent } from "react";
 import { useTaskStore, type EditableField } from "../../store/slices/taskSlice";
-import { useCellNavigation } from "../../hooks/useCellNavigation";
 import { useCellEdit } from "../../hooks/useCellEdit";
 import type { Task } from "../../types/chart.types";
 import type { NavigationDirection } from "../../types/task.types";
@@ -44,8 +43,9 @@ export interface CellProps {
 
 /**
  * Cell component with Excel-like navigation and editing.
+ * Memoized to avoid re-renders when parent re-renders with unchanged props.
  */
-export function Cell({
+export const Cell = memo(function Cell({
   taskId,
   task,
   field,
@@ -54,23 +54,24 @@ export function Cell({
 }: CellProps): JSX.Element {
   const cellRef = useRef<HTMLDivElement>(null);
 
-  const {
-    isCellActive,
-    isCellEditing,
-    setActiveCell,
-    startCellEdit,
-    stopCellEdit,
-    navigateCell,
-  } = useCellNavigation();
-
-  const clearSelection = useTaskStore((state) => state.clearSelection);
-  const isCut = useTaskStore(
-    (state) =>
-      state.cutCell?.taskId === taskId && state.cutCell?.field === field
+  // Derived boolean selectors — only re-render when THIS cell's state changes
+  const isActive = useTaskStore(
+    (s) => s.activeCell.taskId === taskId && s.activeCell.field === field
   );
-
-  const isActive = isCellActive(taskId, field);
-  const isEditing = isCellEditing(taskId, field);
+  const isEditing = useTaskStore(
+    (s) =>
+      s.activeCell.taskId === taskId &&
+      s.activeCell.field === field &&
+      s.isEditingCell
+  );
+  const setActiveCell = useTaskStore((s) => s.setActiveCell);
+  const startCellEdit = useTaskStore((s) => s.startCellEdit);
+  const stopCellEdit = useTaskStore((s) => s.stopCellEdit);
+  const navigateCell = useTaskStore((s) => s.navigateCell);
+  const clearSelection = useTaskStore((s) => s.clearSelection);
+  const isCut = useTaskStore(
+    (s) => s.cutCell?.taskId === taskId && s.cutCell?.field === field
+  );
 
   const {
     localValue,
@@ -213,6 +214,7 @@ export function Cell({
                   ? "number"
                   : "text"
             }
+            aria-label={`Edit ${column.label}`}
             value={localValue}
             onChange={(e) => setLocalValue(e.target.value)}
             onKeyDown={handleEditKeyDown}
@@ -241,13 +243,18 @@ export function Cell({
       role="gridcell"
       aria-selected={isActive}
       tabIndex={isActive ? 0 : -1}
-      className={`
-        border-b ${borderRight} border-neutral-200 flex items-center cursor-pointer relative
-        ${isActive ? "z-10" : ""}
-        ${isActive && !isCut ? "bg-white" : ""}
-        ${!column.editable ? "bg-neutral-50 text-neutral-500" : ""}
-        ${isCut ? "opacity-50 outline outline-2 outline-dashed outline-neutral-500 -outline-offset-2" : ""}
-      `}
+      className={[
+        "border-b",
+        borderRight,
+        "border-neutral-200 flex items-center cursor-pointer relative",
+        isActive && "z-10",
+        isActive && !isCut && "bg-white",
+        !column.editable && "bg-neutral-50 text-neutral-500",
+        isCut &&
+          "opacity-50 outline outline-2 outline-dashed outline-neutral-500 -outline-offset-2",
+      ]
+        .filter(Boolean)
+        .join(" ")}
       style={isActive ? activeCellStyle : cellStyle}
       onClick={handleClick}
       onKeyDown={handleNavigationKeyDown}
@@ -255,4 +262,4 @@ export function Cell({
       {children || <span>{displayValue}</span>}
     </div>
   );
-}
+});
