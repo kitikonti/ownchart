@@ -24,8 +24,10 @@ import { sanitizeGanttFile } from "./sanitize";
 import { migrateGanttFile, needsMigration, isFromFuture } from "./migrate";
 import { FILE_VERSION } from "../../config/version";
 import { normalizeTaskOrder } from "../../utils/hierarchy";
+import { MIN_ZOOM, MAX_ZOOM } from "../../utils/timelineUtils";
 
-const KNOWN_TASK_KEYS = new Set([
+/** Keys consumed by deserializeTask — others are preserved as __unknownFields */
+const DESERIALIZED_TASK_KEYS = new Set([
   "id",
   "name",
   "startDate",
@@ -41,7 +43,8 @@ const KNOWN_TASK_KEYS = new Set([
   "metadata",
 ]);
 
-const KNOWN_DEPENDENCY_KEYS = new Set([
+/** Keys consumed by deserializeDependency — others are preserved as __unknownFields */
+const DESERIALIZED_DEPENDENCY_KEYS = new Set([
   "id",
   "from",
   "to",
@@ -55,6 +58,19 @@ function errorResult(code: string, message: string): DeserializeResult {
   return { success: false, error: { code, message, recoverable: false } };
 }
 
+/** Convert a ValidationError to an error result, re-throw unknown errors */
+function runValidation(fn: () => void): DeserializeResult | null {
+  try {
+    fn();
+    return null;
+  } catch (e) {
+    if (e instanceof ValidationError) {
+      return errorResult(e.code, e.message);
+    }
+    throw e;
+  }
+}
+
 /**
  * Run validation layers 1-3 and return parsed GanttFile or error
  */
@@ -65,14 +81,10 @@ function parseAndValidate(
 ): { ganttFile: GanttFile } | { error: DeserializeResult } {
   // Layer 1: Pre-parse validation (file size, extension)
   if (fileSize !== undefined) {
-    try {
-      validatePreParse({ name: fileName, size: fileSize });
-    } catch (e) {
-      if (e instanceof ValidationError) {
-        return { error: errorResult(e.code, e.message) };
-      }
-      throw e;
-    }
+    const err = runValidation(() =>
+      validatePreParse({ name: fileName, size: fileSize })
+    );
+    if (err) return { error: err };
   }
 
   // Layer 2: Safe JSON parsing
@@ -92,16 +104,52 @@ function parseAndValidate(
   }
 
   // Layer 3: Structure validation
-  try {
-    validateStructure(parsed);
-  } catch (e) {
-    if (e instanceof ValidationError) {
-      return { error: errorResult(e.code, e.message) };
-    }
-    throw e;
+  const structErr = runValidation(() => validateStructure(parsed));
+  if (structErr) return { error: structErr };
+
+  // Safe after validateStructure confirms required shape
+  return { ganttFile: parsed as GanttFile };
+}
+
+/**
+ * Apply migration if needed, collect warnings
+ */
+function applyMigration(
+  ganttFile: GanttFile,
+  warnings: string[]
+): { ganttFile: GanttFile; wasMigrated: boolean } {
+  let wasMigrated = false;
+
+  if (needsMigration(ganttFile.fileVersion)) {
+    const originalVersion = ganttFile.fileVersion;
+    ganttFile = migrateGanttFile(ganttFile);
+    wasMigrated = true;
+    warnings.push(`File migrated from v${originalVersion} to v${FILE_VERSION}`);
   }
 
-  return { ganttFile: parsed as GanttFile };
+  if (isFromFuture(ganttFile.fileVersion)) {
+    warnings.push(
+      "This file was created with a newer version. Some features may not work correctly."
+    );
+  }
+
+  return { ganttFile, wasMigrated };
+}
+
+/**
+ * Collect fields not in the consumedKeys set for round-trip preservation
+ */
+function extractUnknownFields(
+  obj: object,
+  consumedKeys: Set<string>
+): Record<string, unknown> | undefined {
+  const unknownFields: Record<string, unknown> = {};
+  for (const [key, value] of Object.entries(obj)) {
+    if (!consumedKeys.has(key)) {
+      unknownFields[key] = value;
+    }
+  }
+  return Object.keys(unknownFields).length > 0 ? unknownFields : undefined;
 }
 
 /**
@@ -124,36 +172,14 @@ export function deserializeGanttFile(
     const parseResult = parseAndValidate(content, fileName, fileSize);
     if ("error" in parseResult) return parseResult.error;
 
-    let ganttFile = parseResult.ganttFile;
-    let wasMigrated = false;
+    const migration = applyMigration(parseResult.ganttFile, warnings);
+    let ganttFile = migration.ganttFile;
 
-    // Migration (before semantic validation so migrated data gets validated)
-    if (needsMigration(ganttFile.fileVersion)) {
-      const originalVersion = ganttFile.fileVersion;
-      ganttFile = migrateGanttFile(ganttFile);
-      wasMigrated = true;
-      warnings.push(
-        `File migrated from v${originalVersion} to v${FILE_VERSION}`
-      );
-    }
+    // Layer 4: Semantic validation (after migration so migrated data gets validated)
+    const semanticErr = runValidation(() => validateSemantics(ganttFile));
+    if (semanticErr) return semanticErr;
 
-    if (isFromFuture(ganttFile.fileVersion)) {
-      warnings.push(
-        "This file was created with a newer version. Some features may not work correctly."
-      );
-    }
-
-    // Semantic validation
-    try {
-      validateSemantics(ganttFile);
-    } catch (e) {
-      if (e instanceof ValidationError) {
-        return errorResult(e.code, e.message);
-      }
-      throw e;
-    }
-
-    // Sanitization
+    // Layer 5: Sanitization
     ganttFile = sanitizeGanttFile(ganttFile);
 
     const tasks = ganttFile.chart.tasks.map(deserializeTask);
@@ -174,7 +200,7 @@ export function deserializeGanttFile(
         chartId: ganttFile.chart.id,
       },
       warnings: warnings.length > 0 ? warnings : undefined,
-      migrated: wasMigrated,
+      migrated: migration.wasMigrated,
     };
   } catch (e) {
     return errorResult(
@@ -203,23 +229,20 @@ function deserializeTask(serialized: SerializedTask): Task & {
     endDate: endDate,
     duration: serialized.duration,
     progress: serialized.progress ?? 0,
-    color: serialized.color as HexColor,
+    color: serialized.color as HexColor, // Validated by validateTaskColors
     order: serialized.order,
-    type: (serialized.type ?? "task") as TaskType,
+    type: (serialized.type ?? "task") as TaskType, // Validated by validateTaskSemantics
     parent: serialized.parent,
     open: serialized.open ?? true,
-    colorOverride: serialized.colorOverride as HexColor | undefined,
+    colorOverride: serialized.colorOverride as HexColor | undefined, // Validated by validateTaskColors
     metadata: serialized.metadata ?? {},
   };
 
-  const unknownFields: Record<string, unknown> = {};
-  for (const [key, value] of Object.entries(serialized)) {
-    if (!KNOWN_TASK_KEYS.has(key)) {
-      unknownFields[key] = value;
-    }
-  }
-
-  if (Object.keys(unknownFields).length > 0) {
+  const unknownFields = extractUnknownFields(
+    serialized,
+    DESERIALIZED_TASK_KEYS
+  );
+  if (unknownFields) {
     return { ...task, __unknownFields: unknownFields };
   }
 
@@ -237,19 +260,16 @@ function deserializeDependency(
     id: serialized.id,
     fromTaskId: serialized.from,
     toTaskId: serialized.to,
-    type: serialized.type as DependencyType,
+    type: serialized.type as DependencyType, // Validated by validateDependencies
     lag: serialized.lag,
     createdAt: serialized.createdAt ?? "",
   };
 
-  const unknownFields: Record<string, unknown> = {};
-  for (const [key, value] of Object.entries(serialized)) {
-    if (!KNOWN_DEPENDENCY_KEYS.has(key)) {
-      unknownFields[key] = value;
-    }
-  }
-
-  if (Object.keys(unknownFields).length > 0) {
+  const unknownFields = extractUnknownFields(
+    serialized,
+    DESERIALIZED_DEPENDENCY_KEYS
+  );
+  if (unknownFields) {
     return { ...dep, __unknownFields: unknownFields };
   }
 
@@ -261,33 +281,34 @@ function finiteOr(value: unknown, fallback: number): number {
   return typeof value === "number" && Number.isFinite(value) ? value : fallback;
 }
 
+/** Check that a value is a finite positive number, otherwise return the fallback */
+function finitePositiveOr(value: unknown, fallback: null): number | null {
+  return typeof value === "number" && Number.isFinite(value) && value > 0
+    ? value
+    : fallback;
+}
+
 /**
  * Sanitize viewSettings — clamp/fix invalid values rather than rejecting the file.
  * Protects against NaN/Infinity/wrong types propagating into app state.
  */
 function sanitizeViewSettings(raw: ViewSettings): ViewSettings {
   const zoom = finiteOr(raw.zoom, 1);
-  const clampedZoom = Math.max(0.01, Math.min(zoom, 100));
+  const clampedZoom = Math.max(MIN_ZOOM, Math.min(MAX_ZOOM, zoom));
 
   const panOffset = {
     x: finiteOr(raw.panOffset?.x, 0),
     y: finiteOr(raw.panOffset?.y, 0),
   };
 
-  const taskTableWidth =
-    raw.taskTableWidth === null
-      ? null
-      : typeof raw.taskTableWidth === "number" &&
-          Number.isFinite(raw.taskTableWidth) &&
-          raw.taskTableWidth > 0
-        ? raw.taskTableWidth
-        : null;
-
   return {
     ...raw,
     zoom: clampedZoom,
     panOffset,
-    taskTableWidth,
+    taskTableWidth:
+      raw.taskTableWidth === null
+        ? null
+        : finitePositiveOr(raw.taskTableWidth, null),
     showWeekends:
       typeof raw.showWeekends === "boolean" ? raw.showWeekends : true,
     showTodayMarker:

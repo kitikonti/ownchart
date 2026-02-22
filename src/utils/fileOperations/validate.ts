@@ -48,7 +48,7 @@ export function validatePreParse(file: { name: string; size: number }): void {
   if (file.size > MAX_FILE_SIZE) {
     throw new ValidationError(
       "FILE_TOO_LARGE",
-      `File size ${(file.size / 1024 / 1024).toFixed(1)}MB exceeds limit of 50MB`
+      `File size ${(file.size / 1024 / 1024).toFixed(1)}MB exceeds limit of ${MAX_FILE_SIZE / 1024 / 1024}MB`
     );
   }
 
@@ -215,6 +215,24 @@ function validateTaskSemantics(
   index: number,
   taskIds: Set<string>
 ): void {
+  validateTaskId(task, index, taskIds);
+  validateTaskDates(task, index);
+  validateTaskNumericFields(task, index);
+  validateTaskColors(task, index);
+
+  if (task.type && !VALID_TASK_TYPES.has(task.type)) {
+    throw new ValidationError(
+      "INVALID_TASK_TYPE",
+      `Task ${index} has invalid type: ${task.type}`
+    );
+  }
+}
+
+function validateTaskId(
+  task: SerializedTask,
+  index: number,
+  taskIds: Set<string>
+): void {
   if (!UUID_REGEX.test(task.id)) {
     throw new ValidationError(
       "INVALID_ID",
@@ -225,7 +243,9 @@ function validateTaskSemantics(
   if (taskIds.has(task.id)) {
     throw new ValidationError("DUPLICATE_ID", `Duplicate task ID: ${task.id}`);
   }
+}
 
+function validateTaskDates(task: SerializedTask, index: number): void {
   if (!isValidISODate(task.startDate)) {
     throw new ValidationError(
       "INVALID_DATE",
@@ -252,7 +272,9 @@ function validateTaskSemantics(
       `Task ${index}: endDate before startDate`
     );
   }
+}
 
+function validateTaskNumericFields(task: SerializedTask, index: number): void {
   if (
     typeof task.progress !== "number" ||
     !Number.isFinite(task.progress) ||
@@ -275,18 +297,13 @@ function validateTaskSemantics(
       `Task ${index} has invalid duration: ${task.duration}`
     );
   }
+}
 
+function validateTaskColors(task: SerializedTask, index: number): void {
   if (!isValidHexColor(task.color)) {
     throw new ValidationError(
       "INVALID_COLOR",
       `Task ${index} has invalid color: ${task.color}`
-    );
-  }
-
-  if (task.type && !VALID_TASK_TYPES.has(task.type)) {
-    throw new ValidationError(
-      "INVALID_TASK_TYPE",
-      `Task ${index} has invalid type: ${task.type}`
     );
   }
 

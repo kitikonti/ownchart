@@ -3,8 +3,7 @@
  * Forward-compatible file structure for .ownchart files
  */
 
-import type { TaskType } from "../../types/chart.types";
-import type { HexColor } from "../../types/branded.types";
+import type { Task, TaskType } from "../../types/chart.types";
 import type { Dependency as AppDependency } from "../../types/dependency.types";
 import type { ExportOptions } from "../export/types";
 import type {
@@ -146,21 +145,7 @@ export interface FileError {
 export interface DeserializeResult {
   success: boolean;
   data?: {
-    tasks: Array<{
-      id: string;
-      name: string;
-      startDate: string;
-      endDate: string;
-      duration: number;
-      progress: number;
-      color: HexColor;
-      order: number;
-      type?: TaskType;
-      parent?: string;
-      open?: boolean;
-      metadata: Record<string, unknown>;
-      __unknownFields?: Record<string, unknown>;
-    }>;
+    tasks: Array<Task & { __unknownFields?: Record<string, unknown> }>;
     dependencies: AppDependency[]; // Sprint 1.4
     viewSettings: ViewSettings;
     exportSettings?: ExportOptions; // Sprint 1.6

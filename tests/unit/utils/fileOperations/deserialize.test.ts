@@ -741,7 +741,7 @@ describe('File Operations - Deserialization', () => {
       const result = await deserializeGanttFile(JSON.stringify(file), 'test.ownchart');
 
       expect(result.success).toBe(true);
-      expect(result.data!.viewSettings.zoom).toBe(0.01);
+      expect(result.data!.viewSettings.zoom).toBe(0.05); // MIN_ZOOM from timelineUtils
     });
 
     it('should clamp excessive zoom to max', async () => {
@@ -751,7 +751,7 @@ describe('File Operations - Deserialization', () => {
       const result = await deserializeGanttFile(JSON.stringify(file), 'test.ownchart');
 
       expect(result.success).toBe(true);
-      expect(result.data!.viewSettings.zoom).toBe(100);
+      expect(result.data!.viewSettings.zoom).toBe(3); // MAX_ZOOM from timelineUtils
     });
 
     it('should default NaN zoom to 1', async () => {
