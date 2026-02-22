@@ -485,14 +485,4 @@ describe("getColumnDisplayValue", () => {
     expect(getColumnDisplayValue(task as Task, "progress")).toBeNull();
   });
 
-  // --- unknown column ---
-
-  it("returns null for unknown column key", () => {
-    expect(
-      getColumnDisplayValue(
-        baseTask,
-        "name" as Parameters<typeof getColumnDisplayValue>[1]
-      )
-    ).toBeNull();
-  });
 });

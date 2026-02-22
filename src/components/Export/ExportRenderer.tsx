@@ -9,6 +9,7 @@ import { useMemo } from "react";
 import type { Task } from "../../types/chart.types";
 import type {
   ExportColumnKey,
+  ExportDataColumnKey,
   ExportLayoutInput,
 } from "../../utils/export/types";
 import { computeExportLayout } from "../../utils/export/exportLayout";
@@ -98,10 +99,10 @@ function ExportTaskTableHeader({
   );
 }
 
-/** Maps a column key to its display value for a given task. */
+/** Maps a data column key to its display value for a given task. */
 export function getColumnDisplayValue(
   task: Task,
-  key: ExportColumnKey
+  key: ExportDataColumnKey
 ): string | null {
   if (key === "startDate") return task.startDate || null;
 

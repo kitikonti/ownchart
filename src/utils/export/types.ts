@@ -173,6 +173,13 @@ export type ExportColumnKey =
   | "duration"
   | "progress";
 
+/** Data-only columns (excludes layout columns like color/name that need special rendering) */
+export type ExportDataColumnKey =
+  | "startDate"
+  | "endDate"
+  | "duration"
+  | "progress";
+
 /** Zoom mode for export */
 export type ExportZoomMode = "currentView" | "custom" | "fitToWidth";
 
