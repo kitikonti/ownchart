@@ -13,7 +13,7 @@ import {
 } from "react";
 import { useTaskStore, type EditableField } from "../../store/slices/taskSlice";
 import { useChartStore } from "../../store/slices/chartSlice";
-import { getVisibleColumns } from "../../config/tableColumns";
+import { getVisibleColumns, NAME_COLUMN_ID } from "../../config/tableColumns";
 import { usePlaceholderContextMenu } from "../../hooks/usePlaceholderContextMenu";
 import { ContextMenu } from "../ContextMenu/ContextMenu";
 import { PLACEHOLDER_TASK_ID } from "../../config/placeholderRow";
@@ -228,7 +228,7 @@ export function NewTaskPlaceholderRow(): JSX.Element {
     paddingTop: "var(--density-cell-padding-y)",
     paddingBottom: "var(--density-cell-padding-y)",
     paddingLeft:
-      columnId === "name"
+      columnId === NAME_COLUMN_ID
         ? "var(--density-cell-padding-x)"
         : "var(--density-cell-padding-x)",
     paddingRight: "var(--density-cell-padding-x)",
@@ -274,10 +274,10 @@ export function NewTaskPlaceholderRow(): JSX.Element {
         return (
           <div
             key={column.id}
-            ref={column.id === "name" ? cellRef : undefined}
+            ref={column.id === NAME_COLUMN_ID ? cellRef : undefined}
             tabIndex={0}
-            className={`${column.id !== "color" ? "border-r" : ""} border-b border-neutral-200 flex items-center ${
-              column.id === "name" && isEditing
+            className={`${column.showRightBorder !== false ? "border-r" : ""} border-b border-neutral-200 flex items-center ${
+              column.id === NAME_COLUMN_ID && isEditing
                 ? "bg-white z-20"
                 : isSelected
                   ? "bg-neutral-100"
@@ -287,7 +287,7 @@ export function NewTaskPlaceholderRow(): JSX.Element {
             } cursor-pointer`}
             style={{
               ...getCellStyle(column.id),
-              ...(column.id === "name" && isEditing
+              ...(column.id === NAME_COLUMN_ID && isEditing
                 ? { boxShadow: `inset 0 0 0 2px ${COLORS.brand[600]}` }
                 : isActiveCell
                   ? { boxShadow: `inset 0 0 0 2px ${COLORS.brand[600]}` }
@@ -299,10 +299,12 @@ export function NewTaskPlaceholderRow(): JSX.Element {
                 : undefined
             }
             onContextMenu={handlePlaceholderContextMenu}
-            onKeyDown={column.id === "name" ? handleCellKeyDown : undefined}
+            onKeyDown={
+              column.id === NAME_COLUMN_ID ? handleCellKeyDown : undefined
+            }
             role="gridcell"
           >
-            {column.id === "name" &&
+            {column.id === NAME_COLUMN_ID &&
               (isEditing ? (
                 <input
                   ref={inputRef}

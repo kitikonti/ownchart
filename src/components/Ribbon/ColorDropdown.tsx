@@ -24,7 +24,7 @@ import { useDropdown } from "../../hooks/useDropdown";
 import { DropdownTrigger } from "../Toolbar/DropdownTrigger";
 import { DropdownPanel } from "../Toolbar/DropdownPanel";
 import { DropdownItem } from "../Toolbar/DropdownItem";
-import { TOOLBAR } from "../../styles/design-tokens";
+import { TOOLBAR, TYPOGRAPHY } from "../../styles/design-tokens";
 import { Button } from "../common/Button";
 import type { ColorMode } from "../../types/colorMode.types";
 import type { HexColor, PaletteId } from "../../types/branded.types";
@@ -177,7 +177,7 @@ export function ColorDropdown({
               fontWeight: 600,
               color: "rgb(100, 100, 100)",
               textTransform: "uppercase",
-              letterSpacing: "0.5px",
+              letterSpacing: TYPOGRAPHY.letterSpacing.wide,
             }}
           >
             {CATEGORY_LABELS[category]}

@@ -147,6 +147,9 @@ export const TYPOGRAPHY = {
     normal: 1.5,
     relaxed: 1.75,
   },
+  letterSpacing: {
+    wide: "0.5px",
+  },
 } as const;
 
 // =============================================================================
@@ -178,6 +181,22 @@ export const SHADOWS = {
   modal: "0 0 8px rgba(0,0,0,0.12), 0 32px 64px rgba(0,0,0,0.14)",
   // Focus ring (for accessibility)
   focus: `0 0 0 2px ${brand[100]}`,
+} as const;
+
+// =============================================================================
+// Z-INDEX (stacking order)
+// =============================================================================
+
+export const Z_INDEX = {
+  rowHighlight: 5,
+  rowIndicator: 25,
+  hiddenRow: 40,
+  hiddenRowHover: 42,
+  rowControls: 45,
+  insertLine: 60,
+  stickyHeader: 100,
+  dropdown: 1000,
+  popover: 10000,
 } as const;
 
 // =============================================================================

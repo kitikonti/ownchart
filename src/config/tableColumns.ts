@@ -65,6 +65,9 @@ export interface ColumnDefinition {
 
   /** Full label for menus/dropdowns (falls back to label if not set) */
   menuLabel?: string;
+
+  /** Whether to show right border (default: true). Set false for borderless columns like color. */
+  showRightBorder?: boolean;
 }
 
 /** Wrap a string validator with a typeof guard. */
@@ -89,6 +92,9 @@ function numberValidator(
   };
 }
 
+/** The name column requires special layout handling (minmax, indentation). */
+export const NAME_COLUMN_ID: ColumnId = "name";
+
 /**
  * Task table column definitions.
  */
@@ -108,6 +114,7 @@ export const TASK_COLUMNS: ColumnDefinition[] = [
     editable: true,
     renderer: "color",
     validator: stringValidator(validateColor),
+    showRightBorder: false,
   },
   {
     id: "name",
@@ -238,7 +245,7 @@ export function getDensityAwareWidth(
   columnId: string,
   densityConfig: DensityConfig
 ): string {
-  if (columnId === "name") {
+  if (columnId === NAME_COLUMN_ID) {
     return `minmax(${densityConfig.columnWidths.nameMin}px, 1fr)`;
   }
 

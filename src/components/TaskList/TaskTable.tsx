@@ -28,6 +28,7 @@ import { NewTaskPlaceholderRow } from "./NewTaskPlaceholderRow";
 import {
   getDensityAwareWidth,
   getVisibleColumns,
+  NAME_COLUMN_ID,
 } from "../../config/tableColumns";
 import { ColumnResizer } from "./ColumnResizer";
 import { useTableDimensions } from "../../hooks/useTableDimensions";
@@ -180,7 +181,7 @@ export function TaskTable({ hideHeader = true }: TaskTableProps): JSX.Element {
               {visibleColumns.map((column) => (
                 <div
                   key={column.id}
-                  className={`task-table-header-cell sticky top-0 z-10 ${column.id === "name" ? "pr-3" : "px-3"} py-4 bg-neutral-50 border-b ${column.id !== "color" ? "border-r" : ""} border-neutral-200 text-xs font-semibold text-neutral-600 uppercase tracking-wider relative`}
+                  className={`task-table-header-cell sticky top-0 z-10 ${column.id === NAME_COLUMN_ID ? "pr-3" : "px-3"} py-4 bg-neutral-50 border-b ${column.showRightBorder !== false ? "border-r" : ""} border-neutral-200 text-xs font-semibold text-neutral-600 uppercase tracking-wider relative`}
                   role="columnheader"
                 >
                   {column.id === "rowNumber" ? (
@@ -198,7 +199,7 @@ export function TaskTable({ hideHeader = true }: TaskTableProps): JSX.Element {
                     column.label
                   )}
                   {/* Column Resizer - only for name column */}
-                  {column.id === "name" && (
+                  {column.id === NAME_COLUMN_ID && (
                     <ColumnResizer
                       columnId={column.id}
                       currentWidth={getColumnWidth(column.id)}
