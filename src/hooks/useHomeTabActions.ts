@@ -16,14 +16,16 @@ import { COLORS } from "../styles/design-tokens";
 const DEFAULT_NEW_TASK_DURATION_DAYS = 7;
 const DEFAULT_TASK_NAME = "New Task";
 
+const formatDate = (date: Date): string => date.toISOString().split("T")[0];
+
 interface HomeTabActions {
   // History
   undo: () => void;
   redo: () => void;
   canUndo: boolean;
   canRedo: boolean;
-  undoDescription: string | null;
-  redoDescription: string | null;
+  undoDescription: string;
+  redoDescription: string;
   // Clipboard
   handleCopy: () => void;
   handleCut: () => void;
@@ -124,8 +126,6 @@ export function useHomeTabActions(): HomeTabActions {
     const endDate = new Date(today);
     endDate.setDate(today.getDate() + DEFAULT_NEW_TASK_DURATION_DAYS - 1);
 
-    const formatDate = (date: Date): string => date.toISOString().split("T")[0];
-
     addTask({
       name: DEFAULT_TASK_NAME,
       startDate: formatDate(today),
@@ -161,8 +161,8 @@ export function useHomeTabActions(): HomeTabActions {
     redo,
     canUndo,
     canRedo,
-    undoDescription,
-    redoDescription,
+    undoDescription: undoDescription ?? "",
+    redoDescription: redoDescription ?? "",
     handleCopy,
     handleCut,
     handlePaste,

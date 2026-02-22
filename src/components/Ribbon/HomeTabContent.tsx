@@ -37,6 +37,39 @@ import { COLORS } from "../../styles/design-tokens";
 
 const ICON_SIZE = TOOLBAR_TOKENS.iconSize;
 
+// Badge sizing constants
+const BADGE_FONT_SIZE_PX = 8;
+const BADGE_MIN_WIDTH_PX = 12;
+const BADGE_HEIGHT_PX = 12;
+
+function IconWithBadge({
+  count,
+  children,
+}: {
+  count: number;
+  children: React.ReactNode;
+}): JSX.Element {
+  return (
+    <span className="relative inline-flex">
+      {children}
+      {count > 0 && (
+        <span
+          className="absolute -top-0.5 -right-1 font-semibold rounded-full flex items-center justify-center px-0.5 leading-none"
+          style={{
+            backgroundColor: COLORS.brand[600],
+            color: COLORS.neutral[0],
+            fontSize: `${BADGE_FONT_SIZE_PX}px`,
+            minWidth: `${BADGE_MIN_WIDTH_PX}px`,
+            height: `${BADGE_HEIGHT_PX}px`,
+          }}
+        >
+          {count}
+        </span>
+      )}
+    </span>
+  );
+}
+
 export function HomeTabContent(): JSX.Element {
   const {
     undo,
@@ -204,17 +237,9 @@ export function HomeTabContent(): JSX.Element {
               : "Unhide rows in selection"
           }
           icon={
-            <span className="relative inline-flex">
+            <IconWithBadge count={totalHiddenCount}>
               <Eye size={ICON_SIZE} weight="light" />
-              {totalHiddenCount > 0 && (
-                <span
-                  className="absolute -top-0.5 -right-1 text-white text-[8px] font-semibold min-w-[12px] h-3 rounded-full flex items-center justify-center px-0.5 leading-none"
-                  style={{ backgroundColor: COLORS.brand[600] }}
-                >
-                  {totalHiddenCount}
-                </span>
-              )}
-            </span>
+            </IconWithBadge>
           }
         />
       </ToolbarGroup>
