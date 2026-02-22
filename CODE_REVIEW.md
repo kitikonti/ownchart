@@ -96,8 +96,8 @@ cd ../app-gantt-review
 - [x] `src/styles/design-tokens.ts` (283 LOC)
 
 ### Priority: HIGH — File Operations (kritischer Pfad)
-- [ ] `src/utils/fileOperations/validate.ts` (299 LOC)
-- [ ] `src/utils/fileOperations/deserialize.ts` (233 LOC)
+- [x] `src/utils/fileOperations/validate.ts` (299 LOC)
+- [x] `src/utils/fileOperations/deserialize.ts` (233 LOC)
 - [ ] `src/utils/fileOperations/fileDialog.ts` (215 LOC)
 - [ ] `src/utils/fileOperations/types.ts` (192 LOC)
 - [ ] `src/utils/fileOperations/serialize.ts` (159 LOC)
@@ -323,11 +323,14 @@ Entscheidungen aus bisherigen Reviews die fuer zukuenftige Dateien gelten.
 - **Typisierte IDs im Config-Layer, `string` an Boundaries**: `ColumnId` Union-Type in `tableColumns.ts` fuer Typsicherheit in der Spalten-Konfiguration. Store-State (`hiddenColumns`, `columnWidths`) und File-Format behalten `string` fuer Forward-Kompatibilitaet. Lookup in `Partial<Record<ColumnId, ...>>` mit `as ColumnId` Cast ist sicher wenn der Fallback `undefined` handled.
 - **Shared Layout-Berechnung bei Render+Dimension-Dualitaet**: Wenn eine Komponente und eine standalone-Funktion dieselbe Berechnungskette brauchen, in Pure Function extrahieren (`computeExportLayout`). Komponente wrapped via `useMemo`, Funktion ruft direkt auf. Vermeidet ~100+ LOC Duplikation.
 - **Unbenutzte Phase-2 Properties entfernen**: Interface-Properties die nur "fuer spaeter" deklariert sind aber keinen Consumer haben (z.B. `Task.lazy`) werden entfernt. Koennen bei Bedarf via Git-History wiederhergestellt werden.
+- **Milestone endDate-Vertrag**: Validation (validate.ts) erlaubt leeren `endDate` fuer Milestones, Deserialization (deserialize.ts) fixt ihn zu `startDate`. Impliziter Cross-File-Vertrag — bei Aenderungen an einer Seite die andere mitpruefen.
+- **KNOWN_TASK_KEYS nur fuer gemappte Felder**: Nur Felder die `deserializeTask()` tatsaechlich in das `Task`-Objekt uebernimmt gehoeren in `KNOWN_TASK_KEYS`. Alles andere landet in `__unknownFields` fuer Round-Trip-Kompatibilitaet. Timestamps (`createdAt`/`updatedAt`) sind NICHT gemappt und muessen round-trippen.
+- **Runtime-Validation fuer alle File-Format-Felder**: TypeScript-Typen genuegen NICHT fuer Daten aus JSON-Dateien. Jedes Feld das via `as` gecastet wird muss vorher runtime-validiert sein (z.B. `task.type` gegen `VALID_TASK_TYPES`, `colorOverride` gegen Hex-Regex).
 
 ---
 
 ## Progress
 
-- Reviewed: 35 / 193 Dateien
-- Offene Issues: 37 Hex-Farben in 9 .tsx-Dateien, ~18 toISODateString-Umstellungen
+- Reviewed: 36 / 193 Dateien
+- Offene Issues: 38 Hex-Farben in 10 .tsx-Dateien, ~18 toISODateString-Umstellungen
 - Test-Coverage: 80%+

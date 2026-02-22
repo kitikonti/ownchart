@@ -99,7 +99,7 @@ export function serializeToGanttFile(
 
   // Calculate file size
   const jsonString = JSON.stringify(ganttFile);
-  ganttFile.metadata.fileSize = new Blob([jsonString]).size;
+  ganttFile.metadata!.fileSize = new Blob([jsonString]).size;
 
   return options.prettyPrint
     ? JSON.stringify(ganttFile, null, 2)
@@ -145,10 +145,11 @@ function serializeTask(task: Task): SerializedTask {
 
 /**
  * Convert Dependency to SerializedDependency for file format
+ * Preserves __unknownFields for round-trip compatibility
  * Sprint 1.4 - Dependencies
  */
 function serializeDependency(dep: Dependency): SerializedDependency {
-  return {
+  const serialized: SerializedDependency = {
     id: dep.id,
     from: dep.fromTaskId,
     to: dep.toTaskId,
@@ -156,4 +157,17 @@ function serializeDependency(dep: Dependency): SerializedDependency {
     lag: dep.lag,
     createdAt: dep.createdAt,
   };
+
+  // Preserve unknown fields from future versions
+  const depWithUnknownFields = dep as Dependency & {
+    __unknownFields?: Record<string, unknown>;
+  };
+  if (
+    depWithUnknownFields.__unknownFields &&
+    typeof depWithUnknownFields.__unknownFields === "object"
+  ) {
+    Object.assign(serialized, depWithUnknownFields.__unknownFields);
+  }
+
+  return serialized;
 }

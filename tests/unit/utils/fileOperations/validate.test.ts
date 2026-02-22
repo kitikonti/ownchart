@@ -14,44 +14,50 @@ import {
 
 describe('File Operations - Validation', () => {
   describe('Layer 1: Pre-Parse Validation', () => {
-    it('should reject files larger than 50MB', async () => {
+    it('should reject files larger than 50MB', () => {
       const largeFile = new File(['x'], 'test.ownchart', {
         type: 'application/json',
       });
       Object.defineProperty(largeFile, 'size', { value: 51 * 1024 * 1024 });
 
-      await expect(validatePreParse(largeFile)).rejects.toThrow(
-        ValidationError
-      );
-      await expect(validatePreParse(largeFile)).rejects.toThrow(
-        'exceeds limit of 50MB'
-      );
+      expect(() => validatePreParse(largeFile)).toThrow(ValidationError);
+      expect(() => validatePreParse(largeFile)).toThrow('exceeds limit of 50MB');
     });
 
-    it('should accept files smaller than 50MB', async () => {
+    it('should accept files smaller than 50MB', () => {
       const validFile = new File(['{}'], 'test.ownchart', {
         type: 'application/json',
       });
 
-      await expect(validatePreParse(validFile)).resolves.not.toThrow();
+      expect(() => validatePreParse(validFile)).not.toThrow();
     });
 
-    it('should reject files without .ownchart extension', async () => {
+    it('should reject files without .ownchart extension', () => {
       const wrongExtension = new File(['{}'], 'test.json', {
         type: 'application/json',
       });
 
-      await expect(validatePreParse(wrongExtension)).rejects.toThrow(
+      expect(() => validatePreParse(wrongExtension)).toThrow(
         'must have .ownchart extension'
       );
     });
 
-    it('should accept files with .ownchart extension', async () => {
+    it('should accept files with .ownchart extension', () => {
       const validFile = new File(['{}'], 'test.ownchart', {
         type: 'application/json',
       });
 
-      await expect(validatePreParse(validFile)).resolves.not.toThrow();
+      expect(() => validatePreParse(validFile)).not.toThrow();
+    });
+
+    it('should reject empty (zero-byte) files', () => {
+      const emptyFile = new File([], 'test.ownchart', {
+        type: 'application/json',
+      });
+      Object.defineProperty(emptyFile, 'size', { value: 0 });
+
+      expect(() => validatePreParse(emptyFile)).toThrow(ValidationError);
+      expect(() => validatePreParse(emptyFile)).toThrow('File is empty');
     });
   });
 
@@ -120,7 +126,7 @@ describe('File Operations - Validation', () => {
     it('should reject non-array tasks', () => {
       const invalid = {
         fileVersion: '1.0.0',
-        chart: { tasks: 'not an array' },
+        chart: { id: 'test-id', name: 'Test', tasks: 'not an array' },
       };
 
       expect(() => validateStructure(invalid)).toThrow('chart.tasks must be an array');
@@ -140,7 +146,7 @@ describe('File Operations - Validation', () => {
 
       const invalid = {
         fileVersion: '1.0.0',
-        chart: { tasks: tooManyTasks, viewSettings: {} },
+        chart: { id: 'test-id', name: 'Test', tasks: tooManyTasks, viewSettings: {} },
       };
 
       expect(() => validateStructure(invalid)).toThrow('10001 tasks (max: 10000)');
@@ -150,6 +156,8 @@ describe('File Operations - Validation', () => {
       const invalid = {
         fileVersion: '1.0.0',
         chart: {
+          id: 'test-id',
+          name: 'Test',
           tasks: [{ id: 'test' }], // Missing other required fields
           viewSettings: {},
         },
@@ -158,10 +166,46 @@ describe('File Operations - Validation', () => {
       expect(() => validateStructure(invalid)).toThrow('missing field');
     });
 
+    it('should reject missing chart.id', () => {
+      const invalid = {
+        fileVersion: '1.0.0',
+        chart: { name: 'Test', tasks: [], viewSettings: {} },
+      };
+
+      expect(() => validateStructure(invalid)).toThrow('chart.id');
+    });
+
+    it('should reject non-string chart.id', () => {
+      const invalid = {
+        fileVersion: '1.0.0',
+        chart: { id: 123, name: 'Test', tasks: [], viewSettings: {} },
+      };
+
+      expect(() => validateStructure(invalid)).toThrow('chart.id');
+    });
+
+    it('should reject missing chart.name', () => {
+      const invalid = {
+        fileVersion: '1.0.0',
+        chart: { id: 'some-id', tasks: [], viewSettings: {} },
+      };
+
+      expect(() => validateStructure(invalid)).toThrow('chart.name');
+    });
+
+    it('should reject non-string chart.name', () => {
+      const invalid = {
+        fileVersion: '1.0.0',
+        chart: { id: 'some-id', name: 42, tasks: [], viewSettings: {} },
+      };
+
+      expect(() => validateStructure(invalid)).toThrow('chart.name');
+    });
+
     it('should reject missing viewSettings', () => {
       const invalid = {
         fileVersion: '1.0.0',
-        chart: { tasks: [] },
+        chart: { id: 'test-id', name: 'Test', tasks: [] },
       };
 
       expect(() => validateStructure(invalid)).toThrow('Missing required field: chart.viewSettings');
@@ -171,6 +215,8 @@ describe('File Operations - Validation', () => {
       const valid = {
         fileVersion: '1.0.0',
         chart: {
+          id: '123e4567-e89b-12d3-a456-426614174099',
+          name: 'Test Chart',
           tasks: [
             {
               id: '123e4567-e89b-12d3-a456-426614174000',
@@ -261,15 +307,15 @@ describe('File Operations - Validation', () => {
       expect(() => validateSemantics(invalid)).toThrow('invalid endDate');
     });
 
-    it('should auto-fix milestone with empty endDate to startDate', () => {
+    it('should allow milestone with empty endDate (auto-fixed in deserialization)', () => {
       const file = createValidFile();
       file.chart.tasks[0].type = 'milestone';
       file.chart.tasks[0].endDate = '';
       file.chart.tasks[0].startDate = '2026-01-01';
       file.chart.tasks[0].duration = 0;
 
+      // Validation permits empty endDate for milestones; deserializeTask() fixes it
       expect(() => validateSemantics(file)).not.toThrow();
-      expect(file.chart.tasks[0].endDate).toBe('2026-01-01');
     });
 
     it('should reject endDate before startDate', () => {
@@ -393,6 +439,298 @@ describe('File Operations - Validation', () => {
       ];
 
       expect(() => validateSemantics(valid)).not.toThrow();
+    });
+
+    it('should reject date overflow (e.g. Feb 30)', () => {
+      const invalid = createValidFile();
+      invalid.chart.tasks[0].endDate = '2026-02-30';
+
+      expect(() => validateSemantics(invalid)).toThrow('invalid endDate');
+    });
+
+    it('should reject NaN progress', () => {
+      const invalid = createValidFile();
+      invalid.chart.tasks[0].progress = NaN;
+
+      expect(() => validateSemantics(invalid)).toThrow('invalid progress');
+    });
+
+    it('should reject Infinity progress', () => {
+      const invalid = createValidFile();
+      invalid.chart.tasks[0].progress = Infinity;
+
+      expect(() => validateSemantics(invalid)).toThrow('invalid progress');
+    });
+
+    it('should reject negative duration', () => {
+      const invalid = createValidFile();
+      invalid.chart.tasks[0].duration = -5;
+
+      expect(() => validateSemantics(invalid)).toThrow('invalid duration');
+    });
+
+    it('should reject NaN duration', () => {
+      const invalid = createValidFile();
+      invalid.chart.tasks[0].duration = NaN;
+
+      expect(() => validateSemantics(invalid)).toThrow('invalid duration');
+    });
+
+    it('should reject Infinity duration', () => {
+      const invalid = createValidFile();
+      invalid.chart.tasks[0].duration = Infinity;
+
+      expect(() => validateSemantics(invalid)).toThrow('invalid duration');
+    });
+
+    it('should reject non-numeric duration', () => {
+      const invalid = createValidFile();
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      (invalid.chart.tasks[0] as any).duration = 'five';
+
+      expect(() => validateSemantics(invalid)).toThrow('invalid duration');
+    });
+
+    it('should accept zero duration (milestones)', () => {
+      const valid = createValidFile();
+      valid.chart.tasks[0].type = 'milestone';
+      valid.chart.tasks[0].duration = 0;
+      valid.chart.tasks[0].endDate = valid.chart.tasks[0].startDate;
+
+      expect(() => validateSemantics(valid)).not.toThrow();
+    });
+
+    it('should reject invalid task type', () => {
+      const invalid = createValidFile();
+      invalid.chart.tasks[0].type = 'invalid_type';
+
+      expect(() => validateSemantics(invalid)).toThrow('invalid type');
+    });
+
+    it('should accept valid task types (task, summary, milestone)', () => {
+      for (const type of ['task', 'summary', 'milestone']) {
+        const valid = createValidFile();
+        valid.chart.tasks[0].type = type;
+        if (type === 'milestone') {
+          valid.chart.tasks[0].endDate = valid.chart.tasks[0].startDate;
+          valid.chart.tasks[0].duration = 0;
+        }
+        expect(() => validateSemantics(valid)).not.toThrow();
+      }
+    });
+
+    it('should reject invalid colorOverride', () => {
+      const invalid = createValidFile();
+      invalid.chart.tasks[0].colorOverride = 'not-a-color';
+
+      expect(() => validateSemantics(invalid)).toThrow('invalid colorOverride');
+    });
+
+    it('should accept valid colorOverride', () => {
+      const valid = createValidFile();
+      valid.chart.tasks[0].colorOverride = '#FF5733';
+
+      expect(() => validateSemantics(valid)).not.toThrow();
+    });
+
+    it('should reject non-string colorOverride (e.g. number)', () => {
+      const invalid = createValidFile();
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      (invalid.chart.tasks[0] as any).colorOverride = 42;
+
+      expect(() => validateSemantics(invalid)).toThrow('non-string colorOverride');
+    });
+
+    it('should reject non-string colorOverride (e.g. boolean)', () => {
+      const invalid = createValidFile();
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      (invalid.chart.tasks[0] as any).colorOverride = true;
+
+      expect(() => validateSemantics(invalid)).toThrow('non-string colorOverride');
+    });
+
+    it('should accept undefined colorOverride', () => {
+      const valid = createValidFile();
+      valid.chart.tasks[0].colorOverride = undefined;
+
+      expect(() => validateSemantics(valid)).not.toThrow();
+    });
+  });
+
+  describe('Layer 4: Dependency Validation', () => {
+    // eslint-disable-next-line @typescript-eslint/explicit-function-return-type
+    const createFileWithDeps = () => {
+      const file = {
+        fileVersion: '1.0.0',
+        chart: {
+          id: '123e4567-e89b-12d3-a456-426614174000',
+          name: 'Test Chart',
+          tasks: [
+            {
+              id: '123e4567-e89b-12d3-a456-426614174001',
+              name: 'Task 1',
+              startDate: '2026-01-01',
+              endDate: '2026-01-05',
+              duration: 5,
+              progress: 0,
+              color: '#000000',
+              order: 0,
+            },
+            {
+              id: '123e4567-e89b-12d3-a456-426614174002',
+              name: 'Task 2',
+              startDate: '2026-01-06',
+              endDate: '2026-01-10',
+              duration: 5,
+              progress: 0,
+              color: '#000000',
+              order: 1,
+            },
+          ],
+          dependencies: [
+            {
+              id: '123e4567-e89b-12d3-a456-426614174010',
+              from: '123e4567-e89b-12d3-a456-426614174001',
+              to: '123e4567-e89b-12d3-a456-426614174002',
+              type: 'FS',
+            },
+          ],
+          viewSettings: {
+            zoom: 1,
+            panOffset: { x: 0, y: 0 },
+            showWeekends: true,
+            showTodayMarker: true,
+            taskTableWidth: null,
+          },
+          metadata: {
+            createdAt: '2026-01-01T00:00:00.000Z',
+            updatedAt: '2026-01-01T00:00:00.000Z',
+          },
+        },
+        metadata: {
+          created: '2026-01-01T00:00:00.000Z',
+          modified: '2026-01-01T00:00:00.000Z',
+        },
+      };
+      return file as ReturnType<typeof createFileWithDeps>;
+    };
+
+    it('should accept valid dependencies', () => {
+      expect(() => validateSemantics(createFileWithDeps())).not.toThrow();
+    });
+
+    it('should reject dependency with invalid UUID', () => {
+      const file = createFileWithDeps();
+      file.chart.dependencies[0].id = 'not-a-uuid';
+
+      expect(() => validateSemantics(file)).toThrow('invalid UUID');
+    });
+
+    it('should reject duplicate dependency IDs', () => {
+      const file = createFileWithDeps();
+      file.chart.dependencies.push({
+        ...file.chart.dependencies[0],
+        from: '123e4567-e89b-12d3-a456-426614174002',
+        to: '123e4567-e89b-12d3-a456-426614174001',
+      });
+
+      expect(() => validateSemantics(file)).toThrow('Duplicate dependency ID');
+    });
+
+    it('should reject dependency with invalid type', () => {
+      const file = createFileWithDeps();
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      (file.chart.dependencies[0] as any).type = 'INVALID';
+
+      expect(() => validateSemantics(file)).toThrow('invalid type');
+    });
+
+    it('should reject self-referencing dependency', () => {
+      const file = createFileWithDeps();
+      file.chart.dependencies[0].to = file.chart.dependencies[0].from;
+
+      expect(() => validateSemantics(file)).toThrow('self-reference');
+    });
+
+    it('should reject dependency with dangling source task', () => {
+      const file = createFileWithDeps();
+      file.chart.dependencies[0].from = '123e4567-e89b-12d3-a456-999999999999';
+
+      expect(() => validateSemantics(file)).toThrow('non-existent source task');
+    });
+
+    it('should reject dependency with dangling target task', () => {
+      const file = createFileWithDeps();
+      file.chart.dependencies[0].to = '123e4567-e89b-12d3-a456-999999999999';
+
+      expect(() => validateSemantics(file)).toThrow('non-existent target task');
+    });
+
+    it('should accept all valid dependency types', () => {
+      for (const type of ['FS', 'SS', 'FF', 'SF']) {
+        const file = createFileWithDeps();
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        (file.chart.dependencies[0] as any).type = type;
+        expect(() => validateSemantics(file)).not.toThrow();
+      }
+    });
+
+    it('should reject dependency with non-number lag', () => {
+      const file = createFileWithDeps();
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      (file.chart.dependencies[0] as any).lag = 'five';
+
+      expect(() => validateSemantics(file)).toThrow('invalid lag');
+    });
+
+    it('should reject dependency with NaN lag', () => {
+      const file = createFileWithDeps();
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      (file.chart.dependencies[0] as any).lag = NaN;
+
+      expect(() => validateSemantics(file)).toThrow('invalid lag');
+    });
+
+    it('should reject dependency with Infinity lag', () => {
+      const file = createFileWithDeps();
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      (file.chart.dependencies[0] as any).lag = Infinity;
+
+      expect(() => validateSemantics(file)).toThrow('invalid lag');
+    });
+
+    it('should accept dependency with valid numeric lag', () => {
+      const file = createFileWithDeps();
+      file.chart.dependencies[0].lag = 3;
+
+      expect(() => validateSemantics(file)).not.toThrow();
+    });
+
+    it('should accept dependency with negative lag (overlap)', () => {
+      const file = createFileWithDeps();
+      file.chart.dependencies[0].lag = -2;
+
+      expect(() => validateSemantics(file)).not.toThrow();
+    });
+
+    it('should accept dependency with zero lag', () => {
+      const file = createFileWithDeps();
+      file.chart.dependencies[0].lag = 0;
+
+      expect(() => validateSemantics(file)).not.toThrow();
+    });
+
+    it('should accept dependency without lag (undefined)', () => {
+      const file = createFileWithDeps();
+      delete file.chart.dependencies[0].lag;
+
+      expect(() => validateSemantics(file)).not.toThrow();
+    });
+  });
+
+  describe('Layer 3: Array rejection', () => {
+    it('should reject top-level array', () => {
+      expect(() => validateStructure([1, 2, 3])).toThrow('must be a JSON object');
     });
   });
 });

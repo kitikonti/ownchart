@@ -3,8 +3,7 @@
  * Forward-compatible file structure for .ownchart files
  */
 
-import type { TaskType } from "../../types/chart.types";
-import type { HexColor } from "../../types/branded.types";
+import type { Task, TaskType } from "../../types/chart.types";
 import type { Dependency as AppDependency } from "../../types/dependency.types";
 import type { ExportOptions } from "../export/types";
 import type {
@@ -16,8 +15,8 @@ import type { ColorModeState } from "../../types/colorMode.types";
 export interface GanttFile {
   // Format identification
   fileVersion: string; // "1.0.0" - file format version
-  appVersion: string; // "0.0.1" - app version that created it
-  schemaVersion: number; // 1 - for migration tracking
+  appVersion?: string; // "0.0.1" - app version that created it (optional on load)
+  schemaVersion?: number; // 1 - for migration tracking (optional on load)
 
   // Chart data
   chart: {
@@ -36,15 +35,15 @@ export interface GanttFile {
     // Export settings (Sprint 1.6+)
     exportSettings?: ExportOptions;
 
-    // Chart metadata
-    metadata: {
+    // Chart metadata (optional on load — written by serialize, not validated on parse)
+    metadata?: {
       createdAt: string; // ISO 8601
       updatedAt: string; // ISO 8601
     };
   };
 
-  // File metadata
-  metadata: {
+  // File metadata (optional on load — written by serialize, not validated on parse)
+  metadata?: {
     created: string; // ISO 8601
     modified: string; // ISO 8601
     fileSize?: number; // Bytes
@@ -146,22 +145,10 @@ export interface FileError {
 export interface DeserializeResult {
   success: boolean;
   data?: {
-    tasks: Array<{
-      id: string;
-      name: string;
-      startDate: string;
-      endDate: string;
-      duration: number;
-      progress: number;
-      color: HexColor;
-      order: number;
-      type?: TaskType;
-      parent?: string;
-      open?: boolean;
-      metadata: Record<string, unknown>;
-      __unknownFields?: Record<string, unknown>;
-    }>;
-    dependencies: AppDependency[]; // Sprint 1.4
+    tasks: Array<Task & { __unknownFields?: Record<string, unknown> }>;
+    dependencies: Array<
+      AppDependency & { __unknownFields?: Record<string, unknown> }
+    >; // Sprint 1.4
     viewSettings: ViewSettings;
     exportSettings?: ExportOptions; // Sprint 1.6
     chartName: string;
