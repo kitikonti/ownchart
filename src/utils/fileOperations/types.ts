@@ -22,17 +22,13 @@ export interface GanttFile {
   chart: {
     id: string; // UUID v4
     name: string; // Chart title ("My Project")
-    description?: string; // Optional description
-    tasks: SerializedTask[]; // All tasks with hierarchy
-
-    // Future features (empty arrays for now)
-    dependencies?: SerializedDependency[]; // Task dependencies (Sprint 1.4+)
-    resources?: Resource[]; // Resource assignments (future)
+    description?: string;
+    tasks: SerializedTask[];
+    dependencies?: SerializedDependency[];
 
     // View state
     viewSettings: ViewSettings;
 
-    // Export settings (Sprint 1.6+)
     exportSettings?: ExportOptions;
 
     // Chart metadata (optional on load — written by serialize, not validated on parse)
@@ -53,7 +49,7 @@ export interface GanttFile {
   features?: {
     hasHierarchy: boolean;
     hasHistory: boolean;
-    hasDependencies: boolean; // Sprint 1.4
+    hasDependencies: boolean;
   };
 
   // Migration tracking
@@ -99,22 +95,20 @@ export interface ViewSettings {
   taskTableWidth: number | null;
   columnWidths?: Record<string, number>;
 
-  // Display settings (existing)
+  // Display settings
   showWeekends: boolean;
   showTodayMarker: boolean;
-
-  // Display settings (Sprint 1.5.9)
   showHolidays?: boolean;
   showDependencies?: boolean;
   showProgress?: boolean;
   taskLabelPosition?: TaskLabelPosition;
 
-  // Working days mode (Sprint 1.5.9)
+  // Working days mode
   workingDaysMode?: boolean;
   workingDaysConfig?: WorkingDaysConfig;
 
-  // Holiday region (Sprint 1.5.9 - moved from user preferences to per-project)
-  holidayRegion?: string; // ISO 3166-1 alpha-2 country code (e.g., 'AT', 'DE', 'US')
+  // Holiday region (per-project, ISO 3166-1 alpha-2 country code)
+  holidayRegion?: string;
 
   // Project metadata
   projectTitle?: string;
@@ -148,9 +142,9 @@ export interface DeserializeResult {
     tasks: Array<Task & { __unknownFields?: Record<string, unknown> }>;
     dependencies: Array<
       AppDependency & { __unknownFields?: Record<string, unknown> }
-    >; // Sprint 1.4
+    >;
     viewSettings: ViewSettings;
-    exportSettings?: ExportOptions; // Sprint 1.6
+    exportSettings?: ExportOptions;
     chartName: string;
     chartId: string;
   };
@@ -167,14 +161,4 @@ export interface SerializedDependency {
   type: "FS" | "SS" | "FF" | "SF";
   lag?: number; // Offset days
   createdAt?: string;
-}
-
-// Re-export app Dependency type for convenience
-export type { AppDependency as Dependency };
-
-// Future type placeholders
-export interface Resource {
-  id: string;
-  name: string;
-  email?: string;
 }
