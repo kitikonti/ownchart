@@ -1,68 +1,76 @@
 /**
  * ExportRenderer - Offscreen renderer for full chart export.
  * Renders the complete chart without scroll limits for PNG export.
+ *
+ * Layout computation lives in utils/export/exportLayout.ts.
  */
 
 import { useMemo } from "react";
 import type { Task } from "../../types/chart.types";
-import type { ExportOptions, ExportColumnKey } from "../../utils/export/types";
-import {
-  calculateTaskTableWidth,
-  calculateEffectiveZoom,
-  getEffectiveDateRange,
-  calculateDurationDays,
-  calculateOptimalColumnWidths,
-} from "../../utils/export";
-import { getTimelineScale } from "../../utils/timelineUtils";
-import { getDateRange } from "../../utils/dateUtils";
+import type {
+  ExportColumnKey,
+  ExportDataColumnKey,
+  ExportLayoutInput,
+} from "../../utils/export/types";
+import { computeExportLayout } from "../../utils/export/exportLayout";
 import { GridLines } from "../GanttChart/GridLines";
 import { TaskBar } from "../GanttChart/TaskBar";
 import { TodayMarker } from "../GanttChart/TodayMarker";
 import { DependencyArrows } from "../GanttChart/DependencyArrows";
 import { TimelineHeader } from "../GanttChart/TimelineHeader";
 import { TaskTypeIcon } from "../TaskList/TaskTypeIcon";
-import {
-  buildFlattenedTaskList,
-  type FlattenedTask,
-} from "../../utils/hierarchy";
+import type { FlattenedTask } from "../../utils/hierarchy";
 import type { DensityConfig } from "../../types/preferences.types";
-import { DENSITY_CONFIG } from "../../config/densityConfig";
 import { useChartStore } from "../../store/slices/chartSlice";
-import { SVG_FONT_FAMILY } from "../../utils/export/constants";
+import { HEADER_HEIGHT, SVG_FONT_FAMILY } from "../../utils/export/constants";
+import { EXPORT_COLUMN_MAP } from "../../utils/export/columns";
 import { getComputedTaskColor } from "../../utils/computeTaskColor";
+import { COLORS } from "../../styles/design-tokens";
 
-interface ExportRendererProps {
-  tasks: Task[];
-  options: ExportOptions;
+// =============================================================================
+// Types
+// =============================================================================
+
+interface ExportRendererProps extends ExportLayoutInput {
   columnWidths: Record<string, number>;
-  currentAppZoom?: number;
-  projectDateRange?: { start: Date; end: Date };
-  visibleDateRange?: { start: Date; end: Date };
 }
 
-const HEADER_HEIGHT = 48;
+/** Density-related layout props for export table cells */
+type DensityLayoutProps = Pick<
+  DensityConfig,
+  | "rowHeight"
+  | "colorBarHeight"
+  | "indentSize"
+  | "fontSizeCell"
+  | "cellPaddingX"
+>;
 
-/** Column definitions for export (labels must match app's tableColumns.ts) */
-export const EXPORT_COLUMNS = [
-  { key: "color", label: "", defaultWidth: 24 },
-  { key: "name", label: "Name", defaultWidth: 200 },
-  { key: "startDate", label: "Start Date", defaultWidth: 110 },
-  { key: "endDate", label: "End Date", defaultWidth: 110 },
-  { key: "duration", label: "Duration", defaultWidth: 70 },
-  { key: "progress", label: "%", defaultWidth: 60 },
-] as const;
+// =============================================================================
+// Constants
+// =============================================================================
 
-/**
- * Renders the task table header for export.
- */
+/** Static drag state for export (no interaction possible) */
+const EXPORT_DRAG_STATE = {
+  isDragging: false,
+  fromTaskId: null,
+  currentPosition: { x: 0, y: 0 },
+} as const;
+
+// =============================================================================
+// Sub-Components
+// =============================================================================
+
+/** Renders the task table header for export. */
 function ExportTaskTableHeader({
   selectedColumns,
   columnWidths,
   width,
+  cellPaddingX,
 }: {
   selectedColumns: ExportColumnKey[];
   columnWidths: Record<string, number>;
   width: number;
+  cellPaddingX: number;
 }): JSX.Element {
   return (
     <div
@@ -70,15 +78,17 @@ function ExportTaskTableHeader({
       style={{ width, minWidth: width, height: HEADER_HEIGHT }}
     >
       {selectedColumns.map((key) => {
-        const col = EXPORT_COLUMNS.find((c) => c.key === key);
+        const col = EXPORT_COLUMN_MAP.get(key);
         if (!col) return null;
         return (
           <div
             key={col.key}
-            className={`flex items-center px-3 text-xs font-semibold text-neutral-600 uppercase tracking-wider ${col.key !== "color" ? "border-r border-neutral-200" : ""}`}
+            className={`flex items-center text-xs font-semibold text-neutral-600 uppercase tracking-wider ${col.key !== "color" ? "border-r border-neutral-200" : ""}`}
             style={{
               width: columnWidths[col.key] || col.defaultWidth,
               height: HEADER_HEIGHT,
+              paddingLeft: cellPaddingX,
+              paddingRight: cellPaddingX,
             }}
           >
             {col.label}
@@ -89,32 +99,142 @@ function ExportTaskTableHeader({
   );
 }
 
-/**
- * Renders the task table rows for export (without header).
- */
+/** Maps a data column key to its display value for a given task. */
+export function getColumnDisplayValue(
+  task: Task,
+  key: ExportDataColumnKey
+): string | null {
+  if (key === "startDate") return task.startDate || null;
+
+  const isMilestone = task.type === "milestone";
+  const isSummary = task.type === "summary";
+
+  if (key === "endDate") {
+    return isMilestone ? "" : task.endDate || null;
+  }
+  if (key === "duration") {
+    if (isMilestone) return "";
+    if (isSummary && task.duration !== undefined && task.duration > 0) {
+      return `${task.duration} days`;
+    }
+    if (!isSummary && task.duration !== undefined) {
+      return `${task.duration}`;
+    }
+    return null;
+  }
+  if (key === "progress") {
+    return task.progress !== undefined ? `${task.progress}%` : null;
+  }
+  return null;
+}
+
+/** Renders a single cell in the export task table. */
+function ExportTableCell({
+  task,
+  columnKey,
+  colWidth,
+  level,
+  index,
+  parentIds,
+  densityLayout,
+  colorMap,
+}: {
+  task: Task;
+  columnKey: ExportColumnKey;
+  colWidth: number;
+  level: number;
+  index: number;
+  parentIds: Set<string>;
+  densityLayout: DensityLayoutProps;
+  colorMap: Map<string, string>;
+}): JSX.Element {
+  const { rowHeight, colorBarHeight, indentSize, cellPaddingX } = densityLayout;
+
+  if (columnKey === "color") {
+    const displayColor = colorMap.get(task.id) || task.color;
+    return (
+      <div
+        className="flex items-center justify-center"
+        style={{ width: colWidth, height: rowHeight }}
+      >
+        <div
+          className="w-1.5 rounded"
+          style={{ backgroundColor: displayColor, height: colorBarHeight }}
+        />
+      </div>
+    );
+  }
+
+  if (columnKey === "name") {
+    const hasChildren = parentIds.has(task.id);
+    const isSummary = task.type === "summary";
+    return (
+      <div
+        className="flex items-center gap-1 border-r border-neutral-100"
+        style={{
+          width: colWidth,
+          paddingLeft: `${level * indentSize}px`,
+          paddingRight: cellPaddingX,
+          height: rowHeight,
+          whiteSpace: "nowrap",
+        }}
+      >
+        {hasChildren && isSummary ? (
+          <span className="w-4 text-center text-neutral-600 flex-shrink-0">
+            ▼
+          </span>
+        ) : (
+          <span className="w-4 flex-shrink-0" />
+        )}
+        <TaskTypeIcon type={task.type} />
+        <span className="flex-1">{task.name || `Task ${index + 1}`}</span>
+      </div>
+    );
+  }
+
+  // Data column (startDate, endDate, duration, progress)
+  const useSummaryStyle =
+    task.type === "summary" &&
+    (columnKey === "startDate" ||
+      columnKey === "endDate" ||
+      columnKey === "duration");
+
+  const value = getColumnDisplayValue(task, columnKey);
+
+  return (
+    <div
+      className={`flex items-center border-r border-neutral-100 ${useSummaryStyle ? "text-neutral-500 italic" : ""}`}
+      style={{
+        width: colWidth,
+        height: rowHeight,
+        paddingLeft: cellPaddingX,
+        paddingRight: cellPaddingX,
+        whiteSpace: "nowrap",
+      }}
+    >
+      {value === null ? "—" : value}
+    </div>
+  );
+}
+
+/** Renders the task table rows for export (without header). */
 function ExportTaskTableRows({
   flattenedTasks,
+  parentIds,
   selectedColumns,
   columnWidths,
   width,
   height,
-  rowHeight,
-  colorBarHeight,
-  indentSize,
-  fontSizeCell,
-  cellPaddingX,
+  densityLayout,
   colorMap,
 }: {
   flattenedTasks: FlattenedTask[];
+  parentIds: Set<string>;
   selectedColumns: ExportColumnKey[];
   columnWidths: Record<string, number>;
   width: number;
   height: number;
-  rowHeight: number;
-  colorBarHeight: number;
-  indentSize: number;
-  fontSizeCell: number;
-  cellPaddingX: number;
+  densityLayout: DensityLayoutProps;
   colorMap: Map<string, string>;
 }): JSX.Element {
   return (
@@ -124,128 +244,30 @@ function ExportTaskTableRows({
     >
       {flattenedTasks.map((flattenedTask, index) => {
         const task = flattenedTask.task;
-        const level = flattenedTask.level;
         return (
           <div
             key={task.id}
             className="flex border-b border-neutral-100"
-            style={{ height: rowHeight, fontSize: fontSizeCell }}
+            style={{
+              height: densityLayout.rowHeight,
+              fontSize: densityLayout.fontSizeCell,
+            }}
           >
             {selectedColumns.map((key) => {
-              const col = EXPORT_COLUMNS.find((c) => c.key === key);
+              const col = EXPORT_COLUMN_MAP.get(key);
               if (!col) return null;
-              const colWidth = columnWidths[key] || col.defaultWidth;
-
-              if (key === "color") {
-                // Use computed color from colorMap (respects color mode)
-                const displayColor = colorMap.get(task.id) || task.color;
-                return (
-                  <div
-                    key={key}
-                    className="flex items-center justify-center"
-                    style={{
-                      width: colWidth,
-                      height: rowHeight,
-                    }}
-                  >
-                    <div
-                      className="w-1.5 rounded"
-                      style={{
-                        backgroundColor: displayColor,
-                        height: colorBarHeight,
-                      }}
-                    />
-                  </div>
-                );
-              }
-
-              if (key === "name") {
-                // Check if task has children (for expand/collapse indicator)
-                const hasChildren = flattenedTasks.some(
-                  (ft) => ft.task.parent === task.id
-                );
-                const isSummary = task.type === "summary";
-
-                return (
-                  <div
-                    key={key}
-                    className="flex items-center gap-1 border-r border-neutral-100"
-                    style={{
-                      width: colWidth,
-                      paddingLeft: `${level * indentSize}px`,
-                      paddingRight: 10,
-                      height: rowHeight,
-                      whiteSpace: "nowrap",
-                    }}
-                  >
-                    {/* Expand/collapse placeholder - matches app's w-4 (16px) */}
-                    {hasChildren && isSummary ? (
-                      <span className="w-4 text-center text-neutral-600 flex-shrink-0">
-                        ▼
-                      </span>
-                    ) : (
-                      <span className="w-4 flex-shrink-0" />
-                    )}
-                    <TaskTypeIcon type={task.type} />
-                    <span className="flex-1">
-                      {task.name || `Task ${index + 1}`}
-                    </span>
-                  </div>
-                );
-              }
-
-              // Handle milestone and summary special cases
-              const isSummary = task.type === "summary";
-              const isMilestone = task.type === "milestone";
-              // Summary dates/duration are styled differently (text-neutral-500 italic)
-              const useSummaryStyle =
-                isSummary &&
-                (key === "startDate" ||
-                  key === "endDate" ||
-                  key === "duration");
-
-              let value: string | null = null; // null = show "—", empty string = show nothing
-              if (key === "startDate") {
-                value = task.startDate || null;
-              } else if (key === "endDate") {
-                // Milestones don't have an end date (show empty, not "—")
-                if (isMilestone) {
-                  value = "";
-                } else {
-                  value = task.endDate || null;
-                }
-              } else if (key === "duration") {
-                // Milestones don't have duration (show empty, not "—")
-                if (isMilestone) {
-                  value = "";
-                } else if (
-                  isSummary &&
-                  task.duration !== undefined &&
-                  task.duration > 0
-                ) {
-                  value = `${task.duration} days`;
-                } else if (!isSummary && task.duration !== undefined) {
-                  value = `${task.duration}`;
-                }
-              } else if (key === "progress") {
-                value =
-                  task.progress !== undefined ? `${task.progress}%` : null;
-              }
-
               return (
-                <div
+                <ExportTableCell
                   key={key}
-                  className={`flex items-center border-r border-neutral-100 ${useSummaryStyle ? "text-neutral-500 italic" : ""}`}
-                  style={{
-                    width: colWidth,
-                    height: rowHeight,
-                    paddingLeft: cellPaddingX,
-                    paddingRight: cellPaddingX,
-                    whiteSpace: "nowrap",
-                  }}
-                >
-                  {value === null ? "—" : value}
-                </div>
+                  task={task}
+                  columnKey={key}
+                  colWidth={columnWidths[key] || col.defaultWidth}
+                  level={flattenedTask.level}
+                  index={index}
+                  parentIds={parentIds}
+                  densityLayout={densityLayout}
+                  colorMap={colorMap}
+                />
               );
             })}
           </div>
@@ -254,6 +276,10 @@ function ExportTaskTableRows({
     </div>
   );
 }
+
+// =============================================================================
+// Main Component
+// =============================================================================
 
 /**
  * Main export renderer component.
@@ -264,161 +290,67 @@ export function ExportRenderer({
   options,
   columnWidths,
   currentAppZoom = 1,
-  projectDateRange: providedProjectDateRange,
+  projectDateRange,
   visibleDateRange,
 }: ExportRendererProps): JSX.Element {
-  // Get density configuration based on selected density
-  const densityConfig: DensityConfig = DENSITY_CONFIG[options.density];
-
-  // Get holiday region from chart settings (for holiday highlighting)
+  // Get chart settings from store
   const holidayRegion = useChartStore((state) => state.holidayRegion);
-
-  // Build flattened task list (show all tasks, none collapsed for export)
-  const flattenedTasks = useMemo(() => {
-    // Empty set means nothing is collapsed - show all tasks
-    return buildFlattenedTaskList(tasks, new Set<string>());
-  }, [tasks]);
-
-  // Extract just the Task objects for rendering
-  const orderedTasks = useMemo(() => {
-    return flattenedTasks.map((ft) => ft.task);
-  }, [flattenedTasks]);
-
-  // Get color mode state for computing task colors
   const colorModeState = useChartStore((state) => state.colorModeState);
+
+  // Compute full layout geometry (shared with calculateExportDimensions)
+  const layout = useMemo(
+    () =>
+      computeExportLayout({
+        tasks,
+        options,
+        columnWidths,
+        currentAppZoom,
+        projectDateRange,
+        visibleDateRange,
+      }),
+    [
+      tasks,
+      options,
+      columnWidths,
+      currentAppZoom,
+      projectDateRange,
+      visibleDateRange,
+    ]
+  );
+
+  // Pre-compute parent IDs for O(1) hasChildren lookup
+  const parentIds = useMemo(() => {
+    const ids = new Set<string>();
+    for (const ft of layout.flattenedTasks) {
+      if (ft.task.parent) ids.add(ft.task.parent);
+    }
+    return ids;
+  }, [layout.flattenedTasks]);
 
   // Compute color map for all tasks (respects current color mode)
   const colorMap = useMemo(() => {
     const map = new Map<string, string>();
-    orderedTasks.forEach((task) => {
-      const color = getComputedTaskColor(task, orderedTasks, colorModeState);
+    for (const task of layout.orderedTasks) {
+      const color = getComputedTaskColor(
+        task,
+        layout.orderedTasks,
+        colorModeState
+      );
       map.set(task.id, color);
-    });
+    }
     return map;
-  }, [orderedTasks, colorModeState]);
+  }, [layout.orderedTasks, colorModeState]);
 
-  // Calculate project date range from tasks if not provided
-  const projectDateRange = useMemo(() => {
-    if (providedProjectDateRange) return providedProjectDateRange;
-    if (orderedTasks.length === 0) return undefined;
-    const range = getDateRange(orderedTasks);
-    return {
-      start: new Date(range.min),
-      end: new Date(range.max),
-    };
-  }, [orderedTasks, providedProjectDateRange]);
-
-  // Get selected columns (default to all if not specified)
-  const selectedColumns = useMemo(
-    () =>
-      options.selectedColumns || ["name", "startDate", "endDate", "progress"],
-    [options.selectedColumns]
-  );
-  const hasTaskList = selectedColumns.length > 0;
-
-  // Calculate optimal column widths based on content
-  // Uses passed columnWidths for user-customized columns (like "name"),
-  // calculates optimal width for others based on header + cell content
-  const effectiveColumnWidths = useMemo(() => {
-    return calculateOptimalColumnWidths(
-      selectedColumns,
-      orderedTasks,
-      options.density,
-      columnWidths
-    );
-  }, [selectedColumns, orderedTasks, options.density, columnWidths]);
-
-  // Calculate task table width first (needed for fitToWidth calculation)
-  // Uses export density setting for correct column widths
-  const taskTableWidth = hasTaskList
-    ? calculateTaskTableWidth(
-        selectedColumns,
-        effectiveColumnWidths,
-        options.density
-      )
-    : 0;
-
-  // Calculate preliminary zoom (before label padding) for label width estimation
-  const preliminaryDuration = useMemo(() => {
-    if (!projectDateRange) return 30; // Default duration
-    const ms =
-      projectDateRange.end.getTime() - projectDateRange.start.getTime();
-    return Math.ceil(ms / (1000 * 60 * 60 * 24)) + 14; // +14 for base padding
-  }, [projectDateRange]);
-
-  const preliminaryZoom = useMemo(() => {
-    return calculateEffectiveZoom(
-      options,
-      currentAppZoom,
-      preliminaryDuration,
-      taskTableWidth
-    );
-  }, [options, currentAppZoom, preliminaryDuration, taskTableWidth]);
-
-  // Calculate effective date range with label padding
-  const dateRange = useMemo(() => {
-    return getEffectiveDateRange(
-      options,
-      projectDateRange,
-      visibleDateRange,
-      orderedTasks,
-      preliminaryZoom
-    );
-  }, [
-    options,
-    projectDateRange,
-    visibleDateRange,
-    orderedTasks,
-    preliminaryZoom,
-  ]);
-
-  // Calculate final project duration in days
-  const durationDays = useMemo(() => {
-    return calculateDurationDays(dateRange);
-  }, [dateRange]);
-
-  // Calculate final effective zoom based on zoom mode
-  const effectiveZoom = useMemo(() => {
-    return calculateEffectiveZoom(
-      options,
-      currentAppZoom,
-      durationDays,
-      taskTableWidth
-    );
-  }, [options, currentAppZoom, durationDays, taskTableWidth]);
-
-  // Calculate scale with effective zoom
-  const scale = useMemo(() => {
-    return getTimelineScale(
-      dateRange.min,
-      dateRange.max,
-      1000, // containerWidth not used with fixed zoom
-      effectiveZoom
-    );
-  }, [dateRange, effectiveZoom]);
-
-  // Calculate dimensions - for fitToWidth, total width IS the target
-  const timelineWidth =
-    options.zoomMode === "fitToWidth"
-      ? Math.max(100, options.fitToWidth - taskTableWidth)
-      : scale.totalWidth;
-  const totalWidth =
-    options.zoomMode === "fitToWidth"
-      ? options.fitToWidth
-      : taskTableWidth + timelineWidth;
-  const contentHeight = orderedTasks.length * densityConfig.rowHeight;
-  const totalHeight =
-    (options.includeHeader ? HEADER_HEIGHT : 0) + contentHeight;
-
-  // Background color
-  const bgColor = options.background === "white" ? "#ffffff" : "transparent";
+  const { densityConfig } = layout;
+  const bgColor =
+    options.background === "white" ? COLORS.neutral[0] : "transparent";
 
   return (
     <div
       className="export-container"
       style={{
-        width: totalWidth,
-        height: totalHeight,
+        width: layout.totalWidth,
+        height: layout.totalHeight,
         backgroundColor: bgColor,
         display: "flex",
         flexDirection: "column",
@@ -428,86 +360,79 @@ export function ExportRenderer({
       {/* Header Row */}
       {options.includeHeader && (
         <div className="flex" style={{ height: HEADER_HEIGHT }}>
-          {/* Task table header */}
-          {hasTaskList && (
+          {layout.hasTaskList && (
             <ExportTaskTableHeader
-              selectedColumns={selectedColumns}
-              columnWidths={effectiveColumnWidths}
-              width={taskTableWidth}
+              selectedColumns={layout.selectedColumns}
+              columnWidths={layout.effectiveColumnWidths}
+              width={layout.taskTableWidth}
+              cellPaddingX={densityConfig.cellPaddingX}
             />
           )}
-          {/* Timeline header */}
           <svg
-            width={timelineWidth}
+            width={layout.timelineWidth}
             height={HEADER_HEIGHT}
             className="block"
             style={{ backgroundColor: bgColor }}
           >
-            <TimelineHeader scale={scale} width={timelineWidth} />
+            <TimelineHeader scale={layout.scale} width={layout.timelineWidth} />
           </svg>
         </div>
       )}
 
       {/* Content Row */}
-      <div className="flex" style={{ height: contentHeight }}>
-        {/* Task table rows */}
-        {hasTaskList && (
+      <div className="flex" style={{ height: layout.contentHeight }}>
+        {layout.hasTaskList && (
           <ExportTaskTableRows
-            flattenedTasks={flattenedTasks}
-            selectedColumns={selectedColumns}
-            columnWidths={effectiveColumnWidths}
-            width={taskTableWidth}
-            height={contentHeight}
-            rowHeight={densityConfig.rowHeight}
-            colorBarHeight={densityConfig.colorBarHeight}
-            indentSize={densityConfig.indentSize}
-            fontSizeCell={densityConfig.fontSizeCell}
-            cellPaddingX={densityConfig.cellPaddingX}
+            flattenedTasks={layout.flattenedTasks}
+            parentIds={parentIds}
+            selectedColumns={layout.selectedColumns}
+            columnWidths={layout.effectiveColumnWidths}
+            width={layout.taskTableWidth}
+            height={layout.contentHeight}
+            densityLayout={{
+              rowHeight: densityConfig.rowHeight,
+              colorBarHeight: densityConfig.colorBarHeight,
+              indentSize: densityConfig.indentSize,
+              fontSizeCell: densityConfig.fontSizeCell,
+              cellPaddingX: densityConfig.cellPaddingX,
+            }}
             colorMap={colorMap}
           />
         )}
 
-        {/* Timeline chart */}
         <svg
-          width={timelineWidth}
-          height={contentHeight}
+          width={layout.timelineWidth}
+          height={layout.contentHeight}
           className="gantt-chart block"
           style={{ backgroundColor: bgColor }}
         >
-          {/* Grid lines */}
           {options.includeGridLines && (
             <GridLines
-              scale={scale}
-              taskCount={orderedTasks.length}
+              scale={layout.scale}
+              taskCount={layout.orderedTasks.length}
               showWeekends={options.includeWeekends}
               showHolidays={options.includeHolidays}
               holidayRegion={holidayRegion}
-              width={timelineWidth}
+              width={layout.timelineWidth}
               rowHeight={densityConfig.rowHeight}
             />
           )}
 
-          {/* Dependency arrows */}
           {options.includeDependencies && (
             <DependencyArrows
-              tasks={orderedTasks}
-              scale={scale}
+              tasks={layout.orderedTasks}
+              scale={layout.scale}
               rowHeight={densityConfig.rowHeight}
-              dragState={{
-                isDragging: false,
-                fromTaskId: null,
-                currentPosition: { x: 0, y: 0 },
-              }}
+              dragState={EXPORT_DRAG_STATE}
             />
           )}
 
-          {/* Task bars */}
           <g className="layer-tasks">
-            {orderedTasks.map((task, index) => (
+            {layout.orderedTasks.map((task, index) => (
               <TaskBar
                 key={task.id}
                 task={task}
-                scale={scale}
+                scale={layout.scale}
                 rowIndex={index}
                 labelPosition={options.taskLabelPosition}
                 isExport
@@ -521,133 +446,14 @@ export function ExportRenderer({
             ))}
           </g>
 
-          {/* Today marker */}
           {options.includeTodayMarker && (
-            <TodayMarker scale={scale} svgHeight={contentHeight} />
+            <TodayMarker
+              scale={layout.scale}
+              svgHeight={layout.contentHeight}
+            />
           )}
         </svg>
       </div>
     </div>
   );
-}
-
-/**
- * Calculate the export dimensions based on options.
- */
-export function calculateExportDimensions(
-  tasks: Task[],
-  options: ExportOptions,
-  columnWidths: Record<string, number> = {},
-  currentAppZoom: number = 1,
-  projectDateRange?: { start: Date; end: Date },
-  visibleDateRange?: { start: Date; end: Date }
-): { width: number; height: number; effectiveZoom: number } {
-  // Get density configuration based on selected density
-  const densityConfig = DENSITY_CONFIG[options.density];
-
-  // Build flattened task list (all expanded for export)
-  const flattenedTasks = buildFlattenedTaskList(tasks, new Set<string>());
-  const orderedTasks = flattenedTasks.map((ft) => ft.task);
-
-  // Calculate project date range from tasks if not provided
-  let effectiveProjectDateRange = projectDateRange;
-  if (!effectiveProjectDateRange && orderedTasks.length > 0) {
-    const range = getDateRange(orderedTasks);
-    effectiveProjectDateRange = {
-      start: new Date(range.min),
-      end: new Date(range.max),
-    };
-  }
-
-  // Get selected columns (default to all if not specified)
-  const selectedColumns = options.selectedColumns || [
-    "name",
-    "startDate",
-    "endDate",
-    "progress",
-  ];
-  const hasTaskList = selectedColumns.length > 0;
-
-  // Calculate optimal column widths based on content
-  const effectiveColumnWidths = calculateOptimalColumnWidths(
-    selectedColumns,
-    orderedTasks,
-    options.density,
-    columnWidths
-  );
-
-  // Calculate task table width first (needed for fitToWidth calculation)
-  // Uses export density setting for correct column widths
-  const taskTableWidth = hasTaskList
-    ? calculateTaskTableWidth(
-        selectedColumns,
-        effectiveColumnWidths,
-        options.density
-      )
-    : 0;
-
-  // Calculate preliminary zoom for label padding estimation
-  let preliminaryDuration = 30; // Default
-  if (effectiveProjectDateRange) {
-    const ms =
-      effectiveProjectDateRange.end.getTime() -
-      effectiveProjectDateRange.start.getTime();
-    preliminaryDuration = Math.ceil(ms / (1000 * 60 * 60 * 24)) + 14;
-  }
-  const preliminaryZoom = calculateEffectiveZoom(
-    options,
-    currentAppZoom,
-    preliminaryDuration,
-    taskTableWidth
-  );
-
-  // Get effective date range based on mode (with label padding)
-  const dateRange = getEffectiveDateRange(
-    options,
-    effectiveProjectDateRange,
-    visibleDateRange,
-    orderedTasks,
-    preliminaryZoom
-  );
-
-  // Calculate project duration for zoom calculations
-  const durationDays = calculateDurationDays(dateRange);
-
-  // Get effective zoom (passing taskTableWidth for fitToWidth mode)
-  const effectiveZoom = calculateEffectiveZoom(
-    options,
-    currentAppZoom,
-    durationDays,
-    taskTableWidth
-  );
-
-  // Calculate timeline width
-  let timelineWidth: number;
-  let totalWidth: number;
-
-  if (options.zoomMode === "fitToWidth") {
-    // In fitToWidth mode, total width IS the target width
-    totalWidth = options.fitToWidth;
-    timelineWidth = Math.max(100, totalWidth - taskTableWidth);
-  } else {
-    // Calculate scale with effective zoom
-    const scale = getTimelineScale(
-      dateRange.min,
-      dateRange.max,
-      1000,
-      effectiveZoom
-    );
-    timelineWidth = scale.totalWidth;
-    totalWidth = taskTableWidth + timelineWidth;
-  }
-
-  const contentHeight = orderedTasks.length * densityConfig.rowHeight;
-  const totalHeight =
-    (options.includeHeader ? HEADER_HEIGHT : 0) + contentHeight;
-
-  return {
-    width: Math.round(totalWidth),
-    height: Math.round(totalHeight),
-    effectiveZoom,
-  };
 }

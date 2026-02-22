@@ -5,18 +5,31 @@
 export {
   captureChart,
   canvasToBlob,
-  calculateExportDimensions,
   type CaptureChartParams,
 } from "./captureChart";
+
+// Layout computation (pure functions, no React)
+export {
+  calculateExportDimensions,
+  computeExportLayout,
+  type ExportLayout,
+} from "./exportLayout";
 
 // Shared constants
 export {
   HEADER_HEIGHT,
   SVG_FONT_FAMILY,
-  COLORS,
-  HEADER_LABELS,
+  EXPORT_COLORS,
   TASK_TYPE_ICON_PATHS,
 } from "./constants";
+
+// Column definitions (single source of truth)
+export {
+  EXPORT_COLUMNS,
+  EXPORT_COLUMN_MAP,
+  HEADER_LABELS,
+  type ExportColumn,
+} from "./columns";
 
 // Shared helpers
 export {
@@ -59,6 +72,7 @@ export {
   PDF_MARGIN_PRESETS,
   type ExportColumnKey,
   type ExportFormat,
+  type ExportLayoutInput,
   type ExportOptions,
   type ExportState,
   type ExportZoomPreset,

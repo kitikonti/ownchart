@@ -10,10 +10,8 @@ import { createRoot } from "react-dom/client";
 import { createElement } from "react";
 import type { Task } from "../../types/chart.types";
 import type { ExportOptions, SvgExportOptions } from "./types";
-import {
-  ExportRenderer,
-  calculateExportDimensions,
-} from "../../components/Export/ExportRenderer";
+import { ExportRenderer } from "../../components/Export/ExportRenderer";
+import { calculateExportDimensions } from "./exportLayout";
 import { calculateTaskTableWidth } from "./calculations";
 import { buildFlattenedTaskList } from "../../utils/hierarchy";
 // Shared modules
@@ -67,14 +65,14 @@ export async function exportToSvg(params: ExportToSvgParams): Promise<void> {
   onProgress?.(10);
 
   // Calculate dimensions
-  const dimensions = calculateExportDimensions(
+  const dimensions = calculateExportDimensions({
     tasks,
     options,
     columnWidths,
     currentAppZoom,
     projectDateRange,
-    visibleDateRange
-  );
+    visibleDateRange,
+  });
 
   onProgress?.(20);
 

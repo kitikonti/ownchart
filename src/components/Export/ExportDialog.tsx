@@ -168,14 +168,14 @@ export function ExportDialog(): JSX.Element | null {
 
   // Calculate estimated dimensions using effective options (PDF-aware)
   const estimatedDimensions = useMemo(() => {
-    return calculateExportDimensions(
+    return calculateExportDimensions({
       tasks,
-      effectiveExportOptions,
+      options: effectiveExportOptions,
       columnWidths,
       currentAppZoom,
       projectDateRange,
-      visibleDateRange
-    );
+      visibleDateRange,
+    });
   }, [
     tasks,
     effectiveExportOptions,

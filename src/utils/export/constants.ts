@@ -3,6 +3,8 @@
  * Used by both pdfExport.ts and svgExport.ts.
  */
 
+import { COLORS } from "../../styles/design-tokens";
+
 /** Height of the header row in pixels */
 export const HEADER_HEIGHT = 48;
 
@@ -11,38 +13,26 @@ export const SVG_FONT_FAMILY =
   'Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif';
 
 /**
- * Tailwind slate colors for consistent styling.
- * These match the web app's color scheme.
+ * Semantic color tokens for SVG/PDF export task table rendering.
+ * Derived from the design-token neutral scale to stay consistent
+ * with the Tailwind classes used in the HTML (PNG) export path.
  */
-export const COLORS = {
-  /** neutral-800 - task names, regular cell text */
-  textPrimary: "#1e293b",
-  /** neutral-600 - dates, progress, icons, header labels */
-  textSecondary: "#475569",
-  /** neutral-500 - summary dates/duration (lighter, italic in app) */
-  textSummary: "#64748b",
-  /** neutral-600 - header labels */
-  textHeader: "#475569",
-  /** neutral-200 - header borders */
-  border: "#e2e8f0",
-  /** neutral-100 - row borders */
-  borderLight: "#f1f5f9",
-  /** neutral-50 - header background */
-  headerBg: "#f8fafc",
+export const EXPORT_COLORS = {
+  /** neutral-700 — task names, regular cell text */
+  textPrimary: COLORS.neutral[700],
+  /** neutral-600 — dates, progress, icons, header labels */
+  textSecondary: COLORS.neutral[600],
+  /** neutral-500 — summary dates/duration (lighter, italic in app) */
+  textSummary: COLORS.neutral[500],
+  /** neutral-600 — header labels */
+  textHeader: COLORS.neutral[600],
+  /** neutral-200 — header borders */
+  border: COLORS.neutral[200],
+  /** neutral-100 — row borders */
+  borderLight: COLORS.neutral[100],
+  /** neutral-50 — header background */
+  headerBg: COLORS.neutral[50],
 } as const;
-
-/**
- * Header labels matching the app's TASK_COLUMNS.
- * Keys correspond to ExportColumnKey values.
- */
-export const HEADER_LABELS: Record<string, string> = {
-  color: "",
-  name: "Name",
-  startDate: "Start Date",
-  endDate: "End Date",
-  duration: "Duration",
-  progress: "%",
-};
 
 /**
  * Phosphor icon SVG paths for task types (256x256 viewBox).

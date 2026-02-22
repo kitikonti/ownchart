@@ -13,16 +13,7 @@ import {
 } from "../textMeasurement";
 import type { Task } from "../../types/chart.types";
 import { getTaskLevel } from "../hierarchy";
-
-/** Header labels for export columns (must match app's tableColumns.ts) */
-const EXPORT_HEADER_LABELS: Record<ExportColumnKey, string> = {
-  color: "",
-  name: "Name",
-  startDate: "Start Date",
-  endDate: "End Date",
-  duration: "Duration",
-  progress: "%",
-};
+import { HEADER_LABELS } from "./columns";
 
 /** Base pixels per day at 100% zoom */
 export const BASE_PIXELS_PER_DAY = 25;
@@ -198,7 +189,7 @@ export function calculateOptimalColumnWidth(
   }
 
   // Get header label
-  const headerLabel = EXPORT_HEADER_LABELS[key];
+  const headerLabel = HEADER_LABELS[key];
 
   // Name column has only right padding (indent handles left), others have both
   const cellPadding =

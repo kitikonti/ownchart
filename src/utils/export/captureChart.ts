@@ -6,12 +6,9 @@
 import { createRoot } from "react-dom/client";
 import { createElement } from "react";
 import { toCanvas } from "html-to-image";
-import type { ExportOptions } from "./types";
-import type { Task } from "../../types/chart.types";
-import {
-  ExportRenderer,
-  calculateExportDimensions,
-} from "../../components/Export/ExportRenderer";
+import type { ExportLayoutInput } from "./types";
+import { ExportRenderer } from "../../components/Export/ExportRenderer";
+import { calculateExportDimensions } from "./exportLayout";
 
 /**
  * Wait for all fonts to be loaded.
@@ -35,13 +32,7 @@ function waitForPaint(): Promise<void> {
   });
 }
 
-export interface CaptureChartParams {
-  tasks: Task[];
-  options: ExportOptions;
-  columnWidths: Record<string, number>;
-  currentAppZoom?: number;
-  projectDateRange?: { start: Date; end: Date };
-  visibleDateRange?: { start: Date; end: Date };
+export interface CaptureChartParams extends ExportLayoutInput {
   /** Project name for export filename */
   projectName?: string;
 }
@@ -56,21 +47,14 @@ export async function captureChart(
   const {
     tasks,
     options,
-    columnWidths,
+    columnWidths = {},
     currentAppZoom,
     projectDateRange,
     visibleDateRange,
   } = params;
 
   // Calculate expected dimensions
-  const dimensions = calculateExportDimensions(
-    tasks,
-    options,
-    columnWidths,
-    currentAppZoom,
-    projectDateRange,
-    visibleDateRange
-  );
+  const dimensions = calculateExportDimensions(params);
 
   // Create container - must be on-screen for html-to-image (uses SVG foreignObject)
   // We use opacity: 0 and pointer-events: none to hide it from the user
@@ -164,8 +148,3 @@ export async function canvasToBlob(
     );
   });
 }
-
-/**
- * Re-export calculateExportDimensions for use in dialog.
- */
-export { calculateExportDimensions } from "../../components/Export/ExportRenderer";

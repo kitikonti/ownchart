@@ -134,7 +134,7 @@ cd ../app-gantt-review
 - [ ] `src/components/TaskList/TaskTypeIcon.tsx` (62 LOC)
 
 ### Priority: MEDIUM — Layout & Export
-- [ ] `src/components/Export/ExportRenderer.tsx` (655 LOC) — 1 Hex-Wert
+- [x] `src/components/Export/ExportRenderer.tsx`
 - [ ] `src/components/Layout/GanttLayout.tsx` (549 LOC)
 - [ ] `src/components/Export/ExportDialog.tsx` (505 LOC)
 - [ ] `src/components/Export/PdfPreview.tsx` (348 LOC)
@@ -301,6 +301,7 @@ Patterns die mehrere Dateien betreffen. Beim Review jeder Datei pruefen ob sie b
 - **Hardcoded Hex-Farben** (38 Stueck in 10 .tsx-Dateien): `design-tokens.ts` existiert, wird aber von SVG-Komponenten nicht genutzt. Brand-Farbe `#0F6CBD` in 4+ Komponenten als Raw-String. Betroffene Dateien sind im Index markiert.
 - **`toISODateString()` nicht ueberall genutzt**: Utility existiert in `dateUtils.ts`. ~18 weitere `toISOString().split("T")[0]` in: insertionActions, hierarchy, calculations, Cell, HomeTabContent, NewTaskPlaceholderRow, SharedExportOptions. Bei Review dieser Dateien umstellen.
 - **Zirkulaere Imports zwischen Store-Slices**: chartSlice ↔ taskSlice und chartSlice ↔ historySlice importieren sich gegenseitig. Runtime-sicher, da alle Cross-Store-Zugriffe ueber `getState()` in Action-Handlern erfolgen (nicht bei Module-Initialisierung). Pattern ist korrekt fuer Zustand Cross-Store-Kommunikation, aber bei neuen Slices beachten: KEIN module-level Zugriff auf andere Stores.
+- **`HEADER_HEIGHT = 48` in 2 weiteren Dateien dupliziert**: Canonical Export in `src/utils/export/constants.ts`. Noch dupliziert in `GanttLayout.tsx:40`. Bei Review dieser Datei umstellen.
 - **design-tokens Cool Grays sind bewusst anders als Neutrals**: `TABLE_HEADER`, `GRID`, `TIMELINE_HEADER` etc. verwenden Cool Grays mit leichtem Blau-Tint (Bootstrap/Tailwind-Palette), waehrend `COLORS.neutral` reine Grays sind (MS Fluent). Mittelfristig koennte ein `COLORS.cool`-Scale die Chart-Grays systematisieren.
 
 ---
@@ -320,12 +321,13 @@ Entscheidungen aus bisherigen Reviews die fuer zukuenftige Dateien gelten.
 - **Toggle/Setter Boilerplate akzeptabel**: Einfache <5 LOC Methoden mit semantischen Namen (toggleWeekends, setShowWeekends etc.) nicht in generischen Helper abstrahieren — Lesbarkeit und Typsicherheit ueberwiegen DRY. (chartSlice Finding #8)
 - **Grosse Slice-Dateien splitten erst bei Wachstum**: chartSlice.ts (~990 LOC) ist gross aber kohaesiv. Split analog taskSlice→groupingActions erst wenn die Datei weiter waechst. (chartSlice Finding #9)
 - **Typisierte IDs im Config-Layer, `string` an Boundaries**: `ColumnId` Union-Type in `tableColumns.ts` fuer Typsicherheit in der Spalten-Konfiguration. Store-State (`hiddenColumns`, `columnWidths`) und File-Format behalten `string` fuer Forward-Kompatibilitaet. Lookup in `Partial<Record<ColumnId, ...>>` mit `as ColumnId` Cast ist sicher wenn der Fallback `undefined` handled.
+- **Shared Layout-Berechnung bei Render+Dimension-Dualitaet**: Wenn eine Komponente und eine standalone-Funktion dieselbe Berechnungskette brauchen, in Pure Function extrahieren (`computeExportLayout`). Komponente wrapped via `useMemo`, Funktion ruft direkt auf. Vermeidet ~100+ LOC Duplikation.
 - **Unbenutzte Phase-2 Properties entfernen**: Interface-Properties die nur "fuer spaeter" deklariert sind aber keinen Consumer haben (z.B. `Task.lazy`) werden entfernt. Koennen bei Bedarf via Git-History wiederhergestellt werden.
 
 ---
 
 ## Progress
 
-- Reviewed: 34 / 193 Dateien
-- Offene Issues: 38 Hex-Farben in 10 .tsx-Dateien, ~18 toISODateString-Umstellungen
+- Reviewed: 35 / 193 Dateien
+- Offene Issues: 37 Hex-Farben in 9 .tsx-Dateien, ~18 toISODateString-Umstellungen
 - Test-Coverage: 80%+
