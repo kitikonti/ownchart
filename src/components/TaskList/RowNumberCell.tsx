@@ -8,50 +8,23 @@
  * - Excel-like styling and cursor behavior
  */
 
-import { useState, type MouseEvent } from "react";
+import { memo, useState, type MouseEvent } from "react";
 import { DotsSixVertical } from "@phosphor-icons/react";
 import type { DraggableAttributes } from "@dnd-kit/core";
 import type { SyntheticListenerMap } from "@dnd-kit/core/dist/hooks/utilities";
 import { useDensityConfig } from "../../store/slices/userPreferencesSlice";
 import { HiddenRowIndicator } from "./HiddenRowIndicator";
 import { InsertRowButton } from "./InsertRowButton";
+import { InsertLine } from "./InsertLine";
 import { dragState } from "./dragSelectionState";
-import { COLORS, ROW_NUMBER, TYPOGRAPHY } from "../../styles/design-tokens";
-
-// ── Layout constants ────────────────────────────────────────────────────────
-const CONTROLS_WIDTH = 20;
-const INSERT_LINE_THICKNESS = 2;
-const INSERT_LINE_START = 18; // px from left, after the circle
-const INSERT_LINE_EXTEND = -2000; // extends across entire table
-const Z_INSERT_LINE = 60;
-const SELECTION_RADIUS = "3px";
-
-// Row number font sits between TYPOGRAPHY sm (12px) and base (14px)
-const ROW_NUMBER_FONT_SIZE = "13px";
-
-// ── Custom cursor (Excel-style right arrow) ─────────────────────────────────
-function buildRowSelectCursor(fill: string, stroke: string): string {
-  const svg = `<svg xmlns='http://www.w3.org/2000/svg' width='18' height='14' viewBox='0 0 18 14'><path d='M5 5 L5 9 L10 9 L10 13 L17 7 L10 1 L10 5 Z' fill='${fill}' stroke='${stroke}' stroke-width='1'/></svg>`;
-  return `url("data:image/svg+xml,${encodeURIComponent(svg)}") 17 7, pointer`;
-}
-
-const ROW_SELECT_CURSOR = buildRowSelectCursor(
-  COLORS.neutral[900],
-  COLORS.neutral[0]
-);
-
-// ── Color map (Outlook Blue theme) ──────────────────────────────────────────
-const ROW_COLORS = {
-  bgInactive: ROW_NUMBER.bgInactive,
-  bgHover: ROW_NUMBER.bgHover,
-  textInactive: ROW_NUMBER.textInactive,
-  bgSelected: COLORS.brand[600],
-  textSelected: ROW_NUMBER.textSelected,
-  controlsColor: COLORS.brand[600],
-  insertLineColor: COLORS.brand[600],
-  border: ROW_NUMBER.border,
-  hiddenIndicator: ROW_NUMBER.hiddenIndicator,
-};
+import {
+  CONTROLS_WIDTH,
+  SELECTION_RADIUS,
+  ROW_NUMBER_FONT_SIZE,
+  ROW_NUMBER_FONT_WEIGHT,
+  ROW_SELECT_CURSOR,
+  ROW_COLORS,
+} from "./rowNumberConfig";
 
 // ── Props ───────────────────────────────────────────────────────────────────
 
@@ -89,7 +62,7 @@ interface RowNumberCellProps {
   taskName?: string;
 }
 
-export function RowNumberCell({
+export const RowNumberCell = memo(function RowNumberCell({
   rowNumber,
   taskId,
   isSelected,
@@ -208,12 +181,14 @@ export function RowNumberCell({
             controlsColor={ROW_COLORS.controlsColor}
           />
 
-          {/* Drag handle */}
+          {/* Drag handle — fallback a11y attrs when DnD attributes not provided */}
           <div
             className="flex items-center justify-center"
             style={{ cursor: "grab" }}
             onMouseEnter={() => setHoveredControl("drag")}
             onMouseLeave={() => setHoveredControl(null)}
+            role={dragAttributes ? undefined : "button"}
+            tabIndex={dragAttributes ? undefined : 0}
             {...dragAttributes}
             {...dragListeners}
             aria-label={`Drag to reorder ${taskName || `row ${rowNumber}`}`}
@@ -239,43 +214,17 @@ export function RowNumberCell({
         </div>
       )}
 
-      {/* Insert line above - starts after the circle, extends across entire table row */}
-      {hoveredControl === "addAbove" && (
-        <div
-          className="absolute pointer-events-none"
-          style={{
-            top: "-1px",
-            left: `${INSERT_LINE_START}px`,
-            right: `${INSERT_LINE_EXTEND}px`,
-            height: `${INSERT_LINE_THICKNESS}px`,
-            backgroundColor: ROW_COLORS.insertLineColor,
-            zIndex: Z_INSERT_LINE,
-          }}
-        />
-      )}
-
-      {/* Insert line below - starts after the circle, extends across entire table row */}
-      {hoveredControl === "addBelow" && (
-        <div
-          className="absolute pointer-events-none"
-          style={{
-            bottom: "-1px",
-            left: `${INSERT_LINE_START}px`,
-            right: `${INSERT_LINE_EXTEND}px`,
-            height: `${INSERT_LINE_THICKNESS}px`,
-            backgroundColor: ROW_COLORS.insertLineColor,
-            zIndex: Z_INSERT_LINE,
-          }}
-        />
-      )}
+      {/* Insert line — visual feedback when hovering add-row buttons */}
+      {hoveredControl === "addAbove" && <InsertLine position="above" />}
+      {hoveredControl === "addBelow" && <InsertLine position="below" />}
 
       {/* Row number */}
       <span
         style={{
           color: isSelected ? ROW_COLORS.textSelected : ROW_COLORS.textInactive,
           fontWeight: isSelected
-            ? TYPOGRAPHY.fontWeight.semibold
-            : TYPOGRAPHY.fontWeight.normal,
+            ? ROW_NUMBER_FONT_WEIGHT.semibold
+            : ROW_NUMBER_FONT_WEIGHT.normal,
           fontSize: ROW_NUMBER_FONT_SIZE,
           userSelect: "none",
         }}
@@ -295,4 +244,4 @@ export function RowNumberCell({
       )}
     </div>
   );
-}
+});

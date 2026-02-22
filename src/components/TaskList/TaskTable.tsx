@@ -26,11 +26,9 @@ import { useDensityConfig } from "../../store/slices/userPreferencesSlice";
 import { TaskTableRow } from "./TaskTableRow";
 import { NewTaskPlaceholderRow } from "./NewTaskPlaceholderRow";
 import {
-  getColumnPixelWidth,
   getDensityAwareWidth,
   getVisibleColumns,
 } from "../../config/tableColumns";
-import { ColumnResizer } from "./ColumnResizer";
 import { useTableDimensions } from "../../hooks/useTableDimensions";
 import { useFlattenedTasks } from "../../hooks/useFlattenedTasks";
 import { useAutoColumnWidth } from "../../hooks/useAutoColumnWidth";
@@ -39,21 +37,64 @@ import { useHideOperations } from "../../hooks/useHideOperations";
 import { resetDragState } from "./dragSelectionState";
 import { ContextMenu } from "../ContextMenu/ContextMenu";
 import { COLORS } from "../../styles/design-tokens";
+import type { FlattenedTask } from "../../utils/hierarchy";
 
-interface TaskTableProps {
-  hideHeader?: boolean;
+// ── Helper functions for taskRowData computation ────────────────────────────
+
+interface ClipboardPosition {
+  isFirst: boolean;
+  isLast: boolean;
 }
 
-export function TaskTable({ hideHeader = true }: TaskTableProps): JSX.Element {
-  const tasks = useTaskStore((state) => state.tasks);
+interface SelectionPosition {
+  isFirstSelected: boolean;
+  isLastSelected: boolean;
+}
+
+function getClipboardPosition(
+  taskId: string,
+  prevTaskId: string | undefined,
+  nextTaskId: string | undefined,
+  clipboardSet: Set<string>
+): ClipboardPosition | undefined {
+  if (!clipboardSet.has(taskId)) return undefined;
+  return {
+    isFirst: !prevTaskId || !clipboardSet.has(prevTaskId),
+    isLast: !nextTaskId || !clipboardSet.has(nextTaskId),
+  };
+}
+
+function getSelectionPosition(
+  taskId: string,
+  prevTaskId: string | undefined,
+  nextTaskId: string | undefined,
+  selectedSet: Set<string>
+): SelectionPosition | undefined {
+  if (!selectedSet.has(taskId)) return undefined;
+  return {
+    isFirstSelected: !prevTaskId || !selectedSet.has(prevTaskId),
+    isLastSelected: !nextTaskId || !selectedSet.has(nextTaskId),
+  };
+}
+
+function getHiddenGap(
+  globalRowNumber: number,
+  nextGlobalRowNumber: number
+): { hasHiddenBelow: boolean; hiddenBelowCount: number } {
+  const gap = nextGlobalRowNumber - globalRowNumber - 1;
+  return {
+    hasHiddenBelow: gap > 0,
+    hiddenBelowCount: gap > 0 ? gap : 0,
+  };
+}
+
+// ── Component ───────────────────────────────────────────────────────────────
+
+export function TaskTable(): JSX.Element {
   const reorderTasks = useTaskStore((state) => state.reorderTasks);
   const columnWidths = useTaskStore((state) => state.columnWidths);
-  const setColumnWidth = useTaskStore((state) => state.setColumnWidth);
-  const autoFitColumn = useTaskStore((state) => state.autoFitColumn);
-  const selectedTaskIds = useTaskStore((state) => state.selectedTaskIds);
-  const selectAllTasks = useTaskStore((state) => state.selectAllTasks);
-  const clearSelection = useTaskStore((state) => state.clearSelection);
   const clipboardTaskIds = useTaskStore((state) => state.clipboardTaskIds);
+  const selectedTaskIds = useTaskStore((state) => state.selectedTaskIds);
   const densityConfig = useDensityConfig();
   const hiddenColumns = useChartStore((state) => state.hiddenColumns);
   const hiddenTaskIds = useChartStore((state) => state.hiddenTaskIds);
@@ -107,43 +148,27 @@ export function TaskTable({ hideHeader = true }: TaskTableProps): JSX.Element {
     [selectedTaskIds]
   );
 
-  const allSelected = useMemo(
-    () => tasks.length > 0 && tasks.every((task) => selectedSet.has(task.id)),
-    [tasks, selectedSet]
-  );
-
   // Prepare derived props for each task row (clipboard/selection/hidden state)
+  // onUnhideBelow callbacks are created here so they're stable across renders
   const taskRowData = useMemo(
     () =>
       flattenedTasks.map(
-        ({ task, level, hasChildren, globalRowNumber }, index) => {
-          const prevTask = index > 0 ? flattenedTasks[index - 1] : null;
-          const nextTask =
-            index < flattenedTasks.length - 1
-              ? flattenedTasks[index + 1]
-              : null;
-
-          const isInClipboard = clipboardSet.has(task.id);
-          const prevInClipboard = prevTask
-            ? clipboardSet.has(prevTask.task.id)
-            : false;
-          const nextInClipboard = nextTask
-            ? clipboardSet.has(nextTask.task.id)
-            : false;
-
-          const isSelected = selectedSet.has(task.id);
-          const prevSelected = prevTask
-            ? selectedSet.has(prevTask.task.id)
-            : false;
-          const nextSelected = nextTask
-            ? selectedSet.has(nextTask.task.id)
-            : false;
+        (
+          { task, level, hasChildren, globalRowNumber }: FlattenedTask,
+          index: number
+        ) => {
+          const prevTaskId =
+            index > 0 ? flattenedTasks[index - 1].task.id : undefined;
+          const nextTask: FlattenedTask | undefined = flattenedTasks[index + 1];
+          const nextTaskId = nextTask?.task.id;
 
           const nextRowNum = nextTask
             ? nextTask.globalRowNumber
             : allFlattenedTasks.length + 1;
-          const gapAfter = nextRowNum - globalRowNumber - 1;
-          const hasHiddenBelow = gapAfter > 0;
+          const { hasHiddenBelow, hiddenBelowCount } = getHiddenGap(
+            globalRowNumber,
+            nextRowNum
+          );
 
           return {
             task,
@@ -151,21 +176,26 @@ export function TaskTable({ hideHeader = true }: TaskTableProps): JSX.Element {
             hasChildren,
             globalRowNumber,
             hasHiddenBelow,
-            hiddenBelowCount: hasHiddenBelow ? gapAfter : 0,
-            nextRowNum,
-            clipboardPosition: isInClipboard
-              ? { isFirst: !prevInClipboard, isLast: !nextInClipboard }
+            hiddenBelowCount,
+            onUnhideBelow: hasHiddenBelow
+              ? (): void => unhideRange(globalRowNumber, nextRowNum)
               : undefined,
-            selectionPosition: isSelected
-              ? {
-                  isFirstSelected: !prevSelected,
-                  isLastSelected: !nextSelected,
-                }
-              : undefined,
+            clipboardPosition: getClipboardPosition(
+              task.id,
+              prevTaskId,
+              nextTaskId,
+              clipboardSet
+            ),
+            selectionPosition: getSelectionPosition(
+              task.id,
+              prevTaskId,
+              nextTaskId,
+              selectedSet
+            ),
           };
         }
       ),
-    [flattenedTasks, clipboardSet, selectedSet, allFlattenedTasks]
+    [flattenedTasks, clipboardSet, selectedSet, allFlattenedTasks, unhideRange]
   );
 
   const sensors = useSensors(
@@ -183,17 +213,6 @@ export function TaskTable({ hideHeader = true }: TaskTableProps): JSX.Element {
     }
   };
 
-  const handleHeaderCheckboxClick = (): void => {
-    if (allSelected) {
-      clearSelection();
-    } else {
-      selectAllTasks();
-    }
-  };
-
-  /**
-   * Generate CSS grid template columns based on column widths.
-   */
   const gridTemplateColumns = useMemo(() => {
     return visibleColumns
       .map((col) => {
@@ -204,10 +223,6 @@ export function TaskTable({ hideHeader = true }: TaskTableProps): JSX.Element {
       })
       .join(" ");
   }, [columnWidths, densityConfig, visibleColumns]);
-
-  const handleColumnResize = (columnId: string, width: number): void => {
-    setColumnWidth(columnId, width);
-  };
 
   return (
     <div className="task-table-container bg-white border-r border-neutral-200 select-none">
@@ -223,48 +238,6 @@ export function TaskTable({ hideHeader = true }: TaskTableProps): JSX.Element {
           role="grid"
           aria-label="Task spreadsheet"
         >
-          {/* Header Row - Hidden when rendered on App level */}
-          {!hideHeader && (
-            <div className="task-table-header contents" role="row">
-              {visibleColumns.map((column) => (
-                <div
-                  key={column.id}
-                  className={`task-table-header-cell sticky top-0 z-10 ${column.id === "name" ? "pr-3" : "px-3"} py-4 bg-neutral-50 border-b ${column.id !== "color" ? "border-r" : ""} border-neutral-200 text-xs font-semibold text-neutral-600 uppercase tracking-wider relative`}
-                  role="columnheader"
-                >
-                  {column.id === "rowNumber" ? (
-                    <button
-                      onClick={handleHeaderCheckboxClick}
-                      className="w-full h-full flex items-center justify-center"
-                      title={allSelected ? "Deselect all" : "Select all"}
-                      aria-label={
-                        allSelected ? "Deselect all tasks" : "Select all tasks"
-                      }
-                    />
-                  ) : column.id === "color" ? (
-                    ""
-                  ) : (
-                    column.label
-                  )}
-                  {/* Column Resizer - only for name column */}
-                  {column.id === "name" && (
-                    <ColumnResizer
-                      columnId={column.id}
-                      currentWidth={getColumnPixelWidth(
-                        column.id,
-                        columnWidths,
-                        densityConfig
-                      )}
-                      onResize={handleColumnResize}
-                      onAutoResize={autoFitColumn}
-                      minWidth={100}
-                    />
-                  )}
-                </div>
-              ))}
-            </div>
-          )}
-
           {/* Task Rows with Drag and Drop */}
           <DndContext
             sensors={sensors}
@@ -289,12 +262,7 @@ export function TaskTable({ hideHeader = true }: TaskTableProps): JSX.Element {
                     visibleTaskIds={visibleTaskIds}
                     hasHiddenBelow={row.hasHiddenBelow}
                     hiddenBelowCount={row.hiddenBelowCount}
-                    onUnhideBelow={
-                      row.hasHiddenBelow
-                        ? (): void =>
-                            unhideRange(row.globalRowNumber, row.nextRowNum)
-                        : undefined
-                    }
+                    onUnhideBelow={row.onUnhideBelow}
                     clipboardPosition={row.clipboardPosition}
                     selectionPosition={row.selectionPosition}
                   />
