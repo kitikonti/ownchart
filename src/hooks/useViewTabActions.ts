@@ -38,6 +38,7 @@ interface ViewTabActions {
   handleZoomIn: () => void;
   handleZoomOut: () => void;
   handleZoomLevelSelect: (level: number | "fit") => void;
+  handleFitToView: () => void;
   // Layout
   isTaskTableCollapsed: boolean;
   toggleTaskTableCollapsed: () => void;
@@ -98,10 +99,14 @@ export function useViewTabActions(): ViewTabActions {
     applyScrollLeft(result.newScrollLeft);
   };
 
+  const handleFitToView = (): void => {
+    // Read tasks lazily — no subscription needed
+    fitToView(useTaskStore.getState().tasks);
+  };
+
   const handleZoomLevelSelect = (level: number | "fit"): void => {
     if (level === "fit") {
-      // Read tasks lazily — no subscription needed
-      fitToView(useTaskStore.getState().tasks);
+      handleFitToView();
     } else {
       const anchor = getViewportCenterAnchor();
       const result = setZoom(level / 100, anchor);
@@ -131,6 +136,7 @@ export function useViewTabActions(): ViewTabActions {
     handleZoomIn,
     handleZoomOut,
     handleZoomLevelSelect,
+    handleFitToView,
     isTaskTableCollapsed,
     toggleTaskTableCollapsed,
   };

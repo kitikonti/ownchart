@@ -197,8 +197,8 @@ export const ToolbarButton = forwardRef<HTMLButtonElement, ToolbarButtonProps>(
     const toggleActiveStyle: React.CSSProperties =
       variant === "toggle" && isActive
         ? {
-            backgroundColor: "rgb(235, 235, 235)",
-            borderColor: "rgb(97, 97, 97)",
+            backgroundColor: COLORS.neutral[100],
+            borderColor: COLORS.neutral[500],
           }
         : {};
 

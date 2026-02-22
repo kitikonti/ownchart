@@ -79,7 +79,7 @@ export function HomeTabContent(): JSX.Element {
         size="large"
         onClick={handleAddTask}
         aria-label="Add new task"
-        icon={<Plus size={ICON_SIZE} weight="regular" />}
+        icon={<Plus size={ICON_SIZE} weight="light" />}
         label="Add Task"
       />
 

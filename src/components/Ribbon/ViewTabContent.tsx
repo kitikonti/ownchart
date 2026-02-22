@@ -49,6 +49,7 @@ export function ViewTabContent(): JSX.Element {
     handleZoomIn,
     handleZoomOut,
     handleZoomLevelSelect,
+    handleFitToView,
     isTaskTableCollapsed,
     toggleTaskTableCollapsed,
   } = useViewTabActions();
@@ -142,7 +143,7 @@ export function ViewTabContent(): JSX.Element {
           icon={<MagnifyingGlassPlus size={ICON_SIZE} weight="light" />}
         />
         <ToolbarButton
-          onClick={() => handleZoomLevelSelect("fit")}
+          onClick={handleFitToView}
           title="Fit to width (F)"
           aria-label="Fit to width"
           icon={<ArrowsOutLineHorizontal size={ICON_SIZE} weight="light" />}
