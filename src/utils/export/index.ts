@@ -13,7 +13,7 @@ export {
 export {
   HEADER_HEIGHT,
   SVG_FONT_FAMILY,
-  COLORS,
+  EXPORT_COLORS,
   TASK_TYPE_ICON_PATHS,
 } from "./constants";
 

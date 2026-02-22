@@ -12,7 +12,7 @@ import { getDefaultColumnWidth } from "./calculations";
 import {
   HEADER_HEIGHT,
   SVG_FONT_FAMILY,
-  COLORS,
+  EXPORT_COLORS,
   TASK_TYPE_ICON_PATHS,
 } from "./constants";
 import type { ColorModeState } from "../../types/colorMode.types";
@@ -48,7 +48,7 @@ export function renderTaskTableHeader(
   bg.setAttribute("y", String(y));
   bg.setAttribute("width", String(totalWidth));
   bg.setAttribute("height", String(HEADER_HEIGHT));
-  bg.setAttribute("fill", COLORS.headerBg);
+  bg.setAttribute("fill", EXPORT_COLORS.headerBg);
   group.appendChild(bg);
 
   // Header border
@@ -57,7 +57,7 @@ export function renderTaskTableHeader(
   border.setAttribute("y1", String(y + HEADER_HEIGHT));
   border.setAttribute("x2", String(x + totalWidth));
   border.setAttribute("y2", String(y + HEADER_HEIGHT));
-  border.setAttribute("stroke", COLORS.border);
+  border.setAttribute("stroke", EXPORT_COLORS.border);
   border.setAttribute("stroke-width", "1");
   group.appendChild(border);
 
@@ -75,7 +75,7 @@ export function renderTaskTableHeader(
       );
       text.setAttribute("x", String(colX + 12));
       text.setAttribute("y", String(y + HEADER_HEIGHT / 2 + 4));
-      text.setAttribute("fill", COLORS.textHeader);
+      text.setAttribute("fill", EXPORT_COLORS.textHeader);
       text.setAttribute("font-family", SVG_FONT_FAMILY);
       text.setAttribute("font-size", "12");
       // Use "bold" for svg2pdf.js compatibility (doesn't support "600")
@@ -95,7 +95,7 @@ export function renderTaskTableHeader(
       sep.setAttribute("y1", String(y));
       sep.setAttribute("x2", String(colX + colWidth));
       sep.setAttribute("y2", String(y + HEADER_HEIGHT));
-      sep.setAttribute("stroke", COLORS.border);
+      sep.setAttribute("stroke", EXPORT_COLORS.border);
       sep.setAttribute("stroke-width", "1");
       group.appendChild(sep);
     }
@@ -161,7 +161,7 @@ export function renderTaskTableRows(
     "y2",
     String(startY + flattenedTasks.length * rowHeight)
   );
-  tableBorder.setAttribute("stroke", COLORS.border);
+  tableBorder.setAttribute("stroke", EXPORT_COLORS.border);
   tableBorder.setAttribute("stroke-width", "1");
   group.appendChild(tableBorder);
 
@@ -182,7 +182,7 @@ export function renderTaskTableRows(
     rowBorder.setAttribute("y1", String(rowY + rowHeight));
     rowBorder.setAttribute("x2", String(x + totalWidth));
     rowBorder.setAttribute("y2", String(rowY + rowHeight));
-    rowBorder.setAttribute("stroke", COLORS.borderLight);
+    rowBorder.setAttribute("stroke", EXPORT_COLORS.borderLight);
     rowBorder.setAttribute("stroke-width", "1");
     group.appendChild(rowBorder);
 
@@ -241,7 +241,7 @@ export function renderTaskTableRows(
         sep.setAttribute("y1", String(rowY));
         sep.setAttribute("x2", String(colX + colWidth));
         sep.setAttribute("y2", String(rowY + rowHeight));
-        sep.setAttribute("stroke", COLORS.borderLight);
+        sep.setAttribute("stroke", EXPORT_COLORS.borderLight);
         sep.setAttribute("stroke-width", "1");
         group.appendChild(sep);
       }
@@ -312,7 +312,7 @@ function renderNameColumn(
     );
     arrowText.setAttribute("x", String(currentX));
     arrowText.setAttribute("y", String(rowY + rowHeight / 2 + 4));
-    arrowText.setAttribute("fill", COLORS.textSecondary);
+    arrowText.setAttribute("fill", EXPORT_COLORS.textSecondary);
     arrowText.setAttribute("font-family", SVG_FONT_FAMILY);
     arrowText.setAttribute("font-size", "11");
     arrowText.textContent = "▼";
@@ -333,7 +333,7 @@ function renderNameColumn(
     "http://www.w3.org/2000/svg",
     "path"
   );
-  iconPath.setAttribute("fill", COLORS.textSecondary);
+  iconPath.setAttribute("fill", EXPORT_COLORS.textSecondary);
 
   // Select the appropriate icon path based on task type
   const pathData =
@@ -354,7 +354,7 @@ function renderNameColumn(
   const text = document.createElementNS("http://www.w3.org/2000/svg", "text");
   text.setAttribute("x", String(currentX));
   text.setAttribute("y", String(rowY + rowHeight / 2 + 4));
-  text.setAttribute("fill", COLORS.textPrimary);
+  text.setAttribute("fill", EXPORT_COLORS.textPrimary);
   text.setAttribute("font-family", SVG_FONT_FAMILY);
   text.setAttribute("font-size", String(fontSize));
   text.textContent = task.name || `Task ${index + 1}`;
@@ -407,7 +407,7 @@ function renderDataColumn(
     text.setAttribute("y", String(rowY + rowHeight / 2 + 4));
     text.setAttribute(
       "fill",
-      useSummaryStyle ? COLORS.textSummary : COLORS.textPrimary
+      useSummaryStyle ? EXPORT_COLORS.textSummary : EXPORT_COLORS.textPrimary
     );
     text.setAttribute("font-family", SVG_FONT_FAMILY);
     text.setAttribute("font-size", String(fontSize));

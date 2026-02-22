@@ -147,6 +147,98 @@ function computeFinalDimensions(
 }
 
 /**
+ * Resolve the project date range from an explicit value or from task dates.
+ */
+function resolveProjectDateRange(
+  provided: { start: Date; end: Date } | undefined,
+  orderedTasks: Task[]
+): { start: Date; end: Date } | undefined {
+  if (provided) return provided;
+  if (orderedTasks.length === 0) return undefined;
+  const range = getDateRange(orderedTasks);
+  return { start: new Date(range.min), end: new Date(range.max) };
+}
+
+/**
+ * Compute task table column widths and total table width.
+ */
+function computeTaskTableLayout(
+  selectedColumns: ExportColumnKey[],
+  orderedTasks: Task[],
+  options: ExportOptions,
+  columnWidths: Record<string, number>
+): {
+  hasTaskList: boolean;
+  effectiveColumnWidths: Record<string, number>;
+  taskTableWidth: number;
+} {
+  const hasTaskList = selectedColumns.length > 0;
+  const effectiveColumnWidths = calculateOptimalColumnWidths(
+    selectedColumns,
+    orderedTasks,
+    options.density,
+    columnWidths
+  );
+  const taskTableWidth = hasTaskList
+    ? calculateTaskTableWidth(
+        selectedColumns,
+        effectiveColumnWidths,
+        options.density
+      )
+    : 0;
+  return { hasTaskList, effectiveColumnWidths, taskTableWidth };
+}
+
+/**
+ * Compute zoom, date range, and timeline scale from task data and options.
+ */
+function computeTimelineLayout(
+  options: ExportOptions,
+  currentAppZoom: number,
+  orderedTasks: Task[],
+  taskTableWidth: number,
+  projectDateRange: { start: Date; end: Date } | undefined,
+  visibleDateRange: { start: Date; end: Date } | undefined
+): {
+  dateRange: { min: string; max: string };
+  effectiveZoom: number;
+  scale: TimelineScale;
+} {
+  const preliminaryDuration = estimatePreliminaryDuration(projectDateRange);
+  const preliminaryZoom = calculateEffectiveZoom(
+    options,
+    currentAppZoom,
+    preliminaryDuration,
+    taskTableWidth
+  );
+
+  const dateRange = getEffectiveDateRange(
+    options,
+    projectDateRange,
+    visibleDateRange,
+    orderedTasks,
+    preliminaryZoom
+  );
+
+  const durationDays = calculateDurationDays(dateRange);
+  const effectiveZoom = calculateEffectiveZoom(
+    options,
+    currentAppZoom,
+    durationDays,
+    taskTableWidth
+  );
+
+  const scale = getTimelineScale(
+    dateRange.min,
+    dateRange.max,
+    MIN_TIMELINE_WIDTH,
+    effectiveZoom
+  );
+
+  return { dateRange, effectiveZoom, scale };
+}
+
+/**
  * Computes the full export layout geometry from tasks and options.
  * Pure function shared by both ExportRenderer (via useMemo) and
  * calculateExportDimensions to eliminate duplication.
@@ -161,72 +253,30 @@ function computeExportLayout(
 ): ExportLayout {
   const densityConfig = DENSITY_CONFIG[options.density];
 
-  // Build flattened task list (all expanded for export)
   const flattenedTasks = buildFlattenedTaskList(tasks, new Set<string>());
   const orderedTasks = flattenedTasks.map((ft) => ft.task);
-
-  // Calculate project date range from tasks if not provided
-  let projectDateRange = providedProjectDateRange;
-  if (!projectDateRange && orderedTasks.length > 0) {
-    const range = getDateRange(orderedTasks);
-    projectDateRange = {
-      start: new Date(range.min),
-      end: new Date(range.max),
-    };
-  }
-
   const selectedColumns = options.selectedColumns;
-  const hasTaskList = selectedColumns.length > 0;
 
-  // Calculate optimal column widths based on content
-  const effectiveColumnWidths = calculateOptimalColumnWidths(
-    selectedColumns,
-    orderedTasks,
-    options.density,
-    columnWidths
+  const projectDateRange = resolveProjectDateRange(
+    providedProjectDateRange,
+    orderedTasks
   );
 
-  // Calculate task table width (needed for fitToWidth calculation)
-  const taskTableWidth = hasTaskList
-    ? calculateTaskTableWidth(
-        selectedColumns,
-        effectiveColumnWidths,
-        options.density
-      )
-    : 0;
+  const { hasTaskList, effectiveColumnWidths, taskTableWidth } =
+    computeTaskTableLayout(
+      selectedColumns,
+      orderedTasks,
+      options,
+      columnWidths
+    );
 
-  // Calculate preliminary zoom for label padding estimation
-  const preliminaryDuration = estimatePreliminaryDuration(projectDateRange);
-  const preliminaryZoom = calculateEffectiveZoom(
+  const { dateRange, effectiveZoom, scale } = computeTimelineLayout(
     options,
     currentAppZoom,
-    preliminaryDuration,
-    taskTableWidth
-  );
-
-  // Get effective date range with label padding
-  const dateRange = getEffectiveDateRange(
-    options,
+    orderedTasks,
+    taskTableWidth,
     projectDateRange,
-    visibleDateRange,
-    orderedTasks,
-    preliminaryZoom
-  );
-
-  // Calculate final zoom and scale
-  const durationDays = calculateDurationDays(dateRange);
-  const effectiveZoom = calculateEffectiveZoom(
-    options,
-    currentAppZoom,
-    durationDays,
-    taskTableWidth
-  );
-
-  const scale = getTimelineScale(
-    dateRange.min,
-    dateRange.max,
-    MIN_TIMELINE_WIDTH,
-    effectiveZoom
+    visibleDateRange
   );
 
   const { timelineWidth, totalWidth, contentHeight, totalHeight } =
