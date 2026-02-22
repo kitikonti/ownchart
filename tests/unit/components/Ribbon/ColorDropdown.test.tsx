@@ -379,6 +379,17 @@ describe("ColorDropdown", () => {
       expect(buttons.length).toBe(5);
     });
 
+    it("does not emit aria-selected on mode buttons (no role)", () => {
+      const { container } = renderOpenDropdown();
+      const group = container.querySelector(
+        '[role="group"][aria-label="Color modes"]'
+      );
+      const buttons = group!.querySelectorAll("button");
+      buttons.forEach((btn) => {
+        expect(btn.hasAttribute("aria-selected")).toBe(false);
+      });
+    });
+
     it("wraps palette items in groups per category", () => {
       const { container } = renderOpenDropdown("theme");
       const groups = container.querySelectorAll(
@@ -389,6 +400,17 @@ describe("ColorDropdown", () => {
       groups.forEach((g) => {
         expect(g.querySelectorAll("button").length).toBeGreaterThan(0);
       });
+    });
+  });
+
+  describe("focus management", () => {
+    it("focuses first dialog button when panel opens", () => {
+      const { container } = renderOpenDropdown();
+      const firstDialogButton = container.querySelector(
+        '[role="dialog"] button'
+      );
+      expect(firstDialogButton).not.toBeNull();
+      expect(document.activeElement).toBe(firstDialogButton);
     });
   });
 

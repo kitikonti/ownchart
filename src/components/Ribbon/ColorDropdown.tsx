@@ -54,6 +54,8 @@ interface ColorModeOption {
   description: string;
 }
 
+const PANEL_MIN_WIDTH = "280px";
+
 const COLOR_MODE_OPTIONS: ColorModeOption[] = [
   {
     value: "manual",
@@ -439,7 +441,7 @@ export function ColorDropdown({
 
       {isOpen && (
         <DropdownPanel
-          minWidth="280px"
+          minWidth={PANEL_MIN_WIDTH}
           role="dialog"
           aria-label="Color mode options"
         >

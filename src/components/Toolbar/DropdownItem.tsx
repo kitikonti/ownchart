@@ -21,9 +21,9 @@ interface DropdownItemProps {
   showCheckmark?: boolean;
   /** Trailing content (e.g. color swatches) */
   trailing?: ReactNode;
-  /** ARIA role (defaults to "option") */
+  /** ARIA role — when set, enables aria-selected on the button */
   role?: string;
-  /** aria-selected override */
+  /** aria-selected override (only emitted when role is set) */
   "aria-selected"?: boolean;
 }
 
@@ -43,7 +43,7 @@ export function DropdownItem({
     <button
       type="button"
       role={role}
-      aria-selected={ariaSelected ?? isSelected}
+      aria-selected={role ? (ariaSelected ?? isSelected) : undefined}
       onClick={onClick}
       className={`dropdown-item${isSelected ? " dropdown-item-selected" : ""}`}
       style={{
