@@ -24,7 +24,7 @@ import { useDropdown } from "../../hooks/useDropdown";
 import { DropdownTrigger } from "../Toolbar/DropdownTrigger";
 import { DropdownPanel } from "../Toolbar/DropdownPanel";
 import { DropdownItem } from "../Toolbar/DropdownItem";
-import { TOOLBAR, COLORS } from "../../styles/design-tokens";
+import { TOOLBAR } from "../../styles/design-tokens";
 import { Button } from "../common/Button";
 import type { ColorMode } from "../../types/colorMode.types";
 import type {
@@ -41,6 +41,8 @@ import {
 } from "../../utils/colorPalettes";
 
 // ── Constants ───────────────────────────────────────────────────────────────
+
+const MAX_OPTIONS_HEIGHT = "320px";
 
 interface ColorModeOption {
   value: ColorMode;
@@ -95,22 +97,15 @@ function ColorSwatch({
 }): JSX.Element {
   return (
     <span
-      style={{
-        display: "inline-block",
-        width: size,
-        height: size,
-        backgroundColor: color,
-        borderRadius: "2px",
-        border: "1px solid rgba(0, 0, 0, 0.1)",
-        flexShrink: 0,
-      }}
+      className="inline-block rounded-sm border border-neutral-200 shrink-0"
+      style={{ width: size, height: size, backgroundColor: color }}
     />
   );
 }
 
 function PalettePreview({ colors }: { colors: string[] }): JSX.Element {
   return (
-    <div style={{ display: "flex", gap: "1px" }}>
+    <div className="flex gap-px">
       {colors.map((color, i) => (
         <ColorSwatch key={i} color={color} size={10} />
       ))}
@@ -122,38 +117,24 @@ interface ColorPickerRowProps {
   label: string;
   value: string;
   onChange: (hex: HexColor) => void;
-  marginBottom?: string;
+  className?: string;
 }
 
 function ColorPickerRow({
   label,
   value,
   onChange,
-  marginBottom = "10px",
+  className = "mb-2.5",
 }: ColorPickerRowProps): JSX.Element {
   return (
-    <div
-      style={{
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "space-between",
-        marginBottom,
-      }}
-    >
-      <span style={{ fontSize: "13px" }}>{label}</span>
+    <div className={`flex items-center justify-between ${className}`}>
+      <span className="text-sm">{label}</span>
       <input
         type="color"
         value={value}
         onChange={(e) => onChange(e.target.value as HexColor)}
         aria-label={`${label} color`}
-        style={{
-          width: "32px",
-          height: "24px",
-          border: `1px solid ${COLORS.neutral[200]}`,
-          borderRadius: "4px",
-          cursor: "pointer",
-          padding: "2px",
-        }}
+        className="w-8 h-6 border border-neutral-200 rounded cursor-pointer p-0.5"
       />
     </div>
   );
@@ -165,7 +146,7 @@ interface RangeSliderRowProps {
   min: number;
   max: number;
   onChange: (value: number) => void;
-  marginBottom?: string;
+  className?: string;
 }
 
 function RangeSliderRow({
@@ -174,20 +155,13 @@ function RangeSliderRow({
   min,
   max,
   onChange,
-  marginBottom = "12px",
+  className = "mb-3",
 }: RangeSliderRowProps): JSX.Element {
   return (
-    <div style={{ marginBottom }}>
-      <div
-        style={{
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "space-between",
-          marginBottom: "4px",
-        }}
-      >
-        <span style={{ fontSize: "13px" }}>{label}</span>
-        <span style={{ fontSize: "13px", fontWeight: 500 }}>{value}%</span>
+    <div className={className}>
+      <div className="flex items-center justify-between mb-1">
+        <span className="text-sm">{label}</span>
+        <span className="text-sm font-medium">{value}%</span>
       </div>
       <input
         type="range"
@@ -196,7 +170,7 @@ function RangeSliderRow({
         value={value}
         onChange={(e) => onChange(parseInt(e.target.value))}
         aria-label={label}
-        style={{ width: "100%", cursor: "pointer" }}
+        className="w-full cursor-pointer"
       />
     </div>
   );
@@ -206,8 +180,8 @@ function RangeSliderRow({
 
 function ManualOptions(): JSX.Element {
   return (
-    <div style={{ padding: "12px" }}>
-      <div style={{ fontSize: "13px", color: COLORS.neutral[500] }}>
+    <div className="p-3">
+      <div className="text-xs text-neutral-500">
         Use the color picker in the task list to set individual task colors.
       </div>
     </div>
@@ -216,7 +190,7 @@ function ManualOptions(): JSX.Element {
 
 interface ThemeOptionsProps {
   selectedPaletteId: PaletteId | null;
-  onSelectPalette: (id: string) => void;
+  onSelectPalette: (id: PaletteId) => void;
 }
 
 function ThemeOptions({
@@ -224,19 +198,10 @@ function ThemeOptions({
   onSelectPalette,
 }: ThemeOptionsProps): JSX.Element {
   return (
-    <div style={{ padding: "8px 0" }}>
+    <div className="py-2">
       {PALETTE_CATEGORIES.map((category) => (
-        <div key={category} style={{ marginBottom: "8px" }}>
-          <div
-            style={{
-              padding: "4px 12px",
-              fontSize: "11px",
-              fontWeight: 600,
-              color: COLORS.neutral[500],
-              textTransform: "uppercase",
-              letterSpacing: "0.5px",
-            }}
-          >
+        <div key={category} className="mb-2">
+          <div className="px-3 py-1 text-[11px] font-semibold text-neutral-500 uppercase tracking-wider">
             {CATEGORY_LABELS[category]}
           </div>
 
@@ -245,7 +210,7 @@ function ThemeOptions({
               key={palette.id}
               isSelected={selectedPaletteId === palette.id}
               showCheckmark={false}
-              onClick={() => onSelectPalette(palette.id)}
+              onClick={() => onSelectPalette(palette.id as PaletteId)}
               trailing={<PalettePreview colors={palette.colors} />}
             >
               {palette.name}
@@ -267,39 +232,23 @@ function SummaryOptions({
   onChange,
 }: SummaryOptionsProps): JSX.Element {
   return (
-    <div style={{ padding: "12px" }}>
-      <div
-        style={{
-          fontSize: "13px",
-          color: COLORS.neutral[500],
-          marginBottom: "12px",
-        }}
-      >
+    <div className="p-3">
+      <div className="text-xs text-neutral-500 mb-3">
         Set colors on summary tasks — children inherit automatically.
       </div>
-      <label
-        style={{
-          display: "flex",
-          alignItems: "center",
-          gap: "8px",
-          cursor: "pointer",
-          marginBottom: "12px",
-        }}
-      >
+      <label className="flex items-center gap-2 cursor-pointer mb-3">
         <input
           type="checkbox"
           checked={options.useMilestoneAccent}
           onChange={(e) => onChange({ useMilestoneAccent: e.target.checked })}
-          style={{ width: "16px", height: "16px", cursor: "pointer" }}
+          className="w-4 h-4 cursor-pointer"
         />
-        <span style={{ fontSize: "13px" }}>Milestones in accent color</span>
+        <span className="text-sm">Milestones in accent color</span>
       </label>
 
       {options.useMilestoneAccent && (
-        <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-          <span style={{ fontSize: "13px", color: COLORS.neutral[500] }}>
-            Accent:
-          </span>
+        <div className="flex items-center gap-2">
+          <span className="text-xs text-neutral-500">Accent:</span>
           <input
             type="color"
             value={options.milestoneAccentColor}
@@ -307,14 +256,7 @@ function SummaryOptions({
               onChange({ milestoneAccentColor: e.target.value as HexColor })
             }
             aria-label="Milestone accent color"
-            style={{
-              width: "28px",
-              height: "28px",
-              border: `1px solid ${COLORS.neutral[200]}`,
-              borderRadius: "4px",
-              cursor: "pointer",
-              padding: "2px",
-            }}
+            className="w-7 h-7 border border-neutral-200 rounded cursor-pointer p-0.5"
           />
         </div>
       )}
@@ -332,7 +274,7 @@ function TaskTypeOptions({
   onChange,
 }: TaskTypeOptionsProps): JSX.Element {
   return (
-    <div style={{ padding: "12px" }}>
+    <div className="p-3">
       <ColorPickerRow
         label="Summary"
         value={options.summaryColor}
@@ -347,7 +289,7 @@ function TaskTypeOptions({
         label="Milestone"
         value={options.milestoneColor}
         onChange={(hex) => onChange({ milestoneColor: hex })}
-        marginBottom="0"
+        className=""
       />
     </div>
   );
@@ -363,12 +305,12 @@ function HierarchyOptions({
   onChange,
 }: HierarchyOptionsProps): JSX.Element {
   return (
-    <div style={{ padding: "12px" }}>
+    <div className="p-3">
       <ColorPickerRow
         label="Base Color"
         value={options.baseColor}
         onChange={(hex) => onChange({ baseColor: hex })}
-        marginBottom="12px"
+        className="mb-3"
       />
       <RangeSliderRow
         label="Lighten per level"
@@ -383,7 +325,7 @@ function HierarchyOptions({
         min={20}
         max={60}
         onChange={(v) => onChange({ maxLightenPercent: v })}
-        marginBottom="0"
+        className=""
       />
     </div>
   );
@@ -419,9 +361,9 @@ export function ColorDropdown({
     // Panel stays open — don't call close()
   };
 
-  const handleSelectPalette = (paletteId: string): void => {
+  const handleSelectPalette = (paletteId: PaletteId): void => {
     setThemeOptions({
-      selectedPaletteId: paletteId as PaletteId,
+      selectedPaletteId: paletteId,
       customMonochromeBase: null,
     });
     close();
@@ -470,8 +412,8 @@ export function ColorDropdown({
         onClick={toggle}
         icon={<Palette size={TOOLBAR.iconSize} weight="light" />}
         label="Color"
-        aria-label="Color"
-        aria-haspopup="listbox"
+        aria-label="Color mode and options"
+        aria-haspopup="dialog"
         title="Color mode and options"
         labelPriority={labelPriority}
       />
@@ -491,31 +433,25 @@ export function ColorDropdown({
           ))}
 
           {/* Divider */}
-          <div
-            style={{
-              height: "1px",
-              backgroundColor: COLORS.neutral[100],
-              margin: "4px 0",
-            }}
-          />
+          <div className="h-px bg-neutral-100 my-1" />
 
           {/* Mode-specific options (scrollable) */}
-          <div style={{ overflowY: "auto", maxHeight: "320px" }}>
+          <div
+            className="overflow-y-auto"
+            style={{ maxHeight: MAX_OPTIONS_HEIGHT }}
+          >
             {renderOptions()}
           </div>
 
           {/* Apply Colors to Manual footer (only in auto modes) */}
           {currentMode !== "manual" && (
-            <div
-              style={{
-                borderTop: `1px solid ${COLORS.neutral[100]}`,
-                padding: "8px",
-              }}
-            >
+            <div className="border-t border-neutral-100 p-2">
               <Button
                 variant="secondary"
                 fullWidth
-                icon={<PaintBucket size={16} weight="light" />}
+                icon={
+                  <PaintBucket size={TOOLBAR.iconSizeSmall} weight="light" />
+                }
                 onClick={() => {
                   applyColorsToManual();
                   close();

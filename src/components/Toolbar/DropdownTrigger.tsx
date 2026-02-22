@@ -28,7 +28,7 @@ interface DropdownTriggerProps {
   /** Tooltip */
   title?: string;
   /** ARIA haspopup value */
-  "aria-haspopup"?: "true" | "listbox" | "menu";
+  "aria-haspopup"?: "true" | "listbox" | "menu" | "dialog";
   /** Visual border state for active config (e.g. WorkingDays) */
   isActive?: boolean;
   /** Collapse priority: lower numbers hide first. Omit to never collapse. */
