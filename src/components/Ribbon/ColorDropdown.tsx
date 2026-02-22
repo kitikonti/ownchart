@@ -106,8 +106,8 @@ function ColorSwatch({
 function PalettePreview({ colors }: { colors: string[] }): JSX.Element {
   return (
     <div className="flex gap-px">
-      {colors.map((color, i) => (
-        <ColorSwatch key={i} color={color} size={10} />
+      {colors.map((color) => (
+        <ColorSwatch key={color} color={color} size={10} />
       ))}
     </div>
   );
@@ -205,17 +205,22 @@ function ThemeOptions({
             {CATEGORY_LABELS[category]}
           </div>
 
-          {PALETTES_BY_CATEGORY[category].map((palette) => (
-            <DropdownItem
-              key={palette.id}
-              isSelected={selectedPaletteId === palette.id}
-              showCheckmark={false}
-              onClick={() => onSelectPalette(palette.id as PaletteId)}
-              trailing={<PalettePreview colors={palette.colors} />}
-            >
-              {palette.name}
-            </DropdownItem>
-          ))}
+          <div
+            role="listbox"
+            aria-label={`${CATEGORY_LABELS[category]} palettes`}
+          >
+            {PALETTES_BY_CATEGORY[category].map((palette) => (
+              <DropdownItem
+                key={palette.id}
+                isSelected={selectedPaletteId === palette.id}
+                showCheckmark={false}
+                onClick={() => onSelectPalette(palette.id as PaletteId)}
+                trailing={<PalettePreview colors={palette.colors} />}
+              >
+                {palette.name}
+              </DropdownItem>
+            ))}
+          </div>
         </div>
       ))}
     </div>
@@ -425,16 +430,18 @@ export function ColorDropdown({
           aria-label="Color mode options"
         >
           {/* Mode selection (fixed) */}
-          {COLOR_MODE_OPTIONS.map((option) => (
-            <DropdownItem
-              key={option.value}
-              isSelected={option.value === currentMode}
-              onClick={() => handleModeSelect(option.value)}
-              description={option.description}
-            >
-              {option.label}
-            </DropdownItem>
-          ))}
+          <div role="listbox" aria-label="Color modes">
+            {COLOR_MODE_OPTIONS.map((option) => (
+              <DropdownItem
+                key={option.value}
+                isSelected={option.value === currentMode}
+                onClick={() => handleModeSelect(option.value)}
+                description={option.description}
+              >
+                {option.label}
+              </DropdownItem>
+            ))}
+          </div>
 
           {/* Divider */}
           <div className="h-px bg-neutral-100 my-1" />

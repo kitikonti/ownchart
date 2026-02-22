@@ -8,6 +8,7 @@ import { describe, it, expect, beforeEach, vi } from "vitest";
 import { render, fireEvent } from "@testing-library/react";
 import { ColorDropdown } from "../../../../src/components/Ribbon/ColorDropdown";
 import { DEFAULT_COLOR_MODE_STATE } from "../../../../src/config/colorModeDefaults";
+import { RibbonCollapseProvider } from "../../../../src/components/Ribbon/RibbonCollapseContext";
 import type { ColorModeState } from "../../../../src/types/colorMode.types";
 
 // ---------------------------------------------------------------------------
@@ -366,6 +367,53 @@ describe("ColorDropdown", () => {
       const panel = container.querySelector('[role="dialog"]');
       expect(panel).not.toBeNull();
       expect(panel?.getAttribute("aria-label")).toBe("Color mode options");
+    });
+
+    it("wraps mode options in a listbox with aria-label", () => {
+      const { container } = renderOpenDropdown();
+      const listbox = container.querySelector(
+        '[role="listbox"][aria-label="Color modes"]'
+      );
+      expect(listbox).not.toBeNull();
+      const options = listbox!.querySelectorAll('[role="option"]');
+      expect(options.length).toBe(5);
+    });
+
+    it("wraps palette items in listboxes per category", () => {
+      const { container } = renderOpenDropdown("theme");
+      const listboxes = container.querySelectorAll(
+        '[role="listbox"][aria-label$="palettes"]'
+      );
+      expect(listboxes.length).toBeGreaterThan(0);
+      // Each category listbox contains palette options
+      listboxes.forEach((lb) => {
+        expect(lb.querySelectorAll('[role="option"]').length).toBeGreaterThan(0);
+      });
+    });
+  });
+
+  describe("labelPriority", () => {
+    it("hides label when collapse level exceeds priority", () => {
+      mockIsOpen = false;
+      const { container } = render(
+        <RibbonCollapseProvider value={3}>
+          <ColorDropdown labelPriority={2} />
+        </RibbonCollapseProvider>
+      );
+      const trigger = container.querySelector("button");
+      expect(trigger).not.toBeNull();
+      // Label text "Color" should not be visible (only icon + caret remain)
+      expect(trigger!.querySelector("span")).toBeNull();
+    });
+
+    it("shows label when collapse level is below priority", () => {
+      mockIsOpen = false;
+      const { container } = render(
+        <RibbonCollapseProvider value={1}>
+          <ColorDropdown labelPriority={2} />
+        </RibbonCollapseProvider>
+      );
+      expect(container.textContent).toContain("Color");
     });
   });
 });
