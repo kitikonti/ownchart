@@ -126,6 +126,9 @@ export interface ViewSettings {
 
   // Hidden task IDs (Hide/Show Rows)
   hiddenTaskIds?: string[];
+
+  // Preserve unknown fields from future versions
+  [key: string]: unknown;
 }
 
 // Validation error types
@@ -136,25 +139,28 @@ export interface FileError {
   details?: Record<string, unknown>;
 }
 
+// Deserialized task with validated/branded types
+export interface DeserializedTask {
+  id: string;
+  name: string;
+  startDate: string;
+  endDate: string;
+  duration: number;
+  progress: number;
+  color: HexColor;
+  order: number;
+  type?: TaskType;
+  parent?: string;
+  open?: boolean;
+  metadata: Record<string, unknown>;
+  __unknownFields?: Record<string, unknown>;
+}
+
 // Deserialization result
 export interface DeserializeResult {
   success: boolean;
   data?: {
-    tasks: Array<{
-      id: string;
-      name: string;
-      startDate: string;
-      endDate: string;
-      duration: number;
-      progress: number;
-      color: HexColor;
-      order: number;
-      type?: TaskType;
-      parent?: string;
-      open?: boolean;
-      metadata: Record<string, unknown>;
-      __unknownFields?: Record<string, unknown>;
-    }>;
+    tasks: DeserializedTask[];
     dependencies: AppDependency[];
     viewSettings: ViewSettings;
     exportSettings?: ExportOptions;

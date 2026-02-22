@@ -179,21 +179,25 @@ function openViaFileInput(): Promise<OpenFileResult> {
     input.accept = ".ownchart,application/json";
 
     input.onchange = async (): Promise<void> => {
-      if (!input.files || input.files.length === 0) {
-        resolve({ success: false, error: "No file selected" });
-        return;
+      try {
+        if (!input.files || input.files.length === 0) {
+          resolve({ success: false, error: "No file selected" });
+          return;
+        }
+
+        const file = input.files[0];
+        const content = await file.text();
+
+        // Clear file handle — Firefox/Safari can't re-save to same file
+        currentFileHandle = null;
+
+        resolve({
+          success: true,
+          file: { name: file.name, content, size: file.size },
+        });
+      } catch (e) {
+        resolve({ success: false, error: toErrorMessage(e) });
       }
-
-      const file = input.files[0];
-      const content = await file.text();
-
-      // Clear file handle — Firefox/Safari can't re-save to same file
-      currentFileHandle = null;
-
-      resolve({
-        success: true,
-        file: { name: file.name, content, size: file.size },
-      });
     };
 
     input.oncancel = (): void => {
