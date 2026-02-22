@@ -2,6 +2,8 @@
  * ViewTabContent - Ribbon View tab toolbar content.
  *
  * Contains: Show/Hide toggles, Zoom controls, and Layout settings.
+ *
+ * Pure presentational component — all logic lives in useViewTabActions.
  */
 
 import {
@@ -24,82 +26,32 @@ import {
 } from "../Toolbar/ToolbarPrimitives";
 import { HolidayRegionPopover } from "./HolidayRegionPopover";
 import { ZoomDropdown } from "./ZoomDropdown";
-
-import { useTaskStore } from "../../store/slices/taskSlice";
-import { useChartStore } from "../../store/slices/chartSlice";
-import { getViewportCenterAnchor, applyScrollLeft } from "../../hooks/useZoom";
-import { MIN_ZOOM, MAX_ZOOM } from "../../utils/timelineUtils";
+import { useViewTabActions } from "../../hooks/useViewTabActions";
 
 const ICON_SIZE = TOOLBAR_TOKENS.iconSize;
 
-// Preset zoom levels
-const PRESET_ZOOM_LEVELS = [5, 10, 25, 50, 75, 100, 150, 200, 300];
-
 export function ViewTabContent(): JSX.Element {
-  // Task store (for fitToView)
-  const tasks = useTaskStore((state) => state.tasks);
-
-  // Chart store
-  const zoom = useChartStore((state) => state.zoom);
-  const zoomIn = useChartStore((state) => state.zoomIn);
-  const zoomOut = useChartStore((state) => state.zoomOut);
-  const fitToView = useChartStore((state) => state.fitToView);
-  const showTodayMarker = useChartStore((state) => state.showTodayMarker);
-  const toggleTodayMarker = useChartStore((state) => state.toggleTodayMarker);
-  const showWeekends = useChartStore((state) => state.showWeekends);
-  const toggleWeekends = useChartStore((state) => state.toggleWeekends);
-  const showHolidays = useChartStore((state) => state.showHolidays);
-  const toggleHolidays = useChartStore((state) => state.toggleHolidays);
-  const showDependencies = useChartStore((state) => state.showDependencies);
-  const toggleDependencies = useChartStore((state) => state.toggleDependencies);
-  const showProgress = useChartStore((state) => state.showProgress);
-  const toggleProgress = useChartStore((state) => state.toggleProgress);
-  const isTaskTableCollapsed = useChartStore(
-    (state) => state.isTaskTableCollapsed
-  );
-  const setTaskTableCollapsed = useChartStore(
-    (state) => state.setTaskTableCollapsed
-  );
-
-  // Derived zoom state
-  const zoomPercentage = Math.round(zoom * 100);
-  const canZoomIn = zoom < MAX_ZOOM;
-  const canZoomOut = zoom > MIN_ZOOM;
-
-  const zoomOptions = [...PRESET_ZOOM_LEVELS];
-  if (!PRESET_ZOOM_LEVELS.includes(zoomPercentage)) {
-    const insertIndex = zoomOptions.findIndex(
-      (level) => level > zoomPercentage
-    );
-    if (insertIndex === -1) {
-      zoomOptions.push(zoomPercentage);
-    } else {
-      zoomOptions.splice(insertIndex, 0, zoomPercentage);
-    }
-  }
-
-  // Handlers
-  const handleZoomIn = (): void => {
-    const anchor = getViewportCenterAnchor();
-    const result = zoomIn(anchor);
-    applyScrollLeft(result.newScrollLeft);
-  };
-
-  const handleZoomOut = (): void => {
-    const anchor = getViewportCenterAnchor();
-    const result = zoomOut(anchor);
-    applyScrollLeft(result.newScrollLeft);
-  };
-
-  const handleZoomLevelSelect = (level: number | "fit"): void => {
-    if (level === "fit") {
-      fitToView(tasks);
-    } else {
-      const anchor = getViewportCenterAnchor();
-      const result = useChartStore.getState().setZoom(level / 100, anchor);
-      applyScrollLeft(result.newScrollLeft);
-    }
-  };
+  const {
+    showTodayMarker,
+    toggleTodayMarker,
+    showWeekends,
+    toggleWeekends,
+    showHolidays,
+    toggleHolidays,
+    showDependencies,
+    toggleDependencies,
+    showProgress,
+    toggleProgress,
+    zoomPercentage,
+    zoomOptions,
+    canZoomIn,
+    canZoomOut,
+    handleZoomIn,
+    handleZoomOut,
+    handleZoomLevelSelect,
+    isTaskTableCollapsed,
+    toggleTaskTableCollapsed,
+  } = useViewTabActions();
 
   return (
     <>
@@ -190,7 +142,7 @@ export function ViewTabContent(): JSX.Element {
           icon={<MagnifyingGlassPlus size={ICON_SIZE} weight="light" />}
         />
         <ToolbarButton
-          onClick={() => fitToView(tasks)}
+          onClick={() => handleZoomLevelSelect("fit")}
           title="Fit to width (F)"
           aria-label="Fit to width"
           icon={<ArrowsOutLineHorizontal size={ICON_SIZE} weight="light" />}
@@ -204,7 +156,7 @@ export function ViewTabContent(): JSX.Element {
         <ToolbarButton
           variant="toggle"
           isActive={!isTaskTableCollapsed}
-          onClick={() => setTaskTableCollapsed(!isTaskTableCollapsed)}
+          onClick={toggleTaskTableCollapsed}
           title={isTaskTableCollapsed ? "Show Task Table" : "Hide Task Table"}
           aria-label={
             isTaskTableCollapsed ? "Show Task Table" : "Hide Task Table"
