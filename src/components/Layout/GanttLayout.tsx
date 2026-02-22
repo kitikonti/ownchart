@@ -8,7 +8,7 @@
  *         +-- Layout
  *             +-- SplitPane
  *                 +-- Left: TaskTableHeader + TaskTable (resizable)
- *                 +-- Right: TimelineHeader + ChartCanvas (fills remaining space)
+ *                 +-- Right: TimelinePanel (fills remaining space)
  *
  * This layout ensures:
  * - Resizable split between TaskTable and Timeline
@@ -20,14 +20,12 @@
 import { useRef, useEffect } from "react";
 import { TaskTable } from "../TaskList/TaskTable";
 import { TaskTableHeader } from "../TaskList/TaskTableHeader";
-import { ChartCanvas, TimelineHeader, SelectionHighlight } from "../GanttChart";
-import { ContextMenu } from "../ContextMenu/ContextMenu";
 import { useTaskStore } from "../../store/slices/taskSlice";
 import { useChartStore } from "../../store/slices/chartSlice";
 import { SplitPane } from "./SplitPane";
+import { TimelinePanel } from "./TimelinePanel";
 import { useTableDimensions } from "../../hooks/useTableDimensions";
 import { useFlattenedTasks } from "../../hooks/useFlattenedTasks";
-import { useHeaderDateSelection } from "../../hooks/useHeaderDateSelection";
 import { useSyncScroll } from "../../hooks/useSyncScroll";
 import { useInfiniteScroll } from "../../hooks/useInfiniteScroll";
 import { useContainerDimensions } from "../../hooks/useContainerDimensions";
@@ -36,7 +34,6 @@ import { useDensityConfig } from "../../store/slices/userPreferencesSlice";
 import { calculateLayoutDimensions } from "../../utils/layoutCalculations";
 import {
   MIN_TABLE_WIDTH,
-  HEADER_HEIGHT,
   HIDDEN_SCROLLBAR_STYLE,
 } from "../../config/layoutConstants";
 
@@ -48,13 +45,11 @@ export function GanttLayout(): JSX.Element {
   const timelineHeaderScrollRef = useRef<HTMLDivElement>(null);
   const taskTableScrollRef = useRef<HTMLDivElement>(null);
   const taskTableHeaderScrollRef = useRef<HTMLDivElement>(null);
-  const headerSvgRef = useRef<SVGSVGElement>(null);
   // Refs for direct DOM translateY updates (avoids React re-render on scroll)
   const taskTableTranslateRef = useRef<HTMLDivElement>(null);
   const chartTranslateRef = useRef<HTMLDivElement>(null);
 
   // Task store
-  const selectedTaskIds = useTaskStore((state) => state.selectedTaskIds);
   const taskTableWidth = useTaskStore((state) => state.taskTableWidth);
   const setTaskTableWidth = useTaskStore((state) => state.setTaskTableWidth);
 
@@ -68,7 +63,7 @@ export function GanttLayout(): JSX.Element {
   // Table dimensions
   const { totalColumnWidth } = useTableDimensions();
 
-  // Chart state for headers and infinite scroll
+  // Chart state for infinite scroll
   const scale = useChartStore((state) => state.scale);
   const containerWidth = useChartStore((state) => state.containerWidth);
   const extendDateRange = useChartStore((state) => state.extendDateRange);
@@ -76,16 +71,6 @@ export function GanttLayout(): JSX.Element {
   const lastFitToViewTime = useChartStore((state) => state.lastFitToViewTime);
   const fileLoadCounter = useChartStore((state) => state.fileLoadCounter);
   const setViewport = useChartStore((state) => state.setViewport);
-
-  // Header date selection (drag-to-select + context menu)
-  const {
-    selectionPixelRect,
-    contextMenu: headerContextMenu,
-    contextMenuItems: headerContextMenuItems,
-    closeContextMenu: closeHeaderContextMenu,
-    onMouseDown: handleHeaderMouseDown,
-    onContextMenu: handleHeaderContextMenu,
-  } = useHeaderDateSelection({ headerSvgRef, scale });
 
   // Task table collapse state
   const isTaskTableCollapsed = useChartStore(
@@ -177,7 +162,11 @@ export function GanttLayout(): JSX.Element {
               isCollapsed={isTaskTableCollapsed}
               onCollapsedChange={setTaskTableCollapsed}
               leftContent={
-                <div className="flex flex-col h-full">
+                <div
+                  className="flex flex-col h-full"
+                  role="region"
+                  aria-label="Task list"
+                >
                   <div
                     ref={taskTableHeaderScrollRef}
                     className="flex-shrink-0 bg-white/90 backdrop-blur-sm border-b border-neutral-200/80 overflow-x-auto overflow-y-hidden"
@@ -197,62 +186,15 @@ export function GanttLayout(): JSX.Element {
                 </div>
               }
               rightContent={
-                <div className="flex flex-col h-full">
-                  <div
-                    ref={timelineHeaderScrollRef}
-                    className="flex-shrink-0 bg-white/90 backdrop-blur-sm overflow-x-auto overflow-y-hidden border-b border-neutral-200/80"
-                    style={HIDDEN_SCROLLBAR_STYLE}
-                  >
-                    {scale && (
-                      <svg
-                        ref={headerSvgRef}
-                        width={timelineHeaderWidth}
-                        height={HEADER_HEIGHT}
-                        className="block select-none"
-                        role="img"
-                        aria-label="Timeline header"
-                        onMouseDown={handleHeaderMouseDown}
-                        onContextMenu={handleHeaderContextMenu}
-                      >
-                        <TimelineHeader
-                          scale={scale}
-                          width={timelineHeaderWidth}
-                        />
-                        <SelectionHighlight
-                          rect={selectionPixelRect}
-                          height={HEADER_HEIGHT}
-                        />
-                      </svg>
-                    )}
-                    {headerContextMenu && (
-                      <ContextMenu
-                        items={headerContextMenuItems}
-                        position={headerContextMenu}
-                        onClose={closeHeaderContextMenu}
-                      />
-                    )}
-                  </div>
-                  <div
-                    className="flex-1 h-full relative"
-                    style={{ height: contentAreaHeight }}
-                  >
-                    <div
-                      ref={chartContainerRef}
-                      className="gantt-chart-scroll-container absolute inset-0 bg-white overflow-x-auto scrollbar-thin"
-                      style={{ overflowY: "clip" }}
-                    >
-                      <div ref={chartTranslateRef}>
-                        <ChartCanvas
-                          tasks={orderedTasks}
-                          selectedTaskIds={selectedTaskIds}
-                          containerHeight={contentAreaHeight}
-                          containerWidth={chartContainerWidth}
-                          headerSelectionRect={selectionPixelRect}
-                        />
-                      </div>
-                    </div>
-                  </div>
-                </div>
+                <TimelinePanel
+                  timelineHeaderScrollRef={timelineHeaderScrollRef}
+                  chartContainerRef={chartContainerRef}
+                  chartTranslateRef={chartTranslateRef}
+                  timelineHeaderWidth={timelineHeaderWidth}
+                  contentAreaHeight={contentAreaHeight}
+                  chartContainerWidth={chartContainerWidth}
+                  orderedTasks={orderedTasks}
+                />
               }
             />
           </div>
