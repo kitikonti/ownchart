@@ -49,6 +49,16 @@ describe('File Operations - Validation', () => {
 
       expect(() => validatePreParse(validFile)).not.toThrow();
     });
+
+    it('should reject empty (zero-byte) files', () => {
+      const emptyFile = new File([], 'test.ownchart', {
+        type: 'application/json',
+      });
+      Object.defineProperty(emptyFile, 'size', { value: 0 });
+
+      expect(() => validatePreParse(emptyFile)).toThrow(ValidationError);
+      expect(() => validatePreParse(emptyFile)).toThrow('File is empty');
+    });
   });
 
   describe('Layer 2: Safe JSON Parsing', () => {
@@ -519,6 +529,29 @@ describe('File Operations - Validation', () => {
     it('should accept valid colorOverride', () => {
       const valid = createValidFile();
       valid.chart.tasks[0].colorOverride = '#FF5733';
+
+      expect(() => validateSemantics(valid)).not.toThrow();
+    });
+
+    it('should reject non-string colorOverride (e.g. number)', () => {
+      const invalid = createValidFile();
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      (invalid.chart.tasks[0] as any).colorOverride = 42;
+
+      expect(() => validateSemantics(invalid)).toThrow('non-string colorOverride');
+    });
+
+    it('should reject non-string colorOverride (e.g. boolean)', () => {
+      const invalid = createValidFile();
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      (invalid.chart.tasks[0] as any).colorOverride = true;
+
+      expect(() => validateSemantics(invalid)).toThrow('non-string colorOverride');
+    });
+
+    it('should accept undefined colorOverride', () => {
+      const valid = createValidFile();
+      valid.chart.tasks[0].colorOverride = undefined;
 
       expect(() => validateSemantics(valid)).not.toThrow();
     });

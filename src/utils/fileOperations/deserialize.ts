@@ -313,6 +313,22 @@ function sanitizeViewSettings(raw: ViewSettings): ViewSettings {
       typeof raw.showWeekends === "boolean" ? raw.showWeekends : true,
     showTodayMarker:
       typeof raw.showTodayMarker === "boolean" ? raw.showTodayMarker : true,
+    showHolidays:
+      typeof raw.showHolidays === "boolean" ? raw.showHolidays : undefined,
+    showDependencies:
+      typeof raw.showDependencies === "boolean"
+        ? raw.showDependencies
+        : undefined,
+    showProgress:
+      typeof raw.showProgress === "boolean" ? raw.showProgress : undefined,
+    workingDaysMode:
+      typeof raw.workingDaysMode === "boolean"
+        ? raw.workingDaysMode
+        : undefined,
+    isTaskTableCollapsed:
+      typeof raw.isTaskTableCollapsed === "boolean"
+        ? raw.isTaskTableCollapsed
+        : undefined,
   };
 }
 

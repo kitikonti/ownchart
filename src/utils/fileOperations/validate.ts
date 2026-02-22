@@ -44,6 +44,11 @@ export class ValidationError extends Error {
  * Check file size and extension before parsing
  */
 export function validatePreParse(file: { name: string; size: number }): void {
+  // Empty file check
+  if (file.size === 0) {
+    throw new ValidationError("FILE_EMPTY", "File is empty");
+  }
+
   // File size check
   if (file.size > MAX_FILE_SIZE) {
     throw new ValidationError(
@@ -307,14 +312,19 @@ function validateTaskColors(task: SerializedTask, index: number): void {
     );
   }
 
-  if (
-    typeof task.colorOverride === "string" &&
-    !isValidHexColor(task.colorOverride)
-  ) {
-    throw new ValidationError(
-      "INVALID_COLOR",
-      `Task ${index} has invalid colorOverride: ${task.colorOverride}`
-    );
+  if (task.colorOverride !== undefined) {
+    if (typeof task.colorOverride !== "string") {
+      throw new ValidationError(
+        "INVALID_COLOR",
+        `Task ${index} has non-string colorOverride: ${typeof task.colorOverride}`
+      );
+    }
+    if (!isValidHexColor(task.colorOverride)) {
+      throw new ValidationError(
+        "INVALID_COLOR",
+        `Task ${index} has invalid colorOverride: ${task.colorOverride}`
+      );
+    }
   }
 }
 
