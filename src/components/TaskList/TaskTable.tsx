@@ -4,7 +4,7 @@
  * Supports hidden rows with Excel-style row number gaps and indicator lines.
  */
 
-import { useMemo } from "react";
+import { useEffect, useMemo } from "react";
 import {
   DndContext,
   closestCenter,
@@ -26,6 +26,7 @@ import { useDensityConfig } from "../../store/slices/userPreferencesSlice";
 import { TaskTableRow } from "./TaskTableRow";
 import { NewTaskPlaceholderRow } from "./NewTaskPlaceholderRow";
 import {
+  getColumnPixelWidth,
   getDensityAwareWidth,
   getVisibleColumns,
 } from "../../config/tableColumns";
@@ -35,6 +36,7 @@ import { useFlattenedTasks } from "../../hooks/useFlattenedTasks";
 import { useAutoColumnWidth } from "../../hooks/useAutoColumnWidth";
 import { useTaskTableRowContextMenu } from "../../hooks/useTaskTableRowContextMenu";
 import { useHideOperations } from "../../hooks/useHideOperations";
+import { resetDragState } from "./dragSelectionState";
 import { ContextMenu } from "../ContextMenu/ContextMenu";
 import { COLORS } from "../../styles/design-tokens";
 
@@ -88,6 +90,13 @@ export function TaskTable({ hideHeader = true }: TaskTableProps): JSX.Element {
   // Auto-fit columns when density or task content changes
   useAutoColumnWidth();
 
+  // Single mouseup listener for drag-selection cleanup (hoisted from RowNumberCell)
+  useEffect(() => {
+    const handleMouseUp = (): void => resetDragState();
+    window.addEventListener("mouseup", handleMouseUp);
+    return (): void => window.removeEventListener("mouseup", handleMouseUp);
+  }, []);
+
   // Build sets for quick lookup
   const clipboardSet = useMemo(
     () => new Set(clipboardTaskIds),
@@ -98,9 +107,66 @@ export function TaskTable({ hideHeader = true }: TaskTableProps): JSX.Element {
     [selectedTaskIds]
   );
 
-  const allSelected =
-    tasks.length > 0 &&
-    tasks.every((task) => selectedTaskIds.includes(task.id));
+  const allSelected = useMemo(
+    () => tasks.length > 0 && tasks.every((task) => selectedSet.has(task.id)),
+    [tasks, selectedSet]
+  );
+
+  // Prepare derived props for each task row (clipboard/selection/hidden state)
+  const taskRowData = useMemo(
+    () =>
+      flattenedTasks.map(
+        ({ task, level, hasChildren, globalRowNumber }, index) => {
+          const prevTask = index > 0 ? flattenedTasks[index - 1] : null;
+          const nextTask =
+            index < flattenedTasks.length - 1
+              ? flattenedTasks[index + 1]
+              : null;
+
+          const isInClipboard = clipboardSet.has(task.id);
+          const prevInClipboard = prevTask
+            ? clipboardSet.has(prevTask.task.id)
+            : false;
+          const nextInClipboard = nextTask
+            ? clipboardSet.has(nextTask.task.id)
+            : false;
+
+          const isSelected = selectedSet.has(task.id);
+          const prevSelected = prevTask
+            ? selectedSet.has(prevTask.task.id)
+            : false;
+          const nextSelected = nextTask
+            ? selectedSet.has(nextTask.task.id)
+            : false;
+
+          const nextRowNum = nextTask
+            ? nextTask.globalRowNumber
+            : allFlattenedTasks.length + 1;
+          const gapAfter = nextRowNum - globalRowNumber - 1;
+          const hasHiddenBelow = gapAfter > 0;
+
+          return {
+            task,
+            level,
+            hasChildren,
+            globalRowNumber,
+            hasHiddenBelow,
+            hiddenBelowCount: hasHiddenBelow ? gapAfter : 0,
+            nextRowNum,
+            clipboardPosition: isInClipboard
+              ? { isFirst: !prevInClipboard, isLast: !nextInClipboard }
+              : undefined,
+            selectionPosition: isSelected
+              ? {
+                  isFirstSelected: !prevSelected,
+                  isLastSelected: !nextSelected,
+                }
+              : undefined,
+          };
+        }
+      ),
+    [flattenedTasks, clipboardSet, selectedSet, allFlattenedTasks]
+  );
 
   const sensors = useSensors(
     useSensor(PointerSensor),
@@ -138,23 +204,6 @@ export function TaskTable({ hideHeader = true }: TaskTableProps): JSX.Element {
       })
       .join(" ");
   }, [columnWidths, densityConfig, visibleColumns]);
-
-  /**
-   * Get current width of a column in pixels.
-   */
-  const getColumnWidth = (columnId: string): number => {
-    const customWidth = columnWidths[columnId];
-    if (customWidth) return customWidth;
-
-    const densityWidth = getDensityAwareWidth(columnId, densityConfig);
-    const match = densityWidth.match(/(\d+)px/);
-    if (match) return parseInt(match[1], 10);
-
-    const minmaxMatch = densityWidth.match(/minmax\((\d+)px/);
-    if (minmaxMatch) return parseInt(minmaxMatch[1], 10);
-
-    return 200;
-  };
 
   const handleColumnResize = (columnId: string, width: number): void => {
     setColumnWidth(columnId, width);
@@ -201,7 +250,11 @@ export function TaskTable({ hideHeader = true }: TaskTableProps): JSX.Element {
                   {column.id === "name" && (
                     <ColumnResizer
                       columnId={column.id}
-                      currentWidth={getColumnWidth(column.id)}
+                      currentWidth={getColumnPixelWidth(
+                        column.id,
+                        columnWidths,
+                        densityConfig
+                      )}
                       onResize={handleColumnResize}
                       onAutoResize={autoFitColumn}
                       minWidth={100}
@@ -222,84 +275,31 @@ export function TaskTable({ hideHeader = true }: TaskTableProps): JSX.Element {
               items={flattenedTasks.map(({ task }) => task.id)}
               strategy={verticalListSortingStrategy}
             >
-              {flattenedTasks.map(
-                ({ task, level, hasChildren, globalRowNumber }, index) => {
-                  const isInClipboard = clipboardSet.has(task.id);
-                  const prevTask = index > 0 ? flattenedTasks[index - 1] : null;
-                  const nextTask =
-                    index < flattenedTasks.length - 1
-                      ? flattenedTasks[index + 1]
-                      : null;
-
-                  // Check if previous/next tasks are also in clipboard
-                  const prevInClipboard = prevTask
-                    ? clipboardSet.has(prevTask.task.id)
-                    : false;
-                  const nextInClipboard = nextTask
-                    ? clipboardSet.has(nextTask.task.id)
-                    : false;
-
-                  // Check if previous/next tasks are also selected
-                  const isSelected = selectedSet.has(task.id);
-                  const prevSelected = prevTask
-                    ? selectedSet.has(prevTask.task.id)
-                    : false;
-                  const nextSelected = nextTask
-                    ? selectedSet.has(nextTask.task.id)
-                    : false;
-
-                  // Detect gaps caused by hidden rows
-                  const nextRowNum = nextTask
-                    ? nextTask.globalRowNumber
-                    : allFlattenedTasks.length + 1;
-                  const gapAfter = nextRowNum - globalRowNumber - 1;
-
-                  const hasHiddenBelow = gapAfter > 0;
-
-                  // Count of hidden rows below (gapAfter already includes trailing gap for last row)
-                  const hiddenBelowCount = hasHiddenBelow ? gapAfter : 0;
-
-                  return (
-                    <div
-                      key={task.id}
-                      onContextMenu={(e) => handleRowContextMenu(e, task.id)}
-                      className="contents"
-                    >
-                      <TaskTableRow
-                        task={task}
-                        globalRowNumber={globalRowNumber}
-                        level={level}
-                        hasChildren={hasChildren}
-                        visibleTaskIds={visibleTaskIds}
-                        hasHiddenBelow={hasHiddenBelow}
-                        hiddenBelowCount={hiddenBelowCount}
-                        onUnhideBelow={
-                          hasHiddenBelow
-                            ? (): void =>
-                                unhideRange(globalRowNumber, nextRowNum)
-                            : undefined
-                        }
-                        clipboardPosition={
-                          isInClipboard
-                            ? {
-                                isFirst: !prevInClipboard,
-                                isLast: !nextInClipboard,
-                              }
-                            : undefined
-                        }
-                        selectionPosition={
-                          isSelected
-                            ? {
-                                isFirstSelected: !prevSelected,
-                                isLastSelected: !nextSelected,
-                              }
-                            : undefined
-                        }
-                      />
-                    </div>
-                  );
-                }
-              )}
+              {taskRowData.map((row) => (
+                <div
+                  key={row.task.id}
+                  onContextMenu={(e) => handleRowContextMenu(e, row.task.id)}
+                  className="contents"
+                >
+                  <TaskTableRow
+                    task={row.task}
+                    globalRowNumber={row.globalRowNumber}
+                    level={row.level}
+                    hasChildren={row.hasChildren}
+                    visibleTaskIds={visibleTaskIds}
+                    hasHiddenBelow={row.hasHiddenBelow}
+                    hiddenBelowCount={row.hiddenBelowCount}
+                    onUnhideBelow={
+                      row.hasHiddenBelow
+                        ? (): void =>
+                            unhideRange(row.globalRowNumber, row.nextRowNum)
+                        : undefined
+                    }
+                    clipboardPosition={row.clipboardPosition}
+                    selectionPosition={row.selectionPosition}
+                  />
+                </div>
+              ))}
             </SortableContext>
           </DndContext>
 

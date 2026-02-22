@@ -11,7 +11,8 @@ import type { Task } from "../../types/chart.types";
 import { useTaskStore } from "../../store/slices/taskSlice";
 import { useChartStore } from "../../store/slices/chartSlice";
 import { useDensityConfig } from "../../store/slices/userPreferencesSlice";
-import { RowNumberCell, dragState } from "./RowNumberCell";
+import { RowNumberCell } from "./RowNumberCell";
+import { dragState } from "./dragSelectionState";
 import { TaskDataCells } from "./TaskDataCells";
 import {
   getDensityAwareWidth,

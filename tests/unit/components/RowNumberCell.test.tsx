@@ -5,17 +5,11 @@
 
 import { describe, it, expect, beforeEach, vi } from "vitest";
 import { render, screen, fireEvent } from "@testing-library/react";
+import { RowNumberCell } from "../../../src/components/TaskList/RowNumberCell";
 import {
-  RowNumberCell,
   dragState,
-} from "../../../src/components/TaskList/RowNumberCell";
-
-// Reset dragState between tests
-function resetDragState(): void {
-  dragState.isDragging = false;
-  dragState.startTaskId = null;
-  dragState.onDragSelect = null;
-}
+  resetDragState,
+} from "../../../src/components/TaskList/dragSelectionState";
 
 describe("RowNumberCell", () => {
   const defaultProps = {
@@ -166,18 +160,14 @@ describe("RowNumberCell", () => {
     });
   });
 
-  describe("mouseup cleanup", () => {
-    it("should reset dragState on mouseup", () => {
-      render(<RowNumberCell {...defaultProps} />);
-      const cell = screen.getByRole("gridcell");
+  describe("resetDragState", () => {
+    it("should reset all drag state fields", () => {
+      dragState.isDragging = true;
+      dragState.startTaskId = "task-1";
+      dragState.onDragSelect = vi.fn();
 
-      // Start a drag
-      fireEvent.mouseDown(cell, { button: 0 });
-      expect(dragState.isDragging).toBe(true);
-      expect(dragState.startTaskId).toBe("task-1");
+      resetDragState();
 
-      // End drag via global mouseup
-      fireEvent.mouseUp(window);
       expect(dragState.isDragging).toBe(false);
       expect(dragState.startTaskId).toBeNull();
       expect(dragState.onDragSelect).toBeNull();

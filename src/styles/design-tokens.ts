@@ -278,6 +278,7 @@ export const ROW_NUMBER = {
   textSelected: neutral[0],
   border: TABLE_HEADER.border,
   hiddenIndicator: "#9ca3af", // Tailwind gray-400
+  controlBg: neutral[0], // Insert-circle & cursor background
 } as const;
 
 // =============================================================================
