@@ -34,7 +34,7 @@ export function DropdownItem({
   description,
   showCheckmark = true,
   trailing,
-  role = "option",
+  role,
   "aria-selected": ariaSelected,
 }: DropdownItemProps): JSX.Element {
   const hasDescription = !!description;

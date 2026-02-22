@@ -18,6 +18,7 @@
  * └──────────────────────────┘
  */
 
+import { useEffect } from "react";
 import { Palette, PaintBucket } from "@phosphor-icons/react";
 import { useChartStore } from "../../store/slices/chartSlice";
 import { useDropdown } from "../../hooks/useDropdown";
@@ -32,7 +33,12 @@ import type {
   TaskTypeModeOptions,
   HierarchyModeOptions,
 } from "../../types/colorMode.types";
-import type { HexColor, PaletteId } from "../../types/branded.types";
+import {
+  toHexColor,
+  toPaletteId,
+  type HexColor,
+  type PaletteId,
+} from "../../types/branded.types";
 import {
   COLOR_PALETTES,
   CATEGORY_LABELS,
@@ -41,8 +47,6 @@ import {
 } from "../../utils/colorPalettes";
 
 // ── Constants ───────────────────────────────────────────────────────────────
-
-const MAX_OPTIONS_HEIGHT = "320px";
 
 interface ColorModeOption {
   value: ColorMode;
@@ -106,8 +110,8 @@ function ColorSwatch({
 function PalettePreview({ colors }: { colors: string[] }): JSX.Element {
   return (
     <div className="flex gap-px">
-      {colors.map((color) => (
-        <ColorSwatch key={color} color={color} size={10} />
+      {colors.map((color, index) => (
+        <ColorSwatch key={`${color}-${index}`} color={color} size={10} />
       ))}
     </div>
   );
@@ -132,7 +136,7 @@ function ColorPickerRow({
       <input
         type="color"
         value={value}
-        onChange={(e) => onChange(e.target.value as HexColor)}
+        onChange={(e) => onChange(toHexColor(e.target.value))}
         aria-label={`${label} color`}
         className="w-8 h-6 border border-neutral-200 rounded cursor-pointer p-0.5"
       />
@@ -206,7 +210,7 @@ function ThemeOptions({
           </div>
 
           <div
-            role="listbox"
+            role="group"
             aria-label={`${CATEGORY_LABELS[category]} palettes`}
           >
             {PALETTES_BY_CATEGORY[category].map((palette) => (
@@ -214,7 +218,7 @@ function ThemeOptions({
                 key={palette.id}
                 isSelected={selectedPaletteId === palette.id}
                 showCheckmark={false}
-                onClick={() => onSelectPalette(palette.id as PaletteId)}
+                onClick={() => onSelectPalette(toPaletteId(palette.id))}
                 trailing={<PalettePreview colors={palette.colors} />}
               >
                 {palette.name}
@@ -258,7 +262,7 @@ function SummaryOptions({
             type="color"
             value={options.milestoneAccentColor}
             onChange={(e) =>
-              onChange({ milestoneAccentColor: e.target.value as HexColor })
+              onChange({ milestoneAccentColor: toHexColor(e.target.value) })
             }
             aria-label="Milestone accent color"
             className="w-7 h-7 border border-neutral-200 rounded cursor-pointer p-0.5"
@@ -359,6 +363,16 @@ export function ColorDropdown({
     (state) => state.applyColorsToManual
   );
 
+  // Focus first option when panel opens (F002: dialog focus management)
+  useEffect(() => {
+    if (isOpen && containerRef.current) {
+      const firstButton = containerRef.current.querySelector<HTMLElement>(
+        '[role="dialog"] button'
+      );
+      firstButton?.focus();
+    }
+  }, [isOpen, containerRef]);
+
   const currentMode = colorModeState.mode;
 
   const handleModeSelect = (mode: ColorMode): void => {
@@ -430,7 +444,7 @@ export function ColorDropdown({
           aria-label="Color mode options"
         >
           {/* Mode selection (fixed) */}
-          <div role="listbox" aria-label="Color modes">
+          <div role="group" aria-label="Color modes">
             {COLOR_MODE_OPTIONS.map((option) => (
               <DropdownItem
                 key={option.value}
@@ -447,12 +461,7 @@ export function ColorDropdown({
           <div className="h-px bg-neutral-100 my-1" />
 
           {/* Mode-specific options (scrollable) */}
-          <div
-            className="overflow-y-auto"
-            style={{ maxHeight: MAX_OPTIONS_HEIGHT }}
-          >
-            {renderOptions()}
-          </div>
+          <div className="overflow-y-auto max-h-80">{renderOptions()}</div>
 
           {/* Apply Colors to Manual footer (only in auto modes) */}
           {currentMode !== "manual" && (

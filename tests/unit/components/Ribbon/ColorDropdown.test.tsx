@@ -369,25 +369,25 @@ describe("ColorDropdown", () => {
       expect(panel?.getAttribute("aria-label")).toBe("Color mode options");
     });
 
-    it("wraps mode options in a listbox with aria-label", () => {
+    it("wraps mode options in a group with aria-label", () => {
       const { container } = renderOpenDropdown();
-      const listbox = container.querySelector(
-        '[role="listbox"][aria-label="Color modes"]'
+      const group = container.querySelector(
+        '[role="group"][aria-label="Color modes"]'
       );
-      expect(listbox).not.toBeNull();
-      const options = listbox!.querySelectorAll('[role="option"]');
-      expect(options.length).toBe(5);
+      expect(group).not.toBeNull();
+      const buttons = group!.querySelectorAll("button");
+      expect(buttons.length).toBe(5);
     });
 
-    it("wraps palette items in listboxes per category", () => {
+    it("wraps palette items in groups per category", () => {
       const { container } = renderOpenDropdown("theme");
-      const listboxes = container.querySelectorAll(
-        '[role="listbox"][aria-label$="palettes"]'
+      const groups = container.querySelectorAll(
+        '[role="group"][aria-label$="palettes"]'
       );
-      expect(listboxes.length).toBeGreaterThan(0);
-      // Each category listbox contains palette options
-      listboxes.forEach((lb) => {
-        expect(lb.querySelectorAll('[role="option"]').length).toBeGreaterThan(0);
+      expect(groups.length).toBeGreaterThan(0);
+      // Each category group contains palette buttons
+      groups.forEach((g) => {
+        expect(g.querySelectorAll("button").length).toBeGreaterThan(0);
       });
     });
   });
