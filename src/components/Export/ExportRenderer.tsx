@@ -30,6 +30,7 @@ import { DENSITY_CONFIG } from "../../config/densityConfig";
 import { useChartStore } from "../../store/slices/chartSlice";
 import { SVG_FONT_FAMILY } from "../../utils/export/constants";
 import { getComputedTaskColor } from "../../utils/computeTaskColor";
+import { HEADER_HEIGHT } from "../../config/layoutConstants";
 
 interface ExportRendererProps {
   tasks: Task[];
@@ -39,8 +40,6 @@ interface ExportRendererProps {
   projectDateRange?: { start: Date; end: Date };
   visibleDateRange?: { start: Date; end: Date };
 }
-
-const HEADER_HEIGHT = 48;
 
 /** Column definitions for export (labels must match app's tableColumns.ts) */
 export const EXPORT_COLUMNS = [
