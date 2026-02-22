@@ -343,6 +343,7 @@ const VALID_EXPORT_ZOOM_MODES = new Set([
 const VALID_EXPORT_DATE_RANGE_MODES = new Set(["all", "visible", "custom"]);
 const VALID_EXPORT_BACKGROUNDS = new Set(["white", "transparent"]);
 const VALID_EXPORT_DENSITIES = new Set(["compact", "normal", "comfortable"]);
+// SYNC: Must match column IDs from src/config/tableColumns.ts (TASK_COLUMNS)
 const VALID_EXPORT_COLUMNS = new Set([
   "color",
   "name",

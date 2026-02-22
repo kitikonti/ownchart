@@ -443,11 +443,13 @@ function detectCircularHierarchy(
   const visited = new Set<string>();
   const recursionStack = new Set<string>();
 
-  function dfs(taskId: string, path: string[]): void {
+  const path: string[] = [];
+
+  function dfs(taskId: string): void {
     if (recursionStack.has(taskId)) {
       throw new ValidationError(
         "CIRCULAR_HIERARCHY",
-        `Circular reference detected: ${path.join(" -> ")} -> ${taskId}`
+        `Circular reference detected: ${[...path, taskId].join(" -> ")}`
       );
     }
 
@@ -455,18 +457,20 @@ function detectCircularHierarchy(
 
     visited.add(taskId);
     recursionStack.add(taskId);
+    path.push(taskId);
 
     const task = taskMap.get(taskId);
     if (task?.parent) {
-      dfs(task.parent, [...path, taskId]);
+      dfs(task.parent);
     }
 
+    path.pop();
     recursionStack.delete(taskId);
   }
 
   tasks.forEach((task) => {
     if (!visited.has(task.id)) {
-      dfs(task.id, []);
+      dfs(task.id);
     }
   });
 }

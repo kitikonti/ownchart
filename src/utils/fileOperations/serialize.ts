@@ -99,7 +99,7 @@ export function serializeToGanttFile(
 
   // Calculate file size
   const jsonString = JSON.stringify(ganttFile);
-  ganttFile.metadata.fileSize = new Blob([jsonString]).size;
+  ganttFile.metadata!.fileSize = new Blob([jsonString]).size;
 
   return options.prettyPrint
     ? JSON.stringify(ganttFile, null, 2)
