@@ -116,7 +116,7 @@ describe('File Operations - Validation', () => {
     it('should reject non-array tasks', () => {
       const invalid = {
         fileVersion: '1.0.0',
-        chart: { tasks: 'not an array' },
+        chart: { id: 'test-id', name: 'Test', tasks: 'not an array' },
       };
 
       expect(() => validateStructure(invalid)).toThrow('chart.tasks must be an array');
@@ -136,7 +136,7 @@ describe('File Operations - Validation', () => {
 
       const invalid = {
         fileVersion: '1.0.0',
-        chart: { tasks: tooManyTasks, viewSettings: {} },
+        chart: { id: 'test-id', name: 'Test', tasks: tooManyTasks, viewSettings: {} },
       };
 
       expect(() => validateStructure(invalid)).toThrow('10001 tasks (max: 10000)');
@@ -146,6 +146,8 @@ describe('File Operations - Validation', () => {
       const invalid = {
         fileVersion: '1.0.0',
         chart: {
+          id: 'test-id',
+          name: 'Test',
           tasks: [{ id: 'test' }], // Missing other required fields
           viewSettings: {},
         },
@@ -154,10 +156,46 @@ describe('File Operations - Validation', () => {
       expect(() => validateStructure(invalid)).toThrow('missing field');
     });
 
+    it('should reject missing chart.id', () => {
+      const invalid = {
+        fileVersion: '1.0.0',
+        chart: { name: 'Test', tasks: [], viewSettings: {} },
+      };
+
+      expect(() => validateStructure(invalid)).toThrow('chart.id');
+    });
+
+    it('should reject non-string chart.id', () => {
+      const invalid = {
+        fileVersion: '1.0.0',
+        chart: { id: 123, name: 'Test', tasks: [], viewSettings: {} },
+      };
+
+      expect(() => validateStructure(invalid)).toThrow('chart.id');
+    });
+
+    it('should reject missing chart.name', () => {
+      const invalid = {
+        fileVersion: '1.0.0',
+        chart: { id: 'some-id', tasks: [], viewSettings: {} },
+      };
+
+      expect(() => validateStructure(invalid)).toThrow('chart.name');
+    });
+
+    it('should reject non-string chart.name', () => {
+      const invalid = {
+        fileVersion: '1.0.0',
+        chart: { id: 'some-id', name: 42, tasks: [], viewSettings: {} },
+      };
+
+      expect(() => validateStructure(invalid)).toThrow('chart.name');
+    });
+
     it('should reject missing viewSettings', () => {
       const invalid = {
         fileVersion: '1.0.0',
-        chart: { tasks: [] },
+        chart: { id: 'test-id', name: 'Test', tasks: [] },
       };
 
       expect(() => validateStructure(invalid)).toThrow('Missing required field: chart.viewSettings');
@@ -167,6 +205,8 @@ describe('File Operations - Validation', () => {
       const valid = {
         fileVersion: '1.0.0',
         chart: {
+          id: '123e4567-e89b-12d3-a456-426614174099',
+          name: 'Test Chart',
           tasks: [
             {
               id: '123e4567-e89b-12d3-a456-426614174000',
@@ -396,6 +436,58 @@ describe('File Operations - Validation', () => {
       invalid.chart.tasks[0].endDate = '2026-02-30';
 
       expect(() => validateSemantics(invalid)).toThrow('invalid endDate');
+    });
+
+    it('should reject NaN progress', () => {
+      const invalid = createValidFile();
+      invalid.chart.tasks[0].progress = NaN;
+
+      expect(() => validateSemantics(invalid)).toThrow('invalid progress');
+    });
+
+    it('should reject Infinity progress', () => {
+      const invalid = createValidFile();
+      invalid.chart.tasks[0].progress = Infinity;
+
+      expect(() => validateSemantics(invalid)).toThrow('invalid progress');
+    });
+
+    it('should reject negative duration', () => {
+      const invalid = createValidFile();
+      invalid.chart.tasks[0].duration = -5;
+
+      expect(() => validateSemantics(invalid)).toThrow('invalid duration');
+    });
+
+    it('should reject NaN duration', () => {
+      const invalid = createValidFile();
+      invalid.chart.tasks[0].duration = NaN;
+
+      expect(() => validateSemantics(invalid)).toThrow('invalid duration');
+    });
+
+    it('should reject Infinity duration', () => {
+      const invalid = createValidFile();
+      invalid.chart.tasks[0].duration = Infinity;
+
+      expect(() => validateSemantics(invalid)).toThrow('invalid duration');
+    });
+
+    it('should reject non-numeric duration', () => {
+      const invalid = createValidFile();
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      (invalid.chart.tasks[0] as any).duration = 'five';
+
+      expect(() => validateSemantics(invalid)).toThrow('invalid duration');
+    });
+
+    it('should accept zero duration (milestones)', () => {
+      const valid = createValidFile();
+      valid.chart.tasks[0].type = 'milestone';
+      valid.chart.tasks[0].duration = 0;
+      valid.chart.tasks[0].endDate = valid.chart.tasks[0].startDate;
+
+      expect(() => validateSemantics(valid)).not.toThrow();
     });
 
     it('should reject invalid task type', () => {

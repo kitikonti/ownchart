@@ -199,6 +199,36 @@ describe('File Operations - Deserialization', () => {
     });
   });
 
+  describe('Missing Chart Fields', () => {
+    it('should reject file without chart.id', async () => {
+      const invalid = createValidFileContent();
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      delete (invalid.chart as any).id;
+
+      const result = await deserializeGanttFile(
+        JSON.stringify(invalid),
+        'test.ownchart'
+      );
+
+      expect(result.success).toBe(false);
+      expect(result.error!.message).toContain('chart.id');
+    });
+
+    it('should reject file without chart.name', async () => {
+      const invalid = createValidFileContent();
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      delete (invalid.chart as any).name;
+
+      const result = await deserializeGanttFile(
+        JSON.stringify(invalid),
+        'test.ownchart'
+      );
+
+      expect(result.success).toBe(false);
+      expect(result.error!.message).toContain('chart.name');
+    });
+  });
+
   describe('Invalid Task Data', () => {
     it('should reject task with invalid UUID', async () => {
       const invalid = createValidFileContent();
@@ -250,6 +280,63 @@ describe('File Operations - Deserialization', () => {
 
       expect(result.success).toBe(false);
       expect(result.error!.message).toContain('invalid color');
+    });
+  });
+
+  describe('Duration and Progress Edge Cases', () => {
+    it('should reject task with NaN progress', async () => {
+      const invalid = createValidFileContent();
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      (invalid.chart.tasks[0] as any).progress = NaN;
+
+      const result = await deserializeGanttFile(
+        JSON.stringify(invalid),
+        'test.ownchart'
+      );
+
+      expect(result.success).toBe(false);
+      expect(result.error!.message).toContain('invalid progress');
+    });
+
+    it('should reject task with negative duration', async () => {
+      const invalid = createValidFileContent();
+      invalid.chart.tasks[0].duration = -5;
+
+      const result = await deserializeGanttFile(
+        JSON.stringify(invalid),
+        'test.ownchart'
+      );
+
+      expect(result.success).toBe(false);
+      expect(result.error!.message).toContain('invalid duration');
+    });
+
+    it('should reject task with NaN duration', async () => {
+      const invalid = createValidFileContent();
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      (invalid.chart.tasks[0] as any).duration = NaN;
+
+      const result = await deserializeGanttFile(
+        JSON.stringify(invalid),
+        'test.ownchart'
+      );
+
+      expect(result.success).toBe(false);
+      expect(result.error!.message).toContain('invalid duration');
+    });
+
+    it('should reject task with string duration', async () => {
+      const invalid = createValidFileContent();
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      (invalid.chart.tasks[0] as any).duration = 'five';
+
+      const result = await deserializeGanttFile(
+        JSON.stringify(invalid),
+        'test.ownchart'
+      );
+
+      expect(result.success).toBe(false);
+      expect(result.error!.message).toContain('invalid duration');
     });
   });
 
@@ -579,6 +666,70 @@ describe('File Operations - Deserialization', () => {
 
       expect(result.success).toBe(true);
       expect(result.data!.dependencies).toEqual([]);
+    });
+
+    it('should preserve unknown dependency fields for round-trip', async () => {
+      const file = createValidFileContent();
+      file.chart.tasks.push({
+        id: '123e4567-e89b-12d3-a456-426614174002',
+        name: 'Task 2',
+        startDate: '2026-01-06',
+        endDate: '2026-01-10',
+        duration: 5,
+        progress: 0,
+        color: '#10b981',
+        order: 1,
+      });
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      (file.chart as any).dependencies = [
+        {
+          id: '123e4567-e89b-12d3-a456-426614174010',
+          from: '123e4567-e89b-12d3-a456-426614174001',
+          to: '123e4567-e89b-12d3-a456-426614174002',
+          type: 'FS',
+          futureColor: '#FF0000',
+          futureLabel: 'critical path',
+        },
+      ];
+
+      const result = await deserializeGanttFile(JSON.stringify(file), 'test.ownchart');
+
+      expect(result.success).toBe(true);
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const dep = result.data!.dependencies[0] as any;
+      expect(dep.__unknownFields).toBeDefined();
+      expect(dep.__unknownFields.futureColor).toBe('#FF0000');
+      expect(dep.__unknownFields.futureLabel).toBe('critical path');
+    });
+
+    it('should not store known dependency fields in __unknownFields', async () => {
+      const file = createValidFileContent();
+      file.chart.tasks.push({
+        id: '123e4567-e89b-12d3-a456-426614174002',
+        name: 'Task 2',
+        startDate: '2026-01-06',
+        endDate: '2026-01-10',
+        duration: 5,
+        progress: 0,
+        color: '#10b981',
+        order: 1,
+      });
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      (file.chart as any).dependencies = [
+        {
+          id: '123e4567-e89b-12d3-a456-426614174010',
+          from: '123e4567-e89b-12d3-a456-426614174001',
+          to: '123e4567-e89b-12d3-a456-426614174002',
+          type: 'FS',
+        },
+      ];
+
+      const result = await deserializeGanttFile(JSON.stringify(file), 'test.ownchart');
+
+      expect(result.success).toBe(true);
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const dep = result.data!.dependencies[0] as any;
+      expect(dep.__unknownFields).toBeUndefined();
     });
   });
 

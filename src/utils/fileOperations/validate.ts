@@ -110,6 +110,20 @@ export function validateStructure(data: unknown): void {
 
   const chart = file.chart as Record<string, unknown>;
 
+  if (typeof chart.id !== "string") {
+    throw new ValidationError(
+      "MISSING_FIELD",
+      "Missing or invalid field: chart.id"
+    );
+  }
+
+  if (typeof chart.name !== "string") {
+    throw new ValidationError(
+      "MISSING_FIELD",
+      "Missing or invalid field: chart.name"
+    );
+  }
+
   // Required chart fields
   if (!Array.isArray(chart.tasks)) {
     throw new ValidationError(
@@ -241,12 +255,24 @@ function validateTaskSemantics(
 
   if (
     typeof task.progress !== "number" ||
+    !Number.isFinite(task.progress) ||
     task.progress < 0 ||
     task.progress > 100
   ) {
     throw new ValidationError(
       "INVALID_PROGRESS",
       `Task ${index} has invalid progress: ${task.progress}`
+    );
+  }
+
+  if (
+    typeof task.duration !== "number" ||
+    !Number.isFinite(task.duration) ||
+    task.duration < 0
+  ) {
+    throw new ValidationError(
+      "INVALID_DURATION",
+      `Task ${index} has invalid duration: ${task.duration}`
     );
   }
 

@@ -41,6 +41,15 @@ const KNOWN_TASK_KEYS = new Set([
   "metadata",
 ]);
 
+const KNOWN_DEPENDENCY_KEYS = new Set([
+  "id",
+  "from",
+  "to",
+  "type",
+  "lag",
+  "createdAt",
+]);
+
 /** Create a failed DeserializeResult */
 function errorResult(code: string, message: string): DeserializeResult {
   return { success: false, error: { code, message, recoverable: false } };
@@ -104,11 +113,11 @@ function parseAndValidate(
  * @param fileSize - File size in bytes (for Layer 1 validation)
  * @returns DeserializeResult with success/error/warnings
  */
-export async function deserializeGanttFile(
+export function deserializeGanttFile(
   content: string,
   fileName: string,
   fileSize?: number
-): Promise<DeserializeResult> {
+): DeserializeResult {
   const warnings: string[] = [];
 
   try {
@@ -219,9 +228,12 @@ function deserializeTask(serialized: SerializedTask): Task & {
 
 /**
  * Convert SerializedDependency to Dependency
+ * Preserves unknown fields for round-trip compatibility
  */
-function deserializeDependency(serialized: SerializedDependency): Dependency {
-  return {
+function deserializeDependency(
+  serialized: SerializedDependency
+): Dependency & { __unknownFields?: Record<string, unknown> } {
+  const dep: Dependency & { __unknownFields?: Record<string, unknown> } = {
     id: serialized.id,
     fromTaskId: serialized.from,
     toTaskId: serialized.to,
@@ -229,6 +241,19 @@ function deserializeDependency(serialized: SerializedDependency): Dependency {
     lag: serialized.lag,
     createdAt: serialized.createdAt ?? "",
   };
+
+  const unknownFields: Record<string, unknown> = {};
+  for (const [key, value] of Object.entries(serialized)) {
+    if (!KNOWN_DEPENDENCY_KEYS.has(key)) {
+      unknownFields[key] = value;
+    }
+  }
+
+  if (Object.keys(unknownFields).length > 0) {
+    return { ...dep, __unknownFields: unknownFields };
+  }
+
+  return dep;
 }
 
 /** Check that a value is a finite number, otherwise return the fallback */
