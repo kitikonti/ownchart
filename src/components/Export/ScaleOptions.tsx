@@ -1,23 +1,23 @@
 /**
- * PNG/SVG scale options component.
- * Wrapper around ZoomModeSelector for PNG/SVG export.
+ * Scale options component for PNG and SVG export.
+ * Wrapper around ZoomModeSelector.
  */
 
 import type { ExportOptions, ExportZoomMode } from "../../utils/export/types";
 import { ZoomModeSelector } from "./ZoomModeSelector";
 
-export interface PngScaleOptionsProps {
+export interface ScaleOptionsProps {
   options: ExportOptions;
   onChange: (options: Partial<ExportOptions>) => void;
   currentAppZoom: number;
   taskTableWidth: number;
 }
 
-export function PngScaleOptions({
+export function ScaleOptions({
   options,
   onChange,
   currentAppZoom,
-}: PngScaleOptionsProps): JSX.Element {
+}: ScaleOptionsProps): JSX.Element {
   return (
     <ZoomModeSelector
       zoomMode={options.zoomMode}

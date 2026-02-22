@@ -1,6 +1,6 @@
 /**
  * SVG export options component.
- * Timeline scale options are shared with PNG export via PngScaleOptions.
+ * Timeline scale options are shared with PNG export via ScaleOptions.
  * This component is a placeholder for future SVG-specific options.
  */
 
@@ -13,10 +13,10 @@ export interface SvgExportOptionsProps {
 
 /**
  * SVG-specific export options.
- * Currently returns null as timeline scale is handled by PngScaleOptions.
+ * Currently returns null as timeline scale is handled by ScaleOptions.
  */
 export function SvgExportOptions(_: SvgExportOptionsProps): JSX.Element | null {
   void _; // Acknowledge unused parameter for future use
-  // No SVG-specific options currently - timeline scale is handled by PngScaleOptions
+  // No SVG-specific options currently - timeline scale is handled by ScaleOptions
   return null;
 }

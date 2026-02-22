@@ -3,8 +3,12 @@
  * Renders PdfPreview for PDF format, ChartPreview for PNG/SVG.
  */
 
-import type { ExportFormat, PdfExportOptions } from "../../utils/export/types";
-import { ChartPreview, type ReadabilityStatus } from "./ChartPreview";
+import type {
+  ExportFormat,
+  PdfExportOptions,
+  ReadabilityStatus,
+} from "../../utils/export/types";
+import { ChartPreview } from "./ChartPreview";
 import { PdfPreview } from "./PdfPreview";
 
 export interface ExportPreviewProps {
