@@ -45,7 +45,7 @@ export interface UseCellEditReturn {
   error: string | null;
   inputRef: RefObject<HTMLInputElement>;
   shouldOverwriteRef: React.MutableRefObject<boolean>;
-  saveValue: () => void;
+  saveValue: () => boolean;
   cancelEdit: () => void;
   handleEditKeyDown: (e: KeyboardEvent<HTMLInputElement>) => void;
   displayValue: string;
@@ -153,17 +153,18 @@ export function useCellEdit({
     updateTask(taskId, { [field]: typedValue });
   };
 
-  /** Validate and save the cell value. */
-  const saveValue = (): void => {
+  /** Validate and save the cell value. Returns true on success, false on validation failure. */
+  const saveValue = (): boolean => {
     if (!column.validator) {
       updateCellValue(localValue);
-      return;
+      stopCellEdit();
+      return true;
     }
 
     const validation = column.validator(localValue);
     if (!validation.valid) {
       setError(validation.error || "Invalid value");
-      return;
+      return false;
     }
 
     if (field === "startDate" || field === "endDate") {
@@ -173,7 +174,7 @@ export function useCellEdit({
 
       if (end < start) {
         setError("End date must be after start date");
-        return;
+        return false;
       }
 
       const duration = calculateDuration(newTask.startDate, newTask.endDate);
@@ -204,6 +205,7 @@ export function useCellEdit({
 
     setError(null);
     stopCellEdit();
+    return true;
   };
 
   /** Cancel edit mode without saving. */
@@ -217,14 +219,12 @@ export function useCellEdit({
   const handleEditKeyDown = (e: KeyboardEvent<HTMLInputElement>): void => {
     if (e.key === "Enter") {
       e.preventDefault();
-      saveValue();
-      if (!error) {
+      if (saveValue()) {
         navigateCell(e.shiftKey ? "up" : "down");
       }
     } else if (e.key === "Tab") {
       e.preventDefault();
-      saveValue();
-      if (!error) {
+      if (saveValue()) {
         navigateCell(e.shiftKey ? "left" : "right");
       }
     } else if (e.key === "Escape") {

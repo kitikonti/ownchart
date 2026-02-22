@@ -194,6 +194,7 @@ export function Cell({
       <div
         ref={cellRef}
         role="gridcell"
+        aria-selected={true}
         tabIndex={-1}
         className={`relative flex items-center border-b ${borderRight} border-neutral-200 bg-white z-20`}
         style={activeCellStyle}
@@ -238,6 +239,7 @@ export function Cell({
     <div
       ref={cellRef}
       role="gridcell"
+      aria-selected={isActive}
       tabIndex={isActive ? 0 : -1}
       className={`
         border-b ${borderRight} border-neutral-200 flex items-center cursor-pointer relative

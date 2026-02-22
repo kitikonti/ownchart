@@ -146,6 +146,27 @@ describe("Cell", () => {
       expect(screen.queryByText("Test Task")).not.toBeInTheDocument();
     });
 
+    it("sets aria-selected=false when not active", () => {
+      render(
+        <Cell taskId="task-1" task={task} field="name" column={column} />
+      );
+      expect(screen.getByRole("gridcell")).toHaveAttribute(
+        "aria-selected",
+        "false"
+      );
+    });
+
+    it("sets aria-selected=true when active", () => {
+      mockActiveCell = { taskId: "task-1", field: "name" };
+      render(
+        <Cell taskId="task-1" task={task} field="name" column={column} />
+      );
+      expect(screen.getByRole("gridcell")).toHaveAttribute(
+        "aria-selected",
+        "true"
+      );
+    });
+
     it("applies non-editable styling when column is read-only", () => {
       const readOnlyColumn = makeColumn({ editable: false });
       render(
@@ -313,6 +334,16 @@ describe("Cell", () => {
     beforeEach(() => {
       mockActiveCell = { taskId: "task-1", field: "name" };
       mockIsEditing = true;
+    });
+
+    it("sets aria-selected=true in edit mode", () => {
+      render(
+        <Cell taskId="task-1" task={task} field="name" column={column} />
+      );
+      expect(screen.getByRole("gridcell")).toHaveAttribute(
+        "aria-selected",
+        "true"
+      );
     });
 
     it("renders with role=gridcell in edit mode (F008)", () => {
@@ -495,7 +526,7 @@ describe("useCellEdit", () => {
     expect(mockStop).toHaveBeenCalled();
   });
 
-  it("saveValue calls updateTask for simple fields", () => {
+  it("saveValue calls updateTask for simple fields and returns true", () => {
     const { result } = renderHook(() =>
       useCellEdit({ ...defaultParams, isEditing: true })
     );
@@ -503,13 +534,17 @@ describe("useCellEdit", () => {
     act(() => {
       result.current.setLocalValue("New Name");
     });
+
+    let saved: boolean | undefined;
     act(() => {
-      result.current.saveValue();
+      saved = result.current.saveValue();
     });
 
+    expect(saved).toBe(true);
     expect(mockUpdateTask).toHaveBeenCalledWith("task-1", {
       name: "New Name",
     });
+    expect(mockStop).toHaveBeenCalled();
   });
 
   it("saveValue converts duration to number", () => {
@@ -541,7 +576,7 @@ describe("useCellEdit", () => {
     );
   });
 
-  it("saveValue sets error for invalid date validator result", () => {
+  it("saveValue returns false and sets error for invalid date validator result", () => {
     const dateColumn = makeColumn({
       id: "startDate",
       field: "startDate" as EditableField,
@@ -564,15 +599,18 @@ describe("useCellEdit", () => {
     act(() => {
       result.current.setLocalValue("not-a-date");
     });
+
+    let saved: boolean | undefined;
     act(() => {
-      result.current.saveValue();
+      saved = result.current.saveValue();
     });
 
+    expect(saved).toBe(false);
     expect(result.current.error).toBe("Invalid date format");
     expect(mockUpdateTask).not.toHaveBeenCalled();
   });
 
-  it("saveValue rejects end date before start date", () => {
+  it("saveValue returns false and rejects end date before start date", () => {
     const dateColumn = makeColumn({
       id: "endDate",
       field: "endDate" as EditableField,
@@ -593,10 +631,13 @@ describe("useCellEdit", () => {
     act(() => {
       result.current.setLocalValue("2025-03-05"); // before start
     });
+
+    let saved: boolean | undefined;
     act(() => {
-      result.current.saveValue();
+      saved = result.current.saveValue();
     });
 
+    expect(saved).toBe(false);
     expect(result.current.error).toBe("End date must be after start date");
     expect(mockUpdateTask).not.toHaveBeenCalled();
   });
@@ -668,7 +709,7 @@ describe("useCellEdit", () => {
     });
   });
 
-  it("saveValue saves without validator when none provided", () => {
+  it("saveValue saves without validator, calls stopCellEdit, and returns true", () => {
     const noValidatorColumn = makeColumn({ validator: undefined });
 
     const { result } = renderHook(() =>
@@ -682,11 +723,15 @@ describe("useCellEdit", () => {
     act(() => {
       result.current.setLocalValue("Any Value");
     });
+
+    let saved: boolean | undefined;
     act(() => {
-      result.current.saveValue();
+      saved = result.current.saveValue();
     });
 
+    expect(saved).toBe(true);
     expect(mockUpdateTask).toHaveBeenCalledWith("task-1", { name: "Any Value" });
+    expect(mockStop).toHaveBeenCalled();
   });
 
   describe("handleEditKeyDown", () => {
@@ -819,9 +864,36 @@ describe("useCellEdit", () => {
       });
 
       expect(mockUpdateTask).not.toHaveBeenCalled();
-      // error is set but navigation should still be attempted since the
-      // error variable in the closure is captured before saveValue updates it
-      // The important thing is that updateTask was NOT called
+      expect(mockNav).not.toHaveBeenCalled();
+      expect(result.current.error).toBe("Always fails");
+    });
+
+    it("does not navigate on Tab when validation fails", () => {
+      const strictColumn = makeColumn({
+        validator: () => ({ valid: false, error: "Always fails" }),
+      });
+
+      const { result } = renderHook(() =>
+        useCellEdit({
+          ...defaultParams,
+          column: strictColumn,
+          isEditing: true,
+        })
+      );
+
+      const event = {
+        key: "Tab",
+        shiftKey: false,
+        preventDefault: vi.fn(),
+      } as unknown as React.KeyboardEvent<HTMLInputElement>;
+
+      act(() => {
+        result.current.handleEditKeyDown(event);
+      });
+
+      expect(mockUpdateTask).not.toHaveBeenCalled();
+      expect(mockNav).not.toHaveBeenCalled();
+      expect(result.current.error).toBe("Always fails");
     });
   });
 
