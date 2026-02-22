@@ -4,7 +4,7 @@
  * Override-aware: in automatic color modes, writes to colorOverride.
  */
 
-import { useState, useRef, useEffect, type KeyboardEvent } from "react";
+import { useState, useRef, useEffect, useCallback, type KeyboardEvent } from "react";
 import { createPortal } from "react-dom";
 import { ColorPickerPopover } from "./ColorPickerPopover";
 import type { ColorMode } from "../../../types/colorMode.types";
@@ -79,10 +79,10 @@ export function ColorCellEditor({
     onChange(color);
   };
 
-  const handleClose = (): void => {
+  const handleClose = useCallback((): void => {
     setShowPopover(false);
     onSave?.();
-  };
+  }, [onSave]);
 
   const handleKeyDown = (e: KeyboardEvent<HTMLButtonElement>): void => {
     if (e.key === "Enter") {

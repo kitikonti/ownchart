@@ -312,6 +312,53 @@ function CustomColorSection({
 }
 
 // =============================================================================
+// Positioning
+// =============================================================================
+
+/** Compute popover style with viewport-aware anchor positioning */
+function computePopoverStyle(anchorRect?: DOMRect): React.CSSProperties {
+  const style: React.CSSProperties = {
+    position: "fixed",
+    zIndex: Z_INDEX.popover,
+    backgroundColor: COLORS.neutral[0],
+    borderRadius: RADIUS.lg,
+    boxShadow: SHADOWS.dropdown,
+    padding: SPACING[4],
+    width: POPOVER_WIDTH,
+    maxHeight: POPOVER_MAX_HEIGHT,
+    overflowY: "auto",
+  };
+
+  if (!anchorRect) {
+    return {
+      ...style,
+      top: "50%",
+      left: "50%",
+      transform: "translate(-50%, -50%)",
+    };
+  }
+
+  const spaceBelow = window.innerHeight - anchorRect.bottom;
+  const spaceAbove = anchorRect.top;
+
+  if (
+    spaceBelow < POPOVER_MAX_HEIGHT + ANCHOR_GAP &&
+    spaceAbove > spaceBelow
+  ) {
+    style.bottom = window.innerHeight - anchorRect.top + ANCHOR_GAP;
+  } else {
+    style.top = anchorRect.bottom + ANCHOR_GAP;
+  }
+
+  style.left = Math.min(
+    Math.max(VIEWPORT_MARGIN, anchorRect.left),
+    window.innerWidth - POPOVER_WIDTH - VIEWPORT_MARGIN
+  );
+
+  return style;
+}
+
+// =============================================================================
 // Main component
 // =============================================================================
 
@@ -428,42 +475,7 @@ export function ColorPickerPopover({
     onClose();
   };
 
-  // Popover base style
-  const popoverStyle: React.CSSProperties = {
-    position: "fixed",
-    zIndex: Z_INDEX.popover,
-    backgroundColor: COLORS.neutral[0],
-    borderRadius: RADIUS.lg,
-    boxShadow: SHADOWS.dropdown,
-    padding: SPACING[4],
-    width: POPOVER_WIDTH,
-    maxHeight: POPOVER_MAX_HEIGHT,
-    overflowY: "auto",
-  };
-
-  // Position relative to anchor with viewport-aware flipping
-  if (anchorRect) {
-    const spaceBelow = window.innerHeight - anchorRect.bottom;
-    const spaceAbove = anchorRect.top;
-
-    if (
-      spaceBelow < POPOVER_MAX_HEIGHT + ANCHOR_GAP &&
-      spaceAbove > spaceBelow
-    ) {
-      popoverStyle.bottom = window.innerHeight - anchorRect.top + ANCHOR_GAP;
-    } else {
-      popoverStyle.top = anchorRect.bottom + ANCHOR_GAP;
-    }
-
-    popoverStyle.left = Math.min(
-      Math.max(VIEWPORT_MARGIN, anchorRect.left),
-      window.innerWidth - POPOVER_WIDTH - VIEWPORT_MARGIN
-    );
-  } else {
-    popoverStyle.top = "50%";
-    popoverStyle.left = "50%";
-    popoverStyle.transform = "translate(-50%, -50%)";
-  }
+  const popoverStyle = computePopoverStyle(anchorRect);
 
   return (
     // eslint-disable-next-line jsx-a11y/no-noninteractive-element-interactions -- dialog needs keyboard handling for Escape and focus trapping

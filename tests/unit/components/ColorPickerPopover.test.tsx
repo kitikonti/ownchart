@@ -9,6 +9,7 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { render, screen, fireEvent } from '@testing-library/react';
 import { ColorPickerPopover } from '../../../src/components/TaskList/CellEditors/ColorPickerPopover';
+import { useTaskStore } from '../../../src/store/slices/taskSlice';
 
 // Mock Zustand store used by useProjectColors
 vi.mock('../../../src/store/slices/taskSlice', () => ({
@@ -460,6 +461,51 @@ describe('ColorPickerPopover', () => {
       const swatch = screen.getByTitle('#0F6CBD');
       // Selected swatches have a 2px solid brand border
       expect(swatch.style.border).toContain('2px solid');
+    });
+  });
+
+  // ---------------------------------------------------------------------------
+  // Project colors
+  // ---------------------------------------------------------------------------
+
+  describe('project colors', () => {
+    function mockTasksWithColors(colors: string[]): void {
+      vi.mocked(useTaskStore).mockImplementation(
+        (selector: (state: { tasks: { color: string }[] }) => unknown) =>
+          selector({ tasks: colors.map((color) => ({ color })) })
+      );
+    }
+
+    afterEach(() => {
+      // Restore default mock (empty tasks) so other tests are unaffected
+      vi.mocked(useTaskStore).mockImplementation(
+        (selector: (state: { tasks: unknown[] }) => unknown) =>
+          selector({ tasks: [] })
+      );
+    });
+
+    it('should render project colors section when tasks have colors', () => {
+      mockTasksWithColors(['#FF0000', '#00FF00', '#0000FF']);
+
+      render(<ColorPickerPopover {...defaultProps} />);
+
+      expect(screen.getByText('Project Colors')).toBeInTheDocument();
+      // useProjectColors normalizes to uppercase
+      expect(screen.getByTitle('#FF0000')).toBeInTheDocument();
+      expect(screen.getByTitle('#00FF00')).toBeInTheDocument();
+      expect(screen.getByTitle('#0000FF')).toBeInTheDocument();
+    });
+
+    it('should allow selecting a project color', () => {
+      mockTasksWithColors(['#FF0000', '#00FF00']);
+
+      render(<ColorPickerPopover {...defaultProps} />);
+
+      const swatch = screen.getByTitle('#FF0000');
+      fireEvent.click(swatch);
+
+      expect(defaultProps.onSelect).toHaveBeenCalledWith('#FF0000');
+      expect(defaultProps.onClose).toHaveBeenCalledTimes(1);
     });
   });
 });
