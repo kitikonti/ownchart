@@ -204,6 +204,38 @@ describe("ColorDropdown", () => {
       );
       expect(colorInput).not.toBeNull();
     });
+
+    it("calls setSummaryOptions when milestone accent checkbox is clicked", () => {
+      const { container } = renderOpenDropdown("summary");
+      const checkbox = container.querySelector(
+        'input[type="checkbox"]'
+      ) as HTMLInputElement;
+      fireEvent.click(checkbox);
+      expect(mockSetSummaryOptions).toHaveBeenCalledTimes(1);
+      expect(mockSetSummaryOptions.mock.calls[0][0]).toHaveProperty(
+        "useMilestoneAccent"
+      );
+    });
+
+    it("calls setSummaryOptions when milestone accent color changes", () => {
+      mockIsOpen = true;
+      mockColorModeState = {
+        ...DEFAULT_COLOR_MODE_STATE,
+        mode: "summary",
+        summaryOptions: {
+          useMilestoneAccent: true,
+          milestoneAccentColor: "#CA8A04",
+        },
+      };
+      const { container } = render(<ColorDropdown />);
+      const colorInput = container.querySelector(
+        'input[aria-label="Milestone accent color"]'
+      ) as HTMLInputElement;
+      fireEvent.change(colorInput, { target: { value: "#ff0000" } });
+      expect(mockSetSummaryOptions).toHaveBeenCalledWith({
+        milestoneAccentColor: "#ff0000",
+      });
+    });
   });
 
   describe("taskType mode options", () => {
@@ -219,13 +251,24 @@ describe("ColorDropdown", () => {
         container.querySelector('input[aria-label="Milestone color"]')
       ).not.toBeNull();
     });
+
+    it("calls setTaskTypeOptions when a color is changed", () => {
+      const { container } = renderOpenDropdown("taskType");
+      const summaryInput = container.querySelector(
+        'input[aria-label="Summary color"]'
+      ) as HTMLInputElement;
+      fireEvent.change(summaryInput, { target: { value: "#aa0000" } });
+      expect(mockSetTaskTypeOptions).toHaveBeenCalledWith({
+        summaryColor: "#aa0000",
+      });
+    });
   });
 
   describe("hierarchy mode options", () => {
     it("shows base color picker and range sliders", () => {
       const { container } = renderOpenDropdown("hierarchy");
       expect(
-        container.querySelector('input[aria-label="Base Color color"]')
+        container.querySelector('input[aria-label="Base color"]')
       ).not.toBeNull();
       expect(
         container.querySelector('input[aria-label="Lighten per level"]')
@@ -240,6 +283,39 @@ describe("ColorDropdown", () => {
       const text = container.textContent || "";
       expect(text).toContain("12%");
       expect(text).toContain("36%");
+    });
+
+    it("calls setHierarchyOptions when base color changes", () => {
+      const { container } = renderOpenDropdown("hierarchy");
+      const colorInput = container.querySelector(
+        'input[aria-label="Base color"]'
+      ) as HTMLInputElement;
+      fireEvent.change(colorInput, { target: { value: "#00ff00" } });
+      expect(mockSetHierarchyOptions).toHaveBeenCalledWith({
+        baseColor: "#00ff00",
+      });
+    });
+
+    it("calls setHierarchyOptions when lighten slider changes", () => {
+      const { container } = renderOpenDropdown("hierarchy");
+      const slider = container.querySelector(
+        'input[aria-label="Lighten per level"]'
+      ) as HTMLInputElement;
+      fireEvent.change(slider, { target: { value: "15" } });
+      expect(mockSetHierarchyOptions).toHaveBeenCalledWith({
+        lightenPercentPerLevel: 15,
+      });
+    });
+
+    it("calls setHierarchyOptions when max lighten slider changes", () => {
+      const { container } = renderOpenDropdown("hierarchy");
+      const slider = container.querySelector(
+        'input[aria-label="Max lighten"]'
+      ) as HTMLInputElement;
+      fireEvent.change(slider, { target: { value: "45" } });
+      expect(mockSetHierarchyOptions).toHaveBeenCalledWith({
+        maxLightenPercent: 45,
+      });
     });
   });
 
@@ -283,6 +359,13 @@ describe("ColorDropdown", () => {
         '[aria-label="Color mode and options"]'
       );
       expect(trigger).not.toBeNull();
+    });
+
+    it("has role=dialog and aria-label on open panel", () => {
+      const { container } = renderOpenDropdown();
+      const panel = container.querySelector('[role="dialog"]');
+      expect(panel).not.toBeNull();
+      expect(panel?.getAttribute("aria-label")).toBe("Color mode options");
     });
   });
 });

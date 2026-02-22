@@ -307,7 +307,7 @@ function HierarchyOptions({
   return (
     <div className="p-3">
       <ColorPickerRow
-        label="Base Color"
+        label="Base"
         value={options.baseColor}
         onChange={(hex) => onChange({ baseColor: hex })}
         className="mb-3"
@@ -419,7 +419,11 @@ export function ColorDropdown({
       />
 
       {isOpen && (
-        <DropdownPanel minWidth="280px">
+        <DropdownPanel
+          minWidth="280px"
+          role="dialog"
+          aria-label="Color mode options"
+        >
           {/* Mode selection (fixed) */}
           {COLOR_MODE_OPTIONS.map((option) => (
             <DropdownItem
