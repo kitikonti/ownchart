@@ -291,7 +291,7 @@ function CustomColorSection({
         />
         <button
           type="button"
-          className="bg-neutral-50 hover:bg-neutral-100"
+          className="hover:bg-neutral-100"
           onClick={() => nativePickerRef.current?.click()}
           style={{
             flex: 1,
@@ -302,6 +302,7 @@ function CustomColorSection({
             fontSize: TYPOGRAPHY.fontSize.sm,
             color: COLORS.neutral[600],
             textAlign: "left",
+            backgroundColor: COLORS.neutral[50],
           }}
         >
           Choose custom color...
@@ -509,9 +510,10 @@ export function ColorPickerPopover({
           type="button"
           onClick={onClose}
           aria-label="Close"
-          className="bg-transparent hover:bg-neutral-100"
+          className="hover:bg-neutral-100"
           style={{
             border: "none",
+            backgroundColor: "transparent",
             cursor: "pointer",
             padding: SPACING[1],
             display: "flex",
