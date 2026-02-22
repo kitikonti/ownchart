@@ -76,7 +76,7 @@ describe('ColorCellEditor', () => {
     });
 
     // Click the close button in the popover
-    const closeButton = screen.getByRole('button', { name: '' }); // X icon button
+    const closeButton = screen.getByRole('button', { name: 'Close' });
     fireEvent.click(closeButton);
 
     expect(defaultProps.onSave).toHaveBeenCalledTimes(1);

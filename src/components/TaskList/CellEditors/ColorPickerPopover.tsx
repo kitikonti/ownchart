@@ -18,24 +18,39 @@ import {
 } from "../../../hooks/useProjectColors";
 import { getContrastTextColor } from "../../../utils/colorUtils";
 import type { ColorMode } from "../../../types/colorMode.types";
-import { COLORS } from "../../../styles/design-tokens";
+import {
+  COLORS,
+  SPACING,
+  TYPOGRAPHY,
+  RADIUS,
+  SHADOWS,
+} from "../../../styles/design-tokens";
 
-interface ColorPickerPopoverProps {
-  /** Current color value (hex) */
-  value: string;
-  /** Called when a color is selected */
-  onSelect: (color: string) => void;
-  /** Called when the popover should close */
-  onClose: () => void;
-  /** Position of the popover trigger element */
-  anchorRect?: DOMRect;
-  /** Current color mode (for showing reset button) */
-  colorMode?: ColorMode;
-  /** Whether task has a colorOverride */
-  hasOverride?: boolean;
-  /** Called to reset colorOverride */
-  onResetOverride?: () => void;
-}
+// =============================================================================
+// Constants
+// =============================================================================
+
+const POPOVER_WIDTH = 280;
+const POPOVER_MAX_HEIGHT = 400;
+const SWATCH_SIZE = 24;
+const PREVIEW_SIZE = 40;
+const VIEWPORT_MARGIN = 8;
+const ANCHOR_GAP = 4;
+
+/** Swatch category definitions for DRY iteration */
+const SWATCH_CATEGORIES: {
+  key: keyof typeof CURATED_SWATCHES;
+  label: string;
+}[] = [
+  { key: "blues", label: "Blues" },
+  { key: "greens", label: "Greens" },
+  { key: "warm", label: "Warm" },
+  { key: "neutral", label: "Neutral" },
+];
+
+// =============================================================================
+// Sub-components
+// =============================================================================
 
 /**
  * Color swatch button
@@ -55,17 +70,17 @@ function ColorSwatch({
       onClick={onClick}
       title={color}
       style={{
-        width: "24px",
-        height: "24px",
+        width: SWATCH_SIZE,
+        height: SWATCH_SIZE,
         backgroundColor: color,
         border: isSelected
           ? `2px solid ${COLORS.brand[600]}`
           : "1px solid rgba(0, 0, 0, 0.15)",
-        borderRadius: "4px",
+        borderRadius: RADIUS.md,
         cursor: "pointer",
         padding: 0,
         transition: "transform 0.1s, box-shadow 0.1s",
-        boxShadow: isSelected ? "0 0 0 2px rgba(15, 108, 189, 0.3)" : "none",
+        boxShadow: isSelected ? SHADOWS.focus : "none",
       }}
       onMouseEnter={(e) => {
         e.currentTarget.style.transform = "scale(1.1)";
@@ -88,13 +103,13 @@ function SectionHeader({
   return (
     <div
       style={{
-        fontSize: "11px",
-        fontWeight: 600,
-        color: "rgb(100, 100, 100)",
+        fontSize: TYPOGRAPHY.fontSize.xs,
+        fontWeight: TYPOGRAPHY.fontWeight.semibold,
+        color: COLORS.neutral[600],
         textTransform: "uppercase",
         letterSpacing: "0.5px",
-        marginBottom: "8px",
-        marginTop: "4px",
+        marginBottom: SPACING[2],
+        marginTop: SPACING[1],
       }}
     >
       {children}
@@ -110,7 +125,7 @@ function SwatchGrid({
   selectedColor,
   onSelect,
 }: {
-  colors: string[];
+  colors: readonly string[];
   selectedColor: string;
   onSelect: (color: string) => void;
 }): JSX.Element {
@@ -136,6 +151,27 @@ function SwatchGrid({
   );
 }
 
+// =============================================================================
+// Main component
+// =============================================================================
+
+interface ColorPickerPopoverProps {
+  /** Current color value (hex) */
+  value: string;
+  /** Called when a color is selected */
+  onSelect: (color: string) => void;
+  /** Called when the popover should close */
+  onClose: () => void;
+  /** Position of the popover trigger element */
+  anchorRect?: DOMRect;
+  /** Current color mode (for showing reset button) */
+  colorMode?: ColorMode;
+  /** Whether task has a colorOverride */
+  hasOverride?: boolean;
+  /** Called to reset colorOverride */
+  onResetOverride?: () => void;
+}
+
 export function ColorPickerPopover({
   value,
   onSelect,
@@ -149,12 +185,16 @@ export function ColorPickerPopover({
   const popoverRef = useRef<HTMLDivElement>(null);
   const nativePickerRef = useRef<HTMLInputElement>(null);
 
-  // Get project colors
   const projectColors = useProjectColors(8);
 
   // Show reset button when in auto mode and override is active
   const showResetButton =
     colorMode !== "manual" && hasOverride && onResetOverride;
+
+  // Focus popover on mount for keyboard accessibility
+  useEffect(() => {
+    popoverRef.current?.focus();
+  }, []);
 
   // Close on outside click
   useEffect(() => {
@@ -173,7 +213,6 @@ export function ColorPickerPopover({
     };
   }, [onClose]);
 
-  // Handle keyboard
   const handleKeyDown = (e: KeyboardEvent): void => {
     if (e.key === "Escape") {
       e.preventDefault();
@@ -181,14 +220,12 @@ export function ColorPickerPopover({
     }
   };
 
-  // Handle color selection
   const handleColorSelect = (color: string): void => {
     setLocalColor(color);
     onSelect(color);
     onClose();
   };
 
-  // Handle native picker change
   const handleNativePickerChange = (
     e: React.ChangeEvent<HTMLInputElement>
   ): void => {
@@ -197,44 +234,41 @@ export function ColorPickerPopover({
     onSelect(color);
   };
 
-  // Handle reset to automatic
   const handleReset = (): void => {
     onResetOverride?.();
     onClose();
   };
 
-  // Calculate popover position
+  // Popover base style
   const popoverStyle: React.CSSProperties = {
     position: "fixed",
     zIndex: 10000,
-    backgroundColor: "#ffffff",
-    borderRadius: "8px",
-    boxShadow: "0 4px 20px rgba(0, 0, 0, 0.15), 0 0 1px rgba(0, 0, 0, 0.1)",
-    padding: "16px",
-    width: "280px",
-    maxHeight: "400px",
+    backgroundColor: COLORS.neutral[0],
+    borderRadius: RADIUS.lg,
+    boxShadow: SHADOWS.dropdown,
+    padding: SPACING[4],
+    width: POPOVER_WIDTH,
+    maxHeight: POPOVER_MAX_HEIGHT,
     overflowY: "auto",
   };
 
   // Position relative to anchor with viewport-aware flipping
   if (anchorRect) {
-    const popoverHeight = 400; // matches maxHeight
     const spaceBelow = window.innerHeight - anchorRect.bottom;
     const spaceAbove = anchorRect.top;
-    const gap = 4;
 
-    // Flip upward if not enough space below but enough above
-    if (spaceBelow < popoverHeight + gap && spaceAbove > spaceBelow) {
-      popoverStyle.bottom = window.innerHeight - anchorRect.top + gap;
+    if (
+      spaceBelow < POPOVER_MAX_HEIGHT + ANCHOR_GAP &&
+      spaceAbove > spaceBelow
+    ) {
+      popoverStyle.bottom = window.innerHeight - anchorRect.top + ANCHOR_GAP;
     } else {
-      popoverStyle.top = anchorRect.bottom + gap;
+      popoverStyle.top = anchorRect.bottom + ANCHOR_GAP;
     }
 
-    // Horizontal: keep within viewport
-    const popoverWidth = 280; // matches width
     popoverStyle.left = Math.min(
-      Math.max(8, anchorRect.left),
-      window.innerWidth - popoverWidth - 8
+      Math.max(VIEWPORT_MARGIN, anchorRect.left),
+      window.innerWidth - POPOVER_WIDTH - VIEWPORT_MARGIN
     );
   } else {
     popoverStyle.top = "50%";
@@ -258,25 +292,33 @@ export function ColorPickerPopover({
           display: "flex",
           alignItems: "center",
           justifyContent: "space-between",
-          marginBottom: "12px",
+          marginBottom: SPACING[3],
         }}
       >
-        <span style={{ fontWeight: 600, fontSize: "14px" }}>Choose Color</span>
+        <span
+          style={{
+            fontWeight: TYPOGRAPHY.fontWeight.semibold,
+            fontSize: TYPOGRAPHY.fontSize.base,
+          }}
+        >
+          Choose Color
+        </span>
         <button
           type="button"
           onClick={onClose}
+          aria-label="Close"
           style={{
             background: "none",
             border: "none",
             cursor: "pointer",
-            padding: "4px",
+            padding: SPACING[1],
             display: "flex",
             alignItems: "center",
             justifyContent: "center",
-            borderRadius: "4px",
+            borderRadius: RADIUS.md,
           }}
           onMouseEnter={(e) => {
-            e.currentTarget.style.backgroundColor = "rgb(240, 240, 240)";
+            e.currentTarget.style.backgroundColor = COLORS.neutral[100];
           }}
           onMouseLeave={(e) => {
             e.currentTarget.style.backgroundColor = "transparent";
@@ -291,17 +333,17 @@ export function ColorPickerPopover({
         style={{
           display: "flex",
           alignItems: "center",
-          gap: "12px",
-          marginBottom: "16px",
-          padding: "8px",
-          backgroundColor: "rgb(248, 248, 248)",
+          gap: SPACING[3],
+          marginBottom: SPACING[4],
+          padding: SPACING[2],
+          backgroundColor: COLORS.neutral[50],
           borderRadius: "6px",
         }}
       >
         <div
           style={{
-            width: "40px",
-            height: "40px",
+            width: PREVIEW_SIZE,
+            height: PREVIEW_SIZE,
             backgroundColor: localColor,
             borderRadius: "6px",
             border: "1px solid rgba(0, 0, 0, 0.1)",
@@ -310,20 +352,29 @@ export function ColorPickerPopover({
             justifyContent: "center",
             color: getContrastTextColor(localColor),
             fontSize: "10px",
-            fontWeight: 600,
+            fontWeight: TYPOGRAPHY.fontWeight.semibold,
           }}
         >
           Aa
         </div>
         <div style={{ flex: 1 }}>
-          <div style={{ fontWeight: 500, fontSize: "13px" }}>
+          <div
+            style={{
+              fontWeight: TYPOGRAPHY.fontWeight.medium,
+              fontSize: TYPOGRAPHY.fontSize.sm,
+            }}
+          >
             {localColor.toUpperCase()}
           </div>
-          <div style={{ fontSize: "11px", color: "rgb(120, 120, 120)" }}>
+          <div
+            style={{
+              fontSize: TYPOGRAPHY.fontSize.xs,
+              color: COLORS.neutral[500],
+            }}
+          >
             {showResetButton ? "Manual override" : "Current color"}
           </div>
         </div>
-        {/* Reset to automatic button */}
         {showResetButton && (
           <button
             type="button"
@@ -332,15 +383,15 @@ export function ColorPickerPopover({
             style={{
               display: "flex",
               alignItems: "center",
-              gap: "4px",
-              padding: "4px 8px",
-              fontSize: "11px",
-              color: "rgb(15, 108, 189)",
-              backgroundColor: "rgb(235, 245, 255)",
-              border: "1px solid rgb(190, 220, 250)",
-              borderRadius: "4px",
+              gap: SPACING[1],
+              padding: `${SPACING[1]} ${SPACING[2]}`,
+              fontSize: TYPOGRAPHY.fontSize.xs,
+              color: COLORS.brand[600],
+              backgroundColor: COLORS.brand[50],
+              border: `1px solid ${COLORS.brand[100]}`,
+              borderRadius: RADIUS.md,
               cursor: "pointer",
-              fontWeight: 500,
+              fontWeight: TYPOGRAPHY.fontWeight.medium,
               whiteSpace: "nowrap",
             }}
           >
@@ -352,7 +403,7 @@ export function ColorPickerPopover({
 
       {/* Project colors (if any) */}
       {projectColors.length > 0 && (
-        <div style={{ marginBottom: "16px" }}>
+        <div style={{ marginBottom: SPACING[4] }}>
           <SectionHeader>Project Colors</SectionHeader>
           <SwatchGrid
             colors={projectColors}
@@ -363,51 +414,32 @@ export function ColorPickerPopover({
       )}
 
       {/* Curated swatches */}
-      <div style={{ marginBottom: "16px" }}>
-        <SectionHeader>Blues</SectionHeader>
-        <SwatchGrid
-          colors={[...CURATED_SWATCHES.blues]}
-          selectedColor={localColor}
-          onSelect={handleColorSelect}
-        />
-      </div>
-
-      <div style={{ marginBottom: "16px" }}>
-        <SectionHeader>Greens</SectionHeader>
-        <SwatchGrid
-          colors={[...CURATED_SWATCHES.greens]}
-          selectedColor={localColor}
-          onSelect={handleColorSelect}
-        />
-      </div>
-
-      <div style={{ marginBottom: "16px" }}>
-        <SectionHeader>Warm</SectionHeader>
-        <SwatchGrid
-          colors={[...CURATED_SWATCHES.warm]}
-          selectedColor={localColor}
-          onSelect={handleColorSelect}
-        />
-      </div>
-
-      <div style={{ marginBottom: "16px" }}>
-        <SectionHeader>Neutral</SectionHeader>
-        <SwatchGrid
-          colors={[...CURATED_SWATCHES.neutral]}
-          selectedColor={localColor}
-          onSelect={handleColorSelect}
-        />
-      </div>
+      {SWATCH_CATEGORIES.map(({ key, label }) => (
+        <div key={key} style={{ marginBottom: SPACING[4] }}>
+          <SectionHeader>{label}</SectionHeader>
+          <SwatchGrid
+            colors={CURATED_SWATCHES[key]}
+            selectedColor={localColor}
+            onSelect={handleColorSelect}
+          />
+        </div>
+      ))}
 
       {/* Custom color picker */}
       <div
         style={{
-          borderTop: "1px solid rgb(230, 230, 230)",
-          paddingTop: "12px",
+          borderTop: `1px solid ${COLORS.neutral[200]}`,
+          paddingTop: SPACING[3],
         }}
       >
         <SectionHeader>Custom Color</SectionHeader>
-        <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+        <div
+          style={{
+            display: "flex",
+            alignItems: "center",
+            gap: SPACING[2],
+          }}
+        >
           <input
             ref={nativePickerRef}
             type="color"
@@ -416,8 +448,8 @@ export function ColorPickerPopover({
             style={{
               width: "40px",
               height: "32px",
-              border: "1px solid rgb(200, 200, 200)",
-              borderRadius: "4px",
+              border: `1px solid ${COLORS.neutral[200]}`,
+              borderRadius: RADIUS.md,
               cursor: "pointer",
               padding: "2px",
             }}
@@ -428,20 +460,20 @@ export function ColorPickerPopover({
             onClick={() => nativePickerRef.current?.click()}
             style={{
               flex: 1,
-              padding: "8px 12px",
-              backgroundColor: "rgb(248, 248, 248)",
-              border: "1px solid rgb(220, 220, 220)",
-              borderRadius: "4px",
+              padding: `${SPACING[2]} ${SPACING[3]}`,
+              backgroundColor: COLORS.neutral[50],
+              border: `1px solid ${COLORS.neutral[200]}`,
+              borderRadius: RADIUS.md,
               cursor: "pointer",
-              fontSize: "13px",
-              color: "rgb(80, 80, 80)",
+              fontSize: TYPOGRAPHY.fontSize.sm,
+              color: COLORS.neutral[600],
               textAlign: "left",
             }}
             onMouseEnter={(e) => {
-              e.currentTarget.style.backgroundColor = "rgb(240, 240, 240)";
+              e.currentTarget.style.backgroundColor = COLORS.neutral[100];
             }}
             onMouseLeave={(e) => {
-              e.currentTarget.style.backgroundColor = "rgb(248, 248, 248)";
+              e.currentTarget.style.backgroundColor = COLORS.neutral[50];
             }}
           >
             Choose custom color...
