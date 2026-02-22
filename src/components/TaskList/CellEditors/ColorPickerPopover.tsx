@@ -7,7 +7,7 @@
  * - Native color picker for custom colors
  * - Reset-to-automatic button when colorOverride is active
  * - Click-outside to close
- * - Keyboard navigation (Escape to close)
+ * - Keyboard navigation (Escape to close, focus-trapped Tab)
  */
 
 import { useState, useRef, useEffect, type KeyboardEvent } from "react";
@@ -36,11 +36,14 @@ const POPOVER_MAX_HEIGHT = 400;
 const SWATCH_SIZE = 24;
 const SWATCH_GAP = 6;
 const PREVIEW_SIZE = 40;
-const PREVIEW_LABEL_FONT_SIZE = "10px";
 const NATIVE_PICKER_WIDTH = 40;
 const NATIVE_PICKER_HEIGHT = 32;
 const VIEWPORT_MARGIN = 8;
 const ANCHOR_GAP = 4;
+
+/** Selector for elements that can receive focus inside the popover */
+const FOCUSABLE_SELECTOR =
+  'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])';
 
 /** Border style for unselected swatches */
 const SWATCH_BORDER = `1px solid ${COLORS.neutral[200]}`;
@@ -111,7 +114,7 @@ function SectionHeader({
         fontWeight: TYPOGRAPHY.fontWeight.semibold,
         color: COLORS.neutral[600],
         textTransform: "uppercase",
-        letterSpacing: "0.5px",
+        letterSpacing: TYPOGRAPHY.letterSpacing.wide,
         marginBottom: SPACING[2],
         marginTop: SPACING[1],
       }}
@@ -190,7 +193,7 @@ function ColorPreview({
           alignItems: "center",
           justifyContent: "center",
           color: getContrastTextColor(color),
-          fontSize: PREVIEW_LABEL_FONT_SIZE,
+          fontSize: TYPOGRAPHY.fontSize.xs,
           fontWeight: TYPOGRAPHY.fontWeight.semibold,
         }}
       >
@@ -254,7 +257,6 @@ function CustomColorSection({
   onChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
 }): JSX.Element {
   const nativePickerRef = useRef<HTMLInputElement>(null);
-  const [buttonHovered, setButtonHovered] = useState(false);
 
   return (
     <div
@@ -289,15 +291,11 @@ function CustomColorSection({
         />
         <button
           type="button"
+          className="bg-neutral-50 hover:bg-neutral-100"
           onClick={() => nativePickerRef.current?.click()}
-          onMouseEnter={() => setButtonHovered(true)}
-          onMouseLeave={() => setButtonHovered(false)}
           style={{
             flex: 1,
             padding: `${SPACING[2]} ${SPACING[3]}`,
-            backgroundColor: buttonHovered
-              ? COLORS.neutral[100]
-              : COLORS.neutral[50],
             border: SWATCH_BORDER,
             borderRadius: RADIUS.md,
             cursor: "pointer",
@@ -344,7 +342,6 @@ export function ColorPickerPopover({
   onResetOverride,
 }: ColorPickerPopoverProps): JSX.Element {
   const [localColor, setLocalColor] = useState(value);
-  const [closeHovered, setCloseHovered] = useState(false);
   const popoverRef = useRef<HTMLDivElement>(null);
 
   const projectColors = useProjectColors(8);
@@ -380,6 +377,35 @@ export function ColorPickerPopover({
     if (e.key === "Escape") {
       e.preventDefault();
       onClose();
+      return;
+    }
+
+    // Focus trapping: keep Tab/Shift+Tab within the popover
+    if (e.key === "Tab") {
+      const focusable =
+        popoverRef.current?.querySelectorAll<HTMLElement>(FOCUSABLE_SELECTOR);
+      if (!focusable || focusable.length === 0) {
+        e.preventDefault();
+        return;
+      }
+
+      const first = focusable[0];
+      const last = focusable[focusable.length - 1];
+
+      if (e.shiftKey) {
+        if (
+          document.activeElement === first ||
+          document.activeElement === popoverRef.current
+        ) {
+          e.preventDefault();
+          last.focus();
+        }
+      } else {
+        if (document.activeElement === last) {
+          e.preventDefault();
+          first.focus();
+        }
+      }
     }
   };
 
@@ -440,7 +466,7 @@ export function ColorPickerPopover({
   }
 
   return (
-    // eslint-disable-next-line jsx-a11y/no-noninteractive-element-interactions -- dialog needs keyboard handling for Escape
+    // eslint-disable-next-line jsx-a11y/no-noninteractive-element-interactions -- dialog needs keyboard handling for Escape and focus trapping
     <div
       ref={popoverRef}
       role="dialog"
@@ -471,10 +497,8 @@ export function ColorPickerPopover({
           type="button"
           onClick={onClose}
           aria-label="Close"
-          onMouseEnter={() => setCloseHovered(true)}
-          onMouseLeave={() => setCloseHovered(false)}
+          className="bg-transparent hover:bg-neutral-100"
           style={{
-            background: "none",
             border: "none",
             cursor: "pointer",
             padding: SPACING[1],
@@ -482,7 +506,6 @@ export function ColorPickerPopover({
             alignItems: "center",
             justifyContent: "center",
             borderRadius: RADIUS.md,
-            backgroundColor: closeHovered ? COLORS.neutral[100] : "transparent",
           }}
         >
           <X size={16} weight="bold" />

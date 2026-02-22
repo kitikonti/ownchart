@@ -147,6 +147,9 @@ export const TYPOGRAPHY = {
     normal: 1.5,
     relaxed: 1.75,
   },
+  letterSpacing: {
+    wide: "0.5px",
+  },
 } as const;
 
 // =============================================================================

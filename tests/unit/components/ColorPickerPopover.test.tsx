@@ -3,7 +3,7 @@
  *
  * Tests: rendering, keyboard navigation, color selection,
  * reset button visibility, native picker, focus management,
- * and viewport-aware positioning.
+ * focus trapping, and viewport-aware positioning.
  */
 
 import { describe, it, expect, beforeEach, vi } from 'vitest';
@@ -140,6 +140,66 @@ describe('ColorPickerPopover', () => {
   });
 
   // ---------------------------------------------------------------------------
+  // Focus trapping
+  // ---------------------------------------------------------------------------
+
+  describe('focus trapping', () => {
+    it('should wrap focus from last element to first on Tab', () => {
+      render(<ColorPickerPopover {...defaultProps} />);
+
+      const dialog = screen.getByRole('dialog');
+      const focusable = dialog.querySelectorAll<HTMLElement>(
+        'button, input, [tabindex]:not([tabindex="-1"])'
+      );
+      const lastFocusable = focusable[focusable.length - 1];
+
+      // Focus the last focusable element
+      lastFocusable.focus();
+      expect(lastFocusable).toHaveFocus();
+
+      // Press Tab — should wrap to first
+      fireEvent.keyDown(dialog, { key: 'Tab' });
+      expect(focusable[0]).toHaveFocus();
+    });
+
+    it('should wrap focus from first element to last on Shift+Tab', () => {
+      render(<ColorPickerPopover {...defaultProps} />);
+
+      const dialog = screen.getByRole('dialog');
+      const focusable = dialog.querySelectorAll<HTMLElement>(
+        'button, input, [tabindex]:not([tabindex="-1"])'
+      );
+      const firstFocusable = focusable[0];
+      const lastFocusable = focusable[focusable.length - 1];
+
+      // Focus the first focusable element
+      firstFocusable.focus();
+      expect(firstFocusable).toHaveFocus();
+
+      // Press Shift+Tab — should wrap to last
+      fireEvent.keyDown(dialog, { key: 'Tab', shiftKey: true });
+      expect(lastFocusable).toHaveFocus();
+    });
+
+    it('should wrap focus from dialog container to last on Shift+Tab', () => {
+      render(<ColorPickerPopover {...defaultProps} />);
+
+      const dialog = screen.getByRole('dialog');
+      const focusable = dialog.querySelectorAll<HTMLElement>(
+        'button, input, [tabindex]:not([tabindex="-1"])'
+      );
+      const lastFocusable = focusable[focusable.length - 1];
+
+      // Dialog container is focused on mount
+      expect(dialog).toHaveFocus();
+
+      // Press Shift+Tab — should wrap to last focusable
+      fireEvent.keyDown(dialog, { key: 'Tab', shiftKey: true });
+      expect(lastFocusable).toHaveFocus();
+    });
+  });
+
+  // ---------------------------------------------------------------------------
   // Close button
   // ---------------------------------------------------------------------------
 
@@ -210,6 +270,19 @@ describe('ColorPickerPopover', () => {
 
       // onClose is NOT called for native picker — user may want to keep adjusting
       expect(defaultProps.onClose).not.toHaveBeenCalled();
+    });
+
+    it('should trigger native picker when "Choose custom color..." button is clicked', () => {
+      render(<ColorPickerPopover {...defaultProps} />);
+
+      const nativePicker = screen.getByTitle('Pick custom color') as HTMLInputElement;
+      const clickSpy = vi.spyOn(nativePicker, 'click');
+
+      const triggerButton = screen.getByText('Choose custom color...');
+      fireEvent.click(triggerButton);
+
+      expect(clickSpy).toHaveBeenCalledTimes(1);
+      clickSpy.mockRestore();
     });
   });
 
