@@ -33,12 +33,13 @@ describe('ColorPickerPopover', () => {
   // ---------------------------------------------------------------------------
 
   describe('rendering', () => {
-    it('should render with role="dialog" and aria-label', () => {
+    it('should render with role="dialog", aria-modal, and aria-label', () => {
       render(<ColorPickerPopover {...defaultProps} />);
 
       const dialog = screen.getByRole('dialog');
       expect(dialog).toBeInTheDocument();
       expect(dialog).toHaveAttribute('aria-label', 'Color picker');
+      expect(dialog).toHaveAttribute('aria-modal', 'true');
     });
 
     it('should display the header text', () => {
@@ -81,6 +82,14 @@ describe('ColorPickerPopover', () => {
       expect(screen.getByText('Custom Color')).toBeInTheDocument();
       expect(screen.getByTitle('Pick custom color')).toBeInTheDocument();
       expect(screen.getByText('Choose custom color...')).toBeInTheDocument();
+    });
+
+    it('should render swatch buttons with aria-label for screen readers', () => {
+      render(<ColorPickerPopover {...defaultProps} />);
+
+      // Blues category swatch
+      const swatch = screen.getByTitle('#0F6CBD');
+      expect(swatch).toHaveAttribute('aria-label', 'Select color #0F6CBD');
     });
 
     it('should render native color input with correct value', () => {

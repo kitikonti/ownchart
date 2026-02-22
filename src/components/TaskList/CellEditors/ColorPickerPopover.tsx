@@ -24,6 +24,7 @@ import {
   TYPOGRAPHY,
   RADIUS,
   SHADOWS,
+  Z_INDEX,
 } from "../../../styles/design-tokens";
 
 // =============================================================================
@@ -33,9 +34,19 @@ import {
 const POPOVER_WIDTH = 280;
 const POPOVER_MAX_HEIGHT = 400;
 const SWATCH_SIZE = 24;
+const SWATCH_GAP = 6;
 const PREVIEW_SIZE = 40;
+const PREVIEW_LABEL_FONT_SIZE = "10px";
+const NATIVE_PICKER_WIDTH = 40;
+const NATIVE_PICKER_HEIGHT = 32;
 const VIEWPORT_MARGIN = 8;
 const ANCHOR_GAP = 4;
+
+/** Border style for unselected swatches */
+const SWATCH_BORDER = `1px solid ${COLORS.neutral[200]}`;
+
+/** Border style for the selected swatch */
+const SWATCH_BORDER_SELECTED = `2px solid ${COLORS.brand[600]}`;
 
 /** Swatch category definitions for DRY iteration */
 const SWATCH_CATEGORIES: {
@@ -67,26 +78,19 @@ function ColorSwatch({
   return (
     <button
       type="button"
+      className="transition-transform duration-100 hover:scale-110"
       onClick={onClick}
       title={color}
+      aria-label={`Select color ${color}`}
       style={{
         width: SWATCH_SIZE,
         height: SWATCH_SIZE,
         backgroundColor: color,
-        border: isSelected
-          ? `2px solid ${COLORS.brand[600]}`
-          : "1px solid rgba(0, 0, 0, 0.15)",
+        border: isSelected ? SWATCH_BORDER_SELECTED : SWATCH_BORDER,
         borderRadius: RADIUS.md,
         cursor: "pointer",
         padding: 0,
-        transition: "transform 0.1s, box-shadow 0.1s",
         boxShadow: isSelected ? SHADOWS.focus : "none",
-      }}
-      onMouseEnter={(e) => {
-        e.currentTarget.style.transform = "scale(1.1)";
-      }}
-      onMouseLeave={(e) => {
-        e.currentTarget.style.transform = "scale(1)";
       }}
     />
   );
@@ -136,7 +140,7 @@ function SwatchGrid({
       style={{
         display: "flex",
         flexWrap: "wrap",
-        gap: "6px",
+        gap: SWATCH_GAP,
       }}
     >
       {colors.map((color) => (
@@ -147,6 +151,164 @@ function SwatchGrid({
           onClick={() => onSelect(color)}
         />
       ))}
+    </div>
+  );
+}
+
+/**
+ * Current color preview with optional reset button
+ */
+function ColorPreview({
+  color,
+  showResetButton,
+  onReset,
+}: {
+  color: string;
+  showResetButton: boolean;
+  onReset: () => void;
+}): JSX.Element {
+  return (
+    <div
+      style={{
+        display: "flex",
+        alignItems: "center",
+        gap: SPACING[3],
+        marginBottom: SPACING[4],
+        padding: SPACING[2],
+        backgroundColor: COLORS.neutral[50],
+        borderRadius: RADIUS.lg,
+      }}
+    >
+      <div
+        style={{
+          width: PREVIEW_SIZE,
+          height: PREVIEW_SIZE,
+          backgroundColor: color,
+          borderRadius: RADIUS.lg,
+          border: SWATCH_BORDER,
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          color: getContrastTextColor(color),
+          fontSize: PREVIEW_LABEL_FONT_SIZE,
+          fontWeight: TYPOGRAPHY.fontWeight.semibold,
+        }}
+      >
+        Aa
+      </div>
+      <div style={{ flex: 1 }}>
+        <div
+          style={{
+            fontWeight: TYPOGRAPHY.fontWeight.medium,
+            fontSize: TYPOGRAPHY.fontSize.sm,
+          }}
+        >
+          {color.toUpperCase()}
+        </div>
+        <div
+          style={{
+            fontSize: TYPOGRAPHY.fontSize.xs,
+            color: COLORS.neutral[500],
+          }}
+        >
+          {showResetButton ? "Manual override" : "Current color"}
+        </div>
+      </div>
+      {showResetButton && (
+        <button
+          type="button"
+          onClick={onReset}
+          title="Reset to automatic color"
+          aria-label="Reset to automatic color"
+          style={{
+            display: "flex",
+            alignItems: "center",
+            gap: SPACING[1],
+            padding: `${SPACING[1]} ${SPACING[2]}`,
+            fontSize: TYPOGRAPHY.fontSize.xs,
+            color: COLORS.brand[600],
+            backgroundColor: COLORS.brand[50],
+            border: `1px solid ${COLORS.brand[100]}`,
+            borderRadius: RADIUS.md,
+            cursor: "pointer",
+            fontWeight: TYPOGRAPHY.fontWeight.medium,
+            whiteSpace: "nowrap",
+          }}
+        >
+          <ArrowCounterClockwise size={12} weight="bold" />
+          Reset
+        </button>
+      )}
+    </div>
+  );
+}
+
+/**
+ * Custom color picker section with native input and trigger button
+ */
+function CustomColorSection({
+  color,
+  onChange,
+}: {
+  color: string;
+  onChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
+}): JSX.Element {
+  const nativePickerRef = useRef<HTMLInputElement>(null);
+  const [buttonHovered, setButtonHovered] = useState(false);
+
+  return (
+    <div
+      style={{
+        borderTop: `1px solid ${COLORS.neutral[200]}`,
+        paddingTop: SPACING[3],
+      }}
+    >
+      <SectionHeader>Custom Color</SectionHeader>
+      <div
+        style={{
+          display: "flex",
+          alignItems: "center",
+          gap: SPACING[2],
+        }}
+      >
+        <input
+          ref={nativePickerRef}
+          type="color"
+          value={color}
+          onChange={onChange}
+          aria-label="Pick custom color"
+          style={{
+            width: NATIVE_PICKER_WIDTH,
+            height: NATIVE_PICKER_HEIGHT,
+            border: SWATCH_BORDER,
+            borderRadius: RADIUS.md,
+            cursor: "pointer",
+            padding: SPACING[0.5],
+          }}
+          title="Pick custom color"
+        />
+        <button
+          type="button"
+          onClick={() => nativePickerRef.current?.click()}
+          onMouseEnter={() => setButtonHovered(true)}
+          onMouseLeave={() => setButtonHovered(false)}
+          style={{
+            flex: 1,
+            padding: `${SPACING[2]} ${SPACING[3]}`,
+            backgroundColor: buttonHovered
+              ? COLORS.neutral[100]
+              : COLORS.neutral[50],
+            border: SWATCH_BORDER,
+            borderRadius: RADIUS.md,
+            cursor: "pointer",
+            fontSize: TYPOGRAPHY.fontSize.sm,
+            color: COLORS.neutral[600],
+            textAlign: "left",
+          }}
+        >
+          Choose custom color...
+        </button>
+      </div>
     </div>
   );
 }
@@ -182,14 +344,14 @@ export function ColorPickerPopover({
   onResetOverride,
 }: ColorPickerPopoverProps): JSX.Element {
   const [localColor, setLocalColor] = useState(value);
+  const [closeHovered, setCloseHovered] = useState(false);
   const popoverRef = useRef<HTMLDivElement>(null);
-  const nativePickerRef = useRef<HTMLInputElement>(null);
 
   const projectColors = useProjectColors(8);
 
   // Show reset button when in auto mode and override is active
   const showResetButton =
-    colorMode !== "manual" && hasOverride && onResetOverride;
+    colorMode !== "manual" && hasOverride && !!onResetOverride;
 
   // Focus popover on mount for keyboard accessibility
   useEffect(() => {
@@ -201,7 +363,8 @@ export function ColorPickerPopover({
     const handleClickOutside = (e: MouseEvent): void => {
       if (
         popoverRef.current &&
-        !popoverRef.current.contains(e.target as Node)
+        e.target instanceof Node &&
+        !popoverRef.current.contains(e.target)
       ) {
         onClose();
       }
@@ -242,7 +405,7 @@ export function ColorPickerPopover({
   // Popover base style
   const popoverStyle: React.CSSProperties = {
     position: "fixed",
-    zIndex: 10000,
+    zIndex: Z_INDEX.popover,
     backgroundColor: COLORS.neutral[0],
     borderRadius: RADIUS.lg,
     boxShadow: SHADOWS.dropdown,
@@ -281,6 +444,7 @@ export function ColorPickerPopover({
     <div
       ref={popoverRef}
       role="dialog"
+      aria-modal="true"
       aria-label="Color picker"
       style={popoverStyle}
       onKeyDown={handleKeyDown}
@@ -307,6 +471,8 @@ export function ColorPickerPopover({
           type="button"
           onClick={onClose}
           aria-label="Close"
+          onMouseEnter={() => setCloseHovered(true)}
+          onMouseLeave={() => setCloseHovered(false)}
           style={{
             background: "none",
             border: "none",
@@ -316,12 +482,7 @@ export function ColorPickerPopover({
             alignItems: "center",
             justifyContent: "center",
             borderRadius: RADIUS.md,
-          }}
-          onMouseEnter={(e) => {
-            e.currentTarget.style.backgroundColor = COLORS.neutral[100];
-          }}
-          onMouseLeave={(e) => {
-            e.currentTarget.style.backgroundColor = "transparent";
+            backgroundColor: closeHovered ? COLORS.neutral[100] : "transparent",
           }}
         >
           <X size={16} weight="bold" />
@@ -329,77 +490,11 @@ export function ColorPickerPopover({
       </div>
 
       {/* Current color preview */}
-      <div
-        style={{
-          display: "flex",
-          alignItems: "center",
-          gap: SPACING[3],
-          marginBottom: SPACING[4],
-          padding: SPACING[2],
-          backgroundColor: COLORS.neutral[50],
-          borderRadius: "6px",
-        }}
-      >
-        <div
-          style={{
-            width: PREVIEW_SIZE,
-            height: PREVIEW_SIZE,
-            backgroundColor: localColor,
-            borderRadius: "6px",
-            border: "1px solid rgba(0, 0, 0, 0.1)",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            color: getContrastTextColor(localColor),
-            fontSize: "10px",
-            fontWeight: TYPOGRAPHY.fontWeight.semibold,
-          }}
-        >
-          Aa
-        </div>
-        <div style={{ flex: 1 }}>
-          <div
-            style={{
-              fontWeight: TYPOGRAPHY.fontWeight.medium,
-              fontSize: TYPOGRAPHY.fontSize.sm,
-            }}
-          >
-            {localColor.toUpperCase()}
-          </div>
-          <div
-            style={{
-              fontSize: TYPOGRAPHY.fontSize.xs,
-              color: COLORS.neutral[500],
-            }}
-          >
-            {showResetButton ? "Manual override" : "Current color"}
-          </div>
-        </div>
-        {showResetButton && (
-          <button
-            type="button"
-            onClick={handleReset}
-            title="Reset to automatic color"
-            style={{
-              display: "flex",
-              alignItems: "center",
-              gap: SPACING[1],
-              padding: `${SPACING[1]} ${SPACING[2]}`,
-              fontSize: TYPOGRAPHY.fontSize.xs,
-              color: COLORS.brand[600],
-              backgroundColor: COLORS.brand[50],
-              border: `1px solid ${COLORS.brand[100]}`,
-              borderRadius: RADIUS.md,
-              cursor: "pointer",
-              fontWeight: TYPOGRAPHY.fontWeight.medium,
-              whiteSpace: "nowrap",
-            }}
-          >
-            <ArrowCounterClockwise size={12} weight="bold" />
-            Reset
-          </button>
-        )}
-      </div>
+      <ColorPreview
+        color={localColor}
+        showResetButton={showResetButton}
+        onReset={handleReset}
+      />
 
       {/* Project colors (if any) */}
       {projectColors.length > 0 && (
@@ -426,60 +521,10 @@ export function ColorPickerPopover({
       ))}
 
       {/* Custom color picker */}
-      <div
-        style={{
-          borderTop: `1px solid ${COLORS.neutral[200]}`,
-          paddingTop: SPACING[3],
-        }}
-      >
-        <SectionHeader>Custom Color</SectionHeader>
-        <div
-          style={{
-            display: "flex",
-            alignItems: "center",
-            gap: SPACING[2],
-          }}
-        >
-          <input
-            ref={nativePickerRef}
-            type="color"
-            value={localColor}
-            onChange={handleNativePickerChange}
-            style={{
-              width: "40px",
-              height: "32px",
-              border: `1px solid ${COLORS.neutral[200]}`,
-              borderRadius: RADIUS.md,
-              cursor: "pointer",
-              padding: "2px",
-            }}
-            title="Pick custom color"
-          />
-          <button
-            type="button"
-            onClick={() => nativePickerRef.current?.click()}
-            style={{
-              flex: 1,
-              padding: `${SPACING[2]} ${SPACING[3]}`,
-              backgroundColor: COLORS.neutral[50],
-              border: `1px solid ${COLORS.neutral[200]}`,
-              borderRadius: RADIUS.md,
-              cursor: "pointer",
-              fontSize: TYPOGRAPHY.fontSize.sm,
-              color: COLORS.neutral[600],
-              textAlign: "left",
-            }}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.backgroundColor = COLORS.neutral[100];
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.backgroundColor = COLORS.neutral[50];
-            }}
-          >
-            Choose custom color...
-          </button>
-        </div>
-      </div>
+      <CustomColorSection
+        color={localColor}
+        onChange={handleNativePickerChange}
+      />
     </div>
   );
 }
