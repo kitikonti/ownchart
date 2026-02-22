@@ -1,6 +1,9 @@
 import { describe, it, expect } from "vitest";
 import { calculateExportDimensions } from "../../../../src/utils/export/exportLayout";
-import { EXPORT_COLUMNS } from "../../../../src/utils/export/columns";
+import {
+  EXPORT_COLUMNS,
+  getColumnDisplayValue,
+} from "../../../../src/utils/export/columns";
 import { calculateTaskTableWidth } from "../../../../src/utils/export";
 import { DENSITY_CONFIG } from "../../../../src/config/densityConfig";
 import { DEFAULT_EXPORT_OPTIONS } from "../../../../src/utils/export/types";
@@ -397,3 +400,90 @@ describe("calculateExportDimensions", () => {
   });
 });
 
+describe("getColumnDisplayValue", () => {
+  const baseTask: Task = {
+    id: "1",
+    name: "Test Task",
+    startDate: "2025-01-15",
+    endDate: "2025-02-15",
+    duration: 31,
+    progress: 50,
+    type: "task",
+    color: "#4299e1",
+  };
+
+  const milestone: Task = { ...baseTask, type: "milestone" };
+  const summary: Task = { ...baseTask, type: "summary" };
+
+  // --- startDate ---
+
+  it("returns startDate for regular task", () => {
+    expect(getColumnDisplayValue(baseTask, "startDate")).toBe("2025-01-15");
+  });
+
+  it("returns null when startDate is empty", () => {
+    expect(
+      getColumnDisplayValue({ ...baseTask, startDate: "" }, "startDate")
+    ).toBeNull();
+  });
+
+  // --- endDate ---
+
+  it("returns endDate for regular task", () => {
+    expect(getColumnDisplayValue(baseTask, "endDate")).toBe("2025-02-15");
+  });
+
+  it("returns empty string for milestone endDate", () => {
+    expect(getColumnDisplayValue(milestone, "endDate")).toBe("");
+  });
+
+  it("returns null when endDate is empty", () => {
+    expect(
+      getColumnDisplayValue({ ...baseTask, endDate: "" }, "endDate")
+    ).toBeNull();
+  });
+
+  // --- duration ---
+
+  it("returns duration as plain number for regular task", () => {
+    expect(getColumnDisplayValue(baseTask, "duration")).toBe("31");
+  });
+
+  it("returns duration with 'days' suffix for summary", () => {
+    expect(getColumnDisplayValue(summary, "duration")).toBe("31 days");
+  });
+
+  it("returns empty string for milestone duration", () => {
+    expect(getColumnDisplayValue(milestone, "duration")).toBe("");
+  });
+
+  it("returns null for summary with zero duration", () => {
+    expect(
+      getColumnDisplayValue({ ...summary, duration: 0 }, "duration")
+    ).toBeNull();
+  });
+
+  it("returns null when duration is undefined", () => {
+    const task = { ...baseTask };
+    delete (task as Partial<Task>).duration;
+    expect(getColumnDisplayValue(task as Task, "duration")).toBeNull();
+  });
+
+  // --- progress ---
+
+  it("returns progress with % suffix", () => {
+    expect(getColumnDisplayValue(baseTask, "progress")).toBe("50%");
+  });
+
+  it("returns 0% for zero progress", () => {
+    expect(
+      getColumnDisplayValue({ ...baseTask, progress: 0 }, "progress")
+    ).toBe("0%");
+  });
+
+  it("returns null when progress is undefined", () => {
+    const task = { ...baseTask };
+    delete (task as Partial<Task>).progress;
+    expect(getColumnDisplayValue(task as Task, "progress")).toBeNull();
+  });
+});

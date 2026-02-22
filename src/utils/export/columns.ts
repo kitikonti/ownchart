@@ -4,7 +4,8 @@
  * and calculations (optimal column widths).
  */
 
-import type { ExportColumnKey } from "./types";
+import type { ExportColumnKey, ExportDataColumnKey } from "./types";
+import type { Task } from "../../types/chart.types";
 
 /** Column definition for export (labels must match app's tableColumns.ts) */
 export interface ExportColumn {
@@ -22,6 +23,39 @@ export const EXPORT_COLUMNS: readonly ExportColumn[] = [
   { key: "duration", label: "Duration", defaultWidth: 70 },
   { key: "progress", label: "%", defaultWidth: 60 },
 ] as const;
+
+/**
+ * Returns the display string for a data column cell.
+ * Returns null when no value is available (renders "—"),
+ * empty string when the cell should be blank (e.g. milestone end date).
+ */
+export function getColumnDisplayValue(
+  task: Task,
+  key: ExportDataColumnKey
+): string | null {
+  const isSummary = task.type === "summary";
+  const isMilestone = task.type === "milestone";
+
+  if (key === "startDate") {
+    return task.startDate || null;
+  }
+  if (key === "endDate") {
+    if (isMilestone) return "";
+    return task.endDate || null;
+  }
+  if (key === "duration") {
+    if (isMilestone) return "";
+    if (isSummary && task.duration !== undefined && task.duration > 0) {
+      return `${task.duration} days`;
+    }
+    if (!isSummary && task.duration !== undefined) {
+      return `${task.duration}`;
+    }
+    return null;
+  }
+  // progress
+  return task.progress !== undefined ? `${task.progress}%` : null;
+}
 
 /** Pre-computed column lookup for O(1) access */
 export const EXPORT_COLUMN_MAP = new Map<ExportColumnKey, ExportColumn>(

@@ -5,7 +5,11 @@
 
 import { useMemo } from "react";
 import type { Task } from "../../types/chart.types";
-import type { ExportOptions, ExportColumnKey } from "../../utils/export/types";
+import type {
+  ExportOptions,
+  ExportColumnKey,
+  ExportDataColumnKey,
+} from "../../utils/export/types";
 import {
   calculateTaskTableWidth,
   calculateEffectiveZoom,
@@ -29,6 +33,7 @@ import type { DensityConfig } from "../../types/preferences.types";
 import { DENSITY_CONFIG } from "../../config/densityConfig";
 import { useChartStore } from "../../store/slices/chartSlice";
 import { SVG_FONT_FAMILY } from "../../utils/export/constants";
+import { getColumnDisplayValue } from "../../utils/export/columns";
 import { getComputedTaskColor } from "../../utils/computeTaskColor";
 import { HEADER_HEIGHT } from "../../config/layoutConstants";
 
@@ -195,7 +200,6 @@ function ExportTaskTableRows({
 
               // Handle milestone and summary special cases
               const isSummary = task.type === "summary";
-              const isMilestone = task.type === "milestone";
               // Summary dates/duration are styled differently (text-neutral-500 italic)
               const useSummaryStyle =
                 isSummary &&
@@ -203,33 +207,10 @@ function ExportTaskTableRows({
                   key === "endDate" ||
                   key === "duration");
 
-              let value: string | null = null; // null = show "—", empty string = show nothing
-              if (key === "startDate") {
-                value = task.startDate || null;
-              } else if (key === "endDate") {
-                // Milestones don't have an end date (show empty, not "—")
-                if (isMilestone) {
-                  value = "";
-                } else {
-                  value = task.endDate || null;
-                }
-              } else if (key === "duration") {
-                // Milestones don't have duration (show empty, not "—")
-                if (isMilestone) {
-                  value = "";
-                } else if (
-                  isSummary &&
-                  task.duration !== undefined &&
-                  task.duration > 0
-                ) {
-                  value = `${task.duration} days`;
-                } else if (!isSummary && task.duration !== undefined) {
-                  value = `${task.duration}`;
-                }
-              } else if (key === "progress") {
-                value =
-                  task.progress !== undefined ? `${task.progress}%` : null;
-              }
+              const value = getColumnDisplayValue(
+                task,
+                key as ExportDataColumnKey
+              );
 
               return (
                 <div
