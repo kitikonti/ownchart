@@ -502,4 +502,227 @@ describe('File Operations - Deserialization', () => {
       expect(result.data!.tasks[0].name).toBe('Task with émojis 🚀 and ümlauts');
     });
   });
+
+  describe('Dependency Deserialization', () => {
+    it('should deserialize dependencies with correct field mapping', async () => {
+      const file = createValidFileContent();
+      file.chart.tasks.push({
+        id: '123e4567-e89b-12d3-a456-426614174002',
+        name: 'Task 2',
+        startDate: '2026-01-06',
+        endDate: '2026-01-10',
+        duration: 5,
+        progress: 0,
+        color: '#10b981',
+        order: 1,
+      });
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      (file.chart as any).dependencies = [
+        {
+          id: '123e4567-e89b-12d3-a456-426614174010',
+          from: '123e4567-e89b-12d3-a456-426614174001',
+          to: '123e4567-e89b-12d3-a456-426614174002',
+          type: 'FS',
+          lag: 2,
+          createdAt: '2026-01-01T00:00:00.000Z',
+        },
+      ];
+
+      const result = await deserializeGanttFile(JSON.stringify(file), 'test.ownchart');
+
+      expect(result.success).toBe(true);
+      expect(result.data!.dependencies).toHaveLength(1);
+
+      const dep = result.data!.dependencies[0];
+      expect(dep.id).toBe('123e4567-e89b-12d3-a456-426614174010');
+      expect(dep.fromTaskId).toBe('123e4567-e89b-12d3-a456-426614174001');
+      expect(dep.toTaskId).toBe('123e4567-e89b-12d3-a456-426614174002');
+      expect(dep.type).toBe('FS');
+      expect(dep.lag).toBe(2);
+      expect(dep.createdAt).toBe('2026-01-01T00:00:00.000Z');
+    });
+
+    it('should default createdAt to empty string when missing', async () => {
+      const file = createValidFileContent();
+      file.chart.tasks.push({
+        id: '123e4567-e89b-12d3-a456-426614174002',
+        name: 'Task 2',
+        startDate: '2026-01-06',
+        endDate: '2026-01-10',
+        duration: 5,
+        progress: 0,
+        color: '#10b981',
+        order: 1,
+      });
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      (file.chart as any).dependencies = [
+        {
+          id: '123e4567-e89b-12d3-a456-426614174010',
+          from: '123e4567-e89b-12d3-a456-426614174001',
+          to: '123e4567-e89b-12d3-a456-426614174002',
+          type: 'FS',
+        },
+      ];
+
+      const result = await deserializeGanttFile(JSON.stringify(file), 'test.ownchart');
+
+      expect(result.success).toBe(true);
+      expect(result.data!.dependencies[0].createdAt).toBe('');
+    });
+
+    it('should handle empty dependencies array', async () => {
+      const file = createValidFileContent();
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      (file.chart as any).dependencies = [];
+
+      const result = await deserializeGanttFile(JSON.stringify(file), 'test.ownchart');
+
+      expect(result.success).toBe(true);
+      expect(result.data!.dependencies).toEqual([]);
+    });
+  });
+
+  describe('ViewSettings Sanitization', () => {
+    it('should clamp zoom to safe range', async () => {
+      const file = createValidFileContent();
+      file.chart.viewSettings.zoom = -999;
+
+      const result = await deserializeGanttFile(JSON.stringify(file), 'test.ownchart');
+
+      expect(result.success).toBe(true);
+      expect(result.data!.viewSettings.zoom).toBe(0.01);
+    });
+
+    it('should clamp excessive zoom to max', async () => {
+      const file = createValidFileContent();
+      file.chart.viewSettings.zoom = 999;
+
+      const result = await deserializeGanttFile(JSON.stringify(file), 'test.ownchart');
+
+      expect(result.success).toBe(true);
+      expect(result.data!.viewSettings.zoom).toBe(100);
+    });
+
+    it('should default NaN zoom to 1', async () => {
+      const file = createValidFileContent();
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      (file.chart.viewSettings as any).zoom = 'invalid';
+
+      const result = await deserializeGanttFile(JSON.stringify(file), 'test.ownchart');
+
+      expect(result.success).toBe(true);
+      expect(result.data!.viewSettings.zoom).toBe(1);
+    });
+
+    it('should fix non-numeric panOffset values', async () => {
+      const file = createValidFileContent();
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      (file.chart.viewSettings as any).panOffset = { x: 'bad', y: null };
+
+      const result = await deserializeGanttFile(JSON.stringify(file), 'test.ownchart');
+
+      expect(result.success).toBe(true);
+      expect(result.data!.viewSettings.panOffset).toEqual({ x: 0, y: 0 });
+    });
+
+    it('should fix invalid taskTableWidth to null', async () => {
+      const file = createValidFileContent();
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      (file.chart.viewSettings as any).taskTableWidth = -100;
+
+      const result = await deserializeGanttFile(JSON.stringify(file), 'test.ownchart');
+
+      expect(result.success).toBe(true);
+      expect(result.data!.viewSettings.taskTableWidth).toBeNull();
+    });
+
+    it('should preserve valid viewSettings values', async () => {
+      const file = createValidFileContent();
+
+      const result = await deserializeGanttFile(JSON.stringify(file), 'test.ownchart');
+
+      expect(result.success).toBe(true);
+      expect(result.data!.viewSettings.zoom).toBe(1.5);
+      expect(result.data!.viewSettings.panOffset).toEqual({ x: -100, y: 0 });
+      expect(result.data!.viewSettings.taskTableWidth).toBe(400);
+      expect(result.data!.viewSettings.showWeekends).toBe(false);
+    });
+
+    it('should default non-boolean showWeekends/showTodayMarker', async () => {
+      const file = createValidFileContent();
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      (file.chart.viewSettings as any).showWeekends = 'yes';
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      (file.chart.viewSettings as any).showTodayMarker = 42;
+
+      const result = await deserializeGanttFile(JSON.stringify(file), 'test.ownchart');
+
+      expect(result.success).toBe(true);
+      expect(result.data!.viewSettings.showWeekends).toBe(true);
+      expect(result.data!.viewSettings.showTodayMarker).toBe(true);
+    });
+  });
+
+  describe('ExportSettings Sanitization', () => {
+    it('should pass through valid exportSettings', async () => {
+      const file = createValidFileContent();
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      (file.chart as any).exportSettings = {
+        zoomMode: 'preset',
+        timelineZoom: 1,
+        fitToWidth: 1200,
+        dateRangeMode: 'full',
+        selectedColumns: [],
+        includeHeader: true,
+        includeTodayMarker: true,
+        includeDependencies: true,
+        includeGridLines: true,
+        includeWeekends: true,
+        includeHolidays: false,
+        taskLabelPosition: 'inside',
+        background: 'white',
+      };
+
+      const result = await deserializeGanttFile(JSON.stringify(file), 'test.ownchart');
+
+      expect(result.success).toBe(true);
+      expect(result.data!.exportSettings).toBeDefined();
+      expect(result.data!.exportSettings!.zoomMode).toBe('preset');
+    });
+
+    it('should drop non-object exportSettings', async () => {
+      const file = createValidFileContent();
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      (file.chart as any).exportSettings = 'invalid';
+
+      const result = await deserializeGanttFile(JSON.stringify(file), 'test.ownchart');
+
+      expect(result.success).toBe(true);
+      expect(result.data!.exportSettings).toBeUndefined();
+    });
+
+    it('should drop array exportSettings', async () => {
+      const file = createValidFileContent();
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      (file.chart as any).exportSettings = [1, 2, 3];
+
+      const result = await deserializeGanttFile(JSON.stringify(file), 'test.ownchart');
+
+      expect(result.success).toBe(true);
+      expect(result.data!.exportSettings).toBeUndefined();
+    });
+  });
+
+  describe('Future Version Warning', () => {
+    it('should add warning for files from future versions', async () => {
+      const file = createValidFileContent();
+      file.fileVersion = '99.0.0';
+
+      const result = await deserializeGanttFile(JSON.stringify(file), 'test.ownchart');
+
+      expect(result.success).toBe(true);
+      expect(result.warnings).toBeDefined();
+      expect(result.warnings!.some((w) => w.includes('newer version'))).toBe(true);
+    });
+  });
 });

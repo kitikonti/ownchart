@@ -9,7 +9,7 @@
  * Layer 6: Migration (version compatibility - in migrate.ts)
  */
 
-import type { GanttFile, SerializedTask } from "./types";
+import type { GanttFile, SerializedTask, SerializedDependency } from "./types";
 
 const MAX_FILE_SIZE = 50 * 1024 * 1024; // 50MB
 const MAX_TASKS = 10000;
@@ -87,7 +87,7 @@ export function safeJsonParse(jsonString: string): unknown {
  * Check required fields and types
  */
 export function validateStructure(data: unknown): void {
-  if (!data || typeof data !== "object") {
+  if (!data || typeof data !== "object" || Array.isArray(data)) {
     throw new ValidationError(
       "INVALID_STRUCTURE",
       "File must be a JSON object"
@@ -281,16 +281,41 @@ const VALID_DEPENDENCY_TYPES = new Set(["FS", "SS", "FF", "SF"]);
  * Validate dependency entries
  */
 function validateDependencies(
-  dependencies: Array<{ id: string; from: string; to: string; type: string }>,
+  dependencies: SerializedDependency[],
   taskIds: Set<string>
 ): void {
+  const depIds = new Set<string>();
+
   dependencies.forEach((dep, index) => {
+    if (!UUID_REGEX.test(dep.id)) {
+      throw new ValidationError(
+        "INVALID_ID",
+        `Dependency ${index} has invalid UUID: ${dep.id}`
+      );
+    }
+
+    if (depIds.has(dep.id)) {
+      throw new ValidationError(
+        "DUPLICATE_ID",
+        `Duplicate dependency ID: ${dep.id}`
+      );
+    }
+    depIds.add(dep.id);
+
     if (!VALID_DEPENDENCY_TYPES.has(dep.type)) {
       throw new ValidationError(
         "INVALID_DEPENDENCY_TYPE",
         `Dependency ${index} has invalid type: ${dep.type}`
       );
     }
+
+    if (dep.from === dep.to) {
+      throw new ValidationError(
+        "SELF_DEPENDENCY",
+        `Dependency ${index} is a self-reference: ${dep.from}`
+      );
+    }
+
     if (!taskIds.has(dep.from)) {
       throw new ValidationError(
         "DANGLING_DEPENDENCY",

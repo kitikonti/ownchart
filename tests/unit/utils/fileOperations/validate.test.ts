@@ -431,4 +431,129 @@ describe('File Operations - Validation', () => {
       expect(() => validateSemantics(valid)).not.toThrow();
     });
   });
+
+  describe('Layer 4: Dependency Validation', () => {
+    // eslint-disable-next-line @typescript-eslint/explicit-function-return-type
+    const createFileWithDeps = () => {
+      const file = {
+        fileVersion: '1.0.0',
+        chart: {
+          id: '123e4567-e89b-12d3-a456-426614174000',
+          name: 'Test Chart',
+          tasks: [
+            {
+              id: '123e4567-e89b-12d3-a456-426614174001',
+              name: 'Task 1',
+              startDate: '2026-01-01',
+              endDate: '2026-01-05',
+              duration: 5,
+              progress: 0,
+              color: '#000000',
+              order: 0,
+            },
+            {
+              id: '123e4567-e89b-12d3-a456-426614174002',
+              name: 'Task 2',
+              startDate: '2026-01-06',
+              endDate: '2026-01-10',
+              duration: 5,
+              progress: 0,
+              color: '#000000',
+              order: 1,
+            },
+          ],
+          dependencies: [
+            {
+              id: '123e4567-e89b-12d3-a456-426614174010',
+              from: '123e4567-e89b-12d3-a456-426614174001',
+              to: '123e4567-e89b-12d3-a456-426614174002',
+              type: 'FS',
+            },
+          ],
+          viewSettings: {
+            zoom: 1,
+            panOffset: { x: 0, y: 0 },
+            showWeekends: true,
+            showTodayMarker: true,
+            taskTableWidth: null,
+          },
+          metadata: {
+            createdAt: '2026-01-01T00:00:00.000Z',
+            updatedAt: '2026-01-01T00:00:00.000Z',
+          },
+        },
+        metadata: {
+          created: '2026-01-01T00:00:00.000Z',
+          modified: '2026-01-01T00:00:00.000Z',
+        },
+      };
+      return file as ReturnType<typeof createFileWithDeps>;
+    };
+
+    it('should accept valid dependencies', () => {
+      expect(() => validateSemantics(createFileWithDeps())).not.toThrow();
+    });
+
+    it('should reject dependency with invalid UUID', () => {
+      const file = createFileWithDeps();
+      file.chart.dependencies[0].id = 'not-a-uuid';
+
+      expect(() => validateSemantics(file)).toThrow('invalid UUID');
+    });
+
+    it('should reject duplicate dependency IDs', () => {
+      const file = createFileWithDeps();
+      file.chart.dependencies.push({
+        ...file.chart.dependencies[0],
+        from: '123e4567-e89b-12d3-a456-426614174002',
+        to: '123e4567-e89b-12d3-a456-426614174001',
+      });
+
+      expect(() => validateSemantics(file)).toThrow('Duplicate dependency ID');
+    });
+
+    it('should reject dependency with invalid type', () => {
+      const file = createFileWithDeps();
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      (file.chart.dependencies[0] as any).type = 'INVALID';
+
+      expect(() => validateSemantics(file)).toThrow('invalid type');
+    });
+
+    it('should reject self-referencing dependency', () => {
+      const file = createFileWithDeps();
+      file.chart.dependencies[0].to = file.chart.dependencies[0].from;
+
+      expect(() => validateSemantics(file)).toThrow('self-reference');
+    });
+
+    it('should reject dependency with dangling source task', () => {
+      const file = createFileWithDeps();
+      file.chart.dependencies[0].from = '123e4567-e89b-12d3-a456-999999999999';
+
+      expect(() => validateSemantics(file)).toThrow('non-existent source task');
+    });
+
+    it('should reject dependency with dangling target task', () => {
+      const file = createFileWithDeps();
+      file.chart.dependencies[0].to = '123e4567-e89b-12d3-a456-999999999999';
+
+      expect(() => validateSemantics(file)).toThrow('non-existent target task');
+    });
+
+    it('should accept all valid dependency types', () => {
+      for (const type of ['FS', 'SS', 'FF', 'SF']) {
+        const file = createFileWithDeps();
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        (file.chart.dependencies[0] as any).type = type;
+        expect(() => validateSemantics(file)).not.toThrow();
+      }
+    });
+  });
+
+  describe('Layer 3: Array rejection', () => {
+    it('should reject top-level array', () => {
+      expect(() => validateStructure([1, 2, 3])).toThrow('must be a JSON object');
+    });
+  });
 });

@@ -10,7 +10,9 @@ import type {
   SerializedTask,
   SerializedDependency,
   DeserializeResult,
+  ViewSettings,
 } from "./types";
+import type { ExportOptions } from "../export/types";
 import {
   validatePreParse,
   safeJsonParse,
@@ -157,8 +159,8 @@ export async function deserializeGanttFile(
       data: {
         tasks,
         dependencies,
-        viewSettings: ganttFile.chart.viewSettings,
-        exportSettings: ganttFile.chart.exportSettings,
+        viewSettings: sanitizeViewSettings(ganttFile.chart.viewSettings),
+        exportSettings: sanitizeExportSettings(ganttFile.chart.exportSettings),
         chartName: ganttFile.chart.name,
         chartId: ganttFile.chart.id,
       },
@@ -227,4 +229,55 @@ function deserializeDependency(serialized: SerializedDependency): Dependency {
     lag: serialized.lag,
     createdAt: serialized.createdAt ?? "",
   };
+}
+
+/** Check that a value is a finite number, otherwise return the fallback */
+function finiteOr(value: unknown, fallback: number): number {
+  return typeof value === "number" && Number.isFinite(value) ? value : fallback;
+}
+
+/**
+ * Sanitize viewSettings — clamp/fix invalid values rather than rejecting the file.
+ * Protects against NaN/Infinity/wrong types propagating into app state.
+ */
+function sanitizeViewSettings(raw: ViewSettings): ViewSettings {
+  const zoom = finiteOr(raw.zoom, 1);
+  const clampedZoom = Math.max(0.01, Math.min(zoom, 100));
+
+  const panOffset = {
+    x: finiteOr(raw.panOffset?.x, 0),
+    y: finiteOr(raw.panOffset?.y, 0),
+  };
+
+  const taskTableWidth =
+    raw.taskTableWidth === null
+      ? null
+      : typeof raw.taskTableWidth === "number" &&
+          Number.isFinite(raw.taskTableWidth) &&
+          raw.taskTableWidth > 0
+        ? raw.taskTableWidth
+        : null;
+
+  return {
+    ...raw,
+    zoom: clampedZoom,
+    panOffset,
+    taskTableWidth,
+    showWeekends:
+      typeof raw.showWeekends === "boolean" ? raw.showWeekends : true,
+    showTodayMarker:
+      typeof raw.showTodayMarker === "boolean" ? raw.showTodayMarker : true,
+  };
+}
+
+/**
+ * Sanitize exportSettings — drop entirely if not a valid object.
+ */
+function sanitizeExportSettings(
+  raw: ExportOptions | undefined
+): ExportOptions | undefined {
+  if (!raw || typeof raw !== "object" || Array.isArray(raw)) {
+    return undefined;
+  }
+  return raw;
 }
