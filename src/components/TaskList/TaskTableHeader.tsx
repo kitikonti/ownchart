@@ -10,6 +10,7 @@ import { useChartStore } from "../../store/slices/chartSlice";
 import {
   getVisibleColumns,
   getDensityAwareWidth,
+  NAME_COLUMN_ID,
 } from "../../config/tableColumns";
 import { ColumnResizer } from "./ColumnResizer";
 import { useTableDimensions } from "../../hooks/useTableDimensions";
@@ -114,7 +115,7 @@ export function TaskTableHeader(): JSX.Element {
         {visibleColumns.map((column) => (
           <div
             key={column.id}
-            className={`task-table-header-cell ${column.id === "name" ? "pr-3" : "px-3"} py-4 border-b ${column.showRightBorder !== false ? "border-r" : ""} text-xs font-semibold text-neutral-600 uppercase tracking-wider whitespace-nowrap relative`}
+            className={`task-table-header-cell ${column.id === NAME_COLUMN_ID ? "pr-3" : "px-3"} py-4 border-b ${column.showRightBorder !== false ? "border-r" : ""} text-xs font-semibold text-neutral-600 uppercase tracking-wider whitespace-nowrap relative`}
             style={{
               backgroundColor: TABLE_HEADER.bg,
               borderColor: TABLE_HEADER.border,
@@ -150,7 +151,7 @@ export function TaskTableHeader(): JSX.Element {
               column.label
             )}
             {/* Column Resizer - only for name column */}
-            {column.id === "name" && (
+            {column.id === NAME_COLUMN_ID && (
               <ColumnResizer
                 columnId={column.id}
                 currentWidth={getColumnWidth(column.id)}

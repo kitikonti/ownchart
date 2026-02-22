@@ -92,6 +92,9 @@ function numberValidator(
   };
 }
 
+/** The name column requires special layout handling (minmax, indentation). */
+export const NAME_COLUMN_ID: ColumnId = "name";
+
 /**
  * Task table column definitions.
  */
@@ -242,7 +245,7 @@ export function getDensityAwareWidth(
   columnId: string,
   densityConfig: DensityConfig
 ): string {
-  if (columnId === "name") {
+  if (columnId === NAME_COLUMN_ID) {
     return `minmax(${densityConfig.columnWidths.nameMin}px, 1fr)`;
   }
 

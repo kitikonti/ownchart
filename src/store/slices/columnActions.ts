@@ -5,7 +5,7 @@
 
 import type { Task } from "../../types/chart.types";
 import { getTaskLevel } from "../../utils/hierarchy";
-import { TASK_COLUMNS } from "../../config/tableColumns";
+import { TASK_COLUMNS, NAME_COLUMN_ID } from "../../config/tableColumns";
 import { calculateColumnWidth } from "../../utils/textMeasurement";
 import type { DensityConfig } from "../../types/preferences.types";
 import { getCurrentDensityConfig } from "./userPreferencesSlice";
@@ -37,7 +37,7 @@ function fitColumnToContent(
   const indentSize = densityConfig.indentSize;
   const iconSize = densityConfig.iconSize;
   const cellPadding =
-    columnId === "name"
+    columnId === NAME_COLUMN_ID
       ? densityConfig.cellPaddingX
       : densityConfig.cellPaddingX * 2;
 
@@ -57,7 +57,7 @@ function fitColumnToContent(
     }
     cellValues.push(valueStr);
 
-    if (columnId === "name") {
+    if (columnId === NAME_COLUMN_ID) {
       const level = getTaskLevel(tasks, task.id);
       const hierarchyIndent = level * indentSize;
       extraWidths.push(
@@ -68,7 +68,7 @@ function fitColumnToContent(
     }
   }
 
-  if (columnId === "name") {
+  if (columnId === NAME_COLUMN_ID) {
     cellValues.push(PLACEHOLDER_TEXT);
     extraWidths.push(EXPAND_BUTTON_WIDTH + CELL_GAP_SIZE + iconSize);
   }
