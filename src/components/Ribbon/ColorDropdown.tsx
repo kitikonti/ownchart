@@ -24,9 +24,14 @@ import { useDropdown } from "../../hooks/useDropdown";
 import { DropdownTrigger } from "../Toolbar/DropdownTrigger";
 import { DropdownPanel } from "../Toolbar/DropdownPanel";
 import { DropdownItem } from "../Toolbar/DropdownItem";
-import { TOOLBAR } from "../../styles/design-tokens";
+import { TOOLBAR, COLORS } from "../../styles/design-tokens";
 import { Button } from "../common/Button";
 import type { ColorMode } from "../../types/colorMode.types";
+import type {
+  SummaryModeOptions,
+  TaskTypeModeOptions,
+  HierarchyModeOptions,
+} from "../../types/colorMode.types";
 import type { HexColor, PaletteId } from "../../types/branded.types";
 import {
   COLOR_PALETTES,
@@ -34,6 +39,8 @@ import {
   PALETTE_CATEGORIES,
   type PaletteCategory,
 } from "../../utils/colorPalettes";
+
+// ── Constants ───────────────────────────────────────────────────────────────
 
 interface ColorModeOption {
   value: ColorMode;
@@ -69,9 +76,16 @@ const COLOR_MODE_OPTIONS: ColorModeOption[] = [
   },
 ];
 
-/**
- * Color swatch for palette preview
- */
+/** Palettes grouped by category (static — computed once at module load) */
+const PALETTES_BY_CATEGORY = Object.fromEntries(
+  PALETTE_CATEGORIES.map((cat) => [
+    cat,
+    COLOR_PALETTES.filter((p) => p.category === cat),
+  ])
+) as Record<PaletteCategory, typeof COLOR_PALETTES>;
+
+// ── Shared sub-components ───────────────────────────────────────────────────
+
 function ColorSwatch({
   color,
   size = 14,
@@ -94,9 +108,6 @@ function ColorSwatch({
   );
 }
 
-/**
- * Palette preview row showing all color swatches
- */
 function PalettePreview({ colors }: { colors: string[] }): JSX.Element {
   return (
     <div style={{ display: "flex", gap: "1px" }}>
@@ -106,6 +117,279 @@ function PalettePreview({ colors }: { colors: string[] }): JSX.Element {
     </div>
   );
 }
+
+interface ColorPickerRowProps {
+  label: string;
+  value: string;
+  onChange: (hex: HexColor) => void;
+  marginBottom?: string;
+}
+
+function ColorPickerRow({
+  label,
+  value,
+  onChange,
+  marginBottom = "10px",
+}: ColorPickerRowProps): JSX.Element {
+  return (
+    <div
+      style={{
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "space-between",
+        marginBottom,
+      }}
+    >
+      <span style={{ fontSize: "13px" }}>{label}</span>
+      <input
+        type="color"
+        value={value}
+        onChange={(e) => onChange(e.target.value as HexColor)}
+        aria-label={`${label} color`}
+        style={{
+          width: "32px",
+          height: "24px",
+          border: `1px solid ${COLORS.neutral[200]}`,
+          borderRadius: "4px",
+          cursor: "pointer",
+          padding: "2px",
+        }}
+      />
+    </div>
+  );
+}
+
+interface RangeSliderRowProps {
+  label: string;
+  value: number;
+  min: number;
+  max: number;
+  onChange: (value: number) => void;
+  marginBottom?: string;
+}
+
+function RangeSliderRow({
+  label,
+  value,
+  min,
+  max,
+  onChange,
+  marginBottom = "12px",
+}: RangeSliderRowProps): JSX.Element {
+  return (
+    <div style={{ marginBottom }}>
+      <div
+        style={{
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "space-between",
+          marginBottom: "4px",
+        }}
+      >
+        <span style={{ fontSize: "13px" }}>{label}</span>
+        <span style={{ fontSize: "13px", fontWeight: 500 }}>{value}%</span>
+      </div>
+      <input
+        type="range"
+        min={min}
+        max={max}
+        value={value}
+        onChange={(e) => onChange(parseInt(e.target.value))}
+        aria-label={label}
+        style={{ width: "100%", cursor: "pointer" }}
+      />
+    </div>
+  );
+}
+
+// ── Mode option panels ──────────────────────────────────────────────────────
+
+function ManualOptions(): JSX.Element {
+  return (
+    <div style={{ padding: "12px" }}>
+      <div style={{ fontSize: "13px", color: COLORS.neutral[500] }}>
+        Use the color picker in the task list to set individual task colors.
+      </div>
+    </div>
+  );
+}
+
+interface ThemeOptionsProps {
+  selectedPaletteId: PaletteId | null;
+  onSelectPalette: (id: string) => void;
+}
+
+function ThemeOptions({
+  selectedPaletteId,
+  onSelectPalette,
+}: ThemeOptionsProps): JSX.Element {
+  return (
+    <div style={{ padding: "8px 0" }}>
+      {PALETTE_CATEGORIES.map((category) => (
+        <div key={category} style={{ marginBottom: "8px" }}>
+          <div
+            style={{
+              padding: "4px 12px",
+              fontSize: "11px",
+              fontWeight: 600,
+              color: COLORS.neutral[500],
+              textTransform: "uppercase",
+              letterSpacing: "0.5px",
+            }}
+          >
+            {CATEGORY_LABELS[category]}
+          </div>
+
+          {PALETTES_BY_CATEGORY[category].map((palette) => (
+            <DropdownItem
+              key={palette.id}
+              isSelected={selectedPaletteId === palette.id}
+              showCheckmark={false}
+              onClick={() => onSelectPalette(palette.id)}
+              trailing={<PalettePreview colors={palette.colors} />}
+            >
+              {palette.name}
+            </DropdownItem>
+          ))}
+        </div>
+      ))}
+    </div>
+  );
+}
+
+interface SummaryOptionsProps {
+  options: SummaryModeOptions;
+  onChange: (update: Partial<SummaryModeOptions>) => void;
+}
+
+function SummaryOptions({
+  options,
+  onChange,
+}: SummaryOptionsProps): JSX.Element {
+  return (
+    <div style={{ padding: "12px" }}>
+      <div
+        style={{
+          fontSize: "13px",
+          color: COLORS.neutral[500],
+          marginBottom: "12px",
+        }}
+      >
+        Set colors on summary tasks — children inherit automatically.
+      </div>
+      <label
+        style={{
+          display: "flex",
+          alignItems: "center",
+          gap: "8px",
+          cursor: "pointer",
+          marginBottom: "12px",
+        }}
+      >
+        <input
+          type="checkbox"
+          checked={options.useMilestoneAccent}
+          onChange={(e) => onChange({ useMilestoneAccent: e.target.checked })}
+          style={{ width: "16px", height: "16px", cursor: "pointer" }}
+        />
+        <span style={{ fontSize: "13px" }}>Milestones in accent color</span>
+      </label>
+
+      {options.useMilestoneAccent && (
+        <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+          <span style={{ fontSize: "13px", color: COLORS.neutral[500] }}>
+            Accent:
+          </span>
+          <input
+            type="color"
+            value={options.milestoneAccentColor}
+            onChange={(e) =>
+              onChange({ milestoneAccentColor: e.target.value as HexColor })
+            }
+            aria-label="Milestone accent color"
+            style={{
+              width: "28px",
+              height: "28px",
+              border: `1px solid ${COLORS.neutral[200]}`,
+              borderRadius: "4px",
+              cursor: "pointer",
+              padding: "2px",
+            }}
+          />
+        </div>
+      )}
+    </div>
+  );
+}
+
+interface TaskTypeOptionsProps {
+  options: TaskTypeModeOptions;
+  onChange: (update: Partial<TaskTypeModeOptions>) => void;
+}
+
+function TaskTypeOptions({
+  options,
+  onChange,
+}: TaskTypeOptionsProps): JSX.Element {
+  return (
+    <div style={{ padding: "12px" }}>
+      <ColorPickerRow
+        label="Summary"
+        value={options.summaryColor}
+        onChange={(hex) => onChange({ summaryColor: hex })}
+      />
+      <ColorPickerRow
+        label="Task"
+        value={options.taskColor}
+        onChange={(hex) => onChange({ taskColor: hex })}
+      />
+      <ColorPickerRow
+        label="Milestone"
+        value={options.milestoneColor}
+        onChange={(hex) => onChange({ milestoneColor: hex })}
+        marginBottom="0"
+      />
+    </div>
+  );
+}
+
+interface HierarchyOptionsProps {
+  options: HierarchyModeOptions;
+  onChange: (update: Partial<HierarchyModeOptions>) => void;
+}
+
+function HierarchyOptions({
+  options,
+  onChange,
+}: HierarchyOptionsProps): JSX.Element {
+  return (
+    <div style={{ padding: "12px" }}>
+      <ColorPickerRow
+        label="Base Color"
+        value={options.baseColor}
+        onChange={(hex) => onChange({ baseColor: hex })}
+        marginBottom="12px"
+      />
+      <RangeSliderRow
+        label="Lighten per level"
+        value={options.lightenPercentPerLevel}
+        min={5}
+        max={25}
+        onChange={(v) => onChange({ lightenPercentPerLevel: v })}
+      />
+      <RangeSliderRow
+        label="Max lighten"
+        value={options.maxLightenPercent}
+        min={20}
+        max={60}
+        onChange={(v) => onChange({ maxLightenPercent: v })}
+        marginBottom="0"
+      />
+    </div>
+  );
+}
+
+// ── Main component ──────────────────────────────────────────────────────────
 
 interface ColorDropdownProps {
   labelPriority?: number;
@@ -130,14 +414,6 @@ export function ColorDropdown({
 
   const currentMode = colorModeState.mode;
 
-  // Group palettes by category
-  const palettesByCategory = Object.fromEntries(
-    PALETTE_CATEGORIES.map((cat) => [
-      cat,
-      COLOR_PALETTES.filter((p) => p.category === cat),
-    ])
-  ) as Record<PaletteCategory, typeof COLOR_PALETTES>;
-
   const handleModeSelect = (mode: ColorMode): void => {
     setColorMode(mode);
     // Panel stays open — don't call close()
@@ -151,293 +427,39 @@ export function ColorDropdown({
     close();
   };
 
-  // ── Mode-specific option renderers ─────────────────────────────────────
-
-  const renderManualOptions = (): JSX.Element => (
-    <div style={{ padding: "12px" }}>
-      <div
-        style={{
-          fontSize: "13px",
-          color: "rgb(100, 100, 100)",
-        }}
-      >
-        Use the color picker in the task list to set individual task colors.
-      </div>
-    </div>
-  );
-
-  const renderThemeOptions = (): JSX.Element => (
-    <div style={{ padding: "8px 0" }}>
-      {PALETTE_CATEGORIES.map((category) => (
-        <div key={category} style={{ marginBottom: "8px" }}>
-          <div
-            style={{
-              padding: "4px 12px",
-              fontSize: "11px",
-              fontWeight: 600,
-              color: "rgb(100, 100, 100)",
-              textTransform: "uppercase",
-              letterSpacing: "0.5px",
-            }}
-          >
-            {CATEGORY_LABELS[category]}
-          </div>
-
-          {palettesByCategory[category].map((palette) => {
-            const isSelected =
-              colorModeState.themeOptions.selectedPaletteId === palette.id;
-            return (
-              <DropdownItem
-                key={palette.id}
-                isSelected={isSelected}
-                showCheckmark={false}
-                onClick={() => handleSelectPalette(palette.id)}
-                trailing={<PalettePreview colors={palette.colors} />}
-              >
-                {palette.name}
-              </DropdownItem>
-            );
-          })}
-        </div>
-      ))}
-    </div>
-  );
-
-  const renderSummaryOptions = (): JSX.Element => (
-    <div style={{ padding: "12px" }}>
-      <div
-        style={{
-          fontSize: "13px",
-          color: "rgb(100, 100, 100)",
-          marginBottom: "12px",
-        }}
-      >
-        Set colors on summary tasks — children inherit automatically.
-      </div>
-      <label
-        style={{
-          display: "flex",
-          alignItems: "center",
-          gap: "8px",
-          cursor: "pointer",
-          marginBottom: "12px",
-        }}
-      >
-        <input
-          type="checkbox"
-          checked={colorModeState.summaryOptions.useMilestoneAccent}
-          onChange={(e) =>
-            setSummaryOptions({ useMilestoneAccent: e.target.checked })
-          }
-          style={{ width: "16px", height: "16px", cursor: "pointer" }}
-        />
-        <span style={{ fontSize: "13px" }}>Milestones in accent color</span>
-      </label>
-
-      {colorModeState.summaryOptions.useMilestoneAccent && (
-        <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-          <span style={{ fontSize: "13px", color: "rgb(100, 100, 100)" }}>
-            Accent:
-          </span>
-          <input
-            type="color"
-            value={colorModeState.summaryOptions.milestoneAccentColor}
-            onChange={(e) =>
-              setSummaryOptions({
-                milestoneAccentColor: e.target.value as HexColor,
-              })
-            }
-            style={{
-              width: "28px",
-              height: "28px",
-              border: "1px solid rgb(200, 200, 200)",
-              borderRadius: "4px",
-              cursor: "pointer",
-              padding: "2px",
-            }}
-            title="Milestone accent color"
-          />
-        </div>
-      )}
-    </div>
-  );
-
-  const renderTaskTypeOptions = (): JSX.Element => (
-    <div style={{ padding: "12px" }}>
-      <div
-        style={{
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "space-between",
-          marginBottom: "10px",
-        }}
-      >
-        <span style={{ fontSize: "13px" }}>Summary</span>
-        <input
-          type="color"
-          value={colorModeState.taskTypeOptions.summaryColor}
-          onChange={(e) =>
-            setTaskTypeOptions({ summaryColor: e.target.value as HexColor })
-          }
-          style={{
-            width: "32px",
-            height: "24px",
-            border: "1px solid rgb(200, 200, 200)",
-            borderRadius: "4px",
-            cursor: "pointer",
-            padding: "2px",
-          }}
-        />
-      </div>
-      <div
-        style={{
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "space-between",
-          marginBottom: "10px",
-        }}
-      >
-        <span style={{ fontSize: "13px" }}>Task</span>
-        <input
-          type="color"
-          value={colorModeState.taskTypeOptions.taskColor}
-          onChange={(e) =>
-            setTaskTypeOptions({ taskColor: e.target.value as HexColor })
-          }
-          style={{
-            width: "32px",
-            height: "24px",
-            border: "1px solid rgb(200, 200, 200)",
-            borderRadius: "4px",
-            cursor: "pointer",
-            padding: "2px",
-          }}
-        />
-      </div>
-      <div
-        style={{
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "space-between",
-        }}
-      >
-        <span style={{ fontSize: "13px" }}>Milestone</span>
-        <input
-          type="color"
-          value={colorModeState.taskTypeOptions.milestoneColor}
-          onChange={(e) =>
-            setTaskTypeOptions({
-              milestoneColor: e.target.value as HexColor,
-            })
-          }
-          style={{
-            width: "32px",
-            height: "24px",
-            border: "1px solid rgb(200, 200, 200)",
-            borderRadius: "4px",
-            cursor: "pointer",
-            padding: "2px",
-          }}
-        />
-      </div>
-    </div>
-  );
-
-  const renderHierarchyOptions = (): JSX.Element => (
-    <div style={{ padding: "12px" }}>
-      <div
-        style={{
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "space-between",
-          marginBottom: "12px",
-        }}
-      >
-        <span style={{ fontSize: "13px" }}>Base Color</span>
-        <input
-          type="color"
-          value={colorModeState.hierarchyOptions.baseColor}
-          onChange={(e) =>
-            setHierarchyOptions({ baseColor: e.target.value as HexColor })
-          }
-          style={{
-            width: "32px",
-            height: "24px",
-            border: "1px solid rgb(200, 200, 200)",
-            borderRadius: "4px",
-            cursor: "pointer",
-            padding: "2px",
-          }}
-        />
-      </div>
-      <div style={{ marginBottom: "12px" }}>
-        <div
-          style={{
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "space-between",
-            marginBottom: "4px",
-          }}
-        >
-          <span style={{ fontSize: "13px" }}>Lighten per level</span>
-          <span style={{ fontSize: "13px", fontWeight: 500 }}>
-            {colorModeState.hierarchyOptions.lightenPercentPerLevel}%
-          </span>
-        </div>
-        <input
-          type="range"
-          min="5"
-          max="25"
-          value={colorModeState.hierarchyOptions.lightenPercentPerLevel}
-          onChange={(e) =>
-            setHierarchyOptions({
-              lightenPercentPerLevel: parseInt(e.target.value),
-            })
-          }
-          style={{ width: "100%", cursor: "pointer" }}
-        />
-      </div>
-      <div>
-        <div
-          style={{
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "space-between",
-            marginBottom: "4px",
-          }}
-        >
-          <span style={{ fontSize: "13px" }}>Max lighten</span>
-          <span style={{ fontSize: "13px", fontWeight: 500 }}>
-            {colorModeState.hierarchyOptions.maxLightenPercent}%
-          </span>
-        </div>
-        <input
-          type="range"
-          min="20"
-          max="60"
-          value={colorModeState.hierarchyOptions.maxLightenPercent}
-          onChange={(e) =>
-            setHierarchyOptions({ maxLightenPercent: parseInt(e.target.value) })
-          }
-          style={{ width: "100%", cursor: "pointer" }}
-        />
-      </div>
-    </div>
-  );
-
   const renderOptions = (): JSX.Element => {
     switch (currentMode) {
       case "theme":
-        return renderThemeOptions();
+        return (
+          <ThemeOptions
+            selectedPaletteId={colorModeState.themeOptions.selectedPaletteId}
+            onSelectPalette={handleSelectPalette}
+          />
+        );
       case "summary":
-        return renderSummaryOptions();
+        return (
+          <SummaryOptions
+            options={colorModeState.summaryOptions}
+            onChange={setSummaryOptions}
+          />
+        );
       case "taskType":
-        return renderTaskTypeOptions();
+        return (
+          <TaskTypeOptions
+            options={colorModeState.taskTypeOptions}
+            onChange={setTaskTypeOptions}
+          />
+        );
       case "hierarchy":
-        return renderHierarchyOptions();
+        return (
+          <HierarchyOptions
+            options={colorModeState.hierarchyOptions}
+            onChange={setHierarchyOptions}
+          />
+        );
       case "manual":
       default:
-        return renderManualOptions();
+        return <ManualOptions />;
     }
   };
 
@@ -472,7 +494,7 @@ export function ColorDropdown({
           <div
             style={{
               height: "1px",
-              backgroundColor: "rgb(230, 230, 230)",
+              backgroundColor: COLORS.neutral[100],
               margin: "4px 0",
             }}
           />
@@ -486,7 +508,7 @@ export function ColorDropdown({
           {currentMode !== "manual" && (
             <div
               style={{
-                borderTop: "1px solid rgb(230, 230, 230)",
+                borderTop: `1px solid ${COLORS.neutral[100]}`,
                 padding: "8px",
               }}
             >
