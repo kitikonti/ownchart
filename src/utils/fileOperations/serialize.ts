@@ -12,13 +12,33 @@ import type {
   ViewSettings,
 } from "./types";
 import { FILE_VERSION } from "../../config/version";
+import { DEFAULT_CHART_NAME } from "../../config/viewSettingsDefaults";
+
+/** Known task field names — used to filter unknownFields during round-trip */
+const KNOWN_TASK_KEYS = new Set([
+  "id",
+  "name",
+  "startDate",
+  "endDate",
+  "duration",
+  "progress",
+  "color",
+  "order",
+  "type",
+  "parent",
+  "open",
+  "colorOverride",
+  "metadata",
+  "createdAt",
+  "updatedAt",
+]);
 
 export interface SerializeOptions {
   chartName?: string;
   chartId?: string;
   prettyPrint?: boolean;
-  dependencies?: Dependency[]; // Sprint 1.4
-  exportSettings?: ExportOptions; // Sprint 1.6
+  dependencies?: Dependency[];
+  exportSettings?: ExportOptions;
 }
 
 /**
@@ -35,7 +55,6 @@ export function serializeToGanttFile(
   options: SerializeOptions = {}
 ): string {
   const now = new Date().toISOString();
-
   const dependencies = options.dependencies || [];
 
   const ganttFile: GanttFile = {
@@ -45,40 +64,11 @@ export function serializeToGanttFile(
 
     chart: {
       id: options.chartId || crypto.randomUUID(),
-      name: options.chartName || "Untitled",
-      tasks: tasks.map(serializeTask),
-      dependencies: dependencies.map(serializeDependency), // Sprint 1.4
-      viewSettings: {
-        // Navigation
-        zoom: viewSettings.zoom,
-        panOffset: viewSettings.panOffset,
-        taskTableWidth: viewSettings.taskTableWidth,
-        columnWidths: viewSettings.columnWidths,
-        // Display settings
-        showWeekends: viewSettings.showWeekends,
-        showTodayMarker: viewSettings.showTodayMarker,
-        showHolidays: viewSettings.showHolidays,
-        showDependencies: viewSettings.showDependencies,
-        showProgress: viewSettings.showProgress,
-        taskLabelPosition: viewSettings.taskLabelPosition,
-        // Working days mode
-        workingDaysMode: viewSettings.workingDaysMode,
-        workingDaysConfig: viewSettings.workingDaysConfig,
-        // Holiday region
-        holidayRegion: viewSettings.holidayRegion,
-        // Project metadata
-        projectTitle: viewSettings.projectTitle,
-        projectAuthor: viewSettings.projectAuthor,
-        // Color mode
-        colorModeState: viewSettings.colorModeState,
-        // Column visibility
-        hiddenColumns: viewSettings.hiddenColumns,
-        // Task table collapse
-        isTaskTableCollapsed: viewSettings.isTaskTableCollapsed,
-        // Hidden task IDs
-        hiddenTaskIds: viewSettings.hiddenTaskIds,
-      },
-      exportSettings: options.exportSettings, // Sprint 1.6
+      name: options.chartName || DEFAULT_CHART_NAME,
+      tasks: tasks.map((task) => serializeTask(task, now)),
+      dependencies: dependencies.map(serializeDependency),
+      viewSettings: { ...viewSettings },
+      exportSettings: options.exportSettings,
       metadata: {
         createdAt: now,
         updatedAt: now,
@@ -92,15 +82,19 @@ export function serializeToGanttFile(
 
     features: {
       hasHierarchy: tasks.some((t) => !!t.parent),
-      hasHistory: false, // No history persistence in v1.0.0
-      hasDependencies: dependencies.length > 0, // Sprint 1.4
+      hasHistory: false,
+      hasDependencies: dependencies.length > 0,
     },
   };
 
-  // Calculate file size
-  const jsonString = JSON.stringify(ganttFile);
-  ganttFile.metadata.fileSize = new Blob([jsonString]).size;
+  // Serialize to final output, then calculate accurate file size
+  const output = options.prettyPrint
+    ? JSON.stringify(ganttFile, null, 2)
+    : JSON.stringify(ganttFile);
 
+  ganttFile.metadata.fileSize = new Blob([output]).size;
+
+  // Re-serialize with the fileSize included
   return options.prettyPrint
     ? JSON.stringify(ganttFile, null, 2)
     : JSON.stringify(ganttFile);
@@ -110,7 +104,13 @@ export function serializeToGanttFile(
  * Convert Task to SerializedTask
  * Preserves __unknownFields for round-trip compatibility
  */
-function serializeTask(task: Task): SerializedTask {
+function serializeTask(task: Task, now: string): SerializedTask {
+  const taskWithExtra = task as Task & {
+    __unknownFields?: Record<string, unknown>;
+    createdAt?: string;
+    updatedAt?: string;
+  };
+
   const serialized: SerializedTask = {
     id: task.id,
     name: task.name,
@@ -125,19 +125,20 @@ function serializeTask(task: Task): SerializedTask {
     open: task.open,
     colorOverride: task.colorOverride,
     metadata: task.metadata,
-    createdAt: new Date().toISOString(),
-    updatedAt: new Date().toISOString(),
+    createdAt: taskWithExtra.createdAt || now,
+    updatedAt: now,
   };
 
-  // Preserve unknown fields from future versions
-  const taskWithUnknownFields = task as Task & {
-    __unknownFields?: Record<string, unknown>;
-  };
+  // Preserve unknown fields from future versions, but never overwrite known fields
   if (
-    taskWithUnknownFields.__unknownFields &&
-    typeof taskWithUnknownFields.__unknownFields === "object"
+    taskWithExtra.__unknownFields &&
+    typeof taskWithExtra.__unknownFields === "object"
   ) {
-    Object.assign(serialized, taskWithUnknownFields.__unknownFields);
+    for (const [key, value] of Object.entries(taskWithExtra.__unknownFields)) {
+      if (!KNOWN_TASK_KEYS.has(key)) {
+        (serialized as Record<string, unknown>)[key] = value;
+      }
+    }
   }
 
   return serialized;
@@ -145,7 +146,6 @@ function serializeTask(task: Task): SerializedTask {
 
 /**
  * Convert Dependency to SerializedDependency for file format
- * Sprint 1.4 - Dependencies
  */
 function serializeDependency(dep: Dependency): SerializedDependency {
   return {

@@ -225,6 +225,26 @@ describe('File Operations - Serialization', () => {
       expect(parsed.chart.tasks[0].__unknownFields).toBeUndefined();
       expect(parsed.chart.tasks[0].futureField).toBe('value');
     });
+
+    it('should not overwrite known fields from __unknownFields', () => {
+      const tasks: (Task & { __unknownFields?: Record<string, unknown> })[] = [
+        {
+          ...createSampleTasks()[0],
+          __unknownFields: {
+            id: 'hacked-id',
+            name: 'hacked-name',
+            safeFutureField: 'preserved',
+          },
+        },
+      ];
+
+      const json = serializeToGanttFile(tasks, createSampleViewSettings());
+      const parsed = JSON.parse(json);
+
+      expect(parsed.chart.tasks[0].id).toBe(createSampleTasks()[0].id);
+      expect(parsed.chart.tasks[0].name).toBe('Task 1');
+      expect(parsed.chart.tasks[0].safeFutureField).toBe('preserved');
+    });
   });
 
   describe('Task Metadata', () => {
@@ -271,6 +291,47 @@ describe('File Operations - Serialization', () => {
       const parsed = JSON.parse(json);
 
       expect(parsed.features.hasHierarchy).toBe(true);
+    });
+  });
+
+  describe('Task Timestamps', () => {
+    it('should preserve existing createdAt from deserialized tasks', () => {
+      const originalCreatedAt = '2025-06-15T10:30:00.000Z';
+      const tasks: (Task & { createdAt?: string })[] = [
+        {
+          ...createSampleTasks()[0],
+          createdAt: originalCreatedAt,
+        },
+      ];
+
+      const json = serializeToGanttFile(tasks, createSampleViewSettings());
+      const parsed = JSON.parse(json);
+
+      expect(parsed.chart.tasks[0].createdAt).toBe(originalCreatedAt);
+    });
+
+    it('should set createdAt to now for new tasks without createdAt', () => {
+      const tasks = createSampleTasks();
+      const json = serializeToGanttFile(tasks, createSampleViewSettings());
+      const parsed = JSON.parse(json);
+
+      const isoRegex = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}Z$/;
+      expect(parsed.chart.tasks[0].createdAt).toMatch(isoRegex);
+    });
+
+    it('should always update updatedAt to now', () => {
+      const oldUpdatedAt = '2020-01-01T00:00:00.000Z';
+      const tasks: (Task & { updatedAt?: string })[] = [
+        {
+          ...createSampleTasks()[0],
+          updatedAt: oldUpdatedAt,
+        },
+      ];
+
+      const json = serializeToGanttFile(tasks, createSampleViewSettings());
+      const parsed = JSON.parse(json);
+
+      expect(parsed.chart.tasks[0].updatedAt).not.toBe(oldUpdatedAt);
     });
   });
 

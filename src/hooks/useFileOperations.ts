@@ -17,7 +17,10 @@ import {
   openFile,
   clearFileHandle,
 } from "../utils/fileOperations/fileDialog";
-import { loadFileIntoApp } from "../utils/fileOperations/loadFromFile";
+import {
+  loadFileIntoApp,
+  showLoadNotifications,
+} from "../utils/fileOperations/loadFromFile";
 import { sanitizeFilename } from "../utils/export/sanitizeFilename";
 
 /**
@@ -201,7 +204,11 @@ export function useFileOperations(): {
         return;
       }
 
-      await loadFileIntoApp(result.file);
+      const loadResult = await loadFileIntoApp(result.file);
+      showLoadNotifications(
+        { ...loadResult, fileName: result.file.name },
+        toast
+      );
     } catch (e) {
       toast.error(`Open failed: ${(e as Error).message}`);
     }

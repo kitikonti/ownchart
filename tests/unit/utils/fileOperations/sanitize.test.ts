@@ -350,6 +350,50 @@ describe('File Operations - Sanitization (XSS Prevention)', () => {
     });
   });
 
+  describe('ViewSettings Sanitization', () => {
+    it('should sanitize projectTitle with XSS', () => {
+      const malicious = createBaseFile();
+      malicious.chart.viewSettings.projectTitle = '<script>alert("XSS")</script>My Project';
+
+      const sanitized = sanitizeGanttFile(malicious);
+
+      expect(sanitized.chart.viewSettings.projectTitle).not.toContain('<script>');
+      expect(sanitized.chart.viewSettings.projectTitle).toContain('My Project');
+    });
+
+    it('should sanitize projectAuthor with XSS', () => {
+      const malicious = createBaseFile();
+      malicious.chart.viewSettings.projectAuthor = '<img onerror=alert(1) src=x>John';
+
+      const sanitized = sanitizeGanttFile(malicious);
+
+      expect(sanitized.chart.viewSettings.projectAuthor).not.toContain('onerror');
+      expect(sanitized.chart.viewSettings.projectAuthor).toContain('John');
+    });
+
+    it('should preserve clean projectTitle and projectAuthor', () => {
+      const file = createBaseFile();
+      file.chart.viewSettings.projectTitle = 'Clean Project Name';
+      file.chart.viewSettings.projectAuthor = 'Martin Müller';
+
+      const sanitized = sanitizeGanttFile(file);
+
+      expect(sanitized.chart.viewSettings.projectTitle).toBe('Clean Project Name');
+      expect(sanitized.chart.viewSettings.projectAuthor).toBe('Martin Müller');
+    });
+
+    it('should handle undefined projectTitle and projectAuthor', () => {
+      const file = createBaseFile();
+      file.chart.viewSettings.projectTitle = undefined;
+      file.chart.viewSettings.projectAuthor = undefined;
+
+      const sanitized = sanitizeGanttFile(file);
+
+      expect(sanitized.chart.viewSettings.projectTitle).toBeUndefined();
+      expect(sanitized.chart.viewSettings.projectAuthor).toBeUndefined();
+    });
+  });
+
   describe('Non-String Values', () => {
     it('should not sanitize numbers', () => {
       const file = createBaseFile();

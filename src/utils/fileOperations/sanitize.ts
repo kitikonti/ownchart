@@ -34,6 +34,15 @@ export function sanitizeGanttFile(file: GanttFile): GanttFile {
             : task.metadata,
         };
       }),
+      viewSettings: {
+        ...file.chart.viewSettings,
+        projectTitle: file.chart.viewSettings.projectTitle
+          ? sanitizeString(file.chart.viewSettings.projectTitle)
+          : file.chart.viewSettings.projectTitle,
+        projectAuthor: file.chart.viewSettings.projectAuthor
+          ? sanitizeString(file.chart.viewSettings.projectAuthor)
+          : file.chart.viewSettings.projectAuthor,
+      },
     },
   };
 }

@@ -47,6 +47,9 @@ const migrations: Migration[] = [
   // Future migrations will be added here
 ];
 
+/** Maximum migration steps to prevent infinite loops from cyclic migrations */
+const MAX_MIGRATION_STEPS = 100;
+
 /**
  * Migrate file to current version
  * Applies migrations sequentially from file version to current version
@@ -54,12 +57,17 @@ const migrations: Migration[] = [
 export function migrateGanttFile(file: GanttFile): GanttFile {
   let current = file;
   let currentVersion = file.fileVersion;
+  let steps = 0;
 
   while (currentVersion !== FILE_VERSION) {
     const migration = migrations.find((m) => m.fromVersion === currentVersion);
 
     if (!migration) {
-      // No migration path - either already at current version or from future version
+      // No migration path — either already current or from future version
+      break;
+    }
+
+    if (++steps > MAX_MIGRATION_STEPS) {
       break;
     }
 
@@ -94,9 +102,10 @@ export function isFromFuture(fileVersion: string): boolean {
 }
 
 /**
- * Parse semantic version string to numbers
+ * Parse semantic version string to numbers.
+ * Returns [major, minor, patch]. Invalid segments default to 0.
  */
-function parseVersion(version: string): [number, number, number] {
+export function parseVersion(version: string): [number, number, number] {
   const parts = version.split(".").map(Number);
   return [parts[0] || 0, parts[1] || 0, parts[2] || 0];
 }
