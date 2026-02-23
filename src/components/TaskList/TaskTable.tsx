@@ -36,7 +36,35 @@ import { useHideOperations } from "../../hooks/useHideOperations";
 import { useTaskRowData } from "../../hooks/useTaskRowData";
 import { resetDragState } from "./dragSelectionState";
 import { ContextMenu } from "../ContextMenu/ContextMenu";
-import { COLORS } from "../../styles/design-tokens";
+
+// ── Sub-components ──────────────────────────────────────────────────────────
+
+/** Status message shown when all tasks are hidden — includes a button to show all. */
+function AllHiddenMessage({
+  hiddenCount,
+  rowHeight,
+  onShowAll,
+}: {
+  hiddenCount: number;
+  rowHeight: number;
+  onShowAll: () => void;
+}): JSX.Element {
+  return (
+    <div
+      className="col-span-full flex items-center justify-center text-neutral-500 text-sm"
+      style={{ height: rowHeight }}
+      role="status"
+    >
+      {hiddenCount} row{hiddenCount !== 1 ? "s" : ""} hidden —{" "}
+      <button
+        className="hover:underline focus:underline ml-1 text-brand-600"
+        onClick={onShowAll}
+      >
+        show all
+      </button>
+    </div>
+  );
+}
 
 // ── Component ───────────────────────────────────────────────────────────────
 
@@ -155,20 +183,11 @@ export function TaskTable(): JSX.Element {
 
           {/* All tasks hidden — show message with unhide action */}
           {flattenedTaskCount === 0 && hiddenTaskCount > 0 && (
-            <div
-              className="col-span-full flex items-center justify-center text-neutral-500 text-sm"
-              style={{ height: densityConfig.rowHeight }}
-              role="status"
-            >
-              {hiddenTaskCount} row{hiddenTaskCount !== 1 ? "s" : ""} hidden —{" "}
-              <button
-                className="hover:underline focus:underline ml-1"
-                style={{ color: COLORS.brand[600] }}
-                onClick={showAll}
-              >
-                show all
-              </button>
-            </div>
+            <AllHiddenMessage
+              hiddenCount={hiddenTaskCount}
+              rowHeight={densityConfig.rowHeight}
+              onShowAll={showAll}
+            />
           )}
 
           {/* Placeholder row for adding new tasks */}

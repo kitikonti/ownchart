@@ -8,11 +8,17 @@
  * - Excel-like styling and cursor behavior
  */
 
-import { memo, useState, type MouseEvent } from "react";
+import {
+  memo,
+  useCallback,
+  useState,
+  type FocusEvent,
+  type MouseEvent,
+} from "react";
 import { DotsSixVertical } from "@phosphor-icons/react";
 import type { DraggableAttributes } from "@dnd-kit/core";
 import type { SyntheticListenerMap } from "@dnd-kit/core/dist/hooks/utilities";
-import { SPACING, TRANSITIONS } from "../../styles/design-tokens";
+import { TRANSITIONS } from "../../styles/design-tokens";
 import { HiddenRowIndicator } from "./HiddenRowIndicator";
 import { InsertRowButton } from "./InsertRowButton";
 import { InsertLine } from "./InsertLine";
@@ -83,7 +89,24 @@ export const RowNumberCell = memo(function RowNumberCell({
   taskName,
 }: RowNumberCellProps): JSX.Element {
   const [isHovered, setIsHovered] = useState(false);
+  const [isFocusedWithin, setIsFocusedWithin] = useState(false);
   const [hoveredControl, setHoveredControl] = useState<HoveredControl>(null);
+  const showControls = isHovered || isFocusedWithin;
+
+  // Stabilized hover-control callbacks (safe for future memo on child components)
+  const handleHoverDrag = useCallback(
+    (): void => setHoveredControl("drag"),
+    []
+  );
+  const handleHoverAbove = useCallback(
+    (): void => setHoveredControl("addAbove"),
+    []
+  );
+  const handleHoverBelow = useCallback(
+    (): void => setHoveredControl("addBelow"),
+    []
+  );
+  const handleHoverEnd = useCallback((): void => setHoveredControl(null), []);
 
   // Handle drag selection — select range as mouse moves over rows.
   // This callback is stored in dragState.onDragSelect during mousedown on THIS row,
@@ -118,6 +141,17 @@ export const RowNumberCell = memo(function RowNumberCell({
     setHoveredControl(null);
   };
 
+  // Show controls when cell receives keyboard focus
+  const handleFocus = useCallback((): void => setIsFocusedWithin(true), []);
+
+  // Hide controls when keyboard focus leaves the cell entirely
+  const handleBlur = useCallback((e: FocusEvent): void => {
+    if (!e.currentTarget.contains(e.relatedTarget as Node)) {
+      setIsFocusedWithin(false);
+      setHoveredControl(null);
+    }
+  }, []);
+
   // Extend selection when mouse enters during drag
   const handleMouseEnter = (): void => {
     setIsHovered(true);
@@ -132,7 +166,7 @@ export const RowNumberCell = memo(function RowNumberCell({
     if (hoveredControl === "drag") return "grab";
     if (hoveredControl === "addAbove" || hoveredControl === "addBelow")
       return "pointer";
-    if (isHovered) return ROW_SELECT_CURSOR;
+    if (showControls) return ROW_SELECT_CURSOR;
     return "default";
   };
 
@@ -146,34 +180,31 @@ export const RowNumberCell = memo(function RowNumberCell({
 
   return (
     <div
-      className="row-number-cell relative select-none"
+      className="row-number-cell relative select-none flex items-center justify-end overflow-visible pr-2"
       style={{
         height: rowHeight,
         backgroundColor: isSelected
           ? ROW_COLORS.bgSelected
-          : isHovered
+          : showControls
             ? ROW_COLORS.bgHover
             : ROW_COLORS.bgInactive,
         borderRight: `1px solid ${ROW_COLORS.border}`,
         borderBottom: `1px solid ${ROW_COLORS.border}`,
         borderRadius: getBorderRadius(),
         cursor: getCursor(),
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "flex-end",
-        paddingRight: SPACING[2],
         transition: `background-color ${TRANSITIONS.fast}`,
-        overflow: "visible", // Allow insert line to extend beyond cell
       }}
       onMouseEnter={handleMouseEnter}
       onMouseLeave={handleMouseLeave}
       onMouseDown={handleMouseDown}
+      onFocus={handleFocus}
+      onBlur={handleBlur}
       role="gridcell"
       tabIndex={-1}
       aria-label={`Row ${rowNumber}${isSelected ? ", selected" : ""}`}
     >
-      {/* Hover controls container - appears on left side */}
-      {isHovered && (
+      {/* Hover/focus controls container - appears on left side */}
+      {showControls && (
         <div
           className="absolute left-0 top-0 bottom-0 flex flex-col items-center justify-center"
           style={{ width: `${CONTROLS_WIDTH}px` }}
@@ -183,8 +214,8 @@ export const RowNumberCell = memo(function RowNumberCell({
             rowNumber={rowNumber}
             isActive={hoveredControl === "addAbove"}
             onInsert={onInsertAbove}
-            onHoverStart={() => setHoveredControl("addAbove")}
-            onHoverEnd={() => setHoveredControl(null)}
+            onHoverStart={handleHoverAbove}
+            onHoverEnd={handleHoverEnd}
             controlsColor={ROW_COLORS.controlsColor}
           />
 
@@ -192,8 +223,8 @@ export const RowNumberCell = memo(function RowNumberCell({
           <div
             className="flex items-center justify-center"
             style={{ cursor: "grab" }}
-            onMouseEnter={() => setHoveredControl("drag")}
-            onMouseLeave={() => setHoveredControl(null)}
+            onMouseEnter={handleHoverDrag}
+            onMouseLeave={handleHoverEnd}
             role={dragAttributes ? undefined : "button"}
             tabIndex={dragAttributes ? undefined : 0}
             {...dragAttributes}
@@ -214,8 +245,8 @@ export const RowNumberCell = memo(function RowNumberCell({
             rowNumber={rowNumber}
             isActive={hoveredControl === "addBelow"}
             onInsert={onInsertBelow}
-            onHoverStart={() => setHoveredControl("addBelow")}
-            onHoverEnd={() => setHoveredControl(null)}
+            onHoverStart={handleHoverBelow}
+            onHoverEnd={handleHoverEnd}
             controlsColor={ROW_COLORS.controlsColor}
           />
         </div>

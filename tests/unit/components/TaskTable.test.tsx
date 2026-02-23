@@ -113,11 +113,11 @@ vi.mock("../../../src/components/TaskList/dragSelectionState", () => ({
   resetDragState: vi.fn(),
 }));
 
-// @dnd-kit pass-through mocks
+// @dnd-kit pass-through mocks (DndContext as vi.fn for prop inspection)
 vi.mock("@dnd-kit/core", () => ({
-  DndContext: ({ children }: { children: React.ReactNode }) => (
+  DndContext: vi.fn(({ children }: { children: React.ReactNode }) => (
     <div data-testid="dnd-context">{children}</div>
-  ),
+  )),
   closestCenter: vi.fn(),
   PointerSensor: vi.fn(),
   KeyboardSensor: vi.fn(),
@@ -126,7 +126,11 @@ vi.mock("@dnd-kit/core", () => ({
 }));
 
 vi.mock("@dnd-kit/sortable", () => ({
-  SortableContext: ({ children }: { children: React.ReactNode }) => (
+  SortableContext: ({
+    children,
+  }: {
+    children: React.ReactNode;
+  }): React.ReactNode => (
     <div data-testid="sortable-context">{children}</div>
   ),
   sortableKeyboardCoordinates: vi.fn(),
@@ -134,6 +138,8 @@ vi.mock("@dnd-kit/sortable", () => ({
 }));
 
 // Re-import for per-test overrides
+import { DndContext } from "@dnd-kit/core";
+import { useTaskStore } from "../../../src/store/slices/taskSlice";
 import { useChartStore } from "../../../src/store/slices/chartSlice";
 import { useTaskRowData } from "../../../src/hooks/useTaskRowData";
 import { useHideOperations } from "../../../src/hooks/useHideOperations";
@@ -330,5 +336,71 @@ describe("TaskTable", () => {
 
     addSpy.mockRestore();
     removeSpy.mockRestore();
+  });
+
+  describe("drag and drop", () => {
+    /** Extract the onDragEnd handler passed to the mocked DndContext. */
+    function extractDragEndHandler(): (event: {
+      active: { id: string };
+      over: { id: string } | null;
+    }) => void {
+      const lastCall = vi.mocked(DndContext).mock.calls.at(-1);
+      const props = lastCall?.[0] as Record<string, unknown> | undefined;
+      return props?.onDragEnd as (event: {
+        active: { id: string };
+        over: { id: string } | null;
+      }) => void;
+    }
+
+    it("should call reorderTasks when task is dropped at a different position", () => {
+      const mockReorder = vi.fn();
+      vi.mocked(useTaskStore).mockImplementation(
+        (selector: (s: Record<string, unknown>) => unknown) =>
+          selector({
+            reorderTasks: mockReorder,
+            columnWidths: {},
+          }) as never
+      );
+
+      render(<TaskTable />);
+      const onDragEnd = extractDragEndHandler();
+
+      onDragEnd({ active: { id: "t1" }, over: { id: "t2" } });
+      expect(mockReorder).toHaveBeenCalledWith("t1", "t2");
+    });
+
+    it("should not reorder when task is dropped at the same position", () => {
+      const mockReorder = vi.fn();
+      vi.mocked(useTaskStore).mockImplementation(
+        (selector: (s: Record<string, unknown>) => unknown) =>
+          selector({
+            reorderTasks: mockReorder,
+            columnWidths: {},
+          }) as never
+      );
+
+      render(<TaskTable />);
+      const onDragEnd = extractDragEndHandler();
+
+      onDragEnd({ active: { id: "t1" }, over: { id: "t1" } });
+      expect(mockReorder).not.toHaveBeenCalled();
+    });
+
+    it("should not reorder when task is dropped with no target", () => {
+      const mockReorder = vi.fn();
+      vi.mocked(useTaskStore).mockImplementation(
+        (selector: (s: Record<string, unknown>) => unknown) =>
+          selector({
+            reorderTasks: mockReorder,
+            columnWidths: {},
+          }) as never
+      );
+
+      render(<TaskTable />);
+      const onDragEnd = extractDragEndHandler();
+
+      onDragEnd({ active: { id: "t1" }, over: null });
+      expect(mockReorder).not.toHaveBeenCalled();
+    });
   });
 });

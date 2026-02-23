@@ -122,8 +122,8 @@ cd ../app-gantt-review
 ### Priority: MEDIUM — TaskList Komponenten
 - [ ] `src/components/TaskList/Cell.tsx` (496 LOC) — 1 Hex-Wert (BRAND_COLOR)
 - [ ] `src/components/TaskList/CellEditors/ColorPickerPopover.tsx` (452 LOC) — 2 Hex-Werte
-- [x] `src/components/TaskList/RowNumberCell.tsx` (253 LOC)
-- [x] `src/components/TaskList/TaskTable.tsx` (189 LOC)
+- [x] `src/components/TaskList/RowNumberCell.tsx` (283 LOC) — a11y focus-within, Tailwind migration, useCallback
+- [x] `src/components/TaskList/TaskTable.tsx` (208 LOC) — AllHiddenMessage extracted, text-brand-600
 - [ ] `src/components/TaskList/TaskDataCells.tsx` (333 LOC)
 - [ ] `src/components/TaskList/NewTaskPlaceholderRow.tsx` (315 LOC) — 4 Hex-Werte
 - [x] `src/components/TaskList/TaskTableRow.tsx` (234 LOC)
