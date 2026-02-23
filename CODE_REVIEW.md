@@ -155,9 +155,9 @@ cd ../app-gantt-review
 - [ ] `src/components/Ribbon/ColorDropdown.tsx` (500 LOC)
 - [ ] `src/components/Ribbon/HomeTabContent.tsx` (291 LOC)
 - [ ] `src/components/Ribbon/ViewTabContent.tsx` (219 LOC)
-- [ ] `src/components/Ribbon/Ribbon.tsx` (218 LOC) — 2 Hex-Werte
-- [ ] `src/components/Ribbon/HolidayRegionPopover.tsx` (158 LOC)
-- [ ] `src/components/Ribbon/ZoomDropdown.tsx` (138 LOC)
+- [x] `src/components/Ribbon/Ribbon.tsx` (218 LOC)
+- [x] `src/components/Ribbon/HolidayRegionPopover.tsx` (158 LOC)
+- [x] `src/components/Ribbon/ZoomDropdown.tsx` (138 LOC)
 - [ ] `src/components/Ribbon/FormatTabContent.tsx` (135 LOC)
 - [ ] `src/components/Ribbon/WorkingDaysDropdown.tsx` (125 LOC)
 - [ ] `src/components/Ribbon/InlineProjectTitle.tsx` (99 LOC)
@@ -326,6 +326,6 @@ Entscheidungen aus bisherigen Reviews die fuer zukuenftige Dateien gelten.
 
 ## Progress
 
-- Reviewed: 37 / 193 Dateien
+- Reviewed: 40 / 193 Dateien
 - Offene Issues: 38 Hex-Farben in 10 .tsx-Dateien, ~18 toISODateString-Umstellungen
 - Test-Coverage: 80%+
