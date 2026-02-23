@@ -122,8 +122,8 @@ cd ../app-gantt-review
 ### Priority: MEDIUM — TaskList Komponenten
 - [ ] `src/components/TaskList/Cell.tsx` (496 LOC) — 1 Hex-Wert (BRAND_COLOR)
 - [ ] `src/components/TaskList/CellEditors/ColorPickerPopover.tsx` (452 LOC) — 2 Hex-Werte
-- [x] `src/components/TaskList/RowNumberCell.tsx` (248 LOC)
-- [x] `src/components/TaskList/TaskTable.tsx` (307 LOC)
+- [x] `src/components/TaskList/RowNumberCell.tsx` (253 LOC)
+- [x] `src/components/TaskList/TaskTable.tsx` (189 LOC)
 - [ ] `src/components/TaskList/TaskDataCells.tsx` (333 LOC)
 - [ ] `src/components/TaskList/NewTaskPlaceholderRow.tsx` (315 LOC) — 4 Hex-Werte
 - [x] `src/components/TaskList/TaskTableRow.tsx` (234 LOC)
@@ -180,6 +180,7 @@ cd ../app-gantt-review
 - [ ] `src/hooks/useZoom.ts` (217 LOC)
 - [ ] `src/hooks/useFullTaskContextMenuItems.ts` (200 LOC)
 - [ ] `src/hooks/useHideOperations.ts` (173 LOC)
+- [x] `src/hooks/useTaskRowData.ts` (159 LOC)
 - [ ] `src/hooks/useLocalStoragePersistence.ts` (158 LOC)
 - [ ] `src/hooks/useTableHeaderContextMenu.ts` (134 LOC)
 - [ ] `src/hooks/useTimelineAreaContextMenu.ts` (124 LOC)
@@ -326,6 +327,6 @@ Entscheidungen aus bisherigen Reviews die fuer zukuenftige Dateien gelten.
 
 ## Progress
 
-- Reviewed: 38 / 193 Dateien
+- Reviewed: 39 / 194 Dateien
 - Offene Issues: 38 Hex-Farben in 10 .tsx-Dateien, ~18 toISODateString-Umstellungen
 - Test-Coverage: 80%+
