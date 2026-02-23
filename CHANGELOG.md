@@ -2,6 +2,18 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [0.0.47](https://github.com/kitikonti/ownchart/compare/v0.0.46...v0.0.47) (2026-02-23)
+
+
+### Bug Fixes
+
+* **ci:** set HOME=/root for Firefox in Playwright container ([2b2f3ce](https://github.com/kitikonti/ownchart/commit/2b2f3ceffa6e2933753c1297f2b9a363c04d4eec))
+
+
+### Performance Improvements
+
+* **ci:** use Playwright Docker image instead of installing browsers ([ed6b09b](https://github.com/kitikonti/ownchart/commit/ed6b09bf6f6fed59f00bf2945ebbc119ab04c03f))
+
 ### [0.0.46](https://github.com/kitikonti/ownchart/compare/v0.0.45...v0.0.46) (2026-02-23)
 
 
