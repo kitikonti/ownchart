@@ -5,7 +5,7 @@
 
 import type { CSSProperties, MouseEvent } from "react";
 import { CaretDown } from "@phosphor-icons/react";
-import { COLORS, TYPOGRAPHY, RADIUS } from "../../styles/design-tokens";
+import { COLORS, TYPOGRAPHY, RADIUS, SPACING } from "../../styles/design-tokens";
 import { useDropdown } from "../../hooks/useDropdown";
 import { DropdownPanel } from "../Toolbar/DropdownPanel";
 import { DropdownItem } from "../Toolbar/DropdownItem";
@@ -32,7 +32,7 @@ const textStyle: CSSProperties = {
   width: `${TEXT_WIDTH}px`,
   height: `${TEXT_HEIGHT}px`,
   lineHeight: `${TEXT_HEIGHT}px`,
-  paddingLeft: "8px",
+  paddingLeft: SPACING[2],
   color: COLORS.neutral[800],
   fontSize: TYPOGRAPHY.fontSize.base,
   fontWeight: TYPOGRAPHY.fontWeight.normal,
