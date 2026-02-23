@@ -233,7 +233,6 @@ export const RowNumberCell = memo(function RowNumberCell({
             ? ROW_NUMBER_FONT_WEIGHT.semibold
             : ROW_NUMBER_FONT_WEIGHT.normal,
           fontSize: ROW_NUMBER_FONT_SIZE,
-          userSelect: "none",
         }}
       >
         {rowNumber}

@@ -162,7 +162,7 @@ export function TaskTable(): JSX.Element {
             >
               {hiddenTaskCount} row{hiddenTaskCount !== 1 ? "s" : ""} hidden —{" "}
               <button
-                className="hover:underline ml-1"
+                className="hover:underline focus:underline ml-1"
                 style={{ color: COLORS.brand[600] }}
                 onClick={showAll}
               >
