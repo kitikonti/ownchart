@@ -98,8 +98,8 @@ cd ../app-gantt-review
 ### Priority: HIGH — File Operations (kritischer Pfad)
 - [x] `src/utils/fileOperations/validate.ts` (299 LOC)
 - [x] `src/utils/fileOperations/deserialize.ts` (233 LOC)
-- [ ] `src/utils/fileOperations/fileDialog.ts` (215 LOC)
-- [ ] `src/utils/fileOperations/types.ts` (192 LOC)
+- [x] `src/utils/fileOperations/fileDialog.ts`
+- [x] `src/utils/fileOperations/types.ts`
 - [ ] `src/utils/fileOperations/serialize.ts` (159 LOC)
 - [ ] `src/utils/fileOperations/loadFromFile.ts` (115 LOC)
 - [ ] `src/utils/fileOperations/migrate.ts` (102 LOC)
@@ -120,8 +120,8 @@ cd ../app-gantt-review
 - [x] `src/components/GanttChart/index.ts`
 
 ### Priority: MEDIUM — TaskList Komponenten
-- [ ] `src/components/TaskList/Cell.tsx` (496 LOC) — 1 Hex-Wert (BRAND_COLOR)
-- [ ] `src/components/TaskList/CellEditors/ColorPickerPopover.tsx` (452 LOC) — 2 Hex-Werte
+- [x] `src/components/TaskList/Cell.tsx`
+- [x] `src/components/TaskList/CellEditors/ColorPickerPopover.tsx`
 - [ ] `src/components/TaskList/RowNumberCell.tsx` (399 LOC) — 6 Hex-Werte
 - [ ] `src/components/TaskList/TaskTable.tsx` (339 LOC)
 - [ ] `src/components/TaskList/TaskDataCells.tsx` (333 LOC)
@@ -135,7 +135,7 @@ cd ../app-gantt-review
 
 ### Priority: MEDIUM — Layout & Export
 - [x] `src/components/Export/ExportRenderer.tsx`
-- [ ] `src/components/Layout/GanttLayout.tsx` (549 LOC)
+- [x] `src/components/Layout/GanttLayout.tsx`
 - [ ] `src/components/Export/ExportDialog.tsx` (505 LOC)
 - [ ] `src/components/Export/PdfPreview.tsx` (348 LOC)
 - [ ] `src/components/Export/PdfExportOptions.tsx` (338 LOC)
@@ -152,9 +152,9 @@ cd ../app-gantt-review
 - [ ] `src/components/Layout/index.ts` (1 LOC)
 
 ### Priority: MEDIUM — Ribbon
-- [ ] `src/components/Ribbon/ColorDropdown.tsx` (500 LOC)
-- [ ] `src/components/Ribbon/HomeTabContent.tsx` (291 LOC)
-- [ ] `src/components/Ribbon/ViewTabContent.tsx` (219 LOC)
+- [x] `src/components/Ribbon/ColorDropdown.tsx`
+- [x] `src/components/Ribbon/HomeTabContent.tsx`
+- [x] `src/components/Ribbon/ViewTabContent.tsx`
 - [ ] `src/components/Ribbon/Ribbon.tsx` (218 LOC) — 2 Hex-Werte
 - [ ] `src/components/Ribbon/HolidayRegionPopover.tsx` (158 LOC)
 - [ ] `src/components/Ribbon/ZoomDropdown.tsx` (138 LOC)
@@ -331,6 +331,6 @@ Entscheidungen aus bisherigen Reviews die fuer zukuenftige Dateien gelten.
 
 ## Progress
 
-- Reviewed: 36 / 193 Dateien
+- Reviewed: 44 / 193 Dateien
 - Offene Issues: 38 Hex-Farben in 10 .tsx-Dateien, ~18 toISODateString-Umstellungen
 - Test-Coverage: 80%+
