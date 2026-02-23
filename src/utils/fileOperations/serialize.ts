@@ -13,29 +13,12 @@ import type {
 } from "./types";
 import { FILE_VERSION } from "../../config/version";
 import { DEFAULT_CHART_NAME } from "../../config/viewSettingsDefaults";
-
-/** Known task field names — used to filter unknownFields during round-trip */
-const KNOWN_TASK_KEYS = new Set([
-  "id",
-  "name",
-  "startDate",
-  "endDate",
-  "duration",
-  "progress",
-  "color",
-  "order",
-  "type",
-  "parent",
-  "open",
-  "colorOverride",
-  "metadata",
-  "createdAt",
-  "updatedAt",
-]);
+import { KNOWN_TASK_KEYS } from "./constants";
 
 export interface SerializeOptions {
   chartName?: string;
   chartId?: string;
+  chartCreatedAt?: string;
   prettyPrint?: boolean;
   dependencies?: Dependency[];
   exportSettings?: ExportOptions;
@@ -70,7 +53,7 @@ export function serializeToGanttFile(
       viewSettings: { ...viewSettings },
       exportSettings: options.exportSettings,
       metadata: {
-        createdAt: now,
+        createdAt: options.chartCreatedAt || now,
         updatedAt: now,
       },
     },
@@ -87,14 +70,6 @@ export function serializeToGanttFile(
     },
   };
 
-  // Serialize to final output, then calculate accurate file size
-  const output = options.prettyPrint
-    ? JSON.stringify(ganttFile, null, 2)
-    : JSON.stringify(ganttFile);
-
-  ganttFile.metadata.fileSize = new Blob([output]).size;
-
-  // Re-serialize with the fileSize included
   return options.prettyPrint
     ? JSON.stringify(ganttFile, null, 2)
     : JSON.stringify(ganttFile);

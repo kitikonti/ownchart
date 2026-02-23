@@ -166,6 +166,7 @@ export interface DeserializeResult {
     exportSettings?: ExportOptions; // Sprint 1.6
     chartName: string;
     chartId: string;
+    chartCreatedAt?: string;
   };
   error?: FileError;
   warnings?: string[];

@@ -20,6 +20,13 @@ export interface LoadFileResult {
   error?: string;
 }
 
+/** Toast handler compatible with react-hot-toast API */
+export interface ToastHandler {
+  success: (msg: string) => void;
+  error: (msg: string) => void;
+  (msg: string, opts?: { icon: string }): void;
+}
+
 /**
  * Load file content into the application stores.
  * Can be called from both React hooks and non-React contexts (e.g. LaunchQueue).
@@ -60,7 +67,7 @@ export async function loadFileIntoApp(file: {
   chartStore.signalFileLoaded();
 
   // Reset file state
-  resetFileState(file.name, data.chartId);
+  resetFileState(file.name, data.chartId, data.chartCreatedAt);
   useHistoryStore.getState().clearHistory();
 
   return {
@@ -70,28 +77,13 @@ export async function loadFileIntoApp(file: {
 }
 
 /**
- * Apply view settings from file to chart store
+ * Apply view settings from file to chart store.
+ * setViewSettings accepts Partial<SettableViewFields> and only reads
+ * fields it knows about, so passing the full ViewSettings is safe —
+ * taskTableWidth/columnWidths are handled separately in restoreColumnWidths.
  */
 function applyViewSettings(viewSettings: ViewSettings): void {
-  useChartStore.getState().setViewSettings({
-    zoom: viewSettings.zoom,
-    panOffset: viewSettings.panOffset,
-    showWeekends: viewSettings.showWeekends,
-    showTodayMarker: viewSettings.showTodayMarker,
-    showHolidays: viewSettings.showHolidays,
-    showDependencies: viewSettings.showDependencies,
-    showProgress: viewSettings.showProgress,
-    taskLabelPosition: viewSettings.taskLabelPosition,
-    workingDaysMode: viewSettings.workingDaysMode,
-    workingDaysConfig: viewSettings.workingDaysConfig,
-    holidayRegion: viewSettings.holidayRegion,
-    projectTitle: viewSettings.projectTitle,
-    projectAuthor: viewSettings.projectAuthor,
-    colorModeState: viewSettings.colorModeState,
-    hiddenColumns: viewSettings.hiddenColumns,
-    isTaskTableCollapsed: viewSettings.isTaskTableCollapsed,
-    hiddenTaskIds: viewSettings.hiddenTaskIds,
-  });
+  useChartStore.getState().setViewSettings(viewSettings);
 }
 
 /**
@@ -119,10 +111,15 @@ function restoreColumnWidths(viewSettings: ViewSettings): void {
 /**
  * Reset file tracking state after loading
  */
-function resetFileState(fileName: string, chartId: string): void {
+function resetFileState(
+  fileName: string,
+  chartId: string,
+  chartCreatedAt?: string
+): void {
   const fileStore = useFileStore.getState();
   fileStore.setFileName(fileName);
   fileStore.setChartId(chartId);
+  fileStore.setChartCreatedAt(chartCreatedAt ?? null);
   fileStore.setLastSaved(new Date());
   fileStore.markClean();
 }
@@ -133,11 +130,7 @@ function resetFileState(fileName: string, chartId: string): void {
  */
 export function showLoadNotifications(
   result: LoadFileResult & { fileName: string },
-  toast: {
-    success: (msg: string) => void;
-    error: (msg: string) => void;
-    (msg: string, opts?: { icon: string }): void;
-  }
+  toast: ToastHandler
 ): void {
   if (!result.success) {
     toast.error(result.error ?? "Failed to open file");
@@ -149,20 +142,4 @@ export function showLoadNotifications(
   }
 
   toast.success(`Opened "${result.fileName}"`);
-}
-
-/**
- * @deprecated Use loadFileIntoApp + showLoadNotifications separately
- */
-export async function loadFileIntoAppWithToast(
-  file: { name: string; content: string; size: number },
-  toast: {
-    success: (msg: string) => void;
-    error: (msg: string) => void;
-    (msg: string, opts?: { icon: string }): void;
-  }
-): Promise<boolean> {
-  const result = await loadFileIntoApp(file);
-  showLoadNotifications({ ...result, fileName: file.name }, toast);
-  return result.success;
 }

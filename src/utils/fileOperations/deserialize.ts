@@ -22,6 +22,7 @@ import { sanitizeGanttFile } from "./sanitize";
 import { migrateGanttFile, needsMigration, isFromFuture } from "./migrate";
 import { FILE_VERSION } from "../../config/version";
 import { normalizeTaskOrder } from "../../utils/hierarchy";
+import { KNOWN_TASK_KEYS } from "./constants";
 
 /**
  * Deserialize GanttFile JSON string to app state
@@ -134,6 +135,7 @@ export async function deserializeGanttFile(
         exportSettings, // Sprint 1.6
         chartName: ganttFile.chart.name,
         chartId: ganttFile.chart.id,
+        chartCreatedAt: ganttFile.chart.metadata?.createdAt,
       },
       warnings: warnings.length > 0 ? warnings : undefined,
       migrated: needsMigration(
@@ -191,27 +193,9 @@ function deserializeTask(serialized: SerializedTask): Task & {
   };
 
   // Preserve unknown fields for round-trip
-  const knownKeys = new Set([
-    "id",
-    "name",
-    "startDate",
-    "endDate",
-    "duration",
-    "progress",
-    "color",
-    "order",
-    "type",
-    "parent",
-    "open",
-    "colorOverride",
-    "metadata",
-    "createdAt",
-    "updatedAt",
-  ]);
-
   const unknownFields: Record<string, unknown> = {};
   for (const [key, value] of Object.entries(serialized)) {
-    if (!knownKeys.has(key)) {
+    if (!KNOWN_TASK_KEYS.has(key)) {
       unknownFields[key] = value;
     }
   }

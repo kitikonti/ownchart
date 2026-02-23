@@ -14,38 +14,21 @@ export interface Migration {
 }
 
 /**
- * Migration registry
- * Add new migrations here as file format evolves
+ * Migration registry — keyed by fromVersion for O(1) lookup.
+ * Add new migrations here as file format evolves.
  *
  * Example for future v1.1.0:
- * {
+ * migrations.set('1.0.0', {
  *   fromVersion: '1.0.0',
  *   toVersion: '1.1.0',
  *   description: 'Add customFields support',
- *   migrate: (file) => ({
- *     ...file,
- *     fileVersion: '1.1.0',
- *     chart: {
- *       ...file.chart,
- *       tasks: file.chart.tasks.map(task => ({
- *         ...task,
- *         customFields: task.customFields ?? {}
- *       }))
- *     },
- *     migrations: {
- *       appliedMigrations: [
- *         ...(file.migrations?.appliedMigrations || []),
- *         '1.0.0->1.1.0'
- *       ],
- *       originalVersion: file.migrations?.originalVersion || file.fileVersion
- *     }
- *   })
- * }
+ *   migrate: (file) => ({ ... })
+ * });
  */
-const migrations: Migration[] = [
+const migrations = new Map<string, Migration>([
   // No migrations yet for v1.0.0
   // Future migrations will be added here
-];
+]);
 
 /** Maximum migration steps to prevent infinite loops from cyclic migrations */
 const MAX_MIGRATION_STEPS = 100;
@@ -60,7 +43,7 @@ export function migrateGanttFile(file: GanttFile): GanttFile {
   let steps = 0;
 
   while (currentVersion !== FILE_VERSION) {
-    const migration = migrations.find((m) => m.fromVersion === currentVersion);
+    const migration = migrations.get(currentVersion);
 
     if (!migration) {
       // No migration path — either already current or from future version
@@ -68,7 +51,9 @@ export function migrateGanttFile(file: GanttFile): GanttFile {
     }
 
     if (++steps > MAX_MIGRATION_STEPS) {
-      break;
+      throw new Error(
+        `Migration exceeded ${MAX_MIGRATION_STEPS} steps (at version ${currentVersion}). Possible cyclic migration chain.`
+      );
     }
 
     current = migration.migrate(current);

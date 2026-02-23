@@ -24,6 +24,7 @@ const mockSignalFileLoaded = vi.fn();
 
 const mockSetFileName = vi.fn();
 const mockSetChartId = vi.fn();
+const mockSetChartCreatedAt = vi.fn();
 const mockSetLastSaved = vi.fn();
 const mockMarkClean = vi.fn();
 
@@ -62,6 +63,7 @@ vi.mock('../../../../src/store/slices/fileSlice', () => ({
     getState: () => ({
       setFileName: mockSetFileName,
       setChartId: mockSetChartId,
+      setChartCreatedAt: mockSetChartCreatedAt,
       setLastSaved: mockSetLastSaved,
       markClean: mockMarkClean,
     }),
@@ -96,7 +98,6 @@ vi.mock('../../../../src/store/slices/uiSlice', () => ({
 import {
   loadFileIntoApp,
   showLoadNotifications,
-  loadFileIntoAppWithToast,
 } from '../../../../src/utils/fileOperations/loadFromFile';
 
 // ---------------------------------------------------------------------------
@@ -819,41 +820,45 @@ describe('loadFromFile', () => {
   });
 
   // =========================================================================
-  // loadFileIntoAppWithToast (deprecated wrapper)
+  // loadFileIntoApp — chartCreatedAt preservation
   // =========================================================================
-  describe('loadFileIntoAppWithToast (deprecated)', () => {
-    function createMockToast(): {
-      success: ReturnType<typeof vi.fn>;
-      error: ReturnType<typeof vi.fn>;
-      (msg: string, opts?: { icon: string }): void;
-    } {
-      const toastFn = vi.fn() as unknown as ReturnType<typeof createMockToast>;
-      toastFn.success = vi.fn();
-      toastFn.error = vi.fn();
-      return toastFn;
-    }
-
-    it('should return true on success', async () => {
-      const toast = createMockToast();
+  describe('loadFileIntoApp - chartCreatedAt preservation', () => {
+    it('should store chartCreatedAt from file metadata', async () => {
       const content = JSON.stringify(createValidFileContent());
-      const success = await loadFileIntoAppWithToast(
-        makeFile(content),
-        toast
-      );
+      await loadFileIntoApp(makeFile(content));
 
-      expect(success).toBe(true);
-      expect(toast.success).toHaveBeenCalled();
+      expect(mockSetChartCreatedAt).toHaveBeenCalledWith(
+        '2026-01-01T00:00:00.000Z'
+      );
     });
 
-    it('should return false on failure', async () => {
-      const toast = createMockToast();
-      const success = await loadFileIntoAppWithToast(
-        makeFile('{bad}', 'test.ownchart'),
-        toast
-      );
+    it('should store null when chart metadata has no createdAt', async () => {
+      const file = createValidFileContent();
+      const chart = file.chart as Record<string, unknown>;
+      const meta = chart.metadata as Record<string, unknown>;
+      delete meta.createdAt;
 
-      expect(success).toBe(false);
-      expect(toast.error).toHaveBeenCalled();
+      const content = JSON.stringify(file);
+      await loadFileIntoApp(makeFile(content));
+
+      expect(mockSetChartCreatedAt).toHaveBeenCalledWith(null);
+    });
+  });
+
+  // =========================================================================
+  // loadFileIntoApp — view settings passed to chart store
+  // =========================================================================
+  describe('loadFileIntoApp - view settings forwarding', () => {
+    it('should pass all view settings fields to setViewSettings', async () => {
+      const content = JSON.stringify(createValidFileContent());
+      await loadFileIntoApp(makeFile(content));
+
+      // setViewSettings receives the full ViewSettings object —
+      // it only reads SettableViewFields, ignoring extras like taskTableWidth
+      const viewSettings = mockSetViewSettings.mock.calls[0][0];
+      expect(viewSettings.zoom).toBe(1.5);
+      expect(viewSettings.showWeekends).toBe(false);
+      expect(viewSettings.showTodayMarker).toBe(true);
     });
   });
 });

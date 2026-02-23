@@ -81,6 +81,7 @@ export function useFileOperations(): {
   );
 
   const fileState = useFileStore();
+  const chartCreatedAt = useFileStore((state) => state.chartCreatedAt);
   const clearHistory = useHistoryStore((state) => state.clearHistory);
 
   // Export options from uiSlice
@@ -127,6 +128,7 @@ export function useFileOperations(): {
             chartName:
               fileState.fileName?.replace(".ownchart", "") || "Untitled",
             chartId: fileState.chartId || undefined,
+            chartCreatedAt: chartCreatedAt || undefined,
             prettyPrint: true,
             dependencies, // Sprint 1.4
             exportSettings: exportOptions, // Sprint 1.6
@@ -161,6 +163,7 @@ export function useFileOperations(): {
       tasks,
       dependencies,
       exportOptions,
+      chartCreatedAt,
       zoom,
       panOffset,
       showWeekends,

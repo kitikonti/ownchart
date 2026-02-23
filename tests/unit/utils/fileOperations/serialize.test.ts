@@ -335,6 +335,98 @@ describe('File Operations - Serialization', () => {
     });
   });
 
+  describe('Chart Metadata - createdAt Preservation', () => {
+    it('should use provided chartCreatedAt instead of now', () => {
+      const originalCreatedAt = '2025-06-01T12:00:00.000Z';
+      const json = serializeToGanttFile([], createSampleViewSettings(), {
+        chartCreatedAt: originalCreatedAt,
+      });
+      const parsed = JSON.parse(json);
+
+      expect(parsed.chart.metadata.createdAt).toBe(originalCreatedAt);
+    });
+
+    it('should default to now when chartCreatedAt not provided', () => {
+      const before = new Date().toISOString();
+      const json = serializeToGanttFile([], createSampleViewSettings());
+      const parsed = JSON.parse(json);
+      const after = new Date().toISOString();
+
+      expect(parsed.chart.metadata.createdAt >= before).toBe(true);
+      expect(parsed.chart.metadata.createdAt <= after).toBe(true);
+    });
+
+    it('should always set updatedAt to now regardless of chartCreatedAt', () => {
+      const before = new Date().toISOString();
+      const json = serializeToGanttFile([], createSampleViewSettings(), {
+        chartCreatedAt: '2020-01-01T00:00:00.000Z',
+      });
+      const parsed = JSON.parse(json);
+      const after = new Date().toISOString();
+
+      expect(parsed.chart.metadata.updatedAt >= before).toBe(true);
+      expect(parsed.chart.metadata.updatedAt <= after).toBe(true);
+    });
+  });
+
+  describe('Dependency Serialization', () => {
+    it('should serialize dependencies with correct field mapping', () => {
+      const json = serializeToGanttFile([], createSampleViewSettings(), {
+        dependencies: [
+          {
+            id: '123e4567-e89b-12d3-a456-426614174099',
+            fromTaskId: '123e4567-e89b-12d3-a456-426614174001',
+            toTaskId: '123e4567-e89b-12d3-a456-426614174002',
+            type: 'FS',
+            lag: 2,
+            createdAt: '2025-06-01T12:00:00.000Z',
+          },
+        ],
+      });
+      const parsed = JSON.parse(json);
+
+      expect(parsed.chart.dependencies).toHaveLength(1);
+      expect(parsed.chart.dependencies[0].id).toBe(
+        '123e4567-e89b-12d3-a456-426614174099'
+      );
+      expect(parsed.chart.dependencies[0].from).toBe(
+        '123e4567-e89b-12d3-a456-426614174001'
+      );
+      expect(parsed.chart.dependencies[0].to).toBe(
+        '123e4567-e89b-12d3-a456-426614174002'
+      );
+      expect(parsed.chart.dependencies[0].type).toBe('FS');
+      expect(parsed.chart.dependencies[0].lag).toBe(2);
+      expect(parsed.chart.dependencies[0].createdAt).toBe(
+        '2025-06-01T12:00:00.000Z'
+      );
+    });
+
+    it('should set hasDependencies feature flag when dependencies exist', () => {
+      const json = serializeToGanttFile([], createSampleViewSettings(), {
+        dependencies: [
+          {
+            id: '123e4567-e89b-12d3-a456-426614174099',
+            fromTaskId: 'a',
+            toTaskId: 'b',
+            type: 'FS',
+            createdAt: '2025-06-01T12:00:00.000Z',
+          },
+        ],
+      });
+      const parsed = JSON.parse(json);
+
+      expect(parsed.features.hasDependencies).toBe(true);
+    });
+
+    it('should set hasDependencies to false when no dependencies', () => {
+      const json = serializeToGanttFile([], createSampleViewSettings());
+      const parsed = JSON.parse(json);
+
+      expect(parsed.features.hasDependencies).toBe(false);
+    });
+  });
+
   describe('Round-Trip Compatibility', () => {
     it('should maintain data integrity in round-trip', () => {
       const originalTasks = createSampleTasks();

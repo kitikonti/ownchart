@@ -394,6 +394,100 @@ describe('File Operations - Sanitization (XSS Prevention)', () => {
     });
   });
 
+  describe('Unknown Task Fields (future-proofing)', () => {
+    it('should sanitize unknown string fields on tasks', () => {
+      const file = createBaseFile();
+      file.chart.tasks = [
+        {
+          id: '123e4567-e89b-12d3-a456-426614174001',
+          name: 'Task',
+          startDate: '2026-01-01',
+          endDate: '2026-01-02',
+          duration: 1,
+          progress: 0,
+          color: '#000000',
+          order: 0,
+          futureStringField: '<script>alert("XSS")</script>Safe',
+        },
+      ];
+
+      const sanitized = sanitizeGanttFile(file);
+
+      expect(sanitized.chart.tasks[0].futureStringField).not.toContain(
+        '<script>'
+      );
+      expect(sanitized.chart.tasks[0].futureStringField).toContain('Safe');
+    });
+
+    it('should not corrupt ID-like fields during sanitization', () => {
+      const file = createBaseFile();
+      file.chart.tasks = [
+        {
+          id: '123e4567-e89b-12d3-a456-426614174001',
+          name: 'Task',
+          startDate: '2026-01-01',
+          endDate: '2026-01-02',
+          duration: 1,
+          progress: 0,
+          color: '#FF0000',
+          order: 0,
+          parent: '123e4567-e89b-12d3-a456-426614174002',
+          colorOverride: '#00FF00',
+          type: 'task',
+          createdAt: '2026-01-01T00:00:00.000Z',
+          updatedAt: '2026-01-01T00:00:00.000Z',
+        },
+      ];
+
+      const sanitized = sanitizeGanttFile(file);
+
+      // ID-like fields should pass through unchanged
+      expect(sanitized.chart.tasks[0].id).toBe(
+        '123e4567-e89b-12d3-a456-426614174001'
+      );
+      expect(sanitized.chart.tasks[0].color).toBe('#FF0000');
+      expect(sanitized.chart.tasks[0].parent).toBe(
+        '123e4567-e89b-12d3-a456-426614174002'
+      );
+      expect(sanitized.chart.tasks[0].colorOverride).toBe('#00FF00');
+      expect(sanitized.chart.tasks[0].startDate).toBe('2026-01-01');
+      expect(sanitized.chart.tasks[0].endDate).toBe('2026-01-02');
+      expect(sanitized.chart.tasks[0].type).toBe('task');
+      expect(sanitized.chart.tasks[0].createdAt).toBe(
+        '2026-01-01T00:00:00.000Z'
+      );
+      expect(sanitized.chart.tasks[0].updatedAt).toBe(
+        '2026-01-01T00:00:00.000Z'
+      );
+    });
+
+    it('should sanitize unknown nested object fields on tasks', () => {
+      const file = createBaseFile();
+      file.chart.tasks = [
+        {
+          id: '123e4567-e89b-12d3-a456-426614174001',
+          name: 'Task',
+          startDate: '2026-01-01',
+          endDate: '2026-01-02',
+          duration: 1,
+          progress: 0,
+          color: '#000000',
+          order: 0,
+          futureObject: {
+            nestedString: '<img onerror=alert(1) src=x>Clean',
+          },
+        },
+      ];
+
+      const sanitized = sanitizeGanttFile(file);
+
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const futureObj = (sanitized.chart.tasks[0] as any).futureObject;
+      expect(futureObj.nestedString).not.toContain('onerror');
+      expect(futureObj.nestedString).toContain('Clean');
+    });
+  });
+
   describe('Non-String Values', () => {
     it('should not sanitize numbers', () => {
       const file = createBaseFile();
