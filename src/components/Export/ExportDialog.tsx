@@ -27,6 +27,76 @@ const FORMAT_CONFIG: Record<
   svg: { icon: FileCode, label: "Export SVG" },
 };
 
+interface ExportDialogFooterProps {
+  isExporting: boolean;
+  exportProgress: number;
+  selectedExportFormat: ExportFormat;
+  onExport: () => void;
+  onCancel: () => void;
+}
+
+function ExportDialogFooter({
+  isExporting,
+  exportProgress,
+  selectedExportFormat,
+  onExport,
+  onCancel,
+}: ExportDialogFooterProps): JSX.Element {
+  const currentFormat = FORMAT_CONFIG[selectedExportFormat];
+  const FormatIcon = currentFormat.icon;
+
+  return (
+    <div className="flex items-center w-full gap-3">
+      {isExporting && exportProgress > 0 && (
+        <div className="flex items-center gap-2 flex-1">
+          <div
+            className="w-32 h-2 bg-neutral-200 rounded-full overflow-hidden"
+            role="progressbar"
+            aria-valuenow={exportProgress}
+            aria-valuemin={0}
+            aria-valuemax={100}
+            aria-label="Export progress"
+          >
+            <div
+              className="h-full bg-brand-600 transition-all duration-300"
+              style={{ width: `${exportProgress}%` }}
+            />
+          </div>
+          <span className="text-xs text-neutral-500 font-mono">
+            {exportProgress}%
+          </span>
+        </div>
+      )}
+
+      {!(isExporting && exportProgress > 0) && <div className="flex-1" />}
+
+      <Button
+        variant="secondary"
+        onClick={onCancel}
+        disabled={isExporting}
+        className="flex-1 max-w-[140px]"
+      >
+        Cancel
+      </Button>
+      <Button
+        variant="primary"
+        onClick={onExport}
+        disabled={isExporting}
+        icon={
+          isExporting ? (
+            <Spinner size={16} className="animate-spin" />
+          ) : (
+            <FormatIcon size={16} weight="regular" />
+          )
+        }
+        className="flex-1 max-w-[180px]"
+      >
+        {isExporting ? "Exporting..." : currentFormat.label}
+      </Button>
+    </div>
+  );
+}
+
 /**
  * Export Dialog component.
  */
@@ -62,7 +132,6 @@ export function ExportDialog(): JSX.Element | null {
     hasInfo,
   } = useExportDialog();
 
-  // Generate live preview
   const {
     previewDataUrl,
     previewDimensions,
@@ -78,68 +147,21 @@ export function ExportDialog(): JSX.Element | null {
     enabled: isExportDialogOpen,
   });
 
-  const currentFormat = FORMAT_CONFIG[selectedExportFormat];
-  const FormatIcon = currentFormat.icon;
-
-  const footer = (
-    <div className="flex items-center w-full gap-3">
-      {/* Progress bar */}
-      {isExporting && exportProgress > 0 && (
-        <div className="flex items-center gap-2 flex-1">
-          <div
-            className="w-32 h-2 bg-neutral-200 rounded-full overflow-hidden"
-            role="progressbar"
-            aria-valuenow={exportProgress}
-            aria-valuemin={0}
-            aria-valuemax={100}
-            aria-label="Export progress"
-          >
-            <div
-              className="h-full bg-brand-600 transition-all duration-300"
-              style={{ width: `${exportProgress}%` }}
-            />
-          </div>
-          <span className="text-xs text-neutral-500 font-mono">
-            {exportProgress}%
-          </span>
-        </div>
-      )}
-
-      {!(isExporting && exportProgress > 0) && <div className="flex-1" />}
-
-      <Button
-        variant="secondary"
-        onClick={closeExportDialog}
-        disabled={isExporting}
-        className="flex-1 max-w-[140px]"
-      >
-        Cancel
-      </Button>
-      <Button
-        variant="primary"
-        onClick={handleExport}
-        disabled={isExporting}
-        icon={
-          isExporting ? (
-            <Spinner size={16} className="animate-spin" />
-          ) : (
-            <FormatIcon size={16} weight="regular" />
-          )
-        }
-        className="flex-1 max-w-[180px]"
-      >
-        {isExporting ? "Exporting..." : currentFormat.label}
-      </Button>
-    </div>
-  );
-
   return (
     <Modal
       isOpen={isExportDialogOpen}
       onClose={closeExportDialog}
       title="Export Gantt Chart"
       subtitle="Choose format and customize your export"
-      footer={footer}
+      footer={
+        <ExportDialogFooter
+          isExporting={isExporting}
+          exportProgress={exportProgress}
+          selectedExportFormat={selectedExportFormat}
+          onExport={handleExport}
+          onCancel={closeExportDialog}
+        />
+      }
       widthClass="max-w-7xl"
       headerStyle="figma"
       footerStyle="figma"

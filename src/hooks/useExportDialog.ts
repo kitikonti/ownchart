@@ -10,7 +10,6 @@ import type {
   ExportFormat,
   ExportOptions,
   PdfExportOptions,
-  SvgExportOptions,
   ReadabilityStatus,
 } from "../utils/export/types";
 import {
@@ -112,7 +111,6 @@ export interface UseExportDialogResult {
   setExportOptions: (options: Partial<ExportOptions>) => void;
   pdfExportOptions: PdfExportOptions;
   setPdfExportOptions: (options: Partial<PdfExportOptions>) => void;
-  svgExportOptions: SvgExportOptions;
 
   // Export status & action
   isExporting: boolean;
@@ -366,7 +364,6 @@ export function useExportDialog(): UseExportDialogResult {
     setExportOptions,
     pdfExportOptions,
     setPdfExportOptions,
-    svgExportOptions,
     isExporting,
     exportProgress,
     exportError,
