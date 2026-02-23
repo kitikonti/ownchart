@@ -3,7 +3,7 @@
  * Extracted from Ribbon.tsx for modularity.
  */
 
-import type { MouseEvent } from "react";
+import type { CSSProperties, MouseEvent } from "react";
 import { CaretDown } from "@phosphor-icons/react";
 import { COLORS, TYPOGRAPHY, RADIUS } from "../../styles/design-tokens";
 import { useDropdown } from "../../hooks/useDropdown";
@@ -16,6 +16,43 @@ const COMBOBOX_HEIGHT = 28;
 const TEXT_WIDTH = 46;
 const TEXT_HEIGHT = 26;
 const CHEVRON_WIDTH = 24;
+
+const comboboxStyle: CSSProperties = {
+  position: "relative",
+  display: "block",
+  width: `${COMBOBOX_WIDTH}px`,
+  height: `${COMBOBOX_HEIGHT}px`,
+  borderRadius: RADIUS.md,
+  cursor: "pointer",
+  userSelect: "none",
+};
+
+const textStyle: CSSProperties = {
+  display: "inline-block",
+  width: `${TEXT_WIDTH}px`,
+  height: `${TEXT_HEIGHT}px`,
+  lineHeight: `${TEXT_HEIGHT}px`,
+  paddingLeft: "8px",
+  color: COLORS.neutral[800],
+  fontSize: TYPOGRAPHY.fontSize.base,
+  fontWeight: TYPOGRAPHY.fontWeight.normal,
+  whiteSpace: "nowrap",
+  overflow: "hidden",
+  textOverflow: "ellipsis",
+};
+
+const chevronBaseStyle: CSSProperties = {
+  position: "absolute",
+  top: "0",
+  right: "0",
+  display: "flex",
+  alignItems: "center",
+  justifyContent: "center",
+  width: `${CHEVRON_WIDTH}px`,
+  height: `${TEXT_HEIGHT}px`,
+  borderRadius: `0 ${RADIUS.md} ${RADIUS.md} 0`,
+  cursor: "default",
+};
 
 interface ZoomDropdownProps {
   zoomPercentage: number;
@@ -37,8 +74,13 @@ export function ZoomDropdown({
 
   const handleContainerClick = (e: MouseEvent): void => {
     // Don't toggle when clicking inside the dropdown panel
-    if ((e.target as HTMLElement).closest(".dropdown-panel")) return;
+    if ((e.target as HTMLElement).closest("[data-dropdown-panel]")) return;
     toggle();
+  };
+
+  const chevronStyle: CSSProperties = {
+    ...chevronBaseStyle,
+    backgroundColor: isOpen ? COLORS.neutral[100] : "transparent",
   };
 
   return (
@@ -57,51 +99,13 @@ export function ZoomDropdown({
         }
       }}
       className="zoom-combobox"
-      style={{
-        position: "relative",
-        display: "block",
-        width: `${COMBOBOX_WIDTH}px`,
-        height: `${COMBOBOX_HEIGHT}px`,
-        borderRadius: RADIUS.md,
-        cursor: "pointer",
-        userSelect: "none",
-      }}
+      style={comboboxStyle}
     >
       {/* Text display */}
-      <span
-        style={{
-          display: "inline-block",
-          width: `${TEXT_WIDTH}px`,
-          height: `${TEXT_HEIGHT}px`,
-          lineHeight: `${TEXT_HEIGHT}px`,
-          paddingLeft: "8px",
-          color: COLORS.neutral[800],
-          fontSize: TYPOGRAPHY.fontSize.base,
-          fontWeight: TYPOGRAPHY.fontWeight.normal,
-          whiteSpace: "nowrap",
-          overflow: "hidden",
-          textOverflow: "ellipsis",
-        }}
-      >
-        {zoomPercentage}%
-      </span>
+      <span style={textStyle}>{zoomPercentage}%</span>
 
       {/* Chevron button */}
-      <span
-        style={{
-          position: "absolute",
-          top: "0",
-          right: "0",
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-          width: `${CHEVRON_WIDTH}px`,
-          height: `${TEXT_HEIGHT}px`,
-          backgroundColor: isOpen ? COLORS.neutral[100] : "transparent",
-          borderRadius: "0 3px 3px 0",
-          cursor: "default",
-        }}
-      >
+      <span style={chevronStyle}>
         <CaretDown
           size={12}
           weight="bold"

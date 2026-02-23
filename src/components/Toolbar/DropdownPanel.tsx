@@ -54,6 +54,7 @@ export function DropdownPanel({
       role={role}
       aria-label={ariaLabel}
       className={`dropdown-panel ${className}`.trim()}
+      data-dropdown-panel
       style={panelStyle}
     >
       {children}

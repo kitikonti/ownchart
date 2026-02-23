@@ -35,7 +35,19 @@ const TAB_BAR_HEIGHT = 36;
 /** Height of the floating toolbar content (px) */
 const TOOLBAR_HEIGHT = 40;
 
+/** z-index for the ribbon header (above timeline/table) */
+const Z_INDEX_RIBBON = 100;
+/** z-index for the floating toolbar (above tab bar background) */
+const Z_INDEX_TOOLBAR = 2;
+
 type RibbonTab = "home" | "view" | "format" | "help";
+
+const TABS: { id: RibbonTab; label: string }[] = [
+  { id: "home", label: "Home" },
+  { id: "view", label: "View" },
+  { id: "format", label: "Format" },
+  { id: "help", label: "Help" },
+];
 
 export function Ribbon(): JSX.Element {
   const [activeTab, setActiveTab] = useState<RibbonTab>("home");
@@ -92,28 +104,20 @@ export function Ribbon(): JSX.Element {
   // Render
   // ─────────────────────────────────────────────────────────────────────────
 
-  const tabs: { id: RibbonTab; label: string }[] = [
-    { id: "home", label: "Home" },
-    { id: "view", label: "View" },
-    { id: "format", label: "Format" },
-    { id: "help", label: "Help" },
-  ];
-
   return (
     <header
       className="flex-shrink-0 relative"
       style={{
-        zIndex: 100,
+        zIndex: Z_INDEX_RIBBON,
         backgroundColor: COLORS.neutral[50],
         paddingBottom: SPACING[2],
       }}
     >
-      {/* Tab Bar - Fixed at top (MS colorNeutralBackground3) */}
+      {/* Tab Bar */}
       <div
         className="flex items-center"
         style={{ height: `${TAB_BAR_HEIGHT}px` }}
       >
-        {/* Tabs - MS Office style */}
         <div
           className="flex items-center h-full"
           role="tablist"
@@ -130,7 +134,7 @@ export function Ribbon(): JSX.Element {
           />
 
           {/* Regular tabs */}
-          {tabs.map((tab) => {
+          {TABS.map((tab) => {
             const isActive = activeTab === tab.id;
             const classes = [
               "ribbon-tab",
@@ -143,8 +147,10 @@ export function Ribbon(): JSX.Element {
             return (
               <button
                 key={tab.id}
+                id={`ribbon-tab-${tab.id}`}
                 role="tab"
                 aria-selected={isActive}
+                aria-controls="ribbon-tabpanel"
                 onClick={() => setActiveTab(tab.id)}
                 className={classes}
               >
@@ -173,8 +179,11 @@ export function Ribbon(): JSX.Element {
         </div>
       </div>
 
-      {/* Floating Toolbar - MS Office style */}
+      {/* Floating Toolbar */}
       <div
+        id="ribbon-tabpanel"
+        role="tabpanel"
+        aria-labelledby={`ribbon-tab-${activeTab}`}
         className="flex items-center justify-between px-3 gap-1"
         style={{
           height: `${TOOLBAR_HEIGHT}px`,
@@ -184,7 +193,7 @@ export function Ribbon(): JSX.Element {
           width: `calc(100% - ${SPACING[4]})`,
           margin: `0 ${SPACING[2]}`,
           position: "relative",
-          zIndex: 2,
+          zIndex: Z_INDEX_TOOLBAR,
           transition: "height 150ms cubic-bezier(0.1, 0.9, 0.2, 1)",
         }}
       >
