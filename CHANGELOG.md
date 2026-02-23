@@ -2,6 +2,68 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [0.0.46](https://github.com/kitikonti/ownchart/compare/v0.0.45...v0.0.46) (2026-02-23)
+
+
+### Bug Fixes
+
+* **ci:** replace deprecated --production flag with --omit=dev in npm audit ([1d304d8](https://github.com/kitikonti/ownchart/commit/1d304d87ecbade2a3abc1d700cb922c6a1438f64))
+* remove getColumnDisplayValue tests after merge conflict resolution ([2c6b4b5](https://github.com/kitikonti/ownchart/commit/2c6b4b57e52eda1ba1b310125331bdda1dffd50b))
+* resolve stale closure bug and inconsistent edit cleanup in Cell ([b817e8a](https://github.com/kitikonti/ownchart/commit/b817e8aba533746492b3aee54150476c64c198aa))
+
+
+### Code Refactoring
+
+* add focus trapping, design tokens, and Tailwind hover to ColorPickerPopover ([e369987](https://github.com/kitikonti/ownchart/commit/e369987fbb5bdfc6b9298b914a6ba2551c24662d))
+* apply review cleanup to types.ts after merge ([d2a6f5c](https://github.com/kitikonti/ownchart/commit/d2a6f5c1067af19470367f6439428eace6c0c07c))
+* clean up fileDialog.ts and types.ts per code review ([386fe22](https://github.com/kitikonti/ownchart/commit/386fe22542dd6d606b4bacda150c4d8a838907f2))
+* clean up RowNumberCell and TaskTable per code review ([1afe40f](https://github.com/kitikonti/ownchart/commit/1afe40f6d86a40f99c6669a802a53117cc288a72))
+* ColorDropdown migration to Tailwind and review fixes ([b216879](https://github.com/kitikonti/ownchart/commit/b2168790828504223236ff9a56f96f31cc696910))
+* extract getColumnDisplayValue into export/columns utility ([b1f35e9](https://github.com/kitikonti/ownchart/commit/b1f35e9a5d9193fd1292a67249f25af2e478cc51))
+* extract hooks from GanttLayout and centralize constants ([01df543](https://github.com/kitikonti/ownchart/commit/01df54396d27fc9b43cd0c4ced4d7ca7fb2db026))
+* extract IconWithBadge, harden undo descriptions, add ribbon tab tests ([d3c460b](https://github.com/kitikonti/ownchart/commit/d3c460b9ffef94f4e71bee0d6e02d6e272533297))
+* extract NAME_COLUMN_ID constant for name column checks ([e90d700](https://github.com/kitikonti/ownchart/commit/e90d700dc1ff67a2a18d4996a873252b214ed611))
+* extract positioning logic and stabilize ColorPickerPopover ([66eed41](https://github.com/kitikonti/ownchart/commit/66eed416ba1d4e8fb6afd5c9f1fa37c371fcdc2d))
+* extract ribbon tab logic into custom hooks ([1542eba](https://github.com/kitikonti/ownchart/commit/1542eba3fdad548283112984cc7d7fb371214d87))
+* extract RowNumberCell config, add React.memo, clean up TaskTable ([0e8ffaa](https://github.com/kitikonti/ownchart/commit/0e8ffaaaf09df91ce38669068f1e76daf98ade80))
+* extract sub-components and use design tokens in ColorDropdown ([fd0a722](https://github.com/kitikonti/ownchart/commit/fd0a722b52d8439d4c32680a46c8b62e36478793))
+* extract sub-components, add Z_INDEX tokens, and harden ColorPickerPopover ([fb4eee5](https://github.com/kitikonti/ownchart/commit/fb4eee5557cf6ad3c453b4976d1b9478b97156e3))
+* extract TimelinePanel from GanttLayout and add ARIA landmarks ([5063bae](https://github.com/kitikonti/ownchart/commit/5063bae0926596ed5f6dff2f05e40c6ebe7755fb))
+* extract useCellEdit hook from Cell component ([dda529f](https://github.com/kitikonti/ownchart/commit/dda529f0b0ba88989e940b938a1e1706846a0293))
+* fix ARIA role ownership and improve test coverage in ColorDropdown ([b859bb1](https://github.com/kitikonti/ownchart/commit/b859bb14876591d0933ef2e41a6a5e413d534d2d))
+* fix aria-selected validity and extract constant in ColorDropdown ([2bf1291](https://github.com/kitikonti/ownchart/commit/2bf1291d0372d630a5aa73478394bca9af1142d5))
+* fix review findings in ColorDropdown (a11y, types, Tailwind) ([cad87ac](https://github.com/kitikonti/ownchart/commit/cad87ac3639f1c5e1a47d840f1b9f26c650fa453))
+* fix review findings in ColorDropdown (aria, label, tests) ([761b6b1](https://github.com/kitikonti/ownchart/commit/761b6b1267acab72edc5144d660dfd96569dacad))
+* fix review findings in file operations validation pipeline ([ffd55ec](https://github.com/kitikonti/ownchart/commit/ffd55ec1dc61a0f4a7b21d80ab7b60dc095ee987))
+* fix review findings in ribbon tab components ([a48c4ac](https://github.com/kitikonti/ownchart/commit/a48c4aca115b92a210e77e26785d96ffdd5d3d0c))
+* harden file operation sanitization and add lag validation ([4c97612](https://github.com/kitikonti/ownchart/commit/4c97612358d9d3a030f817226ff1360af29f3be4))
+* harden file operation sanitization and improve code structure ([e1fa983](https://github.com/kitikonti/ownchart/commit/e1fa983895a1bf8c129b8e53de7b618af2270d07))
+* harden file operation validation and fix review findings ([5e7812c](https://github.com/kitikonti/ownchart/commit/5e7812c76b3f39a0af3f098497160236fc436450))
+* harden fileDialog fallback and improve types.ts forward-compat ([87e7960](https://github.com/kitikonti/ownchart/commit/87e7960d482acf406dde3a8119f26d5a16655507))
+* harden validation pipeline and add dependency round-trip support ([257eaaf](https://github.com/kitikonti/ownchart/commit/257eaaff0b1f308e38b51cd92b221e1bca7892eb))
+* harden validation pipeline and add missing test coverage ([8189b32](https://github.com/kitikonti/ownchart/commit/8189b32b5a2ef1b4ce8a264d0d1559f78f6879b3))
+* harden validation pipeline and fix deserialization bugs ([e1840e6](https://github.com/kitikonti/ownchart/commit/e1840e61ec99335ceb2ca877c67ffd60a289f425))
+* improve Cell component from code review findings ([e01d22b](https://github.com/kitikonti/ownchart/commit/e01d22b4de373fe456aee0033f15ae75dc570ba4))
+* improve ColorPickerPopover with design tokens, DRY, a11y, and tests ([a6149e5](https://github.com/kitikonti/ownchart/commit/a6149e5d4180490b6ef95aa5a88ff5410da50505))
+* improve Ribbon components per code review findings ([2422691](https://github.com/kitikonti/ownchart/commit/2422691d5d63867884c23274f75c68966cf8727f))
+* improve validation pipeline maintainability and fix zoom constant divergence ([841d149](https://github.com/kitikonti/ownchart/commit/841d149a6ae0e72b0e5257be5dac2854a30f7051))
+* improve validation pipeline security, performance and maintainability ([cd25b5a](https://github.com/kitikonti/ownchart/commit/cd25b5ac9840613eb82bc5c073a178a70c37fd7d))
+* migrate ColorDropdown to Tailwind and fix review findings ([841e1cb](https://github.com/kitikonti/ownchart/commit/841e1cb6f3b8ee18c7295a260212c1395b86f473))
+* move static backgrounds from Tailwind classes to inline design tokens in ColorPickerPopover ([56c83fc](https://github.com/kitikonti/ownchart/commit/56c83fc4f8f5302083753d9a2796c140564f5d01))
+* optimize Cell with derived selectors, memo, and a11y ([8fd3b76](https://github.com/kitikonti/ownchart/commit/8fd3b76b00280cf3cad6992a0104eb3fe3126c94))
+* optimize GanttLayout scroll perf and extract testable logic ([b812149](https://github.com/kitikonti/ownchart/commit/b8121499b2adddd7ea6039a9b6b75a0aa9fd59ea))
+* optimize TaskTableRow with React.memo and reduce store subscriptions ([476deb5](https://github.com/kitikonti/ownchart/commit/476deb5f297999a24994b6653fa5c43e0d7ed4ee))
+* remove unused stickyContainerRef and fix ROW_HEIGHT naming ([98d2af1](https://github.com/kitikonti/ownchart/commit/98d2af1cabd35f62cdc1c2775ac04a19bf1766de))
+* replace hardcoded colors with design tokens in Ribbon components ([9b388c1](https://github.com/kitikonti/ownchart/commit/9b388c13afe8097833478d5b1b2538b576e1797f))
+* replace hardcoded padding with SPACING token in ZoomDropdown ([a5d2ff9](https://github.com/kitikonti/ownchart/commit/a5d2ff96f3b8cd3f931aa5da2870807fa863f71f))
+* review ExportRenderer — extract helpers, stabilize refs, add edge-case tests ([4735884](https://github.com/kitikonti/ownchart/commit/4735884830c98769fc24e22f0dfdd06ab8f74654))
+* review ExportRenderer — extract layout module, param object API, cell component ([c1dbbf4](https://github.com/kitikonti/ownchart/commit/c1dbbf45df748ab8e78dd1f6bc36fc3c72eb3b53))
+* review ExportRenderer — extract shared layout, fix tokens, optimize lookups ([042defd](https://github.com/kitikonti/ownchart/commit/042defdfd91e45ce8439e856e793ed19a17f6af5))
+* review ExportRenderer — fix layer direction, deduplicate labels, name constants ([c3259e4](https://github.com/kitikonti/ownchart/commit/c3259e42b328d9bec6827ba68cf22220b3116ea1))
+* review ExportRenderer — narrow getColumnDisplayValue to ExportDataColumnKey ([c44cc63](https://github.com/kitikonti/ownchart/commit/c44cc638fdfb31a4c5f5d19ea63dea7161079d29))
+* review ExportRenderer — remove dead fallback, tighten types, add display-value tests ([54f18a7](https://github.com/kitikonti/ownchart/commit/54f18a70e1c74f8409aef38141deb54fdf46f2c0))
+* review ExportRenderer — split layout helper, align export colors to design tokens ([6ebc3e6](https://github.com/kitikonti/ownchart/commit/6ebc3e69f91feceb1f0a27d24b93aa0e1e0b6f75))
+
 ### [0.0.45](https://github.com/kitikonti/ownchart/compare/v0.0.44...v0.0.45) (2026-02-21)
 
 ### [0.0.44](https://github.com/kitikonti/ownchart/compare/v0.0.43...v0.0.44) (2026-02-21)
