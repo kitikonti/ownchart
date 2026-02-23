@@ -12,16 +12,10 @@
  */
 
 import { useState, useEffect, useCallback } from "react";
-import { Info, Question } from "@phosphor-icons/react";
 
 import OwnChartLogo from "../../assets/logo.svg?react";
 
-import {
-  ToolbarButton,
-  ToolbarGroup,
-  ToolbarSpacer,
-  TOOLBAR_TOKENS,
-} from "../Toolbar/ToolbarPrimitives";
+import { ToolbarSpacer } from "../Toolbar/ToolbarPrimitives";
 import { FileMenu } from "./FileMenu";
 import { InlineProjectTitle } from "./InlineProjectTitle";
 import { RibbonCollapseProvider } from "./RibbonCollapseContext";
@@ -29,14 +23,31 @@ import { useRibbonCollapse } from "../../hooks/useRibbonCollapse";
 import { HomeTabContent } from "./HomeTabContent";
 import { ViewTabContent } from "./ViewTabContent";
 import { FormatTabContent } from "./FormatTabContent";
+import { HelpTabContent } from "./HelpTabContent";
 
 import { useTaskStore } from "../../store/slices/taskSlice";
 import { useUIStore } from "../../store/slices/uiSlice";
 import { useFileOperations } from "../../hooks/useFileOperations";
+import { COLORS, SHADOWS, RADIUS, SPACING } from "../../styles/design-tokens";
 
-const ICON_SIZE = TOOLBAR_TOKENS.iconSize;
+/** Height of the tab bar row (px) */
+const TAB_BAR_HEIGHT = 36;
+/** Height of the floating toolbar content (px) */
+const TOOLBAR_HEIGHT = 40;
+
+/** z-index for the ribbon header (above timeline/table) */
+const Z_INDEX_RIBBON = 100;
+/** z-index for the floating toolbar (above tab bar background) */
+const Z_INDEX_TOOLBAR = 2;
 
 type RibbonTab = "home" | "view" | "format" | "help";
+
+const TABS: { id: RibbonTab; label: string }[] = [
+  { id: "home", label: "Home" },
+  { id: "view", label: "View" },
+  { id: "format", label: "Format" },
+  { id: "help", label: "Help" },
+];
 
 export function Ribbon(): JSX.Element {
   const [activeTab, setActiveTab] = useState<RibbonTab>("home");
@@ -47,8 +58,6 @@ export function Ribbon(): JSX.Element {
 
   // UI store
   const openExportDialog = useUIStore((state) => state.openExportDialog);
-  const openHelpPanel = useUIStore((state) => state.openHelpPanel);
-  const openAboutDialog = useUIStore((state) => state.openAboutDialog);
 
   // File operations
   const { handleNew, handleOpen, handleSave, handleSaveAs } =
@@ -87,24 +96,7 @@ export function Ribbon(): JSX.Element {
       case "format":
         return <FormatTabContent />;
       case "help":
-        return (
-          <ToolbarGroup label="Help">
-            <ToolbarButton
-              onClick={openHelpPanel}
-              title="Help (?)"
-              aria-label="Help"
-              icon={<Question size={ICON_SIZE} weight="light" />}
-              label="Help"
-            />
-            <ToolbarButton
-              onClick={openAboutDialog}
-              title="About OwnChart"
-              aria-label="About"
-              icon={<Info size={ICON_SIZE} weight="light" />}
-              label="About"
-            />
-          </ToolbarGroup>
-        );
+        return <HelpTabContent />;
     }
   };
 
@@ -112,30 +104,24 @@ export function Ribbon(): JSX.Element {
   // Render
   // ─────────────────────────────────────────────────────────────────────────
 
-  const tabs: { id: RibbonTab; label: string }[] = [
-    { id: "home", label: "Home" },
-    { id: "view", label: "View" },
-    { id: "format", label: "Format" },
-    { id: "help", label: "Help" },
-  ];
-
   return (
     <header
       className="flex-shrink-0 relative"
-      style={{ zIndex: 100, backgroundColor: "#f5f5f5", paddingBottom: "8px" }}
+      style={{
+        zIndex: Z_INDEX_RIBBON,
+        backgroundColor: COLORS.neutral[50],
+        paddingBottom: SPACING[2],
+      }}
     >
-      {/* Tab Bar - Fixed at top (MS uses colorNeutralBackground3 = #f5f5f5) */}
+      {/* Tab Bar */}
       <div
         className="flex items-center"
-        style={{
-          height: "36px",
-        }}
+        style={{ height: `${TAB_BAR_HEIGHT}px` }}
       >
-        {/* Tabs - MS Office style */}
         <div
           className="flex items-center h-full"
           role="tablist"
-          style={{ paddingLeft: "8px" }}
+          style={{ paddingLeft: SPACING[2] }}
         >
           {/* File Button - Opens dropdown instead of switching tabs */}
           <FileMenu
@@ -148,7 +134,7 @@ export function Ribbon(): JSX.Element {
           />
 
           {/* Regular tabs */}
-          {tabs.map((tab) => {
+          {TABS.map((tab) => {
             const isActive = activeTab === tab.id;
             const classes = [
               "ribbon-tab",
@@ -161,8 +147,10 @@ export function Ribbon(): JSX.Element {
             return (
               <button
                 key={tab.id}
+                id={`ribbon-tab-${tab.id}`}
                 role="tab"
                 aria-selected={isActive}
+                aria-controls="ribbon-tabpanel"
                 onClick={() => setActiveTab(tab.id)}
                 className={classes}
               >
@@ -191,19 +179,21 @@ export function Ribbon(): JSX.Element {
         </div>
       </div>
 
-      {/* Floating Toolbar - MS Office style */}
+      {/* Floating Toolbar */}
       <div
+        id="ribbon-tabpanel"
+        role="tabpanel"
+        aria-labelledby={`ribbon-tab-${activeTab}`}
         className="flex items-center justify-between px-3 gap-1"
         style={{
-          height: "40px",
-          backgroundColor: "#ffffff",
-          boxShadow:
-            "0 0 2px rgba(0, 0, 0, 0.12), 0 2px 4px rgba(0, 0, 0, 0.14)",
-          borderRadius: "8px",
-          width: "calc(100% - 16px)",
-          margin: "0 8px",
+          height: `${TOOLBAR_HEIGHT}px`,
+          backgroundColor: COLORS.neutral[0],
+          boxShadow: SHADOWS.rest,
+          borderRadius: RADIUS.lg,
+          width: `calc(100% - ${SPACING[4]})`,
+          margin: `0 ${SPACING[2]}`,
           position: "relative",
-          zIndex: 2,
+          zIndex: Z_INDEX_TOOLBAR,
           transition: "height 150ms cubic-bezier(0.1, 0.9, 0.2, 1)",
         }}
       >

@@ -122,11 +122,11 @@ cd ../app-gantt-review
 ### Priority: MEDIUM — TaskList Komponenten
 - [x] `src/components/TaskList/Cell.tsx`
 - [x] `src/components/TaskList/CellEditors/ColorPickerPopover.tsx`
-- [ ] `src/components/TaskList/RowNumberCell.tsx` (399 LOC) — 6 Hex-Werte
-- [ ] `src/components/TaskList/TaskTable.tsx` (339 LOC)
+- [x] `src/components/TaskList/RowNumberCell.tsx` (247 LOC)
+- [x] `src/components/TaskList/TaskTable.tsx` (263 LOC)
 - [ ] `src/components/TaskList/TaskDataCells.tsx` (333 LOC)
 - [ ] `src/components/TaskList/NewTaskPlaceholderRow.tsx` (315 LOC) — 4 Hex-Werte
-- [ ] `src/components/TaskList/TaskTableRow.tsx` (261 LOC)
+- [x] `src/components/TaskList/TaskTableRow.tsx` (234 LOC)
 - [ ] `src/components/TaskList/TaskTableHeader.tsx` (176 LOC)
 - [ ] `src/components/TaskList/HiddenRowIndicator.tsx` (138 LOC)
 - [ ] `src/components/TaskList/ColumnResizer.tsx` (133 LOC)
@@ -155,9 +155,9 @@ cd ../app-gantt-review
 - [x] `src/components/Ribbon/ColorDropdown.tsx`
 - [x] `src/components/Ribbon/HomeTabContent.tsx`
 - [x] `src/components/Ribbon/ViewTabContent.tsx`
-- [ ] `src/components/Ribbon/Ribbon.tsx` (218 LOC) — 2 Hex-Werte
-- [ ] `src/components/Ribbon/HolidayRegionPopover.tsx` (158 LOC)
-- [ ] `src/components/Ribbon/ZoomDropdown.tsx` (138 LOC)
+- [x] `src/components/Ribbon/Ribbon.tsx` (218 LOC)
+- [x] `src/components/Ribbon/HolidayRegionPopover.tsx` (158 LOC)
+- [x] `src/components/Ribbon/ZoomDropdown.tsx` (138 LOC)
 - [ ] `src/components/Ribbon/FormatTabContent.tsx` (135 LOC)
 - [ ] `src/components/Ribbon/WorkingDaysDropdown.tsx` (125 LOC)
 - [ ] `src/components/Ribbon/InlineProjectTitle.tsx` (99 LOC)
@@ -331,6 +331,6 @@ Entscheidungen aus bisherigen Reviews die fuer zukuenftige Dateien gelten.
 
 ## Progress
 
-- Reviewed: 44 / 193 Dateien
+- Reviewed: 49 / 193 Dateien
 - Offene Issues: 38 Hex-Farben in 10 .tsx-Dateien, ~18 toISODateString-Umstellungen
 - Test-Coverage: 80%+

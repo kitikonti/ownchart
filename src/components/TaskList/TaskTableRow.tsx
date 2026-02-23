@@ -2,60 +2,76 @@
  * TaskTableRow component.
  * Renders a task as a spreadsheet row with individual cells.
  * Supports hierarchy with SVAR-style indentation.
+ *
+ * Wrapped in React.memo — re-renders only when props change.
+ * Store subscriptions are minimized: isSelected is derived from selectionPosition prop,
+ * lastSelectedTaskId is read from getState() inside callbacks, and gridTemplateColumns
+ * + visibleColumns are received as props from TaskTable.
  */
 
-import { useMemo } from "react";
+import { memo, useCallback, useMemo } from "react";
 import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import type { Task } from "../../types/chart.types";
 import { useTaskStore } from "../../store/slices/taskSlice";
-import { useChartStore } from "../../store/slices/chartSlice";
-import { useDensityConfig } from "../../store/slices/userPreferencesSlice";
-import { RowNumberCell, dragState } from "./RowNumberCell";
+import type { ColumnDefinition } from "../../config/tableColumns";
+import { RowNumberCell } from "./RowNumberCell";
+import { dragState } from "./dragSelectionState";
 import { TaskDataCells } from "./TaskDataCells";
-import {
-  getDensityAwareWidth,
-  getVisibleColumns,
-} from "../../config/tableColumns";
 import { calculateSummaryDates } from "../../utils/hierarchy";
 import { useComputedTaskColor } from "../../hooks/useComputedTaskColor";
 import { COLORS } from "../../styles/design-tokens";
 
+// ── Constants ────────────────────────────────────────────────────────────────
+
+const SELECTION_BORDER_COLOR = COLORS.brand[600];
+const SELECTION_BG_COLOR = `${COLORS.brand[600]}14`; // brand-600 at ~8% opacity
+
+// ── Props ────────────────────────────────────────────────────────────────────
+
 interface TaskTableRowProps {
   task: Task;
-  globalRowNumber: number; // 1-based position in full (non-hidden-filtered) list for Excel-style display
-  level?: number; // Nesting level (0 = root)
-  hasChildren?: boolean; // Whether task has children
-  visibleTaskIds: string[]; // Array of task IDs in visible order (for range selection)
-  hasHiddenBelow?: boolean; // Hidden rows below (double-line on RowNumberCell bottom)
-  hiddenBelowCount?: number; // Number of hidden rows below (for tooltip)
-  onUnhideBelow?: () => void; // Callback to unhide hidden rows below
+  globalRowNumber: number;
+  level?: number;
+  hasChildren?: boolean;
+  visibleTaskIds: string[];
+  visibleColumns: ColumnDefinition[];
+  gridTemplateColumns: string;
+  hasHiddenBelow?: boolean;
+  hiddenBelowCount?: number;
+  onUnhideBelow?: () => void;
+  onContextMenu: (e: React.MouseEvent, taskId: string) => void;
   clipboardPosition?: {
-    isFirst: boolean; // First in clipboard group (show top border)
-    isLast: boolean; // Last in clipboard group (show bottom border)
+    isFirst: boolean;
+    isLast: boolean;
   };
   selectionPosition?: {
-    isFirstSelected: boolean; // First in contiguous selection (show top border)
-    isLastSelected: boolean; // Last in contiguous selection (show bottom border)
+    isFirstSelected: boolean;
+    isLastSelected: boolean;
   };
 }
 
-export function TaskTableRow({
+// ── Component ────────────────────────────────────────────────────────────────
+
+export const TaskTableRow = memo(function TaskTableRow({
   task,
   globalRowNumber,
   level = 0,
   hasChildren = false,
   visibleTaskIds,
+  visibleColumns,
+  gridTemplateColumns,
   hasHiddenBelow = false,
   hiddenBelowCount,
   onUnhideBelow,
+  onContextMenu,
   clipboardPosition,
   selectionPosition,
 }: TaskTableRowProps): JSX.Element {
-  const tasks = useTaskStore((state) => state.tasks);
-  const columnWidths = useTaskStore((state) => state.columnWidths);
-  const selectedTaskIds = useTaskStore((state) => state.selectedTaskIds);
-  const lastSelectedTaskId = useTaskStore((state) => state.lastSelectedTaskId);
+  // Only subscribe to tasks for summary rows (non-summary rows return null → stable ref)
+  const tasks = useTaskStore((state) =>
+    task.type === "summary" ? state.tasks : null
+  );
   const toggleTaskSelection = useTaskStore(
     (state) => state.toggleTaskSelection
   );
@@ -63,44 +79,33 @@ export function TaskTableRow({
   const setActiveCell = useTaskStore((state) => state.setActiveCell);
   const insertTaskAbove = useTaskStore((state) => state.insertTaskAbove);
   const insertTaskBelow = useTaskStore((state) => state.insertTaskBelow);
-  const densityConfig = useDensityConfig();
-  const hiddenColumns = useChartStore((state) => state.hiddenColumns);
 
-  // Get computed task color based on current color mode
   const computedColor = useComputedTaskColor(task);
 
-  // Get visible columns based on settings
-  const visibleColumns = useMemo(
-    () => getVisibleColumns(hiddenColumns),
-    [hiddenColumns]
-  );
-
-  const isSelected = selectedTaskIds.includes(task.id);
+  // Derived from props — no store subscription needed
+  const isSelected = selectionPosition !== undefined;
   const isInClipboard = clipboardPosition !== undefined;
 
   // Calculate summary dates if needed, and recalculate duration for all tasks
   const displayTask = useMemo(() => {
-    let updatedTask = { ...task };
-
-    if (task.type === "summary") {
+    if (task.type === "summary" && tasks) {
       const summaryDates = calculateSummaryDates(tasks, task.id);
       if (summaryDates) {
-        updatedTask = { ...task, ...summaryDates };
-      } else {
-        // Summary has no children - clear date fields
-        updatedTask = { ...task, startDate: "", endDate: "", duration: 0 };
+        return { ...task, ...summaryDates };
       }
-    } else if (task.startDate && task.endDate) {
-      // Recalculate duration from dates to ensure consistency
+      return { ...task, startDate: "", endDate: "", duration: 0 };
+    }
+
+    if (task.startDate && task.endDate) {
       const start = new Date(task.startDate);
       const end = new Date(task.endDate);
       const calculatedDuration =
         Math.ceil((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24)) +
         1;
-      updatedTask = { ...task, duration: calculatedDuration };
+      return { ...task, duration: calculatedDuration };
     }
 
-    return updatedTask;
+    return task;
   }, [task, tasks]);
 
   const isExpanded = task.open ?? true;
@@ -114,16 +119,6 @@ export function TaskTableRow({
     isDragging,
   } = useSortable({ id: task.id });
 
-  // Generate grid template columns with density-aware widths
-  const gridTemplateColumns = visibleColumns
-    .map((col) => {
-      const customWidth = columnWidths[col.id];
-      return customWidth
-        ? `${customWidth}px`
-        : getDensityAwareWidth(col.id, densityConfig);
-    })
-    .join(" ");
-
   const style = {
     transform: CSS.Transform.toString(transform),
     transition,
@@ -131,51 +126,62 @@ export function TaskTableRow({
     gridTemplateColumns,
   };
 
-  // OwnChart brand colors for selected row
-  const SELECTION_BORDER_COLOR = COLORS.brand[600];
-  const SELECTION_BG_COLOR = `${COLORS.brand[600]}14`; // brand-600 at ~8% opacity
-
-  // Determine selection borders based on position in contiguous selection
   const showTopBorder = selectionPosition?.isFirstSelected ?? true;
   const showBottomBorder = selectionPosition?.isLastSelected ?? true;
 
-  // Handle mouse enter on entire row for drag selection
-  const handleRowMouseEnter = (): void => {
+  // ── Stabilized callbacks ─────────────────────────────────────────────────
+
+  const handleRowMouseEnter = useCallback((): void => {
     if (dragState.isDragging && dragState.onDragSelect) {
       dragState.onDragSelect(task.id);
     }
-  };
+  }, [task.id]);
 
-  // Handle row selection via RowNumberCell
-  const handleSelectRow = (
-    taskId: string,
-    shiftKey: boolean,
-    ctrlKey: boolean
-  ): void => {
-    setActiveCell(null, null);
-    if (shiftKey) {
-      // Shift+Click or Drag: Range selection using VISIBLE task order
-      const anchorTaskId = dragState.startTaskId || lastSelectedTaskId;
-      if (anchorTaskId) {
-        const startIdx = visibleTaskIds.indexOf(anchorTaskId);
-        const endIdx = visibleTaskIds.indexOf(taskId);
+  const handleSelectRow = useCallback(
+    (taskId: string, shiftKey: boolean, ctrlKey: boolean): void => {
+      setActiveCell(null, null);
+      if (shiftKey) {
+        // Read from store at call-time to avoid subscription
+        const anchorTaskId =
+          dragState.startTaskId || useTaskStore.getState().lastSelectedTaskId;
+        if (anchorTaskId) {
+          const startIdx = visibleTaskIds.indexOf(anchorTaskId);
+          const endIdx = visibleTaskIds.indexOf(taskId);
 
-        if (startIdx !== -1 && endIdx !== -1) {
-          const minIdx = Math.min(startIdx, endIdx);
-          const maxIdx = Math.max(startIdx, endIdx);
-          const idsInRange = visibleTaskIds.slice(minIdx, maxIdx + 1);
-          setSelectedTaskIds(idsInRange, false);
+          if (startIdx !== -1 && endIdx !== -1) {
+            const minIdx = Math.min(startIdx, endIdx);
+            const maxIdx = Math.max(startIdx, endIdx);
+            const idsInRange = visibleTaskIds.slice(minIdx, maxIdx + 1);
+            setSelectedTaskIds(idsInRange, false);
+          }
+        } else {
+          setSelectedTaskIds([taskId], false);
         }
+      } else if (ctrlKey) {
+        toggleTaskSelection(taskId);
       } else {
-        // No anchor yet — just select this row
         setSelectedTaskIds([taskId], false);
       }
-    } else if (ctrlKey) {
-      toggleTaskSelection(taskId);
-    } else {
-      setSelectedTaskIds([taskId], false);
-    }
-  };
+    },
+    [visibleTaskIds, setActiveCell, setSelectedTaskIds, toggleTaskSelection]
+  );
+
+  const handleInsertAbove = useCallback(
+    () => insertTaskAbove(task.id),
+    [insertTaskAbove, task.id]
+  );
+
+  const handleInsertBelow = useCallback(
+    () => insertTaskBelow(task.id),
+    [insertTaskBelow, task.id]
+  );
+
+  const handleContextMenu = useCallback(
+    (e: React.MouseEvent) => onContextMenu(e, task.id),
+    [onContextMenu, task.id]
+  );
+
+  // ── Render ───────────────────────────────────────────────────────────────
 
   return (
     <div
@@ -185,7 +191,7 @@ export function TaskTableRow({
         ...(isSelected
           ? {
               backgroundColor: SELECTION_BG_COLOR,
-              position: "relative",
+              position: "relative" as const,
               zIndex: 5,
             }
           : {}),
@@ -196,6 +202,7 @@ export function TaskTableRow({
       role="row"
       tabIndex={-1}
       onMouseEnter={handleRowMouseEnter}
+      onContextMenu={handleContextMenu}
     >
       {/* Selection overlay - renders above cell borders */}
       {isSelected && (
@@ -238,8 +245,8 @@ export function TaskTableRow({
         hiddenBelowCount={hiddenBelowCount}
         onUnhideBelow={onUnhideBelow}
         onSelectRow={handleSelectRow}
-        onInsertAbove={() => insertTaskAbove(task.id)}
-        onInsertBelow={() => insertTaskBelow(task.id)}
+        onInsertAbove={handleInsertAbove}
+        onInsertBelow={handleInsertBelow}
         rowHeight="var(--density-row-height)"
         dragAttributes={attributes}
         dragListeners={listeners}
@@ -258,4 +265,4 @@ export function TaskTableRow({
       />
     </div>
   );
-}
+});

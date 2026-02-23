@@ -8,42 +8,25 @@
  * - Excel-like styling and cursor behavior
  */
 
-import { useState, useRef, useEffect, type MouseEvent } from "react";
-import { DotsSixVertical, Plus } from "@phosphor-icons/react";
+import { memo, useState, type MouseEvent } from "react";
+import { DotsSixVertical } from "@phosphor-icons/react";
 import type { DraggableAttributes } from "@dnd-kit/core";
 import type { SyntheticListenerMap } from "@dnd-kit/core/dist/hooks/utilities";
 import { useDensityConfig } from "../../store/slices/userPreferencesSlice";
 import { HiddenRowIndicator } from "./HiddenRowIndicator";
-import { COLORS, ROW_NUMBER } from "../../styles/design-tokens";
+import { InsertRowButton } from "./InsertRowButton";
+import { InsertLine } from "./InsertLine";
+import { dragState } from "./dragSelectionState";
+import {
+  CONTROLS_WIDTH,
+  SELECTION_RADIUS,
+  ROW_NUMBER_FONT_SIZE,
+  ROW_NUMBER_FONT_WEIGHT,
+  ROW_SELECT_CURSOR,
+  ROW_COLORS,
+} from "./rowNumberConfig";
 
-// Global drag selection state (shared between all RowNumberCell instances)
-// Exported so TaskTableRow can also respond to drag selection
-export const dragState = {
-  isDragging: false,
-  startTaskId: null as string | null,
-  onDragSelect: null as ((taskId: string) => void) | null,
-};
-
-// Custom cursor for row selection (Excel-style right arrow with shaft)
-const ROW_SELECT_CURSOR = `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='18' height='14' viewBox='0 0 18 14'%3E%3Cpath d='M5 5 L5 9 L10 9 L10 13 L17 7 L10 1 L10 5 Z' fill='black' stroke='white' stroke-width='1'/%3E%3C/svg%3E") 17 7, pointer`;
-
-// Row number cell colors (Outlook Blue theme)
-const ROW_COLORS = {
-  // Inactive state
-  bgInactive: ROW_NUMBER.bgInactive,
-  bgHover: ROW_NUMBER.bgHover,
-  textInactive: ROW_NUMBER.textInactive,
-  // Selected state - OwnChart brand
-  bgSelected: COLORS.brand[600],
-  textSelected: ROW_NUMBER.textSelected,
-  // Hover controls - OwnChart brand
-  controlsColor: COLORS.brand[600],
-  insertLineColor: COLORS.brand[600],
-  // Border
-  border: ROW_NUMBER.border,
-  // Hidden row indicator (neutral-400)
-  hiddenIndicator: ROW_NUMBER.hiddenIndicator,
-};
+// ── Props ───────────────────────────────────────────────────────────────────
 
 interface RowNumberCellProps {
   /** Row number to display (1-based) */
@@ -79,7 +62,7 @@ interface RowNumberCellProps {
   taskName?: string;
 }
 
-export function RowNumberCell({
+export const RowNumberCell = memo(function RowNumberCell({
   rowNumber,
   taskId,
   isSelected,
@@ -101,21 +84,22 @@ export function RowNumberCell({
   const [hoveredControl, setHoveredControl] = useState<
     "drag" | "addAbove" | "addBelow" | null
   >(null);
-  const cellRef = useRef<HTMLDivElement>(null);
 
-  // Handle drag selection - select range as mouse moves over rows
+  // Handle drag selection — select range as mouse moves over rows.
+  // This callback is stored in dragState.onDragSelect during mousedown on THIS row,
+  // then invoked by OTHER rows on mouseEnter. It captures THIS row's onSelectRow,
+  // which works correctly because onSelectRow is a store-backed action that accepts
+  // any taskId (it's not specific to this row).
   const handleDragSelect = (targetTaskId: string): void => {
     if (dragState.startTaskId) {
-      onSelectRow(targetTaskId, true, false); // Shift-style range selection
+      onSelectRow(targetTaskId, true, false);
     }
   };
 
-  // Start drag selection on mousedown
+  // Start drag selection on mousedown (only on number area, not controls)
   const handleMouseDown = (e: MouseEvent): void => {
-    // Only handle left mouse button on the number area, not on controls
-    if (e.button !== 0 || hoveredControl === "drag") return;
+    if (e.button !== 0 || hoveredControl !== null) return;
 
-    // Start drag selection
     dragState.isDragging = true;
     dragState.onDragSelect = handleDragSelect;
 
@@ -125,7 +109,6 @@ export function RowNumberCell({
       dragState.startTaskId = taskId;
     }
 
-    // Select this row (replace selection on normal click)
     onSelectRow(taskId, e.shiftKey, e.ctrlKey || e.metaKey);
   };
 
@@ -133,34 +116,9 @@ export function RowNumberCell({
   const handleMouseEnter = (): void => {
     setIsHovered(true);
 
-    // If dragging, extend selection to this row
     if (dragState.isDragging && dragState.onDragSelect) {
       dragState.onDragSelect(taskId);
     }
-  };
-
-  // End drag selection on mouseup (global listener)
-  useEffect(() => {
-    const handleMouseUp = (): void => {
-      dragState.isDragging = false;
-      dragState.startTaskId = null;
-      dragState.onDragSelect = null;
-    };
-
-    window.addEventListener("mouseup", handleMouseUp);
-    return (): void => {
-      window.removeEventListener("mouseup", handleMouseUp);
-    };
-  }, []);
-
-  const handleInsertAbove = (e: MouseEvent): void => {
-    e.stopPropagation();
-    onInsertAbove?.();
-  };
-
-  const handleInsertBelow = (e: MouseEvent): void => {
-    e.stopPropagation();
-    onInsertBelow?.();
   };
 
   // Determine cursor based on what's being hovered
@@ -168,22 +126,20 @@ export function RowNumberCell({
     if (hoveredControl === "drag") return "grab";
     if (hoveredControl === "addAbove" || hoveredControl === "addBelow")
       return "pointer";
-    if (isHovered) return ROW_SELECT_CURSOR; // Excel-style row select cursor
+    if (isHovered) return ROW_SELECT_CURSOR;
     return "default";
   };
 
   // Calculate border-radius for selected cells
   const getBorderRadius = (): string | undefined => {
     if (!isSelected) return undefined;
-    const radius = "3px";
     const isFirst = selectionPosition?.isFirstSelected ?? true;
     const isLast = selectionPosition?.isLastSelected ?? true;
-    return `${isFirst ? radius : "0"} 0 0 ${isLast ? radius : "0"}`;
+    return `${isFirst ? SELECTION_RADIUS : "0"} 0 0 ${isLast ? SELECTION_RADIUS : "0"}`;
   };
 
   return (
     <div
-      ref={cellRef}
       className="row-number-cell relative select-none"
       style={{
         height: rowHeight,
@@ -217,66 +173,26 @@ export function RowNumberCell({
       {isHovered && (
         <div
           className="absolute left-0 top-0 bottom-0 flex flex-col items-center justify-center"
-          style={{ width: "20px" }}
+          style={{ width: `${CONTROLS_WIDTH}px` }}
         >
-          {/* Add row above button */}
-          <button
-            className="flex items-center justify-center"
-            style={{
-              width: "18px",
-              height: "18px",
-              position: "absolute",
-              top: "-9px",
-              left: "1px",
-              zIndex: 45,
-            }}
-            onMouseEnter={() => setHoveredControl("addAbove")}
-            onMouseLeave={() => setHoveredControl(null)}
-            onClick={handleInsertAbove}
-            aria-label={`Insert row above row ${rowNumber}`}
-          >
-            {hoveredControl === "addAbove" ? (
-              // Hover state: larger circle with plus
-              <div
-                style={{
-                  width: "14px",
-                  height: "14px",
-                  borderRadius: "50%",
-                  backgroundColor: "white",
-                  border: `1px solid ${ROW_COLORS.controlsColor}`,
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                }}
-              >
-                <Plus
-                  size={10}
-                  weight="bold"
-                  color={ROW_COLORS.controlsColor}
-                />
-              </div>
-            ) : (
-              // Normal state: small ring
-              <div
-                style={{
-                  width: "7px",
-                  height: "7px",
-                  borderRadius: "50%",
-                  backgroundColor: "white",
-                  border: `1px solid ${ROW_COLORS.controlsColor}`,
-                }}
-              />
-            )}
-          </button>
+          <InsertRowButton
+            position="above"
+            rowNumber={rowNumber}
+            isActive={hoveredControl === "addAbove"}
+            onInsert={onInsertAbove}
+            onHoverStart={() => setHoveredControl("addAbove")}
+            onHoverEnd={() => setHoveredControl(null)}
+            controlsColor={ROW_COLORS.controlsColor}
+          />
 
-          {/* Drag handle */}
+          {/* Drag handle — fallback a11y attrs when DnD attributes not provided */}
           <div
             className="flex items-center justify-center"
-            style={{
-              cursor: "grab",
-            }}
+            style={{ cursor: "grab" }}
             onMouseEnter={() => setHoveredControl("drag")}
             onMouseLeave={() => setHoveredControl(null)}
+            role={dragAttributes ? undefined : "button"}
+            tabIndex={dragAttributes ? undefined : 0}
             {...dragAttributes}
             {...dragListeners}
             aria-label={`Drag to reorder ${taskName || `row ${rowNumber}`}`}
@@ -290,94 +206,30 @@ export function RowNumberCell({
             />
           </div>
 
-          {/* Add row below button */}
-          <button
-            className="flex items-center justify-center"
-            style={{
-              width: "18px",
-              height: "18px",
-              position: "absolute",
-              bottom: "-9px",
-              left: "1px",
-              zIndex: 45,
-            }}
-            onMouseEnter={() => setHoveredControl("addBelow")}
-            onMouseLeave={() => setHoveredControl(null)}
-            onClick={handleInsertBelow}
-            aria-label={`Insert row below row ${rowNumber}`}
-          >
-            {hoveredControl === "addBelow" ? (
-              // Hover state: larger circle with plus
-              <div
-                style={{
-                  width: "14px",
-                  height: "14px",
-                  borderRadius: "50%",
-                  backgroundColor: "white",
-                  border: `1px solid ${ROW_COLORS.controlsColor}`,
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                }}
-              >
-                <Plus
-                  size={10}
-                  weight="bold"
-                  color={ROW_COLORS.controlsColor}
-                />
-              </div>
-            ) : (
-              // Normal state: small ring
-              <div
-                style={{
-                  width: "7px",
-                  height: "7px",
-                  borderRadius: "50%",
-                  backgroundColor: "white",
-                  border: `1px solid ${ROW_COLORS.controlsColor}`,
-                }}
-              />
-            )}
-          </button>
+          <InsertRowButton
+            position="below"
+            rowNumber={rowNumber}
+            isActive={hoveredControl === "addBelow"}
+            onInsert={onInsertBelow}
+            onHoverStart={() => setHoveredControl("addBelow")}
+            onHoverEnd={() => setHoveredControl(null)}
+            controlsColor={ROW_COLORS.controlsColor}
+          />
         </div>
       )}
 
-      {/* Insert line above - starts after the circle, extends across entire table row */}
-      {hoveredControl === "addAbove" && (
-        <div
-          className="absolute pointer-events-none"
-          style={{
-            top: "-1px",
-            left: "18px", // Start after the circle
-            right: "-2000px", // Extend across entire table
-            height: "2px",
-            backgroundColor: ROW_COLORS.insertLineColor,
-            zIndex: 60,
-          }}
-        />
-      )}
-
-      {/* Insert line below - starts after the circle, extends across entire table row */}
-      {hoveredControl === "addBelow" && (
-        <div
-          className="absolute pointer-events-none"
-          style={{
-            bottom: "-1px",
-            left: "18px", // Start after the circle
-            right: "-2000px", // Extend across entire table
-            height: "2px",
-            backgroundColor: ROW_COLORS.insertLineColor,
-            zIndex: 60,
-          }}
-        />
-      )}
+      {/* Insert line — visual feedback when hovering add-row buttons */}
+      {hoveredControl === "addAbove" && <InsertLine position="above" />}
+      {hoveredControl === "addBelow" && <InsertLine position="below" />}
 
       {/* Row number */}
       <span
         style={{
           color: isSelected ? ROW_COLORS.textSelected : ROW_COLORS.textInactive,
-          fontWeight: isSelected ? 600 : 400,
-          fontSize: "13px",
+          fontWeight: isSelected
+            ? ROW_NUMBER_FONT_WEIGHT.semibold
+            : ROW_NUMBER_FONT_WEIGHT.normal,
+          fontSize: ROW_NUMBER_FONT_SIZE,
           userSelect: "none",
         }}
       >
@@ -396,4 +248,4 @@ export function RowNumberCell({
       )}
     </div>
   );
-}
+});
