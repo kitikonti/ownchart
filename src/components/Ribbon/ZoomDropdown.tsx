@@ -5,10 +5,17 @@
 
 import type { MouseEvent } from "react";
 import { CaretDown } from "@phosphor-icons/react";
-import { COLORS } from "../../styles/design-tokens";
+import { COLORS, TYPOGRAPHY, RADIUS } from "../../styles/design-tokens";
 import { useDropdown } from "../../hooks/useDropdown";
 import { DropdownPanel } from "../Toolbar/DropdownPanel";
 import { DropdownItem } from "../Toolbar/DropdownItem";
+
+/** Combobox layout constants (px) — pixel-precise Fluent UI fidelity */
+const COMBOBOX_WIDTH = 70;
+const COMBOBOX_HEIGHT = 28;
+const TEXT_WIDTH = 46;
+const TEXT_HEIGHT = 26;
+const CHEVRON_WIDTH = 24;
 
 interface ZoomDropdownProps {
   zoomPercentage: number;
@@ -53,9 +60,9 @@ export function ZoomDropdown({
       style={{
         position: "relative",
         display: "block",
-        width: "70px",
-        height: "28px",
-        borderRadius: "4px",
+        width: `${COMBOBOX_WIDTH}px`,
+        height: `${COMBOBOX_HEIGHT}px`,
+        borderRadius: RADIUS.md,
         cursor: "pointer",
         userSelect: "none",
       }}
@@ -64,13 +71,13 @@ export function ZoomDropdown({
       <span
         style={{
           display: "inline-block",
-          width: "46px",
-          height: "26px",
-          lineHeight: "26px",
+          width: `${TEXT_WIDTH}px`,
+          height: `${TEXT_HEIGHT}px`,
+          lineHeight: `${TEXT_HEIGHT}px`,
           paddingLeft: "8px",
           color: COLORS.neutral[800],
-          fontSize: "14px",
-          fontWeight: 400,
+          fontSize: TYPOGRAPHY.fontSize.base,
+          fontWeight: TYPOGRAPHY.fontWeight.normal,
           whiteSpace: "nowrap",
           overflow: "hidden",
           textOverflow: "ellipsis",
@@ -88,9 +95,9 @@ export function ZoomDropdown({
           display: "flex",
           alignItems: "center",
           justifyContent: "center",
-          width: "24px",
-          height: "26px",
-          backgroundColor: isOpen ? "rgb(235, 235, 235)" : "transparent",
+          width: `${CHEVRON_WIDTH}px`,
+          height: `${TEXT_HEIGHT}px`,
+          backgroundColor: isOpen ? COLORS.neutral[100] : "transparent",
           borderRadius: "0 3px 3px 0",
           cursor: "default",
         }}
@@ -99,7 +106,7 @@ export function ZoomDropdown({
           size={12}
           weight="bold"
           style={{
-            color: isOpen ? "rgb(37, 36, 35)" : "rgb(121, 119, 117)",
+            color: isOpen ? COLORS.neutral[800] : COLORS.neutral[600],
           }}
         />
       </span>

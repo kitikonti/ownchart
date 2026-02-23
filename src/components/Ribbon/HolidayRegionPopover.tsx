@@ -3,7 +3,7 @@
  * Triggered by gear icon next to Holidays toggle in View tab.
  */
 
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import { Globe, MagnifyingGlass, Gear } from "@phosphor-icons/react";
 import { Input } from "../common/Input";
 import { useChartStore } from "../../store/slices/chartSlice";
@@ -11,7 +11,6 @@ import { holidayService } from "../../services/holidayService";
 import { useDropdown } from "../../hooks/useDropdown";
 import { DropdownPanel } from "../Toolbar/DropdownPanel";
 import { TOOLBAR_TOKENS } from "../Toolbar/ToolbarPrimitives";
-import { useState } from "react";
 
 const ICON_SIZE = TOOLBAR_TOKENS.iconSize;
 
@@ -128,27 +127,36 @@ export function HolidayRegionPopover(): JSX.Element {
           </div>
 
           {/* Country list */}
-          <div className="max-h-56 overflow-y-auto scrollbar-thin">
+          <div
+            className="max-h-56 overflow-y-auto scrollbar-thin"
+            role="listbox"
+            aria-label="Holiday region"
+          >
             {filteredCountries.length === 0 ? (
               <div className="px-3 py-2 text-sm text-neutral-500">
                 No countries found
               </div>
             ) : (
-              filteredCountries.map((country) => (
-                <button
-                  key={country.code}
-                  type="button"
-                  onClick={() => handleCountrySelect(country.code)}
-                  className={`w-full flex items-center gap-2 px-4 py-2 text-sm hover:bg-neutral-50 transition-colors ${
-                    country.code === holidayRegion
-                      ? "bg-neutral-100 text-neutral-900"
-                      : "text-neutral-800"
-                  }`}
-                >
-                  <span className="font-medium">{country.name}</span>
-                  <span className="text-neutral-500">({country.code})</span>
-                </button>
-              ))
+              filteredCountries.map((country) => {
+                const isSelected = country.code === holidayRegion;
+                return (
+                  <button
+                    key={country.code}
+                    type="button"
+                    role="option"
+                    aria-selected={isSelected}
+                    onClick={() => handleCountrySelect(country.code)}
+                    className={`w-full flex items-center gap-2 px-4 py-2 text-sm hover:bg-neutral-50 transition-colors ${
+                      isSelected
+                        ? "bg-neutral-100 text-neutral-900"
+                        : "text-neutral-800"
+                    }`}
+                  >
+                    <span className="font-medium">{country.name}</span>
+                    <span className="text-neutral-500">({country.code})</span>
+                  </button>
+                );
+              })
             )}
           </div>
         </DropdownPanel>
