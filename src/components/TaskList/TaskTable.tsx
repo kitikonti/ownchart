@@ -97,7 +97,7 @@ export function TaskTable(): JSX.Element {
   const selectedTaskIds = useTaskStore((state) => state.selectedTaskIds);
   const densityConfig = useDensityConfig();
   const hiddenColumns = useChartStore((state) => state.hiddenColumns);
-  const hiddenTaskIds = useChartStore((state) => state.hiddenTaskIds);
+  const hiddenTaskCount = useChartStore((state) => state.hiddenTaskIds.length);
 
   // Get visible columns based on settings
   const visibleColumns = useMemo(
@@ -273,13 +273,12 @@ export function TaskTable(): JSX.Element {
           </DndContext>
 
           {/* All tasks hidden — show message with unhide action */}
-          {flattenedTasks.length === 0 && hiddenTaskIds.length > 0 && (
+          {flattenedTasks.length === 0 && hiddenTaskCount > 0 && (
             <div
               className="col-span-full flex items-center justify-center text-neutral-500 text-sm"
               style={{ height: densityConfig.rowHeight }}
             >
-              {hiddenTaskIds.length} row{hiddenTaskIds.length !== 1 ? "s" : ""}{" "}
-              hidden —{" "}
+              {hiddenTaskCount} row{hiddenTaskCount !== 1 ? "s" : ""} hidden —{" "}
               <button
                 className="hover:underline ml-1"
                 style={{ color: COLORS.brand[600] }}

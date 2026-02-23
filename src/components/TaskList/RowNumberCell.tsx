@@ -12,7 +12,7 @@ import { memo, useState, type MouseEvent } from "react";
 import { DotsSixVertical } from "@phosphor-icons/react";
 import type { DraggableAttributes } from "@dnd-kit/core";
 import type { SyntheticListenerMap } from "@dnd-kit/core/dist/hooks/utilities";
-import { useDensityConfig } from "../../store/slices/userPreferencesSlice";
+import { SPACING, TRANSITIONS } from "../../styles/design-tokens";
 import { HiddenRowIndicator } from "./HiddenRowIndicator";
 import { InsertRowButton } from "./InsertRowButton";
 import { InsertLine } from "./InsertLine";
@@ -78,8 +78,6 @@ export const RowNumberCell = memo(function RowNumberCell({
   dragListeners,
   taskName = "",
 }: RowNumberCellProps): JSX.Element {
-  const densityConfig = useDensityConfig();
-
   const [isHovered, setIsHovered] = useState(false);
   const [hoveredControl, setHoveredControl] = useState<
     "drag" | "addAbove" | "addBelow" | null
@@ -155,8 +153,8 @@ export const RowNumberCell = memo(function RowNumberCell({
         display: "flex",
         alignItems: "center",
         justifyContent: "flex-end",
-        paddingRight: "8px",
-        transition: "background-color 0.1s ease",
+        paddingRight: SPACING[2],
+        transition: `background-color ${TRANSITIONS.fast}`,
         overflow: "visible", // Allow insert line to extend beyond cell
       }}
       onMouseEnter={handleMouseEnter}
@@ -239,7 +237,6 @@ export const RowNumberCell = memo(function RowNumberCell({
       {/* Excel-style double-line indicator for hidden rows below */}
       {hasHiddenBelow && (
         <HiddenRowIndicator
-          rowHeight={densityConfig.rowHeight}
           hiddenBelowCount={hiddenBelowCount}
           onUnhideBelow={onUnhideBelow}
           controlsColor={ROW_COLORS.controlsColor}
