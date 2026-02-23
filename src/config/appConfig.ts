@@ -11,4 +11,5 @@ export const APP_CONFIG = {
   githubUrl: "https://github.com/kitikonti/ownchart",
   sponsorUrl: "https://github.com/sponsors/kitikonti",
   websiteUrl: "https://wimmer.dev",
+  fileExtension: ".ownchart",
 } as const;

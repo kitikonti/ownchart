@@ -11,7 +11,10 @@ import { holidayService } from "../../services/holidayService";
 import { useDropdown } from "../../hooks/useDropdown";
 import { DropdownTrigger } from "../Toolbar/DropdownTrigger";
 import { DropdownPanel } from "../Toolbar/DropdownPanel";
-import { TOOLBAR } from "../../styles/design-tokens";
+import { TOOLBAR } from "../Toolbar/ToolbarPrimitives";
+
+const ICON_SIZE = TOOLBAR.iconSize;
+const PANEL_WIDTH = "280px";
 
 interface WorkingDaysDropdownProps {
   labelPriority?: number;
@@ -61,7 +64,7 @@ export function WorkingDaysDropdown({
       <DropdownTrigger
         isOpen={isOpen}
         onClick={toggle}
-        icon={<Briefcase size={TOOLBAR.iconSize} weight="light" />}
+        icon={<Briefcase size={ICON_SIZE} weight="light" />}
         label="Working Days"
         aria-label="Working Days"
         title="Working Days configuration"
@@ -70,7 +73,7 @@ export function WorkingDaysDropdown({
       />
 
       {isOpen && (
-        <DropdownPanel width="280px">
+        <DropdownPanel width={PANEL_WIDTH}>
           {/* Info text */}
           <div className="px-4 py-3 border-b border-neutral-200">
             <p className="text-xs text-neutral-500 leading-relaxed">

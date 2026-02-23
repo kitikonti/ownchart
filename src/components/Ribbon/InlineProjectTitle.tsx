@@ -5,6 +5,17 @@
 import { useState, useRef, useEffect } from "react";
 import { useChartStore } from "../../store/slices/chartSlice";
 import { useFileStore } from "../../store/slices/fileSlice";
+import { APP_CONFIG } from "../../config/appConfig";
+
+/** Width calculation constants for the auto-sizing input */
+const MIN_INPUT_WIDTH = 80;
+const CHAR_WIDTH_APPROX = 8;
+const INPUT_PADDING = 24;
+const MAX_INPUT_WIDTH = 300;
+
+function stripExtension(name: string): string {
+  return name.replace(APP_CONFIG.fileExtension, "");
+}
 
 interface InlineProjectTitleProps {
   triggerEdit?: boolean;
@@ -25,10 +36,10 @@ export function InlineProjectTitle({
   const isDirty = useFileStore((state) => state.isDirty);
 
   const displayName =
-    projectTitle || fileName?.replace(".ownchart", "") || "Untitled";
+    projectTitle || (fileName ? stripExtension(fileName) : "") || "Untitled";
 
   const handleClick = (): void => {
-    setDraft(projectTitle || fileName?.replace(".ownchart", "") || "");
+    setDraft(projectTitle || (fileName ? stripExtension(fileName) : "") || "");
     setIsEditing(true);
   };
 
@@ -51,6 +62,7 @@ export function InlineProjectTitle({
       handleClick();
       onEditTriggered?.();
     }
+    // Only re-run when triggerEdit changes — handler identity is irrelevant
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [triggerEdit]);
 
@@ -63,10 +75,7 @@ export function InlineProjectTitle({
   }, [isEditing]);
 
   return (
-    <div
-      className="absolute left-1/2 transform -translate-x-1/2 flex items-center h-full"
-      style={{ fontSize: "14px" }}
-    >
+    <div className="absolute left-1/2 transform -translate-x-1/2 flex items-center h-full text-sm">
       {isEditing ? (
         <input
           ref={inputRef}
@@ -77,8 +86,8 @@ export function InlineProjectTitle({
           onKeyDown={handleKeyDown}
           className="bg-white border border-brand-400 rounded px-2 py-0.5 text-sm text-neutral-800 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-brand-400"
           style={{
-            width: `${Math.max(80, draft.length * 8 + 24)}px`,
-            maxWidth: "300px",
+            width: `${Math.max(MIN_INPUT_WIDTH, draft.length * CHAR_WIDTH_APPROX + INPUT_PADDING)}px`,
+            maxWidth: `${MAX_INPUT_WIDTH}px`,
             textAlign: "center",
           }}
           aria-label="Project title"

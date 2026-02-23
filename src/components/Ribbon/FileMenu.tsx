@@ -12,6 +12,9 @@ import {
 } from "@phosphor-icons/react";
 import { useDropdown } from "../../hooks/useDropdown";
 import { DropdownPanel } from "../Toolbar/DropdownPanel";
+import { TOOLBAR } from "../Toolbar/ToolbarPrimitives";
+
+const ICON_SIZE = TOOLBAR.iconSizeMenu;
 
 interface FileMenuProps {
   onNew: () => void;
@@ -32,10 +35,12 @@ export function FileMenu({
 }: FileMenuProps): JSX.Element {
   const { isOpen, toggle, close, containerRef } = useDropdown();
 
-  const handleAction = (action: () => void) => () => {
-    action();
-    close();
-  };
+  const handleAction =
+    (action: () => void): (() => void) =>
+    () => {
+      action();
+      close();
+    };
 
   return (
     <div ref={containerRef} className="relative">
@@ -49,35 +54,63 @@ export function FileMenu({
       </button>
 
       {isOpen && (
-        <DropdownPanel minWidth="14rem">
-          <button className="file-menu-item" onClick={handleAction(onNew)}>
-            <File size={18} weight="light" />
+        <DropdownPanel
+          minWidth={TOOLBAR.fileMenuMinWidth}
+          role="menu"
+          aria-label="File menu"
+        >
+          <button
+            role="menuitem"
+            className="file-menu-item"
+            onClick={handleAction(onNew)}
+          >
+            <File size={ICON_SIZE} weight="light" />
             <span>New</span>
             <span className="file-menu-shortcut">Ctrl+Alt+N</span>
           </button>
-          <button className="file-menu-item" onClick={handleAction(onOpen)}>
-            <FolderOpen size={18} weight="light" />
+          <button
+            role="menuitem"
+            className="file-menu-item"
+            onClick={handleAction(onOpen)}
+          >
+            <FolderOpen size={ICON_SIZE} weight="light" />
             <span>Open</span>
             <span className="file-menu-shortcut">Ctrl+O</span>
           </button>
-          <button className="file-menu-item" onClick={handleAction(onSave)}>
-            <FloppyDisk size={18} weight="light" />
+          <button
+            role="menuitem"
+            className="file-menu-item"
+            onClick={handleAction(onSave)}
+          >
+            <FloppyDisk size={ICON_SIZE} weight="light" />
             <span>Save</span>
             <span className="file-menu-shortcut">Ctrl+S</span>
           </button>
-          <button className="file-menu-item" onClick={handleAction(onSaveAs)}>
-            <FloppyDisk size={18} weight="light" />
+          <button
+            role="menuitem"
+            className="file-menu-item"
+            onClick={handleAction(onSaveAs)}
+          >
+            <FloppyDisk size={ICON_SIZE} weight="light" />
             <span>Save As...</span>
             <span className="file-menu-shortcut">Ctrl+Shift+S</span>
           </button>
-          <button className="file-menu-item" onClick={handleAction(onRename)}>
-            <PencilSimple size={18} weight="light" />
+          <button
+            role="menuitem"
+            className="file-menu-item"
+            onClick={handleAction(onRename)}
+          >
+            <PencilSimple size={ICON_SIZE} weight="light" />
             <span>Rename</span>
             <span className="file-menu-shortcut">F2</span>
           </button>
-          <div className="file-menu-divider" />
-          <button className="file-menu-item" onClick={handleAction(onExport)}>
-            <Export size={18} weight="light" />
+          <div role="separator" className="file-menu-divider" />
+          <button
+            role="menuitem"
+            className="file-menu-item"
+            onClick={handleAction(onExport)}
+          >
+            <Export size={ICON_SIZE} weight="light" />
             <span>Export</span>
             <span className="file-menu-shortcut">Ctrl+E</span>
           </button>
