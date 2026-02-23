@@ -51,24 +51,34 @@ export async function loadFileIntoApp(file: {
 
   const { data } = parseResult;
 
-  // Load data into stores
-  useTaskStore.getState().setTasks(data.tasks);
-  useDependencyStore.getState().setDependencies(data.dependencies || []);
-  useUIStore.getState().resetExportOptions(data.exportSettings);
+  // Hydrate all stores inside a try/catch so a failure in any store
+  // method (e.g. updateScale with unexpected data) doesn't leave the
+  // app in a partially-loaded, inconsistent state.
+  try {
+    // Load data into stores
+    useTaskStore.getState().setTasks(data.tasks);
+    useDependencyStore.getState().setDependencies(data.dependencies || []);
+    useUIStore.getState().resetExportOptions(data.exportSettings);
 
-  // Apply view settings with defaults for older file versions
-  const viewSettings = applyViewSettingsDefaults(data.viewSettings);
-  applyViewSettings(viewSettings);
-  restoreColumnWidths(viewSettings);
+    // Apply view settings with defaults for older file versions
+    const viewSettings = applyViewSettingsDefaults(data.viewSettings);
+    applyViewSettings(viewSettings);
+    restoreColumnWidths(viewSettings);
 
-  // Update scale immediately with new tasks and zoom (before signalFileLoaded)
-  const chartStore = useChartStore.getState();
-  chartStore.updateScale(data.tasks);
-  chartStore.signalFileLoaded();
+    // Update scale immediately with new tasks and zoom (before signalFileLoaded)
+    const chartStore = useChartStore.getState();
+    chartStore.updateScale(data.tasks);
+    chartStore.signalFileLoaded();
 
-  // Reset file state
-  resetFileState(file.name, data.chartId, data.chartCreatedAt);
-  useHistoryStore.getState().clearHistory();
+    // Reset file state
+    resetFileState(file.name, data.chartId, data.chartCreatedAt);
+    useHistoryStore.getState().clearHistory();
+  } catch (e) {
+    return {
+      success: false,
+      error: `Failed to load file data: ${(e as Error).message}`,
+    };
+  }
 
   return {
     success: true,

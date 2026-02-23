@@ -14,44 +14,33 @@ import {
 
 describe('File Operations - Validation', () => {
   describe('Layer 1: Pre-Parse Validation', () => {
-    it('should reject files larger than 50MB', async () => {
-      const largeFile = new File(['x'], 'test.ownchart', {
-        type: 'application/json',
-      });
-      Object.defineProperty(largeFile, 'size', { value: 51 * 1024 * 1024 });
+    it('should reject files larger than 50MB', () => {
+      const largeFile = { name: 'test.ownchart', size: 51 * 1024 * 1024 };
 
-      await expect(validatePreParse(largeFile)).rejects.toThrow(
-        ValidationError
-      );
-      await expect(validatePreParse(largeFile)).rejects.toThrow(
+      expect(() => validatePreParse(largeFile)).toThrow(ValidationError);
+      expect(() => validatePreParse(largeFile)).toThrow(
         'exceeds limit of 50MB'
       );
     });
 
-    it('should accept files smaller than 50MB', async () => {
-      const validFile = new File(['{}'], 'test.ownchart', {
-        type: 'application/json',
-      });
+    it('should accept files smaller than 50MB', () => {
+      const validFile = { name: 'test.ownchart', size: 2 };
 
-      await expect(validatePreParse(validFile)).resolves.not.toThrow();
+      expect(() => validatePreParse(validFile)).not.toThrow();
     });
 
-    it('should reject files without .ownchart extension', async () => {
-      const wrongExtension = new File(['{}'], 'test.json', {
-        type: 'application/json',
-      });
+    it('should reject files without .ownchart extension', () => {
+      const wrongExtension = { name: 'test.json', size: 2 };
 
-      await expect(validatePreParse(wrongExtension)).rejects.toThrow(
+      expect(() => validatePreParse(wrongExtension)).toThrow(
         'must have .ownchart extension'
       );
     });
 
-    it('should accept files with .ownchart extension', async () => {
-      const validFile = new File(['{}'], 'test.ownchart', {
-        type: 'application/json',
-      });
+    it('should accept files with .ownchart extension', () => {
+      const validFile = { name: 'test.ownchart', size: 2 };
 
-      await expect(validatePreParse(validFile)).resolves.not.toThrow();
+      expect(() => validatePreParse(validFile)).not.toThrow();
     });
   });
 

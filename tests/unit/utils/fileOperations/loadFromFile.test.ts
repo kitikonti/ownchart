@@ -160,7 +160,7 @@ function makeFile(
 
 describe('loadFromFile', () => {
   beforeEach(() => {
-    vi.clearAllMocks();
+    vi.resetAllMocks();
   });
 
   // =========================================================================
@@ -691,6 +691,18 @@ describe('loadFromFile', () => {
       const tasks = mockSetTasks.mock.calls[0][0];
       expect(tasks[0].name).not.toContain('<script>');
       expect(tasks[0].name).toContain('Clean');
+    });
+
+    it('should return error when store hydration throws', async () => {
+      mockUpdateScale.mockImplementation(() => {
+        throw new Error('Scale calculation failed');
+      });
+
+      const content = JSON.stringify(createValidFileContent());
+      const result = await loadFileIntoApp(makeFile(content));
+
+      expect(result.success).toBe(false);
+      expect(result.error).toContain('Scale calculation failed');
     });
   });
 

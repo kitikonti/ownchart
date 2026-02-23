@@ -57,6 +57,7 @@ export function migrateGanttFile(file: GanttFile): GanttFile {
     }
 
     current = migration.migrate(current);
+    current = { ...current, fileVersion: migration.toVersion };
     currentVersion = migration.toVersion;
   }
 
@@ -93,4 +94,15 @@ export function isFromFuture(fileVersion: string): boolean {
 export function parseVersion(version: string): [number, number, number] {
   const parts = version.split(".").map(Number);
   return [parts[0] || 0, parts[1] || 0, parts[2] || 0];
+}
+
+/**
+ * Register a migration (for testing or dynamic migration loading).
+ * Returns an unregister function for cleanup.
+ */
+export function registerMigration(migration: Migration): () => void {
+  migrations.set(migration.fromVersion, migration);
+  return () => {
+    migrations.delete(migration.fromVersion);
+  };
 }

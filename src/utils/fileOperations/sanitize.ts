@@ -6,7 +6,17 @@
 import DOMPurify from "dompurify";
 import type { GanttFile, SerializedTask } from "./types";
 
-/** Task fields that contain non-content strings (IDs, dates, colors) — skip sanitization */
+/**
+ * Keys that could cause prototype pollution if copied to a new object.
+ * safeJsonParse (Layer 2) already strips these during parsing, but this
+ * provides defense-in-depth for non-JSON sources (tests, plugins, etc.).
+ */
+const DANGEROUS_KEYS = new Set(["__proto__", "constructor", "prototype"]);
+
+/**
+ * Task fields that contain non-content strings (IDs, dates, colors) — skip sanitization.
+ * @see KNOWN_TASK_KEYS in constants.ts for the related round-trip field set.
+ */
 const SKIP_SANITIZE_KEYS = new Set([
   "id",
   "startDate",
@@ -54,6 +64,7 @@ function sanitizeTask(task: SerializedTask): SerializedTask {
   const result: Record<string, unknown> = {};
 
   for (const [key, value] of Object.entries(task)) {
+    if (DANGEROUS_KEYS.has(key)) continue;
     if (SKIP_SANITIZE_KEYS.has(key)) {
       result[key] = value;
     } else if (typeof value === "string") {
@@ -77,6 +88,7 @@ function sanitizeObject(obj: Record<string, unknown>): Record<string, unknown> {
   const result: Record<string, unknown> = {};
 
   for (const [key, value] of Object.entries(obj)) {
+    if (DANGEROUS_KEYS.has(key)) continue;
     if (typeof value === "string") {
       result[key] = sanitizeString(value);
     } else if (Array.isArray(value)) {

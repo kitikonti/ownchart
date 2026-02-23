@@ -2,7 +2,11 @@
  * Shared constants for file operations (serialize + deserialize)
  */
 
-/** Known task field names — used to identify/filter unknownFields during round-trip */
+/**
+ * Known task field names — used to identify/filter unknownFields during round-trip.
+ * Must stay in sync with SerializedTask fields in types.ts.
+ * @see SKIP_SANITIZE_KEYS in sanitize.ts for the related sanitization skip-set.
+ */
 export const KNOWN_TASK_KEYS = new Set([
   "id",
   "name",

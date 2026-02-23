@@ -3,8 +3,7 @@
  * Forward-compatible file structure for .ownchart files
  */
 
-import type { TaskType } from "../../types/chart.types";
-import type { HexColor } from "../../types/branded.types";
+import type { Task, TaskType } from "../../types/chart.types";
 import type { Dependency as AppDependency } from "../../types/dependency.types";
 import type { ExportOptions } from "../export/types";
 import type {
@@ -146,21 +145,7 @@ export interface FileError {
 export interface DeserializeResult {
   success: boolean;
   data?: {
-    tasks: Array<{
-      id: string;
-      name: string;
-      startDate: string;
-      endDate: string;
-      duration: number;
-      progress: number;
-      color: HexColor;
-      order: number;
-      type?: TaskType;
-      parent?: string;
-      open?: boolean;
-      metadata: Record<string, unknown>;
-      __unknownFields?: Record<string, unknown>;
-    }>;
+    tasks: TaskWithExtras[];
     dependencies: AppDependency[]; // Sprint 1.4
     viewSettings: ViewSettings;
     exportSettings?: ExportOptions; // Sprint 1.6
@@ -185,6 +170,17 @@ export interface SerializedDependency {
 
 // Re-export app Dependency type for convenience
 export type { AppDependency as Dependency };
+
+/**
+ * Task extended with round-trip metadata.
+ * Used at the serialize/deserialize boundary to preserve fields
+ * that the app doesn't model directly (timestamps, future-version fields).
+ */
+export type TaskWithExtras = Task & {
+  __unknownFields?: Record<string, unknown>;
+  createdAt?: string;
+  updatedAt?: string;
+};
 
 // Future type placeholders
 export interface Resource {

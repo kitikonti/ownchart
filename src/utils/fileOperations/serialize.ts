@@ -9,6 +9,7 @@ import type {
   GanttFile,
   SerializedTask,
   SerializedDependency,
+  TaskWithExtras,
   ViewSettings,
 } from "./types";
 import { FILE_VERSION } from "../../config/version";
@@ -52,12 +53,14 @@ export function serializeToGanttFile(
       dependencies: dependencies.map(serializeDependency),
       viewSettings: { ...viewSettings },
       exportSettings: options.exportSettings,
+      // Chart-level timestamps: when this chart was first created / last edited
       metadata: {
         createdAt: options.chartCreatedAt || now,
         updatedAt: now,
       },
     },
 
+    // File-level timestamps: when this .ownchart file was written to disk
     metadata: {
       created: now,
       modified: now,
@@ -76,15 +79,13 @@ export function serializeToGanttFile(
 }
 
 /**
- * Convert Task to SerializedTask
- * Preserves __unknownFields for round-trip compatibility
+ * Convert Task to SerializedTask.
+ * Preserves __unknownFields for round-trip compatibility.
+ * Tasks from deserialization may carry extra fields (see TaskWithExtras);
+ * the assertion is safe because we only read, never write, the extras.
  */
 function serializeTask(task: Task, now: string): SerializedTask {
-  const taskWithExtra = task as Task & {
-    __unknownFields?: Record<string, unknown>;
-    createdAt?: string;
-    updatedAt?: string;
-  };
+  const taskWithExtra = task as TaskWithExtras;
 
   const serialized: SerializedTask = {
     id: task.id,

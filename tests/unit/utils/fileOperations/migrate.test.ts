@@ -3,12 +3,13 @@
  * Tests version parsing, migration detection, and file migration logic
  */
 
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, afterEach } from 'vitest';
 import {
   migrateGanttFile,
   needsMigration,
   isFromFuture,
   parseVersion,
+  registerMigration,
 } from '../../../../src/utils/fileOperations/migrate';
 import type { GanttFile } from '../../../../src/utils/fileOperations/types';
 
@@ -141,6 +142,13 @@ describe('File Operations - Migration', () => {
   });
 
   describe('migrateGanttFile', () => {
+    const cleanups: (() => void)[] = [];
+
+    afterEach(() => {
+      cleanups.forEach((fn) => fn());
+      cleanups.length = 0;
+    });
+
     it('should return file unchanged when already at current version', () => {
       const file = createMinimalGanttFile({ fileVersion: '1.0.0' });
 
@@ -155,6 +163,76 @@ describe('File Operations - Migration', () => {
       const result = migrateGanttFile(file);
 
       expect(result).toBe(file);
+    });
+
+    it('should update fileVersion on the result after migration', () => {
+      // Register a migration from 0.9.0 -> 1.0.0
+      cleanups.push(
+        registerMigration({
+          fromVersion: '0.9.0',
+          toVersion: '1.0.0',
+          description: 'Test migration',
+          migrate: (file) => ({ ...file, schemaVersion: 2 }),
+        })
+      );
+
+      const file = createMinimalGanttFile({ fileVersion: '0.9.0' });
+      const result = migrateGanttFile(file);
+
+      expect(result.fileVersion).toBe('1.0.0');
+      expect(result.schemaVersion).toBe(2);
+    });
+
+    it('should chain multiple migrations sequentially', () => {
+      // Register 0.8.0 -> 0.9.0 -> 1.0.0
+      cleanups.push(
+        registerMigration({
+          fromVersion: '0.8.0',
+          toVersion: '0.9.0',
+          description: 'First step',
+          migrate: (file) => ({ ...file, schemaVersion: 2 }),
+        })
+      );
+      cleanups.push(
+        registerMigration({
+          fromVersion: '0.9.0',
+          toVersion: '1.0.0',
+          description: 'Second step',
+          migrate: (file) => ({ ...file, schemaVersion: 3 }),
+        })
+      );
+
+      const file = createMinimalGanttFile({ fileVersion: '0.8.0' });
+      const result = migrateGanttFile(file);
+
+      expect(result.fileVersion).toBe('1.0.0');
+      expect(result.schemaVersion).toBe(3);
+    });
+
+    it('should throw on cyclic migration chains', () => {
+      // Register A -> B -> A cycle (neither reaches FILE_VERSION "1.0.0")
+      cleanups.push(
+        registerMigration({
+          fromVersion: '0.1.0',
+          toVersion: '0.2.0',
+          description: 'Cycle step 1',
+          migrate: (file) => file,
+        })
+      );
+      cleanups.push(
+        registerMigration({
+          fromVersion: '0.2.0',
+          toVersion: '0.1.0',
+          description: 'Cycle step 2',
+          migrate: (file) => file,
+        })
+      );
+
+      const file = createMinimalGanttFile({ fileVersion: '0.1.0' });
+
+      expect(() => migrateGanttFile(file)).toThrow(
+        /Migration exceeded 100 steps/
+      );
     });
   });
 });

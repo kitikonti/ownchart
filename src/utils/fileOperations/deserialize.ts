@@ -2,7 +2,7 @@
  * Deserialization utilities for converting GanttFile JSON to app state
  */
 
-import type { Task, TaskType } from "../../types/chart.types";
+import type { TaskType } from "../../types/chart.types";
 import type { HexColor } from "../../types/branded.types";
 import type { Dependency, DependencyType } from "../../types/dependency.types";
 import type {
@@ -10,6 +10,7 @@ import type {
   SerializedTask,
   SerializedDependency,
   DeserializeResult,
+  TaskWithExtras,
 } from "./types";
 import {
   validatePreParse,
@@ -33,17 +34,17 @@ import { KNOWN_TASK_KEYS } from "./constants";
  * @param fileSize - File size in bytes (for Layer 1 validation)
  * @returns DeserializeResult with success/error/warnings
  */
-export async function deserializeGanttFile(
+export function deserializeGanttFile(
   content: string,
   fileName: string,
   fileSize?: number
-): Promise<DeserializeResult> {
+): DeserializeResult {
   const warnings: string[] = [];
 
   try {
     // Layer 1: Pre-parse validation (file size, extension)
     if (fileSize !== undefined) {
-      await validatePreParse({ name: fileName, size: fileSize } as File);
+      validatePreParse({ name: fileName, size: fileSize });
     }
 
     // Layer 2: Safe JSON parsing
@@ -158,11 +159,7 @@ export async function deserializeGanttFile(
  * Convert SerializedTask to Task
  * Preserves unknown fields for round-trip compatibility
  */
-function deserializeTask(serialized: SerializedTask): Task & {
-  __unknownFields?: Record<string, unknown>;
-  createdAt?: string;
-  updatedAt?: string;
-} {
+function deserializeTask(serialized: SerializedTask): TaskWithExtras {
   // Migrate milestones with empty endDate (pre-fix backward compat)
   const endDate =
     serialized.type === "milestone" && !serialized.endDate
@@ -170,11 +167,7 @@ function deserializeTask(serialized: SerializedTask): Task & {
       : serialized.endDate;
 
   // Extract known fields
-  const task: Task & {
-    __unknownFields?: Record<string, unknown>;
-    createdAt?: string;
-    updatedAt?: string;
-  } = {
+  const task: TaskWithExtras = {
     id: serialized.id,
     name: serialized.name,
     startDate: serialized.startDate,

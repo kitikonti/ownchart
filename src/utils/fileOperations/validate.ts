@@ -29,9 +29,10 @@ export class ValidationError extends Error {
 
 /**
  * Layer 1: Pre-Parse Validation
- * Check file size and extension before parsing
+ * Check file size and extension before parsing.
+ * Accepts anything with { name, size } so callers don't need a real File object.
  */
-export async function validatePreParse(file: File): Promise<void> {
+export function validatePreParse(file: { name: string; size: number }): void {
   // File size check
   if (file.size > MAX_FILE_SIZE) {
     throw new ValidationError(
