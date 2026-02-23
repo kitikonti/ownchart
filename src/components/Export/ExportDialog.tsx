@@ -17,6 +17,10 @@ import { ExportPreview } from "./ExportPreview";
 import { useExportPreview } from "../../hooks/useExportPreview";
 import { useExportDialog } from "../../hooks/useExportDialog";
 
+/** Layout constants for the export dialog */
+const CONTENT_HEIGHT = "h-[65vh]";
+const OPTIONS_PANEL_WIDTH = "w-[480px]";
+
 /** Format-specific button configuration */
 const FORMAT_CONFIG: Record<
   ExportFormat,
@@ -44,31 +48,32 @@ function ExportDialogFooter({
 }: ExportDialogFooterProps): JSX.Element {
   const currentFormat = FORMAT_CONFIG[selectedExportFormat];
   const FormatIcon = currentFormat.icon;
+  const showProgress = isExporting && exportProgress > 0;
 
   return (
     <div className="flex items-center w-full gap-3">
-      {isExporting && exportProgress > 0 && (
-        <div className="flex items-center gap-2 flex-1">
-          <div
-            className="w-32 h-2 bg-neutral-200 rounded-full overflow-hidden"
-            role="progressbar"
-            aria-valuenow={exportProgress}
-            aria-valuemin={0}
-            aria-valuemax={100}
-            aria-label="Export progress"
-          >
+      <div className="flex-1">
+        {showProgress && (
+          <div className="flex items-center gap-2">
             <div
-              className="h-full bg-brand-600 transition-all duration-300"
-              style={{ width: `${exportProgress}%` }}
-            />
+              className="w-32 h-2 bg-neutral-200 rounded-full overflow-hidden"
+              role="progressbar"
+              aria-valuenow={exportProgress}
+              aria-valuemin={0}
+              aria-valuemax={100}
+              aria-label="Export progress"
+            >
+              <div
+                className="h-full bg-brand-600 transition-all duration-300"
+                style={{ width: `${exportProgress}%` }}
+              />
+            </div>
+            <span className="text-xs text-neutral-500 font-mono">
+              {exportProgress}%
+            </span>
           </div>
-          <span className="text-xs text-neutral-500 font-mono">
-            {exportProgress}%
-          </span>
-        </div>
-      )}
-
-      {!(isExporting && exportProgress > 0) && <div className="flex-1" />}
+        )}
+      </div>
 
       <Button
         variant="secondary"
@@ -100,7 +105,7 @@ function ExportDialogFooter({
 /**
  * Export Dialog component.
  */
-export function ExportDialog(): JSX.Element | null {
+export function ExportDialog(): JSX.Element {
   const {
     isExportDialogOpen,
     closeExportDialog,
@@ -167,7 +172,7 @@ export function ExportDialog(): JSX.Element | null {
       footerStyle="figma"
       contentPadding="p-0"
     >
-      <div className="flex h-[65vh]">
+      <div className={`flex ${CONTENT_HEIGHT}`}>
         {/* Left: Preview Panel */}
         <div className="flex-1 bg-neutral-50 p-6 border-r border-neutral-200">
           <ExportPreview
@@ -190,15 +195,14 @@ export function ExportDialog(): JSX.Element | null {
 
           {showDimensions && (hasWarning || hasInfo) && (
             <div className="mt-4">
-              {hasWarning && (
+              {hasWarning ? (
                 <Alert variant="warning">
                   <span className="font-medium">
                     Export exceeds {EXPORT_MAX_SAFE_WIDTH.toLocaleString()}px -
                     may cause issues
                   </span>
                 </Alert>
-              )}
-              {hasInfo && !hasWarning && (
+              ) : (
                 <Alert variant="neutral">
                   <span className="font-medium">
                     Large export - generation may take a moment
@@ -210,7 +214,9 @@ export function ExportDialog(): JSX.Element | null {
         </div>
 
         {/* Right: Options Panel */}
-        <div className="w-[480px] flex-shrink-0 overflow-y-auto p-8 scrollbar-thin">
+        <div
+          className={`${OPTIONS_PANEL_WIDTH} flex-shrink-0 overflow-y-auto p-8 scrollbar-thin`}
+        >
           <div className="space-y-8">
             <ExportFormatSelector
               selectedFormat={selectedExportFormat}
