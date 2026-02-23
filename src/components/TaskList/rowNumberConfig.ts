@@ -7,6 +7,7 @@ import { COLORS, ROW_NUMBER, TYPOGRAPHY } from "../../styles/design-tokens";
 
 // ── Layout constants ────────────────────────────────────────────────────────
 export const CONTROLS_WIDTH = 20;
+export const DRAG_HANDLE_ICON_SIZE = 16;
 export const SELECTION_RADIUS = "3px";
 
 // Row number font sits between TYPOGRAPHY sm (12px) and base (14px)

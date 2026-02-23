@@ -19,6 +19,7 @@ import { InsertLine } from "./InsertLine";
 import { dragState } from "./dragSelectionState";
 import {
   CONTROLS_WIDTH,
+  DRAG_HANDLE_ICON_SIZE,
   SELECTION_RADIUS,
   ROW_NUMBER_FONT_SIZE,
   ROW_NUMBER_FONT_WEIGHT,
@@ -58,9 +59,12 @@ interface RowNumberCellProps {
   dragAttributes?: DraggableAttributes;
   /** DnD listeners for drag handle */
   dragListeners?: SyntheticListenerMap;
-  /** Task name for accessibility */
+  /** Task name for drag handle accessibility label */
   taskName?: string;
 }
+
+/** Which hover control is active — used for cursor and highlight state. */
+type HoveredControl = "drag" | "addAbove" | "addBelow" | null;
 
 export const RowNumberCell = memo(function RowNumberCell({
   rowNumber,
@@ -76,12 +80,10 @@ export const RowNumberCell = memo(function RowNumberCell({
   rowHeight,
   dragAttributes,
   dragListeners,
-  taskName = "",
+  taskName,
 }: RowNumberCellProps): JSX.Element {
   const [isHovered, setIsHovered] = useState(false);
-  const [hoveredControl, setHoveredControl] = useState<
-    "drag" | "addAbove" | "addBelow" | null
-  >(null);
+  const [hoveredControl, setHoveredControl] = useState<HoveredControl>(null);
 
   // Handle drag selection — select range as mouse moves over rows.
   // This callback is stored in dragState.onDragSelect during mousedown on THIS row,
@@ -108,6 +110,12 @@ export const RowNumberCell = memo(function RowNumberCell({
     }
 
     onSelectRow(taskId, e.shiftKey, e.ctrlKey || e.metaKey);
+  };
+
+  // Clear hover state when mouse leaves the cell
+  const handleMouseLeave = (): void => {
+    setIsHovered(false);
+    setHoveredControl(null);
   };
 
   // Extend selection when mouse enters during drag
@@ -158,10 +166,7 @@ export const RowNumberCell = memo(function RowNumberCell({
         overflow: "visible", // Allow insert line to extend beyond cell
       }}
       onMouseEnter={handleMouseEnter}
-      onMouseLeave={() => {
-        setIsHovered(false);
-        setHoveredControl(null);
-      }}
+      onMouseLeave={handleMouseLeave}
       onMouseDown={handleMouseDown}
       role="gridcell"
       tabIndex={-1}
@@ -193,10 +198,10 @@ export const RowNumberCell = memo(function RowNumberCell({
             tabIndex={dragAttributes ? undefined : 0}
             {...dragAttributes}
             {...dragListeners}
-            aria-label={`Drag to reorder ${taskName || `row ${rowNumber}`}`}
+            aria-label={`Drag to reorder ${taskName ?? `row ${rowNumber}`}`}
           >
             <DotsSixVertical
-              size={16}
+              size={DRAG_HANDLE_ICON_SIZE}
               weight="bold"
               color={
                 isSelected ? ROW_COLORS.textSelected : ROW_COLORS.textInactive

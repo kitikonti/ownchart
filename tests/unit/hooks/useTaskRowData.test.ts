@@ -1,5 +1,5 @@
 /**
- * Unit tests for TaskTable helper functions.
+ * Unit tests for useTaskRowData helper functions.
  * Tests getClipboardPosition, getSelectionPosition, and getHiddenGap
  * which compute derived row state for the task table.
  */
@@ -9,9 +9,9 @@ import {
   getClipboardPosition,
   getSelectionPosition,
   getHiddenGap,
-} from "../../../src/components/TaskList/TaskTable";
+} from "../../../src/hooks/useTaskRowData";
 
-describe("TaskTable helpers", () => {
+describe("useTaskRowData helpers", () => {
   // ── getClipboardPosition ───────────────────────────────────────────────
 
   describe("getClipboardPosition", () => {
