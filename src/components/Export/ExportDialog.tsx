@@ -20,6 +20,8 @@ import { useExportDialog } from "../../hooks/useExportDialog";
 /** Layout constants for the export dialog */
 const CONTENT_HEIGHT = "h-[65vh]";
 const OPTIONS_PANEL_WIDTH = "w-[480px]";
+const CANCEL_BUTTON_WIDTH = "max-w-[140px]";
+const EXPORT_BUTTON_WIDTH = "max-w-[180px]";
 
 /** Format-specific button configuration */
 const FORMAT_CONFIG: Record<
@@ -79,7 +81,7 @@ function ExportDialogFooter({
         variant="secondary"
         onClick={onCancel}
         disabled={isExporting}
-        className="flex-1 max-w-[140px]"
+        className={`flex-1 ${CANCEL_BUTTON_WIDTH}`}
       >
         Cancel
       </Button>
@@ -94,7 +96,7 @@ function ExportDialogFooter({
             <FormatIcon size={16} weight="regular" />
           )
         }
-        className="flex-1 max-w-[180px]"
+        className={`flex-1 ${EXPORT_BUTTON_WIDTH}`}
       >
         {isExporting ? "Exporting..." : currentFormat.label}
       </Button>
