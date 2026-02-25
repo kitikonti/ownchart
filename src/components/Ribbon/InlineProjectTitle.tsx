@@ -11,9 +11,12 @@ import { APP_CONFIG } from "../../config/appConfig";
 
 const MIN_INPUT_WIDTH = 80;
 const MAX_INPUT_WIDTH = 300;
+const MEASUREMENT_PADDING_PX = 2;
+const UNTITLED_LABEL = "Untitled";
 
 function stripExtension(name: string): string {
-  return name.replace(APP_CONFIG.fileExtension, "");
+  const ext = APP_CONFIG.fileExtension;
+  return name.endsWith(ext) ? name.slice(0, -ext.length) : name;
 }
 
 /** Derive the editable title value (empty string fallback for editing). */
@@ -43,7 +46,9 @@ export function InlineProjectTitle({
   const fileName = useFileStore((state) => state.fileName);
   const isDirty = useFileStore((state) => state.isDirty);
 
-  const displayName = getEditableTitle(projectTitle, fileName) || "Untitled";
+  const displayName =
+    getEditableTitle(projectTitle, fileName) || UNTITLED_LABEL;
+  const isPlaceholder = displayName === UNTITLED_LABEL;
 
   const handleClick = (): void => {
     setDraft(getEditableTitle(projectTitle, fileName));
@@ -85,7 +90,7 @@ export function InlineProjectTitle({
   const measuredWidth = measureRef.current?.scrollWidth ?? 0;
   const inputWidth = Math.min(
     MAX_INPUT_WIDTH,
-    Math.max(MIN_INPUT_WIDTH, measuredWidth + 2)
+    Math.max(MIN_INPUT_WIDTH, measuredWidth + MEASUREMENT_PADDING_PX)
   );
 
   return (
@@ -118,7 +123,7 @@ export function InlineProjectTitle({
           type="button"
           onClick={handleClick}
           title="Click to edit project title"
-          className="hover:bg-neutral-200/50 rounded px-2 py-0.5 transition-colors cursor-text text-neutral-400"
+          className={`hover:bg-neutral-200/50 rounded px-2 py-0.5 transition-colors cursor-text ${isPlaceholder ? "text-neutral-400 italic" : "text-neutral-600"}`}
         >
           {displayName}
           {isDirty && <span className="text-neutral-500">*</span>}

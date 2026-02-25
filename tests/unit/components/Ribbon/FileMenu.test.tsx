@@ -182,4 +182,24 @@ describe("FileMenu", () => {
       expect(item).toHaveAttribute("tabindex", "-1");
     }
   });
+
+  it("moves focus to item on mouse hover", () => {
+    render(<FileMenu {...createHandlers()} />);
+    const items = openMenu();
+
+    fireEvent.mouseEnter(items[3]);
+    expect(items[3]).toHaveFocus();
+  });
+
+  it("keyboard activation uses hovered item after mouse enter", () => {
+    const handlers = createHandlers();
+    render(<FileMenu {...handlers} />);
+    const items = openMenu();
+
+    // Hover over Save (index 2), then press Enter
+    fireEvent.mouseEnter(items[2]);
+    fireEvent.keyDown(items[2], { key: "Enter" });
+
+    expect(handlers.onSave).toHaveBeenCalledOnce();
+  });
 });

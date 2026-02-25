@@ -117,4 +117,25 @@ describe("InlineProjectTitle", () => {
     fireEvent.click(screen.getByText("Test"));
     expect(screen.getByLabelText("Project title")).toBeInTheDocument();
   });
+
+  it("uses muted styling for Untitled placeholder", () => {
+    render(<InlineProjectTitle />);
+    const button = screen.getByText("Untitled").closest("button")!;
+    expect(button.className).toContain("text-neutral-400");
+    expect(button.className).toContain("italic");
+  });
+
+  it("uses normal contrast for real project titles", () => {
+    useChartStore.setState({ projectTitle: "My Plan" });
+    render(<InlineProjectTitle />);
+    const button = screen.getByText("My Plan").closest("button")!;
+    expect(button.className).toContain("text-neutral-600");
+    expect(button.className).not.toContain("italic");
+  });
+
+  it("strips extension only from end of filename", () => {
+    useFileStore.setState({ fileName: "my.ownchart.backup.ownchart" });
+    render(<InlineProjectTitle />);
+    expect(screen.getByText("my.ownchart.backup")).toBeInTheDocument();
+  });
 });

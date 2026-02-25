@@ -70,7 +70,11 @@ export function WorkingDaysDropdown({
       />
 
       {isOpen && (
-        <DropdownPanel width={PANEL_WIDTH}>
+        <DropdownPanel
+          width={PANEL_WIDTH}
+          role="group"
+          aria-label="Working Days configuration"
+        >
           {/* Info text */}
           <div className="px-4 py-3 border-b border-neutral-200">
             <p className="text-xs text-neutral-500 leading-relaxed">
@@ -89,7 +93,7 @@ export function WorkingDaysDropdown({
                 <Checkbox
                   checked={workingDaysConfig[key]}
                   onChange={(checked) => handleConfigChange(key, checked)}
-                  aria-label={label}
+                  aria-label={getLabel(key, label)}
                 />
                 <span className="text-sm text-neutral-700">
                   {getLabel(key, label)}

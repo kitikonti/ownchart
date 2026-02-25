@@ -47,7 +47,7 @@ export function FileMenu({
   onRename,
   onExport,
 }: FileMenuProps): JSX.Element {
-  const { isOpen, toggle, close, containerRef } = useDropdown();
+  const { isOpen, toggle, close, containerRef, triggerRef } = useDropdown();
   const menuRef = useRef<HTMLDivElement>(null);
   const focusedIndexRef = useRef(0);
 
@@ -150,7 +150,7 @@ export function FileMenu({
           const item = items[focusedIndexRef.current];
           if (item) {
             item.action();
-            close();
+            close(true);
           }
           break;
         }
@@ -162,6 +162,7 @@ export function FileMenu({
   return (
     <div ref={containerRef} className="relative">
       <button
+        ref={triggerRef}
         onClick={toggle}
         className={`ribbon-tab ribbon-tab-file ${isOpen ? "ribbon-tab-active" : ""}`}
         aria-haspopup="true"
@@ -176,8 +177,7 @@ export function FileMenu({
           role="menu"
           aria-label="File menu"
         >
-          {/* eslint-disable-next-line jsx-a11y/no-static-element-interactions */}
-          <div ref={menuRef} onKeyDown={handleKeyDown}>
+          <div ref={menuRef}>
             {items.map((item, index) => (
               <div key={item.id}>
                 <button
@@ -185,9 +185,11 @@ export function FileMenu({
                   role="menuitem"
                   tabIndex={-1}
                   className="file-menu-item"
+                  onKeyDown={handleKeyDown}
+                  onMouseEnter={() => focusItem(index)}
                   onClick={() => {
                     item.action();
-                    close();
+                    close(true);
                   }}
                 >
                   {item.icon}

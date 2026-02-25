@@ -96,6 +96,26 @@ describe("WorkingDaysDropdown", () => {
     ).toBeInTheDocument();
   });
 
+  it("holidays checkbox aria-label includes country name", () => {
+    useChartStore.setState({ holidayRegion: "DE" });
+    render(<WorkingDaysDropdown />);
+    fireEvent.click(screen.getByTitle("Working Days configuration"));
+
+    expect(
+      screen.getByLabelText("Exclude Holidays (Germany)")
+    ).toBeInTheDocument();
+  });
+
+  it("dropdown panel has ARIA role and label", () => {
+    render(<WorkingDaysDropdown />);
+    fireEvent.click(screen.getByTitle("Working Days configuration"));
+
+    const panel = screen.getByRole("group", {
+      name: "Working Days configuration",
+    });
+    expect(panel).toBeInTheDocument();
+  });
+
   it("reads workingDaysMode from store for isActive indicator", () => {
     // When mode is derived as active, the trigger should reflect it
     useChartStore.setState({

@@ -19,8 +19,11 @@ interface UseDropdownReturn<T extends HTMLElement = HTMLDivElement> {
   isOpen: boolean;
   setIsOpen: (open: boolean) => void;
   toggle: () => void;
-  close: () => void;
+  /** Close the dropdown. Pass `true` to return focus to the trigger element. */
+  close: (returnFocus?: boolean) => void;
   containerRef: React.RefObject<T>;
+  /** Callback ref — attach to the trigger element for focus return on close. */
+  triggerRef: (el: HTMLElement | null) => void;
   triggerProps: {
     onClick: () => void;
     "aria-haspopup": "true" | "listbox";
@@ -33,11 +36,23 @@ export function useDropdown<T extends HTMLElement = HTMLDivElement>(
 ): UseDropdownReturn<T> {
   const [isOpen, setIsOpenState] = useState(false);
   const containerRef = useRef<T>(null) as React.RefObject<T>;
+  const triggerElRef = useRef<HTMLElement | null>(null);
 
-  const close = useCallback(() => {
-    setIsOpenState(false);
-    options?.onClose?.();
-  }, [options]);
+  // Callback ref for the trigger element — compatible with any HTML element type
+  const triggerRef = useCallback((el: HTMLElement | null) => {
+    triggerElRef.current = el;
+  }, []);
+
+  const close = useCallback(
+    (returnFocus?: boolean) => {
+      setIsOpenState(false);
+      options?.onClose?.();
+      if (returnFocus && triggerElRef.current) {
+        requestAnimationFrame(() => triggerElRef.current?.focus());
+      }
+    },
+    [options]
+  );
 
   const setIsOpen = useCallback(
     (open: boolean) => {
@@ -83,7 +98,7 @@ export function useDropdown<T extends HTMLElement = HTMLDivElement>(
 
     const handleKeyDown = (e: KeyboardEvent): void => {
       if (e.key === "Escape") {
-        close();
+        close(true);
       }
     };
 
@@ -105,6 +120,7 @@ export function useDropdown<T extends HTMLElement = HTMLDivElement>(
     toggle,
     close,
     containerRef,
+    triggerRef,
     triggerProps,
   };
 }
