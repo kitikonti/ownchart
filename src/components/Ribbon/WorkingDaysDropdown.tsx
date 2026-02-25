@@ -12,9 +12,18 @@ import { useDropdown } from "../../hooks/useDropdown";
 import { DropdownTrigger } from "../Toolbar/DropdownTrigger";
 import { DropdownPanel } from "../Toolbar/DropdownPanel";
 import { TOOLBAR } from "../Toolbar/ToolbarPrimitives";
+import type { WorkingDaysConfig } from "../../types/preferences.types";
 
 const ICON_SIZE = TOOLBAR.iconSize;
 const PANEL_WIDTH = "280px";
+
+type ConfigKey = keyof WorkingDaysConfig;
+
+const EXCLUSION_OPTIONS: { key: ConfigKey; label: string }[] = [
+  { key: "excludeSaturday", label: "Exclude Saturdays" },
+  { key: "excludeSunday", label: "Exclude Sundays" },
+  { key: "excludeHolidays", label: "Exclude Holidays" },
+];
 
 interface WorkingDaysDropdownProps {
   labelPriority?: number;
@@ -29,14 +38,8 @@ export function WorkingDaysDropdown({
   const setWorkingDaysConfig = useChartStore(
     (state) => state.setWorkingDaysConfig
   );
-  const setWorkingDaysMode = useChartStore((state) => state.setWorkingDaysMode);
+  const workingDaysMode = useChartStore((state) => state.workingDaysMode);
   const holidayRegion = useChartStore((state) => state.holidayRegion);
-
-  // Derive workingDaysMode from config
-  const isAnyExcluded =
-    workingDaysConfig.excludeSaturday ||
-    workingDaysConfig.excludeSunday ||
-    workingDaysConfig.excludeHolidays;
 
   // Get current country name for display
   const currentCountryName = useMemo(() => {
@@ -45,19 +48,13 @@ export function WorkingDaysDropdown({
     return country?.name || holidayRegion;
   }, [holidayRegion]);
 
-  const handleConfigChange = (
-    key: "excludeSaturday" | "excludeSunday" | "excludeHolidays",
-    checked: boolean
-  ): void => {
-    const newConfig = { ...workingDaysConfig, [key]: checked };
-    setWorkingDaysConfig(newConfig);
-    // Derive workingDaysMode: true if any exclusion is checked
-    const anyExcluded =
-      newConfig.excludeSaturday ||
-      newConfig.excludeSunday ||
-      newConfig.excludeHolidays;
-    setWorkingDaysMode(anyExcluded);
+  const handleConfigChange = (key: ConfigKey, checked: boolean): void => {
+    // Store auto-derives workingDaysMode from config
+    setWorkingDaysConfig({ [key]: checked });
   };
+
+  const getLabel = (key: ConfigKey, label: string): string =>
+    key === "excludeHolidays" ? `${label} (${currentCountryName})` : label;
 
   return (
     <div ref={containerRef} className="relative">
@@ -68,7 +65,7 @@ export function WorkingDaysDropdown({
         label="Working Days"
         aria-label="Working Days"
         title="Working Days configuration"
-        isActive={isAnyExcluded}
+        isActive={workingDaysMode}
         labelPriority={labelPriority}
       />
 
@@ -84,42 +81,21 @@ export function WorkingDaysDropdown({
 
           {/* Checkboxes */}
           <div className="px-4 py-3 space-y-3">
-            <label className="flex items-center gap-3 cursor-pointer">
-              <Checkbox
-                checked={workingDaysConfig.excludeSaturday}
-                onChange={(checked) =>
-                  handleConfigChange("excludeSaturday", checked)
-                }
-                aria-label="Exclude Saturdays"
-              />
-              <span className="text-sm text-neutral-700">
-                Exclude Saturdays
-              </span>
-            </label>
-
-            <label className="flex items-center gap-3 cursor-pointer">
-              <Checkbox
-                checked={workingDaysConfig.excludeSunday}
-                onChange={(checked) =>
-                  handleConfigChange("excludeSunday", checked)
-                }
-                aria-label="Exclude Sundays"
-              />
-              <span className="text-sm text-neutral-700">Exclude Sundays</span>
-            </label>
-
-            <label className="flex items-center gap-3 cursor-pointer">
-              <Checkbox
-                checked={workingDaysConfig.excludeHolidays}
-                onChange={(checked) =>
-                  handleConfigChange("excludeHolidays", checked)
-                }
-                aria-label="Exclude Holidays"
-              />
-              <span className="text-sm text-neutral-700">
-                Exclude Holidays ({currentCountryName})
-              </span>
-            </label>
+            {EXCLUSION_OPTIONS.map(({ key, label }) => (
+              <label
+                key={key}
+                className="flex items-center gap-3 cursor-pointer"
+              >
+                <Checkbox
+                  checked={workingDaysConfig[key]}
+                  onChange={(checked) => handleConfigChange(key, checked)}
+                  aria-label={label}
+                />
+                <span className="text-sm text-neutral-700">
+                  {getLabel(key, label)}
+                </span>
+              </label>
+            ))}
           </div>
         </DropdownPanel>
       )}

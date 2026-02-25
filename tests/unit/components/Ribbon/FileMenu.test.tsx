@@ -13,6 +13,12 @@ function createHandlers(): Record<string, ReturnType<typeof vi.fn>> {
   };
 }
 
+/** Helper: open the menu and return all menu items. */
+function openMenu(): HTMLElement[] {
+  fireEvent.click(screen.getByText("File"));
+  return screen.getAllByRole("menuitem");
+}
+
 describe("FileMenu", () => {
   it("renders File button", () => {
     render(<FileMenu {...createHandlers()} />);
@@ -95,5 +101,85 @@ describe("FileMenu", () => {
     fireEvent.click(screen.getByText(label));
 
     expect(handlers[handlerName]).toHaveBeenCalledOnce();
+  });
+
+  // --- Keyboard navigation (WAI-ARIA Menu pattern) ---
+
+  it("moves focus down with ArrowDown and wraps around", () => {
+    render(<FileMenu {...createHandlers()} />);
+    const items = openMenu();
+
+    // Auto-focus lands on first item; ArrowDown → second
+    fireEvent.keyDown(items[0], { key: "ArrowDown" });
+    expect(items[1]).toHaveFocus();
+
+    // Continue navigating down sequentially to reach last item
+    fireEvent.keyDown(items[1], { key: "ArrowDown" });
+    fireEvent.keyDown(items[2], { key: "ArrowDown" });
+    fireEvent.keyDown(items[3], { key: "ArrowDown" });
+    fireEvent.keyDown(items[4], { key: "ArrowDown" });
+    expect(items[5]).toHaveFocus();
+
+    // ArrowDown from last → wraps to first
+    fireEvent.keyDown(items[5], { key: "ArrowDown" });
+    expect(items[0]).toHaveFocus();
+  });
+
+  it("moves focus up with ArrowUp and wraps around", () => {
+    render(<FileMenu {...createHandlers()} />);
+    const items = openMenu();
+
+    // ArrowUp from first → wraps to last
+    fireEvent.keyDown(items[0], { key: "ArrowUp" });
+    expect(items[5]).toHaveFocus();
+
+    // ArrowUp from last → second to last
+    fireEvent.keyDown(items[5], { key: "ArrowUp" });
+    expect(items[4]).toHaveFocus();
+  });
+
+  it("jumps to first/last item with Home/End", () => {
+    render(<FileMenu {...createHandlers()} />);
+    const items = openMenu();
+
+    fireEvent.keyDown(items[0], { key: "End" });
+    expect(items[5]).toHaveFocus();
+
+    fireEvent.keyDown(items[5], { key: "Home" });
+    expect(items[0]).toHaveFocus();
+  });
+
+  it("activates item with Enter key", () => {
+    const handlers = createHandlers();
+    render(<FileMenu {...handlers} />);
+    const items = openMenu();
+
+    // Navigate to Open (index 1)
+    fireEvent.keyDown(items[0], { key: "ArrowDown" });
+    fireEvent.keyDown(items[1], { key: "Enter" });
+
+    expect(handlers.onOpen).toHaveBeenCalledOnce();
+    // Menu should close after activation
+    expect(screen.queryByRole("menu")).not.toBeInTheDocument();
+  });
+
+  it("activates item with Space key", () => {
+    const handlers = createHandlers();
+    render(<FileMenu {...handlers} />);
+    const items = openMenu();
+
+    fireEvent.keyDown(items[0], { key: " " });
+
+    expect(handlers.onNew).toHaveBeenCalledOnce();
+    expect(screen.queryByRole("menu")).not.toBeInTheDocument();
+  });
+
+  it("sets tabIndex=-1 on menu items for managed focus", () => {
+    render(<FileMenu {...createHandlers()} />);
+    const items = openMenu();
+
+    for (const item of items) {
+      expect(item).toHaveAttribute("tabindex", "-1");
+    }
   });
 });

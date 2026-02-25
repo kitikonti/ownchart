@@ -2,7 +2,6 @@ import { describe, it, expect, beforeEach, vi } from "vitest";
 import { render, screen, fireEvent } from "@testing-library/react";
 import { WorkingDaysDropdown } from "../../../../src/components/Ribbon/WorkingDaysDropdown";
 import { useChartStore } from "../../../../src/store/slices/chartSlice";
-import { DEFAULT_WORKING_DAYS_CONFIG } from "../../../../src/config/workingDaysConfig";
 
 vi.mock("../../../../src/services/holidayService", () => ({
   holidayService: {
@@ -17,7 +16,11 @@ vi.mock("../../../../src/services/holidayService", () => ({
 describe("WorkingDaysDropdown", () => {
   beforeEach(() => {
     useChartStore.setState({
-      workingDaysConfig: { ...DEFAULT_WORKING_DAYS_CONFIG },
+      workingDaysConfig: {
+        excludeSaturday: false,
+        excludeSunday: false,
+        excludeHolidays: false,
+      },
       workingDaysMode: false,
       holidayRegion: "AT",
     });
@@ -53,23 +56,15 @@ describe("WorkingDaysDropdown", () => {
     expect(screen.getByText("Exclude Holidays (XX)")).toBeInTheDocument();
   });
 
-  it("toggles excludeSaturday and enables workingDaysMode", () => {
-    useChartStore.setState({
-      workingDaysConfig: {
-        excludeSaturday: false,
-        excludeSunday: false,
-        excludeHolidays: false,
-      },
-      workingDaysMode: false,
-    });
+  it("toggles excludeSaturday and store auto-derives workingDaysMode", () => {
     render(<WorkingDaysDropdown />);
     fireEvent.click(screen.getByTitle("Working Days configuration"));
 
-    const saturdayCheckbox = screen.getByLabelText("Exclude Saturdays");
-    fireEvent.click(saturdayCheckbox);
+    fireEvent.click(screen.getByLabelText("Exclude Saturdays"));
 
     const state = useChartStore.getState();
     expect(state.workingDaysConfig.excludeSaturday).toBe(true);
+    // workingDaysMode is auto-derived by the store
     expect(state.workingDaysMode).toBe(true);
   });
 
@@ -85,8 +80,7 @@ describe("WorkingDaysDropdown", () => {
     render(<WorkingDaysDropdown />);
     fireEvent.click(screen.getByTitle("Working Days configuration"));
 
-    const saturdayCheckbox = screen.getByLabelText("Exclude Saturdays");
-    fireEvent.click(saturdayCheckbox);
+    fireEvent.click(screen.getByLabelText("Exclude Saturdays"));
 
     const state = useChartStore.getState();
     expect(state.workingDaysConfig.excludeSaturday).toBe(false);
@@ -100,5 +94,22 @@ describe("WorkingDaysDropdown", () => {
     expect(
       screen.getByText(/Tasks skip non-working days/)
     ).toBeInTheDocument();
+  });
+
+  it("reads workingDaysMode from store for isActive indicator", () => {
+    // When mode is derived as active, the trigger should reflect it
+    useChartStore.setState({
+      workingDaysConfig: {
+        excludeSaturday: true,
+        excludeSunday: true,
+        excludeHolidays: false,
+      },
+      workingDaysMode: true,
+    });
+    render(<WorkingDaysDropdown />);
+
+    // The trigger button should have the active styling (border)
+    const trigger = screen.getByTitle("Working Days configuration");
+    expect(trigger.closest("button")).toHaveClass("dropdown-trigger-active");
   });
 });

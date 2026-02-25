@@ -683,10 +683,15 @@ export const useChartStore = create<ChartState & ChartActions>()(
       });
     },
 
-    // Set working days configuration
+    // Set working days configuration (auto-derives workingDaysMode)
     setWorkingDaysConfig: (config: Partial<WorkingDaysConfig>): void => {
       set((state) => {
         Object.assign(state.workingDaysConfig, config);
+        // Derive workingDaysMode: true if any exclusion is checked
+        state.workingDaysMode =
+          state.workingDaysConfig.excludeSaturday ||
+          state.workingDaysConfig.excludeSunday ||
+          state.workingDaysConfig.excludeHolidays;
       });
     },
 
@@ -950,10 +955,16 @@ export const useChartStore = create<ChartState & ChartActions>()(
           state.showProgress = settings.showProgress;
         if (settings.taskLabelPosition !== undefined)
           state.taskLabelPosition = settings.taskLabelPosition;
-        if (settings.workingDaysMode !== undefined)
-          state.workingDaysMode = settings.workingDaysMode;
-        if (settings.workingDaysConfig !== undefined)
+        if (settings.workingDaysConfig !== undefined) {
           state.workingDaysConfig = settings.workingDaysConfig;
+          // Derive workingDaysMode from config (ignore persisted mode flag)
+          state.workingDaysMode =
+            settings.workingDaysConfig.excludeSaturday ||
+            settings.workingDaysConfig.excludeSunday ||
+            settings.workingDaysConfig.excludeHolidays;
+        } else if (settings.workingDaysMode !== undefined) {
+          state.workingDaysMode = settings.workingDaysMode;
+        }
         if (settings.holidayRegion !== undefined)
           state.holidayRegion = settings.holidayRegion;
         if (settings.projectTitle !== undefined)
