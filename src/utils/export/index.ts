@@ -98,7 +98,16 @@ export {
   calculateOptimalColumnWidth,
   calculateOptimalColumnWidths,
 } from "./calculations";
-export { calculatePdfFitToWidth } from "./pdfLayout";
+export {
+  calculatePdfFitToWidth,
+  PDF_HEADER_FOOTER_RESERVED_MM,
+  hasHeaderFooterContent,
+  getReservedSpace,
+  formatPageSizeName,
+  getPageDimensions,
+  getMargins,
+  mmToPx,
+} from "./pdfLayout";
 
 import {
   captureChart,

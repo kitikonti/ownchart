@@ -16,6 +16,10 @@ import {
   calculateScale,
   hexToRgb,
   truncateText,
+  hasHeaderFooterContent,
+  getReservedSpace,
+  formatPageSizeName,
+  PDF_HEADER_FOOTER_RESERVED_MM,
   PT_PER_MM,
   PT_PER_PX,
   MM_PER_PX,
@@ -377,6 +381,108 @@ describe("pdfLayout", () => {
     it("handles very small maxWidth", () => {
       const result = truncateText("Hello World", 5, 12);
       expect(result.length).toBeLessThanOrEqual(5);
+    });
+  });
+
+  describe("hasHeaderFooterContent", () => {
+    it("returns false when nothing is enabled", () => {
+      expect(
+        hasHeaderFooterContent({
+          showProjectName: false,
+          showAuthor: false,
+          showExportDate: false,
+        })
+      ).toBe(false);
+    });
+
+    it("returns true when showProjectName is enabled", () => {
+      expect(
+        hasHeaderFooterContent({
+          showProjectName: true,
+          showAuthor: false,
+          showExportDate: false,
+        })
+      ).toBe(true);
+    });
+
+    it("returns true when showAuthor is enabled", () => {
+      expect(
+        hasHeaderFooterContent({
+          showProjectName: false,
+          showAuthor: true,
+          showExportDate: false,
+        })
+      ).toBe(true);
+    });
+
+    it("returns true when showExportDate is enabled", () => {
+      expect(
+        hasHeaderFooterContent({
+          showProjectName: false,
+          showAuthor: false,
+          showExportDate: true,
+        })
+      ).toBe(true);
+    });
+
+    it("returns true when all fields are enabled", () => {
+      expect(
+        hasHeaderFooterContent({
+          showProjectName: true,
+          showAuthor: true,
+          showExportDate: true,
+        })
+      ).toBe(true);
+    });
+  });
+
+  describe("getReservedSpace", () => {
+    it("returns 0 when no content is enabled", () => {
+      expect(
+        getReservedSpace({
+          showProjectName: false,
+          showAuthor: false,
+          showExportDate: false,
+        })
+      ).toBe(0);
+    });
+
+    it("returns PDF_HEADER_FOOTER_RESERVED_MM when content is enabled", () => {
+      expect(
+        getReservedSpace({
+          showProjectName: true,
+          showAuthor: false,
+          showExportDate: false,
+        })
+      ).toBe(PDF_HEADER_FOOTER_RESERVED_MM);
+    });
+
+    it("returns the same value regardless of how many fields are enabled", () => {
+      const oneField = getReservedSpace({
+        showProjectName: true,
+        showAuthor: false,
+        showExportDate: false,
+      });
+      const allFields = getReservedSpace({
+        showProjectName: true,
+        showAuthor: true,
+        showExportDate: true,
+      });
+      expect(oneField).toBe(allFields);
+    });
+  });
+
+  describe("formatPageSizeName", () => {
+    it("formats standard page sizes correctly", () => {
+      expect(formatPageSizeName("a4")).toBe("A4");
+      expect(formatPageSizeName("a3")).toBe("A3");
+      expect(formatPageSizeName("a2")).toBe("A2");
+      expect(formatPageSizeName("a1")).toBe("A1");
+      expect(formatPageSizeName("a0")).toBe("A0");
+      expect(formatPageSizeName("letter")).toBe("Letter");
+      expect(formatPageSizeName("legal")).toBe("Legal");
+      expect(formatPageSizeName("tabloid")).toBe("Tabloid");
+      expect(formatPageSizeName("custom")).toBe("Custom");
     });
   });
 });

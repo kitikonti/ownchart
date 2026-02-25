@@ -3,13 +3,25 @@
  * Shows a paper frame with correct aspect ratio, margins, header/footer.
  */
 
+import { useMemo } from "react";
 import { Spinner, WarningCircle, Warning } from "@phosphor-icons/react";
 import type {
   PdfExportOptions,
-  PdfPageSize,
+  PdfHeaderFooter,
   ReadabilityStatus,
 } from "../../utils/export/types";
-import { PDF_PAGE_SIZES, PDF_MARGIN_PRESETS } from "../../utils/export/types";
+import {
+  getPageDimensions,
+  getMargins,
+  getReservedSpace,
+  hasHeaderFooterContent,
+  mmToPx,
+  formatPageSizeName,
+} from "../../utils/export/pdfLayout";
+
+// =============================================================================
+// Types
+// =============================================================================
 
 export interface PdfPreviewProps {
   /** Data URL of the preview image */
@@ -26,62 +38,171 @@ export interface PdfPreviewProps {
   readabilityStatus?: ReadabilityStatus;
 }
 
+// =============================================================================
+// Helpers
+// =============================================================================
+
 /**
- * Get page dimensions in mm for a given page size and orientation.
+ * Build left/right text arrays for a header or footer section.
  */
-function getPageDimensions(
-  pageSize: PdfPageSize,
-  orientation: "landscape" | "portrait",
-  customSize?: { width: number; height: number }
-): { width: number; height: number } {
-  if (pageSize === "custom" && customSize) {
-    return orientation === "landscape"
-      ? customSize
-      : { width: customSize.height, height: customSize.width };
+function buildSectionContent(
+  section: PdfHeaderFooter,
+  projectTitle: string | undefined,
+  projectAuthor: string | undefined,
+  formattedDate: string
+): { left: string[]; right: string[] } {
+  const left: string[] = [];
+  const right: string[] = [];
+
+  if (section.showProjectName && projectTitle) {
+    left.push(projectTitle);
+  }
+  if (section.showAuthor && projectAuthor) {
+    right.push(projectAuthor);
+  }
+  if (section.showExportDate) {
+    right.push(formattedDate);
   }
 
-  const baseDims = PDF_PAGE_SIZES[pageSize as Exclude<PdfPageSize, "custom">];
-  if (!baseDims) {
-    // Fallback to A4
-    return orientation === "landscape"
-      ? { width: 297, height: 210 }
-      : { width: 210, height: 297 };
-  }
-
-  // PDF_PAGE_SIZES are in landscape orientation
-  return orientation === "landscape"
-    ? baseDims
-    : { width: baseDims.height, height: baseDims.width };
+  return { left, right };
 }
 
 /**
- * Format page size display name.
+ * Calculate scale factor when fitting chart into the PDF content area.
+ * Returns a value in [0, 1] — 1 means the chart fits without scaling.
  */
-function formatPageSizeName(pageSize: PdfPageSize): string {
-  const names: Record<PdfPageSize, string> = {
-    a4: "A4",
-    a3: "A3",
-    a2: "A2",
-    a1: "A1",
-    a0: "A0",
-    letter: "Letter",
-    legal: "Legal",
-    tabloid: "Tabloid",
-    custom: "Custom",
-  };
-  return names[pageSize] || pageSize.toUpperCase();
+function calculateScaleFactor(
+  chartWidth: number,
+  chartHeight: number,
+  contentWidthMm: number,
+  chartAreaHeightMm: number
+): number {
+  if (chartWidth <= 0 || chartHeight <= 0) return 1;
+
+  const chartAreaWidthPx = mmToPx(contentWidthMm);
+  const chartAreaHeightPx = mmToPx(chartAreaHeightMm);
+  const scaleX = chartAreaWidthPx / chartWidth;
+  const scaleY = chartAreaHeightPx / chartHeight;
+  return Math.min(scaleX, scaleY, 1);
 }
 
-/**
- * Format today's date.
- */
-function formatDate(): string {
-  return new Date().toLocaleDateString(undefined, {
-    year: "numeric",
-    month: "short",
-    day: "numeric",
-  });
+// =============================================================================
+// Sub-components
+// =============================================================================
+
+/** Dot-separated row in the header or footer strip */
+function SectionStrip({
+  left,
+  right,
+  border,
+}: {
+  left: string[];
+  right: string[];
+  border: "top" | "bottom";
+}): JSX.Element {
+  const borderClass =
+    border === "bottom"
+      ? "border-b border-neutral-200"
+      : "border-t border-neutral-200";
+  return (
+    <div
+      className={`flex items-center justify-between px-1 py-0.5 ${borderClass} shrink-0`}
+    >
+      <span className="text-[6px] text-neutral-600 truncate">
+        {left.join(" \u00B7 ")}
+      </span>
+      <span className="text-[6px] text-neutral-600 truncate">
+        {right.join(" \u00B7 ")}
+      </span>
+    </div>
+  );
 }
+
+/** Info panel below the paper frame showing zoom, page size, and warnings */
+function PdfPreviewInfo({
+  effectiveZoom,
+  pdfOptions,
+  pageDims,
+  scaleFactor,
+  readabilityStatus,
+}: {
+  effectiveZoom: number | undefined;
+  pdfOptions: PdfExportOptions;
+  pageDims: { width: number; height: number };
+  scaleFactor: number;
+  readabilityStatus: ReadabilityStatus | undefined;
+}): JSX.Element {
+  const scalePercent = Math.round(scaleFactor * 100);
+  const SCALE_WARNING_THRESHOLD = 0.5;
+
+  return (
+    <div className="mt-4 space-y-2">
+      {/* Single row with dot separators */}
+      <div className="text-xs text-neutral-600">
+        <span className="font-medium text-neutral-900">
+          {effectiveZoom !== undefined
+            ? `${Math.round(effectiveZoom * 100)}%`
+            : "\u2014"}
+        </span>
+        {" zoom"}
+        <span className="mx-1.5 text-neutral-300">&middot;</span>
+        <span className="font-medium text-neutral-900">
+          {formatPageSizeName(pdfOptions.pageSize)}{" "}
+          {pdfOptions.orientation === "landscape" ? "Landscape" : "Portrait"}
+        </span>
+        <span className="mx-1.5 text-neutral-300">&middot;</span>
+        <span className="font-medium text-neutral-900">
+          {pageDims.width}&times;{pageDims.height}
+        </span>
+        {" mm"}
+      </div>
+
+      {/* Readability Indicator - only show warnings/critical */}
+      {readabilityStatus && readabilityStatus.level !== "good" && (
+        <div
+          className={`flex items-center gap-2.5 px-4 py-3 rounded ${
+            readabilityStatus.level === "warning"
+              ? "bg-amber-50 border border-amber-200"
+              : "bg-red-50 border border-red-200"
+          }`}
+        >
+          <Warning
+            size={16}
+            weight="fill"
+            className={
+              readabilityStatus.level === "warning"
+                ? "text-amber-600"
+                : "text-red-600"
+            }
+          />
+          <span
+            className={`text-xs font-semibold ${
+              readabilityStatus.level === "warning"
+                ? "text-amber-700"
+                : "text-red-700"
+            }`}
+          >
+            {readabilityStatus.message}
+          </span>
+        </div>
+      )}
+
+      {/* Scale Warning - if content needs significant scaling to fit page */}
+      {scaleFactor < SCALE_WARNING_THRESHOLD && (
+        <div className="flex items-center gap-2.5 px-4 py-3 rounded bg-amber-50 border border-amber-200">
+          <WarningCircle size={16} weight="fill" className="text-amber-600" />
+          <span className="text-xs font-semibold text-amber-700">
+            Content scaled to {scalePercent}% &mdash; consider larger page size
+          </span>
+        </div>
+      )}
+    </div>
+  );
+}
+
+// =============================================================================
+// Main Component
+// =============================================================================
 
 /**
  * PdfPreview component for PDF export preview.
@@ -98,78 +219,54 @@ export function PdfPreview({
   effectiveZoom,
   readabilityStatus,
 }: PdfPreviewProps): JSX.Element {
-  // Get page and margin dimensions
-  const pageDims = getPageDimensions(
-    pdfOptions.pageSize,
-    pdfOptions.orientation,
-    pdfOptions.customPageSize
-  );
-  const margins =
-    pdfOptions.customMargins ||
-    PDF_MARGIN_PRESETS[pdfOptions.marginPreset] ||
-    PDF_MARGIN_PRESETS.normal;
+  // Use canonical layout utilities — single source of truth with pdfExport.ts
+  const pageDims = getPageDimensions(pdfOptions);
+  const margins = getMargins(pdfOptions);
 
-  // Calculate aspect ratio for paper frame
   const aspectRatio = pageDims.width / pageDims.height;
-
-  // Calculate content area (after margins)
   const contentWidthMm = pageDims.width - margins.left - margins.right;
   const contentHeightMm = pageDims.height - margins.top - margins.bottom;
 
-  // Calculate scale factor if chart doesn't fit
-  const hasHeader =
-    pdfOptions.header.showProjectName ||
-    pdfOptions.header.showAuthor ||
-    pdfOptions.header.showExportDate;
-  const hasFooter =
-    pdfOptions.footer.showProjectName ||
-    pdfOptions.footer.showAuthor ||
-    pdfOptions.footer.showExportDate;
-
-  // Header/footer take up space in mm (must match pdfExport.ts reserved space)
-  const headerHeightMm = hasHeader ? 10 : 0;
-  const footerHeightMm = hasFooter ? 10 : 0;
+  const hasHeader = hasHeaderFooterContent(pdfOptions.header);
+  const hasFooter = hasHeaderFooterContent(pdfOptions.footer);
+  const headerHeightMm = getReservedSpace(pdfOptions.header);
+  const footerHeightMm = getReservedSpace(pdfOptions.footer);
   const chartAreaHeightMm = contentHeightMm - headerHeightMm - footerHeightMm;
 
-  // Calculate scale factor if chart needs to be scaled down
-  // Using mm to pixels: 1mm ≈ 3.78 px at 96 DPI
-  const mmToPx = 3.78;
-  const chartAreaWidthPx = contentWidthMm * mmToPx;
-  const chartAreaHeightPx = chartAreaHeightMm * mmToPx;
+  const scaleFactor = calculateScaleFactor(
+    chartDimensions.width,
+    chartDimensions.height,
+    contentWidthMm,
+    chartAreaHeightMm
+  );
 
-  let scaleFactor = 1;
-  if (chartDimensions.width > 0 && chartDimensions.height > 0) {
-    const scaleX = chartAreaWidthPx / chartDimensions.width;
-    const scaleY = chartAreaHeightPx / chartDimensions.height;
-    scaleFactor = Math.min(scaleX, scaleY, 1);
-  }
-  const scalePercent = Math.round(scaleFactor * 100);
+  // Stable formatted date — only recalculate when pdfOptions identity changes
+  const formattedDate = useMemo(
+    () =>
+      new Date().toLocaleDateString(undefined, {
+        year: "numeric",
+        month: "short",
+        day: "numeric",
+      }),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [pdfOptions]
+  );
 
-  // Build header content
-  const headerLeft: string[] = [];
-  const headerRight: string[] = [];
-  if (pdfOptions.header.showProjectName && projectTitle) {
-    headerLeft.push(projectTitle);
-  }
-  if (pdfOptions.header.showAuthor && projectAuthor) {
-    headerRight.push(projectAuthor);
-  }
-  if (pdfOptions.header.showExportDate) {
-    headerRight.push(formatDate());
-  }
+  const headerContent = buildSectionContent(
+    pdfOptions.header,
+    projectTitle,
+    projectAuthor,
+    formattedDate
+  );
+  const footerContent = buildSectionContent(
+    pdfOptions.footer,
+    projectTitle,
+    projectAuthor,
+    formattedDate
+  );
 
-  // Build footer content (same layout as header: title left, author+date right)
-  const footerLeft: string[] = [];
-  const footerRight: string[] = [];
-  if (pdfOptions.footer.showProjectName && projectTitle) {
-    footerLeft.push(projectTitle);
-  }
-  if (pdfOptions.footer.showAuthor && projectAuthor) {
-    footerRight.push(projectAuthor);
-  }
-  if (pdfOptions.footer.showExportDate) {
-    footerRight.push(formatDate());
-  }
+  // Margin padding as percentages of page dimensions for responsive scaling
+  const marginPadding = `${(margins.top / pageDims.height) * 100}% ${(margins.right / pageDims.width) * 100}% ${(margins.bottom / pageDims.height) * 100}% ${(margins.left / pageDims.width) * 100}%`;
 
   return (
     <div className="flex flex-col h-full">
@@ -196,30 +293,23 @@ export function PdfPreview({
           {/* Margin visualization */}
           <div
             className="absolute inset-0 flex flex-col"
-            style={{
-              padding: `${(margins.top / pageDims.height) * 100}% ${(margins.right / pageDims.width) * 100}% ${(margins.bottom / pageDims.height) * 100}% ${(margins.left / pageDims.width) * 100}%`,
-            }}
+            style={{ padding: marginPadding }}
           >
             {/* Margin border (dashed) */}
             <div className="absolute inset-0 border border-dashed border-neutral-200 pointer-events-none" />
 
             {/* Content area */}
             <div className="flex flex-col h-full">
-              {/* Header */}
               {hasHeader && (
-                <div className="flex items-center justify-between px-1 py-0.5 border-b border-neutral-200 shrink-0">
-                  <span className="text-[6px] text-neutral-600 truncate">
-                    {headerLeft.join(" \u00B7 ")}
-                  </span>
-                  <span className="text-[6px] text-neutral-600 truncate">
-                    {headerRight.join(" \u00B7 ")}
-                  </span>
-                </div>
+                <SectionStrip
+                  left={headerContent.left}
+                  right={headerContent.right}
+                  border="bottom"
+                />
               )}
 
               {/* Chart Content Area */}
               <div className="flex-1 flex items-start justify-center relative min-h-0 overflow-hidden">
-                {/* Loading State */}
                 {isRendering && (
                   <div className="absolute inset-0 bg-white/80 flex flex-col items-center justify-center z-10">
                     <Spinner
@@ -233,7 +323,6 @@ export function PdfPreview({
                   </div>
                 )}
 
-                {/* Error State */}
                 {error && !isRendering && (
                   <div className="absolute inset-0 bg-white flex flex-col items-center justify-center z-10 p-2">
                     <WarningCircle
@@ -247,7 +336,6 @@ export function PdfPreview({
                   </div>
                 )}
 
-                {/* Preview Image */}
                 {!error && previewDataUrl && (
                   <img
                     src={previewDataUrl}
@@ -256,7 +344,6 @@ export function PdfPreview({
                   />
                 )}
 
-                {/* Placeholder */}
                 {!previewDataUrl && !isRendering && !error && (
                   <div className="flex items-center justify-center">
                     <div className="w-3/4 h-1/2 bg-neutral-100 rounded flex items-center justify-center">
@@ -268,84 +355,25 @@ export function PdfPreview({
                 )}
               </div>
 
-              {/* Footer */}
               {hasFooter && (
-                <div className="flex items-center justify-between px-1 py-0.5 border-t border-neutral-200 shrink-0">
-                  <span className="text-[6px] text-neutral-600 truncate">
-                    {footerLeft.join(" \u00B7 ")}
-                  </span>
-                  <span className="text-[6px] text-neutral-600 truncate">
-                    {footerRight.join(" \u00B7 ")}
-                  </span>
-                </div>
+                <SectionStrip
+                  left={footerContent.left}
+                  right={footerContent.right}
+                  border="top"
+                />
               )}
             </div>
           </div>
         </div>
       </div>
 
-      {/* Info Panel - Compact */}
-      <div className="mt-4 space-y-2">
-        {/* Single row with dot separators */}
-        <div className="text-xs text-neutral-600">
-          <span className="font-medium text-neutral-900">
-            {effectiveZoom !== undefined
-              ? `${Math.round(effectiveZoom * 100)}%`
-              : "—"}
-          </span>
-          {" zoom"}
-          <span className="mx-1.5 text-neutral-300">·</span>
-          <span className="font-medium text-neutral-900">
-            {formatPageSizeName(pdfOptions.pageSize)}{" "}
-            {pdfOptions.orientation === "landscape" ? "Landscape" : "Portrait"}
-          </span>
-          <span className="mx-1.5 text-neutral-300">·</span>
-          <span className="font-medium text-neutral-900">
-            {pageDims.width}×{pageDims.height}
-          </span>
-          {" mm"}
-        </div>
-
-        {/* Readability Indicator - only show warnings/critical */}
-        {readabilityStatus && readabilityStatus.level !== "good" && (
-          <div
-            className={`flex items-center gap-2.5 px-4 py-3 rounded ${
-              readabilityStatus.level === "warning"
-                ? "bg-amber-50 border border-amber-200"
-                : "bg-red-50 border border-red-200"
-            }`}
-          >
-            <Warning
-              size={16}
-              weight="fill"
-              className={
-                readabilityStatus.level === "warning"
-                  ? "text-amber-600"
-                  : "text-red-600"
-              }
-            />
-            <span
-              className={`text-xs font-semibold ${
-                readabilityStatus.level === "warning"
-                  ? "text-amber-700"
-                  : "text-red-700"
-              }`}
-            >
-              {readabilityStatus.message}
-            </span>
-          </div>
-        )}
-
-        {/* Scale Warning - if content needs significant scaling to fit page */}
-        {scaleFactor < 0.5 && (
-          <div className="flex items-center gap-2.5 px-4 py-3 rounded bg-amber-50 border border-amber-200">
-            <WarningCircle size={16} weight="fill" className="text-amber-600" />
-            <span className="text-xs font-semibold text-amber-700">
-              Content scaled to {scalePercent}% — consider larger page size
-            </span>
-          </div>
-        )}
-      </div>
+      <PdfPreviewInfo
+        effectiveZoom={effectiveZoom}
+        pdfOptions={pdfOptions}
+        pageDims={pageDims}
+        scaleFactor={scaleFactor}
+        readabilityStatus={readabilityStatus}
+      />
     </div>
   );
 }
