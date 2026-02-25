@@ -3,7 +3,6 @@
  * Shows a paper frame with correct aspect ratio, margins, header/footer.
  */
 
-import { useMemo } from "react";
 import { Spinner, WarningCircle, Warning } from "@phosphor-icons/react";
 import type {
   PdfExportOptions,
@@ -87,19 +86,27 @@ function calculateScaleFactor(
 }
 
 // =============================================================================
+// Constants
+// =============================================================================
+
+/** Warn when chart content must be scaled below this factor to fit the page */
+const SCALE_WARNING_THRESHOLD = 0.5;
+
+/** Middle dot separator for header/footer text items */
+const DOT_SEPARATOR = " \u00B7 ";
+
+// =============================================================================
 // Sub-components
 // =============================================================================
 
-/** Dot-separated row in the header or footer strip */
-function SectionStrip({
-  left,
-  right,
-  border,
-}: {
+interface SectionStripProps {
   left: string[];
   right: string[];
   border: "top" | "bottom";
-}): JSX.Element {
+}
+
+/** Dot-separated row in the header or footer strip */
+function SectionStrip({ left, right, border }: SectionStripProps): JSX.Element {
   const borderClass =
     border === "bottom"
       ? "border-b border-neutral-200"
@@ -109,13 +116,21 @@ function SectionStrip({
       className={`flex items-center justify-between px-1 py-0.5 ${borderClass} shrink-0`}
     >
       <span className="text-[6px] text-neutral-600 truncate">
-        {left.join(" \u00B7 ")}
+        {left.join(DOT_SEPARATOR)}
       </span>
       <span className="text-[6px] text-neutral-600 truncate">
-        {right.join(" \u00B7 ")}
+        {right.join(DOT_SEPARATOR)}
       </span>
     </div>
   );
+}
+
+interface PdfPreviewInfoProps {
+  effectiveZoom: number | undefined;
+  pdfOptions: PdfExportOptions;
+  pageDims: { width: number; height: number };
+  scaleFactor: number;
+  readabilityStatus: ReadabilityStatus | undefined;
 }
 
 /** Info panel below the paper frame showing zoom, page size, and warnings */
@@ -125,15 +140,8 @@ function PdfPreviewInfo({
   pageDims,
   scaleFactor,
   readabilityStatus,
-}: {
-  effectiveZoom: number | undefined;
-  pdfOptions: PdfExportOptions;
-  pageDims: { width: number; height: number };
-  scaleFactor: number;
-  readabilityStatus: ReadabilityStatus | undefined;
-}): JSX.Element {
+}: PdfPreviewInfoProps): JSX.Element {
   const scalePercent = Math.round(scaleFactor * 100);
-  const SCALE_WARNING_THRESHOLD = 0.5;
 
   return (
     <div className="mt-4 space-y-2">
@@ -169,6 +177,7 @@ function PdfPreviewInfo({
           <Warning
             size={16}
             weight="fill"
+            aria-hidden="true"
             className={
               readabilityStatus.level === "warning"
                 ? "text-amber-600"
@@ -190,7 +199,12 @@ function PdfPreviewInfo({
       {/* Scale Warning - if content needs significant scaling to fit page */}
       {scaleFactor < SCALE_WARNING_THRESHOLD && (
         <div className="flex items-center gap-2.5 px-4 py-3 rounded bg-amber-50 border border-amber-200">
-          <WarningCircle size={16} weight="fill" className="text-amber-600" />
+          <WarningCircle
+            size={16}
+            weight="fill"
+            aria-hidden="true"
+            className="text-amber-600"
+          />
           <span className="text-xs font-semibold text-amber-700">
             Content scaled to {scalePercent}% &mdash; consider larger page size
           </span>
@@ -240,17 +254,11 @@ export function PdfPreview({
     chartAreaHeightMm
   );
 
-  // Stable formatted date — only recalculate when pdfOptions identity changes
-  const formattedDate = useMemo(
-    () =>
-      new Date().toLocaleDateString(undefined, {
-        year: "numeric",
-        month: "short",
-        day: "numeric",
-      }),
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    [pdfOptions]
-  );
+  const formattedDate = new Date().toLocaleDateString(undefined, {
+    year: "numeric",
+    month: "short",
+    day: "numeric",
+  });
 
   const headerContent = buildSectionContent(
     pdfOptions.header,
@@ -311,9 +319,14 @@ export function PdfPreview({
               {/* Chart Content Area */}
               <div className="flex-1 flex items-start justify-center relative min-h-0 overflow-hidden">
                 {isRendering && (
-                  <div className="absolute inset-0 bg-white/80 flex flex-col items-center justify-center z-10">
+                  <div
+                    className="absolute inset-0 bg-white/80 flex flex-col items-center justify-center z-10"
+                    aria-live="polite"
+                    role="status"
+                  >
                     <Spinner
                       size={20}
+                      aria-hidden="true"
                       className="animate-spin text-brand-600"
                       weight="regular"
                     />
@@ -327,6 +340,7 @@ export function PdfPreview({
                   <div className="absolute inset-0 bg-white flex flex-col items-center justify-center z-10 p-2">
                     <WarningCircle
                       size={16}
+                      aria-hidden="true"
                       className="text-red-500"
                       weight="fill"
                     />

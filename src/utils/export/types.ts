@@ -61,7 +61,6 @@ export interface PdfHeaderFooter {
   showProjectName: boolean;
   showAuthor: boolean;
   showExportDate: boolean;
-  customText?: string;
 }
 
 /** PDF-specific export options */
