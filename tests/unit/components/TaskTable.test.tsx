@@ -266,7 +266,7 @@ describe("TaskTable", () => {
       render(<TaskTable />);
       expect(screen.getByText("3 rows hidden —")).toBeInTheDocument();
       expect(
-        screen.getByRole("button", { name: "show all" })
+        screen.getByRole("button", { name: /show all/i })
       ).toBeInTheDocument();
     });
 
@@ -314,7 +314,7 @@ describe("TaskTable", () => {
       });
 
       render(<TaskTable />);
-      fireEvent.click(screen.getByRole("button", { name: "show all" }));
+      fireEvent.click(screen.getByRole("button", { name: /show all/i }));
       expect(mockShowAll).toHaveBeenCalledOnce();
     });
 
