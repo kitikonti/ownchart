@@ -2,6 +2,22 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [0.0.49](https://github.com/kitikonti/ownchart/compare/v0.0.48...v0.0.49) (2026-02-25)
+
+
+### Bug Fixes
+
+* **test:** use regex match for aria-label in TaskTable show-all tests ([bfa8182](https://github.com/kitikonti/ownchart/commit/bfa8182f2530f5f8384fe48f1da3c799ef7e8358))
+
+
+### Code Refactoring
+
+* extract useTaskRowData hook and fix review findings ([c59a73d](https://github.com/kitikonti/ownchart/commit/c59a73d354f685e98e6ee5e11da5f1145d4d3bd6))
+* fix review findings in RowNumberCell/TaskTable and add smoke tests ([e6361e8](https://github.com/kitikonti/ownchart/commit/e6361e83aaadf1d543aa5610512636cc040d273b))
+* fix review findings in RowNumberCell/TaskTable and add smoke tests ([f5d41f8](https://github.com/kitikonti/ownchart/commit/f5d41f8741080e596a6256a951f98105a9bf0d79)), closes [#5F6368](https://github.com/kitikonti/ownchart/issues/5F6368) [#9ca3](https://github.com/kitikonti/ownchart/issues/9ca3)
+* fix review findings in RowNumberCell/TaskTable and add smoke tests ([3670eab](https://github.com/kitikonti/ownchart/commit/3670eab3ea3f37e09bd3bb0a00db4be1b55843b5))
+* use design tokens and narrow store subscriptions in TaskList ([c0b162d](https://github.com/kitikonti/ownchart/commit/c0b162d7d32d64880534654979b245ecd43ac39c))
+
 ### [0.0.48](https://github.com/kitikonti/ownchart/compare/v0.0.47...v0.0.48) (2026-02-25)
 
 
