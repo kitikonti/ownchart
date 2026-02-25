@@ -17,7 +17,7 @@ const DANGEROUS_KEYS = new Set(["__proto__", "constructor", "prototype"]);
  * Task fields that contain non-content strings (IDs, dates, colors) — skip sanitization.
  * @see KNOWN_TASK_KEYS in constants.ts for the related round-trip field set.
  */
-const SKIP_SANITIZE_KEYS = new Set([
+export const SKIP_SANITIZE_KEYS = new Set([
   "id",
   "startDate",
   "endDate",
@@ -28,6 +28,9 @@ const SKIP_SANITIZE_KEYS = new Set([
   "createdAt",
   "updatedAt",
 ]);
+
+/** Maximum nesting depth for recursive sanitization to prevent stack overflow */
+const MAX_SANITIZE_DEPTH = 50;
 
 /**
  * Sanitize all string fields in a GanttFile.
@@ -71,8 +74,8 @@ function sanitizeTask(task: SerializedTask): SerializedTask {
       result[key] = sanitizeString(value);
     } else if (typeof value === "object" && value !== null) {
       result[key] = Array.isArray(value)
-        ? sanitizeArray(value)
-        : sanitizeObject(value as Record<string, unknown>);
+        ? sanitizeArray(value, 1)
+        : sanitizeObject(value as Record<string, unknown>, 1);
     } else {
       result[key] = value;
     }
@@ -82,9 +85,15 @@ function sanitizeTask(task: SerializedTask): SerializedTask {
 }
 
 /**
- * Recursively sanitize all string values in an object
+ * Recursively sanitize all string values in an object.
+ * Returns the object unchanged if depth limit is exceeded.
  */
-function sanitizeObject(obj: Record<string, unknown>): Record<string, unknown> {
+function sanitizeObject(
+  obj: Record<string, unknown>,
+  depth: number
+): Record<string, unknown> {
+  if (depth > MAX_SANITIZE_DEPTH) return obj;
+
   const result: Record<string, unknown> = {};
 
   for (const [key, value] of Object.entries(obj)) {
@@ -92,9 +101,9 @@ function sanitizeObject(obj: Record<string, unknown>): Record<string, unknown> {
     if (typeof value === "string") {
       result[key] = sanitizeString(value);
     } else if (Array.isArray(value)) {
-      result[key] = sanitizeArray(value);
+      result[key] = sanitizeArray(value, depth + 1);
     } else if (typeof value === "object" && value !== null) {
-      result[key] = sanitizeObject(value as Record<string, unknown>);
+      result[key] = sanitizeObject(value as Record<string, unknown>, depth + 1);
     } else {
       result[key] = value;
     }
@@ -104,16 +113,19 @@ function sanitizeObject(obj: Record<string, unknown>): Record<string, unknown> {
 }
 
 /**
- * Recursively sanitize all string values in an array
+ * Recursively sanitize all string values in an array.
+ * Returns the array unchanged if depth limit is exceeded.
  */
-function sanitizeArray(arr: unknown[]): unknown[] {
+function sanitizeArray(arr: unknown[], depth: number): unknown[] {
+  if (depth > MAX_SANITIZE_DEPTH) return arr;
+
   return arr.map((item) =>
     typeof item === "string"
       ? sanitizeString(item)
       : typeof item === "object" && item !== null
         ? Array.isArray(item)
-          ? sanitizeArray(item)
-          : sanitizeObject(item as Record<string, unknown>)
+          ? sanitizeArray(item, depth + 1)
+          : sanitizeObject(item as Record<string, unknown>, depth + 1)
         : item
   );
 }

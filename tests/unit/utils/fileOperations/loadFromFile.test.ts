@@ -167,17 +167,17 @@ describe('loadFromFile', () => {
   // loadFileIntoApp — success path
   // =========================================================================
   describe('loadFileIntoApp - success path', () => {
-    it('should return success for a valid file', async () => {
+    it('should return success for a valid file', () => {
       const content = JSON.stringify(createValidFileContent());
-      const result = await loadFileIntoApp(makeFile(content));
+      const result = loadFileIntoApp(makeFile(content));
 
       expect(result.success).toBe(true);
       expect(result.error).toBeUndefined();
     });
 
-    it('should load tasks into the task store', async () => {
+    it('should load tasks into the task store', () => {
       const content = JSON.stringify(createValidFileContent());
-      await loadFileIntoApp(makeFile(content));
+      loadFileIntoApp(makeFile(content));
 
       expect(mockSetTasks).toHaveBeenCalledTimes(1);
       const tasks = mockSetTasks.mock.calls[0][0];
@@ -187,15 +187,15 @@ describe('loadFromFile', () => {
       expect(tasks[0].progress).toBe(50);
     });
 
-    it('should set dependencies (empty array when absent)', async () => {
+    it('should set dependencies (empty array when absent)', () => {
       const content = JSON.stringify(createValidFileContent());
-      await loadFileIntoApp(makeFile(content));
+      loadFileIntoApp(makeFile(content));
 
       expect(mockSetDependencies).toHaveBeenCalledTimes(1);
       expect(mockSetDependencies).toHaveBeenCalledWith([]);
     });
 
-    it('should load dependencies when present in file', async () => {
+    it('should load dependencies when present in file', () => {
       const file = createValidFileContent();
       // Add a second task so we can create a dependency
       (file.chart as Record<string, unknown>).tasks = [
@@ -223,7 +223,7 @@ describe('loadFromFile', () => {
       ];
 
       const content = JSON.stringify(file);
-      await loadFileIntoApp(makeFile(content));
+      loadFileIntoApp(makeFile(content));
 
       expect(mockSetDependencies).toHaveBeenCalledTimes(1);
       const deps = mockSetDependencies.mock.calls[0][0];
@@ -233,16 +233,16 @@ describe('loadFromFile', () => {
       expect(deps[0].type).toBe('FS');
     });
 
-    it('should reset export options', async () => {
+    it('should reset export options', () => {
       const content = JSON.stringify(createValidFileContent());
-      await loadFileIntoApp(makeFile(content));
+      loadFileIntoApp(makeFile(content));
 
       expect(mockResetExportOptions).toHaveBeenCalledTimes(1);
     });
 
-    it('should apply view settings to chart store', async () => {
+    it('should apply view settings to chart store', () => {
       const content = JSON.stringify(createValidFileContent());
-      await loadFileIntoApp(makeFile(content));
+      loadFileIntoApp(makeFile(content));
 
       expect(mockSetViewSettings).toHaveBeenCalledTimes(1);
       const viewSettings = mockSetViewSettings.mock.calls[0][0];
@@ -252,32 +252,32 @@ describe('loadFromFile', () => {
       expect(viewSettings.showTodayMarker).toBe(true);
     });
 
-    it('should call updateScale with tasks', async () => {
+    it('should call updateScale with tasks', () => {
       const content = JSON.stringify(createValidFileContent());
-      await loadFileIntoApp(makeFile(content));
+      loadFileIntoApp(makeFile(content));
 
       expect(mockUpdateScale).toHaveBeenCalledTimes(1);
       const scaleTasks = mockUpdateScale.mock.calls[0][0];
       expect(scaleTasks).toHaveLength(1);
     });
 
-    it('should signal file loaded', async () => {
+    it('should signal file loaded', () => {
       const content = JSON.stringify(createValidFileContent());
-      await loadFileIntoApp(makeFile(content));
+      loadFileIntoApp(makeFile(content));
 
       expect(mockSignalFileLoaded).toHaveBeenCalledTimes(1);
     });
 
-    it('should clear history after loading', async () => {
+    it('should clear history after loading', () => {
       const content = JSON.stringify(createValidFileContent());
-      await loadFileIntoApp(makeFile(content));
+      loadFileIntoApp(makeFile(content));
 
       expect(mockClearHistory).toHaveBeenCalledTimes(1);
     });
 
-    it('should return no warnings for a current-version file', async () => {
+    it('should return no warnings for a current-version file', () => {
       const content = JSON.stringify(createValidFileContent());
-      const result = await loadFileIntoApp(makeFile(content));
+      const result = loadFileIntoApp(makeFile(content));
 
       expect(result.warnings).toBeUndefined();
     });
@@ -287,26 +287,26 @@ describe('loadFromFile', () => {
   // loadFileIntoApp — file state reset
   // =========================================================================
   describe('loadFileIntoApp - file state reset', () => {
-    it('should set the file name in file store', async () => {
+    it('should set the file name in file store', () => {
       const content = JSON.stringify(createValidFileContent());
-      await loadFileIntoApp(makeFile(content, 'my-project.ownchart'));
+      loadFileIntoApp(makeFile(content, 'my-project.ownchart'));
 
       expect(mockSetFileName).toHaveBeenCalledWith('my-project.ownchart');
     });
 
-    it('should set the chart ID in file store', async () => {
+    it('should set the chart ID in file store', () => {
       const content = JSON.stringify(createValidFileContent());
-      await loadFileIntoApp(makeFile(content));
+      loadFileIntoApp(makeFile(content));
 
       expect(mockSetChartId).toHaveBeenCalledWith(
         '123e4567-e89b-12d3-a456-426614174000'
       );
     });
 
-    it('should set lastSaved to a recent Date', async () => {
+    it('should set lastSaved to a recent Date', () => {
       const before = Date.now();
       const content = JSON.stringify(createValidFileContent());
-      await loadFileIntoApp(makeFile(content));
+      loadFileIntoApp(makeFile(content));
       const after = Date.now();
 
       expect(mockSetLastSaved).toHaveBeenCalledTimes(1);
@@ -316,9 +316,9 @@ describe('loadFromFile', () => {
       expect(savedDate.getTime()).toBeLessThanOrEqual(after);
     });
 
-    it('should mark the file as clean', async () => {
+    it('should mark the file as clean', () => {
       const content = JSON.stringify(createValidFileContent());
-      await loadFileIntoApp(makeFile(content));
+      loadFileIntoApp(makeFile(content));
 
       expect(mockMarkClean).toHaveBeenCalledTimes(1);
     });
@@ -328,56 +328,56 @@ describe('loadFromFile', () => {
   // loadFileIntoApp — column widths
   // =========================================================================
   describe('loadFileIntoApp - column width restoration', () => {
-    it('should restore taskTableWidth when present', async () => {
+    it('should restore taskTableWidth when present', () => {
       const content = JSON.stringify(createValidFileContent());
-      await loadFileIntoApp(makeFile(content));
+      loadFileIntoApp(makeFile(content));
 
       expect(mockSetTaskTableWidth).toHaveBeenCalledWith(400);
     });
 
-    it('should restore individual column widths when present', async () => {
+    it('should restore individual column widths when present', () => {
       const content = JSON.stringify(createValidFileContent());
-      await loadFileIntoApp(makeFile(content));
+      loadFileIntoApp(makeFile(content));
 
       expect(mockSetColumnWidth).toHaveBeenCalledWith('name', 250);
       expect(mockSetColumnWidth).toHaveBeenCalledWith('startDate', 100);
       expect(mockAutoFitColumn).not.toHaveBeenCalled();
     });
 
-    it('should auto-fit name column when no column widths saved', async () => {
+    it('should auto-fit name column when no column widths saved', () => {
       const file = createValidFileContent();
       const chart = file.chart as Record<string, unknown>;
       const vs = chart.viewSettings as Record<string, unknown>;
       delete vs.columnWidths;
 
       const content = JSON.stringify(file);
-      await loadFileIntoApp(makeFile(content));
+      loadFileIntoApp(makeFile(content));
 
       expect(mockAutoFitColumn).toHaveBeenCalledWith('name');
       expect(mockSetColumnWidth).not.toHaveBeenCalled();
     });
 
-    it('should auto-fit name column when column widths object is empty', async () => {
+    it('should auto-fit name column when column widths object is empty', () => {
       const file = createValidFileContent();
       const chart = file.chart as Record<string, unknown>;
       const vs = chart.viewSettings as Record<string, unknown>;
       vs.columnWidths = {};
 
       const content = JSON.stringify(file);
-      await loadFileIntoApp(makeFile(content));
+      loadFileIntoApp(makeFile(content));
 
       expect(mockAutoFitColumn).toHaveBeenCalledWith('name');
       expect(mockSetColumnWidth).not.toHaveBeenCalled();
     });
 
-    it('should not set taskTableWidth when it is not in file', async () => {
+    it('should not set taskTableWidth when it is not in file', () => {
       const file = createValidFileContent();
       const chart = file.chart as Record<string, unknown>;
       const vs = chart.viewSettings as Record<string, unknown>;
       delete vs.taskTableWidth;
 
       const content = JSON.stringify(file);
-      await loadFileIntoApp(makeFile(content));
+      loadFileIntoApp(makeFile(content));
 
       expect(mockSetTaskTableWidth).not.toHaveBeenCalled();
     });
@@ -387,11 +387,11 @@ describe('loadFromFile', () => {
   // loadFileIntoApp — view settings defaults for older files
   // =========================================================================
   describe('loadFileIntoApp - view settings defaults', () => {
-    it('should apply defaults for optional fields missing from file', async () => {
+    it('should apply defaults for optional fields missing from file', () => {
       const file = createValidFileContent();
       // The base file content already lacks showHolidays, showDependencies, etc.
       const content = JSON.stringify(file);
-      await loadFileIntoApp(makeFile(content));
+      loadFileIntoApp(makeFile(content));
 
       const viewSettings = mockSetViewSettings.mock.calls[0][0];
       // These should have been defaulted by applyViewSettingsDefaults
@@ -407,7 +407,7 @@ describe('loadFromFile', () => {
       expect(viewSettings.projectAuthor).toBe('');
     });
 
-    it('should preserve explicit view settings values from file', async () => {
+    it('should preserve explicit view settings values from file', () => {
       const file = createValidFileContent();
       const chart = file.chart as Record<string, unknown>;
       const vs = chart.viewSettings as Record<string, unknown>;
@@ -423,7 +423,7 @@ describe('loadFromFile', () => {
       vs.projectAuthor = 'Martin';
 
       const content = JSON.stringify(file);
-      await loadFileIntoApp(makeFile(content));
+      loadFileIntoApp(makeFile(content));
 
       const viewSettings = mockSetViewSettings.mock.calls[0][0];
       expect(viewSettings.showHolidays).toBe(false);
@@ -445,8 +445,8 @@ describe('loadFromFile', () => {
   // loadFileIntoApp — error paths
   // =========================================================================
   describe('loadFileIntoApp - error paths', () => {
-    it('should fail for malformed JSON', async () => {
-      const result = await loadFileIntoApp(
+    it('should fail for malformed JSON', () => {
+      const result = loadFileIntoApp(
         makeFile('{not valid json}', 'test.ownchart')
       );
 
@@ -455,16 +455,16 @@ describe('loadFromFile', () => {
       expect(result.error).toContain('Invalid JSON');
     });
 
-    it('should fail for empty string content', async () => {
-      const result = await loadFileIntoApp(makeFile('', 'test.ownchart'));
+    it('should fail for empty string content', () => {
+      const result = loadFileIntoApp(makeFile('', 'test.ownchart'));
 
       expect(result.success).toBe(false);
       expect(result.error).toBeDefined();
     });
 
-    it('should fail when required fields are missing', async () => {
+    it('should fail when required fields are missing', () => {
       const invalid = { someField: 'value' };
-      const result = await loadFileIntoApp(
+      const result = loadFileIntoApp(
         makeFile(JSON.stringify(invalid), 'test.ownchart')
       );
 
@@ -472,9 +472,9 @@ describe('loadFromFile', () => {
       expect(result.error).toBeDefined();
     });
 
-    it('should fail when chart is missing', async () => {
+    it('should fail when chart is missing', () => {
       const invalid = { fileVersion: '1.0.0' };
-      const result = await loadFileIntoApp(
+      const result = loadFileIntoApp(
         makeFile(JSON.stringify(invalid), 'test.ownchart')
       );
 
@@ -482,10 +482,10 @@ describe('loadFromFile', () => {
       expect(result.error).toContain('chart');
     });
 
-    it('should fail for file exceeding 50MB', async () => {
+    it('should fail for file exceeding 50MB', () => {
       const content = JSON.stringify(createValidFileContent());
       const hugeSize = 51 * 1024 * 1024;
-      const result = await loadFileIntoApp(
+      const result = loadFileIntoApp(
         makeFile(content, 'big.ownchart', hugeSize)
       );
 
@@ -493,9 +493,9 @@ describe('loadFromFile', () => {
       expect(result.error).toContain('exceeds limit');
     });
 
-    it('should fail for file with invalid extension', async () => {
+    it('should fail for file with invalid extension', () => {
       const content = JSON.stringify(createValidFileContent());
-      const result = await loadFileIntoApp(
+      const result = loadFileIntoApp(
         makeFile(content, 'project.json', content.length)
       );
 
@@ -503,11 +503,11 @@ describe('loadFromFile', () => {
       expect(result.error).toContain('.ownchart');
     });
 
-    it('should fail for tasks with invalid UUIDs', async () => {
+    it('should fail for tasks with invalid UUIDs', () => {
       const file = createValidFileContent();
       (file.chart as { tasks: { id: string }[] }).tasks[0].id = 'not-a-uuid';
 
-      const result = await loadFileIntoApp(
+      const result = loadFileIntoApp(
         makeFile(JSON.stringify(file), 'test.ownchart')
       );
 
@@ -515,12 +515,12 @@ describe('loadFromFile', () => {
       expect(result.error).toContain('invalid UUID');
     });
 
-    it('should fail for tasks with invalid dates', async () => {
+    it('should fail for tasks with invalid dates', () => {
       const file = createValidFileContent();
       (file.chart as { tasks: { startDate: string }[] }).tasks[0].startDate =
         'not-a-date';
 
-      const result = await loadFileIntoApp(
+      const result = loadFileIntoApp(
         makeFile(JSON.stringify(file), 'test.ownchart')
       );
 
@@ -528,11 +528,11 @@ describe('loadFromFile', () => {
       expect(result.error).toContain('invalid startDate');
     });
 
-    it('should fail for tasks with progress > 100', async () => {
+    it('should fail for tasks with progress > 100', () => {
       const file = createValidFileContent();
       (file.chart as { tasks: { progress: number }[] }).tasks[0].progress = 150;
 
-      const result = await loadFileIntoApp(
+      const result = loadFileIntoApp(
         makeFile(JSON.stringify(file), 'test.ownchart')
       );
 
@@ -540,8 +540,8 @@ describe('loadFromFile', () => {
       expect(result.error).toContain('invalid progress');
     });
 
-    it('should not modify stores when parsing fails', async () => {
-      await loadFileIntoApp(makeFile('{bad json}', 'test.ownchart'));
+    it('should not modify stores when parsing fails', () => {
+      loadFileIntoApp(makeFile('{bad json}', 'test.ownchart'));
 
       expect(mockSetTasks).not.toHaveBeenCalled();
       expect(mockSetDependencies).not.toHaveBeenCalled();
@@ -550,12 +550,12 @@ describe('loadFromFile', () => {
       expect(mockClearHistory).not.toHaveBeenCalled();
     });
 
-    it('should return "Unknown parse error" when error message is missing', async () => {
+    it('should return "Unknown parse error" when error message is missing', () => {
       // A file that causes an error without a message is hard to construct
       // via the real pipeline, so we verify the fallback path indirectly:
       // the error always has a message from the pipeline, but we can check
       // that a non-success result always has a string error.
-      const result = await loadFileIntoApp(makeFile('', 'test.ownchart'));
+      const result = loadFileIntoApp(makeFile('', 'test.ownchart'));
 
       expect(result.success).toBe(false);
       expect(typeof result.error).toBe('string');
@@ -566,12 +566,12 @@ describe('loadFromFile', () => {
   // loadFileIntoApp — warnings (future version files)
   // =========================================================================
   describe('loadFileIntoApp - warnings', () => {
-    it('should return warnings for a file from a future version', async () => {
+    it('should return warnings for a file from a future version', () => {
       const file = createValidFileContent();
       file.fileVersion = '2.0.0';
 
       const content = JSON.stringify(file);
-      const result = await loadFileIntoApp(makeFile(content, 'future.ownchart'));
+      const result = loadFileIntoApp(makeFile(content, 'future.ownchart'));
 
       expect(result.success).toBe(true);
       expect(result.warnings).toBeDefined();
@@ -586,7 +586,7 @@ describe('loadFromFile', () => {
   // loadFileIntoApp — store call ordering
   // =========================================================================
   describe('loadFileIntoApp - ordering guarantees', () => {
-    it('should call updateScale before signalFileLoaded', async () => {
+    it('should call updateScale before signalFileLoaded', () => {
       const callOrder: string[] = [];
       mockUpdateScale.mockImplementation(() => callOrder.push('updateScale'));
       mockSignalFileLoaded.mockImplementation(() =>
@@ -594,33 +594,33 @@ describe('loadFromFile', () => {
       );
 
       const content = JSON.stringify(createValidFileContent());
-      await loadFileIntoApp(makeFile(content));
+      loadFileIntoApp(makeFile(content));
 
       const updateIdx = callOrder.indexOf('updateScale');
       const signalIdx = callOrder.indexOf('signalFileLoaded');
       expect(updateIdx).toBeLessThan(signalIdx);
     });
 
-    it('should set tasks before calling updateScale', async () => {
+    it('should set tasks before calling updateScale', () => {
       const callOrder: string[] = [];
       mockSetTasks.mockImplementation(() => callOrder.push('setTasks'));
       mockUpdateScale.mockImplementation(() => callOrder.push('updateScale'));
 
       const content = JSON.stringify(createValidFileContent());
-      await loadFileIntoApp(makeFile(content));
+      loadFileIntoApp(makeFile(content));
 
       const setIdx = callOrder.indexOf('setTasks');
       const scaleIdx = callOrder.indexOf('updateScale');
       expect(setIdx).toBeLessThan(scaleIdx);
     });
 
-    it('should clear history after resetting file state', async () => {
+    it('should clear history after resetting file state', () => {
       const callOrder: string[] = [];
       mockMarkClean.mockImplementation(() => callOrder.push('markClean'));
       mockClearHistory.mockImplementation(() => callOrder.push('clearHistory'));
 
       const content = JSON.stringify(createValidFileContent());
-      await loadFileIntoApp(makeFile(content));
+      loadFileIntoApp(makeFile(content));
 
       const cleanIdx = callOrder.indexOf('markClean');
       const historyIdx = callOrder.indexOf('clearHistory');
@@ -632,18 +632,18 @@ describe('loadFromFile', () => {
   // loadFileIntoApp — edge cases
   // =========================================================================
   describe('loadFileIntoApp - edge cases', () => {
-    it('should handle a file with zero tasks', async () => {
+    it('should handle a file with zero tasks', () => {
       const file = createValidFileContent();
       (file.chart as { tasks: unknown[] }).tasks = [];
 
       const content = JSON.stringify(file);
-      const result = await loadFileIntoApp(makeFile(content));
+      const result = loadFileIntoApp(makeFile(content));
 
       expect(result.success).toBe(true);
       expect(mockSetTasks).toHaveBeenCalledWith([]);
     });
 
-    it('should handle a file with multiple tasks', async () => {
+    it('should handle a file with multiple tasks', () => {
       const file = createValidFileContent();
       (file.chart as { tasks: unknown[] }).tasks.push({
         id: '123e4567-e89b-12d3-a456-426614174002',
@@ -659,33 +659,33 @@ describe('loadFromFile', () => {
       });
 
       const content = JSON.stringify(file);
-      const result = await loadFileIntoApp(makeFile(content));
+      const result = loadFileIntoApp(makeFile(content));
 
       expect(result.success).toBe(true);
       const tasks = mockSetTasks.mock.calls[0][0];
       expect(tasks).toHaveLength(2);
     });
 
-    it('should handle taskTableWidth of null', async () => {
+    it('should handle taskTableWidth of null', () => {
       const file = createValidFileContent();
       const chart = file.chart as Record<string, unknown>;
       const vs = chart.viewSettings as Record<string, unknown>;
       vs.taskTableWidth = null;
 
       const content = JSON.stringify(file);
-      await loadFileIntoApp(makeFile(content));
+      loadFileIntoApp(makeFile(content));
 
       // null is not undefined, so setTaskTableWidth should still be called
       expect(mockSetTaskTableWidth).toHaveBeenCalledWith(null);
     });
 
-    it('should sanitize XSS in task names during load', async () => {
+    it('should sanitize XSS in task names during load', () => {
       const file = createValidFileContent();
       (file.chart as { tasks: { name: string }[] }).tasks[0].name =
         '<script>alert("XSS")</script>Clean';
 
       const content = JSON.stringify(file);
-      const result = await loadFileIntoApp(makeFile(content));
+      const result = loadFileIntoApp(makeFile(content));
 
       expect(result.success).toBe(true);
       const tasks = mockSetTasks.mock.calls[0][0];
@@ -693,13 +693,13 @@ describe('loadFromFile', () => {
       expect(tasks[0].name).toContain('Clean');
     });
 
-    it('should return error when store hydration throws', async () => {
+    it('should return error when store hydration throws', () => {
       mockUpdateScale.mockImplementation(() => {
         throw new Error('Scale calculation failed');
       });
 
       const content = JSON.stringify(createValidFileContent());
-      const result = await loadFileIntoApp(makeFile(content));
+      const result = loadFileIntoApp(makeFile(content));
 
       expect(result.success).toBe(false);
       expect(result.error).toContain('Scale calculation failed');
@@ -835,23 +835,23 @@ describe('loadFromFile', () => {
   // loadFileIntoApp — chartCreatedAt preservation
   // =========================================================================
   describe('loadFileIntoApp - chartCreatedAt preservation', () => {
-    it('should store chartCreatedAt from file metadata', async () => {
+    it('should store chartCreatedAt from file metadata', () => {
       const content = JSON.stringify(createValidFileContent());
-      await loadFileIntoApp(makeFile(content));
+      loadFileIntoApp(makeFile(content));
 
       expect(mockSetChartCreatedAt).toHaveBeenCalledWith(
         '2026-01-01T00:00:00.000Z'
       );
     });
 
-    it('should store null when chart metadata has no createdAt', async () => {
+    it('should store null when chart metadata has no createdAt', () => {
       const file = createValidFileContent();
       const chart = file.chart as Record<string, unknown>;
       const meta = chart.metadata as Record<string, unknown>;
       delete meta.createdAt;
 
       const content = JSON.stringify(file);
-      await loadFileIntoApp(makeFile(content));
+      loadFileIntoApp(makeFile(content));
 
       expect(mockSetChartCreatedAt).toHaveBeenCalledWith(null);
     });
@@ -861,9 +861,9 @@ describe('loadFromFile', () => {
   // loadFileIntoApp — view settings passed to chart store
   // =========================================================================
   describe('loadFileIntoApp - view settings forwarding', () => {
-    it('should pass all view settings fields to setViewSettings', async () => {
+    it('should pass all view settings fields to setViewSettings', () => {
       const content = JSON.stringify(createValidFileContent());
-      await loadFileIntoApp(makeFile(content));
+      loadFileIntoApp(makeFile(content));
 
       // setViewSettings receives the full ViewSettings object —
       // it only reads SettableViewFields, ignoring extras like taskTableWidth

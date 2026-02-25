@@ -30,17 +30,16 @@ export interface ToastHandler {
 /**
  * Load file content into the application stores.
  * Can be called from both React hooks and non-React contexts (e.g. LaunchQueue).
+ *
+ * Returns a plain LoadFileResult (not a Promise). Callers that `await` it
+ * still work — `await` on a non-Promise resolves immediately.
  */
-export async function loadFileIntoApp(file: {
+export function loadFileIntoApp(file: {
   name: string;
   content: string;
   size: number;
-}): Promise<LoadFileResult> {
-  const parseResult = await deserializeGanttFile(
-    file.content,
-    file.name,
-    file.size
-  );
+}): LoadFileResult {
+  const parseResult = deserializeGanttFile(file.content, file.name, file.size);
 
   if (!parseResult.success || !parseResult.data) {
     return {
@@ -51,9 +50,11 @@ export async function loadFileIntoApp(file: {
 
   const { data } = parseResult;
 
-  // Hydrate all stores inside a try/catch so a failure in any store
-  // method (e.g. updateScale with unexpected data) doesn't leave the
-  // app in a partially-loaded, inconsistent state.
+  // Hydrate all stores inside a try/catch so callers get a structured
+  // error result instead of an unhandled exception.  Note: if a store
+  // method throws mid-hydration, earlier stores keep their new values —
+  // a full rollback is not attempted because valid data already passed
+  // the 6-layer validation pipeline and store failures are exceptional.
   try {
     // Load data into stores
     useTaskStore.getState().setTasks(data.tasks);

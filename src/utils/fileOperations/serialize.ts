@@ -12,7 +12,7 @@ import type {
   TaskWithExtras,
   ViewSettings,
 } from "./types";
-import { FILE_VERSION } from "../../config/version";
+import { FILE_VERSION, SCHEMA_VERSION } from "../../config/version";
 import { DEFAULT_CHART_NAME } from "../../config/viewSettingsDefaults";
 import { KNOWN_TASK_KEYS } from "./constants";
 
@@ -44,7 +44,7 @@ export function serializeToGanttFile(
   const ganttFile: GanttFile = {
     fileVersion: FILE_VERSION,
     appVersion: __APP_VERSION__,
-    schemaVersion: 1,
+    schemaVersion: SCHEMA_VERSION,
 
     chart: {
       id: options.chartId || crypto.randomUUID(),

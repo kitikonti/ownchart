@@ -4,8 +4,15 @@
  */
 
 import { describe, it, expect } from 'vitest';
-import { sanitizeGanttFile } from '../../../../src/utils/fileOperations/sanitize';
-import type { GanttFile } from '../../../../src/utils/fileOperations/types';
+import {
+  sanitizeGanttFile,
+  SKIP_SANITIZE_KEYS,
+} from '../../../../src/utils/fileOperations/sanitize';
+import { KNOWN_TASK_KEYS } from '../../../../src/utils/fileOperations/constants';
+import type {
+  GanttFile,
+  SerializedTask,
+} from '../../../../src/utils/fileOperations/types';
 
 describe('File Operations - Sanitization (XSS Prevention)', () => {
   const createBaseFile = (): GanttFile => ({
@@ -530,6 +537,202 @@ describe('File Operations - Sanitization (XSS Prevention)', () => {
 
       expect(sanitized.chart.tasks[0].open).toBe(true);
       expect(typeof sanitized.chart.tasks[0].open).toBe('boolean');
+    });
+  });
+
+  describe('Prototype Pollution Prevention (defense-in-depth)', () => {
+    it('should strip __proto__ keys from task fields', () => {
+      const file = createBaseFile();
+      // Use Object.defineProperty to add __proto__ as a regular data property.
+      // Object literal syntax { __proto__: ... } sets the prototype instead.
+      const task: Record<string, unknown> = {
+        id: '123e4567-e89b-12d3-a456-426614174001',
+        name: 'Task',
+        startDate: '2026-01-01',
+        endDate: '2026-01-02',
+        duration: 1,
+        progress: 0,
+        color: '#000000',
+        order: 0,
+      };
+      Object.defineProperty(task, '__proto__', {
+        value: { polluted: true },
+        enumerable: true,
+        configurable: true,
+      });
+      expect(Object.keys(task)).toContain('__proto__');
+
+      file.chart.tasks = [task as SerializedTask];
+      const sanitized = sanitizeGanttFile(file);
+
+      expect(Object.keys(sanitized.chart.tasks[0])).not.toContain('__proto__');
+    });
+
+    it('should strip constructor keys from task fields', () => {
+      const file = createBaseFile();
+      const task = Object.assign(Object.create(null), {
+        id: '123e4567-e89b-12d3-a456-426614174001',
+        name: 'Task',
+        startDate: '2026-01-01',
+        endDate: '2026-01-02',
+        duration: 1,
+        progress: 0,
+        color: '#000000',
+        order: 0,
+        constructor: { polluted: true },
+      }) as SerializedTask;
+      expect(Object.keys(task)).toContain('constructor');
+
+      file.chart.tasks = [task];
+      const sanitized = sanitizeGanttFile(file);
+
+      expect(Object.keys(sanitized.chart.tasks[0])).not.toContain(
+        'constructor'
+      );
+    });
+
+    it('should strip prototype keys from task fields', () => {
+      const file = createBaseFile();
+      const task = Object.assign(Object.create(null), {
+        id: '123e4567-e89b-12d3-a456-426614174001',
+        name: 'Task',
+        startDate: '2026-01-01',
+        endDate: '2026-01-02',
+        duration: 1,
+        progress: 0,
+        color: '#000000',
+        order: 0,
+        prototype: { polluted: true },
+      }) as SerializedTask;
+      expect(Object.keys(task)).toContain('prototype');
+
+      file.chart.tasks = [task];
+      const sanitized = sanitizeGanttFile(file);
+
+      expect(Object.keys(sanitized.chart.tasks[0])).not.toContain('prototype');
+    });
+
+    it('should strip dangerous keys from nested metadata objects', () => {
+      const file = createBaseFile();
+      const meta: Record<string, unknown> = {
+        notes: 'safe',
+        constructor: { polluted: true },
+      };
+      Object.defineProperty(meta, '__proto__', {
+        value: { polluted: true },
+        enumerable: true,
+        configurable: true,
+      });
+      expect(Object.keys(meta)).toContain('__proto__');
+      expect(Object.keys(meta)).toContain('constructor');
+
+      file.chart.tasks = [
+        {
+          id: '123e4567-e89b-12d3-a456-426614174001',
+          name: 'Task',
+          startDate: '2026-01-01',
+          endDate: '2026-01-02',
+          duration: 1,
+          progress: 0,
+          color: '#000000',
+          order: 0,
+          metadata: meta,
+        },
+      ];
+
+      const sanitized = sanitizeGanttFile(file);
+      const sanitizedMeta = sanitized.chart.tasks[0].metadata!;
+
+      expect(Object.keys(sanitizedMeta)).not.toContain('__proto__');
+      expect(Object.keys(sanitizedMeta)).not.toContain('constructor');
+      expect(sanitizedMeta.notes).toBe('safe');
+    });
+  });
+
+  describe('Key-Set Sync Assertions', () => {
+    it('SKIP_SANITIZE_KEYS should be a subset of KNOWN_TASK_KEYS', () => {
+      for (const key of SKIP_SANITIZE_KEYS) {
+        expect(
+          KNOWN_TASK_KEYS.has(key),
+          `SKIP_SANITIZE_KEYS contains "${key}" which is not in KNOWN_TASK_KEYS — update constants.ts`
+        ).toBe(true);
+      }
+    });
+
+    it('KNOWN_TASK_KEYS should cover all typed SerializedTask fields', () => {
+      // Build a fully-populated SerializedTask to extract its field names.
+      // This breaks if a new field is added to the type but not here.
+      const exemplar: Required<
+        Pick<
+          SerializedTask,
+          | 'id'
+          | 'name'
+          | 'startDate'
+          | 'endDate'
+          | 'duration'
+          | 'progress'
+          | 'color'
+          | 'order'
+          | 'type'
+          | 'parent'
+          | 'open'
+          | 'colorOverride'
+          | 'metadata'
+          | 'createdAt'
+          | 'updatedAt'
+        >
+      > = {
+        id: '',
+        name: '',
+        startDate: '',
+        endDate: '',
+        duration: 0,
+        progress: 0,
+        color: '',
+        order: 0,
+        type: 'task',
+        parent: '',
+        open: true,
+        colorOverride: '',
+        metadata: {},
+        createdAt: '',
+        updatedAt: '',
+      };
+
+      const fieldNames = Object.keys(exemplar);
+      for (const field of fieldNames) {
+        expect(
+          KNOWN_TASK_KEYS.has(field),
+          `SerializedTask field "${field}" is not in KNOWN_TASK_KEYS — update constants.ts`
+        ).toBe(true);
+      }
+    });
+
+    it('KNOWN_TASK_KEYS should not contain stale keys beyond SerializedTask', () => {
+      const typedFields = new Set([
+        'id',
+        'name',
+        'startDate',
+        'endDate',
+        'duration',
+        'progress',
+        'color',
+        'order',
+        'type',
+        'parent',
+        'open',
+        'colorOverride',
+        'metadata',
+        'createdAt',
+        'updatedAt',
+      ]);
+
+      for (const key of KNOWN_TASK_KEYS) {
+        expect(
+          typedFields.has(key),
+          `KNOWN_TASK_KEYS contains stale key "${key}" not in SerializedTask — remove from constants.ts`
+        ).toBe(true);
+      }
     });
   });
 });
