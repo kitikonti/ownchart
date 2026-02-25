@@ -1,0 +1,388 @@
+/**
+ * Tests for TaskDataCells component.
+ * Verifies cell rendering per field type, read-only cells,
+ * column formatter usage, and color cell editing.
+ */
+
+import { describe, it, expect, vi, beforeEach } from "vitest";
+import { render, screen } from "@testing-library/react";
+import { TaskDataCells } from "../../../src/components/TaskList/TaskDataCells";
+import type { Task } from "../../../src/types/chart.types";
+import type { ColumnDefinition } from "../../../src/config/tableColumns";
+
+// ---------------------------------------------------------------------------
+// Mocks
+// ---------------------------------------------------------------------------
+
+vi.mock("../../../src/store/slices/taskSlice", () => ({
+  useTaskStore: vi.fn((selector: (s: Record<string, unknown>) => unknown) =>
+    selector({
+      updateTask: vi.fn(),
+      toggleTaskCollapsed: vi.fn(),
+      activeCell: { taskId: null, field: null },
+      isEditingCell: false,
+      setActiveCell: vi.fn(),
+      startCellEdit: vi.fn(),
+      stopCellEdit: vi.fn(),
+      navigateCell: vi.fn(),
+      clearSelection: vi.fn(),
+      cutCell: null,
+    })
+  ),
+}));
+
+vi.mock("../../../src/store/slices/chartSlice", () => ({
+  useChartStore: vi.fn((selector: (s: Record<string, unknown>) => unknown) =>
+    selector({
+      colorModeState: { mode: "manual" },
+    })
+  ),
+}));
+
+vi.mock("../../../src/store/slices/userPreferencesSlice", () => ({
+  useDensityConfig: vi.fn(() => ({
+    rowHeight: 36,
+    indentSize: 20,
+    colorBarHeight: 14,
+    cellPaddingY: 6,
+    cellPaddingX: 8,
+    fontSizeCell: 13,
+    columnWidths: {
+      rowNumber: 52,
+      color: 30,
+      nameMin: 180,
+      startDate: 118,
+      endDate: 118,
+      duration: 90,
+      progress: 62,
+    },
+  })),
+}));
+
+vi.mock("../../../src/hooks/useCellNavigation", () => ({
+  useCellNavigation: vi.fn(() => ({
+    isCellEditing: vi.fn(() => false),
+    isCellActive: vi.fn(() => false),
+    activeCell: { taskId: null, field: null },
+    isEditingCell: false,
+    setActiveCell: vi.fn(),
+    navigateCell: vi.fn(),
+    startCellEdit: vi.fn(),
+    stopCellEdit: vi.fn(),
+  })),
+}));
+
+vi.mock("../../../src/hooks/useCellEdit", () => ({
+  useCellEdit: vi.fn(() => ({
+    localValue: "",
+    setLocalValue: vi.fn(),
+    error: null,
+    inputRef: { current: null },
+    shouldOverwriteRef: { current: false },
+    saveValue: vi.fn(),
+    cancelEdit: vi.fn(),
+    handleEditKeyDown: vi.fn(),
+    displayValue: "",
+  })),
+}));
+
+// ---------------------------------------------------------------------------
+// Helpers
+// ---------------------------------------------------------------------------
+
+function makeTask(overrides: Partial<Task> = {}): Task {
+  return {
+    id: "task-1",
+    name: "Test Task",
+    startDate: "2025-01-10",
+    endDate: "2025-01-17",
+    duration: 7,
+    progress: 50,
+    color: "#4A90D9",
+    order: 0,
+    type: "task",
+    parent: undefined,
+    open: true,
+    metadata: {},
+    ...overrides,
+  };
+}
+
+function makeColumn(
+  overrides: Partial<ColumnDefinition> = {}
+): ColumnDefinition {
+  return {
+    id: "name",
+    field: "name",
+    label: "Name",
+    defaultWidth: "200px",
+    editable: true,
+    renderer: "text",
+    ...overrides,
+  } as ColumnDefinition;
+}
+
+const durationColumn = makeColumn({
+  id: "duration",
+  field: "duration",
+  label: "Duration",
+  defaultWidth: "100px",
+  renderer: "number",
+  formatter: (value) => `${value} ${Number(value) === 1 ? "day" : "days"}`,
+});
+
+const nameColumn = makeColumn();
+
+const startDateColumn = makeColumn({
+  id: "startDate",
+  field: "startDate",
+  label: "Start Date",
+  defaultWidth: "130px",
+  renderer: "date",
+});
+
+const endDateColumn = makeColumn({
+  id: "endDate",
+  field: "endDate",
+  label: "End Date",
+  defaultWidth: "130px",
+  renderer: "date",
+});
+
+const progressColumn = makeColumn({
+  id: "progress",
+  field: "progress",
+  label: "%",
+  defaultWidth: "70px",
+  renderer: "number",
+  formatter: (value) => `${value}%`,
+});
+
+// ---------------------------------------------------------------------------
+// Tests
+// ---------------------------------------------------------------------------
+
+describe("TaskDataCells", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  describe("summary task rendering", () => {
+    it("renders summary dates as read-only italic text", () => {
+      const task = makeTask({ type: "summary" });
+      render(
+        <TaskDataCells
+          task={task}
+          displayTask={task}
+          visibleColumns={[startDateColumn, endDateColumn]}
+          level={0}
+          hasChildren={true}
+          isExpanded={true}
+          computedColor="#4A90D9"
+        />
+      );
+
+      const italicSpans = document.querySelectorAll(".italic");
+      expect(italicSpans.length).toBeGreaterThanOrEqual(2);
+      expect(italicSpans[0].textContent).toBe("2025-01-10");
+      expect(italicSpans[1].textContent).toBe("2025-01-17");
+    });
+
+    it("renders summary duration using column formatter with plural", () => {
+      const task = makeTask({ type: "summary", duration: 7 });
+      render(
+        <TaskDataCells
+          task={task}
+          displayTask={task}
+          visibleColumns={[durationColumn]}
+          level={0}
+          hasChildren={true}
+          isExpanded={true}
+          computedColor="#4A90D9"
+        />
+      );
+
+      const italicSpan = document.querySelector(".italic");
+      expect(italicSpan?.textContent).toBe("7 days");
+    });
+
+    it("renders summary duration using column formatter with singular", () => {
+      const task = makeTask({ type: "summary", duration: 1 });
+      render(
+        <TaskDataCells
+          task={task}
+          displayTask={task}
+          visibleColumns={[durationColumn]}
+          level={0}
+          hasChildren={true}
+          isExpanded={true}
+          computedColor="#4A90D9"
+        />
+      );
+
+      const italicSpan = document.querySelector(".italic");
+      expect(italicSpan?.textContent).toBe("1 day");
+    });
+
+    it("renders empty span for summary duration of 0", () => {
+      const task = makeTask({ type: "summary", duration: 0 });
+      render(
+        <TaskDataCells
+          task={task}
+          displayTask={task}
+          visibleColumns={[durationColumn]}
+          level={0}
+          hasChildren={true}
+          isExpanded={true}
+          computedColor="#4A90D9"
+        />
+      );
+
+      const italicSpan = document.querySelector(".italic");
+      expect(italicSpan).toBeNull();
+    });
+  });
+
+  describe("milestone task rendering", () => {
+    it("renders empty endDate cell for milestones", () => {
+      const task = makeTask({ type: "milestone", duration: 0 });
+      const { container } = render(
+        <TaskDataCells
+          task={task}
+          displayTask={task}
+          visibleColumns={[endDateColumn]}
+          level={0}
+          hasChildren={false}
+          isExpanded={false}
+          computedColor="#4A90D9"
+        />
+      );
+
+      const cells = container.querySelectorAll("[role='gridcell']");
+      expect(cells.length).toBe(1);
+      // endDate cell should have an empty span
+      const span = cells[0].querySelector("span");
+      expect(span?.textContent).toBe("");
+    });
+
+    it("renders empty progress cell for milestones", () => {
+      const task = makeTask({ type: "milestone", duration: 0, progress: 0 });
+      const { container } = render(
+        <TaskDataCells
+          task={task}
+          displayTask={task}
+          visibleColumns={[progressColumn]}
+          level={0}
+          hasChildren={false}
+          isExpanded={false}
+          computedColor="#4A90D9"
+        />
+      );
+
+      const cells = container.querySelectorAll("[role='gridcell']");
+      expect(cells.length).toBe(1);
+      const span = cells[0].querySelector("span");
+      expect(span?.textContent).toBe("");
+    });
+  });
+
+  describe("regular task rendering", () => {
+    it("renders default cells for regular task fields", () => {
+      const task = makeTask();
+      const { container } = render(
+        <TaskDataCells
+          task={task}
+          displayTask={task}
+          visibleColumns={[startDateColumn, durationColumn, progressColumn]}
+          level={0}
+          hasChildren={false}
+          isExpanded={false}
+          computedColor="#4A90D9"
+        />
+      );
+
+      const cells = container.querySelectorAll("[role='gridcell']");
+      expect(cells.length).toBe(3);
+    });
+  });
+
+  describe("name cell", () => {
+    it("renders task name in view mode", () => {
+      const task = makeTask({ name: "My Task" });
+      render(
+        <TaskDataCells
+          task={task}
+          displayTask={task}
+          visibleColumns={[nameColumn]}
+          level={0}
+          hasChildren={false}
+          isExpanded={false}
+          computedColor="#4A90D9"
+        />
+      );
+
+      expect(screen.getByText("My Task")).toBeInTheDocument();
+    });
+
+    it("renders expand/collapse button for summary tasks with children", () => {
+      const task = makeTask({ type: "summary", name: "Group" });
+      render(
+        <TaskDataCells
+          task={task}
+          displayTask={task}
+          visibleColumns={[nameColumn]}
+          level={0}
+          hasChildren={true}
+          isExpanded={true}
+          computedColor="#4A90D9"
+        />
+      );
+
+      const button = screen.getByRole("button", {
+        name: /collapse group/i,
+      });
+      expect(button).toBeInTheDocument();
+      expect(button).toHaveAttribute("aria-expanded", "true");
+    });
+
+    it("renders task type icon as interactive button", () => {
+      const task = makeTask();
+      render(
+        <TaskDataCells
+          task={task}
+          displayTask={task}
+          visibleColumns={[nameColumn]}
+          level={0}
+          hasChildren={false}
+          isExpanded={false}
+          computedColor="#4A90D9"
+        />
+      );
+
+      // TaskTypeIcon should be wrapped in a button
+      const typeButton = screen.getByRole("button", {
+        name: /task type/i,
+      });
+      expect(typeButton).toBeInTheDocument();
+    });
+
+    it("applies hierarchy indentation based on level", () => {
+      const task = makeTask();
+      render(
+        <TaskDataCells
+          task={task}
+          displayTask={task}
+          visibleColumns={[nameColumn]}
+          level={2}
+          hasChildren={false}
+          isExpanded={false}
+          computedColor="#4A90D9"
+        />
+      );
+
+      // Level 2 with indentSize 20 = 40px paddingLeft
+      const flexContainer = document.querySelector(".flex.items-center.gap-1");
+      expect(flexContainer).toHaveStyle({ paddingLeft: "40px" });
+    });
+  });
+});

@@ -14,10 +14,7 @@ import {
   NAME_COLUMN_ID,
   type ColumnDefinition,
 } from "../../config/tableColumns";
-import { COLORS } from "../../styles/design-tokens";
-
-/** Brand color for active cell outline. */
-const ACTIVE_CELL_BORDER = COLORS.brand[600];
+import { CELL } from "../../styles/design-tokens";
 
 /** Arrow keys mapped to navigation directions. */
 const ARROW_NAV: Record<string, NavigationDirection> = {
@@ -191,7 +188,7 @@ export const Cell = memo(function Cell({
   // Active cell style with brand color inset box-shadow (doesn't affect layout)
   const activeCellStyle: React.CSSProperties = {
     ...cellStyle,
-    boxShadow: `inset 0 0 0 2px ${ACTIVE_CELL_BORDER}`,
+    boxShadow: CELL.activeBorderShadow,
   };
 
   // Render edit mode

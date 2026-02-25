@@ -139,6 +139,7 @@ export function GanttLayout(): JSX.Element {
   return (
     <div
       ref={outerScrollRef}
+      data-scroll-driver
       className="flex-1 overflow-y-auto overflow-x-hidden"
     >
       {/* Pseudo-rows - creates the total scroll height */}

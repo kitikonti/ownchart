@@ -14,6 +14,7 @@
 import type { Task } from "../../types/chart.types";
 import type { HexColor } from "../../types/branded.types";
 import type { ColumnDefinition } from "../../config/tableColumns";
+import type { EditableField } from "../../types/task.types";
 import { useTaskStore } from "../../store/slices/taskSlice";
 import { useChartStore } from "../../store/slices/chartSlice";
 import { useDensityConfig } from "../../store/slices/userPreferencesSlice";
@@ -21,6 +22,56 @@ import { useCellNavigation } from "../../hooks/useCellNavigation";
 import { Cell } from "./Cell";
 import { ColorCellEditor } from "./CellEditors/ColorCellEditor";
 import { TaskTypeIcon } from "./TaskTypeIcon";
+
+// ─────────────────────────────────────────────────────────────────────────
+// Helpers
+// ─────────────────────────────────────────────────────────────────────────
+
+/** CSS classes for read-only italic content in summary tasks */
+const READONLY_CLASSES = "text-neutral-500 italic";
+
+/** Checks whether a field on a given task type should be rendered read-only (empty). */
+function isReadOnlyEmpty(field: EditableField, type: Task["type"]): boolean {
+  if (type === "milestone") {
+    return field === "endDate" || field === "progress";
+  }
+  return false;
+}
+
+/** Checks whether a field on a given task type should be rendered read-only with italic styling. */
+function isReadOnlyItalic(field: EditableField, type: Task["type"]): boolean {
+  if (type === "summary") {
+    return field === "startDate" || field === "endDate" || field === "duration";
+  }
+  if (type === "milestone") {
+    return field === "duration";
+  }
+  return false;
+}
+
+/**
+ * Get the display value for a read-only italic cell.
+ * Uses the column formatter when available for consistent display (e.g., "7 days" vs "1 day").
+ */
+function getReadOnlyDisplayValue(
+  field: EditableField,
+  displayTask: Task,
+  column: ColumnDefinition
+): string | null {
+  if (field === "duration") {
+    if (displayTask.duration <= 0) return null;
+    return column.formatter
+      ? column.formatter(displayTask.duration)
+      : String(displayTask.duration);
+  }
+  // field is "startDate" | "endDate" — safe access via EditableField
+  const value = displayTask[field as keyof Task];
+  return value ? String(value) : null;
+}
+
+// ─────────────────────────────────────────────────────────────────────────
+// Main Component
+// ─────────────────────────────────────────────────────────────────────────
 
 interface TaskDataCellsProps {
   task: Task;
@@ -48,6 +99,7 @@ export function TaskDataCells({
       {visibleColumns
         .filter((col) => col.field)
         .map((column) => {
+          // Safe: .filter() above guarantees col.field is defined
           const field = column.field!;
 
           // Special handling for name field with hierarchy
@@ -66,84 +118,6 @@ export function TaskDataCells({
             );
           }
 
-          // Special handling for dates in summary tasks (read-only)
-          if (
-            (field === "startDate" || field === "endDate") &&
-            task.type === "summary"
-          ) {
-            return (
-              <Cell
-                key={field}
-                taskId={task.id}
-                task={displayTask}
-                field={field}
-                column={column}
-              >
-                {displayTask[field as keyof Task] ? (
-                  <span className="text-neutral-500 italic">
-                    {String(displayTask[field as keyof Task])}
-                  </span>
-                ) : (
-                  <span></span>
-                )}
-              </Cell>
-            );
-          }
-
-          // Special handling for end date in milestone tasks (read-only, empty)
-          if (field === "endDate" && task.type === "milestone") {
-            return (
-              <Cell
-                key={field}
-                taskId={task.id}
-                task={displayTask}
-                field={field}
-                column={column}
-              >
-                <span></span>
-              </Cell>
-            );
-          }
-
-          // Special handling for duration in summary and milestone tasks (read-only)
-          if (
-            field === "duration" &&
-            (task.type === "summary" || task.type === "milestone")
-          ) {
-            return (
-              <Cell
-                key={field}
-                taskId={task.id}
-                task={displayTask}
-                field={field}
-                column={column}
-              >
-                {task.type === "summary" && displayTask.duration > 0 ? (
-                  <span className="text-neutral-500 italic">
-                    {displayTask.duration} days
-                  </span>
-                ) : (
-                  <span></span>
-                )}
-              </Cell>
-            );
-          }
-
-          // Special handling for progress in milestone tasks (read-only, empty)
-          if (field === "progress" && task.type === "milestone") {
-            return (
-              <Cell
-                key={field}
-                taskId={task.id}
-                task={displayTask}
-                field={field}
-                column={column}
-              >
-                <span></span>
-              </Cell>
-            );
-          }
-
           // Special handling for color field with color picker
           if (field === "color") {
             return (
@@ -155,6 +129,45 @@ export function TaskDataCells({
                 computedColor={computedColor}
                 isEditing={isCellEditing(task.id, field)}
               />
+            );
+          }
+
+          // Read-only empty cell (milestone endDate, milestone progress)
+          if (isReadOnlyEmpty(field, task.type)) {
+            return (
+              <Cell
+                key={field}
+                taskId={task.id}
+                task={displayTask}
+                field={field}
+                column={column}
+              >
+                <span></span>
+              </Cell>
+            );
+          }
+
+          // Read-only italic cell (summary dates/duration, milestone duration)
+          if (isReadOnlyItalic(field, task.type)) {
+            const displayValue = getReadOnlyDisplayValue(
+              field,
+              displayTask,
+              column
+            );
+            return (
+              <Cell
+                key={field}
+                taskId={task.id}
+                task={displayTask}
+                field={field}
+                column={column}
+              >
+                {displayValue ? (
+                  <span className={READONLY_CLASSES}>{displayValue}</span>
+                ) : (
+                  <span></span>
+                )}
+              </Cell>
             );
           }
 

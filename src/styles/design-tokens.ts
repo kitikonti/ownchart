@@ -287,6 +287,17 @@ export const CONNECTION_HANDLE = {
 } as const;
 
 // =============================================================================
+// CELL TOKENS (task table cell styling)
+// =============================================================================
+
+export const CELL = {
+  /** Brand color for active cell outline */
+  activeBorderColor: brand[600],
+  /** Full box-shadow for active/editing cell */
+  activeBorderShadow: `inset 0 0 0 2px ${brand[600]}`,
+} as const;
+
+// =============================================================================
 // ROW NUMBER TOKENS
 // =============================================================================
 

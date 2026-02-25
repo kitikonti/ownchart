@@ -15,22 +15,29 @@ import { useTaskStore, type EditableField } from "../../store/slices/taskSlice";
 import { useChartStore } from "../../store/slices/chartSlice";
 import { getVisibleColumns, NAME_COLUMN_ID } from "../../config/tableColumns";
 import { usePlaceholderContextMenu } from "../../hooks/usePlaceholderContextMenu";
+import { useNewTaskCreation } from "../../hooks/useNewTaskCreation";
 import { ContextMenu } from "../ContextMenu/ContextMenu";
 import { PLACEHOLDER_TASK_ID } from "../../config/placeholderRow";
-import { COLORS, ROW_NUMBER } from "../../styles/design-tokens";
+import { CELL, ROW_NUMBER } from "../../styles/design-tokens";
+
+/** Selector: data-attribute used by scroll-into-view to find the scroll driver. */
+const SCROLL_DRIVER_SELECTOR = "[data-scroll-driver]";
 
 export function NewTaskPlaceholderRow(): JSX.Element {
   const [isEditing, setIsEditing] = useState(false);
   const [inputValue, setInputValue] = useState("");
   const inputRef = useRef<HTMLInputElement>(null);
   const cellRef = useRef<HTMLDivElement>(null);
-  const addTask = useTaskStore((state) => state.addTask);
-  const tasks = useTaskStore((state) => state.tasks);
+
   const activeCell = useTaskStore((state) => state.activeCell);
   const setActiveCell = useTaskStore((state) => state.setActiveCell);
-  const selectedTaskIds = useTaskStore((state) => state.selectedTaskIds);
+  const isSelected = useTaskStore((state) =>
+    state.selectedTaskIds.includes(PLACEHOLDER_TASK_ID)
+  );
   const clearSelection = useTaskStore((state) => state.clearSelection);
   const hiddenColumns = useChartStore((state) => state.hiddenColumns);
+
+  const { createTask } = useNewTaskCreation();
 
   const {
     contextMenu: placeholderContextMenu,
@@ -47,16 +54,14 @@ export function NewTaskPlaceholderRow(): JSX.Element {
 
   const isRowActive = activeCell.taskId === PLACEHOLDER_TASK_ID;
   const isNameActive = isRowActive && activeCell.field === "name";
-  const isSelected = selectedTaskIds.includes(PLACEHOLDER_TASK_ID);
 
   // Scroll the outerScrollRef (vertical scroll driver) so the placeholder is visible.
   // We must NOT use el.scrollIntoView() because that scrolls the wrong container
   // (taskTableScrollRef) which desyncs TaskTable from Timeline (GitHub #16).
-  // Instead, we scroll the outerScrollRef which drives translateY for both panels.
   const scrollPlaceholderIntoView = useRef(() => {
     const el = cellRef.current;
     if (!el) return;
-    const outerScroll = el.closest(".flex-1.overflow-y-auto");
+    const outerScroll = el.closest(SCROLL_DRIVER_SELECTOR);
     if (!outerScroll) return;
     const outerRect = outerScroll.getBoundingClientRect();
     const elRect = el.getBoundingClientRect();
@@ -86,7 +91,7 @@ export function NewTaskPlaceholderRow(): JSX.Element {
 
   const handleCellClick = (field: EditableField): void => {
     // Clear row selection when clicking a cell
-    if (selectedTaskIds.length > 0) {
+    if (isSelected) {
       clearSelection();
     }
 
@@ -106,6 +111,7 @@ export function NewTaskPlaceholderRow(): JSX.Element {
   const handleRowNumberClick = (): void => {
     // Toggle selection of placeholder row
     const store = useTaskStore.getState();
+    const selectedTaskIds = store.selectedTaskIds;
     if (isSelected) {
       store.setSelectedTaskIds(
         selectedTaskIds.filter((id) => id !== PLACEHOLDER_TASK_ID),
@@ -142,12 +148,25 @@ export function NewTaskPlaceholderRow(): JSX.Element {
     }
   };
 
+  const commitNewTask = (): void => {
+    const trimmed = inputValue.trim();
+    if (trimmed) {
+      createTask(trimmed);
+    }
+    setIsEditing(false);
+    setInputValue("");
+  };
+
+  const cancelEdit = (): void => {
+    setIsEditing(false);
+    setInputValue("");
+  };
+
   const handleInputBlur = (): void => {
     if (inputValue.trim()) {
-      createNewTask();
+      commitNewTask();
     } else {
-      setIsEditing(false);
-      setInputValue("");
+      cancelEdit();
     }
   };
 
@@ -155,82 +174,25 @@ export function NewTaskPlaceholderRow(): JSX.Element {
     if (e.key === "Enter") {
       e.preventDefault();
       if (inputValue.trim()) {
-        createNewTask();
+        commitNewTask();
       } else {
-        setIsEditing(false);
-        setInputValue("");
+        cancelEdit();
       }
     } else if (e.key === "Escape") {
-      setIsEditing(false);
-      setInputValue("");
+      cancelEdit();
       // Re-focus the cell
       setTimeout(() => cellRef.current?.focus({ preventScroll: true }), 0);
     }
   };
 
-  const createNewTask = (): void => {
-    const DEFAULT_DURATION = 7;
-
-    const formatDate = (date: Date): string => {
-      return date.toISOString().split("T")[0];
-    };
-
-    // Calculate start date based on last task's end date (like insertTaskBelow)
-    let startDate: string;
-    let endDate: string;
-
-    const lastTask = tasks.length > 0 ? tasks[tasks.length - 1] : null;
-
-    if (lastTask?.endDate) {
-      // Start one day after the last task ends
-      const lastEnd = new Date(lastTask.endDate);
-      const start = new Date(lastEnd);
-      start.setDate(lastEnd.getDate() + 1);
-      startDate = formatDate(start);
-
-      const end = new Date(start);
-      end.setDate(start.getDate() + DEFAULT_DURATION - 1);
-      endDate = formatDate(end);
-    } else {
-      // No tasks or last task has no end date - use today
-      const today = new Date();
-      const nextWeek = new Date(today);
-      nextWeek.setDate(today.getDate() + DEFAULT_DURATION - 1);
-      startDate = formatDate(today);
-      endDate = formatDate(nextWeek);
-    }
-
-    // Calculate the next order value
-    const maxOrder =
-      tasks.length > 0 ? Math.max(...tasks.map((t) => t.order)) + 1 : 0;
-
-    addTask({
-      name: inputValue.trim(),
-      startDate,
-      endDate,
-      duration: DEFAULT_DURATION,
-      progress: 0,
-      color: COLORS.brand[600],
-      order: maxOrder,
-      type: "task",
-      parent: undefined,
-      metadata: {},
-    });
-
-    // Reset state
-    setIsEditing(false);
-    setInputValue("");
-  };
-
-  // Density-aware cell styles
+  // Density-aware cell styles — matches Cell.tsx approach
   const getCellStyle = (columnId: string): React.CSSProperties => ({
     height: "var(--density-row-height)",
     paddingTop: "var(--density-cell-padding-y)",
     paddingBottom: "var(--density-cell-padding-y)",
+    // Name column omits paddingLeft — hierarchy indentation handles it (matches Cell.tsx)
     paddingLeft:
-      columnId === NAME_COLUMN_ID
-        ? "var(--density-cell-padding-x)"
-        : "var(--density-cell-padding-x)",
+      columnId === NAME_COLUMN_ID ? undefined : "var(--density-cell-padding-x)",
     paddingRight: "var(--density-cell-padding-x)",
     fontSize: "var(--density-font-size-cell)",
   });
@@ -246,12 +208,11 @@ export function NewTaskPlaceholderRow(): JSX.Element {
           return (
             <div
               key={column.id}
-              className="border-r border-b border-neutral-200 flex items-center justify-end cursor-pointer"
+              className="border-r border-b border-neutral-200 flex items-center justify-end cursor-pointer pr-2"
               style={{
                 height: "var(--density-row-height)",
-                paddingRight: "8px",
                 backgroundColor: isSelected
-                  ? COLORS.brand[600]
+                  ? ROW_NUMBER.bgHover
                   : ROW_NUMBER.bgInactive,
               }}
               onClick={handleRowNumberClick}
@@ -271,13 +232,16 @@ export function NewTaskPlaceholderRow(): JSX.Element {
           );
         }
 
+        const isNameEditing = column.id === NAME_COLUMN_ID && isEditing;
+        const showActiveBorder = isNameEditing || isActiveCell;
+
         return (
           <div
             key={column.id}
             ref={column.id === NAME_COLUMN_ID ? cellRef : undefined}
             tabIndex={0}
             className={`${column.showRightBorder !== false ? "border-r" : ""} border-b border-neutral-200 flex items-center ${
-              column.id === NAME_COLUMN_ID && isEditing
+              isNameEditing
                 ? "bg-white z-20"
                 : isSelected
                   ? "bg-neutral-100"
@@ -287,11 +251,9 @@ export function NewTaskPlaceholderRow(): JSX.Element {
             } cursor-pointer`}
             style={{
               ...getCellStyle(column.id),
-              ...(column.id === NAME_COLUMN_ID && isEditing
-                ? { boxShadow: `inset 0 0 0 2px ${COLORS.brand[600]}` }
-                : isActiveCell
-                  ? { boxShadow: `inset 0 0 0 2px ${COLORS.brand[600]}` }
-                  : {}),
+              ...(showActiveBorder
+                ? { boxShadow: CELL.activeBorderShadow }
+                : {}),
             }}
             onClick={() =>
               column.field
