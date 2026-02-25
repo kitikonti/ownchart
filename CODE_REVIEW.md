@@ -128,7 +128,7 @@ cd ../app-gantt-review
 - [ ] `src/components/TaskList/NewTaskPlaceholderRow.tsx` (315 LOC) — 4 Hex-Werte
 - [x] `src/components/TaskList/TaskTableRow.tsx` (234 LOC)
 - [ ] `src/components/TaskList/TaskTableHeader.tsx` (176 LOC)
-- [ ] `src/components/TaskList/HiddenRowIndicator.tsx` (138 LOC)
+- [x] `src/components/TaskList/HiddenRowIndicator.tsx` (137 LOC)
 - [ ] `src/components/TaskList/ColumnResizer.tsx` (133 LOC)
 - [ ] `src/components/TaskList/CellEditors/ColorCellEditor.tsx` (130 LOC)
 - [ ] `src/components/TaskList/TaskTypeIcon.tsx` (62 LOC)
@@ -180,6 +180,7 @@ cd ../app-gantt-review
 - [ ] `src/hooks/useZoom.ts` (217 LOC)
 - [ ] `src/hooks/useFullTaskContextMenuItems.ts` (200 LOC)
 - [ ] `src/hooks/useHideOperations.ts` (173 LOC)
+- [x] `src/hooks/useTaskRowData.ts` (159 LOC)
 - [ ] `src/hooks/useLocalStoragePersistence.ts` (158 LOC)
 - [ ] `src/hooks/useTableHeaderContextMenu.ts` (134 LOC)
 - [ ] `src/hooks/useTimelineAreaContextMenu.ts` (124 LOC)

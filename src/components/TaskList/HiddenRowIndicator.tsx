@@ -6,6 +6,7 @@
 
 import { useState } from "react";
 import { CaretUpDown } from "@phosphor-icons/react";
+import { useDensityConfig } from "../../store/slices/userPreferencesSlice";
 
 // Density breakpoints for indicator height scaling
 const COMPACT_ROW_HEIGHT = 28;
@@ -19,8 +20,6 @@ const HOVER_ZONE_OFFSET_RATIO = 0.45;
 const HOVER_ZONE_HEIGHT_RATIO = 0.9;
 
 interface HiddenRowIndicatorProps {
-  /** Density-aware row height in px */
-  rowHeight: number;
   /** Number of hidden rows below (for tooltip text) */
   hiddenBelowCount?: number;
   /** Callback to unhide hidden rows below */
@@ -32,12 +31,12 @@ interface HiddenRowIndicatorProps {
 }
 
 export function HiddenRowIndicator({
-  rowHeight,
   hiddenBelowCount,
   onUnhideBelow,
   controlsColor,
   indicatorColor,
 }: HiddenRowIndicatorProps): JSX.Element {
+  const { rowHeight } = useDensityConfig();
   const [showUnhideButton, setShowUnhideButton] = useState(false);
   const [isButtonHovered, setIsButtonHovered] = useState(false);
 

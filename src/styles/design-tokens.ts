@@ -293,10 +293,10 @@ export const CONNECTION_HANDLE = {
 export const ROW_NUMBER = {
   bgInactive: TABLE_HEADER.bg,
   bgHover: TABLE_HEADER.bgHover,
-  textInactive: "#5F6368", // Google Material gray
+  textInactive: neutral[500], // Secondary text
   textSelected: neutral[0],
   border: TABLE_HEADER.border,
-  hiddenIndicator: "#9ca3af", // Tailwind gray-400
+  hiddenIndicator: neutral[400], // Subtle indicator lines
   controlBg: neutral[0], // Insert-circle & cursor background
 } as const;
 

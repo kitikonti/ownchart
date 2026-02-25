@@ -160,6 +160,107 @@ describe("RowNumberCell", () => {
     });
   });
 
+  describe("hover and focus controls", () => {
+    it("should show insert buttons on mouse hover", () => {
+      render(<RowNumberCell {...defaultProps} />);
+      const cell = screen.getByRole("gridcell");
+
+      fireEvent.mouseEnter(cell);
+
+      expect(
+        screen.getByRole("button", { name: "Insert row above row 1" })
+      ).toBeInTheDocument();
+      expect(
+        screen.getByRole("button", { name: "Insert row below row 1" })
+      ).toBeInTheDocument();
+    });
+
+    it("should hide controls on mouse leave", () => {
+      render(<RowNumberCell {...defaultProps} />);
+      const cell = screen.getByRole("gridcell");
+
+      fireEvent.mouseEnter(cell);
+      expect(
+        screen.getByRole("button", { name: "Insert row above row 1" })
+      ).toBeInTheDocument();
+
+      fireEvent.mouseLeave(cell);
+      expect(
+        screen.queryByRole("button", { name: "Insert row above row 1" })
+      ).not.toBeInTheDocument();
+    });
+
+    it("should show controls on keyboard focus", () => {
+      render(<RowNumberCell {...defaultProps} />);
+      const cell = screen.getByRole("gridcell");
+
+      fireEvent.focus(cell);
+
+      expect(
+        screen.getByRole("button", { name: "Insert row above row 1" })
+      ).toBeInTheDocument();
+      expect(
+        screen.getByRole("button", { name: "Insert row below row 1" })
+      ).toBeInTheDocument();
+    });
+
+    it("should hide controls when focus leaves cell entirely", () => {
+      render(<RowNumberCell {...defaultProps} />);
+      const cell = screen.getByRole("gridcell");
+
+      fireEvent.focus(cell);
+      expect(
+        screen.getByRole("button", { name: "Insert row above row 1" })
+      ).toBeInTheDocument();
+
+      // Focus leaves to an element outside the cell
+      fireEvent.blur(cell, { relatedTarget: document.body });
+
+      expect(
+        screen.queryByRole("button", { name: "Insert row above row 1" })
+      ).not.toBeInTheDocument();
+    });
+
+    it("should keep controls visible when focus moves between child elements", () => {
+      render(<RowNumberCell {...defaultProps} />);
+      const cell = screen.getByRole("gridcell");
+
+      fireEvent.focus(cell);
+      const insertBtn = screen.getByRole("button", {
+        name: "Insert row above row 1",
+      });
+
+      // Focus moves to a child button inside the cell
+      fireEvent.blur(cell, { relatedTarget: insertBtn });
+
+      expect(
+        screen.getByRole("button", { name: "Insert row above row 1" })
+      ).toBeInTheDocument();
+    });
+
+    it("should show drag handle with correct aria-label", () => {
+      render(<RowNumberCell {...defaultProps} taskName="Design phase" />);
+      const cell = screen.getByRole("gridcell");
+
+      fireEvent.mouseEnter(cell);
+
+      expect(
+        screen.getByRole("button", { name: "Drag to reorder Design phase" })
+      ).toBeInTheDocument();
+    });
+
+    it("should use fallback drag handle label when no taskName", () => {
+      render(<RowNumberCell {...defaultProps} />);
+      const cell = screen.getByRole("gridcell");
+
+      fireEvent.mouseEnter(cell);
+
+      expect(
+        screen.getByRole("button", { name: "Drag to reorder row 1" })
+      ).toBeInTheDocument();
+    });
+  });
+
   describe("resetDragState", () => {
     it("should reset all drag state fields", () => {
       dragState.isDragging = true;
