@@ -9,6 +9,7 @@ import {
   needsMigration,
   isFromFuture,
   parseVersion,
+  compareVersions,
   registerMigration,
 } from '../../../../src/utils/fileOperations/migrate';
 import type { GanttFile } from '../../../../src/utils/fileOperations/types';
@@ -53,91 +54,112 @@ function createMinimalGanttFile(
 describe('File Operations - Migration', () => {
   describe('needsMigration', () => {
     it('should return false when fileVersion equals FILE_VERSION ("1.0.0")', () => {
-      const result = needsMigration('1.0.0');
-
-      expect(result).toBe(false);
+      expect(needsMigration('1.0.0')).toBe(false);
     });
 
     it('should return true for older version ("0.9.0")', () => {
-      const result = needsMigration('0.9.0');
-
-      expect(result).toBe(true);
+      expect(needsMigration('0.9.0')).toBe(true);
     });
 
-    it('should return true for newer version ("2.0.0")', () => {
-      const result = needsMigration('2.0.0');
+    it('should return false for future version ("2.0.0")', () => {
+      expect(needsMigration('2.0.0')).toBe(false);
+    });
 
-      expect(result).toBe(true);
+    it('should return false for future minor ("1.1.0")', () => {
+      expect(needsMigration('1.1.0')).toBe(false);
+    });
+
+    it('should return true for older minor ("0.99.99")', () => {
+      expect(needsMigration('0.99.99')).toBe(true);
     });
   });
 
   describe('isFromFuture', () => {
     it('should return false for current version "1.0.0"', () => {
-      const result = isFromFuture('1.0.0');
-
-      expect(result).toBe(false);
+      expect(isFromFuture('1.0.0')).toBe(false);
     });
 
     it('should return false for older version "0.9.0"', () => {
-      const result = isFromFuture('0.9.0');
-
-      expect(result).toBe(false);
+      expect(isFromFuture('0.9.0')).toBe(false);
     });
 
     it('should return true for future major "2.0.0"', () => {
-      const result = isFromFuture('2.0.0');
-
-      expect(result).toBe(true);
+      expect(isFromFuture('2.0.0')).toBe(true);
     });
 
     it('should return true for future minor "1.1.0"', () => {
-      const result = isFromFuture('1.1.0');
-
-      expect(result).toBe(true);
+      expect(isFromFuture('1.1.0')).toBe(true);
     });
 
     it('should return true for future patch "1.0.1"', () => {
-      const result = isFromFuture('1.0.1');
-
-      expect(result).toBe(true);
+      expect(isFromFuture('1.0.1')).toBe(true);
     });
 
     it('should return false for "0.99.99" (older major)', () => {
-      const result = isFromFuture('0.99.99');
+      expect(isFromFuture('0.99.99')).toBe(false);
+    });
+  });
 
-      expect(result).toBe(false);
+  describe('compareVersions', () => {
+    it('should return 0 for equal versions', () => {
+      expect(compareVersions('1.0.0', '1.0.0')).toBe(0);
+    });
+
+    it('should return negative for older vs newer', () => {
+      expect(compareVersions('0.9.0', '1.0.0')).toBeLessThan(0);
+    });
+
+    it('should return positive for newer vs older', () => {
+      expect(compareVersions('2.0.0', '1.0.0')).toBeGreaterThan(0);
+    });
+
+    it('should compare minor versions correctly', () => {
+      expect(compareVersions('1.1.0', '1.2.0')).toBeLessThan(0);
+      expect(compareVersions('1.2.0', '1.1.0')).toBeGreaterThan(0);
+    });
+
+    it('should compare patch versions correctly', () => {
+      expect(compareVersions('1.0.1', '1.0.2')).toBeLessThan(0);
+      expect(compareVersions('1.0.2', '1.0.1')).toBeGreaterThan(0);
+    });
+
+    it('should prioritize major over minor over patch', () => {
+      expect(compareVersions('2.0.0', '1.99.99')).toBeGreaterThan(0);
+      expect(compareVersions('1.2.0', '1.1.99')).toBeGreaterThan(0);
     });
   });
 
   describe('parseVersion', () => {
     it('should parse "1.0.0" to [1, 0, 0]', () => {
-      const result = parseVersion('1.0.0');
-
-      expect(result).toEqual([1, 0, 0]);
+      expect(parseVersion('1.0.0')).toEqual([1, 0, 0]);
     });
 
     it('should parse "2.3.4" to [2, 3, 4]', () => {
-      const result = parseVersion('2.3.4');
-
-      expect(result).toEqual([2, 3, 4]);
+      expect(parseVersion('2.3.4')).toEqual([2, 3, 4]);
     });
 
     it('should handle missing parts "1" -> [1, 0, 0]', () => {
-      const result = parseVersion('1');
-
-      expect(result).toEqual([1, 0, 0]);
+      expect(parseVersion('1')).toEqual([1, 0, 0]);
     });
 
     it('should handle empty string -> [0, 0, 0]', () => {
-      const result = parseVersion('');
-
-      expect(result).toEqual([0, 0, 0]);
+      expect(parseVersion('')).toEqual([0, 0, 0]);
     });
 
     it('should handle non-numeric parts "abc.def.ghi" -> [0, 0, 0]', () => {
-      const result = parseVersion('abc.def.ghi');
+      expect(parseVersion('abc.def.ghi')).toEqual([0, 0, 0]);
+    });
 
-      expect(result).toEqual([0, 0, 0]);
+    it('should handle negative numbers as 0', () => {
+      expect(parseVersion('-1.0.0')).toEqual([0, 0, 0]);
+    });
+
+    it('should floor decimal segments', () => {
+      expect(parseVersion('1.2.3')).toEqual([1, 2, 3]);
+    });
+
+    it('should handle version "0.0.0" correctly', () => {
+      expect(parseVersion('0.0.0')).toEqual([0, 0, 0]);
     });
   });
 
@@ -166,7 +188,6 @@ describe('File Operations - Migration', () => {
     });
 
     it('should update fileVersion on the result after migration', () => {
-      // Register a migration from 0.9.0 -> 1.0.0
       cleanups.push(
         registerMigration({
           fromVersion: '0.9.0',
@@ -184,7 +205,6 @@ describe('File Operations - Migration', () => {
     });
 
     it('should chain multiple migrations sequentially', () => {
-      // Register 0.8.0 -> 0.9.0 -> 1.0.0
       cleanups.push(
         registerMigration({
           fromVersion: '0.8.0',
@@ -210,7 +230,6 @@ describe('File Operations - Migration', () => {
     });
 
     it('should throw on cyclic migration chains', () => {
-      // Register A -> B -> A cycle (neither reaches FILE_VERSION "1.0.0")
       cleanups.push(
         registerMigration({
           fromVersion: '0.1.0',

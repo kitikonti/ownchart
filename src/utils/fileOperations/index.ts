@@ -1,23 +1,59 @@
 /**
- * File operations - Public API exports
+ * File operations - Public API
  *
- * Re-exports all sub-modules as a flat namespace.
- * If name collisions arise as the module grows, switch to explicit named re-exports.
+ * Explicit re-exports to control the module's public surface.
+ * Internal helpers (registerMigration, parseVersion, sanitizeString, etc.)
+ * should be imported directly from their submodules when needed in tests.
  */
 
-// Types & constants
-export * from "./types";
-export * from "./constants";
+// Types
+export type {
+  GanttFile,
+  SerializedTask,
+  SerializedDependency,
+  ViewSettings,
+  DeserializeResult,
+  FileError,
+  TaskWithExtras,
+  Resource,
+} from "./types";
+
+// Constants
+export { KNOWN_TASK_KEYS } from "./constants";
 
 // Serialization pipeline
-export * from "./serialize";
-export * from "./deserialize";
+export { serializeToGanttFile } from "./serialize";
+export type { SerializeOptions } from "./serialize";
+export { deserializeGanttFile } from "./deserialize";
 
-// Validation & security layers
-export * from "./validate";
-export * from "./sanitize";
-export * from "./migrate";
+// Validation
+export {
+  validatePreParse,
+  safeJsonParse,
+  validateStructure,
+  validateSemantics,
+  ValidationError,
+} from "./validate";
+
+// Sanitization
+export { sanitizeGanttFile, SKIP_SANITIZE_KEYS } from "./sanitize";
+
+// Migration
+export {
+  migrateGanttFile,
+  needsMigration,
+  isFromFuture,
+  compareVersions,
+} from "./migrate";
+export type { Migration } from "./migrate";
 
 // File I/O
-export * from "./fileDialog";
-export * from "./loadFromFile";
+export {
+  saveFile,
+  openFile,
+  clearFileHandle,
+  hasFileHandle,
+} from "./fileDialog";
+export type { SaveFileResult, OpenFileResult } from "./fileDialog";
+export { loadFileIntoApp, showLoadNotifications } from "./loadFromFile";
+export type { LoadFileResult, ToastHandler } from "./loadFromFile";

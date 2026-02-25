@@ -576,7 +576,7 @@ describe('loadFromFile', () => {
       expect(result.success).toBe(true);
       expect(result.warnings).toBeDefined();
       expect(result.warnings!.length).toBeGreaterThan(0);
-      // Should contain both a migration warning and a future-version warning
+      // Future files get a forward-compatibility warning (no migration warning)
       const allWarnings = result.warnings!.join(' ');
       expect(allWarnings).toContain('newer version');
     });
@@ -601,6 +601,32 @@ describe('loadFromFile', () => {
       expect(updateIdx).toBeLessThan(signalIdx);
     });
 
+    it('should reset file state before loading data stores', () => {
+      const callOrder: string[] = [];
+      mockMarkClean.mockImplementation(() => callOrder.push('markClean'));
+      mockSetTasks.mockImplementation(() => callOrder.push('setTasks'));
+
+      const content = JSON.stringify(createValidFileContent());
+      loadFileIntoApp(makeFile(content));
+
+      const cleanIdx = callOrder.indexOf('markClean');
+      const setIdx = callOrder.indexOf('setTasks');
+      expect(cleanIdx).toBeLessThan(setIdx);
+    });
+
+    it('should clear history before loading data stores', () => {
+      const callOrder: string[] = [];
+      mockClearHistory.mockImplementation(() => callOrder.push('clearHistory'));
+      mockSetTasks.mockImplementation(() => callOrder.push('setTasks'));
+
+      const content = JSON.stringify(createValidFileContent());
+      loadFileIntoApp(makeFile(content));
+
+      const historyIdx = callOrder.indexOf('clearHistory');
+      const setIdx = callOrder.indexOf('setTasks');
+      expect(historyIdx).toBeLessThan(setIdx);
+    });
+
     it('should set tasks before calling updateScale', () => {
       const callOrder: string[] = [];
       mockSetTasks.mockImplementation(() => callOrder.push('setTasks'));
@@ -612,19 +638,6 @@ describe('loadFromFile', () => {
       const setIdx = callOrder.indexOf('setTasks');
       const scaleIdx = callOrder.indexOf('updateScale');
       expect(setIdx).toBeLessThan(scaleIdx);
-    });
-
-    it('should clear history after resetting file state', () => {
-      const callOrder: string[] = [];
-      mockMarkClean.mockImplementation(() => callOrder.push('markClean'));
-      mockClearHistory.mockImplementation(() => callOrder.push('clearHistory'));
-
-      const content = JSON.stringify(createValidFileContent());
-      loadFileIntoApp(makeFile(content));
-
-      const cleanIdx = callOrder.indexOf('markClean');
-      const historyIdx = callOrder.indexOf('clearHistory');
-      expect(cleanIdx).toBeLessThan(historyIdx);
     });
   });
 

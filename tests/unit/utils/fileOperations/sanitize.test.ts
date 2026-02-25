@@ -399,6 +399,37 @@ describe('File Operations - Sanitization (XSS Prevention)', () => {
       expect(sanitized.chart.viewSettings.projectTitle).toBeUndefined();
       expect(sanitized.chart.viewSettings.projectAuthor).toBeUndefined();
     });
+
+    it('should sanitize holidayRegion with XSS', () => {
+      const malicious = createBaseFile();
+      malicious.chart.viewSettings.holidayRegion =
+        '<script>alert("XSS")</script>AT';
+
+      const sanitized = sanitizeGanttFile(malicious);
+
+      expect(sanitized.chart.viewSettings.holidayRegion).not.toContain(
+        '<script>'
+      );
+      expect(sanitized.chart.viewSettings.holidayRegion).toContain('AT');
+    });
+
+    it('should preserve clean holidayRegion', () => {
+      const file = createBaseFile();
+      file.chart.viewSettings.holidayRegion = 'DE';
+
+      const sanitized = sanitizeGanttFile(file);
+
+      expect(sanitized.chart.viewSettings.holidayRegion).toBe('DE');
+    });
+
+    it('should handle undefined holidayRegion', () => {
+      const file = createBaseFile();
+      file.chart.viewSettings.holidayRegion = undefined;
+
+      const sanitized = sanitizeGanttFile(file);
+
+      expect(sanitized.chart.viewSettings.holidayRegion).toBeUndefined();
+    });
   });
 
   describe('Unknown Task Fields (future-proofing)', () => {
@@ -733,6 +764,68 @@ describe('File Operations - Sanitization (XSS Prevention)', () => {
           `KNOWN_TASK_KEYS contains stale key "${key}" not in SerializedTask — remove from constants.ts`
         ).toBe(true);
       }
+    });
+  });
+
+  describe('Depth-Limit Safety', () => {
+    it('should sanitize string leaves at depth limit instead of returning raw data', () => {
+      const file = createBaseFile();
+      // Build a deeply nested structure that exceeds depth 50
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      let current: any = { xss: '<script>alert("deep")</script>Payload' };
+      for (let i = 0; i < 55; i++) {
+        current = { nested: current };
+      }
+
+      file.chart.tasks = [
+        {
+          id: '123e4567-e89b-12d3-a456-426614174001',
+          name: 'Task',
+          startDate: '2026-01-01',
+          endDate: '2026-01-02',
+          duration: 1,
+          progress: 0,
+          color: '#000000',
+          order: 0,
+          deepData: current,
+        },
+      ];
+
+      const sanitized = sanitizeGanttFile(file);
+
+      // The deeply nested object should be dropped (not returned raw)
+      // because it cannot be safely sanitized without exceeding the stack
+      const json = JSON.stringify(sanitized);
+      expect(json).not.toContain('<script>');
+    });
+
+    it('should keep non-string primitives at depth limit', () => {
+      const file = createBaseFile();
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      let current: any = { num: 42, bool: true, str: '<b>html</b>' };
+      for (let i = 0; i < 55; i++) {
+        current = { nested: current };
+      }
+
+      file.chart.tasks = [
+        {
+          id: '123e4567-e89b-12d3-a456-426614174001',
+          name: 'Task',
+          startDate: '2026-01-01',
+          endDate: '2026-01-02',
+          duration: 1,
+          progress: 0,
+          color: '#000000',
+          order: 0,
+          deepData: current,
+        },
+      ];
+
+      const sanitized = sanitizeGanttFile(file);
+      const json = JSON.stringify(sanitized);
+
+      // No XSS content should survive
+      expect(json).not.toContain('<b>');
     });
   });
 });

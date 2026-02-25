@@ -60,7 +60,10 @@ export function serializeToGanttFile(
       },
     },
 
-    // File-level timestamps: when this .ownchart file was written to disk
+    // File-level timestamp: when this .ownchart file was written to disk.
+    // Both values are identical because each save overwrites the entire file.
+    // The meaningful creation timestamp is chart.metadata.createdAt above.
+    // These exist for external tooling (backup scripts, file managers).
     metadata: {
       created: now,
       modified: now,

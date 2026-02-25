@@ -34,8 +34,9 @@ const migrations = new Map<string, Migration>([
 const MAX_MIGRATION_STEPS = 100;
 
 /**
- * Migrate file to current version
- * Applies migrations sequentially from file version to current version
+ * Migrate file to current version.
+ * Applies migrations sequentially from file version to current version.
+ * Only called for older files — future versions are handled separately.
  */
 export function migrateGanttFile(file: GanttFile): GanttFile {
   let current = file;
@@ -65,35 +66,50 @@ export function migrateGanttFile(file: GanttFile): GanttFile {
 }
 
 /**
- * Check if file needs migration
+ * Check if file is from an older version that needs migration.
+ * Returns false for current and future versions.
  */
 export function needsMigration(fileVersion: string): boolean {
-  return fileVersion !== FILE_VERSION;
+  return !isFromFuture(fileVersion) && fileVersion !== FILE_VERSION;
 }
 
 /**
  * Check if file is from a future version
  */
 export function isFromFuture(fileVersion: string): boolean {
-  const [fileMajor, fileMinor, filePatch] = parseVersion(fileVersion);
-  const [currentMajor, currentMinor, currentPatch] = parseVersion(FILE_VERSION);
+  return compareVersions(fileVersion, FILE_VERSION) > 0;
+}
 
-  return (
-    fileMajor > currentMajor ||
-    (fileMajor === currentMajor && fileMinor > currentMinor) ||
-    (fileMajor === currentMajor &&
-      fileMinor === currentMinor &&
-      filePatch > currentPatch)
-  );
+/**
+ * Compare two semantic version strings.
+ * Returns: negative if a < b, 0 if equal, positive if a > b.
+ */
+export function compareVersions(a: string, b: string): number {
+  const [aMajor, aMinor, aPatch] = parseVersion(a);
+  const [bMajor, bMinor, bPatch] = parseVersion(b);
+
+  if (aMajor !== bMajor) return aMajor - bMajor;
+  if (aMinor !== bMinor) return aMinor - bMinor;
+  return aPatch - bPatch;
 }
 
 /**
  * Parse semantic version string to numbers.
- * Returns [major, minor, patch]. Invalid segments default to 0.
+ * Returns [major, minor, patch]. Non-numeric segments are treated as 0.
  */
 export function parseVersion(version: string): [number, number, number] {
-  const parts = version.split(".").map(Number);
-  return [parts[0] || 0, parts[1] || 0, parts[2] || 0];
+  const parts = version.split(".");
+  return [toSafeInt(parts[0]), toSafeInt(parts[1]), toSafeInt(parts[2])];
+}
+
+/**
+ * Convert a version segment to a non-negative integer.
+ * Returns 0 for undefined, empty, NaN, or negative values.
+ */
+function toSafeInt(segment: string | undefined): number {
+  if (!segment) return 0;
+  const n = Number(segment);
+  return Number.isNaN(n) || n < 0 ? 0 : Math.floor(n);
 }
 
 /**

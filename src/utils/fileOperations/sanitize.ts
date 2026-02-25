@@ -46,16 +46,29 @@ export function sanitizeGanttFile(file: GanttFile): GanttFile {
         ? sanitizeString(file.chart.description)
         : file.chart.description,
       tasks: file.chart.tasks.map(sanitizeTask),
-      viewSettings: {
-        ...file.chart.viewSettings,
-        projectTitle: file.chart.viewSettings.projectTitle
-          ? sanitizeString(file.chart.viewSettings.projectTitle)
-          : file.chart.viewSettings.projectTitle,
-        projectAuthor: file.chart.viewSettings.projectAuthor
-          ? sanitizeString(file.chart.viewSettings.projectAuthor)
-          : file.chart.viewSettings.projectAuthor,
-      },
+      viewSettings: sanitizeViewSettings(file.chart.viewSettings),
     },
+  };
+}
+
+/**
+ * Sanitize user-facing string fields in ViewSettings.
+ * Machine-readable fields (booleans, numbers, arrays of IDs) are passed through.
+ */
+function sanitizeViewSettings(
+  vs: GanttFile["chart"]["viewSettings"]
+): GanttFile["chart"]["viewSettings"] {
+  return {
+    ...vs,
+    projectTitle: vs.projectTitle
+      ? sanitizeString(vs.projectTitle)
+      : vs.projectTitle,
+    projectAuthor: vs.projectAuthor
+      ? sanitizeString(vs.projectAuthor)
+      : vs.projectAuthor,
+    holidayRegion: vs.holidayRegion
+      ? sanitizeString(vs.holidayRegion)
+      : vs.holidayRegion,
   };
 }
 
@@ -86,20 +99,28 @@ function sanitizeTask(task: SerializedTask): SerializedTask {
 
 /**
  * Recursively sanitize all string values in an object.
- * Returns the object unchanged if depth limit is exceeded.
+ * At depth limit: still sanitizes direct string values but stops recursing
+ * into nested objects/arrays, preventing stack overflow while ensuring
+ * no unsanitized strings pass through.
  */
 function sanitizeObject(
   obj: Record<string, unknown>,
   depth: number
 ): Record<string, unknown> {
-  if (depth > MAX_SANITIZE_DEPTH) return obj;
-
+  const atLimit = depth > MAX_SANITIZE_DEPTH;
   const result: Record<string, unknown> = {};
 
   for (const [key, value] of Object.entries(obj)) {
     if (DANGEROUS_KEYS.has(key)) continue;
     if (typeof value === "string") {
       result[key] = sanitizeString(value);
+    } else if (atLimit) {
+      // At depth limit: keep non-string primitives, drop nested structures
+      if (typeof value !== "object" || value === null) {
+        result[key] = value;
+      }
+      // Nested objects/arrays at the limit are dropped — they cannot be
+      // safely sanitized without recursion and may contain XSS payloads.
     } else if (Array.isArray(value)) {
       result[key] = sanitizeArray(value, depth + 1);
     } else if (typeof value === "object" && value !== null) {
@@ -114,20 +135,25 @@ function sanitizeObject(
 
 /**
  * Recursively sanitize all string values in an array.
- * Returns the array unchanged if depth limit is exceeded.
+ * At depth limit: still sanitizes direct string values but stops recursing
+ * into nested objects/arrays.
  */
 function sanitizeArray(arr: unknown[], depth: number): unknown[] {
-  if (depth > MAX_SANITIZE_DEPTH) return arr;
+  const atLimit = depth > MAX_SANITIZE_DEPTH;
 
-  return arr.map((item) =>
-    typeof item === "string"
-      ? sanitizeString(item)
-      : typeof item === "object" && item !== null
-        ? Array.isArray(item)
-          ? sanitizeArray(item, depth + 1)
-          : sanitizeObject(item as Record<string, unknown>, depth + 1)
-        : item
-  );
+  return arr.map((item) => {
+    if (typeof item === "string") return sanitizeString(item);
+    if (atLimit) {
+      // At depth limit: keep non-string primitives, drop nested structures
+      return typeof item !== "object" || item === null ? item : undefined;
+    }
+    if (typeof item === "object" && item !== null) {
+      return Array.isArray(item)
+        ? sanitizeArray(item, depth + 1)
+        : sanitizeObject(item as Record<string, unknown>, depth + 1);
+    }
+    return item;
+  });
 }
 
 /**

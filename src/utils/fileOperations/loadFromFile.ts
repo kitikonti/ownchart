@@ -51,29 +51,32 @@ export function loadFileIntoApp(file: {
   const { data } = parseResult;
 
   // Hydrate all stores inside a try/catch so callers get a structured
-  // error result instead of an unhandled exception.  Note: if a store
-  // method throws mid-hydration, earlier stores keep their new values —
-  // a full rollback is not attempted because valid data already passed
-  // the 6-layer validation pipeline and store failures are exceptional.
+  // error result instead of an unhandled exception.
+  //
+  // Ordering rationale: lightweight, rarely-failing operations (file state,
+  // history clear) run first so the app stays consistent even if a heavier
+  // operation (updateScale) fails later.  A full rollback is not attempted
+  // because valid data already passed the 6-layer validation pipeline and
+  // store failures are exceptional.
   try {
-    // Load data into stores
+    // 1. Reset tracking state & history first (lightweight, unlikely to fail)
+    resetFileState(file.name, data.chartId, data.chartCreatedAt);
+    useHistoryStore.getState().clearHistory();
+
+    // 2. Load core data into stores
     useTaskStore.getState().setTasks(data.tasks);
     useDependencyStore.getState().setDependencies(data.dependencies || []);
     useUIStore.getState().resetExportOptions(data.exportSettings);
 
-    // Apply view settings with defaults for older file versions
+    // 3. Apply view settings with defaults for older file versions
     const viewSettings = applyViewSettingsDefaults(data.viewSettings);
     applyViewSettings(viewSettings);
     restoreColumnWidths(viewSettings);
 
-    // Update scale immediately with new tasks and zoom (before signalFileLoaded)
+    // 4. Update scale and signal completion (heaviest operation, runs last)
     const chartStore = useChartStore.getState();
     chartStore.updateScale(data.tasks);
     chartStore.signalFileLoaded();
-
-    // Reset file state
-    resetFileState(file.name, data.chartId, data.chartCreatedAt);
-    useHistoryStore.getState().clearHistory();
   } catch (e) {
     return {
       success: false,
