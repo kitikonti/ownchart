@@ -58,6 +58,9 @@ export function loadFileIntoApp(file: {
   // operation (updateScale) fails later.  A full rollback is not attempted
   // because valid data already passed the 6-layer validation pipeline and
   // store failures are exceptional.
+  //
+  // NOTE: On mid-sequence failure, earlier stores may already be mutated.
+  // The error result indicates failure but partial state may have been applied.
   try {
     // 1. Reset tracking state & history first (lightweight, unlikely to fail)
     resetFileState(file.name, data.chartId, data.chartCreatedAt);
@@ -68,9 +71,12 @@ export function loadFileIntoApp(file: {
     useDependencyStore.getState().setDependencies(data.dependencies || []);
     useUIStore.getState().resetExportOptions(data.exportSettings);
 
-    // 3. Apply view settings with defaults for older file versions
+    // 3. Apply view settings with defaults for older file versions.
+    //    setViewSettings accepts Partial<SettableViewFields> and only reads
+    //    fields it knows about, so passing the full ViewSettings is safe —
+    //    taskTableWidth/columnWidths are handled separately in restoreColumnWidths.
     const viewSettings = applyViewSettingsDefaults(data.viewSettings);
-    applyViewSettings(viewSettings);
+    useChartStore.getState().setViewSettings(viewSettings);
     restoreColumnWidths(viewSettings);
 
     // 4. Update scale and signal completion (heaviest operation, runs last)
@@ -78,9 +84,10 @@ export function loadFileIntoApp(file: {
     chartStore.updateScale(data.tasks);
     chartStore.signalFileLoaded();
   } catch (e) {
+    const message = e instanceof Error ? e.message : String(e);
     return {
       success: false,
-      error: `Failed to load file data: ${(e as Error).message}`,
+      error: `Failed to load file data: ${message}`,
     };
   }
 
@@ -88,16 +95,6 @@ export function loadFileIntoApp(file: {
     success: true,
     warnings: parseResult.warnings,
   };
-}
-
-/**
- * Apply view settings from file to chart store.
- * setViewSettings accepts Partial<SettableViewFields> and only reads
- * fields it knows about, so passing the full ViewSettings is safe —
- * taskTableWidth/columnWidths are handled separately in restoreColumnWidths.
- */
-function applyViewSettings(viewSettings: ViewSettings): void {
-  useChartStore.getState().setViewSettings(viewSettings);
 }
 
 /**

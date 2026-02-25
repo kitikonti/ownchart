@@ -85,9 +85,12 @@ export function serializeToGanttFile(
  * Convert Task to SerializedTask.
  * Preserves __unknownFields for round-trip compatibility.
  * Tasks from deserialization may carry extra fields (see TaskWithExtras);
- * the assertion is safe because we only read, never write, the extras.
+ * the widening is safe because we only read optional extras, never write them.
  */
 function serializeTask(task: Task, now: string): SerializedTask {
+  // SAFETY: TaskWithExtras extends Task with optional fields (__unknownFields,
+  // createdAt, updatedAt). Reading non-existent optional fields returns
+  // undefined, so this widening is safe for any Task at runtime.
   const taskWithExtra = task as TaskWithExtras;
 
   const serialized: SerializedTask = {
@@ -108,14 +111,18 @@ function serializeTask(task: Task, now: string): SerializedTask {
     updatedAt: now,
   };
 
-  // Preserve unknown fields from future versions, but never overwrite known fields
+  // Preserve unknown fields from future versions, but never overwrite known fields.
+  // SAFETY: SerializedTask has an index signature [key: string]: unknown, so
+  // writing unknown keys is type-safe; the Record cast just satisfies the compiler
+  // which doesn't infer index-signature writability through the typed interface.
   if (
     taskWithExtra.__unknownFields &&
     typeof taskWithExtra.__unknownFields === "object"
   ) {
+    const target = serialized as Record<string, unknown>;
     for (const [key, value] of Object.entries(taskWithExtra.__unknownFields)) {
       if (!KNOWN_TASK_KEYS.has(key)) {
-        (serialized as Record<string, unknown>)[key] = value;
+        target[key] = value;
       }
     }
   }

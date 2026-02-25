@@ -56,7 +56,7 @@ export function deserializeGanttFile(
         success: false,
         error: {
           code: "INVALID_JSON",
-          message: `Invalid JSON: ${(e as Error).message}`,
+          message: `Invalid JSON: ${e instanceof Error ? e.message : String(e)}`,
           recoverable: false,
         },
       };
@@ -148,7 +148,7 @@ export function deserializeGanttFile(
       success: false,
       error: {
         code: "UNKNOWN_ERROR",
-        message: `Unexpected error: ${(e as Error).message}`,
+        message: `Unexpected error: ${e instanceof Error ? e.message : String(e)}`,
         recoverable: false,
       },
     };

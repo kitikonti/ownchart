@@ -136,24 +136,32 @@ function sanitizeObject(
 /**
  * Recursively sanitize all string values in an array.
  * At depth limit: still sanitizes direct string values but stops recursing
- * into nested objects/arrays.
+ * into nested objects/arrays (which are filtered out to avoid undefined holes).
  */
 function sanitizeArray(arr: unknown[], depth: number): unknown[] {
   const atLimit = depth > MAX_SANITIZE_DEPTH;
 
-  return arr.map((item) => {
-    if (typeof item === "string") return sanitizeString(item);
-    if (atLimit) {
+  const result: unknown[] = [];
+
+  for (const item of arr) {
+    if (typeof item === "string") {
+      result.push(sanitizeString(item));
+    } else if (atLimit) {
       // At depth limit: keep non-string primitives, drop nested structures
-      return typeof item !== "object" || item === null ? item : undefined;
+      // entirely so the array never contains undefined holes.
+      if (typeof item !== "object" || item === null) {
+        result.push(item);
+      }
+    } else if (Array.isArray(item)) {
+      result.push(sanitizeArray(item, depth + 1));
+    } else if (typeof item === "object" && item !== null) {
+      result.push(sanitizeObject(item as Record<string, unknown>, depth + 1));
+    } else {
+      result.push(item);
     }
-    if (typeof item === "object" && item !== null) {
-      return Array.isArray(item)
-        ? sanitizeArray(item, depth + 1)
-        : sanitizeObject(item as Record<string, unknown>, depth + 1);
-    }
-    return item;
-  });
+  }
+
+  return result;
 }
 
 /**

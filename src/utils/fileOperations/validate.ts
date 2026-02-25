@@ -66,7 +66,7 @@ export function safeJsonParse(jsonString: string): unknown {
   } catch (e) {
     throw new ValidationError(
       "INVALID_JSON",
-      `Invalid JSON: ${(e as Error).message}`
+      `Invalid JSON: ${e instanceof Error ? e.message : String(e)}`
     );
   }
 }
@@ -263,11 +263,14 @@ function isValidHexColor(color: string): boolean {
 }
 
 /**
- * Detect circular hierarchy references
+ * Detect circular hierarchy references.
+ * Uses a Map for O(1) task lookups instead of Array.find to stay O(n)
+ * overall, which matters for files with up to MAX_TASKS (10,000) tasks.
  */
 function detectCircularHierarchy(
   tasks: Array<{ id: string; parent?: string }>
 ): void {
+  const taskById = new Map(tasks.map((t) => [t.id, t]));
   const visited = new Set<string>();
   const recursionStack = new Set<string>();
 
@@ -284,7 +287,7 @@ function detectCircularHierarchy(
     visited.add(taskId);
     recursionStack.add(taskId);
 
-    const task = tasks.find((t) => t.id === taskId);
+    const task = taskById.get(taskId);
     if (task?.parent) {
       dfs(task.parent, [...path, taskId]);
     }
@@ -292,9 +295,9 @@ function detectCircularHierarchy(
     recursionStack.delete(taskId);
   }
 
-  tasks.forEach((task) => {
+  for (const task of tasks) {
     if (!visited.has(task.id)) {
       dfs(task.id, []);
     }
-  });
+  }
 }

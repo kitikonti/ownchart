@@ -106,7 +106,7 @@ export async function saveFile(
 
       return { success: true, fileName: handle.name };
     } catch (e) {
-      if ((e as Error).name === "AbortError") {
+      if (e instanceof Error && e.name === "AbortError") {
         return { success: false, error: "Save cancelled" };
       }
       // Fall through to fallback
@@ -127,7 +127,8 @@ export async function saveFile(
 
     return { success: true, fileName };
   } catch (e) {
-    return { success: false, error: (e as Error).message };
+    const message = e instanceof Error ? e.message : String(e);
+    return { success: false, error: message };
   }
 }
 
@@ -161,7 +162,7 @@ export async function openFile(): Promise<OpenFileResult> {
         file: { name: file.name, content, size: file.size },
       };
     } catch (e) {
-      if ((e as Error).name === "AbortError") {
+      if (e instanceof Error && e.name === "AbortError") {
         return { success: false, error: "Open cancelled" };
       }
       // Fall through to fallback

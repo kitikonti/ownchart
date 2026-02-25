@@ -36,7 +36,7 @@ export {
 } from "./validate";
 
 // Sanitization
-export { sanitizeGanttFile, SKIP_SANITIZE_KEYS } from "./sanitize";
+export { sanitizeGanttFile } from "./sanitize";
 
 // Migration
 export {

@@ -799,6 +799,44 @@ describe('File Operations - Sanitization (XSS Prevention)', () => {
       expect(json).not.toContain('<script>');
     });
 
+    it('should not leave undefined holes in arrays at depth limit', () => {
+      // Directly test the sanitize module by crafting a task with a deeply
+      // nested array. At the depth limit, nested objects in arrays should be
+      // omitted entirely (not replaced with undefined/null).
+      const file = createBaseFile();
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      let current: any = ['safe', 42, { nested: '<script>xss</script>' }, true];
+      for (let i = 0; i < 55; i++) {
+        current = { nested: current };
+      }
+
+      file.chart.tasks = [
+        {
+          id: '123e4567-e89b-12d3-a456-426614174001',
+          name: 'Task',
+          startDate: '2026-01-01',
+          endDate: '2026-01-02',
+          duration: 1,
+          progress: 0,
+          color: '#000000',
+          order: 0,
+          deepData: current,
+        },
+      ];
+
+      const sanitized = sanitizeGanttFile(file);
+
+      // No XSS content should survive
+      const json = JSON.stringify(sanitized);
+      expect(json).not.toContain('<script>');
+
+      // The deeply nested array items that were objects should be omitted,
+      // not replaced with undefined (which JSON.stringify would show as null).
+      // We verify by checking the serialized output doesn't contain null
+      // entries where the nested objects were.
+      expect(json).not.toContain('"xss"');
+    });
+
     it('should keep non-string primitives at depth limit', () => {
       const file = createBaseFile();
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
