@@ -146,6 +146,7 @@ export const RowNumberCell = memo(function RowNumberCell({
 
   // Hide controls when keyboard focus leaves the cell entirely
   const handleBlur = useCallback((e: FocusEvent): void => {
+    // relatedTarget is always Node | null in DOM focus/blur events
     if (!e.currentTarget.contains(e.relatedTarget as Node)) {
       setIsFocusedWithin(false);
       setHoveredControl(null);

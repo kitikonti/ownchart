@@ -58,6 +58,7 @@ function AllHiddenMessage({
       {hiddenCount} row{hiddenCount !== 1 ? "s" : ""} hidden —{" "}
       <button
         className="hover:underline focus:underline ml-1 text-brand-600"
+        aria-label={`Show all ${hiddenCount} hidden rows`}
         onClick={onShowAll}
       >
         show all
