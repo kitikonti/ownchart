@@ -4,9 +4,12 @@
  */
 
 import { Spinner, WarningCircle, Warning } from "@phosphor-icons/react";
-import type { PdfExportOptions, PdfPageSize } from "../../utils/export/types";
+import type {
+  PdfExportOptions,
+  PdfPageSize,
+  ReadabilityStatus,
+} from "../../utils/export/types";
 import { PDF_PAGE_SIZES, PDF_MARGIN_PRESETS } from "../../utils/export/types";
-import type { ReadabilityStatus } from "./ChartPreview";
 
 export interface PdfPreviewProps {
   /** Data URL of the preview image */

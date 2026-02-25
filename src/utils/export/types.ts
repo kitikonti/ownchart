@@ -313,6 +313,9 @@ export const EXPORT_ZOOM_LABELS_HIDDEN_THRESHOLD = 0.08;
 /** Maximum safe canvas width (WebGL limit on many GPUs) */
 export const EXPORT_MAX_SAFE_WIDTH = 16384;
 
+/** Width threshold above which a "large export" info message is shown (PNG only) */
+export const EXPORT_LARGE_WIDTH_THRESHOLD = 4000;
+
 /**
  * Default export options.
  */
@@ -332,6 +335,12 @@ export const DEFAULT_EXPORT_OPTIONS: ExportOptions = {
   background: "white",
   density: "comfortable",
 };
+
+/** Readability status for export zoom level */
+export interface ReadabilityStatus {
+  level: "good" | "warning" | "critical";
+  message: string;
+}
 
 /**
  * Export state for tracking progress.

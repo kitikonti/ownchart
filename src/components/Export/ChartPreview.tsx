@@ -5,11 +5,10 @@
  */
 
 import { Spinner, WarningCircle, Warning, Image } from "@phosphor-icons/react";
+import type { ReadabilityStatus } from "../../utils/export/types";
 
-export interface ReadabilityStatus {
-  level: "good" | "warning" | "critical";
-  message: string;
-}
+// Re-export for backwards compatibility
+export type { ReadabilityStatus };
 
 export interface ChartPreviewProps {
   /** Data URL of the preview image */

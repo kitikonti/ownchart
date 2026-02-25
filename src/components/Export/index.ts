@@ -7,7 +7,7 @@ export { ExportFormatSelector } from "./ExportFormatSelector";
 export { PdfExportOptions } from "./PdfExportOptions";
 export { SvgExportOptions } from "./SvgExportOptions";
 export { SharedExportOptions } from "./SharedExportOptions";
-export { PngScaleOptions } from "./PngScaleOptions";
+export { ScaleOptions } from "./ScaleOptions";
 export { ExportRenderer } from "./ExportRenderer";
 
 // Re-export shared utilities from utils/export
