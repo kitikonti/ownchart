@@ -121,7 +121,7 @@ describe("InlineProjectTitle", () => {
   it("uses muted styling for Untitled placeholder", () => {
     render(<InlineProjectTitle />);
     const button = screen.getByText("Untitled").closest("button")!;
-    expect(button.className).toContain("text-neutral-400");
+    expect(button.className).toContain("text-neutral-500");
     expect(button.className).toContain("italic");
   });
 

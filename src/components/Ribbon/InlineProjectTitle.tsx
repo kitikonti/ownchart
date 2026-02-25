@@ -4,7 +4,7 @@
  * Uses a hidden span to measure text width for accurate input auto-sizing.
  */
 
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, useLayoutEffect } from "react";
 import { useChartStore } from "../../store/slices/chartSlice";
 import { useFileStore } from "../../store/slices/fileSlice";
 import { APP_CONFIG } from "../../config/appConfig";
@@ -24,7 +24,7 @@ function getEditableTitle(
   projectTitle: string,
   fileName: string | null
 ): string {
-  return projectTitle || (fileName ? stripExtension(fileName) : "") || "";
+  return projectTitle || (fileName ? stripExtension(fileName) : "");
 }
 
 interface InlineProjectTitleProps {
@@ -38,6 +38,7 @@ export function InlineProjectTitle({
 }: InlineProjectTitleProps): JSX.Element {
   const [isEditing, setIsEditing] = useState(false);
   const [draft, setDraft] = useState("");
+  const [inputWidth, setInputWidth] = useState(MIN_INPUT_WIDTH);
   const inputRef = useRef<HTMLInputElement>(null);
   const measureRef = useRef<HTMLSpanElement>(null);
 
@@ -86,12 +87,19 @@ export function InlineProjectTitle({
     }
   }, [isEditing]);
 
-  // Measure text width using the hidden span
-  const measuredWidth = measureRef.current?.scrollWidth ?? 0;
-  const inputWidth = Math.min(
-    MAX_INPUT_WIDTH,
-    Math.max(MIN_INPUT_WIDTH, measuredWidth + MEASUREMENT_PADDING_PX)
-  );
+  // Measure text width after DOM commit so the span's scrollWidth is available.
+  // useLayoutEffect runs synchronously before paint → user never sees wrong width.
+  useLayoutEffect(() => {
+    if (isEditing && measureRef.current) {
+      const measured = measureRef.current.scrollWidth;
+      setInputWidth(
+        Math.min(
+          MAX_INPUT_WIDTH,
+          Math.max(MIN_INPUT_WIDTH, measured + MEASUREMENT_PADDING_PX)
+        )
+      );
+    }
+  }, [isEditing, draft]);
 
   return (
     <div className="absolute left-1/2 transform -translate-x-1/2 flex items-center h-full text-sm">
@@ -123,7 +131,7 @@ export function InlineProjectTitle({
           type="button"
           onClick={handleClick}
           title="Click to edit project title"
-          className={`hover:bg-neutral-200/50 rounded px-2 py-0.5 transition-colors cursor-text ${isPlaceholder ? "text-neutral-400 italic" : "text-neutral-600"}`}
+          className={`hover:bg-neutral-200/50 rounded px-2 py-0.5 transition-colors cursor-text focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-brand-400 ${isPlaceholder ? "text-neutral-500 italic" : "text-neutral-600"}`}
         >
           {displayName}
           {isDirty && <span className="text-neutral-500">*</span>}
