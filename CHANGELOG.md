@@ -2,6 +2,16 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [0.0.48](https://github.com/kitikonti/ownchart/compare/v0.0.47...v0.0.48) (2026-02-25)
+
+
+### Code Refactoring
+
+* extract ExportDialog logic into useExportDialog hook ([1660d28](https://github.com/kitikonti/ownchart/commit/1660d28cd2d21cae6b61303b04fce2876c8dd81d))
+* extract ExportDialogFooter and add hook unit tests ([1e28368](https://github.com/kitikonti/ownchart/commit/1e283685954b5341c81b193cc2e49704cf9ba595))
+* extract footer button width constants in ExportDialog ([b0631db](https://github.com/kitikonti/ownchart/commit/b0631db308a22080eebdfe24dec6b7d986913be1))
+* extract layout constants and simplify ExportDialog conditionals ([2bee5e4](https://github.com/kitikonti/ownchart/commit/2bee5e4baa5cbc83039399d68e033d7984c10489))
+
 ### [0.0.47](https://github.com/kitikonti/ownchart/compare/v0.0.46...v0.0.47) (2026-02-23)
 
 
