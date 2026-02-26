@@ -59,7 +59,12 @@ function getPlaceholderCellBg(state: {
 // ─────────────────────────────────────────────────────────────────────────
 
 export function NewTaskPlaceholderRow(): JSX.Element {
-  const activeCell = useTaskStore((s) => s.activeCell);
+  // Focused selector — returns the active field only when THIS row is active,
+  // null otherwise. Returns a primitive so Zustand skips re-renders when other
+  // rows' cells become active.
+  const activePlaceholderField = useTaskStore((s) =>
+    s.activeCell.taskId === PLACEHOLDER_TASK_ID ? s.activeCell.field : null
+  );
   const setActiveCell = useTaskStore((s) => s.setActiveCell);
   const isSelected = useTaskStore((s) =>
     s.selectedTaskIds.includes(PLACEHOLDER_TASK_ID)
@@ -79,12 +84,13 @@ export function NewTaskPlaceholderRow(): JSX.Element {
     [hiddenColumns]
   );
 
-  const isRowActive = activeCell.taskId === PLACEHOLDER_TASK_ID;
-
-  const handleDataCellClick = (field: EditableField): void => {
-    if (isSelected) clearSelection();
-    setActiveCell(PLACEHOLDER_TASK_ID, field);
-  };
+  const handleDataCellClick = useCallback(
+    (field: EditableField): void => {
+      if (isSelected) clearSelection();
+      setActiveCell(PLACEHOLDER_TASK_ID, field);
+    },
+    [isSelected, clearSelection, setActiveCell]
+  );
 
   return (
     <div className="placeholder-row contents" role="row">
@@ -109,7 +115,7 @@ export function NewTaskPlaceholderRow(): JSX.Element {
         }
 
         // Generic data cell — no content, just activates on click
-        const isActiveCell = isRowActive && activeCell.field === column.field;
+        const isActiveCell = activePlaceholderField === column.field;
         return (
           <div
             key={column.id}
@@ -344,6 +350,7 @@ function PlaceholderNameCell({
       onContextMenu={onContextMenu}
       onKeyDown={handleKeyDown}
       role="gridcell"
+      aria-label="New task name"
     >
       {isEditing ? (
         <input

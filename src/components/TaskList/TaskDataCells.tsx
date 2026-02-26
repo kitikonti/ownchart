@@ -15,6 +15,7 @@ import { memo, useCallback } from "react";
 import type { Task } from "../../types/chart.types";
 import type { ColumnDefinition } from "../../config/tableColumns";
 import type { EditableField } from "../../types/task.types";
+import type { HexColor } from "../../types/branded.types";
 import { useTaskStore } from "../../store/slices/taskSlice";
 import { useChartStore } from "../../store/slices/chartSlice";
 import { useDensityConfig } from "../../store/slices/userPreferencesSlice";
@@ -33,6 +34,22 @@ type DataColumn = ColumnDefinition & { field: EditableField };
 // ─────────────────────────────────────────────────────────────────────────
 // Helpers
 // ─────────────────────────────────────────────────────────────────────────
+
+/**
+ * Read-only field rendering matrix by task type:
+ *
+ *   Field       | task     | summary        | milestone
+ *   ------------|----------|----------------|----------
+ *   startDate   | editable | italic (auto)  | editable
+ *   endDate     | editable | italic (auto)  | empty
+ *   duration    | editable | italic (auto)  | empty
+ *   progress    | editable | editable       | empty
+ *   name, color | editable | editable       | editable
+ *
+ * "italic"  = read-only, shows computed value with italic styling
+ * "empty"   = read-only, renders blank (field not applicable)
+ * "editable" = default Cell rendering with inline editing
+ */
 
 /** CSS classes for read-only italic content in summary tasks */
 const READONLY_CLASSES = "text-neutral-500 italic";
@@ -263,7 +280,9 @@ function NameCell({
             }}
             className="w-4 h-4 flex items-center justify-center hover:bg-neutral-200 rounded text-neutral-600 flex-shrink-0"
             aria-label={
-              isExpanded ? `Collapse ${task.name}` : `Expand ${task.name}`
+              isExpanded
+                ? `Collapse ${displayTask.name}`
+                : `Expand ${displayTask.name}`
             }
             aria-expanded={isExpanded}
           >
@@ -276,8 +295,8 @@ function NameCell({
         {/* Task type icon - clickable to cycle through types */}
         <TaskTypeIcon type={task.type} onClick={handleTypeClick} />
 
-        {/* Task name display */}
-        <span className="flex-1">{task.name}</span>
+        {/* Task name display — uses displayTask for consistency with Cell */}
+        <span className="flex-1">{displayTask.name}</span>
       </div>
     </Cell>
   );
@@ -309,6 +328,25 @@ function ColorCell({
       s.isEditingCell
   );
 
+  /** Apply color change respecting the active color mode. */
+  const handleColorChange = useCallback(
+    (hex: HexColor) => {
+      if (colorModeState.mode === "manual") {
+        updateTask(task.id, { color: hex });
+      } else if (colorModeState.mode === "summary" && task.type === "summary") {
+        updateTask(task.id, { color: hex, colorOverride: undefined });
+      } else {
+        updateTask(task.id, { colorOverride: hex });
+      }
+    },
+    [colorModeState.mode, task.id, task.type, updateTask]
+  );
+
+  /** Clear any manual override so the automatic color mode takes effect. */
+  const handleResetOverride = useCallback(() => {
+    updateTask(task.id, { colorOverride: undefined });
+  }, [task.id, updateTask]);
+
   return (
     <Cell taskId={task.id} task={displayTask} field="color" column={column}>
       <div className="flex items-center justify-center w-full h-full">
@@ -318,26 +356,8 @@ function ColorCell({
             computedColor={computedColor}
             colorMode={colorModeState.mode}
             hasOverride={!!task.colorOverride}
-            onChange={(hex) => {
-              if (colorModeState.mode === "manual") {
-                updateTask(task.id, { color: hex });
-              } else if (
-                colorModeState.mode === "summary" &&
-                task.type === "summary"
-              ) {
-                updateTask(task.id, {
-                  color: hex,
-                  colorOverride: undefined,
-                });
-              } else {
-                updateTask(task.id, { colorOverride: hex });
-              }
-            }}
-            onResetOverride={() =>
-              updateTask(task.id, {
-                colorOverride: undefined,
-              })
-            }
+            onChange={handleColorChange}
+            onResetOverride={handleResetOverride}
             onSave={stopCellEdit}
             onCancel={stopCellEdit}
             height={densityConfig.colorBarHeight}

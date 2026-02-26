@@ -392,6 +392,13 @@ describe("NewTaskPlaceholderRow", () => {
   });
 
   describe("accessibility", () => {
+    it("has aria-label on the name cell div", () => {
+      render(<NewTaskPlaceholderRow />);
+      expect(
+        screen.getByRole("gridcell", { name: "New task name" })
+      ).toBeInTheDocument();
+    });
+
     it("has aria-label on the task name input", () => {
       mockActivePlaceholderNameCell();
 
@@ -410,10 +417,12 @@ describe("NewTaskPlaceholderRow", () => {
       const cells = screen.getAllByRole("gridcell");
       cells.forEach((cell) => {
         const tabIndex = cell.getAttribute("tabindex");
-        const isRowNumber = cell.getAttribute("aria-label") === "Select new task placeholder row";
-        const isNameCell = cell.textContent === "Add new task...";
+        const ariaLabel = cell.getAttribute("aria-label");
+        const isFocusable =
+          ariaLabel === "Select new task placeholder row" ||
+          ariaLabel === "New task name";
 
-        if (isRowNumber || isNameCell) {
+        if (isFocusable) {
           expect(tabIndex).toBe("0");
         } else {
           expect(tabIndex).toBe("-1");
