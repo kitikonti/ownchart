@@ -96,6 +96,11 @@ export function compareVersions(a: string, b: string): number {
 /**
  * Parse semantic version string to numbers.
  * Returns [major, minor, patch]. Non-numeric segments are treated as 0.
+ *
+ * NOTE: Pre-release suffixes (e.g., "1.0.0-beta") are not supported.
+ * The hyphenated segment parses as NaN and falls back to 0, so pre-release
+ * versions are treated as equal to their release counterparts.
+ * This is acceptable because the file format uses plain semver only.
  */
 export function parseVersion(version: string): [number, number, number] {
   const parts = version.split(".");

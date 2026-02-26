@@ -41,6 +41,9 @@ export function sanitizeGanttFile(file: GanttFile): GanttFile {
         : file.chart.description,
       tasks: file.chart.tasks.map(sanitizeTask),
       viewSettings: sanitizeViewSettings(file.chart.viewSettings),
+      exportSettings: file.chart.exportSettings
+        ? sanitizeExportSettings(file.chart.exportSettings)
+        : file.chart.exportSettings,
     },
   };
 }
@@ -64,6 +67,23 @@ function sanitizeViewSettings(
       ? sanitizeString(vs.holidayRegion)
       : vs.holidayRegion,
   };
+}
+
+/**
+ * Sanitize export settings values.
+ * Most fields are enums/numbers/booleans, but future versions may add
+ * user-entered strings. Generic deep sanitization ensures safety.
+ */
+function sanitizeExportSettings(
+  settings: NonNullable<GanttFile["chart"]["exportSettings"]>
+): NonNullable<GanttFile["chart"]["exportSettings"]> {
+  // SAFETY: ExportOptions is a typed interface without an index signature,
+  // so we cast through unknown to satisfy the compiler. sanitizeObject
+  // preserves all keys and only transforms string values via DOMPurify.
+  return sanitizeObject(
+    settings as unknown as Record<string, unknown>,
+    0
+  ) as unknown as NonNullable<GanttFile["chart"]["exportSettings"]>;
 }
 
 /**

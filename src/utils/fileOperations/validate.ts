@@ -14,6 +14,9 @@ import type { GanttFile } from "./types";
 const MAX_FILE_SIZE = 50 * 1024 * 1024; // 50MB
 const MAX_TASKS = 10000;
 
+/** Allowed task type values — must match TaskType in chart.types.ts */
+const VALID_TASK_TYPES = new Set(["task", "summary", "milestone"]);
+
 /**
  * Custom validation error class
  */
@@ -225,6 +228,25 @@ export function validateSemantics(file: GanttFile): void {
       throw new ValidationError(
         "INVALID_COLOR",
         `Task ${index} has invalid color: ${task.color}`
+      );
+    }
+
+    // Validate task type (if present, must be a recognized value)
+    if (task.type !== undefined && !VALID_TASK_TYPES.has(task.type)) {
+      throw new ValidationError(
+        "INVALID_TASK_TYPE",
+        `Task ${index} has invalid type: ${task.type}`
+      );
+    }
+
+    // Validate colorOverride (if present, must be valid hex color)
+    if (
+      task.colorOverride !== undefined &&
+      !isValidHexColor(task.colorOverride)
+    ) {
+      throw new ValidationError(
+        "INVALID_COLOR",
+        `Task ${index} has invalid colorOverride: ${task.colorOverride}`
       );
     }
   });

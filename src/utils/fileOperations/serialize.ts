@@ -119,7 +119,8 @@ function serializeTask(task: Task, now: string): SerializedTask {
   // (safeJsonParse, sanitizeTask) already strip them during deserialization.
   if (
     taskWithExtra.__unknownFields &&
-    typeof taskWithExtra.__unknownFields === "object"
+    typeof taskWithExtra.__unknownFields === "object" &&
+    !Array.isArray(taskWithExtra.__unknownFields)
   ) {
     const target = serialized as Record<string, unknown>;
     for (const [key, value] of Object.entries(taskWithExtra.__unknownFields)) {

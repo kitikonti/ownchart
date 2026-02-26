@@ -161,6 +161,13 @@ describe('File Operations - Migration', () => {
     it('should handle version "0.0.0" correctly', () => {
       expect(parseVersion('0.0.0')).toEqual([0, 0, 0]);
     });
+
+    it('should treat pre-release suffix as 0 (not supported)', () => {
+      // "1.0.0-beta" → patch segment "0-beta" → NaN → 0
+      expect(parseVersion('1.0.0-beta')).toEqual([1, 0, 0]);
+      expect(parseVersion('1.0.0-beta.1')).toEqual([1, 0, 0]);
+      expect(parseVersion('2.1.0-rc.2')).toEqual([2, 1, 0]);
+    });
   });
 
   describe('migrateGanttFile', () => {

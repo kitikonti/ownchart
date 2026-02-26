@@ -435,6 +435,80 @@ describe('File Operations - Sanitization (XSS Prevention)', () => {
     });
   });
 
+  describe('ExportSettings Sanitization', () => {
+    it('should sanitize string fields in exportSettings', () => {
+      const file = createBaseFile();
+      // Simulate exportSettings with an XSS payload in a string field
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      (file.chart as any).exportSettings = {
+        zoomMode: 'currentView',
+        timelineZoom: 1.0,
+        fitToWidth: 1920,
+        dateRangeMode: 'custom',
+        customDateStart: '<script>alert("XSS")</script>2026-01-01',
+        customDateEnd: '2026-12-31',
+        selectedColumns: [],
+        includeHeader: true,
+        includeTodayMarker: true,
+        includeDependencies: true,
+        includeGridLines: true,
+        includeWeekends: true,
+        includeHolidays: true,
+        taskLabelPosition: 'inside',
+        background: 'white',
+        density: 'comfortable',
+      };
+
+      const sanitized = sanitizeGanttFile(file);
+
+      expect(sanitized.chart.exportSettings!.customDateStart).not.toContain(
+        '<script>'
+      );
+      // Non-string fields pass through unchanged
+      expect(sanitized.chart.exportSettings!.timelineZoom).toBe(1.0);
+      expect(sanitized.chart.exportSettings!.includeHeader).toBe(true);
+    });
+
+    it('should pass through undefined exportSettings', () => {
+      const file = createBaseFile();
+      // exportSettings not set (undefined)
+
+      const sanitized = sanitizeGanttFile(file);
+
+      expect(sanitized.chart.exportSettings).toBeUndefined();
+    });
+
+    it('should sanitize future string fields in exportSettings', () => {
+      const file = createBaseFile();
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      (file.chart as any).exportSettings = {
+        zoomMode: 'currentView',
+        timelineZoom: 1.0,
+        fitToWidth: 1920,
+        dateRangeMode: 'all',
+        selectedColumns: [],
+        includeHeader: true,
+        includeTodayMarker: true,
+        includeDependencies: true,
+        includeGridLines: true,
+        includeWeekends: true,
+        includeHolidays: true,
+        taskLabelPosition: 'inside',
+        background: 'white',
+        density: 'comfortable',
+        // Simulate a future string field
+        futureCustomLabel: '<img onerror=alert(1) src=x>Label',
+      };
+
+      const sanitized = sanitizeGanttFile(file);
+
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const settings = sanitized.chart.exportSettings as any;
+      expect(settings.futureCustomLabel).not.toContain('onerror');
+      expect(settings.futureCustomLabel).toContain('Label');
+    });
+  });
+
   describe('Unknown Task Fields (future-proofing)', () => {
     it('should sanitize unknown string fields on tasks', () => {
       const file = createBaseFile();

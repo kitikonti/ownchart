@@ -246,6 +246,24 @@ describe('File Operations - Serialization', () => {
       expect(parsed.chart.tasks[0].safeFutureField).toBe('preserved');
     });
 
+    it('should ignore __unknownFields if it is an array (defense-in-depth)', () => {
+      const tasks: (Task & { __unknownFields?: Record<string, unknown> })[] = [
+        {
+          ...createSampleTasks()[0],
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          __unknownFields: ['not', 'a', 'record'] as any,
+        },
+      ];
+
+      const json = serializeToGanttFile(tasks, createSampleViewSettings());
+      const parsed = JSON.parse(json);
+
+      // Array __unknownFields should be silently ignored, not spread onto the task
+      expect(parsed.chart.tasks[0].name).toBe('Task 1');
+      expect(parsed.chart.tasks[0]['0']).toBeUndefined();
+      expect(parsed.chart.tasks[0]['1']).toBeUndefined();
+    });
+
     it('should filter prototype pollution keys from __unknownFields', () => {
       const unknownFields: Record<string, unknown> = {
         safeFutureField: 'preserved',

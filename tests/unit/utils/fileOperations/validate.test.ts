@@ -383,5 +383,63 @@ describe('File Operations - Validation', () => {
 
       expect(() => validateSemantics(valid)).not.toThrow();
     });
+
+    it('should reject invalid task type', () => {
+      const invalid = createValidFile();
+      invalid.chart.tasks[0].type = 'invalid-type';
+
+      expect(() => validateSemantics(invalid)).toThrow('invalid type');
+    });
+
+    it('should reject XSS payload in task type', () => {
+      const invalid = createValidFile();
+      invalid.chart.tasks[0].type = '<script>alert(1)</script>';
+
+      expect(() => validateSemantics(invalid)).toThrow('invalid type');
+    });
+
+    it('should accept valid task types', () => {
+      for (const type of ['task', 'summary', 'milestone']) {
+        const valid = createValidFile();
+        valid.chart.tasks[0].type = type;
+
+        expect(() => validateSemantics(valid)).not.toThrow();
+      }
+    });
+
+    it('should accept undefined task type', () => {
+      const valid = createValidFile();
+      delete valid.chart.tasks[0].type;
+
+      expect(() => validateSemantics(valid)).not.toThrow();
+    });
+
+    it('should reject invalid colorOverride', () => {
+      const invalid = createValidFile();
+      invalid.chart.tasks[0].colorOverride = 'not-a-color';
+
+      expect(() => validateSemantics(invalid)).toThrow('invalid colorOverride');
+    });
+
+    it('should accept valid hex colorOverride', () => {
+      const valid = createValidFile();
+      valid.chart.tasks[0].colorOverride = '#FF5733';
+
+      expect(() => validateSemantics(valid)).not.toThrow();
+    });
+
+    it('should accept 3-digit hex colorOverride', () => {
+      const valid = createValidFile();
+      valid.chart.tasks[0].colorOverride = '#F53';
+
+      expect(() => validateSemantics(valid)).not.toThrow();
+    });
+
+    it('should accept undefined colorOverride', () => {
+      const valid = createValidFile();
+      delete valid.chart.tasks[0].colorOverride;
+
+      expect(() => validateSemantics(valid)).not.toThrow();
+    });
   });
 });
