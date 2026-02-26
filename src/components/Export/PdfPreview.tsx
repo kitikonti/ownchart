@@ -191,6 +191,12 @@ function PdfPreviewInfo({
 }: PdfPreviewInfoProps): JSX.Element {
   const scalePercent = Math.round(scaleFactor * 100);
 
+  // Extract warning-level readability so TypeScript narrows without `as` cast
+  const readabilityWarning =
+    readabilityStatus && readabilityStatus.level !== "good"
+      ? { level: readabilityStatus.level, message: readabilityStatus.message }
+      : null;
+
   return (
     <div className="mt-4 space-y-2">
       {/* Single row with dot separators */}
@@ -214,11 +220,11 @@ function PdfPreviewInfo({
       </div>
 
       {/* Readability Indicator - only show warnings/critical */}
-      {readabilityStatus && readabilityStatus.level !== "good" && (
+      {readabilityWarning && (
         <WarningBanner
-          level={readabilityStatus.level as WarningLevel}
+          level={readabilityWarning.level}
           icon={Warning}
-          message={readabilityStatus.message}
+          message={readabilityWarning.message}
         />
       )}
 
