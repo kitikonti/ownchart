@@ -12,6 +12,7 @@ import {
   useCallback,
   type RefObject,
   type KeyboardEvent,
+  type MouseEvent,
 } from "react";
 import { useTaskStore } from "../store/slices/taskSlice";
 import { useIsPlaceholderSelected } from "./useIsPlaceholderSelected";
@@ -27,7 +28,7 @@ interface UsePlaceholderNameEditReturn {
   isNameActive: boolean;
   isSelected: boolean;
   showActiveBorder: boolean;
-  handleClick: () => void;
+  handleClick: (e: MouseEvent) => void;
   handleKeyDown: (e: KeyboardEvent<HTMLDivElement>) => void;
   handleInputBlur: () => void;
   handleInputKeyDown: (e: KeyboardEvent<HTMLInputElement>) => void;
@@ -96,14 +97,18 @@ export function usePlaceholderNameEdit(
     setInputValue("");
   }, []);
 
-  const handleClick = useCallback((): void => {
-    if (isSelected) clearSelection();
-    if (isNameActive && !isEditing) {
-      setIsEditing(true);
-    } else if (!isNameActive) {
-      setActiveCell(PLACEHOLDER_TASK_ID, "name");
-    }
-  }, [isSelected, clearSelection, isNameActive, isEditing, setActiveCell]);
+  const handleClick = useCallback(
+    (e: MouseEvent): void => {
+      e.stopPropagation();
+      clearSelection();
+      if (isNameActive && !isEditing) {
+        setIsEditing(true);
+      } else if (!isNameActive) {
+        setActiveCell(PLACEHOLDER_TASK_ID, "name");
+      }
+    },
+    [clearSelection, isNameActive, isEditing, setActiveCell]
+  );
 
   const handleKeyDown = useCallback(
     (e: KeyboardEvent<HTMLDivElement>): void => {

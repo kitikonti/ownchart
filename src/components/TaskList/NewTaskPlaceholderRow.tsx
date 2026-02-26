@@ -288,10 +288,14 @@ const PlaceholderDataCell = memo(function PlaceholderDataCell({
     }
   }, [isActive]);
 
-  const handleClick = useCallback((): void => {
-    if (isSelected) clearSelection();
-    setActiveCell(PLACEHOLDER_TASK_ID, field);
-  }, [field, isSelected, clearSelection, setActiveCell]);
+  const handleClick = useCallback(
+    (e: React.MouseEvent): void => {
+      e.stopPropagation();
+      clearSelection();
+      setActiveCell(PLACEHOLDER_TASK_ID, field);
+    },
+    [field, clearSelection, setActiveCell]
+  );
 
   const handleKeyDown = useCallback(
     (e: KeyboardEvent<HTMLDivElement>): void => {
@@ -307,13 +311,14 @@ const PlaceholderDataCell = memo(function PlaceholderDataCell({
         navigateCell(e.shiftKey ? "left" : "right");
       } else if (e.key === "Enter" || e.key === " ") {
         e.preventDefault();
-        handleClick();
+        clearSelection();
+        setActiveCell(PLACEHOLDER_TASK_ID, field);
       } else if (e.key === "Escape") {
         e.preventDefault();
         setActiveCell(null, null);
       }
     },
-    [navigateCell, handleClick, setActiveCell]
+    [field, navigateCell, clearSelection, setActiveCell]
   );
 
   return (
