@@ -14,7 +14,7 @@ import type {
 } from "./types";
 import { FILE_VERSION, SCHEMA_VERSION } from "../../config/version";
 import { DEFAULT_CHART_NAME } from "../../config/viewSettingsDefaults";
-import { KNOWN_TASK_KEYS, DANGEROUS_KEYS } from "./constants";
+import { KNOWN_TASK_KEYS, DANGEROUS_KEYS, INTERNAL_KEYS } from "./constants";
 
 export interface SerializeOptions {
   chartName?: string;
@@ -124,7 +124,11 @@ function serializeTask(task: Task, now: string): SerializedTask {
   ) {
     const target = serialized as Record<string, unknown>;
     for (const [key, value] of Object.entries(taskWithExtra.__unknownFields)) {
-      if (!KNOWN_TASK_KEYS.has(key) && !DANGEROUS_KEYS.has(key)) {
+      if (
+        !KNOWN_TASK_KEYS.has(key) &&
+        !DANGEROUS_KEYS.has(key) &&
+        !INTERNAL_KEYS.has(key)
+      ) {
         target[key] = value;
       }
     }

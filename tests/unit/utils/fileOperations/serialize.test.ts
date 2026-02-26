@@ -264,6 +264,27 @@ describe('File Operations - Serialization', () => {
       expect(parsed.chart.tasks[0]['1']).toBeUndefined();
     });
 
+    it('should not leak __unknownFields as a literal key into the file', () => {
+      const tasks: (Task & { __unknownFields?: Record<string, unknown> })[] = [
+        {
+          ...createSampleTasks()[0],
+          __unknownFields: {
+            __unknownFields: { nested: 'should not appear' },
+            safeFutureField: 'preserved',
+          },
+        },
+      ];
+
+      const json = serializeToGanttFile(tasks, createSampleViewSettings());
+      const parsed = JSON.parse(json);
+
+      // The internal meta-key must not leak into the serialized output
+      const taskKeys = Object.keys(parsed.chart.tasks[0]);
+      expect(taskKeys).not.toContain('__unknownFields');
+      // Other unknown fields are still preserved
+      expect(parsed.chart.tasks[0].safeFutureField).toBe('preserved');
+    });
+
     it('should filter prototype pollution keys from __unknownFields', () => {
       const unknownFields: Record<string, unknown> = {
         safeFutureField: 'preserved',

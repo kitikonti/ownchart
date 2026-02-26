@@ -236,6 +236,87 @@ describe('File Operations - Migration', () => {
       expect(result.schemaVersion).toBe(3);
     });
 
+    it('should record originalVersion after single migration', () => {
+      cleanups.push(
+        registerMigration({
+          fromVersion: '0.9.0',
+          toVersion: '1.0.0',
+          description: 'Test migration',
+          migrate: (file) => ({ ...file, schemaVersion: 2 }),
+        })
+      );
+
+      const file = createMinimalGanttFile({ fileVersion: '0.9.0' });
+      const result = migrateGanttFile(file);
+
+      expect(result.migrations?.originalVersion).toBe('0.9.0');
+      expect(result.migrations?.appliedMigrations).toEqual(['0.9.0->1.0.0']);
+    });
+
+    it('should record originalVersion and all steps after chained migrations', () => {
+      cleanups.push(
+        registerMigration({
+          fromVersion: '0.8.0',
+          toVersion: '0.9.0',
+          description: 'First step',
+          migrate: (file) => ({ ...file, schemaVersion: 2 }),
+        })
+      );
+      cleanups.push(
+        registerMigration({
+          fromVersion: '0.9.0',
+          toVersion: '1.0.0',
+          description: 'Second step',
+          migrate: (file) => ({ ...file, schemaVersion: 3 }),
+        })
+      );
+
+      const file = createMinimalGanttFile({ fileVersion: '0.8.0' });
+      const result = migrateGanttFile(file);
+
+      expect(result.migrations?.originalVersion).toBe('0.8.0');
+      expect(result.migrations?.appliedMigrations).toEqual([
+        '0.8.0->0.9.0',
+        '0.9.0->1.0.0',
+      ]);
+    });
+
+    it('should not add migrations metadata when no migration was applied', () => {
+      const file = createMinimalGanttFile({ fileVersion: '1.0.0' });
+      const result = migrateGanttFile(file);
+
+      // No migrations applied, so migrations field should remain unchanged
+      expect(result.migrations).toBeUndefined();
+    });
+
+    it('should preserve existing originalVersion from a previously migrated file', () => {
+      cleanups.push(
+        registerMigration({
+          fromVersion: '0.9.0',
+          toVersion: '1.0.0',
+          description: 'Latest migration',
+          migrate: (file) => ({ ...file, schemaVersion: 3 }),
+        })
+      );
+
+      const file = createMinimalGanttFile({
+        fileVersion: '0.9.0',
+        migrations: {
+          originalVersion: '0.7.0',
+          appliedMigrations: ['0.7.0->0.8.0', '0.8.0->0.9.0'],
+        },
+      });
+      const result = migrateGanttFile(file);
+
+      // Should keep the earliest originalVersion, not overwrite with 0.9.0
+      expect(result.migrations?.originalVersion).toBe('0.7.0');
+      expect(result.migrations?.appliedMigrations).toEqual([
+        '0.7.0->0.8.0',
+        '0.8.0->0.9.0',
+        '0.9.0->1.0.0',
+      ]);
+    });
+
     it('should throw on cyclic migration chains', () => {
       cleanups.push(
         registerMigration({

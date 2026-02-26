@@ -21,7 +21,6 @@ import {
 } from "./validate";
 import { sanitizeGanttFile } from "./sanitize";
 import { migrateGanttFile, needsMigration, isFromFuture } from "./migrate";
-import { FILE_VERSION } from "../../config/version";
 import { normalizeTaskOrder } from "../../utils/hierarchy";
 import { KNOWN_TASK_KEYS } from "./constants";
 
@@ -83,9 +82,10 @@ export function deserializeGanttFile(
 
     // Layer 6: Version compatibility & migration
     if (needsMigration(ganttFile.fileVersion)) {
+      const preVersion = ganttFile.fileVersion;
       ganttFile = migrateGanttFile(ganttFile);
       warnings.push(
-        `File migrated from v${ganttFile.migrations?.originalVersion || ganttFile.fileVersion} to v${FILE_VERSION}`
+        `File migrated from v${ganttFile.migrations?.originalVersion || preVersion} to v${ganttFile.fileVersion}`
       );
     }
 

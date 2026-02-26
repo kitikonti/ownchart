@@ -14,6 +14,13 @@ export const DANGEROUS_KEYS = new Set([
 ]);
 
 /**
+ * Internal meta-keys used at the serialize/deserialize boundary.
+ * These must never leak into the persisted file format.
+ * Used by serialize.ts to exclude internal bookkeeping fields from output.
+ */
+export const INTERNAL_KEYS = new Set(["__unknownFields"]);
+
+/**
  * Known task field names — used to identify/filter unknownFields during round-trip.
  * Must stay in sync with SerializedTask fields in types.ts.
  * @see SKIP_SANITIZE_KEYS in sanitize.ts for the related sanitization skip-set.

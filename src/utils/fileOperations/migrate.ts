@@ -39,9 +39,11 @@ const MAX_MIGRATION_STEPS = 100;
  * Only called for older files — future versions are handled separately.
  */
 export function migrateGanttFile(file: GanttFile): GanttFile {
+  const originalVersion = file.fileVersion;
   let current = file;
-  let currentVersion = file.fileVersion;
+  let currentVersion = originalVersion;
   let steps = 0;
+  const appliedMigrations: string[] = [];
 
   while (currentVersion !== FILE_VERSION) {
     const migration = migrations.get(currentVersion);
@@ -59,7 +61,23 @@ export function migrateGanttFile(file: GanttFile): GanttFile {
 
     current = migration.migrate(current);
     current = { ...current, fileVersion: migration.toVersion };
+    appliedMigrations.push(`${currentVersion}->${migration.toVersion}`);
     currentVersion = migration.toVersion;
+  }
+
+  // Record migration history so callers can report accurate version info
+  if (appliedMigrations.length > 0) {
+    current = {
+      ...current,
+      migrations: {
+        appliedMigrations: [
+          ...(current.migrations?.appliedMigrations || []),
+          ...appliedMigrations,
+        ],
+        originalVersion:
+          current.migrations?.originalVersion || originalVersion,
+      },
+    };
   }
 
   return current;

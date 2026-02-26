@@ -11,6 +11,7 @@ import {
 import {
   KNOWN_TASK_KEYS,
   DANGEROUS_KEYS,
+  INTERNAL_KEYS,
 } from '../../../../src/utils/fileOperations/constants';
 import type {
   GanttFile,
@@ -765,6 +766,19 @@ describe('File Operations - Sanitization (XSS Prevention)', () => {
           DANGEROUS_KEYS.has(key),
           `DANGEROUS_KEYS is missing "${key}" — update constants.ts`
         ).toBe(true);
+      }
+    });
+
+    it('INTERNAL_KEYS should not overlap with KNOWN_TASK_KEYS or DANGEROUS_KEYS', () => {
+      for (const key of INTERNAL_KEYS) {
+        expect(
+          KNOWN_TASK_KEYS.has(key),
+          `INTERNAL_KEYS entry "${key}" overlaps with KNOWN_TASK_KEYS — would silently drop a real field`
+        ).toBe(false);
+        expect(
+          DANGEROUS_KEYS.has(key),
+          `INTERNAL_KEYS entry "${key}" overlaps with DANGEROUS_KEYS — redundant filtering`
+        ).toBe(false);
       }
     });
 
