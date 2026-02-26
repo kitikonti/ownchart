@@ -14,7 +14,13 @@ import type {
 } from "./types";
 import { FILE_VERSION, SCHEMA_VERSION } from "../../config/version";
 import { DEFAULT_CHART_NAME } from "../../config/viewSettingsDefaults";
-import { KNOWN_TASK_KEYS, DANGEROUS_KEYS, INTERNAL_KEYS } from "./constants";
+import {
+  KNOWN_TASK_KEYS,
+  KNOWN_DEPENDENCY_KEYS,
+  DANGEROUS_KEYS,
+  INTERNAL_KEYS,
+  isPlainObject,
+} from "./constants";
 
 export interface SerializeOptions {
   chartName?: string;
@@ -117,11 +123,7 @@ function serializeTask(task: Task, now: string): SerializedTask {
   // which doesn't infer index-signature writability through the typed interface.
   // Defense-in-depth: DANGEROUS_KEYS are filtered even though upstream layers
   // (safeJsonParse, sanitizeTask) already strip them during deserialization.
-  if (
-    taskWithExtra.__unknownFields &&
-    typeof taskWithExtra.__unknownFields === "object" &&
-    !Array.isArray(taskWithExtra.__unknownFields)
-  ) {
+  if (isPlainObject(taskWithExtra.__unknownFields)) {
     const target = serialized as Record<string, unknown>;
     for (const [key, value] of Object.entries(taskWithExtra.__unknownFields)) {
       if (
@@ -150,15 +152,27 @@ function serializeDependency(dep: Dependency): SerializedDependency {
     createdAt: dep.createdAt,
   };
 
-  // Preserve unknown fields from future versions
+  // Preserve unknown fields from future versions, but never overwrite known fields.
+  // Defense-in-depth: DANGEROUS_KEYS and INTERNAL_KEYS are filtered even though
+  // upstream layers (safeJsonParse) already strip them during deserialization.
   const depWithUnknownFields = dep as Dependency & {
     __unknownFields?: Record<string, unknown>;
   };
-  if (
-    depWithUnknownFields.__unknownFields &&
-    typeof depWithUnknownFields.__unknownFields === "object"
-  ) {
-    Object.assign(serialized, depWithUnknownFields.__unknownFields);
+  if (isPlainObject(depWithUnknownFields.__unknownFields)) {
+    // SAFETY: SerializedDependency has no index signature, so we cast through
+    // unknown to write dynamic keys. Only unknown fields pass the guard below.
+    const target = serialized as unknown as Record<string, unknown>;
+    for (const [key, value] of Object.entries(
+      depWithUnknownFields.__unknownFields
+    )) {
+      if (
+        !KNOWN_DEPENDENCY_KEYS.has(key) &&
+        !DANGEROUS_KEYS.has(key) &&
+        !INTERNAL_KEYS.has(key)
+      ) {
+        target[key] = value;
+      }
+    }
   }
 
   return serialized;

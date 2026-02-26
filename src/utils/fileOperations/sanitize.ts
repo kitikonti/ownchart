@@ -5,7 +5,7 @@
 
 import DOMPurify from "dompurify";
 import type { GanttFile, SerializedTask } from "./types";
-import { DANGEROUS_KEYS } from "./constants";
+import { DANGEROUS_KEYS, isPlainObject } from "./constants";
 
 /**
  * Task fields that contain non-content strings (IDs, dates, colors) — skip sanitization.
@@ -41,12 +41,9 @@ export function sanitizeGanttFile(file: GanttFile): GanttFile {
         : file.chart.description,
       tasks: file.chart.tasks.map(sanitizeTask),
       viewSettings: sanitizeViewSettings(file.chart.viewSettings),
-      exportSettings:
-        file.chart.exportSettings &&
-        typeof file.chart.exportSettings === "object" &&
-        !Array.isArray(file.chart.exportSettings)
-          ? sanitizeExportSettings(file.chart.exportSettings)
-          : undefined,
+      exportSettings: isPlainObject(file.chart.exportSettings)
+        ? sanitizeExportSettings(file.chart.exportSettings)
+        : undefined,
     },
   };
 }

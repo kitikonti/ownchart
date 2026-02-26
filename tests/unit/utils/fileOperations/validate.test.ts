@@ -11,6 +11,7 @@ import {
   validateSemantics,
   ValidationError,
 } from '../../../../src/utils/fileOperations/validate';
+import type { GanttFile } from '../../../../src/utils/fileOperations/types';
 
 describe('File Operations - Validation', () => {
   describe('Layer 1: Pre-Parse Validation', () => {
@@ -232,7 +233,7 @@ describe('File Operations - Validation', () => {
   });
 
   describe('Layer 4: Semantic Validation', () => {
-    const createValidFile = (): Record<string, unknown> => ({
+    const createValidFile = (): GanttFile => ({
       fileVersion: '1.0.0',
       chart: {
         id: '123e4567-e89b-12d3-a456-426614174000',
@@ -568,62 +569,62 @@ describe('File Operations - Validation', () => {
   });
 
   describe('Layer 4: Dependency Validation', () => {
-    // eslint-disable-next-line @typescript-eslint/explicit-function-return-type
-    const createFileWithDeps = () => {
-      const file = {
-        fileVersion: '1.0.0',
-        chart: {
-          id: '123e4567-e89b-12d3-a456-426614174000',
-          name: 'Test Chart',
-          tasks: [
-            {
-              id: '123e4567-e89b-12d3-a456-426614174001',
-              name: 'Task 1',
-              startDate: '2026-01-01',
-              endDate: '2026-01-05',
-              duration: 5,
-              progress: 0,
-              color: '#000000',
-              order: 0,
-            },
-            {
-              id: '123e4567-e89b-12d3-a456-426614174002',
-              name: 'Task 2',
-              startDate: '2026-01-06',
-              endDate: '2026-01-10',
-              duration: 5,
-              progress: 0,
-              color: '#000000',
-              order: 1,
-            },
-          ],
-          dependencies: [
-            {
-              id: '123e4567-e89b-12d3-a456-426614174010',
-              from: '123e4567-e89b-12d3-a456-426614174001',
-              to: '123e4567-e89b-12d3-a456-426614174002',
-              type: 'FS',
-            },
-          ],
-          viewSettings: {
-            zoom: 1,
-            panOffset: { x: 0, y: 0 },
-            showWeekends: true,
-            showTodayMarker: true,
-            taskTableWidth: null,
+    const createFileWithDeps = (): GanttFile & {
+      chart: GanttFile['chart'] & {
+        dependencies: NonNullable<GanttFile['chart']['dependencies']>;
+      };
+    } => ({
+      fileVersion: '1.0.0',
+      chart: {
+        id: '123e4567-e89b-12d3-a456-426614174000',
+        name: 'Test Chart',
+        tasks: [
+          {
+            id: '123e4567-e89b-12d3-a456-426614174001',
+            name: 'Task 1',
+            startDate: '2026-01-01',
+            endDate: '2026-01-05',
+            duration: 5,
+            progress: 0,
+            color: '#000000',
+            order: 0,
           },
-          metadata: {
-            createdAt: '2026-01-01T00:00:00.000Z',
-            updatedAt: '2026-01-01T00:00:00.000Z',
+          {
+            id: '123e4567-e89b-12d3-a456-426614174002',
+            name: 'Task 2',
+            startDate: '2026-01-06',
+            endDate: '2026-01-10',
+            duration: 5,
+            progress: 0,
+            color: '#000000',
+            order: 1,
           },
+        ],
+        dependencies: [
+          {
+            id: '123e4567-e89b-12d3-a456-426614174010',
+            from: '123e4567-e89b-12d3-a456-426614174001',
+            to: '123e4567-e89b-12d3-a456-426614174002',
+            type: 'FS',
+          },
+        ],
+        viewSettings: {
+          zoom: 1,
+          panOffset: { x: 0, y: 0 },
+          showWeekends: true,
+          showTodayMarker: true,
+          taskTableWidth: null,
         },
         metadata: {
-          created: '2026-01-01T00:00:00.000Z',
-          modified: '2026-01-01T00:00:00.000Z',
+          createdAt: '2026-01-01T00:00:00.000Z',
+          updatedAt: '2026-01-01T00:00:00.000Z',
         },
-      };
-      return file as ReturnType<typeof createFileWithDeps>;
-    };
+      },
+      metadata: {
+        created: '2026-01-01T00:00:00.000Z',
+        modified: '2026-01-01T00:00:00.000Z',
+      },
+    });
 
     it('should accept valid dependencies', () => {
       expect(() => validateSemantics(createFileWithDeps())).not.toThrow();

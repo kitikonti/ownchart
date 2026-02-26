@@ -10,9 +10,13 @@ import {
 } from '../../../../src/utils/fileOperations/sanitize';
 import {
   KNOWN_TASK_KEYS,
+  KNOWN_DEPENDENCY_KEYS,
   DANGEROUS_KEYS,
   INTERNAL_KEYS,
+  VALID_EXPORT_COLUMNS,
 } from '../../../../src/utils/fileOperations/constants';
+import type { SerializedDependency } from '../../../../src/utils/fileOperations/types';
+import { TASK_COLUMNS } from '../../../../src/config/tableColumns';
 import type {
   GanttFile,
   SerializedTask,
@@ -872,6 +876,71 @@ describe('File Operations - Sanitization (XSS Prevention)', () => {
         expect(
           typedFields.has(key),
           `KNOWN_TASK_KEYS contains stale key "${key}" not in SerializedTask — remove from constants.ts`
+        ).toBe(true);
+      }
+    });
+
+    it('KNOWN_DEPENDENCY_KEYS should cover all typed SerializedDependency fields', () => {
+      const exemplar: Required<
+        Pick<SerializedDependency, 'id' | 'from' | 'to' | 'type' | 'lag' | 'createdAt'>
+      > = {
+        id: '',
+        from: '',
+        to: '',
+        type: 'FS',
+        lag: 0,
+        createdAt: '',
+      };
+
+      const fieldNames = Object.keys(exemplar);
+      for (const field of fieldNames) {
+        expect(
+          KNOWN_DEPENDENCY_KEYS.has(field),
+          `SerializedDependency field "${field}" is not in KNOWN_DEPENDENCY_KEYS — update constants.ts`
+        ).toBe(true);
+      }
+    });
+
+    it('KNOWN_DEPENDENCY_KEYS should not contain stale keys beyond SerializedDependency', () => {
+      const typedFields = new Set(['id', 'from', 'to', 'type', 'lag', 'createdAt']);
+
+      for (const key of KNOWN_DEPENDENCY_KEYS) {
+        expect(
+          typedFields.has(key),
+          `KNOWN_DEPENDENCY_KEYS contains stale key "${key}" not in SerializedDependency — remove from constants.ts`
+        ).toBe(true);
+      }
+    });
+
+    it('KNOWN_DEPENDENCY_KEYS should not overlap with DANGEROUS_KEYS', () => {
+      for (const key of DANGEROUS_KEYS) {
+        expect(
+          KNOWN_DEPENDENCY_KEYS.has(key),
+          `DANGEROUS_KEYS entry "${key}" overlaps with KNOWN_DEPENDENCY_KEYS`
+        ).toBe(false);
+      }
+    });
+
+    it('VALID_EXPORT_COLUMNS should match hideable column IDs from TASK_COLUMNS', () => {
+      // Derive the expected set from the source of truth: TASK_COLUMNS
+      // Export columns = all columns except non-hideable ones (rowNumber)
+      const hideableColumnIds = new Set(
+        TASK_COLUMNS
+          .filter((col) => col.id !== 'rowNumber')
+          .map((col) => col.id)
+      );
+
+      for (const col of VALID_EXPORT_COLUMNS) {
+        expect(
+          hideableColumnIds.has(col),
+          `VALID_EXPORT_COLUMNS contains "${col}" which is not a hideable column in TASK_COLUMNS — update constants.ts`
+        ).toBe(true);
+      }
+
+      for (const col of hideableColumnIds) {
+        expect(
+          VALID_EXPORT_COLUMNS.has(col),
+          `TASK_COLUMNS has hideable column "${col}" missing from VALID_EXPORT_COLUMNS — update constants.ts`
         ).toBe(true);
       }
     });

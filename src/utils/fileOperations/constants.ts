@@ -1,6 +1,16 @@
 /**
- * Shared constants for file operations (serialize + deserialize + sanitize)
+ * Shared constants and type guards for file operations (serialize + deserialize + sanitize)
  */
+
+/**
+ * Type guard for plain objects (not null, not array).
+ * Centralizes the repeated `typeof x === "object" && x !== null && !Array.isArray(x)` pattern.
+ */
+export function isPlainObject(
+  value: unknown
+): value is Record<string, unknown> {
+  return typeof value === "object" && value !== null && !Array.isArray(value);
+}
 
 /**
  * Keys that could cause prototype pollution if copied to a new object.
@@ -41,4 +51,31 @@ export const KNOWN_TASK_KEYS = new Set([
   "metadata",
   "createdAt",
   "updatedAt",
+]);
+
+/**
+ * Known dependency field names — used to identify/filter unknownFields during round-trip.
+ * Must stay in sync with SerializedDependency fields in types.ts.
+ */
+export const KNOWN_DEPENDENCY_KEYS = new Set([
+  "id",
+  "from",
+  "to",
+  "type",
+  "lag",
+  "createdAt",
+]);
+
+/**
+ * Valid column IDs for export selectedColumns filtering.
+ * Must stay in sync with hideable column IDs from src/config/tableColumns.ts (TASK_COLUMNS).
+ * @see sanitize.test.ts for the sync test that prevents drift.
+ */
+export const VALID_EXPORT_COLUMNS = new Set([
+  "color",
+  "name",
+  "startDate",
+  "endDate",
+  "duration",
+  "progress",
 ]);

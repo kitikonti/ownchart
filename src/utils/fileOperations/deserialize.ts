@@ -31,17 +31,15 @@ import { migrateGanttFile, needsMigration, isFromFuture } from "./migrate";
 import { FILE_VERSION } from "../../config/version";
 import { normalizeTaskOrder } from "../../utils/hierarchy";
 import { MIN_ZOOM, MAX_ZOOM } from "../../utils/timelineUtils";
-import { KNOWN_TASK_KEYS } from "./constants";
+import {
+  KNOWN_TASK_KEYS,
+  KNOWN_DEPENDENCY_KEYS,
+  VALID_EXPORT_COLUMNS,
+  isPlainObject,
+} from "./constants";
 
-/** Keys consumed by deserializeDependency — others are preserved as __unknownFields */
-const DESERIALIZED_DEPENDENCY_KEYS = new Set([
-  "id",
-  "from",
-  "to",
-  "type",
-  "lag",
-  "createdAt",
-]);
+/** Default width for fitToWidth export option */
+const DEFAULT_FIT_TO_WIDTH = 1920;
 
 /** Create a failed DeserializeResult */
 function errorResult(code: string, message: string): DeserializeResult {
@@ -184,8 +182,8 @@ export function deserializeGanttFile(
       data: {
         tasks,
         dependencies,
-        viewSettings: sanitizeViewSettings(ganttFile.chart.viewSettings),
-        exportSettings: sanitizeExportSettings(ganttFile.chart.exportSettings),
+        viewSettings: normalizeViewSettings(ganttFile.chart.viewSettings),
+        exportSettings: normalizeExportSettings(ganttFile.chart.exportSettings),
         chartName: ganttFile.chart.name,
         chartId: ganttFile.chart.id,
         chartCreatedAt: ganttFile.chart.metadata?.createdAt,
@@ -253,10 +251,7 @@ function deserializeDependency(
     createdAt: serialized.createdAt ?? "",
   };
 
-  const unknownFields = extractUnknownFields(
-    serialized,
-    DESERIALIZED_DEPENDENCY_KEYS
-  );
+  const unknownFields = extractUnknownFields(serialized, KNOWN_DEPENDENCY_KEYS);
   if (unknownFields) {
     return { ...dep, __unknownFields: unknownFields };
   }
@@ -326,16 +321,6 @@ const VALID_EXPORT_ZOOM_MODES = new Set([
 const VALID_EXPORT_DATE_RANGE_MODES = new Set(["all", "visible", "custom"]);
 const VALID_EXPORT_BACKGROUNDS = new Set(["white", "transparent"]);
 const VALID_EXPORT_DENSITIES = new Set(["compact", "normal", "comfortable"]);
-// SYNC: Must match column IDs from src/config/tableColumns.ts (TASK_COLUMNS)
-const VALID_EXPORT_COLUMNS = new Set([
-  "color",
-  "name",
-  "startDate",
-  "endDate",
-  "duration",
-  "progress",
-]);
-
 // =============================================================================
 // Field-level sanitizers
 // =============================================================================
@@ -344,7 +329,7 @@ const VALID_EXPORT_COLUMNS = new Set([
 function sanitizeColumnWidths(
   raw: Record<string, number> | undefined
 ): Record<string, number> | undefined {
-  if (!raw || typeof raw !== "object" || Array.isArray(raw)) {
+  if (!isPlainObject(raw)) {
     return undefined;
   }
   const cleaned: Record<string, number> = {};
@@ -369,11 +354,10 @@ function filterStringArray(raw: string[] | undefined): string[] | undefined {
 
 /** Sanitize colorModeState — validate mode enum and sub-object shapes */
 function sanitizeColorModeState(raw: unknown): ColorModeState | undefined {
-  if (!raw || typeof raw !== "object" || Array.isArray(raw)) {
+  if (!isPlainObject(raw)) {
     return undefined;
   }
-  const obj = raw as Record<string, unknown>;
-  if (!VALID_COLOR_MODES.has(obj.mode as string)) {
+  if (!VALID_COLOR_MODES.has(raw.mode as string)) {
     return undefined;
   }
   // Sub-objects are validated at consumption; ensure they're at least objects
@@ -384,42 +368,37 @@ function sanitizeColorModeState(raw: unknown): ColorModeState | undefined {
     "hierarchyOptions",
   ] as const;
   for (const key of subKeys) {
-    if (
-      obj[key] !== undefined &&
-      (typeof obj[key] !== "object" ||
-        obj[key] === null ||
-        Array.isArray(obj[key]))
-    ) {
+    if (raw[key] !== undefined && !isPlainObject(raw[key])) {
       return undefined;
     }
   }
-  return raw as ColorModeState;
+  return raw as unknown as ColorModeState;
 }
 
 /** Sanitize workingDaysConfig — validate boolean fields with defaults */
 function sanitizeWorkingDaysConfig(
   raw: unknown
 ): WorkingDaysConfig | undefined {
-  if (!raw || typeof raw !== "object" || Array.isArray(raw)) {
+  if (!isPlainObject(raw)) {
     return undefined;
   }
-  const obj = raw as Record<string, unknown>;
   return {
-    excludeSaturday: booleanOr(obj.excludeSaturday, true),
-    excludeSunday: booleanOr(obj.excludeSunday, true),
-    excludeHolidays: booleanOr(obj.excludeHolidays, false),
+    excludeSaturday: booleanOr(raw.excludeSaturday, true),
+    excludeSunday: booleanOr(raw.excludeSunday, true),
+    excludeHolidays: booleanOr(raw.excludeHolidays, false),
   };
 }
 
 // =============================================================================
-// ViewSettings & ExportSettings sanitization
+// ViewSettings & ExportSettings normalization
 // =============================================================================
 
 /**
- * Sanitize viewSettings — clamp/fix invalid values rather than rejecting the file.
+ * Normalize viewSettings — clamp/fix invalid values rather than rejecting the file.
  * Protects against NaN/Infinity/wrong types propagating into app state.
+ * Named "normalize" to distinguish from sanitize.ts which handles XSS stripping.
  */
-function sanitizeViewSettings(raw: ViewSettings): ViewSettings {
+function normalizeViewSettings(raw: ViewSettings): ViewSettings {
   const zoom = finiteOr(raw.zoom, 1);
   const clampedZoom = Math.max(MIN_ZOOM, Math.min(MAX_ZOOM, zoom));
 
@@ -457,13 +436,14 @@ function sanitizeViewSettings(raw: ViewSettings): ViewSettings {
 }
 
 /**
- * Sanitize exportSettings — validate each field, use defaults for invalid values.
+ * Normalize exportSettings — validate each field, use defaults for invalid values.
  * Protects against malformed values propagating into app state.
+ * Named "normalize" to distinguish from sanitize.ts which handles XSS stripping.
  */
-function sanitizeExportSettings(
+function normalizeExportSettings(
   raw: ExportOptions | undefined
 ): ExportOptions | undefined {
-  if (!raw || typeof raw !== "object" || Array.isArray(raw)) {
+  if (!isPlainObject(raw)) {
     return undefined;
   }
 
@@ -473,7 +453,7 @@ function sanitizeExportSettings(
   return {
     zoomMode: enumOr(obj.zoomMode, VALID_EXPORT_ZOOM_MODES, "currentView"),
     timelineZoom: finiteOr(obj.timelineZoom, 1),
-    fitToWidth: finiteOr(obj.fitToWidth, 1920),
+    fitToWidth: finiteOr(obj.fitToWidth, DEFAULT_FIT_TO_WIDTH),
     dateRangeMode: enumOr(
       obj.dateRangeMode,
       VALID_EXPORT_DATE_RANGE_MODES,

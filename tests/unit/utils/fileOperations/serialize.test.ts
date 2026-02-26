@@ -502,6 +502,139 @@ describe('File Operations - Serialization', () => {
     });
   });
 
+  describe('Dependency Unknown Fields (Defense-in-Depth)', () => {
+    it('should preserve unknown dependency fields', () => {
+      const json = serializeToGanttFile([], createSampleViewSettings(), {
+        dependencies: [
+          {
+            id: '123e4567-e89b-12d3-a456-426614174099',
+            fromTaskId: '123e4567-e89b-12d3-a456-426614174001',
+            toTaskId: '123e4567-e89b-12d3-a456-426614174002',
+            type: 'FS',
+            createdAt: '2025-06-01T12:00:00.000Z',
+            __unknownFields: {
+              futureColor: '#FF0000',
+              futureLabel: 'critical path',
+            },
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          } as any,
+        ],
+      });
+      const parsed = JSON.parse(json);
+
+      expect(parsed.chart.dependencies[0].futureColor).toBe('#FF0000');
+      expect(parsed.chart.dependencies[0].futureLabel).toBe('critical path');
+    });
+
+    it('should not include __unknownFields key itself on dependencies', () => {
+      const json = serializeToGanttFile([], createSampleViewSettings(), {
+        dependencies: [
+          {
+            id: '123e4567-e89b-12d3-a456-426614174099',
+            fromTaskId: 'a',
+            toTaskId: 'b',
+            type: 'FS',
+            createdAt: '',
+            __unknownFields: { futureField: 'value' },
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          } as any,
+        ],
+      });
+      const parsed = JSON.parse(json);
+
+      expect(parsed.chart.dependencies[0].__unknownFields).toBeUndefined();
+      expect(parsed.chart.dependencies[0].futureField).toBe('value');
+    });
+
+    it('should not overwrite known dependency fields from __unknownFields', () => {
+      const json = serializeToGanttFile([], createSampleViewSettings(), {
+        dependencies: [
+          {
+            id: '123e4567-e89b-12d3-a456-426614174099',
+            fromTaskId: '123e4567-e89b-12d3-a456-426614174001',
+            toTaskId: '123e4567-e89b-12d3-a456-426614174002',
+            type: 'FS',
+            createdAt: '2025-06-01T12:00:00.000Z',
+            __unknownFields: {
+              id: 'hacked-id',
+              from: 'hacked-from',
+              to: 'hacked-to',
+              type: 'hacked-type',
+              safeFutureField: 'preserved',
+            },
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          } as any,
+        ],
+      });
+      const parsed = JSON.parse(json);
+
+      expect(parsed.chart.dependencies[0].id).toBe('123e4567-e89b-12d3-a456-426614174099');
+      expect(parsed.chart.dependencies[0].from).toBe('123e4567-e89b-12d3-a456-426614174001');
+      expect(parsed.chart.dependencies[0].to).toBe('123e4567-e89b-12d3-a456-426614174002');
+      expect(parsed.chart.dependencies[0].type).toBe('FS');
+      expect(parsed.chart.dependencies[0].safeFutureField).toBe('preserved');
+    });
+
+    it('should filter prototype pollution keys from dependency __unknownFields', () => {
+      const unknownFields: Record<string, unknown> = {
+        safeFutureField: 'preserved',
+        prototype: { polluted: true },
+      };
+      Object.defineProperty(unknownFields, '__proto__', {
+        value: { polluted: true },
+        enumerable: true,
+        configurable: true,
+      });
+      Object.defineProperty(unknownFields, 'constructor', {
+        value: { polluted: true },
+        enumerable: true,
+        configurable: true,
+      });
+
+      const json = serializeToGanttFile([], createSampleViewSettings(), {
+        dependencies: [
+          {
+            id: '123e4567-e89b-12d3-a456-426614174099',
+            fromTaskId: 'a',
+            toTaskId: 'b',
+            type: 'FS',
+            createdAt: '',
+            __unknownFields: unknownFields,
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          } as any,
+        ],
+      });
+      const parsed = JSON.parse(json);
+
+      expect(parsed.chart.dependencies[0].safeFutureField).toBe('preserved');
+      const depKeys = Object.keys(parsed.chart.dependencies[0]);
+      expect(depKeys).not.toContain('__proto__');
+      expect(depKeys).not.toContain('constructor');
+      expect(depKeys).not.toContain('prototype');
+    });
+
+    it('should ignore __unknownFields if it is an array (defense-in-depth)', () => {
+      const json = serializeToGanttFile([], createSampleViewSettings(), {
+        dependencies: [
+          {
+            id: '123e4567-e89b-12d3-a456-426614174099',
+            fromTaskId: 'a',
+            toTaskId: 'b',
+            type: 'FS',
+            createdAt: '',
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            __unknownFields: ['not', 'a', 'record'] as any,
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          } as any,
+        ],
+      });
+      const parsed = JSON.parse(json);
+
+      expect(parsed.chart.dependencies[0].from).toBe('a');
+      expect(parsed.chart.dependencies[0]['0']).toBeUndefined();
+    });
+  });
+
   describe('Round-Trip Compatibility', () => {
     it('should maintain data integrity in round-trip', () => {
       const originalTasks = createSampleTasks();
