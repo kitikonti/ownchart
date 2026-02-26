@@ -2,6 +2,45 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [0.0.50](https://github.com/kitikonti/ownchart/compare/v0.0.49...v0.0.50) (2026-02-26)
+
+
+### Code Refactoring
+
+* align placeholder cell click behavior with Cell.tsx contract ([d5c3f44](https://github.com/kitikonti/ownchart/commit/d5c3f44a0f5b55d44b5941cb6804c30027b7cacb))
+* **export:** clean up PdfPreview from code review findings ([78f4136](https://github.com/kitikonti/ownchart/commit/78f413664ac3691fa0085110fed401f55bbc4bac))
+* **export:** extract shared PDF layout constants and deduplicate PdfPreview ([19c9c5b](https://github.com/kitikonti/ownchart/commit/19c9c5b4507ae1a2758b8ed0383c874900ac517e))
+* **export:** harden PdfPreview from code review findings ([1e06518](https://github.com/kitikonti/ownchart/commit/1e0651822962fd91fa7af85a0932756174dcd10e))
+* **export:** remove unsafe type assertion in PdfPreview readability warning ([836fc97](https://github.com/kitikonti/ownchart/commit/836fc97e213f8d74c4f219b761e08f8f18b42f2a))
+* extract ARROW_NAV, add ROW_NUMBER_COLUMN_ID, clean up review findings ([9627dfc](https://github.com/kitikonti/ownchart/commit/9627dfc14838a8818d4bf7b66f6103347778ab54))
+* extract hooks, add readOnly Cell prop, fix Tab navigation in placeholder row ([d49513e](https://github.com/kitikonti/ownchart/commit/d49513e7bc74002057704abb68ff0b0675bb34c5))
+* extract PlaceholderDataCell, add memo/focus/keyboard to placeholder row ([d6bfee3](https://github.com/kitikonti/ownchart/commit/d6bfee322845f396b24c8182c99f5df9b7e35418))
+* extract shared utilities, fix perf and a11y in TaskDataCells & NewTaskPlaceholderRow ([e873316](https://github.com/kitikonti/ownchart/commit/e87331627d0f303ef70f7da81103b027aa3b4ca2))
+* extract useIsCellEditing hook, tighten HexColor types, remove redundant setTimeout ([f725a7a](https://github.com/kitikonti/ownchart/commit/f725a7abfbe12d6595bac257a41ac1d3a50ae17d))
+* fix arrow-key navigation gap in placeholder name cell, extract Props interfaces ([3c404e0](https://github.com/kitikonti/ownchart/commit/3c404e0ee811af1d10579a82dde58bfbd092d794))
+* fix InlineProjectTitle review findings — a11y, contrast, measurement ([91dfd46](https://github.com/kitikonti/ownchart/commit/91dfd46036f08316121081e1c5d341a7c539d4b9))
+* fix review findings — perf, a11y, consistency in TaskDataCells & NewTaskPlaceholderRow ([e330e44](https://github.com/kitikonti/ownchart/commit/e330e44aeabcb8b07627ee92db2496a2e0a96880))
+* fix review findings in TaskDataCells, NewTaskPlaceholderRow, TaskTypeIcon ([e92b37b](https://github.com/kitikonti/ownchart/commit/e92b37b853c119d7a09a46881edd3972227d5de6))
+* fix Ribbon review findings — a11y, focus mgmt, contrast, correctness ([0cdc46e](https://github.com/kitikonti/ownchart/commit/0cdc46e5e7d7f8628c5771363167453781e07f51))
+* fix Ribbon review findings — Escape guard, a11y focus, type safety ([d9df394](https://github.com/kitikonti/ownchart/commit/d9df394ae4baa1a6ed68827cd1171c2e18e28bdf))
+* fix Ribbon review findings — focus mgmt, a11y, overflow, Tab-close ([dd9a434](https://github.com/kitikonti/ownchart/commit/dd9a43456d855e76f715ec0f2ee0d158f4214f84))
+* fix Ribbon review findings — store sync, a11y, DRY, tests ([028465a](https://github.com/kitikonti/ownchart/commit/028465a49ef97d66b71ea48a9cb8f90861f92e30))
+* harden file operations per code review findings ([2466b29](https://github.com/kitikonti/ownchart/commit/2466b29dbefbdaef5fcf509a4cbfcafb4458e586))
+* harden file operations per code review findings (batch 10) ([73a244f](https://github.com/kitikonti/ownchart/commit/73a244fc40d011e30eba179ae62047f42fc9b2f5))
+* harden file operations per code review findings (batch 2) ([4027687](https://github.com/kitikonti/ownchart/commit/4027687c839413f90dafd5c4b0e2fc8edc9b06d1))
+* harden file operations per code review findings (batch 3) ([5c8bb37](https://github.com/kitikonti/ownchart/commit/5c8bb37773d58809868f7c4b57499b30f01c3996))
+* harden file operations per code review findings (batch 4) ([efc75a5](https://github.com/kitikonti/ownchart/commit/efc75a5cd5e9a92d1f4ad5877ae886fd40444faa))
+* harden file operations per code review findings (batch 5) ([c217db5](https://github.com/kitikonti/ownchart/commit/c217db551188857014f86a5215505b1ee0b33d70))
+* harden file operations per code review findings (batch 6) ([83f1bdb](https://github.com/kitikonti/ownchart/commit/83f1bdb4162bd5ea8f57a80933b3f9bb92ab22bb))
+* harden file operations per code review findings (batch 7) ([e1a4c9a](https://github.com/kitikonti/ownchart/commit/e1a4c9ac834ede0d506535c253c8dc256530338c))
+* harden file operations per code review findings (batch 8) ([d55c803](https://github.com/kitikonti/ownchart/commit/d55c80391ba18e60eeca5af8b037ffbddb4617de))
+* harden file operations per code review findings (batch 9) ([6e4a928](https://github.com/kitikonti/ownchart/commit/6e4a928a4932b48679e9d30c0150a180155ac313))
+* harden TaskDataCells & NewTaskPlaceholderRow with tests and consistency fixes ([feae112](https://github.com/kitikonti/ownchart/commit/feae112b539bd8026e5459b68926fbeedde47286))
+* improve Ribbon components per code review ([3cd0520](https://github.com/kitikonti/ownchart/commit/3cd0520c36ea9b56e29ee70bb5bec4dd2e3c1246))
+* improve type safety and extract sub-components in TaskDataCells & NewTaskPlaceholderRow ([b9580ba](https://github.com/kitikonti/ownchart/commit/b9580ba809a1ebe1d60362ff0223412bfd6f3453))
+* tokenize cell z-index, add memo/a11y to placeholder row, DRY TaskDataCells ([2575f4d](https://github.com/kitikonti/ownchart/commit/2575f4d70b571df6bca0e3dd884dcb931ee9d3bd))
+* tokenize placeholder cell colors, fix milestone duration classification, add memo ([dacc8a8](https://github.com/kitikonti/ownchart/commit/dacc8a8c4fb960627e5fe8fcc5e78a51f2b505b0))
+
 ### [0.0.49](https://github.com/kitikonti/ownchart/compare/v0.0.48...v0.0.49) (2026-02-25)
 
 
