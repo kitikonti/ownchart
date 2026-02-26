@@ -60,6 +60,7 @@ vi.mock("../../../src/hooks/usePlaceholderContextMenu", () => ({
 }));
 
 import { useTaskStore } from "../../../src/store/slices/taskSlice";
+import { usePlaceholderContextMenu } from "../../../src/hooks/usePlaceholderContextMenu";
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -103,6 +104,7 @@ describe("NewTaskPlaceholderRow", () => {
     vi.mocked(useTaskStore.getState).mockReturnValue({
       selectedTaskIds: [],
       setSelectedTaskIds: mockSetSelectedTaskIds,
+      setActiveCell: mockSetActiveCell,
     } as unknown as ReturnType<typeof useTaskStore.getState>);
   });
 
@@ -269,6 +271,123 @@ describe("NewTaskPlaceholderRow", () => {
       fireEvent.keyDown(rowNumberCell, { key: " " });
 
       expect(mockSetSelectedTaskIds).toHaveBeenCalled();
+    });
+  });
+
+  describe("blur behavior", () => {
+    it("commits task on blur when input has text", () => {
+      mockActivePlaceholderNameCell();
+
+      render(<NewTaskPlaceholderRow />);
+      const nameCell = screen.getByText("Add new task...").closest("[role='gridcell']")!;
+      fireEvent.click(nameCell);
+
+      const input = screen.getByRole("textbox", { name: "New task name" });
+      fireEvent.change(input, { target: { value: "Blur Task" } });
+      fireEvent.blur(input);
+
+      expect(mockCreateTask).toHaveBeenCalledWith("Blur Task");
+    });
+
+    it("cancels edit on blur when input is empty", () => {
+      mockActivePlaceholderNameCell();
+
+      render(<NewTaskPlaceholderRow />);
+      const nameCell = screen.getByText("Add new task...").closest("[role='gridcell']")!;
+      fireEvent.click(nameCell);
+
+      const input = screen.getByRole("textbox", { name: "New task name" });
+      fireEvent.blur(input);
+
+      expect(mockCreateTask).not.toHaveBeenCalled();
+      expect(screen.getByText("Add new task...")).toBeInTheDocument();
+    });
+
+    it("trims whitespace before committing on blur", () => {
+      mockActivePlaceholderNameCell();
+
+      render(<NewTaskPlaceholderRow />);
+      const nameCell = screen.getByText("Add new task...").closest("[role='gridcell']")!;
+      fireEvent.click(nameCell);
+
+      const input = screen.getByRole("textbox", { name: "New task name" });
+      fireEvent.change(input, { target: { value: "  Trimmed  " } });
+      fireEvent.blur(input);
+
+      expect(mockCreateTask).toHaveBeenCalledWith("Trimmed");
+    });
+  });
+
+  describe("F2 key editing", () => {
+    it("starts editing on F2 when name cell is active", () => {
+      mockActivePlaceholderNameCell();
+
+      render(<NewTaskPlaceholderRow />);
+      const nameCell = screen.getByText("Add new task...").closest("[role='gridcell']")!;
+
+      fireEvent.keyDown(nameCell, { key: "F2" });
+
+      expect(screen.getByRole("textbox", { name: "New task name" })).toBeInTheDocument();
+    });
+  });
+
+  describe("generic data cell interaction", () => {
+    it("activates a data cell on click", () => {
+      render(<NewTaskPlaceholderRow />);
+
+      // Find a generic data cell (not name, not row number) — e.g., startDate
+      const cells = screen.getAllByRole("gridcell");
+      // cells[0] = rowNumber, cells[1] = color, cells[2] = name, cells[3] = startDate
+      const dataCell = cells[3];
+      fireEvent.click(dataCell);
+
+      expect(mockSetActiveCell).toHaveBeenCalledWith(
+        "__new_task_placeholder__",
+        expect.any(String)
+      );
+    });
+
+    it("activates a data cell on Enter key", () => {
+      render(<NewTaskPlaceholderRow />);
+
+      const cells = screen.getAllByRole("gridcell");
+      const dataCell = cells[3];
+      fireEvent.keyDown(dataCell, { key: "Enter" });
+
+      expect(mockSetActiveCell).toHaveBeenCalledWith(
+        "__new_task_placeholder__",
+        expect.any(String)
+      );
+    });
+
+    it("activates a data cell on Space key", () => {
+      render(<NewTaskPlaceholderRow />);
+
+      const cells = screen.getAllByRole("gridcell");
+      const dataCell = cells[3];
+      fireEvent.keyDown(dataCell, { key: " " });
+
+      expect(mockSetActiveCell).toHaveBeenCalledWith(
+        "__new_task_placeholder__",
+        expect.any(String)
+      );
+    });
+  });
+
+  describe("context menu", () => {
+    it("renders ContextMenu when contextMenu position is set", () => {
+      vi.mocked(usePlaceholderContextMenu).mockReturnValue({
+        contextMenu: { x: 100, y: 200 },
+        contextMenuItems: [
+          { label: "Paste", action: vi.fn() },
+        ],
+        handlePlaceholderContextMenu: vi.fn(),
+        closeContextMenu: vi.fn(),
+      } as never);
+
+      render(<NewTaskPlaceholderRow />);
+
+      expect(screen.getByText("Paste")).toBeInTheDocument();
     });
   });
 

@@ -15,6 +15,7 @@ import type { ColumnDefinition } from "../../../src/config/tableColumns";
 // ---------------------------------------------------------------------------
 
 const mockUpdateTask = vi.fn();
+const mockStopCellEdit = vi.fn();
 
 vi.mock("../../../src/store/slices/taskSlice", () => ({
   useTaskStore: vi.fn((selector: (s: Record<string, unknown>) => unknown) =>
@@ -25,7 +26,7 @@ vi.mock("../../../src/store/slices/taskSlice", () => ({
       isEditingCell: false,
       setActiveCell: vi.fn(),
       startCellEdit: vi.fn(),
-      stopCellEdit: vi.fn(),
+      stopCellEdit: mockStopCellEdit,
       navigateCell: vi.fn(),
       clearSelection: vi.fn(),
       cutCell: null,
@@ -74,6 +75,35 @@ vi.mock("../../../src/hooks/useCellEdit", () => ({
     displayValue: "",
   })),
 }));
+
+vi.mock(
+  "../../../src/components/TaskList/CellEditors/ColorCellEditor",
+  () => ({
+    ColorCellEditor: (props: {
+      onChange: (hex: string) => void;
+      onResetOverride: () => void;
+      onSave: () => void;
+    }) => (
+      <div data-testid="color-cell-editor">
+        <button
+          data-testid="pick-color"
+          onClick={() => props.onChange("#FF0000")}
+        >
+          pick
+        </button>
+        <button data-testid="reset-override" onClick={props.onResetOverride}>
+          reset
+        </button>
+        <button data-testid="save-color" onClick={props.onSave}>
+          save
+        </button>
+      </div>
+    ),
+  })
+);
+
+import { useTaskStore } from "../../../src/store/slices/taskSlice";
+import { useChartStore } from "../../../src/store/slices/chartSlice";
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -147,6 +177,43 @@ const progressColumn = makeColumn({
   formatter: (value) => `${value}%`,
 });
 
+const colorColumn = makeColumn({
+  id: "color",
+  field: "color",
+  label: "Color",
+  defaultWidth: "40px",
+  editable: true,
+});
+
+/** Override mocks to simulate editing a specific cell. */
+function mockEditingState(
+  taskId: string,
+  field: string,
+  colorMode = "manual"
+): void {
+  vi.mocked(useTaskStore).mockImplementation(
+    (selector: (s: Record<string, unknown>) => unknown) =>
+      selector({
+        updateTask: mockUpdateTask,
+        toggleTaskCollapsed: vi.fn(),
+        activeCell: { taskId, field },
+        isEditingCell: true,
+        setActiveCell: vi.fn(),
+        startCellEdit: vi.fn(),
+        stopCellEdit: mockStopCellEdit,
+        navigateCell: vi.fn(),
+        clearSelection: vi.fn(),
+        cutCell: null,
+      }) as never
+  );
+  vi.mocked(useChartStore).mockImplementation(
+    (selector: (s: Record<string, unknown>) => unknown) =>
+      selector({
+        colorModeState: { mode: colorMode },
+      }) as never
+  );
+}
+
 // ---------------------------------------------------------------------------
 // Tests
 // ---------------------------------------------------------------------------
@@ -154,6 +221,29 @@ const progressColumn = makeColumn({
 describe("TaskDataCells", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+
+    // Restore default implementations after per-test overrides
+    vi.mocked(useTaskStore).mockImplementation(
+      (selector: (s: Record<string, unknown>) => unknown) =>
+        selector({
+          updateTask: mockUpdateTask,
+          toggleTaskCollapsed: vi.fn(),
+          activeCell: { taskId: null, field: null },
+          isEditingCell: false,
+          setActiveCell: vi.fn(),
+          startCellEdit: vi.fn(),
+          stopCellEdit: mockStopCellEdit,
+          navigateCell: vi.fn(),
+          clearSelection: vi.fn(),
+          cutCell: null,
+        }) as never
+    );
+    vi.mocked(useChartStore).mockImplementation(
+      (selector: (s: Record<string, unknown>) => unknown) =>
+        selector({
+          colorModeState: { mode: "manual" },
+        }) as never
+    );
   });
 
   describe("summary task rendering", () => {
@@ -396,6 +486,155 @@ describe("TaskDataCells", () => {
       expect(mockUpdateTask).toHaveBeenCalledWith("task-1", {
         type: "summary",
       });
+    });
+  });
+
+  describe("color cell", () => {
+    it("renders color bar in view mode", () => {
+      const task = makeTask({ color: "#4A90D9" as never });
+      const { container } = render(
+        <TaskDataCells
+          task={task}
+          displayTask={task}
+          visibleColumns={[colorColumn]}
+          level={0}
+          hasChildren={false}
+          isExpanded={false}
+          computedColor="#4A90D9"
+        />
+      );
+
+      const colorBar = container.querySelector(".w-1\\.5.rounded");
+      expect(colorBar).toBeInTheDocument();
+      expect(colorBar).toHaveStyle({ backgroundColor: "#4A90D9" });
+    });
+
+    it("renders ColorCellEditor when editing", () => {
+      mockEditingState("task-1", "color");
+
+      const task = makeTask();
+      render(
+        <TaskDataCells
+          task={task}
+          displayTask={task}
+          visibleColumns={[colorColumn]}
+          level={0}
+          hasChildren={false}
+          isExpanded={false}
+          computedColor="#4A90D9"
+        />
+      );
+
+      expect(screen.getByTestId("color-cell-editor")).toBeInTheDocument();
+    });
+
+    it("dispatches updateTask with color in manual mode", () => {
+      mockEditingState("task-1", "color", "manual");
+
+      const task = makeTask();
+      render(
+        <TaskDataCells
+          task={task}
+          displayTask={task}
+          visibleColumns={[colorColumn]}
+          level={0}
+          hasChildren={false}
+          isExpanded={false}
+          computedColor="#4A90D9"
+        />
+      );
+
+      fireEvent.click(screen.getByTestId("pick-color"));
+      expect(mockUpdateTask).toHaveBeenCalledWith("task-1", {
+        color: "#FF0000",
+      });
+    });
+
+    it("dispatches updateTask with colorOverride in auto mode", () => {
+      mockEditingState("task-1", "color", "theme");
+
+      const task = makeTask({ type: "task" });
+      render(
+        <TaskDataCells
+          task={task}
+          displayTask={task}
+          visibleColumns={[colorColumn]}
+          level={0}
+          hasChildren={false}
+          isExpanded={false}
+          computedColor="#4A90D9"
+        />
+      );
+
+      fireEvent.click(screen.getByTestId("pick-color"));
+      expect(mockUpdateTask).toHaveBeenCalledWith("task-1", {
+        colorOverride: "#FF0000",
+      });
+    });
+
+    it("dispatches updateTask with color (no override) for summary task in summary mode", () => {
+      mockEditingState("task-1", "color", "summary");
+
+      const task = makeTask({ type: "summary" });
+      render(
+        <TaskDataCells
+          task={task}
+          displayTask={task}
+          visibleColumns={[colorColumn]}
+          level={0}
+          hasChildren={true}
+          isExpanded={true}
+          computedColor="#4A90D9"
+        />
+      );
+
+      fireEvent.click(screen.getByTestId("pick-color"));
+      expect(mockUpdateTask).toHaveBeenCalledWith("task-1", {
+        color: "#FF0000",
+        colorOverride: undefined,
+      });
+    });
+
+    it("resets colorOverride on reset-override click", () => {
+      mockEditingState("task-1", "color");
+
+      const task = makeTask({ colorOverride: "#123456" as never });
+      render(
+        <TaskDataCells
+          task={task}
+          displayTask={task}
+          visibleColumns={[colorColumn]}
+          level={0}
+          hasChildren={false}
+          isExpanded={false}
+          computedColor="#4A90D9"
+        />
+      );
+
+      fireEvent.click(screen.getByTestId("reset-override"));
+      expect(mockUpdateTask).toHaveBeenCalledWith("task-1", {
+        colorOverride: undefined,
+      });
+    });
+
+    it("calls stopCellEdit on save", () => {
+      mockEditingState("task-1", "color");
+
+      const task = makeTask();
+      render(
+        <TaskDataCells
+          task={task}
+          displayTask={task}
+          visibleColumns={[colorColumn]}
+          level={0}
+          hasChildren={false}
+          isExpanded={false}
+          computedColor="#4A90D9"
+        />
+      );
+
+      fireEvent.click(screen.getByTestId("save-color"));
+      expect(mockStopCellEdit).toHaveBeenCalled();
     });
   });
 

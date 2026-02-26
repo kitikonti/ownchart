@@ -158,8 +158,8 @@ function PlaceholderRowNumberCell({
   const isSelected = useTaskStore((s) =>
     s.selectedTaskIds.includes(PLACEHOLDER_TASK_ID)
   );
-  const setActiveCell = useTaskStore((s) => s.setActiveCell);
 
+  // All state reads + actions via getState() — fresh snapshot in event handler
   const handleClick = (): void => {
     const store = useTaskStore.getState();
     const selectedTaskIds = store.selectedTaskIds;
@@ -175,7 +175,7 @@ function PlaceholderRowNumberCell({
         false
       );
     }
-    setActiveCell(null, null);
+    store.setActiveCell(null, null);
   };
 
   return (
@@ -232,6 +232,8 @@ function PlaceholderNameCell({
 
   // Scroll the outerScrollRef (vertical scroll driver) so the placeholder is visible.
   // Must NOT use el.scrollIntoView() — desyncs TaskTable from Timeline (GitHub #16).
+  // useRef (not useCallback) — stable function that needs no dependency array;
+  // reads cellRef.current at call time so it always targets the current DOM node.
   const scrollIntoView = useRef(() => {
     const el = cellRef.current;
     if (!el) return;

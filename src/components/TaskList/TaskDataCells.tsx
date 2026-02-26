@@ -75,9 +75,18 @@ function getReadOnlyDisplayValue(
       ? column.formatter(displayTask.duration)
       : String(displayTask.duration);
   }
-  // Only startDate and endDate reach this path (guarded by isReadOnlyItalic)
-  if (field === "startDate") return displayTask.startDate || null;
-  if (field === "endDate") return displayTask.endDate || null;
+  // Only startDate and endDate reach this path (guarded by isReadOnlyItalic).
+  // Uses formatter when available for consistency with duration handling.
+  if (field === "startDate") {
+    const value = displayTask.startDate;
+    if (!value) return null;
+    return column.formatter ? column.formatter(value) : value;
+  }
+  if (field === "endDate") {
+    const value = displayTask.endDate;
+    if (!value) return null;
+    return column.formatter ? column.formatter(value) : value;
+  }
   return null;
 }
 
@@ -265,6 +274,7 @@ function NameCell({
         <TaskTypeIcon
           type={task.type}
           onClick={() => {
+            // Task.type is optional — default to "task" for legacy data
             const nextType = getNextTaskType(task.type ?? "task", hasChildren);
             updateTask(task.id, { type: nextType });
           }}
