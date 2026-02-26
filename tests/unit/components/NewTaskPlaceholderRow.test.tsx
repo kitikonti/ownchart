@@ -14,6 +14,7 @@ import { NewTaskPlaceholderRow } from "../../../src/components/TaskList/NewTaskP
 
 const mockSetActiveCell = vi.fn();
 const mockClearSelection = vi.fn();
+const mockNavigateCell = vi.fn();
 const mockSetSelectedTaskIds = vi.fn();
 const mockCreateTask = vi.fn();
 
@@ -25,12 +26,14 @@ vi.mock("../../../src/store/slices/taskSlice", () => ({
         setActiveCell: mockSetActiveCell,
         selectedTaskIds: [],
         clearSelection: mockClearSelection,
+        navigateCell: mockNavigateCell,
       })
     ),
     {
       getState: vi.fn(() => ({
         selectedTaskIds: [],
         setSelectedTaskIds: mockSetSelectedTaskIds,
+        setActiveCell: mockSetActiveCell,
       })),
     }
   ),
@@ -78,6 +81,7 @@ function mockActivePlaceholderNameCell(): void {
         setActiveCell: mockSetActiveCell,
         selectedTaskIds: [],
         clearSelection: mockClearSelection,
+        navigateCell: mockNavigateCell,
       }) as never
   );
 }
@@ -98,6 +102,7 @@ describe("NewTaskPlaceholderRow", () => {
           setActiveCell: mockSetActiveCell,
           selectedTaskIds: [],
           clearSelection: mockClearSelection,
+          navigateCell: mockNavigateCell,
         }) as never
     );
 
@@ -328,6 +333,77 @@ describe("NewTaskPlaceholderRow", () => {
       fireEvent.keyDown(nameCell, { key: "F2" });
 
       expect(screen.getByRole("textbox", { name: "New task name" })).toBeInTheDocument();
+    });
+  });
+
+  describe("Tab key navigation", () => {
+    it("navigates right on Tab from active name cell", () => {
+      mockActivePlaceholderNameCell();
+
+      render(<NewTaskPlaceholderRow />);
+      const nameCell = screen.getByText("Add new task...").closest("[role='gridcell']")!;
+
+      fireEvent.keyDown(nameCell, { key: "Tab" });
+      expect(mockNavigateCell).toHaveBeenCalledWith("right");
+    });
+
+    it("navigates left on Shift+Tab from active name cell", () => {
+      mockActivePlaceholderNameCell();
+
+      render(<NewTaskPlaceholderRow />);
+      const nameCell = screen.getByText("Add new task...").closest("[role='gridcell']")!;
+
+      fireEvent.keyDown(nameCell, { key: "Tab", shiftKey: true });
+      expect(mockNavigateCell).toHaveBeenCalledWith("left");
+    });
+
+    it("commits task and navigates on Tab during editing", () => {
+      mockActivePlaceholderNameCell();
+
+      render(<NewTaskPlaceholderRow />);
+      const nameCell = screen.getByText("Add new task...").closest("[role='gridcell']")!;
+      fireEvent.click(nameCell);
+
+      const input = screen.getByRole("textbox", { name: "New task name" });
+      fireEvent.change(input, { target: { value: "Tab Task" } });
+      fireEvent.keyDown(input, { key: "Tab" });
+
+      expect(mockCreateTask).toHaveBeenCalledWith("Tab Task");
+      expect(mockNavigateCell).toHaveBeenCalledWith("right");
+    });
+
+    it("cancels and navigates on Tab during editing with empty input", () => {
+      mockActivePlaceholderNameCell();
+
+      render(<NewTaskPlaceholderRow />);
+      const nameCell = screen.getByText("Add new task...").closest("[role='gridcell']")!;
+      fireEvent.click(nameCell);
+
+      const input = screen.getByRole("textbox", { name: "New task name" });
+      fireEvent.keyDown(input, { key: "Tab" });
+
+      expect(mockCreateTask).not.toHaveBeenCalled();
+      expect(mockNavigateCell).toHaveBeenCalledWith("right");
+    });
+
+    it("navigates on Tab from generic data cell", () => {
+      render(<NewTaskPlaceholderRow />);
+
+      const cells = screen.getAllByRole("gridcell");
+      const dataCell = cells[3]; // startDate
+      fireEvent.keyDown(dataCell, { key: "Tab" });
+
+      expect(mockNavigateCell).toHaveBeenCalledWith("right");
+    });
+
+    it("navigates left on Shift+Tab from generic data cell", () => {
+      render(<NewTaskPlaceholderRow />);
+
+      const cells = screen.getAllByRole("gridcell");
+      const dataCell = cells[3]; // startDate
+      fireEvent.keyDown(dataCell, { key: "Tab", shiftKey: true });
+
+      expect(mockNavigateCell).toHaveBeenCalledWith("left");
     });
   });
 

@@ -34,6 +34,9 @@ export interface CellProps {
   /** Column definition */
   column: ColumnDefinition;
 
+  /** Prevent entering edit mode (e.g. milestone endDate, summary computed fields). */
+  readOnly?: boolean;
+
   /** Cell renderer component */
   children?: React.ReactNode;
 }
@@ -47,6 +50,7 @@ export const Cell = memo(function Cell({
   task,
   field,
   column,
+  readOnly,
   children,
 }: CellProps): JSX.Element {
   const cellRef = useRef<HTMLDivElement>(null);
@@ -97,7 +101,7 @@ export const Cell = memo(function Cell({
     e.stopPropagation();
     clearSelection();
 
-    if (!column.editable) {
+    if (!column.editable || readOnly) {
       setActiveCell(taskId, field);
       return;
     }
@@ -141,16 +145,17 @@ export const Cell = memo(function Cell({
       navigateCell(e.shiftKey ? "left" : "right");
     } else if (e.key === "Enter") {
       e.preventDefault();
-      if (column.editable) {
+      if (column.editable && !readOnly) {
         startCellEdit();
       } else {
         navigateCell("down");
       }
-    } else if (e.key === "F2" && column.editable) {
+    } else if (e.key === "F2" && column.editable && !readOnly) {
       e.preventDefault();
       startCellEdit();
     } else if (
       column.editable &&
+      !readOnly &&
       e.key.length === 1 &&
       !e.ctrlKey &&
       !e.metaKey &&

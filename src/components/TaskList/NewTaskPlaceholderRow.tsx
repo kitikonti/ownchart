@@ -4,14 +4,7 @@
  * Can be selected to allow pasting at the end of the list.
  */
 
-import {
-  useState,
-  useRef,
-  useEffect,
-  useMemo,
-  useCallback,
-  type KeyboardEvent,
-} from "react";
+import { useRef, useMemo, useCallback } from "react";
 import { useTaskStore, type EditableField } from "../../store/slices/taskSlice";
 import { useChartStore } from "../../store/slices/chartSlice";
 import {
@@ -20,10 +13,10 @@ import {
   type ColumnDefinition,
 } from "../../config/tableColumns";
 import { usePlaceholderContextMenu } from "../../hooks/usePlaceholderContextMenu";
-import { useNewTaskCreation } from "../../hooks/useNewTaskCreation";
+import { useIsPlaceholderSelected } from "../../hooks/useIsPlaceholderSelected";
+import { usePlaceholderNameEdit } from "../../hooks/usePlaceholderNameEdit";
 import { ContextMenu } from "../ContextMenu/ContextMenu";
 import { PLACEHOLDER_TASK_ID } from "../../config/placeholderRow";
-import { SCROLL_DRIVER_SELECTOR } from "../../config/layoutConstants";
 import { ROW_NUMBER, PLACEHOLDER_CELL } from "../../styles/design-tokens";
 import { getCellStyle, getActiveCellStyle } from "../../styles/cellStyles";
 
@@ -66,9 +59,8 @@ export function NewTaskPlaceholderRow(): JSX.Element {
     s.activeCell.taskId === PLACEHOLDER_TASK_ID ? s.activeCell.field : null
   );
   const setActiveCell = useTaskStore((s) => s.setActiveCell);
-  const isSelected = useTaskStore((s) =>
-    s.selectedTaskIds.includes(PLACEHOLDER_TASK_ID)
-  );
+  const navigateCell = useTaskStore((s) => s.navigateCell);
+  const isSelected = useIsPlaceholderSelected();
   const clearSelection = useTaskStore((s) => s.clearSelection);
   const hiddenColumns = useChartStore((s) => s.hiddenColumns);
 
@@ -131,7 +123,10 @@ export function NewTaskPlaceholderRow(): JSX.Element {
               if (column.field) handleDataCellClick(column.field);
             }}
             onKeyDown={(e) => {
-              if ((e.key === "Enter" || e.key === " ") && column.field) {
+              if (e.key === "Tab") {
+                e.preventDefault();
+                navigateCell(e.shiftKey ? "left" : "right");
+              } else if ((e.key === "Enter" || e.key === " ") && column.field) {
                 e.preventDefault();
                 handleDataCellClick(column.field);
               }
@@ -162,9 +157,7 @@ function PlaceholderRowNumberCell({
 }: {
   onContextMenu: (e: React.MouseEvent) => void;
 }): JSX.Element {
-  const isSelected = useTaskStore((s) =>
-    s.selectedTaskIds.includes(PLACEHOLDER_TASK_ID)
-  );
+  const isSelected = useIsPlaceholderSelected();
 
   // All state reads + actions via getState() — fresh snapshot in event handler
   const handleClick = (): void => {
@@ -211,7 +204,7 @@ function PlaceholderRowNumberCell({
   );
 }
 
-/** Name cell — owns editing state, focus management, and task creation. */
+/** Name cell — rendering wrapper; editing logic lives in usePlaceholderNameEdit. */
 function PlaceholderNameCell({
   column,
   onContextMenu,
@@ -219,115 +212,21 @@ function PlaceholderNameCell({
   column: ColumnDefinition;
   onContextMenu: (e: React.MouseEvent) => void;
 }): JSX.Element {
-  const [isEditing, setIsEditing] = useState(false);
-  const [inputValue, setInputValue] = useState("");
-  const inputRef = useRef<HTMLInputElement>(null);
   const cellRef = useRef<HTMLDivElement>(null);
+  const inputRef = useRef<HTMLInputElement>(null);
 
-  const setActiveCell = useTaskStore((s) => s.setActiveCell);
-  const clearSelection = useTaskStore((s) => s.clearSelection);
-  const isSelected = useTaskStore((s) =>
-    s.selectedTaskIds.includes(PLACEHOLDER_TASK_ID)
-  );
-  const isNameActive = useTaskStore(
-    (s) =>
-      s.activeCell.taskId === PLACEHOLDER_TASK_ID &&
-      s.activeCell.field === "name"
-  );
-
-  const { createTask } = useNewTaskCreation();
-
-  // Scroll the outerScrollRef (vertical scroll driver) so the placeholder is visible.
-  // Must NOT use el.scrollIntoView() — desyncs TaskTable from Timeline (GitHub #16).
-  // Stable callback (empty deps) — reads cellRef.current at call time.
-  const scrollIntoView = useCallback(() => {
-    const el = cellRef.current;
-    if (!el) return;
-    const outerScroll = el.closest(SCROLL_DRIVER_SELECTOR);
-    if (!outerScroll) return;
-    const outerRect = outerScroll.getBoundingClientRect();
-    const elRect = el.getBoundingClientRect();
-    if (elRect.bottom > outerRect.bottom) {
-      outerScroll.scrollTop += elRect.bottom - outerRect.bottom;
-    }
-  }, []);
-
-  // Focus cell when it becomes active (not editing).
-  // preventScroll: true prevents desyncing TaskTable from Timeline (GitHub #16).
-  useEffect(() => {
-    if (isNameActive && !isEditing && cellRef.current) {
-      cellRef.current.focus({ preventScroll: true });
-      scrollIntoView();
-    }
-  }, [isNameActive, isEditing, scrollIntoView]);
-
-  // Focus input when editing starts
-  useEffect(() => {
-    if (isEditing && inputRef.current) {
-      inputRef.current.focus({ preventScroll: true });
-      scrollIntoView();
-    }
-  }, [isEditing, scrollIntoView]);
-
-  const handleClick = (): void => {
-    if (isSelected) clearSelection();
-    if (isNameActive && !isEditing) {
-      setIsEditing(true);
-    } else if (!isNameActive) {
-      setActiveCell(PLACEHOLDER_TASK_ID, "name");
-    }
-  };
-
-  const handleKeyDown = (e: KeyboardEvent<HTMLDivElement>): void => {
-    if (isEditing) return;
-
-    if (e.key === "Enter" || e.key === "F2") {
-      e.preventDefault();
-      setIsEditing(true);
-    } else if (e.key.length === 1 && !e.ctrlKey && !e.metaKey && !e.altKey) {
-      e.preventDefault();
-      setInputValue(e.key);
-      setIsEditing(true);
-    } else if (e.key === "Escape") {
-      setActiveCell(null, null);
-    }
-  };
-
-  const commitNewTask = (): void => {
-    const trimmed = inputValue.trim();
-    if (trimmed) createTask(trimmed);
-    setIsEditing(false);
-    setInputValue("");
-  };
-
-  const cancelEdit = (): void => {
-    setIsEditing(false);
-    setInputValue("");
-  };
-
-  const handleInputBlur = (): void => {
-    if (inputValue.trim()) {
-      commitNewTask();
-    } else {
-      cancelEdit();
-    }
-  };
-
-  const handleInputKeyDown = (e: KeyboardEvent<HTMLInputElement>): void => {
-    if (e.key === "Enter") {
-      e.preventDefault();
-      if (inputValue.trim()) {
-        commitNewTask();
-      } else {
-        cancelEdit();
-      }
-    } else if (e.key === "Escape") {
-      // cancelEdit sets isEditing=false → the useEffect above re-focuses the cell
-      cancelEdit();
-    }
-  };
-
-  const showActiveBorder = isEditing || isNameActive;
+  const {
+    isEditing,
+    inputValue,
+    setInputValue,
+    isNameActive,
+    isSelected,
+    showActiveBorder,
+    handleClick,
+    handleKeyDown,
+    handleInputBlur,
+    handleInputKeyDown,
+  } = usePlaceholderNameEdit(cellRef, inputRef);
 
   return (
     <div

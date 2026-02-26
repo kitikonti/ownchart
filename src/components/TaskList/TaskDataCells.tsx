@@ -11,7 +11,7 @@
  * Returns a Fragment so cells remain direct children of the CSS Grid parent.
  */
 
-import { memo, useCallback } from "react";
+import { memo, useCallback, useMemo } from "react";
 import type { Task } from "../../types/chart.types";
 import type { ColumnDefinition } from "../../config/tableColumns";
 import type { EditableField } from "../../types/task.types";
@@ -129,9 +129,14 @@ export const TaskDataCells = memo(function TaskDataCells({
   isExpanded,
   computedColor,
 }: TaskDataCellsProps): JSX.Element {
+  const dataColumns = useMemo(
+    () => visibleColumns.filter(isDataColumn),
+    [visibleColumns]
+  );
+
   return (
     <>
-      {visibleColumns.filter(isDataColumn).map((column) => {
+      {dataColumns.map((column) => {
         const { field } = column;
 
         // Special handling for name field with hierarchy
@@ -171,6 +176,7 @@ export const TaskDataCells = memo(function TaskDataCells({
               task={displayTask}
               field={field}
               column={column}
+              readOnly
             >
               <span></span>
             </Cell>
@@ -191,6 +197,7 @@ export const TaskDataCells = memo(function TaskDataCells({
               task={displayTask}
               field={field}
               column={column}
+              readOnly
             >
               {displayValue ? (
                 <span className={READONLY_CLASSES}>{displayValue}</span>
@@ -229,7 +236,7 @@ interface NameCellProps {
   isExpanded: boolean;
 }
 
-function NameCell({
+const NameCell = memo(function NameCell({
   task,
   displayTask,
   column,
@@ -295,7 +302,7 @@ function NameCell({
       </div>
     </Cell>
   );
-}
+});
 
 interface ColorCellProps {
   task: Task;
@@ -304,7 +311,7 @@ interface ColorCellProps {
   computedColor: HexColor;
 }
 
-function ColorCell({
+const ColorCell = memo(function ColorCell({
   task,
   displayTask,
   column,
@@ -363,4 +370,4 @@ function ColorCell({
       </div>
     </Cell>
   );
-}
+});
