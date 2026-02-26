@@ -1,7 +1,7 @@
 /**
  * Tests for NewTaskPlaceholderRow component.
  * Verifies placeholder rendering, keyboard navigation, task creation flow,
- * and row selection toggle.
+ * row selection toggle, and data cell focus/keyboard behavior.
  */
 
 import { describe, it, expect, vi, beforeEach } from "vitest";
@@ -77,6 +77,23 @@ function mockActivePlaceholderNameCell(): void {
         activeCell: {
           taskId: "__new_task_placeholder__",
           field: "name",
+        },
+        setActiveCell: mockSetActiveCell,
+        selectedTaskIds: [],
+        clearSelection: mockClearSelection,
+        navigateCell: mockNavigateCell,
+      }) as never
+  );
+}
+
+/** Set up the mock so a placeholder data cell is active. */
+function mockActivePlaceholderDataCell(field: string): void {
+  vi.mocked(useTaskStore).mockImplementation(
+    (selector: (s: Record<string, unknown>) => unknown) =>
+      selector({
+        activeCell: {
+          taskId: "__new_task_placeholder__",
+          field,
         },
         setActiveCell: mockSetActiveCell,
         selectedTaskIds: [],
@@ -386,23 +403,23 @@ describe("NewTaskPlaceholderRow", () => {
       expect(mockNavigateCell).toHaveBeenCalledWith("right");
     });
 
-    it("navigates on Tab from generic data cell", () => {
+    it("navigates right on Tab from data cell", () => {
+      mockActivePlaceholderDataCell("startDate");
+
       render(<NewTaskPlaceholderRow />);
+      const dataCell = screen.getByRole("gridcell", { name: "Start Date" });
 
-      const cells = screen.getAllByRole("gridcell");
-      const dataCell = cells[3]; // startDate
       fireEvent.keyDown(dataCell, { key: "Tab" });
-
       expect(mockNavigateCell).toHaveBeenCalledWith("right");
     });
 
-    it("navigates left on Shift+Tab from generic data cell", () => {
+    it("navigates left on Shift+Tab from data cell", () => {
+      mockActivePlaceholderDataCell("startDate");
+
       render(<NewTaskPlaceholderRow />);
+      const dataCell = screen.getByRole("gridcell", { name: "Start Date" });
 
-      const cells = screen.getAllByRole("gridcell");
-      const dataCell = cells[3]; // startDate
       fireEvent.keyDown(dataCell, { key: "Tab", shiftKey: true });
-
       expect(mockNavigateCell).toHaveBeenCalledWith("left");
     });
   });
@@ -412,41 +429,111 @@ describe("NewTaskPlaceholderRow", () => {
       render(<NewTaskPlaceholderRow />);
 
       // Find a generic data cell (not name, not row number) — e.g., startDate
-      const cells = screen.getAllByRole("gridcell");
-      // cells[0] = rowNumber, cells[1] = color, cells[2] = name, cells[3] = startDate
-      const dataCell = cells[3];
+      const dataCell = screen.getByRole("gridcell", { name: "Start Date" });
       fireEvent.click(dataCell);
 
       expect(mockSetActiveCell).toHaveBeenCalledWith(
         "__new_task_placeholder__",
-        expect.any(String)
+        "startDate"
       );
     });
 
     it("activates a data cell on Enter key", () => {
-      render(<NewTaskPlaceholderRow />);
+      mockActivePlaceholderDataCell("startDate");
 
-      const cells = screen.getAllByRole("gridcell");
-      const dataCell = cells[3];
+      render(<NewTaskPlaceholderRow />);
+      const dataCell = screen.getByRole("gridcell", { name: "Start Date" });
+
       fireEvent.keyDown(dataCell, { key: "Enter" });
 
       expect(mockSetActiveCell).toHaveBeenCalledWith(
         "__new_task_placeholder__",
-        expect.any(String)
+        "startDate"
       );
     });
 
     it("activates a data cell on Space key", () => {
-      render(<NewTaskPlaceholderRow />);
+      mockActivePlaceholderDataCell("startDate");
 
-      const cells = screen.getAllByRole("gridcell");
-      const dataCell = cells[3];
+      render(<NewTaskPlaceholderRow />);
+      const dataCell = screen.getByRole("gridcell", { name: "Start Date" });
+
       fireEvent.keyDown(dataCell, { key: " " });
 
       expect(mockSetActiveCell).toHaveBeenCalledWith(
         "__new_task_placeholder__",
-        expect.any(String)
+        "startDate"
       );
+    });
+
+    it("navigates up on ArrowUp from data cell", () => {
+      mockActivePlaceholderDataCell("startDate");
+
+      render(<NewTaskPlaceholderRow />);
+      const dataCell = screen.getByRole("gridcell", { name: "Start Date" });
+
+      fireEvent.keyDown(dataCell, { key: "ArrowUp" });
+      expect(mockNavigateCell).toHaveBeenCalledWith("up");
+    });
+
+    it("navigates down on ArrowDown from data cell", () => {
+      mockActivePlaceholderDataCell("startDate");
+
+      render(<NewTaskPlaceholderRow />);
+      const dataCell = screen.getByRole("gridcell", { name: "Start Date" });
+
+      fireEvent.keyDown(dataCell, { key: "ArrowDown" });
+      expect(mockNavigateCell).toHaveBeenCalledWith("down");
+    });
+
+    it("navigates left on ArrowLeft from data cell", () => {
+      mockActivePlaceholderDataCell("startDate");
+
+      render(<NewTaskPlaceholderRow />);
+      const dataCell = screen.getByRole("gridcell", { name: "Start Date" });
+
+      fireEvent.keyDown(dataCell, { key: "ArrowLeft" });
+      expect(mockNavigateCell).toHaveBeenCalledWith("left");
+    });
+
+    it("navigates right on ArrowRight from data cell", () => {
+      mockActivePlaceholderDataCell("startDate");
+
+      render(<NewTaskPlaceholderRow />);
+      const dataCell = screen.getByRole("gridcell", { name: "Start Date" });
+
+      fireEvent.keyDown(dataCell, { key: "ArrowRight" });
+      expect(mockNavigateCell).toHaveBeenCalledWith("right");
+    });
+
+    it("deactivates on Escape from data cell", () => {
+      mockActivePlaceholderDataCell("startDate");
+
+      render(<NewTaskPlaceholderRow />);
+      const dataCell = screen.getByRole("gridcell", { name: "Start Date" });
+
+      fireEvent.keyDown(dataCell, { key: "Escape" });
+      expect(mockSetActiveCell).toHaveBeenCalledWith(null, null);
+    });
+
+    it("sets aria-selected when active", () => {
+      mockActivePlaceholderDataCell("startDate");
+
+      render(<NewTaskPlaceholderRow />);
+      const dataCell = screen.getByRole("gridcell", { name: "Start Date" });
+
+      expect(dataCell).toHaveAttribute("aria-selected", "true");
+    });
+
+    it("sets tabIndex=0 when active, -1 when inactive", () => {
+      mockActivePlaceholderDataCell("startDate");
+
+      render(<NewTaskPlaceholderRow />);
+      const activeCell = screen.getByRole("gridcell", { name: "Start Date" });
+      const inactiveCell = screen.getByRole("gridcell", { name: "End Date" });
+
+      expect(activeCell).toHaveAttribute("tabindex", "0");
+      expect(inactiveCell).toHaveAttribute("tabindex", "-1");
     });
   });
 
@@ -487,23 +574,32 @@ describe("NewTaskPlaceholderRow", () => {
       ).toBeInTheDocument();
     });
 
-    it("only makes name cell and row number cell focusable", () => {
+    it("name cell and row number cell are always focusable, data cells only when active", () => {
       render(<NewTaskPlaceholderRow />);
 
       const cells = screen.getAllByRole("gridcell");
       cells.forEach((cell) => {
         const tabIndex = cell.getAttribute("tabindex");
         const ariaLabel = cell.getAttribute("aria-label");
-        const isFocusable =
+        const isAlwaysFocusable =
           ariaLabel === "Select new task placeholder row" ||
           ariaLabel === "New task name";
 
-        if (isFocusable) {
+        if (isAlwaysFocusable) {
           expect(tabIndex).toBe("0");
         } else {
+          // Data cells use roving tabindex — only active cell gets tabIndex=0
           expect(tabIndex).toBe("-1");
         }
       });
+    });
+
+    it("data cells have aria-label from column label", () => {
+      render(<NewTaskPlaceholderRow />);
+
+      expect(screen.getByRole("gridcell", { name: "Start Date" })).toBeInTheDocument();
+      expect(screen.getByRole("gridcell", { name: "End Date" })).toBeInTheDocument();
+      expect(screen.getByRole("gridcell", { name: "Duration" })).toBeInTheDocument();
     });
   });
 });

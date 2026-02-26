@@ -4,7 +4,8 @@
  * Can be selected to allow pasting at the end of the list.
  */
 
-import { useRef, useMemo, useCallback, memo } from "react";
+import { useRef, useEffect, useMemo, useCallback, memo } from "react";
+import type { KeyboardEvent } from "react";
 import { useTaskStore, type EditableField } from "../../store/slices/taskSlice";
 import { useChartStore } from "../../store/slices/chartSlice";
 import {
@@ -17,6 +18,7 @@ import { useIsPlaceholderSelected } from "../../hooks/useIsPlaceholderSelected";
 import { usePlaceholderNameEdit } from "../../hooks/usePlaceholderNameEdit";
 import { ContextMenu } from "../ContextMenu/ContextMenu";
 import { PLACEHOLDER_TASK_ID } from "../../config/placeholderRow";
+import type { NavigationDirection } from "../../types/task.types";
 import {
   ROW_NUMBER,
   PLACEHOLDER_CELL,
@@ -30,6 +32,14 @@ import { getCellStyle, getActiveCellStyle } from "../../styles/cellStyles";
 
 /** Placeholder text shown in the name cell when not editing. */
 const PLACEHOLDER_TEXT = "Add new task...";
+
+/** Arrow keys mapped to navigation directions (matches Cell.tsx). */
+const ARROW_NAV: Record<string, NavigationDirection> = {
+  ArrowUp: "up",
+  ArrowDown: "down",
+  ArrowLeft: "left",
+  ArrowRight: "right",
+};
 
 /** Layout classes for a placeholder cell (no background — use getPlaceholderCellBg for that). */
 function getPlaceholderCellClassName(column: ColumnDefinition): string {
@@ -61,102 +71,67 @@ function getPlaceholderCellBg(state: {
 // Main Component
 // ─────────────────────────────────────────────────────────────────────────
 
-export function NewTaskPlaceholderRow(): JSX.Element {
-  // Focused selector — returns the active field only when THIS row is active,
-  // null otherwise. Returns a primitive so Zustand skips re-renders when other
-  // rows' cells become active.
-  const activePlaceholderField = useTaskStore((s) =>
-    s.activeCell.taskId === PLACEHOLDER_TASK_ID ? s.activeCell.field : null
-  );
-  const setActiveCell = useTaskStore((s) => s.setActiveCell);
-  const navigateCell = useTaskStore((s) => s.navigateCell);
-  const isSelected = useIsPlaceholderSelected();
-  const clearSelection = useTaskStore((s) => s.clearSelection);
-  const hiddenColumns = useChartStore((s) => s.hiddenColumns);
+export const NewTaskPlaceholderRow = memo(
+  function NewTaskPlaceholderRow(): JSX.Element {
+    const hiddenColumns = useChartStore((s) => s.hiddenColumns);
 
-  const {
-    contextMenu,
-    contextMenuItems,
-    handlePlaceholderContextMenu,
-    closeContextMenu,
-  } = usePlaceholderContextMenu();
+    const {
+      contextMenu,
+      contextMenuItems,
+      handlePlaceholderContextMenu,
+      closeContextMenu,
+    } = usePlaceholderContextMenu();
 
-  const visibleColumns = useMemo(
-    () => getVisibleColumns(hiddenColumns),
-    [hiddenColumns]
-  );
+    const visibleColumns = useMemo(
+      () => getVisibleColumns(hiddenColumns),
+      [hiddenColumns]
+    );
 
-  const handleDataCellClick = useCallback(
-    (field: EditableField): void => {
-      if (isSelected) clearSelection();
-      setActiveCell(PLACEHOLDER_TASK_ID, field);
-    },
-    [isSelected, clearSelection, setActiveCell]
-  );
+    return (
+      <div className="placeholder-row contents" role="row">
+        {visibleColumns.map((column) => {
+          if (column.id === "rowNumber") {
+            return (
+              <PlaceholderRowNumberCell
+                key={column.id}
+                onContextMenu={handlePlaceholderContextMenu}
+              />
+            );
+          }
 
-  return (
-    <div className="placeholder-row contents" role="row">
-      {visibleColumns.map((column) => {
-        if (column.id === "rowNumber") {
+          if (column.id === NAME_COLUMN_ID) {
+            return (
+              <PlaceholderNameCell
+                key={column.id}
+                column={column}
+                onContextMenu={handlePlaceholderContextMenu}
+              />
+            );
+          }
+
+          // Data columns always have a field after rowNumber/name are handled
+          if (!column.field) return null;
+
           return (
-            <PlaceholderRowNumberCell
-              key={column.id}
-              onContextMenu={handlePlaceholderContextMenu}
-            />
-          );
-        }
-
-        if (column.id === NAME_COLUMN_ID) {
-          return (
-            <PlaceholderNameCell
+            <PlaceholderDataCell
               key={column.id}
               column={column}
+              field={column.field}
               onContextMenu={handlePlaceholderContextMenu}
             />
           );
-        }
-
-        // Generic data cell — no content, just activates on click
-        const isActiveCell = activePlaceholderField === column.field;
-        return (
-          <div
-            key={column.id}
-            tabIndex={-1}
-            className={getPlaceholderCellClassName(column)}
-            style={{
-              ...(isActiveCell
-                ? getActiveCellStyle(column.id)
-                : getCellStyle(column.id)),
-              ...getPlaceholderCellBg({ isSelected, isActive: isActiveCell }),
-            }}
-            onClick={() => {
-              if (column.field) handleDataCellClick(column.field);
-            }}
-            onKeyDown={(e) => {
-              if (e.key === "Tab") {
-                e.preventDefault();
-                navigateCell(e.shiftKey ? "left" : "right");
-              } else if ((e.key === "Enter" || e.key === " ") && column.field) {
-                e.preventDefault();
-                handleDataCellClick(column.field);
-              }
-            }}
-            onContextMenu={handlePlaceholderContextMenu}
-            role="gridcell"
-            aria-label={column.label}
+        })}
+        {contextMenu && (
+          <ContextMenu
+            items={contextMenuItems}
+            position={contextMenu}
+            onClose={closeContextMenu}
           />
-        );
-      })}
-      {contextMenu && (
-        <ContextMenu
-          items={contextMenuItems}
-          position={contextMenu}
-          onClose={closeContextMenu}
-        />
-      )}
-    </div>
-  );
-}
+        )}
+      </div>
+    );
+  }
+);
 
 // ─────────────────────────────────────────────────────────────────────────
 // Sub-Components
@@ -278,5 +253,81 @@ const PlaceholderNameCell = memo(function PlaceholderNameCell({
         </span>
       )}
     </div>
+  );
+});
+
+/** Data cell — empty placeholder with keyboard navigation and focus management. */
+const PlaceholderDataCell = memo(function PlaceholderDataCell({
+  column,
+  field,
+  onContextMenu,
+}: {
+  column: ColumnDefinition;
+  field: EditableField;
+  onContextMenu: (e: React.MouseEvent) => void;
+}): JSX.Element {
+  const cellRef = useRef<HTMLDivElement>(null);
+
+  const isActive = useTaskStore(
+    (s) =>
+      s.activeCell.taskId === PLACEHOLDER_TASK_ID &&
+      s.activeCell.field === field
+  );
+  const isSelected = useIsPlaceholderSelected();
+  const setActiveCell = useTaskStore((s) => s.setActiveCell);
+  const clearSelection = useTaskStore((s) => s.clearSelection);
+  const navigateCell = useTaskStore((s) => s.navigateCell);
+
+  // Focus cell when it becomes active — matches Cell.tsx focus contract
+  useEffect(() => {
+    if (isActive && cellRef.current) {
+      cellRef.current.focus({ preventScroll: true });
+    }
+  }, [isActive]);
+
+  const handleClick = useCallback((): void => {
+    if (isSelected) clearSelection();
+    setActiveCell(PLACEHOLDER_TASK_ID, field);
+  }, [field, isSelected, clearSelection, setActiveCell]);
+
+  const handleKeyDown = useCallback(
+    (e: KeyboardEvent<HTMLDivElement>): void => {
+      const direction = ARROW_NAV[e.key];
+      if (direction) {
+        e.preventDefault();
+        navigateCell(direction);
+        return;
+      }
+
+      if (e.key === "Tab") {
+        e.preventDefault();
+        navigateCell(e.shiftKey ? "left" : "right");
+      } else if (e.key === "Enter" || e.key === " ") {
+        e.preventDefault();
+        handleClick();
+      } else if (e.key === "Escape") {
+        e.preventDefault();
+        setActiveCell(null, null);
+      }
+    },
+    [navigateCell, handleClick, setActiveCell]
+  );
+
+  return (
+    <div
+      ref={cellRef}
+      tabIndex={isActive ? 0 : -1}
+      className={getPlaceholderCellClassName(column)}
+      style={{
+        ...(isActive ? getActiveCellStyle(column.id) : getCellStyle(column.id)),
+        ...getPlaceholderCellBg({ isSelected, isActive }),
+      }}
+      onClick={handleClick}
+      onKeyDown={handleKeyDown}
+      onContextMenu={onContextMenu}
+      role="gridcell"
+      aria-label={column.label}
+      aria-selected={isActive}
+    />
   );
 });
