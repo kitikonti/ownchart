@@ -3,6 +3,7 @@
  * Shows a paper frame with correct aspect ratio, margins, header/footer.
  */
 
+import type { Icon as PhosphorIcon } from "@phosphor-icons/react";
 import { Spinner, WarningCircle, Warning } from "@phosphor-icons/react";
 import type {
   PdfExportOptions,
@@ -77,9 +78,12 @@ function calculateScaleFactor(
   chartAreaHeightMm: number
 ): number {
   if (chartWidth <= 0 || chartHeight <= 0) return 1;
+  // Clamp to zero — extreme custom margins could make the area negative
+  const safeHeightMm = Math.max(chartAreaHeightMm, 0);
+  if (contentWidthMm <= 0 || safeHeightMm <= 0) return 0;
 
   const chartAreaWidthPx = mmToPx(contentWidthMm);
-  const chartAreaHeightPx = mmToPx(chartAreaHeightMm);
+  const chartAreaHeightPx = mmToPx(safeHeightMm);
   const scaleX = chartAreaWidthPx / chartWidth;
   const scaleY = chartAreaHeightPx / chartHeight;
   return Math.min(scaleX, scaleY, 1);
@@ -121,6 +125,50 @@ function SectionStrip({ left, right, border }: SectionStripProps): JSX.Element {
       <span className="text-[6px] text-neutral-600 truncate">
         {right.join(DOT_SEPARATOR)}
       </span>
+    </div>
+  );
+}
+
+type WarningLevel = "warning" | "critical";
+
+interface WarningBannerProps {
+  level: WarningLevel;
+  icon: PhosphorIcon;
+  message: string;
+}
+
+const WARNING_STYLES: Record<
+  WarningLevel,
+  { bg: string; icon: string; text: string }
+> = {
+  warning: {
+    bg: "bg-amber-50 border border-amber-200",
+    icon: "text-amber-600",
+    text: "text-amber-700",
+  },
+  critical: {
+    bg: "bg-red-50 border border-red-200",
+    icon: "text-red-600",
+    text: "text-red-700",
+  },
+};
+
+/** Reusable warning/critical alert banner */
+function WarningBanner({
+  level,
+  icon: Icon,
+  message,
+}: WarningBannerProps): JSX.Element {
+  const styles = WARNING_STYLES[level];
+  return (
+    <div className={`flex items-center gap-2.5 px-4 py-3 rounded ${styles.bg}`}>
+      <Icon
+        size={16}
+        weight="fill"
+        aria-hidden="true"
+        className={styles.icon}
+      />
+      <span className={`text-xs font-semibold ${styles.text}`}>{message}</span>
     </div>
   );
 }
@@ -167,48 +215,20 @@ function PdfPreviewInfo({
 
       {/* Readability Indicator - only show warnings/critical */}
       {readabilityStatus && readabilityStatus.level !== "good" && (
-        <div
-          className={`flex items-center gap-2.5 px-4 py-3 rounded ${
-            readabilityStatus.level === "warning"
-              ? "bg-amber-50 border border-amber-200"
-              : "bg-red-50 border border-red-200"
-          }`}
-        >
-          <Warning
-            size={16}
-            weight="fill"
-            aria-hidden="true"
-            className={
-              readabilityStatus.level === "warning"
-                ? "text-amber-600"
-                : "text-red-600"
-            }
-          />
-          <span
-            className={`text-xs font-semibold ${
-              readabilityStatus.level === "warning"
-                ? "text-amber-700"
-                : "text-red-700"
-            }`}
-          >
-            {readabilityStatus.message}
-          </span>
-        </div>
+        <WarningBanner
+          level={readabilityStatus.level as WarningLevel}
+          icon={Warning}
+          message={readabilityStatus.message}
+        />
       )}
 
       {/* Scale Warning - if content needs significant scaling to fit page */}
       {scaleFactor < SCALE_WARNING_THRESHOLD && (
-        <div className="flex items-center gap-2.5 px-4 py-3 rounded bg-amber-50 border border-amber-200">
-          <WarningCircle
-            size={16}
-            weight="fill"
-            aria-hidden="true"
-            className="text-amber-600"
-          />
-          <span className="text-xs font-semibold text-amber-700">
-            Content scaled to {scalePercent}% &mdash; consider larger page size
-          </span>
-        </div>
+        <WarningBanner
+          level="warning"
+          icon={WarningCircle}
+          message={`Content scaled to ${scalePercent}% \u2014 consider larger page size`}
+        />
       )}
     </div>
   );
@@ -274,7 +294,11 @@ export function PdfPreview({
   );
 
   // Margin padding as percentages of page dimensions for responsive scaling
-  const marginPadding = `${(margins.top / pageDims.height) * 100}% ${(margins.right / pageDims.width) * 100}% ${(margins.bottom / pageDims.height) * 100}% ${(margins.left / pageDims.width) * 100}%`;
+  const topPct = (margins.top / pageDims.height) * 100;
+  const rightPct = (margins.right / pageDims.width) * 100;
+  const bottomPct = (margins.bottom / pageDims.height) * 100;
+  const leftPct = (margins.left / pageDims.width) * 100;
+  const marginPadding = `${topPct}% ${rightPct}% ${bottomPct}% ${leftPct}%`;
 
   return (
     <div className="flex flex-col h-full">
@@ -337,7 +361,10 @@ export function PdfPreview({
                 )}
 
                 {error && !isRendering && (
-                  <div className="absolute inset-0 bg-white flex flex-col items-center justify-center z-10 p-2">
+                  <div
+                    className="absolute inset-0 bg-white flex flex-col items-center justify-center z-10 p-2"
+                    role="alert"
+                  >
                     <WarningCircle
                       size={16}
                       aria-hidden="true"
