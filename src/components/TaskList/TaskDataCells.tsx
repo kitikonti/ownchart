@@ -12,7 +12,6 @@
  */
 
 import type { Task } from "../../types/chart.types";
-import type { HexColor } from "../../types/branded.types";
 import type { ColumnDefinition } from "../../config/tableColumns";
 import type { EditableField } from "../../types/task.types";
 import { useTaskStore } from "../../store/slices/taskSlice";
@@ -266,7 +265,7 @@ function NameCell({
         <TaskTypeIcon
           type={task.type}
           onClick={() => {
-            const nextType = getNextTaskType(task.type || "task", hasChildren);
+            const nextType = getNextTaskType(task.type ?? "task", hasChildren);
             updateTask(task.id, { type: nextType });
           }}
         />
@@ -313,8 +312,7 @@ function ColorCell({
             computedColor={computedColor}
             colorMode={colorModeState.mode}
             hasOverride={!!task.colorOverride}
-            onChange={(value) => {
-              const hex = value as HexColor;
+            onChange={(hex) => {
               if (colorModeState.mode === "manual") {
                 updateTask(task.id, { color: hex });
               } else if (
