@@ -432,7 +432,7 @@ describe('File Operations - Deserialization', () => {
       }
     });
 
-    it('should preserve createdAt/updatedAt in __unknownFields for round-trip', () => {
+    it('should preserve createdAt/updatedAt as direct task fields for round-trip', () => {
       const file = createValidFileContent();
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       (file.chart.tasks[0] as any).createdAt = '2026-01-01T00:00:00.000Z';
@@ -441,9 +441,9 @@ describe('File Operations - Deserialization', () => {
 
       const result = deserializeGanttFile(JSON.stringify(file), 'test.ownchart');
 
-      expect(result.data!.tasks[0].__unknownFields).toBeDefined();
-      expect(result.data!.tasks[0].__unknownFields!.createdAt).toBe('2026-01-01T00:00:00.000Z');
-      expect(result.data!.tasks[0].__unknownFields!.updatedAt).toBe('2026-01-15T12:00:00.000Z');
+      // createdAt/updatedAt are known fields mapped directly onto the task (not __unknownFields)
+      expect(result.data!.tasks[0].createdAt).toBe('2026-01-01T00:00:00.000Z');
+      expect(result.data!.tasks[0].updatedAt).toBe('2026-01-15T12:00:00.000Z');
     });
   });
 

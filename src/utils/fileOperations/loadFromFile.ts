@@ -4,7 +4,6 @@
  * Works outside React (uses getState()).
  */
 
-import toast from "react-hot-toast";
 import { useTaskStore } from "../../store/slices/taskSlice";
 import { useChartStore } from "../../store/slices/chartSlice";
 import { useFileStore } from "../../store/slices/fileSlice";
@@ -12,104 +11,146 @@ import { useHistoryStore } from "../../store/slices/historySlice";
 import { useDependencyStore } from "../../store/slices/dependencySlice";
 import { useUIStore } from "../../store/slices/uiSlice";
 import { deserializeGanttFile } from "./deserialize";
-import { DEFAULT_COLOR_MODE_STATE } from "../../config/colorModeDefaults";
+import type { ViewSettings } from "./types";
+import { applyViewSettingsDefaults } from "../../config/viewSettingsDefaults";
+
+export interface LoadFileResult {
+  success: boolean;
+  warnings?: string[];
+  error?: string;
+}
+
+/** Toast handler compatible with react-hot-toast API */
+export interface ToastHandler {
+  success: (msg: string) => void;
+  error: (msg: string) => void;
+  (msg: string, opts?: { icon: string }): void;
+}
 
 /**
  * Load file content into the application stores.
  * Can be called from both React hooks and non-React contexts (e.g. LaunchQueue).
+ *
+ * Returns a plain LoadFileResult (not a Promise). Callers that `await` it
+ * still work — `await` on a non-Promise resolves immediately.
  */
-export async function loadFileIntoApp(file: {
+export function loadFileIntoApp(file: {
   name: string;
   content: string;
   size: number;
-}): Promise<boolean> {
-  const parseResult = await deserializeGanttFile(
-    file.content,
-    file.name,
-    file.size
-  );
+}): LoadFileResult {
+  const parseResult = deserializeGanttFile(file.content, file.name, file.size);
 
-  if (!parseResult.success) {
-    toast.error(parseResult.error!.message);
-    return false;
+  if (!parseResult.success || !parseResult.data) {
+    return {
+      success: false,
+      error: parseResult.error?.message ?? "Unknown parse error",
+    };
   }
 
+  const { data } = parseResult;
+
+  // Hydrate all stores inside a try/catch so callers get a structured
+  // error result instead of an unhandled exception.
+  //
+  // Ordering rationale: lightweight, rarely-failing operations (file state,
+  // history clear) run first so the app stays consistent even if a heavier
+  // operation (updateScale) fails later.  A full rollback is not attempted
+  // because valid data already passed the 6-layer validation pipeline and
+  // store failures are exceptional.
+  //
+  // NOTE: On mid-sequence failure, earlier stores may already be mutated.
+  // The error result indicates failure but partial state may have been applied.
+  try {
+    // 1. Reset tracking state & history first (lightweight, unlikely to fail)
+    resetFileState(file.name, data.chartId, data.chartCreatedAt);
+    useHistoryStore.getState().clearHistory();
+
+    // 2. Load core data into stores
+    useTaskStore.getState().setTasks(data.tasks);
+    useDependencyStore.getState().setDependencies(data.dependencies || []);
+    useUIStore.getState().resetExportOptions(data.exportSettings);
+
+    // 3. Apply view settings with defaults for older file versions.
+    //    setViewSettings accepts Partial<SettableViewFields> and only reads
+    //    fields it knows about, so passing the full ViewSettings is safe —
+    //    taskTableWidth/columnWidths are handled separately in restoreColumnWidths.
+    const viewSettings = applyViewSettingsDefaults(data.viewSettings);
+    useChartStore.getState().setViewSettings(viewSettings);
+    restoreColumnWidths(viewSettings);
+
+    // 4. Update scale and signal completion (heaviest operation, runs last)
+    const chartStore = useChartStore.getState();
+    chartStore.updateScale(data.tasks);
+    chartStore.signalFileLoaded();
+  } catch (e) {
+    const message = e instanceof Error ? e.message : String(e);
+    return {
+      success: false,
+      error: `Failed to load file data: ${message}`,
+    };
+  }
+
+  return {
+    success: true,
+    warnings: parseResult.warnings,
+  };
+}
+
+/**
+ * Restore column widths from file, or auto-fit if none were saved
+ */
+function restoreColumnWidths(viewSettings: ViewSettings): void {
   const taskStore = useTaskStore.getState();
-  const chartStore = useChartStore.getState();
-  const fileStore = useFileStore.getState();
-  const historyStore = useHistoryStore.getState();
-  const dependencyStore = useDependencyStore.getState();
-  const uiStore = useUIStore.getState();
 
-  // Load data
-  taskStore.setTasks(parseResult.data!.tasks);
-  dependencyStore.setDependencies(parseResult.data!.dependencies || []);
-  uiStore.resetExportOptions(parseResult.data!.exportSettings);
-
-  // Load view settings from file
-  const loadedViewSettings = parseResult.data!.viewSettings;
-  chartStore.setViewSettings({
-    zoom: loadedViewSettings.zoom,
-    panOffset: loadedViewSettings.panOffset,
-    showWeekends: loadedViewSettings.showWeekends,
-    showTodayMarker: loadedViewSettings.showTodayMarker,
-    showHolidays: loadedViewSettings.showHolidays ?? true,
-    showDependencies: loadedViewSettings.showDependencies ?? true,
-    showProgress: loadedViewSettings.showProgress ?? true,
-    taskLabelPosition: loadedViewSettings.taskLabelPosition ?? "inside",
-    workingDaysMode: loadedViewSettings.workingDaysMode ?? false,
-    workingDaysConfig: loadedViewSettings.workingDaysConfig ?? {
-      excludeSaturday: true,
-      excludeSunday: true,
-      excludeHolidays: true,
-    },
-    holidayRegion: loadedViewSettings.holidayRegion,
-    projectTitle: loadedViewSettings.projectTitle ?? "",
-    projectAuthor: loadedViewSettings.projectAuthor ?? "",
-    colorModeState:
-      loadedViewSettings.colorModeState ?? DEFAULT_COLOR_MODE_STATE,
-    hiddenColumns: loadedViewSettings.hiddenColumns ?? [],
-    isTaskTableCollapsed: loadedViewSettings.isTaskTableCollapsed ?? false,
-    hiddenTaskIds: loadedViewSettings.hiddenTaskIds ?? [],
-  });
-
-  // Update scale immediately with new tasks and zoom (before signalFileLoaded)
-  chartStore.updateScale(parseResult.data!.tasks);
-
-  // Signal that a file was loaded (triggers scroll positioning in GanttLayout)
-  chartStore.signalFileLoaded();
-
-  // Restore column widths from file
-  if (loadedViewSettings.taskTableWidth !== undefined) {
-    taskStore.setTaskTableWidth(loadedViewSettings.taskTableWidth);
-  }
-  if (loadedViewSettings.columnWidths) {
-    Object.entries(loadedViewSettings.columnWidths).forEach(
-      ([columnId, width]) => {
-        taskStore.setColumnWidth(columnId, width);
-      }
-    );
+  if (viewSettings.taskTableWidth !== undefined) {
+    taskStore.setTaskTableWidth(viewSettings.taskTableWidth);
   }
 
-  // Only auto-fit if no column widths were saved in file
   if (
-    !loadedViewSettings.columnWidths ||
-    Object.keys(loadedViewSettings.columnWidths).length === 0
+    viewSettings.columnWidths &&
+    Object.keys(viewSettings.columnWidths).length > 0
   ) {
+    for (const [columnId, width] of Object.entries(viewSettings.columnWidths)) {
+      taskStore.setColumnWidth(columnId, width);
+    }
+  } else {
     taskStore.autoFitColumn("name");
   }
+}
 
-  historyStore.clearHistory();
-  fileStore.setFileName(file.name);
-  fileStore.setChartId(parseResult.data!.chartId);
+/**
+ * Reset file tracking state after loading
+ */
+function resetFileState(
+  fileName: string,
+  chartId: string,
+  chartCreatedAt?: string
+): void {
+  const fileStore = useFileStore.getState();
+  fileStore.setFileName(fileName);
+  fileStore.setChartId(chartId);
+  fileStore.setChartCreatedAt(chartCreatedAt ?? null);
   fileStore.setLastSaved(new Date());
   fileStore.markClean();
+}
 
-  // Show warnings
-  if (parseResult.warnings) {
-    parseResult.warnings.forEach((w) => toast(w, { icon: "ℹ️" }));
+/**
+ * Show toast notifications for load results.
+ * Separated from core logic for testability.
+ */
+export function showLoadNotifications(
+  result: LoadFileResult & { fileName: string },
+  toast: ToastHandler
+): void {
+  if (!result.success) {
+    toast.error(result.error ?? "Failed to open file");
+    return;
   }
 
-  toast.success(`Opened "${file.name}"`);
-  return true;
+  if (result.warnings) {
+    result.warnings.forEach((w) => toast(w, { icon: "\u2139\uFE0F" }));
+  }
+
+  toast.success(`Opened "${result.fileName}"`);
 }

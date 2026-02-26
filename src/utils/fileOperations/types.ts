@@ -139,7 +139,7 @@ export interface FileError {
 export interface DeserializeResult {
   success: boolean;
   data?: {
-    tasks: Array<Task & { __unknownFields?: Record<string, unknown> }>;
+    tasks: TaskWithExtras[];
     dependencies: Array<
       AppDependency & { __unknownFields?: Record<string, unknown> }
     >;
@@ -147,6 +147,7 @@ export interface DeserializeResult {
     exportSettings?: ExportOptions;
     chartName: string;
     chartId: string;
+    chartCreatedAt?: string;
   };
   error?: FileError;
   warnings?: string[];
@@ -162,3 +163,17 @@ export interface SerializedDependency {
   lag?: number; // Offset days
   createdAt?: string;
 }
+
+// Re-export app Dependency type for convenience
+export type { AppDependency as Dependency };
+
+/**
+ * Task extended with round-trip metadata.
+ * Used at the serialize/deserialize boundary to preserve fields
+ * that the app doesn't model directly (timestamps, future-version fields).
+ */
+export type TaskWithExtras = Task & {
+  __unknownFields?: Record<string, unknown>;
+  createdAt?: string;
+  updatedAt?: string;
+};

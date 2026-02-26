@@ -225,6 +225,101 @@ describe('File Operations - Serialization', () => {
       expect(parsed.chart.tasks[0].__unknownFields).toBeUndefined();
       expect(parsed.chart.tasks[0].futureField).toBe('value');
     });
+
+    it('should not overwrite known fields from __unknownFields', () => {
+      const tasks: (Task & { __unknownFields?: Record<string, unknown> })[] = [
+        {
+          ...createSampleTasks()[0],
+          __unknownFields: {
+            id: 'hacked-id',
+            name: 'hacked-name',
+            safeFutureField: 'preserved',
+          },
+        },
+      ];
+
+      const json = serializeToGanttFile(tasks, createSampleViewSettings());
+      const parsed = JSON.parse(json);
+
+      expect(parsed.chart.tasks[0].id).toBe(createSampleTasks()[0].id);
+      expect(parsed.chart.tasks[0].name).toBe('Task 1');
+      expect(parsed.chart.tasks[0].safeFutureField).toBe('preserved');
+    });
+
+    it('should ignore __unknownFields if it is an array (defense-in-depth)', () => {
+      const tasks: (Task & { __unknownFields?: Record<string, unknown> })[] = [
+        {
+          ...createSampleTasks()[0],
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          __unknownFields: ['not', 'a', 'record'] as any,
+        },
+      ];
+
+      const json = serializeToGanttFile(tasks, createSampleViewSettings());
+      const parsed = JSON.parse(json);
+
+      // Array __unknownFields should be silently ignored, not spread onto the task
+      expect(parsed.chart.tasks[0].name).toBe('Task 1');
+      expect(parsed.chart.tasks[0]['0']).toBeUndefined();
+      expect(parsed.chart.tasks[0]['1']).toBeUndefined();
+    });
+
+    it('should not leak __unknownFields as a literal key into the file', () => {
+      const tasks: (Task & { __unknownFields?: Record<string, unknown> })[] = [
+        {
+          ...createSampleTasks()[0],
+          __unknownFields: {
+            __unknownFields: { nested: 'should not appear' },
+            safeFutureField: 'preserved',
+          },
+        },
+      ];
+
+      const json = serializeToGanttFile(tasks, createSampleViewSettings());
+      const parsed = JSON.parse(json);
+
+      // The internal meta-key must not leak into the serialized output
+      const taskKeys = Object.keys(parsed.chart.tasks[0]);
+      expect(taskKeys).not.toContain('__unknownFields');
+      // Other unknown fields are still preserved
+      expect(parsed.chart.tasks[0].safeFutureField).toBe('preserved');
+    });
+
+    it('should filter prototype pollution keys from __unknownFields', () => {
+      const unknownFields: Record<string, unknown> = {
+        safeFutureField: 'preserved',
+        prototype: { polluted: true },
+      };
+      // Use defineProperty because { __proto__: ... } sets the prototype instead
+      Object.defineProperty(unknownFields, '__proto__', {
+        value: { polluted: true },
+        enumerable: true,
+        configurable: true,
+      });
+      Object.defineProperty(unknownFields, 'constructor', {
+        value: { polluted: true },
+        enumerable: true,
+        configurable: true,
+      });
+
+      const tasks: (Task & { __unknownFields?: Record<string, unknown> })[] = [
+        {
+          ...createSampleTasks()[0],
+          __unknownFields: unknownFields,
+        },
+      ];
+
+      const json = serializeToGanttFile(tasks, createSampleViewSettings());
+      const parsed = JSON.parse(json);
+
+      // Safe fields are preserved
+      expect(parsed.chart.tasks[0].safeFutureField).toBe('preserved');
+      // Dangerous keys are not present as own properties in the output
+      const taskKeys = Object.keys(parsed.chart.tasks[0]);
+      expect(taskKeys).not.toContain('__proto__');
+      expect(taskKeys).not.toContain('constructor');
+      expect(taskKeys).not.toContain('prototype');
+    });
   });
 
   describe('Task Metadata', () => {
@@ -271,6 +366,139 @@ describe('File Operations - Serialization', () => {
       const parsed = JSON.parse(json);
 
       expect(parsed.features.hasHierarchy).toBe(true);
+    });
+  });
+
+  describe('Task Timestamps', () => {
+    it('should preserve existing createdAt from deserialized tasks', () => {
+      const originalCreatedAt = '2025-06-15T10:30:00.000Z';
+      const tasks: (Task & { createdAt?: string })[] = [
+        {
+          ...createSampleTasks()[0],
+          createdAt: originalCreatedAt,
+        },
+      ];
+
+      const json = serializeToGanttFile(tasks, createSampleViewSettings());
+      const parsed = JSON.parse(json);
+
+      expect(parsed.chart.tasks[0].createdAt).toBe(originalCreatedAt);
+    });
+
+    it('should set createdAt to now for new tasks without createdAt', () => {
+      const tasks = createSampleTasks();
+      const json = serializeToGanttFile(tasks, createSampleViewSettings());
+      const parsed = JSON.parse(json);
+
+      const isoRegex = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}Z$/;
+      expect(parsed.chart.tasks[0].createdAt).toMatch(isoRegex);
+    });
+
+    it('should always update updatedAt to now', () => {
+      const oldUpdatedAt = '2020-01-01T00:00:00.000Z';
+      const tasks: (Task & { updatedAt?: string })[] = [
+        {
+          ...createSampleTasks()[0],
+          updatedAt: oldUpdatedAt,
+        },
+      ];
+
+      const json = serializeToGanttFile(tasks, createSampleViewSettings());
+      const parsed = JSON.parse(json);
+
+      expect(parsed.chart.tasks[0].updatedAt).not.toBe(oldUpdatedAt);
+    });
+  });
+
+  describe('Chart Metadata - createdAt Preservation', () => {
+    it('should use provided chartCreatedAt instead of now', () => {
+      const originalCreatedAt = '2025-06-01T12:00:00.000Z';
+      const json = serializeToGanttFile([], createSampleViewSettings(), {
+        chartCreatedAt: originalCreatedAt,
+      });
+      const parsed = JSON.parse(json);
+
+      expect(parsed.chart.metadata.createdAt).toBe(originalCreatedAt);
+    });
+
+    it('should default to now when chartCreatedAt not provided', () => {
+      const before = new Date().toISOString();
+      const json = serializeToGanttFile([], createSampleViewSettings());
+      const parsed = JSON.parse(json);
+      const after = new Date().toISOString();
+
+      expect(parsed.chart.metadata.createdAt >= before).toBe(true);
+      expect(parsed.chart.metadata.createdAt <= after).toBe(true);
+    });
+
+    it('should always set updatedAt to now regardless of chartCreatedAt', () => {
+      const before = new Date().toISOString();
+      const json = serializeToGanttFile([], createSampleViewSettings(), {
+        chartCreatedAt: '2020-01-01T00:00:00.000Z',
+      });
+      const parsed = JSON.parse(json);
+      const after = new Date().toISOString();
+
+      expect(parsed.chart.metadata.updatedAt >= before).toBe(true);
+      expect(parsed.chart.metadata.updatedAt <= after).toBe(true);
+    });
+  });
+
+  describe('Dependency Serialization', () => {
+    it('should serialize dependencies with correct field mapping', () => {
+      const json = serializeToGanttFile([], createSampleViewSettings(), {
+        dependencies: [
+          {
+            id: '123e4567-e89b-12d3-a456-426614174099',
+            fromTaskId: '123e4567-e89b-12d3-a456-426614174001',
+            toTaskId: '123e4567-e89b-12d3-a456-426614174002',
+            type: 'FS',
+            lag: 2,
+            createdAt: '2025-06-01T12:00:00.000Z',
+          },
+        ],
+      });
+      const parsed = JSON.parse(json);
+
+      expect(parsed.chart.dependencies).toHaveLength(1);
+      expect(parsed.chart.dependencies[0].id).toBe(
+        '123e4567-e89b-12d3-a456-426614174099'
+      );
+      expect(parsed.chart.dependencies[0].from).toBe(
+        '123e4567-e89b-12d3-a456-426614174001'
+      );
+      expect(parsed.chart.dependencies[0].to).toBe(
+        '123e4567-e89b-12d3-a456-426614174002'
+      );
+      expect(parsed.chart.dependencies[0].type).toBe('FS');
+      expect(parsed.chart.dependencies[0].lag).toBe(2);
+      expect(parsed.chart.dependencies[0].createdAt).toBe(
+        '2025-06-01T12:00:00.000Z'
+      );
+    });
+
+    it('should set hasDependencies feature flag when dependencies exist', () => {
+      const json = serializeToGanttFile([], createSampleViewSettings(), {
+        dependencies: [
+          {
+            id: '123e4567-e89b-12d3-a456-426614174099',
+            fromTaskId: 'a',
+            toTaskId: 'b',
+            type: 'FS',
+            createdAt: '2025-06-01T12:00:00.000Z',
+          },
+        ],
+      });
+      const parsed = JSON.parse(json);
+
+      expect(parsed.features.hasDependencies).toBe(true);
+    });
+
+    it('should set hasDependencies to false when no dependencies', () => {
+      const json = serializeToGanttFile([], createSampleViewSettings());
+      const parsed = JSON.parse(json);
+
+      expect(parsed.features.hasDependencies).toBe(false);
     });
   });
 

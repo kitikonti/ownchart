@@ -6,11 +6,13 @@ interface FileState {
   isDirty: boolean;
   lastSaved: Date | null;
   chartId: string | null;
+  chartCreatedAt: string | null;
 }
 
 interface FileActions {
   setFileName: (name: string | null) => void;
   setChartId: (id: string | null) => void;
+  setChartCreatedAt: (date: string | null) => void;
   markDirty: () => void;
   markClean: () => void;
   setLastSaved: (date: Date) => void;
@@ -24,6 +26,7 @@ const initialState: FileState = {
   isDirty: false,
   lastSaved: null,
   chartId: null,
+  chartCreatedAt: null,
 };
 
 export const useFileStore = create<FileStore>()(
@@ -38,6 +41,11 @@ export const useFileStore = create<FileStore>()(
     setChartId: (id): void =>
       set((state) => {
         state.chartId = id;
+      }),
+
+    setChartCreatedAt: (date): void =>
+      set((state) => {
+        state.chartCreatedAt = date;
       }),
 
     markDirty: (): void =>

@@ -9,16 +9,20 @@ import type {
   GanttFile,
   SerializedTask,
   SerializedDependency,
+  TaskWithExtras,
   ViewSettings,
 } from "./types";
-import { FILE_VERSION } from "../../config/version";
+import { FILE_VERSION, SCHEMA_VERSION } from "../../config/version";
+import { DEFAULT_CHART_NAME } from "../../config/viewSettingsDefaults";
+import { KNOWN_TASK_KEYS, DANGEROUS_KEYS, INTERNAL_KEYS } from "./constants";
 
 export interface SerializeOptions {
   chartName?: string;
   chartId?: string;
+  chartCreatedAt?: string;
   prettyPrint?: boolean;
-  dependencies?: Dependency[]; // Sprint 1.4
-  exportSettings?: ExportOptions; // Sprint 1.6
+  dependencies?: Dependency[];
+  exportSettings?: ExportOptions;
 }
 
 /**
@@ -35,56 +39,31 @@ export function serializeToGanttFile(
   options: SerializeOptions = {}
 ): string {
   const now = new Date().toISOString();
-
   const dependencies = options.dependencies || [];
 
   const ganttFile: GanttFile = {
     fileVersion: FILE_VERSION,
     appVersion: __APP_VERSION__,
-    schemaVersion: 1,
+    schemaVersion: SCHEMA_VERSION,
 
     chart: {
       id: options.chartId || crypto.randomUUID(),
-      name: options.chartName || "Untitled",
-      tasks: tasks.map(serializeTask),
-      dependencies: dependencies.map(serializeDependency), // Sprint 1.4
-      viewSettings: {
-        // Navigation
-        zoom: viewSettings.zoom,
-        panOffset: viewSettings.panOffset,
-        taskTableWidth: viewSettings.taskTableWidth,
-        columnWidths: viewSettings.columnWidths,
-        // Display settings
-        showWeekends: viewSettings.showWeekends,
-        showTodayMarker: viewSettings.showTodayMarker,
-        showHolidays: viewSettings.showHolidays,
-        showDependencies: viewSettings.showDependencies,
-        showProgress: viewSettings.showProgress,
-        taskLabelPosition: viewSettings.taskLabelPosition,
-        // Working days mode
-        workingDaysMode: viewSettings.workingDaysMode,
-        workingDaysConfig: viewSettings.workingDaysConfig,
-        // Holiday region
-        holidayRegion: viewSettings.holidayRegion,
-        // Project metadata
-        projectTitle: viewSettings.projectTitle,
-        projectAuthor: viewSettings.projectAuthor,
-        // Color mode
-        colorModeState: viewSettings.colorModeState,
-        // Column visibility
-        hiddenColumns: viewSettings.hiddenColumns,
-        // Task table collapse
-        isTaskTableCollapsed: viewSettings.isTaskTableCollapsed,
-        // Hidden task IDs
-        hiddenTaskIds: viewSettings.hiddenTaskIds,
-      },
-      exportSettings: options.exportSettings, // Sprint 1.6
+      name: options.chartName || DEFAULT_CHART_NAME,
+      tasks: tasks.map((task) => serializeTask(task, now)),
+      dependencies: dependencies.map(serializeDependency),
+      viewSettings: { ...viewSettings },
+      exportSettings: options.exportSettings,
+      // Chart-level timestamps: when this chart was first created / last edited
       metadata: {
-        createdAt: now,
+        createdAt: options.chartCreatedAt || now,
         updatedAt: now,
       },
     },
 
+    // File-level timestamp: when this .ownchart file was written to disk.
+    // Both values are identical because each save overwrites the entire file.
+    // The meaningful creation timestamp is chart.metadata.createdAt above.
+    // These exist for external tooling (backup scripts, file managers).
     metadata: {
       created: now,
       modified: now,
@@ -92,14 +71,10 @@ export function serializeToGanttFile(
 
     features: {
       hasHierarchy: tasks.some((t) => !!t.parent),
-      hasHistory: false, // No history persistence in v1.0.0
-      hasDependencies: dependencies.length > 0, // Sprint 1.4
+      hasHistory: false,
+      hasDependencies: dependencies.length > 0,
     },
   };
-
-  // Calculate file size
-  const jsonString = JSON.stringify(ganttFile);
-  ganttFile.metadata!.fileSize = new Blob([jsonString]).size;
 
   return options.prettyPrint
     ? JSON.stringify(ganttFile, null, 2)
@@ -107,10 +82,17 @@ export function serializeToGanttFile(
 }
 
 /**
- * Convert Task to SerializedTask
- * Preserves __unknownFields for round-trip compatibility
+ * Convert Task to SerializedTask.
+ * Preserves __unknownFields for round-trip compatibility.
+ * Tasks from deserialization may carry extra fields (see TaskWithExtras);
+ * the widening is safe because we only read optional extras, never write them.
  */
-function serializeTask(task: Task): SerializedTask {
+function serializeTask(task: Task, now: string): SerializedTask {
+  // SAFETY: TaskWithExtras extends Task with optional fields (__unknownFields,
+  // createdAt, updatedAt). Reading non-existent optional fields returns
+  // undefined, so this widening is safe for any Task at runtime.
+  const taskWithExtra = task as TaskWithExtras;
+
   const serialized: SerializedTask = {
     id: task.id,
     name: task.name,
@@ -125,19 +107,31 @@ function serializeTask(task: Task): SerializedTask {
     open: task.open,
     colorOverride: task.colorOverride,
     metadata: task.metadata,
-    createdAt: new Date().toISOString(),
-    updatedAt: new Date().toISOString(),
+    createdAt: taskWithExtra.createdAt || now,
+    updatedAt: now,
   };
 
-  // Preserve unknown fields from future versions
-  const taskWithUnknownFields = task as Task & {
-    __unknownFields?: Record<string, unknown>;
-  };
+  // Preserve unknown fields from future versions, but never overwrite known fields.
+  // SAFETY: SerializedTask has an index signature [key: string]: unknown, so
+  // writing unknown keys is type-safe; the Record cast just satisfies the compiler
+  // which doesn't infer index-signature writability through the typed interface.
+  // Defense-in-depth: DANGEROUS_KEYS are filtered even though upstream layers
+  // (safeJsonParse, sanitizeTask) already strip them during deserialization.
   if (
-    taskWithUnknownFields.__unknownFields &&
-    typeof taskWithUnknownFields.__unknownFields === "object"
+    taskWithExtra.__unknownFields &&
+    typeof taskWithExtra.__unknownFields === "object" &&
+    !Array.isArray(taskWithExtra.__unknownFields)
   ) {
-    Object.assign(serialized, taskWithUnknownFields.__unknownFields);
+    const target = serialized as Record<string, unknown>;
+    for (const [key, value] of Object.entries(taskWithExtra.__unknownFields)) {
+      if (
+        !KNOWN_TASK_KEYS.has(key) &&
+        !DANGEROUS_KEYS.has(key) &&
+        !INTERNAL_KEYS.has(key)
+      ) {
+        target[key] = value;
+      }
+    }
   }
 
   return serialized;
@@ -145,8 +139,6 @@ function serializeTask(task: Task): SerializedTask {
 
 /**
  * Convert Dependency to SerializedDependency for file format
- * Preserves __unknownFields for round-trip compatibility
- * Sprint 1.4 - Dependencies
  */
 function serializeDependency(dep: Dependency): SerializedDependency {
   const serialized: SerializedDependency = {

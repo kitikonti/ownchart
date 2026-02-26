@@ -5,7 +5,11 @@
  */
 
 import { useEffect } from "react";
-import { loadFileIntoApp } from "../utils/fileOperations/loadFromFile";
+import toast from "react-hot-toast";
+import {
+  loadFileIntoApp,
+  showLoadNotifications,
+} from "../utils/fileOperations/loadFromFile";
 
 export function useLaunchQueue(): void {
   useEffect(() => {
@@ -18,11 +22,12 @@ export function useLaunchQueue(): void {
       try {
         const file = await handle.getFile();
         const content = await file.text();
-        await loadFileIntoApp({
+        const result = await loadFileIntoApp({
           name: file.name,
           content,
           size: file.size,
         });
+        showLoadNotifications({ ...result, fileName: file.name }, toast);
       } catch (e) {
         console.error("Failed to open file from LaunchQueue:", e);
       }

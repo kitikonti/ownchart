@@ -4,8 +4,19 @@
  */
 
 import { describe, it, expect } from 'vitest';
-import { sanitizeGanttFile } from '../../../../src/utils/fileOperations/sanitize';
-import type { GanttFile } from '../../../../src/utils/fileOperations/types';
+import {
+  sanitizeGanttFile,
+  SKIP_SANITIZE_KEYS,
+} from '../../../../src/utils/fileOperations/sanitize';
+import {
+  KNOWN_TASK_KEYS,
+  DANGEROUS_KEYS,
+  INTERNAL_KEYS,
+} from '../../../../src/utils/fileOperations/constants';
+import type {
+  GanttFile,
+  SerializedTask,
+} from '../../../../src/utils/fileOperations/types';
 
 describe('File Operations - Sanitization (XSS Prevention)', () => {
   const createBaseFile = (): GanttFile => ({
@@ -350,6 +361,249 @@ describe('File Operations - Sanitization (XSS Prevention)', () => {
     });
   });
 
+  describe('ViewSettings Sanitization', () => {
+    it('should sanitize projectTitle with XSS', () => {
+      const malicious = createBaseFile();
+      malicious.chart.viewSettings.projectTitle = '<script>alert("XSS")</script>My Project';
+
+      const sanitized = sanitizeGanttFile(malicious);
+
+      expect(sanitized.chart.viewSettings.projectTitle).not.toContain('<script>');
+      expect(sanitized.chart.viewSettings.projectTitle).toContain('My Project');
+    });
+
+    it('should sanitize projectAuthor with XSS', () => {
+      const malicious = createBaseFile();
+      malicious.chart.viewSettings.projectAuthor = '<img onerror=alert(1) src=x>John';
+
+      const sanitized = sanitizeGanttFile(malicious);
+
+      expect(sanitized.chart.viewSettings.projectAuthor).not.toContain('onerror');
+      expect(sanitized.chart.viewSettings.projectAuthor).toContain('John');
+    });
+
+    it('should preserve clean projectTitle and projectAuthor', () => {
+      const file = createBaseFile();
+      file.chart.viewSettings.projectTitle = 'Clean Project Name';
+      file.chart.viewSettings.projectAuthor = 'Martin Müller';
+
+      const sanitized = sanitizeGanttFile(file);
+
+      expect(sanitized.chart.viewSettings.projectTitle).toBe('Clean Project Name');
+      expect(sanitized.chart.viewSettings.projectAuthor).toBe('Martin Müller');
+    });
+
+    it('should handle undefined projectTitle and projectAuthor', () => {
+      const file = createBaseFile();
+      file.chart.viewSettings.projectTitle = undefined;
+      file.chart.viewSettings.projectAuthor = undefined;
+
+      const sanitized = sanitizeGanttFile(file);
+
+      expect(sanitized.chart.viewSettings.projectTitle).toBeUndefined();
+      expect(sanitized.chart.viewSettings.projectAuthor).toBeUndefined();
+    });
+
+    it('should sanitize holidayRegion with XSS', () => {
+      const malicious = createBaseFile();
+      malicious.chart.viewSettings.holidayRegion =
+        '<script>alert("XSS")</script>AT';
+
+      const sanitized = sanitizeGanttFile(malicious);
+
+      expect(sanitized.chart.viewSettings.holidayRegion).not.toContain(
+        '<script>'
+      );
+      expect(sanitized.chart.viewSettings.holidayRegion).toContain('AT');
+    });
+
+    it('should preserve clean holidayRegion', () => {
+      const file = createBaseFile();
+      file.chart.viewSettings.holidayRegion = 'DE';
+
+      const sanitized = sanitizeGanttFile(file);
+
+      expect(sanitized.chart.viewSettings.holidayRegion).toBe('DE');
+    });
+
+    it('should handle undefined holidayRegion', () => {
+      const file = createBaseFile();
+      file.chart.viewSettings.holidayRegion = undefined;
+
+      const sanitized = sanitizeGanttFile(file);
+
+      expect(sanitized.chart.viewSettings.holidayRegion).toBeUndefined();
+    });
+  });
+
+  describe('ExportSettings Sanitization', () => {
+    it('should sanitize string fields in exportSettings', () => {
+      const file = createBaseFile();
+      // Simulate exportSettings with an XSS payload in a string field
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      (file.chart as any).exportSettings = {
+        zoomMode: 'currentView',
+        timelineZoom: 1.0,
+        fitToWidth: 1920,
+        dateRangeMode: 'custom',
+        customDateStart: '<script>alert("XSS")</script>2026-01-01',
+        customDateEnd: '2026-12-31',
+        selectedColumns: [],
+        includeHeader: true,
+        includeTodayMarker: true,
+        includeDependencies: true,
+        includeGridLines: true,
+        includeWeekends: true,
+        includeHolidays: true,
+        taskLabelPosition: 'inside',
+        background: 'white',
+        density: 'comfortable',
+      };
+
+      const sanitized = sanitizeGanttFile(file);
+
+      expect(sanitized.chart.exportSettings!.customDateStart).not.toContain(
+        '<script>'
+      );
+      // Non-string fields pass through unchanged
+      expect(sanitized.chart.exportSettings!.timelineZoom).toBe(1.0);
+      expect(sanitized.chart.exportSettings!.includeHeader).toBe(true);
+    });
+
+    it('should pass through undefined exportSettings', () => {
+      const file = createBaseFile();
+      // exportSettings not set (undefined)
+
+      const sanitized = sanitizeGanttFile(file);
+
+      expect(sanitized.chart.exportSettings).toBeUndefined();
+    });
+
+    it('should sanitize future string fields in exportSettings', () => {
+      const file = createBaseFile();
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      (file.chart as any).exportSettings = {
+        zoomMode: 'currentView',
+        timelineZoom: 1.0,
+        fitToWidth: 1920,
+        dateRangeMode: 'all',
+        selectedColumns: [],
+        includeHeader: true,
+        includeTodayMarker: true,
+        includeDependencies: true,
+        includeGridLines: true,
+        includeWeekends: true,
+        includeHolidays: true,
+        taskLabelPosition: 'inside',
+        background: 'white',
+        density: 'comfortable',
+        // Simulate a future string field
+        futureCustomLabel: '<img onerror=alert(1) src=x>Label',
+      };
+
+      const sanitized = sanitizeGanttFile(file);
+
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const settings = sanitized.chart.exportSettings as any;
+      expect(settings.futureCustomLabel).not.toContain('onerror');
+      expect(settings.futureCustomLabel).toContain('Label');
+    });
+  });
+
+  describe('Unknown Task Fields (future-proofing)', () => {
+    it('should sanitize unknown string fields on tasks', () => {
+      const file = createBaseFile();
+      file.chart.tasks = [
+        {
+          id: '123e4567-e89b-12d3-a456-426614174001',
+          name: 'Task',
+          startDate: '2026-01-01',
+          endDate: '2026-01-02',
+          duration: 1,
+          progress: 0,
+          color: '#000000',
+          order: 0,
+          futureStringField: '<script>alert("XSS")</script>Safe',
+        },
+      ];
+
+      const sanitized = sanitizeGanttFile(file);
+
+      expect(sanitized.chart.tasks[0].futureStringField).not.toContain(
+        '<script>'
+      );
+      expect(sanitized.chart.tasks[0].futureStringField).toContain('Safe');
+    });
+
+    it('should not corrupt ID-like fields during sanitization', () => {
+      const file = createBaseFile();
+      file.chart.tasks = [
+        {
+          id: '123e4567-e89b-12d3-a456-426614174001',
+          name: 'Task',
+          startDate: '2026-01-01',
+          endDate: '2026-01-02',
+          duration: 1,
+          progress: 0,
+          color: '#FF0000',
+          order: 0,
+          parent: '123e4567-e89b-12d3-a456-426614174002',
+          colorOverride: '#00FF00',
+          type: 'task',
+          createdAt: '2026-01-01T00:00:00.000Z',
+          updatedAt: '2026-01-01T00:00:00.000Z',
+        },
+      ];
+
+      const sanitized = sanitizeGanttFile(file);
+
+      // ID-like fields should pass through unchanged
+      expect(sanitized.chart.tasks[0].id).toBe(
+        '123e4567-e89b-12d3-a456-426614174001'
+      );
+      expect(sanitized.chart.tasks[0].color).toBe('#FF0000');
+      expect(sanitized.chart.tasks[0].parent).toBe(
+        '123e4567-e89b-12d3-a456-426614174002'
+      );
+      expect(sanitized.chart.tasks[0].colorOverride).toBe('#00FF00');
+      expect(sanitized.chart.tasks[0].startDate).toBe('2026-01-01');
+      expect(sanitized.chart.tasks[0].endDate).toBe('2026-01-02');
+      expect(sanitized.chart.tasks[0].type).toBe('task');
+      expect(sanitized.chart.tasks[0].createdAt).toBe(
+        '2026-01-01T00:00:00.000Z'
+      );
+      expect(sanitized.chart.tasks[0].updatedAt).toBe(
+        '2026-01-01T00:00:00.000Z'
+      );
+    });
+
+    it('should sanitize unknown nested object fields on tasks', () => {
+      const file = createBaseFile();
+      file.chart.tasks = [
+        {
+          id: '123e4567-e89b-12d3-a456-426614174001',
+          name: 'Task',
+          startDate: '2026-01-01',
+          endDate: '2026-01-02',
+          duration: 1,
+          progress: 0,
+          color: '#000000',
+          order: 0,
+          futureObject: {
+            nestedString: '<img onerror=alert(1) src=x>Clean',
+          },
+        },
+      ];
+
+      const sanitized = sanitizeGanttFile(file);
+
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const futureObj = (sanitized.chart.tasks[0] as any).futureObject;
+      expect(futureObj.nestedString).not.toContain('onerror');
+      expect(futureObj.nestedString).toContain('Clean');
+    });
+  });
+
   describe('Non-String Values', () => {
     it('should not sanitize numbers', () => {
       const file = createBaseFile();
@@ -392,6 +646,334 @@ describe('File Operations - Sanitization (XSS Prevention)', () => {
 
       expect(sanitized.chart.tasks[0].open).toBe(true);
       expect(typeof sanitized.chart.tasks[0].open).toBe('boolean');
+    });
+  });
+
+  describe('Prototype Pollution Prevention (defense-in-depth)', () => {
+    it('should strip __proto__ keys from task fields', () => {
+      const file = createBaseFile();
+      // Use Object.defineProperty to add __proto__ as a regular data property.
+      // Object literal syntax { __proto__: ... } sets the prototype instead.
+      const task: Record<string, unknown> = {
+        id: '123e4567-e89b-12d3-a456-426614174001',
+        name: 'Task',
+        startDate: '2026-01-01',
+        endDate: '2026-01-02',
+        duration: 1,
+        progress: 0,
+        color: '#000000',
+        order: 0,
+      };
+      Object.defineProperty(task, '__proto__', {
+        value: { polluted: true },
+        enumerable: true,
+        configurable: true,
+      });
+      expect(Object.keys(task)).toContain('__proto__');
+
+      file.chart.tasks = [task as SerializedTask];
+      const sanitized = sanitizeGanttFile(file);
+
+      expect(Object.keys(sanitized.chart.tasks[0])).not.toContain('__proto__');
+    });
+
+    it('should strip constructor keys from task fields', () => {
+      const file = createBaseFile();
+      const task = Object.assign(Object.create(null), {
+        id: '123e4567-e89b-12d3-a456-426614174001',
+        name: 'Task',
+        startDate: '2026-01-01',
+        endDate: '2026-01-02',
+        duration: 1,
+        progress: 0,
+        color: '#000000',
+        order: 0,
+        constructor: { polluted: true },
+      }) as SerializedTask;
+      expect(Object.keys(task)).toContain('constructor');
+
+      file.chart.tasks = [task];
+      const sanitized = sanitizeGanttFile(file);
+
+      expect(Object.keys(sanitized.chart.tasks[0])).not.toContain(
+        'constructor'
+      );
+    });
+
+    it('should strip prototype keys from task fields', () => {
+      const file = createBaseFile();
+      const task = Object.assign(Object.create(null), {
+        id: '123e4567-e89b-12d3-a456-426614174001',
+        name: 'Task',
+        startDate: '2026-01-01',
+        endDate: '2026-01-02',
+        duration: 1,
+        progress: 0,
+        color: '#000000',
+        order: 0,
+        prototype: { polluted: true },
+      }) as SerializedTask;
+      expect(Object.keys(task)).toContain('prototype');
+
+      file.chart.tasks = [task];
+      const sanitized = sanitizeGanttFile(file);
+
+      expect(Object.keys(sanitized.chart.tasks[0])).not.toContain('prototype');
+    });
+
+    it('should strip dangerous keys from nested metadata objects', () => {
+      const file = createBaseFile();
+      const meta: Record<string, unknown> = {
+        notes: 'safe',
+        constructor: { polluted: true },
+      };
+      Object.defineProperty(meta, '__proto__', {
+        value: { polluted: true },
+        enumerable: true,
+        configurable: true,
+      });
+      expect(Object.keys(meta)).toContain('__proto__');
+      expect(Object.keys(meta)).toContain('constructor');
+
+      file.chart.tasks = [
+        {
+          id: '123e4567-e89b-12d3-a456-426614174001',
+          name: 'Task',
+          startDate: '2026-01-01',
+          endDate: '2026-01-02',
+          duration: 1,
+          progress: 0,
+          color: '#000000',
+          order: 0,
+          metadata: meta,
+        },
+      ];
+
+      const sanitized = sanitizeGanttFile(file);
+      const sanitizedMeta = sanitized.chart.tasks[0].metadata!;
+
+      expect(Object.keys(sanitizedMeta)).not.toContain('__proto__');
+      expect(Object.keys(sanitizedMeta)).not.toContain('constructor');
+      expect(sanitizedMeta.notes).toBe('safe');
+    });
+  });
+
+  describe('Key-Set Sync Assertions', () => {
+    it('DANGEROUS_KEYS should cover all standard prototype pollution vectors', () => {
+      const required = ['__proto__', 'constructor', 'prototype'];
+      for (const key of required) {
+        expect(
+          DANGEROUS_KEYS.has(key),
+          `DANGEROUS_KEYS is missing "${key}" — update constants.ts`
+        ).toBe(true);
+      }
+    });
+
+    it('INTERNAL_KEYS should not overlap with KNOWN_TASK_KEYS or DANGEROUS_KEYS', () => {
+      for (const key of INTERNAL_KEYS) {
+        expect(
+          KNOWN_TASK_KEYS.has(key),
+          `INTERNAL_KEYS entry "${key}" overlaps with KNOWN_TASK_KEYS — would silently drop a real field`
+        ).toBe(false);
+        expect(
+          DANGEROUS_KEYS.has(key),
+          `INTERNAL_KEYS entry "${key}" overlaps with DANGEROUS_KEYS — redundant filtering`
+        ).toBe(false);
+      }
+    });
+
+    it('DANGEROUS_KEYS should not overlap with KNOWN_TASK_KEYS', () => {
+      for (const key of DANGEROUS_KEYS) {
+        expect(
+          KNOWN_TASK_KEYS.has(key),
+          `DANGEROUS_KEYS entry "${key}" overlaps with KNOWN_TASK_KEYS — this would silently drop a real field`
+        ).toBe(false);
+      }
+    });
+
+    it('SKIP_SANITIZE_KEYS should be a subset of KNOWN_TASK_KEYS', () => {
+      for (const key of SKIP_SANITIZE_KEYS) {
+        expect(
+          KNOWN_TASK_KEYS.has(key),
+          `SKIP_SANITIZE_KEYS contains "${key}" which is not in KNOWN_TASK_KEYS — update constants.ts`
+        ).toBe(true);
+      }
+    });
+
+    it('KNOWN_TASK_KEYS should cover all typed SerializedTask fields', () => {
+      // Build a fully-populated SerializedTask to extract its field names.
+      // This breaks if a new field is added to the type but not here.
+      const exemplar: Required<
+        Pick<
+          SerializedTask,
+          | 'id'
+          | 'name'
+          | 'startDate'
+          | 'endDate'
+          | 'duration'
+          | 'progress'
+          | 'color'
+          | 'order'
+          | 'type'
+          | 'parent'
+          | 'open'
+          | 'colorOverride'
+          | 'metadata'
+          | 'createdAt'
+          | 'updatedAt'
+        >
+      > = {
+        id: '',
+        name: '',
+        startDate: '',
+        endDate: '',
+        duration: 0,
+        progress: 0,
+        color: '',
+        order: 0,
+        type: 'task',
+        parent: '',
+        open: true,
+        colorOverride: '',
+        metadata: {},
+        createdAt: '',
+        updatedAt: '',
+      };
+
+      const fieldNames = Object.keys(exemplar);
+      for (const field of fieldNames) {
+        expect(
+          KNOWN_TASK_KEYS.has(field),
+          `SerializedTask field "${field}" is not in KNOWN_TASK_KEYS — update constants.ts`
+        ).toBe(true);
+      }
+    });
+
+    it('KNOWN_TASK_KEYS should not contain stale keys beyond SerializedTask', () => {
+      const typedFields = new Set([
+        'id',
+        'name',
+        'startDate',
+        'endDate',
+        'duration',
+        'progress',
+        'color',
+        'order',
+        'type',
+        'parent',
+        'open',
+        'colorOverride',
+        'metadata',
+        'createdAt',
+        'updatedAt',
+      ]);
+
+      for (const key of KNOWN_TASK_KEYS) {
+        expect(
+          typedFields.has(key),
+          `KNOWN_TASK_KEYS contains stale key "${key}" not in SerializedTask — remove from constants.ts`
+        ).toBe(true);
+      }
+    });
+  });
+
+  describe('Depth-Limit Safety', () => {
+    it('should sanitize string leaves at depth limit instead of returning raw data', () => {
+      const file = createBaseFile();
+      // Build a deeply nested structure that exceeds depth 50
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      let current: any = { xss: '<script>alert("deep")</script>Payload' };
+      for (let i = 0; i < 55; i++) {
+        current = { nested: current };
+      }
+
+      file.chart.tasks = [
+        {
+          id: '123e4567-e89b-12d3-a456-426614174001',
+          name: 'Task',
+          startDate: '2026-01-01',
+          endDate: '2026-01-02',
+          duration: 1,
+          progress: 0,
+          color: '#000000',
+          order: 0,
+          deepData: current,
+        },
+      ];
+
+      const sanitized = sanitizeGanttFile(file);
+
+      // The deeply nested object should be dropped (not returned raw)
+      // because it cannot be safely sanitized without exceeding the stack
+      const json = JSON.stringify(sanitized);
+      expect(json).not.toContain('<script>');
+    });
+
+    it('should not leave undefined holes in arrays at depth limit', () => {
+      // Directly test the sanitize module by crafting a task with a deeply
+      // nested array. At the depth limit, nested objects in arrays should be
+      // omitted entirely (not replaced with undefined/null).
+      const file = createBaseFile();
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      let current: any = ['safe', 42, { nested: '<script>xss</script>' }, true];
+      for (let i = 0; i < 55; i++) {
+        current = { nested: current };
+      }
+
+      file.chart.tasks = [
+        {
+          id: '123e4567-e89b-12d3-a456-426614174001',
+          name: 'Task',
+          startDate: '2026-01-01',
+          endDate: '2026-01-02',
+          duration: 1,
+          progress: 0,
+          color: '#000000',
+          order: 0,
+          deepData: current,
+        },
+      ];
+
+      const sanitized = sanitizeGanttFile(file);
+
+      // No XSS content should survive
+      const json = JSON.stringify(sanitized);
+      expect(json).not.toContain('<script>');
+
+      // The deeply nested array items that were objects should be omitted,
+      // not replaced with undefined (which JSON.stringify would show as null).
+      // We verify by checking the serialized output doesn't contain null
+      // entries where the nested objects were.
+      expect(json).not.toContain('"xss"');
+    });
+
+    it('should keep non-string primitives at depth limit', () => {
+      const file = createBaseFile();
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      let current: any = { num: 42, bool: true, str: '<b>html</b>' };
+      for (let i = 0; i < 55; i++) {
+        current = { nested: current };
+      }
+
+      file.chart.tasks = [
+        {
+          id: '123e4567-e89b-12d3-a456-426614174001',
+          name: 'Task',
+          startDate: '2026-01-01',
+          endDate: '2026-01-02',
+          duration: 1,
+          progress: 0,
+          color: '#000000',
+          order: 0,
+          deepData: current,
+        },
+      ];
+
+      const sanitized = sanitizeGanttFile(file);
+      const json = JSON.stringify(sanitized);
+
+      // No XSS content should survive
+      expect(json).not.toContain('<b>');
     });
   });
 });

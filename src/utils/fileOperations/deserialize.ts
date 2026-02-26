@@ -2,7 +2,7 @@
  * Deserialization utilities for converting GanttFile JSON to app state
  */
 
-import type { Task, TaskType } from "../../types/chart.types";
+import type { TaskType } from "../../types/chart.types";
 import type { HexColor } from "../../types/branded.types";
 import type { Dependency, DependencyType } from "../../types/dependency.types";
 import type {
@@ -11,6 +11,7 @@ import type {
   SerializedDependency,
   DeserializeResult,
   ViewSettings,
+  TaskWithExtras,
 } from "./types";
 import type { ExportOptions } from "../export/types";
 import type {
@@ -30,23 +31,7 @@ import { migrateGanttFile, needsMigration, isFromFuture } from "./migrate";
 import { FILE_VERSION } from "../../config/version";
 import { normalizeTaskOrder } from "../../utils/hierarchy";
 import { MIN_ZOOM, MAX_ZOOM } from "../../utils/timelineUtils";
-
-/** Keys consumed by deserializeTask — others are preserved as __unknownFields */
-const DESERIALIZED_TASK_KEYS = new Set([
-  "id",
-  "name",
-  "startDate",
-  "endDate",
-  "duration",
-  "progress",
-  "color",
-  "order",
-  "type",
-  "parent",
-  "open",
-  "colorOverride",
-  "metadata",
-]);
+import { KNOWN_TASK_KEYS } from "./constants";
 
 /** Keys consumed by deserializeDependency — others are preserved as __unknownFields */
 const DESERIALIZED_DEPENDENCY_KEYS = new Set([
@@ -103,7 +88,7 @@ function parseAndValidate(
     return {
       error: errorResult(
         "INVALID_JSON",
-        `Invalid JSON: ${(e as Error).message}`
+        `Invalid JSON: ${e instanceof Error ? e.message : String(e)}`
       ),
     };
   }
@@ -203,6 +188,7 @@ export function deserializeGanttFile(
         exportSettings: sanitizeExportSettings(ganttFile.chart.exportSettings),
         chartName: ganttFile.chart.name,
         chartId: ganttFile.chart.id,
+        chartCreatedAt: ganttFile.chart.metadata?.createdAt,
       },
       warnings: warnings.length > 0 ? warnings : undefined,
       migrated: migration.wasMigrated,
@@ -210,7 +196,7 @@ export function deserializeGanttFile(
   } catch (e) {
     return errorResult(
       "UNKNOWN_ERROR",
-      `Unexpected error: ${(e as Error).message}`
+      `Unexpected error: ${e instanceof Error ? e.message : String(e)}`
     );
   }
 }
@@ -219,15 +205,13 @@ export function deserializeGanttFile(
  * Convert SerializedTask to Task
  * Preserves unknown fields for round-trip compatibility
  */
-function deserializeTask(serialized: SerializedTask): Task & {
-  __unknownFields?: Record<string, unknown>;
-} {
+function deserializeTask(serialized: SerializedTask): TaskWithExtras {
   const endDate =
     serialized.type === "milestone" && !serialized.endDate
       ? serialized.startDate
       : serialized.endDate;
 
-  const task: Task & { __unknownFields?: Record<string, unknown> } = {
+  const task: TaskWithExtras = {
     id: serialized.id,
     name: serialized.name,
     startDate: serialized.startDate,
@@ -241,12 +225,11 @@ function deserializeTask(serialized: SerializedTask): Task & {
     open: serialized.open ?? true,
     colorOverride: serialized.colorOverride as HexColor | undefined, // Validated by validateTaskColors
     metadata: serialized.metadata ?? {},
+    createdAt: serialized.createdAt,
+    updatedAt: serialized.updatedAt,
   };
 
-  const unknownFields = extractUnknownFields(
-    serialized,
-    DESERIALIZED_TASK_KEYS
-  );
+  const unknownFields = extractUnknownFields(serialized, KNOWN_TASK_KEYS);
   if (unknownFields) {
     return { ...task, __unknownFields: unknownFields };
   }

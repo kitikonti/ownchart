@@ -15,27 +15,20 @@ import {
 describe('File Operations - Validation', () => {
   describe('Layer 1: Pre-Parse Validation', () => {
     it('should reject files larger than 50MB', () => {
-      const largeFile = new File(['x'], 'test.ownchart', {
-        type: 'application/json',
-      });
-      Object.defineProperty(largeFile, 'size', { value: 51 * 1024 * 1024 });
+      const largeFile = { name: 'test.ownchart', size: 51 * 1024 * 1024 };
 
       expect(() => validatePreParse(largeFile)).toThrow(ValidationError);
       expect(() => validatePreParse(largeFile)).toThrow('exceeds limit of 50MB');
     });
 
     it('should accept files smaller than 50MB', () => {
-      const validFile = new File(['{}'], 'test.ownchart', {
-        type: 'application/json',
-      });
+      const validFile = { name: 'test.ownchart', size: 2 };
 
       expect(() => validatePreParse(validFile)).not.toThrow();
     });
 
     it('should reject files without .ownchart extension', () => {
-      const wrongExtension = new File(['{}'], 'test.json', {
-        type: 'application/json',
-      });
+      const wrongExtension = { name: 'test.json', size: 2 };
 
       expect(() => validatePreParse(wrongExtension)).toThrow(
         'must have .ownchart extension'
@@ -43,18 +36,13 @@ describe('File Operations - Validation', () => {
     });
 
     it('should accept files with .ownchart extension', () => {
-      const validFile = new File(['{}'], 'test.ownchart', {
-        type: 'application/json',
-      });
+      const validFile = { name: 'test.ownchart', size: 2 };
 
       expect(() => validatePreParse(validFile)).not.toThrow();
     });
 
     it('should reject empty (zero-byte) files', () => {
-      const emptyFile = new File([], 'test.ownchart', {
-        type: 'application/json',
-      });
-      Object.defineProperty(emptyFile, 'size', { value: 0 });
+      const emptyFile = { name: 'test.ownchart', size: 0 };
 
       expect(() => validatePreParse(emptyFile)).toThrow(ValidationError);
       expect(() => validatePreParse(emptyFile)).toThrow('File is empty');
@@ -507,6 +495,13 @@ describe('File Operations - Validation', () => {
       expect(() => validateSemantics(invalid)).toThrow('invalid type');
     });
 
+    it('should reject XSS payload in task type', () => {
+      const invalid = createValidFile();
+      invalid.chart.tasks[0].type = '<script>alert(1)</script>';
+
+      expect(() => validateSemantics(invalid)).toThrow('invalid type');
+    });
+
     it('should accept valid task types (task, summary, milestone)', () => {
       for (const type of ['task', 'summary', 'milestone']) {
         const valid = createValidFile();
@@ -519,6 +514,14 @@ describe('File Operations - Validation', () => {
       }
     });
 
+    it('should accept undefined task type', () => {
+      const valid = createValidFile();
+      delete valid.chart.tasks[0].type;
+
+      expect(() => validateSemantics(valid)).not.toThrow();
+    });
+
+
     it('should reject invalid colorOverride', () => {
       const invalid = createValidFile();
       invalid.chart.tasks[0].colorOverride = 'not-a-color';
@@ -526,9 +529,16 @@ describe('File Operations - Validation', () => {
       expect(() => validateSemantics(invalid)).toThrow('invalid colorOverride');
     });
 
-    it('should accept valid colorOverride', () => {
+    it('should accept valid hex colorOverride', () => {
       const valid = createValidFile();
       valid.chart.tasks[0].colorOverride = '#FF5733';
+
+      expect(() => validateSemantics(valid)).not.toThrow();
+    });
+
+    it('should accept 3-digit hex colorOverride', () => {
+      const valid = createValidFile();
+      valid.chart.tasks[0].colorOverride = '#F53';
 
       expect(() => validateSemantics(valid)).not.toThrow();
     });
@@ -551,7 +561,7 @@ describe('File Operations - Validation', () => {
 
     it('should accept undefined colorOverride', () => {
       const valid = createValidFile();
-      valid.chart.tasks[0].colorOverride = undefined;
+      delete valid.chart.tasks[0].colorOverride;
 
       expect(() => validateSemantics(valid)).not.toThrow();
     });

@@ -98,13 +98,13 @@ cd ../app-gantt-review
 ### Priority: HIGH — File Operations (kritischer Pfad)
 - [x] `src/utils/fileOperations/validate.ts` (299 LOC)
 - [x] `src/utils/fileOperations/deserialize.ts` (233 LOC)
-- [x] `src/utils/fileOperations/fileDialog.ts`
-- [x] `src/utils/fileOperations/types.ts`
-- [ ] `src/utils/fileOperations/serialize.ts` (159 LOC)
-- [ ] `src/utils/fileOperations/loadFromFile.ts` (115 LOC)
-- [ ] `src/utils/fileOperations/migrate.ts` (102 LOC)
-- [ ] `src/utils/fileOperations/sanitize.ts` (79 LOC)
-- [ ] `src/utils/fileOperations/index.ts` (12 LOC)
+- [x] `src/utils/fileOperations/fileDialog.ts` (215 LOC)
+- [x] `src/utils/fileOperations/types.ts` (192 LOC)
+- [x] `src/utils/fileOperations/serialize.ts` (159 LOC)
+- [x] `src/utils/fileOperations/loadFromFile.ts` (115 LOC)
+- [x] `src/utils/fileOperations/migrate.ts` (102 LOC)
+- [x] `src/utils/fileOperations/sanitize.ts` (79 LOC)
+- [x] `src/utils/fileOperations/index.ts` (12 LOC)
 
 ### Priority: MEDIUM — GanttChart Komponenten
 - [x] `src/components/GanttChart/TaskBar.tsx`
@@ -304,6 +304,7 @@ Patterns die mehrere Dateien betreffen. Beim Review jeder Datei pruefen ob sie b
 - **Zirkulaere Imports zwischen Store-Slices**: chartSlice ↔ taskSlice und chartSlice ↔ historySlice importieren sich gegenseitig. Runtime-sicher, da alle Cross-Store-Zugriffe ueber `getState()` in Action-Handlern erfolgen (nicht bei Module-Initialisierung). Pattern ist korrekt fuer Zustand Cross-Store-Kommunikation, aber bei neuen Slices beachten: KEIN module-level Zugriff auf andere Stores.
 - **`HEADER_HEIGHT = 48` in 2 weiteren Dateien dupliziert**: Canonical Export in `src/utils/export/constants.ts`. Noch dupliziert in `GanttLayout.tsx:40`. Bei Review dieser Datei umstellen.
 - **design-tokens Cool Grays sind bewusst anders als Neutrals**: `TABLE_HEADER`, `GRID`, `TIMELINE_HEADER` etc. verwenden Cool Grays mit leichtem Blau-Tint (Bootstrap/Tailwind-Palette), waehrend `COLORS.neutral` reine Grays sind (MS Fluent). Mittelfristig koennte ein `COLORS.cool`-Scale die Chart-Grays systematisieren.
+- **ViewSettings Feld-Propagation-Kette**: Neues ViewSettings-Feld braucht Aenderungen in 3 Dateien: `types.ts` (Typ), `viewSettingsDefaults.ts` (Default), `chartSlice.ts` SettableViewFields (Pick-Type + setViewSettings Handler). `loadFromFile.ts` leitet automatisch weiter. `useFileOperations.ts` muss nur angepasst werden wenn das Feld nicht ueber einen bestehenden chartSlice-Selector zugreifbar ist.
 
 ---
 
@@ -325,13 +326,15 @@ Entscheidungen aus bisherigen Reviews die fuer zukuenftige Dateien gelten.
 - **Shared Layout-Berechnung bei Render+Dimension-Dualitaet**: Wenn eine Komponente und eine standalone-Funktion dieselbe Berechnungskette brauchen, in Pure Function extrahieren (`computeExportLayout`). Komponente wrapped via `useMemo`, Funktion ruft direkt auf. Vermeidet ~100+ LOC Duplikation.
 - **Unbenutzte Phase-2 Properties entfernen**: Interface-Properties die nur "fuer spaeter" deklariert sind aber keinen Consumer haben (z.B. `Task.lazy`) werden entfernt. Koennen bei Bedarf via Git-History wiederhergestellt werden.
 - **Milestone endDate-Vertrag**: Validation (validate.ts) erlaubt leeren `endDate` fuer Milestones, Deserialization (deserialize.ts) fixt ihn zu `startDate`. Impliziter Cross-File-Vertrag — bei Aenderungen an einer Seite die andere mitpruefen.
-- **KNOWN_TASK_KEYS nur fuer gemappte Felder**: Nur Felder die `deserializeTask()` tatsaechlich in das `Task`-Objekt uebernimmt gehoeren in `KNOWN_TASK_KEYS`. Alles andere landet in `__unknownFields` fuer Round-Trip-Kompatibilitaet. Timestamps (`createdAt`/`updatedAt`) sind NICHT gemappt und muessen round-trippen.
 - **Runtime-Validation fuer alle File-Format-Felder**: TypeScript-Typen genuegen NICHT fuer Daten aus JSON-Dateien. Jedes Feld das via `as` gecastet wird muss vorher runtime-validiert sein (z.B. `task.type` gegen `VALID_TASK_TYPES`, `colorOverride` gegen Hex-Regex).
+- **Shared Constants fuer Serialize/Deserialize**: Gemeinsame Feld-Listen (z.B. `KNOWN_TASK_KEYS`) in `fileOperations/constants.ts`. Nicht duplizieren.
+- **Sanitization: SKIP_SANITIZE_KEYS fuer ID-artige Felder**: `sanitize.ts` sanitized alle Task-String-Felder rekursiv, aber ID-artige Felder (UUIDs, Daten, Farben) werden uebersprungen. Bei neuen ID-artigen Task-Feldern `SKIP_SANITIZE_KEYS` in `sanitize.ts` ergaenzen.
+- **Deprecated Exports sofort entfernen wenn 0 Caller**: Keine `@deprecated`-Marker beibehalten wenn grep 0 Aufrufer zeigt. Sofort loeschen — Git-History reicht.
 
 ---
 
 ## Progress
 
-- Reviewed: 50 / 193 Dateien
+- Reviewed: 55 / 194 Dateien
 - Offene Issues: 38 Hex-Farben in 10 .tsx-Dateien, ~18 toISODateString-Umstellungen
 - Test-Coverage: 80%+
