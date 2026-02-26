@@ -74,8 +74,7 @@ export function migrateGanttFile(file: GanttFile): GanttFile {
           ...(current.migrations?.appliedMigrations || []),
           ...appliedMigrations,
         ],
-        originalVersion:
-          current.migrations?.originalVersion || originalVersion,
+        originalVersion: current.migrations?.originalVersion || originalVersion,
       },
     };
   }
