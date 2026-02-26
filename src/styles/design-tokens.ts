@@ -298,6 +298,17 @@ export const CELL = {
 } as const;
 
 // =============================================================================
+// PLACEHOLDER CELL TOKENS (new task placeholder row)
+// =============================================================================
+
+export const PLACEHOLDER_CELL = {
+  bgDefault: neutral[50], // Subtle background for idle state
+  bgSelected: neutral[100], // Selected state
+  bgActive: neutral[100], // Active (focused) state
+  bgEditing: neutral[0], // Editing state (white)
+} as const;
+
+// =============================================================================
 // ROW NUMBER TOKENS
 // =============================================================================
 

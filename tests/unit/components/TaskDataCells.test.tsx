@@ -363,6 +363,26 @@ describe("TaskDataCells", () => {
       const span = cells[0].querySelector("span");
       expect(span?.textContent).toBe("");
     });
+
+    it("renders empty duration cell for milestones", () => {
+      const task = makeTask({ type: "milestone", duration: 0 });
+      const { container } = render(
+        <TaskDataCells
+          task={task}
+          displayTask={task}
+          visibleColumns={[durationColumn]}
+          level={0}
+          hasChildren={false}
+          isExpanded={false}
+          computedColor="#4A90D9"
+        />
+      );
+
+      const cells = container.querySelectorAll("[role='gridcell']");
+      expect(cells.length).toBe(1);
+      const span = cells[0].querySelector("span");
+      expect(span?.textContent).toBe("");
+    });
   });
 
   describe("regular task rendering", () => {

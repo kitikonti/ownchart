@@ -11,6 +11,7 @@
  * Returns a Fragment so cells remain direct children of the CSS Grid parent.
  */
 
+import { memo, useCallback } from "react";
 import type { Task } from "../../types/chart.types";
 import type { ColumnDefinition } from "../../config/tableColumns";
 import type { EditableField } from "../../types/task.types";
@@ -44,7 +45,7 @@ function isDataColumn(col: ColumnDefinition): col is DataColumn {
 /** Checks whether a field on a given task type should be rendered read-only (empty). */
 function isReadOnlyEmpty(field: EditableField, type: Task["type"]): boolean {
   if (type === "milestone") {
-    return field === "endDate" || field === "progress";
+    return field === "endDate" || field === "duration" || field === "progress";
   }
   return false;
 }
@@ -53,9 +54,6 @@ function isReadOnlyEmpty(field: EditableField, type: Task["type"]): boolean {
 function isReadOnlyItalic(field: EditableField, type: Task["type"]): boolean {
   if (type === "summary") {
     return field === "startDate" || field === "endDate" || field === "duration";
-  }
-  if (type === "milestone") {
-    return field === "duration";
   }
   return false;
 }
@@ -104,7 +102,7 @@ interface TaskDataCellsProps {
   computedColor: string;
 }
 
-export function TaskDataCells({
+export const TaskDataCells = memo(function TaskDataCells({
   task,
   displayTask,
   visibleColumns,
@@ -146,7 +144,7 @@ export function TaskDataCells({
           );
         }
 
-        // Read-only empty cell (milestone endDate, milestone progress)
+        // Read-only empty cell (milestone endDate/duration/progress)
         if (isReadOnlyEmpty(field, task.type)) {
           return (
             <Cell
@@ -161,7 +159,7 @@ export function TaskDataCells({
           );
         }
 
-        // Read-only italic cell (summary dates/duration, milestone duration)
+        // Read-only italic cell (summary dates/duration)
         if (isReadOnlyItalic(field, task.type)) {
           const displayValue = getReadOnlyDisplayValue(
             field,
@@ -198,7 +196,7 @@ export function TaskDataCells({
       })}
     </>
   );
-}
+});
 
 // ─────────────────────────────────────────────────────────────────────────
 // Specialized Cell Components
@@ -226,6 +224,11 @@ function NameCell({
     (state) => state.toggleTaskCollapsed
   );
   const densityConfig = useDensityConfig();
+
+  const handleTypeClick = useCallback(() => {
+    const nextType = getNextTaskType(task.type ?? "task", hasChildren);
+    updateTask(task.id, { type: nextType });
+  }, [task.id, task.type, hasChildren, updateTask]);
 
   // Focused selector — only re-renders when THIS cell's editing state changes
   const isEditing = useTaskStore(
@@ -271,14 +274,7 @@ function NameCell({
         )}
 
         {/* Task type icon - clickable to cycle through types */}
-        <TaskTypeIcon
-          type={task.type}
-          onClick={() => {
-            // Task.type is optional — default to "task" for legacy data
-            const nextType = getNextTaskType(task.type ?? "task", hasChildren);
-            updateTask(task.id, { type: nextType });
-          }}
-        />
+        <TaskTypeIcon type={task.type} onClick={handleTypeClick} />
 
         {/* Task name display */}
         <span className="flex-1">{task.name}</span>

@@ -9,6 +9,7 @@ import {
   useRef,
   useEffect,
   useMemo,
+  useCallback,
   type KeyboardEvent,
 } from "react";
 import { useTaskStore, type EditableField } from "../../store/slices/taskSlice";
@@ -22,33 +23,35 @@ import { usePlaceholderContextMenu } from "../../hooks/usePlaceholderContextMenu
 import { useNewTaskCreation } from "../../hooks/useNewTaskCreation";
 import { ContextMenu } from "../ContextMenu/ContextMenu";
 import { PLACEHOLDER_TASK_ID } from "../../config/placeholderRow";
-import { ROW_NUMBER } from "../../styles/design-tokens";
+import { SCROLL_DRIVER_SELECTOR } from "../../config/layoutConstants";
+import { ROW_NUMBER, PLACEHOLDER_CELL } from "../../styles/design-tokens";
 import { getCellStyle, getActiveCellStyle } from "../../styles/cellStyles";
 
 // ─────────────────────────────────────────────────────────────────────────
 // Helpers
 // ─────────────────────────────────────────────────────────────────────────
 
-/** Selector: data-attribute used by scroll-into-view to find the scroll driver. */
-const SCROLL_DRIVER_SELECTOR = "[data-scroll-driver]";
-
 /** Placeholder text shown in the name cell when not editing. */
 const PLACEHOLDER_TEXT = "Add new task...";
 
-/** Resolves background and layout classes for a placeholder cell based on interaction state. */
-function getPlaceholderCellClassName(
-  column: ColumnDefinition,
-  state: { isEditing?: boolean; isSelected: boolean; isActive: boolean }
-): string {
+/** Layout classes for a placeholder cell (no background — use getPlaceholderCellBg for that). */
+function getPlaceholderCellClassName(column: ColumnDefinition): string {
   const border = column.showRightBorder !== false ? "border-r" : "";
-  const bg = state.isEditing
-    ? "bg-white z-20"
-    : state.isSelected
-      ? "bg-neutral-100"
-      : state.isActive
-        ? "bg-neutral-100 z-10"
-        : "bg-neutral-50/50 hover:bg-neutral-100";
-  return `${border} border-b border-neutral-200 flex items-center ${bg} cursor-pointer`;
+  return `${border} border-b border-neutral-200 flex items-center cursor-pointer`;
+}
+
+/** Background style for a placeholder cell based on interaction state. */
+function getPlaceholderCellBg(state: {
+  isEditing?: boolean;
+  isSelected: boolean;
+  isActive: boolean;
+}): { backgroundColor: string; zIndex?: number } {
+  if (state.isEditing)
+    return { backgroundColor: PLACEHOLDER_CELL.bgEditing, zIndex: 20 };
+  if (state.isSelected) return { backgroundColor: PLACEHOLDER_CELL.bgSelected };
+  if (state.isActive)
+    return { backgroundColor: PLACEHOLDER_CELL.bgActive, zIndex: 10 };
+  return { backgroundColor: PLACEHOLDER_CELL.bgDefault };
 }
 
 // ─────────────────────────────────────────────────────────────────────────
@@ -111,15 +114,13 @@ export function NewTaskPlaceholderRow(): JSX.Element {
           <div
             key={column.id}
             tabIndex={-1}
-            className={getPlaceholderCellClassName(column, {
-              isSelected,
-              isActive: isActiveCell,
-            })}
-            style={
-              isActiveCell
+            className={getPlaceholderCellClassName(column)}
+            style={{
+              ...(isActiveCell
                 ? getActiveCellStyle(column.id)
-                : getCellStyle(column.id)
-            }
+                : getCellStyle(column.id)),
+              ...getPlaceholderCellBg({ isSelected, isActive: isActiveCell }),
+            }}
             onClick={() => {
               if (column.field) handleDataCellClick(column.field);
             }}
@@ -232,9 +233,8 @@ function PlaceholderNameCell({
 
   // Scroll the outerScrollRef (vertical scroll driver) so the placeholder is visible.
   // Must NOT use el.scrollIntoView() — desyncs TaskTable from Timeline (GitHub #16).
-  // useRef (not useCallback) — stable function that needs no dependency array;
-  // reads cellRef.current at call time so it always targets the current DOM node.
-  const scrollIntoView = useRef(() => {
+  // Stable callback (empty deps) — reads cellRef.current at call time.
+  const scrollIntoView = useCallback(() => {
     const el = cellRef.current;
     if (!el) return;
     const outerScroll = el.closest(SCROLL_DRIVER_SELECTOR);
@@ -244,24 +244,24 @@ function PlaceholderNameCell({
     if (elRect.bottom > outerRect.bottom) {
       outerScroll.scrollTop += elRect.bottom - outerRect.bottom;
     }
-  });
+  }, []);
 
   // Focus cell when it becomes active (not editing).
   // preventScroll: true prevents desyncing TaskTable from Timeline (GitHub #16).
   useEffect(() => {
     if (isNameActive && !isEditing && cellRef.current) {
       cellRef.current.focus({ preventScroll: true });
-      scrollIntoView.current();
+      scrollIntoView();
     }
-  }, [isNameActive, isEditing]);
+  }, [isNameActive, isEditing, scrollIntoView]);
 
   // Focus input when editing starts
   useEffect(() => {
     if (isEditing && inputRef.current) {
       inputRef.current.focus({ preventScroll: true });
-      scrollIntoView.current();
+      scrollIntoView();
     }
-  }, [isEditing]);
+  }, [isEditing, scrollIntoView]);
 
   const handleClick = (): void => {
     if (isSelected) clearSelection();
@@ -329,16 +329,17 @@ function PlaceholderNameCell({
     <div
       ref={cellRef}
       tabIndex={0}
-      className={getPlaceholderCellClassName(column, {
-        isEditing,
-        isSelected,
-        isActive: isNameActive,
-      })}
-      style={
-        showActiveBorder
+      className={getPlaceholderCellClassName(column)}
+      style={{
+        ...(showActiveBorder
           ? getActiveCellStyle(column.id)
-          : getCellStyle(column.id)
-      }
+          : getCellStyle(column.id)),
+        ...getPlaceholderCellBg({
+          isEditing,
+          isSelected,
+          isActive: isNameActive,
+        }),
+      }}
       onClick={handleClick}
       onContextMenu={onContextMenu}
       onKeyDown={handleKeyDown}
