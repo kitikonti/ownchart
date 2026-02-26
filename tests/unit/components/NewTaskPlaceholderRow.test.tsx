@@ -62,6 +62,26 @@ vi.mock("../../../src/hooks/usePlaceholderContextMenu", () => ({
 import { useTaskStore } from "../../../src/store/slices/taskSlice";
 
 // ---------------------------------------------------------------------------
+// Helpers
+// ---------------------------------------------------------------------------
+
+/** Set up the mock so the placeholder name cell is active. */
+function mockActivePlaceholderNameCell(): void {
+  vi.mocked(useTaskStore).mockImplementation(
+    (selector: (s: Record<string, unknown>) => unknown) =>
+      selector({
+        activeCell: {
+          taskId: "__new_task_placeholder__",
+          field: "name",
+        },
+        setActiveCell: mockSetActiveCell,
+        selectedTaskIds: [],
+        clearSelection: mockClearSelection,
+      }) as never
+  );
+}
+
+// ---------------------------------------------------------------------------
 // Tests
 // ---------------------------------------------------------------------------
 
@@ -128,41 +148,19 @@ describe("NewTaskPlaceholderRow", () => {
 
   describe("keyboard navigation", () => {
     it("starts editing on Enter when name cell is active", () => {
-      // Set up active state on the name cell
-      vi.mocked(useTaskStore).mockImplementation(
-        (selector: (s: Record<string, unknown>) => unknown) =>
-          selector({
-            activeCell: {
-              taskId: "__new_task_placeholder__",
-              field: "name",
-            },
-            setActiveCell: mockSetActiveCell,
-            selectedTaskIds: [],
-            clearSelection: mockClearSelection,
-          }) as never
-      );
+      mockActivePlaceholderNameCell();
 
       render(<NewTaskPlaceholderRow />);
       const nameCell = screen.getByText("Add new task...").closest("[role='gridcell']")!;
 
       fireEvent.keyDown(nameCell, { key: "Enter" });
-      // After Enter, should switch to editing mode (input visible)
-      // The component re-renders with isEditing=true showing the input
+
+      // After Enter, editing mode starts — input should be visible
+      expect(screen.getByRole("textbox", { name: "New task name" })).toBeInTheDocument();
     });
 
     it("deactivates cell on Escape", () => {
-      vi.mocked(useTaskStore).mockImplementation(
-        (selector: (s: Record<string, unknown>) => unknown) =>
-          selector({
-            activeCell: {
-              taskId: "__new_task_placeholder__",
-              field: "name",
-            },
-            setActiveCell: mockSetActiveCell,
-            selectedTaskIds: [],
-            clearSelection: mockClearSelection,
-          }) as never
-      );
+      mockActivePlaceholderNameCell();
 
       render(<NewTaskPlaceholderRow />);
       const nameCell = screen.getByText("Add new task...").closest("[role='gridcell']")!;
@@ -170,64 +168,69 @@ describe("NewTaskPlaceholderRow", () => {
       fireEvent.keyDown(nameCell, { key: "Escape" });
       expect(mockSetActiveCell).toHaveBeenCalledWith(null, null);
     });
+
+    it("starts editing with typed character on printable key press", () => {
+      mockActivePlaceholderNameCell();
+
+      render(<NewTaskPlaceholderRow />);
+      const nameCell = screen.getByText("Add new task...").closest("[role='gridcell']")!;
+
+      fireEvent.keyDown(nameCell, { key: "a" });
+
+      // Input should appear with the typed character
+      const input = screen.getByRole("textbox", { name: "New task name" });
+      expect(input).toBeInTheDocument();
+      expect(input).toHaveValue("a");
+    });
   });
 
   describe("task creation", () => {
     it("calls createTask on Enter with non-empty input", () => {
-      // Start in editing mode by setting active + simulating click
-      vi.mocked(useTaskStore).mockImplementation(
-        (selector: (s: Record<string, unknown>) => unknown) =>
-          selector({
-            activeCell: {
-              taskId: "__new_task_placeholder__",
-              field: "name",
-            },
-            setActiveCell: mockSetActiveCell,
-            selectedTaskIds: [],
-            clearSelection: mockClearSelection,
-          }) as never
-      );
+      mockActivePlaceholderNameCell();
 
       render(<NewTaskPlaceholderRow />);
 
-      // Click to activate, then click again to start editing
+      // Click to start editing (active → editing transition)
       const nameCell = screen.getByText("Add new task...").closest("[role='gridcell']")!;
       fireEvent.click(nameCell);
 
-      // Now we should be in editing mode - find the input
-      const input = document.querySelector("input[type='text']");
-      if (input) {
-        fireEvent.change(input, { target: { value: "My New Task" } });
-        fireEvent.keyDown(input, { key: "Enter" });
-        expect(mockCreateTask).toHaveBeenCalledWith("My New Task");
-      }
+      // Input must exist after entering edit mode
+      const input = screen.getByRole("textbox", { name: "New task name" });
+      fireEvent.change(input, { target: { value: "My New Task" } });
+      fireEvent.keyDown(input, { key: "Enter" });
+
+      expect(mockCreateTask).toHaveBeenCalledWith("My New Task");
     });
 
     it("does not create task on Enter with empty input", () => {
-      vi.mocked(useTaskStore).mockImplementation(
-        (selector: (s: Record<string, unknown>) => unknown) =>
-          selector({
-            activeCell: {
-              taskId: "__new_task_placeholder__",
-              field: "name",
-            },
-            setActiveCell: mockSetActiveCell,
-            selectedTaskIds: [],
-            clearSelection: mockClearSelection,
-          }) as never
-      );
+      mockActivePlaceholderNameCell();
 
       render(<NewTaskPlaceholderRow />);
 
       const nameCell = screen.getByText("Add new task...").closest("[role='gridcell']")!;
       fireEvent.click(nameCell);
 
-      const input = document.querySelector("input[type='text']");
-      if (input) {
-        fireEvent.change(input, { target: { value: "   " } });
-        fireEvent.keyDown(input, { key: "Enter" });
-        expect(mockCreateTask).not.toHaveBeenCalled();
-      }
+      const input = screen.getByRole("textbox", { name: "New task name" });
+      fireEvent.change(input, { target: { value: "   " } });
+      fireEvent.keyDown(input, { key: "Enter" });
+
+      expect(mockCreateTask).not.toHaveBeenCalled();
+    });
+
+    it("cancels editing on Escape and re-shows placeholder text", () => {
+      mockActivePlaceholderNameCell();
+
+      render(<NewTaskPlaceholderRow />);
+
+      const nameCell = screen.getByText("Add new task...").closest("[role='gridcell']")!;
+      fireEvent.click(nameCell);
+
+      const input = screen.getByRole("textbox", { name: "New task name" });
+      fireEvent.change(input, { target: { value: "Draft" } });
+      fireEvent.keyDown(input, { key: "Escape" });
+
+      // Should return to placeholder text
+      expect(screen.getByText("Add new task...")).toBeInTheDocument();
     });
   });
 
@@ -266,6 +269,37 @@ describe("NewTaskPlaceholderRow", () => {
       fireEvent.keyDown(rowNumberCell, { key: " " });
 
       expect(mockSetSelectedTaskIds).toHaveBeenCalled();
+    });
+  });
+
+  describe("accessibility", () => {
+    it("has aria-label on the task name input", () => {
+      mockActivePlaceholderNameCell();
+
+      render(<NewTaskPlaceholderRow />);
+      const nameCell = screen.getByText("Add new task...").closest("[role='gridcell']")!;
+      fireEvent.click(nameCell);
+
+      expect(
+        screen.getByRole("textbox", { name: "New task name" })
+      ).toBeInTheDocument();
+    });
+
+    it("only makes name cell and row number cell focusable", () => {
+      render(<NewTaskPlaceholderRow />);
+
+      const cells = screen.getAllByRole("gridcell");
+      cells.forEach((cell) => {
+        const tabIndex = cell.getAttribute("tabindex");
+        const isRowNumber = cell.getAttribute("aria-label") === "Select new task placeholder row";
+        const isNameCell = cell.textContent === "Add new task...";
+
+        if (isRowNumber || isNameCell) {
+          expect(tabIndex).toBe("0");
+        } else {
+          expect(tabIndex).toBe("-1");
+        }
+      });
     });
   });
 });

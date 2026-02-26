@@ -18,10 +18,14 @@ import { usePlaceholderContextMenu } from "../../hooks/usePlaceholderContextMenu
 import { useNewTaskCreation } from "../../hooks/useNewTaskCreation";
 import { ContextMenu } from "../ContextMenu/ContextMenu";
 import { PLACEHOLDER_TASK_ID } from "../../config/placeholderRow";
-import { CELL, ROW_NUMBER } from "../../styles/design-tokens";
+import { ROW_NUMBER } from "../../styles/design-tokens";
+import { getCellStyle, getActiveCellStyle } from "../../styles/cellStyles";
 
 /** Selector: data-attribute used by scroll-into-view to find the scroll driver. */
 const SCROLL_DRIVER_SELECTOR = "[data-scroll-driver]";
+
+/** Placeholder text shown in the name cell when not editing. */
+const PLACEHOLDER_TEXT = "Add new task...";
 
 export function NewTaskPlaceholderRow(): JSX.Element {
   const [isEditing, setIsEditing] = useState(false);
@@ -185,18 +189,6 @@ export function NewTaskPlaceholderRow(): JSX.Element {
     }
   };
 
-  // Density-aware cell styles — matches Cell.tsx approach
-  const getCellStyle = (columnId: string): React.CSSProperties => ({
-    height: "var(--density-row-height)",
-    paddingTop: "var(--density-cell-padding-y)",
-    paddingBottom: "var(--density-cell-padding-y)",
-    // Name column omits paddingLeft — hierarchy indentation handles it (matches Cell.tsx)
-    paddingLeft:
-      columnId === NAME_COLUMN_ID ? undefined : "var(--density-cell-padding-x)",
-    paddingRight: "var(--density-cell-padding-x)",
-    fontSize: "var(--density-font-size-cell)",
-  });
-
   return (
     <div className="placeholder-row contents" role="row">
       {visibleColumns.map((column) => {
@@ -232,14 +224,15 @@ export function NewTaskPlaceholderRow(): JSX.Element {
           );
         }
 
-        const isNameEditing = column.id === NAME_COLUMN_ID && isEditing;
+        const isNameColumn = column.id === NAME_COLUMN_ID;
+        const isNameEditing = isNameColumn && isEditing;
         const showActiveBorder = isNameEditing || isActiveCell;
 
         return (
           <div
             key={column.id}
-            ref={column.id === NAME_COLUMN_ID ? cellRef : undefined}
-            tabIndex={0}
+            ref={isNameColumn ? cellRef : undefined}
+            tabIndex={isNameColumn ? 0 : -1}
             className={`${column.showRightBorder !== false ? "border-r" : ""} border-b border-neutral-200 flex items-center ${
               isNameEditing
                 ? "bg-white z-20"
@@ -249,24 +242,19 @@ export function NewTaskPlaceholderRow(): JSX.Element {
                     ? "bg-neutral-100 z-10"
                     : "bg-neutral-50/50 hover:bg-neutral-100"
             } cursor-pointer`}
-            style={{
-              ...getCellStyle(column.id),
-              ...(showActiveBorder
-                ? { boxShadow: CELL.activeBorderShadow }
-                : {}),
-            }}
+            style={
+              showActiveBorder
+                ? getActiveCellStyle(column.id)
+                : getCellStyle(column.id)
+            }
             onClick={() =>
-              column.field
-                ? handleCellClick(column.field as EditableField)
-                : undefined
+              column.field ? handleCellClick(column.field) : undefined
             }
             onContextMenu={handlePlaceholderContextMenu}
-            onKeyDown={
-              column.id === NAME_COLUMN_ID ? handleCellKeyDown : undefined
-            }
+            onKeyDown={isNameColumn ? handleCellKeyDown : undefined}
             role="gridcell"
           >
-            {column.id === NAME_COLUMN_ID &&
+            {isNameColumn &&
               (isEditing ? (
                 <input
                   ref={inputRef}
@@ -277,10 +265,11 @@ export function NewTaskPlaceholderRow(): JSX.Element {
                   onKeyDown={handleInputKeyDown}
                   className="w-full px-0 py-0 border-0 focus:outline-none bg-transparent"
                   style={{ fontSize: "inherit" }}
+                  aria-label="New task name"
                 />
               ) : (
                 <span className="text-neutral-500 italic select-none">
-                  Add new task...
+                  {PLACEHOLDER_TEXT}
                 </span>
               ))}
           </div>

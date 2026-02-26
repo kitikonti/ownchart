@@ -1,11 +1,11 @@
 /**
  * Tests for TaskDataCells component.
  * Verifies cell rendering per field type, read-only cells,
- * column formatter usage, and color cell editing.
+ * column formatter usage, type cycling, and color cell editing.
  */
 
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { render, screen } from "@testing-library/react";
+import { render, screen, fireEvent } from "@testing-library/react";
 import { TaskDataCells } from "../../../src/components/TaskList/TaskDataCells";
 import type { Task } from "../../../src/types/chart.types";
 import type { ColumnDefinition } from "../../../src/config/tableColumns";
@@ -14,10 +14,12 @@ import type { ColumnDefinition } from "../../../src/config/tableColumns";
 // Mocks
 // ---------------------------------------------------------------------------
 
+const mockUpdateTask = vi.fn();
+
 vi.mock("../../../src/store/slices/taskSlice", () => ({
   useTaskStore: vi.fn((selector: (s: Record<string, unknown>) => unknown) =>
     selector({
-      updateTask: vi.fn(),
+      updateTask: mockUpdateTask,
       toggleTaskCollapsed: vi.fn(),
       activeCell: { taskId: null, field: null },
       isEditingCell: false,
@@ -56,19 +58,6 @@ vi.mock("../../../src/store/slices/userPreferencesSlice", () => ({
       duration: 90,
       progress: 62,
     },
-  })),
-}));
-
-vi.mock("../../../src/hooks/useCellNavigation", () => ({
-  useCellNavigation: vi.fn(() => ({
-    isCellEditing: vi.fn(() => false),
-    isCellActive: vi.fn(() => false),
-    activeCell: { taskId: null, field: null },
-    isEditingCell: false,
-    setActiveCell: vi.fn(),
-    navigateCell: vi.fn(),
-    startCellEdit: vi.fn(),
-    stopCellEdit: vi.fn(),
   })),
 }));
 
@@ -383,6 +372,59 @@ describe("TaskDataCells", () => {
       // Level 2 with indentSize 20 = 40px paddingLeft
       const flexContainer = document.querySelector(".flex.items-center.gap-1");
       expect(flexContainer).toHaveStyle({ paddingLeft: "40px" });
+    });
+
+    it("cycles task type on TaskTypeIcon click", () => {
+      const task = makeTask({ type: "task" });
+      render(
+        <TaskDataCells
+          task={task}
+          displayTask={task}
+          visibleColumns={[nameColumn]}
+          level={0}
+          hasChildren={false}
+          isExpanded={false}
+          computedColor="#4A90D9"
+        />
+      );
+
+      const typeButton = screen.getByRole("button", {
+        name: /task type/i,
+      });
+      fireEvent.click(typeButton);
+
+      expect(mockUpdateTask).toHaveBeenCalledWith("task-1", {
+        type: "summary",
+      });
+    });
+  });
+
+  describe("column filtering", () => {
+    it("skips columns without a field (non-data columns)", () => {
+      const task = makeTask();
+      const rowNumberColumn = makeColumn({
+        id: "rowNumber",
+        field: undefined,
+        label: "#",
+        defaultWidth: "50px",
+        editable: false,
+      });
+
+      const { container } = render(
+        <TaskDataCells
+          task={task}
+          displayTask={task}
+          visibleColumns={[rowNumberColumn, startDateColumn]}
+          level={0}
+          hasChildren={false}
+          isExpanded={false}
+          computedColor="#4A90D9"
+        />
+      );
+
+      // Only startDate should render (rowNumber has no field)
+      const cells = container.querySelectorAll("[role='gridcell']");
+      expect(cells.length).toBe(1);
     });
   });
 });

@@ -10,11 +10,8 @@ import { useTaskStore, type EditableField } from "../../store/slices/taskSlice";
 import { useCellEdit } from "../../hooks/useCellEdit";
 import type { Task } from "../../types/chart.types";
 import type { NavigationDirection } from "../../types/task.types";
-import {
-  NAME_COLUMN_ID,
-  type ColumnDefinition,
-} from "../../config/tableColumns";
-import { CELL } from "../../styles/design-tokens";
+import { type ColumnDefinition } from "../../config/tableColumns";
+import { getCellStyle, getActiveCellStyle } from "../../styles/cellStyles";
 
 /** Arrow keys mapped to navigation directions. */
 const ARROW_NAV: Record<string, NavigationDirection> = {
@@ -172,24 +169,8 @@ export const Cell = memo(function Cell({
 
   const borderRight = column.showRightBorder !== false ? "border-r" : "";
 
-  // Density-aware styles using CSS custom properties
-  const cellStyle: React.CSSProperties = {
-    height: "var(--density-row-height)",
-    paddingTop: "var(--density-cell-padding-y)",
-    paddingBottom: "var(--density-cell-padding-y)",
-    paddingLeft:
-      column.id === NAME_COLUMN_ID
-        ? undefined
-        : "var(--density-cell-padding-x)",
-    paddingRight: "var(--density-cell-padding-x)",
-    fontSize: "var(--density-font-size-cell)",
-  };
-
-  // Active cell style with brand color inset box-shadow (doesn't affect layout)
-  const activeCellStyle: React.CSSProperties = {
-    ...cellStyle,
-    boxShadow: CELL.activeBorderShadow,
-  };
+  const cellStyle = getCellStyle(column.id);
+  const activeCellStyle = getActiveCellStyle(column.id);
 
   // Render edit mode
   if (isEditing) {
