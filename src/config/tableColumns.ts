@@ -92,6 +92,9 @@ function numberValidator(
   };
 }
 
+/** The row-number column has no data field; used for selection and visual numbering. */
+export const ROW_NUMBER_COLUMN_ID: ColumnId = "rowNumber";
+
 /** The name column requires special layout handling (minmax, indentation). */
 export const NAME_COLUMN_ID: ColumnId = "name";
 

@@ -23,7 +23,6 @@ interface UsePlaceholderNameEditReturn {
   isEditing: boolean;
   inputValue: string;
   setInputValue: (value: string) => void;
-  inputRef: RefObject<HTMLInputElement | null>;
   isNameActive: boolean;
   isSelected: boolean;
   showActiveBorder: boolean;
@@ -163,7 +162,6 @@ export function usePlaceholderNameEdit(
     isEditing,
     inputValue,
     setInputValue,
-    inputRef,
     isNameActive,
     isSelected,
     showActiveBorder: isEditing || isNameActive,

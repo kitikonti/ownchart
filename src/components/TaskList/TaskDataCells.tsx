@@ -160,6 +160,7 @@ export const TaskDataCells = memo(function TaskDataCells({
         }
 
         // Read-only empty cell (milestone endDate/duration/progress)
+        // Empty children suppress Cell's displayValue fallback.
         if (isReadOnlyEmpty(field, task.type)) {
           return (
             <Cell
@@ -194,6 +195,7 @@ export const TaskDataCells = memo(function TaskDataCells({
               {displayValue ? (
                 <span className={READONLY_CLASSES}>{displayValue}</span>
               ) : (
+                // Empty children suppress Cell's displayValue fallback.
                 <span></span>
               )}
             </Cell>

@@ -10,6 +10,7 @@ import { useTaskStore, type EditableField } from "../../store/slices/taskSlice";
 import { useChartStore } from "../../store/slices/chartSlice";
 import {
   getVisibleColumns,
+  ROW_NUMBER_COLUMN_ID,
   NAME_COLUMN_ID,
   type ColumnDefinition,
 } from "../../config/tableColumns";
@@ -18,7 +19,7 @@ import { useIsPlaceholderSelected } from "../../hooks/useIsPlaceholderSelected";
 import { usePlaceholderNameEdit } from "../../hooks/usePlaceholderNameEdit";
 import { ContextMenu } from "../ContextMenu/ContextMenu";
 import { PLACEHOLDER_TASK_ID } from "../../config/placeholderRow";
-import type { NavigationDirection } from "../../types/task.types";
+import { ARROW_NAV } from "../../config/keyboardNavigation";
 import {
   ROW_NUMBER,
   PLACEHOLDER_CELL,
@@ -33,18 +34,14 @@ import { getCellStyle, getActiveCellStyle } from "../../styles/cellStyles";
 /** Placeholder text shown in the name cell when not editing. */
 const PLACEHOLDER_TEXT = "Add new task...";
 
-/** Arrow keys mapped to navigation directions (matches Cell.tsx). */
-const ARROW_NAV: Record<string, NavigationDirection> = {
-  ArrowUp: "up",
-  ArrowDown: "down",
-  ArrowLeft: "left",
-  ArrowRight: "right",
-};
-
 /** Layout classes for a placeholder cell (no background — use getPlaceholderCellBg for that). */
 function getPlaceholderCellClassName(column: ColumnDefinition): string {
-  const border = column.showRightBorder !== false ? "border-r" : "";
-  return `${border} border-b border-neutral-200 flex items-center cursor-pointer`;
+  return [
+    column.showRightBorder !== false && "border-r",
+    "border-b border-neutral-200 flex items-center cursor-pointer",
+  ]
+    .filter(Boolean)
+    .join(" ");
 }
 
 /** Background style for a placeholder cell based on interaction state. */
@@ -90,7 +87,7 @@ export const NewTaskPlaceholderRow = memo(
     return (
       <div className="placeholder-row contents" role="row">
         {visibleColumns.map((column) => {
-          if (column.id === "rowNumber") {
+          if (column.id === ROW_NUMBER_COLUMN_ID) {
             return (
               <PlaceholderRowNumberCell
                 key={column.id}

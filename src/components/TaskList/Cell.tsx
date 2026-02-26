@@ -9,21 +9,13 @@ import { memo, useRef, type KeyboardEvent, type MouseEvent } from "react";
 import { useTaskStore, type EditableField } from "../../store/slices/taskSlice";
 import { useCellEdit } from "../../hooks/useCellEdit";
 import type { Task } from "../../types/chart.types";
-import type { NavigationDirection } from "../../types/task.types";
 import { type ColumnDefinition } from "../../config/tableColumns";
+import { ARROW_NAV } from "../../config/keyboardNavigation";
 import {
   getCellStyle,
   getActiveCellStyle,
   getEditingCellStyle,
 } from "../../styles/cellStyles";
-
-/** Arrow keys mapped to navigation directions. */
-const ARROW_NAV: Record<string, NavigationDirection> = {
-  ArrowUp: "up",
-  ArrowDown: "down",
-  ArrowLeft: "left",
-  ArrowRight: "right",
-};
 
 export interface CellProps {
   /** Task ID */
