@@ -218,6 +218,7 @@ export const TOOLBAR = {
   // Icon sizes (Phosphor Icons: 16px grid, optimal at 16/20/24/32)
   iconSize: 20,
   iconSizeSmall: 16,
+  iconSizeMenu: 18, // File menu / dropdown menu items
 
   // Spacing
   groupGap: 4, // gap between items within a group (px)
@@ -226,6 +227,9 @@ export const TOOLBAR = {
   // Button dimensions
   buttonHeight: 31,
   buttonMinWidth: 32,
+
+  // Dropdown dimensions
+  fileMenuMinWidth: "14rem",
 } as const;
 
 // =============================================================================

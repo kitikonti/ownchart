@@ -3,7 +3,7 @@
  * Replaces the Working Days section from the deleted Chart Settings Dialog.
  */
 
-import { useMemo } from "react";
+import { useCallback, useMemo } from "react";
 import { Briefcase } from "@phosphor-icons/react";
 import { Checkbox } from "../common/Checkbox";
 import { useChartStore } from "../../store/slices/chartSlice";
@@ -11,7 +11,19 @@ import { holidayService } from "../../services/holidayService";
 import { useDropdown } from "../../hooks/useDropdown";
 import { DropdownTrigger } from "../Toolbar/DropdownTrigger";
 import { DropdownPanel } from "../Toolbar/DropdownPanel";
-import { TOOLBAR } from "../../styles/design-tokens";
+import { TOOLBAR } from "../Toolbar/ToolbarPrimitives";
+import type { WorkingDaysConfig } from "../../types/preferences.types";
+
+const ICON_SIZE = TOOLBAR.iconSize;
+const PANEL_WIDTH = "280px";
+
+type ConfigKey = keyof WorkingDaysConfig;
+
+const EXCLUSION_OPTIONS: { key: ConfigKey; label: string }[] = [
+  { key: "excludeSaturday", label: "Exclude Saturdays" },
+  { key: "excludeSunday", label: "Exclude Sundays" },
+  { key: "excludeHolidays", label: "Exclude Holidays" },
+];
 
 interface WorkingDaysDropdownProps {
   labelPriority?: number;
@@ -20,20 +32,14 @@ interface WorkingDaysDropdownProps {
 export function WorkingDaysDropdown({
   labelPriority,
 }: WorkingDaysDropdownProps): JSX.Element {
-  const { isOpen, toggle, containerRef } = useDropdown();
+  const { isOpen, toggle, containerRef, triggerRef } = useDropdown();
 
   const workingDaysConfig = useChartStore((state) => state.workingDaysConfig);
   const setWorkingDaysConfig = useChartStore(
     (state) => state.setWorkingDaysConfig
   );
-  const setWorkingDaysMode = useChartStore((state) => state.setWorkingDaysMode);
+  const workingDaysMode = useChartStore((state) => state.workingDaysMode);
   const holidayRegion = useChartStore((state) => state.holidayRegion);
-
-  // Derive workingDaysMode from config
-  const isAnyExcluded =
-    workingDaysConfig.excludeSaturday ||
-    workingDaysConfig.excludeSunday ||
-    workingDaysConfig.excludeHolidays;
 
   // Get current country name for display
   const currentCountryName = useMemo(() => {
@@ -42,35 +48,37 @@ export function WorkingDaysDropdown({
     return country?.name || holidayRegion;
   }, [holidayRegion]);
 
-  const handleConfigChange = (
-    key: "excludeSaturday" | "excludeSunday" | "excludeHolidays",
-    checked: boolean
-  ): void => {
-    const newConfig = { ...workingDaysConfig, [key]: checked };
-    setWorkingDaysConfig(newConfig);
-    // Derive workingDaysMode: true if any exclusion is checked
-    const anyExcluded =
-      newConfig.excludeSaturday ||
-      newConfig.excludeSunday ||
-      newConfig.excludeHolidays;
-    setWorkingDaysMode(anyExcluded);
-  };
+  const handleConfigChange = useCallback(
+    (key: ConfigKey, checked: boolean): void => {
+      // Store auto-derives workingDaysMode from config
+      setWorkingDaysConfig({ [key]: checked });
+    },
+    [setWorkingDaysConfig]
+  );
+
+  const getLabel = (key: ConfigKey, label: string): string =>
+    key === "excludeHolidays" ? `${label} (${currentCountryName})` : label;
 
   return (
     <div ref={containerRef} className="relative">
       <DropdownTrigger
         isOpen={isOpen}
         onClick={toggle}
-        icon={<Briefcase size={TOOLBAR.iconSize} weight="light" />}
+        icon={<Briefcase size={ICON_SIZE} weight="light" />}
         label="Working Days"
         aria-label="Working Days"
         title="Working Days configuration"
-        isActive={isAnyExcluded}
+        isActive={workingDaysMode}
         labelPriority={labelPriority}
+        triggerRef={triggerRef}
       />
 
       {isOpen && (
-        <DropdownPanel width="280px">
+        <DropdownPanel
+          width={PANEL_WIDTH}
+          role="group"
+          aria-label="Working Days configuration"
+        >
           {/* Info text */}
           <div className="px-4 py-3 border-b border-neutral-200">
             <p className="text-xs text-neutral-500 leading-relaxed">
@@ -81,42 +89,21 @@ export function WorkingDaysDropdown({
 
           {/* Checkboxes */}
           <div className="px-4 py-3 space-y-3">
-            <label className="flex items-center gap-3 cursor-pointer">
-              <Checkbox
-                checked={workingDaysConfig.excludeSaturday}
-                onChange={(checked) =>
-                  handleConfigChange("excludeSaturday", checked)
-                }
-                aria-label="Exclude Saturdays"
-              />
-              <span className="text-sm text-neutral-700">
-                Exclude Saturdays
-              </span>
-            </label>
-
-            <label className="flex items-center gap-3 cursor-pointer">
-              <Checkbox
-                checked={workingDaysConfig.excludeSunday}
-                onChange={(checked) =>
-                  handleConfigChange("excludeSunday", checked)
-                }
-                aria-label="Exclude Sundays"
-              />
-              <span className="text-sm text-neutral-700">Exclude Sundays</span>
-            </label>
-
-            <label className="flex items-center gap-3 cursor-pointer">
-              <Checkbox
-                checked={workingDaysConfig.excludeHolidays}
-                onChange={(checked) =>
-                  handleConfigChange("excludeHolidays", checked)
-                }
-                aria-label="Exclude Holidays"
-              />
-              <span className="text-sm text-neutral-700">
-                Exclude Holidays ({currentCountryName})
-              </span>
-            </label>
+            {EXCLUSION_OPTIONS.map(({ key, label }) => (
+              <label
+                key={key}
+                className="flex items-center gap-3 cursor-pointer"
+              >
+                <Checkbox
+                  checked={workingDaysConfig[key]}
+                  onChange={(checked) => handleConfigChange(key, checked)}
+                  aria-label={getLabel(key, label)}
+                />
+                <span className="text-sm text-neutral-700">
+                  {getLabel(key, label)}
+                </span>
+              </label>
+            ))}
           </div>
         </DropdownPanel>
       )}

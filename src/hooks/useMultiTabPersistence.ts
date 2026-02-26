@@ -94,10 +94,8 @@ export function useMultiTabPersistence(): void {
     if (savedChart.chartState.taskLabelPosition !== undefined) {
       chartStore.setTaskLabelPosition(savedChart.chartState.taskLabelPosition);
     }
-    if (savedChart.chartState.workingDaysMode !== undefined) {
-      chartStore.setWorkingDaysMode(savedChart.chartState.workingDaysMode);
-    }
     if (savedChart.chartState.workingDaysConfig !== undefined) {
+      // setWorkingDaysConfig auto-derives workingDaysMode
       chartStore.setWorkingDaysConfig(savedChart.chartState.workingDaysConfig);
     }
     if (savedChart.chartState.holidayRegion !== undefined) {

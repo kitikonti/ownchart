@@ -33,6 +33,8 @@ interface DropdownTriggerProps {
   isActive?: boolean;
   /** Collapse priority: lower numbers hide first. Omit to never collapse. */
   labelPriority?: number;
+  /** Callback ref for focus management (from useDropdown.triggerRef) */
+  triggerRef?: (el: HTMLElement | null) => void;
 }
 
 export function DropdownTrigger({
@@ -45,6 +47,7 @@ export function DropdownTrigger({
   "aria-haspopup": ariaHaspopup = "true",
   isActive = false,
   labelPriority,
+  triggerRef,
 }: DropdownTriggerProps): JSX.Element {
   const collapseLevel = useCollapseLevel();
   const showLabel = shouldShowLabel(labelPriority, collapseLevel);
@@ -54,6 +57,7 @@ export function DropdownTrigger({
 
   return (
     <button
+      ref={triggerRef}
       type="button"
       onClick={onClick}
       aria-label={ariaLabel}

@@ -16,7 +16,7 @@ import {
 import {
   ToolbarGroup,
   ToolbarSeparator,
-  TOOLBAR_TOKENS,
+  TOOLBAR,
 } from "../Toolbar/ToolbarPrimitives";
 import { ToolbarDropdown } from "../Toolbar/ToolbarDropdown";
 import { WorkingDaysDropdown } from "./WorkingDaysDropdown";
@@ -31,7 +31,7 @@ import {
   WEEK_NUMBERING_OPTIONS,
 } from "../../config/preferencesOptions";
 
-const ICON_SIZE = TOOLBAR_TOKENS.iconSize;
+const ICON_SIZE = TOOLBAR.iconSize;
 
 export function FormatTabContent(): JSX.Element {
   // Chart store
