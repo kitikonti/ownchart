@@ -41,6 +41,30 @@ describe("InlineProjectTitle", () => {
     expect(screen.getByText("*")).toBeInTheDocument();
   });
 
+  it("dirty indicator is hidden from screen readers", () => {
+    useChartStore.setState({ projectTitle: "Test" });
+    useFileStore.setState({ isDirty: true });
+    render(<InlineProjectTitle />);
+    const asterisk = screen.getByText("*");
+    expect(asterisk).toHaveAttribute("aria-hidden", "true");
+  });
+
+  it("button aria-label includes unsaved state when dirty", () => {
+    useChartStore.setState({ projectTitle: "Test" });
+    useFileStore.setState({ isDirty: true });
+    render(<InlineProjectTitle />);
+    expect(
+      screen.getByLabelText("Test (unsaved changes)")
+    ).toBeInTheDocument();
+  });
+
+  it("button aria-label is just the title when clean", () => {
+    useChartStore.setState({ projectTitle: "Test" });
+    useFileStore.setState({ isDirty: false });
+    render(<InlineProjectTitle />);
+    expect(screen.getByLabelText("Test")).toBeInTheDocument();
+  });
+
   it("does not show dirty indicator when file is clean", () => {
     useChartStore.setState({ projectTitle: "Test" });
     useFileStore.setState({ isDirty: false });
@@ -137,5 +161,13 @@ describe("InlineProjectTitle", () => {
     useFileStore.setState({ fileName: "my.ownchart.backup.ownchart" });
     render(<InlineProjectTitle />);
     expect(screen.getByText("my.ownchart.backup")).toBeInTheDocument();
+  });
+
+  it("truncates long titles with max-width", () => {
+    useChartStore.setState({ projectTitle: "My Plan" });
+    render(<InlineProjectTitle />);
+    const button = screen.getByText("My Plan").closest("button")!;
+    expect(button.className).toContain("max-w-[300px]");
+    expect(button.className).toContain("truncate");
   });
 });

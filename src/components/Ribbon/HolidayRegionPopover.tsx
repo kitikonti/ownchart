@@ -34,7 +34,7 @@ const POPULAR_COUNTRIES = [
 export function HolidayRegionPopover(): JSX.Element {
   const [countrySearch, setCountrySearch] = useState("");
 
-  const { isOpen, toggle, close, containerRef } = useDropdown({
+  const { isOpen, toggle, close, containerRef, triggerRef } = useDropdown({
     onClose: () => setCountrySearch(""),
   });
 
@@ -73,13 +73,14 @@ export function HolidayRegionPopover(): JSX.Element {
 
   const handleCountrySelect = (code: string): void => {
     setHolidayRegion(code);
-    close();
+    close(true);
   };
 
   return (
     <div ref={containerRef} className="relative">
       {/* Gear icon trigger - custom (not DropdownTrigger) */}
       <button
+        ref={triggerRef}
         type="button"
         onClick={toggle}
         title={`Holiday Region: ${currentCountryName} (${holidayRegion})`}

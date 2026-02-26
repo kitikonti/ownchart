@@ -48,13 +48,13 @@ export function ToolbarDropdown<T extends string = string>({
   title,
   labelPriority,
 }: ToolbarDropdownProps<T>): JSX.Element {
-  const { isOpen, toggle, close, containerRef } = useDropdown();
+  const { isOpen, toggle, close, containerRef, triggerRef } = useDropdown();
 
   const displayLabel = labelPrefix || "Select";
 
   const handleSelect = (optionValue: T): void => {
     onChange(optionValue);
-    close();
+    close(true);
   };
 
   return (
@@ -68,6 +68,7 @@ export function ToolbarDropdown<T extends string = string>({
         aria-haspopup="listbox"
         title={title}
         labelPriority={labelPriority}
+        triggerRef={triggerRef}
       />
 
       {isOpen && (

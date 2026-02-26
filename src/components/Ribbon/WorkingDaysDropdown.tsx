@@ -32,7 +32,7 @@ interface WorkingDaysDropdownProps {
 export function WorkingDaysDropdown({
   labelPriority,
 }: WorkingDaysDropdownProps): JSX.Element {
-  const { isOpen, toggle, containerRef } = useDropdown();
+  const { isOpen, toggle, containerRef, triggerRef } = useDropdown();
 
   const workingDaysConfig = useChartStore((state) => state.workingDaysConfig);
   const setWorkingDaysConfig = useChartStore(
@@ -67,6 +67,7 @@ export function WorkingDaysDropdown({
         title="Working Days configuration"
         isActive={workingDaysMode}
         labelPriority={labelPriority}
+        triggerRef={triggerRef}
       />
 
       {isOpen && (

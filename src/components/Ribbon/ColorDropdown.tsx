@@ -114,7 +114,7 @@ interface ColorDropdownProps {
 export function ColorDropdown({
   labelPriority,
 }: ColorDropdownProps): JSX.Element {
-  const { isOpen, toggle, close, containerRef } = useDropdown();
+  const { isOpen, toggle, close, containerRef, triggerRef } = useDropdown();
 
   const colorModeState = useChartStore((state) => state.colorModeState);
   const setColorMode = useChartStore((state) => state.setColorMode);
@@ -148,7 +148,7 @@ export function ColorDropdown({
       selectedPaletteId: paletteId as PaletteId,
       customMonochromeBase: null,
     });
-    close();
+    close(true);
   };
 
   // ── Mode-specific option renderers ─────────────────────────────────────
@@ -452,6 +452,7 @@ export function ColorDropdown({
         aria-haspopup="listbox"
         title="Color mode and options"
         labelPriority={labelPriority}
+        triggerRef={triggerRef}
       />
 
       {isOpen && (
@@ -496,7 +497,7 @@ export function ColorDropdown({
                 icon={<PaintBucket size={16} weight="light" />}
                 onClick={() => {
                   applyColorsToManual();
-                  close();
+                  close(true);
                 }}
                 title="Write current colors into each task and switch to manual mode"
               >

@@ -3,7 +3,7 @@
  * Extracted from Ribbon.tsx for modularity.
  */
 
-import type { MouseEvent } from "react";
+import { useCallback, type MouseEvent } from "react";
 import { CaretDown } from "@phosphor-icons/react";
 import { COLORS } from "../../styles/design-tokens";
 import { useDropdown } from "../../hooks/useDropdown";
@@ -21,11 +21,21 @@ export function ZoomDropdown({
   zoomOptions,
   onSelectLevel,
 }: ZoomDropdownProps): JSX.Element {
-  const { isOpen, toggle, close, containerRef } = useDropdown();
+  const { isOpen, toggle, close, containerRef, triggerRef } = useDropdown();
+
+  // Container IS the trigger — combine both refs
+  const combinedRef = useCallback(
+    (el: HTMLDivElement | null) => {
+      (containerRef as React.MutableRefObject<HTMLDivElement | null>).current =
+        el;
+      triggerRef(el);
+    },
+    [containerRef, triggerRef]
+  );
 
   const handleSelect = (level: number | "fit"): void => {
     onSelectLevel(level);
-    close();
+    close(true);
   };
 
   const handleContainerClick = (e: MouseEvent): void => {
@@ -36,7 +46,7 @@ export function ZoomDropdown({
 
   return (
     <div
-      ref={containerRef}
+      ref={combinedRef}
       role="button"
       tabIndex={0}
       aria-expanded={isOpen}

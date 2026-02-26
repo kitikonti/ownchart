@@ -4,7 +4,8 @@
  * Handles:
  * - Open/close toggle state
  * - Outside-click detection (mousedown)
- * - Escape key to close
+ * - Escape key to close (returns focus to trigger)
+ * - Tab key / focusout detection (closes when focus leaves container)
  * - Optional onClose callback (e.g. to clear search state)
  */
 
@@ -105,6 +106,29 @@ export function useDropdown<T extends HTMLElement = HTMLDivElement>(
     document.addEventListener("keydown", handleKeyDown);
     return (): void => {
       document.removeEventListener("keydown", handleKeyDown);
+    };
+  }, [isOpen, close]);
+
+  // Close when focus leaves the container (e.g. Tab key)
+  useEffect(() => {
+    if (!isOpen) return;
+    const container = containerRef.current;
+    if (!container) return;
+
+    const handleFocusOut = (e: FocusEvent): void => {
+      const newTarget = e.relatedTarget as Node | null;
+      // Only close when focus moves to a known element outside the container.
+      // When relatedTarget is null (click on non-focusable content inside the
+      // panel, or focus leaving the page), skip — the outside-click handler
+      // covers the former case; the latter is harmless.
+      if (newTarget && !container.contains(newTarget)) {
+        close();
+      }
+    };
+
+    container.addEventListener("focusout", handleFocusOut);
+    return (): void => {
+      container.removeEventListener("focusout", handleFocusOut);
     };
   }, [isOpen, close]);
 

@@ -131,10 +131,17 @@ export function InlineProjectTitle({
           type="button"
           onClick={handleClick}
           title="Click to edit project title"
-          className={`hover:bg-neutral-200/50 rounded px-2 py-0.5 transition-colors cursor-text focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-brand-400 ${isPlaceholder ? "text-neutral-500 italic" : "text-neutral-600"}`}
+          aria-label={
+            isDirty ? `${displayName} (unsaved changes)` : displayName
+          }
+          className={`max-w-[300px] truncate hover:bg-neutral-200/50 rounded px-2 py-0.5 transition-colors cursor-text focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-brand-400 ${isPlaceholder ? "text-neutral-500 italic" : "text-neutral-600"}`}
         >
           {displayName}
-          {isDirty && <span className="text-neutral-500">*</span>}
+          {isDirty && (
+            <span className="text-neutral-500" aria-hidden="true">
+              *
+            </span>
+          )}
         </button>
       )}
     </div>
