@@ -322,10 +322,8 @@ function PlaceholderNameCell({
         cancelEdit();
       }
     } else if (e.key === "Escape") {
+      // cancelEdit sets isEditing=false → the useEffect above re-focuses the cell
       cancelEdit();
-      // Re-focus cell after canceling edit — setTimeout needed because
-      // React processes the state update before the focus can land
-      setTimeout(() => cellRef.current?.focus({ preventScroll: true }), 0);
     }
   };
 

@@ -9,6 +9,7 @@ import { useMemo } from "react";
 import { useChartStore } from "../store/slices/chartSlice";
 import { useTaskStore } from "../store/slices/taskSlice";
 import type { Task } from "../types/chart.types";
+import type { HexColor } from "../types/branded.types";
 import {
   computeTaskColor,
   getComputedTaskColor,
@@ -18,30 +19,31 @@ import {
 export { getComputedTaskColor };
 
 /**
- * Hook to get computed color for a single task
+ * Hook to get computed color for a single task.
+ * Returns HexColor — computeTaskColor always produces hex strings.
  */
-export function useComputedTaskColor(task: Task): string {
+export function useComputedTaskColor(task: Task): HexColor {
   const colorModeState = useChartStore((state) => state.colorModeState);
   const tasks = useTaskStore((state) => state.tasks);
 
   return useMemo(() => {
-    return computeTaskColor(task, tasks, colorModeState);
+    return computeTaskColor(task, tasks, colorModeState) as HexColor;
   }, [task, tasks, colorModeState]);
 }
 
 /**
- * Hook to get computed colors for all tasks
- * Returns a Map from task ID to computed color
+ * Hook to get computed colors for all tasks.
+ * Returns a Map from task ID to computed HexColor.
  */
-export function useComputedTaskColors(): Map<string, string> {
+export function useComputedTaskColors(): Map<string, HexColor> {
   const colorModeState = useChartStore((state) => state.colorModeState);
   const tasks = useTaskStore((state) => state.tasks);
 
   return useMemo(() => {
-    const colorMap = new Map<string, string>();
+    const colorMap = new Map<string, HexColor>();
 
     tasks.forEach((task) => {
-      const color = computeTaskColor(task, tasks, colorModeState);
+      const color = computeTaskColor(task, tasks, colorModeState) as HexColor;
       colorMap.set(task.id, color);
     });
 

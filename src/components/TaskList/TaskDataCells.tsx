@@ -19,6 +19,7 @@ import type { HexColor } from "../../types/branded.types";
 import { useTaskStore } from "../../store/slices/taskSlice";
 import { useChartStore } from "../../store/slices/chartSlice";
 import { useDensityConfig } from "../../store/slices/userPreferencesSlice";
+import { useIsCellEditing } from "../../hooks/useIsCellEditing";
 import { getNextTaskType } from "../../utils/taskTypeUtils";
 import { Cell } from "./Cell";
 import { ColorCellEditor } from "./CellEditors/ColorCellEditor";
@@ -116,7 +117,7 @@ interface TaskDataCellsProps {
   level: number;
   hasChildren: boolean;
   isExpanded: boolean;
-  computedColor: string;
+  computedColor: HexColor;
 }
 
 export const TaskDataCells = memo(function TaskDataCells({
@@ -247,13 +248,7 @@ function NameCell({
     updateTask(task.id, { type: nextType });
   }, [task.id, task.type, hasChildren, updateTask]);
 
-  // Focused selector — only re-renders when THIS cell's editing state changes
-  const isEditing = useTaskStore(
-    (s) =>
-      s.activeCell.taskId === task.id &&
-      s.activeCell.field === "name" &&
-      s.isEditingCell
-  );
+  const isEditing = useIsCellEditing(task.id, "name");
 
   // In edit mode: no custom children, let Cell handle everything
   if (isEditing) {
@@ -306,7 +301,7 @@ interface ColorCellProps {
   task: Task;
   displayTask: Task;
   column: ColumnDefinition;
-  computedColor: string;
+  computedColor: HexColor;
 }
 
 function ColorCell({
@@ -320,13 +315,7 @@ function ColorCell({
   const colorModeState = useChartStore((state) => state.colorModeState);
   const densityConfig = useDensityConfig();
 
-  // Focused selector — only re-renders when THIS cell's editing state changes
-  const isEditing = useTaskStore(
-    (s) =>
-      s.activeCell.taskId === task.id &&
-      s.activeCell.field === "color" &&
-      s.isEditingCell
-  );
+  const isEditing = useIsCellEditing(task.id, "color");
 
   /** Apply color change respecting the active color mode. */
   const handleColorChange = useCallback(

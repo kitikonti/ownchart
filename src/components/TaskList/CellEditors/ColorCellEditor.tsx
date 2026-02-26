@@ -22,7 +22,7 @@ export interface ColorCellEditorProps {
   value: HexColor;
 
   /** Computed display color (may differ from value in auto modes) */
-  computedColor?: string;
+  computedColor?: HexColor;
 
   /** Current color mode */
   colorMode?: ColorMode;
