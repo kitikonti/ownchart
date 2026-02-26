@@ -189,6 +189,8 @@ export const SHADOWS = {
 
 export const Z_INDEX = {
   rowHighlight: 5,
+  cellActive: 10,
+  cellEditing: 20,
   rowIndicator: 25,
   hiddenRow: 40,
   hiddenRowHover: 42,
@@ -288,6 +290,28 @@ export const CONNECTION_HANDLE = {
   validStroke: "#22c55e", // Tailwind green-500
   invalidFill: "#fecaca", // Tailwind red-200
   invalidStroke: "#ef4444", // Tailwind red-500
+} as const;
+
+// =============================================================================
+// CELL TOKENS (task table cell styling)
+// =============================================================================
+
+export const CELL = {
+  /** Brand color for active cell outline */
+  activeBorderColor: brand[600],
+  /** Full box-shadow for active/editing cell */
+  activeBorderShadow: `inset 0 0 0 2px ${brand[600]}`,
+} as const;
+
+// =============================================================================
+// PLACEHOLDER CELL TOKENS (new task placeholder row)
+// =============================================================================
+
+export const PLACEHOLDER_CELL = {
+  bgDefault: neutral[50], // Subtle background for idle state
+  bgSelected: neutral[100], // Selected state
+  bgActive: neutral[100], // Active (focused) state
+  bgEditing: neutral[0], // Editing state (white)
 } as const;
 
 // =============================================================================

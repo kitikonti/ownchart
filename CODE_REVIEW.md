@@ -124,8 +124,8 @@ cd ../app-gantt-review
 - [x] `src/components/TaskList/CellEditors/ColorPickerPopover.tsx`
 - [x] `src/components/TaskList/RowNumberCell.tsx` (247 LOC)
 - [x] `src/components/TaskList/TaskTable.tsx` (263 LOC)
-- [ ] `src/components/TaskList/TaskDataCells.tsx` (333 LOC)
-- [ ] `src/components/TaskList/NewTaskPlaceholderRow.tsx` (315 LOC) — 4 Hex-Werte
+- [x] `src/components/TaskList/TaskDataCells.tsx` (333 LOC)
+- [x] `src/components/TaskList/NewTaskPlaceholderRow.tsx` (315 LOC)
 - [x] `src/components/TaskList/TaskTableRow.tsx` (234 LOC)
 - [ ] `src/components/TaskList/TaskTableHeader.tsx` (176 LOC)
 - [x] `src/components/TaskList/HiddenRowIndicator.tsx` (137 LOC)
@@ -335,6 +335,6 @@ Entscheidungen aus bisherigen Reviews die fuer zukuenftige Dateien gelten.
 
 ## Progress
 
-- Reviewed: 55 / 194 Dateien
+- Reviewed: 61 / 194 Dateien
 - Offene Issues: 38 Hex-Farben in 10 .tsx-Dateien, ~18 toISODateString-Umstellungen
 - Test-Coverage: 80%+

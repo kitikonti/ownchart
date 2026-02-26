@@ -9,23 +9,13 @@ import { memo, useRef, type KeyboardEvent, type MouseEvent } from "react";
 import { useTaskStore, type EditableField } from "../../store/slices/taskSlice";
 import { useCellEdit } from "../../hooks/useCellEdit";
 import type { Task } from "../../types/chart.types";
-import type { NavigationDirection } from "../../types/task.types";
+import { type ColumnDefinition } from "../../config/tableColumns";
+import { ARROW_NAV } from "../../config/keyboardNavigation";
 import {
-  NAME_COLUMN_ID,
-  type ColumnDefinition,
-} from "../../config/tableColumns";
-import { COLORS } from "../../styles/design-tokens";
-
-/** Brand color for active cell outline. */
-const ACTIVE_CELL_BORDER = COLORS.brand[600];
-
-/** Arrow keys mapped to navigation directions. */
-const ARROW_NAV: Record<string, NavigationDirection> = {
-  ArrowUp: "up",
-  ArrowDown: "down",
-  ArrowLeft: "left",
-  ArrowRight: "right",
-};
+  getCellStyle,
+  getActiveCellStyle,
+  getEditingCellStyle,
+} from "../../styles/cellStyles";
 
 export interface CellProps {
   /** Task ID */
@@ -40,6 +30,9 @@ export interface CellProps {
   /** Column definition */
   column: ColumnDefinition;
 
+  /** Prevent entering edit mode (e.g. milestone endDate, summary computed fields). */
+  readOnly?: boolean;
+
   /** Cell renderer component */
   children?: React.ReactNode;
 }
@@ -53,6 +46,7 @@ export const Cell = memo(function Cell({
   task,
   field,
   column,
+  readOnly,
   children,
 }: CellProps): JSX.Element {
   const cellRef = useRef<HTMLDivElement>(null);
@@ -103,7 +97,7 @@ export const Cell = memo(function Cell({
     e.stopPropagation();
     clearSelection();
 
-    if (!column.editable) {
+    if (!column.editable || readOnly) {
       setActiveCell(taskId, field);
       return;
     }
@@ -147,16 +141,17 @@ export const Cell = memo(function Cell({
       navigateCell(e.shiftKey ? "left" : "right");
     } else if (e.key === "Enter") {
       e.preventDefault();
-      if (column.editable) {
+      if (column.editable && !readOnly) {
         startCellEdit();
       } else {
         navigateCell("down");
       }
-    } else if (e.key === "F2" && column.editable) {
+    } else if (e.key === "F2" && column.editable && !readOnly) {
       e.preventDefault();
       startCellEdit();
     } else if (
       column.editable &&
+      !readOnly &&
       e.key.length === 1 &&
       !e.ctrlKey &&
       !e.metaKey &&
@@ -175,24 +170,9 @@ export const Cell = memo(function Cell({
 
   const borderRight = column.showRightBorder !== false ? "border-r" : "";
 
-  // Density-aware styles using CSS custom properties
-  const cellStyle: React.CSSProperties = {
-    height: "var(--density-row-height)",
-    paddingTop: "var(--density-cell-padding-y)",
-    paddingBottom: "var(--density-cell-padding-y)",
-    paddingLeft:
-      column.id === NAME_COLUMN_ID
-        ? undefined
-        : "var(--density-cell-padding-x)",
-    paddingRight: "var(--density-cell-padding-x)",
-    fontSize: "var(--density-font-size-cell)",
-  };
-
-  // Active cell style with brand color inset box-shadow (doesn't affect layout)
-  const activeCellStyle: React.CSSProperties = {
-    ...cellStyle,
-    boxShadow: `inset 0 0 0 2px ${ACTIVE_CELL_BORDER}`,
-  };
+  const cellStyle = getCellStyle(column.id);
+  const activeCellStyle = getActiveCellStyle(column.id);
+  const editingCellStyle = getEditingCellStyle(column.id);
 
   // Render edit mode
   if (isEditing) {
@@ -202,8 +182,8 @@ export const Cell = memo(function Cell({
         role="gridcell"
         aria-selected={true}
         tabIndex={-1}
-        className={`relative flex items-center border-b ${borderRight} border-neutral-200 bg-white z-20`}
-        style={activeCellStyle}
+        className={`relative flex items-center border-b ${borderRight} border-neutral-200 bg-white`}
+        style={editingCellStyle}
         onClick={(e) => e.stopPropagation()}
         onKeyDown={handleEditModeKeyDown}
       >
@@ -252,7 +232,6 @@ export const Cell = memo(function Cell({
         "border-b",
         borderRight,
         "border-neutral-200 flex items-center cursor-pointer relative",
-        isActive && "z-10",
         isActive && !isCut && "bg-white",
         !column.editable && "bg-neutral-50 text-neutral-500",
         isCut &&

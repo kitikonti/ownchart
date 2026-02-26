@@ -18,6 +18,9 @@ export const HEADER_HEIGHT = 48;
 /** Extra rows beyond the task list (placeholder row for quick task creation) */
 export const PLACEHOLDER_ROW_COUNT = 1;
 
+/** CSS selector for the vertical scroll driver element (set by GanttLayout). */
+export const SCROLL_DRIVER_SELECTOR = "[data-scroll-driver]";
+
 // --- Infinite scroll constants ---
 
 /** Milliseconds between infinite scroll extensions */

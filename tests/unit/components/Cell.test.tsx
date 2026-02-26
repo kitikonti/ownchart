@@ -321,6 +321,69 @@ describe("Cell", () => {
     });
   });
 
+  describe("readOnly prop", () => {
+    beforeEach(() => {
+      mockActiveCell = { taskId: "task-1", field: "name" };
+    });
+
+    it("does not start editing on click when readOnly", () => {
+      render(
+        <Cell taskId="task-1" task={task} field="name" column={column} readOnly />
+      );
+      fireEvent.click(screen.getByRole("gridcell"));
+
+      expect(mockStartCellEdit).not.toHaveBeenCalled();
+      // Should still activate the cell for navigation
+      expect(mockSetActiveCell).toHaveBeenCalledWith("task-1", "name");
+    });
+
+    it("navigates down on Enter instead of editing when readOnly", () => {
+      render(
+        <Cell taskId="task-1" task={task} field="name" column={column} readOnly />
+      );
+      fireEvent.keyDown(screen.getByRole("gridcell"), { key: "Enter" });
+
+      expect(mockStartCellEdit).not.toHaveBeenCalled();
+      expect(mockNavigateCell).toHaveBeenCalledWith("down");
+    });
+
+    it("does not start editing on F2 when readOnly", () => {
+      render(
+        <Cell taskId="task-1" task={task} field="name" column={column} readOnly />
+      );
+      fireEvent.keyDown(screen.getByRole("gridcell"), { key: "F2" });
+
+      expect(mockStartCellEdit).not.toHaveBeenCalled();
+    });
+
+    it("does not start editing on printable key when readOnly", () => {
+      render(
+        <Cell taskId="task-1" task={task} field="name" column={column} readOnly />
+      );
+      fireEvent.keyDown(screen.getByRole("gridcell"), { key: "a" });
+
+      expect(mockStartCellEdit).not.toHaveBeenCalled();
+    });
+
+    it("still allows arrow key navigation when readOnly", () => {
+      render(
+        <Cell taskId="task-1" task={task} field="name" column={column} readOnly />
+      );
+      fireEvent.keyDown(screen.getByRole("gridcell"), { key: "ArrowRight" });
+
+      expect(mockNavigateCell).toHaveBeenCalledWith("right");
+    });
+
+    it("still allows Tab navigation when readOnly", () => {
+      render(
+        <Cell taskId="task-1" task={task} field="name" column={column} readOnly />
+      );
+      fireEvent.keyDown(screen.getByRole("gridcell"), { key: "Tab" });
+
+      expect(mockNavigateCell).toHaveBeenCalledWith("right");
+    });
+  });
+
   describe("edit mode rendering", () => {
     beforeEach(() => {
       mockActiveCell = { taskId: "task-1", field: "name" };

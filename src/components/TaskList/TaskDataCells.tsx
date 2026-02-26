@@ -11,16 +11,102 @@
  * Returns a Fragment so cells remain direct children of the CSS Grid parent.
  */
 
+import { memo, useCallback, useMemo } from "react";
 import type { Task } from "../../types/chart.types";
-import type { HexColor } from "../../types/branded.types";
 import type { ColumnDefinition } from "../../config/tableColumns";
+import type { EditableField } from "../../types/task.types";
+import type { HexColor } from "../../types/branded.types";
 import { useTaskStore } from "../../store/slices/taskSlice";
 import { useChartStore } from "../../store/slices/chartSlice";
 import { useDensityConfig } from "../../store/slices/userPreferencesSlice";
-import { useCellNavigation } from "../../hooks/useCellNavigation";
+import { useIsCellEditing } from "../../hooks/useIsCellEditing";
+import { getNextTaskType } from "../../utils/taskTypeUtils";
 import { Cell } from "./Cell";
 import { ColorCellEditor } from "./CellEditors/ColorCellEditor";
 import { TaskTypeIcon } from "./TaskTypeIcon";
+
+// ─────────────────────────────────────────────────────────────────────────
+// Types
+// ─────────────────────────────────────────────────────────────────────────
+
+/** Column with a guaranteed field — narrows after filtering out non-data columns. */
+type DataColumn = ColumnDefinition & { field: EditableField };
+
+// ─────────────────────────────────────────────────────────────────────────
+// Helpers
+// ─────────────────────────────────────────────────────────────────────────
+
+/**
+ * Read-only field rendering matrix by task type:
+ *
+ *   Field       | task     | summary        | milestone
+ *   ------------|----------|----------------|----------
+ *   startDate   | editable | italic (auto)  | editable
+ *   endDate     | editable | italic (auto)  | empty
+ *   duration    | editable | italic (auto)  | empty
+ *   progress    | editable | editable       | empty
+ *   name, color | editable | editable       | editable
+ *
+ * "italic"  = read-only, shows computed value with italic styling
+ * "empty"   = read-only, renders blank (field not applicable)
+ * "editable" = default Cell rendering with inline editing
+ */
+
+/** CSS classes for read-only italic content in summary tasks */
+const READONLY_CLASSES = "text-neutral-500 italic";
+
+/** Type guard: narrows ColumnDefinition to DataColumn (has a field). */
+function isDataColumn(col: ColumnDefinition): col is DataColumn {
+  return col.field !== undefined;
+}
+
+/** Checks whether a field on a given task type should be rendered read-only (empty). */
+function isReadOnlyEmpty(field: EditableField, type: Task["type"]): boolean {
+  if (type === "milestone") {
+    return field === "endDate" || field === "duration" || field === "progress";
+  }
+  return false;
+}
+
+/** Checks whether a field on a given task type should be rendered read-only with italic styling. */
+function isReadOnlyItalic(field: EditableField, type: Task["type"]): boolean {
+  if (type === "summary") {
+    return field === "startDate" || field === "endDate" || field === "duration";
+  }
+  return false;
+}
+
+/**
+ * Get the display value for a read-only italic cell.
+ * Uses the column formatter when available for consistent display (e.g., "7 days" vs "1 day").
+ */
+function getReadOnlyDisplayValue(
+  field: EditableField,
+  displayTask: Task,
+  column: ColumnDefinition
+): string | null {
+  switch (field) {
+    case "duration": {
+      if (displayTask.duration <= 0) return null;
+      return column.formatter
+        ? column.formatter(displayTask.duration)
+        : String(displayTask.duration);
+    }
+    case "startDate":
+    case "endDate": {
+      const value =
+        field === "startDate" ? displayTask.startDate : displayTask.endDate;
+      if (!value) return null;
+      return column.formatter ? column.formatter(value) : value;
+    }
+    default:
+      return null;
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────
+// Main Component
+// ─────────────────────────────────────────────────────────────────────────
 
 interface TaskDataCellsProps {
   task: Task;
@@ -29,10 +115,10 @@ interface TaskDataCellsProps {
   level: number;
   hasChildren: boolean;
   isExpanded: boolean;
-  computedColor: string;
+  computedColor: HexColor;
 }
 
-export function TaskDataCells({
+export const TaskDataCells = memo(function TaskDataCells({
   task,
   displayTask,
   visibleColumns,
@@ -41,124 +127,47 @@ export function TaskDataCells({
   isExpanded,
   computedColor,
 }: TaskDataCellsProps): JSX.Element {
-  const { isCellEditing } = useCellNavigation();
+  const dataColumns = useMemo(
+    () => visibleColumns.filter(isDataColumn),
+    [visibleColumns]
+  );
 
   return (
     <>
-      {visibleColumns
-        .filter((col) => col.field)
-        .map((column) => {
-          const field = column.field!;
+      {dataColumns.map((column) => {
+        const { field } = column;
 
-          // Special handling for name field with hierarchy
-          if (field === "name") {
-            return (
-              <NameCell
-                key={field}
-                task={task}
-                displayTask={displayTask}
-                column={column}
-                level={level}
-                hasChildren={hasChildren}
-                isExpanded={isExpanded}
-                isEditing={isCellEditing(task.id, field)}
-              />
-            );
-          }
+        // Special handling for name field with hierarchy
+        if (field === "name") {
+          return (
+            <NameCell
+              key={field}
+              task={task}
+              displayTask={displayTask}
+              column={column}
+              level={level}
+              hasChildren={hasChildren}
+              isExpanded={isExpanded}
+            />
+          );
+        }
 
-          // Special handling for dates in summary tasks (read-only)
-          if (
-            (field === "startDate" || field === "endDate") &&
-            task.type === "summary"
-          ) {
-            return (
-              <Cell
-                key={field}
-                taskId={task.id}
-                task={displayTask}
-                field={field}
-                column={column}
-              >
-                {displayTask[field as keyof Task] ? (
-                  <span className="text-neutral-500 italic">
-                    {String(displayTask[field as keyof Task])}
-                  </span>
-                ) : (
-                  <span></span>
-                )}
-              </Cell>
-            );
-          }
+        // Special handling for color field with color picker
+        if (field === "color") {
+          return (
+            <ColorCell
+              key={field}
+              task={task}
+              displayTask={displayTask}
+              column={column}
+              computedColor={computedColor}
+            />
+          );
+        }
 
-          // Special handling for end date in milestone tasks (read-only, empty)
-          if (field === "endDate" && task.type === "milestone") {
-            return (
-              <Cell
-                key={field}
-                taskId={task.id}
-                task={displayTask}
-                field={field}
-                column={column}
-              >
-                <span></span>
-              </Cell>
-            );
-          }
-
-          // Special handling for duration in summary and milestone tasks (read-only)
-          if (
-            field === "duration" &&
-            (task.type === "summary" || task.type === "milestone")
-          ) {
-            return (
-              <Cell
-                key={field}
-                taskId={task.id}
-                task={displayTask}
-                field={field}
-                column={column}
-              >
-                {task.type === "summary" && displayTask.duration > 0 ? (
-                  <span className="text-neutral-500 italic">
-                    {displayTask.duration} days
-                  </span>
-                ) : (
-                  <span></span>
-                )}
-              </Cell>
-            );
-          }
-
-          // Special handling for progress in milestone tasks (read-only, empty)
-          if (field === "progress" && task.type === "milestone") {
-            return (
-              <Cell
-                key={field}
-                taskId={task.id}
-                task={displayTask}
-                field={field}
-                column={column}
-              >
-                <span></span>
-              </Cell>
-            );
-          }
-
-          // Special handling for color field with color picker
-          if (field === "color") {
-            return (
-              <ColorCell
-                key={field}
-                task={task}
-                displayTask={displayTask}
-                column={column}
-                computedColor={computedColor}
-                isEditing={isCellEditing(task.id, field)}
-              />
-            );
-          }
-
-          // Default cell rendering
+        // Read-only empty cell (milestone endDate/duration/progress)
+        // Empty children suppress Cell's displayValue fallback.
+        if (isReadOnlyEmpty(field, task.type)) {
           return (
             <Cell
               key={field}
@@ -166,12 +175,53 @@ export function TaskDataCells({
               task={displayTask}
               field={field}
               column={column}
-            />
+              readOnly
+            >
+              <span></span>
+            </Cell>
           );
-        })}
+        }
+
+        // Read-only italic cell (summary dates/duration)
+        if (isReadOnlyItalic(field, task.type)) {
+          const displayValue = getReadOnlyDisplayValue(
+            field,
+            displayTask,
+            column
+          );
+          return (
+            <Cell
+              key={field}
+              taskId={task.id}
+              task={displayTask}
+              field={field}
+              column={column}
+              readOnly
+            >
+              {displayValue ? (
+                <span className={READONLY_CLASSES}>{displayValue}</span>
+              ) : (
+                // Empty children suppress Cell's displayValue fallback.
+                <span></span>
+              )}
+            </Cell>
+          );
+        }
+
+        // Default cell rendering
+        return (
+          <Cell
+            key={field}
+            taskId={task.id}
+            task={displayTask}
+            field={field}
+            column={column}
+          />
+        );
+      })}
     </>
   );
-}
+});
 
 // ─────────────────────────────────────────────────────────────────────────
 // Specialized Cell Components
@@ -184,23 +234,28 @@ interface NameCellProps {
   level: number;
   hasChildren: boolean;
   isExpanded: boolean;
-  isEditing: boolean;
 }
 
-function NameCell({
+const NameCell = memo(function NameCell({
   task,
   displayTask,
   column,
   level,
   hasChildren,
   isExpanded,
-  isEditing,
 }: NameCellProps): JSX.Element {
   const updateTask = useTaskStore((state) => state.updateTask);
   const toggleTaskCollapsed = useTaskStore(
     (state) => state.toggleTaskCollapsed
   );
   const densityConfig = useDensityConfig();
+
+  const handleTypeClick = useCallback(() => {
+    const nextType = getNextTaskType(task.type ?? "task", hasChildren);
+    updateTask(task.id, { type: nextType });
+  }, [task.id, task.type, hasChildren, updateTask]);
+
+  const isEditing = useIsCellEditing(task.id, "name");
 
   // In edit mode: no custom children, let Cell handle everything
   if (isEditing) {
@@ -227,7 +282,9 @@ function NameCell({
             }}
             className="w-4 h-4 flex items-center justify-center hover:bg-neutral-200 rounded text-neutral-600 flex-shrink-0"
             aria-label={
-              isExpanded ? `Collapse ${task.name}` : `Expand ${task.name}`
+              isExpanded
+                ? `Collapse ${displayTask.name}`
+                : `Expand ${displayTask.name}`
             }
             aria-expanded={isExpanded}
           >
@@ -238,53 +295,53 @@ function NameCell({
         )}
 
         {/* Task type icon - clickable to cycle through types */}
-        <TaskTypeIcon
-          type={task.type}
-          onClick={() => {
-            const currentType = task.type || "task";
-            let nextType: Task["type"];
+        <TaskTypeIcon type={task.type} onClick={handleTypeClick} />
 
-            if (hasChildren) {
-              nextType = currentType === "task" ? "summary" : "task";
-            } else {
-              nextType =
-                currentType === "task"
-                  ? "summary"
-                  : currentType === "summary"
-                    ? "milestone"
-                    : "task";
-            }
-
-            updateTask(task.id, { type: nextType });
-          }}
-        />
-
-        {/* Task name display */}
-        <span className="flex-1">{task.name}</span>
+        {/* Task name display — uses displayTask for consistency with Cell */}
+        <span className="flex-1">{displayTask.name}</span>
       </div>
     </Cell>
   );
-}
+});
 
 interface ColorCellProps {
   task: Task;
   displayTask: Task;
   column: ColumnDefinition;
-  computedColor: string;
-  isEditing: boolean;
+  computedColor: HexColor;
 }
 
-function ColorCell({
+const ColorCell = memo(function ColorCell({
   task,
   displayTask,
   column,
   computedColor,
-  isEditing,
 }: ColorCellProps): JSX.Element {
   const updateTask = useTaskStore((state) => state.updateTask);
+  const stopCellEdit = useTaskStore((state) => state.stopCellEdit);
   const colorModeState = useChartStore((state) => state.colorModeState);
   const densityConfig = useDensityConfig();
-  const { stopCellEdit } = useCellNavigation();
+
+  const isEditing = useIsCellEditing(task.id, "color");
+
+  /** Apply color change respecting the active color mode. */
+  const handleColorChange = useCallback(
+    (hex: HexColor) => {
+      if (colorModeState.mode === "manual") {
+        updateTask(task.id, { color: hex });
+      } else if (colorModeState.mode === "summary" && task.type === "summary") {
+        updateTask(task.id, { color: hex, colorOverride: undefined });
+      } else {
+        updateTask(task.id, { colorOverride: hex });
+      }
+    },
+    [colorModeState.mode, task.id, task.type, updateTask]
+  );
+
+  /** Clear any manual override so the automatic color mode takes effect. */
+  const handleResetOverride = useCallback(() => {
+    updateTask(task.id, { colorOverride: undefined });
+  }, [task.id, updateTask]);
 
   return (
     <Cell taskId={task.id} task={displayTask} field="color" column={column}>
@@ -295,27 +352,8 @@ function ColorCell({
             computedColor={computedColor}
             colorMode={colorModeState.mode}
             hasOverride={!!task.colorOverride}
-            onChange={(value) => {
-              const hex = value as HexColor;
-              if (colorModeState.mode === "manual") {
-                updateTask(task.id, { color: hex });
-              } else if (
-                colorModeState.mode === "summary" &&
-                task.type === "summary"
-              ) {
-                updateTask(task.id, {
-                  color: hex,
-                  colorOverride: undefined,
-                });
-              } else {
-                updateTask(task.id, { colorOverride: hex });
-              }
-            }}
-            onResetOverride={() =>
-              updateTask(task.id, {
-                colorOverride: undefined,
-              })
-            }
+            onChange={handleColorChange}
+            onResetOverride={handleResetOverride}
             onSave={stopCellEdit}
             onCancel={stopCellEdit}
             height={densityConfig.colorBarHeight}
@@ -332,4 +370,4 @@ function ColorCell({
       </div>
     </Cell>
   );
-}
+});

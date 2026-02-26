@@ -14,13 +14,15 @@ import {
 import { createPortal } from "react-dom";
 import { ColorPickerPopover } from "./ColorPickerPopover";
 import type { ColorMode } from "../../../types/colorMode.types";
+import type { HexColor } from "../../../types/branded.types";
+import { toHexColor } from "../../../types/branded.types";
 
 export interface ColorCellEditorProps {
   /** Current task.color value (hex) */
-  value: string;
+  value: HexColor;
 
   /** Computed display color (may differ from value in auto modes) */
-  computedColor?: string;
+  computedColor?: HexColor;
 
   /** Current color mode */
   colorMode?: ColorMode;
@@ -29,7 +31,7 @@ export interface ColorCellEditorProps {
   hasOverride?: boolean;
 
   /** Called when color changes */
-  onChange: (value: string) => void;
+  onChange: (value: HexColor) => void;
 
   /** Called to reset colorOverride back to automatic */
   onResetOverride?: () => void;
@@ -82,7 +84,7 @@ export function ColorCellEditor({
   };
 
   const handleSelect = (color: string): void => {
-    onChange(color);
+    onChange(toHexColor(color));
   };
 
   const handleClose = useCallback((): void => {
