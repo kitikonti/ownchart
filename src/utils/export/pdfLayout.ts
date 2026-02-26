@@ -3,7 +3,13 @@
  * Handles coordinate conversion and printable area calculation.
  */
 
-import type { PdfExportOptions, PdfMargins, ExportOptions } from "./types";
+import type {
+  PdfExportOptions,
+  PdfHeaderFooter,
+  PdfMargins,
+  PdfPageSize,
+  ExportOptions,
+} from "./types";
 import { PDF_PAGE_SIZES, PDF_MARGIN_PRESETS } from "./types";
 import { INTERNAL_DPI, MM_PER_INCH, PNG_EXPORT_DPI } from "./dpi";
 import type { Task } from "../../types/chart.types";
@@ -72,6 +78,48 @@ export function pxToMm(px: number): number {
  */
 export function mmToPx(mm: number): number {
   return mm / MM_PER_PX;
+}
+
+// =============================================================================
+// PDF Header/Footer Constants
+// =============================================================================
+
+/** Reserved space (mm) for header or footer when content is enabled */
+export const PDF_HEADER_FOOTER_RESERVED_MM = 10;
+
+/**
+ * Check whether a header/footer section has any content enabled.
+ */
+export function hasHeaderFooterContent(section: PdfHeaderFooter): boolean {
+  return (
+    section.showProjectName || section.showAuthor || section.showExportDate
+  );
+}
+
+/**
+ * Calculate reserved space (mm) for a header/footer section.
+ * Returns PDF_HEADER_FOOTER_RESERVED_MM if any content is enabled, 0 otherwise.
+ */
+export function getReservedSpace(section: PdfHeaderFooter): number {
+  return hasHeaderFooterContent(section) ? PDF_HEADER_FOOTER_RESERVED_MM : 0;
+}
+
+/**
+ * Format page size display name (e.g. "a4" → "A4", "letter" → "Letter").
+ */
+export function formatPageSizeName(pageSize: PdfPageSize): string {
+  const names: Record<PdfPageSize, string> = {
+    a4: "A4",
+    a3: "A3",
+    a2: "A2",
+    a1: "A1",
+    a0: "A0",
+    letter: "Letter",
+    legal: "Legal",
+    tabloid: "Tabloid",
+    custom: "Custom",
+  };
+  return names[pageSize] || pageSize.toUpperCase();
 }
 
 /**
@@ -266,18 +314,8 @@ export function calculatePdfFitToWidth(
   const margins = getMargins(pdfOptions);
 
   // Calculate reserved space for PDF header/footer
-  const headerReserved =
-    pdfOptions.header.showProjectName ||
-    pdfOptions.header.showAuthor ||
-    pdfOptions.header.showExportDate
-      ? 10
-      : 0;
-  const footerReserved =
-    pdfOptions.footer.showProjectName ||
-    pdfOptions.footer.showAuthor ||
-    pdfOptions.footer.showExportDate
-      ? 10
-      : 0;
+  const headerReserved = getReservedSpace(pdfOptions.header);
+  const footerReserved = getReservedSpace(pdfOptions.footer);
 
   const availableWidthMm = pageDims.width - margins.left - margins.right;
   const availableHeightMm =

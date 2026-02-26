@@ -17,6 +17,7 @@ import type { ExportOptions, PdfExportOptions, ExportColumnKey } from "./types";
 import {
   getPageDimensions,
   getMargins,
+  getReservedSpace,
   mmToPx,
   calculatePdfFitToWidth,
 } from "./pdfLayout";
@@ -178,18 +179,8 @@ export async function exportToPdf(params: ExportToPdfParams): Promise<void> {
     const margins = getMargins(pdfOptions);
 
     // Calculate reserved space for header/footer
-    const headerReserved =
-      pdfOptions.header.showProjectName ||
-      pdfOptions.header.showAuthor ||
-      pdfOptions.header.showExportDate
-        ? 10
-        : 0;
-    const footerReserved =
-      pdfOptions.footer.showProjectName ||
-      pdfOptions.footer.showAuthor ||
-      pdfOptions.footer.showExportDate
-        ? 10
-        : 0;
+    const headerReserved = getReservedSpace(pdfOptions.header);
+    const footerReserved = getReservedSpace(pdfOptions.footer);
 
     // Calculate available content area in mm
     const contentWidth = pageDims.width - margins.left - margins.right;
