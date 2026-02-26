@@ -189,6 +189,8 @@ export const SHADOWS = {
 
 export const Z_INDEX = {
   rowHighlight: 5,
+  cellActive: 10,
+  cellEditing: 20,
   rowIndicator: 25,
   hiddenRow: 40,
   hiddenRowHover: 42,

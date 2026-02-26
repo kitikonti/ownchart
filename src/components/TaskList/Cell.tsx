@@ -11,7 +11,11 @@ import { useCellEdit } from "../../hooks/useCellEdit";
 import type { Task } from "../../types/chart.types";
 import type { NavigationDirection } from "../../types/task.types";
 import { type ColumnDefinition } from "../../config/tableColumns";
-import { getCellStyle, getActiveCellStyle } from "../../styles/cellStyles";
+import {
+  getCellStyle,
+  getActiveCellStyle,
+  getEditingCellStyle,
+} from "../../styles/cellStyles";
 
 /** Arrow keys mapped to navigation directions. */
 const ARROW_NAV: Record<string, NavigationDirection> = {
@@ -176,6 +180,7 @@ export const Cell = memo(function Cell({
 
   const cellStyle = getCellStyle(column.id);
   const activeCellStyle = getActiveCellStyle(column.id);
+  const editingCellStyle = getEditingCellStyle(column.id);
 
   // Render edit mode
   if (isEditing) {
@@ -185,8 +190,8 @@ export const Cell = memo(function Cell({
         role="gridcell"
         aria-selected={true}
         tabIndex={-1}
-        className={`relative flex items-center border-b ${borderRight} border-neutral-200 bg-white z-20`}
-        style={activeCellStyle}
+        className={`relative flex items-center border-b ${borderRight} border-neutral-200 bg-white`}
+        style={editingCellStyle}
         onClick={(e) => e.stopPropagation()}
         onKeyDown={handleEditModeKeyDown}
       >
@@ -235,7 +240,6 @@ export const Cell = memo(function Cell({
         "border-b",
         borderRight,
         "border-neutral-200 flex items-center cursor-pointer relative",
-        isActive && "z-10",
         isActive && !isCut && "bg-white",
         !column.editable && "bg-neutral-50 text-neutral-500",
         isCut &&

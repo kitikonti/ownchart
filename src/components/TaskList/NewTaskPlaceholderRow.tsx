@@ -4,7 +4,7 @@
  * Can be selected to allow pasting at the end of the list.
  */
 
-import { useRef, useMemo, useCallback } from "react";
+import { useRef, useMemo, useCallback, memo } from "react";
 import { useTaskStore, type EditableField } from "../../store/slices/taskSlice";
 import { useChartStore } from "../../store/slices/chartSlice";
 import {
@@ -17,7 +17,11 @@ import { useIsPlaceholderSelected } from "../../hooks/useIsPlaceholderSelected";
 import { usePlaceholderNameEdit } from "../../hooks/usePlaceholderNameEdit";
 import { ContextMenu } from "../ContextMenu/ContextMenu";
 import { PLACEHOLDER_TASK_ID } from "../../config/placeholderRow";
-import { ROW_NUMBER, PLACEHOLDER_CELL } from "../../styles/design-tokens";
+import {
+  ROW_NUMBER,
+  PLACEHOLDER_CELL,
+  Z_INDEX,
+} from "../../styles/design-tokens";
 import { getCellStyle, getActiveCellStyle } from "../../styles/cellStyles";
 
 // ─────────────────────────────────────────────────────────────────────────
@@ -40,10 +44,16 @@ function getPlaceholderCellBg(state: {
   isActive: boolean;
 }): { backgroundColor: string; zIndex?: number } {
   if (state.isEditing)
-    return { backgroundColor: PLACEHOLDER_CELL.bgEditing, zIndex: 20 };
+    return {
+      backgroundColor: PLACEHOLDER_CELL.bgEditing,
+      zIndex: Z_INDEX.cellEditing,
+    };
   if (state.isSelected) return { backgroundColor: PLACEHOLDER_CELL.bgSelected };
   if (state.isActive)
-    return { backgroundColor: PLACEHOLDER_CELL.bgActive, zIndex: 10 };
+    return {
+      backgroundColor: PLACEHOLDER_CELL.bgActive,
+      zIndex: Z_INDEX.cellActive,
+    };
   return { backgroundColor: PLACEHOLDER_CELL.bgDefault };
 }
 
@@ -133,6 +143,7 @@ export function NewTaskPlaceholderRow(): JSX.Element {
             }}
             onContextMenu={handlePlaceholderContextMenu}
             role="gridcell"
+            aria-label={column.label}
           />
         );
       })}
@@ -152,7 +163,7 @@ export function NewTaskPlaceholderRow(): JSX.Element {
 // ─────────────────────────────────────────────────────────────────────────
 
 /** Row number cell — handles selection toggle on click. */
-function PlaceholderRowNumberCell({
+const PlaceholderRowNumberCell = memo(function PlaceholderRowNumberCell({
   onContextMenu,
 }: {
   onContextMenu: (e: React.MouseEvent) => void;
@@ -202,10 +213,10 @@ function PlaceholderRowNumberCell({
       {/* Empty — placeholder row has no number */}
     </div>
   );
-}
+});
 
 /** Name cell — rendering wrapper; editing logic lives in usePlaceholderNameEdit. */
-function PlaceholderNameCell({
+const PlaceholderNameCell = memo(function PlaceholderNameCell({
   column,
   onContextMenu,
 }: {
@@ -268,4 +279,4 @@ function PlaceholderNameCell({
       )}
     </div>
   );
-}
+});

@@ -7,7 +7,7 @@
 
 import type { CSSProperties } from "react";
 import { NAME_COLUMN_ID } from "../config/tableColumns";
-import { CELL } from "./design-tokens";
+import { CELL, Z_INDEX } from "./design-tokens";
 
 /**
  * Density-aware cell style using CSS custom properties.
@@ -32,5 +32,18 @@ export function getActiveCellStyle(columnId: string): CSSProperties {
   return {
     ...getCellStyle(columnId),
     boxShadow: CELL.activeBorderShadow,
+    zIndex: Z_INDEX.cellActive,
+  };
+}
+
+/**
+ * Editing cell style — extends base cell style with brand-colored inset shadow
+ * and elevated z-index to sit above active cells.
+ */
+export function getEditingCellStyle(columnId: string): CSSProperties {
+  return {
+    ...getCellStyle(columnId),
+    boxShadow: CELL.activeBorderShadow,
+    zIndex: Z_INDEX.cellEditing,
   };
 }

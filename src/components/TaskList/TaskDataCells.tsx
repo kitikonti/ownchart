@@ -92,18 +92,10 @@ function getReadOnlyDisplayValue(
       : String(displayTask.duration);
   }
   // Only startDate and endDate reach this path (guarded by isReadOnlyItalic).
-  // Uses formatter when available for consistency with duration handling.
-  if (field === "startDate") {
-    const value = displayTask.startDate;
-    if (!value) return null;
-    return column.formatter ? column.formatter(value) : value;
-  }
-  if (field === "endDate") {
-    const value = displayTask.endDate;
-    if (!value) return null;
-    return column.formatter ? column.formatter(value) : value;
-  }
-  return null;
+  const value =
+    field === "startDate" ? displayTask.startDate : displayTask.endDate;
+  if (!value) return null;
+  return column.formatter ? column.formatter(value) : value;
 }
 
 // ─────────────────────────────────────────────────────────────────────────
