@@ -134,16 +134,18 @@ export const NewTaskPlaceholderRow = memo(
 // Sub-Components
 // ─────────────────────────────────────────────────────────────────────────
 
+interface PlaceholderRowNumberCellProps {
+  onContextMenu: (e: React.MouseEvent) => void;
+}
+
 /** Row number cell — handles selection toggle on click. */
 const PlaceholderRowNumberCell = memo(function PlaceholderRowNumberCell({
   onContextMenu,
-}: {
-  onContextMenu: (e: React.MouseEvent) => void;
-}): JSX.Element {
+}: PlaceholderRowNumberCellProps): JSX.Element {
   const isSelected = useIsPlaceholderSelected();
 
   // All state reads + actions via getState() — fresh snapshot in event handler
-  const handleClick = (): void => {
+  const handleClick = useCallback((): void => {
     const store = useTaskStore.getState();
     const selectedTaskIds = store.selectedTaskIds;
     const currentlySelected = selectedTaskIds.includes(PLACEHOLDER_TASK_ID);
@@ -159,7 +161,7 @@ const PlaceholderRowNumberCell = memo(function PlaceholderRowNumberCell({
       );
     }
     store.setActiveCell(null, null);
-  };
+  }, []);
 
   return (
     <div
@@ -187,14 +189,16 @@ const PlaceholderRowNumberCell = memo(function PlaceholderRowNumberCell({
   );
 });
 
+interface PlaceholderNameCellProps {
+  column: ColumnDefinition;
+  onContextMenu: (e: React.MouseEvent) => void;
+}
+
 /** Name cell — rendering wrapper; editing logic lives in usePlaceholderNameEdit. */
 const PlaceholderNameCell = memo(function PlaceholderNameCell({
   column,
   onContextMenu,
-}: {
-  column: ColumnDefinition;
-  onContextMenu: (e: React.MouseEvent) => void;
-}): JSX.Element {
+}: PlaceholderNameCellProps): JSX.Element {
   const cellRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
@@ -253,16 +257,18 @@ const PlaceholderNameCell = memo(function PlaceholderNameCell({
   );
 });
 
+interface PlaceholderDataCellProps {
+  column: ColumnDefinition;
+  field: EditableField;
+  onContextMenu: (e: React.MouseEvent) => void;
+}
+
 /** Data cell — empty placeholder with keyboard navigation and focus management. */
 const PlaceholderDataCell = memo(function PlaceholderDataCell({
   column,
   field,
   onContextMenu,
-}: {
-  column: ColumnDefinition;
-  field: EditableField;
-  onContextMenu: (e: React.MouseEvent) => void;
-}): JSX.Element {
+}: PlaceholderDataCellProps): JSX.Element {
   const cellRef = useRef<HTMLDivElement>(null);
 
   const isActive = useTaskStore(

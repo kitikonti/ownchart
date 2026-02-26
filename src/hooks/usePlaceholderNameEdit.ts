@@ -17,6 +17,7 @@ import { useTaskStore } from "../store/slices/taskSlice";
 import { useIsPlaceholderSelected } from "./useIsPlaceholderSelected";
 import { useNewTaskCreation } from "./useNewTaskCreation";
 import { PLACEHOLDER_TASK_ID } from "../config/placeholderRow";
+import { ARROW_NAV } from "../config/keyboardNavigation";
 import { SCROLL_DRIVER_SELECTOR } from "../config/layoutConstants";
 
 interface UsePlaceholderNameEditReturn {
@@ -107,6 +108,14 @@ export function usePlaceholderNameEdit(
   const handleKeyDown = useCallback(
     (e: KeyboardEvent<HTMLDivElement>): void => {
       if (isEditing) return;
+
+      // Arrow key navigation — matches PlaceholderDataCell / Cell.tsx contract
+      const direction = ARROW_NAV[e.key];
+      if (direction) {
+        e.preventDefault();
+        navigateCell(direction);
+        return;
+      }
 
       if (e.key === "Enter" || e.key === "F2") {
         e.preventDefault();

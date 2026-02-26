@@ -206,6 +206,46 @@ describe("NewTaskPlaceholderRow", () => {
       expect(input).toBeInTheDocument();
       expect(input).toHaveValue("a");
     });
+
+    it("navigates up on ArrowUp from active name cell", () => {
+      mockActivePlaceholderNameCell();
+
+      render(<NewTaskPlaceholderRow />);
+      const nameCell = screen.getByText("Add new task...").closest("[role='gridcell']")!;
+
+      fireEvent.keyDown(nameCell, { key: "ArrowUp" });
+      expect(mockNavigateCell).toHaveBeenCalledWith("up");
+    });
+
+    it("navigates down on ArrowDown from active name cell", () => {
+      mockActivePlaceholderNameCell();
+
+      render(<NewTaskPlaceholderRow />);
+      const nameCell = screen.getByText("Add new task...").closest("[role='gridcell']")!;
+
+      fireEvent.keyDown(nameCell, { key: "ArrowDown" });
+      expect(mockNavigateCell).toHaveBeenCalledWith("down");
+    });
+
+    it("navigates left on ArrowLeft from active name cell", () => {
+      mockActivePlaceholderNameCell();
+
+      render(<NewTaskPlaceholderRow />);
+      const nameCell = screen.getByText("Add new task...").closest("[role='gridcell']")!;
+
+      fireEvent.keyDown(nameCell, { key: "ArrowLeft" });
+      expect(mockNavigateCell).toHaveBeenCalledWith("left");
+    });
+
+    it("navigates right on ArrowRight from active name cell", () => {
+      mockActivePlaceholderNameCell();
+
+      render(<NewTaskPlaceholderRow />);
+      const nameCell = screen.getByText("Add new task...").closest("[role='gridcell']")!;
+
+      fireEvent.keyDown(nameCell, { key: "ArrowRight" });
+      expect(mockNavigateCell).toHaveBeenCalledWith("right");
+    });
   });
 
   describe("task creation", () => {
