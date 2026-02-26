@@ -8,7 +8,10 @@ import {
   sanitizeGanttFile,
   SKIP_SANITIZE_KEYS,
 } from '../../../../src/utils/fileOperations/sanitize';
-import { KNOWN_TASK_KEYS } from '../../../../src/utils/fileOperations/constants';
+import {
+  KNOWN_TASK_KEYS,
+  DANGEROUS_KEYS,
+} from '../../../../src/utils/fileOperations/constants';
 import type {
   GanttFile,
   SerializedTask,
@@ -681,6 +684,25 @@ describe('File Operations - Sanitization (XSS Prevention)', () => {
   });
 
   describe('Key-Set Sync Assertions', () => {
+    it('DANGEROUS_KEYS should cover all standard prototype pollution vectors', () => {
+      const required = ['__proto__', 'constructor', 'prototype'];
+      for (const key of required) {
+        expect(
+          DANGEROUS_KEYS.has(key),
+          `DANGEROUS_KEYS is missing "${key}" — update constants.ts`
+        ).toBe(true);
+      }
+    });
+
+    it('DANGEROUS_KEYS should not overlap with KNOWN_TASK_KEYS', () => {
+      for (const key of DANGEROUS_KEYS) {
+        expect(
+          KNOWN_TASK_KEYS.has(key),
+          `DANGEROUS_KEYS entry "${key}" overlaps with KNOWN_TASK_KEYS — this would silently drop a real field`
+        ).toBe(false);
+      }
+    });
+
     it('SKIP_SANITIZE_KEYS should be a subset of KNOWN_TASK_KEYS', () => {
       for (const key of SKIP_SANITIZE_KEYS) {
         expect(

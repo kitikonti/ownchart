@@ -18,9 +18,6 @@ export type {
   Resource,
 } from "./types";
 
-// Constants
-export { KNOWN_TASK_KEYS } from "./constants";
-
 // Serialization pipeline
 export { serializeToGanttFile } from "./serialize";
 export type { SerializeOptions } from "./serialize";

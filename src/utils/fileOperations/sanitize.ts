@@ -5,13 +5,7 @@
 
 import DOMPurify from "dompurify";
 import type { GanttFile, SerializedTask } from "./types";
-
-/**
- * Keys that could cause prototype pollution if copied to a new object.
- * safeJsonParse (Layer 2) already strips these during parsing, but this
- * provides defense-in-depth for non-JSON sources (tests, plugins, etc.).
- */
-const DANGEROUS_KEYS = new Set(["__proto__", "constructor", "prototype"]);
+import { DANGEROUS_KEYS } from "./constants";
 
 /**
  * Task fields that contain non-content strings (IDs, dates, colors) — skip sanitization.

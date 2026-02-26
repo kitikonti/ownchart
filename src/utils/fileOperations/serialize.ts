@@ -14,7 +14,7 @@ import type {
 } from "./types";
 import { FILE_VERSION, SCHEMA_VERSION } from "../../config/version";
 import { DEFAULT_CHART_NAME } from "../../config/viewSettingsDefaults";
-import { KNOWN_TASK_KEYS } from "./constants";
+import { KNOWN_TASK_KEYS, DANGEROUS_KEYS } from "./constants";
 
 export interface SerializeOptions {
   chartName?: string;
@@ -115,13 +115,15 @@ function serializeTask(task: Task, now: string): SerializedTask {
   // SAFETY: SerializedTask has an index signature [key: string]: unknown, so
   // writing unknown keys is type-safe; the Record cast just satisfies the compiler
   // which doesn't infer index-signature writability through the typed interface.
+  // Defense-in-depth: DANGEROUS_KEYS are filtered even though upstream layers
+  // (safeJsonParse, sanitizeTask) already strip them during deserialization.
   if (
     taskWithExtra.__unknownFields &&
     typeof taskWithExtra.__unknownFields === "object"
   ) {
     const target = serialized as Record<string, unknown>;
     for (const [key, value] of Object.entries(taskWithExtra.__unknownFields)) {
-      if (!KNOWN_TASK_KEYS.has(key)) {
+      if (!KNOWN_TASK_KEYS.has(key) && !DANGEROUS_KEYS.has(key)) {
         target[key] = value;
       }
     }

@@ -245,6 +245,42 @@ describe('File Operations - Serialization', () => {
       expect(parsed.chart.tasks[0].name).toBe('Task 1');
       expect(parsed.chart.tasks[0].safeFutureField).toBe('preserved');
     });
+
+    it('should filter prototype pollution keys from __unknownFields', () => {
+      const unknownFields: Record<string, unknown> = {
+        safeFutureField: 'preserved',
+        prototype: { polluted: true },
+      };
+      // Use defineProperty because { __proto__: ... } sets the prototype instead
+      Object.defineProperty(unknownFields, '__proto__', {
+        value: { polluted: true },
+        enumerable: true,
+        configurable: true,
+      });
+      Object.defineProperty(unknownFields, 'constructor', {
+        value: { polluted: true },
+        enumerable: true,
+        configurable: true,
+      });
+
+      const tasks: (Task & { __unknownFields?: Record<string, unknown> })[] = [
+        {
+          ...createSampleTasks()[0],
+          __unknownFields: unknownFields,
+        },
+      ];
+
+      const json = serializeToGanttFile(tasks, createSampleViewSettings());
+      const parsed = JSON.parse(json);
+
+      // Safe fields are preserved
+      expect(parsed.chart.tasks[0].safeFutureField).toBe('preserved');
+      // Dangerous keys are not present as own properties in the output
+      const taskKeys = Object.keys(parsed.chart.tasks[0]);
+      expect(taskKeys).not.toContain('__proto__');
+      expect(taskKeys).not.toContain('constructor');
+      expect(taskKeys).not.toContain('prototype');
+    });
   });
 
   describe('Task Metadata', () => {

@@ -720,6 +720,49 @@ describe('loadFromFile', () => {
   });
 
   // =========================================================================
+  // loadFileIntoApp — partial state on mid-sequence failure
+  // =========================================================================
+  describe('loadFileIntoApp - partial state on mid-sequence failure', () => {
+    it('should have mutated file state and history when setTasks throws', () => {
+      mockSetTasks.mockImplementation(() => {
+        throw new Error('setTasks failed');
+      });
+
+      const content = JSON.stringify(createValidFileContent());
+      const result = loadFileIntoApp(makeFile(content));
+
+      expect(result.success).toBe(false);
+      // Earlier stores (file state, history) were already mutated
+      expect(mockSetFileName).toHaveBeenCalled();
+      expect(mockClearHistory).toHaveBeenCalled();
+      // Later stores were NOT reached
+      expect(mockSetDependencies).not.toHaveBeenCalled();
+      expect(mockSetViewSettings).not.toHaveBeenCalled();
+      expect(mockUpdateScale).not.toHaveBeenCalled();
+      expect(mockSignalFileLoaded).not.toHaveBeenCalled();
+    });
+
+    it('should have mutated data stores when updateScale throws', () => {
+      mockUpdateScale.mockImplementation(() => {
+        throw new Error('updateScale failed');
+      });
+
+      const content = JSON.stringify(createValidFileContent());
+      const result = loadFileIntoApp(makeFile(content));
+
+      expect(result.success).toBe(false);
+      // All stores before updateScale were mutated
+      expect(mockSetFileName).toHaveBeenCalled();
+      expect(mockClearHistory).toHaveBeenCalled();
+      expect(mockSetTasks).toHaveBeenCalled();
+      expect(mockSetDependencies).toHaveBeenCalled();
+      expect(mockSetViewSettings).toHaveBeenCalled();
+      // signalFileLoaded was NOT reached
+      expect(mockSignalFileLoaded).not.toHaveBeenCalled();
+    });
+  });
+
+  // =========================================================================
   // showLoadNotifications
   // =========================================================================
   describe('showLoadNotifications', () => {
