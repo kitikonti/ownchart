@@ -137,7 +137,7 @@ cd ../app-gantt-review
 - [x] `src/components/Export/ExportRenderer.tsx`
 - [x] `src/components/Layout/GanttLayout.tsx`
 - [ ] `src/components/Export/ExportDialog.tsx` (505 LOC)
-- [ ] `src/components/Export/PdfPreview.tsx` (348 LOC)
+- [x] `src/components/Export/PdfPreview.tsx` (426 LOC)
 - [ ] `src/components/Export/PdfExportOptions.tsx` (338 LOC)
 - [ ] `src/components/Export/SharedExportOptions.tsx` (273 LOC)
 - [ ] `src/components/Export/ZoomModeSelector.tsx` (255 LOC)
@@ -231,16 +231,16 @@ cd ../app-gantt-review
 - [ ] `src/utils/graph/index.ts` (12 LOC)
 
 ### Priority: MEDIUM — Export Utils
-- [ ] `src/utils/export/pdfExport.ts` (518 LOC)
+- [ ] `src/utils/export/pdfExport.ts` (507 LOC)
 - [ ] `src/utils/export/taskTableRenderer.ts` (421 LOC)
 - [ ] `src/utils/export/svgExport.ts` (378 LOC)
 - [ ] `src/utils/export/renderConstants.ts` (373 LOC)
-- [ ] `src/utils/export/types.ts` (344 LOC)
-- [ ] `src/utils/export/pdfLayout.ts` (317 LOC)
+- [ ] `src/utils/export/types.ts` (374 LOC)
+- [ ] `src/utils/export/pdfLayout.ts` (355 LOC)
 - [ ] `src/utils/export/calculations.ts` (294 LOC)
 - [ ] `src/utils/export/captureChart.ts` (171 LOC)
 - [ ] `src/utils/export/helpers.ts` (156 LOC)
-- [ ] `src/utils/export/index.ts` (110 LOC)
+- [ ] `src/utils/export/index.ts` (133 LOC)
 - [ ] `src/utils/export/downloadPng.ts` (75 LOC)
 - [ ] `src/utils/export/dpi.ts` (67 LOC)
 - [ ] `src/utils/export/constants.ts` (60 LOC)
@@ -332,6 +332,6 @@ Entscheidungen aus bisherigen Reviews die fuer zukuenftige Dateien gelten.
 
 ## Progress
 
-- Reviewed: 49 / 193 Dateien
+- Reviewed: 50 / 193 Dateien
 - Offene Issues: 38 Hex-Farben in 10 .tsx-Dateien, ~18 toISODateString-Umstellungen
 - Test-Coverage: 80%+
