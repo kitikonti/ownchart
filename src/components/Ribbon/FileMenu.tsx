@@ -111,10 +111,10 @@ export function FileMenu({
 
   // Auto-focus first item when menu opens
   useEffect(() => {
-    if (isOpen) {
-      // Wait for DOM render before focusing
-      requestAnimationFrame(() => focusItem(0));
-    }
+    if (!isOpen) return;
+    // Wait for DOM render before focusing
+    const rafId = requestAnimationFrame(() => focusItem(0));
+    return () => cancelAnimationFrame(rafId);
   }, [isOpen, focusItem]);
 
   const handleKeyDown = useCallback(
@@ -163,6 +163,7 @@ export function FileMenu({
     <div ref={containerRef} className="relative">
       <button
         ref={triggerRef}
+        type="button"
         onClick={toggle}
         className={`ribbon-tab ribbon-tab-file ${isOpen ? "ribbon-tab-active" : ""}`}
         aria-haspopup="true"
@@ -181,6 +182,7 @@ export function FileMenu({
             {items.map((item, index) => (
               <div key={item.id}>
                 <button
+                  type="button"
                   data-index={index}
                   role="menuitem"
                   tabIndex={-1}

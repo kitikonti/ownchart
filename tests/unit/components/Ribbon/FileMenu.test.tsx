@@ -78,6 +78,18 @@ describe("FileMenu", () => {
     expect(button).toHaveAttribute("aria-expanded", "true");
   });
 
+  it("uses type=button on trigger and all menu items", () => {
+    render(<FileMenu {...createHandlers()} />);
+    const trigger = screen.getByText("File");
+    expect(trigger).toHaveAttribute("type", "button");
+
+    fireEvent.click(trigger);
+    const items = screen.getAllByRole("menuitem");
+    for (const item of items) {
+      expect(item).toHaveAttribute("type", "button");
+    }
+  });
+
   it("renders separator between Rename and Export", () => {
     render(<FileMenu {...createHandlers()} />);
     fireEvent.click(screen.getByText("File"));

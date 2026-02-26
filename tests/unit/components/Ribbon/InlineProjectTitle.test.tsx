@@ -109,6 +109,41 @@ describe("InlineProjectTitle", () => {
     expect(screen.queryByRole("textbox")).not.toBeInTheDocument();
   });
 
+  it("Escape prevents save even if blur fires afterwards", () => {
+    useChartStore.setState({ projectTitle: "Original" });
+    render(<InlineProjectTitle />);
+
+    fireEvent.click(screen.getByText("Original"));
+    const input = screen.getByRole("textbox");
+    fireEvent.change(input, { target: { value: "Changed" } });
+    // Simulate the real-browser scenario: Escape followed by blur
+    fireEvent.keyDown(input, { key: "Escape" });
+    fireEvent.blur(input);
+
+    expect(useChartStore.getState().projectTitle).toBe("Original");
+  });
+
+  it("re-editing after Escape still saves correctly", () => {
+    useChartStore.setState({ projectTitle: "Original" });
+    render(<InlineProjectTitle />);
+
+    // First: Escape to cancel
+    fireEvent.click(screen.getByText("Original"));
+    fireEvent.change(screen.getByRole("textbox"), {
+      target: { value: "Cancelled" },
+    });
+    fireEvent.keyDown(screen.getByRole("textbox"), { key: "Escape" });
+    expect(useChartStore.getState().projectTitle).toBe("Original");
+
+    // Second: Edit again and save — cancelled ref must have reset
+    fireEvent.click(screen.getByText("Original"));
+    const input = screen.getByRole("textbox");
+    fireEvent.change(input, { target: { value: "New Title" } });
+    fireEvent.keyDown(input, { key: "Enter" });
+
+    expect(useChartStore.getState().projectTitle).toBe("New Title");
+  });
+
   it("saves on blur", () => {
     useChartStore.setState({ projectTitle: "Old" });
     render(<InlineProjectTitle />);

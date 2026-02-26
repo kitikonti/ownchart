@@ -4,7 +4,13 @@
  * Uses a hidden span to measure text width for accurate input auto-sizing.
  */
 
-import { useState, useRef, useEffect, useLayoutEffect } from "react";
+import {
+  useState,
+  useRef,
+  useEffect,
+  useLayoutEffect,
+  useCallback,
+} from "react";
 import { useChartStore } from "../../store/slices/chartSlice";
 import { useFileStore } from "../../store/slices/fileSlice";
 import { APP_CONFIG } from "../../config/appConfig";
@@ -41,6 +47,8 @@ export function InlineProjectTitle({
   const [inputWidth, setInputWidth] = useState(MIN_INPUT_WIDTH);
   const inputRef = useRef<HTMLInputElement>(null);
   const measureRef = useRef<HTMLSpanElement>(null);
+  // Guards against blur handler saving after Escape cancellation
+  const cancelledRef = useRef(false);
 
   const projectTitle = useChartStore((state) => state.projectTitle);
   const setProjectTitle = useChartStore((state) => state.setProjectTitle);
@@ -51,12 +59,17 @@ export function InlineProjectTitle({
     getEditableTitle(projectTitle, fileName) || UNTITLED_LABEL;
   const isPlaceholder = displayName === UNTITLED_LABEL;
 
-  const handleClick = (): void => {
+  const startEditing = useCallback((): void => {
     setDraft(getEditableTitle(projectTitle, fileName));
+    cancelledRef.current = false;
     setIsEditing(true);
-  };
+  }, [projectTitle, fileName]);
 
   const handleSave = (): void => {
+    if (cancelledRef.current) {
+      cancelledRef.current = false;
+      return;
+    }
     setProjectTitle(draft.trim());
     setIsEditing(false);
   };
@@ -65,6 +78,7 @@ export function InlineProjectTitle({
     if (e.key === "Enter") {
       handleSave();
     } else if (e.key === "Escape") {
+      cancelledRef.current = true;
       setIsEditing(false);
     }
   };
@@ -72,12 +86,10 @@ export function InlineProjectTitle({
   // Enter edit mode when triggered externally (e.g. File > Rename or F2)
   useEffect(() => {
     if (triggerEdit) {
-      handleClick();
+      startEditing();
       onEditTriggered?.();
     }
-    // Only re-run when triggerEdit changes — handler identity is irrelevant
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [triggerEdit]);
+  }, [triggerEdit, startEditing, onEditTriggered]);
 
   // Focus and select input when editing starts
   useEffect(() => {
@@ -129,7 +141,7 @@ export function InlineProjectTitle({
       ) : (
         <button
           type="button"
-          onClick={handleClick}
+          onClick={startEditing}
           title="Click to edit project title"
           aria-label={
             isDirty ? `${displayName} (unsaved changes)` : displayName

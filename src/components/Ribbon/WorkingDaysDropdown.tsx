@@ -3,7 +3,7 @@
  * Replaces the Working Days section from the deleted Chart Settings Dialog.
  */
 
-import { useMemo } from "react";
+import { useCallback, useMemo } from "react";
 import { Briefcase } from "@phosphor-icons/react";
 import { Checkbox } from "../common/Checkbox";
 import { useChartStore } from "../../store/slices/chartSlice";
@@ -48,10 +48,13 @@ export function WorkingDaysDropdown({
     return country?.name || holidayRegion;
   }, [holidayRegion]);
 
-  const handleConfigChange = (key: ConfigKey, checked: boolean): void => {
-    // Store auto-derives workingDaysMode from config
-    setWorkingDaysConfig({ [key]: checked });
-  };
+  const handleConfigChange = useCallback(
+    (key: ConfigKey, checked: boolean): void => {
+      // Store auto-derives workingDaysMode from config
+      setWorkingDaysConfig({ [key]: checked });
+    },
+    [setWorkingDaysConfig]
+  );
 
   const getLabel = (key: ConfigKey, label: string): string =>
     key === "excludeHolidays" ? `${label} (${currentCountryName})` : label;
