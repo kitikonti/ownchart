@@ -408,7 +408,7 @@ describe("getComputedTaskColor - theme mode", () => {
   });
 
   it("deconflicts hash collisions: 5 roots with known-colliding IDs get 5 different colors", () => {
-    // These are the actual IDs from examples/website-relaunch.ownchart.
+    // These are IDs that produce known hash collisions (originally from the old website-relaunch example).
     // Without deconfliction, Planning+Launch collide (idx 3) and Development+Content collide (idx 1).
     const deconflictState = makeState({
       mode: "theme",

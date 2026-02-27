@@ -1,0 +1,838 @@
+{
+  "fileVersion": "1.0.0",
+  "appVersion": "1.0.1",
+  "schemaVersion": 1,
+  "chart": {
+    "id": "a0000000-0000-4000-a000-000000000000",
+    "name": "mars-colony",
+    "tasks": [
+      {
+        "id": "a0000001-0000-4000-a000-000000000001",
+        "name": "Mission Planning",
+        "startDate": "2026-01-05",
+        "endDate": "2026-01-21",
+        "duration": 13,
+        "progress": 100,
+        "color": "#3b82f6",
+        "order": 0,
+        "type": "summary",
+        "open": true,
+        "metadata": {
+          "phase": "planning",
+          "missionDirector": "Dr. Elena Rodriguez"
+        },
+        "createdAt": "2026-02-01T10:00:00.000Z",
+        "updatedAt": "2026-02-27T20:40:23.579Z"
+      },
+      {
+        "id": "a0000001-0000-4000-a000-000000000002",
+        "name": "Crew Selection",
+        "startDate": "2026-01-05",
+        "endDate": "2026-01-09",
+        "duration": 5,
+        "progress": 100,
+        "color": "#3b82f6",
+        "order": 1,
+        "type": "task",
+        "parent": "a0000001-0000-4000-a000-000000000001",
+        "open": true,
+        "metadata": {
+          "crew": [
+            "Dr. Elena Rodriguez",
+            "Cmdr. James Chen",
+            "Dr. Aisha Patel",
+            "Eng. Kofi Mensah",
+            "Dr. Yuki Tanaka",
+            "Pilot Sarah O'Brien"
+          ]
+        },
+        "createdAt": "2026-02-01T10:01:00.000Z",
+        "updatedAt": "2026-02-27T20:40:23.579Z"
+      },
+      {
+        "id": "a0000001-0000-4000-a000-000000000003",
+        "name": "Mission Architecture Design",
+        "startDate": "2026-01-12",
+        "endDate": "2026-01-20",
+        "duration": 7,
+        "progress": 100,
+        "color": "#3b82f6",
+        "order": 2,
+        "type": "task",
+        "parent": "a0000001-0000-4000-a000-000000000001",
+        "open": true,
+        "metadata": {
+          "orbitType": "Hohmann transfer",
+          "landingSite": "Jezero Crater"
+        },
+        "createdAt": "2026-02-01T10:02:00.000Z",
+        "updatedAt": "2026-02-27T20:40:23.579Z"
+      },
+      {
+        "id": "a0000001-0000-4000-a000-000000000004",
+        "name": "Budget Approval",
+        "startDate": "2026-01-21",
+        "endDate": "2026-01-21",
+        "duration": 1,
+        "progress": 100,
+        "color": "#eab308",
+        "order": 3,
+        "type": "milestone",
+        "parent": "a0000001-0000-4000-a000-000000000001",
+        "open": true,
+        "metadata": {
+          "approvedBudget": "$42B",
+          "approvedBy": "UN Space Council"
+        },
+        "createdAt": "2026-02-01T10:03:00.000Z",
+        "updatedAt": "2026-02-27T20:40:23.579Z"
+      },
+      {
+        "id": "a0000002-0000-4000-a000-000000000001",
+        "name": "Rocket & Spacecraft",
+        "startDate": "2026-01-23",
+        "endDate": "2026-02-26",
+        "duration": 25,
+        "progress": 70,
+        "color": "#10b981",
+        "order": 4,
+        "type": "summary",
+        "open": true,
+        "metadata": {
+          "rocketType": "Falcon Heavy Mk III",
+          "launchSite": "Cape Canaveral LC-39A"
+        },
+        "createdAt": "2026-02-01T10:04:00.000Z",
+        "updatedAt": "2026-02-27T20:40:23.579Z"
+      },
+      {
+        "id": "a0000002-0000-4000-a000-000000000002",
+        "name": "Engine Development",
+        "startDate": "2026-01-23",
+        "endDate": "2026-02-11",
+        "duration": 14,
+        "progress": 85,
+        "color": "#10b981",
+        "order": 5,
+        "type": "summary",
+        "parent": "a0000002-0000-4000-a000-000000000001",
+        "open": true,
+        "metadata": {
+          "engineType": "Raptor 3.5",
+          "thrust": "2.5 MN"
+        },
+        "createdAt": "2026-02-01T10:05:00.000Z",
+        "updatedAt": "2026-02-27T20:40:23.579Z"
+      },
+      {
+        "id": "a0000002-0000-4000-a000-000000000003",
+        "name": "Prototype Engine Build",
+        "startDate": "2026-01-23",
+        "endDate": "2026-02-03",
+        "duration": 8,
+        "progress": 100,
+        "color": "#10b981",
+        "order": 6,
+        "type": "task",
+        "parent": "a0000002-0000-4000-a000-000000000002",
+        "open": true,
+        "metadata": {
+          "facility": "Boca Chica Starbase",
+          "material": "Stainless steel alloy"
+        },
+        "createdAt": "2026-02-01T10:06:00.000Z",
+        "updatedAt": "2026-02-27T20:40:23.579Z"
+      },
+      {
+        "id": "a0000002-0000-4000-a000-000000000004",
+        "name": "Engine Testing",
+        "startDate": "2026-02-04",
+        "endDate": "2026-02-11",
+        "duration": 6,
+        "progress": 70,
+        "color": "#10b981",
+        "order": 7,
+        "type": "task",
+        "parent": "a0000002-0000-4000-a000-000000000002",
+        "open": true,
+        "metadata": {
+          "testFirings": 12,
+          "testSite": "McGregor, TX"
+        },
+        "createdAt": "2026-02-01T10:07:00.000Z",
+        "updatedAt": "2026-02-27T20:40:23.579Z"
+      },
+      {
+        "id": "a0000002-0000-4000-a000-000000000005",
+        "name": "Spacecraft Assembly",
+        "startDate": "2026-02-12",
+        "endDate": "2026-02-25",
+        "duration": 10,
+        "progress": 50,
+        "color": "#10b981",
+        "order": 8,
+        "type": "task",
+        "parent": "a0000002-0000-4000-a000-000000000001",
+        "open": true,
+        "metadata": {
+          "modules": [
+            "Command",
+            "Habitation",
+            "Cargo",
+            "Service"
+          ],
+          "heatShield": "PICA-X Gen 4"
+        },
+        "createdAt": "2026-02-01T10:08:00.000Z",
+        "updatedAt": "2026-02-27T20:40:23.579Z"
+      },
+      {
+        "id": "a0000002-0000-4000-a000-000000000006",
+        "name": "Flight Readiness Review",
+        "startDate": "2026-02-26",
+        "endDate": "2026-02-26",
+        "duration": 1,
+        "progress": 0,
+        "color": "#eab308",
+        "order": 9,
+        "type": "milestone",
+        "parent": "a0000002-0000-4000-a000-000000000001",
+        "open": true,
+        "metadata": {
+          "reviewBoard": "NASA + ESA Joint Panel"
+        },
+        "createdAt": "2026-02-01T10:09:00.000Z",
+        "updatedAt": "2026-02-27T20:40:23.579Z"
+      },
+      {
+        "id": "a0000003-0000-4000-a000-000000000001",
+        "name": "Supply & Logistics",
+        "startDate": "2026-01-23",
+        "endDate": "2026-02-18",
+        "duration": 19,
+        "progress": 55,
+        "color": "#8b5cf6",
+        "order": 10,
+        "type": "summary",
+        "open": true,
+        "metadata": {
+          "totalCargoMass": "48 tonnes",
+          "supplyVendor": "Orbital Dynamics Corp"
+        },
+        "createdAt": "2026-02-01T10:10:00.000Z",
+        "updatedAt": "2026-02-27T20:40:23.579Z"
+      },
+      {
+        "id": "a0000003-0000-4000-a000-000000000002",
+        "name": "Life Support Systems",
+        "startDate": "2026-01-23",
+        "endDate": "2026-02-03",
+        "duration": 8,
+        "progress": 80,
+        "color": "#8b5cf6",
+        "order": 11,
+        "type": "task",
+        "parent": "a0000003-0000-4000-a000-000000000001",
+        "open": true,
+        "metadata": {
+          "oxygenCapacity": "6 crew × 900 days",
+          "waterRecycling": "98.5% efficiency"
+        },
+        "createdAt": "2026-02-01T10:11:00.000Z",
+        "updatedAt": "2026-02-27T20:40:23.579Z"
+      },
+      {
+        "id": "a0000003-0000-4000-a000-000000000003",
+        "name": "Food Production Module",
+        "startDate": "2026-02-04",
+        "endDate": "2026-02-11",
+        "duration": 6,
+        "progress": 60,
+        "color": "#8b5cf6",
+        "order": 12,
+        "type": "task",
+        "parent": "a0000003-0000-4000-a000-000000000001",
+        "open": true,
+        "metadata": {
+          "crops": [
+            "tomatoes",
+            "basil",
+            "potatoes",
+            "wheat",
+            "soybeans"
+          ],
+          "growMethod": "Aeroponics"
+        },
+        "createdAt": "2026-02-01T10:12:00.000Z",
+        "updatedAt": "2026-02-27T20:40:23.579Z"
+      },
+      {
+        "id": "a0000003-0000-4000-a000-000000000004",
+        "name": "Equipment Procurement",
+        "startDate": "2026-02-12",
+        "endDate": "2026-02-18",
+        "duration": 5,
+        "progress": 25,
+        "color": "#8b5cf6",
+        "order": 13,
+        "type": "task",
+        "parent": "a0000003-0000-4000-a000-000000000001",
+        "open": true,
+        "metadata": {
+          "items": 342,
+          "criticalPath": [
+            "EVA suits",
+            "Drill rigs",
+            "3D printers"
+          ]
+        },
+        "createdAt": "2026-02-01T10:13:00.000Z",
+        "updatedAt": "2026-02-27T20:40:23.579Z"
+      },
+      {
+        "id": "a0000004-0000-4000-a000-000000000001",
+        "name": "Training & Simulation",
+        "startDate": "2026-01-26",
+        "endDate": "2026-02-25",
+        "duration": 23,
+        "progress": 40,
+        "color": "#f97316",
+        "order": 14,
+        "type": "summary",
+        "open": true,
+        "metadata": {
+          "trainingFacility": "Johnson Space Center, Houston",
+          "simulatorVersion": "MarsHab v4.2"
+        },
+        "createdAt": "2026-02-01T10:14:00.000Z",
+        "updatedAt": "2026-02-27T20:40:23.579Z"
+      },
+      {
+        "id": "a0000004-0000-4000-a000-000000000002",
+        "name": "Astronaut Physical Training",
+        "startDate": "2026-01-26",
+        "endDate": "2026-02-06",
+        "duration": 10,
+        "progress": 60,
+        "color": "#f97316",
+        "order": 15,
+        "type": "task",
+        "parent": "a0000004-0000-4000-a000-000000000001",
+        "open": true,
+        "metadata": {
+          "regimen": "Mars gravity adaptation + cardiovascular",
+          "centrifugeHours": 120
+        },
+        "createdAt": "2026-02-01T10:15:00.000Z",
+        "updatedAt": "2026-02-27T20:40:23.579Z"
+      },
+      {
+        "id": "a0000004-0000-4000-a000-000000000003",
+        "name": "Mars Surface Simulation",
+        "startDate": "2026-02-09",
+        "endDate": "2026-02-17",
+        "duration": 7,
+        "progress": 30,
+        "color": "#f97316",
+        "order": 16,
+        "type": "task",
+        "parent": "a0000004-0000-4000-a000-000000000001",
+        "open": true,
+        "metadata": {
+          "location": "Devon Island, Canadian Arctic",
+          "simulatedSols": 14
+        },
+        "createdAt": "2026-02-01T10:16:00.000Z",
+        "updatedAt": "2026-02-27T20:40:23.579Z"
+      },
+      {
+        "id": "a0000004-0000-4000-a000-000000000004",
+        "name": "Emergency Procedures",
+        "startDate": "2026-02-18",
+        "endDate": "2026-02-24",
+        "duration": 5,
+        "progress": 10,
+        "color": "#f97316",
+        "order": 17,
+        "type": "task",
+        "parent": "a0000004-0000-4000-a000-000000000001",
+        "open": true,
+        "metadata": {
+          "scenarios": [
+            "hull breach",
+            "dust storm",
+            "medical emergency",
+            "comm blackout",
+            "abort-to-orbit"
+          ]
+        },
+        "createdAt": "2026-02-01T10:17:00.000Z",
+        "updatedAt": "2026-02-27T20:40:23.579Z"
+      },
+      {
+        "id": "a0000004-0000-4000-a000-000000000005",
+        "name": "Final Crew Certification",
+        "startDate": "2026-02-25",
+        "endDate": "2026-02-25",
+        "duration": 1,
+        "progress": 0,
+        "color": "#eab308",
+        "order": 18,
+        "type": "milestone",
+        "parent": "a0000004-0000-4000-a000-000000000001",
+        "open": true,
+        "metadata": {
+          "certifiedBy": "International Space Agency Board"
+        },
+        "createdAt": "2026-02-01T10:18:00.000Z",
+        "updatedAt": "2026-02-27T20:40:23.579Z"
+      },
+      {
+        "id": "a0000005-0000-4000-a000-000000000001",
+        "name": "Launch & Transit",
+        "startDate": "2026-02-27",
+        "endDate": "2026-03-24",
+        "duration": 18,
+        "progress": 0,
+        "color": "#ef4444",
+        "order": 19,
+        "type": "summary",
+        "open": true,
+        "metadata": {
+          "launchWindow": "February 2026 — optimal Earth-Mars alignment",
+          "transitDays": 210
+        },
+        "createdAt": "2026-02-01T10:19:00.000Z",
+        "updatedAt": "2026-02-27T20:40:23.579Z"
+      },
+      {
+        "id": "a0000005-0000-4000-a000-000000000002",
+        "name": "Launch Countdown",
+        "startDate": "2026-02-27",
+        "endDate": "2026-03-03",
+        "duration": 3,
+        "progress": 0,
+        "color": "#ef4444",
+        "order": 20,
+        "type": "task",
+        "parent": "a0000005-0000-4000-a000-000000000001",
+        "open": true,
+        "metadata": {
+          "countdownStart": "T-72 hours",
+          "weatherConstraints": "Wind &lt; 30 knots, no lightning within 20 nm"
+        },
+        "createdAt": "2026-02-01T10:20:00.000Z",
+        "updatedAt": "2026-02-27T20:40:23.579Z"
+      },
+      {
+        "id": "a0000005-0000-4000-a000-000000000003",
+        "name": "Transit to Mars",
+        "startDate": "2026-03-04",
+        "endDate": "2026-03-23",
+        "duration": 14,
+        "progress": 0,
+        "color": "#ef4444",
+        "order": 21,
+        "type": "task",
+        "parent": "a0000005-0000-4000-a000-000000000001",
+        "open": true,
+        "metadata": {
+          "distance": "225 million km",
+          "maxVelocity": "34,000 km/h",
+          "midcourseCorrectionBurns": 3
+        },
+        "createdAt": "2026-02-01T10:21:00.000Z",
+        "updatedAt": "2026-02-27T20:40:23.579Z"
+      },
+      {
+        "id": "a0000005-0000-4000-a000-000000000004",
+        "name": "Mars Orbit Insertion",
+        "startDate": "2026-03-24",
+        "endDate": "2026-03-24",
+        "duration": 1,
+        "progress": 0,
+        "color": "#eab308",
+        "order": 22,
+        "type": "milestone",
+        "parent": "a0000005-0000-4000-a000-000000000001",
+        "open": true,
+        "metadata": {
+          "orbitAltitude": "250 km",
+          "brakingBurn": "6 min retrograde"
+        },
+        "createdAt": "2026-02-01T10:22:00.000Z",
+        "updatedAt": "2026-02-27T20:40:23.579Z"
+      },
+      {
+        "id": "a0000006-0000-4000-a000-000000000001",
+        "name": "Colony Construction",
+        "startDate": "2026-03-26",
+        "endDate": "2026-04-27",
+        "duration": 23,
+        "progress": 0,
+        "color": "#14b8a6",
+        "order": 23,
+        "type": "summary",
+        "open": true,
+        "metadata": {
+          "colonyName": "Ares Base",
+          "capacity": "6 crew permanent + 4 visitors"
+        },
+        "createdAt": "2026-02-01T10:23:00.000Z",
+        "updatedAt": "2026-02-27T20:40:23.579Z"
+      },
+      {
+        "id": "a0000006-0000-4000-a000-000000000002",
+        "name": "Habitat Module Deployment",
+        "startDate": "2026-03-26",
+        "endDate": "2026-04-03",
+        "duration": 7,
+        "progress": 0,
+        "color": "#14b8a6",
+        "order": 24,
+        "type": "task",
+        "parent": "a0000006-0000-4000-a000-000000000001",
+        "open": true,
+        "metadata": {
+          "modules": 4,
+          "inflatableVolume": "330 m³",
+          "radiationShielding": "Regolith + polyethylene"
+        },
+        "createdAt": "2026-02-01T10:24:00.000Z",
+        "updatedAt": "2026-02-27T20:40:23.579Z"
+      },
+      {
+        "id": "a0000006-0000-4000-a000-000000000003",
+        "name": "Solar Array Installation",
+        "startDate": "2026-04-06",
+        "endDate": "2026-04-10",
+        "duration": 5,
+        "progress": 0,
+        "color": "#14b8a6",
+        "order": 25,
+        "type": "task",
+        "parent": "a0000006-0000-4000-a000-000000000001",
+        "open": true,
+        "metadata": {
+          "panels": 48,
+          "peakOutput": "120 kW",
+          "backupRTG": true
+        },
+        "createdAt": "2026-02-01T10:25:00.000Z",
+        "updatedAt": "2026-02-27T20:40:23.579Z"
+      },
+      {
+        "id": "a0000006-0000-4000-a000-000000000004",
+        "name": "Water Extraction System",
+        "startDate": "2026-04-13",
+        "endDate": "2026-04-20",
+        "duration": 6,
+        "progress": 0,
+        "color": "#14b8a6",
+        "order": 26,
+        "type": "task",
+        "parent": "a0000006-0000-4000-a000-000000000001",
+        "open": true,
+        "metadata": {
+          "method": "Subsurface ice drilling",
+          "dailyOutput": "200 liters",
+          "drillDepth": "15 meters"
+        },
+        "createdAt": "2026-02-01T10:26:00.000Z",
+        "updatedAt": "2026-02-27T20:40:23.579Z"
+      },
+      {
+        "id": "a0000006-0000-4000-a000-000000000005",
+        "name": "Greenhouse Setup",
+        "startDate": "2026-04-21",
+        "endDate": "2026-04-27",
+        "duration": 5,
+        "progress": 0,
+        "color": "#14b8a6",
+        "order": 27,
+        "type": "task",
+        "parent": "a0000006-0000-4000-a000-000000000001",
+        "open": true,
+        "metadata": {
+          "area": "80 m²",
+          "firstCrop": "Cherry tomatoes + basil",
+          "artificialLighting": "Full-spectrum LED"
+        },
+        "createdAt": "2026-02-01T10:27:00.000Z",
+        "updatedAt": "2026-02-27T20:40:23.579Z"
+      },
+      {
+        "id": "a0000007-0000-4000-a000-000000000001",
+        "name": "First Pizza on Mars 🎉",
+        "startDate": "2026-04-29",
+        "endDate": "2026-04-29",
+        "duration": 1,
+        "progress": 0,
+        "color": "#eab308",
+        "order": 28,
+        "type": "milestone",
+        "open": true,
+        "metadata": {
+          "menuItem": "Margherita with Mars-grown basil",
+          "ovenType": "Solar-powered convection",
+          "dedicatedTo": "All of humanity"
+        },
+        "createdAt": "2026-02-01T10:28:00.000Z",
+        "updatedAt": "2026-02-27T20:40:23.579Z"
+      }
+    ],
+    "dependencies": [
+      {
+        "id": "d0000001-0000-4000-a000-000000000001",
+        "from": "a0000001-0000-4000-a000-000000000002",
+        "to": "a0000001-0000-4000-a000-000000000003",
+        "type": "FS",
+        "lag": 0,
+        "createdAt": "2026-02-01T10:30:00.000Z"
+      },
+      {
+        "id": "d0000001-0000-4000-a000-000000000002",
+        "from": "a0000001-0000-4000-a000-000000000003",
+        "to": "a0000001-0000-4000-a000-000000000004",
+        "type": "FS",
+        "lag": 0,
+        "createdAt": "2026-02-01T10:30:00.000Z"
+      },
+      {
+        "id": "d0000001-0000-4000-a000-000000000003",
+        "from": "a0000001-0000-4000-a000-000000000004",
+        "to": "a0000002-0000-4000-a000-000000000003",
+        "type": "FS",
+        "lag": 1,
+        "createdAt": "2026-02-01T10:30:00.000Z"
+      },
+      {
+        "id": "d0000001-0000-4000-a000-000000000004",
+        "from": "a0000001-0000-4000-a000-000000000004",
+        "to": "a0000003-0000-4000-a000-000000000002",
+        "type": "FS",
+        "lag": 1,
+        "createdAt": "2026-02-01T10:30:00.000Z"
+      },
+      {
+        "id": "d0000001-0000-4000-a000-000000000005",
+        "from": "a0000002-0000-4000-a000-000000000003",
+        "to": "a0000002-0000-4000-a000-000000000004",
+        "type": "FS",
+        "lag": 0,
+        "createdAt": "2026-02-01T10:30:00.000Z"
+      },
+      {
+        "id": "d0000001-0000-4000-a000-000000000006",
+        "from": "a0000002-0000-4000-a000-000000000004",
+        "to": "a0000002-0000-4000-a000-000000000005",
+        "type": "FS",
+        "lag": 0,
+        "createdAt": "2026-02-01T10:30:00.000Z"
+      },
+      {
+        "id": "d0000001-0000-4000-a000-000000000007",
+        "from": "a0000002-0000-4000-a000-000000000005",
+        "to": "a0000002-0000-4000-a000-000000000006",
+        "type": "FS",
+        "lag": 0,
+        "createdAt": "2026-02-01T10:30:00.000Z"
+      },
+      {
+        "id": "d0000001-0000-4000-a000-000000000008",
+        "from": "a0000003-0000-4000-a000-000000000002",
+        "to": "a0000003-0000-4000-a000-000000000003",
+        "type": "FS",
+        "lag": 0,
+        "createdAt": "2026-02-01T10:30:00.000Z"
+      },
+      {
+        "id": "d0000001-0000-4000-a000-000000000009",
+        "from": "a0000003-0000-4000-a000-000000000003",
+        "to": "a0000003-0000-4000-a000-000000000004",
+        "type": "FS",
+        "lag": 0,
+        "createdAt": "2026-02-01T10:30:00.000Z"
+      },
+      {
+        "id": "d0000001-0000-4000-a000-000000000010",
+        "from": "a0000004-0000-4000-a000-000000000002",
+        "to": "a0000004-0000-4000-a000-000000000003",
+        "type": "FS",
+        "lag": 0,
+        "createdAt": "2026-02-01T10:30:00.000Z"
+      },
+      {
+        "id": "d0000001-0000-4000-a000-000000000011",
+        "from": "a0000004-0000-4000-a000-000000000003",
+        "to": "a0000004-0000-4000-a000-000000000004",
+        "type": "FS",
+        "lag": 0,
+        "createdAt": "2026-02-01T10:30:00.000Z"
+      },
+      {
+        "id": "d0000001-0000-4000-a000-000000000012",
+        "from": "a0000004-0000-4000-a000-000000000004",
+        "to": "a0000004-0000-4000-a000-000000000005",
+        "type": "FS",
+        "lag": 0,
+        "createdAt": "2026-02-01T10:30:00.000Z"
+      },
+      {
+        "id": "d0000001-0000-4000-a000-000000000013",
+        "from": "a0000002-0000-4000-a000-000000000006",
+        "to": "a0000005-0000-4000-a000-000000000002",
+        "type": "FS",
+        "lag": 0,
+        "createdAt": "2026-02-01T10:30:00.000Z"
+      },
+      {
+        "id": "d0000001-0000-4000-a000-000000000014",
+        "from": "a0000004-0000-4000-a000-000000000005",
+        "to": "a0000005-0000-4000-a000-000000000002",
+        "type": "FS",
+        "lag": 0,
+        "createdAt": "2026-02-01T10:30:00.000Z"
+      },
+      {
+        "id": "d0000001-0000-4000-a000-000000000015",
+        "from": "a0000005-0000-4000-a000-000000000002",
+        "to": "a0000005-0000-4000-a000-000000000003",
+        "type": "FS",
+        "lag": 0,
+        "createdAt": "2026-02-01T10:30:00.000Z"
+      },
+      {
+        "id": "d0000001-0000-4000-a000-000000000016",
+        "from": "a0000005-0000-4000-a000-000000000003",
+        "to": "a0000005-0000-4000-a000-000000000004",
+        "type": "FS",
+        "lag": 0,
+        "createdAt": "2026-02-01T10:30:00.000Z"
+      },
+      {
+        "id": "d0000001-0000-4000-a000-000000000017",
+        "from": "a0000005-0000-4000-a000-000000000004",
+        "to": "a0000006-0000-4000-a000-000000000002",
+        "type": "FS",
+        "lag": 1,
+        "createdAt": "2026-02-01T10:30:00.000Z"
+      },
+      {
+        "id": "d0000001-0000-4000-a000-000000000018",
+        "from": "a0000006-0000-4000-a000-000000000002",
+        "to": "a0000006-0000-4000-a000-000000000003",
+        "type": "FS",
+        "lag": 0,
+        "createdAt": "2026-02-01T10:30:00.000Z"
+      },
+      {
+        "id": "d0000001-0000-4000-a000-000000000019",
+        "from": "a0000006-0000-4000-a000-000000000003",
+        "to": "a0000006-0000-4000-a000-000000000004",
+        "type": "FS",
+        "lag": 0,
+        "createdAt": "2026-02-01T10:30:00.000Z"
+      },
+      {
+        "id": "d0000001-0000-4000-a000-000000000020",
+        "from": "a0000006-0000-4000-a000-000000000004",
+        "to": "a0000006-0000-4000-a000-000000000005",
+        "type": "FS",
+        "lag": 0,
+        "createdAt": "2026-02-01T10:30:00.000Z"
+      },
+      {
+        "id": "d0000001-0000-4000-a000-000000000021",
+        "from": "a0000006-0000-4000-a000-000000000005",
+        "to": "a0000007-0000-4000-a000-000000000001",
+        "type": "FS",
+        "lag": 1,
+        "createdAt": "2026-02-01T10:30:00.000Z"
+      }
+    ],
+    "viewSettings": {
+      "zoom": 0.32273972602739726,
+      "panOffset": {
+        "x": 0,
+        "y": 0
+      },
+      "taskTableWidth": 738,
+      "columnWidths": {
+        "name": 271,
+        "startDate": 113,
+        "endDate": 113,
+        "duration": 95,
+        "progress": 64
+      },
+      "showWeekends": true,
+      "showTodayMarker": true,
+      "showHolidays": true,
+      "showDependencies": true,
+      "showProgress": true,
+      "taskLabelPosition": "after",
+      "workingDaysMode": true,
+      "workingDaysConfig": {
+        "excludeSaturday": true,
+        "excludeSunday": true,
+        "excludeHolidays": true
+      },
+      "holidayRegion": "US",
+      "projectTitle": "Project Red Planet",
+      "projectAuthor": "OwnChart",
+      "colorModeState": {
+        "mode": "summary",
+        "themeOptions": {
+          "selectedPaletteId": null,
+          "customMonochromeBase": null
+        },
+        "summaryOptions": {
+          "useMilestoneAccent": true,
+          "milestoneAccentColor": "#CA8A04"
+        },
+        "taskTypeOptions": {
+          "summaryColor": "#0A2E4A",
+          "taskColor": "#0F6CBD",
+          "milestoneColor": "#CA8A04"
+        },
+        "hierarchyOptions": {
+          "baseColor": "#0F6CBD",
+          "lightenPercentPerLevel": 12,
+          "maxLightenPercent": 36
+        }
+      },
+      "hiddenColumns": [],
+      "isTaskTableCollapsed": false,
+      "hiddenTaskIds": []
+    },
+    "exportSettings": {
+      "zoomMode": "currentView",
+      "timelineZoom": 1,
+      "fitToWidth": 1920,
+      "dateRangeMode": "all",
+      "selectedColumns": [],
+      "includeHeader": true,
+      "includeTodayMarker": true,
+      "includeDependencies": true,
+      "includeGridLines": true,
+      "includeWeekends": true,
+      "includeHolidays": true,
+      "taskLabelPosition": "inside",
+      "background": "white",
+      "density": "normal"
+    },
+    "metadata": {
+      "createdAt": "2026-02-01T10:00:00.000Z",
+      "updatedAt": "2026-02-27T20:40:23.579Z"
+    }
+  },
+  "metadata": {
+    "created": "2026-02-27T20:40:23.579Z",
+    "modified": "2026-02-27T20:40:23.579Z"
+  },
+  "features": {
+    "hasHierarchy": true,
+    "hasHistory": false,
+    "hasDependencies": true
+  }
+}

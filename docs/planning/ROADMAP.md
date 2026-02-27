@@ -353,7 +353,7 @@ If dependency arrows or performance validation fails, reassess approach before c
 - 8 utility files created in `src/utils/fileOperations/`
 - 112 automated tests (90%+ coverage)
 - Browser compatibility: Chrome/Edge (File System Access API) + Firefox/Safari (fallback)
-- Example file: `examples/website-relaunch.ownchart` (27 tasks, 17 KB)
+- Example file: `examples/mars-colony.ownchart` (29 tasks, 18 KB)
 
 **Rationale for Priority**: File operations moved ahead of dependencies because:
 - Critical for usability - users need to save their work

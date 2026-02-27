@@ -325,9 +325,9 @@
 ## 13. Example Files
 
 ### Provided Example
-- [x] `examples/website-relaunch.ownchart` existiert ✅ *Automated: File exists (17 KB)*
+- [x] `examples/mars-colony.ownchart` existiert ✅ *Automated: File exists (18 KB)*
 - [ ] Datei öffnet ohne Fehler ⚠️ *Manual: Requires browser testing*
-- [ ] Alle 27 Tasks werden geladen ⚠️ *Manual: Requires browser testing*
+- [ ] Alle 29 Tasks werden geladen ⚠️ *Manual: Requires browser testing*
 - [ ] Hierarchie (3 Ebenen) wird korrekt dargestellt ⚠️ *Manual: Requires browser testing*
 - [ ] Alle Task-Typen (task, summary, milestone) vorhanden ⚠️ *Manual: Requires browser testing*
 - [ ] View Settings werden angewendet (Zoom 1.2, Pan -150) ⚠️ *Manual: Requires browser testing*
