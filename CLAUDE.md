@@ -379,7 +379,7 @@ This includes linting, formatting, type-checking, and all unit tests. Do NOT pus
 
 ### Release Workflow for Claude
 
-**When Martin says "let's release" or after completing a sprint**:
+**When Martin asks to push OR says "let's release" or after completing a sprint**:
 
 ```bash
 # 1. Check if all tests pass
@@ -406,6 +406,10 @@ git tag -l
 - Inform Martin of new version number
 - Summarize what's in the changelog
 - Confirm tags were pushed successfully
+
+### Push = Release Rule
+
+**Whenever Martin asks to push** (e.g., "push", "push it", "push to main"), **ALWAYS run the full release workflow above first** — including `npm run release` and `git push --follow-tags`. Never do a bare `git push` without releasing.
 
 ### Documentation Updates
 
@@ -558,7 +562,7 @@ npm run test:e2e            # E2E tests (Playwright)
 - Easier event handling
 - Good performance for <1000 tasks
 
-**Why standard-version for releases?**
+**Why commit-and-tag-version for releases?**
 - Local control (not fully automated)
 - Solo-friendly workflow
 - Generates changelog from commits
