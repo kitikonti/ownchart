@@ -21,6 +21,7 @@
  */
 
 import type { Task } from "../types/chart.types";
+import type { ColorModeState } from "../types/colorMode.types";
 import type { Dependency } from "../types/dependency.types";
 
 const STORAGE_KEY = "ownchart-multi-tab-state";
@@ -50,6 +51,7 @@ export interface ChartState {
   hiddenColumns?: string[];
   isTaskTableCollapsed?: boolean;
   hiddenTaskIds?: string[];
+  colorModeState?: ColorModeState;
 }
 
 export interface FileState {

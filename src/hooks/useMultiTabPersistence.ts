@@ -118,6 +118,9 @@ export function useMultiTabPersistence(): void {
     if (savedChart.chartState.hiddenTaskIds !== undefined) {
       chartStore.setHiddenTaskIds(savedChart.chartState.hiddenTaskIds);
     }
+    if (savedChart.chartState.colorModeState !== undefined) {
+      chartStore.setColorModeState(savedChart.chartState.colorModeState);
+    }
 
     // Restore file state
     const { setFileName, setChartId, setLastSaved, markDirty, markClean } =
@@ -183,6 +186,7 @@ export function useMultiTabPersistence(): void {
           hiddenColumns: chartState.hiddenColumns,
           isTaskTableCollapsed: chartState.isTaskTableCollapsed,
           hiddenTaskIds: chartState.hiddenTaskIds,
+          colorModeState: chartState.colorModeState,
         } as ChartState,
         tableState: {
           columnWidths: taskState.columnWidths,
