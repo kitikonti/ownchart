@@ -2,6 +2,14 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [0.0.51](https://github.com/kitikonti/ownchart/compare/v0.0.50...v0.0.51) (2026-02-27)
+
+
+### Bug Fixes
+
+* allow unhiding first hidden rows via top-edge indicator ([#58](https://github.com/kitikonti/ownchart/issues/58)) ([7d7f2bd](https://github.com/kitikonti/ownchart/commit/7d7f2bd4aed8db118cec25c465609cb1d06378aa))
+* persist color mode across page reload ([#61](https://github.com/kitikonti/ownchart/issues/61)) ([715d10f](https://github.com/kitikonti/ownchart/commit/715d10f9fa7e8fb32806aae33e416a3f914f898c))
+
 ### [0.0.50](https://github.com/kitikonti/ownchart/compare/v0.0.49...v0.0.50) (2026-02-26)
 
 
