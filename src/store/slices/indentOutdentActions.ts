@@ -4,6 +4,7 @@
  */
 
 import type { Task } from "../../types/chart.types";
+import type { TaskId } from "../../types/branded.types";
 import {
   wouldCreateCircularHierarchy,
   getTaskLevel,
@@ -38,12 +39,12 @@ type IndentOutdentActions = Pick<
  */
 function computeIndentChanges(
   tasks: Task[],
-  taskIds: string[],
+  taskIds: TaskId[],
   flatList: FlattenedTask[]
 ): Array<{
-  taskId: string;
-  oldParent: string | undefined;
-  newParent: string | undefined;
+  taskId: TaskId;
+  oldParent: TaskId | undefined;
+  newParent: TaskId | undefined;
 }> {
   // Sort selection by display order (top to bottom)
   const sortedIds = [...taskIds].sort((a, b) => {
@@ -53,9 +54,9 @@ function computeIndentChanges(
   });
 
   const changes: Array<{
-    taskId: string;
-    oldParent: string | undefined;
-    newParent: string | undefined;
+    taskId: TaskId;
+    oldParent: TaskId | undefined;
+    newParent: TaskId | undefined;
   }> = [];
 
   for (const taskId of sortedIds) {
@@ -69,7 +70,7 @@ function computeIndentChanges(
     const oldParent = task.parent;
 
     // Find previous sibling (same level) - skip if it's also selected
-    let newParentId: string | null = null;
+    let newParentId: TaskId | null = null;
     for (let i = index - 1; i >= 0; i--) {
       const prevTask = flatList[i];
       if (prevTask.level === level) {
@@ -117,9 +118,13 @@ export function createIndentOutdentActions(
       const { tasks } = state;
 
       // Create snapshot of current hierarchy BEFORE any changes
-      const originalFlatList = buildFlattenedTaskList(tasks, new Set<string>());
+      const originalFlatList = buildFlattenedTaskList(tasks, new Set<TaskId>());
 
-      const changes = computeIndentChanges(tasks, taskIds, originalFlatList);
+      const changes = computeIndentChanges(
+        tasks,
+        taskIds as TaskId[],
+        originalFlatList
+      );
       if (changes.length === 0) return;
 
       const previousTaskSnapshot = captureHierarchySnapshot(tasks);
@@ -143,7 +148,7 @@ export function createIndentOutdentActions(
         const affectedParentIds = new Set(
           changes
             .map((c) => c.newParent)
-            .filter((id): id is string => id !== undefined)
+            .filter((id): id is TaskId => id !== undefined)
         );
         recalculateSummaryAncestors(state.tasks, affectedParentIds);
 
@@ -186,12 +191,12 @@ export function createIndentOutdentActions(
 
       // Calculate all changes based on ORIGINAL hierarchy (capture oldParent)
       const changes: Array<{
-        taskId: string;
-        oldParent: string | undefined;
-        newParent: string | undefined;
+        taskId: TaskId;
+        oldParent: TaskId | undefined;
+        newParent: TaskId | undefined;
       }> = [];
 
-      for (const taskId of taskIds) {
+      for (const taskId of taskIds as TaskId[]) {
         const task = tasks.find((t) => t.id === taskId);
         if (!task?.parent) continue; // Already on root level
 
@@ -218,7 +223,7 @@ export function createIndentOutdentActions(
       const previousTaskSnapshot = captureHierarchySnapshot(tasks);
 
       // Track old parents for summary date recalculation
-      const oldParentIds = new Set<string>();
+      const oldParentIds = new Set<TaskId>();
       for (const { oldParent } of changes) {
         if (oldParent) {
           oldParentIds.add(oldParent);
@@ -230,7 +235,7 @@ export function createIndentOutdentActions(
         for (const { taskId, newParent } of changes) {
           const task = state.tasks.find((t) => t.id === taskId);
           if (task) {
-            task.parent = newParent || undefined;
+            task.parent = newParent ?? undefined;
           }
         }
 
@@ -266,7 +271,7 @@ export function createIndentOutdentActions(
       if (taskIds.length === 0) return false;
       const { tasks } = state;
 
-      const flatList = buildFlattenedTaskList(tasks, new Set<string>());
+      const flatList = buildFlattenedTaskList(tasks, new Set<TaskId>());
 
       return taskIds.some((taskId) => {
         const index = flatList.findIndex((t) => t.task.id === taskId);

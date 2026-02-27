@@ -5,6 +5,7 @@
 
 import { useState, useCallback, useRef, useEffect } from "react";
 import type { Task } from "../types/chart.types";
+import type { TaskId } from "../types/branded.types";
 import type { TimelineScale, TaskBarGeometry } from "../utils/timelineUtils";
 import { addDays, calculateDuration } from "../utils/dateUtils";
 import { useTaskStore } from "../store/slices/taskSlice";
@@ -303,7 +304,7 @@ export function useTaskBarInteraction(
         );
 
         // Build updates array for all affected tasks
-        const updates: Array<{ id: string; updates: Partial<Task> }> = [];
+        const updates: Array<{ id: TaskId; updates: Partial<Task> }> = [];
 
         for (const taskId of effectiveTaskIds) {
           const t = currentTasks.find((x) => x.id === taskId);

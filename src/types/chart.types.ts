@@ -3,7 +3,7 @@
  * Aligned with DATA_MODEL.md Section 3.1
  */
 
-import type { HexColor } from "./branded.types";
+import type { HexColor, TaskId } from "./branded.types";
 
 /**
  * Task type classification.
@@ -35,7 +35,7 @@ export type TaskType = "task" | "summary" | "milestone";
  * @property open - Expanded/collapsed state for summary tasks (default: true)
  */
 export interface Task {
-  id: string;
+  id: TaskId;
   name: string;
   startDate: string;
   endDate: string;
@@ -47,7 +47,7 @@ export interface Task {
 
   // Extended properties for advanced features
   type?: TaskType;
-  parent?: string;
+  parent?: TaskId;
   open?: boolean;
 
   // Color override for manual overrides in automatic color modes

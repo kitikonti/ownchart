@@ -20,6 +20,7 @@ import {
 import GroupIcon from "../assets/icons/group-light.svg?react";
 import UngroupIcon from "../assets/icons/ungroup-light.svg?react";
 import type { ContextMenuItem } from "../components/ContextMenu/ContextMenu";
+import type { TaskId } from "../types/branded.types";
 import { useClipboardOperations } from "./useClipboardOperations";
 import { useHideOperations } from "./useHideOperations";
 import { useTaskStore } from "../store/slices/taskSlice";
@@ -36,7 +37,7 @@ import {
 
 interface UseFullTaskContextMenuItemsResult {
   /** Build the full context menu items for a given task. */
-  buildItems: (taskId: string) => ContextMenuItem[];
+  buildItems: (taskId: TaskId) => ContextMenuItem[];
 }
 
 export function useFullTaskContextMenuItems(): UseFullTaskContextMenuItemsResult {
@@ -84,7 +85,7 @@ export function useFullTaskContextMenuItems(): UseFullTaskContextMenuItemsResult
   );
 
   const buildItems = useCallback(
-    (taskId: string): ContextMenuItem[] => {
+    (taskId: TaskId): ContextMenuItem[] => {
       const { effectiveSelection, count } = getEffectiveSelection(
         taskId,
         selectedTaskIds

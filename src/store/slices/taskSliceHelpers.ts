@@ -3,6 +3,7 @@
  */
 
 import type { Task } from "../../types/chart.types";
+import type { TaskId } from "../../types/branded.types";
 import type {
   Command,
   CommandParamsMap,
@@ -59,9 +60,9 @@ export function recordCommand<T extends CommandType>(
  * Returns selected task IDs if any, otherwise the active cell's task ID.
  */
 export function getEffectiveTaskIds(state: {
-  selectedTaskIds: string[];
-  activeCell: { taskId: string | null };
-}): string[] {
+  selectedTaskIds: TaskId[];
+  activeCell: { taskId: TaskId | null };
+}): TaskId[] {
   if (state.selectedTaskIds.length > 0) return state.selectedTaskIds;
   if (state.activeCell.taskId) return [state.activeCell.taskId];
   return [];
@@ -73,8 +74,8 @@ export function getEffectiveTaskIds(state: {
  */
 export function getRootSelectedIds(
   tasks: Task[],
-  selectedIds: string[]
-): string[] {
+  selectedIds: TaskId[]
+): TaskId[] {
   const selectedSet = new Set(selectedIds);
   return selectedIds.filter((id) => {
     let ancestor = tasks.find((t) => t.id === id);
@@ -93,7 +94,7 @@ export function getRootSelectedIds(
  */
 export function computeTypeChangeEffects(
   tasks: Task[],
-  taskId: string,
+  taskId: TaskId,
   task: Task, // Immer draft — type may be mutated for summary
   updates: Partial<Task>
 ): Partial<Task> | null {

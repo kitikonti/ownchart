@@ -7,6 +7,7 @@
  */
 
 import { useEffect, useRef } from "react";
+import type { TaskId } from "../types/branded.types";
 import { useTaskStore } from "../store/slices/taskSlice";
 import { useChartStore } from "../store/slices/chartSlice";
 import { useFileStore } from "../store/slices/fileSlice";
@@ -116,7 +117,9 @@ export function useMultiTabPersistence(): void {
       );
     }
     if (savedChart.chartState.hiddenTaskIds !== undefined) {
-      chartStore.setHiddenTaskIds(savedChart.chartState.hiddenTaskIds);
+      chartStore.setHiddenTaskIds(
+        savedChart.chartState.hiddenTaskIds as TaskId[]
+      );
     }
     if (savedChart.chartState.colorModeState !== undefined) {
       chartStore.setColorModeState(savedChart.chartState.colorModeState);

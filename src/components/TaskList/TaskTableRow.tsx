@@ -13,6 +13,7 @@ import { memo, useCallback, useMemo } from "react";
 import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import type { Task } from "../../types/chart.types";
+import type { TaskId } from "../../types/branded.types";
 import { useTaskStore } from "../../store/slices/taskSlice";
 import type { ColumnDefinition } from "../../config/tableColumns";
 import { RowNumberCell } from "./RowNumberCell";
@@ -34,7 +35,7 @@ interface TaskTableRowProps {
   globalRowNumber: number;
   level?: number;
   hasChildren?: boolean;
-  visibleTaskIds: string[];
+  visibleTaskIds: TaskId[];
   visibleColumns: ColumnDefinition[];
   gridTemplateColumns: string;
   hasHiddenAbove?: boolean;
@@ -43,7 +44,7 @@ interface TaskTableRowProps {
   hasHiddenBelow?: boolean;
   hiddenBelowCount?: number;
   onUnhideBelow?: () => void;
-  onContextMenu: (e: React.MouseEvent, taskId: string) => void;
+  onContextMenu: (e: React.MouseEvent, taskId: TaskId) => void;
   clipboardPosition?: {
     isFirst: boolean;
     isLast: boolean;
@@ -144,7 +145,7 @@ export const TaskTableRow = memo(function TaskTableRow({
   }, [task.id]);
 
   const handleSelectRow = useCallback(
-    (taskId: string, shiftKey: boolean, ctrlKey: boolean): void => {
+    (taskId: TaskId, shiftKey: boolean, ctrlKey: boolean): void => {
       setActiveCell(null, null);
       if (shiftKey) {
         // Read from store at call-time to avoid subscription

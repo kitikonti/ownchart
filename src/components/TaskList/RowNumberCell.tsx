@@ -18,6 +18,7 @@ import {
 import { DotsSixVertical } from "@phosphor-icons/react";
 import type { DraggableAttributes } from "@dnd-kit/core";
 import type { SyntheticListenerMap } from "@dnd-kit/core/dist/hooks/utilities";
+import type { TaskId } from "../../types/branded.types";
 import { TRANSITIONS } from "../../styles/design-tokens";
 import { HiddenRowIndicator } from "./HiddenRowIndicator";
 import { InsertRowButton } from "./InsertRowButton";
@@ -39,7 +40,7 @@ interface RowNumberCellProps {
   /** Row number to display (1-based) */
   rowNumber: number;
   /** Task ID for this row */
-  taskId: string;
+  taskId: TaskId;
   /** Whether this row is selected */
   isSelected: boolean;
   /** Position in selection for border-radius */
@@ -60,7 +61,7 @@ interface RowNumberCellProps {
   /** Callback to unhide hidden rows below */
   onUnhideBelow?: () => void;
   /** Select this row (Excel-style: normal=replace, Shift=range, Ctrl=toggle) */
-  onSelectRow: (taskId: string, shiftKey: boolean, ctrlKey: boolean) => void;
+  onSelectRow: (taskId: TaskId, shiftKey: boolean, ctrlKey: boolean) => void;
   /** Insert a new row above this one */
   onInsertAbove?: () => void;
   /** Insert a new row below this one */
@@ -122,7 +123,7 @@ export const RowNumberCell = memo(function RowNumberCell({
   // then invoked by OTHER rows on mouseEnter. It captures THIS row's onSelectRow,
   // which works correctly because onSelectRow is a store-backed action that accepts
   // any taskId (it's not specific to this row).
-  const handleDragSelect = (targetTaskId: string): void => {
+  const handleDragSelect = (targetTaskId: TaskId): void => {
     if (dragState.startTaskId) {
       onSelectRow(targetTaskId, true, false);
     }

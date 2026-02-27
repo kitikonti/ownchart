@@ -4,6 +4,7 @@
  * See: concept/sprints/SPRINT_1.1.1_TASK_GROUPS.md
  */
 
+import type { TaskId } from "../types/branded.types";
 import type { Task } from "../types/chart.types";
 
 /**
@@ -277,7 +278,7 @@ export interface SummaryDateUpdates {
  * Result of a single summary recalculation, capturing previous values for undo.
  */
 export interface SummaryCascadeEntry {
-  id: string;
+  id: TaskId;
   updates: SummaryDateUpdates;
   previousValues: SummaryDateUpdates;
 }
@@ -292,10 +293,10 @@ export interface SummaryCascadeEntry {
  */
 export function recalculateSummaryAncestors(
   tasks: Task[],
-  parentIds: Set<string>
+  parentIds: Set<TaskId>
 ): SummaryCascadeEntry[] {
   const cascadeUpdates: SummaryCascadeEntry[] = [];
-  const processed = new Set<string>();
+  const processed = new Set<TaskId>();
   const queue = Array.from(parentIds);
 
   while (queue.length > 0) {
@@ -376,15 +377,15 @@ export function recalculateSummaryAncestors(
  */
 export function getEffectiveTasksToMove(
   tasks: Task[],
-  selectedIds: string[]
-): string[] {
+  selectedIds: TaskId[]
+): TaskId[] {
   // For simple case with no hierarchical selections, just return selected non-summary tasks
   if (selectedIds.length === 0) return [];
 
-  const result = new Set<string>();
+  const result = new Set<TaskId>();
 
   // Check if any selected task is a summary that would expand to include descendants
-  const selectedSummaryIds = new Set<string>();
+  const selectedSummaryIds = new Set<TaskId>();
   for (const id of selectedIds) {
     const task = tasks.find((t) => t.id === id);
     if (task?.type === "summary") {

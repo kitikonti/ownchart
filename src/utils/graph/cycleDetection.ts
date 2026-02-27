@@ -6,6 +6,7 @@
  * Space Complexity: O(V) for recursion stack
  */
 
+import type { TaskId } from "../../types/branded.types";
 import type {
   Dependency,
   CycleDetectionResult,
@@ -23,7 +24,7 @@ export function detectCycle(
   newDependency?: Dependency
 ): CycleDetectionResult {
   // Build adjacency list
-  const graph = new Map<string, string[]>();
+  const graph = new Map<TaskId, TaskId[]>();
 
   // Add existing dependencies
   for (const dep of dependencies) {
@@ -47,10 +48,10 @@ export function detectCycle(
   }
 
   // DFS with recursion stack tracking
-  const visited = new Set<string>();
-  const inStack = new Set<string>();
+  const visited = new Set<TaskId>();
+  const inStack = new Set<TaskId>();
 
-  function dfs(node: string, path: string[]): string[] | null {
+  function dfs(node: TaskId, path: TaskId[]): TaskId[] | null {
     visited.add(node);
     inStack.add(node);
     path.push(node);
@@ -95,8 +96,8 @@ export function detectCycle(
  */
 export function wouldCreateCycle(
   dependencies: Dependency[],
-  fromTaskId: string,
-  toTaskId: string
+  fromTaskId: TaskId,
+  toTaskId: TaskId
 ): CycleDetectionResult {
   // Self-dependency is always a cycle
   if (fromTaskId === toTaskId) {

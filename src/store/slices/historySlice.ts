@@ -27,6 +27,7 @@ import {
   type UnhideTasksParams,
 } from "../../types/command.types";
 import type { Task } from "../../types/chart.types";
+import type { TaskId } from "../../types/branded.types";
 import type { Dependency } from "../../types/dependency.types";
 import { calculateDuration } from "../../utils/dateUtils";
 import { useTaskStore } from "./taskSlice";
@@ -232,8 +233,8 @@ function applyCascadePreviousValues(
 function applySnapshot(
   taskMap: Map<string, Task>,
   snapshot: ReadonlyArray<{
-    id: string;
-    parent: string | undefined;
+    id: TaskId;
+    parent: TaskId | undefined;
     order: number;
   }>
 ): void {
@@ -248,11 +249,11 @@ function applySnapshot(
 
 function collectAffectedParents(
   changes: ReadonlyArray<{
-    oldParent?: string | undefined;
-    newParent?: string | undefined;
+    oldParent?: TaskId | undefined;
+    newParent?: TaskId | undefined;
   }>
-): Set<string> {
-  const ids = new Set<string>();
+): Set<TaskId> {
+  const ids = new Set<TaskId>();
   for (const change of changes) {
     if (change.oldParent) ids.add(change.oldParent);
     if (change.newParent) ids.add(change.newParent);
@@ -332,7 +333,7 @@ function undoReorderTasks(params: ReorderTasksParams): void {
 
   applySnapshot(taskMap, params.previousOrder);
 
-  const affectedParentIds = new Set<string>();
+  const affectedParentIds = new Set<TaskId>();
   for (const entry of params.previousOrder) {
     if (entry.parent) affectedParentIds.add(entry.parent);
   }
@@ -514,7 +515,7 @@ function undoUngroupTasks(params: UngroupTasksParams): void {
 }
 
 function undoHideStateChange(params: {
-  previousHiddenTaskIds: string[];
+  previousHiddenTaskIds: TaskId[];
 }): void {
   useChartStore.getState().setHiddenTaskIds(params.previousHiddenTaskIds);
 }
@@ -549,7 +550,7 @@ function redoUpdateTask(params: UpdateTaskParams): void {
 function redoDeleteTask(params: DeleteTaskParams): void {
   const idsToDelete = new Set(params.deletedIds);
 
-  const affectedParentIds = new Set<string>();
+  const affectedParentIds = new Set<TaskId>();
   if (params.deletedTasks) {
     for (const task of params.deletedTasks) {
       if (task.parent && !idsToDelete.has(task.parent)) {
@@ -712,7 +713,7 @@ function redoGroupTasks(params: GroupTasksParams): void {
   }
 
   normalizeTaskOrder(currentTasks);
-  const affectedParents = new Set<string>([params.summaryTaskId]);
+  const affectedParents = new Set<TaskId>([params.summaryTaskId]);
   if (params.summaryTask.parent) {
     affectedParents.add(params.summaryTask.parent);
   }
@@ -756,7 +757,7 @@ function redoUngroupTasks(params: UngroupTasksParams): void {
 
   normalizeTaskOrder(filteredTasks);
 
-  const affectedParents = new Set<string>();
+  const affectedParents = new Set<TaskId>();
   for (const entry of params.ungroupedSummaries) {
     if (entry.summaryTask.parent) {
       affectedParents.add(entry.summaryTask.parent);

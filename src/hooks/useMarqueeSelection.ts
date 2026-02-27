@@ -4,6 +4,7 @@
  */
 
 import { useState, useCallback, useRef, useEffect } from "react";
+import type { TaskId } from "../types/branded.types";
 
 export interface MarqueeRect {
   startX: number;
@@ -13,7 +14,7 @@ export interface MarqueeRect {
 }
 
 export interface TaskGeometry {
-  id: string;
+  id: TaskId;
   x: number;
   y: number;
   width: number;
@@ -26,7 +27,7 @@ interface UseMarqueeSelectionOptions {
   /** Task geometries for hit detection */
   taskGeometries: TaskGeometry[];
   /** Callback when selection changes */
-  onSelectionChange: (taskIds: string[], addToSelection: boolean) => void;
+  onSelectionChange: (taskIds: TaskId[], addToSelection: boolean) => void;
   /** Whether marquee selection is enabled */
   enabled?: boolean;
 }
@@ -109,9 +110,9 @@ export function useMarqueeSelection({
 
   // Find tasks that intersect with the marquee rectangle
   const findIntersectingTasks = useCallback(
-    (marquee: MarqueeRect): string[] => {
+    (marquee: MarqueeRect): TaskId[] => {
       const normalizedMarquee = normalizeRect(marquee);
-      const intersectingIds: string[] = [];
+      const intersectingIds: TaskId[] = [];
 
       for (const task of taskGeometries) {
         const taskRect = {

@@ -6,6 +6,7 @@
  * Space Complexity: O(V)
  */
 
+import type { TaskId } from "../../types/branded.types";
 import type { Task } from "../../types/chart.types";
 import type { Dependency } from "../../types/dependency.types";
 
@@ -21,9 +22,9 @@ export function topologicalSort(
   tasks: Task[],
   dependencies: Dependency[]
 ): Task[] {
-  const taskMap = new Map(tasks.map((t) => [t.id, t]));
-  const inDegree = new Map<string, number>();
-  const graph = new Map<string, string[]>();
+  const taskMap = new Map<TaskId, Task>(tasks.map((t) => [t.id, t]));
+  const inDegree = new Map<TaskId, number>();
+  const graph = new Map<TaskId, TaskId[]>();
 
   // Initialize all tasks with 0 in-degree
   for (const task of tasks) {
@@ -41,7 +42,7 @@ export function topologicalSort(
   }
 
   // Start with tasks that have no predecessors
-  const queue: string[] = [];
+  const queue: TaskId[] = [];
   for (const [taskId, degree] of inDegree) {
     if (degree === 0) {
       queue.push(taskId);
@@ -77,11 +78,11 @@ export function topologicalSort(
  * @returns Set of successor task IDs
  */
 export function getSuccessors(
-  taskId: string,
+  taskId: TaskId,
   dependencies: Dependency[]
-): Set<string> {
-  const successors = new Set<string>();
-  const graph = new Map<string, string[]>();
+): Set<TaskId> {
+  const successors = new Set<TaskId>();
+  const graph = new Map<TaskId, TaskId[]>();
 
   // Build adjacency list
   for (const dep of dependencies) {
@@ -92,8 +93,8 @@ export function getSuccessors(
   }
 
   // BFS to find all reachable nodes
-  const queue = [taskId];
-  const visited = new Set<string>();
+  const queue: TaskId[] = [taskId];
+  const visited = new Set<TaskId>();
 
   while (queue.length > 0) {
     const current = queue.shift()!;
@@ -119,13 +120,13 @@ export function getSuccessors(
  * @returns Set of predecessor task IDs
  */
 export function getPredecessors(
-  taskId: string,
+  taskId: TaskId,
   dependencies: Dependency[]
-): Set<string> {
-  const predecessors = new Set<string>();
+): Set<TaskId> {
+  const predecessors = new Set<TaskId>();
 
   // Build reverse adjacency list
-  const reverseGraph = new Map<string, string[]>();
+  const reverseGraph = new Map<TaskId, TaskId[]>();
   for (const dep of dependencies) {
     if (!reverseGraph.has(dep.toTaskId)) {
       reverseGraph.set(dep.toTaskId, []);
@@ -134,8 +135,8 @@ export function getPredecessors(
   }
 
   // BFS to find all predecessors
-  const queue = [taskId];
-  const visited = new Set<string>();
+  const queue: TaskId[] = [taskId];
+  const visited = new Set<TaskId>();
 
   while (queue.length > 0) {
     const current = queue.shift()!;

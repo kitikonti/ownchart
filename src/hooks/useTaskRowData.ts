@@ -6,6 +6,7 @@
  */
 
 import { useMemo } from "react";
+import type { TaskId } from "../types/branded.types";
 import { useTaskStore } from "../store/slices/taskSlice";
 import { useFlattenedTasks } from "./useFlattenedTasks";
 import type { FlattenedTask } from "../utils/hierarchy";
@@ -95,7 +96,7 @@ export function useTaskRowData(
   unhideRange: (fromRowNum: number, toRowNum: number) => void
 ): {
   taskRowData: TaskRowDatum[];
-  visibleTaskIds: string[];
+  visibleTaskIds: TaskId[];
   flattenedTaskCount: number;
 } {
   const clipboardTaskIds = useTaskStore((state) => state.clipboardTaskIds);

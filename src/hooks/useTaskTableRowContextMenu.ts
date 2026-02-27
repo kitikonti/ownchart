@@ -6,6 +6,7 @@
 
 import { useMemo, useState, useCallback } from "react";
 import type { ContextMenuItem } from "../components/ContextMenu/ContextMenu";
+import type { TaskId } from "../types/branded.types";
 import { useTaskStore } from "../store/slices/taskSlice";
 import type { TaskContextMenuState } from "./contextMenuItemBuilders";
 import { useFullTaskContextMenuItems } from "./useFullTaskContextMenuItems";
@@ -13,7 +14,7 @@ import { useFullTaskContextMenuItems } from "./useFullTaskContextMenuItems";
 interface UseTaskTableRowContextMenuResult {
   contextMenu: TaskContextMenuState | null;
   contextMenuItems: ContextMenuItem[];
-  handleRowContextMenu: (e: React.MouseEvent, taskId: string) => void;
+  handleRowContextMenu: (e: React.MouseEvent, taskId: TaskId) => void;
   closeContextMenu: () => void;
 }
 
@@ -26,7 +27,7 @@ export function useTaskTableRowContextMenu(): UseTaskTableRowContextMenuResult {
   );
 
   const handleRowContextMenu = useCallback(
-    (e: React.MouseEvent, taskId: string): void => {
+    (e: React.MouseEvent, taskId: TaskId): void => {
       e.preventDefault();
 
       // Right-click selection logic:

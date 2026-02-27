@@ -16,10 +16,11 @@ import { useTaskStore } from "../store/slices/taskSlice";
 import { CONTEXT_MENU } from "../styles/design-tokens";
 import { useFullTaskContextMenuItems } from "./useFullTaskContextMenuItems";
 import type { Task } from "../types/chart.types";
+import type { TaskId } from "../types/branded.types";
 
 /** Context menu state: either targeting a specific task or just a position. */
 type AreaContextMenuState =
-  | { position: ContextMenuPosition; taskId: string }
+  | { position: ContextMenuPosition; taskId: TaskId }
   | { position: ContextMenuPosition; taskId?: undefined };
 
 interface UseTimelineAreaContextMenuOptions {

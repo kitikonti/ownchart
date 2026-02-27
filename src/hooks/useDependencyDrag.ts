@@ -6,6 +6,7 @@
 
 import { useState, useCallback, useEffect, useRef } from "react";
 import type { Task } from "../types/chart.types";
+import type { TaskId } from "../types/branded.types";
 import type { DependencyDragState } from "../types/dependency.types";
 import { useDependencyStore } from "../store/slices/dependencySlice";
 import toast from "react-hot-toast";
@@ -19,23 +20,23 @@ interface UseDependencyDragOptions {
 interface UseDependencyDragReturn {
   dragState: DependencyDragState;
   startDrag: (
-    taskId: string,
+    taskId: TaskId,
     side: "start" | "end",
     e: React.MouseEvent
   ) => void;
   updateDragPosition: (e: MouseEvent | React.MouseEvent) => void;
-  endDrag: (targetTaskId?: string) => void;
+  endDrag: (targetTaskId?: TaskId) => void;
   cancelDrag: () => void;
-  isValidTarget: (taskId: string) => boolean;
-  isInvalidTarget: (taskId: string) => boolean;
+  isValidTarget: (taskId: TaskId) => boolean;
+  isInvalidTarget: (taskId: TaskId) => boolean;
   getHoveredTaskId: (
     x: number,
     y: number,
     taskPositions: Map<
-      string,
+      TaskId,
       { x: number; y: number; width: number; height: number }
     >
-  ) => string | null;
+  ) => TaskId | null;
 }
 
 const initialDragState: DependencyDragState = {
@@ -43,8 +44,8 @@ const initialDragState: DependencyDragState = {
   fromTaskId: null,
   fromSide: null,
   currentPosition: { x: 0, y: 0 },
-  validTargets: new Set(),
-  invalidTargets: new Set(),
+  validTargets: new Set<TaskId>(),
+  invalidTargets: new Set<TaskId>(),
 };
 
 export function useDependencyDrag({
@@ -61,11 +62,11 @@ export function useDependencyDrag({
 
   // Calculate valid and invalid targets when starting drag
   const startDrag = useCallback(
-    (taskId: string, side: "start" | "end", e: React.MouseEvent) => {
+    (taskId: TaskId, side: "start" | "end", e: React.MouseEvent) => {
       if (!enabled) return;
 
-      const validTargets = new Set<string>();
-      const invalidTargets = new Set<string>();
+      const validTargets = new Set<TaskId>();
+      const invalidTargets = new Set<TaskId>();
 
       for (const task of tasks) {
         if (task.id === taskId) continue;
@@ -132,7 +133,7 @@ export function useDependencyDrag({
 
   // End drag and potentially create dependency
   const endDrag = useCallback(
-    (targetTaskId?: string) => {
+    (targetTaskId?: TaskId) => {
       const { fromTaskId, fromSide, validTargets, invalidTargets } =
         dragStateRef.current;
 
@@ -170,7 +171,7 @@ export function useDependencyDrag({
 
   // Check if a task is a valid drop target
   const isValidTarget = useCallback(
-    (taskId: string) => {
+    (taskId: TaskId) => {
       return dragState.validTargets.has(taskId);
     },
     [dragState.validTargets]
@@ -178,7 +179,7 @@ export function useDependencyDrag({
 
   // Check if a task is an invalid drop target (would create cycle)
   const isInvalidTarget = useCallback(
-    (taskId: string) => {
+    (taskId: TaskId) => {
       return dragState.invalidTargets.has(taskId);
     },
     [dragState.invalidTargets]
@@ -190,10 +191,10 @@ export function useDependencyDrag({
       x: number,
       y: number,
       taskPositions: Map<
-        string,
+        TaskId,
         { x: number; y: number; width: number; height: number }
       >
-    ): string | null => {
+    ): TaskId | null => {
       for (const [taskId, pos] of taskPositions) {
         if (
           x >= pos.x &&

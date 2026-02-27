@@ -7,22 +7,23 @@ import type {
   ContextMenuItem,
   ContextMenuPosition,
 } from "../components/ContextMenu/ContextMenu";
+import type { TaskId } from "../types/branded.types";
 
 // ─── Shared types ───
 
 /** State for context menus that target a specific task (Zone 1 + Zone 3). */
 export interface TaskContextMenuState {
   position: ContextMenuPosition;
-  taskId: string;
+  taskId: TaskId;
 }
 
 // ─── Helpers ───
 
 /** Compute effective selection: use current selection if task is in it, otherwise just the task. */
 export function getEffectiveSelection(
-  taskId: string,
-  selectedTaskIds: string[]
-): { effectiveSelection: string[]; count: number } {
+  taskId: TaskId,
+  selectedTaskIds: TaskId[]
+): { effectiveSelection: TaskId[]; count: number } {
   const effectiveSelection = selectedTaskIds.includes(taskId)
     ? selectedTaskIds
     : [taskId];
@@ -78,9 +79,9 @@ export function buildClipboardItems(
 
 interface DeleteItemParams {
   count: number;
-  taskId: string;
+  taskId: TaskId;
   deleteSelectedTasks: () => void;
-  deleteTask: (id: string, record: boolean) => void;
+  deleteTask: (id: TaskId, cascade?: boolean) => void;
   icon: React.ReactNode;
   separator?: boolean;
 }
@@ -106,8 +107,8 @@ export function buildDeleteItem(params: DeleteItemParams): ContextMenuItem {
 
 interface HideItemParams {
   count: number;
-  effectiveSelection: string[];
-  hideRows: (taskIds: string[]) => void;
+  effectiveSelection: TaskId[];
+  hideRows: (taskIds: TaskId[]) => void;
   icon: React.ReactNode;
 }
 
@@ -124,9 +125,9 @@ export function buildHideItem(params: HideItemParams): ContextMenuItem {
 }
 
 interface InsertItemsParams {
-  taskId: string;
-  insertTaskAbove: (id: string) => void;
-  insertTaskBelow: (id: string) => void;
+  taskId: TaskId;
+  insertTaskAbove: (id: TaskId) => void;
+  insertTaskBelow: (id: TaskId) => void;
   insertAboveIcon: React.ReactNode;
   insertBelowIcon: React.ReactNode;
 }
@@ -208,8 +209,8 @@ export function buildHierarchyItems(
 
 interface UnhideItemParams {
   hiddenCount: number;
-  unhideSelection: (selectedTaskIds: string[]) => void;
-  selectedTaskIds: string[];
+  unhideSelection: (selectedTaskIds: TaskId[]) => void;
+  selectedTaskIds: TaskId[];
   icon: React.ReactNode;
 }
 

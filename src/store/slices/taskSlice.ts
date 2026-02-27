@@ -7,6 +7,7 @@ import { create } from "zustand";
 import { immer } from "zustand/middleware/immer";
 import { current } from "immer";
 import type { Task } from "../../types/chart.types";
+import type { TaskId } from "../../types/branded.types";
 import type {
   EditableField,
   NavigationDirection,
@@ -52,12 +53,12 @@ export interface TaskState {
   tasks: Task[];
 
   // Multi-selection state
-  selectedTaskIds: string[];
-  lastSelectedTaskId: string | null;
+  selectedTaskIds: TaskId[];
+  lastSelectedTaskId: TaskId | null;
 
   // Cell navigation state
   activeCell: {
-    taskId: string | null;
+    taskId: TaskId | null;
     field: EditableField | null;
   };
   isEditingCell: boolean;
@@ -67,8 +68,8 @@ export interface TaskState {
   taskTableWidth: number | null; // null = auto (total column width)
 
   // Clipboard state (for visual feedback - both copy and cut)
-  clipboardTaskIds: string[];
-  cutCell: { taskId: string; field: EditableField } | null;
+  clipboardTaskIds: TaskId[];
+  cutCell: { taskId: TaskId; field: EditableField } | null;
 }
 
 /**
@@ -76,24 +77,24 @@ export interface TaskState {
  */
 export interface TaskActions {
   addTask: (taskData: Omit<Task, "id">) => void;
-  updateTask: (id: string, updates: Partial<Task>) => void;
+  updateTask: (id: TaskId, updates: Partial<Task>) => void;
   updateMultipleTasks: (
-    updates: Array<{ id: string; updates: Partial<Task> }>
+    updates: Array<{ id: TaskId; updates: Partial<Task> }>
   ) => void;
-  deleteTask: (id: string, cascade?: boolean) => void;
+  deleteTask: (id: TaskId, cascade?: boolean) => void;
   deleteSelectedTasks: () => void;
-  reorderTasks: (activeTaskId: string, overTaskId: string) => void;
+  reorderTasks: (activeTaskId: TaskId, overTaskId: TaskId) => void;
   setTasks: (tasks: Task[]) => void;
 
   // Multi-selection actions
-  toggleTaskSelection: (id: string) => void;
-  selectTaskRange: (startId: string, endId: string) => void;
+  toggleTaskSelection: (id: TaskId) => void;
+  selectTaskRange: (startId: TaskId, endId: TaskId) => void;
   selectAllTasks: () => void;
   clearSelection: () => void;
-  setSelectedTaskIds: (ids: string[], addToSelection?: boolean) => void;
+  setSelectedTaskIds: (ids: TaskId[], addToSelection?: boolean) => void;
 
   // Cell navigation actions
-  setActiveCell: (taskId: string | null, field: EditableField | null) => void;
+  setActiveCell: (taskId: TaskId | null, field: EditableField | null) => void;
   navigateCell: (direction: NavigationDirection) => void;
   startCellEdit: () => void;
   stopCellEdit: () => void;
@@ -105,9 +106,9 @@ export interface TaskActions {
   setTaskTableWidth: (width: number | null) => void;
 
   // Hierarchy actions
-  toggleTaskCollapsed: (taskId: string) => void;
-  expandTask: (taskId: string) => void;
-  collapseTask: (taskId: string) => void;
+  toggleTaskCollapsed: (taskId: TaskId) => void;
+  expandTask: (taskId: TaskId) => void;
+  collapseTask: (taskId: TaskId) => void;
   expandAll: () => void;
   collapseAll: () => void;
   indentSelectedTasks: () => void;
@@ -120,9 +121,9 @@ export interface TaskActions {
   canUngroupSelection: () => boolean;
 
   // Insert task relative to another
-  insertTaskAbove: (referenceTaskId: string) => void;
-  insertTaskBelow: (referenceTaskId: string) => void;
-  insertMultipleTasksAbove: (referenceTaskId: string, count: number) => void;
+  insertTaskAbove: (referenceTaskId: TaskId) => void;
+  insertTaskBelow: (referenceTaskId: TaskId) => void;
+  insertMultipleTasksAbove: (referenceTaskId: TaskId, count: number) => void;
 }
 
 /**
@@ -166,12 +167,12 @@ export const useTaskStore = create<TaskStore>()(
 
     // Actions
     addTask: (taskData): void => {
-      let generatedId = "";
+      let generatedId = "" as TaskId;
 
       set((state) => {
         const newTask: Task = {
           ...taskData,
-          id: crypto.randomUUID(),
+          id: crypto.randomUUID() as TaskId,
         };
         generatedId = newTask.id;
         state.tasks.push(newTask);
@@ -190,7 +191,7 @@ export const useTaskStore = create<TaskStore>()(
       const previousValues: Partial<Task> = {};
       let taskName = "";
       const parentUpdates: Array<{
-        id: string;
+        id: TaskId;
         updates: Partial<Task>;
         previousValues: Partial<Task>;
       }> = [];
@@ -269,20 +270,20 @@ export const useTaskStore = create<TaskStore>()(
 
     updateMultipleTasks: (updates): void => {
       const taskChanges: Array<{
-        id: string;
+        id: TaskId;
         previousStartDate: string;
         previousEndDate: string;
         newStartDate: string;
         newEndDate: string;
       }> = [];
       const cascadeUpdates: Array<{
-        id: string;
+        id: TaskId;
         updates: Partial<Task>;
         previousValues: Partial<Task>;
       }> = [];
 
       set((state) => {
-        const affectedParentIds = new Set<string>();
+        const affectedParentIds = new Set<TaskId>();
 
         // Apply all task updates
         for (const { id, updates: taskUpdates } of updates) {
@@ -335,7 +336,7 @@ export const useTaskStore = create<TaskStore>()(
     deleteTask: (id, cascade = false): void => {
       const deletedTasks: Task[] = [];
       let cascadeUpdates: Array<{
-        id: string;
+        id: TaskId;
         updates: Partial<Task>;
         previousValues: Partial<Task>;
       }> = [];
@@ -460,7 +461,7 @@ export const useTaskStore = create<TaskStore>()(
       if (selectedIds.length === 0) return;
 
       // Collect all tasks to delete (including children of selected tasks)
-      const idsToDelete = new Set<string>();
+      const idsToDelete = new Set<TaskId>();
       const deletedTasks: Task[] = [];
 
       // Add selected tasks and their children
@@ -477,7 +478,7 @@ export const useTaskStore = create<TaskStore>()(
       });
 
       // Collect parent IDs of deleted tasks that are NOT themselves deleted
-      const affectedParentIds = new Set<string>();
+      const affectedParentIds = new Set<TaskId>();
       deletedTasks.forEach((task) => {
         if (task.parent && !idsToDelete.has(task.parent)) {
           affectedParentIds.add(task.parent);
@@ -486,7 +487,7 @@ export const useTaskStore = create<TaskStore>()(
 
       // Remove all collected tasks and recalculate summaries
       let cascadeUpdates: Array<{
-        id: string;
+        id: TaskId;
         updates: { startDate: string; endDate: string; duration: number };
         previousValues: {
           startDate: string;
@@ -596,7 +597,7 @@ export const useTaskStore = create<TaskStore>()(
         // Build flattened list to determine visual positions BEFORE re-parenting
         const flatBefore = buildFlattenedTaskList(
           state.tasks,
-          new Set<string>()
+          new Set<TaskId>()
         );
         const activeVisualIdx = flatBefore.findIndex(
           (f) => f.task.id === activeTaskId
@@ -644,7 +645,7 @@ export const useTaskStore = create<TaskStore>()(
 
         // If parent changed, recalculate summary dates for old and new parents
         if (oldParent !== newParent) {
-          const affectedParents = new Set<string>();
+          const affectedParents = new Set<TaskId>();
           if (oldParent) affectedParents.add(oldParent);
           if (newParent) affectedParents.add(newParent);
           recalculateSummaryAncestors(state.tasks, affectedParents);
@@ -701,7 +702,7 @@ export const useTaskStore = create<TaskStore>()(
         if (fieldIndex === -1) return;
 
         let newFieldIndex = fieldIndex;
-        let newTaskId: string | null = activeCell.taskId;
+        let newTaskId: TaskId | null = activeCell.taskId;
 
         switch (direction) {
           case "up":

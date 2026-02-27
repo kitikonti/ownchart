@@ -15,6 +15,7 @@ import { useTaskStore, type EditableField } from "../store/slices/taskSlice";
 import { useChartStore } from "../store/slices/chartSlice";
 import { useUserPreferencesStore } from "../store/slices/userPreferencesSlice";
 import type { Task } from "../types/chart.types";
+import type { TaskId } from "../types/branded.types";
 import type { NavigationDirection } from "../types/task.types";
 import type { ColumnDefinition } from "../config/tableColumns";
 import {
@@ -28,7 +29,7 @@ import {
 } from "../utils/workingDaysCalculator";
 
 interface UseCellEditParams {
-  taskId: string;
+  taskId: TaskId;
   task: Task;
   field: EditableField;
   column: ColumnDefinition;

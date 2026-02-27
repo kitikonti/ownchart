@@ -9,6 +9,7 @@ import { memo, useRef, type KeyboardEvent, type MouseEvent } from "react";
 import { useTaskStore, type EditableField } from "../../store/slices/taskSlice";
 import { useCellEdit } from "../../hooks/useCellEdit";
 import type { Task } from "../../types/chart.types";
+import type { TaskId } from "../../types/branded.types";
 import { type ColumnDefinition } from "../../config/tableColumns";
 import { ARROW_NAV } from "../../config/keyboardNavigation";
 import {
@@ -19,7 +20,7 @@ import {
 
 export interface CellProps {
   /** Task ID */
-  taskId: string;
+  taskId: TaskId;
 
   /** Task data */
   task: Task;

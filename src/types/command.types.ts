@@ -11,27 +11,27 @@ import type {
 } from "./dependency.types";
 import type { ColorModeState } from "./colorMode.types";
 import type { EditableField } from "./task.types";
-import type { HexColor } from "./branded.types";
+import type { HexColor, TaskId } from "./branded.types";
 
 export interface CascadeUpdate {
-  id: string;
+  id: TaskId;
   updates: Partial<Task>;
   previousValues: Partial<Task>;
 }
 
 export interface ParentChange {
-  taskId: string;
-  oldParent: string | undefined;
+  taskId: TaskId;
+  oldParent: TaskId | undefined;
   oldOrder: number;
 }
 
 export type TaskHierarchySnapshot = Array<{
-  id: string;
-  parent: string | undefined;
+  id: TaskId;
+  parent: TaskId | undefined;
   order: number;
 }>;
 
-export type TaskOrderSnapshot = Array<{ id: string; order: number }>;
+export type TaskOrderSnapshot = Array<{ id: TaskId; order: number }>;
 
 interface CommandBase {
   id: string; // UUID for tracking
@@ -119,24 +119,24 @@ export type AddTaskParams = SingleAddTaskParams | BatchAddTaskParams;
 export interface SingleAddTaskParams {
   mode: "single";
   task: Omit<Task, "id">;
-  generatedId: string;
+  generatedId: TaskId;
 }
 
 export interface BatchAddTaskParams {
   mode: "batch";
   tasks: Array<Omit<Task, "id">>;
-  generatedIds: string[];
+  generatedIds: TaskId[];
 }
 
 export interface UpdateTaskParams {
-  id: string;
+  id: TaskId;
   updates: Partial<Task>;
   previousValues: Partial<Task>; // Store old values for undo
   cascadeUpdates?: CascadeUpdate[];
 }
 
 export interface DeleteTaskParams {
-  deletedIds: string[];
+  deletedIds: TaskId[];
   cascade: boolean;
   deletedTasks: Task[];
   deletedDependencies: Dependency[];
@@ -144,25 +144,25 @@ export interface DeleteTaskParams {
 }
 
 export interface ReorderTasksParams {
-  activeTaskId: string;
-  overTaskId: string;
+  activeTaskId: TaskId;
+  overTaskId: TaskId;
   previousOrder: TaskHierarchySnapshot; // Lightweight snapshot for undo
 }
 
 // Hierarchy operations
 export interface IndentOutdentParams {
-  taskIds: string[];
+  taskIds: TaskId[];
   changes: Array<{
-    taskId: string;
-    oldParent: string | undefined;
-    newParent: string | undefined;
+    taskId: TaskId;
+    oldParent: TaskId | undefined;
+    newParent: TaskId | undefined;
   }>;
   previousTaskSnapshot: TaskHierarchySnapshot;
   afterTaskSnapshot: TaskHierarchySnapshot;
 }
 
 export interface GroupTasksParams {
-  summaryTaskId: string;
+  summaryTaskId: TaskId;
   summaryTask: Task;
   changes: ParentChange[];
   previousOrder: TaskOrderSnapshot;
@@ -197,7 +197,7 @@ export interface UpdateDependencyParams {
 
 // Clipboard operations (Row-level)
 export interface CopyRowsParams {
-  taskIds: string[];
+  taskIds: TaskId[];
   tasks: Task[];
   dependencies: Dependency[];
 }
@@ -208,14 +208,14 @@ export interface PasteRowsParams {
   pastedTasks: Task[];
   pastedDependencies: Dependency[];
   insertIndex: number;
-  idMapping: Record<string, string>; // old ID -> new ID
-  previousCutTaskIds?: string[]; // For undo of cut operation
+  idMapping: Record<TaskId, TaskId>; // old ID -> new ID
+  previousCutTaskIds?: TaskId[]; // For undo of cut operation
   deletedTasks?: Task[]; // Store deleted tasks for undo
 }
 
 // Clipboard operations (Cell-level)
 export interface CopyCellParams {
-  taskId: string;
+  taskId: TaskId;
   field: EditableField;
   value: Task[EditableField];
 }
@@ -223,7 +223,7 @@ export interface CopyCellParams {
 export type CutCellParams = CopyCellParams;
 
 export interface PasteCellParams {
-  taskId: string;
+  taskId: TaskId;
   field: EditableField;
   newValue: Task[EditableField];
   previousValue: Task[EditableField];
@@ -234,7 +234,7 @@ export interface PasteCellParams {
 // Multi-task operations
 export interface MultiDragTasksParams {
   taskChanges: Array<{
-    id: string;
+    id: TaskId;
     previousStartDate: string;
     previousEndDate: string;
     newStartDate: string;
@@ -247,7 +247,7 @@ export interface MultiDragTasksParams {
 export interface ApplyColorsToManualParams {
   previousColorModeState: ColorModeState;
   colorChanges: Array<{
-    id: string;
+    id: TaskId;
     previousColor: HexColor;
     previousColorOverride: HexColor | undefined;
     newColor: HexColor;
@@ -256,11 +256,11 @@ export interface ApplyColorsToManualParams {
 
 // Hide/Show operations
 export interface HideTasksParams {
-  taskIds: string[]; // IDs that were explicitly hidden (including descendants)
-  previousHiddenTaskIds: string[]; // Previous state for undo
+  taskIds: TaskId[]; // IDs that were explicitly hidden (including descendants)
+  previousHiddenTaskIds: TaskId[]; // Previous state for undo
 }
 
 export interface UnhideTasksParams {
-  taskIds: string[]; // IDs that were unhidden
-  previousHiddenTaskIds: string[]; // Previous state for undo
+  taskIds: TaskId[]; // IDs that were unhidden
+  previousHiddenTaskIds: TaskId[]; // Previous state for undo
 }

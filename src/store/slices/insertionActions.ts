@@ -4,6 +4,7 @@
  */
 
 import type { Task } from "../../types/chart.types";
+import type { TaskId } from "../../types/branded.types";
 import {
   recalculateSummaryAncestors,
   normalizeTaskOrder,
@@ -89,7 +90,7 @@ function insertTasksRelative(
   const spliceIndex = direction === "above" ? refIndex : refIndex + 1;
 
   const tasksToInsert: Array<Omit<Task, "id">> = [];
-  const generatedIds: string[] = [];
+  const generatedIds: TaskId[] = [];
 
   for (let i = 0; i < count; i++) {
     const { startDate, endDate } = computeInsertionDates(refTask, direction, i);
@@ -106,7 +107,7 @@ function insertTasksRelative(
       parent: refTask.parent,
       metadata: {},
     });
-    generatedIds.push(crypto.randomUUID());
+    generatedIds.push(crypto.randomUUID() as TaskId);
   }
 
   // For "above" with multiple tasks: reverse so earliest comes first

@@ -4,6 +4,7 @@
  */
 
 import type { Task } from "../../types/chart.types";
+import type { TaskId } from "../../types/branded.types";
 import type { Dependency } from "../../types/dependency.types";
 import type { UngroupTasksParams } from "../../types/command.types";
 import {
@@ -43,11 +44,11 @@ type GroupingActions = Pick<
  */
 function validateGroupSelection(
   tasks: Task[],
-  selectedIds: string[]
-): { rootIds: string[] } | { error: string } {
+  selectedIds: TaskId[]
+): { rootIds: TaskId[] } | { error: string } {
   if (selectedIds.length === 0) return { error: "No tasks selected" };
 
-  const rootIds = getRootSelectedIds(tasks, selectedIds);
+  const rootIds = getRootSelectedIds(tasks, selectedIds) as TaskId[];
   if (rootIds.length === 0) return { error: "No root tasks in selection" };
 
   // All must share the same parent
@@ -75,7 +76,7 @@ function validateGroupSelection(
  */
 function calculateGroupDates(
   tasks: Task[],
-  rootIds: string[]
+  rootIds: TaskId[]
 ): { startDate: string; endDate: string; duration: number } {
   const allDates: { start: string; end: string }[] = [];
 
@@ -121,10 +122,10 @@ function buildUngroupUndoData(
   dependencies: Dependency[]
 ): {
   ungroupedSummaries: UngroupTasksParams["ungroupedSummaries"];
-  childIdsAll: string[];
+  childIdsAll: TaskId[];
 } {
   const ungroupedSummaries: UngroupTasksParams["ungroupedSummaries"] = [];
-  const childIdsAll: string[] = [];
+  const childIdsAll: TaskId[] = [];
 
   for (const summary of sortedSummaries) {
     const children = getTaskChildren(tasks, summary.id);
@@ -201,7 +202,7 @@ export function createGroupingActions(
       });
 
       // Create summary task
-      const summaryId = crypto.randomUUID();
+      const summaryId = crypto.randomUUID() as TaskId;
       const insertOrder =
         insertVisualIndex < flatList.length
           ? flatList[insertVisualIndex].task.order
@@ -223,7 +224,7 @@ export function createGroupingActions(
       };
 
       const cascadeUpdates: Array<{
-        id: string;
+        id: TaskId;
         updates: Partial<Task>;
         previousValues: Partial<Task>;
       }> = [];
@@ -240,7 +241,7 @@ export function createGroupingActions(
 
         normalizeTaskOrder(state.tasks);
 
-        const affectedParents = new Set<string>([summaryId]);
+        const affectedParents = new Set<TaskId>([summaryId]);
         if (commonParent) affectedParents.add(commonParent);
         const results = recalculateSummaryAncestors(
           state.tasks,
@@ -315,13 +316,13 @@ export function createGroupingActions(
       const summaryIds = new Set(sortedSummaries.map((s) => s.id));
 
       // Collect affected parent IDs for cascade recalculation
-      const affectedParentIds = new Set<string>();
+      const affectedParentIds = new Set<TaskId>();
       for (const summary of sortedSummaries) {
         if (summary.parent) affectedParentIds.add(summary.parent);
       }
 
       const cascadeUpdates: Array<{
-        id: string;
+        id: TaskId;
         updates: Partial<Task>;
         previousValues: Partial<Task>;
       }> = [];

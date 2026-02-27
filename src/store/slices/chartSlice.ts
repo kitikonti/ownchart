@@ -47,7 +47,7 @@ import { TASK_COLUMNS, getColumnPixelWidth } from "../../config/tableColumns";
 import { getComputedTaskColor } from "../../utils/computeTaskColor";
 import { MIN_TABLE_WIDTH } from "../../config/layoutConstants";
 import { DEFAULT_PALETTE_ID } from "../../utils/colorPalettes";
-import type { HexColor, PaletteId } from "../../types/branded.types";
+import type { HexColor, PaletteId, TaskId } from "../../types/branded.types";
 import { CommandType } from "../../types/command.types";
 import type { ApplyColorsToManualParams } from "../../types/command.types";
 import { useTaskStore } from "./taskSlice";
@@ -106,7 +106,7 @@ interface ChartState {
   isTaskTableCollapsed: boolean;
 
   // Hidden task IDs (Hide/Show Rows feature)
-  hiddenTaskIds: string[];
+  hiddenTaskIds: TaskId[];
 
   // Color mode state (Smart Color Management)
   colorModeState: ColorModeState;
@@ -123,7 +123,7 @@ interface ChartState {
   // Multi-task drag state (shared for preview rendering)
   dragState: {
     deltaDays: number;
-    sourceTaskId: string;
+    sourceTaskId: TaskId;
   } | null;
 
   // File load signal (for scroll positioning on file open)
@@ -208,10 +208,10 @@ interface ChartActions {
   setTaskTableCollapsed: (collapsed: boolean) => void;
 
   // Hidden tasks actions (Hide/Show Rows)
-  hideTasks: (taskIds: string[]) => void;
-  unhideTasks: (taskIds: string[]) => void;
+  hideTasks: (taskIds: TaskId[]) => void;
+  unhideTasks: (taskIds: TaskId[]) => void;
   unhideAll: () => void;
-  setHiddenTaskIds: (ids: string[]) => void;
+  setHiddenTaskIds: (ids: TaskId[]) => void;
 
   // Color mode actions (Smart Color Management)
   setColorMode: (mode: ColorMode) => void;
@@ -226,7 +226,7 @@ interface ChartActions {
   setViewSettings: (settings: Partial<SettableViewFields>) => void;
 
   // Drag state (for multi-task preview)
-  setDragState: (deltaDays: number, sourceTaskId: string) => void;
+  setDragState: (deltaDays: number, sourceTaskId: TaskId) => void;
   clearDragState: () => void;
 
   // File load signal (for scroll positioning)
@@ -289,7 +289,7 @@ export const useChartStore = create<ChartState & ChartActions>()(
     isTaskTableCollapsed: false,
 
     // Hidden task IDs
-    hiddenTaskIds: [] as string[],
+    hiddenTaskIds: [] as TaskId[],
 
     // Color mode state (Smart Color Management)
     colorModeState: { ...DEFAULT_COLOR_MODE_STATE },
@@ -797,9 +797,9 @@ export const useChartStore = create<ChartState & ChartActions>()(
     },
 
     // Hidden tasks actions (Hide/Show Rows)
-    hideTasks: (taskIds: string[]): void => {
+    hideTasks: (taskIds: TaskId[]): void => {
       const allTasks = useTaskStore.getState().tasks;
-      const allIdsToHide = new Set<string>();
+      const allIdsToHide = new Set<TaskId>();
       for (const id of taskIds) {
         allIdsToHide.add(id);
         // Summary: also hide all descendants
@@ -814,7 +814,7 @@ export const useChartStore = create<ChartState & ChartActions>()(
       });
     },
 
-    unhideTasks: (taskIds: string[]): void => {
+    unhideTasks: (taskIds: TaskId[]): void => {
       set((state) => {
         const idsToUnhide = new Set(taskIds);
         state.hiddenTaskIds = state.hiddenTaskIds.filter(
@@ -829,7 +829,7 @@ export const useChartStore = create<ChartState & ChartActions>()(
       });
     },
 
-    setHiddenTaskIds: (ids: string[]): void => {
+    setHiddenTaskIds: (ids: TaskId[]): void => {
       set((state) => {
         state.hiddenTaskIds = ids;
       });
@@ -987,7 +987,7 @@ export const useChartStore = create<ChartState & ChartActions>()(
     },
 
     // Set drag state (for multi-task preview)
-    setDragState: (deltaDays: number, sourceTaskId: string): void => {
+    setDragState: (deltaDays: number, sourceTaskId: TaskId): void => {
       set((state) => {
         state.dragState = { deltaDays, sourceTaskId };
       });

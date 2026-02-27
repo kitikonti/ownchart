@@ -14,6 +14,7 @@ import type {
   CycleDetectionResult,
 } from "../../types/dependency.types";
 import type { Task } from "../../types/chart.types";
+import type { TaskId } from "../../types/branded.types";
 import { CommandType } from "../../types/command.types";
 import { useTaskStore } from "./taskSlice";
 import { useHistoryStore } from "./historySlice";
@@ -25,8 +26,8 @@ import { wouldCreateCycle } from "../../utils/graph/cycleDetection";
  * Checks self-dependency, task existence, duplicates, and cycles.
  */
 function validateNewDependency(
-  fromTaskId: string,
-  toTaskId: string,
+  fromTaskId: TaskId,
+  toTaskId: TaskId,
   tasks: Task[],
   dependencies: Dependency[]
 ):
@@ -80,8 +81,8 @@ interface DependencyState {
 interface DependencyActions {
   // CRUD operations
   addDependency: (
-    fromTaskId: string,
-    toTaskId: string,
+    fromTaskId: TaskId,
+    toTaskId: TaskId,
     type?: DependencyType,
     lag?: number
   ) => AddDependencyResult;
@@ -91,23 +92,23 @@ interface DependencyActions {
   // Bulk operations
   setDependencies: (dependencies: Dependency[]) => void;
   clearDependencies: () => void;
-  removeDependenciesForTask: (taskId: string) => Dependency[];
+  removeDependenciesForTask: (taskId: TaskId) => Dependency[];
 
   // Selection
   selectDependency: (id: string | null) => void;
 
   // Queries
-  getDependenciesForTask: (taskId: string) => {
+  getDependenciesForTask: (taskId: TaskId) => {
     predecessors: Dependency[];
     successors: Dependency[];
   };
   getDependencyById: (id: string) => Dependency | undefined;
-  hasDependency: (fromTaskId: string, toTaskId: string) => boolean;
+  hasDependency: (fromTaskId: TaskId, toTaskId: TaskId) => boolean;
 
   // Validation
   checkWouldCreateCycle: (
-    fromTaskId: string,
-    toTaskId: string
+    fromTaskId: TaskId,
+    toTaskId: TaskId
   ) => CycleDetectionResult;
 }
 
@@ -127,8 +128,8 @@ export const useDependencyStore = create<DependencyStore>()(
 
     // Actions
     addDependency: (
-      fromTaskId: string,
-      toTaskId: string,
+      fromTaskId: TaskId,
+      toTaskId: TaskId,
       type: DependencyType = "FS",
       lag: number = 0
     ): AddDependencyResult => {
@@ -323,8 +324,8 @@ export const useDependencyStore = create<DependencyStore>()(
     },
 
     checkWouldCreateCycle: (
-      fromTaskId: string,
-      toTaskId: string
+      fromTaskId: TaskId,
+      toTaskId: TaskId
     ): CycleDetectionResult => {
       return wouldCreateCycle(get().dependencies, fromTaskId, toTaskId);
     },

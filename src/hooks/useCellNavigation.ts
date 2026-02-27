@@ -8,11 +8,12 @@ import {
   type EditableField,
   type NavigationDirection,
 } from "../store/slices/taskSlice";
+import type { TaskId } from "../types/branded.types";
 
 export interface UseCellNavigationReturn {
   /** Current active cell */
   activeCell: {
-    taskId: string | null;
+    taskId: TaskId | null;
     field: EditableField | null;
   };
 
@@ -20,7 +21,7 @@ export interface UseCellNavigationReturn {
   isEditingCell: boolean;
 
   /** Set the active cell */
-  setActiveCell: (taskId: string | null, field: EditableField | null) => void;
+  setActiveCell: (taskId: TaskId | null, field: EditableField | null) => void;
 
   /** Navigate to adjacent cell */
   navigateCell: (direction: NavigationDirection) => void;
@@ -32,10 +33,10 @@ export interface UseCellNavigationReturn {
   stopCellEdit: () => void;
 
   /** Check if a specific cell is active */
-  isCellActive: (taskId: string, field: EditableField) => boolean;
+  isCellActive: (taskId: TaskId, field: EditableField) => boolean;
 
   /** Check if a specific cell is being edited */
-  isCellEditing: (taskId: string, field: EditableField) => boolean;
+  isCellEditing: (taskId: TaskId, field: EditableField) => boolean;
 }
 
 /**
@@ -49,11 +50,11 @@ export function useCellNavigation(): UseCellNavigationReturn {
   const startCellEdit = useTaskStore((state) => state.startCellEdit);
   const stopCellEdit = useTaskStore((state) => state.stopCellEdit);
 
-  const isCellActive = (taskId: string, field: EditableField): boolean => {
+  const isCellActive = (taskId: TaskId, field: EditableField): boolean => {
     return activeCell.taskId === taskId && activeCell.field === field;
   };
 
-  const isCellEditing = (taskId: string, field: EditableField): boolean => {
+  const isCellEditing = (taskId: TaskId, field: EditableField): boolean => {
     return isCellActive(taskId, field) && isEditingCell;
   };
 

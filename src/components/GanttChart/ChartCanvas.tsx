@@ -10,6 +10,7 @@
 
 import { useRef, useEffect, useMemo, useState, useCallback, memo } from "react";
 import type { Task } from "../../types/chart.types";
+import type { TaskId } from "../../types/branded.types";
 import { useChartStore } from "../../store/slices/chartSlice";
 import { useTaskStore } from "../../store/slices/taskSlice";
 import { useDensityConfig } from "../../store/slices/userPreferencesSlice";
@@ -107,9 +108,9 @@ const SelectionRows = memo(function SelectionRows({
 
 interface ChartCanvasProps {
   tasks: Task[];
-  selectedTaskIds: string[];
-  onTaskClick?: (taskId: string) => void;
-  onTaskDoubleClick?: (taskId: string) => void;
+  selectedTaskIds: TaskId[];
+  onTaskClick?: (taskId: TaskId) => void;
+  onTaskDoubleClick?: (taskId: TaskId) => void;
   containerHeight?: number; // Height from parent container
   containerWidth?: number; // Width from parent (viewport, not content)
   /** Header date selection highlight (x, width in pixels) */
@@ -129,7 +130,7 @@ export function ChartCanvas({
   const svgRef = useRef<SVGSVGElement>(null);
 
   // State for tracking which task's connection handles are visible
-  const [hoveredTaskId, setHoveredTaskId] = useState<string | null>(null);
+  const [hoveredTaskId, setHoveredTaskId] = useState<TaskId | null>(null);
 
   // Get density configuration for dynamic row height
   const densityConfig = useDensityConfig();
@@ -203,14 +204,14 @@ export function ChartCanvas({
     if (!scale)
       return {
         taskGeometriesMap: new Map<
-          string,
+          TaskId,
           { x: number; y: number; width: number; height: number }
         >(),
         taskGeometriesArray: [] as TaskGeometry[],
       };
 
     const geometriesMap = new Map<
-      string,
+      TaskId,
       { x: number; y: number; width: number; height: number }
     >();
     const geometriesArray: TaskGeometry[] = [];
@@ -248,7 +249,7 @@ export function ChartCanvas({
 
   // Sprint 1.4: Handle mouse up on task for dependency drop
   const handleTaskMouseUp = useCallback(
-    (taskId: string) => {
+    (taskId: TaskId) => {
       if (dragState.isDragging) {
         endDrag(taskId);
       }

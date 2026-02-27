@@ -4,6 +4,7 @@
  */
 
 import type { Task, TaskType } from "../../types/chart.types";
+import type { TaskId } from "../../types/branded.types";
 import type { Dependency as AppDependency } from "../../types/dependency.types";
 import type { ExportOptions } from "../export/types";
 import type {
@@ -124,7 +125,7 @@ export interface ViewSettings {
   isTaskTableCollapsed?: boolean;
 
   // Hidden task IDs (Hide/Show Rows)
-  hiddenTaskIds?: string[];
+  hiddenTaskIds?: TaskId[];
 }
 
 // Validation error types

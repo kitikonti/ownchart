@@ -22,6 +22,7 @@ import { useClipboardOperations } from "./useClipboardOperations";
 import { useHideOperations } from "./useHideOperations";
 import { useClipboardStore } from "../store/slices/clipboardSlice";
 import { buildFlattenedTaskList } from "../utils/hierarchy";
+import type { TaskId } from "../types/branded.types";
 
 export function useKeyboardShortcuts(): void {
   const undo = useHistoryStore((state) => state.undo);
@@ -211,7 +212,7 @@ export function useKeyboardShortcuts(): void {
           currentTasks.filter((t) => t.open === false).map((t) => t.id)
         );
         const flatList = buildFlattenedTaskList(currentTasks, collapsedIds);
-        let referenceTaskId: string | null = null;
+        let referenceTaskId: TaskId | null = null;
         if (selectedTaskIds.length > 0) {
           const selectedSet = new Set(selectedTaskIds);
           for (const ft of flatList) {

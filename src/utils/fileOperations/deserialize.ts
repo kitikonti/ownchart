@@ -3,7 +3,7 @@
  */
 
 import type { TaskType } from "../../types/chart.types";
-import type { HexColor } from "../../types/branded.types";
+import type { HexColor, TaskId } from "../../types/branded.types";
 import type { Dependency, DependencyType } from "../../types/dependency.types";
 import type {
   GanttFile,
@@ -210,7 +210,7 @@ function deserializeTask(serialized: SerializedTask): TaskWithExtras {
       : serialized.endDate;
 
   const task: TaskWithExtras = {
-    id: serialized.id,
+    id: serialized.id as TaskId,
     name: serialized.name,
     startDate: serialized.startDate,
     endDate: endDate,
@@ -219,7 +219,7 @@ function deserializeTask(serialized: SerializedTask): TaskWithExtras {
     color: serialized.color as HexColor, // Validated by validateTaskColors
     order: serialized.order,
     type: (serialized.type ?? "task") as TaskType, // Validated by validateTaskSemantics
-    parent: serialized.parent,
+    parent: serialized.parent as TaskId | undefined,
     open: serialized.open ?? true,
     colorOverride: serialized.colorOverride as HexColor | undefined, // Validated by validateTaskColors
     metadata: serialized.metadata ?? {},
@@ -244,8 +244,8 @@ function deserializeDependency(
 ): Dependency & { __unknownFields?: Record<string, unknown> } {
   const dep: Dependency & { __unknownFields?: Record<string, unknown> } = {
     id: serialized.id,
-    fromTaskId: serialized.from,
-    toTaskId: serialized.to,
+    fromTaskId: serialized.from as TaskId,
+    toTaskId: serialized.to as TaskId,
     type: serialized.type as DependencyType, // Validated by validateDependencies
     lag: serialized.lag,
     createdAt: serialized.createdAt ?? "",
@@ -431,7 +431,7 @@ function normalizeViewSettings(raw: ViewSettings): ViewSettings {
     isTaskTableCollapsed: optionalBoolean(raw.isTaskTableCollapsed),
     colorModeState: sanitizeColorModeState(raw.colorModeState),
     hiddenColumns: filterStringArray(raw.hiddenColumns),
-    hiddenTaskIds: filterStringArray(raw.hiddenTaskIds),
+    hiddenTaskIds: filterStringArray(raw.hiddenTaskIds) as TaskId[] | undefined,
   };
 }
 

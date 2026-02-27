@@ -3,6 +3,8 @@
  * See DATA_MODEL.md Section 2.2
  */
 
+import type { TaskId } from "./branded.types";
+
 /**
  * Dependency type classification.
  * Currently only FS (Finish-to-Start) is implemented.
@@ -26,8 +28,8 @@ export type DependencyType = "FS" | "SS" | "FF" | "SF";
  */
 export interface Dependency {
   id: string;
-  fromTaskId: string;
-  toTaskId: string;
+  fromTaskId: TaskId;
+  toTaskId: TaskId;
   type: DependencyType;
   lag?: number;
   createdAt: string;
@@ -38,14 +40,14 @@ export interface Dependency {
  */
 export interface CycleDetectionResult {
   hasCycle: boolean;
-  cyclePath?: string[]; // Task IDs forming the cycle (e.g., ['A', 'B', 'C', 'A'])
+  cyclePath?: TaskId[]; // Task IDs forming the cycle (e.g., ['A', 'B', 'C', 'A'])
 }
 
 /**
  * Result of date adjustment calculation.
  */
 export interface DateAdjustment {
-  taskId: string;
+  taskId: TaskId;
   oldStartDate: string;
   oldEndDate: string;
   newStartDate: string;
@@ -79,11 +81,11 @@ export interface TaskPosition {
  */
 export interface DependencyDragState {
   isDragging: boolean;
-  fromTaskId: string | null;
+  fromTaskId: TaskId | null;
   fromSide: "start" | "end" | null;
   currentPosition: { x: number; y: number };
-  validTargets: Set<string>;
-  invalidTargets: Set<string>;
+  validTargets: Set<TaskId>;
+  invalidTargets: Set<TaskId>;
 }
 
 /**

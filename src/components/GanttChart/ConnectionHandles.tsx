@@ -5,6 +5,7 @@
  */
 
 import React, { memo, useState, useCallback } from "react";
+import type { TaskId } from "../../types/branded.types";
 import { CONNECTION_HANDLE } from "../../styles/design-tokens";
 
 /** Distance from task edge to handle center */
@@ -28,7 +29,7 @@ const RING_OPACITY = 0.6;
 const RING_STROKE_WIDTH = 2;
 
 interface ConnectionHandlesProps {
-  taskId: string;
+  taskId: TaskId;
   x: number;
   y: number;
   width: number;
@@ -37,12 +38,12 @@ interface ConnectionHandlesProps {
   isValidDropTarget: boolean;
   isInvalidDropTarget: boolean;
   onDragStart: (
-    taskId: string,
+    taskId: TaskId,
     side: "start" | "end",
     e: React.MouseEvent
   ) => void;
-  onHover?: (taskId: string | null) => void;
-  onDrop?: (taskId: string) => void;
+  onHover?: (taskId: TaskId | null) => void;
+  onDrop?: (taskId: TaskId) => void;
 }
 
 export const ConnectionHandles = memo(function ConnectionHandles({

@@ -7,10 +7,12 @@
  * rather than in each RowNumberCell (N instances).
  */
 
+import type { TaskId } from "../../types/branded.types";
+
 export const dragState = {
   isDragging: false,
-  startTaskId: null as string | null,
-  onDragSelect: null as ((taskId: string) => void) | null,
+  startTaskId: null as TaskId | null,
+  onDragSelect: null as ((taskId: TaskId) => void) | null,
 };
 
 /** Reset drag state — called on global mouseup from TaskTable. */

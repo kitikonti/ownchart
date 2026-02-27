@@ -4,6 +4,7 @@
  */
 
 import type { Task } from "../../types/chart.types";
+import type { TaskId } from "../../types/branded.types";
 import type { Dependency } from "../../types/dependency.types";
 
 /**
@@ -15,18 +16,18 @@ import type { Dependency } from "../../types/dependency.types";
  */
 export function remapTaskIds(tasks: Task[]): {
   remappedTasks: Task[];
-  idMapping: Record<string, string>;
+  idMapping: Record<TaskId, TaskId>;
 } {
-  const idMapping: Record<string, string> = {};
+  const idMapping: Record<TaskId, TaskId> = {} as Record<TaskId, TaskId>;
 
   // First pass: Generate new IDs for all tasks
   tasks.forEach((task) => {
-    const newId = crypto.randomUUID();
+    const newId = crypto.randomUUID() as TaskId;
     idMapping[task.id] = newId;
   });
 
   // Second pass: Apply new IDs and remap parent references
-  const remappedTasks = tasks.map((task) => ({
+  const remappedTasks: Task[] = tasks.map((task) => ({
     ...task,
     id: idMapping[task.id],
     // Remap parent if it exists in the mapping (internal parent)
@@ -50,7 +51,7 @@ export function remapTaskIds(tasks: Task[]): {
  */
 export function remapDependencies(
   deps: Dependency[],
-  idMapping: Record<string, string>
+  idMapping: Record<TaskId, TaskId>
 ): Dependency[] {
   return deps
     .filter(

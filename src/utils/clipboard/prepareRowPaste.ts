@@ -4,6 +4,7 @@
  */
 
 import type { Task } from "../../types/chart.types";
+import type { TaskId } from "../../types/branded.types";
 import type { Dependency } from "../../types/dependency.types";
 import type { FlattenedTask } from "../hierarchy";
 import {
@@ -23,9 +24,9 @@ export interface PrepareRowPasteInput {
   /** Current tasks in the task store. */
   currentTasks: Task[];
   /** Active cell state for insert position. */
-  activeCell: { taskId: string | null };
+  activeCell: { taskId: TaskId | null };
   /** Currently selected task IDs. */
-  selectedTaskIds: string[];
+  selectedTaskIds: TaskId[];
 }
 
 export interface PrepareRowPasteResult {
@@ -36,11 +37,11 @@ export interface PrepareRowPasteResult {
   /** Remapped dependencies for the pasted tasks. */
   remappedDependencies: Dependency[];
   /** Old ID → new ID mapping. */
-  idMapping: Record<string, string>;
+  idMapping: Record<TaskId, TaskId>;
   /** Order value at which new tasks were inserted. */
   insertOrder: number;
   /** Parent assigned to root-level pasted tasks. */
-  targetParent: string | undefined;
+  targetParent: TaskId | undefined;
 }
 
 /**
@@ -76,7 +77,7 @@ export function prepareRowPaste(
 
   // Get the actual ORDER value at the insert position
   let insertOrder: number;
-  let targetParent: string | undefined = undefined;
+  let targetParent: TaskId | undefined = undefined;
   let targetParentLevel = 0;
 
   if (insertIndex < flattenedTasks.length) {
@@ -161,7 +162,7 @@ export function prepareRowPaste(
  */
 export function applySummaryRecalculation(
   tasks: Task[],
-  targetParent: string | undefined
+  targetParent: TaskId | undefined
 ): Task[] {
   if (!targetParent) return tasks;
 
