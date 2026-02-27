@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [1.0.1](https://github.com/kitikonti/ownchart/compare/v1.0.0...v1.0.1) (2026-02-27)
+
+
+### Bug Fixes
+
+* add v1.0.0 changelog entry and extract tag-specific release notes ([49d8f7e](https://github.com/kitikonti/ownchart/commit/49d8f7eeb11becdfe51710ee4a90ef0d54758b4b))
+
 ## [1.0.0](https://github.com/kitikonti/ownchart/compare/v0.0.52...v1.0.0) (2026-02-27)
 
 OwnChart v1.0.0 — the first stable release. All MVP features are complete.
