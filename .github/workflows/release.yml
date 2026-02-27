@@ -15,9 +15,20 @@ jobs:
       - name: Extract changelog for this version
         id: changelog
         run: |
-          # Extract text between first and second version headers (## or ###)
-          NOTES=$(awk '/^##+ \[/{if(found) exit; found=1; next} found' CHANGELOG.md)
-          # Write to file for gh release
+          VERSION="${GITHUB_REF_NAME#v}"  # v1.0.0 → 1.0.0
+          NOTES=$(awk -v ver="$VERSION" '
+            /^##+ \[/ {
+              if (found) exit
+              if (index($0, "[" ver "]")) { found=1; next }
+            }
+            found
+          ' CHANGELOG.md)
+
+          # Fallback if no matching CHANGELOG entry
+          if [ -z "$NOTES" ]; then
+            NOTES="Release ${GITHUB_REF_NAME}"
+          fi
+
           echo "$NOTES" > RELEASE_NOTES.md
       - name: Create GitHub Release
         env:

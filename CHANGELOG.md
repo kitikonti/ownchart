@@ -2,6 +2,28 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [1.0.0](https://github.com/kitikonti/ownchart/compare/v0.0.52...v1.0.0) (2026-02-27)
+
+OwnChart v1.0.0 — the first stable release. All MVP features are complete.
+
+### Highlights
+
+* **Gantt Chart Core** — task hierarchy with indent/outdent, summary tasks, milestones
+* **Interactive Timeline** — drag to move/resize tasks, infinite scroll, exponential zoom, cursor-anchored zoom
+* **Dependencies** — finish-to-start arrows with click-to-create and validation
+* **Multi-Select & Clipboard** — rectangular marquee selection, copy/cut/paste across tabs
+* **File Operations** — save/load `.ownchart` files with 6-layer validation pipeline
+* **Undo/Redo** — full command-pattern history for all operations
+* **Export** — PNG, PDF (vector), and SVG with live preview dialog
+* **Smart Colors** — 5 color modes (Manual, Theme, Summary Group, Task Type, Hierarchy)
+* **Ribbon UI** — MS Office-style tabbed toolbar (File, Task, View, Help)
+* **User Preferences** — date format, first day of week, week numbering, UI density
+* **Holidays** — 199 countries via date-holidays, highlighted in timeline
+* **Working Days Mode** — durations and dragging respect non-working days
+* **Welcome Tour & Help Panel** — onboarding and keyboard shortcut reference
+* **PWA & Branding** — installable, custom logo, Open Graph meta tags
+* **834 unit tests** with 80%+ coverage
+
 ## [0.0.52](https://github.com/kitikonti/ownchart/compare/v0.0.51...v0.0.52) (2026-02-27)
 
 
