@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [1.0.2](https://github.com/kitikonti/ownchart/compare/v1.0.1...v1.0.2) (2026-02-27)
+
+
+### Bug Fixes
+
+* replace broken website-relaunch example with Mars Colony project ([0c0d74a](https://github.com/kitikonti/ownchart/commit/0c0d74ae5c03039c59ba8f27181b9a0cdb261a05))
+
 ## [1.0.1](https://github.com/kitikonti/ownchart/compare/v1.0.0...v1.0.1) (2026-02-27)
 
 
