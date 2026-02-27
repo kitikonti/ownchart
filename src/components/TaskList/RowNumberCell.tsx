@@ -47,6 +47,12 @@ interface RowNumberCellProps {
     isFirstSelected: boolean;
     isLastSelected: boolean;
   };
+  /** Hidden rows exist above this row (Excel-style double-line at top) */
+  hasHiddenAbove?: boolean;
+  /** Number of hidden rows above (for tooltip text) */
+  hiddenAboveCount?: number;
+  /** Callback to unhide hidden rows above */
+  onUnhideAbove?: () => void;
   /** Hidden rows exist below this row (Excel-style double-line at bottom) */
   hasHiddenBelow?: boolean;
   /** Number of hidden rows below (for tooltip text) */
@@ -77,6 +83,9 @@ export const RowNumberCell = memo(function RowNumberCell({
   taskId,
   isSelected,
   selectionPosition,
+  hasHiddenAbove = false,
+  hiddenAboveCount,
+  onUnhideAbove,
   hasHiddenBelow = false,
   hiddenBelowCount,
   onUnhideBelow,
@@ -270,11 +279,21 @@ export const RowNumberCell = memo(function RowNumberCell({
         {rowNumber}
       </span>
 
+      {/* Excel-style double-line indicator for hidden rows above */}
+      {hasHiddenAbove && (
+        <HiddenRowIndicator
+          position="above"
+          hiddenCount={hiddenAboveCount}
+          onUnhide={onUnhideAbove}
+          controlsColor={ROW_COLORS.controlsColor}
+          indicatorColor={ROW_COLORS.hiddenIndicator}
+        />
+      )}
       {/* Excel-style double-line indicator for hidden rows below */}
       {hasHiddenBelow && (
         <HiddenRowIndicator
-          hiddenBelowCount={hiddenBelowCount}
-          onUnhideBelow={onUnhideBelow}
+          hiddenCount={hiddenBelowCount}
+          onUnhide={onUnhideBelow}
           controlsColor={ROW_COLORS.controlsColor}
           indicatorColor={ROW_COLORS.hiddenIndicator}
         />

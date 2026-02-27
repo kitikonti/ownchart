@@ -27,6 +27,9 @@ export interface TaskRowDatum {
   level: number;
   hasChildren: boolean;
   globalRowNumber: number;
+  hasHiddenAbove: boolean;
+  hiddenAboveCount: number;
+  onUnhideAbove: (() => void) | undefined;
   hasHiddenBelow: boolean;
   hiddenBelowCount: number;
   onUnhideBelow: (() => void) | undefined;
@@ -72,6 +75,19 @@ export function getHiddenGap(
     hiddenBelowCount: gap > 0 ? gap : 0,
   };
 }
+
+export function getHiddenGapAbove(firstGlobalRowNumber: number): {
+  hasHiddenAbove: boolean;
+  hiddenAboveCount: number;
+} {
+  const count = firstGlobalRowNumber - 1;
+  return {
+    hasHiddenAbove: count > 0,
+    hiddenAboveCount: count > 0 ? count : 0,
+  };
+}
+
+const NO_HIDDEN_ABOVE = { hasHiddenAbove: false, hiddenAboveCount: 0 } as const;
 
 // ── Hook ─────────────────────────────────────────────────────────────────────
 
@@ -123,11 +139,19 @@ export function useTaskRowData(
             nextRowNum
           );
 
+          const above =
+            index === 0 ? getHiddenGapAbove(globalRowNumber) : NO_HIDDEN_ABOVE;
+
           return {
             task,
             level,
             hasChildren,
             globalRowNumber,
+            hasHiddenAbove: above.hasHiddenAbove,
+            hiddenAboveCount: above.hiddenAboveCount,
+            onUnhideAbove: above.hasHiddenAbove
+              ? (): void => unhideRange(0, globalRowNumber)
+              : undefined,
             hasHiddenBelow,
             hiddenBelowCount,
             onUnhideBelow: hasHiddenBelow

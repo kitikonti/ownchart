@@ -37,6 +37,9 @@ interface TaskTableRowProps {
   visibleTaskIds: string[];
   visibleColumns: ColumnDefinition[];
   gridTemplateColumns: string;
+  hasHiddenAbove?: boolean;
+  hiddenAboveCount?: number;
+  onUnhideAbove?: () => void;
   hasHiddenBelow?: boolean;
   hiddenBelowCount?: number;
   onUnhideBelow?: () => void;
@@ -61,6 +64,9 @@ export const TaskTableRow = memo(function TaskTableRow({
   visibleTaskIds,
   visibleColumns,
   gridTemplateColumns,
+  hasHiddenAbove = false,
+  hiddenAboveCount,
+  onUnhideAbove,
   hasHiddenBelow = false,
   hiddenBelowCount,
   onUnhideBelow,
@@ -241,6 +247,9 @@ export const TaskTableRow = memo(function TaskTableRow({
         taskId={task.id}
         isSelected={isSelected}
         selectionPosition={selectionPosition}
+        hasHiddenAbove={hasHiddenAbove}
+        hiddenAboveCount={hiddenAboveCount}
+        onUnhideAbove={onUnhideAbove}
         hasHiddenBelow={hasHiddenBelow}
         hiddenBelowCount={hiddenBelowCount}
         onUnhideBelow={onUnhideBelow}

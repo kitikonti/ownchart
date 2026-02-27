@@ -1,6 +1,6 @@
 /**
  * HiddenRowIndicator - Excel-style double-line indicator for hidden rows.
- * Shows below a RowNumberCell when there are hidden rows underneath.
+ * Shows above or below a RowNumberCell when there are hidden rows adjacent to it.
  * On hover, reveals an unhide button to restore hidden rows.
  */
 
@@ -20,21 +20,24 @@ const HOVER_ZONE_OFFSET_RATIO = 0.45;
 const HOVER_ZONE_HEIGHT_RATIO = 0.9;
 
 interface HiddenRowIndicatorProps {
-  /** Number of hidden rows below (for tooltip text) */
-  hiddenBelowCount?: number;
-  /** Callback to unhide hidden rows below */
-  onUnhideBelow?: () => void;
+  /** Number of hidden rows (for tooltip text) */
+  hiddenCount?: number;
+  /** Callback to unhide hidden rows */
+  onUnhide?: () => void;
   /** Brand color for controls */
   controlsColor: string;
   /** Color for the double-line indicator */
   indicatorColor: string;
+  /** Position relative to the row — "below" (default) or "above" */
+  position?: "above" | "below";
 }
 
 export function HiddenRowIndicator({
-  hiddenBelowCount,
-  onUnhideBelow,
+  hiddenCount,
+  onUnhide,
   controlsColor,
   indicatorColor,
+  position = "below",
 }: HiddenRowIndicatorProps): JSX.Element {
   const { rowHeight } = useDensityConfig();
   const [showUnhideButton, setShowUnhideButton] = useState(false);
@@ -47,13 +50,25 @@ export function HiddenRowIndicator({
         ? INDICATOR_HEIGHT_NORMAL
         : INDICATOR_HEIGHT_COMFORTABLE;
 
+  const isAbove = position === "above";
+
+  // Position the double-line at the top or bottom edge of the cell
+  const lineStyle = isAbove
+    ? { top: `${-(indicatorHeight / 2 + 1)}px` }
+    : { bottom: `${-(indicatorHeight / 2 + 1)}px` };
+
+  // Position the hover zone at the top or bottom edge
+  const hoverZoneStyle = isAbove
+    ? { top: `${-(rowHeight * HOVER_ZONE_OFFSET_RATIO)}px` }
+    : { bottom: `${-(rowHeight * HOVER_ZONE_OFFSET_RATIO)}px` };
+
   return (
     <>
       {/* Double-line */}
       <div
         className="absolute left-0 right-0 pointer-events-none"
         style={{
-          bottom: `${-(indicatorHeight / 2 + 1)}px`,
+          ...lineStyle,
           height: `${indicatorHeight}px`,
           backgroundColor: "white",
           borderTop: `1.5px solid ${indicatorColor}`,
@@ -62,14 +77,14 @@ export function HiddenRowIndicator({
         }}
       />
       {/* Hover zone — covers double-line area + extends right for button */}
-      {onUnhideBelow && (
+      {onUnhide && (
         <div
           data-unhide-zone
           className="absolute"
           style={{
             left: 0,
             right: "-21px",
-            bottom: `${-(rowHeight * HOVER_ZONE_OFFSET_RATIO)}px`,
+            ...hoverZoneStyle,
             height: `${rowHeight * HOVER_ZONE_HEIGHT_RATIO}px`,
             zIndex: 42,
           }}
@@ -99,8 +114,8 @@ export function HiddenRowIndicator({
               }}
               role="button"
               tabIndex={0}
-              title={`${hiddenBelowCount ?? 0} hidden — click to unhide`}
-              aria-label={`Unhide ${hiddenBelowCount ?? 0} hidden rows`}
+              title={`${hiddenCount ?? 0} hidden — click to unhide`}
+              aria-label={`Unhide ${hiddenCount ?? 0} hidden rows`}
               onMouseEnter={() => setIsButtonHovered(true)}
               onMouseLeave={(e) => {
                 setIsButtonHovered(false);
@@ -113,13 +128,13 @@ export function HiddenRowIndicator({
               }}
               onClick={(e) => {
                 e.stopPropagation();
-                onUnhideBelow();
+                onUnhide();
               }}
               onKeyDown={(e) => {
                 if (e.key === "Enter" || e.key === " ") {
                   e.preventDefault();
                   e.stopPropagation();
-                  onUnhideBelow();
+                  onUnhide();
                 }
               }}
             >

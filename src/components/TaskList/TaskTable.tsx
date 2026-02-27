@@ -171,6 +171,9 @@ export function TaskTable(): JSX.Element {
                   visibleTaskIds={visibleTaskIds}
                   visibleColumns={visibleColumns}
                   gridTemplateColumns={gridTemplateColumns}
+                  hasHiddenAbove={row.hasHiddenAbove}
+                  hiddenAboveCount={row.hiddenAboveCount}
+                  onUnhideAbove={row.onUnhideAbove}
                   hasHiddenBelow={row.hasHiddenBelow}
                   hiddenBelowCount={row.hiddenBelowCount}
                   onUnhideBelow={row.onUnhideBelow}

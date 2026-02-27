@@ -9,6 +9,7 @@ import {
   getClipboardPosition,
   getSelectionPosition,
   getHiddenGap,
+  getHiddenGapAbove,
 } from "../../../src/hooks/useTaskRowData";
 
 describe("useTaskRowData helpers", () => {
@@ -239,6 +240,31 @@ describe("useTaskRowData helpers", () => {
       expect(getHiddenGap(10, 11)).toEqual({
         hasHiddenBelow: false,
         hiddenBelowCount: 0,
+      });
+    });
+  });
+
+  // ── getHiddenGapAbove ────────────────────────────────────────────────
+
+  describe("getHiddenGapAbove", () => {
+    it("should return no gap when first row is visible (globalRowNumber = 1)", () => {
+      expect(getHiddenGapAbove(1)).toEqual({
+        hasHiddenAbove: false,
+        hiddenAboveCount: 0,
+      });
+    });
+
+    it("should detect a single hidden row above", () => {
+      expect(getHiddenGapAbove(2)).toEqual({
+        hasHiddenAbove: true,
+        hiddenAboveCount: 1,
+      });
+    });
+
+    it("should detect multiple hidden rows above", () => {
+      expect(getHiddenGapAbove(4)).toEqual({
+        hasHiddenAbove: true,
+        hiddenAboveCount: 3,
       });
     });
   });
