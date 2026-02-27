@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [0.0.52](https://github.com/kitikonti/ownchart/compare/v0.0.51...v0.0.52) (2026-02-27)
+
+
+### Bug Fixes
+
+* handle both H2 and H3 version headers in release workflow ([45d7d14](https://github.com/kitikonti/ownchart/commit/45d7d14f9d41556b633384fe94497dc6bb0d4aba))
+
 ## [0.0.51](https://github.com/kitikonti/ownchart/compare/v0.0.50...v0.0.51) (2026-02-27)
 
 
