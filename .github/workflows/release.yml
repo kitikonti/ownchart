@@ -15,8 +15,8 @@ jobs:
       - name: Extract changelog for this version
         id: changelog
         run: |
-          # Extract text between first and second version headers
-          NOTES=$(awk '/^### \[/{if(found) exit; found=1; next} found' CHANGELOG.md)
+          # Extract text between first and second version headers (## or ###)
+          NOTES=$(awk '/^##+ \[/{if(found) exit; found=1; next} found' CHANGELOG.md)
           # Write to file for gh release
           echo "$NOTES" > RELEASE_NOTES.md
       - name: Create GitHub Release
