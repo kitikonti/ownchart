@@ -18,7 +18,6 @@ This roadmap outlines the phased development approach for the Gantt Chart applic
 4. **Quality-first** - Adequate time for testing, accessibility, security
 
 **Key Changes from v1.3**:
-- Moved history timeline slider to V1.1 (complexity vs value)
 - Moved task groups/phases to V1.1 (can launch without)
 - Moved advanced dependency types (SS/FF/SF) to V1.1 (start with FS only)
 - Moved copy/paste to V1.1 (nice-to-have, not essential)
@@ -193,12 +192,11 @@ If dependency arrows or performance validation fails, reassess approach before c
 - Timeline visualization with pan/zoom
 - **Finish-to-Start dependencies only** (not SS/FF/SF)
 - File save/load (.ownchart format)
-- **Basic undo/redo** (not history timeline slider)
+- **Basic undo/redo**
 - **PNG export only** (not PDF/SVG)
 - Keyboard shortcuts and help
 
 **Deferred to V1.1** (Phase 1.5):
-- History timeline slider with real-time scrubbing
 - Advanced dependency types (SS, FF, SF)
 - ~~PDF/SVG export~~ → ✅ COMPLETE (v0.0.22)
 - ~~Task groups/phases~~ → ✅ COMPLETE (Sprint 1.1.1)
@@ -433,7 +431,6 @@ If dependency arrows or performance validation fails, reassess approach before c
 - Support for concurrent operations with isUndoing/isRedoing flags
 
 **Deferred to V1.1**:
-- History timeline slider with real-time scrubbing
 - Named snapshots
 - Timeline visualization of changes
 - History persistence to localStorage
@@ -516,7 +513,6 @@ Feature-complete for basic Gantt chart creation and editing.
 - ✅ Performance: 100 tasks at 60fps, 500 tasks at 30fps minimum
 
 **Known Limitations** (intentional for MVP):
-- Basic undo/redo only (no history timeline in MVP)
 - No named snapshots (V1.1)
 
 **Originally Planned for V1.1 but Completed in MVP**:
@@ -539,28 +535,6 @@ Feature-complete for basic Gantt chart creation and editing.
 
 **Why These Were Deferred**:
 These features add significant complexity relative to their value for proving the core concept. By shipping MVP first, we can validate the product before investing in these enhancements.
-
-#### Sprint 1.5.1: History Timeline Slider
-
-**Features**:
-- Visual timeline slider showing all history
-- Real-time scrubbing through changes
-- Timeline markers for major changes
-- Preview state while scrubbing
-
-**Technical Work**:
-- Timeline slider UI component
-- Efficient state restoration for scrubbing
-- Visual markers and labels
-- Performance optimization for smooth scrubbing
-
-**Acceptance Criteria**:
-- Timeline slider shows all changes chronologically
-- Scrubbing updates chart in real-time at 60fps
-- Can navigate through 500+ changes smoothly
-- Visual feedback shows current position
-
----
 
 #### Sprint 1.5.2: Advanced Dependencies (SS/FF/SF)
 
@@ -1570,7 +1544,7 @@ This roadmap provides a clear path from concept to launch:
 **Major Changes**:
 1. **Simplified MVP** - Reduced from 16 features to 8 core features
 2. **Added Phase 0 Risk Validation** - Validate dependency arrows and performance before committing
-3. **Moved Complex Features to V1.1** - Timeline slider, task groups, copy/paste, PDF/SVG export
+3. **Moved Complex Features to V1.1** - Task groups, copy/paste, PDF/SVG export
 4. **Added CI/CD Infrastructure** - GitHub Actions, testing requirements, security scanning
 5. **Realistic Timeline Estimates** - Increased from 14 weeks to 25 weeks for quality
 6. **Added Testing Focus** - 50-100 test cases for dependency logic
@@ -1578,7 +1552,6 @@ This roadmap provides a clear path from concept to launch:
 8. **Business strategy removed** - Focused on technical implementation only
 
 **Deferred to Phase 1.5 (V1.1)**:
-- History timeline slider → Basic undo/redo in MVP
 - ~~Task groups/phases~~ → ✅ COMPLETE (Sprint 1.1.1)
 - ~~Copy/paste with multi-select~~ → ✅ COMPLETE (Sprint 1.5.4)
 - ~~PDF/SVG export~~ → ✅ COMPLETE (Sprint 1.5.5, v0.0.22)

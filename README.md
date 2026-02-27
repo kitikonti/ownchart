@@ -11,37 +11,88 @@
 
 **OwnChart** is a browser-based Gantt chart application that respects your privacy. No cloud, no tracking, no accounts. Your data stays on your device.
 
-## 🌐 Try It Now
+![OwnChart Screenshot](.github/screenshot.png)
 
-**Live**: [https://ownchart.app](https://ownchart.app)
+## Get Started
 
-No installation needed - just open and start planning. Your data stays in your browser's local storage.
+**Use OwnChart now**: [ownchart.app](https://ownchart.app)
 
-## ✨ Features
+No installation needed — open the app and start planning. Your data stays in your browser's local storage, or save it as a `.ownchart` file to keep full control.
 
-- 🔒 **Privacy-First** - All data stays local, zero tracking
-- 📴 **Offline-Ready** - Works completely offline in your browser
-- 🎯 **No Setup** - Zero installation, no backend required
-- 💾 **Own Your Data** - Save/load `.ownchart` files on your device
-- ⚡ **Fast & Lightweight** - Built with modern web technologies
-- 🎨 **Interactive Timeline** - Drag-to-move, drag-to-resize task bars
-- 🔗 **Task Dependencies** - Finish-to-Start with automatic date propagation
-- 🔄 **Full Undo/Redo** - Time-travel through your changes (100 steps)
-- 📊 **Task Hierarchy** - Organize with summaries and milestones (3 levels)
-- 📋 **Multi-Select** - Select multiple tasks with Ctrl/Shift+Click or marquee
-- ✂️ **Copy/Paste** - Cross-tab clipboard support with dependencies preserved
-- 📄 **PDF/SVG/PNG Export** - Vector and raster export with live preview
-- 🎨 **Smart Color Management** - 5 color modes (Manual, By Type, Progress, Duration, Random)
-- 📐 **UI Density Modes** - Compact, Normal, Comfortable row heights
-- 📅 **Holiday Support** - 199 countries with timeline highlighting
-- ⚙️ **Working Days Mode** - Business day calculations for scheduling
-- 🎀 **MS Office UI** - Familiar ribbon interface with tabbed workflow
-- ⌨️ **Keyboard Shortcuts** - Efficient navigation and editing
-- ❓ **Help Panel** - Built-in keyboard shortcut reference
-- 🎓 **Welcome Tour** - Guided introduction for first-time users
-- 🔐 **Security-Focused** - 6-layer file validation against XSS/injection
+## Features
 
-## 🚀 Quick Start
+### Privacy & Data Ownership
+- **100% Local** — All data stays on your device, nothing is sent to any server
+- **Zero Tracking** — No analytics, no telemetry, no cookies
+- **No Accounts** — No sign-up, no login, no email required
+- **File-Based** — Save/load `.ownchart` files you own and control
+- **Open Source** — Fully auditable MIT-licensed code
+
+### Timeline & Editing
+- **Drag-to-Move & Resize** — Interactive task bars on the timeline
+- **Task Dependencies** — Finish-to-Start links with automatic date propagation
+- **Multi-Task Drag** — Move all selected tasks together
+- **Summary Task Drag** — Moving a summary moves all its children
+- **Infinite Scroll** — Timeline auto-extends as you scroll past/future
+- **Zoom** — 5% to 300% with cursor-centered anchoring
+
+### Project Organization
+- **Task Hierarchy** — Summaries, milestones, and regular tasks (3 levels deep)
+- **Multi-Select** — Ctrl/Shift+Click or rectangular marquee selection
+- **Copy/Paste** — Cross-tab clipboard with dependencies preserved
+- **Insert Tasks** — Add above/below with toolbar buttons or placeholder row
+- **Undo/Redo** — 100-step command history for all operations
+
+### Export
+- **PNG Export** — High-resolution raster images
+- **PDF Export** — Vector graphics that scale perfectly for large prints
+- **SVG Export** — Editable vector output
+- **Live Preview** — Figma-style export dialog with real-time preview
+- **Page Options** — A4, A3, Letter, Legal, Tabloid with orientation and margins
+
+### Customization
+- **5 Color Modes** — Manual, Theme, Summary Group, Task Type, Hierarchy
+- **UI Density** — Compact, Normal, or Comfortable row heights
+- **Holiday Support** — 199 countries with timeline highlighting
+- **Working Days Mode** — Business day calculations for scheduling
+- **Task Labels** — Position before, inside, after, or hide labels
+- **View Toggles** — Show/hide today marker, weekends, holidays, dependencies, progress
+
+### User Experience
+- **Ribbon UI** — MS Office-style tabbed interface (File, Task, View, Help)
+- **Keyboard Shortcuts** — Efficient navigation and editing
+- **Help Panel** — Built-in shortcut reference (press `?`)
+- **Welcome Tour** — Guided introduction for first-time users
+- **Security** — 6-layer file validation against XSS/injection
+
+## Keyboard Shortcuts
+
+| Shortcut | Action |
+|----------|--------|
+| `Ctrl+Z` | Undo |
+| `Ctrl+Shift+Z` / `Ctrl+Y` | Redo |
+| `Ctrl+C` / `Ctrl+V` / `Ctrl+X` | Copy / Paste / Cut |
+| `Ctrl+A` | Select all tasks |
+| `Del` | Delete selected tasks |
+| `Tab` / `Shift+Tab` | Indent / Outdent |
+| `F` | Fit timeline to view |
+| `T` | Toggle today marker |
+| `D` | Toggle dependencies |
+| `P` | Toggle progress |
+| `H` | Toggle holidays |
+| `?` | Open help panel |
+
+## Browser Support
+
+| Browser | Minimum Version |
+|---------|----------------|
+| Chrome / Edge | 90+ |
+| Firefox | 88+ |
+| Safari | 14+ |
+
+Works on Windows, macOS, and Linux.
+
+## Quick Start (Development)
 
 ```bash
 # Clone the repository
@@ -55,21 +106,19 @@ npm install
 npm run dev
 ```
 
-Open [http://localhost:5173](http://localhost:5173) in your browser to start developing!
+Open [http://localhost:5173](http://localhost:5173) to start developing.
 
-**Or try it online**: [https://ownchart.app](https://ownchart.app)
+## Tech Stack
 
-## 🏗️ Tech Stack
+- **React 18** — UI framework with hooks
+- **TypeScript** — Type-safe development
+- **Zustand** — Lightweight state management
+- **TailwindCSS** — Utility-first styling
+- **Vite** — Lightning-fast build tool
+- **D3.js** — Timeline rendering
+- **Vitest + Playwright** — Comprehensive testing
 
-- **React 18** - UI framework with hooks
-- **TypeScript** - Type-safe development
-- **Zustand** - Lightweight state management
-- **TailwindCSS** - Utility-first styling
-- **Vite** - Lightning-fast build tool
-- **D3.js** - Timeline rendering
-- **Vitest + Playwright** - Comprehensive testing
-
-## 📦 Scripts
+## Scripts
 
 ```bash
 npm run dev              # Start dev server
@@ -88,7 +137,7 @@ npm run ci:local         # Run all checks (pre-commit)
 npm run release          # Create new release with changelog
 ```
 
-## 🗂️ Project Structure
+## Project Structure
 
 ```
 ownchart/
@@ -99,65 +148,44 @@ ownchart/
 │   ├── types/          # TypeScript definitions
 │   └── hooks/          # Custom React hooks
 ├── tests/              # Unit, integration, E2E tests
-├── docs/            # Comprehensive documentation
+├── docs/               # Comprehensive documentation
 └── CLAUDE.md           # AI assistant guide
 ```
 
-## 📖 Documentation
+## Documentation
 
 Comprehensive documentation is available in the [`/docs`](./docs) folder:
 
-- **[Product Requirements](./docs/planning/PRD.md)** - Vision and requirements
-- **[Roadmap](./docs/planning/ROADMAP.md)** - Development phases
-- **[Technical Architecture](./docs/architecture/TECHNICAL_ARCHITECTURE.md)** - System design
-- **[Data Model](./docs/architecture/DATA_MODEL.md)** - Data structures
-- **[Testing Strategy](./docs/process/TESTING_STRATEGY.md)** - QA approach
-- **[CI/CD Pipeline](./docs/process/CI_CD.md)** - Deployment process
+- **[Product Requirements](./docs/planning/PRD.md)** — Vision and requirements
+- **[Roadmap](./docs/planning/ROADMAP.md)** — Development phases
+- **[Technical Architecture](./docs/architecture/TECHNICAL_ARCHITECTURE.md)** — System design
+- **[Data Model](./docs/architecture/DATA_MODEL.md)** — Data structures
+- **[Testing Strategy](./docs/process/TESTING_STRATEGY.md)** — QA approach
+- **[CI/CD Pipeline](./docs/process/CI_CD.md)** — Deployment process
 
-## 🔐 Security & Privacy
+## Security & Privacy
 
-**OwnChart** is designed with privacy as the foundation:
+OwnChart is designed with privacy as the foundation:
 
-- ✅ **Zero Telemetry** - No analytics, no tracking
-- ✅ **Local-Only** - No data ever leaves your device
-- ✅ **No Accounts** - No sign-up, no login required
-- ✅ **File Validation** - 6-layer security pipeline (XSS, prototype pollution prevention)
-- ✅ **Open Source** - Fully auditable code
+- **Zero Telemetry** — No analytics, no tracking
+- **Local-Only** — No data ever leaves your device
+- **No Accounts** — No sign-up, no login required
+- **File Validation** — 6-layer security pipeline (XSS, prototype pollution prevention)
+- **Open Source** — Fully auditable code
 
-## 🎯 Current Status
+## Current Status
 
-**Version**: [Latest Release](https://github.com/kitikonti/ownchart/releases/latest)
-
-**Core Features**:
-- ✅ Task management with hierarchy (summaries, milestones, 3 levels)
-- ✅ Interactive timeline (drag-to-move, drag-to-resize, multi-task drag)
-- ✅ Zoom & navigation (5%-300%) with cursor-centered anchoring
-- ✅ File operations (save/load `.ownchart` format with 6-layer validation)
-- ✅ Task dependencies (Finish-to-Start with automatic date propagation)
-- ✅ Undo/redo system (100 command stack with indent/outdent support)
-- ✅ Multi-select with rectangular marquee selection
-- ✅ Copy/paste/cut with cross-tab clipboard support
-- ✅ PDF/SVG/PNG export with Figma-style live preview
-- ✅ Smart Color Management (5 modes: Manual, By Type, Progress, Duration, Random)
-- ✅ UI Density settings (Compact/Normal/Comfortable)
-- ✅ User preferences (date format, first day of week, week numbering)
-- ✅ Holiday support (199 countries) with timeline highlighting
-- ✅ Working Days Mode for business day calculations
-- ✅ MS Office-style ribbon UI (File, Task, View, Help tabs)
-- ✅ Help panel with keyboard shortcuts reference
-- ✅ Welcome tour for first-time users
-- ✅ Infinite scroll timeline with smooth navigation
+**v1.0 milestone reached** — OwnChart is stable and feature-complete for professional Gantt chart creation and editing. See the [changelog](./CHANGELOG.md) for details.
 
 **Next Up (V1.1)**:
-- 🔜 Advanced dependencies (Start-to-Start, Finish-to-Finish, Start-to-Finish)
-- 🔜 Custom fields UI
-- 🔜 Multi-project management
-- 🔜 History timeline slider with real-time scrubbing
-- 🔜 Named snapshots
+- Advanced dependencies (Start-to-Start, Finish-to-Finish, Start-to-Finish)
+- Custom fields UI
+- Multi-project management
+- Named snapshots
 
 See the [Roadmap](./docs/planning/ROADMAP.md) for the full development plan.
 
-## 🤝 Contributing
+## Contributing
 
 Contributions are welcome! Please read our [contributing guidelines](./CONTRIBUTING.md) before submitting PRs.
 
@@ -170,20 +198,19 @@ Contributions are welcome! Please read our [contributing guidelines](./CONTRIBUT
 
 **Commit Convention**: We use [Conventional Commits](https://www.conventionalcommits.org/) for automated changelog generation.
 
-## 📝 License
+## License
 
-[MIT License](LICENSE) - Feel free to use OwnChart for any purpose.
+[MIT License](LICENSE) — Feel free to use OwnChart for any purpose.
 
-## 🔗 Links
+## Links
 
-- **Live**: [ownchart.app](https://ownchart.app)
+- **App**: [ownchart.app](https://ownchart.app)
 - **Repository**: [github.com/kitikonti/ownchart](https://github.com/kitikonti/ownchart)
 - **Issues**: [Report a bug or request a feature](https://github.com/kitikonti/ownchart/issues)
 - **Changelog**: [See what's new](./CHANGELOG.md)
-- **AI Guide**: [For AI assistants working on this project](./CLAUDE.md)
 
 ---
 
-**Built with ❤️ for privacy-conscious developers and power users.**
+**Built with care for privacy-conscious project managers.**
 
-**OwnChart** - Because your project data belongs to you, not in someone else's cloud.
+**OwnChart** — Because your project data belongs to you, not in someone else's cloud.
