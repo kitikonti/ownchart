@@ -5,6 +5,7 @@ import {
 } from "../../../../src/utils/clipboard/prepareRowPaste";
 import type { Task } from "../../../../src/types/chart.types";
 import type { Dependency } from "../../../../src/types/dependency.types";
+import { tid, hex } from "../../../helpers/branded";
 
 const createTask = (
   id: string,
@@ -13,16 +14,16 @@ const createTask = (
   parent?: string,
   overrides?: Partial<Task>
 ): Task => ({
-  id,
+  id: tid(id),
   name,
   startDate: "2025-01-01",
   endDate: "2025-01-07",
   duration: 7,
   progress: 0,
-  color: "#3b82f6",
+  color: hex("#3b82f6"),
   order,
   type: "task",
-  parent,
+  parent: parent ? tid(parent) : undefined,
   metadata: {},
   ...overrides,
 });
@@ -33,8 +34,8 @@ const createDep = (
   toTaskId: string
 ): Dependency => ({
   id,
-  fromTaskId,
-  toTaskId,
+  fromTaskId: tid(fromTaskId),
+  toTaskId: tid(toTaskId),
   type: "FS",
   createdAt: new Date().toISOString(),
 });

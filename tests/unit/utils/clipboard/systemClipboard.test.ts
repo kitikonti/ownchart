@@ -10,6 +10,7 @@ import {
 } from "../../../../src/utils/clipboard/systemClipboard";
 import type { Task } from "../../../../src/types/chart.types";
 import type { Dependency } from "../../../../src/types/dependency.types";
+import { tid, hex } from "../../../helpers/branded";
 
 // Mock clipboard storage
 let clipboardContent = "";
@@ -54,13 +55,13 @@ describe("systemClipboard", () => {
     it("should write tasks and dependencies to clipboard with correct prefix", async () => {
       const tasks: Task[] = [
         {
-          id: "task-1",
+          id: tid("task-1"),
           name: "Test Task",
           startDate: "2025-01-01",
           endDate: "2025-01-07",
           duration: 7,
           progress: 50,
-          color: "#3b82f6",
+          color: hex("#3b82f6"),
           order: 0,
           metadata: {},
         },
@@ -79,24 +80,24 @@ describe("systemClipboard", () => {
     it("should include dependencies in clipboard data", async () => {
       const tasks: Task[] = [
         {
-          id: "task-1",
+          id: tid("task-1"),
           name: "Task 1",
           startDate: "2025-01-01",
           endDate: "2025-01-07",
           duration: 7,
           progress: 0,
-          color: "#3b82f6",
+          color: hex("#3b82f6"),
           order: 0,
           metadata: {},
         },
         {
-          id: "task-2",
+          id: tid("task-2"),
           name: "Task 2",
           startDate: "2025-01-08",
           endDate: "2025-01-14",
           duration: 7,
           progress: 0,
-          color: "#3b82f6",
+          color: hex("#3b82f6"),
           order: 1,
           metadata: {},
         },
@@ -104,8 +105,8 @@ describe("systemClipboard", () => {
       const dependencies: Dependency[] = [
         {
           id: "dep-1",
-          fromTaskId: "task-1",
-          toTaskId: "task-2",
+          fromTaskId: tid("task-1"),
+          toTaskId: tid("task-2"),
           type: "FS",
           createdAt: "2025-01-01T00:00:00Z",
         },
@@ -375,13 +376,13 @@ describe("systemClipboard", () => {
     it("should correctly round-trip row data", async () => {
       const originalTasks: Task[] = [
         {
-          id: "task-1",
+          id: tid("task-1"),
           name: "Round Trip Task",
           startDate: "2025-06-01",
           endDate: "2025-06-15",
           duration: 15,
           progress: 25,
-          color: "#ff0000",
+          color: hex("#ff0000"),
           order: 0,
           type: "task",
           metadata: { custom: "data" },

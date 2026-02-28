@@ -9,7 +9,7 @@ import { useMemo } from "react";
 import { useChartStore } from "../store/slices/chartSlice";
 import { useTaskStore } from "../store/slices/taskSlice";
 import type { Task } from "../types/chart.types";
-import type { HexColor } from "../types/branded.types";
+import type { HexColor, TaskId } from "../types/branded.types";
 import {
   computeTaskColor,
   getComputedTaskColor,
@@ -35,12 +35,12 @@ export function useComputedTaskColor(task: Task): HexColor {
  * Hook to get computed colors for all tasks.
  * Returns a Map from task ID to computed HexColor.
  */
-export function useComputedTaskColors(): Map<string, HexColor> {
+export function useComputedTaskColors(): Map<TaskId, HexColor> {
   const colorModeState = useChartStore((state) => state.colorModeState);
   const tasks = useTaskStore((state) => state.tasks);
 
   return useMemo(() => {
-    const colorMap = new Map<string, HexColor>();
+    const colorMap = new Map<TaskId, HexColor>();
 
     tasks.forEach((task) => {
       const color = computeTaskColor(task, tasks, colorModeState) as HexColor;

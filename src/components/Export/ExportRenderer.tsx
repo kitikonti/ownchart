@@ -120,7 +120,7 @@ function ExportTaskTableRows({
   indentSize: number;
   fontSizeCell: number;
   cellPaddingX: number;
-  colorMap: Map<string, string>;
+  colorMap: Map<TaskId, string>;
 }): JSX.Element {
   return (
     <div
@@ -270,7 +270,7 @@ export function ExportRenderer({
 
   // Compute color map for all tasks (respects current color mode)
   const colorMap = useMemo(() => {
-    const map = new Map<string, string>();
+    const map = new Map<TaskId, string>();
     orderedTasks.forEach((task) => {
       const color = getComputedTaskColor(task, orderedTasks, colorModeState);
       map.set(task.id, color);

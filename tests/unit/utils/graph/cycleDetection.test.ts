@@ -9,13 +9,14 @@ import {
   wouldCreateCycle,
 } from "../../../../src/utils/graph/cycleDetection";
 import type { Dependency } from "../../../../src/types/dependency.types";
+import { tid } from "../../../helpers/branded";
 
 // Helper to create dependency
 function dep(from: string, to: string, id?: string): Dependency {
   return {
     id: id || `${from}-${to}`,
-    fromTaskId: from,
-    toTaskId: to,
+    fromTaskId: tid(from),
+    toTaskId: tid(to),
     type: "FS",
     createdAt: "",
   };
@@ -93,25 +94,25 @@ describe("detectCycle", () => {
 
 describe("wouldCreateCycle", () => {
   it("should detect self-dependency as cycle", () => {
-    const result = wouldCreateCycle([], "A", "A");
+    const result = wouldCreateCycle([], tid("A"), tid("A"));
     expect(result.hasCycle).toBe(true);
-    expect(result.cyclePath).toEqual(["A", "A"]);
+    expect(result.cyclePath).toEqual([tid("A"), tid("A")]);
   });
 
   it("should detect when adding edge would create cycle", () => {
     const deps = [dep("A", "B"), dep("B", "C")];
-    const result = wouldCreateCycle(deps, "C", "A");
+    const result = wouldCreateCycle(deps, tid("C"), tid("A"));
     expect(result.hasCycle).toBe(true);
   });
 
   it("should not detect cycle when edge is safe", () => {
     const deps = [dep("A", "B"), dep("B", "C")];
-    const result = wouldCreateCycle(deps, "A", "C");
+    const result = wouldCreateCycle(deps, tid("A"), tid("C"));
     expect(result.hasCycle).toBe(false);
   });
 
   it("should handle empty dependency list", () => {
-    const result = wouldCreateCycle([], "A", "B");
+    const result = wouldCreateCycle([], tid("A"), tid("B"));
     expect(result.hasCycle).toBe(false);
   });
 
@@ -120,7 +121,7 @@ describe("wouldCreateCycle", () => {
     // A -> C -> D
     // Adding D -> A creates cycle
     const deps = [dep("A", "B"), dep("A", "C"), dep("B", "D"), dep("C", "D")];
-    const result = wouldCreateCycle(deps, "D", "A");
+    const result = wouldCreateCycle(deps, tid("D"), tid("A"));
     expect(result.hasCycle).toBe(true);
   });
 });

@@ -231,7 +231,7 @@ function applyCascadePreviousValues(
 }
 
 function applySnapshot(
-  taskMap: Map<string, Task>,
+  taskMap: Map<TaskId, Task>,
   snapshot: ReadonlyArray<{
     id: TaskId;
     parent: TaskId | undefined;

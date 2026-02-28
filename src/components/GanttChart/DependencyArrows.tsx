@@ -61,7 +61,7 @@ export function DependencyArrows({
 
   // Create task map for quick lookup
   const taskMap = useMemo(() => {
-    return new Map(tasks.map((t) => [t.id, t]));
+    return new Map<TaskId, Task>(tasks.map((t) => [t.id, t]));
   }, [tasks]);
 
   // Calculate positions for all tasks

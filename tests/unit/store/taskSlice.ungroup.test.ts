@@ -4,6 +4,7 @@ import { useHistoryStore } from "../../../src/store/slices/historySlice";
 import { useDependencyStore } from "../../../src/store/slices/dependencySlice";
 import type { Task } from "../../../src/types/chart.types";
 import type { Dependency } from "../../../src/types/dependency.types";
+import { tid, hex } from "../../helpers/branded";
 
 function makeTask(
   overrides: Partial<Task> & { id: string; name: string }
@@ -13,11 +14,13 @@ function makeTask(
     endDate: "2025-06-07",
     duration: 7,
     progress: 0,
-    color: "#0F6CBD",
+    color: hex("#0F6CBD"),
     order: 0,
     type: "task",
     metadata: {},
     ...overrides,
+    id: tid(overrides.id),
+    parent: overrides.parent ? tid(overrides.parent) : undefined,
   };
 }
 
@@ -28,6 +31,8 @@ function makeDep(
     type: "finish-to-start",
     lag: 0,
     ...overrides,
+    fromTaskId: tid(overrides.fromTaskId),
+    toTaskId: tid(overrides.toTaskId),
   };
 }
 

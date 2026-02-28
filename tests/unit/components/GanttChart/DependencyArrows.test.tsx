@@ -9,6 +9,7 @@ import { render } from "@testing-library/react";
 import { DependencyArrows } from "../../../../src/components/GanttChart/DependencyArrows";
 import type { Task } from "../../../../src/types/chart.types";
 import type { TimelineScale } from "../../../../src/utils/timelineUtils";
+import { tid, hex } from "../../../helpers/branded";
 
 // ---------------------------------------------------------------------------
 // Mocks
@@ -17,8 +18,8 @@ import type { TimelineScale } from "../../../../src/utils/timelineUtils";
 const mockDependencies = [
   {
     id: "dep-1",
-    fromTaskId: "task-1",
-    toTaskId: "task-2",
+    fromTaskId: tid("task-1"),
+    toTaskId: tid("task-2"),
     type: "FS" as const,
     createdAt: "2025-01-01",
   },
@@ -58,19 +59,20 @@ vi.mock(
 // Helpers
 // ---------------------------------------------------------------------------
 
-function createTask(overrides: Partial<Task> = {}): Task {
+function createTask(overrides: Partial<Task> & { id?: string } = {}): Task {
+  const { id = "task-1", ...rest } = overrides;
   return {
-    id: "task-1",
+    id: tid(id),
     name: "Task 1",
     startDate: "2025-01-06",
     endDate: "2025-01-10",
     duration: 5,
     progress: 0,
-    color: "#0F6CBD",
+    color: hex("#0F6CBD"),
     order: 0,
     metadata: {},
     type: "task",
-    ...overrides,
+    ...rest,
   };
 }
 
@@ -145,8 +147,8 @@ describe("DependencyArrows", () => {
       mockStoreState.dependencies = [
         {
           id: "dep-x",
-          fromTaskId: "nonexistent",
-          toTaskId: "task-2",
+          fromTaskId: tid("nonexistent"),
+          toTaskId: tid("task-2"),
           type: "FS" as const,
           createdAt: "2025-01-01",
         },
@@ -161,8 +163,8 @@ describe("DependencyArrows", () => {
       mockStoreState.dependencies = [
         {
           id: "dep-x",
-          fromTaskId: "task-1",
-          toTaskId: "nonexistent",
+          fromTaskId: tid("task-1"),
+          toTaskId: tid("nonexistent"),
           type: "FS" as const,
           createdAt: "2025-01-01",
         },
@@ -224,7 +226,7 @@ describe("DependencyArrows", () => {
       const { container } = renderArrows({
         dragState: {
           isDragging: true,
-          fromTaskId: "task-1",
+          fromTaskId: tid("task-1"),
           currentPosition: { x: 300, y: 100 },
         },
       });
@@ -251,7 +253,7 @@ describe("DependencyArrows", () => {
         tasks: [createTask({ id: "task-1", startDate: "" })],
         dragState: {
           isDragging: true,
-          fromTaskId: "task-1",
+          fromTaskId: tid("task-1"),
           currentPosition: { x: 300, y: 100 },
         },
       });

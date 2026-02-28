@@ -6,6 +6,7 @@ import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import type { Task } from "../../../../src/types/chart.types";
 import type { ExportOptions, PdfExportOptions } from "../../../../src/utils/export/types";
 import { DEFAULT_PDF_OPTIONS, DEFAULT_EXPORT_OPTIONS } from "../../../../src/utils/export/types";
+import { tid } from "../../../helpers/branded";
 
 // Mock functions for jsPDF
 const mockSave = vi.fn();
@@ -61,16 +62,19 @@ vi.mock("jspdf", () => ({
 
 
 describe("pdfExport", () => {
-  const createTestTask = (overrides: Partial<Task> = {}): Task => ({
-    id: "task-1",
-    name: "Test Task",
-    startDate: "2024-01-01",
-    endDate: "2024-01-15",
-    progress: 50,
-    type: "task",
-    open: true,
-    ...overrides,
-  });
+  const createTestTask = (overrides: Partial<Task> & { id?: string } = {}): Task => {
+    const { id = "task-1", ...rest } = overrides;
+    return {
+      id: tid(id),
+      name: "Test Task",
+      startDate: "2024-01-01",
+      endDate: "2024-01-15",
+      progress: 50,
+      type: "task",
+      open: true,
+      ...rest,
+    };
+  };
 
   const defaultExportOptions: ExportOptions = {
     ...DEFAULT_EXPORT_OPTIONS,
@@ -430,7 +434,7 @@ describe("pdfExport", () => {
       const { exportToPdf } = await import("../../../../src/utils/export/pdfExport");
 
       const dependencies = [
-        { id: "dep-1", fromTaskId: "task-1", toTaskId: "task-2", type: "FS" as const },
+        { id: "dep-1", fromTaskId: tid("task-1"), toTaskId: tid("task-2"), type: "FS" as const },
       ];
 
       await exportToPdf({

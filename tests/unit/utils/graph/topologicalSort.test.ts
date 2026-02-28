@@ -11,17 +11,18 @@ import {
 } from "../../../../src/utils/graph/topologicalSort";
 import type { Task } from "../../../../src/types/chart.types";
 import type { Dependency } from "../../../../src/types/dependency.types";
+import { tid, hex } from "../../../helpers/branded";
 
 // Helper to create minimal task
 function task(id: string): Task {
   return {
-    id,
+    id: tid(id),
     name: `Task ${id}`,
     startDate: "2025-01-01",
     endDate: "2025-01-07",
     duration: 7,
     progress: 0,
-    color: "#3b82f6",
+    color: hex("#3b82f6"),
     order: 0,
     type: "task",
     metadata: {},
@@ -32,8 +33,8 @@ function task(id: string): Task {
 function dep(from: string, to: string): Dependency {
   return {
     id: `${from}-${to}`,
-    fromTaskId: from,
-    toTaskId: to,
+    fromTaskId: tid(from),
+    toTaskId: tid(to),
     type: "FS",
     createdAt: "",
   };

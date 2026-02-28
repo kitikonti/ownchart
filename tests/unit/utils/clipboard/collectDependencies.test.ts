@@ -2,16 +2,17 @@ import { describe, it, expect } from "vitest";
 import { collectInternalDependencies } from "../../../../src/utils/clipboard/collectDependencies";
 import type { Task } from "../../../../src/types/chart.types";
 import type { Dependency } from "../../../../src/types/dependency.types";
+import { tid, hex } from "../../../helpers/branded";
 
 // Helper to create test tasks
 const createTask = (id: string, name: string): Task => ({
-  id,
+  id: tid(id),
   name,
   startDate: "2025-01-01",
   endDate: "2025-01-07",
   duration: 7,
   progress: 0,
-  color: "#3b82f6",
+  color: hex("#3b82f6"),
   order: 0,
   type: "task",
   metadata: {},
@@ -24,8 +25,8 @@ const createDep = (
   toTaskId: string
 ): Dependency => ({
   id,
-  fromTaskId,
-  toTaskId,
+  fromTaskId: tid(fromTaskId),
+  toTaskId: tid(toTaskId),
   type: "FS",
   createdAt: new Date().toISOString(),
 });

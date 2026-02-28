@@ -9,6 +9,7 @@ import { useHistoryStore } from "../../src/store/slices/historySlice";
 import { useClipboardStore } from "../../src/store/slices/clipboardSlice";
 import { useDependencyStore } from "../../src/store/slices/dependencySlice";
 import type { Task } from "../../src/types/chart.types";
+import { tid, hex } from "../helpers/branded";
 
 // Helper to create test tasks
 const createTask = (
@@ -18,16 +19,16 @@ const createTask = (
   parent?: string,
   open?: boolean
 ): Task => ({
-  id,
+  id: tid(id),
   name,
   startDate: "2025-01-01",
   endDate: "2025-01-07",
   duration: 7,
   progress: 0,
-  color: "#3b82f6",
+  color: hex("#3b82f6"),
   order,
   type: "task",
-  parent,
+  parent: parent ? tid(parent) : undefined,
   open,
   metadata: {},
 });

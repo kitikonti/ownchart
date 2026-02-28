@@ -8,6 +8,8 @@ import { describe, it, expect, vi } from "vitest";
 import { render, fireEvent } from "@testing-library/react";
 import { DependencyArrow } from "../../../../src/components/GanttChart/DependencyArrow";
 import type { Dependency, TaskPosition } from "../../../../src/types/dependency.types";
+import type { TaskId } from "../../../../src/types/branded.types";
+import { tid } from "../../../helpers/branded";
 import { COLORS } from "../../../../src/styles/design-tokens";
 
 // ---------------------------------------------------------------------------
@@ -32,16 +34,16 @@ const toTaskName = "To Task";
 
 const dependency: Dependency = {
   id: "dep-1",
-  fromTaskId: "task-1",
-  toTaskId: "task-2",
+  fromTaskId: tid("task-1"),
+  toTaskId: tid("task-2"),
   type: "FS",
   createdAt: "2025-01-01",
 };
 
-function makePositions(): Map<string, TaskPosition> {
-  const map = new Map<string, TaskPosition>();
-  map.set("task-1", { x: 50, y: 10, width: 100, height: 26 });
-  map.set("task-2", { x: 200, y: 46, width: 100, height: 26 });
+function makePositions(): Map<TaskId, TaskPosition> {
+  const map = new Map<TaskId, TaskPosition>();
+  map.set(tid("task-1"), { x: 50, y: 10, width: 100, height: 26 });
+  map.set(tid("task-2"), { x: 200, y: 46, width: 100, height: 26 });
   return map;
 }
 
