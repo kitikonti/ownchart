@@ -40,10 +40,9 @@ import {
   type PaletteId,
 } from "../../types/branded.types";
 import {
-  COLOR_PALETTES,
   CATEGORY_LABELS,
   PALETTE_CATEGORIES,
-  type PaletteCategory,
+  PALETTES_BY_CATEGORY,
 } from "../../utils/colorPalettes";
 
 // ── Constants ───────────────────────────────────────────────────────────────
@@ -83,14 +82,6 @@ const COLOR_MODE_OPTIONS: ColorModeOption[] = [
     description: "Darker\u2192lighter by depth",
   },
 ];
-
-/** Palettes grouped by category (static — computed once at module load) */
-const PALETTES_BY_CATEGORY = Object.fromEntries(
-  PALETTE_CATEGORIES.map((cat) => [
-    cat,
-    COLOR_PALETTES.filter((p) => p.category === cat),
-  ])
-) as Record<PaletteCategory, typeof COLOR_PALETTES>;
 
 // ── Shared sub-components ───────────────────────────────────────────────────
 

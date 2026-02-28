@@ -2,7 +2,18 @@
  * Curated color palettes for Smart Color Management
  * 27 professionally designed multi-hue palettes in 5 categories
  * Each palette has 8-10 categorically different colors for maximum distinction
+ *
+ * Sources:
+ * - Classic: Tableau Public, D3.js (ISC license), Observable Plot
+ * - Professional: Highcharts, Plotly, Apache ECharts, Google Charts,
+ *   MS Office, Notion, Monday.com
+ * - Design: Google Material Design, Tailwind CSS, Ant Design,
+ *   IBM Carbon Design System
+ * - Vibrant: Datawrapper, colorbrewer2.org, custom curated
+ * - Soft: Datawrapper, D3.js (ISC), Okabe & Ito (2008), Paul Tol (SRON)
  */
+
+import { toPaletteId, type PaletteId } from "../types/branded.types";
 
 /**
  * Palette category for organization in UI
@@ -25,7 +36,7 @@ export interface ColorPalette {
 }
 
 /** Default palette ID used when switching to theme mode without a selection */
-export const DEFAULT_PALETTE_ID = "tableau-10";
+export const DEFAULT_PALETTE_ID: PaletteId = toPaletteId("tableau-10");
 
 /**
  * All curated palettes organized by category
@@ -33,6 +44,7 @@ export const DEFAULT_PALETTE_ID = "tableau-10";
 export const COLOR_PALETTES: ColorPalette[] = [
   // ═══════════════════════════════════════════════════════
   // CLASSIC — Data Visualization Standards
+  // Sources: Tableau Public, D3.js (ISC), Observable Plot
   // ═══════════════════════════════════════════════════════
 
   {
@@ -104,6 +116,8 @@ export const COLOR_PALETTES: ColorPalette[] = [
 
   // ═══════════════════════════════════════════════════════
   // PROFESSIONAL — Charting Libraries & PM Tools
+  // Sources: Highcharts, Plotly, Apache ECharts, Google Charts,
+  //          MS Office, Notion, Monday.com
   // ═══════════════════════════════════════════════════════
 
   {
@@ -128,16 +142,16 @@ export const COLOR_PALETTES: ColorPalette[] = [
     name: "Plotly G10",
     category: "professional",
     colors: [
-      "#636EFA",
-      "#EF553B",
-      "#00CC96",
-      "#AB63FA",
-      "#FFA15A",
-      "#19D3F3",
-      "#FF6692",
-      "#B6E880",
-      "#FF97FF",
-      "#FECB52",
+      "#636efa",
+      "#ef553b",
+      "#00cc96",
+      "#ab63fa",
+      "#ffa15a",
+      "#19d3f3",
+      "#ff6692",
+      "#b6e880",
+      "#ff97ff",
+      "#fecb52",
     ],
   },
   {
@@ -179,16 +193,16 @@ export const COLOR_PALETTES: ColorPalette[] = [
     name: "MS Office",
     category: "professional",
     colors: [
-      "#4472C4",
-      "#ED7D31",
-      "#A5A5A5",
-      "#FFC000",
-      "#5B9BD5",
-      "#70AD47",
+      "#4472c4",
+      "#ed7d31",
+      "#a5a5a5",
+      "#ffc000",
+      "#5b9bd5",
+      "#70ad47",
       "#264478",
-      "#9B57A2",
+      "#9b57a2",
       "#636363",
-      "#EB7E3A",
+      "#eb7e3a",
     ],
   },
   {
@@ -197,14 +211,14 @@ export const COLOR_PALETTES: ColorPalette[] = [
     category: "professional",
     colors: [
       "#787774",
-      "#976D57",
-      "#CC782F",
-      "#C29343",
+      "#976d57",
+      "#cc782f",
+      "#c29343",
       "#548164",
-      "#487CA5",
-      "#8A67AB",
-      "#B35488",
-      "#C4554D",
+      "#487ca5",
+      "#8a67ab",
+      "#b35488",
+      "#c4554d",
       "#373530",
     ],
   },
@@ -213,21 +227,23 @@ export const COLOR_PALETTES: ColorPalette[] = [
     name: "Monday.com",
     category: "professional",
     colors: [
-      "#00C875",
-      "#FDAB3D",
-      "#E2445C",
-      "#0086C0",
-      "#A25DDC",
-      "#037F4C",
-      "#FFCB00",
-      "#FF158A",
-      "#579BFC",
-      "#CAB641",
+      "#00c875",
+      "#fdab3d",
+      "#e2445c",
+      "#0086c0",
+      "#a25ddc",
+      "#037f4c",
+      "#ffcb00",
+      "#ff158a",
+      "#579bfc",
+      "#cab641",
     ],
   },
 
   // ═══════════════════════════════════════════════════════
   // DESIGN — Design Systems
+  // Sources: Google Material Design, Tailwind CSS, Ant Design,
+  //          IBM Carbon Design System
   // ═══════════════════════════════════════════════════════
 
   {
@@ -235,16 +251,16 @@ export const COLOR_PALETTES: ColorPalette[] = [
     name: "Material Design",
     category: "design",
     colors: [
-      "#F44336",
-      "#E91E63",
-      "#9C27B0",
-      "#3F51B5",
-      "#2196F3",
+      "#f44336",
+      "#e91e63",
+      "#9c27b0",
+      "#3f51b5",
+      "#2196f3",
       "#009688",
-      "#4CAF50",
-      "#FF9800",
+      "#4caf50",
+      "#ff9800",
       "#795548",
-      "#607D8B",
+      "#607d8b",
     ],
   },
   {
@@ -299,6 +315,7 @@ export const COLOR_PALETTES: ColorPalette[] = [
 
   // ═══════════════════════════════════════════════════════
   // VIBRANT — Bold & Saturated
+  // Sources: Datawrapper, colorbrewer2.org, custom curated
   // ═══════════════════════════════════════════════════════
 
   {
@@ -306,15 +323,15 @@ export const COLOR_PALETTES: ColorPalette[] = [
     name: "Bold",
     category: "vibrant",
     colors: [
-      "#7F3C8D",
-      "#11A579",
-      "#3969AC",
-      "#F2B701",
-      "#E73F74",
-      "#80BA5A",
-      "#E68310",
+      "#7f3c8d",
+      "#11a579",
+      "#3969ac",
+      "#f2b701",
+      "#e73f74",
+      "#80ba5a",
+      "#e68310",
       "#008695",
-      "#CF1C90",
+      "#cf1c90",
       "#f97b72",
     ],
   },
@@ -323,16 +340,16 @@ export const COLOR_PALETTES: ColorPalette[] = [
     name: "Vivid",
     category: "vibrant",
     colors: [
-      "#E58606",
-      "#5D69B1",
-      "#52BCA3",
-      "#99C945",
-      "#CC61B0",
-      "#24796C",
-      "#DAA51B",
-      "#2F8AC4",
-      "#764E9F",
-      "#ED645A",
+      "#e58606",
+      "#5d69b1",
+      "#52bca3",
+      "#99c945",
+      "#cc61b0",
+      "#24796c",
+      "#daa51b",
+      "#2f8ac4",
+      "#764e9f",
+      "#ed645a",
     ],
   },
   {
@@ -372,15 +389,15 @@ export const COLOR_PALETTES: ColorPalette[] = [
     name: "Jewel Box",
     category: "vibrant",
     colors: [
-      "#0B6623",
-      "#0070C0",
+      "#0b6623",
+      "#0070c0",
       "#800080",
-      "#FFD700",
-      "#E0115F",
-      "#50C878",
-      "#4682B4",
-      "#9F1D35",
-      "#DAA520",
+      "#ffd700",
+      "#e0115f",
+      "#50c878",
+      "#4682b4",
+      "#9f1d35",
+      "#daa520",
       "#191970",
     ],
   },
@@ -390,15 +407,15 @@ export const COLOR_PALETTES: ColorPalette[] = [
     category: "vibrant",
     colors: [
       "#264653",
-      "#2A9D8F",
-      "#E9C46A",
-      "#F4A261",
-      "#E76F51",
-      "#006D77",
-      "#83C5BE",
-      "#FFDDD2",
-      "#E29578",
-      "#8AB17D",
+      "#2a9d8f",
+      "#e9c46a",
+      "#f4a261",
+      "#e76f51",
+      "#006d77",
+      "#83c5be",
+      "#ffddd2",
+      "#e29578",
+      "#8ab17d",
     ],
   },
   {
@@ -406,21 +423,23 @@ export const COLOR_PALETTES: ColorPalette[] = [
     name: "Spectral",
     category: "vibrant",
     colors: [
-      "#9E0142",
-      "#D53E4F",
-      "#F46D43",
-      "#FDAE61",
-      "#FEE08B",
-      "#E6F598",
-      "#ABDDA4",
-      "#66C2A5",
-      "#3288BD",
-      "#5E4FA2",
+      "#9e0142",
+      "#d53e4f",
+      "#f46d43",
+      "#fdae61",
+      "#fee08b",
+      "#e6f598",
+      "#abdda4",
+      "#66c2a5",
+      "#3288bd",
+      "#5e4fa2",
     ],
   },
 
   // ═══════════════════════════════════════════════════════
   // SOFT — Pastels & Colorblind-Safe
+  // Sources: Datawrapper, D3.js (ISC),
+  //          Okabe & Ito (2008), Paul Tol (SRON Technical Note)
   // ═══════════════════════════════════════════════════════
 
   {
@@ -444,16 +463,16 @@ export const COLOR_PALETTES: ColorPalette[] = [
     name: "Pastel Breeze",
     category: "soft",
     colors: [
-      "#66C5CC",
-      "#F6CF71",
-      "#F89C74",
-      "#DCB0F2",
-      "#87C55F",
-      "#9EB9F3",
-      "#FE88B1",
-      "#C9DB74",
-      "#8BE0A4",
-      "#B497E7",
+      "#66c5cc",
+      "#f6cf71",
+      "#f89c74",
+      "#dcb0f2",
+      "#87c55f",
+      "#9eb9f3",
+      "#fe88b1",
+      "#c9db74",
+      "#8be0a4",
+      "#b497e7",
     ],
   },
   {
@@ -476,13 +495,13 @@ export const COLOR_PALETTES: ColorPalette[] = [
     name: "Okabe-Ito",
     category: "soft",
     colors: [
-      "#E69F00",
-      "#56B4E9",
-      "#009E73",
-      "#F0E442",
-      "#0072B2",
-      "#D55E00",
-      "#CC79A7",
+      "#e69f00",
+      "#56b4e9",
+      "#009e73",
+      "#f0e442",
+      "#0072b2",
+      "#d55e00",
+      "#cc79a7",
       "#000000",
     ],
   },
@@ -491,15 +510,15 @@ export const COLOR_PALETTES: ColorPalette[] = [
     name: "Paul Tol Muted",
     category: "soft",
     colors: [
-      "#CC6677",
+      "#cc6677",
       "#332288",
-      "#DDCC77",
+      "#ddcc77",
       "#117733",
-      "#88CCEE",
+      "#88ccee",
       "#882255",
-      "#44AA99",
+      "#44aa99",
       "#999933",
-      "#AA4499",
+      "#aa4499",
     ],
   },
 ];
@@ -509,15 +528,6 @@ export const COLOR_PALETTES: ColorPalette[] = [
  */
 export function getPaletteById(id: string): ColorPalette | undefined {
   return COLOR_PALETTES.find((p) => p.id === id);
-}
-
-/**
- * Get palettes by category
- */
-export function getPalettesByCategory(
-  category: PaletteCategory
-): ColorPalette[] {
-  return COLOR_PALETTES.filter((p) => p.category === category);
 }
 
 /**
@@ -532,12 +542,19 @@ export const CATEGORY_LABELS: Record<PaletteCategory, string> = {
 };
 
 /**
- * All palette categories in display order
+ * All palette categories in display order (derived from CATEGORY_LABELS
+ * so adding a new PaletteCategory forces updates in both places)
  */
-export const PALETTE_CATEGORIES: PaletteCategory[] = [
-  "classic",
-  "professional",
-  "design",
-  "vibrant",
-  "soft",
-];
+export const PALETTE_CATEGORIES = Object.keys(
+  CATEGORY_LABELS
+) as PaletteCategory[];
+
+/**
+ * Palettes pre-grouped by category (computed once at module load)
+ */
+export const PALETTES_BY_CATEGORY = Object.fromEntries(
+  PALETTE_CATEGORIES.map((cat) => [
+    cat,
+    COLOR_PALETTES.filter((p) => p.category === cat),
+  ])
+) as Record<PaletteCategory, ColorPalette[]>;
