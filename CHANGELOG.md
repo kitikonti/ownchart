@@ -2,6 +2,16 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [1.0.3](https://github.com/kitikonti/ownchart/compare/v1.0.2...v1.0.3) (2026-02-28)
+
+
+### Code Refactoring
+
+* complete TaskId branded type coverage in source and tests ([53754ce](https://github.com/kitikonti/ownchart/commit/53754ce883b990c29f1ba961b8b4cc3913604ac8))
+* complete TaskId branded type migration across codebase ([75def92](https://github.com/kitikonti/ownchart/commit/75def927341248bd253cbec7392bbd67cbc4cc31)), closes [#57](https://github.com/kitikonti/ownchart/issues/57)
+* introduce branded TaskId type for compile-time safety ([#57](https://github.com/kitikonti/ownchart/issues/57)) ([de16899](https://github.com/kitikonti/ownchart/commit/de168993ac0a3d38dce6414306515cb44bf779b6))
+* use toTaskId() factory at all system boundaries ([d017949](https://github.com/kitikonti/ownchart/commit/d017949f1a299bc45883e12773e23658f1ba1f59))
+
 ## [1.0.2](https://github.com/kitikonti/ownchart/compare/v1.0.1...v1.0.2) (2026-02-27)
 
 
