@@ -1,20 +1,42 @@
 /**
  * PDF export options component.
- * Provides controls for page size, orientation, scale, margins, and more.
+ * Provides controls for page size, orientation, scale, margins, and header/footer.
  */
 
 import type {
   PdfExportOptions as PdfOptions,
   PdfPageSize,
-  PdfMarginPreset,
+  PdfHeaderFooter,
   ExportOptions,
   ExportZoomMode,
 } from "../../utils/export/types";
-import { Checkbox } from "../common/Checkbox";
+import {
+  PDF_PAGE_SIZES,
+  PDF_MARGIN_PRESETS,
+  DEFAULT_PDF_OPTIONS,
+} from "../../utils/export/types";
+import { CheckboxGroup } from "../common/CheckboxGroup";
 import { Input } from "../common/Input";
 import { Select } from "../common/Select";
-import { PDF_PAGE_SIZES, PDF_MARGIN_PRESETS } from "../../utils/export/types";
+import { SectionHeader } from "../common/SectionHeader";
+import { SegmentedControl } from "../common/SegmentedControl";
+import type { SegmentedControlOption } from "../common/SegmentedControl";
 import { ZoomModeSelector } from "./ZoomModeSelector";
+
+// =============================================================================
+// Constants
+// =============================================================================
+
+/** Minimum custom page dimension in mm */
+const MIN_CUSTOM_PAGE_MM = 100;
+/** Maximum custom page dimension in mm */
+const MAX_CUSTOM_PAGE_MM = 5000;
+
+/** Fallback for custom page size when not yet configured */
+const DEFAULT_CUSTOM_SIZE = DEFAULT_PDF_OPTIONS.customPageSize ?? {
+  width: 500,
+  height: 300,
+};
 
 const PAGE_SIZE_LABELS: Record<PdfPageSize, { label: string; size: string }> = {
   a4: { label: "A4", size: "297 × 210 mm" },
@@ -28,13 +50,25 @@ const PAGE_SIZE_LABELS: Record<PdfPageSize, { label: string; size: string }> = {
   custom: { label: "Custom", size: "" },
 };
 
-const MARGIN_LABELS: Record<PdfMarginPreset, string> = {
-  normal: "Normal",
-  narrow: "Narrow",
-  wide: "Wide",
-  none: "None",
-  custom: "Custom",
-};
+const ORIENTATION_OPTIONS: SegmentedControlOption[] = [
+  {
+    value: "landscape",
+    label: "Landscape",
+    icon: <span className="w-4 h-2.5 border-2 border-current rounded-sm" />,
+  },
+  {
+    value: "portrait",
+    label: "Portrait",
+    icon: <span className="w-2.5 h-4 border-2 border-current rounded-sm" />,
+  },
+];
+
+const MARGIN_OPTIONS: SegmentedControlOption[] = [
+  { value: "normal", label: "Normal" },
+  { value: "narrow", label: "Narrow" },
+  { value: "wide", label: "Wide" },
+  { value: "none", label: "None" },
+];
 
 /** Header/Footer checkbox options */
 const HEADER_FOOTER_OPTIONS = [
@@ -43,7 +77,56 @@ const HEADER_FOOTER_OPTIONS = [
   { key: "showExportDate", label: "Export date" },
 ] as const;
 
-interface PdfExportOptionsProps {
+// =============================================================================
+// Type Guards
+// =============================================================================
+
+/** Validates that a string is a valid PdfPageSize */
+const isPageSize = (value: string): value is PdfPageSize =>
+  value in PAGE_SIZE_LABELS;
+
+// =============================================================================
+// Sub-Components
+// =============================================================================
+
+interface HeaderFooterColumnProps {
+  title: string;
+  values: PdfHeaderFooter;
+  onValuesChange: (values: PdfHeaderFooter) => void;
+}
+
+/** Renders a header or footer checkbox column using CheckboxGroup */
+function HeaderFooterColumn({
+  title,
+  values,
+  onValuesChange,
+}: HeaderFooterColumnProps): JSX.Element {
+  const items = HEADER_FOOTER_OPTIONS.map((opt) => ({
+    key: opt.key,
+    label: opt.label,
+    checked: values[opt.key],
+  }));
+
+  const handleChange = (key: string, checked: boolean): void => {
+    if (!HEADER_FOOTER_OPTIONS.some((opt) => opt.key === key)) return;
+    onValuesChange({ ...values, [key]: checked } as PdfHeaderFooter);
+  };
+
+  return (
+    <div>
+      <span className="block text-sm font-medium text-neutral-700 mb-3">
+        {title}
+      </span>
+      <CheckboxGroup items={items} onChange={handleChange} />
+    </div>
+  );
+}
+
+// =============================================================================
+// Main Component
+// =============================================================================
+
+export interface PdfExportOptionsProps {
   options: PdfOptions;
   onChange: (options: Partial<PdfOptions>) => void;
   exportOptions: ExportOptions;
@@ -64,7 +147,7 @@ export function PdfExportOptions({
 }: PdfExportOptionsProps): JSX.Element {
   const pageDims =
     options.pageSize === "custom"
-      ? options.customPageSize || { width: 500, height: 300 }
+      ? options.customPageSize || DEFAULT_CUSTOM_SIZE
       : PDF_PAGE_SIZES[options.pageSize];
   const displayWidth =
     options.orientation === "landscape" ? pageDims.width : pageDims.height;
@@ -91,9 +174,7 @@ export function PdfExportOptions({
 
       {/* ============ PAGE SETUP ============ */}
       <section>
-        <span className="block text-sm font-semibold text-neutral-900 mb-3">
-          Page Setup
-        </span>
+        <SectionHeader title="Page Setup" variant="simple" />
 
         <div className="space-y-5">
           {/* Page Size */}
@@ -103,9 +184,11 @@ export function PdfExportOptions({
             </span>
             <Select
               value={options.pageSize}
-              onChange={(e) =>
-                onChange({ pageSize: e.target.value as PdfPageSize })
-              }
+              onChange={(e) => {
+                if (isPageSize(e.target.value)) {
+                  onChange({ pageSize: e.target.value });
+                }
+              }}
             >
               {Object.entries(PAGE_SIZE_LABELS).map(
                 ([key, { label, size }]) => (
@@ -122,37 +205,19 @@ export function PdfExportOptions({
             )}
           </div>
 
-          {/* Orientation - Segmented Control */}
+          {/* Orientation */}
           <div>
             <span className="block text-sm font-medium text-neutral-700 mb-2">
               Orientation
             </span>
-            <div className="inline-flex rounded border border-neutral-300 overflow-hidden">
-              <button
-                type="button"
-                onClick={() => onChange({ orientation: "landscape" })}
-                className={`flex items-center justify-center gap-2 px-4 py-2 text-sm font-medium transition-colors duration-150 ${
-                  options.orientation === "landscape"
-                    ? "bg-brand-600 text-white"
-                    : "bg-white text-neutral-700 hover:bg-neutral-50"
-                }`}
-              >
-                <span className="w-4 h-2.5 border-2 border-current rounded-sm" />
-                Landscape
-              </button>
-              <button
-                type="button"
-                onClick={() => onChange({ orientation: "portrait" })}
-                className={`flex items-center justify-center gap-2 px-4 py-2 text-sm font-medium border-l border-neutral-300 transition-colors duration-150 ${
-                  options.orientation === "portrait"
-                    ? "bg-brand-600 text-white"
-                    : "bg-white text-neutral-700 hover:bg-neutral-50"
-                }`}
-              >
-                <span className="w-2.5 h-4 border-2 border-current rounded-sm" />
-                Portrait
-              </button>
-            </div>
+            <SegmentedControl
+              options={ORIENTATION_OPTIONS}
+              value={options.orientation}
+              onChange={(value) =>
+                onChange({ orientation: value as "landscape" | "portrait" })
+              }
+              ariaLabel="Page orientation"
+            />
           </div>
         </div>
 
@@ -169,17 +234,24 @@ export function PdfExportOptions({
               <Input
                 id="pdf-custom-width"
                 type="number"
-                value={options.customPageSize?.width || 500}
+                value={
+                  options.customPageSize?.width || DEFAULT_CUSTOM_SIZE.width
+                }
                 onChange={(e) =>
                   onChange({
                     customPageSize: {
-                      width: Math.max(100, parseInt(e.target.value) || 500),
-                      height: options.customPageSize?.height || 300,
+                      width: Math.max(
+                        MIN_CUSTOM_PAGE_MM,
+                        parseInt(e.target.value) || DEFAULT_CUSTOM_SIZE.width
+                      ),
+                      height:
+                        options.customPageSize?.height ||
+                        DEFAULT_CUSTOM_SIZE.height,
                     },
                   })
                 }
-                min={100}
-                max={5000}
+                min={MIN_CUSTOM_PAGE_MM}
+                max={MAX_CUSTOM_PAGE_MM}
                 mono
               />
             </div>
@@ -193,17 +265,24 @@ export function PdfExportOptions({
               <Input
                 id="pdf-custom-height"
                 type="number"
-                value={options.customPageSize?.height || 300}
+                value={
+                  options.customPageSize?.height || DEFAULT_CUSTOM_SIZE.height
+                }
                 onChange={(e) =>
                   onChange({
                     customPageSize: {
-                      width: options.customPageSize?.width || 500,
-                      height: Math.max(100, parseInt(e.target.value) || 300),
+                      width:
+                        options.customPageSize?.width ||
+                        DEFAULT_CUSTOM_SIZE.width,
+                      height: Math.max(
+                        MIN_CUSTOM_PAGE_MM,
+                        parseInt(e.target.value) || DEFAULT_CUSTOM_SIZE.height
+                      ),
                     },
                   })
                 }
-                min={100}
-                max={5000}
+                min={MIN_CUSTOM_PAGE_MM}
+                max={MAX_CUSTOM_PAGE_MM}
                 mono
               />
             </div>
@@ -215,24 +294,15 @@ export function PdfExportOptions({
           <span className="block text-sm font-medium text-neutral-700 mb-2">
             Margins
           </span>
-          <div className="grid grid-cols-2 gap-2">
-            {(Object.keys(MARGIN_LABELS) as PdfMarginPreset[])
-              .filter((key) => key !== "custom")
-              .map((preset) => (
-                <button
-                  key={preset}
-                  type="button"
-                  onClick={() => onChange({ marginPreset: preset })}
-                  className={`px-4 py-2 text-sm font-medium rounded border transition-colors duration-150 ${
-                    options.marginPreset === preset
-                      ? "border-brand-600 bg-brand-600 text-white"
-                      : "border-neutral-300 bg-white text-neutral-700 hover:border-neutral-400 hover:bg-neutral-50"
-                  }`}
-                >
-                  {MARGIN_LABELS[preset]}
-                </button>
-              ))}
-          </div>
+          <SegmentedControl
+            options={MARGIN_OPTIONS}
+            value={options.marginPreset}
+            onChange={(value) =>
+              onChange({ marginPreset: value as PdfOptions["marginPreset"] })
+            }
+            layout="grid"
+            ariaLabel="Margin preset"
+          />
           {options.marginPreset !== "none" && (
             <p className="text-xs text-neutral-500 mt-2">
               {PDF_MARGIN_PRESETS[options.marginPreset].top}mm top/bottom,{" "}
@@ -246,75 +316,22 @@ export function PdfExportOptions({
 
       {/* ============ HEADER / FOOTER ============ */}
       <section>
-        <span className="block text-sm font-semibold text-neutral-900 mb-3">
-          Header / Footer
-        </span>
+        <SectionHeader title="Header / Footer" variant="simple" />
 
         <div className="grid grid-cols-2 gap-6">
-          {/* Header */}
-          <div>
-            <span className="block text-sm font-medium text-neutral-700 mb-3">
-              Header
-            </span>
-            <div className="bg-white border border-neutral-200 rounded p-3">
-              <div className="space-y-2.5">
-                {HEADER_FOOTER_OPTIONS.map((opt, idx, arr) => (
-                  <div key={opt.key}>
-                    <label className="flex items-center gap-3 cursor-pointer group min-h-[32px]">
-                      <Checkbox
-                        checked={options.header[opt.key]}
-                        onChange={(checked) =>
-                          onChange({
-                            header: { ...options.header, [opt.key]: checked },
-                          })
-                        }
-                      />
-                      <span className="text-sm text-neutral-900">
-                        {opt.label}
-                      </span>
-                    </label>
-                    {idx < arr.length - 1 && (
-                      <div className="divider-h-light mt-2.5" />
-                    )}
-                  </div>
-                ))}
-              </div>
-            </div>
-          </div>
-
-          {/* Footer */}
-          <div>
-            <span className="block text-sm font-medium text-neutral-700 mb-3">
-              Footer
-            </span>
-            <div className="bg-white border border-neutral-200 rounded p-3">
-              <div className="space-y-2.5">
-                {HEADER_FOOTER_OPTIONS.map((opt, idx, arr) => (
-                  <div key={opt.key}>
-                    <label className="flex items-center gap-3 cursor-pointer group min-h-[32px]">
-                      <Checkbox
-                        checked={options.footer[opt.key]}
-                        onChange={(checked) =>
-                          onChange({
-                            footer: { ...options.footer, [opt.key]: checked },
-                          })
-                        }
-                      />
-                      <span className="text-sm text-neutral-900">
-                        {opt.label}
-                      </span>
-                    </label>
-                    {idx < arr.length - 1 && (
-                      <div className="divider-h-light mt-2.5" />
-                    )}
-                  </div>
-                ))}
-              </div>
-            </div>
-          </div>
+          <HeaderFooterColumn
+            title="Header"
+            values={options.header}
+            onValuesChange={(header) => onChange({ header })}
+          />
+          <HeaderFooterColumn
+            title="Footer"
+            values={options.footer}
+            onValuesChange={(footer) => onChange({ footer })}
+          />
         </div>
 
-        {/* Inline Author input - shown when any "Author" checkbox is enabled */}
+        {/* Author input - shown when any "Author" checkbox is enabled */}
         {(options.header.showAuthor || options.footer.showAuthor) && (
           <div className="mt-4">
             <label

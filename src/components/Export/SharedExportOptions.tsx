@@ -8,6 +8,7 @@ import type {
   ExportOptions,
   ExportColumnKey,
   ExportFormat,
+  ExportBooleanKey,
 } from "../../utils/export/types";
 import type {
   UiDensity,
@@ -18,26 +19,27 @@ import { RadioOptionCard } from "../common/RadioOptionCard";
 import { CollapsibleSection } from "../common/CollapsibleSection";
 import { CheckboxGroup } from "../common/CheckboxGroup";
 import { Input } from "../common/Input";
+import { SectionHeader } from "../common/SectionHeader";
+import { SegmentedControl } from "../common/SegmentedControl";
+import type { SegmentedControlOption } from "../common/SegmentedControl";
+
+// =============================================================================
+// Constants
+// =============================================================================
 
 /** Density options for the export */
-const DENSITY_OPTIONS: {
-  key: UiDensity;
-  label: string;
-}[] = [
-  { key: "compact", label: "Compact" },
-  { key: "normal", label: "Normal" },
-  { key: "comfortable", label: "Comfortable" },
+const DENSITY_OPTIONS: SegmentedControlOption[] = [
+  { value: "compact", label: "Compact" },
+  { value: "normal", label: "Normal" },
+  { value: "comfortable", label: "Comfortable" },
 ];
 
 /** Task label position options for the export */
-const LABEL_POSITION_OPTIONS: {
-  key: TaskLabelPosition;
-  label: string;
-}[] = [
-  { key: "before", label: "Before" },
-  { key: "inside", label: "Inside" },
-  { key: "after", label: "After" },
-  { key: "none", label: "None" },
+const LABEL_POSITION_OPTIONS: SegmentedControlOption[] = [
+  { value: "before", label: "Before" },
+  { value: "inside", label: "Inside" },
+  { value: "after", label: "After" },
+  { value: "none", label: "None" },
 ];
 
 /** Column definitions for the export options UI */
@@ -50,8 +52,8 @@ const COLUMN_OPTIONS: { key: ExportColumnKey; label: string }[] = [
   { key: "progress", label: "Progress" },
 ];
 
-/** Timeline display options */
-const TIMELINE_OPTIONS: { key: keyof ExportOptions; label: string }[] = [
+/** Timeline display options (using ExportBooleanKey for type safety) */
+const TIMELINE_OPTIONS: { key: ExportBooleanKey; label: string }[] = [
   { key: "includeHeader", label: "Header row" },
   { key: "includeGridLines", label: "Grid lines" },
   { key: "includeWeekends", label: "Weekend shading" },
@@ -59,6 +61,20 @@ const TIMELINE_OPTIONS: { key: keyof ExportOptions; label: string }[] = [
   { key: "includeDependencies", label: "Dependencies" },
   { key: "includeHolidays", label: "Holidays" },
 ];
+
+// =============================================================================
+// Helpers
+// =============================================================================
+
+/** Format a Date as ISO date string (YYYY-MM-DD) */
+function formatDate(date: Date | undefined): string {
+  if (!date) return "";
+  return date.toISOString().split("T")[0];
+}
+
+// =============================================================================
+// Component
+// =============================================================================
 
 export interface SharedExportOptionsProps {
   options: ExportOptions;
@@ -75,11 +91,6 @@ export function SharedExportOptions({
   projectDateRange,
   visibleDateRange,
 }: SharedExportOptionsProps): JSX.Element {
-  const formatDate = (date: Date | undefined): string => {
-    if (!date) return "";
-    return date.toISOString().split("T")[0];
-  };
-
   const showBackground = format === "png" || format === "svg";
 
   // Build checkbox items for columns
@@ -89,14 +100,15 @@ export function SharedExportOptions({
     checked: options.selectedColumns.includes(col.key),
   }));
 
-  // Build checkbox items for timeline options
+  // Build checkbox items for timeline options (type-safe via ExportBooleanKey)
   const timelineItems = TIMELINE_OPTIONS.map((item) => ({
     key: item.key,
     label: item.label,
-    checked: options[item.key] as boolean,
+    checked: options[item.key],
   }));
 
   const handleColumnChange = (key: string, checked: boolean): void => {
+    if (!COLUMN_OPTIONS.some((c) => c.key === key)) return;
     const columnKey = key as ExportColumnKey;
     const newColumns = checked
       ? [...options.selectedColumns, columnKey]
@@ -108,6 +120,7 @@ export function SharedExportOptions({
   };
 
   const handleTimelineChange = (key: string, checked: boolean): void => {
+    if (!TIMELINE_OPTIONS.some((item) => item.key === key)) return;
     onChange({ [key]: checked });
   };
 
@@ -115,9 +128,7 @@ export function SharedExportOptions({
     <div className="space-y-6">
       {/* ============ DATE RANGE ============ */}
       <section>
-        <span className="block text-sm font-semibold text-neutral-900 mb-3">
-          Date Range
-        </span>
+        <SectionHeader title="Date Range" variant="simple" />
 
         <div className="space-y-2">
           <RadioOptionCard
@@ -189,31 +200,21 @@ export function SharedExportOptions({
 
       {/* ============ LAYOUT OPTIONS (Collapsible) ============ */}
       <CollapsibleSection title="Layout Options">
-        {/* Row Density - Segmented Control */}
+        {/* Row Density */}
         <div>
           <span className="block text-sm font-medium text-neutral-700 mb-2">
             Row Density
           </span>
-          <div className="inline-flex rounded border border-neutral-300 overflow-hidden w-full">
-            {DENSITY_OPTIONS.map((opt, index) => (
-              <button
-                key={opt.key}
-                onClick={() => onChange({ density: opt.key })}
-                className={`flex-1 px-4 py-2 text-sm font-medium transition-colors duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-100 ${
-                  index > 0 ? "border-l border-neutral-300" : ""
-                } ${
-                  options.density === opt.key
-                    ? "bg-brand-600 text-white"
-                    : "bg-white text-neutral-700 hover:bg-neutral-50"
-                }`}
-              >
-                {opt.label}
-              </button>
-            ))}
-          </div>
+          <SegmentedControl
+            options={DENSITY_OPTIONS}
+            value={options.density}
+            onChange={(value) => onChange({ density: value as UiDensity })}
+            ariaLabel="Row density"
+            fullWidth
+          />
         </div>
 
-        {/* Columns - Checkbox Group */}
+        {/* Columns */}
         <div>
           <span className="block text-sm font-medium text-neutral-700 mb-3">
             Columns to Include
@@ -229,7 +230,7 @@ export function SharedExportOptions({
 
       {/* ============ DISPLAY OPTIONS (Collapsible) ============ */}
       <CollapsibleSection title="Display Options">
-        {/* Timeline Elements - Checkbox Group */}
+        {/* Timeline Elements */}
         <div>
           <span className="block text-sm font-medium text-neutral-700 mb-3">
             Show in Timeline
@@ -240,26 +241,20 @@ export function SharedExportOptions({
           />
         </div>
 
-        {/* Label Position - 2x2 Grid Buttons */}
+        {/* Label Position */}
         <div>
           <span className="block text-sm font-medium text-neutral-700 mb-2">
             Label Position
           </span>
-          <div className="grid grid-cols-2 gap-2">
-            {LABEL_POSITION_OPTIONS.map((opt) => (
-              <button
-                key={opt.key}
-                onClick={() => onChange({ taskLabelPosition: opt.key })}
-                className={`px-4 py-2 text-sm font-medium rounded border transition-colors duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-100 focus-visible:ring-offset-2 ${
-                  options.taskLabelPosition === opt.key
-                    ? "border-brand-600 bg-brand-600 text-white"
-                    : "border-neutral-300 bg-white text-neutral-700 hover:border-neutral-400 hover:bg-neutral-50"
-                }`}
-              >
-                {opt.label}
-              </button>
-            ))}
-          </div>
+          <SegmentedControl
+            options={LABEL_POSITION_OPTIONS}
+            value={options.taskLabelPosition}
+            onChange={(value) =>
+              onChange({ taskLabelPosition: value as TaskLabelPosition })
+            }
+            layout="grid"
+            ariaLabel="Task label position"
+          />
           {options.taskLabelPosition === "inside" && (
             <div className="mt-3 text-xs text-neutral-600 bg-white rounded px-3 py-2.5 border border-neutral-200">
               Note: Milestones and summary tasks default to &quot;After&quot;
