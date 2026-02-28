@@ -17,16 +17,18 @@ import type { TaskId } from "../../types/branded.types";
 import { useTaskStore } from "../../store/slices/taskSlice";
 import type { ColumnDefinition } from "../../config/tableColumns";
 import { RowNumberCell } from "./RowNumberCell";
+import { RowOverlays } from "./RowOverlays";
 import { dragState } from "./dragSelectionState";
 import { TaskDataCells } from "./TaskDataCells";
 import { calculateSummaryDates } from "../../utils/hierarchy";
+import { calculateDuration } from "../../utils/dateUtils";
 import { useComputedTaskColor } from "../../hooks/useComputedTaskColor";
-import { COLORS } from "../../styles/design-tokens";
+import { COLORS, Z_INDEX } from "../../styles/design-tokens";
 
 // ── Constants ────────────────────────────────────────────────────────────────
 
-const SELECTION_BORDER_COLOR = COLORS.brand[600];
-const SELECTION_BG_COLOR = `${COLORS.brand[600]}14`; // brand-600 at ~8% opacity
+/** brand-600 at ~8% opacity (hex 14 ≈ 8%) */
+const SELECTION_BG_COLOR = `${COLORS.brand[600]}14`;
 
 // ── Props ────────────────────────────────────────────────────────────────────
 
@@ -104,12 +106,10 @@ export const TaskTableRow = memo(function TaskTableRow({
     }
 
     if (task.startDate && task.endDate) {
-      const start = new Date(task.startDate);
-      const end = new Date(task.endDate);
-      const calculatedDuration =
-        Math.ceil((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24)) +
-        1;
-      return { ...task, duration: calculatedDuration };
+      return {
+        ...task,
+        duration: calculateDuration(task.startDate, task.endDate),
+      };
     }
 
     return task;
@@ -132,9 +132,6 @@ export const TaskTableRow = memo(function TaskTableRow({
     opacity: isDragging ? 0.5 : 1,
     gridTemplateColumns,
   };
-
-  const showTopBorder = selectionPosition?.isFirstSelected ?? true;
-  const showBottomBorder = selectionPosition?.isLastSelected ?? true;
 
   // ── Stabilized callbacks ─────────────────────────────────────────────────
 
@@ -198,8 +195,8 @@ export const TaskTableRow = memo(function TaskTableRow({
         ...(isSelected
           ? {
               backgroundColor: SELECTION_BG_COLOR,
-              position: "relative" as const,
-              zIndex: 5,
+              position: "relative",
+              zIndex: Z_INDEX.rowHighlight,
             }
           : {}),
       }}
@@ -211,37 +208,11 @@ export const TaskTableRow = memo(function TaskTableRow({
       onMouseEnter={handleRowMouseEnter}
       onContextMenu={handleContextMenu}
     >
-      {/* Selection overlay - renders above cell borders */}
-      {isSelected && (
-        <div
-          className="absolute pointer-events-none"
-          style={{
-            top: 0,
-            left: 0,
-            right: 0,
-            bottom: 0,
-            borderTop: showTopBorder
-              ? `2px solid ${SELECTION_BORDER_COLOR}`
-              : "none",
-            borderBottom: showBottomBorder
-              ? `2px solid ${SELECTION_BORDER_COLOR}`
-              : "none",
-            borderLeft: `2px solid ${SELECTION_BORDER_COLOR}`,
-            borderRadius: `${showTopBorder ? "3px" : "0"} 0 0 ${showBottomBorder ? "3px" : "0"}`,
-            zIndex: 25,
-          }}
-        />
-      )}
-      {/* Clipboard selection overlay with dotted border */}
-      {isInClipboard && clipboardPosition && (
-        <div
-          className="absolute inset-0 pointer-events-none z-20 border-2 border-dotted border-neutral-500"
-          style={{
-            borderTopStyle: clipboardPosition.isFirst ? "dotted" : "none",
-            borderBottomStyle: clipboardPosition.isLast ? "dotted" : "none",
-          }}
-        />
-      )}
+      <RowOverlays
+        selectionPosition={selectionPosition}
+        clipboardPosition={clipboardPosition}
+      />
+
       {/* Row Number Cell - Excel-style with hover controls */}
       <RowNumberCell
         rowNumber={globalRowNumber}

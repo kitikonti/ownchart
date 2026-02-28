@@ -6,6 +6,7 @@
 
 import type { TaskId } from "../types/branded.types";
 import type { Task } from "../types/chart.types";
+import { calculateDuration, toISODateString } from "./dateUtils";
 
 /**
  * Maximum hierarchy depth (number of levels: 0, 1, 2).
@@ -160,15 +161,13 @@ export function calculateSummaryDates(
 
   if (!minStart || !maxEnd) return null;
 
-  // Calculate duration in days (inclusive of start and end dates)
-  const duration =
-    Math.ceil((maxEnd.getTime() - minStart.getTime()) / (1000 * 60 * 60 * 24)) +
-    1;
+  const startDate = toISODateString(minStart);
+  const endDate = toISODateString(maxEnd);
 
   return {
-    startDate: minStart.toISOString().split("T")[0],
-    endDate: maxEnd.toISOString().split("T")[0],
-    duration,
+    startDate,
+    endDate,
+    duration: calculateDuration(startDate, endDate),
   };
 }
 

@@ -1,15 +1,16 @@
 /**
- * TaskTableHeader component - Renders the sticky header for the task table
- * Extracted to be used on App level for synchronized scrolling
+ * TaskTableHeader component - Renders the sticky header for the task table.
+ * Extracted to be used on App level for synchronized scrolling.
  */
 
-import { useMemo } from "react";
+import { memo, useCallback, useMemo } from "react";
 import { useTaskStore } from "../../store/slices/taskSlice";
 import { useDensityConfig } from "../../store/slices/userPreferencesSlice";
 import { useChartStore } from "../../store/slices/chartSlice";
 import {
   getVisibleColumns,
   getDensityAwareWidth,
+  getColumnPixelWidth,
   NAME_COLUMN_ID,
 } from "../../config/tableColumns";
 import { ColumnResizer } from "./ColumnResizer";
@@ -18,7 +19,15 @@ import { useTableHeaderContextMenu } from "../../hooks/useTableHeaderContextMenu
 import { ContextMenu } from "../ContextMenu/ContextMenu";
 import { TABLE_HEADER } from "../../styles/design-tokens";
 
-export function TaskTableHeader(): JSX.Element {
+// ── Constants ────────────────────────────────────────────────────────────────
+
+const SELECT_ALL_TRIANGLE_SIZE = 8;
+const SELECT_ALL_TRIANGLE_INSET = "4px";
+const NAME_RESIZER_MIN_WIDTH = 100;
+
+// ── Component ────────────────────────────────────────────────────────────────
+
+export const TaskTableHeader = memo(function TaskTableHeader(): JSX.Element {
   const tasks = useTaskStore((state) => state.tasks);
   const selectedTaskIds = useTaskStore((state) => state.selectedTaskIds);
   const selectAllTasks = useTaskStore((state) => state.selectAllTasks);
@@ -46,9 +55,11 @@ export function TaskTableHeader(): JSX.Element {
   // Get total column width for proper scrolling
   const { totalColumnWidth } = useTableDimensions();
 
-  const allSelected =
-    tasks.length > 0 &&
-    tasks.every((task) => selectedTaskIds.includes(task.id));
+  const allSelected = useMemo(() => {
+    if (tasks.length === 0) return false;
+    const selectedSet = new Set(selectedTaskIds);
+    return tasks.every((task) => selectedSet.has(task.id));
+  }, [tasks, selectedTaskIds]);
 
   /**
    * Generate CSS grid template columns based on column widths.
@@ -65,40 +76,13 @@ export function TaskTableHeader(): JSX.Element {
       .join(" ");
   }, [columnWidths, densityConfig, visibleColumns]);
 
-  /**
-   * Get current width of a column in pixels.
-   * Uses density-aware widths when no custom width is set.
-   */
-  const getColumnWidth = (columnId: string): number => {
-    const customWidth = columnWidths[columnId];
-    if (customWidth) return customWidth;
-
-    // Get density-aware default width
-    const densityWidth = getDensityAwareWidth(columnId, densityConfig);
-    const match = densityWidth.match(/(\d+)px/);
-    if (match) return parseInt(match[1], 10);
-
-    // For minmax, extract the first value
-    const minmaxMatch = densityWidth.match(/minmax\((\d+)px/);
-    if (minmaxMatch) return parseInt(minmaxMatch[1], 10);
-
-    return 200;
-  };
-
-  /**
-   * Handle column resize.
-   */
-  const handleColumnResize = (columnId: string, width: number): void => {
-    setColumnWidth(columnId, width);
-  };
-
-  const handleSelectAllClick = (): void => {
+  const handleSelectAllClick = useCallback((): void => {
     if (allSelected) {
       clearSelection();
     } else {
       selectAllTasks();
     }
-  };
+  }, [allSelected, clearSelection, selectAllTasks]);
 
   return (
     <>
@@ -115,7 +99,14 @@ export function TaskTableHeader(): JSX.Element {
         {visibleColumns.map((column) => (
           <div
             key={column.id}
-            className={`task-table-header-cell ${column.id === NAME_COLUMN_ID ? "pr-3" : "px-3"} py-4 border-b ${column.showRightBorder !== false ? "border-r" : ""} text-xs font-semibold text-neutral-600 uppercase tracking-wider whitespace-nowrap relative`}
+            className={[
+              "task-table-header-cell",
+              column.id === NAME_COLUMN_ID ? "pr-3" : "px-3",
+              "py-4 border-b",
+              column.showRightBorder !== false ? "border-r" : "",
+              "text-xs font-semibold text-neutral-600 uppercase tracking-wider",
+              "whitespace-nowrap relative",
+            ].join(" ")}
             style={{
               backgroundColor: TABLE_HEADER.bg,
               borderColor: TABLE_HEADER.border,
@@ -128,8 +119,7 @@ export function TaskTableHeader(): JSX.Element {
               // Excel-style select-all triangle in top-left corner
               <button
                 onClick={handleSelectAllClick}
-                className="absolute inset-0 hover:bg-neutral-200 transition-colors"
-                style={{ cursor: "pointer" }}
+                className="absolute inset-0 cursor-pointer hover:bg-neutral-200 transition-colors"
                 title={allSelected ? "Deselect all" : "Select all"}
                 aria-label={
                   allSelected ? "Deselect all tasks" : "Select all tasks"
@@ -137,12 +127,19 @@ export function TaskTableHeader(): JSX.Element {
               >
                 {/* Small triangle in bottom-right corner */}
                 <svg
-                  width="8"
-                  height="8"
-                  viewBox="0 0 8 8"
-                  style={{ position: "absolute", bottom: "4px", right: "4px" }}
+                  width={SELECT_ALL_TRIANGLE_SIZE}
+                  height={SELECT_ALL_TRIANGLE_SIZE}
+                  viewBox={`0 0 ${SELECT_ALL_TRIANGLE_SIZE} ${SELECT_ALL_TRIANGLE_SIZE}`}
+                  style={{
+                    position: "absolute",
+                    bottom: SELECT_ALL_TRIANGLE_INSET,
+                    right: SELECT_ALL_TRIANGLE_INSET,
+                  }}
                 >
-                  <path d="M8 0 L8 8 L0 8 Z" fill={TABLE_HEADER.triangle} />
+                  <path
+                    d={`M${SELECT_ALL_TRIANGLE_SIZE} 0 L${SELECT_ALL_TRIANGLE_SIZE} ${SELECT_ALL_TRIANGLE_SIZE} L0 ${SELECT_ALL_TRIANGLE_SIZE} Z`}
+                    fill={TABLE_HEADER.triangle}
+                  />
                 </svg>
               </button>
             ) : column.id === "color" ? (
@@ -154,10 +151,14 @@ export function TaskTableHeader(): JSX.Element {
             {column.id === NAME_COLUMN_ID && (
               <ColumnResizer
                 columnId={column.id}
-                currentWidth={getColumnWidth(column.id)}
-                onResize={handleColumnResize}
+                currentWidth={getColumnPixelWidth(
+                  column.id,
+                  columnWidths,
+                  densityConfig
+                )}
+                onResize={setColumnWidth}
                 onAutoResize={autoFitColumn}
-                minWidth={100}
+                minWidth={NAME_RESIZER_MIN_WIDTH}
               />
             )}
           </div>
@@ -174,4 +175,4 @@ export function TaskTableHeader(): JSX.Element {
       )}
     </>
   );
-}
+});

@@ -127,9 +127,14 @@ describe("getColumnPixelWidth", () => {
     expect(result).toBe(100);
   });
 
-  it("should return default for name column (uses minmax in grid)", () => {
+  it("should return nameMin for name column (uses minmax in grid)", () => {
     const result = getColumnPixelWidth("name", {}, normalDensity);
-    expect(result).toBe(100);
+    expect(result).toBe(normalDensity.columnWidths.nameMin);
+  });
+
+  it("should prefer stored width over nameMin for name column", () => {
+    const result = getColumnPixelWidth("name", { name: 350 }, normalDensity);
+    expect(result).toBe(350);
   });
 
   it("should prefer stored width over density default", () => {

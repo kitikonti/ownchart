@@ -237,6 +237,10 @@ export function getColumnPixelWidth(
   if (columnWidths[columnId] !== undefined) {
     return columnWidths[columnId];
   }
+  // Name column uses minmax() in grid — return the density-aware minimum
+  if (columnId === NAME_COLUMN_ID) {
+    return densityConfig.columnWidths.nameMin;
+  }
   return getDensityDefault(columnId, densityConfig) ?? DEFAULT_COLUMN_WIDTH_PX;
 }
 
