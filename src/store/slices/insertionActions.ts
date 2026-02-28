@@ -4,7 +4,7 @@
  */
 
 import type { Task } from "../../types/chart.types";
-import type { TaskId } from "../../types/branded.types";
+import { type TaskId, toTaskId } from "../../types/branded.types";
 import {
   recalculateSummaryAncestors,
   normalizeTaskOrder,
@@ -107,7 +107,7 @@ function insertTasksRelative(
       parent: refTask.parent,
       metadata: {},
     });
-    generatedIds.push(crypto.randomUUID() as TaskId);
+    generatedIds.push(toTaskId(crypto.randomUUID()));
   }
 
   // For "above" with multiple tasks: reverse so earliest comes first

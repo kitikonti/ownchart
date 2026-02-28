@@ -7,7 +7,7 @@ import { create } from "zustand";
 import { immer } from "zustand/middleware/immer";
 import { current } from "immer";
 import type { Task } from "../../types/chart.types";
-import type { TaskId } from "../../types/branded.types";
+import { type TaskId, toTaskId } from "../../types/branded.types";
 import type {
   EditableField,
   NavigationDirection,
@@ -167,7 +167,7 @@ export const useTaskStore = create<TaskStore>()(
 
     // Actions
     addTask: (taskData): void => {
-      const generatedId = crypto.randomUUID() as TaskId;
+      const generatedId = toTaskId(crypto.randomUUID());
 
       set((state) => {
         const newTask: Task = {

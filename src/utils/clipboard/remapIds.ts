@@ -4,7 +4,7 @@
  */
 
 import type { Task } from "../../types/chart.types";
-import type { TaskId } from "../../types/branded.types";
+import { type TaskId, toTaskId } from "../../types/branded.types";
 import type { Dependency } from "../../types/dependency.types";
 
 /**
@@ -22,7 +22,7 @@ export function remapTaskIds(tasks: Task[]): {
 
   // First pass: Generate new IDs for all tasks
   tasks.forEach((task) => {
-    const newId = crypto.randomUUID() as TaskId;
+    const newId = toTaskId(crypto.randomUUID());
     idMapping[task.id] = newId;
   });
 

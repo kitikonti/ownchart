@@ -317,7 +317,7 @@ export const useDependencyStore = create<DependencyStore>()(
       return get().dependencies.find((d) => d.id === id);
     },
 
-    hasDependency: (fromTaskId: string, toTaskId: string): boolean => {
+    hasDependency: (fromTaskId: TaskId, toTaskId: TaskId): boolean => {
       return get().dependencies.some(
         (d) => d.fromTaskId === fromTaskId && d.toTaskId === toTaskId
       );

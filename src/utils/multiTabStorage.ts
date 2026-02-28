@@ -21,6 +21,7 @@
  */
 
 import type { Task } from "../types/chart.types";
+import type { TaskId } from "../types/branded.types";
 import type { ColorModeState } from "../types/colorMode.types";
 import type { Dependency } from "../types/dependency.types";
 
@@ -50,7 +51,7 @@ export interface ChartState {
   projectAuthor?: string;
   hiddenColumns?: string[];
   isTaskTableCollapsed?: boolean;
-  hiddenTaskIds?: string[];
+  hiddenTaskIds?: TaskId[];
   colorModeState?: ColorModeState;
 }
 

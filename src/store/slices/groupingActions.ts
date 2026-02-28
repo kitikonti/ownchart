@@ -4,7 +4,7 @@
  */
 
 import type { Task } from "../../types/chart.types";
-import type { TaskId } from "../../types/branded.types";
+import { type TaskId, toTaskId } from "../../types/branded.types";
 import type { Dependency } from "../../types/dependency.types";
 import type { UngroupTasksParams } from "../../types/command.types";
 import {
@@ -202,7 +202,7 @@ export function createGroupingActions(
       });
 
       // Create summary task
-      const summaryId = crypto.randomUUID() as TaskId;
+      const summaryId = toTaskId(crypto.randomUUID());
       const insertOrder =
         insertVisualIndex < flatList.length
           ? flatList[insertVisualIndex].task.order

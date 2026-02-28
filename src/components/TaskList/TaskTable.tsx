@@ -20,7 +20,7 @@ import {
   verticalListSortingStrategy,
 } from "@dnd-kit/sortable";
 
-import type { TaskId } from "../../types/branded.types";
+import { toTaskId } from "../../types/branded.types";
 import { useTaskStore } from "../../store/slices/taskSlice";
 import { useChartStore } from "../../store/slices/chartSlice";
 import { useDensityConfig } from "../../store/slices/userPreferencesSlice";
@@ -121,7 +121,7 @@ export function TaskTable(): JSX.Element {
       const { active, over } = event;
 
       if (over && active.id !== over.id) {
-        reorderTasks(String(active.id) as TaskId, String(over.id) as TaskId);
+        reorderTasks(toTaskId(String(active.id)), toTaskId(String(over.id)));
       }
     },
     [reorderTasks]
