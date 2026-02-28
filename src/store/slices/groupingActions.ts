@@ -48,7 +48,7 @@ function validateGroupSelection(
 ): { rootIds: TaskId[] } | { error: string } {
   if (selectedIds.length === 0) return { error: "No tasks selected" };
 
-  const rootIds = getRootSelectedIds(tasks, selectedIds) as TaskId[];
+  const rootIds = getRootSelectedIds(tasks, selectedIds);
   if (rootIds.length === 0) return { error: "No root tasks in selection" };
 
   // All must share the same parent
@@ -177,7 +177,7 @@ export function createGroupingActions(
       const commonParent = tasks.find((t) => t.id === rootIds[0])?.parent;
 
       // Find insertion position: topmost selected task in visual order
-      const flatList = buildFlattenedTaskList(tasks, new Set<string>());
+      const flatList = buildFlattenedTaskList(tasks, new Set<TaskId>());
       const rootIdSet = new Set(rootIds);
       let insertVisualIndex = flatList.length;
       for (let i = 0; i < flatList.length; i++) {

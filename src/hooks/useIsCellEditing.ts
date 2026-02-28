@@ -6,10 +6,11 @@
  * when other cells' editing state changes.
  */
 
+import type { TaskId } from "../types/branded.types";
 import { useTaskStore } from "../store/slices/taskSlice";
 
 /** Focused selector — only re-renders when THIS cell's editing state changes. */
-export function useIsCellEditing(taskId: string, field: string): boolean {
+export function useIsCellEditing(taskId: TaskId, field: string): boolean {
   return useTaskStore(
     (s) =>
       s.activeCell.taskId === taskId &&

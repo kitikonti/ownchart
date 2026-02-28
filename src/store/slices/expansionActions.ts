@@ -3,6 +3,7 @@
  * Handles collapse/expand of summary tasks.
  */
 
+import type { TaskId } from "../../types/branded.types";
 import { useFileStore } from "./fileSlice";
 import type { TaskSliceSet, TaskActions, TaskState } from "./taskSlice";
 
@@ -18,7 +19,7 @@ type ExpansionActions = Pick<
 /**
  * Set a single task's open state. Returns true if state changed.
  */
-function setTaskOpen(state: TaskState, taskId: string, open: boolean): boolean {
+function setTaskOpen(state: TaskState, taskId: TaskId, open: boolean): boolean {
   const task = state.tasks.find((t) => t.id === taskId);
   if (!task || task.type !== "summary") return false;
   const hasChildren = state.tasks.some((t) => t.parent === taskId);

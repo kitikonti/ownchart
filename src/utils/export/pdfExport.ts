@@ -11,6 +11,7 @@ import "svg2pdf.js";
 import { createRoot } from "react-dom/client";
 import { createElement } from "react";
 import type { Task } from "../../types/chart.types";
+import type { TaskId } from "../../types/branded.types";
 import type { Dependency } from "../../types/dependency.types";
 import type { TimelineScale } from "../timelineUtils";
 import type { ExportOptions, PdfExportOptions, ExportColumnKey } from "./types";
@@ -310,7 +311,7 @@ function buildCompleteSvg(
     ? calculateTaskTableWidth(selectedColumns, columnWidths, options.density)
     : 0;
 
-  const flattenedTasks = buildFlattenedTaskList(tasks, new Set<string>());
+  const flattenedTasks = buildFlattenedTaskList(tasks, new Set<TaskId>());
 
   // Create root SVG
   const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");

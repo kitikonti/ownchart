@@ -42,7 +42,7 @@ import { SelectionHighlight } from "./SelectionHighlight";
 
 interface SelectionRowsProps {
   tasks: Task[];
-  selectedSet: Set<string>;
+  selectedSet: Set<TaskId>;
   rowHeight: number;
   timelineWidth: number;
 }

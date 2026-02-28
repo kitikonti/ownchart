@@ -41,10 +41,10 @@ export interface TaskRowDatum {
 // ── Pure helper functions (exported for testing) ─────────────────────────────
 
 export function getClipboardPosition(
-  taskId: string,
-  prevTaskId: string | undefined,
-  nextTaskId: string | undefined,
-  clipboardSet: Set<string>
+  taskId: TaskId,
+  prevTaskId: TaskId | undefined,
+  nextTaskId: TaskId | undefined,
+  clipboardSet: Set<TaskId>
 ): ClipboardPosition | undefined {
   if (!clipboardSet.has(taskId)) return undefined;
   return {
@@ -54,10 +54,10 @@ export function getClipboardPosition(
 }
 
 export function getSelectionPosition(
-  taskId: string,
-  prevTaskId: string | undefined,
-  nextTaskId: string | undefined,
-  selectedSet: Set<string>
+  taskId: TaskId,
+  prevTaskId: TaskId | undefined,
+  nextTaskId: TaskId | undefined,
+  selectedSet: Set<TaskId>
 ): SelectionPosition | undefined {
   if (!selectedSet.has(taskId)) return undefined;
   return {

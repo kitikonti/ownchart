@@ -206,7 +206,7 @@ export const useHistoryStore = create<HistoryStore>()(
 // Shared helpers
 // ---------------------------------------------------------------------------
 
-function buildTaskMap(tasks: Task[]): Map<string, Task> {
+function buildTaskMap(tasks: Task[]): Map<TaskId, Task> {
   return new Map(tasks.map((t) => [t.id, t]));
 }
 
@@ -219,8 +219,8 @@ function assertNever(x: never): never {
 }
 
 function applyCascadePreviousValues(
-  taskMap: Map<string, Task>,
-  cascades: ReadonlyArray<{ id: string; previousValues: Partial<Task> }>
+  taskMap: Map<TaskId, Task>,
+  cascades: ReadonlyArray<{ id: TaskId; previousValues: Partial<Task> }>
 ): void {
   for (const cascade of cascades) {
     const task = taskMap.get(cascade.id);

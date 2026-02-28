@@ -32,8 +32,8 @@ function performUnhide(idsToUnhide: TaskId[]): void {
     timestamp: Date.now(),
     description: `Show ${pluralize(idsToUnhide.length, "hidden task")}`,
     params: {
-      taskIds: idsToUnhide as TaskId[],
-      previousHiddenTaskIds: previousHiddenTaskIds as TaskId[],
+      taskIds: idsToUnhide,
+      previousHiddenTaskIds,
     },
   });
 
@@ -76,8 +76,8 @@ export function useHideOperations(): UseHideOperationsResult {
         timestamp: Date.now(),
         description: `Hide ${pluralize(newlyHidden, "task")}`,
         params: {
-          taskIds: newHiddenIds.filter((id) => !prevSet.has(id)) as TaskId[],
-          previousHiddenTaskIds: previousHiddenTaskIds as TaskId[],
+          taskIds: newHiddenIds.filter((id) => !prevSet.has(id)),
+          previousHiddenTaskIds,
         },
       });
 
@@ -100,8 +100,8 @@ export function useHideOperations(): UseHideOperationsResult {
       timestamp: Date.now(),
       description: `Show all ${previousHiddenTaskIds.length} hidden tasks`,
       params: {
-        taskIds: previousHiddenTaskIds as TaskId[],
-        previousHiddenTaskIds: previousHiddenTaskIds as TaskId[],
+        taskIds: previousHiddenTaskIds,
+        previousHiddenTaskIds,
       },
     });
 

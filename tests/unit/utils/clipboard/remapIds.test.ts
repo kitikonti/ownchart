@@ -5,19 +5,20 @@ import {
 } from "../../../../src/utils/clipboard/remapIds";
 import type { Task } from "../../../../src/types/chart.types";
 import type { Dependency } from "../../../../src/types/dependency.types";
+import { tid, hex } from "../../../helpers/branded";
 
 // Helper to create test tasks
 const createTask = (id: string, name: string, parent?: string): Task => ({
-  id,
+  id: tid(id),
   name,
   startDate: "2025-01-01",
   endDate: "2025-01-07",
   duration: 7,
   progress: 0,
-  color: "#3b82f6",
+  color: hex("#3b82f6"),
   order: 0,
   type: "task",
-  parent,
+  parent: parent ? tid(parent) : undefined,
   metadata: {},
 });
 

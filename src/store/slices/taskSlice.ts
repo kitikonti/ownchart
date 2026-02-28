@@ -167,14 +167,13 @@ export const useTaskStore = create<TaskStore>()(
 
     // Actions
     addTask: (taskData): void => {
-      let generatedId = "" as TaskId;
+      const generatedId = crypto.randomUUID() as TaskId;
 
       set((state) => {
         const newTask: Task = {
           ...taskData,
-          id: crypto.randomUUID() as TaskId,
+          id: generatedId,
         };
-        generatedId = newTask.id;
         state.tasks.push(newTask);
       });
 

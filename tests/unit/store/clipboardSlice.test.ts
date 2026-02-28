@@ -12,6 +12,7 @@ import { useDependencyStore } from "../../../src/store/slices/dependencySlice";
 import { useFileStore } from "../../../src/store/slices/fileSlice";
 import type { Task } from "../../../src/types/chart.types";
 import type { Dependency } from "../../../src/types/dependency.types";
+import { tid, hex } from "../../helpers/branded";
 
 const createTask = (
   id: string,
@@ -19,13 +20,13 @@ const createTask = (
   order: number,
   overrides?: Partial<Task>
 ): Task => ({
-  id,
+  id: tid(id),
   name,
   startDate: "2025-01-01",
   endDate: "2025-01-07",
   duration: 7,
   progress: 0,
-  color: "#3b82f6",
+  color: hex("#3b82f6"),
   order,
   type: "task",
   metadata: {},

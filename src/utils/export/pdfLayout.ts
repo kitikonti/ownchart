@@ -13,6 +13,7 @@ import type {
 import { PDF_PAGE_SIZES, PDF_MARGIN_PRESETS } from "./types";
 import { INTERNAL_DPI, MM_PER_INCH, PNG_EXPORT_DPI } from "./dpi";
 import type { Task } from "../../types/chart.types";
+import type { TaskId } from "../../types/branded.types";
 import { buildFlattenedTaskList } from "../hierarchy";
 import { DENSITY_CONFIG } from "../../config/densityConfig";
 import { HEADER_HEIGHT } from "./constants";
@@ -332,7 +333,7 @@ export function calculatePdfFitToWidth(
   // Calculate content height based on task count
   const densityConfig = DENSITY_CONFIG[options.density];
   const contentHeaderHeight = options.includeHeader ? HEADER_HEIGHT : 0;
-  const flattenedTasks = buildFlattenedTaskList(tasks, new Set<string>());
+  const flattenedTasks = buildFlattenedTaskList(tasks, new Set<TaskId>());
   const contentHeightPx =
     flattenedTasks.length * densityConfig.rowHeight + contentHeaderHeight;
 

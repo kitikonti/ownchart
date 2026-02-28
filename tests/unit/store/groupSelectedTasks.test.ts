@@ -2,6 +2,7 @@ import { describe, it, expect, beforeEach } from "vitest";
 import { useTaskStore } from "../../../src/store/slices/taskSlice";
 import { useHistoryStore } from "../../../src/store/slices/historySlice";
 import type { Task } from "../../../src/types/chart.types";
+import { tid, hex } from "../../helpers/branded";
 
 /**
  * Helper: create a task with sensible defaults.
@@ -12,11 +13,13 @@ function makeTask(overrides: Partial<Task> & { id: string; name: string }): Task
     endDate: "2025-06-07",
     duration: 7,
     progress: 0,
-    color: "#0F6CBD",
+    color: hex("#0F6CBD"),
     order: 0,
     type: "task",
     metadata: {},
     ...overrides,
+    id: tid(overrides.id),
+    parent: overrides.parent ? tid(overrides.parent) : undefined,
   };
 }
 

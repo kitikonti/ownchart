@@ -9,6 +9,7 @@
 import { createRoot } from "react-dom/client";
 import { createElement } from "react";
 import type { Task } from "../../types/chart.types";
+import type { TaskId } from "../../types/branded.types";
 import type { ExportOptions, SvgExportOptions } from "./types";
 import { ExportRenderer } from "../../components/Export/ExportRenderer";
 import { calculateExportDimensions } from "./exportLayout";
@@ -184,7 +185,7 @@ function buildCompleteSvg(
     : 0;
 
   // Build flattened task list
-  const flattenedTasks = buildFlattenedTaskList(tasks, new Set<string>());
+  const flattenedTasks = buildFlattenedTaskList(tasks, new Set<TaskId>());
 
   // Create the root SVG
   const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");

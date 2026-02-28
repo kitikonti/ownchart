@@ -5,6 +5,7 @@
 
 import { useMemo } from "react";
 import type { Task } from "../../types/chart.types";
+import type { TaskId } from "../../types/branded.types";
 import type {
   ExportOptions,
   ExportColumnKey,
@@ -256,7 +257,7 @@ export function ExportRenderer({
   // Build flattened task list (show all tasks, none collapsed for export)
   const flattenedTasks = useMemo(() => {
     // Empty set means nothing is collapsed - show all tasks
-    return buildFlattenedTaskList(tasks, new Set<string>());
+    return buildFlattenedTaskList(tasks, new Set<TaskId>());
   }, [tasks]);
 
   // Extract just the Task objects for rendering
@@ -526,7 +527,7 @@ export function calculateExportDimensions(
   const densityConfig = DENSITY_CONFIG[options.density];
 
   // Build flattened task list (all expanded for export)
-  const flattenedTasks = buildFlattenedTaskList(tasks, new Set<string>());
+  const flattenedTasks = buildFlattenedTaskList(tasks, new Set<TaskId>());
   const orderedTasks = flattenedTasks.map((ft) => ft.task);
 
   // Calculate project date range from tasks if not provided

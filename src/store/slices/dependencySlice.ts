@@ -271,7 +271,7 @@ export const useDependencyStore = create<DependencyStore>()(
     },
 
     /** @internal Called by task deletion — does NOT record history (caller is responsible). */
-    removeDependenciesForTask: (taskId: string): Dependency[] => {
+    removeDependenciesForTask: (taskId: TaskId): Dependency[] => {
       const toRemove = get().dependencies.filter(
         (d) => d.fromTaskId === taskId || d.toTaskId === taskId
       );
@@ -304,7 +304,7 @@ export const useDependencyStore = create<DependencyStore>()(
     },
 
     getDependenciesForTask: (
-      taskId: string
+      taskId: TaskId
     ): { predecessors: Dependency[]; successors: Dependency[] } => {
       const deps = get().dependencies;
       return {

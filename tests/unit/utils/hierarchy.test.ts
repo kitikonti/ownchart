@@ -9,6 +9,7 @@ import {
   normalizeTaskOrder,
 } from "../../../src/utils/hierarchy";
 import type { Task } from "../../../src/types/chart.types";
+import { tid, hex } from "../../helpers/branded";
 
 // Helper to create a minimal task
 function createTask(
@@ -17,13 +18,13 @@ function createTask(
   options: Partial<Task> = {}
 ): Task {
   return {
-    id,
+    id: tid(id),
     name,
     startDate: "2025-01-01",
     endDate: "2025-01-05",
     duration: 5,
     progress: 0,
-    color: "#3b82f6",
+    color: hex("#3b82f6"),
     order: 0,
     metadata: {},
     type: "task",

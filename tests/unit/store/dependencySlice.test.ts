@@ -6,19 +6,20 @@ import { useFileStore } from "../../../src/store/slices/fileSlice";
 import type { Dependency } from "../../../src/types/dependency.types";
 import type { Task } from "../../../src/types/chart.types";
 import { CommandType } from "../../../src/types/command.types";
+import { tid, hex } from "../../helpers/branded";
 
 /**
  * Helper to create a minimal task for testing.
  */
 function createTestTask(overrides: Partial<Task> = {}): Task {
   return {
-    id: crypto.randomUUID(),
+    id: tid(crypto.randomUUID()),
     name: "Test Task",
     startDate: "2026-01-10",
     endDate: "2026-01-15",
     duration: 5,
     progress: 0,
-    color: "#3b82f6",
+    color: hex("#3b82f6"),
     order: 0,
     metadata: {},
     ...overrides,
@@ -31,8 +32,8 @@ function createTestTask(overrides: Partial<Task> = {}): Task {
 function createTestDependency(overrides: Partial<Dependency> = {}): Dependency {
   return {
     id: crypto.randomUUID(),
-    fromTaskId: "task-1",
-    toTaskId: "task-2",
+    fromTaskId: tid("task-1"),
+    toTaskId: tid("task-2"),
     type: "FS",
     lag: 0,
     createdAt: new Date().toISOString(),

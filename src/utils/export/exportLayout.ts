@@ -6,6 +6,7 @@
  */
 
 import type { Task } from "../../types/chart.types";
+import type { TaskId } from "../../types/branded.types";
 import type {
   ExportColumnKey,
   ExportLayoutInput,
@@ -224,7 +225,7 @@ export function computeExportLayout(input: ExportLayoutInput): ExportLayout {
 
   const densityConfig = DENSITY_CONFIG[options.density];
 
-  const flattenedTasks = buildFlattenedTaskList(tasks, new Set<string>());
+  const flattenedTasks = buildFlattenedTaskList(tasks, new Set<TaskId>());
   const orderedTasks = flattenedTasks.map((ft) => ft.task);
   const selectedColumns = options.selectedColumns;
 

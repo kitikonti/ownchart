@@ -120,11 +120,7 @@ export function createIndentOutdentActions(
       // Create snapshot of current hierarchy BEFORE any changes
       const originalFlatList = buildFlattenedTaskList(tasks, new Set<TaskId>());
 
-      const changes = computeIndentChanges(
-        tasks,
-        taskIds as TaskId[],
-        originalFlatList
-      );
+      const changes = computeIndentChanges(tasks, taskIds, originalFlatList);
       if (changes.length === 0) return;
 
       const previousTaskSnapshot = captureHierarchySnapshot(tasks);
@@ -196,7 +192,7 @@ export function createIndentOutdentActions(
         newParent: TaskId | undefined;
       }> = [];
 
-      for (const taskId of taskIds as TaskId[]) {
+      for (const taskId of taskIds) {
         const task = tasks.find((t) => t.id === taskId);
         if (!task?.parent) continue; // Already on root level
 

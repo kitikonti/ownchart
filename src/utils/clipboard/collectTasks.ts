@@ -4,6 +4,7 @@
  */
 
 import type { Task } from "../../types/chart.types";
+import type { TaskId } from "../../types/branded.types";
 import { getTaskChildren } from "../hierarchy";
 
 /**
@@ -19,16 +20,16 @@ import { getTaskChildren } from "../hierarchy";
  * @returns Array of tasks to copy
  */
 export function collectTasksWithChildren(
-  taskIds: string[],
+  taskIds: TaskId[],
   allTasks: Task[]
 ): Task[] {
-  const collected = new Set<string>();
+  const collected = new Set<TaskId>();
   const result: Task[] = [];
 
   /**
    * Recursively collect children of a collapsed task.
    */
-  const collectChildrenOfCollapsed = (taskId: string): void => {
+  const collectChildrenOfCollapsed = (taskId: TaskId): void => {
     const children = getTaskChildren(allTasks, taskId);
     children.forEach((child) => {
       if (collected.has(child.id)) return;

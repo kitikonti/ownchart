@@ -3,6 +3,7 @@
  * Implements Excel-like paste behavior.
  */
 
+import type { TaskId } from "../../types/branded.types";
 import type { FlattenedTask } from "../hierarchy";
 import { PLACEHOLDER_TASK_ID } from "../../config/placeholderRow";
 
@@ -21,8 +22,8 @@ import { PLACEHOLDER_TASK_ID } from "../../config/placeholderRow";
  * @returns Index in the flattened list where tasks should be inserted
  */
 export function determineInsertPosition(
-  activeCell: { taskId: string | null },
-  selectedTaskIds: string[],
+  activeCell: { taskId: TaskId | null },
+  selectedTaskIds: TaskId[],
   flattenedTasks: FlattenedTask[]
 ): number {
   // Priority 1: Placeholder row is active or selected -> insert at end

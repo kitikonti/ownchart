@@ -10,6 +10,7 @@ import type { Task } from "../../../src/types/chart.types";
 import type { Dependency } from "../../../src/types/dependency.types";
 import type { ColorModeState } from "../../../src/types/colorMode.types";
 import { DEFAULT_COLOR_MODE_STATE } from "../../../src/config/colorModeDefaults";
+import { tid, hex } from "../../helpers/branded";
 
 // Mock react-hot-toast as a callable function with .success/.error
 const toastMock = vi.hoisted(() =>
@@ -32,13 +33,13 @@ function createTask(
   options: Partial<Task> = {}
 ): Task {
   return {
-    id,
+    id: tid(id),
     name,
     startDate: "2025-01-01",
     endDate: "2025-01-05",
     duration: 5,
     progress: 0,
-    color: "#3b82f6",
+    color: hex("#3b82f6"),
     order: 0,
     type: "task",
     metadata: {},

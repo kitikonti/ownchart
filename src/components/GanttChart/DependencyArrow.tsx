@@ -5,6 +5,7 @@
  */
 
 import React, { memo, useMemo, useState } from "react";
+import type { TaskId } from "../../types/branded.types";
 import type { Dependency, TaskPosition } from "../../types/dependency.types";
 import {
   ARROWHEAD_SIZE,
@@ -34,7 +35,7 @@ interface DependencyArrowProps {
   dependency: Dependency;
   fromTaskName: string;
   toTaskName: string;
-  taskPositions: Map<string, TaskPosition>;
+  taskPositions: Map<TaskId, TaskPosition>;
   rowHeight: number;
   isSelected: boolean;
   onSelect: (id: string) => void;

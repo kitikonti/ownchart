@@ -18,7 +18,7 @@ export const MAX_HIERARCHY_DEPTH = 3;
  */
 export function getTaskChildren(
   tasks: Task[],
-  parentId: string | null
+  parentId: TaskId | null
 ): Task[] {
   return tasks
     .filter((task) => {
@@ -34,7 +34,7 @@ export function getTaskChildren(
 /**
  * Get all descendants of a task (recursive).
  */
-export function getTaskDescendants(tasks: Task[], parentId: string): Task[] {
+export function getTaskDescendants(tasks: Task[], parentId: TaskId): Task[] {
   const children = getTaskChildren(tasks, parentId);
   const descendants = [...children];
 
@@ -48,7 +48,7 @@ export function getTaskDescendants(tasks: Task[], parentId: string): Task[] {
 /**
  * Get path from root to task (array of parent IDs).
  */
-export function getTaskPath(tasks: Task[], taskId: string): string[] {
+export function getTaskPath(tasks: Task[], taskId: TaskId): TaskId[] {
   const task = tasks.find((t) => t.id === taskId);
   if (!task || !task.parent) return [];
 
@@ -58,7 +58,7 @@ export function getTaskPath(tasks: Task[], taskId: string): string[] {
 /**
  * Get nesting level of a task (0 = root).
  */
-export function getTaskLevel(tasks: Task[], taskId: string): number {
+export function getTaskLevel(tasks: Task[], taskId: TaskId): number {
   return getTaskPath(tasks, taskId).length;
 }
 
@@ -67,8 +67,8 @@ export function getTaskLevel(tasks: Task[], taskId: string): number {
  */
 export function wouldCreateCircularHierarchy(
   tasks: Task[],
-  taskId: string,
-  newParentId: string | null
+  taskId: TaskId,
+  newParentId: TaskId | null
 ): boolean {
   if (!newParentId) return false;
   if (taskId === newParentId) return true;
@@ -82,7 +82,7 @@ export function wouldCreateCircularHierarchy(
  * Get the deepest absolute level among a task's descendants (including the task itself).
  * Returns the task's own level if it has no descendants.
  */
-export function getMaxDescendantLevel(tasks: Task[], taskId: string): number {
+export function getMaxDescendantLevel(tasks: Task[], taskId: TaskId): number {
   const taskLevel = getTaskLevel(tasks, taskId);
   const descendants = getTaskDescendants(tasks, taskId);
 
@@ -119,7 +119,7 @@ export function getMaxDepth(tasks: Task[]): number {
  */
 export function calculateSummaryDates(
   tasks: Task[],
-  summaryTaskId: string
+  summaryTaskId: TaskId
 ): { startDate: string; endDate: string; duration: number } | null {
   const summaryTask = tasks.find((t) => t.id === summaryTaskId);
 
@@ -188,11 +188,11 @@ export interface FlattenedTask {
 
 export function buildFlattenedTaskList(
   tasks: Task[],
-  collapsedTaskIds: Set<string>
+  collapsedTaskIds: Set<TaskId>
 ): FlattenedTask[] {
   // Build children map: parentId → children sorted by order
-  const childrenMap = new Map<string | undefined, Task[]>();
-  const childrenSet = new Set<string>(); // Tasks that have children
+  const childrenMap = new Map<TaskId | undefined, Task[]>();
+  const childrenSet = new Set<TaskId>(); // Tasks that have children
   const taskIds = new Set(tasks.map((t) => t.id));
 
   for (const task of tasks) {
@@ -218,7 +218,7 @@ export function buildFlattenedTaskList(
   // Recursive tree-walk
   const result: FlattenedTask[] = [];
 
-  function walk(parentId: string | undefined, level: number): void {
+  function walk(parentId: TaskId | undefined, level: number): void {
     const children = childrenMap.get(parentId);
     if (!children) return;
 
@@ -254,7 +254,7 @@ export function buildFlattenedTaskList(
  * order values as output.
  */
 export function normalizeTaskOrder(tasks: Task[]): void {
-  const flattened = buildFlattenedTaskList(tasks, new Set<string>());
+  const flattened = buildFlattenedTaskList(tasks, new Set<TaskId>());
   const taskMap = new Map(tasks.map((t) => [t.id, t]));
   let order = 0;
   for (const { task } of flattened) {
@@ -437,10 +437,10 @@ export function getEffectiveTasksToMove(
  */
 export function collectDescendantIds(
   tasks: ReadonlyArray<Task>,
-  rootId: string,
-  result?: Set<string>
-): Set<string> {
-  const ids = result ?? new Set<string>();
+  rootId: TaskId,
+  result?: Set<TaskId>
+): Set<TaskId> {
+  const ids = result ?? new Set<TaskId>();
   for (const task of tasks) {
     if (task.parent === rootId && !ids.has(task.id)) {
       ids.add(task.id);

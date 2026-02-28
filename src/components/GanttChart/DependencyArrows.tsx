@@ -6,6 +6,7 @@
 
 import { useMemo, useCallback } from "react";
 import type { Task } from "../../types/chart.types";
+import type { TaskId } from "../../types/branded.types";
 import type { TaskPosition } from "../../types/dependency.types";
 import type {
   TimelineScale,
@@ -25,7 +26,7 @@ interface DependencyArrowsProps {
   rowHeight?: number;
   dragState?: {
     isDragging: boolean;
-    fromTaskId: string | null;
+    fromTaskId: TaskId | null;
     currentPosition: { x: number; y: number };
   };
 }
@@ -65,7 +66,7 @@ export function DependencyArrows({
 
   // Calculate positions for all tasks
   const taskPositions = useMemo(() => {
-    const positions = new Map<string, TaskPosition>();
+    const positions = new Map<TaskId, TaskPosition>();
 
     tasks.forEach((task, index) => {
       // Skip tasks without valid dates
