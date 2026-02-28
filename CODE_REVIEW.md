@@ -126,9 +126,9 @@ cd ../app-gantt-review
 - [x] `src/components/TaskList/TaskTable.tsx` (263 LOC)
 - [x] `src/components/TaskList/TaskDataCells.tsx` (333 LOC)
 - [x] `src/components/TaskList/NewTaskPlaceholderRow.tsx` (315 LOC)
-- [x] `src/components/TaskList/TaskTableRow.tsx` (234 LOC)
+- [ ] `src/components/TaskList/TaskTableRow.tsx` (234 LOC)
 - [ ] `src/components/TaskList/TaskTableHeader.tsx` (176 LOC)
-- [x] `src/components/TaskList/HiddenRowIndicator.tsx` (137 LOC)
+- [ ] `src/components/TaskList/HiddenRowIndicator.tsx` (137 LOC)
 - [ ] `src/components/TaskList/ColumnResizer.tsx` (133 LOC)
 - [ ] `src/components/TaskList/CellEditors/ColorCellEditor.tsx` (130 LOC)
 - [ ] `src/components/TaskList/TaskTypeIcon.tsx` (62 LOC)
@@ -136,7 +136,7 @@ cd ../app-gantt-review
 ### Priority: MEDIUM — Layout & Export
 - [x] `src/components/Export/ExportRenderer.tsx`
 - [x] `src/components/Layout/GanttLayout.tsx`
-- [ ] `src/components/Export/ExportDialog.tsx` (505 LOC)
+- [x] `src/components/Export/ExportDialog.tsx` (505 LOC)
 - [x] `src/components/Export/PdfPreview.tsx` (426 LOC)
 - [ ] `src/components/Export/PdfExportOptions.tsx` (338 LOC)
 - [ ] `src/components/Export/SharedExportOptions.tsx` (273 LOC)
@@ -158,12 +158,12 @@ cd ../app-gantt-review
 - [x] `src/components/Ribbon/Ribbon.tsx` (218 LOC)
 - [x] `src/components/Ribbon/HolidayRegionPopover.tsx` (158 LOC)
 - [x] `src/components/Ribbon/ZoomDropdown.tsx` (138 LOC)
-- [ ] `src/components/Ribbon/FormatTabContent.tsx` (135 LOC)
-- [ ] `src/components/Ribbon/WorkingDaysDropdown.tsx` (125 LOC)
-- [ ] `src/components/Ribbon/InlineProjectTitle.tsx` (99 LOC)
-- [ ] `src/components/Ribbon/FileMenu.tsx` (88 LOC)
-- [ ] `src/components/Ribbon/RibbonCollapseContext.tsx` (34 LOC)
-- [ ] `src/components/Ribbon/index.ts` (1 LOC)
+- [x] `src/components/Ribbon/FormatTabContent.tsx` (135 LOC)
+- [x] `src/components/Ribbon/WorkingDaysDropdown.tsx` (125 LOC)
+- [x] `src/components/Ribbon/InlineProjectTitle.tsx` (99 LOC)
+- [x] `src/components/Ribbon/FileMenu.tsx` (88 LOC)
+- [x] `src/components/Ribbon/RibbonCollapseContext.tsx` (34 LOC)
+- [x] `src/components/Ribbon/index.ts` (1 LOC)
 
 ### Priority: MEDIUM — Hooks
 - [ ] `src/hooks/useTaskBarInteraction.ts` (478 LOC)
@@ -180,7 +180,7 @@ cd ../app-gantt-review
 - [ ] `src/hooks/useZoom.ts` (217 LOC)
 - [ ] `src/hooks/useFullTaskContextMenuItems.ts` (200 LOC)
 - [ ] `src/hooks/useHideOperations.ts` (173 LOC)
-- [x] `src/hooks/useTaskRowData.ts` (159 LOC)
+- [ ] `src/hooks/useTaskRowData.ts` (159 LOC)
 - [ ] `src/hooks/useLocalStoragePersistence.ts` (158 LOC)
 - [ ] `src/hooks/useTableHeaderContextMenu.ts` (134 LOC)
 - [ ] `src/hooks/useTimelineAreaContextMenu.ts` (124 LOC)
@@ -330,11 +330,3 @@ Entscheidungen aus bisherigen Reviews die fuer zukuenftige Dateien gelten.
 - **Shared Constants fuer Serialize/Deserialize**: Gemeinsame Feld-Listen (z.B. `KNOWN_TASK_KEYS`) in `fileOperations/constants.ts`. Nicht duplizieren.
 - **Sanitization: SKIP_SANITIZE_KEYS fuer ID-artige Felder**: `sanitize.ts` sanitized alle Task-String-Felder rekursiv, aber ID-artige Felder (UUIDs, Daten, Farben) werden uebersprungen. Bei neuen ID-artigen Task-Feldern `SKIP_SANITIZE_KEYS` in `sanitize.ts` ergaenzen.
 - **Deprecated Exports sofort entfernen wenn 0 Caller**: Keine `@deprecated`-Marker beibehalten wenn grep 0 Aufrufer zeigt. Sofort loeschen — Git-History reicht.
-
----
-
-## Progress
-
-- Reviewed: 61 / 194 Dateien
-- Offene Issues: 38 Hex-Farben in 10 .tsx-Dateien, ~18 toISODateString-Umstellungen
-- Test-Coverage: 80%+
