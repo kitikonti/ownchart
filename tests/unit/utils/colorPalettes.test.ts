@@ -12,6 +12,7 @@ import {
   getPaletteById,
   type PaletteCategory,
 } from "../../../src/utils/colorPalettes";
+import { toPaletteId } from "../../../src/types/branded.types";
 
 describe("colorPalettes", () => {
   // ── Data Integrity ──────────────────────────────────────────────────────
@@ -94,7 +95,7 @@ describe("colorPalettes", () => {
 
   describe("getPaletteById", () => {
     it("returns the correct palette for a valid ID", () => {
-      const palette = getPaletteById("tableau-10");
+      const palette = getPaletteById(toPaletteId("tableau-10"));
       expect(palette).toBeDefined();
       expect(palette!.name).toBe("Tableau 10");
       expect(palette!.category).toBe("classic");
@@ -102,19 +103,25 @@ describe("colorPalettes", () => {
     });
 
     it("returns undefined for an invalid ID", () => {
-      expect(getPaletteById("nonexistent")).toBeUndefined();
+      expect(getPaletteById(toPaletteId("nonexistent"))).toBeUndefined();
     });
 
     it("returns undefined for an empty string", () => {
-      expect(getPaletteById("")).toBeUndefined();
+      expect(getPaletteById(toPaletteId(""))).toBeUndefined();
     });
 
     it("finds palettes from each category", () => {
-      expect(getPaletteById("d3-category10")?.category).toBe("classic");
-      expect(getPaletteById("highcharts")?.category).toBe("professional");
-      expect(getPaletteById("material-design")?.category).toBe("design");
-      expect(getPaletteById("bold")?.category).toBe("vibrant");
-      expect(getPaletteById("okabe-ito")?.category).toBe("soft");
+      expect(getPaletteById(toPaletteId("d3-category10"))?.category).toBe(
+        "classic",
+      );
+      expect(getPaletteById(toPaletteId("highcharts"))?.category).toBe(
+        "professional",
+      );
+      expect(getPaletteById(toPaletteId("material-design"))?.category).toBe(
+        "design",
+      );
+      expect(getPaletteById(toPaletteId("bold"))?.category).toBe("vibrant");
+      expect(getPaletteById(toPaletteId("okabe-ito"))?.category).toBe("soft");
     });
   });
 

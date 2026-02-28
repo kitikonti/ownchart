@@ -13,7 +13,11 @@
  * - Soft: Datawrapper, D3.js (ISC), Okabe & Ito (2008), Paul Tol (SRON)
  */
 
-import { toPaletteId, type PaletteId } from "../types/branded.types";
+import {
+  toPaletteId,
+  type HexColor,
+  type PaletteId,
+} from "../types/branded.types";
 
 /**
  * Palette category for organization in UI
@@ -29,10 +33,10 @@ export type PaletteCategory =
  * Color palette definition
  */
 export interface ColorPalette {
-  id: string;
+  id: PaletteId;
   name: string;
   category: PaletteCategory;
-  colors: string[]; // 8-10 categorical hex colors
+  colors: HexColor[]; // 8-10 categorical hex colors
 }
 
 /** Default palette ID used when switching to theme mode without a selection */
@@ -48,7 +52,7 @@ export const COLOR_PALETTES: ColorPalette[] = [
   // ═══════════════════════════════════════════════════════
 
   {
-    id: "tableau-10",
+    id: toPaletteId("tableau-10"),
     name: "Tableau 10",
     category: "classic",
     colors: [
@@ -65,7 +69,7 @@ export const COLOR_PALETTES: ColorPalette[] = [
     ],
   },
   {
-    id: "d3-category10",
+    id: toPaletteId("d3-category10"),
     name: "D3 Category10",
     category: "classic",
     colors: [
@@ -82,7 +86,7 @@ export const COLOR_PALETTES: ColorPalette[] = [
     ],
   },
   {
-    id: "observable-10",
+    id: toPaletteId("observable-10"),
     name: "Observable 10",
     category: "classic",
     colors: [
@@ -99,7 +103,7 @@ export const COLOR_PALETTES: ColorPalette[] = [
     ],
   },
   {
-    id: "d3-dark2",
+    id: toPaletteId("d3-dark2"),
     name: "D3 Dark2",
     category: "classic",
     colors: [
@@ -121,7 +125,7 @@ export const COLOR_PALETTES: ColorPalette[] = [
   // ═══════════════════════════════════════════════════════
 
   {
-    id: "highcharts",
+    id: toPaletteId("highcharts"),
     name: "Highcharts",
     category: "professional",
     colors: [
@@ -138,7 +142,7 @@ export const COLOR_PALETTES: ColorPalette[] = [
     ],
   },
   {
-    id: "plotly-g10",
+    id: toPaletteId("plotly-g10"),
     name: "Plotly G10",
     category: "professional",
     colors: [
@@ -155,7 +159,7 @@ export const COLOR_PALETTES: ColorPalette[] = [
     ],
   },
   {
-    id: "echarts",
+    id: toPaletteId("echarts"),
     name: "ECharts",
     category: "professional",
     colors: [
@@ -172,7 +176,7 @@ export const COLOR_PALETTES: ColorPalette[] = [
     ],
   },
   {
-    id: "google-charts",
+    id: toPaletteId("google-charts"),
     name: "Google Charts",
     category: "professional",
     colors: [
@@ -189,7 +193,7 @@ export const COLOR_PALETTES: ColorPalette[] = [
     ],
   },
   {
-    id: "ms-office",
+    id: toPaletteId("ms-office"),
     name: "MS Office",
     category: "professional",
     colors: [
@@ -206,7 +210,7 @@ export const COLOR_PALETTES: ColorPalette[] = [
     ],
   },
   {
-    id: "notion-labels",
+    id: toPaletteId("notion-labels"),
     name: "Notion Labels",
     category: "professional",
     colors: [
@@ -223,7 +227,7 @@ export const COLOR_PALETTES: ColorPalette[] = [
     ],
   },
   {
-    id: "monday",
+    id: toPaletteId("monday"),
     name: "Monday.com",
     category: "professional",
     colors: [
@@ -247,7 +251,7 @@ export const COLOR_PALETTES: ColorPalette[] = [
   // ═══════════════════════════════════════════════════════
 
   {
-    id: "material-design",
+    id: toPaletteId("material-design"),
     name: "Material Design",
     category: "design",
     colors: [
@@ -264,7 +268,7 @@ export const COLOR_PALETTES: ColorPalette[] = [
     ],
   },
   {
-    id: "tailwind-curated",
+    id: toPaletteId("tailwind-curated"),
     name: "Tailwind Curated",
     category: "design",
     colors: [
@@ -281,7 +285,7 @@ export const COLOR_PALETTES: ColorPalette[] = [
     ],
   },
   {
-    id: "ant-design",
+    id: toPaletteId("ant-design"),
     name: "Ant Design",
     category: "design",
     colors: [
@@ -298,7 +302,7 @@ export const COLOR_PALETTES: ColorPalette[] = [
     ],
   },
   {
-    id: "ibm-carbon",
+    id: toPaletteId("ibm-carbon"),
     name: "IBM Carbon",
     category: "design",
     colors: [
@@ -319,7 +323,7 @@ export const COLOR_PALETTES: ColorPalette[] = [
   // ═══════════════════════════════════════════════════════
 
   {
-    id: "bold",
+    id: toPaletteId("bold"),
     name: "Bold",
     category: "vibrant",
     colors: [
@@ -336,7 +340,7 @@ export const COLOR_PALETTES: ColorPalette[] = [
     ],
   },
   {
-    id: "vivid",
+    id: toPaletteId("vivid"),
     name: "Vivid",
     category: "vibrant",
     colors: [
@@ -353,7 +357,7 @@ export const COLOR_PALETTES: ColorPalette[] = [
     ],
   },
   {
-    id: "retro-metro",
+    id: toPaletteId("retro-metro"),
     name: "Retro Metro",
     category: "vibrant",
     colors: [
@@ -369,7 +373,7 @@ export const COLOR_PALETTES: ColorPalette[] = [
     ],
   },
   {
-    id: "dutch-field",
+    id: toPaletteId("dutch-field"),
     name: "Dutch Field",
     category: "vibrant",
     colors: [
@@ -385,7 +389,7 @@ export const COLOR_PALETTES: ColorPalette[] = [
     ],
   },
   {
-    id: "jewel-box",
+    id: toPaletteId("jewel-box"),
     name: "Jewel Box",
     category: "vibrant",
     colors: [
@@ -402,7 +406,7 @@ export const COLOR_PALETTES: ColorPalette[] = [
     ],
   },
   {
-    id: "coral-reef",
+    id: toPaletteId("coral-reef"),
     name: "Coral Reef",
     category: "vibrant",
     colors: [
@@ -419,7 +423,7 @@ export const COLOR_PALETTES: ColorPalette[] = [
     ],
   },
   {
-    id: "spectral",
+    id: toPaletteId("spectral"),
     name: "Spectral",
     category: "vibrant",
     colors: [
@@ -443,7 +447,7 @@ export const COLOR_PALETTES: ColorPalette[] = [
   // ═══════════════════════════════════════════════════════
 
   {
-    id: "spring-pastels",
+    id: toPaletteId("spring-pastels"),
     name: "Spring Pastels",
     category: "soft",
     colors: [
@@ -459,7 +463,7 @@ export const COLOR_PALETTES: ColorPalette[] = [
     ],
   },
   {
-    id: "pastel-breeze",
+    id: toPaletteId("pastel-breeze"),
     name: "Pastel Breeze",
     category: "soft",
     colors: [
@@ -476,7 +480,7 @@ export const COLOR_PALETTES: ColorPalette[] = [
     ],
   },
   {
-    id: "d3-set2",
+    id: toPaletteId("d3-set2"),
     name: "D3 Set2",
     category: "soft",
     colors: [
@@ -491,7 +495,7 @@ export const COLOR_PALETTES: ColorPalette[] = [
     ],
   },
   {
-    id: "okabe-ito",
+    id: toPaletteId("okabe-ito"),
     name: "Okabe-Ito",
     category: "soft",
     colors: [
@@ -506,7 +510,7 @@ export const COLOR_PALETTES: ColorPalette[] = [
     ],
   },
   {
-    id: "paul-tol-muted",
+    id: toPaletteId("paul-tol-muted"),
     name: "Paul Tol Muted",
     category: "soft",
     colors: [
@@ -526,7 +530,7 @@ export const COLOR_PALETTES: ColorPalette[] = [
 /**
  * Get palette by ID
  */
-export function getPaletteById(id: string): ColorPalette | undefined {
+export function getPaletteById(id: PaletteId): ColorPalette | undefined {
   return COLOR_PALETTES.find((p) => p.id === id);
 }
 
@@ -550,7 +554,9 @@ export const PALETTE_CATEGORIES = Object.keys(
 ) as PaletteCategory[];
 
 /**
- * Palettes pre-grouped by category (computed once at module load)
+ * Palettes pre-grouped by category (computed once at module load).
+ * Safe assertion: PALETTE_CATEGORIES covers all PaletteCategory values,
+ * so every key is guaranteed to be present.
  */
 export const PALETTES_BY_CATEGORY = Object.fromEntries(
   PALETTE_CATEGORIES.map((cat) => [

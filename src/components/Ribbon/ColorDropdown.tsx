@@ -35,7 +35,6 @@ import type {
 } from "../../types/colorMode.types";
 import {
   toHexColor,
-  toPaletteId,
   type HexColor,
   type PaletteId,
 } from "../../types/branded.types";
@@ -100,7 +99,7 @@ function ColorSwatch({
   );
 }
 
-function PalettePreview({ colors }: { colors: string[] }): JSX.Element {
+function PalettePreview({ colors }: { colors: HexColor[] }): JSX.Element {
   return (
     <div className="flex gap-px">
       {colors.map((color, index) => (
@@ -211,7 +210,7 @@ function ThemeOptions({
                 key={palette.id}
                 isSelected={selectedPaletteId === palette.id}
                 showCheckmark={false}
-                onClick={() => onSelectPalette(toPaletteId(palette.id))}
+                onClick={() => onSelectPalette(palette.id)}
                 trailing={<PalettePreview colors={palette.colors} />}
               >
                 {palette.name}
