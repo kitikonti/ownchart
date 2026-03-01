@@ -202,7 +202,7 @@ cd ../app-gantt-review
 
 ### Priority: MEDIUM — Utils
 - [x] `src/utils/colorPalettes.ts` (540 LOC) — Datendatei
-- [ ] `src/utils/hierarchy.ts` (430 LOC)
+- [x] `src/utils/hierarchy.ts` (430 LOC)
 - [ ] `src/utils/timelineUtils.ts` (424 LOC)
 - [ ] `src/utils/colorUtils.ts` (332 LOC)
 - [ ] `src/utils/multiTabStorage.ts` (318 LOC)
