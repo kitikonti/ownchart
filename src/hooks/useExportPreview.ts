@@ -3,7 +3,7 @@
  * Adapts captureChart logic for preview use with debouncing and memory management.
  */
 
-import { useEffect, useState, useRef, useCallback } from "react";
+import { useEffect, useState, useRef, useCallback, useMemo } from "react";
 import { createRoot, type Root } from "react-dom/client";
 import { createElement } from "react";
 import { toCanvas } from "html-to-image";
@@ -12,14 +12,18 @@ import type { ExportOptions } from "../utils/export/types";
 import { ExportRenderer } from "../components/Export/ExportRenderer";
 import { calculateExportDimensions } from "../utils/export/exportLayout";
 
-/** Debounce delay in milliseconds */
+/** Debounce delay before triggering a new preview render */
 const DEBOUNCE_MS = 300;
+/** Time to wait for React to settle after root.render() before capturing */
+const RENDER_SETTLE_MS = 100;
+/** Pixel ratio for preview capture — intentionally reduced for performance */
+const PREVIEW_PIXEL_RATIO = 1;
+/** White background hex used for container background and canvas capture */
+const WHITE_HEX = "#ffffff";
 
 export interface UseExportPreviewResult {
   /** Data URL of the preview image (use with <img src={...}>) */
   previewDataUrl: string | null;
-  /** @deprecated Use previewDataUrl instead */
-  previewCanvas: HTMLCanvasElement | null;
   previewDimensions: { width: number; height: number };
   isRendering: boolean;
   error: string | null;
@@ -45,7 +49,9 @@ async function waitForFonts(): Promise<void> {
 }
 
 /**
- * Wait for next animation frame (ensures DOM is painted).
+ * Wait for the next two animation frames so the DOM is fully painted.
+ * Two rAF calls are needed: the first schedules after the current paint,
+ * the second ensures any layout-triggered repaints have also settled.
  */
 function waitForPaint(): Promise<void> {
   return new Promise((resolve) => {
@@ -98,6 +104,90 @@ function createOptionsKey(
 }
 
 /**
+ * Create the off-screen DOM wrapper and container for rendering.
+ * The wrapper uses height:0 + overflow:hidden to hide content visually
+ * while still allowing html-to-image to capture it (height-overflow method).
+ */
+function buildRenderContainer(
+  renderId: number,
+  dimensions: { width: number; height: number },
+  background: string
+): { wrapper: HTMLDivElement; container: HTMLDivElement } {
+  const wrapper = document.createElement("div");
+  wrapper.id = `export-preview-wrapper-${renderId}`;
+  wrapper.style.cssText = `
+    position: fixed;
+    left: 0;
+    top: 0;
+    height: 0;
+    overflow: hidden;
+    pointer-events: none;
+  `;
+  document.body.appendChild(wrapper);
+
+  const container = document.createElement("div");
+  container.id = `export-preview-container-${renderId}`;
+  container.style.cssText = `
+    width: ${dimensions.width}px;
+    height: ${dimensions.height}px;
+    overflow: hidden;
+    background: ${background};
+  `;
+  wrapper.appendChild(container);
+
+  return { wrapper, container };
+}
+
+/**
+ * Mount the ExportRenderer into the container and wait for React to settle.
+ * Returns the created React root for later cleanup.
+ */
+async function renderToContainer(
+  container: HTMLDivElement,
+  props: {
+    tasks: Task[];
+    options: ExportOptions;
+    columnWidths: Record<string, number>;
+    currentAppZoom: number;
+    projectDateRange?: { start: Date; end: Date };
+    visibleDateRange?: { start: Date; end: Date };
+  }
+): Promise<Root> {
+  const root = createRoot(container);
+  await new Promise<void>((resolve) => {
+    root.render(createElement(ExportRenderer, props));
+    setTimeout(resolve, RENDER_SETTLE_MS);
+  });
+  return root;
+}
+
+/**
+ * Wait for fonts and paint, then capture the container to a PNG data URL.
+ */
+async function captureContainerToDataUrl(
+  container: HTMLDivElement,
+  dimensions: { width: number; height: number },
+  backgroundColor: string | undefined
+): Promise<string> {
+  await waitForFonts();
+  await waitForPaint();
+
+  const canvas = await toCanvas(container, {
+    pixelRatio: PREVIEW_PIXEL_RATIO,
+    backgroundColor,
+    width: dimensions.width,
+    height: dimensions.height,
+    style: {
+      transform: "none",
+      left: "0",
+      top: "0",
+    },
+  });
+
+  return canvas.toDataURL("image/png");
+}
+
+/**
  * Hook for generating live export preview with debouncing and memory management.
  */
 export function useExportPreview({
@@ -110,9 +200,6 @@ export function useExportPreview({
   enabled = true,
 }: UseExportPreviewParams): UseExportPreviewResult {
   const [previewDataUrl, setPreviewDataUrl] = useState<string | null>(null);
-  const [previewCanvas, setPreviewCanvas] = useState<HTMLCanvasElement | null>(
-    null
-  );
   const [previewDimensions, setPreviewDimensions] = useState<{
     width: number;
     height: number;
@@ -147,11 +234,9 @@ export function useExportPreview({
     }
   }, []);
 
-  // Render preview
   const renderPreview = useCallback(async () => {
     if (!enabled || tasks.length === 0) {
       setPreviewDataUrl(null);
-      setPreviewCanvas(null);
       setPreviewDimensions({ width: 0, height: 0 });
       return;
     }
@@ -160,12 +245,9 @@ export function useExportPreview({
     abortRef.current = false;
     setIsRendering(true);
     setError(null);
-
-    // Cleanup previous render
     cleanup();
 
     try {
-      // Calculate full dimensions
       const fullDimensions = calculateExportDimensions({
         tasks,
         options,
@@ -175,102 +257,54 @@ export function useExportPreview({
         visibleDateRange,
       });
 
-      // Create wrapper with height:0 + overflow:hidden to hide content visually
-      // while still allowing html-to-image to capture it (height-overflow method)
-      const wrapper = document.createElement("div");
-      wrapper.id = `export-preview-wrapper-${renderId}`;
-      wrapper.style.cssText = `
-        position: fixed;
-        left: 0;
-        top: 0;
-        height: 0;
-        overflow: hidden;
-        pointer-events: none;
-      `;
-      document.body.appendChild(wrapper);
-      overlayRef.current = wrapper; // reuse overlayRef for wrapper cleanup
-
-      // Create container inside wrapper - it renders but wrapper hides it
-      const container = document.createElement("div");
-      container.id = `export-preview-container-${renderId}`;
-      container.style.cssText = `
-        width: ${fullDimensions.width}px;
-        height: ${fullDimensions.height}px;
-        overflow: hidden;
-        background: ${options.background === "white" ? "#ffffff" : "transparent"};
-      `;
-      wrapper.appendChild(container);
+      // Phase 1: Build off-screen container
+      const background =
+        options.background === "white" ? WHITE_HEX : "transparent";
+      const { wrapper, container } = buildRenderContainer(
+        renderId,
+        fullDimensions,
+        background
+      );
+      overlayRef.current = wrapper;
       containerRef.current = container;
 
-      // Check if aborted
       if (abortRef.current || renderId !== renderIdRef.current) {
         cleanup();
         return;
       }
 
-      // Create React root and render
-      const root = createRoot(container);
+      // Phase 2: Render React tree and wait for it to settle
+      const root = await renderToContainer(container, {
+        tasks,
+        options,
+        columnWidths,
+        currentAppZoom,
+        projectDateRange,
+        visibleDateRange,
+      });
       rootRef.current = root;
 
-      await new Promise<void>((resolve) => {
-        root.render(
-          createElement(ExportRenderer, {
-            tasks,
-            options,
-            columnWidths,
-            currentAppZoom,
-            projectDateRange,
-            visibleDateRange,
-          })
-        );
-        setTimeout(resolve, 100);
-      });
-
-      // Check if aborted
       if (abortRef.current || renderId !== renderIdRef.current) {
         cleanup();
         return;
       }
 
-      // Wait for fonts and paint
-      await waitForFonts();
-      await waitForPaint();
+      // Phase 3: Wait for fonts/paint, then capture to data URL
+      const backgroundColor =
+        options.background === "white" ? WHITE_HEX : undefined;
+      const dataUrl = await captureContainerToDataUrl(
+        container,
+        fullDimensions,
+        backgroundColor
+      );
 
-      // Check if aborted
       if (abortRef.current || renderId !== renderIdRef.current) {
         cleanup();
         return;
       }
 
-      // Capture to canvas at reduced resolution for preview
-      const canvas = await toCanvas(container, {
-        // Reduced pixel ratio for preview performance
-        pixelRatio: 1,
-        backgroundColor: options.background === "white" ? "#ffffff" : undefined,
-        width: fullDimensions.width,
-        height: fullDimensions.height,
-        style: {
-          transform: "none",
-          left: "0",
-          top: "0",
-        },
-      });
-
-      // Check if aborted
-      if (abortRef.current || renderId !== renderIdRef.current) {
-        cleanup();
-        return;
-      }
-
-      // Cleanup
       cleanup();
-
-      // Convert canvas to data URL for flash-free display
-      const dataUrl = canvas.toDataURL("image/png");
-
-      // Update state with the data URL, canvas, and full dimensions
       setPreviewDataUrl(dataUrl);
-      setPreviewCanvas(canvas);
       setPreviewDimensions(fullDimensions);
     } catch (err) {
       if (!abortRef.current && renderId === renderIdRef.current) {
@@ -278,7 +312,6 @@ export function useExportPreview({
           err instanceof Error ? err.message : "Preview generation failed";
         setError(message);
         setPreviewDataUrl(null);
-        setPreviewCanvas(null);
       }
       cleanup();
     } finally {
@@ -297,18 +330,17 @@ export function useExportPreview({
     cleanup,
   ]);
 
-  // Create options key for debouncing
-  const optionsKey = createOptionsKey(
-    options,
-    projectDateRange,
-    visibleDateRange
+  // Memoized key capturing all options that affect visual output
+  const optionsKey = useMemo(
+    () => createOptionsKey(options, projectDateRange, visibleDateRange),
+    [options, projectDateRange, visibleDateRange]
   );
 
-  // Debounced render effect
+  // Debounced render effect — re-runs when task data, options, or zoom change.
+  // Task property changes (not just count) also propagate via renderPreview being recreated.
   useEffect(() => {
     if (!enabled) {
       setPreviewDataUrl(null);
-      setPreviewCanvas(null);
       setPreviewDimensions({ width: 0, height: 0 });
       return;
     }
@@ -323,8 +355,8 @@ export function useExportPreview({
     };
   }, [
     enabled,
-    tasks.length, // Re-render when task count changes
-    optionsKey, // Re-render when options change
+    tasks.length, // task count change; full task changes propagate via renderPreview
+    optionsKey,
     currentAppZoom,
     renderPreview,
   ]);
@@ -339,7 +371,6 @@ export function useExportPreview({
 
   return {
     previewDataUrl,
-    previewCanvas,
     previewDimensions,
     isRendering,
     error,

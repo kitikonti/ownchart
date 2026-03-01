@@ -27,7 +27,7 @@ export function useComputedTaskColor(task: Task): HexColor {
   const tasks = useTaskStore((state) => state.tasks);
 
   return useMemo(() => {
-    return computeTaskColor(task, tasks, colorModeState) as HexColor;
+    return computeTaskColor(task, tasks, colorModeState);
   }, [task, tasks, colorModeState]);
 }
 
@@ -43,7 +43,7 @@ export function useComputedTaskColors(): Map<TaskId, HexColor> {
     const colorMap = new Map<TaskId, HexColor>();
 
     tasks.forEach((task) => {
-      const color = computeTaskColor(task, tasks, colorModeState) as HexColor;
+      const color = computeTaskColor(task, tasks, colorModeState);
       colorMap.set(task.id, color);
     });
 
