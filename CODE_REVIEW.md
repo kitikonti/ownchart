@@ -201,7 +201,7 @@ cd ../app-gantt-review
 - [ ] `src/hooks/useUnsavedChanges.ts` (25 LOC)
 
 ### Priority: MEDIUM — Utils
-- [ ] `src/utils/colorPalettes.ts` (540 LOC) — Datendatei
+- [x] `src/utils/colorPalettes.ts` (540 LOC) — Datendatei
 - [ ] `src/utils/hierarchy.ts` (430 LOC)
 - [ ] `src/utils/timelineUtils.ts` (424 LOC)
 - [ ] `src/utils/colorUtils.ts` (332 LOC)
