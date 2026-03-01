@@ -11,7 +11,6 @@ import type {
   PdfHeaderFooter,
   PdfCustomPageSize,
   ExportOptions,
-  ExportZoomMode,
 } from "../../utils/export/types";
 import {
   PDF_PAGE_SIZES,
@@ -23,8 +22,7 @@ import { FieldLabel } from "../common/FieldLabel";
 import { Input } from "../common/Input";
 import { Select } from "../common/Select";
 import { SectionHeader } from "../common/SectionHeader";
-import { SegmentedControl } from "../common/SegmentedControl";
-import type { SegmentedControlOption } from "../common/SegmentedControl";
+import { SegmentedControl, type SegmentedControlOption } from "../common/SegmentedControl";
 import { ZoomModeSelector } from "./ZoomModeSelector";
 
 // =============================================================================
@@ -35,6 +33,10 @@ import { ZoomModeSelector } from "./ZoomModeSelector";
 const MIN_CUSTOM_PAGE_MM = 100;
 /** Maximum custom page dimension in mm */
 const MAX_CUSTOM_PAGE_MM = 5000;
+/** Default custom page width in mm — used when no custom size has been configured yet */
+const DEFAULT_CUSTOM_WIDTH_MM = 500;
+/** Default custom page height in mm — used when no custom size has been configured yet */
+const DEFAULT_CUSTOM_HEIGHT_MM = 300;
 
 /**
  * Fallback for custom page size when not yet configured.
@@ -43,8 +45,8 @@ const MAX_CUSTOM_PAGE_MM = 5000;
  */
 const DEFAULT_CUSTOM_SIZE: PdfCustomPageSize =
   DEFAULT_PDF_OPTIONS.customPageSize ?? {
-    width: 500,
-    height: 300,
+    width: DEFAULT_CUSTOM_WIDTH_MM,
+    height: DEFAULT_CUSTOM_HEIGHT_MM,
   };
 
 /**
@@ -77,10 +79,10 @@ function formatPageSizeLabel(key: PdfPageSize): string {
 
 // Named icon constants — static React elements, defined once at module scope
 const LANDSCAPE_ICON = (
-  <span className="w-4 h-2.5 border-2 border-current rounded-sm" />
+  <span aria-hidden="true" className="w-4 h-2.5 border-2 border-current rounded-sm" />
 );
 const PORTRAIT_ICON = (
-  <span className="w-2.5 h-4 border-2 border-current rounded-sm" />
+  <span aria-hidden="true" className="w-2.5 h-4 border-2 border-current rounded-sm" />
 );
 
 const ORIENTATION_OPTIONS: SegmentedControlOption<PdfOrientation>[] = [
@@ -159,7 +161,7 @@ function HeaderFooterColumn({
 }
 
 interface CustomPageSizeInputsProps {
-  customPageSize: { width: number; height: number } | undefined;
+  customPageSize: PdfCustomPageSize | undefined;
   onChange: (options: Partial<PdfOptions>) => void;
 }
 
@@ -256,11 +258,9 @@ export function PdfExportOptions({
       {/* ============ TIMELINE SCALE ============ */}
       <ZoomModeSelector
         zoomMode={exportOptions.zoomMode}
-        onZoomModeChange={(mode: ExportZoomMode) =>
-          onExportOptionsChange({ zoomMode: mode })
-        }
+        onZoomModeChange={(mode) => onExportOptionsChange({ zoomMode: mode })}
         timelineZoom={exportOptions.timelineZoom}
-        onTimelineZoomChange={(zoom: number) =>
+        onTimelineZoomChange={(zoom) =>
           onExportOptionsChange({ timelineZoom: zoom })
         }
         currentAppZoom={currentAppZoom}
@@ -293,7 +293,7 @@ export function PdfExportOptions({
               ))}
             </Select>
             {options.pageSize !== "custom" && (
-              <p className="text-xs text-neutral-500 mt-2">
+              <p className="text-xs text-neutral-600 mt-2">
                 {displayWidth} × {displayHeight} mm
               </p>
             )}
@@ -330,7 +330,7 @@ export function PdfExportOptions({
             ariaLabel="Margin preset"
           />
           {options.marginPreset !== "none" && (
-            <p className="text-xs text-neutral-500 mt-2">
+            <p className="text-xs text-neutral-600 mt-2">
               {PDF_MARGIN_PRESETS[options.marginPreset].top}mm top/bottom,{" "}
               {PDF_MARGIN_PRESETS[options.marginPreset].left}mm left/right
             </p>

@@ -14,6 +14,7 @@ import type {
   UiDensity,
   TaskLabelPosition,
 } from "../../types/preferences.types";
+import { Alert } from "../common/Alert";
 import { FieldLabel } from "../common/FieldLabel";
 import { LabeledCheckbox } from "../common/LabeledCheckbox";
 import { RadioOptionCard } from "../common/RadioOptionCard";
@@ -21,8 +22,7 @@ import { CollapsibleSection } from "../common/CollapsibleSection";
 import { CheckboxGroup } from "../common/CheckboxGroup";
 import { Input } from "../common/Input";
 import { SectionHeader } from "../common/SectionHeader";
-import { SegmentedControl } from "../common/SegmentedControl";
-import type { SegmentedControlOption } from "../common/SegmentedControl";
+import { SegmentedControl, type SegmentedControlOption } from "../common/SegmentedControl";
 
 // =============================================================================
 // Constants
@@ -76,6 +76,11 @@ function formatDate(date: Date | undefined): string {
   return `${y}-${m}-${d}`;
 }
 
+/** Format a date range as "YYYY-MM-DD – YYYY-MM-DD" */
+function formatDateRange(range: { start: Date; end: Date }): string {
+  return `${formatDate(range.start)} – ${formatDate(range.end)}`;
+}
+
 // =============================================================================
 // Component
 // =============================================================================
@@ -97,6 +102,12 @@ export function SharedExportOptions({
 }: SharedExportOptionsProps): JSX.Element {
   const showBackground = format === "png" || format === "svg";
 
+  const isCustomRangeInvalid =
+    options.dateRangeMode === "custom" &&
+    !!options.customDateStart &&
+    !!options.customDateEnd &&
+    options.customDateEnd < options.customDateStart;
+
   // Build checkbox items for columns
   const columnItems = COLUMN_OPTIONS.map((col) => ({
     key: col.key,
@@ -114,11 +125,13 @@ export function SharedExportOptions({
   const handleColumnChange = (key: string, checked: boolean): void => {
     const col = COLUMN_OPTIONS.find((c) => c.key === key);
     if (!col) return;
-    const newColumns = checked
-      ? [...options.selectedColumns, col.key]
-      : options.selectedColumns.filter((k) => k !== col.key);
+    const selected = new Set(options.selectedColumns);
+    if (checked) selected.add(col.key);
+    else selected.delete(col.key);
+    // Re-derive in COLUMN_OPTIONS order to keep the output stable regardless
+    // of the order in which checkboxes are toggled.
     const orderedColumns = COLUMN_OPTIONS.filter((c) =>
-      newColumns.includes(c.key)
+      selected.has(c.key)
     ).map((c) => c.key);
     onChange({ selectedColumns: orderedColumns });
   };
@@ -145,9 +158,7 @@ export function SharedExportOptions({
             onChange={() => onChange({ dateRangeMode: "all" })}
             title="Entire project"
             description={
-              projectDateRange
-                ? `${formatDate(projectDateRange.start)} – ${formatDate(projectDateRange.end)}`
-                : undefined
+              projectDateRange ? formatDateRange(projectDateRange) : undefined
             }
           />
 
@@ -157,9 +168,7 @@ export function SharedExportOptions({
             onChange={() => onChange({ dateRangeMode: "visible" })}
             title="Visible range"
             description={
-              visibleDateRange
-                ? `${formatDate(visibleDateRange.start)} – ${formatDate(visibleDateRange.end)}`
-                : undefined
+              visibleDateRange ? formatDateRange(visibleDateRange) : undefined
             }
           />
 
@@ -184,6 +193,9 @@ export function SharedExportOptions({
                 onClick={(e) => e.stopPropagation()}
                 aria-label="Custom end date"
               />
+              {isCustomRangeInvalid && (
+                <Alert variant="error">End date must be after start date</Alert>
+              )}
             </div>
           </RadioOptionCard>
         </div>
@@ -228,7 +240,7 @@ export function SharedExportOptions({
             onChange={handleColumnChange}
             ariaLabel="Columns to Include"
           />
-          <p className="text-xs text-neutral-500 mt-2">
+          <p className="text-xs text-neutral-600 mt-2">
             Uncheck all for timeline-only export
           </p>
         </div>
