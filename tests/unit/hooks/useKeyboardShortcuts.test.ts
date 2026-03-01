@@ -853,6 +853,26 @@ describe('useKeyboardShortcuts', () => {
       simulateKeyPress('h', { ctrlKey: true });
       expect(useChartStore.getState().showHolidays).toBe(true);
     });
+
+    it('should not hide rows on Ctrl+H when isEditingCell is true', () => {
+      useTaskStore.setState({
+        selectedTaskIds: ['task-1', 'task-2'],
+        isEditingCell: true,
+      });
+      renderHook(() => useKeyboardShortcuts());
+      simulateKeyPress('h', { ctrlKey: true });
+      expect(mockHideRows).not.toHaveBeenCalled();
+    });
+
+    it('should not unhide rows on Ctrl+Shift+H when isEditingCell is true', () => {
+      useTaskStore.setState({
+        selectedTaskIds: ['task-1', 'task-3'],
+        isEditingCell: true,
+      });
+      renderHook(() => useKeyboardShortcuts());
+      simulateKeyPress('h', { ctrlKey: true, shiftKey: true });
+      expect(mockUnhideSelection).not.toHaveBeenCalled();
+    });
   });
 
   // ── Edge cases ─────────────────────────────────────────────────────────

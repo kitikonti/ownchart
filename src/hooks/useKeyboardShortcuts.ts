@@ -53,11 +53,8 @@ export function isTextInputElement(target: HTMLElement): boolean {
 
 // ── Context ───────────────────────────────────────────────────────────────────
 // A single snapshot of all state needed by the sub-handlers.  Built fresh on
-// every render in the hook body and passed into every module-level handler
-// so they remain pure functions with no closed-over stale values.
-//
-// When adding a shortcut: update (1) this interface, (2) the Zustand
-// subscription in useKeyboardShortcuts(), and (3) the ctx literal.
+// every render in useShortcutSubscriptions() and passed into every module-level
+// handler so they remain pure functions with no closed-over stale values.
 
 interface ActiveCell {
   taskId: TaskId | null;
@@ -324,7 +321,7 @@ function handleHideShortcuts(
   modKey: boolean,
   ctx: ShortcutContext
 ): boolean {
-  if (!modKey || e.key.toLowerCase() !== "h") return false;
+  if (!modKey || ctx.isEditingCell || e.key.toLowerCase() !== "h") return false;
   if (e.shiftKey) {
     // Ctrl+Shift+H: unhide hidden rows spanned by the current selection
     e.preventDefault();
@@ -387,23 +384,25 @@ function handleSingleKeyShortcuts(
   return false;
 }
 
-// ── Hook ──────────────────────────────────────────────────────────────────────
+// ── Subscription hook ──────────────────────────────────────────────────────────
+// Collects all Zustand-subscribed values into a ShortcutContext snapshot.
+// Re-evaluates on every render so handlerRef always sees the latest values
+// without stale closures.
+//
+// When adding a shortcut: update (1) ShortcutContext, (2) this hook, and
+// (3) the dispatcher chain in useKeyboardShortcuts.
 
-export function useKeyboardShortcuts(): void {
-  // ── History ────────────────────────────────────────────────────────────
+function useShortcutSubscriptions(): ShortcutContext {
   const undo = useHistoryStore((state) => state.undo);
   const redo = useHistoryStore((state) => state.redo);
 
-  // ── File operations ────────────────────────────────────────────────────
   const { handleSave, handleSaveAs, handleOpen, handleNew } =
     useFileOperations();
 
-  // ── Clipboard ──────────────────────────────────────────────────────────
   const { handleCopy, handleCut, handlePaste } = useClipboardOperations();
   const clearClipboard = useClipboardStore((state) => state.clearClipboard);
   const clipboardMode = useClipboardStore((state) => state.activeMode);
 
-  // ── Task operations ────────────────────────────────────────────────────
   const deleteSelectedTasks = useTaskStore(
     (state) => state.deleteSelectedTasks
   );
@@ -426,17 +425,14 @@ export function useKeyboardShortcuts(): void {
     (state) => state.ungroupSelectedTasks
   );
 
-  // ── View toggles ───────────────────────────────────────────────────────
   const toggleDependencies = useChartStore((state) => state.toggleDependencies);
   const toggleTodayMarker = useChartStore((state) => state.toggleTodayMarker);
   const toggleProgress = useChartStore((state) => state.toggleProgress);
   const toggleHolidays = useChartStore((state) => state.toggleHolidays);
   const fitToView = useChartStore((state) => state.fitToView);
 
-  // ── Hide / Show rows ───────────────────────────────────────────────────
   const { hideRows, unhideSelection } = useHideOperations();
 
-  // ── UI / dialogs ───────────────────────────────────────────────────────
   const openExportDialog = useUIStore((state) => state.openExportDialog);
   const openHelpPanel = useUIStore((state) => state.openHelpPanel);
   const closeExportDialog = useUIStore((state) => state.closeExportDialog);
@@ -446,17 +442,7 @@ export function useKeyboardShortcuts(): void {
   const isHelpPanelOpen = useUIStore((state) => state.isHelpPanelOpen);
   const isWelcomeTourOpen = useUIStore((state) => state.isWelcomeTourOpen);
 
-  // ── Stable handler ref ─────────────────────────────────────────────────
-  // The event listener is registered once (empty dep array below).
-  // On every render, handlerRef.current is replaced with a fresh closure so
-  // all sub-handlers always see the latest Zustand-subscribed values.
-  // This prevents the listener from being torn down and re-added on every
-  // task edit, selection change, or cell navigation.
-  const handlerRef = useRef<(e: KeyboardEvent) => void>(() => {});
-
-  // Build a context snapshot from the latest subscribed values.  Extracted
-  // here so the dispatcher closure stays under 50 lines.
-  const ctx: ShortcutContext = {
+  return {
     undo,
     redo,
     handleSave,
@@ -495,8 +481,20 @@ export function useKeyboardShortcuts(): void {
     isHelpPanelOpen,
     isWelcomeTourOpen,
   };
+}
 
-  // ── Main dispatcher ────────────────────────────────────────────────────
+// ── Hook ──────────────────────────────────────────────────────────────────────
+
+export function useKeyboardShortcuts(): void {
+  const ctx = useShortcutSubscriptions();
+
+  // The event listener is registered once (empty dep array below).
+  // On every render, handlerRef.current is replaced with a fresh closure so
+  // all sub-handlers always see the latest Zustand-subscribed values.
+  // This prevents the listener from being torn down and re-added on every
+  // task edit, selection change, or cell navigation.
+  const handlerRef = useRef<(e: KeyboardEvent) => void>(() => {});
+
   handlerRef.current = (e: KeyboardEvent): void => {
     const modKey = IS_MAC ? e.metaKey : e.ctrlKey;
 
@@ -505,7 +503,7 @@ export function useKeyboardShortcuts(): void {
 
     if (isTextInputElement(target)) return;
 
-    const isCellActive = activeCell.taskId !== null;
+    const isCellActive = ctx.activeCell.taskId !== null;
 
     if (handleUndoRedo(e, modKey, ctx)) return;
     if (handleFileShortcuts(e, modKey, ctx)) return;
