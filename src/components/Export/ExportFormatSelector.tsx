@@ -11,7 +11,7 @@ import type { ExportFormat } from "@/utils/export/types";
 
 const ICON_SIZE = 22;
 // 80px: ensures icon + label always fit without clipping at any font scale
-const FORMAT_CARD_HEIGHT_CLASS = "min-h-[80px]";
+const FORMAT_CARD_MIN_HEIGHT_CLASS = "min-h-[80px]";
 
 interface FormatOption {
   format: ExportFormat;
@@ -60,10 +60,12 @@ function FormatCard({
       type="button"
       role="radio"
       aria-checked={isSelected}
+      // WAI-ARIA radiogroup: only the selected radio needs describedby —
+      // the help-text box always reflects the currently selected format.
       aria-describedby={isSelected ? descriptionId : undefined}
       tabIndex={isSelected ? 0 : -1}
       onClick={() => onSelect(option.format)}
-      className={`flex flex-col items-center gap-2 px-4 py-3.5 rounded border transition-colors duration-150 ${FORMAT_CARD_HEIGHT_CLASS} focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 focus-visible:ring-offset-2 ${
+      className={`flex flex-col items-center gap-2 px-4 py-3.5 rounded border transition-colors duration-150 ${FORMAT_CARD_MIN_HEIGHT_CLASS} focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 focus-visible:ring-offset-2 ${
         isSelected
           ? "border-brand-600 bg-brand-600"
           : "border-neutral-200 hover:border-neutral-300 hover:bg-neutral-50"

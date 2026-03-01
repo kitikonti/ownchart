@@ -143,13 +143,13 @@ cd ../app-gantt-review
 - [ ] `src/components/Export/ZoomModeSelector.tsx` (255 LOC)
 - [ ] `src/components/Export/ChartPreview.tsx` (212 LOC) — 1 Hex-Wert
 - [ ] `src/components/Layout/SplitPane.tsx` (186 LOC)
-- [ ] `src/components/Export/ExportFormatSelector.tsx` (105 LOC)
-- [ ] `src/components/Layout/SplitPaneDivider.tsx` (85 LOC)
-- [ ] `src/components/Export/ExportPreview.tsx` (71 LOC)
-- [ ] `src/components/Export/PngScaleOptions.tsx` (33 LOC)
-- [ ] `src/components/Export/SvgExportOptions.tsx` (22 LOC)
-- [ ] `src/components/Export/index.ts` (19 LOC)
-- [ ] `src/components/Layout/index.ts` (1 LOC)
+- [x] `src/components/Export/ExportFormatSelector.tsx` (105 LOC)
+- [x] `src/components/Layout/SplitPaneDivider.tsx` (85 LOC)
+- [x] `src/components/Export/ExportPreview.tsx` (71 LOC)
+- [x] `src/components/Export/ScaleOptions.tsx` (46 LOC)
+- [x] `src/components/Export/SvgExportOptions.tsx` (22 LOC)
+- [x] `src/components/Export/index.ts` (19 LOC)
+- [x] `src/components/Layout/index.ts` (1 LOC)
 
 ### Priority: MEDIUM — Ribbon
 - [x] `src/components/Ribbon/ColorDropdown.tsx`

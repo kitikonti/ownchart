@@ -45,8 +45,9 @@ export function ExportPreview({
   effectiveZoom,
   readabilityStatus,
 }: ExportPreviewProps): JSX.Element {
-  // pdfOptions may be undefined during initial load before defaults are applied.
-  // In that case we fall through to ChartPreview as a loading-state fallback.
+  // pdfOptions is optional so ExportPreview can be used outside ExportDialog
+  // (e.g. in tests or future standalone contexts). Within ExportDialog it is
+  // always populated by the hook; the undefined branch is a loading-state guard.
   if (format === "pdf" && pdfOptions) {
     return (
       <PdfPreview

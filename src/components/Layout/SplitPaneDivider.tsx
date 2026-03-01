@@ -24,6 +24,7 @@ interface SplitPaneDividerProps {
   maxWidth: number;
 }
 
+// TODO: long class strings below are candidates for clsx() when the project adopts it.
 function getDividerClassName(
   isCollapsed: boolean,
   isDragging: boolean
@@ -73,6 +74,11 @@ export function SplitPaneDivider({
       className={getDividerClassName(isCollapsed, isDragging)}
       onMouseDown={onMouseDown}
       onKeyDown={handleKeyDown}
+      // Both onClick and onMouseDown are intentional in collapsed state:
+      // onMouseDown starts a drag-from-collapsed gesture (parent guards via
+      // dragFromCollapsedRef); onClick fires only when no drag occurred and
+      // expands the pane. The parent's mouseUp handler clears the ref before
+      // the click event fires, so the two handlers never conflict.
       onClick={isCollapsed && onExpand ? onExpand : undefined}
     >
       {isCollapsed ? (
