@@ -17,6 +17,7 @@ import {
   startOfMonth,
   startOfWeek,
   startOfDay,
+  startOfHour,
   endOfYear,
   endOfQuarter,
   endOfMonth,
@@ -47,7 +48,19 @@ export const FIT_TO_VIEW_PADDING_DAYS = 7;
 export const WEEK_START_DAY = 1; // 0 = Sunday, 1 = Monday (ISO 8601)
 export const FIRST_WEEK_CONTAINS_DATE = 4; // Thursday (ISO 8601: week 1 has first Thursday)
 
-// Store references for lazy access (set by userPreferencesSlice on init)
+// Named constants for pixels-per-day zoom thresholds used in getScaleConfig
+const PPD_QUARTER_VIEW = 3; // Below this: show quarters + months
+const PPD_WEEK_NUMBER_ONLY = 5; // Below this: show months + bare week number
+const PPD_WEEK_WITH_PREFIX = 30; // Below this: show months + "W"-prefixed week number
+const PPD_DAY_VIEW = 60; // Below this: show weeks + day number; above: week + abbreviated day
+
+// Named constant for the two-row timeline header height (2 × 24px rows)
+export const TIMELINE_HEADER_HEIGHT_PX = 48;
+
+// Store references for lazy access (set by userPreferencesSlice on init).
+// This service-locator pattern avoids circular imports between the util layer
+// and the Zustand store layer. Threading preferences as params at every
+// render-path callsite would require updating ~10 call sites across the codebase.
 let _getFirstDayOfWeek: (() => "sunday" | "monday") | null = null;
 let _getWeekNumberingSystem: (() => "iso" | "us") | null = null;
 
@@ -121,6 +134,31 @@ export interface TaskBarGeometry {
   height: number; // Bar height (typically 32px)
 }
 
+// Extracted helper — avoids repeating the week options object in every format function
+function getWeekNumber(date: Date): number {
+  return getWeek(date, {
+    weekStartsOn: getWeekStartDay(),
+    firstWeekContainsDate: getFirstWeekContainsDate(),
+  });
+}
+
+// Named format helpers extracted from getScaleConfig for readability
+function formatQuarterHeader(date: Date): string {
+  return `Q${Math.floor(date.getMonth() / 3) + 1} ${date.getFullYear()}`;
+}
+
+function formatWeekNumberOnly(date: Date): string {
+  return `${getWeekNumber(date)}`;
+}
+
+function formatWeekWithPrefix(date: Date): string {
+  return `W${getWeekNumber(date)}`;
+}
+
+function formatWeekWithMonthYear(date: Date): string {
+  return `Week ${getWeekNumber(date)}, ${format(date, "MMM yyyy")}`;
+}
+
 /**
  * Get appropriate scale configuration based on zoom level
  * Inspired by SVAR React Gantt's adaptive scale system
@@ -131,98 +169,41 @@ export function getScaleConfig(
 ): ScaleConfig[] {
   const effectivePixelsPerDay = pixelsPerDay * zoom;
 
-  // Extremely zoomed out (< 3 pixels per day): Quarter+Year → Month
-  if (effectivePixelsPerDay < 3) {
+  // Extremely zoomed out (< PPD_QUARTER_VIEW): Quarter → Month
+  if (effectivePixelsPerDay < PPD_QUARTER_VIEW) {
     return [
-      {
-        unit: "quarter",
-        step: 1,
-        format: (date) =>
-          `Q${Math.floor(date.getMonth() / 3) + 1} ${date.getFullYear()}`,
-      },
+      { unit: "quarter", step: 1, format: formatQuarterHeader },
       { unit: "month", step: 1, format: "MMM" },
     ];
   }
 
-  // Very zoomed out (3-5 pixels per day): Month+Year → Week (number only)
-  if (effectivePixelsPerDay < 5) {
+  // Very zoomed out (< PPD_WEEK_NUMBER_ONLY): Month+Year → Week (bare number)
+  if (effectivePixelsPerDay < PPD_WEEK_NUMBER_ONLY) {
     return [
       { unit: "month", step: 1, format: "MMM yyyy" },
-      {
-        unit: "week",
-        step: 1,
-        format: (date) =>
-          `${getWeek(date, {
-            weekStartsOn: getWeekStartDay(),
-            firstWeekContainsDate: getFirstWeekContainsDate(),
-          })}`,
-      },
+      { unit: "week", step: 1, format: formatWeekNumberOnly },
     ];
   }
 
-  // Zoomed out (5-15 pixels per day): Month+Year → Week
-  if (effectivePixelsPerDay < 15) {
+  // Zoomed out (< PPD_WEEK_WITH_PREFIX): Month+Year → Week with "W" prefix
+  if (effectivePixelsPerDay < PPD_WEEK_WITH_PREFIX) {
     return [
       { unit: "month", step: 1, format: "MMM yyyy" },
-      {
-        unit: "week",
-        step: 1,
-        format: (date) =>
-          `W${getWeek(date, {
-            weekStartsOn: getWeekStartDay(),
-            firstWeekContainsDate: getFirstWeekContainsDate(),
-          })}`,
-      },
+      { unit: "week", step: 1, format: formatWeekWithPrefix },
     ];
   }
 
-  // Medium zoom (15-30 pixels per day): Month → Week
-  if (effectivePixelsPerDay < 30) {
+  // Zoomed in (< PPD_DAY_VIEW): Week → Day (number only)
+  if (effectivePixelsPerDay < PPD_DAY_VIEW) {
     return [
-      { unit: "month", step: 1, format: "MMM yyyy" },
-      {
-        unit: "week",
-        step: 1,
-        format: (date) =>
-          `W${getWeek(date, {
-            weekStartsOn: getWeekStartDay(),
-            firstWeekContainsDate: getFirstWeekContainsDate(),
-          })}`,
-      },
-    ];
-  }
-
-  // Zoomed in (30-60 pixels per day): Week → Day
-  if (effectivePixelsPerDay < 60) {
-    return [
-      {
-        unit: "week",
-        step: 1,
-        format: (date: Date): string => {
-          const wn = getWeek(date, {
-            weekStartsOn: getWeekStartDay(),
-            firstWeekContainsDate: getFirstWeekContainsDate(),
-          });
-          return `Week ${wn}, ${format(date, "MMM yyyy")}`;
-        },
-      },
+      { unit: "week", step: 1, format: formatWeekWithMonthYear },
       { unit: "day", step: 1, format: "d" },
     ];
   }
 
-  // Very zoomed in (60+ pixels per day): Week → Day with time
+  // Very zoomed in (PPD_DAY_VIEW+): Week → Day with abbreviated weekday name
   return [
-    {
-      unit: "week",
-      step: 1,
-      format: (date: Date): string => {
-        const wn = getWeek(date, {
-          weekStartsOn: getWeekStartDay(),
-          firstWeekContainsDate: getFirstWeekContainsDate(),
-        });
-        return `Week ${wn}, ${format(date, "MMM yyyy")}`;
-      },
-    },
+    { unit: "week", step: 1, format: formatWeekWithMonthYear },
     { unit: "day", step: 1, format: "EEE d" },
   ];
 }
@@ -240,7 +221,7 @@ export function getScaleConfig(
 export function getTimelineScale(
   minDate: string,
   maxDate: string,
-  _containerWidth: number,
+  _containerWidth: number, // Reserved — previously used for auto-scaling; kept for API stability
   zoom: number = 1
 ): TimelineScale {
   const totalDays = calculateDuration(minDate, maxDate);
@@ -295,12 +276,13 @@ export interface DensityGeometryConfig {
 }
 
 /**
- * Default density config (Normal mode) for backwards compatibility
+ * Default density config (Normal mode) for backwards compatibility.
+ * Values mirror DENSITY_CONFIG.normal in config/densityConfig.ts.
  */
 export const DEFAULT_DENSITY_GEOMETRY: DensityGeometryConfig = {
-  rowHeight: 36,
-  taskBarHeight: 26,
-  taskBarOffset: 5,
+  rowHeight: 36, // DENSITY_CONFIG.normal.rowHeight
+  taskBarHeight: 26, // DENSITY_CONFIG.normal.taskBarHeight
+  taskBarOffset: 5, // DENSITY_CONFIG.normal.taskBarOffset
 };
 
 /**
@@ -309,14 +291,14 @@ export const DEFAULT_DENSITY_GEOMETRY: DensityGeometryConfig = {
  * @param scale - The timeline scale
  * @param rowIndex - The row index of the task
  * @param densityConfig - Density configuration (rowHeight, taskBarHeight, taskBarOffset)
- * @param headerHeight - Height of timeline header (default 48px: 2×24px rows)
+ * @param headerHeight - Height of timeline header (default: TIMELINE_HEADER_HEIGHT_PX = 48px: 2×24px rows)
  */
 export function getTaskBarGeometry(
   task: Task,
   scale: TimelineScale,
   rowIndex: number,
   densityConfig: DensityGeometryConfig = DEFAULT_DENSITY_GEOMETRY,
-  headerHeight: number = 48
+  headerHeight: number = TIMELINE_HEADER_HEIGHT_PX
 ): TaskBarGeometry {
   const x = dateToPixel(task.startDate, scale);
 
@@ -351,18 +333,9 @@ export function getUnitStart(date: Date, unit: ScaleUnit): Date {
     case "day":
       return startOfDay(date);
     case "hour":
-      // Round down to hour
-      return new Date(
-        date.getFullYear(),
-        date.getMonth(),
-        date.getDate(),
-        date.getHours(),
-        0,
-        0,
-        0
-      );
+      return startOfHour(date);
     default:
-      return date;
+      throw new Error(`Unknown ScaleUnit: ${unit}`);
   }
 }
 
@@ -384,9 +357,11 @@ export function getUnitEnd(date: Date, unit: ScaleUnit, step: number): Date {
     case "day":
       return endOfDay(addDaysDateFns(date, step - 1));
     case "hour":
+      // Hours use addHours(step) not step-1 — hour end boundaries are exclusive
+      // (no endOfHour equivalent); caller expects the next hour boundary.
       return addHours(date, step);
     default:
-      return date;
+      throw new Error(`Unknown ScaleUnit: ${unit}`);
   }
 }
 
@@ -408,7 +383,7 @@ export function addUnit(date: Date, unit: ScaleUnit, step: number): Date {
     case "hour":
       return addHours(date, step);
     default:
-      return date;
+      throw new Error(`Unknown ScaleUnit: ${unit}`);
   }
 }
 
