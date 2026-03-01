@@ -12,6 +12,7 @@ import {
   dragState,
   resetDragState,
 } from "../../../src/components/TaskList/dragSelectionState";
+import { TABLE_ROW } from "../../../src/styles/design-tokens";
 
 // ---------------------------------------------------------------------------
 // Mocks
@@ -134,13 +135,15 @@ describe("TaskTableRow", () => {
     expect(screen.getByTestId("row-overlays")).toBeInTheDocument();
   });
 
-  it("should have bg-white class when not selected", () => {
+  it("should use default background color when not selected", () => {
     render(<TaskTableRow {...defaultProps} />);
     const row = screen.getByRole("row");
-    expect(row.className).toContain("bg-white");
+    // Background is set via inline style from TABLE_ROW.defaultBg (#ffffff).
+    // jsdom normalizes hex colors to rgb(), so we compare the normalized form.
+    expect(row.style.backgroundColor).toBe("rgb(255, 255, 255)");
   });
 
-  it("should not have bg-white class when selected", () => {
+  it("should use selection background color when selected", () => {
     render(
       <TaskTableRow
         {...defaultProps}
@@ -148,7 +151,8 @@ describe("TaskTableRow", () => {
       />
     );
     const row = screen.getByRole("row");
-    expect(row.className).not.toContain("bg-white");
+    // TABLE_ROW.selectionBg is already in rgba() form — jsdom keeps it as-is.
+    expect(row.style.backgroundColor).toBe(TABLE_ROW.selectionBg);
   });
 
   it("should fire onContextMenu with task.id", () => {

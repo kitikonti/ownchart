@@ -4,9 +4,9 @@
  */
 
 import { memo, useCallback, useMemo } from "react";
-import { useTaskStore } from "@/store/slices/taskSlice";
 import { useDensityConfig } from "@/store/slices/userPreferencesSlice";
 import { useChartStore } from "@/store/slices/chartSlice";
+import { useTaskTableHeaderStore } from "@/hooks/useTaskTableHeaderStore";
 import type { DensityConfig } from "@/types/preferences.types";
 import type { ColumnDefinition } from "@/config/tableColumns";
 import {
@@ -45,12 +45,13 @@ const SelectAllButton = memo(function SelectAllButton({
       title={allSelected ? "Deselect all" : "Select all"}
       aria-label={allSelected ? "Deselect all tasks" : "Select all tasks"}
     >
-      {/* Small triangle in bottom-right corner */}
+      {/* Small triangle in bottom-right corner — decorative, described by button aria-label */}
       <svg
         width={SELECT_ALL_TRIANGLE_SIZE}
         height={SELECT_ALL_TRIANGLE_SIZE}
         viewBox={`0 0 ${SELECT_ALL_TRIANGLE_SIZE} ${SELECT_ALL_TRIANGLE_SIZE}`}
         className="absolute bottom-1 right-1"
+        aria-hidden="true"
       >
         <path
           d={`M${SELECT_ALL_TRIANGLE_SIZE} 0 L${SELECT_ALL_TRIANGLE_SIZE} ${SELECT_ALL_TRIANGLE_SIZE} L0 ${SELECT_ALL_TRIANGLE_SIZE} Z`}
@@ -64,21 +65,26 @@ const SelectAllButton = memo(function SelectAllButton({
 interface HeaderCellProps {
   column: ColumnDefinition;
   densityConfig: DensityConfig;
-  allSelected: boolean;
+  /** Only relevant for the rowNumber column — omit for all other columns. */
+  allSelected?: boolean;
   columnWidths: Record<string, number>;
-  onSelectAll: () => void;
+  /** Only relevant for the rowNumber column — omit for all other columns. */
+  onSelectAll?: () => void;
   onContextMenu: (e: React.MouseEvent, columnId: string) => void;
   setColumnWidth: (id: string, width: number) => void;
   autoFitColumn: (id: string) => void;
 }
 
+// Stable noop used as default for onSelectAll when the cell is not rowNumber.
+const noop = (): void => {};
+
 /** Renders a single column header cell with context menu and optional resizer. */
 const HeaderCell = memo(function HeaderCell({
   column,
   densityConfig,
-  allSelected,
+  allSelected = false,
   columnWidths,
-  onSelectAll,
+  onSelectAll = noop,
   onContextMenu,
   setColumnWidth,
   autoFitColumn,
@@ -89,7 +95,7 @@ const HeaderCell = memo(function HeaderCell({
         "task-table-header-cell",
         column.id === NAME_COLUMN_ID ? "pr-3" : "px-3",
         "border-b",
-        column.showRightBorder !== false ? "border-r" : "",
+        (column.showRightBorder ?? true) ? "border-r" : "",
         "text-xs font-semibold text-neutral-600 uppercase tracking-wider",
         "whitespace-nowrap relative",
       ].join(" ")}
@@ -133,13 +139,15 @@ const HeaderCell = memo(function HeaderCell({
 // ── Component ────────────────────────────────────────────────────────────────
 
 export const TaskTableHeader = memo(function TaskTableHeader(): JSX.Element {
-  const tasks = useTaskStore((state) => state.tasks);
-  const selectedTaskIds = useTaskStore((state) => state.selectedTaskIds);
-  const selectAllTasks = useTaskStore((state) => state.selectAllTasks);
-  const clearSelection = useTaskStore((state) => state.clearSelection);
-  const columnWidths = useTaskStore((state) => state.columnWidths);
-  const setColumnWidth = useTaskStore((state) => state.setColumnWidth);
-  const autoFitColumn = useTaskStore((state) => state.autoFitColumn);
+  const {
+    tasks,
+    selectedTaskIds,
+    selectAllTasks,
+    clearSelection,
+    columnWidths,
+    setColumnWidth,
+    autoFitColumn,
+  } = useTaskTableHeaderStore();
   const densityConfig = useDensityConfig();
   const hiddenColumns = useChartStore((state) => state.hiddenColumns);
 
@@ -199,12 +207,17 @@ export const TaskTableHeader = memo(function TaskTableHeader(): JSX.Element {
             key={column.id}
             column={column}
             densityConfig={densityConfig}
-            allSelected={allSelected}
             columnWidths={columnWidths}
-            onSelectAll={handleSelectAllClick}
             onContextMenu={handleHeaderContextMenu}
             setColumnWidth={setColumnWidth}
             autoFitColumn={autoFitColumn}
+            // allSelected / onSelectAll only consumed by the rowNumber cell;
+            // omitting them for all other columns keeps their props stable so
+            // React.memo can skip re-renders when selection changes.
+            {...(column.id === "rowNumber" && {
+              allSelected,
+              onSelectAll: handleSelectAllClick,
+            })}
           />
         ))}
       </div>

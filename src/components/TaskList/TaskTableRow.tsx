@@ -115,12 +115,8 @@ export const TaskTableRow = memo(function TaskTableRow({
     transition,
     opacity: isDragging ? DRAGGING_OPACITY : 1,
     gridTemplateColumns,
-    ...(isSelected
-      ? {
-          backgroundColor: TABLE_ROW.selectionBg,
-          zIndex: Z_INDEX.rowHighlight,
-        }
-      : {}),
+    backgroundColor: isSelected ? TABLE_ROW.selectionBg : TABLE_ROW.defaultBg,
+    ...(isSelected && { zIndex: Z_INDEX.rowHighlight }),
   };
 
   // ── Stabilized callbacks ─────────────────────────────────────────────────
@@ -152,9 +148,12 @@ export const TaskTableRow = memo(function TaskTableRow({
     <div
       ref={setNodeRef}
       style={style}
-      className={`task-table-row col-span-full grid ${
-        isSelected ? "" : "bg-white"
-      } ${isInClipboard || isSelected ? "relative" : ""}`}
+      className={[
+        "task-table-row col-span-full grid",
+        (isInClipboard || isSelected) && "relative",
+      ]
+        .filter(Boolean)
+        .join(" ")}
       role="row"
       aria-selected={isSelected}
       aria-rowindex={globalRowNumber}

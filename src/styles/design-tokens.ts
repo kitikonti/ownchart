@@ -333,6 +333,8 @@ export const ROW_NUMBER = {
 // =============================================================================
 
 export const TABLE_ROW = {
+  /** Default (unselected) row background — white. */
+  defaultBg: neutral[0],
   /**
    * Selected row background: brand[600] (#0F6CBD) at chart.selectionFillOpacity (8%).
    * Using rgba() avoids the fragile hex+alpha-suffix approach.
