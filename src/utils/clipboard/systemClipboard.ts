@@ -17,6 +17,7 @@ const VALID_EDITABLE_FIELDS: Set<string> = new Set(EDITABLE_FIELDS);
 /**
  * Validate that a parsed object has the minimum required Task shape.
  * Checks all required Task fields to catch cross-version or malformed clipboard data.
+ * Also validates the optional `type` field — if present it must be a known TaskType value.
  */
 function isValidTaskShape(obj: unknown): boolean {
   if (typeof obj !== "object" || obj === null) return false;
@@ -27,7 +28,27 @@ function isValidTaskShape(obj: unknown): boolean {
     typeof t.startDate === "string" &&
     typeof t.endDate === "string" &&
     typeof t.duration === "number" &&
-    typeof t.progress === "number"
+    typeof t.progress === "number" &&
+    (t.type === undefined ||
+      t.type === "task" ||
+      t.type === "summary" ||
+      t.type === "milestone")
+  );
+}
+
+/**
+ * Validate that a parsed object has the minimum required Dependency shape.
+ * Checks all required fields to catch cross-version or malformed clipboard data.
+ */
+function isValidDependencyShape(obj: unknown): boolean {
+  if (typeof obj !== "object" || obj === null) return false;
+  const d = obj as Record<string, unknown>;
+  return (
+    typeof d.id === "string" &&
+    typeof d.fromTaskId === "string" &&
+    typeof d.toTaskId === "string" &&
+    typeof d.type === "string" &&
+    typeof d.createdAt === "string"
   );
 }
 
@@ -56,7 +77,7 @@ async function writeToClipboard(
     await navigator.clipboard.writeText(prefix + JSON.stringify(data));
     return true;
   } catch (error) {
-    console.warn("Failed to write to system clipboard:", error);
+    if (import.meta.env.DEV) console.warn("Failed to write to system clipboard:", error);
     return false;
   }
 }
@@ -112,9 +133,14 @@ export async function readRowsFromSystemClipboard(): Promise<SystemRowClipboardD
       return null;
     }
 
+    // Verify each dependency has the minimum required shape
+    if (!data.dependencies.every(isValidDependencyShape)) {
+      return null;
+    }
+
     return data;
   } catch (error) {
-    console.warn("Failed to read from system clipboard:", error);
+    if (import.meta.env.DEV) console.warn("Failed to read from system clipboard:", error);
     return null;
   }
 }
@@ -148,7 +174,7 @@ export async function readCellFromSystemClipboard(): Promise<SystemCellClipboard
 
     return data;
   } catch (error) {
-    console.warn("Failed to read from system clipboard:", error);
+    if (import.meta.env.DEV) console.warn("Failed to read from system clipboard:", error);
     return null;
   }
 }
@@ -173,7 +199,7 @@ export async function getSystemClipboardType(): Promise<"row" | "cell" | null> {
     }
     return null;
   } catch (error) {
-    console.warn("Failed to check system clipboard:", error);
+    if (import.meta.env.DEV) console.warn("Failed to check system clipboard:", error);
     return null;
   }
 }
@@ -185,7 +211,7 @@ export async function clearSystemClipboard(): Promise<void> {
   try {
     await navigator.clipboard.writeText("");
   } catch (error) {
-    console.warn("Failed to clear system clipboard:", error);
+    if (import.meta.env.DEV) console.warn("Failed to clear system clipboard:", error);
   }
 }
 

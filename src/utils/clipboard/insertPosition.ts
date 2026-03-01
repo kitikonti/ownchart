@@ -53,7 +53,9 @@ export function determineInsertPosition(
     }
   }
 
-  // Priority 3: Last selected row (insert after it)
+  // Priority 3: Last selected row (insert after it).
+  // Assumes selectedTaskIds is maintained in visual (flattened-list) order by the store,
+  // so the last element is also the bottommost visible row in the selection.
   if (realSelectedIds.length > 0) {
     const lastSelectedId = realSelectedIds[realSelectedIds.length - 1];
     const index = flattenedTasks.findIndex(

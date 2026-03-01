@@ -5,7 +5,7 @@
 
 import type { Task } from "../../types/chart.types";
 import type { EditableField } from "../../types/task.types";
-import { COLORS } from "../../styles/design-tokens";
+import { DEFAULT_TASK_COLOR } from "../../styles/design-tokens";
 
 /**
  * Validate if a cell value can be pasted into a target field.
@@ -108,7 +108,7 @@ export function getClearValueForField(
     case "progress":
       return 0;
     case "color":
-      return COLORS.chart.taskDefault;
+      return DEFAULT_TASK_COLOR;
     case "type":
       return "task";
   }
