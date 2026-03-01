@@ -573,6 +573,16 @@ describe('useKeyboardShortcuts', () => {
       simulateKeyPress('Delete');
       expect(useTaskStore.getState().tasks).toHaveLength(3);
     });
+
+    it('should not delete on Delete when isEditingCell is true', () => {
+      useTaskStore.setState({
+        selectedTaskIds: ['task-1'],
+        isEditingCell: true,
+      });
+      renderHook(() => useKeyboardShortcuts());
+      simulateKeyPress('Delete');
+      expect(useTaskStore.getState().tasks).toHaveLength(3);
+    });
   });
 
   // ── Ctrl++ / Ctrl+- ────────────────────────────────────────────────────
@@ -806,11 +816,14 @@ describe('useKeyboardShortcuts', () => {
       expect(mockHideRows).not.toHaveBeenCalled();
     });
 
-    it('should always consume Ctrl+H even with no selection', () => {
+    it('should not consume the event on Ctrl+H when no tasks are selected', () => {
       renderHook(() => useKeyboardShortcuts());
-      // Ctrl+H should not fall through to toggleHolidays
+      // With no selection the shortcut is a no-op; the browser default is
+      // intentionally not suppressed. toggleHolidays must not fire either
+      // because modKey is true (caught by handleSingleKeyShortcuts guard).
       const event = simulateKeyPress('h', { ctrlKey: true });
-      expect(event.defaultPrevented).toBe(true);
+      expect(event.defaultPrevented).toBe(false);
+      expect(mockHideRows).not.toHaveBeenCalled();
       expect(useChartStore.getState().showHolidays).toBe(true);
     });
 

@@ -22,8 +22,7 @@ import { useFileOperations } from "./useFileOperations";
 import { useClipboardOperations } from "./useClipboardOperations";
 import { useHideOperations } from "./useHideOperations";
 import { useClipboardStore } from "../store/slices/clipboardSlice";
-import { buildFlattenedTaskList } from "../utils/hierarchy";
-import type { TaskId } from "../types/branded.types";
+import { findTopmostSelectedTaskId } from "../utils/selection";
 
 export function useKeyboardShortcuts(): void {
   // ── History ────────────────────────────────────────────────────────────
@@ -90,7 +89,7 @@ export function useKeyboardShortcuts(): void {
       (navigator as Navigator & { userAgentData?: { platform?: string } })
         .userAgentData?.platform === "macOS" ||
       navigator.platform.toUpperCase().includes("MAC"),
-    [],
+    []
   );
 
   // ── Stable handler ref ─────────────────────────────────────────────────
@@ -209,8 +208,9 @@ export function useKeyboardShortcuts(): void {
     e: KeyboardEvent,
     modKey: boolean
   ): boolean => {
-    // Delete key: remove selected tasks
-    if (e.key === "Delete" && selectedTaskIds.length > 0) {
+    // Delete key: remove selected tasks (guard isEditingCell for consistency
+    // with handleInsertShortcuts / handleIndentShortcuts / handleGroupShortcuts)
+    if (e.key === "Delete" && !isEditingCell && selectedTaskIds.length > 0) {
       e.preventDefault();
       deleteSelectedTasks();
       return true;
@@ -240,23 +240,9 @@ export function useKeyboardShortcuts(): void {
     const count = Math.max(selectedTaskIds.length, 1);
     // Fetch tasks fresh so this handler doesn't need `tasks` in any dep array.
     const currentTasks = useTaskStore.getState().tasks;
-    const collapsedIds = new Set(
-      currentTasks.filter((t) => t.open === false).map((t) => t.id)
-    );
-    const flatList = buildFlattenedTaskList(currentTasks, collapsedIds);
-    let referenceTaskId: TaskId | null = null;
-    if (selectedTaskIds.length > 0) {
-      const selectedSet = new Set(selectedTaskIds);
-      for (const ft of flatList) {
-        if (selectedSet.has(ft.task.id)) {
-          referenceTaskId = ft.task.id;
-          break;
-        }
-      }
-    }
-    if (!referenceTaskId && activeCell.taskId) {
-      referenceTaskId = activeCell.taskId;
-    }
+    const referenceTaskId =
+      findTopmostSelectedTaskId(currentTasks, selectedTaskIds) ??
+      activeCell.taskId;
     if (referenceTaskId) {
       if (count === 1) {
         insertTaskAbove(referenceTaskId);
@@ -301,15 +287,20 @@ export function useKeyboardShortcuts(): void {
 
   const handleHideShortcuts = (e: KeyboardEvent, modKey: boolean): boolean => {
     if (!modKey || e.key.toLowerCase() !== "h") return false;
-    e.preventDefault();
     if (e.shiftKey) {
       // Ctrl+Shift+H: unhide hidden rows spanned by the current selection
+      e.preventDefault();
       unhideSelection(selectedTaskIds);
-    } else if (selectedTaskIds.length > 0) {
-      // Ctrl+H: hide selected rows
-      hideRows(selectedTaskIds);
+      return true;
     }
-    return true;
+    if (selectedTaskIds.length > 0) {
+      // Ctrl+H: hide selected rows
+      e.preventDefault();
+      hideRows(selectedTaskIds);
+      return true;
+    }
+    // Nothing to do — don't suppress the browser's Ctrl+H default.
+    return false;
   };
 
   const handleSingleKeyShortcuts = (
