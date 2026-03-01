@@ -21,13 +21,13 @@ import type {
   ClipboardPosition,
   SelectionPosition,
 } from "@/hooks/useTaskRowData";
+import { computeDisplayTask } from "@/utils/taskDisplayUtils";
+import { useComputedTaskColor } from "@/hooks/useComputedTaskColor";
+import { TABLE_ROW, Z_INDEX } from "@/styles/design-tokens";
 import { RowNumberCell } from "./RowNumberCell";
 import { RowOverlays } from "./RowOverlays";
 import { dragState } from "./dragSelectionState";
 import { TaskDataCells } from "./TaskDataCells";
-import { computeDisplayTask } from "@/utils/taskDisplayUtils";
-import { useComputedTaskColor } from "@/hooks/useComputedTaskColor";
-import { TABLE_ROW, Z_INDEX } from "@/styles/design-tokens";
 import { useRowSelectionHandler } from "./useRowSelectionHandler";
 
 // ── Constants ────────────────────────────────────────────────────────────────
@@ -122,17 +122,17 @@ export const TaskTableRow = memo(function TaskTableRow({
   }, [task.id]);
 
   const handleInsertAbove = useCallback(
-    () => insertTaskAbove(task.id),
+    (): void => insertTaskAbove(task.id),
     [insertTaskAbove, task.id]
   );
 
   const handleInsertBelow = useCallback(
-    () => insertTaskBelow(task.id),
+    (): void => insertTaskBelow(task.id),
     [insertTaskBelow, task.id]
   );
 
   const handleContextMenu = useCallback(
-    (e: React.MouseEvent) => onContextMenu(e, task.id),
+    (e: React.MouseEvent): void => onContextMenu(e, task.id),
     [onContextMenu, task.id]
   );
 

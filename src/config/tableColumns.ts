@@ -68,6 +68,25 @@ export interface ColumnDefinition {
 
   /** Whether to show right border (default: true). Set false for borderless columns like color. */
   showRightBorder?: boolean;
+
+  /**
+   * Special header rendering variant. Undefined renders column.label as plain text.
+   * - 'select-all': renders an Excel-style select-all button (rowNumber column)
+   * - 'empty': renders nothing — column is identified by aria-label only (color column)
+   */
+  headerVariant?: "select-all" | "empty";
+
+  /**
+   * Accessible label for header cells that have no visible label text.
+   * Used as aria-label on the header cell element.
+   */
+  headerAriaLabel?: string;
+
+  /**
+   * Whether the column header shows a drag-to-resize handle.
+   * When true, right padding is omitted to leave space for the resizer.
+   */
+  resizable?: boolean;
 }
 
 /** Wrap a string validator with a typeof guard. */
@@ -111,6 +130,8 @@ export const TASK_COLUMNS: ColumnDefinition[] = [
     defaultWidth: "40px",
     editable: false,
     renderer: "custom",
+    headerVariant: "select-all",
+    headerAriaLabel: "Row number",
   },
   {
     id: "color",
@@ -121,6 +142,8 @@ export const TASK_COLUMNS: ColumnDefinition[] = [
     renderer: "color",
     validator: stringValidator(validateColor),
     showRightBorder: false,
+    headerVariant: "empty",
+    headerAriaLabel: "Color",
   },
   {
     id: "name",
@@ -130,6 +153,7 @@ export const TASK_COLUMNS: ColumnDefinition[] = [
     editable: true,
     renderer: "text",
     validator: stringValidator(validateTaskName),
+    resizable: true,
   },
   {
     id: "startDate",
