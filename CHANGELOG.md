@@ -2,6 +2,15 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [1.1.8](https://github.com/kitikonti/ownchart/compare/v1.1.7...v1.1.8) (2026-03-01)
+
+
+### Code Refactoring
+
+* apply code review fixes to HiddenRowIndicator, ColumnResizer, ColorCellEditor, TaskTypeIcon ([347495e](https://github.com/kitikonti/ownchart/commit/347495e75dbe40f99abf12aac9d424435eed54e2))
+* apply code review fixes to HiddenRowIndicator, ColumnResizer, ColorCellEditor, TaskTypeIcon ([a6aa104](https://github.com/kitikonti/ownchart/commit/a6aa10407f85f68274e858a4f5212615cf751a8b))
+* apply code review fixes to HiddenRowIndicator, ColumnResizer, ColorCellEditor, TaskTypeIcon ([93e4996](https://github.com/kitikonti/ownchart/commit/93e499639d89322741a2e630f5dcd362a119f743))
+
 ## [1.1.7](https://github.com/kitikonti/ownchart/compare/v1.1.6...v1.1.7) (2026-03-01)
 
 
