@@ -57,7 +57,9 @@ export function remapDependencies(
   return deps
     .filter(
       // Only keep dependencies where both tasks are in the mapping
-      (dep) => idMapping[dep.fromTaskId] && idMapping[dep.toTaskId]
+      (dep) =>
+        idMapping[dep.fromTaskId] !== undefined &&
+        idMapping[dep.toTaskId] !== undefined
     )
     .map((dep) => ({
       ...dep,

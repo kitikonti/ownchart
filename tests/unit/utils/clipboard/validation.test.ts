@@ -1,6 +1,7 @@
 import { describe, it, expect } from "vitest";
 import {
   canPasteCellValue,
+  canCutCellValue,
   getClearValueForField,
 } from "../../../../src/utils/clipboard/validation";
 import type { Task } from "../../../../src/types/chart.types";
@@ -166,6 +167,48 @@ describe("canPasteCellValue", () => {
         const result = canPasteCellValue(field, field, createTask("task"));
         expect(result.valid).toBe(true);
       });
+    });
+  });
+});
+
+describe("canCutCellValue", () => {
+  describe("summary task restrictions", () => {
+    it("should reject cutting type from a summary task", () => {
+      const result = canCutCellValue("type", createTask("summary"));
+      expect(result.valid).toBe(false);
+      expect(result.error).toBe(
+        "Cannot cut type from summary tasks (would orphan their children)"
+      );
+    });
+
+    it("should allow cutting other fields from summary task", () => {
+      expect(canCutCellValue("name", createTask("summary")).valid).toBe(true);
+      expect(canCutCellValue("color", createTask("summary")).valid).toBe(true);
+      expect(canCutCellValue("progress", createTask("summary")).valid).toBe(true);
+    });
+  });
+
+  describe("regular and milestone tasks allow all cuts", () => {
+    const fields = [
+      "name",
+      "startDate",
+      "endDate",
+      "duration",
+      "progress",
+      "color",
+      "type",
+    ] as const;
+
+    fields.forEach((field) => {
+      it(`should allow cutting ${field} from regular task`, () => {
+        expect(canCutCellValue(field, createTask("task")).valid).toBe(true);
+      });
+
+      if (field !== "type") {
+        it(`should allow cutting ${field} from milestone task`, () => {
+          expect(canCutCellValue(field, createTask("milestone")).valid).toBe(true);
+        });
+      }
     });
   });
 });

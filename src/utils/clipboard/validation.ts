@@ -100,7 +100,6 @@ export function getClearValueForField(
     case "name":
       return "";
     case "startDate":
-      return "";
     case "endDate":
       return "";
     case "duration":

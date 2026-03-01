@@ -21,6 +21,7 @@ const VALID_EDITABLE_FIELDS: Set<EditableField> = new Set(EDITABLE_FIELDS);
  */
 function isValidTaskShape(obj: unknown): boolean {
   if (typeof obj !== "object" || obj === null) return false;
+  // safe cast — object type confirmed by guard above, structure validated immediately below
   const t = obj as Record<string, unknown>;
   return (
     typeof t.id === "string" &&
@@ -83,6 +84,19 @@ async function writeToClipboard(
 }
 
 /**
+ * Shared read helper — reads clipboard text, checks prefix, and parses JSON.
+ * Returns the parsed value if the prefix matches and JSON is valid; null otherwise.
+ */
+async function readFromClipboard(prefix: string): Promise<unknown | null> {
+  const text = await navigator.clipboard.readText();
+  if (!text.startsWith(prefix)) return null;
+  const jsonStr = text.slice(prefix.length);
+  const parsed: unknown = JSON.parse(jsonStr);
+  if (typeof parsed !== "object" || parsed === null) return null;
+  return parsed;
+}
+
+/**
  * Write row data to system clipboard.
  * Stores serialized JSON with a prefix for identification.
  */
@@ -111,15 +125,9 @@ export async function writeCellToSystemClipboard(
  */
 export async function readRowsFromSystemClipboard(): Promise<SystemRowClipboardData | null> {
   try {
-    const text = await navigator.clipboard.readText();
+    const parsed = await readFromClipboard(OWNCHART_ROW_PREFIX);
+    if (parsed === null) return null;
 
-    if (!text.startsWith(OWNCHART_ROW_PREFIX)) {
-      return null;
-    }
-
-    const jsonStr = text.slice(OWNCHART_ROW_PREFIX.length);
-    const parsed: unknown = JSON.parse(jsonStr);
-    if (typeof parsed !== "object" || parsed === null) return null;
     // safe cast — structure validated immediately below
     const data = parsed as SystemRowClipboardData;
 
@@ -155,15 +163,9 @@ export async function readRowsFromSystemClipboard(): Promise<SystemRowClipboardD
  */
 export async function readCellFromSystemClipboard(): Promise<SystemCellClipboardData | null> {
   try {
-    const text = await navigator.clipboard.readText();
+    const parsed = await readFromClipboard(OWNCHART_CELL_PREFIX);
+    if (parsed === null) return null;
 
-    if (!text.startsWith(OWNCHART_CELL_PREFIX)) {
-      return null;
-    }
-
-    const jsonStr = text.slice(OWNCHART_CELL_PREFIX.length);
-    const parsed: unknown = JSON.parse(jsonStr);
-    if (typeof parsed !== "object" || parsed === null) return null;
     // safe cast — field and value validated immediately below
     const data = parsed as SystemCellClipboardData;
 

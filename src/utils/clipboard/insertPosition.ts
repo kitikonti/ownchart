@@ -56,11 +56,15 @@ export function determineInsertPosition(
   // Priority 3: Last selected row by visual position (insert after it).
   // Finds the bottommost selected task in the flattened list rather than
   // relying on the store maintaining selectedTaskIds in visual order.
+  // Pre-build index map to avoid O(n²) findIndex-in-loop.
   if (realSelectedIds.length > 0) {
+    const indexMap = new Map(
+      flattenedTasks.map(({ task }, i) => [task.id, i])
+    );
     let lastIndex = -1;
     for (const id of realSelectedIds) {
-      const index = flattenedTasks.findIndex(({ task }) => task.id === id);
-      if (index > lastIndex) lastIndex = index;
+      const idx = indexMap.get(id) ?? -1;
+      if (idx > lastIndex) lastIndex = idx;
     }
     if (lastIndex !== -1) {
       return lastIndex + 1; // Insert after last selected
