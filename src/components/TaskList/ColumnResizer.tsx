@@ -60,7 +60,10 @@ export const ColumnResizer = memo(function ColumnResizer({
     const computeWidth = (clientX: number): number =>
       Math.min(
         maxWidth ?? Infinity,
-        Math.max(minWidth, startWidthRef.current + (clientX - startXRef.current))
+        Math.max(
+          minWidth,
+          startWidthRef.current + (clientX - startXRef.current)
+        )
       );
 
     const handleMouseMove = (e: globalThis.MouseEvent): void => {
