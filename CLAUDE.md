@@ -281,6 +281,18 @@ git commit -m "chore: update React to 18.3.1"
 git commit -m "ui: shorten progress column header"
 ```
 
+**Git Commit Messages**:
+
+Never use `$()` command substitution or heredocs for commit messages.
+Use a single `-m` flag with a plain multiline string instead:
+
+```bash
+git commit -m "subject line
+
+- bullet one
+- bullet two"
+```
+
 **Commit Type → Version Bump**:
 - `feat:` → MINOR version (0.0.1 → 0.1.0)
 - `fix:`, `perf:` → PATCH version (0.1.0 → 0.1.1)
