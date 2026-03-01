@@ -7,7 +7,7 @@
 import { useRef, useId } from "react";
 import { Image, FilePdf, FileCode, Info } from "@phosphor-icons/react";
 import type { Icon } from "@phosphor-icons/react";
-import type { ExportFormat } from "../../utils/export/types";
+import type { ExportFormat } from "@/utils/export/types";
 
 const ICON_SIZE = 22;
 // 80px: ensures icon + label always fit without clipping at any font scale
@@ -119,7 +119,6 @@ export function ExportFormatSelector({
                   ? "border-brand-600 bg-brand-600"
                   : "border-neutral-200 hover:border-neutral-300 hover:bg-neutral-50"
               }`}
-              title={option.helpText}
             >
               <Icon
                 size={ICON_SIZE}
@@ -142,6 +141,7 @@ export function ExportFormatSelector({
       {selectedOption && (
         <div className="mt-3 flex items-start gap-2 text-xs text-neutral-600 bg-neutral-50 rounded p-3 border border-neutral-200">
           <Info
+            aria-hidden="true"
             className="size-4 text-neutral-500 mt-0.5 flex-shrink-0"
             weight="fill"
           />

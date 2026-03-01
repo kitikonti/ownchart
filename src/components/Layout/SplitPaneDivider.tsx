@@ -47,17 +47,11 @@ export function SplitPaneDivider({
     }
   };
 
-  const handleClick = (): void => {
-    if (onExpand) {
-      onExpand();
-    }
-  };
-
   const ariaLabel = isCollapsed ? ARIA_LABEL_COLLAPSED : ARIA_LABEL_EXPANDED;
 
   const className = isCollapsed
-    ? "split-divider w-3 cursor-e-resize flex-shrink-0 bg-neutral-200 hover:bg-neutral-300 transition-colors duration-150 relative flex items-center justify-center"
-    : `split-divider w-1 cursor-col-resize flex-shrink-0 ${isDragging ? "bg-neutral-500" : "bg-neutral-200"} hover:bg-neutral-400 transition-colors duration-150 relative group`;
+    ? "split-divider w-3 cursor-e-resize flex-shrink-0 bg-neutral-200 hover:bg-neutral-300 transition-colors duration-150 relative flex items-center justify-center focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 focus-visible:ring-offset-1"
+    : `split-divider w-1 cursor-col-resize flex-shrink-0 ${isDragging ? "bg-neutral-500" : "bg-neutral-200"} hover:bg-neutral-400 transition-colors duration-150 relative group focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 focus-visible:ring-offset-1`;
 
   return (
     // eslint-disable-next-line jsx-a11y/no-noninteractive-element-interactions -- separator is a keyboard-operable resize handle
@@ -73,10 +67,11 @@ export function SplitPaneDivider({
       className={className}
       onMouseDown={onMouseDown}
       onKeyDown={handleKeyDown}
-      onClick={isCollapsed ? handleClick : undefined}
+      onClick={isCollapsed && onExpand ? onExpand : undefined}
     >
       {isCollapsed ? (
         <CaretRight
+          aria-hidden="true"
           size={COLLAPSE_ICON_SIZE}
           weight="bold"
           className="text-neutral-500 pointer-events-none"

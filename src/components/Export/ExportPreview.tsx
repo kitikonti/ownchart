@@ -8,7 +8,7 @@ import type {
   PdfExportOptions,
   PixelDimensions,
   ReadabilityStatus,
-} from "../../utils/export/types";
+} from "@/utils/export/types";
 import { ChartPreview } from "./ChartPreview";
 import { PdfPreview } from "./PdfPreview";
 
