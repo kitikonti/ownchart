@@ -56,152 +56,18 @@ Example: "I need to check the export name in interFontData.ts. Could you run `gr
 
 ## Project Status
 
-**Current Version**: See `package.json` for the current version number.
+**Current Version**: See `package.json`. Full history in `CHANGELOG.md` and `docs/planning/ROADMAP.md`.
 
-**Completed Sprints**:
-- ✅ Sprint 1.1.1 - Task Groups & Hierarchical Organization
-- ✅ Sprint 1.1.2 - Hierarchy Indent/Outdent
-- ✅ Sprint 1.2 Package 1 - Timeline Visualization
-- ✅ Sprint 1.2 Package 2 - Interactive Editing
-- ✅ Sprint 1.2 Package 3 - Navigation & Scale
-- ✅ Sprint 1.3 - File Operations
-- ✅ Sprint 1.4 - Dependencies (FS only)
-- ✅ Sprint 1.5 - Undo/Redo System
-- ✅ Sprint 1.5.4 - Copy/Paste & Multi-Select (ahead of schedule from V1.1)
-- ✅ Sprint 1.6 - PNG Export & Polish
-- ✅ Sprint 1.5.9.1 - UI Density (Compact/Normal/Comfortable)
-- ✅ Sprint 1.5.9 - User Preferences & Settings
-- ✅ Sprint 1.5.9.2 - Infinite Scroll & Zoom Anchoring
-- ✅ Sprint 1.5.5 - PDF & SVG Export (vector formats)
-
-**MVP Features Complete**:
-- ✅ Multi-select with rectangular marquee selection in timeline
-- ✅ Copy/Cut/Paste with cross-tab clipboard support
-- ✅ Multi-task dragging (all selected tasks move together)
-- ✅ Summary task dragging (moves all children automatically)
-- ✅ Insert task above/below toolbar buttons
-- ✅ DEL key and toolbar button for task deletion
-- ✅ Placeholder row for quick task creation
-- ✅ PNG Export with options dialog (zoom, columns, grid lines, weekends, background)
-- ✅ Help Panel with keyboard shortcuts reference
-- ✅ Welcome Tour for first-time users
-- ✅ File extension changed to `.ownchart`
-- ✅ Auto-fit name column on file open
-- ✅ Export settings persisted in project file
-- ✅ Multi-tab persistence (dependencies, column widths)
-- ✅ UI Density settings (Compact/Normal/Comfortable) with preferences dialog
-- ✅ Export density selection independent from app setting
-
-**Sprint 1.5.5 Features (Complete)**:
-- ✅ PDF Export with vector graphics (scales perfectly for large prints)
-- ✅ SVG Export for editable vector output
-- ✅ Page size selection (A4, A3, Letter, Legal, Tabloid)
-- ✅ Orientation (Landscape/Portrait) and margin presets
-- ✅ Scale modes (Fit to page, Custom zoom %)
-- ✅ Unified export dialog with teal accent color
-- ✅ Chart settings persistence in localStorage
-- ✅ Inter-Italic font embedded for proper PDF rendering
-- ✅ Shared export utilities for PNG/PDF/SVG consistency
-
-**Sprint 1.5.9 Features (Complete)**:
-- ✅ Holiday Service with date-holidays library (199 countries supported)
-- ✅ User Preferences: Date Format, First Day of Week, Week Numbering System
-- ✅ Chart Settings Dialog (Timeline Display, Task Display sections)
-- ✅ Holiday region selection per project
-- ✅ Holiday highlighting in timeline with tooltips
-- ✅ Task Label Position (before/inside/after/none)
-- ✅ Show/Hide toggles: Today Marker, Weekends, Holidays, Dependencies, Progress
-- ✅ Keyboard shortcuts for view toggles (T, D, P, H)
-- ✅ Dependencies toggle button in toolbar (FlowArrow icon)
-- ✅ Timeline header improvements: Calendar week visible at all zoom levels
-- ✅ Working Days Mode (duration editing, task drag maintains working days)
-
-**Sprint 1.5.9.2 Features (Complete)**:
-- ✅ Infinite Scroll for timeline (auto-extends past/future on scroll)
-- ✅ Zoom Anchoring (cursor-centered for wheel, viewport-centered for keyboard/toolbar)
-- ✅ Smooth left-scrolling for infinite timeline
-- ✅ Dependency arrows no longer animate during scroll
-
-**Branding Complete (v0.0.34)**:
-- ✅ Custom OwnChart logo throughout application
-- ✅ Multi-format favicon infrastructure (SVG, ICO, PNG)
-- ✅ PWA manifest with installability support
-- ✅ Social media meta tags (Open Graph, Twitter Cards)
-- ✅ Ribbon header branding with logo SVG
-- ✅ E2E tests for branding infrastructure
-
-**Post-Sprint UI/UX Enhancements (v0.0.23 - v0.0.33)**:
-- ✅ Smart Color Management with 5 color modes (Manual, Theme, Summary Group, Task Type, Hierarchy)
-- ✅ Export dialog redesigned with Figma-style live preview
-- ✅ MS Office-style Ribbon UI (tabbed interface: File, Task, View, Help)
-- ✅ Dynamic text color contrast for task labels
-- ✅ Today marker changed from red to blue with header highlight
-- ✅ Unified dropdown styling across components
-- ✅ Auto-fit column widths on density and content changes
-- ✅ "F" keyboard shortcut for fit to view
-- ✅ Color mode state persisted to .ownchart files
-- ✅ Undo/redo support for indent/outdent operations
-- ✅ Timeline header shows "Week N, Mon YYYY" at medium zoom levels
-
-**Latest Improvements (v0.0.13 - v0.0.33)**:
-- ✅ Smart Color Management (5 modes: Manual, Theme, Summary Group, Task Type, Hierarchy)
-- ✅ MS Office-style Ribbon UI with tabbed interface
-- ✅ Export dialog redesign with Figma-style live preview
-- ✅ PDF Export with vector graphics and page size options
-- ✅ SVG Export for editable vector output
-- ✅ Dynamic text color contrast for task labels
-- ✅ Today marker changed to blue with header highlight
-- ✅ Unified dropdown and dialog styling
-- ✅ Auto-fit column widths on density changes
-- ✅ Inter font with embedded PDF support (replaced IBM Plex Sans)
-- ✅ Chart settings persistence in localStorage
-- ✅ Exponential zoom for consistent feel at all zoom levels
-- ✅ Color mode state persisted in .ownchart files
-- ✅ Undo/redo support for indent/outdent operations
-- ✅ "F" keyboard shortcut for fit to view
-- ✅ Project name included in PNG export filename
-- ✅ Column widths restored when opening files
-- ✅ Dependencies no longer auto-move tasks on creation
-- ✅ Custom domain configured: ownchart.app
-
-**Test Coverage**: 834 unit tests (80%+ coverage)
-
-**Next Phase**:
-- 🔜 Phase 1.5 (V1.1) - Remaining Deferred Features & Extensibility
+**Next Phase**: Phase 1.5 (V1.1) - Remaining Deferred Features & Extensibility
 
 ## Directory Structure
 
-```
-ownchart/
-├── src/
-│   ├── components/     # React components
-│   ├── store/          # Zustand stores (taskSlice, chartSlice, historySlice)
-│   ├── utils/          # Helper functions
-│   ├── types/          # TypeScript interfaces
-│   └── hooks/          # Custom React hooks
-├── docs/            # ALL design documentation
-│   ├── planning/       # PRD, Roadmap, User Stories
-│   ├── architecture/   # Technical Architecture, Data Model
-│   ├── sprints/        # Sprint-specific documentation
-│   ├── design/         # UI/UX specs, Competitive Analysis
-│   └── process/        # CI/CD, Testing Strategy
-├── tests/
-│   ├── unit/
-│   ├── integration/
-│   └── e2e/
-└── CHANGELOG.md        # Auto-generated release notes
-```
-
-## Core Technologies
-
-| Purpose | Technology | Why |
-|---------|-----------|-----|
-| UI Framework | React 18 | Ecosystem, TypeScript support |
-| State Management | Zustand | Simple, minimal boilerplate |
-| Styling | TailwindCSS | Utility-first, fast development |
-| Build Tool | Vite | Fast HMR, modern tooling |
-| Timeline Rendering | D3.js | SVG utilities, date scales |
-| Testing | Vitest + Playwright | Fast, modern, TypeScript-first |
+- `src/components/` — React components
+- `src/store/` — Zustand slices (taskSlice, chartSlice, historySlice, clipboardSlice, uiSlice)
+- `src/utils/` — Helper functions (including `fileOperations/`)
+- `src/types/` — TypeScript interfaces; `src/hooks/` — Custom hooks
+- `docs/` — All design docs (planning/, architecture/, sprints/, design/, process/)
+- `tests/` — unit/, integration/, e2e/
 
 ## Key Architectural Patterns
 
@@ -237,28 +103,19 @@ ownchart/
 ### Making Changes
 
 ```bash
-# Start development
-npm run dev
-
-# Lint and format
-npm run lint
-npm run format
-
-# Type check
-npm run type-check
-
-# Run tests
-npm run test:unit
-
-# Full CI check
-npm run ci:local
+npm run dev          # Start development
+npm run lint         # Lint
+npm run format       # Format
+npm run type-check   # Type check
+npm run test:unit    # Unit tests
+npm run ci:local     # Full CI check
 ```
 
 ### Git Commit Standards
 
 **Use Conventional Commits** (required for automated changelog):
 
-```bash
+```
 feat: add new feature description
 fix: resolve bug description
 perf: improve performance description
@@ -267,18 +124,6 @@ test: add test coverage
 docs: update documentation
 chore: update dependencies
 ui: improve UI/UX
-```
-
-**Examples**:
-```bash
-git commit -m "feat: add undo/redo buttons to toolbar"
-git commit -m "fix: resolve zoom functionality bug"
-git commit -m "perf: optimize task rendering for large datasets"
-git commit -m "refactor: split App.tsx into sub-components"
-git commit -m "test: improve test coverage from 67% to 75%"
-git commit -m "docs: update Sprint 1.3 documentation"
-git commit -m "chore: update React to 18.3.1"
-git commit -m "ui: shorten progress column header"
 ```
 
 **Git Commit Messages**:
@@ -301,13 +146,7 @@ git commit -m "subject line
 
 ### Release Management Workflow
 
-**When to Release**:
-- After completing a sprint
-- After significant bug fixes
-- When Martin asks for a release
-- Before deploying to production
-
-**Release Process** (automated):
+**Release Process**:
 
 ```bash
 # 1. Ensure all changes are committed
@@ -319,14 +158,6 @@ npm run release
 # 3. Push with tags
 git push --follow-tags origin main
 ```
-
-**What happens automatically**:
-1. ✅ Analyzes all commits since last release
-2. ✅ Determines version bump (based on commit types)
-3. ✅ Updates `package.json` version
-4. ✅ Generates/updates `CHANGELOG.md`
-5. ✅ Creates git commit: `chore(release): vX.Y.Z`
-6. ✅ Creates git tag: `vX.Y.Z`
 
 **Manual version control** (optional):
 ```bash
@@ -431,11 +262,6 @@ git tag -l
 - When adding new development patterns
 - When tooling changes
 
-**When to update other docs**:
-- Sprint docs: During/after sprint completion
-- Architecture docs: When patterns change
-- README.md: For user-facing changes
-
 ## Important Files Reference
 
 **Configuration**:
@@ -503,51 +329,6 @@ npm run test:e2e            # E2E tests (Playwright)
 - Run `npm run format` before committing
 - 2 spaces indentation, single quotes, semicolons
 
-## Common Tasks
-
-### Adding a New Component
-```bash
-# 1. Create file in src/components/
-# 2. Define Props interface
-# 3. Implement component with TypeScript
-# 4. Write tests in tests/unit/
-# 5. Import and use in parent component
-```
-
-### Adding a New Zustand Slice
-```bash
-# 1. Create file in src/store/
-# 2. Define state interface
-# 3. Create slice with Immer middleware
-# 4. Export hooks and selectors
-# 5. Write tests
-```
-
-### Adding a New Utility
-```bash
-# 1. Create file in src/utils/
-# 2. Implement pure functions
-# 3. Write comprehensive unit tests
-# 4. Aim for 100% coverage
-```
-
-## Troubleshooting
-
-**Tests failing**:
-- Check Node version (should be 20.x)
-- Clear cache: `rm -rf node_modules && npm install`
-- Check for missing mocks
-
-**Build errors**:
-- Run `npm run type-check` for TypeScript errors
-- Check for circular imports
-- Verify all dependencies installed
-
-**Performance issues**:
-- Use React DevTools Profiler
-- Check for unnecessary re-renders
-- Profile with Chrome DevTools
-
 ## Security
 
 **Client-Side Security**:
@@ -561,37 +342,3 @@ npm run test:e2e            # E2E tests (Playwright)
 - DOMPurify for string sanitization
 - Prototype pollution prevention
 - Size limits enforced
-
-## Key Decision Records
-
-**Why Zustand over Redux?**
-- Less boilerplate for solo project
-- Better TypeScript inference
-- No provider wrapper needed
-
-**Why SVG over Canvas?**
-- Better accessibility
-- Easier event handling
-- Good performance for <1000 tasks
-
-**Why commit-and-tag-version for releases?**
-- Local control (not fully automated)
-- Solo-friendly workflow
-- Generates changelog from commits
-
-## External Resources
-
-- [React Docs](https://react.dev)
-- [TypeScript Docs](https://www.typescriptlang.org/docs)
-- [Zustand Docs](https://github.com/pmndrs/zustand)
-- [Vite Docs](https://vitejs.dev)
-- [TailwindCSS Docs](https://tailwindcss.com)
-- [Conventional Commits](https://www.conventionalcommits.org)
-- [Semantic Versioning](https://semver.org)
-
----
-
-**Status**: ✅ Sprint 1.5.5 Complete + UI/UX Polish + Branding (Custom Logo, PWA, Social Meta Tags)
-**Current Version**: See `package.json`
-**File Extension**: `.ownchart`
-**Last Updated**: 2026-02-05
