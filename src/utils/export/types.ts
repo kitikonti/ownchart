@@ -231,6 +231,15 @@ export interface ExportOptions {
   density: UiDensity;
 }
 
+/** Boolean toggle keys in ExportOptions (type-safe subset for checkbox groups) */
+export type ExportBooleanKey =
+  | "includeHeader"
+  | "includeTodayMarker"
+  | "includeDependencies"
+  | "includeGridLines"
+  | "includeWeekends"
+  | "includeHolidays";
+
 /**
  * Preset zoom options for export.
  * These control how spread out the timeline appears.

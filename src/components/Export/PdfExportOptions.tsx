@@ -1,40 +1,130 @@
 /**
  * PDF export options component.
- * Provides controls for page size, orientation, scale, margins, and more.
+ * Provides controls for page size, orientation, scale, margins, and header/footer.
  */
 
+import { useCallback, useId } from "react";
 import type {
   PdfExportOptions as PdfOptions,
   PdfPageSize,
+  PdfOrientation,
   PdfMarginPreset,
+  PdfHeaderFooter,
+  PdfCustomPageSize,
   ExportOptions,
-  ExportZoomMode,
 } from "../../utils/export/types";
-import { Checkbox } from "../common/Checkbox";
+import {
+  PDF_PAGE_SIZES,
+  PDF_MARGIN_PRESETS,
+  DEFAULT_PDF_OPTIONS,
+} from "../../utils/export/types";
+import { CheckboxGroup } from "../common/CheckboxGroup";
+import { FieldLabel } from "../common/FieldLabel";
 import { Input } from "../common/Input";
 import { Select } from "../common/Select";
-import { PDF_PAGE_SIZES, PDF_MARGIN_PRESETS } from "../../utils/export/types";
+import { SectionHeader } from "../common/SectionHeader";
+import {
+  SegmentedControl,
+  type SegmentedControlOption,
+} from "../common/SegmentedControl";
 import { ZoomModeSelector } from "./ZoomModeSelector";
 
-const PAGE_SIZE_LABELS: Record<PdfPageSize, { label: string; size: string }> = {
-  a4: { label: "A4", size: "297 × 210 mm" },
-  a3: { label: "A3", size: "420 × 297 mm" },
-  a2: { label: "A2", size: "594 × 420 mm" },
-  a1: { label: "A1", size: "841 × 594 mm" },
-  a0: { label: "A0", size: "1189 × 841 mm" },
-  letter: { label: "Letter", size: "11 × 8.5 in" },
-  legal: { label: "Legal", size: "14 × 8.5 in" },
-  tabloid: { label: "Tabloid", size: "17 × 11 in" },
-  custom: { label: "Custom", size: "" },
-};
+// =============================================================================
+// Constants
+// =============================================================================
 
-const MARGIN_LABELS: Record<PdfMarginPreset, string> = {
-  normal: "Normal",
-  narrow: "Narrow",
-  wide: "Wide",
-  none: "None",
+/** Minimum custom page dimension in mm */
+const MIN_CUSTOM_PAGE_MM = 100;
+/** Maximum custom page dimension in mm */
+const MAX_CUSTOM_PAGE_MM = 5000;
+/** Default custom page width in mm — used when no custom size has been configured yet */
+const DEFAULT_CUSTOM_WIDTH_MM = 500;
+/** Default custom page height in mm — used when no custom size has been configured yet */
+const DEFAULT_CUSTOM_HEIGHT_MM = 300;
+
+/**
+ * Fallback for custom page size when not yet configured.
+ * `DEFAULT_PDF_OPTIONS.customPageSize` is always defined, but the type allows
+ * undefined (optional field) — the ?? keeps this resilient to future changes.
+ */
+const DEFAULT_CUSTOM_SIZE: PdfCustomPageSize =
+  DEFAULT_PDF_OPTIONS.customPageSize ?? {
+    width: DEFAULT_CUSTOM_WIDTH_MM,
+    height: DEFAULT_CUSTOM_HEIGHT_MM,
+  };
+
+/**
+ * Human-readable names for each page size.
+ * Dimensions are derived from PDF_PAGE_SIZES (single source of truth, all in mm)
+ * so dropdown labels stay in sync automatically if sizes change.
+ */
+const PAGE_SIZE_NAMES: Record<PdfPageSize, string> = {
+  a4: "A4",
+  a3: "A3",
+  a2: "A2",
+  a1: "A1",
+  a0: "A0",
+  letter: "Letter",
+  legal: "Legal",
+  tabloid: "Tabloid",
   custom: "Custom",
 };
+
+/**
+ * Explicit ordering for page size options.
+ * Safer than Object.keys(PAGE_SIZE_NAMES) which relies on insertion order,
+ * and makes the intended sequence obvious at a glance.
+ */
+const PAGE_SIZE_ORDER: PdfPageSize[] = [
+  "a4",
+  "a3",
+  "a2",
+  "a1",
+  "a0",
+  "letter",
+  "legal",
+  "tabloid",
+  "custom",
+];
+
+/**
+ * Format a page size option label including landscape dimensions in mm.
+ * Dimensions come from PDF_PAGE_SIZES (stored as landscape: width × height).
+ * The hint text below the select shows orientation-corrected effective dimensions.
+ */
+function formatPageSizeLabel(key: PdfPageSize): string {
+  if (key === "custom") return PAGE_SIZE_NAMES[key];
+  const { width, height } = PDF_PAGE_SIZES[key];
+  return `${PAGE_SIZE_NAMES[key]} (${width} × ${height} mm)`;
+}
+
+// Named icon constants — static React elements, defined once at module scope
+const LANDSCAPE_ICON = (
+  <span
+    aria-hidden="true"
+    className="w-4 h-2.5 border-2 border-current rounded-sm"
+  />
+);
+const PORTRAIT_ICON = (
+  <span
+    aria-hidden="true"
+    className="w-2.5 h-4 border-2 border-current rounded-sm"
+  />
+);
+
+const ORIENTATION_OPTIONS: SegmentedControlOption<PdfOrientation>[] = [
+  { value: "landscape", label: "Landscape", icon: LANDSCAPE_ICON },
+  { value: "portrait", label: "Portrait", icon: PORTRAIT_ICON },
+];
+
+const MARGIN_OPTIONS: SegmentedControlOption<PdfMarginPreset>[] = [
+  { value: "normal", label: "Normal" },
+  { value: "narrow", label: "Narrow" },
+  { value: "wide", label: "Wide" },
+  { value: "none", label: "None" },
+  // Note: "custom" exists in PdfMarginPreset but is intentionally not listed here.
+  // It is reserved for a future "custom margins" editing feature.
+];
 
 /** Header/Footer checkbox options */
 const HEADER_FOOTER_OPTIONS = [
@@ -43,7 +133,154 @@ const HEADER_FOOTER_OPTIONS = [
   { key: "showExportDate", label: "Export date" },
 ] as const;
 
-interface PdfExportOptionsProps {
+// =============================================================================
+// Helpers
+// =============================================================================
+
+/** Validates that a string is a valid PdfPageSize */
+const isPageSize = (value: string): value is PdfPageSize =>
+  value in PAGE_SIZE_NAMES;
+
+/** Clamp a parsed input value to the allowed page dimension range */
+function clampDimension(raw: string, fallback: number): number {
+  const parsed = parseInt(raw, 10);
+  const value = Number.isNaN(parsed) ? fallback : parsed;
+  return Math.max(MIN_CUSTOM_PAGE_MM, Math.min(MAX_CUSTOM_PAGE_MM, value));
+}
+
+// =============================================================================
+// Sub-Components
+// =============================================================================
+
+interface HeaderFooterColumnProps {
+  title: string;
+  values: PdfHeaderFooter;
+  onValuesChange: (values: PdfHeaderFooter) => void;
+}
+
+/** Renders a header or footer checkbox column using CheckboxGroup */
+function HeaderFooterColumn({
+  title,
+  values,
+  onValuesChange,
+}: HeaderFooterColumnProps): JSX.Element {
+  const items = HEADER_FOOTER_OPTIONS.map((opt) => ({
+    key: opt.key,
+    label: opt.label,
+    checked: values[opt.key],
+  }));
+
+  const handleChange = useCallback(
+    (key: string, checked: boolean): void => {
+      const opt = HEADER_FOOTER_OPTIONS.find((o) => o.key === key);
+      if (!opt) return;
+      // Build update via typed key — TypeScript verifies opt.key is a PdfHeaderFooter field
+      const update: PdfHeaderFooter = { ...values };
+      update[opt.key] = checked;
+      onValuesChange(update);
+    },
+    [values, onValuesChange]
+  );
+
+  return (
+    <div>
+      <FieldLabel>{title}</FieldLabel>
+      <CheckboxGroup items={items} onChange={handleChange} ariaLabel={title} />
+    </div>
+  );
+}
+
+interface DimensionInputProps {
+  id: string;
+  label: string;
+  value: number;
+  onChange: (raw: string) => void;
+  min: number;
+  max: number;
+}
+
+/** Renders a single labeled number input for a custom page dimension */
+function DimensionInput({
+  id,
+  label,
+  value,
+  onChange,
+  min,
+  max,
+}: DimensionInputProps): JSX.Element {
+  return (
+    <div>
+      <FieldLabel htmlFor={id}>{label}</FieldLabel>
+      <Input
+        id={id}
+        type="number"
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        min={min}
+        max={max}
+        mono
+      />
+    </div>
+  );
+}
+
+interface CustomPageSizeInputsProps {
+  customPageSize: PdfCustomPageSize | undefined;
+  onChange: (options: Partial<PdfOptions>) => void;
+}
+
+/** Renders width/height inputs for custom page dimensions */
+function CustomPageSizeInputs({
+  customPageSize,
+  onChange,
+}: CustomPageSizeInputsProps): JSX.Element {
+  const currentWidth = customPageSize?.width ?? DEFAULT_CUSTOM_SIZE.width;
+  const currentHeight = customPageSize?.height ?? DEFAULT_CUSTOM_SIZE.height;
+
+  const handleDimensionChange = useCallback(
+    (dimension: "width" | "height", raw: string): void => {
+      const fallback =
+        dimension === "width"
+          ? DEFAULT_CUSTOM_SIZE.width
+          : DEFAULT_CUSTOM_SIZE.height;
+      const clamped = clampDimension(raw, fallback);
+      onChange({
+        customPageSize: {
+          width: dimension === "width" ? clamped : currentWidth,
+          height: dimension === "height" ? clamped : currentHeight,
+        },
+      });
+    },
+    [currentWidth, currentHeight, onChange]
+  );
+
+  return (
+    <div className="mt-5 grid grid-cols-2 gap-4">
+      <DimensionInput
+        id="pdf-custom-width"
+        label="Width (mm)"
+        value={currentWidth}
+        onChange={(raw) => handleDimensionChange("width", raw)}
+        min={MIN_CUSTOM_PAGE_MM}
+        max={MAX_CUSTOM_PAGE_MM}
+      />
+      <DimensionInput
+        id="pdf-custom-height"
+        label="Height (mm)"
+        value={currentHeight}
+        onChange={(raw) => handleDimensionChange("height", raw)}
+        min={MIN_CUSTOM_PAGE_MM}
+        max={MAX_CUSTOM_PAGE_MM}
+      />
+    </div>
+  );
+}
+
+// =============================================================================
+// Main Component
+// =============================================================================
+
+export interface PdfExportOptionsProps {
   options: PdfOptions;
   onChange: (options: Partial<PdfOptions>) => void;
   exportOptions: ExportOptions;
@@ -62,9 +299,13 @@ export function PdfExportOptions({
   projectAuthor,
   onProjectAuthorChange,
 }: PdfExportOptionsProps): JSX.Element {
+  // Stable IDs for aria-labelledby on each section landmark
+  const pageSetupId = useId();
+  const headerFooterId = useId();
+
   const pageDims =
     options.pageSize === "custom"
-      ? options.customPageSize || { width: 500, height: 300 }
+      ? options.customPageSize ?? DEFAULT_CUSTOM_SIZE
       : PDF_PAGE_SIZES[options.pageSize];
   const displayWidth =
     options.orientation === "landscape" ? pageDims.width : pageDims.height;
@@ -76,11 +317,9 @@ export function PdfExportOptions({
       {/* ============ TIMELINE SCALE ============ */}
       <ZoomModeSelector
         zoomMode={exportOptions.zoomMode}
-        onZoomModeChange={(mode: ExportZoomMode) =>
-          onExportOptionsChange({ zoomMode: mode })
-        }
+        onZoomModeChange={(mode) => onExportOptionsChange({ zoomMode: mode })}
         timelineZoom={exportOptions.timelineZoom}
-        onTimelineZoomChange={(zoom: number) =>
+        onTimelineZoomChange={(zoom) =>
           onExportOptionsChange({ timelineZoom: zoom })
         }
         currentAppZoom={currentAppZoom}
@@ -90,151 +329,67 @@ export function PdfExportOptions({
       <div className="divider-h" />
 
       {/* ============ PAGE SETUP ============ */}
-      <section>
-        <span className="block text-sm font-semibold text-neutral-900 mb-3">
-          Page Setup
-        </span>
+      <section aria-labelledby={pageSetupId}>
+        <SectionHeader id={pageSetupId} title="Page Setup" variant="simple" />
 
         <div className="space-y-5">
           {/* Page Size */}
           <div>
-            <span className="block text-sm font-medium text-neutral-700 mb-2">
-              Page Size
-            </span>
+            <FieldLabel htmlFor="pdf-page-size">Page Size</FieldLabel>
             <Select
+              id="pdf-page-size"
               value={options.pageSize}
-              onChange={(e) =>
-                onChange({ pageSize: e.target.value as PdfPageSize })
-              }
+              onChange={(e) => {
+                if (isPageSize(e.target.value)) {
+                  onChange({ pageSize: e.target.value });
+                }
+              }}
             >
-              {Object.entries(PAGE_SIZE_LABELS).map(
-                ([key, { label, size }]) => (
-                  <option key={key} value={key}>
-                    {size ? `${label} (${size})` : label}
-                  </option>
-                )
-              )}
+              {PAGE_SIZE_ORDER.map((key) => (
+                <option key={key} value={key}>
+                  {formatPageSizeLabel(key)}
+                </option>
+              ))}
             </Select>
             {options.pageSize !== "custom" && (
-              <p className="text-xs text-neutral-500 mt-2">
+              <p className="text-xs text-neutral-600 mt-2">
                 {displayWidth} × {displayHeight} mm
               </p>
             )}
           </div>
 
-          {/* Orientation - Segmented Control */}
+          {/* Orientation */}
           <div>
-            <span className="block text-sm font-medium text-neutral-700 mb-2">
-              Orientation
-            </span>
-            <div className="inline-flex rounded border border-neutral-300 overflow-hidden">
-              <button
-                type="button"
-                onClick={() => onChange({ orientation: "landscape" })}
-                className={`flex items-center justify-center gap-2 px-4 py-2 text-sm font-medium transition-colors duration-150 ${
-                  options.orientation === "landscape"
-                    ? "bg-brand-600 text-white"
-                    : "bg-white text-neutral-700 hover:bg-neutral-50"
-                }`}
-              >
-                <span className="w-4 h-2.5 border-2 border-current rounded-sm" />
-                Landscape
-              </button>
-              <button
-                type="button"
-                onClick={() => onChange({ orientation: "portrait" })}
-                className={`flex items-center justify-center gap-2 px-4 py-2 text-sm font-medium border-l border-neutral-300 transition-colors duration-150 ${
-                  options.orientation === "portrait"
-                    ? "bg-brand-600 text-white"
-                    : "bg-white text-neutral-700 hover:bg-neutral-50"
-                }`}
-              >
-                <span className="w-2.5 h-4 border-2 border-current rounded-sm" />
-                Portrait
-              </button>
-            </div>
+            <FieldLabel>Orientation</FieldLabel>
+            <SegmentedControl
+              options={ORIENTATION_OPTIONS}
+              value={options.orientation}
+              onChange={(value) => onChange({ orientation: value })}
+              ariaLabel="Page orientation"
+            />
           </div>
         </div>
 
         {/* Custom page size */}
         {options.pageSize === "custom" && (
-          <div className="mt-5 grid grid-cols-2 gap-4">
-            <div>
-              <label
-                className="block text-sm font-medium text-neutral-700 mb-2"
-                htmlFor="pdf-custom-width"
-              >
-                Width (mm)
-              </label>
-              <Input
-                id="pdf-custom-width"
-                type="number"
-                value={options.customPageSize?.width || 500}
-                onChange={(e) =>
-                  onChange({
-                    customPageSize: {
-                      width: Math.max(100, parseInt(e.target.value) || 500),
-                      height: options.customPageSize?.height || 300,
-                    },
-                  })
-                }
-                min={100}
-                max={5000}
-                mono
-              />
-            </div>
-            <div>
-              <label
-                className="block text-sm font-medium text-neutral-700 mb-2"
-                htmlFor="pdf-custom-height"
-              >
-                Height (mm)
-              </label>
-              <Input
-                id="pdf-custom-height"
-                type="number"
-                value={options.customPageSize?.height || 300}
-                onChange={(e) =>
-                  onChange({
-                    customPageSize: {
-                      width: options.customPageSize?.width || 500,
-                      height: Math.max(100, parseInt(e.target.value) || 300),
-                    },
-                  })
-                }
-                min={100}
-                max={5000}
-                mono
-              />
-            </div>
-          </div>
+          <CustomPageSizeInputs
+            customPageSize={options.customPageSize}
+            onChange={onChange}
+          />
         )}
 
         {/* Margins */}
         <div className="mt-6">
-          <span className="block text-sm font-medium text-neutral-700 mb-2">
-            Margins
-          </span>
-          <div className="grid grid-cols-2 gap-2">
-            {(Object.keys(MARGIN_LABELS) as PdfMarginPreset[])
-              .filter((key) => key !== "custom")
-              .map((preset) => (
-                <button
-                  key={preset}
-                  type="button"
-                  onClick={() => onChange({ marginPreset: preset })}
-                  className={`px-4 py-2 text-sm font-medium rounded border transition-colors duration-150 ${
-                    options.marginPreset === preset
-                      ? "border-brand-600 bg-brand-600 text-white"
-                      : "border-neutral-300 bg-white text-neutral-700 hover:border-neutral-400 hover:bg-neutral-50"
-                  }`}
-                >
-                  {MARGIN_LABELS[preset]}
-                </button>
-              ))}
-          </div>
+          <FieldLabel>Margins</FieldLabel>
+          <SegmentedControl
+            options={MARGIN_OPTIONS}
+            value={options.marginPreset}
+            onChange={(value) => onChange({ marginPreset: value })}
+            layout="grid"
+            ariaLabel="Margin preset"
+          />
           {options.marginPreset !== "none" && (
-            <p className="text-xs text-neutral-500 mt-2">
+            <p className="text-xs text-neutral-600 mt-2">
               {PDF_MARGIN_PRESETS[options.marginPreset].top}mm top/bottom,{" "}
               {PDF_MARGIN_PRESETS[options.marginPreset].left}mm left/right
             </p>
@@ -245,84 +400,30 @@ export function PdfExportOptions({
       <div className="divider-h" />
 
       {/* ============ HEADER / FOOTER ============ */}
-      <section>
-        <span className="block text-sm font-semibold text-neutral-900 mb-3">
-          Header / Footer
-        </span>
+      <section aria-labelledby={headerFooterId}>
+        <SectionHeader
+          id={headerFooterId}
+          title="Header / Footer"
+          variant="simple"
+        />
 
         <div className="grid grid-cols-2 gap-6">
-          {/* Header */}
-          <div>
-            <span className="block text-sm font-medium text-neutral-700 mb-3">
-              Header
-            </span>
-            <div className="bg-white border border-neutral-200 rounded p-3">
-              <div className="space-y-2.5">
-                {HEADER_FOOTER_OPTIONS.map((opt, idx, arr) => (
-                  <div key={opt.key}>
-                    <label className="flex items-center gap-3 cursor-pointer group min-h-[32px]">
-                      <Checkbox
-                        checked={options.header[opt.key]}
-                        onChange={(checked) =>
-                          onChange({
-                            header: { ...options.header, [opt.key]: checked },
-                          })
-                        }
-                      />
-                      <span className="text-sm text-neutral-900">
-                        {opt.label}
-                      </span>
-                    </label>
-                    {idx < arr.length - 1 && (
-                      <div className="divider-h-light mt-2.5" />
-                    )}
-                  </div>
-                ))}
-              </div>
-            </div>
-          </div>
-
-          {/* Footer */}
-          <div>
-            <span className="block text-sm font-medium text-neutral-700 mb-3">
-              Footer
-            </span>
-            <div className="bg-white border border-neutral-200 rounded p-3">
-              <div className="space-y-2.5">
-                {HEADER_FOOTER_OPTIONS.map((opt, idx, arr) => (
-                  <div key={opt.key}>
-                    <label className="flex items-center gap-3 cursor-pointer group min-h-[32px]">
-                      <Checkbox
-                        checked={options.footer[opt.key]}
-                        onChange={(checked) =>
-                          onChange({
-                            footer: { ...options.footer, [opt.key]: checked },
-                          })
-                        }
-                      />
-                      <span className="text-sm text-neutral-900">
-                        {opt.label}
-                      </span>
-                    </label>
-                    {idx < arr.length - 1 && (
-                      <div className="divider-h-light mt-2.5" />
-                    )}
-                  </div>
-                ))}
-              </div>
-            </div>
-          </div>
+          <HeaderFooterColumn
+            title="Header"
+            values={options.header}
+            onValuesChange={(header) => onChange({ header })}
+          />
+          <HeaderFooterColumn
+            title="Footer"
+            values={options.footer}
+            onValuesChange={(footer) => onChange({ footer })}
+          />
         </div>
 
-        {/* Inline Author input - shown when any "Author" checkbox is enabled */}
+        {/* Author input - shown when any "Author" checkbox is enabled */}
         {(options.header.showAuthor || options.footer.showAuthor) && (
           <div className="mt-4">
-            <label
-              htmlFor="pdf-author"
-              className="block text-sm font-medium text-neutral-700 mb-2"
-            >
-              Author
-            </label>
+            <FieldLabel htmlFor="pdf-author">Author</FieldLabel>
             <Input
               id="pdf-author"
               type="text"

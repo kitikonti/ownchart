@@ -4,40 +4,53 @@
  * Uses extracted common components for consistent styling.
  */
 
+import {
+  type MouseEvent as ReactMouseEvent,
+  useCallback,
+  useId,
+  useMemo,
+} from "react";
 import type {
   ExportOptions,
   ExportColumnKey,
   ExportFormat,
+  ExportBooleanKey,
 } from "../../utils/export/types";
 import type {
   UiDensity,
   TaskLabelPosition,
 } from "../../types/preferences.types";
+import { formatDateRange } from "../../utils/export/dateFormatting";
+import { Alert } from "../common/Alert";
+import { FieldLabel } from "../common/FieldLabel";
 import { LabeledCheckbox } from "../common/LabeledCheckbox";
 import { RadioOptionCard } from "../common/RadioOptionCard";
 import { CollapsibleSection } from "../common/CollapsibleSection";
 import { CheckboxGroup } from "../common/CheckboxGroup";
 import { Input } from "../common/Input";
+import { SectionHeader } from "../common/SectionHeader";
+import {
+  SegmentedControl,
+  type SegmentedControlOption,
+} from "../common/SegmentedControl";
+
+// =============================================================================
+// Constants
+// =============================================================================
 
 /** Density options for the export */
-const DENSITY_OPTIONS: {
-  key: UiDensity;
-  label: string;
-}[] = [
-  { key: "compact", label: "Compact" },
-  { key: "normal", label: "Normal" },
-  { key: "comfortable", label: "Comfortable" },
+const DENSITY_OPTIONS: SegmentedControlOption<UiDensity>[] = [
+  { value: "compact", label: "Compact" },
+  { value: "normal", label: "Normal" },
+  { value: "comfortable", label: "Comfortable" },
 ];
 
 /** Task label position options for the export */
-const LABEL_POSITION_OPTIONS: {
-  key: TaskLabelPosition;
-  label: string;
-}[] = [
-  { key: "before", label: "Before" },
-  { key: "inside", label: "Inside" },
-  { key: "after", label: "After" },
-  { key: "none", label: "None" },
+const LABEL_POSITION_OPTIONS: SegmentedControlOption<TaskLabelPosition>[] = [
+  { value: "before", label: "Before" },
+  { value: "inside", label: "Inside" },
+  { value: "after", label: "After" },
+  { value: "none", label: "None" },
 ];
 
 /** Column definitions for the export options UI */
@@ -50,8 +63,12 @@ const COLUMN_OPTIONS: { key: ExportColumnKey; label: string }[] = [
   { key: "progress", label: "Progress" },
 ];
 
-/** Timeline display options */
-const TIMELINE_OPTIONS: { key: keyof ExportOptions; label: string }[] = [
+/**
+ * Timeline display options (using ExportBooleanKey for type safety).
+ * ⚠️ If you add a new entry here, also add its flag to the `timelineItems`
+ * useMemo dependency array in SharedExportOptions.
+ */
+const TIMELINE_OPTIONS: { key: ExportBooleanKey; label: string }[] = [
   { key: "includeHeader", label: "Header row" },
   { key: "includeGridLines", label: "Grid lines" },
   { key: "includeWeekends", label: "Weekend shading" },
@@ -59,6 +76,104 @@ const TIMELINE_OPTIONS: { key: keyof ExportOptions; label: string }[] = [
   { key: "includeDependencies", label: "Dependencies" },
   { key: "includeHolidays", label: "Holidays" },
 ];
+
+// =============================================================================
+// Sub-Components
+// =============================================================================
+
+interface DateRangeSectionProps {
+  options: ExportOptions;
+  onChange: (options: Partial<ExportOptions>) => void;
+  projectDateRange?: { start: Date; end: Date };
+  visibleDateRange?: { start: Date; end: Date };
+}
+
+/** Renders the Date Range section: Entire project / Visible range / Custom. */
+function DateRangeSection({
+  options,
+  onChange,
+  projectDateRange,
+  visibleDateRange,
+}: DateRangeSectionProps): JSX.Element {
+  const dateRangeSectionId = useId();
+
+  // ISO date strings sort lexicographically, so string comparison is equivalent
+  // to chronological comparison — no Date conversion needed.
+  const isCustomRangeInvalid =
+    options.dateRangeMode === "custom" &&
+    !!options.customDateStart &&
+    !!options.customDateEnd &&
+    options.customDateEnd < options.customDateStart;
+
+  // Prevent the RadioOptionCard's label from consuming the click before the
+  // native date-picker can receive focus.
+  const handleDateInputClick = useCallback((e: ReactMouseEvent): void => {
+    e.stopPropagation();
+  }, []);
+
+  return (
+    <section aria-labelledby={dateRangeSectionId}>
+      <SectionHeader
+        id={dateRangeSectionId}
+        title="Date Range"
+        variant="simple"
+      />
+
+      <div className="space-y-2">
+        <RadioOptionCard
+          name="dateRangeMode"
+          selected={options.dateRangeMode === "all"}
+          onChange={() => onChange({ dateRangeMode: "all" })}
+          title="Entire project"
+          description={
+            projectDateRange ? formatDateRange(projectDateRange) : undefined
+          }
+        />
+
+        <RadioOptionCard
+          name="dateRangeMode"
+          selected={options.dateRangeMode === "visible"}
+          onChange={() => onChange({ dateRangeMode: "visible" })}
+          title="Visible range"
+          description={
+            visibleDateRange ? formatDateRange(visibleDateRange) : undefined
+          }
+        />
+
+        <RadioOptionCard
+          name="dateRangeMode"
+          selected={options.dateRangeMode === "custom"}
+          onChange={() => onChange({ dateRangeMode: "custom" })}
+          title="Custom range"
+        >
+          <div className="space-y-2">
+            <Input
+              type="date"
+              value={options.customDateStart || ""}
+              onChange={(e) => onChange({ customDateStart: e.target.value })}
+              onClick={handleDateInputClick}
+              aria-label="Custom start date"
+            />
+            <Input
+              type="date"
+              value={options.customDateEnd || ""}
+              onChange={(e) => onChange({ customDateEnd: e.target.value })}
+              onClick={handleDateInputClick}
+              aria-label="Custom end date"
+            />
+            {isCustomRangeInvalid && (
+              <Alert variant="error">End date must be after start date</Alert>
+            )}
+          </div>
+        </RadioOptionCard>
+      </div>
+    </section>
+  );
+}
+
+// =============================================================================
+// Component
+// =============================================================================
 
 export interface SharedExportOptionsProps {
   options: ExportOptions;
@@ -75,104 +190,83 @@ export function SharedExportOptions({
   projectDateRange,
   visibleDateRange,
 }: SharedExportOptionsProps): JSX.Element {
-  const formatDate = (date: Date | undefined): string => {
-    if (!date) return "";
-    return date.toISOString().split("T")[0];
-  };
-
   const showBackground = format === "png" || format === "svg";
 
-  // Build checkbox items for columns
-  const columnItems = COLUMN_OPTIONS.map((col) => ({
-    key: col.key,
-    label: col.label,
-    checked: options.selectedColumns.includes(col.key),
-  }));
+  // Build checkbox items for columns — memoised to avoid recomputing when
+  // unrelated options (zoom, date range, etc.) change.
+  const columnItems = useMemo(
+    () =>
+      COLUMN_OPTIONS.map((col) => ({
+        key: col.key,
+        label: col.label,
+        checked: options.selectedColumns.includes(col.key),
+      })),
+    [options.selectedColumns]
+  );
 
-  // Build checkbox items for timeline options
-  const timelineItems = TIMELINE_OPTIONS.map((item) => ({
-    key: item.key,
-    label: item.label,
-    checked: options[item.key] as boolean,
-  }));
+  // Build checkbox items for timeline options — memoised independently of
+  // column and date-range state.
+  const timelineItems = useMemo(
+    () =>
+      TIMELINE_OPTIONS.map((item) => ({
+        key: item.key,
+        label: item.label,
+        checked: options[item.key],
+      })),
+    // Depend only on the 6 boolean flags this memo actually reads
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [
+      options.includeHeader,
+      options.includeGridLines,
+      options.includeWeekends,
+      options.includeTodayMarker,
+      options.includeDependencies,
+      options.includeHolidays,
+    ]
+  );
 
-  const handleColumnChange = (key: string, checked: boolean): void => {
-    const columnKey = key as ExportColumnKey;
-    const newColumns = checked
-      ? [...options.selectedColumns, columnKey]
-      : options.selectedColumns.filter((k) => k !== columnKey);
-    const orderedColumns = COLUMN_OPTIONS.filter((c) =>
-      newColumns.includes(c.key)
-    ).map((c) => c.key);
-    onChange({ selectedColumns: orderedColumns });
-  };
+  const handleColumnChange = useCallback(
+    (key: string, checked: boolean): void => {
+      const col = COLUMN_OPTIONS.find((c) => c.key === key);
+      if (!col) return;
+      const selected = new Set(options.selectedColumns);
+      if (checked) selected.add(col.key);
+      else selected.delete(col.key);
+      // Re-derive in COLUMN_OPTIONS order to keep the output stable regardless
+      // of the order in which checkboxes are toggled.
+      const orderedColumns = COLUMN_OPTIONS.filter((c) =>
+        selected.has(c.key)
+      ).map((c) => c.key);
+      onChange({ selectedColumns: orderedColumns });
+    },
+    [options.selectedColumns, onChange]
+  );
 
-  const handleTimelineChange = (key: string, checked: boolean): void => {
-    onChange({ [key]: checked });
-  };
+  const handleTimelineChange = useCallback(
+    (key: string, checked: boolean): void => {
+      const opt = TIMELINE_OPTIONS.find((item) => item.key === key);
+      if (!opt) return;
+      // Build update via typed key so TypeScript verifies ExportBooleanKey maps to boolean
+      const update: Partial<ExportOptions> = {};
+      update[opt.key] = checked;
+      onChange(update);
+    },
+    [onChange]
+  );
 
   return (
     <div className="space-y-6">
       {/* ============ DATE RANGE ============ */}
-      <section>
-        <span className="block text-sm font-semibold text-neutral-900 mb-3">
-          Date Range
-        </span>
-
-        <div className="space-y-2">
-          <RadioOptionCard
-            name="dateRangeMode"
-            selected={options.dateRangeMode === "all"}
-            onChange={() => onChange({ dateRangeMode: "all" })}
-            title="Entire project"
-            description={
-              projectDateRange
-                ? `${formatDate(projectDateRange.start)} – ${formatDate(projectDateRange.end)}`
-                : undefined
-            }
-          />
-
-          <RadioOptionCard
-            name="dateRangeMode"
-            selected={options.dateRangeMode === "visible"}
-            onChange={() => onChange({ dateRangeMode: "visible" })}
-            title="Visible range"
-            description={
-              visibleDateRange
-                ? `${formatDate(visibleDateRange.start)} – ${formatDate(visibleDateRange.end)}`
-                : undefined
-            }
-          />
-
-          <RadioOptionCard
-            name="dateRangeMode"
-            selected={options.dateRangeMode === "custom"}
-            onChange={() => onChange({ dateRangeMode: "custom" })}
-            title="Custom range"
-          >
-            <div className="space-y-2">
-              <Input
-                type="date"
-                value={options.customDateStart || ""}
-                onChange={(e) => onChange({ customDateStart: e.target.value })}
-                onClick={(e) => e.stopPropagation()}
-                aria-label="Custom start date"
-              />
-              <Input
-                type="date"
-                value={options.customDateEnd || ""}
-                onChange={(e) => onChange({ customDateEnd: e.target.value })}
-                onClick={(e) => e.stopPropagation()}
-                aria-label="Custom end date"
-              />
-            </div>
-          </RadioOptionCard>
-        </div>
-      </section>
+      <DateRangeSection
+        options={options}
+        onChange={onChange}
+        projectDateRange={projectDateRange}
+        visibleDateRange={visibleDateRange}
+      />
 
       {/* ============ BACKGROUND (PNG/SVG only) ============ */}
       {showBackground && (
-        <section>
+        <div>
           <LabeledCheckbox
             id="export-transparent-bg"
             checked={options.background === "transparent"}
@@ -182,44 +276,34 @@ export function SharedExportOptions({
             title="Transparent background"
             description="Remove white background for overlay use"
           />
-        </section>
+        </div>
       )}
 
       <div className="divider-h" />
 
       {/* ============ LAYOUT OPTIONS (Collapsible) ============ */}
       <CollapsibleSection title="Layout Options">
-        {/* Row Density - Segmented Control */}
+        {/* Row Density */}
         <div>
-          <span className="block text-sm font-medium text-neutral-700 mb-2">
-            Row Density
-          </span>
-          <div className="inline-flex rounded border border-neutral-300 overflow-hidden w-full">
-            {DENSITY_OPTIONS.map((opt, index) => (
-              <button
-                key={opt.key}
-                onClick={() => onChange({ density: opt.key })}
-                className={`flex-1 px-4 py-2 text-sm font-medium transition-colors duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-100 ${
-                  index > 0 ? "border-l border-neutral-300" : ""
-                } ${
-                  options.density === opt.key
-                    ? "bg-brand-600 text-white"
-                    : "bg-white text-neutral-700 hover:bg-neutral-50"
-                }`}
-              >
-                {opt.label}
-              </button>
-            ))}
-          </div>
+          <FieldLabel>Row Density</FieldLabel>
+          <SegmentedControl
+            options={DENSITY_OPTIONS}
+            value={options.density}
+            onChange={(value) => onChange({ density: value })}
+            ariaLabel="Row density"
+            fullWidth
+          />
         </div>
 
-        {/* Columns - Checkbox Group */}
+        {/* Columns */}
         <div>
-          <span className="block text-sm font-medium text-neutral-700 mb-3">
-            Columns to Include
-          </span>
-          <CheckboxGroup items={columnItems} onChange={handleColumnChange} />
-          <p className="text-xs text-neutral-500 mt-2">
+          <FieldLabel>Columns to Include</FieldLabel>
+          <CheckboxGroup
+            items={columnItems}
+            onChange={handleColumnChange}
+            ariaLabel="Columns to Include"
+          />
+          <p className="text-xs text-neutral-600 mt-2">
             Uncheck all for timeline-only export
           </p>
         </div>
@@ -229,37 +313,26 @@ export function SharedExportOptions({
 
       {/* ============ DISPLAY OPTIONS (Collapsible) ============ */}
       <CollapsibleSection title="Display Options">
-        {/* Timeline Elements - Checkbox Group */}
+        {/* Timeline Elements */}
         <div>
-          <span className="block text-sm font-medium text-neutral-700 mb-3">
-            Show in Timeline
-          </span>
+          <FieldLabel>Show in Timeline</FieldLabel>
           <CheckboxGroup
             items={timelineItems}
             onChange={handleTimelineChange}
+            ariaLabel="Show in Timeline"
           />
         </div>
 
-        {/* Label Position - 2x2 Grid Buttons */}
+        {/* Label Position */}
         <div>
-          <span className="block text-sm font-medium text-neutral-700 mb-2">
-            Label Position
-          </span>
-          <div className="grid grid-cols-2 gap-2">
-            {LABEL_POSITION_OPTIONS.map((opt) => (
-              <button
-                key={opt.key}
-                onClick={() => onChange({ taskLabelPosition: opt.key })}
-                className={`px-4 py-2 text-sm font-medium rounded border transition-colors duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-100 focus-visible:ring-offset-2 ${
-                  options.taskLabelPosition === opt.key
-                    ? "border-brand-600 bg-brand-600 text-white"
-                    : "border-neutral-300 bg-white text-neutral-700 hover:border-neutral-400 hover:bg-neutral-50"
-                }`}
-              >
-                {opt.label}
-              </button>
-            ))}
-          </div>
+          <FieldLabel>Label Position</FieldLabel>
+          <SegmentedControl
+            options={LABEL_POSITION_OPTIONS}
+            value={options.taskLabelPosition}
+            onChange={(value) => onChange({ taskLabelPosition: value })}
+            layout="grid"
+            ariaLabel="Task label position"
+          />
           {options.taskLabelPosition === "inside" && (
             <div className="mt-3 text-xs text-neutral-600 bg-white rounded px-3 py-2.5 border border-neutral-200">
               Note: Milestones and summary tasks default to &quot;After&quot;
