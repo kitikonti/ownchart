@@ -7,7 +7,6 @@ import {
   hexToRgb,
   getRelativeLuminance,
   getContrastRatio,
-  isLightColor,
   getContrastTextColor,
   hexToHSL,
   hslToHex,
@@ -97,31 +96,6 @@ describe("colorUtils", () => {
       expect(getContrastRatio("#ffffff", "#000000")).toBeCloseTo(21, 0);
       // Pure red on white: ~4:1
       expect(getContrastRatio("#ff0000", "#ffffff")).toBeCloseTo(4, 0);
-    });
-  });
-
-  describe("isLightColor", () => {
-    it("returns false for black", () => {
-      expect(isLightColor("#000000")).toBe(false);
-    });
-
-    it("returns true for white", () => {
-      expect(isLightColor("#ffffff")).toBe(true);
-    });
-
-    it("returns false for dark colors that need white text", () => {
-      expect(isLightColor("#1a1a1a")).toBe(false); // Very dark gray
-      expect(isLightColor("#0000ff")).toBe(false); // Pure blue
-      expect(isLightColor("#800000")).toBe(false); // Dark red/maroon
-      expect(isLightColor("#003366")).toBe(false); // Dark blue
-      expect(isLightColor("#9b59b6")).toBe(false); // Purple
-    });
-
-    it("returns true for light colors that need dark text", () => {
-      expect(isLightColor("#f0f0f0")).toBe(true); // Light gray
-      expect(isLightColor("#ffff00")).toBe(true); // Yellow
-      expect(isLightColor("#00ff00")).toBe(true); // Pure green
-      expect(isLightColor("#ffcccc")).toBe(true); // Light pink
     });
   });
 

@@ -3,21 +3,26 @@
  * Uses WCAG 2.1 relative luminance algorithm for accessibility-compliant contrast
  */
 
-/**
- * Default fallback color (Outlook Blue - app brand color)
- */
-const DEFAULT_COLOR = "#0F6CBD";
+import { COLORS } from "../styles/design-tokens";
 
 /**
- * Text colors for contrast
- * Using darker text (#1e293b = slate-800) for better readability
+ * Default fallback color (brand primary — matches COLORS.brand[600] in design-tokens.ts)
+ */
+const DEFAULT_COLOR = COLORS.brand[600];
+
+/**
+ * Text colors for contrast.
+ * DARK_TEXT matches slate[800] from the design system — update if the slate scale changes.
  */
 const LIGHT_TEXT = "#ffffff";
-const DARK_TEXT = "#1e293b"; // slate-800 - darker than previous #495057
+const DARK_TEXT = "#1e293b"; // slate[800] from design system
 
 /**
  * Converts a hex color string to RGB values
  * Handles both 3-digit (#RGB) and 6-digit (#RRGGBB) formats, with or without #
+ *
+ * NOTE: Only null/undefined/empty strings are guarded — invalid hex strings (e.g. "#ZZZZZZ")
+ * produce NaN channels that propagate silently. Callers should pass valid hex strings.
  */
 export function hexToRgb(hex: string): { r: number; g: number; b: number } {
   // Handle undefined/null/empty by using default
@@ -86,24 +91,10 @@ export function getContrastRatio(hex1: string, hex2: string): number {
 }
 
 /**
- * Determines if a color is perceptually "light" enough to need dark text
- * Uses WCAG luminance with a threshold optimized for task bar readability
- *
- * A luminance > 0.179 means white text won't have enough contrast (< 4.5:1)
- * so we need dark text instead
- */
-export function isLightColor(hex: string): boolean {
-  const luminance = getRelativeLuminance(hex);
-  // Threshold: if luminance > 0.179, white text contrast < 4.5:1
-  // Using slightly lower threshold (0.18) to be more conservative
-  return luminance > 0.18;
-}
-
-/**
  * Minimum contrast ratio for white text to be acceptable.
- * We use a lower threshold (2.0) to prefer white text on most colored backgrounds,
- * since white text is more readable on saturated colors even at lower contrast ratios.
- * Dark text is only used on very light backgrounds (yellow, white, light gray).
+ * Intentionally below WCAG AA (4.5:1) and WCAG AA Large Text (3:1) — this is a
+ * deliberate UX trade-off: white text is more readable on saturated colors even at
+ * lower mathematical contrast ratios. Dark text is only used on near-white backgrounds.
  */
 const WHITE_TEXT_MIN_CONTRAST = 2.0;
 
@@ -128,21 +119,15 @@ export function getContrastTextColor(
   // Calculate contrast ratio for white text
   const lightContrast = getContrastRatio(backgroundColor, lightText);
 
-  // Prefer white text if it has acceptable contrast (≥ 3:1)
-  // This works better on saturated colors where white is more readable
-  // than dark text even if dark has slightly higher mathematical contrast
+  // Prefer white text if it has acceptable contrast (≥ 2:1, per WHITE_TEXT_MIN_CONTRAST).
+  // Intentional UX trade-off: white reads better on saturated colors even when dark text
+  // has slightly higher mathematical contrast. Dark text is only used on near-white
+  // backgrounds (yellow, white, light gray).
   if (lightContrast >= WHITE_TEXT_MIN_CONTRAST) {
     return lightText;
   }
 
-  // Otherwise use dark text (for very light backgrounds like yellow, white, etc.)
   return darkText;
-}
-
-// Legacy export for backwards compatibility (HSP-based)
-export function getPerceivedBrightness(hex: string): number {
-  // Convert WCAG luminance (0-1) to brightness scale (0-255) for compatibility
-  return getRelativeLuminance(hex) * 255;
 }
 
 // ═══════════════════════════════════════════════════════════════════════════
@@ -274,21 +259,32 @@ export function darkenColor(hex: string, amount: number): string {
   return hslToHex(hsl);
 }
 
+/** Lightness steps (dark → light) for the 10-swatch monochrome palette */
+const MONOCHROME_LIGHTNESS_STEPS = [15, 22, 30, 37, 44, 52, 59, 66, 73, 80];
+
 /**
  * Generates a monochrome palette from a base color (10 shades: dark → light)
  * @param baseColor - Hex color string
  */
 export function generateMonochromePalette(baseColor: string): string[] {
   const hsl = hexToHSL(baseColor);
-  const lightnessSteps = [15, 22, 30, 37, 44, 52, 59, 66, 73, 80]; // dark → light
-
-  return lightnessSteps.map((l) => hslToHex({ h: hsl.h, s: hsl.s, l }));
+  return MONOCHROME_LIGHTNESS_STEPS.map((l) =>
+    hslToHex({ h: hsl.h, s: hsl.s, l })
+  );
 }
+
+/** Lightness floor/ceiling (%) for expanded palette shades */
+const PALETTE_LIGHTNESS_MIN = 25;
+const PALETTE_LIGHTNESS_MAX = 75;
+/** Saturation modulation depth for palette expansion (0 = none, 1 = full parabola) */
+const PALETTE_SATURATION_VARIATION = 0.3;
+/** Max hue rotation for the Bezold-Brücke perceptual shift (degrees) */
+const BEZOLD_BRUCKE_SHIFT_DEGREES = 6;
 
 /**
  * Expands a palette to match a target count using lightness variations
  * Based on Matt Ström's color formulas and Lyft ColorBox algorithm
- * @see https://mattstromawn.com/writing/generating-color-palettes/
+ * @see https://matthewstrom.com/writing/generating-color-palettes/
  * @see https://github.com/lyft/coloralgorithm
  */
 export function expandPalette(
@@ -311,15 +307,17 @@ export function expandPalette(
       // Easing for more natural transitions (easeOutQuad)
       const eased = 1 - Math.pow(1 - t, 2);
 
-      // Lightness: dark → light (25% → 75%)
-      const lightness = 25 + eased * 50;
+      // Lightness: dark → light
+      const lightness =
+        PALETTE_LIGHTNESS_MIN +
+        eased * (PALETTE_LIGHTNESS_MAX - PALETTE_LIGHTNESS_MIN);
 
       // Saturation: parabola (maximum in middle, formula: -4n² + 4n)
-      const satMod = 1 - Math.pow(2 * t - 1, 2) * 0.3;
+      const satMod = 1 - Math.pow(2 * t - 1, 2) * PALETTE_SATURATION_VARIATION;
       const saturation = Math.min(100, hsl.s * satMod);
 
-      // Hue-Shift (Bezold-Brücke effect): ±3° based on lightness
-      const hueShift = (0.5 - t) * 6;
+      // Hue-Shift (Bezold-Brücke effect)
+      const hueShift = (0.5 - t) * BEZOLD_BRUCKE_SHIFT_DEGREES;
       const hue = (hsl.h + hueShift + 360) % 360;
 
       expanded.push(hslToHex({ h: hue, s: saturation, l: lightness }));
