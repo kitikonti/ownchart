@@ -555,12 +555,13 @@ export const PALETTE_CATEGORIES = Object.keys(
 
 /**
  * Palettes pre-grouped by category (computed once at module load).
- * Safe assertion: PALETTE_CATEGORIES covers all PaletteCategory values,
- * so every key is guaranteed to be present.
+ * Explicit type annotation ensures TypeScript enforces all PaletteCategory keys —
+ * adding a new category to the union type causes a compile error here.
  */
-export const PALETTES_BY_CATEGORY = Object.fromEntries(
-  PALETTE_CATEGORIES.map((cat) => [
-    cat,
-    COLOR_PALETTES.filter((p) => p.category === cat),
-  ])
-) as Record<PaletteCategory, ColorPalette[]>;
+export const PALETTES_BY_CATEGORY: Record<PaletteCategory, ColorPalette[]> = {
+  classic: COLOR_PALETTES.filter((p) => p.category === "classic"),
+  professional: COLOR_PALETTES.filter((p) => p.category === "professional"),
+  design: COLOR_PALETTES.filter((p) => p.category === "design"),
+  vibrant: COLOR_PALETTES.filter((p) => p.category === "vibrant"),
+  soft: COLOR_PALETTES.filter((p) => p.category === "soft"),
+};
