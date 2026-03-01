@@ -354,7 +354,8 @@ export function getTaskBarGeometry({
   const x = dateToPixel(task.startDate, scale);
 
   // Milestones only need startDate (they represent a point in time, not a duration)
-  const endDate = task.endDate ?? task.startDate;
+  // Use || rather than ?? so that empty-string endDates also fall back to startDate.
+  const endDate = task.endDate || task.startDate;
   const duration = calculateDuration(task.startDate, endDate);
   const width = duration * scale.pixelsPerDay;
 
