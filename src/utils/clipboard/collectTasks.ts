@@ -11,7 +11,7 @@ import type { TaskId } from "../../types/branded.types";
  * All descendants are included regardless of their own open/closed state,
  * because a collapsed ancestor hides the entire subtree.
  */
-function collectChildrenOfCollapsed(
+function collectHiddenDescendants(
   taskId: TaskId,
   childrenMap: Map<TaskId, Task[]>,
   collected: Set<TaskId>,
@@ -24,7 +24,7 @@ function collectChildrenOfCollapsed(
     collected.add(child.id);
     result.push(child);
 
-    collectChildrenOfCollapsed(child.id, childrenMap, collected, result);
+    collectHiddenDescendants(child.id, childrenMap, collected, result);
   });
 }
 
@@ -72,7 +72,7 @@ export function collectTasksWithChildren(
 
     // If task is collapsed, also collect its hidden children
     if (task.open === false) {
-      collectChildrenOfCollapsed(id, childrenMap, collected, result);
+      collectHiddenDescendants(id, childrenMap, collected, result);
     }
   });
 

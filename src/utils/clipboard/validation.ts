@@ -24,7 +24,7 @@ export function canPasteCellValue(
   sourceField: EditableField,
   targetField: EditableField,
   targetTask: Task
-): { valid: boolean; error?: string } {
+): { valid: true } | { valid: false; error: string } {
   // Rule 1: Field types must match
   if (sourceField !== targetField) {
     return {
@@ -74,7 +74,7 @@ export function canPasteCellValue(
 export function canCutCellValue(
   field: EditableField,
   sourceTask: Task
-): { valid: boolean; error?: string } {
+): { valid: true } | { valid: false; error: string } {
   // Cutting type from a summary task clears it to "task", leaving its children
   // without a summary parent — hierarchy invariant violated.
   if (field === "type" && sourceTask.type === "summary") {
@@ -111,5 +111,9 @@ export function getClearValueForField(
       return DEFAULT_TASK_COLOR;
     case "type":
       return "task";
+    default: {
+      const _exhaustive: never = field;
+      return _exhaustive;
+    }
   }
 }

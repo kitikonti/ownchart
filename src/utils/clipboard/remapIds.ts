@@ -28,16 +28,16 @@ export function remapTaskIds(tasks: Task[]): {
   });
 
   // Second pass: Apply new IDs and remap parent references
-  const remappedTasks: Task[] = tasks.map((task) => ({
-    ...task,
-    id: idMapping[task.id],
+  const remappedTasks: Task[] = tasks.map((task) => {
     // Remap parent if it exists in the mapping (internal parent)
     // Otherwise set to undefined (external parent removed)
-    parent:
-      task.parent && idMapping[task.parent]
-        ? idMapping[task.parent]
-        : undefined,
-  }));
+    const mappedParent = task.parent ? idMapping[task.parent] : undefined;
+    return {
+      ...task,
+      id: idMapping[task.id],
+      parent: mappedParent,
+    };
+  });
 
   return { remappedTasks, idMapping };
 }

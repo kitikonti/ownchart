@@ -12,7 +12,7 @@ const OWNCHART_ROW_PREFIX = "OWNCHART_ROWS:";
 const OWNCHART_CELL_PREFIX = "OWNCHART_CELL:";
 
 // Derived from the shared EDITABLE_FIELDS constant — single source of truth.
-const VALID_EDITABLE_FIELDS: Set<string> = new Set(EDITABLE_FIELDS);
+const VALID_EDITABLE_FIELDS: Set<EditableField> = new Set(EDITABLE_FIELDS);
 
 /**
  * Validate that a parsed object has the minimum required Task shape.
@@ -168,7 +168,7 @@ export async function readCellFromSystemClipboard(): Promise<SystemCellClipboard
     const data = parsed as SystemCellClipboardData;
 
     // Validate field is a known EditableField value
-    if (!VALID_EDITABLE_FIELDS.has(data.field) || data.value === undefined) {
+    if (!VALID_EDITABLE_FIELDS.has(data.field) || data.value == null) {
       return null;
     }
 
