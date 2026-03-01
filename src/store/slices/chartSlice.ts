@@ -250,12 +250,11 @@ const DEFAULT_ZOOM = 1.0;
  */
 function deriveScale(
   dateRange: { min: string; max: string } | null,
-  containerWidth: number,
   zoom: number
 ): TimelineScale | null {
   if (!dateRange) return null;
 
-  return getTimelineScale(dateRange.min, dateRange.max, containerWidth, zoom);
+  return getTimelineScale(dateRange.min, dateRange.max, zoom);
 }
 
 export const useChartStore = create<ChartState & ChartActions>()(
@@ -328,11 +327,7 @@ export const useChartStore = create<ChartState & ChartActions>()(
         }
 
         // Always re-derive scale (task count may have changed)
-        state.scale = deriveScale(
-          state.dateRange,
-          state.containerWidth,
-          state.zoom
-        );
+        state.scale = deriveScale(state.dateRange, state.zoom);
       });
     },
 
@@ -342,7 +337,7 @@ export const useChartStore = create<ChartState & ChartActions>()(
         state.containerWidth = width;
         // Recalculate scale if we have a dateRange
         if (state.dateRange) {
-          state.scale = deriveScale(state.dateRange, width, state.zoom);
+          state.scale = deriveScale(state.dateRange, state.zoom);
         }
       });
     },
@@ -362,11 +357,7 @@ export const useChartStore = create<ChartState & ChartActions>()(
         }
 
         // Recalculate scale with new date range
-        state.scale = deriveScale(
-          state.dateRange,
-          state.containerWidth,
-          state.zoom
-        );
+        state.scale = deriveScale(state.dateRange, state.zoom);
       });
     },
 
@@ -380,11 +371,7 @@ export const useChartStore = create<ChartState & ChartActions>()(
 
       if (anchor && state.scale && state.dateRange) {
         // Calculate new scale with the new zoom
-        const newScale = deriveScale(
-          state.dateRange,
-          state.containerWidth,
-          constrainedZoom
-        );
+        const newScale = deriveScale(state.dateRange, constrainedZoom);
 
         if (newScale) {
           // Calculate where the anchor date will be in the new scale
@@ -403,11 +390,7 @@ export const useChartStore = create<ChartState & ChartActions>()(
         state.zoom = constrainedZoom;
 
         if (state.dateRange) {
-          state.scale = deriveScale(
-            state.dateRange,
-            state.containerWidth,
-            constrainedZoom
-          );
+          state.scale = deriveScale(state.dateRange, constrainedZoom);
         }
       });
 
@@ -530,7 +513,7 @@ export const useChartStore = create<ChartState & ChartActions>()(
         state.dateRange = newDateRange;
         state.zoom = finalZoom;
         state.panOffset = { x: 0, y: 0 };
-        state.scale = deriveScale(newDateRange, containerWidth, finalZoom);
+        state.scale = deriveScale(newDateRange, finalZoom);
         state.lastFitToViewTime = Date.now(); // Mark that fitToView was called
       });
     },
@@ -564,7 +547,7 @@ export const useChartStore = create<ChartState & ChartActions>()(
         state.dateRange = newDateRange;
         state.zoom = finalZoom;
         state.panOffset = { x: 0, y: 0 };
-        state.scale = deriveScale(newDateRange, containerWidth, finalZoom);
+        state.scale = deriveScale(newDateRange, finalZoom);
         state.lastFitToViewTime = Date.now();
       });
     },

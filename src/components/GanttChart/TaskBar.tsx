@@ -322,7 +322,14 @@ export const TaskBar = React.memo(function TaskBar({
 
   // All hooks must be called before any conditional returns
   const geometry = useMemo(
-    () => getTaskBarGeometry(task, scale, rowIndex, densityGeometry, 0), // headerHeight = 0 (header in separate SVG)
+    () =>
+      getTaskBarGeometry({
+        task,
+        scale,
+        rowIndex,
+        densityConfig: densityGeometry,
+        headerHeight: 0,
+      }), // headerHeight = 0 (header in separate SVG)
     [task, scale, rowIndex, densityGeometry]
   );
 

@@ -74,13 +74,13 @@ export function DependencyArrows({
         return;
       }
 
-      const geometry = getTaskBarGeometry(
+      const geometry = getTaskBarGeometry({
         task,
         scale,
-        index,
-        densityGeometry,
-        0 // headerHeight = 0 (header in separate SVG)
-      );
+        rowIndex: index,
+        densityConfig: densityGeometry,
+        headerHeight: 0, // header in separate SVG
+      });
 
       positions.set(task.id, {
         x: geometry.x,

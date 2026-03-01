@@ -370,12 +370,7 @@ export function ExportRenderer({
 
   // Calculate scale with effective zoom
   const scale = useMemo(() => {
-    return getTimelineScale(
-      dateRange.min,
-      dateRange.max,
-      1000, // containerWidth not used with fixed zoom
-      effectiveZoom
-    );
+    return getTimelineScale(dateRange.min, dateRange.max, effectiveZoom);
   }, [dateRange, effectiveZoom]);
 
   // Calculate dimensions - for fitToWidth, total width IS the target
@@ -612,12 +607,7 @@ export function calculateExportDimensions(
     timelineWidth = Math.max(100, totalWidth - taskTableWidth);
   } else {
     // Calculate scale with effective zoom
-    const scale = getTimelineScale(
-      dateRange.min,
-      dateRange.max,
-      1000,
-      effectiveZoom
-    );
+    const scale = getTimelineScale(dateRange.min, dateRange.max, effectiveZoom);
     timelineWidth = scale.totalWidth;
     totalWidth = taskTableWidth + timelineWidth;
   }

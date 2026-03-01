@@ -220,7 +220,13 @@ export function ChartCanvas({
       if (!task.startDate || (!task.endDate && task.type !== "milestone")) {
         return;
       }
-      const geo = getTaskBarGeometry(task, scale, index, densityGeometry, 0);
+      const geo = getTaskBarGeometry({
+        task,
+        scale,
+        rowIndex: index,
+        densityConfig: densityGeometry,
+        headerHeight: 0,
+      });
       const geometry = {
         id: task.id,
         x: geo.x,
