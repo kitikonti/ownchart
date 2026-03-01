@@ -8,6 +8,7 @@ import { useState, useEffect, useRef, useCallback } from "react";
 import { SplitPaneDivider } from "./SplitPaneDivider";
 
 const COLLAPSE_THRESHOLD = 80; // px — snap to collapsed below this width
+const PANEL_TRANSITION = "width 150ms ease-out";
 
 export interface SplitPaneProps {
   leftContent: React.ReactNode;
@@ -149,10 +150,7 @@ export function SplitPane({
   const handleExpandFromCollapsed = useCallback((): void => {
     onCollapsedChange?.(false);
     // Restore previous width or use minimum
-    const restoreWidth = Math.max(
-      minLeftWidth,
-      preCollapseWidthRef.current ?? minLeftWidth
-    );
+    const restoreWidth = Math.max(minLeftWidth, preCollapseWidthRef.current);
     onLeftWidthChange(restoreWidth);
   }, [onCollapsedChange, minLeftWidth, onLeftWidthChange]);
 
@@ -166,7 +164,7 @@ export function SplitPane({
         ref={leftPanelRef}
         style={{
           width: effectiveWidth,
-          transition: isDragging ? "none" : "width 150ms ease-out",
+          transition: isDragging ? "none" : PANEL_TRANSITION,
         }}
         className="flex-shrink-0 overflow-clip"
       >

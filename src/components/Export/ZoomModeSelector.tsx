@@ -9,6 +9,8 @@ import type { ExportZoomMode, ExportFormat } from "../../utils/export/types";
 import { FitToWidthSelector } from "./FitToWidthSelector";
 import { CustomZoomControl } from "./CustomZoomControl";
 
+const DEFAULT_FIT_TO_WIDTH_PX = 1920;
+
 export interface ZoomModeSelectorProps {
   /** Current zoom mode */
   zoomMode: ExportZoomMode;
@@ -35,17 +37,17 @@ export function ZoomModeSelector({
   onTimelineZoomChange,
   currentAppZoom,
   format,
-  fitToWidth = 1920,
+  fitToWidth = DEFAULT_FIT_TO_WIDTH_PX,
   onFitToWidthChange,
 }: ZoomModeSelectorProps): JSX.Element {
   const isPngOrSvg = format === "png" || format === "svg";
   const radioName = `${format}ZoomMode`;
 
   return (
-    <section>
-      <span className="block text-sm font-semibold text-neutral-900 mb-3">
+    <fieldset className="border-0 p-0 m-0">
+      <legend className="block text-sm font-semibold text-neutral-900 mb-3">
         Timeline Scale
-      </span>
+      </legend>
 
       <div className="space-y-2">
         {/* Use Current View */}
@@ -91,6 +93,6 @@ export function ZoomModeSelector({
           />
         </RadioOptionCard>
       </div>
-    </section>
+    </fieldset>
   );
 }

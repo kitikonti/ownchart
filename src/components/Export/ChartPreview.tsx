@@ -12,9 +12,128 @@ import {
   Image,
 } from "@phosphor-icons/react";
 import type { ReadabilityStatus } from "../../utils/export/types";
+import { COLORS } from "../../styles/design-tokens";
 
-// Re-export for backwards compatibility
-export type { ReadabilityStatus };
+/** Checkerboard tile color for transparent background visualization */
+const CHECKERBOARD_TILE_COLOR = COLORS.neutral[100];
+
+/** Conservative PNG compression ratio (typical range: 25–50% of raw RGBA) */
+const PNG_COMPRESSION_RATIO = 0.35;
+
+const BYTES_PER_KB = 1024;
+const BYTES_PER_MB = 1024 * 1024;
+
+/**
+ * Estimate file size based on dimensions.
+ * PNG: roughly 4 bytes per pixel with compression (~25% of raw)
+ */
+function estimateFileSize(width: number, height: number): string {
+  if (width === 0 || height === 0) return "—";
+  const rawBytes = width * height * 4;
+  const estimatedBytes = rawBytes * PNG_COMPRESSION_RATIO;
+
+  if (estimatedBytes < BYTES_PER_KB) {
+    return `~${Math.round(estimatedBytes)} B`;
+  } else if (estimatedBytes < BYTES_PER_MB) {
+    return `~${(estimatedBytes / BYTES_PER_KB).toFixed(1)} KB`;
+  } else {
+    return `~${(estimatedBytes / BYTES_PER_MB).toFixed(1)} MB`;
+  }
+}
+
+interface PreviewFrameProps {
+  dimensions: { width: number; height: number };
+  isRendering: boolean;
+  error: string | null;
+  isTransparent: boolean;
+  previewDataUrl: string | null;
+  formatType: "png" | "svg";
+}
+
+/** Inner preview frame showing chart states: loading, error, empty, or image. */
+function PreviewFrame({
+  dimensions,
+  isRendering,
+  error,
+  isTransparent,
+  previewDataUrl,
+  formatType,
+}: PreviewFrameProps): JSX.Element {
+  return (
+    <div
+      className="bg-white border border-neutral-200 shadow-sm flex items-center justify-center relative overflow-hidden"
+      style={{
+        aspectRatio:
+          dimensions.width > 0 && dimensions.height > 0
+            ? `${dimensions.width} / ${dimensions.height}`
+            : "16 / 9",
+        maxWidth: "100%",
+        maxHeight: "100%",
+        // For wide exports, constrain width; for tall exports, constrain height
+        width: dimensions.width >= dimensions.height ? "100%" : "auto",
+        height: dimensions.width < dimensions.height ? "100%" : "auto",
+      }}
+    >
+      {/* Checkerboard pattern for transparent background */}
+      {isTransparent && (
+        <div
+          className="absolute inset-0"
+          style={{
+            backgroundImage: `linear-gradient(45deg, ${CHECKERBOARD_TILE_COLOR} 25%, transparent 25%), linear-gradient(-45deg, ${CHECKERBOARD_TILE_COLOR} 25%, transparent 25%), linear-gradient(45deg, transparent 75%, ${CHECKERBOARD_TILE_COLOR} 75%), linear-gradient(-45deg, transparent 75%, ${CHECKERBOARD_TILE_COLOR} 75%)`,
+            backgroundSize: "16px 16px",
+            backgroundPosition: "0 0, 0 8px, 8px -8px, -8px 0px",
+          }}
+        />
+      )}
+
+      {/* Loading State */}
+      {isRendering && (
+        <div className="absolute inset-0 bg-white/80 flex flex-col items-center justify-center z-10">
+          <Spinner
+            size={32}
+            className="animate-spin text-brand-600"
+            weight="regular"
+          />
+          <p className="text-sm text-neutral-600 mt-3">Rendering preview...</p>
+        </div>
+      )}
+
+      {/* Error State */}
+      {error && !isRendering && (
+        <div className="absolute inset-0 bg-white flex flex-col items-center justify-center z-10 p-4">
+          <WarningCircle size={32} className="text-red-500" weight="fill" />
+          <p className="text-sm text-red-700 mt-3 text-center">{error}</p>
+        </div>
+      )}
+
+      {/* Preview Image */}
+      {!error && previewDataUrl && (
+        <img
+          src={previewDataUrl}
+          alt="Export preview"
+          className="relative z-0 max-w-full max-h-full w-auto h-auto object-contain"
+        />
+      )}
+
+      {/* Empty State (no preview yet) */}
+      {!previewDataUrl && !isRendering && !error && (
+        <div className="absolute inset-0 flex flex-col items-center justify-center z-10">
+          <div className="w-16 h-16 rounded-2xl bg-neutral-700 flex items-center justify-center mb-4">
+            <Image size={32} className="text-white" weight="regular" />
+          </div>
+          <p className="text-sm text-neutral-700 font-medium">
+            Preview will render here
+          </p>
+          <p className="text-xs text-neutral-400 mt-1">
+            {formatType === "svg"
+              ? "Vector image format"
+              : "Raster image format"}
+          </p>
+        </div>
+      )}
+    </div>
+  );
+}
 
 export interface ChartPreviewProps {
   /** Data URL of the preview image */
@@ -29,30 +148,6 @@ export interface ChartPreviewProps {
   readabilityStatus?: ReadabilityStatus;
   /** Format type for display */
   formatType?: "png" | "svg";
-}
-
-/** Checkerboard tile color for transparent background visualization */
-const CHECKERBOARD_TILE_COLOR = "#e5e5e5";
-
-/** Conservative PNG compression ratio (typical range: 25–50% of raw RGBA) */
-const PNG_COMPRESSION_RATIO = 0.35;
-
-/**
- * Estimate file size based on dimensions.
- * PNG: roughly 4 bytes per pixel with compression (~25% of raw)
- */
-function estimateFileSize(width: number, height: number): string {
-  if (width === 0 || height === 0) return "—";
-  const rawBytes = width * height * 4;
-  const estimatedBytes = rawBytes * PNG_COMPRESSION_RATIO;
-
-  if (estimatedBytes < 1024) {
-    return `~${Math.round(estimatedBytes)} B`;
-  } else if (estimatedBytes < 1024 * 1024) {
-    return `~${(estimatedBytes / 1024).toFixed(1)} KB`;
-  } else {
-    return `~${(estimatedBytes / (1024 * 1024)).toFixed(1)} MB`;
-  }
 }
 
 /**
@@ -71,6 +166,7 @@ export function ChartPreview({
 }: ChartPreviewProps): JSX.Element {
   const ReadabilityIcon =
     readabilityStatus?.level === "critical" ? WarningOctagon : Warning;
+  const isWarning = readabilityStatus?.level === "warning";
 
   return (
     <div className="flex flex-col h-full">
@@ -84,81 +180,14 @@ export function ChartPreview({
 
       {/* Preview Area Container - centers the preview frame */}
       <div className="flex-1 flex items-center justify-center p-2 min-h-[200px]">
-        {/* Preview Frame - sized to match export aspect ratio */}
-        <div
-          className="bg-white border border-neutral-200 shadow-sm flex items-center justify-center relative overflow-hidden"
-          style={{
-            aspectRatio:
-              dimensions.width > 0 && dimensions.height > 0
-                ? `${dimensions.width} / ${dimensions.height}`
-                : "16 / 9",
-            maxWidth: "100%",
-            maxHeight: "100%",
-            // For wide exports, constrain width; for tall exports, constrain height
-            width: dimensions.width >= dimensions.height ? "100%" : "auto",
-            height: dimensions.width < dimensions.height ? "100%" : "auto",
-          }}
-        >
-          {/* Checkerboard pattern for transparent background */}
-          {isTransparent && (
-            <div
-              className="absolute inset-0"
-              style={{
-                backgroundImage: `linear-gradient(45deg, ${CHECKERBOARD_TILE_COLOR} 25%, transparent 25%), linear-gradient(-45deg, ${CHECKERBOARD_TILE_COLOR} 25%, transparent 25%), linear-gradient(45deg, transparent 75%, ${CHECKERBOARD_TILE_COLOR} 75%), linear-gradient(-45deg, transparent 75%, ${CHECKERBOARD_TILE_COLOR} 75%)`,
-                backgroundSize: "16px 16px",
-                backgroundPosition: "0 0, 0 8px, 8px -8px, -8px 0px",
-              }}
-            />
-          )}
-
-          {/* Loading State */}
-          {isRendering && (
-            <div className="absolute inset-0 bg-white/80 flex flex-col items-center justify-center z-10">
-              <Spinner
-                size={32}
-                className="animate-spin text-brand-600"
-                weight="regular"
-              />
-              <p className="text-sm text-neutral-600 mt-3">
-                Rendering preview...
-              </p>
-            </div>
-          )}
-
-          {/* Error State */}
-          {error && !isRendering && (
-            <div className="absolute inset-0 bg-white flex flex-col items-center justify-center z-10 p-4">
-              <WarningCircle size={32} className="text-red-500" weight="fill" />
-              <p className="text-sm text-red-700 mt-3 text-center">{error}</p>
-            </div>
-          )}
-
-          {/* Preview Image */}
-          {!error && previewDataUrl && (
-            <img
-              src={previewDataUrl}
-              alt="Export preview"
-              className="relative z-0 max-w-full max-h-full w-auto h-auto object-contain"
-            />
-          )}
-
-          {/* Empty State (no preview yet) */}
-          {!previewDataUrl && !isRendering && !error && (
-            <div className="absolute inset-0 flex flex-col items-center justify-center z-10">
-              <div className="w-16 h-16 rounded-2xl bg-neutral-700 flex items-center justify-center mb-4">
-                <Image size={32} className="text-white" weight="regular" />
-              </div>
-              <p className="text-sm text-neutral-700 font-medium">
-                Preview will render here
-              </p>
-              <p className="text-xs text-neutral-400 mt-1">
-                {formatType === "svg"
-                  ? "Vector image format"
-                  : "Raster image format"}
-              </p>
-            </div>
-          )}
-        </div>
+        <PreviewFrame
+          dimensions={dimensions}
+          isRendering={isRendering}
+          error={error}
+          isTransparent={isTransparent}
+          previewDataUrl={previewDataUrl}
+          formatType={formatType}
+        />
       </div>
 
       {/* Info Panel - Compact */}
@@ -190,34 +219,30 @@ export function ChartPreview({
         </div>
 
         {/* Readability Indicator - only show warnings/critical */}
-        {readabilityStatus && readabilityStatus.level !== "good" && (
-          <div
-            className={`flex items-center gap-2.5 px-4 py-3 rounded ${
-              readabilityStatus.level === "warning"
-                ? "bg-amber-50 border border-amber-200"
-                : "bg-red-50 border border-red-200"
-            }`}
-          >
-            <ReadabilityIcon
-              size={16}
-              weight="fill"
-              className={
-                readabilityStatus.level === "warning"
-                  ? "text-amber-600"
-                  : "text-red-600"
-              }
-            />
-            <span
-              className={`text-xs font-semibold ${
-                readabilityStatus.level === "warning"
-                  ? "text-amber-700"
-                  : "text-red-700"
+        <div aria-live="polite">
+          {readabilityStatus && readabilityStatus.level !== "good" && (
+            <div
+              className={`flex items-center gap-2.5 px-4 py-3 rounded ${
+                isWarning
+                  ? "bg-amber-50 border border-amber-200"
+                  : "bg-red-50 border border-red-200"
               }`}
             >
-              {readabilityStatus.message}
-            </span>
-          </div>
-        )}
+              <ReadabilityIcon
+                size={16}
+                weight="fill"
+                className={isWarning ? "text-amber-600" : "text-red-600"}
+              />
+              <span
+                className={`text-xs font-semibold ${
+                  isWarning ? "text-amber-700" : "text-red-700"
+                }`}
+              >
+                {readabilityStatus.message}
+              </span>
+            </div>
+          )}
+        </div>
       </div>
     </div>
   );
