@@ -383,14 +383,19 @@ describe('useKeyboardShortcuts', () => {
       document.body.removeChild(select);
     });
 
-    it.skip('should not trigger shortcuts in contentEditable elements', () => {
-      // Note: contentEditable detection in jsdom has known issues
+    it('should not trigger shortcuts in contentEditable elements', () => {
+      // jsdom does not propagate the contentEditable attribute to
+      // isContentEditable, so we use Object.defineProperty to set the
+      // property directly on the element before dispatching the event.
       renderHook(() => useKeyboardShortcuts());
 
       const div = document.createElement('div');
-      div.contentEditable = 'true';
+      Object.defineProperty(div, 'isContentEditable', {
+        value: true,
+        writable: true,
+        configurable: true,
+      });
       document.body.appendChild(div);
-      div.focus();
       div.dispatchEvent(
         new KeyboardEvent('keydown', {
           key: 'y',

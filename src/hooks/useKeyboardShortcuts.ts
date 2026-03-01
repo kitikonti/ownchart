@@ -14,9 +14,6 @@
  */
 
 import { useEffect, useRef } from "react";
-import type { Task } from "../types/chart.types";
-import type { TaskId } from "../types/branded.types";
-import type { EditableField } from "../types/task.types";
 import { useHistoryStore } from "../store/slices/historySlice";
 import { useTaskStore } from "../store/slices/taskSlice";
 import { useChartStore } from "../store/slices/chartSlice";
@@ -26,12 +23,14 @@ import { useFileOperations } from "./useFileOperations";
 import { useClipboardOperations } from "./useClipboardOperations";
 import { useHideOperations } from "./useHideOperations";
 import { findTopmostSelectedTaskId } from "../utils/selection";
+import type { Task } from "../types/chart.types";
+import type { TaskId } from "../types/branded.types";
+import type { EditableField } from "../types/task.types";
 
 // ── Context ───────────────────────────────────────────────────────────────────
 // A single snapshot of all state needed by the sub-handlers.  Built fresh on
-// every render inside handlerRef.current and passed into every module-level
-// handler so they remain pure, testable functions with no closed-over stale
-// values.
+// every render in the hook body and passed into every module-level handler
+// so they remain pure functions with no closed-over stale values.
 
 interface ActiveCell {
   taskId: TaskId | null;
@@ -442,6 +441,48 @@ export function useKeyboardShortcuts(): void {
   // task edit, selection change, or cell navigation.
   const handlerRef = useRef<(e: KeyboardEvent) => void>(() => {});
 
+  // Build a context snapshot from the latest subscribed values.  Extracted
+  // here so the dispatcher closure stays under 50 lines.
+  const ctx: ShortcutContext = {
+    undo,
+    redo,
+    handleSave,
+    handleSaveAs,
+    handleOpen,
+    handleNew,
+    openExportDialog,
+    handleCopy,
+    handleCut,
+    handlePaste,
+    clearClipboard,
+    clipboardMode,
+    isEditingCell,
+    selectedTaskIds,
+    activeCell,
+    deleteSelectedTasks,
+    deleteTask,
+    insertTaskAbove,
+    insertMultipleTasksAbove,
+    indentSelectedTasks,
+    outdentSelectedTasks,
+    groupSelectedTasks,
+    ungroupSelectedTasks,
+    toggleDependencies,
+    toggleTodayMarker,
+    toggleProgress,
+    toggleHolidays,
+    fitToView,
+    hideRows,
+    unhideSelection,
+    openHelpPanel,
+    closeExportDialog,
+    closeHelpPanel,
+    closeWelcomeTour,
+    isExportDialogOpen,
+    isHelpPanelOpen,
+    isWelcomeTourOpen,
+  };
+
   // ── Main dispatcher ────────────────────────────────────────────────────
   handlerRef.current = (e: KeyboardEvent): void => {
     const modKey = isMac ? e.metaKey : e.ctrlKey;
@@ -462,48 +503,6 @@ export function useKeyboardShortcuts(): void {
     if (isTextInput) return;
 
     const isCellActive = activeCell.taskId !== null;
-
-    // Build a context snapshot from the latest subscribed values so each
-    // module-level sub-handler receives a single, consistent object.
-    const ctx: ShortcutContext = {
-      undo,
-      redo,
-      handleSave,
-      handleSaveAs,
-      handleOpen,
-      handleNew,
-      openExportDialog,
-      handleCopy,
-      handleCut,
-      handlePaste,
-      clearClipboard,
-      clipboardMode,
-      isEditingCell,
-      selectedTaskIds,
-      activeCell,
-      deleteSelectedTasks,
-      deleteTask,
-      insertTaskAbove,
-      insertMultipleTasksAbove,
-      indentSelectedTasks,
-      outdentSelectedTasks,
-      groupSelectedTasks,
-      ungroupSelectedTasks,
-      toggleDependencies,
-      toggleTodayMarker,
-      toggleProgress,
-      toggleHolidays,
-      fitToView,
-      hideRows,
-      unhideSelection,
-      openHelpPanel,
-      closeExportDialog,
-      closeHelpPanel,
-      closeWelcomeTour,
-      isExportDialogOpen,
-      isHelpPanelOpen,
-      isWelcomeTourOpen,
-    };
 
     if (handleUndoRedo(e, modKey, ctx)) return;
     if (handleFileShortcuts(e, modKey, ctx)) return;
