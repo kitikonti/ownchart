@@ -126,8 +126,8 @@ cd ../app-gantt-review
 - [x] `src/components/TaskList/TaskTable.tsx` (263 LOC)
 - [x] `src/components/TaskList/TaskDataCells.tsx` (333 LOC)
 - [x] `src/components/TaskList/NewTaskPlaceholderRow.tsx` (315 LOC)
-- [ ] `src/components/TaskList/TaskTableRow.tsx` (234 LOC)
-- [ ] `src/components/TaskList/TaskTableHeader.tsx` (176 LOC)
+- [x] `src/components/TaskList/TaskTableRow.tsx` (234 LOC)
+- [x] `src/components/TaskList/TaskTableHeader.tsx` (176 LOC)
 - [ ] `src/components/TaskList/HiddenRowIndicator.tsx` (137 LOC)
 - [ ] `src/components/TaskList/ColumnResizer.tsx` (133 LOC)
 - [ ] `src/components/TaskList/CellEditors/ColorCellEditor.tsx` (130 LOC)
@@ -138,8 +138,8 @@ cd ../app-gantt-review
 - [x] `src/components/Layout/GanttLayout.tsx`
 - [x] `src/components/Export/ExportDialog.tsx` (505 LOC)
 - [x] `src/components/Export/PdfPreview.tsx` (426 LOC)
-- [ ] `src/components/Export/PdfExportOptions.tsx` (338 LOC)
-- [ ] `src/components/Export/SharedExportOptions.tsx` (273 LOC)
+- [x] `src/components/Export/PdfExportOptions.tsx` (338 LOC)
+- [x] `src/components/Export/SharedExportOptions.tsx` (273 LOC)
 - [ ] `src/components/Export/ZoomModeSelector.tsx` (255 LOC)
 - [ ] `src/components/Export/ChartPreview.tsx` (212 LOC) — 1 Hex-Wert
 - [ ] `src/components/Layout/SplitPane.tsx` (186 LOC)
