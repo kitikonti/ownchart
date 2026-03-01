@@ -7,13 +7,10 @@
  */
 
 import { useState, useCallback, useRef, useEffect } from "react";
-import type { Task } from "../types/chart.types";
-import type { TaskId } from "../types/branded.types";
-import type { TimelineScale, TaskBarGeometry } from "../utils/timelineUtils";
 import { addDays } from "../utils/dateUtils";
+import { getEffectiveTasksToMove } from "../utils/hierarchy";
 import { useTaskStore } from "../store/slices/taskSlice";
 import { useChartStore } from "../store/slices/chartSlice";
-import { getEffectiveTasksToMove } from "../utils/hierarchy";
 import { getSVGPoint } from "../utils/svgUtils";
 import {
   detectInteractionZone,
@@ -24,10 +21,15 @@ import {
   calculateDeltaDaysFromDates,
   buildMoveUpdates,
   buildResizeUpdate,
-  type DragState,
-  type CursorType,
-  type InteractionMode,
-  type WorkingDaysContext,
+} from "../utils/taskBarDragHelpers";
+import type { Task } from "../types/chart.types";
+import type { TaskId } from "../types/branded.types";
+import type { TimelineScale, TaskBarGeometry } from "../utils/timelineUtils";
+import type {
+  DragState,
+  CursorType,
+  InteractionMode,
+  WorkingDaysContext,
 } from "../utils/taskBarDragHelpers";
 
 export interface UseTaskBarInteractionReturn {
@@ -188,6 +190,7 @@ export function useTaskBarInteraction(
     document.removeEventListener("mousemove", stableMouseMove);
     document.removeEventListener("mouseup", stableMouseUp);
     syncDragState(null);
+    setCursor("pointer");
     svgRef.current = null;
     clearSharedDragState();
   };
@@ -256,14 +259,22 @@ export function useTaskBarInteraction(
     [task.type, geometry]
   );
 
-  // Cleanup on unmount — stable refs guarantee correct removal
+  // Cleanup on unmount — stable refs guarantee correct removal.
+  // Clear shared drag state in case the component unmounts mid-drag
+  // (e.g. a task is deleted while being dragged). React state (cursor /
+  // dragState) is intentionally not reset here — setting state after
+  // unmount is a no-op that triggers a React warning.
   useEffect(() => {
     return () => {
       if (rafRef.current) cancelAnimationFrame(rafRef.current);
       document.removeEventListener("mousemove", stableMouseMove);
       document.removeEventListener("mouseup", stableMouseUp);
+      if (dragStateRef.current) {
+        dragStateRef.current = null;
+        clearSharedDragState();
+      }
     };
-  }, [stableMouseMove, stableMouseUp]);
+  }, [stableMouseMove, stableMouseUp, clearSharedDragState]);
 
   const activeCursor = dragState?.mode === "dragging" ? "grabbing" : cursor;
 

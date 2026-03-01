@@ -534,6 +534,7 @@ describe('useTaskBarInteraction', () => {
         duration: 13,
       });
       expect(result.current.isDragging).toBe(false);
+      expect(result.current.cursor).toBe('pointer');
     });
 
     it('does not commit when deltaDays is 0 (no movement)', () => {
@@ -735,6 +736,39 @@ describe('useTaskBarInteraction', () => {
       const calls = removeSpy.mock.calls.map((c) => c[0]);
       expect(calls).toContain('mousemove');
       expect(calls).toContain('mouseup');
+    });
+
+    it('clears shared drag state when unmounting during an active drag', () => {
+      mockGetSVGPoint.mockReturnValue({ x: 200, y: 50 });
+      const task = createTask();
+
+      const { result, unmount } = renderHook(() =>
+        useTaskBarInteraction(task, createScale(), createGeometry()),
+      );
+
+      // Start a drag so dragStateRef is populated
+      act(() => {
+        result.current.onMouseDown(createMockSVGEvent(200));
+      });
+
+      expect(result.current.isDragging).toBe(true);
+
+      // Reset spy so we can assert the unmount-specific call
+      clearDragStateSpy.mockClear();
+      unmount();
+
+      expect(clearDragStateSpy).toHaveBeenCalled();
+    });
+
+    it('does not call clearDragState on unmount when not dragging', () => {
+      const { unmount } = renderHook(() =>
+        useTaskBarInteraction(createTask(), createScale(), createGeometry()),
+      );
+
+      clearDragStateSpy.mockClear();
+      unmount();
+
+      expect(clearDragStateSpy).not.toHaveBeenCalled();
     });
   });
 });
