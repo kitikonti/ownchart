@@ -13,27 +13,25 @@
 import { memo, useCallback, useMemo } from "react";
 import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
-import type { Task } from "../../types/chart.types";
-import type { TaskId } from "../../types/branded.types";
-import { useTaskStore } from "../../store/slices/taskSlice";
-import type { ColumnDefinition } from "../../config/tableColumns";
+import type { Task } from "@/types/chart.types";
+import type { TaskId } from "@/types/branded.types";
+import { useTaskStore } from "@/store/slices/taskSlice";
+import type { ColumnDefinition } from "@/config/tableColumns";
 import type {
   ClipboardPosition,
   SelectionPosition,
-} from "../../hooks/useTaskRowData";
+} from "@/hooks/useTaskRowData";
 import { RowNumberCell } from "./RowNumberCell";
 import { RowOverlays } from "./RowOverlays";
 import { dragState } from "./dragSelectionState";
 import { TaskDataCells } from "./TaskDataCells";
-import { computeDisplayTask } from "../../utils/taskDisplayUtils";
-import { useComputedTaskColor } from "../../hooks/useComputedTaskColor";
-import { COLORS, Z_INDEX } from "../../styles/design-tokens";
+import { computeDisplayTask } from "@/utils/taskDisplayUtils";
+import { useComputedTaskColor } from "@/hooks/useComputedTaskColor";
+import { TABLE_ROW, Z_INDEX } from "@/styles/design-tokens";
 import { useRowSelectionHandler } from "./useRowSelectionHandler";
 
 // ── Constants ────────────────────────────────────────────────────────────────
 
-/** brand-600 at ~8% opacity (hex 14 ≈ 8%) */
-const SELECTION_BG_COLOR = `${COLORS.brand[600]}14`;
 const DRAGGING_OPACITY = 0.5;
 const DENSITY_ROW_HEIGHT_VAR = "var(--density-row-height)";
 
@@ -119,7 +117,7 @@ export const TaskTableRow = memo(function TaskTableRow({
     gridTemplateColumns,
     ...(isSelected
       ? {
-          backgroundColor: SELECTION_BG_COLOR,
+          backgroundColor: TABLE_ROW.selectionBg,
           zIndex: Z_INDEX.rowHighlight,
         }
       : {}),
