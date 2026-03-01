@@ -18,6 +18,7 @@ import { useTableDimensions } from "@/hooks/useTableDimensions";
 import { useTableHeaderContextMenu } from "@/hooks/useTableHeaderContextMenu";
 import { ContextMenu } from "@/components/ContextMenu/ContextMenu";
 import { TABLE_HEADER } from "@/styles/design-tokens";
+import { HEADER_HEIGHT } from "@/config/layoutConstants";
 import { ColumnResizer } from "./ColumnResizer";
 
 // ── Constants ────────────────────────────────────────────────────────────────
@@ -109,6 +110,7 @@ const HeaderCell = memo(function HeaderCell({
     <div
       className={[
         "task-table-header-cell",
+        "flex items-center",
         // Resizable columns omit right padding — the resize handle fills that space
         column.resizable ? "pr-3" : "px-3",
         "border-b",
@@ -118,9 +120,6 @@ const HeaderCell = memo(function HeaderCell({
       ].join(" ")}
       style={{
         borderColor: TABLE_HEADER.border,
-        // Vertical padding follows density so the header height matches row height
-        paddingTop: densityConfig.headerPaddingY,
-        paddingBottom: densityConfig.headerPaddingY,
       }}
       role="columnheader"
       // 'select-all' cells: tabIndex=-1 because the inner SelectAllButton is the
@@ -212,6 +211,7 @@ export const TaskTableHeader = memo(function TaskTableHeader(): JSX.Element {
         style={{
           gridTemplateColumns,
           minWidth: totalColumnWidth,
+          height: HEADER_HEIGHT,
           backgroundColor: TABLE_HEADER.bg,
         }}
         role="row"
