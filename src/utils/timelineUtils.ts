@@ -24,8 +24,8 @@ import {
 } from "date-fns";
 
 import { DENSITY_CONFIG } from "@/config/densityConfig";
-import type { Task } from "@/types/chart.types";
 import { calculateDuration, addDays } from "@/utils/dateUtils";
+import type { Task } from "@/types/chart.types";
 
 // Fixed zoom configuration (industry standard approach)
 export const FIXED_BASE_PIXELS_PER_DAY = 25; // Comfortable standard view
@@ -48,8 +48,8 @@ export const FIT_TO_VIEW_PADDING_DAYS = 7;
 
 // Week numbering configuration (ISO 8601 - European standard)
 // Default week start day - actual value comes from user preferences
-export const WEEK_START_DAY = 1; // 0 = Sunday, 1 = Monday (ISO 8601)
-export const FIRST_WEEK_CONTAINS_DATE = 4; // Thursday (ISO 8601: week 1 has first Thursday)
+export const DEFAULT_WEEK_START_DAY = 1; // 0 = Sunday, 1 = Monday (ISO 8601)
+export const DEFAULT_FIRST_WEEK_CONTAINS_DATE = 4; // Thursday (ISO 8601: week 1 has first Thursday)
 
 // Named constants for pixels-per-day zoom thresholds used in getScaleConfig
 const PPD_QUARTER_VIEW = 3; // Below this: show quarters + months
@@ -98,20 +98,25 @@ export function resetPreferenceGetters(): void {
   _getWeekNumberingSystem = null;
 }
 
+/** Logs a DEV-only warning when a preference getter is called before registration. */
+function warnIfNotRegistered(getter: unknown, functionName: string): void {
+  if (!getter && import.meta.env.DEV) {
+    console.warn(
+      `[timelineUtils] ${functionName} called before getter was registered — falling back to ISO default`
+    );
+  }
+}
+
 /**
  * Get week start day from user preferences.
  * Returns 0 for Sunday, 1 for Monday.
  */
 export function getWeekStartDay(): 0 | 1 {
-  if (!_getFirstDayOfWeek && import.meta.env.DEV) {
-    console.warn(
-      "[timelineUtils] getWeekStartDay called before getter was registered — falling back to ISO default"
-    );
-  }
+  warnIfNotRegistered(_getFirstDayOfWeek, "getWeekStartDay");
   if (_getFirstDayOfWeek) {
     return _getFirstDayOfWeek() === "sunday" ? 0 : 1;
   }
-  return WEEK_START_DAY; // Fallback to default
+  return DEFAULT_WEEK_START_DAY;
 }
 
 /**
@@ -119,15 +124,11 @@ export function getWeekStartDay(): 0 | 1 {
  * Returns 4 for ISO 8601 (first Thursday), 1 for US (first day of year).
  */
 export function getFirstWeekContainsDate(): 1 | 4 {
-  if (!_getWeekNumberingSystem && import.meta.env.DEV) {
-    console.warn(
-      "[timelineUtils] getFirstWeekContainsDate called before getter was registered — falling back to ISO default"
-    );
-  }
+  warnIfNotRegistered(_getWeekNumberingSystem, "getFirstWeekContainsDate");
   if (_getWeekNumberingSystem) {
     return _getWeekNumberingSystem() === "us" ? 1 : 4;
   }
-  return FIRST_WEEK_CONTAINS_DATE; // Fallback to default (ISO)
+  return DEFAULT_FIRST_WEEK_CONTAINS_DATE;
 }
 
 // Scale unit types (inspired by SVAR React Gantt)
@@ -187,6 +188,52 @@ function formatWeekWithMonthYear(date: Date): string {
   return `Week ${getWeekNumber(date)}, ${format(date, "MMM yyyy")}`;
 }
 
+// Data-driven threshold table for getScaleConfig — adding a new zoom mode only
+// requires one change point. Entries are checked in ascending `below` order;
+// the first match wins. Thresholds match the PPD_* constants above.
+type ScaleThreshold = { below: number; scales: ScaleConfig[] };
+
+const SCALE_THRESHOLDS: ScaleThreshold[] = [
+  // Extremely zoomed out (< PPD_QUARTER_VIEW): Quarter → Month
+  {
+    below: PPD_QUARTER_VIEW,
+    scales: [
+      { unit: "quarter", step: 1, format: formatQuarterHeader },
+      { unit: "month", step: 1, format: "MMM" },
+    ],
+  },
+  // Very zoomed out (< PPD_WEEK_NUMBER_ONLY): Month+Year → Week (bare number)
+  {
+    below: PPD_WEEK_NUMBER_ONLY,
+    scales: [
+      { unit: "month", step: 1, format: "MMM yyyy" },
+      { unit: "week", step: 1, format: formatWeekNumberOnly },
+    ],
+  },
+  // Zoomed out (< PPD_WEEK_WITH_PREFIX): Month+Year → Week with "W" prefix
+  {
+    below: PPD_WEEK_WITH_PREFIX,
+    scales: [
+      { unit: "month", step: 1, format: "MMM yyyy" },
+      { unit: "week", step: 1, format: formatWeekWithPrefix },
+    ],
+  },
+  // Zoomed in (< PPD_DAY_VIEW): Week → Day (number only)
+  {
+    below: PPD_DAY_VIEW,
+    scales: [
+      { unit: "week", step: 1, format: formatWeekWithMonthYear },
+      { unit: "day", step: 1, format: "d" },
+    ],
+  },
+];
+
+// Very zoomed in (PPD_DAY_VIEW+): Week → Day with abbreviated weekday name
+const DEFAULT_SCALE_CONFIG: ScaleConfig[] = [
+  { unit: "week", step: 1, format: formatWeekWithMonthYear },
+  { unit: "day", step: 1, format: "EEE d" },
+];
+
 /**
  * Get appropriate scale configuration based on zoom level
  * Inspired by SVAR React Gantt's adaptive scale system
@@ -199,44 +246,10 @@ export function getScaleConfig(
   basePixelsPerDay: number
 ): ScaleConfig[] {
   const effectivePixelsPerDay = basePixelsPerDay * zoom;
-
-  // Extremely zoomed out (< PPD_QUARTER_VIEW): Quarter → Month
-  if (effectivePixelsPerDay < PPD_QUARTER_VIEW) {
-    return [
-      { unit: "quarter", step: 1, format: formatQuarterHeader },
-      { unit: "month", step: 1, format: "MMM" },
-    ];
-  }
-
-  // Very zoomed out (< PPD_WEEK_NUMBER_ONLY): Month+Year → Week (bare number)
-  if (effectivePixelsPerDay < PPD_WEEK_NUMBER_ONLY) {
-    return [
-      { unit: "month", step: 1, format: "MMM yyyy" },
-      { unit: "week", step: 1, format: formatWeekNumberOnly },
-    ];
-  }
-
-  // Zoomed out (< PPD_WEEK_WITH_PREFIX): Month+Year → Week with "W" prefix
-  if (effectivePixelsPerDay < PPD_WEEK_WITH_PREFIX) {
-    return [
-      { unit: "month", step: 1, format: "MMM yyyy" },
-      { unit: "week", step: 1, format: formatWeekWithPrefix },
-    ];
-  }
-
-  // Zoomed in (< PPD_DAY_VIEW): Week → Day (number only)
-  if (effectivePixelsPerDay < PPD_DAY_VIEW) {
-    return [
-      { unit: "week", step: 1, format: formatWeekWithMonthYear },
-      { unit: "day", step: 1, format: "d" },
-    ];
-  }
-
-  // Very zoomed in (PPD_DAY_VIEW+): Week → Day with abbreviated weekday name
-  return [
-    { unit: "week", step: 1, format: formatWeekWithMonthYear },
-    { unit: "day", step: 1, format: "EEE d" },
-  ];
+  return (
+    SCALE_THRESHOLDS.find(({ below }) => effectivePixelsPerDay < below)
+      ?.scales ?? DEFAULT_SCALE_CONFIG
+  );
 }
 
 /**
@@ -413,7 +426,10 @@ export function addUnit(date: Date, unit: ScaleUnit, step: number): Date {
 }
 
 /** Named type for the visible date range returned by getVisibleDateRange. */
-export type VisibleDateRange = { start: string; end: string };
+export interface VisibleDateRange {
+  start: string;
+  end: string;
+}
 
 /**
  * Get visible date range based on scroll position

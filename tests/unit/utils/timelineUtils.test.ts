@@ -240,7 +240,7 @@ describe("timelineUtils", () => {
       const date = new Date(2026, 0, 8); // Thursday Jan 8, 2026
       const start = getUnitStart(date, "week");
 
-      // Monday Jan 5, 2026 (WEEK_START_DAY = 1 = Monday by default)
+      // Monday Jan 5, 2026 (DEFAULT_WEEK_START_DAY = 1 = Monday by default)
       expect(start.getFullYear()).toBe(2026);
       expect(start.getMonth()).toBe(0); // January
       expect(start.getDate()).toBe(5);
