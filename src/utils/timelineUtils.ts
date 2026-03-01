@@ -183,12 +183,15 @@ function formatWeekWithMonthYear(date: Date): string {
 /**
  * Get appropriate scale configuration based on zoom level
  * Inspired by SVAR React Gantt's adaptive scale system
+ * @param zoom - Current zoom level multiplier
+ * @param basePixelsPerDay - Unzoomed pixels-per-day (typically FIXED_BASE_PIXELS_PER_DAY = 25);
+ *   do NOT pass an already-zoomed scale.pixelsPerDay here.
  */
 export function getScaleConfig(
   zoom: number,
-  pixelsPerDay: number
+  basePixelsPerDay: number
 ): ScaleConfig[] {
-  const effectivePixelsPerDay = pixelsPerDay * zoom;
+  const effectivePixelsPerDay = basePixelsPerDay * zoom;
 
   // Extremely zoomed out (< PPD_QUARTER_VIEW): Quarter → Month
   if (effectivePixelsPerDay < PPD_QUARTER_VIEW) {
@@ -272,6 +275,7 @@ export function getTimelineScale(
  * @returns X coordinate in pixels
  */
 export function dateToPixel(dateStr: string, scale: TimelineScale): number {
+  // calculateDuration is inclusive (same date → 1); subtract 1 for 0-based pixel offset
   const daysFromStart = calculateDuration(scale.minDate, dateStr) - 1;
   return daysFromStart * scale.pixelsPerDay;
 }

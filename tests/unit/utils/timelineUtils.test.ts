@@ -4,15 +4,33 @@
  */
 
 import { describe, it, expect } from "vitest";
+import type { Task } from "../../../src/types/chart.types";
 import {
   getScaleConfig,
   getTimelineScale,
   dateToPixel,
   pixelToDate,
   getUnitStart,
+  getUnitEnd,
   addUnit,
+  getVisibleDateRange,
+  getTaskBarGeometry,
   FIXED_BASE_PIXELS_PER_DAY,
+  DEFAULT_DENSITY_GEOMETRY,
+  TIMELINE_HEADER_HEIGHT_PX,
 } from "../../../src/utils/timelineUtils";
+
+const makeTask = (startDate: string, endDate: string): Task => ({
+  id: "test-id",
+  name: "Test Task",
+  startDate,
+  endDate,
+  duration: 1,
+  progress: 0,
+  color: "#3b82f6",
+  order: 0,
+  metadata: {},
+});
 
 describe("timelineUtils", () => {
   describe("getScaleConfig", () => {
@@ -219,11 +237,13 @@ describe("timelineUtils", () => {
     });
 
     it("should get start of week", () => {
-      const date = new Date(2026, 0, 8); // Thursday
+      const date = new Date(2026, 0, 8); // Thursday Jan 8, 2026
       const start = getUnitStart(date, "week");
 
-      // Should be Monday Jan 5, 2026 (with default Monday start)
-      expect(start.getDate()).toBeLessThanOrEqual(8);
+      // Monday Jan 5, 2026 (WEEK_START_DAY = 1 = Monday by default)
+      expect(start.getFullYear()).toBe(2026);
+      expect(start.getMonth()).toBe(0); // January
+      expect(start.getDate()).toBe(5);
     });
 
     it("should get start of day", () => {
@@ -280,6 +300,129 @@ describe("timelineUtils", () => {
     });
   });
 
+  describe("getUnitEnd", () => {
+    it("should get end of year", () => {
+      const date = new Date(2026, 5, 15);
+      const end = getUnitEnd(date, "year", 1);
+
+      expect(end.getFullYear()).toBe(2026);
+      expect(end.getMonth()).toBe(11); // December
+      expect(end.getDate()).toBe(31);
+    });
+
+    it("should get end of quarter", () => {
+      const date = new Date(2026, 0, 15); // Q1
+      const end = getUnitEnd(date, "quarter", 1);
+
+      expect(end.getMonth()).toBe(2); // March
+      expect(end.getDate()).toBe(31);
+    });
+
+    it("should get end of month", () => {
+      const date = new Date(2026, 0, 15); // January
+      const end = getUnitEnd(date, "month", 1);
+
+      expect(end.getMonth()).toBe(0); // January
+      expect(end.getDate()).toBe(31);
+    });
+
+    it("should get end of week", () => {
+      const date = new Date(2026, 0, 5); // Monday Jan 5 (default Monday week start)
+      const end = getUnitEnd(date, "week", 1);
+
+      // End of week starting Monday Jan 5 = Sunday Jan 11
+      expect(end.getFullYear()).toBe(2026);
+      expect(end.getMonth()).toBe(0);
+      expect(end.getDate()).toBe(11);
+    });
+
+    it("should get end of day", () => {
+      const date = new Date(2026, 0, 15, 10, 30);
+      const end = getUnitEnd(date, "day", 1);
+
+      expect(end.getHours()).toBe(23);
+      expect(end.getMinutes()).toBe(59);
+      expect(end.getSeconds()).toBe(59);
+    });
+
+    it("should span multiple steps", () => {
+      const date = new Date(2026, 0, 1); // January
+      const end = getUnitEnd(date, "month", 3); // end of March
+
+      expect(end.getMonth()).toBe(2); // March
+      expect(end.getDate()).toBe(31);
+    });
+  });
+
+  describe("getVisibleDateRange", () => {
+    it("should return visible date range based on scroll and viewport", () => {
+      const scale = getTimelineScale("2026-01-01", "2026-12-31", 1.0);
+      const { start, end } = getVisibleDateRange(
+        scale,
+        0,
+        7 * FIXED_BASE_PIXELS_PER_DAY
+      );
+
+      expect(start).toBe("2026-01-01");
+      expect(end).toBe("2026-01-08");
+    });
+
+    it("should account for scroll offset", () => {
+      const scale = getTimelineScale("2026-01-01", "2026-12-31", 1.0);
+      const scrollX = 30 * FIXED_BASE_PIXELS_PER_DAY; // 30 days into the timeline
+      const { start } = getVisibleDateRange(scale, scrollX, FIXED_BASE_PIXELS_PER_DAY);
+
+      expect(start).toBe("2026-01-31");
+    });
+  });
+
+  describe("getTaskBarGeometry", () => {
+    const scale = getTimelineScale("2026-01-01", "2026-01-31", 1.0);
+
+    it("should compute geometry for a normal task", () => {
+      const task = makeTask("2026-01-05", "2026-01-09");
+      const geometry = getTaskBarGeometry({ task, scale, rowIndex: 0 });
+
+      // x: 4 days from Jan 1 → 4 × 25 = 100
+      expect(geometry.x).toBe(4 * FIXED_BASE_PIXELS_PER_DAY);
+      // width: 5 inclusive days × 25 = 125
+      expect(geometry.width).toBe(5 * FIXED_BASE_PIXELS_PER_DAY);
+      // y: header + row 0 offset
+      expect(geometry.y).toBe(
+        TIMELINE_HEADER_HEIGHT_PX + DEFAULT_DENSITY_GEOMETRY.taskBarOffset
+      );
+      expect(geometry.height).toBe(DEFAULT_DENSITY_GEOMETRY.taskBarHeight);
+    });
+
+    it("should treat empty endDate as single-day bar (milestone)", () => {
+      const task = makeTask("2026-01-10", "");
+      const geometry = getTaskBarGeometry({ task, scale, rowIndex: 0 });
+
+      // Milestone: width = 1 day × pixelsPerDay
+      expect(geometry.width).toBe(FIXED_BASE_PIXELS_PER_DAY);
+    });
+
+    it("should offset y by rowIndex", () => {
+      const task = makeTask("2026-01-05", "2026-01-07");
+      const geom0 = getTaskBarGeometry({ task, scale, rowIndex: 0 });
+      const geom3 = getTaskBarGeometry({ task, scale, rowIndex: 3 });
+
+      expect(geom3.y - geom0.y).toBe(3 * DEFAULT_DENSITY_GEOMETRY.rowHeight);
+    });
+
+    it("should use headerHeight = 0 for separate-SVG mode", () => {
+      const task = makeTask("2026-01-05", "2026-01-07");
+      const geometry = getTaskBarGeometry({
+        task,
+        scale,
+        rowIndex: 0,
+        headerHeight: 0,
+      });
+
+      expect(geometry.y).toBe(DEFAULT_DENSITY_GEOMETRY.taskBarOffset);
+    });
+  });
+
   describe("zoom level boundaries", () => {
     const basePixelsPerDay = FIXED_BASE_PIXELS_PER_DAY;
 
@@ -310,16 +453,16 @@ describe("timelineUtils", () => {
       }
     });
 
-    it("should switch at exactly 15 px/day boundary", () => {
-      // Just below 15 px/day -> Month -> Week with W
-      const below = getScaleConfig(0.59, basePixelsPerDay); // 14.75 px/day
-      expect(below[0].unit).toBe("month");
-      expect(below[1].unit).toBe("week");
+    it("should use W-prefix week format within 5–30 px/day range", () => {
+      // 60% zoom = 25 * 0.6 = 15 px/day — mid-range between PPD_WEEK_NUMBER_ONLY (5) and PPD_WEEK_WITH_PREFIX (30)
+      const config = getScaleConfig(0.6, basePixelsPerDay);
+      expect(config[0].unit).toBe("month");
+      expect(config[1].unit).toBe("week");
 
-      // At/above 15 px/day -> still Month -> Week (different format though)
-      const above = getScaleConfig(0.6, basePixelsPerDay); // 15 px/day
-      expect(above[0].unit).toBe("month");
-      expect(above[1].unit).toBe("week");
+      // Confirm the W-prefix format is active in this range
+      if (typeof config[1].format === "function") {
+        expect(config[1].format(new Date(2026, 0, 5))).toMatch(/^W\d+$/);
+      }
     });
 
     it("should switch at exactly 30 px/day boundary", () => {
