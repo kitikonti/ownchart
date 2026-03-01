@@ -24,6 +24,7 @@ import {
   endOfWeek,
   endOfDay,
 } from "date-fns";
+import { DENSITY_CONFIG } from "../config/densityConfig";
 import type { Task } from "../types/chart.types";
 import { calculateDuration, addDays } from "./dateUtils";
 
@@ -37,7 +38,7 @@ export const MAX_ZOOM = 3.0; // 300% - show at least 1 week
 export const DATE_RANGE_PADDING_DAYS = 90;
 /** Days to scroll past from dateRange.min to reach visible content start.
  *  = DATE_RANGE_PADDING_DAYS - 7 (visible pre-task days) */
-export const SCROLL_OFFSET_DAYS = 83;
+export const SCROLL_OFFSET_DAYS = DATE_RANGE_PADDING_DAYS - 7;
 /** Visual breathing room (days) added on each side by zoomToDateRange */
 export const ZOOM_VISUAL_PADDING_DAYS = 2;
 /** Base padding (days) added on each side by fitToView before label padding */
@@ -83,6 +84,15 @@ export function registerWeekNumberingSystemGetter(
 }
 
 /**
+ * Reset registered preference getters to null (for test teardown).
+ * Restores fallback behaviour (ISO defaults) between test cases.
+ */
+export function resetPreferenceGetters(): void {
+  _getFirstDayOfWeek = null;
+  _getWeekNumberingSystem = null;
+}
+
+/**
  * Get week start day from user preferences.
  * Returns 0 for Sunday, 1 for Monday.
  */
@@ -90,7 +100,7 @@ export function getWeekStartDay(): 0 | 1 {
   if (_getFirstDayOfWeek) {
     return _getFirstDayOfWeek() === "sunday" ? 0 : 1;
   }
-  return WEEK_START_DAY as 0 | 1; // Fallback to default
+  return WEEK_START_DAY; // Fallback to default
 }
 
 /**
@@ -101,10 +111,11 @@ export function getFirstWeekContainsDate(): 1 | 4 {
   if (_getWeekNumberingSystem) {
     return _getWeekNumberingSystem() === "us" ? 1 : 4;
   }
-  return FIRST_WEEK_CONTAINS_DATE as 1 | 4; // Fallback to default (ISO)
+  return FIRST_WEEK_CONTAINS_DATE; // Fallback to default (ISO)
 }
 
 // Scale unit types (inspired by SVAR React Gantt)
+// Note: "hour" is reserved for future hour-level zoom; not currently returned by getScaleConfig.
 export type ScaleUnit = "year" | "quarter" | "month" | "week" | "day" | "hour";
 
 // Scale configuration for a single row in the header
@@ -276,14 +287,10 @@ export interface DensityGeometryConfig {
 }
 
 /**
- * Default density config (Normal mode) for backwards compatibility.
- * Values mirror DENSITY_CONFIG.normal in config/densityConfig.ts.
+ * Default density config (Normal mode) — references DENSITY_CONFIG.normal directly
+ * so values stay in sync with config/densityConfig.ts without manual duplication.
  */
-export const DEFAULT_DENSITY_GEOMETRY: DensityGeometryConfig = {
-  rowHeight: 36, // DENSITY_CONFIG.normal.rowHeight
-  taskBarHeight: 26, // DENSITY_CONFIG.normal.taskBarHeight
-  taskBarOffset: 5, // DENSITY_CONFIG.normal.taskBarOffset
-};
+export const DEFAULT_DENSITY_GEOMETRY: DensityGeometryConfig = DENSITY_CONFIG.normal;
 
 /**
  * Get task bar geometry for rendering
@@ -317,75 +324,74 @@ export function getTaskBarGeometry(
   };
 }
 
+// Unit operation dispatch table — centralises per-unit logic so that adding a new
+// ScaleUnit only requires one change point instead of three parallel switch statements.
+type UnitOps = {
+  start: (date: Date) => Date;
+  end: (date: Date, step: number) => Date;
+  add: (date: Date, step: number) => Date;
+};
+
+const UNIT_OPS: Record<ScaleUnit, UnitOps> = {
+  year: {
+    start: startOfYear,
+    end: (date, step) => endOfYear(addYears(date, step - 1)),
+    add: (date, step) => addYears(date, step),
+  },
+  quarter: {
+    start: startOfQuarter,
+    end: (date, step) => endOfQuarter(addQuarters(date, step - 1)),
+    add: (date, step) => addQuarters(date, step),
+  },
+  month: {
+    start: startOfMonth,
+    end: (date, step) => endOfMonth(addMonths(date, step - 1)),
+    add: (date, step) => addMonths(date, step),
+  },
+  week: {
+    start: (date) => startOfWeek(date, { weekStartsOn: getWeekStartDay() }),
+    end: (date, step) =>
+      endOfWeek(addWeeks(date, step - 1), { weekStartsOn: getWeekStartDay() }),
+    add: (date, step) => addWeeks(date, step),
+  },
+  day: {
+    start: startOfDay,
+    end: (date, step) => endOfDay(addDaysDateFns(date, step - 1)),
+    add: (date, step) => addDaysDateFns(date, step),
+  },
+  hour: {
+    // Hours use addHours(step) not step-1 — hour end boundaries are exclusive
+    // (no endOfHour equivalent); caller expects the next hour boundary.
+    // Reserved for future hour-level zoom; not currently returned by getScaleConfig.
+    start: startOfHour,
+    end: (date, step) => addHours(date, step),
+    add: (date, step) => addHours(date, step),
+  },
+};
+
 /**
  * Get the start date of a time unit (aligned to unit boundary)
  */
 export function getUnitStart(date: Date, unit: ScaleUnit): Date {
-  switch (unit) {
-    case "year":
-      return startOfYear(date);
-    case "quarter":
-      return startOfQuarter(date);
-    case "month":
-      return startOfMonth(date);
-    case "week":
-      return startOfWeek(date, { weekStartsOn: getWeekStartDay() });
-    case "day":
-      return startOfDay(date);
-    case "hour":
-      return startOfHour(date);
-    default:
-      throw new Error(`Unknown ScaleUnit: ${unit}`);
-  }
+  return UNIT_OPS[unit].start(date);
 }
 
 /**
  * Get the end date of a time unit
  */
 export function getUnitEnd(date: Date, unit: ScaleUnit, step: number): Date {
-  switch (unit) {
-    case "year":
-      return endOfYear(addYears(date, step - 1));
-    case "quarter":
-      return endOfQuarter(addQuarters(date, step - 1));
-    case "month":
-      return endOfMonth(addMonths(date, step - 1));
-    case "week":
-      return endOfWeek(addWeeks(date, step - 1), {
-        weekStartsOn: getWeekStartDay(),
-      });
-    case "day":
-      return endOfDay(addDaysDateFns(date, step - 1));
-    case "hour":
-      // Hours use addHours(step) not step-1 — hour end boundaries are exclusive
-      // (no endOfHour equivalent); caller expects the next hour boundary.
-      return addHours(date, step);
-    default:
-      throw new Error(`Unknown ScaleUnit: ${unit}`);
-  }
+  return UNIT_OPS[unit].end(date, step);
 }
 
 /**
  * Add time unit to date
  */
 export function addUnit(date: Date, unit: ScaleUnit, step: number): Date {
-  switch (unit) {
-    case "year":
-      return addYears(date, step);
-    case "quarter":
-      return addQuarters(date, step);
-    case "month":
-      return addMonths(date, step);
-    case "week":
-      return addWeeks(date, step);
-    case "day":
-      return addDaysDateFns(date, step);
-    case "hour":
-      return addHours(date, step);
-    default:
-      throw new Error(`Unknown ScaleUnit: ${unit}`);
-  }
+  return UNIT_OPS[unit].add(date, step);
 }
+
+/** Named type for the visible date range returned by getVisibleDateRange. */
+export type VisibleDateRange = { start: string; end: string };
 
 /**
  * Get visible date range based on scroll position
@@ -394,7 +400,7 @@ export function getVisibleDateRange(
   scale: TimelineScale,
   scrollX: number,
   viewportWidth: number
-): { start: string; end: string } {
+): VisibleDateRange {
   const start = pixelToDate(scrollX, scale);
   const end = pixelToDate(scrollX + viewportWidth, scale);
   return { start, end };
