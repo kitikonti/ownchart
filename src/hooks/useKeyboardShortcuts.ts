@@ -218,10 +218,7 @@ function handleClipboardShortcuts(
   return false;
 }
 
-function handleEscapeKey(
-  e: KeyboardEvent,
-  ctx: ShortcutContext
-): boolean {
+function handleEscapeKey(e: KeyboardEvent, ctx: ShortcutContext): boolean {
   if (e.key !== "Escape") return false;
   // Close dialogs in priority order
   if (ctx.isExportDialogOpen) {
