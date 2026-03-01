@@ -2,6 +2,18 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [1.1.2](https://github.com/kitikonti/ownchart/compare/v1.1.1...v1.1.2) (2026-03-01)
+
+
+### Code Refactoring
+
+* apply code review fixes to PdfExportOptions and SharedExportOptions ([bee8187](https://github.com/kitikonti/ownchart/commit/bee8187d5f091fc119a83b5ab515200d2b1f4736))
+* apply code review fixes to PdfExportOptions and SharedExportOptions ([8410c32](https://github.com/kitikonti/ownchart/commit/8410c32382978a68c90ffaf1f91b43b46de9a83b))
+* apply code review fixes to PdfExportOptions and SharedExportOptions ([b11b5ca](https://github.com/kitikonti/ownchart/commit/b11b5caaeb06667fb573ff833d6a21291bfd11d3))
+* harden export option handlers and fix a11y in CheckboxGroup ([309b542](https://github.com/kitikonti/ownchart/commit/309b542ce49b2454f332ffaacb4e853e8598e5f6))
+* improve export options with FieldLabel, generic SegmentedControl, and validation fixes ([97f9e2a](https://github.com/kitikonti/ownchart/commit/97f9e2ac89e55d69b378d6182b98bd5c45f004ff))
+* improve export options with SegmentedControl, type safety, and a11y ([b2b9315](https://github.com/kitikonti/ownchart/commit/b2b9315b00890895891d498987c8f0749d5f5037))
+
 ## [1.1.1](https://github.com/kitikonti/ownchart/compare/v1.1.0...v1.1.1) (2026-03-01)
 
 
