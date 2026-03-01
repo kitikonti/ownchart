@@ -1,7 +1,10 @@
 /**
  * SVG-specific export options.
- * Timeline scale is handled by ScaleOptions; this component is a placeholder
- * for future SVG-specific options (e.g. responsiveMode, includeAccessibility).
+ * Timeline scale is handled by ScaleOptions.
+ *
+ * @placeholder — returns null until SVG-specific options are implemented
+ * (e.g. responsiveMode, includeAccessibility). Keep in sync with PdfExportOptions
+ * as the parallel component for the SVG format slot.
  */
 export function SvgExportOptions(): JSX.Element | null {
   // No SVG-specific options currently - timeline scale is handled by ScaleOptions

@@ -23,16 +23,23 @@ export function ScaleOptions({
   currentAppZoom,
   format,
 }: ScaleOptionsProps): JSX.Element {
+  const handleZoomModeChange = (mode: ExportZoomMode): void =>
+    onChange({ zoomMode: mode });
+  const handleTimelineZoomChange = (zoom: number): void =>
+    onChange({ timelineZoom: zoom });
+  const handleFitToWidthChange = (width: number): void =>
+    onChange({ fitToWidth: width });
+
   return (
     <ZoomModeSelector
       zoomMode={options.zoomMode}
-      onZoomModeChange={(mode: ExportZoomMode) => onChange({ zoomMode: mode })}
+      onZoomModeChange={handleZoomModeChange}
       timelineZoom={options.timelineZoom}
-      onTimelineZoomChange={(zoom: number) => onChange({ timelineZoom: zoom })}
+      onTimelineZoomChange={handleTimelineZoomChange}
       currentAppZoom={currentAppZoom}
       format={format}
       fitToWidth={options.fitToWidth}
-      onFitToWidthChange={(width: number) => onChange({ fitToWidth: width })}
+      onFitToWidthChange={handleFitToWidthChange}
     />
   );
 }

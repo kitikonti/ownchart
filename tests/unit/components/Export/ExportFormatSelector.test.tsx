@@ -137,4 +137,88 @@ describe("ExportFormatSelector", () => {
       expect(pdfButton).not.toHaveClass("bg-brand-600");
     });
   });
+
+  describe("keyboard navigation", () => {
+    it("moves selection to PDF on ArrowRight from PNG", () => {
+      const onFormatChange = vi.fn();
+      render(
+        <ExportFormatSelector selectedFormat="png" onFormatChange={onFormatChange} />
+      );
+
+      fireEvent.keyDown(screen.getByRole("radiogroup"), { key: "ArrowRight" });
+      expect(onFormatChange).toHaveBeenCalledWith("pdf");
+    });
+
+    it("moves selection to SVG on ArrowRight from PDF", () => {
+      const onFormatChange = vi.fn();
+      render(
+        <ExportFormatSelector selectedFormat="pdf" onFormatChange={onFormatChange} />
+      );
+
+      fireEvent.keyDown(screen.getByRole("radiogroup"), { key: "ArrowRight" });
+      expect(onFormatChange).toHaveBeenCalledWith("svg");
+    });
+
+    it("wraps from SVG back to PNG on ArrowRight", () => {
+      const onFormatChange = vi.fn();
+      render(
+        <ExportFormatSelector selectedFormat="svg" onFormatChange={onFormatChange} />
+      );
+
+      fireEvent.keyDown(screen.getByRole("radiogroup"), { key: "ArrowRight" });
+      expect(onFormatChange).toHaveBeenCalledWith("png");
+    });
+
+    it("moves selection to PNG on ArrowLeft from PDF", () => {
+      const onFormatChange = vi.fn();
+      render(
+        <ExportFormatSelector selectedFormat="pdf" onFormatChange={onFormatChange} />
+      );
+
+      fireEvent.keyDown(screen.getByRole("radiogroup"), { key: "ArrowLeft" });
+      expect(onFormatChange).toHaveBeenCalledWith("png");
+    });
+
+    it("wraps from PNG to SVG on ArrowLeft", () => {
+      const onFormatChange = vi.fn();
+      render(
+        <ExportFormatSelector selectedFormat="png" onFormatChange={onFormatChange} />
+      );
+
+      fireEvent.keyDown(screen.getByRole("radiogroup"), { key: "ArrowLeft" });
+      expect(onFormatChange).toHaveBeenCalledWith("svg");
+    });
+
+    it("also navigates on ArrowDown (same as ArrowRight)", () => {
+      const onFormatChange = vi.fn();
+      render(
+        <ExportFormatSelector selectedFormat="png" onFormatChange={onFormatChange} />
+      );
+
+      fireEvent.keyDown(screen.getByRole("radiogroup"), { key: "ArrowDown" });
+      expect(onFormatChange).toHaveBeenCalledWith("pdf");
+    });
+
+    it("also navigates on ArrowUp (same as ArrowLeft)", () => {
+      const onFormatChange = vi.fn();
+      render(
+        <ExportFormatSelector selectedFormat="pdf" onFormatChange={onFormatChange} />
+      );
+
+      fireEvent.keyDown(screen.getByRole("radiogroup"), { key: "ArrowUp" });
+      expect(onFormatChange).toHaveBeenCalledWith("png");
+    });
+
+    it("does not call onFormatChange for non-navigation keys", () => {
+      const onFormatChange = vi.fn();
+      render(
+        <ExportFormatSelector selectedFormat="png" onFormatChange={onFormatChange} />
+      );
+
+      fireEvent.keyDown(screen.getByRole("radiogroup"), { key: "Enter" });
+      fireEvent.keyDown(screen.getByRole("radiogroup"), { key: "Tab" });
+      fireEvent.keyDown(screen.getByRole("radiogroup"), { key: "Space" });
+      expect(onFormatChange).not.toHaveBeenCalled();
+    });
+  });
 });

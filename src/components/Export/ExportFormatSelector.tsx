@@ -41,6 +41,50 @@ const FORMAT_OPTIONS: FormatOption[] = [
   },
 ];
 
+interface FormatCardProps {
+  option: FormatOption;
+  isSelected: boolean;
+  descriptionId: string;
+  onSelect: (format: ExportFormat) => void;
+}
+
+function FormatCard({
+  option,
+  isSelected,
+  descriptionId,
+  onSelect,
+}: FormatCardProps): JSX.Element {
+  const Icon = option.icon;
+  return (
+    <button
+      type="button"
+      role="radio"
+      aria-checked={isSelected}
+      aria-describedby={isSelected ? descriptionId : undefined}
+      tabIndex={isSelected ? 0 : -1}
+      onClick={() => onSelect(option.format)}
+      className={`flex flex-col items-center gap-2 px-4 py-3.5 rounded border transition-colors duration-150 ${FORMAT_CARD_HEIGHT_CLASS} focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 focus-visible:ring-offset-2 ${
+        isSelected
+          ? "border-brand-600 bg-brand-600"
+          : "border-neutral-200 hover:border-neutral-300 hover:bg-neutral-50"
+      }`}
+    >
+      <Icon
+        size={ICON_SIZE}
+        weight="light"
+        className={isSelected ? "text-white" : "text-neutral-500"}
+      />
+      <span
+        className={`text-xs font-semibold ${
+          isSelected ? "text-white" : "text-neutral-700"
+        }`}
+      >
+        {option.label}
+      </span>
+    </button>
+  );
+}
+
 interface ExportFormatSelectorProps {
   selectedFormat: ExportFormat;
   onFormatChange: (format: ExportFormat) => void;
@@ -99,42 +143,15 @@ export function ExportFormatSelector({
         className="grid grid-cols-3 gap-2"
         onKeyDown={handleGroupKeyDown}
       >
-        {FORMAT_OPTIONS.map((option) => {
-          const Icon = option.icon;
-          const isSelected = selectedFormat === option.format;
-
-          return (
-            <button
-              key={option.format}
-              type="button"
-              role="radio"
-              aria-checked={isSelected}
-              aria-describedby={isSelected ? descriptionId : undefined}
-              // Single tab stop in the group: selected radio is reachable via Tab,
-              // others are reached via arrow keys (WAI-ARIA radiogroup pattern).
-              tabIndex={isSelected ? 0 : -1}
-              onClick={() => onFormatChange(option.format)}
-              className={`flex flex-col items-center gap-2 px-4 py-3.5 rounded border transition-colors duration-150 ${FORMAT_CARD_HEIGHT_CLASS} focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 focus-visible:ring-offset-2 ${
-                isSelected
-                  ? "border-brand-600 bg-brand-600"
-                  : "border-neutral-200 hover:border-neutral-300 hover:bg-neutral-50"
-              }`}
-            >
-              <Icon
-                size={ICON_SIZE}
-                weight="light"
-                className={isSelected ? "text-white" : "text-neutral-500"}
-              />
-              <span
-                className={`text-xs font-semibold ${
-                  isSelected ? "text-white" : "text-neutral-700"
-                }`}
-              >
-                {option.label}
-              </span>
-            </button>
-          );
-        })}
+        {FORMAT_OPTIONS.map((option) => (
+          <FormatCard
+            key={option.format}
+            option={option}
+            isSelected={selectedFormat === option.format}
+            descriptionId={descriptionId}
+            onSelect={onFormatChange}
+          />
+        ))}
       </div>
 
       {/* Help Text Box — id referenced by the selected radio button via aria-describedby */}

@@ -24,6 +24,16 @@ interface SplitPaneDividerProps {
   maxWidth: number;
 }
 
+function getDividerClassName(
+  isCollapsed: boolean,
+  isDragging: boolean
+): string {
+  if (isCollapsed) {
+    return "split-divider w-3 cursor-e-resize flex-shrink-0 bg-neutral-200 hover:bg-neutral-300 transition-colors duration-150 relative flex items-center justify-center focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 focus-visible:ring-offset-1";
+  }
+  return `split-divider w-1 cursor-col-resize flex-shrink-0 ${isDragging ? "bg-neutral-500" : "bg-neutral-200"} hover:bg-neutral-400 transition-colors duration-150 relative group focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 focus-visible:ring-offset-1`;
+}
+
 export function SplitPaneDivider({
   onMouseDown,
   onResize,
@@ -49,10 +59,6 @@ export function SplitPaneDivider({
 
   const ariaLabel = isCollapsed ? ARIA_LABEL_COLLAPSED : ARIA_LABEL_EXPANDED;
 
-  const className = isCollapsed
-    ? "split-divider w-3 cursor-e-resize flex-shrink-0 bg-neutral-200 hover:bg-neutral-300 transition-colors duration-150 relative flex items-center justify-center focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 focus-visible:ring-offset-1"
-    : `split-divider w-1 cursor-col-resize flex-shrink-0 ${isDragging ? "bg-neutral-500" : "bg-neutral-200"} hover:bg-neutral-400 transition-colors duration-150 relative group focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 focus-visible:ring-offset-1`;
-
   return (
     // eslint-disable-next-line jsx-a11y/no-noninteractive-element-interactions -- separator is a keyboard-operable resize handle
     <div
@@ -64,7 +70,7 @@ export function SplitPaneDivider({
       aria-valuenow={currentWidth}
       aria-valuemin={minWidth}
       aria-valuemax={maxWidth}
-      className={className}
+      className={getDividerClassName(isCollapsed, isDragging)}
       onMouseDown={onMouseDown}
       onKeyDown={handleKeyDown}
       onClick={isCollapsed && onExpand ? onExpand : undefined}
