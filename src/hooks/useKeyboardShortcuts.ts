@@ -132,7 +132,7 @@ type ShortcutContext = HistoryContext &
 
 // ── Sub-handlers (module-level; return true when the event is consumed) ───────
 
-export function handleUndoRedo(
+function handleUndoRedo(
   e: KeyboardEvent,
   modKey: boolean,
   ctx: ShortcutContext
@@ -157,7 +157,7 @@ export function handleUndoRedo(
   return false;
 }
 
-export function handleFileShortcuts(
+function handleFileShortcuts(
   e: KeyboardEvent,
   modKey: boolean,
   ctx: ShortcutContext
@@ -184,6 +184,7 @@ export function handleFileShortcuts(
     ctx.handleNew();
     return true;
   }
+  // Ctrl+E: Export is a file-category shortcut; it opens the export UI dialog.
   if (key === "e") {
     e.preventDefault();
     ctx.openExportDialog();
@@ -192,7 +193,7 @@ export function handleFileShortcuts(
   return false;
 }
 
-export function handleClipboardShortcuts(
+function handleClipboardShortcuts(
   e: KeyboardEvent,
   modKey: boolean,
   ctx: ShortcutContext
@@ -217,7 +218,7 @@ export function handleClipboardShortcuts(
   return false;
 }
 
-export function handleEscapeKey(
+function handleEscapeKey(
   e: KeyboardEvent,
   ctx: ShortcutContext
 ): boolean {
@@ -246,7 +247,7 @@ export function handleEscapeKey(
   return false;
 }
 
-export function handleDeleteShortcuts(
+function handleDeleteShortcuts(
   e: KeyboardEvent,
   modKey: boolean,
   ctx: ShortcutContext
@@ -275,7 +276,7 @@ export function handleDeleteShortcuts(
   return false;
 }
 
-export function handleInsertShortcuts(
+function handleInsertShortcuts(
   e: KeyboardEvent,
   modKey: boolean,
   ctx: ShortcutContext
@@ -302,7 +303,7 @@ export function handleInsertShortcuts(
   return false;
 }
 
-export function handleIndentShortcuts(
+function handleIndentShortcuts(
   e: KeyboardEvent,
   ctx: ShortcutContext
 ): boolean {
@@ -321,7 +322,7 @@ export function handleIndentShortcuts(
   return false;
 }
 
-export function handleGroupShortcuts(
+function handleGroupShortcuts(
   e: KeyboardEvent,
   modKey: boolean,
   ctx: ShortcutContext
@@ -341,7 +342,7 @@ export function handleGroupShortcuts(
   return false;
 }
 
-export function handleHideShortcuts(
+function handleHideShortcuts(
   e: KeyboardEvent,
   modKey: boolean,
   ctx: ShortcutContext
@@ -363,14 +364,16 @@ export function handleHideShortcuts(
   return false;
 }
 
-export function handleSingleKeyShortcuts(
+// Handles view-toggle shortcuts (D, T, P, H, F) and the help-panel shortcut (?).
+// All require no modifier key and no active cell.  The ? key is checked before
+// the shared guard because on US keyboards it is produced by Shift+/, which
+// would otherwise be blocked by the shiftKey check below.
+function handleViewToggleShortcuts(
   e: KeyboardEvent,
-  isCellActive: boolean,
   modKey: boolean,
   ctx: ShortcutContext
 ): boolean {
-  // The ? key is handled before the shiftKey guard because on US keyboards
-  // it is produced by Shift+/, which would otherwise be blocked below.
+  const isCellActive = ctx.activeCell.taskId !== null;
   if (e.key === "?" && !isCellActive && !modKey && !e.altKey) {
     e.preventDefault();
     ctx.openHelpPanel();
@@ -379,31 +382,20 @@ export function handleSingleKeyShortcuts(
   if (isCellActive || modKey || e.altKey || e.shiftKey) return false;
 
   const key = e.key.toLowerCase();
-  if (key === "d") {
+  // View-toggle shortcuts — bare key, no modifier, no active cell.
+  // `f` reads tasks via getState() so the handler doesn't subscribe to
+  // `tasks` and trigger listener re-registration on every task mutation.
+  const VIEW_TOGGLE_ACTIONS: Partial<Record<string, () => void>> = {
+    d: () => ctx.toggleDependencies(),
+    t: () => ctx.toggleTodayMarker(),
+    p: () => ctx.toggleProgress(),
+    h: () => ctx.toggleHolidays(),
+    f: () => ctx.fitToView(useTaskStore.getState().tasks),
+  };
+  const action = VIEW_TOGGLE_ACTIONS[key];
+  if (action) {
     e.preventDefault();
-    ctx.toggleDependencies();
-    return true;
-  }
-  if (key === "t") {
-    e.preventDefault();
-    ctx.toggleTodayMarker();
-    return true;
-  }
-  if (key === "p") {
-    e.preventDefault();
-    ctx.toggleProgress();
-    return true;
-  }
-  if (key === "h") {
-    e.preventDefault();
-    ctx.toggleHolidays();
-    return true;
-  }
-  if (key === "f") {
-    e.preventDefault();
-    // Fetch tasks fresh so the hook does not subscribe to `tasks` and
-    // re-register the listener on every task mutation.
-    ctx.fitToView(useTaskStore.getState().tasks);
+    action();
     return true;
   }
   return false;
@@ -541,12 +533,12 @@ export function useKeyboardShortcuts(): void {
   handlerRef.current = (e: KeyboardEvent): void => {
     const modKey = IS_MAC ? e.metaKey : e.ctrlKey;
 
+    // KeyboardEvent.target is EventTarget; narrowing to HTMLElement is safe
+    // inside a keydown handler where the target is always a DOM element.
     const target = e.target as HTMLElement | null;
     if (!target) return;
 
     if (isTextInputElement(target)) return;
-
-    const isCellActive = ctx.activeCell.taskId !== null;
 
     if (handleUndoRedo(e, modKey, ctx)) return;
     if (handleFileShortcuts(e, modKey, ctx)) return;
@@ -557,7 +549,7 @@ export function useKeyboardShortcuts(): void {
     if (handleIndentShortcuts(e, ctx)) return;
     if (handleGroupShortcuts(e, modKey, ctx)) return;
     if (handleHideShortcuts(e, modKey, ctx)) return;
-    if (handleSingleKeyShortcuts(e, isCellActive, modKey, ctx)) return;
+    if (handleViewToggleShortcuts(e, modKey, ctx)) return;
   };
 
   // Register the listener once; handlerRef.current always delegates to the

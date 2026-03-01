@@ -320,6 +320,12 @@ describe('useKeyboardShortcuts', () => {
       expect(useUIStore.getState().isHelpPanelOpen).toBe(false);
     });
 
+    it('should not open help panel when altKey is held', () => {
+      renderHook(() => useKeyboardShortcuts());
+      simulateKeyPress('?', { altKey: true });
+      expect(useUIStore.getState().isHelpPanelOpen).toBe(false);
+    });
+
     it('should not open help panel when a cell is active', () => {
       useTaskStore.setState({
         activeCell: { taskId: 'task-1', field: 'name' },
@@ -662,6 +668,16 @@ describe('useKeyboardShortcuts', () => {
       useTaskStore.setState({ selectedTaskIds: ['task-2'] });
       renderHook(() => useKeyboardShortcuts());
       simulateKeyPress('-', { ctrlKey: true });
+      expect(useTaskStore.getState().tasks).toHaveLength(2);
+      expect(
+        useTaskStore.getState().tasks.find((t) => t.id === 'task-2'),
+      ).toBeUndefined();
+    });
+
+    it('should delete selected tasks via Ctrl+_ (underscore alias)', () => {
+      useTaskStore.setState({ selectedTaskIds: ['task-2'] });
+      renderHook(() => useKeyboardShortcuts());
+      simulateKeyPress('_', { ctrlKey: true });
       expect(useTaskStore.getState().tasks).toHaveLength(2);
       expect(
         useTaskStore.getState().tasks.find((t) => t.id === 'task-2'),
