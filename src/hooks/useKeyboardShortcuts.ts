@@ -3,7 +3,7 @@
  * Handles Ctrl+Z (undo), Ctrl+Shift+Z (redo), Ctrl+Y (redo alternative)
  * Handles Ctrl+S (save), Ctrl+Shift+S (save as), Ctrl+O (open), Ctrl+Alt+N (new)
  * Handles Ctrl+C (copy), Ctrl+X (cut), Ctrl+V (paste)
- * Handles Ctrl+E (export to PNG)
+ * Handles Ctrl+E (open export dialog)
  * Handles ESC (close dialogs in priority order, then clear clipboard)
  * Handles ? (open help panel) — checked before shiftKey guard for US-keyboard compat
  * Handles D (toggle dependencies), T (toggle today marker)
@@ -32,6 +32,7 @@ import type { EditableField } from "../types/task.types";
 // navigator.userAgentData.platform is the modern standard (Chromium 90+);
 // navigator.platform is deprecated but remains the universal fallback.
 const IS_MAC =
+  // userAgentData is not yet in TypeScript's lib.dom.d.ts
   (navigator as Navigator & { userAgentData?: { platform?: string } })
     .userAgentData?.platform === "macOS" ||
   navigator.platform.toUpperCase().includes("MAC");
@@ -61,23 +62,29 @@ interface ActiveCell {
   field: EditableField | null;
 }
 
-interface ShortcutContext {
-  // History
+// Sub-interfaces grouped by concern — composed into ShortcutContext below.
+
+interface HistoryContext {
   undo: () => void;
   redo: () => void;
-  // File ops
+}
+
+interface FileContext {
   handleSave: () => void;
   handleSaveAs: () => void;
   handleOpen: () => void;
   handleNew: () => void;
-  openExportDialog: () => void;
-  // Clipboard
+}
+
+interface ClipboardContext {
   handleCopy: () => void;
   handleCut: () => void;
   handlePaste: () => void;
   clearClipboard: () => void;
   clipboardMode: "row" | "cell" | null;
-  // Task state
+}
+
+interface TaskContext {
   isEditingCell: boolean;
   selectedTaskIds: TaskId[];
   activeCell: ActiveCell;
@@ -89,16 +96,23 @@ interface ShortcutContext {
   outdentSelectedTasks: () => void;
   groupSelectedTasks: () => void;
   ungroupSelectedTasks: () => void;
-  // View
+}
+
+interface ViewContext {
   toggleDependencies: () => void;
   toggleTodayMarker: () => void;
   toggleProgress: () => void;
   toggleHolidays: () => void;
   fitToView: (tasks: Task[]) => void;
-  // Hide
+}
+
+interface HideContext {
   hideRows: (ids: TaskId[]) => void;
   unhideSelection: (ids: TaskId[]) => void;
-  // UI dialogs
+}
+
+interface UIContext {
+  openExportDialog: () => void;
   openHelpPanel: () => void;
   closeExportDialog: () => void;
   closeHelpPanel: () => void;
@@ -108,9 +122,17 @@ interface ShortcutContext {
   isWelcomeTourOpen: boolean;
 }
 
+type ShortcutContext = HistoryContext &
+  FileContext &
+  ClipboardContext &
+  TaskContext &
+  ViewContext &
+  HideContext &
+  UIContext;
+
 // ── Sub-handlers (module-level; return true when the event is consumed) ───────
 
-function handleUndoRedo(
+export function handleUndoRedo(
   e: KeyboardEvent,
   modKey: boolean,
   ctx: ShortcutContext
@@ -135,7 +157,7 @@ function handleUndoRedo(
   return false;
 }
 
-function handleFileShortcuts(
+export function handleFileShortcuts(
   e: KeyboardEvent,
   modKey: boolean,
   ctx: ShortcutContext
@@ -170,7 +192,7 @@ function handleFileShortcuts(
   return false;
 }
 
-function handleClipboardShortcuts(
+export function handleClipboardShortcuts(
   e: KeyboardEvent,
   modKey: boolean,
   ctx: ShortcutContext
@@ -195,7 +217,10 @@ function handleClipboardShortcuts(
   return false;
 }
 
-function handleEscapeKey(e: KeyboardEvent, ctx: ShortcutContext): boolean {
+export function handleEscapeKey(
+  e: KeyboardEvent,
+  ctx: ShortcutContext
+): boolean {
   if (e.key !== "Escape") return false;
   // Close dialogs in priority order
   if (ctx.isExportDialogOpen) {
@@ -221,7 +246,7 @@ function handleEscapeKey(e: KeyboardEvent, ctx: ShortcutContext): boolean {
   return false;
 }
 
-function handleDeleteShortcuts(
+export function handleDeleteShortcuts(
   e: KeyboardEvent,
   modKey: boolean,
   ctx: ShortcutContext
@@ -250,7 +275,7 @@ function handleDeleteShortcuts(
   return false;
 }
 
-function handleInsertShortcuts(
+export function handleInsertShortcuts(
   e: KeyboardEvent,
   modKey: boolean,
   ctx: ShortcutContext
@@ -277,7 +302,7 @@ function handleInsertShortcuts(
   return false;
 }
 
-function handleIndentShortcuts(
+export function handleIndentShortcuts(
   e: KeyboardEvent,
   ctx: ShortcutContext
 ): boolean {
@@ -296,7 +321,7 @@ function handleIndentShortcuts(
   return false;
 }
 
-function handleGroupShortcuts(
+export function handleGroupShortcuts(
   e: KeyboardEvent,
   modKey: boolean,
   ctx: ShortcutContext
@@ -316,7 +341,7 @@ function handleGroupShortcuts(
   return false;
 }
 
-function handleHideShortcuts(
+export function handleHideShortcuts(
   e: KeyboardEvent,
   modKey: boolean,
   ctx: ShortcutContext
@@ -338,7 +363,7 @@ function handleHideShortcuts(
   return false;
 }
 
-function handleSingleKeyShortcuts(
+export function handleSingleKeyShortcuts(
   e: KeyboardEvent,
   isCellActive: boolean,
   modKey: boolean,
@@ -384,25 +409,34 @@ function handleSingleKeyShortcuts(
   return false;
 }
 
-// ── Subscription hook ──────────────────────────────────────────────────────────
-// Collects all Zustand-subscribed values into a ShortcutContext snapshot.
-// Re-evaluates on every render so handlerRef always sees the latest values
-// without stale closures.
+// ── Per-domain subscription hooks ─────────────────────────────────────────────
+// Each hook subscribes to one concern's Zustand state and returns a typed
+// sub-context.  useShortcutSubscriptions() composes them into one snapshot
+// that is built fresh on every render.
 //
-// When adding a shortcut: update (1) ShortcutContext, (2) this hook, and
-// (3) the dispatcher chain in useKeyboardShortcuts.
+// When adding a shortcut: update (1) the matching sub-interface, (2) the
+// matching sub-hook, and (3) the dispatcher chain in useKeyboardShortcuts.
 
-function useShortcutSubscriptions(): ShortcutContext {
+function useHistoryContext(): HistoryContext {
   const undo = useHistoryStore((state) => state.undo);
   const redo = useHistoryStore((state) => state.redo);
+  return { undo, redo };
+}
 
+function useFileContext(): FileContext {
   const { handleSave, handleSaveAs, handleOpen, handleNew } =
     useFileOperations();
+  return { handleSave, handleSaveAs, handleOpen, handleNew };
+}
 
+function useClipboardContext(): ClipboardContext {
   const { handleCopy, handleCut, handlePaste } = useClipboardOperations();
   const clearClipboard = useClipboardStore((state) => state.clearClipboard);
   const clipboardMode = useClipboardStore((state) => state.activeMode);
+  return { handleCopy, handleCut, handlePaste, clearClipboard, clipboardMode };
+}
 
+function useTaskContext(): TaskContext {
   const deleteSelectedTasks = useTaskStore(
     (state) => state.deleteSelectedTasks
   );
@@ -424,37 +458,7 @@ function useShortcutSubscriptions(): ShortcutContext {
   const ungroupSelectedTasks = useTaskStore(
     (state) => state.ungroupSelectedTasks
   );
-
-  const toggleDependencies = useChartStore((state) => state.toggleDependencies);
-  const toggleTodayMarker = useChartStore((state) => state.toggleTodayMarker);
-  const toggleProgress = useChartStore((state) => state.toggleProgress);
-  const toggleHolidays = useChartStore((state) => state.toggleHolidays);
-  const fitToView = useChartStore((state) => state.fitToView);
-
-  const { hideRows, unhideSelection } = useHideOperations();
-
-  const openExportDialog = useUIStore((state) => state.openExportDialog);
-  const openHelpPanel = useUIStore((state) => state.openHelpPanel);
-  const closeExportDialog = useUIStore((state) => state.closeExportDialog);
-  const closeHelpPanel = useUIStore((state) => state.closeHelpPanel);
-  const closeWelcomeTour = useUIStore((state) => state.dismissWelcome);
-  const isExportDialogOpen = useUIStore((state) => state.isExportDialogOpen);
-  const isHelpPanelOpen = useUIStore((state) => state.isHelpPanelOpen);
-  const isWelcomeTourOpen = useUIStore((state) => state.isWelcomeTourOpen);
-
   return {
-    undo,
-    redo,
-    handleSave,
-    handleSaveAs,
-    handleOpen,
-    handleNew,
-    openExportDialog,
-    handleCopy,
-    handleCut,
-    handlePaste,
-    clearClipboard,
-    clipboardMode,
     isEditingCell,
     selectedTaskIds,
     activeCell,
@@ -466,13 +470,40 @@ function useShortcutSubscriptions(): ShortcutContext {
     outdentSelectedTasks,
     groupSelectedTasks,
     ungroupSelectedTasks,
+  };
+}
+
+function useViewContext(): ViewContext {
+  const toggleDependencies = useChartStore((state) => state.toggleDependencies);
+  const toggleTodayMarker = useChartStore((state) => state.toggleTodayMarker);
+  const toggleProgress = useChartStore((state) => state.toggleProgress);
+  const toggleHolidays = useChartStore((state) => state.toggleHolidays);
+  const fitToView = useChartStore((state) => state.fitToView);
+  return {
     toggleDependencies,
     toggleTodayMarker,
     toggleProgress,
     toggleHolidays,
     fitToView,
-    hideRows,
-    unhideSelection,
+  };
+}
+
+function useHideContext(): HideContext {
+  const { hideRows, unhideSelection } = useHideOperations();
+  return { hideRows, unhideSelection };
+}
+
+function useUIContext(): UIContext {
+  const openExportDialog = useUIStore((state) => state.openExportDialog);
+  const openHelpPanel = useUIStore((state) => state.openHelpPanel);
+  const closeExportDialog = useUIStore((state) => state.closeExportDialog);
+  const closeHelpPanel = useUIStore((state) => state.closeHelpPanel);
+  const closeWelcomeTour = useUIStore((state) => state.dismissWelcome);
+  const isExportDialogOpen = useUIStore((state) => state.isExportDialogOpen);
+  const isHelpPanelOpen = useUIStore((state) => state.isHelpPanelOpen);
+  const isWelcomeTourOpen = useUIStore((state) => state.isWelcomeTourOpen);
+  return {
+    openExportDialog,
     openHelpPanel,
     closeExportDialog,
     closeHelpPanel,
@@ -480,6 +511,18 @@ function useShortcutSubscriptions(): ShortcutContext {
     isExportDialogOpen,
     isHelpPanelOpen,
     isWelcomeTourOpen,
+  };
+}
+
+function useShortcutSubscriptions(): ShortcutContext {
+  return {
+    ...useHistoryContext(),
+    ...useFileContext(),
+    ...useClipboardContext(),
+    ...useTaskContext(),
+    ...useViewContext(),
+    ...useHideContext(),
+    ...useUIContext(),
   };
 }
 
