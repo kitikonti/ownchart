@@ -358,6 +358,23 @@ describe('useKeyboardShortcuts', () => {
       document.body.removeChild(textarea);
     });
 
+    it('should not trigger single-key shortcuts when a select element is focused', () => {
+      renderHook(() => useKeyboardShortcuts());
+
+      const select = document.createElement('select');
+      document.body.appendChild(select);
+      select.focus();
+      select.dispatchEvent(
+        new KeyboardEvent('keydown', {
+          key: 'd',
+          bubbles: true,
+          cancelable: true,
+        }),
+      );
+      expect(useChartStore.getState().showDependencies).toBe(true);
+      document.body.removeChild(select);
+    });
+
     it.skip('should not trigger shortcuts in contentEditable elements', () => {
       // Note: contentEditable detection in jsdom has known issues
       renderHook(() => useKeyboardShortcuts());

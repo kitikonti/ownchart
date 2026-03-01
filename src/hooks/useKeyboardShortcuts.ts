@@ -1,7 +1,7 @@
 /**
  * Global keyboard shortcuts hook
  * Handles Ctrl+Z (undo), Ctrl+Shift+Z (redo), Ctrl+Y (redo alternative)
- * Handles Ctrl+S (save), Ctrl+Shift+S (save as), Ctrl+O (open), Ctrl+N (new)
+ * Handles Ctrl+S (save), Ctrl+Shift+S (save as), Ctrl+O (open), Ctrl+Alt+N (new)
  * Handles Ctrl+C (copy), Ctrl+X (cut), Ctrl+V (paste)
  * Handles Ctrl+E (export to PNG)
  * Handles ESC (close dialogs in priority order, then clear clipboard)
@@ -13,7 +13,7 @@
  * Handles Ctrl+G (group), Ctrl+Shift+G (ungroup)
  */
 
-import { useEffect, useRef } from "react";
+import { useEffect, useMemo, useRef } from "react";
 import { useHistoryStore } from "../store/slices/historySlice";
 import { useTaskStore } from "../store/slices/taskSlice";
 import { useChartStore } from "../store/slices/chartSlice";
@@ -82,13 +82,16 @@ export function useKeyboardShortcuts(): void {
   const isHelpPanelOpen = useUIStore((state) => state.isHelpPanelOpen);
   const isWelcomeTourOpen = useUIStore((state) => state.isWelcomeTourOpen);
 
-  // Detect modifier-key convention for this OS once per render.
+  // Detect modifier-key convention for this OS once per mount.
   // navigator.userAgentData.platform is the modern standard (Chromium 90+);
   // navigator.platform is deprecated but remains the universal fallback.
-  const isMac =
-    (navigator as Navigator & { userAgentData?: { platform?: string } })
-      .userAgentData?.platform === "macOS" ||
-    navigator.platform.toUpperCase().includes("MAC");
+  const isMac = useMemo(
+    () =>
+      (navigator as Navigator & { userAgentData?: { platform?: string } })
+        .userAgentData?.platform === "macOS" ||
+      navigator.platform.toUpperCase().includes("MAC"),
+    [],
+  );
 
   // ── Stable handler ref ─────────────────────────────────────────────────
   // The event listener is registered once (empty dep array below).
@@ -309,7 +312,7 @@ export function useKeyboardShortcuts(): void {
     return true;
   };
 
-  const handleViewToggles = (
+  const handleSingleKeyShortcuts = (
     e: KeyboardEvent,
     isCellActive: boolean,
     modKey: boolean
@@ -363,6 +366,7 @@ export function useKeyboardShortcuts(): void {
 
     const isTextInput =
       target.tagName === "TEXTAREA" ||
+      target.tagName === "SELECT" ||
       target.isContentEditable ||
       (target.tagName === "INPUT" &&
         (target as HTMLInputElement).type !== "checkbox");
@@ -383,7 +387,7 @@ export function useKeyboardShortcuts(): void {
     if (handleIndentShortcuts(e)) return;
     if (handleGroupShortcuts(e, modKey)) return;
     if (handleHideShortcuts(e, modKey)) return;
-    if (handleViewToggles(e, isCellActive, modKey)) return;
+    if (handleSingleKeyShortcuts(e, isCellActive, modKey)) return;
   };
 
   // Register the listener once; handlerRef.current always delegates to the
