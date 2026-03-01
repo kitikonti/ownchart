@@ -2,6 +2,24 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [1.1.10](https://github.com/kitikonti/ownchart/compare/v1.1.9...v1.1.10) (2026-03-01)
+
+
+### Bug Fixes
+
+* use || instead of ?? in getTaskBarGeometry for empty endDate fallback ([2424a98](https://github.com/kitikonti/ownchart/commit/2424a984c5e1a3eb9b1667e28e953b7a57b68327))
+
+
+### Code Refactoring
+
+* apply review findings to timelineUtils.ts (F001–F004) ([9323170](https://github.com/kitikonti/ownchart/commit/932317086f5fdcfc08d9a700d1113830054ed686))
+* apply review findings to timelineUtils.ts (F001–F004) ([47de9c7](https://github.com/kitikonti/ownchart/commit/47de9c732e5fd219113c60ad17d9337f4205cf86))
+* apply review findings to timelineUtils.ts (F001–F005) ([2b6cb56](https://github.com/kitikonti/ownchart/commit/2b6cb56b6134bdcf6d20826330e7560c97a6ef52))
+* apply review findings to timelineUtils.ts (F001–F006) ([c795c37](https://github.com/kitikonti/ownchart/commit/c795c37f0e2d8c5ac1d4ad3ced1ecdae81be6ad7))
+* apply review findings to timelineUtils.ts (F001–F007) ([c389052](https://github.com/kitikonti/ownchart/commit/c389052f6650ab872c6e74486790ff788f2c8a42))
+* apply review findings to timelineUtils.ts (F001–F008) ([bd011dc](https://github.com/kitikonti/ownchart/commit/bd011dc1cafe227e8d6cf575321552c8d58a7ac8))
+* apply review findings to timelineUtils.ts (F001–F011) ([8fcb9d2](https://github.com/kitikonti/ownchart/commit/8fcb9d2e53ea30470a9785fc72baa7ec9fc9446b))
+
 ## [1.1.9](https://github.com/kitikonti/ownchart/compare/v1.1.8...v1.1.9) (2026-03-01)
 
 
