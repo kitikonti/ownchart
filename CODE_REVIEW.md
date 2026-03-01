@@ -166,7 +166,7 @@ cd ../app-gantt-review
 - [x] `src/components/Ribbon/index.ts` (1 LOC)
 
 ### Priority: MEDIUM — Hooks
-- [ ] `src/hooks/useTaskBarInteraction.ts` (478 LOC)
+- [x] `src/hooks/useTaskBarInteraction.ts` (478 LOC)
 - [ ] `src/hooks/useKeyboardShortcuts.ts` (406 LOC)
 - [ ] `src/hooks/useComputedTaskColor.ts` (393 LOC)
 - [ ] `src/hooks/useExportPreview.ts` (349 LOC)
