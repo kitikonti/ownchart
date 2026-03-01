@@ -2,6 +2,17 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [1.1.1](https://github.com/kitikonti/ownchart/compare/v1.1.0...v1.1.1) (2026-03-01)
+
+
+### Code Refactoring
+
+* apply code review fixes to useTaskBarInteraction ([b124ebb](https://github.com/kitikonti/ownchart/commit/b124ebba8f90c8b362c833bb68aea158426c83e5))
+* apply review fixes to useTaskBarInteraction ([ddb829a](https://github.com/kitikonti/ownchart/commit/ddb829ad00e4bb63590082080a8100ac8fdd51a1))
+* extract task bar drag helpers to utility module ([57792c1](https://github.com/kitikonti/ownchart/commit/57792c15cafa3ee930229db904ed8fcca30953cd))
+* slim down useTaskBarInteraction using extracted helpers ([0a2dd2c](https://github.com/kitikonti/ownchart/commit/0a2dd2c3732497c4e93add4742086de2a9978263))
+* stabilize useTaskBarInteraction with ref-based listeners and improved coverage ([8428c88](https://github.com/kitikonti/ownchart/commit/8428c88a6936f747416d00088fcfa0904f73f712))
+
 ## [1.1.0](https://github.com/kitikonti/ownchart/compare/v1.0.4...v1.1.0) (2026-03-01)
 
 
