@@ -7,6 +7,7 @@
  * Store subscriptions are minimized: isSelected is derived from selectionPosition prop,
  * lastSelectedTaskId is read from getState() inside callbacks, and gridTemplateColumns
  * + visibleColumns are received as props from TaskTable.
+ * Selection logic is encapsulated in useRowSelectionHandler.
  */
 
 import { memo, useCallback, useMemo } from "react";
@@ -27,15 +28,18 @@ import { TaskDataCells } from "./TaskDataCells";
 import { computeDisplayTask } from "../../utils/taskDisplayUtils";
 import { useComputedTaskColor } from "../../hooks/useComputedTaskColor";
 import { COLORS, Z_INDEX } from "../../styles/design-tokens";
+import { useRowSelectionHandler } from "./useRowSelectionHandler";
 
 // ── Constants ────────────────────────────────────────────────────────────────
 
 /** brand-600 at ~8% opacity (hex 14 ≈ 8%) */
 const SELECTION_BG_COLOR = `${COLORS.brand[600]}14`;
+const DRAGGING_OPACITY = 0.5;
+const DENSITY_ROW_HEIGHT_VAR = "var(--density-row-height)";
 
 // ── Props ────────────────────────────────────────────────────────────────────
 
-interface TaskTableRowProps {
+export interface TaskTableRowProps {
   task: Task;
   globalRowNumber: number;
   level?: number;
@@ -78,15 +82,11 @@ export const TaskTableRow = memo(function TaskTableRow({
   const tasks = useTaskStore((state) =>
     task.type === "summary" ? state.tasks : null
   );
-  const toggleTaskSelection = useTaskStore(
-    (state) => state.toggleTaskSelection
-  );
-  const setSelectedTaskIds = useTaskStore((state) => state.setSelectedTaskIds);
-  const setActiveCell = useTaskStore((state) => state.setActiveCell);
   const insertTaskAbove = useTaskStore((state) => state.insertTaskAbove);
   const insertTaskBelow = useTaskStore((state) => state.insertTaskBelow);
 
   const computedColor = useComputedTaskColor(task);
+  const { handleSelectRow } = useRowSelectionHandler({ visibleTaskIds });
 
   // Derived from props — no store subscription needed
   const isSelected = selectionPosition !== undefined;
@@ -109,11 +109,20 @@ export const TaskTableRow = memo(function TaskTableRow({
     isDragging,
   } = useSortable({ id: task.id });
 
+  // Inline style: combine dnd-kit transform, grid layout, and selection highlight.
+  // `position: relative` is handled via Tailwind className below (covers both
+  // isSelected and isInClipboard cases without duplication).
   const style = {
     transform: CSS.Transform.toString(transform),
     transition,
-    opacity: isDragging ? 0.5 : 1,
+    opacity: isDragging ? DRAGGING_OPACITY : 1,
     gridTemplateColumns,
+    ...(isSelected
+      ? {
+          backgroundColor: SELECTION_BG_COLOR,
+          zIndex: Z_INDEX.rowHighlight,
+        }
+      : {}),
   };
 
   // ── Stabilized callbacks ─────────────────────────────────────────────────
@@ -123,35 +132,6 @@ export const TaskTableRow = memo(function TaskTableRow({
       dragState.onDragSelect(task.id);
     }
   }, [task.id]);
-
-  const handleSelectRow = useCallback(
-    (taskId: TaskId, shiftKey: boolean, ctrlKey: boolean): void => {
-      setActiveCell(null, null);
-      if (shiftKey) {
-        // Read from store at call-time to avoid subscription
-        const anchorTaskId =
-          dragState.startTaskId || useTaskStore.getState().lastSelectedTaskId;
-        if (anchorTaskId) {
-          const startIdx = visibleTaskIds.indexOf(anchorTaskId);
-          const endIdx = visibleTaskIds.indexOf(taskId);
-
-          if (startIdx !== -1 && endIdx !== -1) {
-            const minIdx = Math.min(startIdx, endIdx);
-            const maxIdx = Math.max(startIdx, endIdx);
-            const idsInRange = visibleTaskIds.slice(minIdx, maxIdx + 1);
-            setSelectedTaskIds(idsInRange, false);
-          }
-        } else {
-          setSelectedTaskIds([taskId], false);
-        }
-      } else if (ctrlKey) {
-        toggleTaskSelection(taskId);
-      } else {
-        setSelectedTaskIds([taskId], false);
-      }
-    },
-    [visibleTaskIds, setActiveCell, setSelectedTaskIds, toggleTaskSelection]
-  );
 
   const handleInsertAbove = useCallback(
     () => insertTaskAbove(task.id),
@@ -173,20 +153,13 @@ export const TaskTableRow = memo(function TaskTableRow({
   return (
     <div
       ref={setNodeRef}
-      style={{
-        ...style,
-        ...(isSelected
-          ? {
-              backgroundColor: SELECTION_BG_COLOR,
-              position: "relative",
-              zIndex: Z_INDEX.rowHighlight,
-            }
-          : {}),
-      }}
+      style={style}
       className={`task-table-row col-span-full grid ${
         isSelected ? "" : "bg-white"
       } ${isInClipboard || isSelected ? "relative" : ""}`}
       role="row"
+      aria-selected={isSelected}
+      aria-rowindex={globalRowNumber}
       tabIndex={-1}
       onMouseEnter={handleRowMouseEnter}
       onContextMenu={handleContextMenu}
@@ -211,7 +184,7 @@ export const TaskTableRow = memo(function TaskTableRow({
         onSelectRow={handleSelectRow}
         onInsertAbove={handleInsertAbove}
         onInsertBelow={handleInsertBelow}
-        rowHeight="var(--density-row-height)"
+        rowHeight={DENSITY_ROW_HEIGHT_VAR}
         dragAttributes={attributes}
         dragListeners={listeners}
         taskName={task.name}

@@ -95,16 +95,23 @@ export const TaskTableHeader = memo(function TaskTableHeader(): JSX.Element {
             className={[
               "task-table-header-cell",
               column.id === NAME_COLUMN_ID ? "pr-3" : "px-3",
-              "py-4 border-b",
+              "border-b",
               column.showRightBorder !== false ? "border-r" : "",
               "text-xs font-semibold text-neutral-600 uppercase tracking-wider",
               "whitespace-nowrap relative",
             ].join(" ")}
             style={{
               borderColor: TABLE_HEADER.border,
+              // Vertical padding follows density so the header height matches row height
+              paddingTop: densityConfig.headerPaddingY,
+              paddingBottom: densityConfig.headerPaddingY,
             }}
             role="columnheader"
-            tabIndex={-1}
+            // tabIndex=0 makes headers reachable via Tab; the browser ContextMenu
+            // key (or Shift+F10) will fire onContextMenu for keyboard users.
+            tabIndex={0}
+            // Provide an accessible name for columns with no visible label text
+            aria-label={column.id === "color" ? "Color" : undefined}
             onContextMenu={(e) => handleHeaderContextMenu(e, column.id)}
           >
             {column.id === "rowNumber" ? (

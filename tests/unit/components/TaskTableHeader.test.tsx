@@ -34,11 +34,18 @@ vi.mock("../../../src/store/slices/taskSlice", () => ({
 vi.mock("../../../src/store/slices/userPreferencesSlice", () => ({
   useDensityConfig: vi.fn(() => ({
     rowHeight: 36,
-    indentSize: 20,
-    colorBarHeight: 14,
+    taskBarHeight: 26,
+    taskBarOffset: 5,
     cellPaddingY: 6,
-    cellPaddingX: 8,
-    fontSizeCell: 13,
+    cellPaddingX: 10,
+    headerPaddingY: 12,
+    fontSizeCell: 15,
+    fontSizeBar: 12,
+    fontSizeHeader: 11,
+    iconSize: 16,
+    checkboxSize: 16,
+    indentSize: 18,
+    colorBarHeight: 24,
     columnWidths: {
       rowNumber: 52,
       color: 30,
