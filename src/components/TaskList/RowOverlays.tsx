@@ -4,6 +4,10 @@
  */
 
 import { memo } from "react";
+import type {
+  ClipboardPosition,
+  SelectionPosition,
+} from "../../hooks/useTaskRowData";
 import { COLORS, Z_INDEX } from "../../styles/design-tokens";
 import { SELECTION_RADIUS } from "./rowNumberConfig";
 
@@ -14,14 +18,8 @@ const SELECTION_BORDER = `2px solid ${COLORS.brand[600]}`;
 // ── Props ────────────────────────────────────────────────────────────────────
 
 interface RowOverlaysProps {
-  selectionPosition?: {
-    isFirstSelected: boolean;
-    isLastSelected: boolean;
-  };
-  clipboardPosition?: {
-    isFirst: boolean;
-    isLast: boolean;
-  };
+  selectionPosition?: SelectionPosition;
+  clipboardPosition?: ClipboardPosition;
 }
 
 // ── Component ────────────────────────────────────────────────────────────────

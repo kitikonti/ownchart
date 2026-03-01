@@ -9,7 +9,7 @@ import { useDensityConfig } from "../../store/slices/userPreferencesSlice";
 import { useChartStore } from "../../store/slices/chartSlice";
 import {
   getVisibleColumns,
-  getDensityAwareWidth,
+  buildGridTemplateColumns,
   getColumnPixelWidth,
   NAME_COLUMN_ID,
 } from "../../config/tableColumns";
@@ -65,16 +65,10 @@ export const TaskTableHeader = memo(function TaskTableHeader(): JSX.Element {
    * Generate CSS grid template columns based on column widths.
    * Uses density-aware widths when no custom width is set.
    */
-  const gridTemplateColumns = useMemo(() => {
-    return visibleColumns
-      .map((col) => {
-        const customWidth = columnWidths[col.id];
-        return customWidth
-          ? `${customWidth}px`
-          : getDensityAwareWidth(col.id, densityConfig);
-      })
-      .join(" ");
-  }, [columnWidths, densityConfig, visibleColumns]);
+  const gridTemplateColumns = useMemo(
+    () => buildGridTemplateColumns(visibleColumns, columnWidths, densityConfig),
+    [columnWidths, densityConfig, visibleColumns]
+  );
 
   const handleSelectAllClick = useCallback((): void => {
     if (allSelected) {
@@ -87,9 +81,8 @@ export const TaskTableHeader = memo(function TaskTableHeader(): JSX.Element {
   return (
     <>
       <div
-        className="task-table-header-row"
+        className="task-table-header-row grid"
         style={{
-          display: "grid",
           gridTemplateColumns,
           minWidth: totalColumnWidth,
           backgroundColor: TABLE_HEADER.bg,
@@ -108,7 +101,6 @@ export const TaskTableHeader = memo(function TaskTableHeader(): JSX.Element {
               "whitespace-nowrap relative",
             ].join(" ")}
             style={{
-              backgroundColor: TABLE_HEADER.bg,
               borderColor: TABLE_HEADER.border,
             }}
             role="columnheader"
@@ -142,9 +134,7 @@ export const TaskTableHeader = memo(function TaskTableHeader(): JSX.Element {
                   />
                 </svg>
               </button>
-            ) : column.id === "color" ? (
-              ""
-            ) : (
+            ) : column.id === "color" ? null : (
               column.label
             )}
             {/* Column Resizer - only for name column */}

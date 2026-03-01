@@ -27,7 +27,7 @@ import { useDensityConfig } from "../../store/slices/userPreferencesSlice";
 import { TaskTableRow } from "./TaskTableRow";
 import { NewTaskPlaceholderRow } from "./NewTaskPlaceholderRow";
 import {
-  getDensityAwareWidth,
+  buildGridTemplateColumns,
   getVisibleColumns,
 } from "../../config/tableColumns";
 import { useTableDimensions } from "../../hooks/useTableDimensions";
@@ -127,16 +127,10 @@ export function TaskTable(): JSX.Element {
     [reorderTasks]
   );
 
-  const gridTemplateColumns = useMemo(() => {
-    return visibleColumns
-      .map((col) => {
-        const customWidth = columnWidths[col.id];
-        return customWidth
-          ? `${customWidth}px`
-          : getDensityAwareWidth(col.id, densityConfig);
-      })
-      .join(" ");
-  }, [columnWidths, densityConfig, visibleColumns]);
+  const gridTemplateColumns = useMemo(
+    () => buildGridTemplateColumns(visibleColumns, columnWidths, densityConfig),
+    [columnWidths, densityConfig, visibleColumns]
+  );
 
   return (
     <div className="task-table-container bg-white border-r border-neutral-200 select-none">

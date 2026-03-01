@@ -265,3 +265,22 @@ export function getDensityAwareWidth(
   const col = TASK_COLUMNS.find((c) => c.id === columnId);
   return col?.defaultWidth ?? `${DEFAULT_COLUMN_WIDTH_PX}px`;
 }
+
+/**
+ * Build a CSS `grid-template-columns` value from visible columns.
+ * Uses custom widths when available, falling back to density-aware defaults.
+ */
+export function buildGridTemplateColumns(
+  visibleColumns: ColumnDefinition[],
+  columnWidths: Record<string, number>,
+  densityConfig: DensityConfig
+): string {
+  return visibleColumns
+    .map((col) => {
+      const customWidth = columnWidths[col.id];
+      return customWidth
+        ? `${customWidth}px`
+        : getDensityAwareWidth(col.id, densityConfig);
+    })
+    .join(" ");
+}

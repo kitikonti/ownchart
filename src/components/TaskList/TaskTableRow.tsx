@@ -16,12 +16,15 @@ import type { Task } from "../../types/chart.types";
 import type { TaskId } from "../../types/branded.types";
 import { useTaskStore } from "../../store/slices/taskSlice";
 import type { ColumnDefinition } from "../../config/tableColumns";
+import type {
+  ClipboardPosition,
+  SelectionPosition,
+} from "../../hooks/useTaskRowData";
 import { RowNumberCell } from "./RowNumberCell";
 import { RowOverlays } from "./RowOverlays";
 import { dragState } from "./dragSelectionState";
 import { TaskDataCells } from "./TaskDataCells";
-import { calculateSummaryDates } from "../../utils/hierarchy";
-import { calculateDuration } from "../../utils/dateUtils";
+import { computeDisplayTask } from "../../utils/taskDisplayUtils";
 import { useComputedTaskColor } from "../../hooks/useComputedTaskColor";
 import { COLORS, Z_INDEX } from "../../styles/design-tokens";
 
@@ -47,14 +50,8 @@ interface TaskTableRowProps {
   hiddenBelowCount?: number;
   onUnhideBelow?: () => void;
   onContextMenu: (e: React.MouseEvent, taskId: TaskId) => void;
-  clipboardPosition?: {
-    isFirst: boolean;
-    isLast: boolean;
-  };
-  selectionPosition?: {
-    isFirstSelected: boolean;
-    isLastSelected: boolean;
-  };
+  clipboardPosition?: ClipboardPosition;
+  selectionPosition?: SelectionPosition;
 }
 
 // ── Component ────────────────────────────────────────────────────────────────
@@ -96,24 +93,10 @@ export const TaskTableRow = memo(function TaskTableRow({
   const isInClipboard = clipboardPosition !== undefined;
 
   // Calculate summary dates if needed, and recalculate duration for all tasks
-  const displayTask = useMemo(() => {
-    if (task.type === "summary" && tasks) {
-      const summaryDates = calculateSummaryDates(tasks, task.id);
-      if (summaryDates) {
-        return { ...task, ...summaryDates };
-      }
-      return { ...task, startDate: "", endDate: "", duration: 0 };
-    }
-
-    if (task.startDate && task.endDate) {
-      return {
-        ...task,
-        duration: calculateDuration(task.startDate, task.endDate),
-      };
-    }
-
-    return task;
-  }, [task, tasks]);
+  const displayTask = useMemo(
+    () => computeDisplayTask(task, tasks),
+    [task, tasks]
+  );
 
   const isExpanded = task.open ?? true;
 
