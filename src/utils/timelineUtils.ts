@@ -161,6 +161,9 @@ export interface TaskBarGeometry {
   height: number; // Bar height (typically 32px)
 }
 
+/** Entry in the SCALE_THRESHOLDS lookup table. */
+type ScaleThreshold = { below: number; scales: ScaleConfig[] };
+
 // Extracted helper — avoids repeating the week options object in every format function
 function getWeekNumber(date: Date): number {
   return getWeek(date, {
@@ -191,8 +194,6 @@ function formatWeekWithMonthYear(date: Date): string {
 // Data-driven threshold table for getScaleConfig — adding a new zoom mode only
 // requires one change point. Entries are checked in ascending `below` order;
 // the first match wins. Thresholds match the PPD_* constants above.
-type ScaleThreshold = { below: number; scales: ScaleConfig[] };
-
 const SCALE_THRESHOLDS: ScaleThreshold[] = [
   // Extremely zoomed out (< PPD_QUARTER_VIEW): Quarter → Month
   {
@@ -272,7 +273,7 @@ export function getTimelineScale(
   // FIXED base pixels per day (industry standard)
   const basePixelsPerDay = FIXED_BASE_PIXELS_PER_DAY;
 
-  // Clamp zoom to valid range — prevents divide-by-zero in pixelToDate
+  // Clamp to MIN_ZOOM to prevent divide-by-zero in pixelToDate (MAX_ZOOM is enforced by the UI layer)
   const safeZoom = Math.max(MIN_ZOOM, zoom);
 
   // Apply zoom to pixels per day
@@ -353,7 +354,7 @@ export function getTaskBarGeometry({
   const x = dateToPixel(task.startDate, scale);
 
   // Milestones only need startDate (they represent a point in time, not a duration)
-  const endDate = task.endDate || task.startDate;
+  const endDate = task.endDate ?? task.startDate;
   const duration = calculateDuration(task.startDate, endDate);
   const width = duration * scale.pixelsPerDay;
 
@@ -392,6 +393,8 @@ const UNIT_OPS: Record<ScaleUnit, UnitOps> = {
     add: (date, step) => addMonths(date, step),
   },
   week: {
+    // weekStartsOn is called at invocation time (not module init) so that
+    // user-preference changes are picked up immediately — cannot be a constant.
     start: (date) => startOfWeek(date, { weekStartsOn: getWeekStartDay() }),
     end: (date, step) =>
       endOfWeek(addWeeks(date, step - 1), { weekStartsOn: getWeekStartDay() }),
