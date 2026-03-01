@@ -233,6 +233,7 @@ export function ExportDialog(): JSX.Element {
                 options={exportOptions}
                 onChange={setExportOptions}
                 currentAppZoom={currentAppZoom}
+                format={selectedExportFormat}
               />
             )}
 

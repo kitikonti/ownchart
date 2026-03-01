@@ -5,11 +5,14 @@
  */
 
 import { Image, FilePdf, FileCode, Info } from "@phosphor-icons/react";
+import type { Icon } from "@phosphor-icons/react";
 import type { ExportFormat } from "../../utils/export/types";
+
+const ICON_SIZE = 22;
 
 interface FormatOption {
   format: ExportFormat;
-  icon: typeof Image;
+  icon: Icon;
   label: string;
   helpText: string;
 }
@@ -82,7 +85,7 @@ export function ExportFormatSelector({
               title={option.helpText}
             >
               <Icon
-                size={22}
+                size={ICON_SIZE}
                 weight="light"
                 className={isSelected ? "text-white" : "text-neutral-500"}
               />

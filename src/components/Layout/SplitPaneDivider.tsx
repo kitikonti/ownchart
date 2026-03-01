@@ -6,6 +6,7 @@
 import { CaretRight } from "@phosphor-icons/react";
 
 const KEYBOARD_RESIZE_STEP = 20; // px per arrow key press
+const COLLAPSE_ICON_SIZE = 12;
 
 interface SplitPaneDividerProps {
   onMouseDown: (e: React.MouseEvent) => void;
@@ -76,13 +77,14 @@ export function SplitPaneDivider({
     >
       {isCollapsed ? (
         <CaretRight
-          size={12}
+          size={COLLAPSE_ICON_SIZE}
           weight="bold"
           className="text-neutral-500 pointer-events-none"
         />
       ) : (
         /* Visual indicator on hover - extends hit area */
         <div
+          aria-hidden="true"
           className={`absolute inset-y-0 -left-1 -right-1 ${isDragging ? "opacity-100" : "opacity-0 group-hover:opacity-100"}`}
         />
       )}

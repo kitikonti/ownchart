@@ -3,19 +3,25 @@
  * Wrapper around ZoomModeSelector.
  */
 
-import type { ExportOptions, ExportZoomMode } from "../../utils/export/types";
+import type {
+  ExportFormat,
+  ExportOptions,
+  ExportZoomMode,
+} from "../../utils/export/types";
 import { ZoomModeSelector } from "./ZoomModeSelector";
 
 export interface ScaleOptionsProps {
   options: ExportOptions;
   onChange: (options: Partial<ExportOptions>) => void;
   currentAppZoom: number;
+  format: ExportFormat;
 }
 
 export function ScaleOptions({
   options,
   onChange,
   currentAppZoom,
+  format,
 }: ScaleOptionsProps): JSX.Element {
   return (
     <ZoomModeSelector
@@ -24,7 +30,7 @@ export function ScaleOptions({
       timelineZoom={options.timelineZoom}
       onTimelineZoomChange={(zoom: number) => onChange({ timelineZoom: zoom })}
       currentAppZoom={currentAppZoom}
-      format="png"
+      format={format}
       fitToWidth={options.fitToWidth}
       onFitToWidthChange={(width: number) => onChange({ fitToWidth: width })}
     />
