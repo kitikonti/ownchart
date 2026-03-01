@@ -6,22 +6,22 @@
 
 import type { ReactNode } from "react";
 
-export interface SegmentedControlOption {
+export interface SegmentedControlOption<T extends string = string> {
   /** Unique value for this option */
-  value: string;
+  value: T;
   /** Display label */
   label: string;
   /** Optional icon rendered before label */
   icon?: ReactNode;
 }
 
-export interface SegmentedControlProps {
+export interface SegmentedControlProps<T extends string = string> {
   /** Available options */
-  options: SegmentedControlOption[];
+  options: SegmentedControlOption<T>[];
   /** Currently selected value */
-  value: string;
+  value: T;
   /** Called when selection changes */
-  onChange: (value: string) => void;
+  onChange: (value: T) => void;
   /** Layout mode: "inline" for horizontal bar, "grid" for 2D grid */
   layout?: "inline" | "grid";
   /** Number of columns for grid layout (default: 2) */
@@ -41,7 +41,7 @@ const GRID_COLS: Record<number, string> = {
 const FOCUS_CLASSES =
   "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-100";
 
-export function SegmentedControl({
+export function SegmentedControl<T extends string = string>({
   options,
   value,
   onChange,
@@ -49,7 +49,7 @@ export function SegmentedControl({
   columns = 2,
   ariaLabel,
   fullWidth = false,
-}: SegmentedControlProps): JSX.Element {
+}: SegmentedControlProps<T>): JSX.Element {
   if (layout === "grid") {
     const gridCols = GRID_COLS[columns] || "grid-cols-2";
     return (

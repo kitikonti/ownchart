@@ -14,6 +14,7 @@ import type {
   UiDensity,
   TaskLabelPosition,
 } from "../../types/preferences.types";
+import { FieldLabel } from "../common/FieldLabel";
 import { LabeledCheckbox } from "../common/LabeledCheckbox";
 import { RadioOptionCard } from "../common/RadioOptionCard";
 import { CollapsibleSection } from "../common/CollapsibleSection";
@@ -28,14 +29,14 @@ import type { SegmentedControlOption } from "../common/SegmentedControl";
 // =============================================================================
 
 /** Density options for the export */
-const DENSITY_OPTIONS: SegmentedControlOption[] = [
+const DENSITY_OPTIONS: SegmentedControlOption<UiDensity>[] = [
   { value: "compact", label: "Compact" },
   { value: "normal", label: "Normal" },
   { value: "comfortable", label: "Comfortable" },
 ];
 
 /** Task label position options for the export */
-const LABEL_POSITION_OPTIONS: SegmentedControlOption[] = [
+const LABEL_POSITION_OPTIONS: SegmentedControlOption<TaskLabelPosition>[] = [
   { value: "before", label: "Before" },
   { value: "inside", label: "Inside" },
   { value: "after", label: "After" },
@@ -66,10 +67,13 @@ const TIMELINE_OPTIONS: { key: ExportBooleanKey; label: string }[] = [
 // Helpers
 // =============================================================================
 
-/** Format a Date as ISO date string (YYYY-MM-DD) */
+/** Format a Date as YYYY-MM-DD using local date parts (avoids UTC shift) */
 function formatDate(date: Date | undefined): string {
   if (!date) return "";
-  return date.toISOString().split("T")[0];
+  const y = date.getFullYear();
+  const m = String(date.getMonth() + 1).padStart(2, "0");
+  const d = String(date.getDate()).padStart(2, "0");
+  return `${y}-${m}-${d}`;
 }
 
 // =============================================================================
@@ -202,13 +206,11 @@ export function SharedExportOptions({
       <CollapsibleSection title="Layout Options">
         {/* Row Density */}
         <div>
-          <span className="block text-sm font-medium text-neutral-700 mb-2">
-            Row Density
-          </span>
+          <FieldLabel>Row Density</FieldLabel>
           <SegmentedControl
             options={DENSITY_OPTIONS}
             value={options.density}
-            onChange={(value) => onChange({ density: value as UiDensity })}
+            onChange={(value) => onChange({ density: value })}
             ariaLabel="Row density"
             fullWidth
           />
@@ -216,9 +218,7 @@ export function SharedExportOptions({
 
         {/* Columns */}
         <div>
-          <span className="block text-sm font-medium text-neutral-700 mb-3">
-            Columns to Include
-          </span>
+          <FieldLabel>Columns to Include</FieldLabel>
           <CheckboxGroup items={columnItems} onChange={handleColumnChange} />
           <p className="text-xs text-neutral-500 mt-2">
             Uncheck all for timeline-only export
@@ -232,9 +232,7 @@ export function SharedExportOptions({
       <CollapsibleSection title="Display Options">
         {/* Timeline Elements */}
         <div>
-          <span className="block text-sm font-medium text-neutral-700 mb-3">
-            Show in Timeline
-          </span>
+          <FieldLabel>Show in Timeline</FieldLabel>
           <CheckboxGroup
             items={timelineItems}
             onChange={handleTimelineChange}
@@ -243,15 +241,11 @@ export function SharedExportOptions({
 
         {/* Label Position */}
         <div>
-          <span className="block text-sm font-medium text-neutral-700 mb-2">
-            Label Position
-          </span>
+          <FieldLabel>Label Position</FieldLabel>
           <SegmentedControl
             options={LABEL_POSITION_OPTIONS}
             value={options.taskLabelPosition}
-            onChange={(value) =>
-              onChange({ taskLabelPosition: value as TaskLabelPosition })
-            }
+            onChange={(value) => onChange({ taskLabelPosition: value })}
             layout="grid"
             ariaLabel="Task label position"
           />

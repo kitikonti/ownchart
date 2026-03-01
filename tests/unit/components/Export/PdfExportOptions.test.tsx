@@ -175,6 +175,69 @@ describe("PdfExportOptions", () => {
         })
       );
     });
+
+    it("clamps custom dimensions to minimum", () => {
+      const onChange = vi.fn();
+      render(
+        <PdfExportOptions
+          {...createDefaultProps({
+            options: { ...DEFAULT_PDF_OPTIONS, pageSize: "custom" },
+            onChange,
+          })}
+        />
+      );
+
+      fireEvent.change(screen.getByLabelText("Width (mm)"), {
+        target: { value: "10" },
+      });
+      expect(onChange).toHaveBeenCalledWith(
+        expect.objectContaining({
+          customPageSize: expect.objectContaining({ width: 100 }),
+        })
+      );
+    });
+
+    it("clamps custom dimensions to maximum", () => {
+      const onChange = vi.fn();
+      render(
+        <PdfExportOptions
+          {...createDefaultProps({
+            options: { ...DEFAULT_PDF_OPTIONS, pageSize: "custom" },
+            onChange,
+          })}
+        />
+      );
+
+      fireEvent.change(screen.getByLabelText("Height (mm)"), {
+        target: { value: "9999" },
+      });
+      expect(onChange).toHaveBeenCalledWith(
+        expect.objectContaining({
+          customPageSize: expect.objectContaining({ height: 5000 }),
+        })
+      );
+    });
+
+    it("falls back to default for non-numeric custom input", () => {
+      const onChange = vi.fn();
+      render(
+        <PdfExportOptions
+          {...createDefaultProps({
+            options: { ...DEFAULT_PDF_OPTIONS, pageSize: "custom" },
+            onChange,
+          })}
+        />
+      );
+
+      fireEvent.change(screen.getByLabelText("Width (mm)"), {
+        target: { value: "" },
+      });
+      expect(onChange).toHaveBeenCalledWith(
+        expect.objectContaining({
+          customPageSize: expect.objectContaining({ width: 500 }),
+        })
+      );
+    });
   });
 
   describe("margin presets", () => {
@@ -342,6 +405,31 @@ describe("PdfExportOptions", () => {
       render(<PdfExportOptions {...createDefaultProps()} />);
       const pageSetup = screen.getByText("Page Setup");
       expect(pageSetup.tagName).toBe("H3");
+    });
+
+    it("has accessible label on page size select", () => {
+      render(<PdfExportOptions {...createDefaultProps()} />);
+      expect(screen.getByLabelText("Page Size")).toBeInTheDocument();
+    });
+
+    it("has accessible label on author input", () => {
+      render(
+        <PdfExportOptions
+          {...createDefaultProps({
+            options: {
+              ...DEFAULT_PDF_OPTIONS,
+              header: {
+                ...DEFAULT_PDF_OPTIONS.header,
+                showAuthor: true,
+              },
+            },
+          })}
+        />
+      );
+      // Use role query to target the text input specifically (not checkbox labels)
+      expect(
+        screen.getByRole("textbox", { name: "Author" })
+      ).toBeInTheDocument();
     });
   });
 });

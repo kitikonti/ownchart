@@ -87,8 +87,8 @@ describe("SharedExportOptions", () => {
         <SharedExportOptions
           {...createDefaultProps({
             projectDateRange: {
-              start: new Date("2025-01-01"),
-              end: new Date("2025-12-31"),
+              start: new Date(2025, 0, 1), // Jan 1, 2025 local
+              end: new Date(2025, 11, 31), // Dec 31, 2025 local
             },
           })}
         />
@@ -96,6 +96,23 @@ describe("SharedExportOptions", () => {
 
       expect(screen.getByText(/2025-01-01/)).toBeInTheDocument();
       expect(screen.getByText(/2025-12-31/)).toBeInTheDocument();
+    });
+
+    it("formats dates using local time, not UTC", () => {
+      // Use a date at midnight local time — toISOString() would shift to previous day in positive UTC offsets
+      render(
+        <SharedExportOptions
+          {...createDefaultProps({
+            projectDateRange: {
+              start: new Date(2025, 5, 15), // June 15, 2025 local
+              end: new Date(2025, 5, 30), // June 30, 2025 local
+            },
+          })}
+        />
+      );
+
+      expect(screen.getByText(/2025-06-15/)).toBeInTheDocument();
+      expect(screen.getByText(/2025-06-30/)).toBeInTheDocument();
     });
 
     it("shows custom date inputs when custom range is selected", () => {
