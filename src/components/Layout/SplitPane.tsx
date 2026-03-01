@@ -5,11 +5,13 @@
  */
 
 import { useState, useEffect, useRef, useCallback } from "react";
+import type { MouseEvent as ReactMouseEvent } from "react";
 import { SplitPaneDivider } from "./SplitPaneDivider";
 
 const COLLAPSE_THRESHOLD = 80; // px — snap to collapsed below this width
+const PANEL_TRANSITION = "width 150ms ease-out";
 
-interface SplitPaneProps {
+export interface SplitPaneProps {
   leftContent: React.ReactNode;
   rightContent: React.ReactNode;
   leftWidth: number;
@@ -47,12 +49,15 @@ export function SplitPane({
     }
   }, [leftWidth, isCollapsed]);
 
-  const handleMouseDown = (e: React.MouseEvent): void => {
-    e.preventDefault();
-    dragFromCollapsedRef.current = isCollapsed;
-    dragWidthRef.current = isCollapsed ? 0 : leftWidth;
-    setIsDragging(true);
-  };
+  const handleMouseDown = useCallback(
+    (e: ReactMouseEvent): void => {
+      e.preventDefault();
+      dragFromCollapsedRef.current = isCollapsed;
+      dragWidthRef.current = isCollapsed ? 0 : leftWidth;
+      setIsDragging(true);
+    },
+    [isCollapsed, leftWidth]
+  );
 
   const handleKeyboardResize = useCallback(
     (delta: number): void => {
@@ -143,15 +148,12 @@ export function SplitPane({
     onCollapsedChange,
   ]);
 
-  const handleExpandFromCollapsed = (): void => {
+  const handleExpandFromCollapsed = useCallback((): void => {
     onCollapsedChange?.(false);
     // Restore previous width or use minimum
-    const restoreWidth = Math.max(
-      minLeftWidth,
-      preCollapseWidthRef.current || minLeftWidth
-    );
+    const restoreWidth = Math.max(minLeftWidth, preCollapseWidthRef.current);
     onLeftWidthChange(restoreWidth);
-  };
+  }, [onCollapsedChange, minLeftWidth, onLeftWidthChange]);
 
   // When collapsed, always show 0 width (during drag, DOM manipulation takes over)
   const effectiveWidth = isCollapsed ? 0 : leftWidth;
@@ -163,7 +165,7 @@ export function SplitPane({
         ref={leftPanelRef}
         style={{
           width: effectiveWidth,
-          transition: isDragging ? "none" : "width 150ms ease-out",
+          transition: isDragging ? "none" : PANEL_TRANSITION,
         }}
         className="flex-shrink-0 overflow-clip"
       >

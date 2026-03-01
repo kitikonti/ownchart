@@ -4,50 +4,12 @@
  * Supports current view, fit to width/page, and custom zoom modes.
  */
 
-import { useState } from "react";
 import { RadioOptionCard } from "../common/RadioOptionCard";
-import { Input } from "../common/Input";
-import { Select } from "../common/Select";
-import {
-  EXPORT_ZOOM_MIN,
-  EXPORT_ZOOM_MAX,
-  EXPORT_ZOOM_PRESETS,
-} from "../../utils/export/types";
 import type { ExportZoomMode, ExportFormat } from "../../utils/export/types";
+import { FitToWidthSelector } from "./FitToWidthSelector";
+import { CustomZoomControl } from "./CustomZoomControl";
 
-/** Fit to width preset option (PNG only) */
-interface FitToWidthPreset {
-  label: string;
-  value: number;
-}
-
-/** Fit to width preset groups (PNG only) */
-const FIT_TO_WIDTH_GROUPS = {
-  screenSizes: {
-    label: "Screen Sizes",
-    presets: [
-      { label: "HD Screen (1920px)", value: 1920 },
-      { label: "4K Screen (3840px)", value: 3840 },
-    ] as FitToWidthPreset[],
-  },
-  print150dpi: {
-    label: "Print @ 150 DPI",
-    presets: [
-      { label: "A4 Landscape (1754px)", value: 1754 },
-      { label: "A3 Landscape (2480px)", value: 2480 },
-      { label: "Letter Landscape (1650px)", value: 1650 },
-    ] as FitToWidthPreset[],
-  },
-};
-
-/** All preset values for quick lookup */
-const ALL_PRESET_VALUES = [
-  ...FIT_TO_WIDTH_GROUPS.screenSizes.presets,
-  ...FIT_TO_WIDTH_GROUPS.print150dpi.presets,
-].map((p) => p.value);
-
-/** Custom zoom presets */
-const CUSTOM_ZOOM_PRESETS_ARRAY = [0.1, 0.25, 0.5, 1.0, 1.5, 2.0];
+const DEFAULT_FIT_TO_WIDTH_PX = 1920;
 
 export interface ZoomModeSelectorProps {
   /** Current zoom mode */
@@ -75,33 +37,17 @@ export function ZoomModeSelector({
   onTimelineZoomChange,
   currentAppZoom,
   format,
-  fitToWidth = 1920,
+  fitToWidth = DEFAULT_FIT_TO_WIDTH_PX,
   onFitToWidthChange,
 }: ZoomModeSelectorProps): JSX.Element {
-  // Track if custom width is selected (PNG only)
-  const [isCustomWidth, setIsCustomWidth] = useState(
-    !ALL_PRESET_VALUES.includes(fitToWidth)
-  );
-
   const isPngOrSvg = format === "png" || format === "svg";
   const radioName = `${format}ZoomMode`;
 
-  // Handle fit to width select change (PNG only)
-  const handleSelectChange = (value: string): void => {
-    if (value === "custom") {
-      setIsCustomWidth(true);
-    } else {
-      const numValue = parseInt(value);
-      setIsCustomWidth(false);
-      onFitToWidthChange?.(numValue);
-    }
-  };
-
   return (
-    <section>
-      <span className="block text-sm font-semibold text-neutral-900 mb-3">
+    <fieldset className="border-0 p-0 m-0">
+      <legend className="block text-sm font-semibold text-neutral-900 mb-3">
         Timeline Scale
-      </span>
+      </legend>
 
       <div className="space-y-2">
         {/* Use Current View */}
@@ -125,56 +71,10 @@ export function ZoomModeSelector({
           }
         >
           {isPngOrSvg && (
-            <div className="space-y-3">
-              {/* Select Dropdown */}
-              <Select
-                value={isCustomWidth ? "custom" : fitToWidth.toString()}
-                onChange={(e) => handleSelectChange(e.target.value)}
-                onClick={(e) => e.stopPropagation()}
-              >
-                <optgroup label={FIT_TO_WIDTH_GROUPS.screenSizes.label}>
-                  {FIT_TO_WIDTH_GROUPS.screenSizes.presets.map((preset) => (
-                    <option key={preset.value} value={preset.value}>
-                      {preset.label}
-                    </option>
-                  ))}
-                </optgroup>
-                <optgroup label={FIT_TO_WIDTH_GROUPS.print150dpi.label}>
-                  {FIT_TO_WIDTH_GROUPS.print150dpi.presets.map((preset) => (
-                    <option key={preset.value} value={preset.value}>
-                      {preset.label}
-                    </option>
-                  ))}
-                </optgroup>
-                <option value="custom">Custom width...</option>
-              </Select>
-
-              {/* Custom Width Input */}
-              {isCustomWidth && (
-                <div className="flex items-center gap-2">
-                  <Input
-                    type="number"
-                    value={fitToWidth}
-                    onChange={(e) =>
-                      onFitToWidthChange?.(
-                        Math.max(
-                          100,
-                          Math.min(20000, parseInt(e.target.value) || 1920)
-                        )
-                      )
-                    }
-                    onClick={(e) => e.stopPropagation()}
-                    fullWidth={false}
-                    className="flex-1"
-                    mono
-                    min={100}
-                    max={20000}
-                    placeholder="1920"
-                  />
-                  <span className="text-sm text-neutral-500">px</span>
-                </div>
-              )}
-            </div>
+            <FitToWidthSelector
+              fitToWidth={fitToWidth}
+              onFitToWidthChange={onFitToWidthChange}
+            />
           )}
         </RadioOptionCard>
 
@@ -186,70 +86,13 @@ export function ZoomModeSelector({
           title="Custom zoom"
           description="Set a specific zoom percentage"
         >
-          <div className="space-y-4">
-            <div className="flex items-center gap-3">
-              <input
-                type="range"
-                min={EXPORT_ZOOM_MIN * 100}
-                max={EXPORT_ZOOM_MAX * 100}
-                step={1}
-                value={timelineZoom * 100}
-                onChange={(e) =>
-                  onTimelineZoomChange(parseInt(e.target.value) / 100)
-                }
-                onClick={(e) => e.stopPropagation()}
-                className="flex-1 h-1.5 bg-neutral-200 rounded-full appearance-none cursor-pointer accent-brand-600"
-              />
-              <div className="flex items-center gap-1 bg-white border border-neutral-300 rounded px-3 py-1.5">
-                <input
-                  type="number"
-                  value={Math.round(timelineZoom * 100)}
-                  onChange={(e) =>
-                    onTimelineZoomChange(
-                      Math.max(
-                        EXPORT_ZOOM_MIN,
-                        Math.min(
-                          EXPORT_ZOOM_MAX,
-                          parseInt(e.target.value) / 100 || 1
-                        )
-                      )
-                    )
-                  }
-                  onClick={(e) => e.stopPropagation()}
-                  className="w-10 text-sm text-center font-mono bg-transparent border-none focus:outline-none text-neutral-900"
-                  min={EXPORT_ZOOM_MIN * 100}
-                  max={EXPORT_ZOOM_MAX * 100}
-                />
-                <span className="text-xs text-neutral-500">%</span>
-              </div>
-            </div>
-
-            {/* Zoom presets */}
-            <div className="flex flex-wrap gap-1.5">
-              {(isPngOrSvg
-                ? CUSTOM_ZOOM_PRESETS_ARRAY
-                : Object.values(EXPORT_ZOOM_PRESETS)
-              ).map((value) => (
-                <button
-                  key={value}
-                  type="button"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    onTimelineZoomChange(value);
-                  }}
-                  className={`px-3 py-1.5 text-xs font-mono font-medium rounded transition-colors duration-150 ${
-                    timelineZoom === value
-                      ? "bg-brand-600 text-white"
-                      : "bg-white border border-neutral-300 text-neutral-700 hover:border-neutral-400 hover:bg-neutral-50"
-                  }`}
-                >
-                  {Math.round(value * 100)}%
-                </button>
-              ))}
-            </div>
-          </div>
+          <CustomZoomControl
+            timelineZoom={timelineZoom}
+            onTimelineZoomChange={onTimelineZoomChange}
+            isPngOrSvg={isPngOrSvg}
+          />
         </RadioOptionCard>
       </div>
-    </section>
+    </fieldset>
   );
 }

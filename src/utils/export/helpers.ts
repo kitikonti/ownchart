@@ -154,3 +154,30 @@ export function removeOffscreenContainer(container: HTMLDivElement): void {
     container.parentNode.removeChild(container);
   }
 }
+
+/** Conservative PNG compression ratio (typical range: 25–50% of raw RGBA) */
+const PNG_COMPRESSION_RATIO = 0.35;
+const BYTES_PER_KB = 1024;
+const BYTES_PER_MB = 1024 * 1024;
+
+/**
+ * Estimate PNG file size based on dimensions.
+ * Uses conservative 4 bytes/pixel RGBA with ~35% compression ratio.
+ *
+ * @param width - Image width in pixels
+ * @param height - Image height in pixels
+ * @returns Human-readable size string (e.g. "~1.2 MB")
+ */
+export function estimateFileSize(width: number, height: number): string {
+  if (width === 0 || height === 0) return "—";
+  const rawBytes = width * height * 4;
+  const estimatedBytes = rawBytes * PNG_COMPRESSION_RATIO;
+
+  if (estimatedBytes < BYTES_PER_KB) {
+    return `~${Math.round(estimatedBytes)} B`;
+  } else if (estimatedBytes < BYTES_PER_MB) {
+    return `~${(estimatedBytes / BYTES_PER_KB).toFixed(1)} KB`;
+  } else {
+    return `~${(estimatedBytes / BYTES_PER_MB).toFixed(1)} MB`;
+  }
+}
