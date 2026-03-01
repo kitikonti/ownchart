@@ -27,10 +27,37 @@ import type { Task } from "../types/chart.types";
 import type { TaskId } from "../types/branded.types";
 import type { EditableField } from "../types/task.types";
 
+// ── OS detection ──────────────────────────────────────────────────────────────
+// Computed once at module load — environment-stable, never changes at runtime.
+// navigator.userAgentData.platform is the modern standard (Chromium 90+);
+// navigator.platform is deprecated but remains the universal fallback.
+const IS_MAC =
+  (navigator as Navigator & { userAgentData?: { platform?: string } })
+    .userAgentData?.platform === "macOS" ||
+  navigator.platform.toUpperCase().includes("MAC");
+
+// ── Helpers ───────────────────────────────────────────────────────────────────
+
+/** Returns true when the focused element is a text-entry control.
+ *  Checkbox inputs are intentionally excluded so that clipboard and other
+ *  operations continue to work normally when a checkbox has focus. */
+export function isTextInputElement(target: HTMLElement): boolean {
+  return (
+    target.tagName === "TEXTAREA" ||
+    target.tagName === "SELECT" ||
+    target.isContentEditable ||
+    (target.tagName === "INPUT" &&
+      (target as HTMLInputElement).type !== "checkbox")
+  );
+}
+
 // ── Context ───────────────────────────────────────────────────────────────────
 // A single snapshot of all state needed by the sub-handlers.  Built fresh on
 // every render in the hook body and passed into every module-level handler
 // so they remain pure functions with no closed-over stale values.
+//
+// When adding a shortcut: update (1) this interface, (2) the Zustand
+// subscription in useKeyboardShortcuts(), and (3) the ctx literal.
 
 interface ActiveCell {
   taskId: TaskId | null;
@@ -419,20 +446,6 @@ export function useKeyboardShortcuts(): void {
   const isHelpPanelOpen = useUIStore((state) => state.isHelpPanelOpen);
   const isWelcomeTourOpen = useUIStore((state) => state.isWelcomeTourOpen);
 
-  // Detect modifier-key convention for this OS once per mount.
-  // useRef with lazy init is the precise semantic for "compute once, never
-  // discard" — unlike useMemo, React will never throw away a ref's value.
-  // navigator.userAgentData.platform is the modern standard (Chromium 90+);
-  // navigator.platform is deprecated but remains the universal fallback.
-  const isMacRef = useRef<boolean | null>(null);
-  if (isMacRef.current === null) {
-    isMacRef.current =
-      (navigator as Navigator & { userAgentData?: { platform?: string } })
-        .userAgentData?.platform === "macOS" ||
-      navigator.platform.toUpperCase().includes("MAC");
-  }
-  const isMac = isMacRef.current;
-
   // ── Stable handler ref ─────────────────────────────────────────────────
   // The event listener is registered once (empty dep array below).
   // On every render, handlerRef.current is replaced with a fresh closure so
@@ -485,22 +498,12 @@ export function useKeyboardShortcuts(): void {
 
   // ── Main dispatcher ────────────────────────────────────────────────────
   handlerRef.current = (e: KeyboardEvent): void => {
-    const modKey = isMac ? e.metaKey : e.ctrlKey;
+    const modKey = IS_MAC ? e.metaKey : e.ctrlKey;
 
     const target = e.target as HTMLElement | null;
     if (!target) return;
 
-    const isTextInput =
-      target.tagName === "TEXTAREA" ||
-      target.tagName === "SELECT" ||
-      target.isContentEditable ||
-      (target.tagName === "INPUT" &&
-        (target as HTMLInputElement).type !== "checkbox");
-
-    // Ignore all shortcuts when the user is typing in a text field.
-    // Checkbox-focused elements are intentionally excluded so that
-    // clipboard and other operations continue to work normally.
-    if (isTextInput) return;
+    if (isTextInputElement(target)) return;
 
     const isCellActive = activeCell.taskId !== null;
 
