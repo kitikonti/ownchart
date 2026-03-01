@@ -68,6 +68,25 @@ export interface ColumnDefinition {
 
   /** Whether to show right border (default: true). Set false for borderless columns like color. */
   showRightBorder?: boolean;
+
+  /**
+   * Special header rendering variant. Undefined renders column.label as plain text.
+   * - 'select-all': renders an Excel-style select-all button (rowNumber column)
+   * - 'empty': renders nothing — column is identified by aria-label only (color column)
+   */
+  headerVariant?: "select-all" | "empty";
+
+  /**
+   * Accessible label for header cells that have no visible label text.
+   * Used as aria-label on the header cell element.
+   */
+  headerAriaLabel?: string;
+
+  /**
+   * Whether the column header shows a drag-to-resize handle.
+   * When true, right padding is omitted to leave space for the resizer.
+   */
+  resizable?: boolean;
 }
 
 /** Wrap a string validator with a typeof guard. */
@@ -95,6 +114,9 @@ function numberValidator(
 /** The row-number column has no data field; used for selection and visual numbering. */
 export const ROW_NUMBER_COLUMN_ID: ColumnId = "rowNumber";
 
+/** The color column has no header label; identified by this constant for conditional rendering. */
+export const COLOR_COLUMN_ID: ColumnId = "color";
+
 /** The name column requires special layout handling (minmax, indentation). */
 export const NAME_COLUMN_ID: ColumnId = "name";
 
@@ -108,6 +130,8 @@ export const TASK_COLUMNS: ColumnDefinition[] = [
     defaultWidth: "40px",
     editable: false,
     renderer: "custom",
+    headerVariant: "select-all",
+    headerAriaLabel: "Row number",
   },
   {
     id: "color",
@@ -118,6 +142,8 @@ export const TASK_COLUMNS: ColumnDefinition[] = [
     renderer: "color",
     validator: stringValidator(validateColor),
     showRightBorder: false,
+    headerVariant: "empty",
+    headerAriaLabel: "Color",
   },
   {
     id: "name",
@@ -127,6 +153,7 @@ export const TASK_COLUMNS: ColumnDefinition[] = [
     editable: true,
     renderer: "text",
     validator: stringValidator(validateTaskName),
+    resizable: true,
   },
   {
     id: "startDate",
@@ -237,6 +264,10 @@ export function getColumnPixelWidth(
   if (columnWidths[columnId] !== undefined) {
     return columnWidths[columnId];
   }
+  // Name column uses minmax() in grid — return the density-aware minimum
+  if (columnId === NAME_COLUMN_ID) {
+    return densityConfig.columnWidths.nameMin;
+  }
   return getDensityDefault(columnId, densityConfig) ?? DEFAULT_COLUMN_WIDTH_PX;
 }
 
@@ -260,4 +291,23 @@ export function getDensityAwareWidth(
   // Fallback to the original column definition
   const col = TASK_COLUMNS.find((c) => c.id === columnId);
   return col?.defaultWidth ?? `${DEFAULT_COLUMN_WIDTH_PX}px`;
+}
+
+/**
+ * Build a CSS `grid-template-columns` value from visible columns.
+ * Uses custom widths when available, falling back to density-aware defaults.
+ */
+export function buildGridTemplateColumns(
+  visibleColumns: ColumnDefinition[],
+  columnWidths: Record<string, number>,
+  densityConfig: DensityConfig
+): string {
+  return visibleColumns
+    .map((col) => {
+      const customWidth = columnWidths[col.id];
+      return customWidth
+        ? `${customWidth}px`
+        : getDensityAwareWidth(col.id, densityConfig);
+    })
+    .join(" ");
 }

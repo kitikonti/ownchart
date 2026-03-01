@@ -1,31 +1,167 @@
 /**
- * TaskTableHeader component - Renders the sticky header for the task table
- * Extracted to be used on App level for synchronized scrolling
+ * TaskTableHeader component - Renders the sticky header for the task table.
+ * Extracted to be used on App level for synchronized scrolling.
  */
 
-import { useMemo } from "react";
-import { useTaskStore } from "../../store/slices/taskSlice";
-import { useDensityConfig } from "../../store/slices/userPreferencesSlice";
-import { useChartStore } from "../../store/slices/chartSlice";
+import { memo, useCallback, useMemo } from "react";
+import { useDensityConfig } from "@/store/slices/userPreferencesSlice";
+import { useChartStore } from "@/store/slices/chartSlice";
+import { useTaskTableHeaderStore } from "@/hooks/useTaskTableHeaderStore";
+import type { DensityConfig } from "@/types/preferences.types";
+import type { ColumnDefinition } from "@/config/tableColumns";
 import {
   getVisibleColumns,
-  getDensityAwareWidth,
-  NAME_COLUMN_ID,
-} from "../../config/tableColumns";
+  buildGridTemplateColumns,
+  getColumnPixelWidth,
+} from "@/config/tableColumns";
+import { useTableDimensions } from "@/hooks/useTableDimensions";
+import { useTableHeaderContextMenu } from "@/hooks/useTableHeaderContextMenu";
+import { ContextMenu } from "@/components/ContextMenu/ContextMenu";
+import { TABLE_HEADER } from "@/styles/design-tokens";
 import { ColumnResizer } from "./ColumnResizer";
-import { useTableDimensions } from "../../hooks/useTableDimensions";
-import { useTableHeaderContextMenu } from "../../hooks/useTableHeaderContextMenu";
-import { ContextMenu } from "../ContextMenu/ContextMenu";
-import { TABLE_HEADER } from "../../styles/design-tokens";
 
-export function TaskTableHeader(): JSX.Element {
-  const tasks = useTaskStore((state) => state.tasks);
-  const selectedTaskIds = useTaskStore((state) => state.selectedTaskIds);
-  const selectAllTasks = useTaskStore((state) => state.selectAllTasks);
-  const clearSelection = useTaskStore((state) => state.clearSelection);
-  const columnWidths = useTaskStore((state) => state.columnWidths);
-  const setColumnWidth = useTaskStore((state) => state.setColumnWidth);
-  const autoFitColumn = useTaskStore((state) => state.autoFitColumn);
+// ── Constants ────────────────────────────────────────────────────────────────
+
+const SELECT_ALL_TRIANGLE_SIZE = 8;
+const NAME_RESIZER_MIN_WIDTH = 100;
+
+// ── Private Sub-Components ───────────────────────────────────────────────────
+
+interface SelectAllButtonProps {
+  allSelected: boolean;
+  onSelectAll: () => void;
+}
+
+/** Excel-style select-all button rendered in the row-number column header. */
+const SelectAllButton = memo(function SelectAllButton({
+  allSelected,
+  onSelectAll,
+}: SelectAllButtonProps): JSX.Element {
+  return (
+    <button
+      onClick={onSelectAll}
+      className="absolute inset-0 cursor-pointer hover:bg-neutral-200 transition-colors"
+      title={allSelected ? "Deselect all" : "Select all"}
+      aria-label={allSelected ? "Deselect all tasks" : "Select all tasks"}
+    >
+      {/* Small triangle in bottom-right corner — decorative, described by button aria-label */}
+      <svg
+        width={SELECT_ALL_TRIANGLE_SIZE}
+        height={SELECT_ALL_TRIANGLE_SIZE}
+        viewBox={`0 0 ${SELECT_ALL_TRIANGLE_SIZE} ${SELECT_ALL_TRIANGLE_SIZE}`}
+        className="absolute bottom-1 right-1"
+        aria-hidden="true"
+      >
+        <path
+          d={`M${SELECT_ALL_TRIANGLE_SIZE} 0 L${SELECT_ALL_TRIANGLE_SIZE} ${SELECT_ALL_TRIANGLE_SIZE} L0 ${SELECT_ALL_TRIANGLE_SIZE} Z`}
+          fill={TABLE_HEADER.triangle}
+        />
+      </svg>
+    </button>
+  );
+});
+
+interface HeaderCellProps {
+  column: ColumnDefinition;
+  densityConfig: DensityConfig;
+  /** Only consumed when column.headerVariant === 'select-all'. */
+  allSelected?: boolean;
+  columnWidths: Record<string, number>;
+  /** Only consumed when column.headerVariant === 'select-all'. */
+  onSelectAll?: () => void;
+  onContextMenu: (e: React.MouseEvent, columnId: string) => void;
+  setColumnWidth: (id: string, width: number) => void;
+  autoFitColumn: (id: string) => void;
+}
+
+// Stable noop used as default for onSelectAll when the cell is not rowNumber.
+const noop = (): void => {};
+
+/** Returns the content to render inside a header cell based on column headerVariant. */
+function renderHeaderCellContent(
+  column: ColumnDefinition,
+  allSelected: boolean,
+  onSelectAll: () => void
+): JSX.Element | string | null {
+  if (column.headerVariant === "select-all") {
+    return (
+      <SelectAllButton allSelected={allSelected} onSelectAll={onSelectAll} />
+    );
+  }
+  if (column.headerVariant === "empty") {
+    return null;
+  }
+  return column.label;
+}
+
+/** Renders a single column header cell with context menu and optional resizer. */
+const HeaderCell = memo(function HeaderCell({
+  column,
+  densityConfig,
+  allSelected = false,
+  columnWidths,
+  onSelectAll = noop,
+  onContextMenu,
+  setColumnWidth,
+  autoFitColumn,
+}: HeaderCellProps): JSX.Element {
+  return (
+    <div
+      className={[
+        "task-table-header-cell",
+        // Resizable columns omit right padding — the resize handle fills that space
+        column.resizable ? "pr-3" : "px-3",
+        "border-b",
+        (column.showRightBorder ?? true) ? "border-r" : "",
+        "text-xs font-semibold text-neutral-600 uppercase tracking-wider",
+        "whitespace-nowrap relative",
+      ].join(" ")}
+      style={{
+        borderColor: TABLE_HEADER.border,
+        // Vertical padding follows density so the header height matches row height
+        paddingTop: densityConfig.headerPaddingY,
+        paddingBottom: densityConfig.headerPaddingY,
+      }}
+      role="columnheader"
+      // 'select-all' cells: tabIndex=-1 because the inner SelectAllButton is the
+      // interactive element and handles both its own action and keyboard context
+      // menu (Shift+F10 fires on the focused element). Other cells: tabIndex=0
+      // so the ContextMenu key reaches them for column header context menus.
+      tabIndex={column.headerVariant === "select-all" ? -1 : 0}
+      // Accessible name for columns with no visible label text (from column config)
+      aria-label={column.headerAriaLabel}
+      onContextMenu={(e) => onContextMenu(e, column.id)}
+    >
+      {renderHeaderCellContent(column, allSelected, onSelectAll)}
+      {column.resizable && (
+        <ColumnResizer
+          columnId={column.id}
+          currentWidth={getColumnPixelWidth(
+            column.id,
+            columnWidths,
+            densityConfig
+          )}
+          onResize={setColumnWidth}
+          onAutoResize={autoFitColumn}
+          minWidth={NAME_RESIZER_MIN_WIDTH}
+        />
+      )}
+    </div>
+  );
+});
+
+// ── Component ────────────────────────────────────────────────────────────────
+
+export const TaskTableHeader = memo(function TaskTableHeader(): JSX.Element {
+  const {
+    tasks,
+    selectedTaskIds,
+    selectAllTasks,
+    clearSelection,
+    columnWidths,
+    setColumnWidth,
+    autoFitColumn,
+  } = useTaskTableHeaderStore();
   const densityConfig = useDensityConfig();
   const hiddenColumns = useChartStore((state) => state.hiddenColumns);
 
@@ -46,66 +182,34 @@ export function TaskTableHeader(): JSX.Element {
   // Get total column width for proper scrolling
   const { totalColumnWidth } = useTableDimensions();
 
-  const allSelected =
-    tasks.length > 0 &&
-    tasks.every((task) => selectedTaskIds.includes(task.id));
+  const allSelected = useMemo(() => {
+    if (tasks.length === 0) return false;
+    const selectedSet = new Set(selectedTaskIds);
+    return tasks.every((task) => selectedSet.has(task.id));
+  }, [tasks, selectedTaskIds]);
 
   /**
    * Generate CSS grid template columns based on column widths.
    * Uses density-aware widths when no custom width is set.
    */
-  const gridTemplateColumns = useMemo(() => {
-    return visibleColumns
-      .map((col) => {
-        const customWidth = columnWidths[col.id];
-        return customWidth
-          ? `${customWidth}px`
-          : getDensityAwareWidth(col.id, densityConfig);
-      })
-      .join(" ");
-  }, [columnWidths, densityConfig, visibleColumns]);
+  const gridTemplateColumns = useMemo(
+    () => buildGridTemplateColumns(visibleColumns, columnWidths, densityConfig),
+    [columnWidths, densityConfig, visibleColumns]
+  );
 
-  /**
-   * Get current width of a column in pixels.
-   * Uses density-aware widths when no custom width is set.
-   */
-  const getColumnWidth = (columnId: string): number => {
-    const customWidth = columnWidths[columnId];
-    if (customWidth) return customWidth;
-
-    // Get density-aware default width
-    const densityWidth = getDensityAwareWidth(columnId, densityConfig);
-    const match = densityWidth.match(/(\d+)px/);
-    if (match) return parseInt(match[1], 10);
-
-    // For minmax, extract the first value
-    const minmaxMatch = densityWidth.match(/minmax\((\d+)px/);
-    if (minmaxMatch) return parseInt(minmaxMatch[1], 10);
-
-    return 200;
-  };
-
-  /**
-   * Handle column resize.
-   */
-  const handleColumnResize = (columnId: string, width: number): void => {
-    setColumnWidth(columnId, width);
-  };
-
-  const handleSelectAllClick = (): void => {
+  const handleSelectAllClick = useCallback((): void => {
     if (allSelected) {
       clearSelection();
     } else {
       selectAllTasks();
     }
-  };
+  }, [allSelected, clearSelection, selectAllTasks]);
 
   return (
     <>
       <div
-        className="task-table-header-row"
+        className="task-table-header-row grid"
         style={{
-          display: "grid",
           gridTemplateColumns,
           minWidth: totalColumnWidth,
           backgroundColor: TABLE_HEADER.bg,
@@ -113,54 +217,22 @@ export function TaskTableHeader(): JSX.Element {
         role="row"
       >
         {visibleColumns.map((column) => (
-          <div
+          <HeaderCell
             key={column.id}
-            className={`task-table-header-cell ${column.id === NAME_COLUMN_ID ? "pr-3" : "px-3"} py-4 border-b ${column.showRightBorder !== false ? "border-r" : ""} text-xs font-semibold text-neutral-600 uppercase tracking-wider whitespace-nowrap relative`}
-            style={{
-              backgroundColor: TABLE_HEADER.bg,
-              borderColor: TABLE_HEADER.border,
-            }}
-            role="columnheader"
-            tabIndex={-1}
-            onContextMenu={(e) => handleHeaderContextMenu(e, column.id)}
-          >
-            {column.id === "rowNumber" ? (
-              // Excel-style select-all triangle in top-left corner
-              <button
-                onClick={handleSelectAllClick}
-                className="absolute inset-0 hover:bg-neutral-200 transition-colors"
-                style={{ cursor: "pointer" }}
-                title={allSelected ? "Deselect all" : "Select all"}
-                aria-label={
-                  allSelected ? "Deselect all tasks" : "Select all tasks"
-                }
-              >
-                {/* Small triangle in bottom-right corner */}
-                <svg
-                  width="8"
-                  height="8"
-                  viewBox="0 0 8 8"
-                  style={{ position: "absolute", bottom: "4px", right: "4px" }}
-                >
-                  <path d="M8 0 L8 8 L0 8 Z" fill={TABLE_HEADER.triangle} />
-                </svg>
-              </button>
-            ) : column.id === "color" ? (
-              ""
-            ) : (
-              column.label
-            )}
-            {/* Column Resizer - only for name column */}
-            {column.id === NAME_COLUMN_ID && (
-              <ColumnResizer
-                columnId={column.id}
-                currentWidth={getColumnWidth(column.id)}
-                onResize={handleColumnResize}
-                onAutoResize={autoFitColumn}
-                minWidth={100}
-              />
-            )}
-          </div>
+            column={column}
+            densityConfig={densityConfig}
+            columnWidths={columnWidths}
+            onContextMenu={handleHeaderContextMenu}
+            setColumnWidth={setColumnWidth}
+            autoFitColumn={autoFitColumn}
+            // allSelected / onSelectAll only consumed by the 'select-all' variant;
+            // omitting them for all other columns keeps their props stable so
+            // React.memo can skip re-renders when selection changes.
+            {...(column.headerVariant === "select-all" && {
+              allSelected,
+              onSelectAll: handleSelectAllClick,
+            })}
+          />
         ))}
       </div>
 
@@ -174,4 +246,4 @@ export function TaskTableHeader(): JSX.Element {
       )}
     </>
   );
-}
+});

@@ -5,6 +5,7 @@ import {
   getHideableColumns,
   getColumnPixelWidth,
   getDensityAwareWidth,
+  buildGridTemplateColumns,
 } from "../../../src/config/tableColumns";
 import { DENSITY_CONFIG } from "../../../src/config/densityConfig";
 import type { DensityConfig } from "../../../src/types/preferences.types";
@@ -127,9 +128,14 @@ describe("getColumnPixelWidth", () => {
     expect(result).toBe(100);
   });
 
-  it("should return default for name column (uses minmax in grid)", () => {
+  it("should return nameMin for name column (uses minmax in grid)", () => {
     const result = getColumnPixelWidth("name", {}, normalDensity);
-    expect(result).toBe(100);
+    expect(result).toBe(normalDensity.columnWidths.nameMin);
+  });
+
+  it("should prefer stored width over nameMin for name column", () => {
+    const result = getColumnPixelWidth("name", { name: 350 }, normalDensity);
+    expect(result).toBe(350);
   });
 
   it("should prefer stored width over density default", () => {
@@ -270,5 +276,57 @@ describe("column validators", () => {
     const format = progressCol!.formatter!;
     expect(format(50)).toBe("50%");
     expect(format(0)).toBe("0%");
+  });
+});
+
+// ── buildGridTemplateColumns ────────────────────────────────────────────────
+
+describe("buildGridTemplateColumns", () => {
+  const allColumns = getVisibleColumns([]);
+
+  it("should produce density-aware widths when no custom widths are set", () => {
+    const result = buildGridTemplateColumns(allColumns, {}, normalDensity);
+    // Name column should use minmax
+    expect(result).toContain("minmax(");
+    // Should have px values for other columns
+    expect(result).toContain(`${normalDensity.columnWidths.startDate}px`);
+  });
+
+  it("should use custom px width when set for a column", () => {
+    // Use a distinctive custom width that doesn't collide with any default
+    const result = buildGridTemplateColumns(
+      allColumns,
+      { startDate: 777 },
+      normalDensity
+    );
+    expect(result).toContain("777px");
+  });
+
+  it("should produce different results for different density configs", () => {
+    const compact = DENSITY_CONFIG.compact;
+    const comfortable = DENSITY_CONFIG.comfortable;
+
+    const resultCompact = buildGridTemplateColumns(allColumns, {}, compact);
+    const resultComfortable = buildGridTemplateColumns(
+      allColumns,
+      {},
+      comfortable
+    );
+    expect(resultCompact).not.toBe(resultComfortable);
+  });
+
+  it("should produce shorter output when columns are hidden", () => {
+    const withHidden = getVisibleColumns(["startDate", "endDate"]);
+    const resultFull = buildGridTemplateColumns(allColumns, {}, normalDensity);
+    const resultHidden = buildGridTemplateColumns(
+      withHidden,
+      {},
+      normalDensity
+    );
+    expect(resultHidden.length).toBeLessThan(resultFull.length);
+    // Hidden columns' widths should not be in the output
+    expect(resultHidden).not.toContain(
+      `${normalDensity.columnWidths.startDate}px`
+    );
   });
 });

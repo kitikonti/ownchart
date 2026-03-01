@@ -329,6 +329,20 @@ export const ROW_NUMBER = {
 } as const;
 
 // =============================================================================
+// TABLE ROW TOKENS
+// =============================================================================
+
+export const TABLE_ROW = {
+  /** Default (unselected) row background — white. */
+  defaultBg: neutral[0],
+  /**
+   * Selected row background: brand[600] (#0F6CBD) at chart.selectionFillOpacity (8%).
+   * Using rgba() avoids the fragile hex+alpha-suffix approach.
+   */
+  selectionBg: `rgba(15, 108, 189, ${COLORS.chart.selectionFillOpacity})`,
+} as const;
+
+// =============================================================================
 // TOAST TOKENS
 // =============================================================================
 
