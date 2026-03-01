@@ -392,7 +392,7 @@ export function calculateSummaryDates(
   if (!minStart || !maxEnd) return null;
 
   const duration =
-    Math.ceil((maxEnd.getTime() - minStart.getTime()) / MS_PER_DAY) + 1;
+    Math.ceil((maxEnd.getTime() - minStart.getTime()) / MS_PER_DAY) + 1; // +1: duration is inclusive of both endpoints (e.g. Jan 1 → Jan 1 = 1 day)
 
   return {
     startDate: minStart.toISOString().split("T")[0],
@@ -481,7 +481,7 @@ export function recalculateSummaryAncestors(
   const queue = Array.from(parentIds);
 
   while (queue.length > 0) {
-    const parentId = queue.shift();
+    const parentId = queue.pop();
     if (parentId === undefined) continue;
     if (processed.has(parentId)) continue;
     processed.add(parentId);
