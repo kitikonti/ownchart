@@ -20,11 +20,14 @@ const mockHandleOpen = vi.fn();
 const mockHandleNew = vi.fn();
 
 vi.mock('../../../src/hooks/useFileOperations', () => ({
-  useFileOperations: (): Record<string, unknown> => ({
+  useFileOperations: () => ({
     handleSave: mockHandleSave,
     handleSaveAs: mockHandleSaveAs,
     handleOpen: mockHandleOpen,
     handleNew: mockHandleNew,
+    fileName: null,
+    isDirty: false,
+    lastSaved: null,
   }),
 }));
 
@@ -33,10 +36,12 @@ const mockHandleCut = vi.fn();
 const mockHandlePaste = vi.fn();
 
 vi.mock('../../../src/hooks/useClipboardOperations', () => ({
-  useClipboardOperations: (): Record<string, unknown> => ({
+  useClipboardOperations: () => ({
     handleCopy: mockHandleCopy,
     handleCut: mockHandleCut,
     handlePaste: mockHandlePaste,
+    canCopyOrCut: false,
+    canPaste: false,
   }),
 }));
 
@@ -44,9 +49,12 @@ const mockHideRows = vi.fn();
 const mockUnhideSelection = vi.fn();
 
 vi.mock('../../../src/hooks/useHideOperations', () => ({
-  useHideOperations: (): Record<string, unknown> => ({
+  useHideOperations: () => ({
     hideRows: mockHideRows,
     unhideSelection: mockUnhideSelection,
+    showAll: vi.fn(),
+    unhideRange: vi.fn(),
+    getHiddenInSelectionCount: vi.fn().mockReturnValue(0),
   }),
 }));
 

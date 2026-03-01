@@ -14,6 +14,8 @@
  */
 
 import { useEffect, useMemo, useRef } from "react";
+import type { Task } from "../types/chart.types";
+import type { TaskId } from "../types/branded.types";
 import { useHistoryStore } from "../store/slices/historySlice";
 import { useTaskStore } from "../store/slices/taskSlice";
 import { useChartStore } from "../store/slices/chartSlice";
@@ -23,6 +25,346 @@ import { useClipboardOperations } from "./useClipboardOperations";
 import { useHideOperations } from "./useHideOperations";
 import { useClipboardStore } from "../store/slices/clipboardSlice";
 import { findTopmostSelectedTaskId } from "../utils/selection";
+
+// ── Context ───────────────────────────────────────────────────────────────────
+// A single snapshot of all state needed by the sub-handlers.  Built fresh on
+// every render inside handlerRef.current and passed into every module-level
+// handler so they remain pure, testable functions with no closed-over stale
+// values.
+
+interface ActiveCell {
+  taskId: string | null;
+  field: string | null;
+}
+
+interface ShortcutContext {
+  // History
+  undo: () => void;
+  redo: () => void;
+  // File ops
+  handleSave: () => void;
+  handleSaveAs: () => void;
+  handleOpen: () => void;
+  handleNew: () => void;
+  openExportDialog: () => void;
+  // Clipboard
+  handleCopy: () => void;
+  handleCut: () => void;
+  handlePaste: () => void;
+  clearClipboard: () => void;
+  clipboardMode: string | null;
+  // Task state
+  isEditingCell: boolean;
+  selectedTaskIds: string[];
+  activeCell: ActiveCell;
+  deleteSelectedTasks: () => void;
+  deleteTask: (taskId: string, selectAdjacent: boolean) => void;
+  insertTaskAbove: (taskId: string) => void;
+  insertMultipleTasksAbove: (taskId: string, count: number) => void;
+  indentSelectedTasks: () => void;
+  outdentSelectedTasks: () => void;
+  groupSelectedTasks: () => void;
+  ungroupSelectedTasks: () => void;
+  // View
+  toggleDependencies: () => void;
+  toggleTodayMarker: () => void;
+  toggleProgress: () => void;
+  toggleHolidays: () => void;
+  fitToView: (tasks: Task[]) => void;
+  // Hide
+  hideRows: (ids: string[]) => void;
+  unhideSelection: (ids: string[]) => void;
+  // UI dialogs
+  openHelpPanel: () => void;
+  closeExportDialog: () => void;
+  closeHelpPanel: () => void;
+  closeWelcomeTour: () => void;
+  isExportDialogOpen: boolean;
+  isHelpPanelOpen: boolean;
+  isWelcomeTourOpen: boolean;
+}
+
+// ── Sub-handlers (module-level; return true when the event is consumed) ───────
+
+function handleUndoRedo(
+  e: KeyboardEvent,
+  modKey: boolean,
+  ctx: ShortcutContext
+): boolean {
+  if (!modKey) return false;
+  const key = e.key.toLowerCase();
+  if (key === "z" && !e.shiftKey) {
+    e.preventDefault();
+    ctx.undo();
+    return true;
+  }
+  if (key === "z" && e.shiftKey) {
+    e.preventDefault();
+    ctx.redo();
+    return true;
+  }
+  if (key === "y") {
+    e.preventDefault();
+    ctx.redo();
+    return true;
+  }
+  return false;
+}
+
+function handleFileShortcuts(
+  e: KeyboardEvent,
+  modKey: boolean,
+  ctx: ShortcutContext
+): boolean {
+  if (!modKey) return false;
+  const key = e.key.toLowerCase();
+  if (key === "s" && !e.shiftKey) {
+    e.preventDefault();
+    ctx.handleSave();
+    return true;
+  }
+  if (key === "s" && e.shiftKey) {
+    e.preventDefault();
+    ctx.handleSaveAs();
+    return true;
+  }
+  if (key === "o") {
+    e.preventDefault();
+    ctx.handleOpen();
+    return true;
+  }
+  if (key === "n" && e.altKey) {
+    e.preventDefault();
+    ctx.handleNew();
+    return true;
+  }
+  if (key === "e") {
+    e.preventDefault();
+    ctx.openExportDialog();
+    return true;
+  }
+  return false;
+}
+
+function handleClipboardShortcuts(
+  e: KeyboardEvent,
+  modKey: boolean,
+  ctx: ShortcutContext
+): boolean {
+  if (!modKey) return false;
+  const key = e.key.toLowerCase();
+  if (key === "c") {
+    e.preventDefault();
+    ctx.handleCopy();
+    return true;
+  }
+  if (key === "x") {
+    e.preventDefault();
+    ctx.handleCut();
+    return true;
+  }
+  if (key === "v") {
+    e.preventDefault();
+    ctx.handlePaste();
+    return true;
+  }
+  return false;
+}
+
+function handleEscapeKey(e: KeyboardEvent, ctx: ShortcutContext): boolean {
+  if (e.key !== "Escape") return false;
+  // Close dialogs in priority order
+  if (ctx.isExportDialogOpen) {
+    e.preventDefault();
+    ctx.closeExportDialog();
+    return true;
+  }
+  if (ctx.isHelpPanelOpen) {
+    e.preventDefault();
+    ctx.closeHelpPanel();
+    return true;
+  }
+  if (ctx.isWelcomeTourOpen) {
+    e.preventDefault();
+    ctx.closeWelcomeTour();
+    return true;
+  }
+  // Clear clipboard (like Excel)
+  if (ctx.clipboardMode !== null) {
+    ctx.clearClipboard();
+    return true;
+  }
+  return false;
+}
+
+function handleDeleteShortcuts(
+  e: KeyboardEvent,
+  modKey: boolean,
+  ctx: ShortcutContext
+): boolean {
+  // Delete key: remove selected tasks (guard isEditingCell for consistency
+  // with handleInsertShortcuts / handleIndentShortcuts / handleGroupShortcuts)
+  if (
+    e.key === "Delete" &&
+    !ctx.isEditingCell &&
+    ctx.selectedTaskIds.length > 0
+  ) {
+    e.preventDefault();
+    ctx.deleteSelectedTasks();
+    return true;
+  }
+  // Ctrl+-: delete selected tasks or the active-cell task (Excel-style)
+  if (modKey && (e.key === "-" || e.key === "_") && !ctx.isEditingCell) {
+    e.preventDefault();
+    if (ctx.selectedTaskIds.length > 0) {
+      ctx.deleteSelectedTasks();
+    } else if (ctx.activeCell.taskId) {
+      ctx.deleteTask(ctx.activeCell.taskId, true);
+    }
+    return true;
+  }
+  return false;
+}
+
+function handleInsertShortcuts(
+  e: KeyboardEvent,
+  modKey: boolean,
+  ctx: ShortcutContext
+): boolean {
+  // Ctrl++: insert row(s) above selection (Excel-style).
+  // Positive guard: only proceed when all three conditions are met.
+  if (modKey && (e.key === "+" || e.key === "=") && !ctx.isEditingCell) {
+    e.preventDefault();
+    const count = Math.max(ctx.selectedTaskIds.length, 1);
+    // Fetch tasks fresh so this handler doesn't need `tasks` in any dep array.
+    const currentTasks = useTaskStore.getState().tasks;
+    const referenceTaskId =
+      // ctx.selectedTaskIds uses string[] for interface simplicity;
+      // findTopmostSelectedTaskId only reads the array for ordering.
+      findTopmostSelectedTaskId(
+        currentTasks,
+        ctx.selectedTaskIds as TaskId[]
+      ) ?? ctx.activeCell.taskId;
+    if (referenceTaskId) {
+      if (count === 1) {
+        ctx.insertTaskAbove(referenceTaskId);
+      } else {
+        ctx.insertMultipleTasksAbove(referenceTaskId, count);
+      }
+    }
+    return true;
+  }
+  return false;
+}
+
+function handleIndentShortcuts(
+  e: KeyboardEvent,
+  ctx: ShortcutContext
+): boolean {
+  // Alt+Shift+Arrow: indent / outdent (MS Project style)
+  if (!e.altKey || !e.shiftKey || ctx.isEditingCell) return false;
+  if (e.key === "ArrowRight") {
+    e.preventDefault();
+    ctx.indentSelectedTasks();
+    return true;
+  }
+  if (e.key === "ArrowLeft") {
+    e.preventDefault();
+    ctx.outdentSelectedTasks();
+    return true;
+  }
+  return false;
+}
+
+function handleGroupShortcuts(
+  e: KeyboardEvent,
+  modKey: boolean,
+  ctx: ShortcutContext
+): boolean {
+  if (!modKey || ctx.isEditingCell) return false;
+  // Check Shift+G before plain G so Ctrl+Shift+G never falls through to Ctrl+G.
+  if (e.shiftKey && e.key.toLowerCase() === "g") {
+    e.preventDefault();
+    ctx.ungroupSelectedTasks();
+    return true;
+  }
+  if (!e.shiftKey && e.key.toLowerCase() === "g") {
+    e.preventDefault();
+    ctx.groupSelectedTasks();
+    return true;
+  }
+  return false;
+}
+
+function handleHideShortcuts(
+  e: KeyboardEvent,
+  modKey: boolean,
+  ctx: ShortcutContext
+): boolean {
+  if (!modKey || e.key.toLowerCase() !== "h") return false;
+  if (e.shiftKey) {
+    // Ctrl+Shift+H: unhide hidden rows spanned by the current selection
+    e.preventDefault();
+    ctx.unhideSelection(ctx.selectedTaskIds);
+    return true;
+  }
+  if (ctx.selectedTaskIds.length > 0) {
+    // Ctrl+H: hide selected rows
+    e.preventDefault();
+    ctx.hideRows(ctx.selectedTaskIds);
+    return true;
+  }
+  // Nothing to do — don't suppress the browser's Ctrl+H default.
+  return false;
+}
+
+function handleSingleKeyShortcuts(
+  e: KeyboardEvent,
+  isCellActive: boolean,
+  modKey: boolean,
+  ctx: ShortcutContext
+): boolean {
+  // The ? key is handled before the shiftKey guard because on US keyboards
+  // it is produced by Shift+/, which would otherwise be blocked below.
+  if (e.key === "?" && !isCellActive && !modKey && !e.altKey) {
+    e.preventDefault();
+    ctx.openHelpPanel();
+    return true;
+  }
+  if (isCellActive || modKey || e.altKey || e.shiftKey) return false;
+
+  const key = e.key.toLowerCase();
+  if (key === "d") {
+    e.preventDefault();
+    ctx.toggleDependencies();
+    return true;
+  }
+  if (key === "t") {
+    e.preventDefault();
+    ctx.toggleTodayMarker();
+    return true;
+  }
+  if (key === "p") {
+    e.preventDefault();
+    ctx.toggleProgress();
+    return true;
+  }
+  if (key === "h") {
+    e.preventDefault();
+    ctx.toggleHolidays();
+    return true;
+  }
+  if (key === "f") {
+    e.preventDefault();
+    // Fetch tasks fresh so the hook does not subscribe to `tasks` and
+    // re-register the listener on every task mutation.
+    ctx.fitToView(useTaskStore.getState().tasks);
+    return true;
+  }
+  return false;
+}
+
+// ── Hook ──────────────────────────────────────────────────────────────────────
 
 export function useKeyboardShortcuts(): void {
   // ── History ────────────────────────────────────────────────────────────
@@ -100,254 +442,6 @@ export function useKeyboardShortcuts(): void {
   // task edit, selection change, or cell navigation.
   const handlerRef = useRef<(e: KeyboardEvent) => void>(() => {});
 
-  // ── Sub-handlers (each returns true when the event is consumed) ────────
-
-  const handleUndoRedo = (e: KeyboardEvent, modKey: boolean): boolean => {
-    if (!modKey) return false;
-    const key = e.key.toLowerCase();
-    if (key === "z" && !e.shiftKey) {
-      e.preventDefault();
-      undo();
-      return true;
-    }
-    if (key === "z" && e.shiftKey) {
-      e.preventDefault();
-      redo();
-      return true;
-    }
-    if (key === "y") {
-      e.preventDefault();
-      redo();
-      return true;
-    }
-    return false;
-  };
-
-  const handleFileShortcuts = (e: KeyboardEvent, modKey: boolean): boolean => {
-    if (!modKey) return false;
-    const key = e.key.toLowerCase();
-    if (key === "s" && !e.shiftKey) {
-      e.preventDefault();
-      handleSave();
-      return true;
-    }
-    if (key === "s" && e.shiftKey) {
-      e.preventDefault();
-      handleSaveAs();
-      return true;
-    }
-    if (key === "o") {
-      e.preventDefault();
-      handleOpen();
-      return true;
-    }
-    if (key === "n" && e.altKey) {
-      e.preventDefault();
-      handleNew();
-      return true;
-    }
-    if (key === "e") {
-      e.preventDefault();
-      openExportDialog();
-      return true;
-    }
-    return false;
-  };
-
-  const handleClipboardShortcuts = (
-    e: KeyboardEvent,
-    modKey: boolean
-  ): boolean => {
-    if (!modKey) return false;
-    const key = e.key.toLowerCase();
-    if (key === "c") {
-      e.preventDefault();
-      handleCopy();
-      return true;
-    }
-    if (key === "x") {
-      e.preventDefault();
-      handleCut();
-      return true;
-    }
-    if (key === "v") {
-      e.preventDefault();
-      handlePaste();
-      return true;
-    }
-    return false;
-  };
-
-  const handleEscapeKey = (e: KeyboardEvent): boolean => {
-    if (e.key !== "Escape") return false;
-    // Close dialogs in priority order
-    if (isExportDialogOpen) {
-      e.preventDefault();
-      closeExportDialog();
-      return true;
-    }
-    if (isHelpPanelOpen) {
-      e.preventDefault();
-      closeHelpPanel();
-      return true;
-    }
-    if (isWelcomeTourOpen) {
-      e.preventDefault();
-      closeWelcomeTour();
-      return true;
-    }
-    // Clear clipboard (like Excel)
-    if (clipboardMode !== null) {
-      clearClipboard();
-      return true;
-    }
-    return false;
-  };
-
-  const handleDeleteShortcuts = (
-    e: KeyboardEvent,
-    modKey: boolean
-  ): boolean => {
-    // Delete key: remove selected tasks (guard isEditingCell for consistency
-    // with handleInsertShortcuts / handleIndentShortcuts / handleGroupShortcuts)
-    if (e.key === "Delete" && !isEditingCell && selectedTaskIds.length > 0) {
-      e.preventDefault();
-      deleteSelectedTasks();
-      return true;
-    }
-    // Ctrl+-: delete selected tasks or the active-cell task (Excel-style)
-    if (modKey && (e.key === "-" || e.key === "_") && !isEditingCell) {
-      e.preventDefault();
-      if (selectedTaskIds.length > 0) {
-        deleteSelectedTasks();
-      } else if (activeCell.taskId) {
-        deleteTask(activeCell.taskId, true);
-      }
-      return true;
-    }
-    return false;
-  };
-
-  const handleInsertShortcuts = (
-    e: KeyboardEvent,
-    modKey: boolean
-  ): boolean => {
-    // Ctrl++: insert row(s) above selection (Excel-style)
-    if (!modKey || !(e.key === "+" || e.key === "=") || isEditingCell) {
-      return false;
-    }
-    e.preventDefault();
-    const count = Math.max(selectedTaskIds.length, 1);
-    // Fetch tasks fresh so this handler doesn't need `tasks` in any dep array.
-    const currentTasks = useTaskStore.getState().tasks;
-    const referenceTaskId =
-      findTopmostSelectedTaskId(currentTasks, selectedTaskIds) ??
-      activeCell.taskId;
-    if (referenceTaskId) {
-      if (count === 1) {
-        insertTaskAbove(referenceTaskId);
-      } else {
-        insertMultipleTasksAbove(referenceTaskId, count);
-      }
-    }
-    return true;
-  };
-
-  const handleIndentShortcuts = (e: KeyboardEvent): boolean => {
-    // Alt+Shift+Arrow: indent / outdent (MS Project style)
-    if (!e.altKey || !e.shiftKey || isEditingCell) return false;
-    if (e.key === "ArrowRight") {
-      e.preventDefault();
-      indentSelectedTasks();
-      return true;
-    }
-    if (e.key === "ArrowLeft") {
-      e.preventDefault();
-      outdentSelectedTasks();
-      return true;
-    }
-    return false;
-  };
-
-  const handleGroupShortcuts = (e: KeyboardEvent, modKey: boolean): boolean => {
-    if (!modKey || isEditingCell) return false;
-    // Check Shift+G before plain G so Ctrl+Shift+G never falls through to Ctrl+G.
-    if (e.shiftKey && e.key.toLowerCase() === "g") {
-      e.preventDefault();
-      ungroupSelectedTasks();
-      return true;
-    }
-    if (!e.shiftKey && e.key.toLowerCase() === "g") {
-      e.preventDefault();
-      groupSelectedTasks();
-      return true;
-    }
-    return false;
-  };
-
-  const handleHideShortcuts = (e: KeyboardEvent, modKey: boolean): boolean => {
-    if (!modKey || e.key.toLowerCase() !== "h") return false;
-    if (e.shiftKey) {
-      // Ctrl+Shift+H: unhide hidden rows spanned by the current selection
-      e.preventDefault();
-      unhideSelection(selectedTaskIds);
-      return true;
-    }
-    if (selectedTaskIds.length > 0) {
-      // Ctrl+H: hide selected rows
-      e.preventDefault();
-      hideRows(selectedTaskIds);
-      return true;
-    }
-    // Nothing to do — don't suppress the browser's Ctrl+H default.
-    return false;
-  };
-
-  const handleSingleKeyShortcuts = (
-    e: KeyboardEvent,
-    isCellActive: boolean,
-    modKey: boolean
-  ): boolean => {
-    // The ? key is handled before the shiftKey guard because on US keyboards
-    // it is produced by Shift+/, which would otherwise be blocked below.
-    if (e.key === "?" && !isCellActive && !modKey && !e.altKey) {
-      e.preventDefault();
-      openHelpPanel();
-      return true;
-    }
-    if (isCellActive || modKey || e.altKey || e.shiftKey) return false;
-
-    const key = e.key.toLowerCase();
-    if (key === "d") {
-      e.preventDefault();
-      toggleDependencies();
-      return true;
-    }
-    if (key === "t") {
-      e.preventDefault();
-      toggleTodayMarker();
-      return true;
-    }
-    if (key === "p") {
-      e.preventDefault();
-      toggleProgress();
-      return true;
-    }
-    if (key === "h") {
-      e.preventDefault();
-      toggleHolidays();
-      return true;
-    }
-    if (key === "f") {
-      e.preventDefault();
-      // Fetch tasks fresh so the hook does not subscribe to `tasks` and
-      // re-register the listener on every task mutation.
-      fitToView(useTaskStore.getState().tasks);
-      return true;
-    }
-    return false;
-  };
-
   // ── Main dispatcher ────────────────────────────────────────────────────
   handlerRef.current = (e: KeyboardEvent): void => {
     const modKey = isMac ? e.metaKey : e.ctrlKey;
@@ -369,16 +463,59 @@ export function useKeyboardShortcuts(): void {
 
     const isCellActive = activeCell.taskId !== null;
 
-    if (handleUndoRedo(e, modKey)) return;
-    if (handleFileShortcuts(e, modKey)) return;
-    if (handleClipboardShortcuts(e, modKey)) return;
-    if (handleEscapeKey(e)) return;
-    if (handleDeleteShortcuts(e, modKey)) return;
-    if (handleInsertShortcuts(e, modKey)) return;
-    if (handleIndentShortcuts(e)) return;
-    if (handleGroupShortcuts(e, modKey)) return;
-    if (handleHideShortcuts(e, modKey)) return;
-    if (handleSingleKeyShortcuts(e, isCellActive, modKey)) return;
+    // Build a context snapshot from the latest subscribed values so each
+    // module-level sub-handler receives a single, consistent object.
+    const ctx: ShortcutContext = {
+      undo,
+      redo,
+      handleSave,
+      handleSaveAs,
+      handleOpen,
+      handleNew,
+      openExportDialog,
+      handleCopy,
+      handleCut,
+      handlePaste,
+      clearClipboard,
+      clipboardMode: clipboardMode as string | null,
+      isEditingCell,
+      selectedTaskIds: selectedTaskIds as string[],
+      activeCell,
+      deleteSelectedTasks,
+      deleteTask: deleteTask as ShortcutContext["deleteTask"],
+      insertTaskAbove: insertTaskAbove as ShortcutContext["insertTaskAbove"],
+      insertMultipleTasksAbove:
+        insertMultipleTasksAbove as ShortcutContext["insertMultipleTasksAbove"],
+      indentSelectedTasks,
+      outdentSelectedTasks,
+      groupSelectedTasks,
+      ungroupSelectedTasks,
+      toggleDependencies,
+      toggleTodayMarker,
+      toggleProgress,
+      toggleHolidays,
+      fitToView: fitToView as ShortcutContext["fitToView"],
+      hideRows: hideRows as ShortcutContext["hideRows"],
+      unhideSelection: unhideSelection as ShortcutContext["unhideSelection"],
+      openHelpPanel,
+      closeExportDialog,
+      closeHelpPanel,
+      closeWelcomeTour,
+      isExportDialogOpen,
+      isHelpPanelOpen,
+      isWelcomeTourOpen,
+    };
+
+    if (handleUndoRedo(e, modKey, ctx)) return;
+    if (handleFileShortcuts(e, modKey, ctx)) return;
+    if (handleClipboardShortcuts(e, modKey, ctx)) return;
+    if (handleEscapeKey(e, ctx)) return;
+    if (handleDeleteShortcuts(e, modKey, ctx)) return;
+    if (handleInsertShortcuts(e, modKey, ctx)) return;
+    if (handleIndentShortcuts(e, ctx)) return;
+    if (handleGroupShortcuts(e, modKey, ctx)) return;
+    if (handleHideShortcuts(e, modKey, ctx)) return;
+    if (handleSingleKeyShortcuts(e, isCellActive, modKey, ctx)) return;
   };
 
   // Register the listener once; handlerRef.current always delegates to the
