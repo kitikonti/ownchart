@@ -7,6 +7,8 @@ import { CaretRight } from "@phosphor-icons/react";
 
 const KEYBOARD_RESIZE_STEP = 20; // px per arrow key press
 const COLLAPSE_ICON_SIZE = 12;
+const ARIA_LABEL_COLLAPSED = "Expand task table. Press Enter or drag right.";
+const ARIA_LABEL_EXPANDED = "Resize panel. Use left/right arrow keys.";
 
 interface SplitPaneDividerProps {
   onMouseDown: (e: React.MouseEvent) => void;
@@ -46,18 +48,16 @@ export function SplitPaneDivider({
   };
 
   const handleClick = (): void => {
-    if (isCollapsed && onExpand) {
+    if (onExpand) {
       onExpand();
     }
   };
 
-  const ariaLabel = isCollapsed
-    ? "Expand task table. Press Enter or drag right."
-    : "Resize panel. Use left/right arrow keys.";
+  const ariaLabel = isCollapsed ? ARIA_LABEL_COLLAPSED : ARIA_LABEL_EXPANDED;
 
   const className = isCollapsed
     ? "split-divider w-3 cursor-e-resize flex-shrink-0 bg-neutral-200 hover:bg-neutral-300 transition-colors duration-150 relative flex items-center justify-center"
-    : `split-divider w-1 cursor-col-resize flex-shrink-0 bg-neutral-200 hover:bg-neutral-400 transition-colors duration-150 relative group${isDragging ? " bg-neutral-500" : ""}`;
+    : `split-divider w-1 cursor-col-resize flex-shrink-0 ${isDragging ? "bg-neutral-500" : "bg-neutral-200"} hover:bg-neutral-400 transition-colors duration-150 relative group`;
 
   return (
     // eslint-disable-next-line jsx-a11y/no-noninteractive-element-interactions -- separator is a keyboard-operable resize handle
