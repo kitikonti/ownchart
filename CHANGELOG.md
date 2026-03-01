@@ -2,6 +2,20 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [1.1.0](https://github.com/kitikonti/ownchart/compare/v1.0.4...v1.1.0) (2026-03-01)
+
+
+### Features
+
+* add model recommendation to review skill ([a0c93cb](https://github.com/kitikonti/ownchart/commit/a0c93cb6abaa2f141e474740395504db6bf8720d))
+
+
+### Code Refactoring
+
+* apply PaletteId and HexColor branded types to ColorPalette interface ([64f4930](https://github.com/kitikonti/ownchart/commit/64f4930ebaf1dc50df2aea408c8892b2166f2fc8))
+* harden colorPalettes with type safety, consistency, and tests ([14d519d](https://github.com/kitikonti/ownchart/commit/14d519d627dbbf881e904f61fc827055a0743d73))
+* replace type assertion in PALETTES_BY_CATEGORY with explicit annotation ([a4c44e3](https://github.com/kitikonti/ownchart/commit/a4c44e3784d1bf062c450b13544372943f3c61e7))
+
 ## [1.0.4](https://github.com/kitikonti/ownchart/compare/v1.0.3...v1.0.4) (2026-02-28)
 
 ## [1.0.3](https://github.com/kitikonti/ownchart/compare/v1.0.2...v1.0.3) (2026-02-28)
