@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [1.1.7](https://github.com/kitikonti/ownchart/compare/v1.1.6...v1.1.7) (2026-03-01)
+
+
+### Bug Fixes
+
+* header cells stretch to full row height for proper borders ([f37aede](https://github.com/kitikonti/ownchart/commit/f37aedee32953f53bb1da3be322d52b73173eae9))
+
 ## [1.1.6](https://github.com/kitikonti/ownchart/compare/v1.1.5...v1.1.6) (2026-03-01)
 
 
