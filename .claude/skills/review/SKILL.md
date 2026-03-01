@@ -109,6 +109,11 @@ Erstelle den Report im definierten Output-Format (siehe unten).
 1. [F00X] [Wichtigste Änderung zuerst]
 2. [F00Y] [Zweitwichtigste]
 3. [...]
+
+## Model Recommendation
+
+**Recommended model for fixes:** [Sonnet / Opus]
+**Reasoning:** [Kurze Begründung]
 ```
 
 ## Finding-IDs
@@ -158,3 +163,26 @@ Beachte diese projektspezifischen Gotchas während der Review:
 - **Dropdown-Pattern**: `useDropdown` Hook + `DropdownTrigger` + `DropdownPanel` + Content
 - **Conventional Commits** sind Pflicht (feat:, fix:, refactor:, etc.)
 - **CI-Check vor Push**: `npm run ci:local` muss bestanden werden
+
+## Model Recommendation Guide
+
+Am Ende jeder Review eine Empfehlung aussprechen, welches Modell (Sonnet oder Opus) für die Fixes verwendet werden sollte.
+
+### Sonnet empfehlen wenn:
+- Nur NOTEs und einfache WARNINGs gefunden wurden
+- Fixes mechanisch/repetitiv sind (Renames, Import-Sortierung, fehlende ARIA-Labels, Magic Numbers extrahieren)
+- Änderungen auf einzelne Dateien beschränkt sind
+- Kein tiefes Architektur-Verständnis nötig ist
+- Standard-Patterns angewendet werden (z.B. `React.memo` hinzufügen, Tests ergänzen)
+
+### Opus empfehlen wenn:
+- CRITICAL Findings vorhanden sind
+- Fixes architekturelle Änderungen erfordern (State-Redesign, neue Patterns einführen)
+- Cross-File Refactorings nötig sind (mehrere Dateien koordiniert ändern)
+- Komplexe Logik-Bugs behoben werden müssen
+- Security-Fixes mit subtilen Implikationen
+- Änderungen am Zustand-Store oder History-System betreffen
+- Tiefes Verständnis des Zusammenspiels mehrerer Systeme nötig ist
+
+### Gemischte Findings:
+Wenn sowohl einfache als auch komplexe Fixes nötig sind, Opus empfehlen mit dem Hinweis, dass die einfachen Fixes (NOTEs) auch mit Sonnet erledigt werden könnten, um Kosten zu sparen.
