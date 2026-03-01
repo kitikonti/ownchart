@@ -39,6 +39,7 @@ export {
   generateExportFilename,
   createOffscreenContainer,
   removeOffscreenContainer,
+  estimateFileSize,
 } from "./helpers";
 
 // Task table rendering

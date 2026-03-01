@@ -5,6 +5,7 @@
  */
 
 import { useState, useEffect, useRef, useCallback } from "react";
+import type { MouseEvent as ReactMouseEvent } from "react";
 import { SplitPaneDivider } from "./SplitPaneDivider";
 
 const COLLAPSE_THRESHOLD = 80; // px — snap to collapsed below this width
@@ -49,7 +50,7 @@ export function SplitPane({
   }, [leftWidth, isCollapsed]);
 
   const handleMouseDown = useCallback(
-    (e: React.MouseEvent): void => {
+    (e: ReactMouseEvent): void => {
       e.preventDefault();
       dragFromCollapsedRef.current = isCollapsed;
       dragWidthRef.current = isCollapsed ? 0 : leftWidth;

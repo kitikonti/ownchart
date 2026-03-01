@@ -4,6 +4,7 @@
  * Includes info panel below preview (Figma-style).
  */
 
+import { memo } from "react";
 import {
   Spinner,
   WarningCircle,
@@ -13,33 +14,13 @@ import {
 } from "@phosphor-icons/react";
 import type { ReadabilityStatus } from "../../utils/export/types";
 import { COLORS } from "../../styles/design-tokens";
+import { estimateFileSize } from "../../utils/export";
 
 /** Checkerboard tile color for transparent background visualization */
 const CHECKERBOARD_TILE_COLOR = COLORS.neutral[100];
 
-/** Conservative PNG compression ratio (typical range: 25–50% of raw RGBA) */
-const PNG_COMPRESSION_RATIO = 0.35;
-
-const BYTES_PER_KB = 1024;
-const BYTES_PER_MB = 1024 * 1024;
-
-/**
- * Estimate file size based on dimensions.
- * PNG: roughly 4 bytes per pixel with compression (~25% of raw)
- */
-function estimateFileSize(width: number, height: number): string {
-  if (width === 0 || height === 0) return "—";
-  const rawBytes = width * height * 4;
-  const estimatedBytes = rawBytes * PNG_COMPRESSION_RATIO;
-
-  if (estimatedBytes < BYTES_PER_KB) {
-    return `~${Math.round(estimatedBytes)} B`;
-  } else if (estimatedBytes < BYTES_PER_MB) {
-    return `~${(estimatedBytes / BYTES_PER_KB).toFixed(1)} KB`;
-  } else {
-    return `~${(estimatedBytes / BYTES_PER_MB).toFixed(1)} MB`;
-  }
-}
+/** Format types supported by the preview component (excludes PDF) */
+type PreviewFormatType = "png" | "svg";
 
 interface PreviewFrameProps {
   dimensions: { width: number; height: number };
@@ -47,11 +28,11 @@ interface PreviewFrameProps {
   error: string | null;
   isTransparent: boolean;
   previewDataUrl: string | null;
-  formatType: "png" | "svg";
+  formatType: PreviewFormatType;
 }
 
 /** Inner preview frame showing chart states: loading, error, empty, or image. */
-function PreviewFrame({
+const PreviewFrame = memo(function PreviewFrame({
   dimensions,
   isRendering,
   error,
@@ -133,7 +114,7 @@ function PreviewFrame({
       )}
     </div>
   );
-}
+});
 
 export interface ChartPreviewProps {
   /** Data URL of the preview image */
@@ -147,7 +128,7 @@ export interface ChartPreviewProps {
   /** Readability status for labels */
   readabilityStatus?: ReadabilityStatus;
   /** Format type for display */
-  formatType?: "png" | "svg";
+  formatType?: PreviewFormatType;
 }
 
 /**
