@@ -2,6 +2,22 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [1.1.9](https://github.com/kitikonti/ownchart/compare/v1.1.8...v1.1.9) (2026-03-01)
+
+
+### Code Refactoring
+
+* apply review fixes to useKeyboardShortcuts ([8ffa904](https://github.com/kitikonti/ownchart/commit/8ffa90421fe36ef2c1ecf74b68a2d18fa071a541))
+* apply review fixes to useKeyboardShortcuts (round 2) ([d3a925d](https://github.com/kitikonti/ownchart/commit/d3a925d5395048023e5ece224fca0caf5d9570ef))
+* apply review fixes to useKeyboardShortcuts (round 3) ([42ea698](https://github.com/kitikonti/ownchart/commit/42ea698654a83bae7085c117f2d4e2f7561ae230))
+* apply review fixes to useKeyboardShortcuts (round 4) ([ba05453](https://github.com/kitikonti/ownchart/commit/ba054539d34c60689706dec948f9cb63b516af26))
+* apply review fixes to useKeyboardShortcuts (round 5) ([7e75924](https://github.com/kitikonti/ownchart/commit/7e7592426d367a90fe5916ba35011429a6d76837))
+* apply review fixes to useKeyboardShortcuts (round 6) ([1b8bef7](https://github.com/kitikonti/ownchart/commit/1b8bef7b5dc2457d65f9f981881c05817b750c9f))
+* apply review fixes to useKeyboardShortcuts (round 7) ([c680df4](https://github.com/kitikonti/ownchart/commit/c680df403ce1e5da3c82a31cea0f69a9d3c1b5a4))
+* apply review fixes to useKeyboardShortcuts (round 8) ([b15057f](https://github.com/kitikonti/ownchart/commit/b15057fefab1b8025df7f038a47492c5963f9e05))
+* overhaul useKeyboardShortcuts for correctness and performance ([79fd84d](https://github.com/kitikonti/ownchart/commit/79fd84df56b00dfdec769cbd508b133f05e6627d))
+* split useKeyboardShortcuts into domain sub-hooks and export handlers ([487acd4](https://github.com/kitikonti/ownchart/commit/487acd47080737b06bd1ec5e8cb5717f0eb8c05b))
+
 ## [1.1.8](https://github.com/kitikonti/ownchart/compare/v1.1.7...v1.1.8) (2026-03-01)
 
 
