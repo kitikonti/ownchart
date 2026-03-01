@@ -7,6 +7,28 @@ import type { Task } from "../../types/chart.types";
 import type { TaskId } from "../../types/branded.types";
 
 /**
+ * Recursively add children of a collapsed task to the collected set.
+ * All descendants are included regardless of their own open/closed state,
+ * because a collapsed ancestor hides the entire subtree.
+ */
+function collectChildrenOfCollapsed(
+  taskId: TaskId,
+  childrenMap: Map<TaskId, Task[]>,
+  collected: Set<TaskId>,
+  result: Task[]
+): void {
+  const children = childrenMap.get(taskId) ?? [];
+  children.forEach((child) => {
+    if (collected.has(child.id)) return;
+
+    collected.add(child.id);
+    result.push(child);
+
+    collectChildrenOfCollapsed(child.id, childrenMap, collected, result);
+  });
+}
+
+/**
  * Collect tasks for clipboard operation.
  *
  * Rules:
@@ -36,23 +58,6 @@ export function collectTasksWithChildren(
     }
   });
 
-  /**
-   * Recursively collect children of a collapsed task.
-   */
-  const collectChildrenOfCollapsed = (taskId: TaskId): void => {
-    const children = childrenMap.get(taskId) ?? [];
-    children.forEach((child) => {
-      if (collected.has(child.id)) return;
-
-      collected.add(child.id);
-      result.push(child);
-
-      // Always collect grandchildren of collapsed parents
-      // (they are also hidden)
-      collectChildrenOfCollapsed(child.id);
-    });
-  };
-
   // Process each selected task
   taskIds.forEach((id) => {
     // Skip if already collected (e.g., as child of collapsed parent)
@@ -67,7 +72,7 @@ export function collectTasksWithChildren(
 
     // If task is collapsed, also collect its hidden children
     if (task.open === false) {
-      collectChildrenOfCollapsed(id);
+      collectChildrenOfCollapsed(id, childrenMap, collected, result);
     }
   });
 
@@ -80,6 +85,10 @@ export function collectTasksWithChildren(
  *
  * @param tasks - Tasks to clone
  * @returns Deep cloned tasks
+ *
+ * @remarks Assumes all Task fields are JSON-serializable (strings, numbers,
+ * booleans, plain objects). Non-serializable values (Dates, undefined) would
+ * be silently dropped or coerced.
  */
 export function deepCloneTasks(tasks: Task[]): Task[] {
   return JSON.parse(JSON.stringify(tasks)) as Task[];

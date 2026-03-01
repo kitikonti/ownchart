@@ -8,9 +8,10 @@ import { immer } from "zustand/middleware/immer";
 import { current } from "immer";
 import type { Task } from "../../types/chart.types";
 import { type TaskId, toTaskId } from "../../types/branded.types";
-import type {
-  EditableField,
-  NavigationDirection,
+import {
+  EDITABLE_FIELDS,
+  type EditableField,
+  type NavigationDirection,
 } from "../../types/task.types";
 import {
   wouldCreateCircularHierarchy,
@@ -137,18 +138,6 @@ export type TaskSliceSet = (fn: (state: TaskStore) => void) => void;
 /** Zustand get function. */
 export type TaskSliceGet = () => TaskStore;
 
-/**
- * Editable fields in order of tab navigation.
- */
-const EDITABLE_FIELDS: EditableField[] = [
-  "color",
-  "name",
-  "type",
-  "startDate",
-  "endDate",
-  "duration",
-  "progress",
-];
 
 export const useTaskStore = create<TaskStore>()(
   immer((set, get) => ({

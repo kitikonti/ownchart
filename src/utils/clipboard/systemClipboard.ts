@@ -5,28 +5,30 @@
 
 import type { Task } from "../../types/chart.types";
 import type { Dependency } from "../../types/dependency.types";
-import type { EditableField } from "../../types/task.types";
+import { EDITABLE_FIELDS, type EditableField } from "../../types/task.types";
 
 // Prefix to identify OwnChart data in the clipboard
 const OWNCHART_ROW_PREFIX = "OWNCHART_ROWS:";
 const OWNCHART_CELL_PREFIX = "OWNCHART_CELL:";
 
-// Valid EditableField values (duplicated here to avoid circular import from store)
-const VALID_EDITABLE_FIELDS = new Set<string>([
-  "name",
-  "startDate",
-  "endDate",
-  "duration",
-  "progress",
-  "color",
-  "type",
-]);
+// Derived from the shared EDITABLE_FIELDS constant — single source of truth.
+const VALID_EDITABLE_FIELDS: Set<string> = new Set(EDITABLE_FIELDS);
 
-/** Validate that a parsed object has the minimum required Task shape. */
+/**
+ * Validate that a parsed object has the minimum required Task shape.
+ * Checks all required Task fields to catch cross-version or malformed clipboard data.
+ */
 function isValidTaskShape(obj: unknown): boolean {
   if (typeof obj !== "object" || obj === null) return false;
   const t = obj as Record<string, unknown>;
-  return typeof t.id === "string" && typeof t.name === "string";
+  return (
+    typeof t.id === "string" &&
+    typeof t.name === "string" &&
+    typeof t.startDate === "string" &&
+    typeof t.endDate === "string" &&
+    typeof t.duration === "number" &&
+    typeof t.progress === "number"
+  );
 }
 
 /**

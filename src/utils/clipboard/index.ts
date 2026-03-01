@@ -11,7 +11,7 @@ export { remapTaskIds, remapDependencies } from "./remapIds";
 
 export { determineInsertPosition } from "./insertPosition";
 
-export { canPasteCellValue, getClearValueForField } from "./validation";
+export { canPasteCellValue, canCutCellValue, getClearValueForField } from "./validation";
 
 export {
   prepareRowPaste,

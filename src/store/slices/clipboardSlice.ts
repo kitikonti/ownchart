@@ -21,6 +21,7 @@ import {
   prepareRowPaste,
   applySummaryRecalculation,
   canPasteCellValue,
+  canCutCellValue,
   getClearValueForField,
   type PrepareRowPasteResult,
   type SystemRowClipboardData,
@@ -147,6 +148,9 @@ function performCellCopyOrCut(
 ): void {
   const task = useTaskStore.getState().tasks.find((t) => t.id === taskId);
   if (!task) return;
+
+  // Guard: prevent cuts that would corrupt task hierarchy when the source is cleared.
+  if (operation === "cut" && !canCutCellValue(field, task).valid) return;
 
   const value = getTaskFieldValue(task, field);
 

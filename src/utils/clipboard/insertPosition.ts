@@ -32,10 +32,11 @@ export function determineInsertPosition(
   }
 
   // Check if placeholder is in selection (filter it out for other checks)
+  const selectedSet = new Set(selectedTaskIds);
+  const placeholderSelected = selectedSet.has(PLACEHOLDER_TASK_ID);
   const realSelectedIds = selectedTaskIds.filter(
     (id) => id !== PLACEHOLDER_TASK_ID
   );
-  const placeholderSelected = selectedTaskIds.includes(PLACEHOLDER_TASK_ID);
 
   // If only placeholder is selected, insert at end
   if (placeholderSelected && realSelectedIds.length === 0) {

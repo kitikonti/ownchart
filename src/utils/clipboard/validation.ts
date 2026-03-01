@@ -61,6 +61,33 @@ export function canPasteCellValue(
 }
 
 /**
+ * Validate if a cell value can be cut from a source field.
+ *
+ * Rules:
+ * - Summary tasks' type cannot be cleared — doing so would convert the summary
+ *   to a regular task while its children remain, breaking the hierarchy.
+ *
+ * @param field - Field being cut
+ * @param sourceTask - Task being cut from
+ * @returns Validation result with error message if invalid
+ */
+export function canCutCellValue(
+  field: EditableField,
+  sourceTask: Task
+): { valid: boolean; error?: string } {
+  // Cutting type from a summary task clears it to "task", leaving its children
+  // without a summary parent — hierarchy invariant violated.
+  if (field === "type" && sourceTask.type === "summary") {
+    return {
+      valid: false,
+      error: "Cannot cut type from summary tasks (would orphan their children)",
+    };
+  }
+
+  return { valid: true };
+}
+
+/**
  * Get the default "clear" value for a field when cutting a cell.
  *
  * @param field - Field to get clear value for

@@ -11,4 +11,18 @@ export type EditableField =
   | "color"
   | "type";
 
+/**
+ * All editable fields in tab-navigation order.
+ * Single source of truth shared by taskSlice (navigation) and clipboard (validation).
+ */
+export const EDITABLE_FIELDS: readonly EditableField[] = [
+  "color",
+  "name",
+  "type",
+  "startDate",
+  "endDate",
+  "duration",
+  "progress",
+];
+
 export type NavigationDirection = "up" | "down" | "left" | "right";
