@@ -84,7 +84,5 @@ export function getClearValueForField(
       return COLORS.chart.taskDefault;
     case "type":
       return "task";
-    default:
-      return "";
   }
 }

@@ -18,6 +18,7 @@ export function remapTaskIds(tasks: Task[]): {
   remappedTasks: Task[];
   idMapping: Record<TaskId, TaskId>;
 } {
+  // Branded key type requires assertion; entries are populated immediately in the loop below
   const idMapping: Record<TaskId, TaskId> = {} as Record<TaskId, TaskId>;
 
   // First pass: Generate new IDs for all tasks

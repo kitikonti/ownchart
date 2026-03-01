@@ -45,6 +45,20 @@ export interface SystemCellClipboardData {
   field: EditableField;
 }
 
+/** Shared write helper — serializes data with prefix to system clipboard. */
+async function writeToClipboard(
+  prefix: string,
+  data: unknown
+): Promise<boolean> {
+  try {
+    await navigator.clipboard.writeText(prefix + JSON.stringify(data));
+    return true;
+  } catch (error) {
+    console.warn("Failed to write to system clipboard:", error);
+    return false;
+  }
+}
+
 /**
  * Write row data to system clipboard.
  * Stores serialized JSON with a prefix for identification.
@@ -53,16 +67,8 @@ export async function writeRowsToSystemClipboard(
   tasks: Task[],
   dependencies: Dependency[]
 ): Promise<boolean> {
-  try {
-    const data: SystemRowClipboardData = { tasks, dependencies };
-    const text = OWNCHART_ROW_PREFIX + JSON.stringify(data);
-
-    await navigator.clipboard.writeText(text);
-    return true;
-  } catch (error) {
-    console.warn("Failed to write to system clipboard:", error);
-    return false;
-  }
+  const data: SystemRowClipboardData = { tasks, dependencies };
+  return writeToClipboard(OWNCHART_ROW_PREFIX, data);
 }
 
 /**
@@ -72,16 +78,8 @@ export async function writeCellToSystemClipboard(
   value: Task[EditableField],
   field: EditableField
 ): Promise<boolean> {
-  try {
-    const data: SystemCellClipboardData = { value, field };
-    const text = OWNCHART_CELL_PREFIX + JSON.stringify(data);
-
-    await navigator.clipboard.writeText(text);
-    return true;
-  } catch (error) {
-    console.warn("Failed to write to system clipboard:", error);
-    return false;
-  }
+  const data: SystemCellClipboardData = { value, field };
+  return writeToClipboard(OWNCHART_CELL_PREFIX, data);
 }
 
 /**
@@ -97,7 +95,10 @@ export async function readRowsFromSystemClipboard(): Promise<SystemRowClipboardD
     }
 
     const jsonStr = text.slice(OWNCHART_ROW_PREFIX.length);
-    const data = JSON.parse(jsonStr) as SystemRowClipboardData;
+    const parsed: unknown = JSON.parse(jsonStr);
+    if (typeof parsed !== "object" || parsed === null) return null;
+    // safe cast — structure validated immediately below
+    const data = parsed as SystemRowClipboardData;
 
     // Structural validation
     if (!Array.isArray(data.tasks) || !Array.isArray(data.dependencies)) {
@@ -119,6 +120,10 @@ export async function readRowsFromSystemClipboard(): Promise<SystemRowClipboardD
 /**
  * Read cell data from system clipboard.
  * Returns null if clipboard doesn't contain OwnChart cell data.
+ *
+ * @remarks The `field` is validated against known EditableField values.
+ * The `value` is only checked for existence (not undefined) — callers should
+ * validate the value type matches the expected type for the given field.
  */
 export async function readCellFromSystemClipboard(): Promise<SystemCellClipboardData | null> {
   try {
@@ -129,7 +134,10 @@ export async function readCellFromSystemClipboard(): Promise<SystemCellClipboard
     }
 
     const jsonStr = text.slice(OWNCHART_CELL_PREFIX.length);
-    const data = JSON.parse(jsonStr) as SystemCellClipboardData;
+    const parsed: unknown = JSON.parse(jsonStr);
+    if (typeof parsed !== "object" || parsed === null) return null;
+    // safe cast — field and value validated immediately below
+    const data = parsed as SystemCellClipboardData;
 
     // Validate field is a known EditableField value
     if (!VALID_EDITABLE_FIELDS.has(data.field) || data.value === undefined) {
@@ -146,6 +154,10 @@ export async function readCellFromSystemClipboard(): Promise<SystemCellClipboard
 /**
  * Check what type of OwnChart data is in the system clipboard.
  * Returns "row", "cell", or null if no OwnChart data.
+ *
+ * @remarks Performs a separate clipboard read. If you intend to also read the
+ * clipboard content, prefer calling the read function directly — it returns null
+ * for non-matching data — to avoid two clipboard API calls.
  */
 export async function getSystemClipboardType(): Promise<"row" | "cell" | null> {
   try {

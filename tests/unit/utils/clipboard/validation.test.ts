@@ -198,9 +198,4 @@ describe("getClearValueForField", () => {
   it('should return "task" for "type"', () => {
     expect(getClearValueForField("type")).toBe("task");
   });
-
-  it("should return empty string for unknown field", () => {
-    // @ts-expect-error - testing unknown field
-    expect(getClearValueForField("unknownField")).toBe("");
-  });
 });
