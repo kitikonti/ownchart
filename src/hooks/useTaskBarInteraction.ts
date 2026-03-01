@@ -1,6 +1,9 @@
 /**
  * Task bar interaction hook for drag-to-move and drag-to-resize functionality.
  * Thin orchestrator — pure logic lives in ../utils/taskBarDragHelpers.
+ *
+ * Uses ref-based stable listeners to avoid stale closures and fragile cleanup.
+ * Document event handlers always delegate to the latest handler via refs.
  */
 
 import { useState, useCallback, useRef, useEffect } from "react";
@@ -21,17 +24,9 @@ import {
   buildMoveUpdates,
   buildResizeUpdate,
   type DragState,
+  type CursorType,
   type WorkingDaysContext,
 } from "../utils/taskBarDragHelpers";
-
-// Re-export types for backward compatibility
-export type {
-  InteractionMode,
-  CursorType,
-  DragState,
-} from "../utils/taskBarDragHelpers";
-
-import type { CursorType } from "../utils/taskBarDragHelpers";
 
 export interface UseTaskBarInteractionReturn {
   mode: "idle" | "dragging" | "resizing-left" | "resizing-right";
@@ -76,91 +71,104 @@ export function useTaskBarInteraction(
   const rafRef = useRef<number | null>(null);
   const svgRef = useRef<SVGSVGElement | null>(null);
 
-  /** Start drag or resize operation. */
-  const handleMouseDown = useCallback(
-    (e: React.MouseEvent<SVGGElement>) => {
-      const svg = e.currentTarget.ownerSVGElement;
-      if (!svg) return;
-      svgRef.current = svg;
+  /** Sync drag state to both React state and ref in one call. */
+  const syncDragState = useCallback((value: DragState | null): void => {
+    setDragState(value);
+    dragStateRef.current = value;
+  }, []);
 
-      const svgPoint = getSVGPoint(e, svg);
-      const zone = detectInteractionZone(svgPoint.x, geometry);
-      const mode = determineInteractionMode(task.type, zone);
+  // --- Stable document listeners via refs ---
+  // Handler refs are assigned in the render phase so they always capture
+  // fresh closure values. The stable callbacks never change identity,
+  // ensuring removeEventListener always matches addEventListener.
+  const mouseMoveRef = useRef<(e: MouseEvent) => void>(() => {});
+  const mouseUpRef = useRef<() => void>(() => {});
 
-      const effectiveEndDate = task.endDate || task.startDate;
-      const newDragState: DragState = {
-        mode,
-        startX: svgPoint.x,
-        startMouseX: e.clientX,
-        originalStartDate: task.startDate,
-        originalEndDate: effectiveEndDate,
-        currentPreviewStart: task.startDate,
-        currentPreviewEnd: effectiveEndDate,
-      };
-
-      setDragState(newDragState);
-      dragStateRef.current = newDragState;
-
-      document.addEventListener("mousemove", handleMouseMove);
-      document.addEventListener("mouseup", handleMouseUp);
-      e.preventDefault();
-      e.stopPropagation();
-    },
-    // eslint-disable-next-line react-hooks/exhaustive-deps -- handleMouseMove/handleMouseUp use refs for fresh values
-    [task, geometry, scale]
+  const stableMouseMove = useCallback(
+    (e: MouseEvent): void => mouseMoveRef.current(e),
+    []
   );
+  const stableMouseUp = useCallback((): void => mouseUpRef.current(), []);
 
-  /** Update preview during drag. */
-  const handleMouseMove = useCallback(
-    (e: MouseEvent) => {
-      const current = dragStateRef.current;
-      if (!current || !svgRef.current) return;
+  /** Commit a drag-move operation to the store. */
+  const commitDragMove = (current: DragState): void => {
+    const previewStart =
+      current.currentPreviewStart || current.originalStartDate;
+    const deltaDays = calculateDeltaDaysFromDates(
+      current.originalStartDate,
+      previewStart
+    );
 
-      if (rafRef.current) cancelAnimationFrame(rafRef.current);
+    if (deltaDays === 0) return;
 
-      rafRef.current = requestAnimationFrame(() => {
-        const deltaX = e.clientX - current.startMouseX;
-        const deltaDays = pixelsToDeltaDays(deltaX, scale.pixelsPerDay);
+    const { tasks, selectedTaskIds } = useTaskStore.getState();
+    const tasksToMove = selectedTaskIds.includes(task.id)
+      ? selectedTaskIds
+      : [task.id];
+    const effectiveTaskIds = getEffectiveTasksToMove(tasks, tasksToMove);
 
-        if (current.mode === "dragging") {
-          const newStart = addDays(current.originalStartDate, deltaDays);
-          const ctx = getWorkingDaysContext();
-          const newEnd = computeEndDateForDrag(
-            newStart,
-            current.originalStartDate,
-            current.originalEndDate,
-            deltaDays,
-            task.type,
-            ctx
-          );
+    const taskMap = new Map(tasks.map((t) => [t.id, t]));
+    const ctx = getWorkingDaysContext();
+    const updates = buildMoveUpdates(effectiveTaskIds, taskMap, deltaDays, ctx);
 
-          const updated: DragState = {
-            ...current,
-            currentPreviewStart: newStart,
-            currentPreviewEnd: newEnd,
-          };
-          setDragState(updated);
-          dragStateRef.current = updated;
-          setSharedDragState(deltaDays, task.id);
-        } else {
-          const preview = computeResizePreview(current, deltaDays);
-          if (!preview) return; // invalid duration
+    if (updates.length > 0) updateMultipleTasks(updates);
+  };
 
-          const updated: DragState = {
-            ...current,
-            currentPreviewStart: preview.previewStart,
-            currentPreviewEnd: preview.previewEnd,
-          };
-          setDragState(updated);
-          dragStateRef.current = updated;
-        }
-      });
-    },
-    [scale, task.id, task.type, setSharedDragState]
-  );
+  /** Commit a resize operation to the store. */
+  const commitResize = (current: DragState): void => {
+    const freshTask =
+      useTaskStore.getState().tasks.find((t) => t.id === task.id) ?? task;
+    const resizeUpdate = buildResizeUpdate(
+      freshTask,
+      current.currentPreviewStart,
+      current.currentPreviewEnd
+    );
+    if (resizeUpdate) updateTask(task.id, resizeUpdate);
+  };
 
-  /** Complete drag operation and commit changes. */
-  const handleMouseUp = useCallback(() => {
+  // Keep document handlers fresh on every render
+  mouseMoveRef.current = (e: MouseEvent): void => {
+    const current = dragStateRef.current;
+    if (!current || !svgRef.current) return;
+
+    if (rafRef.current) cancelAnimationFrame(rafRef.current);
+
+    rafRef.current = requestAnimationFrame(() => {
+      const deltaX = e.clientX - current.startMouseX;
+      const deltaDays = pixelsToDeltaDays(deltaX, scale.pixelsPerDay);
+
+      if (current.mode === "dragging") {
+        const newStart = addDays(current.originalStartDate, deltaDays);
+        const ctx = getWorkingDaysContext();
+        const newEnd = computeEndDateForDrag(
+          newStart,
+          current.originalStartDate,
+          current.originalEndDate,
+          deltaDays,
+          task.type,
+          ctx
+        );
+
+        syncDragState({
+          ...current,
+          currentPreviewStart: newStart,
+          currentPreviewEnd: newEnd,
+        });
+        setSharedDragState(deltaDays, task.id);
+      } else {
+        const preview = computeResizePreview(current, deltaDays);
+        if (!preview) return;
+
+        syncDragState({
+          ...current,
+          currentPreviewStart: preview.previewStart,
+          currentPreviewEnd: preview.previewEnd,
+        });
+      }
+    });
+  };
+
+  mouseUpRef.current = (): void => {
     const current = dragStateRef.current;
     if (!current) return;
 
@@ -170,62 +178,52 @@ export function useTaskBarInteraction(
     }
 
     if (current.mode === "dragging") {
-      const previewStart =
-        current.currentPreviewStart || current.originalStartDate;
-      const deltaDays = calculateDeltaDaysFromDates(
-        current.originalStartDate,
-        previewStart
-      );
-
-      if (deltaDays !== 0) {
-        const { tasks, selectedTaskIds } = useTaskStore.getState();
-        const tasksToMove = selectedTaskIds.includes(task.id)
-          ? selectedTaskIds
-          : [task.id];
-        const effectiveTaskIds = getEffectiveTasksToMove(tasks, tasksToMove);
-
-        const taskMap = new Map(tasks.map((t) => [t.id, t]));
-        const ctx = getWorkingDaysContext();
-        const updates = buildMoveUpdates(
-          effectiveTaskIds,
-          taskMap,
-          deltaDays,
-          ctx
-        );
-
-        if (updates.length > 0) updateMultipleTasks(updates);
-      }
+      commitDragMove(current);
     } else {
-      // Resize: read fresh task from store to avoid stale closure
-      const freshTask =
-        useTaskStore.getState().tasks.find((t) => t.id === task.id) ?? task;
-      const resizeUpdate = buildResizeUpdate(
-        freshTask,
-        current.currentPreviewStart,
-        current.currentPreviewEnd
-      );
-      if (resizeUpdate) updateTask(task.id, resizeUpdate);
+      commitResize(current);
     }
 
-    // Cleanup
-    document.removeEventListener("mousemove", handleMouseMove);
-    document.removeEventListener("mouseup", handleMouseUp);
-    setDragState(null);
-    dragStateRef.current = null;
+    document.removeEventListener("mousemove", stableMouseMove);
+    document.removeEventListener("mouseup", stableMouseUp);
+    syncDragState(null);
     svgRef.current = null;
     clearSharedDragState();
-  }, [
-    task,
-    updateTask,
-    updateMultipleTasks,
-    handleMouseMove,
-    clearSharedDragState,
-  ]);
+  };
+
+  /** Start drag or resize operation. */
+  const handleMouseDown = useCallback(
+    (e: React.MouseEvent<SVGGElement>): void => {
+      const svg = e.currentTarget.ownerSVGElement;
+      if (!svg) return;
+      svgRef.current = svg;
+
+      const svgPoint = getSVGPoint(e, svg);
+      const zone = detectInteractionZone(svgPoint.x, geometry);
+      const mode = determineInteractionMode(task.type, zone);
+
+      const effectiveEndDate = task.endDate || task.startDate;
+      syncDragState({
+        mode,
+        startX: svgPoint.x,
+        startMouseX: e.clientX,
+        originalStartDate: task.startDate,
+        originalEndDate: effectiveEndDate,
+        currentPreviewStart: task.startDate,
+        currentPreviewEnd: effectiveEndDate,
+      });
+
+      document.addEventListener("mousemove", stableMouseMove);
+      document.addEventListener("mouseup", stableMouseUp);
+      e.preventDefault();
+      e.stopPropagation();
+    },
+    [task, geometry, syncDragState, stableMouseMove, stableMouseUp]
+  );
 
   /** Update cursor on hover (when not dragging). */
   const handleMouseMoveForCursor = useCallback(
-    (e: React.MouseEvent<SVGGElement>) => {
-      if (dragState) return;
+    (e: React.MouseEvent<SVGGElement>): void => {
+      if (dragStateRef.current) return;
 
       if (task.type === "summary" || task.type === "milestone") {
         setCursor("grab");
@@ -239,17 +237,17 @@ export function useTaskBarInteraction(
       const zone = detectInteractionZone(svgPoint.x, geometry);
       setCursor(zone === "center" ? "grab" : "ew-resize");
     },
-    [task, geometry, dragState]
+    [task.type, geometry]
   );
 
-  // Cleanup on unmount
+  // Cleanup on unmount — stable refs guarantee correct removal
   useEffect(() => {
     return () => {
       if (rafRef.current) cancelAnimationFrame(rafRef.current);
-      document.removeEventListener("mousemove", handleMouseMove);
-      document.removeEventListener("mouseup", handleMouseUp);
+      document.removeEventListener("mousemove", stableMouseMove);
+      document.removeEventListener("mouseup", stableMouseUp);
     };
-  }, [handleMouseMove, handleMouseUp]);
+  }, [stableMouseMove, stableMouseUp]);
 
   const activeCursor = dragState?.mode === "dragging" ? "grabbing" : cursor;
 

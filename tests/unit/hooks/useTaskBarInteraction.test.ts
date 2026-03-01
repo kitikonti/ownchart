@@ -35,9 +35,12 @@ vi.mock('../../../src/utils/workingDaysCalculator', () => ({
 
 import { getSVGPoint } from '../../../src/utils/svgUtils';
 import { getEffectiveTasksToMove } from '../../../src/utils/hierarchy';
+import { calculateWorkingDays, addWorkingDays } from '../../../src/utils/workingDaysCalculator';
 
 const mockGetSVGPoint = vi.mocked(getSVGPoint);
 const mockGetEffective = vi.mocked(getEffectiveTasksToMove);
+const mockCalculateWorkingDays = vi.mocked(calculateWorkingDays);
+const mockAddWorkingDays = vi.mocked(addWorkingDays);
 
 // ─── Helpers ───────────────────────────────────────────────────────────
 
@@ -121,6 +124,8 @@ beforeEach(() => {
 
   mockGetSVGPoint.mockReturnValue({ x: 200, y: 50 });
   mockGetEffective.mockImplementation((_tasks, ids) => ids);
+  mockCalculateWorkingDays.mockReturnValue(5);
+  mockAddWorkingDays.mockImplementation((start: string) => start);
 });
 
 afterEach(() => {
@@ -369,6 +374,62 @@ describe('useTaskBarInteraction', () => {
       expect(result.current.previewGeometry?.startDate).toBe('2025-01-10');
       expect(result.current.previewGeometry?.endDate).toBe('2025-01-22');
     });
+
+    it('updates preview for resize-left', async () => {
+      // Position at left edge
+      mockGetSVGPoint.mockReturnValue({ x: 102, y: 50 });
+      const task = createTask();
+      const scale = createScale({ pixelsPerDay: 25 });
+
+      const { result } = renderHook(() =>
+        useTaskBarInteraction(task, scale, createGeometry()),
+      );
+
+      act(() => {
+        result.current.onMouseDown(createMockSVGEvent(102));
+      });
+
+      // Move 50px left → -2 days (52 - 102 = -50, -50/25 = -2)
+      await act(async () => {
+        document.dispatchEvent(new MouseEvent('mousemove', { clientX: 52 }));
+        await new Promise((resolve) => requestAnimationFrame(resolve));
+      });
+
+      expect(result.current.previewGeometry).not.toBeNull();
+      // Start shifts left, end stays original
+      expect(result.current.previewGeometry?.startDate).toBe('2025-01-08');
+      expect(result.current.previewGeometry?.endDate).toBe('2025-01-20');
+    });
+
+    it('does not update preview for invalid resize (duration < 1 day)', async () => {
+      // Position at left edge for resize-left
+      mockGetSVGPoint.mockReturnValue({ x: 102, y: 50 });
+      // Short task: Jan 10 to Jan 11 (2-day duration)
+      const task = createTask({
+        startDate: '2025-01-10',
+        endDate: '2025-01-11',
+        duration: 2,
+      });
+      const scale = createScale({ pixelsPerDay: 25 });
+
+      const { result } = renderHook(() =>
+        useTaskBarInteraction(task, scale, createGeometry()),
+      );
+
+      act(() => {
+        result.current.onMouseDown(createMockSVGEvent(102));
+      });
+
+      // Move 75px right → +3 days → newStart Jan 13, past endDate Jan 11 → invalid
+      await act(async () => {
+        document.dispatchEvent(new MouseEvent('mousemove', { clientX: 177 }));
+        await new Promise((resolve) => requestAnimationFrame(resolve));
+      });
+
+      // Preview should still show original dates (computeResizePreview returned null)
+      expect(result.current.previewGeometry?.startDate).toBe('2025-01-10');
+      expect(result.current.previewGeometry?.endDate).toBe('2025-01-11');
+    });
   });
 
   describe('mouseup commits changes', () => {
@@ -501,6 +562,51 @@ describe('useTaskBarInteraction', () => {
 
       expect(clearDragStateSpy).toHaveBeenCalled();
     });
+
+    it('moves all selected tasks when dragged task is in selection', async () => {
+      mockGetSVGPoint.mockReturnValue({ x: 200, y: 50 });
+      const task = createTask();
+      const task2 = createTask({
+        id: toTaskId('task-2'),
+        name: 'Task 2',
+        startDate: '2025-01-15',
+        endDate: '2025-01-25',
+      });
+      const scale = createScale({ pixelsPerDay: 25 });
+
+      const originalGetState = useTaskStore.getState;
+      vi.spyOn(useTaskStore, 'getState').mockReturnValue({
+        ...originalGetState(),
+        tasks: [task, task2],
+        selectedTaskIds: [task.id, task2.id],
+        updateTask: updateTaskSpy,
+        updateMultipleTasks: updateMultipleTasksSpy,
+      } as ReturnType<typeof useTaskStore.getState>);
+
+      const { result } = renderHook(() =>
+        useTaskBarInteraction(task, scale, createGeometry()),
+      );
+
+      act(() => {
+        result.current.onMouseDown(createMockSVGEvent(200));
+      });
+
+      await act(async () => {
+        document.dispatchEvent(new MouseEvent('mousemove', { clientX: 275 }));
+        await new Promise((resolve) => requestAnimationFrame(resolve));
+      });
+
+      act(() => {
+        document.dispatchEvent(new MouseEvent('mouseup'));
+      });
+
+      // Should resolve effective tasks for all selected IDs
+      expect(mockGetEffective).toHaveBeenCalledWith(
+        [task, task2],
+        [task.id, task2.id],
+      );
+      expect(updateMultipleTasksSpy).toHaveBeenCalled();
+    });
   });
 
   describe('milestone handling', () => {
@@ -524,6 +630,44 @@ describe('useTaskBarInteraction', () => {
       // Preview should use startDate for both
       expect(result.current.previewGeometry?.startDate).toBe('2025-01-15');
       expect(result.current.previewGeometry?.endDate).toBe('2025-01-15');
+    });
+  });
+
+  describe('working days mode', () => {
+    it('uses working days calculation during drag when enabled', async () => {
+      mockGetSVGPoint.mockReturnValue({ x: 200, y: 50 });
+      const task = createTask();
+      const scale = createScale({ pixelsPerDay: 25 });
+
+      // Enable working days mode in chart store
+      const chartState = useChartStore.getState();
+      Object.defineProperty(chartState, 'workingDaysMode', {
+        value: true,
+        writable: true,
+        configurable: true,
+      });
+      Object.defineProperty(chartState, 'workingDaysConfig', {
+        value: { excludeWeekends: true, excludeHolidays: false },
+        writable: true,
+        configurable: true,
+      });
+
+      const { result } = renderHook(() =>
+        useTaskBarInteraction(task, scale, createGeometry()),
+      );
+
+      act(() => {
+        result.current.onMouseDown(createMockSVGEvent(200));
+      });
+
+      await act(async () => {
+        document.dispatchEvent(new MouseEvent('mousemove', { clientX: 275 }));
+        await new Promise((resolve) => requestAnimationFrame(resolve));
+      });
+
+      // computeEndDateForDrag should use working days functions
+      expect(mockCalculateWorkingDays).toHaveBeenCalled();
+      expect(mockAddWorkingDays).toHaveBeenCalled();
     });
   });
 
