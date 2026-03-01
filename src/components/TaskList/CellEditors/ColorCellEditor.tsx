@@ -5,6 +5,7 @@
  */
 
 import {
+  memo,
   useState,
   useRef,
   useEffect,
@@ -16,6 +17,7 @@ import { ColorPickerPopover } from "./ColorPickerPopover";
 import type { ColorMode } from "../../../types/colorMode.types";
 import type { HexColor } from "../../../types/branded.types";
 import { toHexColor } from "../../../types/branded.types";
+import { DENSITY_CONFIG } from "../../../config/densityConfig";
 
 export interface ColorCellEditorProps {
   /** Current task.color value (hex) */
@@ -50,7 +52,7 @@ export interface ColorCellEditorProps {
  * Color picker cell editor component.
  * Shows a color swatch that opens an enhanced popover on click.
  */
-export function ColorCellEditor({
+export const ColorCellEditor = memo(function ColorCellEditor({
   value,
   computedColor,
   colorMode = "manual",
@@ -59,7 +61,7 @@ export function ColorCellEditor({
   onResetOverride,
   onSave,
   onCancel,
-  height = 28,
+  height = DENSITY_CONFIG.compact.rowHeight,
 }: ColorCellEditorProps): JSX.Element {
   const [showPopover, setShowPopover] = useState(false);
   const [anchorRect, setAnchorRect] = useState<DOMRect | undefined>();
@@ -68,19 +70,20 @@ export function ColorCellEditor({
   // The display color: in auto modes use computed, in manual use task.color
   const displayColor = computedColor || value;
 
-  // Auto-open popover on mount
-  useEffect(() => {
+  const openPopover = useCallback((): void => {
     if (triggerRef.current) {
       setAnchorRect(triggerRef.current.getBoundingClientRect());
       setShowPopover(true);
     }
   }, []);
 
+  // Auto-open popover on mount
+  useEffect(() => {
+    openPopover();
+  }, [openPopover]);
+
   const handleClick = (): void => {
-    if (triggerRef.current) {
-      setAnchorRect(triggerRef.current.getBoundingClientRect());
-      setShowPopover(true);
-    }
+    openPopover();
   };
 
   const handleSelect = useCallback(
@@ -142,4 +145,4 @@ export function ColorCellEditor({
         )}
     </>
   );
-}
+});

@@ -7,9 +7,12 @@
  * button so users can cycle task types via Enter/Space.
  */
 
+import { memo } from "react";
 import type { KeyboardEvent, MouseEvent } from "react";
 import { Folder, CheckSquare, Diamond } from "@phosphor-icons/react";
 import type { TaskType } from "../../types/chart.types";
+
+const TASK_TYPE_ICON_SIZE = 16;
 
 /** Display labels for screen readers */
 const TYPE_LABELS: Record<TaskType, string> = {
@@ -24,7 +27,7 @@ interface TaskTypeIconProps {
   className?: string;
 }
 
-export function TaskTypeIcon({
+export const TaskTypeIcon = memo(function TaskTypeIcon({
   type = "task",
   onClick,
   className = "",
@@ -35,7 +38,12 @@ export function TaskTypeIcon({
     type === "summary" ? Folder : type === "milestone" ? Diamond : CheckSquare;
 
   const icon = (
-    <Icon size={16} weight="light" className={iconClassName} aria-hidden />
+    <Icon
+      size={TASK_TYPE_ICON_SIZE}
+      weight="light"
+      className={iconClassName}
+      aria-hidden
+    />
   );
 
   // When interactive, wrap in an accessible button
@@ -54,18 +62,18 @@ export function TaskTypeIcon({
     };
 
     return (
-      <span
-        role="button"
+      <button
+        type="button"
         tabIndex={0}
         aria-label={`Task type: ${TYPE_LABELS[type]}. Click to change`}
-        className="inline-flex cursor-pointer hover:text-neutral-800 transition-colors"
+        className="inline-flex cursor-pointer hover:text-neutral-800 transition-colors bg-transparent border-0 p-0"
         onClick={handleClick}
         onKeyDown={handleKeyDown}
       >
         {icon}
-      </span>
+      </button>
     );
   }
 
   return icon;
-}
+});

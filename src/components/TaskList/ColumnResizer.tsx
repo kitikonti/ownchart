@@ -4,6 +4,7 @@
  */
 
 import {
+  memo,
   useState,
   useRef,
   useEffect,
@@ -41,7 +42,7 @@ export interface ColumnResizerProps {
 /**
  * Column resizer component.
  */
-export function ColumnResizer({
+export const ColumnResizer = memo(function ColumnResizer({
   columnId,
   onResize,
   onAutoResize,
@@ -56,18 +57,15 @@ export function ColumnResizer({
   useEffect(() => {
     if (!isResizing) return;
 
+    const computeWidth = (clientX: number): number =>
+      Math.max(minWidth, startWidthRef.current + (clientX - startXRef.current));
+
     const handleMouseMove = (e: globalThis.MouseEvent): void => {
-      // Live update during drag
-      const deltaX = e.clientX - startXRef.current;
-      const newWidth = Math.max(minWidth, startWidthRef.current + deltaX);
-      onResize(columnId, newWidth);
+      onResize(columnId, computeWidth(e.clientX));
     };
 
     const handleMouseUp = (e: globalThis.MouseEvent): void => {
-      const deltaX = e.clientX - startXRef.current;
-      const newWidth = Math.max(minWidth, startWidthRef.current + deltaX);
-
-      onResize(columnId, newWidth);
+      onResize(columnId, computeWidth(e.clientX));
       setIsResizing(false);
     };
 
@@ -142,4 +140,4 @@ export function ColumnResizer({
       title="Drag to resize, double-click to auto-fit. Arrow keys: resize, Enter: auto-fit"
     />
   );
-}
+});

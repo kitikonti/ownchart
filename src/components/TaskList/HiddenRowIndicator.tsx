@@ -4,7 +4,7 @@
  * On hover, reveals an unhide button to restore hidden rows.
  */
 
-import { useState } from "react";
+import { memo, useState } from "react";
 import { CaretUpDown } from "@phosphor-icons/react";
 import { useDensityConfig } from "../../store/slices/userPreferencesSlice";
 
@@ -22,6 +22,7 @@ const HOVER_ZONE_HEIGHT_RATIO = 0.9;
 // Unhide button dimensions
 const UNHIDE_BUTTON_WIDTH = 20;
 const UNHIDE_HOVER_ZONE_EXTENSION = UNHIDE_BUTTON_WIDTH + 1; // extends past button by 1px for border overlap
+const UNHIDE_ICON_SIZE = 20;
 
 // Z-index layers for indicator elements
 const INDICATOR_Z_INDEX = 40;
@@ -33,18 +34,23 @@ interface HiddenRowIndicatorProps {
   hiddenCount?: number;
   /** Callback to unhide hidden rows */
   onUnhide?: () => void;
-  /** Brand color for controls */
-  controlsColor: string;
+  /** Brand color for controls (only used when onUnhide is provided) */
+  controlsColor?: string;
   /** Color for the double-line indicator */
   indicatorColor: string;
   /** Position relative to the row — "below" (default) or "above" */
   position?: "above" | "below";
 }
 
-export function HiddenRowIndicator({
+/** Returns true when the element (or an ancestor) is part of the unhide interaction zone. */
+function isWithinUnhideArea(element: HTMLElement | null): boolean {
+  return !!element?.closest?.("[data-unhide-zone], [data-unhide-button]");
+}
+
+export const HiddenRowIndicator = memo(function HiddenRowIndicator({
   hiddenCount,
   onUnhide,
-  controlsColor,
+  controlsColor = "transparent",
   indicatorColor,
   position = "below",
 }: HiddenRowIndicatorProps): JSX.Element {
@@ -98,8 +104,7 @@ export function HiddenRowIndicator({
           }}
           onMouseEnter={() => setShowUnhideButton(true)}
           onMouseLeave={(e) => {
-            const related = e.relatedTarget as HTMLElement | null;
-            if (related?.closest?.("[data-unhide-zone], [data-unhide-button]"))
+            if (isWithinUnhideArea(e.relatedTarget as HTMLElement | null))
               return;
             setShowUnhideButton(false);
             setIsButtonHovered(false);
@@ -124,10 +129,7 @@ export function HiddenRowIndicator({
               onMouseEnter={() => setIsButtonHovered(true)}
               onMouseLeave={(e) => {
                 setIsButtonHovered(false);
-                const related = e.relatedTarget as HTMLElement | null;
-                if (
-                  related?.closest?.("[data-unhide-zone], [data-unhide-button]")
-                )
+                if (isWithinUnhideArea(e.relatedTarget as HTMLElement | null))
                   return;
                 setShowUnhideButton(false);
               }}
@@ -144,7 +146,7 @@ export function HiddenRowIndicator({
               }}
             >
               <CaretUpDown
-                size={20}
+                size={UNHIDE_ICON_SIZE}
                 weight="fill"
                 color={isButtonHovered ? "white" : controlsColor}
               />
@@ -154,4 +156,4 @@ export function HiddenRowIndicator({
       )}
     </>
   );
-}
+});
