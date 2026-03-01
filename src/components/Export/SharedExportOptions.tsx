@@ -4,6 +4,12 @@
  * Uses extracted common components for consistent styling.
  */
 
+import {
+  type MouseEvent as ReactMouseEvent,
+  useCallback,
+  useId,
+  useMemo,
+} from "react";
 import type {
   ExportOptions,
   ExportColumnKey,
@@ -14,6 +20,7 @@ import type {
   UiDensity,
   TaskLabelPosition,
 } from "../../types/preferences.types";
+import { formatDateRange } from "../../utils/export/dateFormatting";
 import { Alert } from "../common/Alert";
 import { FieldLabel } from "../common/FieldLabel";
 import { LabeledCheckbox } from "../common/LabeledCheckbox";
@@ -22,7 +29,10 @@ import { CollapsibleSection } from "../common/CollapsibleSection";
 import { CheckboxGroup } from "../common/CheckboxGroup";
 import { Input } from "../common/Input";
 import { SectionHeader } from "../common/SectionHeader";
-import { SegmentedControl, type SegmentedControlOption } from "../common/SegmentedControl";
+import {
+  SegmentedControl,
+  type SegmentedControlOption,
+} from "../common/SegmentedControl";
 
 // =============================================================================
 // Constants
@@ -64,24 +74,6 @@ const TIMELINE_OPTIONS: { key: ExportBooleanKey; label: string }[] = [
 ];
 
 // =============================================================================
-// Helpers
-// =============================================================================
-
-/** Format a Date as YYYY-MM-DD using local date parts (avoids UTC shift) */
-function formatDate(date: Date | undefined): string {
-  if (!date) return "";
-  const y = date.getFullYear();
-  const m = String(date.getMonth() + 1).padStart(2, "0");
-  const d = String(date.getDate()).padStart(2, "0");
-  return `${y}-${m}-${d}`;
-}
-
-/** Format a date range as "YYYY-MM-DD – YYYY-MM-DD" */
-function formatDateRange(range: { start: Date; end: Date }): string {
-  return `${formatDate(range.start)} – ${formatDate(range.end)}`;
-}
-
-// =============================================================================
 // Component
 // =============================================================================
 
@@ -100,56 +92,96 @@ export function SharedExportOptions({
   projectDateRange,
   visibleDateRange,
 }: SharedExportOptionsProps): JSX.Element {
+  // Stable IDs for aria-labelledby on the Date Range section landmark
+  const dateRangeSectionId = useId();
+
   const showBackground = format === "png" || format === "svg";
 
+  // ISO date strings sort lexicographically, so string comparison is equivalent
+  // to chronological comparison — no Date conversion needed.
   const isCustomRangeInvalid =
     options.dateRangeMode === "custom" &&
     !!options.customDateStart &&
     !!options.customDateEnd &&
     options.customDateEnd < options.customDateStart;
 
-  // Build checkbox items for columns
-  const columnItems = COLUMN_OPTIONS.map((col) => ({
-    key: col.key,
-    label: col.label,
-    checked: options.selectedColumns.includes(col.key),
-  }));
+  // Build checkbox items for columns — memoised to avoid recomputing when
+  // unrelated options (zoom, date range, etc.) change.
+  const columnItems = useMemo(
+    () =>
+      COLUMN_OPTIONS.map((col) => ({
+        key: col.key,
+        label: col.label,
+        checked: options.selectedColumns.includes(col.key),
+      })),
+    [options.selectedColumns]
+  );
 
-  // Build checkbox items for timeline options (type-safe via ExportBooleanKey)
-  const timelineItems = TIMELINE_OPTIONS.map((item) => ({
-    key: item.key,
-    label: item.label,
-    checked: options[item.key],
-  }));
+  // Build checkbox items for timeline options — memoised independently of
+  // column and date-range state.
+  const timelineItems = useMemo(
+    () =>
+      TIMELINE_OPTIONS.map((item) => ({
+        key: item.key,
+        label: item.label,
+        checked: options[item.key],
+      })),
+    // Depend only on the 6 boolean flags this memo actually reads
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [
+      options.includeHeader,
+      options.includeGridLines,
+      options.includeWeekends,
+      options.includeTodayMarker,
+      options.includeDependencies,
+      options.includeHolidays,
+    ]
+  );
 
-  const handleColumnChange = (key: string, checked: boolean): void => {
-    const col = COLUMN_OPTIONS.find((c) => c.key === key);
-    if (!col) return;
-    const selected = new Set(options.selectedColumns);
-    if (checked) selected.add(col.key);
-    else selected.delete(col.key);
-    // Re-derive in COLUMN_OPTIONS order to keep the output stable regardless
-    // of the order in which checkboxes are toggled.
-    const orderedColumns = COLUMN_OPTIONS.filter((c) =>
-      selected.has(c.key)
-    ).map((c) => c.key);
-    onChange({ selectedColumns: orderedColumns });
-  };
+  const handleColumnChange = useCallback(
+    (key: string, checked: boolean): void => {
+      const col = COLUMN_OPTIONS.find((c) => c.key === key);
+      if (!col) return;
+      const selected = new Set(options.selectedColumns);
+      if (checked) selected.add(col.key);
+      else selected.delete(col.key);
+      // Re-derive in COLUMN_OPTIONS order to keep the output stable regardless
+      // of the order in which checkboxes are toggled.
+      const orderedColumns = COLUMN_OPTIONS.filter((c) =>
+        selected.has(c.key)
+      ).map((c) => c.key);
+      onChange({ selectedColumns: orderedColumns });
+    },
+    [options.selectedColumns, onChange]
+  );
 
-  const handleTimelineChange = (key: string, checked: boolean): void => {
-    const opt = TIMELINE_OPTIONS.find((item) => item.key === key);
-    if (!opt) return;
-    // Build update via typed key so TypeScript verifies ExportBooleanKey maps to boolean
-    const update: Partial<ExportOptions> = {};
-    update[opt.key] = checked;
-    onChange(update);
-  };
+  const handleTimelineChange = useCallback(
+    (key: string, checked: boolean): void => {
+      const opt = TIMELINE_OPTIONS.find((item) => item.key === key);
+      if (!opt) return;
+      // Build update via typed key so TypeScript verifies ExportBooleanKey maps to boolean
+      const update: Partial<ExportOptions> = {};
+      update[opt.key] = checked;
+      onChange(update);
+    },
+    [onChange]
+  );
+
+  // Prevent the RadioOptionCard's label from consuming the click before the
+  // native date-picker can receive focus.
+  const handleDateInputClick = useCallback((e: ReactMouseEvent): void => {
+    e.stopPropagation();
+  }, []);
 
   return (
     <div className="space-y-6">
       {/* ============ DATE RANGE ============ */}
-      <section>
-        <SectionHeader title="Date Range" variant="simple" />
+      <section aria-labelledby={dateRangeSectionId}>
+        <SectionHeader
+          id={dateRangeSectionId}
+          title="Date Range"
+          variant="simple"
+        />
 
         <div className="space-y-2">
           <RadioOptionCard
@@ -183,14 +215,14 @@ export function SharedExportOptions({
                 type="date"
                 value={options.customDateStart || ""}
                 onChange={(e) => onChange({ customDateStart: e.target.value })}
-                onClick={(e) => e.stopPropagation()}
+                onClick={handleDateInputClick}
                 aria-label="Custom start date"
               />
               <Input
                 type="date"
                 value={options.customDateEnd || ""}
                 onChange={(e) => onChange({ customDateEnd: e.target.value })}
-                onClick={(e) => e.stopPropagation()}
+                onClick={handleDateInputClick}
                 aria-label="Custom end date"
               />
               {isCustomRangeInvalid && (
@@ -203,7 +235,7 @@ export function SharedExportOptions({
 
       {/* ============ BACKGROUND (PNG/SVG only) ============ */}
       {showBackground && (
-        <section>
+        <div>
           <LabeledCheckbox
             id="export-transparent-bg"
             checked={options.background === "transparent"}
@@ -213,7 +245,7 @@ export function SharedExportOptions({
             title="Transparent background"
             description="Remove white background for overlay use"
           />
-        </section>
+        </div>
       )}
 
       <div className="divider-h" />

@@ -20,6 +20,8 @@ export interface SectionHeaderProps {
   variant?: SectionHeaderVariant;
   /** HTML element to use (h3 or span) */
   as?: "h3" | "span";
+  /** Optional id so a parent <section> can reference this heading via aria-labelledby */
+  id?: string;
 }
 
 export function SectionHeader({
@@ -27,10 +29,14 @@ export function SectionHeader({
   icon,
   variant = "default",
   as: Element = "h3",
+  id,
 }: SectionHeaderProps): JSX.Element {
   if (variant === "simple") {
     return (
-      <Element className="block text-sm font-semibold text-neutral-900 mb-3">
+      <Element
+        id={id}
+        className="block text-sm font-semibold text-neutral-900 mb-3"
+      >
         {title}
       </Element>
     );
@@ -38,7 +44,10 @@ export function SectionHeader({
 
   if (variant === "bordered") {
     return (
-      <Element className="text-sm font-semibold text-neutral-900 mb-2.5 pb-1.5 border-b border-neutral-200">
+      <Element
+        id={id}
+        className="text-sm font-semibold text-neutral-900 mb-2.5 pb-1.5 border-b border-neutral-200"
+      >
         {title}
       </Element>
     );
@@ -48,7 +57,7 @@ export function SectionHeader({
   return (
     <div className="flex items-center gap-2 mb-4">
       {icon && <span className="text-neutral-500 flex-shrink-0">{icon}</span>}
-      <Element className="text-sm font-semibold text-neutral-900">
+      <Element id={id} className="text-sm font-semibold text-neutral-900">
         {title}
       </Element>
     </div>
