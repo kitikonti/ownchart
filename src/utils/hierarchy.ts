@@ -45,6 +45,11 @@ export interface SummaryCascadeEntry {
 
 // ─── Internal Helpers ─────────────────────────────────────────────────────────
 
+/** Builds a map from task ID → task for O(1) lookups. */
+function buildTaskById(tasks: ReadonlyArray<Task>): Map<TaskId, Task> {
+  return new Map(tasks.map((t) => [t.id, t]));
+}
+
 /**
  * Builds a map from each task ID to its nesting level (0 = root) in a single
  * O(n) pass using memoised top-down recursion. Much more efficient than calling
@@ -54,7 +59,7 @@ export interface SummaryCascadeEntry {
  * the task is treated as root level (0) to prevent infinite recursion.
  */
 function buildLevelMap(tasks: Task[]): Map<TaskId, number> {
-  const taskById = new Map<TaskId, Task>(tasks.map((t) => [t.id, t]));
+  const taskById = buildTaskById(tasks);
   const levelCache = new Map<TaskId, number>();
   const computing = new Set<TaskId>(); // Guard against circular refs in data
 
@@ -90,18 +95,26 @@ function buildLevelMap(tasks: Task[]): Map<TaskId, number> {
 
 /**
  * Resolves the effective date range for a child during summary date computation.
- * For summary children, recursively computes their derived dates.
+ * For summary children, recursively computes their derived dates via
+ * calculateSummaryDatesInner (which carries the pre-built maps and visited guard).
  * Returns null if the child has no usable or valid dates.
  */
 function resolveChildDateRange(
   tasks: Task[],
-  child: Task
+  child: Task,
+  childrenMap: Map<TaskId | undefined, Task[]>,
+  visited: Set<TaskId>
 ): { start: Date; end: Date } | null {
   let startStr: string;
   let endStr: string;
 
   if (child.type === "summary") {
-    const summaryDates = calculateSummaryDates(tasks, child.id);
+    const summaryDates = calculateSummaryDatesInner(
+      tasks,
+      child.id,
+      childrenMap,
+      visited
+    );
     if (!summaryDates) return null;
     startStr = summaryDates.startDate;
     endStr = summaryDates.endDate;
@@ -180,11 +193,14 @@ function applySummaryUpdate(
  * Recalculates or clears a summary task's dates depending on whether it still
  * has children, then appends the cascade entry to the accumulator.
  * Extracted from the BFS loop in recalculateSummaryAncestors for clarity.
+ * Accepts the pre-built childrenMap so calculateSummaryDatesInner can reuse it
+ * without rebuilding per cascade step.
  */
 function updateOrClearSummaryDates(
   parent: Task,
   tasks: Task[],
   childrenSet: Set<TaskId>,
+  childrenMap: Map<TaskId | undefined, Task[]>,
   cascadeUpdates: SummaryCascadeEntry[]
 ): void {
   const previousValues: SummaryDateUpdates = {
@@ -194,7 +210,12 @@ function updateOrClearSummaryDates(
   };
 
   if (childrenSet.has(parent.id)) {
-    const summaryDates = calculateSummaryDates(tasks, parent.id);
+    const summaryDates = calculateSummaryDatesInner(
+      tasks,
+      parent.id,
+      childrenMap,
+      new Set()
+    );
     if (summaryDates) {
       cascadeUpdates.push(
         applySummaryUpdate(parent, summaryDates, previousValues)
@@ -283,7 +304,7 @@ export function getTaskDescendants(
  * replacing the previous O(n × depth) recursive approach.
  */
 export function getTaskPath(tasks: Task[], taskId: TaskId): TaskId[] {
-  const taskById = new Map<TaskId, Task>(tasks.map((t) => [t.id, t]));
+  const taskById = buildTaskById(tasks);
   const path: TaskId[] = [];
   let current = taskById.get(taskId);
 
@@ -362,28 +383,34 @@ export function getMaxDepth(tasks: Task[]): number {
 }
 
 /**
- * Calculate summary task dates from children.
- *
- * IMPORTANT: Only applies to type='summary'!
- * Regular tasks (type='task') with children keep their manual dates.
+ * Internal recursive implementation of summary date calculation.
+ * Accepts pre-built lookup structures so they are not rebuilt at every recursion
+ * level, and a `visited` set that guards against infinite recursion on corrupt
+ * data containing summary cycles (mirrors the `computing` set in buildLevelMap).
  */
-export function calculateSummaryDates(
+function calculateSummaryDatesInner(
   tasks: Task[],
-  summaryTaskId: TaskId
+  summaryTaskId: TaskId,
+  childrenMap: Map<TaskId | undefined, Task[]>,
+  visited: Set<TaskId>
 ): SummaryDateUpdates | null {
+  // Circular-reference guard — same pattern as buildLevelMap's `computing` set.
+  if (visited.has(summaryTaskId)) return null;
+  visited.add(summaryTaskId);
+
   const summaryTask = tasks.find((t) => t.id === summaryTaskId);
 
   // Only calculate for summary type!
   if (summaryTask?.type !== "summary") return null;
 
-  const children = getTaskChildren(tasks, summaryTaskId);
+  const children = childrenMap.get(summaryTaskId) ?? [];
   if (children.length === 0) return null;
 
   let minStart: Date | null = null;
   let maxEnd: Date | null = null;
 
   for (const child of children) {
-    const range = resolveChildDateRange(tasks, child);
+    const range = resolveChildDateRange(tasks, child, childrenMap, visited);
     if (!range) continue;
     if (!minStart || range.start < minStart) minStart = range.start;
     if (!maxEnd || range.end > maxEnd) maxEnd = range.end;
@@ -399,6 +426,24 @@ export function calculateSummaryDates(
     endDate: maxEnd.toISOString().split("T")[0],
     duration,
   };
+}
+
+/**
+ * Calculate summary task dates from children.
+ *
+ * IMPORTANT: Only applies to type='summary'!
+ * Regular tasks (type='task') with children keep their manual dates.
+ *
+ * Builds the children lookup once and delegates to calculateSummaryDatesInner
+ * to avoid O(n × depth) cost from repeated getTaskChildren calls during
+ * recursive traversal of nested summaries.
+ */
+export function calculateSummaryDates(
+  tasks: Task[],
+  summaryTaskId: TaskId
+): SummaryDateUpdates | null {
+  const { childrenMap } = buildChildrenLookup(tasks);
+  return calculateSummaryDatesInner(tasks, summaryTaskId, childrenMap, new Set());
 }
 
 /**
@@ -475,9 +520,9 @@ export function recalculateSummaryAncestors(
   const processed = new Set<TaskId>();
   // O(1) task lookup; task references in this map are Immer draft proxies
   // when called from a store action, so direct mutation propagates correctly.
-  const taskById = new Map(tasks.map((t) => [t.id, t]));
-  // O(1) children-exist check, replacing the per-iteration O(n) tasks.some() scan.
-  const { childrenSet } = buildChildrenLookup(tasks);
+  const taskById = buildTaskById(tasks);
+  // Build once: O(1) children-exist check + reusable map for calculateSummaryDatesInner.
+  const { childrenMap, childrenSet } = buildChildrenLookup(tasks);
   const queue = Array.from(parentIds);
 
   while (queue.length > 0) {
@@ -489,7 +534,7 @@ export function recalculateSummaryAncestors(
     const parent = taskById.get(parentId);
     if (!parent || parent.type !== "summary") continue;
 
-    updateOrClearSummaryDates(parent, tasks, childrenSet, cascadeUpdates);
+    updateOrClearSummaryDates(parent, tasks, childrenSet, childrenMap, cascadeUpdates);
 
     // Continue cascading up
     if (parent.parent) {
@@ -518,7 +563,9 @@ export function getEffectiveTasksToMove(
 ): TaskId[] {
   if (selectedIds.length === 0) return [];
 
-  const taskById = new Map<TaskId, Task>(tasks.map((t) => [t.id, t]));
+  const taskById = buildTaskById(tasks);
+  // Build once — reused for both the descendant walk and the ancestor-coverage check.
+  const { childrenMap } = buildChildrenLookup(tasks);
   const result = new Set<TaskId>();
 
   // Collect selected summary IDs upfront for O(1) ancestor-coverage checks
@@ -534,10 +581,17 @@ export function getEffectiveTasksToMove(
     if (!task) continue;
 
     if (task.type === "summary") {
-      // For summaries: add all their non-summary descendants
-      for (const descendant of getTaskDescendants(tasks, id)) {
-        if (descendant.type !== "summary") {
-          result.add(descendant.id);
+      // Walk descendants via the pre-built childrenMap — O(n) total across all
+      // selected summaries instead of O(k × n) from calling getTaskDescendants
+      // (which calls buildChildrenLookup) once per selected summary.
+      const stack: TaskId[] = [id];
+      while (stack.length > 0) {
+        const currentId = stack.pop()!;
+        for (const child of childrenMap.get(currentId) ?? []) {
+          if (child.type !== "summary") {
+            result.add(child.id);
+          }
+          stack.push(child.id);
         }
       }
     } else if (

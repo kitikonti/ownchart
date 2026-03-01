@@ -565,6 +565,19 @@ describe("calculateSummaryDates", () => {
     expect(calculateSummaryDates(tasks, tid("summary"))).toBeNull();
   });
 
+  it("should not crash on corrupt data with a circular summary chain", () => {
+    // Simulates corrupt data: summary A contains summary B which contains summary A.
+    // The circular-reference guard (visited set) must prevent infinite recursion.
+    const tasks: Task[] = [
+      createTask("a", "Summary A", { type: "summary", parent: tid("b") }),
+      createTask("b", "Summary B", { type: "summary", parent: tid("a") }),
+    ];
+
+    // Must not throw / stack-overflow — result is null (no valid leaf dates to span)
+    expect(() => calculateSummaryDates(tasks, tid("a"))).not.toThrow();
+    expect(calculateSummaryDates(tasks, tid("a"))).toBeNull();
+  });
+
   it("should recursively derive dates from nested summary children", () => {
     const tasks: Task[] = [
       createTask("outer", "Outer Summary", { type: "summary" }),
@@ -877,6 +890,72 @@ describe("buildFlattenedTaskList", () => {
     const ids = result.map((r) => r.task.id);
 
     expect(ids).toEqual([tid("parent"), tid("childA"), tid("childB"), tid("childC")]);
+  });
+
+  describe("globalRowNumber", () => {
+    it("should assign 1-based sequential numbers in tree-walk order for a flat list", () => {
+      const tasks: Task[] = [
+        createTask("a", "A", { order: 0 }),
+        createTask("b", "B", { order: 1 }),
+        createTask("c", "C", { order: 2 }),
+      ];
+
+      const result = buildFlattenedTaskList(tasks, new Set());
+
+      expect(result[0].globalRowNumber).toBe(1);
+      expect(result[1].globalRowNumber).toBe(2);
+      expect(result[2].globalRowNumber).toBe(3);
+    });
+
+    it("should assign sequential numbers in tree-walk order for a hierarchy", () => {
+      const tasks: Task[] = [
+        createTask("root", "Root", { order: 0, type: "summary" }),
+        createTask("child1", "Child 1", { order: 1, parent: tid("root") }),
+        createTask("child2", "Child 2", { order: 2, parent: tid("root") }),
+        createTask("sibling", "Sibling", { order: 3 }),
+      ];
+
+      const result = buildFlattenedTaskList(tasks, new Set());
+
+      // Tree-walk order: root(1), child1(2), child2(3), sibling(4)
+      expect(result.map((r) => r.globalRowNumber)).toEqual([1, 2, 3, 4]);
+    });
+
+    it("should produce gaps when the full-list output is filtered for hidden tasks", () => {
+      // Simulates useFlattenedTasks: build full list, then filter out hidden tasks.
+      // globalRowNumber on remaining entries should have gaps — this is the
+      // "Excel-style row number" behaviour documented in the FlattenedTask interface.
+      const tasks: Task[] = [
+        createTask("a", "A", { order: 0 }),
+        createTask("b", "B", { order: 1 }), // will be hidden
+        createTask("c", "C", { order: 2 }),
+      ];
+
+      const fullList = buildFlattenedTaskList(tasks, new Set());
+      const hiddenIds = new Set([tid("b")]);
+      const visibleList = fullList.filter((r) => !hiddenIds.has(r.task.id));
+
+      // a=1, c=3 — row 2 is absent, creating the gap
+      expect(visibleList[0].globalRowNumber).toBe(1);
+      expect(visibleList[1].globalRowNumber).toBe(3);
+    });
+
+    it("should start globalRowNumber at 1 for the first visible task when parent is collapsed", () => {
+      // When a parent is collapsed its children are excluded from the output, but the
+      // remaining tasks still get 1-based sequential numbers within the output.
+      const tasks: Task[] = [
+        createTask("parent", "Parent", { order: 0, type: "summary" }),
+        createTask("child", "Child", { order: 1, parent: tid("parent") }),
+        createTask("other", "Other", { order: 2 }),
+      ];
+
+      const result = buildFlattenedTaskList(tasks, new Set([tid("parent")]));
+
+      // Only parent and other are visible; child is excluded by collapsed state
+      expect(result).toHaveLength(2);
+      expect(result[0].globalRowNumber).toBe(1);
+      expect(result[1].globalRowNumber).toBe(2);
+    });
   });
 });
 
