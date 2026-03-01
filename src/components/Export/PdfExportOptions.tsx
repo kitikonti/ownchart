@@ -9,6 +9,7 @@ import type {
   PdfOrientation,
   PdfMarginPreset,
   PdfHeaderFooter,
+  PdfCustomPageSize,
   ExportOptions,
   ExportZoomMode,
 } from "../../utils/export/types";
@@ -35,35 +36,56 @@ const MIN_CUSTOM_PAGE_MM = 100;
 /** Maximum custom page dimension in mm */
 const MAX_CUSTOM_PAGE_MM = 5000;
 
-/** Fallback for custom page size when not yet configured */
-const DEFAULT_CUSTOM_SIZE = DEFAULT_PDF_OPTIONS.customPageSize ?? {
-  width: 500,
-  height: 300,
+/**
+ * Fallback for custom page size when not yet configured.
+ * `DEFAULT_PDF_OPTIONS.customPageSize` is always defined, but the type allows
+ * undefined (optional field) — the ?? keeps this resilient to future changes.
+ */
+const DEFAULT_CUSTOM_SIZE: PdfCustomPageSize =
+  DEFAULT_PDF_OPTIONS.customPageSize ?? {
+    width: 500,
+    height: 300,
+  };
+
+/**
+ * Human-readable names for each page size.
+ * Dimensions are derived from PDF_PAGE_SIZES (single source of truth, all in mm)
+ * so dropdown labels stay in sync automatically if sizes change.
+ */
+const PAGE_SIZE_NAMES: Record<PdfPageSize, string> = {
+  a4: "A4",
+  a3: "A3",
+  a2: "A2",
+  a1: "A1",
+  a0: "A0",
+  letter: "Letter",
+  legal: "Legal",
+  tabloid: "Tabloid",
+  custom: "Custom",
 };
 
-const PAGE_SIZE_LABELS: Record<PdfPageSize, { label: string; size: string }> = {
-  a4: { label: "A4", size: "297 × 210 mm" },
-  a3: { label: "A3", size: "420 × 297 mm" },
-  a2: { label: "A2", size: "594 × 420 mm" },
-  a1: { label: "A1", size: "841 × 594 mm" },
-  a0: { label: "A0", size: "1189 × 841 mm" },
-  letter: { label: "Letter", size: "11 × 8.5 in" },
-  legal: { label: "Legal", size: "14 × 8.5 in" },
-  tabloid: { label: "Tabloid", size: "17 × 11 in" },
-  custom: { label: "Custom", size: "" },
-};
+/**
+ * Format a page size option label including landscape dimensions in mm.
+ * Dimensions come from PDF_PAGE_SIZES (stored as landscape: width × height).
+ * The hint text below the select shows orientation-corrected effective dimensions.
+ */
+function formatPageSizeLabel(key: PdfPageSize): string {
+  if (key === "custom") return PAGE_SIZE_NAMES[key];
+  const { width, height } = PDF_PAGE_SIZES[key];
+  return `${PAGE_SIZE_NAMES[key]} (${width} × ${height} mm)`;
+}
+
+// Named icon constants — static React elements, defined once at module scope
+const LANDSCAPE_ICON = (
+  <span className="w-4 h-2.5 border-2 border-current rounded-sm" />
+);
+const PORTRAIT_ICON = (
+  <span className="w-2.5 h-4 border-2 border-current rounded-sm" />
+);
 
 const ORIENTATION_OPTIONS: SegmentedControlOption<PdfOrientation>[] = [
-  {
-    value: "landscape",
-    label: "Landscape",
-    icon: <span className="w-4 h-2.5 border-2 border-current rounded-sm" />,
-  },
-  {
-    value: "portrait",
-    label: "Portrait",
-    icon: <span className="w-2.5 h-4 border-2 border-current rounded-sm" />,
-  },
+  { value: "landscape", label: "Landscape", icon: LANDSCAPE_ICON },
+  { value: "portrait", label: "Portrait", icon: PORTRAIT_ICON },
 ];
 
 const MARGIN_OPTIONS: SegmentedControlOption<PdfMarginPreset>[] = [
@@ -71,6 +93,8 @@ const MARGIN_OPTIONS: SegmentedControlOption<PdfMarginPreset>[] = [
   { value: "narrow", label: "Narrow" },
   { value: "wide", label: "Wide" },
   { value: "none", label: "None" },
+  // Note: "custom" exists in PdfMarginPreset but is intentionally not listed here.
+  // It is reserved for a future "custom margins" editing feature.
 ];
 
 /** Header/Footer checkbox options */
@@ -86,11 +110,11 @@ const HEADER_FOOTER_OPTIONS = [
 
 /** Validates that a string is a valid PdfPageSize */
 const isPageSize = (value: string): value is PdfPageSize =>
-  value in PAGE_SIZE_LABELS;
+  value in PAGE_SIZE_NAMES;
 
 /** Clamp a parsed input value to the allowed page dimension range */
 function clampDimension(raw: string, fallback: number): number {
-  const parsed = parseInt(raw);
+  const parsed = parseInt(raw, 10);
   const value = Number.isNaN(parsed) ? fallback : parsed;
   return Math.max(MIN_CUSTOM_PAGE_MM, Math.min(MAX_CUSTOM_PAGE_MM, value));
 }
@@ -118,14 +142,18 @@ function HeaderFooterColumn({
   }));
 
   const handleChange = (key: string, checked: boolean): void => {
-    if (!HEADER_FOOTER_OPTIONS.some((opt) => opt.key === key)) return;
-    onValuesChange({ ...values, [key]: checked } as PdfHeaderFooter);
+    const opt = HEADER_FOOTER_OPTIONS.find((o) => o.key === key);
+    if (!opt) return;
+    // Build update via typed key — TypeScript verifies opt.key is a PdfHeaderFooter field
+    const update: PdfHeaderFooter = { ...values };
+    update[opt.key] = checked;
+    onValuesChange(update);
   };
 
   return (
     <div>
       <FieldLabel>{title}</FieldLabel>
-      <CheckboxGroup items={items} onChange={handleChange} />
+      <CheckboxGroup items={items} onChange={handleChange} ariaLabel={title} />
     </div>
   );
 }
@@ -258,13 +286,11 @@ export function PdfExportOptions({
                 }
               }}
             >
-              {Object.entries(PAGE_SIZE_LABELS).map(
-                ([key, { label, size }]) => (
-                  <option key={key} value={key}>
-                    {size ? `${label} (${size})` : label}
-                  </option>
-                )
-              )}
+              {(Object.keys(PAGE_SIZE_NAMES) as PdfPageSize[]).map((key) => (
+                <option key={key} value={key}>
+                  {formatPageSizeLabel(key)}
+                </option>
+              ))}
             </Select>
             {options.pageSize !== "custom" && (
               <p className="text-xs text-neutral-500 mt-2">

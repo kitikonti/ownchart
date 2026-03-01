@@ -16,14 +16,21 @@ export interface CheckboxGroupProps {
   items: CheckboxGroupItem[];
   /** Called when an item is toggled */
   onChange: (key: string, checked: boolean) => void;
+  /** Accessible label for the group — announced by screen readers as the group name */
+  ariaLabel?: string;
 }
 
 export function CheckboxGroup({
   items,
   onChange,
+  ariaLabel,
 }: CheckboxGroupProps): JSX.Element {
   return (
-    <div className="bg-white border border-neutral-200 rounded p-3">
+    <div
+      role="group"
+      aria-label={ariaLabel}
+      className="bg-white border border-neutral-200 rounded p-3"
+    >
       <div className="space-y-2.5">
         {items.map((item, idx, arr) => (
           <div key={item.key}>

@@ -112,11 +112,11 @@ export function SharedExportOptions({
   }));
 
   const handleColumnChange = (key: string, checked: boolean): void => {
-    if (!COLUMN_OPTIONS.some((c) => c.key === key)) return;
-    const columnKey = key as ExportColumnKey;
+    const col = COLUMN_OPTIONS.find((c) => c.key === key);
+    if (!col) return;
     const newColumns = checked
-      ? [...options.selectedColumns, columnKey]
-      : options.selectedColumns.filter((k) => k !== columnKey);
+      ? [...options.selectedColumns, col.key]
+      : options.selectedColumns.filter((k) => k !== col.key);
     const orderedColumns = COLUMN_OPTIONS.filter((c) =>
       newColumns.includes(c.key)
     ).map((c) => c.key);
@@ -124,8 +124,12 @@ export function SharedExportOptions({
   };
 
   const handleTimelineChange = (key: string, checked: boolean): void => {
-    if (!TIMELINE_OPTIONS.some((item) => item.key === key)) return;
-    onChange({ [key]: checked });
+    const opt = TIMELINE_OPTIONS.find((item) => item.key === key);
+    if (!opt) return;
+    // Build update via typed key so TypeScript verifies ExportBooleanKey maps to boolean
+    const update: Partial<ExportOptions> = {};
+    update[opt.key] = checked;
+    onChange(update);
   };
 
   return (
@@ -219,7 +223,11 @@ export function SharedExportOptions({
         {/* Columns */}
         <div>
           <FieldLabel>Columns to Include</FieldLabel>
-          <CheckboxGroup items={columnItems} onChange={handleColumnChange} />
+          <CheckboxGroup
+            items={columnItems}
+            onChange={handleColumnChange}
+            ariaLabel="Columns to Include"
+          />
           <p className="text-xs text-neutral-500 mt-2">
             Uncheck all for timeline-only export
           </p>
@@ -236,6 +244,7 @@ export function SharedExportOptions({
           <CheckboxGroup
             items={timelineItems}
             onChange={handleTimelineChange}
+            ariaLabel="Show in Timeline"
           />
         </div>
 
