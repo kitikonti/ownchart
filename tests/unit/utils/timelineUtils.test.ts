@@ -292,12 +292,6 @@ describe("timelineUtils", () => {
       expect(result.getDate()).toBe(11);
     });
 
-    it("should add hours", () => {
-      const date = new Date(2026, 0, 1, 10, 0, 0);
-      const result = addUnit(date, "hour", 5);
-
-      expect(result.getHours()).toBe(15);
-    });
   });
 
   describe("getUnitEnd", () => {

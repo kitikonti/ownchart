@@ -11,13 +11,11 @@ import {
   addMonths,
   addWeeks,
   addDays as addDaysDateFns,
-  addHours,
   startOfYear,
   startOfQuarter,
   startOfMonth,
   startOfWeek,
   startOfDay,
-  startOfHour,
   endOfYear,
   endOfQuarter,
   endOfMonth,
@@ -25,9 +23,9 @@ import {
   endOfDay,
 } from "date-fns";
 
-import { DENSITY_CONFIG } from "../config/densityConfig";
-import type { Task } from "../types/chart.types";
-import { calculateDuration, addDays } from "./dateUtils";
+import { DENSITY_CONFIG } from "@/config/densityConfig";
+import type { Task } from "@/types/chart.types";
+import { calculateDuration, addDays } from "@/utils/dateUtils";
 
 // Fixed zoom configuration (industry standard approach)
 export const FIXED_BASE_PIXELS_PER_DAY = 25; // Comfortable standard view
@@ -105,6 +103,11 @@ export function resetPreferenceGetters(): void {
  * Returns 0 for Sunday, 1 for Monday.
  */
 export function getWeekStartDay(): 0 | 1 {
+  if (!_getFirstDayOfWeek && import.meta.env.DEV) {
+    console.warn(
+      "[timelineUtils] getWeekStartDay called before getter was registered — falling back to ISO default"
+    );
+  }
   if (_getFirstDayOfWeek) {
     return _getFirstDayOfWeek() === "sunday" ? 0 : 1;
   }
@@ -116,6 +119,11 @@ export function getWeekStartDay(): 0 | 1 {
  * Returns 4 for ISO 8601 (first Thursday), 1 for US (first day of year).
  */
 export function getFirstWeekContainsDate(): 1 | 4 {
+  if (!_getWeekNumberingSystem && import.meta.env.DEV) {
+    console.warn(
+      "[timelineUtils] getFirstWeekContainsDate called before getter was registered — falling back to ISO default"
+    );
+  }
   if (_getWeekNumberingSystem) {
     return _getWeekNumberingSystem() === "us" ? 1 : 4;
   }
@@ -123,8 +131,7 @@ export function getFirstWeekContainsDate(): 1 | 4 {
 }
 
 // Scale unit types (inspired by SVAR React Gantt)
-// Note: "hour" is reserved for future hour-level zoom; not currently returned by getScaleConfig.
-export type ScaleUnit = "year" | "quarter" | "month" | "week" | "day" | "hour";
+export type ScaleUnit = "year" | "quarter" | "month" | "week" | "day";
 
 // Scale configuration for a single row in the header
 export interface ScaleConfig {
@@ -252,8 +259,11 @@ export function getTimelineScale(
   // FIXED base pixels per day (industry standard)
   const basePixelsPerDay = FIXED_BASE_PIXELS_PER_DAY;
 
+  // Clamp zoom to valid range — prevents divide-by-zero in pixelToDate
+  const safeZoom = Math.max(MIN_ZOOM, zoom);
+
   // Apply zoom to pixels per day
-  const pixelsPerDay = basePixelsPerDay * zoom;
+  const pixelsPerDay = basePixelsPerDay * safeZoom;
 
   // Total width is simply days × pixels per day
   // May be smaller OR larger than container (no auto-fill)
@@ -265,8 +275,8 @@ export function getTimelineScale(
     pixelsPerDay,
     totalWidth,
     totalDays,
-    zoom,
-    scales: getScaleConfig(zoom, basePixelsPerDay),
+    zoom: safeZoom,
+    scales: getScaleConfig(safeZoom, basePixelsPerDay),
   };
 }
 
@@ -378,16 +388,6 @@ const UNIT_OPS: Record<ScaleUnit, UnitOps> = {
     start: startOfDay,
     end: (date, step) => endOfDay(addDaysDateFns(date, step - 1)),
     add: (date, step) => addDaysDateFns(date, step),
-  },
-  hour: {
-    // Hours use addHours(step) not step-1 — hour end boundaries are exclusive
-    // (no endOfHour equivalent); caller expects the next hour boundary.
-    // Reserved for future hour-level zoom; not currently returned by getScaleConfig.
-    // NOTE: end intentionally equals add here — do NOT copy this pattern for new units.
-    // All other units use endOf*(add*(date, step-1)) to include the full last unit.
-    start: startOfHour,
-    end: (date, step) => addHours(date, step), // exclusive end — see note above
-    add: (date, step) => addHours(date, step),
   },
 };
 
