@@ -2,6 +2,15 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [1.1.6](https://github.com/kitikonti/ownchart/compare/v1.1.5...v1.1.6) (2026-03-01)
+
+
+### Code Refactoring
+
+* apply review fixes to ChartPreview, SplitPane, export helpers ([4f2c17a](https://github.com/kitikonti/ownchart/commit/4f2c17a7932c9f5f34cd9438bbf98c44bbdb2d24))
+* apply review fixes to ZoomModeSelector, ChartPreview, SplitPane ([e247f31](https://github.com/kitikonti/ownchart/commit/e247f31357204176a948def61dce2f9f1f4ce500)), closes [#e5e5e5](https://github.com/kitikonti/ownchart/issues/e5e5e5)
+* apply review fixes to ZoomModeSelector, ChartPreview, SplitPane ([1160018](https://github.com/kitikonti/ownchart/commit/1160018732b07eded0c2a19b93da7d327b222ceb))
+
 ## [1.1.5](https://github.com/kitikonti/ownchart/compare/v1.1.4...v1.1.5) (2026-03-01)
 
 
