@@ -13,17 +13,18 @@
  * Handles Ctrl+G (group), Ctrl+Shift+G (ungroup)
  */
 
-import { useEffect, useMemo, useRef } from "react";
+import { useEffect, useRef } from "react";
 import type { Task } from "../types/chart.types";
 import type { TaskId } from "../types/branded.types";
+import type { EditableField } from "../types/task.types";
 import { useHistoryStore } from "../store/slices/historySlice";
 import { useTaskStore } from "../store/slices/taskSlice";
 import { useChartStore } from "../store/slices/chartSlice";
 import { useUIStore } from "../store/slices/uiSlice";
+import { useClipboardStore } from "../store/slices/clipboardSlice";
 import { useFileOperations } from "./useFileOperations";
 import { useClipboardOperations } from "./useClipboardOperations";
 import { useHideOperations } from "./useHideOperations";
-import { useClipboardStore } from "../store/slices/clipboardSlice";
 import { findTopmostSelectedTaskId } from "../utils/selection";
 
 // ── Context ───────────────────────────────────────────────────────────────────
@@ -33,8 +34,8 @@ import { findTopmostSelectedTaskId } from "../utils/selection";
 // values.
 
 interface ActiveCell {
-  taskId: string | null;
-  field: string | null;
+  taskId: TaskId | null;
+  field: EditableField | null;
 }
 
 interface ShortcutContext {
@@ -52,15 +53,15 @@ interface ShortcutContext {
   handleCut: () => void;
   handlePaste: () => void;
   clearClipboard: () => void;
-  clipboardMode: string | null;
+  clipboardMode: "row" | "cell" | null;
   // Task state
   isEditingCell: boolean;
-  selectedTaskIds: string[];
+  selectedTaskIds: TaskId[];
   activeCell: ActiveCell;
   deleteSelectedTasks: () => void;
-  deleteTask: (taskId: string, selectAdjacent: boolean) => void;
-  insertTaskAbove: (taskId: string) => void;
-  insertMultipleTasksAbove: (taskId: string, count: number) => void;
+  deleteTask: (id: TaskId, cascade?: boolean) => void;
+  insertTaskAbove: (referenceTaskId: TaskId) => void;
+  insertMultipleTasksAbove: (referenceTaskId: TaskId, count: number) => void;
   indentSelectedTasks: () => void;
   outdentSelectedTasks: () => void;
   groupSelectedTasks: () => void;
@@ -72,8 +73,8 @@ interface ShortcutContext {
   toggleHolidays: () => void;
   fitToView: (tasks: Task[]) => void;
   // Hide
-  hideRows: (ids: string[]) => void;
-  unhideSelection: (ids: string[]) => void;
+  hideRows: (ids: TaskId[]) => void;
+  unhideSelection: (ids: TaskId[]) => void;
   // UI dialogs
   openHelpPanel: () => void;
   closeExportDialog: () => void;
@@ -239,12 +240,8 @@ function handleInsertShortcuts(
     // Fetch tasks fresh so this handler doesn't need `tasks` in any dep array.
     const currentTasks = useTaskStore.getState().tasks;
     const referenceTaskId =
-      // ctx.selectedTaskIds uses string[] for interface simplicity;
-      // findTopmostSelectedTaskId only reads the array for ordering.
-      findTopmostSelectedTaskId(
-        currentTasks,
-        ctx.selectedTaskIds as TaskId[]
-      ) ?? ctx.activeCell.taskId;
+      findTopmostSelectedTaskId(currentTasks, ctx.selectedTaskIds) ??
+      ctx.activeCell.taskId;
     if (referenceTaskId) {
       if (count === 1) {
         ctx.insertTaskAbove(referenceTaskId);
@@ -424,15 +421,18 @@ export function useKeyboardShortcuts(): void {
   const isWelcomeTourOpen = useUIStore((state) => state.isWelcomeTourOpen);
 
   // Detect modifier-key convention for this OS once per mount.
+  // useRef with lazy init is the precise semantic for "compute once, never
+  // discard" — unlike useMemo, React will never throw away a ref's value.
   // navigator.userAgentData.platform is the modern standard (Chromium 90+);
   // navigator.platform is deprecated but remains the universal fallback.
-  const isMac = useMemo(
-    () =>
+  const isMacRef = useRef<boolean | null>(null);
+  if (isMacRef.current === null) {
+    isMacRef.current =
       (navigator as Navigator & { userAgentData?: { platform?: string } })
         .userAgentData?.platform === "macOS" ||
-      navigator.platform.toUpperCase().includes("MAC"),
-    []
-  );
+      navigator.platform.toUpperCase().includes("MAC");
+  }
+  const isMac = isMacRef.current;
 
   // ── Stable handler ref ─────────────────────────────────────────────────
   // The event listener is registered once (empty dep array below).
@@ -477,15 +477,14 @@ export function useKeyboardShortcuts(): void {
       handleCut,
       handlePaste,
       clearClipboard,
-      clipboardMode: clipboardMode as string | null,
+      clipboardMode,
       isEditingCell,
-      selectedTaskIds: selectedTaskIds as string[],
+      selectedTaskIds,
       activeCell,
       deleteSelectedTasks,
-      deleteTask: deleteTask as ShortcutContext["deleteTask"],
-      insertTaskAbove: insertTaskAbove as ShortcutContext["insertTaskAbove"],
-      insertMultipleTasksAbove:
-        insertMultipleTasksAbove as ShortcutContext["insertMultipleTasksAbove"],
+      deleteTask,
+      insertTaskAbove,
+      insertMultipleTasksAbove,
       indentSelectedTasks,
       outdentSelectedTasks,
       groupSelectedTasks,
@@ -494,9 +493,9 @@ export function useKeyboardShortcuts(): void {
       toggleTodayMarker,
       toggleProgress,
       toggleHolidays,
-      fitToView: fitToView as ShortcutContext["fitToView"],
-      hideRows: hideRows as ShortcutContext["hideRows"],
-      unhideSelection: unhideSelection as ShortcutContext["unhideSelection"],
+      fitToView,
+      hideRows,
+      unhideSelection,
       openHelpPanel,
       closeExportDialog,
       closeHelpPanel,
