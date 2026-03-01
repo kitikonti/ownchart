@@ -6,7 +6,7 @@
 
 import { memo, useState } from "react";
 import { CaretUpDown } from "@phosphor-icons/react";
-import { useDensityConfig } from "../../store/slices/userPreferencesSlice";
+import { useDensityConfig } from "@/store/slices/userPreferencesSlice";
 
 // Density breakpoints for indicator height scaling
 const COMPACT_ROW_HEIGHT = 28;
@@ -23,11 +23,16 @@ const HOVER_ZONE_HEIGHT_RATIO = 0.9;
 const UNHIDE_BUTTON_WIDTH = 20;
 const UNHIDE_HOVER_ZONE_EXTENSION = UNHIDE_BUTTON_WIDTH + 1; // extends past button by 1px for border overlap
 const UNHIDE_ICON_SIZE = 20;
+// 1px bleed so the double-line straddles the cell edge rather than sitting inside it
+const INDICATOR_LINE_HALF_OVERLAP_PX = 1;
 
 // Z-index layers for indicator elements
 const INDICATOR_Z_INDEX = 40;
 const HOVER_ZONE_Z_INDEX = 42;
 const UNHIDE_BUTTON_Z_INDEX = 50;
+
+/** Tracks which part of the unhide interaction zone the cursor is over */
+type UnhideHoverState = "none" | "zone" | "button";
 
 interface HiddenRowIndicatorProps {
   /** Number of hidden rows (for tooltip text) */
@@ -55,8 +60,10 @@ export const HiddenRowIndicator = memo(function HiddenRowIndicator({
   position = "below",
 }: HiddenRowIndicatorProps): JSX.Element {
   const { rowHeight } = useDensityConfig();
-  const [showUnhideButton, setShowUnhideButton] = useState(false);
-  const [isButtonHovered, setIsButtonHovered] = useState(false);
+  const [unhideHoverState, setUnhideHoverState] =
+    useState<UnhideHoverState>("none");
+  const showUnhideButton = unhideHoverState !== "none";
+  const isButtonHovered = unhideHoverState === "button";
 
   const indicatorHeight =
     rowHeight <= COMPACT_ROW_HEIGHT
@@ -69,8 +76,10 @@ export const HiddenRowIndicator = memo(function HiddenRowIndicator({
 
   // Position the double-line at the top or bottom edge of the cell
   const lineStyle = isAbove
-    ? { top: `${-(indicatorHeight / 2 + 1)}px` }
-    : { bottom: `${-(indicatorHeight / 2 + 1)}px` };
+    ? { top: `${-(indicatorHeight / 2 + INDICATOR_LINE_HALF_OVERLAP_PX)}px` }
+    : {
+        bottom: `${-(indicatorHeight / 2 + INDICATOR_LINE_HALF_OVERLAP_PX)}px`,
+      };
 
   // Position the hover zone at the top or bottom edge
   const hoverZoneStyle = isAbove
@@ -102,12 +111,11 @@ export const HiddenRowIndicator = memo(function HiddenRowIndicator({
             height: `${rowHeight * HOVER_ZONE_HEIGHT_RATIO}px`,
             zIndex: HOVER_ZONE_Z_INDEX,
           }}
-          onMouseEnter={() => setShowUnhideButton(true)}
+          onMouseEnter={() => setUnhideHoverState("zone")}
           onMouseLeave={(e) => {
-            if (isWithinUnhideArea(e.relatedTarget as HTMLElement | null))
-              return;
-            setShowUnhideButton(false);
-            setIsButtonHovered(false);
+            if (!isWithinUnhideArea(e.relatedTarget as HTMLElement | null)) {
+              setUnhideHoverState("none");
+            }
           }}
         >
           {showUnhideButton && (
@@ -126,12 +134,13 @@ export const HiddenRowIndicator = memo(function HiddenRowIndicator({
               }}
               title={`${hiddenCount ?? 0} hidden — click to unhide`}
               aria-label={`Unhide ${hiddenCount ?? 0} hidden rows`}
-              onMouseEnter={() => setIsButtonHovered(true)}
+              onMouseEnter={() => setUnhideHoverState("button")}
               onMouseLeave={(e) => {
-                setIsButtonHovered(false);
-                if (isWithinUnhideArea(e.relatedTarget as HTMLElement | null))
-                  return;
-                setShowUnhideButton(false);
+                if (isWithinUnhideArea(e.relatedTarget as HTMLElement | null)) {
+                  setUnhideHoverState("zone");
+                } else {
+                  setUnhideHoverState("none");
+                }
               }}
               onClick={(e) => {
                 e.stopPropagation();
@@ -149,6 +158,7 @@ export const HiddenRowIndicator = memo(function HiddenRowIndicator({
                 size={UNHIDE_ICON_SIZE}
                 weight="fill"
                 color={isButtonHovered ? "white" : controlsColor}
+                aria-hidden
               />
             </button>
           )}

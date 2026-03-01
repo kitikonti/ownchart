@@ -10,7 +10,7 @@
 import { memo } from "react";
 import type { KeyboardEvent, MouseEvent } from "react";
 import { Folder, CheckSquare, Diamond } from "@phosphor-icons/react";
-import type { TaskType } from "../../types/chart.types";
+import type { TaskType } from "@/types/chart.types";
 
 const TASK_TYPE_ICON_SIZE = 16;
 
@@ -37,30 +37,33 @@ export const TaskTypeIcon = memo(function TaskTypeIcon({
   const Icon =
     type === "summary" ? Folder : type === "milestone" ? Diamond : CheckSquare;
 
+  // Hoisted to avoid re-creating inside the conditional branch on every render
+  const handleClick = (e: MouseEvent): void => {
+    e.stopPropagation();
+    onClick?.();
+  };
+
+  const handleKeyDown = (e: KeyboardEvent): void => {
+    if (e.key === "Enter" || e.key === " ") {
+      e.preventDefault();
+      e.stopPropagation();
+      onClick?.();
+    }
+  };
+
+  // Hide from screen readers only when inside a button that already has an aria-label.
+  // When rendered without onClick, the icon is the sole semantic element in the cell.
   const icon = (
     <Icon
       size={TASK_TYPE_ICON_SIZE}
       weight="light"
       className={iconClassName}
-      aria-hidden
+      aria-hidden={!!onClick}
     />
   );
 
   // When interactive, wrap in an accessible button
   if (onClick) {
-    const handleClick = (e: MouseEvent): void => {
-      e.stopPropagation();
-      onClick();
-    };
-
-    const handleKeyDown = (e: KeyboardEvent): void => {
-      if (e.key === "Enter" || e.key === " ") {
-        e.preventDefault();
-        e.stopPropagation();
-        onClick();
-      }
-    };
-
     return (
       <button
         type="button"

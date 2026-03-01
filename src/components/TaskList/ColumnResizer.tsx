@@ -58,7 +58,10 @@ export const ColumnResizer = memo(function ColumnResizer({
     if (!isResizing) return;
 
     const computeWidth = (clientX: number): number =>
-      Math.max(minWidth, startWidthRef.current + (clientX - startXRef.current));
+      Math.min(
+        maxWidth ?? Infinity,
+        Math.max(minWidth, startWidthRef.current + (clientX - startXRef.current))
+      );
 
     const handleMouseMove = (e: globalThis.MouseEvent): void => {
       onResize(columnId, computeWidth(e.clientX));
@@ -76,7 +79,7 @@ export const ColumnResizer = memo(function ColumnResizer({
       document.removeEventListener("mousemove", handleMouseMove);
       document.removeEventListener("mouseup", handleMouseUp);
     };
-  }, [isResizing, columnId, onResize, minWidth]);
+  }, [isResizing, columnId, onResize, minWidth, maxWidth]);
 
   const handleMouseDown = (e: MouseEvent<HTMLDivElement>): void => {
     e.preventDefault();
@@ -106,7 +109,7 @@ export const ColumnResizer = memo(function ColumnResizer({
       onResize(columnId, newWidth);
     } else if (e.key === "ArrowRight") {
       e.preventDefault();
-      const newWidth = currentWidth + step;
+      const newWidth = Math.min(maxWidth ?? Infinity, currentWidth + step);
       onResize(columnId, newWidth);
     } else if (e.key === "Enter" || e.key === " ") {
       // Auto-resize on Enter or Space
