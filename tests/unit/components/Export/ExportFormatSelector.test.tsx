@@ -32,13 +32,13 @@ describe("ExportFormatSelector", () => {
       expect(screen.getByText("Format")).toBeInTheDocument();
     });
 
-    it("renders buttons with correct aria-pressed state", () => {
+    it("renders radio buttons with correct aria-checked state", () => {
       render(<ExportFormatSelector {...defaultProps} selectedFormat="png" />);
 
-      const buttons = screen.getAllByRole("button");
-      expect(buttons[0]).toHaveAttribute("aria-pressed", "true"); // PNG
-      expect(buttons[1]).toHaveAttribute("aria-pressed", "false"); // PDF
-      expect(buttons[2]).toHaveAttribute("aria-pressed", "false"); // SVG
+      const radios = screen.getAllByRole("radio");
+      expect(radios[0]).toHaveAttribute("aria-checked", "true"); // PNG
+      expect(radios[1]).toHaveAttribute("aria-checked", "false"); // PDF
+      expect(radios[2]).toHaveAttribute("aria-checked", "false"); // SVG
     });
 
     it("shows help text for selected format", () => {

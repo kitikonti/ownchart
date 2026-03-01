@@ -129,7 +129,6 @@ export function ExportDialog(): JSX.Element {
     setProjectAuthor,
     effectiveExportOptions,
     estimatedDimensions,
-    taskTableWidth,
     effectiveZoom,
     readabilityStatus,
     projectDateRange,
@@ -234,7 +233,6 @@ export function ExportDialog(): JSX.Element {
                 options={exportOptions}
                 onChange={setExportOptions}
                 currentAppZoom={currentAppZoom}
-                taskTableWidth={taskTableWidth}
               />
             )}
 

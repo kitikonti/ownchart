@@ -10,6 +10,7 @@ export { SharedExportOptions } from "./SharedExportOptions";
 export { ScaleOptions } from "./ScaleOptions";
 export { ExportRenderer } from "./ExportRenderer";
 
-// Re-export shared utilities from utils/export
+// Re-export shared utilities from utils/export for consumer convenience.
+// Canonical source is src/utils/export — import from there for non-component code.
 export { calculateTaskTableWidth, EXPORT_COLUMNS } from "../../utils/export";
 export type { ExportColumnKey, ExportFormat } from "../../utils/export/types";

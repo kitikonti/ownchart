@@ -6,6 +6,7 @@
 import type {
   ExportFormat,
   PdfExportOptions,
+  PixelDimensions,
   ReadabilityStatus,
 } from "../../utils/export/types";
 import { ChartPreview } from "./ChartPreview";
@@ -15,7 +16,7 @@ export interface ExportPreviewProps {
   format: ExportFormat;
   /** Data URL of the preview image */
   previewDataUrl: string | null;
-  dimensions: { width: number; height: number };
+  dimensions: PixelDimensions;
   isRendering: boolean;
   error: string | null;
   isTransparent: boolean;
@@ -44,6 +45,8 @@ export function ExportPreview({
   effectiveZoom,
   readabilityStatus,
 }: ExportPreviewProps): JSX.Element {
+  // pdfOptions may be undefined during initial load before defaults are applied.
+  // In that case we fall through to ChartPreview as a loading-state fallback.
   if (format === "pdf" && pdfOptions) {
     return (
       <PdfPreview

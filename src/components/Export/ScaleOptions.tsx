@@ -10,7 +10,6 @@ export interface ScaleOptionsProps {
   options: ExportOptions;
   onChange: (options: Partial<ExportOptions>) => void;
   currentAppZoom: number;
-  taskTableWidth: number;
 }
 
 export function ScaleOptions({

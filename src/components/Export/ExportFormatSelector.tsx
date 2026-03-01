@@ -54,8 +54,12 @@ export function ExportFormatSelector({
         Format
       </span>
 
-      {/* Format Cards Grid */}
-      <div className="grid grid-cols-3 gap-2">
+      {/* Format Cards Grid — radiogroup for correct single-selection semantics */}
+      <div
+        role="radiogroup"
+        aria-label="Export format"
+        className="grid grid-cols-3 gap-2"
+      >
         {FORMAT_OPTIONS.map((option) => {
           const Icon = option.icon;
           const isSelected = selectedFormat === option.format;
@@ -64,13 +68,17 @@ export function ExportFormatSelector({
             <button
               key={option.format}
               type="button"
+              role="radio"
+              aria-checked={isSelected}
+              aria-describedby={
+                isSelected ? "export-format-description" : undefined
+              }
               onClick={() => onFormatChange(option.format)}
               className={`flex flex-col items-center gap-2 px-4 py-3.5 rounded border transition-colors duration-150 min-h-[80px] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-100 focus-visible:ring-offset-2 ${
                 isSelected
                   ? "border-brand-600 bg-brand-600"
                   : "border-neutral-200 hover:border-neutral-300 hover:bg-neutral-50"
               }`}
-              aria-pressed={isSelected}
               title={option.helpText}
             >
               <Icon
@@ -90,14 +98,14 @@ export function ExportFormatSelector({
         })}
       </div>
 
-      {/* Help Text Box */}
+      {/* Help Text Box — id referenced by the selected radio button via aria-describedby */}
       {selectedOption && (
         <div className="mt-3 flex items-start gap-2 text-xs text-neutral-600 bg-neutral-50 rounded p-3 border border-neutral-200">
           <Info
             className="size-4 text-neutral-500 mt-0.5 flex-shrink-0"
             weight="fill"
           />
-          <p>{selectedOption.helpText}</p>
+          <p id="export-format-description">{selectedOption.helpText}</p>
         </div>
       )}
     </div>

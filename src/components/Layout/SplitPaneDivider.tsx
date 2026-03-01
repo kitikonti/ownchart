@@ -13,6 +13,12 @@ interface SplitPaneDividerProps {
   isDragging: boolean;
   isCollapsed?: boolean;
   onExpand?: () => void;
+  /** Current pane width in px — used for aria-valuenow on the separator */
+  currentWidth: number;
+  /** Minimum pane width in px — used for aria-valuemin */
+  minWidth: number;
+  /** Maximum pane width in px — used for aria-valuemax */
+  maxWidth: number;
 }
 
 export function SplitPaneDivider({
@@ -21,6 +27,9 @@ export function SplitPaneDivider({
   isDragging,
   isCollapsed = false,
   onExpand,
+  currentWidth,
+  minWidth,
+  maxWidth,
 }: SplitPaneDividerProps): JSX.Element {
   const handleKeyDown = (e: React.KeyboardEvent): void => {
     if (e.key === "ArrowLeft") {
@@ -41,28 +50,13 @@ export function SplitPaneDivider({
     }
   };
 
-  if (isCollapsed) {
-    return (
-      // eslint-disable-next-line jsx-a11y/no-noninteractive-element-interactions -- separator is a keyboard-operable resize handle
-      <div
-        role="separator"
-        // eslint-disable-next-line jsx-a11y/no-noninteractive-tabindex
-        tabIndex={0}
-        aria-orientation="vertical"
-        aria-label="Expand task table. Press Enter or drag right."
-        className="split-divider w-3 cursor-e-resize flex-shrink-0 bg-neutral-200 hover:bg-neutral-300 transition-colors duration-150 relative flex items-center justify-center"
-        onMouseDown={onMouseDown}
-        onKeyDown={handleKeyDown}
-        onClick={handleClick}
-      >
-        <CaretRight
-          size={12}
-          weight="bold"
-          className="text-neutral-500 pointer-events-none"
-        />
-      </div>
-    );
-  }
+  const ariaLabel = isCollapsed
+    ? "Expand task table. Press Enter or drag right."
+    : "Resize panel. Use left/right arrow keys.";
+
+  const className = isCollapsed
+    ? "split-divider w-3 cursor-e-resize flex-shrink-0 bg-neutral-200 hover:bg-neutral-300 transition-colors duration-150 relative flex items-center justify-center"
+    : `split-divider w-1 cursor-col-resize flex-shrink-0 bg-neutral-200 hover:bg-neutral-400 transition-colors duration-150 relative group${isDragging ? " bg-neutral-500" : ""}`;
 
   return (
     // eslint-disable-next-line jsx-a11y/no-noninteractive-element-interactions -- separator is a keyboard-operable resize handle
@@ -71,15 +65,27 @@ export function SplitPaneDivider({
       // eslint-disable-next-line jsx-a11y/no-noninteractive-tabindex
       tabIndex={0}
       aria-orientation="vertical"
-      aria-label="Resize panel. Use left/right arrow keys."
-      className={`split-divider w-1 cursor-col-resize flex-shrink-0 bg-neutral-200 hover:bg-neutral-400 transition-colors duration-150 relative group ${isDragging ? "bg-neutral-500" : ""}`}
+      aria-label={ariaLabel}
+      aria-valuenow={currentWidth}
+      aria-valuemin={minWidth}
+      aria-valuemax={maxWidth}
+      className={className}
       onMouseDown={onMouseDown}
       onKeyDown={handleKeyDown}
+      onClick={isCollapsed ? handleClick : undefined}
     >
-      {/* Visual indicator on hover - extends hit area */}
-      <div
-        className={`absolute inset-y-0 -left-1 -right-1 ${isDragging ? "opacity-100" : "opacity-0 group-hover:opacity-100"}`}
-      />
+      {isCollapsed ? (
+        <CaretRight
+          size={12}
+          weight="bold"
+          className="text-neutral-500 pointer-events-none"
+        />
+      ) : (
+        /* Visual indicator on hover - extends hit area */
+        <div
+          className={`absolute inset-y-0 -left-1 -right-1 ${isDragging ? "opacity-100" : "opacity-0 group-hover:opacity-100"}`}
+        />
+      )}
     </div>
   );
 }

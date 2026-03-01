@@ -14,9 +14,10 @@ export interface SvgExportOptionsProps {
 /**
  * SVG-specific export options.
  * Currently returns null as timeline scale is handled by ScaleOptions.
+ * TODO: add SVG-specific options (e.g. responsiveMode, includeAccessibility) when needed.
  */
 export function SvgExportOptions(_: SvgExportOptionsProps): JSX.Element | null {
-  void _; // Acknowledge unused parameter for future use
+  void _; // props reserved for future SVG-specific options
   // No SVG-specific options currently - timeline scale is handled by ScaleOptions
   return null;
 }

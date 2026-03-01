@@ -177,6 +177,9 @@ export function SplitPane({
         isDragging={isDragging}
         isCollapsed={isCollapsed && !isDragging}
         onExpand={handleExpandFromCollapsed}
+        currentWidth={effectiveWidth}
+        minWidth={minLeftWidth}
+        maxWidth={maxLeftWidth}
       />
 
       {/* Right Panel (Timeline) */}
