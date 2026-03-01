@@ -7,11 +7,193 @@
 import type { TaskId } from "../types/branded.types";
 import type { Task } from "../types/chart.types";
 
+// ─── Constants ────────────────────────────────────────────────────────────────
+
 /**
  * Maximum hierarchy depth (number of levels: 0, 1, 2).
  * Used by clipboard paste validation and group-selection validation.
  */
 export const MAX_HIERARCHY_DEPTH = 3;
+
+/** Milliseconds in one calendar day. Used for date-span calculations. */
+const MS_PER_DAY = 24 * 60 * 60 * 1000;
+
+// ─── Exported Types ───────────────────────────────────────────────────────────
+
+/** Represents a task positioned in the flattened render tree with layout metadata. */
+export interface FlattenedTask {
+  task: Task;
+  level: number;
+  hasChildren: boolean;
+  /** 1-based position in the full (non-hidden-filtered) list. Used for Excel-style row number gaps. */
+  globalRowNumber: number;
+}
+
+/** Summary date fields used for cascade recalculation. */
+export interface SummaryDateUpdates {
+  startDate: string;
+  endDate: string;
+  duration: number;
+}
+
+/** Result of a single summary recalculation, capturing previous values for undo. */
+export interface SummaryCascadeEntry {
+  id: TaskId;
+  updates: SummaryDateUpdates;
+  previousValues: SummaryDateUpdates;
+}
+
+// ─── Internal Helpers ─────────────────────────────────────────────────────────
+
+/**
+ * Builds a map from each task ID to its nesting level (0 = root) in a single
+ * O(n) pass using memoised top-down recursion. Much more efficient than calling
+ * getTaskLevel (O(n × depth)) for every task in a loop.
+ *
+ * Includes a circular-reference guard: if a cycle is detected during recursion,
+ * the task is treated as root level (0) to prevent infinite recursion.
+ */
+function buildLevelMap(tasks: Task[]): Map<TaskId, number> {
+  const taskById = new Map<TaskId, Task>(tasks.map((t) => [t.id, t]));
+  const levelCache = new Map<TaskId, number>();
+  const computing = new Set<TaskId>(); // Guard against circular refs in data
+
+  function computeLevel(taskId: TaskId): number {
+    const cached = levelCache.get(taskId);
+    if (cached !== undefined) return cached;
+
+    // Already in the call stack — circular reference detected; treat as root.
+    if (computing.has(taskId)) {
+      levelCache.set(taskId, 0);
+      return 0;
+    }
+
+    computing.add(taskId);
+    const task = taskById.get(taskId);
+    if (!task?.parent) {
+      computing.delete(taskId);
+      levelCache.set(taskId, 0);
+      return 0;
+    }
+
+    const level = computeLevel(task.parent) + 1;
+    computing.delete(taskId);
+    levelCache.set(taskId, level);
+    return level;
+  }
+
+  for (const task of tasks) {
+    computeLevel(task.id);
+  }
+  return levelCache;
+}
+
+/**
+ * Resolves the effective date range for a child during summary date computation.
+ * For summary children, recursively computes their derived dates.
+ * Returns null if the child has no usable or valid dates.
+ */
+function resolveChildDateRange(
+  tasks: Task[],
+  child: Task
+): { start: Date; end: Date } | null {
+  let startStr: string;
+  let endStr: string;
+
+  if (child.type === "summary") {
+    const summaryDates = calculateSummaryDates(tasks, child.id);
+    if (!summaryDates) return null;
+    startStr = summaryDates.startDate;
+    endStr = summaryDates.endDate;
+  } else {
+    if (!child.startDate || !child.endDate) return null;
+    startStr = child.startDate;
+    endStr = child.endDate;
+  }
+
+  const start = new Date(startStr);
+  const end = new Date(endStr);
+
+  // Guard against malformed date strings producing Invalid Date
+  if (isNaN(start.getTime()) || isNaN(end.getTime())) return null;
+
+  return { start, end };
+}
+
+/** Return type of buildChildrenLookup. */
+interface ChildrenLookup {
+  /** Maps parentId (undefined = root) to sorted children. */
+  childrenMap: Map<TaskId | undefined, Task[]>;
+  /** Set of task IDs that have at least one child. */
+  childrenSet: Set<TaskId>;
+}
+
+/**
+ * Builds parent→children lookup structures for tree-walk operations.
+ * Orphan tasks (parent ID not found in the task list) are placed at root level.
+ * Siblings within each group are sorted by their `order` field.
+ */
+function buildChildrenLookup(tasks: Task[]): ChildrenLookup {
+  const childrenMap = new Map<TaskId | undefined, Task[]>();
+  const childrenSet = new Set<TaskId>();
+  const taskIds = new Set(tasks.map((t) => t.id));
+
+  for (const task of tasks) {
+    // Orphan safety: if parent doesn't exist in task list, treat as root
+    const parentKey =
+      task.parent && taskIds.has(task.parent) ? task.parent : undefined;
+    let siblings = childrenMap.get(parentKey);
+    if (!siblings) {
+      siblings = [];
+      childrenMap.set(parentKey, siblings);
+    }
+    siblings.push(task);
+    if (task.parent && taskIds.has(task.parent)) {
+      childrenSet.add(task.parent);
+    }
+  }
+
+  // Sort each sibling group by order
+  for (const siblings of childrenMap.values()) {
+    siblings.sort((a, b) => a.order - b.order);
+  }
+
+  return { childrenMap, childrenSet };
+}
+
+/**
+ * Applies date updates to a summary task via direct property mutation (Immer-compatible).
+ * Records and returns the cascade entry with previous values for undo tracking.
+ */
+function applySummaryUpdate(
+  task: Task,
+  updates: SummaryDateUpdates,
+  previousValues: SummaryDateUpdates
+): SummaryCascadeEntry {
+  task.startDate = updates.startDate;
+  task.endDate = updates.endDate;
+  task.duration = updates.duration;
+  return { id: task.id, updates, previousValues };
+}
+
+/**
+ * Returns true if any selected-summary task is an ancestor of the given task,
+ * meaning the task will be moved implicitly through its ancestor's expansion.
+ */
+function isDescendantOfSelectedSummary(
+  task: Task,
+  selectedSummaryIds: Set<TaskId>,
+  taskById: Map<TaskId, Task>
+): boolean {
+  let currentParentId = task.parent;
+  while (currentParentId) {
+    if (selectedSummaryIds.has(currentParentId)) return true;
+    currentParentId = taskById.get(currentParentId)?.parent;
+  }
+  return false;
+}
+
+// ─── Exported Functions ───────────────────────────────────────────────────────
 
 /**
  * Get all children of a task (direct children only).
@@ -81,16 +263,19 @@ export function wouldCreateCircularHierarchy(
 /**
  * Get the deepest absolute level among a task's descendants (including the task itself).
  * Returns the task's own level if it has no descendants.
+ *
+ * Uses a single-pass O(n) level map instead of per-task O(n × depth) lookups.
  */
 export function getMaxDescendantLevel(tasks: Task[], taskId: TaskId): number {
-  const taskLevel = getTaskLevel(tasks, taskId);
+  const levelMap = buildLevelMap(tasks);
+  const ownLevel = levelMap.get(taskId) ?? 0;
   const descendants = getTaskDescendants(tasks, taskId);
 
-  if (descendants.length === 0) return taskLevel;
+  if (descendants.length === 0) return ownLevel;
 
-  let maxLevel = taskLevel;
+  let maxLevel = ownLevel;
   for (const desc of descendants) {
-    const level = getTaskLevel(tasks, desc.id);
+    const level = levelMap.get(desc.id) ?? 0;
     if (level > maxLevel) maxLevel = level;
   }
 
@@ -99,15 +284,16 @@ export function getMaxDescendantLevel(tasks: Task[], taskId: TaskId): number {
 
 /**
  * Get max nesting depth in hierarchy.
+ *
+ * Uses a single-pass O(n) level map instead of per-task O(n × depth) lookups.
  */
 export function getMaxDepth(tasks: Task[]): number {
+  if (tasks.length === 0) return 0;
+  const levelMap = buildLevelMap(tasks);
   let maxDepth = 0;
-
-  for (const task of tasks) {
-    const depth = getTaskLevel(tasks, task.id);
-    if (depth > maxDepth) maxDepth = depth;
+  for (const level of levelMap.values()) {
+    if (level > maxDepth) maxDepth = level;
   }
-
   return maxDepth;
 }
 
@@ -120,50 +306,29 @@ export function getMaxDepth(tasks: Task[]): number {
 export function calculateSummaryDates(
   tasks: Task[],
   summaryTaskId: TaskId
-): { startDate: string; endDate: string; duration: number } | null {
+): SummaryDateUpdates | null {
   const summaryTask = tasks.find((t) => t.id === summaryTaskId);
 
   // Only calculate for summary type!
-  if (summaryTask?.type !== "summary") {
-    return null;
-  }
+  if (summaryTask?.type !== "summary") return null;
 
   const children = getTaskChildren(tasks, summaryTaskId);
+  if (children.length === 0) return null;
 
-  if (children.length === 0) {
-    return null; // No children, no dates
-  }
-
-  // Find earliest start date and latest end date
   let minStart: Date | null = null;
   let maxEnd: Date | null = null;
 
   for (const child of children) {
-    // For summary children, recursively calculate their dates
-    let childStart: Date;
-    let childEnd: Date;
-
-    if (child.type === "summary") {
-      const summaryDates = calculateSummaryDates(tasks, child.id);
-      if (!summaryDates) continue; // Skip empty summaries
-      childStart = new Date(summaryDates.startDate);
-      childEnd = new Date(summaryDates.endDate);
-    } else {
-      if (!child.startDate || !child.endDate) continue;
-      childStart = new Date(child.startDate);
-      childEnd = new Date(child.endDate);
-    }
-
-    if (!minStart || childStart < minStart) minStart = childStart;
-    if (!maxEnd || childEnd > maxEnd) maxEnd = childEnd;
+    const range = resolveChildDateRange(tasks, child);
+    if (!range) continue;
+    if (!minStart || range.start < minStart) minStart = range.start;
+    if (!maxEnd || range.end > maxEnd) maxEnd = range.end;
   }
 
   if (!minStart || !maxEnd) return null;
 
-  // Calculate duration in days (inclusive of start and end dates)
   const duration =
-    Math.ceil((maxEnd.getTime() - minStart.getTime()) / (1000 * 60 * 60 * 24)) +
-    1;
+    Math.ceil((maxEnd.getTime() - minStart.getTime()) / MS_PER_DAY) + 1;
 
   return {
     startDate: minStart.toISOString().split("T")[0],
@@ -178,44 +343,11 @@ export function calculateSummaryDates(
  * Uses recursive tree-walk to ensure children always appear directly
  * below their parent, sorted by `order` within each sibling group.
  */
-export interface FlattenedTask {
-  task: Task;
-  level: number;
-  hasChildren: boolean;
-  /** 1-based position in the full (non-hidden-filtered) list. Used for Excel-style row number gaps. */
-  globalRowNumber: number;
-}
-
 export function buildFlattenedTaskList(
   tasks: Task[],
   collapsedTaskIds: Set<TaskId>
 ): FlattenedTask[] {
-  // Build children map: parentId → children sorted by order
-  const childrenMap = new Map<TaskId | undefined, Task[]>();
-  const childrenSet = new Set<TaskId>(); // Tasks that have children
-  const taskIds = new Set(tasks.map((t) => t.id));
-
-  for (const task of tasks) {
-    // Orphan safety: if parent doesn't exist, treat as root
-    const parentKey =
-      task.parent && taskIds.has(task.parent) ? task.parent : undefined;
-    let siblings = childrenMap.get(parentKey);
-    if (!siblings) {
-      siblings = [];
-      childrenMap.set(parentKey, siblings);
-    }
-    siblings.push(task);
-    if (task.parent && taskIds.has(task.parent)) {
-      childrenSet.add(task.parent);
-    }
-  }
-
-  // Sort each sibling group by order
-  for (const siblings of childrenMap.values()) {
-    siblings.sort((a, b) => a.order - b.order);
-  }
-
-  // Recursive tree-walk
+  const { childrenMap, childrenSet } = buildChildrenLookup(tasks);
   const result: FlattenedTask[] = [];
 
   function walk(parentId: TaskId | undefined, level: number): void {
@@ -224,7 +356,13 @@ export function buildFlattenedTaskList(
 
     for (const task of children) {
       const hasChildren = childrenSet.has(task.id);
-      result.push({ task, level, hasChildren, globalRowNumber: 0 });
+      // Assign globalRowNumber inline (1-based) to avoid a second pass
+      result.push({
+        task,
+        level,
+        hasChildren,
+        globalRowNumber: result.length + 1,
+      });
 
       // Recurse into children if not collapsed
       const isCollapsed = task.open === false || collapsedTaskIds.has(task.id);
@@ -235,12 +373,6 @@ export function buildFlattenedTaskList(
   }
 
   walk(undefined, 0);
-
-  // Assign globalRowNumber (1-based sequential)
-  for (let i = 0; i < result.length; i++) {
-    result[i].globalRowNumber = i + 1;
-  }
-
   return result;
 }
 
@@ -255,32 +387,12 @@ export function buildFlattenedTaskList(
  */
 export function normalizeTaskOrder(tasks: Task[]): void {
   const flattened = buildFlattenedTaskList(tasks, new Set<TaskId>());
-  const taskMap = new Map(tasks.map((t) => [t.id, t]));
   let order = 0;
+  // task references in FlattenedTask point to the original objects in the
+  // input array, so direct mutation here is safe (and Immer-compatible).
   for (const { task } of flattened) {
-    const original = taskMap.get(task.id);
-    if (original) {
-      original.order = order++;
-    }
+    task.order = order++;
   }
-}
-
-/**
- * Summary date fields used for cascade recalculation.
- */
-export interface SummaryDateUpdates {
-  startDate: string;
-  endDate: string;
-  duration: number;
-}
-
-/**
- * Result of a single summary recalculation, capturing previous values for undo.
- */
-export interface SummaryCascadeEntry {
-  id: TaskId;
-  updates: SummaryDateUpdates;
-  previousValues: SummaryDateUpdates;
 }
 
 /**
@@ -297,18 +409,19 @@ export function recalculateSummaryAncestors(
 ): SummaryCascadeEntry[] {
   const cascadeUpdates: SummaryCascadeEntry[] = [];
   const processed = new Set<TaskId>();
+  // O(1) task lookup; task references in this map are Immer draft proxies
+  // when called from a store action, so direct mutation propagates correctly.
+  const taskById = new Map(tasks.map((t) => [t.id, t]));
   const queue = Array.from(parentIds);
 
   while (queue.length > 0) {
-    const parentId = queue.shift()!;
+    const parentId = queue.shift();
+    if (parentId === undefined) continue;
     if (processed.has(parentId)) continue;
     processed.add(parentId);
 
-    const parentIndex = tasks.findIndex((t) => t.id === parentId);
-    if (parentIndex === -1) continue;
-
-    const parent = tasks[parentIndex];
-    if (parent.type !== "summary") continue;
+    const parent = taskById.get(parentId);
+    if (!parent || parent.type !== "summary") continue;
 
     const previousValues: SummaryDateUpdates = {
       startDate: parent.startDate,
@@ -321,37 +434,20 @@ export function recalculateSummaryAncestors(
     if (hasChildren) {
       const summaryDates = calculateSummaryDates(tasks, parentId);
       if (summaryDates) {
-        const updates: SummaryDateUpdates = {
-          startDate: summaryDates.startDate,
-          endDate: summaryDates.endDate,
-          duration: summaryDates.duration,
-        };
-
-        cascadeUpdates.push({ id: parentId, updates, previousValues });
-
-        tasks[parentIndex] = {
-          ...tasks[parentIndex],
-          startDate: summaryDates.startDate,
-          endDate: summaryDates.endDate,
-          duration: summaryDates.duration,
-        };
+        cascadeUpdates.push(
+          applySummaryUpdate(parent, summaryDates, previousValues)
+        );
       }
     } else {
-      // No more children - clear dates
-      const updates: SummaryDateUpdates = {
+      // No more children — clear dates
+      const clearedDates: SummaryDateUpdates = {
         startDate: "",
         endDate: "",
         duration: 0,
       };
-
-      cascadeUpdates.push({ id: parentId, updates, previousValues });
-
-      tasks[parentIndex] = {
-        ...tasks[parentIndex],
-        startDate: "",
-        endDate: "",
-        duration: 0,
-      };
+      cascadeUpdates.push(
+        applySummaryUpdate(parent, clearedDates, previousValues)
+      );
     }
 
     // Continue cascading up
@@ -379,51 +475,35 @@ export function getEffectiveTasksToMove(
   tasks: Task[],
   selectedIds: TaskId[]
 ): TaskId[] {
-  // For simple case with no hierarchical selections, just return selected non-summary tasks
   if (selectedIds.length === 0) return [];
 
+  const taskById = new Map<TaskId, Task>(tasks.map((t) => [t.id, t]));
   const result = new Set<TaskId>();
 
-  // Check if any selected task is a summary that would expand to include descendants
+  // Collect selected summary IDs upfront for O(1) ancestor-coverage checks
   const selectedSummaryIds = new Set<TaskId>();
   for (const id of selectedIds) {
-    const task = tasks.find((t) => t.id === id);
-    if (task?.type === "summary") {
+    if (taskById.get(id)?.type === "summary") {
       selectedSummaryIds.add(id);
     }
   }
 
-  // For each selected ID, determine if it should be included
   for (const id of selectedIds) {
-    const task = tasks.find((t) => t.id === id);
+    const task = taskById.get(id);
     if (!task) continue;
 
     if (task.type === "summary") {
       // For summaries: add all their non-summary descendants
-      const descendants = getTaskDescendants(tasks, id);
-      for (const descendant of descendants) {
+      for (const descendant of getTaskDescendants(tasks, id)) {
         if (descendant.type !== "summary") {
           result.add(descendant.id);
         }
       }
-    } else {
-      // For non-summary tasks: check if already covered by a selected summary ancestor
-      let coveredBySelectedSummary = false;
-      let currentParentId = task.parent;
-
-      while (currentParentId) {
-        if (selectedSummaryIds.has(currentParentId)) {
-          coveredBySelectedSummary = true;
-          break;
-        }
-        const parent = tasks.find((t) => t.id === currentParentId);
-        currentParentId = parent?.parent;
-      }
-
+    } else if (
+      !isDescendantOfSelectedSummary(task, selectedSummaryIds, taskById)
+    ) {
       // Only add if not already covered by a selected summary ancestor
-      if (!coveredBySelectedSummary) {
-        result.add(id);
-      }
+      result.add(id);
     }
   }
 
@@ -431,9 +511,13 @@ export function getEffectiveTasksToMove(
 }
 
 /**
- * Collect all descendant IDs of a given root task.
- * Recurses through the parent relationship to find all children, grandchildren, etc.
- * Optionally accepts an existing Set to accumulate into.
+ * Collect all descendant IDs of a given root task as a `Set<TaskId>`.
+ *
+ * Compared to {@link getTaskDescendants} (which returns `Task[]`), this function:
+ * - Returns a `Set<TaskId>` for O(1) membership tests at call sites
+ * - Accepts `ReadonlyArray<Task>` since no mutation is performed
+ * - Accepts an optional accumulator `result` to incrementally collect IDs
+ *   across multiple root tasks without intermediate allocations
  */
 export function collectDescendantIds(
   tasks: ReadonlyArray<Task>,
@@ -441,11 +525,8 @@ export function collectDescendantIds(
   result?: Set<TaskId>
 ): Set<TaskId> {
   const ids = result ?? new Set<TaskId>();
-  for (const task of tasks) {
-    if (task.parent === rootId && !ids.has(task.id)) {
-      ids.add(task.id);
-      collectDescendantIds(tasks, task.id, ids);
-    }
+  for (const desc of getTaskDescendants(tasks as Task[], rootId)) {
+    ids.add(desc.id);
   }
   return ids;
 }
