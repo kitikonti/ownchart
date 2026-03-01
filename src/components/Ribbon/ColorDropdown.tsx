@@ -35,15 +35,13 @@ import type {
 } from "../../types/colorMode.types";
 import {
   toHexColor,
-  toPaletteId,
   type HexColor,
   type PaletteId,
 } from "../../types/branded.types";
 import {
-  COLOR_PALETTES,
   CATEGORY_LABELS,
   PALETTE_CATEGORIES,
-  type PaletteCategory,
+  PALETTES_BY_CATEGORY,
 } from "../../utils/colorPalettes";
 
 // ── Constants ───────────────────────────────────────────────────────────────
@@ -84,14 +82,6 @@ const COLOR_MODE_OPTIONS: ColorModeOption[] = [
   },
 ];
 
-/** Palettes grouped by category (static — computed once at module load) */
-const PALETTES_BY_CATEGORY = Object.fromEntries(
-  PALETTE_CATEGORIES.map((cat) => [
-    cat,
-    COLOR_PALETTES.filter((p) => p.category === cat),
-  ])
-) as Record<PaletteCategory, typeof COLOR_PALETTES>;
-
 // ── Shared sub-components ───────────────────────────────────────────────────
 
 function ColorSwatch({
@@ -109,7 +99,7 @@ function ColorSwatch({
   );
 }
 
-function PalettePreview({ colors }: { colors: string[] }): JSX.Element {
+function PalettePreview({ colors }: { colors: HexColor[] }): JSX.Element {
   return (
     <div className="flex gap-px">
       {colors.map((color, index) => (
@@ -220,7 +210,7 @@ function ThemeOptions({
                 key={palette.id}
                 isSelected={selectedPaletteId === palette.id}
                 showCheckmark={false}
-                onClick={() => onSelectPalette(toPaletteId(palette.id))}
+                onClick={() => onSelectPalette(palette.id)}
                 trailing={<PalettePreview colors={palette.colors} />}
               >
                 {palette.name}
