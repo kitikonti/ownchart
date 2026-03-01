@@ -14,6 +14,8 @@ import {
   buildGridTemplateColumns,
   getColumnPixelWidth,
   NAME_COLUMN_ID,
+  COLOR_COLUMN_ID,
+  ROW_NUMBER_COLUMN_ID,
 } from "@/config/tableColumns";
 import { ColumnResizer } from "./ColumnResizer";
 import { useTableDimensions } from "@/hooks/useTableDimensions";
@@ -78,6 +80,23 @@ interface HeaderCellProps {
 // Stable noop used as default for onSelectAll when the cell is not rowNumber.
 const noop = (): void => {};
 
+/** Returns the content to render inside a header cell based on column type. */
+function renderHeaderCellContent(
+  column: ColumnDefinition,
+  allSelected: boolean,
+  onSelectAll: () => void
+): JSX.Element | string | null {
+  if (column.id === ROW_NUMBER_COLUMN_ID) {
+    return (
+      <SelectAllButton allSelected={allSelected} onSelectAll={onSelectAll} />
+    );
+  }
+  if (column.id === COLOR_COLUMN_ID) {
+    return null;
+  }
+  return column.label;
+}
+
 /** Renders a single column header cell with context menu and optional resizer. */
 const HeaderCell = memo(function HeaderCell({
   column,
@@ -106,18 +125,22 @@ const HeaderCell = memo(function HeaderCell({
         paddingBottom: densityConfig.headerPaddingY,
       }}
       role="columnheader"
-      // tabIndex=0 makes headers reachable via Tab; the browser ContextMenu
-      // key (or Shift+F10) will fire onContextMenu for keyboard users.
-      tabIndex={0}
-      // Provide an accessible name for columns with no visible label text
-      aria-label={column.id === "color" ? "Color" : undefined}
+      // rowNumber cell: tabIndex=-1 because the inner SelectAllButton is the
+      // interactive element and handles both its own action and keyboard context
+      // menu (Shift+F10 fires on the focused element). Other cells: tabIndex=0
+      // so the ContextMenu key reaches them for column header context menus.
+      tabIndex={column.id === ROW_NUMBER_COLUMN_ID ? -1 : 0}
+      // Accessible name for columns with no visible label text
+      aria-label={
+        column.id === COLOR_COLUMN_ID
+          ? "Color"
+          : column.id === ROW_NUMBER_COLUMN_ID
+            ? "Row number"
+            : undefined
+      }
       onContextMenu={(e) => onContextMenu(e, column.id)}
     >
-      {column.id === "rowNumber" ? (
-        <SelectAllButton allSelected={allSelected} onSelectAll={onSelectAll} />
-      ) : column.id === "color" ? null : (
-        column.label
-      )}
+      {renderHeaderCellContent(column, allSelected, onSelectAll)}
       {/* Column Resizer - only for name column */}
       {column.id === NAME_COLUMN_ID && (
         <ColumnResizer
@@ -214,7 +237,7 @@ export const TaskTableHeader = memo(function TaskTableHeader(): JSX.Element {
             // allSelected / onSelectAll only consumed by the rowNumber cell;
             // omitting them for all other columns keeps their props stable so
             // React.memo can skip re-renders when selection changes.
-            {...(column.id === "rowNumber" && {
+            {...(column.id === ROW_NUMBER_COLUMN_ID && {
               allSelected,
               onSelectAll: handleSelectAllClick,
             })}

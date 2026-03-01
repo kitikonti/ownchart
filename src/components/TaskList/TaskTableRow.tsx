@@ -45,12 +45,10 @@ export interface TaskTableRowProps {
   visibleTaskIds: TaskId[];
   visibleColumns: ColumnDefinition[];
   gridTemplateColumns: string;
-  hasHiddenAbove?: boolean;
-  hiddenAboveCount?: number;
-  onUnhideAbove?: () => void;
-  hasHiddenBelow?: boolean;
-  hiddenBelowCount?: number;
-  onUnhideBelow?: () => void;
+  /** Hidden rows above this row — presence implies the indicator should show. */
+  hiddenAbove?: { count: number; onUnhide: () => void };
+  /** Hidden rows below this row — presence implies the indicator should show. */
+  hiddenBelow?: { count: number; onUnhide: () => void };
   onContextMenu: (e: React.MouseEvent, taskId: TaskId) => void;
   clipboardPosition?: ClipboardPosition;
   selectionPosition?: SelectionPosition;
@@ -66,12 +64,8 @@ export const TaskTableRow = memo(function TaskTableRow({
   visibleTaskIds,
   visibleColumns,
   gridTemplateColumns,
-  hasHiddenAbove = false,
-  hiddenAboveCount,
-  onUnhideAbove,
-  hasHiddenBelow = false,
-  hiddenBelowCount,
-  onUnhideBelow,
+  hiddenAbove,
+  hiddenBelow,
   onContextMenu,
   clipboardPosition,
   selectionPosition,
@@ -172,12 +166,12 @@ export const TaskTableRow = memo(function TaskTableRow({
         taskId={task.id}
         isSelected={isSelected}
         selectionPosition={selectionPosition}
-        hasHiddenAbove={hasHiddenAbove}
-        hiddenAboveCount={hiddenAboveCount}
-        onUnhideAbove={onUnhideAbove}
-        hasHiddenBelow={hasHiddenBelow}
-        hiddenBelowCount={hiddenBelowCount}
-        onUnhideBelow={onUnhideBelow}
+        hasHiddenAbove={hiddenAbove !== undefined}
+        hiddenAboveCount={hiddenAbove?.count}
+        onUnhideAbove={hiddenAbove?.onUnhide}
+        hasHiddenBelow={hiddenBelow !== undefined}
+        hiddenBelowCount={hiddenBelow?.count}
+        onUnhideBelow={hiddenBelow?.onUnhide}
         onSelectRow={handleSelectRow}
         onInsertAbove={handleInsertAbove}
         onInsertBelow={handleInsertBelow}

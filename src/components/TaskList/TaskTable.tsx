@@ -166,12 +166,22 @@ export function TaskTable(): JSX.Element {
                   visibleTaskIds={visibleTaskIds}
                   visibleColumns={visibleColumns}
                   gridTemplateColumns={gridTemplateColumns}
-                  hasHiddenAbove={row.hasHiddenAbove}
-                  hiddenAboveCount={row.hiddenAboveCount}
-                  onUnhideAbove={row.onUnhideAbove}
-                  hasHiddenBelow={row.hasHiddenBelow}
-                  hiddenBelowCount={row.hiddenBelowCount}
-                  onUnhideBelow={row.onUnhideBelow}
+                  hiddenAbove={
+                    row.hasHiddenAbove && row.onUnhideAbove
+                      ? {
+                          count: row.hiddenAboveCount,
+                          onUnhide: row.onUnhideAbove,
+                        }
+                      : undefined
+                  }
+                  hiddenBelow={
+                    row.hasHiddenBelow && row.onUnhideBelow
+                      ? {
+                          count: row.hiddenBelowCount,
+                          onUnhide: row.onUnhideBelow,
+                        }
+                      : undefined
+                  }
                   onContextMenu={handleRowContextMenu}
                   clipboardPosition={row.clipboardPosition}
                   selectionPosition={row.selectionPosition}
