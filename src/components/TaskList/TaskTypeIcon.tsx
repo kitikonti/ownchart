@@ -7,7 +7,7 @@
  * button so users can cycle task types via Enter/Space.
  */
 
-import type { KeyboardEvent } from "react";
+import type { KeyboardEvent, MouseEvent } from "react";
 import { Folder, CheckSquare, Diamond } from "@phosphor-icons/react";
 import type { TaskType } from "../../types/chart.types";
 
@@ -40,7 +40,7 @@ export function TaskTypeIcon({
 
   // When interactive, wrap in an accessible button
   if (onClick) {
-    const handleClick = (e: React.MouseEvent): void => {
+    const handleClick = (e: MouseEvent): void => {
       e.stopPropagation();
       onClick();
     };

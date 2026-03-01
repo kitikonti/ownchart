@@ -19,6 +19,15 @@ const INDICATOR_HEIGHT_COMFORTABLE = 10;
 const HOVER_ZONE_OFFSET_RATIO = 0.45;
 const HOVER_ZONE_HEIGHT_RATIO = 0.9;
 
+// Unhide button dimensions
+const UNHIDE_BUTTON_WIDTH = 20;
+const UNHIDE_HOVER_ZONE_EXTENSION = UNHIDE_BUTTON_WIDTH + 1; // extends past button by 1px for border overlap
+
+// Z-index layers for indicator elements
+const INDICATOR_Z_INDEX = 40;
+const HOVER_ZONE_Z_INDEX = 42;
+const UNHIDE_BUTTON_Z_INDEX = 50;
+
 interface HiddenRowIndicatorProps {
   /** Number of hidden rows (for tooltip text) */
   hiddenCount?: number;
@@ -66,14 +75,13 @@ export function HiddenRowIndicator({
     <>
       {/* Double-line */}
       <div
-        className="absolute left-0 right-0 pointer-events-none"
+        className="absolute left-0 right-0 pointer-events-none bg-white"
         style={{
           ...lineStyle,
           height: `${indicatorHeight}px`,
-          backgroundColor: "white",
           borderTop: `1.5px solid ${indicatorColor}`,
           borderBottom: `1.5px solid ${indicatorColor}`,
-          zIndex: 40,
+          zIndex: INDICATOR_Z_INDEX,
         }}
       />
       {/* Hover zone — covers double-line area + extends right for button */}
@@ -83,10 +91,10 @@ export function HiddenRowIndicator({
           className="absolute"
           style={{
             left: 0,
-            right: "-21px",
+            right: `-${UNHIDE_HOVER_ZONE_EXTENSION}px`,
             ...hoverZoneStyle,
             height: `${rowHeight * HOVER_ZONE_HEIGHT_RATIO}px`,
-            zIndex: 42,
+            zIndex: HOVER_ZONE_Z_INDEX,
           }}
           onMouseEnter={() => setShowUnhideButton(true)}
           onMouseLeave={(e) => {
@@ -98,22 +106,19 @@ export function HiddenRowIndicator({
           }}
         >
           {showUnhideButton && (
-            <div
+            <button
+              type="button"
               data-unhide-button
-              className="absolute flex items-center justify-center"
+              className="absolute flex items-center justify-center cursor-pointer rounded bg-white p-0"
               style={{
                 right: 0,
                 top: 0,
                 bottom: 0,
-                width: "20px",
-                backgroundColor: isButtonHovered ? controlsColor : "white",
+                width: `${UNHIDE_BUTTON_WIDTH}px`,
+                backgroundColor: isButtonHovered ? controlsColor : undefined,
                 border: `1px solid ${controlsColor}`,
-                borderRadius: "3px",
-                cursor: "pointer",
-                zIndex: 50,
+                zIndex: UNHIDE_BUTTON_Z_INDEX,
               }}
-              role="button"
-              tabIndex={0}
               title={`${hiddenCount ?? 0} hidden — click to unhide`}
               aria-label={`Unhide ${hiddenCount ?? 0} hidden rows`}
               onMouseEnter={() => setIsButtonHovered(true)}
@@ -143,7 +148,7 @@ export function HiddenRowIndicator({
                 weight="fill"
                 color={isButtonHovered ? "white" : controlsColor}
               />
-            </div>
+            </button>
           )}
         </div>
       )}

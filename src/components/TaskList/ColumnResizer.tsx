@@ -11,6 +11,13 @@ import {
   type KeyboardEvent,
 } from "react";
 
+// Keyboard resize step sizes (px)
+const RESIZE_STEP_PX = 5;
+const RESIZE_STEP_SHIFT_PX = 20;
+
+// Fallback upper bound for aria-valuemax when no maxWidth prop is provided
+const MAX_COLUMN_WIDTH = 1200;
+
 export interface ColumnResizerProps {
   /** Column ID */
   columnId: string;
@@ -26,6 +33,9 @@ export interface ColumnResizerProps {
 
   /** Minimum column width */
   minWidth?: number;
+
+  /** Maximum column width (used for aria-valuemax) */
+  maxWidth?: number;
 }
 
 /**
@@ -37,6 +47,7 @@ export function ColumnResizer({
   onAutoResize,
   currentWidth,
   minWidth = 60,
+  maxWidth,
 }: ColumnResizerProps): JSX.Element {
   const [isResizing, setIsResizing] = useState(false);
   const startXRef = useRef<number>(0);
@@ -89,7 +100,7 @@ export function ColumnResizer({
 
   // Keyboard support for column resizing
   const handleKeyDown = (e: KeyboardEvent<HTMLDivElement>): void => {
-    const step = e.shiftKey ? 20 : 5; // Larger step with Shift
+    const step = e.shiftKey ? RESIZE_STEP_SHIFT_PX : RESIZE_STEP_PX;
 
     if (e.key === "ArrowLeft") {
       e.preventDefault();
@@ -126,6 +137,7 @@ export function ColumnResizer({
       aria-orientation="vertical"
       aria-valuenow={currentWidth}
       aria-valuemin={minWidth}
+      aria-valuemax={maxWidth ?? MAX_COLUMN_WIDTH}
       aria-label={`Resize ${columnId} column. Use arrow keys to resize, Enter to auto-fit.`}
       title="Drag to resize, double-click to auto-fit. Arrow keys: resize, Enter: auto-fit"
     />

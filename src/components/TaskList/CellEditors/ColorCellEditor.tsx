@@ -83,9 +83,12 @@ export function ColorCellEditor({
     }
   };
 
-  const handleSelect = (color: string): void => {
-    onChange(toHexColor(color));
-  };
+  const handleSelect = useCallback(
+    (color: string): void => {
+      onChange(toHexColor(color));
+    },
+    [onChange]
+  );
 
   const handleClose = useCallback((): void => {
     setShowPopover(false);
@@ -113,6 +116,10 @@ export function ColorCellEditor({
         style={{
           height,
           backgroundColor: displayColor,
+          // outline: none is intentional — the active cell's own blue border
+          // (applied by TaskTableRow) already provides the focus context.
+          // Adding a second ring here would create visual noise inside an
+          // already-highlighted cell.
           outline: "none",
         }}
         title="Choose color"
