@@ -18,6 +18,7 @@ import {
   MAX_HIERARCHY_DEPTH,
   getTaskChildren,
   buildFlattenedTaskList,
+  buildChildrenLookup,
   recalculateSummaryAncestors,
   normalizeTaskOrder,
   getMaxDescendantLevel,
@@ -463,10 +464,12 @@ export const useTaskStore = create<TaskStore>()(
       const idsToDelete = new Set<TaskId>();
       const deletedTasks: Task[] = [];
 
-      // Add selected tasks and their children
+      // Add selected tasks and their children.
+      // Build the lookup once so collectDescendantIds doesn't rebuild it per iteration.
+      const { childrenMap: deleteChildrenMap } = buildChildrenLookup(state.tasks);
       selectedIds.forEach((id) => {
         idsToDelete.add(id);
-        collectDescendantIds(state.tasks, id, idsToDelete);
+        collectDescendantIds(state.tasks, id, idsToDelete, deleteChildrenMap);
       });
 
       // Capture all tasks before deleting
