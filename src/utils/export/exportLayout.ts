@@ -194,12 +194,7 @@ function computeTimelineLayout(
     taskTableWidth
   );
 
-  const scale = getTimelineScale(
-    dateRange.min,
-    dateRange.max,
-    MIN_TIMELINE_WIDTH,
-    effectiveZoom
-  );
+  const scale = getTimelineScale(dateRange.min, dateRange.max, effectiveZoom);
 
   return { dateRange, effectiveZoom, scale };
 }

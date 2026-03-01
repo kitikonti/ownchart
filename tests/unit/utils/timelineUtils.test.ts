@@ -125,7 +125,7 @@ describe("timelineUtils", () => {
 
   describe("getTimelineScale", () => {
     it("should calculate scale with default zoom", () => {
-      const scale = getTimelineScale("2026-01-01", "2026-01-31", 800, 1.0);
+      const scale = getTimelineScale("2026-01-01", "2026-01-31", 1.0);
 
       expect(scale.minDate).toBe("2026-01-01");
       expect(scale.maxDate).toBe("2026-01-31");
@@ -136,14 +136,14 @@ describe("timelineUtils", () => {
     });
 
     it("should apply zoom factor", () => {
-      const scale = getTimelineScale("2026-01-01", "2026-01-31", 800, 2.0);
+      const scale = getTimelineScale("2026-01-01", "2026-01-31", 2.0);
 
       expect(scale.pixelsPerDay).toBe(FIXED_BASE_PIXELS_PER_DAY * 2);
       expect(scale.totalWidth).toBe(31 * FIXED_BASE_PIXELS_PER_DAY * 2);
     });
 
     it("should include scale config", () => {
-      const scale = getTimelineScale("2026-01-01", "2026-12-31", 800, 0.05);
+      const scale = getTimelineScale("2026-01-01", "2026-12-31", 0.05);
 
       expect(scale.scales).toBeDefined();
       expect(scale.scales.length).toBe(2);
@@ -152,7 +152,7 @@ describe("timelineUtils", () => {
 
   describe("dateToPixel", () => {
     it("should convert date to pixel position", () => {
-      const scale = getTimelineScale("2026-01-01", "2026-01-31", 800, 1.0);
+      const scale = getTimelineScale("2026-01-01", "2026-01-31", 1.0);
 
       // First day should be at 0
       expect(dateToPixel("2026-01-01", scale)).toBe(0);
@@ -169,14 +169,14 @@ describe("timelineUtils", () => {
 
   describe("pixelToDate", () => {
     it("should convert pixel position to date", () => {
-      const scale = getTimelineScale("2026-01-01", "2026-01-31", 800, 1.0);
+      const scale = getTimelineScale("2026-01-01", "2026-01-31", 1.0);
 
       expect(pixelToDate(0, scale)).toBe("2026-01-01");
       expect(pixelToDate(FIXED_BASE_PIXELS_PER_DAY, scale)).toBe("2026-01-02");
     });
 
     it("should round to nearest day", () => {
-      const scale = getTimelineScale("2026-01-01", "2026-01-31", 800, 1.0);
+      const scale = getTimelineScale("2026-01-01", "2026-01-31", 1.0);
 
       // Just under 1.5 days should round to day 2
       expect(pixelToDate(FIXED_BASE_PIXELS_PER_DAY * 1.4, scale)).toBe(

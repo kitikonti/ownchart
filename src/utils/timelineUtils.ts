@@ -24,6 +24,7 @@ import {
   endOfWeek,
   endOfDay,
 } from "date-fns";
+
 import { DENSITY_CONFIG } from "../config/densityConfig";
 import type { Task } from "../types/chart.types";
 import { calculateDuration, addDays } from "./dateUtils";
@@ -36,9 +37,12 @@ export const MAX_ZOOM = 3.0; // 300% - show at least 1 week
 // Scroll/date-range padding constants (shared between GanttLayout and chartSlice)
 /** Days of padding added before/after task range for infinite scroll room */
 export const DATE_RANGE_PADDING_DAYS = 90;
+/** Days of visible pre-task breathing room shown before the first task. */
+const VISIBLE_PRE_TASK_DAYS = 7;
 /** Days to scroll past from dateRange.min to reach visible content start.
- *  = DATE_RANGE_PADDING_DAYS - 7 (visible pre-task days) */
-export const SCROLL_OFFSET_DAYS = DATE_RANGE_PADDING_DAYS - 7;
+ *  = DATE_RANGE_PADDING_DAYS - VISIBLE_PRE_TASK_DAYS */
+export const SCROLL_OFFSET_DAYS =
+  DATE_RANGE_PADDING_DAYS - VISIBLE_PRE_TASK_DAYS;
 /** Visual breathing room (days) added on each side by zoomToDateRange */
 export const ZOOM_VISUAL_PADDING_DAYS = 2;
 /** Base padding (days) added on each side by fitToView before label padding */
@@ -86,6 +90,10 @@ export function registerWeekNumberingSystemGetter(
 /**
  * Reset registered preference getters to null (for test teardown).
  * Restores fallback behaviour (ISO defaults) between test cases.
+ *
+ * @important Call this in `afterEach` / `afterAll` in any test suite that
+ * calls `registerFirstDayOfWeekGetter` or `registerWeekNumberingSystemGetter`.
+ * Omitting teardown leaks module-level state into subsequent test cases.
  */
 export function resetPreferenceGetters(): void {
   _getFirstDayOfWeek = null;
@@ -154,8 +162,10 @@ function getWeekNumber(date: Date): number {
 }
 
 // Named format helpers extracted from getScaleConfig for readability
+const MONTHS_PER_QUARTER = 3;
+
 function formatQuarterHeader(date: Date): string {
-  return `Q${Math.floor(date.getMonth() / 3) + 1} ${date.getFullYear()}`;
+  return `Q${Math.floor(date.getMonth() / MONTHS_PER_QUARTER) + 1} ${date.getFullYear()}`;
 }
 
 function formatWeekNumberOnly(date: Date): string {
@@ -232,7 +242,6 @@ export function getScaleConfig(
 export function getTimelineScale(
   minDate: string,
   maxDate: string,
-  _containerWidth: number, // Reserved — previously used for auto-scaling; kept for API stability
   zoom: number = 1
 ): TimelineScale {
   const totalDays = calculateDuration(minDate, maxDate);
@@ -290,23 +299,30 @@ export interface DensityGeometryConfig {
  * Default density config (Normal mode) — references DENSITY_CONFIG.normal directly
  * so values stay in sync with config/densityConfig.ts without manual duplication.
  */
-export const DEFAULT_DENSITY_GEOMETRY: DensityGeometryConfig = DENSITY_CONFIG.normal;
+export const DEFAULT_DENSITY_GEOMETRY: DensityGeometryConfig =
+  DENSITY_CONFIG.normal;
+
+/** Options for getTaskBarGeometry — groups the five parameters into a single object. */
+export interface TaskBarGeometryOptions {
+  task: Task;
+  scale: TimelineScale;
+  rowIndex: number;
+  /** Density configuration (rowHeight, taskBarHeight, taskBarOffset). Defaults to Normal mode. */
+  densityConfig?: DensityGeometryConfig;
+  /** Height of the timeline header in px. Pass 0 when the header lives in a separate SVG. Defaults to TIMELINE_HEADER_HEIGHT_PX (48px). */
+  headerHeight?: number;
+}
 
 /**
- * Get task bar geometry for rendering
- * @param task - The task to calculate geometry for
- * @param scale - The timeline scale
- * @param rowIndex - The row index of the task
- * @param densityConfig - Density configuration (rowHeight, taskBarHeight, taskBarOffset)
- * @param headerHeight - Height of timeline header (default: TIMELINE_HEADER_HEIGHT_PX = 48px: 2×24px rows)
+ * Get task bar geometry for rendering.
  */
-export function getTaskBarGeometry(
-  task: Task,
-  scale: TimelineScale,
-  rowIndex: number,
-  densityConfig: DensityGeometryConfig = DEFAULT_DENSITY_GEOMETRY,
-  headerHeight: number = TIMELINE_HEADER_HEIGHT_PX
-): TaskBarGeometry {
+export function getTaskBarGeometry({
+  task,
+  scale,
+  rowIndex,
+  densityConfig = DEFAULT_DENSITY_GEOMETRY,
+  headerHeight = TIMELINE_HEADER_HEIGHT_PX,
+}: TaskBarGeometryOptions): TaskBarGeometry {
   const x = dateToPixel(task.startDate, scale);
 
   // Milestones only need startDate (they represent a point in time, not a duration)
@@ -363,8 +379,10 @@ const UNIT_OPS: Record<ScaleUnit, UnitOps> = {
     // Hours use addHours(step) not step-1 — hour end boundaries are exclusive
     // (no endOfHour equivalent); caller expects the next hour boundary.
     // Reserved for future hour-level zoom; not currently returned by getScaleConfig.
+    // NOTE: end intentionally equals add here — do NOT copy this pattern for new units.
+    // All other units use endOf*(add*(date, step-1)) to include the full last unit.
     start: startOfHour,
-    end: (date, step) => addHours(date, step),
+    end: (date, step) => addHours(date, step), // exclusive end — see note above
     add: (date, step) => addHours(date, step),
   },
 };
