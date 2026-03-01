@@ -59,6 +59,12 @@ export interface ChildrenLookup {
 
 // ─── Internal Helpers ─────────────────────────────────────────────────────────
 
+/** Resolved date range returned by {@link resolveChildDateRange}. */
+interface DateRange {
+  start: Date;
+  end: Date;
+}
+
 /** Builds a map from task ID → task for O(1) lookups. */
 function buildTaskById(tasks: ReadonlyArray<Task>): Map<TaskId, Task> {
   return new Map(tasks.map((t) => [t.id, t]));
@@ -115,7 +121,9 @@ function buildLevelMap(tasks: ReadonlyArray<Task>): Map<TaskId, number> {
  * Exported so callers that process multiple roots can build the map once and
  * pass it to {@link collectDescendantIds}, avoiding O(k × n) repeated rebuilds.
  */
-export function buildChildrenLookup(tasks: ReadonlyArray<Task>): ChildrenLookup {
+export function buildChildrenLookup(
+  tasks: ReadonlyArray<Task>
+): ChildrenLookup {
   const childrenMap = new Map<TaskId | undefined, Task[]>();
   const childrenSet = new Set<TaskId>();
   const taskIds = new Set(tasks.map((t) => t.id));
@@ -186,6 +194,7 @@ function updateOrClearSummaryDates(
   };
 
   if (childrenSet.has(parent.id)) {
+    // Fresh set per parent: each ancestor's subtree is an independent calculation.
     const summaryDates = calculateSummaryDatesInner(
       parent.id,
       childrenMap,
@@ -287,7 +296,7 @@ function resolveChildDateRange(
   childrenMap: Map<TaskId | undefined, Task[]>,
   taskById: Map<TaskId, Task>,
   visited: Set<TaskId>
-): { start: Date; end: Date } | null {
+): DateRange | null {
   let startStr: string;
   let endStr: string;
 
@@ -371,7 +380,10 @@ export function getTaskDescendants(
  * Builds a task-by-ID map once in O(n), then walks the parent chain in O(depth),
  * replacing the previous O(n × depth) recursive approach.
  */
-export function getTaskPath(tasks: ReadonlyArray<Task>, taskId: TaskId): TaskId[] {
+export function getTaskPath(
+  tasks: ReadonlyArray<Task>,
+  taskId: TaskId
+): TaskId[] {
   const taskById = buildTaskById(tasks);
   const path: TaskId[] = [];
   let current = taskById.get(taskId);
@@ -393,7 +405,10 @@ export function getTaskPath(tasks: ReadonlyArray<Task>, taskId: TaskId): TaskId[
  * Callers needing levels for many tasks in a single pass should use
  * buildFlattenedTaskList or getMaxDepth, which amortise the map build cost.
  */
-export function getTaskLevel(tasks: ReadonlyArray<Task>, taskId: TaskId): number {
+export function getTaskLevel(
+  tasks: ReadonlyArray<Task>,
+  taskId: TaskId
+): number {
   return buildLevelMap(tasks).get(taskId) ?? 0;
 }
 
@@ -484,8 +499,7 @@ export function wouldCreateCircularHierarchy(
   if (taskId === newParentId) return true;
 
   // Check if newParent is a descendant of task
-  const descendants = getTaskDescendants(tasks, taskId);
-  return descendants.some((d) => d.id === newParentId);
+  return collectDescendantIds(tasks, taskId).has(newParentId);
 }
 
 /**
@@ -546,7 +560,12 @@ export function calculateSummaryDates(
 ): SummaryDateUpdates | null {
   const { childrenMap } = buildChildrenLookup(tasks);
   const taskById = buildTaskById(tasks);
-  return calculateSummaryDatesInner(summaryTaskId, childrenMap, taskById, new Set());
+  return calculateSummaryDatesInner(
+    summaryTaskId,
+    childrenMap,
+    taskById,
+    new Set()
+  );
 }
 
 /**
@@ -574,10 +593,10 @@ export function recalculateSummaryAncestors(
     taskById,
     cascadeUpdates,
   };
-  const queue = Array.from(parentIds);
+  const stack = Array.from(parentIds);
 
-  while (queue.length > 0) {
-    const parentId = queue.pop();
+  while (stack.length > 0) {
+    const parentId = stack.pop();
     if (parentId === undefined) continue;
     if (processed.has(parentId)) continue;
     processed.add(parentId);
@@ -589,7 +608,7 @@ export function recalculateSummaryAncestors(
 
     // Continue cascading up
     if (parent.parent) {
-      queue.push(parent.parent);
+      stack.push(parent.parent);
     }
   }
 
