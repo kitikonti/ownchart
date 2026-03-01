@@ -1,0 +1,114 @@
+/**
+ * CustomZoomControl - Zoom slider, percentage input, and preset buttons for export.
+ */
+
+import {
+  EXPORT_ZOOM_MIN,
+  EXPORT_ZOOM_MAX,
+  EXPORT_ZOOM_PRESETS,
+} from "../../utils/export/types";
+
+const CUSTOM_ZOOM_PRESETS_ARRAY = [0.1, 0.25, 0.5, 1.0, 1.5, 2.0];
+
+export interface CustomZoomControlProps {
+  timelineZoom: number;
+  onTimelineZoomChange: (zoom: number) => void;
+  isPngOrSvg: boolean;
+}
+
+/**
+ * Bordered container combining a number input and "%" unit label.
+ * Uses a compound border design (input + label share one border) which
+ * prevents the standard Input component's own border from being used here.
+ */
+function ZoomPercentInput({
+  value,
+  onChange,
+  onClick,
+}: {
+  value: number;
+  onChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
+  onClick: (e: React.MouseEvent<HTMLInputElement>) => void;
+}): JSX.Element {
+  return (
+    <div className="flex items-center gap-1 bg-white border border-neutral-300 rounded px-3 py-1.5">
+      <input
+        type="number"
+        value={value}
+        onChange={onChange}
+        onClick={onClick}
+        aria-label="Zoom percentage"
+        className="w-10 text-sm text-center font-mono bg-transparent border-none focus:outline-none text-neutral-900"
+        min={EXPORT_ZOOM_MIN * 100}
+        max={EXPORT_ZOOM_MAX * 100}
+      />
+      <span className="text-xs text-neutral-500">%</span>
+    </div>
+  );
+}
+
+export function CustomZoomControl({
+  timelineZoom,
+  onTimelineZoomChange,
+  isPngOrSvg,
+}: CustomZoomControlProps): JSX.Element {
+  const presets = isPngOrSvg
+    ? CUSTOM_ZOOM_PRESETS_ARRAY
+    : Object.values(EXPORT_ZOOM_PRESETS);
+
+  return (
+    <div className="space-y-4">
+      <div className="flex items-center gap-3">
+        <input
+          type="range"
+          min={EXPORT_ZOOM_MIN * 100}
+          max={EXPORT_ZOOM_MAX * 100}
+          step={1}
+          value={timelineZoom * 100}
+          onChange={(e) =>
+            onTimelineZoomChange(parseInt(e.target.value, 10) / 100)
+          }
+          onClick={(e) => e.stopPropagation()}
+          aria-label="Zoom level"
+          className="flex-1 h-1.5 bg-neutral-200 rounded-full appearance-none cursor-pointer accent-brand-600"
+        />
+        <ZoomPercentInput
+          value={Math.round(timelineZoom * 100)}
+          onChange={(e) =>
+            onTimelineZoomChange(
+              Math.max(
+                EXPORT_ZOOM_MIN,
+                Math.min(
+                  EXPORT_ZOOM_MAX,
+                  parseInt(e.target.value, 10) / 100 || 1
+                )
+              )
+            )
+          }
+          onClick={(e) => e.stopPropagation()}
+        />
+      </div>
+
+      {/* Zoom presets */}
+      <div className="flex flex-wrap gap-1.5">
+        {presets.map((value) => (
+          <button
+            key={value}
+            type="button"
+            onClick={(e) => {
+              e.stopPropagation();
+              onTimelineZoomChange(value);
+            }}
+            className={`px-3 py-1.5 text-xs font-mono font-medium rounded transition-colors duration-150 ${
+              timelineZoom === value
+                ? "bg-brand-600 text-white"
+                : "bg-white border border-neutral-300 text-neutral-700 hover:border-neutral-400 hover:bg-neutral-50"
+            }`}
+          >
+            {Math.round(value * 100)}%
+          </button>
+        ))}
+      </div>
+    </div>
+  );
+}

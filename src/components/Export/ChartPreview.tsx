@@ -4,7 +4,13 @@
  * Includes info panel below preview (Figma-style).
  */
 
-import { Spinner, WarningCircle, Warning, Image } from "@phosphor-icons/react";
+import {
+  Spinner,
+  WarningCircle,
+  Warning,
+  WarningOctagon,
+  Image,
+} from "@phosphor-icons/react";
 import type { ReadabilityStatus } from "../../utils/export/types";
 
 // Re-export for backwards compatibility
@@ -25,19 +31,20 @@ export interface ChartPreviewProps {
   formatType?: "png" | "svg";
 }
 
-/**
- * ChartPreview component for PNG/SVG export preview.
- * Shows the chart image scaled to fit the preview area.
- */
+/** Checkerboard tile color for transparent background visualization */
+const CHECKERBOARD_TILE_COLOR = "#e5e5e5";
+
+/** Conservative PNG compression ratio (typical range: 25–50% of raw RGBA) */
+const PNG_COMPRESSION_RATIO = 0.35;
+
 /**
  * Estimate file size based on dimensions.
  * PNG: roughly 4 bytes per pixel with compression (~25% of raw)
  */
 function estimateFileSize(width: number, height: number): string {
   if (width === 0 || height === 0) return "—";
-  // PNG compression typically reduces to ~25-50% of raw RGBA
   const rawBytes = width * height * 4;
-  const estimatedBytes = rawBytes * 0.35; // Conservative estimate
+  const estimatedBytes = rawBytes * PNG_COMPRESSION_RATIO;
 
   if (estimatedBytes < 1024) {
     return `~${Math.round(estimatedBytes)} B`;
@@ -48,6 +55,10 @@ function estimateFileSize(width: number, height: number): string {
   }
 }
 
+/**
+ * ChartPreview component for PNG/SVG export preview.
+ * Shows the chart image scaled to fit the preview area.
+ */
 export function ChartPreview({
   previewDataUrl,
   dimensions,
@@ -58,6 +69,9 @@ export function ChartPreview({
   readabilityStatus,
   formatType = "png",
 }: ChartPreviewProps): JSX.Element {
+  const ReadabilityIcon =
+    readabilityStatus?.level === "critical" ? WarningOctagon : Warning;
+
   return (
     <div className="flex flex-col h-full">
       {/* Preview Header */}
@@ -90,8 +104,7 @@ export function ChartPreview({
             <div
               className="absolute inset-0"
               style={{
-                backgroundImage:
-                  "linear-gradient(45deg, #e5e5e5 25%, transparent 25%), linear-gradient(-45deg, #e5e5e5 25%, transparent 25%), linear-gradient(45deg, transparent 75%, #e5e5e5 75%), linear-gradient(-45deg, transparent 75%, #e5e5e5 75%)",
+                backgroundImage: `linear-gradient(45deg, ${CHECKERBOARD_TILE_COLOR} 25%, transparent 25%), linear-gradient(-45deg, ${CHECKERBOARD_TILE_COLOR} 25%, transparent 25%), linear-gradient(45deg, transparent 75%, ${CHECKERBOARD_TILE_COLOR} 75%), linear-gradient(-45deg, transparent 75%, ${CHECKERBOARD_TILE_COLOR} 75%)`,
                 backgroundSize: "16px 16px",
                 backgroundPosition: "0 0, 0 8px, 8px -8px, -8px 0px",
               }}
@@ -185,7 +198,7 @@ export function ChartPreview({
                 : "bg-red-50 border border-red-200"
             }`}
           >
-            <Warning
+            <ReadabilityIcon
               size={16}
               weight="fill"
               className={

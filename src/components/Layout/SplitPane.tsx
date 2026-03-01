@@ -9,7 +9,7 @@ import { SplitPaneDivider } from "./SplitPaneDivider";
 
 const COLLAPSE_THRESHOLD = 80; // px — snap to collapsed below this width
 
-interface SplitPaneProps {
+export interface SplitPaneProps {
   leftContent: React.ReactNode;
   rightContent: React.ReactNode;
   leftWidth: number;
@@ -47,12 +47,15 @@ export function SplitPane({
     }
   }, [leftWidth, isCollapsed]);
 
-  const handleMouseDown = (e: React.MouseEvent): void => {
-    e.preventDefault();
-    dragFromCollapsedRef.current = isCollapsed;
-    dragWidthRef.current = isCollapsed ? 0 : leftWidth;
-    setIsDragging(true);
-  };
+  const handleMouseDown = useCallback(
+    (e: React.MouseEvent): void => {
+      e.preventDefault();
+      dragFromCollapsedRef.current = isCollapsed;
+      dragWidthRef.current = isCollapsed ? 0 : leftWidth;
+      setIsDragging(true);
+    },
+    [isCollapsed, leftWidth]
+  );
 
   const handleKeyboardResize = useCallback(
     (delta: number): void => {
@@ -143,15 +146,15 @@ export function SplitPane({
     onCollapsedChange,
   ]);
 
-  const handleExpandFromCollapsed = (): void => {
+  const handleExpandFromCollapsed = useCallback((): void => {
     onCollapsedChange?.(false);
     // Restore previous width or use minimum
     const restoreWidth = Math.max(
       minLeftWidth,
-      preCollapseWidthRef.current || minLeftWidth
+      preCollapseWidthRef.current ?? minLeftWidth
     );
     onLeftWidthChange(restoreWidth);
-  };
+  }, [onCollapsedChange, minLeftWidth, onLeftWidthChange]);
 
   // When collapsed, always show 0 width (during drag, DOM manipulation takes over)
   const effectiveWidth = isCollapsed ? 0 : leftWidth;
