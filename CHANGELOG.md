@@ -2,6 +2,24 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [1.1.3](https://github.com/kitikonti/ownchart/compare/v1.1.2...v1.1.3) (2026-03-01)
+
+
+### Bug Fixes
+
+* apply prettier formatting to PdfExportOptions ([7964863](https://github.com/kitikonti/ownchart/commit/79648635f259039533853e7b4a19bb63d644ac31))
+
+
+### Code Refactoring
+
+* apply code review fixes to TaskTableRow and TaskTableHeader ([851ffd9](https://github.com/kitikonti/ownchart/commit/851ffd9715ab9d9f03a69b01903e1afe58b51eb0))
+* apply code review fixes to TaskTableRow and TaskTableHeader ([e0b172d](https://github.com/kitikonti/ownchart/commit/e0b172d12c528da1076ac0e3cd8f3028ef2d676a))
+* apply code review fixes to TaskTableRow and TaskTableHeader ([cecd5ae](https://github.com/kitikonti/ownchart/commit/cecd5ae21240e62aaa80f189e5f38f07f8afa7ca))
+* apply code review fixes to TaskTableRow and TaskTableHeader ([3645dd0](https://github.com/kitikonti/ownchart/commit/3645dd0798772e3b5f3a18d74cb2fe1c4731e784))
+* drive header rendering from column config, fix import order and return types ([17c9d90](https://github.com/kitikonti/ownchart/commit/17c9d908ada5078572b8c1b4563486a3c27e2e34))
+* fix code review findings and DRY grid template logic ([8e2013e](https://github.com/kitikonti/ownchart/commit/8e2013e9e61abb4c942cbe06f51015c571fea19e))
+* improve TaskTableRow and TaskTableHeader from code review ([1e6ce47](https://github.com/kitikonti/ownchart/commit/1e6ce4786b807d46e5c4415b863926396df53b76))
+
 ## [1.1.2](https://github.com/kitikonti/ownchart/compare/v1.1.1...v1.1.2) (2026-03-01)
 
 
