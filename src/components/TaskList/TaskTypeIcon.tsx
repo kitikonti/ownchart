@@ -7,9 +7,12 @@
  * button so users can cycle task types via Enter/Space.
  */
 
-import type { KeyboardEvent } from "react";
+import { memo } from "react";
+import type { KeyboardEvent, MouseEvent } from "react";
 import { Folder, CheckSquare, Diamond } from "@phosphor-icons/react";
-import type { TaskType } from "../../types/chart.types";
+import type { TaskType } from "@/types/chart.types";
+
+const TASK_TYPE_ICON_SIZE = 16;
 
 /** Display labels for screen readers */
 const TYPE_LABELS: Record<TaskType, string> = {
@@ -24,7 +27,7 @@ interface TaskTypeIconProps {
   className?: string;
 }
 
-export function TaskTypeIcon({
+export const TaskTypeIcon = memo(function TaskTypeIcon({
   type = "task",
   onClick,
   className = "",
@@ -34,38 +37,46 @@ export function TaskTypeIcon({
   const Icon =
     type === "summary" ? Folder : type === "milestone" ? Diamond : CheckSquare;
 
+  // Hoisted to avoid re-creating inside the conditional branch on every render
+  const handleClick = (e: MouseEvent): void => {
+    e.stopPropagation();
+    onClick?.();
+  };
+
+  const handleKeyDown = (e: KeyboardEvent): void => {
+    if (e.key === "Enter" || e.key === " ") {
+      e.preventDefault();
+      e.stopPropagation();
+      onClick?.();
+    }
+  };
+
+  // Hide from screen readers only when inside a button that already has an aria-label.
+  // When rendered without onClick, the icon is the sole semantic element in the cell.
   const icon = (
-    <Icon size={16} weight="light" className={iconClassName} aria-hidden />
+    <Icon
+      size={TASK_TYPE_ICON_SIZE}
+      weight="light"
+      className={iconClassName}
+      aria-hidden={!!onClick}
+    />
   );
 
   // When interactive, wrap in an accessible button
   if (onClick) {
-    const handleClick = (e: React.MouseEvent): void => {
-      e.stopPropagation();
-      onClick();
-    };
-
-    const handleKeyDown = (e: KeyboardEvent): void => {
-      if (e.key === "Enter" || e.key === " ") {
-        e.preventDefault();
-        e.stopPropagation();
-        onClick();
-      }
-    };
-
     return (
-      <span
-        role="button"
+      <button
+        type="button"
         tabIndex={0}
         aria-label={`Task type: ${TYPE_LABELS[type]}. Click to change`}
-        className="inline-flex cursor-pointer hover:text-neutral-800 transition-colors"
+        className="inline-flex cursor-pointer hover:text-neutral-800 transition-colors bg-transparent border-0 p-0"
         onClick={handleClick}
         onKeyDown={handleKeyDown}
       >
         {icon}
-      </span>
+      </button>
     );
   }
 
   return icon;
-}
+});

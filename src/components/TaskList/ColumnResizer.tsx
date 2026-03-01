@@ -4,12 +4,20 @@
  */
 
 import {
+  memo,
   useState,
   useRef,
   useEffect,
   type MouseEvent,
   type KeyboardEvent,
 } from "react";
+
+// Keyboard resize step sizes (px)
+const RESIZE_STEP_PX = 5;
+const RESIZE_STEP_SHIFT_PX = 20;
+
+// Fallback upper bound for aria-valuemax when no maxWidth prop is provided
+const MAX_COLUMN_WIDTH = 1200;
 
 export interface ColumnResizerProps {
   /** Column ID */
@@ -26,17 +34,21 @@ export interface ColumnResizerProps {
 
   /** Minimum column width */
   minWidth?: number;
+
+  /** Maximum column width (used for aria-valuemax) */
+  maxWidth?: number;
 }
 
 /**
  * Column resizer component.
  */
-export function ColumnResizer({
+export const ColumnResizer = memo(function ColumnResizer({
   columnId,
   onResize,
   onAutoResize,
   currentWidth,
   minWidth = 60,
+  maxWidth,
 }: ColumnResizerProps): JSX.Element {
   const [isResizing, setIsResizing] = useState(false);
   const startXRef = useRef<number>(0);
@@ -45,18 +57,18 @@ export function ColumnResizer({
   useEffect(() => {
     if (!isResizing) return;
 
+    const computeWidth = (clientX: number): number =>
+      Math.min(
+        maxWidth ?? Infinity,
+        Math.max(minWidth, startWidthRef.current + (clientX - startXRef.current))
+      );
+
     const handleMouseMove = (e: globalThis.MouseEvent): void => {
-      // Live update during drag
-      const deltaX = e.clientX - startXRef.current;
-      const newWidth = Math.max(minWidth, startWidthRef.current + deltaX);
-      onResize(columnId, newWidth);
+      onResize(columnId, computeWidth(e.clientX));
     };
 
     const handleMouseUp = (e: globalThis.MouseEvent): void => {
-      const deltaX = e.clientX - startXRef.current;
-      const newWidth = Math.max(minWidth, startWidthRef.current + deltaX);
-
-      onResize(columnId, newWidth);
+      onResize(columnId, computeWidth(e.clientX));
       setIsResizing(false);
     };
 
@@ -67,7 +79,7 @@ export function ColumnResizer({
       document.removeEventListener("mousemove", handleMouseMove);
       document.removeEventListener("mouseup", handleMouseUp);
     };
-  }, [isResizing, columnId, onResize, minWidth]);
+  }, [isResizing, columnId, onResize, minWidth, maxWidth]);
 
   const handleMouseDown = (e: MouseEvent<HTMLDivElement>): void => {
     e.preventDefault();
@@ -89,7 +101,7 @@ export function ColumnResizer({
 
   // Keyboard support for column resizing
   const handleKeyDown = (e: KeyboardEvent<HTMLDivElement>): void => {
-    const step = e.shiftKey ? 20 : 5; // Larger step with Shift
+    const step = e.shiftKey ? RESIZE_STEP_SHIFT_PX : RESIZE_STEP_PX;
 
     if (e.key === "ArrowLeft") {
       e.preventDefault();
@@ -97,7 +109,7 @@ export function ColumnResizer({
       onResize(columnId, newWidth);
     } else if (e.key === "ArrowRight") {
       e.preventDefault();
-      const newWidth = currentWidth + step;
+      const newWidth = Math.min(maxWidth ?? Infinity, currentWidth + step);
       onResize(columnId, newWidth);
     } else if (e.key === "Enter" || e.key === " ") {
       // Auto-resize on Enter or Space
@@ -126,8 +138,9 @@ export function ColumnResizer({
       aria-orientation="vertical"
       aria-valuenow={currentWidth}
       aria-valuemin={minWidth}
+      aria-valuemax={maxWidth ?? MAX_COLUMN_WIDTH}
       aria-label={`Resize ${columnId} column. Use arrow keys to resize, Enter to auto-fit.`}
       title="Drag to resize, double-click to auto-fit. Arrow keys: resize, Enter: auto-fit"
     />
   );
-}
+});

@@ -5,6 +5,7 @@
  */
 
 import {
+  memo,
   useState,
   useRef,
   useEffect,
@@ -13,9 +14,10 @@ import {
 } from "react";
 import { createPortal } from "react-dom";
 import { ColorPickerPopover } from "./ColorPickerPopover";
-import type { ColorMode } from "../../../types/colorMode.types";
-import type { HexColor } from "../../../types/branded.types";
-import { toHexColor } from "../../../types/branded.types";
+import type { ColorMode } from "@/types/colorMode.types";
+import type { HexColor } from "@/types/branded.types";
+import { toHexColor } from "@/types/branded.types";
+import { DENSITY_CONFIG } from "@/config/densityConfig";
 
 export interface ColorCellEditorProps {
   /** Current task.color value (hex) */
@@ -50,7 +52,7 @@ export interface ColorCellEditorProps {
  * Color picker cell editor component.
  * Shows a color swatch that opens an enhanced popover on click.
  */
-export function ColorCellEditor({
+export const ColorCellEditor = memo(function ColorCellEditor({
   value,
   computedColor,
   colorMode = "manual",
@@ -59,7 +61,7 @@ export function ColorCellEditor({
   onResetOverride,
   onSave,
   onCancel,
-  height = 28,
+  height = DENSITY_CONFIG.compact.rowHeight,
 }: ColorCellEditorProps): JSX.Element {
   const [showPopover, setShowPopover] = useState(false);
   const [anchorRect, setAnchorRect] = useState<DOMRect | undefined>();
@@ -68,24 +70,24 @@ export function ColorCellEditor({
   // The display color: in auto modes use computed, in manual use task.color
   const displayColor = computedColor || value;
 
-  // Auto-open popover on mount
-  useEffect(() => {
+  const openPopover = useCallback((): void => {
     if (triggerRef.current) {
       setAnchorRect(triggerRef.current.getBoundingClientRect());
       setShowPopover(true);
     }
   }, []);
 
-  const handleClick = (): void => {
-    if (triggerRef.current) {
-      setAnchorRect(triggerRef.current.getBoundingClientRect());
-      setShowPopover(true);
-    }
-  };
+  // Auto-open popover on mount
+  useEffect(() => {
+    openPopover();
+  }, [openPopover]);
 
-  const handleSelect = (color: string): void => {
-    onChange(toHexColor(color));
-  };
+  const handleSelect = useCallback(
+    (color: string): void => {
+      onChange(toHexColor(color));
+    },
+    [onChange]
+  );
 
   const handleClose = useCallback((): void => {
     setShowPopover(false);
@@ -95,7 +97,7 @@ export function ColorCellEditor({
   const handleKeyDown = (e: KeyboardEvent<HTMLButtonElement>): void => {
     if (e.key === "Enter") {
       e.preventDefault();
-      handleClick();
+      openPopover();
     } else if (e.key === "Escape" && onCancel) {
       e.preventDefault();
       onCancel();
@@ -107,12 +109,15 @@ export function ColorCellEditor({
       <button
         ref={triggerRef}
         type="button"
-        onClick={handleClick}
+        onClick={openPopover}
         onKeyDown={handleKeyDown}
-        className="w-full rounded overflow-hidden border-0 p-0 cursor-pointer"
+        className="w-full rounded overflow-hidden border-0 p-0 cursor-pointer focus-visible:ring-2 focus-visible:ring-brand-500 focus-visible:ring-offset-0"
         style={{
           height,
           backgroundColor: displayColor,
+          // outline: none is intentional — the active cell's own blue border
+          // (applied by TaskTableRow) already provides the focus context for
+          // pointer users. focus-visible:ring provides a fallback for keyboard users.
           outline: "none",
         }}
         title="Choose color"
@@ -135,4 +140,4 @@ export function ColorCellEditor({
         )}
     </>
   );
-}
+});
