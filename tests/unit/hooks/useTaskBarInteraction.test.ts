@@ -24,6 +24,9 @@ vi.mock('../../../src/utils/hierarchy', () => ({
   ),
 }));
 
+// dragValidation is not imported by the hook directly, but is used inside
+// taskBarDragHelpers (buildMoveUpdates / buildResizeUpdate). The mock is
+// required so those helpers don't reject tasks during drag/resize tests.
 vi.mock('../../../src/utils/dragValidation', () => ({
   validateDragOperation: vi.fn(() => ({ valid: true })),
 }));
@@ -202,6 +205,23 @@ describe('useTaskBarInteraction', () => {
         result.current.onMouseMove(createMockSVGEvent());
       });
 
+      expect(result.current.cursor).toBe('ew-resize');
+    });
+
+    it('shows ew-resize cursor during active resize even without prior hover', () => {
+      // Mousedown directly on edge without a preceding mousemove — cursor state
+      // would be the initial "pointer" if mousedown didn't explicitly set it.
+      mockGetSVGPoint.mockReturnValue({ x: 102, y: 50 }); // left edge
+
+      const { result } = renderHook(() =>
+        useTaskBarInteraction(createTask(), createScale(), createGeometry()),
+      );
+
+      act(() => {
+        result.current.onMouseDown(createMockSVGEvent());
+      });
+
+      expect(result.current.mode).toBe('resizing-left');
       expect(result.current.cursor).toBe('ew-resize');
     });
   });
@@ -535,6 +555,37 @@ describe('useTaskBarInteraction', () => {
       });
 
       expect(updateMultipleTasksSpy).not.toHaveBeenCalled();
+      expect(updateTaskSpy).not.toHaveBeenCalled();
+    });
+
+    it('does not call updateTask when resize produces no net change', () => {
+      // Start a resize then release immediately — preview equals original dates,
+      // so buildResizeUpdate returns null and updateTask must not be called.
+      mockGetSVGPoint.mockReturnValue({ x: 298, y: 50 }); // right edge
+      const task = createTask();
+
+      const originalGetState = useTaskStore.getState;
+      vi.spyOn(useTaskStore, 'getState').mockReturnValue({
+        ...originalGetState(),
+        tasks: [task],
+        selectedTaskIds: [],
+        updateTask: updateTaskSpy,
+        updateMultipleTasks: updateMultipleTasksSpy,
+      } as ReturnType<typeof useTaskStore.getState>);
+
+      const { result } = renderHook(() =>
+        useTaskBarInteraction(task, createScale(), createGeometry()),
+      );
+
+      act(() => {
+        result.current.onMouseDown(createMockSVGEvent(298));
+      });
+
+      // Release without any mousemove — dates unchanged
+      act(() => {
+        document.dispatchEvent(new MouseEvent('mouseup'));
+      });
+
       expect(updateTaskSpy).not.toHaveBeenCalled();
     });
 

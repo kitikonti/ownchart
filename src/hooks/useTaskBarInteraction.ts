@@ -1,6 +1,6 @@
 /**
  * Task bar interaction hook for drag-to-move and drag-to-resize functionality.
- * Thin orchestrator — pure logic lives in ../utils/taskBarDragHelpers.
+ * Thin orchestrator — pure logic lives in src/utils/taskBarDragHelpers.
  *
  * Uses ref-based stable listeners to avoid stale closures and fragile cleanup.
  * Document event handlers always delegate to the latest handler via refs.
@@ -8,6 +8,7 @@
 
 import { useState, useCallback, useRef, useEffect } from "react";
 import type { Task } from "../types/chart.types";
+import type { TaskId } from "../types/branded.types";
 import type { TimelineScale, TaskBarGeometry } from "../utils/timelineUtils";
 import { addDays } from "../utils/dateUtils";
 import { useTaskStore } from "../store/slices/taskSlice";
@@ -25,11 +26,12 @@ import {
   buildResizeUpdate,
   type DragState,
   type CursorType,
+  type InteractionMode,
   type WorkingDaysContext,
 } from "../utils/taskBarDragHelpers";
 
 export interface UseTaskBarInteractionReturn {
-  mode: "idle" | "dragging" | "resizing-left" | "resizing-right";
+  mode: InteractionMode;
   previewGeometry: { startDate: string; endDate: string } | null;
   cursor: CursorType;
   isDragging: boolean;
@@ -50,6 +52,46 @@ function getWorkingDaysContext(): WorkingDaysContext {
   };
 }
 
+/** Commit a drag-move operation to the store. */
+function executeDragMoveCommit(current: DragState, taskId: TaskId): void {
+  const previewStart = current.currentPreviewStart || current.originalStartDate;
+  const deltaDays = calculateDeltaDaysFromDates(
+    current.originalStartDate,
+    previewStart
+  );
+  if (deltaDays === 0) return;
+
+  const { tasks, selectedTaskIds, updateMultipleTasks } =
+    useTaskStore.getState();
+  const tasksToMove = selectedTaskIds.includes(taskId)
+    ? selectedTaskIds
+    : [taskId];
+  const effectiveTaskIds = getEffectiveTasksToMove(tasks, tasksToMove);
+
+  const taskMap = new Map(tasks.map((t) => [t.id, t]));
+  const ctx = getWorkingDaysContext();
+  const updates = buildMoveUpdates(effectiveTaskIds, taskMap, deltaDays, ctx);
+
+  if (updates.length > 0) updateMultipleTasks(updates);
+}
+
+/** Commit a resize operation to the store. */
+function executeResizeCommit(
+  current: DragState,
+  taskId: TaskId,
+  fallbackTask: Task
+): void {
+  const { tasks, updateTask } = useTaskStore.getState();
+  // Fetch the freshest task to avoid acting on stale drag-start values.
+  const freshTask = tasks.find((t) => t.id === taskId) ?? fallbackTask;
+  const resizeUpdate = buildResizeUpdate(
+    freshTask,
+    current.currentPreviewStart,
+    current.currentPreviewEnd
+  );
+  if (resizeUpdate) updateTask(taskId, resizeUpdate);
+}
+
 /**
  * Unified hook for task bar drag-to-move and drag-to-resize interactions.
  */
@@ -58,10 +100,6 @@ export function useTaskBarInteraction(
   scale: TimelineScale,
   geometry: TaskBarGeometry
 ): UseTaskBarInteractionReturn {
-  const updateTask = useTaskStore((state) => state.updateTask);
-  const updateMultipleTasks = useTaskStore(
-    (state) => state.updateMultipleTasks
-  );
   const setSharedDragState = useChartStore((state) => state.setDragState);
   const clearSharedDragState = useChartStore((state) => state.clearDragState);
 
@@ -89,42 +127,6 @@ export function useTaskBarInteraction(
     []
   );
   const stableMouseUp = useCallback((): void => mouseUpRef.current(), []);
-
-  /** Commit a drag-move operation to the store. */
-  const commitDragMove = (current: DragState): void => {
-    const previewStart =
-      current.currentPreviewStart || current.originalStartDate;
-    const deltaDays = calculateDeltaDaysFromDates(
-      current.originalStartDate,
-      previewStart
-    );
-
-    if (deltaDays === 0) return;
-
-    const { tasks, selectedTaskIds } = useTaskStore.getState();
-    const tasksToMove = selectedTaskIds.includes(task.id)
-      ? selectedTaskIds
-      : [task.id];
-    const effectiveTaskIds = getEffectiveTasksToMove(tasks, tasksToMove);
-
-    const taskMap = new Map(tasks.map((t) => [t.id, t]));
-    const ctx = getWorkingDaysContext();
-    const updates = buildMoveUpdates(effectiveTaskIds, taskMap, deltaDays, ctx);
-
-    if (updates.length > 0) updateMultipleTasks(updates);
-  };
-
-  /** Commit a resize operation to the store. */
-  const commitResize = (current: DragState): void => {
-    const freshTask =
-      useTaskStore.getState().tasks.find((t) => t.id === task.id) ?? task;
-    const resizeUpdate = buildResizeUpdate(
-      freshTask,
-      current.currentPreviewStart,
-      current.currentPreviewEnd
-    );
-    if (resizeUpdate) updateTask(task.id, resizeUpdate);
-  };
 
   // Keep document handlers fresh on every render
   mouseMoveRef.current = (e: MouseEvent): void => {
@@ -178,9 +180,9 @@ export function useTaskBarInteraction(
     }
 
     if (current.mode === "dragging") {
-      commitDragMove(current);
+      executeDragMoveCommit(current, task.id);
     } else {
-      commitResize(current);
+      executeResizeCommit(current, task.id, task);
     }
 
     document.removeEventListener("mousemove", stableMouseMove);
@@ -201,6 +203,9 @@ export function useTaskBarInteraction(
       const zone = detectInteractionZone(svgPoint.x, geometry);
       const mode = determineInteractionMode(task.type, zone);
 
+      // Resize modes need an explicit cursor; drag "grabbing" is handled by activeCursor below.
+      if (mode !== "dragging") setCursor("ew-resize");
+
       const effectiveEndDate = task.endDate || task.startDate;
       syncDragState({
         mode,
@@ -217,7 +222,18 @@ export function useTaskBarInteraction(
       e.preventDefault();
       e.stopPropagation();
     },
-    [task, geometry, syncDragState, stableMouseMove, stableMouseUp]
+    // Only the task fields actually read inside this callback.
+    // task.id and the full task object are captured by the render-phase ref
+    // assignments (mouseMoveRef / mouseUpRef) which always run fresh.
+    [
+      task.type,
+      task.startDate,
+      task.endDate,
+      geometry,
+      syncDragState,
+      stableMouseMove,
+      stableMouseUp,
+    ]
   );
 
   /** Update cursor on hover (when not dragging). */
@@ -252,7 +268,7 @@ export function useTaskBarInteraction(
   const activeCursor = dragState?.mode === "dragging" ? "grabbing" : cursor;
 
   return {
-    mode: dragState?.mode || "idle",
+    mode: dragState?.mode ?? "idle",
     previewGeometry:
       dragState?.currentPreviewStart && dragState?.currentPreviewEnd
         ? {
