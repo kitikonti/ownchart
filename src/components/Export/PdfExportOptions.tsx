@@ -305,7 +305,7 @@ export function PdfExportOptions({
 
   const pageDims =
     options.pageSize === "custom"
-      ? options.customPageSize || DEFAULT_CUSTOM_SIZE
+      ? options.customPageSize ?? DEFAULT_CUSTOM_SIZE
       : PDF_PAGE_SIZES[options.pageSize];
   const displayWidth =
     options.orientation === "landscape" ? pageDims.width : pageDims.height;

@@ -63,7 +63,11 @@ const COLUMN_OPTIONS: { key: ExportColumnKey; label: string }[] = [
   { key: "progress", label: "Progress" },
 ];
 
-/** Timeline display options (using ExportBooleanKey for type safety) */
+/**
+ * Timeline display options (using ExportBooleanKey for type safety).
+ * ⚠️ If you add a new entry here, also add its flag to the `timelineItems`
+ * useMemo dependency array in SharedExportOptions.
+ */
 const TIMELINE_OPTIONS: { key: ExportBooleanKey; label: string }[] = [
   { key: "includeHeader", label: "Header row" },
   { key: "includeGridLines", label: "Grid lines" },
@@ -72,6 +76,100 @@ const TIMELINE_OPTIONS: { key: ExportBooleanKey; label: string }[] = [
   { key: "includeDependencies", label: "Dependencies" },
   { key: "includeHolidays", label: "Holidays" },
 ];
+
+// =============================================================================
+// Sub-Components
+// =============================================================================
+
+interface DateRangeSectionProps {
+  options: ExportOptions;
+  onChange: (options: Partial<ExportOptions>) => void;
+  projectDateRange?: { start: Date; end: Date };
+  visibleDateRange?: { start: Date; end: Date };
+}
+
+/** Renders the Date Range section: Entire project / Visible range / Custom. */
+function DateRangeSection({
+  options,
+  onChange,
+  projectDateRange,
+  visibleDateRange,
+}: DateRangeSectionProps): JSX.Element {
+  const dateRangeSectionId = useId();
+
+  // ISO date strings sort lexicographically, so string comparison is equivalent
+  // to chronological comparison — no Date conversion needed.
+  const isCustomRangeInvalid =
+    options.dateRangeMode === "custom" &&
+    !!options.customDateStart &&
+    !!options.customDateEnd &&
+    options.customDateEnd < options.customDateStart;
+
+  // Prevent the RadioOptionCard's label from consuming the click before the
+  // native date-picker can receive focus.
+  const handleDateInputClick = useCallback((e: ReactMouseEvent): void => {
+    e.stopPropagation();
+  }, []);
+
+  return (
+    <section aria-labelledby={dateRangeSectionId}>
+      <SectionHeader
+        id={dateRangeSectionId}
+        title="Date Range"
+        variant="simple"
+      />
+
+      <div className="space-y-2">
+        <RadioOptionCard
+          name="dateRangeMode"
+          selected={options.dateRangeMode === "all"}
+          onChange={() => onChange({ dateRangeMode: "all" })}
+          title="Entire project"
+          description={
+            projectDateRange ? formatDateRange(projectDateRange) : undefined
+          }
+        />
+
+        <RadioOptionCard
+          name="dateRangeMode"
+          selected={options.dateRangeMode === "visible"}
+          onChange={() => onChange({ dateRangeMode: "visible" })}
+          title="Visible range"
+          description={
+            visibleDateRange ? formatDateRange(visibleDateRange) : undefined
+          }
+        />
+
+        <RadioOptionCard
+          name="dateRangeMode"
+          selected={options.dateRangeMode === "custom"}
+          onChange={() => onChange({ dateRangeMode: "custom" })}
+          title="Custom range"
+        >
+          <div className="space-y-2">
+            <Input
+              type="date"
+              value={options.customDateStart || ""}
+              onChange={(e) => onChange({ customDateStart: e.target.value })}
+              onClick={handleDateInputClick}
+              aria-label="Custom start date"
+            />
+            <Input
+              type="date"
+              value={options.customDateEnd || ""}
+              onChange={(e) => onChange({ customDateEnd: e.target.value })}
+              onClick={handleDateInputClick}
+              aria-label="Custom end date"
+            />
+            {isCustomRangeInvalid && (
+              <Alert variant="error">End date must be after start date</Alert>
+            )}
+          </div>
+        </RadioOptionCard>
+      </div>
+    </section>
+  );
+}
 
 // =============================================================================
 // Component
@@ -92,18 +190,7 @@ export function SharedExportOptions({
   projectDateRange,
   visibleDateRange,
 }: SharedExportOptionsProps): JSX.Element {
-  // Stable IDs for aria-labelledby on the Date Range section landmark
-  const dateRangeSectionId = useId();
-
   const showBackground = format === "png" || format === "svg";
-
-  // ISO date strings sort lexicographically, so string comparison is equivalent
-  // to chronological comparison — no Date conversion needed.
-  const isCustomRangeInvalid =
-    options.dateRangeMode === "custom" &&
-    !!options.customDateStart &&
-    !!options.customDateEnd &&
-    options.customDateEnd < options.customDateStart;
 
   // Build checkbox items for columns — memoised to avoid recomputing when
   // unrelated options (zoom, date range, etc.) change.
@@ -167,71 +254,15 @@ export function SharedExportOptions({
     [onChange]
   );
 
-  // Prevent the RadioOptionCard's label from consuming the click before the
-  // native date-picker can receive focus.
-  const handleDateInputClick = useCallback((e: ReactMouseEvent): void => {
-    e.stopPropagation();
-  }, []);
-
   return (
     <div className="space-y-6">
       {/* ============ DATE RANGE ============ */}
-      <section aria-labelledby={dateRangeSectionId}>
-        <SectionHeader
-          id={dateRangeSectionId}
-          title="Date Range"
-          variant="simple"
-        />
-
-        <div className="space-y-2">
-          <RadioOptionCard
-            name="dateRangeMode"
-            selected={options.dateRangeMode === "all"}
-            onChange={() => onChange({ dateRangeMode: "all" })}
-            title="Entire project"
-            description={
-              projectDateRange ? formatDateRange(projectDateRange) : undefined
-            }
-          />
-
-          <RadioOptionCard
-            name="dateRangeMode"
-            selected={options.dateRangeMode === "visible"}
-            onChange={() => onChange({ dateRangeMode: "visible" })}
-            title="Visible range"
-            description={
-              visibleDateRange ? formatDateRange(visibleDateRange) : undefined
-            }
-          />
-
-          <RadioOptionCard
-            name="dateRangeMode"
-            selected={options.dateRangeMode === "custom"}
-            onChange={() => onChange({ dateRangeMode: "custom" })}
-            title="Custom range"
-          >
-            <div className="space-y-2">
-              <Input
-                type="date"
-                value={options.customDateStart || ""}
-                onChange={(e) => onChange({ customDateStart: e.target.value })}
-                onClick={handleDateInputClick}
-                aria-label="Custom start date"
-              />
-              <Input
-                type="date"
-                value={options.customDateEnd || ""}
-                onChange={(e) => onChange({ customDateEnd: e.target.value })}
-                onClick={handleDateInputClick}
-                aria-label="Custom end date"
-              />
-              {isCustomRangeInvalid && (
-                <Alert variant="error">End date must be after start date</Alert>
-              )}
-            </div>
-          </RadioOptionCard>
-        </div>
-      </section>
+      <DateRangeSection
+        options={options}
+        onChange={onChange}
+        projectDateRange={projectDateRange}
+        visibleDateRange={visibleDateRange}
+      />
 
       {/* ============ BACKGROUND (PNG/SVG only) ============ */}
       {showBackground && (
