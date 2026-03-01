@@ -2,6 +2,21 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [1.1.5](https://github.com/kitikonti/ownchart/compare/v1.1.4...v1.1.5) (2026-03-01)
+
+
+### Bug Fixes
+
+* apply review findings to hierarchy.ts (F001–F006) ([5316756](https://github.com/kitikonti/ownchart/commit/53167563ab9fe6940c9c5aba9eb88ccda4017e6e))
+
+
+### Code Refactoring
+
+* apply review findings and performance improvements to hierarchy.ts ([7583900](https://github.com/kitikonti/ownchart/commit/7583900b81e270f7edc33489867499ee037d7bf2))
+* apply review findings to hierarchy.ts (F001–F004) ([be9f23c](https://github.com/kitikonti/ownchart/commit/be9f23c1cb87b5461b422e7230225ff600958c28))
+* apply review findings to hierarchy.ts (F001–F005) ([5e53f7a](https://github.com/kitikonti/ownchart/commit/5e53f7aee6fb348f01c137f740c702658480b706))
+* overhaul hierarchy.ts for correctness, performance, and clarity ([89d5eb7](https://github.com/kitikonti/ownchart/commit/89d5eb7e80285dc274ff45085d0fa9534fab0050))
+
 ## [1.1.4](https://github.com/kitikonti/ownchart/compare/v1.1.3...v1.1.4) (2026-03-01)
 
 ## [1.1.3](https://github.com/kitikonti/ownchart/compare/v1.1.2...v1.1.3) (2026-03-01)
