@@ -3,6 +3,7 @@
  * Renders PdfPreview for PDF format, ChartPreview for PNG/SVG.
  */
 
+import { memo } from "react";
 import type {
   ExportFormat,
   PdfExportOptions,
@@ -32,7 +33,7 @@ export interface ExportPreviewProps {
 /**
  * ExportPreview - Renders the appropriate preview based on export format.
  */
-export function ExportPreview({
+export const ExportPreview = memo(function ExportPreview({
   format,
   previewDataUrl,
   dimensions,
@@ -76,4 +77,4 @@ export function ExportPreview({
       formatType={format === "svg" ? "svg" : "png"}
     />
   );
-}
+});

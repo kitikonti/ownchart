@@ -24,15 +24,17 @@ interface SplitPaneDividerProps {
   maxWidth: number;
 }
 
-// TODO: long class strings below are candidates for clsx() when the project adopts it.
+const DIVIDER_BASE_CLASSES =
+  "split-divider flex-shrink-0 transition-colors duration-150 relative focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 focus-visible:ring-offset-1";
+
 function getDividerClassName(
   isCollapsed: boolean,
   isDragging: boolean
 ): string {
   if (isCollapsed) {
-    return "split-divider w-3 cursor-e-resize flex-shrink-0 bg-neutral-200 hover:bg-neutral-300 transition-colors duration-150 relative flex items-center justify-center focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 focus-visible:ring-offset-1";
+    return `${DIVIDER_BASE_CLASSES} w-3 cursor-e-resize bg-neutral-200 hover:bg-neutral-300 flex items-center justify-center`;
   }
-  return `split-divider w-1 cursor-col-resize flex-shrink-0 ${isDragging ? "bg-neutral-500" : "bg-neutral-200"} hover:bg-neutral-400 transition-colors duration-150 relative group focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 focus-visible:ring-offset-1`;
+  return `${DIVIDER_BASE_CLASSES} w-1 cursor-col-resize ${isDragging ? "bg-neutral-500" : "bg-neutral-200"} hover:bg-neutral-400 group`;
 }
 
 export function SplitPaneDivider({

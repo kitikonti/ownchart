@@ -3,6 +3,7 @@
  * Wrapper around ZoomModeSelector.
  */
 
+import { useCallback } from "react";
 import type {
   ExportFormat,
   ExportOptions,
@@ -23,12 +24,18 @@ export function ScaleOptions({
   currentAppZoom,
   format,
 }: ScaleOptionsProps): JSX.Element {
-  const handleZoomModeChange = (mode: ExportZoomMode): void =>
-    onChange({ zoomMode: mode });
-  const handleTimelineZoomChange = (zoom: number): void =>
-    onChange({ timelineZoom: zoom });
-  const handleFitToWidthChange = (width: number): void =>
-    onChange({ fitToWidth: width });
+  const handleZoomModeChange = useCallback(
+    (mode: ExportZoomMode): void => onChange({ zoomMode: mode }),
+    [onChange]
+  );
+  const handleTimelineZoomChange = useCallback(
+    (zoom: number): void => onChange({ timelineZoom: zoom }),
+    [onChange]
+  );
+  const handleFitToWidthChange = useCallback(
+    (width: number): void => onChange({ fitToWidth: width }),
+    [onChange]
+  );
 
   return (
     <ZoomModeSelector

@@ -4,14 +4,15 @@
  * Figma-style: Selected card has solid brand-600 background.
  */
 
-import { useRef, useId } from "react";
+import { memo, useCallback, useRef, useId } from "react";
 import { Image, FilePdf, FileCode, Info } from "@phosphor-icons/react";
 import type { Icon } from "@phosphor-icons/react";
 import type { ExportFormat } from "@/utils/export/types";
 
+// 22px: visually balanced in the card — between the 20px and 24px grid points
 const ICON_SIZE = 22;
 // 80px: ensures icon + label always fit without clipping at any font scale
-const FORMAT_CARD_MIN_HEIGHT_CLASS = "min-h-[80px]";
+const FORMAT_CARD_MIN_HEIGHT = "min-h-[80px]";
 
 interface FormatOption {
   format: ExportFormat;
@@ -48,7 +49,7 @@ interface FormatCardProps {
   onSelect: (format: ExportFormat) => void;
 }
 
-function FormatCard({
+const FormatCard = memo(function FormatCard({
   option,
   isSelected,
   descriptionId,
@@ -65,7 +66,7 @@ function FormatCard({
       aria-describedby={isSelected ? descriptionId : undefined}
       tabIndex={isSelected ? 0 : -1}
       onClick={() => onSelect(option.format)}
-      className={`flex flex-col items-center gap-2 px-4 py-3.5 rounded border transition-colors duration-150 ${FORMAT_CARD_MIN_HEIGHT_CLASS} focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 focus-visible:ring-offset-2 ${
+      className={`flex flex-col items-center gap-2 px-4 py-3.5 rounded border transition-colors duration-150 ${FORMAT_CARD_MIN_HEIGHT} focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 focus-visible:ring-offset-2 ${
         isSelected
           ? "border-brand-600 bg-brand-600"
           : "border-neutral-200 hover:border-neutral-300 hover:bg-neutral-50"
@@ -85,7 +86,7 @@ function FormatCard({
       </span>
     </button>
   );
-}
+});
 
 interface ExportFormatSelectorProps {
   selectedFormat: ExportFormat;
@@ -105,28 +106,31 @@ export function ExportFormatSelector({
 
   // Arrow keys navigate within the radiogroup (WAI-ARIA radiogroup pattern).
   // Only one tab stop in the group — Tab/Shift-Tab moves to the next widget.
-  const handleGroupKeyDown = (e: React.KeyboardEvent): void => {
-    const currentIndex = FORMAT_OPTIONS.findIndex(
-      (opt) => opt.format === selectedFormat
-    );
-    let nextIndex: number | null = null;
+  const handleGroupKeyDown = useCallback(
+    (e: React.KeyboardEvent): void => {
+      const currentIndex = FORMAT_OPTIONS.findIndex(
+        (opt) => opt.format === selectedFormat
+      );
+      let nextIndex: number | null = null;
 
-    if (e.key === "ArrowRight" || e.key === "ArrowDown") {
-      e.preventDefault();
-      nextIndex = (currentIndex + 1) % FORMAT_OPTIONS.length;
-    } else if (e.key === "ArrowLeft" || e.key === "ArrowUp") {
-      e.preventDefault();
-      nextIndex =
-        (currentIndex - 1 + FORMAT_OPTIONS.length) % FORMAT_OPTIONS.length;
-    }
+      if (e.key === "ArrowRight" || e.key === "ArrowDown") {
+        e.preventDefault();
+        nextIndex = (currentIndex + 1) % FORMAT_OPTIONS.length;
+      } else if (e.key === "ArrowLeft" || e.key === "ArrowUp") {
+        e.preventDefault();
+        nextIndex =
+          (currentIndex - 1 + FORMAT_OPTIONS.length) % FORMAT_OPTIONS.length;
+      }
 
-    if (nextIndex !== null) {
-      onFormatChange(FORMAT_OPTIONS[nextIndex].format);
-      const buttons =
-        groupRef.current?.querySelectorAll<HTMLElement>('[role="radio"]');
-      buttons?.[nextIndex]?.focus();
-    }
-  };
+      if (nextIndex !== null) {
+        onFormatChange(FORMAT_OPTIONS[nextIndex].format);
+        const buttons =
+          groupRef.current?.querySelectorAll<HTMLElement>('[role="radio"]');
+        buttons?.[nextIndex]?.focus();
+      }
+    },
+    [selectedFormat, onFormatChange]
+  );
 
   return (
     <div>
@@ -139,8 +143,9 @@ export function ExportFormatSelector({
         ref={groupRef}
         role="radiogroup"
         aria-label="Export format"
-        // tabIndex={-1}: container is programmatically focusable (satisfies
-        // interactive-supports-focus); Tab focus goes to the selected radio (tabIndex=0).
+        // tabIndex={-1}: satisfies the interactive-supports-focus lint rule
+        // (container owns onKeyDown). Adds no tab stop — keyboard users reach
+        // the group via the roving tabIndex=0 on the selected card.
         tabIndex={-1}
         className="grid grid-cols-3 gap-2"
         onKeyDown={handleGroupKeyDown}

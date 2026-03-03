@@ -2,7 +2,7 @@
  * SVG-specific export options.
  * Timeline scale is handled by ScaleOptions.
  *
- * @placeholder — returns null until SVG-specific options are implemented
+ * @remarks Placeholder — returns null until SVG-specific options are implemented
  * (e.g. responsiveMode, includeAccessibility). Keep in sync with PdfExportOptions
  * as the parallel component for the SVG format slot.
  */
