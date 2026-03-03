@@ -10,13 +10,7 @@ import { useChartStore } from "../store/slices/chartSlice";
 import { useTaskStore } from "../store/slices/taskSlice";
 import type { Task } from "../types/chart.types";
 import type { HexColor, TaskId } from "../types/branded.types";
-import {
-  computeTaskColor,
-  getComputedTaskColor,
-} from "../utils/computeTaskColor";
-
-// Re-export pure function for consumers that already import from this file
-export { getComputedTaskColor };
+import { computeTaskColor } from "../utils/computeTaskColor";
 
 /**
  * Hook to get computed color for a single task.

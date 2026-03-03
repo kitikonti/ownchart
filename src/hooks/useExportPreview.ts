@@ -3,9 +3,15 @@
  * Adapts captureChart logic for preview use with debouncing and memory management.
  */
 
-import { useEffect, useState, useRef, useCallback, useMemo } from "react";
+import {
+  useEffect,
+  useState,
+  useRef,
+  useCallback,
+  useMemo,
+  createElement,
+} from "react";
 import { createRoot, type Root } from "react-dom/client";
-import { createElement } from "react";
 import { toCanvas } from "html-to-image";
 import type { Task } from "../types/chart.types";
 import type { ExportOptions } from "../utils/export/types";
@@ -43,9 +49,7 @@ export interface UseExportPreviewParams {
  * Wait for all fonts to be loaded.
  */
 async function waitForFonts(): Promise<void> {
-  if (document.fonts && document.fonts.ready) {
-    await document.fonts.ready;
-  }
+  await document.fonts?.ready;
 }
 
 /**
@@ -107,6 +111,9 @@ function createOptionsKey(
  * Create the off-screen DOM wrapper and container for rendering.
  * The wrapper uses height:0 + overflow:hidden to hide content visually
  * while still allowing html-to-image to capture it (height-overflow method).
+ *
+ * Inline styles (cssText) are used intentionally — these elements are created
+ * imperatively outside React's render tree, so Tailwind classes cannot apply.
  */
 function buildRenderContainer(
   renderId: number,
@@ -141,6 +148,13 @@ function buildRenderContainer(
 /**
  * Mount the ExportRenderer into the container and wait for React to settle.
  * Returns the created React root for later cleanup.
+ *
+ * Two-phase wait strategy:
+ *  1. setTimeout(RENDER_SETTLE_MS) — gives React time to complete its render cycle.
+ *     React 18 concurrent mode can yield to the main thread, so a fixed timeout
+ *     is an empirical lower bound, not a completion signal.
+ *  2. waitForPaint() — double rAF ensures any layout-triggered repaints have
+ *     been committed to the DOM before the caller captures the container.
  */
 async function renderToContainer(
   container: HTMLDivElement,
@@ -158,6 +172,7 @@ async function renderToContainer(
     root.render(createElement(ExportRenderer, props));
     setTimeout(resolve, RENDER_SETTLE_MS);
   });
+  await waitForPaint();
   return root;
 }
 
@@ -337,7 +352,15 @@ export function useExportPreview({
   );
 
   // Debounced render effect — re-runs when task data, options, or zoom change.
-  // Task property changes (not just count) also propagate via renderPreview being recreated.
+  //
+  // Dual dependency path for task changes (intentional design):
+  //  - tasks.length  → direct dep for task add/remove (count change)
+  //  - renderPreview → indirect dep for task property edits: when any task
+  //    property changes, `tasks` (in renderPreview's useCallback deps) changes,
+  //    which recreates renderPreview, which triggers this effect.
+  //
+  // Debouncing absorbs the occasional double-trigger when both paths fire at once
+  // (e.g., task count AND a property change in the same update).
   useEffect(() => {
     if (!enabled) {
       setPreviewDataUrl(null);
@@ -355,7 +378,7 @@ export function useExportPreview({
     };
   }, [
     enabled,
-    tasks.length, // task count change; full task changes propagate via renderPreview
+    tasks.length,
     optionsKey,
     currentAppZoom,
     renderPreview,
