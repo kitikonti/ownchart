@@ -9,6 +9,7 @@
  * Layer 6: Migration (version compatibility - in migrate.ts)
  */
 
+import { TASK_TYPES } from "../../types/chart.types";
 import type { GanttFile, SerializedTask, SerializedDependency } from "./types";
 
 const MAX_FILE_SIZE = 50 * 1024 * 1024; // 50MB
@@ -24,8 +25,8 @@ const REQUIRED_TASK_FIELDS = [
   "order",
 ];
 
-/** Allowed task type values — must match TaskType in chart.types.ts */
-const VALID_TASK_TYPES = new Set(["task", "summary", "milestone"]);
+// Derived from the shared TASK_TYPES constant — single source of truth.
+const VALID_TASK_TYPES = new Set(TASK_TYPES);
 
 /**
  * Custom validation error class

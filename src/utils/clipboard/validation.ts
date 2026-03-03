@@ -8,6 +8,12 @@ import type { EditableField } from "../../types/task.types";
 import { DEFAULT_TASK_COLOR } from "../../styles/design-tokens";
 
 /**
+ * Result of a clipboard validation check.
+ * Discriminated union: narrow on `valid` to access `error`.
+ */
+export type ValidationResult = { valid: true } | { valid: false; error: string };
+
+/**
  * Validate if a cell value can be pasted into a target field.
  *
  * Rules:
@@ -24,7 +30,7 @@ export function canPasteCellValue(
   sourceField: EditableField,
   targetField: EditableField,
   targetTask: Task
-): { valid: true } | { valid: false; error: string } {
+): ValidationResult {
   // Rule 1: Field types must match
   if (sourceField !== targetField) {
     return {
@@ -74,7 +80,7 @@ export function canPasteCellValue(
 export function canCutCellValue(
   field: EditableField,
   sourceTask: Task
-): { valid: true } | { valid: false; error: string } {
+): ValidationResult {
   // Cutting type from a summary task clears it to "task", leaving its children
   // without a summary parent — hierarchy invariant violated.
   if (field === "type" && sourceTask.type === "summary") {

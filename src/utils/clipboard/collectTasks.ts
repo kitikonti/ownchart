@@ -81,15 +81,15 @@ export function collectTasksWithChildren(
 
 /**
  * Deep clone tasks to avoid reference issues.
- * Uses JSON parse/stringify to ensure no Immer draft proxies.
+ * Uses structuredClone to ensure no Immer draft proxies.
  *
  * @param tasks - Tasks to clone
  * @returns Deep cloned tasks
  *
- * @remarks Assumes all Task fields are JSON-serializable (strings, numbers,
- * booleans, plain objects). Non-serializable values (Dates, undefined) would
- * be silently dropped or coerced.
+ * @remarks Task fields must be structuredClone-compatible (strings, numbers,
+ * booleans, plain objects, arrays). Values in task.metadata that are functions,
+ * class instances, or DOM nodes will throw — store only plain data in metadata.
  */
 export function deepCloneTasks(tasks: Task[]): Task[] {
-  return JSON.parse(JSON.stringify(tasks)) as Task[];
+  return structuredClone(tasks);
 }

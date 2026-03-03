@@ -4,6 +4,7 @@
  */
 
 import type { Task } from "../../types/chart.types";
+import { TASK_TYPES } from "../../types/chart.types";
 import type { Dependency } from "../../types/dependency.types";
 import { EDITABLE_FIELDS, type EditableField } from "../../types/task.types";
 
@@ -11,8 +12,9 @@ import { EDITABLE_FIELDS, type EditableField } from "../../types/task.types";
 const OWNCHART_ROW_PREFIX = "OWNCHART_ROWS:";
 const OWNCHART_CELL_PREFIX = "OWNCHART_CELL:";
 
-// Derived from the shared EDITABLE_FIELDS constant — single source of truth.
+// Derived from shared constants — single source of truth for both.
 const VALID_EDITABLE_FIELDS: Set<EditableField> = new Set(EDITABLE_FIELDS);
+const VALID_TASK_TYPES: Set<string> = new Set(TASK_TYPES);
 
 /**
  * Validate that a parsed object has the minimum required Task shape.
@@ -31,9 +33,7 @@ function isValidTaskShape(obj: unknown): boolean {
     typeof t.duration === "number" &&
     typeof t.progress === "number" &&
     (t.type === undefined ||
-      t.type === "task" ||
-      t.type === "summary" ||
-      t.type === "milestone")
+      (typeof t.type === "string" && VALID_TASK_TYPES.has(t.type)))
   );
 }
 
@@ -91,7 +91,12 @@ async function readFromClipboard(prefix: string): Promise<unknown | null> {
   const text = await navigator.clipboard.readText();
   if (!text.startsWith(prefix)) return null;
   const jsonStr = text.slice(prefix.length);
-  const parsed: unknown = JSON.parse(jsonStr);
+  let parsed: unknown;
+  try {
+    parsed = JSON.parse(jsonStr);
+  } catch {
+    return null;
+  }
   if (typeof parsed !== "object" || parsed === null) return null;
   return parsed;
 }
