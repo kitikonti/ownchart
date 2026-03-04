@@ -2,6 +2,18 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [1.1.19](https://github.com/kitikonti/ownchart/compare/v1.1.18...v1.1.19) (2026-03-04)
+
+
+### Bug Fixes
+
+* exclude hidden rows from PNG/PDF/SVG exports ([3324321](https://github.com/kitikonti/ownchart/commit/33243214c1d045121a183aefdb914f395e8731d7)), closes [#65](https://github.com/kitikonti/ownchart/issues/65)
+
+
+### Code Refactoring
+
+* harden export task filtering types and naming ([59541c6](https://github.com/kitikonti/ownchart/commit/59541c6f2d70429918f4bece07ccb7c011491bf8))
+
 ## [1.1.18](https://github.com/kitikonti/ownchart/compare/v1.1.17...v1.1.18) (2026-03-04)
 
 
