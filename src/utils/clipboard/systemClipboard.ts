@@ -18,8 +18,12 @@ const VALID_EDITABLE_FIELDS: Set<EditableField> = new Set(EDITABLE_FIELDS);
 const VALID_TASK_TYPES: Set<string> = new Set(TASK_TYPES);
 const VALID_DEPENDENCY_TYPES: Set<string> = new Set(DEPENDENCY_TYPES);
 
-// Hex color regex — covers #RGB, #RGBA, #RRGGBB, #RRGGBBAA
-const HEX_COLOR_RE = /^#[0-9a-fA-F]{3,8}$/;
+// Hex color regex — exactly matches valid CSS hex lengths: #RGB, #RGBA, #RRGGBB, #RRGGBBAA
+// Lengths 5 and 7 are not valid CSS colors and are intentionally excluded.
+const HEX_COLOR_RE = /^#(?:[0-9a-fA-F]{3,4}|[0-9a-fA-F]{6}|[0-9a-fA-F]{8})$/;
+
+// ISO 8601 date string — YYYY-MM-DD format used throughout OwnChart
+const ISO_DATE_RE = /^\d{4}-\d{2}-\d{2}$/;
 
 // Safety limit — rejects payloads clearly too large to be valid chart data
 const MAX_CLIPBOARD_SIZE = 5_000_000;
@@ -42,7 +46,9 @@ function isValidTaskShape(obj: unknown): boolean {
     typeof t.id === "string" &&
     typeof t.name === "string" &&
     typeof t.startDate === "string" &&
+    ISO_DATE_RE.test(t.startDate as string) &&
     typeof t.endDate === "string" &&
+    ISO_DATE_RE.test(t.endDate as string) &&
     isFiniteNumber(t.duration) &&
     isFiniteNumber(t.progress) &&
     typeof t.color === "string" &&
@@ -118,7 +124,7 @@ async function writeToClipboard(
  * Shared read helper — reads clipboard text, checks prefix, and parses JSON.
  * Returns the parsed value if the prefix matches and JSON is valid; null otherwise.
  */
-async function readFromClipboard(prefix: string): Promise<unknown | null> {
+async function readFromClipboard(prefix: string): Promise<object | null> {
   const text = await navigator.clipboard.readText();
   if (text.length > MAX_CLIPBOARD_SIZE) return null;
   if (!text.startsWith(prefix)) return null;

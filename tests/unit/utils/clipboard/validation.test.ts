@@ -4,6 +4,7 @@ import {
   canCutCellValue,
   getClearValueForField,
 } from "../../../../src/utils/clipboard/validation";
+import { DEFAULT_TASK_COLOR } from "../../../../src/styles/design-tokens";
 import type { Task } from "../../../../src/types/chart.types";
 
 // Helper to create test tasks
@@ -236,12 +237,16 @@ describe("getClearValueForField", () => {
     expect(getClearValueForField("name")).toBe("");
   });
 
-  it('should return empty string for "startDate"', () => {
-    expect(getClearValueForField("startDate")).toBe("");
+  it('should throw for "startDate" — date fields cannot be cleared', () => {
+    expect(() => getClearValueForField("startDate")).toThrow(
+      'getClearValueForField("startDate")'
+    );
   });
 
-  it('should return empty string for "endDate"', () => {
-    expect(getClearValueForField("endDate")).toBe("");
+  it('should throw for "endDate" — date fields cannot be cleared', () => {
+    expect(() => getClearValueForField("endDate")).toThrow(
+      'getClearValueForField("endDate")'
+    );
   });
 
   it('should return 0 for "duration"', () => {
@@ -253,7 +258,7 @@ describe("getClearValueForField", () => {
   });
 
   it('should return default brand color for "color"', () => {
-    expect(getClearValueForField("color")).toBe("#0F6CBD");
+    expect(getClearValueForField("color")).toBe(DEFAULT_TASK_COLOR);
   });
 
   it('should return "task" for "type"', () => {

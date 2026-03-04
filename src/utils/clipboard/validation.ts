@@ -120,9 +120,12 @@ export function getClearValueForField(
       return "";
     case "startDate":
     case "endDate":
-      // Guarded by canCutCellValue — cutting date fields is blocked there.
-      // Present here for exhaustive switch coverage only.
-      return "";
+      // canCutCellValue blocks cutting date fields before this point.
+      // Reaching here is a programming error — throw rather than return a
+      // silent invalid value that would corrupt all date calculations downstream.
+      throw new Error(
+        `getClearValueForField("${field}") called — date fields cannot be cleared (guarded by canCutCellValue)`
+      );
     case "duration":
       return 0;
     case "progress":

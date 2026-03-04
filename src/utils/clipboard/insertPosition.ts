@@ -4,29 +4,14 @@
  */
 
 import type { TaskId } from "../../types/branded.types";
+import type { ActiveCell } from "../../types/task.types";
 import type { FlattenedTask } from "../hierarchy";
 import { PLACEHOLDER_TASK_ID } from "../../config/placeholderRow";
 
 /**
- * Find the visual index of the bottommost task among the given IDs.
- * Pre-builds an index map to avoid O(n²) findIndex-in-loop.
- * Returns -1 if none of the IDs are found in the flattened list.
- */
-function findBottommostIndex(
-  taskIds: TaskId[],
-  flattenedTasks: FlattenedTask[]
-): number {
-  const indexMap = new Map(flattenedTasks.map(({ task }, i) => [task.id, i]));
-  let lastIndex = -1;
-  for (const id of taskIds) {
-    const idx = indexMap.get(id) ?? -1;
-    if (idx > lastIndex) lastIndex = idx;
-  }
-  return lastIndex;
-}
-
-/**
  * Determine where to insert pasted rows based on the flattened (visual) list.
+ * Builds a single index Map shared by Priority 2 and Priority 3 lookups to
+ * avoid redundant O(n) traversals.
  *
  * Priority:
  * 1. If placeholder row is active/selected -> insert at end
@@ -40,7 +25,7 @@ function findBottommostIndex(
  * @returns Index in the flattened list where tasks should be inserted
  */
 export function determineInsertPosition(
-  activeCell: { taskId: TaskId | null },
+  activeCell: Pick<ActiveCell, "taskId">,
   selectedTaskIds: TaskId[],
   flattenedTasks: FlattenedTask[]
 ): number {
@@ -58,18 +43,24 @@ export function determineInsertPosition(
     return flattenedTasks.length;
   }
 
+  // Build index map once — shared by Priority 2 and Priority 3 to avoid
+  // a second O(n) traversal when Priority 2 misses and falls through.
+  const indexMap = new Map(flattenedTasks.map(({ task }, i) => [task.id, i]));
+
   // Priority 2: Active cell row -> insert above it
   if (activeCell.taskId) {
-    const index = flattenedTasks.findIndex(
-      ({ task }) => task.id === activeCell.taskId
-    );
+    const index = indexMap.get(activeCell.taskId) ?? -1;
     if (index !== -1) return index;
   }
 
   // Priority 3: Bottommost selected row -> insert after it.
-  // Uses findBottommostIndex rather than relying on store preserving visual order.
+  // Uses pre-built indexMap rather than relying on store preserving visual order.
   if (realSelectedIds.length > 0) {
-    const lastIndex = findBottommostIndex(realSelectedIds, flattenedTasks);
+    let lastIndex = -1;
+    for (const id of realSelectedIds) {
+      const idx = indexMap.get(id) ?? -1;
+      if (idx > lastIndex) lastIndex = idx;
+    }
     if (lastIndex !== -1) return lastIndex + 1;
   }
 

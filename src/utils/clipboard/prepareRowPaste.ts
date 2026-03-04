@@ -5,6 +5,7 @@
 
 import type { Task } from "../../types/chart.types";
 import type { TaskId } from "../../types/branded.types";
+import type { ActiveCell } from "../../types/task.types";
 import type { Dependency } from "../../types/dependency.types";
 import type { FlattenedTask } from "../hierarchy";
 import {
@@ -24,7 +25,7 @@ export interface PrepareRowPasteInput {
   /** Current tasks in the task store. */
   currentTasks: Task[];
   /** Active cell state for insert position. */
-  activeCell: { taskId: TaskId | null };
+  activeCell: Pick<ActiveCell, "taskId">;
   /** Currently selected task IDs. */
   selectedTaskIds: TaskId[];
 }

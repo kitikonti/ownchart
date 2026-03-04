@@ -307,9 +307,44 @@ describe("systemClipboard", () => {
         expect(await readRowsFromSystemClipboard()).not.toBeNull();
       });
 
+      it("should accept task with 4-char hex color with alpha (#RGBA)", async () => {
+        setClipboard({ color: "#f00f" });
+        expect(await readRowsFromSystemClipboard()).not.toBeNull();
+      });
+
+      it("should accept task with 6-char standard hex color", async () => {
+        setClipboard({ color: "#ff0000" });
+        expect(await readRowsFromSystemClipboard()).not.toBeNull();
+      });
+
       it("should accept task with 8-char hex color with alpha", async () => {
         setClipboard({ color: "#ff000088" });
         expect(await readRowsFromSystemClipboard()).not.toBeNull();
+      });
+
+      it("should reject task with 5-char hex color (invalid CSS length)", async () => {
+        setClipboard({ color: "#ff000" });
+        expect(await readRowsFromSystemClipboard()).toBeNull();
+      });
+
+      it("should reject task with 7-char hex color (invalid CSS length)", async () => {
+        setClipboard({ color: "#ff00000" });
+        expect(await readRowsFromSystemClipboard()).toBeNull();
+      });
+
+      it("should reject task with non-ISO startDate", async () => {
+        setClipboard({ startDate: "January 1, 2025" });
+        expect(await readRowsFromSystemClipboard()).toBeNull();
+      });
+
+      it("should reject task with non-ISO endDate", async () => {
+        setClipboard({ endDate: "not-a-date" });
+        expect(await readRowsFromSystemClipboard()).toBeNull();
+      });
+
+      it("should reject task with empty string startDate", async () => {
+        setClipboard({ startDate: "" });
+        expect(await readRowsFromSystemClipboard()).toBeNull();
       });
 
       it("should reject task with non-boolean open field", async () => {
