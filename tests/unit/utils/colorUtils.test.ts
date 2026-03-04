@@ -49,6 +49,17 @@ describe("colorUtils", () => {
       expect(hexToRgb("#FF0000")).toEqual({ r: 255, g: 0, b: 0 });
       expect(hexToRgb("#Ff00fF")).toEqual({ r: 255, g: 0, b: 255 });
     });
+
+    it("falls back to default color for invalid hex strings (no NaN propagation)", () => {
+      // Invalid characters produce NaN via parseInt — hexToRgb must guard against this
+      const result = hexToRgb("#ZZZZZZ");
+      expect(result.r).not.toBeNaN();
+      expect(result.g).not.toBeNaN();
+      expect(result.b).not.toBeNaN();
+      // Returned values must be valid byte range
+      expect(result.r).toBeGreaterThanOrEqual(0);
+      expect(result.r).toBeLessThanOrEqual(255);
+    });
   });
 
   describe("getRelativeLuminance", () => {
@@ -151,19 +162,19 @@ describe("colorUtils", () => {
     it("handles undefined by using default teal color", () => {
       // @ts-expect-error - testing runtime behavior with undefined
       const result = getContrastTextColor(undefined);
-      // Teal (#14b8a6) should get white text (it's a medium color)
-      expect(["#ffffff", "#1e293b"]).toContain(result);
+      // DEFAULT_COLOR is teal (#14b8a6) which has sufficient contrast for white text
+      expect(result).toBe("#ffffff");
     });
 
     it("handles null by using default teal color", () => {
       // @ts-expect-error - testing runtime behavior with null
       const result = getContrastTextColor(null);
-      expect(["#ffffff", "#1e293b"]).toContain(result);
+      expect(result).toBe("#ffffff");
     });
 
     it("handles empty string by using default teal color", () => {
       const result = getContrastTextColor("");
-      expect(["#ffffff", "#1e293b"]).toContain(result);
+      expect(result).toBe("#ffffff");
     });
   });
 
@@ -437,6 +448,11 @@ describe("colorUtils", () => {
 
     it("returns empty array for targetCount of 0", () => {
       expect(expandPalette(basePalette, 0)).toEqual([]);
+    });
+
+    it("returns empty array for negative targetCount", () => {
+      expect(expandPalette(basePalette, -1)).toEqual([]);
+      expect(expandPalette(basePalette, -100)).toEqual([]);
     });
 
     it("returns exactly targetCount colors", () => {

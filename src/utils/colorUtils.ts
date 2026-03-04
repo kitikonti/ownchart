@@ -46,12 +46,20 @@ const LUMINANCE_R = 0.2126;
 const LUMINANCE_G = 0.7152;
 const LUMINANCE_B = 0.0722;
 
+// ─────────────────────────────────────────────────────────────────────────────
+// WCAG 2.1 contrast ratio constant
+// ─────────────────────────────────────────────────────────────────────────────
+
+/** Luminance offset in WCAG 2.1 contrast ratio formula — prevents division-by-zero for pure black */
+const WCAG_CONTRAST_OFFSET = 0.05;
+
 /**
  * Converts a hex color string to RGB values
  * Handles both 3-digit (#RGB) and 6-digit (#RRGGBB) formats, with or without #
  *
- * NOTE: Only null/undefined/empty strings are guarded — invalid hex strings (e.g. "#ZZZZZZ")
- * produce NaN channels that propagate silently. Callers should pass valid hex strings.
+ * Falls back to DEFAULT_COLOR for null/undefined/empty strings and for strings
+ * that produce invalid (NaN) channel values (e.g. "#ZZZZZZ"). The return value
+ * always contains valid 0–255 channel integers.
  */
 export function hexToRgb(hex: string): { r: number; g: number; b: number } {
   // Handle undefined/null/empty by using default
@@ -71,6 +79,12 @@ export function hexToRgb(hex: string): { r: number; g: number; b: number } {
   const r = parseInt(cleanHex.substring(0, 2), 16);
   const g = parseInt(cleanHex.substring(2, 4), 16);
   const b = parseInt(cleanHex.substring(4, 6), 16);
+
+  // Guard against invalid hex strings — fall back to default rather than
+  // propagating NaN through WCAG luminance calculations.
+  if (Number.isNaN(r) || Number.isNaN(g) || Number.isNaN(b)) {
+    return hexToRgb(DEFAULT_COLOR);
+  }
 
   return { r, g, b };
 }
@@ -119,7 +133,7 @@ export function getContrastRatio(hex1: string, hex2: string): number {
   const lighter = Math.max(lum1, lum2);
   const darker = Math.min(lum1, lum2);
 
-  return (lighter + 0.05) / (darker + 0.05);
+  return (lighter + WCAG_CONTRAST_OFFSET) / (darker + WCAG_CONTRAST_OFFSET);
 }
 
 /**
@@ -245,7 +259,7 @@ export function hexToHSL(hex: string): HSL {
  * Wraps t into [0, 1] before applying the standard HSL piecewise formula.
  * Per the CSS Color Module 4 specification.
  */
-function hue2rgb(p: number, q: number, t: number): number {
+function hueToRgb(p: number, q: number, t: number): number {
   const tw = t < 0 ? t + 1 : t > 1 ? t - 1 : t;
   if (tw < 1 / 6) return p + (q - p) * 6 * tw;
   if (tw < 1 / 2) return q;
@@ -277,9 +291,9 @@ export function hslToHex(hsl: HSL): string {
     const q = l < 0.5 ? l * (1 + s) : l + s - l * s;
     const p = 2 * l - q;
 
-    r = hue2rgb(p, q, h + 1 / 3);
-    g = hue2rgb(p, q, h);
-    b = hue2rgb(p, q, h - 1 / 3);
+    r = hueToRgb(p, q, h + 1 / 3);
+    g = hueToRgb(p, q, h);
+    b = hueToRgb(p, q, h - 1 / 3);
   }
 
   return `#${linearChannelToHex(r)}${linearChannelToHex(g)}${linearChannelToHex(b)}`.toUpperCase();
