@@ -6,6 +6,7 @@
 import type { Task } from "../../types/chart.types";
 import { TASK_TYPES } from "../../types/chart.types";
 import type { Dependency } from "../../types/dependency.types";
+import { DEPENDENCY_TYPES } from "../../types/dependency.types";
 import { EDITABLE_FIELDS, type EditableField } from "../../types/task.types";
 
 // Prefix to identify OwnChart data in the clipboard
@@ -15,11 +16,12 @@ const OWNCHART_CELL_PREFIX = "OWNCHART_CELL:";
 // Derived from shared constants — single source of truth for both.
 const VALID_EDITABLE_FIELDS: Set<EditableField> = new Set(EDITABLE_FIELDS);
 const VALID_TASK_TYPES: Set<string> = new Set(TASK_TYPES);
+const VALID_DEPENDENCY_TYPES: Set<string> = new Set(DEPENDENCY_TYPES);
 
 /**
  * Validate that a parsed object has the minimum required Task shape.
  * Checks all required Task fields to catch cross-version or malformed clipboard data.
- * Also validates the optional `type` field — if present it must be a known TaskType value.
+ * Optional fields (type, parent, open, colorOverride) are validated only when present.
  */
 function isValidTaskShape(obj: unknown): boolean {
   if (typeof obj !== "object" || obj === null) return false;
@@ -32,14 +34,27 @@ function isValidTaskShape(obj: unknown): boolean {
     typeof t.endDate === "string" &&
     typeof t.duration === "number" &&
     typeof t.progress === "number" &&
+    typeof t.color === "string" &&
+    (t.color as string).startsWith("#") &&
+    typeof t.order === "number" &&
+    typeof t.metadata === "object" &&
+    t.metadata !== null &&
+    // Optional: type must be a known TaskType if present
     (t.type === undefined ||
-      (typeof t.type === "string" && VALID_TASK_TYPES.has(t.type)))
+      (typeof t.type === "string" && VALID_TASK_TYPES.has(t.type))) &&
+    // Optional: parent must be a string (TaskId) if present
+    (t.parent === undefined || typeof t.parent === "string") &&
+    // Optional: colorOverride must be a hex string if present
+    (t.colorOverride === undefined ||
+      (typeof t.colorOverride === "string" &&
+        (t.colorOverride as string).startsWith("#")))
   );
 }
 
 /**
  * Validate that a parsed object has the minimum required Dependency shape.
  * Checks all required fields to catch cross-version or malformed clipboard data.
+ * The `type` field is validated against known DependencyType values.
  */
 function isValidDependencyShape(obj: unknown): boolean {
   if (typeof obj !== "object" || obj === null) return false;
@@ -49,6 +64,7 @@ function isValidDependencyShape(obj: unknown): boolean {
     typeof d.fromTaskId === "string" &&
     typeof d.toTaskId === "string" &&
     typeof d.type === "string" &&
+    VALID_DEPENDENCY_TYPES.has(d.type) &&
     typeof d.createdAt === "string"
   );
 }
@@ -78,7 +94,8 @@ async function writeToClipboard(
     await navigator.clipboard.writeText(prefix + JSON.stringify(data));
     return true;
   } catch (error) {
-    if (import.meta.env.DEV) console.warn("Failed to write to system clipboard:", error);
+    if (import.meta.env.DEV)
+      console.warn("Failed to write to system clipboard:", error);
     return false;
   }
 }
@@ -153,7 +170,8 @@ export async function readRowsFromSystemClipboard(): Promise<SystemRowClipboardD
 
     return data;
   } catch (error) {
-    if (import.meta.env.DEV) console.warn("Failed to read from system clipboard:", error);
+    if (import.meta.env.DEV)
+      console.warn("Failed to read from system clipboard:", error);
     return null;
   }
 }
@@ -181,7 +199,8 @@ export async function readCellFromSystemClipboard(): Promise<SystemCellClipboard
 
     return data;
   } catch (error) {
-    if (import.meta.env.DEV) console.warn("Failed to read from system clipboard:", error);
+    if (import.meta.env.DEV)
+      console.warn("Failed to read from system clipboard:", error);
     return null;
   }
 }
@@ -206,7 +225,8 @@ export async function getSystemClipboardType(): Promise<"row" | "cell" | null> {
     }
     return null;
   } catch (error) {
-    if (import.meta.env.DEV) console.warn("Failed to check system clipboard:", error);
+    if (import.meta.env.DEV)
+      console.warn("Failed to check system clipboard:", error);
     return null;
   }
 }
@@ -218,7 +238,8 @@ export async function clearSystemClipboard(): Promise<void> {
   try {
     await navigator.clipboard.writeText("");
   } catch (error) {
-    if (import.meta.env.DEV) console.warn("Failed to clear system clipboard:", error);
+    if (import.meta.env.DEV)
+      console.warn("Failed to clear system clipboard:", error);
   }
 }
 

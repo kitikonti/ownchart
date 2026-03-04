@@ -11,7 +11,9 @@ import { DEFAULT_TASK_COLOR } from "../../styles/design-tokens";
  * Result of a clipboard validation check.
  * Discriminated union: narrow on `valid` to access `error`.
  */
-export type ValidationResult = { valid: true } | { valid: false; error: string };
+export type ValidationResult =
+  | { valid: true }
+  | { valid: false; error: string };
 
 /**
  * Validate if a cell value can be pasted into a target field.

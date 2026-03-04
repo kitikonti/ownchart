@@ -29,9 +29,12 @@ export function remapTaskIds(tasks: Task[]): {
 
   // Second pass: Apply new IDs and remap parent references
   const remappedTasks: Task[] = tasks.map((task) => {
-    // Remap parent if it exists in the mapping (internal parent)
-    // Otherwise set to undefined (external parent removed)
-    const mappedParent = task.parent ? idMapping[task.parent] : undefined;
+    // Remap parent if it exists in the mapping (internal parent).
+    // Cast to TaskId | undefined: Record<TaskId,TaskId> types all keys as present,
+    // but a parent not in the pasted set returns undefined at runtime.
+    const mappedParent = task.parent
+      ? (idMapping[task.parent] as TaskId | undefined)
+      : undefined;
     return {
       ...task,
       id: idMapping[task.id],

@@ -8,6 +8,24 @@ import type { FlattenedTask } from "../hierarchy";
 import { PLACEHOLDER_TASK_ID } from "../../config/placeholderRow";
 
 /**
+ * Find the visual index of the bottommost task among the given IDs.
+ * Pre-builds an index map to avoid O(n²) findIndex-in-loop.
+ * Returns -1 if none of the IDs are found in the flattened list.
+ */
+function findBottommostIndex(
+  taskIds: TaskId[],
+  flattenedTasks: FlattenedTask[]
+): number {
+  const indexMap = new Map(flattenedTasks.map(({ task }, i) => [task.id, i]));
+  let lastIndex = -1;
+  for (const id of taskIds) {
+    const idx = indexMap.get(id) ?? -1;
+    if (idx > lastIndex) lastIndex = idx;
+  }
+  return lastIndex;
+}
+
+/**
  * Determine where to insert pasted rows based on the flattened (visual) list.
  *
  * Priority:
@@ -26,49 +44,32 @@ export function determineInsertPosition(
   selectedTaskIds: TaskId[],
   flattenedTasks: FlattenedTask[]
 ): number {
-  // Priority 1: Placeholder row is active or selected -> insert at end
+  // Priority 1: Placeholder row is active -> insert at end
   if (activeCell.taskId === PLACEHOLDER_TASK_ID) {
     return flattenedTasks.length;
   }
 
-  // Check if placeholder is in selection (filter it out for other checks)
-  const selectedSet = new Set(selectedTaskIds);
-  const placeholderSelected = selectedSet.has(PLACEHOLDER_TASK_ID);
+  // Strip placeholder from selection; if it was the only selection, insert at end
   const realSelectedIds = selectedTaskIds.filter(
     (id) => id !== PLACEHOLDER_TASK_ID
   );
-
-  // If only placeholder is selected, insert at end
-  if (placeholderSelected && realSelectedIds.length === 0) {
+  if (realSelectedIds.length === 0 && selectedTaskIds.length > 0) {
     return flattenedTasks.length;
   }
 
-  // Priority 2: Active cell row (insert above it)
+  // Priority 2: Active cell row -> insert above it
   if (activeCell.taskId) {
     const index = flattenedTasks.findIndex(
       ({ task }) => task.id === activeCell.taskId
     );
-    if (index !== -1) {
-      return index; // Insert before active row
-    }
+    if (index !== -1) return index;
   }
 
-  // Priority 3: Last selected row by visual position (insert after it).
-  // Finds the bottommost selected task in the flattened list rather than
-  // relying on the store maintaining selectedTaskIds in visual order.
-  // Pre-build index map to avoid O(n²) findIndex-in-loop.
+  // Priority 3: Bottommost selected row -> insert after it.
+  // Uses findBottommostIndex rather than relying on store preserving visual order.
   if (realSelectedIds.length > 0) {
-    const indexMap = new Map(
-      flattenedTasks.map(({ task }, i) => [task.id, i])
-    );
-    let lastIndex = -1;
-    for (const id of realSelectedIds) {
-      const idx = indexMap.get(id) ?? -1;
-      if (idx > lastIndex) lastIndex = idx;
-    }
-    if (lastIndex !== -1) {
-      return lastIndex + 1; // Insert after last selected
-    }
+    const lastIndex = findBottommostIndex(realSelectedIds, flattenedTasks);
+    if (lastIndex !== -1) return lastIndex + 1;
   }
 
   // Priority 4: End of list

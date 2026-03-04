@@ -138,7 +138,6 @@ export type TaskSliceSet = (fn: (state: TaskStore) => void) => void;
 /** Zustand get function. */
 export type TaskSliceGet = () => TaskStore;
 
-
 export const useTaskStore = create<TaskStore>()(
   immer((set, get) => ({
     // State (start with empty list - placeholder row allows adding new tasks)
