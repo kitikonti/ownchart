@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [1.1.15](https://github.com/kitikonti/ownchart/compare/v1.1.14...v1.1.15) (2026-03-04)
+
+
+### Bug Fixes
+
+* resolve two CI failures ([eba88f2](https://github.com/kitikonti/ownchart/commit/eba88f2c8579290af6f7a060eccc0104fbbab995))
+
 ## [1.1.14](https://github.com/kitikonti/ownchart/compare/v1.1.13...v1.1.14) (2026-03-04)
 
 
