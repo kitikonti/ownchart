@@ -248,6 +248,100 @@ describe("systemClipboard", () => {
 
       expect(result).toBeNull();
     });
+
+    it("should return null for oversized clipboard payload", async () => {
+      clipboardContent = "OWNCHART_ROWS:" + "x".repeat(6_000_000);
+
+      expect(await readRowsFromSystemClipboard()).toBeNull();
+    });
+
+    describe("task shape validation", () => {
+      const validTask = {
+        id: "task-1",
+        name: "Test Task",
+        startDate: "2025-01-01",
+        endDate: "2025-01-07",
+        duration: 7,
+        progress: 0,
+        color: "#3b82f6",
+        order: 0,
+        metadata: {},
+      };
+
+      const setClipboard = (overrides: Record<string, unknown>): void => {
+        clipboardContent =
+          "OWNCHART_ROWS:" +
+          JSON.stringify({
+            tasks: [{ ...validTask, ...overrides }],
+            dependencies: [],
+          });
+      };
+
+      it("should reject task with non-numeric duration", async () => {
+        setClipboard({ duration: "seven" });
+        expect(await readRowsFromSystemClipboard()).toBeNull();
+      });
+
+      it("should reject task with non-numeric order", async () => {
+        setClipboard({ order: null });
+        expect(await readRowsFromSystemClipboard()).toBeNull();
+      });
+
+      it("should reject task with named color (not hex)", async () => {
+        setClipboard({ color: "red" });
+        expect(await readRowsFromSystemClipboard()).toBeNull();
+      });
+
+      it("should reject task with bare # color", async () => {
+        setClipboard({ color: "#" });
+        expect(await readRowsFromSystemClipboard()).toBeNull();
+      });
+
+      it("should reject task with non-hex color characters", async () => {
+        setClipboard({ color: "#xyz123" });
+        expect(await readRowsFromSystemClipboard()).toBeNull();
+      });
+
+      it("should accept task with 3-char short hex color", async () => {
+        setClipboard({ color: "#f00" });
+        expect(await readRowsFromSystemClipboard()).not.toBeNull();
+      });
+
+      it("should accept task with 8-char hex color with alpha", async () => {
+        setClipboard({ color: "#ff000088" });
+        expect(await readRowsFromSystemClipboard()).not.toBeNull();
+      });
+
+      it("should reject task with non-boolean open field", async () => {
+        setClipboard({ open: "yes" });
+        expect(await readRowsFromSystemClipboard()).toBeNull();
+      });
+
+      it("should reject task with numeric open field", async () => {
+        setClipboard({ open: 1 });
+        expect(await readRowsFromSystemClipboard()).toBeNull();
+      });
+
+      it("should accept task with open: false", async () => {
+        setClipboard({ open: false });
+        expect(await readRowsFromSystemClipboard()).not.toBeNull();
+      });
+
+      it("should accept task with open: true", async () => {
+        setClipboard({ open: true });
+        expect(await readRowsFromSystemClipboard()).not.toBeNull();
+      });
+
+      it("should reject task with non-hex colorOverride", async () => {
+        setClipboard({ colorOverride: "blue" });
+        expect(await readRowsFromSystemClipboard()).toBeNull();
+      });
+
+      it("should accept task with valid colorOverride", async () => {
+        setClipboard({ colorOverride: "#ff0000" });
+        expect(await readRowsFromSystemClipboard()).not.toBeNull();
+      });
+    });
   });
 
   describe("readCellFromSystemClipboard", () => {

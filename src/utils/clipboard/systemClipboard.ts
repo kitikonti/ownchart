@@ -18,6 +18,17 @@ const VALID_EDITABLE_FIELDS: Set<EditableField> = new Set(EDITABLE_FIELDS);
 const VALID_TASK_TYPES: Set<string> = new Set(TASK_TYPES);
 const VALID_DEPENDENCY_TYPES: Set<string> = new Set(DEPENDENCY_TYPES);
 
+// Hex color regex — covers #RGB, #RGBA, #RRGGBB, #RRGGBBAA
+const HEX_COLOR_RE = /^#[0-9a-fA-F]{3,8}$/;
+
+// Safety limit — rejects payloads clearly too large to be valid chart data
+const MAX_CLIPBOARD_SIZE = 5_000_000;
+
+/** Returns true if v is a finite number (excludes NaN and ±Infinity). */
+function isFiniteNumber(v: unknown): v is number {
+  return typeof v === "number" && Number.isFinite(v);
+}
+
 /**
  * Validate that a parsed object has the minimum required Task shape.
  * Checks all required Task fields to catch cross-version or malformed clipboard data.
@@ -32,11 +43,11 @@ function isValidTaskShape(obj: unknown): boolean {
     typeof t.name === "string" &&
     typeof t.startDate === "string" &&
     typeof t.endDate === "string" &&
-    typeof t.duration === "number" &&
-    typeof t.progress === "number" &&
+    isFiniteNumber(t.duration) &&
+    isFiniteNumber(t.progress) &&
     typeof t.color === "string" &&
-    (t.color as string).startsWith("#") &&
-    typeof t.order === "number" &&
+    HEX_COLOR_RE.test(t.color as string) &&
+    isFiniteNumber(t.order) &&
     typeof t.metadata === "object" &&
     t.metadata !== null &&
     // Optional: type must be a known TaskType if present
@@ -44,10 +55,12 @@ function isValidTaskShape(obj: unknown): boolean {
       (typeof t.type === "string" && VALID_TASK_TYPES.has(t.type))) &&
     // Optional: parent must be a string (TaskId) if present
     (t.parent === undefined || typeof t.parent === "string") &&
+    // Optional: open must be boolean if present
+    (t.open === undefined || typeof t.open === "boolean") &&
     // Optional: colorOverride must be a hex string if present
     (t.colorOverride === undefined ||
       (typeof t.colorOverride === "string" &&
-        (t.colorOverride as string).startsWith("#")))
+        HEX_COLOR_RE.test(t.colorOverride as string)))
   );
 }
 
@@ -58,6 +71,7 @@ function isValidTaskShape(obj: unknown): boolean {
  */
 function isValidDependencyShape(obj: unknown): boolean {
   if (typeof obj !== "object" || obj === null) return false;
+  // safe cast — object type confirmed by guard above, structure validated immediately below
   const d = obj as Record<string, unknown>;
   return (
     typeof d.id === "string" &&
@@ -106,6 +120,7 @@ async function writeToClipboard(
  */
 async function readFromClipboard(prefix: string): Promise<unknown | null> {
   const text = await navigator.clipboard.readText();
+  if (text.length > MAX_CLIPBOARD_SIZE) return null;
   if (!text.startsWith(prefix)) return null;
   const jsonStr = text.slice(prefix.length);
   let parsed: unknown;

@@ -188,16 +188,34 @@ describe("canCutCellValue", () => {
     });
   });
 
-  describe("regular and milestone tasks allow all cuts", () => {
-    const fields = [
-      "name",
-      "startDate",
-      "endDate",
-      "duration",
-      "progress",
-      "color",
-      "type",
-    ] as const;
+  describe("date field restrictions", () => {
+    it("should reject cutting startDate from a regular task", () => {
+      const result = canCutCellValue("startDate", createTask("task"));
+      expect(result.valid).toBe(false);
+      expect(result.error).toBe(
+        "Cannot cut startDate — tasks must always have a valid date"
+      );
+    });
+
+    it("should reject cutting endDate from a regular task", () => {
+      const result = canCutCellValue("endDate", createTask("task"));
+      expect(result.valid).toBe(false);
+      expect(result.error).toBe(
+        "Cannot cut endDate — tasks must always have a valid date"
+      );
+    });
+
+    it("should reject cutting startDate from a milestone task", () => {
+      expect(canCutCellValue("startDate", createTask("milestone")).valid).toBe(false);
+    });
+
+    it("should reject cutting endDate from a summary task", () => {
+      expect(canCutCellValue("endDate", createTask("summary")).valid).toBe(false);
+    });
+  });
+
+  describe("regular and milestone tasks allow non-date cuts", () => {
+    const fields = ["name", "duration", "progress", "color", "type"] as const;
 
     fields.forEach((field) => {
       it(`should allow cutting ${field} from regular task`, () => {

@@ -59,10 +59,10 @@ export function remapDependencies(
 ): Dependency[] {
   return deps
     .filter(
-      // Only keep dependencies where both tasks are in the mapping
-      (dep) =>
-        idMapping[dep.fromTaskId] !== undefined &&
-        idMapping[dep.toTaskId] !== undefined
+      // Only keep dependencies where both tasks are in the pasted set.
+      // `in` operator is used for runtime presence check — Record<K,V> types all
+      // accesses as always-defined, so !== undefined would always be true at the type level.
+      (dep) => dep.fromTaskId in idMapping && dep.toTaskId in idMapping
     )
     .map((dep) => ({
       ...dep,

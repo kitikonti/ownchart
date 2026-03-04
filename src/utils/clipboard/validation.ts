@@ -74,6 +74,8 @@ export function canPasteCellValue(
  * Rules:
  * - Summary tasks' type cannot be cleared — doing so would convert the summary
  *   to a regular task while its children remain, breaking the hierarchy.
+ * - Date fields (startDate, endDate) cannot be cut — tasks must always have
+ *   valid dates; clearing them produces invalid state that breaks calculations.
  *
  * @param field - Field being cut
  * @param sourceTask - Task being cut from
@@ -89,6 +91,15 @@ export function canCutCellValue(
     return {
       valid: false,
       error: "Cannot cut type from summary tasks (would orphan their children)",
+    };
+  }
+
+  // Clearing a date field produces an invalid task state (empty date strings break
+  // all date calculations). Dates must always be valid strings.
+  if (field === "startDate" || field === "endDate") {
+    return {
+      valid: false,
+      error: `Cannot cut ${field} — tasks must always have a valid date`,
     };
   }
 
@@ -109,6 +120,8 @@ export function getClearValueForField(
       return "";
     case "startDate":
     case "endDate":
+      // Guarded by canCutCellValue — cutting date fields is blocked there.
+      // Present here for exhaustive switch coverage only.
       return "";
     case "duration":
       return 0;

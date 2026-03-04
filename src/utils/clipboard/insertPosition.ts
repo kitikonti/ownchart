@@ -53,6 +53,7 @@ export function determineInsertPosition(
   const realSelectedIds = selectedTaskIds.filter(
     (id) => id !== PLACEHOLDER_TASK_ID
   );
+  // Edge case: placeholder was range-selected but activeCell is not on the placeholder row.
   if (realSelectedIds.length === 0 && selectedTaskIds.length > 0) {
     return flattenedTasks.length;
   }

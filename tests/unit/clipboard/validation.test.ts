@@ -114,17 +114,25 @@ describe("canCutCellValue", () => {
     expect(canCutCellValue("type", makeTask({ type: "milestone" })).valid).toBe(true);
   });
 
-  it("should allow cutting any other field from a summary task", () => {
+  it("should reject cutting startDate or endDate from any task type", () => {
+    for (const taskType of ["task", "summary", "milestone"] as const) {
+      const task = makeTask({ type: taskType });
+      expect(canCutCellValue("startDate", task).valid).toBe(false);
+      expect(canCutCellValue("endDate", task).valid).toBe(false);
+    }
+  });
+
+  it("should allow cutting non-date fields from a summary task", () => {
     const summary = makeTask({ type: "summary" });
-    const fields = ["name", "startDate", "endDate", "duration", "progress", "color"] as const;
+    const fields = ["name", "duration", "progress", "color"] as const;
     for (const field of fields) {
       expect(canCutCellValue(field, summary).valid).toBe(true);
     }
   });
 
-  it("should allow cutting any field from a regular task", () => {
+  it("should allow cutting non-date fields from a regular task", () => {
     const task = makeTask();
-    const fields = ["name", "startDate", "endDate", "duration", "progress", "color", "type"] as const;
+    const fields = ["name", "duration", "progress", "color", "type"] as const;
     for (const field of fields) {
       expect(canCutCellValue(field, task).valid).toBe(true);
     }
