@@ -2,6 +2,18 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [1.1.18](https://github.com/kitikonti/ownchart/compare/v1.1.17...v1.1.18) (2026-03-04)
+
+
+### Bug Fixes
+
+* prevent task insertion from reordering siblings when array order differs from display order ([1766bde](https://github.com/kitikonti/ownchart/commit/1766bdeeb842912f8b40dd9ae4f0e3cc96580845))
+
+
+### Code Refactoring
+
+* extract INSERTION_ORDER_STEP, add makeTask helper, merge double JSDoc ([5f6e0ed](https://github.com/kitikonti/ownchart/commit/5f6e0ede45a636456e993ca0fe1535829bc54586)), closes [#4A90D9](https://github.com/kitikonti/ownchart/issues/4A90D9)
+
 ## [1.1.17](https://github.com/kitikonti/ownchart/compare/v1.1.16...v1.1.17) (2026-03-04)
 
 
