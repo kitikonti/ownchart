@@ -37,7 +37,7 @@ function createMockDialogResult(
     exportProgress: 0,
     exportError: null,
     handleExport: mockHandleExport,
-    tasks: [],
+    exportTasks: [],
     columnWidths: {},
     currentAppZoom: 1,
     projectTitle: "Test Project",

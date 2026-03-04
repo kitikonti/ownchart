@@ -120,7 +120,7 @@ export interface UseExportDialogResult {
   handleExport: () => Promise<void>;
 
   // Data for sub-components
-  tasks: Task[];
+  exportTasks: Task[];
   columnWidths: Record<string, number>;
   currentAppZoom: number;
   projectTitle: string;
@@ -377,7 +377,7 @@ export function useExportDialog(): UseExportDialogResult {
     exportProgress,
     exportError,
     handleExport,
-    tasks: exportTasks,
+    exportTasks,
     hiddenTaskCount,
     columnWidths,
     currentAppZoom,

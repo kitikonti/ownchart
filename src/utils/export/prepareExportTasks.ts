@@ -9,7 +9,7 @@ import type { TaskId } from "../../types/branded.types";
 
 export function prepareExportTasks(
   tasks: ReadonlyArray<Task>,
-  hiddenTaskIds: TaskId[]
+  hiddenTaskIds: ReadonlyArray<TaskId>
 ): Task[] {
   if (hiddenTaskIds.length === 0) return [...tasks];
   const hiddenSet = new Set<TaskId>(hiddenTaskIds);

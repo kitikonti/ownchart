@@ -121,7 +121,7 @@ export function ExportDialog(): JSX.Element {
     exportProgress,
     exportError,
     handleExport,
-    tasks,
+    exportTasks,
     hiddenTaskCount,
     columnWidths,
     currentAppZoom,
@@ -145,7 +145,7 @@ export function ExportDialog(): JSX.Element {
     isRendering: isPreviewRendering,
     error: previewError,
   } = useExportPreview({
-    tasks,
+    tasks: exportTasks,
     options: effectiveExportOptions,
     columnWidths,
     currentAppZoom,
@@ -230,17 +230,19 @@ export function ExportDialog(): JSX.Element {
             </div>
           )}
 
-          {hiddenTaskCount > 0 && (
-            <div className="mt-4">
-              <Alert variant="info">
-                <span className="font-medium">
-                  {hiddenTaskCount} hidden{" "}
-                  {hiddenTaskCount === 1 ? "row" : "rows"} will not appear in
-                  the export.
-                </span>
-              </Alert>
-            </div>
-          )}
+          <div aria-live="polite" aria-atomic="true">
+            {hiddenTaskCount > 0 && (
+              <div className="mt-4">
+                <Alert variant="info">
+                  <span className="font-medium">
+                    {hiddenTaskCount} hidden{" "}
+                    {hiddenTaskCount === 1 ? "row" : "rows"} will not appear in
+                    the export.
+                  </span>
+                </Alert>
+              </div>
+            )}
+          </div>
         </div>
 
         {/* Right: Options Panel */}
