@@ -3,31 +3,50 @@
  * Wrapper around ZoomModeSelector.
  */
 
-import type { ExportOptions, ExportZoomMode } from "../../utils/export/types";
+import { memo, useCallback } from "react";
+import type {
+  ExportFormat,
+  ExportOptions,
+  ExportZoomMode,
+} from "@/utils/export/types";
 import { ZoomModeSelector } from "./ZoomModeSelector";
 
 export interface ScaleOptionsProps {
   options: ExportOptions;
   onChange: (options: Partial<ExportOptions>) => void;
   currentAppZoom: number;
-  taskTableWidth: number;
+  format: ExportFormat;
 }
 
-export function ScaleOptions({
+export const ScaleOptions = memo(function ScaleOptions({
   options,
   onChange,
   currentAppZoom,
+  format,
 }: ScaleOptionsProps): JSX.Element {
+  const handleZoomModeChange = useCallback(
+    (mode: ExportZoomMode): void => onChange({ zoomMode: mode }),
+    [onChange]
+  );
+  const handleTimelineZoomChange = useCallback(
+    (zoom: number): void => onChange({ timelineZoom: zoom }),
+    [onChange]
+  );
+  const handleFitToWidthChange = useCallback(
+    (width: number): void => onChange({ fitToWidth: width }),
+    [onChange]
+  );
+
   return (
     <ZoomModeSelector
       zoomMode={options.zoomMode}
-      onZoomModeChange={(mode: ExportZoomMode) => onChange({ zoomMode: mode })}
+      onZoomModeChange={handleZoomModeChange}
       timelineZoom={options.timelineZoom}
-      onTimelineZoomChange={(zoom: number) => onChange({ timelineZoom: zoom })}
+      onTimelineZoomChange={handleTimelineZoomChange}
       currentAppZoom={currentAppZoom}
-      format="png"
+      format={format}
       fitToWidth={options.fitToWidth}
-      onFitToWidthChange={(width: number) => onChange({ fitToWidth: width })}
+      onFitToWidthChange={handleFitToWidthChange}
     />
   );
-}
+});

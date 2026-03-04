@@ -32,13 +32,13 @@ describe("ExportFormatSelector", () => {
       expect(screen.getByText("Format")).toBeInTheDocument();
     });
 
-    it("renders buttons with correct aria-pressed state", () => {
+    it("renders radio buttons with correct aria-checked state", () => {
       render(<ExportFormatSelector {...defaultProps} selectedFormat="png" />);
 
-      const buttons = screen.getAllByRole("button");
-      expect(buttons[0]).toHaveAttribute("aria-pressed", "true"); // PNG
-      expect(buttons[1]).toHaveAttribute("aria-pressed", "false"); // PDF
-      expect(buttons[2]).toHaveAttribute("aria-pressed", "false"); // SVG
+      const radios = screen.getAllByRole("radio");
+      expect(radios[0]).toHaveAttribute("aria-checked", "true"); // PNG
+      expect(radios[1]).toHaveAttribute("aria-checked", "false"); // PDF
+      expect(radios[2]).toHaveAttribute("aria-checked", "false"); // SVG
     });
 
     it("shows help text for selected format", () => {
@@ -135,6 +135,90 @@ describe("ExportFormatSelector", () => {
       const pdfButton = screen.getByText("PDF").closest("button");
       expect(pdfButton).toHaveClass("border-neutral-200");
       expect(pdfButton).not.toHaveClass("bg-brand-600");
+    });
+  });
+
+  describe("keyboard navigation", () => {
+    it("moves selection to PDF on ArrowRight from PNG", () => {
+      const onFormatChange = vi.fn();
+      render(
+        <ExportFormatSelector selectedFormat="png" onFormatChange={onFormatChange} />
+      );
+
+      fireEvent.keyDown(screen.getByRole("radiogroup"), { key: "ArrowRight" });
+      expect(onFormatChange).toHaveBeenCalledWith("pdf");
+    });
+
+    it("moves selection to SVG on ArrowRight from PDF", () => {
+      const onFormatChange = vi.fn();
+      render(
+        <ExportFormatSelector selectedFormat="pdf" onFormatChange={onFormatChange} />
+      );
+
+      fireEvent.keyDown(screen.getByRole("radiogroup"), { key: "ArrowRight" });
+      expect(onFormatChange).toHaveBeenCalledWith("svg");
+    });
+
+    it("wraps from SVG back to PNG on ArrowRight", () => {
+      const onFormatChange = vi.fn();
+      render(
+        <ExportFormatSelector selectedFormat="svg" onFormatChange={onFormatChange} />
+      );
+
+      fireEvent.keyDown(screen.getByRole("radiogroup"), { key: "ArrowRight" });
+      expect(onFormatChange).toHaveBeenCalledWith("png");
+    });
+
+    it("moves selection to PNG on ArrowLeft from PDF", () => {
+      const onFormatChange = vi.fn();
+      render(
+        <ExportFormatSelector selectedFormat="pdf" onFormatChange={onFormatChange} />
+      );
+
+      fireEvent.keyDown(screen.getByRole("radiogroup"), { key: "ArrowLeft" });
+      expect(onFormatChange).toHaveBeenCalledWith("png");
+    });
+
+    it("wraps from PNG to SVG on ArrowLeft", () => {
+      const onFormatChange = vi.fn();
+      render(
+        <ExportFormatSelector selectedFormat="png" onFormatChange={onFormatChange} />
+      );
+
+      fireEvent.keyDown(screen.getByRole("radiogroup"), { key: "ArrowLeft" });
+      expect(onFormatChange).toHaveBeenCalledWith("svg");
+    });
+
+    it("also navigates on ArrowDown (same as ArrowRight)", () => {
+      const onFormatChange = vi.fn();
+      render(
+        <ExportFormatSelector selectedFormat="png" onFormatChange={onFormatChange} />
+      );
+
+      fireEvent.keyDown(screen.getByRole("radiogroup"), { key: "ArrowDown" });
+      expect(onFormatChange).toHaveBeenCalledWith("pdf");
+    });
+
+    it("also navigates on ArrowUp (same as ArrowLeft)", () => {
+      const onFormatChange = vi.fn();
+      render(
+        <ExportFormatSelector selectedFormat="pdf" onFormatChange={onFormatChange} />
+      );
+
+      fireEvent.keyDown(screen.getByRole("radiogroup"), { key: "ArrowUp" });
+      expect(onFormatChange).toHaveBeenCalledWith("png");
+    });
+
+    it("does not call onFormatChange for non-navigation keys", () => {
+      const onFormatChange = vi.fn();
+      render(
+        <ExportFormatSelector selectedFormat="png" onFormatChange={onFormatChange} />
+      );
+
+      fireEvent.keyDown(screen.getByRole("radiogroup"), { key: "Enter" });
+      fireEvent.keyDown(screen.getByRole("radiogroup"), { key: "Tab" });
+      fireEvent.keyDown(screen.getByRole("radiogroup"), { key: "Space" });
+      expect(onFormatChange).not.toHaveBeenCalled();
     });
   });
 });

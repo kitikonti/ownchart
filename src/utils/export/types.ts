@@ -20,6 +20,12 @@ import {
 /** Export format selection */
 export type ExportFormat = "png" | "pdf" | "svg";
 
+/** Chart pixel dimensions (width × height in px) */
+export interface PixelDimensions {
+  width: number;
+  height: number;
+}
+
 // =============================================================================
 // PDF Export Types
 // =============================================================================
