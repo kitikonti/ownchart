@@ -2,6 +2,16 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [1.1.14](https://github.com/kitikonti/ownchart/compare/v1.1.13...v1.1.14) (2026-03-04)
+
+
+### Code Refactoring
+
+* apply review fixes to useComputedTaskColor and useExportPreview ([7690f95](https://github.com/kitikonti/ownchart/commit/7690f956885c17881563a9fa6b2b7b5934402423))
+* apply review fixes to useComputedTaskColor and useExportPreview ([2fabc4c](https://github.com/kitikonti/ownchart/commit/2fabc4c60922c58eb2880e69269f493ea4fbb5da))
+* apply review fixes to useComputedTaskColor and useExportPreview ([c9f45f8](https://github.com/kitikonti/ownchart/commit/c9f45f899049505e98bdd1be5bce37109072912f))
+* apply review fixes to useComputedTaskColor and useExportPreview ([c5babbf](https://github.com/kitikonti/ownchart/commit/c5babbf6db137caecc76dc598e8e9570e7db51d4))
+
 ## [1.1.13](https://github.com/kitikonti/ownchart/compare/v1.1.12...v1.1.13) (2026-03-04)
 
 
