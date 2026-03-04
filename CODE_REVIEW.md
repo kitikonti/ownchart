@@ -204,7 +204,7 @@ cd ../app-gantt-review
 - [x] `src/utils/colorPalettes.ts` (540 LOC) — Datendatei
 - [x] `src/utils/hierarchy.ts` (430 LOC)
 - [x] `src/utils/timelineUtils.ts` (424 LOC)
-- [ ] `src/utils/colorUtils.ts` (332 LOC)
+- [x] `src/utils/colorUtils.ts` (332 LOC)
 - [ ] `src/utils/multiTabStorage.ts` (318 LOC)
 - [ ] `src/utils/validation.ts` (236 LOC)
 - [ ] `src/utils/textMeasurement.ts` (217 LOC)
