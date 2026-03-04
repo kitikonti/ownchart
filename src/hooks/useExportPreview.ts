@@ -79,11 +79,14 @@ function waitForPaint(): Promise<void> {
 
 /**
  * Create a stable key for debouncing based on options.
- * Only includes options that affect the visual output.
+ * Spreads all ExportOptions fields — every field affects the visual output,
+ * so all changes trigger preview re-renders automatically. Date range params
+ * need explicit ISO serialization since Date objects don't serialize
+ * deterministically via JSON.stringify.
  *
- * MAINTENANCE NOTE: When adding a new ExportOptions field that affects the
- * visual output, remember to add it here. Omitting it means the preview will
- * not re-render when that option changes.
+ * If a future ExportOptions field should NOT trigger re-renders (e.g. a
+ * filename or author field), switch back to an explicit key list and omit
+ * those fields here.
  */
 function createOptionsKey(
   options: ExportOptions,
@@ -91,21 +94,7 @@ function createOptionsKey(
   visibleDateRange?: { start: Date; end: Date }
 ): string {
   return JSON.stringify({
-    zoomMode: options.zoomMode,
-    timelineZoom: options.timelineZoom,
-    fitToWidth: options.fitToWidth,
-    background: options.background,
-    includeGridLines: options.includeGridLines,
-    includeWeekends: options.includeWeekends,
-    includeHolidays: options.includeHolidays,
-    includeTodayMarker: options.includeTodayMarker,
-    includeDependencies: options.includeDependencies,
-    selectedColumns: options.selectedColumns,
-    taskLabelPosition: options.taskLabelPosition,
-    density: options.density,
-    dateRangeMode: options.dateRangeMode,
-    customDateStart: options.customDateStart,
-    customDateEnd: options.customDateEnd,
+    ...options,
     projectDateRange: projectDateRange
       ? {
           start: projectDateRange.start.toISOString(),

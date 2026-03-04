@@ -7,7 +7,6 @@
 
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { renderHook, act } from "@testing-library/react";
-import type { Task } from "../../../src/types/chart.types";
 import { DEFAULT_EXPORT_OPTIONS } from "../../../src/utils/export/types";
 
 // ---------------------------------------------------------------------------
@@ -55,25 +54,7 @@ vi.mock("../../../src/components/Export/ExportRenderer", () => ({
 }));
 
 import { useExportPreview } from "../../../src/hooks/useExportPreview";
-
-// ---------------------------------------------------------------------------
-// Helpers
-// ---------------------------------------------------------------------------
-
-function makeTask(overrides: Partial<Task> & { id: string }): Task {
-  return {
-    name: "Task",
-    startDate: "2025-01-01",
-    endDate: "2025-01-10",
-    duration: 10,
-    progress: 0,
-    color: "#0F6CBD",
-    order: 0,
-    metadata: {},
-    type: "task",
-    ...overrides,
-  };
-}
+import { makeTask } from "../helpers/taskFactory";
 
 const defaultParams = {
   tasks: [makeTask({ id: "t1" })],
@@ -238,5 +219,37 @@ describe("useExportPreview", () => {
     });
 
     expect(result.current.error).toBe("Preview generation failed");
+  });
+
+  // ── Options key coverage — regression for missing fields ───────────────────
+
+  it("triggers re-render when includeHeader option changes", async () => {
+    // Regression test: includeHeader was previously omitted from createOptionsKey,
+    // so toggling it would not trigger a new preview render.
+    const { rerender } = renderHook(
+      ({ includeHeader }: { includeHeader: boolean }) =>
+        useExportPreview({
+          ...defaultParams,
+          options: { ...DEFAULT_EXPORT_OPTIONS, includeHeader },
+        }),
+      { initialProps: { includeHeader: false } }
+    );
+
+    await act(async () => {
+      await vi.runAllTimersAsync();
+    });
+
+    const renderCountBefore = mocks.mockCreateRoot.mock.calls.length;
+    expect(renderCountBefore).toBeGreaterThan(0);
+
+    rerender({ includeHeader: true });
+
+    await act(async () => {
+      await vi.runAllTimersAsync();
+    });
+
+    expect(mocks.mockCreateRoot.mock.calls.length).toBeGreaterThan(
+      renderCountBefore
+    );
   });
 });
