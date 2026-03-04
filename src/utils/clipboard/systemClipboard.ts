@@ -44,6 +44,11 @@ const ISO_DATE_RE = /^\d{4}-\d{2}-\d{2}$/;
 // Safety limit — rejects payloads clearly too large to be valid chart data
 const MAX_CLIPBOARD_SIZE = 5_000_000;
 
+/** Logs a warning to the console in development mode only. No-op in production. */
+function devWarn(...args: unknown[]): void {
+  if (import.meta.env.DEV) console.warn(...args);
+}
+
 /** Returns true if v is a finite number (excludes NaN and ±Infinity). */
 function isFiniteNumber(v: unknown): v is number {
   return typeof v === "number" && Number.isFinite(v);
@@ -132,8 +137,7 @@ async function writeToClipboard(
     await navigator.clipboard.writeText(prefix + JSON.stringify(data));
     return true;
   } catch (error) {
-    if (import.meta.env.DEV)
-      console.warn("Failed to write to system clipboard:", error);
+    devWarn("Failed to write to system clipboard:", error);
     return false;
   }
 }
@@ -151,7 +155,8 @@ type ClipboardReadResult =
  * Shared read helper — reads clipboard text, checks prefix, and parses JSON.
  * Returns a discriminated result:
  * - `no-match`: clipboard doesn't contain OwnChart data for this prefix
- * - `parse-error`: prefix matched but JSON is invalid or root is not an object
+ * - `parse-error`: prefix matched (or payload exceeded the size limit) but the
+ *   data is invalid; `reason` contains a diagnostic message logged in DEV mode
  * - `ok`: successfully parsed; `data` is the parsed object
  *
  * @remarks May throw if the Clipboard API itself rejects (e.g., permission denied).
@@ -159,7 +164,13 @@ type ClipboardReadResult =
  */
 async function readFromClipboard(prefix: string): Promise<ClipboardReadResult> {
   const text = await navigator.clipboard.readText();
-  if (text.length > MAX_CLIPBOARD_SIZE || !text.startsWith(prefix)) {
+  if (text.length > MAX_CLIPBOARD_SIZE) {
+    return {
+      status: "parse-error",
+      reason: `Payload too large (${text.length} bytes, limit ${MAX_CLIPBOARD_SIZE})`,
+    };
+  }
+  if (!text.startsWith(prefix)) {
     return { status: "no-match" };
   }
   const jsonStr = text.slice(prefix.length);
@@ -211,11 +222,7 @@ export async function readRowsFromSystemClipboard(): Promise<SystemRowClipboardD
     const result = await readFromClipboard(OWNCHART_ROW_PREFIX);
     if (result.status === "no-match") return null;
     if (result.status === "parse-error") {
-      if (import.meta.env.DEV)
-        console.warn(
-          "OwnChart row clipboard data is malformed:",
-          result.reason
-        );
+      devWarn("OwnChart row clipboard data is malformed:", result.reason);
       return null;
     }
 
@@ -224,35 +231,31 @@ export async function readRowsFromSystemClipboard(): Promise<SystemRowClipboardD
 
     // Structural validation
     if (!Array.isArray(data.tasks) || !Array.isArray(data.dependencies)) {
-      if (import.meta.env.DEV)
-        console.warn(
-          "OwnChart row clipboard: missing tasks or dependencies array (possible version mismatch)"
-        );
+      devWarn(
+        "OwnChart row clipboard: missing tasks or dependencies array (possible version mismatch)"
+      );
       return null;
     }
 
     // Verify each task has the minimum required shape
     if (!data.tasks.every(isValidTaskShape)) {
-      if (import.meta.env.DEV)
-        console.warn(
-          "OwnChart row clipboard: one or more tasks failed shape validation (possible version mismatch)"
-        );
+      devWarn(
+        "OwnChart row clipboard: one or more tasks failed shape validation (possible version mismatch)"
+      );
       return null;
     }
 
     // Verify each dependency has the minimum required shape
     if (!data.dependencies.every(isValidDependencyShape)) {
-      if (import.meta.env.DEV)
-        console.warn(
-          "OwnChart row clipboard: one or more dependencies failed shape validation (possible version mismatch)"
-        );
+      devWarn(
+        "OwnChart row clipboard: one or more dependencies failed shape validation (possible version mismatch)"
+      );
       return null;
     }
 
     return data;
   } catch (error) {
-    if (import.meta.env.DEV)
-      console.warn("Failed to read from system clipboard:", error);
+    devWarn("Failed to read from system clipboard:", error);
     return null;
   }
 }
@@ -272,11 +275,7 @@ export async function readCellFromSystemClipboard(): Promise<SystemCellClipboard
     const result = await readFromClipboard(OWNCHART_CELL_PREFIX);
     if (result.status === "no-match") return null;
     if (result.status === "parse-error") {
-      if (import.meta.env.DEV)
-        console.warn(
-          "OwnChart cell clipboard data is malformed:",
-          result.reason
-        );
+      devWarn("OwnChart cell clipboard data is malformed:", result.reason);
       return null;
     }
 
@@ -285,17 +284,15 @@ export async function readCellFromSystemClipboard(): Promise<SystemCellClipboard
 
     // Validate field is a known EditableField value
     if (!VALID_EDITABLE_FIELDS.has(data.field) || data.value == null) {
-      if (import.meta.env.DEV)
-        console.warn(
-          "OwnChart cell clipboard: invalid field or missing value (possible version mismatch)"
-        );
+      devWarn(
+        "OwnChart cell clipboard: invalid field or missing value (possible version mismatch)"
+      );
       return null;
     }
 
     return data;
   } catch (error) {
-    if (import.meta.env.DEV)
-      console.warn("Failed to read from system clipboard:", error);
+    devWarn("Failed to read from system clipboard:", error);
     return null;
   }
 }
@@ -322,8 +319,7 @@ export async function getSystemClipboardType(): Promise<"row" | "cell" | null> {
     }
     return null;
   } catch (error) {
-    if (import.meta.env.DEV)
-      console.warn("Failed to check system clipboard:", error);
+    devWarn("Failed to check system clipboard:", error);
     return null;
   }
 }
@@ -335,8 +331,7 @@ export async function clearSystemClipboard(): Promise<void> {
   try {
     await navigator.clipboard.writeText("");
   } catch (error) {
-    if (import.meta.env.DEV)
-      console.warn("Failed to clear system clipboard:", error);
+    devWarn("Failed to clear system clipboard:", error);
   }
 }
 

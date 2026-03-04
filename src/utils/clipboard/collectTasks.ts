@@ -36,9 +36,13 @@ function collectHiddenDescendants(
  * - EXCEPTION: If a selected task is collapsed (open === false),
  *   also include its hidden children recursively
  *
+ * The result is sorted by the tasks' position in `allTasks` (visual order),
+ * so the returned order is deterministic regardless of the order in which
+ * `taskIds` were accumulated (e.g. from non-sequential Ctrl+click selection).
+ *
  * @param taskIds - IDs of explicitly selected tasks
- * @param allTasks - Complete task list
- * @returns Array of tasks to copy
+ * @param allTasks - Complete task list (defines canonical visual order)
+ * @returns Array of tasks to copy, sorted in visual order
  */
 export function collectTasksWithChildren(
   taskIds: TaskId[],
@@ -49,6 +53,7 @@ export function collectTasksWithChildren(
 
   // Pre-build O(1) lookup structures to avoid O(n) scans inside loops
   const taskMap = new Map<TaskId, Task>(allTasks.map((t) => [t.id, t]));
+  const orderMap = new Map<TaskId, number>(allTasks.map((t, i) => [t.id, i]));
   const childrenMap = new Map<TaskId, Task[]>();
   allTasks.forEach((t) => {
     if (!t.parent) return;
@@ -78,7 +83,11 @@ export function collectTasksWithChildren(
     }
   });
 
-  return result;
+  // Sort by allTasks position to ensure deterministic visual order regardless
+  // of how taskIds were accumulated (e.g. Ctrl+click in non-top-to-bottom order).
+  return result.sort(
+    (a, b) => (orderMap.get(a.id) ?? 0) - (orderMap.get(b.id) ?? 0)
+  );
 }
 
 /**
