@@ -26,6 +26,16 @@ type InsertionActions = Pick<
 >;
 
 /**
+ * Fractional offset applied to refTask.order when computing pre-normalization
+ * order values for newly inserted tasks. Must satisfy:
+ *   count × INSERTION_ORDER_STEP < 1.0
+ * so that inserted tasks stay within the gap between two consecutive integer
+ * orders produced by normalizeTaskOrder. The practical maximum count
+ * (inserting all tasks at once via Ctrl++) is well below 1 / INSERTION_ORDER_STEP.
+ */
+const INSERTION_ORDER_STEP = 0.001;
+
+/**
  * Compute start/end dates for an inserted task relative to a reference task.
  */
 function computeInsertionDates(
@@ -97,8 +107,8 @@ function insertTasksRelative(
     // places new tasks correctly regardless of array position.
     const fractionalOrder =
       direction === "below"
-        ? refOrder + 0.001 * (i + 1)
-        : refOrder - 0.001 * (i + 1);
+        ? refOrder + INSERTION_ORDER_STEP * (i + 1)
+        : refOrder - INSERTION_ORDER_STEP * (i + 1);
 
     tasksToInsert.push({
       name: DEFAULT_TASK_NAME,

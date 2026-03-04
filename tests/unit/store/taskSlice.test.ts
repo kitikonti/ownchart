@@ -2,6 +2,20 @@ import { describe, it, expect, beforeEach } from 'vitest';
 import { useTaskStore } from '../../../src/store/slices/taskSlice';
 import { useHistoryStore } from '../../../src/store/slices/historySlice';
 import type { Task, TaskType } from '../../../src/types/chart.types';
+import { COLORS } from '../../../src/styles/design-tokens';
+
+/**
+ * Test helper: creates a Task with default values for fields irrelevant to
+ * insertion/ordering tests (progress=0, project default color, empty metadata).
+ */
+const makeTask = (
+  fields: Omit<Task, 'progress' | 'color' | 'metadata'>
+): Task => ({
+  ...fields,
+  progress: 0,
+  color: COLORS.chart.taskDefault,
+  metadata: {},
+});
 
 describe('Task Store - CRUD Operations', () => {
   beforeEach(() => {
@@ -2635,62 +2649,14 @@ describe('Task Store - CRUD Operations', () => {
 
   describe('insertTaskBelow with mispositioned array order', () => {
     it('should insert between siblings when array order differs from display order', () => {
-      // Parent with 3 children: C1(order=0), C2(order=1), C3(order=2)
+      // Parent with 3 children: C1(order=1), C2(order=2), C3(order=3)
       // but C1 is at end of state.tasks array (simulating real-world divergence)
       const tasks: Task[] = [
-        {
-          id: 'parent' as any,
-          name: 'Parent',
-          startDate: '2025-01-01',
-          endDate: '2025-01-31',
-          duration: 31,
-          progress: 0,
-          color: '#4A90D9',
-          order: 0,
-          type: 'summary' as TaskType,
-          parent: undefined,
-          metadata: {},
-        },
-        {
-          id: 'c2' as any,
-          name: 'Child 2',
-          startDate: '2025-01-11',
-          endDate: '2025-01-20',
-          duration: 10,
-          progress: 0,
-          color: '#4A90D9',
-          order: 2,
-          type: 'task' as TaskType,
-          parent: 'parent' as any,
-          metadata: {},
-        },
-        {
-          id: 'c3' as any,
-          name: 'Child 3',
-          startDate: '2025-01-21',
-          endDate: '2025-01-31',
-          duration: 11,
-          progress: 0,
-          color: '#4A90D9',
-          order: 3,
-          type: 'task' as TaskType,
-          parent: 'parent' as any,
-          metadata: {},
-        },
+        makeTask({ id: 'parent' as any, name: 'Parent', startDate: '2025-01-01', endDate: '2025-01-31', duration: 31, order: 0, type: 'summary' as TaskType, parent: undefined }),
+        makeTask({ id: 'c2' as any, name: 'Child 2', startDate: '2025-01-11', endDate: '2025-01-20', duration: 10, order: 2, type: 'task' as TaskType, parent: 'parent' as any }),
+        makeTask({ id: 'c3' as any, name: 'Child 3', startDate: '2025-01-21', endDate: '2025-01-31', duration: 11, order: 3, type: 'task' as TaskType, parent: 'parent' as any }),
         // C1 at END of array but has lowest order among siblings
-        {
-          id: 'c1' as any,
-          name: 'Child 1',
-          startDate: '2025-01-01',
-          endDate: '2025-01-10',
-          duration: 10,
-          progress: 0,
-          color: '#4A90D9',
-          order: 1,
-          type: 'task' as TaskType,
-          parent: 'parent' as any,
-          metadata: {},
-        },
+        makeTask({ id: 'c1' as any, name: 'Child 1', startDate: '2025-01-01', endDate: '2025-01-10', duration: 10, order: 1, type: 'task' as TaskType, parent: 'parent' as any }),
       ];
 
       useTaskStore.setState({ tasks });
@@ -2713,58 +2679,10 @@ describe('Task Store - CRUD Operations', () => {
 
     it('should insert above child with mispositioned array', () => {
       const tasks: Task[] = [
-        {
-          id: 'parent' as any,
-          name: 'Parent',
-          startDate: '2025-01-01',
-          endDate: '2025-01-31',
-          duration: 31,
-          progress: 0,
-          color: '#4A90D9',
-          order: 0,
-          type: 'summary' as TaskType,
-          parent: undefined,
-          metadata: {},
-        },
-        {
-          id: 'c2' as any,
-          name: 'Child 2',
-          startDate: '2025-01-11',
-          endDate: '2025-01-20',
-          duration: 10,
-          progress: 0,
-          color: '#4A90D9',
-          order: 2,
-          type: 'task' as TaskType,
-          parent: 'parent' as any,
-          metadata: {},
-        },
-        {
-          id: 'c3' as any,
-          name: 'Child 3',
-          startDate: '2025-01-21',
-          endDate: '2025-01-31',
-          duration: 11,
-          progress: 0,
-          color: '#4A90D9',
-          order: 3,
-          type: 'task' as TaskType,
-          parent: 'parent' as any,
-          metadata: {},
-        },
-        {
-          id: 'c1' as any,
-          name: 'Child 1',
-          startDate: '2025-01-01',
-          endDate: '2025-01-10',
-          duration: 10,
-          progress: 0,
-          color: '#4A90D9',
-          order: 1,
-          type: 'task' as TaskType,
-          parent: 'parent' as any,
-          metadata: {},
-        },
+        makeTask({ id: 'parent' as any, name: 'Parent', startDate: '2025-01-01', endDate: '2025-01-31', duration: 31, order: 0, type: 'summary' as TaskType, parent: undefined }),
+        makeTask({ id: 'c2' as any, name: 'Child 2', startDate: '2025-01-11', endDate: '2025-01-20', duration: 10, order: 2, type: 'task' as TaskType, parent: 'parent' as any }),
+        makeTask({ id: 'c3' as any, name: 'Child 3', startDate: '2025-01-21', endDate: '2025-01-31', duration: 11, order: 3, type: 'task' as TaskType, parent: 'parent' as any }),
+        makeTask({ id: 'c1' as any, name: 'Child 1', startDate: '2025-01-01', endDate: '2025-01-10', duration: 10, order: 1, type: 'task' as TaskType, parent: 'parent' as any }),
       ];
 
       useTaskStore.setState({ tasks });
@@ -2788,32 +2706,8 @@ describe('Task Store - CRUD Operations', () => {
     it('should insert below at root level with mispositioned array', () => {
       // R1(order=0), R2(order=1) where R1 is at end of array
       const tasks: Task[] = [
-        {
-          id: 'r2' as any,
-          name: 'Root 2',
-          startDate: '2025-01-11',
-          endDate: '2025-01-20',
-          duration: 10,
-          progress: 0,
-          color: '#4A90D9',
-          order: 1,
-          type: 'task' as TaskType,
-          parent: undefined,
-          metadata: {},
-        },
-        {
-          id: 'r1' as any,
-          name: 'Root 1',
-          startDate: '2025-01-01',
-          endDate: '2025-01-10',
-          duration: 10,
-          progress: 0,
-          color: '#4A90D9',
-          order: 0,
-          type: 'task' as TaskType,
-          parent: undefined,
-          metadata: {},
-        },
+        makeTask({ id: 'r2' as any, name: 'Root 2', startDate: '2025-01-11', endDate: '2025-01-20', duration: 10, order: 1, type: 'task' as TaskType, parent: undefined }),
+        makeTask({ id: 'r1' as any, name: 'Root 1', startDate: '2025-01-01', endDate: '2025-01-10', duration: 10, order: 0, type: 'task' as TaskType, parent: undefined }),
       ];
 
       useTaskStore.setState({ tasks });
@@ -2835,58 +2729,10 @@ describe('Task Store - CRUD Operations', () => {
 
     it('should insert below last child correctly', () => {
       const tasks: Task[] = [
-        {
-          id: 'parent' as any,
-          name: 'Parent',
-          startDate: '2025-01-01',
-          endDate: '2025-01-31',
-          duration: 31,
-          progress: 0,
-          color: '#4A90D9',
-          order: 0,
-          type: 'summary' as TaskType,
-          parent: undefined,
-          metadata: {},
-        },
-        {
-          id: 'c3' as any,
-          name: 'Child 3',
-          startDate: '2025-01-21',
-          endDate: '2025-01-31',
-          duration: 11,
-          progress: 0,
-          color: '#4A90D9',
-          order: 3,
-          type: 'task' as TaskType,
-          parent: 'parent' as any,
-          metadata: {},
-        },
-        {
-          id: 'c1' as any,
-          name: 'Child 1',
-          startDate: '2025-01-01',
-          endDate: '2025-01-10',
-          duration: 10,
-          progress: 0,
-          color: '#4A90D9',
-          order: 1,
-          type: 'task' as TaskType,
-          parent: 'parent' as any,
-          metadata: {},
-        },
-        {
-          id: 'c2' as any,
-          name: 'Child 2',
-          startDate: '2025-01-11',
-          endDate: '2025-01-20',
-          duration: 10,
-          progress: 0,
-          color: '#4A90D9',
-          order: 2,
-          type: 'task' as TaskType,
-          parent: 'parent' as any,
-          metadata: {},
-        },
+        makeTask({ id: 'parent' as any, name: 'Parent', startDate: '2025-01-01', endDate: '2025-01-31', duration: 31, order: 0, type: 'summary' as TaskType, parent: undefined }),
+        makeTask({ id: 'c3' as any, name: 'Child 3', startDate: '2025-01-21', endDate: '2025-01-31', duration: 11, order: 3, type: 'task' as TaskType, parent: 'parent' as any }),
+        makeTask({ id: 'c1' as any, name: 'Child 1', startDate: '2025-01-01', endDate: '2025-01-10', duration: 10, order: 1, type: 'task' as TaskType, parent: 'parent' as any }),
+        makeTask({ id: 'c2' as any, name: 'Child 2', startDate: '2025-01-11', endDate: '2025-01-20', duration: 10, order: 2, type: 'task' as TaskType, parent: 'parent' as any }),
       ];
 
       useTaskStore.setState({ tasks });
@@ -2911,84 +2757,12 @@ describe('Task Store - CRUD Operations', () => {
     it('should preserve all sibling order after insertion', () => {
       // 5 siblings with array order completely different from display order
       const tasks: Task[] = [
-        {
-          id: 'parent' as any,
-          name: 'Parent',
-          startDate: '2025-01-01',
-          endDate: '2025-02-28',
-          duration: 59,
-          progress: 0,
-          color: '#4A90D9',
-          order: 0,
-          type: 'summary' as TaskType,
-          parent: undefined,
-          metadata: {},
-        },
-        {
-          id: 's4' as any,
-          name: 'Sibling 4',
-          startDate: '2025-01-25',
-          endDate: '2025-01-31',
-          duration: 7,
-          progress: 0,
-          color: '#4A90D9',
-          order: 4,
-          type: 'task' as TaskType,
-          parent: 'parent' as any,
-          metadata: {},
-        },
-        {
-          id: 's2' as any,
-          name: 'Sibling 2',
-          startDate: '2025-01-11',
-          endDate: '2025-01-17',
-          duration: 7,
-          progress: 0,
-          color: '#4A90D9',
-          order: 2,
-          type: 'task' as TaskType,
-          parent: 'parent' as any,
-          metadata: {},
-        },
-        {
-          id: 's5' as any,
-          name: 'Sibling 5',
-          startDate: '2025-02-01',
-          endDate: '2025-02-07',
-          duration: 7,
-          progress: 0,
-          color: '#4A90D9',
-          order: 5,
-          type: 'task' as TaskType,
-          parent: 'parent' as any,
-          metadata: {},
-        },
-        {
-          id: 's1' as any,
-          name: 'Sibling 1',
-          startDate: '2025-01-04',
-          endDate: '2025-01-10',
-          duration: 7,
-          progress: 0,
-          color: '#4A90D9',
-          order: 1,
-          type: 'task' as TaskType,
-          parent: 'parent' as any,
-          metadata: {},
-        },
-        {
-          id: 's3' as any,
-          name: 'Sibling 3',
-          startDate: '2025-01-18',
-          endDate: '2025-01-24',
-          duration: 7,
-          progress: 0,
-          color: '#4A90D9',
-          order: 3,
-          type: 'task' as TaskType,
-          parent: 'parent' as any,
-          metadata: {},
-        },
+        makeTask({ id: 'parent' as any, name: 'Parent', startDate: '2025-01-01', endDate: '2025-02-28', duration: 59, order: 0, type: 'summary' as TaskType, parent: undefined }),
+        makeTask({ id: 's4' as any, name: 'Sibling 4', startDate: '2025-01-25', endDate: '2025-01-31', duration: 7, order: 4, type: 'task' as TaskType, parent: 'parent' as any }),
+        makeTask({ id: 's2' as any, name: 'Sibling 2', startDate: '2025-01-11', endDate: '2025-01-17', duration: 7, order: 2, type: 'task' as TaskType, parent: 'parent' as any }),
+        makeTask({ id: 's5' as any, name: 'Sibling 5', startDate: '2025-02-01', endDate: '2025-02-07', duration: 7, order: 5, type: 'task' as TaskType, parent: 'parent' as any }),
+        makeTask({ id: 's1' as any, name: 'Sibling 1', startDate: '2025-01-04', endDate: '2025-01-10', duration: 7, order: 1, type: 'task' as TaskType, parent: 'parent' as any }),
+        makeTask({ id: 's3' as any, name: 'Sibling 3', startDate: '2025-01-18', endDate: '2025-01-24', duration: 7, order: 3, type: 'task' as TaskType, parent: 'parent' as any }),
       ];
 
       useTaskStore.setState({ tasks });

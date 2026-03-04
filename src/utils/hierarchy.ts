@@ -683,8 +683,7 @@ export function getEffectiveTasksToMove(
  * Note: uses the existing sibling `order` values as input (for intra-group
  * sorting inside buildFlattenedTaskList) and produces globally sequential
  * order values as output.
- */
-/**
+ *
  * WARNING: Do NOT use `tasks[i].order = i` on the raw tasks array as a
  * substitute for this function. Array index does NOT correspond to display
  * order. Instead use fractional order values + normalizeTaskOrder() for
