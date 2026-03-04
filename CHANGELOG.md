@@ -2,6 +2,30 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [1.1.17](https://github.com/kitikonti/ownchart/compare/v1.1.16...v1.1.17) (2026-03-04)
+
+
+### Code Refactoring
+
+* address remaining clipboard review findings ([a373b55](https://github.com/kitikonti/ownchart/commit/a373b5582959c82cfbc89086319e5dfa29e92e55))
+* apply code review fixes to clipboard utils ([6a9802b](https://github.com/kitikonti/ownchart/commit/6a9802b146f29963bbfc759d215fd0a96ac2533b))
+* apply fifth-pass code review fixes to clipboard utils ([e305bb6](https://github.com/kitikonti/ownchart/commit/e305bb6e8b380c8d4bad0f96214918a7abc37089))
+* apply final review fixes to clipboard utils ([6197d14](https://github.com/kitikonti/ownchart/commit/6197d14bbaa25a9873ffa11bff3b9da3034d0ba7))
+* apply fourth-pass code review fixes to clipboard utils ([3dc76a5](https://github.com/kitikonti/ownchart/commit/3dc76a5b03d2bed348a1230ac615a015ea8a0f4c))
+* apply full code review fixes to clipboard utils ([27081f5](https://github.com/kitikonti/ownchart/commit/27081f58153798083f738e536ce9ff521bbb458e))
+* apply review fixes and add unit tests for clipboard utils ([6c64feb](https://github.com/kitikonti/ownchart/commit/6c64feb167fdaf59833aba24c8aa470535cf7e21))
+* apply review fixes to clipboard utils and consolidate TASK_TYPES ([2dc6d64](https://github.com/kitikonti/ownchart/commit/2dc6d6484db653ee4e603d23862371dc814f7ad8))
+* apply second-pass code review fixes to clipboard utils ([8e813aa](https://github.com/kitikonti/ownchart/commit/8e813aabb3660c55816285f54af8a4715f4889d4))
+* apply senior code review fixes to clipboard utils ([3adea2f](https://github.com/kitikonti/ownchart/commit/3adea2f6e3959bccd7ac4f6a0e0a3911b331307b))
+* apply third-pass code review fixes to clipboard utils ([cefe1a3](https://github.com/kitikonti/ownchart/commit/cefe1a38a71247b9d2ddc7b1d309666f9be5e0a6))
+* fix remaining clipboard review findings ([333739d](https://github.com/kitikonti/ownchart/commit/333739d1f6f42dc7c06e77775f7cb07b30013186))
+* fix review findings in clipboard utils ([3069b44](https://github.com/kitikonti/ownchart/commit/3069b44b85515b6f4392e928e4c7ec32053db7a7))
+* harden clipboard utils and fix ordering ([e7d6413](https://github.com/kitikonti/ownchart/commit/e7d641303fbf2274bff48fc881f0ff99a4649151))
+* harden clipboard utils per review findings ([2e6fbf4](https://github.com/kitikonti/ownchart/commit/2e6fbf44551ea4416127f0f847aad0f417940fad))
+* harden clipboard utils per review recommendations ([d591d45](https://github.com/kitikonti/ownchart/commit/d591d45a5111997f8b62802762b25c1ed4363473))
+* harden clipboard utils with senior dev improvements ([133c869](https://github.com/kitikonti/ownchart/commit/133c869c8373709bc086c6e8e5d43d2544220b42))
+* harden clipboard validation and improve parse error diagnostics ([ce43608](https://github.com/kitikonti/ownchart/commit/ce43608fba3667ce32ea92441baf8c3e232c534f))
+
 ## [1.1.16](https://github.com/kitikonti/ownchart/compare/v1.1.15...v1.1.16) (2026-03-04)
 
 
