@@ -82,7 +82,11 @@ test.describe("contentEditable shortcut filtering", () => {
 
     // Press 'd' with the element focused.  This should be a no-op — the
     // shortcut handler must not intercept the event.
-    const defaultPrevented = await page.evaluate(
+    //
+    // Do NOT await the evaluate — we need to queue the listener registration
+    // first, then fire the key press.  Awaiting would deadlock because the
+    // in-page Promise only resolves after the keydown event fires.
+    const defaultPreventedPromise = page.evaluate(
       () =>
         new Promise<boolean>((resolve) => {
           // Listen in the capture phase so we run first; we resolve after the
@@ -101,7 +105,7 @@ test.describe("contentEditable shortcut filtering", () => {
     await page.keyboard.press("d");
     // defaultPrevented will be false because the isTextInput guard returns
     // early without calling preventDefault().
-    expect(await defaultPrevented).toBe(false);
+    expect(await defaultPreventedPromise).toBe(false);
 
     await page.evaluate(() => {
       document.getElementById("e2e-ce-test-d")?.remove();
