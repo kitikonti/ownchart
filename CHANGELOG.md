@@ -2,6 +2,20 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [1.1.13](https://github.com/kitikonti/ownchart/compare/v1.1.12...v1.1.13) (2026-03-04)
+
+
+### Code Refactoring
+
+* apply review findings to layout and export components (F001–F004) ([0e71288](https://github.com/kitikonti/ownchart/commit/0e71288d289bfb866c7bb0bf28b06196d5defe57))
+* apply review findings to layout and export components (F001–F006) ([8400ebd](https://github.com/kitikonti/ownchart/commit/8400ebdd01132f06134940e503296c8e2c9b16c5))
+* apply review findings to layout and export components (F001–F006) ([337a7f3](https://github.com/kitikonti/ownchart/commit/337a7f34efbbb58130346da2997d81189de1a206))
+* apply review findings to layout and export components (F001–F007) ([dd7b496](https://github.com/kitikonti/ownchart/commit/dd7b496b0b7493756a1d88ac786487d2207c9024))
+* apply review findings to layout and export components (F001–F010) ([5246030](https://github.com/kitikonti/ownchart/commit/5246030ce2c1d072a0834d2161cfde235e781fe6))
+* apply review findings to layout and export components (F001–F010) ([c30d610](https://github.com/kitikonti/ownchart/commit/c30d61003ec71b3496a6d2c01434cde9676bb902))
+* apply review findings to layout and export components (F001–F012) ([8749490](https://github.com/kitikonti/ownchart/commit/87494906a855184c3778ae4e0989545470895ba4))
+* apply review findings to layout and export components (F002, F003, F005–F008) ([27e3356](https://github.com/kitikonti/ownchart/commit/27e33564fdb7ec0f1f35acc50560e749ac7ff862))
+
 ## [1.1.12](https://github.com/kitikonti/ownchart/compare/v1.1.11...v1.1.12) (2026-03-01)
 
 ## [1.1.11](https://github.com/kitikonti/ownchart/compare/v1.1.10...v1.1.11) (2026-03-01)
