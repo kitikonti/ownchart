@@ -376,6 +376,126 @@ describe("systemClipboard", () => {
         setClipboard({ colorOverride: "#ff0000" });
         expect(await readRowsFromSystemClipboard()).not.toBeNull();
       });
+
+      it("should reject task with empty string id", async () => {
+        setClipboard({ id: "" });
+        expect(await readRowsFromSystemClipboard()).toBeNull();
+      });
+
+      it("should reject task with negative duration", async () => {
+        setClipboard({ duration: -1 });
+        expect(await readRowsFromSystemClipboard()).toBeNull();
+      });
+
+      it("should accept task with zero duration", async () => {
+        setClipboard({ duration: 0 });
+        expect(await readRowsFromSystemClipboard()).not.toBeNull();
+      });
+
+      it("should reject task with progress above 100", async () => {
+        setClipboard({ progress: 101 });
+        expect(await readRowsFromSystemClipboard()).toBeNull();
+      });
+
+      it("should reject task with negative progress", async () => {
+        setClipboard({ progress: -1 });
+        expect(await readRowsFromSystemClipboard()).toBeNull();
+      });
+
+      it("should accept task with progress at boundary values (0 and 100)", async () => {
+        setClipboard({ progress: 0 });
+        expect(await readRowsFromSystemClipboard()).not.toBeNull();
+        setClipboard({ progress: 100 });
+        expect(await readRowsFromSystemClipboard()).not.toBeNull();
+      });
+
+      it("should reject task with negative order", async () => {
+        setClipboard({ order: -1 });
+        expect(await readRowsFromSystemClipboard()).toBeNull();
+      });
+
+      it("should accept task with order 0", async () => {
+        setClipboard({ order: 0 });
+        expect(await readRowsFromSystemClipboard()).not.toBeNull();
+      });
+
+      it("should reject task with array metadata", async () => {
+        setClipboard({ metadata: [] });
+        expect(await readRowsFromSystemClipboard()).toBeNull();
+      });
+
+      it("should reject task with empty string parent", async () => {
+        setClipboard({ parent: "" });
+        expect(await readRowsFromSystemClipboard()).toBeNull();
+      });
+
+      it("should accept task with non-empty string parent", async () => {
+        setClipboard({ parent: "some-parent-id" });
+        expect(await readRowsFromSystemClipboard()).not.toBeNull();
+      });
+    });
+
+    describe("dependency shape validation", () => {
+      const validTask = {
+        id: "task-1",
+        name: "Test Task",
+        startDate: "2025-01-01",
+        endDate: "2025-01-07",
+        duration: 7,
+        progress: 0,
+        color: "#3b82f6",
+        order: 0,
+        metadata: {},
+      };
+
+      const validDep = {
+        id: "dep-1",
+        fromTaskId: "task-1",
+        toTaskId: "task-2",
+        type: "FS",
+        createdAt: "2025-01-01T00:00:00Z",
+      };
+
+      const setClipboardWithDep = (
+        overrides: Record<string, unknown>
+      ): void => {
+        clipboardContent =
+          "OWNCHART_ROWS:" +
+          JSON.stringify({
+            tasks: [validTask],
+            dependencies: [{ ...validDep, ...overrides }],
+          });
+      };
+
+      it("should accept dependency with valid ISO datetime createdAt", async () => {
+        setClipboardWithDep({});
+        expect(await readRowsFromSystemClipboard()).not.toBeNull();
+      });
+
+      it("should reject dependency with invalid createdAt string", async () => {
+        setClipboardWithDep({ createdAt: "not-a-date" });
+        expect(await readRowsFromSystemClipboard()).toBeNull();
+      });
+
+      it("should reject dependency with empty string id", async () => {
+        setClipboardWithDep({ id: "" });
+        expect(await readRowsFromSystemClipboard()).toBeNull();
+      });
+
+      it("should reject dependency with empty string fromTaskId", async () => {
+        setClipboardWithDep({ fromTaskId: "" });
+        expect(await readRowsFromSystemClipboard()).toBeNull();
+      });
+
+      it("should reject dependency with empty string toTaskId", async () => {
+        setClipboardWithDep({ toTaskId: "" });
+        expect(await readRowsFromSystemClipboard()).toBeNull();
+      });
+
+      it("should reject dependency with unknown type", async () => {
+        setClipboardWithDep({ type: "INVALID" });
+        expect(await readRowsFromSystemClipboard()).toBeNull();
+      });
     });
   });
 

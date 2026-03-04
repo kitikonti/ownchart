@@ -49,6 +49,11 @@ function isFiniteNumber(v: unknown): v is number {
   return typeof v === "number" && Number.isFinite(v);
 }
 
+/** Returns true if s parses as a valid date (not NaN). Used for datetime fields. */
+function isValidDateString(s: string): boolean {
+  return !Number.isNaN(Date.parse(s));
+}
+
 /**
  * Validate that a parsed object has the minimum required Task shape.
  * Checks all required Task fields to catch cross-version or malformed clipboard data.
@@ -60,23 +65,30 @@ function isValidTaskShape(obj: unknown): boolean {
   const t = obj as Record<string, unknown>;
   return (
     typeof t.id === "string" &&
+    t.id.length > 0 &&
     typeof t.name === "string" &&
     typeof t.startDate === "string" &&
     ISO_DATE_RE.test(t.startDate as string) &&
     typeof t.endDate === "string" &&
     ISO_DATE_RE.test(t.endDate as string) &&
     isFiniteNumber(t.duration) &&
+    (t.duration as number) >= 0 &&
     isFiniteNumber(t.progress) &&
+    (t.progress as number) >= 0 &&
+    (t.progress as number) <= 100 &&
     typeof t.color === "string" &&
     HEX_COLOR_RE.test(t.color as string) &&
     isFiniteNumber(t.order) &&
+    (t.order as number) >= 0 &&
     typeof t.metadata === "object" &&
     t.metadata !== null &&
+    !Array.isArray(t.metadata) &&
     // Optional: type must be a known TaskType if present
     (t.type === undefined ||
       (typeof t.type === "string" && VALID_TASK_TYPES.has(t.type))) &&
-    // Optional: parent must be a string (TaskId) if present
-    (t.parent === undefined || typeof t.parent === "string") &&
+    // Optional: parent must be a non-empty string (TaskId) if present
+    (t.parent === undefined ||
+      (typeof t.parent === "string" && t.parent.length > 0)) &&
     // Optional: open must be boolean if present
     (t.open === undefined || typeof t.open === "boolean") &&
     // Optional: colorOverride must be a hex string if present
@@ -97,11 +109,15 @@ function isValidDependencyShape(obj: unknown): boolean {
   const d = obj as Record<string, unknown>;
   return (
     typeof d.id === "string" &&
+    d.id.length > 0 &&
     typeof d.fromTaskId === "string" &&
+    d.fromTaskId.length > 0 &&
     typeof d.toTaskId === "string" &&
+    d.toTaskId.length > 0 &&
     typeof d.type === "string" &&
     VALID_DEPENDENCY_TYPES.has(d.type) &&
-    typeof d.createdAt === "string"
+    typeof d.createdAt === "string" &&
+    isValidDateString(d.createdAt)
   );
 }
 
@@ -121,27 +137,40 @@ async function writeToClipboard(
 }
 
 /**
+ * Internal result type for readFromClipboard.
+ * Distinguishes "no OwnChart data present" from "data present but malformed".
+ */
+type ClipboardReadResult =
+  | { status: "no-match" }
+  | { status: "parse-error"; reason: string }
+  | { status: "ok"; data: Record<string, unknown> };
+
+/**
  * Shared read helper — reads clipboard text, checks prefix, and parses JSON.
- * Returns the parsed value if the prefix matches and JSON is valid; null otherwise.
+ * Returns a discriminated result:
+ * - `no-match`: clipboard doesn't contain OwnChart data for this prefix
+ * - `parse-error`: prefix matched but JSON is invalid or root is not an object
+ * - `ok`: successfully parsed; `data` is the parsed object
  *
  * @remarks May throw if the Clipboard API itself rejects (e.g., permission denied).
  *   All callers must wrap invocations in a try/catch block.
  */
-async function readFromClipboard(
-  prefix: string
-): Promise<Record<string, unknown> | null> {
+async function readFromClipboard(prefix: string): Promise<ClipboardReadResult> {
   const text = await navigator.clipboard.readText();
-  if (text.length > MAX_CLIPBOARD_SIZE) return null;
-  if (!text.startsWith(prefix)) return null;
+  if (text.length > MAX_CLIPBOARD_SIZE || !text.startsWith(prefix)) {
+    return { status: "no-match" };
+  }
   const jsonStr = text.slice(prefix.length);
   let parsed: unknown;
   try {
     parsed = JSON.parse(jsonStr);
   } catch {
-    return null;
+    return { status: "parse-error", reason: "JSON parse failed" };
   }
-  if (typeof parsed !== "object" || parsed === null) return null;
-  return parsed as Record<string, unknown>;
+  if (typeof parsed !== "object" || parsed === null) {
+    return { status: "parse-error", reason: "Root value is not an object" };
+  }
+  return { status: "ok", data: parsed as Record<string, unknown> };
 }
 
 /**
@@ -169,28 +198,52 @@ export async function writeCellToSystemClipboard(
 
 /**
  * Read row data from system clipboard.
- * Returns null if clipboard doesn't contain OwnChart row data.
+ * Returns null if clipboard doesn't contain valid OwnChart row data.
+ *
+ * In DEV mode, logs a warning when data is present but fails validation —
+ * this typically indicates a version mismatch or corrupted clipboard, which
+ * is distinct from the expected "clipboard contains non-OwnChart text" case.
  */
 export async function readRowsFromSystemClipboard(): Promise<SystemRowClipboardData | null> {
   try {
-    const parsed = await readFromClipboard(OWNCHART_ROW_PREFIX);
-    if (parsed === null) return null;
+    const result = await readFromClipboard(OWNCHART_ROW_PREFIX);
+    if (result.status === "no-match") return null;
+    if (result.status === "parse-error") {
+      if (import.meta.env.DEV)
+        console.warn(
+          "OwnChart row clipboard data is malformed:",
+          result.reason
+        );
+      return null;
+    }
 
     // safe cast — structure validated immediately below
-    const data = parsed as unknown as SystemRowClipboardData;
+    const data = result.data as unknown as SystemRowClipboardData;
 
     // Structural validation
     if (!Array.isArray(data.tasks) || !Array.isArray(data.dependencies)) {
+      if (import.meta.env.DEV)
+        console.warn(
+          "OwnChart row clipboard: missing tasks or dependencies array (possible version mismatch)"
+        );
       return null;
     }
 
     // Verify each task has the minimum required shape
     if (!data.tasks.every(isValidTaskShape)) {
+      if (import.meta.env.DEV)
+        console.warn(
+          "OwnChart row clipboard: one or more tasks failed shape validation (possible version mismatch)"
+        );
       return null;
     }
 
     // Verify each dependency has the minimum required shape
     if (!data.dependencies.every(isValidDependencyShape)) {
+      if (import.meta.env.DEV)
+        console.warn(
+          "OwnChart row clipboard: one or more dependencies failed shape validation (possible version mismatch)"
+        );
       return null;
     }
 
@@ -204,7 +257,9 @@ export async function readRowsFromSystemClipboard(): Promise<SystemRowClipboardD
 
 /**
  * Read cell data from system clipboard.
- * Returns null if clipboard doesn't contain OwnChart cell data.
+ * Returns null if clipboard doesn't contain valid OwnChart cell data.
+ *
+ * In DEV mode, logs a warning when data is present but fails validation.
  *
  * @remarks The `field` is validated against known EditableField values.
  * The `value` is only checked for existence (not undefined) — callers should
@@ -212,14 +267,26 @@ export async function readRowsFromSystemClipboard(): Promise<SystemRowClipboardD
  */
 export async function readCellFromSystemClipboard(): Promise<SystemCellClipboardData | null> {
   try {
-    const parsed = await readFromClipboard(OWNCHART_CELL_PREFIX);
-    if (parsed === null) return null;
+    const result = await readFromClipboard(OWNCHART_CELL_PREFIX);
+    if (result.status === "no-match") return null;
+    if (result.status === "parse-error") {
+      if (import.meta.env.DEV)
+        console.warn(
+          "OwnChart cell clipboard data is malformed:",
+          result.reason
+        );
+      return null;
+    }
 
     // safe cast — field and value validated immediately below
-    const data = parsed as unknown as SystemCellClipboardData;
+    const data = result.data as unknown as SystemCellClipboardData;
 
     // Validate field is a known EditableField value
     if (!VALID_EDITABLE_FIELDS.has(data.field) || data.value == null) {
+      if (import.meta.env.DEV)
+        console.warn(
+          "OwnChart cell clipboard: invalid field or missing value (possible version mismatch)"
+        );
       return null;
     }
 
@@ -241,6 +308,7 @@ export async function readCellFromSystemClipboard(): Promise<SystemCellClipboard
  */
 export async function getSystemClipboardType(): Promise<"row" | "cell" | null> {
   try {
+    // NOTE: Separate read from the actual data fetch — see JSDoc above.
     const text = await navigator.clipboard.readText();
     if (text.length > MAX_CLIPBOARD_SIZE) return null;
 

@@ -48,7 +48,7 @@ export function determineInsertPosition(
   const indexMap = new Map(flattenedTasks.map(({ task }, i) => [task.id, i]));
 
   // Priority 2: Active cell row -> insert above it
-  if (activeCell.taskId) {
+  if (activeCell.taskId !== null) {
     const index = indexMap.get(activeCell.taskId) ?? -1;
     if (index !== -1) return index;
   }
