@@ -2,6 +2,23 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [1.1.16](https://github.com/kitikonti/ownchart/compare/v1.1.15...v1.1.16) (2026-03-04)
+
+
+### Bug Fixes
+
+* correct stableHash import path in computeTaskColor.test.ts ([6056b09](https://github.com/kitikonti/ownchart/commit/6056b0940586a1dd18da05a55ad1f81d248e67eb))
+
+
+### Code Refactoring
+
+* address all review findings in colorUtils.ts ([4512840](https://github.com/kitikonti/ownchart/commit/4512840de7d153dc7637e7d40ca1870f3e6fc53c))
+* fix all review findings in colorUtils.ts ([fe8383b](https://github.com/kitikonti/ownchart/commit/fe8383b8626306b379c8d27ab782a8ec7d78c82b))
+* fix all review findings in colorUtils.ts ([ce71691](https://github.com/kitikonti/ownchart/commit/ce716918eca72f288d64493681e96d636df56809))
+* fix all review findings in colorUtils.ts ([bef0c93](https://github.com/kitikonti/ownchart/commit/bef0c93de4bb953eea9e0338e5bcb089f04f58f5)), closes [#0F6](https://github.com/kitikonti/ownchart/issues/0F6)
+* harden colorUtils with named constants and expanded tests ([bbdbc7c](https://github.com/kitikonti/ownchart/commit/bbdbc7c975e498ce7f7c6b726b0b8c0c4102a629)), closes [#1e293](https://github.com/kitikonti/ownchart/issues/1e293)
+* harden colorUtils with named constants and expanded tests ([e4be1fe](https://github.com/kitikonti/ownchart/commit/e4be1fec5f9244b6a924c756e2d68f59d44b0580))
+
 ## [1.1.15](https://github.com/kitikonti/ownchart/compare/v1.1.14...v1.1.15) (2026-03-04)
 
 
