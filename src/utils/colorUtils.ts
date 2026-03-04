@@ -1,6 +1,12 @@
 /**
- * Color utilities for calculating text contrast
- * Uses WCAG 2.1 relative luminance algorithm for accessibility-compliant contrast
+ * Color utilities for calculating text contrast, HSL manipulation, and palette
+ * generation.
+ *
+ * WCAG 2.1 relative luminance algorithm:
+ * @see https://www.w3.org/TR/WCAG21/#dfn-relative-luminance
+ *
+ * For general-purpose string hashing (e.g. mapping task IDs to palette
+ * indices), see {@link ../utils/hashUtils}.
  */
 
 import { COLORS, SLATE_800 } from "../styles/design-tokens";
@@ -52,15 +58,22 @@ const LUMINANCE_B = 0.0722;
 const WCAG_CONTRAST_OFFSET = 0.05;
 
 /**
- * Converts a hex color string to RGB values
- * Handles both 3-digit (#RGB) and 6-digit (#RRGGBB) formats, with or without #
+ * Converts a hex color string to RGB values.
  *
- * Falls back to DEFAULT_COLOR for null/undefined/empty strings and for strings
- * that produce invalid (NaN) channel values (e.g. "#ZZZZZZ"). The return value
- * always contains valid 0–255 channel integers.
+ * Supported formats (with or without leading `#`):
+ * - 3-digit shorthand:  #RGB  → expands each digit (e.g. #F0A → #FF00AA)
+ * - 6-digit standard:   #RRGGBB
+ * - 8-digit with alpha: #RRGGBBAA — alpha channel is silently ignored
+ *
+ * Not supported: 4-digit CSS shorthand (#RGBA). The blue channel would parse
+ * as NaN, causing a fallback to DEFAULT_COLOR.
+ *
+ * Falls back to DEFAULT_COLOR for empty strings and for strings that produce
+ * invalid (NaN) channel values (e.g. "#ZZZZZZ"). The return value always
+ * contains valid 0–255 channel integers.
  */
 export function hexToRgb(hex: string): { r: number; g: number; b: number } {
-  // Handle undefined/null/empty by using default
+  // Defensive fallback for empty strings (runtime safety net)
   const safeHex = hex || DEFAULT_COLOR;
 
   // Remove leading # if present
@@ -174,30 +187,6 @@ export function getContrastTextColor(
   }
 
   return darkText;
-}
-
-// ═══════════════════════════════════════════════════════════════════════════
-// STABLE HASH (for deterministic color assignment)
-// ═══════════════════════════════════════════════════════════════════════════
-
-/** Initial hash value for DJB2 — chosen empirically for low collision rates */
-const DJB2_SEED = 5381;
-/** Bit-shift amount for DJB2: hash * 33 ≡ (hash << 5) + hash */
-const DJB2_SHIFT = 5;
-/** 31-bit mask to ensure stableHash always returns a non-negative integer */
-const INT31_MASK = 0x7fffffff;
-
-/**
- * DJB2 hash function for deterministic, stable color assignment.
- * Produces a non-negative integer from a string (e.g., task ID).
- * @see http://www.cse.yorku.ca/~oz/hash.html
- */
-export function stableHash(str: string): number {
-  let hash = DJB2_SEED;
-  for (let i = 0; i < str.length; i++) {
-    hash = ((hash << DJB2_SHIFT) + hash + str.charCodeAt(i)) & INT31_MASK;
-  }
-  return hash;
 }
 
 // ═══════════════════════════════════════════════════════════════════════════
@@ -393,7 +382,9 @@ export function expandPalette(
   const stepsPerColor = Math.ceil(targetCount / baseColors.length);
   const expanded: string[] = [];
 
-  outer: for (const baseHex of baseColors) {
+  for (const baseHex of baseColors) {
+    if (expanded.length >= targetCount) break;
+
     const hsl = hexToHSL(baseHex);
 
     for (let i = 0; i < stepsPerColor; i++) {
@@ -417,7 +408,7 @@ export function expandPalette(
 
       expanded.push(hslToHex({ h: hue, s: saturation, l: lightness }));
 
-      if (expanded.length >= targetCount) break outer;
+      if (expanded.length >= targetCount) break;
     }
   }
 

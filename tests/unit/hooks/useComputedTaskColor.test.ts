@@ -13,7 +13,8 @@
 
 import { describe, it, expect } from "vitest";
 import { getComputedTaskColor } from "../../../src/utils/computeTaskColor";
-import { hexToHSL, stableHash } from "../../../src/utils/colorUtils";
+import { stableHash } from "../../../src/utils/hashUtils";
+import { hexToHSL } from "../../../src/utils/colorUtils";
 import type { Task } from "../../../src/types/chart.types";
 import type { ColorModeState } from "../../../src/types/colorMode.types";
 import { DEFAULT_COLOR_MODE_STATE } from "../../../src/config/colorModeDefaults";
