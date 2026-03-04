@@ -111,6 +111,9 @@ export function canCutCellValue(
  *
  * @param field - Field to get clear value for
  * @returns Appropriate default/empty value for the field type
+ * @throws {Error} If called with `startDate` or `endDate` — these fields cannot be
+ *   cleared and are guarded by {@link canCutCellValue}. Reaching this throw indicates
+ *   a programming error (missing guard at the call site).
  */
 export function getClearValueForField(
   field: EditableField

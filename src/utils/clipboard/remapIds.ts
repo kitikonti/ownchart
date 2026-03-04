@@ -60,9 +60,13 @@ export function remapDependencies(
   return deps
     .filter(
       // Only keep dependencies where both tasks are in the pasted set.
-      // `in` operator is used for runtime presence check — Record<K,V> types all
-      // accesses as always-defined, so !== undefined would always be true at the type level.
-      (dep) => dep.fromTaskId in idMapping && dep.toTaskId in idMapping
+      // hasOwnProperty.call is used for the runtime presence check — Record<K,V>
+      // types all accesses as always-defined at the type level, so !== undefined
+      // would always be true statically. hasOwnProperty.call avoids prototype
+      // chain lookups that the `in` operator would include.
+      (dep) =>
+        Object.prototype.hasOwnProperty.call(idMapping, dep.fromTaskId) &&
+        Object.prototype.hasOwnProperty.call(idMapping, dep.toTaskId)
     )
     .map((dep) => ({
       ...dep,

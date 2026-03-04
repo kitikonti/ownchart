@@ -9,6 +9,22 @@ import type { Dependency } from "../../types/dependency.types";
 import { DEPENDENCY_TYPES } from "../../types/dependency.types";
 import { EDITABLE_FIELDS, type EditableField } from "../../types/task.types";
 
+/**
+ * Data structure for row clipboard in system clipboard.
+ */
+export interface SystemRowClipboardData {
+  tasks: Task[];
+  dependencies: Dependency[];
+}
+
+/**
+ * Data structure for cell clipboard in system clipboard.
+ */
+export interface SystemCellClipboardData {
+  value: Task[EditableField];
+  field: EditableField;
+}
+
 // Prefix to identify OwnChart data in the clipboard
 const OWNCHART_ROW_PREFIX = "OWNCHART_ROWS:";
 const OWNCHART_CELL_PREFIX = "OWNCHART_CELL:";
@@ -89,22 +105,6 @@ function isValidDependencyShape(obj: unknown): boolean {
   );
 }
 
-/**
- * Data structure for row clipboard in system clipboard
- */
-export interface SystemRowClipboardData {
-  tasks: Task[];
-  dependencies: Dependency[];
-}
-
-/**
- * Data structure for cell clipboard in system clipboard
- */
-export interface SystemCellClipboardData {
-  value: Task[EditableField];
-  field: EditableField;
-}
-
 /** Shared write helper — serializes data with prefix to system clipboard. */
 async function writeToClipboard(
   prefix: string,
@@ -123,8 +123,13 @@ async function writeToClipboard(
 /**
  * Shared read helper — reads clipboard text, checks prefix, and parses JSON.
  * Returns the parsed value if the prefix matches and JSON is valid; null otherwise.
+ *
+ * @remarks May throw if the Clipboard API itself rejects (e.g., permission denied).
+ *   All callers must wrap invocations in a try/catch block.
  */
-async function readFromClipboard(prefix: string): Promise<object | null> {
+async function readFromClipboard(
+  prefix: string
+): Promise<Record<string, unknown> | null> {
   const text = await navigator.clipboard.readText();
   if (text.length > MAX_CLIPBOARD_SIZE) return null;
   if (!text.startsWith(prefix)) return null;
@@ -136,7 +141,7 @@ async function readFromClipboard(prefix: string): Promise<object | null> {
     return null;
   }
   if (typeof parsed !== "object" || parsed === null) return null;
-  return parsed;
+  return parsed as Record<string, unknown>;
 }
 
 /**
@@ -172,7 +177,7 @@ export async function readRowsFromSystemClipboard(): Promise<SystemRowClipboardD
     if (parsed === null) return null;
 
     // safe cast — structure validated immediately below
-    const data = parsed as SystemRowClipboardData;
+    const data = parsed as unknown as SystemRowClipboardData;
 
     // Structural validation
     if (!Array.isArray(data.tasks) || !Array.isArray(data.dependencies)) {
@@ -211,7 +216,7 @@ export async function readCellFromSystemClipboard(): Promise<SystemCellClipboard
     if (parsed === null) return null;
 
     // safe cast — field and value validated immediately below
-    const data = parsed as SystemCellClipboardData;
+    const data = parsed as unknown as SystemCellClipboardData;
 
     // Validate field is a known EditableField value
     if (!VALID_EDITABLE_FIELDS.has(data.field) || data.value == null) {
@@ -237,6 +242,7 @@ export async function readCellFromSystemClipboard(): Promise<SystemCellClipboard
 export async function getSystemClipboardType(): Promise<"row" | "cell" | null> {
   try {
     const text = await navigator.clipboard.readText();
+    if (text.length > MAX_CLIPBOARD_SIZE) return null;
 
     if (text.startsWith(OWNCHART_ROW_PREFIX)) {
       return "row";

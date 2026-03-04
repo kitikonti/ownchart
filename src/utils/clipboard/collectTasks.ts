@@ -51,9 +51,12 @@ export function collectTasksWithChildren(
   const taskMap = new Map<TaskId, Task>(allTasks.map((t) => [t.id, t]));
   const childrenMap = new Map<TaskId, Task[]>();
   allTasks.forEach((t) => {
-    if (t.parent) {
-      if (!childrenMap.has(t.parent)) childrenMap.set(t.parent, []);
-      childrenMap.get(t.parent)!.push(t);
+    if (!t.parent) return;
+    const siblings = childrenMap.get(t.parent);
+    if (siblings) {
+      siblings.push(t);
+    } else {
+      childrenMap.set(t.parent, [t]);
     }
   });
 
