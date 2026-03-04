@@ -168,8 +168,8 @@ cd ../app-gantt-review
 ### Priority: MEDIUM — Hooks
 - [x] `src/hooks/useTaskBarInteraction.ts` (478 LOC)
 - [x] `src/hooks/useKeyboardShortcuts.ts` (406 LOC)
-- [ ] `src/hooks/useComputedTaskColor.ts` (393 LOC)
-- [ ] `src/hooks/useExportPreview.ts` (349 LOC)
+- [x] `src/hooks/useComputedTaskColor.ts` (393 LOC)
+- [x] `src/hooks/useExportPreview.ts` (349 LOC)
 - [ ] `src/hooks/useHeaderDateSelection.ts` (269 LOC)
 - [ ] `src/hooks/useMultiTabPersistence.ts` (265 LOC)
 - [ ] `src/hooks/useDependencyDrag.ts` (261 LOC)
