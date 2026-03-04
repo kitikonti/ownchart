@@ -7,7 +7,7 @@ import type { Task } from "../../types/chart.types";
 import type { TaskId } from "../../types/branded.types";
 
 /**
- * Recursively collect children of a collapsed task.
+ * Collect all hidden descendants of a collapsed task using an iterative DFS.
  * All descendants are included regardless of their own open/closed state,
  * because a collapsed ancestor hides the entire subtree.
  * Updates `collected` in-place as a deduplication guard shared across the traversal.
@@ -18,10 +18,17 @@ function collectHiddenDescendants(
   collected: Set<TaskId>
 ): Task[] {
   const result: Task[] = [];
-  for (const child of childrenMap.get(taskId) ?? []) {
-    if (collected.has(child.id)) continue;
-    collected.add(child.id);
-    result.push(child, ...collectHiddenDescendants(child.id, childrenMap, collected));
+  // Iterative DFS via explicit stack — avoids call-stack overflow on deep hierarchies
+  // and eliminates per-level intermediate array allocations from recursive spreading.
+  const toProcess: TaskId[] = [taskId];
+  while (toProcess.length > 0) {
+    const currentId = toProcess.pop()!;
+    for (const child of childrenMap.get(currentId) ?? []) {
+      if (collected.has(child.id)) continue;
+      collected.add(child.id);
+      result.push(child);
+      toProcess.push(child.id);
+    }
   }
   return result;
 }
@@ -100,5 +107,15 @@ export function collectTasksWithChildren(
  * class instances, or DOM nodes will throw — store only plain data in metadata.
  */
 export function deepCloneTasks(tasks: Task[]): Task[] {
-  return structuredClone(tasks);
+  try {
+    return structuredClone(tasks);
+  } catch (error) {
+    // structuredClone throws DataCloneError for non-serializable values (functions,
+    // DOM nodes, class instances). Only plain data should live in task.metadata.
+    throw new Error(
+      `deepCloneTasks: task.metadata contains a non-cloneable value. ` +
+        `Ensure all metadata values are strings, numbers, booleans, plain objects, ` +
+        `or arrays. Cause: ${error instanceof Error ? error.message : String(error)}`
+    );
+  }
 }

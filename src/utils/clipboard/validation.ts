@@ -64,6 +64,9 @@ export function canPasteCellValue(
     };
   }
 
+  // MAINTENANCE: Add paste restrictions here when new task types are introduced.
+  // Counterpart: canCutCellValue covers cut-operation restrictions.
+
   // All checks passed
   return { valid: true };
 }

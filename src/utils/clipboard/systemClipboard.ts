@@ -1,6 +1,13 @@
 /**
  * System clipboard utilities for cross-tab copy/paste.
  * Uses the browser Clipboard API to share data between tabs.
+ *
+ * @remarks
+ * All diagnostic warnings ({@link devWarn}) are emitted only in development
+ * builds. In production, failures are silently swallowed and callers receive
+ * `null` or `false` return values. Callers are responsible for surfacing
+ * user-facing feedback (e.g. a toast notification) when these functions
+ * return null or false.
  */
 
 import type { Task } from "../../types/chart.types";
@@ -41,6 +48,21 @@ const HEX_COLOR_RE = /^#(?:[0-9a-fA-F]{3,4}|[0-9a-fA-F]{6}|[0-9a-fA-F]{8})$/;
 // ISO 8601 date string — YYYY-MM-DD format used throughout OwnChart
 const ISO_DATE_RE = /^\d{4}-\d{2}-\d{2}$/;
 
+/**
+ * Returns true if `s` is a valid YYYY-MM-DD date string.
+ * Checks both format (via regex) and actual calendar validity by round-tripping
+ * through Date — catches semantically invalid dates like 2024-13-01 or 2024-02-30
+ * that the regex alone would accept.
+ */
+function isValidISODate(s: string): boolean {
+  if (!ISO_DATE_RE.test(s)) return false;
+  const d = new Date(s);
+  if (Number.isNaN(d.getTime())) return false;
+  // Round-trip check: ensures no silent normalization occurred
+  // (e.g. "2024-02-30" → "2024-03-01" in permissive JS engines).
+  return d.toISOString().startsWith(s);
+}
+
 // Safety limit — OwnChart-prefixed payloads exceeding this size are rejected as
 // malformed. The check is applied only after the prefix is confirmed, so unrelated
 // large clipboard content (e.g. a copied document) never produces a false warning.
@@ -61,10 +83,12 @@ function isValidDateString(s: string): boolean {
   return !Number.isNaN(Date.parse(s));
 }
 
-// NOTE: This validator manually mirrors the required/optional fields of the Task type
-// (src/types/chart.types.ts). When a field is added to or removed from Task, this
-// function must be updated — the TypeScript compiler cannot catch this drift because
-// the validator receives unknown/Record<string,unknown> inputs, not typed Task objects.
+// MAINTENANCE: This validator manually mirrors the Task interface in src/types/chart.types.ts.
+// Required fields: id, name, startDate, endDate, duration, progress, color, order, metadata
+// Optional fields: type, parent, open, colorOverride
+// When any field is added, removed, or changes type in Task, update BOTH the lists above
+// and the checks below. The TypeScript compiler cannot catch this drift because the
+// validator receives `unknown` inputs rather than typed Task objects.
 /**
  * Validate that a parsed object has the minimum required Task shape.
  * Checks all required Task fields to catch cross-version or malformed clipboard data.
@@ -79,9 +103,9 @@ function isValidTaskShape(obj: unknown): boolean {
     t.id.length > 0 &&
     typeof t.name === "string" &&
     typeof t.startDate === "string" &&
-    ISO_DATE_RE.test(t.startDate as string) &&
+    isValidISODate(t.startDate as string) &&
     typeof t.endDate === "string" &&
-    ISO_DATE_RE.test(t.endDate as string) &&
+    isValidISODate(t.endDate as string) &&
     isFiniteNumber(t.duration) &&
     (t.duration as number) >= 0 &&
     isFiniteNumber(t.progress) &&
@@ -147,7 +171,7 @@ function isValidCellValueForField(
       return typeof value === "string";
     case "startDate":
     case "endDate":
-      return typeof value === "string" && ISO_DATE_RE.test(value);
+      return typeof value === "string" && isValidISODate(value);
     case "color":
       return typeof value === "string" && HEX_COLOR_RE.test(value);
     case "duration":
@@ -301,9 +325,10 @@ export async function readRowsFromSystemClipboard(): Promise<SystemRowClipboardD
  *
  * In DEV mode, logs a warning when data is present but fails validation.
  *
- * @remarks The `field` is validated against known EditableField values.
- * The `value` is only checked for existence (not undefined) — callers should
- * validate the value type matches the expected type for the given field.
+ * @remarks Both `field` and `value` are fully validated — `field` against known
+ * `EditableField` values, and `value` against the expected runtime type for that
+ * field via `isValidCellValueForField`. Callers can trust the returned data is
+ * well-typed and ready to use.
  */
 export async function readCellFromSystemClipboard(): Promise<SystemCellClipboardData | null> {
   try {
