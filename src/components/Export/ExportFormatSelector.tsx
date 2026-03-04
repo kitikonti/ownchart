@@ -5,8 +5,13 @@
  */
 
 import { memo, useCallback, useRef, useId } from "react";
-import { Image, FilePdf, FileCode, Info } from "@phosphor-icons/react";
-import type { Icon } from "@phosphor-icons/react";
+import {
+  Image,
+  FilePdf,
+  FileCode,
+  Info,
+  type Icon,
+} from "@phosphor-icons/react";
 import type { ExportFormat } from "@/utils/export/types";
 
 // 22px: visually balanced in the card — between the 20px and 24px grid points
@@ -93,7 +98,7 @@ interface ExportFormatSelectorProps {
   onFormatChange: (format: ExportFormat) => void;
 }
 
-export function ExportFormatSelector({
+export const ExportFormatSelector = memo(function ExportFormatSelector({
   selectedFormat,
   onFormatChange,
 }: ExportFormatSelectorProps): JSX.Element {
@@ -174,4 +179,4 @@ export function ExportFormatSelector({
       )}
     </div>
   );
-}
+});

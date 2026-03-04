@@ -3,6 +3,7 @@
  * When collapsed, shows a wider strip with expand caret.
  */
 
+import type { MouseEvent, KeyboardEvent } from "react";
 import { CaretRight } from "@phosphor-icons/react";
 
 const KEYBOARD_RESIZE_STEP = 20; // px per arrow key press
@@ -11,7 +12,7 @@ const ARIA_LABEL_COLLAPSED = "Expand task table. Press Enter or drag right.";
 const ARIA_LABEL_EXPANDED = "Resize panel. Use left/right arrow keys.";
 
 interface SplitPaneDividerProps {
-  onMouseDown: (e: React.MouseEvent) => void;
+  onMouseDown: (e: MouseEvent) => void;
   onResize: (delta: number) => void;
   isDragging: boolean;
   isCollapsed?: boolean;
@@ -47,7 +48,7 @@ export function SplitPaneDivider({
   minWidth,
   maxWidth,
 }: SplitPaneDividerProps): JSX.Element {
-  const handleKeyDown = (e: React.KeyboardEvent): void => {
+  const handleKeyDown = (e: KeyboardEvent): void => {
     if (e.key === "ArrowLeft") {
       e.preventDefault();
       onResize(-KEYBOARD_RESIZE_STEP);

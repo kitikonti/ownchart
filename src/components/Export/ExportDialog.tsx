@@ -176,23 +176,39 @@ export function ExportDialog(): JSX.Element {
       <div className={`flex ${CONTENT_HEIGHT}`}>
         {/* Left: Preview Panel */}
         <div className="flex-1 bg-neutral-50 p-6 border-r border-neutral-200">
-          <ExportPreview
-            format={selectedExportFormat}
-            previewDataUrl={previewDataUrl}
-            dimensions={
-              previewDimensions.width > 0
-                ? previewDimensions
-                : estimatedDimensions
-            }
-            isRendering={isPreviewRendering}
-            error={previewError}
-            isTransparent={exportOptions.background === "transparent"}
-            pdfOptions={pdfExportOptions}
-            projectTitle={projectTitle || undefined}
-            projectAuthor={projectAuthor || undefined}
-            effectiveZoom={effectiveZoom}
-            readabilityStatus={readabilityStatus}
-          />
+          {selectedExportFormat === "pdf" ? (
+            <ExportPreview
+              format="pdf"
+              previewDataUrl={previewDataUrl}
+              dimensions={
+                previewDimensions.width > 0
+                  ? previewDimensions
+                  : estimatedDimensions
+              }
+              isRendering={isPreviewRendering}
+              error={previewError}
+              pdfOptions={pdfExportOptions}
+              projectTitle={projectTitle || undefined}
+              projectAuthor={projectAuthor || undefined}
+              effectiveZoom={effectiveZoom}
+              readabilityStatus={readabilityStatus}
+            />
+          ) : (
+            <ExportPreview
+              format={selectedExportFormat}
+              previewDataUrl={previewDataUrl}
+              dimensions={
+                previewDimensions.width > 0
+                  ? previewDimensions
+                  : estimatedDimensions
+              }
+              isRendering={isPreviewRendering}
+              error={previewError}
+              isTransparent={exportOptions.background === "transparent"}
+              effectiveZoom={effectiveZoom}
+              readabilityStatus={readabilityStatus}
+            />
+          )}
 
           {showDimensions && (hasWarning || hasInfo) && (
             <div className="mt-4">

@@ -5,7 +5,6 @@
 
 import { memo } from "react";
 import type {
-  ExportFormat,
   PdfExportOptions,
   PixelDimensions,
   ReadabilityStatus,
@@ -13,50 +12,58 @@ import type {
 import { ChartPreview } from "./ChartPreview";
 import { PdfPreview } from "./PdfPreview";
 
-export interface ExportPreviewProps {
-  format: ExportFormat;
-  /** Data URL of the preview image */
+type SharedPreviewProps = {
   previewDataUrl: string | null;
   dimensions: PixelDimensions;
   isRendering: boolean;
   error: string | null;
-  isTransparent: boolean;
-  pdfOptions?: PdfExportOptions;
+  effectiveZoom?: number;
+  readabilityStatus?: ReadabilityStatus;
+};
+
+type PdfPreviewVariant = SharedPreviewProps & {
+  format: "pdf";
+  pdfOptions: PdfExportOptions;
   projectTitle?: string;
   projectAuthor?: string;
-  /** Effective zoom for preview info */
-  effectiveZoom?: number;
-  /** Readability status for preview */
-  readabilityStatus?: ReadabilityStatus;
-}
+};
+
+type RasterPreviewVariant = SharedPreviewProps & {
+  format: "png" | "svg";
+  isTransparent: boolean;
+};
+
+/**
+ * Discriminated-union props: PDF requires pdfOptions; PNG/SVG require isTransparent.
+ * This makes format-specific requirements explicit at the type level —
+ * callers cannot pass a PDF format without supplying pdfOptions, nor mix
+ * PDF-only and raster-only props in the same render.
+ */
+export type ExportPreviewProps = PdfPreviewVariant | RasterPreviewVariant;
 
 /**
  * ExportPreview - Renders the appropriate preview based on export format.
  */
-export const ExportPreview = memo(function ExportPreview({
-  format,
-  previewDataUrl,
-  dimensions,
-  isRendering,
-  error,
-  isTransparent,
-  pdfOptions,
-  projectTitle,
-  projectAuthor,
-  effectiveZoom,
-  readabilityStatus,
-}: ExportPreviewProps): JSX.Element {
-  // pdfOptions is optional so ExportPreview can be used outside ExportDialog
-  // (e.g. in tests or future standalone contexts). Within ExportDialog it is
-  // always populated by the hook; the undefined branch is a loading-state guard.
-  if (format === "pdf" && pdfOptions) {
+export const ExportPreview = memo(function ExportPreview(
+  props: ExportPreviewProps
+): JSX.Element {
+  const {
+    previewDataUrl,
+    dimensions,
+    isRendering,
+    error,
+    effectiveZoom,
+    readabilityStatus,
+  } = props;
+
+  if (props.format === "pdf") {
     return (
       <PdfPreview
         previewDataUrl={previewDataUrl}
         chartDimensions={dimensions}
-        pdfOptions={pdfOptions}
-        projectTitle={projectTitle}
-        projectAuthor={projectAuthor}
+        pdfOptions={props.pdfOptions}
+        projectTitle={props.projectTitle}
+        projectAuthor={props.projectAuthor}
         isRendering={isRendering}
         error={error}
         effectiveZoom={effectiveZoom}
@@ -71,10 +78,10 @@ export const ExportPreview = memo(function ExportPreview({
       dimensions={dimensions}
       isRendering={isRendering}
       error={error}
-      isTransparent={isTransparent}
+      isTransparent={props.isTransparent}
       effectiveZoom={effectiveZoom}
       readabilityStatus={readabilityStatus}
-      formatType={format === "svg" ? "svg" : "png"}
+      formatType={props.format === "svg" ? "svg" : "png"}
     />
   );
 });

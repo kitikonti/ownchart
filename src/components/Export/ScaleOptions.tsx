@@ -3,7 +3,7 @@
  * Wrapper around ZoomModeSelector.
  */
 
-import { useCallback } from "react";
+import { memo, useCallback } from "react";
 import type {
   ExportFormat,
   ExportOptions,
@@ -18,7 +18,7 @@ export interface ScaleOptionsProps {
   format: ExportFormat;
 }
 
-export function ScaleOptions({
+export const ScaleOptions = memo(function ScaleOptions({
   options,
   onChange,
   currentAppZoom,
@@ -49,4 +49,4 @@ export function ScaleOptions({
       onFitToWidthChange={handleFitToWidthChange}
     />
   );
-}
+});

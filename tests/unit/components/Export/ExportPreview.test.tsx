@@ -25,7 +25,7 @@ const baseDimensions = { width: 1000, height: 500 };
 
 describe("ExportPreview", () => {
   describe("format routing", () => {
-    it("renders PdfPreview when format is pdf and pdfOptions are provided", () => {
+    it("renders PdfPreview when format is pdf", () => {
       render(
         <ExportPreview
           format="pdf"
@@ -33,7 +33,6 @@ describe("ExportPreview", () => {
           dimensions={baseDimensions}
           isRendering={false}
           error={null}
-          isTransparent={false}
           pdfOptions={DEFAULT_PDF_OPTIONS}
         />
       );
@@ -110,22 +109,9 @@ describe("ExportPreview", () => {
       );
     });
 
-    it("falls through to ChartPreview when format is pdf but pdfOptions is undefined", () => {
-      render(
-        <ExportPreview
-          format="pdf"
-          previewDataUrl={null}
-          dimensions={baseDimensions}
-          isRendering={false}
-          error={null}
-          isTransparent={false}
-          pdfOptions={undefined}
-        />
-      );
-
-      // pdfOptions undefined → loading-state fallback to ChartPreview
-      expect(screen.getByTestId("chart-preview")).toBeInTheDocument();
-      expect(screen.queryByTestId("pdf-preview")).not.toBeInTheDocument();
-    });
   });
+  // Note: the "pdf with undefined pdfOptions falls through to ChartPreview"
+  // scenario from the old flat-props interface no longer applies.
+  // ExportPreviewProps is now a discriminated union: format="pdf" requires
+  // pdfOptions at compile time, so that silent runtime fallback is impossible.
 });
