@@ -128,6 +128,37 @@ function isValidDependencyShape(obj: unknown): boolean {
   );
 }
 
+/**
+ * Validate that a cell value has the correct runtime type for its field.
+ *
+ * Uses an exhaustive switch so TypeScript will emit a compile error if a new
+ * EditableField is added without updating this validator.
+ */
+function isValidCellValueForField(
+  field: EditableField,
+  value: unknown
+): boolean {
+  switch (field) {
+    case "name":
+      return typeof value === "string";
+    case "startDate":
+    case "endDate":
+      return typeof value === "string" && ISO_DATE_RE.test(value);
+    case "color":
+      return typeof value === "string" && HEX_COLOR_RE.test(value);
+    case "duration":
+      return isFiniteNumber(value) && value >= 0;
+    case "progress":
+      return isFiniteNumber(value) && value >= 0 && value <= 100;
+    case "type":
+      return typeof value === "string" && VALID_TASK_TYPES.has(value);
+    default: {
+      const _exhaustive: never = field;
+      return _exhaustive;
+    }
+  }
+}
+
 /** Shared write helper — serializes data with prefix to system clipboard. */
 async function writeToClipboard(
   prefix: string,
@@ -290,6 +321,14 @@ export async function readCellFromSystemClipboard(): Promise<SystemCellClipboard
       return null;
     }
 
+    // Validate value type matches the expected type for the given field
+    if (!isValidCellValueForField(data.field, data.value)) {
+      devWarn(
+        `OwnChart cell clipboard: value type mismatch for field "${data.field}"`
+      );
+      return null;
+    }
+
     return data;
   } catch (error) {
     devWarn("Failed to read from system clipboard:", error);
@@ -301,9 +340,12 @@ export async function readCellFromSystemClipboard(): Promise<SystemCellClipboard
  * Check what type of OwnChart data is in the system clipboard.
  * Returns "row", "cell", or null if no OwnChart data.
  *
- * @remarks Performs a separate clipboard read. If you intend to also read the
- * clipboard content, prefer calling the read function directly — it returns null
- * for non-matching data — to avoid two clipboard API calls.
+ * **Standalone utility for UI affordances only** (e.g., enabling or disabling a
+ * paste button). Do NOT call this function as a pre-check before reading clipboard
+ * content — use the null-return of {@link readRowsFromSystemClipboard} or
+ * {@link readCellFromSystemClipboard} instead. Calling this function before those
+ * read helpers results in two separate Clipboard API calls and introduces a TOCTOU
+ * race condition (the clipboard content may change between the two reads).
  */
 export async function getSystemClipboardType(): Promise<"row" | "cell" | null> {
   try {

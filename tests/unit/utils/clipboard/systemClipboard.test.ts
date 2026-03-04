@@ -433,6 +433,41 @@ describe("systemClipboard", () => {
         setClipboard({ parent: "some-parent-id" });
         expect(await readRowsFromSystemClipboard()).not.toBeNull();
       });
+
+      it("should return null when startDate is missing", async () => {
+        setClipboard({ startDate: undefined });
+        expect(await readRowsFromSystemClipboard()).toBeNull();
+      });
+
+      it("should return null when endDate is missing", async () => {
+        setClipboard({ endDate: undefined });
+        expect(await readRowsFromSystemClipboard()).toBeNull();
+      });
+
+      it("should return null when duration is missing", async () => {
+        setClipboard({ duration: undefined });
+        expect(await readRowsFromSystemClipboard()).toBeNull();
+      });
+
+      it("should return null when progress is missing", async () => {
+        setClipboard({ progress: undefined });
+        expect(await readRowsFromSystemClipboard()).toBeNull();
+      });
+
+      it("should return null when color is missing", async () => {
+        setClipboard({ color: undefined });
+        expect(await readRowsFromSystemClipboard()).toBeNull();
+      });
+
+      it("should return null when order is missing", async () => {
+        setClipboard({ order: undefined });
+        expect(await readRowsFromSystemClipboard()).toBeNull();
+      });
+
+      it("should return null when metadata is missing", async () => {
+        setClipboard({ metadata: undefined });
+        expect(await readRowsFromSystemClipboard()).toBeNull();
+      });
     });
 
     describe("dependency shape validation", () => {
@@ -558,6 +593,63 @@ describe("systemClipboard", () => {
       const result = await readCellFromSystemClipboard();
 
       expect(result).toBeNull();
+    });
+
+    describe("cell value type validation", () => {
+      const setCell = (field: string, value: unknown): void => {
+        clipboardContent =
+          "OWNCHART_CELL:" + JSON.stringify({ field, value });
+      };
+
+      it("should return null for progress field with string value", async () => {
+        setCell("progress", "75");
+        expect(await readCellFromSystemClipboard()).toBeNull();
+      });
+
+      it("should return null for duration field with string value", async () => {
+        setCell("duration", "5");
+        expect(await readCellFromSystemClipboard()).toBeNull();
+      });
+
+      it("should return null for progress field with out-of-range value", async () => {
+        setCell("progress", 150);
+        expect(await readCellFromSystemClipboard()).toBeNull();
+      });
+
+      it("should return null for duration field with negative value", async () => {
+        setCell("duration", -1);
+        expect(await readCellFromSystemClipboard()).toBeNull();
+      });
+
+      it("should return null for name field with numeric value", async () => {
+        setCell("name", 42);
+        expect(await readCellFromSystemClipboard()).toBeNull();
+      });
+
+      it("should return null for startDate field with non-ISO string", async () => {
+        setCell("startDate", "January 1");
+        expect(await readCellFromSystemClipboard()).toBeNull();
+      });
+
+      it("should return null for color field with named color", async () => {
+        setCell("color", "red");
+        expect(await readCellFromSystemClipboard()).toBeNull();
+      });
+
+      it("should return null for type field with invalid value", async () => {
+        setCell("type", "project");
+        expect(await readCellFromSystemClipboard()).toBeNull();
+      });
+
+      it("should not return null for type field with valid value", async () => {
+        setCell("type", "summary");
+        expect(await readCellFromSystemClipboard()).not.toBeNull();
+      });
+
+      it("should not return null for color field with valid hex", async () => {
+        setCell("color", "#ff0000");
+        expect(await readCellFromSystemClipboard()).not.toBeNull();
+      });
     });
   });
 
