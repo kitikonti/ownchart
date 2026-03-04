@@ -19,12 +19,12 @@ import type { Task } from "../types/chart.types";
 import type { ColorModeState } from "../types/colorMode.types";
 import type { HexColor } from "../types/branded.types";
 import { getPaletteById } from "./colorPalettes";
+import { stableHash } from "./hashUtils";
 import {
   generateMonochromePalette,
   hexToHSL,
   hslToHex,
   lightenColor,
-  stableHash,
 } from "./colorUtils";
 
 /**

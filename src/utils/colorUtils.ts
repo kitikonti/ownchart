@@ -1,26 +1,79 @@
 /**
- * Color utilities for calculating text contrast
- * Uses WCAG 2.1 relative luminance algorithm for accessibility-compliant contrast
+ * Color utilities for calculating text contrast, HSL manipulation, and palette
+ * generation.
+ *
+ * WCAG 2.1 relative luminance algorithm:
+ * @see https://www.w3.org/TR/WCAG21/#dfn-relative-luminance
+ *
+ * For general-purpose string hashing (e.g. mapping task IDs to palette
+ * indices), see {@link ../utils/hashUtils}.
  */
 
-/**
- * Default fallback color (Outlook Blue - app brand color)
- */
-const DEFAULT_COLOR = "#0F6CBD";
+import { COLORS, SLATE_800 } from "../styles/design-tokens";
 
 /**
- * Text colors for contrast
- * Using darker text (#1e293b = slate-800) for better readability
+ * Default fallback color (brand primary — matches COLORS.brand[600] in design-tokens.ts)
  */
-const LIGHT_TEXT = "#ffffff";
-const DARK_TEXT = "#1e293b"; // slate-800 - darker than previous #495057
+const DEFAULT_COLOR = COLORS.brand[600];
 
 /**
- * Converts a hex color string to RGB values
- * Handles both 3-digit (#RGB) and 6-digit (#RRGGBB) formats, with or without #
+ * Text colors used for contrast selection.
+ *
+ * LIGHT_TEXT: pure white, from the neutral scale (neutral[0]).
+ * DARK_TEXT: slate[800] — imported as SLATE_800 from design-tokens.ts.
+ */
+const LIGHT_TEXT = COLORS.neutral[0]; // "#ffffff"
+const DARK_TEXT = SLATE_800; // "#1e293b" — slate[800]
+
+// ─────────────────────────────────────────────────────────────────────────────
+// WCAG 2.1 sRGB linearization coefficients
+// Source: https://www.w3.org/TR/WCAG21/#dfn-relative-luminance
+// ─────────────────────────────────────────────────────────────────────────────
+
+/** sRGB threshold below which the linear approximation applies */
+const SRGB_LINEARIZATION_THRESHOLD = 0.03928;
+/** Linear-range divisor for sub-threshold channels */
+const SRGB_LINEAR_DIVISOR = 12.92;
+/** Gamma correction additive bias */
+const SRGB_GAMMA_BIAS = 0.055;
+/** Gamma correction divisor (scale factor before exponentiation) */
+const SRGB_GAMMA_DIVISOR = 1.055;
+/** Gamma correction exponent */
+const SRGB_GAMMA_EXPONENT = 2.4;
+
+// ─────────────────────────────────────────────────────────────────────────────
+// WCAG 2.1 relative luminance coefficients (CIE Y)
+// Weights reflect human perceptual sensitivity to each color channel.
+// ─────────────────────────────────────────────────────────────────────────────
+
+const LUMINANCE_R = 0.2126;
+const LUMINANCE_G = 0.7152;
+const LUMINANCE_B = 0.0722;
+
+// ─────────────────────────────────────────────────────────────────────────────
+// WCAG 2.1 contrast ratio constant
+// ─────────────────────────────────────────────────────────────────────────────
+
+/** Luminance offset in WCAG 2.1 contrast ratio formula — prevents division-by-zero for pure black */
+const WCAG_CONTRAST_OFFSET = 0.05;
+
+/**
+ * Converts a hex color string to RGB values.
+ *
+ * Supported formats (with or without leading `#`):
+ * - 3-digit shorthand:  #RGB  → expands each digit (e.g. #F0A → #FF00AA)
+ * - 6-digit standard:   #RRGGBB
+ * - 8-digit with alpha: #RRGGBBAA — alpha channel is silently ignored
+ *
+ * Not supported: 4-digit CSS shorthand (#RGBA). The blue channel would parse
+ * as NaN, causing a fallback to DEFAULT_COLOR.
+ *
+ * Falls back to DEFAULT_COLOR for empty strings and for strings that produce
+ * invalid (NaN) channel values (e.g. "#ZZZZZZ"). The return value always
+ * contains valid 0–255 channel integers.
  */
 export function hexToRgb(hex: string): { r: number; g: number; b: number } {
-  // Handle undefined/null/empty by using default
+  // Defensive fallback for empty strings (runtime safety net)
   const safeHex = hex || DEFAULT_COLOR;
 
   // Remove leading # if present
@@ -38,6 +91,12 @@ export function hexToRgb(hex: string): { r: number; g: number; b: number } {
   const g = parseInt(cleanHex.substring(2, 4), 16);
   const b = parseInt(cleanHex.substring(4, 6), 16);
 
+  // Guard against invalid hex strings — fall back to default rather than
+  // propagating NaN through WCAG luminance calculations.
+  if (Number.isNaN(r) || Number.isNaN(g) || Number.isNaN(b)) {
+    return hexToRgb(DEFAULT_COLOR);
+  }
+
   return { r, g, b };
 }
 
@@ -47,9 +106,12 @@ export function hexToRgb(hex: string): { r: number; g: number; b: number } {
  */
 function sRGBtoLinear(channel: number): number {
   const normalized = channel / 255;
-  return normalized <= 0.03928
-    ? normalized / 12.92
-    : Math.pow((normalized + 0.055) / 1.055, 2.4);
+  return normalized <= SRGB_LINEARIZATION_THRESHOLD
+    ? normalized / SRGB_LINEAR_DIVISOR
+    : Math.pow(
+        (normalized + SRGB_GAMMA_BIAS) / SRGB_GAMMA_DIVISOR,
+        SRGB_GAMMA_EXPONENT
+      );
 }
 
 /**
@@ -66,7 +128,7 @@ export function getRelativeLuminance(hex: string): number {
   const gLinear = sRGBtoLinear(g);
   const bLinear = sRGBtoLinear(b);
 
-  return 0.2126 * rLinear + 0.7152 * gLinear + 0.0722 * bLinear;
+  return LUMINANCE_R * rLinear + LUMINANCE_G * gLinear + LUMINANCE_B * bLinear;
 }
 
 /**
@@ -82,28 +144,19 @@ export function getContrastRatio(hex1: string, hex2: string): number {
   const lighter = Math.max(lum1, lum2);
   const darker = Math.min(lum1, lum2);
 
-  return (lighter + 0.05) / (darker + 0.05);
-}
-
-/**
- * Determines if a color is perceptually "light" enough to need dark text
- * Uses WCAG luminance with a threshold optimized for task bar readability
- *
- * A luminance > 0.179 means white text won't have enough contrast (< 4.5:1)
- * so we need dark text instead
- */
-export function isLightColor(hex: string): boolean {
-  const luminance = getRelativeLuminance(hex);
-  // Threshold: if luminance > 0.179, white text contrast < 4.5:1
-  // Using slightly lower threshold (0.18) to be more conservative
-  return luminance > 0.18;
+  return (lighter + WCAG_CONTRAST_OFFSET) / (darker + WCAG_CONTRAST_OFFSET);
 }
 
 /**
  * Minimum contrast ratio for white text to be acceptable.
- * We use a lower threshold (2.0) to prefer white text on most colored backgrounds,
- * since white text is more readable on saturated colors even at lower contrast ratios.
- * Dark text is only used on very light backgrounds (yellow, white, light gray).
+ *
+ * Intentionally below WCAG AA (4.5:1) and WCAG AA Large Text (3:1).
+ * This is a deliberate UX trade-off: white text is more visually readable on
+ * saturated colors (blues, greens, oranges) even at lower mathematical contrast.
+ * Dark text is reserved for near-white/near-yellow backgrounds only.
+ *
+ * Design decision: accepted in code review 2026-03-03.
+ * To achieve WCAG AA compliance for all task labels, raise this value to 4.5.
  */
 const WHITE_TEXT_MIN_CONTRAST = 2.0;
 
@@ -125,40 +178,15 @@ export function getContrastTextColor(
   lightText: string = LIGHT_TEXT,
   darkText: string = DARK_TEXT
 ): string {
-  // Calculate contrast ratio for white text
-  const lightContrast = getContrastRatio(backgroundColor, lightText);
-
-  // Prefer white text if it has acceptable contrast (≥ 3:1)
-  // This works better on saturated colors where white is more readable
-  // than dark text even if dark has slightly higher mathematical contrast
-  if (lightContrast >= WHITE_TEXT_MIN_CONTRAST) {
+  // Prefer white text if it has acceptable contrast (≥ WHITE_TEXT_MIN_CONTRAST).
+  // Intentional UX trade-off: white reads better on saturated colors even when dark text
+  // has slightly higher mathematical contrast. Dark text is only used on near-white
+  // backgrounds (yellow, white, light gray).
+  if (getContrastRatio(backgroundColor, lightText) >= WHITE_TEXT_MIN_CONTRAST) {
     return lightText;
   }
 
-  // Otherwise use dark text (for very light backgrounds like yellow, white, etc.)
   return darkText;
-}
-
-// Legacy export for backwards compatibility (HSP-based)
-export function getPerceivedBrightness(hex: string): number {
-  // Convert WCAG luminance (0-1) to brightness scale (0-255) for compatibility
-  return getRelativeLuminance(hex) * 255;
-}
-
-// ═══════════════════════════════════════════════════════════════════════════
-// STABLE HASH (for deterministic color assignment)
-// ═══════════════════════════════════════════════════════════════════════════
-
-/**
- * DJB2 hash function for deterministic, stable color assignment.
- * Produces a positive integer from a string (e.g., task ID).
- */
-export function stableHash(str: string): number {
-  let hash = 5381;
-  for (let i = 0; i < str.length; i++) {
-    hash = ((hash << 5) + hash + str.charCodeAt(i)) & 0x7fffffff;
-  }
-  return hash;
 }
 
 // ═══════════════════════════════════════════════════════════════════════════
@@ -204,6 +232,7 @@ export function hexToHSL(hex: string): HSL {
       case bNorm:
         h = ((rNorm - gNorm) / d + 4) / 6;
         break;
+      // No default: max ∈ {rNorm, gNorm, bNorm} by construction — all cases covered
     }
   }
 
@@ -214,42 +243,81 @@ export function hexToHSL(hex: string): HSL {
   };
 }
 
+// ─────────────────────────────────────────────────────────────────────────────
+// HSL piecewise thresholds — CSS Color Module 4, §10.2
+// @see https://www.w3.org/TR/css-color-4/#hsl-to-rgb
+// ─────────────────────────────────────────────────────────────────────────────
+
+/** One sixth of the hue circle (0–1 range) — first segment boundary */
+const HUE_ONE_SIXTH = 1 / 6;
+/** One third of the hue circle — offset applied to R/B channels in hslToHex */
+const HUE_ONE_THIRD = 1 / 3;
+/** Midpoint of the hue circle — second segment boundary */
+const HUE_ONE_HALF = 1 / 2;
+/** Two thirds of the hue circle — third segment boundary */
+const HUE_TWO_THIRDS = 2 / 3;
+/** Number of hue segments — reciprocal of HUE_ONE_SIXTH, used as multiplier */
+const HUE_SEGMENTS = 6;
+
 /**
- * Converts HSL to hex color
+ * Maps a hue fraction to an RGB channel value (0–1).
+ * Wraps t into [0, 1] before applying the standard HSL piecewise formula.
+ * Per the CSS Color Module 4 specification.
+ * @see https://www.w3.org/TR/css-color-4/#hsl-to-rgb
+ */
+function hueToRgb(p: number, q: number, t: number): number {
+  const tw = t < 0 ? t + 1 : t > 1 ? t - 1 : t;
+  if (tw < HUE_ONE_SIXTH) return p + (q - p) * HUE_SEGMENTS * tw;
+  if (tw < HUE_ONE_HALF) return q;
+  if (tw < HUE_TWO_THIRDS)
+    return p + (q - p) * (HUE_TWO_THIRDS - tw) * HUE_SEGMENTS;
+  return p;
+}
+
+/**
+ * Formats a linear RGB channel value (0–1) as a zero-padded two-character hex string.
+ */
+function linearChannelToHex(x: number): string {
+  return Math.round(x * 255)
+    .toString(16)
+    .padStart(2, "0");
+}
+
+/**
+ * Converts HSL to hex color.
+ * Out-of-range inputs are normalised before conversion:
+ * - h is wrapped modulo 360 (supports negative hues and values > 360)
+ * - s and l are clamped to [0, 100]
  */
 export function hslToHex(hsl: HSL): string {
-  const h = hsl.h / 360;
-  const s = hsl.s / 100;
-  const l = hsl.l / 100;
+  const h = (((hsl.h % 360) + 360) % 360) / 360;
+  const s = Math.min(100, Math.max(0, hsl.s)) / 100;
+  const l = Math.min(100, Math.max(0, hsl.l)) / 100;
 
   let r: number, g: number, b: number;
 
   if (s === 0) {
     r = g = b = l;
   } else {
-    const hue2rgb = (p: number, q: number, t: number): number => {
-      if (t < 0) t += 1;
-      if (t > 1) t -= 1;
-      if (t < 1 / 6) return p + (q - p) * 6 * t;
-      if (t < 1 / 2) return q;
-      if (t < 2 / 3) return p + (q - p) * (2 / 3 - t) * 6;
-      return p;
-    };
-
     const q = l < 0.5 ? l * (1 + s) : l + s - l * s;
     const p = 2 * l - q;
 
-    r = hue2rgb(p, q, h + 1 / 3);
-    g = hue2rgb(p, q, h);
-    b = hue2rgb(p, q, h - 1 / 3);
+    r = hueToRgb(p, q, h + HUE_ONE_THIRD);
+    g = hueToRgb(p, q, h);
+    b = hueToRgb(p, q, h - HUE_ONE_THIRD);
   }
 
-  const toHex = (x: number): string => {
-    const hex = Math.round(x * 255).toString(16);
-    return hex.length === 1 ? "0" + hex : hex;
-  };
+  return `#${linearChannelToHex(r)}${linearChannelToHex(g)}${linearChannelToHex(b)}`.toUpperCase();
+}
 
-  return `#${toHex(r)}${toHex(g)}${toHex(b)}`.toUpperCase();
+/**
+ * Adjusts the lightness of a color by a signed delta.
+ * @param hex - Hex color string
+ * @param delta - Lightness change in percentage points (positive = lighter, negative = darker)
+ */
+function adjustLightness(hex: string, delta: number): string {
+  const hsl = hexToHSL(hex);
+  return hslToHex({ ...hsl, l: Math.min(100, Math.max(0, hsl.l + delta)) });
 }
 
 /**
@@ -258,9 +326,7 @@ export function hslToHex(hsl: HSL): string {
  * @param amount - Amount to lighten (0-1, e.g., 0.15 = 15%)
  */
 export function lightenColor(hex: string, amount: number): string {
-  const hsl = hexToHSL(hex);
-  hsl.l = Math.min(100, hsl.l + amount * 100);
-  return hslToHex(hsl);
+  return adjustLightness(hex, amount * 100);
 }
 
 /**
@@ -269,10 +335,11 @@ export function lightenColor(hex: string, amount: number): string {
  * @param amount - Amount to darken (0-1, e.g., 0.15 = 15%)
  */
 export function darkenColor(hex: string, amount: number): string {
-  const hsl = hexToHSL(hex);
-  hsl.l = Math.max(0, hsl.l - amount * 100);
-  return hslToHex(hsl);
+  return adjustLightness(hex, -amount * 100);
 }
+
+/** Lightness steps (dark → light) for the 10-swatch monochrome palette */
+const MONOCHROME_LIGHTNESS_STEPS = [15, 22, 30, 37, 44, 52, 59, 66, 73, 80];
 
 /**
  * Generates a monochrome palette from a base color (10 shades: dark → light)
@@ -280,21 +347,34 @@ export function darkenColor(hex: string, amount: number): string {
  */
 export function generateMonochromePalette(baseColor: string): string[] {
   const hsl = hexToHSL(baseColor);
-  const lightnessSteps = [15, 22, 30, 37, 44, 52, 59, 66, 73, 80]; // dark → light
-
-  return lightnessSteps.map((l) => hslToHex({ h: hsl.h, s: hsl.s, l }));
+  return MONOCHROME_LIGHTNESS_STEPS.map((l) =>
+    hslToHex({ h: hsl.h, s: hsl.s, l })
+  );
 }
 
+/** Lightness floor/ceiling (%) for expanded palette shades */
+const PALETTE_LIGHTNESS_MIN = 25;
+const PALETTE_LIGHTNESS_MAX = 75;
+/** Saturation modulation depth for palette expansion (0 = none, 1 = full parabola) */
+const PALETTE_SATURATION_VARIATION = 0.3;
+/** Max hue rotation for the Bezold-Brücke perceptual shift (degrees) */
+const BEZOLD_BRUCKE_SHIFT_DEGREES = 6;
+
 /**
- * Expands a palette to match a target count using lightness variations
- * Based on Matt Ström's color formulas and Lyft ColorBox algorithm
- * @see https://mattstromawn.com/writing/generating-color-palettes/
+ * Expands a palette to match a target count using lightness variations.
+ * Returns an empty array when baseColors is empty or targetCount is zero.
+ * Based on Matt Ström's color formulas and Lyft ColorBox algorithm.
+ * @see https://matthewstrom.com/writing/generating-color-palettes/
  * @see https://github.com/lyft/coloralgorithm
  */
 export function expandPalette(
   baseColors: string[],
   targetCount: number
 ): string[] {
+  if (baseColors.length === 0 || targetCount <= 0) {
+    return [];
+  }
+
   if (targetCount <= baseColors.length) {
     return baseColors.slice(0, targetCount);
   }
@@ -303,6 +383,8 @@ export function expandPalette(
   const expanded: string[] = [];
 
   for (const baseHex of baseColors) {
+    if (expanded.length >= targetCount) break;
+
     const hsl = hexToHSL(baseHex);
 
     for (let i = 0; i < stepsPerColor; i++) {
@@ -311,22 +393,24 @@ export function expandPalette(
       // Easing for more natural transitions (easeOutQuad)
       const eased = 1 - Math.pow(1 - t, 2);
 
-      // Lightness: dark → light (25% → 75%)
-      const lightness = 25 + eased * 50;
+      // Lightness: dark → light
+      const lightness =
+        PALETTE_LIGHTNESS_MIN +
+        eased * (PALETTE_LIGHTNESS_MAX - PALETTE_LIGHTNESS_MIN);
 
       // Saturation: parabola (maximum in middle, formula: -4n² + 4n)
-      const satMod = 1 - Math.pow(2 * t - 1, 2) * 0.3;
+      const satMod = 1 - Math.pow(2 * t - 1, 2) * PALETTE_SATURATION_VARIATION;
       const saturation = Math.min(100, hsl.s * satMod);
 
-      // Hue-Shift (Bezold-Brücke effect): ±3° based on lightness
-      const hueShift = (0.5 - t) * 6;
+      // Hue-Shift (Bezold-Brücke effect)
+      const hueShift = (0.5 - t) * BEZOLD_BRUCKE_SHIFT_DEGREES;
       const hue = (hsl.h + hueShift + 360) % 360;
 
       expanded.push(hslToHex({ h: hue, s: saturation, l: lightness }));
-    }
 
-    if (expanded.length >= targetCount) break;
+      if (expanded.length >= targetCount) break;
+    }
   }
 
-  return expanded.slice(0, targetCount);
+  return expanded;
 }

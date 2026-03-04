@@ -72,6 +72,13 @@ const slate = {
   800: "#1e293b",
 } as const;
 
+/**
+ * slate[800] exported for use as a contrast-safe dark text color in colorUtils.
+ * The full slate scale is a private chart/overlay scale not included in COLORS,
+ * but this specific value is needed for WCAG contrast calculations.
+ */
+export const SLATE_800 = slate[800];
+
 export const COLORS = {
   neutral,
   brand,

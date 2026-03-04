@@ -7,7 +7,6 @@ import {
   hexToRgb,
   getRelativeLuminance,
   getContrastRatio,
-  isLightColor,
   getContrastTextColor,
   hexToHSL,
   hslToHex,
@@ -48,6 +47,35 @@ describe("colorUtils", () => {
     it("handles mixed case hex", () => {
       expect(hexToRgb("#FF0000")).toEqual({ r: 255, g: 0, b: 0 });
       expect(hexToRgb("#Ff00fF")).toEqual({ r: 255, g: 0, b: 255 });
+    });
+
+    it("falls back to default color for invalid hex strings (no NaN propagation)", () => {
+      // Invalid characters produce NaN via parseInt — hexToRgb must guard against this
+      const result = hexToRgb("#ZZZZZZ");
+      expect(result.r).not.toBeNaN();
+      expect(result.g).not.toBeNaN();
+      expect(result.b).not.toBeNaN();
+      // Returned values must be valid byte range
+      expect(result.r).toBeGreaterThanOrEqual(0);
+      expect(result.r).toBeLessThanOrEqual(255);
+    });
+
+    it("falls back to default color for bare '#' (no hex digits)", () => {
+      // "#" → cleanHex = "" → all substrings empty → parseInt("", 16) = NaN → fallback
+      const result = hexToRgb("#");
+      expect(result.r).not.toBeNaN();
+      expect(result.g).not.toBeNaN();
+      expect(result.b).not.toBeNaN();
+      expect(result.r).toBeGreaterThanOrEqual(0);
+      expect(result.r).toBeLessThanOrEqual(255);
+    });
+
+    it("falls back to default color for non-hex format strings", () => {
+      // "rgb(...)" — first two chars "rg" produce NaN via parseInt
+      const result = hexToRgb("rgb(255, 0, 0)");
+      expect(result.r).not.toBeNaN();
+      expect(result.g).not.toBeNaN();
+      expect(result.b).not.toBeNaN();
     });
   });
 
@@ -97,31 +125,6 @@ describe("colorUtils", () => {
       expect(getContrastRatio("#ffffff", "#000000")).toBeCloseTo(21, 0);
       // Pure red on white: ~4:1
       expect(getContrastRatio("#ff0000", "#ffffff")).toBeCloseTo(4, 0);
-    });
-  });
-
-  describe("isLightColor", () => {
-    it("returns false for black", () => {
-      expect(isLightColor("#000000")).toBe(false);
-    });
-
-    it("returns true for white", () => {
-      expect(isLightColor("#ffffff")).toBe(true);
-    });
-
-    it("returns false for dark colors that need white text", () => {
-      expect(isLightColor("#1a1a1a")).toBe(false); // Very dark gray
-      expect(isLightColor("#0000ff")).toBe(false); // Pure blue
-      expect(isLightColor("#800000")).toBe(false); // Dark red/maroon
-      expect(isLightColor("#003366")).toBe(false); // Dark blue
-      expect(isLightColor("#9b59b6")).toBe(false); // Purple
-    });
-
-    it("returns true for light colors that need dark text", () => {
-      expect(isLightColor("#f0f0f0")).toBe(true); // Light gray
-      expect(isLightColor("#ffff00")).toBe(true); // Yellow
-      expect(isLightColor("#00ff00")).toBe(true); // Pure green
-      expect(isLightColor("#ffcccc")).toBe(true); // Light pink
     });
   });
 
@@ -176,19 +179,19 @@ describe("colorUtils", () => {
     it("handles undefined by using default teal color", () => {
       // @ts-expect-error - testing runtime behavior with undefined
       const result = getContrastTextColor(undefined);
-      // Teal (#14b8a6) should get white text (it's a medium color)
-      expect(["#ffffff", "#1e293b"]).toContain(result);
+      // DEFAULT_COLOR is teal (#14b8a6) which has sufficient contrast for white text
+      expect(result).toBe("#ffffff");
     });
 
     it("handles null by using default teal color", () => {
       // @ts-expect-error - testing runtime behavior with null
       const result = getContrastTextColor(null);
-      expect(["#ffffff", "#1e293b"]).toContain(result);
+      expect(result).toBe("#ffffff");
     });
 
     it("handles empty string by using default teal color", () => {
       const result = getContrastTextColor("");
-      expect(["#ffffff", "#1e293b"]).toContain(result);
+      expect(result).toBe("#ffffff");
     });
   });
 
@@ -278,6 +281,17 @@ describe("colorUtils", () => {
       expect(hsl.s).toBe(0);
       expect(hsl.l).toBe(50);
     });
+
+    it("falls back via hexToRgb for invalid hex — returns valid HSL ranges", () => {
+      // Invalid hex → hexToRgb falls back to DEFAULT_COLOR → still produces valid HSL
+      const hsl = hexToHSL("#ZZZZZZ");
+      expect(hsl.h).toBeGreaterThanOrEqual(0);
+      expect(hsl.h).toBeLessThanOrEqual(360);
+      expect(hsl.s).toBeGreaterThanOrEqual(0);
+      expect(hsl.s).toBeLessThanOrEqual(100);
+      expect(hsl.l).toBeGreaterThanOrEqual(0);
+      expect(hsl.l).toBeLessThanOrEqual(100);
+    });
   });
 
   describe("hslToHex", () => {
@@ -308,6 +322,47 @@ describe("colorUtils", () => {
       // Allow slight rounding differences
       expect(result.toUpperCase()).toBe(original.toUpperCase());
     });
+
+    // Out-of-range input clamping/wrapping
+    it("wraps h > 360 modulo 360 (480 → 120 = green)", () => {
+      expect(hslToHex({ h: 480, s: 100, l: 50 })).toBe("#00FF00");
+    });
+
+    it("wraps negative h into valid range (-120 → 240 = blue)", () => {
+      expect(hslToHex({ h: -120, s: 100, l: 50 })).toBe("#0000FF");
+    });
+
+    it("clamps s > 100 to 100 — produces same result as s=100", () => {
+      expect(hslToHex({ h: 0, s: 150, l: 50 })).toBe(
+        hslToHex({ h: 0, s: 100, l: 50 })
+      );
+    });
+
+    it("clamps l > 100 to 100 — produces white", () => {
+      expect(hslToHex({ h: 0, s: 100, l: 150 })).toBe("#FFFFFF");
+    });
+
+    it("clamps negative l to 0 — produces black", () => {
+      expect(hslToHex({ h: 0, s: 100, l: -50 })).toBe("#000000");
+    });
+
+    it("clamps negative s to 0 — produces gray", () => {
+      // s=-50 clamped to 0, l=50 → achromatic gray
+      expect(hslToHex({ h: 0, s: -50, l: 50 })).toBe(
+        hslToHex({ h: 0, s: 0, l: 50 })
+      );
+    });
+
+    it("produces a valid 7-char hex string for any arbitrary input", () => {
+      const extremes = [
+        { h: 999, s: 999, l: 999 },
+        { h: -999, s: -999, l: -999 },
+        { h: 0, s: 0, l: 0 },
+      ];
+      extremes.forEach((hsl) => {
+        expect(hslToHex(hsl)).toMatch(/^#[0-9A-F]{6}$/i);
+      });
+    });
   });
 
   describe("lightenColor", () => {
@@ -329,6 +384,19 @@ describe("colorUtils", () => {
       const result = lightenColor(original, 0);
       expect(result.toUpperCase()).toBe(original.toUpperCase());
     });
+
+    it("clamps at l=100 for amount > 1", () => {
+      // amount=2 → delta=200 → any color will reach maximum lightness
+      const result = lightenColor("#808080", 2);
+      expect(hexToHSL(result).l).toBe(100);
+    });
+
+    it("darkens when given a negative amount", () => {
+      // amount=-0.2 → delta=-20 → lightness decreases
+      const original = hexToHSL("#B4D6FA");
+      const result = lightenColor("#B4D6FA", -0.2);
+      expect(hexToHSL(result).l).toBeLessThan(original.l);
+    });
   });
 
   describe("darkenColor", () => {
@@ -349,6 +417,19 @@ describe("colorUtils", () => {
       const original = "#0F6CBD";
       const result = darkenColor(original, 0);
       expect(result.toUpperCase()).toBe(original.toUpperCase());
+    });
+
+    it("clamps at l=0 for amount > 1", () => {
+      // amount=2 → delta=-200 → any color will reach minimum lightness
+      const result = darkenColor("#808080", 2);
+      expect(hexToHSL(result).l).toBe(0);
+    });
+
+    it("lightens when given a negative amount", () => {
+      // amount=-0.2 → delta=20 → lightness increases
+      const original = hexToHSL("#0F6CBD");
+      const result = darkenColor("#0F6CBD", -0.2);
+      expect(hexToHSL(result).l).toBeGreaterThan(original.l);
     });
   });
 
@@ -380,6 +461,14 @@ describe("colorUtils", () => {
       // All hues should be the same (within rounding)
       hues.forEach((h) => {
         expect(Math.abs(h - hues[0])).toBeLessThanOrEqual(1);
+      });
+    });
+
+    it("falls back via hexToRgb for invalid hex — still generates 10 valid colors", () => {
+      const palette = generateMonochromePalette("#ZZZZZZ");
+      expect(palette).toHaveLength(10);
+      palette.forEach((color) => {
+        expect(color).toMatch(/^#[0-9A-F]{6}$/i);
       });
     });
   });
@@ -415,6 +504,44 @@ describe("colorUtils", () => {
       const unique = new Set(result.map((c) => c.toUpperCase()));
       // Most colors should be unique (allow some overlap due to rounding)
       expect(unique.size).toBeGreaterThan(result.length * 0.7);
+    });
+
+    it("returns empty array for empty base palette", () => {
+      expect(expandPalette([], 5)).toEqual([]);
+    });
+
+    it("returns empty array for targetCount of 0", () => {
+      expect(expandPalette(basePalette, 0)).toEqual([]);
+    });
+
+    it("returns empty array for negative targetCount", () => {
+      expect(expandPalette(basePalette, -1)).toEqual([]);
+      expect(expandPalette(basePalette, -100)).toEqual([]);
+    });
+
+    it("works with a single base color", () => {
+      const result = expandPalette(["#0F6CBD"], 5);
+      expect(result).toHaveLength(5);
+      result.forEach((color) => {
+        expect(color).toMatch(/^#[0-9A-F]{6}$/i);
+      });
+    });
+
+    it("returns exactly targetCount colors", () => {
+      expect(expandPalette(basePalette, 7)).toHaveLength(7);
+      expect(expandPalette(basePalette, 13)).toHaveLength(13);
+    });
+
+    it("returns a copy of the full palette when targetCount equals palette length", () => {
+      const result = expandPalette(basePalette, basePalette.length);
+      expect(result).toHaveLength(basePalette.length);
+      expect(result).toEqual(basePalette);
+    });
+
+    it("returns a single-element array for targetCount of 1", () => {
+      const result = expandPalette(basePalette, 1);
+      expect(result).toHaveLength(1);
+      expect(result[0]).toMatch(/^#[0-9A-F]{6}$/i);
     });
   });
 });
