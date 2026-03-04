@@ -60,6 +60,24 @@ describe("colorUtils", () => {
       expect(result.r).toBeGreaterThanOrEqual(0);
       expect(result.r).toBeLessThanOrEqual(255);
     });
+
+    it("falls back to default color for bare '#' (no hex digits)", () => {
+      // "#" → cleanHex = "" → all substrings empty → parseInt("", 16) = NaN → fallback
+      const result = hexToRgb("#");
+      expect(result.r).not.toBeNaN();
+      expect(result.g).not.toBeNaN();
+      expect(result.b).not.toBeNaN();
+      expect(result.r).toBeGreaterThanOrEqual(0);
+      expect(result.r).toBeLessThanOrEqual(255);
+    });
+
+    it("falls back to default color for non-hex format strings", () => {
+      // "rgb(...)" — first two chars "rg" produce NaN via parseInt
+      const result = hexToRgb("rgb(255, 0, 0)");
+      expect(result.r).not.toBeNaN();
+      expect(result.g).not.toBeNaN();
+      expect(result.b).not.toBeNaN();
+    });
   });
 
   describe("getRelativeLuminance", () => {
@@ -453,6 +471,14 @@ describe("colorUtils", () => {
     it("returns empty array for negative targetCount", () => {
       expect(expandPalette(basePalette, -1)).toEqual([]);
       expect(expandPalette(basePalette, -100)).toEqual([]);
+    });
+
+    it("works with a single base color", () => {
+      const result = expandPalette(["#0F6CBD"], 5);
+      expect(result).toHaveLength(5);
+      result.forEach((color) => {
+        expect(color).toMatch(/^#[0-9A-F]{6}$/i);
+      });
     });
 
     it("returns exactly targetCount colors", () => {

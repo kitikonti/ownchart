@@ -184,6 +184,8 @@ export function getContrastTextColor(
 
 /** Initial hash value for DJB2 — chosen empirically for low collision rates */
 const DJB2_SEED = 5381;
+/** Bit-shift amount for DJB2: hash * 33 ≡ (hash << 5) + hash */
+const DJB2_SHIFT = 5;
 /** 31-bit mask to ensure stableHash always returns a non-negative integer */
 const INT31_MASK = 0x7fffffff;
 
@@ -195,7 +197,7 @@ const INT31_MASK = 0x7fffffff;
 export function stableHash(str: string): number {
   let hash = DJB2_SEED;
   for (let i = 0; i < str.length; i++) {
-    hash = ((hash << 5) + hash + str.charCodeAt(i)) & INT31_MASK;
+    hash = ((hash << DJB2_SHIFT) + hash + str.charCodeAt(i)) & INT31_MASK;
   }
   return hash;
 }
@@ -254,16 +256,33 @@ export function hexToHSL(hex: string): HSL {
   };
 }
 
+// ─────────────────────────────────────────────────────────────────────────────
+// HSL piecewise thresholds — CSS Color Module 4, §10.2
+// @see https://www.w3.org/TR/css-color-4/#hsl-to-rgb
+// ─────────────────────────────────────────────────────────────────────────────
+
+/** One sixth of the hue circle (0–1 range) — first segment boundary */
+const HUE_ONE_SIXTH = 1 / 6;
+/** One third of the hue circle — offset applied to R/B channels in hslToHex */
+const HUE_ONE_THIRD = 1 / 3;
+/** Midpoint of the hue circle — second segment boundary */
+const HUE_ONE_HALF = 1 / 2;
+/** Two thirds of the hue circle — third segment boundary */
+const HUE_TWO_THIRDS = 2 / 3;
+/** Number of hue segments — reciprocal of HUE_ONE_SIXTH, used as multiplier */
+const HUE_SEGMENTS = 6;
+
 /**
  * Maps a hue fraction to an RGB channel value (0–1).
  * Wraps t into [0, 1] before applying the standard HSL piecewise formula.
  * Per the CSS Color Module 4 specification.
+ * @see https://www.w3.org/TR/css-color-4/#hsl-to-rgb
  */
 function hueToRgb(p: number, q: number, t: number): number {
   const tw = t < 0 ? t + 1 : t > 1 ? t - 1 : t;
-  if (tw < 1 / 6) return p + (q - p) * 6 * tw;
-  if (tw < 1 / 2) return q;
-  if (tw < 2 / 3) return p + (q - p) * (2 / 3 - tw) * 6;
+  if (tw < HUE_ONE_SIXTH) return p + (q - p) * HUE_SEGMENTS * tw;
+  if (tw < HUE_ONE_HALF) return q;
+  if (tw < HUE_TWO_THIRDS) return p + (q - p) * (HUE_TWO_THIRDS - tw) * HUE_SEGMENTS;
   return p;
 }
 
@@ -271,8 +290,7 @@ function hueToRgb(p: number, q: number, t: number): number {
  * Formats a linear RGB channel value (0–1) as a zero-padded two-character hex string.
  */
 function linearChannelToHex(x: number): string {
-  const hex = Math.round(x * 255).toString(16);
-  return hex.length === 1 ? "0" + hex : hex;
+  return Math.round(x * 255).toString(16).padStart(2, "0");
 }
 
 /**
@@ -291,9 +309,9 @@ export function hslToHex(hsl: HSL): string {
     const q = l < 0.5 ? l * (1 + s) : l + s - l * s;
     const p = 2 * l - q;
 
-    r = hueToRgb(p, q, h + 1 / 3);
+    r = hueToRgb(p, q, h + HUE_ONE_THIRD);
     g = hueToRgb(p, q, h);
-    b = hueToRgb(p, q, h - 1 / 3);
+    b = hueToRgb(p, q, h - HUE_ONE_THIRD);
   }
 
   return `#${linearChannelToHex(r)}${linearChannelToHex(g)}${linearChannelToHex(b)}`.toUpperCase();
