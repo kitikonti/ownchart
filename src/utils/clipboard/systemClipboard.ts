@@ -63,9 +63,10 @@ function isValidISODate(s: string): boolean {
   return d.toISOString().startsWith(s);
 }
 
-// Safety limit — OwnChart-prefixed payloads exceeding this size are rejected as
-// malformed. The check is applied only after the prefix is confirmed, so unrelated
-// large clipboard content (e.g. a copied document) never produces a false warning.
+// Safety limit — OwnChart-prefixed payloads exceeding this character count are rejected
+// as malformed. Uses string length (character count, not byte count — equivalent for
+// ASCII JSON payloads). Applied only after the prefix is confirmed, so unrelated large
+// clipboard content (e.g. a copied document) never produces a false warning.
 const MAX_CLIPBOARD_SIZE = 5_000_000;
 
 /** Logs a warning to the console in development mode only. No-op in production. */
@@ -103,18 +104,18 @@ function isValidTaskShape(obj: unknown): boolean {
     t.id.length > 0 &&
     typeof t.name === "string" &&
     typeof t.startDate === "string" &&
-    isValidISODate(t.startDate as string) &&
+    isValidISODate(t.startDate) &&
     typeof t.endDate === "string" &&
-    isValidISODate(t.endDate as string) &&
+    isValidISODate(t.endDate) &&
     isFiniteNumber(t.duration) &&
-    (t.duration as number) >= 0 &&
+    t.duration >= 0 &&
     isFiniteNumber(t.progress) &&
-    (t.progress as number) >= 0 &&
-    (t.progress as number) <= 100 &&
+    t.progress >= 0 &&
+    t.progress <= 100 &&
     typeof t.color === "string" &&
-    HEX_COLOR_RE.test(t.color as string) &&
+    HEX_COLOR_RE.test(t.color) &&
     isFiniteNumber(t.order) &&
-    (t.order as number) >= 0 &&
+    t.order >= 0 &&
     typeof t.metadata === "object" &&
     t.metadata !== null &&
     !Array.isArray(t.metadata) &&
@@ -129,7 +130,7 @@ function isValidTaskShape(obj: unknown): boolean {
     // Optional: colorOverride must be a hex string if present
     (t.colorOverride === undefined ||
       (typeof t.colorOverride === "string" &&
-        HEX_COLOR_RE.test(t.colorOverride as string)))
+        HEX_COLOR_RE.test(t.colorOverride)))
   );
 }
 
@@ -229,7 +230,7 @@ async function readFromClipboard(prefix: string): Promise<ClipboardReadResult> {
   if (text.length > MAX_CLIPBOARD_SIZE) {
     return {
       status: "parse-error",
-      reason: `Payload too large (${text.length} bytes, limit ${MAX_CLIPBOARD_SIZE})`,
+      reason: `Payload too large (${text.length} characters, limit ${MAX_CLIPBOARD_SIZE})`,
     };
   }
   const jsonStr = text.slice(prefix.length);

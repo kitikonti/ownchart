@@ -198,6 +198,18 @@ describe("systemClipboard", () => {
       expect(result).toBeNull();
     });
 
+    it("should return null when root JSON value is null", async () => {
+      clipboardContent = "OWNCHART_ROWS:null";
+
+      expect(await readRowsFromSystemClipboard()).toBeNull();
+    });
+
+    it("should return null when root JSON value is a string, not an object", async () => {
+      clipboardContent = 'OWNCHART_ROWS:"just a string"';
+
+      expect(await readRowsFromSystemClipboard()).toBeNull();
+    });
+
     it("should return null if tasks is not an array", async () => {
       clipboardContent = 'OWNCHART_ROWS:{"tasks":"not an array","dependencies":[]}';
 
@@ -417,6 +429,17 @@ describe("systemClipboard", () => {
       it("should accept task with order 0", async () => {
         setClipboard({ order: 0 });
         expect(await readRowsFromSystemClipboard()).not.toBeNull();
+      });
+
+      it("should reject task with semantically invalid date (2024-02-30)", async () => {
+        // Regex alone would accept this; the round-trip check must catch it.
+        setClipboard({ startDate: "2024-02-30" });
+        expect(await readRowsFromSystemClipboard()).toBeNull();
+      });
+
+      it("should reject task with semantically invalid date (2024-13-01)", async () => {
+        setClipboard({ startDate: "2024-13-01" });
+        expect(await readRowsFromSystemClipboard()).toBeNull();
       });
 
       it("should reject task with array metadata", async () => {

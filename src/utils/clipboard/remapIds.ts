@@ -62,11 +62,14 @@ export function remapDependencies(
   return deps
     .filter(
       // Only keep dependencies where both tasks are in the pasted set.
-      // `in` is safe here: keys are crypto UUIDs and cannot collide with Object
-      // prototype properties (constructor, hasOwnProperty, etc.). Record<K,V>
-      // types all accesses as always-defined, so we use `in` for the runtime
-      // presence check rather than comparing against undefined.
-      (dep) => dep.fromTaskId in idMapping && dep.toTaskId in idMapping
+      // hasOwnProperty.call checks own properties only, avoiding prototype-chain
+      // false positives (e.g. fromTaskId === "constructor") that the `in`
+      // operator would incorrectly include. dep.fromTaskId/toTaskId come from
+      // clipboard data validated only as non-empty strings, not as UUIDs, so
+      // prototype-chain safety cannot be assumed.
+      (dep) =>
+        Object.prototype.hasOwnProperty.call(idMapping, dep.fromTaskId) &&
+        Object.prototype.hasOwnProperty.call(idMapping, dep.toTaskId)
     )
     .map((dep) => ({
       ...dep,

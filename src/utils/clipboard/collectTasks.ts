@@ -82,9 +82,13 @@ export function collectTasksWithChildren(
     collected.add(id);
     result.push(task);
 
-    // If task is collapsed, also collect its hidden children
+    // If task is collapsed, also collect its hidden children.
+    // Use a for..of loop rather than push(...spread) to avoid hitting the JS
+    // maximum argument limit when a collapsed subtree has thousands of nodes.
     if (task.open === false) {
-      result.push(...collectHiddenDescendants(id, childrenMap, collected));
+      for (const t of collectHiddenDescendants(id, childrenMap, collected)) {
+        result.push(t);
+      }
     }
   });
 
