@@ -5,6 +5,7 @@
 
 import type { Task } from "../../types/chart.types";
 import type { TaskId } from "../../types/branded.types";
+import type { ActiveCell } from "../../types/task.types";
 import type { Dependency } from "../../types/dependency.types";
 import type { FlattenedTask } from "../hierarchy";
 import {
@@ -24,7 +25,7 @@ export interface PrepareRowPasteInput {
   /** Current tasks in the task store. */
   currentTasks: Task[];
   /** Active cell state for insert position. */
-  activeCell: { taskId: TaskId | null };
+  activeCell: Pick<ActiveCell, "taskId">;
   /** Currently selected task IDs. */
   selectedTaskIds: TaskId[];
 }
@@ -88,7 +89,8 @@ export function prepareRowPaste(
       targetParentLevel = getTaskLevel(currentTasks, targetParent) + 1;
     }
   } else {
-    insertOrder = Math.max(...currentTasks.map((t) => t.order), -1) + 1;
+    insertOrder =
+      currentTasks.reduce((max, t) => Math.max(max, t.order), -1) + 1;
   }
 
   // Generate new UUIDs and remap IDs
@@ -110,7 +112,10 @@ export function prepareRowPaste(
     return depth;
   };
 
-  const maxPastedDepth = Math.max(...remappedTasks.map(getDepthInPasted), 0);
+  const maxPastedDepth = remappedTasks.reduce(
+    (max, t) => Math.max(max, getDepthInPasted(t)),
+    0
+  );
 
   // Validate depth
   if (targetParentLevel + maxPastedDepth >= MAX_HIERARCHY_DEPTH) {

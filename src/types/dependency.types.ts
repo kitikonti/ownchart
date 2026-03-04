@@ -17,6 +17,17 @@ import type { TaskId } from "./branded.types";
 export type DependencyType = "FS" | "SS" | "FF" | "SF";
 
 /**
+ * All valid dependency type values as a runtime array.
+ * Single source of truth shared by validation and clipboard utilities.
+ */
+export const DEPENDENCY_TYPES: readonly DependencyType[] = [
+  "FS",
+  "SS",
+  "FF",
+  "SF",
+];
+
+/**
  * Represents a dependency relationship between two tasks.
  *
  * @property id - Unique identifier (UUID v4)

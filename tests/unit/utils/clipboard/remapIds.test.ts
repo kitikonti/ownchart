@@ -208,6 +208,20 @@ describe("remapDependencies", () => {
     expect(result).toHaveLength(0);
   });
 
+  it("should filter out dependencies whose fromTaskId is an Object prototype property not in the mapping", () => {
+    // "constructor" and "hasOwnProperty" exist on Object.prototype but are NOT
+    // own keys of idMapping — they must be filtered out, not included.
+    const idMapping = { old1: "new1", old2: "new2" };
+    const deps: Dependency[] = [
+      { id: "dep1", fromTaskId: "constructor", toTaskId: "old2", type: "FS", createdAt: "2025-01-01T00:00:00Z" },
+      { id: "dep2", fromTaskId: "old1", toTaskId: "hasOwnProperty", type: "FS", createdAt: "2025-01-01T00:00:00Z" },
+    ];
+
+    const result = remapDependencies(deps, idMapping);
+
+    expect(result).toHaveLength(0);
+  });
+
   it("should handle multiple dependencies", () => {
     const idMapping = { a: "A", b: "B", c: "C" };
     const deps = [

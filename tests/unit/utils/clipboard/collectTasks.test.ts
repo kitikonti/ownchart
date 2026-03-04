@@ -123,6 +123,21 @@ describe("collectTasksWithChildren", () => {
     expect(result).toHaveLength(0);
   });
 
+  it("should return tasks in visual order regardless of selection order", () => {
+    const tasks = [
+      createTask("1", "Task 1"),
+      createTask("2", "Task 2"),
+      createTask("3", "Task 3"),
+    ];
+
+    // Select in reverse visual order (e.g. Ctrl+click bottom-to-top)
+    const result = collectTasksWithChildren(["3", "1"], tasks);
+
+    expect(result).toHaveLength(2);
+    // Result must be in allTasks order (1 before 3), not selection order
+    expect(result.map((t) => t.id)).toEqual(["1", "3"]);
+  });
+
   it("should handle open=undefined as expanded (default)", () => {
     const tasks = [
       createTask("parent", "Parent"), // open is undefined

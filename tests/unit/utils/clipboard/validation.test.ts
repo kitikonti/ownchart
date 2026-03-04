@@ -1,8 +1,10 @@
 import { describe, it, expect } from "vitest";
 import {
   canPasteCellValue,
+  canCutCellValue,
   getClearValueForField,
 } from "../../../../src/utils/clipboard/validation";
+import { DEFAULT_TASK_COLOR } from "../../../../src/config/taskDefaults";
 import type { Task } from "../../../../src/types/chart.types";
 
 // Helper to create test tasks
@@ -170,17 +172,81 @@ describe("canPasteCellValue", () => {
   });
 });
 
+describe("canCutCellValue", () => {
+  describe("summary task restrictions", () => {
+    it("should reject cutting type from a summary task", () => {
+      const result = canCutCellValue("type", createTask("summary"));
+      expect(result.valid).toBe(false);
+      expect(result.error).toBe(
+        "Cannot cut type from summary tasks (would orphan their children)"
+      );
+    });
+
+    it("should allow cutting other fields from summary task", () => {
+      expect(canCutCellValue("name", createTask("summary")).valid).toBe(true);
+      expect(canCutCellValue("color", createTask("summary")).valid).toBe(true);
+      expect(canCutCellValue("progress", createTask("summary")).valid).toBe(true);
+    });
+  });
+
+  describe("date field restrictions", () => {
+    it("should reject cutting startDate from a regular task", () => {
+      const result = canCutCellValue("startDate", createTask("task"));
+      expect(result.valid).toBe(false);
+      expect(result.error).toBe(
+        "Cannot cut startDate — tasks must always have a valid date"
+      );
+    });
+
+    it("should reject cutting endDate from a regular task", () => {
+      const result = canCutCellValue("endDate", createTask("task"));
+      expect(result.valid).toBe(false);
+      expect(result.error).toBe(
+        "Cannot cut endDate — tasks must always have a valid date"
+      );
+    });
+
+    it("should reject cutting startDate from a milestone task", () => {
+      expect(canCutCellValue("startDate", createTask("milestone")).valid).toBe(false);
+    });
+
+    it("should reject cutting endDate from a summary task", () => {
+      expect(canCutCellValue("endDate", createTask("summary")).valid).toBe(false);
+    });
+  });
+
+  describe("regular and milestone tasks allow non-date cuts", () => {
+    const fields = ["name", "duration", "progress", "color", "type"] as const;
+
+    fields.forEach((field) => {
+      it(`should allow cutting ${field} from regular task`, () => {
+        expect(canCutCellValue(field, createTask("task")).valid).toBe(true);
+      });
+
+      if (field !== "type") {
+        it(`should allow cutting ${field} from milestone task`, () => {
+          expect(canCutCellValue(field, createTask("milestone")).valid).toBe(true);
+        });
+      }
+    });
+  });
+});
+
 describe("getClearValueForField", () => {
   it('should return empty string for "name"', () => {
     expect(getClearValueForField("name")).toBe("");
   });
 
-  it('should return empty string for "startDate"', () => {
-    expect(getClearValueForField("startDate")).toBe("");
+  it('should throw for "startDate" — date fields cannot be cleared', () => {
+    expect(() => getClearValueForField("startDate")).toThrow(
+      'getClearValueForField("startDate")'
+    );
   });
 
-  it('should return empty string for "endDate"', () => {
-    expect(getClearValueForField("endDate")).toBe("");
+  it('should throw for "endDate" — date fields cannot be cleared', () => {
+    expect(() => getClearValueForField("endDate")).toThrow(
+      'getClearValueForField("endDate")'
+    );
   });
 
   it('should return 0 for "duration"', () => {
@@ -192,15 +258,10 @@ describe("getClearValueForField", () => {
   });
 
   it('should return default brand color for "color"', () => {
-    expect(getClearValueForField("color")).toBe("#0F6CBD");
+    expect(getClearValueForField("color")).toBe(DEFAULT_TASK_COLOR);
   });
 
   it('should return "task" for "type"', () => {
     expect(getClearValueForField("type")).toBe("task");
-  });
-
-  it("should return empty string for unknown field", () => {
-    // @ts-expect-error - testing unknown field
-    expect(getClearValueForField("unknownField")).toBe("");
   });
 });

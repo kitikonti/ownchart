@@ -79,6 +79,13 @@ const slate = {
  */
 export const SLATE_800 = slate[800];
 
+/**
+ * Default color applied to newly created tasks.
+ * Exported as a standalone constant so non-UI modules (e.g. clipboard utilities)
+ * can reference it without importing the full COLORS object.
+ */
+export const DEFAULT_TASK_COLOR = brand[600];
+
 export const COLORS = {
   neutral,
   brand,
@@ -100,7 +107,7 @@ export const COLORS = {
     dependencySelected: slate[700],
     todayMarker: brand[600], // today marker
     todayHighlight: brand[50], // today header cell background
-    taskDefault: brand[600], // new tasks
+    taskDefault: DEFAULT_TASK_COLOR, // new tasks
     marquee: slate[700], // Marquee selection rectangle
     /** Fill opacity for selected-row highlight and marquee overlay */
     selectionFillOpacity: 0.08,

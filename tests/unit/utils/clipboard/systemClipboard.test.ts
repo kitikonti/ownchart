@@ -198,6 +198,18 @@ describe("systemClipboard", () => {
       expect(result).toBeNull();
     });
 
+    it("should return null when root JSON value is null", async () => {
+      clipboardContent = "OWNCHART_ROWS:null";
+
+      expect(await readRowsFromSystemClipboard()).toBeNull();
+    });
+
+    it("should return null when root JSON value is a string, not an object", async () => {
+      clipboardContent = 'OWNCHART_ROWS:"just a string"';
+
+      expect(await readRowsFromSystemClipboard()).toBeNull();
+    });
+
     it("should return null if tasks is not an array", async () => {
       clipboardContent = 'OWNCHART_ROWS:{"tasks":"not an array","dependencies":[]}';
 
@@ -247,6 +259,337 @@ describe("systemClipboard", () => {
       const result = await readRowsFromSystemClipboard();
 
       expect(result).toBeNull();
+    });
+
+    it("should return null for oversized clipboard payload", async () => {
+      clipboardContent = "OWNCHART_ROWS:" + "x".repeat(6_000_000);
+
+      expect(await readRowsFromSystemClipboard()).toBeNull();
+    });
+
+    // Typed as Task so TypeScript will catch interface drift: when a new required
+    // field is added to Task and this fixture is not updated, the compiler errors
+    // here — use that as a prompt to also update isValidTaskShape in systemClipboard.ts.
+    const VALID_TASK: Task = {
+      id: tid("task-shape-test"),
+      name: "Shape Validation Task",
+      startDate: "2025-01-01",
+      endDate: "2025-01-07",
+      duration: 7,
+      progress: 0,
+      color: hex("#3b82f6"),
+      order: 0,
+      metadata: {},
+    };
+
+    it("should accept a complete typed Task via write/read round-trip", async () => {
+      await writeRowsToSystemClipboard([VALID_TASK], []);
+      const result = await readRowsFromSystemClipboard();
+      expect(result).not.toBeNull();
+      expect(result?.tasks[0].id).toBe(VALID_TASK.id);
+      expect(result?.tasks[0].name).toBe(VALID_TASK.name);
+    });
+
+    describe("task shape validation", () => {
+      const validTask = {
+        id: "task-1",
+        name: "Test Task",
+        startDate: "2025-01-01",
+        endDate: "2025-01-07",
+        duration: 7,
+        progress: 0,
+        color: "#3b82f6",
+        order: 0,
+        metadata: {},
+      };
+
+      const setClipboard = (overrides: Record<string, unknown>): void => {
+        clipboardContent =
+          "OWNCHART_ROWS:" +
+          JSON.stringify({
+            tasks: [{ ...validTask, ...overrides }],
+            dependencies: [],
+          });
+      };
+
+      it("should reject task with non-numeric duration", async () => {
+        setClipboard({ duration: "seven" });
+        expect(await readRowsFromSystemClipboard()).toBeNull();
+      });
+
+      it("should reject task with non-numeric order", async () => {
+        setClipboard({ order: null });
+        expect(await readRowsFromSystemClipboard()).toBeNull();
+      });
+
+      it("should reject task with named color (not hex)", async () => {
+        setClipboard({ color: "red" });
+        expect(await readRowsFromSystemClipboard()).toBeNull();
+      });
+
+      it("should reject task with bare # color", async () => {
+        setClipboard({ color: "#" });
+        expect(await readRowsFromSystemClipboard()).toBeNull();
+      });
+
+      it("should reject task with non-hex color characters", async () => {
+        setClipboard({ color: "#xyz123" });
+        expect(await readRowsFromSystemClipboard()).toBeNull();
+      });
+
+      it("should accept task with 3-char short hex color", async () => {
+        setClipboard({ color: "#f00" });
+        expect(await readRowsFromSystemClipboard()).not.toBeNull();
+      });
+
+      it("should accept task with 4-char hex color with alpha (#RGBA)", async () => {
+        setClipboard({ color: "#f00f" });
+        expect(await readRowsFromSystemClipboard()).not.toBeNull();
+      });
+
+      it("should accept task with 6-char standard hex color", async () => {
+        setClipboard({ color: "#ff0000" });
+        expect(await readRowsFromSystemClipboard()).not.toBeNull();
+      });
+
+      it("should accept task with 8-char hex color with alpha", async () => {
+        setClipboard({ color: "#ff000088" });
+        expect(await readRowsFromSystemClipboard()).not.toBeNull();
+      });
+
+      it("should reject task with 5-char hex color (invalid CSS length)", async () => {
+        setClipboard({ color: "#ff000" });
+        expect(await readRowsFromSystemClipboard()).toBeNull();
+      });
+
+      it("should reject task with 7-char hex color (invalid CSS length)", async () => {
+        setClipboard({ color: "#ff00000" });
+        expect(await readRowsFromSystemClipboard()).toBeNull();
+      });
+
+      it("should reject task with non-ISO startDate", async () => {
+        setClipboard({ startDate: "January 1, 2025" });
+        expect(await readRowsFromSystemClipboard()).toBeNull();
+      });
+
+      it("should reject task with non-ISO endDate", async () => {
+        setClipboard({ endDate: "not-a-date" });
+        expect(await readRowsFromSystemClipboard()).toBeNull();
+      });
+
+      it("should reject task with empty string startDate", async () => {
+        setClipboard({ startDate: "" });
+        expect(await readRowsFromSystemClipboard()).toBeNull();
+      });
+
+      it("should reject task with non-boolean open field", async () => {
+        setClipboard({ open: "yes" });
+        expect(await readRowsFromSystemClipboard()).toBeNull();
+      });
+
+      it("should reject task with numeric open field", async () => {
+        setClipboard({ open: 1 });
+        expect(await readRowsFromSystemClipboard()).toBeNull();
+      });
+
+      it("should accept task with open: false", async () => {
+        setClipboard({ open: false });
+        expect(await readRowsFromSystemClipboard()).not.toBeNull();
+      });
+
+      it("should accept task with open: true", async () => {
+        setClipboard({ open: true });
+        expect(await readRowsFromSystemClipboard()).not.toBeNull();
+      });
+
+      it("should reject task with non-hex colorOverride", async () => {
+        setClipboard({ colorOverride: "blue" });
+        expect(await readRowsFromSystemClipboard()).toBeNull();
+      });
+
+      it("should accept task with valid colorOverride", async () => {
+        setClipboard({ colorOverride: "#ff0000" });
+        expect(await readRowsFromSystemClipboard()).not.toBeNull();
+      });
+
+      it("should reject task with empty string id", async () => {
+        setClipboard({ id: "" });
+        expect(await readRowsFromSystemClipboard()).toBeNull();
+      });
+
+      it("should reject task with negative duration", async () => {
+        setClipboard({ duration: -1 });
+        expect(await readRowsFromSystemClipboard()).toBeNull();
+      });
+
+      it("should accept task with zero duration", async () => {
+        setClipboard({ duration: 0 });
+        expect(await readRowsFromSystemClipboard()).not.toBeNull();
+      });
+
+      it("should reject task with progress above 100", async () => {
+        setClipboard({ progress: 101 });
+        expect(await readRowsFromSystemClipboard()).toBeNull();
+      });
+
+      it("should reject task with negative progress", async () => {
+        setClipboard({ progress: -1 });
+        expect(await readRowsFromSystemClipboard()).toBeNull();
+      });
+
+      it("should accept task with progress at boundary values (0 and 100)", async () => {
+        setClipboard({ progress: 0 });
+        expect(await readRowsFromSystemClipboard()).not.toBeNull();
+        setClipboard({ progress: 100 });
+        expect(await readRowsFromSystemClipboard()).not.toBeNull();
+      });
+
+      it("should reject task with negative order", async () => {
+        setClipboard({ order: -1 });
+        expect(await readRowsFromSystemClipboard()).toBeNull();
+      });
+
+      it("should accept task with order 0", async () => {
+        setClipboard({ order: 0 });
+        expect(await readRowsFromSystemClipboard()).not.toBeNull();
+      });
+
+      it("should reject task with semantically invalid date (2024-02-30)", async () => {
+        // Regex alone would accept this; the round-trip check must catch it.
+        setClipboard({ startDate: "2024-02-30" });
+        expect(await readRowsFromSystemClipboard()).toBeNull();
+      });
+
+      it("should reject task with semantically invalid date (2024-13-01)", async () => {
+        setClipboard({ startDate: "2024-13-01" });
+        expect(await readRowsFromSystemClipboard()).toBeNull();
+      });
+
+      it("should reject task with array metadata", async () => {
+        setClipboard({ metadata: [] });
+        expect(await readRowsFromSystemClipboard()).toBeNull();
+      });
+
+      it("should reject task with empty string parent", async () => {
+        setClipboard({ parent: "" });
+        expect(await readRowsFromSystemClipboard()).toBeNull();
+      });
+
+      it("should accept task with non-empty string parent", async () => {
+        setClipboard({ parent: "some-parent-id" });
+        expect(await readRowsFromSystemClipboard()).not.toBeNull();
+      });
+
+      it("should return null when startDate is missing", async () => {
+        setClipboard({ startDate: undefined });
+        expect(await readRowsFromSystemClipboard()).toBeNull();
+      });
+
+      it("should return null when endDate is missing", async () => {
+        setClipboard({ endDate: undefined });
+        expect(await readRowsFromSystemClipboard()).toBeNull();
+      });
+
+      it("should return null when duration is missing", async () => {
+        setClipboard({ duration: undefined });
+        expect(await readRowsFromSystemClipboard()).toBeNull();
+      });
+
+      it("should return null when progress is missing", async () => {
+        setClipboard({ progress: undefined });
+        expect(await readRowsFromSystemClipboard()).toBeNull();
+      });
+
+      it("should return null when color is missing", async () => {
+        setClipboard({ color: undefined });
+        expect(await readRowsFromSystemClipboard()).toBeNull();
+      });
+
+      it("should return null when order is missing", async () => {
+        setClipboard({ order: undefined });
+        expect(await readRowsFromSystemClipboard()).toBeNull();
+      });
+
+      it("should return null when metadata is missing", async () => {
+        setClipboard({ metadata: undefined });
+        expect(await readRowsFromSystemClipboard()).toBeNull();
+      });
+    });
+
+    describe("dependency shape validation", () => {
+      const validTask = {
+        id: "task-1",
+        name: "Test Task",
+        startDate: "2025-01-01",
+        endDate: "2025-01-07",
+        duration: 7,
+        progress: 0,
+        color: "#3b82f6",
+        order: 0,
+        metadata: {},
+      };
+
+      const validDep = {
+        id: "dep-1",
+        fromTaskId: "task-1",
+        toTaskId: "task-2",
+        type: "FS",
+        createdAt: "2025-01-01T00:00:00Z",
+      };
+
+      const setClipboardWithDep = (
+        overrides: Record<string, unknown>
+      ): void => {
+        clipboardContent =
+          "OWNCHART_ROWS:" +
+          JSON.stringify({
+            tasks: [validTask],
+            dependencies: [{ ...validDep, ...overrides }],
+          });
+      };
+
+      it("should accept dependency with valid ISO datetime createdAt", async () => {
+        setClipboardWithDep({});
+        expect(await readRowsFromSystemClipboard()).not.toBeNull();
+      });
+
+      it("should reject dependency with invalid createdAt string", async () => {
+        setClipboardWithDep({ createdAt: "not-a-date" });
+        expect(await readRowsFromSystemClipboard()).toBeNull();
+      });
+
+      it("should reject dependency with locale-specific date format for createdAt", async () => {
+        // Date.parse() accepts "12/25/2024" in most engines — the ISO prefix guard must catch it.
+        setClipboardWithDep({ createdAt: "12/25/2024" });
+        expect(await readRowsFromSystemClipboard()).toBeNull();
+      });
+
+      it("should reject dependency with date-only createdAt (no time component)", async () => {
+        // createdAt is always written as new Date().toISOString() which includes a time component.
+        // A bare date string "YYYY-MM-DD" is rejected because it lacks the required "T" separator.
+        setClipboardWithDep({ createdAt: "2025-01-01" });
+        expect(await readRowsFromSystemClipboard()).toBeNull();
+      });
+
+      it("should reject dependency with empty string id", async () => {
+        setClipboardWithDep({ id: "" });
+        expect(await readRowsFromSystemClipboard()).toBeNull();
+      });
+
+      it("should reject dependency with empty string fromTaskId", async () => {
+        setClipboardWithDep({ fromTaskId: "" });
+        expect(await readRowsFromSystemClipboard()).toBeNull();
+      });
+
+      it("should reject dependency with empty string toTaskId", async () => {
+        setClipboardWithDep({ toTaskId: "" });
+        expect(await readRowsFromSystemClipboard()).toBeNull();
+      });
+
+      it("should reject dependency with unknown type", async () => {
+        setClipboardWithDep({ type: "INVALID" });
+        expect(await readRowsFromSystemClipboard()).toBeNull();
+      });
     });
   });
 
@@ -310,6 +653,69 @@ describe("systemClipboard", () => {
 
       expect(result).toBeNull();
     });
+
+    it("should return null for oversized clipboard payload", async () => {
+      clipboardContent = "OWNCHART_CELL:" + "x".repeat(6_000_000);
+
+      expect(await readCellFromSystemClipboard()).toBeNull();
+    });
+
+    describe("cell value type validation", () => {
+      const setCell = (field: string, value: unknown): void => {
+        clipboardContent =
+          "OWNCHART_CELL:" + JSON.stringify({ field, value });
+      };
+
+      it("should return null for progress field with string value", async () => {
+        setCell("progress", "75");
+        expect(await readCellFromSystemClipboard()).toBeNull();
+      });
+
+      it("should return null for duration field with string value", async () => {
+        setCell("duration", "5");
+        expect(await readCellFromSystemClipboard()).toBeNull();
+      });
+
+      it("should return null for progress field with out-of-range value", async () => {
+        setCell("progress", 150);
+        expect(await readCellFromSystemClipboard()).toBeNull();
+      });
+
+      it("should return null for duration field with negative value", async () => {
+        setCell("duration", -1);
+        expect(await readCellFromSystemClipboard()).toBeNull();
+      });
+
+      it("should return null for name field with numeric value", async () => {
+        setCell("name", 42);
+        expect(await readCellFromSystemClipboard()).toBeNull();
+      });
+
+      it("should return null for startDate field with non-ISO string", async () => {
+        setCell("startDate", "January 1");
+        expect(await readCellFromSystemClipboard()).toBeNull();
+      });
+
+      it("should return null for color field with named color", async () => {
+        setCell("color", "red");
+        expect(await readCellFromSystemClipboard()).toBeNull();
+      });
+
+      it("should return null for type field with invalid value", async () => {
+        setCell("type", "project");
+        expect(await readCellFromSystemClipboard()).toBeNull();
+      });
+
+      it("should not return null for type field with valid value", async () => {
+        setCell("type", "summary");
+        expect(await readCellFromSystemClipboard()).not.toBeNull();
+      });
+
+      it("should not return null for color field with valid hex", async () => {
+        setCell("color", "#ff0000");
+        expect(await readCellFromSystemClipboard()).not.toBeNull();
+      });
+    });
   });
 
   describe("getSystemClipboardType", () => {
@@ -351,6 +757,18 @@ describe("systemClipboard", () => {
       const result = await getSystemClipboardType();
 
       expect(result).toBeNull();
+    });
+
+    it("should return null for oversized OwnChart row payload", async () => {
+      clipboardContent = "OWNCHART_ROWS:" + "x".repeat(6_000_000);
+
+      expect(await getSystemClipboardType()).toBeNull();
+    });
+
+    it("should return null for oversized OwnChart cell payload", async () => {
+      clipboardContent = "OWNCHART_CELL:" + "x".repeat(6_000_000);
+
+      expect(await getSystemClipboardType()).toBeNull();
     });
   });
 

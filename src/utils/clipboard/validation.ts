@@ -5,7 +5,18 @@
 
 import type { Task } from "../../types/chart.types";
 import type { EditableField } from "../../types/task.types";
-import { COLORS } from "../../styles/design-tokens";
+import {
+  DEFAULT_TASK_COLOR,
+  DEFAULT_TASK_TYPE,
+} from "../../config/taskDefaults";
+
+/**
+ * Result of a clipboard validation check.
+ * Discriminated union: narrow on `valid` to access `error`.
+ */
+export type ValidationResult =
+  | { valid: true }
+  | { valid: false; error: string };
 
 /**
  * Validate if a cell value can be pasted into a target field.
@@ -24,7 +35,7 @@ export function canPasteCellValue(
   sourceField: EditableField,
   targetField: EditableField,
   targetTask: Task
-): { valid: boolean; error?: string } {
+): ValidationResult {
   // Rule 1: Field types must match
   if (sourceField !== targetField) {
     return {
@@ -56,7 +67,48 @@ export function canPasteCellValue(
     };
   }
 
+  // MAINTENANCE: Add paste restrictions here when new task types are introduced.
+  // Counterpart: canCutCellValue covers cut-operation restrictions.
+
   // All checks passed
+  return { valid: true };
+}
+
+/**
+ * Validate if a cell value can be cut from a source field.
+ *
+ * Rules:
+ * - Summary tasks' type cannot be cleared — doing so would convert the summary
+ *   to a regular task while its children remain, breaking the hierarchy.
+ * - Date fields (startDate, endDate) cannot be cut — tasks must always have
+ *   valid dates; clearing them produces invalid state that breaks calculations.
+ *
+ * @param field - Field being cut
+ * @param sourceTask - Task being cut from
+ * @returns Validation result with error message if invalid
+ */
+export function canCutCellValue(
+  field: EditableField,
+  sourceTask: Task
+): ValidationResult {
+  // Cutting type from a summary task clears it to "task", leaving its children
+  // without a summary parent — hierarchy invariant violated.
+  if (field === "type" && sourceTask.type === "summary") {
+    return {
+      valid: false,
+      error: "Cannot cut type from summary tasks (would orphan their children)",
+    };
+  }
+
+  // Clearing a date field produces an invalid task state (empty date strings break
+  // all date calculations). Dates must always be valid strings.
+  if (field === "startDate" || field === "endDate") {
+    return {
+      valid: false,
+      error: `Cannot cut ${field} — tasks must always have a valid date`,
+    };
+  }
+
   return { valid: true };
 }
 
@@ -65,6 +117,9 @@ export function canPasteCellValue(
  *
  * @param field - Field to get clear value for
  * @returns Appropriate default/empty value for the field type
+ * @throws {Error} If called with `startDate` or `endDate` — these fields cannot be
+ *   cleared and are guarded by {@link canCutCellValue}. Reaching this throw indicates
+ *   a programming error (missing guard at the call site).
  */
 export function getClearValueForField(
   field: EditableField
@@ -73,18 +128,23 @@ export function getClearValueForField(
     case "name":
       return "";
     case "startDate":
-      return "";
     case "endDate":
-      return "";
+      // canCutCellValue blocks cutting date fields before this point.
+      // Reaching here is a programming error — throw rather than return a
+      // silent invalid value that would corrupt all date calculations downstream.
+      throw new Error(
+        `getClearValueForField("${field}") called — date fields cannot be cleared (guarded by canCutCellValue)`
+      );
     case "duration":
-      return 0;
     case "progress":
       return 0;
     case "color":
-      return COLORS.chart.taskDefault;
+      return DEFAULT_TASK_COLOR;
     case "type":
-      return "task";
-    default:
-      return "";
+      return DEFAULT_TASK_TYPE;
+    default: {
+      const _exhaustive: never = field;
+      return _exhaustive;
+    }
   }
 }

@@ -3,16 +3,17 @@ import { determineInsertPosition } from "../../../../src/utils/clipboard/insertP
 import type { Task } from "../../../../src/types/chart.types";
 import type { FlattenedTask } from "../../../../src/utils/hierarchy";
 import { PLACEHOLDER_TASK_ID } from "../../../../src/config/placeholderRow";
+import { tid, hex } from "../../../helpers/branded";
 
 // Helper to create test tasks
 const createTask = (id: string, name: string): Task => ({
-  id,
+  id: tid(id),
   name,
   startDate: "2025-01-01",
   endDate: "2025-01-07",
   duration: 7,
   progress: 0,
-  color: "#3b82f6",
+  color: hex("#3b82f6"),
   order: 0,
   type: "task",
   metadata: {},
@@ -22,11 +23,13 @@ const createTask = (id: string, name: string): Task => ({
 const createFlattenedTask = (
   id: string,
   level: number = 0,
-  hasChildren: boolean = false
+  hasChildren: boolean = false,
+  globalRowNumber: number = 0
 ): FlattenedTask => ({
   task: createTask(id, `Task ${id}`),
   level,
   hasChildren,
+  globalRowNumber,
 });
 
 describe("determineInsertPosition", () => {
@@ -70,7 +73,7 @@ describe("determineInsertPosition", () => {
       // Placeholder active takes priority
       const result = determineInsertPosition(
         { taskId: PLACEHOLDER_TASK_ID },
-        ["1", PLACEHOLDER_TASK_ID],
+        [tid("1"), PLACEHOLDER_TASK_ID],
         flattenedTasks
       );
 
@@ -87,7 +90,7 @@ describe("determineInsertPosition", () => {
       ];
 
       const result = determineInsertPosition(
-        { taskId: "2" },
+        { taskId: tid("2") },
         [],
         flattenedTasks
       );
@@ -102,7 +105,7 @@ describe("determineInsertPosition", () => {
       ];
 
       const result = determineInsertPosition(
-        { taskId: "1" },
+        { taskId: tid("1") },
         [],
         flattenedTasks
       );
@@ -117,7 +120,7 @@ describe("determineInsertPosition", () => {
       ];
 
       const result = determineInsertPosition(
-        { taskId: "2" },
+        { taskId: tid("2") },
         [],
         flattenedTasks
       );
@@ -133,8 +136,8 @@ describe("determineInsertPosition", () => {
       ];
 
       const result = determineInsertPosition(
-        { taskId: "1" },
-        ["3"], // Selection at end
+        { taskId: tid("1") },
+        [tid("3")], // Selection at end
         flattenedTasks
       );
 
@@ -152,7 +155,7 @@ describe("determineInsertPosition", () => {
 
       const result = determineInsertPosition(
         { taskId: null },
-        ["1", "2"],
+        [tid("1"), tid("2")],
         flattenedTasks
       );
 
@@ -167,7 +170,7 @@ describe("determineInsertPosition", () => {
 
       const result = determineInsertPosition(
         { taskId: null },
-        ["1"],
+        [tid("1")],
         flattenedTasks
       );
 
@@ -182,7 +185,7 @@ describe("determineInsertPosition", () => {
 
       const result = determineInsertPosition(
         { taskId: null },
-        ["1", PLACEHOLDER_TASK_ID],
+        [tid("1"), PLACEHOLDER_TASK_ID],
         flattenedTasks
       );
 
@@ -197,7 +200,7 @@ describe("determineInsertPosition", () => {
 
       const result = determineInsertPosition(
         { taskId: null },
-        ["2"],
+        [tid("2")],
         flattenedTasks
       );
 
@@ -234,7 +237,7 @@ describe("determineInsertPosition", () => {
       ];
 
       const result = determineInsertPosition(
-        { taskId: "nonexistent" },
+        { taskId: tid("nonexistent") },
         [],
         flattenedTasks
       );
@@ -250,7 +253,7 @@ describe("determineInsertPosition", () => {
 
       const result = determineInsertPosition(
         { taskId: null },
-        ["nonexistent1", "nonexistent2"],
+        [tid("nonexistent1"), tid("nonexistent2")],
         flattenedTasks
       );
 
@@ -268,7 +271,7 @@ describe("determineInsertPosition", () => {
       ];
 
       const result = determineInsertPosition(
-        { taskId: "child2" },
+        { taskId: tid("child2") },
         [],
         flattenedTasks
       );

@@ -17,6 +17,12 @@ import type { HexColor, TaskId } from "./branded.types";
 export type TaskType = "task" | "summary" | "milestone";
 
 /**
+ * All valid task type values as a runtime array.
+ * Single source of truth shared by validation, clipboard, and file operations.
+ */
+export const TASK_TYPES: readonly TaskType[] = ["task", "summary", "milestone"];
+
+/**
  * Represents a task in the Gantt chart.
  *
  * @property id - Unique identifier (UUID v4)
