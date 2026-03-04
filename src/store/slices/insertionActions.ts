@@ -83,17 +83,22 @@ function insertTasksRelative(
   count = 1
 ): void {
   const state = get();
-  const refIndex = state.tasks.findIndex((t) => t.id === referenceTaskId);
-  if (refIndex === -1 || count < 1) return;
-
-  const refTask = state.tasks[refIndex];
-  const spliceIndex = direction === "above" ? refIndex : refIndex + 1;
+  const refTask = state.tasks.find((t) => t.id === referenceTaskId);
+  if (!refTask || count < 1) return;
+  const refOrder = refTask.order;
 
   const tasksToInsert: Array<Omit<Task, "id">> = [];
   const generatedIds: TaskId[] = [];
 
   for (let i = 0; i < count; i++) {
     const { startDate, endDate } = computeInsertionDates(refTask, direction, i);
+
+    // Use fractional order relative to refTask so normalizeTaskOrder
+    // places new tasks correctly regardless of array position.
+    const fractionalOrder =
+      direction === "below"
+        ? refOrder + 0.001 * (i + 1)
+        : refOrder - 0.001 * (i + 1);
 
     tasksToInsert.push({
       name: DEFAULT_TASK_NAME,
@@ -102,7 +107,7 @@ function insertTasksRelative(
       duration: DEFAULT_TASK_DURATION,
       progress: 0,
       color: COLORS.chart.taskDefault,
-      order: spliceIndex + i,
+      order: fractionalOrder,
       type: "task",
       parent: refTask.parent,
       metadata: {},
@@ -122,11 +127,7 @@ function insertTasksRelative(
       id: generatedIds[i],
     }));
 
-    state.tasks.splice(spliceIndex, 0, ...newTasks);
-    // Set sequential order so normalizeTaskOrder can sort correctly
-    for (let i = 0; i < state.tasks.length; i++) {
-      state.tasks[i].order = i;
-    }
+    state.tasks.push(...newTasks);
     normalizeTaskOrder(state.tasks);
 
     if (refTask.parent) {
@@ -135,6 +136,15 @@ function insertTasksRelative(
   });
 
   useFileStore.getState().markDirty();
+
+  // Read back final order values so recordCommand captures correct state
+  const finalState = get();
+  for (let i = 0; i < tasksToInsert.length; i++) {
+    const finalTask = finalState.tasks.find((t) => t.id === generatedIds[i]);
+    if (finalTask) {
+      tasksToInsert[i].order = finalTask.order;
+    }
+  }
 
   const description =
     count === 1

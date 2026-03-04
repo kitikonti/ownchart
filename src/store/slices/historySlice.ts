@@ -272,9 +272,7 @@ function undoAddTask(params: AddTaskParams): void {
     const filtered = currentTasks
       .filter((t) => !idsToRemove.has(t.id))
       .map((t) => ({ ...t }));
-    for (let i = 0; i < filtered.length; i++) {
-      filtered[i].order = i;
-    }
+    normalizeTaskOrder(filtered);
     useTaskStore.setState({ tasks: filtered });
   } else {
     useTaskStore.getState().deleteTask(params.generatedId, false);
@@ -386,9 +384,7 @@ function undoPasteRows(params: PasteRowsParams): void {
     ];
   }
 
-  for (let i = 0; i < tasksWithoutPasted.length; i++) {
-    tasksWithoutPasted[i].order = i;
-  }
+  normalizeTaskOrder(tasksWithoutPasted);
 
   useTaskStore.setState({ tasks: tasksWithoutPasted });
 
@@ -531,8 +527,7 @@ function redoAddTask(params: AddTaskParams): void {
       : [{ ...params.task, id: params.generatedId }];
 
   const allTasks = [...getTasksCopy(), ...newTasks];
-  allTasks.sort((a, b) => a.order - b.order);
-  for (let i = 0; i < allTasks.length; i++) allTasks[i].order = i;
+  normalizeTaskOrder(allTasks);
   useTaskStore.setState({ tasks: allTasks });
 }
 
@@ -643,9 +638,7 @@ function redoPasteRows(params: PasteRowsParams): void {
     useDependencyStore.setState({ dependencies: depsWithoutDeleted });
   }
 
-  for (let i = 0; i < updatedTasks.length; i++) {
-    updatedTasks[i].order = i;
-  }
+  normalizeTaskOrder(updatedTasks);
 
   useTaskStore.setState({ tasks: updatedTasks });
 

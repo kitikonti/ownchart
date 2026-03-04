@@ -684,6 +684,12 @@ export function getEffectiveTasksToMove(
  * sorting inside buildFlattenedTaskList) and produces globally sequential
  * order values as output.
  */
+/**
+ * WARNING: Do NOT use `tasks[i].order = i` on the raw tasks array as a
+ * substitute for this function. Array index does NOT correspond to display
+ * order. Instead use fractional order values + normalizeTaskOrder() for
+ * insertions, or sibling-group reorder + normalizeTaskOrder() for reordering.
+ */
 export function normalizeTaskOrder(tasks: Task[]): void {
   const flattened = buildFlattenedTaskList(tasks, new Set<TaskId>());
   let order = 0;

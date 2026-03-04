@@ -2056,8 +2056,9 @@ describe('Task Store - CRUD Operations', () => {
 
       const updatedTasks = useTaskStore.getState().tasks;
       expect(updatedTasks).toHaveLength(2);
-      expect(updatedTasks[0].name).toBe('New Task');
-      expect(updatedTasks[1].id).toBe('task-1');
+      const sorted = [...updatedTasks].sort((a, b) => a.order - b.order);
+      expect(sorted[0].name).toBe('New Task');
+      expect(sorted[1].id).toBe('task-1');
     });
 
     it('should set end date one day before reference start date', () => {
@@ -2080,7 +2081,7 @@ describe('Task Store - CRUD Operations', () => {
       const { insertTaskAbove } = useTaskStore.getState();
       insertTaskAbove('task-1');
 
-      const newTask = useTaskStore.getState().tasks[0];
+      const newTask = useTaskStore.getState().tasks.find((t) => t.name === 'New Task')!;
       expect(newTask.endDate).toBe('2025-01-14'); // Day before 2025-01-15
     });
 
@@ -2117,7 +2118,7 @@ describe('Task Store - CRUD Operations', () => {
       const { insertTaskAbove } = useTaskStore.getState();
       insertTaskAbove('child');
 
-      const newTask = useTaskStore.getState().tasks[1];
+      const newTask = useTaskStore.getState().tasks.find((t) => t.name === 'New Task')!;
       expect(newTask.parent).toBe('parent');
     });
 
@@ -2153,7 +2154,7 @@ describe('Task Store - CRUD Operations', () => {
       const { insertTaskAbove } = useTaskStore.getState();
       insertTaskAbove('task-2');
 
-      const updatedTasks = useTaskStore.getState().tasks;
+      const updatedTasks = [...useTaskStore.getState().tasks].sort((a, b) => a.order - b.order);
       expect(updatedTasks[0].order).toBe(0);
       expect(updatedTasks[1].order).toBe(1);
       expect(updatedTasks[2].order).toBe(2);
@@ -2253,11 +2254,12 @@ describe('Task Store - CRUD Operations', () => {
 
       const updatedTasks = useTaskStore.getState().tasks;
       expect(updatedTasks).toHaveLength(4);
-      expect(updatedTasks[3].id).toBe('task-1');
+      const sorted = [...updatedTasks].sort((a, b) => a.order - b.order);
+      expect(sorted[3].id).toBe('task-1');
       // All new tasks should be named "New Task"
-      expect(updatedTasks[0].name).toBe('New Task');
-      expect(updatedTasks[1].name).toBe('New Task');
-      expect(updatedTasks[2].name).toBe('New Task');
+      expect(sorted[0].name).toBe('New Task');
+      expect(sorted[1].name).toBe('New Task');
+      expect(sorted[2].name).toBe('New Task');
     });
 
     it('should assign correct parent from reference task', () => {
@@ -2296,8 +2298,10 @@ describe('Task Store - CRUD Operations', () => {
       const updatedTasks = useTaskStore.getState().tasks;
       expect(updatedTasks).toHaveLength(4);
       // Both new tasks should have the same parent
-      expect(updatedTasks[1].parent).toBe('parent');
-      expect(updatedTasks[2].parent).toBe('parent');
+      const newTasks = updatedTasks.filter((t) => t.name === 'New Task');
+      expect(newTasks).toHaveLength(2);
+      expect(newTasks[0].parent).toBe('parent');
+      expect(newTasks[1].parent).toBe('parent');
     });
 
     it('should give tasks sequential dates before reference', () => {
@@ -2322,11 +2326,12 @@ describe('Task Store - CRUD Operations', () => {
 
       const updatedTasks = useTaskStore.getState().tasks;
       expect(updatedTasks).toHaveLength(3);
+      const sorted = [...updatedTasks].sort((a, b) => a.order - b.order);
       // The second inserted task (closer to reference) should end before reference starts
-      const closerTask = updatedTasks[1];
+      const closerTask = sorted[1];
       expect(closerTask.endDate).toBe('2025-01-31');
       // The first inserted task should end before the second inserted task
-      const fartherTask = updatedTasks[0];
+      const fartherTask = sorted[0];
       expect(new Date(fartherTask.endDate!).getTime()).toBeLessThan(
         new Date(closerTask.startDate!).getTime()
       );
@@ -2366,8 +2371,9 @@ describe('Task Store - CRUD Operations', () => {
 
       const updatedTasks = useTaskStore.getState().tasks;
       expect(updatedTasks).toHaveLength(4);
-      // Order should be sequential
-      updatedTasks.forEach((task, index) => {
+      // Order should be sequential integers (0..N-1) after normalizeTaskOrder
+      const sorted = [...updatedTasks].sort((a, b) => a.order - b.order);
+      sorted.forEach((task, index) => {
         expect(task.order).toBe(index);
       });
     });
@@ -2419,8 +2425,9 @@ describe('Task Store - CRUD Operations', () => {
 
       const updatedTasks = useTaskStore.getState().tasks;
       expect(updatedTasks).toHaveLength(2);
-      expect(updatedTasks[0].id).toBe('task-1');
-      expect(updatedTasks[1].name).toBe('New Task');
+      const sorted = [...updatedTasks].sort((a, b) => a.order - b.order);
+      expect(sorted[0].id).toBe('task-1');
+      expect(sorted[1].name).toBe('New Task');
     });
 
     it('should set start date one day after reference end date', () => {
@@ -2443,7 +2450,7 @@ describe('Task Store - CRUD Operations', () => {
       const { insertTaskBelow } = useTaskStore.getState();
       insertTaskBelow('task-1');
 
-      const newTask = useTaskStore.getState().tasks[1];
+      const newTask = useTaskStore.getState().tasks.find((t) => t.name === 'New Task')!;
       expect(newTask.startDate).toBe('2025-01-16'); // Day after 2025-01-15
     });
 
@@ -2480,7 +2487,7 @@ describe('Task Store - CRUD Operations', () => {
       const { insertTaskBelow } = useTaskStore.getState();
       insertTaskBelow('child');
 
-      const newTask = useTaskStore.getState().tasks[2];
+      const newTask = useTaskStore.getState().tasks.find((t) => t.name === 'New Task')!;
       expect(newTask.parent).toBe('parent');
     });
 
@@ -2516,7 +2523,7 @@ describe('Task Store - CRUD Operations', () => {
       const { insertTaskBelow } = useTaskStore.getState();
       insertTaskBelow('task-1');
 
-      const updatedTasks = useTaskStore.getState().tasks;
+      const updatedTasks = [...useTaskStore.getState().tasks].sort((a, b) => a.order - b.order);
       expect(updatedTasks[0].order).toBe(0);
       expect(updatedTasks[1].order).toBe(1);
       expect(updatedTasks[2].order).toBe(2);
@@ -2565,7 +2572,7 @@ describe('Task Store - CRUD Operations', () => {
       const { insertTaskBelow } = useTaskStore.getState();
       insertTaskBelow('task-1');
 
-      const newTask = useTaskStore.getState().tasks[1];
+      const newTask = useTaskStore.getState().tasks.find((t) => t.name === 'New Task')!;
       expect(newTask.duration).toBe(7);
       expect(newTask.startDate).toBe('2025-01-16');
       expect(newTask.endDate).toBe('2025-01-22'); // 7 days from 2025-01-16
@@ -2616,6 +2623,392 @@ describe('Task Store - CRUD Operations', () => {
       expect(newTask!.startDate).toBe('2025-01-21');
       // Summary should now end at the new task's later end date
       expect(summary!.endDate).toBe(newTask!.endDate);
+    });
+  });
+
+  // ---------------------------------------------------------------------------
+  // Regression tests: array order != display order
+  // ---------------------------------------------------------------------------
+  // These tests verify that insertion works correctly when the state.tasks
+  // array order diverges from the task.order values (the real-world condition).
+  // Every future insertion test should include at least one variant like this.
+
+  describe('insertTaskBelow with mispositioned array order', () => {
+    it('should insert between siblings when array order differs from display order', () => {
+      // Parent with 3 children: C1(order=0), C2(order=1), C3(order=2)
+      // but C1 is at end of state.tasks array (simulating real-world divergence)
+      const tasks: Task[] = [
+        {
+          id: 'parent' as any,
+          name: 'Parent',
+          startDate: '2025-01-01',
+          endDate: '2025-01-31',
+          duration: 31,
+          progress: 0,
+          color: '#4A90D9',
+          order: 0,
+          type: 'summary' as TaskType,
+          parent: undefined,
+          metadata: {},
+        },
+        {
+          id: 'c2' as any,
+          name: 'Child 2',
+          startDate: '2025-01-11',
+          endDate: '2025-01-20',
+          duration: 10,
+          progress: 0,
+          color: '#4A90D9',
+          order: 2,
+          type: 'task' as TaskType,
+          parent: 'parent' as any,
+          metadata: {},
+        },
+        {
+          id: 'c3' as any,
+          name: 'Child 3',
+          startDate: '2025-01-21',
+          endDate: '2025-01-31',
+          duration: 11,
+          progress: 0,
+          color: '#4A90D9',
+          order: 3,
+          type: 'task' as TaskType,
+          parent: 'parent' as any,
+          metadata: {},
+        },
+        // C1 at END of array but has lowest order among siblings
+        {
+          id: 'c1' as any,
+          name: 'Child 1',
+          startDate: '2025-01-01',
+          endDate: '2025-01-10',
+          duration: 10,
+          progress: 0,
+          color: '#4A90D9',
+          order: 1,
+          type: 'task' as TaskType,
+          parent: 'parent' as any,
+          metadata: {},
+        },
+      ];
+
+      useTaskStore.setState({ tasks });
+
+      const { insertTaskBelow } = useTaskStore.getState();
+      insertTaskBelow('c1');
+
+      const state = useTaskStore.getState();
+      const siblings = state.tasks
+        .filter((t) => t.parent === ('parent' as any))
+        .sort((a, b) => a.order - b.order);
+
+      // New task should be between C1 and C2
+      expect(siblings).toHaveLength(4);
+      expect(siblings[0].id).toBe('c1');
+      expect(siblings[1].name).toBe('New Task');
+      expect(siblings[2].id).toBe('c2');
+      expect(siblings[3].id).toBe('c3');
+    });
+
+    it('should insert above child with mispositioned array', () => {
+      const tasks: Task[] = [
+        {
+          id: 'parent' as any,
+          name: 'Parent',
+          startDate: '2025-01-01',
+          endDate: '2025-01-31',
+          duration: 31,
+          progress: 0,
+          color: '#4A90D9',
+          order: 0,
+          type: 'summary' as TaskType,
+          parent: undefined,
+          metadata: {},
+        },
+        {
+          id: 'c2' as any,
+          name: 'Child 2',
+          startDate: '2025-01-11',
+          endDate: '2025-01-20',
+          duration: 10,
+          progress: 0,
+          color: '#4A90D9',
+          order: 2,
+          type: 'task' as TaskType,
+          parent: 'parent' as any,
+          metadata: {},
+        },
+        {
+          id: 'c3' as any,
+          name: 'Child 3',
+          startDate: '2025-01-21',
+          endDate: '2025-01-31',
+          duration: 11,
+          progress: 0,
+          color: '#4A90D9',
+          order: 3,
+          type: 'task' as TaskType,
+          parent: 'parent' as any,
+          metadata: {},
+        },
+        {
+          id: 'c1' as any,
+          name: 'Child 1',
+          startDate: '2025-01-01',
+          endDate: '2025-01-10',
+          duration: 10,
+          progress: 0,
+          color: '#4A90D9',
+          order: 1,
+          type: 'task' as TaskType,
+          parent: 'parent' as any,
+          metadata: {},
+        },
+      ];
+
+      useTaskStore.setState({ tasks });
+
+      const { insertTaskAbove } = useTaskStore.getState();
+      insertTaskAbove('c1');
+
+      const state = useTaskStore.getState();
+      const siblings = state.tasks
+        .filter((t) => t.parent === ('parent' as any))
+        .sort((a, b) => a.order - b.order);
+
+      // New task should be before C1
+      expect(siblings).toHaveLength(4);
+      expect(siblings[0].name).toBe('New Task');
+      expect(siblings[1].id).toBe('c1');
+      expect(siblings[2].id).toBe('c2');
+      expect(siblings[3].id).toBe('c3');
+    });
+
+    it('should insert below at root level with mispositioned array', () => {
+      // R1(order=0), R2(order=1) where R1 is at end of array
+      const tasks: Task[] = [
+        {
+          id: 'r2' as any,
+          name: 'Root 2',
+          startDate: '2025-01-11',
+          endDate: '2025-01-20',
+          duration: 10,
+          progress: 0,
+          color: '#4A90D9',
+          order: 1,
+          type: 'task' as TaskType,
+          parent: undefined,
+          metadata: {},
+        },
+        {
+          id: 'r1' as any,
+          name: 'Root 1',
+          startDate: '2025-01-01',
+          endDate: '2025-01-10',
+          duration: 10,
+          progress: 0,
+          color: '#4A90D9',
+          order: 0,
+          type: 'task' as TaskType,
+          parent: undefined,
+          metadata: {},
+        },
+      ];
+
+      useTaskStore.setState({ tasks });
+
+      const { insertTaskBelow } = useTaskStore.getState();
+      insertTaskBelow('r1');
+
+      const state = useTaskStore.getState();
+      const rootTasks = state.tasks
+        .filter((t) => !t.parent)
+        .sort((a, b) => a.order - b.order);
+
+      // New task between R1 and R2
+      expect(rootTasks).toHaveLength(3);
+      expect(rootTasks[0].id).toBe('r1');
+      expect(rootTasks[1].name).toBe('New Task');
+      expect(rootTasks[2].id).toBe('r2');
+    });
+
+    it('should insert below last child correctly', () => {
+      const tasks: Task[] = [
+        {
+          id: 'parent' as any,
+          name: 'Parent',
+          startDate: '2025-01-01',
+          endDate: '2025-01-31',
+          duration: 31,
+          progress: 0,
+          color: '#4A90D9',
+          order: 0,
+          type: 'summary' as TaskType,
+          parent: undefined,
+          metadata: {},
+        },
+        {
+          id: 'c3' as any,
+          name: 'Child 3',
+          startDate: '2025-01-21',
+          endDate: '2025-01-31',
+          duration: 11,
+          progress: 0,
+          color: '#4A90D9',
+          order: 3,
+          type: 'task' as TaskType,
+          parent: 'parent' as any,
+          metadata: {},
+        },
+        {
+          id: 'c1' as any,
+          name: 'Child 1',
+          startDate: '2025-01-01',
+          endDate: '2025-01-10',
+          duration: 10,
+          progress: 0,
+          color: '#4A90D9',
+          order: 1,
+          type: 'task' as TaskType,
+          parent: 'parent' as any,
+          metadata: {},
+        },
+        {
+          id: 'c2' as any,
+          name: 'Child 2',
+          startDate: '2025-01-11',
+          endDate: '2025-01-20',
+          duration: 10,
+          progress: 0,
+          color: '#4A90D9',
+          order: 2,
+          type: 'task' as TaskType,
+          parent: 'parent' as any,
+          metadata: {},
+        },
+      ];
+
+      useTaskStore.setState({ tasks });
+
+      const { insertTaskBelow } = useTaskStore.getState();
+      insertTaskBelow('c3');
+
+      const state = useTaskStore.getState();
+      const siblings = state.tasks
+        .filter((t) => t.parent === ('parent' as any))
+        .sort((a, b) => a.order - b.order);
+
+      // New task after C3, still within parent's children
+      expect(siblings).toHaveLength(4);
+      expect(siblings[0].id).toBe('c1');
+      expect(siblings[1].id).toBe('c2');
+      expect(siblings[2].id).toBe('c3');
+      expect(siblings[3].name).toBe('New Task');
+      expect(siblings[3].parent).toBe('parent');
+    });
+
+    it('should preserve all sibling order after insertion', () => {
+      // 5 siblings with array order completely different from display order
+      const tasks: Task[] = [
+        {
+          id: 'parent' as any,
+          name: 'Parent',
+          startDate: '2025-01-01',
+          endDate: '2025-02-28',
+          duration: 59,
+          progress: 0,
+          color: '#4A90D9',
+          order: 0,
+          type: 'summary' as TaskType,
+          parent: undefined,
+          metadata: {},
+        },
+        {
+          id: 's4' as any,
+          name: 'Sibling 4',
+          startDate: '2025-01-25',
+          endDate: '2025-01-31',
+          duration: 7,
+          progress: 0,
+          color: '#4A90D9',
+          order: 4,
+          type: 'task' as TaskType,
+          parent: 'parent' as any,
+          metadata: {},
+        },
+        {
+          id: 's2' as any,
+          name: 'Sibling 2',
+          startDate: '2025-01-11',
+          endDate: '2025-01-17',
+          duration: 7,
+          progress: 0,
+          color: '#4A90D9',
+          order: 2,
+          type: 'task' as TaskType,
+          parent: 'parent' as any,
+          metadata: {},
+        },
+        {
+          id: 's5' as any,
+          name: 'Sibling 5',
+          startDate: '2025-02-01',
+          endDate: '2025-02-07',
+          duration: 7,
+          progress: 0,
+          color: '#4A90D9',
+          order: 5,
+          type: 'task' as TaskType,
+          parent: 'parent' as any,
+          metadata: {},
+        },
+        {
+          id: 's1' as any,
+          name: 'Sibling 1',
+          startDate: '2025-01-04',
+          endDate: '2025-01-10',
+          duration: 7,
+          progress: 0,
+          color: '#4A90D9',
+          order: 1,
+          type: 'task' as TaskType,
+          parent: 'parent' as any,
+          metadata: {},
+        },
+        {
+          id: 's3' as any,
+          name: 'Sibling 3',
+          startDate: '2025-01-18',
+          endDate: '2025-01-24',
+          duration: 7,
+          progress: 0,
+          color: '#4A90D9',
+          order: 3,
+          type: 'task' as TaskType,
+          parent: 'parent' as any,
+          metadata: {},
+        },
+      ];
+
+      useTaskStore.setState({ tasks });
+
+      const { insertTaskBelow } = useTaskStore.getState();
+      insertTaskBelow('s3');
+
+      const state = useTaskStore.getState();
+      const siblings = state.tasks
+        .filter((t) => t.parent === ('parent' as any))
+        .sort((a, b) => a.order - b.order);
+
+      // All original siblings maintain relative order, new task after S3
+      expect(siblings).toHaveLength(6);
+      expect(siblings[0].id).toBe('s1');
+      expect(siblings[1].id).toBe('s2');
+      expect(siblings[2].id).toBe('s3');
+      expect(siblings[3].name).toBe('New Task');
+      expect(siblings[4].id).toBe('s4');
+      expect(siblings[5].id).toBe('s5');
     });
   });
 });

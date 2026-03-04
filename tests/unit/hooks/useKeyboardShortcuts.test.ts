@@ -613,8 +613,9 @@ describe('useKeyboardShortcuts', () => {
       simulateKeyPress('+', { ctrlKey: true });
       const tasks = useTaskStore.getState().tasks;
       expect(tasks).toHaveLength(4);
-      expect(tasks[1].name).toBe('New Task');
-      expect(tasks[2].id).toBe('task-2');
+      const sorted = [...tasks].sort((a, b) => a.order - b.order);
+      expect(sorted[1].name).toBe('New Task');
+      expect(sorted[2].id).toBe('task-2');
     });
 
     it('should insert N rows when N tasks are selected via Ctrl++', () => {
@@ -632,10 +633,11 @@ describe('useKeyboardShortcuts', () => {
       simulateKeyPress('+', { ctrlKey: true });
       const tasks = useTaskStore.getState().tasks;
       expect(tasks).toHaveLength(5);
-      expect(tasks[0].id).toBe('task-1');
-      expect(tasks[1].name).toBe('New Task');
-      expect(tasks[2].name).toBe('New Task');
-      expect(tasks[3].id).toBe('task-2');
+      const sorted = [...tasks].sort((a, b) => a.order - b.order);
+      expect(sorted[0].id).toBe('task-1');
+      expect(sorted[1].name).toBe('New Task');
+      expect(sorted[2].name).toBe('New Task');
+      expect(sorted[3].id).toBe('task-2');
     });
 
     it('should fall back to activeCell.taskId for Ctrl++ when no selection', () => {
