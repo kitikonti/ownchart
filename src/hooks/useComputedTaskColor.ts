@@ -15,9 +15,15 @@ import { computeTaskColor } from "../utils/computeTaskColor";
 /**
  * Hook to get computed color for a single task.
  * Returns HexColor — computeTaskColor always produces hex strings.
+ *
+ * NOTE: Subscribes to the full task list, not just the given task.
+ * This is required because color can depend on other tasks in certain modes
+ * (e.g. parent color in Hierarchy mode, group color in Summary Group mode).
  */
 export function useComputedTaskColor(task: Task): HexColor {
   const colorModeState = useChartStore((state) => state.colorModeState);
+  // Full task list needed: color may depend on parent/siblings in Hierarchy
+  // and Summary Group color modes, not just the task's own properties.
   const tasks = useTaskStore((state) => state.tasks);
 
   return useMemo(() => {

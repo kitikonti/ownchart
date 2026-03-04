@@ -45,6 +45,16 @@ export interface UseExportPreviewParams {
   enabled?: boolean;
 }
 
+/** Internal type for the three-phase render pipeline — UseExportPreviewParams without `enabled` */
+interface RenderParams {
+  tasks: Task[];
+  options: ExportOptions;
+  columnWidths: Record<string, number>;
+  currentAppZoom: number;
+  projectDateRange?: { start: Date; end: Date };
+  visibleDateRange?: { start: Date; end: Date };
+}
+
 /**
  * Wait for all fonts to be loaded.
  */
@@ -70,6 +80,10 @@ function waitForPaint(): Promise<void> {
 /**
  * Create a stable key for debouncing based on options.
  * Only includes options that affect the visual output.
+ *
+ * MAINTENANCE NOTE: When adding a new ExportOptions field that affects the
+ * visual output, remember to add it here. Omitting it means the preview will
+ * not re-render when that option changes.
  */
 function createOptionsKey(
   options: ExportOptions,
@@ -158,14 +172,7 @@ function buildRenderContainer(
  */
 async function renderToContainer(
   container: HTMLDivElement,
-  props: {
-    tasks: Task[];
-    options: ExportOptions;
-    columnWidths: Record<string, number>;
-    currentAppZoom: number;
-    projectDateRange?: { start: Date; end: Date };
-    visibleDateRange?: { start: Date; end: Date };
-  }
+  props: RenderParams
 ): Promise<Root> {
   const root = createRoot(container);
   await new Promise<void>((resolve) => {
@@ -224,7 +231,7 @@ export function useExportPreview({
 
   // Track current render for cleanup
   const containerRef = useRef<HTMLDivElement | null>(null);
-  const overlayRef = useRef<HTMLDivElement | null>(null);
+  const wrapperRef = useRef<HTMLDivElement | null>(null);
   const rootRef = useRef<Root | null>(null);
   const abortRef = useRef(false);
   const renderIdRef = useRef(0);
@@ -243,16 +250,78 @@ export function useExportPreview({
       containerRef.current.parentNode.removeChild(containerRef.current);
       containerRef.current = null;
     }
-    if (overlayRef.current && overlayRef.current.parentNode) {
-      overlayRef.current.parentNode.removeChild(overlayRef.current);
-      overlayRef.current = null;
+    if (wrapperRef.current && wrapperRef.current.parentNode) {
+      wrapperRef.current.parentNode.removeChild(wrapperRef.current);
+      wrapperRef.current = null;
     }
   }, []);
+
+  /**
+   * Run the three-phase render pipeline for a given renderId.
+   * Returns { dataUrl, dimensions } on success, null if superseded (isStale).
+   * Throws on unrecoverable capture error.
+   *
+   * The isStale predicate is passed by the caller (tied to the current renderId)
+   * so this callback remains stable ([cleanup] deps only) while still aborting
+   * correctly when a newer render starts.
+   */
+  const executeRender = useCallback(
+    async (
+      renderId: number,
+      isStale: () => boolean,
+      params: RenderParams
+    ): Promise<{
+      dataUrl: string;
+      dimensions: { width: number; height: number };
+    } | null> => {
+      const fullDimensions = calculateExportDimensions(params);
+      const isWhiteBackground = params.options.background === "white";
+      const containerBackground = isWhiteBackground ? WHITE_HEX : "transparent";
+      const captureBackground = isWhiteBackground ? WHITE_HEX : undefined;
+
+      // Phase 1: Build off-screen container
+      const { wrapper, container } = buildRenderContainer(
+        renderId,
+        fullDimensions,
+        containerBackground
+      );
+      wrapperRef.current = wrapper;
+      containerRef.current = container;
+      if (isStale()) {
+        cleanup();
+        return null;
+      }
+
+      // Phase 2: Render React tree and wait for it to settle
+      const root = await renderToContainer(container, params);
+      rootRef.current = root;
+      if (isStale()) {
+        cleanup();
+        return null;
+      }
+
+      // Phase 3: Wait for fonts/paint, then capture to data URL
+      const dataUrl = await captureContainerToDataUrl(
+        container,
+        fullDimensions,
+        captureBackground
+      );
+      if (isStale()) {
+        cleanup();
+        return null;
+      }
+
+      cleanup();
+      return { dataUrl, dimensions: fullDimensions };
+    },
+    [cleanup]
+  );
 
   const renderPreview = useCallback(async () => {
     if (!enabled || tasks.length === 0) {
       setPreviewDataUrl(null);
       setPreviewDimensions({ width: 0, height: 0 });
+      setError(null);
       return;
     }
 
@@ -262,8 +331,11 @@ export function useExportPreview({
     setError(null);
     cleanup();
 
+    const isStale = (): boolean =>
+      abortRef.current || renderId !== renderIdRef.current;
+
     try {
-      const fullDimensions = calculateExportDimensions({
+      const result = await executeRender(renderId, isStale, {
         tasks,
         options,
         columnWidths,
@@ -271,61 +343,15 @@ export function useExportPreview({
         projectDateRange,
         visibleDateRange,
       });
-
-      // Phase 1: Build off-screen container
-      const background =
-        options.background === "white" ? WHITE_HEX : "transparent";
-      const { wrapper, container } = buildRenderContainer(
-        renderId,
-        fullDimensions,
-        background
-      );
-      overlayRef.current = wrapper;
-      containerRef.current = container;
-
-      if (abortRef.current || renderId !== renderIdRef.current) {
-        cleanup();
-        return;
+      if (result !== null) {
+        setPreviewDataUrl(result.dataUrl);
+        setPreviewDimensions(result.dimensions);
       }
-
-      // Phase 2: Render React tree and wait for it to settle
-      const root = await renderToContainer(container, {
-        tasks,
-        options,
-        columnWidths,
-        currentAppZoom,
-        projectDateRange,
-        visibleDateRange,
-      });
-      rootRef.current = root;
-
-      if (abortRef.current || renderId !== renderIdRef.current) {
-        cleanup();
-        return;
-      }
-
-      // Phase 3: Wait for fonts/paint, then capture to data URL
-      const backgroundColor =
-        options.background === "white" ? WHITE_HEX : undefined;
-      const dataUrl = await captureContainerToDataUrl(
-        container,
-        fullDimensions,
-        backgroundColor
-      );
-
-      if (abortRef.current || renderId !== renderIdRef.current) {
-        cleanup();
-        return;
-      }
-
-      cleanup();
-      setPreviewDataUrl(dataUrl);
-      setPreviewDimensions(fullDimensions);
     } catch (err) {
-      if (!abortRef.current && renderId === renderIdRef.current) {
-        const message =
-          err instanceof Error ? err.message : "Preview generation failed";
-        setError(message);
+      if (!isStale()) {
+        setError(
+          err instanceof Error ? err.message : "Preview generation failed"
+        );
         setPreviewDataUrl(null);
       }
       cleanup();
@@ -343,6 +369,7 @@ export function useExportPreview({
     projectDateRange,
     visibleDateRange,
     cleanup,
+    executeRender,
   ]);
 
   // Memoized key capturing all options that affect visual output
@@ -361,6 +388,10 @@ export function useExportPreview({
   //
   // Debouncing absorbs the occasional double-trigger when both paths fire at once
   // (e.g., task count AND a property change in the same update).
+  //
+  // IMPORTANT: Do not stabilize renderPreview (e.g. via a ref-wrapped callback)
+  // without adding an explicit task-content dep here — doing so would silently
+  // break preview updates when task properties change without a count change.
   useEffect(() => {
     if (!enabled) {
       setPreviewDataUrl(null);
@@ -376,13 +407,7 @@ export function useExportPreview({
       clearTimeout(timer);
       abortRef.current = true;
     };
-  }, [
-    enabled,
-    tasks.length,
-    optionsKey,
-    currentAppZoom,
-    renderPreview,
-  ]);
+  }, [enabled, tasks.length, optionsKey, currentAppZoom, renderPreview]);
 
   // Cleanup on unmount
   useEffect(() => {
