@@ -17,6 +17,7 @@
 
 import type { Task } from "../types/chart.types";
 import type { ColorModeState } from "../types/colorMode.types";
+import type { HexColor } from "../types/branded.types";
 import { getPaletteById } from "./colorPalettes";
 import {
   generateMonochromePalette,
@@ -220,7 +221,7 @@ export function computeTaskColor(
   task: Task,
   allTasks: Task[],
   colorModeState: ColorModeState
-): string {
+): HexColor {
   const {
     mode,
     themeOptions,
@@ -270,7 +271,7 @@ export function computeTaskColor(
         // Root-level task / color-giver itself → use assigned index
         const idx =
           assignment.get(task.id) ?? stableHash(task.id) % paletteColors.length;
-        return paletteColors[idx];
+        return paletteColors[idx] as HexColor;
       }
 
       // Color-giver determines base color from palette
@@ -281,7 +282,7 @@ export function computeTaskColor(
 
       // If this task IS the color-giver itself, use base color directly
       if (task.id === colorGiver.id) {
-        return baseColor;
+        return baseColor as HexColor;
       }
 
       // Children: create a variation of the base color
@@ -297,7 +298,7 @@ export function computeTaskColor(
       const hueShift = (taskHash % 5) - 2;
       hsl.h = (hsl.h + hueShift + 360) % 360;
 
-      return hslToHex(hsl);
+      return hslToHex(hsl) as HexColor;
     }
 
     case "summary": {
@@ -342,7 +343,10 @@ export function computeTaskColor(
         hierarchyOptions.maxLightenPercent / 100
       );
 
-      return lightenColor(hierarchyOptions.baseColor, lightenAmount);
+      return lightenColor(
+        hierarchyOptions.baseColor,
+        lightenAmount
+      ) as HexColor;
     }
 
     default:
@@ -358,6 +362,6 @@ export function getComputedTaskColor(
   task: Task,
   allTasks: Task[],
   colorModeState: ColorModeState
-): string {
+): HexColor {
   return computeTaskColor(task, allTasks, colorModeState);
 }
