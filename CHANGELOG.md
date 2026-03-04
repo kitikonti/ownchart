@@ -8,9 +8,6 @@ All notable changes to this project will be documented in this file. See [commit
 ### Code Refactoring
 
 * apply review fixes to useComputedTaskColor and useExportPreview ([7690f95](https://github.com/kitikonti/ownchart/commit/7690f956885c17881563a9fa6b2b7b5934402423))
-* apply review fixes to useComputedTaskColor and useExportPreview ([2fabc4c](https://github.com/kitikonti/ownchart/commit/2fabc4c60922c58eb2880e69269f493ea4fbb5da))
-* apply review fixes to useComputedTaskColor and useExportPreview ([c9f45f8](https://github.com/kitikonti/ownchart/commit/c9f45f899049505e98bdd1be5bce37109072912f))
-* apply review fixes to useComputedTaskColor and useExportPreview ([c5babbf](https://github.com/kitikonti/ownchart/commit/c5babbf6db137caecc76dc598e8e9570e7db51d4))
 
 ## [1.1.13](https://github.com/kitikonti/ownchart/compare/v1.1.12...v1.1.13) (2026-03-04)
 
@@ -18,10 +15,8 @@ All notable changes to this project will be documented in this file. See [commit
 ### Code Refactoring
 
 * apply review findings to layout and export components (F001–F004) ([0e71288](https://github.com/kitikonti/ownchart/commit/0e71288d289bfb866c7bb0bf28b06196d5defe57))
-* apply review findings to layout and export components (F001–F006) ([8400ebd](https://github.com/kitikonti/ownchart/commit/8400ebdd01132f06134940e503296c8e2c9b16c5))
 * apply review findings to layout and export components (F001–F006) ([337a7f3](https://github.com/kitikonti/ownchart/commit/337a7f34efbbb58130346da2997d81189de1a206))
 * apply review findings to layout and export components (F001–F007) ([dd7b496](https://github.com/kitikonti/ownchart/commit/dd7b496b0b7493756a1d88ac786487d2207c9024))
-* apply review findings to layout and export components (F001–F010) ([5246030](https://github.com/kitikonti/ownchart/commit/5246030ce2c1d072a0834d2161cfde235e781fe6))
 * apply review findings to layout and export components (F001–F010) ([c30d610](https://github.com/kitikonti/ownchart/commit/c30d61003ec71b3496a6d2c01434cde9676bb902))
 * apply review findings to layout and export components (F001–F012) ([8749490](https://github.com/kitikonti/ownchart/commit/87494906a855184c3778ae4e0989545470895ba4))
 * apply review findings to layout and export components (F002, F003, F005–F008) ([27e3356](https://github.com/kitikonti/ownchart/commit/27e33564fdb7ec0f1f35acc50560e749ac7ff862))
@@ -40,7 +35,6 @@ All notable changes to this project will be documented in this file. See [commit
 
 ### Code Refactoring
 
-* apply review findings to timelineUtils.ts (F001–F004) ([9323170](https://github.com/kitikonti/ownchart/commit/932317086f5fdcfc08d9a700d1113830054ed686))
 * apply review findings to timelineUtils.ts (F001–F004) ([47de9c7](https://github.com/kitikonti/ownchart/commit/47de9c732e5fd219113c60ad17d9337f4205cf86))
 * apply review findings to timelineUtils.ts (F001–F005) ([2b6cb56](https://github.com/kitikonti/ownchart/commit/2b6cb56b6134bdcf6d20826330e7560c97a6ef52))
 * apply review findings to timelineUtils.ts (F001–F006) ([c795c37](https://github.com/kitikonti/ownchart/commit/c795c37f0e2d8c5ac1d4ad3ced1ecdae81be6ad7))
@@ -69,8 +63,6 @@ All notable changes to this project will be documented in this file. See [commit
 
 ### Code Refactoring
 
-* apply code review fixes to HiddenRowIndicator, ColumnResizer, ColorCellEditor, TaskTypeIcon ([347495e](https://github.com/kitikonti/ownchart/commit/347495e75dbe40f99abf12aac9d424435eed54e2))
-* apply code review fixes to HiddenRowIndicator, ColumnResizer, ColorCellEditor, TaskTypeIcon ([a6aa104](https://github.com/kitikonti/ownchart/commit/a6aa10407f85f68274e858a4f5212615cf751a8b))
 * apply code review fixes to HiddenRowIndicator, ColumnResizer, ColorCellEditor, TaskTypeIcon ([93e4996](https://github.com/kitikonti/ownchart/commit/93e499639d89322741a2e630f5dcd362a119f743))
 
 ## [1.1.7](https://github.com/kitikonti/ownchart/compare/v1.1.6...v1.1.7) (2026-03-01)
@@ -86,7 +78,6 @@ All notable changes to this project will be documented in this file. See [commit
 ### Code Refactoring
 
 * apply review fixes to ChartPreview, SplitPane, export helpers ([4f2c17a](https://github.com/kitikonti/ownchart/commit/4f2c17a7932c9f5f34cd9438bbf98c44bbdb2d24))
-* apply review fixes to ZoomModeSelector, ChartPreview, SplitPane ([e247f31](https://github.com/kitikonti/ownchart/commit/e247f31357204176a948def61dce2f9f1f4ce500)), closes [#e5e5e5](https://github.com/kitikonti/ownchart/issues/e5e5e5)
 * apply review fixes to ZoomModeSelector, ChartPreview, SplitPane ([1160018](https://github.com/kitikonti/ownchart/commit/1160018732b07eded0c2a19b93da7d327b222ceb))
 
 ## [1.1.5](https://github.com/kitikonti/ownchart/compare/v1.1.4...v1.1.5) (2026-03-01)
@@ -116,9 +107,6 @@ All notable changes to this project will be documented in this file. See [commit
 
 ### Code Refactoring
 
-* apply code review fixes to TaskTableRow and TaskTableHeader ([851ffd9](https://github.com/kitikonti/ownchart/commit/851ffd9715ab9d9f03a69b01903e1afe58b51eb0))
-* apply code review fixes to TaskTableRow and TaskTableHeader ([e0b172d](https://github.com/kitikonti/ownchart/commit/e0b172d12c528da1076ac0e3cd8f3028ef2d676a))
-* apply code review fixes to TaskTableRow and TaskTableHeader ([cecd5ae](https://github.com/kitikonti/ownchart/commit/cecd5ae21240e62aaa80f189e5f38f07f8afa7ca))
 * apply code review fixes to TaskTableRow and TaskTableHeader ([3645dd0](https://github.com/kitikonti/ownchart/commit/3645dd0798772e3b5f3a18d74cb2fe1c4731e784))
 * drive header rendering from column config, fix import order and return types ([17c9d90](https://github.com/kitikonti/ownchart/commit/17c9d908ada5078572b8c1b4563486a3c27e2e34))
 * fix code review findings and DRY grid template logic ([8e2013e](https://github.com/kitikonti/ownchart/commit/8e2013e9e61abb4c942cbe06f51015c571fea19e))
@@ -129,8 +117,6 @@ All notable changes to this project will be documented in this file. See [commit
 
 ### Code Refactoring
 
-* apply code review fixes to PdfExportOptions and SharedExportOptions ([bee8187](https://github.com/kitikonti/ownchart/commit/bee8187d5f091fc119a83b5ab515200d2b1f4736))
-* apply code review fixes to PdfExportOptions and SharedExportOptions ([8410c32](https://github.com/kitikonti/ownchart/commit/8410c32382978a68c90ffaf1f91b43b46de9a83b))
 * apply code review fixes to PdfExportOptions and SharedExportOptions ([b11b5ca](https://github.com/kitikonti/ownchart/commit/b11b5caaeb06667fb573ff833d6a21291bfd11d3))
 * harden export option handlers and fix a11y in CheckboxGroup ([309b542](https://github.com/kitikonti/ownchart/commit/309b542ce49b2454f332ffaacb4e853e8598e5f6))
 * improve export options with FieldLabel, generic SegmentedControl, and validation fixes ([97f9e2a](https://github.com/kitikonti/ownchart/commit/97f9e2ac89e55d69b378d6182b98bd5c45f004ff))
