@@ -215,13 +215,13 @@ cd ../app-gantt-review
 - [ ] `src/utils/svgUtils.ts` (21 LOC)
 
 ### Priority: MEDIUM — Clipboard Utils
-- [ ] `src/utils/clipboard/systemClipboard.ts` (165 LOC)
-- [ ] `src/utils/clipboard/validation.ts` (87 LOC)
-- [ ] `src/utils/clipboard/collectTasks.ts` (76 LOC)
-- [ ] `src/utils/clipboard/insertPosition.ts` (69 LOC)
-- [ ] `src/utils/clipboard/remapIds.ts` (66 LOC)
-- [ ] `src/utils/clipboard/collectDependencies.ts` (26 LOC)
-- [ ] `src/utils/clipboard/index.ts` (26 LOC)
+- [x] `src/utils/clipboard/systemClipboard.ts` (165 LOC)
+- [x] `src/utils/clipboard/validation.ts` (87 LOC)
+- [x] `src/utils/clipboard/collectTasks.ts` (76 LOC)
+- [x] `src/utils/clipboard/insertPosition.ts` (69 LOC)
+- [x] `src/utils/clipboard/remapIds.ts` (66 LOC)
+- [x] `src/utils/clipboard/collectDependencies.ts` (26 LOC)
+- [x] `src/utils/clipboard/index.ts` (26 LOC)
 
 ### Priority: MEDIUM — Graph Utils
 - [ ] `src/utils/arrowPath/bezierPath.ts` (341 LOC)
