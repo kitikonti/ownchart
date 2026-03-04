@@ -8,6 +8,7 @@ import {
   getRelativeLuminance,
   getContrastRatio,
   getContrastTextColor,
+  stableHash,
   hexToHSL,
   hslToHex,
   lightenColor,
@@ -210,6 +211,45 @@ describe("colorUtils", () => {
   });
 
   // ═══════════════════════════════════════════════════════════════════════════
+  // STABLE HASH
+  // ═══════════════════════════════════════════════════════════════════════════
+
+  describe("stableHash", () => {
+    it("returns a non-negative integer", () => {
+      const result = stableHash("task-123");
+      expect(result).toBeGreaterThanOrEqual(0);
+      expect(Number.isInteger(result)).toBe(true);
+    });
+
+    it("is deterministic — same input always yields same output", () => {
+      const id = "ownchart-unique-id-xyz";
+      const results = Array.from({ length: 5 }, () => stableHash(id));
+      expect(new Set(results).size).toBe(1);
+    });
+
+    it("returns DJB2 seed (5381) for empty string", () => {
+      // Loop doesn't execute for empty string, so the seed is returned unchanged
+      expect(stableHash("")).toBe(5381);
+    });
+
+    it("produces different values for different inputs", () => {
+      const h1 = stableHash("task-1");
+      const h2 = stableHash("task-2");
+      const h3 = stableHash("group-abc");
+      expect(h1).not.toBe(h2);
+      expect(h1).not.toBe(h3);
+      expect(h2).not.toBe(h3);
+    });
+
+    it("stays within 31-bit positive integer range", () => {
+      const longString = "a".repeat(1000);
+      const result = stableHash(longString);
+      expect(result).toBeGreaterThanOrEqual(0);
+      expect(result).toBeLessThanOrEqual(0x7fffffff);
+    });
+  });
+
+  // ═══════════════════════════════════════════════════════════════════════════
   // HSL COLOR UTILITIES (Smart Color Management)
   // ═══════════════════════════════════════════════════════════════════════════
 
@@ -389,6 +429,19 @@ describe("colorUtils", () => {
       const unique = new Set(result.map((c) => c.toUpperCase()));
       // Most colors should be unique (allow some overlap due to rounding)
       expect(unique.size).toBeGreaterThan(result.length * 0.7);
+    });
+
+    it("returns empty array for empty base palette", () => {
+      expect(expandPalette([], 5)).toEqual([]);
+    });
+
+    it("returns empty array for targetCount of 0", () => {
+      expect(expandPalette(basePalette, 0)).toEqual([]);
+    });
+
+    it("returns exactly targetCount colors", () => {
+      expect(expandPalette(basePalette, 7)).toHaveLength(7);
+      expect(expandPalette(basePalette, 13)).toHaveLength(13);
     });
   });
 });

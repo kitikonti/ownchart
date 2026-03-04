@@ -11,11 +11,40 @@ import { COLORS } from "../styles/design-tokens";
 const DEFAULT_COLOR = COLORS.brand[600];
 
 /**
- * Text colors for contrast.
- * DARK_TEXT matches slate[800] from the design system — update if the slate scale changes.
+ * Text colors used for contrast selection.
+ *
+ * LIGHT_TEXT: pure white, from the neutral scale (neutral[0]).
+ * DARK_TEXT: slate[800] (#1e293b). Note: the `slate` scale is a private constant in
+ * design-tokens.ts and is not re-exported via COLORS. This literal is intentional;
+ * update it here if slate[800] changes in design-tokens.ts.
  */
-const LIGHT_TEXT = "#ffffff";
-const DARK_TEXT = "#1e293b"; // slate[800] from design system
+const LIGHT_TEXT = COLORS.neutral[0]; // "#ffffff"
+const DARK_TEXT = "#1e293b"; // slate[800] from design-tokens.ts (private scale, not in COLORS)
+
+// ─────────────────────────────────────────────────────────────────────────────
+// WCAG 2.1 sRGB linearization coefficients
+// Source: https://www.w3.org/TR/WCAG21/#dfn-relative-luminance
+// ─────────────────────────────────────────────────────────────────────────────
+
+/** sRGB threshold below which the linear approximation applies */
+const SRGB_LINEARIZATION_THRESHOLD = 0.03928;
+/** Linear-range divisor for sub-threshold channels */
+const SRGB_LINEAR_DIVISOR = 12.92;
+/** Gamma correction additive bias */
+const SRGB_GAMMA_BIAS = 0.055;
+/** Gamma correction divisor (scale factor before exponentiation) */
+const SRGB_GAMMA_DIVISOR = 1.055;
+/** Gamma correction exponent */
+const SRGB_GAMMA_EXPONENT = 2.4;
+
+// ─────────────────────────────────────────────────────────────────────────────
+// WCAG 2.1 relative luminance coefficients (CIE Y)
+// Weights reflect human perceptual sensitivity to each color channel.
+// ─────────────────────────────────────────────────────────────────────────────
+
+const LUMINANCE_R = 0.2126;
+const LUMINANCE_G = 0.7152;
+const LUMINANCE_B = 0.0722;
 
 /**
  * Converts a hex color string to RGB values
@@ -52,9 +81,12 @@ export function hexToRgb(hex: string): { r: number; g: number; b: number } {
  */
 function sRGBtoLinear(channel: number): number {
   const normalized = channel / 255;
-  return normalized <= 0.03928
-    ? normalized / 12.92
-    : Math.pow((normalized + 0.055) / 1.055, 2.4);
+  return normalized <= SRGB_LINEARIZATION_THRESHOLD
+    ? normalized / SRGB_LINEAR_DIVISOR
+    : Math.pow(
+        (normalized + SRGB_GAMMA_BIAS) / SRGB_GAMMA_DIVISOR,
+        SRGB_GAMMA_EXPONENT
+      );
 }
 
 /**
@@ -71,7 +103,7 @@ export function getRelativeLuminance(hex: string): number {
   const gLinear = sRGBtoLinear(g);
   const bLinear = sRGBtoLinear(b);
 
-  return 0.2126 * rLinear + 0.7152 * gLinear + 0.0722 * bLinear;
+  return LUMINANCE_R * rLinear + LUMINANCE_G * gLinear + LUMINANCE_B * bLinear;
 }
 
 /**
@@ -92,9 +124,14 @@ export function getContrastRatio(hex1: string, hex2: string): number {
 
 /**
  * Minimum contrast ratio for white text to be acceptable.
- * Intentionally below WCAG AA (4.5:1) and WCAG AA Large Text (3:1) — this is a
- * deliberate UX trade-off: white text is more readable on saturated colors even at
- * lower mathematical contrast ratios. Dark text is only used on near-white backgrounds.
+ *
+ * Intentionally below WCAG AA (4.5:1) and WCAG AA Large Text (3:1).
+ * This is a deliberate UX trade-off: white text is more visually readable on
+ * saturated colors (blues, greens, oranges) even at lower mathematical contrast.
+ * Dark text is reserved for near-white/near-yellow backgrounds only.
+ *
+ * Design decision: accepted in code review 2026-03-03.
+ * To achieve WCAG AA compliance for all task labels, raise this value to 4.5.
  */
 const WHITE_TEXT_MIN_CONTRAST = 2.0;
 
@@ -116,14 +153,11 @@ export function getContrastTextColor(
   lightText: string = LIGHT_TEXT,
   darkText: string = DARK_TEXT
 ): string {
-  // Calculate contrast ratio for white text
-  const lightContrast = getContrastRatio(backgroundColor, lightText);
-
-  // Prefer white text if it has acceptable contrast (≥ 2:1, per WHITE_TEXT_MIN_CONTRAST).
+  // Prefer white text if it has acceptable contrast (≥ WHITE_TEXT_MIN_CONTRAST).
   // Intentional UX trade-off: white reads better on saturated colors even when dark text
   // has slightly higher mathematical contrast. Dark text is only used on near-white
   // backgrounds (yellow, white, light gray).
-  if (lightContrast >= WHITE_TEXT_MIN_CONTRAST) {
+  if (getContrastRatio(backgroundColor, lightText) >= WHITE_TEXT_MIN_CONTRAST) {
     return lightText;
   }
 
@@ -134,14 +168,20 @@ export function getContrastTextColor(
 // STABLE HASH (for deterministic color assignment)
 // ═══════════════════════════════════════════════════════════════════════════
 
+/** Initial hash value for DJB2 — chosen empirically for low collision rates */
+const DJB2_SEED = 5381;
+/** 31-bit mask to ensure stableHash always returns a non-negative integer */
+const INT31_MASK = 0x7fffffff;
+
 /**
  * DJB2 hash function for deterministic, stable color assignment.
- * Produces a positive integer from a string (e.g., task ID).
+ * Produces a non-negative integer from a string (e.g., task ID).
+ * @see http://www.cse.yorku.ca/~oz/hash.html
  */
 export function stableHash(str: string): number {
-  let hash = 5381;
+  let hash = DJB2_SEED;
   for (let i = 0; i < str.length; i++) {
-    hash = ((hash << 5) + hash + str.charCodeAt(i)) & 0x7fffffff;
+    hash = ((hash << 5) + hash + str.charCodeAt(i)) & INT31_MASK;
   }
   return hash;
 }
@@ -189,6 +229,7 @@ export function hexToHSL(hex: string): HSL {
       case bNorm:
         h = ((rNorm - gNorm) / d + 4) / 6;
         break;
+      // No default: max ∈ {rNorm, gNorm, bNorm} by construction — all cases covered
     }
   }
 
@@ -197,6 +238,27 @@ export function hexToHSL(hex: string): HSL {
     s: Math.round(s * 100),
     l: Math.round(l * 100),
   };
+}
+
+/**
+ * Maps a hue fraction to an RGB channel value (0–1).
+ * Wraps t into [0, 1] before applying the standard HSL piecewise formula.
+ * Per the CSS Color Module 4 specification.
+ */
+function hue2rgb(p: number, q: number, t: number): number {
+  const tw = t < 0 ? t + 1 : t > 1 ? t - 1 : t;
+  if (tw < 1 / 6) return p + (q - p) * 6 * tw;
+  if (tw < 1 / 2) return q;
+  if (tw < 2 / 3) return p + (q - p) * (2 / 3 - tw) * 6;
+  return p;
+}
+
+/**
+ * Formats a linear RGB channel value (0–1) as a zero-padded two-character hex string.
+ */
+function linearChannelToHex(x: number): string {
+  const hex = Math.round(x * 255).toString(16);
+  return hex.length === 1 ? "0" + hex : hex;
 }
 
 /**
@@ -212,15 +274,6 @@ export function hslToHex(hsl: HSL): string {
   if (s === 0) {
     r = g = b = l;
   } else {
-    const hue2rgb = (p: number, q: number, t: number): number => {
-      if (t < 0) t += 1;
-      if (t > 1) t -= 1;
-      if (t < 1 / 6) return p + (q - p) * 6 * t;
-      if (t < 1 / 2) return q;
-      if (t < 2 / 3) return p + (q - p) * (2 / 3 - t) * 6;
-      return p;
-    };
-
     const q = l < 0.5 ? l * (1 + s) : l + s - l * s;
     const p = 2 * l - q;
 
@@ -229,12 +282,17 @@ export function hslToHex(hsl: HSL): string {
     b = hue2rgb(p, q, h - 1 / 3);
   }
 
-  const toHex = (x: number): string => {
-    const hex = Math.round(x * 255).toString(16);
-    return hex.length === 1 ? "0" + hex : hex;
-  };
+  return `#${linearChannelToHex(r)}${linearChannelToHex(g)}${linearChannelToHex(b)}`.toUpperCase();
+}
 
-  return `#${toHex(r)}${toHex(g)}${toHex(b)}`.toUpperCase();
+/**
+ * Adjusts the lightness of a color by a signed delta.
+ * @param hex - Hex color string
+ * @param delta - Lightness change in percentage points (positive = lighter, negative = darker)
+ */
+function adjustLightness(hex: string, delta: number): string {
+  const hsl = hexToHSL(hex);
+  return hslToHex({ ...hsl, l: Math.min(100, Math.max(0, hsl.l + delta)) });
 }
 
 /**
@@ -243,9 +301,7 @@ export function hslToHex(hsl: HSL): string {
  * @param amount - Amount to lighten (0-1, e.g., 0.15 = 15%)
  */
 export function lightenColor(hex: string, amount: number): string {
-  const hsl = hexToHSL(hex);
-  hsl.l = Math.min(100, hsl.l + amount * 100);
-  return hslToHex(hsl);
+  return adjustLightness(hex, amount * 100);
 }
 
 /**
@@ -254,9 +310,7 @@ export function lightenColor(hex: string, amount: number): string {
  * @param amount - Amount to darken (0-1, e.g., 0.15 = 15%)
  */
 export function darkenColor(hex: string, amount: number): string {
-  const hsl = hexToHSL(hex);
-  hsl.l = Math.max(0, hsl.l - amount * 100);
-  return hslToHex(hsl);
+  return adjustLightness(hex, -amount * 100);
 }
 
 /** Lightness steps (dark → light) for the 10-swatch monochrome palette */
@@ -282,8 +336,9 @@ const PALETTE_SATURATION_VARIATION = 0.3;
 const BEZOLD_BRUCKE_SHIFT_DEGREES = 6;
 
 /**
- * Expands a palette to match a target count using lightness variations
- * Based on Matt Ström's color formulas and Lyft ColorBox algorithm
+ * Expands a palette to match a target count using lightness variations.
+ * Returns an empty array when baseColors is empty or targetCount is zero.
+ * Based on Matt Ström's color formulas and Lyft ColorBox algorithm.
  * @see https://matthewstrom.com/writing/generating-color-palettes/
  * @see https://github.com/lyft/coloralgorithm
  */
@@ -291,6 +346,10 @@ export function expandPalette(
   baseColors: string[],
   targetCount: number
 ): string[] {
+  if (baseColors.length === 0 || targetCount <= 0) {
+    return [];
+  }
+
   if (targetCount <= baseColors.length) {
     return baseColors.slice(0, targetCount);
   }
@@ -298,7 +357,7 @@ export function expandPalette(
   const stepsPerColor = Math.ceil(targetCount / baseColors.length);
   const expanded: string[] = [];
 
-  for (const baseHex of baseColors) {
+  outer: for (const baseHex of baseColors) {
     const hsl = hexToHSL(baseHex);
 
     for (let i = 0; i < stepsPerColor; i++) {
@@ -321,10 +380,10 @@ export function expandPalette(
       const hue = (hsl.h + hueShift + 360) % 360;
 
       expanded.push(hslToHex({ h: hue, s: saturation, l: lightness }));
-    }
 
-    if (expanded.length >= targetCount) break;
+      if (expanded.length >= targetCount) break outer;
+    }
   }
 
-  return expanded.slice(0, targetCount);
+  return expanded;
 }
