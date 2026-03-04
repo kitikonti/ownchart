@@ -43,6 +43,7 @@ function createMockDialogResult(
     projectTitle: "Test Project",
     projectAuthor: "",
     setProjectAuthor: mockSetProjectAuthor,
+    hiddenTaskCount: 0,
     effectiveExportOptions: DEFAULT_EXPORT_OPTIONS,
     estimatedDimensions: { width: 1920, height: 1080, effectiveZoom: 1 },
     taskTableWidth: 400,
@@ -255,6 +256,39 @@ describe("ExportDialog", () => {
       expect(
         screen.getByText("Something went wrong")
       ).toBeInTheDocument();
+    });
+
+    it("shows hidden-row warning when hiddenTaskCount > 0", () => {
+      mockDialogResult = createMockDialogResult({
+        hiddenTaskCount: 3,
+      });
+      render(<ExportDialog />);
+
+      expect(
+        screen.getByText(/3 hidden rows will not appear in the export/)
+      ).toBeInTheDocument();
+    });
+
+    it("uses singular 'row' when hiddenTaskCount is 1", () => {
+      mockDialogResult = createMockDialogResult({
+        hiddenTaskCount: 1,
+      });
+      render(<ExportDialog />);
+
+      expect(
+        screen.getByText(/1 hidden row will not appear in the export/)
+      ).toBeInTheDocument();
+    });
+
+    it("does not show hidden-row warning when hiddenTaskCount is 0", () => {
+      mockDialogResult = createMockDialogResult({
+        hiddenTaskCount: 0,
+      });
+      render(<ExportDialog />);
+
+      expect(
+        screen.queryByText(/hidden .* will not appear in the export/)
+      ).not.toBeInTheDocument();
     });
   });
 });

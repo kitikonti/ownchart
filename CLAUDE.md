@@ -206,6 +206,11 @@ This includes linting, formatting, type-checking, and all unit tests. Do NOT pus
    - Changed shortcuts → update shortcuts section + helpContent.ts
    - Removed feature → remove its help topic
 
+6. **Check export pipeline impact**:
+   - Any change to task visibility or filtering MUST also be reflected in
+     `src/utils/export/prepareExportTasks.ts` (single source of truth for export filtering)
+   - Run the export dialog manually to verify changes render correctly in PNG/PDF/SVG
+
 ### When Fixing Bugs
 
 1. **Reproduce the bug** with a test if possible

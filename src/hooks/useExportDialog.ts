@@ -6,6 +6,7 @@
 import { useCallback, useMemo, useEffect } from "react";
 import type { Task } from "../types/chart.types";
 import type { TimelineScale } from "../utils/timelineUtils";
+import { prepareExportTasks } from "../utils/export/prepareExportTasks";
 import type {
   ExportFormat,
   ExportOptions,
@@ -125,6 +126,7 @@ export interface UseExportDialogResult {
   projectTitle: string;
   projectAuthor: string;
   setProjectAuthor: (author: string) => void;
+  hiddenTaskCount: number;
 
   // Computed values
   effectiveExportOptions: ExportOptions;
@@ -178,6 +180,7 @@ export function useExportDialog(): UseExportDialogResult {
   const scale = useChartStore((state) => state.scale);
   const viewportScrollLeft = useChartStore((state) => state.viewportScrollLeft);
   const viewportWidth = useChartStore((state) => state.viewportWidth);
+  const hiddenTaskIds = useChartStore((state) => state.hiddenTaskIds);
 
   const fileName = useFileStore((state) => state.fileName);
   const dependencies = useDependencyStore((state) => state.dependencies);
@@ -189,9 +192,15 @@ export function useExportDialog(): UseExportDialogResult {
   const projectName =
     projectTitle || fileName?.replace(".ownchart", "") || undefined;
 
+  const exportTasks = useMemo(
+    () => prepareExportTasks(tasks, hiddenTaskIds),
+    [tasks, hiddenTaskIds]
+  );
+  const hiddenTaskCount = tasks.length - exportTasks.length;
+
   const projectDateRange = useMemo(
-    () => computeProjectDateRange(tasks),
-    [tasks]
+    () => computeProjectDateRange(exportTasks),
+    [exportTasks]
   );
 
   const visibleDateRange = useMemo(
@@ -216,19 +225,19 @@ export function useExportDialog(): UseExportDialogResult {
       exportOptions.zoomMode === "fitToWidth"
     ) {
       const pdfFitToWidth = calculatePdfFitToWidth(
-        tasks,
+        exportTasks,
         exportOptions,
         pdfExportOptions
       );
       return { ...exportOptions, fitToWidth: pdfFitToWidth };
     }
     return exportOptions;
-  }, [selectedExportFormat, exportOptions, pdfExportOptions, tasks]);
+  }, [selectedExportFormat, exportOptions, pdfExportOptions, exportTasks]);
 
   const estimatedDimensions = useMemo(
     () =>
       calculateExportDimensions({
-        tasks,
+        tasks: exportTasks,
         options: effectiveExportOptions,
         columnWidths,
         currentAppZoom,
@@ -236,7 +245,7 @@ export function useExportDialog(): UseExportDialogResult {
         visibleDateRange,
       }),
     [
-      tasks,
+      exportTasks,
       effectiveExportOptions,
       columnWidths,
       currentAppZoom,
@@ -282,7 +291,7 @@ export function useExportDialog(): UseExportDialogResult {
     try {
       if (selectedExportFormat === "png") {
         await exportToPng({
-          tasks,
+          tasks: exportTasks,
           options: exportOptions,
           columnWidths,
           currentAppZoom,
@@ -293,7 +302,7 @@ export function useExportDialog(): UseExportDialogResult {
       } else if (selectedExportFormat === "pdf") {
         const { exportToPdf } = await import("../utils/export/pdfExport");
         await exportToPdf({
-          tasks,
+          tasks: exportTasks,
           dependencies,
           scale,
           options: exportOptions,
@@ -312,7 +321,7 @@ export function useExportDialog(): UseExportDialogResult {
       } else if (selectedExportFormat === "svg") {
         const { exportToSvg } = await import("../utils/export/svgExport");
         await exportToSvg({
-          tasks,
+          tasks: exportTasks,
           options: exportOptions,
           svgOptions: svgExportOptions,
           columnWidths,
@@ -334,7 +343,7 @@ export function useExportDialog(): UseExportDialogResult {
     }
   }, [
     selectedExportFormat,
-    tasks,
+    exportTasks,
     dependencies,
     scale,
     exportOptions,
@@ -368,7 +377,8 @@ export function useExportDialog(): UseExportDialogResult {
     exportProgress,
     exportError,
     handleExport,
-    tasks,
+    tasks: exportTasks,
+    hiddenTaskCount,
     columnWidths,
     currentAppZoom,
     projectTitle,

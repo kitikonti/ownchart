@@ -122,6 +122,7 @@ export function ExportDialog(): JSX.Element {
     exportError,
     handleExport,
     tasks,
+    hiddenTaskCount,
     columnWidths,
     currentAppZoom,
     projectTitle,
@@ -226,6 +227,18 @@ export function ExportDialog(): JSX.Element {
                   </span>
                 </Alert>
               )}
+            </div>
+          )}
+
+          {hiddenTaskCount > 0 && (
+            <div className="mt-4">
+              <Alert variant="info">
+                <span className="font-medium">
+                  {hiddenTaskCount} hidden{" "}
+                  {hiddenTaskCount === 1 ? "row" : "rows"} will not appear in
+                  the export.
+                </span>
+              </Alert>
             </div>
           )}
         </div>
