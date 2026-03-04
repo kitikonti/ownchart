@@ -3,7 +3,7 @@
  * Uses WCAG 2.1 relative luminance algorithm for accessibility-compliant contrast
  */
 
-import { COLORS } from "../styles/design-tokens";
+import { COLORS, SLATE_800 } from "../styles/design-tokens";
 
 /**
  * Default fallback color (brand primary — matches COLORS.brand[600] in design-tokens.ts)
@@ -14,12 +14,10 @@ const DEFAULT_COLOR = COLORS.brand[600];
  * Text colors used for contrast selection.
  *
  * LIGHT_TEXT: pure white, from the neutral scale (neutral[0]).
- * DARK_TEXT: slate[800] (#1e293b). Note: the `slate` scale is a private constant in
- * design-tokens.ts and is not re-exported via COLORS. This literal is intentional;
- * update it here if slate[800] changes in design-tokens.ts.
+ * DARK_TEXT: slate[800] — imported as SLATE_800 from design-tokens.ts.
  */
 const LIGHT_TEXT = COLORS.neutral[0]; // "#ffffff"
-const DARK_TEXT = "#1e293b"; // slate[800] from design-tokens.ts (private scale, not in COLORS)
+const DARK_TEXT = SLATE_800; // "#1e293b" — slate[800]
 
 // ─────────────────────────────────────────────────────────────────────────────
 // WCAG 2.1 sRGB linearization coefficients
@@ -282,7 +280,8 @@ function hueToRgb(p: number, q: number, t: number): number {
   const tw = t < 0 ? t + 1 : t > 1 ? t - 1 : t;
   if (tw < HUE_ONE_SIXTH) return p + (q - p) * HUE_SEGMENTS * tw;
   if (tw < HUE_ONE_HALF) return q;
-  if (tw < HUE_TWO_THIRDS) return p + (q - p) * (HUE_TWO_THIRDS - tw) * HUE_SEGMENTS;
+  if (tw < HUE_TWO_THIRDS)
+    return p + (q - p) * (HUE_TWO_THIRDS - tw) * HUE_SEGMENTS;
   return p;
 }
 
@@ -290,16 +289,21 @@ function hueToRgb(p: number, q: number, t: number): number {
  * Formats a linear RGB channel value (0–1) as a zero-padded two-character hex string.
  */
 function linearChannelToHex(x: number): string {
-  return Math.round(x * 255).toString(16).padStart(2, "0");
+  return Math.round(x * 255)
+    .toString(16)
+    .padStart(2, "0");
 }
 
 /**
- * Converts HSL to hex color
+ * Converts HSL to hex color.
+ * Out-of-range inputs are normalised before conversion:
+ * - h is wrapped modulo 360 (supports negative hues and values > 360)
+ * - s and l are clamped to [0, 100]
  */
 export function hslToHex(hsl: HSL): string {
-  const h = hsl.h / 360;
-  const s = hsl.s / 100;
-  const l = hsl.l / 100;
+  const h = (((hsl.h % 360) + 360) % 360) / 360;
+  const s = Math.min(100, Math.max(0, hsl.s)) / 100;
+  const l = Math.min(100, Math.max(0, hsl.l)) / 100;
 
   let r: number, g: number, b: number;
 
