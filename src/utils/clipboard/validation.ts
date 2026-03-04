@@ -130,7 +130,6 @@ export function getClearValueForField(
         `getClearValueForField("${field}") called — date fields cannot be cleared (guarded by canCutCellValue)`
       );
     case "duration":
-      return 0;
     case "progress":
       return 0;
     case "color":

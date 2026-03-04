@@ -7,25 +7,23 @@ import type { Task } from "../../types/chart.types";
 import type { TaskId } from "../../types/branded.types";
 
 /**
- * Recursively add children of a collapsed task to the collected set.
+ * Recursively collect children of a collapsed task.
  * All descendants are included regardless of their own open/closed state,
  * because a collapsed ancestor hides the entire subtree.
+ * Updates `collected` in-place as a deduplication guard shared across the traversal.
  */
 function collectHiddenDescendants(
   taskId: TaskId,
   childrenMap: Map<TaskId, Task[]>,
-  collected: Set<TaskId>,
-  result: Task[]
-): void {
-  const children = childrenMap.get(taskId) ?? [];
-  children.forEach((child) => {
-    if (collected.has(child.id)) return;
-
+  collected: Set<TaskId>
+): Task[] {
+  const result: Task[] = [];
+  for (const child of childrenMap.get(taskId) ?? []) {
+    if (collected.has(child.id)) continue;
     collected.add(child.id);
-    result.push(child);
-
-    collectHiddenDescendants(child.id, childrenMap, collected, result);
-  });
+    result.push(child, ...collectHiddenDescendants(child.id, childrenMap, collected));
+  }
+  return result;
 }
 
 /**
@@ -79,7 +77,7 @@ export function collectTasksWithChildren(
 
     // If task is collapsed, also collect its hidden children
     if (task.open === false) {
-      collectHiddenDescendants(id, childrenMap, collected, result);
+      result.push(...collectHiddenDescendants(id, childrenMap, collected));
     }
   });
 

@@ -41,7 +41,9 @@ const HEX_COLOR_RE = /^#(?:[0-9a-fA-F]{3,4}|[0-9a-fA-F]{6}|[0-9a-fA-F]{8})$/;
 // ISO 8601 date string — YYYY-MM-DD format used throughout OwnChart
 const ISO_DATE_RE = /^\d{4}-\d{2}-\d{2}$/;
 
-// Safety limit — rejects payloads clearly too large to be valid chart data
+// Safety limit — OwnChart-prefixed payloads exceeding this size are rejected as
+// malformed. The check is applied only after the prefix is confirmed, so unrelated
+// large clipboard content (e.g. a copied document) never produces a false warning.
 const MAX_CLIPBOARD_SIZE = 5_000_000;
 
 /** Logs a warning to the console in development mode only. No-op in production. */
@@ -60,7 +62,9 @@ function isValidDateString(s: string): boolean {
 }
 
 // NOTE: This validator manually mirrors the required/optional fields of the Task type
-// (src/types/chart.types.ts). When adding a new field to Task, update this function too.
+// (src/types/chart.types.ts). When a field is added to or removed from Task, this
+// function must be updated — the TypeScript compiler cannot catch this drift because
+// the validator receives unknown/Record<string,unknown> inputs, not typed Task objects.
 /**
  * Validate that a parsed object has the minimum required Task shape.
  * Checks all required Task fields to catch cross-version or malformed clipboard data.
@@ -186,8 +190,8 @@ type ClipboardReadResult =
  * Shared read helper — reads clipboard text, checks prefix, and parses JSON.
  * Returns a discriminated result:
  * - `no-match`: clipboard doesn't contain OwnChart data for this prefix
- * - `parse-error`: prefix matched (or payload exceeded the size limit) but the
- *   data is invalid; `reason` contains a diagnostic message logged in DEV mode
+ * - `parse-error`: prefix matched but the payload is invalid or exceeds the size
+ *   limit; `reason` contains a diagnostic message logged in DEV mode
  * - `ok`: successfully parsed; `data` is the parsed object
  *
  * @remarks May throw if the Clipboard API itself rejects (e.g., permission denied).
@@ -195,14 +199,14 @@ type ClipboardReadResult =
  */
 async function readFromClipboard(prefix: string): Promise<ClipboardReadResult> {
   const text = await navigator.clipboard.readText();
+  if (!text.startsWith(prefix)) {
+    return { status: "no-match" };
+  }
   if (text.length > MAX_CLIPBOARD_SIZE) {
     return {
       status: "parse-error",
       reason: `Payload too large (${text.length} bytes, limit ${MAX_CLIPBOARD_SIZE})`,
     };
-  }
-  if (!text.startsWith(prefix)) {
-    return { status: "no-match" };
   }
   const jsonStr = text.slice(prefix.length);
   let parsed: unknown;
@@ -351,13 +355,11 @@ export async function getSystemClipboardType(): Promise<"row" | "cell" | null> {
   try {
     // NOTE: Separate read from the actual data fetch — see JSDoc above.
     const text = await navigator.clipboard.readText();
-    if (text.length > MAX_CLIPBOARD_SIZE) return null;
-
     if (text.startsWith(OWNCHART_ROW_PREFIX)) {
-      return "row";
+      return text.length > MAX_CLIPBOARD_SIZE ? null : "row";
     }
     if (text.startsWith(OWNCHART_CELL_PREFIX)) {
-      return "cell";
+      return text.length > MAX_CLIPBOARD_SIZE ? null : "cell";
     }
     return null;
   } catch (error) {

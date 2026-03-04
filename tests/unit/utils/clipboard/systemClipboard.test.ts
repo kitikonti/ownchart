@@ -595,6 +595,12 @@ describe("systemClipboard", () => {
       expect(result).toBeNull();
     });
 
+    it("should return null for oversized clipboard payload", async () => {
+      clipboardContent = "OWNCHART_CELL:" + "x".repeat(6_000_000);
+
+      expect(await readCellFromSystemClipboard()).toBeNull();
+    });
+
     describe("cell value type validation", () => {
       const setCell = (field: string, value: unknown): void => {
         clipboardContent =
@@ -692,6 +698,18 @@ describe("systemClipboard", () => {
       const result = await getSystemClipboardType();
 
       expect(result).toBeNull();
+    });
+
+    it("should return null for oversized OwnChart row payload", async () => {
+      clipboardContent = "OWNCHART_ROWS:" + "x".repeat(6_000_000);
+
+      expect(await getSystemClipboardType()).toBeNull();
+    });
+
+    it("should return null for oversized OwnChart cell payload", async () => {
+      clipboardContent = "OWNCHART_CELL:" + "x".repeat(6_000_000);
+
+      expect(await getSystemClipboardType()).toBeNull();
     });
   });
 
