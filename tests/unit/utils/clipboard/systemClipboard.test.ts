@@ -267,6 +267,29 @@ describe("systemClipboard", () => {
       expect(await readRowsFromSystemClipboard()).toBeNull();
     });
 
+    // Typed as Task so TypeScript will catch interface drift: when a new required
+    // field is added to Task and this fixture is not updated, the compiler errors
+    // here — use that as a prompt to also update isValidTaskShape in systemClipboard.ts.
+    const VALID_TASK: Task = {
+      id: tid("task-shape-test"),
+      name: "Shape Validation Task",
+      startDate: "2025-01-01",
+      endDate: "2025-01-07",
+      duration: 7,
+      progress: 0,
+      color: hex("#3b82f6"),
+      order: 0,
+      metadata: {},
+    };
+
+    it("should accept a complete typed Task via write/read round-trip", async () => {
+      await writeRowsToSystemClipboard([VALID_TASK], []);
+      const result = await readRowsFromSystemClipboard();
+      expect(result).not.toBeNull();
+      expect(result?.tasks[0].id).toBe(VALID_TASK.id);
+      expect(result?.tasks[0].name).toBe(VALID_TASK.name);
+    });
+
     describe("task shape validation", () => {
       const validTask = {
         id: "task-1",
@@ -532,6 +555,19 @@ describe("systemClipboard", () => {
 
       it("should reject dependency with invalid createdAt string", async () => {
         setClipboardWithDep({ createdAt: "not-a-date" });
+        expect(await readRowsFromSystemClipboard()).toBeNull();
+      });
+
+      it("should reject dependency with locale-specific date format for createdAt", async () => {
+        // Date.parse() accepts "12/25/2024" in most engines — the ISO prefix guard must catch it.
+        setClipboardWithDep({ createdAt: "12/25/2024" });
+        expect(await readRowsFromSystemClipboard()).toBeNull();
+      });
+
+      it("should reject dependency with date-only createdAt (no time component)", async () => {
+        // createdAt is always written as new Date().toISOString() which includes a time component.
+        // A bare date string "YYYY-MM-DD" is rejected because it lacks the required "T" separator.
+        setClipboardWithDep({ createdAt: "2025-01-01" });
         expect(await readRowsFromSystemClipboard()).toBeNull();
       });
 

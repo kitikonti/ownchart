@@ -48,6 +48,12 @@ const HEX_COLOR_RE = /^#(?:[0-9a-fA-F]{3,4}|[0-9a-fA-F]{6}|[0-9a-fA-F]{8})$/;
 // ISO 8601 date string — YYYY-MM-DD format used throughout OwnChart
 const ISO_DATE_RE = /^\d{4}-\d{2}-\d{2}$/;
 
+// ISO 8601 datetime prefix — dependency.createdAt is always written by OwnChart as
+// new Date().toISOString() ("YYYY-MM-DDTHH:mm:ss.sssZ"). The prefix guard rejects
+// locale-specific formats (e.g. "12/25/2024", "25 Dec 2024") that Date.parse()
+// would otherwise silently accept. The full value is then validated by Date.parse().
+const ISO_DATETIME_PREFIX_RE = /^\d{4}-\d{2}-\d{2}T/;
+
 /**
  * Returns true if `s` is a valid YYYY-MM-DD date string.
  * Checks both format (via regex) and actual calendar validity by round-tripping
@@ -79,9 +85,9 @@ function isFiniteNumber(v: unknown): v is number {
   return typeof v === "number" && Number.isFinite(v);
 }
 
-/** Returns true if s parses as a valid date (not NaN). Used for datetime fields. */
+/** Returns true if s is a valid ISO 8601 datetime string (requires "YYYY-MM-DDT" prefix). */
 function isValidDateString(s: string): boolean {
-  return !Number.isNaN(Date.parse(s));
+  return ISO_DATETIME_PREFIX_RE.test(s) && !Number.isNaN(Date.parse(s));
 }
 
 // MAINTENANCE: This validator manually mirrors the Task interface in src/types/chart.types.ts.
@@ -90,6 +96,9 @@ function isValidDateString(s: string): boolean {
 // When any field is added, removed, or changes type in Task, update BOTH the lists above
 // and the checks below. The TypeScript compiler cannot catch this drift because the
 // validator receives `unknown` inputs rather than typed Task objects.
+// Drift detection aid: `VALID_TASK` in systemClipboard.test.ts is typed as `Task`, so
+// the compiler will flag it when a new required field is added to the interface — use
+// that compile error as your prompt to update this validator and the field lists above.
 /**
  * Validate that a parsed object has the minimum required Task shape.
  * Checks all required Task fields to catch cross-version or malformed clipboard data.

@@ -18,18 +18,16 @@ export function remapTaskIds(tasks: Task[]): {
   remappedTasks: Task[];
   idMapping: Record<TaskId, TaskId>;
 } {
-  // Starts empty and is fully populated in the forEach loop immediately below.
-  // The `as` assertion is required: TypeScript cannot verify that all branded
-  // TaskId keys will be present in an empty object literal.
-  const idMapping: Record<TaskId, TaskId> = {} as Record<TaskId, TaskId>;
+  // Build the full mapping atomically via Object.fromEntries — the object is
+  // complete at construction rather than mutated across a separate loop.
+  // The `as` assertion is still required: TypeScript cannot verify that all
+  // branded TaskId keys are present in the Record (Object.fromEntries returns
+  // Record<string, TaskId>, not Record<TaskId, TaskId>).
+  const idMapping = Object.fromEntries(
+    tasks.map((task) => [task.id, toTaskId(crypto.randomUUID())])
+  ) as Record<TaskId, TaskId>;
 
-  // First pass: Generate new IDs for all tasks
-  tasks.forEach((task) => {
-    const newId = toTaskId(crypto.randomUUID());
-    idMapping[task.id] = newId;
-  });
-
-  // Second pass: Apply new IDs and remap parent references
+  // Apply new IDs and remap parent references
   const remappedTasks: Task[] = tasks.map((task) => {
     // Remap parent if it exists in the mapping (internal parent).
     // Cast to TaskId | undefined: Record<TaskId,TaskId> types all keys as present,
