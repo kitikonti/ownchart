@@ -54,6 +54,8 @@ function isValidDateString(s: string): boolean {
   return !Number.isNaN(Date.parse(s));
 }
 
+// NOTE: This validator manually mirrors the required/optional fields of the Task type
+// (src/types/chart.types.ts). When adding a new field to Task, update this function too.
 /**
  * Validate that a parsed object has the minimum required Task shape.
  * Checks all required Task fields to catch cross-version or malformed clipboard data.

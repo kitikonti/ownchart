@@ -5,7 +5,7 @@
 
 import type { Task } from "../../types/chart.types";
 import type { EditableField } from "../../types/task.types";
-import { DEFAULT_TASK_COLOR } from "../../styles/design-tokens";
+import { DEFAULT_TASK_COLOR } from "../../config/taskDefaults";
 
 /**
  * Result of a clipboard validation check.

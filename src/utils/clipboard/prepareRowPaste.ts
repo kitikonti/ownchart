@@ -89,7 +89,8 @@ export function prepareRowPaste(
       targetParentLevel = getTaskLevel(currentTasks, targetParent) + 1;
     }
   } else {
-    insertOrder = Math.max(...currentTasks.map((t) => t.order), -1) + 1;
+    insertOrder =
+      currentTasks.reduce((max, t) => Math.max(max, t.order), -1) + 1;
   }
 
   // Generate new UUIDs and remap IDs
@@ -111,7 +112,10 @@ export function prepareRowPaste(
     return depth;
   };
 
-  const maxPastedDepth = Math.max(...remappedTasks.map(getDepthInPasted), 0);
+  const maxPastedDepth = remappedTasks.reduce(
+    (max, t) => Math.max(max, getDepthInPasted(t)),
+    0
+  );
 
   // Validate depth
   if (targetParentLevel + maxPastedDepth >= MAX_HIERARCHY_DEPTH) {

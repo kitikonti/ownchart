@@ -4,7 +4,7 @@ import {
   canCutCellValue,
   getClearValueForField,
 } from "../../../../src/utils/clipboard/validation";
-import { DEFAULT_TASK_COLOR } from "../../../../src/styles/design-tokens";
+import { DEFAULT_TASK_COLOR } from "../../../../src/config/taskDefaults";
 import type { Task } from "../../../../src/types/chart.types";
 
 // Helper to create test tasks
