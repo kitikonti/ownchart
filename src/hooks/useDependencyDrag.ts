@@ -65,6 +65,93 @@ function resolveDependencyDirection(
     : { fromId: targetTaskId, toId: fromTaskId };
 }
 
+/** Classify all tasks as valid or invalid drop targets for the given drag source. */
+function resolveDragTargets(
+  fromTaskId: TaskId,
+  side: "start" | "end",
+  tasks: Task[],
+  checkWouldCreateCycle: (fromId: TaskId, toId: TaskId) => { hasCycle: boolean }
+): { validTargets: Set<TaskId>; invalidTargets: Set<TaskId> } {
+  const validTargets = new Set<TaskId>();
+  const invalidTargets = new Set<TaskId>();
+
+  for (const task of tasks) {
+    if (task.id === fromTaskId) continue;
+
+    const { fromId, toId } = resolveDependencyDirection(
+      fromTaskId,
+      task.id,
+      side
+    );
+
+    if (checkWouldCreateCycle(fromId, toId).hasCycle) {
+      invalidTargets.add(task.id);
+    } else {
+      validTargets.add(task.id);
+    }
+  }
+
+  return { validTargets, invalidTargets };
+}
+
+/** Attempt to create a dependency and show a toast for success or failure. */
+function attemptCreateDependency(
+  fromTaskId: TaskId,
+  targetTaskId: TaskId,
+  fromSide: "start" | "end",
+  validTargets: Set<TaskId>,
+  invalidTargets: Set<TaskId>,
+  tasks: Task[],
+  addDependency: (
+    fromId: TaskId,
+    toId: TaskId
+  ) => { success: boolean; error?: string }
+): void {
+  if (validTargets.has(targetTaskId)) {
+    const { fromId, toId } = resolveDependencyDirection(
+      fromTaskId,
+      targetTaskId,
+      fromSide
+    );
+
+    const result = addDependency(fromId, toId);
+
+    if (result.success) {
+      const fromTask = tasks.find((t) => t.id === fromId);
+      const toTask = tasks.find((t) => t.id === toId);
+      toast.success(
+        `Dependency created: ${fromTask?.name ?? "?"} → ${toTask?.name ?? "?"}`
+      );
+    } else {
+      toast.error(result.error ?? "Failed to create dependency");
+    }
+  } else if (invalidTargets.has(targetTaskId)) {
+    toast.error("Cannot create: Would create circular dependency");
+  }
+}
+
+/** Find which task (if any) contains the given SVG-local point. */
+function findHoveredTaskId(
+  x: number,
+  y: number,
+  taskPositions: Map<
+    TaskId,
+    { x: number; y: number; width: number; height: number }
+  >
+): TaskId | null {
+  for (const [taskId, pos] of taskPositions) {
+    if (
+      x >= pos.x &&
+      x <= pos.x + pos.width &&
+      y >= pos.y &&
+      y <= pos.y + pos.height
+    ) {
+      return taskId;
+    }
+  }
+  return null;
+}
+
 export function useDependencyDrag({
   tasks,
   svgRef,
@@ -89,24 +176,12 @@ export function useDependencyDrag({
     (taskId: TaskId, side: "start" | "end", e: React.MouseEvent): void => {
       if (!enabled) return;
 
-      const validTargets = new Set<TaskId>();
-      const invalidTargets = new Set<TaskId>();
-
-      for (const task of tasksRef.current) {
-        if (task.id === taskId) continue;
-
-        const { fromId, toId } = resolveDependencyDirection(
-          taskId,
-          task.id,
-          side
-        );
-
-        if (checkWouldCreateCycle(fromId, toId).hasCycle) {
-          invalidTargets.add(task.id);
-        } else {
-          validTargets.add(task.id);
-        }
-      }
+      const { validTargets, invalidTargets } = resolveDragTargets(
+        taskId,
+        side,
+        tasksRef.current,
+        checkWouldCreateCycle
+      );
 
       // Get initial position from event, converting to SVG-local coords if possible
       const svg = svgRef?.current;
@@ -145,29 +220,21 @@ export function useDependencyDrag({
       const { fromTaskId, fromSide, validTargets, invalidTargets } =
         dragStateRef.current;
 
-      if (targetTaskId && fromTaskId) {
-        if (validTargets.has(targetTaskId)) {
-          const { fromId, toId } = resolveDependencyDirection(
-            fromTaskId,
-            targetTaskId,
-            fromSide ?? "end"
-          );
+      if (!fromTaskId || !fromSide) {
+        setDragState(initialDragState);
+        return;
+      }
 
-          const result = addDependency(fromId, toId);
-
-          if (result.success) {
-            // Read task names via ref to avoid tasksRef being a dep of endDrag
-            const fromTask = tasksRef.current.find((t) => t.id === fromId);
-            const toTask = tasksRef.current.find((t) => t.id === toId);
-            toast.success(
-              `Dependency created: ${fromTask?.name ?? "?"} → ${toTask?.name ?? "?"}`
-            );
-          } else {
-            toast.error(result.error);
-          }
-        } else if (invalidTargets.has(targetTaskId)) {
-          toast.error("Cannot create: Would create circular dependency");
-        }
+      if (targetTaskId) {
+        attemptCreateDependency(
+          fromTaskId,
+          targetTaskId,
+          fromSide,
+          validTargets,
+          invalidTargets,
+          tasksRef.current,
+          addDependency
+        );
       }
 
       setDragState(initialDragState);
@@ -196,31 +263,6 @@ export function useDependencyDrag({
     [dragState.invalidTargets]
   );
 
-  // Find which task is under the cursor (for drop detection)
-  const getHoveredTaskId = useCallback(
-    (
-      x: number,
-      y: number,
-      taskPositions: Map<
-        TaskId,
-        { x: number; y: number; width: number; height: number }
-      >
-    ): TaskId | null => {
-      for (const [taskId, pos] of taskPositions) {
-        if (
-          x >= pos.x &&
-          x <= pos.x + pos.width &&
-          y >= pos.y &&
-          y <= pos.y + pos.height
-        ) {
-          return taskId;
-        }
-      }
-      return null;
-    },
-    []
-  );
-
   // Handle global mouse events during drag.
   // endDrag and cancelDrag are now stable (no tasks dep), so this effect
   // re-registers only when isDragging toggles — not on every task change.
@@ -243,14 +285,14 @@ export function useDependencyDrag({
       }
     };
 
-    window.addEventListener("mousemove", handleMouseMove);
-    window.addEventListener("mouseup", handleMouseUp);
-    window.addEventListener("keydown", handleKeyDown);
+    document.addEventListener("mousemove", handleMouseMove);
+    document.addEventListener("mouseup", handleMouseUp);
+    document.addEventListener("keydown", handleKeyDown);
 
     return () => {
-      window.removeEventListener("mousemove", handleMouseMove);
-      window.removeEventListener("mouseup", handleMouseUp);
-      window.removeEventListener("keydown", handleKeyDown);
+      document.removeEventListener("mousemove", handleMouseMove);
+      document.removeEventListener("mouseup", handleMouseUp);
+      document.removeEventListener("keydown", handleKeyDown);
     };
   }, [dragState.isDragging, updateDragPosition, endDrag, cancelDrag]);
 
@@ -262,6 +304,6 @@ export function useDependencyDrag({
     cancelDrag,
     isValidTarget,
     isInvalidTarget,
-    getHoveredTaskId,
+    getHoveredTaskId: findHoveredTaskId, // stable module-level reference, no useCallback needed
   };
 }

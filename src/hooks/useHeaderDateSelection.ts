@@ -22,11 +22,15 @@ import type {
   ContextMenuPosition,
   ContextMenuItem,
 } from "../components/ContextMenu/ContextMenu";
+import { CONTEXT_MENU_CONTAINER_CLASS } from "../components/ContextMenu/ContextMenu";
 import { CONTEXT_MENU } from "../styles/design-tokens";
 import { clientToSvgCoords } from "../utils/svgCoords";
 
 /** Minimum pixel width for a selection to be rendered (ignores single-click without drag) */
 const MIN_SELECTION_WIDTH_PX = 2;
+
+/** Delay (ms) before activating the click-outside listener to avoid reacting to the opening click */
+const CLICK_DETECTION_DELAY_MS = 0;
 
 export interface HeaderDateSelection {
   startDate: string; // ISO date string
@@ -67,6 +71,61 @@ export function normalizeSelection(
     : { startDate: dateB, endDate: dateA };
 }
 
+// ---------------------------------------------------------------------------
+// Private sub-hooks (not exported — used only by useHeaderDateSelection)
+// ---------------------------------------------------------------------------
+
+/** Clears selection on Escape. Reads current selection via ref so the listener
+ * is registered once on mount, not re-registered on every drag-frame. */
+function useClearSelectionOnEscape(
+  selectionRef: { current: HeaderDateSelection | null },
+  clearSelection: () => void
+): void {
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent): void => {
+      if (e.key === "Escape" && selectionRef.current) {
+        clearSelection();
+      }
+    };
+    document.addEventListener("keydown", handleKeyDown);
+    return () => document.removeEventListener("keydown", handleKeyDown);
+  }, [clearSelection]); // selectionRef is always current — no selection dep needed
+}
+
+/** Clears selection when the user clicks outside the header SVG or context menu.
+ * Uses a short timeout so the listener isn't triggered by the same click that
+ * started the drag. */
+function useClearSelectionOnClickOutside(
+  selectionRef: { current: HeaderDateSelection | null },
+  headerSvgRef: { current: SVGSVGElement | null },
+  clearSelection: () => void
+): void {
+  useEffect(() => {
+    const handleMouseDown = (e: MouseEvent): void => {
+      if (!selectionRef.current) return;
+      const svg = headerSvgRef.current;
+      // If clicking inside the header SVG or inside a context menu, don't clear
+      if (svg && svg.contains(e.target as Node)) return;
+      if ((e.target as Element).closest(`.${CONTEXT_MENU_CONTAINER_CLASS}`))
+        return;
+      clearSelection();
+    };
+
+    // Delay to avoid clearing on the same click that created the selection
+    const timer = setTimeout(() => {
+      document.addEventListener("mousedown", handleMouseDown);
+    }, CLICK_DETECTION_DELAY_MS);
+    return () => {
+      clearTimeout(timer);
+      document.removeEventListener("mousedown", handleMouseDown);
+    };
+  }, [headerSvgRef, clearSelection]); // selectionRef is always current — no selection dep needed
+}
+
+// ---------------------------------------------------------------------------
+// Main hook
+// ---------------------------------------------------------------------------
+
 export function useHeaderDateSelection({
   headerSvgRef,
   scale,
@@ -92,6 +151,16 @@ export function useHeaderDateSelection({
 
   const zoomToDateRange = useChartStore((state) => state.zoomToDateRange);
 
+  // --- Single helper that clears both selection and context menu ---
+  const clearSelection = useCallback((): void => {
+    setSelection(null);
+    setContextMenu(null);
+  }, []);
+
+  // --- Sub-hooks for click-outside and ESC dismissal ---
+  useClearSelectionOnEscape(selectionRef, clearSelection);
+  useClearSelectionOnClickOutside(selectionRef, headerSvgRef, clearSelection);
+
   // --- Pixel rect derived from date selection and current scale ---
   const selectionPixelRect = useMemo(() => {
     if (!selection || !scale) return null;
@@ -102,45 +171,6 @@ export function useHeaderDateSelection({
     if (width < MIN_SELECTION_WIDTH_PX) return null;
     return { x, width };
   }, [selection, scale]);
-
-  // --- Clear selection on ESC ---
-  // Reads selection via selectionRef so the listener is registered once on
-  // mount rather than re-registered on every drag-frame.
-  useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent): void => {
-      if (e.key === "Escape" && selectionRef.current) {
-        setSelection(null);
-        setContextMenu(null);
-      }
-    };
-    document.addEventListener("keydown", handleKeyDown);
-    return () => document.removeEventListener("keydown", handleKeyDown);
-  }, []); // selectionRef is always current — no selection dep needed
-
-  // --- Clear selection on click outside header ---
-  // Always-on listener guarded by selectionRef so it doesn't re-register on
-  // every drag-frame. setTimeout(0) avoids reacting to the same mousedown
-  // that started the drag.
-  useEffect(() => {
-    const handleMouseDown = (e: MouseEvent): void => {
-      if (!selectionRef.current) return;
-      const svg = headerSvgRef.current;
-      // If clicking inside the header SVG or inside a context menu, don't clear
-      if (svg && svg.contains(e.target as Node)) return;
-      if ((e.target as Element).closest(".context-menu-container")) return;
-      setSelection(null);
-      setContextMenu(null);
-    };
-
-    // Delay to avoid clearing on the same click that created the selection
-    const timer = setTimeout(() => {
-      document.addEventListener("mousedown", handleMouseDown);
-    }, 0);
-    return () => {
-      clearTimeout(timer);
-      document.removeEventListener("mousedown", handleMouseDown);
-    };
-  }, [headerSvgRef]); // selectionRef is always current — no selection dep needed; headerSvgRef is a stable RefObject
 
   // --- Mouse move during drag ---
   // Deps are empty because all values are read through stable refs:
@@ -246,11 +276,10 @@ export function useHeaderDateSelection({
         setContextMenu({ x: e.clientX, y: e.clientY });
       } else {
         // Right-click outside selection: clear it
-        setSelection(null);
-        setContextMenu(null);
+        clearSelection();
       }
     },
-    [headerSvgRef] // selectionRef + scaleRef are always current — no state deps
+    [headerSvgRef, clearSelection] // selectionRef + scaleRef are always current — no state deps
   );
 
   // --- Close context menu ---
@@ -277,12 +306,11 @@ export function useHeaderDateSelection({
           if (sel) {
             zoomToDateRange(sel.startDate, sel.endDate);
           }
-          setSelection(null);
-          setContextMenu(null);
+          clearSelection();
         },
       },
     ];
-  }, [contextMenu, zoomToDateRange]); // selectionRef is always current — no selection dep
+  }, [contextMenu, zoomToDateRange, clearSelection]); // selectionRef is always current — no selection dep
 
   return {
     selectionPixelRect,

@@ -9,6 +9,8 @@ import { createPortal } from "react-dom";
 import { Check } from "@phosphor-icons/react";
 import { CONTEXT_MENU } from "../../styles/design-tokens";
 
+export const CONTEXT_MENU_CONTAINER_CLASS = "context-menu-container";
+
 export interface ContextMenuItem {
   id: string;
   label: string;
@@ -143,7 +145,7 @@ export function ContextMenu({
   return createPortal(
     <div
       ref={menuRef}
-      className="context-menu-container fixed z-[1000] min-w-[180px]"
+      className={`${CONTEXT_MENU_CONTAINER_CLASS} fixed z-[1000] min-w-[180px]`}
       style={{
         left: position.x,
         top: position.y,

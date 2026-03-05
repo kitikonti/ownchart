@@ -334,7 +334,7 @@ describe("useDependencyDrag", () => {
     expect(result.current.dragState.isDragging).toBe(true);
 
     act(() => {
-      window.dispatchEvent(new KeyboardEvent("keydown", { key: "Escape" }));
+      document.dispatchEvent(new KeyboardEvent("keydown", { key: "Escape" }));
     });
 
     expect(result.current.dragState.isDragging).toBe(false);
@@ -347,7 +347,7 @@ describe("useDependencyDrag", () => {
 
     // No drag started — ESC should silently do nothing
     act(() => {
-      window.dispatchEvent(new KeyboardEvent("keydown", { key: "Escape" }));
+      document.dispatchEvent(new KeyboardEvent("keydown", { key: "Escape" }));
     });
 
     expect(result.current.dragState.isDragging).toBe(false);
@@ -421,7 +421,7 @@ describe("useDependencyDrag", () => {
   // -------------------------------------------------------------------------
 
   it("removes global listeners on unmount during an active drag", () => {
-    const removeSpy = vi.spyOn(window, "removeEventListener");
+    const removeSpy = vi.spyOn(document, "removeEventListener");
 
     const { result, unmount } = renderHook(() =>
       useDependencyDrag({ tasks: DEFAULT_TASKS })

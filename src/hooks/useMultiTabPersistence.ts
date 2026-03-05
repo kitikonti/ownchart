@@ -85,7 +85,10 @@ function restoreFileState(fileState: TabChartData["fileState"]): void {
     useFileStore.getState();
   if (fileState.fileName) setFileName(fileState.fileName);
   if (fileState.chartId) setChartId(fileState.chartId);
-  if (fileState.lastSaved) setLastSaved(new Date(fileState.lastSaved));
+  if (fileState.lastSaved) {
+    const parsed = new Date(fileState.lastSaved);
+    if (!isNaN(parsed.getTime())) setLastSaved(parsed);
+  }
   if (fileState.isDirty) markDirty();
   else markClean();
 }
@@ -146,23 +149,19 @@ function buildSavePayload(): Omit<TabChartData, "tabId" | "lastActive"> {
 }
 
 // ---------------------------------------------------------------------------
-// Hook
+// Private sub-hooks (not exported — used only by useMultiTabPersistence)
 // ---------------------------------------------------------------------------
 
-/**
- * Hook to manage multi-tab localStorage persistence
- */
-export function useMultiTabPersistence(): void {
-  const tabIdRef = useRef<string>(getTabId());
-  const isRestoringRef = useRef(false);
-  const saveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-
-  // Cleanup inactive tabs on mount
+function useTabCleanupOnMount(): void {
   useEffect(() => {
     cleanupInactiveTabs();
   }, []);
+}
 
-  // Restore state on mount
+function useTabRestore(
+  tabIdRef: { current: string },
+  isRestoringRef: { current: boolean }
+): void {
   useEffect(() => {
     const tabId = tabIdRef.current;
     const savedChart = loadTabChart(tabId);
@@ -183,9 +182,14 @@ export function useMultiTabPersistence(): void {
       // Mark as hydrated after restoration attempt (success or partial failure)
       useUIStore.getState().setHydrated();
     }
-  }, []);
+  }, []); // tabIdRef and isRestoringRef are stable refs
+}
 
-  // Save state to localStorage (debounced to avoid a write per keystroke/mousemove)
+function useTabAutoSave(
+  tabIdRef: { current: string },
+  isRestoringRef: { current: boolean },
+  saveTimerRef: { current: ReturnType<typeof setTimeout> | null }
+): void {
   useEffect(() => {
     const tabId = tabIdRef.current;
 
@@ -208,8 +212,7 @@ export function useMultiTabPersistence(): void {
     const unsubscribeChart = useChartStore.subscribe(saveCurrentState);
     const unsubscribeFile = useFileStore.subscribe(saveCurrentState);
 
-    // Initial save after mount (after restoration is complete).
-    // Fires directly (no debounce) so the tab is registered immediately.
+    // Initial save after a short delay to let restoration settle.
     const initialSaveTimer = setTimeout(() => {
       if (!isRestoringRef.current) {
         saveTabChart(tabId, buildSavePayload());
@@ -227,9 +230,10 @@ export function useMultiTabPersistence(): void {
       unsubscribeChart();
       unsubscribeFile();
     };
-  }, []);
+  }, []); // tabIdRef, isRestoringRef, saveTimerRef are stable refs
+}
 
-  // Update activity timestamp periodically
+function useTabHeartbeat(tabIdRef: { current: string }): void {
   useEffect(() => {
     const tabId = tabIdRef.current;
 
@@ -238,7 +242,25 @@ export function useMultiTabPersistence(): void {
     }, ACTIVITY_UPDATE_INTERVAL_MS);
 
     return () => clearInterval(interval);
-  }, []);
+  }, []); // tabIdRef is a stable ref
+}
+
+// ---------------------------------------------------------------------------
+// Hook
+// ---------------------------------------------------------------------------
+
+/**
+ * Hook to manage multi-tab localStorage persistence
+ */
+export function useMultiTabPersistence(): void {
+  const tabIdRef = useRef<string>(getTabId());
+  const isRestoringRef = useRef(false);
+  const saveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  useTabCleanupOnMount();
+  useTabRestore(tabIdRef, isRestoringRef);
+  useTabAutoSave(tabIdRef, isRestoringRef, saveTimerRef);
+  useTabHeartbeat(tabIdRef);
 
   // Note: We don't cleanup on beforeunload because:
   // - beforeunload fires on page refresh, which would delete data we want to persist
