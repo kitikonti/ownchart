@@ -416,7 +416,7 @@ export function ExportRenderer({
           <svg
             width={timelineWidth}
             height={HEADER_HEIGHT}
-            className="block"
+            className="block export-timeline-header"
             style={{ backgroundColor: bgColor }}
           >
             <TimelineHeader scale={scale} width={timelineWidth} />
