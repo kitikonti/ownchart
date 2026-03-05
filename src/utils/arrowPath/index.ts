@@ -8,4 +8,4 @@ export {
   calculateArrowPath,
   calculateDragPath,
   getArrowheadPoints,
-} from "./bezierPath";
+} from "./elbowPath";

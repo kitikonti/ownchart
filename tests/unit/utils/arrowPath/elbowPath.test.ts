@@ -8,7 +8,7 @@ import {
   calculateArrowPath,
   calculateDragPath,
   getArrowheadPoints,
-} from "../../../../src/utils/arrowPath/bezierPath";
+} from "../../../../src/utils/arrowPath/elbowPath";
 import type { TaskPosition } from "../../../../src/types/dependency.types";
 
 // Helper to create task position
@@ -94,6 +94,36 @@ describe("calculateArrowPath", () => {
       expect(result.path).toContain("M ");
       expect(result.arrowHead.x).toBe(110);
     });
+
+    it("should fall back to simple elbow in transition case (gap 14–46px with vertical offset)", () => {
+      // gap = 20px → triggers S-curve branch, but firstVerticalX - r <= secondVerticalX + r
+      // so falls back to calculateSimpleElbow (2 Q corners, not 4)
+      const fromPos = pos(0, 100, 100, 30); // ends at x=100, centerY=115
+      const toPos = pos(120, 200, 100, 30); // starts at x=120, centerY=215 (gap=20px)
+
+      const result = calculateArrowPath(fromPos, toPos);
+
+      const qCount = (result.path.match(/Q /g) || []).length;
+      expect(qCount).toBe(2); // simple elbow: 2 corners, not 4
+      expect(result.path).toContain("M 100 115");
+      expect(result.path).toContain("L 120 215");
+    });
+
+    it("should extend routing beyond tasks when vertically too close for clean curves", () => {
+      // Overlapping tasks that are also close vertically — middleY must extend beyond bounds
+      const fromPos = pos(0, 100, 150, 30); // ends at x=150, centerY=115
+      const toPos = pos(60, 110, 100, 30);  // starts at x=60 (overlap!), centerY=125
+
+      const result = calculateArrowPath(fromPos, toPos);
+
+      // Should produce a 4-corner S-curve
+      const qCount = (result.path.match(/Q /g) || []).length;
+      expect(qCount).toBe(4);
+      // The middleY routing must go below both tasks (goDown=true, distance < minSpaceForCurves)
+      // middleY > max(115, 125) = 125, so path must contain a Y value > 125
+      expect(result.path).toMatch(/\d+\.\d+ \d+\.\d+|1[3-9]\d|[2-9]\d\d/);
+      expect(result.arrowHead.x).toBe(60);
+    });
   });
 
   describe("arrowhead position", () => {
@@ -116,6 +146,34 @@ describe("calculateArrowPath", () => {
       expect(result.arrowHead.angle).toBe(0);
     });
   });
+
+  describe("rowHeight scaling", () => {
+    it("should scale corner radius with rowHeight", () => {
+      const fromPos = pos(0, 100, 100, 30);
+      const toPos = pos(200, 200, 100, 30);
+
+      const smallRowResult = calculateArrowPath(fromPos, toPos, 22); // half BASE_ROW_HEIGHT
+      const largeRowResult = calculateArrowPath(fromPos, toPos, 88); // double BASE_ROW_HEIGHT
+
+      // Both produce valid curved paths
+      expect(smallRowResult.path).toContain("Q ");
+      expect(largeRowResult.path).toContain("Q ");
+
+      // Paths differ because corner radius changes with row height
+      expect(smallRowResult.path).not.toBe(largeRowResult.path);
+    });
+
+    it("should enforce minimum corner radius for very small row heights", () => {
+      const fromPos = pos(0, 100, 100, 30);
+      const toPos = pos(200, 200, 100, 30);
+
+      // Very small rowHeight — corner radius floors at MIN_CORNER_RADIUS_PX (4)
+      const result = calculateArrowPath(fromPos, toPos, 10);
+
+      expect(result.path).toContain("Q ");
+      expect(result.arrowHead.x).toBe(200);
+    });
+  });
 });
 
 describe("calculateDragPath", () => {
@@ -136,6 +194,15 @@ describe("calculateDragPath", () => {
     const path = calculateDragPath(200, 100, 100, 150);
 
     expect(path).toBe("M 200 100 L 100 150");
+  });
+
+  it("should switch to elbow at the same threshold as calculateArrowPath default", () => {
+    // minGapForElbow = HORIZONTAL_SEGMENT*2 + BASE_CORNER_RADIUS*2 = 30 + 16 = 46
+    const elbowPath = calculateDragPath(100, 100, 146, 150); // gap = 46 → elbow
+    const linePath = calculateDragPath(100, 100, 145, 150);  // gap = 45 → straight line
+
+    expect(elbowPath).toContain("Q ");
+    expect(linePath).not.toContain("Q ");
   });
 });
 
