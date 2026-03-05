@@ -9,10 +9,17 @@
 import { jsPDF } from "jspdf";
 import "svg2pdf.js";
 import { createRoot } from "react-dom/client";
+import type { Root } from "react-dom/client";
 import { createElement } from "react";
 import type { Task } from "../../types/chart.types";
 import type { TaskId } from "../../types/branded.types";
-import type { ExportOptions, PdfExportOptions, PdfHeaderFooter } from "./types";
+import type {
+  ExportOptions,
+  PdfExportOptions,
+  PdfHeaderFooter,
+  PdfMargins,
+  PixelDimensions,
+} from "./types";
 import {
   getPageDimensions,
   getMargins,
@@ -24,7 +31,7 @@ import {
 import { ExportRenderer } from "../../components/Export/ExportRenderer";
 import { calculateExportDimensions } from "./exportLayout";
 import { calculateTaskTableWidth } from "./calculations";
-import { buildFlattenedTaskList, type FlattenedTask } from "../hierarchy";
+import { buildFlattenedTaskList } from "../hierarchy";
 import { type DateFormat } from "../../types/preferences.types";
 import { formatDateByPreference } from "../dateUtils";
 import { HEADER_HEIGHT, SVG_FONT_FAMILY } from "./constants";
@@ -77,6 +84,26 @@ const SVG_BACKGROUND_WHITE = "#ffffff";
 
 /** Middle-dot separator between right-side banner fields (e.g. author · date) */
 const PDF_BANNER_SEPARATOR = " \u00B7 ";
+
+/** SVG namespace URI — used in every createElementNS call */
+const SVG_NS = "http://www.w3.org/2000/svg";
+
+/** Default PDF document title when neither projectTitle nor projectName is set */
+const DEFAULT_PDF_TITLE = "Project Timeline";
+
+/** Default PDF document subject metadata */
+const PDF_DEFAULT_SUBJECT = "Gantt Chart Export";
+
+/** Progress checkpoint values emitted via onProgress during export */
+const EXPORT_PROGRESS = {
+  START: 5,
+  DIMENSIONS_READY: 10,
+  RENDER_COMPLETE: 25,
+  SVG_ASSEMBLED: 40,
+  PDF_DOCUMENT_READY: 55,
+  SVG_EMBEDDED: 90,
+  COMPLETE: 100,
+} as const;
 
 // =============================================================================
 // Types
@@ -138,10 +165,24 @@ interface SvgAssemblyContext {
   projectName?: string;
 }
 
+/** Layout values computed once in buildCompleteSvg and passed to SVG sub-assemblers */
+interface SvgChartLayout {
+  /** Width of the task-table panel in px (0 when no columns are selected) */
+  taskTableWidth: number;
+  /** Y offset for chart content — equals HEADER_HEIGHT when a header is included */
+  contentY: number;
+}
+
+/** Reserved vertical space in mm for PDF header/footer strips */
+interface ReservedSpace {
+  header: number;
+  footer: number;
+}
+
 /** Shared context for banner rendering (header/footer strips) */
 interface BannerRenderContext {
   doc: jsPDF;
-  margins: { top: number; bottom: number; left: number; right: number };
+  margins: PdfMargins;
   /** Page width in mm */
   pageWidth: number;
   /** Page height in mm */
@@ -191,7 +232,7 @@ export async function exportToPdf({
   colorModeState,
   onProgress,
 }: ExportToPdfParams): Promise<void> {
-  onProgress?.(5);
+  onProgress?.(EXPORT_PROGRESS.START);
 
   const effectiveOptions = resolveEffectiveOptions(tasks, options, pdfOptions);
   const dimensions = calculateExportDimensions({
@@ -203,54 +244,43 @@ export async function exportToPdf({
     visibleDateRange,
   });
 
-  onProgress?.(10);
+  onProgress?.(EXPORT_PROGRESS.DIMENSIONS_READY);
 
-  const container = createOffscreenContainer(
-    dimensions.width,
-    dimensions.height,
-    effectiveOptions.background
-  );
-  const root = createRoot(container);
-
-  try {
-    await mountExportRenderer(root, container, {
+  const svgElement = await renderToSvg(
+    dimensions,
+    {
       tasks,
       options: effectiveOptions,
       columnWidths,
       currentAppZoom,
       projectDateRange,
       visibleDateRange,
-    });
-
-    onProgress?.(25);
-
-    const svgElement = extractSvgFromContainer(container, dimensions, {
+    },
+    {
       tasks,
       options: effectiveOptions,
       columnWidths,
       colorModeState,
       projectName,
-    });
+    },
+    onProgress
+  );
 
-    onProgress?.(40);
+  onProgress?.(EXPORT_PROGRESS.SVG_ASSEMBLED);
 
-    await buildAndSavePdf(
-      svgElement,
-      dimensions,
-      {
-        metadata: resolvePdfMetadata(projectTitle, projectName, projectAuthor),
-        pdfOptions,
-        dateFormat,
-        projectName,
-      },
-      onProgress
-    );
+  await buildAndSavePdf(
+    svgElement,
+    dimensions,
+    {
+      metadata: resolvePdfMetadata(projectTitle, projectName, projectAuthor),
+      pdfOptions,
+      dateFormat,
+      projectName,
+    },
+    onProgress
+  );
 
-    onProgress?.(100);
-  } finally {
-    root.unmount();
-    removeOffscreenContainer(container);
-  }
+  onProgress?.(EXPORT_PROGRESS.COMPLETE);
 }
 
 // =============================================================================
@@ -278,11 +308,55 @@ export function resolveEffectiveOptions(
 }
 
 /**
+ * Apply PDF metadata fallback logic: prefer explicit title/author values,
+ * fall back to project name for title and empty string for author.
+ *
+ * Exported for unit testing.
+ */
+export function resolvePdfMetadata(
+  projectTitle: string | undefined,
+  projectName: string | undefined,
+  projectAuthor: string | undefined
+): PdfMetadata {
+  return {
+    title: projectTitle || projectName || DEFAULT_PDF_TITLE,
+    author: projectAuthor ?? "",
+  };
+}
+
+/**
+ * Render ExportRenderer in an offscreen container, extract the assembled
+ * SVG, then clean up the container — all in a single try/finally lifecycle.
+ * Emits RENDER_COMPLETE progress once the React render is flushed.
+ */
+async function renderToSvg(
+  dimensions: PixelDimensions,
+  rendererProps: RendererProps,
+  assemblyCtx: SvgAssemblyContext,
+  onProgress?: (progress: number) => void
+): Promise<SVGSVGElement> {
+  const container = createOffscreenContainer(
+    dimensions.width,
+    dimensions.height,
+    rendererProps.options.background
+  );
+  const root = createRoot(container);
+  try {
+    await mountExportRenderer(root, container, rendererProps);
+    onProgress?.(EXPORT_PROGRESS.RENDER_COMPLETE);
+    return extractSvgFromContainer(container, dimensions, assemblyCtx);
+  } finally {
+    root.unmount();
+    removeOffscreenContainer(container);
+  }
+}
+
+/**
  * Mount ExportRenderer in the offscreen container and wait for the browser
  * to complete layout and paint before returning.
  */
 async function mountExportRenderer(
-  root: ReturnType<typeof createRoot>,
+  root: Root,
   container: HTMLDivElement,
   props: RendererProps
 ): Promise<void> {
@@ -302,7 +376,7 @@ async function mountExportRenderer(
  */
 function extractSvgFromContainer(
   container: HTMLDivElement,
-  dimensions: { width: number; height: number },
+  dimensions: PixelDimensions,
   ctx: SvgAssemblyContext
 ): SVGSVGElement {
   const chartSvgEl = container.querySelector("svg.gantt-chart");
@@ -325,22 +399,9 @@ function extractSvgFromContainer(
   return buildCompleteSvg(chartSvgEl, headerSvg, dimensions, ctx);
 }
 
-/**
- * Apply PDF metadata fallback logic: prefer explicit title/author values,
- * fall back to project name for title and empty string for author.
- *
- * Exported for unit testing.
- */
-export function resolvePdfMetadata(
-  projectTitle: string | undefined,
-  projectName: string | undefined,
-  projectAuthor: string | undefined
-): PdfMetadata {
-  return {
-    title: projectTitle || projectName || "Project Timeline",
-    author: projectAuthor ?? "",
-  };
-}
+// =============================================================================
+// PDF Document Helpers
+// =============================================================================
 
 /**
  * Create the jsPDF document, embed the chart SVG, render header/footer
@@ -348,24 +409,57 @@ export function resolvePdfMetadata(
  */
 async function buildAndSavePdf(
   svgElement: SVGSVGElement,
-  dimensions: { width: number; height: number },
+  dimensions: PixelDimensions,
   settings: PdfDocumentSettings,
   onProgress?: (progress: number) => void
 ): Promise<void> {
-  const { metadata, pdfOptions, dateFormat, projectName } = settings;
-
+  const { pdfOptions, dateFormat, projectName } = settings;
   const pageDims = getPageDimensions(pdfOptions);
   const margins = getMargins(pdfOptions);
-  const headerReserved = getReservedSpace(pdfOptions.header);
-  const footerReserved = getReservedSpace(pdfOptions.footer);
+  const reserved: ReservedSpace = {
+    header: getReservedSpace(pdfOptions.header),
+    footer: getReservedSpace(pdfOptions.footer),
+  };
   const placement = computeChartPlacement(
     dimensions,
     pageDims,
     margins,
-    headerReserved,
-    footerReserved
+    reserved
+  );
+  const doc = createPdfDocument(pageDims, settings);
+
+  onProgress?.(EXPORT_PROGRESS.PDF_DOCUMENT_READY);
+
+  await embedSvgInDocument(doc, svgElement, placement);
+
+  onProgress?.(EXPORT_PROGRESS.SVG_EMBEDDED);
+
+  renderBanners(
+    {
+      doc,
+      margins,
+      pageWidth: pageDims.width,
+      pageHeight: pageDims.height,
+      dateFormat,
+    },
+    pdfOptions,
+    settings.metadata,
+    reserved
   );
 
+  doc.save(generateExportFilename(projectName, "pdf"));
+}
+
+/**
+ * Instantiate the jsPDF document, register the Inter font, and set document
+ * properties. Kept separate from SVG embedding so that creation errors are
+ * distinct from render errors.
+ */
+function createPdfDocument(
+  pageDims: { width: number; height: number },
+  settings: PdfDocumentSettings
+): jsPDF {
+  const { metadata, pdfOptions } = settings;
   const doc = new jsPDF({
     orientation: pdfOptions.orientation,
     unit: "mm",
@@ -379,14 +473,22 @@ async function buildAndSavePdf(
   doc.setProperties({
     title: metadata.title,
     author: metadata.author,
-    subject: pdfOptions.metadata.subject ?? "Gantt Chart Export",
+    subject: pdfOptions.metadata.subject ?? PDF_DEFAULT_SUBJECT,
     creator: "OwnChart",
   });
 
-  onProgress?.(55);
+  return doc;
+}
 
-  // Note: fonts are already embedded via registerInterFont() and set on SVG
-  // elements via setFontFamilyOnTextElements().
+/**
+ * Embed the assembled SVG into the PDF document at the computed placement.
+ * Wraps svg2pdf errors with a descriptive message.
+ */
+async function embedSvgInDocument(
+  doc: jsPDF,
+  svgElement: SVGSVGElement,
+  placement: ChartPlacement
+): Promise<void> {
   try {
     await doc.svg(svgElement, {
       x: placement.offsetX,
@@ -397,27 +499,6 @@ async function buildAndSavePdf(
   } catch (err) {
     throw new Error(`PDF rendering failed: ${String(err)}`);
   }
-
-  onProgress?.(90);
-
-  // Render banners after chart SVG so separator lines draw on top of content
-  const bannerCtx: BannerRenderContext = {
-    doc,
-    margins,
-    pageWidth: pageDims.width,
-    pageHeight: pageDims.height,
-    dateFormat,
-  };
-  renderBanners(
-    bannerCtx,
-    pdfOptions,
-    metadata,
-    headerReserved,
-    footerReserved
-  );
-
-  const filename = generateExportFilename(projectName, "pdf");
-  doc.save(filename);
 }
 
 /**
@@ -426,19 +507,18 @@ async function buildAndSavePdf(
  * horizontally.
  */
 function computeChartPlacement(
-  dimensions: { width: number; height: number },
+  dimensions: PixelDimensions,
   pageDims: { width: number; height: number },
-  margins: { top: number; bottom: number; left: number; right: number },
-  headerReserved: number,
-  footerReserved: number
+  margins: PdfMargins,
+  reserved: ReservedSpace
 ): ChartPlacement {
   const contentWidth = pageDims.width - margins.left - margins.right;
   const contentHeight =
     pageDims.height -
     margins.top -
     margins.bottom -
-    headerReserved -
-    footerReserved;
+    reserved.header -
+    reserved.footer;
 
   // Scale SVG to fit the available content area while preserving aspect ratio
   const scale = Math.min(
@@ -450,7 +530,7 @@ function computeChartPlacement(
 
   // Centre horizontally within the content area; pin vertically to header
   const offsetX = margins.left + (contentWidth - finalWidthMm) / 2;
-  const offsetY = margins.top + headerReserved;
+  const offsetY = margins.top + reserved.header;
 
   return { offsetX, offsetY, finalWidthMm, finalHeightMm };
 }
@@ -467,13 +547,12 @@ function renderBanners(
   ctx: BannerRenderContext,
   pdfOptions: PdfExportOptions,
   metadata: PdfMetadata,
-  headerReserved: number,
-  footerReserved: number
+  reserved: ReservedSpace
 ): void {
   if (hasHeaderFooterContent(pdfOptions.header)) {
     renderPdfBanner(ctx, pdfOptions.header, metadata, {
       textY: ctx.margins.top + PDF_HEADER_TEXT_OFFSET_MM,
-      lineY: ctx.margins.top + headerReserved,
+      lineY: ctx.margins.top + reserved.header,
       lineBelowText: true,
     });
   }
@@ -482,7 +561,7 @@ function renderBanners(
     renderPdfBanner(ctx, pdfOptions.footer, metadata, {
       textY:
         ctx.pageHeight - ctx.margins.bottom - PDF_FOOTER_TEXT_BOTTOM_OFFSET_MM,
-      lineY: ctx.pageHeight - ctx.margins.bottom - footerReserved,
+      lineY: ctx.pageHeight - ctx.margins.bottom - reserved.footer,
       lineBelowText: false,
     });
   }
@@ -554,7 +633,7 @@ function renderPdfBanner(
 function buildCompleteSvg(
   chartSvg: SVGSVGElement,
   headerSvg: SVGSVGElement | null,
-  dimensions: { width: number; height: number },
+  dimensions: PixelDimensions,
   ctx: SvgAssemblyContext
 ): SVGSVGElement {
   const { options, columnWidths } = ctx;
@@ -566,23 +645,15 @@ function buildCompleteSvg(
         options.density
       )
     : 0;
-  const flattenedTasks = buildFlattenedTaskList(ctx.tasks, new Set<TaskId>());
   const svg = createSvgRoot(dimensions, options.background, ctx.projectName);
-  let currentY = 0;
+  let contentY = 0;
 
   if (options.includeHeader) {
     appendExportHeader(svg, headerSvg, ctx, taskTableWidth);
-    currentY = HEADER_HEIGHT;
+    contentY = HEADER_HEIGHT;
   }
 
-  appendChartContent(
-    svg,
-    chartSvg,
-    ctx,
-    taskTableWidth,
-    currentY,
-    flattenedTasks
-  );
+  appendChartContent(svg, chartSvg, ctx, { taskTableWidth, contentY });
 
   return svg;
 }
@@ -614,9 +685,7 @@ function appendExportHeader(
 
   if (headerSvg) {
     const headerGroup = createTranslatedGroup(taskTableWidth, 0);
-    Array.from(headerSvg.childNodes).forEach((child) => {
-      headerGroup.appendChild(child.cloneNode(true));
-    });
+    cloneChildrenInto(headerSvg, headerGroup);
     setFontFamilyOnTextElements(headerGroup);
     svg.appendChild(headerGroup);
   }
@@ -624,19 +693,19 @@ function appendExportHeader(
 
 /**
  * Append the task-table row content and the main Gantt chart SVG to the
- * root SVG at the given Y offset.
+ * root SVG at the layout's content Y offset.
  */
 function appendChartContent(
   svg: SVGSVGElement,
   chartSvg: SVGSVGElement,
   ctx: SvgAssemblyContext,
-  taskTableWidth: number,
-  currentY: number,
-  flattenedTasks: FlattenedTask[]
+  layout: SvgChartLayout
 ): void {
   const { options, columnWidths, colorModeState } = ctx;
+  const { taskTableWidth, contentY } = layout;
 
   if (taskTableWidth > 0) {
+    const flattenedTasks = buildFlattenedTaskList(ctx.tasks, new Set<TaskId>());
     const rowsGroup = renderTaskTableRows(
       svg,
       flattenedTasks,
@@ -644,17 +713,15 @@ function appendChartContent(
       columnWidths,
       taskTableWidth,
       0,
-      currentY,
+      contentY,
       options.density,
       colorModeState
     );
     setFontFamilyOnTextElements(rowsGroup);
   }
 
-  const chartGroup = createTranslatedGroup(taskTableWidth, currentY);
-  Array.from(chartSvg.childNodes).forEach((child) => {
-    chartGroup.appendChild(child.cloneNode(true));
-  });
+  const chartGroup = createTranslatedGroup(taskTableWidth, contentY);
+  cloneChildrenInto(chartSvg, chartGroup);
   setFontFamilyOnTextElements(chartGroup);
   svg.appendChild(chartGroup);
 }
@@ -665,32 +732,32 @@ function appendChartContent(
  * for svg2pdf.js compatibility.
  */
 function createSvgRoot(
-  dimensions: { width: number; height: number },
+  dimensions: PixelDimensions,
   background: ExportOptions["background"],
   projectName?: string
 ): SVGSVGElement {
-  const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
-  svg.setAttribute("xmlns", "http://www.w3.org/2000/svg");
+  const svg = document.createElementNS(SVG_NS, "svg");
+  svg.setAttribute("xmlns", SVG_NS);
   svg.setAttribute("width", String(dimensions.width));
   svg.setAttribute("height", String(dimensions.height));
   svg.setAttribute("viewBox", `0 0 ${dimensions.width} ${dimensions.height}`);
 
-  const title = document.createElementNS("http://www.w3.org/2000/svg", "title");
+  const title = document.createElementNS(SVG_NS, "title");
   title.textContent = projectName
     ? `Gantt chart: ${projectName}`
     : "Gantt Chart";
   svg.appendChild(title);
 
   if (background === "white") {
-    const bg = document.createElementNS("http://www.w3.org/2000/svg", "rect");
+    const bg = document.createElementNS(SVG_NS, "rect");
     bg.setAttribute("width", "100%");
     bg.setAttribute("height", "100%");
     bg.setAttribute("fill", SVG_BACKGROUND_WHITE);
     svg.appendChild(bg);
   }
 
-  const defs = document.createElementNS("http://www.w3.org/2000/svg", "defs");
-  const style = document.createElementNS("http://www.w3.org/2000/svg", "style");
+  const defs = document.createElementNS(SVG_NS, "defs");
+  const style = document.createElementNS(SVG_NS, "style");
   style.textContent = `\n    text { font-family: ${SVG_FONT_FAMILY}; }\n  `;
   defs.appendChild(style);
   svg.appendChild(defs);
@@ -700,7 +767,14 @@ function createSvgRoot(
 
 /** Create an SVG <g> element translated to the given (x, y) offset. */
 function createTranslatedGroup(x: number, y: number): SVGGElement {
-  const g = document.createElementNS("http://www.w3.org/2000/svg", "g");
+  const g = document.createElementNS(SVG_NS, "g");
   g.setAttribute("transform", `translate(${x}, ${y})`);
   return g;
+}
+
+/** Deep-clone all child nodes of `source` and append them to `target`. */
+function cloneChildrenInto(source: Node, target: Node): void {
+  source.childNodes.forEach((child) =>
+    target.appendChild(child.cloneNode(true))
+  );
 }

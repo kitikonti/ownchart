@@ -6,6 +6,7 @@ import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import type { Task } from "../../../../src/types/chart.types";
 import type { ExportOptions, PdfExportOptions } from "../../../../src/utils/export/types";
 import { DEFAULT_PDF_OPTIONS, DEFAULT_EXPORT_OPTIONS } from "../../../../src/utils/export/types";
+import { DEFAULT_COLOR_MODE_STATE } from "../../../../src/config/colorModeDefaults";
 import { tid } from "../../../helpers/branded";
 
 // Mock functions for jsPDF
@@ -110,6 +111,7 @@ describe("pdfExport", () => {
         columnWidths: {},
         currentAppZoom: 1,
         dateFormat: "YYYY-MM-DD",
+        colorModeState: DEFAULT_COLOR_MODE_STATE,
       });
 
       expect(jsPDFConstructorCalls.length).toBe(1);
@@ -128,6 +130,7 @@ describe("pdfExport", () => {
         columnWidths: {},
         currentAppZoom: 1,
         dateFormat: "YYYY-MM-DD",
+        colorModeState: DEFAULT_COLOR_MODE_STATE,
       });
 
       expect(jsPDFConstructorCalls.length).toBe(1);
@@ -146,6 +149,7 @@ describe("pdfExport", () => {
         currentAppZoom: 1,
         projectName: "Test Project",
         dateFormat: "YYYY-MM-DD",
+        colorModeState: DEFAULT_COLOR_MODE_STATE,
       });
 
       expect(mockSave).toHaveBeenCalledWith(
@@ -163,6 +167,7 @@ describe("pdfExport", () => {
         columnWidths: {},
         currentAppZoom: 1,
         dateFormat: "YYYY-MM-DD",
+        colorModeState: DEFAULT_COLOR_MODE_STATE,
       });
 
       expect(mockSave).toHaveBeenCalledWith(
@@ -188,6 +193,7 @@ describe("pdfExport", () => {
         projectTitle: "Custom Title",
         projectAuthor: "Test Author",
         dateFormat: "YYYY-MM-DD",
+        colorModeState: DEFAULT_COLOR_MODE_STATE,
       });
 
       expect(mockSetProperties).toHaveBeenCalledWith(
@@ -210,17 +216,18 @@ describe("pdfExport", () => {
         pdfOptions: defaultPdfOptions,
         columnWidths: {},
         currentAppZoom: 1,
+        dateFormat: "YYYY-MM-DD",
+        colorModeState: DEFAULT_COLOR_MODE_STATE,
         onProgress: (progress) => progressValues.push(progress),
       });
 
-      // New SVG-to-PDF approach has different progress values
       expect(progressValues).toContain(5);
       expect(progressValues).toContain(10);
       expect(progressValues).toContain(25);
       expect(progressValues).toContain(100);
     });
 
-    it("should render header when configured", async () => {
+    it("should render header project name when showProjectName is enabled", async () => {
       const { exportToPdf } = await import("../../../../src/utils/export/pdfExport");
 
       await exportToPdf({
@@ -230,20 +237,30 @@ describe("pdfExport", () => {
           ...defaultPdfOptions,
           header: {
             showProjectName: true,
-            showExportDate: true,
+            showAuthor: false,
+            showExportDate: false,
           },
+          // Disable default footer to isolate assertions
+          footer: { showProjectName: false, showAuthor: false, showExportDate: false },
         },
         columnWidths: {},
         currentAppZoom: 1,
         projectName: "Header Test",
         dateFormat: "DD/MM/YYYY",
+        colorModeState: DEFAULT_COLOR_MODE_STATE,
       });
 
-      // Header renders text
-      expect(mockText).toHaveBeenCalled();
+      // Header renders the project name as left-aligned text
+      expect(mockText).toHaveBeenCalledWith(
+        "Header Test",
+        expect.any(Number),
+        expect.any(Number)
+      );
+      // Header separator line is drawn
+      expect(mockLine).toHaveBeenCalled();
     });
 
-    it("should render footer when configured", async () => {
+    it("should render footer project name when showProjectName is enabled", async () => {
       const { exportToPdf } = await import("../../../../src/utils/export/pdfExport");
 
       await exportToPdf({
@@ -251,18 +268,29 @@ describe("pdfExport", () => {
         options: defaultExportOptions,
         pdfOptions: {
           ...defaultPdfOptions,
+          // Disable default header to isolate footer assertions
+          header: { showProjectName: false, showAuthor: false, showExportDate: false },
           footer: {
             showProjectName: true,
-            showExportDate: true,
+            showAuthor: false,
+            showExportDate: false,
           },
         },
         columnWidths: {},
         currentAppZoom: 1,
         projectName: "Footer Test",
         dateFormat: "MM/DD/YYYY",
+        colorModeState: DEFAULT_COLOR_MODE_STATE,
       });
 
-      expect(mockText).toHaveBeenCalled();
+      // Footer renders the project name
+      expect(mockText).toHaveBeenCalledWith(
+        "Footer Test",
+        expect.any(Number),
+        expect.any(Number)
+      );
+      // Footer separator line is drawn
+      expect(mockLine).toHaveBeenCalled();
     });
 
     it("should handle empty task list", async () => {
@@ -275,6 +303,7 @@ describe("pdfExport", () => {
         columnWidths: {},
         currentAppZoom: 1,
         dateFormat: "YYYY-MM-DD",
+        colorModeState: DEFAULT_COLOR_MODE_STATE,
       });
 
       expect(mockSave).toHaveBeenCalled();
@@ -295,6 +324,7 @@ describe("pdfExport", () => {
         columnWidths: {},
         currentAppZoom: 1,
         dateFormat: "YYYY-MM-DD",
+        colorModeState: DEFAULT_COLOR_MODE_STATE,
       });
 
       expect(mockSave).toHaveBeenCalled();
@@ -312,6 +342,8 @@ describe("pdfExport", () => {
         pdfOptions: defaultPdfOptions,
         columnWidths: {},
         currentAppZoom: 1,
+        dateFormat: "YYYY-MM-DD",
+        colorModeState: DEFAULT_COLOR_MODE_STATE,
         visibleDateRange: {
           start: new Date("2024-01-01"),
           end: new Date("2024-01-31"),
@@ -335,6 +367,7 @@ describe("pdfExport", () => {
         columnWidths: {},
         currentAppZoom: 1,
         dateFormat: "YYYY-MM-DD",
+        colorModeState: DEFAULT_COLOR_MODE_STATE,
       });
 
       expect(mockSave).toHaveBeenCalled();
@@ -350,6 +383,7 @@ describe("pdfExport", () => {
         columnWidths: {},
         currentAppZoom: 1,
         dateFormat: "YYYY-MM-DD",
+        colorModeState: DEFAULT_COLOR_MODE_STATE,
       });
 
       expect(jsPDFConstructorCalls.length).toBe(1);
@@ -367,6 +401,7 @@ describe("pdfExport", () => {
         columnWidths: {},
         currentAppZoom: 1,
         dateFormat: "YYYY-MM-DD",
+        colorModeState: DEFAULT_COLOR_MODE_STATE,
       });
 
       expect(jsPDFConstructorCalls.length).toBe(1);
@@ -387,6 +422,7 @@ describe("pdfExport", () => {
         columnWidths: { name: 150, startDate: 100 },
         currentAppZoom: 1,
         dateFormat: "YYYY-MM-DD",
+        colorModeState: DEFAULT_COLOR_MODE_STATE,
       });
 
       expect(mockSave).toHaveBeenCalled();
@@ -403,6 +439,8 @@ describe("pdfExport", () => {
         pdfOptions: defaultPdfOptions,
         columnWidths: {},
         currentAppZoom: 1,
+        dateFormat: "YYYY-MM-DD",
+        colorModeState: DEFAULT_COLOR_MODE_STATE,
         projectName: "My Cool Project",
       });
 
@@ -421,6 +459,8 @@ describe("pdfExport", () => {
         pdfOptions: defaultPdfOptions,
         columnWidths: {},
         currentAppZoom: 1,
+        dateFormat: "YYYY-MM-DD",
+        colorModeState: DEFAULT_COLOR_MODE_STATE,
         projectName: "Project: Test <>&",
       });
 
@@ -430,16 +470,11 @@ describe("pdfExport", () => {
   });
 
   describe("dependencies handling", () => {
-    it("exports with dependencies without errors", async () => {
+    it("exports with includeDependencies flag enabled without errors", async () => {
       const { exportToPdf } = await import("../../../../src/utils/export/pdfExport");
-
-      const dependencies = [
-        { id: "dep-1", fromTaskId: tid("task-1"), toTaskId: tid("task-2"), type: "FS" as const },
-      ];
 
       await exportToPdf({
         tasks: [createTestTask(), createTestTask({ id: "task-2", name: "Task 2" })],
-        dependencies,
         options: {
           ...defaultExportOptions,
           includeDependencies: true,
@@ -448,6 +483,7 @@ describe("pdfExport", () => {
         columnWidths: {},
         currentAppZoom: 1,
         dateFormat: "YYYY-MM-DD",
+        colorModeState: DEFAULT_COLOR_MODE_STATE,
       });
 
       // SVG-to-PDF approach uses doc.svg() to embed the chart
