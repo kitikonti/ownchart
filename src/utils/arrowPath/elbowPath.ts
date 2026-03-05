@@ -82,6 +82,11 @@ function buildStraightLine(from: Point, to: Point): string {
   return `M ${from.x} ${from.y} L ${to.x} ${to.y}`;
 }
 
+/** Format a single quadratic bezier corner segment: `Q anchorX anchorY, endX endY`. */
+function qCorner(anchorX: number, anchorY: number, endX: number, endY: number): string {
+  return `Q ${anchorX} ${anchorY}, ${endX} ${endY}`;
+}
+
 /**
  * Build a two-corner (standard elbow) path string.
  * Both corners meet at the horizontal midpoint between from and to.
@@ -96,14 +101,14 @@ function buildTwoCornerPath(
   const dir = getVerticalDir(from, to);
   const midX = (from.x + to.x) / 2;
 
-  return (
-    `M ${from.x} ${from.y} ` +
-    `L ${midX - r} ${from.y} ` +
-    `Q ${midX} ${from.y}, ${midX} ${from.y + dir * r} ` +
-    `L ${midX} ${to.y - dir * r} ` +
-    `Q ${midX} ${to.y}, ${midX + r} ${to.y} ` +
-    `L ${to.x} ${to.y}`
-  );
+  return [
+    `M ${from.x} ${from.y}`,
+    `L ${midX - r} ${from.y}`,
+    qCorner(midX, from.y, midX, from.y + dir * r),
+    `L ${midX} ${to.y - dir * r}`,
+    qCorner(midX, to.y, midX + r, to.y),
+    `L ${to.x} ${to.y}`,
+  ].join(" ");
 }
 
 /**
@@ -137,10 +142,16 @@ function calculateSimpleElbow(
     return buildStraightLine(from, to);
   }
 
-  const cornerRadius = Math.min(
-    baseRadius,
-    horizontalGap / ADAPTIVE_RADIUS_DIVISOR,
-    verticalGap / ADAPTIVE_RADIUS_DIVISOR
+  // Clamp to zero: at large row heights the S-curve threshold can dip below zero,
+  // making horizontalGap negative here. A zero radius degrades to a sharp corner
+  // rather than producing geometrically invalid (negative-coordinate) path data.
+  const cornerRadius = Math.max(
+    0,
+    Math.min(
+      baseRadius,
+      horizontalGap / ADAPTIVE_RADIUS_DIVISOR,
+      verticalGap / ADAPTIVE_RADIUS_DIVISOR
+    )
   );
 
   return buildTwoCornerPath(from, to, cornerRadius);
@@ -187,27 +198,27 @@ function buildSCurvePath(
   const firstX = from.x + HORIZONTAL_SEGMENT;
   const secondX = to.x - HORIZONTAL_SEGMENT;
 
-  return (
-    `M ${from.x} ${from.y} ` +
+  return [
+    `M ${from.x} ${from.y}`,
     // 1. Horizontal out from source
-    `L ${firstX - r} ${from.y} ` +
+    `L ${firstX - r} ${from.y}`,
     // 2. First corner — turn toward middle
-    `Q ${firstX} ${from.y}, ${firstX} ${from.y + dir * r} ` +
+    qCorner(firstX, from.y, firstX, from.y + dir * r),
     // 3. Vertical to middle
-    `L ${firstX} ${middleY - dir * r} ` +
+    `L ${firstX} ${middleY - dir * r}`,
     // 4. Second corner — turn left (toward target)
-    `Q ${firstX} ${middleY}, ${firstX - r} ${middleY} ` +
+    qCorner(firstX, middleY, firstX - r, middleY),
     // 5. Horizontal segment (going left, between the tasks)
-    `L ${secondX + r} ${middleY} ` +
+    `L ${secondX + r} ${middleY}`,
     // 6. Third corner — turn toward target
-    `Q ${secondX} ${middleY}, ${secondX} ${middleY + dir * r} ` +
+    qCorner(secondX, middleY, secondX, middleY + dir * r),
     // 7. Vertical to target level
-    `L ${secondX} ${to.y - dir * r} ` +
+    `L ${secondX} ${to.y - dir * r}`,
     // 8. Fourth corner — turn right into target
-    `Q ${secondX} ${to.y}, ${secondX + r} ${to.y} ` +
+    qCorner(secondX, to.y, secondX + r, to.y),
     // 9. Horizontal into target
-    `L ${to.x} ${to.y}`
-  );
+    `L ${to.x} ${to.y}`,
+  ].join(" ");
 }
 
 /**
@@ -301,14 +312,7 @@ export function calculateArrowPath(
  * straight line — S-curve routing is intentionally omitted during drag for visual
  * clarity. The elbow threshold matches the default-rowHeight case of calculateArrowPath.
  */
-export function calculateDragPath(
-  startX: number,
-  startY: number,
-  endX: number,
-  endY: number
-): string {
-  const from: Point = { x: startX, y: startY };
-  const to: Point = { x: endX, y: endY };
+export function calculateDragPath(from: Point, to: Point): string {
   const horizontalGap = to.x - from.x;
   const minGapForElbow = computeMinGapForElbow(BASE_CORNER_RADIUS);
 

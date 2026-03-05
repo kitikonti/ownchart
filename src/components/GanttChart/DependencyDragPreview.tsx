@@ -40,7 +40,7 @@ export const DependencyDragPreview = memo(function DependencyDragPreview({
 }: DependencyDragPreviewProps) {
   // Calculate path from start to current mouse position
   const path = useMemo(() => {
-    return calculateDragPath(startX, startY, endX, endY);
+    return calculateDragPath({ x: startX, y: startY }, { x: endX, y: endY });
   }, [startX, startY, endX, endY]);
 
   // Calculate arrowhead angle

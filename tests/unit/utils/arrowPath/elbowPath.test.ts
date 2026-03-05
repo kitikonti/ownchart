@@ -178,33 +178,49 @@ describe("calculateArrowPath", () => {
       expect(result.path).toContain("Q ");
       expect(result.arrowHead.x).toBe(200);
     });
+
+    it("should not produce negative corner radius at large rowHeight with near-zero gap", () => {
+      // rowHeight=90 → cornerRadius=round(8*90/44)=16
+      // minGapForElbow = 15*2 + 16*2 = 62  → calculateRoutedPath fires (gap=-1 < 62)
+      // transition check: firstX-r <= secondX+r → (100+15-16) <= (99-15+16) → 99 <= 100 → TRUE
+      // → calculateSimpleElbow receives horizontalGap=-1, previously yielding cornerRadius=-0.25
+      const fromPos = pos(0, 100, 100, 30); // from.x=100, from.y=115
+      const toPos = pos(99, 200, 100, 30);  // to.x=99 (gap=-1), to.y=215
+
+      const result = calculateArrowPath(fromPos, toPos, 90);
+
+      expect(result.path).toMatch(/^M 100 115/);
+      // Zero radius degrades to sharp corners — path must not contain negative coordinates
+      // that would result from a negative radius being passed to buildTwoCornerPath.
+      expect(result.path).not.toMatch(/[LMQ] -\d/);
+    });
   });
 });
 
 describe("calculateDragPath", () => {
   it("should use elbow path for large horizontal distances", () => {
-    const path = calculateDragPath(100, 100, 200, 150);
+    const path = calculateDragPath({ x: 100, y: 100 }, { x: 200, y: 150 });
 
     expect(path).toContain("Q "); // Has curves
     expect(path).toContain("M 100 100"); // Starts at correct point
   });
 
   it("should use simple line for short distances", () => {
-    const path = calculateDragPath(100, 100, 110, 110);
+    const path = calculateDragPath({ x: 100, y: 100 }, { x: 110, y: 110 });
 
     expect(path).toBe("M 100 100 L 110 110");
   });
 
   it("should use simple line for backwards drag", () => {
-    const path = calculateDragPath(200, 100, 100, 150);
+    const path = calculateDragPath({ x: 200, y: 100 }, { x: 100, y: 150 });
 
     expect(path).toBe("M 200 100 L 100 150");
   });
 
   it("should switch to elbow at the same threshold as calculateArrowPath default", () => {
     // minGapForElbow = HORIZONTAL_SEGMENT*2 + BASE_CORNER_RADIUS*2 = 30 + 16 = 46
-    const elbowPath = calculateDragPath(100, 100, 146, 150); // gap = 46 → elbow
-    const linePath = calculateDragPath(100, 100, 145, 150);  // gap = 45 → straight line
+    const elbowPath = calculateDragPath({ x: 100, y: 100 }, { x: 146, y: 150 }); // gap = 46 → elbow
+    const linePath = calculateDragPath({ x: 100, y: 100 }, { x: 145, y: 150 });  // gap = 45 → straight line
 
     expect(elbowPath).toContain("Q ");
     expect(linePath).not.toContain("Q ");
@@ -212,7 +228,7 @@ describe("calculateDragPath", () => {
 
   it("should produce straight line when gap is large but Y is the same", () => {
     // gap = 200 ≥ minGapForElbow → calculateElbowPath → isSameRow → straight line
-    const path = calculateDragPath(0, 100, 200, 100);
+    const path = calculateDragPath({ x: 0, y: 100 }, { x: 200, y: 100 });
 
     expect(path).toBe("M 0 100 L 200 100");
   });
