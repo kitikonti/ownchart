@@ -75,6 +75,42 @@ export function normalizeSelection(
     : { startDate: dateB, endDate: dateA };
 }
 
+/** Extend the current selection to include a new click date without shrinking it. */
+function computeExtendedSelection(
+  clickDate: string,
+  current: HeaderDateSelection
+): HeaderDateSelection {
+  return {
+    startDate: clickDate < current.startDate ? clickDate : current.startDate,
+    endDate: clickDate > current.endDate ? clickDate : current.endDate,
+  };
+}
+
+/** Build the "Zoom to Selection" context menu item list for the header. */
+function buildZoomContextMenuItems(
+  selectionRef: { current: HeaderDateSelection | null },
+  zoomToDateRange: (startDate: string, endDate: string) => void,
+  clearSelection: () => void
+): ContextMenuItem[] {
+  return [
+    {
+      id: "zoomToSelection",
+      label: "Zoom to Selection",
+      icon: createElement(MagnifyingGlassPlus, {
+        size: CONTEXT_MENU.iconSize,
+        weight: CONTEXT_MENU.iconWeight,
+      }),
+      onClick: (): void => {
+        const sel = selectionRef.current;
+        if (sel) {
+          zoomToDateRange(sel.startDate, sel.endDate);
+        }
+        clearSelection();
+      },
+    },
+  ];
+}
+
 // ---------------------------------------------------------------------------
 // Private sub-hooks (not exported — used only by useHeaderDateSelection)
 // ---------------------------------------------------------------------------
@@ -195,15 +231,7 @@ function useHeaderDrag(
       // Shift+click: extend existing selection (read via ref — no dep on selection state)
       const currentSelection = selectionRef.current;
       if (e.shiftKey && currentSelection) {
-        const extendedStart =
-          clickDate < currentSelection.startDate
-            ? clickDate
-            : currentSelection.startDate;
-        const extendedEnd =
-          clickDate > currentSelection.endDate
-            ? clickDate
-            : currentSelection.endDate;
-        setSelection({ startDate: extendedStart, endDate: extendedEnd });
+        setSelection(computeExtendedSelection(clickDate, currentSelection));
         e.preventDefault();
         return;
       }
@@ -281,29 +309,19 @@ function useHeaderContextMenu(
   }, [setContextMenu]);
 
   // --- Context menu items ---
-  // onClick reads selection via selectionRef so this memo only recomputes when
-  // the context menu opens/closes, not on every drag-frame selection change.
-  const contextMenuItems = useMemo((): ContextMenuItem[] => {
-    if (!contextMenu) return [];
-
-    return [
-      {
-        id: "zoomToSelection",
-        label: "Zoom to Selection",
-        icon: createElement(MagnifyingGlassPlus, {
-          size: CONTEXT_MENU.iconSize,
-          weight: CONTEXT_MENU.iconWeight,
-        }),
-        onClick: (): void => {
-          const sel = selectionRef.current;
-          if (sel) {
-            zoomToDateRange(sel.startDate, sel.endDate);
-          }
-          clearSelection();
-        },
-      },
-    ];
-  }, [contextMenu, zoomToDateRange, clearSelection]); // selectionRef is always current — no selection dep
+  // Recomputes only when the menu opens/closes; onClick reads selection via
+  // selectionRef so there is no dependency on drag-frame selection changes.
+  const contextMenuItems = useMemo(
+    (): ContextMenuItem[] =>
+      contextMenu
+        ? buildZoomContextMenuItems(
+            selectionRef,
+            zoomToDateRange,
+            clearSelection
+          )
+        : [],
+    [contextMenu, selectionRef, zoomToDateRange, clearSelection]
+  );
 
   return { contextMenuItems, closeContextMenu, onContextMenu };
 }

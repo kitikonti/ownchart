@@ -155,6 +155,24 @@ describe("useDependencyDrag", () => {
     expect(result.current.dragState.isDragging).toBe(false);
   });
 
+  it("cancels an in-progress drag when enabled changes to false", () => {
+    let enabled = true;
+    const { result, rerender } = renderHook(() =>
+      useDependencyDrag({ tasks: DEFAULT_TASKS, enabled })
+    );
+
+    act(() => {
+      result.current.startDrag(TASK_A.id, "end", makeMouseEvent());
+    });
+    expect(result.current.dragState.isDragging).toBe(true);
+
+    enabled = false;
+    rerender();
+
+    expect(result.current.dragState.isDragging).toBe(false);
+    expect(result.current.dragState.fromTaskId).toBeNull();
+  });
+
   it("captures initial mouse position from event", () => {
     const { result } = renderHook(() =>
       useDependencyDrag({ tasks: DEFAULT_TASKS })

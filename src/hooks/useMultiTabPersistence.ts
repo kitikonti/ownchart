@@ -124,7 +124,6 @@ function buildSavePayload(): Omit<TabChartData, "tabId" | "lastActive"> {
       showDependencies: chartState.showDependencies,
       showProgress: chartState.showProgress,
       taskLabelPosition: chartState.taskLabelPosition,
-      workingDaysMode: chartState.workingDaysMode,
       workingDaysConfig: chartState.workingDaysConfig,
       holidayRegion: chartState.holidayRegion,
       projectTitle: chartState.projectTitle,
