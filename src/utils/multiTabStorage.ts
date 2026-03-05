@@ -139,7 +139,12 @@ function parseV1StorageData(raw: string): V1StorageData | null {
   }
 }
 
-/** Default ChartState values used when v1 data is missing chart settings. */
+/**
+ * Minimal required fields for a fresh chart state.
+ * Optional ChartState fields are intentionally omitted — they default to
+ * undefined (feature-disabled) and are populated by individual features
+ * when first configured by the user.
+ */
 const DEFAULT_CHART_STATE: ChartState = {
   zoom: 1,
   panOffset: { x: 0, y: 0 },
@@ -171,6 +176,27 @@ function buildV2FromV1(oldData: V1StorageData, tabId: string): MultiTabStorage {
       },
     },
   };
+}
+
+// ─── Validation ───────────────────────────────────────────────────────────────
+
+/**
+ * Type guard for a single TabChartData entry read from localStorage.
+ * Guards against corrupt or manually-edited storage reaching callers.
+ */
+function isValidTabEntry(entry: unknown): entry is TabChartData {
+  if (!entry || typeof entry !== "object" || Array.isArray(entry)) return false;
+  const e = entry as Record<string, unknown>;
+  return (
+    typeof e.tabId === "string" &&
+    typeof e.lastActive === "number" &&
+    Array.isArray(e.tasks) &&
+    Array.isArray(e.dependencies) &&
+    e.chartState !== null &&
+    typeof e.chartState === "object" &&
+    e.fileState !== null &&
+    typeof e.fileState === "object"
+  );
 }
 
 // ─── Core Storage Operations ──────────────────────────────────────────────────
@@ -231,7 +257,17 @@ export function loadMultiTabStorage(): MultiTabStorage {
       return { version: STORAGE_VERSION, charts: {} };
     }
 
-    const data = JSON.parse(stored) as MultiTabStorage;
+    // Parse as unknown first — never trust data from user-controlled storage
+    const parsed: unknown = JSON.parse(stored);
+
+    if (!parsed || typeof parsed !== "object" || Array.isArray(parsed)) {
+      console.warn(
+        "Multi-tab storage: root value is not a plain object — resetting"
+      );
+      return { version: STORAGE_VERSION, charts: {} };
+    }
+
+    const data = parsed as Record<string, unknown>;
 
     // Version check
     if (data.version !== STORAGE_VERSION) {
@@ -252,7 +288,22 @@ export function loadMultiTabStorage(): MultiTabStorage {
       return { version: STORAGE_VERSION, charts: {} };
     }
 
-    return data;
+    // Per-entry validation — discard malformed entries rather than crashing
+    // callers that rely on fields like lastActive, tasks, chartState, etc.
+    const rawCharts = data.charts as Record<string, unknown>;
+    const validatedCharts: Record<string, TabChartData> = {};
+
+    for (const [tabId, entry] of Object.entries(rawCharts)) {
+      if (isValidTabEntry(entry)) {
+        validatedCharts[tabId] = entry;
+      } else {
+        console.warn(
+          `Multi-tab storage: discarding malformed entry for tab "${tabId}"`
+        );
+      }
+    }
+
+    return { version: STORAGE_VERSION, charts: validatedCharts };
   } catch (error) {
     console.error("Failed to load multi-tab storage:", error);
     return { version: STORAGE_VERSION, charts: {} };
@@ -280,7 +331,7 @@ export function saveMultiTabStorage(storage: MultiTabStorage): boolean {
  */
 export function loadTabChart(tabId: string): TabChartData | null {
   const storage = loadMultiTabStorage();
-  return storage.charts[tabId] || null;
+  return storage.charts[tabId] ?? null;
 }
 
 /**
@@ -311,6 +362,8 @@ export function updateTabActivity(tabId: string): void {
   if (storage.charts[tabId]) {
     storage.charts[tabId].lastActive = Date.now();
     saveMultiTabStorage(storage);
+  } else if (import.meta.env.DEV) {
+    console.warn(`updateTabActivity: tab "${tabId}" not found in storage`);
   }
 }
 

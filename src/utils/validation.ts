@@ -8,6 +8,14 @@ import type { Task } from "../types/chart.types";
 /** Maximum allowed length for a task name. */
 export const MAX_TASK_NAME_LENGTH = 200;
 
+/** Maximum allowed task duration in days (~20 years). Prevents absurdly large values. */
+export const MAX_DURATION_DAYS = 7300;
+
+/** Returns true if the string is empty or contains only whitespace. */
+function isBlank(value: string): boolean {
+  return value.trim().length === 0;
+}
+
 /**
  * Result of a validation operation.
  */
@@ -24,7 +32,7 @@ export interface ValidationResult {
  * @returns Validation result with error message if invalid
  */
 export function validateTaskName(name: string): ValidationResult {
-  if (!name || name.trim().length === 0) {
+  if (isBlank(name)) {
     return {
       valid: false,
       error: "Task name is required",
@@ -49,7 +57,7 @@ export function validateTaskName(name: string): ValidationResult {
  * @returns Validation result with error message if invalid
  */
 export function validateDateString(date: string): ValidationResult {
-  if (!date || date.trim().length === 0) {
+  if (isBlank(date)) {
     return {
       valid: false,
       error: "Date is required",
@@ -98,7 +106,7 @@ export function validateDateString(date: string): ValidationResult {
  * @returns Validation result with error message if invalid
  */
 export function validateColor(color: string): ValidationResult {
-  if (!color || color.trim().length === 0) {
+  if (isBlank(color)) {
     return {
       valid: false,
       error: "Color is required",
@@ -145,6 +153,13 @@ export function validateDuration(duration: number): ValidationResult {
     };
   }
 
+  if (duration > MAX_DURATION_DAYS) {
+    return {
+      valid: false,
+      error: `Duration must be ${MAX_DURATION_DAYS} days or less`,
+    };
+  }
+
   return { valid: true };
 }
 
@@ -176,8 +191,10 @@ export function validateProgress(progress: number): ValidationResult {
 /**
  * Validates that endDate is not before startDate.
  * Both dates must already be valid ISO strings (pre-validated with validateDateString).
+ *
+ * Exported for direct unit testing.
  */
-function validateDateRange(
+export function validateDateRange(
   startDate: string,
   endDate: string
 ): ValidationResult {
@@ -191,66 +208,10 @@ function validateDateRange(
 }
 
 /**
- * Validates a complete task object.
- * Rules:
- * - Valid name (1-200 chars)
- * - Valid start and end dates (ISO format)
- * - endDate >= startDate
- * - Valid progress (0-100)
- * - Valid color (hex code)
- * - Type-specific validation (summary, milestone, task)
- *
- * @param task - Partial task object to validate
- * @returns Validation result with error message if invalid
+ * Validates type-specific constraints for a task.
+ * Extracted to keep validateTask under the 50-line guideline.
  */
-export function validateTask(task: Partial<Task>): ValidationResult {
-  // Validate name
-  if (task.name !== undefined) {
-    const nameResult = validateTaskName(task.name);
-    if (!nameResult.valid) {
-      return nameResult;
-    }
-  }
-
-  // Validate start date
-  if (task.startDate !== undefined) {
-    const startDateResult = validateDateString(task.startDate);
-    if (!startDateResult.valid) {
-      return { valid: false, error: `Start date: ${startDateResult.error}` };
-    }
-  }
-
-  // Validate end date
-  if (task.endDate !== undefined) {
-    const endDateResult = validateDateString(task.endDate);
-    if (!endDateResult.valid) {
-      return { valid: false, error: `End date: ${endDateResult.error}` };
-    }
-  }
-
-  // Validate endDate >= startDate
-  if (task.startDate && task.endDate) {
-    const rangeResult = validateDateRange(task.startDate, task.endDate);
-    if (!rangeResult.valid) return rangeResult;
-  }
-
-  // Validate progress
-  if (task.progress !== undefined) {
-    const progressResult = validateProgress(task.progress);
-    if (!progressResult.valid) {
-      return progressResult;
-    }
-  }
-
-  // Validate color
-  if (task.color !== undefined) {
-    const colorResult = validateColor(task.color);
-    if (!colorResult.valid) {
-      return colorResult;
-    }
-  }
-
-  // Type-specific validation
+function validateTaskTypeConstraints(task: Partial<Task>): ValidationResult {
   if (task.type === "milestone") {
     // Milestones must have duration 0
     if (task.duration !== undefined && task.duration !== 0) {
@@ -260,6 +221,61 @@ export function validateTask(task: Partial<Task>): ValidationResult {
       };
     }
   }
-
   return { valid: true };
+}
+
+/**
+ * Validates a partial task object.
+ *
+ * **Important**: Only fields that are present (not `undefined`) are validated.
+ * This makes the function suitable for partial updates (e.g. editing a single
+ * field) as well as full task objects. Callers creating new tasks must ensure
+ * all required fields are included — `validateTask({})` intentionally returns
+ * `{ valid: true }`.
+ *
+ * Rules:
+ * - Valid name (1-200 chars)
+ * - Valid start and end dates (ISO format)
+ * - endDate >= startDate
+ * - Valid progress (0-100, fractional values allowed)
+ * - Valid color (hex code)
+ * - Type-specific validation (summary, milestone, task)
+ *
+ * @param task - Partial task object to validate
+ * @returns Validation result with error message if invalid
+ */
+export function validateTask(task: Partial<Task>): ValidationResult {
+  if (task.name !== undefined) {
+    const result = validateTaskName(task.name);
+    if (!result.valid) return result;
+  }
+
+  if (task.startDate !== undefined) {
+    const result = validateDateString(task.startDate);
+    if (!result.valid)
+      return { valid: false, error: `Start date: ${result.error}` };
+  }
+
+  if (task.endDate !== undefined) {
+    const result = validateDateString(task.endDate);
+    if (!result.valid)
+      return { valid: false, error: `End date: ${result.error}` };
+  }
+
+  if (task.startDate && task.endDate) {
+    const result = validateDateRange(task.startDate, task.endDate);
+    if (!result.valid) return result;
+  }
+
+  if (task.progress !== undefined) {
+    const result = validateProgress(task.progress);
+    if (!result.valid) return result;
+  }
+
+  if (task.color !== undefined) {
+    const result = validateColor(task.color);
+    if (!result.valid) return result;
+  }
+
+  return validateTaskTypeConstraints(task);
 }
