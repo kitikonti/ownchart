@@ -6,6 +6,8 @@ import {
   validateDuration,
   validateProgress,
   validateTask,
+  validateDateRange,
+  MAX_DURATION_DAYS,
 } from '../../../src/utils/validation';
 
 describe('validateTaskName', () => {
@@ -105,6 +107,12 @@ describe('validateProgress', () => {
     expect(validateProgress(100)).toEqual({ valid: true });
   });
 
+  it('should accept fractional values', () => {
+    expect(validateProgress(50.5)).toEqual({ valid: true });
+    expect(validateProgress(0.1)).toEqual({ valid: true });
+    expect(validateProgress(99.9)).toEqual({ valid: true });
+  });
+
   it('should reject negative values', () => {
     const result = validateProgress(-1);
     expect(result.valid).toBe(false);
@@ -153,6 +161,38 @@ describe('validateDuration', () => {
     const result = validateDuration(1.5);
     expect(result.valid).toBe(false);
     expect(result.error).toBe('Duration must be a whole number of days');
+  });
+
+  it('should accept the maximum allowed duration', () => {
+    expect(validateDuration(MAX_DURATION_DAYS)).toEqual({ valid: true });
+  });
+
+  it('should reject duration exceeding MAX_DURATION_DAYS', () => {
+    const result = validateDuration(MAX_DURATION_DAYS + 1);
+    expect(result.valid).toBe(false);
+    expect(result.error).toBe(`Duration must be ${MAX_DURATION_DAYS} days or less`);
+  });
+});
+
+describe('validateDateRange', () => {
+  it('should accept end date after start date', () => {
+    expect(validateDateRange('2025-01-01', '2025-12-31')).toEqual({ valid: true });
+  });
+
+  it('should accept equal start and end dates', () => {
+    expect(validateDateRange('2025-06-15', '2025-06-15')).toEqual({ valid: true });
+  });
+
+  it('should reject end date before start date', () => {
+    const result = validateDateRange('2025-12-31', '2025-01-01');
+    expect(result.valid).toBe(false);
+    expect(result.error).toBe('End date must be greater than or equal to start date');
+  });
+
+  it('should handle year boundaries correctly', () => {
+    expect(validateDateRange('2024-12-31', '2025-01-01')).toEqual({ valid: true });
+    const result = validateDateRange('2025-01-01', '2024-12-31');
+    expect(result.valid).toBe(false);
   });
 });
 

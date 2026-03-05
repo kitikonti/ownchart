@@ -11,6 +11,10 @@ export const MAX_TASK_NAME_LENGTH = 200;
 /** Maximum allowed task duration in days (~20 years). Prevents absurdly large values. */
 export const MAX_DURATION_DAYS = 7300;
 
+// Pre-compiled regex patterns (hoisted to avoid per-call recompilation)
+const ISO_DATE_REGEX = /^\d{4}-\d{2}-\d{2}$/;
+const HEX_COLOR_REGEX = /^#([A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$/;
+
 /** Returns true if the string is empty or contains only whitespace. */
 function isBlank(value: string): boolean {
   return value.trim().length === 0;
@@ -65,8 +69,7 @@ export function validateDateString(date: string): ValidationResult {
   }
 
   // Check ISO format (YYYY-MM-DD)
-  const isoDateRegex = /^\d{4}-\d{2}-\d{2}$/;
-  if (!isoDateRegex.test(date)) {
+  if (!ISO_DATE_REGEX.test(date)) {
     return {
       valid: false,
       error: "Date must be in ISO format (YYYY-MM-DD)",
@@ -82,12 +85,14 @@ export function validateDateString(date: string): ValidationResult {
     };
   }
 
-  // Verify the date parts match (to catch invalid dates like 2025-02-30)
+  // Verify the date parts match to catch invalid dates like 2025-02-30.
+  // Use UTC methods: ISO date-only strings are parsed as UTC midnight, so
+  // local-timezone getFullYear()/getDate() give wrong values in UTC−12/UTC+14.
   const [year, month, day] = date.split("-").map(Number);
   if (
-    parsedDate.getFullYear() !== year ||
-    parsedDate.getMonth() !== month - 1 ||
-    parsedDate.getDate() !== day
+    parsedDate.getUTCFullYear() !== year ||
+    parsedDate.getUTCMonth() !== month - 1 ||
+    parsedDate.getUTCDate() !== day
   ) {
     return {
       valid: false,
@@ -113,8 +118,7 @@ export function validateColor(color: string): ValidationResult {
     };
   }
 
-  const hexColorRegex = /^#([A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$/;
-  if (!hexColorRegex.test(color)) {
+  if (!HEX_COLOR_REGEX.test(color)) {
     return {
       valid: false,
       error: "Color must be a valid hex code (#RRGGBB or #RGB)",

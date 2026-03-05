@@ -91,6 +91,13 @@ describe("multiTabStorage", () => {
       const second = getTabId();
       expect(first).toBe(second);
     });
+
+    it("should regenerate tab ID if stored value has an invalid format", () => {
+      sessionStorage.setItem(TAB_ID_KEY, "corrupted-id-without-tab-prefix");
+      const tabId = getTabId();
+      expect(tabId).toMatch(/^tab-/);
+      expect(tabId).not.toBe("corrupted-id-without-tab-prefix");
+    });
   });
 
   describe("loadMultiTabStorage / saveMultiTabStorage", () => {
@@ -153,6 +160,57 @@ describe("multiTabStorage", () => {
       );
       const loaded = loadMultiTabStorage();
       expect(loaded).toEqual({ version: 2, charts: {} });
+    });
+
+    it("should discard entries with non-numeric zoom in chartState", () => {
+      const malformed = {
+        tabId: "tab-1",
+        lastActive: Date.now(),
+        tasks: [],
+        dependencies: [],
+        chartState: { zoom: "not-a-number", panOffset: {} },
+        fileState: { isDirty: false },
+      };
+      localStorage.setItem(
+        STORAGE_KEY,
+        JSON.stringify({ version: 2, charts: { "tab-1": malformed } })
+      );
+      const loaded = loadMultiTabStorage();
+      expect(loaded.charts["tab-1"]).toBeUndefined();
+    });
+
+    it("should discard entries with non-boolean isDirty in fileState", () => {
+      const malformed = {
+        tabId: "tab-1",
+        lastActive: Date.now(),
+        tasks: [],
+        dependencies: [],
+        chartState: { zoom: 1, panOffset: {} },
+        fileState: { isDirty: "yes" },
+      };
+      localStorage.setItem(
+        STORAGE_KEY,
+        JSON.stringify({ version: 2, charts: { "tab-1": malformed } })
+      );
+      const loaded = loadMultiTabStorage();
+      expect(loaded.charts["tab-1"]).toBeUndefined();
+    });
+
+    it("should discard entries with empty tabId", () => {
+      const malformed = {
+        tabId: "",
+        lastActive: Date.now(),
+        tasks: [],
+        dependencies: [],
+        chartState: { zoom: 1, panOffset: {} },
+        fileState: { isDirty: false },
+      };
+      localStorage.setItem(
+        STORAGE_KEY,
+        JSON.stringify({ version: 2, charts: { "": malformed } })
+      );
+      const loaded = loadMultiTabStorage();
+      expect(loaded.charts[""]).toBeUndefined();
     });
   });
 
@@ -240,6 +298,23 @@ describe("multiTabStorage", () => {
     it("should return empty storage when neither v1 nor v2 data exists", () => {
       const storage = loadMultiTabStorage();
       expect(storage).toEqual({ version: 2, charts: {} });
+    });
+
+    it("should preserve v1 data when the migration save fails", () => {
+      const v1Data = { tasks: [{ id: "task-1", name: "Task 1" }] };
+      localStorage.setItem(LEGACY_KEY, JSON.stringify(v1Data));
+
+      // Make the first setItem call (saveMultiTabStorage) throw
+      vi.spyOn(Storage.prototype, "setItem").mockImplementationOnce(() => {
+        throw new Error("QuotaExceededError");
+      });
+
+      const storage = loadMultiTabStorage();
+
+      // Returns empty rather than crashing
+      expect(storage).toEqual({ version: 2, charts: {} });
+      // v1 data must NOT have been deleted
+      expect(localStorage.getItem(LEGACY_KEY)).not.toBeNull();
     });
   });
 

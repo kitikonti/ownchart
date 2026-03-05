@@ -103,21 +103,24 @@ interface V1StorageData {
  * Generate a unique tab ID
  */
 export function generateTabId(): string {
+  // Skip "0." prefix of toString(36) and take 7 random alphanumeric chars
   return `tab-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`;
 }
 
 /**
- * Get or create tab ID for this browser tab
- * Tab ID is stored in sessionStorage (persists across page refreshes in same tab)
+ * Get or create tab ID for this browser tab.
+ * Tab ID is stored in sessionStorage (persists across page refreshes in same tab).
+ * Validates the stored ID format before returning to guard against corruption.
  */
 export function getTabId(): string {
-  let tabId = sessionStorage.getItem(TAB_ID_KEY);
+  const stored = sessionStorage.getItem(TAB_ID_KEY);
 
-  if (!tabId) {
-    tabId = generateTabId();
-    sessionStorage.setItem(TAB_ID_KEY, tabId);
+  if (stored && stored.startsWith("tab-")) {
+    return stored;
   }
 
+  const tabId = generateTabId();
+  sessionStorage.setItem(TAB_ID_KEY, tabId);
   return tabId;
 }
 
@@ -183,20 +186,50 @@ function buildV2FromV1(oldData: V1StorageData, tabId: string): MultiTabStorage {
 /**
  * Type guard for a single TabChartData entry read from localStorage.
  * Guards against corrupt or manually-edited storage reaching callers.
+ * Validates both the outer shape and the required inner fields of
+ * chartState/fileState so callers can safely access them without further checks.
  */
 function isValidTabEntry(entry: unknown): entry is TabChartData {
   if (!entry || typeof entry !== "object" || Array.isArray(entry)) return false;
   const e = entry as Record<string, unknown>;
-  return (
-    typeof e.tabId === "string" &&
-    typeof e.lastActive === "number" &&
-    Array.isArray(e.tasks) &&
-    Array.isArray(e.dependencies) &&
-    e.chartState !== null &&
-    typeof e.chartState === "object" &&
-    e.fileState !== null &&
-    typeof e.fileState === "object"
-  );
+
+  if (
+    typeof e.tabId !== "string" ||
+    e.tabId.length === 0 ||
+    typeof e.lastActive !== "number" ||
+    !Array.isArray(e.tasks) ||
+    !Array.isArray(e.dependencies)
+  ) {
+    return false;
+  }
+
+  // Validate required inner fields of chartState
+  if (
+    !e.chartState ||
+    typeof e.chartState !== "object" ||
+    Array.isArray(e.chartState)
+  ) {
+    return false;
+  }
+  const cs = e.chartState as Record<string, unknown>;
+  if (
+    typeof cs.zoom !== "number" ||
+    !cs.panOffset ||
+    typeof cs.panOffset !== "object"
+  ) {
+    return false;
+  }
+
+  // Validate required inner fields of fileState
+  if (
+    !e.fileState ||
+    typeof e.fileState !== "object" ||
+    Array.isArray(e.fileState)
+  ) {
+    return false;
+  }
+  const fs = e.fileState as Record<string, unknown>;
+  return typeof fs.isDirty === "boolean";
 }
 
 // ─── Core Storage Operations ──────────────────────────────────────────────────
@@ -224,7 +257,14 @@ function migrateFromV1(): MultiTabStorage {
       console.info("✓ Migrating from v1 storage to v2 multi-tab storage");
     }
 
-    saveMultiTabStorage(newStorage);
+    // Guard deletion on a successful save: if the write fails (e.g. quota
+    // exceeded) we must NOT delete the v1 data — it's the only copy.
+    const saved = saveMultiTabStorage(newStorage);
+    if (!saved) {
+      console.error("Migration save failed — v1 data preserved in place");
+      return { version: STORAGE_VERSION, charts: {} };
+    }
+
     localStorage.removeItem(LEGACY_V1_STORAGE_KEY);
     sessionStorage.setItem(TAB_ID_KEY, migratedTabId);
 
@@ -242,6 +282,28 @@ function migrateFromV1(): MultiTabStorage {
 }
 
 /**
+ * Validate each entry in the raw charts map, discarding malformed ones.
+ * Extracted to keep loadMultiTabStorage under the 50-line guideline.
+ */
+function parseValidatedCharts(
+  rawCharts: Record<string, unknown>
+): Record<string, TabChartData> {
+  const validated: Record<string, TabChartData> = {};
+
+  for (const [tabId, entry] of Object.entries(rawCharts)) {
+    if (isValidTabEntry(entry)) {
+      validated[tabId] = entry;
+    } else {
+      console.warn(
+        `Multi-tab storage: discarding malformed entry for tab "${tabId}"`
+      );
+    }
+  }
+
+  return validated;
+}
+
+/**
  * Load entire multi-tab storage from localStorage
  */
 export function loadMultiTabStorage(): MultiTabStorage {
@@ -253,7 +315,6 @@ export function loadMultiTabStorage(): MultiTabStorage {
       if (localStorage.getItem(LEGACY_V1_STORAGE_KEY)) {
         return migrateFromV1();
       }
-
       return { version: STORAGE_VERSION, charts: {} };
     }
 
@@ -269,7 +330,6 @@ export function loadMultiTabStorage(): MultiTabStorage {
 
     const data = parsed as Record<string, unknown>;
 
-    // Version check
     if (data.version !== STORAGE_VERSION) {
       console.warn("Storage version mismatch, clearing old data");
       return { version: STORAGE_VERSION, charts: {} };
@@ -288,21 +348,9 @@ export function loadMultiTabStorage(): MultiTabStorage {
       return { version: STORAGE_VERSION, charts: {} };
     }
 
-    // Per-entry validation — discard malformed entries rather than crashing
-    // callers that rely on fields like lastActive, tasks, chartState, etc.
-    const rawCharts = data.charts as Record<string, unknown>;
-    const validatedCharts: Record<string, TabChartData> = {};
-
-    for (const [tabId, entry] of Object.entries(rawCharts)) {
-      if (isValidTabEntry(entry)) {
-        validatedCharts[tabId] = entry;
-      } else {
-        console.warn(
-          `Multi-tab storage: discarding malformed entry for tab "${tabId}"`
-        );
-      }
-    }
-
+    const validatedCharts = parseValidatedCharts(
+      data.charts as Record<string, unknown>
+    );
     return { version: STORAGE_VERSION, charts: validatedCharts };
   } catch (error) {
     console.error("Failed to load multi-tab storage:", error);
@@ -359,11 +407,18 @@ export function saveTabChart(
 export function updateTabActivity(tabId: string): void {
   const storage = loadMultiTabStorage();
 
-  if (storage.charts[tabId]) {
-    storage.charts[tabId].lastActive = Date.now();
-    saveMultiTabStorage(storage);
-  } else if (import.meta.env.DEV) {
-    console.warn(`updateTabActivity: tab "${tabId}" not found in storage`);
+  if (!storage.charts[tabId]) {
+    if (import.meta.env.DEV) {
+      console.warn(`updateTabActivity: tab "${tabId}" not found in storage`);
+    }
+    return;
+  }
+
+  storage.charts[tabId].lastActive = Date.now();
+  if (!saveMultiTabStorage(storage)) {
+    console.error(
+      `updateTabActivity: failed to persist activity for tab "${tabId}"`
+    );
   }
 }
 
@@ -373,7 +428,11 @@ export function updateTabActivity(tabId: string): void {
 export function removeTab(tabId: string): void {
   const storage = loadMultiTabStorage();
   delete storage.charts[tabId];
-  saveMultiTabStorage(storage);
+  if (!saveMultiTabStorage(storage)) {
+    console.error(
+      `removeTab: failed to persist storage after removing tab "${tabId}"`
+    );
+  }
 }
 
 /**
@@ -393,8 +452,11 @@ export function cleanupInactiveTabs(): void {
   });
 
   if (cleaned) {
-    saveMultiTabStorage(storage);
-    if (import.meta.env.DEV) {
+    if (!saveMultiTabStorage(storage)) {
+      console.error(
+        "cleanupInactiveTabs: failed to persist storage after cleanup"
+      );
+    } else if (import.meta.env.DEV) {
       console.info("✓ Cleaned up inactive tabs");
     }
   }
