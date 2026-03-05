@@ -17,13 +17,16 @@ import {
 import { MagnifyingGlassPlus } from "@phosphor-icons/react";
 import type { TimelineScale } from "../utils/timelineUtils";
 import { dateToPixel, pixelToDate } from "../utils/timelineUtils";
+import { useChartStore } from "../store/slices/chartSlice";
+import type {
+  ContextMenuPosition,
+  ContextMenuItem,
+} from "../components/ContextMenu/ContextMenu";
+import { CONTEXT_MENU } from "../styles/design-tokens";
+import { clientToSvgCoords } from "../utils/svgCoords";
 
 /** Minimum pixel width for a selection to be rendered (ignores single-click without drag) */
 const MIN_SELECTION_WIDTH_PX = 2;
-import { useChartStore } from "../store/slices/chartSlice";
-import type { ContextMenuPosition } from "../components/ContextMenu/ContextMenu";
-import type { ContextMenuItem } from "../components/ContextMenu/ContextMenu";
-import { CONTEXT_MENU } from "../styles/design-tokens";
 
 export interface HeaderDateSelection {
   startDate: string; // ISO date string
@@ -54,16 +57,11 @@ interface UseHeaderDateSelectionResult {
   onContextMenu: (e: React.MouseEvent<SVGSVGElement>) => void;
 }
 
-/** Convert a client X position to an SVG-local X.
- *  getBoundingClientRect() already reflects scroll position of the parent container,
- *  so no need to add scrollLeft (that would double-count). */
-function clientXToSvgX(clientX: number, svgEl: SVGSVGElement): number {
-  const rect = svgEl.getBoundingClientRect();
-  return clientX - rect.left;
-}
-
 /** Ensure startDate <= endDate */
-function normalizeSelection(dateA: string, dateB: string): HeaderDateSelection {
+export function normalizeSelection(
+  dateA: string,
+  dateB: string
+): HeaderDateSelection {
   return dateA <= dateB
     ? { startDate: dateA, endDate: dateB }
     : { startDate: dateB, endDate: dateA };
@@ -81,6 +79,11 @@ export function useHeaderDateSelection({
 
   const isDraggingRef = useRef(false);
   const dragStartDateRef = useRef<string | null>(null);
+
+  // Keep latest scale in a ref so mouse-event handlers remain stable across
+  // scale changes (prevents orphaned event listeners when scale updates during drag).
+  const scaleRef = useRef(scale);
+  scaleRef.current = scale;
 
   const zoomToDateRange = useChartStore((state) => state.zoomToDateRange);
 
@@ -131,33 +134,32 @@ export function useHeaderDateSelection({
   }, [selection, headerSvgRef]);
 
   // --- Mouse move during drag ---
-  const handleMouseMove = useCallback(
-    (e: MouseEvent) => {
-      if (!isDraggingRef.current || !scale) return;
-      const svg = headerSvgRef.current;
-      if (!svg) return;
-
-      const svgX = clientXToSvgX(e.clientX, svg);
-      const currentDate = pixelToDate(svgX, scale);
-      const startDate = dragStartDateRef.current;
-      if (!startDate) return;
-
-      setSelection(normalizeSelection(startDate, currentDate));
-    },
-    [scale, headerSvgRef]
-  );
+  // Deps are empty because all values are read through stable refs:
+  // scaleRef (updated every render), headerSvgRef (stable RefObject),
+  // isDraggingRef and dragStartDateRef (internal stable refs).
+  // This ensures the same function reference is registered/unregistered
+  // even if scale changes mid-drag, preventing orphaned listeners.
+  const handleMouseMove = useCallback((e: MouseEvent): void => {
+    if (!isDraggingRef.current || !scaleRef.current) return;
+    const svg = headerSvgRef.current;
+    if (!svg) return;
+    const { x: svgX } = clientToSvgCoords(e.clientX, e.clientY, svg);
+    const currentDate = pixelToDate(svgX, scaleRef.current);
+    const startDate = dragStartDateRef.current;
+    if (!startDate) return;
+    setSelection(normalizeSelection(startDate, currentDate));
+  }, [headerSvgRef]); // headerSvgRef is a stable RefObject; scale read via scaleRef
 
   // --- Mouse up: end drag ---
-  const handleMouseUp = useCallback(() => {
+  const handleMouseUp = useCallback((): void => {
     if (!isDraggingRef.current) return;
     isDraggingRef.current = false;
     setIsDragging(false);
-
     document.removeEventListener("mousemove", handleMouseMove);
     document.removeEventListener("mouseup", handleMouseUp);
-  }, [handleMouseMove]);
+  }, [handleMouseMove]); // handleMouseMove is stable, so this is stable too
 
-  // Cleanup on unmount
+  // Cleanup on unmount — both handlers are stable so this runs exactly once.
   useEffect(() => {
     return () => {
       document.removeEventListener("mousemove", handleMouseMove);
@@ -167,22 +169,21 @@ export function useHeaderDateSelection({
 
   // --- Mouse down on header SVG ---
   const onMouseDown = useCallback(
-    (e: React.MouseEvent<SVGSVGElement>) => {
+    (e: React.MouseEvent<SVGSVGElement>): void => {
       // Only left click
-      if (e.button !== 0 || !scale) return;
+      if (e.button !== 0 || !scaleRef.current) return;
 
       const svg = headerSvgRef.current;
       if (!svg) return;
 
-      const svgX = clientXToSvgX(e.clientX, svg);
-      const clickDate = pixelToDate(svgX, scale);
+      const { x: svgX } = clientToSvgCoords(e.clientX, e.clientY, svg);
+      const clickDate = pixelToDate(svgX, scaleRef.current);
 
       // Close any open context menu
       setContextMenu(null);
 
       // Shift+click: extend existing selection
       if (e.shiftKey && selection) {
-        // Extend to whichever side the click is on
         const extendedStart =
           clickDate < selection.startDate ? clickDate : selection.startDate;
         const extendedEnd =
@@ -203,21 +204,21 @@ export function useHeaderDateSelection({
 
       e.preventDefault();
     },
-    [scale, selection, headerSvgRef, handleMouseMove, handleMouseUp]
+    [selection, handleMouseMove, handleMouseUp, headerSvgRef]
   );
 
   // --- Right-click on header SVG ---
   const onContextMenu = useCallback(
-    (e: React.MouseEvent<SVGSVGElement>) => {
+    (e: React.MouseEvent<SVGSVGElement>): void => {
       e.preventDefault();
 
-      if (!selection || !scale) return;
+      if (!selection || !scaleRef.current) return;
 
       const svg = headerSvgRef.current;
       if (!svg) return;
 
-      const svgX = clientXToSvgX(e.clientX, svg);
-      const clickDate = pixelToDate(svgX, scale);
+      const { x: svgX } = clientToSvgCoords(e.clientX, e.clientY, svg);
+      const clickDate = pixelToDate(svgX, scaleRef.current);
 
       // Only show context menu if right-click is within the selection
       if (clickDate >= selection.startDate && clickDate <= selection.endDate) {
@@ -228,7 +229,7 @@ export function useHeaderDateSelection({
         setContextMenu(null);
       }
     },
-    [selection, scale, headerSvgRef]
+    [selection, headerSvgRef]
   );
 
   // --- Close context menu ---

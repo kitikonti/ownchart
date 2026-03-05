@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
-import { renderHook } from "@testing-library/react";
+import { renderHook, act } from "@testing-library/react";
 import { useMultiTabPersistence } from "../../../src/hooks/useMultiTabPersistence";
 import { useChartStore } from "../../../src/store/slices/chartSlice";
 import { useUIStore } from "../../../src/store/slices/uiSlice";
@@ -143,6 +143,52 @@ describe("useMultiTabPersistence", () => {
       expect(state.panOffset).toEqual({ x: 100, y: 50 });
       expect(state.showWeekends).toBe(false);
     });
+
+    it("should mark hydrated even when no saved state exists", () => {
+      renderHook(() => useMultiTabPersistence());
+      expect(useUIStore.getState().isHydrated).toBe(true);
+    });
+
+    it("should mark hydrated even when restore throws an error", () => {
+      seedTabStorage("tab-error");
+
+      // Force setZoom to throw so we can verify finally-block runs
+      vi.spyOn(useChartStore.getState(), "setZoom").mockImplementation(() => {
+        throw new Error("simulated restore failure");
+      });
+
+      // Should not throw — error is caught, hydrated is still set
+      expect(() => renderHook(() => useMultiTabPersistence())).not.toThrow();
+      expect(useUIStore.getState().isHydrated).toBe(true);
+    });
+
+    it("should not block saves when restore throws an error", async () => {
+      const tabId = "tab-error-save";
+      sessionStorage.setItem(TAB_ID_KEY, tabId);
+      seedTabStorage(tabId);
+
+      vi.spyOn(useChartStore.getState(), "setZoom").mockImplementationOnce(
+        () => {
+          throw new Error("simulated restore failure");
+        }
+      );
+
+      renderHook(() => useMultiTabPersistence());
+
+      // Change state — should be saved (isRestoringRef was reset in finally)
+      act(() => {
+        useChartStore.getState().setShowWeekends(false);
+      });
+
+      await vi.waitFor(() => {
+        const stored = localStorage.getItem(STORAGE_KEY);
+        if (!stored) throw new Error("not saved yet");
+        const parsed = JSON.parse(stored);
+        const chart = parsed.charts[tabId];
+        if (!chart) throw new Error("tab not saved yet");
+        expect(chart.chartState.showWeekends).toBe(false);
+      });
+    });
   });
 
   describe("save on state change", () => {
@@ -170,6 +216,45 @@ describe("useMultiTabPersistence", () => {
         const saved = stored.charts[tabId];
         expect(saved.chartState.colorModeState.mode).toBe("hierarchy");
       });
+    });
+
+    it("should debounce rapid saves into a single write", async () => {
+      const tabId = "tab-debounce-test";
+      sessionStorage.setItem(TAB_ID_KEY, tabId);
+
+      const saveTabChartSpy = vi.spyOn(
+        await import("../../../src/utils/multiTabStorage"),
+        "saveTabChart"
+      );
+
+      renderHook(() => useMultiTabPersistence());
+
+      // Wait for initial save
+      await vi.waitFor(() => expect(saveTabChartSpy).toHaveBeenCalled());
+      const callsAfterInit = saveTabChartSpy.mock.calls.length;
+
+      // Trigger multiple rapid state changes
+      act(() => {
+        useChartStore.getState().setShowWeekends(false);
+        useChartStore.getState().setShowWeekends(true);
+        useChartStore.getState().setShowWeekends(false);
+        useChartStore.getState().setShowTodayMarker(false);
+      });
+
+      // Wait for debounce to flush
+      await vi.waitFor(
+        () => {
+          expect(saveTabChartSpy.mock.calls.length).toBeGreaterThan(
+            callsAfterInit
+          );
+        },
+        { timeout: 500 }
+      );
+
+      // The 4 rapid changes should have been coalesced into fewer saves
+      const callsFromChanges =
+        saveTabChartSpy.mock.calls.length - callsAfterInit;
+      expect(callsFromChanges).toBeLessThan(4);
     });
   });
 

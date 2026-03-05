@@ -19,9 +19,135 @@ import {
   updateTabActivity,
   cleanupInactiveTabs,
   type ChartState,
-  type TableState,
-  type FileState,
+  type TabChartData,
 } from "../utils/multiTabStorage";
+
+const SAVE_DEBOUNCE_MS = 200;
+const ACTIVITY_UPDATE_INTERVAL_MS = 60_000;
+const INITIAL_SAVE_DELAY_MS = 100;
+
+// ---------------------------------------------------------------------------
+// Pure helper functions (module-level, no closure over hook state)
+// ---------------------------------------------------------------------------
+
+function restoreTableState(tableState: TabChartData["tableState"]): void {
+  if (!tableState) return;
+  const taskStore = useTaskStore.getState();
+  if (tableState.columnWidths) {
+    Object.entries(tableState.columnWidths).forEach(([columnId, width]) => {
+      taskStore.setColumnWidth(columnId, width);
+    });
+  }
+  if (tableState.taskTableWidth !== null) {
+    taskStore.setTaskTableWidth(tableState.taskTableWidth);
+  }
+}
+
+function restoreChartState(chartState: ChartState): void {
+  const store = useChartStore.getState();
+
+  // Always-present fields
+  store.setZoom(chartState.zoom);
+  store.setPanOffset(chartState.panOffset);
+  store.setShowWeekends(chartState.showWeekends);
+  store.setShowTodayMarker(chartState.showTodayMarker);
+
+  // Optional fields added in Sprint 1.5.9 — may be absent in older saves
+  if (chartState.showHolidays !== undefined)
+    store.setShowHolidays(chartState.showHolidays);
+  if (chartState.showDependencies !== undefined)
+    store.setShowDependencies(chartState.showDependencies);
+  if (chartState.showProgress !== undefined)
+    store.setShowProgress(chartState.showProgress);
+  if (chartState.taskLabelPosition !== undefined)
+    store.setTaskLabelPosition(chartState.taskLabelPosition);
+  if (chartState.workingDaysConfig !== undefined)
+    // setWorkingDaysConfig auto-derives workingDaysMode
+    store.setWorkingDaysConfig(chartState.workingDaysConfig);
+  if (chartState.holidayRegion !== undefined)
+    store.setHolidayRegion(chartState.holidayRegion);
+  if (chartState.projectTitle !== undefined)
+    store.setProjectTitle(chartState.projectTitle);
+  if (chartState.projectAuthor !== undefined)
+    store.setProjectAuthor(chartState.projectAuthor);
+  if (chartState.hiddenColumns !== undefined)
+    store.setHiddenColumns(chartState.hiddenColumns);
+  if (chartState.isTaskTableCollapsed !== undefined)
+    store.setTaskTableCollapsed(chartState.isTaskTableCollapsed);
+  if (chartState.hiddenTaskIds !== undefined)
+    store.setHiddenTaskIds(chartState.hiddenTaskIds);
+  if (chartState.colorModeState !== undefined)
+    store.setColorModeState(chartState.colorModeState);
+}
+
+function restoreFileState(fileState: TabChartData["fileState"]): void {
+  const { setFileName, setChartId, setLastSaved, markDirty, markClean } =
+    useFileStore.getState();
+  if (fileState.fileName) setFileName(fileState.fileName);
+  if (fileState.chartId) setChartId(fileState.chartId);
+  if (fileState.lastSaved) setLastSaved(new Date(fileState.lastSaved));
+  if (fileState.isDirty) markDirty();
+  else markClean();
+}
+
+/** Restore all stores from a saved chart. Throws on unexpected errors. */
+function restoreStateFromChart(savedChart: TabChartData): void {
+  if (savedChart.tasks.length > 0) {
+    useTaskStore.getState().setTasks(savedChart.tasks);
+  }
+  if (savedChart.dependencies && savedChart.dependencies.length > 0) {
+    useDependencyStore.getState().setDependencies(savedChart.dependencies);
+  }
+  restoreTableState(savedChart.tableState);
+  restoreChartState(savedChart.chartState);
+  restoreFileState(savedChart.fileState);
+}
+
+/** Build the full save payload from current store state. */
+function buildSavePayload(): Omit<TabChartData, "tabId" | "lastActive"> {
+  const taskState = useTaskStore.getState();
+  const dependencyState = useDependencyStore.getState();
+  const chartState = useChartStore.getState();
+  const fileState = useFileStore.getState();
+
+  return {
+    tasks: taskState.tasks,
+    dependencies: dependencyState.dependencies,
+    chartState: {
+      zoom: chartState.zoom,
+      panOffset: chartState.panOffset,
+      showWeekends: chartState.showWeekends,
+      showTodayMarker: chartState.showTodayMarker,
+      showHolidays: chartState.showHolidays,
+      showDependencies: chartState.showDependencies,
+      showProgress: chartState.showProgress,
+      taskLabelPosition: chartState.taskLabelPosition,
+      workingDaysMode: chartState.workingDaysMode,
+      workingDaysConfig: chartState.workingDaysConfig,
+      holidayRegion: chartState.holidayRegion,
+      projectTitle: chartState.projectTitle,
+      projectAuthor: chartState.projectAuthor,
+      hiddenColumns: chartState.hiddenColumns,
+      isTaskTableCollapsed: chartState.isTaskTableCollapsed,
+      hiddenTaskIds: chartState.hiddenTaskIds,
+      colorModeState: chartState.colorModeState,
+    },
+    tableState: {
+      columnWidths: taskState.columnWidths,
+      taskTableWidth: taskState.taskTableWidth,
+    },
+    fileState: {
+      fileName: fileState.fileName,
+      chartId: fileState.chartId,
+      lastSaved: fileState.lastSaved?.toISOString() ?? null,
+      isDirty: fileState.isDirty,
+    },
+  };
+}
+
+// ---------------------------------------------------------------------------
+// Hook
+// ---------------------------------------------------------------------------
 
 /**
  * Hook to manage multi-tab localStorage persistence
@@ -29,6 +155,7 @@ import {
 export function useMultiTabPersistence(): void {
   const tabIdRef = useRef<string>(getTabId());
   const isRestoringRef = useRef(false);
+  const saveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // Cleanup inactive tabs on mount
   useEffect(() => {
@@ -41,166 +168,38 @@ export function useMultiTabPersistence(): void {
     const savedChart = loadTabChart(tabId);
 
     if (!savedChart) {
-      console.info(`✓ New tab ${tabId} - starting fresh`);
       // Mark as hydrated even when no saved state exists
       useUIStore.getState().setHydrated();
       return;
     }
 
     isRestoringRef.current = true;
-
-    // Restore tasks
-    if (savedChart.tasks.length > 0) {
-      useTaskStore.getState().setTasks(savedChart.tasks);
+    try {
+      restoreStateFromChart(savedChart);
+    } catch (error) {
+      console.error("[useMultiTabPersistence] Failed to restore state:", error);
+    } finally {
+      isRestoringRef.current = false;
+      // Mark as hydrated after restoration attempt (success or partial failure)
+      useUIStore.getState().setHydrated();
     }
-
-    // Restore dependencies
-    if (savedChart.dependencies && savedChart.dependencies.length > 0) {
-      useDependencyStore.getState().setDependencies(savedChart.dependencies);
-    }
-
-    // Restore table state (column widths)
-    if (savedChart.tableState) {
-      const taskStore = useTaskStore.getState();
-      if (savedChart.tableState.columnWidths) {
-        Object.entries(savedChart.tableState.columnWidths).forEach(
-          ([columnId, width]) => {
-            taskStore.setColumnWidth(columnId, width);
-          }
-        );
-      }
-      if (savedChart.tableState.taskTableWidth !== null) {
-        taskStore.setTaskTableWidth(savedChart.tableState.taskTableWidth);
-      }
-    }
-
-    // Restore chart state (including all view settings)
-    const chartStore = useChartStore.getState();
-    chartStore.setZoom(savedChart.chartState.zoom);
-    chartStore.setPanOffset(savedChart.chartState.panOffset);
-    chartStore.setShowWeekends(savedChart.chartState.showWeekends);
-    chartStore.setShowTodayMarker(savedChart.chartState.showTodayMarker);
-
-    // Restore extended view settings (Sprint 1.5.9)
-    if (savedChart.chartState.showHolidays !== undefined) {
-      chartStore.setShowHolidays(savedChart.chartState.showHolidays);
-    }
-    if (savedChart.chartState.showDependencies !== undefined) {
-      chartStore.setShowDependencies(savedChart.chartState.showDependencies);
-    }
-    if (savedChart.chartState.showProgress !== undefined) {
-      chartStore.setShowProgress(savedChart.chartState.showProgress);
-    }
-    if (savedChart.chartState.taskLabelPosition !== undefined) {
-      chartStore.setTaskLabelPosition(savedChart.chartState.taskLabelPosition);
-    }
-    if (savedChart.chartState.workingDaysConfig !== undefined) {
-      // setWorkingDaysConfig auto-derives workingDaysMode
-      chartStore.setWorkingDaysConfig(savedChart.chartState.workingDaysConfig);
-    }
-    if (savedChart.chartState.holidayRegion !== undefined) {
-      chartStore.setHolidayRegion(savedChart.chartState.holidayRegion);
-    }
-    if (savedChart.chartState.projectTitle !== undefined) {
-      chartStore.setProjectTitle(savedChart.chartState.projectTitle);
-    }
-    if (savedChart.chartState.projectAuthor !== undefined) {
-      chartStore.setProjectAuthor(savedChart.chartState.projectAuthor);
-    }
-    if (savedChart.chartState.hiddenColumns !== undefined) {
-      chartStore.setHiddenColumns(savedChart.chartState.hiddenColumns);
-    }
-    if (savedChart.chartState.isTaskTableCollapsed !== undefined) {
-      chartStore.setTaskTableCollapsed(
-        savedChart.chartState.isTaskTableCollapsed
-      );
-    }
-    if (savedChart.chartState.hiddenTaskIds !== undefined) {
-      chartStore.setHiddenTaskIds(savedChart.chartState.hiddenTaskIds);
-    }
-    if (savedChart.chartState.colorModeState !== undefined) {
-      chartStore.setColorModeState(savedChart.chartState.colorModeState);
-    }
-
-    // Restore file state
-    const { setFileName, setChartId, setLastSaved, markDirty, markClean } =
-      useFileStore.getState();
-    if (savedChart.fileState.fileName) {
-      setFileName(savedChart.fileState.fileName);
-    }
-    if (savedChart.fileState.chartId) {
-      setChartId(savedChart.fileState.chartId);
-    }
-    if (savedChart.fileState.lastSaved) {
-      setLastSaved(new Date(savedChart.fileState.lastSaved));
-    }
-    // Restore dirty state
-    if (savedChart.fileState.isDirty) {
-      markDirty();
-    } else {
-      markClean();
-    }
-
-    console.info(`✓ Tab ${tabId} - state restored from localStorage`);
-
-    isRestoringRef.current = false;
-
-    // Mark as hydrated after restoration is complete
-    useUIStore.getState().setHydrated();
   }, []);
 
-  // Save state to localStorage on changes
+  // Save state to localStorage (debounced to avoid a write per keystroke/mousemove)
   useEffect(() => {
     const tabId = tabIdRef.current;
 
     const saveCurrentState = (): void => {
       // Don't save during initial restoration to avoid loops
-      // BUT allow saves after restoration is complete
-      if (isRestoringRef.current) {
-        return;
+      if (isRestoringRef.current) return;
+
+      if (saveTimerRef.current !== null) {
+        clearTimeout(saveTimerRef.current);
       }
-
-      const taskState = useTaskStore.getState();
-      const dependencyState = useDependencyStore.getState();
-      const chartState = useChartStore.getState();
-      const fileState = useFileStore.getState();
-
-      const chartData = {
-        tasks: taskState.tasks,
-        dependencies: dependencyState.dependencies,
-        chartState: {
-          zoom: chartState.zoom,
-          panOffset: chartState.panOffset,
-          showWeekends: chartState.showWeekends,
-          showTodayMarker: chartState.showTodayMarker,
-          // Extended view settings (Sprint 1.5.9)
-          showHolidays: chartState.showHolidays,
-          showDependencies: chartState.showDependencies,
-          showProgress: chartState.showProgress,
-          taskLabelPosition: chartState.taskLabelPosition,
-          workingDaysMode: chartState.workingDaysMode,
-          workingDaysConfig: chartState.workingDaysConfig,
-          holidayRegion: chartState.holidayRegion,
-          projectTitle: chartState.projectTitle,
-          projectAuthor: chartState.projectAuthor,
-          hiddenColumns: chartState.hiddenColumns,
-          isTaskTableCollapsed: chartState.isTaskTableCollapsed,
-          hiddenTaskIds: chartState.hiddenTaskIds,
-          colorModeState: chartState.colorModeState,
-        } as ChartState,
-        tableState: {
-          columnWidths: taskState.columnWidths,
-          taskTableWidth: taskState.taskTableWidth,
-        } as TableState,
-        fileState: {
-          fileName: fileState.fileName,
-          chartId: fileState.chartId,
-          lastSaved: fileState.lastSaved?.toISOString() ?? null,
-          isDirty: fileState.isDirty,
-        } as FileState,
-      };
-
-      saveTabChart(tabId, chartData);
+      saveTimerRef.current = setTimeout(() => {
+        saveTimerRef.current = null;
+        saveTabChart(tabId, buildSavePayload());
+      }, SAVE_DEBOUNCE_MS);
     };
 
     // Subscribe to all store changes
@@ -209,15 +208,19 @@ export function useMultiTabPersistence(): void {
     const unsubscribeChart = useChartStore.subscribe(saveCurrentState);
     const unsubscribeFile = useFileStore.subscribe(saveCurrentState);
 
-    // Initial save after mount (after restoration is complete)
-    // This ensures the state is saved even if no changes happen
+    // Initial save after mount (after restoration is complete).
+    // Fires directly (no debounce) so the tab is registered immediately.
     const initialSaveTimer = setTimeout(() => {
       if (!isRestoringRef.current) {
-        saveCurrentState();
+        saveTabChart(tabId, buildSavePayload());
       }
-    }, 100);
+    }, INITIAL_SAVE_DELAY_MS);
 
     return () => {
+      if (saveTimerRef.current !== null) {
+        clearTimeout(saveTimerRef.current);
+        saveTimerRef.current = null;
+      }
       clearTimeout(initialSaveTimer);
       unsubscribeTasks();
       unsubscribeDeps();
@@ -232,7 +235,7 @@ export function useMultiTabPersistence(): void {
 
     const interval = setInterval(() => {
       updateTabActivity(tabId);
-    }, 60000); // Update every minute
+    }, ACTIVITY_UPDATE_INTERVAL_MS);
 
     return () => clearInterval(interval);
   }, []);
@@ -244,13 +247,8 @@ export function useMultiTabPersistence(): void {
       if (e.key !== "ownchart-multi-tab-state") return;
       if (e.newValue === null) return;
 
-      // Check if another tab updated our data
-      // (This could happen if user opens same file in multiple tabs - future feature)
-      console.info("✓ Storage event detected from another tab");
-
-      // For now, we don't sync across tabs automatically
-      // Each tab is independent
-      // Future: Could add conflict detection if same file is opened in multiple tabs
+      // Each tab is independent — no auto-sync across tabs.
+      // Future: Could add conflict detection if same file is opened in multiple tabs.
     };
 
     window.addEventListener("storage", handleStorageEvent);
