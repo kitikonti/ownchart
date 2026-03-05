@@ -83,25 +83,29 @@ describe("calculateArrowPath", () => {
     });
   });
 
-  describe("S-curve path (small/negative gap)", () => {
-    it("should use S-curve when horizontal gap < 46px", () => {
-      const fromPos = pos(0, 100, 100, 30); // ends at x=100
-      const toPos = pos(120, 200, 100, 30); // starts at x=120 (gap = 20px)
+  describe("routed path (small/negative gap)", () => {
+    it("should use 4-corner S-curve when horizontal gap is very small (< 14px at default rowHeight)", () => {
+      // gap=10px < compact-elbow threshold (HORIZONTAL_SEGMENT*2 − cornerRadius*2 = 14px at default)
+      // → calculateRoutedPath → firstVerticalX-r(107) > secondVerticalX+r(103) → S-curve
+      const fromPos = pos(0, 100, 100, 30); // ends at x=100, centerY=115
+      const toPos = pos(110, 200, 100, 30); // starts at x=110, centerY=215 (gap=10px)
 
       const result = calculateArrowPath(fromPos, toPos);
 
-      // Should have multiple Q commands for 4-corner S-curve
       const qCount = (result.path.match(/Q /g) || []).length;
-      expect(qCount).toBeGreaterThanOrEqual(2);
+      expect(qCount).toBe(4); // full 4-corner S-curve
     });
 
     it("should use S-curve for overlapping tasks (negative gap)", () => {
-      const fromPos = pos(0, 100, 150, 30); // ends at x=150
-      const toPos = pos(100, 200, 100, 30); // starts at x=100 (overlap!)
+      // ends at x=150, starts at x=100 → gap=-50 (overlap)
+      const fromPos = pos(0, 100, 150, 30); // ends at x=150, centerY=115
+      const toPos = pos(100, 200, 100, 30); // starts at x=100 (overlap!), centerY=215
 
       const result = calculateArrowPath(fromPos, toPos);
 
-      expect(result.path).toBeDefined();
+      // S-curve routes around the overlapping tasks
+      const qCount = (result.path.match(/Q /g) || []).length;
+      expect(qCount).toBe(4);
       expect(result.arrowHead.x).toBe(100);
     });
 
@@ -133,6 +137,21 @@ describe("calculateArrowPath", () => {
       expect(qCount).toBe(2); // simple elbow: 2 corners, not 4
       expect(result.path).toContain("M 100 115");
       expect(result.path).toContain("L 120 215");
+    });
+
+    it("should extend routing above tasks when going upward and vertically too close for clean curves", () => {
+      // Upward S-curve (dir=-1) with tight vertical space — middleY must extend ABOVE both tasks
+      // gap=-40 (overlap) → S-curve; from.y=215, to.y=205 → verticalDistance=10 < minSpaceForCurves=32
+      // offset = max(32/2, 44*0.4) = 17.6 → middleY = min(215,205) − 17.6 = 187.4
+      const fromPos = pos(0, 200, 100, 30); // ends at x=100, centerY=215
+      const toPos = pos(60, 190, 100, 30);  // starts at x=60 (overlap!), centerY=205 (above)
+
+      const result = calculateArrowPath(fromPos, toPos);
+
+      const qCount = (result.path.match(/Q /g) || []).length;
+      expect(qCount).toBe(4); // 4-corner S-curve
+      expect(result.path).toContain("187.4"); // middleY extends above both tasks
+      expect(result.arrowHead.x).toBe(60);
     });
 
     it("should extend routing beyond tasks when vertically too close for clean curves", () => {
@@ -221,6 +240,40 @@ describe("calculateArrowPath", () => {
       expect(result.path).not.toMatch(/[LMQ] -\d/);
     });
   });
+
+  describe("routing zone boundaries (default rowHeight=44, cornerRadius=8)", () => {
+    // Three routing zones; all thresholds = HORIZONTAL_SEGMENT*2 ± cornerRadius*2 = 30 ± 16:
+    //   standard elbow:  gap ≥ 46  (minGapForElbow = HORIZONTAL_SEGMENT*2 + cornerRadius*2)
+    //   simple elbow:    14 ≤ gap < 46
+    //   S-curve:         gap < 14  (= HORIZONTAL_SEGMENT*2 − cornerRadius*2)
+    const fromPos = pos(0, 100, 100, 30); // right edge x=100, centerY=115
+
+    it("uses standard elbow at the minGapForElbow lower boundary (gap=46)", () => {
+      const result = calculateArrowPath(fromPos, pos(146, 200, 100, 30));
+      const qCount = (result.path.match(/Q /g) || []).length;
+      expect(qCount).toBe(2); // 2-corner standard elbow
+    });
+
+    it("uses compact simple elbow just below standard-elbow zone (gap=45)", () => {
+      const result = calculateArrowPath(fromPos, pos(145, 200, 100, 30));
+      const qCount = (result.path.match(/Q /g) || []).length;
+      expect(qCount).toBe(2); // 2-corner compact elbow (adaptive radius)
+    });
+
+    it("uses simple elbow at the upper S-curve boundary (gap=14)", () => {
+      // firstVerticalX-r = 107 ≤ secondVerticalX+r = 107 → equal → simple elbow
+      const result = calculateArrowPath(fromPos, pos(114, 200, 100, 30));
+      const qCount = (result.path.match(/Q /g) || []).length;
+      expect(qCount).toBe(2);
+    });
+
+    it("uses S-curve just below the simple-elbow zone (gap=13)", () => {
+      // firstVerticalX-r = 107 > secondVerticalX+r = 106 → S-curve
+      const result = calculateArrowPath(fromPos, pos(113, 200, 100, 30));
+      const qCount = (result.path.match(/Q /g) || []).length;
+      expect(qCount).toBe(4);
+    });
+  });
 });
 
 describe("calculateDragPath", () => {
@@ -286,5 +339,11 @@ describe("getArrowheadPoints", () => {
     const points = getArrowheadPoints(4);
 
     expect(points).toBe("-4,-2 0,0 -4,2");
+  });
+
+  it("should return a degenerate polygon string for size=0 without throwing", () => {
+    // size=0 → three coincident points, invisible in SVG — must not crash
+    expect(() => getArrowheadPoints(0)).not.toThrow();
+    expect(getArrowheadPoints(0)).toBe("0,-0 0,0 0,0");
   });
 });
