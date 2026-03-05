@@ -130,6 +130,11 @@ describe('validateProgress', () => {
     expect(result.valid).toBe(false);
     expect(result.error).toBe('Progress must be a number');
   });
+
+  it('should reject Infinity', () => {
+    expect(validateProgress(Infinity).valid).toBe(false);
+    expect(validateProgress(-Infinity).valid).toBe(false);
+  });
 });
 
 describe('validateDuration', () => {
@@ -155,6 +160,11 @@ describe('validateDuration', () => {
     const result = validateDuration(NaN);
     expect(result.valid).toBe(false);
     expect(result.error).toBe('Duration must be a number');
+  });
+
+  it('should reject Infinity', () => {
+    expect(validateDuration(Infinity).valid).toBe(false);
+    expect(validateDuration(-Infinity).valid).toBe(false);
   });
 
   it('should reject fractional values', () => {

@@ -212,6 +212,108 @@ describe("multiTabStorage", () => {
       const loaded = loadMultiTabStorage();
       expect(loaded.charts[""]).toBeUndefined();
     });
+
+    it("should discard entries where tasks contains null items", () => {
+      const malformed = {
+        tabId: "tab-1",
+        lastActive: Date.now(),
+        tasks: [null],
+        dependencies: [],
+        chartState: { zoom: 1, panOffset: { x: 0, y: 0 } },
+        fileState: { isDirty: false },
+      };
+      localStorage.setItem(
+        STORAGE_KEY,
+        JSON.stringify({ version: 2, charts: { "tab-1": malformed } })
+      );
+      const loaded = loadMultiTabStorage();
+      expect(loaded.charts["tab-1"]).toBeUndefined();
+    });
+
+    it("should discard entries where tasks contains primitive items", () => {
+      const malformed = {
+        tabId: "tab-1",
+        lastActive: Date.now(),
+        tasks: ["not-an-object"],
+        dependencies: [],
+        chartState: { zoom: 1, panOffset: { x: 0, y: 0 } },
+        fileState: { isDirty: false },
+      };
+      localStorage.setItem(
+        STORAGE_KEY,
+        JSON.stringify({ version: 2, charts: { "tab-1": malformed } })
+      );
+      const loaded = loadMultiTabStorage();
+      expect(loaded.charts["tab-1"]).toBeUndefined();
+    });
+
+    it("should discard entries where dependencies contains null items", () => {
+      const malformed = {
+        tabId: "tab-1",
+        lastActive: Date.now(),
+        tasks: [],
+        dependencies: [null],
+        chartState: { zoom: 1, panOffset: { x: 0, y: 0 } },
+        fileState: { isDirty: false },
+      };
+      localStorage.setItem(
+        STORAGE_KEY,
+        JSON.stringify({ version: 2, charts: { "tab-1": malformed } })
+      );
+      const loaded = loadMultiTabStorage();
+      expect(loaded.charts["tab-1"]).toBeUndefined();
+    });
+
+    it("should discard entries where panOffset is an array", () => {
+      const malformed = {
+        tabId: "tab-1",
+        lastActive: Date.now(),
+        tasks: [],
+        dependencies: [],
+        chartState: { zoom: 1, panOffset: [0, 0] },
+        fileState: { isDirty: false },
+      };
+      localStorage.setItem(
+        STORAGE_KEY,
+        JSON.stringify({ version: 2, charts: { "tab-1": malformed } })
+      );
+      const loaded = loadMultiTabStorage();
+      expect(loaded.charts["tab-1"]).toBeUndefined();
+    });
+
+    it("should discard entries where panOffset has non-numeric coordinates", () => {
+      const malformed = {
+        tabId: "tab-1",
+        lastActive: Date.now(),
+        tasks: [],
+        dependencies: [],
+        chartState: { zoom: 1, panOffset: { x: "left", y: 0 } },
+        fileState: { isDirty: false },
+      };
+      localStorage.setItem(
+        STORAGE_KEY,
+        JSON.stringify({ version: 2, charts: { "tab-1": malformed } })
+      );
+      const loaded = loadMultiTabStorage();
+      expect(loaded.charts["tab-1"]).toBeUndefined();
+    });
+
+    it("should accept entries with valid tasks and dependencies arrays", () => {
+      const valid = {
+        tabId: "tab-1",
+        lastActive: Date.now(),
+        tasks: [{ id: "task-1", name: "Task 1" }],
+        dependencies: [{ id: "dep-1", fromId: "task-1", toId: "task-2" }],
+        chartState: { zoom: 1, panOffset: { x: 0, y: 0 } },
+        fileState: { isDirty: false },
+      };
+      localStorage.setItem(
+        STORAGE_KEY,
+        JSON.stringify({ version: 2, charts: { "tab-1": valid } })
+      );
+      const loaded = loadMultiTabStorage();
+      expect(loaded.charts["tab-1"]).toBeDefined();
+    });
   });
 
   describe("migrateFromV1 (via loadMultiTabStorage)", () => {

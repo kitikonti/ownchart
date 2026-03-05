@@ -136,7 +136,7 @@ export function validateColor(color: string): ValidationResult {
  * @returns Validation result with error message if invalid
  */
 export function validateDuration(duration: number): ValidationResult {
-  if (typeof duration !== "number" || isNaN(duration)) {
+  if (typeof duration !== "number" || !Number.isFinite(duration)) {
     return {
       valid: false,
       error: "Duration must be a number",
@@ -169,13 +169,13 @@ export function validateDuration(duration: number): ValidationResult {
 
 /**
  * Validates progress value.
- * Rules: Number between 0 and 100
+ * Rules: Finite number between 0 and 100 (fractional values permitted)
  *
  * @param progress - Progress value to validate
  * @returns Validation result with error message if invalid
  */
 export function validateProgress(progress: number): ValidationResult {
-  if (typeof progress !== "number" || isNaN(progress)) {
+  if (typeof progress !== "number" || !Number.isFinite(progress)) {
     return {
       valid: false,
       error: "Progress must be a number",
@@ -266,7 +266,7 @@ export function validateTask(task: Partial<Task>): ValidationResult {
       return { valid: false, error: `End date: ${result.error}` };
   }
 
-  if (task.startDate && task.endDate) {
+  if (task.startDate !== undefined && task.endDate !== undefined) {
     const result = validateDateRange(task.startDate, task.endDate);
     if (!result.valid) return result;
   }

@@ -30,6 +30,7 @@ const LEGACY_V1_STORAGE_KEY = "gantt-app-state";
 const STORAGE_VERSION = 2;
 const TAB_ID_KEY = "ownchart-tab-id";
 const TAB_TIMEOUT_MS = 1000 * 60 * 60 * 24; // 24 hours - cleanup inactive tabs
+const TAB_ID_SUFFIX_LENGTH = 7; // random alphanumeric chars appended to tab ID
 
 export interface ChartState {
   zoom: number;
@@ -103,8 +104,10 @@ interface V1StorageData {
  * Generate a unique tab ID
  */
 export function generateTabId(): string {
-  // Skip "0." prefix of toString(36) and take 7 random alphanumeric chars
-  return `tab-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`;
+  // Skip "0." prefix of toString(36) and take TAB_ID_SUFFIX_LENGTH random alphanumeric chars
+  return `tab-${Date.now()}-${Math.random()
+    .toString(36)
+    .substring(2, 2 + TAB_ID_SUFFIX_LENGTH)}`;
 }
 
 /**
@@ -184,10 +187,38 @@ function buildV2FromV1(oldData: V1StorageData, tabId: string): MultiTabStorage {
 // ─── Validation ───────────────────────────────────────────────────────────────
 
 /**
+ * Returns true if every item in the array is a non-null plain object.
+ * Guards against null, primitive, or nested-array items in tasks/dependencies.
+ */
+function arePlainObjects(arr: unknown[]): boolean {
+  return arr.every(
+    (item) => item !== null && typeof item === "object" && !Array.isArray(item)
+  );
+}
+
+/**
+ * Returns true if the chartState record has the required structural shape,
+ * including a valid panOffset with numeric x/y coordinates.
+ */
+function isValidChartStateShape(cs: Record<string, unknown>): boolean {
+  if (typeof cs.zoom !== "number") return false;
+  if (
+    !cs.panOffset ||
+    typeof cs.panOffset !== "object" ||
+    Array.isArray(cs.panOffset)
+  ) {
+    return false;
+  }
+  const po = cs.panOffset as Record<string, unknown>;
+  return typeof po.x === "number" && typeof po.y === "number";
+}
+
+/**
  * Type guard for a single TabChartData entry read from localStorage.
  * Guards against corrupt or manually-edited storage reaching callers.
- * Validates both the outer shape and the required inner fields of
- * chartState/fileState so callers can safely access them without further checks.
+ * Validates the outer shape, required inner fields of chartState/fileState,
+ * and that tasks/dependencies contain only plain objects — so callers can
+ * safely access all of these without further checks.
  */
 function isValidTabEntry(entry: unknown): entry is TabChartData {
   if (!entry || typeof entry !== "object" || Array.isArray(entry)) return false;
@@ -203,19 +234,20 @@ function isValidTabEntry(entry: unknown): entry is TabChartData {
     return false;
   }
 
+  // Validate array items are plain objects (guards against null/primitive items)
+  if (
+    !arePlainObjects(e.tasks as unknown[]) ||
+    !arePlainObjects(e.dependencies as unknown[])
+  ) {
+    return false;
+  }
+
   // Validate required inner fields of chartState
   if (
     !e.chartState ||
     typeof e.chartState !== "object" ||
-    Array.isArray(e.chartState)
-  ) {
-    return false;
-  }
-  const cs = e.chartState as Record<string, unknown>;
-  if (
-    typeof cs.zoom !== "number" ||
-    !cs.panOffset ||
-    typeof cs.panOffset !== "object"
+    Array.isArray(e.chartState) ||
+    !isValidChartStateShape(e.chartState as Record<string, unknown>)
   ) {
     return false;
   }
@@ -246,7 +278,9 @@ function migrateFromV1(): MultiTabStorage {
 
     const oldData = parseV1StorageData(oldStored);
     if (!oldData) {
-      console.warn("v1 storage data could not be parsed — starting fresh");
+      if (import.meta.env.DEV) {
+        console.warn("v1 storage data could not be parsed — starting fresh");
+      }
       return { version: STORAGE_VERSION, charts: {} };
     }
 
@@ -282,10 +316,10 @@ function migrateFromV1(): MultiTabStorage {
 }
 
 /**
- * Validate each entry in the raw charts map, discarding malformed ones.
+ * Filter the raw charts map to only valid entries, discarding malformed ones.
  * Extracted to keep loadMultiTabStorage under the 50-line guideline.
  */
-function parseValidatedCharts(
+function filterValidTabEntries(
   rawCharts: Record<string, unknown>
 ): Record<string, TabChartData> {
   const validated: Record<string, TabChartData> = {};
@@ -293,7 +327,7 @@ function parseValidatedCharts(
   for (const [tabId, entry] of Object.entries(rawCharts)) {
     if (isValidTabEntry(entry)) {
       validated[tabId] = entry;
-    } else {
+    } else if (import.meta.env.DEV) {
       console.warn(
         `Multi-tab storage: discarding malformed entry for tab "${tabId}"`
       );
@@ -322,16 +356,20 @@ export function loadMultiTabStorage(): MultiTabStorage {
     const parsed: unknown = JSON.parse(stored);
 
     if (!parsed || typeof parsed !== "object" || Array.isArray(parsed)) {
-      console.warn(
-        "Multi-tab storage: root value is not a plain object — resetting"
-      );
+      if (import.meta.env.DEV) {
+        console.warn(
+          "Multi-tab storage: root value is not a plain object — resetting"
+        );
+      }
       return { version: STORAGE_VERSION, charts: {} };
     }
 
     const data = parsed as Record<string, unknown>;
 
     if (data.version !== STORAGE_VERSION) {
-      console.warn("Storage version mismatch, clearing old data");
+      if (import.meta.env.DEV) {
+        console.warn("Storage version mismatch, clearing old data");
+      }
       return { version: STORAGE_VERSION, charts: {} };
     }
 
@@ -348,7 +386,7 @@ export function loadMultiTabStorage(): MultiTabStorage {
       return { version: STORAGE_VERSION, charts: {} };
     }
 
-    const validatedCharts = parseValidatedCharts(
+    const validatedCharts = filterValidTabEntries(
       data.charts as Record<string, unknown>
     );
     return { version: STORAGE_VERSION, charts: validatedCharts };
