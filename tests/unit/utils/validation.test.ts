@@ -148,6 +148,12 @@ describe('validateDuration', () => {
     expect(result.valid).toBe(false);
     expect(result.error).toBe('Duration must be a number');
   });
+
+  it('should reject fractional values', () => {
+    const result = validateDuration(1.5);
+    expect(result.valid).toBe(false);
+    expect(result.error).toBe('Duration must be a whole number of days');
+  });
 });
 
 describe('validateTask', () => {
@@ -230,5 +236,19 @@ describe('validateTask', () => {
       color: '#ff0000',
     };
     expect(validateTask(task)).toEqual({ valid: true });
+  });
+
+  it('should reject milestone with non-zero duration', () => {
+    const result = validateTask({ type: 'milestone', duration: 5 });
+    expect(result.valid).toBe(false);
+    expect(result.error).toBe('Milestone tasks must have duration 0');
+  });
+
+  it('should accept milestone with duration 0', () => {
+    expect(validateTask({ type: 'milestone', duration: 0 })).toEqual({ valid: true });
+  });
+
+  it('should accept milestone without duration field', () => {
+    expect(validateTask({ type: 'milestone' })).toEqual({ valid: true });
   });
 });

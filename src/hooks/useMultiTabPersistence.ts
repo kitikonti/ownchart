@@ -41,7 +41,9 @@ export function useMultiTabPersistence(): void {
     const savedChart = loadTabChart(tabId);
 
     if (!savedChart) {
-      console.info(`✓ New tab ${tabId} - starting fresh`);
+      if (import.meta.env.DEV) {
+        console.info(`✓ New tab ${tabId} - starting fresh`);
+      }
       // Mark as hydrated even when no saved state exists
       useUIStore.getState().setHydrated();
       return;
@@ -141,7 +143,9 @@ export function useMultiTabPersistence(): void {
       markClean();
     }
 
-    console.info(`✓ Tab ${tabId} - state restored from localStorage`);
+    if (import.meta.env.DEV) {
+      console.info(`✓ Tab ${tabId} - state restored from localStorage`);
+    }
 
     isRestoringRef.current = false;
 
@@ -200,7 +204,12 @@ export function useMultiTabPersistence(): void {
         } as FileState,
       };
 
-      saveTabChart(tabId, chartData);
+      const didSave = saveTabChart(tabId, chartData);
+      if (!didSave) {
+        console.warn(
+          `[OwnChart] Failed to persist tab ${tabId} state — localStorage may be full`
+        );
+      }
     };
 
     // Subscribe to all store changes
@@ -246,7 +255,9 @@ export function useMultiTabPersistence(): void {
 
       // Check if another tab updated our data
       // (This could happen if user opens same file in multiple tabs - future feature)
-      console.info("✓ Storage event detected from another tab");
+      if (import.meta.env.DEV) {
+        console.info("✓ Storage event detected from another tab");
+      }
 
       // For now, we don't sync across tabs automatically
       // Each tab is independent

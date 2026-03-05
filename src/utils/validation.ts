@@ -5,6 +5,9 @@
 
 import type { Task } from "../types/chart.types";
 
+/** Maximum allowed length for a task name. */
+export const MAX_TASK_NAME_LENGTH = 200;
+
 /**
  * Result of a validation operation.
  */
@@ -28,10 +31,10 @@ export function validateTaskName(name: string): ValidationResult {
     };
   }
 
-  if (name.length > 200) {
+  if (name.length > MAX_TASK_NAME_LENGTH) {
     return {
       valid: false,
-      error: "Task name must be 200 characters or less",
+      error: `Task name must be ${MAX_TASK_NAME_LENGTH} characters or less`,
     };
   }
 
@@ -128,6 +131,13 @@ export function validateDuration(duration: number): ValidationResult {
     };
   }
 
+  if (!Number.isInteger(duration)) {
+    return {
+      valid: false,
+      error: "Duration must be a whole number of days",
+    };
+  }
+
   if (duration < 1) {
     return {
       valid: false,
@@ -160,6 +170,23 @@ export function validateProgress(progress: number): ValidationResult {
     };
   }
 
+  return { valid: true };
+}
+
+/**
+ * Validates that endDate is not before startDate.
+ * Both dates must already be valid ISO strings (pre-validated with validateDateString).
+ */
+function validateDateRange(
+  startDate: string,
+  endDate: string
+): ValidationResult {
+  if (new Date(endDate) < new Date(startDate)) {
+    return {
+      valid: false,
+      error: "End date must be greater than or equal to start date",
+    };
+  }
   return { valid: true };
 }
 
@@ -203,14 +230,8 @@ export function validateTask(task: Partial<Task>): ValidationResult {
 
   // Validate endDate >= startDate
   if (task.startDate && task.endDate) {
-    const startDate = new Date(task.startDate);
-    const endDate = new Date(task.endDate);
-    if (endDate < startDate) {
-      return {
-        valid: false,
-        error: "End date must be greater than or equal to start date",
-      };
-    }
+    const rangeResult = validateDateRange(task.startDate, task.endDate);
+    if (!rangeResult.valid) return rangeResult;
   }
 
   // Validate progress
@@ -241,21 +262,4 @@ export function validateTask(task: Partial<Task>): ValidationResult {
   }
 
   return { valid: true };
-}
-
-/**
- * Check if a task type can have children.
- * Only milestones cannot be parents.
- *
- * Based on SVAR pattern:
- * - Tasks CAN have children (dates independent of children)
- * - Summaries CAN have children (dates calculated from children)
- * - Milestones CANNOT have children
- */
-export function canHaveChildren(task: Task): boolean {
-  // Milestones cannot be parents
-  if (task.type === "milestone") return false;
-
-  // Tasks and summaries can be parents
-  return true;
 }

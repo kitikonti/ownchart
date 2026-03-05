@@ -13,9 +13,9 @@ import {
   recalculateSummaryAncestors,
   normalizeTaskOrder,
   getMaxDescendantLevel,
+  canHaveChildren,
 } from "../../utils/hierarchy";
 import type { FlattenedTask } from "../../utils/hierarchy";
-import { canHaveChildren } from "../../utils/validation";
 import { useFileStore } from "./fileSlice";
 import { CommandType } from "../../types/command.types";
 import {

@@ -111,6 +111,11 @@ describe("multiTabStorage", () => {
       expect(loaded).toEqual(storage);
     });
 
+    it("should return true on successful save", () => {
+      const storage: MultiTabStorage = { version: 2, charts: {} };
+      expect(saveMultiTabStorage(storage)).toBe(true);
+    });
+
     it("should clear data on version mismatch", () => {
       localStorage.setItem(
         STORAGE_KEY,
@@ -124,6 +129,117 @@ describe("multiTabStorage", () => {
       localStorage.setItem(STORAGE_KEY, "not-valid-json{{{");
       const loaded = loadMultiTabStorage();
       expect(loaded).toEqual({ version: 2, charts: {} });
+    });
+
+    it("should reset when charts field is missing", () => {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify({ version: 2 }));
+      const loaded = loadMultiTabStorage();
+      expect(loaded).toEqual({ version: 2, charts: {} });
+    });
+
+    it("should reset when charts field is null", () => {
+      localStorage.setItem(
+        STORAGE_KEY,
+        JSON.stringify({ version: 2, charts: null })
+      );
+      const loaded = loadMultiTabStorage();
+      expect(loaded).toEqual({ version: 2, charts: {} });
+    });
+
+    it("should reset when charts field is an array", () => {
+      localStorage.setItem(
+        STORAGE_KEY,
+        JSON.stringify({ version: 2, charts: [] })
+      );
+      const loaded = loadMultiTabStorage();
+      expect(loaded).toEqual({ version: 2, charts: {} });
+    });
+  });
+
+  describe("migrateFromV1 (via loadMultiTabStorage)", () => {
+    const LEGACY_KEY = "gantt-app-state";
+
+    it("should migrate valid v1 data to v2 format", () => {
+      const v1Data = {
+        version: 1,
+        timestamp: Date.now(),
+        tasks: [{ id: "task-1", name: "Task 1" }],
+        chartState: {
+          zoom: 2,
+          panOffset: { x: 10, y: 0 },
+          showWeekends: false,
+          showTodayMarker: true,
+        },
+        fileState: {
+          fileName: "test.ownchart",
+          chartId: "chart-1",
+          lastSaved: "2025-01-01T00:00:00.000Z",
+        },
+      };
+      localStorage.setItem(LEGACY_KEY, JSON.stringify(v1Data));
+
+      const storage = loadMultiTabStorage();
+
+      expect(storage.version).toBe(2);
+      const tabs = Object.values(storage.charts);
+      expect(tabs).toHaveLength(1);
+
+      const tab = tabs[0];
+      expect(tab.tasks).toEqual(v1Data.tasks);
+      expect(tab.chartState.zoom).toBe(2);
+      expect(tab.chartState.showWeekends).toBe(false);
+      expect(tab.fileState.fileName).toBe("test.ownchart");
+      expect(tab.fileState.isDirty).toBe(false);
+      expect(tab.dependencies).toEqual([]);
+
+      // Old key must be removed after migration
+      expect(localStorage.getItem(LEGACY_KEY)).toBeNull();
+      // New key must be written
+      expect(localStorage.getItem(STORAGE_KEY)).not.toBeNull();
+      // sessionStorage must contain the migrated tab ID
+      expect(sessionStorage.getItem(TAB_ID_KEY)).toBe(tab.tabId);
+    });
+
+    it("should use defaults for missing tasks in v1 data", () => {
+      const v1Data = {
+        chartState: {
+          zoom: 1,
+          panOffset: { x: 0, y: 0 },
+          showWeekends: true,
+          showTodayMarker: true,
+        },
+      };
+      localStorage.setItem(LEGACY_KEY, JSON.stringify(v1Data));
+
+      const storage = loadMultiTabStorage();
+      const tab = Object.values(storage.charts)[0];
+
+      expect(tab.tasks).toEqual([]);
+      expect(tab.dependencies).toEqual([]);
+    });
+
+    it("should use default chart state when v1 chartState is missing", () => {
+      localStorage.setItem(LEGACY_KEY, JSON.stringify({ tasks: [] }));
+
+      const storage = loadMultiTabStorage();
+      const tab = Object.values(storage.charts)[0];
+
+      expect(tab.chartState.zoom).toBe(1);
+      expect(tab.chartState.showWeekends).toBe(true);
+      expect(tab.chartState.showTodayMarker).toBe(true);
+    });
+
+    it("should return empty storage when v1 data is corrupt JSON", () => {
+      localStorage.setItem(LEGACY_KEY, "not-valid{{{json");
+
+      const storage = loadMultiTabStorage();
+
+      expect(storage).toEqual({ version: 2, charts: {} });
+    });
+
+    it("should return empty storage when neither v1 nor v2 data exists", () => {
+      const storage = loadMultiTabStorage();
+      expect(storage).toEqual({ version: 2, charts: {} });
     });
   });
 
@@ -140,6 +256,12 @@ describe("multiTabStorage", () => {
       expect(loaded).not.toBeNull();
       expect(loaded!.tabId).toBe("tab-1");
       expect(loaded!.chartState.zoom).toBe(1);
+    });
+
+    it("should return true on successful save", () => {
+      const chartData = createTabChartData("tab-1");
+      const result = saveTabChart("tab-1", chartPayload(chartData));
+      expect(result).toBe(true);
     });
   });
 
