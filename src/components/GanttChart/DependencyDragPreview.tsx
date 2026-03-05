@@ -30,6 +30,7 @@ interface DependencyDragPreviewProps {
   startY: number;
   endX: number;
   endY: number;
+  rowHeight: number;
 }
 
 export const DependencyDragPreview = memo(function DependencyDragPreview({
@@ -37,11 +38,12 @@ export const DependencyDragPreview = memo(function DependencyDragPreview({
   startY,
   endX,
   endY,
+  rowHeight,
 }: DependencyDragPreviewProps) {
   // Calculate path from start to current mouse position
   const path = useMemo(() => {
-    return calculateDragPath({ x: startX, y: startY }, { x: endX, y: endY });
-  }, [startX, startY, endX, endY]);
+    return calculateDragPath({ x: startX, y: startY }, { x: endX, y: endY }, rowHeight);
+  }, [startX, startY, endX, endY, rowHeight]);
 
   // Calculate arrowhead angle
   const arrowAngle = useMemo(() => {

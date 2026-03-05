@@ -60,6 +60,27 @@ describe("calculateArrowPath", () => {
       expect(result.path).toContain("Q ");
       expect(result.arrowHead.y).toBe(115);
     });
+
+    it("treats rows within SAME_ROW_TOLERANCE_PX as same-row (straight line)", () => {
+      // from.y = 100 + 30/2 = 115, to.y = 101 + 30/2 = 116, |diff| = 1 < SAME_ROW_TOLERANCE_PX(2)
+      const fromPos = pos(0, 100, 100, 30);
+      const toPos = pos(200, 101, 100, 30);
+
+      const result = calculateArrowPath(fromPos, toPos);
+
+      expect(result.path).not.toContain("Q ");
+      expect(result.path).toMatch(/M 100 115 L 200 116/);
+    });
+
+    it("curves when vertical offset meets SAME_ROW_TOLERANCE_PX", () => {
+      // from.y = 115, to.y = 102 + 30/2 = 117, |diff| = 2 = SAME_ROW_TOLERANCE_PX → not same-row
+      const fromPos = pos(0, 100, 100, 30);
+      const toPos = pos(200, 102, 100, 30);
+
+      const result = calculateArrowPath(fromPos, toPos);
+
+      expect(result.path).toContain("Q ");
+    });
   });
 
   describe("S-curve path (small/negative gap)", () => {
@@ -84,14 +105,19 @@ describe("calculateArrowPath", () => {
       expect(result.arrowHead.x).toBe(100);
     });
 
-    it("should handle same-row tasks with small gap", () => {
-      const fromPos = pos(0, 100, 100, 30);
-      const toPos = pos(110, 100, 100, 30); // gap = 10px, same row
+    it("should handle same-row tasks with small gap via S-curve extending below", () => {
+      // gap=10px < minGapForElbow=46 → calculateRoutedPath
+      // firstVerticalX-r=107 > secondVerticalX+r=103 → S-curve (not simple elbow)
+      // isSameRow → verticalDistance=0 < minSpaceForCurves=32 → offset kicks in
+      // offset = max(32/2, 44*0.4) = max(16, 17.6) = 17.6 → middleY = 115 + 17.6 = 132.6
+      const fromPos = pos(0, 100, 100, 30);  // from: {x:100, y:115}
+      const toPos = pos(110, 100, 100, 30);  // to:   {x:110, y:115}
 
       const result = calculateArrowPath(fromPos, toPos);
 
-      // Should still produce a valid path
-      expect(result.path).toContain("M ");
+      const qCount = (result.path.match(/Q /g) || []).length;
+      expect(qCount).toBe(4); // 4-corner S-curve
+      expect(result.path).toContain("132.6"); // middleY extends below both tasks
       expect(result.arrowHead.x).toBe(110);
     });
 
@@ -218,7 +244,7 @@ describe("calculateDragPath", () => {
   });
 
   it("should switch to elbow at the same threshold as calculateArrowPath default", () => {
-    // minGapForElbow = HORIZONTAL_SEGMENT*2 + BASE_CORNER_RADIUS*2 = 30 + 16 = 46
+    // Default rowHeight=44 → cornerRadius=8 → minGapForElbow = 15*2 + 8*2 = 46
     const elbowPath = calculateDragPath({ x: 100, y: 100 }, { x: 146, y: 150 }); // gap = 46 → elbow
     const linePath = calculateDragPath({ x: 100, y: 100 }, { x: 145, y: 150 });  // gap = 45 → straight line
 
@@ -231,6 +257,15 @@ describe("calculateDragPath", () => {
     const path = calculateDragPath({ x: 0, y: 100 }, { x: 200, y: 100 });
 
     expect(path).toBe("M 0 100 L 200 100");
+  });
+
+  it("should scale threshold with rowHeight to stay consistent with calculateArrowPath", () => {
+    // rowHeight=88 → cornerRadius=round(8*88/44)=16 → minGapForElbow=15*2+16*2=62
+    const atThreshold = calculateDragPath({ x: 0, y: 0 }, { x: 62, y: 50 }, 88);  // gap=62 → elbow
+    const belowThreshold = calculateDragPath({ x: 0, y: 0 }, { x: 61, y: 50 }, 88); // gap=61 → line
+
+    expect(atThreshold).toContain("Q ");
+    expect(belowThreshold).not.toContain("Q ");
   });
 });
 

@@ -45,9 +45,6 @@ const ROUTING_OFFSET_RATIO = 0.4;
 /** Divisor applied to available space when computing adaptive corner radius in tight spaces. */
 const ADAPTIVE_RADIUS_DIVISOR = 4;
 
-/** Halving divisor for the minimum-space-for-curves value when computing the middle Y offset. */
-const MIDDLE_SPACE_HALVING_DIVISOR = 2;
-
 // ---------------------------------------------------------------------------
 // Private helpers
 // ---------------------------------------------------------------------------
@@ -82,21 +79,26 @@ function buildStraightLine(from: Point, to: Point): string {
   return `M ${from.x} ${from.y} L ${to.x} ${to.y}`;
 }
 
-/** Format a single quadratic bezier corner segment: `Q anchorX anchorY, endX endY`. */
-function qCorner(anchorX: number, anchorY: number, endX: number, endY: number): string {
-  return `Q ${anchorX} ${anchorY}, ${endX} ${endY}`;
+/** Format a single quadratic bezier corner segment. */
+function qCorner(anchor: Point, end: Point): string {
+  return `Q ${anchor.x} ${anchor.y}, ${end.x} ${end.y}`;
 }
 
 /**
  * Build a two-corner (standard elbow) path string.
  * Both corners meet at the horizontal midpoint between from and to.
  * Routing direction (up vs. down) is derived from the y-coordinates.
+ * Degenerates to a straight line when from and to are on the same row.
  */
 function buildTwoCornerPath(
   from: Point,
   to: Point,
   cornerRadius: number
 ): string {
+  if (isSameRow(from, to)) {
+    return buildStraightLine(from, to);
+  }
+
   const r = cornerRadius;
   const dir = getVerticalDir(from, to);
   const midX = (from.x + to.x) / 2;
@@ -104,9 +106,9 @@ function buildTwoCornerPath(
   return [
     `M ${from.x} ${from.y}`,
     `L ${midX - r} ${from.y}`,
-    qCorner(midX, from.y, midX, from.y + dir * r),
+    qCorner({ x: midX, y: from.y }, { x: midX, y: from.y + dir * r }),
     `L ${midX} ${to.y - dir * r}`,
-    qCorner(midX, to.y, midX + r, to.y),
+    qCorner({ x: midX, y: to.y }, { x: midX + r, y: to.y }),
     `L ${to.x} ${to.y}`,
   ].join(" ");
 }
@@ -120,9 +122,6 @@ function calculateElbowPath(
   to: Point,
   cornerRadius: number = BASE_CORNER_RADIUS
 ): string {
-  if (isSameRow(from, to)) {
-    return buildStraightLine(from, to);
-  }
   return buildTwoCornerPath(from, to, cornerRadius);
 }
 
@@ -137,10 +136,6 @@ function calculateSimpleElbow(
 ): string {
   const horizontalGap = to.x - from.x;
   const verticalGap = Math.abs(to.y - from.y);
-
-  if (isSameRow(from, to)) {
-    return buildStraightLine(from, to);
-  }
 
   // Clamp to zero: at large row heights the S-curve threshold can dip below zero,
   // making horizontalGap negative here. A zero radius degrades to a sharp corner
@@ -172,7 +167,7 @@ function calculateMiddleY(
   const verticalDistance = Math.abs(to.y - from.y);
   if (verticalDistance < minSpaceForCurves) {
     const offset = Math.max(
-      minSpaceForCurves / MIDDLE_SPACE_HALVING_DIVISOR,
+      minSpaceForCurves / 2,
       rowHeight * ROUTING_OFFSET_RATIO
     );
     const extremeY = dir === 1 ? Math.max(from.y, to.y) : Math.min(from.y, to.y);
@@ -203,19 +198,19 @@ function buildSCurvePath(
     // 1. Horizontal out from source
     `L ${firstX - r} ${from.y}`,
     // 2. First corner — turn toward middle
-    qCorner(firstX, from.y, firstX, from.y + dir * r),
+    qCorner({ x: firstX, y: from.y }, { x: firstX, y: from.y + dir * r }),
     // 3. Vertical to middle
     `L ${firstX} ${middleY - dir * r}`,
     // 4. Second corner — turn left (toward target)
-    qCorner(firstX, middleY, firstX - r, middleY),
+    qCorner({ x: firstX, y: middleY }, { x: firstX - r, y: middleY }),
     // 5. Horizontal segment (going left, between the tasks)
     `L ${secondX + r} ${middleY}`,
     // 6. Third corner — turn toward target
-    qCorner(secondX, middleY, secondX, middleY + dir * r),
+    qCorner({ x: secondX, y: middleY }, { x: secondX, y: middleY + dir * r }),
     // 7. Vertical to target level
     `L ${secondX} ${to.y - dir * r}`,
     // 8. Fourth corner — turn right into target
-    qCorner(secondX, to.y, secondX + r, to.y),
+    qCorner({ x: secondX, y: to.y }, { x: secondX + r, y: to.y }),
     // 9. Horizontal into target
     `L ${to.x} ${to.y}`,
   ].join(" ");
@@ -244,6 +239,24 @@ function calculateRoutedPath(
   const minSpaceForCurves = CURVE_SPACE_MULTIPLIER * cornerRadius;
   const middleY = calculateMiddleY(from, to, minSpaceForCurves, rowHeight);
   return buildSCurvePath(from, to, middleY, cornerRadius);
+}
+
+/**
+ * Compute Finish-to-Start connection anchor points from task bar positions.
+ * Isolated here so that adding SS/FF/SF later requires only a sibling function.
+ *
+ * @param fromPos - Position of the predecessor task bar
+ * @param toPos - Position of the successor task bar
+ * @returns Start and end anchor points for path routing
+ */
+function getFSConnectionPoints(
+  fromPos: TaskPosition,
+  toPos: TaskPosition
+): { from: Point; to: Point } {
+  return {
+    from: { x: fromPos.x + fromPos.width, y: fromPos.y + fromPos.height / 2 },
+    to:   { x: toPos.x,                   y: toPos.y + toPos.height / 2 },
+  };
 }
 
 // ---------------------------------------------------------------------------
@@ -275,17 +288,7 @@ export function calculateArrowPath(
   toPos: TaskPosition,
   rowHeight: number = BASE_ROW_HEIGHT
 ): ArrowPath {
-  // Start point: right edge of predecessor, vertically centered
-  const from: Point = {
-    x: fromPos.x + fromPos.width,
-    y: fromPos.y + fromPos.height / 2,
-  };
-
-  // End point: left edge of successor, vertically centered
-  const to: Point = {
-    x: toPos.x,
-    y: toPos.y + toPos.height / 2,
-  };
+  const { from, to } = getFSConnectionPoints(fromPos, toPos);
 
   const cornerRadius = getScaledCornerRadius(rowHeight);
   const minGapForElbow = computeMinGapForElbow(cornerRadius);
@@ -310,14 +313,24 @@ export function calculateArrowPath(
  * Calculate arrow path for a "temporary" dependency while dragging.
  * Uses the same elbow style for consistency. Tight/backwards gaps fall back to a
  * straight line — S-curve routing is intentionally omitted during drag for visual
- * clarity. The elbow threshold matches the default-rowHeight case of calculateArrowPath.
+ * clarity. Corner radius and gap threshold scale with rowHeight to stay consistent
+ * with calculateArrowPath at any zoom level.
+ *
+ * @param from - Current drag source point
+ * @param to - Current drag target point
+ * @param rowHeight - Height of each row (defaults to BASE_ROW_HEIGHT)
  */
-export function calculateDragPath(from: Point, to: Point): string {
+export function calculateDragPath(
+  from: Point,
+  to: Point,
+  rowHeight: number = BASE_ROW_HEIGHT
+): string {
+  const cornerRadius = getScaledCornerRadius(rowHeight);
   const horizontalGap = to.x - from.x;
-  const minGapForElbow = computeMinGapForElbow(BASE_CORNER_RADIUS);
+  const minGapForElbow = computeMinGapForElbow(cornerRadius);
 
   if (horizontalGap >= minGapForElbow) {
-    return calculateElbowPath(from, to);
+    return calculateElbowPath(from, to, cornerRadius);
   }
 
   return buildStraightLine(from, to);
