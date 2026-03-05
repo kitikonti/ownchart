@@ -119,9 +119,14 @@ describe("calculateArrowPath", () => {
       // Should produce a 4-corner S-curve
       const qCount = (result.path.match(/Q /g) || []).length;
       expect(qCount).toBe(4);
-      // The middleY routing must go below both tasks (goDown=true, distance < minSpaceForCurves)
-      // middleY > max(115, 125) = 125, so path must contain a Y value > 125
-      expect(result.path).toMatch(/\d+\.\d+ \d+\.\d+|1[3-9]\d|[2-9]\d\d/);
+
+      // The middleY routing must extend below both tasks. With default rowHeight=44:
+      //   cornerRadius = max(4, round(8 * 44/44)) = 8
+      //   minSpaceForCurves = 4 * 8 = 32
+      //   verticalDistance = |115 - 125| = 10 < 32 → offset kicks in
+      //   offset = max(32 / 2, 44 * 0.4) = max(16, 17.6) = 17.6
+      //   middleY = max(115, 125) + 17.6 = 142.6
+      expect(result.path).toContain("142.6");
       expect(result.arrowHead.x).toBe(60);
     });
   });

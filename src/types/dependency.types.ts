@@ -66,6 +66,14 @@ export interface DateAdjustment {
 }
 
 /**
+ * A 2D point used for arrow path routing calculations.
+ */
+export interface Point {
+  x: number;
+  y: number;
+}
+
+/**
  * Arrow path calculation result for rendering.
  */
 export interface ArrowPath {

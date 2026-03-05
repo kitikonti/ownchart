@@ -4,10 +4,22 @@
  * Sprint 1.4 - Dependencies (Finish-to-Start Only)
  */
 
-import type { ArrowPath, TaskPosition } from "../../types/dependency.types";
+import type {
+  ArrowPath,
+  Point,
+  TaskPosition,
+} from "../../types/dependency.types";
+
+// ---------------------------------------------------------------------------
+// Public constants
+// ---------------------------------------------------------------------------
 
 /** Arrowhead polygon size (px) — shared by DependencyArrow and DependencyDragPreview */
 export const ARROWHEAD_SIZE = 8;
+
+// ---------------------------------------------------------------------------
+// Private constants
+// ---------------------------------------------------------------------------
 
 /** Horizontal segment length coming out of/into tasks. */
 const HORIZONTAL_SEGMENT = 15;
@@ -39,36 +51,51 @@ const ROUTING_OFFSET_RATIO = 0.4;
 /** Divisor applied to available space when computing adaptive corner radius in tight spaces. */
 const ADAPTIVE_RADIUS_DIVISOR = 4;
 
+/** Halving divisor for the minimum-space-for-curves value when computing the middle Y offset. */
+const MIDDLE_SPACE_HALVING_DIVISOR = 2;
+
+// ---------------------------------------------------------------------------
+// Private helpers
+// ---------------------------------------------------------------------------
+
 /** Get corner radius scaled by row height. */
 function getScaledCornerRadius(rowHeight: number): number {
   const scale = rowHeight / BASE_ROW_HEIGHT;
   return Math.max(MIN_CORNER_RADIUS_PX, Math.round(BASE_CORNER_RADIUS * scale));
 }
 
+/** Compute the minimum horizontal gap required to use an elbow path at a given corner radius. */
+function computeMinGapForElbow(cornerRadius: number): number {
+  return HORIZONTAL_SEGMENT * 2 + cornerRadius * 2 + ELBOW_GAP_PADDING;
+}
+
+/** Build a straight line path from `from` to `to`. */
+function buildStraightLine(from: Point, to: Point): string {
+  return `M ${from.x} ${from.y} L ${to.x} ${to.y}`;
+}
+
 /**
  * Build a two-corner (standard elbow) path string.
- * Both corners meet at the horizontal midpoint between start and end.
- * Uses a direction multiplier so the same template handles both up and down paths.
+ * Both corners meet at the horizontal midpoint between from and to.
+ * Routing direction (up vs. down) is derived from the y-coordinates.
  */
 function buildTwoCornerPath(
-  startX: number,
-  startY: number,
-  endX: number,
-  endY: number,
-  cornerRadius: number,
-  goDown: boolean
+  from: Point,
+  to: Point,
+  cornerRadius: number
 ): string {
   const r = cornerRadius;
+  const goDown = to.y >= from.y;
   const dir = goDown ? 1 : -1;
-  const midX = (startX + endX) / 2;
+  const midX = (from.x + to.x) / 2;
 
   return (
-    `M ${startX} ${startY} ` +
-    `L ${midX - r} ${startY} ` +
-    `Q ${midX} ${startY}, ${midX} ${startY + dir * r} ` +
-    `L ${midX} ${endY - dir * r} ` +
-    `Q ${midX} ${endY}, ${midX + r} ${endY} ` +
-    `L ${endX} ${endY}`
+    `M ${from.x} ${from.y} ` +
+    `L ${midX - r} ${from.y} ` +
+    `Q ${midX} ${from.y}, ${midX} ${from.y + dir * r} ` +
+    `L ${midX} ${to.y - dir * r} ` +
+    `Q ${midX} ${to.y}, ${midX + r} ${to.y} ` +
+    `L ${to.x} ${to.y}`
   );
 }
 
@@ -77,23 +104,14 @@ function buildTwoCornerPath(
  * Used when there's enough horizontal space.
  */
 function calculateElbowPath(
-  startX: number,
-  startY: number,
-  endX: number,
-  endY: number,
+  from: Point,
+  to: Point,
   cornerRadius: number = BASE_CORNER_RADIUS
 ): string {
-  if (Math.abs(endY - startY) < SAME_ROW_TOLERANCE_PX) {
-    return `M ${startX} ${startY} L ${endX} ${endY}`;
+  if (Math.abs(to.y - from.y) < SAME_ROW_TOLERANCE_PX) {
+    return buildStraightLine(from, to);
   }
-  return buildTwoCornerPath(
-    startX,
-    startY,
-    endX,
-    endY,
-    cornerRadius,
-    endY > startY
-  );
+  return buildTwoCornerPath(from, to, cornerRadius);
 }
 
 /**
@@ -101,18 +119,15 @@ function calculateElbowPath(
  * Uses an adaptive radius that shrinks to fit within the available space.
  */
 function calculateSimpleElbow(
-  startX: number,
-  startY: number,
-  endX: number,
-  endY: number,
-  goDown: boolean,
+  from: Point,
+  to: Point,
   baseRadius: number = BASE_CORNER_RADIUS
 ): string {
-  const horizontalGap = endX - startX;
-  const verticalGap = Math.abs(endY - startY);
+  const horizontalGap = to.x - from.x;
+  const verticalGap = Math.abs(to.y - from.y);
 
   if (verticalGap < SAME_ROW_TOLERANCE_PX) {
-    return `M ${startX} ${startY} L ${endX} ${endY}`;
+    return buildStraightLine(from, to);
   }
 
   const cornerRadius = Math.min(
@@ -121,59 +136,58 @@ function calculateSimpleElbow(
     verticalGap / ADAPTIVE_RADIUS_DIVISOR
   );
 
-  return buildTwoCornerPath(startX, startY, endX, endY, cornerRadius, goDown);
+  return buildTwoCornerPath(from, to, cornerRadius);
 }
 
 /**
  * Determine the Y-coordinate for the horizontal middle segment of an S-curve.
  * Extends the route further out when tasks are vertically too close for clean curves.
+ * Routing direction is derived from the y-coordinates.
  */
 function calculateMiddleY(
-  startY: number,
-  endY: number,
-  goDown: boolean,
+  from: Point,
+  to: Point,
   minSpaceForCurves: number,
   rowHeight: number
 ): number {
-  const verticalDistance = Math.abs(endY - startY);
+  const goDown = to.y >= from.y;
+  const verticalDistance = Math.abs(to.y - from.y);
   if (verticalDistance < minSpaceForCurves) {
     const offset = Math.max(
-      minSpaceForCurves / 2,
+      minSpaceForCurves / MIDDLE_SPACE_HALVING_DIVISOR,
       rowHeight * ROUTING_OFFSET_RATIO
     );
     return goDown
-      ? Math.max(startY, endY) + offset
-      : Math.min(startY, endY) - offset;
+      ? Math.max(from.y, to.y) + offset
+      : Math.min(from.y, to.y) - offset;
   }
-  return (startY + endY) / 2;
+  return (from.y + to.y) / 2;
 }
 
 /**
  * Build the four-corner S-curve path string.
  * The path exits horizontally, turns vertical, crosses the middle Y, reverses
  * horizontal direction, then enters the target horizontally.
- * Uses a direction multiplier so the same template handles both up and down paths.
+ * Routing direction is derived from the y-coordinates.
  */
 function buildSCurvePath(
-  startX: number,
-  startY: number,
-  endX: number,
-  endY: number,
+  from: Point,
+  to: Point,
   middleY: number,
-  cornerRadius: number,
-  goDown: boolean
+  cornerRadius: number
 ): string {
   const r = cornerRadius;
+  const goDown = to.y >= from.y;
   const dir = goDown ? 1 : -1;
-  const firstX = startX + HORIZONTAL_SEGMENT;
-  const secondX = endX - HORIZONTAL_SEGMENT;
+  const firstX = from.x + HORIZONTAL_SEGMENT;
+  const secondX = to.x - HORIZONTAL_SEGMENT;
 
   return (
-    `M ${startX} ${startY} ` +
+    `M ${from.x} ${from.y} ` +
     // 1. Horizontal out from source
-    `L ${firstX - r} ${startY} ` +
+    `L ${firstX - r} ${from.y} ` +
     // 2. First corner — turn toward middle
-    `Q ${firstX} ${startY}, ${firstX} ${startY + dir * r} ` +
+    `Q ${firstX} ${from.y}, ${firstX} ${from.y + dir * r} ` +
     // 3. Vertical to middle
     `L ${firstX} ${middleY - dir * r} ` +
     // 4. Second corner — turn left (toward target)
@@ -183,11 +197,11 @@ function buildSCurvePath(
     // 6. Third corner — turn toward target
     `Q ${secondX} ${middleY}, ${secondX} ${middleY + dir * r} ` +
     // 7. Vertical to target level
-    `L ${secondX} ${endY - dir * r} ` +
+    `L ${secondX} ${to.y - dir * r} ` +
     // 8. Fourth corner — turn right into target
-    `Q ${secondX} ${endY}, ${secondX + r} ${endY} ` +
+    `Q ${secondX} ${to.y}, ${secondX + r} ${to.y} ` +
     // 9. Horizontal into target
-    `L ${endX} ${endY}`
+    `L ${to.x} ${to.y}`
   );
 }
 
@@ -196,47 +210,27 @@ function buildSCurvePath(
  * Creates an inverted S-shape to route around the tasks.
  */
 function calculateRoutedPath(
-  startX: number,
-  startY: number,
-  endX: number,
-  endY: number,
+  from: Point,
+  to: Point,
   rowHeight: number = BASE_ROW_HEIGHT,
   cornerRadius: number = BASE_CORNER_RADIUS
 ): string {
-  const goDown = endY >= startY;
-  const firstVerticalX = startX + HORIZONTAL_SEGMENT;
-  const secondVerticalX = endX - HORIZONTAL_SEGMENT;
+  const firstVerticalX = from.x + HORIZONTAL_SEGMENT;
+  const secondVerticalX = to.x - HORIZONTAL_SEGMENT;
 
   // Transition case: horizontal room too small for a full S-curve — use simple elbow
   if (firstVerticalX - cornerRadius <= secondVerticalX + cornerRadius) {
-    return calculateSimpleElbow(
-      startX,
-      startY,
-      endX,
-      endY,
-      goDown,
-      cornerRadius
-    );
+    return calculateSimpleElbow(from, to, cornerRadius);
   }
 
   const minSpaceForCurves = CURVE_SPACE_MULTIPLIER * cornerRadius;
-  const middleY = calculateMiddleY(
-    startY,
-    endY,
-    goDown,
-    minSpaceForCurves,
-    rowHeight
-  );
-  return buildSCurvePath(
-    startX,
-    startY,
-    endX,
-    endY,
-    middleY,
-    cornerRadius,
-    goDown
-  );
+  const middleY = calculateMiddleY(from, to, minSpaceForCurves, rowHeight);
+  return buildSCurvePath(from, to, middleY, cornerRadius);
 }
+
+// ---------------------------------------------------------------------------
+// Public API
+// ---------------------------------------------------------------------------
 
 /**
  * Calculate the SVG path for a dependency arrow.
@@ -249,6 +243,10 @@ function calculateRoutedPath(
  * 4. 90° rounded corner
  * 5. Horizontal segment into target task
  *
+ * NOTE: Entry/exit points are hardcoded for Finish-to-Start (FS) dependency type
+ * (right edge → left edge). To support SS/FF/SF, pass connection-side as a
+ * parameter and adjust start/end x accordingly.
+ *
  * @param fromPos - Position of predecessor task bar
  * @param toPos - Position of successor task bar
  * @param rowHeight - Height of each row (used for scaling corners)
@@ -260,35 +258,31 @@ export function calculateArrowPath(
   rowHeight: number = BASE_ROW_HEIGHT
 ): ArrowPath {
   // Start point: right edge of predecessor, vertically centered
-  const startX = fromPos.x + fromPos.width;
-  const startY = fromPos.y + fromPos.height / 2;
+  const from: Point = {
+    x: fromPos.x + fromPos.width,
+    y: fromPos.y + fromPos.height / 2,
+  };
 
   // End point: left edge of successor, vertically centered
-  const endX = toPos.x;
-  const endY = toPos.y + toPos.height / 2;
+  const to: Point = {
+    x: toPos.x,
+    y: toPos.y + toPos.height / 2,
+  };
 
-  const horizontalGap = endX - startX;
   const cornerRadius = getScaledCornerRadius(rowHeight);
-  const minGapForElbow =
-    HORIZONTAL_SEGMENT * 2 + cornerRadius * 2 + ELBOW_GAP_PADDING;
+  const minGapForElbow = computeMinGapForElbow(cornerRadius);
+  const horizontalGap = to.x - from.x;
 
   const path =
     horizontalGap >= minGapForElbow
-      ? calculateElbowPath(startX, startY, endX, endY, cornerRadius)
-      : calculateRoutedPath(
-          startX,
-          startY,
-          endX,
-          endY,
-          rowHeight,
-          cornerRadius
-        );
+      ? calculateElbowPath(from, to, cornerRadius)
+      : calculateRoutedPath(from, to, rowHeight, cornerRadius);
 
   return {
     path,
     arrowHead: {
-      x: endX,
-      y: endY,
+      x: to.x,
+      y: to.y,
       angle: 0, // Always pointing right (into the task)
     },
   };
@@ -306,15 +300,16 @@ export function calculateDragPath(
   endX: number,
   endY: number
 ): string {
-  const horizontalGap = endX - startX;
-  const minGapForElbow =
-    HORIZONTAL_SEGMENT * 2 + BASE_CORNER_RADIUS * 2 + ELBOW_GAP_PADDING;
+  const from: Point = { x: startX, y: startY };
+  const to: Point = { x: endX, y: endY };
+  const horizontalGap = to.x - from.x;
+  const minGapForElbow = computeMinGapForElbow(BASE_CORNER_RADIUS);
 
   if (horizontalGap >= minGapForElbow) {
-    return calculateElbowPath(startX, startY, endX, endY);
+    return calculateElbowPath(from, to);
   }
 
-  return `M ${startX} ${startY} L ${endX} ${endY}`;
+  return buildStraightLine(from, to);
 }
 
 /**
