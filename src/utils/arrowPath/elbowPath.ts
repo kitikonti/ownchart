@@ -30,12 +30,6 @@ const BASE_CORNER_RADIUS = 8;
 /** Base row height for scaling calculations. */
 const BASE_ROW_HEIGHT = 44;
 
-/**
- * Extra padding added to the minimum gap calculation.
- * Increase this to switch to S-curve earlier.
- */
-const ELBOW_GAP_PADDING = 0;
-
 /** Minimum corner radius regardless of row height scaling. */
 const MIN_CORNER_RADIUS_PX = 4;
 
@@ -64,9 +58,23 @@ function getScaledCornerRadius(rowHeight: number): number {
   return Math.max(MIN_CORNER_RADIUS_PX, Math.round(BASE_CORNER_RADIUS * scale));
 }
 
-/** Compute the minimum horizontal gap required to use an elbow path at a given corner radius. */
+/**
+ * Compute the minimum horizontal gap required to use a standard elbow path.
+ * Below this threshold, routing falls back to a compact elbow or S-curve.
+ * To widen the standard-elbow zone, increase HORIZONTAL_SEGMENT.
+ */
 function computeMinGapForElbow(cornerRadius: number): number {
-  return HORIZONTAL_SEGMENT * 2 + cornerRadius * 2 + ELBOW_GAP_PADDING;
+  return HORIZONTAL_SEGMENT * 2 + cornerRadius * 2;
+}
+
+/** Return +1 when routing goes downward (to is at or below from), −1 when going upward. */
+function getVerticalDir(from: Point, to: Point): 1 | -1 {
+  return to.y >= from.y ? 1 : -1;
+}
+
+/** True when the vertical distance between two points is within the same-row tolerance. */
+function isSameRow(from: Point, to: Point): boolean {
+  return Math.abs(to.y - from.y) < SAME_ROW_TOLERANCE_PX;
 }
 
 /** Build a straight line path from `from` to `to`. */
@@ -85,8 +93,7 @@ function buildTwoCornerPath(
   cornerRadius: number
 ): string {
   const r = cornerRadius;
-  const goDown = to.y >= from.y;
-  const dir = goDown ? 1 : -1;
+  const dir = getVerticalDir(from, to);
   const midX = (from.x + to.x) / 2;
 
   return (
@@ -108,7 +115,7 @@ function calculateElbowPath(
   to: Point,
   cornerRadius: number = BASE_CORNER_RADIUS
 ): string {
-  if (Math.abs(to.y - from.y) < SAME_ROW_TOLERANCE_PX) {
+  if (isSameRow(from, to)) {
     return buildStraightLine(from, to);
   }
   return buildTwoCornerPath(from, to, cornerRadius);
@@ -126,7 +133,7 @@ function calculateSimpleElbow(
   const horizontalGap = to.x - from.x;
   const verticalGap = Math.abs(to.y - from.y);
 
-  if (verticalGap < SAME_ROW_TOLERANCE_PX) {
+  if (isSameRow(from, to)) {
     return buildStraightLine(from, to);
   }
 
@@ -150,16 +157,15 @@ function calculateMiddleY(
   minSpaceForCurves: number,
   rowHeight: number
 ): number {
-  const goDown = to.y >= from.y;
+  const dir = getVerticalDir(from, to);
   const verticalDistance = Math.abs(to.y - from.y);
   if (verticalDistance < minSpaceForCurves) {
     const offset = Math.max(
       minSpaceForCurves / MIDDLE_SPACE_HALVING_DIVISOR,
       rowHeight * ROUTING_OFFSET_RATIO
     );
-    return goDown
-      ? Math.max(from.y, to.y) + offset
-      : Math.min(from.y, to.y) - offset;
+    const extremeY = dir === 1 ? Math.max(from.y, to.y) : Math.min(from.y, to.y);
+    return extremeY + dir * offset;
   }
   return (from.y + to.y) / 2;
 }
@@ -177,8 +183,7 @@ function buildSCurvePath(
   cornerRadius: number
 ): string {
   const r = cornerRadius;
-  const goDown = to.y >= from.y;
-  const dir = goDown ? 1 : -1;
+  const dir = getVerticalDir(from, to);
   const firstX = from.x + HORIZONTAL_SEGMENT;
   const secondX = to.x - HORIZONTAL_SEGMENT;
 
@@ -218,7 +223,9 @@ function calculateRoutedPath(
   const firstVerticalX = from.x + HORIZONTAL_SEGMENT;
   const secondVerticalX = to.x - HORIZONTAL_SEGMENT;
 
-  // Transition case: horizontal room too small for a full S-curve — use simple elbow
+  // Transition case: both vertical-segment lines (offset inward by one corner radius) still fit
+  // left-to-right, so there is just enough horizontal room for a compact 2-corner elbow instead
+  // of a full S-curve. Effective lower-bound gap: HORIZONTAL_SEGMENT * 2 − cornerRadius * 2.
   if (firstVerticalX - cornerRadius <= secondVerticalX + cornerRadius) {
     return calculateSimpleElbow(from, to, cornerRadius);
   }

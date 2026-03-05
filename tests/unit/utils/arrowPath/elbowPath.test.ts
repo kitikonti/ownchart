@@ -95,9 +95,9 @@ describe("calculateArrowPath", () => {
       expect(result.arrowHead.x).toBe(110);
     });
 
-    it("should fall back to simple elbow in transition case (gap 14–46px with vertical offset)", () => {
-      // gap = 20px → triggers S-curve branch, but firstVerticalX - r <= secondVerticalX + r
-      // so falls back to calculateSimpleElbow (2 Q corners, not 4)
+    it("should fall back to simple elbow in transition case (gap 20px, default rowHeight → threshold 14–46px)", () => {
+      // gap = 20px → in the compact-elbow zone (HORIZONTAL_SEGMENT*2 − r*2 ≤ gap < minGapForElbow)
+      // firstVerticalX - r <= secondVerticalX + r → falls back to calculateSimpleElbow (2 Q corners, not 4)
       const fromPos = pos(0, 100, 100, 30); // ends at x=100, centerY=115
       const toPos = pos(120, 200, 100, 30); // starts at x=120, centerY=215 (gap=20px)
 
@@ -208,6 +208,13 @@ describe("calculateDragPath", () => {
 
     expect(elbowPath).toContain("Q ");
     expect(linePath).not.toContain("Q ");
+  });
+
+  it("should produce straight line when gap is large but Y is the same", () => {
+    // gap = 200 ≥ minGapForElbow → calculateElbowPath → isSameRow → straight line
+    const path = calculateDragPath(0, 100, 200, 100);
+
+    expect(path).toBe("M 0 100 L 200 100");
   });
 });
 
