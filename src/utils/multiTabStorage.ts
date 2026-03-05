@@ -25,9 +25,9 @@ import type { TaskId } from "../types/branded.types";
 import type { ColorModeState } from "../types/colorMode.types";
 import type { Dependency } from "../types/dependency.types";
 
-const STORAGE_KEY = "ownchart-multi-tab-state";
+export const STORAGE_KEY = "ownchart-multi-tab-state";
 const STORAGE_VERSION = 2;
-const TAB_ID_KEY = "ownchart-tab-id";
+export const TAB_ID_KEY = "ownchart-tab-id";
 const TAB_TIMEOUT_MS = 1000 * 60 * 60 * 24; // 24 hours - cleanup inactive tabs
 
 export interface ChartState {

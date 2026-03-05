@@ -5,15 +5,14 @@ import { useChartStore } from "../../../src/store/slices/chartSlice";
 import { useUIStore } from "../../../src/store/slices/uiSlice";
 import {
   saveTabChart,
+  STORAGE_KEY,
+  TAB_ID_KEY,
   type ChartState,
   type FileState,
   type TableState,
 } from "../../../src/utils/multiTabStorage";
 import { DEFAULT_COLOR_MODE_STATE } from "../../../src/config/colorModeDefaults";
 import type { ColorModeState } from "../../../src/types/colorMode.types";
-
-const STORAGE_KEY = "ownchart-multi-tab-state";
-const TAB_ID_KEY = "ownchart-tab-id";
 
 function createChartState(overrides?: Partial<ChartState>): ChartState {
   return {

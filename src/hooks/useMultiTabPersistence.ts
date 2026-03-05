@@ -240,24 +240,6 @@ export function useMultiTabPersistence(): void {
     return () => clearInterval(interval);
   }, []);
 
-  // Listen for storage events from other tabs
-  useEffect(() => {
-    const handleStorageEvent = (e: StorageEvent): void => {
-      // Only react to changes in our storage key from other tabs
-      if (e.key !== "ownchart-multi-tab-state") return;
-      if (e.newValue === null) return;
-
-      // Each tab is independent — no auto-sync across tabs.
-      // Future: Could add conflict detection if same file is opened in multiple tabs.
-    };
-
-    window.addEventListener("storage", handleStorageEvent);
-
-    return () => {
-      window.removeEventListener("storage", handleStorageEvent);
-    };
-  }, []);
-
   // Note: We don't cleanup on beforeunload because:
   // - beforeunload fires on page refresh, which would delete data we want to persist
   // - cleanupInactiveTabs() handles cleanup of truly inactive tabs (24h timeout)

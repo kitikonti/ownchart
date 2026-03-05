@@ -85,6 +85,11 @@ export function useHeaderDateSelection({
   const scaleRef = useRef(scale);
   scaleRef.current = scale;
 
+  // Keep latest selection in a ref so ESC / click-outside handlers are stable
+  // and don't re-register on every drag-frame (selection changes on every mousemove).
+  const selectionRef = useRef(selection);
+  selectionRef.current = selection;
+
   const zoomToDateRange = useChartStore((state) => state.zoomToDateRange);
 
   // --- Pixel rect derived from date selection and current scale ---
@@ -99,22 +104,26 @@ export function useHeaderDateSelection({
   }, [selection, scale]);
 
   // --- Clear selection on ESC ---
+  // Reads selection via selectionRef so the listener is registered once on
+  // mount rather than re-registered on every drag-frame.
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent): void => {
-      if (e.key === "Escape" && selection) {
+      if (e.key === "Escape" && selectionRef.current) {
         setSelection(null);
         setContextMenu(null);
       }
     };
     document.addEventListener("keydown", handleKeyDown);
     return () => document.removeEventListener("keydown", handleKeyDown);
-  }, [selection]);
+  }, []); // selectionRef is always current — no selection dep needed
 
   // --- Clear selection on click outside header ---
+  // Always-on listener guarded by selectionRef so it doesn't re-register on
+  // every drag-frame. setTimeout(0) avoids reacting to the same mousedown
+  // that started the drag.
   useEffect(() => {
-    if (!selection) return;
-
     const handleMouseDown = (e: MouseEvent): void => {
+      if (!selectionRef.current) return;
       const svg = headerSvgRef.current;
       // If clicking inside the header SVG or inside a context menu, don't clear
       if (svg && svg.contains(e.target as Node)) return;
@@ -131,7 +140,7 @@ export function useHeaderDateSelection({
       clearTimeout(timer);
       document.removeEventListener("mousedown", handleMouseDown);
     };
-  }, [selection, headerSvgRef]);
+  }, [headerSvgRef]); // selectionRef is always current — no selection dep needed; headerSvgRef is a stable RefObject
 
   // --- Mouse move during drag ---
   // Deps are empty because all values are read through stable refs:
@@ -139,16 +148,19 @@ export function useHeaderDateSelection({
   // isDraggingRef and dragStartDateRef (internal stable refs).
   // This ensures the same function reference is registered/unregistered
   // even if scale changes mid-drag, preventing orphaned listeners.
-  const handleMouseMove = useCallback((e: MouseEvent): void => {
-    if (!isDraggingRef.current || !scaleRef.current) return;
-    const svg = headerSvgRef.current;
-    if (!svg) return;
-    const { x: svgX } = clientToSvgCoords(e.clientX, e.clientY, svg);
-    const currentDate = pixelToDate(svgX, scaleRef.current);
-    const startDate = dragStartDateRef.current;
-    if (!startDate) return;
-    setSelection(normalizeSelection(startDate, currentDate));
-  }, [headerSvgRef]); // headerSvgRef is a stable RefObject; scale read via scaleRef
+  const handleMouseMove = useCallback(
+    (e: MouseEvent): void => {
+      if (!isDraggingRef.current || !scaleRef.current) return;
+      const svg = headerSvgRef.current;
+      if (!svg) return;
+      const { x: svgX } = clientToSvgCoords(e.clientX, e.clientY, svg);
+      const currentDate = pixelToDate(svgX, scaleRef.current);
+      const startDate = dragStartDateRef.current;
+      if (!startDate) return;
+      setSelection(normalizeSelection(startDate, currentDate));
+    },
+    [headerSvgRef]
+  ); // headerSvgRef is a stable RefObject; scale read via scaleRef
 
   // --- Mouse up: end drag ---
   const handleMouseUp = useCallback((): void => {
@@ -182,12 +194,17 @@ export function useHeaderDateSelection({
       // Close any open context menu
       setContextMenu(null);
 
-      // Shift+click: extend existing selection
-      if (e.shiftKey && selection) {
+      // Shift+click: extend existing selection (read via ref — no dep on selection state)
+      const currentSelection = selectionRef.current;
+      if (e.shiftKey && currentSelection) {
         const extendedStart =
-          clickDate < selection.startDate ? clickDate : selection.startDate;
+          clickDate < currentSelection.startDate
+            ? clickDate
+            : currentSelection.startDate;
         const extendedEnd =
-          clickDate > selection.endDate ? clickDate : selection.endDate;
+          clickDate > currentSelection.endDate
+            ? clickDate
+            : currentSelection.endDate;
         setSelection({ startDate: extendedStart, endDate: extendedEnd });
         e.preventDefault();
         return;
@@ -204,7 +221,7 @@ export function useHeaderDateSelection({
 
       e.preventDefault();
     },
-    [selection, handleMouseMove, handleMouseUp, headerSvgRef]
+    [handleMouseMove, handleMouseUp, headerSvgRef] // selectionRef is always current — no selection dep
   );
 
   // --- Right-click on header SVG ---
@@ -212,7 +229,8 @@ export function useHeaderDateSelection({
     (e: React.MouseEvent<SVGSVGElement>): void => {
       e.preventDefault();
 
-      if (!selection || !scaleRef.current) return;
+      const currentSelection = selectionRef.current;
+      if (!currentSelection || !scaleRef.current) return;
 
       const svg = headerSvgRef.current;
       if (!svg) return;
@@ -221,7 +239,10 @@ export function useHeaderDateSelection({
       const clickDate = pixelToDate(svgX, scaleRef.current);
 
       // Only show context menu if right-click is within the selection
-      if (clickDate >= selection.startDate && clickDate <= selection.endDate) {
+      if (
+        clickDate >= currentSelection.startDate &&
+        clickDate <= currentSelection.endDate
+      ) {
         setContextMenu({ x: e.clientX, y: e.clientY });
       } else {
         // Right-click outside selection: clear it
@@ -229,7 +250,7 @@ export function useHeaderDateSelection({
         setContextMenu(null);
       }
     },
-    [selection, headerSvgRef]
+    [headerSvgRef] // selectionRef + scaleRef are always current — no state deps
   );
 
   // --- Close context menu ---
@@ -238,8 +259,10 @@ export function useHeaderDateSelection({
   }, []);
 
   // --- Context menu items ---
+  // onClick reads selection via selectionRef so this memo only recomputes when
+  // the context menu opens/closes, not on every drag-frame selection change.
   const contextMenuItems = useMemo((): ContextMenuItem[] => {
-    if (!contextMenu || !selection) return [];
+    if (!contextMenu) return [];
 
     return [
       {
@@ -250,13 +273,16 @@ export function useHeaderDateSelection({
           weight: CONTEXT_MENU.iconWeight,
         }),
         onClick: (): void => {
-          zoomToDateRange(selection.startDate, selection.endDate);
+          const sel = selectionRef.current;
+          if (sel) {
+            zoomToDateRange(sel.startDate, sel.endDate);
+          }
           setSelection(null);
           setContextMenu(null);
         },
       },
     ];
-  }, [contextMenu, selection, zoomToDateRange]);
+  }, [contextMenu, zoomToDateRange]); // selectionRef is always current — no selection dep
 
   return {
     selectionPixelRect,

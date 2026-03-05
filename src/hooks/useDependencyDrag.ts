@@ -82,7 +82,9 @@ export function useDependencyDrag({
 
   const { addDependency, checkWouldCreateCycle } = useDependencyStore();
 
-  // Calculate valid and invalid targets when starting drag
+  // Calculate valid and invalid targets when starting drag.
+  // Reads the task list via tasksRef so startDrag stays stable across task
+  // list changes — matching the same pattern used for endDrag.
   const startDrag = useCallback(
     (taskId: TaskId, side: "start" | "end", e: React.MouseEvent): void => {
       if (!enabled) return;
@@ -90,7 +92,7 @@ export function useDependencyDrag({
       const validTargets = new Set<TaskId>();
       const invalidTargets = new Set<TaskId>();
 
-      for (const task of tasks) {
+      for (const task of tasksRef.current) {
         if (task.id === taskId) continue;
 
         const { fromId, toId } = resolveDependencyDirection(
@@ -121,7 +123,7 @@ export function useDependencyDrag({
         invalidTargets,
       });
     },
-    [enabled, tasks, checkWouldCreateCycle, svgRef]
+    [enabled, checkWouldCreateCycle, svgRef] // tasksRef is always current — no tasks dep
   );
 
   // Update drag position
