@@ -11,14 +11,15 @@ import {
   cleanupInactiveTabs,
   getActiveTabs,
   clearAllStorage,
+  STORAGE_KEY,
+  TAB_ID_KEY,
+  LEGACY_V1_STORAGE_KEY,
+  STORAGE_VERSION,
   type ChartState,
   type TabChartData,
   type MultiTabStorage,
 } from "../../../src/utils/multiTabStorage";
 import type { ColorModeState } from "../../../src/types/colorMode.types";
-
-const STORAGE_KEY = "ownchart-multi-tab-state";
-const TAB_ID_KEY = "ownchart-tab-id";
 
 function createChartState(overrides?: Partial<ChartState>): ChartState {
   return {
@@ -123,13 +124,18 @@ describe("multiTabStorage", () => {
       expect(saveMultiTabStorage(storage)).toBe(true);
     });
 
-    it("should clear data on version mismatch", () => {
+    it("should clear data on version mismatch and warn unconditionally", () => {
+      const warnSpy = vi.spyOn(console, "warn").mockImplementation(() => {});
       localStorage.setItem(
         STORAGE_KEY,
         JSON.stringify({ version: 999, charts: { x: {} } })
       );
       const loaded = loadMultiTabStorage();
-      expect(loaded).toEqual({ version: 2, charts: {} });
+      expect(loaded).toEqual({ version: STORAGE_VERSION, charts: {} });
+      expect(warnSpy).toHaveBeenCalledWith(
+        expect.stringContaining("version mismatch")
+      );
+      warnSpy.mockRestore();
     });
 
     it("should handle corrupt JSON gracefully", () => {
@@ -304,7 +310,12 @@ describe("multiTabStorage", () => {
         lastActive: Date.now(),
         tasks: [{ id: "task-1", name: "Task 1" }],
         dependencies: [{ id: "dep-1", fromId: "task-1", toId: "task-2" }],
-        chartState: { zoom: 1, panOffset: { x: 0, y: 0 } },
+        chartState: {
+          zoom: 1,
+          panOffset: { x: 0, y: 0 },
+          showWeekends: true,
+          showTodayMarker: true,
+        },
         fileState: { isDirty: false },
       };
       localStorage.setItem(
@@ -317,7 +328,7 @@ describe("multiTabStorage", () => {
   });
 
   describe("migrateFromV1 (via loadMultiTabStorage)", () => {
-    const LEGACY_KEY = "gantt-app-state";
+    const LEGACY_KEY = LEGACY_V1_STORAGE_KEY;
 
     it("should migrate valid v1 data to v2 format", () => {
       const v1Data = {
@@ -578,6 +589,161 @@ describe("multiTabStorage", () => {
 
       expect(localStorage.getItem(STORAGE_KEY)).toBeNull();
       expect(sessionStorage.getItem(TAB_ID_KEY)).toBeNull();
+    });
+  });
+
+  describe("isValidTabEntry — fileState field types", () => {
+    function makeEntry(fileStateOverrides: Record<string, unknown>) {
+      return {
+        tabId: "tab-1",
+        lastActive: Date.now(),
+        tasks: [],
+        dependencies: [],
+        chartState: {
+          zoom: 1,
+          panOffset: { x: 0, y: 0 },
+          showWeekends: true,
+          showTodayMarker: true,
+        },
+        fileState: { isDirty: false, ...fileStateOverrides },
+      };
+    }
+
+    it("should discard entries where fileName is a non-string, non-null value", () => {
+      localStorage.setItem(
+        STORAGE_KEY,
+        JSON.stringify({
+          version: STORAGE_VERSION,
+          charts: { "tab-1": makeEntry({ fileName: 42 }) },
+        })
+      );
+      expect(loadMultiTabStorage().charts["tab-1"]).toBeUndefined();
+    });
+
+    it("should discard entries where chartId is a non-string, non-null value", () => {
+      localStorage.setItem(
+        STORAGE_KEY,
+        JSON.stringify({
+          version: STORAGE_VERSION,
+          charts: { "tab-1": makeEntry({ chartId: true }) },
+        })
+      );
+      expect(loadMultiTabStorage().charts["tab-1"]).toBeUndefined();
+    });
+
+    it("should discard entries where lastSaved is a non-string, non-null value", () => {
+      localStorage.setItem(
+        STORAGE_KEY,
+        JSON.stringify({
+          version: STORAGE_VERSION,
+          charts: { "tab-1": makeEntry({ lastSaved: [] }) },
+        })
+      );
+      expect(loadMultiTabStorage().charts["tab-1"]).toBeUndefined();
+    });
+
+    it("should accept entries where fileName, chartId, lastSaved are null", () => {
+      localStorage.setItem(
+        STORAGE_KEY,
+        JSON.stringify({
+          version: STORAGE_VERSION,
+          charts: {
+            "tab-1": makeEntry({
+              fileName: null,
+              chartId: null,
+              lastSaved: null,
+            }),
+          },
+        })
+      );
+      expect(loadMultiTabStorage().charts["tab-1"]).toBeDefined();
+    });
+
+    it("should accept entries where fileName, chartId, lastSaved are strings", () => {
+      localStorage.setItem(
+        STORAGE_KEY,
+        JSON.stringify({
+          version: STORAGE_VERSION,
+          charts: {
+            "tab-1": makeEntry({
+              fileName: "project.ownchart",
+              chartId: "abc-123",
+              lastSaved: "2025-01-01T00:00:00.000Z",
+            }),
+          },
+        })
+      );
+      expect(loadMultiTabStorage().charts["tab-1"]).toBeDefined();
+    });
+  });
+
+  describe("isValidTabEntry — chartState required boolean flags", () => {
+    it("should discard entries where chartState is missing showWeekends", () => {
+      const entry = {
+        tabId: "tab-1",
+        lastActive: Date.now(),
+        tasks: [],
+        dependencies: [],
+        chartState: { zoom: 1, panOffset: { x: 0, y: 0 }, showTodayMarker: true },
+        fileState: { isDirty: false },
+      };
+      localStorage.setItem(
+        STORAGE_KEY,
+        JSON.stringify({ version: STORAGE_VERSION, charts: { "tab-1": entry } })
+      );
+      expect(loadMultiTabStorage().charts["tab-1"]).toBeUndefined();
+    });
+
+    it("should discard entries where chartState is missing showTodayMarker", () => {
+      const entry = {
+        tabId: "tab-1",
+        lastActive: Date.now(),
+        tasks: [],
+        dependencies: [],
+        chartState: { zoom: 1, panOffset: { x: 0, y: 0 }, showWeekends: true },
+        fileState: { isDirty: false },
+      };
+      localStorage.setItem(
+        STORAGE_KEY,
+        JSON.stringify({ version: STORAGE_VERSION, charts: { "tab-1": entry } })
+      );
+      expect(loadMultiTabStorage().charts["tab-1"]).toBeUndefined();
+    });
+  });
+
+  describe("save failure handling", () => {
+    it("updateTabActivity should not throw when save fails", () => {
+      saveMultiTabStorage({
+        version: STORAGE_VERSION,
+        charts: { "tab-1": createTabChartData("tab-1") },
+      });
+      vi.spyOn(Storage.prototype, "setItem").mockImplementationOnce(() => {
+        throw new Error("QuotaExceededError");
+      });
+      expect(() => updateTabActivity("tab-1")).not.toThrow();
+    });
+
+    it("removeTab should not throw when save fails", () => {
+      saveMultiTabStorage({
+        version: STORAGE_VERSION,
+        charts: { "tab-1": createTabChartData("tab-1") },
+      });
+      vi.spyOn(Storage.prototype, "setItem").mockImplementationOnce(() => {
+        throw new Error("QuotaExceededError");
+      });
+      expect(() => removeTab("tab-1")).not.toThrow();
+    });
+
+    it("cleanupInactiveTabs should not throw when save fails", () => {
+      const dayAgo = Date.now() - 25 * 60 * 60 * 1000;
+      saveMultiTabStorage({
+        version: STORAGE_VERSION,
+        charts: { old: createTabChartData("old", { lastActive: dayAgo }) },
+      });
+      vi.spyOn(Storage.prototype, "setItem").mockImplementationOnce(() => {
+        throw new Error("QuotaExceededError");
+      });
+      expect(() => cleanupInactiveTabs()).not.toThrow();
     });
   });
 });

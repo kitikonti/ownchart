@@ -110,7 +110,7 @@ describe("useMultiTabPersistence", () => {
         },
       };
 
-      seedTabStorage("tab-test", { colorModeState: themeColorMode });
+      seedTabStorage("tab-1111111111-test001", { colorModeState: themeColorMode });
 
       renderHook(() => useMultiTabPersistence());
 
@@ -121,7 +121,7 @@ describe("useMultiTabPersistence", () => {
 
     it("should keep default colorModeState when not in saved data", () => {
       // Seed without colorModeState (backward compat)
-      seedTabStorage("tab-test", {});
+      seedTabStorage("tab-1111111111-test001", {});
 
       renderHook(() => useMultiTabPersistence());
 
@@ -130,7 +130,7 @@ describe("useMultiTabPersistence", () => {
     });
 
     it("should restore basic chart settings", () => {
-      seedTabStorage("tab-test", {
+      seedTabStorage("tab-1111111111-test001", {
         zoom: 2.5,
         panOffset: { x: 100, y: 50 },
         showWeekends: false,
@@ -147,7 +147,7 @@ describe("useMultiTabPersistence", () => {
 
   describe("save on state change", () => {
     it("should persist colorModeState when it changes", async () => {
-      const tabId = "tab-save-test";
+      const tabId = "tab-1234567890-abcdef7";
       sessionStorage.setItem(TAB_ID_KEY, tabId);
 
       renderHook(() => useMultiTabPersistence());
@@ -175,7 +175,7 @@ describe("useMultiTabPersistence", () => {
 
   describe("colorModeState round-trip", () => {
     it("should survive save → reload → restore cycle", () => {
-      const tabId = "tab-roundtrip";
+      const tabId = "tab-9876543210-abc1234";
       sessionStorage.setItem(TAB_ID_KEY, tabId);
 
       const customColorMode: ColorModeState = {

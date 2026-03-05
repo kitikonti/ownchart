@@ -25,12 +25,24 @@ import type { TaskId } from "../types/branded.types";
 import type { ColorModeState } from "../types/colorMode.types";
 import type { Dependency } from "../types/dependency.types";
 
-const STORAGE_KEY = "ownchart-multi-tab-state";
-const LEGACY_V1_STORAGE_KEY = "gantt-app-state";
-const STORAGE_VERSION = 2;
-const TAB_ID_KEY = "ownchart-tab-id";
+export const STORAGE_KEY = "ownchart-multi-tab-state";
+export const LEGACY_V1_STORAGE_KEY = "gantt-app-state";
+/**
+ * Bump this only when the storage schema changes in a breaking way.
+ *
+ * Migration checklist for bumping STORAGE_VERSION (e.g. 2 → 3):
+ *  1. Implement `migrateFromV2(oldData, tabId)` mirroring `buildV2FromV1`.
+ *  2. Add a `data.version === 2` branch inside `validateStorageRoot` that calls
+ *     it; only reset storage for truly unknown versions (< 2 or > CURRENT).
+ *  3. Add tests for the new migration path.
+ *  4. Keep old migration helpers for reference — never delete them.
+ */
+export const STORAGE_VERSION = 2;
+export const TAB_ID_KEY = "ownchart-tab-id";
 const TAB_TIMEOUT_MS = 1000 * 60 * 60 * 24; // 24 hours - cleanup inactive tabs
 const TAB_ID_SUFFIX_LENGTH = 7; // random alphanumeric chars appended to tab ID
+// Pre-compiled regex for tab ID validation (matches the output of generateTabId)
+const TAB_ID_REGEX = /^tab-\d+-[a-z0-9]+$/;
 
 export interface ChartState {
   zoom: number;
@@ -118,7 +130,7 @@ export function generateTabId(): string {
 export function getTabId(): string {
   const stored = sessionStorage.getItem(TAB_ID_KEY);
 
-  if (stored && stored.startsWith("tab-")) {
+  if (stored && TAB_ID_REGEX.test(stored)) {
     return stored;
   }
 
@@ -202,6 +214,8 @@ function arePlainObjects(arr: unknown[]): boolean {
  */
 function isValidChartStateShape(cs: Record<string, unknown>): boolean {
   if (typeof cs.zoom !== "number") return false;
+  if (typeof cs.showWeekends !== "boolean") return false;
+  if (typeof cs.showTodayMarker !== "boolean") return false;
   if (
     !cs.panOffset ||
     typeof cs.panOffset !== "object" ||
@@ -261,7 +275,15 @@ function isValidTabEntry(entry: unknown): entry is TabChartData {
     return false;
   }
   const fs = e.fileState as Record<string, unknown>;
-  return typeof fs.isDirty === "boolean";
+  if (typeof fs.isDirty !== "boolean") return false;
+  // Validate string | null fields — wrong types (e.g. numbers) pass JSON parse
+  // but would cause runtime errors if callers invoke string methods on them.
+  // Use loose != null so that missing fields (undefined) are also accepted for
+  // backwards-compatibility with storage written before these fields existed.
+  if (fs.fileName != null && typeof fs.fileName !== "string") return false;
+  if (fs.chartId != null && typeof fs.chartId !== "string") return false;
+  if (fs.lastSaved != null && typeof fs.lastSaved !== "string") return false;
+  return true;
 }
 
 // ─── Core Storage Operations ──────────────────────────────────────────────────
@@ -338,6 +360,54 @@ function filterValidTabEntries(
 }
 
 /**
+ * Validates the root structure of parsed localStorage data and returns the
+ * raw charts map, or null if the structure is invalid.
+ *
+ * The version-mismatch warning is unconditional (not DEV-only) because
+ * silently discarding all chart data is a significant event that users should
+ * be able to observe in production DevTools. See the STORAGE_VERSION migration
+ * checklist above before bumping the version number.
+ *
+ * Callers should return an empty MultiTabStorage when this returns null.
+ */
+function validateStorageRoot(parsed: unknown): Record<string, unknown> | null {
+  if (!parsed || typeof parsed !== "object" || Array.isArray(parsed)) {
+    if (import.meta.env.DEV) {
+      console.warn(
+        "Multi-tab storage: root value is not a plain object — resetting"
+      );
+    }
+    return null;
+  }
+
+  const data = parsed as Record<string, unknown>;
+
+  if (data.version !== STORAGE_VERSION) {
+    console.warn(
+      `Multi-tab storage: version mismatch (expected ${STORAGE_VERSION}, ` +
+        `got ${String(data.version)}) — resetting. ` +
+        "If you recently updated the app, this is expected."
+    );
+    return null;
+  }
+
+  // Structural guard — corrupt or tampered data must not crash callers that
+  // call Object.keys/values on charts (getActiveTabs, cleanupInactiveTabs, etc.)
+  if (
+    !data.charts ||
+    typeof data.charts !== "object" ||
+    Array.isArray(data.charts)
+  ) {
+    console.warn(
+      'Multi-tab storage: "charts" field is invalid — resetting to empty'
+    );
+    return null;
+  }
+
+  return data.charts as Record<string, unknown>;
+}
+
+/**
  * Load entire multi-tab storage from localStorage
  */
 export function loadMultiTabStorage(): MultiTabStorage {
@@ -352,44 +422,16 @@ export function loadMultiTabStorage(): MultiTabStorage {
       return { version: STORAGE_VERSION, charts: {} };
     }
 
-    // Parse as unknown first — never trust data from user-controlled storage
-    const parsed: unknown = JSON.parse(stored);
-
-    if (!parsed || typeof parsed !== "object" || Array.isArray(parsed)) {
-      if (import.meta.env.DEV) {
-        console.warn(
-          "Multi-tab storage: root value is not a plain object — resetting"
-        );
-      }
+    // Never trust data from user-controlled storage — parse then validate
+    const rawCharts = validateStorageRoot(JSON.parse(stored));
+    if (!rawCharts) {
       return { version: STORAGE_VERSION, charts: {} };
     }
 
-    const data = parsed as Record<string, unknown>;
-
-    if (data.version !== STORAGE_VERSION) {
-      if (import.meta.env.DEV) {
-        console.warn("Storage version mismatch, clearing old data");
-      }
-      return { version: STORAGE_VERSION, charts: {} };
-    }
-
-    // Structural guard — corrupt or tampered data must not crash callers that
-    // call Object.keys/values on charts (getActiveTabs, cleanupInactiveTabs, etc.)
-    if (
-      !data.charts ||
-      typeof data.charts !== "object" ||
-      Array.isArray(data.charts)
-    ) {
-      console.warn(
-        'Multi-tab storage: "charts" field is invalid — resetting to empty'
-      );
-      return { version: STORAGE_VERSION, charts: {} };
-    }
-
-    const validatedCharts = filterValidTabEntries(
-      data.charts as Record<string, unknown>
-    );
-    return { version: STORAGE_VERSION, charts: validatedCharts };
+    return {
+      version: STORAGE_VERSION,
+      charts: filterValidTabEntries(rawCharts),
+    };
   } catch (error) {
     console.error("Failed to load multi-tab storage:", error);
     return { version: STORAGE_VERSION, charts: {} };

@@ -196,6 +196,13 @@ export function validateProgress(progress: number): ValidationResult {
  * Validates that endDate is not before startDate.
  * Both dates must already be valid ISO strings (pre-validated with validateDateString).
  *
+ * Note: if either input is not a parseable date string, `new Date()` returns
+ * an Invalid Date and the comparison evaluates to `false` (NaN arithmetic),
+ * causing the function to return `{ valid: true }`. This is intentional —
+ * invalid date strings are rejected upstream by validateDateString before this
+ * function is reached via validateTask. Direct callers are responsible for
+ * pre-validating inputs.
+ *
  * Exported for direct unit testing.
  */
 export function validateDateRange(
@@ -243,7 +250,7 @@ function validateTaskTypeConstraints(task: Partial<Task>): ValidationResult {
  * - endDate >= startDate
  * - Valid progress (0-100, fractional values allowed)
  * - Valid color (hex code)
- * - Type-specific validation (summary, milestone, task)
+ * - Type-specific validation (milestone: must have duration 0)
  *
  * @param task - Partial task object to validate
  * @returns Validation result with error message if invalid
