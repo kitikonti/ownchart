@@ -33,8 +33,8 @@ const BASE_ROW_HEIGHT = 44;
 /** Minimum corner radius regardless of row height scaling. */
 const MIN_CORNER_RADIUS_PX = 4;
 
-/** Pixel tolerance below which vertical offset is treated as same row. */
-const SAME_ROW_TOLERANCE_PX = 2;
+/** Vertical distance (exclusive upper bound) below which two points are treated as same-row. */
+const SAME_ROW_THRESHOLD_PX = 2;
 
 /** Multiplier applied to corner radius to compute minimum vertical space needed for S-curve turns. */
 const CURVE_SPACE_MULTIPLIER = 4;
@@ -69,9 +69,9 @@ function getVerticalDir(from: Point, to: Point): 1 | -1 {
   return to.y >= from.y ? 1 : -1;
 }
 
-/** True when the vertical distance between two points is within the same-row tolerance. */
+/** True when the vertical distance between two points is strictly less than SAME_ROW_THRESHOLD_PX. */
 function isSameRow(from: Point, to: Point): boolean {
-  return Math.abs(to.y - from.y) < SAME_ROW_TOLERANCE_PX;
+  return Math.abs(to.y - from.y) < SAME_ROW_THRESHOLD_PX;
 }
 
 /** Build a straight line path from `from` to `to`. */
@@ -120,7 +120,7 @@ function buildTwoCornerPath(
 function calculateSimpleElbow(
   from: Point,
   to: Point,
-  baseRadius: number = BASE_CORNER_RADIUS
+  baseRadius: number
 ): string {
   const horizontalGap = to.x - from.x;
   const verticalGap = Math.abs(to.y - from.y);
@@ -205,22 +205,21 @@ function buildSCurvePath(
 }
 
 /**
- * Calculate routed path when tasks are close together or overlapping.
- * Creates an inverted S-shape to route around the tasks.
+ * Route a path when the horizontal gap is too small for a standard elbow.
+ * Delegates to a compact 2-corner elbow when there is just enough room,
+ * or falls back to a 4-corner S-curve when tasks are very close or overlapping.
  */
 function calculateRoutedPath(
   from: Point,
   to: Point,
-  rowHeight: number = BASE_ROW_HEIGHT,
-  cornerRadius: number = BASE_CORNER_RADIUS
+  rowHeight: number,
+  cornerRadius: number
 ): string {
-  const firstVerticalX = from.x + HORIZONTAL_SEGMENT;
-  const secondVerticalX = to.x - HORIZONTAL_SEGMENT;
+  const horizontalGap = to.x - from.x;
 
-  // Transition case: both vertical-segment lines (offset inward by one corner radius) still fit
-  // left-to-right, so there is just enough horizontal room for a compact 2-corner elbow instead
-  // of a full S-curve. Effective lower-bound gap: HORIZONTAL_SEGMENT * 2 − cornerRadius * 2.
-  if (firstVerticalX - cornerRadius <= secondVerticalX + cornerRadius) {
+  // Transition case: enough horizontal room for a compact 2-corner elbow.
+  // Effective lower-bound gap: HORIZONTAL_SEGMENT * 2 − cornerRadius * 2.
+  if (horizontalGap >= 2 * (HORIZONTAL_SEGMENT - cornerRadius)) {
     return calculateSimpleElbow(from, to, cornerRadius);
   }
 

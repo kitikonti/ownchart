@@ -61,8 +61,8 @@ describe("calculateArrowPath", () => {
       expect(result.arrowHead.y).toBe(115);
     });
 
-    it("treats rows within SAME_ROW_TOLERANCE_PX as same-row (straight line)", () => {
-      // from.y = 100 + 30/2 = 115, to.y = 101 + 30/2 = 116, |diff| = 1 < SAME_ROW_TOLERANCE_PX(2)
+    it("treats rows within SAME_ROW_THRESHOLD_PX as same-row (straight line)", () => {
+      // from.y = 100 + 30/2 = 115, to.y = 101 + 30/2 = 116, |diff| = 1 < SAME_ROW_THRESHOLD_PX(2)
       const fromPos = pos(0, 100, 100, 30);
       const toPos = pos(200, 101, 100, 30);
 
@@ -72,8 +72,8 @@ describe("calculateArrowPath", () => {
       expect(result.path).toMatch(/M 100 115 L 200 116/);
     });
 
-    it("curves when vertical offset meets SAME_ROW_TOLERANCE_PX", () => {
-      // from.y = 115, to.y = 102 + 30/2 = 117, |diff| = 2 = SAME_ROW_TOLERANCE_PX → not same-row
+    it("curves when vertical offset meets SAME_ROW_THRESHOLD_PX (exclusive)", () => {
+      // from.y = 115, to.y = 102 + 30/2 = 117, |diff| = 2 = SAME_ROW_THRESHOLD_PX → not same-row (exclusive bound)
       const fromPos = pos(0, 100, 100, 30);
       const toPos = pos(200, 102, 100, 30);
 
@@ -86,7 +86,7 @@ describe("calculateArrowPath", () => {
   describe("routed path (small/negative gap)", () => {
     it("should use 4-corner S-curve when horizontal gap is very small (< 14px at default rowHeight)", () => {
       // gap=10px < compact-elbow threshold (HORIZONTAL_SEGMENT*2 − cornerRadius*2 = 14px at default)
-      // → calculateRoutedPath → firstVerticalX-r(107) > secondVerticalX+r(103) → S-curve
+      // → calculateRoutedPath → gap(10) < 2*(HS-r)(14) → S-curve
       const fromPos = pos(0, 100, 100, 30); // ends at x=100, centerY=115
       const toPos = pos(110, 200, 100, 30); // starts at x=110, centerY=215 (gap=10px)
 
@@ -111,7 +111,7 @@ describe("calculateArrowPath", () => {
 
     it("should handle same-row tasks with small gap via S-curve extending below", () => {
       // gap=10px < minGapForElbow=46 → calculateRoutedPath
-      // firstVerticalX-r=107 > secondVerticalX+r=103 → S-curve (not simple elbow)
+      // gap(10) < 2*(HS-r)=14 → S-curve (not simple elbow)
       // isSameRow → verticalDistance=0 < minSpaceForCurves=32 → offset kicks in
       // offset = max(32/2, 44*0.4) = max(16, 17.6) = 17.6 → middleY = 115 + 17.6 = 132.6
       const fromPos = pos(0, 100, 100, 30);  // from: {x:100, y:115}
@@ -127,7 +127,7 @@ describe("calculateArrowPath", () => {
 
     it("should fall back to simple elbow in transition case (gap 20px, default rowHeight → threshold 14–46px)", () => {
       // gap = 20px → in the compact-elbow zone (HORIZONTAL_SEGMENT*2 − r*2 ≤ gap < minGapForElbow)
-      // firstVerticalX - r <= secondVerticalX + r → falls back to calculateSimpleElbow (2 Q corners, not 4)
+      // gap(20) ≥ 2*(HS-r)=14 → falls back to calculateSimpleElbow (2 Q corners, not 4)
       const fromPos = pos(0, 100, 100, 30); // ends at x=100, centerY=115
       const toPos = pos(120, 200, 100, 30); // starts at x=120, centerY=215 (gap=20px)
 
@@ -261,14 +261,14 @@ describe("calculateArrowPath", () => {
     });
 
     it("uses simple elbow at the upper S-curve boundary (gap=14)", () => {
-      // firstVerticalX-r = 107 ≤ secondVerticalX+r = 107 → equal → simple elbow
+      // gap=14 ≥ 2*(HS-r)=14 → equal → simple elbow
       const result = calculateArrowPath(fromPos, pos(114, 200, 100, 30));
       const qCount = (result.path.match(/Q /g) || []).length;
       expect(qCount).toBe(2);
     });
 
     it("uses S-curve just below the simple-elbow zone (gap=13)", () => {
-      // firstVerticalX-r = 107 > secondVerticalX+r = 106 → S-curve
+      // gap=13 < 2*(HS-r)=14 → S-curve
       const result = calculateArrowPath(fromPos, pos(113, 200, 100, 30));
       const qCount = (result.path.match(/Q /g) || []).length;
       expect(qCount).toBe(4);
