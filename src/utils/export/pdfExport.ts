@@ -24,9 +24,11 @@ import {
   getPageDimensions,
   getMargins,
   getReservedSpace,
-  mmToPx,
+  pxToMm,
+  hexToRgb,
   calculatePdfFitToWidth,
   hasHeaderFooterContent,
+  type PdfColor,
 } from "./pdfLayout";
 import { ExportRenderer } from "../../components/Export/ExportRenderer";
 import { calculateExportDimensions } from "./exportLayout";
@@ -34,7 +36,12 @@ import { calculateTaskTableWidth } from "./calculations";
 import { buildFlattenedTaskList } from "../hierarchy";
 import { type DateFormat } from "../../types/preferences.types";
 import { formatDateByPreference } from "../dateUtils";
-import { HEADER_HEIGHT, SVG_FONT_FAMILY } from "./constants";
+import {
+  HEADER_HEIGHT,
+  SVG_FONT_FAMILY,
+  EXPORT_COLORS,
+  EXPORT_CHART_SVG_CLASS,
+} from "./constants";
 import { registerInterFont } from "./interFont";
 import {
   waitForFonts,
@@ -57,11 +64,19 @@ import type { ColorModeState } from "../../types/colorMode.types";
 /** Font size for header/footer banner text in points */
 const PDF_BANNER_FONT_SIZE_PT = 9;
 
-/** Text color for header/footer labels — neutral-600 (#475569) */
-const PDF_TEXT_COLOR_RGB: [number, number, number] = [71, 85, 105];
+/**
+ * Text color for header/footer labels.
+ * Derived from the design-token EXPORT_COLORS.textSecondary (neutral-600)
+ * so it stays in sync when the design system changes.
+ */
+const PDF_TEXT_COLOR: PdfColor = hexToRgb(EXPORT_COLORS.textSecondary);
 
-/** Separator line color — neutral-200 (#e2e8f0) */
-const PDF_BORDER_COLOR_RGB: [number, number, number] = [226, 232, 240];
+/**
+ * Separator line color.
+ * Derived from EXPORT_COLORS.border (neutral-200) — same token used by the
+ * task-table header borders in the SVG export path.
+ */
+const PDF_BORDER_COLOR: PdfColor = hexToRgb(EXPORT_COLORS.border);
 
 /** Separator line width in millimeters */
 const PDF_SEPARATOR_LINE_WIDTH_MM = 0.1;
@@ -93,6 +108,18 @@ const DEFAULT_PDF_TITLE = "Project Timeline";
 
 /** Default PDF document subject metadata */
 const PDF_DEFAULT_SUBJECT = "Gantt Chart Export";
+
+/** jsPDF registered font name for the embedded Inter typeface */
+const PDF_FONT_NAME = "Inter";
+
+/** jsPDF font style for Inter Regular */
+const PDF_FONT_STYLE = "normal" as const;
+
+/**
+ * CSS class applied to the timeline header SVG element in ExportRenderer.
+ * Must match the className prop on that element.
+ */
+const EXPORT_TIMELINE_HEADER_SVG_CLASS = "export-timeline-header";
 
 /** Progress checkpoint values emitted via onProgress during export */
 const EXPORT_PROGRESS = {
@@ -174,7 +201,7 @@ interface SvgChartLayout {
 }
 
 /** Reserved vertical space in mm for PDF header/footer strips */
-interface ReservedSpace {
+export interface ReservedSpace {
   header: number;
   footer: number;
 }
@@ -379,22 +406,20 @@ function extractSvgFromContainer(
   dimensions: PixelDimensions,
   ctx: SvgAssemblyContext
 ): SVGSVGElement {
-  const chartSvgEl = container.querySelector("svg.gantt-chart");
-  if (!chartSvgEl) {
-    throw new Error("Could not find chart SVG element");
-  }
+  const chartSvgEl = container.querySelector(`svg.${EXPORT_CHART_SVG_CLASS}`);
   if (!(chartSvgEl instanceof SVGSVGElement)) {
-    throw new Error("Chart SVG element is not an SVGSVGElement");
-  }
-
-  const headerSvgEl = container.querySelector("svg.export-timeline-header");
-  const headerSvg = headerSvgEl instanceof SVGSVGElement ? headerSvgEl : null;
-
-  if (ctx.options.includeHeader && !headerSvg) {
-    console.warn(
-      "[pdfExport] Timeline header SVG not found — PDF will be rendered without it"
+    // querySelector returns null when not found; instanceof handles both cases
+    throw new Error(
+      `Chart SVG element (.${EXPORT_CHART_SVG_CLASS}) not found in export container`
     );
   }
+
+  const headerSvgEl = container.querySelector(
+    `svg.${EXPORT_TIMELINE_HEADER_SVG_CLASS}`
+  );
+  const headerSvg = headerSvgEl instanceof SVGSVGElement ? headerSvgEl : null;
+  // When includeHeader is true but the header SVG is absent, appendExportHeader
+  // no-ops gracefully — the export continues without the timeline header.
 
   return buildCompleteSvg(chartSvgEl, headerSvg, dimensions, ctx);
 }
@@ -413,7 +438,7 @@ async function buildAndSavePdf(
   settings: PdfDocumentSettings,
   onProgress?: (progress: number) => void
 ): Promise<void> {
-  const { pdfOptions, dateFormat, projectName } = settings;
+  const { pdfOptions, dateFormat, projectName, metadata } = settings;
   const pageDims = getPageDimensions(pdfOptions);
   const margins = getMargins(pdfOptions);
   const reserved: ReservedSpace = {
@@ -443,7 +468,7 @@ async function buildAndSavePdf(
       dateFormat,
     },
     pdfOptions,
-    settings.metadata,
+    metadata,
     reserved
   );
 
@@ -468,7 +493,7 @@ function createPdfDocument(
 
   // Register Inter font for consistent rendering across all platforms
   registerInterFont(doc);
-  doc.setFont("Inter", "normal");
+  doc.setFont(PDF_FONT_NAME, PDF_FONT_STYLE);
 
   doc.setProperties({
     title: metadata.title,
@@ -505,8 +530,10 @@ async function embedSvgInDocument(
  * Calculate the scaled position and dimensions of the chart SVG within
  * the PDF page's content area, preserving aspect ratio and centering
  * horizontally.
+ *
+ * Exported for unit testing.
  */
-function computeChartPlacement(
+export function computeChartPlacement(
   dimensions: PixelDimensions,
   pageDims: { width: number; height: number },
   margins: PdfMargins,
@@ -520,13 +547,16 @@ function computeChartPlacement(
     reserved.header -
     reserved.footer;
 
-  // Scale SVG to fit the available content area while preserving aspect ratio
+  // Convert SVG px dimensions to mm so both sides of the ratio are in the
+  // same unit, making the resulting scale factor dimensionless.
+  const svgWidthMm = pxToMm(dimensions.width);
+  const svgHeightMm = pxToMm(dimensions.height);
   const scale = Math.min(
-    mmToPx(contentWidth) / dimensions.width,
-    mmToPx(contentHeight) / dimensions.height
+    contentWidth / svgWidthMm,
+    contentHeight / svgHeightMm
   );
-  const finalWidthMm = (dimensions.width * scale) / mmToPx(1);
-  const finalHeightMm = (dimensions.height * scale) / mmToPx(1);
+  const finalWidthMm = svgWidthMm * scale;
+  const finalHeightMm = svgHeightMm * scale;
 
   // Centre horizontally within the content area; pin vertically to header
   const offsetX = margins.left + (contentWidth - finalWidthMm) / 2;
@@ -580,8 +610,8 @@ function renderPdfBanner(
   const { doc, margins, pageWidth, dateFormat } = ctx;
 
   doc.setFontSize(PDF_BANNER_FONT_SIZE_PT);
-  doc.setTextColor(...PDF_TEXT_COLOR_RGB);
-  doc.setDrawColor(...PDF_BORDER_COLOR_RGB);
+  doc.setTextColor(PDF_TEXT_COLOR.r, PDF_TEXT_COLOR.g, PDF_TEXT_COLOR.b);
+  doc.setDrawColor(PDF_BORDER_COLOR.r, PDF_BORDER_COLOR.g, PDF_BORDER_COLOR.b);
   doc.setLineWidth(PDF_SEPARATOR_LINE_WIDTH_MM);
 
   // Footer: separator above text so text renders on top
@@ -705,6 +735,8 @@ function appendChartContent(
   const { taskTableWidth, contentY } = layout;
 
   if (taskTableWidth > 0) {
+    // hiddenTaskIds is empty: ctx.tasks is already pre-filtered by prepareExportTasks,
+    // so no rows need to be hidden at this stage.
     const flattenedTasks = buildFlattenedTaskList(ctx.tasks, new Set<TaskId>());
     const rowsGroup = renderTaskTableRows(
       svg,

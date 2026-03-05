@@ -35,6 +35,13 @@ export const EXPORT_COLORS = {
 } as const;
 
 /**
+ * CSS class applied to the main Gantt chart SVG element by ExportRenderer.
+ * Used as a querySelector selector by PDF and SVG export utilities.
+ * Must stay in sync with the className prop on that element in ExportRenderer.tsx.
+ */
+export const EXPORT_CHART_SVG_CLASS = "gantt-chart";
+
+/**
  * Phosphor icon SVG paths for task types (256x256 viewBox).
  * These are used in task table rendering for SVG/PDF export.
  */
