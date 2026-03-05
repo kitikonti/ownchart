@@ -3,7 +3,7 @@
  *
  * Replaces useLocalStoragePersistence with multi-tab support.
  * Each browser tab can work on a different chart simultaneously.
- * Tabs automatically sync via storage events.
+ * Each tab persists to its own localStorage key; there is no live cross-tab sync.
  */
 
 import { useEffect, useRef } from "react";
@@ -62,8 +62,7 @@ function restoreChartState(chartState: ChartState): void {
   if (chartState.taskLabelPosition !== undefined)
     store.setTaskLabelPosition(chartState.taskLabelPosition);
   if (chartState.workingDaysConfig !== undefined)
-    // setWorkingDaysConfig auto-derives workingDaysMode
-    store.setWorkingDaysConfig(chartState.workingDaysConfig);
+    store.setWorkingDaysConfig(chartState.workingDaysConfig); // auto-derives workingDaysMode
   if (chartState.holidayRegion !== undefined)
     store.setHolidayRegion(chartState.holidayRegion);
   if (chartState.projectTitle !== undefined)
@@ -194,7 +193,11 @@ function useTabAutoSave(
     const tabId = tabIdRef.current;
 
     const saveCurrentState = (): void => {
-      // Don't save during initial restoration to avoid loops
+      // Don't save during initial restoration to avoid overwriting restored state
+      // with stale defaults. The initial mount path is safe because useTabRestore
+      // runs its effect before useTabAutoSave sets up subscriptions (effects run
+      // in declaration order). The guard matters on remount — e.g. React StrictMode
+      // double-invoke — where subscriptions may fire before restoration completes.
       if (isRestoringRef.current) return;
 
       if (saveTimerRef.current !== null) {

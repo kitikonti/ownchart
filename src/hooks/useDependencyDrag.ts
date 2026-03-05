@@ -40,14 +40,18 @@ interface UseDependencyDragReturn {
   ) => TaskId | null;
 }
 
-const initialDragState: DependencyDragState = {
-  isDragging: false,
-  fromTaskId: null,
-  fromSide: null,
-  currentPosition: { x: 0, y: 0 },
-  validTargets: new Set<TaskId>(),
-  invalidTargets: new Set<TaskId>(),
-};
+/** Returns a fresh initial drag state. Using a factory avoids sharing mutable
+ * Set instances across drag sessions. */
+function createInitialDragState(): DependencyDragState {
+  return {
+    isDragging: false,
+    fromTaskId: null,
+    fromSide: null,
+    currentPosition: { x: 0, y: 0 },
+    validTargets: new Set<TaskId>(),
+    invalidTargets: new Set<TaskId>(),
+  };
+}
 
 /**
  * Determine which task is the dependency source and which is the target
@@ -94,6 +98,13 @@ function resolveDragTargets(
   return { validTargets, invalidTargets };
 }
 
+const DEPENDENCY_DRAG_MESSAGES = {
+  created: (fromName: string, toName: string) =>
+    `Dependency created: ${fromName} → ${toName}`,
+  failed: (error?: string) => error ?? "Failed to create dependency",
+  wouldCreateCycle: "Cannot create: Would create circular dependency",
+} as const;
+
 /** Attempt to create a dependency and show a toast for success or failure. */
 function attemptCreateDependency(
   fromTaskId: TaskId,
@@ -120,13 +131,16 @@ function attemptCreateDependency(
       const fromTask = tasks.find((t) => t.id === fromId);
       const toTask = tasks.find((t) => t.id === toId);
       toast.success(
-        `Dependency created: ${fromTask?.name ?? "?"} → ${toTask?.name ?? "?"}`
+        DEPENDENCY_DRAG_MESSAGES.created(
+          fromTask?.name ?? "?",
+          toTask?.name ?? "?"
+        )
       );
     } else {
-      toast.error(result.error ?? "Failed to create dependency");
+      toast.error(DEPENDENCY_DRAG_MESSAGES.failed(result.error));
     }
   } else if (invalidTargets.has(targetTaskId)) {
-    toast.error("Cannot create: Would create circular dependency");
+    toast.error(DEPENDENCY_DRAG_MESSAGES.wouldCreateCycle);
   }
 }
 
@@ -152,13 +166,52 @@ function findHoveredTaskId(
   return null;
 }
 
+/** Attaches global mouse/keyboard listeners for the duration of a dependency drag. */
+function useDragGlobalEvents(
+  isDragging: boolean,
+  updateDragPosition: (e: MouseEvent) => void,
+  endDrag: (targetTaskId?: TaskId) => void,
+  cancelDrag: () => void
+): void {
+  useEffect(() => {
+    if (!isDragging) return;
+
+    const handleMouseMove = (e: MouseEvent): void => {
+      updateDragPosition(e);
+    };
+
+    const handleMouseUp = (): void => {
+      // Drop outside any task — reset drag state without creating a dependency.
+      // Callers pass an explicit targetTaskId to endDrag when dropping on a task.
+      endDrag();
+    };
+
+    const handleKeyDown = (e: KeyboardEvent): void => {
+      if (e.key === "Escape") {
+        cancelDrag();
+      }
+    };
+
+    document.addEventListener("mousemove", handleMouseMove);
+    document.addEventListener("mouseup", handleMouseUp);
+    document.addEventListener("keydown", handleKeyDown);
+
+    return () => {
+      document.removeEventListener("mousemove", handleMouseMove);
+      document.removeEventListener("mouseup", handleMouseUp);
+      document.removeEventListener("keydown", handleKeyDown);
+    };
+  }, [isDragging, updateDragPosition, endDrag, cancelDrag]);
+}
+
 export function useDependencyDrag({
   tasks,
   svgRef,
   enabled = true,
 }: UseDependencyDragOptions): UseDependencyDragReturn {
-  const [dragState, setDragState] =
-    useState<DependencyDragState>(initialDragState);
+  const [dragState, setDragState] = useState<DependencyDragState>(
+    createInitialDragState
+  );
   const dragStateRef = useRef(dragState);
   dragStateRef.current = dragState;
 
@@ -221,7 +274,7 @@ export function useDependencyDrag({
         dragStateRef.current;
 
       if (!fromTaskId || !fromSide) {
-        setDragState(initialDragState);
+        setDragState(createInitialDragState());
         return;
       }
 
@@ -237,17 +290,21 @@ export function useDependencyDrag({
         );
       }
 
-      setDragState(initialDragState);
+      setDragState(createInitialDragState());
     },
     [addDependency] // stable: task names read via tasksRef, drag state via dragStateRef
   );
 
   // Cancel drag without creating dependency
   const cancelDrag = useCallback((): void => {
-    setDragState(initialDragState);
+    setDragState(createInitialDragState());
   }, []);
 
-  // Check if a task is a valid drop target
+  // `validTargets`/`invalidTargets` are NEW Set instances each drag start but
+  // the SAME references during position updates (spread in updateDragPosition
+  // preserves them). useCallback keyed on the Set reference therefore prevents
+  // consumer re-renders during rapid mousemove events while still updating when
+  // a new drag session begins.
   const isValidTarget = useCallback(
     (taskId: TaskId): boolean => {
       return dragState.validTargets.has(taskId);
@@ -255,7 +312,6 @@ export function useDependencyDrag({
     [dragState.validTargets]
   );
 
-  // Check if a task is an invalid drop target (would create cycle)
   const isInvalidTarget = useCallback(
     (taskId: TaskId): boolean => {
       return dragState.invalidTargets.has(taskId);
@@ -264,37 +320,14 @@ export function useDependencyDrag({
   );
 
   // Handle global mouse events during drag.
-  // endDrag and cancelDrag are now stable (no tasks dep), so this effect
-  // re-registers only when isDragging toggles — not on every task change.
-  useEffect(() => {
-    if (!dragState.isDragging) return;
-
-    const handleMouseMove = (e: MouseEvent): void => {
-      updateDragPosition(e);
-    };
-
-    const handleMouseUp = (): void => {
-      // Drop outside any task — reset drag state without creating a dependency.
-      // Callers pass an explicit targetTaskId to endDrag when dropping on a task.
-      endDrag();
-    };
-
-    const handleKeyDown = (e: KeyboardEvent): void => {
-      if (e.key === "Escape") {
-        cancelDrag();
-      }
-    };
-
-    document.addEventListener("mousemove", handleMouseMove);
-    document.addEventListener("mouseup", handleMouseUp);
-    document.addEventListener("keydown", handleKeyDown);
-
-    return () => {
-      document.removeEventListener("mousemove", handleMouseMove);
-      document.removeEventListener("mouseup", handleMouseUp);
-      document.removeEventListener("keydown", handleKeyDown);
-    };
-  }, [dragState.isDragging, updateDragPosition, endDrag, cancelDrag]);
+  // endDrag and cancelDrag are stable (no tasks dep), so this re-registers
+  // only when isDragging toggles — not on every task change.
+  useDragGlobalEvents(
+    dragState.isDragging,
+    updateDragPosition,
+    endDrag,
+    cancelDrag
+  );
 
   return {
     dragState,
