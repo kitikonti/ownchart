@@ -98,6 +98,17 @@ function resolveDragTargets(
   return { validTargets, invalidTargets };
 }
 
+/** Get SVG-local coordinates from a mouse event, falling back to client coords
+ * when no SVG element is available (e.g. during tests without a DOM). */
+function getEventCoords(
+  e: MouseEvent | React.MouseEvent,
+  svg: SVGSVGElement | null | undefined
+): { x: number; y: number } {
+  return svg
+    ? clientToSvgCoords(e.clientX, e.clientY, svg)
+    : { x: e.clientX, y: e.clientY };
+}
+
 const DEPENDENCY_DRAG_MESSAGES = {
   created: (fromName: string, toName: string) =>
     `Dependency created: ${fromName} → ${toName}`,
@@ -105,19 +116,30 @@ const DEPENDENCY_DRAG_MESSAGES = {
   wouldCreateCycle: "Cannot create: Would create circular dependency",
 } as const;
 
-/** Attempt to create a dependency and show a toast for success or failure. */
-function attemptCreateDependency(
-  fromTaskId: TaskId,
-  targetTaskId: TaskId,
-  fromSide: "start" | "end",
-  validTargets: Set<TaskId>,
-  invalidTargets: Set<TaskId>,
-  tasks: Task[],
+/** Options for attempting to create a dependency after a drag. */
+interface AttemptCreateDependencyOptions {
+  fromTaskId: TaskId;
+  targetTaskId: TaskId;
+  fromSide: "start" | "end";
+  validTargets: Set<TaskId>;
+  invalidTargets: Set<TaskId>;
+  tasks: Task[];
   addDependency: (
     fromId: TaskId,
     toId: TaskId
-  ) => { success: boolean; error?: string }
-): void {
+  ) => { success: boolean; error?: string };
+}
+
+/** Attempt to create a dependency and show a toast for success or failure. */
+function attemptCreateDependency({
+  fromTaskId,
+  targetTaskId,
+  fromSide,
+  validTargets,
+  invalidTargets,
+  tasks,
+  addDependency,
+}: AttemptCreateDependencyOptions): void {
   if (validTargets.has(targetTaskId)) {
     const { fromId, toId } = resolveDependencyDirection(
       fromTaskId,
@@ -166,6 +188,10 @@ function findHoveredTaskId(
   return null;
 }
 
+// ---------------------------------------------------------------------------
+// Private sub-hooks (not exported — used only by useDependencyDrag)
+// ---------------------------------------------------------------------------
+
 /** Provides stable callbacks to classify drop targets during a dependency drag.
  * useCallback is keyed on the Set reference, which is a NEW instance each drag
  * start but STABLE during position updates, so consumers don't re-render on
@@ -187,23 +213,115 @@ function useDragTargetClassifier(dragState: DependencyDragState): {
   return { isValidTarget, isInvalidTarget };
 }
 
-/** Tracks the current cursor position in SVG-local coordinates during a drag. */
-function useDragPositionTracker(
+/** Return type for useDragSession. */
+interface DragSession {
+  dragState: DependencyDragState;
+  startDrag: (
+    taskId: TaskId,
+    side: "start" | "end",
+    e: React.MouseEvent
+  ) => void;
+  endDrag: (targetTaskId?: TaskId) => void;
+  cancelDrag: () => void;
+  updateDragPosition: (e: MouseEvent | React.MouseEvent) => void;
+}
+
+/**
+ * Owns all drag session state and the four callbacks (startDrag, endDrag,
+ * cancelDrag, updateDragPosition). Extracted from useDependencyDrag to keep
+ * both functions under the 50-line limit.
+ *
+ * tasksRef and dragStateRef are stable refs so callbacks stay stable across
+ * task-list or drag-state changes without re-registering global listeners.
+ */
+function useDragSession(
+  enabled: boolean,
+  checkWouldCreateCycle: (
+    fromId: TaskId,
+    toId: TaskId
+  ) => { hasCycle: boolean },
+  addDependency: (
+    fromId: TaskId,
+    toId: TaskId
+  ) => { success: boolean; error?: string },
   svgRef: React.RefObject<SVGSVGElement | null> | undefined,
-  setDragState: React.Dispatch<React.SetStateAction<DependencyDragState>>
-): { updateDragPosition: (e: MouseEvent | React.MouseEvent) => void } {
-  const updateDragPosition = useCallback(
-    (e: MouseEvent | React.MouseEvent): void => {
-      const svg = svgRef?.current;
-      const { x, y } = svg
-        ? clientToSvgCoords(e.clientX, e.clientY, svg)
-        : { x: e.clientX, y: e.clientY };
-      setDragState((prev) => ({ ...prev, currentPosition: { x, y } }));
+  tasksRef: { current: Task[] }
+): DragSession {
+  const [dragState, setDragState] = useState<DependencyDragState>(
+    createInitialDragState
+  );
+  const dragStateRef = useRef(dragState);
+  dragStateRef.current = dragState;
+
+  // Calculate valid and invalid targets when starting drag.
+  // tasksRef is always current so startDrag stays stable across task-list changes.
+  const startDrag = useCallback(
+    (taskId: TaskId, side: "start" | "end", e: React.MouseEvent): void => {
+      if (!enabled) return;
+
+      const { validTargets, invalidTargets } = resolveDragTargets(
+        taskId,
+        side,
+        tasksRef.current,
+        checkWouldCreateCycle
+      );
+
+      const { x, y } = getEventCoords(e, svgRef?.current);
+      setDragState({
+        isDragging: true,
+        fromTaskId: taskId,
+        fromSide: side,
+        currentPosition: { x, y },
+        validTargets,
+        invalidTargets,
+      });
     },
-    [svgRef, setDragState]
+    [enabled, checkWouldCreateCycle, svgRef] // tasksRef is always current — no tasks dep
   );
 
-  return { updateDragPosition };
+  // End drag and potentially create a dependency.
+  // addDependency is stable; task names and drag state are read via refs.
+  const endDrag = useCallback(
+    (targetTaskId?: TaskId): void => {
+      const { fromTaskId, fromSide, validTargets, invalidTargets } =
+        dragStateRef.current;
+
+      if (!fromTaskId || !fromSide) {
+        setDragState(createInitialDragState());
+        return;
+      }
+
+      if (targetTaskId) {
+        attemptCreateDependency({
+          fromTaskId,
+          targetTaskId,
+          fromSide,
+          validTargets,
+          invalidTargets,
+          tasks: tasksRef.current,
+          addDependency,
+        });
+      }
+
+      setDragState(createInitialDragState());
+    },
+    [addDependency] // stable: drag state via dragStateRef, task names via tasksRef
+  );
+
+  const cancelDrag = useCallback((): void => {
+    setDragState(createInitialDragState());
+  }, []);
+
+  // Tracks the current cursor position in SVG-local coordinates during a drag.
+  const updateDragPosition = useCallback(
+    (e: MouseEvent | React.MouseEvent): void => {
+      const { x, y } = getEventCoords(e, svgRef?.current);
+      setDragState((prev) => ({ ...prev, currentPosition: { x, y } }));
+    },
+    [svgRef]
+  );
+
+  return { dragState, startDrag, endDrag, cancelDrag, updateDragPosition };
 }
 
 /** Attaches global mouse/keyboard listeners for the duration of a dependency drag. */
@@ -215,10 +333,6 @@ function useDragGlobalEvents(
 ): void {
   useEffect(() => {
     if (!isDragging) return;
-
-    const handleMouseMove = (e: MouseEvent): void => {
-      updateDragPosition(e);
-    };
 
     const handleMouseUp = (): void => {
       // Drop outside any task — reset drag state without creating a dependency.
@@ -232,12 +346,15 @@ function useDragGlobalEvents(
       }
     };
 
-    document.addEventListener("mousemove", handleMouseMove);
+    // updateDragPosition accepts (MouseEvent | React.MouseEvent) which is a
+    // supertype of MouseEvent, so it satisfies the addEventListener callback
+    // signature via function parameter contravariance.
+    document.addEventListener("mousemove", updateDragPosition);
     document.addEventListener("mouseup", handleMouseUp);
     document.addEventListener("keydown", handleKeyDown);
 
     return () => {
-      document.removeEventListener("mousemove", handleMouseMove);
+      document.removeEventListener("mousemove", updateDragPosition);
       document.removeEventListener("mouseup", handleMouseUp);
       document.removeEventListener("keydown", handleKeyDown);
     };
@@ -249,12 +366,6 @@ export function useDependencyDrag({
   svgRef,
   enabled = true,
 }: UseDependencyDragOptions): UseDependencyDragReturn {
-  const [dragState, setDragState] = useState<DependencyDragState>(
-    createInitialDragState
-  );
-  const dragStateRef = useRef(dragState);
-  dragStateRef.current = dragState;
-
   // Keep latest tasks in a ref so endDrag (used only for toast labels) stays
   // stable and doesn't force re-registration of global mouse listeners.
   const tasksRef = useRef(tasks);
@@ -262,81 +373,25 @@ export function useDependencyDrag({
 
   const { addDependency, checkWouldCreateCycle } = useDependencyStore();
 
-  // Calculate valid and invalid targets when starting drag.
-  // Reads the task list via tasksRef so startDrag stays stable across task
-  // list changes — matching the same pattern used for endDrag.
-  const startDrag = useCallback(
-    (taskId: TaskId, side: "start" | "end", e: React.MouseEvent): void => {
-      if (!enabled) return;
-
-      const { validTargets, invalidTargets } = resolveDragTargets(
-        taskId,
-        side,
-        tasksRef.current,
-        checkWouldCreateCycle
-      );
-
-      // Get initial position from event, converting to SVG-local coords if possible
-      const svg = svgRef?.current;
-      const { x, y } = svg
-        ? clientToSvgCoords(e.clientX, e.clientY, svg)
-        : { x: e.clientX, y: e.clientY };
-
-      setDragState({
-        isDragging: true,
-        fromTaskId: taskId,
-        fromSide: side,
-        currentPosition: { x, y },
-        validTargets,
-        invalidTargets,
-      });
-    },
-    [enabled, checkWouldCreateCycle, svgRef] // tasksRef is always current — no tasks dep
-  );
-
-  const { updateDragPosition } = useDragPositionTracker(svgRef, setDragState);
-
-  // End drag and potentially create dependency
-  const endDrag = useCallback(
-    (targetTaskId?: TaskId): void => {
-      const { fromTaskId, fromSide, validTargets, invalidTargets } =
-        dragStateRef.current;
-
-      if (!fromTaskId || !fromSide) {
-        setDragState(createInitialDragState());
-        return;
-      }
-
-      if (targetTaskId) {
-        attemptCreateDependency(
-          fromTaskId,
-          targetTaskId,
-          fromSide,
-          validTargets,
-          invalidTargets,
-          tasksRef.current,
-          addDependency
-        );
-      }
-
-      setDragState(createInitialDragState());
-    },
-    [addDependency] // stable: task names read via tasksRef, drag state via dragStateRef
-  );
-
-  // Cancel drag without creating dependency
-  const cancelDrag = useCallback((): void => {
-    setDragState(createInitialDragState());
-  }, []);
+  const { dragState, startDrag, endDrag, cancelDrag, updateDragPosition } =
+    useDragSession(
+      enabled,
+      checkWouldCreateCycle,
+      addDependency,
+      svgRef,
+      tasksRef
+    );
 
   const { isValidTarget, isInvalidTarget } = useDragTargetClassifier(dragState);
 
   // Cancel any in-progress drag if the feature is disabled externally.
+  // cancelDrag is stable (no deps), so this only re-runs when isDragging or
+  // enabled changes — not on every task update.
   useEffect(() => {
     if (!enabled && dragState.isDragging) {
-      setDragState(createInitialDragState());
+      cancelDrag();
     }
-  }, [enabled, dragState.isDragging]);
+  }, [enabled, dragState.isDragging, cancelDrag]);
 
   // Handle global mouse events during drag.
   // endDrag and cancelDrag are stable (no tasks dep), so this re-registers

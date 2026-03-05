@@ -7,6 +7,7 @@
  */
 
 import { useEffect, useRef } from "react";
+import toast from "react-hot-toast";
 import { useTaskStore } from "../store/slices/taskSlice";
 import { useChartStore } from "../store/slices/chartSlice";
 import { useFileStore } from "../store/slices/fileSlice";
@@ -29,6 +30,12 @@ const INITIAL_SAVE_DELAY_MS = 100;
 // ---------------------------------------------------------------------------
 // Pure helper functions (module-level, no closure over hook state)
 // ---------------------------------------------------------------------------
+
+/** Apply `value` to `setter` only if `value` is not undefined.
+ * Reduces the boilerplate of optional-field restoration in restoreChartState. */
+function applyIfDefined<T>(value: T | undefined, setter: (v: T) => void): void {
+  if (value !== undefined) setter(value);
+}
 
 function restoreTableState(tableState: TabChartData["tableState"]): void {
   if (!tableState) return;
@@ -53,30 +60,22 @@ function restoreChartState(chartState: ChartState): void {
   store.setShowTodayMarker(chartState.showTodayMarker);
 
   // Optional fields added in Sprint 1.5.9 — may be absent in older saves
-  if (chartState.showHolidays !== undefined)
-    store.setShowHolidays(chartState.showHolidays);
-  if (chartState.showDependencies !== undefined)
-    store.setShowDependencies(chartState.showDependencies);
-  if (chartState.showProgress !== undefined)
-    store.setShowProgress(chartState.showProgress);
-  if (chartState.taskLabelPosition !== undefined)
-    store.setTaskLabelPosition(chartState.taskLabelPosition);
-  if (chartState.workingDaysConfig !== undefined)
-    store.setWorkingDaysConfig(chartState.workingDaysConfig); // auto-derives workingDaysMode
-  if (chartState.holidayRegion !== undefined)
-    store.setHolidayRegion(chartState.holidayRegion);
-  if (chartState.projectTitle !== undefined)
-    store.setProjectTitle(chartState.projectTitle);
-  if (chartState.projectAuthor !== undefined)
-    store.setProjectAuthor(chartState.projectAuthor);
-  if (chartState.hiddenColumns !== undefined)
-    store.setHiddenColumns(chartState.hiddenColumns);
-  if (chartState.isTaskTableCollapsed !== undefined)
-    store.setTaskTableCollapsed(chartState.isTaskTableCollapsed);
-  if (chartState.hiddenTaskIds !== undefined)
-    store.setHiddenTaskIds(chartState.hiddenTaskIds);
-  if (chartState.colorModeState !== undefined)
-    store.setColorModeState(chartState.colorModeState);
+  applyIfDefined(chartState.showHolidays, store.setShowHolidays);
+  applyIfDefined(chartState.showDependencies, store.setShowDependencies);
+  applyIfDefined(chartState.showProgress, store.setShowProgress);
+  applyIfDefined(chartState.taskLabelPosition, store.setTaskLabelPosition);
+  applyIfDefined(chartState.holidayRegion, store.setHolidayRegion);
+  applyIfDefined(chartState.projectTitle, store.setProjectTitle);
+  applyIfDefined(chartState.projectAuthor, store.setProjectAuthor);
+  applyIfDefined(chartState.hiddenColumns, store.setHiddenColumns);
+  applyIfDefined(chartState.isTaskTableCollapsed, store.setTaskTableCollapsed);
+  applyIfDefined(chartState.hiddenTaskIds, store.setHiddenTaskIds);
+  applyIfDefined(chartState.colorModeState, store.setColorModeState);
+
+  // workingDaysConfig has a special setter that auto-derives workingDaysMode
+  if (chartState.workingDaysConfig !== undefined) {
+    store.setWorkingDaysConfig(chartState.workingDaysConfig);
+  }
 }
 
 function restoreFileState(fileState: TabChartData["fileState"]): void {
@@ -175,6 +174,10 @@ function useTabRestore(
       restoreStateFromChart(savedChart);
     } catch (error) {
       console.error("[useMultiTabPersistence] Failed to restore state:", error);
+      // Inform the user that their previous session could not be restored.
+      // The app continues with default state; the next autosave will overwrite
+      // the corrupted entry so future loads will be clean.
+      toast.error("Could not restore your previous session. Starting fresh.");
     } finally {
       isRestoringRef.current = false;
       // Mark as hydrated after restoration attempt (success or partial failure)
