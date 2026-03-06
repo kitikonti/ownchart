@@ -23,6 +23,8 @@ import {
 } from "../utils/fileOperations/loadFromFile";
 import { sanitizeFilename } from "../utils/export/sanitizeFilename";
 
+const OWNCHART_FILE_EXTENSION = ".ownchart";
+
 /**
  * Generate a suggested filename from project title and current date.
  * Format: <chartname>_<YYYY-MM-DD>.ownchart
@@ -34,7 +36,20 @@ function generateSuggestedFilename(projectTitle: string): string {
   const month = String(now.getMonth() + 1).padStart(2, "0");
   const day = String(now.getDate()).padStart(2, "0");
   const dateStr = `${year}-${month}-${day}`;
-  return `${sanitizedName}_${dateStr}.ownchart`;
+  return `${sanitizedName}_${dateStr}${OWNCHART_FILE_EXTENSION}`;
+}
+
+/**
+ * Resolve the filename to suggest in the save dialog.
+ * Priority: existing fileName → generated from title → "untitled.ownchart"
+ */
+function resolveSuggestedFilename(
+  fileName: string | null,
+  projectTitle: string
+): string {
+  if (fileName) return fileName;
+  if (projectTitle) return generateSuggestedFilename(projectTitle);
+  return `untitled${OWNCHART_FILE_EXTENSION}`;
 }
 
 export function useFileOperations(): {
@@ -80,8 +95,18 @@ export function useFileOperations(): {
     (state) => state.clearDependencies
   );
 
-  const fileState = useFileStore();
+  // fileSlice — individual selectors to avoid full-store subscription and
+  // prevent handleSave from being recreated on every isDirty/lastSaved change
+  const fileName = useFileStore((state) => state.fileName);
+  const isDirty = useFileStore((state) => state.isDirty);
+  const lastSaved = useFileStore((state) => state.lastSaved);
+  const chartId = useFileStore((state) => state.chartId);
   const chartCreatedAt = useFileStore((state) => state.chartCreatedAt);
+  const setFileName = useFileStore((state) => state.setFileName);
+  const setLastSaved = useFileStore((state) => state.setLastSaved);
+  const markClean = useFileStore((state) => state.markClean);
+  const resetFileStore = useFileStore((state) => state.reset);
+
   const clearHistory = useHistoryStore((state) => state.clearHistory);
 
   // Export options from uiSlice
@@ -92,65 +117,52 @@ export function useFileOperations(): {
   const handleSave = useCallback(
     async (saveAs = false) => {
       try {
+        const viewSettings = {
+          zoom,
+          panOffset,
+          taskTableWidth,
+          columnWidths,
+          showWeekends,
+          showTodayMarker,
+          showHolidays,
+          showDependencies,
+          showProgress,
+          taskLabelPosition,
+          workingDaysMode,
+          workingDaysConfig,
+          holidayRegion,
+          projectTitle,
+          projectAuthor,
+          colorModeState,
+          hiddenColumns,
+          isTaskTableCollapsed,
+          hiddenTaskIds,
+        };
+        const serializeOpts = {
+          chartName:
+            fileName?.replace(OWNCHART_FILE_EXTENSION, "") ?? "Untitled",
+          chartId: chartId ?? undefined,
+          chartCreatedAt: chartCreatedAt ?? undefined,
+          prettyPrint: true,
+          dependencies, // Sprint 1.4
+          exportSettings: exportOptions, // Sprint 1.6
+        };
         const content = serializeToGanttFile(
           tasks,
-          {
-            // Navigation
-            zoom,
-            panOffset,
-            taskTableWidth,
-            columnWidths,
-            // Display settings
-            showWeekends,
-            showTodayMarker,
-            showHolidays,
-            showDependencies,
-            showProgress,
-            taskLabelPosition,
-            // Working days mode
-            workingDaysMode,
-            workingDaysConfig,
-            // Holiday region
-            holidayRegion,
-            // Project metadata
-            projectTitle,
-            projectAuthor,
-            // Color mode
-            colorModeState,
-            // Column visibility
-            hiddenColumns,
-            // Task table collapse
-            isTaskTableCollapsed,
-            // Hidden task IDs
-            hiddenTaskIds,
-          },
-          {
-            chartName:
-              fileState.fileName?.replace(".ownchart", "") || "Untitled",
-            chartId: fileState.chartId || undefined,
-            chartCreatedAt: chartCreatedAt || undefined,
-            prettyPrint: true,
-            dependencies, // Sprint 1.4
-            exportSettings: exportOptions, // Sprint 1.6
-          }
+          viewSettings,
+          serializeOpts
         );
 
-        // Determine suggested filename:
-        // 1. Use existing filename if available
-        // 2. Otherwise, generate from projectTitle (with date)
-        // 3. Fallback to "untitled.ownchart"
-        const suggestedFilename =
-          fileState.fileName ||
-          (projectTitle
-            ? generateSuggestedFilename(projectTitle)
-            : "untitled.ownchart");
-
+        const suggestedFilename = resolveSuggestedFilename(
+          fileName,
+          projectTitle
+        );
         const result = await saveFile(content, suggestedFilename, saveAs);
 
         if (result.success) {
-          fileState.setFileName(result.fileName!);
-          fileState.setLastSaved(new Date());
-          fileState.markClean();
+          setFileName(result.fileName!);
+          setLastSaved(new Date());
+          markClean();
           toast.success(`Saved "${result.fileName}"`);
         } else if (result.error !== "Save cancelled") {
           toast.error(`Save failed: ${result.error}`);
@@ -164,6 +176,7 @@ export function useFileOperations(): {
       dependencies,
       exportOptions,
       chartCreatedAt,
+      chartId,
       zoom,
       panOffset,
       showWeekends,
@@ -183,14 +196,21 @@ export function useFileOperations(): {
       projectAuthor,
       taskTableWidth,
       columnWidths,
-      fileState,
+      fileName,
+      setFileName,
+      setLastSaved,
+      markClean,
     ]
+  );
+
+  const handleSaveAs = useCallback(
+    (): Promise<void> => handleSave(true),
+    [handleSave]
   );
 
   // Open (Ctrl+O)
   const handleOpen = useCallback(async () => {
-    // Check unsaved changes
-    if (fileState.isDirty) {
+    if (isDirty) {
       const confirmed = window.confirm(
         "You have unsaved changes. Do you want to continue without saving?"
       );
@@ -215,11 +235,11 @@ export function useFileOperations(): {
     } catch (e) {
       toast.error(`Open failed: ${(e as Error).message}`);
     }
-  }, [fileState]);
+  }, [isDirty]);
 
   // New (Ctrl+N)
   const handleNew = useCallback(async () => {
-    if (fileState.isDirty) {
+    if (isDirty) {
       const confirmed = window.confirm(
         "You have unsaved changes. Do you want to create a new chart without saving?"
       );
@@ -235,26 +255,27 @@ export function useFileOperations(): {
     useChartStore.getState().setHiddenTaskIds([]); // Clear hidden rows from previous chart
     clearHistory();
     clearFileHandle();
-    fileState.reset();
+    resetFileStore();
 
     toast.success("Created new chart");
   }, [
-    fileState,
+    isDirty,
     setTasks,
     clearDependencies,
     resetExportOptions,
     setProjectTitle,
     setProjectAuthor,
     clearHistory,
+    resetFileStore,
   ]);
 
   return {
     handleSave,
-    handleSaveAs: (): Promise<void> => handleSave(true),
+    handleSaveAs,
     handleOpen,
     handleNew,
-    fileName: fileState.fileName,
-    isDirty: fileState.isDirty,
-    lastSaved: fileState.lastSaved,
+    fileName,
+    isDirty,
+    lastSaved,
   };
 }
