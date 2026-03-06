@@ -2,6 +2,7 @@ import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
 import { renderHook, act } from "@testing-library/react";
 import { useMultiTabPersistence } from "../../../src/hooks/useMultiTabPersistence";
 import { useChartStore } from "../../../src/store/slices/chartSlice";
+import { useTaskStore } from "../../../src/store/slices/taskSlice";
 import { useUIStore } from "../../../src/store/slices/uiSlice";
 import {
   saveTabChart,
@@ -159,6 +160,43 @@ describe("useMultiTabPersistence", () => {
       // Should not throw — error is caught, hydrated is still set
       expect(() => renderHook(() => useMultiTabPersistence())).not.toThrow();
       expect(useUIStore.getState().isHydrated).toBe(true);
+    });
+
+    it("should restore tableState column widths from localStorage", () => {
+      const tabId = "tab-colwidths";
+      sessionStorage.setItem(TAB_ID_KEY, tabId);
+
+      const columnWidths = { name: 220, startDate: 100, endDate: 100 };
+      const data = {
+        version: 2,
+        charts: {
+          [tabId]: {
+            tabId,
+            lastActive: Date.now(),
+            tasks: [],
+            dependencies: [],
+            chartState: createChartState(),
+            fileState: {
+              fileName: null,
+              chartId: null,
+              lastSaved: null,
+              isDirty: false,
+            } as FileState,
+            tableState: {
+              columnWidths,
+              taskTableWidth: null,
+            } as TableState,
+          },
+        },
+      };
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+
+      renderHook(() => useMultiTabPersistence());
+
+      const restored = useTaskStore.getState().columnWidths;
+      expect(restored["name"]).toBe(220);
+      expect(restored["startDate"]).toBe(100);
+      expect(restored["endDate"]).toBe(100);
     });
 
     it("should not block saves when restore throws an error", async () => {

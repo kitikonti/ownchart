@@ -37,6 +37,20 @@ function applyIfDefined<T>(value: T | undefined, setter: (v: T) => void): void {
   if (value !== undefined) setter(value);
 }
 
+/** Subscribe `callback` to all persisted stores. Returns a single unsubscribe. */
+function subscribeAllStores(callback: () => void): () => void {
+  const unsub1 = useTaskStore.subscribe(callback);
+  const unsub2 = useDependencyStore.subscribe(callback);
+  const unsub3 = useChartStore.subscribe(callback);
+  const unsub4 = useFileStore.subscribe(callback);
+  return () => {
+    unsub1();
+    unsub2();
+    unsub3();
+    unsub4();
+  };
+}
+
 function restoreTableState(tableState: TabChartData["tableState"]): void {
   if (!tableState) return;
   const taskStore = useTaskStore.getState();
@@ -72,7 +86,8 @@ function restoreChartState(chartState: ChartState): void {
   applyIfDefined(chartState.hiddenTaskIds, store.setHiddenTaskIds);
   applyIfDefined(chartState.colorModeState, store.setColorModeState);
 
-  // workingDaysConfig has a special setter that auto-derives workingDaysMode
+  // Cannot use applyIfDefined — setWorkingDaysConfig auto-derives workingDaysMode
+  // from the config object and must always be called as a unit.
   if (chartState.workingDaysConfig !== undefined) {
     store.setWorkingDaysConfig(chartState.workingDaysConfig);
   }
@@ -212,10 +227,7 @@ function useTabAutoSave(
     };
 
     // Subscribe to all store changes
-    const unsubscribeTasks = useTaskStore.subscribe(saveCurrentState);
-    const unsubscribeDeps = useDependencyStore.subscribe(saveCurrentState);
-    const unsubscribeChart = useChartStore.subscribe(saveCurrentState);
-    const unsubscribeFile = useFileStore.subscribe(saveCurrentState);
+    const unsubscribeAll = subscribeAllStores(saveCurrentState);
 
     // Initial save after a short delay to let restoration settle.
     const initialSaveTimer = setTimeout(() => {
@@ -230,10 +242,7 @@ function useTabAutoSave(
         saveTimerRef.current = null;
       }
       clearTimeout(initialSaveTimer);
-      unsubscribeTasks();
-      unsubscribeDeps();
-      unsubscribeChart();
-      unsubscribeFile();
+      unsubscribeAll();
     };
   }, []); // tabIdRef, isRestoringRef, saveTimerRef are stable refs
 }

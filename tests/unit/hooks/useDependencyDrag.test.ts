@@ -221,6 +221,29 @@ describe("useDependencyDrag", () => {
   // endDrag
   // -------------------------------------------------------------------------
 
+  it("does nothing and resets state when endDrag called with source task as target", () => {
+    const addDepSpy = vi.spyOn(
+      useDependencyStore.getState(),
+      "addDependency"
+    );
+
+    const { result } = renderHook(() =>
+      useDependencyDrag({ tasks: DEFAULT_TASKS })
+    );
+
+    act(() => {
+      result.current.startDrag(TASK_A.id, "end", makeMouseEvent());
+    });
+
+    act(() => {
+      result.current.endDrag(TASK_A.id);
+    });
+
+    expect(addDepSpy).not.toHaveBeenCalled();
+    expect(result.current.dragState.isDragging).toBe(false);
+    expect(result.current.dragState.fromTaskId).toBeNull();
+  });
+
   it("resets drag state when endDrag called with no target", () => {
     const { result } = renderHook(() =>
       useDependencyDrag({ tasks: DEFAULT_TASKS })
@@ -432,6 +455,32 @@ describe("useDependencyDrag", () => {
 
     const hovered = result.current.getHoveredTaskId(500, 500, positions);
     expect(hovered).toBeNull();
+  });
+
+  it("global mouseup outside a task resets drag state without creating a dependency", () => {
+    const addDepSpy = vi.spyOn(
+      useDependencyStore.getState(),
+      "addDependency"
+    );
+
+    const { result } = renderHook(() =>
+      useDependencyDrag({ tasks: DEFAULT_TASKS })
+    );
+
+    act(() => {
+      result.current.startDrag(TASK_A.id, "end", makeMouseEvent());
+    });
+
+    expect(result.current.dragState.isDragging).toBe(true);
+
+    // Dispatch mouseup on document (no task target — simulates drop in empty space)
+    act(() => {
+      document.dispatchEvent(new MouseEvent("mouseup"));
+    });
+
+    expect(result.current.dragState.isDragging).toBe(false);
+    expect(result.current.dragState.fromTaskId).toBeNull();
+    expect(addDepSpy).not.toHaveBeenCalled();
   });
 
   // -------------------------------------------------------------------------

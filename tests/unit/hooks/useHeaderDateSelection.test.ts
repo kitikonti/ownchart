@@ -356,6 +356,47 @@ describe("useHeaderDateSelection", () => {
     expect(result.current.isDragging).toBe(false);
   });
 
+  it("should clear selection when clicking outside the header SVG", async () => {
+    const { result } = renderSelectionHook();
+
+    // Create a selection via drag
+    act(() => {
+      result.current.onMouseDown({
+        button: 0,
+        clientX: 100,
+        clientY: 24,
+        shiftKey: false,
+        preventDefault: vi.fn(),
+      } as unknown as React.MouseEvent<SVGSVGElement>);
+    });
+
+    act(() => {
+      document.dispatchEvent(
+        new MouseEvent("mousemove", { clientX: 400, clientY: 24 })
+      );
+    });
+
+    act(() => {
+      document.dispatchEvent(new MouseEvent("mouseup"));
+    });
+
+    expect(result.current.selectionPixelRect).not.toBeNull();
+
+    // Allow the deferred click-outside listener (setTimeout 0) to register
+    await act(async () => {
+      await new Promise<void>((resolve) => setTimeout(resolve, 0));
+    });
+
+    // Click outside the header SVG (on document.body, which bubbles to document)
+    act(() => {
+      document.body.dispatchEvent(
+        new MouseEvent("mousedown", { bubbles: true })
+      );
+    });
+
+    expect(result.current.selectionPixelRect).toBeNull();
+  });
+
   it("should clear context menu when starting a new drag", () => {
     const { result } = renderSelectionHook();
 

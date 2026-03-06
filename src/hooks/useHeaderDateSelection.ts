@@ -252,21 +252,15 @@ function useClearSelectionOnClickOutside(
   }, [headerSvgRef, clearSelection]); // selectionRef is always current — no selection dep needed
 }
 
-/** Manages drag state and handlers: isDragging, onMouseDown, mouse-move/up listeners. */
-function useHeaderDrag(
-  headerSvgRef: { current: SVGSVGElement | null },
+/** Stable mousemove/mouseup handlers + cleanup for a header drag session. */
+function useMouseDragListeners(
+  isDraggingRef: { current: boolean },
   scaleRef: { current: TimelineScale | null },
-  selectionRef: { current: HeaderDateSelection | null },
-  setSelection: (value: HeaderDateSelection | null) => void,
-  setContextMenu: (value: ContextMenuPosition | null) => void
-): {
-  isDragging: boolean;
-  onMouseDown: (e: React.MouseEvent<SVGSVGElement>) => void;
-} {
-  const [isDragging, setIsDragging] = useState(false);
-  const isDraggingRef = useRef(false);
-  const dragStartDateRef = useRef<string | null>(null);
-
+  headerSvgRef: { current: SVGSVGElement | null },
+  dragStartDateRef: { current: string | null },
+  setSelection: (v: HeaderDateSelection | null) => void,
+  setIsDragging: (v: boolean) => void
+): { handleMouseMove: (e: MouseEvent) => void; handleMouseUp: () => void } {
   // Mouse move during drag — reads scale/position via stable refs so
   // this function reference survives scale changes without re-registration.
   const handleMouseMove = useCallback(
@@ -290,7 +284,7 @@ function useHeaderDrag(
     setIsDragging(false);
     document.removeEventListener("mousemove", handleMouseMove);
     document.removeEventListener("mouseup", handleMouseUp);
-  }, [handleMouseMove]);
+  }, [handleMouseMove, setIsDragging]);
 
   // Cleanup on unmount — both handlers are stable so this runs exactly once.
   useEffect(() => {
@@ -299,6 +293,33 @@ function useHeaderDrag(
       document.removeEventListener("mouseup", handleMouseUp);
     };
   }, [handleMouseMove, handleMouseUp]);
+
+  return { handleMouseMove, handleMouseUp };
+}
+
+/** Manages drag state and handlers: isDragging, onMouseDown, mouse-move/up listeners. */
+function useHeaderDrag(
+  headerSvgRef: { current: SVGSVGElement | null },
+  scaleRef: { current: TimelineScale | null },
+  selectionRef: { current: HeaderDateSelection | null },
+  setSelection: (value: HeaderDateSelection | null) => void,
+  setContextMenu: (value: ContextMenuPosition | null) => void
+): {
+  isDragging: boolean;
+  onMouseDown: (e: React.MouseEvent<SVGSVGElement>) => void;
+} {
+  const [isDragging, setIsDragging] = useState(false);
+  const isDraggingRef = useRef(false);
+  const dragStartDateRef = useRef<string | null>(null);
+
+  const { handleMouseMove, handleMouseUp } = useMouseDragListeners(
+    isDraggingRef,
+    scaleRef,
+    headerSvgRef,
+    dragStartDateRef,
+    setSelection,
+    setIsDragging
+  );
 
   // Mouse down on header SVG — delegates to the module-level pure helper.
   const onMouseDown = useCallback(
