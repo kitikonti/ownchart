@@ -2,6 +2,18 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [1.1.23](https://github.com/kitikonti/ownchart/compare/v1.1.22...v1.1.23) (2026-03-06)
+
+
+### Code Refactoring
+
+* address code review findings in graph utils ([515fef0](https://github.com/kitikonti/ownchart/commit/515fef00b123abb4659050604ce352b133c779d1))
+* address code review findings in graph utils ([44800b4](https://github.com/kitikonti/ownchart/commit/44800b4e7750ac5f18f1c72c09c37a20dee3ae14))
+* address code review findings in graph utils ([7849446](https://github.com/kitikonti/ownchart/commit/78494464df9b105f459e3d8f91bfd5456fac9743))
+* address code review findings in graph utils ([eb3e0ab](https://github.com/kitikonti/ownchart/commit/eb3e0ab40861af66af2f65ab65bc1027d58a58bd))
+* address code review findings in graph utils ([64a3566](https://github.com/kitikonti/ownchart/commit/64a35666f2a3f4045590ff90f593b9145c49d205))
+* move bfsReachable to graphHelpers, add PROBE_DEPENDENCY_TYPE constant ([315ab4a](https://github.com/kitikonti/ownchart/commit/315ab4addc689b7dcafe572c7cd8d28ac01171b0))
+
 ## [1.1.22](https://github.com/kitikonti/ownchart/compare/v1.1.21...v1.1.22) (2026-03-06)
 
 
