@@ -350,6 +350,20 @@ export const DEFAULT_EXPORT_OPTIONS: ExportOptions = {
   density: "comfortable",
 };
 
+// =============================================================================
+// Task Table Rendering Types
+// =============================================================================
+
+/**
+ * Flattened task with hierarchy information for SVG/PDF task table rendering.
+ * Intentionally simpler than the store's FlattenedTask (no globalRowNumber needed).
+ */
+export interface FlattenedTask {
+  task: Task;
+  level: number;
+  hasChildren: boolean;
+}
+
 /** Readability status for export zoom level */
 export interface ReadabilityStatus {
   level: "good" | "warning" | "critical";
