@@ -1,6 +1,7 @@
 import { describe, it, expect, vi, afterEach, beforeEach } from "vitest";
 import {
   HELP_TABS,
+  MOD_PLACEHOLDER,
   isMac,
   getModKey,
   resolveShortcut,
@@ -71,6 +72,11 @@ describe("getModKey", () => {
     });
     expect(getModKey()).toBe("Ctrl");
   });
+
+  it("should return Ctrl when navigator is undefined", () => {
+    vi.stubGlobal("navigator", undefined);
+    expect(getModKey()).toBe("Ctrl");
+  });
 });
 
 // ---------------------------------------------------------------------------
@@ -86,21 +92,23 @@ describe("resolveShortcut", () => {
     vi.stubGlobal("navigator", {
       userAgent: "Mozilla/5.0 (Windows NT 10.0; Win64; x64)",
     });
-    expect(resolveShortcut("{mod}+S")).toBe("Ctrl+S");
+    expect(resolveShortcut(`${MOD_PLACEHOLDER}+S`)).toBe("Ctrl+S");
   });
 
   it("should replace {mod} with Cmd on Mac", () => {
     vi.stubGlobal("navigator", {
       userAgent: "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7)",
     });
-    expect(resolveShortcut("{mod}+S")).toBe("Cmd+S");
+    expect(resolveShortcut(`${MOD_PLACEHOLDER}+S`)).toBe("Cmd+S");
   });
 
   it("should replace multiple {mod} occurrences in one string", () => {
     vi.stubGlobal("navigator", {
       userAgent: "Mozilla/5.0 (Windows NT 10.0; Win64; x64)",
     });
-    expect(resolveShortcut("{mod}+{mod}")).toBe("Ctrl+Ctrl");
+    expect(
+      resolveShortcut(`${MOD_PLACEHOLDER}+${MOD_PLACEHOLDER}`),
+    ).toBe("Ctrl+Ctrl");
   });
 
   it("should leave strings without {mod} unchanged", () => {
@@ -136,7 +144,7 @@ describe("resolveHelpTopic", () => {
     const topic: HelpTopic = {
       id: "test",
       title: "Test",
-      description: "Press {mod}+S to save.",
+      description: `Press ${MOD_PLACEHOLDER}+S to save.`,
     };
     expect(resolveHelpTopic(topic).description).toBe("Press Ctrl+S to save.");
   });
@@ -146,9 +154,21 @@ describe("resolveHelpTopic", () => {
       id: "test",
       title: "Test",
       description: "No mod here.",
-      tip: "Use {mod}+Z to undo.",
+      tip: `Use ${MOD_PLACEHOLDER}+Z to undo.`,
     };
     expect(resolveHelpTopic(topic).tip).toBe("Use Ctrl+Z to undo.");
+  });
+
+  it("should include tip key when tip is an empty string", () => {
+    const topic: HelpTopic = {
+      id: "test",
+      title: "Test",
+      description: "desc",
+      tip: "",
+    };
+    // tip: "" is a valid value (not undefined), so the key must be present
+    expect("tip" in resolveHelpTopic(topic)).toBe(true);
+    expect(resolveHelpTopic(topic).tip).toBe("");
   });
 
   it("should omit tip key when tip is undefined", () => {
@@ -165,12 +185,27 @@ describe("resolveHelpTopic", () => {
       id: "test",
       title: "Test",
       description: "desc",
-      shortcuts: ["{mod}+S", "{mod}+Shift+S"],
+      shortcuts: [
+        `${MOD_PLACEHOLDER}+S`,
+        `${MOD_PLACEHOLDER}+Shift+S`,
+      ],
     };
     expect(resolveHelpTopic(topic).shortcuts).toEqual([
       "Ctrl+S",
       "Ctrl+Shift+S",
     ]);
+  });
+
+  it("should handle empty shortcuts array without dropping the key", () => {
+    const topic: HelpTopic = {
+      id: "test",
+      title: "Test",
+      description: "desc",
+      shortcuts: [],
+    };
+    const resolved = resolveHelpTopic(topic);
+    expect("shortcuts" in resolved).toBe(true);
+    expect(resolved.shortcuts).toEqual([]);
   });
 
   it("should omit shortcuts key when shortcuts is undefined", () => {
@@ -283,8 +318,8 @@ describe("helpContent", () => {
     }
   });
 
-  it("should be a stable module-level constant (same reference always)", () => {
-    expect(HELP_TABS).toBe(HELP_TABS);
+  it("should export MOD_PLACEHOLDER as the {mod} literal", () => {
+    expect(MOD_PLACEHOLDER).toBe("{mod}");
   });
 
   describe("Getting Started tab", () => {
@@ -311,7 +346,7 @@ describe("helpContent", () => {
       }
     });
 
-    it("should not have duplicate shortcut keys across sections", () => {
+    it("should have unique shortcut strings across all topics", () => {
       const scTab = tabs.find((t) => t.id === "shortcuts")!;
       const allKeys: string[] = [];
       for (const section of scTab.sections) {
@@ -319,9 +354,8 @@ describe("helpContent", () => {
           allKeys.push(...(topic.shortcuts ?? []));
         }
       }
-      // Escape should appear exactly once (sc-escape in nav, sc-clear removed)
-      const escapeCounts = allKeys.filter((k) => k === "Escape").length;
-      expect(escapeCounts).toBe(1);
+      const uniqueKeys = new Set(allKeys);
+      expect(uniqueKeys.size).toBe(allKeys.length);
     });
   });
 
