@@ -93,7 +93,7 @@ type ToolbarButtonSize = "default" | "large";
 
 type BaseToolbarButtonProps = Omit<
   ButtonHTMLAttributes<HTMLButtonElement>,
-  "className" | "aria-label"
+  "className" | "aria-label" | "type"
 > & {
   /** Visual variant */
   variant?: ToolbarButtonVariant;
@@ -151,7 +151,7 @@ export const ToolbarButton = memo(
       ...props
     },
     ref
-  ) {
+  ): JSX.Element {
     const collapseLevel = useCollapseLevel();
     const showLabel = shouldShowLabel(labelPriority, collapseLevel);
 
