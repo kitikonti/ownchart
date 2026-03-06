@@ -234,10 +234,16 @@ export function calculateWorkingDays(
     return calculateDuration(startDate, endDate);
   }
 
-  const holidays = fetchHolidaysForRange(config, holidayRegion, startDate, endDate);
+  const holidays = fetchHolidaysForRange(
+    config,
+    holidayRegion,
+    startDate,
+    endDate
+  );
   const holidayDateSet = buildHolidayDateSet(holidays);
 
-  return scanWorkingDaysInRange(startDate, endDate, config, holidayDateSet).workingDays;
+  return scanWorkingDaysInRange(startDate, endDate, config, holidayDateSet)
+    .workingDays;
 }
 
 /**
