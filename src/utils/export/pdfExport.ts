@@ -252,21 +252,23 @@ interface ChartPlacement {
 /**
  * Export the chart to PDF using SVG-to-PDF conversion.
  */
-export async function exportToPdf({
-  tasks,
-  options,
-  pdfOptions,
-  columnWidths,
-  currentAppZoom,
-  projectDateRange,
-  visibleDateRange,
-  projectName,
-  projectTitle,
-  projectAuthor,
-  dateFormat,
-  colorModeState,
-  onProgress,
-}: ExportToPdfParams): Promise<void> {
+export async function exportToPdf(params: ExportToPdfParams): Promise<void> {
+  const {
+    tasks,
+    options,
+    pdfOptions,
+    columnWidths,
+    currentAppZoom,
+    projectDateRange,
+    visibleDateRange,
+    projectName,
+    projectTitle,
+    projectAuthor,
+    dateFormat,
+    colorModeState,
+    onProgress,
+  } = params;
+
   onProgress?.(EXPORT_PROGRESS.START);
 
   const effectiveOptions = resolveEffectiveOptions(tasks, options, pdfOptions);
@@ -281,21 +283,25 @@ export async function exportToPdf({
 
   onProgress?.(EXPORT_PROGRESS.DIMENSIONS_READY);
 
+  const rendererProps: RendererProps = {
+    options: effectiveOptions,
+    tasks,
+    columnWidths,
+    currentAppZoom,
+    projectDateRange,
+    visibleDateRange,
+  };
+  const assemblyCtx: SvgAssemblyContext = {
+    options: effectiveOptions,
+    tasks,
+    columnWidths,
+    colorModeState,
+    projectName,
+  };
   const svgElement = await renderToSvg(
     dimensions,
-    buildRendererProps(effectiveOptions, {
-      tasks,
-      columnWidths,
-      currentAppZoom,
-      projectDateRange,
-      visibleDateRange,
-    }),
-    buildAssemblyCtx(effectiveOptions, {
-      tasks,
-      columnWidths,
-      colorModeState,
-      projectName,
-    }),
+    rendererProps,
+    assemblyCtx,
     onProgress
   );
 
@@ -314,22 +320,6 @@ export async function exportToPdf({
   );
 
   onProgress?.(EXPORT_PROGRESS.COMPLETE);
-}
-
-/** Build the props object forwarded to ExportRenderer from the resolved export parameters. */
-function buildRendererProps(
-  options: ExportOptions,
-  params: Omit<RendererProps, "options">
-): RendererProps {
-  return { ...params, options };
-}
-
-/** Build the SVG assembly context from the resolved export parameters. */
-function buildAssemblyCtx(
-  options: ExportOptions,
-  params: Omit<SvgAssemblyContext, "options">
-): SvgAssemblyContext {
-  return { ...params, options };
 }
 
 // =============================================================================
@@ -389,13 +379,16 @@ async function renderToSvg(
     dimensions.height,
     rendererProps.options.background
   );
-  const root = createRoot(container);
+  // `root` is declared outside the try block so the finally clause can call
+  // root?.unmount() even if createRoot() throws before assignment.
+  let root: Root | null = null;
   try {
+    root = createRoot(container);
     await mountExportRenderer(root, container, rendererProps);
     onProgress?.(EXPORT_PROGRESS.RENDER_COMPLETE);
     return extractSvgFromContainer(container, dimensions, assemblyCtx);
   } finally {
-    root.unmount();
+    root?.unmount();
     removeOffscreenContainer(container);
   }
 }
