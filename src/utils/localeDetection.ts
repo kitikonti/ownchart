@@ -61,6 +61,16 @@ const US_WEEK_NUMBERING_REGIONS = new Set(["us", "ca"]);
 // ─── Private Helpers ──────────────────────────────────────────────────────────
 
 /**
+ * Per-language-key caches for getLocaleRegion and getLocaleWeekInfo. Keyed by
+ * navigator.language so callers that temporarily change it (e.g. in tests)
+ * still receive correct results per distinct language. Avoids redundant Intl
+ * construction when detectLocale* functions are called in sequence (e.g. when
+ * building DEFAULT_PREFERENCES).
+ */
+const _regionCache = new Map<string, string | undefined>();
+const _weekInfoCache = new Map<string, LocaleWeekInfo | undefined>();
+
+/**
  * Extract the region subtag from navigator.language (lowercase).
  *
  * Handles BCP 47 tags with optional script subtags:
@@ -73,11 +83,15 @@ const US_WEEK_NUMBERING_REGIONS = new Set(["us", "ca"]);
  * Returns undefined when no mapping is available.
  */
 function getLocaleRegion(): string | undefined {
-  const parts = navigator.language.toLowerCase().split("-");
+  const lang = navigator.language;
+  if (_regionCache.has(lang)) return _regionCache.get(lang);
+  const parts = lang.toLowerCase().split("-");
   // BCP 47: language[-script[-region]]; region is always exactly 2 alpha chars.
   // Skip the language part (index 0) and find the first 2-letter subtag.
   const region = parts.slice(1).find((p) => /^[a-z]{2}$/.test(p));
-  return region ?? LANGUAGE_TO_REGION[parts[0]];
+  const result = region ?? LANGUAGE_TO_REGION[parts[0]];
+  _regionCache.set(lang, result);
+  return result;
 }
 
 /**
@@ -96,20 +110,25 @@ interface LocaleWeekInfo {
  * Returns undefined if the API is unavailable or throws.
  */
 function getLocaleWeekInfo(): LocaleWeekInfo | undefined {
+  const lang = navigator.language;
+  if (_weekInfoCache.has(lang)) return _weekInfoCache.get(lang);
+  let result: LocaleWeekInfo | undefined;
   try {
     // Cast to a typed shape that mirrors the actual API; getWeekInfo() / weekInfo
     // are not yet in all TS lib types.
-    const localeObj = new Intl.Locale(navigator.language) as unknown as {
+    const localeObj = new Intl.Locale(lang) as unknown as {
       getWeekInfo?: () => LocaleWeekInfo;
       weekInfo?: LocaleWeekInfo;
     };
-    if (typeof localeObj.getWeekInfo === "function") {
-      return localeObj.getWeekInfo();
-    }
-    return localeObj.weekInfo;
+    result =
+      typeof localeObj.getWeekInfo === "function"
+        ? localeObj.getWeekInfo()
+        : localeObj.weekInfo;
   } catch {
-    return undefined;
+    result = undefined;
   }
+  _weekInfoCache.set(lang, result);
+  return result;
 }
 
 // ─── Public API ───────────────────────────────────────────────────────────────

@@ -4,7 +4,6 @@
 
 import type { Task } from "../types/chart.types";
 import { validateTask } from "./validation";
-import { calculateDuration } from "./dateUtils";
 
 export interface DragValidationResult {
   valid: boolean;
@@ -24,41 +23,16 @@ export function validateDragOperation(
   newStartDate: string,
   newEndDate: string
 ): DragValidationResult {
-  // Rule 1: Use existing validateTask for comprehensive validation
-  // For milestones, only set startDate and duration 0 (they don't have endDate)
-  const taskWithNewDates: Partial<Task> =
+  // Validate only the date fields that change during drag. validateTask handles
+  // format validation, date ordering (endDate >= startDate via validateDateRange),
+  // and type-specific constraints. Milestones omit endDate entirely.
+  const dateUpdate: Partial<Task> =
     task.type === "milestone"
-      ? {
-          ...task,
-          startDate: newStartDate,
-          endDate: undefined, // Explicitly unset endDate for milestones
-          duration: 0,
-        }
-      : {
-          ...task,
-          startDate: newStartDate,
-          endDate: newEndDate,
-        };
+      ? { startDate: newStartDate }
+      : { startDate: newStartDate, endDate: newEndDate };
 
-  const basicValidation = validateTask(taskWithNewDates);
-
-  if (!basicValidation.valid) {
-    return {
-      valid: false,
-      error: basicValidation.error || "Invalid task dates",
-    };
-  }
-
-  // Rule 2: Minimum duration (1 day for regular tasks, milestones and summaries don't need this check)
-  if (task.type !== "milestone" && task.type !== "summary") {
-    const duration = calculateDuration(newStartDate, newEndDate);
-    if (duration < 1) {
-      return {
-        valid: false,
-        error: "Task must be at least 1 day long",
-      };
-    }
-  }
-
-  return { valid: true };
+  const result = validateTask(dateUpdate);
+  return result.valid
+    ? { valid: true }
+    : { valid: false, error: result.error ?? "Invalid task dates" };
 }
