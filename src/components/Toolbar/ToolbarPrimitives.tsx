@@ -24,34 +24,14 @@ import {
 } from "../Ribbon/RibbonCollapseContext";
 
 // ============================================================================
-// ToolbarSeparator
+// Types
 // ============================================================================
 
-interface ToolbarSeparatorProps {
+export interface ToolbarSeparatorProps {
   className?: string;
 }
 
-/**
- * Subtle vertical separator between toolbar sections.
- * Use sparingly - prefer spacing for closely related groups.
- */
-export const ToolbarSeparator = memo(function ToolbarSeparator({
-  className = "",
-}: ToolbarSeparatorProps): JSX.Element {
-  return (
-    <div
-      className={`toolbar-separator h-5 mx-2 flex-shrink-0 ${className}`}
-      role="separator"
-      aria-orientation="vertical"
-    />
-  );
-});
-
-// ============================================================================
-// ToolbarGroup
-// ============================================================================
-
-interface ToolbarGroupProps {
+export interface ToolbarGroupProps {
   children: ReactNode;
   /** Accessible label for the group — required so screen readers can identify the group's purpose. */
   label: string;
@@ -60,36 +40,8 @@ interface ToolbarGroupProps {
   className?: string;
 }
 
-/**
- * Groups related toolbar items with consistent spacing.
- * Optionally adds a separator after the group.
- */
-export const ToolbarGroup = memo(function ToolbarGroup({
-  children,
-  label,
-  withSeparator = false,
-  className = "",
-}: ToolbarGroupProps): JSX.Element {
-  return (
-    <>
-      <div
-        className={`flex items-center gap-0.5 ${className}`}
-        role="group"
-        aria-label={label}
-      >
-        {children}
-      </div>
-      {withSeparator && <ToolbarSeparator />}
-    </>
-  );
-});
-
-// ============================================================================
-// ToolbarButton
-// ============================================================================
-
-type ToolbarButtonVariant = "default" | "primary" | "toggle";
-type ToolbarButtonSize = "default" | "large";
+export type ToolbarButtonVariant = "default" | "primary" | "toggle";
+export type ToolbarButtonSize = "default" | "large";
 
 type BaseToolbarButtonProps = Omit<
   ButtonHTMLAttributes<HTMLButtonElement>,
@@ -122,6 +74,63 @@ export type ToolbarButtonProps = BaseToolbarButtonProps &
     | { label?: never; "aria-label": string }
   );
 
+// ============================================================================
+// ToolbarSeparator
+// ============================================================================
+
+/**
+ * Subtle vertical separator between toolbar sections.
+ * Use sparingly — prefer spacing for closely related groups.
+ *
+ * Grouping is already conveyed via `role="group"` on surrounding ToolbarGroup
+ * elements; `aria-hidden="true"` prevents screen readers from announcing
+ * "separator" redundantly as the user traverses toolbar items.
+ */
+export const ToolbarSeparator = memo(function ToolbarSeparator({
+  className = "",
+}: ToolbarSeparatorProps): JSX.Element {
+  return (
+    <div
+      className={`toolbar-separator h-5 mx-2 flex-shrink-0 ${className}`}
+      role="separator"
+      aria-orientation="vertical"
+      aria-hidden="true"
+    />
+  );
+});
+
+// ============================================================================
+// ToolbarGroup
+// ============================================================================
+
+/**
+ * Groups related toolbar items with consistent spacing.
+ * Optionally adds a separator after the group.
+ */
+export const ToolbarGroup = memo(function ToolbarGroup({
+  children,
+  label,
+  withSeparator = false,
+  className = "",
+}: ToolbarGroupProps): JSX.Element {
+  return (
+    <>
+      <div
+        className={`flex items-center gap-0.5 ${className}`}
+        role="group"
+        aria-label={label}
+      >
+        {children}
+      </div>
+      {withSeparator && <ToolbarSeparator />}
+    </>
+  );
+});
+
+// ============================================================================
+// ToolbarButton
+// ============================================================================
+
 /**
  * Base toolbar button with consistent styling.
  *
@@ -148,6 +157,7 @@ export const ToolbarButton = memo(
       children,
       labelPriority,
       "aria-label": ariaLabel,
+      title,
       ...props
     },
     ref
@@ -155,16 +165,11 @@ export const ToolbarButton = memo(
     const collapseLevel = useCollapseLevel();
     const showLabel = shouldShowLabel(labelPriority, collapseLevel);
 
-    // When the label is collapsed (hidden), promote it to aria-label and title
-    // so screen reader users and sighted keyboard users can still discover the
-    // button's purpose. Caller-provided aria-label always takes precedence.
-    const collapsedLabelProps =
-      !showLabel && label
-        ? {
-            "aria-label": ariaLabel ?? label,
-            title: props.title ?? label,
-          }
-        : {};
+    // When the label collapses, promote it to aria-label and title so that
+    // screen-reader users and sighted keyboard users can still identify the
+    // button. Explicit caller values always take precedence.
+    const resolvedAriaLabel = !showLabel && label ? (ariaLabel ?? label) : ariaLabel;
+    const resolvedTitle = !showLabel && label ? (title ?? label) : title;
 
     return (
       <button
@@ -175,8 +180,8 @@ export const ToolbarButton = memo(
         data-size={size !== "default" ? size : undefined}
         aria-pressed={variant === "toggle" ? isActive : undefined}
         className={`ribbon-toolbar-button ${className}`}
-        aria-label={ariaLabel}
-        {...collapsedLabelProps}
+        aria-label={resolvedAriaLabel}
+        title={resolvedTitle}
         {...props}
       >
         {icon}

@@ -28,20 +28,30 @@ function renderWithCollapse(ui: JSX.Element, level: CollapseLevel = 0) {
 describe("ToolbarSeparator", () => {
   it("renders with role=separator", () => {
     render(<ToolbarSeparator />);
-    expect(screen.getByRole("separator")).toBeInTheDocument();
+    expect(screen.getByRole("separator", { hidden: true })).toBeInTheDocument();
   });
 
   it("has aria-orientation=vertical", () => {
     render(<ToolbarSeparator />);
-    expect(screen.getByRole("separator")).toHaveAttribute(
+    expect(screen.getByRole("separator", { hidden: true })).toHaveAttribute(
       "aria-orientation",
       "vertical"
     );
   });
 
+  it("is hidden from assistive technology", () => {
+    render(<ToolbarSeparator />);
+    expect(screen.getByRole("separator", { hidden: true })).toHaveAttribute(
+      "aria-hidden",
+      "true"
+    );
+  });
+
   it("forwards className prop", () => {
     render(<ToolbarSeparator className="my-class" />);
-    expect(screen.getByRole("separator")).toHaveClass("my-class");
+    expect(screen.getByRole("separator", { hidden: true })).toHaveClass(
+      "my-class"
+    );
   });
 });
 
@@ -70,7 +80,7 @@ describe("ToolbarGroup", () => {
         content
       </ToolbarGroup>
     );
-    expect(screen.getByRole("separator")).toBeInTheDocument();
+    expect(screen.getByRole("separator", { hidden: true })).toBeInTheDocument();
   });
 
   it("does not render a separator by default", () => {
@@ -130,6 +140,14 @@ describe("ToolbarButton", () => {
       2
     );
     expect(screen.getByRole("button")).toHaveAttribute("title", "Custom tooltip");
+  });
+
+  it("title={undefined} does not suppress promoted title when collapsed", () => {
+    renderWithCollapse(
+      <ToolbarButton label="Save" labelPriority={1} title={undefined} />,
+      2
+    );
+    expect(screen.getByRole("button")).toHaveAttribute("title", "Save");
   });
 
   it("icon-only button always has its aria-label regardless of collapse level", () => {
@@ -192,5 +210,6 @@ describe("ToolbarSpacer", () => {
   it("renders a flex spacer element", () => {
     const { container } = render(<ToolbarSpacer />);
     expect(container.firstChild).toBeInTheDocument();
+    expect(container.firstChild).toHaveClass("flex-1");
   });
 });

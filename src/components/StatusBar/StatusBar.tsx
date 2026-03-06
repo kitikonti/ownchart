@@ -12,7 +12,7 @@ import { useTaskStatistics } from "../../hooks/useTaskStatistics";
 import { ZoomControls } from "./ZoomControls";
 
 /** Decorative bullet separator between statistics. Hidden from screen readers. */
-function Sep(): JSX.Element {
+function Separator(): JSX.Element {
   return (
     <span className="mx-1.5 text-neutral-300" aria-hidden="true">
       ·
@@ -38,7 +38,7 @@ export const StatusBar = memo(function StatusBar(): JSX.Element {
         >
           OwnChart v{__APP_VERSION__}
         </button>
-        <Sep />
+        <Separator />
         {/* Live region: only the dynamic task statistics */}
         <div
           role="status"
@@ -50,11 +50,11 @@ export const StatusBar = memo(function StatusBar(): JSX.Element {
           </span>
           {showProgress && (
             <>
-              <Sep />
+              <Separator />
               <span>{completedTasks} Completed</span>
               {overdueTasks > 0 && (
                 <>
-                  <Sep />
+                  <Separator />
                   <span className="text-error">{overdueTasks} Overdue</span>
                 </>
               )}
