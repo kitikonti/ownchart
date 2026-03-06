@@ -160,6 +160,7 @@ export function DependencyArrows({
           startY={dragStartPosition.y}
           endX={dragState.currentPosition.x}
           endY={dragState.currentPosition.y}
+          rowHeight={rowHeight}
         />
       )}
     </g>

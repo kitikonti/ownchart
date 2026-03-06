@@ -1,6 +1,6 @@
 /**
  * Shared rendering constants for export functionality.
- * These values are extracted from TaskBar.tsx and bezierPath.ts
+ * These values are extracted from TaskBar.tsx and elbowPath.ts
  * to ensure consistent rendering between app and exports.
  */
 
@@ -85,7 +85,7 @@ export const LABEL_RENDER_CONSTANTS = {
 } as const;
 
 /**
- * Dependency arrow constants - matching bezierPath.ts
+ * Dependency arrow constants - matching elbowPath.ts
  */
 export const DEPENDENCY_RENDER_CONSTANTS = {
   /**
@@ -222,7 +222,7 @@ export function calculateMilestoneSize(pixelsPerDay: number): number {
 
 /**
  * Calculate corner radius scaled by row height.
- * Matches bezierPath.ts scaling logic.
+ * Matches elbowPath.ts scaling logic.
  */
 export function getScaledCornerRadius(rowHeight: number): number {
   const scale = rowHeight / DEPENDENCY_RENDER_CONSTANTS.baseRowHeight;

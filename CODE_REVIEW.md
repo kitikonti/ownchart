@@ -224,7 +224,7 @@ cd ../app-gantt-review
 - [x] `src/utils/clipboard/index.ts` (26 LOC)
 
 ### Priority: MEDIUM — Graph Utils
-- [ ] `src/utils/arrowPath/elbowPath.ts` (341 LOC)
+- [x] `src/utils/arrowPath/elbowPath.ts` (343 LOC)
 - [ ] `src/utils/graph/topologicalSort.ts` (154 LOC)
 - [ ] `src/utils/graph/cycleDetection.ts` (115 LOC)
 - [ ] `src/utils/arrowPath/index.ts` (10 LOC)
