@@ -45,6 +45,13 @@ describe("detectCycle", () => {
   });
 
   describe("with cycles", () => {
+    it("should detect a self-loop (A -> A)", () => {
+      const deps = [dep("A", "A")];
+      const result = detectCycle(deps);
+      expect(result.hasCycle).toBe(true);
+      expect(result.cyclePath).toEqual([tid("A"), tid("A")]);
+    });
+
     it("should detect simple cycle A -> B -> A", () => {
       const deps = [dep("A", "B"), dep("B", "A")];
       const result = detectCycle(deps);

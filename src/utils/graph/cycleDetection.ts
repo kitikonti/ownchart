@@ -100,9 +100,7 @@ export function detectCycle(
     ensureList(graph, newDependency.fromTaskId).push(newDependency.toTaskId);
 
     // Ensure the sink node is in the graph so it is covered by the traversal
-    if (!graph.has(newDependency.toTaskId)) {
-      graph.set(newDependency.toTaskId, []);
-    }
+    ensureList(graph, newDependency.toTaskId);
   }
 
   const visited = new Set<TaskId>();
@@ -140,8 +138,9 @@ export function wouldCreateCycle(
     return { hasCycle: true, cyclePath: [fromTaskId, fromTaskId] };
   }
 
-  // Dummy id/createdAt are intentional — this dep is never stored, only used
+  // Dummy id/type/createdAt are intentional — this dep is never stored, only used
   // to test whether the proposed edge would introduce a cycle.
+  // type is ignored by graph construction; only fromTaskId/toTaskId matter.
   const proposedDep: Dependency = {
     id: "temp",
     fromTaskId,

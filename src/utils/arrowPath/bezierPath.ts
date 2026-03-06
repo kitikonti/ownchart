@@ -20,6 +20,11 @@ const HORIZONTAL_SEGMENT = 15;
 const BASE_CORNER_RADIUS = 8;
 
 /**
+ * Minimum corner radius to preserve visual quality at small row heights.
+ */
+const MIN_CORNER_RADIUS = 4;
+
+/**
  * Base row height for scaling calculations.
  */
 const BASE_ROW_HEIGHT = 44;
@@ -35,7 +40,7 @@ const ELBOW_GAP_PADDING = 0;
  */
 function getScaledCornerRadius(rowHeight: number): number {
   const scale = rowHeight / BASE_ROW_HEIGHT;
-  return Math.max(4, Math.round(BASE_CORNER_RADIUS * scale));
+  return Math.max(MIN_CORNER_RADIUS, Math.round(BASE_CORNER_RADIUS * scale));
 }
 
 /**
@@ -57,7 +62,7 @@ function getScaledCornerRadius(rowHeight: number): number {
 export function calculateArrowPath(
   fromPos: TaskPosition,
   toPos: TaskPosition,
-  rowHeight: number = 44
+  rowHeight: number = BASE_ROW_HEIGHT
 ): ArrowPath {
   // Start point: right edge of predecessor, vertically centered
   const startX = fromPos.x + fromPos.width;

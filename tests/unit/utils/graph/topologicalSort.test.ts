@@ -97,6 +97,18 @@ describe("topologicalSort", () => {
     });
   });
 
+  describe("with duplicate dependency edges", () => {
+    it("should handle the same edge listed twice and return all tasks in order", () => {
+      const tasks = [task("A"), task("B"), task("C")];
+      const deps = [dep("A", "B"), dep("A", "B"), dep("B", "C")]; // A→B appears twice
+      const result = topologicalSort(tasks, deps);
+      const ids = result.map((t) => t.id);
+      expect(result.length).toBe(3);
+      expect(ids.indexOf(tid("A"))).toBeLessThan(ids.indexOf(tid("B")));
+      expect(ids.indexOf(tid("B"))).toBeLessThan(ids.indexOf(tid("C")));
+    });
+  });
+
   describe("with cyclic dependencies", () => {
     it("should return only acyclic tasks when graph contains a cycle", () => {
       // A is independent; B → C → B is a cycle
