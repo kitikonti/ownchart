@@ -13,6 +13,13 @@ import {
 import type { Task } from "../types/chart.types";
 import type { DateFormat } from "../types/preferences.types";
 
+/** Maps DateFormat preference values to date-fns format strings. */
+const DATE_FORMAT_PATTERNS: Record<DateFormat, string> = {
+  "DD/MM/YYYY": "dd/MM/yyyy",
+  "MM/DD/YYYY": "MM/dd/yyyy",
+  "YYYY-MM-DD": "yyyy-MM-dd",
+};
+
 /**
  * Convert a Date to ISO date string (YYYY-MM-DD) using local timezone.
  * Replaces the common `date.toISOString().split("T")[0]` anti-pattern,
@@ -65,13 +72,8 @@ export function formatDateByPreference(
   date: Date | string,
   dateFormat: DateFormat
 ): string {
-  const formatMap = {
-    "DD/MM/YYYY": "dd/MM/yyyy",
-    "MM/DD/YYYY": "MM/dd/yyyy",
-    "YYYY-MM-DD": "yyyy-MM-dd",
-  };
   const d = typeof date === "string" ? parseISO(date) : date;
-  return format(d, formatMap[dateFormat]);
+  return format(d, DATE_FORMAT_PATTERNS[dateFormat]);
 }
 
 /**
@@ -121,15 +123,17 @@ export function getBusinessDays(start: string, end: string): number {
   const endDate = parseISO(end);
   if (startDate > endDate) return 0;
 
-  let count = 0;
-  let current = startDate;
-  while (current <= endDate) {
-    const day = getDay(current);
-    if (day !== 0 && day !== 6) {
-      count++;
-    }
-    current = addDaysDateFns(current, 1);
+  const totalDays = differenceInDays(endDate, startDate) + 1;
+  const fullWeeks = Math.floor(totalDays / 7);
+  let businessDays = fullWeeks * 5;
+
+  // Tally weekdays in the remaining partial week (0–6 iterations — O(1) overall).
+  const startDow = getDay(startDate); // 0 = Sun … 6 = Sat
+  const remainingDays = totalDays % 7;
+  for (let i = 0; i < remainingDays; i++) {
+    const dow = (startDow + i) % 7;
+    if (dow !== 0 && dow !== 6) businessDays++;
   }
 
-  return count;
+  return businessDays;
 }

@@ -78,20 +78,32 @@ function getLocaleRegion(): string | undefined {
 }
 
 /**
+ * Shape of Intl.Locale.weekInfo / .getWeekInfo() — not yet in all TS lib types.
+ * firstDay: 1 = Monday … 7 = Sunday (ISO weekday numbering).
+ * minimalDays: minimum days of the year's first week (ISO = 4, US = 1).
+ */
+interface LocaleWeekInfo {
+  firstDay?: number;
+  minimalDays?: number;
+  weekend?: number[];
+}
+
+/**
  * Retrieve weekInfo from Intl.Locale.
  * Returns undefined if the API is unavailable or throws.
  */
-function getLocaleWeekInfo(): Record<string, unknown> | undefined {
+function getLocaleWeekInfo(): LocaleWeekInfo | undefined {
   try {
-    // Intl.Locale.getWeekInfo() / .weekInfo not yet in all TS lib types
-    const localeObj = new Intl.Locale(navigator.language) as unknown as Record<
-      string,
-      unknown
-    >;
+    // Cast to a typed shape that mirrors the actual API; getWeekInfo() / weekInfo
+    // are not yet in all TS lib types.
+    const localeObj = new Intl.Locale(navigator.language) as unknown as {
+      getWeekInfo?: () => LocaleWeekInfo;
+      weekInfo?: LocaleWeekInfo;
+    };
     if (typeof localeObj.getWeekInfo === "function") {
-      return (localeObj.getWeekInfo as () => Record<string, unknown>)();
+      return localeObj.getWeekInfo();
     }
-    return localeObj.weekInfo as Record<string, unknown> | undefined;
+    return localeObj.weekInfo;
   } catch {
     return undefined;
   }
@@ -135,9 +147,8 @@ export function detectLocaleDateFormat(): DateFormat {
 export function detectLocaleFirstDayOfWeek(): FirstDayOfWeek {
   const weekInfo = getLocaleWeekInfo();
   if (weekInfo) {
-    const firstDay = weekInfo.firstDay as number | undefined;
-    if (firstDay === 7) return "sunday";
-    if (firstDay === 1) return "monday";
+    if (weekInfo.firstDay === 7) return "sunday";
+    if (weekInfo.firstDay === 1) return "monday";
   }
 
   const region = getLocaleRegion();
@@ -152,9 +163,8 @@ export function detectLocaleFirstDayOfWeek(): FirstDayOfWeek {
 export function detectLocaleWeekNumberingSystem(): WeekNumberingSystem {
   const weekInfo = getLocaleWeekInfo();
   if (weekInfo) {
-    const minimalDays = weekInfo.minimalDays as number | undefined;
-    if (minimalDays === 1) return "us";
-    if (minimalDays === 4) return "iso";
+    if (weekInfo.minimalDays === 1) return "us";
+    if (weekInfo.minimalDays === 4) return "iso";
   }
 
   const region = getLocaleRegion();
