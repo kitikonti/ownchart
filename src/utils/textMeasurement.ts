@@ -69,6 +69,8 @@ function getMeasureContext(): CanvasRenderingContext2D | null {
   if (canvasUnavailable) return null;
 
   if (typeof document !== "undefined") {
+    // The canvas element is intentionally not appended to the document —
+    // it exists solely as an off-screen measurement surface.
     const canvas = document.createElement("canvas");
     const ctx = canvas.getContext("2d");
     if (ctx) {
@@ -101,33 +103,73 @@ function computeOneSidePaddingDays(
   return Math.ceil(totalPadding / pixelsPerDay);
 }
 
+// ─── Types ────────────────────────────────────────────────────────────────────
+
+/**
+ * Typography options for {@link measureTextWidth}.
+ * All properties are optional; defaults match the app's body text style.
+ */
+export interface TextMeasurementOptions {
+  /** Font family string. Defaults to the app's system font stack. */
+  fontFamily?: string;
+  /** CSS font weight (e.g. 400, 600, 700). Defaults to 400 (regular). */
+  fontWeight?: number;
+  /** Letter spacing in em units (matches CSS `letter-spacing`). Defaults to 0. */
+  letterSpacing?: number;
+}
+
+/**
+ * Input for {@link calculateColumnWidth}.
+ * Groups all parameters that describe the column to be measured.
+ */
+export interface ColumnWidthInput {
+  /** Column header text (uppercased internally). */
+  headerLabel: string;
+  /** Formatted cell values to measure against. */
+  cellValues: string[];
+  /** Font size in pixels for cell text. */
+  fontSize: number;
+  /** Total horizontal cell padding in pixels (left + right). */
+  cellPadding: number;
+  /** Per-cell extra widths (e.g. indent + icons for the name column). Defaults to []. */
+  extraWidths?: number[];
+}
+
 // ─── Public API ───────────────────────────────────────────────────────────────
 
 /**
  * Measure text width using the Canvas API.
  *
  * Falls back to a character-count heuristic when the Canvas API is unavailable.
+ * Letter spacing is applied consistently in both the Canvas and fallback paths.
  *
  * @param text - The text to measure
  * @param fontSize - Font size in pixels
- * @param fontFamily - Font family string (defaults to the app's system font stack)
- * @param fontWeight - Font weight (defaults to 400)
- * @param letterSpacing - Letter spacing in em units (defaults to 0)
+ * @param options - Typography options (fontFamily, fontWeight, letterSpacing)
  * @returns Width in pixels, or 0 for an empty string
  */
 export function measureTextWidth(
   text: string,
   fontSize: number,
-  fontFamily: string = DEFAULT_FONT_FAMILY,
-  fontWeight: number = 400,
-  letterSpacing: number = 0
+  options: TextMeasurementOptions = {}
 ): number {
   if (!text) return 0;
 
+  const {
+    fontFamily = DEFAULT_FONT_FAMILY,
+    fontWeight = 400,
+    letterSpacing = 0,
+  } = options;
+
   const ctx = getMeasureContext();
   if (!ctx) {
-    // Fallback estimation when Canvas API is unavailable (e.g. SSR, test environments)
-    return text.length * fontSize * FALLBACK_CHAR_WIDTH_RATIO;
+    // Fallback estimation when Canvas API is unavailable (e.g. SSR, test environments).
+    // Apply the same letter-spacing formula as the Canvas path (n-1 gaps for n chars)
+    // so both paths remain consistent.
+    const baseWidth = text.length * fontSize * FALLBACK_CHAR_WIDTH_RATIO;
+    return letterSpacing > 0
+      ? baseWidth + (text.length - 1) * letterSpacing * fontSize
+      : baseWidth;
   }
 
   ctx.font = `${fontWeight} ${fontSize}px ${fontFamily}`;
@@ -164,23 +206,6 @@ export function getMaxLabelWidth(tasks: Task[], fontSize: number): number {
 }
 
 /**
- * Input for {@link calculateColumnWidth}.
- * Groups all parameters that describe the column to be measured.
- */
-export interface ColumnWidthInput {
-  /** Column header text (uppercased internally). */
-  headerLabel: string;
-  /** Formatted cell values to measure against. */
-  cellValues: string[];
-  /** Font size in pixels for cell text. */
-  fontSize: number;
-  /** Total horizontal cell padding in pixels (left + right). */
-  cellPadding: number;
-  /** Per-cell extra widths (e.g. indent + icons for the name column). Defaults to []. */
-  extraWidths?: number[];
-}
-
-/**
  * Calculate optimal column width based on header and cell content.
  * This is a pure utility function used by both autoFitColumn and export.
  *
@@ -200,9 +225,7 @@ export function calculateColumnWidth({
   const headerTextWidth = measureTextWidth(
     headerLabel.toUpperCase(),
     HEADER_FONT_SIZE,
-    DEFAULT_FONT_FAMILY,
-    HEADER_FONT_WEIGHT,
-    HEADER_LETTER_SPACING
+    { fontWeight: HEADER_FONT_WEIGHT, letterSpacing: HEADER_LETTER_SPACING }
   );
   const headerWidth = headerTextWidth + HEADER_PADDING;
 

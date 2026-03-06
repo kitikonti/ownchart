@@ -3,7 +3,7 @@
  * Tests for measureTextWidth, getMaxLabelWidth, calculateColumnWidth, and calculateLabelPaddingDays
  */
 
-import { describe, it, expect, beforeEach } from "vitest";
+import { describe, it, expect, beforeEach, vi } from "vitest";
 import {
   measureTextWidth,
   getMaxLabelWidth,
@@ -64,16 +64,31 @@ describe("textMeasurement", () => {
     });
 
     it("should return a larger width when letterSpacing is applied", () => {
-      const withoutSpacing = measureTextWidth("Hello", 12, undefined, 400, 0);
-      const withSpacing = measureTextWidth("Hello", 12, undefined, 400, 0.1);
+      const withoutSpacing = measureTextWidth("Hello", 12, { letterSpacing: 0 });
+      const withSpacing = measureTextWidth("Hello", 12, { letterSpacing: 0.1 });
       expect(withSpacing).toBeGreaterThan(withoutSpacing);
     });
 
     it("should not add letter spacing for a single character", () => {
       // n-1 gaps for n characters: a single char has 0 gaps, so spacing has no effect
-      const withoutSpacing = measureTextWidth("A", 12, undefined, 400, 0);
-      const withSpacing = measureTextWidth("A", 12, undefined, 400, 0.5);
+      const withoutSpacing = measureTextWidth("A", 12);
+      const withSpacing = measureTextWidth("A", 12, { letterSpacing: 0.5 });
       expect(withSpacing).toBe(withoutSpacing);
+    });
+
+    it("should apply letterSpacing in the fallback path when canvas is unavailable", () => {
+      // Force canvas unavailability to exercise the character-count fallback code path.
+      // mockReturnValueOnce(null) causes getContext("2d") to return null once,
+      // setting canvasUnavailable = true for the remainder of this test.
+      vi.mocked(HTMLCanvasElement.prototype.getContext).mockReturnValueOnce(null);
+      resetMeasureContextForTesting();
+
+      const withoutSpacing = measureTextWidth("Hello", 12, { letterSpacing: 0 });
+      const withSpacing = measureTextWidth("Hello", 12, { letterSpacing: 0.1 });
+
+      // letterSpacing = 0.1em × 12px × (5-1) gaps = +4.8px
+      expect(withSpacing).toBeGreaterThan(withoutSpacing);
+      expect(withSpacing - withoutSpacing).toBeCloseTo(4.8);
     });
   });
 

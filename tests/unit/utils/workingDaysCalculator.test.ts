@@ -24,7 +24,7 @@ import {
   getHolidaysInRange,
   getWorkingDaysSummary,
 } from "../../../src/utils/workingDaysCalculator";
-import { holidayService } from "../../../src/services/holidayService";
+import { holidayService, type HolidayInfo } from "../../../src/services/holidayService";
 import type { WorkingDaysConfig } from "../../../src/types/preferences.types";
 
 // ─── Test fixtures ────────────────────────────────────────────────────────────
@@ -59,7 +59,7 @@ const mockSetRegion = holidayService.setRegion as ReturnType<typeof vi.fn>;
 // Helper that creates a HolidayInfo-shaped object with a local-midnight Date,
 // so format(h.date, "yyyy-MM-dd") always matches the YYYY-MM-DD string used
 // as currentDate in the calculator's loops.
-function makeHoliday(dateStr: string, name = "Test Holiday") {
+function makeHoliday(dateStr: string, name = "Test Holiday"): HolidayInfo {
   return {
     date: parseISO(dateStr), // local midnight — safe for format() comparison
     name,
@@ -394,15 +394,17 @@ describe("workingDaysCalculator", () => {
       expect(mockSetRegion).toHaveBeenCalledTimes(1);
     });
 
-    it("should return zeros for an empty range (endDate before startDate)", () => {
+    it("should return all-zero metrics when endDate is before startDate", () => {
       const summary = getWorkingDaysSummary(
         "2025-01-10",
         "2025-01-06",
         EXCLUDE_WEEKENDS
       );
-      // calculateDuration returns negative+1, while loop never executes
+      expect(summary.totalDays).toBe(0);
       expect(summary.workingDays).toBe(0);
       expect(summary.weekendDays).toBe(0);
+      expect(summary.holidayCount).toBe(0);
+      expect(summary.holidays).toEqual([]);
     });
 
     it("should handle a single-day range that is a weekday", () => {

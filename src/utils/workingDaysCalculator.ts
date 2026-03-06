@@ -36,6 +36,16 @@ export interface WorkingDaysSummary {
   holidays: HolidayInfo[];
 }
 
+// ─── Constants ────────────────────────────────────────────────────────────────
+
+/**
+ * Buffer added to the `maxIterations` ceiling in {@link addWorkingDays}.
+ * Even the densest real-world holiday calendar leaves this margin of safety —
+ * if this guard ever triggers, it indicates an unhandled exclusion axis in
+ * {@link WorkingDaysConfig} and the returned date will be incorrect.
+ */
+const WORKING_DAYS_LOOP_BUFFER = 60;
+
 // ─── Private helpers ──────────────────────────────────────────────────────────
 
 /**
@@ -54,6 +64,51 @@ function fetchHolidaysForRange(
     parseISO(startDate),
     parseISO(endDate)
   );
+}
+
+/** Internal result of {@link scanWorkingDaysInRange}. */
+interface WorkingDaysScan {
+  workingDays: number;
+  weekendDays: number;
+}
+
+/**
+ * Single-pass scan of a date range to count working days and calendar weekend days.
+ *
+ * Holiday logic is inlined (rather than delegating to isWorkingDay) to use the
+ * pre-built `holidayDateSet` for O(1) lookup per day instead of calling
+ * `isHolidayString` on each iteration.
+ *
+ * Assumes `startDate <= endDate` — call only after validating the range.
+ */
+function scanWorkingDaysInRange(
+  startDate: string,
+  endDate: string,
+  config: WorkingDaysConfig,
+  holidayDateSet: Set<string>
+): WorkingDaysScan {
+  let weekendDays = 0;
+  let workingDays = 0;
+  let currentDate = startDate;
+
+  while (currentDate <= endDate) {
+    const day = getDay(parseISO(currentDate));
+    const isSat = day === 6;
+    const isSun = day === 0;
+
+    if (isSat || isSun) weekendDays++;
+
+    let isWorking = true;
+    if (config.excludeSaturday && isSat) isWorking = false;
+    else if (config.excludeSunday && isSun) isWorking = false;
+    else if (config.excludeHolidays && holidayDateSet.has(currentDate))
+      isWorking = false;
+
+    if (isWorking) workingDays++;
+    currentDate = addDays(currentDate, 1);
+  }
+
+  return { workingDays, weekendDays };
 }
 
 // ─── Public API ───────────────────────────────────────────────────────────────
@@ -201,11 +256,17 @@ export function addWorkingDays(
     remainingDays--;
   }
 
-  // Guard against unbounded iteration: even with the most aggressive real-world
-  // holiday calendar, days × 7 + 60 calendar days is more than enough to find
-  // `days` working days. This prevents an infinite loop if future exclusion
-  // axes are ever added to WorkingDaysConfig.
-  const maxIterations = days * 7 + 60;
+  // Holiday exclusions are checked via isWorkingDay (per-iteration isHolidayString
+  // call) rather than a pre-fetched Set, because the end date is unknown upfront.
+  // This is safe: the holiday service caches per-year internally, so repeated
+  // isHolidayString calls are O(1) after the initial year load.
+  //
+  // Guard against unbounded iteration: days × 7 + WORKING_DAYS_LOOP_BUFFER calendar
+  // days is provably sufficient to find `days` working days under any realistic
+  // holiday calendar. If this guard ever fires, a new exclusion axis was added to
+  // WorkingDaysConfig without updating this function, and the returned date will
+  // be incorrect.
+  const maxIterations = days * 7 + WORKING_DAYS_LOOP_BUFFER;
   let iterations = 0;
 
   while (remainingDays > 0) {
@@ -247,6 +308,8 @@ export function getHolidaysInRange(
  * simultaneously, avoiding the double-iteration that separate
  * `calculateWorkingDays` + weekend-counting loops would require.
  *
+ * Returns all-zero metrics when `endDate` is before `startDate`.
+ *
  * @param startDate - Start date string (YYYY-MM-DD)
  * @param endDate - End date string (YYYY-MM-DD)
  * @param config - Working days configuration
@@ -258,6 +321,16 @@ export function getWorkingDaysSummary(
   config: WorkingDaysConfig,
   holidayRegion?: string
 ): WorkingDaysSummary {
+  if (startDate > endDate) {
+    return {
+      totalDays: 0,
+      workingDays: 0,
+      weekendDays: 0,
+      holidayCount: 0,
+      holidays: [],
+    };
+  }
+
   const totalDays = calculateDuration(startDate, endDate);
 
   // Fetch the full holiday list once (the service caches per-year internally)
@@ -268,36 +341,18 @@ export function getWorkingDaysSummary(
     endDate
   );
 
-  // Build a Set of YYYY-MM-DD strings for O(1) holiday lookup during the loop.
+  // Build a Set of YYYY-MM-DD strings for O(1) holiday lookup during the scan.
   // format() uses local timezone, consistent with parseISO() used on currentDate.
   const holidayDateSet = new Set(
     holidays.map((h) => format(h.date, "yyyy-MM-dd"))
   );
 
-  // Single pass: count weekends and working days simultaneously.
-  // Holiday logic is inlined (rather than delegating to isWorkingDay) to use the
-  // pre-built holidayDateSet for O(1) lookup instead of calling isHolidayString
-  // per day.
-  let weekendDays = 0;
-  let workingDays = 0;
-  let currentDate = startDate;
-
-  while (currentDate <= endDate) {
-    const day = getDay(parseISO(currentDate));
-    const isSat = day === 6;
-    const isSun = day === 0;
-
-    if (isSat || isSun) weekendDays++;
-
-    let isWorking = true;
-    if (config.excludeSaturday && isSat) isWorking = false;
-    else if (config.excludeSunday && isSun) isWorking = false;
-    else if (config.excludeHolidays && holidayDateSet.has(currentDate))
-      isWorking = false;
-
-    if (isWorking) workingDays++;
-    currentDate = addDays(currentDate, 1);
-  }
+  const { workingDays, weekendDays } = scanWorkingDaysInRange(
+    startDate,
+    endDate,
+    config,
+    holidayDateSet
+  );
 
   return {
     totalDays,
