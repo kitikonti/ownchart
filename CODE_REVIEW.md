@@ -225,10 +225,10 @@ cd ../app-gantt-review
 
 ### Priority: MEDIUM — Graph Utils
 - [x] `src/utils/arrowPath/elbowPath.ts` (343 LOC)
-- [ ] `src/utils/graph/topologicalSort.ts` (154 LOC)
-- [ ] `src/utils/graph/cycleDetection.ts` (115 LOC)
-- [ ] `src/utils/arrowPath/index.ts` (10 LOC)
-- [ ] `src/utils/graph/index.ts` (12 LOC)
+- [x] `src/utils/graph/topologicalSort.ts` (154 LOC)
+- [x] `src/utils/graph/cycleDetection.ts` (115 LOC)
+- [x] `src/utils/arrowPath/index.ts` (10 LOC)
+- [x] `src/utils/graph/index.ts` (12 LOC)
 
 ### Priority: MEDIUM — Export Utils
 - [x] `src/utils/export/pdfExport.ts` (507 LOC)
