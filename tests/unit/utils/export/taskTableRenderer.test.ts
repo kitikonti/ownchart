@@ -257,6 +257,18 @@ describe("renderTaskTableRows", () => {
     expect(lines.length).toBe(1); // only the table right border
   });
 
+  it("works correctly for all three density modes", () => {
+    for (const density of ["compact", "normal", "comfortable"] as const) {
+      const svg = makeSvg();
+      const group = renderTaskTableRows(
+        svg,
+        makeRowsOptions([makeFlattenedTask(makeTask())], { density })
+      );
+      expect(group.getAttribute("class")).toBe("task-table-rows");
+      expect(getRectElements(group).length).toBeGreaterThanOrEqual(1);
+    }
+  });
+
   describe("color column", () => {
     it("renders a color rect (not text) for the color column", () => {
       const svg = makeSvg();
@@ -369,6 +381,72 @@ describe("renderTaskTableRows", () => {
 
       const texts = getTextElements(group);
       expect(texts.some((t) => t.textContent === "▼")).toBe(false);
+    });
+
+    it("produces sequential fallback names 'Task 1', 'Task 2', 'Task 3' for multiple unnamed tasks", () => {
+      const svg = makeSvg();
+      const tasks = [
+        makeFlattenedTask(makeTask({ id: "t1" as TaskId, name: "" })),
+        makeFlattenedTask(makeTask({ id: "t2" as TaskId, name: "" })),
+        makeFlattenedTask(makeTask({ id: "t3" as TaskId, name: "" })),
+      ];
+      const group = renderTaskTableRows(
+        svg,
+        makeRowsOptions(tasks, { selectedColumns: ["name"] })
+      );
+
+      const texts = getTextElements(group).map((t) => t.textContent);
+      expect(texts).toContain("Task 1");
+      expect(texts).toContain("Task 2");
+      expect(texts).toContain("Task 3");
+    });
+
+    describe("icon rendering", () => {
+      it("renders a <path> element for the task type icon", () => {
+        const svg = makeSvg();
+        const group = renderTaskTableRows(
+          svg,
+          makeRowsOptions([makeFlattenedTask(makeTask({ type: "task" }))], {
+            selectedColumns: ["name"],
+          })
+        );
+
+        const paths = Array.from(group.querySelectorAll("path")) as SVGPathElement[];
+        expect(paths.length).toBeGreaterThanOrEqual(1);
+        expect(paths[0].getAttribute("d")).toBeTruthy();
+      });
+
+      it("renders distinct icon paths for task, summary and milestone types", () => {
+        const types = ["task", "summary", "milestone"] as const;
+        const dValues = types.map((type) => {
+          const svg = makeSvg();
+          const group = renderTaskTableRows(
+            svg,
+            makeRowsOptions([makeFlattenedTask(makeTask({ type }))], {
+              selectedColumns: ["name"],
+            })
+          );
+          return (
+            Array.from(group.querySelectorAll("path")) as SVGPathElement[]
+          )[0]?.getAttribute("d");
+        });
+
+        expect(dValues.every(Boolean)).toBe(true);
+        expect(dValues[0]).not.toBe(dValues[1]); // task ≠ summary
+        expect(dValues[0]).not.toBe(dValues[2]); // task ≠ milestone
+      });
+
+      it("does not throw when task.type is undefined — falls back to task icon", () => {
+        const svg = makeSvg();
+        const task = { ...makeTask(), type: undefined } as unknown as Task;
+        const group = renderTaskTableRows(
+          svg,
+          makeRowsOptions([makeFlattenedTask(task)], { selectedColumns: ["name"] })
+        );
+
+        const paths = Array.from(group.querySelectorAll("path")) as SVGPathElement[];
+        expect(paths.length).toBeGreaterThanOrEqual(1);
+      });
     });
   });
 
@@ -591,11 +669,37 @@ describe("renderTaskTableRows", () => {
       const lines = getLineElements(group);
       // Row 1 bottom border: y1 = startY + rowHeight = 10 + 44 = 54
       // Row 2 bottom border: y1 = startY + 2 * rowHeight = 10 + 88 = 98
+      // Row borders are horizontal (x1 ≠ x2); right border and separators are vertical (x1 = x2)
       const rowBorderYValues = lines
-        .filter((l) => l !== lines[0]) // skip table right border
+        .filter((l) => l.getAttribute("x1") !== l.getAttribute("x2"))
         .map((l) => l.getAttribute("y1"));
       expect(rowBorderYValues).toContain("54");
       expect(rowBorderYValues).toContain("98");
+    });
+
+    it("offsets column content when x > 0", () => {
+      const task = makeTask({ color: "#aabbcc" });
+
+      const svg0 = makeSvg();
+      const group0 = renderTaskTableRows(
+        svg0,
+        makeRowsOptions([makeFlattenedTask(task)], { selectedColumns: ["color"], x: 0 })
+      );
+
+      const svg50 = makeSvg();
+      const group50 = renderTaskTableRows(
+        svg50,
+        makeRowsOptions([makeFlattenedTask(task)], { selectedColumns: ["color"], x: 50 })
+      );
+
+      const bar0 = getRectElements(group0).find((r) => r.getAttribute("fill") === "#aabbcc");
+      const bar50 = getRectElements(group50).find((r) => r.getAttribute("fill") === "#aabbcc");
+
+      expect(bar0).toBeDefined();
+      expect(bar50).toBeDefined();
+      expect(Number(bar50!.getAttribute("x"))).toBeGreaterThan(
+        Number(bar0!.getAttribute("x"))
+      );
     });
   });
 });

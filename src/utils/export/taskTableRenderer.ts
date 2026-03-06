@@ -46,6 +46,24 @@ const UNNAMED_TASK_PREFIX = "Task";
  */
 const SPECIAL_CASE_COLUMNS = new Set<ExportColumnKey>(["color", "name"]);
 
+/**
+ * Expand/collapse indicator for summary tasks with children.
+ * Defined as a named constant so source and tests reference the same symbol —
+ * a future icon change only needs to happen here.
+ */
+const EXPAND_ARROW_CHAR = "▼";
+
+/**
+ * Data columns that receive lighter/italic styling for summary task rows,
+ * matching the app's rendering of computed summary date ranges.
+ * When ExportDataColumnKey gains a new date-like column, add it here.
+ */
+const SUMMARY_DATE_COLUMNS = new Set<ExportDataColumnKey>([
+  "startDate",
+  "endDate",
+  "duration",
+]);
+
 // ─── SVG namespace helper ─────────────────────────────────────────────────────
 
 const SVG_NS = "http://www.w3.org/2000/svg";
@@ -222,7 +240,7 @@ function renderNameArrow(group: SVGGElement, textY: number, atX: number): void {
       y: textY,
       fill: EXPORT_COLORS.textSecondary,
       fontSize: ARROW_FONT_SIZE,
-      content: "▼",
+      content: EXPAND_ARROW_CHAR,
     })
   );
 }
@@ -266,6 +284,8 @@ function renderNameText({
   availableWidth,
   fontSize,
 }: NameTextOptions): void {
+  // Export-local numbering: intentionally uses the row's position within the exported
+  // subset, not globalRowNumber — fallback names read "Task 1, 2, 3 …" sequentially.
   const rawName = task.name || `${UNNAMED_TASK_PREFIX} ${rowIndex + 1}`;
   const displayName = truncateToWidth(rawName, availableWidth, fontSize);
   group.appendChild(
@@ -356,12 +376,11 @@ function renderDataCell(
 
   const isSummary = task.type === "summary";
   // Summary dates/duration are styled lighter and italic, matching the app
-  const useSummaryStyle =
-    isSummary &&
-    (key === "startDate" || key === "endDate" || key === "duration");
+  // When adding a date-like ExportDataColumnKey, add it to SUMMARY_DATE_COLUMNS above.
+  const useSummaryStyle = isSummary && SUMMARY_DATE_COLUMNS.has(key);
 
   const rawValue = getColumnDisplayValue(task, key);
-  if (!rawValue) return; // null = no value, "" = intentionally blank (e.g. milestone end date)
+  if (!rawValue) return; // skip — null (no value) or "" (intentionally blank, e.g. milestone end date)
 
   const availableWidth = colWidth - cellPaddingX * 2;
   const value = truncateToWidth(rawValue, availableWidth, fontSizeCell);
