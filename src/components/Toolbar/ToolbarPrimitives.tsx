@@ -168,7 +168,8 @@ export const ToolbarButton = memo(
     // When the label collapses, promote it to aria-label and title so that
     // screen-reader users and sighted keyboard users can still identify the
     // button. Explicit caller values always take precedence.
-    const resolvedAriaLabel = !showLabel && label ? (ariaLabel ?? label) : ariaLabel;
+    const resolvedAriaLabel =
+      !showLabel && label ? (ariaLabel ?? label) : ariaLabel;
     const resolvedTitle = !showLabel && label ? (title ?? label) : title;
 
     return (
