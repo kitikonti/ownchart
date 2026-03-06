@@ -6,14 +6,7 @@
  * pixel coordinates for rendering via useMemo.
  */
 
-import {
-  useState,
-  useCallback,
-  useRef,
-  useEffect,
-  useMemo,
-  createElement,
-} from "react";
+import { useState, useCallback, useRef, useEffect, useMemo } from "react";
 import { MagnifyingGlassPlus } from "@phosphor-icons/react";
 import type { TimelineScale } from "../utils/timelineUtils";
 import { dateToPixel, pixelToDate } from "../utils/timelineUtils";
@@ -96,10 +89,12 @@ function buildZoomContextMenuItems(
     {
       id: "zoomToSelection",
       label: "Zoom to Selection",
-      icon: createElement(MagnifyingGlassPlus, {
-        size: CONTEXT_MENU.iconSize,
-        weight: CONTEXT_MENU.iconWeight,
-      }),
+      icon: (
+        <MagnifyingGlassPlus
+          size={CONTEXT_MENU.iconSize}
+          weight={CONTEXT_MENU.iconWeight}
+        />
+      ),
       onClick: (): void => {
         const sel = selectionRef.current;
         if (sel) {

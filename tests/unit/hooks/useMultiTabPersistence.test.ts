@@ -379,6 +379,22 @@ describe("useMultiTabPersistence", () => {
       expect(setWidthSpy).not.toHaveBeenCalled();
     });
 
+    it("should mark hydrated and not throw when loadTabChart itself throws", async () => {
+      // Simulate an unexpected error thrown by loadTabChart (e.g. from
+      // loadMultiTabStorage in a future code path that doesn't swallow errors).
+      // Before F001 fix: loadTabChart was called outside the try-catch, so this
+      // would leave the app permanently unhydrated with an uncaught error.
+      const storageModule = await import(
+        "../../../src/utils/multiTabStorage"
+      );
+      vi.spyOn(storageModule, "loadTabChart").mockImplementationOnce(() => {
+        throw new Error("Unexpected storage error");
+      });
+
+      expect(() => renderHook(() => useMultiTabPersistence())).not.toThrow();
+      expect(useUIStore.getState().isHydrated).toBe(true);
+    });
+
     it("should not block saves when restore throws an error", async () => {
       const tabId = "tab-error-save";
       sessionStorage.setItem(TAB_ID_KEY, tabId);

@@ -184,17 +184,14 @@ function useTabRestore(
 ): void {
   useEffect(() => {
     const tabId = tabIdRef.current;
-    const savedChart = loadTabChart(tabId);
-
-    if (!savedChart) {
-      // Mark as hydrated even when no saved state exists
-      useUIStore.getState().setHydrated();
-      return;
-    }
-
+    // Set before try so the finally block always resets it and calls
+    // setHydrated — even if loadTabChart throws unexpectedly.
     isRestoringRef.current = true;
     try {
-      restoreStateFromChart(savedChart);
+      const savedChart = loadTabChart(tabId);
+      if (savedChart) {
+        restoreStateFromChart(savedChart);
+      }
     } catch (error) {
       // intentional: surface restore failures in the browser console for
       // debugging; the app continues with default state after the toast above.

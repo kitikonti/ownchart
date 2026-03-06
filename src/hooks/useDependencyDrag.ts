@@ -452,7 +452,7 @@ function useDragSession(
 /** Attaches global mouse/keyboard listeners for the duration of a dependency drag. */
 function useDragGlobalEvents(
   isDragging: boolean,
-  updateDragPosition: (e: MouseEvent) => void,
+  updateDragPosition: (e: MouseEvent | React.MouseEvent) => void,
   endDrag: (targetTaskId?: TaskId) => void,
   cancelDrag: () => void
 ): void {
@@ -494,9 +494,7 @@ function useDragLifecycle(
   enabled: boolean,
   dragState: DependencyDragState,
   cancelDrag: () => void,
-  // updateDragPosition accepts (MouseEvent | React.MouseEvent) which is a
-  // supertype of MouseEvent — satisfies addEventListener via contravariance.
-  updateDragPosition: (e: MouseEvent) => void,
+  updateDragPosition: (e: MouseEvent | React.MouseEvent) => void,
   endDrag: (targetTaskId?: TaskId) => void
 ): void {
   // Cancel any in-progress drag if the feature is disabled externally.
