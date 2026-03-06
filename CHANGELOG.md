@@ -2,6 +2,18 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [1.1.24](https://github.com/kitikonti/ownchart/compare/v1.1.23...v1.1.24) (2026-03-06)
+
+
+### Code Refactoring
+
+* address code review findings in textMeasurement and workingDaysCalculator utils ([5a6ebea](https://github.com/kitikonti/ownchart/commit/5a6ebea9999f3633f02565ae93d5e776739ba738))
+* address code review findings in textMeasurement and workingDaysCalculator utils ([da677f6](https://github.com/kitikonti/ownchart/commit/da677f60589bfec43e7abcd06df1ee47a4de60c3))
+* address code review findings in textMeasurement and workingDaysCalculator utils ([557a02e](https://github.com/kitikonti/ownchart/commit/557a02e5e396723bec384cee3398f0c1b690ddfe))
+* address review findings in textMeasurement and workingDaysCalculator ([855fd62](https://github.com/kitikonti/ownchart/commit/855fd6232748c857f3d581bc4395dc5572114e5e))
+* harden textMeasurement and workingDaysCalculator for future-proofing ([77fb2c3](https://github.com/kitikonti/ownchart/commit/77fb2c32fbe40d45e7817b5792efda51167bf780))
+* harden textMeasurement and workingDaysCalculator utils ([bc4f9b6](https://github.com/kitikonti/ownchart/commit/bc4f9b6fb91eb74f4e7c1ccc6bb1454977c8a662))
+
 ## [1.1.23](https://github.com/kitikonti/ownchart/compare/v1.1.22...v1.1.23) (2026-03-06)
 
 
