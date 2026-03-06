@@ -9,6 +9,8 @@ import { useCallback } from "react";
 import toast from "react-hot-toast";
 import { useClipboardStore } from "../store/slices/clipboardSlice";
 import { useTaskStore } from "../store/slices/taskSlice";
+import type { TaskId } from "../types/branded.types";
+import type { EditableField } from "../types/task.types";
 import {
   writeRowsToSystemClipboard,
   writeCellToSystemClipboard,
@@ -17,7 +19,7 @@ import {
   isClipboardApiAvailable,
 } from "../utils/clipboard";
 
-interface ClipboardOperations {
+export interface ClipboardOperations {
   handleCopy: () => void;
   handleCut: () => void;
   handlePaste: () => Promise<void>;
@@ -44,7 +46,7 @@ export function hasSameTaskIds(
 // ---------------------------------------------------------------------------
 
 /**
- * Fire-and-forget: write the current row clipboard to the system clipboard.
+ * Fire-and-forget: sync the current row clipboard to the system clipboard.
  * Silently swallows errors — the internal clipboard always serves as fallback.
  */
 function syncRowsToSystemClipboard(): void {
@@ -59,7 +61,7 @@ function syncRowsToSystemClipboard(): void {
 }
 
 /**
- * Fire-and-forget: write the current cell clipboard to the system clipboard.
+ * Fire-and-forget: sync the current cell clipboard to the system clipboard.
  * Silently swallows errors — the internal clipboard always serves as fallback.
  */
 function syncCellToSystemClipboard(): void {
@@ -71,6 +73,32 @@ function syncCellToSystemClipboard(): void {
         // Silently fail — internal clipboard still works
       }
     );
+  }
+}
+
+/**
+ * Shared implementation for copy and cut — rows take priority over cell.
+ * Extracted to eliminate the structural duplication between handleCopy and
+ * handleCut (they differ only in which store action they call and the verb).
+ */
+function executeCopyOrCut(
+  mode: "copy" | "cut",
+  selectedTaskIds: TaskId[],
+  activeCell: { taskId: TaskId | null; field: EditableField | null },
+  rowAction: (ids: TaskId[]) => void,
+  cellAction: (id: TaskId, field: EditableField) => void
+): void {
+  const verb = mode === "copy" ? "Copied" : "Cut";
+  if (selectedTaskIds.length > 0) {
+    rowAction(selectedTaskIds);
+    toast.success(`${verb} ${selectedTaskIds.length} row(s)`);
+    syncRowsToSystemClipboard();
+  } else if (activeCell.taskId && activeCell.field) {
+    cellAction(activeCell.taskId, activeCell.field);
+    toast.success(`${verb} ${activeCell.field}`);
+    syncCellToSystemClipboard();
+  } else {
+    toast(`Nothing to ${mode}`, { icon: "ℹ️" });
   }
 }
 
@@ -118,7 +146,7 @@ async function tryPasteCellFromSystemClipboard(): Promise<boolean> {
   const externalCell = await readCellFromSystemClipboard();
   if (!externalCell || !activeCell.taskId || !activeCell.field) return false;
 
-  // Skip if this is the same data already in the internal clipboard
+  // Skip if this is the same data already in the internal clipboard.
   const isSameAsInternal =
     internalMode === "cell" &&
     cellClipboard.field === externalCell.field &&
@@ -153,7 +181,7 @@ async function tryPasteFromSystemClipboard(): Promise<boolean> {
     if (await tryPasteRowsFromSystemClipboard()) return true;
     if (await tryPasteCellFromSystemClipboard()) return true;
   } catch (err) {
-    // System clipboard read failed — fall back to internal clipboard
+    // System clipboard read failed — fall back to internal clipboard.
     if (import.meta.env.DEV) {
       console.warn(
         "System clipboard read failed, falling back to internal clipboard",
@@ -165,101 +193,74 @@ async function tryPasteFromSystemClipboard(): Promise<boolean> {
   return false;
 }
 
+/**
+ * Paste from the internal clipboard (fallback when system clipboard is
+ * unavailable or holds the same data as the internal clipboard).
+ * Reads all state fresh via getState() to avoid stale-closure issues.
+ */
+async function pasteFromInternalClipboard(): Promise<void> {
+  const { getClipboardMode, pasteRows, pasteCell } =
+    useClipboardStore.getState();
+  const { activeCell } = useTaskStore.getState();
+  const internalMode = getClipboardMode();
+
+  if (internalMode === "row") {
+    const result = pasteRows();
+    if (result.success) {
+      toast.success("Pasted rows");
+    } else if (result.error) {
+      toast.error(result.error);
+    }
+  } else if (internalMode === "cell" && activeCell.taskId && activeCell.field) {
+    const result = pasteCell(activeCell.taskId, activeCell.field);
+    if (result.success) {
+      toast.success(`Pasted ${activeCell.field}`);
+    } else if (result.error) {
+      toast.error(result.error);
+    }
+  } else {
+    toast("Nothing to paste", { icon: "ℹ️" });
+  }
+}
+
 // ---------------------------------------------------------------------------
 
 export function useClipboardOperations(): ClipboardOperations {
-  // Get only the specific actions we need to avoid unnecessary re-renders
-  const copyRows = useClipboardStore((state) => state.copyRows);
-  const cutRows = useClipboardStore((state) => state.cutRows);
-  const copyCell = useClipboardStore((state) => state.copyCell);
-  const cutCell = useClipboardStore((state) => state.cutCell);
+  // Subscribe only to the actions needed — avoids re-renders on clipboard
+  // data changes (those are read lazily via getState() in the helpers above).
+  const copyRows = useClipboardStore((s) => s.copyRows);
+  const cutRows = useClipboardStore((s) => s.cutRows);
+  const copyCell = useClipboardStore((s) => s.copyCell);
+  const cutCell = useClipboardStore((s) => s.cutCell);
 
-  const selectedTaskIds = useTaskStore((state) => state.selectedTaskIds);
-  const activeCell = useTaskStore((state) => state.activeCell);
+  const selectedTaskIds = useTaskStore((s) => s.selectedTaskIds);
+  const activeCell = useTaskStore((s) => s.activeCell);
 
-  // Determine if copy/cut should be enabled
   const canCopyOrCut =
     selectedTaskIds.length > 0 ||
     (activeCell.taskId !== null && activeCell.field !== null);
 
   // Subscribe directly to activeMode so canPaste is reactive without needing
-  // separate rowClipboard/cellClipboard subscriptions or void suppressions.
-  const canPaste = useClipboardStore((state) => state.activeMode !== null);
+  // separate rowClipboard/cellClipboard subscriptions.
+  const canPaste = useClipboardStore((s) => s.activeMode !== null);
 
-  // Smart mode detection for copy
   const handleCopy = useCallback(() => {
-    if (selectedTaskIds.length > 0) {
-      // Row mode: Copy entire rows
-      copyRows(selectedTaskIds);
-      toast.success(`Copied ${selectedTaskIds.length} row(s)`);
-      // Write to system clipboard after store is updated (fire-and-forget)
-      syncRowsToSystemClipboard();
-    } else if (activeCell.taskId && activeCell.field) {
-      // Cell mode: Copy single cell value
-      copyCell(activeCell.taskId, activeCell.field);
-      toast.success(`Copied ${activeCell.field}`);
-      // Write to system clipboard after store is updated (fire-and-forget)
-      syncCellToSystemClipboard();
-    } else {
-      toast("Nothing to copy", { icon: "ℹ️" });
-    }
+    executeCopyOrCut("copy", selectedTaskIds, activeCell, copyRows, copyCell);
   }, [selectedTaskIds, activeCell, copyRows, copyCell]);
 
-  // Smart mode detection for cut
   const handleCut = useCallback(() => {
-    if (selectedTaskIds.length > 0) {
-      // Row mode: Cut entire rows
-      cutRows(selectedTaskIds);
-      toast.success(`Cut ${selectedTaskIds.length} row(s)`);
-      // Note: Cut marks are internal only — cross-tab paste treats as copy
-      syncRowsToSystemClipboard();
-    } else if (activeCell.taskId && activeCell.field) {
-      // Cell mode: Cut single cell value
-      cutCell(activeCell.taskId, activeCell.field);
-      toast.success(`Cut ${activeCell.field}`);
-      syncCellToSystemClipboard();
-    } else {
-      toast("Nothing to cut", { icon: "ℹ️" });
-    }
+    executeCopyOrCut("cut", selectedTaskIds, activeCell, cutRows, cutCell);
   }, [selectedTaskIds, activeCell, cutRows, cutCell]);
 
-  // Smart mode detection for paste (async for system clipboard).
-  // Reads all state via getState() inside helpers so the dep array stays
-  // minimal and handlePaste remains a stable function reference.
+  // Async paste: try system clipboard first, fall back to internal clipboard.
+  // All state is read via getState() inside the helpers, so the dep array
+  // stays empty and handlePaste is a stable function reference.
   const handlePaste = useCallback(async () => {
     const usedSystemClipboard = await tryPasteFromSystemClipboard();
-    if (usedSystemClipboard) return;
-
-    // Fall back to internal clipboard — read fresh state after the async gap
-    const { getClipboardMode, pasteRows, pasteCell } =
-      useClipboardStore.getState();
-    const { activeCell } = useTaskStore.getState();
-    const internalMode = getClipboardMode();
-
-    if (internalMode === "row") {
-      // Paste rows
-      const result = pasteRows();
-      if (result.success) {
-        toast.success("Pasted rows");
-      } else if (result.error) {
-        toast.error(result.error);
-      }
-    } else if (
-      internalMode === "cell" &&
-      activeCell.taskId &&
-      activeCell.field
-    ) {
-      // Paste cell value
-      const result = pasteCell(activeCell.taskId, activeCell.field);
-      if (result.success) {
-        toast.success(`Pasted ${activeCell.field}`);
-      } else if (result.error) {
-        toast.error(result.error);
-      }
-    } else {
-      toast("Nothing to paste", { icon: "ℹ️" });
+    if (!usedSystemClipboard) {
+      await pasteFromInternalClipboard();
     }
-  }, []); // stable — all state accessed via getState() inside helpers
+  }, []);
 
   return {
     handleCopy,

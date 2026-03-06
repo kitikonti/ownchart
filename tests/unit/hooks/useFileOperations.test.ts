@@ -179,6 +179,19 @@ describe("useFileOperations — handleNew", () => {
     expect(useChartStore.getState().hiddenTaskIds).toEqual([]);
   });
 
+  it("should reset zoom and pan to defaults when creating a new chart", async () => {
+    useChartStore.setState({ zoom: 3, panOffset: { x: 200, y: 50 } });
+    const { result } = renderHook(() => useFileOperations());
+
+    await act(async () => {
+      await result.current.handleNew();
+    });
+
+    // resetView() resets zoom to DEFAULT_ZOOM and pan to {x:0, y:0}
+    expect(useChartStore.getState().panOffset).toEqual({ x: 0, y: 0 });
+    expect(useChartStore.getState().zoom).not.toBe(3);
+  });
+
   it("should clear history and reset file store", async () => {
     const { result } = renderHook(() => useFileOperations());
 
