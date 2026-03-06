@@ -2,6 +2,25 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [1.1.25](https://github.com/kitikonti/ownchart/compare/v1.1.24...v1.1.25) (2026-03-06)
+
+
+### Code Refactoring
+
+* harden three hooks from code review (F001–F004) ([3d626b0](https://github.com/kitikonti/ownchart/commit/3d626b0f20f617fd2c5aef1343ec97ebc795ddb5))
+* harden three hooks from code review (F001–F004) ([5489717](https://github.com/kitikonti/ownchart/commit/5489717575acf19dce0031abf9b55196a4e1f583))
+* harden three hooks from code review (F001–F006) ([51e7c01](https://github.com/kitikonti/ownchart/commit/51e7c01042d9555f6afd9fc13451c02a751753fe))
+* harden three hooks from code review (F001–F006) ([8909eea](https://github.com/kitikonti/ownchart/commit/8909eeac0bb274c82a73b75b4c48e6d4e95f8daf))
+* harden three hooks from code review (F001–F008) ([922634c](https://github.com/kitikonti/ownchart/commit/922634ca6de7ea906f629498da6b1c2b8fe70d2f))
+* harden three hooks from code review (F001–F008) ([335eee1](https://github.com/kitikonti/ownchart/commit/335eee1b90529c237a3cb56e2436b55a1da71443))
+* harden three hooks from code review (F001–F008) ([dd4d93f](https://github.com/kitikonti/ownchart/commit/dd4d93f653c74ffc69fa96a7483cfeffc87c29ae))
+* harden three hooks from code review (F001–F009) ([7178e30](https://github.com/kitikonti/ownchart/commit/7178e30afe30662c92ca51d8df27a05824def01c))
+* harden three hooks from code review (F001–F009) ([65c2c2f](https://github.com/kitikonti/ownchart/commit/65c2c2f27492e6ecc55f5b3c63de879596d4c89a))
+* harden three hooks from code review (F001–F012) ([7578b30](https://github.com/kitikonti/ownchart/commit/7578b3082d59aceffff0a70269cd7f2b947d2ebe))
+* harden three hooks from code review (F001–F013) ([b6f9b90](https://github.com/kitikonti/ownchart/commit/b6f9b90fec9c866d275a05f963f421a50a711d2e))
+* harden three hooks from code review (F001–F013) ([8c8a29b](https://github.com/kitikonti/ownchart/commit/8c8a29bdefc3f5b3ef147d910584b5fca8471cb3))
+* harden three hooks from code review (F001–F019) ([336eab9](https://github.com/kitikonti/ownchart/commit/336eab9137d46f33c8ed5682f7079d55a938e277))
+
 ## [1.1.24](https://github.com/kitikonti/ownchart/compare/v1.1.23...v1.1.24) (2026-03-06)
 
 
