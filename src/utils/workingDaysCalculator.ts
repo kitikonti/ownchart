@@ -16,7 +16,22 @@ import type { WorkingDaysConfig } from "../types/preferences.types";
 export interface WorkingDaysSummary {
   totalDays: number;
   workingDays: number;
+  /**
+   * Total calendar Saturday + Sunday count in the range,
+   * **independent of `config.excludeSaturday` / `config.excludeSunday`**.
+   * This is an informational metric for display; it does not equal the number
+   * of excluded weekend days when one or both flags are disabled.
+   */
   weekendDays: number;
+  /**
+   * Number of holidays returned by the holiday service for the range.
+   * Populated only when `config.excludeHolidays` is true and a
+   * `holidayRegion` is provided; otherwise `0`.
+   *
+   * Note: holidays that fall on a weekend are counted here *and* in
+   * `weekendDays`. To get the total number of excluded days, use
+   * `totalDays - workingDays`.
+   */
   holidayCount: number;
   holidays: HolidayInfo[];
 }
@@ -112,13 +127,26 @@ export function calculateWorkingDays(
     return calculateDuration(startDate, endDate);
   }
 
+  // Pre-fetch holidays once for the full range to avoid per-iteration
+  // setRegion calls; matches the optimization already used in getWorkingDaysSummary.
+  const holidays = fetchHolidaysForRange(
+    config,
+    holidayRegion,
+    startDate,
+    endDate
+  );
+  const holidaySet = new Set(holidays.map((h) => format(h.date, "yyyy-MM-dd")));
+
   let count = 0;
   let currentDate = startDate;
 
   while (currentDate <= endDate) {
-    if (isWorkingDay(currentDate, config, holidayRegion)) {
-      count++;
-    }
+    const day = getDay(parseISO(currentDate));
+    const isExcluded =
+      (config.excludeSaturday && day === 6) ||
+      (config.excludeSunday && day === 0) ||
+      (config.excludeHolidays && holidaySet.has(currentDate));
+    if (!isExcluded) count++;
     currentDate = addDays(currentDate, 1);
   }
 
@@ -158,6 +186,13 @@ export function addWorkingDays(
     return addDays(startDate, days - 1);
   }
 
+  // Pre-configure the holiday service once so that per-iteration isWorkingDay
+  // calls find it already in the correct state (setRegion is idempotent, but
+  // calling it here makes the intent explicit and avoids redundant work).
+  if (config.excludeHolidays && holidayRegion) {
+    holidayService.setRegion(holidayRegion);
+  }
+
   let currentDate = startDate;
   let remainingDays = days;
 
@@ -166,7 +201,15 @@ export function addWorkingDays(
     remainingDays--;
   }
 
+  // Guard against unbounded iteration: even with the most aggressive real-world
+  // holiday calendar, days × 7 + 60 calendar days is more than enough to find
+  // `days` working days. This prevents an infinite loop if future exclusion
+  // axes are ever added to WorkingDaysConfig.
+  const maxIterations = days * 7 + 60;
+  let iterations = 0;
+
   while (remainingDays > 0) {
+    if (iterations++ >= maxIterations) break;
     currentDate = addDays(currentDate, 1);
     if (isWorkingDay(currentDate, config, holidayRegion)) {
       remainingDays--;

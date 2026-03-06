@@ -164,26 +164,38 @@ export function getMaxLabelWidth(tasks: Task[], fontSize: number): number {
 }
 
 /**
+ * Input for {@link calculateColumnWidth}.
+ * Groups all parameters that describe the column to be measured.
+ */
+export interface ColumnWidthInput {
+  /** Column header text (uppercased internally). */
+  headerLabel: string;
+  /** Formatted cell values to measure against. */
+  cellValues: string[];
+  /** Font size in pixels for cell text. */
+  fontSize: number;
+  /** Total horizontal cell padding in pixels (left + right). */
+  cellPadding: number;
+  /** Per-cell extra widths (e.g. indent + icons for the name column). Defaults to []. */
+  extraWidths?: number[];
+}
+
+/**
  * Calculate optimal column width based on header and cell content.
  * This is a pure utility function used by both autoFitColumn and export.
  *
  * Headers are styled with: text-xs (12px), font-semibold (600), uppercase,
  * tracking-wider (0.05em), px-3 (24px horizontal padding).
  *
- * @param headerLabel - Column header text (will be uppercased internally)
- * @param cellValues - Array of formatted cell values
- * @param fontSize - Font size in pixels for cell text
- * @param cellPadding - Total horizontal cell padding in pixels (left + right)
- * @param extraWidths - Per-cell extra widths (e.g. indent + icons for the name column)
  * @returns Optimal column width in pixels, clamped to [MIN_COLUMN_WIDTH_PX, MAX_COLUMN_WIDTH_PX]
  */
-export function calculateColumnWidth(
-  headerLabel: string,
-  cellValues: string[],
-  fontSize: number,
-  cellPadding: number,
-  extraWidths: number[] = []
-): number {
+export function calculateColumnWidth({
+  headerLabel,
+  cellValues,
+  fontSize,
+  cellPadding,
+  extraWidths = [],
+}: ColumnWidthInput): number {
   // Measure header width (uppercase, semibold, letter-spaced) + header padding
   const headerTextWidth = measureTextWidth(
     headerLabel.toUpperCase(),
@@ -271,4 +283,20 @@ export function calculateLabelPaddingDays(
       pixelsPerDay
     ),
   };
+}
+
+/**
+ * Reset the cached canvas context and the unavailability flag.
+ *
+ * **Only intended for use in test environments** to ensure each test suite
+ * starts with a clean measurement context. Without this, `canvasUnavailable`
+ * set to `true` in one test module can leak into subsequent tests that run in
+ * the same worker, causing `measureTextWidth` to silently fall back to the
+ * character-count heuristic even when a canvas mock is available.
+ *
+ * @internal
+ */
+export function resetMeasureContextForTesting(): void {
+  measureContext = null;
+  canvasUnavailable = false;
 }

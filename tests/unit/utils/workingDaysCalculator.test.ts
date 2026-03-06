@@ -206,10 +206,10 @@ describe("workingDaysCalculator", () => {
     });
 
     it("should subtract holiday days from the count", () => {
-      // Wed Jan 8 is a holiday — Mon–Fri (5 days) minus 1 = 4
-      mockIsHolidayString.mockImplementation((dateStr: string) =>
-        dateStr === "2025-01-08" ? makeHoliday("2025-01-08") : null
-      );
+      // Wed Jan 8 is a holiday — Mon–Fri (5 days) minus 1 = 4.
+      // calculateWorkingDays uses fetchHolidaysForRange (getHolidaysInRange),
+      // not isHolidayString, so mock the service-level call.
+      mockGetHolidaysInRange.mockReturnValue([makeHoliday("2025-01-08")]);
       expect(
         calculateWorkingDays("2025-01-06", "2025-01-10", EXCLUDE_ALL, "AT")
       ).toBe(4);
@@ -220,6 +220,11 @@ describe("workingDaysCalculator", () => {
       expect(
         calculateWorkingDays("2025-01-06", "2025-01-17", EXCLUDE_WEEKENDS)
       ).toBe(10);
+    });
+
+    it("should configure holidayService exactly once (not per day)", () => {
+      calculateWorkingDays("2025-01-06", "2025-01-12", EXCLUDE_ALL, "AT");
+      expect(mockSetRegion).toHaveBeenCalledTimes(1);
     });
   });
 

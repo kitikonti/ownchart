@@ -3,12 +3,13 @@
  * Tests for measureTextWidth, getMaxLabelWidth, calculateColumnWidth, and calculateLabelPaddingDays
  */
 
-import { describe, it, expect } from "vitest";
+import { describe, it, expect, beforeEach } from "vitest";
 import {
   measureTextWidth,
   getMaxLabelWidth,
   calculateColumnWidth,
   calculateLabelPaddingDays,
+  resetMeasureContextForTesting,
 } from "../../../src/utils/textMeasurement";
 import type { Task } from "../../../src/types/chart.types";
 
@@ -29,6 +30,12 @@ function createTask(name: string, overrides: Partial<Task> = {}): Task {
 }
 
 describe("textMeasurement", () => {
+  beforeEach(() => {
+    // Reset the canvas context cache so `canvasUnavailable` set in one test
+    // doesn't leak into subsequent tests running in the same worker.
+    resetMeasureContextForTesting();
+  });
+
   describe("measureTextWidth", () => {
     it("should return 0 for empty string", () => {
       expect(measureTextWidth("", 12)).toBe(0);
@@ -108,83 +115,137 @@ describe("textMeasurement", () => {
     // Tests use relative assertions to stay independent of the exact heuristic value.
 
     it("should return a positive width for a non-empty header", () => {
-      expect(calculateColumnWidth("Name", [], 13, 16)).toBeGreaterThan(0);
+      expect(
+        calculateColumnWidth({
+          headerLabel: "Name",
+          cellValues: [],
+          fontSize: 13,
+          cellPadding: 16,
+        })
+      ).toBeGreaterThan(0);
     });
 
     it("should enforce the minimum width of 60px", () => {
       // Empty header and no cell values → raw width is 0 → clamped to 60
-      expect(calculateColumnWidth("", [], 13, 0)).toBe(60);
+      expect(
+        calculateColumnWidth({
+          headerLabel: "",
+          cellValues: [],
+          fontSize: 13,
+          cellPadding: 0,
+        })
+      ).toBe(60);
     });
 
     it("should enforce the maximum width of 600px", () => {
       // Extremely long cell value should be capped
       const longValue = "A".repeat(500);
-      const width = calculateColumnWidth("H", [longValue], 13, 16);
+      const width = calculateColumnWidth({
+        headerLabel: "H",
+        cellValues: [longValue],
+        fontSize: 13,
+        cellPadding: 16,
+      });
       expect(width).toBe(600);
     });
 
     it("should use cell width when it exceeds header width", () => {
       const shortHeader = "N";
       const longCell = "This is a very long cell value that exceeds the header";
-      const width = calculateColumnWidth(shortHeader, [longCell], 13, 16);
-      const headerOnlyWidth = calculateColumnWidth(shortHeader, [], 13, 16);
+      const width = calculateColumnWidth({
+        headerLabel: shortHeader,
+        cellValues: [longCell],
+        fontSize: 13,
+        cellPadding: 16,
+      });
+      const headerOnlyWidth = calculateColumnWidth({
+        headerLabel: shortHeader,
+        cellValues: [],
+        fontSize: 13,
+        cellPadding: 16,
+      });
       expect(width).toBeGreaterThan(headerOnlyWidth);
     });
 
     it("should use header width when no cells are provided", () => {
-      const width = calculateColumnWidth("Status", [], 13, 16);
+      const width = calculateColumnWidth({
+        headerLabel: "Status",
+        cellValues: [],
+        fontSize: 13,
+        cellPadding: 16,
+      });
       expect(width).toBeGreaterThanOrEqual(60);
     });
 
     it("should add extraWidths to the corresponding cell measurement", () => {
       const cellValue = "Task name";
-      const widthWithoutExtra = calculateColumnWidth(
-        "Name",
-        [cellValue],
-        13,
-        16,
-        [0]
-      );
-      const widthWithExtra = calculateColumnWidth(
-        "Name",
-        [cellValue],
-        13,
-        16,
-        [50]
-      );
+      const widthWithoutExtra = calculateColumnWidth({
+        headerLabel: "Name",
+        cellValues: [cellValue],
+        fontSize: 13,
+        cellPadding: 16,
+        extraWidths: [0],
+      });
+      const widthWithExtra = calculateColumnWidth({
+        headerLabel: "Name",
+        cellValues: [cellValue],
+        fontSize: 13,
+        cellPadding: 16,
+        extraWidths: [50],
+      });
       expect(widthWithExtra).toBeGreaterThan(widthWithoutExtra);
     });
 
     it("should treat a missing extraWidths entry the same as 0", () => {
       const cellValue = "Task name";
       // Passing an empty extraWidths array vs omitting the argument entirely
-      const widthNoArray = calculateColumnWidth("Name", [cellValue], 13, 16);
-      const widthEmptyArray = calculateColumnWidth(
-        "Name",
-        [cellValue],
-        13,
-        16,
-        []
-      );
+      const widthNoArray = calculateColumnWidth({
+        headerLabel: "Name",
+        cellValues: [cellValue],
+        fontSize: 13,
+        cellPadding: 16,
+      });
+      const widthEmptyArray = calculateColumnWidth({
+        headerLabel: "Name",
+        cellValues: [cellValue],
+        fontSize: 13,
+        cellPadding: 16,
+        extraWidths: [],
+      });
       expect(widthNoArray).toBe(widthEmptyArray);
     });
 
     it("should pick the widest cell when multiple cells are provided", () => {
       const cells = ["Short", "Medium length value", "A"];
-      const width = calculateColumnWidth("Col", cells, 13, 16);
-      const widthOfWidest = calculateColumnWidth(
-        "Col",
-        ["Medium length value"],
-        13,
-        16
-      );
+      const width = calculateColumnWidth({
+        headerLabel: "Col",
+        cellValues: cells,
+        fontSize: 13,
+        cellPadding: 16,
+      });
+      const widthOfWidest = calculateColumnWidth({
+        headerLabel: "Col",
+        cellValues: ["Medium length value"],
+        fontSize: 13,
+        cellPadding: 16,
+      });
       expect(width).toBe(widthOfWidest);
     });
 
     it("should return a larger width for larger font size", () => {
       const cells = ["Task name"];
-      const smallFont = calculateColumnWidth("Name", cells, 10, 16);
-      const largeFont = calculateColumnWidth("Name", cells, 18, 16);
+      const smallFont = calculateColumnWidth({
+        headerLabel: "Name",
+        cellValues: cells,
+        fontSize: 10,
+        cellPadding: 16,
+      });
+      const largeFont = calculateColumnWidth({
+        headerLabel: "Name",
+        cellValues: cells,
+        fontSize: 18,
+        cellPadding: 16,
+      });
       expect(largeFont).toBeGreaterThanOrEqual(smallFont);
     });
   });

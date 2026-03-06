@@ -252,13 +252,13 @@ export function calculateOptimalColumnWidth(
   }
 
   // Use shared utility function (same as autoFitColumn)
-  return calculateColumnWidth(
+  return calculateColumnWidth({
     headerLabel,
     cellValues,
     fontSize,
     cellPadding,
-    extraWidths
-  );
+    extraWidths,
+  });
 }
 
 /**

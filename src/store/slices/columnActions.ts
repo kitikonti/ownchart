@@ -73,13 +73,13 @@ function fitColumnToContent(
     extraWidths.push(EXPAND_BUTTON_WIDTH + CELL_GAP_SIZE + iconSize);
   }
 
-  state.columnWidths[columnId] = calculateColumnWidth(
-    column.label,
+  state.columnWidths[columnId] = calculateColumnWidth({
+    headerLabel: column.label,
     cellValues,
     fontSize,
     cellPadding,
-    extraWidths
-  );
+    extraWidths,
+  });
 }
 
 export function createColumnActions(set: TaskSliceSet): ColumnActions {
