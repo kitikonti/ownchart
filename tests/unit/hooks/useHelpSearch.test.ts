@@ -1,10 +1,10 @@
 import { describe, it, expect } from "vitest";
 import { renderHook } from "@testing-library/react";
 import { useHelpSearch } from "../../../src/hooks/useHelpSearch";
-import { getHelpTabs } from "../../../src/config/helpContent";
+import { HELP_TABS } from "../../../src/config/helpContent";
 
 describe("useHelpSearch", () => {
-  const tabs = getHelpTabs();
+  const tabs = HELP_TABS;
 
   it("should return empty results for empty query", () => {
     const { result } = renderHook(() => useHelpSearch(tabs, ""));
@@ -51,6 +51,7 @@ describe("useHelpSearch", () => {
         ...(topic.shortcuts ?? []),
         ...(topic.keywords ?? []),
         topic.tip ?? "",
+        topic.menuPath ?? "",
       ]
         .join(" ")
         .toLowerCase();

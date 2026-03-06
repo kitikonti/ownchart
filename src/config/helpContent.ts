@@ -26,6 +26,13 @@ export interface HelpTopic {
   description: string;
   /** Keyboard shortcuts. Use {mod} for Ctrl/Cmd. */
   shortcuts?: string[];
+  /**
+   * UI navigation path for actions that have no keyboard shortcut.
+   * Rendered as a menu breadcrumb (e.g. "View > Columns"), NOT as a <kbd> badge.
+   * Use this instead of shortcuts when the action is menu/toolbar-driven only.
+   * Do NOT use {mod} here — navigation paths are not platform-specific.
+   */
+  menuPath?: string;
   /** Optional power-user tip */
   tip?: string;
   /** Extra search terms not in title/description */
@@ -141,9 +148,6 @@ const SHORTCUT_KEYS = {
   VIEW_HOLIDAYS: "H",
   VIEW_HIDE_ROWS: "{mod}+H",
   VIEW_SHOW_ROWS: "{mod}+Shift+H",
-  // UI navigation paths, not keyboard shortcuts:
-  VIEW_COLUMNS: "View > Columns",
-  VIEW_TABLE: "View > Table",
 
   NAV_HELP: "?",
   NAV_ESCAPE: "Escape",
@@ -385,13 +389,13 @@ const SHORTCUT_SECTIONS: HelpSection[] = [
         id: "sc-columns",
         title: "Show/hide date columns",
         description: "Toggle visibility of date columns.",
-        shortcuts: [SHORTCUT_KEYS.VIEW_COLUMNS],
+        menuPath: "View > Columns",
       },
       {
         id: "sc-table",
         title: "Collapse/expand task table",
         description: "Toggle the task table panel.",
-        shortcuts: [SHORTCUT_KEYS.VIEW_TABLE],
+        menuPath: "View > Table",
       },
     ],
   },

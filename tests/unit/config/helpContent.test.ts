@@ -336,12 +336,18 @@ describe("helpContent", () => {
       expect(scTab.sections).toHaveLength(6);
     });
 
-    it("should have shortcuts defined for every topic", () => {
+    it("should have shortcuts or menuPath defined for every topic", () => {
       const scTab = tabs.find((t) => t.id === "shortcuts")!;
       for (const section of scTab.sections) {
         for (const topic of section.topics) {
-          expect(topic.shortcuts).toBeDefined();
-          expect(topic.shortcuts!.length).toBeGreaterThan(0);
+          const hasShortcuts =
+            topic.shortcuts !== undefined && topic.shortcuts.length > 0;
+          const hasMenuPath =
+            topic.menuPath !== undefined && topic.menuPath.length > 0;
+          expect(
+            hasShortcuts || hasMenuPath,
+            `topic "${topic.id}" must have shortcuts or menuPath`,
+          ).toBe(true);
         }
       }
     });

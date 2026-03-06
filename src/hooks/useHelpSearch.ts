@@ -64,6 +64,9 @@ function buildHaystack(topic: HelpTopic): string {
   if (topic.shortcuts) {
     parts.push(...topic.shortcuts.map(resolveShortcut));
   }
+  if (topic.menuPath) {
+    parts.push(topic.menuPath);
+  }
   if (topic.keywords) {
     parts.push(...topic.keywords);
   }
