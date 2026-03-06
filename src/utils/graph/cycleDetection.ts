@@ -14,6 +14,12 @@ import type {
 import { buildAdjacencyList, ensureList } from "./graphHelpers";
 
 /**
+ * Sentinel ID used for the temporary probe dependency in `wouldCreateCycle`.
+ * The value is never persisted — it only needs to be distinct from real UUIDs.
+ */
+const PROBE_DEPENDENCY_ID = "__probe__";
+
+/**
  * Iterative DFS with three-colour marking to detect back edges (cycles).
  *
  * An explicit [node, neighborIndex] stack replaces the call stack so traversal
@@ -98,9 +104,10 @@ export function detectCycle(
 
   if (newDependency) {
     ensureList(graph, newDependency.fromTaskId).push(newDependency.toTaskId);
-
-    // Ensure the sink node is in the graph so it is covered by the traversal
-    ensureList(graph, newDependency.toTaskId);
+    // The sink node needs no pre-inserted entry: the DFS resolves missing nodes via
+    // `graph.get(node) ?? []`, and a sink-only node has no outgoing edges so it cannot
+    // originate an undiscovered cycle — any cycle through it is reached from its
+    // predecessors, which are already registered as graph keys.
   }
 
   const visited = new Set<TaskId>();
@@ -138,11 +145,10 @@ export function wouldCreateCycle(
     return { hasCycle: true, cyclePath: [fromTaskId, fromTaskId] };
   }
 
-  // Dummy id/type/createdAt are intentional — this dep is never stored, only used
-  // to test whether the proposed edge would introduce a cycle.
-  // type is ignored by graph construction; only fromTaskId/toTaskId matter.
+  // id/type/createdAt are ignored by graph construction — only fromTaskId/toTaskId
+  // matter. This dep is never stored; PROBE_DEPENDENCY_ID flags it as ephemeral.
   const proposedDep: Dependency = {
-    id: "temp",
+    id: PROBE_DEPENDENCY_ID,
     fromTaskId,
     toTaskId,
     type: "FS",

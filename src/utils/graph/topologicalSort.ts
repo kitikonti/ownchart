@@ -62,7 +62,11 @@ function buildInDegreeGraph(
     graph.set(task.id, []);
   }
 
-  // Build adjacency list and in-degree counts — skip deps referencing unknown tasks
+  // Build adjacency list and in-degree counts — skip deps referencing unknown tasks.
+  // Duplicate edges are processed as-is: each duplicate increments inDegree by 1 and
+  // appends one extra entry to the adjacency list. Kahn's decrement loop then reduces
+  // inDegree once per adjacency-list entry, so the counts stay in sync and every task
+  // eventually reaches inDegree 0. No deduplication is required.
   for (const dep of dependencies) {
     if (validTaskIds.has(dep.fromTaskId) && validTaskIds.has(dep.toTaskId)) {
       // Non-null assertions are safe: graph and inDegree were pre-populated
