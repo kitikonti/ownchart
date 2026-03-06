@@ -2,6 +2,21 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [1.1.21](https://github.com/kitikonti/ownchart/compare/v1.1.20...v1.1.21) (2026-03-06)
+
+
+### Code Refactoring
+
+* extract getVerticalDir/isSameRow helpers, remove no-op ELBOW_GAP_PADDING ([5015c62](https://github.com/kitikonti/ownchart/commit/5015c62d07a59941267e96e1077e7dee91237695))
+* harden elbowPath — extract computeElbowParams, fix quadraticCorner naming, clamp arrowhead size ([47fc797](https://github.com/kitikonti/ownchart/commit/47fc79782821cfc0de10994560000ca7896f2c95))
+* harden elbowPath — fix negative radius, extract qCorner, unify calculateDragPath API ([fb36e40](https://github.com/kitikonti/ownchart/commit/fb36e405a9dad52c4174c46beca0f0eb439f9ee1))
+* harden elbowPath — remove dead defaults, simplify routing condition, rename threshold constant ([073445a](https://github.com/kitikonti/ownchart/commit/073445a59ae28f74fafc080fc1db1d499ffbd778))
+* harden elbowPath — rename qCorner, remove thin wrapper, add zone docs ([177b49c](https://github.com/kitikonti/ownchart/commit/177b49c44e1c2a8afb00dbcb70e0e6653b8d6a44))
+* harden elbowPath — typed qCorner, unified isSameRow guard, extract getFSConnectionPoints, scale calculateDragPath by rowHeight ([f243012](https://github.com/kitikonti/ownchart/commit/f243012385bc26b4591646045dd07862938038fb))
+* harden elbowPath helpers with Point type and named helpers ([f9d722c](https://github.com/kitikonti/ownchart/commit/f9d722cb93ae616666e2075189a36d0c7f8cb4b1))
+* merge worktree-review-graph-utils-01 — harden elbowPath utils ([c798f26](https://github.com/kitikonti/ownchart/commit/c798f2670aef04f7263786f89e23b7de2149b9f2))
+* rename bezierPath → elbowPath, extract helpers, name magic numbers ([154cafa](https://github.com/kitikonti/ownchart/commit/154cafa33d020d1e46a7e2c15bce7fd6a3b64180))
+
 ## [1.1.20](https://github.com/kitikonti/ownchart/compare/v1.1.19...v1.1.20) (2026-03-06)
 
 
