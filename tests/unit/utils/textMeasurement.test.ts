@@ -1,13 +1,15 @@
 /**
  * Unit tests for Text Measurement Utilities
- * Tests for measureTextWidth, getMaxLabelWidth, and calculateLabelPaddingDays
+ * Tests for measureTextWidth, getMaxLabelWidth, calculateColumnWidth, and calculateLabelPaddingDays
  */
 
-import { describe, it, expect } from "vitest";
+import { describe, it, expect, beforeEach, vi } from "vitest";
 import {
   measureTextWidth,
   getMaxLabelWidth,
+  calculateColumnWidth,
   calculateLabelPaddingDays,
+  resetMeasureContextForTesting,
 } from "../../../src/utils/textMeasurement";
 import type { Task } from "../../../src/types/chart.types";
 
@@ -28,6 +30,12 @@ function createTask(name: string, overrides: Partial<Task> = {}): Task {
 }
 
 describe("textMeasurement", () => {
+  beforeEach(() => {
+    // Reset the canvas context cache so `canvasUnavailable` set in one test
+    // doesn't leak into subsequent tests running in the same worker.
+    resetMeasureContextForTesting();
+  });
+
   describe("measureTextWidth", () => {
     it("should return 0 for empty string", () => {
       expect(measureTextWidth("", 12)).toBe(0);
@@ -53,6 +61,34 @@ describe("textMeasurement", () => {
     it("should handle special characters", () => {
       const width = measureTextWidth("Task with special: äöü & symbols!", 12);
       expect(width).toBeGreaterThan(0);
+    });
+
+    it("should return a larger width when letterSpacing is applied", () => {
+      const withoutSpacing = measureTextWidth("Hello", 12, { letterSpacing: 0 });
+      const withSpacing = measureTextWidth("Hello", 12, { letterSpacing: 0.1 });
+      expect(withSpacing).toBeGreaterThan(withoutSpacing);
+    });
+
+    it("should not add letter spacing for a single character", () => {
+      // n-1 gaps for n characters: a single char has 0 gaps, so spacing has no effect
+      const withoutSpacing = measureTextWidth("A", 12);
+      const withSpacing = measureTextWidth("A", 12, { letterSpacing: 0.5 });
+      expect(withSpacing).toBe(withoutSpacing);
+    });
+
+    it("should apply letterSpacing in the fallback path when canvas is unavailable", () => {
+      // Force canvas unavailability to exercise the character-count fallback code path.
+      // mockReturnValueOnce(null) causes getContext("2d") to return null once,
+      // setting canvasUnavailable = true for the remainder of this test.
+      vi.mocked(HTMLCanvasElement.prototype.getContext).mockReturnValueOnce(null);
+      resetMeasureContextForTesting();
+
+      const withoutSpacing = measureTextWidth("Hello", 12, { letterSpacing: 0 });
+      const withSpacing = measureTextWidth("Hello", 12, { letterSpacing: 0.1 });
+
+      // letterSpacing = 0.1em × 12px × (5-1) gaps = +4.8px
+      expect(withSpacing).toBeGreaterThan(withoutSpacing);
+      expect(withSpacing - withoutSpacing).toBeCloseTo(4.8);
     });
   });
 
@@ -88,6 +124,147 @@ describe("textMeasurement", () => {
     });
   });
 
+  describe("calculateColumnWidth", () => {
+    // In test environments the Canvas API is unavailable, so measureTextWidth uses
+    // the FALLBACK_CHAR_WIDTH_RATIO (0.6) heuristic: width ≈ chars × fontSize × 0.6.
+    // Tests use relative assertions to stay independent of the exact heuristic value.
+
+    it("should return a positive width for a non-empty header", () => {
+      expect(
+        calculateColumnWidth({
+          headerLabel: "Name",
+          cellValues: [],
+          fontSize: 13,
+          cellPadding: 16,
+        })
+      ).toBeGreaterThan(0);
+    });
+
+    it("should enforce the minimum width of 60px", () => {
+      // Empty header and no cell values → raw width is 0 → clamped to 60
+      expect(
+        calculateColumnWidth({
+          headerLabel: "",
+          cellValues: [],
+          fontSize: 13,
+          cellPadding: 0,
+        })
+      ).toBe(60);
+    });
+
+    it("should enforce the maximum width of 600px", () => {
+      // Extremely long cell value should be capped
+      const longValue = "A".repeat(500);
+      const width = calculateColumnWidth({
+        headerLabel: "H",
+        cellValues: [longValue],
+        fontSize: 13,
+        cellPadding: 16,
+      });
+      expect(width).toBe(600);
+    });
+
+    it("should use cell width when it exceeds header width", () => {
+      const shortHeader = "N";
+      const longCell = "This is a very long cell value that exceeds the header";
+      const width = calculateColumnWidth({
+        headerLabel: shortHeader,
+        cellValues: [longCell],
+        fontSize: 13,
+        cellPadding: 16,
+      });
+      const headerOnlyWidth = calculateColumnWidth({
+        headerLabel: shortHeader,
+        cellValues: [],
+        fontSize: 13,
+        cellPadding: 16,
+      });
+      expect(width).toBeGreaterThan(headerOnlyWidth);
+    });
+
+    it("should use header width when no cells are provided", () => {
+      const width = calculateColumnWidth({
+        headerLabel: "Status",
+        cellValues: [],
+        fontSize: 13,
+        cellPadding: 16,
+      });
+      expect(width).toBeGreaterThanOrEqual(60);
+    });
+
+    it("should add extraWidths to the corresponding cell measurement", () => {
+      const cellValue = "Task name";
+      const widthWithoutExtra = calculateColumnWidth({
+        headerLabel: "Name",
+        cellValues: [cellValue],
+        fontSize: 13,
+        cellPadding: 16,
+        extraWidths: [0],
+      });
+      const widthWithExtra = calculateColumnWidth({
+        headerLabel: "Name",
+        cellValues: [cellValue],
+        fontSize: 13,
+        cellPadding: 16,
+        extraWidths: [50],
+      });
+      expect(widthWithExtra).toBeGreaterThan(widthWithoutExtra);
+    });
+
+    it("should treat a missing extraWidths entry the same as 0", () => {
+      const cellValue = "Task name";
+      // Passing an empty extraWidths array vs omitting the argument entirely
+      const widthNoArray = calculateColumnWidth({
+        headerLabel: "Name",
+        cellValues: [cellValue],
+        fontSize: 13,
+        cellPadding: 16,
+      });
+      const widthEmptyArray = calculateColumnWidth({
+        headerLabel: "Name",
+        cellValues: [cellValue],
+        fontSize: 13,
+        cellPadding: 16,
+        extraWidths: [],
+      });
+      expect(widthNoArray).toBe(widthEmptyArray);
+    });
+
+    it("should pick the widest cell when multiple cells are provided", () => {
+      const cells = ["Short", "Medium length value", "A"];
+      const width = calculateColumnWidth({
+        headerLabel: "Col",
+        cellValues: cells,
+        fontSize: 13,
+        cellPadding: 16,
+      });
+      const widthOfWidest = calculateColumnWidth({
+        headerLabel: "Col",
+        cellValues: ["Medium length value"],
+        fontSize: 13,
+        cellPadding: 16,
+      });
+      expect(width).toBe(widthOfWidest);
+    });
+
+    it("should return a larger width for larger font size", () => {
+      const cells = ["Task name"];
+      const smallFont = calculateColumnWidth({
+        headerLabel: "Name",
+        cellValues: cells,
+        fontSize: 10,
+        cellPadding: 16,
+      });
+      const largeFont = calculateColumnWidth({
+        headerLabel: "Name",
+        cellValues: cells,
+        fontSize: 18,
+        cellPadding: 16,
+      });
+      expect(largeFont).toBeGreaterThanOrEqual(smallFont);
+    });
+  });
+
   describe("calculateLabelPaddingDays", () => {
     const sampleTasks = [
       createTask("Task One"),
@@ -97,7 +274,7 @@ describe("textMeasurement", () => {
     const pixelsPerDay = 25; // 100% zoom
 
     describe("position: inside", () => {
-      it("should return zero padding", () => {
+      it("should return zero padding for regular tasks", () => {
         const result = calculateLabelPaddingDays(
           sampleTasks,
           "inside",
@@ -105,6 +282,31 @@ describe("textMeasurement", () => {
           pixelsPerDay
         );
         expect(result).toEqual({ leftDays: 0, rightDays: 0 });
+      });
+
+      it("should treat summary tasks as 'after' when position is inside", () => {
+        const tasks = [createTask("My Summary", { type: "summary" })];
+        const result = calculateLabelPaddingDays(
+          tasks,
+          "inside",
+          fontSize,
+          pixelsPerDay
+        );
+        // Summary doesn't support inside — falls back to after
+        expect(result.rightDays).toBeGreaterThan(0);
+        expect(result.leftDays).toBe(0);
+      });
+
+      it("should treat milestone tasks as 'after' when position is inside", () => {
+        const tasks = [createTask("My Milestone", { type: "milestone" })];
+        const result = calculateLabelPaddingDays(
+          tasks,
+          "inside",
+          fontSize,
+          pixelsPerDay
+        );
+        expect(result.rightDays).toBeGreaterThan(0);
+        expect(result.leftDays).toBe(0);
       });
     });
 

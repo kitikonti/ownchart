@@ -6,6 +6,8 @@
 import type { Task } from "../types/chart.types";
 import type { TaskLabelPosition } from "../types/preferences.types";
 
+// ─── Constants ────────────────────────────────────────────────────────────────
+
 /** Default font family used in the app (matches tailwind.config.js) */
 const DEFAULT_FONT_FAMILY =
   "Inter, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', sans-serif";
@@ -16,52 +18,173 @@ const LABEL_GAP = 8;
 /** Maximum extra padding in pixels (prevents excessive padding for very long names) */
 const MAX_LABEL_PADDING_PX = 250;
 
+/**
+ * Fallback character-width ratio used when the Canvas API is unavailable
+ * (e.g. server-side rendering or test environments without a real DOM).
+ * Approximates ~0.6× fontSize per character for a typical sans-serif font.
+ */
+const FALLBACK_CHAR_WIDTH_RATIO = 0.6;
+
+/** Minimum column width in pixels */
+const MIN_COLUMN_WIDTH_PX = 60;
+
+/** Maximum column width in pixels */
+const MAX_COLUMN_WIDTH_PX = 600;
+
+/** Small buffer added to measured widths to prevent text clipping */
+const COLUMN_WIDTH_BUFFER_PX = 4;
+
+/** Header font weight (font-semibold = 600) */
+const HEADER_FONT_WEIGHT = 600;
+
+/** Header letter spacing in em (tracking-wider = 0.05em) */
+const HEADER_LETTER_SPACING = 0.05;
+
+/** Header font size in pixels (text-xs = 12px) */
+const HEADER_FONT_SIZE = 12;
+
+/** Header horizontal padding in pixels (px-3 = 12px each side = 24px total) */
+const HEADER_PADDING = 24;
+
+// ─── Types ────────────────────────────────────────────────────────────────────
+
+/**
+ * Typography options for {@link measureTextWidth}.
+ * All properties are optional; defaults match the app's body text style.
+ */
+export interface TextMeasurementOptions {
+  /** Font family string. Defaults to the app's system font stack. */
+  fontFamily?: string;
+  /** CSS font weight (e.g. 400, 600, 700). Defaults to 400 (regular). */
+  fontWeight?: number;
+  /** Letter spacing in em units (matches CSS `letter-spacing`). Defaults to 0. */
+  letterSpacing?: number;
+  /** CSS font style ('normal' | 'italic' | 'oblique'). Defaults to 'normal'. */
+  fontStyle?: string;
+}
+
+/**
+ * Input for {@link calculateColumnWidth}.
+ * Groups all parameters that describe the column to be measured.
+ */
+export interface ColumnWidthInput {
+  /** Column header text (uppercased internally). */
+  headerLabel: string;
+  /** Formatted cell values to measure against. */
+  cellValues: string[];
+  /** Font size in pixels for cell text. */
+  fontSize: number;
+  /** Total horizontal cell padding in pixels (left + right). */
+  cellPadding: number;
+  /** Per-cell extra widths (e.g. indent + icons for the name column). Defaults to []. */
+  extraWidths?: number[];
+}
+
+// ─── Canvas context cache ─────────────────────────────────────────────────────
+
 /** Cached canvas context for text measurement */
 let measureContext: CanvasRenderingContext2D | null = null;
 
 /**
+ * True once a canvas creation attempt has failed in this environment.
+ * Prevents allocating a new <canvas> element on every measureTextWidth call
+ * when the Canvas API is permanently unavailable (e.g. certain SSR contexts
+ * or environments where getContext("2d") returns null).
+ */
+let canvasUnavailable = false;
+
+/**
  * Get or create a cached canvas context for text measurement.
+ * Returns null when running outside a browser environment or when the
+ * Canvas 2D API is not supported.
  */
 function getMeasureContext(): CanvasRenderingContext2D | null {
-  if (!measureContext) {
-    // In browser environment
-    if (typeof document !== "undefined") {
-      const canvas = document.createElement("canvas");
-      measureContext = canvas.getContext("2d");
+  if (measureContext) return measureContext;
+  if (canvasUnavailable) return null;
+
+  if (typeof document !== "undefined") {
+    // The canvas element is intentionally not appended to the document —
+    // it exists solely as an off-screen measurement surface.
+    const canvas = document.createElement("canvas");
+    const ctx = canvas.getContext("2d");
+    if (ctx) {
+      measureContext = ctx;
+    } else {
+      canvasUnavailable = true;
     }
+  } else {
+    canvasUnavailable = true;
   }
+
   return measureContext;
 }
 
+// ─── Private helpers ──────────────────────────────────────────────────────────
+
 /**
- * Measure text width using Canvas API.
+ * Compute the padding days required for one side of the chart, based on the
+ * maximum label width in the given task list.
+ * Returns 0 for an empty task list.
+ */
+function computeOneSidePaddingDays(
+  tasks: Task[],
+  fontSize: number,
+  pixelsPerDay: number
+): number {
+  if (tasks.length === 0) return 0;
+  const maxWidth = getMaxLabelWidth(tasks, fontSize);
+  const totalPadding = Math.min(maxWidth + LABEL_GAP, MAX_LABEL_PADDING_PX);
+  return Math.ceil(totalPadding / pixelsPerDay);
+}
+
+// ─── Public API ───────────────────────────────────────────────────────────────
+
+/**
+ * Measure text width using the Canvas API.
+ *
+ * Falls back to a character-count heuristic when the Canvas API is unavailable.
+ * Letter spacing is applied consistently in both the Canvas and fallback paths.
  *
  * @param text - The text to measure
  * @param fontSize - Font size in pixels
- * @param fontFamily - Optional font family (defaults to system font)
- * @param fontWeight - Optional font weight (defaults to 400)
- * @param letterSpacing - Optional letter spacing in em units (defaults to 0)
- * @returns Width in pixels, or 0 if measurement fails
+ * @param options - Typography options (fontFamily, fontWeight, letterSpacing, fontStyle)
+ * @returns Width in pixels, or 0 for an empty string
  */
 export function measureTextWidth(
   text: string,
   fontSize: number,
-  fontFamily: string = DEFAULT_FONT_FAMILY,
-  fontWeight: number = 400,
-  letterSpacing: number = 0
+  options: TextMeasurementOptions = {}
 ): number {
   if (!text) return 0;
 
+  const {
+    fontFamily = DEFAULT_FONT_FAMILY,
+    fontWeight = 400,
+    letterSpacing = 0,
+    fontStyle = "normal",
+  } = options;
+
   const ctx = getMeasureContext();
   if (!ctx) {
-    // Fallback estimation: ~0.6 of fontSize per character for sans-serif
-    return text.length * fontSize * 0.6;
+    // Fallback estimation when Canvas API is unavailable (e.g. SSR, test environments).
+    // Apply the same letter-spacing formula as the Canvas path (n-1 gaps for n chars)
+    // so both paths remain consistent.
+    // fontStyle is intentionally not factored in — a character-count heuristic
+    // cannot meaningfully account for italic vs. regular glyph width differences.
+    const baseWidth = text.length * fontSize * FALLBACK_CHAR_WIDTH_RATIO;
+    return letterSpacing > 0
+      ? baseWidth + (text.length - 1) * letterSpacing * fontSize
+      : baseWidth;
   }
 
-  ctx.font = `${fontWeight} ${fontSize}px ${fontFamily}`;
+  // Full CSS font shorthand: style weight size family.
+  // Explicit fontStyle prevents any browser-specific font-property inheritance
+  // quirks on a shared off-screen canvas context.
+  ctx.font = `${fontStyle} ${fontWeight} ${fontSize}px ${fontFamily}`;
   let width = ctx.measureText(text).width;
 
-  // Add letter spacing (in em units, so multiply by fontSize)
+  // Add letter spacing (in em units, so multiply by fontSize).
+  // Applied to n-1 gaps between n characters, matching CSS letter-spacing behaviour.
   if (letterSpacing > 0) {
     width += (text.length - 1) * letterSpacing * fontSize;
   }
@@ -74,7 +197,7 @@ export function measureTextWidth(
  *
  * @param tasks - Array of tasks to measure
  * @param fontSize - Font size in pixels
- * @returns Maximum label width in pixels
+ * @returns Maximum label width in pixels, or 0 for an empty array
  */
 export function getMaxLabelWidth(tasks: Task[], fontSize: number): number {
   if (tasks.length === 0) return 0;
@@ -91,76 +214,60 @@ export function getMaxLabelWidth(tasks: Task[], fontSize: number): number {
 }
 
 /**
- * Calculate extra padding (in days) needed for task labels.
- *
- * @param tasks - Array of tasks
- * @param labelPosition - Label position setting (before/inside/after/none)
- * @param fontSize - Font size in pixels
- * @param pixelsPerDay - Current pixels per day (based on zoom)
- * @returns Object with leftDays and rightDays padding needed
- */
-/** Header font weight (font-semibold = 600) */
-const HEADER_FONT_WEIGHT = 600;
-
-/** Header letter spacing in em (tracking-wider = 0.05em) */
-const HEADER_LETTER_SPACING = 0.05;
-
-/** Header font size in pixels (text-xs = 12px) */
-const HEADER_FONT_SIZE = 12;
-
-/** Header horizontal padding in pixels (px-3 = 12px each side = 24px total) */
-const HEADER_PADDING = 24;
-
-/**
  * Calculate optimal column width based on header and cell content.
  * This is a pure utility function used by both autoFitColumn and export.
  *
- * Headers are styled with: text-xs (12px), font-semibold (600), uppercase, tracking-wider (0.05em), px-3 (24px)
+ * Headers are styled with: text-xs (12px), font-semibold (600), uppercase,
+ * tracking-wider (0.05em), px-3 (24px horizontal padding).
  *
- * @param headerLabel - Column header text
- * @param cellValues - Array of formatted cell values
- * @param fontSize - Font size in pixels for cells
- * @param cellPadding - Total horizontal padding (left + right) for cells
- * @param extraWidths - Array of extra widths per cell (e.g., for indent, icons)
- * @returns Optimal column width in pixels
+ * @returns Optimal column width in pixels, clamped to [MIN_COLUMN_WIDTH_PX, MAX_COLUMN_WIDTH_PX]
  */
-export function calculateColumnWidth(
-  headerLabel: string,
-  cellValues: string[],
-  fontSize: number,
-  cellPadding: number,
-  extraWidths: number[] = []
-): number {
-  // Measure header text width (uppercase, semibold, with letter-spacing)
-  // Add header padding (px-3 = 24px) which may be larger than cell padding
+export function calculateColumnWidth({
+  headerLabel,
+  cellValues,
+  fontSize,
+  cellPadding,
+  extraWidths = [],
+}: ColumnWidthInput): number {
+  // Measure header width (uppercase, semibold, letter-spaced) + header padding
   const headerTextWidth = measureTextWidth(
     headerLabel.toUpperCase(),
     HEADER_FONT_SIZE,
-    DEFAULT_FONT_FAMILY,
-    HEADER_FONT_WEIGHT,
-    HEADER_LETTER_SPACING
+    { fontWeight: HEADER_FONT_WEIGHT, letterSpacing: HEADER_LETTER_SPACING }
   );
   const headerWidth = headerTextWidth + HEADER_PADDING;
 
-  // Measure each cell value with cell padding
+  // Measure each cell, accumulating the maximum.
+  // extraWidths[i] ?? 0 safely handles sparse arrays and missing entries.
   let maxCellWidth = 0;
-  cellValues.forEach((value, index) => {
-    let textWidth = measureTextWidth(value, fontSize);
-    // Add extra width for this cell (e.g., indent + icons for name column)
-    if (extraWidths[index]) {
-      textWidth += extraWidths[index];
-    }
+  for (let i = 0; i < cellValues.length; i++) {
+    const textWidth =
+      measureTextWidth(cellValues[i], fontSize) + (extraWidths[i] ?? 0);
     maxCellWidth = Math.max(maxCellWidth, textWidth + cellPadding);
-  });
+  }
 
-  // Take the larger of header width and max cell width
-  const maxWidth = Math.max(headerWidth, maxCellWidth);
+  const rawWidth = Math.max(headerWidth, maxCellWidth);
 
-  // Add small buffer, cap at 600px, minimum 60px
-  const finalWidth = Math.max(60, Math.ceil(maxWidth + 4));
-  return Math.min(finalWidth, 600);
+  // Add buffer, clamp to [MIN_COLUMN_WIDTH_PX, MAX_COLUMN_WIDTH_PX]
+  return Math.min(
+    Math.max(MIN_COLUMN_WIDTH_PX, Math.ceil(rawWidth + COLUMN_WIDTH_BUFFER_PX)),
+    MAX_COLUMN_WIDTH_PX
+  );
 }
 
+/**
+ * Calculate extra padding (in days) needed to prevent task labels from being clipped.
+ *
+ * Labels positioned "before" a task bar extend left; labels positioned "after" extend
+ * right. Summary and Milestone tasks always use "after" when the global setting is
+ * "inside" (they don't support inner labels).
+ *
+ * @param tasks - Array of tasks
+ * @param labelPosition - Global label position setting
+ * @param fontSize - Font size in pixels
+ * @param pixelsPerDay - Current pixels-per-day at the active zoom level
+ * @returns `{ leftDays, rightDays }` — extra padding days on each side
+ */
 export function calculateLabelPaddingDays(
   tasks: Task[],
   labelPosition: TaskLabelPosition,
@@ -172,15 +279,14 @@ export function calculateLabelPaddingDays(
   }
 
   // Separate tasks by their effective label position
-  // Summary/Milestone tasks always use "after" when setting is "inside"
   const tasksWithAfterLabels: Task[] = [];
   const tasksWithBeforeLabels: Task[] = [];
 
   for (const task of tasks) {
-    const taskType = task.type || "task";
+    const taskType = task.type ?? "task";
     let effectivePosition = labelPosition;
 
-    // Summary and Milestone don't support "inside" - they use "after" instead
+    // Summary and Milestone don't support "inside" — fall back to "after"
     if (
       (taskType === "summary" || taskType === "milestone") &&
       labelPosition === "inside"
@@ -193,25 +299,35 @@ export function calculateLabelPaddingDays(
     } else if (effectivePosition === "before") {
       tasksWithBeforeLabels.push(task);
     }
-    // "inside" and "none" don't need padding
+    // "inside" and "none" don't require extra padding
   }
 
-  let leftDays = 0;
-  let rightDays = 0;
+  return {
+    leftDays: computeOneSidePaddingDays(
+      tasksWithBeforeLabels,
+      fontSize,
+      pixelsPerDay
+    ),
+    rightDays: computeOneSidePaddingDays(
+      tasksWithAfterLabels,
+      fontSize,
+      pixelsPerDay
+    ),
+  };
+}
 
-  // Calculate padding for "before" labels (extends left)
-  if (tasksWithBeforeLabels.length > 0) {
-    const maxWidth = getMaxLabelWidth(tasksWithBeforeLabels, fontSize);
-    const totalPadding = Math.min(maxWidth + LABEL_GAP, MAX_LABEL_PADDING_PX);
-    leftDays = Math.ceil(totalPadding / pixelsPerDay);
-  }
-
-  // Calculate padding for "after" labels (extends right)
-  if (tasksWithAfterLabels.length > 0) {
-    const maxWidth = getMaxLabelWidth(tasksWithAfterLabels, fontSize);
-    const totalPadding = Math.min(maxWidth + LABEL_GAP, MAX_LABEL_PADDING_PX);
-    rightDays = Math.ceil(totalPadding / pixelsPerDay);
-  }
-
-  return { leftDays, rightDays };
+/**
+ * Reset the cached canvas context and the unavailability flag.
+ *
+ * **Only intended for use in test environments** to ensure each test suite
+ * starts with a clean measurement context. Without this, `canvasUnavailable`
+ * set to `true` in one test module can leak into subsequent tests that run in
+ * the same worker, causing `measureTextWidth` to silently fall back to the
+ * character-count heuristic even when a canvas mock is available.
+ *
+ * @internal
+ */
+export function resetMeasureContextForTesting(): void {
+  measureContext = null;
+  canvasUnavailable = false;
 }
