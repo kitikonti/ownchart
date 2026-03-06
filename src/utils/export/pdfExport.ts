@@ -42,7 +42,9 @@ import {
   SVG_FONT_FAMILY,
   EXPORT_COLORS,
   EXPORT_CHART_SVG_CLASS,
+  EXPORT_TIMELINE_HEADER_SVG_CLASS,
 } from "./constants";
+import { APP_CONFIG } from "../../config/appConfig";
 import { registerInterFont } from "./interFont";
 import {
   waitForFonts,
@@ -122,12 +124,6 @@ const PDF_FONT_NAME = "Inter";
 
 /** jsPDF font style for Inter Regular */
 const PDF_FONT_STYLE = "normal" as const;
-
-/**
- * CSS class applied to the timeline header SVG element in ExportRenderer.
- * Must match the className prop on that element.
- */
-const EXPORT_TIMELINE_HEADER_SVG_CLASS = "export-timeline-header";
 
 /** Progress checkpoint values emitted via onProgress during export */
 const EXPORT_PROGRESS = {
@@ -514,7 +510,7 @@ function createPdfDocument(
     title: metadata.title,
     author: metadata.author,
     subject: pdfOptions.metadata.subject ?? PDF_DEFAULT_SUBJECT,
-    creator: "OwnChart",
+    creator: APP_CONFIG.name,
   });
 
   return doc;
@@ -728,10 +724,7 @@ function appendExportHeader(
   }
 
   if (headerSvg) {
-    const headerGroup = createTranslatedGroup(taskTableWidth, 0);
-    cloneChildrenInto(headerSvg, headerGroup);
-    setFontFamilyOnTextElements(headerGroup);
-    svg.appendChild(headerGroup);
+    appendTranslatedSvgContent(svg, headerSvg, taskTableWidth, 0);
   }
 }
 
@@ -766,10 +759,7 @@ function appendChartContent(
     setFontFamilyOnTextElements(rowsGroup);
   }
 
-  const chartGroup = createTranslatedGroup(taskTableWidth, contentY);
-  cloneChildrenInto(chartSvg, chartGroup);
-  setFontFamilyOnTextElements(chartGroup);
-  svg.appendChild(chartGroup);
+  appendTranslatedSvgContent(svg, chartSvg, taskTableWidth, contentY);
 }
 
 /**
@@ -823,4 +813,22 @@ function cloneChildrenInto(source: Node, target: Node): void {
   source.childNodes.forEach((child) =>
     target.appendChild(child.cloneNode(true))
   );
+}
+
+/**
+ * Translate `source` SVG's children into a new <g> at (x, y), apply the
+ * Inter font-family declaration to all text elements, and append the group
+ * to `parent`. This is the canonical way to embed a rendered SVG fragment
+ * into the assembled export SVG.
+ */
+function appendTranslatedSvgContent(
+  parent: SVGSVGElement,
+  source: SVGSVGElement,
+  x: number,
+  y: number
+): void {
+  const g = createTranslatedGroup(x, y);
+  cloneChildrenInto(source, g);
+  setFontFamilyOnTextElements(g);
+  parent.appendChild(g);
 }

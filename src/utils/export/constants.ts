@@ -42,6 +42,13 @@ export const EXPORT_COLORS = {
 export const EXPORT_CHART_SVG_CLASS = "gantt-chart";
 
 /**
+ * CSS class applied to the timeline header SVG element by ExportRenderer.
+ * Used as a querySelector selector by PDF export utilities.
+ * Must stay in sync with the className prop on that element in ExportRenderer.tsx.
+ */
+export const EXPORT_TIMELINE_HEADER_SVG_CLASS = "export-timeline-header";
+
+/**
  * Phosphor icon SVG paths for task types (256x256 viewBox).
  * These are used in task table rendering for SVG/PDF export.
  */
