@@ -4,6 +4,7 @@
  */
 
 import type { Task } from "../../types/chart.types";
+import type { HexColor } from "../../types/branded.types";
 import type { UiDensity, DensityConfig } from "../../types/preferences.types";
 import { DENSITY_CONFIG } from "../../config/densityConfig";
 import type {
@@ -31,7 +32,12 @@ import {
   LETTER_SPACING_WIDER,
 } from "./constants";
 import type { ColorModeState } from "../../types/colorMode.types";
-import { getComputedTaskColor } from "../computeTaskColor";
+import { computeAllTaskColors } from "../computeTaskColor";
+
+// ─── Constants ────────────────────────────────────────────────────────────────
+
+/** Fallback label prefix for tasks without a name, e.g. "Task 1", "Task 2". */
+const UNNAMED_TASK_PREFIX = "Task";
 
 // ─── SVG namespace helper ─────────────────────────────────────────────────────
 
@@ -125,9 +131,42 @@ function createBorderLine(
   return line;
 }
 
+// ─── Column separator helper ──────────────────────────────────────────────────
+
+/**
+ * Render a vertical column separator at the right edge of a cell.
+ * No-ops for the color column — matches app styling where the color
+ * swatch column has no right border.
+ */
+function renderColumnSeparator(
+  group: SVGGElement,
+  key: ExportColumnKey,
+  colX: number,
+  colWidth: number,
+  startY: number,
+  height: number,
+  color: string
+): void {
+  if (key === "color") return;
+  group.appendChild(
+    createBorderLine(
+      colX + colWidth,
+      startY,
+      colX + colWidth,
+      startY + height,
+      color
+    )
+  );
+}
+
 // ─── Type guard ───────────────────────────────────────────────────────────────
 
-/** Narrow ExportColumnKey to ExportDataColumnKey (i.e. not 'color' or 'name'). */
+/**
+ * Narrow ExportColumnKey to ExportDataColumnKey (i.e. not 'color' or 'name').
+ * Invariant: ExportDataColumnKey === Exclude<ExportColumnKey, 'color' | 'name'>.
+ * If ExportColumnKey gains new special-case columns, update both this guard
+ * and ExportDataColumnKey in types.ts.
+ */
 function isDataColumn(key: ExportColumnKey): key is ExportDataColumnKey {
   return key !== "color" && key !== "name";
 }
@@ -181,16 +220,27 @@ function renderTypeIcon(
   group.appendChild(iconGroup);
 }
 
-function renderNameText(
-  group: SVGGElement,
-  task: Task,
-  rowIndex: number,
-  textY: number,
-  atX: number,
-  availableWidth: number,
-  fontSize: number
-): void {
-  const rawName = task.name || `Task ${rowIndex + 1}`;
+/** Options for the renderNameText sub-renderer. */
+interface NameTextOptions {
+  group: SVGGElement;
+  task: Task;
+  rowIndex: number;
+  textY: number;
+  atX: number;
+  availableWidth: number;
+  fontSize: number;
+}
+
+function renderNameText({
+  group,
+  task,
+  rowIndex,
+  textY,
+  atX,
+  availableWidth,
+  fontSize,
+}: NameTextOptions): void {
+  const rawName = task.name || `${UNNAMED_TASK_PREFIX} ${rowIndex + 1}`;
   const displayName = truncateToWidth(rawName, availableWidth, fontSize);
   group.appendChild(
     createTextEl({
@@ -207,14 +257,11 @@ function renderNameText(
 
 function renderColorCell(
   ctx: CellRenderContext,
-  task: Task,
-  allTasks: Task[],
-  colorModeState: ColorModeState,
+  color: HexColor | string,
   layout: CellLayout
 ): void {
   const { group, rowY, rowHeight, densityConfig } = ctx;
   const { colX, colWidth } = layout;
-  const displayColor = getComputedTaskColor(task, allTasks, colorModeState);
 
   const colorBar = createSVGEl("rect");
   colorBar.setAttribute("x", String(colX + (colWidth - COLOR_BAR_WIDTH) / 2));
@@ -225,7 +272,7 @@ function renderColorCell(
   colorBar.setAttribute("width", String(COLOR_BAR_WIDTH));
   colorBar.setAttribute("height", String(densityConfig.colorBarHeight));
   colorBar.setAttribute("rx", String(COLOR_BAR_RADIUS));
-  colorBar.setAttribute("fill", displayColor);
+  colorBar.setAttribute("fill", color);
   group.appendChild(colorBar);
 }
 
@@ -260,15 +307,15 @@ function renderNameCell(
 
   // Task name — truncated to remaining available column width
   const availableWidth = colX + colWidth - currentX - cellPaddingX;
-  renderNameText(
+  renderNameText({
     group,
     task,
     rowIndex,
     textY,
-    currentX,
+    atX: currentX,
     availableWidth,
-    fontSizeCell
-  );
+    fontSize: fontSizeCell,
+  });
 }
 
 function renderDataCell(
@@ -315,8 +362,8 @@ interface RowRendererOptions {
   columnWidths: Record<string, number>;
   density: UiDensity;
   densityConfig: DensityConfig;
-  colorModeState: ColorModeState;
-  allTasks: Task[];
+  /** Pre-computed per-task colors — avoids O(n²) color computation in auto modes. */
+  colorCache: Map<string, HexColor>;
   totalWidth: number;
   x: number;
 }
@@ -333,8 +380,7 @@ function renderTaskRow(
     columnWidths,
     density,
     densityConfig,
-    colorModeState,
-    allTasks,
+    colorCache,
     totalWidth,
     x,
   } = options;
@@ -359,25 +405,24 @@ function renderTaskRow(
     const layout: CellLayout = { colX, colWidth };
 
     if (key === "color") {
-      renderColorCell(ctx, task, allTasks, colorModeState, layout);
+      // colorCache always contains every exported task; fallback guards against gaps.
+      const color = colorCache.get(task.id) ?? task.color;
+      renderColorCell(ctx, color, layout);
     } else if (key === "name") {
       renderNameCell(ctx, task, flattenedTask, rowIndex, layout);
     } else if (isDataColumn(key)) {
       renderDataCell(ctx, task, key, layout);
     }
 
-    // Column separator (skip for color column — matches app styling)
-    if (key !== "color") {
-      group.appendChild(
-        createBorderLine(
-          colX + colWidth,
-          rowY,
-          colX + colWidth,
-          rowY + rowHeight,
-          EXPORT_COLORS.borderLight
-        )
-      );
-    }
+    renderColumnSeparator(
+      group,
+      key,
+      colX,
+      colWidth,
+      rowY,
+      rowHeight,
+      EXPORT_COLORS.borderLight
+    );
 
     colX += colWidth;
   }
@@ -411,18 +456,15 @@ function renderHeaderCell(
     );
   }
 
-  // Column separator (skip for color column — matches app styling)
-  if (key !== "color") {
-    group.appendChild(
-      createBorderLine(
-        colX + colWidth,
-        y,
-        colX + colWidth,
-        y + HEADER_HEIGHT,
-        EXPORT_COLORS.border
-      )
-    );
-  }
+  renderColumnSeparator(
+    group,
+    key,
+    colX,
+    colWidth,
+    y,
+    HEADER_HEIGHT,
+    EXPORT_COLORS.border
+  );
 }
 
 // ─── Public API ───────────────────────────────────────────────────────────────
@@ -500,15 +542,14 @@ export interface TaskTableRowsOptions {
 function buildRowOptions(
   options: TaskTableRowsOptions,
   densityConfig: DensityConfig,
-  allTasks: Task[]
+  colorCache: Map<string, HexColor>
 ): RowRendererOptions {
   return {
     selectedColumns: options.selectedColumns,
     columnWidths: options.columnWidths,
     density: options.density,
     densityConfig,
-    colorModeState: options.colorModeState,
-    allTasks,
+    colorCache,
     totalWidth: options.totalWidth,
     x: options.x,
   };
@@ -525,7 +566,7 @@ export function renderTaskTableRows(
   svg: SVGSVGElement,
   options: TaskTableRowsOptions
 ): SVGGElement {
-  const { flattenedTasks, x, startY, density } = options;
+  const { flattenedTasks, x, startY, density, colorModeState } = options;
   const densityConfig = DENSITY_CONFIG[density];
   const { rowHeight } = densityConfig;
 
@@ -543,14 +584,17 @@ export function renderTaskTableRows(
     )
   );
 
-  // Pre-extract Task objects for color computation (avoids repeated mapping per row)
+  // Pre-compute all task colors in one pass — avoids O(n²) per-row color
+  // computation in non-manual modes (theme/hierarchy/summary call expensive
+  // shared operations that are O(n) each if recomputed inside the render loop).
   const allTasks = flattenedTasks.map((ft) => ft.task);
-  const rowOptions = buildRowOptions(options, densityConfig, allTasks);
+  const colorCache = computeAllTaskColors(allTasks, colorModeState);
+  const rowOptions = buildRowOptions(options, densityConfig, colorCache);
 
-  flattenedTasks.forEach((flattenedTask, rowIndex) => {
+  for (const [rowIndex, flattenedTask] of flattenedTasks.entries()) {
     const rowY = startY + rowIndex * rowHeight;
     renderTaskRow(group, flattenedTask, rowIndex, rowY, rowOptions);
-  });
+  }
 
   svg.appendChild(group);
   return group;

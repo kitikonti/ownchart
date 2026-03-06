@@ -213,6 +213,88 @@ function getDepthRelativeToColorGiver(
   return depth;
 }
 
+// ─── Theme mode helpers ───────────────────────────────────────────────────────
+
+/** Pre-computed shared state for theme-mode color resolution. */
+interface ThemeContext {
+  paletteColors: string[];
+  assignment: Map<string, number>;
+}
+
+/**
+ * Pre-compute the palette color list and index assignment for theme mode.
+ * Returns null when no palette is configured (callers fall back to task.color).
+ * Intended to be called once per batch so assignPaletteIndices runs only O(n log n)
+ * instead of O(n) per task (which makes the full render O(n²)).
+ */
+function buildThemeContext(
+  allTasks: Task[],
+  themeOptions: ColorModeState["themeOptions"]
+): ThemeContext | null {
+  let paletteColors: string[] = [];
+
+  if (themeOptions.customMonochromeBase) {
+    paletteColors = generateMonochromePalette(
+      themeOptions.customMonochromeBase
+    );
+  } else if (themeOptions.selectedPaletteId) {
+    const palette = getPaletteById(themeOptions.selectedPaletteId);
+    if (palette) paletteColors = palette.colors;
+  }
+
+  if (paletteColors.length === 0) return null;
+
+  const assignment = assignPaletteIndices(
+    getColorGiverIds(allTasks),
+    paletteColors.length
+  );
+  return { paletteColors, assignment };
+}
+
+/**
+ * Compute a single task's theme-mode color using a pre-built ThemeContext.
+ * The caller is responsible for checking colorOverride before calling this.
+ */
+function applyThemeColor(
+  task: Task,
+  allTasks: Task[],
+  ctx: ThemeContext
+): HexColor {
+  const { paletteColors, assignment } = ctx;
+  const colorGiver = getThemeColorGiver(task, allTasks);
+
+  if (!colorGiver) {
+    const idx =
+      assignment.get(task.id) ?? stableHash(task.id) % paletteColors.length;
+    return paletteColors[idx] as HexColor;
+  }
+
+  const baseIdx =
+    assignment.get(colorGiver.id) ??
+    stableHash(colorGiver.id) % paletteColors.length;
+  const baseColor = paletteColors[baseIdx];
+
+  if (task.id === colorGiver.id) {
+    return baseColor as HexColor;
+  }
+
+  const depth = getDepthRelativeToColorGiver(task, colorGiver, allTasks);
+  const taskHash = stableHash(task.id);
+  const hsl = hexToHSL(baseColor);
+
+  // Lightness: always lighter than parent, small hash variation per sibling
+  const lightnessShift = depth * 7 + (taskHash % 5) * 2; // always positive
+  hsl.l = Math.min(88, hsl.l + lightnessShift);
+
+  // Hue: minimal shift for sibling differentiation (±2°)
+  const hueShift = (taskHash % 5) - 2;
+  hsl.h = (hsl.h + hueShift + 360) % 360;
+
+  return hslToHex(hsl) as HexColor;
+}
+
+// ─── Public API ───────────────────────────────────────────────────────────────
+
 /**
  * Compute the display color for a task based on color mode.
  * Pure function — no React hooks or store access.
@@ -241,64 +323,9 @@ export function computeTaskColor(
       return task.color;
 
     case "theme": {
-      // Get the active palette
-      let paletteColors: string[] = [];
-
-      if (themeOptions.customMonochromeBase) {
-        paletteColors = generateMonochromePalette(
-          themeOptions.customMonochromeBase
-        );
-      } else if (themeOptions.selectedPaletteId) {
-        const palette = getPaletteById(themeOptions.selectedPaletteId);
-        if (palette) {
-          paletteColors = palette.colors;
-        }
-      }
-
-      if (paletteColors.length === 0) {
-        return task.color;
-      }
-
-      // Deconflicted palette assignment for maximum color diversity
-      const assignment = assignPaletteIndices(
-        getColorGiverIds(allTasks),
-        paletteColors.length
-      );
-
-      const colorGiver = getThemeColorGiver(task, allTasks);
-
-      if (!colorGiver) {
-        // Root-level task / color-giver itself → use assigned index
-        const idx =
-          assignment.get(task.id) ?? stableHash(task.id) % paletteColors.length;
-        return paletteColors[idx] as HexColor;
-      }
-
-      // Color-giver determines base color from palette
-      const baseIdx =
-        assignment.get(colorGiver.id) ??
-        stableHash(colorGiver.id) % paletteColors.length;
-      const baseColor = paletteColors[baseIdx];
-
-      // If this task IS the color-giver itself, use base color directly
-      if (task.id === colorGiver.id) {
-        return baseColor as HexColor;
-      }
-
-      // Children: create a variation of the base color
-      const depth = getDepthRelativeToColorGiver(task, colorGiver, allTasks);
-      const taskHash = stableHash(task.id);
-      const hsl = hexToHSL(baseColor);
-
-      // Lightness: always lighter than parent, small hash variation per sibling
-      const lightnessShift = depth * 7 + (taskHash % 5) * 2; // always positive
-      hsl.l = Math.min(88, hsl.l + lightnessShift);
-
-      // Hue: minimal shift for sibling differentiation (±2°)
-      const hueShift = (taskHash % 5) - 2;
-      hsl.h = (hsl.h + hueShift + 360) % 360;
-
-      return hslToHex(hsl) as HexColor;
+      const themeCtx = buildThemeContext(allTasks, themeOptions);
+      if (!themeCtx) return task.color;
+      return applyThemeColor(task, allTasks, themeCtx);
     }
 
     case "summary": {
@@ -364,4 +391,58 @@ export function getComputedTaskColor(
   colorModeState: ColorModeState
 ): HexColor {
   return computeTaskColor(task, allTasks, colorModeState);
+}
+
+/**
+ * Compute display colors for all tasks in a single pass.
+ *
+ * More efficient than calling computeTaskColor per task because expensive
+ * shared computations are performed only once:
+ * - Theme mode: palette-index assignment (O(n log n)) is hoisted out of the per-task loop,
+ *   reducing overall complexity from O(n²) to O(n·depth).
+ * - All other modes: delegates to computeTaskColor per task (acceptable cost).
+ *
+ * Use this in batch rendering contexts (export) instead of calling
+ * getComputedTaskColor inside a render loop.
+ *
+ * @returns Map<taskId, HexColor> — contains an entry for every task in `tasks`.
+ */
+export function computeAllTaskColors(
+  tasks: Task[],
+  colorModeState: ColorModeState
+): Map<string, HexColor> {
+  const result = new Map<string, HexColor>();
+
+  if (tasks.length === 0) return result;
+
+  const { mode } = colorModeState;
+
+  if (mode === "theme") {
+    const themeCtx = buildThemeContext(tasks, colorModeState.themeOptions);
+
+    if (!themeCtx) {
+      // No palette configured — every task falls back to its own color.
+      for (const task of tasks) {
+        result.set(task.id, task.color as HexColor);
+      }
+      return result;
+    }
+
+    for (const task of tasks) {
+      if (task.colorOverride) {
+        result.set(task.id, task.colorOverride);
+        continue;
+      }
+      result.set(task.id, applyThemeColor(task, tasks, themeCtx));
+    }
+    return result;
+  }
+
+  // For all other modes (manual, summary, taskType, hierarchy): delegate to
+  // the single-task function. Their per-task cost is lower than theme mode's
+  // palette-assignment overhead, so calling per task is acceptable.
+  for (const task of tasks) {
+    result.set(task.id, computeTaskColor(task, tasks, colorModeState));
+  }
+  return result;
 }
