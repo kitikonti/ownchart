@@ -5,7 +5,10 @@
 
 import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
 import { renderHook, act } from "@testing-library/react";
-import { useHeaderDateSelection } from "../../../src/hooks/useHeaderDateSelection";
+import {
+  useHeaderDateSelection,
+  normalizeSelection,
+} from "../../../src/hooks/useHeaderDateSelection";
 import { useChartStore } from "../../../src/store/slices/chartSlice";
 import type { TimelineScale } from "../../../src/utils/timelineUtils";
 import type { Task } from "../../../src/types/chart.types";
@@ -49,6 +52,32 @@ function createMockSvg(): SVGSVGElement {
   return svg;
 }
 
+describe("normalizeSelection", () => {
+  it("returns dates unchanged when dateA <= dateB", () => {
+    const result = normalizeSelection("2025-01-01", "2025-03-31");
+    expect(result).toEqual({
+      startDate: "2025-01-01",
+      endDate: "2025-03-31",
+    });
+  });
+
+  it("swaps dates when dateA > dateB", () => {
+    const result = normalizeSelection("2025-03-31", "2025-01-01");
+    expect(result).toEqual({
+      startDate: "2025-01-01",
+      endDate: "2025-03-31",
+    });
+  });
+
+  it("handles equal dates", () => {
+    const result = normalizeSelection("2025-06-15", "2025-06-15");
+    expect(result).toEqual({
+      startDate: "2025-06-15",
+      endDate: "2025-06-15",
+    });
+  });
+});
+
 describe("useHeaderDateSelection", () => {
   let mockSvg: SVGSVGElement;
   let scale: TimelineScale;
@@ -73,7 +102,9 @@ describe("useHeaderDateSelection", () => {
     }
   });
 
-  function renderSelectionHook(): ReturnType<typeof renderHook<ReturnType<typeof useHeaderDateSelection>>> {
+  function renderSelectionHook(): ReturnType<
+    typeof renderHook<ReturnType<typeof useHeaderDateSelection>>
+  > {
     const svgRef = { current: mockSvg };
     return renderHook(() =>
       useHeaderDateSelection({
@@ -238,5 +269,219 @@ describe("useHeaderDateSelection", () => {
 
     expect(spy).toHaveBeenCalled();
     spy.mockRestore();
+  });
+
+  it("should extend selection on shift+click", () => {
+    const { result } = renderSelectionHook();
+
+    // Create an initial selection via drag
+    act(() => {
+      result.current.onMouseDown({
+        button: 0,
+        clientX: 200,
+        clientY: 24,
+        shiftKey: false,
+        preventDefault: vi.fn(),
+      } as unknown as React.MouseEvent<SVGSVGElement>);
+    });
+
+    act(() => {
+      document.dispatchEvent(
+        new MouseEvent("mousemove", { clientX: 400, clientY: 24 })
+      );
+    });
+
+    act(() => {
+      document.dispatchEvent(new MouseEvent("mouseup"));
+    });
+
+    // Remember the current selection bounds
+    const selectionAfterDrag = result.current.selectionPixelRect;
+    expect(selectionAfterDrag).not.toBeNull();
+
+    // Shift+click further to the right — should extend endDate
+    act(() => {
+      result.current.onMouseDown({
+        button: 0,
+        clientX: 700,
+        clientY: 24,
+        shiftKey: true,
+        preventDefault: vi.fn(),
+      } as unknown as React.MouseEvent<SVGSVGElement>);
+    });
+
+    const extendedSelection = result.current.selectionPixelRect;
+    expect(extendedSelection).not.toBeNull();
+    // Width must be larger after extending to the right
+    expect(extendedSelection!.width).toBeGreaterThan(selectionAfterDrag!.width);
+  });
+
+  it("should not extend selection on shift+click when there is no existing selection", () => {
+    const { result } = renderSelectionHook();
+
+    // Shift+click with no prior selection should start a new drag
+    act(() => {
+      result.current.onMouseDown({
+        button: 0,
+        clientX: 300,
+        clientY: 24,
+        shiftKey: true,
+        preventDefault: vi.fn(),
+      } as unknown as React.MouseEvent<SVGSVGElement>);
+    });
+
+    // Should start dragging (not extend, since there was no selection)
+    expect(result.current.isDragging).toBe(true);
+  });
+
+  it("should end drag on mouseup and stop tracking", () => {
+    const { result } = renderSelectionHook();
+
+    act(() => {
+      result.current.onMouseDown({
+        button: 0,
+        clientX: 100,
+        clientY: 24,
+        shiftKey: false,
+        preventDefault: vi.fn(),
+      } as unknown as React.MouseEvent<SVGSVGElement>);
+    });
+
+    expect(result.current.isDragging).toBe(true);
+
+    act(() => {
+      document.dispatchEvent(new MouseEvent("mouseup"));
+    });
+
+    expect(result.current.isDragging).toBe(false);
+  });
+
+  it("should clear selection when clicking outside the header SVG", async () => {
+    const { result } = renderSelectionHook();
+
+    // Create a selection via drag
+    act(() => {
+      result.current.onMouseDown({
+        button: 0,
+        clientX: 100,
+        clientY: 24,
+        shiftKey: false,
+        preventDefault: vi.fn(),
+      } as unknown as React.MouseEvent<SVGSVGElement>);
+    });
+
+    act(() => {
+      document.dispatchEvent(
+        new MouseEvent("mousemove", { clientX: 400, clientY: 24 })
+      );
+    });
+
+    act(() => {
+      document.dispatchEvent(new MouseEvent("mouseup"));
+    });
+
+    expect(result.current.selectionPixelRect).not.toBeNull();
+
+    // Allow the deferred click-outside listener (setTimeout 0) to register
+    await act(async () => {
+      await new Promise<void>((resolve) => setTimeout(resolve, 0));
+    });
+
+    // Click outside the header SVG (on document.body, which bubbles to document)
+    act(() => {
+      document.body.dispatchEvent(
+        new MouseEvent("mousedown", { bubbles: true })
+      );
+    });
+
+    expect(result.current.selectionPixelRect).toBeNull();
+  });
+
+  it("should clear context menu when starting a new drag", () => {
+    const { result } = renderSelectionHook();
+
+    // Build a selection with a context menu
+    act(() => {
+      result.current.onMouseDown({
+        button: 0,
+        clientX: 100,
+        clientY: 24,
+        shiftKey: false,
+        preventDefault: vi.fn(),
+      } as unknown as React.MouseEvent<SVGSVGElement>);
+    });
+
+    act(() => {
+      document.dispatchEvent(
+        new MouseEvent("mousemove", { clientX: 400, clientY: 24 })
+      );
+    });
+
+    act(() => {
+      document.dispatchEvent(new MouseEvent("mouseup"));
+    });
+
+    act(() => {
+      result.current.onContextMenu({
+        clientX: 200,
+        clientY: 24,
+        preventDefault: vi.fn(),
+      } as unknown as React.MouseEvent<SVGSVGElement>);
+    });
+
+    expect(result.current.contextMenu).not.toBeNull();
+
+    // Start a new drag — context menu should be cleared immediately
+    act(() => {
+      result.current.onMouseDown({
+        button: 0,
+        clientX: 500,
+        clientY: 24,
+        shiftKey: false,
+        preventDefault: vi.fn(),
+      } as unknown as React.MouseEvent<SVGSVGElement>);
+    });
+
+    expect(result.current.contextMenu).toBeNull();
+  });
+
+  it("right-click outside selection clears the selection", () => {
+    const { result } = renderSelectionHook();
+
+    // Create a selection via drag (x=100 to x=400)
+    act(() => {
+      result.current.onMouseDown({
+        button: 0,
+        clientX: 100,
+        clientY: 24,
+        shiftKey: false,
+        preventDefault: vi.fn(),
+      } as unknown as React.MouseEvent<SVGSVGElement>);
+    });
+
+    act(() => {
+      document.dispatchEvent(
+        new MouseEvent("mousemove", { clientX: 400, clientY: 24 })
+      );
+    });
+
+    act(() => {
+      document.dispatchEvent(new MouseEvent("mouseup"));
+    });
+
+    expect(result.current.selectionPixelRect).not.toBeNull();
+
+    // Right-click far outside the selection — triggers the else branch of
+    // performContextMenuAction which calls clearSelection()
+    act(() => {
+      result.current.onContextMenu({
+        clientX: 900,
+        clientY: 24,
+        preventDefault: vi.fn(),
+      } as unknown as React.MouseEvent<SVGSVGElement>);
+    });
+
+    expect(result.current.selectionPixelRect).toBeNull();
+    expect(result.current.contextMenu).toBeNull();
   });
 });
