@@ -34,14 +34,14 @@ export interface HeaderDateSelection {
   endDate: string; // ISO date string (always >= startDate)
 }
 
-interface UseHeaderDateSelectionOptions {
+export interface UseHeaderDateSelectionOptions {
   /** Ref to the header SVG element */
   headerSvgRef: React.RefObject<SVGSVGElement | null>;
   /** Current timeline scale */
   scale: TimelineScale | null;
 }
 
-interface UseHeaderDateSelectionResult {
+export interface UseHeaderDateSelectionResult {
   /** Selection pixel rect for rendering (null if no selection) */
   selectionPixelRect: { x: number; width: number } | null;
   /** Whether the user is currently dragging */

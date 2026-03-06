@@ -70,6 +70,13 @@ function restoreTableState(tableState: TabChartData["tableState"]): void {
   }
 }
 
+/**
+ * NOTE: Keep in sync with buildSavePayload — every ChartState field restored
+ * here must be written by that function. Always-present fields are restored
+ * directly; fields added in later sprints use applyIfDefined so older saves
+ * that lack them fall back to the current store default rather than overwriting
+ * it with undefined.
+ */
 function restoreChartState(chartState: ChartState): void {
   const store = useChartStore.getState();
 
@@ -108,6 +115,8 @@ function restoreFileState(fileState: TabChartData["fileState"]): void {
     const parsed = new Date(fileState.lastSaved);
     if (!isNaN(parsed.getTime())) setLastSaved(parsed);
   }
+  // isDirty is absent from saves that predate this field — treat as clean,
+  // which is the safe default (nothing unsaved to warn about).
   if (fileState.isDirty) markDirty();
   else markClean();
 }
@@ -127,7 +136,11 @@ function restoreStateFromChart(savedChart: TabChartData): void {
   restoreFileState(savedChart.fileState);
 }
 
-/** Build the full save payload from current store state. */
+/**
+ * Build the full save payload from current store state.
+ * NOTE: Keep in sync with restoreChartState — every ChartState field added here
+ * must also be restored there (use applyIfDefined for optional/sprint-gated fields).
+ */
 function buildSavePayload(): Omit<TabChartData, "tabId" | "lastActive"> {
   const taskState = useTaskStore.getState();
   const dependencyState = useDependencyStore.getState();
@@ -195,7 +208,11 @@ function useTabRestore(
     } catch (error) {
       // intentional: surface restore failures in the browser console for
       // debugging; the app continues with default state after the toast above.
-      console.error("[useMultiTabPersistence] Failed to restore state:", error);
+      console.error(
+        "[useMultiTabPersistence] Failed to restore state for tab:",
+        tabId,
+        error
+      );
       // Inform the user that their previous session could not be restored.
       // The app continues with default state; the next autosave will overwrite
       // the corrupted entry so future loads will be clean.

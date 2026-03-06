@@ -12,13 +12,22 @@ import { useDependencyStore } from "../store/slices/dependencySlice";
 import { clientToSvgCoords } from "../utils/svgCoords";
 import toast from "react-hot-toast";
 
-interface UseDependencyDragOptions {
+/** Adds a finish-to-start dependency; returns success/failure with an optional message. */
+type AddDependencyFn = (
+  fromId: TaskId,
+  toId: TaskId
+) => { success: boolean; error?: string };
+
+/** Checks whether adding a dependency would create a cycle in the graph. */
+type CheckCycleFn = (fromId: TaskId, toId: TaskId) => { hasCycle: boolean };
+
+export interface UseDependencyDragOptions {
   tasks: Task[];
   svgRef?: React.RefObject<SVGSVGElement | null>;
   enabled?: boolean;
 }
 
-interface UseDependencyDragReturn {
+export interface UseDependencyDragReturn {
   dragState: DependencyDragState;
   startDrag: (
     taskId: TaskId,
@@ -74,7 +83,7 @@ function resolveDragTargets(
   fromTaskId: TaskId,
   side: "start" | "end",
   tasks: Task[],
-  checkWouldCreateCycle: (fromId: TaskId, toId: TaskId) => { hasCycle: boolean }
+  checkWouldCreateCycle: CheckCycleFn
 ): { validTargets: Set<TaskId>; invalidTargets: Set<TaskId> } {
   const validTargets = new Set<TaskId>();
   const invalidTargets = new Set<TaskId>();
@@ -114,6 +123,10 @@ const DEPENDENCY_DRAG_MESSAGES = {
     `Dependency created: ${fromName} → ${toName}`,
   failed: (error?: string) => error ?? "Failed to create dependency",
   wouldCreateCycle: "Cannot create: Would create circular dependency",
+  // Shown when the drop target was added to the task list after drag start and
+  // is therefore absent from the pre-computed valid/invalid sets.
+  unknownTarget:
+    "Cannot create dependency: target not available, please try again",
 } as const;
 
 /** Options for attempting to create a dependency after a drag. */
@@ -124,10 +137,7 @@ interface AttemptCreateDependencyOptions {
   validTargets: Set<TaskId>;
   invalidTargets: Set<TaskId>;
   tasks: Task[];
-  addDependency: (
-    fromId: TaskId,
-    toId: TaskId
-  ) => { success: boolean; error?: string };
+  addDependency: AddDependencyFn;
 }
 
 /** Attempt to create a dependency and show a toast for success or failure. */
@@ -163,6 +173,10 @@ function attemptCreateDependency({
     }
   } else if (invalidTargets.has(targetTaskId)) {
     toast.error(DEPENDENCY_DRAG_MESSAGES.wouldCreateCycle);
+  } else {
+    // Task was added to the task list after this drag started and is absent from
+    // the pre-computed target sets. Surface the failure so the drop is not silent.
+    toast.error(DEPENDENCY_DRAG_MESSAGES.unknownTarget);
   }
 }
 
@@ -201,10 +215,7 @@ function findHoveredTaskId(
 interface EndDragContext {
   dragStateRef: { current: DependencyDragState };
   tasksRef: { current: Task[] };
-  addDependency: (
-    fromId: TaskId,
-    toId: TaskId
-  ) => { success: boolean; error?: string };
+  addDependency: AddDependencyFn;
   setDragState: (s: DependencyDragState) => void;
 }
 
@@ -250,10 +261,7 @@ function performEndDrag(
 /** Creates stable startDrag and cancelDrag callbacks for a drag session. */
 function useDragInitiators(
   enabled: boolean,
-  checkWouldCreateCycle: (
-    fromId: TaskId,
-    toId: TaskId
-  ) => { hasCycle: boolean },
+  checkWouldCreateCycle: CheckCycleFn,
   svgRef: React.RefObject<SVGSVGElement | null> | undefined,
   tasksRef: { current: Task[] },
   setDragState: React.Dispatch<React.SetStateAction<DependencyDragState>>
@@ -375,10 +383,7 @@ function useDragCommitter(
   svgRef: React.RefObject<SVGSVGElement | null> | undefined,
   dragStateRef: { current: DependencyDragState },
   tasksRef: { current: Task[] },
-  addDependency: (
-    fromId: TaskId,
-    toId: TaskId
-  ) => { success: boolean; error?: string },
+  addDependency: AddDependencyFn,
   setDragState: React.Dispatch<React.SetStateAction<DependencyDragState>>
 ): {
   endDrag: (targetTaskId?: TaskId) => void;
@@ -413,14 +418,8 @@ function useDragCommitter(
  */
 function useDragSession(
   enabled: boolean,
-  checkWouldCreateCycle: (
-    fromId: TaskId,
-    toId: TaskId
-  ) => { hasCycle: boolean },
-  addDependency: (
-    fromId: TaskId,
-    toId: TaskId
-  ) => { success: boolean; error?: string },
+  checkWouldCreateCycle: CheckCycleFn,
+  addDependency: AddDependencyFn,
   svgRef: React.RefObject<SVGSVGElement | null> | undefined,
   tasksRef: { current: Task[] }
 ): DragSession {
