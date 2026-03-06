@@ -53,8 +53,8 @@ export const ToolbarSeparator = memo(function ToolbarSeparator({
 
 interface ToolbarGroupProps {
   children: ReactNode;
-  /** Optional label for accessibility */
-  label?: string;
+  /** Accessible label for the group — required so screen readers can identify the group's purpose. */
+  label: string;
   /** Add visual separator after this group */
   withSeparator?: boolean;
   className?: string;

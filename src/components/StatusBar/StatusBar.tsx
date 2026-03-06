@@ -28,11 +28,8 @@ export const StatusBar = memo(function StatusBar(): JSX.Element {
   return (
     <div className="status-bar h-6 flex-shrink-0 flex items-center justify-between select-none bg-neutral-50 border-neutral-200 text-xs px-3">
       {/* Left: version + task statistics */}
-      <div
-        role="status"
-        aria-label="Task statistics"
-        className="flex items-center text-neutral-500"
-      >
+      <div className="flex items-center text-neutral-500">
+        {/* Static version — kept outside the live region so AT don't re-read it on stat changes */}
         <button
           type="button"
           onClick={openAboutDialog}
@@ -42,21 +39,28 @@ export const StatusBar = memo(function StatusBar(): JSX.Element {
           OwnChart v{__APP_VERSION__}
         </button>
         <Sep />
-        <span>
-          {totalTasks} {totalTasks === 1 ? "Task" : "Tasks"}
-        </span>
-        {showProgress && (
-          <>
-            <Sep />
-            <span>{completedTasks} Completed</span>
-            {overdueTasks > 0 && (
-              <>
-                <Sep />
-                <span className="text-error">{overdueTasks} Overdue</span>
-              </>
-            )}
-          </>
-        )}
+        {/* Live region: only the dynamic task statistics */}
+        <div
+          role="status"
+          aria-label="Task statistics"
+          className="flex items-center"
+        >
+          <span>
+            {totalTasks} {totalTasks === 1 ? "Task" : "Tasks"}
+          </span>
+          {showProgress && (
+            <>
+              <Sep />
+              <span>{completedTasks} Completed</span>
+              {overdueTasks > 0 && (
+                <>
+                  <Sep />
+                  <span className="text-error">{overdueTasks} Overdue</span>
+                </>
+              )}
+            </>
+          )}
+        </div>
       </div>
 
       {/* Right: zoom controls */}
