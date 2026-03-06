@@ -205,8 +205,8 @@ cd ../app-gantt-review
 - [x] `src/utils/hierarchy.ts` (430 LOC)
 - [x] `src/utils/timelineUtils.ts` (424 LOC)
 - [x] `src/utils/colorUtils.ts` (332 LOC)
-- [ ] `src/utils/multiTabStorage.ts` (318 LOC)
-- [ ] `src/utils/validation.ts` (236 LOC)
+- [x] `src/utils/multiTabStorage.ts` (318 LOC)
+- [x] `src/utils/validation.ts` (236 LOC)
 - [ ] `src/utils/textMeasurement.ts` (217 LOC)
 - [ ] `src/utils/workingDaysCalculator.ts` (208 LOC)
 - [ ] `src/utils/localeDetection.ts` (183 LOC)
@@ -224,7 +224,7 @@ cd ../app-gantt-review
 - [x] `src/utils/clipboard/index.ts` (26 LOC)
 
 ### Priority: MEDIUM — Graph Utils
-- [ ] `src/utils/arrowPath/bezierPath.ts` (341 LOC)
+- [ ] `src/utils/arrowPath/elbowPath.ts` (341 LOC)
 - [ ] `src/utils/graph/topologicalSort.ts` (154 LOC)
 - [ ] `src/utils/graph/cycleDetection.ts` (115 LOC)
 - [ ] `src/utils/arrowPath/index.ts` (10 LOC)
