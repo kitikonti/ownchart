@@ -63,12 +63,11 @@ function restoreTableState(tableState: TabChartData["tableState"]): void {
       taskStore.setColumnWidth(columnId, width);
     });
   }
-  // Use applyIfDefined so that both null and undefined are treated as "absent"
-  // (null = field present but unset; undefined = old save that predates this field).
-  applyIfDefined(
-    tableState.taskTableWidth ?? undefined,
-    taskStore.setTaskTableWidth
-  );
+  // Skip when null (field present but unset) or undefined (old save that
+  // predates this field). != null covers both cases explicitly.
+  if (tableState.taskTableWidth != null) {
+    taskStore.setTaskTableWidth(tableState.taskTableWidth);
+  }
 }
 
 function restoreChartState(chartState: ChartState): void {
@@ -103,9 +102,9 @@ function restoreChartState(chartState: ChartState): void {
 function restoreFileState(fileState: TabChartData["fileState"]): void {
   const { setFileName, setChartId, setLastSaved, markDirty, markClean } =
     useFileStore.getState();
-  if (fileState.fileName) setFileName(fileState.fileName);
-  if (fileState.chartId) setChartId(fileState.chartId);
-  if (fileState.lastSaved) {
+  if (fileState.fileName != null) setFileName(fileState.fileName);
+  if (fileState.chartId != null) setChartId(fileState.chartId);
+  if (fileState.lastSaved != null) {
     const parsed = new Date(fileState.lastSaved);
     if (!isNaN(parsed.getTime())) setLastSaved(parsed);
   }

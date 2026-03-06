@@ -332,6 +332,40 @@ interface DragSession {
   updateDragPosition: (e: MouseEvent | React.MouseEvent) => void;
 }
 
+/** RAF-throttled hook that produces a stable drag-position updater.
+ * Coordinates are captured synchronously from the event (SyntheticEvent objects
+ * may be recycled by React), then the state update is deferred to the next
+ * animation frame. Callers should not expect synchronous state updates. */
+function useRAFPositionUpdater(
+  svgRef: React.RefObject<SVGSVGElement | null> | undefined,
+  setDragState: React.Dispatch<React.SetStateAction<DependencyDragState>>
+): (e: MouseEvent | React.MouseEvent) => void {
+  const rafRef = useRef<number | null>(null);
+
+  const updateDragPosition = useCallback(
+    (e: MouseEvent | React.MouseEvent): void => {
+      const coords = getEventCoords(e, svgRef?.current);
+      if (rafRef.current !== null) return; // frame already scheduled — skip
+      rafRef.current = requestAnimationFrame(() => {
+        rafRef.current = null;
+        setDragState((prev) => ({ ...prev, currentPosition: coords }));
+      });
+    },
+    [svgRef, setDragState]
+  );
+
+  useEffect(() => {
+    return () => {
+      if (rafRef.current !== null) {
+        cancelAnimationFrame(rafRef.current);
+        rafRef.current = null;
+      }
+    };
+  }, []);
+
+  return updateDragPosition;
+}
+
 /** Owns endDrag and updateDragPosition. Extracted from useDragSession to keep
  * both hooks under the 50-line limit.
  *
@@ -364,31 +398,7 @@ function useDragCommitter(
     [addDependency, dragStateRef, tasksRef, setDragState] // all stable: refs + store action
   );
 
-  // RAF-throttled position tracker — coords are captured synchronously from the
-  // event (event objects may be recycled), then the state update is batched into
-  // the next animation frame. Callers should not expect synchronous state updates.
-  const rafRef = useRef<number | null>(null);
-
-  const updateDragPosition = useCallback(
-    (e: MouseEvent | React.MouseEvent): void => {
-      const coords = getEventCoords(e, svgRef?.current);
-      if (rafRef.current !== null) return; // frame already scheduled — skip
-      rafRef.current = requestAnimationFrame(() => {
-        rafRef.current = null;
-        setDragState((prev) => ({ ...prev, currentPosition: coords }));
-      });
-    },
-    [svgRef, setDragState] // svgRef is stable; setDragState is a stable useState setter
-  );
-
-  useEffect(() => {
-    return () => {
-      if (rafRef.current !== null) {
-        cancelAnimationFrame(rafRef.current);
-        rafRef.current = null;
-      }
-    };
-  }, []);
+  const updateDragPosition = useRAFPositionUpdater(svgRef, setDragState);
 
   return { endDrag, updateDragPosition };
 }

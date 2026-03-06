@@ -159,7 +159,9 @@ function performHeaderMouseDown(
   ctx.dragStartDateRef.current = clickDate;
   ctx.setSelection({ startDate: clickDate, endDate: clickDate });
   document.addEventListener("mousemove", ctx.handleMouseMove);
-  document.addEventListener("mouseup", ctx.handleMouseUp);
+  // { once: true } auto-removes the handler after the first mouseup fires,
+  // so handleMouseUp never needs to reference its own identity to unregister.
+  document.addEventListener("mouseup", ctx.handleMouseUp, { once: true });
   e.preventDefault();
 }
 
@@ -277,19 +279,18 @@ function useMouseDragListeners(
     [headerSvgRef, scaleRef, setSelection]
   );
 
-  // Mouse up: end drag.
-  // Self-reference inside the callback body is safe: `handleMouseUp` closes
-  // over the variable binding, not the value — by the time any mouseup fires,
-  // the variable is already assigned to this callback (HU_v1).
+  // Mouse up: end drag. The mouseup listener is registered with { once: true }
+  // so it auto-removes after firing — no self-reference needed here.
   const handleMouseUp = useCallback((): void => {
     if (!isDraggingRef.current) return;
     isDraggingRef.current = false;
     setIsDragging(false);
     document.removeEventListener("mousemove", handleMouseMove);
-    document.removeEventListener("mouseup", handleMouseUp);
   }, [handleMouseMove, setIsDragging]);
 
   // Cleanup on unmount — both handlers are stable so this runs exactly once.
+  // removeEventListener is a no-op if the { once: true } mouseup has already
+  // auto-removed itself.
   useEffect(() => {
     return () => {
       document.removeEventListener("mousemove", handleMouseMove);
@@ -319,6 +320,9 @@ function useDragStateRefs(): {
 function useHeaderMouseDown(
   ctx: HeaderMouseDownContext
 ): (e: React.MouseEvent<SVGSVGElement>) => void {
+  // Destructure only to give React individual stable values for the dep array.
+  // isDraggingRef, dragStartDateRef, setIsDragging come from useDragStateRefs —
+  // ESLint can't infer their stability, so listed explicitly; identities never change.
   const {
     handleMouseMove,
     handleMouseUp,
@@ -331,11 +335,8 @@ function useHeaderMouseDown(
     dragStartDateRef,
     setIsDragging,
   } = ctx;
-  // isDraggingRef, dragStartDateRef, setIsDragging come from useDragStateRefs.
-  // ESLint can't infer they're stable (ref objects + useState setter), so listed
-  // explicitly — they never change identity.
   return useCallback(
-    (e: React.MouseEvent<SVGSVGElement>): void => {
+    (e: React.MouseEvent<SVGSVGElement>): void =>
       performHeaderMouseDown(e, {
         scaleRef,
         headerSvgRef,
@@ -347,8 +348,7 @@ function useHeaderMouseDown(
         setContextMenu,
         handleMouseMove,
         handleMouseUp,
-      });
-    },
+      }),
     [
       handleMouseMove,
       handleMouseUp,
