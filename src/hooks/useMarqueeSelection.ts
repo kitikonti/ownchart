@@ -21,7 +21,7 @@ export interface TaskGeometry {
   height: number;
 }
 
-interface UseMarqueeSelectionOptions {
+export interface UseMarqueeSelectionOptions {
   /** Reference to the SVG element */
   svgRef: React.RefObject<SVGSVGElement | null>;
   /** Task geometries for hit detection */
@@ -32,7 +32,7 @@ interface UseMarqueeSelectionOptions {
   enabled?: boolean;
 }
 
-interface UseMarqueeSelectionResult {
+export interface UseMarqueeSelectionResult {
   /** Current marquee rectangle (null if not dragging) */
   marqueeRect: MarqueeRect | null;
   /** Normalized rectangle for rendering (x, y, width, height) */
@@ -51,7 +51,7 @@ interface UseMarqueeSelectionResult {
 /**
  * Check if two rectangles intersect
  */
-function rectsIntersect(
+export function rectsIntersect(
   rect1: { x: number; y: number; width: number; height: number },
   rect2: { x: number; y: number; width: number; height: number }
 ): boolean {
@@ -66,7 +66,7 @@ function rectsIntersect(
 /**
  * Normalize a marquee rect to have positive width/height
  */
-function normalizeRect(rect: MarqueeRect): {
+export function normalizeRect(rect: MarqueeRect): {
   x: number;
   y: number;
   width: number;

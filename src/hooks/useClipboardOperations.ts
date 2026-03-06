@@ -62,6 +62,69 @@ function syncCellToSystemClipboard(): void {
 }
 
 /**
+ * Try to paste rows from system clipboard.
+ * Returns true if handled, false to continue to cell check or internal fallback.
+ */
+async function tryPasteRowsFromSystemClipboard(): Promise<boolean> {
+  const { rowClipboard, pasteExternalRows, getClipboardMode } =
+    useClipboardStore.getState();
+  const internalMode = getClipboardMode();
+
+  const externalRows = await readRowsFromSystemClipboard();
+  if (!externalRows || externalRows.tasks.length === 0) return false;
+
+  // Skip if this is the same data already in the internal clipboard
+  const isSameAsInternal =
+    internalMode === "row" &&
+    rowClipboard.tasks.length === externalRows.tasks.length &&
+    rowClipboard.tasks[0]?.id === externalRows.tasks[0]?.id;
+
+  if (isSameAsInternal) return false;
+
+  const result = pasteExternalRows(externalRows);
+  if (result.success) {
+    toast.success(`Pasted ${externalRows.tasks.length} row(s) from clipboard`);
+  } else if (result.error) {
+    toast.error(result.error);
+  }
+  return true;
+}
+
+/**
+ * Try to paste a cell from system clipboard.
+ * Returns true if handled, false to continue to internal fallback.
+ */
+async function tryPasteCellFromSystemClipboard(): Promise<boolean> {
+  const { cellClipboard, pasteExternalCell, getClipboardMode } =
+    useClipboardStore.getState();
+  const { activeCell } = useTaskStore.getState();
+  const internalMode = getClipboardMode();
+
+  const externalCell = await readCellFromSystemClipboard();
+  if (!externalCell || !activeCell.taskId || !activeCell.field) return false;
+
+  // Skip if this is the same data already in the internal clipboard
+  const isSameAsInternal =
+    internalMode === "cell" &&
+    cellClipboard.field === externalCell.field &&
+    cellClipboard.value === externalCell.value;
+
+  if (isSameAsInternal) return false;
+
+  const result = pasteExternalCell(
+    externalCell,
+    activeCell.taskId,
+    activeCell.field
+  );
+  if (result.success) {
+    toast.success(`Pasted ${activeCell.field} from clipboard`);
+  } else if (result.error) {
+    toast.error(result.error);
+  }
+  return true;
+}
+
+/**
  * Try to paste from the system clipboard (cross-tab paste).
  * Returns true if the paste was handled, false to fall back to internal clipboard.
  *
@@ -72,63 +135,8 @@ async function tryPasteFromSystemClipboard(): Promise<boolean> {
   if (!isClipboardApiAvailable()) return false;
 
   try {
-    const {
-      rowClipboard,
-      cellClipboard,
-      pasteExternalRows,
-      pasteExternalCell,
-      getClipboardMode,
-    } = useClipboardStore.getState();
-    const { activeCell } = useTaskStore.getState();
-    const internalMode = getClipboardMode();
-
-    // Try reading rows from system clipboard
-    const externalRows = await readRowsFromSystemClipboard();
-    if (externalRows && externalRows.tasks.length > 0) {
-      // Check if this is the same data as internal clipboard
-      const isSameAsInternal =
-        internalMode === "row" &&
-        rowClipboard.tasks.length === externalRows.tasks.length &&
-        rowClipboard.tasks[0]?.id === externalRows.tasks[0]?.id;
-
-      if (!isSameAsInternal) {
-        // External data differs from internal — use external (cross-tab paste)
-        const result = pasteExternalRows(externalRows);
-        if (result.success) {
-          toast.success(
-            `Pasted ${externalRows.tasks.length} row(s) from clipboard`
-          );
-        } else if (result.error) {
-          toast.error(result.error);
-        }
-        return true;
-      }
-    }
-
-    // Try reading cell from system clipboard
-    const externalCell = await readCellFromSystemClipboard();
-    if (externalCell && activeCell.taskId && activeCell.field) {
-      // Check if this is the same data as internal clipboard
-      const isSameAsInternal =
-        internalMode === "cell" &&
-        cellClipboard.field === externalCell.field &&
-        cellClipboard.value === externalCell.value;
-
-      if (!isSameAsInternal) {
-        // External data differs from internal — use external (cross-tab paste)
-        const result = pasteExternalCell(
-          externalCell,
-          activeCell.taskId,
-          activeCell.field
-        );
-        if (result.success) {
-          toast.success(`Pasted ${activeCell.field} from clipboard`);
-        } else if (result.error) {
-          toast.error(result.error);
-        }
-        return true;
-      }
-    }
+    if (await tryPasteRowsFromSystemClipboard()) return true;
+    if (await tryPasteCellFromSystemClipboard()) return true;
   } catch (err) {
     // System clipboard read failed — fall back to internal clipboard
     if (import.meta.env.DEV) {
@@ -145,14 +153,11 @@ async function tryPasteFromSystemClipboard(): Promise<boolean> {
 // ---------------------------------------------------------------------------
 
 export function useClipboardOperations(): ClipboardOperations {
-  // Get only the specific actions/state we need to avoid unnecessary re-renders
+  // Get only the specific actions we need to avoid unnecessary re-renders
   const copyRows = useClipboardStore((state) => state.copyRows);
   const cutRows = useClipboardStore((state) => state.cutRows);
   const copyCell = useClipboardStore((state) => state.copyCell);
   const cutCell = useClipboardStore((state) => state.cutCell);
-  const getClipboardMode = useClipboardStore((state) => state.getClipboardMode);
-  const rowClipboard = useClipboardStore((state) => state.rowClipboard);
-  const cellClipboard = useClipboardStore((state) => state.cellClipboard);
 
   const selectedTaskIds = useTaskStore((state) => state.selectedTaskIds);
   const activeCell = useTaskStore((state) => state.activeCell);
@@ -162,8 +167,9 @@ export function useClipboardOperations(): ClipboardOperations {
     selectedTaskIds.length > 0 ||
     (activeCell.taskId !== null && activeCell.field !== null);
 
-  // Determine if paste should be enabled (internal clipboard only - external checked async)
-  const canPaste = getClipboardMode() !== null;
+  // Subscribe directly to activeMode so canPaste is reactive without needing
+  // separate rowClipboard/cellClipboard subscriptions or void suppressions.
+  const canPaste = useClipboardStore((state) => state.activeMode !== null);
 
   // Smart mode detection for copy
   const handleCopy = useCallback(() => {
@@ -238,12 +244,6 @@ export function useClipboardOperations(): ClipboardOperations {
       toast("Nothing to paste", { icon: "ℹ️" });
     }
   }, []); // stable — all state accessed via getState() inside helpers
-
-  // Silence unused-variable warnings for rowClipboard/cellClipboard:
-  // these subscriptions are kept intentionally to trigger re-renders when
-  // the clipboard changes so that canPaste (via getClipboardMode()) stays reactive.
-  void rowClipboard;
-  void cellClipboard;
 
   return {
     handleCopy,

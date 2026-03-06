@@ -3,7 +3,7 @@
  * Handles save, open, and new file operations
  */
 
-import { useCallback } from "react";
+import { useCallback, useMemo } from "react";
 import toast from "react-hot-toast";
 import { useTaskStore } from "../store/slices/taskSlice";
 import { useChartStore } from "../store/slices/chartSlice";
@@ -25,11 +25,16 @@ import { sanitizeFilename } from "../utils/export/sanitizeFilename";
 
 const OWNCHART_FILE_EXTENSION = ".ownchart";
 
+/** Coerce an unknown catch value to a readable string. */
+function toErrorMsg(e: unknown): string {
+  return e instanceof Error ? e.message : String(e);
+}
+
 /**
  * Generate a suggested filename from project title and current date.
  * Format: <chartname>_<YYYY-MM-DD>.ownchart
  */
-function generateSuggestedFilename(projectTitle: string): string {
+export function generateSuggestedFilename(projectTitle: string): string {
   const sanitizedName = sanitizeFilename(projectTitle);
   const now = new Date();
   const year = now.getFullYear();
@@ -43,7 +48,7 @@ function generateSuggestedFilename(projectTitle: string): string {
  * Resolve the filename to suggest in the save dialog.
  * Priority: existing fileName → generated from title → "untitled.ownchart"
  */
-function resolveSuggestedFilename(
+export function resolveSuggestedFilename(
   fileName: string | null,
   projectTitle: string
 ): string {
@@ -88,6 +93,7 @@ export function useFileOperations(): {
   const projectAuthor = useChartStore((state) => state.projectAuthor);
   const setProjectTitle = useChartStore((state) => state.setProjectTitle);
   const setProjectAuthor = useChartStore((state) => state.setProjectAuthor);
+  const setHiddenTaskIds = useChartStore((state) => state.setHiddenTaskIds);
 
   // Sprint 1.4: Dependency store
   const dependencies = useDependencyStore((state) => state.dependencies);
@@ -113,72 +119,14 @@ export function useFileOperations(): {
   const exportOptions = useUIStore((state) => state.exportOptions);
   const resetExportOptions = useUIStore((state) => state.resetExportOptions);
 
-  // Save (Ctrl+S) - Re-save if handle exists, otherwise show dialog
-  const handleSave = useCallback(
-    async (saveAs = false) => {
-      try {
-        const viewSettings = {
-          zoom,
-          panOffset,
-          taskTableWidth,
-          columnWidths,
-          showWeekends,
-          showTodayMarker,
-          showHolidays,
-          showDependencies,
-          showProgress,
-          taskLabelPosition,
-          workingDaysMode,
-          workingDaysConfig,
-          holidayRegion,
-          projectTitle,
-          projectAuthor,
-          colorModeState,
-          hiddenColumns,
-          isTaskTableCollapsed,
-          hiddenTaskIds,
-        };
-        const serializeOpts = {
-          chartName:
-            fileName?.replace(OWNCHART_FILE_EXTENSION, "") ?? "Untitled",
-          chartId: chartId ?? undefined,
-          chartCreatedAt: chartCreatedAt ?? undefined,
-          prettyPrint: true,
-          dependencies, // Sprint 1.4
-          exportSettings: exportOptions, // Sprint 1.6
-        };
-        const content = serializeToGanttFile(
-          tasks,
-          viewSettings,
-          serializeOpts
-        );
-
-        const suggestedFilename = resolveSuggestedFilename(
-          fileName,
-          projectTitle
-        );
-        const result = await saveFile(content, suggestedFilename, saveAs);
-
-        if (result.success) {
-          setFileName(result.fileName!);
-          setLastSaved(new Date());
-          markClean();
-          toast.success(`Saved "${result.fileName}"`);
-        } else if (result.error !== "Save cancelled") {
-          toast.error(`Save failed: ${result.error}`);
-        }
-      } catch (e) {
-        toast.error(`Save failed: ${(e as Error).message}`);
-      }
-    },
-    [
-      tasks,
-      dependencies,
-      exportOptions,
-      chartCreatedAt,
-      chartId,
+  // Build the view-settings snapshot — memoized so handleSave's dep array
+  // only needs to reference this object rather than all 19 individual values.
+  const viewSettings = useMemo(
+    () => ({
       zoom,
       panOffset,
+      taskTableWidth,
+      columnWidths,
       showWeekends,
       showTodayMarker,
       showHolidays,
@@ -188,15 +136,85 @@ export function useFileOperations(): {
       workingDaysMode,
       workingDaysConfig,
       holidayRegion,
+      projectTitle,
+      projectAuthor,
       colorModeState,
       hiddenColumns,
       isTaskTableCollapsed,
       hiddenTaskIds,
-      projectTitle,
-      projectAuthor,
+    }),
+    [
+      zoom,
+      panOffset,
       taskTableWidth,
       columnWidths,
-      fileName,
+      showWeekends,
+      showTodayMarker,
+      showHolidays,
+      showDependencies,
+      showProgress,
+      taskLabelPosition,
+      workingDaysMode,
+      workingDaysConfig,
+      holidayRegion,
+      projectTitle,
+      projectAuthor,
+      colorModeState,
+      hiddenColumns,
+      isTaskTableCollapsed,
+      hiddenTaskIds,
+    ]
+  );
+
+  // Build the serialize options — memoized alongside viewSettings so
+  // handleSave stays lean and easy to reason about.
+  const serializeOpts = useMemo(
+    () => ({
+      chartName: fileName?.replace(OWNCHART_FILE_EXTENSION, "") ?? "Untitled",
+      chartId: chartId ?? undefined,
+      chartCreatedAt: chartCreatedAt ?? undefined,
+      prettyPrint: true,
+      dependencies, // Sprint 1.4
+      exportSettings: exportOptions, // Sprint 1.6
+    }),
+    [fileName, chartId, chartCreatedAt, dependencies, exportOptions]
+  );
+
+  // Derive the suggested filename — memoized to keep handleSave's dep array
+  // free of raw fileName/projectTitle references.
+  const suggestedFilename = useMemo(
+    () => resolveSuggestedFilename(fileName, projectTitle),
+    [fileName, projectTitle]
+  );
+
+  // Save (Ctrl+S) — re-save if handle exists, otherwise show dialog
+  const handleSave = useCallback(
+    async (saveAs = false) => {
+      try {
+        const content = serializeToGanttFile(
+          tasks,
+          viewSettings,
+          serializeOpts
+        );
+        const result = await saveFile(content, suggestedFilename, saveAs);
+
+        if (result.success) {
+          setFileName(result.fileName ?? "");
+          setLastSaved(new Date());
+          markClean();
+          toast.success(`Saved "${result.fileName}"`);
+        } else if (result.error !== "Save cancelled") {
+          toast.error(`Save failed: ${result.error}`);
+        }
+      } catch (e) {
+        toast.error(`Save failed: ${toErrorMsg(e)}`);
+      }
+    },
+    [
+      tasks,
+      viewSettings,
+      serializeOpts,
+      suggestedFilename,
       setFileName,
       setLastSaved,
       markClean,
@@ -233,7 +251,7 @@ export function useFileOperations(): {
         toast
       );
     } catch (e) {
-      toast.error(`Open failed: ${(e as Error).message}`);
+      toast.error(`Open failed: ${toErrorMsg(e)}`);
     }
   }, [isDirty]);
 
@@ -252,7 +270,7 @@ export function useFileOperations(): {
     resetExportOptions(); // Sprint 1.6 - reset to defaults
     setProjectTitle(""); // Reset project metadata
     setProjectAuthor("");
-    useChartStore.getState().setHiddenTaskIds([]); // Clear hidden rows from previous chart
+    setHiddenTaskIds([]); // Clear hidden rows from previous chart
     clearHistory();
     clearFileHandle();
     resetFileStore();
@@ -265,6 +283,7 @@ export function useFileOperations(): {
     resetExportOptions,
     setProjectTitle,
     setProjectAuthor,
+    setHiddenTaskIds,
     clearHistory,
     resetFileStore,
   ]);
