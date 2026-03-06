@@ -9,30 +9,7 @@
 import type { TaskId } from "../../types/branded.types";
 import type { Task } from "../../types/chart.types";
 import type { Dependency } from "../../types/dependency.types";
-
-/** Build a forward adjacency list (fromTaskId → [toTaskId, ...]) from a dependency array. */
-function buildAdjacencyList(deps: Dependency[]): Map<TaskId, TaskId[]> {
-  const graph = new Map<TaskId, TaskId[]>();
-  for (const dep of deps) {
-    if (!graph.has(dep.fromTaskId)) {
-      graph.set(dep.fromTaskId, []);
-    }
-    graph.get(dep.fromTaskId)!.push(dep.toTaskId);
-  }
-  return graph;
-}
-
-/** Build a reverse adjacency list (toTaskId → [fromTaskId, ...]) for predecessor traversal. */
-function buildReverseAdjacencyList(deps: Dependency[]): Map<TaskId, TaskId[]> {
-  const graph = new Map<TaskId, TaskId[]>();
-  for (const dep of deps) {
-    if (!graph.has(dep.toTaskId)) {
-      graph.set(dep.toTaskId, []);
-    }
-    graph.get(dep.toTaskId)!.push(dep.fromTaskId);
-  }
-  return graph;
-}
+import { buildAdjacencyList, buildReverseAdjacencyList } from "./graphHelpers";
 
 /**
  * BFS from `startId` returning all reachable nodes (excluding `startId` itself).
@@ -96,6 +73,7 @@ export function topologicalSort(
   // Build graph and count in-degrees (skip deps referencing unknown tasks)
   for (const dep of dependencies) {
     if (taskMap.has(dep.fromTaskId) && taskMap.has(dep.toTaskId)) {
+      // Non-null assertion is safe: graph was pre-populated for all task IDs above
       graph.get(dep.fromTaskId)!.push(dep.toTaskId);
       inDegree.set(dep.toTaskId, (inDegree.get(dep.toTaskId) ?? 0) + 1);
     }

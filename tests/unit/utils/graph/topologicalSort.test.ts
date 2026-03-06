@@ -64,8 +64,8 @@ describe("topologicalSort", () => {
       const result = topologicalSort(tasks, deps);
       const ids = result.map((t) => t.id);
 
-      expect(ids.indexOf("A")).toBeLessThan(ids.indexOf("B"));
-      expect(ids.indexOf("B")).toBeLessThan(ids.indexOf("C"));
+      expect(ids.indexOf(tid("A"))).toBeLessThan(ids.indexOf(tid("B")));
+      expect(ids.indexOf(tid("B"))).toBeLessThan(ids.indexOf(tid("C")));
     });
   });
 
@@ -79,10 +79,10 @@ describe("topologicalSort", () => {
       const result = topologicalSort(tasks, deps);
       const ids = result.map((t) => t.id);
 
-      expect(ids.indexOf("A")).toBeLessThan(ids.indexOf("B"));
-      expect(ids.indexOf("A")).toBeLessThan(ids.indexOf("C"));
-      expect(ids.indexOf("B")).toBeLessThan(ids.indexOf("D"));
-      expect(ids.indexOf("C")).toBeLessThan(ids.indexOf("D"));
+      expect(ids.indexOf(tid("A"))).toBeLessThan(ids.indexOf(tid("B")));
+      expect(ids.indexOf(tid("A"))).toBeLessThan(ids.indexOf(tid("C")));
+      expect(ids.indexOf(tid("B"))).toBeLessThan(ids.indexOf(tid("D")));
+      expect(ids.indexOf(tid("C"))).toBeLessThan(ids.indexOf(tid("D")));
     });
   });
 
@@ -114,24 +114,24 @@ describe("topologicalSort", () => {
 describe("getSuccessors", () => {
   it("should return empty set for task with no successors", () => {
     const deps = [dep("A", "B")];
-    const result = getSuccessors("B", deps);
+    const result = getSuccessors(tid("B"), deps);
     expect(result.size).toBe(0);
   });
 
   it("should return direct successors", () => {
     const deps = [dep("A", "B"), dep("A", "C")];
-    const result = getSuccessors("A", deps);
-    expect(result.has("B")).toBe(true);
-    expect(result.has("C")).toBe(true);
+    const result = getSuccessors(tid("A"), deps);
+    expect(result.has(tid("B"))).toBe(true);
+    expect(result.has(tid("C"))).toBe(true);
     expect(result.size).toBe(2);
   });
 
   it("should return transitive successors", () => {
     const deps = [dep("A", "B"), dep("B", "C"), dep("C", "D")];
-    const result = getSuccessors("A", deps);
-    expect(result.has("B")).toBe(true);
-    expect(result.has("C")).toBe(true);
-    expect(result.has("D")).toBe(true);
+    const result = getSuccessors(tid("A"), deps);
+    expect(result.has(tid("B"))).toBe(true);
+    expect(result.has(tid("C"))).toBe(true);
+    expect(result.has(tid("D"))).toBe(true);
     expect(result.size).toBe(3);
   });
 
@@ -153,24 +153,24 @@ describe("getSuccessors", () => {
 describe("getPredecessors", () => {
   it("should return empty set for task with no predecessors", () => {
     const deps = [dep("A", "B")];
-    const result = getPredecessors("A", deps);
+    const result = getPredecessors(tid("A"), deps);
     expect(result.size).toBe(0);
   });
 
   it("should return direct predecessors", () => {
     const deps = [dep("A", "C"), dep("B", "C")];
-    const result = getPredecessors("C", deps);
-    expect(result.has("A")).toBe(true);
-    expect(result.has("B")).toBe(true);
+    const result = getPredecessors(tid("C"), deps);
+    expect(result.has(tid("A"))).toBe(true);
+    expect(result.has(tid("B"))).toBe(true);
     expect(result.size).toBe(2);
   });
 
   it("should return transitive predecessors", () => {
     const deps = [dep("A", "B"), dep("B", "C"), dep("C", "D")];
-    const result = getPredecessors("D", deps);
-    expect(result.has("A")).toBe(true);
-    expect(result.has("B")).toBe(true);
-    expect(result.has("C")).toBe(true);
+    const result = getPredecessors(tid("D"), deps);
+    expect(result.has(tid("A"))).toBe(true);
+    expect(result.has(tid("B"))).toBe(true);
+    expect(result.has(tid("C"))).toBe(true);
     expect(result.size).toBe(3);
   });
 

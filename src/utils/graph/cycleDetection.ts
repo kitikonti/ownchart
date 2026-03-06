@@ -3,7 +3,7 @@
  * Uses Depth-First Search (DFS) with recursion-stack tracking to detect cycles.
  *
  * Time Complexity: O(V + E) where V = tasks, E = dependencies
- * Space Complexity: O(V) for the recursion stack and path tracking
+ * Space Complexity: O(V) for the traversal stack and path tracking
  */
 
 import type { TaskId } from "../../types/branded.types";
@@ -11,59 +11,67 @@ import type {
   Dependency,
   CycleDetectionResult,
 } from "../../types/dependency.types";
-
-/** Build a forward adjacency list (fromTaskId → [toTaskId, ...]) from a dependency array. */
-function buildAdjacencyList(deps: Dependency[]): Map<TaskId, TaskId[]> {
-  const graph = new Map<TaskId, TaskId[]>();
-  for (const dep of deps) {
-    if (!graph.has(dep.fromTaskId)) {
-      graph.set(dep.fromTaskId, []);
-    }
-    graph.get(dep.fromTaskId)!.push(dep.toTaskId);
-  }
-  return graph;
-}
+import { buildAdjacencyList, ensureList } from "./graphHelpers";
 
 /**
- * DFS traversal with recursion-stack (three-color) tracking to detect cycles.
+ * Iterative DFS with three-colour marking to detect back edges (cycles).
  *
- * Mutates `visited`, `inStack`, and `path` in place and backtracks on exit,
- * keeping space complexity O(V) instead of O(V²) — no path array is copied
- * on each recursive call.
+ * An explicit [node, neighborIndex] stack replaces the call stack so traversal
+ * depth is O(1) in stack frames regardless of graph size — safe even for linear
+ * chains with thousands of nodes.
  *
- * @param node    - Current node being visited
- * @param graph   - Adjacency list of the full graph
- * @param visited - Nodes that have been fully processed (black)
- * @param inStack - Nodes on the current recursion path (gray)
- * @param path    - Ordered list of nodes on the current path (for cycle extraction)
- * @returns The cycle path (repeated start node at both ends) if a back edge is
- *   found, null if no cycle is reachable from this node.
+ * `visited` and `inStack` are mutated in place and shared across restarts in the
+ * outer loop, letting `detectCycle` skip already-processed components efficiently.
+ *
+ * The `path` array mirrors the explicit stack: `path[i] === stack[i][0]` at all
+ * times, enabling O(1) cycle-segment extraction when a back edge is found.
+ *
+ * @param startNode - Entry point for this DFS traversal
+ * @param graph     - Forward adjacency list
+ * @param visited   - Fully-processed nodes (shared across restarts)
+ * @param inStack   - Nodes on the current traversal path (shared across restarts)
+ * @returns The cycle path (start node repeated at both ends), or null if no cycle found
  */
 function dfsDetectCycle(
-  node: TaskId,
+  startNode: TaskId,
   graph: Map<TaskId, TaskId[]>,
   visited: Set<TaskId>,
-  inStack: Set<TaskId>,
-  path: TaskId[]
+  inStack: Set<TaskId>
 ): TaskId[] | null {
-  visited.add(node);
-  inStack.add(node);
-  path.push(node);
+  // `path` mirrors the stack: path[i] === stack[i][0] at all times
+  const path: TaskId[] = [startNode];
+  const stack: Array<[TaskId, number]> = [[startNode, 0]];
+  visited.add(startNode);
+  inStack.add(startNode);
 
-  for (const neighbor of graph.get(node) ?? []) {
-    if (!visited.has(neighbor)) {
-      const result = dfsDetectCycle(neighbor, graph, visited, inStack, path);
-      if (result) return result;
-    } else if (inStack.has(neighbor)) {
-      // Back edge found — extract the cycle segment from path
+  while (stack.length > 0) {
+    const frame = stack[stack.length - 1];
+    const neighbors = graph.get(frame[0]) ?? [];
+
+    if (frame[1] >= neighbors.length) {
+      // All neighbors processed — backtrack
+      inStack.delete(frame[0]);
+      path.pop();
+      stack.pop();
+      continue;
+    }
+
+    const neighbor = neighbors[frame[1]++];
+
+    if (inStack.has(neighbor)) {
+      // Back edge: neighbor is on the current path — extract and return the cycle
       const cycleStart = path.indexOf(neighbor);
       return [...path.slice(cycleStart), neighbor];
     }
+
+    if (!visited.has(neighbor)) {
+      visited.add(neighbor);
+      inStack.add(neighbor);
+      path.push(neighbor);
+      stack.push([neighbor, 0]);
+    }
   }
 
-  // Backtrack: node is fully explored; remove from current path
-  inStack.delete(node);
-  path.pop();
   return null;
 }
 
@@ -81,12 +89,9 @@ export function detectCycle(
   const graph = buildAdjacencyList(dependencies);
 
   if (newDependency) {
-    if (!graph.has(newDependency.fromTaskId)) {
-      graph.set(newDependency.fromTaskId, []);
-    }
-    graph.get(newDependency.fromTaskId)!.push(newDependency.toTaskId);
+    ensureList(graph, newDependency.fromTaskId).push(newDependency.toTaskId);
 
-    // Ensure toTaskId is in the graph so all nodes are covered by traversal
+    // Ensure the sink node is in the graph so it is covered by the traversal
     if (!graph.has(newDependency.toTaskId)) {
       graph.set(newDependency.toTaskId, []);
     }
@@ -98,7 +103,7 @@ export function detectCycle(
   // Check from every unvisited node to handle disconnected components
   for (const node of graph.keys()) {
     if (!visited.has(node)) {
-      const cycle = dfsDetectCycle(node, graph, visited, inStack, []);
+      const cycle = dfsDetectCycle(node, graph, visited, inStack);
       if (cycle) {
         return { hasCycle: true, cyclePath: cycle };
       }
