@@ -37,8 +37,12 @@ function applyIfDefined<T>(value: T | undefined, setter: (v: T) => void): void {
   if (value !== undefined) setter(value);
 }
 
-/** Subscribe `callback` to all persisted stores. Returns a single unsubscribe. */
-function subscribeAllStores(callback: () => void): () => void {
+/**
+ * Subscribe `callback` to all persisted stores. Returns a single unsubscribe.
+ * UIStore is intentionally excluded — its state is transient (dialogs, panels)
+ * and must not be persisted to localStorage.
+ */
+function subscribePersistedStores(callback: () => void): () => void {
   const unsub1 = useTaskStore.subscribe(callback);
   const unsub2 = useDependencyStore.subscribe(callback);
   const unsub3 = useChartStore.subscribe(callback);
@@ -234,7 +238,7 @@ function useTabAutoSave(
     };
 
     // Subscribe to all store changes
-    const unsubscribeAll = subscribeAllStores(saveCurrentState);
+    const unsubscribeAll = subscribePersistedStores(saveCurrentState);
 
     // Initial save after a short delay to let restoration settle.
     const initialSaveTimer = setTimeout(() => {

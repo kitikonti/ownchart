@@ -277,7 +277,10 @@ function useMouseDragListeners(
     [headerSvgRef, scaleRef, setSelection]
   );
 
-  // Mouse up: end drag
+  // Mouse up: end drag.
+  // Self-reference inside the callback body is safe: `handleMouseUp` closes
+  // over the variable binding, not the value — by the time any mouseup fires,
+  // the variable is already assigned to this callback (HU_v1).
   const handleMouseUp = useCallback((): void => {
     if (!isDraggingRef.current) return;
     isDraggingRef.current = false;
@@ -314,17 +317,20 @@ function useDragStateRefs(): {
 /** Stable onMouseDown callback for header SVG drag. Extracted from useHeaderDrag
  * to keep both hooks under the 50-line limit. All params are stable refs or callbacks. */
 function useHeaderMouseDown(
-  headerSvgRef: { current: SVGSVGElement | null },
-  scaleRef: { current: TimelineScale | null },
-  selectionRef: { current: HeaderDateSelection | null },
-  isDraggingRef: { current: boolean },
-  dragStartDateRef: { current: string | null },
-  setIsDragging: (v: boolean) => void,
-  setSelection: (v: HeaderDateSelection | null) => void,
-  setContextMenu: (v: ContextMenuPosition | null) => void,
-  handleMouseMove: (e: MouseEvent) => void,
-  handleMouseUp: () => void
+  ctx: HeaderMouseDownContext
 ): (e: React.MouseEvent<SVGSVGElement>) => void {
+  const {
+    handleMouseMove,
+    handleMouseUp,
+    headerSvgRef,
+    scaleRef,
+    selectionRef,
+    setSelection,
+    setContextMenu,
+    isDraggingRef,
+    dragStartDateRef,
+    setIsDragging,
+  } = ctx;
   // isDraggingRef, dragStartDateRef, setIsDragging come from useDragStateRefs.
   // ESLint can't infer they're stable (ref objects + useState setter), so listed
   // explicitly — they never change identity.
@@ -381,7 +387,7 @@ function useHeaderDrag(
     setIsDragging
   );
 
-  const onMouseDown = useHeaderMouseDown(
+  const onMouseDown = useHeaderMouseDown({
     headerSvgRef,
     scaleRef,
     selectionRef,
@@ -391,8 +397,8 @@ function useHeaderDrag(
     setSelection,
     setContextMenu,
     handleMouseMove,
-    handleMouseUp
-  );
+    handleMouseUp,
+  });
 
   return { isDragging, onMouseDown };
 }

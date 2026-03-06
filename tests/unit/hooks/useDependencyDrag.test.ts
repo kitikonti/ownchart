@@ -398,7 +398,7 @@ describe("useDependencyDrag", () => {
   // updateDragPosition
   // -------------------------------------------------------------------------
 
-  it("updateDragPosition updates currentPosition", () => {
+  it("updateDragPosition updates currentPosition", async () => {
     const { result } = renderHook(() =>
       useDependencyDrag({ tasks: DEFAULT_TASKS })
     );
@@ -407,11 +407,12 @@ describe("useDependencyDrag", () => {
       result.current.startDrag(TASK_A.id, "end", makeMouseEvent(100, 50));
     });
 
-    act(() => {
+    await act(async () => {
       result.current.updateDragPosition({
         clientX: 300,
         clientY: 120,
       } as MouseEvent);
+      await new Promise<void>((resolve) => requestAnimationFrame(() => resolve()));
     });
 
     expect(result.current.dragState.currentPosition).toEqual({
