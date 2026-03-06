@@ -158,7 +158,8 @@ function calculateMiddleY(
       minSpaceForCurves / 2,
       rowHeight * ROUTING_OFFSET_RATIO
     );
-    const extremeY = dir === 1 ? Math.max(from.y, to.y) : Math.min(from.y, to.y);
+    const extremeY =
+      dir === 1 ? Math.max(from.y, to.y) : Math.min(from.y, to.y);
     return extremeY + dir * offset;
   }
   return (from.y + to.y) / 2;
@@ -186,7 +187,10 @@ function buildSCurvePath(
     // 1. Horizontal out from source
     `L ${firstX - r} ${from.y}`,
     // 2. First corner — turn toward middle
-    quadraticCorner({ x: firstX, y: from.y }, { x: firstX, y: from.y + dir * r }),
+    quadraticCorner(
+      { x: firstX, y: from.y },
+      { x: firstX, y: from.y + dir * r }
+    ),
     // 3. Vertical to middle
     `L ${firstX} ${middleY - dir * r}`,
     // 4. Second corner — turn left (toward target)
@@ -194,7 +198,10 @@ function buildSCurvePath(
     // 5. Horizontal segment (going left, between the tasks)
     `L ${secondX + r} ${middleY}`,
     // 6. Third corner — turn toward target
-    quadraticCorner({ x: secondX, y: middleY }, { x: secondX, y: middleY + dir * r }),
+    quadraticCorner(
+      { x: secondX, y: middleY },
+      { x: secondX, y: middleY + dir * r }
+    ),
     // 7. Vertical to target level
     `L ${secondX} ${to.y - dir * r}`,
     // 8. Fourth corner — turn right into target
@@ -258,7 +265,7 @@ function getFSConnectionPoints(
 ): { from: Point; to: Point } {
   return {
     from: { x: fromPos.x + fromPos.width, y: fromPos.y + fromPos.height / 2 },
-    to:   { x: toPos.x,                   y: toPos.y + toPos.height / 2 },
+    to: { x: toPos.x, y: toPos.y + toPos.height / 2 },
   };
 }
 
@@ -292,7 +299,11 @@ export function calculateArrowPath(
   rowHeight: number = BASE_ROW_HEIGHT
 ): ArrowPath {
   const { from, to } = getFSConnectionPoints(fromPos, toPos);
-  const { cornerRadius, minGapForElbow, horizontalGap } = computeElbowParams(from, to, rowHeight);
+  const { cornerRadius, minGapForElbow, horizontalGap } = computeElbowParams(
+    from,
+    to,
+    rowHeight
+  );
 
   // Routing zones (thresholds scale with cornerRadius, which scales with rowHeight):
   //   gap ≥ minGapForElbow                              → standard 2-corner elbow
@@ -330,7 +341,11 @@ export function calculateDragPath(
   to: Point,
   rowHeight: number = BASE_ROW_HEIGHT
 ): string {
-  const { cornerRadius, minGapForElbow, horizontalGap } = computeElbowParams(from, to, rowHeight);
+  const { cornerRadius, minGapForElbow, horizontalGap } = computeElbowParams(
+    from,
+    to,
+    rowHeight
+  );
 
   if (horizontalGap >= minGapForElbow) {
     return buildTwoCornerPath(from, to, cornerRadius);
