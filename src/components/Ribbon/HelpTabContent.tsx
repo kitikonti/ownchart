@@ -7,11 +7,11 @@ import { Info, Question } from "@phosphor-icons/react";
 import {
   ToolbarButton,
   ToolbarGroup,
-  TOOLBAR_TOKENS,
+  TOOLBAR,
 } from "../Toolbar/ToolbarPrimitives";
 import { useUIStore } from "../../store/slices/uiSlice";
 
-const ICON_SIZE = TOOLBAR_TOKENS.iconSize;
+const ICON_SIZE = TOOLBAR.iconSize;
 
 export function HelpTabContent(): JSX.Element {
   const openHelpPanel = useUIStore((state) => state.openHelpPanel);

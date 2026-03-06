@@ -6,6 +6,10 @@
  * - Outlook Blue (#0F6CBD) as the brand color for interactive elements
  * - Smooth micro-interactions that feel polished
  * - Consistent spacing and proportions
+ *
+ * All visual states (hover, active, focus, disabled, variants) are driven
+ * entirely by CSS via the `ribbon-toolbar-button` class in index.css.
+ * No inline styles — all styling through Tailwind classes and CSS selectors.
  */
 
 import { forwardRef, type ReactNode, type ButtonHTMLAttributes } from "react";
@@ -17,28 +21,6 @@ import {
 
 // Re-export tokens for use by other components
 export { COLORS, TOOLBAR };
-
-// Legacy export for backward compatibility
-export const TOOLBAR_TOKENS = {
-  ...TOOLBAR,
-  // Colors from design tokens
-  bgToolbar: COLORS.neutral[0],
-  bgTabs: COLORS.neutral[50],
-  bgHover: COLORS.neutral[50],
-  bgActive: COLORS.neutral[200],
-  bgToggleOn: COLORS.neutral[100],
-  // Icon/Text colors - using Tailwind class names
-  iconDefault: "text-neutral-600",
-  iconHover: "text-neutral-800",
-  iconActive: "text-neutral-900",
-  iconDisabled: "text-neutral-300",
-  // Border colors
-  borderLight: COLORS.neutral[100],
-  borderMedium: COLORS.neutral[200],
-  separatorColor: "bg-neutral-200",
-  // Tab active indicator - brand color
-  tabActiveColor: COLORS.brand[600],
-} as const;
 
 // ============================================================================
 // ToolbarSeparator
@@ -131,6 +113,11 @@ interface ToolbarButtonProps extends Omit<
 /**
  * Base toolbar button with consistent styling.
  *
+ * Visual state is driven entirely by the `ribbon-toolbar-button` CSS class
+ * (index.css) and `data-variant` / `data-size` / `aria-pressed` attributes —
+ * no inline styles. This keeps all styling in one place and avoids specificity
+ * fights with Tailwind utility classes.
+ *
  * Variants:
  * - default: Standard icon button
  * - primary: Emphasized action (like "Add Task")
@@ -154,63 +141,18 @@ export const ToolbarButton = forwardRef<HTMLButtonElement, ToolbarButtonProps>(
   ) {
     const collapseLevel = useCollapseLevel();
     const showLabel = shouldShowLabel(labelPriority, collapseLevel);
-    // MS Office button base styles using design tokens
-    const baseStyle: React.CSSProperties = {
-      display: "inline-flex",
-      alignItems: "center",
-      justifyContent: "center",
-      gap: "4px",
-      height: `${TOOLBAR.buttonHeight}px`,
-      minWidth: `${TOOLBAR.buttonMinWidth}px`,
-      padding: size === "large" ? "5px 12px" : "5px 5px",
-      backgroundColor: "transparent",
-      color: disabled ? COLORS.neutral[300] : COLORS.neutral[800],
-      border: "0.667px solid transparent",
-      borderColor: "transparent",
-      borderRadius: "4px",
-      cursor: disabled ? "not-allowed" : "pointer",
-      fontSize: "14px",
-      lineHeight: "20px",
-      fontWeight: 400,
-      userSelect: "none",
-      overflow: "hidden",
-      transition:
-        "background 0.1s cubic-bezier(0.33, 0, 0.67, 1), border 0.1s cubic-bezier(0.33, 0, 0.67, 1), color 0.1s cubic-bezier(0.33, 0, 0.67, 1)",
-      WebkitFontSmoothing: "antialiased",
-    };
 
-    // Primary variant - brand color (Outlook Blue)
-    const primaryStyle: React.CSSProperties =
-      variant === "primary"
+    // When the label is collapsed (hidden), expose it as both the accessible
+    // name (aria-label) and the hover tooltip (title) so screen reader users
+    // and sighted keyboard users can still discover the button's purpose.
+    // Caller-provided values always take precedence.
+    const collapsedLabelProps =
+      !showLabel && label
         ? {
-            backgroundColor: disabled ? COLORS.neutral[300] : COLORS.brand[600],
-            color: disabled ? COLORS.neutral[400] : COLORS.neutral[0],
-            border: "none", // Override baseStyle border for primary only
-            borderRadius: "3px", // Subtler corners for primary only
-            fontWeight: 400,
-            fontSize: "14px",
-            boxShadow: "none", // NO shadow in idle (Outlook style)
+            "aria-label": props["aria-label"] ?? label,
+            title: props.title ?? label,
           }
         : {};
-
-    // Toggle active state - MS Word style with visible border
-    const toggleActiveStyle: React.CSSProperties =
-      variant === "toggle" && isActive
-        ? {
-            backgroundColor: COLORS.neutral[100],
-            borderColor: COLORS.neutral[600],
-          }
-        : {};
-
-    const combinedStyle = {
-      ...baseStyle,
-      ...primaryStyle,
-      ...toggleActiveStyle,
-    };
-
-    // When label is hidden, use label text as tooltip fallback
-    const titleProp =
-      !showLabel && label && !props.title ? { title: label } : {};
 
     return (
       <button
@@ -218,23 +160,15 @@ export const ToolbarButton = forwardRef<HTMLButtonElement, ToolbarButtonProps>(
         type="button"
         disabled={disabled}
         data-variant={variant}
+        data-size={size !== "default" ? size : undefined}
         aria-pressed={variant === "toggle" ? isActive : undefined}
         className={`ribbon-toolbar-button ${className}`}
-        style={combinedStyle}
-        {...titleProp}
+        {...collapsedLabelProps}
         {...props}
       >
         {icon}
         {label && showLabel && (
-          <span
-            style={{
-              paddingLeft: "4px",
-              whiteSpace: "nowrap",
-              userSelect: "none",
-            }}
-          >
-            {label}
-          </span>
+          <span className="pl-1 whitespace-nowrap select-none">{label}</span>
         )}
         {children}
       </button>

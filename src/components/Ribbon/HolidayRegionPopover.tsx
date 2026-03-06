@@ -10,9 +10,9 @@ import { useChartStore } from "../../store/slices/chartSlice";
 import { holidayService } from "../../services/holidayService";
 import { useDropdown } from "../../hooks/useDropdown";
 import { DropdownPanel } from "../Toolbar/DropdownPanel";
-import { TOOLBAR_TOKENS } from "../Toolbar/ToolbarPrimitives";
+import { TOOLBAR } from "../Toolbar/ToolbarPrimitives";
 
-const ICON_SIZE = TOOLBAR_TOKENS.iconSize;
+const ICON_SIZE = TOOLBAR.iconSize;
 
 /**
  * Popular countries to show at the top of the list
