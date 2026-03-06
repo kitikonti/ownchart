@@ -2,6 +2,22 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [1.1.27](https://github.com/kitikonti/ownchart/compare/v1.1.26...v1.1.27) (2026-03-06)
+
+
+### Bug Fixes
+
+* split chained commands before checking for --abort in PostToolUse hook ([b1386e6](https://github.com/kitikonti/ownchart/commit/b1386e639710579777a9709cbc6cbe5413234600))
+
+
+### Code Refactoring
+
+* eliminate inline styles from ToolbarButton and StatusBar ([be7cfbc](https://github.com/kitikonti/ownchart/commit/be7cfbcbaedc43cd6554d3b1154071b57fba5c48))
+* fix a11y live region in StatusBar, enforce ToolbarGroup label, add tests ([a2dc959](https://github.com/kitikonti/ownchart/commit/a2dc95988cfb2fc6c17b8665e5226b1c48f6cce3))
+* fix a11y, memo, and type safety in ToolbarPrimitives and StatusBar ([4f5b133](https://github.com/kitikonti/ownchart/commit/4f5b13341770f7befc828efd22f8f1a31c814ba1))
+* fix title spread bug in ToolbarButton, rename Sep, strengthen tests ([2a9f84e](https://github.com/kitikonti/ownchart/commit/2a9f84e24c17cfe60dab74d9fcb094b6107be2de))
+* improve ToolbarPrimitives and StatusBar after code review ([22d97ed](https://github.com/kitikonti/ownchart/commit/22d97edf0358535a4c68dd1c64433362a1b15679))
+
 ## [1.1.26](https://github.com/kitikonti/ownchart/compare/v1.1.25...v1.1.26) (2026-03-06)
 
 
