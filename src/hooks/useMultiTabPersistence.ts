@@ -59,9 +59,12 @@ function restoreTableState(tableState: TabChartData["tableState"]): void {
       taskStore.setColumnWidth(columnId, width);
     });
   }
-  if (tableState.taskTableWidth !== null) {
-    taskStore.setTaskTableWidth(tableState.taskTableWidth);
-  }
+  // Use applyIfDefined so that both null and undefined are treated as "absent"
+  // (null = field present but unset; undefined = old save that predates this field).
+  applyIfDefined(
+    tableState.taskTableWidth ?? undefined,
+    taskStore.setTaskTableWidth
+  );
 }
 
 function restoreChartState(chartState: ChartState): void {
@@ -108,12 +111,14 @@ function restoreFileState(fileState: TabChartData["fileState"]): void {
 
 /** Restore all stores from a saved chart. Throws on unexpected errors. */
 function restoreStateFromChart(savedChart: TabChartData): void {
-  if (savedChart.tasks.length > 0) {
-    useTaskStore.getState().setTasks(savedChart.tasks);
-  }
-  if (savedChart.dependencies && savedChart.dependencies.length > 0) {
-    useDependencyStore.getState().setDependencies(savedChart.dependencies);
-  }
+  // Always restore tasks — even an empty array is valid saved state (user
+  // cleared all tasks).  Skipping the restore when tasks is [] would leave
+  // any default/demo tasks visible on reload, which would be incorrect.
+  useTaskStore.getState().setTasks(savedChart.tasks);
+
+  // dependencies may be absent in very old saves that predate the field; fall
+  // back to [] so a previously-cleared dependency list is also restored correctly.
+  useDependencyStore.getState().setDependencies(savedChart.dependencies ?? []);
   restoreTableState(savedChart.tableState);
   restoreChartState(savedChart.chartState);
   restoreFileState(savedChart.fileState);

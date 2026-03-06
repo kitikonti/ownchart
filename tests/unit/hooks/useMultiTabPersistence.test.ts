@@ -3,7 +3,25 @@ import { renderHook, act } from "@testing-library/react";
 import { useMultiTabPersistence } from "../../../src/hooks/useMultiTabPersistence";
 import { useChartStore } from "../../../src/store/slices/chartSlice";
 import { useTaskStore } from "../../../src/store/slices/taskSlice";
+import { useDependencyStore } from "../../../src/store/slices/dependencySlice";
 import { useUIStore } from "../../../src/store/slices/uiSlice";
+import type { Task } from "../../../src/types/chart.types";
+import { toTaskId } from "../../../src/types/branded.types";
+
+function makeTask(id: string, overrides: Partial<Task> = {}): Task {
+  return {
+    id: toTaskId(id),
+    name: `Task ${id}`,
+    startDate: "2025-01-01",
+    endDate: "2025-01-10",
+    duration: 9,
+    progress: 0,
+    color: "#3b82f6",
+    order: 0,
+    metadata: {},
+    ...overrides,
+  };
+}
 import {
   saveTabChart,
   STORAGE_KEY,
@@ -197,6 +215,49 @@ describe("useMultiTabPersistence", () => {
       expect(restored["name"]).toBe(220);
       expect(restored["startDate"]).toBe(100);
       expect(restored["endDate"]).toBe(100);
+    });
+
+    it("should restore an empty task list, clearing any pre-existing tasks", () => {
+      // Regression: restoreStateFromChart previously had a `tasks.length > 0`
+      // guard that skipped setTasks([]) — leaving default/demo tasks visible
+      // after the user had cleared them in a previous session.
+      const tabId = "tab-empty-tasks";
+      sessionStorage.setItem(TAB_ID_KEY, tabId);
+
+      // Pre-populate the store to simulate default/demo tasks being present
+      useTaskStore.getState().setTasks([makeTask("default-1")]);
+      expect(useTaskStore.getState().tasks).toHaveLength(1);
+
+      // Seed storage with an explicitly empty task list (user cleared all tasks)
+      seedTabStorage(tabId); // tasks: [] is the default in seedTabStorage
+
+      renderHook(() => useMultiTabPersistence());
+
+      // The empty saved state must overwrite the default tasks
+      expect(useTaskStore.getState().tasks).toHaveLength(0);
+    });
+
+    it("should restore empty dependencies, clearing any pre-existing ones", () => {
+      // Regression: the `dependencies && dependencies.length > 0` guard would
+      // skip setDependencies([]) — leaving stale dependencies after the user
+      // had cleared them in a previous session.
+      const tabId = "tab-empty-deps";
+      sessionStorage.setItem(TAB_ID_KEY, tabId);
+
+      // Pre-populate the dependency store
+      useTaskStore.getState().setTasks([makeTask("t1"), makeTask("t2")]);
+      useDependencyStore
+        .getState()
+        .addDependency(toTaskId("t1"), toTaskId("t2"));
+      expect(useDependencyStore.getState().dependencies).toHaveLength(1);
+
+      // Seed storage with an explicitly empty dependency list
+      seedTabStorage(tabId); // dependencies: [] is the default in seedTabStorage
+
+      renderHook(() => useMultiTabPersistence());
+
+      // The empty saved state must clear the pre-existing dependency
+      expect(useDependencyStore.getState().dependencies).toHaveLength(0);
     });
 
     it("should not block saves when restore throws an error", async () => {

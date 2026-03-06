@@ -297,6 +297,20 @@ function useMouseDragListeners(
   return { handleMouseMove, handleMouseUp };
 }
 
+/** Encapsulates the three pieces of mutable drag state so useHeaderDrag stays
+ * focused on handler wiring without repeating the ref/state boilerplate. */
+function useDragStateRefs(): {
+  isDragging: boolean;
+  setIsDragging: (v: boolean) => void;
+  isDraggingRef: { current: boolean };
+  dragStartDateRef: { current: string | null };
+} {
+  const [isDragging, setIsDragging] = useState(false);
+  const isDraggingRef = useRef(false);
+  const dragStartDateRef = useRef<string | null>(null);
+  return { isDragging, setIsDragging, isDraggingRef, dragStartDateRef };
+}
+
 /** Manages drag state and handlers: isDragging, onMouseDown, mouse-move/up listeners. */
 function useHeaderDrag(
   headerSvgRef: { current: SVGSVGElement | null },
@@ -308,9 +322,8 @@ function useHeaderDrag(
   isDragging: boolean;
   onMouseDown: (e: React.MouseEvent<SVGSVGElement>) => void;
 } {
-  const [isDragging, setIsDragging] = useState(false);
-  const isDraggingRef = useRef(false);
-  const dragStartDateRef = useRef<string | null>(null);
+  const { isDragging, setIsDragging, isDraggingRef, dragStartDateRef } =
+    useDragStateRefs();
 
   const { handleMouseMove, handleMouseUp } = useMouseDragListeners(
     isDraggingRef,
@@ -345,6 +358,12 @@ function useHeaderDrag(
       selectionRef,
       setSelection,
       setContextMenu,
+      // isDraggingRef, dragStartDateRef, setIsDragging come from useDragStateRefs.
+      // ESLint can't infer they're stable (ref objects + useState setter), so we
+      // list them explicitly.  They will never change identity.
+      isDraggingRef,
+      dragStartDateRef,
+      setIsDragging,
     ]
   );
 
@@ -423,10 +442,21 @@ function useSelectionPixelRect(
 // Main hook
 // ---------------------------------------------------------------------------
 
-export function useHeaderDateSelection({
-  headerSvgRef,
-  scale,
-}: UseHeaderDateSelectionOptions): UseHeaderDateSelectionResult {
+/** Owns the date selection and context-menu state, the scale/selection refs,
+ * the clearSelection callback, and the two dismissal side-effects (Escape and
+ * click-outside).  Extracted from the main hook to keep it under 50 lines. */
+function useSelectionManager(
+  scale: TimelineScale | null,
+  headerSvgRef: { current: SVGSVGElement | null }
+): {
+  selection: HeaderDateSelection | null;
+  setSelection: (v: HeaderDateSelection | null) => void;
+  selectionRef: { current: HeaderDateSelection | null };
+  contextMenu: ContextMenuPosition | null;
+  setContextMenu: (v: ContextMenuPosition | null) => void;
+  scaleRef: { current: TimelineScale | null };
+  clearSelection: () => void;
+} {
   const [selection, setSelection] = useState<HeaderDateSelection | null>(null);
   const [contextMenu, setContextMenu] = useState<ContextMenuPosition | null>(
     null
@@ -442,19 +472,42 @@ export function useHeaderDateSelection({
   const selectionRef = useRef(selection);
   selectionRef.current = selection;
 
-  const zoomToDateRange = useChartStore((state) => state.zoomToDateRange);
-
   // Single helper that clears both selection and context menu
   const clearSelection = useCallback((): void => {
     setSelection(null);
     setContextMenu(null);
   }, []);
 
-  // Sub-hooks for click-outside and ESC dismissal
   useClearSelectionOnEscape(selectionRef, clearSelection);
   useClearSelectionOnClickOutside(selectionRef, headerSvgRef, clearSelection);
 
-  // Sub-hooks for drag and context menu
+  return {
+    selection,
+    setSelection,
+    selectionRef,
+    contextMenu,
+    setContextMenu,
+    scaleRef,
+    clearSelection,
+  };
+}
+
+export function useHeaderDateSelection({
+  headerSvgRef,
+  scale,
+}: UseHeaderDateSelectionOptions): UseHeaderDateSelectionResult {
+  const {
+    selection,
+    setSelection,
+    selectionRef,
+    contextMenu,
+    setContextMenu,
+    scaleRef,
+    clearSelection,
+  } = useSelectionManager(scale, headerSvgRef);
+
+  const zoomToDateRange = useChartStore((state) => state.zoomToDateRange);
+
   const { isDragging, onMouseDown } = useHeaderDrag(
     headerSvgRef,
     scaleRef,
@@ -474,7 +527,6 @@ export function useHeaderDateSelection({
       clearSelection
     );
 
-  // Pixel rect derived from date selection and current scale
   const selectionPixelRect = useSelectionPixelRect(selection, scale);
 
   return {

@@ -193,6 +193,57 @@ function findHoveredTaskId(
 }
 
 // ---------------------------------------------------------------------------
+// Module-level helper extracted from useDragCommitter (pure logic, no React state)
+// ---------------------------------------------------------------------------
+
+/** Context for performEndDrag — all stable refs/setters so the useCallback
+ * that calls this function keeps a minimal, stable dependency array. */
+interface EndDragContext {
+  dragStateRef: { current: DependencyDragState };
+  tasksRef: { current: Task[] };
+  addDependency: (
+    fromId: TaskId,
+    toId: TaskId
+  ) => { success: boolean; error?: string };
+  setDragState: (s: DependencyDragState) => void;
+}
+
+/** Pure logic extracted from useDragCommitter.endDrag to keep the hook body
+ * under the 50-line limit without losing any logic. */
+function performEndDrag(
+  targetTaskId: TaskId | undefined,
+  ctx: EndDragContext
+): void {
+  const { fromTaskId, fromSide, validTargets, invalidTargets } =
+    ctx.dragStateRef.current;
+
+  if (!fromTaskId || !fromSide) {
+    ctx.setDragState(createInitialDragState());
+    return;
+  }
+
+  if (targetTaskId === fromTaskId) {
+    // Dropped on source task — not a valid target (excluded from both sets)
+    ctx.setDragState(createInitialDragState());
+    return;
+  }
+
+  if (targetTaskId) {
+    attemptCreateDependency({
+      fromTaskId,
+      targetTaskId,
+      fromSide,
+      validTargets,
+      invalidTargets,
+      tasks: ctx.tasksRef.current,
+      addDependency: ctx.addDependency,
+    });
+  }
+
+  ctx.setDragState(createInitialDragState());
+}
+
+// ---------------------------------------------------------------------------
 // Private sub-hooks (not exported — used only by useDependencyDrag)
 // ---------------------------------------------------------------------------
 
@@ -281,6 +332,50 @@ interface DragSession {
   updateDragPosition: (e: MouseEvent | React.MouseEvent) => void;
 }
 
+/** Owns endDrag and updateDragPosition. Extracted from useDragSession to keep
+ * both hooks under the 50-line limit.
+ *
+ * All parameters are stable refs or store actions so both callbacks remain
+ * stable across task-list and drag-state changes. */
+function useDragCommitter(
+  svgRef: React.RefObject<SVGSVGElement | null> | undefined,
+  dragStateRef: { current: DependencyDragState },
+  tasksRef: { current: Task[] },
+  addDependency: (
+    fromId: TaskId,
+    toId: TaskId
+  ) => { success: boolean; error?: string },
+  setDragState: React.Dispatch<React.SetStateAction<DependencyDragState>>
+): {
+  endDrag: (targetTaskId?: TaskId) => void;
+  updateDragPosition: (e: MouseEvent | React.MouseEvent) => void;
+} {
+  // End drag and potentially create a dependency.
+  // Delegates to performEndDrag so this callback stays under 10 lines.
+  const endDrag = useCallback(
+    (targetTaskId?: TaskId): void => {
+      performEndDrag(targetTaskId, {
+        dragStateRef,
+        tasksRef,
+        addDependency,
+        setDragState,
+      });
+    },
+    [addDependency, dragStateRef, tasksRef, setDragState] // all stable: refs + store action
+  );
+
+  // Tracks the current cursor position in SVG-local coordinates during a drag.
+  const updateDragPosition = useCallback(
+    (e: MouseEvent | React.MouseEvent): void => {
+      const { x, y } = getEventCoords(e, svgRef?.current);
+      setDragState((prev) => ({ ...prev, currentPosition: { x, y } }));
+    },
+    [svgRef, setDragState] // svgRef is stable; setDragState is a stable useState setter
+  );
+
+  return { endDrag, updateDragPosition };
+}
+
 /**
  * Owns all drag session state and the four callbacks (startDrag, endDrag,
  * cancelDrag, updateDragPosition). Extracted from useDependencyDrag to keep
@@ -316,48 +411,12 @@ function useDragSession(
     setDragState
   );
 
-  // End drag and potentially create a dependency.
-  // addDependency is stable; task names and drag state are read via refs.
-  const endDrag = useCallback(
-    (targetTaskId?: TaskId): void => {
-      const { fromTaskId, fromSide, validTargets, invalidTargets } =
-        dragStateRef.current;
-
-      if (!fromTaskId || !fromSide) {
-        setDragState(createInitialDragState());
-        return;
-      }
-
-      if (targetTaskId === fromTaskId) {
-        // Dropped on source task — not a valid target (excluded from both sets)
-        setDragState(createInitialDragState());
-        return;
-      }
-
-      if (targetTaskId) {
-        attemptCreateDependency({
-          fromTaskId,
-          targetTaskId,
-          fromSide,
-          validTargets,
-          invalidTargets,
-          tasks: tasksRef.current,
-          addDependency,
-        });
-      }
-
-      setDragState(createInitialDragState());
-    },
-    [addDependency] // stable: drag state via dragStateRef, task names via tasksRef
-  );
-
-  // Tracks the current cursor position in SVG-local coordinates during a drag.
-  const updateDragPosition = useCallback(
-    (e: MouseEvent | React.MouseEvent): void => {
-      const { x, y } = getEventCoords(e, svgRef?.current);
-      setDragState((prev) => ({ ...prev, currentPosition: { x, y } }));
-    },
-    [svgRef]
+  const { endDrag, updateDragPosition } = useDragCommitter(
+    svgRef,
+    dragStateRef,
+    tasksRef,
+    addDependency,
+    setDragState
   );
 
   return { dragState, startDrag, endDrag, cancelDrag, updateDragPosition };
@@ -400,6 +459,39 @@ function useDragGlobalEvents(
   }, [isDragging, updateDragPosition, endDrag, cancelDrag]);
 }
 
+/** Wires the two lifecycle concerns for a dependency drag session:
+ *   1. Cancel an in-progress drag when the feature is disabled externally.
+ *   2. Attach/detach global mouse and keyboard listeners while dragging.
+ * Extracted from useDependencyDrag to keep the main hook under 50 lines. */
+function useDragLifecycle(
+  enabled: boolean,
+  dragState: DependencyDragState,
+  cancelDrag: () => void,
+  // updateDragPosition accepts (MouseEvent | React.MouseEvent) which is a
+  // supertype of MouseEvent — satisfies addEventListener via contravariance.
+  updateDragPosition: (e: MouseEvent) => void,
+  endDrag: (targetTaskId?: TaskId) => void
+): void {
+  // Cancel any in-progress drag if the feature is disabled externally.
+  // cancelDrag is stable (no deps), so this only re-runs when isDragging or
+  // enabled changes — not on every task update.
+  useEffect(() => {
+    if (!enabled && dragState.isDragging) {
+      cancelDrag();
+    }
+  }, [enabled, dragState.isDragging, cancelDrag]);
+
+  // Handle global mouse events during drag.
+  // endDrag and cancelDrag are stable (no tasks dep), so this re-registers
+  // only when isDragging toggles — not on every task change.
+  useDragGlobalEvents(
+    dragState.isDragging,
+    updateDragPosition,
+    endDrag,
+    cancelDrag
+  );
+}
+
 export function useDependencyDrag({
   tasks,
   svgRef,
@@ -423,24 +515,7 @@ export function useDependencyDrag({
 
   const { isValidTarget, isInvalidTarget } = useDragTargetClassifier(dragState);
 
-  // Cancel any in-progress drag if the feature is disabled externally.
-  // cancelDrag is stable (no deps), so this only re-runs when isDragging or
-  // enabled changes — not on every task update.
-  useEffect(() => {
-    if (!enabled && dragState.isDragging) {
-      cancelDrag();
-    }
-  }, [enabled, dragState.isDragging, cancelDrag]);
-
-  // Handle global mouse events during drag.
-  // endDrag and cancelDrag are stable (no tasks dep), so this re-registers
-  // only when isDragging toggles — not on every task change.
-  useDragGlobalEvents(
-    dragState.isDragging,
-    updateDragPosition,
-    endDrag,
-    cancelDrag
-  );
+  useDragLifecycle(enabled, dragState, cancelDrag, updateDragPosition, endDrag);
 
   return {
     dragState,
