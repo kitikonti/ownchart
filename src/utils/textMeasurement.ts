@@ -46,6 +46,38 @@ const HEADER_FONT_SIZE = 12;
 /** Header horizontal padding in pixels (px-3 = 12px each side = 24px total) */
 const HEADER_PADDING = 24;
 
+// ─── Types ────────────────────────────────────────────────────────────────────
+
+/**
+ * Typography options for {@link measureTextWidth}.
+ * All properties are optional; defaults match the app's body text style.
+ */
+export interface TextMeasurementOptions {
+  /** Font family string. Defaults to the app's system font stack. */
+  fontFamily?: string;
+  /** CSS font weight (e.g. 400, 600, 700). Defaults to 400 (regular). */
+  fontWeight?: number;
+  /** Letter spacing in em units (matches CSS `letter-spacing`). Defaults to 0. */
+  letterSpacing?: number;
+}
+
+/**
+ * Input for {@link calculateColumnWidth}.
+ * Groups all parameters that describe the column to be measured.
+ */
+export interface ColumnWidthInput {
+  /** Column header text (uppercased internally). */
+  headerLabel: string;
+  /** Formatted cell values to measure against. */
+  cellValues: string[];
+  /** Font size in pixels for cell text. */
+  fontSize: number;
+  /** Total horizontal cell padding in pixels (left + right). */
+  cellPadding: number;
+  /** Per-cell extra widths (e.g. indent + icons for the name column). Defaults to []. */
+  extraWidths?: number[];
+}
+
 // ─── Canvas context cache ─────────────────────────────────────────────────────
 
 /** Cached canvas context for text measurement */
@@ -101,38 +133,6 @@ function computeOneSidePaddingDays(
   const maxWidth = getMaxLabelWidth(tasks, fontSize);
   const totalPadding = Math.min(maxWidth + LABEL_GAP, MAX_LABEL_PADDING_PX);
   return Math.ceil(totalPadding / pixelsPerDay);
-}
-
-// ─── Types ────────────────────────────────────────────────────────────────────
-
-/**
- * Typography options for {@link measureTextWidth}.
- * All properties are optional; defaults match the app's body text style.
- */
-export interface TextMeasurementOptions {
-  /** Font family string. Defaults to the app's system font stack. */
-  fontFamily?: string;
-  /** CSS font weight (e.g. 400, 600, 700). Defaults to 400 (regular). */
-  fontWeight?: number;
-  /** Letter spacing in em units (matches CSS `letter-spacing`). Defaults to 0. */
-  letterSpacing?: number;
-}
-
-/**
- * Input for {@link calculateColumnWidth}.
- * Groups all parameters that describe the column to be measured.
- */
-export interface ColumnWidthInput {
-  /** Column header text (uppercased internally). */
-  headerLabel: string;
-  /** Formatted cell values to measure against. */
-  cellValues: string[];
-  /** Font size in pixels for cell text. */
-  fontSize: number;
-  /** Total horizontal cell padding in pixels (left + right). */
-  cellPadding: number;
-  /** Per-cell extra widths (e.g. indent + icons for the name column). Defaults to []. */
-  extraWidths?: number[];
 }
 
 // ─── Public API ───────────────────────────────────────────────────────────────
@@ -275,7 +275,7 @@ export function calculateLabelPaddingDays(
   const tasksWithBeforeLabels: Task[] = [];
 
   for (const task of tasks) {
-    const taskType = task.type || "task";
+    const taskType = task.type ?? "task";
     let effectivePosition = labelPosition;
 
     // Summary and Milestone don't support "inside" — fall back to "after"

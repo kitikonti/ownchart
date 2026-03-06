@@ -111,6 +111,15 @@ function scanWorkingDaysInRange(
   return { workingDays, weekendDays };
 }
 
+/**
+ * Build a Set of YYYY-MM-DD strings for O(1) per-day holiday lookup.
+ * Uses `format()` with local timezone, consistent with `parseISO()` used on
+ * `currentDate` in the iteration loops.
+ */
+function buildHolidayDateSet(holidays: HolidayInfo[]): Set<string> {
+  return new Set(holidays.map((h) => format(h.date, "yyyy-MM-dd")));
+}
+
 // ─── Public API ───────────────────────────────────────────────────────────────
 
 /**
@@ -182,30 +191,10 @@ export function calculateWorkingDays(
     return calculateDuration(startDate, endDate);
   }
 
-  // Pre-fetch holidays once for the full range to avoid per-iteration
-  // setRegion calls; matches the optimization already used in getWorkingDaysSummary.
-  const holidays = fetchHolidaysForRange(
-    config,
-    holidayRegion,
-    startDate,
-    endDate
-  );
-  const holidaySet = new Set(holidays.map((h) => format(h.date, "yyyy-MM-dd")));
+  const holidays = fetchHolidaysForRange(config, holidayRegion, startDate, endDate);
+  const holidayDateSet = buildHolidayDateSet(holidays);
 
-  let count = 0;
-  let currentDate = startDate;
-
-  while (currentDate <= endDate) {
-    const day = getDay(parseISO(currentDate));
-    const isExcluded =
-      (config.excludeSaturday && day === 6) ||
-      (config.excludeSunday && day === 0) ||
-      (config.excludeHolidays && holidaySet.has(currentDate));
-    if (!isExcluded) count++;
-    currentDate = addDays(currentDate, 1);
-  }
-
-  return count;
+  return scanWorkingDaysInRange(startDate, endDate, config, holidayDateSet).workingDays;
 }
 
 /**
@@ -341,11 +330,7 @@ export function getWorkingDaysSummary(
     endDate
   );
 
-  // Build a Set of YYYY-MM-DD strings for O(1) holiday lookup during the scan.
-  // format() uses local timezone, consistent with parseISO() used on currentDate.
-  const holidayDateSet = new Set(
-    holidays.map((h) => format(h.date, "yyyy-MM-dd"))
-  );
+  const holidayDateSet = buildHolidayDateSet(holidays);
 
   const { workingDays, weekendDays } = scanWorkingDaysInRange(
     startDate,
