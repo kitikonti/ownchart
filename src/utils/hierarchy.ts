@@ -486,6 +486,19 @@ export function collectDescendantIds(
 // -- Hierarchy Validation -----------------------------------------------------
 
 /**
+ * Check if a task type can have children.
+ * Only milestones cannot be parents.
+ *
+ * Based on SVAR pattern:
+ * - Tasks CAN have children (dates independent of children)
+ * - Summaries CAN have children (dates calculated from children)
+ * - Milestones CANNOT have children
+ */
+export function canHaveChildren(task: Task): boolean {
+  return task.type !== "milestone";
+}
+
+/**
  * Check if moving a task would create a circular hierarchy.
  */
 export function wouldCreateCircularHierarchy(

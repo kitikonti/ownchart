@@ -13,6 +13,7 @@ import {
   buildFlattenedTaskList,
   normalizeTaskOrder,
   collectDescendantIds,
+  canHaveChildren,
 } from "../../../src/utils/hierarchy";
 import type { Task } from "../../../src/types/chart.types";
 import { tid, hex } from "../../helpers/branded";
@@ -1064,5 +1065,23 @@ describe("collectDescendantIds", () => {
     const result = collectDescendantIds(tasks, tid("root"));
 
     expect(result.has(tid("root"))).toBe(false);
+  });
+});
+
+describe("canHaveChildren", () => {
+  it("should return true for task type", () => {
+    expect(canHaveChildren(createTask("t", "T", { type: "task" }))).toBe(true);
+  });
+
+  it("should return true for summary type", () => {
+    expect(canHaveChildren(createTask("t", "T", { type: "summary" }))).toBe(true);
+  });
+
+  it("should return false for milestone type", () => {
+    expect(canHaveChildren(createTask("t", "T", { type: "milestone" }))).toBe(false);
+  });
+
+  it("should return true when type is undefined (treated as regular task)", () => {
+    expect(canHaveChildren(createTask("t", "T"))).toBe(true);
   });
 });
