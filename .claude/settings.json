@@ -1,3 +1,15 @@
 {
-  "hooks": {}
+  "hooks": {
+    "PostToolUse": [
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3 -c \"\nimport sys, json\ndata = json.load(sys.stdin)\ncmd = data.get('tool_input', {}).get('command', '')\nis_commit = 'git commit' in cmd and '--no-commit' not in cmd and '--abort' not in cmd\nis_merge = 'git merge' in cmd and '--no-commit' not in cmd and '--abort' not in cmd\nif is_commit or is_merge:\n    print('A git commit was just made. Ask the user if they would like to run /review on this commit, and wait for their response before doing anything.')\n\""
+          }
+        ]
+      }
+    ]
+  }
 }
