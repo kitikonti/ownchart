@@ -18,27 +18,28 @@ import {
 import type { ColorModeState } from "../../types/colorMode.types";
 import { getComputedTaskColor } from "../computeTaskColor";
 
+/** Options for renderTaskTableHeader. */
+export interface TaskTableHeaderOptions {
+  selectedColumns: ExportColumnKey[];
+  columnWidths: Record<string, number>;
+  totalWidth: number;
+  x: number;
+  y: number;
+  density: UiDensity;
+}
+
 /**
  * Render task table header as SVG elements.
  *
  * @param svg - The parent SVG element to append to
- * @param selectedColumns - Columns to render
- * @param columnWidths - Width overrides for columns
- * @param totalWidth - Total table width
- * @param x - X offset
- * @param y - Y offset
- * @param density - UI density setting
+ * @param options - Layout and column configuration
  * @returns The created group element
  */
 export function renderTaskTableHeader(
   svg: SVGSVGElement,
-  selectedColumns: ExportColumnKey[],
-  columnWidths: Record<string, number>,
-  totalWidth: number,
-  x: number,
-  y: number,
-  density: UiDensity
+  options: TaskTableHeaderOptions
 ): SVGGElement {
+  const { selectedColumns, columnWidths, totalWidth, x, y, density } = options;
   const group = document.createElementNS("http://www.w3.org/2000/svg", "g");
   group.setAttribute("class", "task-table-header");
 
@@ -116,31 +117,39 @@ export interface FlattenedTask {
   hasChildren: boolean;
 }
 
+/** Options for renderTaskTableRows. */
+export interface TaskTableRowsOptions {
+  flattenedTasks: FlattenedTask[];
+  selectedColumns: ExportColumnKey[];
+  columnWidths: Record<string, number>;
+  totalWidth: number;
+  x: number;
+  startY: number;
+  density: UiDensity;
+  colorModeState: ColorModeState;
+}
+
 /**
  * Render task table rows as SVG elements.
  *
  * @param svg - The parent SVG element to append to
- * @param flattenedTasks - Tasks with hierarchy info
- * @param selectedColumns - Columns to render
- * @param columnWidths - Width overrides for columns
- * @param totalWidth - Total table width
- * @param x - X offset
- * @param startY - Y offset for first row
- * @param density - UI density setting
- * @param colorModeState - Color mode state for computing task colors
+ * @param options - Layout, column, and colour configuration
  * @returns The created group element
  */
 export function renderTaskTableRows(
   svg: SVGSVGElement,
-  flattenedTasks: FlattenedTask[],
-  selectedColumns: ExportColumnKey[],
-  columnWidths: Record<string, number>,
-  totalWidth: number,
-  x: number,
-  startY: number,
-  density: UiDensity,
-  colorModeState: ColorModeState
+  options: TaskTableRowsOptions
 ): SVGGElement {
+  const {
+    flattenedTasks,
+    selectedColumns,
+    columnWidths,
+    totalWidth,
+    x,
+    startY,
+    density,
+    colorModeState,
+  } = options;
   const densityConfig = DENSITY_CONFIG[density];
   const rowHeight = densityConfig.rowHeight;
   const indentSize = densityConfig.indentSize;

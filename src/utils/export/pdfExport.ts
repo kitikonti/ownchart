@@ -54,6 +54,8 @@ import {
 import {
   renderTaskTableHeader,
   renderTaskTableRows,
+  type TaskTableHeaderOptions,
+  type TaskTableRowsOptions,
 } from "./taskTableRenderer";
 import type { ColorModeState } from "../../types/colorMode.types";
 
@@ -94,7 +96,12 @@ const PDF_FOOTER_TEXT_BOTTOM_OFFSET_MM = 4;
  */
 const REACT_RENDER_WAIT_MS = 100;
 
-/** White background fill colour for the SVG canvas */
+/**
+ * White background fill colour for the SVG canvas.
+ * Intentionally hardcoded: pure white is a presentation-layer override for
+ * the "opaque background" export option, not a design-system colour that
+ * should track theme changes.
+ */
 const SVG_BACKGROUND_WHITE = "#ffffff";
 
 /** Middle-dot separator between right-side banner fields (e.g. author · date) */
@@ -273,23 +280,25 @@ export async function exportToPdf({
 
   onProgress?.(EXPORT_PROGRESS.DIMENSIONS_READY);
 
+  const rendererProps: RendererProps = {
+    tasks,
+    options: effectiveOptions,
+    columnWidths,
+    currentAppZoom,
+    projectDateRange,
+    visibleDateRange,
+  };
+  const assemblyCtx: SvgAssemblyContext = {
+    tasks,
+    options: effectiveOptions,
+    columnWidths,
+    colorModeState,
+    projectName,
+  };
   const svgElement = await renderToSvg(
     dimensions,
-    {
-      tasks,
-      options: effectiveOptions,
-      columnWidths,
-      currentAppZoom,
-      projectDateRange,
-      visibleDateRange,
-    },
-    {
-      tasks,
-      options: effectiveOptions,
-      columnWidths,
-      colorModeState,
-      projectName,
-    },
+    rendererProps,
+    assemblyCtx,
     onProgress
   );
 
@@ -701,15 +710,15 @@ function appendExportHeader(
   const { options, columnWidths } = ctx;
 
   if (taskTableWidth > 0) {
-    const headerGroup = renderTaskTableHeader(
-      svg,
-      options.selectedColumns,
+    const headerOpts: TaskTableHeaderOptions = {
+      selectedColumns: options.selectedColumns,
       columnWidths,
-      taskTableWidth,
-      0,
-      0,
-      options.density
-    );
+      totalWidth: taskTableWidth,
+      x: 0,
+      y: 0,
+      density: options.density,
+    };
+    const headerGroup = renderTaskTableHeader(svg, headerOpts);
     setFontFamilyOnTextElements(headerGroup);
   }
 
@@ -738,17 +747,17 @@ function appendChartContent(
     // hiddenTaskIds is empty: ctx.tasks is already pre-filtered by prepareExportTasks,
     // so no rows need to be hidden at this stage.
     const flattenedTasks = buildFlattenedTaskList(ctx.tasks, new Set<TaskId>());
-    const rowsGroup = renderTaskTableRows(
-      svg,
+    const rowsOpts: TaskTableRowsOptions = {
       flattenedTasks,
-      options.selectedColumns,
+      selectedColumns: options.selectedColumns,
       columnWidths,
-      taskTableWidth,
-      0,
-      contentY,
-      options.density,
-      colorModeState
-    );
+      totalWidth: taskTableWidth,
+      x: 0,
+      startY: contentY,
+      density: options.density,
+      colorModeState,
+    };
+    const rowsGroup = renderTaskTableRows(svg, rowsOpts);
     setFontFamilyOnTextElements(rowsGroup);
   }
 

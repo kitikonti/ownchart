@@ -28,6 +28,8 @@ import {
 import {
   renderTaskTableHeader,
   renderTaskTableRows,
+  type TaskTableHeaderOptions,
+  type TaskTableRowsOptions,
 } from "./taskTableRenderer";
 import type { ColorModeState } from "../../types/colorMode.types";
 
@@ -226,15 +228,15 @@ function buildCompleteSvg(
   if (options.includeHeader) {
     // Task table header
     if (hasTaskList) {
-      renderTaskTableHeader(
-        svg,
+      const headerOpts: TaskTableHeaderOptions = {
         selectedColumns,
         columnWidths,
-        taskTableWidth,
-        0,
-        0,
-        options.density
-      );
+        totalWidth: taskTableWidth,
+        x: 0,
+        y: 0,
+        density: options.density,
+      };
+      renderTaskTableHeader(svg, headerOpts);
     }
 
     // Timeline header - clone and position
@@ -259,17 +261,17 @@ function buildCompleteSvg(
 
   // Render task table rows as SVG
   if (hasTaskList) {
-    renderTaskTableRows(
-      svg,
+    const rowsOpts: TaskTableRowsOptions = {
       flattenedTasks,
       selectedColumns,
       columnWidths,
-      taskTableWidth,
-      0,
-      currentY,
-      options.density,
-      colorModeState
-    );
+      totalWidth: taskTableWidth,
+      x: 0,
+      startY: currentY,
+      density: options.density,
+      colorModeState,
+    };
+    renderTaskTableRows(svg, rowsOpts);
   }
 
   // Add the timeline chart - clone and position
