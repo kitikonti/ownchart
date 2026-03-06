@@ -209,10 +209,10 @@ cd ../app-gantt-review
 - [x] `src/utils/validation.ts` (236 LOC)
 - [x] `src/utils/textMeasurement.ts` (217 LOC)
 - [x] `src/utils/workingDaysCalculator.ts` (208 LOC)
-- [ ] `src/utils/localeDetection.ts` (183 LOC)
-- [ ] `src/utils/dateUtils.ts` (123 LOC)
-- [ ] `src/utils/dragValidation.ts` (67 LOC)
-- [ ] `src/utils/svgUtils.ts` (21 LOC)
+- [x] `src/utils/localeDetection.ts` (183 LOC)
+- [x] `src/utils/dateUtils.ts` (123 LOC)
+- [x] `src/utils/dragValidation.ts` (67 LOC)
+- [x] `src/utils/svgUtils.ts` (21 LOC)
 
 ### Priority: MEDIUM — Clipboard Utils
 - [x] `src/utils/clipboard/systemClipboard.ts` (165 LOC)
