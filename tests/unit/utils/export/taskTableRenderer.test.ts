@@ -13,6 +13,8 @@ import type { FlattenedTask } from "../../../../src/utils/export/types";
 import {
   renderTaskTableHeader,
   renderTaskTableRows,
+  TASK_TABLE_HEADER_CLASS,
+  TASK_TABLE_ROWS_CLASS,
   type TaskTableHeaderOptions,
   type TaskTableRowsOptions,
 } from "../../../../src/utils/export/taskTableRenderer";
@@ -127,7 +129,7 @@ describe("renderTaskTableHeader", () => {
     const group = renderTaskTableHeader(svg, makeHeaderOptions());
 
     expect(group.tagName).toBe("g");
-    expect(group.getAttribute("class")).toBe("task-table-header");
+    expect(group.getAttribute("class")).toBe(TASK_TABLE_HEADER_CLASS);
     expect(svg.contains(group)).toBe(true);
   });
 
@@ -212,7 +214,7 @@ describe("renderTaskTableHeader", () => {
     for (const density of ["compact", "normal", "comfortable"] as const) {
       const svg = makeSvg();
       const group = renderTaskTableHeader(svg, makeHeaderOptions({ density }));
-      expect(group.getAttribute("class")).toBe("task-table-header");
+      expect(group.getAttribute("class")).toBe(TASK_TABLE_HEADER_CLASS);
       // Background rect always present
       expect(getRectElements(group).length).toBeGreaterThanOrEqual(1);
     }
@@ -229,7 +231,7 @@ describe("renderTaskTableRows", () => {
       makeRowsOptions([makeFlattenedTask(makeTask())])
     );
 
-    expect(group.getAttribute("class")).toBe("task-table-rows");
+    expect(group.getAttribute("class")).toBe(TASK_TABLE_ROWS_CLASS);
     expect(svg.contains(group)).toBe(true);
   });
 
@@ -264,7 +266,7 @@ describe("renderTaskTableRows", () => {
         svg,
         makeRowsOptions([makeFlattenedTask(makeTask())], { density })
       );
-      expect(group.getAttribute("class")).toBe("task-table-rows");
+      expect(group.getAttribute("class")).toBe(TASK_TABLE_ROWS_CLASS);
       expect(getRectElements(group).length).toBeGreaterThanOrEqual(1);
     }
   });

@@ -54,6 +54,14 @@ const SPECIAL_CASE_COLUMNS = new Set<ExportColumnKey>(["color", "name"]);
 const EXPAND_ARROW_CHAR = "▼";
 
 /**
+ * CSS class names applied to the SVG group elements produced by the public
+ * render functions. Exported so tests can reference the same symbol instead
+ * of hardcoding strings — a rename only needs to happen here.
+ */
+export const TASK_TABLE_HEADER_CLASS = "task-table-header";
+export const TASK_TABLE_ROWS_CLASS = "task-table-rows";
+
+/**
  * Data columns that receive lighter/italic styling for summary task rows,
  * matching the app's rendering of computed summary date ranges.
  * When ExportDataColumnKey gains a new date-like column, add it here.
@@ -71,6 +79,8 @@ const SVG_NS = "http://www.w3.org/2000/svg";
 function createSVGEl<K extends keyof SVGElementTagNameMap>(
   tag: K
 ): SVGElementTagNameMap[K] {
+  // createElementNS overloads return Element for any namespace URI string;
+  // the cast is safe because SVG_NS + a valid SVG tag always yields the correct type.
   return document.createElementNS(SVG_NS, tag) as SVGElementTagNameMap[K];
 }
 
@@ -324,14 +334,13 @@ function renderColorCell(
 
 function renderNameCell(
   ctx: CellRenderContext,
-  task: Task,
   flattenedTask: FlattenedTask,
   rowIndex: number,
   layout: CellLayout
 ): void {
   const { group, rowY, rowHeight, densityConfig } = ctx;
   const { colX, colWidth } = layout;
-  const { level, hasChildren } = flattenedTask;
+  const { task, level, hasChildren } = flattenedTask;
   const { indentSize, fontSizeCell, cellPaddingX } = densityConfig;
   const textY = rowY + rowHeight / 2 + TEXT_BASELINE_OFFSET;
 
@@ -380,7 +389,9 @@ function renderDataCell(
   const useSummaryStyle = isSummary && SUMMARY_DATE_COLUMNS.has(key);
 
   const rawValue = getColumnDisplayValue(task, key);
-  if (!rawValue) return; // skip — null (no value) or "" (intentionally blank, e.g. milestone end date)
+  // null  → column has no value for this task type (e.g. milestone has no duration)
+  // ""    → intentionally blank (e.g. milestone end date is suppressed by getColumnDisplayValue)
+  if (rawValue === null || rawValue === "") return;
 
   const availableWidth = colWidth - cellPaddingX * 2;
   const value = truncateToWidth(rawValue, availableWidth, fontSizeCell);
@@ -415,6 +426,8 @@ interface RowRendererOptions {
   colorCache: Map<string, HexColor>;
   totalWidth: number;
   x: number;
+  /** Y-coordinate of the first row; used inside renderTaskRow to compute each row's position. */
+  startY: number;
 }
 
 /** Render all cell columns for a single row, advancing colX across selected columns. */
@@ -437,7 +450,7 @@ function renderRowCells(
       const color = colorCache.get(task.id) ?? task.color;
       renderColorCell(ctx, color, layout);
     } else if (key === "name") {
-      renderNameCell(ctx, task, flattenedTask, rowIndex, layout);
+      renderNameCell(ctx, flattenedTask, rowIndex, layout);
     } else if (isDataColumn(key)) {
       renderDataCell(ctx, task, key, layout);
     }
@@ -458,11 +471,11 @@ function renderTaskRow(
   group: SVGGElement,
   flattenedTask: FlattenedTask,
   rowIndex: number,
-  rowY: number,
   options: RowRendererOptions
 ): void {
   const { densityConfig, totalWidth, x } = options;
   const { rowHeight } = densityConfig;
+  const rowY = options.startY + rowIndex * rowHeight;
   const ctx: CellRenderContext = { group, rowY, rowHeight, densityConfig };
 
   // Row bottom border
@@ -557,7 +570,7 @@ export function renderTaskTableHeader(
   };
 
   const group = createSVGEl("g");
-  group.setAttribute("class", "task-table-header");
+  group.setAttribute("class", TASK_TABLE_HEADER_CLASS);
 
   // Header background
   const bg = createSVGEl("rect");
@@ -619,6 +632,7 @@ function buildRowOptions(
     colorCache,
     totalWidth: options.totalWidth,
     x: options.x,
+    startY: options.startY,
   };
 }
 
@@ -638,7 +652,7 @@ export function renderTaskTableRows(
   const { rowHeight } = densityConfig;
 
   const group = createSVGEl("g");
-  group.setAttribute("class", "task-table-rows");
+  group.setAttribute("class", TASK_TABLE_ROWS_CLASS);
 
   // Right border for the entire table body
   group.appendChild(
@@ -659,8 +673,7 @@ export function renderTaskTableRows(
   const rowOptions = buildRowOptions(options, densityConfig, colorCache);
 
   for (const [rowIndex, flattenedTask] of flattenedTasks.entries()) {
-    const rowY = startY + rowIndex * rowHeight;
-    renderTaskRow(group, flattenedTask, rowIndex, rowY, rowOptions);
+    renderTaskRow(group, flattenedTask, rowIndex, rowOptions);
   }
 
   svg.appendChild(group);
