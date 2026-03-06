@@ -4,11 +4,8 @@
 
 import { Info, Question } from "@phosphor-icons/react";
 
-import {
-  ToolbarButton,
-  ToolbarGroup,
-  TOOLBAR,
-} from "../Toolbar/ToolbarPrimitives";
+import { ToolbarButton, ToolbarGroup } from "../Toolbar/ToolbarPrimitives";
+import { TOOLBAR } from "../../styles/design-tokens";
 import { useUIStore } from "../../store/slices/uiSlice";
 
 const ICON_SIZE = TOOLBAR.iconSize;

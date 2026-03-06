@@ -12,15 +12,16 @@
  * No inline styles — all styling through Tailwind classes and CSS selectors.
  */
 
-import { forwardRef, type ReactNode, type ButtonHTMLAttributes } from "react";
-import { COLORS, TOOLBAR } from "../../styles/design-tokens";
+import {
+  forwardRef,
+  memo,
+  type ReactNode,
+  type ButtonHTMLAttributes,
+} from "react";
 import {
   useCollapseLevel,
   shouldShowLabel,
 } from "../Ribbon/RibbonCollapseContext";
-
-// Re-export tokens for use by other components
-export { COLORS, TOOLBAR };
 
 // ============================================================================
 // ToolbarSeparator
@@ -34,7 +35,7 @@ interface ToolbarSeparatorProps {
  * Subtle vertical separator between toolbar sections.
  * Use sparingly - prefer spacing for closely related groups.
  */
-export function ToolbarSeparator({
+export const ToolbarSeparator = memo(function ToolbarSeparator({
   className = "",
 }: ToolbarSeparatorProps): JSX.Element {
   return (
@@ -44,7 +45,7 @@ export function ToolbarSeparator({
       aria-orientation="vertical"
     />
   );
-}
+});
 
 // ============================================================================
 // ToolbarGroup
@@ -63,7 +64,7 @@ interface ToolbarGroupProps {
  * Groups related toolbar items with consistent spacing.
  * Optionally adds a separator after the group.
  */
-export function ToolbarGroup({
+export const ToolbarGroup = memo(function ToolbarGroup({
   children,
   label,
   withSeparator = false,
@@ -81,7 +82,7 @@ export function ToolbarGroup({
       {withSeparator && <ToolbarSeparator />}
     </>
   );
-}
+});
 
 // ============================================================================
 // ToolbarButton
@@ -90,25 +91,36 @@ export function ToolbarGroup({
 type ToolbarButtonVariant = "default" | "primary" | "toggle";
 type ToolbarButtonSize = "default" | "large";
 
-interface ToolbarButtonProps extends Omit<
+type BaseToolbarButtonProps = Omit<
   ButtonHTMLAttributes<HTMLButtonElement>,
-  "className"
-> {
+  "className" | "aria-label"
+> & {
   /** Visual variant */
   variant?: ToolbarButtonVariant;
   /** Button size */
   size?: ToolbarButtonSize;
   /** For toggle buttons: is it currently active? */
   isActive?: boolean;
-  /** Show text label next to icon */
-  label?: string;
   /** Icon element */
   icon?: ReactNode;
   /** Additional classes */
   className?: string;
   /** Collapse priority: lower numbers hide first. Omit to never collapse. */
   labelPriority?: number;
-}
+};
+
+/**
+ * Accessible name contract (enforced by TypeScript):
+ * - If `label` is provided, it serves as the accessible name when visible.
+ *   When the label collapses due to space constraints, it is automatically
+ *   promoted to `aria-label` and `title`.
+ * - Icon-only buttons (no `label`) must supply an explicit `aria-label`.
+ */
+export type ToolbarButtonProps = BaseToolbarButtonProps &
+  (
+    | { label: string; "aria-label"?: string }
+    | { label?: never; "aria-label": string }
+  );
 
 /**
  * Base toolbar button with consistent styling.
@@ -123,8 +135,8 @@ interface ToolbarButtonProps extends Omit<
  * - primary: Emphasized action (like "Add Task")
  * - toggle: Toggle state button (like "Show Dependencies")
  */
-export const ToolbarButton = forwardRef<HTMLButtonElement, ToolbarButtonProps>(
-  function ToolbarButton(
+export const ToolbarButton = memo(
+  forwardRef<HTMLButtonElement, ToolbarButtonProps>(function ToolbarButton(
     {
       variant = "default",
       size = "default",
@@ -135,6 +147,7 @@ export const ToolbarButton = forwardRef<HTMLButtonElement, ToolbarButtonProps>(
       className = "",
       children,
       labelPriority,
+      "aria-label": ariaLabel,
       ...props
     },
     ref
@@ -142,14 +155,13 @@ export const ToolbarButton = forwardRef<HTMLButtonElement, ToolbarButtonProps>(
     const collapseLevel = useCollapseLevel();
     const showLabel = shouldShowLabel(labelPriority, collapseLevel);
 
-    // When the label is collapsed (hidden), expose it as both the accessible
-    // name (aria-label) and the hover tooltip (title) so screen reader users
-    // and sighted keyboard users can still discover the button's purpose.
-    // Caller-provided values always take precedence.
+    // When the label is collapsed (hidden), promote it to aria-label and title
+    // so screen reader users and sighted keyboard users can still discover the
+    // button's purpose. Caller-provided aria-label always takes precedence.
     const collapsedLabelProps =
       !showLabel && label
         ? {
-            "aria-label": props["aria-label"] ?? label,
+            "aria-label": ariaLabel ?? label,
             title: props.title ?? label,
           }
         : {};
@@ -163,6 +175,7 @@ export const ToolbarButton = forwardRef<HTMLButtonElement, ToolbarButtonProps>(
         data-size={size !== "default" ? size : undefined}
         aria-pressed={variant === "toggle" ? isActive : undefined}
         className={`ribbon-toolbar-button ${className}`}
+        aria-label={ariaLabel}
         {...collapsedLabelProps}
         {...props}
       >
@@ -173,7 +186,7 @@ export const ToolbarButton = forwardRef<HTMLButtonElement, ToolbarButtonProps>(
         {children}
       </button>
     );
-  }
+  })
 );
 
 // ============================================================================
@@ -183,6 +196,6 @@ export const ToolbarButton = forwardRef<HTMLButtonElement, ToolbarButtonProps>(
 /**
  * Flexible spacer to push elements to the right.
  */
-export function ToolbarSpacer(): JSX.Element {
+export const ToolbarSpacer = memo(function ToolbarSpacer(): JSX.Element {
   return <div className="flex-1 min-w-4" />;
-}
+});

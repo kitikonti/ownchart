@@ -13,11 +13,8 @@ import {
   Hash,
 } from "@phosphor-icons/react";
 
-import {
-  ToolbarGroup,
-  ToolbarSeparator,
-  TOOLBAR,
-} from "../Toolbar/ToolbarPrimitives";
+import { ToolbarGroup, ToolbarSeparator } from "../Toolbar/ToolbarPrimitives";
+import { TOOLBAR } from "../../styles/design-tokens";
 import { ToolbarDropdown } from "../Toolbar/ToolbarDropdown";
 import { WorkingDaysDropdown } from "./WorkingDaysDropdown";
 

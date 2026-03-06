@@ -22,8 +22,8 @@ import {
   ToolbarButton,
   ToolbarGroup,
   ToolbarSeparator,
-  TOOLBAR,
 } from "../Toolbar/ToolbarPrimitives";
+import { TOOLBAR } from "../../styles/design-tokens";
 import { HolidayRegionPopover } from "./HolidayRegionPopover";
 import { ZoomDropdown } from "./ZoomDropdown";
 import { useViewTabActions } from "../../hooks/useViewTabActions";

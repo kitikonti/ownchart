@@ -11,7 +11,7 @@ import { holidayService } from "../../services/holidayService";
 import { useDropdown } from "../../hooks/useDropdown";
 import { DropdownTrigger } from "../Toolbar/DropdownTrigger";
 import { DropdownPanel } from "../Toolbar/DropdownPanel";
-import { TOOLBAR } from "../Toolbar/ToolbarPrimitives";
+import { TOOLBAR } from "../../styles/design-tokens";
 import type { WorkingDaysConfig } from "../../types/preferences.types";
 
 const ICON_SIZE = TOOLBAR.iconSize;

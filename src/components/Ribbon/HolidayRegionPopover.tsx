@@ -10,7 +10,7 @@ import { useChartStore } from "../../store/slices/chartSlice";
 import { holidayService } from "../../services/holidayService";
 import { useDropdown } from "../../hooks/useDropdown";
 import { DropdownPanel } from "../Toolbar/DropdownPanel";
-import { TOOLBAR } from "../Toolbar/ToolbarPrimitives";
+import { TOOLBAR } from "../../styles/design-tokens";
 
 const ICON_SIZE = TOOLBAR.iconSize;
 
