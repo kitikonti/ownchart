@@ -249,8 +249,8 @@ cd ../app-gantt-review
 - SKIP `src/utils/export/fonts/inter*FontData.ts` — base64 Daten, NICHT OEFFNEN
 
 ### Priority: LOW — UI Components
-- [ ] `src/components/Toolbar/ToolbarPrimitives.tsx` (254 LOC)
-- [ ] `src/components/StatusBar/StatusBar.tsx` (201 LOC)
+- [x] `src/components/Toolbar/ToolbarPrimitives.tsx` (254 LOC)
+- [x] `src/components/StatusBar/StatusBar.tsx` (201 LOC)
 - [ ] `src/components/ContextMenu/ContextMenu.tsx` (198 LOC)
 - [ ] `src/components/common/Modal.tsx` (192 LOC)
 - [ ] `src/components/Help/HelpDialog.tsx` (131 LOC)

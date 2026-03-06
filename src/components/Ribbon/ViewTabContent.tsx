@@ -22,13 +22,13 @@ import {
   ToolbarButton,
   ToolbarGroup,
   ToolbarSeparator,
-  TOOLBAR_TOKENS,
 } from "../Toolbar/ToolbarPrimitives";
+import { TOOLBAR } from "../../styles/design-tokens";
 import { HolidayRegionPopover } from "./HolidayRegionPopover";
 import { ZoomDropdown } from "./ZoomDropdown";
 import { useViewTabActions } from "../../hooks/useViewTabActions";
 
-const ICON_SIZE = TOOLBAR_TOKENS.iconSize;
+const ICON_SIZE = TOOLBAR.iconSize;
 
 export function ViewTabContent(): JSX.Element {
   const {

@@ -16,7 +16,7 @@ import {
 } from "@phosphor-icons/react";
 import { useDropdown } from "../../hooks/useDropdown";
 import { DropdownPanel } from "../Toolbar/DropdownPanel";
-import { TOOLBAR } from "../Toolbar/ToolbarPrimitives";
+import { TOOLBAR } from "../../styles/design-tokens";
 
 const ICON_SIZE = TOOLBAR.iconSizeMenu;
 

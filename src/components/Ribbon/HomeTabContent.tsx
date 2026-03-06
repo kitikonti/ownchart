@@ -29,13 +29,12 @@ import {
   ToolbarButton,
   ToolbarGroup,
   ToolbarSeparator,
-  TOOLBAR_TOKENS,
 } from "../Toolbar/ToolbarPrimitives";
 import { ColorDropdown } from "./ColorDropdown";
 import { useHomeTabActions } from "../../hooks/useHomeTabActions";
-import { COLORS } from "../../styles/design-tokens";
+import { COLORS, TOOLBAR } from "../../styles/design-tokens";
 
-const ICON_SIZE = TOOLBAR_TOKENS.iconSize;
+const ICON_SIZE = TOOLBAR.iconSize;
 
 // Badge sizing constants
 const BADGE_FONT_SIZE_PX = 8;
