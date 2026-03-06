@@ -33,7 +33,11 @@ import {
 import type { DensityConfig } from "../../types/preferences.types";
 import { DENSITY_CONFIG } from "../../config/densityConfig";
 import { useChartStore } from "../../store/slices/chartSlice";
-import { SVG_FONT_FAMILY } from "../../utils/export/constants";
+import {
+  SVG_FONT_FAMILY,
+  EXPORT_CHART_SVG_CLASS,
+  EXPORT_TIMELINE_HEADER_SVG_CLASS,
+} from "../../utils/export/constants";
 import { getColumnDisplayValue } from "../../utils/export/columns";
 import { getComputedTaskColor } from "../../utils/computeTaskColor";
 import { HEADER_HEIGHT } from "../../config/layoutConstants";
@@ -416,7 +420,7 @@ export function ExportRenderer({
           <svg
             width={timelineWidth}
             height={HEADER_HEIGHT}
-            className="block"
+            className={`block ${EXPORT_TIMELINE_HEADER_SVG_CLASS}`}
             style={{ backgroundColor: bgColor }}
           >
             <TimelineHeader scale={scale} width={timelineWidth} />
@@ -447,7 +451,7 @@ export function ExportRenderer({
         <svg
           width={timelineWidth}
           height={contentHeight}
-          className="gantt-chart block"
+          className={`${EXPORT_CHART_SVG_CLASS} block`}
           style={{ backgroundColor: bgColor }}
         >
           {/* Grid lines */}

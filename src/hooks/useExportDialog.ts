@@ -23,7 +23,6 @@ import { useUIStore } from "../store/slices/uiSlice";
 import { useTaskStore } from "../store/slices/taskSlice";
 import { useChartStore } from "../store/slices/chartSlice";
 import { useFileStore } from "../store/slices/fileSlice";
-import { useDependencyStore } from "../store/slices/dependencySlice";
 import { useUserPreferencesStore } from "../store/slices/userPreferencesSlice";
 import {
   exportToPng,
@@ -183,7 +182,6 @@ export function useExportDialog(): UseExportDialogResult {
   const hiddenTaskIds = useChartStore((state) => state.hiddenTaskIds);
 
   const fileName = useFileStore((state) => state.fileName);
-  const dependencies = useDependencyStore((state) => state.dependencies);
   const dateFormat = useUserPreferencesStore(
     (state) => state.preferences.dateFormat
   );
@@ -303,8 +301,6 @@ export function useExportDialog(): UseExportDialogResult {
         const { exportToPdf } = await import("../utils/export/pdfExport");
         await exportToPdf({
           tasks: exportTasks,
-          dependencies,
-          scale,
           options: exportOptions,
           pdfOptions: pdfExportOptions,
           columnWidths,
@@ -344,8 +340,6 @@ export function useExportDialog(): UseExportDialogResult {
   }, [
     selectedExportFormat,
     exportTasks,
-    dependencies,
-    scale,
     exportOptions,
     pdfExportOptions,
     svgExportOptions,

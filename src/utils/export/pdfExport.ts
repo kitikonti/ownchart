@@ -9,18 +9,27 @@
 import { jsPDF } from "jspdf";
 import "svg2pdf.js";
 import { createRoot } from "react-dom/client";
+import type { Root } from "react-dom/client";
 import { createElement } from "react";
 import type { Task } from "../../types/chart.types";
 import type { TaskId } from "../../types/branded.types";
-import type { Dependency } from "../../types/dependency.types";
-import type { TimelineScale } from "../timelineUtils";
-import type { ExportOptions, PdfExportOptions, ExportColumnKey } from "./types";
+import type {
+  ExportOptions,
+  PdfExportOptions,
+  PdfHeaderFooter,
+  PdfMargins,
+  PixelDimensions,
+} from "./types";
 import {
   getPageDimensions,
   getMargins,
   getReservedSpace,
-  mmToPx,
+  pxToMm,
+  hexToRgb,
   calculatePdfFitToWidth,
+  hasHeaderFooterContent,
+  type PageDimensions,
+  type PdfColor,
 } from "./pdfLayout";
 import { ExportRenderer } from "../../components/Export/ExportRenderer";
 import { calculateExportDimensions } from "./exportLayout";
@@ -28,10 +37,15 @@ import { calculateTaskTableWidth } from "./calculations";
 import { buildFlattenedTaskList } from "../hierarchy";
 import { type DateFormat } from "../../types/preferences.types";
 import { formatDateByPreference } from "../dateUtils";
-import { SVG_FONT_FAMILY } from "./constants";
+import {
+  HEADER_HEIGHT,
+  SVG_FONT_FAMILY,
+  EXPORT_COLORS,
+  EXPORT_CHART_SVG_CLASS,
+  EXPORT_TIMELINE_HEADER_SVG_CLASS,
+} from "./constants";
+import { APP_CONFIG } from "../../config/appConfig";
 import { registerInterFont } from "./interFont";
-// Shared modules
-import { HEADER_HEIGHT } from "./constants";
 import {
   waitForFonts,
   waitForPaint,
@@ -43,16 +57,95 @@ import {
 import {
   renderTaskTableHeader,
   renderTaskTableRows,
+  type TaskTableHeaderOptions,
+  type TaskTableRowsOptions,
 } from "./taskTableRenderer";
 import type { ColorModeState } from "../../types/colorMode.types";
+
+// =============================================================================
+// PDF Rendering Constants
+// =============================================================================
+
+/** Font size for header/footer banner text in points */
+const PDF_BANNER_FONT_SIZE_PT = 9;
+
+/**
+ * Text color for header/footer labels.
+ * Derived from the design-token EXPORT_COLORS.textSecondary (neutral-600)
+ * so it stays in sync when the design system changes.
+ */
+const PDF_TEXT_COLOR: PdfColor = hexToRgb(EXPORT_COLORS.textSecondary);
+
+/**
+ * Separator line color.
+ * Derived from EXPORT_COLORS.border (neutral-200) — same token used by the
+ * task-table header borders in the SVG export path.
+ */
+const PDF_BORDER_COLOR: PdfColor = hexToRgb(EXPORT_COLORS.border);
+
+/** Separator line width in millimeters */
+const PDF_SEPARATOR_LINE_WIDTH_MM = 0.1;
+
+/** Header text vertical offset from the top margin edge in mm */
+const PDF_HEADER_TEXT_OFFSET_MM = 6;
+
+/** Footer text vertical offset from the bottom margin edge in mm */
+const PDF_FOOTER_TEXT_BOTTOM_OFFSET_MM = 4;
+
+/**
+ * Wait time in ms after root.render() before reading the DOM.
+ * React schedules its commit asynchronously; this gives it one macro-task
+ * to flush before waitForFonts() / waitForPaint() take over.
+ */
+const REACT_RENDER_WAIT_MS = 100;
+
+/**
+ * White background fill colour for the SVG canvas.
+ * Intentionally hardcoded: pure white is a presentation-layer override for
+ * the "opaque background" export option, not a design-system colour that
+ * should track theme changes.
+ */
+const SVG_BACKGROUND_WHITE = "#ffffff";
+
+/** Middle-dot separator between right-side banner fields (e.g. author · date) */
+const PDF_BANNER_SEPARATOR = " \u00B7 ";
+
+/** SVG namespace URI — used in every createElementNS call */
+const SVG_NS = "http://www.w3.org/2000/svg";
+
+/** Default PDF document title when neither projectTitle nor projectName is set */
+const DEFAULT_PDF_TITLE = "Project Timeline";
+
+/** Default PDF document subject metadata */
+const PDF_DEFAULT_SUBJECT = "Gantt Chart Export";
+
+/** jsPDF registered font name for the embedded Inter typeface */
+const PDF_FONT_NAME = "Inter";
+
+/** jsPDF font style for Inter Regular */
+const PDF_FONT_STYLE = "normal" as const;
+
+/** Progress checkpoint values emitted via onProgress during export */
+const EXPORT_PROGRESS = {
+  START: 5,
+  DIMENSIONS_READY: 10,
+  RENDER_COMPLETE: 25,
+  SVG_ASSEMBLED: 40,
+  PDF_DOCUMENT_READY: 55,
+  SVG_EMBEDDED: 90,
+  COMPLETE: 100,
+} as const;
+
+// =============================================================================
+// Types
+// =============================================================================
 
 /** Parameters for PDF export */
 export interface ExportToPdfParams {
   tasks: Task[];
-  dependencies?: Dependency[];
-  scale?: TimelineScale | null;
   options: ExportOptions;
   pdfOptions: PdfExportOptions;
+  /** Full app column-width map (may contain keys beyond ExportColumnKey) */
   columnWidths: Record<string, number>;
   currentAppZoom: number;
   projectDateRange?: { start: Date; end: Date };
@@ -64,6 +157,93 @@ export interface ExportToPdfParams {
   colorModeState: ColorModeState;
   onProgress?: (progress: number) => void;
 }
+
+/** Resolved title/author strings (with fallbacks applied) */
+interface PdfMetadata {
+  title: string;
+  author: string;
+}
+
+/** Y positions and orientation for a banner strip (header or footer) */
+interface BannerLayout {
+  /** Text baseline Y in mm */
+  textY: number;
+  /** Separator line Y in mm */
+  lineY: number;
+  /**
+   * True for headers (separator drawn below text, on top of chart content).
+   * False for footers (separator drawn above text).
+   */
+  lineBelowText: boolean;
+}
+
+/** Props forwarded to ExportRenderer during offscreen render */
+interface RendererProps {
+  tasks: Task[];
+  options: ExportOptions;
+  columnWidths: Record<string, number>;
+  currentAppZoom: number;
+  projectDateRange?: { start: Date; end: Date };
+  visibleDateRange?: { start: Date; end: Date };
+}
+
+/** Shared context for SVG assembly (task-table columns + chart combination) */
+interface SvgAssemblyContext {
+  tasks: Task[];
+  options: ExportOptions;
+  columnWidths: Record<string, number>;
+  colorModeState: ColorModeState;
+  projectName?: string;
+}
+
+/** Layout values computed once in buildCompleteSvg and passed to SVG sub-assemblers */
+interface SvgChartLayout {
+  /** Width of the task-table panel in px (0 when no columns are selected) */
+  taskTableWidth: number;
+  /** Y offset for chart content — equals HEADER_HEIGHT when a header is included */
+  contentY: number;
+}
+
+/** Reserved vertical space in mm for PDF header/footer strips */
+export interface ReservedSpace {
+  header: number;
+  footer: number;
+}
+
+/** Shared context for banner rendering (header/footer strips) */
+interface BannerRenderContext {
+  doc: jsPDF;
+  margins: PdfMargins;
+  /** Page width in mm */
+  pageWidth: number;
+  /** Page height in mm */
+  pageHeight: number;
+  dateFormat: DateFormat;
+}
+
+/** Document-level settings for PDF generation */
+interface PdfDocumentSettings {
+  metadata: PdfMetadata;
+  pdfOptions: PdfExportOptions;
+  dateFormat: DateFormat;
+  projectName?: string;
+}
+
+/** Scaled placement of the chart SVG within a PDF page */
+interface ChartPlacement {
+  /** X offset in mm from the page origin */
+  offsetX: number;
+  /** Y offset in mm from the page origin */
+  offsetY: number;
+  /** Final rendered width in mm */
+  finalWidthMm: number;
+  /** Final rendered height in mm */
+  finalHeightMm: number;
+}
+
+// =============================================================================
+// Public API
+// =============================================================================
 
 /**
  * Export the chart to PDF using SVG-to-PDF conversion.
@@ -85,23 +265,9 @@ export async function exportToPdf(params: ExportToPdfParams): Promise<void> {
     onProgress,
   } = params;
 
-  onProgress?.(5);
+  onProgress?.(EXPORT_PROGRESS.START);
 
-  // For "fit to page" mode, calculate optimal fitToWidth based on content and page
-  let effectiveOptions = options;
-  if (options.zoomMode === "fitToWidth") {
-    const optimalFitToWidth = calculatePdfFitToWidth(
-      tasks,
-      options,
-      pdfOptions
-    );
-    effectiveOptions = {
-      ...options,
-      fitToWidth: optimalFitToWidth,
-    };
-  }
-
-  // Calculate dimensions - uses same calculation as PNG export
+  const effectiveOptions = resolveEffectiveOptions(tasks, options, pdfOptions);
   const dimensions = calculateExportDimensions({
     tasks,
     options: effectiveOptions,
@@ -111,398 +277,558 @@ export async function exportToPdf(params: ExportToPdfParams): Promise<void> {
     visibleDateRange,
   });
 
-  onProgress?.(10);
+  onProgress?.(EXPORT_PROGRESS.DIMENSIONS_READY);
 
-  // Create offscreen container for rendering
+  const rendererProps: RendererProps = {
+    options: effectiveOptions,
+    tasks,
+    columnWidths,
+    currentAppZoom,
+    projectDateRange,
+    visibleDateRange,
+  };
+  const assemblyCtx: SvgAssemblyContext = {
+    options: effectiveOptions,
+    tasks,
+    columnWidths,
+    colorModeState,
+    projectName,
+  };
+  const svgElement = await renderToSvg(
+    dimensions,
+    rendererProps,
+    assemblyCtx,
+    onProgress
+  );
+
+  onProgress?.(EXPORT_PROGRESS.SVG_ASSEMBLED);
+
+  await buildAndSavePdf(
+    svgElement,
+    dimensions,
+    {
+      metadata: resolvePdfMetadata(projectTitle, projectName, projectAuthor),
+      pdfOptions,
+      dateFormat,
+      projectName,
+    },
+    onProgress
+  );
+
+  onProgress?.(EXPORT_PROGRESS.COMPLETE);
+}
+
+// =============================================================================
+// Step Helpers
+// =============================================================================
+
+/**
+ * For "fit to page" mode, compute the optimal fitToWidth based on content
+ * and page dimensions. Otherwise returns the options unchanged.
+ *
+ * Exported for unit testing.
+ */
+export function resolveEffectiveOptions(
+  tasks: Task[],
+  options: ExportOptions,
+  pdfOptions: PdfExportOptions
+): ExportOptions {
+  if (options.zoomMode !== "fitToWidth") {
+    return options;
+  }
+  return {
+    ...options,
+    fitToWidth: calculatePdfFitToWidth(tasks, options, pdfOptions),
+  };
+}
+
+/**
+ * Apply PDF metadata fallback logic: prefer explicit title/author values,
+ * fall back to project name for title and empty string for author.
+ *
+ * Exported for unit testing.
+ */
+export function resolvePdfMetadata(
+  projectTitle: string | undefined,
+  projectName: string | undefined,
+  projectAuthor: string | undefined
+): PdfMetadata {
+  return {
+    title: projectTitle || projectName || DEFAULT_PDF_TITLE,
+    author: projectAuthor ?? "",
+  };
+}
+
+/**
+ * Render ExportRenderer in an offscreen container, extract the assembled
+ * SVG, then clean up the container — all in a single try/finally lifecycle.
+ * Emits RENDER_COMPLETE progress once the React render is flushed.
+ */
+async function renderToSvg(
+  dimensions: PixelDimensions,
+  rendererProps: RendererProps,
+  assemblyCtx: SvgAssemblyContext,
+  onProgress?: (progress: number) => void
+): Promise<SVGSVGElement> {
   const container = createOffscreenContainer(
     dimensions.width,
     dimensions.height,
-    effectiveOptions.background
+    rendererProps.options.background
   );
-
+  // `root` is declared outside the try block so the finally clause can call
+  // root?.unmount() even if createRoot() throws before assignment.
+  let root: Root | null = null;
   try {
-    // Render ExportRenderer
-    const root = createRoot(container);
-
-    await new Promise<void>((resolve) => {
-      root.render(
-        createElement(ExportRenderer, {
-          tasks,
-          options: effectiveOptions,
-          columnWidths,
-          currentAppZoom,
-          projectDateRange,
-          visibleDateRange,
-        })
-      );
-      setTimeout(resolve, 100);
-    });
-
-    onProgress?.(25);
-
-    await waitForFonts();
-    await waitForPaint();
-
-    container.style.opacity = "1";
-    await waitForPaint();
-
-    onProgress?.(40);
-
-    // Extract SVG elements from the rendered DOM
-    const chartSvg = container.querySelector("svg.gantt-chart");
-    const headerSvg = container.querySelector(
-      ".export-container > div:first-child svg"
-    );
-
-    if (!chartSvg) {
-      throw new Error("Could not find chart SVG element");
-    }
-
-    // Build complete SVG with task table
-    const svgElement = buildCompleteSvg(
-      chartSvg as SVGSVGElement,
-      headerSvg as SVGSVGElement | null,
-      tasks,
-      effectiveOptions,
-      columnWidths,
-      dimensions,
-      colorModeState,
-      projectName
-    );
-
-    onProgress?.(55);
-
-    // Cleanup React
-    root.unmount();
-
-    // Get page dimensions
-    const pageDims = getPageDimensions(pdfOptions);
-    const margins = getMargins(pdfOptions);
-
-    // Calculate reserved space for header/footer
-    const headerReserved = getReservedSpace(pdfOptions.header);
-    const footerReserved = getReservedSpace(pdfOptions.footer);
-
-    // Calculate available content area in mm
-    const contentWidth = pageDims.width - margins.left - margins.right;
-    const contentHeight =
-      pageDims.height -
-      margins.top -
-      margins.bottom -
-      headerReserved -
-      footerReserved;
-
-    // Calculate scale to fit SVG into content area
-    const svgWidth = dimensions.width;
-    const svgHeight = dimensions.height;
-
-    const scaleX = mmToPx(contentWidth) / svgWidth;
-    const scaleY = mmToPx(contentHeight) / svgHeight;
-    const scale = Math.min(scaleX, scaleY);
-
-    // Final dimensions in mm
-    const finalWidthMm = (svgWidth * scale) / mmToPx(1);
-    const finalHeightMm = (svgHeight * scale) / mmToPx(1);
-
-    // Center horizontally
-    const offsetX = margins.left + (contentWidth - finalWidthMm) / 2;
-    const offsetY = margins.top + headerReserved;
-
-    onProgress?.(65);
-
-    // Create PDF document
-    const doc = new jsPDF({
-      orientation: pdfOptions.orientation,
-      unit: "mm",
-      format: [pageDims.width, pageDims.height],
-    });
-
-    // Register and use Inter font for consistent rendering across all systems
-    registerInterFont(doc);
-    doc.setFont("Inter", "normal");
-
-    // Set metadata - use projectTitle/projectAuthor from chart settings, fallback to projectName
-    const pdfTitle = projectTitle || projectName || "Project Timeline";
-    const pdfAuthor = projectAuthor || "";
-    doc.setProperties({
-      title: pdfTitle,
-      author: pdfAuthor,
-      subject: pdfOptions.metadata.subject || "Gantt Chart Export",
-      creator: "OwnChart",
-    });
-
-    onProgress?.(70);
-
-    // Convert SVG to PDF using svg2pdf.js
-    // Note: Fonts are already embedded via embedInterFont() and set on SVG elements
-    await doc.svg(svgElement, {
-      x: offsetX,
-      y: offsetY,
-      width: finalWidthMm,
-      height: finalHeightMm,
-    });
-
-    onProgress?.(90);
-
-    // Render header/footer AFTER chart SVG so lines draw on top of content
-    const hasHeader =
-      pdfOptions.header.showProjectName ||
-      pdfOptions.header.showAuthor ||
-      pdfOptions.header.showExportDate;
-    if (hasHeader) {
-      renderHeader(
-        doc,
-        pdfOptions,
-        pdfTitle,
-        pdfAuthor,
-        margins,
-        pageDims.width,
-        headerReserved,
-        dateFormat
-      );
-    }
-
-    const hasFooter =
-      pdfOptions.footer.showProjectName ||
-      pdfOptions.footer.showAuthor ||
-      pdfOptions.footer.showExportDate;
-    if (hasFooter) {
-      renderFooter(
-        doc,
-        pdfOptions,
-        pdfTitle,
-        pdfAuthor,
-        margins,
-        pageDims.width,
-        pageDims.height,
-        footerReserved,
-        dateFormat
-      );
-    }
-
-    // Generate filename and save
-    const filename = generateExportFilename(projectName, "pdf");
-    doc.save(filename);
-
-    onProgress?.(100);
+    root = createRoot(container);
+    await mountExportRenderer(root, container, rendererProps);
+    onProgress?.(EXPORT_PROGRESS.RENDER_COMPLETE);
+    return extractSvgFromContainer(container, dimensions, assemblyCtx);
   } finally {
+    root?.unmount();
     removeOffscreenContainer(container);
   }
 }
 
 /**
- * Build a complete SVG with task table rendered as native SVG elements.
+ * Mount ExportRenderer in the offscreen container and wait for the browser
+ * to complete layout and paint before returning.
+ */
+async function mountExportRenderer(
+  root: Root,
+  container: HTMLDivElement,
+  props: RendererProps
+): Promise<void> {
+  await new Promise<void>((resolve) => {
+    root.render(createElement(ExportRenderer, props));
+    setTimeout(resolve, REACT_RENDER_WAIT_MS);
+  });
+  await waitForFonts();
+  await waitForPaint();
+  container.style.opacity = "1";
+  await waitForPaint();
+}
+
+/**
+ * Pull the rendered SVG elements from the offscreen container and assemble
+ * a complete, self-contained SVG ready for svg2pdf conversion.
+ */
+function extractSvgFromContainer(
+  container: HTMLDivElement,
+  dimensions: PixelDimensions,
+  ctx: SvgAssemblyContext
+): SVGSVGElement {
+  const chartSvgEl = container.querySelector(`svg.${EXPORT_CHART_SVG_CLASS}`);
+  if (!(chartSvgEl instanceof SVGSVGElement)) {
+    // querySelector returns null when not found; instanceof handles both cases
+    throw new Error(
+      `Chart SVG element (.${EXPORT_CHART_SVG_CLASS}) not found in export container`
+    );
+  }
+
+  const headerSvgEl = container.querySelector(
+    `svg.${EXPORT_TIMELINE_HEADER_SVG_CLASS}`
+  );
+  const headerSvg = headerSvgEl instanceof SVGSVGElement ? headerSvgEl : null;
+  // When includeHeader is true but the header SVG is absent, appendExportHeader
+  // no-ops gracefully — the export continues without the timeline header.
+
+  return buildCompleteSvg(chartSvgEl, headerSvg, dimensions, ctx);
+}
+
+// =============================================================================
+// PDF Document Helpers
+// =============================================================================
+
+/**
+ * Create the jsPDF document, embed the chart SVG, render header/footer
+ * banners, and trigger the file download.
+ */
+async function buildAndSavePdf(
+  svgElement: SVGSVGElement,
+  dimensions: PixelDimensions,
+  settings: PdfDocumentSettings,
+  onProgress?: (progress: number) => void
+): Promise<void> {
+  const { pdfOptions, dateFormat, projectName, metadata } = settings;
+  const pageDims = getPageDimensions(pdfOptions);
+  const margins = getMargins(pdfOptions);
+  const reserved: ReservedSpace = {
+    header: getReservedSpace(pdfOptions.header),
+    footer: getReservedSpace(pdfOptions.footer),
+  };
+  const placement = computeChartPlacement(
+    dimensions,
+    pageDims,
+    margins,
+    reserved
+  );
+  const doc = createPdfDocument(pageDims, settings);
+
+  onProgress?.(EXPORT_PROGRESS.PDF_DOCUMENT_READY);
+
+  await embedSvgInDocument(doc, svgElement, placement);
+
+  onProgress?.(EXPORT_PROGRESS.SVG_EMBEDDED);
+
+  renderBanners(
+    {
+      doc,
+      margins,
+      pageWidth: pageDims.width,
+      pageHeight: pageDims.height,
+      dateFormat,
+    },
+    pdfOptions,
+    metadata,
+    reserved
+  );
+
+  doc.save(generateExportFilename(projectName, "pdf"));
+}
+
+/**
+ * Instantiate the jsPDF document, register the Inter font, and set document
+ * properties. Kept separate from SVG embedding so that creation errors are
+ * distinct from render errors.
+ */
+function createPdfDocument(
+  pageDims: PageDimensions,
+  settings: PdfDocumentSettings
+): jsPDF {
+  const { metadata, pdfOptions } = settings;
+  const doc = new jsPDF({
+    orientation: pdfOptions.orientation,
+    unit: "mm",
+    format: [pageDims.width, pageDims.height],
+  });
+
+  // Register Inter font for consistent rendering across all platforms
+  registerInterFont(doc);
+  doc.setFont(PDF_FONT_NAME, PDF_FONT_STYLE);
+
+  doc.setProperties({
+    title: metadata.title,
+    author: metadata.author,
+    subject: pdfOptions.metadata.subject ?? PDF_DEFAULT_SUBJECT,
+    creator: APP_CONFIG.name,
+  });
+
+  return doc;
+}
+
+/**
+ * Embed the assembled SVG into the PDF document at the computed placement.
+ * Wraps svg2pdf errors with a descriptive message.
+ */
+async function embedSvgInDocument(
+  doc: jsPDF,
+  svgElement: SVGSVGElement,
+  placement: ChartPlacement
+): Promise<void> {
+  try {
+    await doc.svg(svgElement, {
+      x: placement.offsetX,
+      y: placement.offsetY,
+      width: placement.finalWidthMm,
+      height: placement.finalHeightMm,
+    });
+  } catch (err) {
+    throw new Error(`PDF rendering failed: ${String(err)}`);
+  }
+}
+
+/**
+ * Calculate the scaled position and dimensions of the chart SVG within
+ * the PDF page's content area, preserving aspect ratio and centering
+ * horizontally.
+ *
+ * Exported for unit testing.
+ */
+export function computeChartPlacement(
+  dimensions: PixelDimensions,
+  pageDims: PageDimensions,
+  margins: PdfMargins,
+  reserved: ReservedSpace
+): ChartPlacement {
+  const contentWidth = pageDims.width - margins.left - margins.right;
+  const contentHeight =
+    pageDims.height -
+    margins.top -
+    margins.bottom -
+    reserved.header -
+    reserved.footer;
+
+  // Convert SVG px dimensions to mm so both sides of the ratio are in the
+  // same unit, making the resulting scale factor dimensionless.
+  const svgWidthMm = pxToMm(dimensions.width);
+  const svgHeightMm = pxToMm(dimensions.height);
+  const scale = Math.min(
+    contentWidth / svgWidthMm,
+    contentHeight / svgHeightMm
+  );
+  const finalWidthMm = svgWidthMm * scale;
+  const finalHeightMm = svgHeightMm * scale;
+
+  // Centre horizontally within the content area; pin vertically to header
+  const offsetX = margins.left + (contentWidth - finalWidthMm) / 2;
+  const offsetY = margins.top + reserved.header;
+
+  return { offsetX, offsetY, finalWidthMm, finalHeightMm };
+}
+
+// =============================================================================
+// Banner Rendering
+// =============================================================================
+
+/**
+ * Render header and/or footer banners on the PDF document if any fields
+ * are enabled in the respective PdfHeaderFooter config.
+ */
+function renderBanners(
+  ctx: BannerRenderContext,
+  pdfOptions: PdfExportOptions,
+  metadata: PdfMetadata,
+  reserved: ReservedSpace
+): void {
+  if (hasHeaderFooterContent(pdfOptions.header)) {
+    renderPdfBanner(ctx, pdfOptions.header, metadata, {
+      textY: ctx.margins.top + PDF_HEADER_TEXT_OFFSET_MM,
+      lineY: ctx.margins.top + reserved.header,
+      lineBelowText: true,
+    });
+  }
+
+  if (hasHeaderFooterContent(pdfOptions.footer)) {
+    renderPdfBanner(ctx, pdfOptions.footer, metadata, {
+      textY:
+        ctx.pageHeight - ctx.margins.bottom - PDF_FOOTER_TEXT_BOTTOM_OFFSET_MM,
+      lineY: ctx.pageHeight - ctx.margins.bottom - reserved.footer,
+      lineBelowText: false,
+    });
+  }
+}
+
+/**
+ * Render a single banner strip: left-aligned title, right-aligned author/date,
+ * and a separator line (below text for headers, above text for footers).
+ */
+function renderPdfBanner(
+  ctx: BannerRenderContext,
+  sectionOptions: PdfHeaderFooter,
+  metadata: PdfMetadata,
+  layout: BannerLayout
+): void {
+  const { doc, margins, pageWidth, dateFormat } = ctx;
+
+  doc.setFontSize(PDF_BANNER_FONT_SIZE_PT);
+  doc.setTextColor(PDF_TEXT_COLOR.r, PDF_TEXT_COLOR.g, PDF_TEXT_COLOR.b);
+  doc.setDrawColor(PDF_BORDER_COLOR.r, PDF_BORDER_COLOR.g, PDF_BORDER_COLOR.b);
+  doc.setLineWidth(PDF_SEPARATOR_LINE_WIDTH_MM);
+
+  // Footer: separator above text so text renders on top
+  if (!layout.lineBelowText) {
+    doc.line(
+      margins.left,
+      layout.lineY,
+      pageWidth - margins.right,
+      layout.lineY
+    );
+  }
+
+  if (sectionOptions.showProjectName && metadata.title) {
+    doc.text(metadata.title, margins.left, layout.textY);
+  }
+
+  const rightParts: string[] = [];
+  if (sectionOptions.showAuthor && metadata.author) {
+    rightParts.push(metadata.author);
+  }
+  if (sectionOptions.showExportDate) {
+    rightParts.push(formatDateByPreference(new Date(), dateFormat));
+  }
+  if (rightParts.length > 0) {
+    const rightText = rightParts.join(PDF_BANNER_SEPARATOR);
+    const rightWidth = doc.getTextWidth(rightText);
+    doc.text(rightText, pageWidth - margins.right - rightWidth, layout.textY);
+  }
+
+  // Header: separator below text so it draws on top of the chart SVG
+  if (layout.lineBelowText) {
+    doc.line(
+      margins.left,
+      layout.lineY,
+      pageWidth - margins.right,
+      layout.lineY
+    );
+  }
+}
+
+// =============================================================================
+// SVG Construction
+// =============================================================================
+
+/**
+ * Build a complete SVG combining the task table (rendered as native SVG
+ * elements) and the Gantt chart SVG extracted from the offscreen container.
  */
 function buildCompleteSvg(
   chartSvg: SVGSVGElement,
   headerSvg: SVGSVGElement | null,
-  tasks: Task[],
-  options: ExportOptions,
-  columnWidths: Record<string, number>,
-  dimensions: { width: number; height: number },
-  colorModeState: ColorModeState,
-  projectName?: string
+  dimensions: PixelDimensions,
+  ctx: SvgAssemblyContext
 ): SVGSVGElement {
-  const selectedColumns =
-    options.selectedColumns ||
-    (["name", "startDate", "endDate", "progress"] as ExportColumnKey[]);
-  const hasTaskList = selectedColumns.length > 0;
+  const { options, columnWidths } = ctx;
+  const hasTaskList = options.selectedColumns.length > 0;
   const taskTableWidth = hasTaskList
-    ? calculateTaskTableWidth(selectedColumns, columnWidths, options.density)
-    : 0;
-
-  const flattenedTasks = buildFlattenedTaskList(tasks, new Set<TaskId>());
-
-  // Create root SVG
-  const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
-  svg.setAttribute("xmlns", "http://www.w3.org/2000/svg");
-  svg.setAttribute("width", String(dimensions.width));
-  svg.setAttribute("height", String(dimensions.height));
-  svg.setAttribute("viewBox", `0 0 ${dimensions.width} ${dimensions.height}`);
-
-  // Title for accessibility
-  const title = document.createElementNS("http://www.w3.org/2000/svg", "title");
-  title.textContent = projectName
-    ? `Gantt chart: ${projectName}`
-    : "Gantt Chart";
-  svg.appendChild(title);
-
-  // White background
-  if (options.background === "white") {
-    const bg = document.createElementNS("http://www.w3.org/2000/svg", "rect");
-    bg.setAttribute("width", "100%");
-    bg.setAttribute("height", "100%");
-    bg.setAttribute("fill", "#ffffff");
-    svg.appendChild(bg);
-  }
-
-  // Font declaration (system font stack)
-  const defs = document.createElementNS("http://www.w3.org/2000/svg", "defs");
-  const style = document.createElementNS("http://www.w3.org/2000/svg", "style");
-  style.textContent = `
-    text { font-family: ${SVG_FONT_FAMILY}; }
-  `;
-  defs.appendChild(style);
-  svg.appendChild(defs);
-
-  let currentY = 0;
-
-  // Render header row
-  if (options.includeHeader) {
-    if (hasTaskList) {
-      const headerGroup = renderTaskTableHeader(
-        svg,
-        selectedColumns,
+    ? calculateTaskTableWidth(
+        options.selectedColumns,
         columnWidths,
-        taskTableWidth,
-        0,
-        0,
         options.density
-      );
-      // Ensure font-family is set on all text elements for svg2pdf.js
-      setFontFamilyOnTextElements(headerGroup);
-    }
+      )
+    : 0;
+  const svg = createSvgRoot(dimensions, options.background, ctx.projectName);
+  const contentY = options.includeHeader ? HEADER_HEIGHT : 0;
 
-    if (headerSvg) {
-      const headerGroup = document.createElementNS(
-        "http://www.w3.org/2000/svg",
-        "g"
-      );
-      headerGroup.setAttribute("transform", `translate(${taskTableWidth}, 0)`);
-      Array.from(headerSvg.childNodes).forEach((child) => {
-        headerGroup.appendChild(child.cloneNode(true));
-      });
-      setFontFamilyOnTextElements(headerGroup);
-      svg.appendChild(headerGroup);
-    }
-
-    currentY = HEADER_HEIGHT;
+  if (options.includeHeader) {
+    appendExportHeader(svg, headerSvg, ctx, taskTableWidth);
   }
 
-  // Render task table rows
-  if (hasTaskList) {
-    const rowsGroup = renderTaskTableRows(
-      svg,
-      flattenedTasks,
-      selectedColumns,
-      columnWidths,
-      taskTableWidth,
-      0,
-      currentY,
-      options.density,
-      colorModeState
-    );
-    // Ensure font-family is set on all text elements for svg2pdf.js
-    setFontFamilyOnTextElements(rowsGroup);
-  }
-
-  // Add timeline chart
-  const chartGroup = document.createElementNS(
-    "http://www.w3.org/2000/svg",
-    "g"
-  );
-  chartGroup.setAttribute(
-    "transform",
-    `translate(${taskTableWidth}, ${currentY})`
-  );
-  Array.from(chartSvg.childNodes).forEach((child) => {
-    chartGroup.appendChild(child.cloneNode(true));
-  });
-  setFontFamilyOnTextElements(chartGroup);
-  svg.appendChild(chartGroup);
+  appendChartContent(svg, chartSvg, ctx, { taskTableWidth, contentY });
 
   return svg;
 }
 
 /**
- * Render the header on the PDF.
+ * Append the task-table header columns and the timeline header SVG to the
+ * root SVG. No-ops gracefully when either section is absent.
  */
-function renderHeader(
-  doc: jsPDF,
-  options: PdfExportOptions,
-  projectTitle: string | undefined,
-  projectAuthor: string | undefined,
-  margins: { top: number; left: number; right: number },
-  pageWidth: number,
-  headerReserved: number,
-  dateFormat: DateFormat
+function appendExportHeader(
+  svg: SVGSVGElement,
+  headerSvg: SVGSVGElement | null,
+  ctx: SvgAssemblyContext,
+  taskTableWidth: number
 ): void {
-  doc.setFontSize(9);
-  doc.setTextColor(71, 85, 105); // #475569 - matches COLORS.textSecondary
+  const { options, columnWidths } = ctx;
 
-  const textY = margins.top + 6;
-
-  // Left side: Project title
-  if (options.header.showProjectName && projectTitle) {
-    doc.text(projectTitle, margins.left, textY);
+  if (taskTableWidth > 0) {
+    const headerOpts: TaskTableHeaderOptions = {
+      selectedColumns: options.selectedColumns,
+      columnWidths,
+      totalWidth: taskTableWidth,
+      x: 0,
+      y: 0,
+      density: options.density,
+    };
+    const headerGroup = renderTaskTableHeader(svg, headerOpts);
+    setFontFamilyOnTextElements(headerGroup);
   }
 
-  // Right side: Author and/or date, joined with " · "
-  const rightParts: string[] = [];
-  if (options.header.showAuthor && projectAuthor) {
-    rightParts.push(projectAuthor);
+  if (headerSvg) {
+    appendTranslatedSvgContent(svg, headerSvg, taskTableWidth, 0);
   }
-  if (options.header.showExportDate) {
-    rightParts.push(formatDateByPreference(new Date(), dateFormat));
-  }
-  if (rightParts.length > 0) {
-    const rightText = rightParts.join(" \u00B7 ");
-    const rightWidth = doc.getTextWidth(rightText);
-    doc.text(rightText, pageWidth - margins.right - rightWidth, textY);
+}
+
+/**
+ * Append the task-table row content and the main Gantt chart SVG to the
+ * root SVG at the layout's content Y offset.
+ */
+function appendChartContent(
+  svg: SVGSVGElement,
+  chartSvg: SVGSVGElement,
+  ctx: SvgAssemblyContext,
+  layout: SvgChartLayout
+): void {
+  const { options, columnWidths, colorModeState } = ctx;
+  const { taskTableWidth, contentY } = layout;
+
+  if (taskTableWidth > 0) {
+    // hiddenTaskIds is empty: ctx.tasks is already pre-filtered by prepareExportTasks,
+    // so no rows need to be hidden at this stage.
+    const flattenedTasks = buildFlattenedTaskList(ctx.tasks, new Set<TaskId>());
+    const rowsOpts: TaskTableRowsOptions = {
+      flattenedTasks,
+      selectedColumns: options.selectedColumns,
+      columnWidths,
+      totalWidth: taskTableWidth,
+      x: 0,
+      startY: contentY,
+      density: options.density,
+      colorModeState,
+    };
+    const rowsGroup = renderTaskTableRows(svg, rowsOpts);
+    setFontFamilyOnTextElements(rowsGroup);
   }
 
-  // Separator line below header
-  doc.setDrawColor(226, 232, 240); // #e2e8f0 - matches COLORS.border
-  doc.setLineWidth(0.1);
-  doc.line(
-    margins.left,
-    margins.top + headerReserved,
-    pageWidth - margins.right,
-    margins.top + headerReserved
+  appendTranslatedSvgContent(svg, chartSvg, taskTableWidth, contentY);
+}
+
+/**
+ * Create the root SVG element with correct dimensions, an accessibility
+ * title, optional white background, and a font-family CSS declaration
+ * for svg2pdf.js compatibility.
+ */
+function createSvgRoot(
+  dimensions: PixelDimensions,
+  background: ExportOptions["background"],
+  projectName?: string
+): SVGSVGElement {
+  const svg = document.createElementNS(SVG_NS, "svg");
+  svg.setAttribute("xmlns", SVG_NS);
+  svg.setAttribute("width", String(dimensions.width));
+  svg.setAttribute("height", String(dimensions.height));
+  svg.setAttribute("viewBox", `0 0 ${dimensions.width} ${dimensions.height}`);
+
+  const title = document.createElementNS(SVG_NS, "title");
+  title.textContent = projectName
+    ? `Gantt chart: ${projectName}`
+    : "Gantt Chart";
+  svg.appendChild(title);
+
+  if (background === "white") {
+    const bg = document.createElementNS(SVG_NS, "rect");
+    bg.setAttribute("width", "100%");
+    bg.setAttribute("height", "100%");
+    bg.setAttribute("fill", SVG_BACKGROUND_WHITE);
+    svg.appendChild(bg);
+  }
+
+  const defs = document.createElementNS(SVG_NS, "defs");
+  const style = document.createElementNS(SVG_NS, "style");
+  style.textContent = `text { font-family: ${SVG_FONT_FAMILY}; }`;
+  defs.appendChild(style);
+  svg.appendChild(defs);
+
+  return svg;
+}
+
+/** Create an SVG <g> element translated to the given (x, y) offset. */
+function createTranslatedGroup(x: number, y: number): SVGGElement {
+  const g = document.createElementNS(SVG_NS, "g");
+  g.setAttribute("transform", `translate(${x}, ${y})`);
+  return g;
+}
+
+/** Deep-clone all child nodes of `source` and append them to `target`. */
+function cloneChildrenInto(source: Node, target: Node): void {
+  source.childNodes.forEach((child) =>
+    target.appendChild(child.cloneNode(true))
   );
 }
 
 /**
- * Render the footer on the PDF.
+ * Translate `source` SVG's children into a new <g> at (x, y), apply the
+ * Inter font-family declaration to all text elements, and append the group
+ * to `parent`. This is the canonical way to embed a rendered SVG fragment
+ * into the assembled export SVG.
  */
-function renderFooter(
-  doc: jsPDF,
-  options: PdfExportOptions,
-  projectTitle: string | undefined,
-  projectAuthor: string | undefined,
-  margins: { top: number; left: number; bottom: number; right: number },
-  pageWidth: number,
-  pageHeight: number,
-  footerReserved: number,
-  dateFormat: DateFormat
+function appendTranslatedSvgContent(
+  parent: SVGSVGElement,
+  source: SVGSVGElement,
+  x: number,
+  y: number
 ): void {
-  doc.setFontSize(9);
-  doc.setTextColor(71, 85, 105); // #475569 - matches COLORS.textSecondary
-
-  const footerLineY = pageHeight - margins.bottom - footerReserved;
-  const textY = pageHeight - margins.bottom - 4;
-
-  // Separator line above footer
-  doc.setDrawColor(226, 232, 240); // #e2e8f0 - matches COLORS.border
-  doc.setLineWidth(0.1);
-  doc.line(margins.left, footerLineY, pageWidth - margins.right, footerLineY);
-
-  // Left side: Project title
-  if (options.footer.showProjectName && projectTitle) {
-    doc.text(projectTitle, margins.left, textY);
-  }
-
-  // Right side: Author and/or date, joined with " · "
-  const rightParts: string[] = [];
-  if (options.footer.showAuthor && projectAuthor) {
-    rightParts.push(projectAuthor);
-  }
-  if (options.footer.showExportDate) {
-    rightParts.push(formatDateByPreference(new Date(), dateFormat));
-  }
-  if (rightParts.length > 0) {
-    const rightText = rightParts.join(" \u00B7 ");
-    const rightWidth = doc.getTextWidth(rightText);
-    doc.text(rightText, pageWidth - margins.right - rightWidth, textY);
-  }
+  const g = createTranslatedGroup(x, y);
+  cloneChildrenInto(source, g);
+  setFontFamilyOnTextElements(g);
+  parent.appendChild(g);
 }
