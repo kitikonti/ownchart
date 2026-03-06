@@ -20,6 +20,12 @@ import { buildAdjacencyList, ensureList } from "./graphHelpers";
 const PROBE_DEPENDENCY_ID = "__probe__";
 
 /**
+ * Arbitrary valid `DependencyType` for the probe object — ignored by graph construction.
+ * Explicitly typed so any future change to the DependencyType union surfaces here at compile time.
+ */
+const PROBE_DEPENDENCY_TYPE: Dependency["type"] = "FS";
+
+/**
  * Iterative DFS with three-colour marking to detect back edges (cycles).
  *
  * An explicit [node, neighborIndex] stack replaces the call stack so traversal
@@ -151,8 +157,8 @@ export function wouldCreateCycle(
     id: PROBE_DEPENDENCY_ID,
     fromTaskId,
     toTaskId,
-    type: "FS",
-    createdAt: "",
+    type: PROBE_DEPENDENCY_TYPE,
+    createdAt: "", // placeholder; ignored by graph construction
   };
 
   return detectCycle(dependencies, proposedDep);

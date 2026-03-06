@@ -38,3 +38,33 @@ export function buildReverseAdjacencyList(
   }
   return graph;
 }
+
+/**
+ * BFS from `startId` returning all reachable nodes (excluding `startId` itself).
+ * Uses a pointer-based queue for O(1) dequeue — overall O(V + E).
+ *
+ * `startId` is pre-marked as visited so it is never added to the result set,
+ * even in graphs that contain cycles leading back to it.
+ */
+export function bfsReachable(
+  startId: TaskId,
+  graph: Map<TaskId, TaskId[]>
+): Set<TaskId> {
+  const reachable = new Set<TaskId>();
+  const queue: TaskId[] = [startId];
+  let head = 0;
+  const visited = new Set<TaskId>([startId]);
+
+  while (head < queue.length) {
+    const current = queue[head++];
+    for (const neighbor of graph.get(current) ?? []) {
+      if (!visited.has(neighbor)) {
+        visited.add(neighbor);
+        reachable.add(neighbor);
+        queue.push(neighbor);
+      }
+    }
+  }
+
+  return reachable;
+}
