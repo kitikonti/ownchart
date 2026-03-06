@@ -114,31 +114,20 @@ export function useMarqueeSelection({
         y: e.clientY - rect.top,
       };
     },
-    [svgRef]
+    [] // svgRef is a stable React ref — re-creation on ref identity change is unnecessary
   );
 
   // Find tasks that intersect with the marquee rectangle.
   // Uses a ref for taskGeometries so this callback is always stable —
   // avoids recreating handleMouseUp/onMouseDown on every render.
+  // TaskGeometry structurally satisfies the rect parameter of rectsIntersect,
+  // so we pass the task object directly without an intermediate spread.
   const findIntersectingTasks = useCallback(
     (marquee: MarqueeRect): TaskId[] => {
       const normalizedMarquee = normalizeRect(marquee);
-      const intersectingIds: TaskId[] = [];
-
-      for (const task of taskGeometriesRef.current) {
-        const taskRect = {
-          x: task.x,
-          y: task.y,
-          width: task.width,
-          height: task.height,
-        };
-
-        if (rectsIntersect(normalizedMarquee, taskRect)) {
-          intersectingIds.push(task.id);
-        }
-      }
-
-      return intersectingIds;
+      return taskGeometriesRef.current
+        .filter((task) => rectsIntersect(normalizedMarquee, task))
+        .map((task) => task.id);
     },
     []
   ); // stable — reads taskGeometries via ref

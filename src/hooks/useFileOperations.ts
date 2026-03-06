@@ -24,6 +24,7 @@ import {
 import { sanitizeFilename } from "../utils/export/sanitizeFilename";
 
 const OWNCHART_FILE_EXTENSION = ".ownchart";
+const DEFAULT_CHART_NAME = "Untitled";
 
 /** Coerce an unknown catch value to a readable string. */
 function toErrorMsg(e: unknown): string {
@@ -57,21 +58,24 @@ export function resolveSuggestedFilename(
   return `untitled${OWNCHART_FILE_EXTENSION}`;
 }
 
-export function useFileOperations(): {
-  handleSave: (saveAs?: boolean) => Promise<void>;
-  handleSaveAs: () => Promise<void>;
-  handleOpen: () => Promise<void>;
-  handleNew: () => Promise<void>;
-  fileName: string | null;
-  isDirty: boolean;
-  lastSaved: Date | null;
-} {
+// ---------------------------------------------------------------------------
+// Internal sub-hook — groups all store subscriptions in one place.
+//
+// Individual selectors (not a combined selector returning an object) are used
+// throughout so that each value has its own subscription. This prevents an
+// unrelated state change (e.g. isDirty toggling on every keystroke) from
+// invalidating the memoized viewSettings / serializeOpts objects and
+// needlessly re-creating the handleSave callback.
+// ---------------------------------------------------------------------------
+
+function useFileOperationsState() {
+  // taskSlice
   const tasks = useTaskStore((state) => state.tasks);
   const setTasks = useTaskStore((state) => state.setTasks);
   const taskTableWidth = useTaskStore((state) => state.taskTableWidth);
   const columnWidths = useTaskStore((state) => state.columnWidths);
 
-  // View settings from chartSlice
+  // chartSlice — view settings persisted to .ownchart file
   const zoom = useChartStore((state) => state.zoom);
   const panOffset = useChartStore((state) => state.panOffset);
   const showWeekends = useChartStore((state) => state.showWeekends);
@@ -95,14 +99,14 @@ export function useFileOperations(): {
   const setProjectAuthor = useChartStore((state) => state.setProjectAuthor);
   const setHiddenTaskIds = useChartStore((state) => state.setHiddenTaskIds);
 
-  // Sprint 1.4: Dependency store
+  // dependencySlice
   const dependencies = useDependencyStore((state) => state.dependencies);
   const clearDependencies = useDependencyStore(
     (state) => state.clearDependencies
   );
 
-  // fileSlice — individual selectors to avoid full-store subscription and
-  // prevent handleSave from being recreated on every isDirty/lastSaved change
+  // fileSlice — individual selectors prevent handleSave from being
+  // re-created on every isDirty/lastSaved change (see comment above)
   const fileName = useFileStore((state) => state.fileName);
   const isDirty = useFileStore((state) => state.isDirty);
   const lastSaved = useFileStore((state) => state.lastSaved);
@@ -115,9 +119,101 @@ export function useFileOperations(): {
 
   const clearHistory = useHistoryStore((state) => state.clearHistory);
 
-  // Export options from uiSlice
+  // uiSlice
   const exportOptions = useUIStore((state) => state.exportOptions);
   const resetExportOptions = useUIStore((state) => state.resetExportOptions);
+
+  return {
+    tasks,
+    setTasks,
+    taskTableWidth,
+    columnWidths,
+    zoom,
+    panOffset,
+    showWeekends,
+    showTodayMarker,
+    showHolidays,
+    showDependencies,
+    showProgress,
+    taskLabelPosition,
+    workingDaysMode,
+    workingDaysConfig,
+    holidayRegion,
+    colorModeState,
+    hiddenColumns,
+    isTaskTableCollapsed,
+    hiddenTaskIds,
+    projectTitle,
+    projectAuthor,
+    setProjectTitle,
+    setProjectAuthor,
+    setHiddenTaskIds,
+    dependencies,
+    clearDependencies,
+    fileName,
+    isDirty,
+    lastSaved,
+    chartId,
+    chartCreatedAt,
+    setFileName,
+    setLastSaved,
+    markClean,
+    resetFileStore,
+    clearHistory,
+    exportOptions,
+    resetExportOptions,
+  };
+}
+
+export function useFileOperations(): {
+  handleSave: (saveAs?: boolean) => Promise<void>;
+  handleSaveAs: () => Promise<void>;
+  handleOpen: () => Promise<void>;
+  handleNew: () => Promise<void>;
+  fileName: string | null;
+  isDirty: boolean;
+  lastSaved: Date | null;
+} {
+  const {
+    tasks,
+    setTasks,
+    taskTableWidth,
+    columnWidths,
+    zoom,
+    panOffset,
+    showWeekends,
+    showTodayMarker,
+    showHolidays,
+    showDependencies,
+    showProgress,
+    taskLabelPosition,
+    workingDaysMode,
+    workingDaysConfig,
+    holidayRegion,
+    colorModeState,
+    hiddenColumns,
+    isTaskTableCollapsed,
+    hiddenTaskIds,
+    projectTitle,
+    projectAuthor,
+    setProjectTitle,
+    setProjectAuthor,
+    setHiddenTaskIds,
+    dependencies,
+    clearDependencies,
+    fileName,
+    isDirty,
+    lastSaved,
+    chartId,
+    chartCreatedAt,
+    setFileName,
+    setLastSaved,
+    markClean,
+    resetFileStore,
+    clearHistory,
+    exportOptions,
+    resetExportOptions,
+  } = useFileOperationsState();
 
   // Build the view-settings snapshot — memoized so handleSave's dep array
   // only needs to reference this object rather than all 19 individual values.
@@ -170,7 +266,8 @@ export function useFileOperations(): {
   // handleSave stays lean and easy to reason about.
   const serializeOpts = useMemo(
     () => ({
-      chartName: fileName?.replace(OWNCHART_FILE_EXTENSION, "") ?? "Untitled",
+      chartName:
+        fileName?.replace(OWNCHART_FILE_EXTENSION, "") ?? DEFAULT_CHART_NAME,
       chartId: chartId ?? undefined,
       chartCreatedAt: chartCreatedAt ?? undefined,
       prettyPrint: true,

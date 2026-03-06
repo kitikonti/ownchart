@@ -25,6 +25,19 @@ interface ClipboardOperations {
   canPaste: boolean;
 }
 
+/**
+ * Returns true if two task arrays represent the same ordered sequence of IDs.
+ * Used to detect when the system clipboard holds data already present in the
+ * internal clipboard, preventing accidental double-paste across tabs.
+ * @internal exported for testing
+ */
+export function hasSameTaskIds(
+  a: readonly { id: unknown }[],
+  b: readonly { id: unknown }[]
+): boolean {
+  return a.length === b.length && a.every((item, i) => item.id === b[i].id);
+}
+
 // ---------------------------------------------------------------------------
 // Module-level helpers — read fresh store state via getState() so they never
 // need to be part of a useCallback dependency array.
@@ -73,11 +86,13 @@ async function tryPasteRowsFromSystemClipboard(): Promise<boolean> {
   const externalRows = await readRowsFromSystemClipboard();
   if (!externalRows || externalRows.tasks.length === 0) return false;
 
-  // Skip if this is the same data already in the internal clipboard
+  // Skip if this is the same data already in the internal clipboard.
+  // Compare the full ID sequence — not just the first element — so a
+  // different multi-task selection that happens to share the first ID
+  // does not silently skip the external paste.
   const isSameAsInternal =
     internalMode === "row" &&
-    rowClipboard.tasks.length === externalRows.tasks.length &&
-    rowClipboard.tasks[0]?.id === externalRows.tasks[0]?.id;
+    hasSameTaskIds(rowClipboard.tasks, externalRows.tasks);
 
   if (isSameAsInternal) return false;
 
@@ -216,27 +231,28 @@ export function useClipboardOperations(): ClipboardOperations {
     if (usedSystemClipboard) return;
 
     // Fall back to internal clipboard — read fresh state after the async gap
-    const {
-      getClipboardMode: getMode,
-      pasteRows: paste,
-      pasteCell: pasteC,
-    } = useClipboardStore.getState();
-    const { activeCell: cell } = useTaskStore.getState();
-    const internalMode = getMode();
+    const { getClipboardMode, pasteRows, pasteCell } =
+      useClipboardStore.getState();
+    const { activeCell } = useTaskStore.getState();
+    const internalMode = getClipboardMode();
 
     if (internalMode === "row") {
       // Paste rows
-      const result = paste();
+      const result = pasteRows();
       if (result.success) {
         toast.success("Pasted rows");
       } else if (result.error) {
         toast.error(result.error);
       }
-    } else if (internalMode === "cell" && cell.taskId && cell.field) {
+    } else if (
+      internalMode === "cell" &&
+      activeCell.taskId &&
+      activeCell.field
+    ) {
       // Paste cell value
-      const result = pasteC(cell.taskId, cell.field);
+      const result = pasteCell(activeCell.taskId, activeCell.field);
       if (result.success) {
-        toast.success(`Pasted ${cell.field}`);
+        toast.success(`Pasted ${activeCell.field}`);
       } else if (result.error) {
         toast.error(result.error);
       }
