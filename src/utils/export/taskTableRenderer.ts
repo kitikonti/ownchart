@@ -39,6 +39,13 @@ import { computeAllTaskColors } from "../computeTaskColor";
 /** Fallback label prefix for tasks without a name, e.g. "Task 1", "Task 2". */
 const UNNAMED_TASK_PREFIX = "Task";
 
+/**
+ * Columns that require custom rendering (not handled by getColumnDisplayValue).
+ * When ExportColumnKey gains a new special-case column, add it here AND update
+ * ExportDataColumnKey in types.ts.
+ */
+const SPECIAL_CASE_COLUMNS = new Set<ExportColumnKey>(["color", "name"]);
+
 // ─── SVG namespace helper ─────────────────────────────────────────────────────
 
 const SVG_NS = "http://www.w3.org/2000/svg";
@@ -133,6 +140,15 @@ function createBorderLine(
 
 // ─── Column separator helper ──────────────────────────────────────────────────
 
+/** Position and span of a vertical column separator line. */
+interface SeparatorOptions {
+  colX: number;
+  colWidth: number;
+  startY: number;
+  height: number;
+  color: string;
+}
+
 /**
  * Render a vertical column separator at the right edge of a cell.
  * No-ops for the color column — matches app styling where the color
@@ -141,34 +157,44 @@ function createBorderLine(
 function renderColumnSeparator(
   group: SVGGElement,
   key: ExportColumnKey,
-  colX: number,
-  colWidth: number,
-  startY: number,
-  height: number,
-  color: string
+  opts: SeparatorOptions
 ): void {
   if (key === "color") return;
   group.appendChild(
     createBorderLine(
-      colX + colWidth,
-      startY,
-      colX + colWidth,
-      startY + height,
-      color
+      opts.colX + opts.colWidth,
+      opts.startY,
+      opts.colX + opts.colWidth,
+      opts.startY + opts.height,
+      opts.color
     )
   );
+}
+
+// ─── Column width resolver ────────────────────────────────────────────────────
+
+/**
+ * Resolve the rendered width for a column: uses the caller-provided override
+ * when present, otherwise falls back to the density-specific default.
+ */
+function resolveColumnWidth(
+  key: ExportColumnKey,
+  columnWidths: Record<string, number>,
+  density: UiDensity
+): number {
+  return columnWidths[key] ?? getDefaultColumnWidth(key, density);
 }
 
 // ─── Type guard ───────────────────────────────────────────────────────────────
 
 /**
- * Narrow ExportColumnKey to ExportDataColumnKey (i.e. not 'color' or 'name').
+ * Narrow ExportColumnKey to ExportDataColumnKey (i.e. not in SPECIAL_CASE_COLUMNS).
  * Invariant: ExportDataColumnKey === Exclude<ExportColumnKey, 'color' | 'name'>.
- * If ExportColumnKey gains new special-case columns, update both this guard
+ * If ExportColumnKey gains new special-case columns, update SPECIAL_CASE_COLUMNS
  * and ExportDataColumnKey in types.ts.
  */
 function isDataColumn(key: ExportColumnKey): key is ExportDataColumnKey {
-  return key !== "color" && key !== "name";
+  return !SPECIAL_CASE_COLUMNS.has(key);
 }
 
 // ─── Cell render context ──────────────────────────────────────────────────────
@@ -257,7 +283,7 @@ function renderNameText({
 
 function renderColorCell(
   ctx: CellRenderContext,
-  color: HexColor | string,
+  color: HexColor,
   layout: CellLayout
 ): void {
   const { group, rowY, rowHeight, densityConfig } = ctx;
@@ -359,6 +385,10 @@ function renderDataCell(
 /** Shared rendering options forwarded to every row renderer. */
 interface RowRendererOptions {
   selectedColumns: ExportColumnKey[];
+  /**
+   * Caller-provided column-width overrides (may include keys beyond ExportColumnKey).
+   * Falls back to density-specific defaults via resolveColumnWidth for any missing key.
+   */
   columnWidths: Record<string, number>;
   density: UiDensity;
   densityConfig: DensityConfig;
@@ -368,6 +398,43 @@ interface RowRendererOptions {
   x: number;
 }
 
+/** Render all cell columns for a single row, advancing colX across selected columns. */
+function renderRowCells(
+  ctx: CellRenderContext,
+  flattenedTask: FlattenedTask,
+  rowIndex: number,
+  options: RowRendererOptions
+): void {
+  const { selectedColumns, columnWidths, density, colorCache, x } = options;
+  const { task } = flattenedTask;
+
+  let colX = x;
+  for (const key of selectedColumns) {
+    const colWidth = resolveColumnWidth(key, columnWidths, density);
+    const layout: CellLayout = { colX, colWidth };
+
+    if (key === "color") {
+      // colorCache always contains every exported task; fallback guards against gaps.
+      const color = colorCache.get(task.id) ?? task.color;
+      renderColorCell(ctx, color, layout);
+    } else if (key === "name") {
+      renderNameCell(ctx, task, flattenedTask, rowIndex, layout);
+    } else if (isDataColumn(key)) {
+      renderDataCell(ctx, task, key, layout);
+    }
+
+    renderColumnSeparator(ctx.group, key, {
+      colX,
+      colWidth,
+      startY: ctx.rowY,
+      height: ctx.rowHeight,
+      color: EXPORT_COLORS.borderLight,
+    });
+
+    colX += colWidth;
+  }
+}
+
 function renderTaskRow(
   group: SVGGElement,
   flattenedTask: FlattenedTask,
@@ -375,17 +442,8 @@ function renderTaskRow(
   rowY: number,
   options: RowRendererOptions
 ): void {
-  const {
-    selectedColumns,
-    columnWidths,
-    density,
-    densityConfig,
-    colorCache,
-    totalWidth,
-    x,
-  } = options;
+  const { densityConfig, totalWidth, x } = options;
   const { rowHeight } = densityConfig;
-  const { task } = flattenedTask;
   const ctx: CellRenderContext = { group, rowY, rowHeight, densityConfig };
 
   // Row bottom border
@@ -399,45 +457,25 @@ function renderTaskRow(
     )
   );
 
-  let colX = x;
-  for (const key of selectedColumns) {
-    const colWidth = columnWidths[key] ?? getDefaultColumnWidth(key, density);
-    const layout: CellLayout = { colX, colWidth };
-
-    if (key === "color") {
-      // colorCache always contains every exported task; fallback guards against gaps.
-      const color = colorCache.get(task.id) ?? task.color;
-      renderColorCell(ctx, color, layout);
-    } else if (key === "name") {
-      renderNameCell(ctx, task, flattenedTask, rowIndex, layout);
-    } else if (isDataColumn(key)) {
-      renderDataCell(ctx, task, key, layout);
-    }
-
-    renderColumnSeparator(
-      group,
-      key,
-      colX,
-      colWidth,
-      rowY,
-      rowHeight,
-      EXPORT_COLORS.borderLight
-    );
-
-    colX += colWidth;
-  }
+  renderRowCells(ctx, flattenedTask, rowIndex, options);
 }
 
 // ─── Private header cell renderer ─────────────────────────────────────────────
+
+/** Rendering context passed to each header cell renderer. */
+interface HeaderCellContext {
+  y: number;
+  cellPaddingX: number;
+}
 
 function renderHeaderCell(
   group: SVGGElement,
   key: ExportColumnKey,
   layout: CellLayout,
-  y: number,
-  cellPaddingX: number
+  ctx: HeaderCellContext
 ): void {
   const { colX, colWidth } = layout;
+  const { y, cellPaddingX } = ctx;
   const label = HEADER_LABELS[key] ?? "";
 
   // Column header text — matches app: text-xs font-semibold uppercase tracking-wider
@@ -456,15 +494,13 @@ function renderHeaderCell(
     );
   }
 
-  renderColumnSeparator(
-    group,
-    key,
+  renderColumnSeparator(group, key, {
     colX,
     colWidth,
-    y,
-    HEADER_HEIGHT,
-    EXPORT_COLORS.border
-  );
+    startY: y,
+    height: HEADER_HEIGHT,
+    color: EXPORT_COLORS.border,
+  });
 }
 
 // ─── Public API ───────────────────────────────────────────────────────────────
@@ -472,6 +508,10 @@ function renderHeaderCell(
 /** Options for renderTaskTableHeader. */
 export interface TaskTableHeaderOptions {
   selectedColumns: ExportColumnKey[];
+  /**
+   * Caller-provided column-width overrides (may include keys beyond ExportColumnKey).
+   * Falls back to density-specific defaults for any missing key.
+   */
   columnWidths: Record<string, number>;
   totalWidth: number;
   x: number;
@@ -491,7 +531,11 @@ export function renderTaskTableHeader(
   options: TaskTableHeaderOptions
 ): SVGGElement {
   const { selectedColumns, columnWidths, totalWidth, x, y, density } = options;
-  const { cellPaddingX } = DENSITY_CONFIG[density];
+  const densityConfig = DENSITY_CONFIG[density];
+  const headerCtx: HeaderCellContext = {
+    y,
+    cellPaddingX: densityConfig.cellPaddingX,
+  };
 
   const group = createSVGEl("g");
   group.setAttribute("class", "task-table-header");
@@ -518,8 +562,8 @@ export function renderTaskTableHeader(
 
   let colX = x;
   for (const key of selectedColumns) {
-    const colWidth = columnWidths[key] ?? getDefaultColumnWidth(key, density);
-    renderHeaderCell(group, key, { colX, colWidth }, y, cellPaddingX);
+    const colWidth = resolveColumnWidth(key, columnWidths, density);
+    renderHeaderCell(group, key, { colX, colWidth }, headerCtx);
     colX += colWidth;
   }
 
@@ -531,6 +575,10 @@ export function renderTaskTableHeader(
 export interface TaskTableRowsOptions {
   flattenedTasks: FlattenedTask[];
   selectedColumns: ExportColumnKey[];
+  /**
+   * Caller-provided column-width overrides (may include keys beyond ExportColumnKey).
+   * Falls back to density-specific defaults for any missing key.
+   */
   columnWidths: Record<string, number>;
   totalWidth: number;
   x: number;
