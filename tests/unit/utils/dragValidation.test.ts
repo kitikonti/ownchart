@@ -46,7 +46,7 @@ describe("validateDragOperation", () => {
     it("should return invalid when duration is less than 1 day", () => {
       const task = createTask("1", "Task 1");
 
-      // Same date means 0 days duration using calculateDuration logic
+      // End before start: rejected by validateDateRange inside validateTask.
       const result = validateDragOperation(task, "2025-01-10", "2025-01-09");
 
       expect(result.valid).toBe(false);

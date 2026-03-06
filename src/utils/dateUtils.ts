@@ -13,17 +13,30 @@ import {
 import type { Task } from "../types/chart.types";
 import type { DateFormat } from "../types/preferences.types";
 
+/** Maps DateFormat preference values to date-fns format strings. */
+const DATE_FORMAT_PATTERNS: Record<DateFormat, string> = {
+  "DD/MM/YYYY": "dd/MM/yyyy",
+  "MM/DD/YYYY": "MM/dd/yyyy",
+  "YYYY-MM-DD": "yyyy-MM-dd",
+};
+
 /**
- * Convert a Date to ISO date string (YYYY-MM-DD).
- * Replaces the common `date.toISOString().split("T")[0]` pattern.
+ * Convert a Date to ISO date string (YYYY-MM-DD) using local timezone.
+ * Replaces the common `date.toISOString().split("T")[0]` anti-pattern,
+ * which is UTC-based and returns the wrong date for users east of UTC+0
+ * when dates from date-fns (which uses local midnight) are involved.
  */
 export function toISODateString(date: Date): string {
-  return date.toISOString().split("T")[0];
+  return format(date, "yyyy-MM-dd");
 }
 
 /**
- * Calculate duration between two dates in days (inclusive)
+ * Calculate duration between two dates in days (inclusive).
+ * Returns 1 for a same-day range; positive integers for longer ranges.
+ * Returns 0 when endDate is exactly one day before startDate.
+ * Returns a negative value for larger reversed ranges.
  * @example calculateDuration('2025-01-01', '2025-01-05') // 5
+ * @example calculateDuration('2025-01-01', '2025-01-01') // 1
  */
 export function calculateDuration(startDate: string, endDate: string): number {
   const start = parseISO(startDate);
@@ -61,13 +74,8 @@ export function formatDateByPreference(
   date: Date | string,
   dateFormat: DateFormat
 ): string {
-  const formatMap = {
-    "DD/MM/YYYY": "dd/MM/yyyy",
-    "MM/DD/YYYY": "MM/dd/yyyy",
-    "YYYY-MM-DD": "yyyy-MM-dd",
-  };
   const d = typeof date === "string" ? parseISO(date) : date;
-  return format(d, formatMap[dateFormat]);
+  return format(d, DATE_FORMAT_PATTERNS[dateFormat]);
 }
 
 /**
@@ -76,19 +84,15 @@ export function formatDateByPreference(
  */
 export function getDateRange(tasks: Task[]): { min: string; max: string } {
   // Filter out tasks with invalid/empty dates (e.g., empty summaries)
-  const validTasks = tasks.filter(
-    (task) =>
-      task.startDate &&
-      task.endDate &&
-      task.startDate !== "" &&
-      task.endDate !== ""
-  );
+  const validTasks = tasks.filter((task) => task.startDate && task.endDate);
 
   if (validTasks.length === 0) {
     const today = format(new Date(), "yyyy-MM-dd");
     return { min: today, max: addDays(today, 30) };
   }
 
+  // ISO YYYY-MM-DD strings are lexicographically ordered, so < / > comparisons
+  // are equivalent to chronological comparisons for this format.
   let minDate = validTasks[0].startDate;
   let maxDate = validTasks[0].endDate;
 
@@ -115,20 +119,25 @@ export function isWeekend(dateStr: string): boolean {
 }
 
 /**
- * Get business days between dates (excluding weekends)
+ * Get business days between dates (excluding weekends, inclusive of start and end).
+ * Returns 0 if start > end.
  */
 export function getBusinessDays(start: string, end: string): number {
   const startDate = parseISO(start);
   const endDate = parseISO(end);
-  let count = 0;
+  if (startDate > endDate) return 0;
 
-  let current = startDate;
-  while (current <= endDate) {
-    if (!isWeekend(format(current, "yyyy-MM-dd"))) {
-      count++;
-    }
-    current = addDaysDateFns(current, 1);
+  const totalDays = differenceInDays(endDate, startDate) + 1;
+  const fullWeeks = Math.floor(totalDays / 7);
+  let businessDays = fullWeeks * 5;
+
+  // Tally weekdays in the remaining partial week (0–6 iterations — O(1) overall).
+  const startDow = getDay(startDate); // 0 = Sun … 6 = Sat
+  const remainingDays = totalDays % 7;
+  for (let i = 0; i < remainingDays; i++) {
+    const dow = (startDow + i) % 7;
+    if (dow !== 0 && dow !== 6) businessDays++;
   }
 
-  return count;
+  return businessDays;
 }

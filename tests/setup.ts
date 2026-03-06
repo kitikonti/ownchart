@@ -1,5 +1,46 @@
 import '@testing-library/jest-dom';
 import { expect, afterEach, beforeEach, vi } from 'vitest';
+
+// ─── Geometry API polyfills ────────────────────────────────────────────────────
+// jsdom does not implement DOMMatrix or DOMPoint. Provide minimal but correct
+// 2D affine-transform polyfills so geometry utilities can be tested without a
+// real browser. Only installed when the API is missing.
+
+if (typeof globalThis.DOMMatrix === 'undefined') {
+  class DOMMatrixImpl {
+    a: number; b: number; c: number; d: number; e: number; f: number;
+    constructor(init?: number[]) {
+      const [a = 1, b = 0, c = 0, d = 1, e = 0, f = 0] = init ?? [];
+      this.a = a; this.b = b; this.c = c; this.d = d; this.e = e; this.f = f;
+    }
+    inverse(): DOMMatrixImpl {
+      const det = this.a * this.d - this.b * this.c;
+      return new DOMMatrixImpl([
+        this.d / det,         -this.b / det,
+        -this.c / det,         this.a / det,
+        (this.c * this.f - this.d * this.e) / det,
+        (this.b * this.e - this.a * this.f) / det,
+      ]);
+    }
+  }
+  (globalThis as Record<string, unknown>).DOMMatrix = DOMMatrixImpl;
+}
+
+if (typeof globalThis.DOMPoint === 'undefined') {
+  class DOMPointImpl {
+    x: number; y: number; z: number; w: number;
+    constructor(x = 0, y = 0, z = 0, w = 1) {
+      this.x = x; this.y = y; this.z = z; this.w = w;
+    }
+    matrixTransform(m: { a: number; b: number; c: number; d: number; e: number; f: number }): DOMPointImpl {
+      return new DOMPointImpl(
+        m.a * this.x + m.c * this.y + m.e,
+        m.b * this.x + m.d * this.y + m.f,
+      );
+    }
+  }
+  (globalThis as Record<string, unknown>).DOMPoint = DOMPointImpl;
+}
 import { cleanup } from '@testing-library/react';
 
 // Cleanup after each test case (e.g., clearing jsdom)
