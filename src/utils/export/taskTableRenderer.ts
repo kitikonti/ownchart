@@ -27,6 +27,8 @@ import {
   COLOR_BAR_WIDTH,
   COLOR_BAR_RADIUS,
   COLUMN_HEADER_FONT_SIZE,
+  BORDER_STROKE_WIDTH,
+  LETTER_SPACING_WIDER,
 } from "./constants";
 import type { ColorModeState } from "../../types/colorMode.types";
 import { getComputedTaskColor } from "../computeTaskColor";
@@ -67,22 +69,67 @@ function truncateToWidth(
   return text.slice(0, Math.max(0, maxChars - 1)) + "…";
 }
 
-// ─── Column separator helper ──────────────────────────────────────────────────
+interface TextElOptions {
+  x: number;
+  y: number;
+  fill: string;
+  fontSize: number;
+  content: string;
+  fontWeight?: string;
+  fontStyle?: string;
+  letterSpacing?: string;
+}
 
-function createColumnSeparatorLine(
-  x: number,
+/** Create and configure an SVG <text> element with common export attributes. */
+function createTextEl({
+  x,
+  y,
+  fill,
+  fontSize,
+  content,
+  fontWeight,
+  fontStyle,
+  letterSpacing,
+}: TextElOptions): SVGTextElement {
+  const el = createSVGEl("text");
+  el.setAttribute("x", String(x));
+  el.setAttribute("y", String(y));
+  el.setAttribute("fill", fill);
+  el.setAttribute("font-family", SVG_FONT_FAMILY);
+  el.setAttribute("font-size", String(fontSize));
+  if (fontWeight !== undefined) el.setAttribute("font-weight", fontWeight);
+  if (fontStyle !== undefined) el.setAttribute("font-style", fontStyle);
+  if (letterSpacing !== undefined)
+    el.setAttribute("letter-spacing", letterSpacing);
+  el.textContent = content;
+  return el;
+}
+
+// ─── Border line helper ───────────────────────────────────────────────────────
+
+/** Create an SVG <line> element for a table border or column separator. */
+function createBorderLine(
+  x1: number,
   y1: number,
+  x2: number,
   y2: number,
   color: string
 ): SVGLineElement {
   const line = createSVGEl("line");
-  line.setAttribute("x1", String(x));
+  line.setAttribute("x1", String(x1));
   line.setAttribute("y1", String(y1));
-  line.setAttribute("x2", String(x));
+  line.setAttribute("x2", String(x2));
   line.setAttribute("y2", String(y2));
   line.setAttribute("stroke", color);
-  line.setAttribute("stroke-width", "1");
+  line.setAttribute("stroke-width", BORDER_STROKE_WIDTH);
   return line;
+}
+
+// ─── Type guard ───────────────────────────────────────────────────────────────
+
+/** Narrow ExportColumnKey to ExportDataColumnKey (i.e. not 'color' or 'name'). */
+function isDataColumn(key: ExportColumnKey): key is ExportDataColumnKey {
+  return key !== "color" && key !== "name";
 }
 
 // ─── Cell render context ──────────────────────────────────────────────────────
@@ -95,6 +142,67 @@ interface CellRenderContext {
   densityConfig: DensityConfig;
 }
 
+/** Cell position and dimensions, forwarded to each private cell renderer. */
+interface CellLayout {
+  colX: number;
+  colWidth: number;
+}
+
+// ─── Name cell sub-renderers ──────────────────────────────────────────────────
+
+function renderNameArrow(group: SVGGElement, textY: number, atX: number): void {
+  group.appendChild(
+    createTextEl({
+      x: atX,
+      y: textY,
+      fill: EXPORT_COLORS.textSecondary,
+      fontSize: ARROW_FONT_SIZE,
+      content: "▼",
+    })
+  );
+}
+
+function renderTypeIcon(
+  group: SVGGElement,
+  task: Task,
+  atX: number,
+  iconY: number
+): void {
+  const iconGroup = createSVGEl("g");
+  iconGroup.setAttribute(
+    "transform",
+    `translate(${atX}, ${iconY}) scale(${ICON_SCALE})`
+  );
+  const iconPath = createSVGEl("path");
+  iconPath.setAttribute("fill", EXPORT_COLORS.textSecondary);
+  // task.type is optional; fall back to "task" icon when absent.
+  iconPath.setAttribute("d", TASK_TYPE_ICON_PATHS[task.type ?? "task"]);
+  iconGroup.appendChild(iconPath);
+  group.appendChild(iconGroup);
+}
+
+function renderNameText(
+  group: SVGGElement,
+  task: Task,
+  rowIndex: number,
+  textY: number,
+  atX: number,
+  availableWidth: number,
+  fontSize: number
+): void {
+  const rawName = task.name || `Task ${rowIndex + 1}`;
+  const displayName = truncateToWidth(rawName, availableWidth, fontSize);
+  group.appendChild(
+    createTextEl({
+      x: atX,
+      y: textY,
+      fill: EXPORT_COLORS.textPrimary,
+      fontSize,
+      content: displayName,
+    })
+  );
+}
+
 // ─── Private cell renderers ───────────────────────────────────────────────────
 
 function renderColorCell(
@@ -102,10 +210,10 @@ function renderColorCell(
   task: Task,
   allTasks: Task[],
   colorModeState: ColorModeState,
-  colX: number,
-  colWidth: number
+  layout: CellLayout
 ): void {
   const { group, rowY, rowHeight, densityConfig } = ctx;
+  const { colX, colWidth } = layout;
   const displayColor = getComputedTaskColor(task, allTasks, colorModeState);
 
   const colorBar = createSVGEl("rect");
@@ -126,10 +234,10 @@ function renderNameCell(
   task: Task,
   flattenedTask: FlattenedTask,
   rowIndex: number,
-  colX: number,
-  colWidth: number
+  layout: CellLayout
 ): void {
   const { group, rowY, rowHeight, densityConfig } = ctx;
+  const { colX, colWidth } = layout;
   const { level, hasChildren } = flattenedTask;
   const { indentSize, fontSizeCell, cellPaddingX } = densityConfig;
   const textY = rowY + rowHeight / 2 + TEXT_BASELINE_OFFSET;
@@ -138,64 +246,39 @@ function renderNameCell(
 
   // Expand/collapse arrow for summary tasks with children
   if (hasChildren && task.type === "summary") {
-    const arrow = createSVGEl("text");
-    arrow.setAttribute("x", String(currentX));
-    arrow.setAttribute("y", String(textY));
-    arrow.setAttribute("fill", EXPORT_COLORS.textSecondary);
-    arrow.setAttribute("font-family", SVG_FONT_FAMILY);
-    arrow.setAttribute("font-size", String(ARROW_FONT_SIZE));
-    arrow.textContent = "▼";
-    group.appendChild(arrow);
+    renderNameArrow(group, textY, currentX);
   }
   // Reserve space for the arrow placeholder (ARROW_PLACEHOLDER_WIDTH = w-4 = 16px)
   currentX += ARROW_PLACEHOLDER_WIDTH;
 
   // Task type icon — Phosphor Icons, 256×256 viewBox, scaled to ICON_RENDER_SIZE
   const iconY = rowY + (rowHeight - ICON_RENDER_SIZE) / 2;
-  const iconGroup = createSVGEl("g");
-  iconGroup.setAttribute(
-    "transform",
-    `translate(${currentX}, ${iconY}) scale(${ICON_SCALE})`
-  );
-  const iconPath = createSVGEl("path");
-  iconPath.setAttribute("fill", EXPORT_COLORS.textSecondary);
-  iconPath.setAttribute(
-    "d",
-    task.type === "milestone"
-      ? TASK_TYPE_ICON_PATHS.milestone
-      : task.type === "summary"
-        ? TASK_TYPE_ICON_PATHS.summary
-        : TASK_TYPE_ICON_PATHS.task
-  );
-  iconGroup.appendChild(iconPath);
-  group.appendChild(iconGroup);
+  renderTypeIcon(group, task, currentX, iconY);
 
   // Advance past icon (ICON_RENDER_SIZE) + gap (ICON_TEXT_GAP)
   currentX += ICON_RENDER_SIZE + ICON_TEXT_GAP;
 
   // Task name — truncated to remaining available column width
   const availableWidth = colX + colWidth - currentX - cellPaddingX;
-  const rawName = task.name || `Task ${rowIndex + 1}`;
-  const displayName = truncateToWidth(rawName, availableWidth, fontSizeCell);
-
-  const text = createSVGEl("text");
-  text.setAttribute("x", String(currentX));
-  text.setAttribute("y", String(textY));
-  text.setAttribute("fill", EXPORT_COLORS.textPrimary);
-  text.setAttribute("font-family", SVG_FONT_FAMILY);
-  text.setAttribute("font-size", String(fontSizeCell));
-  text.textContent = displayName;
-  group.appendChild(text);
+  renderNameText(
+    group,
+    task,
+    rowIndex,
+    textY,
+    currentX,
+    availableWidth,
+    fontSizeCell
+  );
 }
 
 function renderDataCell(
   ctx: CellRenderContext,
   task: Task,
   key: ExportDataColumnKey,
-  colX: number,
-  colWidth: number
+  layout: CellLayout
 ): void {
   const { group, rowY, rowHeight, densityConfig } = ctx;
+  const { colX, colWidth } = layout;
   const { fontSizeCell, cellPaddingX } = densityConfig;
 
   const isSummary = task.type === "summary";
@@ -210,20 +293,18 @@ function renderDataCell(
   const availableWidth = colWidth - cellPaddingX * 2;
   const value = truncateToWidth(rawValue, availableWidth, fontSizeCell);
 
-  const text = createSVGEl("text");
-  text.setAttribute("x", String(colX + cellPaddingX));
-  text.setAttribute("y", String(rowY + rowHeight / 2 + TEXT_BASELINE_OFFSET));
-  text.setAttribute(
-    "fill",
-    useSummaryStyle ? EXPORT_COLORS.textSummary : EXPORT_COLORS.textPrimary
+  group.appendChild(
+    createTextEl({
+      x: colX + cellPaddingX,
+      y: rowY + rowHeight / 2 + TEXT_BASELINE_OFFSET,
+      fill: useSummaryStyle
+        ? EXPORT_COLORS.textSummary
+        : EXPORT_COLORS.textPrimary,
+      fontSize: fontSizeCell,
+      content: value,
+      fontStyle: useSummaryStyle ? "italic" : undefined,
+    })
   );
-  text.setAttribute("font-family", SVG_FONT_FAMILY);
-  text.setAttribute("font-size", String(fontSizeCell));
-  if (useSummaryStyle) {
-    text.setAttribute("font-style", "italic");
-  }
-  text.textContent = value;
-  group.appendChild(text);
 }
 
 // ─── Private row renderer ─────────────────────────────────────────────────────
@@ -262,34 +343,36 @@ function renderTaskRow(
   const ctx: CellRenderContext = { group, rowY, rowHeight, densityConfig };
 
   // Row bottom border
-  const rowBorder = createSVGEl("line");
-  rowBorder.setAttribute("x1", String(x));
-  rowBorder.setAttribute("y1", String(rowY + rowHeight));
-  rowBorder.setAttribute("x2", String(x + totalWidth));
-  rowBorder.setAttribute("y2", String(rowY + rowHeight));
-  rowBorder.setAttribute("stroke", EXPORT_COLORS.borderLight);
-  rowBorder.setAttribute("stroke-width", "1");
-  group.appendChild(rowBorder);
+  group.appendChild(
+    createBorderLine(
+      x,
+      rowY + rowHeight,
+      x + totalWidth,
+      rowY + rowHeight,
+      EXPORT_COLORS.borderLight
+    )
+  );
 
   let colX = x;
   for (const key of selectedColumns) {
     const colWidth = columnWidths[key] ?? getDefaultColumnWidth(key, density);
+    const layout: CellLayout = { colX, colWidth };
 
     if (key === "color") {
-      renderColorCell(ctx, task, allTasks, colorModeState, colX, colWidth);
+      renderColorCell(ctx, task, allTasks, colorModeState, layout);
     } else if (key === "name") {
-      renderNameCell(ctx, task, flattenedTask, rowIndex, colX, colWidth);
-    } else {
-      // key is narrowed to ExportDataColumnKey by the preceding guards
-      renderDataCell(ctx, task, key as ExportDataColumnKey, colX, colWidth);
+      renderNameCell(ctx, task, flattenedTask, rowIndex, layout);
+    } else if (isDataColumn(key)) {
+      renderDataCell(ctx, task, key, layout);
     }
 
     // Column separator (skip for color column — matches app styling)
     if (key !== "color") {
       group.appendChild(
-        createColumnSeparatorLine(
+        createBorderLine(
           colX + colWidth,
           rowY,
+          colX + colWidth,
           rowY + rowHeight,
           EXPORT_COLORS.borderLight
         )
@@ -305,37 +388,36 @@ function renderTaskRow(
 function renderHeaderCell(
   group: SVGGElement,
   key: ExportColumnKey,
-  colX: number,
-  colWidth: number,
+  layout: CellLayout,
   y: number,
   cellPaddingX: number
 ): void {
+  const { colX, colWidth } = layout;
   const label = HEADER_LABELS[key] ?? "";
 
   // Column header text — matches app: text-xs font-semibold uppercase tracking-wider
   if (label) {
-    const text = createSVGEl("text");
-    text.setAttribute("x", String(colX + cellPaddingX));
-    text.setAttribute(
-      "y",
-      String(y + HEADER_HEIGHT / 2 + TEXT_BASELINE_OFFSET)
+    group.appendChild(
+      createTextEl({
+        x: colX + cellPaddingX,
+        y: y + HEADER_HEIGHT / 2 + TEXT_BASELINE_OFFSET,
+        fill: EXPORT_COLORS.textHeader,
+        fontSize: COLUMN_HEADER_FONT_SIZE,
+        content: label.toUpperCase(),
+        // "bold" for svg2pdf.js compatibility (doesn't support font-weight "600")
+        fontWeight: "bold",
+        letterSpacing: LETTER_SPACING_WIDER,
+      })
     );
-    text.setAttribute("fill", EXPORT_COLORS.textHeader);
-    text.setAttribute("font-family", SVG_FONT_FAMILY);
-    text.setAttribute("font-size", String(COLUMN_HEADER_FONT_SIZE));
-    // "bold" for svg2pdf.js compatibility (doesn't support font-weight "600")
-    text.setAttribute("font-weight", "bold");
-    text.setAttribute("letter-spacing", "0.05em");
-    text.textContent = label.toUpperCase();
-    group.appendChild(text);
   }
 
   // Column separator (skip for color column — matches app styling)
   if (key !== "color") {
     group.appendChild(
-      createColumnSeparatorLine(
+      createBorderLine(
         colX + colWidth,
         y,
+        colX + colWidth,
         y + HEADER_HEIGHT,
         EXPORT_COLORS.border
       )
@@ -382,19 +464,20 @@ export function renderTaskTableHeader(
   group.appendChild(bg);
 
   // Header bottom border
-  const border = createSVGEl("line");
-  border.setAttribute("x1", String(x));
-  border.setAttribute("y1", String(y + HEADER_HEIGHT));
-  border.setAttribute("x2", String(x + totalWidth));
-  border.setAttribute("y2", String(y + HEADER_HEIGHT));
-  border.setAttribute("stroke", EXPORT_COLORS.border);
-  border.setAttribute("stroke-width", "1");
-  group.appendChild(border);
+  group.appendChild(
+    createBorderLine(
+      x,
+      y + HEADER_HEIGHT,
+      x + totalWidth,
+      y + HEADER_HEIGHT,
+      EXPORT_COLORS.border
+    )
+  );
 
   let colX = x;
   for (const key of selectedColumns) {
     const colWidth = columnWidths[key] ?? getDefaultColumnWidth(key, density);
-    renderHeaderCell(group, key, colX, colWidth, y, cellPaddingX);
+    renderHeaderCell(group, key, { colX, colWidth }, y, cellPaddingX);
     colX += colWidth;
   }
 
@@ -414,6 +497,23 @@ export interface TaskTableRowsOptions {
   colorModeState: ColorModeState;
 }
 
+function buildRowOptions(
+  options: TaskTableRowsOptions,
+  densityConfig: DensityConfig,
+  allTasks: Task[]
+): RowRendererOptions {
+  return {
+    selectedColumns: options.selectedColumns,
+    columnWidths: options.columnWidths,
+    density: options.density,
+    densityConfig,
+    colorModeState: options.colorModeState,
+    allTasks,
+    totalWidth: options.totalWidth,
+    x: options.x,
+  };
+}
+
 /**
  * Render task table rows as SVG elements.
  *
@@ -425,16 +525,7 @@ export function renderTaskTableRows(
   svg: SVGSVGElement,
   options: TaskTableRowsOptions
 ): SVGGElement {
-  const {
-    flattenedTasks,
-    selectedColumns,
-    columnWidths,
-    totalWidth,
-    x,
-    startY,
-    density,
-    colorModeState,
-  } = options;
+  const { flattenedTasks, x, startY, density } = options;
   const densityConfig = DENSITY_CONFIG[density];
   const { rowHeight } = densityConfig;
 
@@ -442,42 +533,25 @@ export function renderTaskTableRows(
   group.setAttribute("class", "task-table-rows");
 
   // Right border for the entire table body
-  const tableBorder = createSVGEl("line");
-  tableBorder.setAttribute("x1", String(x + totalWidth));
-  tableBorder.setAttribute("y1", String(startY));
-  tableBorder.setAttribute("x2", String(x + totalWidth));
-  tableBorder.setAttribute(
-    "y2",
-    String(startY + flattenedTasks.length * rowHeight)
+  group.appendChild(
+    createBorderLine(
+      x + options.totalWidth,
+      startY,
+      x + options.totalWidth,
+      startY + flattenedTasks.length * rowHeight,
+      EXPORT_COLORS.border
+    )
   );
-  tableBorder.setAttribute("stroke", EXPORT_COLORS.border);
-  tableBorder.setAttribute("stroke-width", "1");
-  group.appendChild(tableBorder);
 
   // Pre-extract Task objects for color computation (avoids repeated mapping per row)
   const allTasks = flattenedTasks.map((ft) => ft.task);
+  const rowOptions = buildRowOptions(options, densityConfig, allTasks);
 
-  const rowOptions: RowRendererOptions = {
-    selectedColumns,
-    columnWidths,
-    density,
-    densityConfig,
-    colorModeState,
-    allTasks,
-    totalWidth,
-    x,
-  };
-
-  let rowIndex = 0;
-  for (const flattenedTask of flattenedTasks) {
+  flattenedTasks.forEach((flattenedTask, rowIndex) => {
     const rowY = startY + rowIndex * rowHeight;
     renderTaskRow(group, flattenedTask, rowIndex, rowY, rowOptions);
-    rowIndex++;
-  }
+  });
 
   svg.appendChild(group);
   return group;
 }
-
-// Re-export FlattenedTask so existing callers that import it from here continue to work
-export type { FlattenedTask };

@@ -66,6 +66,15 @@ export const COLOR_BAR_RADIUS = 3;
  */
 export const COLUMN_HEADER_FONT_SIZE = 12;
 
+/** SVG stroke-width for table border and separator lines */
+export const BORDER_STROKE_WIDTH = "1";
+
+/**
+ * CSS letter-spacing for column header labels.
+ * Matches Tailwind's tracking-wider utility (0.05em).
+ */
+export const LETTER_SPACING_WIDER = "0.05em";
+
 /**
  * CSS class applied to the main Gantt chart SVG element by ExportRenderer.
  * Used as a querySelector selector by PDF and SVG export utilities.

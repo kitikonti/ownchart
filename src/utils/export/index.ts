@@ -46,10 +46,10 @@ export {
 export {
   renderTaskTableHeader,
   renderTaskTableRows,
-  type FlattenedTask,
   type TaskTableHeaderOptions,
   type TaskTableRowsOptions,
 } from "./taskTableRenderer";
+export type { FlattenedTask } from "./types";
 export {
   downloadBlob,
   downloadCanvasAsPng,
