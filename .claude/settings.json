@@ -6,7 +6,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "python3 -c \"\nimport sys, json\ndata = json.load(sys.stdin)\ncmd = data.get('tool_input', {}).get('command', '')\nis_commit = 'git commit' in cmd and '--no-commit' not in cmd and '--abort' not in cmd\nis_merge = 'git merge' in cmd and '--no-commit' not in cmd and '--abort' not in cmd\nif is_commit or is_merge:\n    print('A git commit was just made. Ask the user if they would like to run /review on this commit, and wait for their response before doing anything.')\n\""
+            "command": "python3 -c \"\nimport sys, json\ndata = json.load(sys.stdin)\ncmd = data.get('tool_input', {}).get('command', '')\nimport re\nparts = re.split(r'[;&|]+', cmd)\nis_commit = any('git commit' in p and '--no-commit' not in p and '--abort' not in p for p in parts)\nis_merge = any('git merge' in p and '--no-commit' not in p and '--abort' not in p for p in parts)\nif is_commit or is_merge:\n    print('A git commit was just made. Ask the user if they would like to run /review on this commit, and wait for their response before doing anything.')\n\""
           }
         ]
       }
