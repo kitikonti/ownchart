@@ -2,11 +2,13 @@
  * SVG utility functions shared across hooks.
  */
 
+import type { MouseEvent as ReactMouseEvent } from "react";
+
 /**
  * Convert screen coordinates (clientX/clientY) to SVG element coordinates.
  */
 export function getSVGPoint(
-  e: MouseEvent | React.MouseEvent,
+  e: MouseEvent | ReactMouseEvent,
   svg: SVGSVGElement
 ): { x: number; y: number } {
   const point = svg.createSVGPoint();

@@ -14,15 +14,19 @@ import type { Task } from "../types/chart.types";
 import type { DateFormat } from "../types/preferences.types";
 
 /**
- * Convert a Date to ISO date string (YYYY-MM-DD).
- * Replaces the common `date.toISOString().split("T")[0]` pattern.
+ * Convert a Date to ISO date string (YYYY-MM-DD) using local timezone.
+ * Replaces the common `date.toISOString().split("T")[0]` anti-pattern,
+ * which is UTC-based and returns the wrong date for users east of UTC+0
+ * when dates from date-fns (which uses local midnight) are involved.
  */
 export function toISODateString(date: Date): string {
-  return date.toISOString().split("T")[0];
+  return format(date, "yyyy-MM-dd");
 }
 
 /**
- * Calculate duration between two dates in days (inclusive)
+ * Calculate duration between two dates in days (inclusive).
+ * Returns a positive number when endDate >= startDate.
+ * Returns 0 for the same day, negative when endDate < startDate.
  * @example calculateDuration('2025-01-01', '2025-01-05') // 5
  */
 export function calculateDuration(startDate: string, endDate: string): number {
@@ -76,13 +80,7 @@ export function formatDateByPreference(
  */
 export function getDateRange(tasks: Task[]): { min: string; max: string } {
   // Filter out tasks with invalid/empty dates (e.g., empty summaries)
-  const validTasks = tasks.filter(
-    (task) =>
-      task.startDate &&
-      task.endDate &&
-      task.startDate !== "" &&
-      task.endDate !== ""
-  );
+  const validTasks = tasks.filter((task) => task.startDate && task.endDate);
 
   if (validTasks.length === 0) {
     const today = format(new Date(), "yyyy-MM-dd");
@@ -115,16 +113,19 @@ export function isWeekend(dateStr: string): boolean {
 }
 
 /**
- * Get business days between dates (excluding weekends)
+ * Get business days between dates (excluding weekends, inclusive of start and end).
+ * Returns 0 if start > end.
  */
 export function getBusinessDays(start: string, end: string): number {
   const startDate = parseISO(start);
   const endDate = parseISO(end);
-  let count = 0;
+  if (startDate > endDate) return 0;
 
+  let count = 0;
   let current = startDate;
   while (current <= endDate) {
-    if (!isWeekend(format(current, "yyyy-MM-dd"))) {
+    const day = getDay(current);
+    if (day !== 0 && day !== 6) {
       count++;
     }
     current = addDaysDateFns(current, 1);
