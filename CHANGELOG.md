@@ -2,6 +2,18 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [1.1.20](https://github.com/kitikonti/ownchart/compare/v1.1.19...v1.1.20) (2026-03-06)
+
+
+### Code Refactoring
+
+* address code review findings in multiTabStorage and validation utils ([8cc1044](https://github.com/kitikonti/ownchart/commit/8cc10446dc0c83cc0ef005b0c37e9c8ecf0bff18))
+* address code review findings in multiTabStorage and validation utils ([c2adc14](https://github.com/kitikonti/ownchart/commit/c2adc14a6508e3824a4fe6d2a3412c766aa663e7))
+* harden multiTabStorage and validation utils ([f16a1f5](https://github.com/kitikonti/ownchart/commit/f16a1f577dcf025b9f46ba37cbe48e0a65b81d11))
+* harden multiTabStorage and validation utils ([301a7bd](https://github.com/kitikonti/ownchart/commit/301a7bda87b3e21af176521868334dbc7d215d7c))
+* harden multiTabStorage and validation utils ([7e20ca5](https://github.com/kitikonti/ownchart/commit/7e20ca5f35046a67d67ae20dc175f3168e79ba5e))
+* harden validation and multiTabStorage utils ([41e364b](https://github.com/kitikonti/ownchart/commit/41e364bbd59b0007a6f78f19b3e56055d2d7dfa9))
+
 ## [1.1.19](https://github.com/kitikonti/ownchart/compare/v1.1.18...v1.1.19) (2026-03-04)
 
 
