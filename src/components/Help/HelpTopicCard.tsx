@@ -22,6 +22,21 @@ export function KeyBadge({ children }: { children: string }): JSX.Element {
   );
 }
 
+/** Renders a UI navigation path (e.g. "View > Columns") as a breadcrumb. */
+export function MenuPathLabel({ path }: { path: string }): JSX.Element {
+  const parts = path.split(" > ");
+  return (
+    <span className="text-xs text-neutral-400 flex items-center gap-0.5 flex-shrink-0">
+      {parts.map((part, i) => (
+        <span key={i} className="flex items-center gap-0.5">
+          {i > 0 && <span className="mx-0.5">›</span>}
+          <span>{part}</span>
+        </span>
+      ))}
+    </span>
+  );
+}
+
 export function ShortcutKeys({ keys }: { keys: string }): JSX.Element {
   const resolved = resolveShortcut(keys);
   const parts = resolved.split("+");
@@ -56,9 +71,11 @@ export function HelpTopicCard({
     return (
       <div className="flex items-center justify-between py-1.5 px-2 -mx-2 rounded hover:bg-neutral-50 transition-colors">
         <span className="text-sm text-neutral-600">{topic.description}</span>
-        {topic.shortcuts && topic.shortcuts.length > 0 && (
+        {topic.shortcuts && topic.shortcuts.length > 0 ? (
           <ShortcutKeys keys={topic.shortcuts[0]} />
-        )}
+        ) : topic.menuPath ? (
+          <MenuPathLabel path={topic.menuPath} />
+        ) : null}
       </div>
     );
   }
@@ -74,13 +91,14 @@ export function HelpTopicCard({
             {resolveShortcut(topic.description)}
           </p>
         </div>
-        {topic.shortcuts && topic.shortcuts.length > 0 && (
+        {(topic.shortcuts && topic.shortcuts.length > 0) || topic.menuPath ? (
           <div className="flex flex-col items-end gap-1 mt-0.5">
-            {topic.shortcuts.map((sc) => (
+            {topic.shortcuts?.map((sc) => (
               <ShortcutKeys key={sc} keys={sc} />
             ))}
+            {topic.menuPath && <MenuPathLabel path={topic.menuPath} />}
           </div>
-        )}
+        ) : null}
       </div>
       {topic.tip && (
         <p className="text-xs text-neutral-400 mt-1.5 flex items-center gap-1">

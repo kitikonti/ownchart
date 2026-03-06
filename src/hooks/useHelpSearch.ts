@@ -23,7 +23,7 @@ export interface HelpSearchResult {
  * Returns an empty sections array when query is blank (caller shows normal tabs).
  */
 export function useHelpSearch(
-  tabs: HelpTab[],
+  tabs: readonly HelpTab[],
   query: string
 ): HelpSearchResult {
   return useMemo(() => {
@@ -63,6 +63,9 @@ function buildHaystack(topic: HelpTopic): string {
   const parts = [topic.title, topic.description];
   if (topic.shortcuts) {
     parts.push(...topic.shortcuts.map(resolveShortcut));
+  }
+  if (topic.menuPath) {
+    parts.push(topic.menuPath);
   }
   if (topic.keywords) {
     parts.push(...topic.keywords);
