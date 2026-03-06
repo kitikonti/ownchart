@@ -247,6 +247,48 @@ describe("ContextMenu", () => {
       expect(document.activeElement).toBe(itemBButton);
     });
 
+    it("Home moves to first enabled item", () => {
+      const items: ContextMenuItem[] = [
+        { id: "a", label: "Item A", onClick: vi.fn(), disabled: true },
+        { id: "b", label: "Item B", onClick: vi.fn() },
+        { id: "c", label: "Item C", onClick: vi.fn() },
+      ];
+      render(
+        <ContextMenu
+          items={items}
+          position={defaultPosition}
+          onClose={onClose}
+        />
+      );
+      // Move to last item first
+      fireEvent.keyDown(screen.getByRole("menu"), { key: "ArrowDown" });
+      // Home should jump back to first enabled (B, skipping disabled A)
+      fireEvent.keyDown(screen.getByRole("menu"), { key: "Home" });
+      expect(document.activeElement).toBe(
+        screen.getByText("Item B").closest("button")
+      );
+    });
+
+    it("End moves to last enabled item", () => {
+      const items: ContextMenuItem[] = [
+        { id: "a", label: "Item A", onClick: vi.fn() },
+        { id: "b", label: "Item B", onClick: vi.fn() },
+        { id: "c", label: "Item C", onClick: vi.fn(), disabled: true },
+      ];
+      render(
+        <ContextMenu
+          items={items}
+          position={defaultPosition}
+          onClose={onClose}
+        />
+      );
+      // End should jump to last enabled item (B, skipping disabled C)
+      fireEvent.keyDown(screen.getByRole("menu"), { key: "End" });
+      expect(document.activeElement).toBe(
+        screen.getByText("Item B").closest("button")
+      );
+    });
+
     it("ArrowUp skips disabled items", () => {
       const items: ContextMenuItem[] = [
         { id: "a", label: "Item A", onClick: vi.fn() },

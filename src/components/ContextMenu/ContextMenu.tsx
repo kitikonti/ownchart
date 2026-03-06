@@ -142,6 +142,21 @@ export function ContextMenu({
         return;
       }
 
+      if (e.key === "Home") {
+        e.preventDefault();
+        const first = items.findIndex((item) => !item.disabled);
+        if (first >= 0) focusItem(first);
+        return;
+      }
+
+      if (e.key === "End") {
+        e.preventDefault();
+        let last = items.length - 1;
+        while (last >= 0 && items[last].disabled) last--;
+        if (last >= 0) focusItem(last);
+        return;
+      }
+
       if (e.key === "Enter" || e.key === " ") {
         e.preventDefault();
         const item = items[focusedIndexRef.current];
@@ -178,7 +193,7 @@ export function ContextMenu({
             aria-checked={item.checked}
             tabIndex={-1}
             disabled={item.disabled}
-            className="context-menu-item text-left outline-none"
+            className="context-menu-item text-left outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-brand-500"
             onClick={() => {
               item.onClick();
               onClose();

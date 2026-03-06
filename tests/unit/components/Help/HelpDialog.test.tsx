@@ -157,6 +157,32 @@ describe("HelpDialog", () => {
       expect(useUIStore.getState().helpDialogActiveTab).toBe("features");
     });
 
+    it("should jump to first tab with Home key", () => {
+      useUIStore.setState({
+        isHelpPanelOpen: true,
+        helpDialogActiveTab: "features",
+      });
+      render(<HelpDialog />);
+
+      const tablist = screen.getByRole("tablist");
+      fireEvent.keyDown(tablist, { key: "Home" });
+
+      expect(useUIStore.getState().helpDialogActiveTab).toBe("getting-started");
+    });
+
+    it("should jump to last tab with End key", () => {
+      useUIStore.setState({
+        isHelpPanelOpen: true,
+        helpDialogActiveTab: "getting-started",
+      });
+      render(<HelpDialog />);
+
+      const tablist = screen.getByRole("tablist");
+      fireEvent.keyDown(tablist, { key: "End" });
+
+      expect(useUIStore.getState().helpDialogActiveTab).toBe("features");
+    });
+
     it("should not respond to other keys in tablist", () => {
       useUIStore.setState({
         isHelpPanelOpen: true,

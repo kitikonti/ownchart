@@ -10,6 +10,12 @@ import { X } from "@phosphor-icons/react";
 import { Z_INDEX, SHADOWS } from "../../styles/design-tokens";
 
 /**
+ * Maximum height for the dialog container — prevents the modal from overflowing
+ * the viewport on short screens while still allowing internal scrolling.
+ */
+const DIALOG_MAX_HEIGHT = "max-h-[90vh]" as const;
+
+/**
  * Selector for all focusable, non-disabled elements within the modal.
  * Defined at module level to avoid re-creating the string on every render.
  */
@@ -132,7 +138,7 @@ export function Modal({
       {/* Dialog container - Outlook style: 4px radius, Fluent shadow */}
       <div
         className={`
-          relative bg-white rounded overflow-hidden ${widthClass} w-full max-h-[90vh] flex flex-col
+          relative bg-white rounded overflow-hidden ${widthClass} w-full ${DIALOG_MAX_HEIGHT} flex flex-col
           animate-modal-in
         `}
         style={{ boxShadow: SHADOWS.modal }}
