@@ -5,6 +5,7 @@
 
 import { describe, it, expect } from "vitest";
 import {
+  ARROWHEAD_SIZE,
   calculateArrowPath,
   calculateDragPath,
   getArrowheadPoints,
@@ -15,6 +16,12 @@ import type { TaskPosition } from "../../../../src/types/dependency.types";
 function pos(x: number, y: number, width: number, height: number): TaskPosition {
   return { x, y, width, height };
 }
+
+describe("ARROWHEAD_SIZE", () => {
+  it("should equal 8", () => {
+    expect(ARROWHEAD_SIZE).toBe(8);
+  });
+});
 
 describe("calculateArrowPath", () => {
   describe("elbow path (large gap)", () => {
@@ -198,6 +205,22 @@ describe("calculateArrowPath", () => {
   });
 
   describe("rowHeight scaling", () => {
+    it("should give identical results with default and explicit rowHeight=44", () => {
+      const fromPos = pos(0, 100, 100, 44);
+      const toPos = pos(300, 200, 100, 44);
+      expect(calculateArrowPath(fromPos, toPos)).toEqual(
+        calculateArrowPath(fromPos, toPos, 44)
+      );
+    });
+
+    it("should produce a valid path at smaller row heights", () => {
+      const fromPos = pos(0, 0, 100, 20);
+      const toPos = pos(300, 100, 100, 20);
+      const result = calculateArrowPath(fromPos, toPos, 20);
+      expect(result.path).toContain("M ");
+      expect(result.arrowHead.angle).toBe(0);
+    });
+
     it("should scale corner radius with rowHeight", () => {
       const fromPos = pos(0, 100, 100, 30);
       const toPos = pos(200, 200, 100, 30);

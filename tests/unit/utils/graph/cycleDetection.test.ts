@@ -45,12 +45,39 @@ describe("detectCycle", () => {
   });
 
   describe("with cycles", () => {
+    it("should detect a self-loop (A -> A)", () => {
+      const deps = [dep("A", "A")];
+      const result = detectCycle(deps);
+      expect(result.hasCycle).toBe(true);
+      expect(result.cyclePath).toEqual([tid("A"), tid("A")]);
+    });
+
     it("should detect simple cycle A -> B -> A", () => {
       const deps = [dep("A", "B"), dep("B", "A")];
       const result = detectCycle(deps);
       expect(result.hasCycle).toBe(true);
       expect(result.cyclePath).toBeDefined();
       expect(result.cyclePath!.length).toBeGreaterThan(0);
+    });
+
+    it("should return a cyclePath where first and last node are the same", () => {
+      const deps = [dep("A", "B"), dep("B", "A")];
+      const result = detectCycle(deps);
+      expect(result.cyclePath).toBeDefined();
+      const path = result.cyclePath!;
+      expect(path[0]).toBe(path[path.length - 1]);
+    });
+
+    it("should return a cyclePath containing all nodes in the cycle", () => {
+      const deps = [dep("A", "B"), dep("B", "C"), dep("C", "A")];
+      const result = detectCycle(deps);
+      expect(result.hasCycle).toBe(true);
+      const path = result.cyclePath!;
+      // Path must include all three cycle nodes and repeat the start
+      expect(path).toContain(tid("A"));
+      expect(path).toContain(tid("B"));
+      expect(path).toContain(tid("C"));
+      expect(path[0]).toBe(path[path.length - 1]);
     });
 
     it("should detect longer cycle A -> B -> C -> A", () => {
@@ -97,6 +124,17 @@ describe("wouldCreateCycle", () => {
     const result = wouldCreateCycle([], tid("A"), tid("A"));
     expect(result.hasCycle).toBe(true);
     expect(result.cyclePath).toEqual([tid("A"), tid("A")]);
+  });
+
+  it("cyclePath should start and end with the same node when a cycle is created", () => {
+    const deps = [dep("A", "B"), dep("B", "C")];
+    const result = wouldCreateCycle(deps, tid("C"), tid("A"));
+    expect(result.hasCycle).toBe(true);
+    const path = result.cyclePath!;
+    expect(path[0]).toBe(path[path.length - 1]);
+    expect(path).toContain(tid("A"));
+    expect(path).toContain(tid("B"));
+    expect(path).toContain(tid("C"));
   });
 
   it("should detect when adding edge would create cycle", () => {
