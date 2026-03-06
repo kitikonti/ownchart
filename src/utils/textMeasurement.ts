@@ -6,6 +6,8 @@
 import type { Task } from "../types/chart.types";
 import type { TaskLabelPosition } from "../types/preferences.types";
 
+// ─── Constants ────────────────────────────────────────────────────────────────
+
 /** Default font family used in the app (matches tailwind.config.js) */
 const DEFAULT_FONT_FAMILY =
   "Inter, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', sans-serif";
@@ -16,15 +18,45 @@ const LABEL_GAP = 8;
 /** Maximum extra padding in pixels (prevents excessive padding for very long names) */
 const MAX_LABEL_PADDING_PX = 250;
 
+/**
+ * Fallback character-width ratio used when the Canvas API is unavailable
+ * (e.g. server-side rendering or test environments without a real DOM).
+ * Approximates ~0.6× fontSize per character for a typical sans-serif font.
+ */
+const FALLBACK_CHAR_WIDTH_RATIO = 0.6;
+
+/** Minimum column width in pixels */
+const MIN_COLUMN_WIDTH_PX = 60;
+
+/** Maximum column width in pixels */
+const MAX_COLUMN_WIDTH_PX = 600;
+
+/** Small buffer added to measured widths to prevent text clipping */
+const COLUMN_WIDTH_BUFFER_PX = 4;
+
+/** Header font weight (font-semibold = 600) */
+const HEADER_FONT_WEIGHT = 600;
+
+/** Header letter spacing in em (tracking-wider = 0.05em) */
+const HEADER_LETTER_SPACING = 0.05;
+
+/** Header font size in pixels (text-xs = 12px) */
+const HEADER_FONT_SIZE = 12;
+
+/** Header horizontal padding in pixels (px-3 = 12px each side = 24px total) */
+const HEADER_PADDING = 24;
+
+// ─── Canvas context cache ─────────────────────────────────────────────────────
+
 /** Cached canvas context for text measurement */
 let measureContext: CanvasRenderingContext2D | null = null;
 
 /**
  * Get or create a cached canvas context for text measurement.
+ * Returns null when running outside a browser environment.
  */
 function getMeasureContext(): CanvasRenderingContext2D | null {
   if (!measureContext) {
-    // In browser environment
     if (typeof document !== "undefined") {
       const canvas = document.createElement("canvas");
       measureContext = canvas.getContext("2d");
@@ -33,15 +65,19 @@ function getMeasureContext(): CanvasRenderingContext2D | null {
   return measureContext;
 }
 
+// ─── Public API ───────────────────────────────────────────────────────────────
+
 /**
- * Measure text width using Canvas API.
+ * Measure text width using the Canvas API.
+ *
+ * Falls back to a character-count heuristic when the Canvas API is unavailable.
  *
  * @param text - The text to measure
  * @param fontSize - Font size in pixels
- * @param fontFamily - Optional font family (defaults to system font)
- * @param fontWeight - Optional font weight (defaults to 400)
- * @param letterSpacing - Optional letter spacing in em units (defaults to 0)
- * @returns Width in pixels, or 0 if measurement fails
+ * @param fontFamily - Font family string (defaults to the app's system font stack)
+ * @param fontWeight - Font weight (defaults to 400)
+ * @param letterSpacing - Letter spacing in em units (defaults to 0)
+ * @returns Width in pixels, or 0 for an empty string
  */
 export function measureTextWidth(
   text: string,
@@ -54,8 +90,8 @@ export function measureTextWidth(
 
   const ctx = getMeasureContext();
   if (!ctx) {
-    // Fallback estimation: ~0.6 of fontSize per character for sans-serif
-    return text.length * fontSize * 0.6;
+    // Fallback estimation when Canvas API is unavailable (e.g. SSR, test environments)
+    return text.length * fontSize * FALLBACK_CHAR_WIDTH_RATIO;
   }
 
   ctx.font = `${fontWeight} ${fontSize}px ${fontFamily}`;
@@ -74,7 +110,7 @@ export function measureTextWidth(
  *
  * @param tasks - Array of tasks to measure
  * @param fontSize - Font size in pixels
- * @returns Maximum label width in pixels
+ * @returns Maximum label width in pixels, or 0 for an empty array
  */
 export function getMaxLabelWidth(tasks: Task[], fontSize: number): number {
   if (tasks.length === 0) return 0;
@@ -91,38 +127,18 @@ export function getMaxLabelWidth(tasks: Task[], fontSize: number): number {
 }
 
 /**
- * Calculate extra padding (in days) needed for task labels.
- *
- * @param tasks - Array of tasks
- * @param labelPosition - Label position setting (before/inside/after/none)
- * @param fontSize - Font size in pixels
- * @param pixelsPerDay - Current pixels per day (based on zoom)
- * @returns Object with leftDays and rightDays padding needed
- */
-/** Header font weight (font-semibold = 600) */
-const HEADER_FONT_WEIGHT = 600;
-
-/** Header letter spacing in em (tracking-wider = 0.05em) */
-const HEADER_LETTER_SPACING = 0.05;
-
-/** Header font size in pixels (text-xs = 12px) */
-const HEADER_FONT_SIZE = 12;
-
-/** Header horizontal padding in pixels (px-3 = 12px each side = 24px total) */
-const HEADER_PADDING = 24;
-
-/**
  * Calculate optimal column width based on header and cell content.
  * This is a pure utility function used by both autoFitColumn and export.
  *
- * Headers are styled with: text-xs (12px), font-semibold (600), uppercase, tracking-wider (0.05em), px-3 (24px)
+ * Headers are styled with: text-xs (12px), font-semibold (600), uppercase,
+ * tracking-wider (0.05em), px-3 (24px horizontal padding).
  *
- * @param headerLabel - Column header text
+ * @param headerLabel - Column header text (will be uppercased internally)
  * @param cellValues - Array of formatted cell values
- * @param fontSize - Font size in pixels for cells
- * @param cellPadding - Total horizontal padding (left + right) for cells
- * @param extraWidths - Array of extra widths per cell (e.g., for indent, icons)
- * @returns Optimal column width in pixels
+ * @param fontSize - Font size in pixels for cell text
+ * @param cellPadding - Total horizontal cell padding in pixels (left + right)
+ * @param extraWidths - Per-cell extra widths (e.g. indent + icons for the name column)
+ * @returns Optimal column width in pixels, clamped to [MIN_COLUMN_WIDTH_PX, MAX_COLUMN_WIDTH_PX]
  */
 export function calculateColumnWidth(
   headerLabel: string,
@@ -131,8 +147,7 @@ export function calculateColumnWidth(
   cellPadding: number,
   extraWidths: number[] = []
 ): number {
-  // Measure header text width (uppercase, semibold, with letter-spacing)
-  // Add header padding (px-3 = 24px) which may be larger than cell padding
+  // Measure header width (uppercase, semibold, letter-spaced) + header padding
   const headerTextWidth = measureTextWidth(
     headerLabel.toUpperCase(),
     HEADER_FONT_SIZE,
@@ -142,25 +157,38 @@ export function calculateColumnWidth(
   );
   const headerWidth = headerTextWidth + HEADER_PADDING;
 
-  // Measure each cell value with cell padding
+  // Measure each cell, accumulating the maximum
   let maxCellWidth = 0;
   cellValues.forEach((value, index) => {
     let textWidth = measureTextWidth(value, fontSize);
-    // Add extra width for this cell (e.g., indent + icons for name column)
     if (extraWidths[index]) {
       textWidth += extraWidths[index];
     }
     maxCellWidth = Math.max(maxCellWidth, textWidth + cellPadding);
   });
 
-  // Take the larger of header width and max cell width
-  const maxWidth = Math.max(headerWidth, maxCellWidth);
+  const rawWidth = Math.max(headerWidth, maxCellWidth);
 
-  // Add small buffer, cap at 600px, minimum 60px
-  const finalWidth = Math.max(60, Math.ceil(maxWidth + 4));
-  return Math.min(finalWidth, 600);
+  // Add buffer, clamp to [MIN_COLUMN_WIDTH_PX, MAX_COLUMN_WIDTH_PX]
+  return Math.min(
+    Math.max(MIN_COLUMN_WIDTH_PX, Math.ceil(rawWidth + COLUMN_WIDTH_BUFFER_PX)),
+    MAX_COLUMN_WIDTH_PX
+  );
 }
 
+/**
+ * Calculate extra padding (in days) needed to prevent task labels from being clipped.
+ *
+ * Labels positioned "before" a task bar extend left; labels positioned "after" extend
+ * right. Summary and Milestone tasks always use "after" when the global setting is
+ * "inside" (they don't support inner labels).
+ *
+ * @param tasks - Array of tasks
+ * @param labelPosition - Global label position setting
+ * @param fontSize - Font size in pixels
+ * @param pixelsPerDay - Current pixels-per-day at the active zoom level
+ * @returns `{ leftDays, rightDays }` — extra padding days on each side
+ */
 export function calculateLabelPaddingDays(
   tasks: Task[],
   labelPosition: TaskLabelPosition,
@@ -172,7 +200,6 @@ export function calculateLabelPaddingDays(
   }
 
   // Separate tasks by their effective label position
-  // Summary/Milestone tasks always use "after" when setting is "inside"
   const tasksWithAfterLabels: Task[] = [];
   const tasksWithBeforeLabels: Task[] = [];
 
@@ -180,7 +207,7 @@ export function calculateLabelPaddingDays(
     const taskType = task.type || "task";
     let effectivePosition = labelPosition;
 
-    // Summary and Milestone don't support "inside" - they use "after" instead
+    // Summary and Milestone don't support "inside" — fall back to "after"
     if (
       (taskType === "summary" || taskType === "milestone") &&
       labelPosition === "inside"
@@ -193,20 +220,18 @@ export function calculateLabelPaddingDays(
     } else if (effectivePosition === "before") {
       tasksWithBeforeLabels.push(task);
     }
-    // "inside" and "none" don't need padding
+    // "inside" and "none" don't require extra padding
   }
 
   let leftDays = 0;
   let rightDays = 0;
 
-  // Calculate padding for "before" labels (extends left)
   if (tasksWithBeforeLabels.length > 0) {
     const maxWidth = getMaxLabelWidth(tasksWithBeforeLabels, fontSize);
     const totalPadding = Math.min(maxWidth + LABEL_GAP, MAX_LABEL_PADDING_PX);
     leftDays = Math.ceil(totalPadding / pixelsPerDay);
   }
 
-  // Calculate padding for "after" labels (extends right)
   if (tasksWithAfterLabels.length > 0) {
     const maxWidth = getMaxLabelWidth(tasksWithAfterLabels, fontSize);
     const totalPadding = Math.min(maxWidth + LABEL_GAP, MAX_LABEL_PADDING_PX);

@@ -5,47 +5,63 @@
  * Calculates working days between dates, considering weekends and holidays.
  */
 
+import { parseISO, getDay, format } from "date-fns";
 import { holidayService, type HolidayInfo } from "../services/holidayService";
-import { isWeekend, addDays, calculateDuration } from "./dateUtils";
+import { addDays, calculateDuration } from "./dateUtils";
 import type { WorkingDaysConfig } from "../types/preferences.types";
 
+// ─── Types ────────────────────────────────────────────────────────────────────
+
+/** Summary of a working-day calculation, useful for displaying a breakdown to the user. */
+export interface WorkingDaysSummary {
+  totalDays: number;
+  workingDays: number;
+  weekendDays: number;
+  holidayCount: number;
+  holidays: HolidayInfo[];
+}
+
+// ─── Public API ───────────────────────────────────────────────────────────────
+
 /**
- * Check if a date string is a working day
+ * Check if a date string represents a working day.
+ *
+ * Saturday and Sunday are checked independently (rather than via `isWeekend()`)
+ * because `config.excludeSaturday` and `config.excludeSunday` are separate flags —
+ * a user may work Saturdays while keeping Sundays excluded, or vice versa.
+ *
  * @param dateString - ISO date string (YYYY-MM-DD)
- * @param config - Working days configuration (what to exclude)
- * @param holidayRegion - Holiday region code (required if excludeHolidays is true)
+ * @param config - Working days configuration
+ * @param holidayRegion - Holiday region code. When `config.excludeHolidays` is true,
+ *   the caller is responsible for calling `holidayService.setRegion()` before invoking
+ *   this function so the service is already configured for the correct region.
  */
 export function isWorkingDay(
   dateString: string,
   config: WorkingDaysConfig,
   holidayRegion?: string
 ): boolean {
-  const date = new Date(dateString);
-  const dayOfWeek = date.getDay();
+  // parseISO treats "YYYY-MM-DD" as local midnight, avoiding the UTC-parsing +
+  // local-getDay mismatch that `new Date(dateString).getDay()` produces in
+  // UTC-offset timezones.
+  const dayOfWeek = getDay(parseISO(dateString));
 
-  // Check Saturday
-  if (config.excludeSaturday && dayOfWeek === 6) {
-    return false;
-  }
+  if (config.excludeSaturday && dayOfWeek === 6) return false;
+  if (config.excludeSunday && dayOfWeek === 0) return false;
 
-  // Check Sunday
-  if (config.excludeSunday && dayOfWeek === 0) {
-    return false;
-  }
-
-  // Check holidays
+  // Caller is responsible for setting the region before entering a loop.
   if (config.excludeHolidays && holidayRegion) {
-    holidayService.setRegion(holidayRegion);
-    if (holidayService.isHolidayString(dateString) !== null) {
-      return false;
-    }
+    if (holidayService.isHolidayString(dateString) !== null) return false;
   }
 
   return true;
 }
 
 /**
- * Calculate working days between two dates (inclusive)
+ * Calculate the number of working days between two dates (inclusive).
+ *
+ * Returns 0 when `endDate` is before `startDate`.
+ *
  * @param startDate - Start date string (YYYY-MM-DD)
  * @param endDate - End date string (YYYY-MM-DD)
  * @param config - Working days configuration
@@ -57,13 +73,18 @@ export function calculateWorkingDays(
   config: WorkingDaysConfig,
   holidayRegion?: string
 ): number {
-  // If nothing is excluded, use simple duration calculation
+  // Fast path: if nothing is excluded, simple inclusive-day count suffices
   if (
     !config.excludeSaturday &&
     !config.excludeSunday &&
     !config.excludeHolidays
   ) {
     return calculateDuration(startDate, endDate);
+  }
+
+  // Configure the holiday service once before the loop, not on every isWorkingDay call
+  if (config.excludeHolidays && holidayRegion) {
+    holidayService.setRegion(holidayRegion);
   }
 
   let count = 0;
@@ -80,9 +101,14 @@ export function calculateWorkingDays(
 }
 
 /**
- * Add working days to a date
+ * Add a number of working days to a start date.
+ *
+ * The start date counts as day 1 if it is itself a working day. For example,
+ * `addWorkingDays("2025-01-06" /* Monday *\/, 1, config)` returns `"2025-01-06"`.
+ *
  * @param startDate - Start date string (YYYY-MM-DD)
- * @param days - Number of working days to add
+ * @param days - Number of working days to add. Must be ≥ 1; behaviour for
+ *   `days ≤ 0` is unspecified — callers should guard against this.
  * @param config - Working days configuration
  * @param holidayRegion - Holiday region code
  * @returns End date string (YYYY-MM-DD)
@@ -93,19 +119,24 @@ export function addWorkingDays(
   config: WorkingDaysConfig,
   holidayRegion?: string
 ): string {
-  // If nothing is excluded, use simple date addition
+  // Fast path: no exclusions → simple date arithmetic (start date = day 1)
   if (
     !config.excludeSaturday &&
     !config.excludeSunday &&
     !config.excludeHolidays
   ) {
-    return addDays(startDate, days - 1); // -1 because start date counts as day 1
+    return addDays(startDate, days - 1);
+  }
+
+  // Configure the holiday service once before the loop
+  if (config.excludeHolidays && holidayRegion) {
+    holidayService.setRegion(holidayRegion);
   }
 
   let currentDate = startDate;
   let remainingDays = days;
 
-  // Start date counts as day 1 if it's a working day
+  // Start date counts as day 1 if it is a working day
   if (isWorkingDay(currentDate, config, holidayRegion)) {
     remainingDays--;
   }
@@ -121,7 +152,8 @@ export function addWorkingDays(
 }
 
 /**
- * Get holidays in a date range
+ * Get all holidays within a date range for a given region.
+ *
  * @param startDate - Start date string (YYYY-MM-DD)
  * @param endDate - End date string (YYYY-MM-DD)
  * @param holidayRegion - Holiday region code
@@ -132,58 +164,75 @@ export function getHolidaysInRange(
   holidayRegion: string
 ): HolidayInfo[] {
   holidayService.setRegion(holidayRegion);
+  // Use parseISO so dates are interpreted as local midnight, matching the
+  // holiday service's internal Date comparisons.
   return holidayService.getHolidaysInRange(
-    new Date(startDate),
-    new Date(endDate)
+    parseISO(startDate),
+    parseISO(endDate)
   );
 }
 
 /**
- * Get a summary of working days calculation
- * Useful for displaying details to the user
+ * Get a summary of working days for a date range.
+ *
+ * Performs a single pass through the date range to compute all metrics
+ * simultaneously, avoiding the double-iteration that separate
+ * `calculateWorkingDays` + weekend-counting loops would require.
+ *
+ * @param startDate - Start date string (YYYY-MM-DD)
+ * @param endDate - End date string (YYYY-MM-DD)
+ * @param config - Working days configuration
+ * @param holidayRegion - Holiday region code
  */
 export function getWorkingDaysSummary(
   startDate: string,
   endDate: string,
   config: WorkingDaysConfig,
   holidayRegion?: string
-): {
-  totalDays: number;
-  workingDays: number;
-  weekendDays: number;
-  holidayCount: number;
-  holidays: HolidayInfo[];
-} {
+): WorkingDaysSummary {
   const totalDays = calculateDuration(startDate, endDate);
 
-  let weekendDays = 0;
+  // Fetch the full holiday list once (the service caches per-year internally)
   const holidays: HolidayInfo[] = [];
-
-  // Get holidays in range
   if (config.excludeHolidays && holidayRegion) {
     holidayService.setRegion(holidayRegion);
-    const allHolidays = holidayService.getHolidaysInRange(
-      new Date(startDate),
-      new Date(endDate)
+    holidays.push(
+      ...holidayService.getHolidaysInRange(
+        parseISO(startDate),
+        parseISO(endDate)
+      )
     );
-    holidays.push(...allHolidays);
   }
 
-  // Count weekend days
+  // Build a Set of YYYY-MM-DD strings for O(1) holiday lookup during the loop.
+  // format() uses local timezone, consistent with parseISO() used on currentDate.
+  const holidayDateSet = new Set(
+    holidays.map((h) => format(h.date, "yyyy-MM-dd"))
+  );
+
+  // Single pass: count weekends and working days simultaneously
+  let weekendDays = 0;
+  let workingDays = 0;
   let currentDate = startDate;
+
   while (currentDate <= endDate) {
-    if (isWeekend(currentDate)) {
-      weekendDays++;
-    }
+    const day = getDay(parseISO(currentDate));
+    const isSat = day === 6;
+    const isSun = day === 0;
+
+    if (isSat || isSun) weekendDays++;
+
+    // Mirrors isWorkingDay() logic — inlined to avoid a redundant setRegion()
+    // call on every iteration of the loop.
+    let isWorking = true;
+    if (config.excludeSaturday && isSat) isWorking = false;
+    else if (config.excludeSunday && isSun) isWorking = false;
+    else if (config.excludeHolidays && holidayDateSet.has(currentDate))
+      isWorking = false;
+
+    if (isWorking) workingDays++;
     currentDate = addDays(currentDate, 1);
   }
-
-  const workingDays = calculateWorkingDays(
-    startDate,
-    endDate,
-    config,
-    holidayRegion
-  );
 
   return {
     totalDays,
@@ -192,17 +241,4 @@ export function getWorkingDaysSummary(
     holidayCount: holidays.length,
     holidays,
   };
-}
-
-/**
- * Calculate the end date given a start date and number of working days
- * This is the inverse of calculateWorkingDays
- */
-export function calculateEndDateFromWorkingDays(
-  startDate: string,
-  workingDays: number,
-  config: WorkingDaysConfig,
-  holidayRegion?: string
-): string {
-  return addWorkingDays(startDate, workingDays, config, holidayRegion);
 }
