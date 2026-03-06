@@ -51,8 +51,13 @@ describe("calculateDuration", () => {
     expect(calculateDuration("2024-12-30", "2025-01-02")).toBe(4);
   });
 
-  it("returns 0 for a reversed range (end before start)", () => {
+  it("returns 0 for a 1-day reversed range (end exactly 1 day before start)", () => {
     expect(calculateDuration("2025-01-10", "2025-01-09")).toBe(0);
+  });
+
+  it("returns a negative value for a larger reversed range", () => {
+    // differenceInDays("2025-01-05", "2025-01-10") = -5; -5 + 1 = -4
+    expect(calculateDuration("2025-01-10", "2025-01-05")).toBe(-4);
   });
 });
 

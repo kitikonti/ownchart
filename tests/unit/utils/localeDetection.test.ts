@@ -58,6 +58,188 @@ describe("detectLocaleHolidayRegion", () => {
   });
 });
 
+// ─── Primary (Intl API) path helpers ─────────────────────────────────────────
+
+/**
+ * Mock formatToParts to return a controlled part ordering.
+ * Returns a restore function.
+ */
+function mockFormatToPartsReturning(parts: Intl.DateTimeFormatPart[]): () => void {
+  const spy = vi
+    .spyOn(Intl.DateTimeFormat.prototype, "formatToParts")
+    .mockReturnValue(parts);
+  return () => spy.mockRestore();
+}
+
+/**
+ * Replace Intl.Locale with a class whose instances expose getWeekInfo() as a
+ * function — the modern API path in getLocaleWeekInfo().
+ * Returns a restore function.
+ */
+function mockIntlLocaleGetWeekInfo(weekInfo: {
+  firstDay?: number;
+  minimalDays?: number;
+}): () => void {
+  const original = Intl.Locale;
+  (globalThis.Intl as Record<string, unknown>).Locale = class {
+    constructor() {}
+    getWeekInfo() {
+      return weekInfo;
+    }
+  };
+  return () => {
+    (globalThis.Intl as Record<string, unknown>).Locale = original;
+  };
+}
+
+/**
+ * Replace Intl.Locale with a class whose instances expose weekInfo as a
+ * property — the legacy API path in getLocaleWeekInfo().
+ * Returns a restore function.
+ */
+function mockIntlLocaleWeekInfoProp(weekInfo: {
+  firstDay?: number;
+  minimalDays?: number;
+}): () => void {
+  const original = Intl.Locale;
+  (globalThis.Intl as Record<string, unknown>).Locale = class {
+    constructor() {}
+    weekInfo = weekInfo;
+  };
+  return () => {
+    (globalThis.Intl as Record<string, unknown>).Locale = original;
+  };
+}
+
+// ─── detectLocaleDateFormat (primary Intl path) ───────────────────────────────
+
+describe("detectLocaleDateFormat (primary Intl path)", () => {
+  let restore: () => void;
+  afterEach(() => restore());
+
+  it("returns MM/DD/YYYY when Intl reports month-first ordering", () => {
+    restore = mockFormatToPartsReturning([
+      { type: "month", value: "01" },
+      { type: "literal", value: "/" },
+      { type: "day", value: "02" },
+      { type: "literal", value: "/" },
+      { type: "year", value: "2026" },
+    ]);
+    setLanguage("en-US");
+    expect(detectLocaleDateFormat()).toBe("MM/DD/YYYY");
+  });
+
+  it("returns YYYY-MM-DD when Intl reports year-first ordering", () => {
+    restore = mockFormatToPartsReturning([
+      { type: "year", value: "2026" },
+      { type: "literal", value: "-" },
+      { type: "month", value: "01" },
+      { type: "literal", value: "-" },
+      { type: "day", value: "02" },
+    ]);
+    setLanguage("ja-JP");
+    expect(detectLocaleDateFormat()).toBe("YYYY-MM-DD");
+  });
+
+  it("returns DD/MM/YYYY when Intl reports day-first ordering", () => {
+    restore = mockFormatToPartsReturning([
+      { type: "day", value: "02" },
+      { type: "literal", value: "." },
+      { type: "month", value: "01" },
+      { type: "literal", value: "." },
+      { type: "year", value: "2026" },
+    ]);
+    setLanguage("de-DE");
+    expect(detectLocaleDateFormat()).toBe("DD/MM/YYYY");
+  });
+});
+
+// ─── detectLocaleFirstDayOfWeek (primary Intl path) ───────────────────────────
+
+describe("detectLocaleFirstDayOfWeek (primary Intl path — getWeekInfo function)", () => {
+  let restore: () => void;
+  afterEach(() => restore());
+
+  it("returns sunday when getWeekInfo().firstDay === 7", () => {
+    setLanguage("en-US");
+    restore = mockIntlLocaleGetWeekInfo({ firstDay: 7 });
+    expect(detectLocaleFirstDayOfWeek()).toBe("sunday");
+  });
+
+  it("returns monday when getWeekInfo().firstDay === 1", () => {
+    setLanguage("de-DE");
+    restore = mockIntlLocaleGetWeekInfo({ firstDay: 1 });
+    expect(detectLocaleFirstDayOfWeek()).toBe("monday");
+  });
+
+  it("falls back to region when getWeekInfo().firstDay is neither 1 nor 7", () => {
+    // firstDay 6 = Saturday-first; falls through to region check (us → sunday)
+    setLanguage("en-US");
+    restore = mockIntlLocaleGetWeekInfo({ firstDay: 6 });
+    expect(detectLocaleFirstDayOfWeek()).toBe("sunday");
+  });
+});
+
+describe("detectLocaleFirstDayOfWeek (primary Intl path — weekInfo property)", () => {
+  let restore: () => void;
+  afterEach(() => restore());
+
+  it("returns sunday when weekInfo.firstDay === 7 (property API)", () => {
+    setLanguage("en-US");
+    restore = mockIntlLocaleWeekInfoProp({ firstDay: 7 });
+    expect(detectLocaleFirstDayOfWeek()).toBe("sunday");
+  });
+
+  it("returns monday when weekInfo.firstDay === 1 (property API)", () => {
+    setLanguage("de-DE");
+    restore = mockIntlLocaleWeekInfoProp({ firstDay: 1 });
+    expect(detectLocaleFirstDayOfWeek()).toBe("monday");
+  });
+});
+
+// ─── detectLocaleWeekNumberingSystem (primary Intl path) ─────────────────────
+
+describe("detectLocaleWeekNumberingSystem (primary Intl path — getWeekInfo function)", () => {
+  let restore: () => void;
+  afterEach(() => restore());
+
+  it("returns us when getWeekInfo().minimalDays === 1", () => {
+    setLanguage("en-US");
+    restore = mockIntlLocaleGetWeekInfo({ minimalDays: 1 });
+    expect(detectLocaleWeekNumberingSystem()).toBe("us");
+  });
+
+  it("returns iso when getWeekInfo().minimalDays === 4", () => {
+    setLanguage("de-DE");
+    restore = mockIntlLocaleGetWeekInfo({ minimalDays: 4 });
+    expect(detectLocaleWeekNumberingSystem()).toBe("iso");
+  });
+
+  it("falls back to region when minimalDays is neither 1 nor 4", () => {
+    // minimalDays=2 is not a standard value; falls through to region (us → us)
+    setLanguage("en-US");
+    restore = mockIntlLocaleGetWeekInfo({ minimalDays: 2 });
+    expect(detectLocaleWeekNumberingSystem()).toBe("us");
+  });
+});
+
+describe("detectLocaleWeekNumberingSystem (primary Intl path — weekInfo property)", () => {
+  let restore: () => void;
+  afterEach(() => restore());
+
+  it("returns us when weekInfo.minimalDays === 1 (property API)", () => {
+    setLanguage("en-US");
+    restore = mockIntlLocaleWeekInfoProp({ minimalDays: 1 });
+    expect(detectLocaleWeekNumberingSystem()).toBe("us");
+  });
+
+  it("returns iso when weekInfo.minimalDays === 4 (property API)", () => {
+    setLanguage("de-DE");
+    restore = mockIntlLocaleWeekInfoProp({ minimalDays: 4 });
+    expect(detectLocaleWeekNumberingSystem()).toBe("iso");
+  });
+});
+
 // ─── Fallback-path helpers ────────────────────────────────────────────────────
 
 /**

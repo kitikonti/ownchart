@@ -32,9 +32,11 @@ export function toISODateString(date: Date): string {
 
 /**
  * Calculate duration between two dates in days (inclusive).
- * Returns a positive number when endDate >= startDate.
- * Returns 0 for the same day, negative when endDate < startDate.
+ * Returns 1 for a same-day range; positive integers for longer ranges.
+ * Returns 0 when endDate is exactly one day before startDate.
+ * Returns a negative value for larger reversed ranges.
  * @example calculateDuration('2025-01-01', '2025-01-05') // 5
+ * @example calculateDuration('2025-01-01', '2025-01-01') // 1
  */
 export function calculateDuration(startDate: string, endDate: string): number {
   const start = parseISO(startDate);
@@ -89,6 +91,8 @@ export function getDateRange(tasks: Task[]): { min: string; max: string } {
     return { min: today, max: addDays(today, 30) };
   }
 
+  // ISO YYYY-MM-DD strings are lexicographically ordered, so < / > comparisons
+  // are equivalent to chronological comparisons for this format.
   let minDate = validTasks[0].startDate;
   let maxDate = validTasks[0].endDate;
 

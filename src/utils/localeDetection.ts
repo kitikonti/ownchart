@@ -2,6 +2,9 @@
  * Locale detection utilities for user preferences.
  * Detects date format, first day of week, week numbering system,
  * and holiday region from the browser locale.
+ *
+ * NOTE: This module reads `navigator.language` at import time via
+ * `DEFAULT_PREFERENCES`. It must only be imported in browser environments.
  */
 
 import type {
@@ -149,6 +152,8 @@ export function detectLocaleFirstDayOfWeek(): FirstDayOfWeek {
   if (weekInfo) {
     if (weekInfo.firstDay === 7) return "sunday";
     if (weekInfo.firstDay === 1) return "monday";
+    // firstDay values 2–6 (Tue–Sat as week start) fall through to the
+    // region-based fallback. FirstDayOfWeek only supports 'monday' | 'sunday'.
   }
 
   const region = getLocaleRegion();
@@ -182,8 +187,9 @@ export function detectLocaleHolidayRegion(): string {
 }
 
 /**
- * Default preferences for new users.
- * Uses locale detection for regional settings.
+ * Default preferences for new users, computed once at module load from the
+ * browser's `navigator.language`. Requires a browser environment; do not
+ * import this module outside of a browser context.
  */
 export const DEFAULT_PREFERENCES: UserPreferences = {
   uiDensity: "normal",

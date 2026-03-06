@@ -60,8 +60,5 @@ export function validateDragOperation(
     }
   }
 
-  // Note: Summary tasks are now allowed to be dragged - their children
-  // are moved along with them, and the summary dates auto-recalculate.
-
   return { valid: true };
 }
