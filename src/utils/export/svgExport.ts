@@ -22,6 +22,7 @@ import {
   HEADER_HEIGHT,
   SVG_FONT_FAMILY,
   EXPORT_CHART_SVG_CLASS,
+  EXPORT_TIMELINE_HEADER_SVG_CLASS,
   SVG_NS,
   REACT_RENDER_WAIT_MS,
   SVG_BACKGROUND_WHITE,
@@ -72,6 +73,16 @@ interface BuildSvgParams {
   projectName?: string;
 }
 
+/** Options for appendHeaderElements */
+interface AppendHeaderElementsOptions {
+  hasTaskList: boolean;
+  selectedColumns: ExportOptions["selectedColumns"];
+  columnWidths: Record<string, number>;
+  taskTableWidth: number;
+  density: ExportOptions["density"];
+  headerSvg: SVGSVGElement | null;
+}
+
 // =============================================================================
 // Public API
 // =============================================================================
@@ -81,6 +92,62 @@ interface BuildSvgParams {
  * Creates a proper SVG that works in vector editing applications.
  */
 export async function exportToSvg(params: ExportToSvgParams): Promise<void> {
+  const { svgOptions, projectName, onProgress } = params;
+
+  onProgress?.(10);
+
+  const dimensions = calculateExportDimensions({
+    tasks: params.tasks,
+    options: params.options,
+    columnWidths: params.columnWidths,
+    currentAppZoom: params.currentAppZoom,
+    projectDateRange: params.projectDateRange,
+    visibleDateRange: params.visibleDateRange,
+  });
+
+  onProgress?.(20);
+
+  const container = createOffscreenContainer(
+    dimensions.width,
+    dimensions.height,
+    params.options.background
+  );
+
+  try {
+    const svgString = await buildSvgString(
+      container,
+      params,
+      dimensions,
+      onProgress
+    );
+
+    if (svgOptions.copyToClipboard) {
+      await copyToClipboard(svgString);
+    } else {
+      downloadSvg(svgString, generateExportFilename(projectName, "svg"));
+    }
+
+    onProgress?.(100);
+  } finally {
+    // Container cleanup is always here; root cleanup is inside buildSvgString
+    removeOffscreenContainer(container);
+  }
+}
+
+// =============================================================================
+// Private helpers — rendering pipeline
+// =============================================================================
+
+/**
+ * Run the full SVG build pipeline inside an offscreen container.
+ * Owns the React root lifecycle: creates it before rendering, unmounts in finally.
+ */
+async function buildSvgString(
+  container: HTMLDivElement,
+  params: ExportToSvgParams,
+  dimensions: PixelDimensions,
+  onProgress?: (progress: number) => void
+): Promise<string> {
   const {
     tasks,
     options,
@@ -89,48 +156,25 @@ export async function exportToSvg(params: ExportToSvgParams): Promise<void> {
     currentAppZoom,
     projectDateRange,
     visibleDateRange,
-    projectName,
     colorModeState,
-    onProgress,
+    projectName,
   } = params;
 
-  onProgress?.(10);
-
-  const dimensions = calculateExportDimensions({
-    tasks,
-    options,
-    columnWidths,
-    currentAppZoom,
-    projectDateRange,
-    visibleDateRange,
-  });
-
-  onProgress?.(20);
-
-  const container = createOffscreenContainer(
-    dimensions.width,
-    dimensions.height,
-    options.background
+  const root = await renderReactToOffscreen(
+    container,
+    createElement(ExportRenderer, {
+      tasks,
+      options,
+      columnWidths,
+      currentAppZoom,
+      projectDateRange,
+      visibleDateRange,
+    })
   );
 
-  // root is declared outside try so it can be unmounted in finally even on error
-  let root: Root | null = null;
+  onProgress?.(40);
 
   try {
-    root = await renderReactToOffscreen(
-      container,
-      createElement(ExportRenderer, {
-        tasks,
-        options,
-        columnWidths,
-        currentAppZoom,
-        projectDateRange,
-        visibleDateRange,
-      })
-    );
-
-    onProgress?.(40);
-
     await waitForFonts();
     await waitForPaint();
 
@@ -155,28 +199,15 @@ export async function exportToSvg(params: ExportToSvgParams): Promise<void> {
 
     onProgress?.(80);
 
-    const svgString = finalizeSvg(finalSvg, svgOptions, projectName);
+    const result = finalizeSvg(finalSvg, svgOptions, projectName);
 
     onProgress?.(90);
 
-    if (svgOptions.copyToClipboard) {
-      await copyToClipboard(svgString);
-    } else {
-      const filename = generateExportFilename(projectName, "svg");
-      downloadSvg(svgString, filename);
-    }
-
-    onProgress?.(100);
+    return result;
   } finally {
-    // Always unmount — even when an error is thrown before explicit unmount
-    root?.unmount();
-    removeOffscreenContainer(container);
+    root.unmount();
   }
 }
-
-// =============================================================================
-// Private helpers — rendering pipeline
-// =============================================================================
 
 /**
  * Render a React element into an offscreen container and wait for the commit.
@@ -197,9 +228,10 @@ async function renderReactToOffscreen(
 
 /**
  * Extract chart and header SVG elements from the rendered offscreen container.
+ * Selects by stable CSS class constants — decoupled from DOM structure.
  * Throws with a descriptive message if the required chart SVG is not found.
  */
-function extractSvgElements(container: HTMLDivElement): {
+export function extractSvgElements(container: HTMLDivElement): {
   chartSvg: SVGSVGElement;
   headerSvg: SVGSVGElement | null;
 } {
@@ -210,7 +242,7 @@ function extractSvgElements(container: HTMLDivElement): {
     );
   }
   const headerEl = container.querySelector(
-    ".export-container > div:first-child svg"
+    `svg.${EXPORT_TIMELINE_HEADER_SVG_CLASS}`
   );
   return {
     chartSvg: chartEl as SVGSVGElement,
@@ -221,6 +253,30 @@ function extractSvgElements(container: HTMLDivElement): {
 // =============================================================================
 // Private helpers — SVG construction
 // =============================================================================
+
+/**
+ * Create the root SVG element with correct dimensions and an accessibility title.
+ * viewBox is always present so downstream consumers can safely remove width/height
+ * for responsive embedding without losing layout information.
+ */
+function createRootSvgElement(
+  dimensions: PixelDimensions,
+  projectName?: string
+): SVGSVGElement {
+  const svg = document.createElementNS(SVG_NS, "svg");
+  svg.setAttribute("xmlns", SVG_NS);
+  svg.setAttribute("width", String(dimensions.width));
+  svg.setAttribute("height", String(dimensions.height));
+  svg.setAttribute("viewBox", `0 0 ${dimensions.width} ${dimensions.height}`);
+
+  const title = document.createElementNS(SVG_NS, "title");
+  title.textContent = projectName
+    ? `Gantt chart: ${projectName}`
+    : "Gantt Chart";
+  svg.appendChild(title);
+
+  return svg;
+}
 
 /**
  * Append a white background rect (when requested) and a font CSS declaration.
@@ -252,13 +308,17 @@ function appendBackgroundAndDefs(
  */
 function appendHeaderElements(
   svg: SVGSVGElement,
-  hasTaskList: boolean,
-  selectedColumns: ExportOptions["selectedColumns"],
-  columnWidths: Record<string, number>,
-  taskTableWidth: number,
-  density: ExportOptions["density"],
-  headerSvg: SVGSVGElement | null
+  options: AppendHeaderElementsOptions
 ): void {
+  const {
+    hasTaskList,
+    selectedColumns,
+    columnWidths,
+    taskTableWidth,
+    density,
+    headerSvg,
+  } = options;
+
   if (hasTaskList) {
     const headerOpts: TaskTableHeaderOptions = {
       selectedColumns,
@@ -322,34 +382,21 @@ function buildCompleteSvg(params: BuildSvgParams): SVGSVGElement {
   // No hidden tasks at export time — tasks are pre-filtered by prepareExportTasks
   const flattenedTasks = buildFlattenedTaskList(tasks, new Set<TaskId>());
 
-  // Root SVG element
-  const svg = document.createElementNS(SVG_NS, "svg");
-  svg.setAttribute("xmlns", SVG_NS);
-  svg.setAttribute("width", String(dimensions.width));
-  svg.setAttribute("height", String(dimensions.height));
-  svg.setAttribute("viewBox", `0 0 ${dimensions.width} ${dimensions.height}`);
-
-  // Accessibility title
-  const title = document.createElementNS(SVG_NS, "title");
-  title.textContent = projectName
-    ? `Gantt chart: ${projectName}`
-    : "Gantt Chart";
-  svg.appendChild(title);
+  const svg = createRootSvgElement(dimensions, projectName);
 
   appendBackgroundAndDefs(svg, options.background);
 
   let currentY = 0;
 
   if (options.includeHeader) {
-    appendHeaderElements(
-      svg,
+    appendHeaderElements(svg, {
       hasTaskList,
       selectedColumns,
       columnWidths,
       taskTableWidth,
-      options.density,
-      headerSvg
-    );
+      density: options.density,
+      headerSvg,
+    });
     currentY = HEADER_HEIGHT;
   }
 
@@ -382,11 +429,13 @@ function buildCompleteSvg(params: BuildSvgParams): SVGSVGElement {
  * Option precedence (highest to lowest):
  *   dimensionMode === "custom"  →  explicit width/height applied last (overrides responsive)
  *   responsiveMode === true     →  width/height removed so SVG scales to its container
- *   (default)                  →  fixed pixel dimensions from buildCompleteSvg
+ *   (default)                  →  fixed pixel dimensions from createRootSvgElement
  *
- * viewBox is always present (set by buildCompleteSvg), so no fallback is needed here.
+ * viewBox is always present (set by createRootSvgElement), so no fallback is needed here.
+ *
+ * Exported for unit testing.
  */
-function finalizeSvg(
+export function finalizeSvg(
   svg: SVGSVGElement,
   options: SvgExportOptions,
   projectName?: string
@@ -404,12 +453,14 @@ function finalizeSvg(
     svg.removeAttribute("height");
   }
 
-  // Custom dimensions are applied after responsiveMode so they always win
+  // Custom dimensions are applied after responsiveMode so they always win.
+  // Use != null rather than truthiness so an explicit 0 is not silently dropped
+  // (0 is not a valid SVG dimension but the guard should be intentional, not accidental).
   if (options.dimensionMode === "custom") {
-    if (options.customWidth) {
+    if (options.customWidth != null) {
       svg.setAttribute("width", String(options.customWidth));
     }
-    if (options.customHeight) {
+    if (options.customHeight != null) {
       svg.setAttribute("height", String(options.customHeight));
     }
   }
@@ -443,8 +494,13 @@ async function copyToClipboard(svgString: string): Promise<void> {
     textarea.style.opacity = "0";
     document.body.appendChild(textarea);
     textarea.select();
-    document.execCommand("copy");
+    const success = document.execCommand("copy");
     document.body.removeChild(textarea);
+    if (!success) {
+      console.warn(
+        "[svgExport] execCommand copy returned false — clipboard may not have been updated"
+      );
+    }
   }
 }
 

@@ -196,7 +196,7 @@ describe("generateMilestonePath", () => {
 // =============================================================================
 
 describe("getLabelConfig — before position", () => {
-  const cfg = getLabelConfig(100, 30, "before", 12);
+  const cfg = getLabelConfig({ taskWidth: 100, taskHeight: 30, labelPosition: "before", fontSize: 12 });
 
   it("x is negative (label to the left of bar)", () => {
     expect(cfg.x).toBeLessThan(0);
@@ -217,36 +217,36 @@ describe("getLabelConfig — before position", () => {
 
 describe("getLabelConfig — inside position", () => {
   it("x is positive (label inside bar)", () => {
-    const cfg = getLabelConfig(100, 30, "inside", 12);
+    const cfg = getLabelConfig({ taskWidth: 100, taskHeight: 30, labelPosition: "inside", fontSize: 12 });
     expect(cfg.x).toBeGreaterThan(0);
   });
 
   it("textAnchor is start", () => {
-    const cfg = getLabelConfig(100, 30, "inside", 12);
+    const cfg = getLabelConfig({ taskWidth: 100, taskHeight: 30, labelPosition: "inside", fontSize: 12 });
     expect(cfg.textAnchor).toBe("start");
   });
 
   it("clip is true", () => {
-    const cfg = getLabelConfig(100, 30, "inside", 12);
+    const cfg = getLabelConfig({ taskWidth: 100, taskHeight: 30, labelPosition: "inside", fontSize: 12 });
     expect(cfg.clip).toBe(true);
   });
 
   it("uses internal color when no taskColor given", () => {
-    const cfg = getLabelConfig(100, 30, "inside", 12);
+    const cfg = getLabelConfig({ taskWidth: 100, taskHeight: 30, labelPosition: "inside", fontSize: 12 });
     expect(cfg.fill).toBe(RENDER_COLORS.textInternal);
   });
 
   it("calculates contrast color when taskColor is provided", () => {
     // Dark task color → white text; light task color → dark text
-    const darkCfg = getLabelConfig(100, 30, "inside", 12, "#000000");
-    const lightCfg = getLabelConfig(100, 30, "inside", 12, "#ffffff");
+    const darkCfg = getLabelConfig({ taskWidth: 100, taskHeight: 30, labelPosition: "inside", fontSize: 12, taskColor: "#000000" });
+    const lightCfg = getLabelConfig({ taskWidth: 100, taskHeight: 30, labelPosition: "inside", fontSize: 12, taskColor: "#ffffff" });
     // They should differ from each other and from the plain internal color
     expect(darkCfg.fill).not.toBe(lightCfg.fill);
   });
 });
 
 describe("getLabelConfig — after position", () => {
-  const cfg = getLabelConfig(100, 30, "after", 12);
+  const cfg = getLabelConfig({ taskWidth: 100, taskHeight: 30, labelPosition: "after", fontSize: 12 });
 
   it("x is greater than taskWidth (label to the right)", () => {
     expect(cfg.x).toBeGreaterThan(100);
@@ -267,14 +267,14 @@ describe("getLabelConfig — after position", () => {
 
 describe("getLabelConfig — y calculation", () => {
   it("y is approximately half of taskHeight", () => {
-    const cfg = getLabelConfig(100, 40, "inside", 12);
+    const cfg = getLabelConfig({ taskWidth: 100, taskHeight: 40, labelPosition: "inside", fontSize: 12 });
     // y = taskHeight/2 + fontSize/3 = 20 + 4 = 24
     expect(cfg.y).toBeCloseTo(24, 5);
   });
 
   it("y scales with fontSize", () => {
-    const small = getLabelConfig(100, 40, "inside", 10);
-    const large = getLabelConfig(100, 40, "inside", 20);
+    const small = getLabelConfig({ taskWidth: 100, taskHeight: 40, labelPosition: "inside", fontSize: 10 });
+    const large = getLabelConfig({ taskWidth: 100, taskHeight: 40, labelPosition: "inside", fontSize: 20 });
     expect(large.y).toBeGreaterThan(small.y);
   });
 });

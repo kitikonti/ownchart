@@ -195,7 +195,7 @@ export const DEPENDENCY_RENDER_CONSTANTS = {
 // =============================================================================
 
 /** Resolved label position and styling for a task bar label */
-export type LabelConfig = {
+export interface LabelConfig {
   /** X offset relative to task bar start */
   x: number;
   /** Y position for text baseline */
@@ -206,7 +206,21 @@ export type LabelConfig = {
   fill: string;
   /** Whether the label should be clipped to the task bar bounds */
   clip: boolean;
-};
+}
+
+/** Options for getLabelConfig */
+export interface GetLabelConfigOptions {
+  /** Width of the task bar */
+  taskWidth: number;
+  /** Height of the task bar */
+  taskHeight: number;
+  /** Position of the label (before, inside, after) */
+  labelPosition: "before" | "inside" | "after";
+  /** Font size for vertical offset calculation */
+  fontSize: number;
+  /** Optional task background color for dynamic contrast (inside labels only) */
+  taskColor?: string;
+}
 
 // =============================================================================
 // Functions
@@ -297,20 +311,9 @@ export function generateMilestonePath(
 /**
  * Calculate label position and styling based on position mode.
  * Returns x offset relative to task bar start, y position, text anchor, fill color, and clip flag.
- *
- * @param taskWidth - Width of the task bar
- * @param taskHeight - Height of the task bar
- * @param labelPosition - Position of the label (before, inside, after)
- * @param fontSize - Font size for vertical offset calculation
- * @param taskColor - Optional task background color for dynamic contrast calculation (inside labels only)
  */
-export function getLabelConfig(
-  taskWidth: number,
-  taskHeight: number,
-  labelPosition: "before" | "inside" | "after",
-  fontSize: number,
-  taskColor?: string
-): LabelConfig {
+export function getLabelConfig(options: GetLabelConfigOptions): LabelConfig {
+  const { taskWidth, taskHeight, labelPosition, fontSize, taskColor } = options;
   const padding = LABEL_RENDER_CONSTANTS.padding;
   const yOffset = fontSize * LABEL_RENDER_CONSTANTS.verticalOffsetFactor;
   const y = taskHeight / 2 + yOffset;
