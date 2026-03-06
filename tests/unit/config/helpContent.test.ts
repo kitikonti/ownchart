@@ -1,6 +1,6 @@
-import { describe, it, expect, vi, afterEach } from "vitest";
+import { describe, it, expect, vi, afterEach, beforeEach } from "vitest";
 import {
-  getHelpTabs,
+  HELP_TABS,
   isMac,
   getModKey,
   resolveShortcut,
@@ -119,15 +119,17 @@ describe("resolveShortcut", () => {
 // ---------------------------------------------------------------------------
 
 describe("resolveHelpTopic", () => {
-  afterEach(() => {
-    vi.unstubAllGlobals();
-  });
-
-  beforeAll(() => {
-    // Use non-Mac so {mod} → Ctrl for predictable assertions
+  beforeEach(() => {
+    // Use non-Mac so {mod} → Ctrl for predictable assertions.
+    // beforeEach (not beforeAll) because afterEach clears all stubs after
+    // each test, so the stub must be re-applied before the next one.
     vi.stubGlobal("navigator", {
       userAgent: "Mozilla/5.0 (Windows NT 10.0; Win64; x64)",
     });
+  });
+
+  afterEach(() => {
+    vi.unstubAllGlobals();
   });
 
   it("should resolve {mod} in description", () => {
@@ -211,11 +213,7 @@ describe("resolveHelpTopic", () => {
 // ---------------------------------------------------------------------------
 
 describe("helpContent", () => {
-  let tabs: HelpTab[];
-
-  beforeAll(() => {
-    tabs = getHelpTabs();
-  });
+  const tabs: readonly HelpTab[] = HELP_TABS;
 
   it("should have exactly 3 tabs", () => {
     expect(tabs).toHaveLength(3);
@@ -285,8 +283,8 @@ describe("helpContent", () => {
     }
   });
 
-  it("should return the same array reference on every call (cached)", () => {
-    expect(getHelpTabs()).toBe(getHelpTabs());
+  it("should be a stable module-level constant (same reference always)", () => {
+    expect(HELP_TABS).toBe(HELP_TABS);
   });
 
   describe("Getting Started tab", () => {

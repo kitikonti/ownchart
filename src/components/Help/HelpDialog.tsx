@@ -3,13 +3,13 @@
  * search, and comprehensive feature documentation.
  */
 
-import { useState, useMemo } from "react";
+import { useState } from "react";
 import { Question, Command } from "@phosphor-icons/react";
 import { Modal } from "../common/Modal";
 import { Button } from "../common/Button";
 import { Alert } from "../common/Alert";
 import { useUIStore } from "../../store/slices/uiSlice";
-import { getHelpTabs, isMac, getModKey } from "../../config/helpContent";
+import { HELP_TABS, isMac, getModKey } from "../../config/helpContent";
 import { useHelpSearch } from "../../hooks/useHelpSearch";
 import { HelpSearchInput } from "./HelpSearchInput";
 import { HelpSectionList } from "./HelpSectionList";
@@ -23,7 +23,7 @@ export function HelpDialog(): JSX.Element | null {
 
   const [query, setQuery] = useState("");
 
-  const tabs = useMemo(() => getHelpTabs(), []);
+  const tabs = HELP_TABS;
   const { sections: searchResults, matchCount } = useHelpSearch(tabs, query);
   const isSearching = query.trim().length > 0;
 

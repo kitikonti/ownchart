@@ -23,7 +23,7 @@ export interface HelpSearchResult {
  * Returns an empty sections array when query is blank (caller shows normal tabs).
  */
 export function useHelpSearch(
-  tabs: HelpTab[],
+  tabs: readonly HelpTab[],
   query: string
 ): HelpSearchResult {
   return useMemo(() => {

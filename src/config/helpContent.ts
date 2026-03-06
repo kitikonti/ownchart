@@ -2,7 +2,8 @@
  * Help content data — single source of truth for all in-app documentation.
  *
  * When adding a new user-facing feature, add a HelpTopic here.
- * When changing shortcuts, update both the shortcuts tab and helpContent.
+ * When changing a shortcut key, update the SC constant and every topic
+ * that references it — both tabs stay consistent automatically.
  * When removing a feature, remove its help topic.
  *
  * All shortcut strings use {mod} as a placeholder for the platform modifier
@@ -49,6 +50,22 @@ export interface HelpTab {
 // Platform helpers
 // ---------------------------------------------------------------------------
 
+/**
+ * Placeholder token replaced by resolveShortcut() with the platform modifier
+ * key. Export this constant when constructing shortcut strings programmatically
+ * to avoid typos in the "{mod}" literal.
+ */
+export const MOD_PLACEHOLDER = "{mod}";
+
+/** Pre-compiled regex for the {mod} placeholder — avoids re-creation per call. */
+const MOD_REGEX = /\{mod\}/g;
+
+/**
+ * Returns true if the current platform is macOS.
+ *
+ * Intentionally a function (not a module-level constant) so that tests can
+ * stub `navigator` to verify platform-specific behaviour independently.
+ */
 export function isMac(): boolean {
   if (typeof navigator === "undefined") return false;
   return /Mac/.test(navigator.userAgent);
@@ -60,13 +77,17 @@ export function getModKey(): string {
 
 /** Replace {mod} placeholder with the platform modifier key (Ctrl or Cmd). */
 export function resolveShortcut(shortcut: string): string {
-  return shortcut.replace(/\{mod\}/g, getModKey());
+  return shortcut.replace(MOD_REGEX, getModKey());
 }
 
 /**
  * Resolve all {mod} placeholders in a topic's text fields.
  * Use this when rendering a topic to ensure description, tip, and shortcuts
  * all display the correct platform modifier key.
+ *
+ * Note: keywords are intentionally excluded — they are search terms only and
+ * are never displayed directly, so {mod} substitution would break search
+ * matching (users type "Ctrl", not "{mod}").
  */
 export function resolveHelpTopic(topic: HelpTopic): HelpTopic {
   return {
@@ -78,6 +99,57 @@ export function resolveHelpTopic(topic: HelpTopic): HelpTopic {
     }),
   };
 }
+
+// ---------------------------------------------------------------------------
+// Shortcut constants — single source of truth for all shortcut key strings.
+//
+// Reference these in both SHORTCUT_SECTIONS and FEATURE_SECTIONS so that
+// changing a shortcut key here propagates to both help tabs automatically.
+// ---------------------------------------------------------------------------
+
+const SC = {
+  FILE_NEW: "{mod}+Alt+N",
+  FILE_OPEN: "{mod}+O",
+  FILE_SAVE: "{mod}+S",
+  FILE_SAVE_AS: "{mod}+Shift+S",
+  FILE_EXPORT: "{mod}+E",
+
+  EDIT_UNDO: "{mod}+Z",
+  EDIT_REDO: "{mod}+Shift+Z",
+  EDIT_REDO_ALT: "{mod}+Y",
+  EDIT_COPY: "{mod}+C",
+  EDIT_CUT: "{mod}+X",
+  EDIT_PASTE: "{mod}+V",
+  EDIT_SELECT_ALL: "{mod}+A",
+  EDIT_DELETE: "Delete",
+  EDIT_DELETE_ALT: "{mod}+-",
+  EDIT_INSERT: "{mod}++",
+
+  HIER_INDENT: "Alt+Shift+Right",
+  HIER_OUTDENT: "Alt+Shift+Left",
+  HIER_GROUP: "{mod}+G",
+  HIER_UNGROUP: "{mod}+Shift+G",
+
+  VIEW_ZOOM_RESET: "{mod}+0",
+  VIEW_ZOOM_WHEEL: "{mod}+Wheel",
+  VIEW_FIT: "F",
+  VIEW_TODAY: "T",
+  VIEW_DEPS: "D",
+  VIEW_PROGRESS: "P",
+  VIEW_HOLIDAYS: "H",
+  VIEW_HIDE_ROWS: "{mod}+H",
+  VIEW_SHOW_ROWS: "{mod}+Shift+H",
+  VIEW_COLUMNS: "View > Columns",
+  VIEW_TABLE: "View > Table",
+
+  NAV_HELP: "?",
+  NAV_ESCAPE: "Escape",
+
+  SEL_CLICK: "Click",
+  SEL_MOD_CLICK: "{mod}+Click",
+  SEL_RANGE: "Shift+Click",
+  SEL_DRAG: "Drag (timeline)",
+} as const;
 
 // ---------------------------------------------------------------------------
 // Shortcut sections
@@ -93,31 +165,31 @@ const SHORTCUT_SECTIONS: HelpSection[] = [
         id: "sc-new",
         title: "New chart",
         description: "Create a new empty project.",
-        shortcuts: ["{mod}+Alt+N"],
+        shortcuts: [SC.FILE_NEW],
       },
       {
         id: "sc-open",
         title: "Open file",
         description: "Open an existing .ownchart file.",
-        shortcuts: ["{mod}+O"],
+        shortcuts: [SC.FILE_OPEN],
       },
       {
         id: "sc-save",
         title: "Save",
         description: "Save the current project to disk.",
-        shortcuts: ["{mod}+S"],
+        shortcuts: [SC.FILE_SAVE],
       },
       {
         id: "sc-save-as",
         title: "Save As",
         description: "Save with a new file name.",
-        shortcuts: ["{mod}+Shift+S"],
+        shortcuts: [SC.FILE_SAVE_AS],
       },
       {
         id: "sc-export",
         title: "Export",
         description: "Open the export dialog for PNG, PDF, or SVG.",
-        shortcuts: ["{mod}+E"],
+        shortcuts: [SC.FILE_EXPORT],
       },
     ],
   },
@@ -130,55 +202,56 @@ const SHORTCUT_SECTIONS: HelpSection[] = [
         id: "sc-undo",
         title: "Undo",
         description: "Undo the last action.",
-        shortcuts: ["{mod}+Z"],
+        shortcuts: [SC.EDIT_UNDO],
       },
       {
         id: "sc-redo",
         title: "Redo",
         description: "Redo the previously undone action.",
-        shortcuts: ["{mod}+Shift+Z"],
+        shortcuts: [SC.EDIT_REDO],
       },
       {
         id: "sc-redo-alt",
         title: "Redo (alternative)",
         description: "Alternative redo shortcut.",
-        shortcuts: ["{mod}+Y"],
+        shortcuts: [SC.EDIT_REDO_ALT],
       },
       {
         id: "sc-copy",
         title: "Copy selected tasks",
         description: "Copy the selected tasks to the clipboard.",
-        shortcuts: ["{mod}+C"],
+        shortcuts: [SC.EDIT_COPY],
       },
       {
         id: "sc-cut",
         title: "Cut selected tasks",
         description: "Cut the selected tasks to the clipboard.",
-        shortcuts: ["{mod}+X"],
+        shortcuts: [SC.EDIT_CUT],
       },
       {
         id: "sc-paste",
         title: "Paste tasks",
         description: "Paste tasks from the clipboard.",
-        shortcuts: ["{mod}+V"],
+        shortcuts: [SC.EDIT_PASTE],
       },
       {
         id: "sc-select-all",
         title: "Select all tasks",
         description: "Select every task in the project.",
-        shortcuts: ["{mod}+A"],
+        shortcuts: [SC.EDIT_SELECT_ALL],
       },
       {
         id: "sc-delete",
         title: "Delete selected tasks",
         description: "Remove the selected tasks.",
-        shortcuts: ["Delete / {mod}+-"],
+        // Combined into one string for the shortcuts reference tab (alternatives on one line)
+        shortcuts: [`${SC.EDIT_DELETE} / ${SC.EDIT_DELETE_ALT}`],
       },
       {
         id: "sc-insert",
         title: "Insert row(s) above",
         description: "Insert new task rows above the current selection.",
-        shortcuts: ["{mod}++"],
+        shortcuts: [SC.EDIT_INSERT],
       },
     ],
   },
@@ -191,25 +264,25 @@ const SHORTCUT_SECTIONS: HelpSection[] = [
         id: "sc-click",
         title: "Select task",
         description: "Click a task to select it.",
-        shortcuts: ["Click"],
+        shortcuts: [SC.SEL_CLICK],
       },
       {
         id: "sc-multi-click",
         title: "Add to selection",
         description: "Add or remove a task from the current selection.",
-        shortcuts: ["{mod}+Click"],
+        shortcuts: [SC.SEL_MOD_CLICK],
       },
       {
         id: "sc-range",
         title: "Range select",
         description: "Select a contiguous range of tasks.",
-        shortcuts: ["Shift+Click"],
+        shortcuts: [SC.SEL_RANGE],
       },
       {
         id: "sc-marquee",
         title: "Marquee select",
         description: "Drag a rectangle in the timeline to select tasks.",
-        shortcuts: ["Drag (timeline)"],
+        shortcuts: [SC.SEL_DRAG],
       },
     ],
   },
@@ -222,25 +295,25 @@ const SHORTCUT_SECTIONS: HelpSection[] = [
         id: "sc-indent",
         title: "Indent task (make child)",
         description: "Make the selected task a child of the task above.",
-        shortcuts: ["Alt+Shift+Right"],
+        shortcuts: [SC.HIER_INDENT],
       },
       {
         id: "sc-outdent",
         title: "Outdent task (make sibling)",
         description: "Move the selected task one level up in hierarchy.",
-        shortcuts: ["Alt+Shift+Left"],
+        shortcuts: [SC.HIER_OUTDENT],
       },
       {
         id: "sc-group",
         title: "Group selected tasks",
         description: "Wrap the selected tasks in a new summary task.",
-        shortcuts: ["{mod}+G"],
+        shortcuts: [SC.HIER_GROUP],
       },
       {
         id: "sc-ungroup",
         title: "Ungroup (dissolve summary)",
         description: "Remove the summary task and promote its children.",
-        shortcuts: ["{mod}+Shift+G"],
+        shortcuts: [SC.HIER_UNGROUP],
       },
     ],
   },
@@ -253,67 +326,67 @@ const SHORTCUT_SECTIONS: HelpSection[] = [
         id: "sc-zoom-reset",
         title: "Reset zoom to 100%",
         description: "Reset the timeline zoom level to default.",
-        shortcuts: ["{mod}+0"],
+        shortcuts: [SC.VIEW_ZOOM_RESET],
       },
       {
         id: "sc-zoom-wheel",
         title: "Zoom at cursor",
         description: "Zoom in or out centered on the mouse cursor.",
-        shortcuts: ["{mod}+Wheel"],
+        shortcuts: [SC.VIEW_ZOOM_WHEEL],
       },
       {
         id: "sc-fit",
         title: "Fit timeline to tasks",
         description: "Adjust zoom so all tasks fit in the viewport.",
-        shortcuts: ["F"],
+        shortcuts: [SC.VIEW_FIT],
       },
       {
         id: "sc-toggle-today",
         title: "Toggle today marker",
         description: "Show or hide the today marker line.",
-        shortcuts: ["T"],
+        shortcuts: [SC.VIEW_TODAY],
       },
       {
         id: "sc-toggle-deps",
         title: "Toggle dependencies",
         description: "Show or hide dependency arrows.",
-        shortcuts: ["D"],
+        shortcuts: [SC.VIEW_DEPS],
       },
       {
         id: "sc-toggle-progress",
         title: "Toggle progress",
         description: "Show or hide the progress column and bars.",
-        shortcuts: ["P"],
+        shortcuts: [SC.VIEW_PROGRESS],
       },
       {
         id: "sc-toggle-holidays",
         title: "Toggle holidays",
         description: "Show or hide holiday highlighting.",
-        shortcuts: ["H"],
+        shortcuts: [SC.VIEW_HOLIDAYS],
       },
       {
         id: "sc-hide-rows",
         title: "Hide selected rows",
         description: "Hide selected rows from the table (Excel-style).",
-        shortcuts: ["{mod}+H"],
+        shortcuts: [SC.VIEW_HIDE_ROWS],
       },
       {
         id: "sc-show-rows",
         title: "Show all hidden rows",
         description: "Unhide all hidden rows.",
-        shortcuts: ["{mod}+Shift+H"],
+        shortcuts: [SC.VIEW_SHOW_ROWS],
       },
       {
         id: "sc-columns",
         title: "Show/hide date columns",
         description: "Toggle visibility of date columns.",
-        shortcuts: ["View > Columns"],
+        shortcuts: [SC.VIEW_COLUMNS],
       },
       {
         id: "sc-table",
         title: "Collapse/expand task table",
         description: "Toggle the task table panel.",
-        shortcuts: ["View > Table"],
+        shortcuts: [SC.VIEW_TABLE],
       },
     ],
   },
@@ -326,13 +399,13 @@ const SHORTCUT_SECTIONS: HelpSection[] = [
         id: "sc-help",
         title: "Show this help",
         description: "Open the help dialog.",
-        shortcuts: ["?"],
+        shortcuts: [SC.NAV_HELP],
       },
       {
         id: "sc-escape",
         title: "Close dialog / Clear selection",
         description: "Close the current dialog or clear the selection.",
-        shortcuts: ["Escape"],
+        shortcuts: [SC.NAV_ESCAPE],
       },
     ],
   },
@@ -414,7 +487,7 @@ const FEATURE_SECTIONS: HelpSection[] = [
         title: "New Project",
         description:
           "Create a blank project with default settings. If you have unsaved changes you'll be prompted to save first.",
-        shortcuts: ["{mod}+Alt+N"],
+        shortcuts: [SC.FILE_NEW],
         keywords: ["new", "create", "blank"],
       },
       {
@@ -422,7 +495,7 @@ const FEATURE_SECTIONS: HelpSection[] = [
         title: "Open Project",
         description:
           "Open an .ownchart file from your device. View settings, column widths, and dependencies are all restored.",
-        shortcuts: ["{mod}+O"],
+        shortcuts: [SC.FILE_OPEN],
         keywords: ["open", "load", "import"],
       },
       {
@@ -430,7 +503,7 @@ const FEATURE_SECTIONS: HelpSection[] = [
         title: "Save Project",
         description:
           "Save your project to disk. On first save, you'll choose a filename. Subsequent saves write to the same file instantly.",
-        shortcuts: ["{mod}+S"],
+        shortcuts: [SC.FILE_SAVE],
         keywords: ["save", "disk", "file"],
       },
       {
@@ -438,7 +511,7 @@ const FEATURE_SECTIONS: HelpSection[] = [
         title: "Save As",
         description:
           "Save a copy of your project with a new filename, keeping the original intact.",
-        shortcuts: ["{mod}+Shift+S"],
+        shortcuts: [SC.FILE_SAVE_AS],
         keywords: ["save as", "copy", "duplicate"],
       },
       {
@@ -446,7 +519,7 @@ const FEATURE_SECTIONS: HelpSection[] = [
         title: "Export",
         description:
           "Export your chart as PNG, PDF, or SVG. Open the export dialog to configure format-specific options like page size, scale, and content toggles.",
-        shortcuts: ["{mod}+E"],
+        shortcuts: [SC.FILE_EXPORT],
         keywords: ["export", "png", "pdf", "svg", "image"],
       },
       {
@@ -484,7 +557,8 @@ const FEATURE_SECTIONS: HelpSection[] = [
         title: "Delete Tasks",
         description:
           "Select one or more tasks and press Delete or click the Delete button. Summary tasks offer the choice to delete children or promote them.",
-        shortcuts: ["Delete", "{mod}+-"],
+        // Two separate entries here (vs. combined in shortcuts tab) for clarity
+        shortcuts: [SC.EDIT_DELETE, SC.EDIT_DELETE_ALT],
         keywords: ["delete", "remove"],
       },
       {
@@ -506,7 +580,7 @@ const FEATURE_SECTIONS: HelpSection[] = [
         title: "Insert Tasks",
         description:
           "Insert a new task above or below the current selection using the ribbon buttons or keyboard shortcuts.",
-        shortcuts: ["{mod}++"],
+        shortcuts: [SC.EDIT_INSERT],
         keywords: ["insert", "above", "below"],
       },
     ],
@@ -530,7 +604,7 @@ const FEATURE_SECTIONS: HelpSection[] = [
         title: "Multi-Selection",
         description:
           "Hold {mod} and click to toggle individual tasks in and out of the selection. Works in both table and timeline.",
-        shortcuts: ["{mod}+Click"],
+        shortcuts: [SC.SEL_MOD_CLICK],
         keywords: ["multi", "toggle", "ctrl"],
       },
       {
@@ -538,7 +612,7 @@ const FEATURE_SECTIONS: HelpSection[] = [
         title: "Range Selection",
         description:
           "Hold Shift and click to select a contiguous range of tasks from the last selected task to the clicked task.",
-        shortcuts: ["Shift+Click"],
+        shortcuts: [SC.SEL_RANGE],
         keywords: ["range", "shift"],
       },
       {
@@ -552,7 +626,7 @@ const FEATURE_SECTIONS: HelpSection[] = [
         id: "feat-sel-all",
         title: "Select All",
         description: "Select every task in the project.",
-        shortcuts: ["{mod}+A"],
+        shortcuts: [SC.EDIT_SELECT_ALL],
         keywords: ["all", "select all"],
       },
     ],
@@ -569,7 +643,7 @@ const FEATURE_SECTIONS: HelpSection[] = [
         title: "Indent / Outdent",
         description:
           "Indent makes a task a child of the task above it. Outdent moves it back to the parent's level. Both operations support undo.",
-        shortcuts: ["Alt+Shift+Right", "Alt+Shift+Left"],
+        shortcuts: [SC.HIER_INDENT, SC.HIER_OUTDENT],
         keywords: ["indent", "outdent", "child", "sibling"],
       },
       {
@@ -577,7 +651,7 @@ const FEATURE_SECTIONS: HelpSection[] = [
         title: "Group / Ungroup",
         description:
           "Group wraps selected tasks in a new summary task. Ungroup removes the summary and promotes its children to siblings.",
-        shortcuts: ["{mod}+G", "{mod}+Shift+G"],
+        shortcuts: [SC.HIER_GROUP, SC.HIER_UNGROUP],
         keywords: ["group", "ungroup", "wrap"],
       },
       {
@@ -615,7 +689,7 @@ const FEATURE_SECTIONS: HelpSection[] = [
         title: "Zoom In / Out",
         description:
           "Zoom from 5% to 300% using toolbar buttons, the dropdown, or {mod}+Scroll. Zoom is exponential for a consistent feel at all levels.",
-        shortcuts: ["{mod}+Wheel"],
+        shortcuts: [SC.VIEW_ZOOM_WHEEL],
         keywords: ["zoom", "scale", "magnify"],
       },
       {
@@ -623,7 +697,7 @@ const FEATURE_SECTIONS: HelpSection[] = [
         title: "Fit to View",
         description:
           "Automatically adjust zoom and scroll so all tasks fit within the visible timeline area.",
-        shortcuts: ["F"],
+        shortcuts: [SC.VIEW_FIT],
         keywords: ["fit", "auto zoom", "overview"],
       },
       {
@@ -726,7 +800,7 @@ const FEATURE_SECTIONS: HelpSection[] = [
         title: "Dependency Arrows",
         description:
           "Dependencies render as curved SVG arrows. Toggle their visibility with D or the Dependencies button in the View tab.",
-        shortcuts: ["D"],
+        shortcuts: [SC.VIEW_DEPS],
         keywords: ["arrow", "visual", "show", "hide"],
       },
     ],
@@ -743,7 +817,7 @@ const FEATURE_SECTIONS: HelpSection[] = [
         title: "Copy Tasks",
         description:
           "Copy selected tasks to the clipboard. Copied rows show a dashed border. Paste multiple times from the same copy.",
-        shortcuts: ["{mod}+C"],
+        shortcuts: [SC.EDIT_COPY],
         keywords: ["copy", "duplicate"],
       },
       {
@@ -751,7 +825,7 @@ const FEATURE_SECTIONS: HelpSection[] = [
         title: "Cut Tasks",
         description:
           "Cut selected tasks to the clipboard. They appear faded until pasted or the operation is cancelled with Escape.",
-        shortcuts: ["{mod}+X"],
+        shortcuts: [SC.EDIT_CUT],
         keywords: ["cut", "move"],
       },
       {
@@ -759,7 +833,7 @@ const FEATURE_SECTIONS: HelpSection[] = [
         title: "Paste Tasks",
         description:
           "Paste tasks from the clipboard. They are inserted after the current selection or at the end of the list.",
-        shortcuts: ["{mod}+V"],
+        shortcuts: [SC.EDIT_PASTE],
         keywords: ["paste", "insert"],
       },
       {
@@ -783,14 +857,14 @@ const FEATURE_SECTIONS: HelpSection[] = [
         title: "Today Marker",
         description:
           "A blue vertical line marking today's date in the timeline. Toggle with T or the View tab.",
-        shortcuts: ["T"],
+        shortcuts: [SC.VIEW_TODAY],
         keywords: ["today", "marker", "line", "blue"],
       },
       {
         id: "feat-view-deps",
         title: "Dependencies Toggle",
         description: "Show or hide all dependency arrows in the timeline.",
-        shortcuts: ["D"],
+        shortcuts: [SC.VIEW_DEPS],
         keywords: ["dependencies", "arrows", "toggle"],
       },
       {
@@ -798,7 +872,7 @@ const FEATURE_SECTIONS: HelpSection[] = [
         title: "Progress Toggle",
         description:
           "Show or hide the progress column in the table and progress bars on task bars.",
-        shortcuts: ["P"],
+        shortcuts: [SC.VIEW_PROGRESS],
         keywords: ["progress", "column", "bar"],
       },
       {
@@ -806,7 +880,7 @@ const FEATURE_SECTIONS: HelpSection[] = [
         title: "Holidays Toggle",
         description:
           "Show or hide holiday highlighting in the timeline. Holidays are color-coded with tooltips showing the holiday name.",
-        shortcuts: ["H"],
+        shortcuts: [SC.VIEW_HOLIDAYS],
         keywords: ["holidays", "highlight", "tooltip"],
       },
       {
@@ -948,7 +1022,7 @@ const FEATURE_SECTIONS: HelpSection[] = [
         title: "Hidden Rows",
         description:
           "Hide selected rows with {mod}+H. Row number gaps indicate hidden rows with a clickable indicator to unhide them. Use {mod}+Shift+H to show all.",
-        shortcuts: ["{mod}+H", "{mod}+Shift+H"],
+        shortcuts: [SC.VIEW_HIDE_ROWS, SC.VIEW_SHOW_ROWS],
         keywords: ["hidden", "rows", "filter", "unhide"],
       },
       {
@@ -1009,7 +1083,7 @@ const FEATURE_SECTIONS: HelpSection[] = [
         title: "Undo",
         description:
           "Undo the last action. The toolbar button shows a tooltip describing which action will be undone. Supports all task mutations, hierarchy changes, and color changes.",
-        shortcuts: ["{mod}+Z"],
+        shortcuts: [SC.EDIT_UNDO],
         keywords: ["undo", "revert", "back"],
       },
       {
@@ -1017,7 +1091,7 @@ const FEATURE_SECTIONS: HelpSection[] = [
         title: "Redo",
         description:
           "Redo a previously undone action. Available as long as no new action has been performed after the undo.",
-        shortcuts: ["{mod}+Shift+Z", "{mod}+Y"],
+        shortcuts: [SC.EDIT_REDO, SC.EDIT_REDO_ALT],
         keywords: ["redo", "forward", "repeat"],
       },
     ],
@@ -1041,7 +1115,7 @@ const FEATURE_SECTIONS: HelpSection[] = [
         title: "Keyboard Shortcuts",
         description:
           "Press ? to open the help dialog. The Shortcuts tab lists every keyboard shortcut organized by category with platform-aware modifier keys.",
-        shortcuts: ["?"],
+        shortcuts: [SC.NAV_HELP],
         keywords: ["keyboard", "shortcuts", "help", "hotkeys"],
       },
       {
@@ -1093,10 +1167,11 @@ const FEATURE_SECTIONS: HelpSection[] = [
 ];
 
 // ---------------------------------------------------------------------------
-// Assembled tabs
+// Assembled tabs — exported as a named constant for direct reference.
+// Consumers should import HELP_TABS directly rather than calling getHelpTabs().
 // ---------------------------------------------------------------------------
 
-const HELP_TABS: HelpTab[] = [
+export const HELP_TABS: readonly HelpTab[] = [
   {
     id: "getting-started",
     label: "Getting Started",
@@ -1113,7 +1188,3 @@ const HELP_TABS: HelpTab[] = [
     sections: FEATURE_SECTIONS,
   },
 ];
-
-export function getHelpTabs(): HelpTab[] {
-  return HELP_TABS;
-}
