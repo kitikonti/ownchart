@@ -2,6 +2,20 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [1.1.29](https://github.com/kitikonti/ownchart/compare/v1.1.28...v1.1.29) (2026-03-06)
+
+
+### Bug Fixes
+
+* **helpContent:** replace VIEW_COLUMNS/VIEW_TABLE shortcuts with menuPath ([3625149](https://github.com/kitikonti/ownchart/commit/3625149ad338d41dc4290988b976ee0c1873c4b2))
+
+
+### Code Refactoring
+
+* **helpContent:** apply F001–F005 review fixes and future-proof hardening ([a0d6757](https://github.com/kitikonti/ownchart/commit/a0d6757d56ecb5b65dd2e5930845fd66c98e4fa8))
+* **helpContent:** apply review fixes and future-proof hardening ([78103be](https://github.com/kitikonti/ownchart/commit/78103be08707f44bf90d98c0a64d55cc146d6002))
+* **helpContent:** harden config file from code review (F001–F006) ([b003b57](https://github.com/kitikonti/ownchart/commit/b003b57e52215bbd7a3b5e4ea2734f51bfb3e931))
+
 ## [1.1.28](https://github.com/kitikonti/ownchart/compare/v1.1.27...v1.1.28) (2026-03-06)
 
 
