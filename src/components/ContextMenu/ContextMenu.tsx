@@ -4,12 +4,15 @@
  * Future-proof: can be extended with Cut/Copy/Paste, Delete, Indent/Outdent, etc.
  */
 
-import { useEffect, useRef, useCallback, createElement } from "react";
+import { useEffect, useRef, useCallback } from "react";
 import { createPortal } from "react-dom";
 import { Check } from "@phosphor-icons/react";
-import { CONTEXT_MENU } from "../../styles/design-tokens";
+import { CONTEXT_MENU, Z_INDEX } from "../../styles/design-tokens";
 
 export const CONTEXT_MENU_CONTAINER_CLASS = "context-menu-container";
+
+/** Pixel gap kept between the menu edge and the viewport boundary. */
+const VIEWPORT_EDGE_MARGIN_PX = 4;
 
 export interface ContextMenuItem {
   id: string;
@@ -65,10 +68,10 @@ export function ContextMenu({
     let y = position.y;
 
     if (x + rect.width > viewportWidth) {
-      x = viewportWidth - rect.width - 4;
+      x = viewportWidth - rect.width - VIEWPORT_EDGE_MARGIN_PX;
     }
     if (y + rect.height > viewportHeight) {
-      y = viewportHeight - rect.height - 4;
+      y = viewportHeight - rect.height - VIEWPORT_EDGE_MARGIN_PX;
     }
 
     el.style.left = `${Math.max(0, x)}px`;
@@ -92,8 +95,8 @@ export function ContextMenu({
         onClose();
       }
     };
-    // Use setTimeout to avoid the same click that opened the menu closing it
-    // Use capture phase so DnD libraries can't swallow the event
+    // Use setTimeout to avoid the same click that opened the menu closing it.
+    // Use capture phase so DnD libraries can't swallow the event.
     const timer = setTimeout(() => {
       document.addEventListener("mousedown", handleClick, true);
     }, 0);
@@ -145,11 +148,13 @@ export function ContextMenu({
   return createPortal(
     <div
       ref={menuRef}
-      className={`${CONTEXT_MENU_CONTAINER_CLASS} fixed z-[1000] min-w-[180px]`}
+      className={`${CONTEXT_MENU_CONTAINER_CLASS} fixed`}
       style={{
         left: position.x,
         top: position.y,
         visibility: "hidden",
+        zIndex: Z_INDEX.dropdown,
+        minWidth: CONTEXT_MENU.minWidth,
       }}
       role="menu"
       tabIndex={-1}
@@ -165,19 +170,18 @@ export function ContextMenu({
             disabled={item.disabled}
             className="context-menu-item text-left outline-none"
             onClick={() => {
-              if (!item.disabled) {
-                item.onClick();
-                onClose();
-              }
+              item.onClick();
+              onClose();
             }}
           >
             {item.checked !== undefined ? (
               <span className="context-menu-item-check">
-                {item.checked &&
-                  createElement(Check, {
-                    size: CONTEXT_MENU.iconSize,
-                    weight: CONTEXT_MENU.iconWeight,
-                  })}
+                {item.checked && (
+                  <Check
+                    size={CONTEXT_MENU.iconSize}
+                    weight={CONTEXT_MENU.iconWeight}
+                  />
+                )}
               </span>
             ) : (
               item.icon && (

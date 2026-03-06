@@ -255,6 +255,7 @@ export const TOOLBAR = {
 export const CONTEXT_MENU = {
   iconSize: 20,
   iconWeight: "light" as const,
+  minWidth: 180,
 } as const;
 
 // =============================================================================

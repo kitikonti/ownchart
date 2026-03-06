@@ -5,6 +5,7 @@
  */
 
 import { useEffect, useRef, type ReactNode, type KeyboardEvent } from "react";
+import { createPortal } from "react-dom";
 import { X } from "@phosphor-icons/react";
 
 export interface ModalProps {
@@ -17,7 +18,7 @@ export interface ModalProps {
   /** Modal title */
   title: string;
 
-  /** Optional subtitle below the title */
+  /** Optional subtitle below the title — also used as the dialog's accessible description */
   subtitle?: string;
 
   /** Modal content */
@@ -61,19 +62,16 @@ export function Modal({
   const modalRef = useRef<HTMLDivElement>(null);
   const previousActiveElement = useRef<HTMLElement | null>(null);
 
-  // Save the previously focused element and focus the modal
+  // Save the focused element before opening; restore it when the modal closes.
+  // Avoiding a cleanup function prevents the stale-closure issue where the
+  // captured `isOpen` value is always the one from the previous render.
   useEffect(() => {
     if (isOpen) {
       previousActiveElement.current = document.activeElement as HTMLElement;
       modalRef.current?.focus();
+    } else {
+      previousActiveElement.current?.focus();
     }
-
-    return () => {
-      // Restore focus when modal closes
-      if (previousActiveElement.current && !isOpen) {
-        previousActiveElement.current.focus();
-      }
-    };
   }, [isOpen]);
 
   // Handle keyboard events
@@ -107,7 +105,7 @@ export function Modal({
     return null;
   }
 
-  return (
+  return createPortal(
     // eslint-disable-next-line jsx-a11y/no-noninteractive-element-interactions
     <div
       ref={modalRef}
@@ -115,6 +113,7 @@ export function Modal({
       role="dialog"
       aria-modal="true"
       aria-labelledby="modal-title"
+      aria-describedby={subtitle ? "modal-subtitle" : undefined}
       tabIndex={-1}
       onKeyDown={handleKeyDown}
     >
@@ -154,7 +153,12 @@ export function Modal({
                 {title}
               </h2>
               {subtitle && (
-                <p className="text-sm text-neutral-500 mt-0.5">{subtitle}</p>
+                <p
+                  id="modal-subtitle"
+                  className="text-sm text-neutral-500 mt-0.5"
+                >
+                  {subtitle}
+                </p>
               )}
             </div>
           </div>
@@ -187,6 +191,7 @@ export function Modal({
           </div>
         )}
       </div>
-    </div>
+    </div>,
+    document.body
   );
 }

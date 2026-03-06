@@ -55,12 +55,17 @@ export function HelpDialog(): JSX.Element | null {
 
       {/* Tab bar (hidden during search) */}
       {!isSearching && (
-        <div className="px-6 flex gap-1 border-b border-neutral-200">
+        <div
+          className="px-6 flex gap-1 border-b border-neutral-200"
+          role="tablist"
+          aria-label="Help navigation"
+        >
           {tabs.map((tab) => {
             const isActive = tab.id === activeTab;
             return (
               <button
                 key={tab.id}
+                id={`tab-${tab.id}`}
                 onClick={() => setActiveTab(tab.id)}
                 className={`px-3 py-2 text-sm font-medium transition-colors relative ${
                   isActive
@@ -69,6 +74,7 @@ export function HelpDialog(): JSX.Element | null {
                 }`}
                 role="tab"
                 aria-selected={isActive}
+                aria-controls={`help-panel-${tab.id}`}
               >
                 {tab.label}
                 {isActive && (
@@ -80,8 +86,14 @@ export function HelpDialog(): JSX.Element | null {
         </div>
       )}
 
-      {/* Content */}
-      <div className="px-6 py-4 overflow-y-auto max-h-[55vh] scrollbar-thin">
+      {/* Content — role="tabpanel" when tabs are visible, plain div when searching */}
+      <div
+        className="px-6 py-4 overflow-y-auto max-h-[55vh] scrollbar-thin"
+        role={!isSearching ? "tabpanel" : undefined}
+        id={!isSearching ? `help-panel-${activeTab}` : undefined}
+        aria-labelledby={!isSearching ? `tab-${activeTab}` : undefined}
+        tabIndex={!isSearching ? 0 : undefined}
+      >
         {isSearching ? (
           // Search results
           searchResults.length > 0 ? (
