@@ -2,6 +2,24 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [1.1.28](https://github.com/kitikonti/ownchart/compare/v1.1.27...v1.1.28) (2026-03-06)
+
+
+### Bug Fixes
+
+* use exit code 2 in PostToolUse hook to surface message to Claude ([43246c6](https://github.com/kitikonti/ownchart/commit/43246c6b1c87b47f720bd096219c9ef97cc126bc))
+
+
+### Code Refactoring
+
+* fix all review findings F001–F004 in taskTableRenderer ([dec74f7](https://github.com/kitikonti/ownchart/commit/dec74f715fa4f5ddce8b9625f31f535bf663ff88))
+* fix F002 — group ColorModeState import with other type imports ([2afc910](https://github.com/kitikonti/ownchart/commit/2afc9107c9b053841ffb7fbb9d8fd8861318e4c0))
+* harden taskTableRenderer — fix all review findings F001–F005 ([1cee430](https://github.com/kitikonti/ownchart/commit/1cee430d17cd69d26df902cf14d61590a608deb4))
+* harden taskTableRenderer — fix all review findings F001–F006 ([56159dc](https://github.com/kitikonti/ownchart/commit/56159dcdb93d90335dbb458831ef58d7fbf9345b))
+* harden taskTableRenderer — fix all review findings F001–F007 ([e2bf72c](https://github.com/kitikonti/ownchart/commit/e2bf72c4e70ba598f5e1eaddd8d24dcc11f7085a))
+* harden taskTableRenderer — fix all review findings F001–F008 ([c2e32ee](https://github.com/kitikonti/ownchart/commit/c2e32ee2bfa16d799ff0421173c8a727caa20f60))
+* harden taskTableRenderer — fix all review findings F001–F008 ([5759e6e](https://github.com/kitikonti/ownchart/commit/5759e6e94223c2bee144906a3a263aa8f5ac8edc))
+
 ## [1.1.27](https://github.com/kitikonti/ownchart/compare/v1.1.26...v1.1.27) (2026-03-06)
 
 
