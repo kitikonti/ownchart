@@ -209,6 +209,14 @@ export function validateDateRange(
   startDate: string,
   endDate: string
 ): ValidationResult {
+  if (import.meta.env.DEV) {
+    if (!ISO_DATE_REGEX.test(startDate) || !ISO_DATE_REGEX.test(endDate)) {
+      console.warn(
+        "validateDateRange: called with unvalidated inputs — pre-validate with validateDateString first"
+      );
+    }
+  }
+
   if (new Date(endDate) < new Date(startDate)) {
     return {
       valid: false,

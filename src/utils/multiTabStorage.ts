@@ -134,6 +134,12 @@ export function getTabId(): string {
     return stored;
   }
 
+  if (stored && import.meta.env.DEV) {
+    console.warn(
+      `getTabId: stored tab ID "${stored}" failed format validation — regenerating`
+    );
+  }
+
   const tabId = generateTabId();
   sessionStorage.setItem(TAB_ID_KEY, tabId);
   return tabId;
@@ -398,6 +404,9 @@ function validateStorageRoot(parsed: unknown): Record<string, unknown> | null {
     typeof data.charts !== "object" ||
     Array.isArray(data.charts)
   ) {
+    // Unconditional (not DEV-only) for the same reason as the version-mismatch
+    // warning above: silently resetting all chart data is a significant event
+    // that users should be able to observe in production DevTools.
     console.warn(
       'Multi-tab storage: "charts" field is invalid — resetting to empty'
     );
@@ -523,13 +532,13 @@ export function cleanupInactiveTabs(): void {
   const now = Date.now();
   let cleaned = false;
 
-  Object.keys(storage.charts).forEach((tabId) => {
+  for (const tabId of Object.keys(storage.charts)) {
     const tab = storage.charts[tabId];
     if (now - tab.lastActive > TAB_TIMEOUT_MS) {
       delete storage.charts[tabId];
       cleaned = true;
     }
-  });
+  }
 
   if (cleaned) {
     if (!saveMultiTabStorage(storage)) {
