@@ -2,6 +2,16 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [1.1.26](https://github.com/kitikonti/ownchart/compare/v1.1.25...v1.1.26) (2026-03-06)
+
+
+### Code Refactoring
+
+* harden date/locale/svg utils for type safety and performance ([266bc16](https://github.com/kitikonti/ownchart/commit/266bc161c00d3052a2beea4b6703619fbfafa377))
+* harden locale/date utils and add missing test coverage ([96a3500](https://github.com/kitikonti/ownchart/commit/96a3500afaf2e836b2053d6530705a2dad06c88f))
+* harden locale/drag/svg utils — caching, dead code, DOMPoint migration ([27bac38](https://github.com/kitikonti/ownchart/commit/27bac38f9cce180bf67551aaae497e2e78839055))
+* harden utils docs, comments, and test coverage ([f37bf69](https://github.com/kitikonti/ownchart/commit/f37bf69888cf15f75a54010ea0b5f1db4695e80b))
+
 ## [1.1.25](https://github.com/kitikonti/ownchart/compare/v1.1.24...v1.1.25) (2026-03-06)
 
 
