@@ -42,6 +42,40 @@ function bfsReachable(
 }
 
 /**
+ * Builds a forward adjacency list and per-node in-degree counts
+ * for the subset of dependencies whose endpoints are both known tasks.
+ *
+ * All task IDs are guaranteed to be present in both returned maps
+ * (empty adjacency list / zero in-degree as defaults), so callers may
+ * use non-null assertions when accessing them.
+ */
+function buildInDegreeGraph(
+  tasks: Task[],
+  dependencies: Dependency[]
+): { graph: Map<TaskId, TaskId[]>; inDegree: Map<TaskId, number> } {
+  const validTaskIds = new Set<TaskId>(tasks.map((t) => t.id));
+  const inDegree = new Map<TaskId, number>();
+  const graph = new Map<TaskId, TaskId[]>();
+
+  for (const task of tasks) {
+    inDegree.set(task.id, 0);
+    graph.set(task.id, []);
+  }
+
+  // Build adjacency list and in-degree counts — skip deps referencing unknown tasks
+  for (const dep of dependencies) {
+    if (validTaskIds.has(dep.fromTaskId) && validTaskIds.has(dep.toTaskId)) {
+      // Non-null assertions are safe: graph and inDegree were pre-populated
+      // for all valid task IDs above.
+      graph.get(dep.fromTaskId)!.push(dep.toTaskId);
+      inDegree.set(dep.toTaskId, inDegree.get(dep.toTaskId)! + 1);
+    }
+  }
+
+  return { graph, inDegree };
+}
+
+/**
  * Sort tasks in topological order based on dependencies.
  * Tasks with no predecessors come first.
  *
@@ -61,23 +95,7 @@ export function topologicalSort(
   dependencies: Dependency[]
 ): Task[] {
   const taskMap = new Map<TaskId, Task>(tasks.map((t) => [t.id, t]));
-  const inDegree = new Map<TaskId, number>();
-  const graph = new Map<TaskId, TaskId[]>();
-
-  // Initialize all tasks with 0 in-degree
-  for (const task of tasks) {
-    inDegree.set(task.id, 0);
-    graph.set(task.id, []);
-  }
-
-  // Build graph and count in-degrees (skip deps referencing unknown tasks)
-  for (const dep of dependencies) {
-    if (taskMap.has(dep.fromTaskId) && taskMap.has(dep.toTaskId)) {
-      // Non-null assertion is safe: graph was pre-populated for all task IDs above
-      graph.get(dep.fromTaskId)!.push(dep.toTaskId);
-      inDegree.set(dep.toTaskId, (inDegree.get(dep.toTaskId) ?? 0) + 1);
-    }
-  }
+  const { graph, inDegree } = buildInDegreeGraph(tasks, dependencies);
 
   // Enqueue all tasks with no incoming edges
   const queue: TaskId[] = [];
@@ -92,13 +110,12 @@ export function topologicalSort(
 
   while (head < queue.length) {
     const current = queue[head++];
-    const task = taskMap.get(current);
-    if (task) {
-      result.push(task);
-    }
+    // Non-null assertions are safe: taskMap and graph are keyed on task IDs,
+    // and the queue is populated exclusively from those IDs.
+    result.push(taskMap.get(current)!);
 
-    for (const neighbor of graph.get(current) ?? []) {
-      const newDegree = (inDegree.get(neighbor) ?? 0) - 1;
+    for (const neighbor of graph.get(current)!) {
+      const newDegree = inDegree.get(neighbor)! - 1;
       inDegree.set(neighbor, newDegree);
       if (newDegree === 0) {
         queue.push(neighbor);

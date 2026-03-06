@@ -24,7 +24,8 @@ import { buildAdjacencyList, ensureList } from "./graphHelpers";
  * outer loop, letting `detectCycle` skip already-processed components efficiently.
  *
  * The `path` array mirrors the explicit stack: `path[i] === stack[i][0]` at all
- * times, enabling O(1) cycle-segment extraction when a back edge is found.
+ * times. `pathIndex` maintains the inverse mapping (node → index in `path`) for
+ * O(1) cycle-segment extraction when a back edge is found.
  *
  * @param startNode - Entry point for this DFS traversal
  * @param graph     - Forward adjacency list
@@ -38,19 +39,24 @@ function dfsDetectCycle(
   visited: Set<TaskId>,
   inStack: Set<TaskId>
 ): TaskId[] | null {
-  // `path` mirrors the stack: path[i] === stack[i][0] at all times
+  // `path` mirrors the stack: path[i] === stack[i][0] at all times.
+  // `pathIndex` is the inverse: pathIndex.get(node) === its current index in path,
+  // enabling O(1) cycle-start lookup when a back edge is found.
   const path: TaskId[] = [startNode];
+  const pathIndex = new Map<TaskId, number>([[startNode, 0]]);
   const stack: Array<[TaskId, number]> = [[startNode, 0]];
   visited.add(startNode);
   inStack.add(startNode);
 
   while (stack.length > 0) {
     const frame = stack[stack.length - 1];
-    const neighbors = graph.get(frame[0]) ?? [];
+    const node = frame[0];
+    const neighbors = graph.get(node) ?? [];
 
     if (frame[1] >= neighbors.length) {
       // All neighbors processed — backtrack
-      inStack.delete(frame[0]);
+      inStack.delete(node);
+      pathIndex.delete(node);
       path.pop();
       stack.pop();
       continue;
@@ -59,14 +65,16 @@ function dfsDetectCycle(
     const neighbor = neighbors[frame[1]++];
 
     if (inStack.has(neighbor)) {
-      // Back edge: neighbor is on the current path — extract and return the cycle
-      const cycleStart = path.indexOf(neighbor);
+      // Back edge: neighbor is on the current path — extract and return the cycle.
+      // pathIndex gives O(1) lookup of the cycle's start position in path.
+      const cycleStart = pathIndex.get(neighbor)!;
       return [...path.slice(cycleStart), neighbor];
     }
 
     if (!visited.has(neighbor)) {
       visited.add(neighbor);
       inStack.add(neighbor);
+      pathIndex.set(neighbor, path.length);
       path.push(neighbor);
       stack.push([neighbor, 0]);
     }
