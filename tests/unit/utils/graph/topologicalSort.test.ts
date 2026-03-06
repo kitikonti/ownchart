@@ -41,14 +41,18 @@ function dep(from: string, to: string): Dependency {
 }
 
 describe("topologicalSort", () => {
-  describe("with no dependencies", () => {
+  describe("with empty input", () => {
+    it("should return empty array for empty tasks and no dependencies", () => {
+      expect(topologicalSort([], [])).toEqual([]);
+    });
+
     it("should return all tasks when no dependencies", () => {
       const tasks = [task("A"), task("B"), task("C")];
       const result = topologicalSort(tasks, []);
       expect(result.length).toBe(3);
-      expect(result.map((t) => t.id)).toContain("A");
-      expect(result.map((t) => t.id)).toContain("B");
-      expect(result.map((t) => t.id)).toContain("C");
+      expect(result.map((t) => t.id)).toContain(tid("A"));
+      expect(result.map((t) => t.id)).toContain(tid("B"));
+      expect(result.map((t) => t.id)).toContain(tid("C"));
     });
   });
 
@@ -89,7 +93,20 @@ describe("topologicalSort", () => {
 
       const result = topologicalSort(tasks, deps);
       expect(result.length).toBe(2);
-      expect(result.map((t) => t.id)).toEqual(["A", "B"]);
+      expect(result.map((t) => t.id)).toEqual([tid("A"), tid("B")]);
+    });
+  });
+
+  describe("with cyclic dependencies", () => {
+    it("should return only acyclic tasks when graph contains a cycle", () => {
+      // A is independent; B → C → B is a cycle
+      const tasks = [task("A"), task("B"), task("C")];
+      const deps = [dep("B", "C"), dep("C", "B")];
+
+      const result = topologicalSort(tasks, deps);
+      // A has no dependencies so it escapes; B and C are stuck in the cycle
+      expect(result.map((t) => t.id)).toContain(tid("A"));
+      expect(result.length).toBe(1);
     });
   });
 });
@@ -120,8 +137,16 @@ describe("getSuccessors", () => {
 
   it("should not include the starting task", () => {
     const deps = [dep("A", "B")];
-    const result = getSuccessors("A", deps);
-    expect(result.has("A")).toBe(false);
+    const result = getSuccessors(tid("A"), deps);
+    expect(result.has(tid("A"))).toBe(false);
+  });
+
+  it("should not include the starting task even when a cycle leads back to it", () => {
+    // A → B → A forms a cycle; starting node is pre-visited so it never enters reachable
+    const deps = [dep("A", "B"), dep("B", "A")];
+    const result = getSuccessors(tid("A"), deps);
+    expect(result.has(tid("B"))).toBe(true);
+    expect(result.has(tid("A"))).toBe(false);
   });
 });
 
@@ -151,7 +176,15 @@ describe("getPredecessors", () => {
 
   it("should not include the starting task", () => {
     const deps = [dep("A", "B")];
-    const result = getPredecessors("B", deps);
-    expect(result.has("B")).toBe(false);
+    const result = getPredecessors(tid("B"), deps);
+    expect(result.has(tid("B"))).toBe(false);
+  });
+
+  it("should not include the starting task even when a cycle leads back to it", () => {
+    // A → B → A forms a cycle; starting node is pre-visited so it never enters reachable
+    const deps = [dep("A", "B"), dep("B", "A")];
+    const result = getPredecessors(tid("A"), deps);
+    expect(result.has(tid("B"))).toBe(true);
+    expect(result.has(tid("A"))).toBe(false);
   });
 });
