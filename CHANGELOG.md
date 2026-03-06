@@ -2,6 +2,21 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [1.1.22](https://github.com/kitikonti/ownchart/compare/v1.1.21...v1.1.22) (2026-03-06)
+
+
+### Code Refactoring
+
+* decompose pdfExport.ts into focused single-responsibility functions ([c3d98f5](https://github.com/kitikonti/ownchart/commit/c3d98f5fffab4b91a5d466bdd4d93edb18363778))
+* harden hierarchy, multiTabStorage, validation — review findings ([48ae111](https://github.com/kitikonti/ownchart/commit/48ae111ee45162c11d8c104f2c72ffac92e17cc0))
+* harden pdfExport.ts — fix dead params, reduce coupling, add tests ([80f55f6](https://github.com/kitikonti/ownchart/commit/80f55f69130b491673ca59525cf5099176227e1a))
+* harden pdfExport.ts — fix review findings F001–F002, defensive root cleanup ([74b6bec](https://github.com/kitikonti/ownchart/commit/74b6bec8fda9ccb56934cd7df0c131b707fb4bda))
+* harden pdfExport.ts — fix review findings F001–F003, add PageDimensions ([99986c5](https://github.com/kitikonti/ownchart/commit/99986c5f2e0f087579942a774fe572bcaacb1dca))
+* harden pdfExport.ts — fix review findings F001–F004 ([70f7d9d](https://github.com/kitikonti/ownchart/commit/70f7d9d80b095b93526b5329401dcc8415cbd808))
+* harden pdfExport.ts — fix review findings F001–F006 ([1bba711](https://github.com/kitikonti/ownchart/commit/1bba7118823925f96bdb0a155857031075590989))
+* harden pdfExport.ts — reduce coupling, sharpen types, fix test gaps ([827c46c](https://github.com/kitikonti/ownchart/commit/827c46c20bcf29ef9bd54dbeddc26f771392ee60))
+* replace positional args with options objects in taskTableRenderer ([fd7a4c1](https://github.com/kitikonti/ownchart/commit/fd7a4c19aae298dedb5737e092c9bd4949832486))
+
 ## [1.1.21](https://github.com/kitikonti/ownchart/compare/v1.1.20...v1.1.21) (2026-03-06)
 
 
