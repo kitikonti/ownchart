@@ -28,6 +28,7 @@ import {
   hexToRgb,
   calculatePdfFitToWidth,
   hasHeaderFooterContent,
+  type PageDimensions,
   type PdfColor,
 } from "./pdfLayout";
 import { ExportRenderer } from "../../components/Export/ExportRenderer";
@@ -280,25 +281,21 @@ export async function exportToPdf({
 
   onProgress?.(EXPORT_PROGRESS.DIMENSIONS_READY);
 
-  const rendererProps: RendererProps = {
-    tasks,
-    options: effectiveOptions,
-    columnWidths,
-    currentAppZoom,
-    projectDateRange,
-    visibleDateRange,
-  };
-  const assemblyCtx: SvgAssemblyContext = {
-    tasks,
-    options: effectiveOptions,
-    columnWidths,
-    colorModeState,
-    projectName,
-  };
   const svgElement = await renderToSvg(
     dimensions,
-    rendererProps,
-    assemblyCtx,
+    buildRendererProps(effectiveOptions, {
+      tasks,
+      columnWidths,
+      currentAppZoom,
+      projectDateRange,
+      visibleDateRange,
+    }),
+    buildAssemblyCtx(effectiveOptions, {
+      tasks,
+      columnWidths,
+      colorModeState,
+      projectName,
+    }),
     onProgress
   );
 
@@ -317,6 +314,22 @@ export async function exportToPdf({
   );
 
   onProgress?.(EXPORT_PROGRESS.COMPLETE);
+}
+
+/** Build the props object forwarded to ExportRenderer from the resolved export parameters. */
+function buildRendererProps(
+  options: ExportOptions,
+  params: Omit<RendererProps, "options">
+): RendererProps {
+  return { ...params, options };
+}
+
+/** Build the SVG assembly context from the resolved export parameters. */
+function buildAssemblyCtx(
+  options: ExportOptions,
+  params: Omit<SvgAssemblyContext, "options">
+): SvgAssemblyContext {
+  return { ...params, options };
 }
 
 // =============================================================================
@@ -490,7 +503,7 @@ async function buildAndSavePdf(
  * distinct from render errors.
  */
 function createPdfDocument(
-  pageDims: { width: number; height: number },
+  pageDims: PageDimensions,
   settings: PdfDocumentSettings
 ): jsPDF {
   const { metadata, pdfOptions } = settings;
@@ -544,7 +557,7 @@ async function embedSvgInDocument(
  */
 export function computeChartPlacement(
   dimensions: PixelDimensions,
-  pageDims: { width: number; height: number },
+  pageDims: PageDimensions,
   margins: PdfMargins,
   reserved: ReservedSpace
 ): ChartPlacement {
@@ -685,11 +698,10 @@ function buildCompleteSvg(
       )
     : 0;
   const svg = createSvgRoot(dimensions, options.background, ctx.projectName);
-  let contentY = 0;
+  const contentY = options.includeHeader ? HEADER_HEIGHT : 0;
 
   if (options.includeHeader) {
     appendExportHeader(svg, headerSvg, ctx, taskTableWidth);
-    contentY = HEADER_HEIGHT;
   }
 
   appendChartContent(svg, chartSvg, ctx, { taskTableWidth, contentY });
@@ -799,7 +811,7 @@ function createSvgRoot(
 
   const defs = document.createElementNS(SVG_NS, "defs");
   const style = document.createElementNS(SVG_NS, "style");
-  style.textContent = `\n    text { font-family: ${SVG_FONT_FAMILY}; }\n  `;
+  style.textContent = `text { font-family: ${SVG_FONT_FAMILY}; }`;
   defs.appendChild(style);
   svg.appendChild(defs);
 
