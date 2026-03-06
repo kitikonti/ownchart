@@ -59,6 +59,8 @@ export interface TextMeasurementOptions {
   fontWeight?: number;
   /** Letter spacing in em units (matches CSS `letter-spacing`). Defaults to 0. */
   letterSpacing?: number;
+  /** CSS font style ('normal' | 'italic' | 'oblique'). Defaults to 'normal'. */
+  fontStyle?: string;
 }
 
 /**
@@ -145,7 +147,7 @@ function computeOneSidePaddingDays(
  *
  * @param text - The text to measure
  * @param fontSize - Font size in pixels
- * @param options - Typography options (fontFamily, fontWeight, letterSpacing)
+ * @param options - Typography options (fontFamily, fontWeight, letterSpacing, fontStyle)
  * @returns Width in pixels, or 0 for an empty string
  */
 export function measureTextWidth(
@@ -159,6 +161,7 @@ export function measureTextWidth(
     fontFamily = DEFAULT_FONT_FAMILY,
     fontWeight = 400,
     letterSpacing = 0,
+    fontStyle = "normal",
   } = options;
 
   const ctx = getMeasureContext();
@@ -166,13 +169,18 @@ export function measureTextWidth(
     // Fallback estimation when Canvas API is unavailable (e.g. SSR, test environments).
     // Apply the same letter-spacing formula as the Canvas path (n-1 gaps for n chars)
     // so both paths remain consistent.
+    // fontStyle is intentionally not factored in — a character-count heuristic
+    // cannot meaningfully account for italic vs. regular glyph width differences.
     const baseWidth = text.length * fontSize * FALLBACK_CHAR_WIDTH_RATIO;
     return letterSpacing > 0
       ? baseWidth + (text.length - 1) * letterSpacing * fontSize
       : baseWidth;
   }
 
-  ctx.font = `${fontWeight} ${fontSize}px ${fontFamily}`;
+  // Full CSS font shorthand: style weight size family.
+  // Explicit fontStyle prevents any browser-specific font-property inheritance
+  // quirks on a shared off-screen canvas context.
+  ctx.font = `${fontStyle} ${fontWeight} ${fontSize}px ${fontFamily}`;
   let width = ctx.measureText(text).width;
 
   // Add letter spacing (in em units, so multiply by fontSize).

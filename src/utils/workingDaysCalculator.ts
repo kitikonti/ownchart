@@ -120,6 +120,49 @@ function buildHolidayDateSet(holidays: HolidayInfo[]): Set<string> {
   return new Set(holidays.map((h) => format(h.date, "yyyy-MM-dd")));
 }
 
+/**
+ * Advance `startDate` forward until `count` working days have been found.
+ *
+ * Extracted from {@link addWorkingDays} so the outer function stays under the
+ * 50-line limit and the iteration-guard logic (including its dev-mode warning)
+ * is isolated in one place.
+ *
+ * `count × 7 + WORKING_DAYS_LOOP_BUFFER` calendar days is provably sufficient
+ * to find `count` working days under any realistic holiday calendar. If the
+ * guard fires, a new exclusion axis was added to {@link WorkingDaysConfig}
+ * without updating {@link addWorkingDays}, and the returned date is incorrect.
+ */
+function advanceByWorkingDays(
+  startDate: string,
+  count: number,
+  config: WorkingDaysConfig,
+  holidayRegion: string | undefined
+): string {
+  let currentDate = startDate;
+  let remaining = count;
+  const maxIterations = count * 7 + WORKING_DAYS_LOOP_BUFFER;
+  let iterations = 0;
+
+  while (remaining > 0) {
+    if (iterations++ >= maxIterations) {
+      if (import.meta.env.DEV) {
+        console.warn(
+          "[addWorkingDays] Iteration guard fired — result is incorrect. " +
+            "A new exclusion axis may have been added to WorkingDaysConfig " +
+            "without updating addWorkingDays."
+        );
+      }
+      break;
+    }
+    currentDate = addDays(currentDate, 1);
+    if (isWorkingDay(currentDate, config, holidayRegion)) {
+      remaining--;
+    }
+  }
+
+  return currentDate;
+}
+
 // ─── Public API ───────────────────────────────────────────────────────────────
 
 /**
@@ -237,36 +280,19 @@ export function addWorkingDays(
     holidayService.setRegion(holidayRegion);
   }
 
-  let currentDate = startDate;
-  let remainingDays = days;
-
-  // Start date counts as day 1 if it is a working day
-  if (isWorkingDay(currentDate, config, holidayRegion)) {
-    remainingDays--;
-  }
-
+  // Start date counts as day 1 if it is a working day.
   // Holiday exclusions are checked via isWorkingDay (per-iteration isHolidayString
   // call) rather than a pre-fetched Set, because the end date is unknown upfront.
   // This is safe: the holiday service caches per-year internally, so repeated
   // isHolidayString calls are O(1) after the initial year load.
-  //
-  // Guard against unbounded iteration: days × 7 + WORKING_DAYS_LOOP_BUFFER calendar
-  // days is provably sufficient to find `days` working days under any realistic
-  // holiday calendar. If this guard ever fires, a new exclusion axis was added to
-  // WorkingDaysConfig without updating this function, and the returned date will
-  // be incorrect.
-  const maxIterations = days * 7 + WORKING_DAYS_LOOP_BUFFER;
-  let iterations = 0;
-
-  while (remainingDays > 0) {
-    if (iterations++ >= maxIterations) break;
-    currentDate = addDays(currentDate, 1);
-    if (isWorkingDay(currentDate, config, holidayRegion)) {
-      remainingDays--;
-    }
+  let remainingDays = days;
+  if (isWorkingDay(startDate, config, holidayRegion)) {
+    remainingDays--;
   }
 
-  return currentDate;
+  if (remainingDays === 0) return startDate;
+
+  return advanceByWorkingDays(startDate, remainingDays, config, holidayRegion);
 }
 
 /**
