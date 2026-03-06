@@ -1,210 +1,216 @@
 /**
  * Shared rendering constants for export functionality.
- * These values are extracted from TaskBar.tsx and elbowPath.ts
- * to ensure consistent rendering between app and exports.
+ * These values mirror TaskBar.tsx and elbowPath.ts to ensure consistent
+ * rendering between the live app and all export formats (SVG, PDF, PNG).
+ *
+ * Dependency direction: components import from here, never the other way around.
  */
 
 import { getContrastTextColor } from "../colorUtils";
-import { SUMMARY_BRACKET } from "../../components/GanttChart/TaskBar";
+
+// =============================================================================
+// Summary bracket (single source of truth — TaskBar.tsx imports from here)
+// =============================================================================
 
 /**
- * Task rendering constants - matching TaskBar.tsx exactly
+ * Summary bracket shape geometry.
+ * Imported by TaskBar.tsx and the export renderer alike so both always stay
+ * in sync without any component → utils dependency inversion.
  */
-export const TASK_RENDER_CONSTANTS = {
-  /**
-   * Corner radius for regular task bars (rx, ry in SVG)
-   */
-  taskCornerRadius: 4,
-
-  /**
-   * Background opacity when progress is shown
-   */
-  taskBackgroundOpacity: 0.65,
-
-  /**
-   * Progress bar uses full opacity
-   */
-  taskProgressOpacity: 1.0,
+export const SUMMARY_BRACKET = {
+  /** Horizontal bar thickness as ratio of total height (30%) */
+  barThicknessRatio: 0.3,
+  /** Downward tip height as ratio of total height (50%) */
+  tipHeightRatio: 0.5,
+  /** Tip width factor for 60° angle (1/tan(60°) ≈ 0.577) */
+  tipWidthFactor: 0.577,
+  /** Radius for top corners of the bracket bar */
+  cornerRadius: 10,
+  /** Radius for inner corners where tips meet the bar */
+  innerRadius: 3,
+  /** Fill opacity for summary bracket shapes */
+  fillOpacity: 0.9,
 } as const;
 
-/**
- * Summary bracket constants — re-exported from TaskBar.tsx (single source of truth).
- */
-export const SUMMARY_RENDER_CONSTANTS = {
-  ...SUMMARY_BRACKET,
-} as const;
+// =============================================================================
+// Colors (declared first — other constant groups reference these)
+// =============================================================================
 
 /**
- * Milestone rendering constants - matching MilestoneDiamond component
- */
-export const MILESTONE_RENDER_CONSTANTS = {
-  /**
-   * Minimum size for milestone diamond
-   */
-  minSize: 6,
-
-  /**
-   * Maximum size for milestone diamond
-   */
-  maxSize: 10,
-
-  /**
-   * Factor to calculate size from pixelsPerDay (pixelsPerDay / 2)
-   */
-  sizeFactor: 0.5,
-} as const;
-
-/**
- * Label rendering constants - matching TaskBar label positioning
- */
-export const LABEL_RENDER_CONSTANTS = {
-  /**
-   * Horizontal padding from task bar edge
-   */
-  padding: 8,
-
-  /**
-   * Color for labels outside the bar (before/after positions)
-   */
-  externalColor: "#495057",
-
-  /**
-   * Color for labels inside the bar
-   */
-  internalColor: "#ffffff",
-
-  /**
-   * Vertical offset factor for centering (fontSize / 3 gives good visual center)
-   */
-  verticalOffsetFactor: 1 / 3,
-
-  /**
-   * Font weight for task labels
-   */
-  fontWeight: 600,
-} as const;
-
-/**
- * Dependency arrow constants - matching elbowPath.ts
- */
-export const DEPENDENCY_RENDER_CONSTANTS = {
-  /**
-   * Horizontal segment length coming out of/into tasks
-   */
-  horizontalSegment: 15,
-
-  /**
-   * Base corner radius for 90° turns (at comfortable/44px row height)
-   */
-  baseCornerRadius: 8,
-
-  /**
-   * Base row height for scaling calculations
-   */
-  baseRowHeight: 44,
-
-  /**
-   * Arrowhead size (triangle pointing into target task)
-   */
-  arrowheadSize: 8,
-
-  /**
-   * Stroke color for dependency lines (neutral-400)
-   */
-  strokeColor: "#94a3b8",
-
-  /**
-   * Stroke width for dependency lines
-   */
-  strokeWidth: 1.5,
-
-  /**
-   * Extra padding for minimum gap calculation (switch to S-curve earlier)
-   */
-  elbowGapPadding: 0,
-} as const;
-
-/**
- * Default colors used in rendering
+ * Default colors used in rendering.
+ * Single source of truth for all export rendering colors.
+ * Individual constant groups below reference these values so there is no
+ * duplication between RENDER_COLORS and, e.g., LABEL_RENDER_CONSTANTS.
  */
 export const RENDER_COLORS = {
-  /**
-   * Default task color (brand-600)
-   */
+  /** Default task color (brand-600) */
   taskDefault: "#0F6CBD",
 
-  /**
-   * Preview outline color during drag (brand-400)
-   */
+  /** Preview outline color during drag (brand-400) */
   previewOutline: "#2B88D8",
 
-  /**
-   * Text color for external labels
-   */
+  /** Text color for external labels (before/after the bar) */
   textExternal: "#495057",
 
-  /**
-   * Text color for internal labels
-   */
+  /** Text color for internal labels (inside the bar) */
   textInternal: "#ffffff",
 
-  /**
-   * Dependency line color
-   */
+  /** Dependency line color (neutral-400) */
   dependency: "#94a3b8",
 
   /**
-   * Weekend background color (neutral-100 blended with white at 50% opacity)
-   * Original: rgba(241, 245, 249, 0.5) -> blended to #f8fafc
+   * Weekend background color.
+   * Original: rgba(241, 245, 249, 0.5) blended onto white → #f8fafc
    */
   weekendBackground: "#f8fafc",
 
   /**
-   * Holiday background color (amber-100 blended with white at 50% opacity)
-   * Original: rgba(254, 243, 199, 0.5) -> blended to #fef9e3
+   * Holiday background color.
+   * Original: rgba(254, 243, 199, 0.5) blended onto white → #fef9e3
    */
   holidayBackground: "#fef9e3",
 
-  /**
-   * Grid line color
-   */
+  /** Grid line color (neutral-200) */
   gridLine: "#e2e8f0",
 
-  /**
-   * Today marker color (brand-600)
-   */
+  /** Today marker color (brand-600) */
   todayMarker: "#0F6CBD",
 
-  /**
-   * Today header cell highlight color (brand-50)
-   */
+  /** Today header cell highlight color (brand-50) */
   todayHighlight: "#EBF3FC",
 
-  /**
-   * Header background color
-   */
+  /** Header background color (neutral-50) */
   headerBackground: "#f8fafc",
 
-  /**
-   * Header text color
-   */
+  /** Header text color (neutral-600) */
   headerText: "#475569",
 
-  /**
-   * Table border color
-   */
+  /** Table border color (neutral-200) */
   tableBorder: "#e2e8f0",
 
-  /**
-   * Table text color
-   */
+  /** Table text color (neutral-900) */
   tableText: "#1e293b",
 
-  /**
-   * Table header text color
-   */
+  /** Table header text color (neutral-500) */
   tableHeaderText: "#64748b",
 } as const;
+
+// =============================================================================
+// Task rendering
+// =============================================================================
+
+/**
+ * Task bar rendering constants — matching TaskBar.tsx exactly.
+ */
+export const TASK_RENDER_CONSTANTS = {
+  /** Corner radius for regular task bars (rx, ry in SVG) */
+  taskCornerRadius: 4,
+
+  /** Background opacity when progress is shown */
+  taskBackgroundOpacity: 0.65,
+
+  /** Progress bar uses full opacity */
+  taskProgressOpacity: 1.0,
+} as const;
+
+// =============================================================================
+// Milestone rendering
+// =============================================================================
+
+/**
+ * Milestone diamond rendering constants — matching MilestoneDiamond component.
+ */
+export const MILESTONE_RENDER_CONSTANTS = {
+  /** Minimum size for milestone diamond (px) */
+  minSize: 6,
+
+  /** Maximum size for milestone diamond (px) */
+  maxSize: 10,
+
+  /** Size factor: pixelsPerDay × sizeFactor = diamond half-size */
+  sizeFactor: 0.5,
+} as const;
+
+// =============================================================================
+// Label rendering
+// =============================================================================
+
+/**
+ * Task label rendering constants — matching TaskBar label positioning.
+ * Colors reference RENDER_COLORS to avoid duplication.
+ */
+export const LABEL_RENDER_CONSTANTS = {
+  /** Horizontal padding from task bar edge (px) */
+  padding: 8,
+
+  /** Color for labels outside the bar (before/after positions) */
+  externalColor: RENDER_COLORS.textExternal,
+
+  /** Color for labels inside the bar */
+  internalColor: RENDER_COLORS.textInternal,
+
+  /** Vertical offset factor: fontSize × factor centres text visually */
+  verticalOffsetFactor: 1 / 3,
+
+  /** Font weight for task labels */
+  fontWeight: 600,
+} as const;
+
+// =============================================================================
+// Dependency arrow rendering
+// =============================================================================
+
+/**
+ * Dependency arrow rendering constants — matching elbowPath.ts.
+ * Colors reference RENDER_COLORS to avoid duplication.
+ */
+export const DEPENDENCY_RENDER_CONSTANTS = {
+  /** Horizontal segment length coming out of / into tasks (px) */
+  horizontalSegment: 15,
+
+  /** Base corner radius for 90° turns at the comfortable (44px) row height */
+  baseCornerRadius: 8,
+
+  /** Minimum corner radius after scaling — prevents radius from collapsing at small row heights */
+  minCornerRadius: 4,
+
+  /** Base row height used as the scaling reference (px) */
+  baseRowHeight: 44,
+
+  /** Arrowhead size — triangle pointing into target task (px) */
+  arrowheadSize: 8,
+
+  /** Stroke color for dependency lines */
+  strokeColor: RENDER_COLORS.dependency,
+
+  /** Stroke width for dependency lines (px) */
+  strokeWidth: 1.5,
+
+  /** Extra padding for minimum gap calculation (triggers S-curve sooner) */
+  elbowGapPadding: 0,
+} as const;
+
+// =============================================================================
+// Types
+// =============================================================================
+
+/** Resolved label position and styling for a task bar label */
+export type LabelConfig = {
+  /** X offset relative to task bar start */
+  x: number;
+  /** Y position for text baseline */
+  y: number;
+  /** SVG text-anchor value */
+  textAnchor: "start" | "end";
+  /** Fill color for the label text */
+  fill: string;
+  /** Whether the label should be clipped to the task bar bounds */
+  clip: boolean;
+};
+
+// =============================================================================
+// Functions
+// =============================================================================
 
 /**
  * Calculate milestone size based on pixels per day.
@@ -227,7 +233,7 @@ export function calculateMilestoneSize(pixelsPerDay: number): number {
 export function getScaledCornerRadius(rowHeight: number): number {
   const scale = rowHeight / DEPENDENCY_RENDER_CONSTANTS.baseRowHeight;
   return Math.max(
-    4,
+    DEPENDENCY_RENDER_CONSTANTS.minCornerRadius,
     Math.round(DEPENDENCY_RENDER_CONSTANTS.baseCornerRadius * scale)
   );
 }
@@ -242,11 +248,11 @@ export function generateSummaryBracketPath(
   width: number,
   height: number
 ): string {
-  const tipHeight = height * SUMMARY_RENDER_CONSTANTS.tipHeightRatio;
-  const barThickness = height * SUMMARY_RENDER_CONSTANTS.barThicknessRatio;
-  const tipWidth = tipHeight * SUMMARY_RENDER_CONSTANTS.tipWidthFactor;
-  const cornerRadius = SUMMARY_RENDER_CONSTANTS.cornerRadius;
-  const innerRadius = SUMMARY_RENDER_CONSTANTS.innerRadius;
+  const tipHeight = height * SUMMARY_BRACKET.tipHeightRatio;
+  const barThickness = height * SUMMARY_BRACKET.barThicknessRatio;
+  const tipWidth = tipHeight * SUMMARY_BRACKET.tipWidthFactor;
+  const cornerRadius = SUMMARY_BRACKET.cornerRadius;
+  const innerRadius = SUMMARY_BRACKET.innerRadius;
 
   return `
     M ${x + cornerRadius} ${y}
@@ -304,13 +310,7 @@ export function getLabelConfig(
   labelPosition: "before" | "inside" | "after",
   fontSize: number,
   taskColor?: string
-): {
-  x: number;
-  y: number;
-  textAnchor: "start" | "end";
-  fill: string;
-  clip: boolean;
-} {
+): LabelConfig {
   const padding = LABEL_RENDER_CONSTANTS.padding;
   const yOffset = fontSize * LABEL_RENDER_CONSTANTS.verticalOffsetFactor;
   const y = taskHeight / 2 + yOffset;

@@ -48,6 +48,26 @@ export const EXPORT_CHART_SVG_CLASS = "gantt-chart";
  */
 export const EXPORT_TIMELINE_HEADER_SVG_CLASS = "export-timeline-header";
 
+/** SVG namespace URI — required for every createElementNS call */
+export const SVG_NS = "http://www.w3.org/2000/svg";
+
+/**
+ * Wait time in ms after root.render() before reading the DOM.
+ * React schedules its commit asynchronously; this gives it one macro-task
+ * to flush before waitForFonts() / waitForPaint() take over.
+ * Single source of truth — shared by svgExport.ts and pdfExport.ts.
+ */
+export const REACT_RENDER_WAIT_MS = 100;
+
+/**
+ * White background fill colour for SVG/PDF export with opaque background.
+ * Intentionally hardcoded: pure white is a presentation-layer override for
+ * the "opaque background" export option, not a design-system colour that
+ * should track theme changes.
+ * Single source of truth — shared by svgExport.ts and pdfExport.ts.
+ */
+export const SVG_BACKGROUND_WHITE = "#ffffff";
+
 /**
  * Phosphor icon SVG paths for task types (256x256 viewBox).
  * These are used in task table rendering for SVG/PDF export.
