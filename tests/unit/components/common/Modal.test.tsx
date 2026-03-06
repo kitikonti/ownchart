@@ -1,0 +1,194 @@
+/**
+ * Unit tests for Modal component.
+ */
+
+import { describe, it, expect, vi } from "vitest";
+import { render, screen, fireEvent } from "@testing-library/react";
+import { Modal } from "../../../../src/components/common/Modal";
+
+const defaultProps = {
+  isOpen: true,
+  onClose: vi.fn(),
+  title: "Test Modal",
+  children: <p>Modal content</p>,
+};
+
+describe("Modal", () => {
+  describe("visibility", () => {
+    it("returns null when closed", () => {
+      render(<Modal {...defaultProps} isOpen={false} />);
+      expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
+    });
+
+    it("renders when open", () => {
+      render(<Modal {...defaultProps} />);
+      expect(screen.getByRole("dialog")).toBeInTheDocument();
+    });
+  });
+
+  describe("content", () => {
+    it("renders title and children", () => {
+      render(<Modal {...defaultProps} />);
+      expect(screen.getByText("Test Modal")).toBeInTheDocument();
+      expect(screen.getByText("Modal content")).toBeInTheDocument();
+    });
+
+    it("renders subtitle when provided", () => {
+      render(<Modal {...defaultProps} subtitle="A helpful subtitle" />);
+      expect(screen.getByText("A helpful subtitle")).toBeInTheDocument();
+    });
+
+    it("renders footer when provided", () => {
+      render(<Modal {...defaultProps} footer={<button>Save</button>} />);
+      expect(screen.getByText("Save")).toBeInTheDocument();
+    });
+
+    it("does not render footer section when footer is absent", () => {
+      const { container } = render(<Modal {...defaultProps} footer={undefined} />);
+      // No footer div rendered — check that "Save" isn't there as a proxy
+      expect(screen.queryByText("Save")).not.toBeInTheDocument();
+      // The flex-row footer wrapper should not appear
+      expect(container.querySelector(".justify-end")).not.toBeInTheDocument();
+    });
+  });
+
+  describe("accessibility", () => {
+    it("has role=dialog with aria-modal", () => {
+      render(<Modal {...defaultProps} />);
+      const dialog = screen.getByRole("dialog");
+      expect(dialog).toHaveAttribute("aria-modal", "true");
+    });
+
+    it("labels the dialog with the title via aria-labelledby", () => {
+      render(<Modal {...defaultProps} />);
+      const dialog = screen.getByRole("dialog");
+      expect(dialog).toHaveAttribute("aria-labelledby", "modal-title");
+      expect(screen.getByText("Test Modal")).toHaveAttribute("id", "modal-title");
+    });
+
+    it("sets aria-describedby when subtitle is provided", () => {
+      render(<Modal {...defaultProps} subtitle="A description" />);
+      const dialog = screen.getByRole("dialog");
+      expect(dialog).toHaveAttribute("aria-describedby", "modal-subtitle");
+      expect(screen.getByText("A description")).toHaveAttribute(
+        "id",
+        "modal-subtitle"
+      );
+    });
+
+    it("does not set aria-describedby when subtitle is absent", () => {
+      render(<Modal {...defaultProps} />);
+      expect(screen.getByRole("dialog")).not.toHaveAttribute("aria-describedby");
+    });
+
+    it("close button has an accessible label", () => {
+      render(<Modal {...defaultProps} />);
+      expect(screen.getByLabelText("Close dialog")).toBeInTheDocument();
+    });
+
+    it("backdrop has aria-hidden", () => {
+      render(<Modal {...defaultProps} />);
+      // Modal renders in a portal to document.body — query the whole document
+      const backdrop = document.body.querySelector('[aria-hidden="true"]');
+      expect(backdrop).toBeTruthy();
+    });
+  });
+
+  describe("keyboard interactions", () => {
+    it("calls onClose when Escape is pressed", () => {
+      const onClose = vi.fn();
+      render(<Modal {...defaultProps} onClose={onClose} />);
+      fireEvent.keyDown(screen.getByRole("dialog"), { key: "Escape" });
+      expect(onClose).toHaveBeenCalledTimes(1);
+    });
+
+    it("calls onClose when the close button is clicked", () => {
+      const onClose = vi.fn();
+      render(<Modal {...defaultProps} onClose={onClose} />);
+      fireEvent.click(screen.getByLabelText("Close dialog"));
+      expect(onClose).toHaveBeenCalledTimes(1);
+    });
+
+    it("calls onClose when the backdrop is clicked", () => {
+      const onClose = vi.fn();
+      render(<Modal {...defaultProps} onClose={onClose} />);
+      // Modal renders in a portal to document.body — query the whole document
+      const backdrop = document.body.querySelector('[aria-hidden="true"]')!;
+      fireEvent.click(backdrop);
+      expect(onClose).toHaveBeenCalledTimes(1);
+    });
+
+    it("wraps Tab focus from last element to first", () => {
+      render(
+        <Modal {...defaultProps} footer={<button>Save</button>}>
+          <button>Inner button</button>
+        </Modal>
+      );
+      // Focus the last focusable element (Save button in footer)
+      const saveButton = screen.getByText("Save");
+      saveButton.focus();
+
+      // Tab from last element — focus trap wraps to first (Close dialog button)
+      fireEvent.keyDown(screen.getByRole("dialog"), {
+        key: "Tab",
+        shiftKey: false,
+      });
+      expect(document.activeElement).toBe(screen.getByLabelText("Close dialog"));
+    });
+
+    it("wraps Shift+Tab focus from first element to last", () => {
+      render(
+        <Modal {...defaultProps} footer={<button>Save</button>}>
+          <button>Inner button</button>
+        </Modal>
+      );
+      // Focus the first focusable element (Close dialog button)
+      const closeButton = screen.getByLabelText("Close dialog");
+      closeButton.focus();
+
+      // Shift+Tab from first element — focus trap wraps to last (Save button)
+      fireEvent.keyDown(screen.getByRole("dialog"), {
+        key: "Tab",
+        shiftKey: true,
+      });
+      expect(document.activeElement).toBe(screen.getByText("Save"));
+    });
+  });
+
+  describe("focus management", () => {
+    it("restores focus to the triggering element when closed", () => {
+      const trigger = document.createElement("button");
+      trigger.textContent = "Open Modal";
+      document.body.appendChild(trigger);
+      trigger.focus();
+
+      const { rerender } = render(<Modal {...defaultProps} isOpen={true} />);
+
+      // Simulate closing the modal
+      rerender(<Modal {...defaultProps} isOpen={false} />);
+
+      expect(document.activeElement).toBe(trigger);
+      document.body.removeChild(trigger);
+    });
+  });
+
+  describe("headerStyle prop", () => {
+    it("applies border-bottom header when headerStyle=bordered", () => {
+      render(<Modal {...defaultProps} headerStyle="bordered" />);
+      // Modal renders in a portal — query document.body
+      expect(document.body.querySelector(".border-b")).toBeTruthy();
+    });
+
+    it("applies neutral title color when headerStyle=bordered", () => {
+      render(<Modal {...defaultProps} headerStyle="bordered" />);
+      const title = screen.getByText("Test Modal");
+      expect(title.className).toContain("text-neutral-900");
+    });
+
+    it("applies brand title color when headerStyle=default", () => {
+      render(<Modal {...defaultProps} headerStyle="default" />);
+      const title = screen.getByText("Test Modal");
+      expect(title.className).toContain("text-brand-600");
+    });
+  });
+});

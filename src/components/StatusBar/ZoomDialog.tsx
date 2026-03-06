@@ -89,8 +89,8 @@ export function ZoomDialog({
       }
       footer={footer}
       widthClass="max-w-xs"
-      headerStyle="figma"
-      footerStyle="figma"
+      headerStyle="bordered"
+      footerStyle="bordered"
     >
       <div className="space-y-1">
         {ZOOM_PRESETS.map((preset) => (

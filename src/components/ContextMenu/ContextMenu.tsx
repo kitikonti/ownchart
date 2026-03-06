@@ -45,6 +45,7 @@ export function ContextMenu({
 }: ContextMenuProps): JSX.Element {
   const menuRef = useRef<HTMLDivElement>(null);
   const focusedIndexRef = useRef(0);
+  const previousFocusRef = useRef<HTMLElement | null>(null);
 
   // Focus management
   const focusItem = useCallback((index: number): void => {
@@ -53,6 +54,15 @@ export function ContextMenu({
     ) as HTMLElement | null;
     el?.focus();
     focusedIndexRef.current = index;
+  }, []);
+
+  // Save the element focused before the menu opened and restore it on unmount.
+  // This keeps keyboard users oriented after closing the menu (same pattern as Modal).
+  useEffect(() => {
+    previousFocusRef.current = document.activeElement as HTMLElement;
+    return () => {
+      previousFocusRef.current?.focus();
+    };
   }, []);
 
   // Position the menu within viewport bounds
@@ -161,11 +171,11 @@ export function ContextMenu({
       onKeyDown={handleKeyDown}
     >
       {items.map((item, index) => (
-        <div key={item.id}>
+        <div key={item.id} role="none">
           <button
             data-index={index}
             role={item.checked !== undefined ? "menuitemcheckbox" : "menuitem"}
-            aria-checked={item.checked !== undefined ? item.checked : undefined}
+            aria-checked={item.checked}
             tabIndex={-1}
             disabled={item.disabled}
             className="context-menu-item text-left outline-none"
@@ -195,7 +205,9 @@ export function ContextMenu({
               </span>
             )}
           </button>
-          {item.separator && <div className="context-menu-separator" />}
+          {item.separator && (
+            <div role="separator" className="context-menu-separator" />
+          )}
         </div>
       ))}
     </div>,

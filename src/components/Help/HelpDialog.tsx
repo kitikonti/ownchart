@@ -3,7 +3,7 @@
  * search, and comprehensive feature documentation.
  */
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useRef, useCallback } from "react";
 import { Question, Command } from "@phosphor-icons/react";
 import { Modal } from "../common/Modal";
 import { Button } from "../common/Button";
@@ -14,6 +14,12 @@ import { useHelpSearch } from "../../hooks/useHelpSearch";
 import { HelpSearchInput } from "./HelpSearchInput";
 import { HelpSectionList } from "./HelpSectionList";
 import { GettingStartedTab } from "./GettingStartedTab";
+
+/**
+ * Maximum height for the help dialog content area.
+ * Sized to leave room for the search bar, tab strip, and footer within the modal.
+ */
+const CONTENT_MAX_HEIGHT = "max-h-[55vh]" as const;
 
 export function HelpDialog(): JSX.Element | null {
   const isOpen = useUIStore((state) => state.isHelpPanelOpen);
@@ -30,6 +36,26 @@ export function HelpDialog(): JSX.Element | null {
   const currentTab = tabs.find((t) => t.id === activeTab) ?? tabs[0];
   const modKey = getModKey();
 
+  const tablistRef = useRef<HTMLDivElement>(null);
+
+  // WAI-ARIA tablist pattern: Left/Right arrow keys move between tabs and
+  // keep DOM focus on the active tab button (roving tabIndex).
+  const handleTablistKeyDown = useCallback(
+    (e: React.KeyboardEvent<HTMLDivElement>): void => {
+      if (e.key !== "ArrowLeft" && e.key !== "ArrowRight") return;
+      e.preventDefault();
+      const currentIndex = tabs.findIndex((t) => t.id === activeTab);
+      const delta = e.key === "ArrowRight" ? 1 : -1;
+      const nextIndex = (currentIndex + delta + tabs.length) % tabs.length;
+      setActiveTab(tabs[nextIndex].id);
+      // Move DOM focus to the newly active tab button
+      const tabButtons =
+        tablistRef.current?.querySelectorAll<HTMLElement>('[role="tab"]');
+      tabButtons?.[nextIndex]?.focus();
+    },
+    [tabs, activeTab, setActiveTab]
+  );
+
   const footer = (
     <Button variant="primary" onClick={closeHelp}>
       Done
@@ -43,8 +69,8 @@ export function HelpDialog(): JSX.Element | null {
       title="Help"
       icon={<Question size={24} weight="light" className="text-neutral-500" />}
       widthClass="max-w-2xl"
-      headerStyle="figma"
-      footerStyle="figma"
+      headerStyle="bordered"
+      footerStyle="bordered"
       contentPadding="p-0"
       footer={footer}
     >
@@ -56,9 +82,12 @@ export function HelpDialog(): JSX.Element | null {
       {/* Tab bar (hidden during search) */}
       {!isSearching && (
         <div
+          ref={tablistRef}
           className="px-6 flex gap-1 border-b border-neutral-200"
           role="tablist"
           aria-label="Help navigation"
+          tabIndex={-1}
+          onKeyDown={handleTablistKeyDown}
         >
           {tabs.map((tab) => {
             const isActive = tab.id === activeTab;
@@ -75,6 +104,7 @@ export function HelpDialog(): JSX.Element | null {
                 role="tab"
                 aria-selected={isActive}
                 aria-controls={`help-panel-${tab.id}`}
+                tabIndex={isActive ? 0 : -1}
               >
                 {tab.label}
                 {isActive && (
@@ -88,7 +118,7 @@ export function HelpDialog(): JSX.Element | null {
 
       {/* Content — role="tabpanel" when tabs are visible, plain div when searching */}
       <div
-        className="px-6 py-4 overflow-y-auto max-h-[55vh] scrollbar-thin"
+        className={`px-6 py-4 overflow-y-auto ${CONTENT_MAX_HEIGHT} scrollbar-thin`}
         role={!isSearching ? "tabpanel" : undefined}
         id={!isSearching ? `help-panel-${activeTab}` : undefined}
         aria-labelledby={!isSearching ? `tab-${activeTab}` : undefined}

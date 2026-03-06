@@ -212,6 +212,7 @@ export const Z_INDEX = {
   insertLine: 60,
   stickyHeader: 100,
   dropdown: 1000,
+  modal: 1000,
   popover: 10000,
 } as const;
 
