@@ -80,8 +80,8 @@ function buildStraightLine(from: Point, to: Point): string {
 }
 
 /** Format a single quadratic bezier corner segment. */
-function quadraticCorner(anchor: Point, end: Point): string {
-  return `Q ${anchor.x} ${anchor.y}, ${end.x} ${end.y}`;
+function quadraticCorner(controlPoint: Point, end: Point): string {
+  return `Q ${controlPoint.x} ${controlPoint.y}, ${end.x} ${end.y}`;
 }
 
 /**
@@ -229,6 +229,22 @@ function calculateRoutedPath(
 }
 
 /**
+ * Compute routing parameters shared by calculateArrowPath and calculateDragPath.
+ * Extracted to keep both call sites consistent — cornerRadius scales with rowHeight,
+ * minGapForElbow derives from cornerRadius, and horizontalGap is the raw x-delta.
+ */
+function computeElbowParams(
+  from: Point,
+  to: Point,
+  rowHeight: number
+): { cornerRadius: number; minGapForElbow: number; horizontalGap: number } {
+  const cornerRadius = getScaledCornerRadius(rowHeight);
+  const minGapForElbow = computeMinGapForElbow(cornerRadius);
+  const horizontalGap = to.x - from.x;
+  return { cornerRadius, minGapForElbow, horizontalGap };
+}
+
+/**
  * Compute Finish-to-Start connection anchor points from task bar positions.
  * Isolated here so that adding SS/FF/SF later requires only a sibling function.
  *
@@ -276,10 +292,7 @@ export function calculateArrowPath(
   rowHeight: number = BASE_ROW_HEIGHT
 ): ArrowPath {
   const { from, to } = getFSConnectionPoints(fromPos, toPos);
-
-  const cornerRadius = getScaledCornerRadius(rowHeight);
-  const minGapForElbow = computeMinGapForElbow(cornerRadius);
-  const horizontalGap = to.x - from.x;
+  const { cornerRadius, minGapForElbow, horizontalGap } = computeElbowParams(from, to, rowHeight);
 
   // Routing zones (thresholds scale with cornerRadius, which scales with rowHeight):
   //   gap ≥ minGapForElbow                              → standard 2-corner elbow
@@ -303,9 +316,9 @@ export function calculateArrowPath(
 /**
  * Calculate arrow path for a "temporary" dependency while dragging.
  * Uses the same elbow style for consistency. Tight/backwards gaps fall back to a
- * straight line — S-curve routing is intentionally omitted during drag for visual
- * clarity. Corner radius and gap threshold scale with rowHeight to stay consistent
- * with calculateArrowPath at any zoom level.
+ * straight line — compact-elbow and S-curve routing are intentionally omitted during
+ * drag for visual clarity. Corner radius and gap threshold scale with rowHeight to
+ * stay consistent with calculateArrowPath at any zoom level.
  *
  * @param from - Current drag source point
  * @param to - Current drag target point
@@ -317,9 +330,7 @@ export function calculateDragPath(
   to: Point,
   rowHeight: number = BASE_ROW_HEIGHT
 ): string {
-  const cornerRadius = getScaledCornerRadius(rowHeight);
-  const horizontalGap = to.x - from.x;
-  const minGapForElbow = computeMinGapForElbow(cornerRadius);
+  const { cornerRadius, minGapForElbow, horizontalGap } = computeElbowParams(from, to, rowHeight);
 
   if (horizontalGap >= minGapForElbow) {
     return buildTwoCornerPath(from, to, cornerRadius);
@@ -333,9 +344,12 @@ export function calculateDragPath(
  * The polygon points left (negative X) so the tip sits at the origin (0,0),
  * letting the consumer translate/rotate as needed.
  *
- * @param size - Size of the arrowhead in pixels (default 8px)
+ * Negative sizes are clamped to 0 (degenerate polygon, invisible in SVG).
+ *
+ * @param size - Size of the arrowhead in pixels (default 8px); negative values treated as 0
  * @returns SVG polygon points string in "x1,y1 x2,y2 x3,y3" format
  */
 export function getArrowheadPoints(size: number = ARROWHEAD_SIZE): string {
-  return `${-size},-${size / 2} 0,0 ${-size},${size / 2}`;
+  const s = Math.max(0, size);
+  return `${-s},${-(s / 2)} 0,0 ${-s},${s / 2}`;
 }

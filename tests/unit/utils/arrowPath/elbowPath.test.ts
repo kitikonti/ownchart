@@ -344,6 +344,10 @@ describe("getArrowheadPoints", () => {
   it("should return a degenerate polygon string for size=0 without throwing", () => {
     // size=0 → three coincident points, invisible in SVG — must not crash
     expect(() => getArrowheadPoints(0)).not.toThrow();
-    expect(getArrowheadPoints(0)).toBe("0,-0 0,0 0,0");
+    expect(getArrowheadPoints(0)).toBe("0,0 0,0 0,0");
+  });
+
+  it("should clamp negative size to 0", () => {
+    expect(getArrowheadPoints(-5)).toBe("0,0 0,0 0,0");
   });
 });
