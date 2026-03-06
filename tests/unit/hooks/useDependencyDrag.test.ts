@@ -457,6 +457,39 @@ describe("useDependencyDrag", () => {
     expect(hovered).toBeNull();
   });
 
+  it("getHoveredTaskId returns null for an empty positions map", () => {
+    const { result } = renderHook(() =>
+      useDependencyDrag({ tasks: DEFAULT_TASKS })
+    );
+
+    const hovered = result.current.getHoveredTaskId(
+      150,
+      50,
+      new Map()
+    );
+    expect(hovered).toBeNull();
+  });
+
+  it("getHoveredTaskId matches when point is exactly on the boundary (inclusive)", () => {
+    const { result } = renderHook(() =>
+      useDependencyDrag({ tasks: DEFAULT_TASKS })
+    );
+
+    const positions = new Map<
+      TaskId,
+      { x: number; y: number; width: number; height: number }
+    >([
+      [TASK_A.id, { x: 100, y: 40, width: 200, height: 26 }],
+    ]);
+
+    // Top-left corner (x === pos.x, y === pos.y)
+    expect(result.current.getHoveredTaskId(100, 40, positions)).toBe(TASK_A.id);
+    // Bottom-right corner (x === pos.x + width, y === pos.y + height)
+    expect(result.current.getHoveredTaskId(300, 66, positions)).toBe(TASK_A.id);
+    // One pixel outside right edge
+    expect(result.current.getHoveredTaskId(301, 50, positions)).toBeNull();
+  });
+
   it("global mouseup outside a task resets drag state without creating a dependency", () => {
     const addDepSpy = vi.spyOn(
       useDependencyStore.getState(),

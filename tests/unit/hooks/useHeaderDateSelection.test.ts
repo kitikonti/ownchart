@@ -444,4 +444,44 @@ describe("useHeaderDateSelection", () => {
 
     expect(result.current.contextMenu).toBeNull();
   });
+
+  it("right-click outside selection clears the selection", () => {
+    const { result } = renderSelectionHook();
+
+    // Create a selection via drag (x=100 to x=400)
+    act(() => {
+      result.current.onMouseDown({
+        button: 0,
+        clientX: 100,
+        clientY: 24,
+        shiftKey: false,
+        preventDefault: vi.fn(),
+      } as unknown as React.MouseEvent<SVGSVGElement>);
+    });
+
+    act(() => {
+      document.dispatchEvent(
+        new MouseEvent("mousemove", { clientX: 400, clientY: 24 })
+      );
+    });
+
+    act(() => {
+      document.dispatchEvent(new MouseEvent("mouseup"));
+    });
+
+    expect(result.current.selectionPixelRect).not.toBeNull();
+
+    // Right-click far outside the selection — triggers the else branch of
+    // performContextMenuAction which calls clearSelection()
+    act(() => {
+      result.current.onContextMenu({
+        clientX: 900,
+        clientY: 24,
+        preventDefault: vi.fn(),
+      } as unknown as React.MouseEvent<SVGSVGElement>);
+    });
+
+    expect(result.current.selectionPixelRect).toBeNull();
+    expect(result.current.contextMenu).toBeNull();
+  });
 });

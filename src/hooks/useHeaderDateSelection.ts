@@ -311,6 +311,53 @@ function useDragStateRefs(): {
   return { isDragging, setIsDragging, isDraggingRef, dragStartDateRef };
 }
 
+/** Stable onMouseDown callback for header SVG drag. Extracted from useHeaderDrag
+ * to keep both hooks under the 50-line limit. All params are stable refs or callbacks. */
+function useHeaderMouseDown(
+  headerSvgRef: { current: SVGSVGElement | null },
+  scaleRef: { current: TimelineScale | null },
+  selectionRef: { current: HeaderDateSelection | null },
+  isDraggingRef: { current: boolean },
+  dragStartDateRef: { current: string | null },
+  setIsDragging: (v: boolean) => void,
+  setSelection: (v: HeaderDateSelection | null) => void,
+  setContextMenu: (v: ContextMenuPosition | null) => void,
+  handleMouseMove: (e: MouseEvent) => void,
+  handleMouseUp: () => void
+): (e: React.MouseEvent<SVGSVGElement>) => void {
+  // isDraggingRef, dragStartDateRef, setIsDragging come from useDragStateRefs.
+  // ESLint can't infer they're stable (ref objects + useState setter), so listed
+  // explicitly — they never change identity.
+  return useCallback(
+    (e: React.MouseEvent<SVGSVGElement>): void => {
+      performHeaderMouseDown(e, {
+        scaleRef,
+        headerSvgRef,
+        selectionRef,
+        isDraggingRef,
+        dragStartDateRef,
+        setIsDragging,
+        setSelection,
+        setContextMenu,
+        handleMouseMove,
+        handleMouseUp,
+      });
+    },
+    [
+      handleMouseMove,
+      handleMouseUp,
+      headerSvgRef,
+      scaleRef,
+      selectionRef,
+      setSelection,
+      setContextMenu,
+      isDraggingRef,
+      dragStartDateRef,
+      setIsDragging,
+    ]
+  );
+}
+
 /** Manages drag state and handlers: isDragging, onMouseDown, mouse-move/up listeners. */
 function useHeaderDrag(
   headerSvgRef: { current: SVGSVGElement | null },
@@ -334,37 +381,17 @@ function useHeaderDrag(
     setIsDragging
   );
 
-  // Mouse down on header SVG — delegates to the module-level pure helper.
-  const onMouseDown = useCallback(
-    (e: React.MouseEvent<SVGSVGElement>): void => {
-      performHeaderMouseDown(e, {
-        scaleRef,
-        headerSvgRef,
-        selectionRef,
-        isDraggingRef,
-        dragStartDateRef,
-        setIsDragging,
-        setSelection,
-        setContextMenu,
-        handleMouseMove,
-        handleMouseUp,
-      });
-    },
-    [
-      handleMouseMove,
-      handleMouseUp,
-      headerSvgRef,
-      scaleRef,
-      selectionRef,
-      setSelection,
-      setContextMenu,
-      // isDraggingRef, dragStartDateRef, setIsDragging come from useDragStateRefs.
-      // ESLint can't infer they're stable (ref objects + useState setter), so we
-      // list them explicitly.  They will never change identity.
-      isDraggingRef,
-      dragStartDateRef,
-      setIsDragging,
-    ]
+  const onMouseDown = useHeaderMouseDown(
+    headerSvgRef,
+    scaleRef,
+    selectionRef,
+    isDraggingRef,
+    dragStartDateRef,
+    setIsDragging,
+    setSelection,
+    setContextMenu,
+    handleMouseMove,
+    handleMouseUp
   );
 
   return { isDragging, onMouseDown };

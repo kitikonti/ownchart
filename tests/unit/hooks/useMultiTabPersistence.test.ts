@@ -5,6 +5,7 @@ import { useChartStore } from "../../../src/store/slices/chartSlice";
 import { useTaskStore } from "../../../src/store/slices/taskSlice";
 import { useDependencyStore } from "../../../src/store/slices/dependencySlice";
 import { useUIStore } from "../../../src/store/slices/uiSlice";
+import { useFileStore } from "../../../src/store/slices/fileSlice";
 import type { Task } from "../../../src/types/chart.types";
 import { toTaskId } from "../../../src/types/branded.types";
 
@@ -258,6 +259,124 @@ describe("useMultiTabPersistence", () => {
 
       // The empty saved state must clear the pre-existing dependency
       expect(useDependencyStore.getState().dependencies).toHaveLength(0);
+    });
+
+    it("should restore fileName, chartId, and isDirty from fileState", () => {
+      const tabId = "tab-filestate";
+      sessionStorage.setItem(TAB_ID_KEY, tabId);
+
+      // Reset fileStore so previous test state doesn't bleed through
+      useFileStore.setState({
+        fileName: null,
+        chartId: null,
+        isDirty: false,
+        lastSaved: null,
+        chartCreatedAt: null,
+      });
+
+      const data = {
+        version: 2,
+        charts: {
+          [tabId]: {
+            tabId,
+            lastActive: Date.now(),
+            tasks: [],
+            dependencies: [],
+            chartState: createChartState(),
+            fileState: {
+              fileName: "my-chart.ownchart",
+              chartId: "chart-abc123",
+              lastSaved: null,
+              isDirty: true,
+            } as FileState,
+          },
+        },
+      };
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+
+      renderHook(() => useMultiTabPersistence());
+
+      const fileState = useFileStore.getState();
+      expect(fileState.fileName).toBe("my-chart.ownchart");
+      expect(fileState.chartId).toBe("chart-abc123");
+      expect(fileState.isDirty).toBe(true);
+    });
+
+    it("should skip invalid lastSaved date without crashing", () => {
+      const tabId = "tab-bad-date";
+      sessionStorage.setItem(TAB_ID_KEY, tabId);
+
+      useFileStore.setState({
+        fileName: null,
+        chartId: null,
+        isDirty: false,
+        lastSaved: null,
+        chartCreatedAt: null,
+      });
+
+      const data = {
+        version: 2,
+        charts: {
+          [tabId]: {
+            tabId,
+            lastActive: Date.now(),
+            tasks: [],
+            dependencies: [],
+            chartState: createChartState(),
+            fileState: {
+              fileName: null,
+              chartId: null,
+              lastSaved: "not-a-valid-date",
+              isDirty: false,
+            } as FileState,
+          },
+        },
+      };
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+
+      expect(() => renderHook(() => useMultiTabPersistence())).not.toThrow();
+      expect(useUIStore.getState().isHydrated).toBe(true);
+      // setLastSaved should not have been called — lastSaved stays null
+      expect(useFileStore.getState().lastSaved).toBeNull();
+    });
+
+    it("should not call setTaskTableWidth when taskTableWidth is null", () => {
+      const tabId = "tab-null-width";
+      sessionStorage.setItem(TAB_ID_KEY, tabId);
+
+      const setWidthSpy = vi.spyOn(
+        useTaskStore.getState(),
+        "setTaskTableWidth"
+      );
+
+      const data = {
+        version: 2,
+        charts: {
+          [tabId]: {
+            tabId,
+            lastActive: Date.now(),
+            tasks: [],
+            dependencies: [],
+            chartState: createChartState(),
+            fileState: {
+              fileName: null,
+              chartId: null,
+              lastSaved: null,
+              isDirty: false,
+            } as FileState,
+            tableState: {
+              columnWidths: {},
+              taskTableWidth: null,
+            } as TableState,
+          },
+        },
+      };
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+
+      renderHook(() => useMultiTabPersistence());
+
+      // taskTableWidth null coerces to undefined via ?? — applyIfDefined skips it
+      expect(setWidthSpy).not.toHaveBeenCalled();
     });
 
     it("should not block saves when restore throws an error", async () => {

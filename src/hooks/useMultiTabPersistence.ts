@@ -193,6 +193,8 @@ function useTabRestore(
     try {
       restoreStateFromChart(savedChart);
     } catch (error) {
+      // intentional: surface restore failures in the browser console for
+      // debugging; the app continues with default state after the toast above.
       console.error("[useMultiTabPersistence] Failed to restore state:", error);
       // Inform the user that their previous session could not be restored.
       // The app continues with default state; the next autosave will overwrite
