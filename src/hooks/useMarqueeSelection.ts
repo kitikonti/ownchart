@@ -111,28 +111,60 @@ function findIntersectingTaskIds(
   return tasks.filter((t) => rectsIntersect(normalized, t)).map((t) => t.id);
 }
 
-export function useMarqueeSelection({
+/**
+ * Return false if the event targets an interactive task element that should
+ * absorb pointer events rather than starting a marquee drag.
+ */
+function shouldStartMarqueeDrag(
+  e: React.MouseEvent<SVGSVGElement>,
+  enabled: boolean
+): boolean {
+  if (!enabled || e.button !== 0) return false;
+  const target = e.target as Element;
+  return (
+    !target.closest(TASK_BAR_SELECTOR) &&
+    !target.closest(CONNECTION_HANDLE_SELECTOR) &&
+    !target.closest(DEPENDENCY_ARROW_SELECTOR)
+  );
+}
+
+// ---------------------------------------------------------------------------
+
+interface MarqueeDragListenersDeps {
+  svgRef: React.RefObject<SVGSVGElement | null>;
+  enabled: boolean;
+  marqueeRectRef: React.MutableRefObject<MarqueeRect | null>;
+  onSelectionChangeRef: React.MutableRefObject<
+    (taskIds: TaskId[], addToSelection: boolean) => void
+  >;
+  taskGeometriesRef: React.MutableRefObject<TaskGeometry[]>;
+  setMarqueeRect: React.Dispatch<React.SetStateAction<MarqueeRect | null>>;
+}
+
+interface MarqueeDragListeners {
+  isSelectingRef: React.MutableRefObject<boolean>;
+  addToSelectionRef: React.MutableRefObject<boolean>;
+  handleMouseMove: (e: MouseEvent) => void;
+  handleMouseUp: (e: MouseEvent) => void;
+}
+
+/**
+ * Owns the document-level drag listeners (mousemove / mouseup), the mutable
+ * refs that track drag state, and the cleanup effect.
+ *
+ * Extracted so the main hook stays focused on state, stable-ref updates,
+ * the mousedown initiator, and the public return value.
+ */
+function useMarqueeDragListeners({
   svgRef,
-  taskGeometries,
-  onSelectionChange,
-  enabled = true,
-}: UseMarqueeSelectionOptions): UseMarqueeSelectionResult {
-  const [marqueeRect, setMarqueeRect] = useState<MarqueeRect | null>(null);
-  const marqueeRectRef = useRef<MarqueeRect | null>(null);
+  enabled,
+  marqueeRectRef,
+  onSelectionChangeRef,
+  taskGeometriesRef,
+  setMarqueeRect,
+}: MarqueeDragListenersDeps): MarqueeDragListeners {
   const isSelectingRef = useRef(false);
   const addToSelectionRef = useRef(false);
-
-  // Keep ref in sync with state so event handlers always see the current rect.
-  marqueeRectRef.current = marqueeRect;
-
-  // Stable refs for props that may change every render — prevents the active
-  // drag listeners from being removed and re-added on parent re-renders (e.g.
-  // due to a store update mid-drag).
-  const onSelectionChangeRef = useRef(onSelectionChange);
-  onSelectionChangeRef.current = onSelectionChange;
-
-  const taskGeometriesRef = useRef(taskGeometries);
-  taskGeometriesRef.current = taskGeometries;
 
   const handleMouseMove = useCallback(
     (e: MouseEvent) => {
@@ -144,8 +176,8 @@ export function useMarqueeSelection({
         prev ? { ...prev, currentX: coords.x, currentY: coords.y } : null
       );
     },
-    [svgRef]
-  ); // svgRef is a stable React ref — adding it satisfies exhaustive-deps without causing re-creation
+    [svgRef, setMarqueeRect]
+  );
 
   const handleMouseUp = useCallback(
     (e: MouseEvent) => {
@@ -177,23 +209,68 @@ export function useMarqueeSelection({
       document.removeEventListener("mousemove", handleMouseMove);
       document.removeEventListener("mouseup", handleMouseUp);
     },
-    [svgRef, handleMouseMove] // svgRef is stable; handleMouseMove needed for removeEventListener identity
+    [
+      svgRef,
+      marqueeRectRef,
+      taskGeometriesRef,
+      onSelectionChangeRef,
+      setMarqueeRect,
+      handleMouseMove,
+    ]
   );
+
+  // Cancel an active drag when `enabled` turns false mid-drag, and clean up
+  // listeners on unmount. Combined into one effect: the cleanup function always
+  // runs on unmount so a separate effect for that is not needed.
+  useEffect(() => {
+    if (!enabled && isSelectingRef.current) {
+      isSelectingRef.current = false;
+      setMarqueeRect(null);
+      document.removeEventListener("mousemove", handleMouseMove);
+      document.removeEventListener("mouseup", handleMouseUp);
+    }
+    return () => {
+      document.removeEventListener("mousemove", handleMouseMove);
+      document.removeEventListener("mouseup", handleMouseUp);
+    };
+  }, [enabled, handleMouseMove, handleMouseUp, setMarqueeRect]);
+
+  return { isSelectingRef, addToSelectionRef, handleMouseMove, handleMouseUp };
+}
+
+// ---------------------------------------------------------------------------
+
+export function useMarqueeSelection({
+  svgRef,
+  taskGeometries,
+  onSelectionChange,
+  enabled = true,
+}: UseMarqueeSelectionOptions): UseMarqueeSelectionResult {
+  const [marqueeRect, setMarqueeRect] = useState<MarqueeRect | null>(null);
+  const marqueeRectRef = useRef<MarqueeRect | null>(null);
+  marqueeRectRef.current = marqueeRect;
+
+  // Stable refs for props that may change every render — prevents the active
+  // drag listeners from being removed and re-added on parent re-renders.
+  const onSelectionChangeRef = useRef(onSelectionChange);
+  onSelectionChangeRef.current = onSelectionChange;
+
+  const taskGeometriesRef = useRef(taskGeometries);
+  taskGeometriesRef.current = taskGeometries;
+
+  const { isSelectingRef, addToSelectionRef, handleMouseMove, handleMouseUp } =
+    useMarqueeDragListeners({
+      svgRef,
+      enabled,
+      marqueeRectRef,
+      onSelectionChangeRef,
+      taskGeometriesRef,
+      setMarqueeRect,
+    });
 
   const onMouseDown = useCallback(
     (e: React.MouseEvent<SVGSVGElement>) => {
-      if (!enabled || e.button !== 0) return;
-
-      // Don't start a marquee drag when clicking on interactive task elements.
-      const target = e.target as Element;
-      if (
-        target.closest(TASK_BAR_SELECTOR) ||
-        target.closest(CONNECTION_HANDLE_SELECTOR) ||
-        target.closest(DEPENDENCY_ARROW_SELECTOR)
-      ) {
-        return;
-      }
-
+      if (!shouldStartMarqueeDrag(e, enabled)) return;
       const svg = svgRef.current;
       if (!svg) return;
       const coords = getSvgCoordinates(svg, e);
@@ -213,24 +290,15 @@ export function useMarqueeSelection({
       // Prevent text selection during drag.
       e.preventDefault();
     },
-    [svgRef, enabled, handleMouseMove, handleMouseUp]
+    [
+      svgRef,
+      enabled,
+      addToSelectionRef,
+      isSelectingRef,
+      handleMouseMove,
+      handleMouseUp,
+    ]
   );
-
-  // Cancel an active drag when `enabled` turns false mid-drag, and clean up
-  // listeners on unmount. Combined into one effect: the cleanup function always
-  // runs on unmount so a separate effect for that is not needed.
-  useEffect(() => {
-    if (!enabled && isSelectingRef.current) {
-      isSelectingRef.current = false;
-      setMarqueeRect(null);
-      document.removeEventListener("mousemove", handleMouseMove);
-      document.removeEventListener("mouseup", handleMouseUp);
-    }
-    return () => {
-      document.removeEventListener("mousemove", handleMouseMove);
-      document.removeEventListener("mouseup", handleMouseUp);
-    };
-  }, [enabled, handleMouseMove, handleMouseUp]);
 
   return {
     marqueeRect,

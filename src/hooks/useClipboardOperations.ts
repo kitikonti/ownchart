@@ -147,6 +147,9 @@ async function tryPasteCellFromSystemClipboard(): Promise<boolean> {
   if (!externalCell || !activeCell.taskId || !activeCell.field) return false;
 
   // Skip if this is the same data already in the internal clipboard.
+  // Safe to use === here: all Task[EditableField] types are primitives
+  // (string | number) that survive JSON round-trip unchanged, so strict
+  // equality correctly identifies same-tab duplicates.
   const isSameAsInternal =
     internalMode === "cell" &&
     cellClipboard.field === externalCell.field &&

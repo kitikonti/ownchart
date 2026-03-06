@@ -5,6 +5,10 @@
 
 import { useCallback, useMemo } from "react";
 import toast from "react-hot-toast";
+import type { Task } from "../types/chart.types";
+import type { TaskId } from "../types/branded.types";
+import type { Dependency } from "../types/dependency.types";
+import type { ExportOptions } from "../utils/export/types";
 import { useTaskStore } from "../store/slices/taskSlice";
 import { useChartStore } from "../store/slices/chartSlice";
 import { useFileStore } from "../store/slices/fileSlice";
@@ -12,6 +16,8 @@ import { useHistoryStore } from "../store/slices/historySlice";
 import { useDependencyStore } from "../store/slices/dependencySlice";
 import { useUIStore } from "../store/slices/uiSlice";
 import { serializeToGanttFile } from "../utils/fileOperations/serialize";
+import type { SerializeOptions } from "../utils/fileOperations/serialize";
+import type { ViewSettings } from "../utils/fileOperations/types";
 import {
   saveFile,
   openFile,
@@ -29,6 +35,15 @@ const DEFAULT_CHART_NAME = "Untitled";
 /** Coerce an unknown catch value to a readable string. */
 function toErrorMsg(e: unknown): string {
   return e instanceof Error ? e.message : String(e);
+}
+
+/**
+ * Confirm navigating away from unsaved changes.
+ * Extracted so it can be replaced with a custom modal later
+ * without touching handler logic.
+ */
+function confirmDiscardChanges(message: string): boolean {
+  return window.confirm(message);
 }
 
 /**
@@ -59,16 +74,70 @@ export function resolveSuggestedFilename(
 }
 
 // ---------------------------------------------------------------------------
+// Return-type aliases for private slice hooks.
+// Using Pick<store.getState(), ...> ties the types to the actual store
+// without importing unexported internal interfaces — TypeScript will flag
+// stale picks when a store field is renamed or removed.
+// ---------------------------------------------------------------------------
+
+type TaskSliceNeeded = Pick<
+  ReturnType<typeof useTaskStore.getState>,
+  "tasks" | "setTasks" | "taskTableWidth" | "columnWidths"
+>;
+
+type ChartSliceNeeded = Pick<
+  ReturnType<typeof useChartStore.getState>,
+  | "zoom"
+  | "panOffset"
+  | "showWeekends"
+  | "showTodayMarker"
+  | "showHolidays"
+  | "showDependencies"
+  | "showProgress"
+  | "taskLabelPosition"
+  | "workingDaysMode"
+  | "workingDaysConfig"
+  | "holidayRegion"
+  | "colorModeState"
+  | "hiddenColumns"
+  | "isTaskTableCollapsed"
+  | "hiddenTaskIds"
+  | "projectTitle"
+  | "projectAuthor"
+  | "setProjectTitle"
+  | "setProjectAuthor"
+  | "setHiddenTaskIds"
+  | "resetView"
+>;
+
+type OperationalSliceNeeded = {
+  dependencies: Dependency[];
+  clearDependencies: () => void;
+  fileName: string | null;
+  isDirty: boolean;
+  lastSaved: Date | null;
+  chartId: string | null;
+  chartCreatedAt: string | null;
+  setFileName: (name: string) => void;
+  setLastSaved: (date: Date) => void;
+  markClean: () => void;
+  resetFileStore: () => void;
+  clearHistory: () => void;
+  exportOptions: ExportOptions;
+  resetExportOptions: () => void;
+};
+
+// ---------------------------------------------------------------------------
 // State sub-hooks — split by slice so each value keeps its own Zustand
 // subscription. Grouping by slice (rather than one giant hook) keeps each
-// sub-hook under 50 lines while preserving the individual-selector pattern.
+// sub-hook focused while preserving the individual-selector pattern.
 //
 // Callers destructure the returned object immediately so useCallback dep
 // arrays reference stable individual variables rather than the container
 // object, which changes identity on every render.
 // ---------------------------------------------------------------------------
 
-function useTaskSliceState() {
+function useTaskSliceState(): TaskSliceNeeded {
   const tasks = useTaskStore((s) => s.tasks);
   const setTasks = useTaskStore((s) => s.setTasks);
   const taskTableWidth = useTaskStore((s) => s.taskTableWidth);
@@ -76,7 +145,7 @@ function useTaskSliceState() {
   return { tasks, setTasks, taskTableWidth, columnWidths };
 }
 
-function useChartSliceState() {
+function useChartSliceState(): ChartSliceNeeded {
   const zoom = useChartStore((s) => s.zoom);
   const panOffset = useChartStore((s) => s.panOffset);
   const showWeekends = useChartStore((s) => s.showWeekends);
@@ -123,7 +192,7 @@ function useChartSliceState() {
   };
 }
 
-function useOperationalSliceState() {
+function useOperationalSliceState(): OperationalSliceNeeded {
   const dependencies = useDependencyStore((s) => s.dependencies);
   const clearDependencies = useDependencyStore((s) => s.clearDependencies);
   const fileName = useFileStore((s) => s.fileName);
@@ -157,20 +226,23 @@ function useOperationalSliceState() {
 }
 
 // ---------------------------------------------------------------------------
-// Serialization options sub-hook — groups the three memoized values that feed
-// into handleSave. Extracting them here keeps handleSave's dep array minimal
-// and makes the "what gets serialized" contract explicit in one place.
+// Serialization sub-hooks — groups the memoized values that feed into
+// handleSave. Splitting viewSettings into its own hook keeps each function
+// under 50 lines and makes the "what gets serialized" contract explicit.
 //
-// Params are the sub-hook result objects. Each value is destructured
+// Params are the slice sub-hook result objects. Each value is destructured
 // immediately so the useMemo dep arrays reference individual stable variables,
 // not the container objects (which are new on every render).
 // ---------------------------------------------------------------------------
 
-function useSerializeOptions(
-  task: ReturnType<typeof useTaskSliceState>,
-  chart: ReturnType<typeof useChartSliceState>,
-  op: ReturnType<typeof useOperationalSliceState>
-) {
+/**
+ * Builds the ViewSettings snapshot written to the .ownchart file.
+ * Extracted so its large dep array lives in its own focused function.
+ */
+function useViewSettings(
+  task: TaskSliceNeeded,
+  chart: ChartSliceNeeded
+): ViewSettings {
   const { taskTableWidth, columnWidths } = task;
   const {
     zoom,
@@ -184,17 +256,14 @@ function useSerializeOptions(
     workingDaysMode,
     workingDaysConfig,
     holidayRegion,
+    projectTitle,
+    projectAuthor,
     colorModeState,
     hiddenColumns,
     isTaskTableCollapsed,
     hiddenTaskIds,
-    projectTitle,
-    projectAuthor,
   } = chart;
-  const { fileName, chartId, chartCreatedAt, dependencies, exportOptions } = op;
-
-  // Snapshot of all view settings written to the .ownchart file.
-  const viewSettings = useMemo(
+  return useMemo(
     () => ({
       zoom,
       panOffset,
@@ -238,6 +307,21 @@ function useSerializeOptions(
       hiddenTaskIds,
     ]
   );
+}
+
+function useSerializeOptions(
+  task: TaskSliceNeeded,
+  chart: ChartSliceNeeded,
+  op: OperationalSliceNeeded
+): {
+  viewSettings: ViewSettings;
+  serializeOpts: SerializeOptions;
+  suggestedFilename: string;
+} {
+  const { fileName, chartId, chartCreatedAt, dependencies, exportOptions } = op;
+  const { projectTitle } = chart;
+
+  const viewSettings = useViewSettings(task, chart);
 
   // Serializer flags and metadata (file identity, dependency data, export settings).
   const serializeOpts = useMemo(
@@ -259,6 +343,162 @@ function useSerializeOptions(
   );
 
   return { viewSettings, serializeOpts, suggestedFilename };
+}
+
+// ---------------------------------------------------------------------------
+// Operation sub-hooks — each owns one user-facing operation (save, open, new).
+// Extracting them keeps useFileOperations slim and each operation independently
+// readable.
+// ---------------------------------------------------------------------------
+
+function useSaveOperation(
+  tasks: Task[],
+  viewSettings: ViewSettings,
+  serializeOpts: SerializeOptions,
+  suggestedFilename: string,
+  setFileName: (name: string) => void,
+  setLastSaved: (date: Date) => void,
+  markClean: () => void
+): {
+  handleSave: (saveAs?: boolean) => Promise<void>;
+  handleSaveAs: () => Promise<void>;
+} {
+  const handleSave = useCallback(
+    async (saveAs = false) => {
+      try {
+        const content = serializeToGanttFile(
+          tasks,
+          viewSettings,
+          serializeOpts
+        );
+        const result = await saveFile(content, suggestedFilename, saveAs);
+        if (result.success) {
+          setFileName(result.fileName ?? "");
+          setLastSaved(new Date());
+          markClean();
+          toast.success(`Saved "${result.fileName}"`);
+        } else if (result.error !== "Save cancelled") {
+          toast.error(`Save failed: ${result.error}`);
+        }
+      } catch (e) {
+        toast.error(`Save failed: ${toErrorMsg(e)}`);
+      }
+    },
+    [
+      tasks,
+      viewSettings,
+      serializeOpts,
+      suggestedFilename,
+      setFileName,
+      setLastSaved,
+      markClean,
+    ]
+  );
+
+  const handleSaveAs = useCallback(
+    (): Promise<void> => handleSave(true),
+    [handleSave]
+  );
+
+  return { handleSave, handleSaveAs };
+}
+
+function useOpenOperation(isDirty: boolean): {
+  handleOpen: () => Promise<void>;
+} {
+  const handleOpen = useCallback(async () => {
+    if (
+      isDirty &&
+      !confirmDiscardChanges(
+        "You have unsaved changes. Do you want to continue without saving?"
+      )
+    ) {
+      return;
+    }
+    try {
+      const result = await openFile();
+      if (!result.success || !result.file) {
+        if (result.error !== "Open cancelled") {
+          toast.error(`Open failed: ${result.error}`);
+        }
+        return;
+      }
+      const loadResult = await loadFileIntoApp(result.file);
+      showLoadNotifications(
+        { ...loadResult, fileName: result.file.name },
+        toast
+      );
+    } catch (e) {
+      toast.error(`Open failed: ${toErrorMsg(e)}`);
+    }
+  }, [isDirty]);
+
+  return { handleOpen };
+}
+
+interface NewOperationDeps {
+  isDirty: boolean;
+  setTasks: (tasks: Task[]) => void;
+  clearDependencies: () => void;
+  resetExportOptions: () => void;
+  setProjectTitle: (title: string) => void;
+  setProjectAuthor: (author: string) => void;
+  setHiddenTaskIds: (ids: TaskId[]) => void;
+  resetView: () => void;
+  clearHistory: () => void;
+  resetFileStore: () => void;
+}
+
+function useNewOperation({
+  isDirty,
+  setTasks,
+  clearDependencies,
+  resetExportOptions,
+  setProjectTitle,
+  setProjectAuthor,
+  setHiddenTaskIds,
+  resetView,
+  clearHistory,
+  resetFileStore,
+}: NewOperationDeps): { handleNew: () => Promise<void> } {
+  const handleNew = useCallback(async () => {
+    if (
+      isDirty &&
+      !confirmDiscardChanges(
+        "You have unsaved changes. Do you want to create a new chart without saving?"
+      )
+    ) {
+      return;
+    }
+    setTasks([]);
+    clearDependencies();
+    resetExportOptions();
+    setProjectTitle("");
+    setProjectAuthor("");
+    // Per-file row visibility resets with the file.
+    // Column visibility and table layout are user preferences that intentionally
+    // persist across new charts — only task-specific hidden rows are cleared.
+    setHiddenTaskIds([]);
+    // Reset zoom and pan so a new chart always opens at a sensible default view.
+    resetView();
+    clearHistory();
+    clearFileHandle();
+    resetFileStore();
+    toast.success("Created new chart");
+  }, [
+    isDirty,
+    setTasks,
+    clearDependencies,
+    resetExportOptions,
+    setProjectTitle,
+    setProjectAuthor,
+    setHiddenTaskIds,
+    resetView,
+    clearHistory,
+    resetFileStore,
+  ]);
+
+  return { handleNew };
 }
 
 // ---------------------------------------------------------------------------
@@ -297,100 +537,19 @@ export function useFileOperations(): {
   const { viewSettings, serializeOpts, suggestedFilename } =
     useSerializeOptions(taskState, chartState, opState);
 
-  // Save (Ctrl+S) — re-save to existing handle if present, else open dialog.
-  const handleSave = useCallback(
-    async (saveAs = false) => {
-      try {
-        const content = serializeToGanttFile(
-          tasks,
-          viewSettings,
-          serializeOpts
-        );
-        const result = await saveFile(content, suggestedFilename, saveAs);
-
-        if (result.success) {
-          setFileName(result.fileName ?? "");
-          setLastSaved(new Date());
-          markClean();
-          toast.success(`Saved "${result.fileName}"`);
-        } else if (result.error !== "Save cancelled") {
-          toast.error(`Save failed: ${result.error}`);
-        }
-      } catch (e) {
-        toast.error(`Save failed: ${toErrorMsg(e)}`);
-      }
-    },
-    [
-      tasks,
-      viewSettings,
-      serializeOpts,
-      suggestedFilename,
-      setFileName,
-      setLastSaved,
-      markClean,
-    ]
+  const { handleSave, handleSaveAs } = useSaveOperation(
+    tasks,
+    viewSettings,
+    serializeOpts,
+    suggestedFilename,
+    setFileName,
+    setLastSaved,
+    markClean
   );
 
-  const handleSaveAs = useCallback(
-    (): Promise<void> => handleSave(true),
-    [handleSave]
-  );
+  const { handleOpen } = useOpenOperation(isDirty);
 
-  // Open (Ctrl+O)
-  const handleOpen = useCallback(async () => {
-    if (isDirty) {
-      const confirmed = window.confirm(
-        "You have unsaved changes. Do you want to continue without saving?"
-      );
-      if (!confirmed) return;
-    }
-
-    try {
-      const result = await openFile();
-
-      if (!result.success || !result.file) {
-        if (result.error !== "Open cancelled") {
-          toast.error(`Open failed: ${result.error}`);
-        }
-        return;
-      }
-
-      const loadResult = await loadFileIntoApp(result.file);
-      showLoadNotifications(
-        { ...loadResult, fileName: result.file.name },
-        toast
-      );
-    } catch (e) {
-      toast.error(`Open failed: ${toErrorMsg(e)}`);
-    }
-  }, [isDirty]);
-
-  // New (Ctrl+N)
-  const handleNew = useCallback(async () => {
-    if (isDirty) {
-      const confirmed = window.confirm(
-        "You have unsaved changes. Do you want to create a new chart without saving?"
-      );
-      if (!confirmed) return;
-    }
-
-    setTasks([]);
-    clearDependencies();
-    resetExportOptions();
-    setProjectTitle("");
-    setProjectAuthor("");
-    // Per-file row visibility resets with the file.
-    // Column visibility and table layout are user preferences that intentionally
-    // persist across new charts — only task-specific hidden rows are cleared.
-    setHiddenTaskIds([]);
-    // Reset zoom and pan so a new chart always opens at a sensible default view.
-    resetView();
-    clearHistory();
-    clearFileHandle();
-    resetFileStore();
-
-    toast.success("Created new chart");
-  }, [
+  const { handleNew } = useNewOperation({
     isDirty,
     setTasks,
     clearDependencies,
@@ -401,7 +560,7 @@ export function useFileOperations(): {
     resetView,
     clearHistory,
     resetFileStore,
-  ]);
+  });
 
   return {
     handleSave,
