@@ -52,17 +52,53 @@ const HEADER_PADDING = 24;
 let measureContext: CanvasRenderingContext2D | null = null;
 
 /**
+ * True once a canvas creation attempt has failed in this environment.
+ * Prevents allocating a new <canvas> element on every measureTextWidth call
+ * when the Canvas API is permanently unavailable (e.g. certain SSR contexts
+ * or environments where getContext("2d") returns null).
+ */
+let canvasUnavailable = false;
+
+/**
  * Get or create a cached canvas context for text measurement.
- * Returns null when running outside a browser environment.
+ * Returns null when running outside a browser environment or when the
+ * Canvas 2D API is not supported.
  */
 function getMeasureContext(): CanvasRenderingContext2D | null {
-  if (!measureContext) {
-    if (typeof document !== "undefined") {
-      const canvas = document.createElement("canvas");
-      measureContext = canvas.getContext("2d");
+  if (measureContext) return measureContext;
+  if (canvasUnavailable) return null;
+
+  if (typeof document !== "undefined") {
+    const canvas = document.createElement("canvas");
+    const ctx = canvas.getContext("2d");
+    if (ctx) {
+      measureContext = ctx;
+    } else {
+      canvasUnavailable = true;
     }
+  } else {
+    canvasUnavailable = true;
   }
+
   return measureContext;
+}
+
+// ─── Private helpers ──────────────────────────────────────────────────────────
+
+/**
+ * Compute the padding days required for one side of the chart, based on the
+ * maximum label width in the given task list.
+ * Returns 0 for an empty task list.
+ */
+function computeOneSidePaddingDays(
+  tasks: Task[],
+  fontSize: number,
+  pixelsPerDay: number
+): number {
+  if (tasks.length === 0) return 0;
+  const maxWidth = getMaxLabelWidth(tasks, fontSize);
+  const totalPadding = Math.min(maxWidth + LABEL_GAP, MAX_LABEL_PADDING_PX);
+  return Math.ceil(totalPadding / pixelsPerDay);
 }
 
 // ─── Public API ───────────────────────────────────────────────────────────────
@@ -97,7 +133,8 @@ export function measureTextWidth(
   ctx.font = `${fontWeight} ${fontSize}px ${fontFamily}`;
   let width = ctx.measureText(text).width;
 
-  // Add letter spacing (in em units, so multiply by fontSize)
+  // Add letter spacing (in em units, so multiply by fontSize).
+  // Applied to n-1 gaps between n characters, matching CSS letter-spacing behaviour.
   if (letterSpacing > 0) {
     width += (text.length - 1) * letterSpacing * fontSize;
   }
@@ -157,15 +194,14 @@ export function calculateColumnWidth(
   );
   const headerWidth = headerTextWidth + HEADER_PADDING;
 
-  // Measure each cell, accumulating the maximum
+  // Measure each cell, accumulating the maximum.
+  // extraWidths[i] ?? 0 safely handles sparse arrays and missing entries.
   let maxCellWidth = 0;
-  cellValues.forEach((value, index) => {
-    let textWidth = measureTextWidth(value, fontSize);
-    if (extraWidths[index]) {
-      textWidth += extraWidths[index];
-    }
+  for (let i = 0; i < cellValues.length; i++) {
+    const textWidth =
+      measureTextWidth(cellValues[i], fontSize) + (extraWidths[i] ?? 0);
     maxCellWidth = Math.max(maxCellWidth, textWidth + cellPadding);
-  });
+  }
 
   const rawWidth = Math.max(headerWidth, maxCellWidth);
 
@@ -223,20 +259,16 @@ export function calculateLabelPaddingDays(
     // "inside" and "none" don't require extra padding
   }
 
-  let leftDays = 0;
-  let rightDays = 0;
-
-  if (tasksWithBeforeLabels.length > 0) {
-    const maxWidth = getMaxLabelWidth(tasksWithBeforeLabels, fontSize);
-    const totalPadding = Math.min(maxWidth + LABEL_GAP, MAX_LABEL_PADDING_PX);
-    leftDays = Math.ceil(totalPadding / pixelsPerDay);
-  }
-
-  if (tasksWithAfterLabels.length > 0) {
-    const maxWidth = getMaxLabelWidth(tasksWithAfterLabels, fontSize);
-    const totalPadding = Math.min(maxWidth + LABEL_GAP, MAX_LABEL_PADDING_PX);
-    rightDays = Math.ceil(totalPadding / pixelsPerDay);
-  }
-
-  return { leftDays, rightDays };
+  return {
+    leftDays: computeOneSidePaddingDays(
+      tasksWithBeforeLabels,
+      fontSize,
+      pixelsPerDay
+    ),
+    rightDays: computeOneSidePaddingDays(
+      tasksWithAfterLabels,
+      fontSize,
+      pixelsPerDay
+    ),
+  };
 }

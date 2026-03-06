@@ -21,6 +21,26 @@ export interface WorkingDaysSummary {
   holidays: HolidayInfo[];
 }
 
+// ─── Private helpers ──────────────────────────────────────────────────────────
+
+/**
+ * Fetch holidays for a date range after configuring the holiday service.
+ * Returns an empty array when holiday exclusion is disabled or no region is provided.
+ */
+function fetchHolidaysForRange(
+  config: WorkingDaysConfig,
+  holidayRegion: string | undefined,
+  startDate: string,
+  endDate: string
+): HolidayInfo[] {
+  if (!config.excludeHolidays || !holidayRegion) return [];
+  holidayService.setRegion(holidayRegion);
+  return holidayService.getHolidaysInRange(
+    parseISO(startDate),
+    parseISO(endDate)
+  );
+}
+
 // ─── Public API ───────────────────────────────────────────────────────────────
 
 /**
@@ -30,11 +50,15 @@ export interface WorkingDaysSummary {
  * because `config.excludeSaturday` and `config.excludeSunday` are separate flags —
  * a user may work Saturdays while keeping Sundays excluded, or vice versa.
  *
+ * When `config.excludeHolidays` is true and `holidayRegion` is provided, the
+ * holiday service is configured internally — callers do not need to pre-call
+ * `holidayService.setRegion()`. If `holidayRegion` is omitted while
+ * `config.excludeHolidays` is true, holiday exclusion is silently skipped.
+ *
  * @param dateString - ISO date string (YYYY-MM-DD)
  * @param config - Working days configuration
- * @param holidayRegion - Holiday region code. When `config.excludeHolidays` is true,
- *   the caller is responsible for calling `holidayService.setRegion()` before invoking
- *   this function so the service is already configured for the correct region.
+ * @param holidayRegion - Holiday region code. Required when `config.excludeHolidays`
+ *   is true; if omitted, holiday exclusion is silently skipped.
  */
 export function isWorkingDay(
   dateString: string,
@@ -49,8 +73,12 @@ export function isWorkingDay(
   if (config.excludeSaturday && dayOfWeek === 6) return false;
   if (config.excludeSunday && dayOfWeek === 0) return false;
 
-  // Caller is responsible for setting the region before entering a loop.
   if (config.excludeHolidays && holidayRegion) {
+    // setRegion is idempotent (no-op when the region is unchanged), so calling it
+    // here makes isWorkingDay safe to use as a standalone function without requiring
+    // the caller to pre-configure the service.
+    holidayService.setRegion(holidayRegion);
+    // isHolidayString returns HolidayInfo | null (not a boolean despite the name)
     if (holidayService.isHolidayString(dateString) !== null) return false;
   }
 
@@ -73,6 +101,8 @@ export function calculateWorkingDays(
   config: WorkingDaysConfig,
   holidayRegion?: string
 ): number {
+  if (startDate > endDate) return 0;
+
   // Fast path: if nothing is excluded, simple inclusive-day count suffices
   if (
     !config.excludeSaturday &&
@@ -80,11 +110,6 @@ export function calculateWorkingDays(
     !config.excludeHolidays
   ) {
     return calculateDuration(startDate, endDate);
-  }
-
-  // Configure the holiday service once before the loop, not on every isWorkingDay call
-  if (config.excludeHolidays && holidayRegion) {
-    holidayService.setRegion(holidayRegion);
   }
 
   let count = 0;
@@ -106,9 +131,11 @@ export function calculateWorkingDays(
  * The start date counts as day 1 if it is itself a working day. For example,
  * `addWorkingDays("2025-01-06" /* Monday *\/, 1, config)` returns `"2025-01-06"`.
  *
+ * Returns `startDate` unchanged for `days <= 0`.
+ *
  * @param startDate - Start date string (YYYY-MM-DD)
- * @param days - Number of working days to add. Must be ≥ 1; behaviour for
- *   `days ≤ 0` is unspecified — callers should guard against this.
+ * @param days - Number of working days to add. Must be ≥ 1; returns `startDate`
+ *   for `days ≤ 0`.
  * @param config - Working days configuration
  * @param holidayRegion - Holiday region code
  * @returns End date string (YYYY-MM-DD)
@@ -119,6 +146,9 @@ export function addWorkingDays(
   config: WorkingDaysConfig,
   holidayRegion?: string
 ): string {
+  // Guard: non-positive day counts are a no-op regardless of config or fast path
+  if (days <= 0) return startDate;
+
   // Fast path: no exclusions → simple date arithmetic (start date = day 1)
   if (
     !config.excludeSaturday &&
@@ -126,11 +156,6 @@ export function addWorkingDays(
     !config.excludeHolidays
   ) {
     return addDays(startDate, days - 1);
-  }
-
-  // Configure the holiday service once before the loop
-  if (config.excludeHolidays && holidayRegion) {
-    holidayService.setRegion(holidayRegion);
   }
 
   let currentDate = startDate;
@@ -193,16 +218,12 @@ export function getWorkingDaysSummary(
   const totalDays = calculateDuration(startDate, endDate);
 
   // Fetch the full holiday list once (the service caches per-year internally)
-  const holidays: HolidayInfo[] = [];
-  if (config.excludeHolidays && holidayRegion) {
-    holidayService.setRegion(holidayRegion);
-    holidays.push(
-      ...holidayService.getHolidaysInRange(
-        parseISO(startDate),
-        parseISO(endDate)
-      )
-    );
-  }
+  const holidays = fetchHolidaysForRange(
+    config,
+    holidayRegion,
+    startDate,
+    endDate
+  );
 
   // Build a Set of YYYY-MM-DD strings for O(1) holiday lookup during the loop.
   // format() uses local timezone, consistent with parseISO() used on currentDate.
@@ -210,7 +231,10 @@ export function getWorkingDaysSummary(
     holidays.map((h) => format(h.date, "yyyy-MM-dd"))
   );
 
-  // Single pass: count weekends and working days simultaneously
+  // Single pass: count weekends and working days simultaneously.
+  // Holiday logic is inlined (rather than delegating to isWorkingDay) to use the
+  // pre-built holidayDateSet for O(1) lookup instead of calling isHolidayString
+  // per day.
   let weekendDays = 0;
   let workingDays = 0;
   let currentDate = startDate;
@@ -222,8 +246,6 @@ export function getWorkingDaysSummary(
 
     if (isSat || isSun) weekendDays++;
 
-    // Mirrors isWorkingDay() logic — inlined to avoid a redundant setRegion()
-    // call on every iteration of the loop.
     let isWorking = true;
     if (config.excludeSaturday && isSat) isWorking = false;
     else if (config.excludeSunday && isSun) isWorking = false;

@@ -122,7 +122,9 @@ describe("workingDaysCalculator", () => {
     });
 
     it("should return false for a holiday when excludeHolidays is true", () => {
-      mockIsHolidayString.mockReturnValue(makeHoliday("2025-01-01", "New Year's Day"));
+      mockIsHolidayString.mockReturnValue(
+        makeHoliday("2025-01-01", "New Year's Day")
+      );
       expect(isWorkingDay("2025-01-01", EXCLUDE_ALL, "AT")).toBe(false);
     });
 
@@ -138,6 +140,11 @@ describe("workingDaysCalculator", () => {
     it("should not query holidayService when no holidayRegion is provided", () => {
       isWorkingDay("2025-01-06", EXCLUDE_ALL);
       expect(holidayService.isHolidayString).not.toHaveBeenCalled();
+    });
+
+    it("should configure the holiday service when excludeHolidays is true and region is provided", () => {
+      isWorkingDay("2025-01-06", EXCLUDE_ALL, "AT");
+      expect(mockSetRegion).toHaveBeenCalledWith("AT");
     });
   });
 
@@ -157,9 +164,17 @@ describe("workingDaysCalculator", () => {
       ).toBe(1);
     });
 
-    it("should return 0 when endDate is before startDate", () => {
+    it("should return 0 when endDate is before startDate (slow path)", () => {
       expect(
         calculateWorkingDays("2025-01-10", "2025-01-06", EXCLUDE_WEEKENDS)
+      ).toBe(0);
+    });
+
+    it("should return 0 when endDate is before startDate (fast path)", () => {
+      // Ensures the guard fires before the fast-path calculateDuration call,
+      // which would otherwise return a negative number.
+      expect(
+        calculateWorkingDays("2025-01-10", "2025-01-06", NO_EXCLUSIONS)
       ).toBe(0);
     });
 
@@ -180,9 +195,8 @@ describe("workingDaysCalculator", () => {
       expect(calculateWorkingDays("2025-01-06", "2025-01-12", config)).toBe(6);
     });
 
-    it("should configure holidayService exactly once before the loop", () => {
+    it("should configure the holiday service with the correct region", () => {
       calculateWorkingDays("2025-01-06", "2025-01-10", EXCLUDE_ALL, "AT");
-      expect(mockSetRegion).toHaveBeenCalledTimes(1);
       expect(mockSetRegion).toHaveBeenCalledWith("AT");
     });
 
@@ -217,13 +231,13 @@ describe("workingDaysCalculator", () => {
       expect(addWorkingDays("2025-01-06", 5, NO_EXCLUSIONS)).toBe("2025-01-10");
     });
 
-    it("should return startDate for days=1 when startDate is a working day", () => {
+    it("should return startDate for days = 1 when startDate is a working day", () => {
       expect(addWorkingDays("2025-01-06", 1, EXCLUDE_WEEKENDS)).toBe(
         "2025-01-06"
       );
     });
 
-    it("should find the next working day for days=1 when startDate is a weekend", () => {
+    it("should find the next working day for days = 1 when startDate is a weekend", () => {
       // Saturday Jan 11 → first working day = Monday Jan 13
       expect(addWorkingDays("2025-01-11", 1, EXCLUDE_WEEKENDS)).toBe(
         "2025-01-13"
@@ -255,14 +269,31 @@ describe("workingDaysCalculator", () => {
       );
     });
 
-    it("should configure holidayService exactly once before the loop", () => {
+    it("should configure the holiday service with the correct region", () => {
       addWorkingDays("2025-01-06", 3, EXCLUDE_ALL, "AT");
-      expect(mockSetRegion).toHaveBeenCalledTimes(1);
+      expect(mockSetRegion).toHaveBeenCalledWith("AT");
     });
 
     it("should not call setRegion when excludeHolidays is false", () => {
       addWorkingDays("2025-01-06", 3, EXCLUDE_WEEKENDS, "AT");
       expect(mockSetRegion).not.toHaveBeenCalled();
+    });
+
+    it("should return startDate unchanged for days = 0 (no-op guard)", () => {
+      // Both fast path and slow path must agree: non-positive days → startDate
+      expect(addWorkingDays("2025-01-06", 0, NO_EXCLUSIONS)).toBe("2025-01-06");
+      expect(addWorkingDays("2025-01-06", 0, EXCLUDE_WEEKENDS)).toBe(
+        "2025-01-06"
+      );
+    });
+
+    it("should return startDate unchanged for negative days", () => {
+      expect(addWorkingDays("2025-01-06", -1, NO_EXCLUSIONS)).toBe(
+        "2025-01-06"
+      );
+      expect(addWorkingDays("2025-01-06", -5, EXCLUDE_WEEKENDS)).toBe(
+        "2025-01-06"
+      );
     });
   });
 
@@ -306,7 +337,7 @@ describe("workingDaysCalculator", () => {
         NO_EXCLUSIONS
       );
       expect(summary.workingDays).toBe(7);
-      // weekendDays is always counted regardless of config (it's informational)
+      // weekendDays is always the calendar count regardless of config (informational)
       expect(summary.weekendDays).toBe(2);
     });
 
