@@ -282,7 +282,7 @@ cd ../app-gantt-review
 - [ ] `src/components/StatusBar/index.ts` (2 LOC)
 
 ### Priority: LOW — Config & Services
-- [ ] `src/config/helpContent.ts` (1109 LOC) — Datendatei
+- [x] `src/config/helpContent.ts` (1109 LOC) — Datendatei
 - [ ] `src/services/holidayService.ts` (209 LOC)
 - [ ] `src/config/preferencesOptions.ts` (113 LOC)
 - [ ] `src/config/appConfig.ts` (14 LOC)
