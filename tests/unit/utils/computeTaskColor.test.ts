@@ -12,7 +12,10 @@
  */
 
 import { describe, it, expect } from "vitest";
-import { getComputedTaskColor } from "../../../src/utils/computeTaskColor";
+import {
+  getComputedTaskColor,
+  computeAllTaskColors,
+} from "../../../src/utils/computeTaskColor";
 import { hexToHSL } from "../../../src/utils/colorUtils";
 import { stableHash } from "../../../src/utils/hashUtils";
 import type { ColorModeState } from "../../../src/types/colorMode.types";
@@ -537,5 +540,128 @@ describe("getComputedTaskColor - hierarchy mode", () => {
     // Deeper levels should be different (lighter)
     expect(l1Color).not.toBe(rootColor);
     expect(l2Color).not.toBe(l1Color);
+  });
+});
+
+// ── computeAllTaskColors ────────────────────────────────────────────────────
+
+describe("computeAllTaskColors", () => {
+  it("returns an empty Map for an empty task list", () => {
+    const result = computeAllTaskColors([], makeState({ mode: "manual" }));
+    expect(result.size).toBe(0);
+  });
+
+  it("contains an entry for every task", () => {
+    const tasks = [
+      makeTask({ id: "t1", color: "#FF0000" }),
+      makeTask({ id: "t2", color: "#00FF00" }),
+      makeTask({ id: "t3", color: "#0000FF" }),
+    ];
+    const result = computeAllTaskColors(tasks, makeState({ mode: "manual" }));
+    expect(result.size).toBe(3);
+    expect(result.has("t1")).toBe(true);
+    expect(result.has("t2")).toBe(true);
+    expect(result.has("t3")).toBe(true);
+  });
+
+  it("manual mode: returns each task's own color", () => {
+    const tasks = [
+      makeTask({ id: "t1", color: "#AA0000" }),
+      makeTask({ id: "t2", color: "#00BB00" }),
+    ];
+    const result = computeAllTaskColors(tasks, makeState({ mode: "manual" }));
+    expect(result.get("t1")).toBe("#AA0000");
+    expect(result.get("t2")).toBe("#00BB00");
+  });
+
+  it("produces the same colors as getComputedTaskColor for manual mode", () => {
+    const tasks = [
+      makeTask({ id: "t1", color: "#123456" }),
+      makeTask({ id: "t2", color: "#abcdef" }),
+    ];
+    const state = makeState({ mode: "manual" });
+    const batch = computeAllTaskColors(tasks, state);
+    for (const task of tasks) {
+      expect(batch.get(task.id)).toBe(getComputedTaskColor(task, tasks, state));
+    }
+  });
+
+  it("produces the same colors as getComputedTaskColor for taskType mode", () => {
+    const tasks = [
+      makeTask({ id: "t1", type: "task", color: "#000" }),
+      makeTask({ id: "t2", type: "summary", color: "#000" }),
+      makeTask({ id: "t3", type: "milestone", color: "#000" }),
+    ];
+    const state = makeState({ mode: "taskType" });
+    const batch = computeAllTaskColors(tasks, state);
+    for (const task of tasks) {
+      expect(batch.get(task.id)).toBe(getComputedTaskColor(task, tasks, state));
+    }
+  });
+
+  it("produces the same colors as getComputedTaskColor for summary mode", () => {
+    const summary = makeTask({ id: "s1", type: "summary", color: "#AA0000" });
+    const child = makeTask({ id: "c1", parent: "s1", color: "#0000FF" });
+    const tasks = [summary, child];
+    const state = makeState({ mode: "summary" });
+    const batch = computeAllTaskColors(tasks, state);
+    for (const task of tasks) {
+      expect(batch.get(task.id)).toBe(getComputedTaskColor(task, tasks, state));
+    }
+  });
+
+  it("produces the same colors as getComputedTaskColor for hierarchy mode", () => {
+    const root = makeTask({ id: "r", type: "summary", color: "#000" });
+    const child = makeTask({ id: "c", parent: "r", color: "#000" });
+    const tasks = [root, child];
+    const state = makeState({ mode: "hierarchy" });
+    const batch = computeAllTaskColors(tasks, state);
+    for (const task of tasks) {
+      expect(batch.get(task.id)).toBe(getComputedTaskColor(task, tasks, state));
+    }
+  });
+
+  describe("theme mode", () => {
+    const themeState = makeState({
+      mode: "theme",
+      themeOptions: { selectedPaletteId: "tableau-10", customMonochromeBase: null },
+    });
+
+    it("produces the same colors as getComputedTaskColor for theme mode", () => {
+      const root = makeTask({ id: "root", type: "summary", color: "#000" });
+      const groupA = makeTask({ id: "groupA", type: "summary", parent: "root", color: "#000" });
+      const child = makeTask({ id: "child", parent: "groupA", color: "#000" });
+      const tasks = [root, groupA, child];
+      const batch = computeAllTaskColors(tasks, themeState);
+      for (const task of tasks) {
+        expect(batch.get(task.id)).toBe(
+          getComputedTaskColor(task, tasks, themeState)
+        );
+      }
+    });
+
+    it("returns task.color when no palette is configured", () => {
+      const noPaletteState = makeState({
+        mode: "theme",
+        themeOptions: { selectedPaletteId: null, customMonochromeBase: null },
+      });
+      const task = makeTask({ id: "t1", color: "#ABCDEF" });
+      const result = computeAllTaskColors([task], noPaletteState);
+      expect(result.get("t1")).toBe("#ABCDEF");
+    });
+
+    it("respects colorOverride in theme mode", () => {
+      const task = makeTask({ id: "t1", color: "#000", colorOverride: "#FF1234" });
+      const result = computeAllTaskColors([task], themeState);
+      expect(result.get("t1")).toBe("#FF1234");
+    });
+
+    it("batch result matches per-task result for tasks with colorOverride", () => {
+      const task = makeTask({ id: "t1", color: "#000", colorOverride: "#AABBCC" });
+      const batch = computeAllTaskColors([task], themeState);
+      expect(batch.get(task.id)).toBe(
+        getComputedTaskColor(task, [task], themeState)
+      );
+    });
   });
 });

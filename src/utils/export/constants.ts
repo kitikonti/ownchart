@@ -34,6 +34,47 @@ export const EXPORT_COLORS = {
   headerBg: COLORS.neutral[50],
 } as const;
 
+// ─── Task table cell rendering constants ──────────────────────────────────────
+
+/** Y offset added to rowHeight/2 for SVG text baseline alignment */
+export const TEXT_BASELINE_OFFSET = 4;
+
+/** Fixed width reserved for the expand/collapse arrow in the name column (Tailwind w-4) */
+export const ARROW_PLACEHOLDER_WIDTH = 16;
+
+/** Rendered pixel size of the task-type Phosphor icon in the name column */
+export const ICON_RENDER_SIZE = 16;
+
+/** Gap between the task-type icon and the task name text (px) */
+export const ICON_TEXT_GAP = 4;
+
+/** Scale factor to render 256×256 viewBox Phosphor icons at ICON_RENDER_SIZE px (16 / 256) */
+export const ICON_SCALE = 0.0625;
+
+/** Font size for the expand/collapse arrow glyph "▼" */
+export const ARROW_FONT_SIZE = 11;
+
+/** Width of the color indicator pill in the color column (px) */
+export const COLOR_BAR_WIDTH = 6;
+
+/** Corner radius of the color indicator pill (px) */
+export const COLOR_BAR_RADIUS = 3;
+
+/**
+ * Font size for task table column header labels.
+ * Matches Tailwind text-xs (12px) used in the app — density-invariant.
+ */
+export const COLUMN_HEADER_FONT_SIZE = 12;
+
+/** SVG stroke-width for table border and separator lines */
+export const BORDER_STROKE_WIDTH = "1";
+
+/**
+ * CSS letter-spacing for column header labels.
+ * Matches Tailwind's tracking-wider utility (0.05em).
+ */
+export const LETTER_SPACING_WIDER = "0.05em";
+
 /**
  * CSS class applied to the main Gantt chart SVG element by ExportRenderer.
  * Used as a querySelector selector by PDF and SVG export utilities.

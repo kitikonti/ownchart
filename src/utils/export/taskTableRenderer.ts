@@ -4,23 +4,546 @@
  */
 
 import type { Task } from "../../types/chart.types";
-import type { UiDensity } from "../../types/preferences.types";
+import type { HexColor } from "../../types/branded.types";
+import type { UiDensity, DensityConfig } from "../../types/preferences.types";
+import type { ColorModeState } from "../../types/colorMode.types";
 import { DENSITY_CONFIG } from "../../config/densityConfig";
-import type { ExportColumnKey } from "./types";
-import { EXPORT_COLUMN_MAP, HEADER_LABELS } from "./columns";
+import type {
+  ExportColumnKey,
+  ExportDataColumnKey,
+  FlattenedTask,
+} from "./types";
+import { HEADER_LABELS, getColumnDisplayValue } from "./columns";
 import { getDefaultColumnWidth } from "./calculations";
 import {
   HEADER_HEIGHT,
   SVG_FONT_FAMILY,
   EXPORT_COLORS,
   TASK_TYPE_ICON_PATHS,
+  TEXT_BASELINE_OFFSET,
+  ARROW_PLACEHOLDER_WIDTH,
+  ICON_RENDER_SIZE,
+  ICON_TEXT_GAP,
+  ICON_SCALE,
+  ARROW_FONT_SIZE,
+  COLOR_BAR_WIDTH,
+  COLOR_BAR_RADIUS,
+  COLUMN_HEADER_FONT_SIZE,
+  BORDER_STROKE_WIDTH,
+  LETTER_SPACING_WIDER,
 } from "./constants";
-import type { ColorModeState } from "../../types/colorMode.types";
-import { getComputedTaskColor } from "../computeTaskColor";
+import { computeAllTaskColors } from "../computeTaskColor";
+
+// ─── Constants ────────────────────────────────────────────────────────────────
+
+/** Fallback label prefix for tasks without a name, e.g. "Task 1", "Task 2". */
+const UNNAMED_TASK_PREFIX = "Task";
+
+/**
+ * Columns that require custom rendering (not handled by getColumnDisplayValue).
+ * When ExportColumnKey gains a new special-case column, add it here AND update
+ * ExportDataColumnKey in types.ts.
+ */
+const SPECIAL_CASE_COLUMNS = new Set<ExportColumnKey>(["color", "name"]);
+
+/**
+ * Expand/collapse indicator for summary tasks with children.
+ * Defined as a named constant so source and tests reference the same symbol —
+ * a future icon change only needs to happen here.
+ */
+const EXPAND_ARROW_CHAR = "▼";
+
+/**
+ * CSS class names applied to the SVG group elements produced by the public
+ * render functions. Exported so tests can reference the same symbol instead
+ * of hardcoding strings — a rename only needs to happen here.
+ */
+export const TASK_TABLE_HEADER_CLASS = "task-table-header";
+export const TASK_TABLE_ROWS_CLASS = "task-table-rows";
+
+/**
+ * Data columns that receive lighter/italic styling for summary task rows,
+ * matching the app's rendering of computed summary date ranges.
+ * When ExportDataColumnKey gains a new date-like column, add it here.
+ */
+const SUMMARY_DATE_COLUMNS = new Set<ExportDataColumnKey>([
+  "startDate",
+  "endDate",
+  "duration",
+]);
+
+// ─── SVG namespace helper ─────────────────────────────────────────────────────
+
+const SVG_NS = "http://www.w3.org/2000/svg";
+
+function createSVGEl<K extends keyof SVGElementTagNameMap>(
+  tag: K
+): SVGElementTagNameMap[K] {
+  // createElementNS overloads return Element for any namespace URI string;
+  // the cast is safe because SVG_NS + a valid SVG tag always yields the correct type.
+  return document.createElementNS(SVG_NS, tag) as SVGElementTagNameMap[K];
+}
+
+// ─── Text helpers ─────────────────────────────────────────────────────────────
+
+/**
+ * Approximate char-width ratio for Inter at any size.
+ * Inter digits/dashes average ~6–7 px at 16 px; mixed task-name text is slightly wider.
+ * 0.45 keeps typical dates/durations unclipped while still truncating genuinely long names.
+ * Safe for both SVG and PDF export (no canvas measurement needed).
+ */
+const APPROX_CHAR_WIDTH_RATIO = 0.45;
+
+/**
+ * Truncate a string to fit within availableWidth pixels at the given fontSize.
+ * Appends "…" when truncation occurs.
+ */
+function truncateToWidth(
+  text: string,
+  availableWidth: number,
+  fontSize: number
+): string {
+  const maxChars = Math.floor(
+    availableWidth / (fontSize * APPROX_CHAR_WIDTH_RATIO)
+  );
+  if (text.length <= maxChars) return text;
+  return text.slice(0, Math.max(0, maxChars - 1)) + "…";
+}
+
+interface TextElOptions {
+  x: number;
+  y: number;
+  fill: string;
+  fontSize: number;
+  content: string;
+  fontWeight?: string;
+  fontStyle?: string;
+  letterSpacing?: string;
+}
+
+/** Create and configure an SVG <text> element with common export attributes. */
+function createTextEl({
+  x,
+  y,
+  fill,
+  fontSize,
+  content,
+  fontWeight,
+  fontStyle,
+  letterSpacing,
+}: TextElOptions): SVGTextElement {
+  const el = createSVGEl("text");
+  el.setAttribute("x", String(x));
+  el.setAttribute("y", String(y));
+  el.setAttribute("fill", fill);
+  el.setAttribute("font-family", SVG_FONT_FAMILY);
+  el.setAttribute("font-size", String(fontSize));
+  if (fontWeight !== undefined) el.setAttribute("font-weight", fontWeight);
+  if (fontStyle !== undefined) el.setAttribute("font-style", fontStyle);
+  if (letterSpacing !== undefined)
+    el.setAttribute("letter-spacing", letterSpacing);
+  el.textContent = content;
+  return el;
+}
+
+// ─── Border line helper ───────────────────────────────────────────────────────
+
+/** Create an SVG <line> element for a table border or column separator. */
+function createBorderLine(
+  x1: number,
+  y1: number,
+  x2: number,
+  y2: number,
+  color: string
+): SVGLineElement {
+  const line = createSVGEl("line");
+  line.setAttribute("x1", String(x1));
+  line.setAttribute("y1", String(y1));
+  line.setAttribute("x2", String(x2));
+  line.setAttribute("y2", String(y2));
+  line.setAttribute("stroke", color);
+  line.setAttribute("stroke-width", BORDER_STROKE_WIDTH);
+  return line;
+}
+
+// ─── Column separator helper ──────────────────────────────────────────────────
+
+/** Position and span of a vertical column separator line. */
+interface SeparatorOptions {
+  colX: number;
+  colWidth: number;
+  startY: number;
+  height: number;
+  color: string;
+}
+
+/**
+ * Render a vertical column separator at the right edge of a cell.
+ * No-ops for the color column — matches app styling where the color
+ * swatch column has no right border.
+ */
+function renderColumnSeparator(
+  group: SVGGElement,
+  key: ExportColumnKey,
+  opts: SeparatorOptions
+): void {
+  if (key === "color") return;
+  group.appendChild(
+    createBorderLine(
+      opts.colX + opts.colWidth,
+      opts.startY,
+      opts.colX + opts.colWidth,
+      opts.startY + opts.height,
+      opts.color
+    )
+  );
+}
+
+// ─── Column width resolver ────────────────────────────────────────────────────
+
+/**
+ * Resolve the rendered width for a column: uses the caller-provided override
+ * when present, otherwise falls back to the density-specific default.
+ */
+function resolveColumnWidth(
+  key: ExportColumnKey,
+  columnWidths: Record<string, number>,
+  density: UiDensity
+): number {
+  return columnWidths[key] ?? getDefaultColumnWidth(key, density);
+}
+
+// ─── Type guard ───────────────────────────────────────────────────────────────
+
+/**
+ * Narrow ExportColumnKey to ExportDataColumnKey (i.e. not in SPECIAL_CASE_COLUMNS).
+ * Invariant: ExportDataColumnKey === Exclude<ExportColumnKey, 'color' | 'name'>.
+ * If ExportColumnKey gains new special-case columns, update SPECIAL_CASE_COLUMNS
+ * and ExportDataColumnKey in types.ts.
+ */
+function isDataColumn(key: ExportColumnKey): key is ExportDataColumnKey {
+  return !SPECIAL_CASE_COLUMNS.has(key);
+}
+
+// ─── Cell render context ──────────────────────────────────────────────────────
+
+/** Shared state forwarded to every private cell renderer for a single row. */
+interface CellRenderContext {
+  group: SVGGElement;
+  rowY: number;
+  rowHeight: number;
+  densityConfig: DensityConfig;
+}
+
+/** Cell position and dimensions, forwarded to each private cell renderer. */
+interface CellLayout {
+  colX: number;
+  colWidth: number;
+}
+
+// ─── Name cell sub-renderers ──────────────────────────────────────────────────
+
+function renderNameArrow(group: SVGGElement, textY: number, atX: number): void {
+  group.appendChild(
+    createTextEl({
+      x: atX,
+      y: textY,
+      fill: EXPORT_COLORS.textSecondary,
+      fontSize: ARROW_FONT_SIZE,
+      content: EXPAND_ARROW_CHAR,
+    })
+  );
+}
+
+function renderTypeIcon(
+  group: SVGGElement,
+  task: Task,
+  atX: number,
+  iconY: number
+): void {
+  const iconGroup = createSVGEl("g");
+  iconGroup.setAttribute(
+    "transform",
+    `translate(${atX}, ${iconY}) scale(${ICON_SCALE})`
+  );
+  const iconPath = createSVGEl("path");
+  iconPath.setAttribute("fill", EXPORT_COLORS.textSecondary);
+  // task.type is optional; fall back to "task" icon when absent.
+  iconPath.setAttribute("d", TASK_TYPE_ICON_PATHS[task.type ?? "task"]);
+  iconGroup.appendChild(iconPath);
+  group.appendChild(iconGroup);
+}
+
+/** Options for the renderNameText sub-renderer. */
+interface NameTextOptions {
+  group: SVGGElement;
+  task: Task;
+  rowIndex: number;
+  textY: number;
+  atX: number;
+  availableWidth: number;
+  fontSize: number;
+}
+
+function renderNameText({
+  group,
+  task,
+  rowIndex,
+  textY,
+  atX,
+  availableWidth,
+  fontSize,
+}: NameTextOptions): void {
+  // Export-local numbering: intentionally uses the row's position within the exported
+  // subset, not globalRowNumber — fallback names read "Task 1, 2, 3 …" sequentially.
+  const rawName = task.name || `${UNNAMED_TASK_PREFIX} ${rowIndex + 1}`;
+  const displayName = truncateToWidth(rawName, availableWidth, fontSize);
+  group.appendChild(
+    createTextEl({
+      x: atX,
+      y: textY,
+      fill: EXPORT_COLORS.textPrimary,
+      fontSize,
+      content: displayName,
+    })
+  );
+}
+
+// ─── Private cell renderers ───────────────────────────────────────────────────
+
+function renderColorCell(
+  ctx: CellRenderContext,
+  color: HexColor,
+  layout: CellLayout
+): void {
+  const { group, rowY, rowHeight, densityConfig } = ctx;
+  const { colX, colWidth } = layout;
+
+  const colorBar = createSVGEl("rect");
+  colorBar.setAttribute("x", String(colX + (colWidth - COLOR_BAR_WIDTH) / 2));
+  colorBar.setAttribute(
+    "y",
+    String(rowY + (rowHeight - densityConfig.colorBarHeight) / 2)
+  );
+  colorBar.setAttribute("width", String(COLOR_BAR_WIDTH));
+  colorBar.setAttribute("height", String(densityConfig.colorBarHeight));
+  colorBar.setAttribute("rx", String(COLOR_BAR_RADIUS));
+  colorBar.setAttribute("fill", color);
+  group.appendChild(colorBar);
+}
+
+function renderNameCell(
+  ctx: CellRenderContext,
+  flattenedTask: FlattenedTask,
+  rowIndex: number,
+  layout: CellLayout
+): void {
+  const { group, rowY, rowHeight, densityConfig } = ctx;
+  const { colX, colWidth } = layout;
+  const { task, level, hasChildren } = flattenedTask;
+  const { indentSize, fontSizeCell, cellPaddingX } = densityConfig;
+  const textY = rowY + rowHeight / 2 + TEXT_BASELINE_OFFSET;
+
+  let currentX = colX + level * indentSize;
+
+  // Expand/collapse arrow for summary tasks with children
+  if (hasChildren && task.type === "summary") {
+    renderNameArrow(group, textY, currentX);
+  }
+  // Reserve space for the arrow placeholder (ARROW_PLACEHOLDER_WIDTH = w-4 = 16px)
+  currentX += ARROW_PLACEHOLDER_WIDTH;
+
+  // Task type icon — Phosphor Icons, 256×256 viewBox, scaled to ICON_RENDER_SIZE
+  const iconY = rowY + (rowHeight - ICON_RENDER_SIZE) / 2;
+  renderTypeIcon(group, task, currentX, iconY);
+
+  // Advance past icon (ICON_RENDER_SIZE) + gap (ICON_TEXT_GAP)
+  currentX += ICON_RENDER_SIZE + ICON_TEXT_GAP;
+
+  // Task name — truncated to remaining available column width
+  const availableWidth = colX + colWidth - currentX - cellPaddingX;
+  renderNameText({
+    group,
+    task,
+    rowIndex,
+    textY,
+    atX: currentX,
+    availableWidth,
+    fontSize: fontSizeCell,
+  });
+}
+
+function renderDataCell(
+  ctx: CellRenderContext,
+  task: Task,
+  key: ExportDataColumnKey,
+  layout: CellLayout
+): void {
+  const { group, rowY, rowHeight, densityConfig } = ctx;
+  const { colX, colWidth } = layout;
+  const { fontSizeCell, cellPaddingX } = densityConfig;
+
+  const isSummary = task.type === "summary";
+  // Summary dates/duration are styled lighter and italic, matching the app
+  // When adding a date-like ExportDataColumnKey, add it to SUMMARY_DATE_COLUMNS above.
+  const useSummaryStyle = isSummary && SUMMARY_DATE_COLUMNS.has(key);
+
+  const rawValue = getColumnDisplayValue(task, key);
+  // null  → column has no value for this task type (e.g. milestone has no duration)
+  // ""    → intentionally blank (e.g. milestone end date is suppressed by getColumnDisplayValue)
+  if (rawValue === null || rawValue === "") return;
+
+  const availableWidth = colWidth - cellPaddingX * 2;
+  const value = truncateToWidth(rawValue, availableWidth, fontSizeCell);
+
+  group.appendChild(
+    createTextEl({
+      x: colX + cellPaddingX,
+      y: rowY + rowHeight / 2 + TEXT_BASELINE_OFFSET,
+      fill: useSummaryStyle
+        ? EXPORT_COLORS.textSummary
+        : EXPORT_COLORS.textPrimary,
+      fontSize: fontSizeCell,
+      content: value,
+      fontStyle: useSummaryStyle ? "italic" : undefined,
+    })
+  );
+}
+
+// ─── Private row renderer ─────────────────────────────────────────────────────
+
+/** Shared rendering options forwarded to every row renderer. */
+interface RowRendererOptions {
+  selectedColumns: ExportColumnKey[];
+  /**
+   * Caller-provided column-width overrides (may include keys beyond ExportColumnKey).
+   * Falls back to density-specific defaults via resolveColumnWidth for any missing key.
+   */
+  columnWidths: Record<string, number>;
+  density: UiDensity;
+  densityConfig: DensityConfig;
+  /** Pre-computed per-task colors — avoids O(n²) color computation in auto modes. */
+  colorCache: Map<string, HexColor>;
+  totalWidth: number;
+  x: number;
+  /** Y-coordinate of the first row; used inside renderTaskRow to compute each row's position. */
+  startY: number;
+}
+
+/** Render all cell columns for a single row, advancing colX across selected columns. */
+function renderRowCells(
+  ctx: CellRenderContext,
+  flattenedTask: FlattenedTask,
+  rowIndex: number,
+  options: RowRendererOptions
+): void {
+  const { selectedColumns, columnWidths, density, colorCache, x } = options;
+  const { task } = flattenedTask;
+
+  let colX = x;
+  for (const key of selectedColumns) {
+    const colWidth = resolveColumnWidth(key, columnWidths, density);
+    const layout: CellLayout = { colX, colWidth };
+
+    if (key === "color") {
+      // colorCache always contains every exported task; fallback guards against gaps.
+      const color = colorCache.get(task.id) ?? task.color;
+      renderColorCell(ctx, color, layout);
+    } else if (key === "name") {
+      renderNameCell(ctx, flattenedTask, rowIndex, layout);
+    } else if (isDataColumn(key)) {
+      renderDataCell(ctx, task, key, layout);
+    }
+
+    renderColumnSeparator(ctx.group, key, {
+      colX,
+      colWidth,
+      startY: ctx.rowY,
+      height: ctx.rowHeight,
+      color: EXPORT_COLORS.borderLight,
+    });
+
+    colX += colWidth;
+  }
+}
+
+function renderTaskRow(
+  group: SVGGElement,
+  flattenedTask: FlattenedTask,
+  rowIndex: number,
+  options: RowRendererOptions
+): void {
+  const { densityConfig, totalWidth, x } = options;
+  const { rowHeight } = densityConfig;
+  const rowY = options.startY + rowIndex * rowHeight;
+  const ctx: CellRenderContext = { group, rowY, rowHeight, densityConfig };
+
+  // Row bottom border
+  group.appendChild(
+    createBorderLine(
+      x,
+      rowY + rowHeight,
+      x + totalWidth,
+      rowY + rowHeight,
+      EXPORT_COLORS.borderLight
+    )
+  );
+
+  renderRowCells(ctx, flattenedTask, rowIndex, options);
+}
+
+// ─── Private header cell renderer ─────────────────────────────────────────────
+
+/** Rendering context passed to each header cell renderer. */
+interface HeaderCellContext {
+  y: number;
+  cellPaddingX: number;
+}
+
+function renderHeaderCell(
+  group: SVGGElement,
+  key: ExportColumnKey,
+  layout: CellLayout,
+  ctx: HeaderCellContext
+): void {
+  const { colX, colWidth } = layout;
+  const { y, cellPaddingX } = ctx;
+  const label = HEADER_LABELS[key] ?? "";
+
+  // Column header text — matches app: text-xs font-semibold uppercase tracking-wider
+  if (label) {
+    group.appendChild(
+      createTextEl({
+        x: colX + cellPaddingX,
+        y: y + HEADER_HEIGHT / 2 + TEXT_BASELINE_OFFSET,
+        fill: EXPORT_COLORS.textHeader,
+        fontSize: COLUMN_HEADER_FONT_SIZE,
+        content: label.toUpperCase(),
+        // "bold" for svg2pdf.js compatibility (doesn't support font-weight "600")
+        fontWeight: "bold",
+        letterSpacing: LETTER_SPACING_WIDER,
+      })
+    );
+  }
+
+  renderColumnSeparator(group, key, {
+    colX,
+    colWidth,
+    startY: y,
+    height: HEADER_HEIGHT,
+    color: EXPORT_COLORS.border,
+  });
+}
+
+// ─── Public API ───────────────────────────────────────────────────────────────
 
 /** Options for renderTaskTableHeader. */
 export interface TaskTableHeaderOptions {
   selectedColumns: ExportColumnKey[];
+  /**
+   * Caller-provided column-width overrides (may include keys beyond ExportColumnKey).
+   * Falls back to density-specific defaults for any missing key.
+   */
   columnWidths: Record<string, number>;
   totalWidth: number;
   x: number;
@@ -40,11 +563,17 @@ export function renderTaskTableHeader(
   options: TaskTableHeaderOptions
 ): SVGGElement {
   const { selectedColumns, columnWidths, totalWidth, x, y, density } = options;
-  const group = document.createElementNS("http://www.w3.org/2000/svg", "g");
-  group.setAttribute("class", "task-table-header");
+  const densityConfig = DENSITY_CONFIG[density];
+  const headerCtx: HeaderCellContext = {
+    y,
+    cellPaddingX: densityConfig.cellPaddingX,
+  };
+
+  const group = createSVGEl("g");
+  group.setAttribute("class", TASK_TABLE_HEADER_CLASS);
 
   // Header background
-  const bg = document.createElementNS("http://www.w3.org/2000/svg", "rect");
+  const bg = createSVGEl("rect");
   bg.setAttribute("x", String(x));
   bg.setAttribute("y", String(y));
   bg.setAttribute("width", String(totalWidth));
@@ -52,55 +581,21 @@ export function renderTaskTableHeader(
   bg.setAttribute("fill", EXPORT_COLORS.headerBg);
   group.appendChild(bg);
 
-  // Header border
-  const border = document.createElementNS("http://www.w3.org/2000/svg", "line");
-  border.setAttribute("x1", String(x));
-  border.setAttribute("y1", String(y + HEADER_HEIGHT));
-  border.setAttribute("x2", String(x + totalWidth));
-  border.setAttribute("y2", String(y + HEADER_HEIGHT));
-  border.setAttribute("stroke", EXPORT_COLORS.border);
-  border.setAttribute("stroke-width", "1");
-  group.appendChild(border);
+  // Header bottom border
+  group.appendChild(
+    createBorderLine(
+      x,
+      y + HEADER_HEIGHT,
+      x + totalWidth,
+      y + HEADER_HEIGHT,
+      EXPORT_COLORS.border
+    )
+  );
 
-  // Column headers
   let colX = x;
   for (const key of selectedColumns) {
-    const colWidth = columnWidths[key] || getDefaultColumnWidth(key, density);
-    const label = HEADER_LABELS[key] || "";
-
-    // Column text - matches app styling: text-xs font-semibold uppercase tracking-wider
-    if (label) {
-      const text = document.createElementNS(
-        "http://www.w3.org/2000/svg",
-        "text"
-      );
-      text.setAttribute("x", String(colX + 12));
-      text.setAttribute("y", String(y + HEADER_HEIGHT / 2 + 4));
-      text.setAttribute("fill", EXPORT_COLORS.textHeader);
-      text.setAttribute("font-family", SVG_FONT_FAMILY);
-      text.setAttribute("font-size", "12");
-      // Use "bold" for svg2pdf.js compatibility (doesn't support "600")
-      text.setAttribute("font-weight", "bold");
-      text.setAttribute("letter-spacing", "0.05em");
-      text.textContent = label.toUpperCase();
-      group.appendChild(text);
-    }
-
-    // Column separator (skip for color column - matches app)
-    if (key !== "color") {
-      const sep = document.createElementNS(
-        "http://www.w3.org/2000/svg",
-        "line"
-      );
-      sep.setAttribute("x1", String(colX + colWidth));
-      sep.setAttribute("y1", String(y));
-      sep.setAttribute("x2", String(colX + colWidth));
-      sep.setAttribute("y2", String(y + HEADER_HEIGHT));
-      sep.setAttribute("stroke", EXPORT_COLORS.border);
-      sep.setAttribute("stroke-width", "1");
-      group.appendChild(sep);
-    }
-
+    const colWidth = resolveColumnWidth(key, columnWidths, density);
+    renderHeaderCell(group, key, { colX, colWidth }, headerCtx);
     colX += colWidth;
   }
 
@@ -108,25 +603,37 @@ export function renderTaskTableHeader(
   return group;
 }
 
-/**
- * Flattened task with hierarchy information.
- */
-export interface FlattenedTask {
-  task: Task;
-  level: number;
-  hasChildren: boolean;
-}
-
 /** Options for renderTaskTableRows. */
 export interface TaskTableRowsOptions {
   flattenedTasks: FlattenedTask[];
   selectedColumns: ExportColumnKey[];
+  /**
+   * Caller-provided column-width overrides (may include keys beyond ExportColumnKey).
+   * Falls back to density-specific defaults for any missing key.
+   */
   columnWidths: Record<string, number>;
   totalWidth: number;
   x: number;
   startY: number;
   density: UiDensity;
   colorModeState: ColorModeState;
+}
+
+function buildRowOptions(
+  options: TaskTableRowsOptions,
+  densityConfig: DensityConfig,
+  colorCache: Map<string, HexColor>
+): RowRendererOptions {
+  return {
+    selectedColumns: options.selectedColumns,
+    columnWidths: options.columnWidths,
+    density: options.density,
+    densityConfig,
+    colorCache,
+    totalWidth: options.totalWidth,
+    x: options.x,
+    startY: options.startY,
+  };
 }
 
 /**
@@ -140,290 +647,35 @@ export function renderTaskTableRows(
   svg: SVGSVGElement,
   options: TaskTableRowsOptions
 ): SVGGElement {
-  const {
-    flattenedTasks,
-    selectedColumns,
-    columnWidths,
-    totalWidth,
-    x,
-    startY,
-    density,
-    colorModeState,
-  } = options;
+  const { flattenedTasks, x, startY, density, colorModeState } = options;
   const densityConfig = DENSITY_CONFIG[density];
-  const rowHeight = densityConfig.rowHeight;
-  const indentSize = densityConfig.indentSize;
-  const colorBarHeight = densityConfig.colorBarHeight;
+  const { rowHeight } = densityConfig;
 
-  const group = document.createElementNS("http://www.w3.org/2000/svg", "g");
-  group.setAttribute("class", "task-table-rows");
+  const group = createSVGEl("g");
+  group.setAttribute("class", TASK_TABLE_ROWS_CLASS);
 
-  // Right border for the table
-  const tableBorder = document.createElementNS(
-    "http://www.w3.org/2000/svg",
-    "line"
+  // Right border for the entire table body
+  group.appendChild(
+    createBorderLine(
+      x + options.totalWidth,
+      startY,
+      x + options.totalWidth,
+      startY + flattenedTasks.length * rowHeight,
+      EXPORT_COLORS.border
+    )
   );
-  tableBorder.setAttribute("x1", String(x + totalWidth));
-  tableBorder.setAttribute("y1", String(startY));
-  tableBorder.setAttribute("x2", String(x + totalWidth));
-  tableBorder.setAttribute(
-    "y2",
-    String(startY + flattenedTasks.length * rowHeight)
-  );
-  tableBorder.setAttribute("stroke", EXPORT_COLORS.border);
-  tableBorder.setAttribute("stroke-width", "1");
-  group.appendChild(tableBorder);
 
-  // Extract just the Task objects for color computation
+  // Pre-compute all task colors in one pass — avoids O(n²) per-row color
+  // computation in non-manual modes (theme/hierarchy/summary call expensive
+  // shared operations that are O(n) each if recomputed inside the render loop).
   const allTasks = flattenedTasks.map((ft) => ft.task);
+  const colorCache = computeAllTaskColors(allTasks, colorModeState);
+  const rowOptions = buildRowOptions(options, densityConfig, colorCache);
 
-  flattenedTasks.forEach((flattenedTask, index) => {
-    const task = flattenedTask.task;
-    const level = flattenedTask.level;
-    const rowY = startY + index * rowHeight;
-
-    // Row border
-    const rowBorder = document.createElementNS(
-      "http://www.w3.org/2000/svg",
-      "line"
-    );
-    rowBorder.setAttribute("x1", String(x));
-    rowBorder.setAttribute("y1", String(rowY + rowHeight));
-    rowBorder.setAttribute("x2", String(x + totalWidth));
-    rowBorder.setAttribute("y2", String(rowY + rowHeight));
-    rowBorder.setAttribute("stroke", EXPORT_COLORS.borderLight);
-    rowBorder.setAttribute("stroke-width", "1");
-    group.appendChild(rowBorder);
-
-    let colX = x;
-    for (const key of selectedColumns) {
-      const col = EXPORT_COLUMN_MAP.get(key);
-      if (!col) continue;
-
-      const colWidth = columnWidths[key] || getDefaultColumnWidth(key, density);
-
-      if (key === "color") {
-        renderColorColumn(
-          group,
-          task,
-          allTasks,
-          colorModeState,
-          colX,
-          rowY,
-          colWidth,
-          rowHeight,
-          colorBarHeight
-        );
-      } else if (key === "name") {
-        renderNameColumn(
-          group,
-          task,
-          flattenedTask,
-          index,
-          colX,
-          rowY,
-          rowHeight,
-          level,
-          indentSize,
-          densityConfig.fontSizeCell
-        );
-      } else {
-        renderDataColumn(
-          group,
-          task,
-          key,
-          colX,
-          rowY,
-          colWidth,
-          rowHeight,
-          densityConfig.fontSizeCell
-        );
-      }
-
-      // Column separator (skip for color column - matches app)
-      if (key !== "color") {
-        const sep = document.createElementNS(
-          "http://www.w3.org/2000/svg",
-          "line"
-        );
-        sep.setAttribute("x1", String(colX + colWidth));
-        sep.setAttribute("y1", String(rowY));
-        sep.setAttribute("x2", String(colX + colWidth));
-        sep.setAttribute("y2", String(rowY + rowHeight));
-        sep.setAttribute("stroke", EXPORT_COLORS.borderLight);
-        sep.setAttribute("stroke-width", "1");
-        group.appendChild(sep);
-      }
-
-      colX += colWidth;
-    }
-  });
+  for (const [rowIndex, flattenedTask] of flattenedTasks.entries()) {
+    renderTaskRow(group, flattenedTask, rowIndex, rowOptions);
+  }
 
   svg.appendChild(group);
   return group;
-}
-
-/**
- * Render the color indicator column.
- */
-function renderColorColumn(
-  group: SVGGElement,
-  task: Task,
-  allTasks: Task[],
-  colorModeState: ColorModeState,
-  colX: number,
-  rowY: number,
-  colWidth: number,
-  rowHeight: number,
-  colorBarHeight: number
-): void {
-  // Compute the actual display color based on color mode
-  const displayColor = getComputedTaskColor(task, allTasks, colorModeState);
-
-  const colorBar = document.createElementNS(
-    "http://www.w3.org/2000/svg",
-    "rect"
-  );
-  colorBar.setAttribute("x", String(colX + (colWidth - 6) / 2));
-  colorBar.setAttribute("y", String(rowY + (rowHeight - colorBarHeight) / 2));
-  colorBar.setAttribute("width", "6");
-  colorBar.setAttribute("height", String(colorBarHeight));
-  colorBar.setAttribute("rx", "3");
-  colorBar.setAttribute("fill", displayColor);
-  group.appendChild(colorBar);
-}
-
-/**
- * Render the name column with hierarchy, icons, and text.
- */
-function renderNameColumn(
-  group: SVGGElement,
-  task: Task,
-  flattenedTask: FlattenedTask,
-  index: number,
-  colX: number,
-  rowY: number,
-  rowHeight: number,
-  level: number,
-  indentSize: number,
-  fontSize: number
-): void {
-  const hasChildren = flattenedTask.hasChildren;
-
-  // Base X position with indent
-  let currentX = colX + level * indentSize;
-
-  // Expand/collapse arrow for summary tasks with children
-  if (hasChildren && task.type === "summary") {
-    const arrowText = document.createElementNS(
-      "http://www.w3.org/2000/svg",
-      "text"
-    );
-    arrowText.setAttribute("x", String(currentX));
-    arrowText.setAttribute("y", String(rowY + rowHeight / 2 + 4));
-    arrowText.setAttribute("fill", EXPORT_COLORS.textSecondary);
-    arrowText.setAttribute("font-family", SVG_FONT_FAMILY);
-    arrowText.setAttribute("font-size", "11");
-    arrowText.textContent = "▼";
-    group.appendChild(arrowText);
-  }
-  // Move past the arrow placeholder (16px like w-4 in Tailwind)
-  currentX += 16;
-
-  // Task type icon - using Phosphor Icons SVG paths (256x256 viewBox)
-  const iconY = rowY + (rowHeight - 16) / 2;
-  const iconGroup = document.createElementNS("http://www.w3.org/2000/svg", "g");
-  iconGroup.setAttribute(
-    "transform",
-    `translate(${currentX}, ${iconY}) scale(0.0625)`
-  );
-
-  const iconPath = document.createElementNS(
-    "http://www.w3.org/2000/svg",
-    "path"
-  );
-  iconPath.setAttribute("fill", EXPORT_COLORS.textSecondary);
-
-  // Select the appropriate icon path based on task type
-  const pathData =
-    task.type === "milestone"
-      ? TASK_TYPE_ICON_PATHS.milestone
-      : task.type === "summary"
-        ? TASK_TYPE_ICON_PATHS.summary
-        : TASK_TYPE_ICON_PATHS.task;
-  iconPath.setAttribute("d", pathData);
-
-  iconGroup.appendChild(iconPath);
-  group.appendChild(iconGroup);
-
-  // Move past the icon (16px) + gap (4px)
-  currentX += 20;
-
-  // Task name
-  const text = document.createElementNS("http://www.w3.org/2000/svg", "text");
-  text.setAttribute("x", String(currentX));
-  text.setAttribute("y", String(rowY + rowHeight / 2 + 4));
-  text.setAttribute("fill", EXPORT_COLORS.textPrimary);
-  text.setAttribute("font-family", SVG_FONT_FAMILY);
-  text.setAttribute("font-size", String(fontSize));
-  text.textContent = task.name || `Task ${index + 1}`;
-  group.appendChild(text);
-}
-
-/**
- * Render a data column (dates, duration, progress).
- */
-function renderDataColumn(
-  group: SVGGElement,
-  task: Task,
-  key: ExportColumnKey,
-  colX: number,
-  rowY: number,
-  _colWidth: number,
-  rowHeight: number,
-  fontSize: number
-): void {
-  const isSummary = task.type === "summary";
-  const isMilestone = task.type === "milestone";
-  // Summary dates/duration are styled differently (text-neutral-500 italic)
-  const useSummaryStyle =
-    isSummary &&
-    (key === "startDate" || key === "endDate" || key === "duration");
-
-  let value = "";
-  if (key === "startDate") {
-    value = task.startDate || "";
-  } else if (key === "endDate") {
-    // Milestones don't have an end date
-    value = isMilestone ? "" : task.endDate || "";
-  } else if (key === "duration") {
-    // Milestones don't have duration, summaries show "X days"
-    if (isMilestone) {
-      value = "";
-    } else if (isSummary && task.duration !== undefined && task.duration > 0) {
-      value = `${task.duration} days`;
-    } else if (!isSummary && task.duration !== undefined) {
-      value = `${task.duration}`;
-    }
-  } else if (key === "progress") {
-    value = task.progress !== undefined ? `${task.progress}%` : "";
-  }
-
-  // Only render text if there's a value
-  if (value) {
-    const text = document.createElementNS("http://www.w3.org/2000/svg", "text");
-    text.setAttribute("x", String(colX + 12));
-    text.setAttribute("y", String(rowY + rowHeight / 2 + 4));
-    text.setAttribute(
-      "fill",
-      useSummaryStyle ? EXPORT_COLORS.textSummary : EXPORT_COLORS.textPrimary
-    );
-    text.setAttribute("font-family", SVG_FONT_FAMILY);
-    text.setAttribute("font-size", String(fontSize));
-    if (useSummaryStyle) {
-      text.setAttribute("font-style", "italic");
-    }
-    text.textContent = value;
-    group.appendChild(text);
-  }
 }
