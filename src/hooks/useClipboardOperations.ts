@@ -56,8 +56,11 @@ function syncRowsToSystemClipboard(): void {
   writeRowsToSystemClipboard(
     rowClipboard.tasks,
     rowClipboard.dependencies
-  ).catch(() => {
-    // Silently fail — internal clipboard still works
+  ).catch((err) => {
+    // Internal clipboard still works — system clipboard sync is best-effort.
+    if (import.meta.env.DEV) {
+      console.warn("Failed to sync rows to system clipboard", err);
+    }
   });
 }
 
@@ -70,8 +73,11 @@ function syncCellToSystemClipboard(): void {
   const { cellClipboard } = useClipboardStore.getState();
   if (cellClipboard.field && cellClipboard.value != null) {
     writeCellToSystemClipboard(cellClipboard.value, cellClipboard.field).catch(
-      () => {
-        // Silently fail — internal clipboard still works
+      (err) => {
+        // Internal clipboard still works — system clipboard sync is best-effort.
+        if (import.meta.env.DEV) {
+          console.warn("Failed to sync cell to system clipboard", err);
+        }
       }
     );
   }

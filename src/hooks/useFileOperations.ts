@@ -351,15 +351,25 @@ function useSerializeOptions(
 // readable.
 // ---------------------------------------------------------------------------
 
-function useSaveOperation(
-  tasks: Task[],
-  viewSettings: ViewSettings,
-  serializeOpts: SerializeOptions,
-  suggestedFilename: string,
-  setFileName: (name: string) => void,
-  setLastSaved: (date: Date) => void,
-  markClean: () => void
-): {
+interface SaveOperationDeps {
+  tasks: Task[];
+  viewSettings: ViewSettings;
+  serializeOpts: SerializeOptions;
+  suggestedFilename: string;
+  setFileName: (name: string) => void;
+  setLastSaved: (date: Date) => void;
+  markClean: () => void;
+}
+
+function useSaveOperation({
+  tasks,
+  viewSettings,
+  serializeOpts,
+  suggestedFilename,
+  setFileName,
+  setLastSaved,
+  markClean,
+}: SaveOperationDeps): {
   handleSave: (saveAs?: boolean) => Promise<void>;
   handleSaveAs: () => Promise<void>;
 } {
@@ -558,15 +568,15 @@ export function useFileOperations(): {
   const { viewSettings, serializeOpts, suggestedFilename } =
     useSerializeOptions(taskState, chartState, opState);
 
-  const { handleSave, handleSaveAs } = useSaveOperation(
+  const { handleSave, handleSaveAs } = useSaveOperation({
     tasks,
     viewSettings,
     serializeOpts,
     suggestedFilename,
     setFileName,
     setLastSaved,
-    markClean
-  );
+    markClean,
+  });
 
   const { handleOpen } = useOpenOperation(isDirty);
 

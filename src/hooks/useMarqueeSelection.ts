@@ -171,28 +171,40 @@ function useMarqueeMouseMoveHandler(
   );
 }
 
+interface UseMarqueeMouseUpHandlerDeps {
+  svgRef: React.RefObject<SVGSVGElement | null>;
+  isSelectingRef: React.MutableRefObject<boolean>;
+  addToSelectionRef: React.MutableRefObject<boolean>;
+  marqueeRectRef: React.MutableRefObject<MarqueeRect | null>;
+  onSelectionChangeRef: React.MutableRefObject<
+    (taskIds: TaskId[], addToSelection: boolean) => void
+  >;
+  taskGeometriesRef: React.MutableRefObject<TaskGeometry[]>;
+  setMarqueeRect: React.Dispatch<React.SetStateAction<MarqueeRect | null>>;
+  handleMouseMove: (e: MouseEvent) => void;
+  /** Ref to self so the callback can deregister without a self-referential
+   *  dependency (which would require the function in its own dep array,
+   *  causing a circular re-creation on every render). */
+  selfRef: React.MutableRefObject<(e: MouseEvent) => void>;
+}
+
 /**
  * Stable mouseup handler: finalises selection and removes drag listeners.
  * Uses a handler ref so the callback can deregister itself without a
  * self-referential closure, and accepts handleMouseMove to remove it too.
  * Extracted to keep useMarqueeDragListeners under 50 lines.
  */
-function useMarqueeMouseUpHandler(
-  svgRef: React.RefObject<SVGSVGElement | null>,
-  isSelectingRef: React.MutableRefObject<boolean>,
-  addToSelectionRef: React.MutableRefObject<boolean>,
-  marqueeRectRef: React.MutableRefObject<MarqueeRect | null>,
-  onSelectionChangeRef: React.MutableRefObject<
-    (taskIds: TaskId[], addToSelection: boolean) => void
-  >,
-  taskGeometriesRef: React.MutableRefObject<TaskGeometry[]>,
-  setMarqueeRect: React.Dispatch<React.SetStateAction<MarqueeRect | null>>,
-  handleMouseMove: (e: MouseEvent) => void,
-  // Receives a ref to itself so the callback can deregister without a
-  // self-referential dependency (which would require the function in its own
-  // dep array, causing a circular re-creation on every render).
-  selfRef: React.MutableRefObject<(e: MouseEvent) => void>
-): (e: MouseEvent) => void {
+function useMarqueeMouseUpHandler({
+  svgRef,
+  isSelectingRef,
+  addToSelectionRef,
+  marqueeRectRef,
+  onSelectionChangeRef,
+  taskGeometriesRef,
+  setMarqueeRect,
+  handleMouseMove,
+  selfRef,
+}: UseMarqueeMouseUpHandlerDeps): (e: MouseEvent) => void {
   return useCallback(
     (e: MouseEvent) => {
       if (!isSelectingRef.current) return;
@@ -264,7 +276,7 @@ function useMarqueeDragListeners({
     setMarqueeRect
   );
 
-  const handleMouseUp = useMarqueeMouseUpHandler(
+  const handleMouseUp = useMarqueeMouseUpHandler({
     svgRef,
     isSelectingRef,
     addToSelectionRef,
@@ -273,8 +285,8 @@ function useMarqueeDragListeners({
     taskGeometriesRef,
     setMarqueeRect,
     handleMouseMove,
-    handleMouseUpRef
-  );
+    selfRef: handleMouseUpRef,
+  });
   // Keep the ref current so the callback always deregisters the active version.
   handleMouseUpRef.current = handleMouseUp;
 
