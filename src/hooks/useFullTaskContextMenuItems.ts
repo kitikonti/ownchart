@@ -35,6 +35,18 @@ import {
   buildUnhideItem,
 } from "./contextMenuItemBuilders";
 
+// Icon prop objects are derived from static config — defined at module level
+// so they are stable references and don't need to be in the useCallback dep array.
+const ICON_PROPS = {
+  size: CONTEXT_MENU.iconSize,
+  weight: CONTEXT_MENU.iconWeight,
+} as const;
+
+const SVG_ICON_PROPS = {
+  width: CONTEXT_MENU.iconSize,
+  height: CONTEXT_MENU.iconSize,
+} as const;
+
 interface UseFullTaskContextMenuItemsResult {
   /** Build the full context menu items for a given task. */
   buildItems: (taskId: TaskId) => ContextMenuItem[];
@@ -68,18 +80,22 @@ export function useFullTaskContextMenuItems(): UseFullTaskContextMenuItemsResult
   const { hideRows, unhideSelection, getHiddenInSelectionCount } =
     useHideOperations();
 
-  const iconProps = useMemo(
+  // Pre-create icons once per render using stable module-level prop objects.
+  // These are memoized so icon element identity is stable across buildItems calls.
+  const icons = useMemo(
     () => ({
-      size: CONTEXT_MENU.iconSize,
-      weight: CONTEXT_MENU.iconWeight,
-    }),
-    []
-  );
-
-  const svgIconProps = useMemo(
-    () => ({
-      width: CONTEXT_MENU.iconSize,
-      height: CONTEXT_MENU.iconSize,
+      cut: createElement(Scissors, ICON_PROPS),
+      copy: createElement(Copy, ICON_PROPS),
+      paste: createElement(ClipboardText, ICON_PROPS),
+      insertAbove: createElement(RowsPlusTop, ICON_PROPS),
+      insertBelow: createElement(RowsPlusBottom, ICON_PROPS),
+      trash: createElement(Trash, ICON_PROPS),
+      indent: createElement(TextIndent, ICON_PROPS),
+      outdent: createElement(TextOutdent, ICON_PROPS),
+      group: createElement(GroupIcon, SVG_ICON_PROPS),
+      ungroup: createElement(UngroupIcon, SVG_ICON_PROPS),
+      eyeSlash: createElement(EyeSlash, ICON_PROPS),
+      eye: createElement(Eye, ICON_PROPS),
     }),
     []
   );
@@ -101,9 +117,9 @@ export function useFullTaskContextMenuItems(): UseFullTaskContextMenuItemsResult
           handlePaste,
           canCopyOrCut,
           canPaste,
-          cutIcon: createElement(Scissors, iconProps),
-          copyIcon: createElement(Copy, iconProps),
-          pasteIcon: createElement(ClipboardText, iconProps),
+          cutIcon: icons.cut,
+          copyIcon: icons.copy,
+          pasteIcon: icons.paste,
         })
       );
 
@@ -113,8 +129,8 @@ export function useFullTaskContextMenuItems(): UseFullTaskContextMenuItemsResult
           taskId,
           insertTaskAbove,
           insertTaskBelow,
-          insertAboveIcon: createElement(RowsPlusTop, iconProps),
-          insertBelowIcon: createElement(RowsPlusBottom, iconProps),
+          insertAboveIcon: icons.insertAbove,
+          insertBelowIcon: icons.insertBelow,
         })
       );
       items.push(
@@ -123,7 +139,7 @@ export function useFullTaskContextMenuItems(): UseFullTaskContextMenuItemsResult
           taskId,
           deleteSelectedTasks,
           deleteTask,
-          icon: createElement(Trash, iconProps),
+          icon: icons.trash,
           separator: true,
         })
       );
@@ -139,10 +155,10 @@ export function useFullTaskContextMenuItems(): UseFullTaskContextMenuItemsResult
           outdentSelectedTasks,
           groupSelectedTasks,
           ungroupSelectedTasks,
-          indentIcon: createElement(TextIndent, iconProps),
-          outdentIcon: createElement(TextOutdent, iconProps),
-          groupIcon: createElement(GroupIcon, svgIconProps),
-          ungroupIcon: createElement(UngroupIcon, svgIconProps),
+          indentIcon: icons.indent,
+          outdentIcon: icons.outdent,
+          groupIcon: icons.group,
+          ungroupIcon: icons.ungroup,
         })
       );
 
@@ -152,17 +168,19 @@ export function useFullTaskContextMenuItems(): UseFullTaskContextMenuItemsResult
           count,
           effectiveSelection,
           hideRows,
-          icon: createElement(EyeSlash, iconProps),
+          icon: icons.eyeSlash,
         })
       );
 
-      // Unhide — only visible when hidden rows exist in selection range
+      // Unhide — only visible when hidden rows exist in selection range.
+      // Extra guard: only show when right-clicking a task within the active
+      // multi-selection (avoids showing unhide on a single right-click outside selection).
       const hiddenInRangeCount = getHiddenInSelectionCount(selectedTaskIds);
       const unhideItem = buildUnhideItem({
         hiddenCount: hiddenInRangeCount,
         unhideSelection,
         selectedTaskIds,
-        icon: createElement(Eye, iconProps),
+        icon: icons.eye,
       });
       if (unhideItem && selectedTaskIds.includes(taskId)) {
         items.push(unhideItem);
@@ -192,8 +210,7 @@ export function useFullTaskContextMenuItems(): UseFullTaskContextMenuItemsResult
       hideRows,
       unhideSelection,
       getHiddenInSelectionCount,
-      iconProps,
-      svgIconProps,
+      icons,
     ]
   );
 

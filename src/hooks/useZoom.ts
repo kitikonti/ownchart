@@ -11,13 +11,20 @@
  * - Keyboard zoom: keeps the date at viewport center at the same position
  */
 
+import type { RefObject, WheelEvent as ReactWheelEvent } from "react";
 import { useCallback, useEffect } from "react";
 import { useChartStore } from "../store/slices/chartSlice";
 import { pixelToDate } from "../utils/timelineUtils";
 
 interface UseZoomOptions {
-  containerRef: React.RefObject<HTMLElement>;
+  containerRef: RefObject<HTMLElement>;
   enabled?: boolean;
+}
+
+interface UseZoomResult {
+  handlers: {
+    onWheel: (e: ReactWheelEvent) => void;
+  };
 }
 
 /** CSS class of the scrollable timeline container */
@@ -45,16 +52,15 @@ function applyScrollLeft(newScrollLeft: number | null): void {
   }
 }
 
-export function useZoom({ containerRef, enabled = true }: UseZoomOptions): {
-  handlers: {
-    onWheel: (e: React.WheelEvent) => void;
-  };
-} {
+export function useZoom({
+  containerRef,
+  enabled = true,
+}: UseZoomOptions): UseZoomResult {
   const { zoom, scale, setZoom, resetZoom } = useChartStore();
 
   // Zoom with Ctrl/Cmd + Wheel (centered on cursor position)
   const handleWheel = useCallback(
-    (e: React.WheelEvent) => {
+    (e: ReactWheelEvent) => {
       if (!enabled) return;
 
       // Only zoom with Ctrl (Windows/Linux) or Cmd (Mac)
@@ -65,7 +71,7 @@ export function useZoom({ containerRef, enabled = true }: UseZoomOptions): {
 
       const scrollContainer = getScrollContainer();
       if (!scrollContainer || !scale) {
-        // Fallback: zoom without anchoring (exponential)
+        // Fallback: zoom without anchoring
         const factor = e.deltaY > 0 ? 1 / WHEEL_ZOOM_FACTOR : WHEEL_ZOOM_FACTOR;
         setZoom(zoom * factor);
         return;
@@ -82,7 +88,6 @@ export function useZoom({ containerRef, enabled = true }: UseZoomOptions): {
       // Convert pixel position to date (this is the anchor point)
       const anchorDate = pixelToDate(cursorPixelPos, scale);
 
-      // Calculate zoom factor (exponential for consistent feel at all levels)
       const factor = e.deltaY > 0 ? 1 / WHEEL_ZOOM_FACTOR : WHEEL_ZOOM_FACTOR;
       const newZoom = zoom * factor;
 
@@ -107,7 +112,6 @@ export function useZoom({ containerRef, enabled = true }: UseZoomOptions): {
 
     const preventBrowserZoom = (e: WheelEvent): void => {
       // If Ctrl/Cmd is pressed, prevent browser zoom globally
-      // This ensures consistent Ctrl+Wheel behavior across the entire app
       if (e.ctrlKey || e.metaKey) {
         e.preventDefault();
       }
@@ -140,27 +144,6 @@ export function useZoom({ containerRef, enabled = true }: UseZoomOptions): {
 
       // Zoom shortcuts (Ctrl/Cmd + key)
       if ((e.ctrlKey || e.metaKey) && !isInput) {
-        // Get viewport center anchor for keyboard zoom
-        const getViewportCenterAnchor = ():
-          | { anchorDate: string; anchorPixelOffset: number }
-          | undefined => {
-          const scrollContainer = getScrollContainer();
-          const currentScale = useChartStore.getState().scale;
-
-          if (!scrollContainer || !currentScale) {
-            return undefined;
-          }
-
-          const scrollLeft = scrollContainer.scrollLeft;
-          const viewportWidth = scrollContainer.clientWidth;
-          const centerPixelPos = scrollLeft + viewportWidth / 2;
-
-          return {
-            anchorDate: pixelToDate(centerPixelPos, currentScale),
-            anchorPixelOffset: viewportWidth / 2,
-          };
-        };
-
         switch (e.key) {
           case "0": {
             e.preventDefault();
@@ -181,7 +164,6 @@ export function useZoom({ containerRef, enabled = true }: UseZoomOptions): {
   }, [enabled, resetZoom]);
 
   return {
-    // Event handlers
     handlers: {
       onWheel: handleWheel,
     },

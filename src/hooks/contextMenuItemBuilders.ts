@@ -1,8 +1,9 @@
 /**
  * Shared context menu item builders for Zone 1 (row), Zone 3 (bar), and Zone 4 (area).
- * Pure functions — icons are passed in as ReactNode so builders stay framework-free.
+ * Pure functions — no hooks or JSX. Icons are passed in as ReactNode by the caller.
  */
 
+import type { ReactNode } from "react";
 import type {
   ContextMenuItem,
   ContextMenuPosition,
@@ -38,9 +39,9 @@ interface ClipboardItemsParams {
   handlePaste: () => Promise<void>;
   canCopyOrCut: boolean;
   canPaste: boolean;
-  cutIcon: React.ReactNode;
-  copyIcon: React.ReactNode;
-  pasteIcon: React.ReactNode;
+  cutIcon: ReactNode;
+  copyIcon: ReactNode;
+  pasteIcon: ReactNode;
   pasteSeparator?: boolean;
 }
 
@@ -82,7 +83,7 @@ interface DeleteItemParams {
   taskId: TaskId;
   deleteSelectedTasks: () => void;
   deleteTask: (id: TaskId, cascade?: boolean) => void;
-  icon: React.ReactNode;
+  icon: ReactNode;
   separator?: boolean;
 }
 
@@ -109,7 +110,7 @@ interface HideItemParams {
   count: number;
   effectiveSelection: TaskId[];
   hideRows: (taskIds: TaskId[]) => void;
-  icon: React.ReactNode;
+  icon: ReactNode;
 }
 
 /** Build a single hide-row menu item with singular/plural label. */
@@ -128,8 +129,8 @@ interface InsertItemsParams {
   taskId: TaskId;
   insertTaskAbove: (id: TaskId) => void;
   insertTaskBelow: (id: TaskId) => void;
-  insertAboveIcon: React.ReactNode;
-  insertBelowIcon: React.ReactNode;
+  insertAboveIcon: ReactNode;
+  insertBelowIcon: ReactNode;
 }
 
 /** Build insert above / below menu items. */
@@ -160,10 +161,10 @@ interface HierarchyItemsParams {
   outdentSelectedTasks: () => void;
   groupSelectedTasks: () => void;
   ungroupSelectedTasks: () => void;
-  indentIcon: React.ReactNode;
-  outdentIcon: React.ReactNode;
-  groupIcon: React.ReactNode;
-  ungroupIcon: React.ReactNode;
+  indentIcon: ReactNode;
+  outdentIcon: ReactNode;
+  groupIcon: ReactNode;
+  ungroupIcon: ReactNode;
 }
 
 /** Build indent / outdent / group / ungroup menu items. */
@@ -211,7 +212,7 @@ interface UnhideItemParams {
   hiddenCount: number;
   unhideSelection: (selectedTaskIds: TaskId[]) => void;
   selectedTaskIds: TaskId[];
-  icon: React.ReactNode;
+  icon: ReactNode;
 }
 
 /** Build an unhide menu item (only visible when hidden rows exist in selection range). */
