@@ -167,14 +167,15 @@ export async function exportToSvg(params: ExportToSvgParams): Promise<void> {
 
     if (options.includeHeader && !headerSvg) {
       // This is a non-fatal invariant violation: the chart body will be offset
-      // by HEADER_HEIGHT but the header section will be blank. Log a warning
-      // unconditionally so it surfaces in all environments (dev and production)
-      // without crashing the export — the user will at least see a console
-      // message explaining the blank header area.
-      console.warn(
-        "[svgExport] includeHeader is true but the timeline header SVG element was not found. " +
-          "The export header area will be empty."
-      );
+      // by HEADER_HEIGHT but the header section will be blank. Limit the
+      // warning to development builds so it does not appear in users' consoles
+      // in production — the export will still complete with a blank header area.
+      if (import.meta.env.DEV) {
+        console.warn(
+          "[svgExport] includeHeader is true but the timeline header SVG element was not found. " +
+            "The export header area will be empty."
+        );
+      }
     }
 
     // Build a new complete SVG with task table as SVG elements
@@ -196,13 +197,8 @@ export async function exportToSvg(params: ExportToSvgParams): Promise<void> {
 
     onProgress?.(90);
 
-    // Output
-    if (svgOptions.copyToClipboard) {
-      await copyToClipboard(svgString);
-    } else {
-      const filename = generateExportFilename(projectName, "svg");
-      downloadSvg(svgString, filename);
-    }
+    // Deliver the serialized SVG to the user (clipboard or file download)
+    await deliverSvg(svgString, svgOptions, projectName);
 
     onProgress?.(100);
   } finally {
@@ -241,6 +237,9 @@ export function resolveExportLayout(
     options.selectedColumns.length > 0
       ? options.selectedColumns
       : DEFAULT_EXPORT_COLUMNS;
+  // Always true after the fallback above (DEFAULT_EXPORT_COLUMNS is non-empty).
+  // A timeline-only mode with no task table should use an explicit ExportOptions
+  // flag rather than an empty selectedColumns array.
   const hasTaskList = selectedColumns.length > 0;
   const taskTableWidth = hasTaskList
     ? calculateTaskTableWidth(selectedColumns, columnWidths, options.density)
@@ -523,6 +522,23 @@ export function finalizeSvg(
   }
 
   return result;
+}
+
+/**
+ * Deliver the serialized SVG to the user — either copies it to the clipboard
+ * or triggers a file download, depending on `options.copyToClipboard`.
+ */
+async function deliverSvg(
+  svgString: string,
+  options: SvgExportOptions,
+  projectName?: string
+): Promise<void> {
+  if (options.copyToClipboard) {
+    await copyToClipboard(svgString);
+  } else {
+    const filename = generateExportFilename(projectName, "svg");
+    downloadSvg(svgString, filename);
+  }
 }
 
 /**

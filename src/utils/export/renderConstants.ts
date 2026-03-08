@@ -28,6 +28,13 @@ export const TASK_RENDER_CONSTANTS = {
 } as const;
 
 /**
+ * Angle (in degrees) of the downward-pointing tips on a summary bracket.
+ * A 60° angle produces a relatively narrow tip; increase toward 90° for a
+ * wider/flatter tip. Changing this value automatically updates tipWidthFactor.
+ */
+const SUMMARY_BRACKET_TIP_ANGLE_DEG = 60;
+
+/**
  * Summary bracket shape geometry — single source of truth.
  * Consumed by renderConstants (export path) and TaskBar.tsx (app rendering path).
  *
@@ -38,8 +45,13 @@ export const SUMMARY_BRACKET = {
   barThicknessRatio: 0.3,
   /** Downward tip height as ratio of total height (50%) */
   tipHeightRatio: 0.5,
-  /** Tip width factor for a 60° angle: 1/tan(60°) = 1/√3, computed at init for precision */
-  tipWidthFactor: 1 / Math.tan(Math.PI / 3),
+  /**
+   * Tip width factor derived from the tip angle: 1/tan(angle).
+   * At 60° this equals 1/√3 ≈ 0.577. Computed at module-load time from
+   * SUMMARY_BRACKET_TIP_ANGLE_DEG so that changing the angle constant is
+   * sufficient to update the geometry.
+   */
+  tipWidthFactor: 1 / Math.tan((SUMMARY_BRACKET_TIP_ANGLE_DEG * Math.PI) / 180),
   /** Radius for top corners of the bracket bar */
   cornerRadius: 10,
   /** Radius for inner corners where tips meet the bar */
@@ -100,14 +112,16 @@ export const RENDER_COLORS = {
   dependency: "#94a3b8",
 
   /**
-   * Weekend background color (neutral-100 blended with white at 50% opacity)
-   * Original: rgba(241, 245, 249, 0.5) -> blended to #f8fafc
+   * Weekend background color.
+   * Derived from neutral-100 (rgba(241,245,249,0.5)) composited over white →
+   * #f8fafc. If the source opacity or color changes, re-derive this hex value.
    */
   weekendBackground: "#f8fafc",
 
   /**
-   * Holiday background color (amber-100 blended with white at 50% opacity)
-   * Original: rgba(254, 243, 199, 0.5) -> blended to #fef9e3
+   * Holiday background color.
+   * Derived from amber-100 (rgba(254,243,199,0.5)) composited over white →
+   * #fef9e3. If the source opacity or color changes, re-derive this hex value.
    */
   holidayBackground: "#fef9e3",
 
