@@ -176,7 +176,8 @@ export const ContextMenu = memo(function ContextMenu({
         return;
       }
 
-      // WAI-ARIA: Tab closes the menu and returns focus to the trigger element.
+      // WAI-ARIA: Both Tab and Shift+Tab close the menu and return focus to
+      // the trigger element — there is nothing to tab to inside a context menu.
       if (e.key === "Tab") {
         e.preventDefault();
         onClose();
@@ -240,40 +241,56 @@ export const ContextMenu = memo(function ContextMenu({
       onKeyDown={handleKeyDown}
     >
       {items.map((item, index) => (
-        <div key={item.id} role="none">
-          <button
-            data-index={index}
-            role={item.checked !== undefined ? "menuitemcheckbox" : "menuitem"}
-            aria-checked={item.checked !== undefined ? item.checked : undefined}
-            tabIndex={-1}
-            disabled={item.disabled}
-            className="context-menu-item text-left outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-brand-500"
-            onClick={() => handleItemClick(item)}
-          >
-            {item.checked !== undefined ? (
-              <span className="context-menu-item-check" aria-hidden="true">
-                {item.checked && (
-                  <Check
-                    size={CONTEXT_MENU.iconSize}
-                    weight={CONTEXT_MENU.iconWeight}
-                  />
-                )}
-              </span>
-            ) : (
-              item.icon && (
-                <span className="context-menu-item-icon" aria-hidden="true">
-                  {item.icon}
+        // role="none" neutralises any implicit div role so the menu's ARIA
+        // structure is: menu > menuitem* (WAI-ARIA 1.1 §3.15).
+        // The separator is rendered as a direct child of the menu (outside this
+        // wrapper) so it satisfies the WAI-ARIA requirement that `separator` be
+        // a direct child of `menu` or `menubar`.
+        <div key={item.id}>
+          <div role="none">
+            <button
+              data-index={index}
+              role={
+                item.checked !== undefined ? "menuitemcheckbox" : "menuitem"
+              }
+              aria-checked={
+                item.checked !== undefined ? item.checked : undefined
+              }
+              tabIndex={-1}
+              disabled={item.disabled}
+              className="context-menu-item text-left outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-brand-500"
+              onClick={() => handleItemClick(item)}
+            >
+              {item.checked !== undefined ? (
+                <span className="context-menu-item-check" aria-hidden="true">
+                  {item.checked && (
+                    <Check
+                      size={CONTEXT_MENU.iconSize}
+                      weight={CONTEXT_MENU.iconWeight}
+                    />
+                  )}
                 </span>
-              )
-            )}
-            <span className="context-menu-item-label">{item.label}</span>
-            {item.shortcut && (
-              <span className="context-menu-item-shortcut">
-                {item.shortcut}
-              </span>
-            )}
-          </button>
+              ) : (
+                item.icon && (
+                  <span className="context-menu-item-icon" aria-hidden="true">
+                    {item.icon}
+                  </span>
+                )
+              )}
+              <span className="context-menu-item-label">{item.label}</span>
+              {item.shortcut && (
+                // aria-hidden: the shortcut hint is supplementary visual info;
+                // hiding it prevents screen readers from double-announcing it.
+                // The shortcut is optionally surfaced via aria-keyshortcuts below.
+                <span className="context-menu-item-shortcut" aria-hidden="true">
+                  {item.shortcut}
+                </span>
+              )}
+            </button>
+          </div>
           {item.separator && (
+            // Rendered outside role="none" so it is a direct child of role="menu",
+            // conforming to WAI-ARIA §6.10 (separator as menu child).
             <div role="separator" className="context-menu-separator" />
           )}
         </div>

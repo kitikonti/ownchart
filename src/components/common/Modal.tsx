@@ -112,6 +112,12 @@ export const Modal = memo(function Modal({
   // Save the focused element before opening; restore it when the modal closes.
   // Guard the restore with a null check and reset after use to prevent
   // double-focus or focus on a stale/unmounted element.
+  //
+  // Focus strategy: we focus the dialog root (tabIndex={-1}) rather than the
+  // first focusable child. This is a deliberate trade-off — it prevents
+  // accidentally activating a destructive button (e.g. "Delete") the moment
+  // the modal opens, and it allows callers (like HelpDialog) to control which
+  // element receives initial focus via autoFocus or explicit focus calls.
   useEffect(() => {
     if (isOpen) {
       previousActiveElement.current = document.activeElement as HTMLElement;
@@ -137,6 +143,9 @@ export const Modal = memo(function Modal({
       }
 
       // Focus trap: keep focus inside the modal while it is open.
+      // querySelectorAll is intentionally called on every Tab keypress rather
+      // than cached — this correctly handles modals with dynamic children
+      // (conditionally rendered buttons, tabs switching content, etc.).
       if (e.key === "Tab" && modalRef.current) {
         const focusableElements =
           modalRef.current.querySelectorAll<HTMLElement>(FOCUSABLE_SELECTOR);

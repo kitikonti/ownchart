@@ -38,7 +38,8 @@ interface HelpTabContentProps {
   matchCount: number;
   query: string;
   activeTab: HelpTabId;
-  selectedTab: HelpTab;
+  /** The full HelpTab object for the active tab ID (already resolved from HELP_TABS). */
+  resolvedTab: HelpTab;
   modKey: string;
 }
 
@@ -48,7 +49,7 @@ const HelpTabContent = memo(function HelpTabContent({
   matchCount,
   query,
   activeTab,
-  selectedTab,
+  resolvedTab,
   modKey,
 }: HelpTabContentProps): JSX.Element {
   if (isSearching) {
@@ -71,13 +72,13 @@ const HelpTabContent = memo(function HelpTabContent({
   }
 
   if (activeTab === "getting-started") {
-    return <GettingStartedTab sections={selectedTab.sections} />;
+    return <GettingStartedTab sections={resolvedTab.sections} />;
   }
 
   if (activeTab === "shortcuts") {
     return (
       <>
-        <HelpSectionList sections={selectedTab.sections} compact defaultOpen />
+        <HelpSectionList sections={resolvedTab.sections} compact defaultOpen />
         <div className="mt-4">
           <Alert variant="info">
             <span className="text-sm">
@@ -97,7 +98,7 @@ const HelpTabContent = memo(function HelpTabContent({
   }
 
   // Features tab (default)
-  return <HelpSectionList sections={selectedTab.sections} />;
+  return <HelpSectionList sections={resolvedTab.sections} />;
 });
 
 // ---------------------------------------------------------------------------
@@ -129,7 +130,7 @@ export const HelpDialog = memo(function HelpDialog(): JSX.Element | null {
 
   const foundTab = HELP_TABS.find((t) => t.id === activeTab);
   // HELP_TABS is typed as a non-empty tuple, so HELP_TABS[0] is always defined.
-  const selectedTab = foundTab ?? HELP_TABS[0];
+  const resolvedTab = foundTab ?? HELP_TABS[0];
 
   // Warn developers (once per distinct invalid value) when the persisted
   // activeTab doesn't match any known tab — this can happen if a tab is
@@ -235,12 +236,15 @@ export const HelpDialog = memo(function HelpDialog(): JSX.Element | null {
         </div>
       )}
 
-      {/* Content — role="tabpanel" when tabs are visible, plain div when searching */}
+      {/* Content — role="tabpanel" when tabs are visible; role="region" when
+          searching so assistive technology users retain landmark context even
+          though the tab strip is hidden during search. */}
       <div
         className={`px-6 py-4 overflow-y-auto ${CONTENT_MAX_HEIGHT_CLASS} scrollbar-thin`}
-        role={!isSearching ? "tabpanel" : undefined}
+        role={!isSearching ? "tabpanel" : "region"}
         id={!isSearching ? `help-panel-${activeTab}` : undefined}
         aria-labelledby={!isSearching ? `tab-${activeTab}` : undefined}
+        aria-label={isSearching ? "Search results" : undefined}
       >
         <HelpTabContent
           isSearching={isSearching}
@@ -248,7 +252,7 @@ export const HelpDialog = memo(function HelpDialog(): JSX.Element | null {
           matchCount={matchCount}
           query={trimmedQuery}
           activeTab={activeTab}
-          selectedTab={selectedTab}
+          resolvedTab={resolvedTab}
           modKey={modKey}
         />
       </div>
