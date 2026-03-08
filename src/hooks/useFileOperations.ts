@@ -42,6 +42,11 @@ function toErrorMsg(e: unknown): string {
   return e instanceof Error ? e.message : String(e);
 }
 
+/** Remove the first occurrence of the given extension suffix from a filename. */
+function stripFileExtension(name: string, ext: string): string {
+  return name.replace(ext, "");
+}
+
 /**
  * Confirm navigating away from unsaved changes.
  * Extracted so it can be replaced with a custom modal later
@@ -241,19 +246,78 @@ function useOperationalSliceState(): OperationalSliceNeeded {
 // ---------------------------------------------------------------------------
 
 /**
- * Builds the ViewSettings snapshot written to the .ownchart file.
- * Extracted so its large dep array lives in its own focused function.
- * The dep array necessarily mirrors the factory object keys — both must be
- * kept in sync when a new ViewSettings field is added.
+ * Builds the layout/display portion of ViewSettings (panel sizes, column
+ * widths, visibility toggles that affect layout).
+ * Split from feature-flag settings so each sub-hook stays under 50 lines.
  */
-function useViewSettings(
+function useLayoutViewSettings(
   task: TaskSliceNeeded,
   chart: ChartSliceNeeded
-): ViewSettings {
+): Pick<
+  ViewSettings,
+  | "zoom"
+  | "panOffset"
+  | "taskTableWidth"
+  | "columnWidths"
+  | "hiddenColumns"
+  | "isTaskTableCollapsed"
+  | "hiddenTaskIds"
+> {
   const { taskTableWidth, columnWidths } = task;
   const {
     zoom,
     panOffset,
+    hiddenColumns,
+    isTaskTableCollapsed,
+    hiddenTaskIds,
+  } = chart;
+  return useMemo(
+    () => ({
+      zoom,
+      panOffset,
+      taskTableWidth,
+      columnWidths,
+      hiddenColumns,
+      isTaskTableCollapsed,
+      hiddenTaskIds,
+    }),
+    [
+      zoom,
+      panOffset,
+      taskTableWidth,
+      columnWidths,
+      hiddenColumns,
+      isTaskTableCollapsed,
+      hiddenTaskIds,
+    ]
+  );
+}
+
+/**
+ * Builds the feature-flag/metadata portion of ViewSettings (toggles,
+ * working-day config, project metadata, colour mode).
+ * Split from layout settings so each sub-hook stays under 50 lines.
+ * The dep array necessarily mirrors the factory object keys — both must be
+ * kept in sync when a new ViewSettings field is added.
+ */
+function useFeatureViewSettings(
+  chart: ChartSliceNeeded
+): Pick<
+  ViewSettings,
+  | "showWeekends"
+  | "showTodayMarker"
+  | "showHolidays"
+  | "showDependencies"
+  | "showProgress"
+  | "taskLabelPosition"
+  | "workingDaysMode"
+  | "workingDaysConfig"
+  | "holidayRegion"
+  | "projectTitle"
+  | "projectAuthor"
+  | "colorModeState"
+> {
+  const {
     showWeekends,
     showTodayMarker,
     showHolidays,
@@ -266,16 +330,9 @@ function useViewSettings(
     projectTitle,
     projectAuthor,
     colorModeState,
-    hiddenColumns,
-    isTaskTableCollapsed,
-    hiddenTaskIds,
   } = chart;
   return useMemo(
     () => ({
-      zoom,
-      panOffset,
-      taskTableWidth,
-      columnWidths,
       showWeekends,
       showTodayMarker,
       showHolidays,
@@ -288,15 +345,8 @@ function useViewSettings(
       projectTitle,
       projectAuthor,
       colorModeState,
-      hiddenColumns,
-      isTaskTableCollapsed,
-      hiddenTaskIds,
     }),
     [
-      zoom,
-      panOffset,
-      taskTableWidth,
-      columnWidths,
       showWeekends,
       showTodayMarker,
       showHolidays,
@@ -309,10 +359,25 @@ function useViewSettings(
       projectTitle,
       projectAuthor,
       colorModeState,
-      hiddenColumns,
-      isTaskTableCollapsed,
-      hiddenTaskIds,
     ]
+  );
+}
+
+/**
+ * Merges layout and feature-flag view settings into the full ViewSettings
+ * snapshot written to the .ownchart file.
+ */
+function useViewSettings(
+  task: TaskSliceNeeded,
+  chart: ChartSliceNeeded
+): ViewSettings {
+  const layout = useLayoutViewSettings(task, chart);
+  const features = useFeatureViewSettings(chart);
+  return useMemo(
+    () => ({ ...layout, ...features }),
+    // Spreading stable memo results — only re-merge when either partial
+    // snapshot changes identity (i.e. one of its own deps changed).
+    [layout, features]
   );
 }
 
@@ -333,9 +398,9 @@ function useSerializeOptions(
   // Serializer flags and metadata (file identity, dependency data, export settings).
   const serializeOpts = useMemo(
     () => ({
-      // replace() removes the first (and normally only) occurrence of the extension.
-      chartName:
-        fileName?.replace(OWNCHART_FILE_EXTENSION, "") ?? DEFAULT_CHART_NAME,
+      chartName: fileName
+        ? stripFileExtension(fileName, OWNCHART_FILE_EXTENSION)
+        : DEFAULT_CHART_NAME,
       chartId: chartId ?? undefined,
       chartCreatedAt: chartCreatedAt ?? undefined,
       prettyPrint: true,

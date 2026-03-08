@@ -438,14 +438,11 @@ export function useMarqueeSelection({
       // Prevent text selection during drag.
       e.preventDefault();
     },
-    [
-      svgRef,
-      enabled,
-      addToSelectionRef,
-      isSelectingRef,
-      handleMouseMove,
-      handleMouseUp,
-    ]
+    // svgRef, addToSelectionRef, isSelectingRef are stable ref objects whose
+    // identity never changes — omitting them from the dep array is intentional
+    // and consistent with the ref pattern used throughout this hook.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [enabled, handleMouseMove, handleMouseUp]
   );
 
   return {
