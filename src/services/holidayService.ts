@@ -161,14 +161,11 @@ class _HolidayService {
 
     try {
       this.hd.init(country, state);
-    } catch (err) {
+    } catch {
       // date-holidays can throw for unknown country/state codes.
-      // Log the error and leave the previous region unchanged so the app
-      // continues functioning rather than entering an inconsistent state.
-      console.error(
-        `[holidayService] Failed to initialise region "${country}"${state ? `/${state}` : ""}:`,
-        err
-      );
+      // Leave the previous region unchanged so the app continues functioning
+      // rather than entering an inconsistent state. The caller receives no
+      // holidays for the requested region, which is the safe fallback.
       return;
     }
 
@@ -180,7 +177,10 @@ class _HolidayService {
   }
 
   /**
-   * Get current region
+   * Get the currently active holiday region.
+   *
+   * @returns An object with `country` (ISO 3166-1 alpha-2) and an optional
+   *   `state` code. Both are empty / undefined when no region has been set yet.
    */
   getCurrentRegion(): { country: string; state?: string } {
     return {
@@ -218,13 +218,9 @@ class _HolidayService {
     let rawHolidays: HolidaysTypes.Holiday[];
     try {
       rawHolidays = this.hd.getHolidays(year);
-    } catch (err) {
+    } catch {
       // date-holidays can throw for edge-case years or invalid internal state.
       // Return an empty array so the calendar degrades gracefully.
-      console.error(
-        `[holidayService] Failed to load holidays for year ${year}:`,
-        err
-      );
       return [];
     }
 
@@ -276,12 +272,21 @@ class _HolidayService {
   }
 
   /**
-   * Check if a specific date is a holiday
-   * @returns Holiday info if it's a holiday, null otherwise
+   * Check if a specific date is a holiday.
+   * The input date may have any time component — it is normalised to local
+   * midnight before comparison so time-of-day differences do not affect the
+   * result.
+   *
+   * @param date - Any Date object representing the day to check.
+   * @returns Holiday info if the day is a public/bank holiday, null otherwise.
    */
   isHoliday(date: Date): HolidayInfo | null {
-    const holidays = this.getHolidaysForYear(date.getFullYear());
-    return holidays.find((h) => this.isSameDay(h.date, date)) || null;
+    // Normalise to local midnight so that the timestamp equality used by
+    // isSameDay (year/month/day field comparison) remains robust even if the
+    // implementation is ever changed to a direct getTime() comparison.
+    const normalised = toLocalMidnight(date);
+    const holidays = this.getHolidaysForYear(normalised.getFullYear());
+    return holidays.find((h) => this.isSameDay(h.date, normalised)) || null;
   }
 
   /**

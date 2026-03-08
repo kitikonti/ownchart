@@ -79,6 +79,12 @@ export const DENSITY_OPTIONS_EXTENDED: DensityOption[] = [
  * The year used in all date-format example strings.
  * Computed from the current year at module load time so examples never
  * become outdated — no manual update required when the calendar rolls over.
+ *
+ * Note: tests that assert the example strings also derive the current year
+ * with `new Date().getFullYear()` at assertion time, which is safe because
+ * Vitest re-evaluates modules before each test file run. If a test freezes
+ * time with `vi.useFakeTimers`, it must do so before this module is first
+ * imported to avoid a year mismatch between the module constant and the mock.
  */
 const EXAMPLE_YEAR_NUMBER = new Date().getFullYear();
 
@@ -103,6 +109,9 @@ const EXAMPLE_DATE = new Date(
 
 /**
  * Zero-pad a number to two digits (e.g. 5 → "05", 12 → "12").
+ * Numbers ≥ 100 are returned as-is without truncation (e.g. 100 → "100").
+ * All callers pass values in the range 1–31 (days) or 1–12 (months).
+ *
  * @param n - Non-negative integer to format.
  * @returns A string of at least two characters.
  */
