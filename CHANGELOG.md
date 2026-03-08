@@ -2,6 +2,65 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [1.2.2](https://github.com/kitikonti/ownchart/compare/v1.2.1...v1.2.2) (2026-03-08)
+
+
+### Bug Fixes
+
+* **review:** address a11y and clarity issues in ContextMenu, Modal, HelpDialog ([dcca54a](https://github.com/kitikonti/ownchart/commit/dcca54a3768f74e451be3af058071848f159e153))
+* **review:** address review findings in ContextMenu, Modal, and HelpDialog ([16f3092](https://github.com/kitikonti/ownchart/commit/16f3092a48b4d69cfb330738b5b160566bee6d46))
+* **review:** address review findings in ContextMenu, Modal, and HelpDialog ([562846a](https://github.com/kitikonti/ownchart/commit/562846a9c8a74d46e82547672d9eeafc85426087))
+* **review:** address review findings in ContextMenu, Modal, HelpDialog ([d09f898](https://github.com/kitikonti/ownchart/commit/d09f898a6519d6e54c83d2e6ab49018eb9078e35))
+* **review:** address review findings in ContextMenu, Modal, HelpDialog ([8951300](https://github.com/kitikonti/ownchart/commit/895130071d761a3979af19a7c817582647e55b7b))
+* **review:** address review findings in ContextMenu, Modal, HelpDialog ([0d9eb1b](https://github.com/kitikonti/ownchart/commit/0d9eb1b641ff0687abb26f9231ccb7628fe7c920))
+* **review:** address review findings in ContextMenu, Modal, HelpDialog ([e474db6](https://github.com/kitikonti/ownchart/commit/e474db6ad48256c2f101fc090dad24770b557762))
+* **review:** address review findings in ContextMenu, Modal, HelpDialog ([0ffa542](https://github.com/kitikonti/ownchart/commit/0ffa5426948d96135dac1a0ad7bc7cc20821469b))
+* **review:** address review findings in ContextMenu, Modal, HelpDialog ([4ee38b5](https://github.com/kitikonti/ownchart/commit/4ee38b543fc44474c679203874e1d2d61e943169))
+* **review:** address review findings in ContextMenu, Modal, HelpDialog ([1d87f68](https://github.com/kitikonti/ownchart/commit/1d87f682fad659f056dcc421d40e35fb598d210e))
+* **review:** address review findings in ContextMenu, Modal, HelpDialog ([3d22914](https://github.com/kitikonti/ownchart/commit/3d229147218d10a833fb7b8ae36041d93e243db3))
+* **review:** address review findings in holidayService ([482e712](https://github.com/kitikonti/ownchart/commit/482e712e27d16a86775046850edb313232b288b5))
+* **review:** address review findings in holidayService and config files ([f23a173](https://github.com/kitikonti/ownchart/commit/f23a1734e7de91e1651b2bf04bb7c2438b73afdb))
+* **review:** address review findings in holidayService and config files ([592cc88](https://github.com/kitikonti/ownchart/commit/592cc8869c4d82dfc4dd575267fc9af6ebcc9b41))
+* **review:** address review findings in holidayService and preferencesOptions ([87552bc](https://github.com/kitikonti/ownchart/commit/87552bc0891b00484c669142874a8eaf7bce725e))
+* **review:** address review findings in holidayService and preferencesOptions ([4887872](https://github.com/kitikonti/ownchart/commit/4887872c9ba625153df09bd079012f176b63593e))
+* **review:** address review findings in holidayService, appConfig, preferencesOptions, version ([1ab88c6](https://github.com/kitikonti/ownchart/commit/1ab88c62e736533002f1dfcf4eabdf0ebc0dc0ab))
+* **review:** address review findings in svgExport and renderConstants ([f952d3f](https://github.com/kitikonti/ownchart/commit/f952d3f612d64fdb6364621a95a1981d1ac9ed37))
+* **review:** address review findings in svgExport and renderConstants ([c9740af](https://github.com/kitikonti/ownchart/commit/c9740af12ef473c982ea287d304e31cfc0bd6436))
+* **review:** address review findings in svgExport and renderConstants ([e8405f1](https://github.com/kitikonti/ownchart/commit/e8405f1558282218bb6652334239d52342783e72))
+* **review:** address review findings in svgExport and renderConstants ([c3de5b9](https://github.com/kitikonti/ownchart/commit/c3de5b9d0c7b158c6824bda1b289f9991beab3fe))
+* **review:** remove unnecessary async from handleNew in useFileOperations ([f6c3baf](https://github.com/kitikonti/ownchart/commit/f6c3baf7fd1badb1e1374787f2e44a217fe06dd5))
+* **review:** strip file extension from end to avoid mid-name replacement ([56b9c73](https://github.com/kitikonti/ownchart/commit/56b9c73dfbcdbffde5ae682162c8ac03f86b0f1c))
+
+
+### Code Refactoring
+
+* **review:** address review findings in ContextMenu, Modal, HelpDialog ([3e5fe79](https://github.com/kitikonti/ownchart/commit/3e5fe790f47ddb893be2d2a3cef65306f83a9420))
+* **review:** address review findings in holidayService and preferencesOptions ([448b0e1](https://github.com/kitikonti/ownchart/commit/448b0e1cfa114637ec88e756412c23d40ba6d7d0))
+* **review:** address review findings in svgExport and renderConstants ([343d471](https://github.com/kitikonti/ownchart/commit/343d47134865bc9fd8768007b7610d4b10e799a2))
+* **review:** address review findings in svgExport and renderConstants ([3eeb5aa](https://github.com/kitikonti/ownchart/commit/3eeb5aae63db6b6f8c72723d8e6a1f00a63a29f7))
+* **review:** address review findings in svgExport and renderConstants ([6056e05](https://github.com/kitikonti/ownchart/commit/6056e0573981965e52a21b4b0ac7410a835951a4))
+* **review:** address review findings in svgExport and renderConstants ([d1baa7f](https://github.com/kitikonti/ownchart/commit/d1baa7f85cfd20666368bcfc10f07526a52ffab5))
+* **review:** address review findings in svgExport and renderConstants ([b2deb20](https://github.com/kitikonti/ownchart/commit/b2deb20888cef6164358644416a20853269b6fd6))
+* **review:** address review findings in svgExport and renderConstants ([1cf203f](https://github.com/kitikonti/ownchart/commit/1cf203f06f4a230ce8b5d9e2a6cb0eb3c8dc6362))
+* **review:** address review findings in svgExport and renderConstants ([91495b0](https://github.com/kitikonti/ownchart/commit/91495b051240311c48a47864aab343a50f2c47ff))
+* **review:** apply parameter-object pattern and improve clipboard debug logging ([8974ce3](https://github.com/kitikonti/ownchart/commit/8974ce3ac8bdc52334a3db2a4ea8eccd5bb73f4b))
+* **review:** apply review fixes in holidayService, preferencesOptions, appConfig, version ([e0bbede](https://github.com/kitikonti/ownchart/commit/e0bbedead4491ea49fb05793c7b6227986c0a9eb))
+* **review:** apply review fixes to ContextMenu, Modal, HelpDialog ([eb545e7](https://github.com/kitikonti/ownchart/commit/eb545e7a6b5c4551e91e610c1cdb961ba74843d2))
+* **review:** apply review fixes to holidayService and appConfig ([20caf4c](https://github.com/kitikonti/ownchart/commit/20caf4cd058fc85281f99a5e2fe05d17c969ee80))
+* **review:** apply review fixes to holidayService and config files ([558c90b](https://github.com/kitikonti/ownchart/commit/558c90ba4fe878c879ea00fcd32dc1faa86f004c))
+* **review:** apply review fixes to holidayService and preferencesOptions ([0064002](https://github.com/kitikonti/ownchart/commit/0064002c2a04d696202f0923e1d995fa31f92c85))
+* **review:** apply review fixes to holidayService and preferencesOptions ([c8f5f4a](https://github.com/kitikonti/ownchart/commit/c8f5f4abea745206b51a81ba048797197fe8cc15))
+* **review:** apply review fixes to holidayService, appConfig, and version ([2729344](https://github.com/kitikonti/ownchart/commit/2729344ec59d2f5ec6eb0f8b9789e675648dac31))
+* **review:** apply review fixes to holidayService, preferencesOptions, appConfig, version ([7e4331f](https://github.com/kitikonti/ownchart/commit/7e4331f18de6a7849097a7252e00ea793fb0ae0d))
+* **review:** apply review fixes to holidayService, preferencesOptions, version ([e57e664](https://github.com/kitikonti/ownchart/commit/e57e66456040d0ee39e2bad829507d4411fc9b6d))
+* **review:** apply review fixes to useFileOperations, useMarqueeSelection, useClipboardOperations ([e8a4479](https://github.com/kitikonti/ownchart/commit/e8a4479391a95eb6f4ce2368ee6504f8c61f5943))
+* **review:** apply review fixes to useFileOperations, useMarqueeSelection, useClipboardOperations ([37b0e41](https://github.com/kitikonti/ownchart/commit/37b0e41abbe9f5c71787fb2421508c6d6749341a))
+* **review:** extract magic strings to named constants and improve comments ([5ee52d4](https://github.com/kitikonti/ownchart/commit/5ee52d4066291b501973b70fd4ca248628b18cb5))
+* **review:** fix all review findings in holidayService and config files ([6eb91d7](https://github.com/kitikonti/ownchart/commit/6eb91d7a629b614341ee547b39d5fdc6e881c523))
+* **review:** improve useFileOperations and useMarqueeSelection robustness ([6ff6449](https://github.com/kitikonti/ownchart/commit/6ff64499c7ef77e461516fb926f47034a60b59f7))
+* **review:** improve useFileOperations, useMarqueeSelection, useClipboardOperations ([c8d80ad](https://github.com/kitikonti/ownchart/commit/c8d80ad5530c391a529c3453bc098ae9a984991b))
+* **review:** split useViewSettings and clean up dep arrays ([262bfb2](https://github.com/kitikonti/ownchart/commit/262bfb28d7cf61e6e9b3fd066dc64916c945b5cd))
+
 ## [1.2.1](https://github.com/kitikonti/ownchart/compare/v1.2.0...v1.2.1) (2026-03-08)
 
 
