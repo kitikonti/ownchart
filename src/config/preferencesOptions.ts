@@ -77,10 +77,10 @@ export const DENSITY_OPTIONS_EXTENDED: DensityOption[] = [
 
 /**
  * The year used in all date-format example strings.
- * Centralised here so all examples stay consistent when it needs updating.
- * Update this value when the examples start feeling outdated.
+ * Computed from the current year at module load time so examples never
+ * become outdated — no manual update required when the calendar rolls over.
  */
-const EXAMPLE_YEAR_NUMBER = 2026;
+const EXAMPLE_YEAR_NUMBER = new Date().getFullYear();
 
 /**
  * Sentinel date used to build format examples (Dec 31 of a fixed year).

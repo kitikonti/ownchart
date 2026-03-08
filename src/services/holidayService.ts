@@ -217,19 +217,33 @@ class HolidayServiceClass {
    *   (e.g. "12/25/2026") are rejected and return null.
    */
   getHolidayForDateString(dateString: string): HolidayInfo | null {
+    const date = this.parseDateOnlyString(dateString);
+    return date ? this.isHoliday(date) : null;
+  }
+
+  /**
+   * Parse a strict YYYY-MM-DD date string to a local-midnight Date object.
+   *
+   * Returns null when:
+   *   - the string does not match YYYY-MM-DD exactly (rejects datetime strings
+   *     like "2026-12-25T00:00:00Z" and locale formats like "12/25/2026"), or
+   *   - the date is calendar-invalid (e.g. "2026-02-30" — V8 silently rolls
+   *     these over instead of returning NaN, so we cross-check the components).
+   *
+   * new Date("YYYY-MM-DD") is parsed as local midnight per the HTML spec when
+   * the string has no time component, so isSameDay() comparisons are safe on
+   * the returned Date.
+   */
+  private parseDateOnlyString(dateString: string): Date | null {
     // Enforce strict YYYY-MM-DD format before parsing.
     // Without this guard, datetime strings like "2026-12-25T00:00:00Z" would
     // be accepted — but new Date("…TZ") produces a UTC-midnight Date whose
     // local year/month/day differs from the calendar date in negative-offset
     // timezones (e.g. UTC-5: Dec 25 00:00 UTC → Dec 24 local), causing
     // isSameDay() to return false for the intended holiday.
-    // Non-ISO formats like "12/25/2026" are also rejected here rather than
-    // relying solely on the isNaN guard below.
     if (!/^\d{4}-\d{2}-\d{2}$/.test(dateString)) {
       return null;
     }
-    // new Date("YYYY-MM-DD") is parsed as local midnight per the HTML spec
-    // when the string has no time component, so isSameDay() comparisons are safe.
     const date = new Date(dateString);
     // Guard against calendar-invalid dates like "2026-02-30".
     // isNaN alone is insufficient on V8: new Date("2026-02-30") does not return
@@ -246,7 +260,7 @@ class HolidayServiceClass {
     ) {
       return null;
     }
-    return this.isHoliday(date);
+    return date;
   }
 
   /**
@@ -293,7 +307,13 @@ class HolidayServiceClass {
   }
 
   /**
-   * Clear all cached holiday data
+   * Clear all cached holiday data without touching the active region.
+   *
+   * Use this when you want to force a fresh fetch for subsequent
+   * `getHolidaysForYear` calls while keeping the region intact.
+   *
+   * For test teardown, prefer `reset()` — it clears the cache *and* resets
+   * the region so each test starts from a fully pristine state.
    */
   clearCache(): void {
     this.cache.clear();

@@ -64,7 +64,10 @@ describe("DATE_FORMAT_OPTIONS", () => {
   });
 
   it("should produce unambiguous examples (day 31 ≠ month 12)", () => {
-    // Dec 31, 2026 — the sentinel date used in the module
+    // Dec 31 of the current year — mirrors the sentinel date used in the module.
+    // The year is derived dynamically so the test stays correct without manual
+    // updates each year.
+    const currentYear = String(new Date().getFullYear());
     const ddMmYyyyOpt = DATE_FORMAT_OPTIONS_EXTENDED.find(
       (o) => o.value === "DD/MM/YYYY"
     )!;
@@ -75,9 +78,9 @@ describe("DATE_FORMAT_OPTIONS", () => {
       (o) => o.value === "YYYY-MM-DD"
     )!;
 
-    expect(ddMmYyyyOpt.example).toBe("31/12/2026");
-    expect(mmDdYyyyOpt.example).toBe("12/31/2026");
-    expect(isoOpt.example).toBe("2026-12-31");
+    expect(ddMmYyyyOpt.example).toBe(`31/12/${currentYear}`);
+    expect(mmDdYyyyOpt.example).toBe(`12/31/${currentYear}`);
+    expect(isoOpt.example).toBe(`${currentYear}-12-31`);
   });
 });
 

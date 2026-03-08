@@ -298,8 +298,10 @@ describe("HolidayService", () => {
       const countries = holidayService.getAvailableCountries();
 
       for (let i = 1; i < countries.length; i++) {
+        // Use the same locale as the implementation ('en') so the sort-order
+        // assertion matches the actual comparison key used in getAvailableCountries.
         expect(
-          countries[i - 1].name.localeCompare(countries[i].name)
+          countries[i - 1].name.localeCompare(countries[i].name, "en")
         ).toBeLessThanOrEqual(0);
       }
     });

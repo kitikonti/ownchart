@@ -34,4 +34,8 @@ describe("APP_CONFIG", () => {
   it("should have a non-empty tagline", () => {
     expect(APP_CONFIG.tagline.length).toBeGreaterThan(0);
   });
+
+  it("should have a valid websiteUrl starting with https://", () => {
+    expect(APP_CONFIG.websiteUrl).toMatch(/^https:\/\//);
+  });
 });
