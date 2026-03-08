@@ -31,6 +31,24 @@ export interface StateInfo {
 }
 
 /**
+ * Popular/common country codes for quick selection.
+ * Exported so callers (e.g., tests and UI) can derive counts without
+ * relying on magic literals.
+ */
+export const POPULAR_COUNTRY_CODES: readonly string[] = [
+  "DE",
+  "AT",
+  "CH",
+  "US",
+  "GB",
+  "FR",
+  "IT",
+  "ES",
+  "NL",
+  "BE",
+];
+
+/**
  * Holiday Service class - singleton pattern
  * Manages holiday data for a configured region
  */
@@ -84,6 +102,7 @@ class HolidayServiceClass {
   getHolidaysForYear(year: number): HolidayInfo[] {
     const cacheKey = `${this.currentCountry}-${this.currentState || ""}-${year}`;
     if (this.cache.has(cacheKey)) {
+      // safe: presence was verified by .has() above
       return this.cache.get(cacheKey)!;
     }
 
@@ -138,10 +157,20 @@ class HolidayServiceClass {
   }
 
   /**
-   * Check if a date string is a holiday
+   * Look up holiday info for an ISO 8601 date string (e.g. "2026-12-25").
+   * Returns the matching HolidayInfo, or null if the date is not a holiday
+   * or if the string is not a valid date.
+   *
+   * @param dateString - ISO 8601 date string (YYYY-MM-DD). Non-ISO formats may
+   *   behave differently across browsers and should be avoided.
    */
-  isHolidayString(dateString: string): HolidayInfo | null {
-    return this.isHoliday(new Date(dateString));
+  getHolidayForDateString(dateString: string): HolidayInfo | null {
+    const date = new Date(dateString);
+    // Guard against invalid date strings (e.g. malformed task data)
+    if (isNaN(date.getTime())) {
+      return null;
+    }
+    return this.isHoliday(date);
   }
 
   /**
@@ -175,10 +204,11 @@ class HolidayServiceClass {
   }
 
   /**
-   * Get popular/common countries for quick selection
+   * Get popular/common countries for quick selection.
+   * Returns codes from POPULAR_COUNTRY_CODES.
    */
-  getPopularCountries(): string[] {
-    return ["DE", "AT", "CH", "US", "GB", "FR", "IT", "ES", "NL", "BE"];
+  getPopularCountries(): readonly string[] {
+    return POPULAR_COUNTRY_CODES;
   }
 
   /**
@@ -197,6 +227,18 @@ class HolidayServiceClass {
    */
   clearCache(): void {
     this.cache.clear();
+  }
+
+  /**
+   * Reset all service state (region + cache).
+   * Intended for use in tests to cleanly restore a pristine state without
+   * relying on internal field access.
+   */
+  reset(): void {
+    this.currentCountry = "";
+    this.currentState = undefined;
+    this.cache.clear();
+    this.hd = new Holidays();
   }
 }
 

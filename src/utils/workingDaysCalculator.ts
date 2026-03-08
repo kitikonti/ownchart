@@ -77,7 +77,7 @@ interface WorkingDaysScan {
  *
  * Holiday logic is inlined (rather than delegating to isWorkingDay) to use the
  * pre-built `holidayDateSet` for O(1) lookup per day instead of calling
- * `isHolidayString` on each iteration.
+ * `getHolidayForDateString` on each iteration.
  *
  * Assumes `startDate <= endDate` — call only after validating the range.
  */
@@ -200,8 +200,8 @@ export function isWorkingDay(
     // here makes isWorkingDay safe to use as a standalone function without requiring
     // the caller to pre-configure the service.
     holidayService.setRegion(holidayRegion);
-    // isHolidayString returns HolidayInfo | null (not a boolean despite the name)
-    if (holidayService.isHolidayString(dateString) !== null) return false;
+    if (holidayService.getHolidayForDateString(dateString) !== null)
+      return false;
   }
 
   return true;
@@ -287,10 +287,10 @@ export function addWorkingDays(
   }
 
   // Start date counts as day 1 if it is a working day.
-  // Holiday exclusions are checked via isWorkingDay (per-iteration isHolidayString
+  // Holiday exclusions are checked via isWorkingDay (per-iteration getHolidayForDateString
   // call) rather than a pre-fetched Set, because the end date is unknown upfront.
   // This is safe: the holiday service caches per-year internally, so repeated
-  // isHolidayString calls are O(1) after the initial year load.
+  // getHolidayForDateString calls are O(1) after the initial year load.
   let remainingDays = days;
   if (isWorkingDay(startDate, config, holidayRegion)) {
     remainingDays--;

@@ -44,6 +44,8 @@ export interface WeekNumberingOption {
 // Extended options (for radio cards in PreferencesDialog)
 // ─────────────────────────────────────────────────────────────────────────────
 
+// NOTE: rowsExample pixel values must stay in sync with ROW_HEIGHTS in
+// src/config/densityConfig.ts — they are display strings, not computed values.
 export const DENSITY_OPTIONS_EXTENDED: DensityOption[] = [
   {
     value: "compact",

@@ -7,6 +7,7 @@ import { describe, it, expect, beforeEach } from "vitest";
 import {
   holidayService,
   detectLocaleHolidayRegion,
+  POPULAR_COUNTRY_CODES,
 } from "../../../src/services/holidayService";
 
 describe("HolidayService", () => {
@@ -106,9 +107,8 @@ describe("HolidayService", () => {
     });
 
     it("should return empty array when no region is set", () => {
-      // Clear the current region by setting to empty
-      (holidayService as unknown as { currentCountry: string }).currentCountry = "";
-      holidayService.clearCache();
+      // Use reset() to cleanly restore pristine state without private-field access
+      holidayService.reset();
 
       const holidays = holidayService.getHolidaysForYear(2026);
       expect(holidays).toEqual([]);
@@ -166,18 +166,28 @@ describe("HolidayService", () => {
     });
   });
 
-  describe("isHolidayString", () => {
+  describe("getHolidayForDateString", () => {
     beforeEach(() => {
       holidayService.setRegion("AT");
     });
 
     it("should detect holiday from date string", () => {
-      const result = holidayService.isHolidayString("2026-12-25");
+      const result = holidayService.getHolidayForDateString("2026-12-25");
       expect(result).not.toBeNull();
     });
 
     it("should return null for non-holiday string", () => {
-      const result = holidayService.isHolidayString("2026-06-15");
+      const result = holidayService.getHolidayForDateString("2026-06-15");
+      expect(result).toBeNull();
+    });
+
+    it("should return null for an invalid date string", () => {
+      const result = holidayService.getHolidayForDateString("not-a-date");
+      expect(result).toBeNull();
+    });
+
+    it("should return null for an empty string", () => {
+      const result = holidayService.getHolidayForDateString("");
       expect(result).toBeNull();
     });
   });
@@ -280,7 +290,7 @@ describe("HolidayService", () => {
     it("should return a list of popular countries", () => {
       const popular = holidayService.getPopularCountries();
 
-      expect(popular.length).toBe(10);
+      expect(popular.length).toBe(POPULAR_COUNTRY_CODES.length);
       expect(popular).toContain("DE");
       expect(popular).toContain("AT");
       expect(popular).toContain("CH");

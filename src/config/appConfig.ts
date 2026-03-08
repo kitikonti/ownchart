@@ -8,6 +8,7 @@ export const APP_CONFIG = {
   tagline:
     "Privacy-first, offline Gantt chart for project planning. Own your data.",
   license: "MIT",
+  appUrl: "https://ownchart.app",
   githubUrl: "https://github.com/kitikonti/ownchart",
   sponsorUrl: "https://github.com/sponsors/kitikonti",
   websiteUrl: "https://wimmer.dev",
