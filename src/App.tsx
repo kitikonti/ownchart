@@ -4,7 +4,7 @@
  * Gates mobile devices with a block screen before mounting the full app.
  */
 
-import { useEffect, ReactElement } from "react";
+import { useEffect, type ReactElement } from "react";
 import { Toaster } from "react-hot-toast";
 import { GanttLayout } from "./components/Layout";
 import { StatusBar } from "./components/StatusBar";
@@ -21,20 +21,24 @@ import { useLaunchQueue } from "./hooks/useLaunchQueue";
 import { useDeviceDetection } from "./hooks/useDeviceDetection";
 import { useUIStore } from "./store/slices/uiSlice";
 import { useUserPreferencesStore } from "./store/slices/userPreferencesSlice";
-import { COLORS, TOAST } from "./styles/design-tokens";
+import { COLORS, SHADOWS, TOAST } from "./styles/design-tokens";
 
 function App(): ReactElement {
+  return (
+    <AppErrorBoundary>
+      <AppInner />
+    </AppErrorBoundary>
+  );
+}
+
+function AppInner(): ReactElement {
   const { shouldShowMobileBlock, dismiss } = useDeviceDetection();
 
   if (shouldShowMobileBlock) {
     return <MobileBlockScreen onDismiss={dismiss} />;
   }
 
-  return (
-    <AppErrorBoundary>
-      <AppContent />
-    </AppErrorBoundary>
-  );
+  return <AppContent />;
 }
 
 function AppContent(): ReactElement {
@@ -66,16 +70,9 @@ function AppContent(): ReactElement {
 
   return (
     <>
-      {/* Export Dialog */}
       <ExportDialog />
-
-      {/* Help Dialog */}
       <HelpDialog />
-
-      {/* About Dialog */}
       <AboutDialog />
-
-      {/* Welcome Tour for first-time users */}
       <WelcomeTour />
 
       <Toaster
@@ -86,8 +83,7 @@ function AppContent(): ReactElement {
             background: TOAST.bg,
             color: TOAST.text,
             borderRadius: TOAST.borderRadius,
-            boxShadow:
-              "0 10px 15px -3px rgba(15, 23, 42, 0.15), 0 4px 6px -2px rgba(15, 23, 42, 0.08)",
+            boxShadow: SHADOWS.toast,
             fontFamily: "var(--font-sans)",
             fontSize: TOAST.fontSize,
             padding: TOAST.padding,

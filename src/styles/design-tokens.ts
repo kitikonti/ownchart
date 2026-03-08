@@ -195,6 +195,9 @@ export const SHADOWS = {
   modal: "0 0 8px rgba(0,0,0,0.12), 0 32px 64px rgba(0,0,0,0.14)",
   // Focus ring (for accessibility)
   focus: `0 0 0 2px ${brand[100]}`,
+  // Toast notification shadow (Tailwind-style elevation)
+  toast:
+    "0 10px 15px -3px rgba(15, 23, 42, 0.15), 0 4px 6px -2px rgba(15, 23, 42, 0.08)",
 } as const;
 
 // =============================================================================
