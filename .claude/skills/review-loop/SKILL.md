@@ -108,4 +108,4 @@ Replace N with the actual counts from the review report.
 
 - If sub-agent doesn't return a `REVIEW_RESULT:` line, print a warning and ask Martin whether to retry or stop
 - If `npm run ci:local` keeps failing inside a sub-agent, the sub-agent should report the error and stop — the main session will surface this to Martin
-- Maximum recommended iterations: 5 (if still failing after 5, stop and report)
+- Maximum recommended iterations: 10 (if still failing after 10, stop and report)
