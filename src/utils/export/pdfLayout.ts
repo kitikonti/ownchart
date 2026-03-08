@@ -15,16 +15,19 @@ import {
   PDF_MARGIN_PRESETS,
   DEFAULT_CUSTOM_PAGE_SIZE,
 } from "./types";
-import { INTERNAL_DPI, MM_PER_INCH, PNG_EXPORT_DPI } from "./dpi";
+import { INTERNAL_DPI, MM_PER_INCH, PNG_EXPORT_DPI, mmToPxAtDpi } from "./dpi";
 import type { Task } from "../../types/chart.types";
 import type { TaskId } from "../../types/branded.types";
 import { buildFlattenedTaskList } from "../hierarchy";
 import { DENSITY_CONFIG } from "../../config/densityConfig";
 import { HEADER_HEIGHT } from "./constants";
 
-// Re-exported for consumers that previously imported from pdfLayout;
-// prefer importing from ./dpi directly for new code.
+/**
+ * @deprecated These re-exports exist only for backwards compatibility.
+ * Import directly from './dpi' for new code.
+ */
 export { INTERNAL_DPI, PNG_EXPORT_DPI, MM_PER_INCH } from "./dpi";
+/** @deprecated Import from './dpi' directly. */
 export {
   mmToPxAtDpi,
   calculatePixelDimensions,
@@ -98,6 +101,9 @@ export const PDF_HEADER_FOOTER_RESERVED_MM = 10;
  * Based on Helvetica metrics; used for text truncation width estimation.
  */
 const HELVETICA_AVG_CHAR_WIDTH_RATIO = 0.5;
+
+/** Ellipsis string appended when text is truncated. */
+const ELLIPSIS = "...";
 
 /**
  * Check whether a header/footer section has any content enabled.
@@ -303,12 +309,12 @@ export function truncateText(
   }
 
   // Guard: if maxChars is too small to fit an ellipsis, just cut hard
-  if (maxChars <= 3) {
+  if (maxChars <= ELLIPSIS.length) {
     return text.substring(0, maxChars);
   }
 
   // Truncate with ellipsis
-  return text.substring(0, maxChars - 3) + "...";
+  return text.substring(0, maxChars - ELLIPSIS.length) + ELLIPSIS;
 }
 
 /**
@@ -344,9 +350,11 @@ export function calculatePdfFitToWidth(
     headerReserved -
     footerReserved;
 
-  // Convert to pixels at PNG_EXPORT_DPI for consistency with PNG presets
-  const availableWidthPx = (availableWidthMm / MM_PER_INCH) * PNG_EXPORT_DPI;
-  const availableHeightPx = (availableHeightMm / MM_PER_INCH) * PNG_EXPORT_DPI;
+  // Convert to pixels at PNG_EXPORT_DPI (150) — intentionally NOT INTERNAL_DPI (96) —
+  // so the result is consistent with PNG preset widths and page-size presets in types.ts.
+  // Do not substitute mmToPx() here; that helper operates at INTERNAL_DPI.
+  const availableWidthPx = mmToPxAtDpi(availableWidthMm, PNG_EXPORT_DPI);
+  const availableHeightPx = mmToPxAtDpi(availableHeightMm, PNG_EXPORT_DPI);
 
   // Calculate content height based on task count
   const densityConfig = DENSITY_CONFIG[options.density];
@@ -355,8 +363,8 @@ export function calculatePdfFitToWidth(
   const contentHeightPx =
     flattenedTasks.length * densityConfig.rowHeight + contentHeaderHeight;
 
-  // Base width matches PNG preset (full page at 150 DPI)
-  const baseWidthPx = (pageDims.width / MM_PER_INCH) * PNG_EXPORT_DPI;
+  // Base width matches PNG preset (full page at PNG_EXPORT_DPI, not INTERNAL_DPI)
+  const baseWidthPx = mmToPxAtDpi(pageDims.width, PNG_EXPORT_DPI);
 
   // If content is taller than available space, it will be scaled down.
   // To fill the page after scaling, we need a wider content.

@@ -52,7 +52,11 @@ export interface PdfCustomPageSize {
   height: number;
 }
 
-/** Default custom page dimensions (mm) used as fallback when no custom size is provided */
+/**
+ * Default custom page dimensions (mm) used as fallback when no custom size is provided.
+ * 500 × 300 mm is a generous landscape canvas — wider than A2, suitable for projects
+ * spanning many months that don't map cleanly to a standard paper size.
+ */
 export const DEFAULT_CUSTOM_PAGE_SIZE: PdfCustomPageSize = {
   width: 500,
   height: 300,
@@ -188,7 +192,11 @@ export type ExportColumnKey =
   | "duration"
   | "progress";
 
-/** Data-only columns (excludes layout columns like color/name that need special rendering) */
+/**
+ * Data-only columns (excludes layout columns like color/name that need special rendering).
+ * Use this type when only data cells (dates, duration, progress) are relevant,
+ * e.g. for column auto-fit calculations that skip the fixed-width layout columns.
+ */
 export type ExportDataColumnKey = Exclude<ExportColumnKey, "color" | "name">;
 
 /**
@@ -341,10 +349,10 @@ export const EXPORT_ZOOM_MIN = 0.05;
 /** Maximum zoom level for export */
 export const EXPORT_ZOOM_MAX = 3.0;
 
-/** Zoom threshold below which labels become hard to read */
+/** Zoom multiplier (1.0 = 100%) below which labels become hard to read */
 export const EXPORT_ZOOM_READABLE_THRESHOLD = 0.15;
 
-/** Zoom threshold below which labels are typically hidden */
+/** Zoom multiplier (1.0 = 100%) below which labels are typically hidden */
 export const EXPORT_ZOOM_LABELS_HIDDEN_THRESHOLD = 0.08;
 
 /** Maximum safe canvas width (WebGL limit on many GPUs) */
