@@ -5,7 +5,22 @@
  */
 
 import { useEffect, useRef, type ReactNode, type KeyboardEvent } from "react";
+import { createPortal } from "react-dom";
 import { X } from "@phosphor-icons/react";
+import { Z_INDEX, SHADOWS } from "../../styles/design-tokens";
+
+/**
+ * Maximum height for the dialog container — prevents the modal from overflowing
+ * the viewport on short screens while still allowing internal scrolling.
+ */
+const DIALOG_MAX_HEIGHT = "max-h-[90vh]" as const;
+
+/**
+ * Selector for all focusable, non-disabled elements within the modal.
+ * Defined at module level to avoid re-creating the string on every render.
+ */
+const FOCUSABLE_SELECTOR =
+  'button:not([disabled]), [href], input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])';
 
 export interface ModalProps {
   /** Whether the modal is open */
@@ -17,7 +32,7 @@ export interface ModalProps {
   /** Modal title */
   title: string;
 
-  /** Optional subtitle below the title */
+  /** Optional subtitle below the title — also used as the dialog's accessible description */
   subtitle?: string;
 
   /** Modal content */
@@ -32,11 +47,11 @@ export interface ModalProps {
   /** Modal width class (default: max-w-lg) */
   widthClass?: string;
 
-  /** Use new Figma-style header with border-bottom (default: false) */
-  headerStyle?: "default" | "figma";
+  /** Header style: "default" = flush, "bordered" = border-bottom (Fluent-style) */
+  headerStyle?: "default" | "bordered";
 
-  /** Use new Figma-style footer with bg-neutral-50 (default: false) */
-  footerStyle?: "default" | "figma";
+  /** Footer style: "default" = minimal, "bordered" = border-top with bg-neutral-50 */
+  footerStyle?: "default" | "bordered";
 
   /** Custom padding for content area */
   contentPadding?: string;
@@ -61,19 +76,16 @@ export function Modal({
   const modalRef = useRef<HTMLDivElement>(null);
   const previousActiveElement = useRef<HTMLElement | null>(null);
 
-  // Save the previously focused element and focus the modal
+  // Save the focused element before opening; restore it when the modal closes.
+  // Avoiding a cleanup function prevents the stale-closure issue where the
+  // captured `isOpen` value is always the one from the previous render.
   useEffect(() => {
     if (isOpen) {
       previousActiveElement.current = document.activeElement as HTMLElement;
       modalRef.current?.focus();
+    } else {
+      previousActiveElement.current?.focus();
     }
-
-    return () => {
-      // Restore focus when modal closes
-      if (previousActiveElement.current && !isOpen) {
-        previousActiveElement.current.focus();
-      }
-    };
   }, [isOpen]);
 
   // Handle keyboard events
@@ -83,15 +95,12 @@ export function Modal({
       onClose();
     }
 
-    // Focus trap
+    // Focus trap: keep focus inside the modal while it is open.
     if (e.key === "Tab" && modalRef.current) {
-      const focusableElements = modalRef.current.querySelectorAll(
-        'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
-      );
-      const firstElement = focusableElements[0] as HTMLElement;
-      const lastElement = focusableElements[
-        focusableElements.length - 1
-      ] as HTMLElement;
+      const focusableElements =
+        modalRef.current.querySelectorAll<HTMLElement>(FOCUSABLE_SELECTOR);
+      const firstElement = focusableElements[0];
+      const lastElement = focusableElements[focusableElements.length - 1];
 
       if (e.shiftKey && document.activeElement === firstElement) {
         e.preventDefault();
@@ -107,14 +116,16 @@ export function Modal({
     return null;
   }
 
-  return (
+  return createPortal(
     // eslint-disable-next-line jsx-a11y/no-noninteractive-element-interactions
     <div
       ref={modalRef}
-      className="fixed inset-0 z-[1000] flex items-center justify-center p-4"
+      className="fixed inset-0 flex items-center justify-center p-4"
+      style={{ zIndex: Z_INDEX.modal }}
       role="dialog"
       aria-modal="true"
       aria-labelledby="modal-title"
+      aria-describedby={subtitle ? "modal-subtitle" : undefined}
       tabIndex={-1}
       onKeyDown={handleKeyDown}
     >
@@ -124,18 +135,18 @@ export function Modal({
         onClick={onClose}
         aria-hidden="true"
       />
-      {/* Dialog container - Outlook style: 4px radius, subtle shadow */}
+      {/* Dialog container - Outlook style: 4px radius, Fluent shadow */}
       <div
         className={`
-          relative bg-white rounded overflow-hidden ${widthClass} w-full max-h-[90vh] flex flex-col
+          relative bg-white rounded overflow-hidden ${widthClass} w-full ${DIALOG_MAX_HEIGHT} flex flex-col
           animate-modal-in
-          shadow-[0_0_8px_rgba(0,0,0,0.12),0_32px_64px_rgba(0,0,0,0.14)]
         `}
+        style={{ boxShadow: SHADOWS.modal }}
       >
         {/* Header */}
         <div
           className={`flex items-center justify-between ${
-            headerStyle === "figma"
+            headerStyle === "bordered"
               ? "px-8 py-6 border-b border-neutral-200"
               : "p-6 pb-0"
           }`}
@@ -146,7 +157,7 @@ export function Modal({
               <h2
                 id="modal-title"
                 className={`font-semibold leading-7 ${
-                  headerStyle === "figma"
+                  headerStyle === "bordered"
                     ? "text-xl text-neutral-900"
                     : "text-xl text-brand-600"
                 }`}
@@ -154,7 +165,12 @@ export function Modal({
                 {title}
               </h2>
               {subtitle && (
-                <p className="text-sm text-neutral-500 mt-0.5">{subtitle}</p>
+                <p
+                  id="modal-subtitle"
+                  className="text-sm text-neutral-500 mt-0.5"
+                >
+                  {subtitle}
+                </p>
               )}
             </div>
           </div>
@@ -178,7 +194,7 @@ export function Modal({
         {footer && (
           <div
             className={
-              footerStyle === "figma"
+              footerStyle === "bordered"
                 ? "px-8 py-6 border-t border-neutral-200 bg-neutral-50 rounded-b flex justify-end gap-3"
                 : "px-6 pb-6 pt-2 flex justify-end gap-2"
             }
@@ -187,6 +203,7 @@ export function Modal({
           </div>
         )}
       </div>
-    </div>
+    </div>,
+    document.body
   );
 }

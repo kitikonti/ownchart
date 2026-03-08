@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach } from "vitest";
-import { render, screen } from "@testing-library/react";
+import { render, screen, fireEvent } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { HelpDialog } from "../../../../src/components/Help/HelpDialog";
 import { useUIStore } from "../../../../src/store/slices/uiSlice";
@@ -83,6 +83,119 @@ describe("HelpDialog", () => {
 
     await user.click(screen.getByText("Done"));
     expect(useUIStore.getState().isHelpPanelOpen).toBe(false);
+  });
+
+  describe("tab accessibility", () => {
+    it("should have correct ARIA attributes on tabs", () => {
+      useUIStore.setState({ isHelpPanelOpen: true });
+      render(<HelpDialog />);
+
+      const tabs = screen.getAllByRole("tab");
+      expect(tabs).toHaveLength(3);
+
+      // Active tab has aria-selected=true and tabIndex=0
+      const activeTab = tabs.find((t) => t.getAttribute("aria-selected") === "true");
+      expect(activeTab).toBeTruthy();
+      expect(activeTab).toHaveAttribute("tabindex", "0");
+
+      // Inactive tabs have tabIndex=-1
+      const inactiveTabs = tabs.filter((t) => t.getAttribute("aria-selected") === "false");
+      inactiveTabs.forEach((tab) => {
+        expect(tab).toHaveAttribute("tabindex", "-1");
+      });
+    });
+
+    it("should navigate to next tab with ArrowRight", () => {
+      useUIStore.setState({
+        isHelpPanelOpen: true,
+        helpDialogActiveTab: "getting-started",
+      });
+      render(<HelpDialog />);
+
+      const tablist = screen.getByRole("tablist");
+      fireEvent.keyDown(tablist, { key: "ArrowRight" });
+
+      expect(useUIStore.getState().helpDialogActiveTab).toBe("shortcuts");
+    });
+
+    it("should navigate to previous tab with ArrowLeft", () => {
+      useUIStore.setState({
+        isHelpPanelOpen: true,
+        helpDialogActiveTab: "shortcuts",
+      });
+      render(<HelpDialog />);
+
+      const tablist = screen.getByRole("tablist");
+      fireEvent.keyDown(tablist, { key: "ArrowLeft" });
+
+      expect(useUIStore.getState().helpDialogActiveTab).toBe("getting-started");
+    });
+
+    it("should wrap ArrowRight from last tab to first", () => {
+      useUIStore.setState({
+        isHelpPanelOpen: true,
+        helpDialogActiveTab: "features",
+      });
+      render(<HelpDialog />);
+
+      const tablist = screen.getByRole("tablist");
+      fireEvent.keyDown(tablist, { key: "ArrowRight" });
+
+      expect(useUIStore.getState().helpDialogActiveTab).toBe("getting-started");
+    });
+
+    it("should wrap ArrowLeft from first tab to last", () => {
+      useUIStore.setState({
+        isHelpPanelOpen: true,
+        helpDialogActiveTab: "getting-started",
+      });
+      render(<HelpDialog />);
+
+      const tablist = screen.getByRole("tablist");
+      fireEvent.keyDown(tablist, { key: "ArrowLeft" });
+
+      expect(useUIStore.getState().helpDialogActiveTab).toBe("features");
+    });
+
+    it("should jump to first tab with Home key", () => {
+      useUIStore.setState({
+        isHelpPanelOpen: true,
+        helpDialogActiveTab: "features",
+      });
+      render(<HelpDialog />);
+
+      const tablist = screen.getByRole("tablist");
+      fireEvent.keyDown(tablist, { key: "Home" });
+
+      expect(useUIStore.getState().helpDialogActiveTab).toBe("getting-started");
+    });
+
+    it("should jump to last tab with End key", () => {
+      useUIStore.setState({
+        isHelpPanelOpen: true,
+        helpDialogActiveTab: "getting-started",
+      });
+      render(<HelpDialog />);
+
+      const tablist = screen.getByRole("tablist");
+      fireEvent.keyDown(tablist, { key: "End" });
+
+      expect(useUIStore.getState().helpDialogActiveTab).toBe("features");
+    });
+
+    it("should not respond to other keys in tablist", () => {
+      useUIStore.setState({
+        isHelpPanelOpen: true,
+        helpDialogActiveTab: "getting-started",
+      });
+      render(<HelpDialog />);
+
+      const tablist = screen.getByRole("tablist");
+      fireEvent.keyDown(tablist, { key: "Enter" });
+
+      // Tab should not change
+      expect(useUIStore.getState().helpDialogActiveTab).toBe("getting-started");
+    });
   });
 
   describe("search", () => {

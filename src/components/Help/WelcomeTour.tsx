@@ -52,8 +52,8 @@ export function WelcomeTour(): JSX.Element | null {
       icon={<HandWaving size={24} weight="light" className="text-amber-500" />}
       footer={footer}
       widthClass="max-w-md"
-      headerStyle="figma"
-      footerStyle="figma"
+      headerStyle="bordered"
+      footerStyle="bordered"
     >
       <div className="space-y-5">
         {/* Description */}

@@ -27,8 +27,8 @@ export function AboutDialog(): JSX.Element | null {
       onClose={closeAboutDialog}
       title="About"
       icon={<Info size={24} weight="light" className="text-brand-600" />}
-      headerStyle="figma"
-      footerStyle="figma"
+      headerStyle="bordered"
+      footerStyle="bordered"
       widthClass="max-w-sm"
       contentPadding="px-8 py-6"
       footer={

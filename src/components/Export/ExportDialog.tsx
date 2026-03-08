@@ -170,8 +170,8 @@ export function ExportDialog(): JSX.Element {
         />
       }
       widthClass="max-w-7xl"
-      headerStyle="figma"
-      footerStyle="figma"
+      headerStyle="bordered"
+      footerStyle="bordered"
       contentPadding="p-0"
     >
       <div className={`flex ${CONTENT_HEIGHT}`}>
