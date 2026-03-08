@@ -73,15 +73,15 @@ describe("buildClipboardItems", () => {
     expect(items[2].disabled).toBe(true);
   });
 
-  it("should default pasteSeparator to true", () => {
+  it("should default hasSeparatorAfterPaste to true", () => {
     const items = buildClipboardItems(defaultParams);
     expect(items[2].separator).toBe(true);
   });
 
-  it("should respect pasteSeparator = false", () => {
+  it("should respect hasSeparatorAfterPaste = false", () => {
     const items = buildClipboardItems({
       ...defaultParams,
-      pasteSeparator: false,
+      hasSeparatorAfterPaste: false,
     });
     expect(items[2].separator).toBe(false);
   });

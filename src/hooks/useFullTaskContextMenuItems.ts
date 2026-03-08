@@ -70,6 +70,9 @@ export function useFullTaskContextMenuItems(): UseFullTaskContextMenuItemsResult
   const ungroupSelectedTasks = useTaskStore(
     (state) => state.ungroupSelectedTasks
   );
+  // These selectors call computed methods on the state object. Each returns a
+  // primitive boolean, so Zustand's default shallow-equal check prevents
+  // unnecessary re-renders when the value hasn't changed.
   const canIndent = useTaskStore((state) => state.canIndentSelection());
   const canOutdent = useTaskStore((state) => state.canOutdentSelection());
   const canGroup = useTaskStore((state) => state.canGroupSelection());
@@ -80,8 +83,10 @@ export function useFullTaskContextMenuItems(): UseFullTaskContextMenuItemsResult
   const { hideRows, unhideSelection, getHiddenInSelectionCount } =
     useHideOperations();
 
-  // Pre-create icons once per render using stable module-level prop objects.
-  // These are memoized so icon element identity is stable across buildItems calls.
+  // Pre-create icons once per mount using stable module-level prop objects.
+  // Empty dep array is intentional: icons are derived purely from static CONTEXT_MENU
+  // config and never need to change. Stable identity prevents buildItems from
+  // recreating its closure unnecessarily.
   const icons = useMemo(
     () => ({
       cut: createElement(Scissors, ICON_PROPS),
@@ -199,6 +204,7 @@ export function useFullTaskContextMenuItems(): UseFullTaskContextMenuItemsResult
       handleCopy,
       handleCut,
       handlePaste,
+      // Store actions below are stable Zustand references; included for exhaustive-deps correctness
       insertTaskAbove,
       insertTaskBelow,
       deleteSelectedTasks,

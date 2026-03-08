@@ -42,7 +42,8 @@ interface ClipboardItemsParams {
   cutIcon: ReactNode;
   copyIcon: ReactNode;
   pasteIcon: ReactNode;
-  pasteSeparator?: boolean;
+  /** Whether to render a visual separator after the Paste item. Defaults to true. */
+  hasSeparatorAfterPaste?: boolean;
 }
 
 /** Build cut / copy / paste menu items. */
@@ -73,7 +74,7 @@ export function buildClipboardItems(
       shortcut: "Ctrl+V",
       onClick: () => void params.handlePaste(),
       disabled: !params.canPaste,
-      separator: params.pasteSeparator ?? true,
+      separator: params.hasSeparatorAfterPaste ?? true,
     },
   ];
 }

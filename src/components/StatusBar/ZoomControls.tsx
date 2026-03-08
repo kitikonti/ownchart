@@ -13,7 +13,10 @@ import { Minus, Plus, ArrowsOutLineHorizontal } from "@phosphor-icons/react";
 import { useTaskStore } from "../../store/slices/taskSlice";
 import { useChartStore } from "../../store/slices/chartSlice";
 import { MIN_ZOOM, MAX_ZOOM } from "../../utils/timelineUtils";
-import { getViewportCenterAnchor, applyScrollLeft } from "../../hooks/useZoom";
+import {
+  computeViewportCenterAnchor,
+  applyScrollLeft,
+} from "../../hooks/useZoom";
 import { ZoomDialog } from "./ZoomDialog";
 
 export function ZoomControls(): JSX.Element {
@@ -31,19 +34,19 @@ export function ZoomControls(): JSX.Element {
 
   const handleSliderChange = (e: React.ChangeEvent<HTMLInputElement>): void => {
     const newZoom = parseInt(e.target.value, 10) / 100;
-    const anchor = getViewportCenterAnchor();
+    const anchor = computeViewportCenterAnchor();
     const result = setZoom(newZoom, anchor);
     applyScrollLeft(result.newScrollLeft);
   };
 
   const handleZoomIn = (): void => {
-    const anchor = getViewportCenterAnchor();
+    const anchor = computeViewportCenterAnchor();
     const result = zoomIn(anchor);
     applyScrollLeft(result.newScrollLeft);
   };
 
   const handleZoomOut = (): void => {
-    const anchor = getViewportCenterAnchor();
+    const anchor = computeViewportCenterAnchor();
     const result = zoomOut(anchor);
     applyScrollLeft(result.newScrollLeft);
   };
@@ -56,7 +59,7 @@ export function ZoomControls(): JSX.Element {
     if (newZoom === "fit") {
       fitToView(useTaskStore.getState().tasks);
     } else {
-      const anchor = getViewportCenterAnchor();
+      const anchor = computeViewportCenterAnchor();
       const result = setZoom(newZoom, anchor);
       applyScrollLeft(result.newScrollLeft);
     }

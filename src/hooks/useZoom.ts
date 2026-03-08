@@ -56,7 +56,7 @@ export function useZoom({
   containerRef,
   enabled = true,
 }: UseZoomOptions): UseZoomResult {
-  const { zoom, scale, setZoom, resetZoom } = useChartStore();
+  const { scale, setZoom, resetZoom } = useChartStore();
 
   // Zoom with Ctrl/Cmd + Wheel (centered on cursor position)
   const handleWheel = useCallback(
@@ -69,11 +69,16 @@ export function useZoom({
       const container = containerRef.current;
       if (!container) return;
 
+      // Read zoom at event time to avoid stale-closure drift during rapid wheel events
+      const currentZoom = useChartStore.getState().zoom;
+      // Zoom in (wheel up) or out (wheel down) by a constant exponential factor
+      const factor = e.deltaY > 0 ? 1 / WHEEL_ZOOM_FACTOR : WHEEL_ZOOM_FACTOR;
+      const newZoom = currentZoom * factor;
+
       const scrollContainer = getScrollContainer();
       if (!scrollContainer || !scale) {
         // Fallback: zoom without anchoring
-        const factor = e.deltaY > 0 ? 1 / WHEEL_ZOOM_FACTOR : WHEEL_ZOOM_FACTOR;
-        setZoom(zoom * factor);
+        setZoom(newZoom);
         return;
       }
 
@@ -88,9 +93,6 @@ export function useZoom({
       // Convert pixel position to date (this is the anchor point)
       const anchorDate = pixelToDate(cursorPixelPos, scale);
 
-      const factor = e.deltaY > 0 ? 1 / WHEEL_ZOOM_FACTOR : WHEEL_ZOOM_FACTOR;
-      const newZoom = zoom * factor;
-
       // Set zoom with cursor-centered anchor
       const result = setZoom(newZoom, {
         anchorDate,
@@ -100,7 +102,7 @@ export function useZoom({
       // Apply the calculated scroll position
       applyScrollLeft(result?.newScrollLeft ?? null);
     },
-    [enabled, zoom, scale, setZoom, containerRef]
+    [enabled, scale, setZoom, containerRef]
   );
 
   // Global prevention of browser zoom (Ctrl+Wheel) throughout the entire app
@@ -147,7 +149,7 @@ export function useZoom({
         switch (e.key) {
           case "0": {
             e.preventDefault();
-            const anchor = getViewportCenterAnchor();
+            const anchor = computeViewportCenterAnchor();
             const result = resetZoom(anchor);
             applyScrollLeft(result?.newScrollLeft ?? null);
             break;
@@ -171,9 +173,11 @@ export function useZoom({
 }
 
 /**
- * Helper to get viewport center anchor for external use (e.g., toolbar buttons)
+ * Compute the viewport center anchor for use in zoom operations.
+ * Uses getState() for non-reactive, imperative access — intentionally not a hook.
+ * Called at interaction time (click/keydown handlers) to avoid stale closures.
  */
-export function getViewportCenterAnchor():
+export function computeViewportCenterAnchor():
   | { anchorDate: string; anchorPixelOffset: number }
   | undefined {
   const scrollContainer = getScrollContainer();
