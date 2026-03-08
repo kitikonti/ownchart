@@ -11,6 +11,7 @@ import type {
   TaskLabelPosition,
 } from "../types/preferences.types";
 import type { DropdownOption } from "../components/Toolbar/ToolbarDropdown";
+import { DENSITY_CONFIG } from "./densityConfig";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Extended option types for radio cards (with descriptions)
@@ -44,26 +45,24 @@ export interface WeekNumberingOption {
 // Extended options (for radio cards in PreferencesDialog)
 // ─────────────────────────────────────────────────────────────────────────────
 
-// NOTE: rowsExample pixel values must stay in sync with ROW_HEIGHTS in
-// src/config/densityConfig.ts — they are display strings, not computed values.
 export const DENSITY_OPTIONS_EXTENDED: DensityOption[] = [
   {
     value: "compact",
     label: "Compact",
     description: "Shows more tasks on screen",
-    rowsExample: "28px rows",
+    rowsExample: `${DENSITY_CONFIG.compact.rowHeight}px rows`,
   },
   {
     value: "normal",
     label: "Normal",
     description: "Balanced view (recommended)",
-    rowsExample: "36px rows",
+    rowsExample: `${DENSITY_CONFIG.normal.rowHeight}px rows`,
   },
   {
     value: "comfortable",
     label: "Comfortable",
     description: "Easier to read, more spacing",
-    rowsExample: "44px rows",
+    rowsExample: `${DENSITY_CONFIG.comfortable.rowHeight}px rows`,
   },
 ];
 
@@ -107,6 +106,7 @@ export const FIRST_DAY_OF_WEEK_OPTIONS: DropdownOption<FirstDayOfWeek>[] =
 export const WEEK_NUMBERING_OPTIONS: DropdownOption<WeekNumberingSystem>[] =
   WEEK_NUMBERING_OPTIONS_EXTENDED.map(({ value, label }) => ({ value, label }));
 
+// No extended variant needed — task label positions require no descriptions.
 export const LABEL_OPTIONS: DropdownOption<TaskLabelPosition>[] = [
   { value: "before", label: "Before" },
   { value: "inside", label: "Inside" },

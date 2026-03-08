@@ -121,6 +121,8 @@ class HolidayServiceClass {
       .map((h: HolidaysTypes.Holiday) => ({
         date: new Date(h.date),
         name: h.name,
+        // date-holidays narrows type to 'public'|'bank' after the filter above,
+        // but its TS type still includes all holiday variants — cast is safe here.
         type: h.type as HolidayInfo["type"],
       }));
 
@@ -165,6 +167,9 @@ class HolidayServiceClass {
    *   behave differently across browsers and should be avoided.
    */
   getHolidayForDateString(dateString: string): HolidayInfo | null {
+    // Requires ISO 8601 (YYYY-MM-DD); non-ISO strings may parse inconsistently
+    // across browsers. The isNaN guard catches truly invalid strings but not
+    // locale-ambiguous formats like "12/25/2026".
     const date = new Date(dateString);
     // Guard against invalid date strings (e.g. malformed task data)
     if (isNaN(date.getTime())) {
@@ -183,6 +188,7 @@ class HolidayServiceClass {
     return Object.entries(countries)
       .map(([code, name]) => ({
         code,
+        // date-holidays returns plain strings for the 'en' locale; cast is safe.
         name: name as string,
       }))
       .sort((a, b) => a.name.localeCompare(b.name));
@@ -198,17 +204,10 @@ class HolidayServiceClass {
     return Object.entries(states)
       .map(([code, name]) => ({
         code,
+        // date-holidays returns plain strings for the 'en' locale; cast is safe.
         name: name as string,
       }))
       .sort((a, b) => a.name.localeCompare(b.name));
-  }
-
-  /**
-   * Get popular/common countries for quick selection.
-   * Returns codes from POPULAR_COUNTRY_CODES.
-   */
-  getPopularCountries(): readonly string[] {
-    return POPULAR_COUNTRY_CODES;
   }
 
   /**

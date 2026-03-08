@@ -286,16 +286,14 @@ describe("HolidayService", () => {
     });
   });
 
-  describe("getPopularCountries", () => {
-    it("should return a list of popular countries", () => {
-      const popular = holidayService.getPopularCountries();
-
-      expect(popular.length).toBe(POPULAR_COUNTRY_CODES.length);
-      expect(popular).toContain("DE");
-      expect(popular).toContain("AT");
-      expect(popular).toContain("CH");
-      expect(popular).toContain("US");
-      expect(popular).toContain("GB");
+  describe("POPULAR_COUNTRY_CODES", () => {
+    it("should contain the expected popular countries", () => {
+      expect(POPULAR_COUNTRY_CODES.length).toBeGreaterThan(0);
+      expect(POPULAR_COUNTRY_CODES).toContain("DE");
+      expect(POPULAR_COUNTRY_CODES).toContain("AT");
+      expect(POPULAR_COUNTRY_CODES).toContain("CH");
+      expect(POPULAR_COUNTRY_CODES).toContain("US");
+      expect(POPULAR_COUNTRY_CODES).toContain("GB");
     });
   });
 
