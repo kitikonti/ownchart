@@ -55,7 +55,11 @@ export interface UseMarqueeSelectionResult {
 }
 
 /**
- * Check if two rectangles intersect
+ * Check if two rectangles intersect (including touching edges).
+ *
+ * @param rect1 - First rectangle with `x`, `y`, `width`, `height` in the same coordinate space.
+ * @param rect2 - Second rectangle with `x`, `y`, `width`, `height` in the same coordinate space.
+ * @returns `true` when the rectangles overlap or share an edge, `false` when they are fully separate.
  */
 export function rectsIntersect(
   rect1: { x: number; y: number; width: number; height: number },
@@ -70,7 +74,11 @@ export function rectsIntersect(
 }
 
 /**
- * Normalize a marquee rect to have positive width/height
+ * Normalize a marquee rect so that `width` and `height` are always positive,
+ * regardless of the direction the user dragged.
+ *
+ * @param rect - Raw marquee rect from drag state (start and current coordinates).
+ * @returns Normalized rect with `x`/`y` set to the top-left corner and positive `width`/`height`.
  */
 export function normalizeRect(rect: MarqueeRect): {
   x: number;
@@ -86,13 +94,17 @@ export function normalizeRect(rect: MarqueeRect): {
 }
 
 /**
- * Convert a mouse event's client coordinates to SVG-local coordinates.
+ * Convert mouse client coordinates to SVG-local coordinates.
  * Extracted as a module-level pure function — reads no closed-over state,
  * so it does not need useCallback inside the hook.
+ *
+ * Accepts any object with `clientX`/`clientY` so both native `MouseEvent`
+ * (document listeners) and React synthetic events (onMouseDown) can be passed
+ * without an explicit union type.
  */
 function getSvgCoordinates(
   svg: SVGSVGElement,
-  e: MouseEvent | React.MouseEvent
+  e: { clientX: number; clientY: number }
 ): { x: number; y: number } {
   const rect = svg.getBoundingClientRect();
   return { x: e.clientX - rect.left, y: e.clientY - rect.top };
@@ -254,6 +266,11 @@ function useMarqueeMouseUpHandler({
  * Owns the document-level drag listeners (mousemove / mouseup), the mutable
  * refs that track drag state, and the cleanup effect.
  *
+ * Handlers are attached and detached exclusively via stable wrapper refs, so
+ * cleanup always removes the same function object that was registered — even
+ * if the underlying useCallback implementations are re-created after a
+ * dependency change during an active drag.
+ *
  * Extracted so the main hook stays focused on state, stable-ref updates,
  * the mousedown initiator, and the public return value.
  */
@@ -267,14 +284,29 @@ function useMarqueeDragListeners({
 }: MarqueeDragListenersDeps): MarqueeDragListeners {
   const isSelectingRef = useRef(false);
   const addToSelectionRef = useRef(false);
+
   // Stable ref to handleMouseUp so the handler can deregister itself.
   const handleMouseUpRef = useRef<(e: MouseEvent) => void>(() => undefined);
+  // Stable ref to handleMouseMove for consistent add/remove identity.
+  const handleMouseMoveRef = useRef<(e: MouseEvent) => void>(() => undefined);
+
+  // Stable wrapper functions whose identity never changes. They delegate to
+  // the current ref value, so the document listener is always one stable
+  // function object regardless of how many times the inner callbacks re-create.
+  const stableMouseMove = useRef<(e: MouseEvent) => void>((e) =>
+    handleMouseMoveRef.current(e)
+  ).current;
+  const stableMouseUp = useRef<(e: MouseEvent) => void>((e) =>
+    handleMouseUpRef.current(e)
+  ).current;
 
   const handleMouseMove = useMarqueeMouseMoveHandler(
     svgRef,
     isSelectingRef,
     setMarqueeRect
   );
+  // Keep the ref current so the stable wrapper always delegates to the latest version.
+  handleMouseMoveRef.current = handleMouseMove;
 
   const handleMouseUp = useMarqueeMouseUpHandler({
     svgRef,
@@ -284,29 +316,36 @@ function useMarqueeDragListeners({
     onSelectionChangeRef,
     taskGeometriesRef,
     setMarqueeRect,
-    handleMouseMove,
+    handleMouseMove: stableMouseMove,
     selfRef: handleMouseUpRef,
   });
-  // Keep the ref current so the callback always deregisters the active version.
+  // Keep the ref current so the stable wrapper always delegates to the latest version.
   handleMouseUpRef.current = handleMouseUp;
 
   // Cancel an active drag when `enabled` turns false mid-drag, and clean up
   // listeners on unmount. Combined into one effect: the cleanup function always
   // runs on unmount so a separate effect for that is not needed.
+  // Uses stable wrappers so cleanup always removes the registered listener
+  // identity, avoiding orphaned document listeners on rapid re-renders.
   useEffect(() => {
     if (!enabled && isSelectingRef.current) {
       isSelectingRef.current = false;
       setMarqueeRect(null);
-      document.removeEventListener("mousemove", handleMouseMove);
-      document.removeEventListener("mouseup", handleMouseUp);
+      document.removeEventListener("mousemove", stableMouseMove);
+      document.removeEventListener("mouseup", stableMouseUp);
     }
     return () => {
-      document.removeEventListener("mousemove", handleMouseMove);
-      document.removeEventListener("mouseup", handleMouseUp);
+      document.removeEventListener("mousemove", stableMouseMove);
+      document.removeEventListener("mouseup", stableMouseUp);
     };
-  }, [enabled, handleMouseMove, handleMouseUp, setMarqueeRect]);
+  }, [enabled, stableMouseMove, stableMouseUp, setMarqueeRect]);
 
-  return { isSelectingRef, addToSelectionRef, handleMouseMove, handleMouseUp };
+  return {
+    isSelectingRef,
+    addToSelectionRef,
+    handleMouseMove: stableMouseMove,
+    handleMouseUp: stableMouseUp,
+  };
 }
 
 // ---------------------------------------------------------------------------

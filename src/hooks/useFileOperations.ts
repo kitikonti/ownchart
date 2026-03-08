@@ -15,13 +15,17 @@ import { useFileStore } from "../store/slices/fileSlice";
 import { useHistoryStore } from "../store/slices/historySlice";
 import { useDependencyStore } from "../store/slices/dependencySlice";
 import { useUIStore } from "../store/slices/uiSlice";
-import { serializeToGanttFile } from "../utils/fileOperations/serialize";
-import type { SerializeOptions } from "../utils/fileOperations/serialize";
+import {
+  serializeToGanttFile,
+  type SerializeOptions,
+} from "../utils/fileOperations/serialize";
 import type { ViewSettings } from "../utils/fileOperations/types";
 import {
   saveFile,
   openFile,
   clearFileHandle,
+  SAVE_CANCELLED,
+  OPEN_CANCELLED,
 } from "../utils/fileOperations/fileDialog";
 import {
   loadFileIntoApp,
@@ -31,6 +35,7 @@ import { sanitizeFilename } from "../utils/export/sanitizeFilename";
 
 const OWNCHART_FILE_EXTENSION = ".ownchart";
 const DEFAULT_CHART_NAME = "Untitled";
+const DEFAULT_UNTITLED_PREFIX = "untitled";
 
 /** Coerce an unknown catch value to a readable string. */
 function toErrorMsg(e: unknown): string {
@@ -70,7 +75,7 @@ export function resolveSuggestedFilename(
 ): string {
   if (fileName) return fileName;
   if (projectTitle) return generateSuggestedFilename(projectTitle);
-  return `untitled${OWNCHART_FILE_EXTENSION}`;
+  return `${DEFAULT_UNTITLED_PREFIX}${OWNCHART_FILE_EXTENSION}`;
 }
 
 // ---------------------------------------------------------------------------
@@ -387,7 +392,7 @@ function useSaveOperation({
           setLastSaved(new Date());
           markClean();
           toast.success(`Saved "${result.fileName}"`);
-        } else if (result.error !== "Save cancelled") {
+        } else if (result.error !== SAVE_CANCELLED) {
           toast.error(`Save failed: ${result.error}`);
         }
       } catch (e) {
@@ -428,7 +433,7 @@ function useOpenOperation(isDirty: boolean): {
     try {
       const result = await openFile();
       if (!result.success || !result.file) {
-        if (result.error !== "Open cancelled") {
+        if (result.error !== OPEN_CANCELLED) {
           toast.error(`Open failed: ${result.error}`);
         }
         return;

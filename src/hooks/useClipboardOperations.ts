@@ -35,8 +35,8 @@ export interface ClipboardOperations {
  * Exported only for unit-testing purposes — treat as an implementation detail.
  */
 export function hasSameTaskIds(
-  a: readonly { id: unknown }[],
-  b: readonly { id: unknown }[]
+  a: readonly { id: TaskId }[],
+  b: readonly { id: TaskId }[]
 ): boolean {
   return a.length === b.length && a.every((item, i) => item.id === b[i].id);
 }

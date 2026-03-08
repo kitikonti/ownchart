@@ -40,6 +40,8 @@ vi.mock("../../../src/utils/fileOperations/fileDialog", () => ({
   saveFile: (...args: unknown[]) => mockSaveFile(...args),
   openFile: (...args: unknown[]) => mockOpenFile(...args),
   clearFileHandle: (...args: unknown[]) => mockClearFileHandle(...args),
+  SAVE_CANCELLED: "Save cancelled",
+  OPEN_CANCELLED: "Open cancelled",
 }));
 
 const mockSerialize = vi.fn().mockReturnValue('{"mock":"content"}');
