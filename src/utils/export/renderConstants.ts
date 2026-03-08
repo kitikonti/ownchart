@@ -38,8 +38,8 @@ export const SUMMARY_BRACKET = {
   barThicknessRatio: 0.3,
   /** Downward tip height as ratio of total height (50%) */
   tipHeightRatio: 0.5,
-  /** Tip width factor for 60° angle (1/tan(60°) ≈ 0.577) */
-  tipWidthFactor: 0.577,
+  /** Tip width factor for a 60° angle: 1/tan(60°) = 1/√3, computed at init for precision */
+  tipWidthFactor: 1 / Math.tan(Math.PI / 3),
   /** Radius for top corners of the bracket bar */
   cornerRadius: 10,
   /** Radius for inner corners where tips meet the bar */

@@ -6,20 +6,15 @@
  * and convert the HTML task table to SVG elements.
  */
 
+// React
 import { createRoot } from "react-dom/client";
 import { createElement } from "react";
 
-import type { ColorModeState } from "../../types/colorMode.types";
-import type { Task } from "../../types/chart.types";
-import type { TaskId } from "../../types/branded.types";
-import type { ExportOptions, SvgExportOptions } from "./types";
-import type {
-  TaskTableHeaderOptions,
-  TaskTableRowsOptions,
-} from "./taskTableRenderer";
+// Local components
 import { ExportRenderer } from "../../components/Export/ExportRenderer";
+
+// Local utilities
 import { buildFlattenedTaskList } from "../hierarchy";
-import { DEFAULT_EXPORT_COLUMNS } from "./types";
 import { calculateExportDimensions } from "./exportLayout";
 import { calculateTaskTableWidth } from "./calculations";
 import {
@@ -40,6 +35,17 @@ import {
 import {
   renderTaskTableHeader,
   renderTaskTableRows,
+} from "./taskTableRenderer";
+import { DEFAULT_EXPORT_COLUMNS } from "./types";
+
+// Types
+import type { ColorModeState } from "../../types/colorMode.types";
+import type { Task } from "../../types/chart.types";
+import type { TaskId } from "../../types/branded.types";
+import type { ExportOptions, SvgExportOptions } from "./types";
+import type {
+  TaskTableHeaderOptions,
+  TaskTableRowsOptions,
 } from "./taskTableRenderer";
 
 /**
@@ -162,13 +168,13 @@ export async function exportToSvg(params: ExportToSvgParams): Promise<void> {
     if (options.includeHeader && !headerSvg) {
       // This is a non-fatal invariant violation: the chart body will be offset
       // by HEADER_HEIGHT but the header section will be blank. Log a warning
-      // so it surfaces in developer consoles without crashing the export.
-      if (import.meta.env.DEV) {
-        console.warn(
-          "[svgExport] includeHeader is true but the timeline header SVG element was not found. " +
-            "The export header area will be empty."
-        );
-      }
+      // unconditionally so it surfaces in all environments (dev and production)
+      // without crashing the export — the user will at least see a console
+      // message explaining the blank header area.
+      console.warn(
+        "[svgExport] includeHeader is true but the timeline header SVG element was not found. " +
+          "The export header area will be empty."
+      );
     }
 
     // Build a new complete SVG with task table as SVG elements
@@ -226,6 +232,11 @@ export function resolveExportLayout(
   taskTableWidth: number;
   hasTaskList: boolean;
 } {
+  // Fall back to DEFAULT_EXPORT_COLUMNS when the caller passes an empty array.
+  // DEFAULT_EXPORT_COLUMNS is always non-empty, so `hasTaskList` will be true
+  // in the fallback path. A future timeline-only mode (no task table at all)
+  // should be modelled with an explicit ExportOptions flag rather than by
+  // passing an empty selectedColumns array.
   const selectedColumns =
     options.selectedColumns.length > 0
       ? options.selectedColumns
@@ -285,8 +296,10 @@ export function createRootSvg(
 /**
  * Append the timeline header SVG (cloned from the rendered DOM) into the root SVG,
  * offset horizontally by the task table width.
+ *
+ * @internal
  */
-function appendTimelineHeader(
+export function appendTimelineHeader(
   svg: SVGSVGElement,
   headerSvg: SVGSVGElement,
   taskTableWidth: number
@@ -309,8 +322,10 @@ function appendTimelineHeader(
 /**
  * Append the chart body SVG (cloned from the rendered DOM) into the root SVG,
  * offset by the task table width and the header height.
+ *
+ * @internal
  */
-function appendChartBody(
+export function appendChartBody(
   svg: SVGSVGElement,
   chartSvg: SVGSVGElement,
   taskTableWidth: number,
@@ -383,7 +398,26 @@ function renderTaskTableSection(
 }
 
 /**
- * Build a complete SVG with task table rendered as native SVG elements.
+ * Build a complete SVG document from the rendered React export DOM.
+ *
+ * Composes the final SVG by:
+ * 1. Creating a root canvas sized to `dimensions`.
+ * 2. Rendering the task table (header row + data rows) as native SVG elements
+ *    at the left edge.
+ * 3. Cloning and appending the timeline header SVG (offset right by task-table
+ *    width) when `options.includeHeader` is true and `headerSvg` is present.
+ * 4. Cloning and appending the chart body SVG (offset right and down by header
+ *    height when applicable).
+ *
+ * @param chartSvg - The main Gantt chart SVG extracted from the rendered DOM
+ * @param headerSvg - The timeline header SVG, or `null` if not rendered
+ * @param tasks - Full task list (used to build the flattened task table)
+ * @param options - Export options controlling layout, header, density, etc.
+ * @param columnWidths - Per-column pixel widths for the task table panel
+ * @param dimensions - Final canvas width and height in pixels
+ * @param colorModeState - Current color mode (used for task row backgrounds)
+ * @param projectName - Optional project name for the SVG `<title>` element
+ * @returns The composed root SVGSVGElement ready for serialization
  */
 function buildCompleteSvg(
   chartSvg: SVGSVGElement,

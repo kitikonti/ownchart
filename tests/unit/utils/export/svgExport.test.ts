@@ -11,6 +11,8 @@ import {
   finalizeSvg,
   createRootSvg,
   resolveExportLayout,
+  appendTimelineHeader,
+  appendChartBody,
 } from "../../../../src/utils/export/svgExport";
 import type {
   SvgExportOptions,
@@ -582,5 +584,149 @@ describe("resolveExportLayout", () => {
     };
     const { taskTableWidth } = resolveExportLayout(options, columnWidths);
     expect(taskTableWidth).toBeGreaterThan(0);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// appendTimelineHeader (@internal)
+// ---------------------------------------------------------------------------
+
+describe("appendTimelineHeader", () => {
+  function makeSvgEl(
+    ns = "http://www.w3.org/2000/svg",
+    tag = "svg"
+  ): SVGSVGElement {
+    return document.createElementNS(ns, tag) as SVGSVGElement;
+  }
+
+  it("appends a <g> element to the root SVG", () => {
+    const root = makeSvgEl();
+    const header = makeSvgEl();
+    appendTimelineHeader(root, header, 0);
+    const groups = root.querySelectorAll("g");
+    expect(groups.length).toBeGreaterThan(0);
+  });
+
+  it("applies a horizontal translate transform equal to taskTableWidth", () => {
+    const root = makeSvgEl();
+    const header = makeSvgEl();
+    appendTimelineHeader(root, header, 200);
+    const g = root.querySelector("g");
+    expect(g?.getAttribute("transform")).toBe("translate(200, 0)");
+  });
+
+  it("clones child nodes from the header SVG into the group", () => {
+    const root = makeSvgEl();
+    const header = makeSvgEl();
+    const rect = document.createElementNS("http://www.w3.org/2000/svg", "rect");
+    rect.setAttribute("width", "50");
+    header.appendChild(rect);
+
+    appendTimelineHeader(root, header, 0);
+    const clonedRect = root.querySelector("rect");
+    expect(clonedRect).not.toBeNull();
+    expect(clonedRect?.getAttribute("width")).toBe("50");
+  });
+
+  it("does not mutate the source header SVG", () => {
+    const root = makeSvgEl();
+    const header = makeSvgEl();
+    const rect = document.createElementNS("http://www.w3.org/2000/svg", "rect");
+    header.appendChild(rect);
+    const originalChildCount = header.childNodes.length;
+
+    appendTimelineHeader(root, header, 0);
+    expect(header.childNodes.length).toBe(originalChildCount);
+  });
+
+  it("sets font-family on cloned text elements", () => {
+    const root = makeSvgEl();
+    const header = makeSvgEl();
+    const text = document.createElementNS(
+      "http://www.w3.org/2000/svg",
+      "text"
+    );
+    text.textContent = "Header label";
+    header.appendChild(text);
+
+    appendTimelineHeader(root, header, 0);
+    const clonedText = root.querySelector("text");
+    expect(clonedText?.getAttribute("font-family")).toBeTruthy();
+  });
+});
+
+// ---------------------------------------------------------------------------
+// appendChartBody (@internal)
+// ---------------------------------------------------------------------------
+
+describe("appendChartBody", () => {
+  function makeSvgEl(
+    ns = "http://www.w3.org/2000/svg",
+    tag = "svg"
+  ): SVGSVGElement {
+    return document.createElementNS(ns, tag) as SVGSVGElement;
+  }
+
+  it("appends a <g> element to the root SVG", () => {
+    const root = makeSvgEl();
+    const chart = makeSvgEl();
+    appendChartBody(root, chart, 0, 0);
+    const groups = root.querySelectorAll("g");
+    expect(groups.length).toBeGreaterThan(0);
+  });
+
+  it("applies translate transform with correct x and y offsets", () => {
+    const root = makeSvgEl();
+    const chart = makeSvgEl();
+    appendChartBody(root, chart, 150, 48);
+    const g = root.querySelector("g");
+    expect(g?.getAttribute("transform")).toBe("translate(150, 48)");
+  });
+
+  it("applies translate(0, 0) when both offsets are zero", () => {
+    const root = makeSvgEl();
+    const chart = makeSvgEl();
+    appendChartBody(root, chart, 0, 0);
+    const g = root.querySelector("g");
+    expect(g?.getAttribute("transform")).toBe("translate(0, 0)");
+  });
+
+  it("clones child nodes from the chart SVG into the group", () => {
+    const root = makeSvgEl();
+    const chart = makeSvgEl();
+    const rect = document.createElementNS("http://www.w3.org/2000/svg", "rect");
+    rect.setAttribute("height", "200");
+    chart.appendChild(rect);
+
+    appendChartBody(root, chart, 0, 0);
+    const clonedRect = root.querySelector("rect");
+    expect(clonedRect).not.toBeNull();
+    expect(clonedRect?.getAttribute("height")).toBe("200");
+  });
+
+  it("does not mutate the source chart SVG", () => {
+    const root = makeSvgEl();
+    const chart = makeSvgEl();
+    const rect = document.createElementNS("http://www.w3.org/2020/svg", "rect");
+    chart.appendChild(rect);
+    const originalChildCount = chart.childNodes.length;
+
+    appendChartBody(root, chart, 0, 0);
+    expect(chart.childNodes.length).toBe(originalChildCount);
+  });
+
+  it("sets font-family on cloned text elements", () => {
+    const root = makeSvgEl();
+    const chart = makeSvgEl();
+    const text = document.createElementNS(
+      "http://www.w3.org/2000/svg",
+      "text"
+    );
+    text.textContent = "Bar label";
+    chart.appendChild(text);
+
+    appendChartBody(root, chart, 0, 0);
+    const clonedText = root.querySelector("text");
+    expect(clonedText?.getAttribute("font-family")).toBeTruthy();
   });
 });
