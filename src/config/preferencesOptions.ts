@@ -83,14 +83,23 @@ export const DENSITY_OPTIONS_EXTENDED: DensityOption[] = [
 const EXAMPLE_YEAR_NUMBER = new Date().getFullYear();
 
 /**
- * Sentinel date used to build format examples (Dec 31 of a fixed year).
- * Day (31) ≠ month (12) makes DD/MM vs MM/DD ordering unambiguous.
- *
- * This Date object is intentionally static — it is constructed once at module
- * load time from compile-time constants and is never mutated afterwards.
+ * Sentinel month and day for date-format examples.
+ * Day (31) ≠ month (12) makes DD/MM vs MM/DD ordering visually unambiguous —
+ * "31/12" cannot be confused with "12/31" the way "01/01" could be.
+ */
+const EXAMPLE_MONTH_INDEX = 11; // 0-based: December
+const EXAMPLE_DAY = 31;
+
+/**
+ * Sentinel date used to build format examples (Dec 31 of the current year).
+ * Constructed once at module load time and never mutated afterwards.
  * The derived string components (exampleDay/Month/Year) below are equally static.
  */
-const EXAMPLE_DATE = new Date(EXAMPLE_YEAR_NUMBER, 11, 31); // Dec 31, EXAMPLE_YEAR_NUMBER
+const EXAMPLE_DATE = new Date(
+  EXAMPLE_YEAR_NUMBER,
+  EXAMPLE_MONTH_INDEX,
+  EXAMPLE_DAY
+);
 
 /** Zero-pad a number to two digits. */
 function pad2(n: number): string {

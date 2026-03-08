@@ -3,7 +3,7 @@
  * Sprint 1.5.9: User Preferences & Settings
  */
 
-import { describe, it, expect, beforeEach } from "vitest";
+import { describe, it, expect, beforeEach, afterEach } from "vitest";
 import {
   holidayService,
   detectLocaleHolidayRegion,

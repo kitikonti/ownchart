@@ -126,9 +126,9 @@ class HolidayServiceClass {
    */
   getHolidaysForYear(year: number): HolidayInfo[] {
     const cacheKey = `${this.currentCountry}-${this.currentState || ""}-${year}`;
-    if (this.cache.has(cacheKey)) {
-      // safe: presence was verified by .has() above
-      return this.cache.get(cacheKey)!;
+    const cached = this.cache.get(cacheKey);
+    if (cached !== undefined) {
+      return cached;
     }
 
     // Guard: no region set → return empty array without caching.
@@ -270,13 +270,18 @@ class HolidayServiceClass {
     const countries = this.hd.getCountries(HOLIDAY_DISPLAY_LOCALE);
     if (!countries) return [];
 
-    return Object.entries(countries)
-      .map(([code, name]) => ({
-        code,
-        // date-holidays returns plain strings for the 'en' locale; cast is safe.
-        name: name as string,
-      }))
-      .sort((a, b) => a.name.localeCompare(b.name, HOLIDAY_DISPLAY_LOCALE));
+    return (
+      Object.entries(countries)
+        // date-holidays returns string values for the 'en' locale.
+        // For other locales the value may be a nested object; filter those out
+        // defensively in case HOLIDAY_DISPLAY_LOCALE is ever changed.
+        .filter(([, name]) => typeof name === "string")
+        .map(([code, name]) => ({
+          code,
+          name: name as string,
+        }))
+        .sort((a, b) => a.name.localeCompare(b.name, HOLIDAY_DISPLAY_LOCALE))
+    );
   }
 
   /**
@@ -286,13 +291,18 @@ class HolidayServiceClass {
     const states = this.hd.getStates(countryCode, HOLIDAY_DISPLAY_LOCALE);
     if (!states) return [];
 
-    return Object.entries(states)
-      .map(([code, name]) => ({
-        code,
-        // date-holidays returns plain strings for the 'en' locale; cast is safe.
-        name: name as string,
-      }))
-      .sort((a, b) => a.name.localeCompare(b.name, HOLIDAY_DISPLAY_LOCALE));
+    return (
+      Object.entries(states)
+        // date-holidays returns string values for the 'en' locale.
+        // For other locales the value may be a nested object; filter those out
+        // defensively in case HOLIDAY_DISPLAY_LOCALE is ever changed.
+        .filter(([, name]) => typeof name === "string")
+        .map(([code, name]) => ({
+          code,
+          name: name as string,
+        }))
+        .sort((a, b) => a.name.localeCompare(b.name, HOLIDAY_DISPLAY_LOCALE))
+    );
   }
 
   /**
