@@ -775,7 +775,8 @@ select:focus-visible {
   background-color: var(--color-neutral-50);
 }
 
-.context-menu-item:disabled {
+.context-menu-item:disabled,
+.context-menu-item[aria-disabled="true"] {
   color: var(--color-text-disabled);
   cursor: default;
   background-color: transparent;

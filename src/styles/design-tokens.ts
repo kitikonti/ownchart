@@ -212,7 +212,10 @@ export const Z_INDEX = {
   insertLine: 60,
   stickyHeader: 100,
   dropdown: 1000,
-  modal: 1000,
+  /** Context menus (right-click menus) — same layer as dropdowns */
+  contextMenu: 1000,
+  /** Modal dialogs — must sit above context menus and dropdowns */
+  modal: 1100,
   popover: 10000,
 } as const;
 

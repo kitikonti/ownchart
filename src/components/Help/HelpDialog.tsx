@@ -3,7 +3,15 @@
  * search, and comprehensive feature documentation.
  */
 
-import { useState, useRef, useCallback } from "react";
+import {
+  useState,
+  useRef,
+  useCallback,
+  useEffect,
+  useId,
+  useMemo,
+  memo,
+} from "react";
 import { Question, Command } from "@phosphor-icons/react";
 import { Modal } from "../common/Modal";
 import { Button } from "../common/Button";
@@ -23,10 +31,14 @@ import { HelpSectionList } from "./HelpSectionList";
 import { GettingStartedTab } from "./GettingStartedTab";
 
 /**
- * Maximum height for the help dialog content area.
+ * Tailwind class that constrains the help dialog content area height.
  * Sized to leave room for the search bar, tab strip, and footer within the modal.
+ *
+ * Rationale: The modal is max-h-[90vh]. Subtracting the bordered header (~72px),
+ * search bar (~64px), tab strip (~40px), bordered footer (~72px), and vertical
+ * padding leaves roughly 55 vh for the scrollable content area.
  */
-const CONTENT_MAX_HEIGHT = "max-h-[55vh]" as const;
+const CONTENT_MAX_HEIGHT_CLASS = "max-h-[55vh]";
 
 // ---------------------------------------------------------------------------
 // Tab panel content — extracted to keep HelpDialog's return lean
@@ -38,17 +50,18 @@ interface HelpTabContentProps {
   matchCount: number;
   query: string;
   activeTab: HelpTabId;
-  currentTab: HelpTab;
+  /** The full HelpTab object for the active tab ID (already resolved from HELP_TABS). */
+  resolvedTab: HelpTab;
   modKey: string;
 }
 
-function HelpTabContent({
+const HelpTabContent = memo(function HelpTabContent({
   isSearching,
   searchResults,
   matchCount,
   query,
   activeTab,
-  currentTab,
+  resolvedTab,
   modKey,
 }: HelpTabContentProps): JSX.Element {
   if (isSearching) {
@@ -57,7 +70,7 @@ function HelpTabContent({
         <>
           <p className="text-xs text-neutral-400 mb-3">
             {matchCount} result{matchCount !== 1 ? "s" : ""} for &ldquo;
-            {query.trim()}&rdquo;
+            {query}&rdquo;
           </p>
           <HelpSectionList sections={searchResults} defaultOpen />
         </>
@@ -65,19 +78,19 @@ function HelpTabContent({
     }
     return (
       <p className="text-sm text-neutral-400 text-center py-8">
-        No results for &ldquo;{query.trim()}&rdquo;
+        No results for &ldquo;{query}&rdquo;
       </p>
     );
   }
 
   if (activeTab === "getting-started") {
-    return <GettingStartedTab sections={currentTab.sections} />;
+    return <GettingStartedTab sections={resolvedTab.sections} />;
   }
 
   if (activeTab === "shortcuts") {
     return (
       <>
-        <HelpSectionList sections={currentTab.sections} compact defaultOpen />
+        <HelpSectionList sections={resolvedTab.sections} compact defaultOpen />
         <div className="mt-4">
           <Alert variant="info">
             <span className="text-sm">
@@ -97,14 +110,14 @@ function HelpTabContent({
   }
 
   // Features tab (default)
-  return <HelpSectionList sections={currentTab.sections} />;
-}
+  return <HelpSectionList sections={resolvedTab.sections} />;
+});
 
 // ---------------------------------------------------------------------------
 // HelpDialog
 // ---------------------------------------------------------------------------
 
-export function HelpDialog(): JSX.Element | null {
+export const HelpDialog = memo(function HelpDialog(): JSX.Element | null {
   const isOpen = useUIStore((state) => state.isHelpPanelOpen);
   const closeHelp = useUIStore((state) => state.closeHelpPanel);
   const activeTab = useUIStore((state) => state.helpDialogActiveTab);
@@ -112,12 +125,50 @@ export function HelpDialog(): JSX.Element | null {
 
   const [query, setQuery] = useState("");
 
-  const tabs = HELP_TABS;
-  const { sections: searchResults, matchCount } = useHelpSearch(tabs, query);
-  const isSearching = query.trim().length > 0;
+  // Reset the search query whenever the dialog is closed so that reopening
+  // it always shows a clean state instead of the previous search.
+  useEffect(() => {
+    if (!isOpen) {
+      setQuery("");
+    }
+  }, [isOpen]);
 
-  const currentTab = tabs.find((t) => t.id === activeTab) ?? tabs[0];
-  const modKey = getModKey();
+  const trimmedQuery = query.trim();
+  // Use trimmedQuery (not raw query) so that typing only whitespace does not
+  // trigger a search — isSearching and useHelpSearch must agree on what
+  // constitutes an active query.
+  const { sections: searchResults, matchCount } = useHelpSearch(
+    HELP_TABS,
+    trimmedQuery
+  );
+  const isSearching = trimmedQuery.length > 0;
+
+  const foundTab = HELP_TABS.find((t) => t.id === activeTab);
+  // HELP_TABS is typed as a non-empty tuple, so HELP_TABS[0] is always defined.
+  // The non-null assertion makes this TypeScript-explicit: if the array type ever
+  // changes to allow an empty tuple, the compiler will surface the error here.
+  const resolvedTab = foundTab ?? HELP_TABS[0]!;
+
+  // Warn developers (once per distinct invalid value) when the persisted
+  // activeTab doesn't match any known tab — this can happen if a tab is
+  // renamed or removed without updating the uiSlice default.
+  // Placed in useEffect so it fires only when activeTab changes, not on
+  // every render.
+  useEffect(() => {
+    if (import.meta.env.DEV && !foundTab) {
+      console.warn(
+        `[HelpDialog] Unknown activeTab "${activeTab}". Falling back to first tab.`
+      );
+    }
+  }, [activeTab, foundTab]);
+
+  // getModKey reads navigator.platform which never changes — compute once.
+  const modKey = useMemo(() => getModKey(), []);
+
+  // Generate a stable instance-unique prefix for tab/panel IDs so that if
+  // two HelpDialogs are ever mounted simultaneously they don't share ARIA IDs
+  // (consistent with the same pattern used in Modal).
+  const instanceId = useId();
 
   const tablistRef = useRef<HTMLDivElement>(null);
 
@@ -125,34 +176,28 @@ export function HelpDialog(): JSX.Element | null {
   // keep DOM focus on the active tab button (roving tabIndex).
   const handleTablistKeyDown = useCallback(
     (e: React.KeyboardEvent<HTMLDivElement>): void => {
-      const currentIndex = tabs.findIndex((t) => t.id === activeTab);
+      const currentIndex = HELP_TABS.findIndex((t) => t.id === activeTab);
       let nextIndex: number | null = null;
 
       if (e.key === "ArrowRight") {
-        nextIndex = (currentIndex + 1) % tabs.length;
+        nextIndex = (currentIndex + 1) % HELP_TABS.length;
       } else if (e.key === "ArrowLeft") {
-        nextIndex = (currentIndex - 1 + tabs.length) % tabs.length;
+        nextIndex = (currentIndex - 1 + HELP_TABS.length) % HELP_TABS.length;
       } else if (e.key === "Home") {
         nextIndex = 0;
       } else if (e.key === "End") {
-        nextIndex = tabs.length - 1;
+        nextIndex = HELP_TABS.length - 1;
       }
 
       if (nextIndex === null) return;
       e.preventDefault();
-      setActiveTab(tabs[nextIndex].id);
+      setActiveTab(HELP_TABS[nextIndex].id);
       // Move DOM focus to the newly active tab button
       const tabButtons =
         tablistRef.current?.querySelectorAll<HTMLElement>('[role="tab"]');
       tabButtons?.[nextIndex]?.focus();
     },
-    [tabs, activeTab, setActiveTab]
-  );
-
-  const footer = (
-    <Button variant="primary" onClick={closeHelp}>
-      Done
-    </Button>
+    [activeTab, setActiveTab]
   );
 
   return (
@@ -165,7 +210,11 @@ export function HelpDialog(): JSX.Element | null {
       headerStyle="bordered"
       footerStyle="bordered"
       contentPadding="p-0"
-      footer={footer}
+      footer={
+        <Button variant="primary" onClick={closeHelp}>
+          Done
+        </Button>
+      }
     >
       {/* Search bar */}
       <div className="px-6 pt-5 pb-3">
@@ -182,21 +231,21 @@ export function HelpDialog(): JSX.Element | null {
           tabIndex={-1}
           onKeyDown={handleTablistKeyDown}
         >
-          {tabs.map((tab) => {
+          {HELP_TABS.map((tab) => {
             const isActive = tab.id === activeTab;
             return (
               <button
                 key={tab.id}
-                id={`tab-${tab.id}`}
+                id={`tab-${instanceId}-${tab.id}`}
                 onClick={() => setActiveTab(tab.id)}
-                className={`px-3 py-2 text-sm font-medium transition-colors relative ${
+                className={`px-3 py-2 text-sm font-medium transition-colors relative focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 focus-visible:ring-inset rounded-sm ${
                   isActive
                     ? "text-brand-600"
                     : "text-neutral-500 hover:text-neutral-700"
                 }`}
                 role="tab"
                 aria-selected={isActive}
-                aria-controls={`help-panel-${tab.id}`}
+                aria-controls={`help-panel-${instanceId}-${tab.id}`}
                 tabIndex={isActive ? 0 : -1}
               >
                 {tab.label}
@@ -209,24 +258,28 @@ export function HelpDialog(): JSX.Element | null {
         </div>
       )}
 
-      {/* Content — role="tabpanel" when tabs are visible, plain div when searching */}
+      {/* Content — role="tabpanel" when tabs are visible; role="region" when
+          searching so assistive technology users retain landmark context even
+          though the tab strip is hidden during search. */}
       <div
-        className={`px-6 py-4 overflow-y-auto ${CONTENT_MAX_HEIGHT} scrollbar-thin`}
-        role={!isSearching ? "tabpanel" : undefined}
-        id={!isSearching ? `help-panel-${activeTab}` : undefined}
-        aria-labelledby={!isSearching ? `tab-${activeTab}` : undefined}
-        tabIndex={!isSearching ? 0 : undefined}
+        className={`px-6 py-4 overflow-y-auto ${CONTENT_MAX_HEIGHT_CLASS} scrollbar-thin`}
+        role={!isSearching ? "tabpanel" : "region"}
+        id={!isSearching ? `help-panel-${instanceId}-${activeTab}` : undefined}
+        aria-labelledby={
+          !isSearching ? `tab-${instanceId}-${activeTab}` : undefined
+        }
+        aria-label={isSearching ? "Search results" : undefined}
       >
         <HelpTabContent
           isSearching={isSearching}
           searchResults={searchResults}
           matchCount={matchCount}
-          query={query}
+          query={trimmedQuery}
           activeTab={activeTab}
-          currentTab={currentTab}
+          resolvedTab={resolvedTab}
           modKey={modKey}
         />
       </div>
     </Modal>
   );
-}
+});

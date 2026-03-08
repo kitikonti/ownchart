@@ -210,6 +210,7 @@ export function TaskTable(): JSX.Element {
           items={contextMenuItems}
           position={contextMenu.position}
           onClose={closeContextMenu}
+          ariaLabel="Task actions"
         />
       )}
     </div>

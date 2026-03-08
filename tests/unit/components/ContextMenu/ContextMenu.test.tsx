@@ -8,6 +8,7 @@ import { ContextMenu } from "../../../../src/components/ContextMenu/ContextMenu"
 import type { ContextMenuItem } from "../../../../src/components/ContextMenu/ContextMenu";
 
 const defaultPosition = { x: 100, y: 100 };
+const defaultAriaLabel = "Test context menu";
 
 function makeItems(overrides: Partial<ContextMenuItem>[] = []): ContextMenuItem[] {
   return [
@@ -38,6 +39,7 @@ describe("ContextMenu", () => {
           items={makeItems()}
           position={defaultPosition}
           onClose={onClose}
+          ariaLabel={defaultAriaLabel}
         />
       );
       expect(screen.getByText("Cut")).toBeInTheDocument();
@@ -52,6 +54,7 @@ describe("ContextMenu", () => {
           items={makeItems()}
           position={defaultPosition}
           onClose={onClose}
+          ariaLabel={defaultAriaLabel}
         />
       );
       expect(screen.getByRole("menu")).toBeInTheDocument();
@@ -67,6 +70,7 @@ describe("ContextMenu", () => {
           items={items}
           position={defaultPosition}
           onClose={onClose}
+          ariaLabel={defaultAriaLabel}
         />
       );
       expect(screen.getAllByRole("menuitem")).toHaveLength(2);
@@ -82,6 +86,7 @@ describe("ContextMenu", () => {
           items={items}
           position={defaultPosition}
           onClose={onClose}
+          ariaLabel={defaultAriaLabel}
         />
       );
       const checkboxItems = screen.getAllByRole("menuitemcheckbox");
@@ -96,6 +101,7 @@ describe("ContextMenu", () => {
           items={makeItems()}
           position={defaultPosition}
           onClose={onClose}
+          ariaLabel={defaultAriaLabel}
         />
       );
       // The "Delete" item has separator=true
@@ -108,21 +114,23 @@ describe("ContextMenu", () => {
           items={makeItems()}
           position={defaultPosition}
           onClose={onClose}
+          ariaLabel={defaultAriaLabel}
         />
       );
       expect(screen.getByText("Ctrl+X")).toBeInTheDocument();
     });
 
-    it("marks disabled items as disabled", () => {
+    it("marks disabled items with aria-disabled", () => {
       render(
         <ContextMenu
           items={makeItems()}
           position={defaultPosition}
           onClose={onClose}
+          ariaLabel={defaultAriaLabel}
         />
       );
       const pasteButton = screen.getByText("Paste").closest("button");
-      expect(pasteButton).toBeDisabled();
+      expect(pasteButton).toHaveAttribute("aria-disabled", "true");
     });
   });
 
@@ -137,6 +145,7 @@ describe("ContextMenu", () => {
           items={items}
           position={defaultPosition}
           onClose={onClose}
+          ariaLabel={defaultAriaLabel}
         />
       );
       fireEvent.click(screen.getByText("Action"));
@@ -144,7 +153,7 @@ describe("ContextMenu", () => {
       expect(onClose).toHaveBeenCalledTimes(1);
     });
 
-    it("does not call onClose when a disabled item button is clicked (browser prevents it)", () => {
+    it("does not call onClick or onClose when an aria-disabled item is clicked", () => {
       const onClick = vi.fn();
       const items: ContextMenuItem[] = [
         { id: "disabled", label: "Disabled Action", onClick, disabled: true },
@@ -154,11 +163,15 @@ describe("ContextMenu", () => {
           items={items}
           position={defaultPosition}
           onClose={onClose}
+          ariaLabel={defaultAriaLabel}
         />
       );
-      // Disabled buttons do not fire click events
+      // aria-disabled keeps the button focusable but the handler guards activation
       const button = screen.getByText("Disabled Action").closest("button")!;
-      expect(button).toBeDisabled();
+      expect(button).toHaveAttribute("aria-disabled", "true");
+      fireEvent.click(button);
+      expect(onClick).not.toHaveBeenCalled();
+      expect(onClose).not.toHaveBeenCalled();
     });
   });
 
@@ -169,6 +182,7 @@ describe("ContextMenu", () => {
           items={makeItems()}
           position={defaultPosition}
           onClose={onClose}
+          ariaLabel={defaultAriaLabel}
         />
       );
       fireEvent.keyDown(screen.getByRole("menu"), { key: "Escape" });
@@ -185,6 +199,7 @@ describe("ContextMenu", () => {
           items={items}
           position={defaultPosition}
           onClose={onClose}
+          ariaLabel={defaultAriaLabel}
         />
       );
       fireEvent.keyDown(screen.getByRole("menu"), { key: "Enter" });
@@ -202,6 +217,7 @@ describe("ContextMenu", () => {
           items={items}
           position={defaultPosition}
           onClose={onClose}
+          ariaLabel={defaultAriaLabel}
         />
       );
       fireEvent.keyDown(screen.getByRole("menu"), { key: " " });
@@ -219,6 +235,7 @@ describe("ContextMenu", () => {
           items={items}
           position={defaultPosition}
           onClose={onClose}
+          ariaLabel={defaultAriaLabel}
         />
       );
       // After mount, focusedIndex = 0 (Item A). ArrowDown should skip B and land on C.
@@ -227,7 +244,7 @@ describe("ContextMenu", () => {
       expect(document.activeElement).toBe(itemCButton);
     });
 
-    it("ArrowDown does not move past the last enabled item", () => {
+    it("ArrowDown wraps around to the first enabled item when at end of list", () => {
       const items: ContextMenuItem[] = [
         { id: "a", label: "Item A", onClick: vi.fn() },
         { id: "b", label: "Item B", onClick: vi.fn() },
@@ -237,14 +254,15 @@ describe("ContextMenu", () => {
           items={items}
           position={defaultPosition}
           onClose={onClose}
+          ariaLabel={defaultAriaLabel}
         />
       );
-      // Start at index 0, move down twice — second press should be a no-op
+      // WAI-ARIA menu pattern: ArrowDown wraps around at the end of the list.
       const menu = screen.getByRole("menu");
       fireEvent.keyDown(menu, { key: "ArrowDown" }); // → Item B
-      fireEvent.keyDown(menu, { key: "ArrowDown" }); // → still Item B (end of list)
-      const itemBButton = screen.getByText("Item B").closest("button");
-      expect(document.activeElement).toBe(itemBButton);
+      fireEvent.keyDown(menu, { key: "ArrowDown" }); // → wraps back to Item A
+      const itemAButton = screen.getByText("Item A").closest("button");
+      expect(document.activeElement).toBe(itemAButton);
     });
 
     it("Home moves to first enabled item", () => {
@@ -258,6 +276,7 @@ describe("ContextMenu", () => {
           items={items}
           position={defaultPosition}
           onClose={onClose}
+          ariaLabel={defaultAriaLabel}
         />
       );
       // Move to last item first
@@ -280,6 +299,7 @@ describe("ContextMenu", () => {
           items={items}
           position={defaultPosition}
           onClose={onClose}
+          ariaLabel={defaultAriaLabel}
         />
       );
       // End should jump to last enabled item (B, skipping disabled C)
@@ -300,6 +320,7 @@ describe("ContextMenu", () => {
           items={items}
           position={defaultPosition}
           onClose={onClose}
+          ariaLabel={defaultAriaLabel}
         />
       );
       // Move to Item C first
@@ -308,6 +329,27 @@ describe("ContextMenu", () => {
       fireEvent.keyDown(screen.getByRole("menu"), { key: "ArrowUp" });
       const itemAButton = screen.getByText("Item A").closest("button");
       expect(document.activeElement).toBe(itemAButton);
+    });
+
+    it("ArrowUp wraps around to the last enabled item when at start of list", () => {
+      const items: ContextMenuItem[] = [
+        { id: "a", label: "Item A", onClick: vi.fn() },
+        { id: "b", label: "Item B", onClick: vi.fn() },
+      ];
+      render(
+        <ContextMenu
+          items={items}
+          position={defaultPosition}
+          onClose={onClose}
+          ariaLabel={defaultAriaLabel}
+        />
+      );
+      // WAI-ARIA menu pattern: ArrowUp wraps around at the start of the list.
+      // After mount, focus is at Item A (first enabled). ArrowUp should wrap to Item B.
+      const menu = screen.getByRole("menu");
+      fireEvent.keyDown(menu, { key: "ArrowUp" }); // → wraps to Item B (last)
+      const itemBButton = screen.getByText("Item B").closest("button");
+      expect(document.activeElement).toBe(itemBButton);
     });
   });
 
@@ -324,6 +366,7 @@ describe("ContextMenu", () => {
           items={makeItems()}
           position={defaultPosition}
           onClose={onClose}
+          ariaLabel={defaultAriaLabel}
         />
       );
 
