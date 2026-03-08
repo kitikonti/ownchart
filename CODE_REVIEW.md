@@ -251,9 +251,9 @@ cd ../app-gantt-review
 ### Priority: LOW — UI Components
 - [x] `src/components/Toolbar/ToolbarPrimitives.tsx` (254 LOC)
 - [x] `src/components/StatusBar/StatusBar.tsx` (201 LOC)
-- [ ] `src/components/ContextMenu/ContextMenu.tsx` (198 LOC)
-- [ ] `src/components/common/Modal.tsx` (192 LOC)
-- [ ] `src/components/Help/HelpDialog.tsx` (131 LOC)
+- [x] `src/components/ContextMenu/ContextMenu.tsx` (198 LOC)
+- [x] `src/components/common/Modal.tsx` (192 LOC)
+- [x] `src/components/Help/HelpDialog.tsx` (131 LOC)
 - [ ] `src/components/Help/WelcomeTour.tsx` (128 LOC)
 - [ ] `src/components/Help/AboutDialog.tsx` (127 LOC)
 - [ ] `src/components/common/Button.tsx` (124 LOC)
