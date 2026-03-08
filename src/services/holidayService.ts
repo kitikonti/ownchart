@@ -11,7 +11,8 @@ import Holidays, { type HolidaysTypes } from "date-holidays";
 export interface HolidayInfo {
   date: Date;
   name: string;
-  type: "public" | "bank" | "school" | "optional" | "observance";
+  /** Only public and bank holidays are retained by getHolidaysForYear. */
+  type: "public" | "bank";
 }
 
 /**
@@ -131,8 +132,7 @@ class HolidayServiceClass {
       .map((h: HolidaysTypes.Holiday) => ({
         date: new Date(h.date),
         name: h.name,
-        // date-holidays narrows type to 'public'|'bank' after the filter above,
-        // but its TS type still includes all holiday variants — cast is safe here.
+        // The filter above guarantees type is 'public' | 'bank', matching HolidayInfo["type"].
         type: h.type as HolidayInfo["type"],
       }));
 

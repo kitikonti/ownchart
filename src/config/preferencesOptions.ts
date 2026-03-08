@@ -78,14 +78,26 @@ function pad2(n: number): string {
   return String(n).padStart(2, "0");
 }
 
-const _d = pad2(EXAMPLE_DATE.getDate()); // "31"
-const _m = pad2(EXAMPLE_DATE.getMonth() + 1); // "12"
-const _y = String(EXAMPLE_DATE.getFullYear()); // "2026"
+const exampleDay = pad2(EXAMPLE_DATE.getDate()); // "31"
+const exampleMonth = pad2(EXAMPLE_DATE.getMonth() + 1); // "12"
+const exampleYear = String(EXAMPLE_DATE.getFullYear()); // "2026"
 
 export const DATE_FORMAT_OPTIONS_EXTENDED: DateFormatOption[] = [
-  { value: "DD/MM/YYYY", label: "DD/MM/YYYY", example: `${_d}/${_m}/${_y}` },
-  { value: "MM/DD/YYYY", label: "MM/DD/YYYY", example: `${_m}/${_d}/${_y}` },
-  { value: "YYYY-MM-DD", label: "YYYY-MM-DD", example: `${_y}-${_m}-${_d}` },
+  {
+    value: "DD/MM/YYYY",
+    label: "DD/MM/YYYY",
+    example: `${exampleDay}/${exampleMonth}/${exampleYear}`,
+  },
+  {
+    value: "MM/DD/YYYY",
+    label: "MM/DD/YYYY",
+    example: `${exampleMonth}/${exampleDay}/${exampleYear}`,
+  },
+  {
+    value: "YYYY-MM-DD",
+    label: "YYYY-MM-DD",
+    example: `${exampleYear}-${exampleMonth}-${exampleDay}`,
+  },
 ];
 
 export const FIRST_DAY_OF_WEEK_OPTIONS_EXTENDED: FirstDayOfWeekOption[] = [
