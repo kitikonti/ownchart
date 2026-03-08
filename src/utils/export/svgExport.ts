@@ -8,15 +8,16 @@
 
 import { createRoot } from "react-dom/client";
 import { createElement } from "react";
+
+import type { ColorModeState } from "../../types/colorMode.types";
 import type { Task } from "../../types/chart.types";
 import type { TaskId } from "../../types/branded.types";
+import { ExportRenderer } from "../../components/Export/ExportRenderer";
+import { buildFlattenedTaskList } from "../../utils/hierarchy";
 import type { ExportOptions, SvgExportOptions } from "./types";
 import { DEFAULT_EXPORT_COLUMNS } from "./types";
-import { ExportRenderer } from "../../components/Export/ExportRenderer";
 import { calculateExportDimensions } from "./exportLayout";
 import { calculateTaskTableWidth } from "./calculations";
-import { buildFlattenedTaskList } from "../../utils/hierarchy";
-// Shared modules
 import {
   HEADER_HEIGHT,
   SVG_FONT_FAMILY,
@@ -38,7 +39,6 @@ import {
   type TaskTableHeaderOptions,
   type TaskTableRowsOptions,
 } from "./taskTableRenderer";
-import type { ColorModeState } from "../../types/colorMode.types";
 
 /**
  * White background fill colour for the SVG canvas.
@@ -275,6 +275,54 @@ function appendChartBody(
 }
 
 /**
+ * Render the task table section (header row + data rows) into the root SVG.
+ * Only called when at least one column is selected for the task list panel.
+ *
+ * @param svg - Root SVG element to append into
+ * @param flattenedTasks - Flattened task list (from {@link buildFlattenedTaskList})
+ * @param selectedColumns - Ordered list of columns to render
+ * @param columnWidths - Per-column pixel widths
+ * @param taskTableWidth - Total width of the task table panel in px
+ * @param bodyYOffset - Y offset in px where task data rows begin (after header, if any)
+ * @param options - Export options (density, includeHeader, etc.)
+ * @param colorModeState - Current color mode for row rendering
+ */
+function renderTaskTableSection(
+  svg: SVGSVGElement,
+  flattenedTasks: ReturnType<typeof buildFlattenedTaskList>,
+  selectedColumns: NonNullable<ExportOptions["selectedColumns"]>,
+  columnWidths: Record<string, number>,
+  taskTableWidth: number,
+  bodyYOffset: number,
+  options: ExportOptions,
+  colorModeState: ColorModeState
+): void {
+  if (options.includeHeader) {
+    const headerOpts: TaskTableHeaderOptions = {
+      selectedColumns,
+      columnWidths,
+      totalWidth: taskTableWidth,
+      x: 0,
+      y: 0,
+      density: options.density,
+    };
+    renderTaskTableHeader(svg, headerOpts);
+  }
+
+  const rowsOpts: TaskTableRowsOptions = {
+    flattenedTasks,
+    selectedColumns,
+    columnWidths,
+    totalWidth: taskTableWidth,
+    x: 0,
+    startY: bodyYOffset,
+    density: options.density,
+    colorModeState,
+  };
+  renderTaskTableRows(svg, rowsOpts);
+}
+
+/**
  * Build a complete SVG with task table rendered as native SVG elements.
  */
 function buildCompleteSvg(
@@ -297,49 +345,43 @@ function buildCompleteSvg(
 
   const svg = createRootSvg(dimensions, options.background, projectName);
 
-  let currentY = 0;
-
-  if (options.includeHeader) {
-    if (hasTaskList) {
-      const headerOpts: TaskTableHeaderOptions = {
-        selectedColumns,
-        columnWidths,
-        totalWidth: taskTableWidth,
-        x: 0,
-        y: 0,
-        density: options.density,
-      };
-      renderTaskTableHeader(svg, headerOpts);
-    }
-
-    if (headerSvg) {
-      appendTimelineHeader(svg, headerSvg, taskTableWidth);
-    }
-
-    currentY = HEADER_HEIGHT;
-  }
+  const bodyYOffset = options.includeHeader ? HEADER_HEIGHT : 0;
 
   if (hasTaskList) {
-    const rowsOpts: TaskTableRowsOptions = {
+    renderTaskTableSection(
+      svg,
       flattenedTasks,
       selectedColumns,
       columnWidths,
-      totalWidth: taskTableWidth,
-      x: 0,
-      startY: currentY,
-      density: options.density,
-      colorModeState,
-    };
-    renderTaskTableRows(svg, rowsOpts);
+      taskTableWidth,
+      bodyYOffset,
+      options,
+      colorModeState
+    );
   }
 
-  appendChartBody(svg, chartSvg, taskTableWidth, currentY);
+  if (options.includeHeader && headerSvg) {
+    appendTimelineHeader(svg, headerSvg, taskTableWidth);
+  }
+
+  appendChartBody(svg, chartSvg, taskTableWidth, bodyYOffset);
 
   return svg;
 }
 
 /**
- * Finalize SVG with options and serialize.
+ * Apply SVG export options to the root SVG element and serialize it to a string.
+ *
+ * This function performs four steps in order:
+ * 1. Adds accessibility attributes (`role="img"`, `aria-label`) if requested.
+ * 2. Switches to responsive mode by removing `width`/`height` and ensuring a `viewBox` exists.
+ * 3. Applies custom pixel dimensions if `dimensionMode` is `"custom"`.
+ * 4. Serializes the SVG to an XML string and prepends the XML declaration.
+ *
+ * @param svg - The fully constructed root SVG element (mutated in place)
+ * @param options - SVG-specific export options
+ * @param projectName - Optional project name used for the `aria-label` value
+ * @returns The serialized SVG string including the `<?xml ...?>` declaration
  */
 function finalizeSvg(
   svg: SVGSVGElement,
@@ -422,16 +464,20 @@ async function copyToClipboard(svgString: string): Promise<void> {
 }
 
 /**
- * Download SVG as file.
+ * Download SVG as a file via an ephemeral anchor element.
+ * Revokes the object URL after triggering the download even if `.click()` throws,
+ * and rethrows any error so the caller can surface it to the user.
  */
 function downloadSvg(svgString: string, filename: string): void {
   const blob = new Blob([svgString], { type: "image/svg+xml" });
   const url = URL.createObjectURL(blob);
 
-  const link = document.createElement("a");
-  link.href = url;
-  link.download = filename;
-  link.click();
-
-  URL.revokeObjectURL(url);
+  try {
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = filename;
+    link.click();
+  } finally {
+    URL.revokeObjectURL(url);
+  }
 }

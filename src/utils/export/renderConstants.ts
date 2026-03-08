@@ -243,8 +243,10 @@ export function calculateMilestoneSize(pixelsPerDay: number): number {
 /**
  * Minimum corner radius for dependency arrows at extreme zoom-out.
  * Prevents sharp 90° corners when scaling produces very small radii.
+ * Exported so callers can reason about the effective lower bound when
+ * computing row-height-scaled radii.
  */
-const MIN_CORNER_RADIUS = 4;
+export const MIN_CORNER_RADIUS = 4;
 
 /**
  * Calculate corner radius scaled by row height.
@@ -261,6 +263,16 @@ export function getScaledCornerRadius(rowHeight: number): number {
 /**
  * Generate SVG path for a summary bracket shape.
  * Matches the SummaryBracket component exactly.
+ *
+ * The shape consists of a horizontal bar at the top with rounded outer corners,
+ * plus two downward-pointing triangular tips at each end (like a bracket: ▼…▼).
+ * All proportions are driven by {@link SUMMARY_BRACKET} ratios applied to `height`.
+ *
+ * @param x - Left edge of the bracket in px
+ * @param y - Top edge of the bracket in px
+ * @param width - Total width of the bracket in px
+ * @param height - Total height of the bracket (bar + tip) in px
+ * @returns SVG path `d` attribute string
  */
 export function generateSummaryBracketPath(
   x: number,
@@ -315,14 +327,32 @@ export function generateMilestonePath(
 }
 
 /**
+ * Computed label position and styling for a task bar label.
+ * Returned by {@link getLabelConfig}.
+ */
+export interface LabelConfig {
+  /** X offset in px relative to the task bar's left edge */
+  x: number;
+  /** Y position in px (baseline-adjusted for visual vertical centering) */
+  y: number;
+  /** SVG text-anchor value */
+  textAnchor: "start" | "end";
+  /** CSS/SVG fill color for the label text */
+  fill: string;
+  /** Whether the label should be clipped to the task bar bounds */
+  clip: boolean;
+}
+
+/**
  * Calculate label position and styling based on position mode.
  * Returns x offset relative to task bar start, y position, text anchor, fill color, and clip flag.
  *
- * @param taskWidth - Width of the task bar
- * @param taskHeight - Height of the task bar
- * @param labelPosition - Position of the label (before, inside, after)
- * @param fontSize - Font size for vertical offset calculation
+ * @param taskWidth - Width of the task bar in px
+ * @param taskHeight - Height of the task bar in px
+ * @param labelPosition - Position of the label ("before", "inside", or "after")
+ * @param fontSize - Font size in px used for vertical offset calculation
  * @param taskColor - Optional task background color for dynamic contrast calculation (inside labels only)
+ * @returns {@link LabelConfig} describing where and how to render the label
  */
 export function getLabelConfig(
   taskWidth: number,
@@ -330,13 +360,7 @@ export function getLabelConfig(
   labelPosition: "before" | "inside" | "after",
   fontSize: number,
   taskColor?: string
-): {
-  x: number;
-  y: number;
-  textAnchor: "start" | "end";
-  fill: string;
-  clip: boolean;
-} {
+): LabelConfig {
   const padding = LABEL_RENDER_CONSTANTS.padding;
   const yOffset = fontSize * LABEL_RENDER_CONSTANTS.verticalOffsetFactor;
   const y = taskHeight / 2 + yOffset;
