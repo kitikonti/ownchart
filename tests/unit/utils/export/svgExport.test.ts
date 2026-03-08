@@ -14,6 +14,7 @@ import {
   appendTimelineHeader,
   appendChartBody,
   extractSvgElements,
+  cloneSvgIntoGroup,
 } from "../../../../src/utils/export/svgExport";
 import type {
   SvgExportOptions,
@@ -581,6 +582,17 @@ describe("resolveExportLayout", () => {
     const { taskTableWidth } = resolveExportLayout(options, columnWidths);
     expect(taskTableWidth).toBeGreaterThan(0);
   });
+
+  it("handles undefined selectedColumns gracefully (defensive guard)", () => {
+    // Simulate a caller passing undefined via a loose cast
+    const options = {
+      ...DEFAULT_EXPORT_OPTIONS,
+      selectedColumns: undefined as unknown as [],
+    };
+    expect(() => resolveExportLayout(options, columnWidths)).not.toThrow();
+    const { selectedColumns } = resolveExportLayout(options, columnWidths);
+    expect(selectedColumns.length).toBeGreaterThan(0);
+  });
 });
 
 // ---------------------------------------------------------------------------
@@ -750,33 +762,91 @@ describe("extractSvgElements", () => {
     document.body.innerHTML = "";
   });
 
-  it("throws when the chart SVG element is absent", async () => {
+  it("throws when the chart SVG element is absent", () => {
     const container = makeContainer();
-    await expect(
+    expect(() =>
       extractSvgElements(container, { includeHeader: false })
-    ).rejects.toThrow("Could not find chart SVG element");
+    ).toThrow("Could not find chart SVG element");
   });
 
-  it("resolves with chartSvg and null headerSvg when header is not present", async () => {
+  it("returns chartSvg and null headerSvg when header is not present", () => {
     const container = makeContainer();
     addSvgWithClass(container, "gantt-chart");
 
-    const { chartSvg, headerSvg } = await extractSvgElements(container, {
+    const { chartSvg, headerSvg } = extractSvgElements(container, {
       includeHeader: false,
     });
     expect(chartSvg).toBeInstanceOf(SVGSVGElement);
     expect(headerSvg).toBeNull();
   });
 
-  it("resolves with both chartSvg and headerSvg when both are present", async () => {
+  it("returns both chartSvg and headerSvg when both are present", () => {
     const container = makeContainer();
     addSvgWithClass(container, "gantt-chart");
     addSvgWithClass(container, "export-timeline-header");
 
-    const { chartSvg, headerSvg } = await extractSvgElements(container, {
+    const { chartSvg, headerSvg } = extractSvgElements(container, {
       includeHeader: true,
     });
     expect(chartSvg).toBeInstanceOf(SVGSVGElement);
     expect(headerSvg).toBeInstanceOf(SVGSVGElement);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// cloneSvgIntoGroup (@internal)
+// ---------------------------------------------------------------------------
+
+describe("cloneSvgIntoGroup", () => {
+  function makeSvgEl(
+    ns = "http://www.w3.org/2000/svg",
+    tag = "svg"
+  ): SVGSVGElement {
+    return document.createElementNS(ns, tag) as SVGSVGElement;
+  }
+
+  it("appends a <g> with the given transform to the root SVG", () => {
+    const root = makeSvgEl();
+    const source = makeSvgEl();
+    cloneSvgIntoGroup(root, source, "translate(100, 50)");
+    const group = root.querySelector("g");
+    expect(group).not.toBeNull();
+    expect(group?.getAttribute("transform")).toBe("translate(100, 50)");
+  });
+
+  it("clones child nodes from the source SVG into the group", () => {
+    const root = makeSvgEl();
+    const source = makeSvgEl();
+    const rect = document.createElementNS("http://www.w3.org/2000/svg", "rect");
+    rect.setAttribute("width", "42");
+    source.appendChild(rect);
+
+    cloneSvgIntoGroup(root, source, "translate(0, 0)");
+    const clonedRect = root.querySelector("rect");
+    expect(clonedRect).not.toBeNull();
+    expect(clonedRect?.getAttribute("width")).toBe("42");
+  });
+
+  it("does not mutate the source SVG", () => {
+    const root = makeSvgEl();
+    const source = makeSvgEl();
+    const rect = document.createElementNS("http://www.w3.org/2000/svg", "rect");
+    source.appendChild(rect);
+    const originalChildCount = source.childNodes.length;
+
+    cloneSvgIntoGroup(root, source, "translate(0, 0)");
+    expect(source.childNodes.length).toBe(originalChildCount);
+  });
+
+  it("sets font-family on cloned text elements", () => {
+    const root = makeSvgEl();
+    const source = makeSvgEl();
+    const text = document.createElementNS("http://www.w3.org/2000/svg", "text");
+    text.textContent = "Label";
+    source.appendChild(text);
+
+    cloneSvgIntoGroup(root, source, "translate(0, 0)");
+    const clonedText = root.querySelector("text");
+    expect(clonedText?.getAttribute("font-family")).toBeTruthy();
   });
 });

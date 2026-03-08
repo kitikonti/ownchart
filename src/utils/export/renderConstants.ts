@@ -6,6 +6,7 @@
  */
 
 import { getContrastTextColor } from "../colorUtils";
+import { COLORS, SLATE_800 } from "../../styles/design-tokens";
 
 /**
  * Task rendering constants - matching TaskBar.tsx exactly
@@ -88,32 +89,40 @@ export const MILESTONE_RENDER_CONSTANTS = {
  * Default colors used in rendering.
  * Defined before LABEL_RENDER_CONSTANTS so label colors can reference these
  * as the single source of truth for shared hex values.
+ *
+ * Values sourced from COLORS / design-tokens where available to prevent
+ * drift when design tokens change.  Composited values (weekendBackground,
+ * holidayBackground) and colors from Tailwind scales not exported by the
+ * design-token module remain as documented hex literals.
  */
 export const RENDER_COLORS = {
   /**
    * Default task color (brand-600)
    */
-  taskDefault: "#0F6CBD",
+  taskDefault: COLORS.brand[600],
 
   /**
    * Preview outline color during drag (brand-400)
    */
-  previewOutline: "#2B88D8",
+  previewOutline: COLORS.brand[400],
 
   /**
-   * Text color for external labels (before/after positions)
+   * Text color for external labels (before/after positions).
+   * Bootstrap gray-700 (#495057) — matches COLORS.chart.text.
    */
-  textExternal: "#495057",
+  textExternal: COLORS.chart.text,
 
   /**
-   * Text color for internal labels (inside position)
+   * Text color for internal labels (inside position).
+   * Pure white (neutral-0).
    */
-  textInternal: "#ffffff",
+  textInternal: COLORS.neutral[0],
 
   /**
-   * Dependency line color
+   * Dependency line color.
+   * Matches COLORS.chart.dependencyDefault (slate-400).
    */
-  dependency: "#94a3b8",
+  dependency: COLORS.chart.dependencyDefault,
 
   /**
    * Weekend background color.
@@ -130,46 +139,51 @@ export const RENDER_COLORS = {
   holidayBackground: "#fef9e3",
 
   /**
-   * Grid line color
+   * Grid line color (slate-200).
+   * Matches COLORS.chart area styling.
    */
   gridLine: "#e2e8f0",
 
   /**
    * Today marker color (brand-600).
-   * Intentionally the same hex as taskDefault — separate entry because the
+   * Intentionally the same token as taskDefault — separate entry because the
    * semantic roles differ and each may diverge independently in future themes.
    */
-  todayMarker: "#0F6CBD",
+  todayMarker: COLORS.chart.todayMarker,
 
   /**
    * Today header cell highlight color (brand-50)
    */
-  todayHighlight: "#EBF3FC",
+  todayHighlight: COLORS.chart.todayHighlight,
 
   /**
-   * Header background color
+   * Header background color (slate-100).
+   * Cool-gray tint matching the chart area chrome.
    */
   headerBackground: "#f8fafc",
 
   /**
-   * Header text color
+   * Header text color.
+   * Tailwind slate-600 (#475569) — not in the exported design-token scale.
    */
   headerText: "#475569",
 
   /**
-   * Table border color
+   * Table border color (slate-200).
    */
   tableBorder: "#e2e8f0",
 
   /**
-   * Table text color
+   * Table text color.
+   * Uses the exported SLATE_800 constant for WCAG contrast calculations.
    */
-  tableText: "#1e293b",
+  tableText: SLATE_800,
 
   /**
-   * Table header text color
+   * Table header text color.
+   * Tailwind slate-500 (#64748b) — matches COLORS.chart.dependencyHover.
    */
-  tableHeaderText: "#64748b",
+  tableHeaderText: COLORS.chart.dependencyHover,
 } as const;
 
 /**
@@ -302,8 +316,10 @@ interface BracketGeometry {
  * Compute the clamped geometry values for a summary bracket of the given size.
  * Extracted so the clamping logic is independently testable and
  * {@link generateSummaryBracketPath} can focus on path assembly only.
+ *
+ * @internal
  */
-function computeBracketGeometry(
+export function computeBracketGeometry(
   width: number,
   height: number
 ): BracketGeometry {
@@ -350,7 +366,8 @@ export function generateSummaryBracketPath(
   const { tipHeight, barThickness, tipWidth, cornerRadius, innerRadius } =
     computeBracketGeometry(width, height);
 
-  return `
+  return (
+    `
     M ${x + cornerRadius} ${y}
     L ${x + width - cornerRadius} ${y}
     Q ${x + width} ${y} ${x + width} ${y + cornerRadius}
@@ -366,8 +383,10 @@ export function generateSummaryBracketPath(
     Q ${x} ${y} ${x + cornerRadius} ${y}
     Z
   `
-    .trim()
-    .replace(/\s+/g, " ");
+      .trim()
+      // Collapses template-literal indentation; safe because SVG path numbers contain no embedded spaces.
+      .replace(/\s+/g, " ")
+  );
 }
 
 /**
@@ -389,15 +408,18 @@ export function generateMilestonePath(
 ): string {
   if (size <= 0) return "";
 
-  return `
+  return (
+    `
     M ${centerX} ${centerY - size}
     L ${centerX + size} ${centerY}
     L ${centerX} ${centerY + size}
     L ${centerX - size} ${centerY}
     Z
   `
-    .trim()
-    .replace(/\s+/g, " ");
+      .trim()
+      // Collapses template-literal indentation; safe because SVG path numbers contain no embedded spaces.
+      .replace(/\s+/g, " ")
+  );
 }
 
 /**

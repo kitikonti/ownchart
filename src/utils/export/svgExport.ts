@@ -41,8 +41,12 @@ import {
 import type { ColorModeState } from "../../types/colorMode.types";
 import type { Task } from "../../types/chart.types";
 import type { TaskId } from "../../types/branded.types";
-import type { ExportOptions, SvgExportOptions } from "./types";
-import { DEFAULT_EXPORT_COLUMNS } from "./types";
+import {
+  type ExportOptions,
+  type SvgExportOptions,
+  type ExportColumnKey,
+  DEFAULT_EXPORT_COLUMNS,
+} from "./types";
 import type {
   TaskTableHeaderOptions,
   TaskTableRowsOptions,
@@ -123,14 +127,11 @@ export async function exportToSvg(params: ExportToSvgParams): Promise<void> {
 
     onProgress?.(40);
 
-    const { chartSvg, headerSvg } = await extractSvgElements(
-      container,
-      options
-    );
+    const { chartSvg, headerSvg } = extractSvgElements(container, options);
 
     onProgress?.(60);
 
-    const finalSvg = buildCompleteSvg(
+    const finalSvg = buildCompleteSvg({
       chartSvg,
       headerSvg,
       tasks,
@@ -138,8 +139,8 @@ export async function exportToSvg(params: ExportToSvgParams): Promise<void> {
       columnWidths,
       dimensions,
       colorModeState,
-      projectName
-    );
+      projectName,
+    });
 
     onProgress?.(80);
 
@@ -208,10 +209,10 @@ export async function renderExportComponentAndWait(
  *
  * @internal
  */
-export async function extractSvgElements(
+export function extractSvgElements(
   container: HTMLElement,
   options: Pick<ExportOptions, "includeHeader">
-): Promise<{ chartSvg: SVGSVGElement; headerSvg: SVGSVGElement | null }> {
+): { chartSvg: SVGSVGElement; headerSvg: SVGSVGElement | null } {
   // Use the same named CSS class constants as pdfExport.ts to avoid
   // selector drift if class names change in ExportRenderer.
   const chartSvgEl = container.querySelector(`svg.${EXPORT_CHART_SVG_CLASS}`);
@@ -275,10 +276,9 @@ export function resolveExportLayout(
   selectedColumns: NonNullable<ExportOptions["selectedColumns"]>;
   taskTableWidth: number;
 } {
-  const selectedColumns =
-    options.selectedColumns.length > 0
-      ? options.selectedColumns
-      : DEFAULT_EXPORT_COLUMNS;
+  // Guard against undefined (e.g. loose casts from JS callers or future optional paths).
+  const cols: ExportColumnKey[] = options.selectedColumns ?? [];
+  const selectedColumns = cols.length > 0 ? cols : DEFAULT_EXPORT_COLUMNS;
   const taskTableWidth = calculateTaskTableWidth(
     selectedColumns,
     columnWidths,
@@ -333,6 +333,31 @@ export function createRootSvg(
 }
 
 /**
+ * Clone all children of `sourceSvg` into a new `<g>` element with the given
+ * SVG transform, set font-family on all text descendants (vector apps ignore
+ * CSS style blocks), and append the group to `svg`.
+ *
+ * Extracted from {@link appendTimelineHeader} and {@link appendChartBody} to
+ * eliminate the duplicated clone-and-append pattern.
+ *
+ * @internal
+ */
+export function cloneSvgIntoGroup(
+  svg: SVGSVGElement,
+  sourceSvg: SVGSVGElement,
+  transform: string
+): void {
+  const group = document.createElementNS("http://www.w3.org/2000/svg", "g");
+  group.setAttribute("transform", transform);
+  Array.from(sourceSvg.childNodes).forEach((child) => {
+    group.appendChild(child.cloneNode(true));
+  });
+  // Set font-family on all text elements (vector apps ignore CSS style blocks)
+  setFontFamilyOnTextElements(group);
+  svg.appendChild(group);
+}
+
+/**
  * Append the timeline header SVG (cloned from the rendered DOM) into the root SVG,
  * offset horizontally by the task table width.
  *
@@ -343,19 +368,7 @@ export function appendTimelineHeader(
   headerSvg: SVGSVGElement,
   taskTableWidth: number
 ): void {
-  const headerGroup = document.createElementNS(
-    "http://www.w3.org/2000/svg",
-    "g"
-  );
-  headerGroup.setAttribute("transform", `translate(${taskTableWidth}, 0)`);
-
-  // Clone all children from header SVG
-  Array.from(headerSvg.childNodes).forEach((child) => {
-    headerGroup.appendChild(child.cloneNode(true));
-  });
-  // Set font-family on all text elements (vector apps ignore CSS style blocks)
-  setFontFamilyOnTextElements(headerGroup);
-  svg.appendChild(headerGroup);
+  cloneSvgIntoGroup(svg, headerSvg, `translate(${taskTableWidth}, 0)`);
 }
 
 /**
@@ -370,47 +383,38 @@ export function appendChartBody(
   taskTableWidth: number,
   yOffset: number
 ): void {
-  const chartGroup = document.createElementNS(
-    "http://www.w3.org/2000/svg",
-    "g"
-  );
-  chartGroup.setAttribute(
-    "transform",
-    `translate(${taskTableWidth}, ${yOffset})`
-  );
+  cloneSvgIntoGroup(svg, chartSvg, `translate(${taskTableWidth}, ${yOffset})`);
+}
 
-  // Clone all children from chart SVG
-  Array.from(chartSvg.childNodes).forEach((child) => {
-    chartGroup.appendChild(child.cloneNode(true));
-  });
-  // Set font-family on all text elements (vector apps ignore CSS style blocks)
-  setFontFamilyOnTextElements(chartGroup);
-  svg.appendChild(chartGroup);
+/** Options for {@link renderTaskTableSection}. */
+interface RenderTaskTableSectionOptions {
+  flattenedTasks: ReturnType<typeof buildFlattenedTaskList>;
+  selectedColumns: NonNullable<ExportOptions["selectedColumns"]>;
+  columnWidths: Record<string, number>;
+  taskTableWidth: number;
+  bodyYOffset: number;
+  options: ExportOptions;
+  colorModeState: ColorModeState;
 }
 
 /**
  * Render the task table section (header row + data rows) into the root SVG.
  * Only called when at least one column is selected for the task list panel.
- *
- * @param svg - Root SVG element to append into
- * @param flattenedTasks - Flattened task list (from {@link buildFlattenedTaskList})
- * @param selectedColumns - Ordered list of columns to render
- * @param columnWidths - Per-column pixel widths
- * @param taskTableWidth - Total width of the task table panel in px
- * @param bodyYOffset - Y offset in px where task data rows begin (after header, if any)
- * @param options - Export options (density, includeHeader, etc.)
- * @param colorModeState - Current color mode for row rendering
  */
 function renderTaskTableSection(
   svg: SVGSVGElement,
-  flattenedTasks: ReturnType<typeof buildFlattenedTaskList>,
-  selectedColumns: NonNullable<ExportOptions["selectedColumns"]>,
-  columnWidths: Record<string, number>,
-  taskTableWidth: number,
-  bodyYOffset: number,
-  options: ExportOptions,
-  colorModeState: ColorModeState
+  sectionOpts: RenderTaskTableSectionOptions
 ): void {
+  const {
+    flattenedTasks,
+    selectedColumns,
+    columnWidths,
+    taskTableWidth,
+    bodyYOffset,
+    options,
+    colorModeState,
+  } = sectionOpts;
+
   if (options.includeHeader) {
     const headerOpts: TaskTableHeaderOptions = {
       selectedColumns,
@@ -436,6 +440,18 @@ function renderTaskTableSection(
   renderTaskTableRows(svg, rowsOpts);
 }
 
+/** Parameters for {@link buildCompleteSvg}. */
+interface BuildCompleteSvgParams {
+  chartSvg: SVGSVGElement;
+  headerSvg: SVGSVGElement | null;
+  tasks: Task[];
+  options: ExportOptions;
+  columnWidths: Record<string, number>;
+  dimensions: { width: number; height: number };
+  colorModeState: ColorModeState;
+  projectName?: string;
+}
+
 /**
  * Build a complete SVG document from the rendered React export DOM.
  *
@@ -448,26 +464,20 @@ function renderTaskTableSection(
  * 4. Cloning and appending the chart body SVG (offset right and down by header
  *    height when applicable).
  *
- * @param chartSvg - The main Gantt chart SVG extracted from the rendered DOM
- * @param headerSvg - The timeline header SVG, or `null` if not rendered
- * @param tasks - Full task list (used to build the flattened task table)
- * @param options - Export options controlling layout, header, density, etc.
- * @param columnWidths - Per-column pixel widths for the task table panel
- * @param dimensions - Final canvas width and height in pixels
- * @param colorModeState - Current color mode (used for task row backgrounds)
- * @param projectName - Optional project name for the SVG `<title>` element
  * @returns The composed root SVGSVGElement ready for serialization
  */
-function buildCompleteSvg(
-  chartSvg: SVGSVGElement,
-  headerSvg: SVGSVGElement | null,
-  tasks: Task[],
-  options: ExportOptions,
-  columnWidths: Record<string, number>,
-  dimensions: { width: number; height: number },
-  colorModeState: ColorModeState,
-  projectName?: string
-): SVGSVGElement {
+function buildCompleteSvg(params: BuildCompleteSvgParams): SVGSVGElement {
+  const {
+    chartSvg,
+    headerSvg,
+    tasks,
+    options,
+    columnWidths,
+    dimensions,
+    colorModeState,
+    projectName,
+  } = params;
+
   const { selectedColumns, taskTableWidth } = resolveExportLayout(
     options,
     columnWidths
@@ -482,16 +492,15 @@ function buildCompleteSvg(
   // selectedColumns is always non-empty after resolveExportLayout's fallback
   // to DEFAULT_EXPORT_COLUMNS, so the task table section is always rendered.
   // A future timeline-only mode should use an explicit ExportOptions flag.
-  renderTaskTableSection(
-    svg,
+  renderTaskTableSection(svg, {
     flattenedTasks,
     selectedColumns,
     columnWidths,
     taskTableWidth,
     bodyYOffset,
     options,
-    colorModeState
-  );
+    colorModeState,
+  });
 
   if (options.includeHeader && headerSvg) {
     appendTimelineHeader(svg, headerSvg, taskTableWidth);
