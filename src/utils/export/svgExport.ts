@@ -11,12 +11,17 @@ import { createElement } from "react";
 import type { Task } from "../../types/chart.types";
 import type { TaskId } from "../../types/branded.types";
 import type { ExportOptions, SvgExportOptions } from "./types";
+import { DEFAULT_EXPORT_COLUMNS } from "./types";
 import { ExportRenderer } from "../../components/Export/ExportRenderer";
 import { calculateExportDimensions } from "./exportLayout";
 import { calculateTaskTableWidth } from "./calculations";
 import { buildFlattenedTaskList } from "../../utils/hierarchy";
 // Shared modules
-import { HEADER_HEIGHT, SVG_FONT_FAMILY } from "./constants";
+import {
+  HEADER_HEIGHT,
+  SVG_FONT_FAMILY,
+  REACT_RENDER_WAIT_MS,
+} from "./constants";
 import {
   waitForFonts,
   waitForPaint,
@@ -32,6 +37,14 @@ import {
   type TaskTableRowsOptions,
 } from "./taskTableRenderer";
 import type { ColorModeState } from "../../types/colorMode.types";
+
+/**
+ * White background fill colour for the SVG canvas.
+ * Intentionally hardcoded: pure white is a presentation-layer override for
+ * the "opaque background" export option, not a design-system colour that
+ * should track theme changes.
+ */
+const SVG_BACKGROUND_WHITE = "#ffffff";
 
 /** Parameters for SVG export */
 export interface ExportToSvgParams {
@@ -101,7 +114,7 @@ export async function exportToSvg(params: ExportToSvgParams): Promise<void> {
           visibleDateRange,
         })
       );
-      setTimeout(resolve, 100);
+      setTimeout(resolve, REACT_RENDER_WAIT_MS);
     });
 
     onProgress?.(40);
@@ -175,12 +188,7 @@ function buildCompleteSvg(
   projectName?: string
 ): SVGSVGElement {
   // Calculate task table width
-  const selectedColumns = options.selectedColumns || [
-    "name",
-    "startDate",
-    "endDate",
-    "progress",
-  ];
+  const selectedColumns = options.selectedColumns || DEFAULT_EXPORT_COLUMNS;
   const hasTaskList = selectedColumns.length > 0;
   const taskTableWidth = hasTaskList
     ? calculateTaskTableWidth(selectedColumns, columnWidths, options.density)
@@ -208,7 +216,7 @@ function buildCompleteSvg(
     const bg = document.createElementNS("http://www.w3.org/2000/svg", "rect");
     bg.setAttribute("width", "100%");
     bg.setAttribute("height", "100%");
-    bg.setAttribute("fill", "#ffffff");
+    bg.setAttribute("fill", SVG_BACKGROUND_WHITE);
     svg.appendChild(bg);
   }
 
@@ -347,18 +355,33 @@ function finalizeSvg(
 
 /**
  * Copy SVG string to clipboard.
+ * Prefers the modern Clipboard API; falls back to the legacy execCommand
+ * approach for environments where the Clipboard API is unavailable (e.g.
+ * insecure contexts). Throws if both methods fail so the caller can surface
+ * a user-facing error rather than silently doing nothing.
  */
 async function copyToClipboard(svgString: string): Promise<void> {
-  try {
+  // Prefer modern Clipboard API (available in secure contexts)
+  if (navigator.clipboard?.writeText) {
     await navigator.clipboard.writeText(svgString);
-  } catch {
-    const textarea = document.createElement("textarea");
-    textarea.value = svgString;
-    textarea.style.position = "fixed";
-    textarea.style.opacity = "0";
-    document.body.appendChild(textarea);
+    return;
+  }
+
+  // Fallback: legacy execCommand (deprecated but still works in some environments)
+  const textarea = document.createElement("textarea");
+  textarea.value = svgString;
+  textarea.style.position = "fixed";
+  textarea.style.opacity = "0";
+  document.body.appendChild(textarea);
+  try {
     textarea.select();
-    document.execCommand("copy");
+    // execCommand is deprecated; this is only reached when the Clipboard API
+    // is unavailable (e.g. non-HTTPS context or older browser).
+    const success = document.execCommand("copy");
+    if (!success) {
+      throw new Error("execCommand copy returned false");
+    }
+  } finally {
     document.body.removeChild(textarea);
   }
 }

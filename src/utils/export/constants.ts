@@ -8,6 +8,13 @@ import { COLORS } from "../../styles/design-tokens";
 /** Height of the header row in pixels */
 export const HEADER_HEIGHT = 48;
 
+/**
+ * Wait time in ms after root.render() before reading the DOM.
+ * React schedules its commit asynchronously; this gives it one macro-task
+ * to flush before waitForFonts() / waitForPaint() take over.
+ */
+export const REACT_RENDER_WAIT_MS = 100;
+
 /** Font family for SVG text elements (Inter with system font fallback) */
 export const SVG_FONT_FAMILY =
   'Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif';

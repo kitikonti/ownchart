@@ -43,6 +43,7 @@ import {
   EXPORT_COLORS,
   EXPORT_CHART_SVG_CLASS,
   EXPORT_TIMELINE_HEADER_SVG_CLASS,
+  REACT_RENDER_WAIT_MS,
 } from "./constants";
 import { APP_CONFIG } from "../../config/appConfig";
 import { registerInterFont } from "./interFont";
@@ -91,13 +92,6 @@ const PDF_HEADER_TEXT_OFFSET_MM = 6;
 
 /** Footer text vertical offset from the bottom margin edge in mm */
 const PDF_FOOTER_TEXT_BOTTOM_OFFSET_MM = 4;
-
-/**
- * Wait time in ms after root.render() before reading the DOM.
- * React schedules its commit asynchronously; this gives it one macro-task
- * to flush before waitForFonts() / waitForPaint() take over.
- */
-const REACT_RENDER_WAIT_MS = 100;
 
 /**
  * White background fill colour for the SVG canvas.

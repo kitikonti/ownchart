@@ -1,11 +1,11 @@
 /**
  * Shared rendering constants for export functionality.
- * These values are extracted from TaskBar.tsx and elbowPath.ts
- * to ensure consistent rendering between app and exports.
+ * These values are the single source of truth for geometry and colour used
+ * by both the app (TaskBar.tsx, elbowPath.ts) and the export path (svgExport,
+ * pdfExport, taskTableRenderer) to guarantee visual consistency.
  */
 
 import { getContrastTextColor } from "../colorUtils";
-import { SUMMARY_BRACKET } from "../../components/GanttChart/TaskBar";
 
 /**
  * Task rendering constants - matching TaskBar.tsx exactly
@@ -28,11 +28,33 @@ export const TASK_RENDER_CONSTANTS = {
 } as const;
 
 /**
- * Summary bracket constants — re-exported from TaskBar.tsx (single source of truth).
+ * Summary bracket shape geometry — single source of truth.
+ * Consumed by renderConstants (export path) and TaskBar.tsx (app rendering path).
+ *
+ * All values are ratios or unitless factors applied to the rendered height.
  */
-export const SUMMARY_RENDER_CONSTANTS = {
-  ...SUMMARY_BRACKET,
+export const SUMMARY_BRACKET = {
+  /** Horizontal bar thickness as ratio of total height (30%) */
+  barThicknessRatio: 0.3,
+  /** Downward tip height as ratio of total height (50%) */
+  tipHeightRatio: 0.5,
+  /** Tip width factor for 60° angle (1/tan(60°) ≈ 0.577) */
+  tipWidthFactor: 0.577,
+  /** Radius for top corners of the bracket bar */
+  cornerRadius: 10,
+  /** Radius for inner corners where tips meet the bar */
+  innerRadius: 3,
+  /** Fill opacity for summary bracket shapes */
+  fillOpacity: 0.9,
 } as const;
+
+/**
+ * Summary bracket constants — alias for SUMMARY_BRACKET kept for naming
+ * consistency with the other RENDER_CONSTANTS exports in this file.
+ *
+ * @see SUMMARY_BRACKET
+ */
+export const SUMMARY_RENDER_CONSTANTS = SUMMARY_BRACKET;
 
 /**
  * Milestone rendering constants - matching MilestoneDiamond component
@@ -55,77 +77,9 @@ export const MILESTONE_RENDER_CONSTANTS = {
 } as const;
 
 /**
- * Label rendering constants - matching TaskBar label positioning
- */
-export const LABEL_RENDER_CONSTANTS = {
-  /**
-   * Horizontal padding from task bar edge
-   */
-  padding: 8,
-
-  /**
-   * Color for labels outside the bar (before/after positions)
-   */
-  externalColor: "#495057",
-
-  /**
-   * Color for labels inside the bar
-   */
-  internalColor: "#ffffff",
-
-  /**
-   * Vertical offset factor for centering (fontSize / 3 gives good visual center)
-   */
-  verticalOffsetFactor: 1 / 3,
-
-  /**
-   * Font weight for task labels
-   */
-  fontWeight: 600,
-} as const;
-
-/**
- * Dependency arrow constants - matching elbowPath.ts
- */
-export const DEPENDENCY_RENDER_CONSTANTS = {
-  /**
-   * Horizontal segment length coming out of/into tasks
-   */
-  horizontalSegment: 15,
-
-  /**
-   * Base corner radius for 90° turns (at comfortable/44px row height)
-   */
-  baseCornerRadius: 8,
-
-  /**
-   * Base row height for scaling calculations
-   */
-  baseRowHeight: 44,
-
-  /**
-   * Arrowhead size (triangle pointing into target task)
-   */
-  arrowheadSize: 8,
-
-  /**
-   * Stroke color for dependency lines (neutral-400)
-   */
-  strokeColor: "#94a3b8",
-
-  /**
-   * Stroke width for dependency lines
-   */
-  strokeWidth: 1.5,
-
-  /**
-   * Extra padding for minimum gap calculation (switch to S-curve earlier)
-   */
-  elbowGapPadding: 0,
-} as const;
-
-/**
- * Default colors used in rendering
+ * Default colors used in rendering.
+ * Defined before LABEL_RENDER_CONSTANTS so label colors can reference these
+ * as the single source of truth for shared hex values.
  */
 export const RENDER_COLORS = {
   /**
@@ -139,12 +93,12 @@ export const RENDER_COLORS = {
   previewOutline: "#2B88D8",
 
   /**
-   * Text color for external labels
+   * Text color for external labels (before/after positions)
    */
   textExternal: "#495057",
 
   /**
-   * Text color for internal labels
+   * Text color for internal labels (inside position)
    */
   textInternal: "#ffffff",
 
@@ -204,6 +158,79 @@ export const RENDER_COLORS = {
    * Table header text color
    */
   tableHeaderText: "#64748b",
+} as const;
+
+/**
+ * Label rendering constants - matching TaskBar label positioning.
+ * Colors reference RENDER_COLORS to avoid duplication.
+ */
+export const LABEL_RENDER_CONSTANTS = {
+  /**
+   * Horizontal padding from task bar edge
+   */
+  padding: 8,
+
+  /**
+   * Color for labels outside the bar (before/after positions)
+   */
+  externalColor: RENDER_COLORS.textExternal,
+
+  /**
+   * Color for labels inside the bar
+   */
+  internalColor: RENDER_COLORS.textInternal,
+
+  /**
+   * Vertical offset factor for centering (fontSize / 3 gives good visual center)
+   */
+  verticalOffsetFactor: 1 / 3,
+
+  /**
+   * Font weight for task labels
+   */
+  fontWeight: 600,
+} as const;
+
+/**
+ * Dependency arrow constants - matching elbowPath.ts
+ */
+export const DEPENDENCY_RENDER_CONSTANTS = {
+  /**
+   * Horizontal segment length coming out of/into tasks
+   */
+  horizontalSegment: 15,
+
+  /**
+   * Base corner radius for 90° turns (at comfortable/44px row height)
+   */
+  baseCornerRadius: 8,
+
+  /**
+   * Base row height for scaling calculations
+   */
+  baseRowHeight: 44,
+
+  /**
+   * Arrowhead size (triangle pointing into target task)
+   */
+  arrowheadSize: 8,
+
+  /**
+   * Stroke color for dependency lines (neutral-400)
+   */
+  strokeColor: "#94a3b8",
+
+  /**
+   * Stroke width for dependency lines
+   */
+  strokeWidth: 1.5,
+
+  /**
+   * Extra padding for minimum gap calculation (switch to S-curve earlier).
+   * Zero means the S-curve threshold is purely based on task geometry with
+   * no additional buffer — keeps arrows tight to task bars.
+   */
+  elbowGapPadding: 0,
 } as const;
 
 /**
@@ -342,5 +369,12 @@ export function getLabelConfig(
         fill: LABEL_RENDER_CONSTANTS.externalColor,
         clip: false,
       };
+    default: {
+      // TypeScript exhaustiveness check — this branch is unreachable at compile
+      // time but provides a runtime guard if the union is ever widened or the
+      // function is called via an unsafe cast.
+      const _exhaustive: never = labelPosition;
+      throw new Error(`Unknown labelPosition: ${String(_exhaustive)}`);
+    }
   }
 }

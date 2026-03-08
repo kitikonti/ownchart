@@ -11,6 +11,7 @@ import type {
   ExportColumnKey,
   ExportDataColumnKey,
 } from "../../utils/export/types";
+import { DEFAULT_EXPORT_COLUMNS } from "../../utils/export/types";
 import {
   calculateTaskTableWidth,
   calculateEffectiveZoom,
@@ -295,8 +296,7 @@ export function ExportRenderer({
 
   // Get selected columns (default to all if not specified)
   const selectedColumns = useMemo(
-    () =>
-      options.selectedColumns || ["name", "startDate", "endDate", "progress"],
+    () => options.selectedColumns || DEFAULT_EXPORT_COLUMNS,
     [options.selectedColumns]
   );
   const hasTaskList = selectedColumns.length > 0;

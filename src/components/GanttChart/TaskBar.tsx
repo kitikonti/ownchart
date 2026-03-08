@@ -18,6 +18,7 @@ import { useChartStore } from "../../store/slices/chartSlice";
 import { useTaskStore } from "../../store/slices/taskSlice";
 import { useDensityConfig } from "../../store/slices/userPreferencesSlice";
 import { SVG_FONT_FAMILY } from "../../utils/export/constants";
+import { SUMMARY_BRACKET } from "../../utils/export/renderConstants";
 import { getContrastTextColor } from "../../utils/colorUtils";
 import { useComputedTaskColor } from "../../hooks/useComputedTaskColor";
 import {
@@ -46,21 +47,8 @@ const DRAG_OPACITY = 0.3;
 /** Background opacity for the unfilled portion of a progress bar */
 const PROGRESS_BG_OPACITY = 0.65;
 
-/** Summary bracket shape geometry (shared with export renderer) */
-export const SUMMARY_BRACKET = {
-  /** Horizontal bar thickness as ratio of total height (30%) */
-  barThicknessRatio: 0.3,
-  /** Downward tip height as ratio of total height (50%) */
-  tipHeightRatio: 0.5,
-  /** Tip width factor for 60° angle (1/tan(60°) ≈ 0.577) */
-  tipWidthFactor: 0.577,
-  /** Radius for top corners of the bracket bar */
-  cornerRadius: 10,
-  /** Radius for inner corners where tips meet the bar */
-  innerRadius: 3,
-  /** Fill opacity for summary bracket shapes */
-  fillOpacity: 0.9,
-} as const;
+// SUMMARY_BRACKET is imported from renderConstants — single source of truth.
+// See src/utils/export/renderConstants.ts.
 
 /** Stroke width for drag preview outlines */
 const PREVIEW_STROKE_WIDTH = 2;

@@ -185,6 +185,17 @@ export type ExportDataColumnKey =
   | "duration"
   | "progress";
 
+/**
+ * Default columns shown when no explicit selection has been made.
+ * Used as fallback in ExportRenderer and SVG export when selectedColumns is empty.
+ */
+export const DEFAULT_EXPORT_COLUMNS: ExportColumnKey[] = [
+  "name",
+  "startDate",
+  "endDate",
+  "progress",
+];
+
 /** Zoom mode for export */
 export type ExportZoomMode = "currentView" | "custom" | "fitToWidth";
 
