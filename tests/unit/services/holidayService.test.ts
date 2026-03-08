@@ -55,6 +55,15 @@ describe("HolidayService", () => {
       expect(holidays1).toBe(holidays2);
     });
 
+    it("should accept unknown country codes without throwing (date-holidays is lenient)", () => {
+      // date-holidays silently accepts unknown country codes and returns zero
+      // holidays for them. setRegion should not throw either — it just records
+      // the (unknown) country so callers can later query via getCurrentRegion().
+      expect(() => holidayService.setRegion("XX_UNKNOWN")).not.toThrow();
+      const region = holidayService.getCurrentRegion();
+      expect(region.country).toBe("XX_UNKNOWN");
+    });
+
   });
 
   describe("getHolidaysForYear", () => {

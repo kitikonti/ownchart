@@ -161,11 +161,15 @@ class _HolidayService {
 
     try {
       this.hd.init(country, state);
-    } catch {
+    } catch (err) {
       // date-holidays can throw for unknown country/state codes.
       // Leave the previous region unchanged so the app continues functioning
       // rather than entering an inconsistent state. The caller receives no
       // holidays for the requested region, which is the safe fallback.
+      console.warn(
+        `[holidayService] setRegion failed for country="${country}" state="${state ?? ""}" — keeping previous region.`,
+        err
+      );
       return;
     }
 
@@ -347,13 +351,14 @@ class _HolidayService {
   }
 
   /**
-   * Helper: Compare two dates (day only, ignoring time)
+   * Helper: Compare two dates (day only, ignoring time).
+   * Both inputs are normalised to local midnight before comparison so that
+   * time-of-day differences — including any residual component left by
+   * date-holidays — never cause a false mismatch.
    */
   private isSameDay(date1: Date, date2: Date): boolean {
     return (
-      date1.getFullYear() === date2.getFullYear() &&
-      date1.getMonth() === date2.getMonth() &&
-      date1.getDate() === date2.getDate()
+      toLocalMidnight(date1).getTime() === toLocalMidnight(date2).getTime()
     );
   }
 
