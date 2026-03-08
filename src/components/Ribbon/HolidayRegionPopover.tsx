@@ -7,33 +7,20 @@ import { useCallback, useMemo, useRef, useState } from "react";
 import { Globe, MagnifyingGlass, Gear } from "@phosphor-icons/react";
 import { Input } from "../common/Input";
 import { useChartStore } from "../../store/slices/chartSlice";
-import { holidayService } from "../../services/holidayService";
+import {
+  holidayService,
+  POPULAR_COUNTRY_CODES,
+} from "../../services/holidayService";
 import { useDropdown } from "../../hooks/useDropdown";
 import { DropdownPanel } from "../Toolbar/DropdownPanel";
 import { TOOLBAR } from "../../styles/design-tokens";
 
 const ICON_SIZE = TOOLBAR.iconSize;
 
-/**
- * Popular countries to show at the top of the list
- */
-const POPULAR_COUNTRIES = [
-  "AT",
-  "DE",
-  "CH",
-  "US",
-  "GB",
-  "FR",
-  "ES",
-  "IT",
-  "NL",
-  "BE",
-];
-
 /** Sorted country list — computed once at module load (static data). */
 const ALL_COUNTRIES = holidayService.getAvailableCountries().sort((a, b) => {
-  const aPopular = POPULAR_COUNTRIES.indexOf(a.code);
-  const bPopular = POPULAR_COUNTRIES.indexOf(b.code);
+  const aPopular = POPULAR_COUNTRY_CODES.indexOf(a.code);
+  const bPopular = POPULAR_COUNTRY_CODES.indexOf(b.code);
   if (aPopular !== -1 && bPopular !== -1) return aPopular - bPopular;
   if (aPopular !== -1) return -1;
   if (bPopular !== -1) return 1;

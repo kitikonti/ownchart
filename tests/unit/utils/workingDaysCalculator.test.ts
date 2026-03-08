@@ -12,7 +12,7 @@ import { parseISO } from "date-fns";
 vi.mock("../../../src/services/holidayService", () => ({
   holidayService: {
     setRegion: vi.fn(),
-    isHolidayString: vi.fn().mockReturnValue(null), // no holidays by default
+    getHolidayForDateString: vi.fn().mockReturnValue(null), // no holidays by default
     getHolidaysInRange: vi.fn().mockReturnValue([]),
   },
 }));
@@ -48,9 +48,8 @@ const EXCLUDE_ALL: WorkingDaysConfig = {
 };
 
 // Convenience typed references to the mocked functions
-const mockIsHolidayString = holidayService.isHolidayString as ReturnType<
-  typeof vi.fn
->;
+const mockGetHolidayForDateString =
+  holidayService.getHolidayForDateString as ReturnType<typeof vi.fn>;
 const mockGetHolidaysInRange = holidayService.getHolidaysInRange as ReturnType<
   typeof vi.fn
 >;
@@ -72,7 +71,7 @@ function makeHoliday(dateStr: string, name = "Test Holiday"): HolidayInfo {
 describe("workingDaysCalculator", () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    mockIsHolidayString.mockReturnValue(null);
+    mockGetHolidayForDateString.mockReturnValue(null);
     mockGetHolidaysInRange.mockReturnValue([]);
   });
 
@@ -122,7 +121,7 @@ describe("workingDaysCalculator", () => {
     });
 
     it("should return false for a holiday when excludeHolidays is true", () => {
-      mockIsHolidayString.mockReturnValue(
+      mockGetHolidayForDateString.mockReturnValue(
         makeHoliday("2025-01-01", "New Year's Day")
       );
       expect(isWorkingDay("2025-01-01", EXCLUDE_ALL, "AT")).toBe(false);
@@ -134,12 +133,12 @@ describe("workingDaysCalculator", () => {
 
     it("should not query holidayService when excludeHolidays is false", () => {
       isWorkingDay("2025-01-06", EXCLUDE_WEEKENDS, "AT");
-      expect(holidayService.isHolidayString).not.toHaveBeenCalled();
+      expect(holidayService.getHolidayForDateString).not.toHaveBeenCalled();
     });
 
     it("should not query holidayService when no holidayRegion is provided", () => {
       isWorkingDay("2025-01-06", EXCLUDE_ALL);
-      expect(holidayService.isHolidayString).not.toHaveBeenCalled();
+      expect(holidayService.getHolidayForDateString).not.toHaveBeenCalled();
     });
 
     it("should configure the holiday service when excludeHolidays is true and region is provided", () => {
@@ -208,7 +207,7 @@ describe("workingDaysCalculator", () => {
     it("should subtract holiday days from the count", () => {
       // Wed Jan 8 is a holiday — Mon–Fri (5 days) minus 1 = 4.
       // calculateWorkingDays uses fetchHolidaysForRange (getHolidaysInRange),
-      // not isHolidayString, so mock the service-level call.
+      // not getHolidayForDateString, so mock the service-level call.
       mockGetHolidaysInRange.mockReturnValue([makeHoliday("2025-01-08")]);
       expect(
         calculateWorkingDays("2025-01-06", "2025-01-10", EXCLUDE_ALL, "AT")
@@ -266,7 +265,7 @@ describe("workingDaysCalculator", () => {
     it("should skip holidays when excludeHolidays is true", () => {
       // Mon Jan 6 to Fri Jan 10: Wed Jan 8 is a holiday.
       // days=5: Mon(1) Tue(2) [Wed skipped] Thu(3) Fri(4) Mon Jan 13(5)
-      mockIsHolidayString.mockImplementation((dateStr: string) =>
+      mockGetHolidayForDateString.mockImplementation((dateStr: string) =>
         dateStr === "2025-01-08" ? makeHoliday("2025-01-08") : null
       );
       expect(addWorkingDays("2025-01-06", 5, EXCLUDE_ALL, "AT")).toBe(

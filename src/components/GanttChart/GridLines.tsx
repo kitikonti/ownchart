@@ -172,7 +172,7 @@ export function GridLines({
       const x = dateToPixel(currentDate, scale);
 
       if (x >= 0 && x <= gridWidth) {
-        const holidayInfo = holidayService.isHolidayString(currentDate);
+        const holidayInfo = holidayService.getHolidayForDateString(currentDate);
         if (holidayInfo) {
           columns.push({ x, date: currentDate, name: holidayInfo.name });
         }

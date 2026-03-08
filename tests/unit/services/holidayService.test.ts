@@ -3,16 +3,18 @@
  * Sprint 1.5.9: User Preferences & Settings
  */
 
-import { describe, it, expect, beforeEach } from "vitest";
+import { describe, it, expect, beforeEach, afterEach } from "vitest";
 import {
   holidayService,
   detectLocaleHolidayRegion,
+  POPULAR_COUNTRY_CODES,
 } from "../../../src/services/holidayService";
 
 describe("HolidayService", () => {
   beforeEach(() => {
-    // Reset service state before each test
-    holidayService.clearCache();
+    // Reset service state (region + cache) before each test to prevent
+    // state leakage between describe blocks that call setRegion().
+    holidayService.reset();
   });
 
   describe("setRegion", () => {
@@ -52,6 +54,16 @@ describe("HolidayService", () => {
       // Should be cached (same reference)
       expect(holidays1).toBe(holidays2);
     });
+
+    it("should accept unknown country codes without throwing (date-holidays is lenient)", () => {
+      // date-holidays silently accepts unknown country codes and returns zero
+      // holidays for them. setRegion should not throw either — it just records
+      // the (unknown) country so callers can later query via getCurrentRegion().
+      expect(() => holidayService.setRegion("XX_UNKNOWN")).not.toThrow();
+      const region = holidayService.getCurrentRegion();
+      expect(region.country).toBe("XX_UNKNOWN");
+    });
+
   });
 
   describe("getHolidaysForYear", () => {
@@ -106,9 +118,8 @@ describe("HolidayService", () => {
     });
 
     it("should return empty array when no region is set", () => {
-      // Clear the current region by setting to empty
-      (holidayService as unknown as { currentCountry: string }).currentCountry = "";
-      holidayService.clearCache();
+      // Use reset() to cleanly restore pristine state without private-field access
+      holidayService.reset();
 
       const holidays = holidayService.getHolidaysForYear(2026);
       expect(holidays).toEqual([]);
@@ -166,18 +177,57 @@ describe("HolidayService", () => {
     });
   });
 
-  describe("isHolidayString", () => {
+  describe("getHolidayForDateString", () => {
     beforeEach(() => {
       holidayService.setRegion("AT");
     });
 
     it("should detect holiday from date string", () => {
-      const result = holidayService.isHolidayString("2026-12-25");
+      const result = holidayService.getHolidayForDateString("2026-12-25");
       expect(result).not.toBeNull();
     });
 
     it("should return null for non-holiday string", () => {
-      const result = holidayService.isHolidayString("2026-06-15");
+      const result = holidayService.getHolidayForDateString("2026-06-15");
+      expect(result).toBeNull();
+    });
+
+    it("should return null for an invalid date string", () => {
+      const result = holidayService.getHolidayForDateString("not-a-date");
+      expect(result).toBeNull();
+    });
+
+    it("should return null for an empty string", () => {
+      const result = holidayService.getHolidayForDateString("");
+      expect(result).toBeNull();
+    });
+
+    it("should return null for a datetime string (ISO 8601 with time component)", () => {
+      // Datetime strings are rejected to prevent timezone-related misdetection:
+      // new Date("2026-12-25T00:00:00Z") may resolve to Dec 24 local time in
+      // negative-offset timezones, causing isSameDay() to miss the holiday.
+      const result = holidayService.getHolidayForDateString(
+        "2026-12-25T00:00:00Z"
+      );
+      expect(result).toBeNull();
+    });
+
+    it("should return null for a locale-format date string (MM/DD/YYYY)", () => {
+      const result = holidayService.getHolidayForDateString("12/25/2026");
+      expect(result).toBeNull();
+    });
+
+    it("should return null for a calendar-invalid date (e.g. Feb 30)", () => {
+      // V8 silently rolls "2026-02-30" over to 2026-03-02 instead of returning
+      // NaN. The cross-check guard in getHolidayForDateString detects this and
+      // returns null rather than looking up the wrong date.
+      const result = holidayService.getHolidayForDateString("2026-02-30");
+      expect(result).toBeNull();
+    });
+
+    it("should return null for other rolled-over dates (e.g. month 13)", () => {
+      // "2026-13-01" — month 13 rolls over to Jan 2027 in V8.
+      const result = holidayService.getHolidayForDateString("2026-13-01");
       expect(result).toBeNull();
     });
   });
@@ -219,6 +269,17 @@ describe("HolidayService", () => {
       // Austria has no public holidays in early July
       expect(holidays.length).toBe(0);
     });
+
+    it("should return empty array when start is after end (inverted range)", () => {
+      // The year loop condition (year <= endYear) short-circuits immediately,
+      // so an inverted range is a silent no-op returning [].
+      const start = new Date(2026, 11, 31); // Dec 31
+      const end = new Date(2026, 0, 1); // Jan 1 (before start)
+
+      const holidays = holidayService.getHolidaysInRange(start, end);
+
+      expect(holidays).toEqual([]);
+    });
   });
 
   describe("getAvailableCountries", () => {
@@ -246,8 +307,10 @@ describe("HolidayService", () => {
       const countries = holidayService.getAvailableCountries();
 
       for (let i = 1; i < countries.length; i++) {
+        // Use the same locale as the implementation ('en') so the sort-order
+        // assertion matches the actual comparison key used in getAvailableCountries.
         expect(
-          countries[i - 1].name.localeCompare(countries[i].name)
+          countries[i - 1].name.localeCompare(countries[i].name, "en")
         ).toBeLessThanOrEqual(0);
       }
     });
@@ -276,16 +339,14 @@ describe("HolidayService", () => {
     });
   });
 
-  describe("getPopularCountries", () => {
-    it("should return a list of popular countries", () => {
-      const popular = holidayService.getPopularCountries();
-
-      expect(popular.length).toBe(10);
-      expect(popular).toContain("DE");
-      expect(popular).toContain("AT");
-      expect(popular).toContain("CH");
-      expect(popular).toContain("US");
-      expect(popular).toContain("GB");
+  describe("POPULAR_COUNTRY_CODES", () => {
+    it("should contain the expected popular countries", () => {
+      expect(POPULAR_COUNTRY_CODES.length).toBeGreaterThan(0);
+      expect(POPULAR_COUNTRY_CODES).toContain("DE");
+      expect(POPULAR_COUNTRY_CODES).toContain("AT");
+      expect(POPULAR_COUNTRY_CODES).toContain("CH");
+      expect(POPULAR_COUNTRY_CODES).toContain("US");
+      expect(POPULAR_COUNTRY_CODES).toContain("GB");
     });
   });
 
@@ -301,6 +362,15 @@ describe("HolidayService", () => {
       expect(holidays1).not.toBe(holidays2);
       // But same content
       expect(holidays1.length).toBe(holidays2.length);
+    });
+
+    it("should not reset the active region", () => {
+      holidayService.setRegion("AT");
+      holidayService.clearCache();
+      // Region must remain unchanged — clearCache only purges cached data
+      const region = holidayService.getCurrentRegion();
+      expect(region.country).toBe("AT");
+      expect(region.state).toBeUndefined();
     });
   });
 });
@@ -357,4 +427,3 @@ describe("detectLocaleHolidayRegion", () => {
     expect(detectLocaleHolidayRegion()).toBe("US");
   });
 });
-

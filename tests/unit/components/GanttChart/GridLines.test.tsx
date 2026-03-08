@@ -25,7 +25,7 @@ vi.mock("../../../../src/store/slices/userPreferencesSlice", () => ({
 vi.mock("../../../../src/services/holidayService", () => ({
   holidayService: {
     setRegion: vi.fn(),
-    isHolidayString: vi.fn((date: string) => {
+    getHolidayForDateString: vi.fn((date: string) => {
       // Simulate Jan 1 as a holiday
       if (date === "2025-01-01") return { name: "New Year" };
       return null;

@@ -283,10 +283,10 @@ cd ../app-gantt-review
 
 ### Priority: LOW — Config & Services
 - [x] `src/config/helpContent.ts` (1109 LOC) — Datendatei
-- [ ] `src/services/holidayService.ts` (209 LOC)
-- [ ] `src/config/preferencesOptions.ts` (113 LOC)
-- [ ] `src/config/appConfig.ts` (14 LOC)
-- [ ] `src/config/version.ts` (5 LOC)
+- [x] `src/services/holidayService.ts` (209 LOC)
+- [x] `src/config/preferencesOptions.ts` (135 LOC)
+- [x] `src/config/appConfig.ts` (14 LOC)
+- [x] `src/config/version.ts` (5 LOC)
 
 ### Priority: LOW — App Entry & Type Declarations
 - [ ] `src/App.tsx` (112 LOC) — 5 Hex-Werte (Toast)

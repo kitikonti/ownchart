@@ -13,11 +13,10 @@ import { useDropdown } from "../../hooks/useDropdown";
 import { DropdownTrigger } from "./DropdownTrigger";
 import { DropdownPanel } from "./DropdownPanel";
 import { DropdownItem } from "./DropdownItem";
+import type { DropdownOption } from "../../types/ui.types";
 
-export interface DropdownOption<T extends string = string> {
-  value: T;
-  label: string;
-}
+// Re-exported so existing imports from this file continue to work.
+export type { DropdownOption } from "../../types/ui.types";
 
 interface ToolbarDropdownProps<T extends string = string> {
   /** Currently selected value */
