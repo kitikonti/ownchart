@@ -37,6 +37,13 @@ const OWNCHART_FILE_EXTENSION = ".ownchart";
 const DEFAULT_CHART_NAME = "Untitled";
 const DEFAULT_UNTITLED_PREFIX = "untitled";
 
+/** Confirmation message shown when opening a file with unsaved changes. */
+const DISCARD_CHANGES_OPEN_MSG =
+  "You have unsaved changes. Do you want to continue without saving?";
+/** Confirmation message shown when creating a new chart with unsaved changes. */
+const DISCARD_CHANGES_NEW_MSG =
+  "You have unsaved changes. Do you want to create a new chart without saving?";
+
 /** Coerce an unknown catch value to a readable string. */
 function toErrorMsg(e: unknown): string {
   return e instanceof Error ? e.message : String(e);
@@ -513,12 +520,7 @@ function useOpenOperation(isDirty: boolean): {
   handleOpen: () => Promise<void>;
 } {
   const handleOpen = useCallback(async () => {
-    if (
-      isDirty &&
-      !confirmDiscardChanges(
-        "You have unsaved changes. Do you want to continue without saving?"
-      )
-    ) {
+    if (isDirty && !confirmDiscardChanges(DISCARD_CHANGES_OPEN_MSG)) {
       return;
     }
     try {
@@ -568,12 +570,7 @@ function useNewOperation({
   resetFileStore,
 }: NewOperationDeps): { handleNew: () => Promise<void> } {
   const handleNew = useCallback(async () => {
-    if (
-      isDirty &&
-      !confirmDiscardChanges(
-        "You have unsaved changes. Do you want to create a new chart without saving?"
-      )
-    ) {
+    if (isDirty && !confirmDiscardChanges(DISCARD_CHANGES_NEW_MSG)) {
       return;
     }
     setTasks([]);

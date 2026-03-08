@@ -193,9 +193,11 @@ function useMarqueeMouseMoveHandler(
         prev ? { ...prev, currentX: coords.x, currentY: coords.y } : null
       );
     },
-    // Refs (svgRef, isSelectingRef) are stable objects — their identity never
-    // changes, so they do not belong in the dep array. Only setMarqueeRect
-    // (stable dispatch from useState) is listed to satisfy exhaustive-deps.
+    // Intentionally omitted from dep array: svgRef, isSelectingRef — both are
+    // stable ref objects whose identity never changes across re-renders. Listing
+    // them would mislead readers into thinking the callback re-creates when the
+    // ref contents change. Only setMarqueeRect (stable dispatch from useState)
+    // is listed to satisfy exhaustive-deps.
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [setMarqueeRect]
   );

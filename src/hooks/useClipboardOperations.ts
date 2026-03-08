@@ -29,6 +29,13 @@ export interface ClipboardOperations {
 }
 
 // ---------------------------------------------------------------------------
+// Constants
+// ---------------------------------------------------------------------------
+
+/** Toast options for informational (non-error, non-success) messages. */
+const INFO_TOAST_OPTIONS = { icon: "ℹ️" } as const;
+
+// ---------------------------------------------------------------------------
 // Module-level helpers — read fresh store state via getState() so they never
 // need to be part of a useCallback dependency array.
 // ---------------------------------------------------------------------------
@@ -92,7 +99,7 @@ function executeCopyOrCut(
     toast.success(`${verb} ${activeCell.field}`);
     syncCellToSystemClipboard();
   } else {
-    toast(`Nothing to ${mode}`, { icon: "ℹ️" });
+    toast(`Nothing to ${mode}`, INFO_TOAST_OPTIONS);
   }
 }
 
@@ -216,7 +223,7 @@ async function pasteFromInternalClipboard(): Promise<void> {
       toast.error(result.error);
     }
   } else {
-    toast("Nothing to paste", { icon: "ℹ️" });
+    toast("Nothing to paste", INFO_TOAST_OPTIONS);
   }
 }
 
