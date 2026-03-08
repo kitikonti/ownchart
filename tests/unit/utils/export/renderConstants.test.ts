@@ -117,6 +117,22 @@ describe("generateSummaryBracketPath", () => {
     const path = generateSummaryBracketPath(0, 0, 80, 16);
     expect(path).not.toMatch(/\s{2,}/);
   });
+
+  it("returns empty string for zero width", () => {
+    expect(generateSummaryBracketPath(0, 0, 0, 20)).toBe("");
+  });
+
+  it("returns empty string for zero height", () => {
+    expect(generateSummaryBracketPath(0, 0, 100, 0)).toBe("");
+  });
+
+  it("returns empty string for negative width", () => {
+    expect(generateSummaryBracketPath(0, 0, -10, 20)).toBe("");
+  });
+
+  it("returns empty string for negative height", () => {
+    expect(generateSummaryBracketPath(0, 0, 100, -5)).toBe("");
+  });
 });
 
 // ---------------------------------------------------------------------------
@@ -145,6 +161,14 @@ describe("generateMilestonePath", () => {
   it("produces normalized output with no extra whitespace", () => {
     const path = generateMilestonePath(10, 20, 6);
     expect(path).not.toMatch(/\s{2,}/);
+  });
+
+  it("returns empty string for zero size", () => {
+    expect(generateMilestonePath(50, 50, 0)).toBe("");
+  });
+
+  it("returns empty string for negative size", () => {
+    expect(generateMilestonePath(50, 50, -3)).toBe("");
   });
 });
 

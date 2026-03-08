@@ -117,7 +117,9 @@ export const RENDER_COLORS = {
   gridLine: "#e2e8f0",
 
   /**
-   * Today marker color (brand-600)
+   * Today marker color (brand-600).
+   * Intentionally the same hex as taskDefault — separate entry because the
+   * semantic roles differ and each may diverge independently in future themes.
    */
   todayMarker: "#0F6CBD",
 
@@ -173,7 +175,10 @@ export const LABEL_RENDER_CONSTANTS = {
   internalColor: RENDER_COLORS.textInternal,
 
   /**
-   * Vertical offset factor for centering (fontSize / 3 gives good visual center)
+   * Vertical offset factor for centering (fontSize / 3 ≈ 0.333 gives good visual center).
+   * Applied as: y = rowHeight / 2 + fontSize * verticalOffsetFactor
+   * This compensates for SVG text being anchored at its baseline rather than its
+   * visual midpoint, producing more accurate vertical centering than rowHeight/2 alone.
    */
   verticalOffsetFactor: 1 / 3,
 
@@ -266,13 +271,18 @@ export function getScaledCornerRadius(rowHeight: number): number {
  *
  * The shape consists of a horizontal bar at the top with rounded outer corners,
  * plus two downward-pointing triangular tips at each end (like a bracket: ▼…▼).
+ * The tips have inner-corner rounding (`innerRadius`) where they meet the
+ * horizontal bar, preventing sharp re-entrant angles in the SVG path.
  * All proportions are driven by {@link SUMMARY_BRACKET} ratios applied to `height`.
+ *
+ * Returns an empty string for degenerate inputs (width or height ≤ 0) so callers
+ * can safely skip rendering zero-size shapes.
  *
  * @param x - Left edge of the bracket in px
  * @param y - Top edge of the bracket in px
  * @param width - Total width of the bracket in px
  * @param height - Total height of the bracket (bar + tip) in px
- * @returns SVG path `d` attribute string
+ * @returns SVG path `d` attribute string, or `""` for degenerate dimensions
  */
 export function generateSummaryBracketPath(
   x: number,
@@ -280,6 +290,8 @@ export function generateSummaryBracketPath(
   width: number,
   height: number
 ): string {
+  if (width <= 0 || height <= 0) return "";
+
   const tipHeight = height * SUMMARY_BRACKET.tipHeightRatio;
   const barThickness = height * SUMMARY_BRACKET.barThicknessRatio;
   const tipWidth = tipHeight * SUMMARY_BRACKET.tipWidthFactor;
@@ -309,12 +321,22 @@ export function generateSummaryBracketPath(
 /**
  * Generate SVG path for a milestone diamond shape.
  * Matches the MilestoneDiamond component exactly.
+ *
+ * Returns an empty string for degenerate inputs (size ≤ 0) so callers can
+ * safely skip rendering zero-size diamonds.
+ *
+ * @param centerX - Center X of the diamond in px
+ * @param centerY - Center Y of the diamond in px
+ * @param size - Half-width/half-height (radius) of the diamond in px
+ * @returns SVG path `d` attribute string, or `""` for degenerate dimensions
  */
 export function generateMilestonePath(
   centerX: number,
   centerY: number,
   size: number
 ): string {
+  if (size <= 0) return "";
+
   return `
     M ${centerX} ${centerY - size}
     L ${centerX + size} ${centerY}

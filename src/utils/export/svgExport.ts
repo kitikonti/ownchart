@@ -13,7 +13,7 @@ import type { ColorModeState } from "../../types/colorMode.types";
 import type { Task } from "../../types/chart.types";
 import type { TaskId } from "../../types/branded.types";
 import { ExportRenderer } from "../../components/Export/ExportRenderer";
-import { buildFlattenedTaskList } from "../../utils/hierarchy";
+import { buildFlattenedTaskList } from "../hierarchy";
 import type { ExportOptions, SvgExportOptions } from "./types";
 import { DEFAULT_EXPORT_COLUMNS } from "./types";
 import { calculateExportDimensions } from "./exportLayout";
@@ -141,6 +141,16 @@ export async function exportToSvg(params: ExportToSvgParams): Promise<void> {
 
     if (!chartSvg) {
       throw new Error("Could not find chart SVG element");
+    }
+
+    if (options.includeHeader && !headerSvg) {
+      // This is a non-fatal invariant violation: the chart body will be offset
+      // by HEADER_HEIGHT but the header section will be blank. Log a warning
+      // so it surfaces in developer consoles without crashing the export.
+      console.warn(
+        "[svgExport] includeHeader is true but the timeline header SVG element was not found. " +
+          "The export header area will be empty."
+      );
     }
 
     // Build a new complete SVG with task table as SVG elements
@@ -465,19 +475,25 @@ async function copyToClipboard(svgString: string): Promise<void> {
 
 /**
  * Download SVG as a file via an ephemeral anchor element.
- * Revokes the object URL after triggering the download even if `.click()` throws,
- * and rethrows any error so the caller can surface it to the user.
+ * The anchor is briefly appended to and then removed from `document.body`
+ * so that `.click()` fires the download in all browsers (Firefox requires the
+ * element to be in the DOM). Revokes the object URL after triggering the
+ * download even if `.click()` throws, and rethrows any error so the caller
+ * can surface it to the user.
  */
 function downloadSvg(svgString: string, filename: string): void {
   const blob = new Blob([svgString], { type: "image/svg+xml" });
   const url = URL.createObjectURL(blob);
+  const link = document.createElement("a");
+  link.href = url;
+  link.download = filename;
+  link.style.display = "none";
+  document.body.appendChild(link);
 
   try {
-    const link = document.createElement("a");
-    link.href = url;
-    link.download = filename;
     link.click();
   } finally {
+    document.body.removeChild(link);
     URL.revokeObjectURL(url);
   }
 }
