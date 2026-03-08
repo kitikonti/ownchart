@@ -354,6 +354,15 @@ describe("HolidayService", () => {
       // But same content
       expect(holidays1.length).toBe(holidays2.length);
     });
+
+    it("should not reset the active region", () => {
+      holidayService.setRegion("AT");
+      holidayService.clearCache();
+      // Region must remain unchanged — clearCache only purges cached data
+      const region = holidayService.getCurrentRegion();
+      expect(region.country).toBe("AT");
+      expect(region.state).toBeUndefined();
+    });
   });
 });
 
@@ -409,4 +418,3 @@ describe("detectLocaleHolidayRegion", () => {
     expect(detectLocaleHolidayRegion()).toBe("US");
   });
 });
-

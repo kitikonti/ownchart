@@ -56,6 +56,22 @@ export const POPULAR_COUNTRY_CODES: readonly string[] = [
 ];
 
 /**
+ * Return a copy of `date` normalised to local midnight (00:00:00.000).
+ *
+ * Used to strip any time component that `date-holidays` may embed in holiday
+ * Date objects so that boundary comparisons in `getHolidaysInRange` and
+ * day-equality checks in `isSameDay` are always working on a consistent base.
+ *
+ * @param date - Any Date object.
+ * @returns A new Date set to the start of the local calendar day.
+ */
+function toLocalMidnight(date: Date): Date {
+  const d = new Date(date);
+  d.setHours(0, 0, 0, 0);
+  return d;
+}
+
+/**
  * Parse a strict YYYY-MM-DD date string to a local-midnight Date object.
  *
  * Extracted as a module-level function (no `this` dependency) to improve
@@ -216,7 +232,10 @@ class _HolidayService {
     const holidays: HolidayInfo[] = rawHolidays
       .filter((h) => h.type === "public" || h.type === "bank")
       .map((h) => ({
-        date: new Date(h.date),
+        // Normalise to local midnight so boundary comparisons in getHolidaysInRange
+        // (h.date >= startDate && h.date <= endDate) and isSameDay() are both safe
+        // regardless of whatever time component date-holidays may embed.
+        date: toLocalMidnight(new Date(h.date)),
         name: h.name,
         // SAFETY: The .filter() above already ensures h.type is 'public' | 'bank'.
         // The assertion narrows the library's broader string type to HolidayInfo["type"].
@@ -231,22 +250,21 @@ class _HolidayService {
    * Get holidays for a date range (spans multiple years if needed).
    * Returns an empty array when startDate > endDate (inverted range is a no-op).
    *
-   * **Date comparison precision**: holiday dates retain the time component
-   * produced by `new Date(h.date)` from the `date-holidays` library (typically
-   * local midnight, but not guaranteed). Boundary holidays are included only
-   * when `h.date >= startDate && h.date <= endDate` holds with full timestamp
-   * precision. Callers should ensure `startDate` and `endDate` are set to
-   * start-of-day (00:00:00.000) to avoid accidentally excluding boundary
-   * holidays whose internal timestamp differs from the caller's value.
+   * Holiday dates stored in the cache are normalised to local midnight by
+   * `getHolidaysForYear`, so boundary comparisons are safe as long as
+   * `startDate` and `endDate` are also at start-of-day (00:00:00.000).
    */
   getHolidaysInRange(startDate: Date, endDate: Date): HolidayInfo[] {
+    // Explicit date-level guard: an inverted range is always a no-op.
+    if (startDate > endDate) {
+      return [];
+    }
+
     const startYear = startDate.getFullYear();
     const endYear = endDate.getFullYear();
 
     const allHolidays: HolidayInfo[] = [];
 
-    // When startDate > endDate, startYear > endYear so the loop body never
-    // executes and an empty array is returned — intentional silent no-op.
     for (let year = startYear; year <= endYear; year++) {
       const yearHolidays = this.getHolidaysForYear(year);
       allHolidays.push(

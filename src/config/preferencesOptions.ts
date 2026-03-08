@@ -101,7 +101,11 @@ const EXAMPLE_DATE = new Date(
   EXAMPLE_DAY
 );
 
-/** Zero-pad a number to two digits. */
+/**
+ * Zero-pad a number to two digits (e.g. 5 → "05", 12 → "12").
+ * @param n - Non-negative integer to format.
+ * @returns A string of at least two characters.
+ */
 function pad2(n: number): string {
   return String(n).padStart(2, "0");
 }
