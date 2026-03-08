@@ -7,6 +7,7 @@ import type {
   TaskLabelPosition,
 } from "../../types/preferences.types";
 import type { Task } from "../../types/chart.types";
+// Used by createPagePreset() to initialise EXPORT_QUICK_PRESETS at module load time
 import {
   PNG_EXPORT_DPI,
   calculatePixelDimensions,
@@ -50,6 +51,12 @@ export interface PdfCustomPageSize {
   width: number;
   height: number;
 }
+
+/** Default custom page dimensions (mm) used as fallback when no custom size is provided */
+export const DEFAULT_CUSTOM_PAGE_SIZE: PdfCustomPageSize = {
+  width: 500,
+  height: 300,
+};
 
 /** PDF margin preset */
 export type PdfMarginPreset = "normal" | "narrow" | "wide" | "none" | "custom";
@@ -112,7 +119,7 @@ export const PDF_MARGIN_PRESETS: Record<PdfMarginPreset, PdfMargins> = {
 /** Default PDF export options */
 export const DEFAULT_PDF_OPTIONS: PdfExportOptions = {
   pageSize: "a4",
-  customPageSize: { width: 500, height: 300 },
+  customPageSize: DEFAULT_CUSTOM_PAGE_SIZE,
   orientation: "landscape",
   marginPreset: "normal",
   header: {
@@ -216,7 +223,7 @@ export interface ExportQuickPreset {
 export interface ExportOptions {
   /** How the zoom level is determined */
   zoomMode: ExportZoomMode;
-  /** Timeline zoom level (affects horizontal scale) - used when zoomMode is 'preset' or 'custom' */
+  /** Timeline zoom level (affects horizontal scale) - used when zoomMode is 'custom' */
   timelineZoom: number;
   /** Target width in pixels - used when zoomMode is 'fitToWidth' */
   fitToWidth: number;

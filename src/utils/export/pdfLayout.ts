@@ -10,7 +10,11 @@ import type {
   PdfPageSize,
   ExportOptions,
 } from "./types";
-import { PDF_PAGE_SIZES, PDF_MARGIN_PRESETS } from "./types";
+import {
+  PDF_PAGE_SIZES,
+  PDF_MARGIN_PRESETS,
+  DEFAULT_CUSTOM_PAGE_SIZE,
+} from "./types";
 import { INTERNAL_DPI, MM_PER_INCH, PNG_EXPORT_DPI } from "./dpi";
 import type { Task } from "../../types/chart.types";
 import type { TaskId } from "../../types/branded.types";
@@ -18,7 +22,8 @@ import { buildFlattenedTaskList } from "../hierarchy";
 import { DENSITY_CONFIG } from "../../config/densityConfig";
 import { HEADER_HEIGHT } from "./constants";
 
-// Re-export DPI constants for backwards compatibility
+// Re-exported for consumers that previously imported from pdfLayout;
+// prefer importing from ./dpi directly for new code.
 export { INTERNAL_DPI, PNG_EXPORT_DPI, MM_PER_INCH } from "./dpi";
 export {
   mmToPxAtDpi,
@@ -89,6 +94,12 @@ export function mmToPx(mm: number): number {
 export const PDF_HEADER_FOOTER_RESERVED_MM = 10;
 
 /**
+ * Approximation of average character width as a fraction of font size (in pt).
+ * Based on Helvetica metrics; used for text truncation width estimation.
+ */
+const HELVETICA_AVG_CHAR_WIDTH_RATIO = 0.5;
+
+/**
  * Check whether a header/footer section has any content enabled.
  */
 export function hasHeaderFooterContent(section: PdfHeaderFooter): boolean {
@@ -148,7 +159,7 @@ export function getPageDimensions(options: PdfExportOptions): PageDimensions {
   // Handle custom page size
   const pageSize =
     options.pageSize === "custom"
-      ? options.customPageSize || { width: 500, height: 300 }
+      ? options.customPageSize || DEFAULT_CUSTOM_PAGE_SIZE
       : PDF_PAGE_SIZES[options.pageSize];
 
   // Landscape dimensions are width x height
@@ -257,13 +268,17 @@ export interface PdfColor {
  */
 export function hexToRgb(hex: string): PdfColor {
   const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
-  return result
-    ? {
-        r: parseInt(result[1], 16),
-        g: parseInt(result[2], 16),
-        b: parseInt(result[3], 16),
-      }
-    : { r: 128, g: 128, b: 128 };
+  if (!result) {
+    console.warn(
+      `hexToRgb: invalid hex color string "${hex}", falling back to gray`
+    );
+    return { r: 128, g: 128, b: 128 };
+  }
+  return {
+    r: parseInt(result[1], 16),
+    g: parseInt(result[2], 16),
+    b: parseInt(result[3], 16),
+  };
 }
 
 /**
@@ -279,14 +294,19 @@ export function truncateText(
   fontSize: number
 ): string {
   // Approximate character width (varies by font)
-  // For Helvetica, average char width is ~0.5 * fontSize in pt
-  const avgCharWidthPt = fontSize * 0.5;
+  // For Helvetica, average char width is ~HELVETICA_AVG_CHAR_WIDTH_RATIO * fontSize in pt
+  const avgCharWidthPt = fontSize * HELVETICA_AVG_CHAR_WIDTH_RATIO;
   const avgCharWidthMm = ptToMm(avgCharWidthPt);
 
   const maxChars = Math.floor(maxWidth / avgCharWidthMm);
 
   if (text.length <= maxChars) {
     return text;
+  }
+
+  // Guard: if maxChars is too small to fit an ellipsis, just cut hard
+  if (maxChars <= 3) {
+    return text.substring(0, maxChars);
   }
 
   // Truncate with ellipsis
