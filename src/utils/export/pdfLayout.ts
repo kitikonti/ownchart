@@ -23,8 +23,10 @@ import { DENSITY_CONFIG } from "../../config/densityConfig";
 import { HEADER_HEIGHT } from "./constants";
 
 /**
- * @deprecated These re-exports exist only for backwards compatibility.
+ * @deprecated These re-exports exist only for backwards compatibility with callers
+ * that imported from pdfLayout before the DPI helpers were extracted to ./dpi.
  * Import directly from './dpi' for new code.
+ * TODO(v1.4): remove these re-exports once all callers are migrated to './dpi'.
  */
 export { INTERNAL_DPI, PNG_EXPORT_DPI, MM_PER_INCH } from "./dpi";
 /** @deprecated Import from './dpi' directly. */
@@ -270,7 +272,11 @@ export interface PdfColor {
 }
 
 /**
- * Convert hex color to RGB.
+ * Convert a 6-digit hex color string to RGB components.
+ * Accepts strings with or without a leading `#` (e.g. `"#ff0000"` or `"ff0000"`).
+ * 3-digit shorthand hex (e.g. `"#fff"`) is NOT supported — falls back to neutral gray.
+ * @param hex - Hex color string (6 digits, optionally prefixed with `#`)
+ * @returns RGB object with `r`, `g`, `b` in the range 0–255
  */
 export function hexToRgb(hex: string): PdfColor {
   const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
@@ -297,6 +303,9 @@ export function truncateText(
   maxWidth: number,
   fontSize: number
 ): string {
+  if (!text) return text;
+  if (maxWidth <= 0) return "";
+
   // Approximate character width (varies by font)
   // For Helvetica, average char width is ~HELVETICA_AVG_CHAR_WIDTH_RATIO * fontSize in pt
   const avgCharWidthPt = fontSize * HELVETICA_AVG_CHAR_WIDTH_RATIO;

@@ -5,6 +5,7 @@
 
 import { SVG_FONT_FAMILY } from "./constants";
 import { sanitizeFilename } from "./sanitizeFilename";
+import type { ExportBackground } from "./types";
 
 /**
  * Wait for all fonts to be loaded.
@@ -118,13 +119,13 @@ export function generateExportFilename(
  *
  * @param width - Container width in pixels
  * @param height - Container height in pixels
- * @param background - Background color ("white" or "transparent")
+ * @param background - Background fill mode ("white" renders as #ffffff, "transparent" renders as none)
  * @returns The created container element
  */
 export function createOffscreenContainer(
   width: number,
   height: number,
-  background: "white" | "transparent"
+  background: ExportBackground
 ): HTMLDivElement {
   const container = document.createElement("div");
   container.id = "export-offscreen-container";

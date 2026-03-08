@@ -256,11 +256,14 @@ export interface ExportOptions {
   includeHolidays: boolean;
   /** Task label position on bars (Sprint 1.5.9) */
   taskLabelPosition: TaskLabelPosition;
-  /** Background color */
-  background: "white" | "transparent";
+  /** Background fill mode */
+  background: ExportBackground;
   /** UI density for export */
   density: UiDensity;
 }
+
+/** Background fill mode for export (white canvas or transparent) */
+export type ExportBackground = "white" | "transparent";
 
 /** Boolean toggle keys in ExportOptions (type-safe subset for checkbox groups) */
 export type ExportBooleanKey =
@@ -287,12 +290,22 @@ export type ExportZoomPreset = keyof typeof EXPORT_ZOOM_PRESETS;
 /** Default fitToWidth value in pixels (HD screen width) */
 export const DEFAULT_FIT_TO_WIDTH_PX = 1920;
 
+/** HD (1080p) screen height in pixels */
+export const HD_SCREEN_HEIGHT_PX = 1080;
+
 /** 4K (UHD) screen width in pixels */
 export const UHD_SCREEN_WIDTH_PX = 3840;
+
+/** 4K (UHD) screen height in pixels */
+export const UHD_SCREEN_HEIGHT_PX = 2160;
 
 /**
  * Generate a quick preset from a page size.
  * Uses PNG_EXPORT_DPI (150) for print-quality output.
+ * @param key - Unique preset identifier (e.g. "a4-landscape")
+ * @param label - Human-readable label shown in the UI
+ * @param pageSize - Paper size key from PDF_PAGE_SIZES
+ * @param orientation - Page orientation; defaults to "landscape"
  */
 function createPagePreset(
   key: string,
@@ -332,13 +345,13 @@ export const EXPORT_QUICK_PRESETS: ExportQuickPreset[] = [
   {
     key: "hd-screen",
     label: "HD Screen",
-    description: "1920 × 1080 px",
+    description: `${DEFAULT_FIT_TO_WIDTH_PX} × ${HD_SCREEN_HEIGHT_PX} px`,
     targetWidth: DEFAULT_FIT_TO_WIDTH_PX,
   },
   {
     key: "4k-screen",
     label: "4K Screen",
-    description: "3840 × 2160 px",
+    description: `${UHD_SCREEN_WIDTH_PX} × ${UHD_SCREEN_HEIGHT_PX} px`,
     targetWidth: UHD_SCREEN_WIDTH_PX,
   },
 ];
