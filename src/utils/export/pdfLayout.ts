@@ -131,7 +131,7 @@ export function formatPageSizeName(pageSize: PdfPageSize): string {
     tabloid: "Tabloid",
     custom: "Custom",
   };
-  return names[pageSize] || pageSize.toUpperCase();
+  return names[pageSize];
 }
 
 /**
@@ -269,9 +269,7 @@ export interface PdfColor {
 export function hexToRgb(hex: string): PdfColor {
   const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
   if (!result) {
-    console.warn(
-      `hexToRgb: invalid hex color string "${hex}", falling back to gray`
-    );
+    // Invalid hex string — return a neutral gray as a safe fallback
     return { r: 128, g: 128, b: 128 };
   }
   return {

@@ -67,12 +67,14 @@ export {
 } from "./dpi";
 export {
   DEFAULT_EXPORT_OPTIONS,
+  DEFAULT_FIT_TO_WIDTH_PX,
   DEFAULT_PDF_OPTIONS,
   DEFAULT_SVG_OPTIONS,
   EXPORT_ZOOM_PRESETS,
   INITIAL_EXPORT_STATE,
   PDF_PAGE_SIZES,
   PDF_MARGIN_PRESETS,
+  UHD_SCREEN_WIDTH_PX,
   type ExportColumnKey,
   type ExportFormat,
   type ExportLayoutInput,
@@ -82,6 +84,7 @@ export {
   type PdfExportOptions,
   type PdfCustomPageSize,
   type PdfHeaderFooter,
+  type PdfMetadata,
   type PdfMarginPreset,
   type PdfMargins,
   type PdfOrientation,

@@ -76,6 +76,13 @@ export interface PdfHeaderFooter {
   showExportDate: boolean;
 }
 
+/** PDF document metadata (title, author, subject) */
+export interface PdfMetadata {
+  title?: string;
+  author?: string;
+  subject?: string;
+}
+
 /** PDF-specific export options */
 export interface PdfExportOptions {
   pageSize: PdfPageSize;
@@ -85,11 +92,7 @@ export interface PdfExportOptions {
   customMargins?: PdfMargins;
   header: PdfHeaderFooter;
   footer: PdfHeaderFooter;
-  metadata: {
-    title?: string;
-    author?: string;
-    subject?: string;
-  };
+  metadata: PdfMetadata;
 }
 
 /** PDF page dimensions in mm (landscape orientation by default) */
@@ -186,11 +189,7 @@ export type ExportColumnKey =
   | "progress";
 
 /** Data-only columns (excludes layout columns like color/name that need special rendering) */
-export type ExportDataColumnKey =
-  | "startDate"
-  | "endDate"
-  | "duration"
-  | "progress";
+export type ExportDataColumnKey = Exclude<ExportColumnKey, "color" | "name">;
 
 /**
  * Default columns shown when no explicit selection has been made.
@@ -277,6 +276,12 @@ export const EXPORT_ZOOM_PRESETS = {
 
 export type ExportZoomPreset = keyof typeof EXPORT_ZOOM_PRESETS;
 
+/** Default fitToWidth value in pixels (HD screen width) */
+export const DEFAULT_FIT_TO_WIDTH_PX = 1920;
+
+/** 4K (UHD) screen width in pixels */
+export const UHD_SCREEN_WIDTH_PX = 3840;
+
 /**
  * Generate a quick preset from a page size.
  * Uses PNG_EXPORT_DPI (150) for print-quality output.
@@ -285,7 +290,7 @@ function createPagePreset(
   key: string,
   label: string,
   pageSize: keyof typeof PDF_PAGE_SIZES,
-  orientation: "landscape" | "portrait" = "landscape"
+  orientation: PdfOrientation = "landscape"
 ): ExportQuickPreset {
   const size = PDF_PAGE_SIZES[pageSize];
   const widthMm = orientation === "landscape" ? size.width : size.height;
@@ -320,13 +325,13 @@ export const EXPORT_QUICK_PRESETS: ExportQuickPreset[] = [
     key: "hd-screen",
     label: "HD Screen",
     description: "1920 × 1080 px",
-    targetWidth: 1920,
+    targetWidth: DEFAULT_FIT_TO_WIDTH_PX,
   },
   {
     key: "4k-screen",
     label: "4K Screen",
     description: "3840 × 2160 px",
-    targetWidth: 3840,
+    targetWidth: UHD_SCREEN_WIDTH_PX,
   },
 ];
 
@@ -354,7 +359,7 @@ export const EXPORT_LARGE_WIDTH_THRESHOLD = 4000;
 export const DEFAULT_EXPORT_OPTIONS: ExportOptions = {
   zoomMode: "currentView",
   timelineZoom: EXPORT_ZOOM_PRESETS.STANDARD,
-  fitToWidth: 1920,
+  fitToWidth: DEFAULT_FIT_TO_WIDTH_PX,
   dateRangeMode: "all",
   selectedColumns: [],
   includeHeader: true,
