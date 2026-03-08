@@ -14,6 +14,7 @@ import {
   useFileOperations,
   generateSuggestedFilename,
   resolveSuggestedFilename,
+  setConfirmDiscardChanges,
 } from "../../../src/hooks/useFileOperations";
 import { useTaskStore } from "../../../src/store/slices/taskSlice";
 import { useChartStore } from "../../../src/store/slices/chartSlice";
@@ -40,6 +41,8 @@ vi.mock("../../../src/utils/fileOperations/fileDialog", () => ({
   saveFile: (...args: unknown[]) => mockSaveFile(...args),
   openFile: (...args: unknown[]) => mockOpenFile(...args),
   clearFileHandle: (...args: unknown[]) => mockClearFileHandle(...args),
+  SAVE_CANCELLED: "Save cancelled",
+  OPEN_CANCELLED: "Open cancelled",
 }));
 
 const mockSerialize = vi.fn().mockReturnValue('{"mock":"content"}');
@@ -157,13 +160,16 @@ describe("useFileOperations — handleNew", () => {
       undoStack: [{ id: "cmd" } as never],
       redoStack: [],
     });
-    vi.spyOn(window, "confirm").mockReturnValue(true);
+    // Use the injectable confirm function rather than spying on window.confirm,
+    // so tests don't depend on the global browser API.
+    setConfirmDiscardChanges(() => true);
     vi.clearAllMocks();
     mockClearFileHandle.mockReturnValue(undefined);
   });
 
   afterEach(() => {
-    vi.restoreAllMocks();
+    // Restore the default window.confirm implementation.
+    setConfirmDiscardChanges((msg) => window.confirm(msg));
   });
 
   it("should clear tasks, project metadata, and hidden rows", async () => {
@@ -215,7 +221,7 @@ describe("useFileOperations — handleNew", () => {
   });
 
   it("should not reset when user cancels the dirty confirmation", async () => {
-    vi.spyOn(window, "confirm").mockReturnValue(false);
+    setConfirmDiscardChanges(() => false);
 
     const { result } = renderHook(() => useFileOperations());
 
@@ -229,7 +235,8 @@ describe("useFileOperations — handleNew", () => {
 
   it("should skip the confirmation dialog when the file is clean", async () => {
     useFileStore.getState().markClean();
-    const confirmSpy = vi.spyOn(window, "confirm");
+    const confirmFn = vi.fn(() => true);
+    setConfirmDiscardChanges(confirmFn);
 
     const { result } = renderHook(() => useFileOperations());
 
@@ -237,7 +244,7 @@ describe("useFileOperations — handleNew", () => {
       await result.current.handleNew();
     });
 
-    expect(confirmSpy).not.toHaveBeenCalled();
+    expect(confirmFn).not.toHaveBeenCalled();
     expect(useTaskStore.getState().tasks).toEqual([]);
   });
 });

@@ -10,6 +10,7 @@ import { describe, it, expect, beforeEach, vi } from "vitest";
 import { renderHook, act } from "@testing-library/react";
 import toast from "react-hot-toast";
 import { useClipboardOperations } from "../../../src/hooks/useClipboardOperations";
+import { hasSameTaskIds } from "../../../src/utils/clipboard";
 import { useClipboardStore } from "../../../src/store/slices/clipboardSlice";
 import { useTaskStore } from "../../../src/store/slices/taskSlice";
 import type { Task } from "../../../src/types/chart.types";
@@ -61,6 +62,56 @@ function createTask(id: string, options: Partial<Task> = {}): Task {
     ...options,
   };
 }
+
+// ---------------------------------------------------------------------------
+// Pure function: hasSameTaskIds
+// ---------------------------------------------------------------------------
+
+describe("hasSameTaskIds", () => {
+  it("should return true for two empty arrays", () => {
+    expect(hasSameTaskIds([], [])).toBe(true);
+  });
+
+  it("should return true for arrays with the same IDs in the same order", () => {
+    expect(
+      hasSameTaskIds(
+        [{ id: "t1" as TaskId }, { id: "t2" as TaskId }],
+        [{ id: "t1" as TaskId }, { id: "t2" as TaskId }]
+      )
+    ).toBe(true);
+  });
+
+  it("should return false for arrays with different lengths", () => {
+    expect(
+      hasSameTaskIds(
+        [{ id: "t1" as TaskId }],
+        [{ id: "t1" as TaskId }, { id: "t2" as TaskId }]
+      )
+    ).toBe(false);
+  });
+
+  it("should return false for arrays with same length but different IDs", () => {
+    expect(
+      hasSameTaskIds(
+        [{ id: "t1" as TaskId }, { id: "t2" as TaskId }],
+        [{ id: "t1" as TaskId }, { id: "t3" as TaskId }]
+      )
+    ).toBe(false);
+  });
+
+  it("should return false for arrays with same IDs in different order", () => {
+    expect(
+      hasSameTaskIds(
+        [{ id: "t1" as TaskId }, { id: "t2" as TaskId }],
+        [{ id: "t2" as TaskId }, { id: "t1" as TaskId }]
+      )
+    ).toBe(false);
+  });
+
+  it("should return false when one array is empty and the other is not", () => {
+    expect(hasSameTaskIds([], [{ id: "t1" as TaskId }])).toBe(false);
+  });
+});
 
 // ---------------------------------------------------------------------------
 

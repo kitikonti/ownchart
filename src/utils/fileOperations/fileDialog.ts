@@ -63,6 +63,12 @@ export interface OpenFileResult {
   error?: string;
 }
 
+/** Sentinel returned in `SaveFileResult.error` when the user cancels the save dialog. */
+export const SAVE_CANCELLED = "Save cancelled";
+
+/** Sentinel returned in `OpenFileResult.error` when the user cancels the open dialog. */
+export const OPEN_CANCELLED = "Open cancelled";
+
 function isAbortError(e: unknown): boolean {
   return e instanceof Error && e.name === "AbortError";
 }
@@ -103,7 +109,7 @@ async function saveWithFilePicker(
     currentFileHandle = handle;
     return { success: true, fileName: handle.name };
   } catch (e) {
-    if (isAbortError(e)) return { success: false, error: "Save cancelled" };
+    if (isAbortError(e)) return { success: false, error: SAVE_CANCELLED };
     return null;
   }
 }
@@ -166,7 +172,7 @@ async function openWithFilePicker(): Promise<OpenFileResult | null> {
       file: { name: file.name, content, size: file.size },
     };
   } catch (e) {
-    if (isAbortError(e)) return { success: false, error: "Open cancelled" };
+    if (isAbortError(e)) return { success: false, error: OPEN_CANCELLED };
     return null;
   }
 }
@@ -201,7 +207,7 @@ function openViaFileInput(): Promise<OpenFileResult> {
     };
 
     input.oncancel = (): void => {
-      resolve({ success: false, error: "Open cancelled" });
+      resolve({ success: false, error: OPEN_CANCELLED });
     };
 
     input.click();

@@ -17,6 +17,7 @@ import {
   readRowsFromSystemClipboard,
   readCellFromSystemClipboard,
   isClipboardApiAvailable,
+  hasSameTaskIds,
 } from "../utils/clipboard";
 
 export interface ClipboardOperations {
@@ -27,18 +28,12 @@ export interface ClipboardOperations {
   canPaste: boolean;
 }
 
-/**
- * Returns true if two task arrays represent the same ordered sequence of IDs.
- * Used to detect when the system clipboard holds data already present in the
- * internal clipboard, preventing accidental double-paste across tabs.
- * @internal exported for testing
- */
-export function hasSameTaskIds(
-  a: readonly { id: unknown }[],
-  b: readonly { id: unknown }[]
-): boolean {
-  return a.length === b.length && a.every((item, i) => item.id === b[i].id);
-}
+// ---------------------------------------------------------------------------
+// Constants
+// ---------------------------------------------------------------------------
+
+/** Toast options for informational (non-error, non-success) messages. */
+const INFO_TOAST_OPTIONS = { icon: "ℹ️" } as const;
 
 // ---------------------------------------------------------------------------
 // Module-level helpers — read fresh store state via getState() so they never
@@ -55,8 +50,11 @@ function syncRowsToSystemClipboard(): void {
   writeRowsToSystemClipboard(
     rowClipboard.tasks,
     rowClipboard.dependencies
-  ).catch(() => {
-    // Silently fail — internal clipboard still works
+  ).catch((err) => {
+    // Internal clipboard still works — system clipboard sync is best-effort.
+    if (import.meta.env.DEV) {
+      console.warn("Failed to sync rows to system clipboard", err);
+    }
   });
 }
 
@@ -69,8 +67,11 @@ function syncCellToSystemClipboard(): void {
   const { cellClipboard } = useClipboardStore.getState();
   if (cellClipboard.field && cellClipboard.value != null) {
     writeCellToSystemClipboard(cellClipboard.value, cellClipboard.field).catch(
-      () => {
-        // Silently fail — internal clipboard still works
+      (err) => {
+        // Internal clipboard still works — system clipboard sync is best-effort.
+        if (import.meta.env.DEV) {
+          console.warn("Failed to sync cell to system clipboard", err);
+        }
       }
     );
   }
@@ -98,7 +99,7 @@ function executeCopyOrCut(
     toast.success(`${verb} ${activeCell.field}`);
     syncCellToSystemClipboard();
   } else {
-    toast(`Nothing to ${mode}`, { icon: "ℹ️" });
+    toast(`Nothing to ${mode}`, INFO_TOAST_OPTIONS);
   }
 }
 
@@ -222,7 +223,7 @@ async function pasteFromInternalClipboard(): Promise<void> {
       toast.error(result.error);
     }
   } else {
-    toast("Nothing to paste", { icon: "ℹ️" });
+    toast("Nothing to paste", INFO_TOAST_OPTIONS);
   }
 }
 

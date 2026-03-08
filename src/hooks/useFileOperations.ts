@@ -5,45 +5,78 @@
 
 import { useCallback, useMemo } from "react";
 import toast from "react-hot-toast";
-import type { Task } from "../types/chart.types";
-import type { TaskId } from "../types/branded.types";
-import type { Dependency } from "../types/dependency.types";
-import type { ExportOptions } from "../utils/export/types";
 import { useTaskStore } from "../store/slices/taskSlice";
 import { useChartStore } from "../store/slices/chartSlice";
+import { useDependencyStore } from "../store/slices/dependencySlice";
 import { useFileStore } from "../store/slices/fileSlice";
 import { useHistoryStore } from "../store/slices/historySlice";
-import { useDependencyStore } from "../store/slices/dependencySlice";
 import { useUIStore } from "../store/slices/uiSlice";
-import { serializeToGanttFile } from "../utils/fileOperations/serialize";
-import type { SerializeOptions } from "../utils/fileOperations/serialize";
-import type { ViewSettings } from "../utils/fileOperations/types";
+import { sanitizeFilename } from "../utils/export/sanitizeFilename";
 import {
   saveFile,
   openFile,
   clearFileHandle,
+  SAVE_CANCELLED,
+  OPEN_CANCELLED,
 } from "../utils/fileOperations/fileDialog";
 import {
   loadFileIntoApp,
   showLoadNotifications,
 } from "../utils/fileOperations/loadFromFile";
-import { sanitizeFilename } from "../utils/export/sanitizeFilename";
+import {
+  serializeToGanttFile,
+  type SerializeOptions,
+} from "../utils/fileOperations/serialize";
+import type { Dependency } from "../types/dependency.types";
+import type { ExportOptions } from "../utils/export/types";
+import type { ViewSettings } from "../utils/fileOperations/types";
+import type { Task } from "../types/chart.types";
+import type { TaskId } from "../types/branded.types";
 
 const OWNCHART_FILE_EXTENSION = ".ownchart";
 const DEFAULT_CHART_NAME = "Untitled";
+const DEFAULT_UNTITLED_PREFIX = "untitled";
+
+/** Confirmation message shown when opening a file with unsaved changes. */
+const DISCARD_CHANGES_OPEN_MSG =
+  "You have unsaved changes. Do you want to continue without saving?";
+/** Confirmation message shown when creating a new chart with unsaved changes. */
+const DISCARD_CHANGES_NEW_MSG =
+  "You have unsaved changes. Do you want to create a new chart without saving?";
 
 /** Coerce an unknown catch value to a readable string. */
 function toErrorMsg(e: unknown): string {
   return e instanceof Error ? e.message : String(e);
 }
 
+/** Remove the extension suffix from the end of a filename, if present. */
+function stripFileExtension(name: string, ext: string): string {
+  return name.endsWith(ext) ? name.slice(0, -ext.length) : name;
+}
+
 /**
- * Confirm navigating away from unsaved changes.
- * Extracted so it can be replaced with a custom modal later
- * without touching handler logic.
+ * Module-level confirm function used by handleOpen and handleNew.
+ * Replace via `setConfirmDiscardChanges()` — e.g. to swap in a custom modal
+ * — without touching operation logic. Tests override this to avoid real dialogs.
  */
-function confirmDiscardChanges(message: string): boolean {
-  return window.confirm(message);
+let confirmDiscardChanges: (message: string) => boolean = (message) =>
+  window.confirm(message);
+
+/**
+ * Override the confirm-discard-changes implementation.
+ * Useful for swapping in a custom modal dialog or for test isolation.
+ *
+ * @example
+ * // In tests:
+ * setConfirmDiscardChanges(() => true);
+ *
+ * // To restore the default:
+ * setConfirmDiscardChanges((msg) => window.confirm(msg));
+ */
+export function setConfirmDiscardChanges(
+  fn: (message: string) => boolean
+): void {
+  confirmDiscardChanges = fn;
 }
 
 /**
@@ -70,7 +103,7 @@ export function resolveSuggestedFilename(
 ): string {
   if (fileName) return fileName;
   if (projectTitle) return generateSuggestedFilename(projectTitle);
-  return `untitled${OWNCHART_FILE_EXTENSION}`;
+  return `${DEFAULT_UNTITLED_PREFIX}${OWNCHART_FILE_EXTENSION}`;
 }
 
 // ---------------------------------------------------------------------------
@@ -110,6 +143,11 @@ type ChartSliceNeeded = Pick<
   | "resetView"
 >;
 
+// OperationalSliceNeeded aggregates fields from three separate stores
+// (dependencySlice, fileSlice, historySlice, uiSlice). A single Pick<> cannot
+// span multiple stores, so this is a manually-maintained interface.
+// When adding or renaming fields in any of these slices, update this type and
+// the useOperationalSliceState() selector below to stay in sync.
 type OperationalSliceNeeded = {
   dependencies: Dependency[];
   clearDependencies: () => void;
@@ -236,17 +274,78 @@ function useOperationalSliceState(): OperationalSliceNeeded {
 // ---------------------------------------------------------------------------
 
 /**
- * Builds the ViewSettings snapshot written to the .ownchart file.
- * Extracted so its large dep array lives in its own focused function.
+ * Builds the layout/display portion of ViewSettings (panel sizes, column
+ * widths, visibility toggles that affect layout).
+ * Split from feature-flag settings so each sub-hook stays under 50 lines.
  */
-function useViewSettings(
+function useLayoutViewSettings(
   task: TaskSliceNeeded,
   chart: ChartSliceNeeded
-): ViewSettings {
+): Pick<
+  ViewSettings,
+  | "zoom"
+  | "panOffset"
+  | "taskTableWidth"
+  | "columnWidths"
+  | "hiddenColumns"
+  | "isTaskTableCollapsed"
+  | "hiddenTaskIds"
+> {
   const { taskTableWidth, columnWidths } = task;
   const {
     zoom,
     panOffset,
+    hiddenColumns,
+    isTaskTableCollapsed,
+    hiddenTaskIds,
+  } = chart;
+  return useMemo(
+    () => ({
+      zoom,
+      panOffset,
+      taskTableWidth,
+      columnWidths,
+      hiddenColumns,
+      isTaskTableCollapsed,
+      hiddenTaskIds,
+    }),
+    [
+      zoom,
+      panOffset,
+      taskTableWidth,
+      columnWidths,
+      hiddenColumns,
+      isTaskTableCollapsed,
+      hiddenTaskIds,
+    ]
+  );
+}
+
+/**
+ * Builds the feature-flag/metadata portion of ViewSettings (toggles,
+ * working-day config, project metadata, colour mode).
+ * Split from layout settings so each sub-hook stays under 50 lines.
+ * The dep array necessarily mirrors the factory object keys — both must be
+ * kept in sync when a new ViewSettings field is added.
+ */
+function useFeatureViewSettings(
+  chart: ChartSliceNeeded
+): Pick<
+  ViewSettings,
+  | "showWeekends"
+  | "showTodayMarker"
+  | "showHolidays"
+  | "showDependencies"
+  | "showProgress"
+  | "taskLabelPosition"
+  | "workingDaysMode"
+  | "workingDaysConfig"
+  | "holidayRegion"
+  | "projectTitle"
+  | "projectAuthor"
+  | "colorModeState"
+> {
+  const {
     showWeekends,
     showTodayMarker,
     showHolidays,
@@ -259,16 +358,9 @@ function useViewSettings(
     projectTitle,
     projectAuthor,
     colorModeState,
-    hiddenColumns,
-    isTaskTableCollapsed,
-    hiddenTaskIds,
   } = chart;
   return useMemo(
     () => ({
-      zoom,
-      panOffset,
-      taskTableWidth,
-      columnWidths,
       showWeekends,
       showTodayMarker,
       showHolidays,
@@ -281,15 +373,8 @@ function useViewSettings(
       projectTitle,
       projectAuthor,
       colorModeState,
-      hiddenColumns,
-      isTaskTableCollapsed,
-      hiddenTaskIds,
     }),
     [
-      zoom,
-      panOffset,
-      taskTableWidth,
-      columnWidths,
       showWeekends,
       showTodayMarker,
       showHolidays,
@@ -302,10 +387,25 @@ function useViewSettings(
       projectTitle,
       projectAuthor,
       colorModeState,
-      hiddenColumns,
-      isTaskTableCollapsed,
-      hiddenTaskIds,
     ]
+  );
+}
+
+/**
+ * Merges layout and feature-flag view settings into the full ViewSettings
+ * snapshot written to the .ownchart file.
+ */
+function useViewSettings(
+  task: TaskSliceNeeded,
+  chart: ChartSliceNeeded
+): ViewSettings {
+  const layout = useLayoutViewSettings(task, chart);
+  const features = useFeatureViewSettings(chart);
+  return useMemo(
+    () => ({ ...layout, ...features }),
+    // Spreading stable memo results — only re-merge when either partial
+    // snapshot changes identity (i.e. one of its own deps changed).
+    [layout, features]
   );
 }
 
@@ -326,8 +426,9 @@ function useSerializeOptions(
   // Serializer flags and metadata (file identity, dependency data, export settings).
   const serializeOpts = useMemo(
     () => ({
-      chartName:
-        fileName?.replace(OWNCHART_FILE_EXTENSION, "") ?? DEFAULT_CHART_NAME,
+      chartName: fileName
+        ? stripFileExtension(fileName, OWNCHART_FILE_EXTENSION)
+        : DEFAULT_CHART_NAME,
       chartId: chartId ?? undefined,
       chartCreatedAt: chartCreatedAt ?? undefined,
       prettyPrint: true,
@@ -351,19 +452,31 @@ function useSerializeOptions(
 // readable.
 // ---------------------------------------------------------------------------
 
-function useSaveOperation(
-  tasks: Task[],
-  viewSettings: ViewSettings,
-  serializeOpts: SerializeOptions,
-  suggestedFilename: string,
-  setFileName: (name: string) => void,
-  setLastSaved: (date: Date) => void,
-  markClean: () => void
-): {
+interface SaveOperationDeps {
+  tasks: Task[];
+  viewSettings: ViewSettings;
+  serializeOpts: SerializeOptions;
+  suggestedFilename: string;
+  setFileName: (name: string) => void;
+  setLastSaved: (date: Date) => void;
+  markClean: () => void;
+}
+
+function useSaveOperation({
+  tasks,
+  viewSettings,
+  serializeOpts,
+  suggestedFilename,
+  setFileName,
+  setLastSaved,
+  markClean,
+}: SaveOperationDeps): {
+  /** Save to the existing file handle; pass `true` to always open the file picker. */
   handleSave: (saveAs?: boolean) => Promise<void>;
   handleSaveAs: () => Promise<void>;
 } {
   const handleSave = useCallback(
+    /** @param saveAs - When true, always open the file-picker (Save As). Default: false (Save). */
     async (saveAs = false) => {
       try {
         const content = serializeToGanttFile(
@@ -377,7 +490,7 @@ function useSaveOperation(
           setLastSaved(new Date());
           markClean();
           toast.success(`Saved "${result.fileName}"`);
-        } else if (result.error !== "Save cancelled") {
+        } else if (result.error !== SAVE_CANCELLED) {
           toast.error(`Save failed: ${result.error}`);
         }
       } catch (e) {
@@ -407,18 +520,13 @@ function useOpenOperation(isDirty: boolean): {
   handleOpen: () => Promise<void>;
 } {
   const handleOpen = useCallback(async () => {
-    if (
-      isDirty &&
-      !confirmDiscardChanges(
-        "You have unsaved changes. Do you want to continue without saving?"
-      )
-    ) {
+    if (isDirty && !confirmDiscardChanges(DISCARD_CHANGES_OPEN_MSG)) {
       return;
     }
     try {
       const result = await openFile();
       if (!result.success || !result.file) {
-        if (result.error !== "Open cancelled") {
+        if (result.error !== OPEN_CANCELLED) {
           toast.error(`Open failed: ${result.error}`);
         }
         return;
@@ -460,14 +568,9 @@ function useNewOperation({
   resetView,
   clearHistory,
   resetFileStore,
-}: NewOperationDeps): { handleNew: () => Promise<void> } {
-  const handleNew = useCallback(async () => {
-    if (
-      isDirty &&
-      !confirmDiscardChanges(
-        "You have unsaved changes. Do you want to create a new chart without saving?"
-      )
-    ) {
+}: NewOperationDeps): { handleNew: () => void } {
+  const handleNew = useCallback(() => {
+    if (isDirty && !confirmDiscardChanges(DISCARD_CHANGES_NEW_MSG)) {
       return;
     }
     setTasks([]);
@@ -502,54 +605,27 @@ function useNewOperation({
 }
 
 // ---------------------------------------------------------------------------
+// Assembles the NewOperationDeps struct from the slice sub-hook results.
+// Extracted to keep useFileOperations under 50 lines while making the
+// "what a new-chart operation needs" contract explicit.
+// ---------------------------------------------------------------------------
 
-export function useFileOperations(): {
-  handleSave: (saveAs?: boolean) => Promise<void>;
-  handleSaveAs: () => Promise<void>;
-  handleOpen: () => Promise<void>;
-  handleNew: () => Promise<void>;
-  fileName: string | null;
-  isDirty: boolean;
-  lastSaved: Date | null;
-} {
-  const taskState = useTaskSliceState();
-  const chartState = useChartSliceState();
-  const opState = useOperationalSliceState();
-
-  // Destructure immediately so callback dep arrays reference stable individual
-  // variables, not the container objects (exhaustive-deps requires this).
-  const { tasks, setTasks } = taskState;
+function useNewOperationDeps(
+  task: TaskSliceNeeded,
+  chart: ChartSliceNeeded,
+  op: OperationalSliceNeeded
+): NewOperationDeps {
+  const { setTasks } = task;
   const { setProjectTitle, setProjectAuthor, setHiddenTaskIds, resetView } =
-    chartState;
+    chart;
   const {
     isDirty,
-    fileName,
-    lastSaved,
-    setFileName,
-    setLastSaved,
-    markClean,
     clearDependencies,
     resetExportOptions,
     clearHistory,
     resetFileStore,
-  } = opState;
-
-  const { viewSettings, serializeOpts, suggestedFilename } =
-    useSerializeOptions(taskState, chartState, opState);
-
-  const { handleSave, handleSaveAs } = useSaveOperation(
-    tasks,
-    viewSettings,
-    serializeOpts,
-    suggestedFilename,
-    setFileName,
-    setLastSaved,
-    markClean
-  );
-
-  const { handleOpen } = useOpenOperation(isDirty);
-
-  const { handleNew } = useNewOperation({
+  } = op;
+  return {
     isDirty,
     setTasks,
     clearDependencies,
@@ -560,7 +636,46 @@ export function useFileOperations(): {
     resetView,
     clearHistory,
     resetFileStore,
+  };
+}
+
+// ---------------------------------------------------------------------------
+
+export function useFileOperations(): {
+  handleSave: (saveAs?: boolean) => Promise<void>;
+  handleSaveAs: () => Promise<void>;
+  handleOpen: () => Promise<void>;
+  handleNew: () => void;
+  fileName: string | null;
+  isDirty: boolean;
+  lastSaved: Date | null;
+} {
+  const taskState = useTaskSliceState();
+  const chartState = useChartSliceState();
+  const opState = useOperationalSliceState();
+
+  const { tasks } = taskState;
+  const { isDirty, fileName, lastSaved, setFileName, setLastSaved, markClean } =
+    opState;
+
+  const { viewSettings, serializeOpts, suggestedFilename } =
+    useSerializeOptions(taskState, chartState, opState);
+
+  const { handleSave, handleSaveAs } = useSaveOperation({
+    tasks,
+    viewSettings,
+    serializeOpts,
+    suggestedFilename,
+    setFileName,
+    setLastSaved,
+    markClean,
   });
+
+  const { handleOpen } = useOpenOperation(isDirty);
+
+  const { handleNew } = useNewOperation(
+    useNewOperationDeps(taskState, chartState, opState)
+  );
 
   return {
     handleSave,
