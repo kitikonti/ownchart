@@ -45,7 +45,6 @@ import {
   EXPORT_TIMELINE_HEADER_SVG_CLASS,
   SVG_NS,
   REACT_RENDER_WAIT_MS,
-  SVG_BACKGROUND_WHITE,
 } from "./constants";
 import { APP_CONFIG } from "../../config/appConfig";
 import { registerInterFont } from "./interFont";
@@ -95,7 +94,13 @@ const PDF_HEADER_TEXT_OFFSET_MM = 6;
 /** Footer text vertical offset from the bottom margin edge in mm */
 const PDF_FOOTER_TEXT_BOTTOM_OFFSET_MM = 4;
 
-// REACT_RENDER_WAIT_MS, SVG_BACKGROUND_WHITE, SVG_NS imported from ./constants
+/**
+ * White background fill colour for the SVG canvas.
+ * Intentionally hardcoded: pure white is a presentation-layer override for
+ * the "opaque background" export option, not a design-system colour that
+ * should track theme changes.
+ */
+const SVG_BACKGROUND_WHITE = "#ffffff";
 
 /** Middle-dot separator between right-side banner fields (e.g. author · date) */
 const PDF_BANNER_SEPARATOR = " \u00B7 ";

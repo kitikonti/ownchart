@@ -47,6 +47,9 @@ const DRAG_OPACITY = 0.3;
 /** Background opacity for the unfilled portion of a progress bar */
 const PROGRESS_BG_OPACITY = 0.65;
 
+// SUMMARY_BRACKET is imported from renderConstants — single source of truth.
+// See src/utils/export/renderConstants.ts.
+
 /** Stroke width for drag preview outlines */
 const PREVIEW_STROKE_WIDTH = 2;
 

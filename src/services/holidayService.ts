@@ -367,9 +367,7 @@ class _HolidayService {
    * @param data - Raw object from date-holidays (may be null/undefined/unknown).
    * @returns Sorted array of `{ code, name }` pairs.
    */
-  private buildSortedInfoList(
-    data: unknown
-  ): { code: string; name: string }[] {
+  private buildSortedInfoList(data: unknown): { code: string; name: string }[] {
     if (!data || typeof data !== "object") return [];
     return Object.entries(data as Record<string, unknown>)
       .filter(([, name]) => typeof name === "string")

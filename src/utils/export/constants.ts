@@ -8,6 +8,13 @@ import { COLORS } from "../../styles/design-tokens";
 /** Height of the header row in pixels */
 export const HEADER_HEIGHT = 48;
 
+/**
+ * Wait time in ms after root.render() before reading the DOM.
+ * React schedules its commit asynchronously; this gives it one macro-task
+ * to flush before waitForFonts() / waitForPaint() take over.
+ */
+export const REACT_RENDER_WAIT_MS = 100;
+
 /** Font family for SVG text elements (Inter with system font fallback) */
 export const SVG_FONT_FAMILY =
   'Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif';
@@ -91,14 +98,6 @@ export const EXPORT_TIMELINE_HEADER_SVG_CLASS = "export-timeline-header";
 
 /** SVG namespace URI — required for every createElementNS call */
 export const SVG_NS = "http://www.w3.org/2000/svg";
-
-/**
- * Wait time in ms after root.render() before reading the DOM.
- * React schedules its commit asynchronously; this gives it one macro-task
- * to flush before waitForFonts() / waitForPaint() take over.
- * Single source of truth — shared by svgExport.ts and pdfExport.ts.
- */
-export const REACT_RENDER_WAIT_MS = 100;
 
 /**
  * White background fill colour for SVG/PDF export with opaque background.
