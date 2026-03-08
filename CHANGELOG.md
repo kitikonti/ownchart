@@ -2,6 +2,29 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [1.2.0](https://github.com/kitikonti/ownchart/compare/v1.1.29...v1.2.0) (2026-03-08)
+
+
+### Features
+
+* **skills:** add review-loop skill for automated iterative review ([a4650a2](https://github.com/kitikonti/ownchart/commit/a4650a22f8a49d53b7f0e3776066a9707994e788))
+
+
+### Bug Fixes
+
+* **ui:** address all review findings in ContextMenu, Modal, HelpDialog ([a2b4f62](https://github.com/kitikonti/ownchart/commit/a2b4f62c607701de4bb38cda4ec3ed9f849ce6b0))
+* **ui:** address second-pass review findings in ContextMenu, Modal, HelpDialog ([c4dc859](https://github.com/kitikonti/ownchart/commit/c4dc8597c083abeb4444371ae3f797784dd766f5))
+* **ui:** fix a11y, focus restoration, and code quality in ContextMenu, Modal, HelpDialog ([65cb923](https://github.com/kitikonti/ownchart/commit/65cb923099e00623fdf0098fe3226a3cf106399f))
+
+
+### Code Refactoring
+
+* apply review fixes to useFileOperations, useMarqueeSelection, useClipboardOperations ([e46380e](https://github.com/kitikonti/ownchart/commit/e46380e51bab99c632585ca95bc8915c34db42e7))
+* apply review fixes to useFileOperations, useMarqueeSelection, useClipboardOperations ([af0f5aa](https://github.com/kitikonti/ownchart/commit/af0f5aa48bda9a753ed34a81b3f691c11ddcaa56))
+* apply review fixes to useFileOperations, useMarqueeSelection, useClipboardOperations ([2a61484](https://github.com/kitikonti/ownchart/commit/2a61484d7b628fbc1352b8b48b1ca8feff8be1ac))
+* improve useFileOperations, useMarqueeSelection, useClipboardOperations ([010c1a9](https://github.com/kitikonti/ownchart/commit/010c1a9961070253aa886494c53fac298c480d79))
+* improve useFileOperations, useMarqueeSelection, useClipboardOperations ([50dd55c](https://github.com/kitikonti/ownchart/commit/50dd55c54123ab3a35acd162000f35ffc401e57f))
+
 ## [1.1.29](https://github.com/kitikonti/ownchart/compare/v1.1.28...v1.1.29) (2026-03-06)
 
 
