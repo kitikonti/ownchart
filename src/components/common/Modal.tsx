@@ -109,7 +109,8 @@ export const Modal = memo(function Modal({
   const titleId = `modal-title-${instanceId}`;
   const subtitleId = `modal-subtitle-${instanceId}`;
 
-  // Save the focused element before opening; restore it when the modal closes.
+  // Save the focused element before opening; restore it when the modal closes
+  // or when the component unmounts (e.g. parent removed from tree while open).
   // Guard the restore with a null check and reset after use to prevent
   // double-focus or focus on a stale/unmounted element.
   //
@@ -122,12 +123,14 @@ export const Modal = memo(function Modal({
     if (isOpen) {
       previousActiveElement.current = document.activeElement as HTMLElement;
       modalRef.current?.focus();
-    } else {
-      // Capture and null the ref before calling focus() so that even if
-      // .focus() throws, the ref is not left pointing at a stale element.
-      const elToRestore = previousActiveElement.current;
-      previousActiveElement.current = null;
-      elToRestore?.focus();
+      return () => {
+        // Restore focus on close (isOpen → false) OR on unmount while open.
+        // Capture and null the ref before calling focus() so that even if
+        // .focus() throws, the ref is not left pointing at a stale element.
+        const elToRestore = previousActiveElement.current;
+        previousActiveElement.current = null;
+        elToRestore?.focus();
+      };
     }
   }, [isOpen]);
 
@@ -230,7 +233,7 @@ export const Modal = memo(function Modal({
           </div>
           <button
             onClick={onClose}
-            className="p-1.5 -m-1.5 rounded-sm text-neutral-500 hover:text-neutral-700 transition-colors duration-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-100"
+            className="p-1.5 -m-1.5 rounded-sm text-neutral-500 hover:text-neutral-700 transition-colors duration-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500"
             aria-label={`Close ${title}`}
           >
             <X size={20} weight="regular" />

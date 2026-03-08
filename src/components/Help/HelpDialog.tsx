@@ -122,9 +122,12 @@ export const HelpDialog = memo(function HelpDialog(): JSX.Element | null {
   }, [isOpen]);
 
   const trimmedQuery = query.trim();
+  // Use trimmedQuery (not raw query) so that typing only whitespace does not
+  // trigger a search — isSearching and useHelpSearch must agree on what
+  // constitutes an active query.
   const { sections: searchResults, matchCount } = useHelpSearch(
     HELP_TABS,
-    query
+    trimmedQuery
   );
   const isSearching = trimmedQuery.length > 0;
 

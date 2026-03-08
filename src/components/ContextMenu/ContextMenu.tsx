@@ -4,7 +4,14 @@
  * Future-proof: can be extended with Cut/Copy/Paste, Delete, Indent/Outdent, etc.
  */
 
-import { useEffect, useRef, useCallback, memo, type ReactNode } from "react";
+import {
+  useEffect,
+  useRef,
+  useCallback,
+  memo,
+  Fragment,
+  type ReactNode,
+} from "react";
 import { createPortal } from "react-dom";
 import { Check } from "@phosphor-icons/react";
 import { CONTEXT_MENU } from "../../styles/design-tokens";
@@ -136,7 +143,8 @@ export const ContextMenu = memo(function ContextMenu({
     }
   }, []);
 
-  /** Returns the index of the next enabled item after `from`, wrapping around. */
+  /** Returns the index of the next enabled item after `from`, wrapping around.
+   *  Returns `from` unchanged when all items are disabled (nothing to navigate to). */
   const findNextEnabled = useCallback(
     (from: number): number => {
       let next = from + 1;
@@ -144,13 +152,16 @@ export const ContextMenu = memo(function ContextMenu({
       if (next >= items.length) {
         // Wrap around: find first enabled item from the beginning
         next = items.findIndex((item) => !item.disabled);
+        // All items are disabled — stay put.
+        if (next < 0) return from;
       }
       return next;
     },
     [items]
   );
 
-  /** Returns the index of the previous enabled item before `from`, wrapping around. */
+  /** Returns the index of the previous enabled item before `from`, wrapping around.
+   *  Returns `from` unchanged when all items are disabled (nothing to navigate to). */
   const findPrevEnabled = useCallback(
     (from: number): number => {
       let prev = from - 1;
@@ -159,6 +170,8 @@ export const ContextMenu = memo(function ContextMenu({
         // Wrap around: find last enabled item from the end
         prev = items.length - 1;
         while (prev >= 0 && items[prev].disabled) prev--;
+        // All items are disabled — stay put.
+        if (prev < 0) return from;
       }
       return prev;
     },
@@ -230,23 +243,23 @@ export const ContextMenu = memo(function ContextMenu({
     <div
       ref={menuRef}
       className={`${CONTEXT_MENU_CONTAINER_CLASS} fixed z-[1000] min-w-[180px]`}
-      style={{
-        left: `${position.x}px`,
-        top: `${position.y}px`,
-        visibility: "hidden",
-      }}
+      // left/top are set imperatively in the positioning useEffect after
+      // viewport-clamping; visibility:hidden keeps the menu invisible until
+      // the effect runs so there is no flash at an unclamped position.
+      style={{ visibility: "hidden" }}
       role="menu"
       aria-label={ariaLabel}
       tabIndex={-1}
       onKeyDown={handleKeyDown}
     >
       {items.map((item, index) => (
-        // role="none" neutralises any implicit div role so the menu's ARIA
-        // structure is: menu > menuitem* (WAI-ARIA 1.1 §3.15).
-        // The separator is rendered as a direct child of the menu (outside this
-        // wrapper) so it satisfies the WAI-ARIA requirement that `separator` be
-        // a direct child of `menu` or `menubar`.
-        <div key={item.id}>
+        // WAI-ARIA 1.1 §3.15: role="menu" directly owns menuitem/menuitemcheckbox
+        // and separator elements. role="none" on the wrapper suppresses the
+        // implicit div role so the owned-element relationship is preserved.
+        // Separator is rendered as a sibling (not nested inside role="none") to
+        // satisfy the WAI-ARIA requirement that separator be a direct child of
+        // role="menu" or role="menubar".
+        <Fragment key={item.id}>
           <div role="none">
             <button
               data-index={index}
@@ -256,6 +269,9 @@ export const ContextMenu = memo(function ContextMenu({
               aria-checked={
                 item.checked !== undefined ? item.checked : undefined
               }
+              // aria-keyshortcuts surfaces the keyboard shortcut hint to screen
+              // readers; the visual <span> is aria-hidden to avoid double-reading.
+              aria-keyshortcuts={item.shortcut}
               tabIndex={-1}
               disabled={item.disabled}
               className="context-menu-item text-left outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-brand-500"
@@ -280,8 +296,7 @@ export const ContextMenu = memo(function ContextMenu({
               <span className="context-menu-item-label">{item.label}</span>
               {item.shortcut && (
                 // aria-hidden: the shortcut hint is supplementary visual info;
-                // hiding it prevents screen readers from double-announcing it.
-                // The shortcut is optionally surfaced via aria-keyshortcuts below.
+                // screen readers receive it via aria-keyshortcuts on the button.
                 <span className="context-menu-item-shortcut" aria-hidden="true">
                   {item.shortcut}
                 </span>
@@ -289,11 +304,11 @@ export const ContextMenu = memo(function ContextMenu({
             </button>
           </div>
           {item.separator && (
-            // Rendered outside role="none" so it is a direct child of role="menu",
-            // conforming to WAI-ARIA §6.10 (separator as menu child).
+            // Rendered as a Fragment sibling (not inside role="none") so it is a
+            // direct child of role="menu", conforming to WAI-ARIA §6.10.
             <div role="separator" className="context-menu-separator" />
           )}
-        </div>
+        </Fragment>
       ))}
     </div>,
     document.body
