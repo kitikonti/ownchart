@@ -191,6 +191,26 @@ describe("HolidayService", () => {
       const result = holidayService.getHolidayForDateString("");
       expect(result).toBeNull();
     });
+
+    it("should return null for a datetime string (ISO 8601 with time component)", () => {
+      // Datetime strings are rejected to prevent timezone-related misdetection:
+      // new Date("2026-12-25T00:00:00Z") may resolve to Dec 24 local time in
+      // negative-offset timezones, causing isSameDay() to miss the holiday.
+      const result = holidayService.getHolidayForDateString(
+        "2026-12-25T00:00:00Z"
+      );
+      expect(result).toBeNull();
+    });
+
+    it("should return null for a locale-format date string (MM/DD/YYYY)", () => {
+      const result = holidayService.getHolidayForDateString("12/25/2026");
+      expect(result).toBeNull();
+    });
+
+    it("should return null for a calendar-invalid date (e.g. Feb 30)", () => {
+      const result = holidayService.getHolidayForDateString("2026-02-30");
+      expect(result).toBeNull();
+    });
   });
 
   describe("getHolidaysInRange", () => {

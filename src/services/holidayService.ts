@@ -172,19 +172,31 @@ class HolidayServiceClass {
   }
 
   /**
-   * Look up holiday info for an ISO 8601 date string (e.g. "2026-12-25").
-   * Returns the matching HolidayInfo, or null if the date is not a holiday
-   * or if the string is not a valid date.
+   * Look up holiday info for a date-only string in YYYY-MM-DD format.
+   * Returns the matching HolidayInfo, or null if the date is not a holiday,
+   * the string does not match YYYY-MM-DD exactly, or the date is calendar-invalid
+   * (e.g. "2026-02-30").
    *
-   * @param dateString - ISO 8601 date string (YYYY-MM-DD). Non-ISO formats may
-   *   behave differently across browsers and should be avoided.
+   * @param dateString - Date string in YYYY-MM-DD format. Datetime strings
+   *   (e.g. "2026-12-25T00:00:00Z") and locale-specific formats
+   *   (e.g. "12/25/2026") are rejected and return null.
    */
   getHolidayForDateString(dateString: string): HolidayInfo | null {
-    // Requires ISO 8601 (YYYY-MM-DD); non-ISO strings may parse inconsistently
-    // across browsers. The isNaN guard catches truly invalid strings but not
-    // locale-ambiguous formats like "12/25/2026".
+    // Enforce strict YYYY-MM-DD format before parsing.
+    // Without this guard, datetime strings like "2026-12-25T00:00:00Z" would
+    // be accepted — but new Date("…TZ") produces a UTC-midnight Date whose
+    // local year/month/day differs from the calendar date in negative-offset
+    // timezones (e.g. UTC-5: Dec 25 00:00 UTC → Dec 24 local), causing
+    // isSameDay() to return false for the intended holiday.
+    // Non-ISO formats like "12/25/2026" are also rejected here rather than
+    // relying solely on the isNaN guard below.
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(dateString)) {
+      return null;
+    }
+    // new Date("YYYY-MM-DD") is parsed as local midnight per the HTML spec
+    // when the string has no time component, so isSameDay() comparisons are safe.
     const date = new Date(dateString);
-    // Guard against invalid date strings (e.g. malformed task data)
+    // Guard against calendar-invalid dates like "2026-02-30".
     if (isNaN(date.getTime())) {
       return null;
     }
