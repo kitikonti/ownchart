@@ -22,9 +22,6 @@ export const CONTEXT_MENU_CONTAINER_CLASS = "context-menu-container";
 /** Pixel gap kept between the menu edge and the viewport boundary. */
 const VIEWPORT_EDGE_MARGIN_PX = 4;
 
-/** Minimum width of the context menu in pixels. */
-const CONTEXT_MENU_MIN_WIDTH_PX = 180;
-
 export interface ContextMenuItem {
   id: string;
   label: string;
@@ -112,9 +109,20 @@ export const ContextMenu = memo(function ContextMenu({
     // No visible focus ring — CSS uses :focus-visible (keyboard only).
     // `items` is in the dependency array so focus is re-evaluated whenever the
     // item list changes (e.g. async-loaded items or toggled disabled states).
+    //
+    // NOTE for callers: memoize the `items` array to avoid spurious focus
+    // resets on every parent render (this effect re-runs whenever `items` changes).
     const firstEnabled = items.findIndex((item) => !item.disabled);
     if (firstEnabled >= 0) {
       focusItem(firstEnabled);
+      // Safety-net: if the button wasn't in the DOM yet (e.g. portal not flushed),
+      // fall back to focusing the menu container so keyboard events still land.
+      if (
+        document.activeElement !== el &&
+        !el.contains(document.activeElement)
+      ) {
+        el.focus();
+      }
     } else {
       el.focus();
     }
@@ -256,11 +264,11 @@ export const ContextMenu = memo(function ContextMenu({
       // the effect runs so there is no flash at an unclamped position.
       // zIndex uses the Z_INDEX token so the stacking order relative to Modal
       // (Z_INDEX.modal = 1100) is explicit and maintained centrally.
-      // minWidth uses the named constant rather than an inline magic number.
+      // minWidth uses the CONTEXT_MENU design token rather than an inline magic number.
       style={{
         visibility: "hidden",
         zIndex: Z_INDEX.contextMenu,
-        minWidth: CONTEXT_MENU_MIN_WIDTH_PX,
+        minWidth: CONTEXT_MENU.minWidth,
       }}
       role="menu"
       aria-label={ariaLabel}

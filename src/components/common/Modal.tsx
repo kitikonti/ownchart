@@ -223,6 +223,12 @@ export const Modal = memo(function Modal({
         if (e.shiftKey && document.activeElement === firstElement) {
           e.preventDefault();
           lastElement?.focus();
+        } else if (e.shiftKey && document.activeElement === modalRef.current) {
+          // When the modal root itself is focused (e.g. immediately after open)
+          // and the user presses Shift+Tab, wrap to the last focusable element
+          // rather than letting focus escape the modal.
+          e.preventDefault();
+          lastElement?.focus();
         } else if (!e.shiftKey && document.activeElement === lastElement) {
           e.preventDefault();
           firstElement?.focus();
