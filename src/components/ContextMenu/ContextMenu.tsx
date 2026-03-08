@@ -14,7 +14,7 @@ import {
 } from "react";
 import { createPortal } from "react-dom";
 import { Check } from "@phosphor-icons/react";
-import { CONTEXT_MENU } from "../../styles/design-tokens";
+import { CONTEXT_MENU, Z_INDEX } from "../../styles/design-tokens";
 
 /** CSS class applied to the menu root div; exported so callers can exclude it from outside-click detection. */
 export const CONTEXT_MENU_CONTAINER_CLASS = "context-menu-container";
@@ -242,11 +242,13 @@ export const ContextMenu = memo(function ContextMenu({
   return createPortal(
     <div
       ref={menuRef}
-      className={`${CONTEXT_MENU_CONTAINER_CLASS} fixed z-[1000] min-w-[180px]`}
+      className={`${CONTEXT_MENU_CONTAINER_CLASS} fixed min-w-[180px]`}
       // left/top are set imperatively in the positioning useEffect after
       // viewport-clamping; visibility:hidden keeps the menu invisible until
       // the effect runs so there is no flash at an unclamped position.
-      style={{ visibility: "hidden" }}
+      // zIndex uses the Z_INDEX token so the stacking order relative to Modal
+      // (Z_INDEX.modal = 1100) is explicit and maintained centrally.
+      style={{ visibility: "hidden", zIndex: Z_INDEX.contextMenu }}
       role="menu"
       aria-label={ariaLabel}
       tabIndex={-1}

@@ -14,13 +14,7 @@ import {
 } from "react";
 import { createPortal } from "react-dom";
 import { X } from "@phosphor-icons/react";
-import { SHADOWS } from "../../styles/design-tokens";
-
-/**
- * Tailwind class that constrains the dialog height — prevents the modal from
- * overflowing the viewport on short screens while still allowing internal scrolling.
- */
-const DIALOG_MAX_HEIGHT_CLASS = "max-h-[90vh]";
+import { SHADOWS, Z_INDEX } from "../../styles/design-tokens";
 
 /**
  * Tailwind class maps for header/footer style variants.
@@ -186,7 +180,10 @@ export const Modal = memo(function Modal({
     // eslint-disable-next-line jsx-a11y/no-noninteractive-element-interactions
     <div
       ref={modalRef}
-      className="fixed inset-0 flex items-center justify-center p-4 z-[1100]"
+      className="fixed inset-0 flex items-center justify-center p-4"
+      // zIndex uses the Z_INDEX token so the stacking order relative to
+      // ContextMenu (Z_INDEX.contextMenu = 1000) is explicit and centrally managed.
+      style={{ zIndex: Z_INDEX.modal }}
       role="dialog"
       aria-modal="true"
       aria-labelledby={titleId}
@@ -206,7 +203,7 @@ export const Modal = memo(function Modal({
       {/* Dialog container - Outlook style: 4px radius, Fluent shadow */}
       <div
         className={`
-          relative bg-white rounded overflow-hidden ${widthClass} w-full ${DIALOG_MAX_HEIGHT_CLASS} flex flex-col
+          relative bg-white rounded overflow-hidden ${widthClass} w-full max-h-[90vh] flex flex-col
           animate-modal-in
         `}
         style={{ boxShadow: SHADOWS.modal }}
