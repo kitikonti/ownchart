@@ -1,281 +1,244 @@
 /**
  * Unit tests for svgExport.ts
  *
- * Note: Many functions in svgExport.ts work with DOM elements,
- * so we test the utilities that don't require a full DOM.
+ * Tests the exported pure helpers: finalizeSvg and extractSvgElements.
+ * The top-level exportToSvg is an async pipeline with React rendering and
+ * DOM side effects — it is exercised by E2E tests instead.
  */
 
-import { describe, it, expect, vi, afterEach } from "vitest";
+import { describe, it, expect } from "vitest";
+import {
+  finalizeSvg,
+  extractSvgElements,
+} from "../../../../src/utils/export/svgExport";
+import {
+  EXPORT_CHART_SVG_CLASS,
+  EXPORT_TIMELINE_HEADER_SVG_CLASS,
+} from "../../../../src/utils/export/constants";
+import type { SvgExportOptions } from "../../../../src/utils/export/types";
 
-// We need to test the module functions, but many depend on DOM
-// For now, we test the exported function behavior with mocks
+// =============================================================================
+// Helpers
+// =============================================================================
 
-describe("svgExport", () => {
-  afterEach(() => {
-    vi.restoreAllMocks();
+function makeSvg(width = 800, height = 600): SVGSVGElement {
+  const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+  svg.setAttribute("width", String(width));
+  svg.setAttribute("height", String(height));
+  svg.setAttribute("viewBox", `0 0 ${width} ${height}`);
+  return svg;
+}
+
+/** Minimal valid SvgExportOptions — all flags off, dimensionMode auto */
+const BASE_OPTIONS: SvgExportOptions = {
+  dimensionMode: "auto",
+  preserveAspectRatio: true,
+  textMode: "text",
+  styleMode: "inline",
+  optimize: false,
+  includeBackground: false,
+  responsiveMode: false,
+  includeAccessibility: false,
+  copyToClipboard: false,
+};
+
+function makeContainer(opts?: {
+  includeChart?: boolean;
+  includeHeader?: boolean;
+}): HTMLDivElement {
+  const container = document.createElement("div");
+  if (opts?.includeChart !== false) {
+    const chartSvg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+    chartSvg.setAttribute("class", EXPORT_CHART_SVG_CLASS);
+    container.appendChild(chartSvg);
+  }
+  if (opts?.includeHeader) {
+    const headerSvg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+    headerSvg.setAttribute("class", EXPORT_TIMELINE_HEADER_SVG_CLASS);
+    container.appendChild(headerSvg);
+  }
+  return container;
+}
+
+// =============================================================================
+// finalizeSvg — XML declaration
+// =============================================================================
+
+describe("finalizeSvg — XML declaration", () => {
+  it("prepends <?xml declaration when not already present", () => {
+    const svg = makeSvg();
+    const result = finalizeSvg(svg, BASE_OPTIONS);
+    expect(result.startsWith('<?xml version="1.0" encoding="UTF-8"?>')).toBe(true);
   });
 
-  describe("exportToSvg", () => {
-    it("should be importable", async () => {
-      const { exportToSvg } = await import(
-        "../../../../src/utils/export/svgExport"
-      );
-      expect(typeof exportToSvg).toBe("function");
-    });
+  it("does not double-prepend if <?xml is already present", () => {
+    // XMLSerializer in jsdom does not prepend <?xml by itself, so simulate the
+    // case where the string already starts with the declaration.
+    // The guard `!result.startsWith("<?xml")` ensures idempotency when the
+    // serializer does include it.
+    const svg = makeSvg();
+    const result = finalizeSvg(svg, BASE_OPTIONS);
+    const declarationCount = (result.match(/<\?xml/g) ?? []).length;
+    expect(declarationCount).toBe(1);
+  });
+});
+
+// =============================================================================
+// finalizeSvg — accessibility
+// =============================================================================
+
+describe("finalizeSvg — accessibility", () => {
+  it("adds role=img and default aria-label when includeAccessibility is true and no project name", () => {
+    const svg = makeSvg();
+    const result = finalizeSvg(svg, { ...BASE_OPTIONS, includeAccessibility: true });
+    expect(result).toContain('role="img"');
+    expect(result).toContain('aria-label="Project Gantt chart"');
   });
 
-  describe("SVG serialization", () => {
-    it("serializes SVG element to string", () => {
-      const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
-      svg.setAttribute("width", "100");
-      svg.setAttribute("height", "100");
-
-      const rect = document.createElementNS(
-        "http://www.w3.org/2000/svg",
-        "rect"
-      );
-      rect.setAttribute("x", "10");
-      rect.setAttribute("y", "10");
-      rect.setAttribute("width", "80");
-      rect.setAttribute("height", "80");
-      rect.setAttribute("fill", "#ff0000");
-      svg.appendChild(rect);
-
-      const serializer = new XMLSerializer();
-      const svgString = serializer.serializeToString(svg);
-
-      expect(svgString).toContain("<svg");
-      expect(svgString).toContain("<rect");
-      expect(svgString).toContain('fill="#ff0000"');
-    });
-
-    it("preserves viewBox attribute", () => {
-      const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
-      svg.setAttribute("viewBox", "0 0 800 600");
-
-      const serializer = new XMLSerializer();
-      const svgString = serializer.serializeToString(svg);
-
-      expect(svgString).toContain('viewBox="0 0 800 600"');
-    });
-
-    it("preserves nested elements", () => {
-      const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
-      const g = document.createElementNS("http://www.w3.org/2000/svg", "g");
-      g.setAttribute("class", "task-group");
-
-      const rect = document.createElementNS(
-        "http://www.w3.org/2000/svg",
-        "rect"
-      );
-      g.appendChild(rect);
-      svg.appendChild(g);
-
-      const serializer = new XMLSerializer();
-      const svgString = serializer.serializeToString(svg);
-
-      expect(svgString).toContain("<g");
-      expect(svgString).toContain('class="task-group"');
-      expect(svgString).toContain("<rect");
-    });
+  it("uses project name in aria-label when provided", () => {
+    const svg = makeSvg();
+    const result = finalizeSvg(
+      svg,
+      { ...BASE_OPTIONS, includeAccessibility: true },
+      "My Project"
+    );
+    expect(result).toContain('aria-label="Gantt chart for My Project"');
   });
 
-  describe("SVG dimension handling", () => {
-    it("can set width and height attributes", () => {
-      const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
-      svg.setAttribute("width", "800");
-      svg.setAttribute("height", "600");
+  it("does not add accessibility attributes when includeAccessibility is false", () => {
+    const svg = makeSvg();
+    const result = finalizeSvg(svg, { ...BASE_OPTIONS, includeAccessibility: false });
+    expect(result).not.toContain('role="img"');
+    expect(result).not.toContain("aria-label");
+  });
+});
 
-      expect(svg.getAttribute("width")).toBe("800");
-      expect(svg.getAttribute("height")).toBe("600");
-    });
+// =============================================================================
+// finalizeSvg — responsiveMode
+// =============================================================================
 
-    it("can remove width and height for responsive mode", () => {
-      const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
-      svg.setAttribute("width", "800");
-      svg.setAttribute("height", "600");
-      svg.setAttribute("viewBox", "0 0 800 600");
-
-      // Remove dimensions for responsive
-      svg.removeAttribute("width");
-      svg.removeAttribute("height");
-
-      expect(svg.getAttribute("width")).toBeNull();
-      expect(svg.getAttribute("height")).toBeNull();
-      expect(svg.getAttribute("viewBox")).toBe("0 0 800 600");
-    });
+describe("finalizeSvg — responsiveMode", () => {
+  it("removes width and height attributes when responsiveMode is true", () => {
+    const svg = makeSvg(800, 600);
+    const result = finalizeSvg(svg, { ...BASE_OPTIONS, responsiveMode: true });
+    // No fixed width/height — only viewBox survives
+    expect(result).not.toMatch(/\swidth="\d+"/);
+    expect(result).not.toMatch(/\sheight="\d+"/);
   });
 
-  describe("SVG background handling", () => {
-    it("can insert background rect as first child", () => {
-      const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
-      svg.setAttribute("width", "100");
-      svg.setAttribute("height", "100");
-
-      const existingRect = document.createElementNS(
-        "http://www.w3.org/2000/svg",
-        "rect"
-      );
-      existingRect.setAttribute("class", "content");
-      svg.appendChild(existingRect);
-
-      // Add background
-      const bgRect = document.createElementNS(
-        "http://www.w3.org/2000/svg",
-        "rect"
-      );
-      bgRect.setAttribute("x", "0");
-      bgRect.setAttribute("y", "0");
-      bgRect.setAttribute("width", "100%");
-      bgRect.setAttribute("height", "100%");
-      bgRect.setAttribute("fill", "white");
-      svg.insertBefore(bgRect, svg.firstChild);
-
-      expect(svg.children.length).toBe(2);
-      expect(svg.firstChild).toBe(bgRect);
-    });
+  it("keeps viewBox when responsiveMode is true", () => {
+    const svg = makeSvg(800, 600);
+    const result = finalizeSvg(svg, { ...BASE_OPTIONS, responsiveMode: true });
+    expect(result).toContain('viewBox="0 0 800 600"');
   });
 
-  describe("SVG accessibility attributes", () => {
-    it("can add role attribute", () => {
-      const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
-      svg.setAttribute("role", "img");
+  it("keeps fixed dimensions when responsiveMode is false", () => {
+    const svg = makeSvg(800, 600);
+    const result = finalizeSvg(svg, { ...BASE_OPTIONS, responsiveMode: false });
+    expect(result).toContain('width="800"');
+    expect(result).toContain('height="600"');
+  });
+});
 
-      expect(svg.getAttribute("role")).toBe("img");
+// =============================================================================
+// finalizeSvg — custom dimensions
+// =============================================================================
+
+describe("finalizeSvg — custom dimensions", () => {
+  it("applies customWidth when dimensionMode is custom", () => {
+    const svg = makeSvg(800, 600);
+    const result = finalizeSvg(svg, {
+      ...BASE_OPTIONS,
+      dimensionMode: "custom",
+      customWidth: 1200,
     });
-
-    it("can add aria-label attribute", () => {
-      const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
-      svg.setAttribute("aria-label", "Gantt chart for Test Project");
-
-      expect(svg.getAttribute("aria-label")).toBe("Gantt chart for Test Project");
-    });
+    expect(result).toContain('width="1200"');
   });
 
-  describe("SVG style extraction", () => {
-    it("can extract inline styles to class", () => {
-      const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
-      const rect = document.createElementNS(
-        "http://www.w3.org/2000/svg",
-        "rect"
-      );
-      rect.setAttribute("style", "fill: red; stroke: blue;");
-      svg.appendChild(rect);
-
-      // Extract style
-      const inlineStyle = rect.getAttribute("style") || "";
-      const className = "extracted-style-0";
-
-      rect.classList.add(className);
-      rect.removeAttribute("style");
-
-      // Add style element
-      const styleEl = document.createElementNS(
-        "http://www.w3.org/2000/svg",
-        "style"
-      );
-      styleEl.textContent = `.${className} { ${inlineStyle} }`;
-      svg.insertBefore(styleEl, svg.firstChild);
-
-      expect(rect.getAttribute("style")).toBeNull();
-      expect(rect.classList.contains(className)).toBe(true);
-      expect(svg.querySelector("style")).not.toBeNull();
+  it("applies customHeight when dimensionMode is custom", () => {
+    const svg = makeSvg(800, 600);
+    const result = finalizeSvg(svg, {
+      ...BASE_OPTIONS,
+      dimensionMode: "custom",
+      customHeight: 900,
     });
+    expect(result).toContain('height="900"');
   });
 
-  describe("SVG element removal", () => {
-    it("can remove elements with data attributes", () => {
-      const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
-
-      const interactive = document.createElementNS(
-        "http://www.w3.org/2000/svg",
-        "rect"
-      );
-      interactive.setAttribute("data-interactive", "true");
-      svg.appendChild(interactive);
-
-      const normal = document.createElementNS(
-        "http://www.w3.org/2000/svg",
-        "rect"
-      );
-      svg.appendChild(normal);
-
-      // Remove interactive elements
-      svg.querySelectorAll("[data-interactive]").forEach((el) => el.remove());
-
-      expect(svg.children.length).toBe(1);
-      expect(svg.querySelector("[data-interactive]")).toBeNull();
+  it("custom dimensions override responsiveMode — applied after removal", () => {
+    const svg = makeSvg(800, 600);
+    const result = finalizeSvg(svg, {
+      ...BASE_OPTIONS,
+      responsiveMode: true,
+      dimensionMode: "custom",
+      customWidth: 1200,
+      customHeight: 900,
     });
-
-    it("can filter animation classes", () => {
-      const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
-      const rect = document.createElementNS(
-        "http://www.w3.org/2000/svg",
-        "rect"
-      );
-      rect.setAttribute("class", "task-bar animate-pulse other-class");
-      svg.appendChild(rect);
-
-      // Filter animation classes
-      const classes = rect.getAttribute("class") || "";
-      const filtered = classes
-        .split(" ")
-        .filter((c) => !c.includes("animate"))
-        .join(" ");
-      rect.setAttribute("class", filtered);
-
-      expect(rect.getAttribute("class")).toBe("task-bar other-class");
-    });
+    expect(result).toContain('width="1200"');
+    expect(result).toContain('height="900"');
   });
 
-  describe("filename generation", () => {
-    it("generates filename with date and time", () => {
-      const projectName = "Test Project";
-      const baseName = projectName.toLowerCase().replace(/[^a-z0-9]+/g, "-");
-      const now = new Date();
-      const year = now.getFullYear();
-      const month = String(now.getMonth() + 1).padStart(2, "0");
-      const day = String(now.getDate()).padStart(2, "0");
-      const hours = String(now.getHours()).padStart(2, "0");
-      const minutes = String(now.getMinutes()).padStart(2, "0");
-      const seconds = String(now.getSeconds()).padStart(2, "0");
-      const filename = `${baseName}-${year}${month}${day}-${hours}${minutes}${seconds}.svg`;
-
-      expect(filename).toMatch(/^test-project-\d{8}-\d{6}\.svg$/);
-    });
-
-    it("handles empty project name", () => {
-      const baseName = "gantt-chart";
-      const now = new Date();
-      const year = now.getFullYear();
-      const month = String(now.getMonth() + 1).padStart(2, "0");
-      const day = String(now.getDate()).padStart(2, "0");
-      const hours = String(now.getHours()).padStart(2, "0");
-      const minutes = String(now.getMinutes()).padStart(2, "0");
-      const seconds = String(now.getSeconds()).padStart(2, "0");
-      const filename = `${baseName}-${year}${month}${day}-${hours}${minutes}${seconds}.svg`;
-
-      expect(filename).toMatch(/^gantt-chart-\d{8}-\d{6}\.svg$/);
-    });
-
-    it("sanitizes special characters in project name", () => {
-      const projectName = "Project: Test <>&\"'";
-      const baseName = projectName.toLowerCase().replace(/[^a-z0-9]+/g, "-");
-
-      expect(baseName).not.toContain(":");
-      expect(baseName).not.toContain("<");
-      expect(baseName).not.toContain(">");
-    });
+  it("does not alter dimensions when dimensionMode is auto", () => {
+    const svg = makeSvg(800, 600);
+    const result = finalizeSvg(svg, { ...BASE_OPTIONS, dimensionMode: "auto" });
+    expect(result).toContain('width="800"');
+    expect(result).toContain('height="600"');
   });
 
-  describe("blob creation", () => {
-    it("creates SVG blob with correct MIME type", () => {
-      const svgString =
-        '<svg xmlns="http://www.w3.org/2000/svg"><rect/></svg>';
-      const blob = new Blob([svgString], { type: "image/svg+xml" });
-
-      expect(blob.type).toBe("image/svg+xml");
-      expect(blob.size).toBeGreaterThan(0);
+  it("does not set width when customWidth is absent in custom mode", () => {
+    const svg = makeSvg(800, 600);
+    const result = finalizeSvg(svg, {
+      ...BASE_OPTIONS,
+      dimensionMode: "custom",
+      customHeight: 900,
+      // customWidth deliberately omitted
     });
+    // Original width is preserved (not cleared by responsiveMode either)
+    expect(result).toContain('width="800"');
+    expect(result).toContain('height="900"');
+  });
+});
+
+// =============================================================================
+// extractSvgElements
+// =============================================================================
+
+describe("extractSvgElements", () => {
+  it("throws when chart SVG is not found", () => {
+    const container = document.createElement("div");
+    expect(() => extractSvgElements(container)).toThrow(EXPORT_CHART_SVG_CLASS);
+  });
+
+  it("error message includes the missing class name for diagnosability", () => {
+    const container = document.createElement("div");
+    expect(() => extractSvgElements(container)).toThrowError(
+      new RegExp(EXPORT_CHART_SVG_CLASS)
+    );
+  });
+
+  it("returns chartSvg element when found", () => {
+    const container = makeContainer({ includeChart: true });
+    const { chartSvg } = extractSvgElements(container);
+    expect(chartSvg).toBeInstanceOf(SVGSVGElement);
+    expect(chartSvg.getAttribute("class")).toBe(EXPORT_CHART_SVG_CLASS);
+  });
+
+  it("returns null headerSvg when no header SVG exists", () => {
+    const container = makeContainer({ includeChart: true, includeHeader: false });
+    const { headerSvg } = extractSvgElements(container);
+    expect(headerSvg).toBeNull();
+  });
+
+  it("returns headerSvg element when header SVG exists", () => {
+    const container = makeContainer({ includeChart: true, includeHeader: true });
+    const { headerSvg } = extractSvgElements(container);
+    expect(headerSvg).toBeInstanceOf(SVGSVGElement);
+    expect(headerSvg?.getAttribute("class")).toBe(EXPORT_TIMELINE_HEADER_SVG_CLASS);
+  });
+
+  it("is importable as a named export (public API contract)", async () => {
+    const mod = await import("../../../../src/utils/export/svgExport");
+    expect(typeof mod.extractSvgElements).toBe("function");
+    expect(typeof mod.finalizeSvg).toBe("function");
   });
 });

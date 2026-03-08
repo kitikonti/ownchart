@@ -43,6 +43,9 @@ import {
   EXPORT_COLORS,
   EXPORT_CHART_SVG_CLASS,
   EXPORT_TIMELINE_HEADER_SVG_CLASS,
+  SVG_NS,
+  REACT_RENDER_WAIT_MS,
+  SVG_BACKGROUND_WHITE,
 } from "./constants";
 import { APP_CONFIG } from "../../config/appConfig";
 import { registerInterFont } from "./interFont";
@@ -92,26 +95,10 @@ const PDF_HEADER_TEXT_OFFSET_MM = 6;
 /** Footer text vertical offset from the bottom margin edge in mm */
 const PDF_FOOTER_TEXT_BOTTOM_OFFSET_MM = 4;
 
-/**
- * Wait time in ms after root.render() before reading the DOM.
- * React schedules its commit asynchronously; this gives it one macro-task
- * to flush before waitForFonts() / waitForPaint() take over.
- */
-const REACT_RENDER_WAIT_MS = 100;
-
-/**
- * White background fill colour for the SVG canvas.
- * Intentionally hardcoded: pure white is a presentation-layer override for
- * the "opaque background" export option, not a design-system colour that
- * should track theme changes.
- */
-const SVG_BACKGROUND_WHITE = "#ffffff";
+// REACT_RENDER_WAIT_MS, SVG_BACKGROUND_WHITE, SVG_NS imported from ./constants
 
 /** Middle-dot separator between right-side banner fields (e.g. author · date) */
 const PDF_BANNER_SEPARATOR = " \u00B7 ";
-
-/** SVG namespace URI — used in every createElementNS call */
-const SVG_NS = "http://www.w3.org/2000/svg";
 
 /** Default PDF document title when neither projectTitle nor projectName is set */
 const DEFAULT_PDF_TITLE = "Project Timeline";

@@ -155,6 +155,24 @@ export function removeOffscreenContainer(container: HTMLDivElement): void {
   }
 }
 
+/**
+ * Clone all child nodes of source into group and normalise font attributes.
+ * Vector apps (Illustrator, Inkscape) ignore CSS style blocks, so font-family
+ * must be set as an explicit attribute on every text element after cloning.
+ *
+ * @param source - The source SVG element whose children are cloned
+ * @param group - The target group element to receive the cloned children
+ */
+export function cloneSvgChildrenIntoGroup(
+  source: SVGElement,
+  group: SVGElement
+): void {
+  Array.from(source.childNodes).forEach((child) => {
+    group.appendChild(child.cloneNode(true));
+  });
+  setFontFamilyOnTextElements(group);
+}
+
 /** Conservative PNG compression ratio (typical range: 25–50% of raw RGBA) */
 const PNG_COMPRESSION_RATIO = 0.35;
 const BYTES_PER_KB = 1024;
