@@ -16,21 +16,24 @@ import { createPortal } from "react-dom";
 import { X } from "@phosphor-icons/react";
 import { SHADOWS, Z_INDEX } from "../../styles/design-tokens";
 
+/** Union of supported header/footer style variants. */
+export type ModalStyleVariant = "default" | "bordered";
+
 /**
  * Tailwind class maps for header/footer style variants.
  * Centralised here so adding a new variant only requires one change.
  */
-const HEADER_STYLE_CLASSES: Record<"default" | "bordered", string> = {
+const HEADER_STYLE_CLASSES: Record<ModalStyleVariant, string> = {
   default: "p-6 pb-0",
   bordered: "px-8 py-6 border-b border-neutral-200",
 } as const;
 
-const HEADER_TITLE_CLASSES: Record<"default" | "bordered", string> = {
+const HEADER_TITLE_CLASSES: Record<ModalStyleVariant, string> = {
   default: "text-xl text-brand-600",
   bordered: "text-xl text-neutral-900",
 } as const;
 
-const FOOTER_STYLE_CLASSES: Record<"default" | "bordered", string> = {
+const FOOTER_STYLE_CLASSES: Record<ModalStyleVariant, string> = {
   default: "px-6 pb-6 pt-2 flex justify-end gap-2",
   bordered:
     "px-8 py-6 border-t border-neutral-200 bg-neutral-50 rounded-b flex justify-end gap-3",
@@ -71,10 +74,10 @@ export interface ModalProps {
   widthClass?: string;
 
   /** Header style: "default" = flush, "bordered" = border-bottom (Fluent-style) */
-  headerStyle?: "default" | "bordered";
+  headerStyle?: ModalStyleVariant;
 
   /** Footer style: "default" = minimal, "bordered" = border-top with bg-neutral-50 */
-  footerStyle?: "default" | "bordered";
+  footerStyle?: ModalStyleVariant;
 
   /** Custom padding for content area */
   contentPadding?: string;
@@ -88,7 +91,7 @@ interface ModalHeaderProps {
   title: string;
   subtitle?: string;
   icon?: ReactNode;
-  headerStyle: "default" | "bordered";
+  headerStyle: ModalStyleVariant;
   titleId: string;
   subtitleId: string;
   onClose: () => void;
@@ -236,8 +239,7 @@ export const Modal = memo(function Modal({
   return createPortal(
     // The dialog root captures keyboard events for Escape + focus-trap (Tab).
     // role="dialog" with tabIndex={-1} is the standard WAI-ARIA modal pattern;
-    // jsx-a11y misclassifies it as non-interactive because it isn't a widget role.
-    // eslint-disable-next-line jsx-a11y/no-noninteractive-element-interactions
+    // eslint-disable-next-line jsx-a11y/no-noninteractive-element-interactions -- role="dialog" + tabIndex={-1} IS the WAI-ARIA modal pattern; jsx-a11y misclassifies it as non-interactive because "dialog" is not a widget role
     <div
       ref={modalRef}
       className="fixed inset-0 flex items-center justify-center p-4"

@@ -238,7 +238,7 @@ export const HelpDialog = memo(function HelpDialog(): JSX.Element | null {
                 key={tab.id}
                 id={`tab-${instanceId}-${tab.id}`}
                 onClick={() => setActiveTab(tab.id)}
-                className={`px-3 py-2 text-sm font-medium transition-colors relative ${
+                className={`px-3 py-2 text-sm font-medium transition-colors relative focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 focus-visible:ring-inset rounded-sm ${
                   isActive
                     ? "text-brand-600"
                     : "text-neutral-500 hover:text-neutral-700"

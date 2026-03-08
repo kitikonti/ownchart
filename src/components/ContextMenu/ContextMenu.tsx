@@ -288,7 +288,7 @@ export const ContextMenu = memo(function ContextMenu({
               // readers; the visual <span> is aria-hidden to avoid double-reading.
               aria-keyshortcuts={item.shortcut}
               tabIndex={-1}
-              disabled={item.disabled}
+              aria-disabled={item.disabled}
               className="context-menu-item text-left outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-brand-500"
               onClick={() => handleItemClick(item)}
             >

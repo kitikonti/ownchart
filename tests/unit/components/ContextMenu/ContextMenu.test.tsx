@@ -120,7 +120,7 @@ describe("ContextMenu", () => {
       expect(screen.getByText("Ctrl+X")).toBeInTheDocument();
     });
 
-    it("marks disabled items as disabled", () => {
+    it("marks disabled items with aria-disabled", () => {
       render(
         <ContextMenu
           items={makeItems()}
@@ -130,7 +130,7 @@ describe("ContextMenu", () => {
         />
       );
       const pasteButton = screen.getByText("Paste").closest("button");
-      expect(pasteButton).toBeDisabled();
+      expect(pasteButton).toHaveAttribute("aria-disabled", "true");
     });
   });
 
@@ -153,7 +153,7 @@ describe("ContextMenu", () => {
       expect(onClose).toHaveBeenCalledTimes(1);
     });
 
-    it("does not call onClose when a disabled item button is clicked (browser prevents it)", () => {
+    it("does not call onClick or onClose when an aria-disabled item is clicked", () => {
       const onClick = vi.fn();
       const items: ContextMenuItem[] = [
         { id: "disabled", label: "Disabled Action", onClick, disabled: true },
@@ -166,9 +166,12 @@ describe("ContextMenu", () => {
           ariaLabel={defaultAriaLabel}
         />
       );
-      // Disabled buttons do not fire click events
+      // aria-disabled keeps the button focusable but the handler guards activation
       const button = screen.getByText("Disabled Action").closest("button")!;
-      expect(button).toBeDisabled();
+      expect(button).toHaveAttribute("aria-disabled", "true");
+      fireEvent.click(button);
+      expect(onClick).not.toHaveBeenCalled();
+      expect(onClose).not.toHaveBeenCalled();
     });
   });
 
