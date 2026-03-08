@@ -1,6 +1,15 @@
 /**
  * Shared preferences options for dropdowns and radio cards.
  * Used by PreferencesDialog, Ribbon, and export dialogs.
+ *
+ * This module exports options at two levels of detail:
+ *   - **Extended options** (`*_EXTENDED`) — include descriptions/examples for
+ *     rich UI widgets such as radio cards in PreferencesDialog.
+ *   - **Simple dropdown options** — derived from the extended arrays (single
+ *     source of truth) for use in compact ToolbarDropdown components.
+ *
+ * Adding a new preference option: add it to the appropriate `*_EXTENDED`
+ * array; the simple dropdown array is automatically kept in sync via `.map()`.
  */
 
 import type {
@@ -67,11 +76,16 @@ export const DENSITY_OPTIONS_EXTENDED: DensityOption[] = [
 ];
 
 /**
+ * The year used in all date-format example strings.
+ * Centralised here so all examples stay consistent when it needs updating.
+ */
+const EXAMPLE_YEAR_NUMBER = 2026;
+
+/**
  * Sentinel date used to build format examples (Dec 31 of a fixed year).
  * Day (31) ≠ month (12) makes DD/MM vs MM/DD ordering unambiguous.
- * The year is specified once here so all examples stay consistent.
  */
-const EXAMPLE_DATE = new Date(2026, 11, 31); // Dec 31, 2026
+const EXAMPLE_DATE = new Date(EXAMPLE_YEAR_NUMBER, 11, 31); // Dec 31, EXAMPLE_YEAR_NUMBER
 
 /** Zero-pad a number to two digits. */
 function pad2(n: number): string {

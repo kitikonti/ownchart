@@ -132,7 +132,8 @@ class HolidayServiceClass {
       .map((h: HolidaysTypes.Holiday) => ({
         date: new Date(h.date),
         name: h.name,
-        // The filter above guarantees type is 'public' | 'bank', matching HolidayInfo["type"].
+        // SAFETY: The .filter() above already ensures h.type is 'public' | 'bank'.
+        // The assertion narrows the library's broader string type to HolidayInfo["type"].
         type: h.type as HolidayInfo["type"],
       }));
 
@@ -143,6 +144,14 @@ class HolidayServiceClass {
   /**
    * Get holidays for a date range (spans multiple years if needed).
    * Returns an empty array when startDate > endDate (inverted range is a no-op).
+   *
+   * **Date comparison precision**: holiday dates retain the time component
+   * produced by `new Date(h.date)` from the `date-holidays` library (typically
+   * local midnight, but not guaranteed). Boundary holidays are included only
+   * when `h.date >= startDate && h.date <= endDate` holds with full timestamp
+   * precision. Callers should ensure `startDate` and `endDate` are set to
+   * start-of-day (00:00:00.000) to avoid accidentally excluding boundary
+   * holidays whose internal timestamp differs from the caller's value.
    */
   getHolidaysInRange(startDate: Date, endDate: Date): HolidayInfo[] {
     const startYear = startDate.getFullYear();
