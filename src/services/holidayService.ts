@@ -77,7 +77,11 @@ class HolidayServiceClass {
   }
 
   /**
-   * Set the active holiday region
+   * Set the active holiday region.
+   * Silently ignores calls that would set the same region already active.
+   * Logs a warning and leaves the previous region intact if the underlying
+   * library rejects the country/state combination (e.g. unknown codes).
+   *
    * @param country ISO 3166-1 alpha-2 code (e.g., 'AT', 'DE', 'US')
    * @param state Optional state/region code (e.g., 'BY' for Bavaria)
    */
@@ -87,7 +91,18 @@ class HolidayServiceClass {
       return;
     }
 
-    this.hd.init(country, state);
+    try {
+      this.hd.init(country, state);
+    } catch (err) {
+      // date-holidays can throw for unknown country/state codes.
+      // Log the error and leave the previous region unchanged so the app
+      // continues functioning rather than entering an inconsistent state.
+      console.error(
+        `[holidayService] Failed to initialise region "${country}"${state ? `/${state}` : ""}:`,
+        err
+      );
+      return;
+    }
 
     this.currentCountry = country;
     this.currentState = state;
@@ -217,7 +232,18 @@ class HolidayServiceClass {
     // when the string has no time component, so isSameDay() comparisons are safe.
     const date = new Date(dateString);
     // Guard against calendar-invalid dates like "2026-02-30".
+    // isNaN alone is insufficient on V8: new Date("2026-02-30") does not return
+    // NaN — V8 silently rolls over to 2026-03-02. We cross-check the parsed
+    // year/month/day against the original string components to detect rollover.
     if (isNaN(date.getTime())) {
+      return null;
+    }
+    const [yearStr, monthStr, dayStr] = dateString.split("-");
+    if (
+      date.getFullYear() !== Number(yearStr) ||
+      date.getMonth() + 1 !== Number(monthStr) ||
+      date.getDate() !== Number(dayStr)
+    ) {
       return null;
     }
     return this.isHoliday(date);
@@ -236,7 +262,7 @@ class HolidayServiceClass {
         // date-holidays returns plain strings for the 'en' locale; cast is safe.
         name: name as string,
       }))
-      .sort((a, b) => a.name.localeCompare(b.name));
+      .sort((a, b) => a.name.localeCompare(b.name, HOLIDAY_DISPLAY_LOCALE));
   }
 
   /**
@@ -252,7 +278,7 @@ class HolidayServiceClass {
         // date-holidays returns plain strings for the 'en' locale; cast is safe.
         name: name as string,
       }))
-      .sort((a, b) => a.name.localeCompare(b.name));
+      .sort((a, b) => a.name.localeCompare(b.name, HOLIDAY_DISPLAY_LOCALE));
   }
 
   /**

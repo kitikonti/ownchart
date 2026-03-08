@@ -54,6 +54,7 @@ describe("HolidayService", () => {
       // Should be cached (same reference)
       expect(holidays1).toBe(holidays2);
     });
+
   });
 
   describe("getHolidaysForYear", () => {
@@ -208,7 +209,16 @@ describe("HolidayService", () => {
     });
 
     it("should return null for a calendar-invalid date (e.g. Feb 30)", () => {
+      // V8 silently rolls "2026-02-30" over to 2026-03-02 instead of returning
+      // NaN. The cross-check guard in getHolidayForDateString detects this and
+      // returns null rather than looking up the wrong date.
       const result = holidayService.getHolidayForDateString("2026-02-30");
+      expect(result).toBeNull();
+    });
+
+    it("should return null for other rolled-over dates (e.g. month 13)", () => {
+      // "2026-13-01" — month 13 rolls over to Jan 2027 in V8.
+      const result = holidayService.getHolidayForDateString("2026-13-01");
       expect(result).toBeNull();
     });
   });

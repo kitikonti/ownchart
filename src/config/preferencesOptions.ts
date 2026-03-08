@@ -85,6 +85,10 @@ const EXAMPLE_YEAR_NUMBER = 2026;
 /**
  * Sentinel date used to build format examples (Dec 31 of a fixed year).
  * Day (31) ≠ month (12) makes DD/MM vs MM/DD ordering unambiguous.
+ *
+ * This Date object is intentionally static — it is constructed once at module
+ * load time from compile-time constants and is never mutated afterwards.
+ * The derived string components (exampleDay/Month/Year) below are equally static.
  */
 const EXAMPLE_DATE = new Date(EXAMPLE_YEAR_NUMBER, 11, 31); // Dec 31, EXAMPLE_YEAR_NUMBER
 
