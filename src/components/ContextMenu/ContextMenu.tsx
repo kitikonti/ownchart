@@ -142,16 +142,27 @@ export function ContextMenu({
 
       if (e.key === "ArrowDown") {
         e.preventDefault();
+        // WAI-ARIA menu pattern: wrap around to first enabled item at end of list.
         let next = focusedIndexRef.current + 1;
         while (next < items.length && items[next].disabled) next++;
-        if (next < items.length) focusItem(next);
+        if (next >= items.length) {
+          // Wrap around: find first enabled item from the beginning
+          next = items.findIndex((item) => !item.disabled);
+        }
+        if (next >= 0) focusItem(next);
         return;
       }
 
       if (e.key === "ArrowUp") {
         e.preventDefault();
+        // WAI-ARIA menu pattern: wrap around to last enabled item at start of list.
         let prev = focusedIndexRef.current - 1;
         while (prev >= 0 && items[prev].disabled) prev--;
+        if (prev < 0) {
+          // Wrap around: find last enabled item from the end
+          prev = items.length - 1;
+          while (prev >= 0 && items[prev].disabled) prev--;
+        }
         if (prev >= 0) focusItem(prev);
         return;
       }
@@ -205,7 +216,7 @@ export function ContextMenu({
           <button
             data-index={index}
             role={item.checked !== undefined ? "menuitemcheckbox" : "menuitem"}
-            aria-checked={item.checked}
+            aria-checked={item.checked !== undefined ? item.checked : undefined}
             tabIndex={-1}
             disabled={item.disabled}
             className="context-menu-item text-left outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-brand-500"

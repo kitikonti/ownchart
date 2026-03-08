@@ -227,7 +227,7 @@ describe("ContextMenu", () => {
       expect(document.activeElement).toBe(itemCButton);
     });
 
-    it("ArrowDown does not move past the last enabled item", () => {
+    it("ArrowDown wraps around to the first enabled item when at end of list", () => {
       const items: ContextMenuItem[] = [
         { id: "a", label: "Item A", onClick: vi.fn() },
         { id: "b", label: "Item B", onClick: vi.fn() },
@@ -239,12 +239,12 @@ describe("ContextMenu", () => {
           onClose={onClose}
         />
       );
-      // Start at index 0, move down twice — second press should be a no-op
+      // WAI-ARIA menu pattern: ArrowDown wraps around at the end of the list.
       const menu = screen.getByRole("menu");
       fireEvent.keyDown(menu, { key: "ArrowDown" }); // → Item B
-      fireEvent.keyDown(menu, { key: "ArrowDown" }); // → still Item B (end of list)
-      const itemBButton = screen.getByText("Item B").closest("button");
-      expect(document.activeElement).toBe(itemBButton);
+      fireEvent.keyDown(menu, { key: "ArrowDown" }); // → wraps back to Item A
+      const itemAButton = screen.getByText("Item A").closest("button");
+      expect(document.activeElement).toBe(itemAButton);
     });
 
     it("Home moves to first enabled item", () => {
@@ -308,6 +308,26 @@ describe("ContextMenu", () => {
       fireEvent.keyDown(screen.getByRole("menu"), { key: "ArrowUp" });
       const itemAButton = screen.getByText("Item A").closest("button");
       expect(document.activeElement).toBe(itemAButton);
+    });
+
+    it("ArrowUp wraps around to the last enabled item when at start of list", () => {
+      const items: ContextMenuItem[] = [
+        { id: "a", label: "Item A", onClick: vi.fn() },
+        { id: "b", label: "Item B", onClick: vi.fn() },
+      ];
+      render(
+        <ContextMenu
+          items={items}
+          position={defaultPosition}
+          onClose={onClose}
+        />
+      );
+      // WAI-ARIA menu pattern: ArrowUp wraps around at the start of the list.
+      // After mount, focus is at Item A (first enabled). ArrowUp should wrap to Item B.
+      const menu = screen.getByRole("menu");
+      fireEvent.keyDown(menu, { key: "ArrowUp" }); // → wraps to Item B (last)
+      const itemBButton = screen.getByText("Item B").closest("button");
+      expect(document.activeElement).toBe(itemBButton);
     });
   });
 

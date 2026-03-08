@@ -23,6 +23,26 @@ import { Z_INDEX, SHADOWS } from "../../styles/design-tokens";
 const DIALOG_MAX_HEIGHT = "max-h-[90vh]" as const;
 
 /**
+ * Tailwind class maps for header/footer style variants.
+ * Centralised here so adding a new variant only requires one change.
+ */
+const HEADER_STYLE_CLASSES: Record<"default" | "bordered", string> = {
+  default: "p-6 pb-0",
+  bordered: "px-8 py-6 border-b border-neutral-200",
+} as const;
+
+const HEADER_TITLE_CLASSES: Record<"default" | "bordered", string> = {
+  default: "text-xl text-brand-600",
+  bordered: "text-xl text-neutral-900",
+} as const;
+
+const FOOTER_STYLE_CLASSES: Record<"default" | "bordered", string> = {
+  default: "px-6 pb-6 pt-2 flex justify-end gap-2",
+  bordered:
+    "px-8 py-6 border-t border-neutral-200 bg-neutral-50 rounded-b flex justify-end gap-3",
+} as const;
+
+/**
  * Selector for all focusable, non-disabled elements within the modal.
  * Defined at module level to avoid re-creating the string on every render.
  */
@@ -120,6 +140,14 @@ export function Modal({
       if (e.key === "Tab" && modalRef.current) {
         const focusableElements =
           modalRef.current.querySelectorAll<HTMLElement>(FOCUSABLE_SELECTOR);
+
+        // Guard: if there are no focusable elements, absorb Tab to prevent
+        // focus from escaping the modal (e.g. content-only dialogs).
+        if (focusableElements.length === 0) {
+          e.preventDefault();
+          return;
+        }
+
         const firstElement = focusableElements[0];
         const lastElement = focusableElements[focusableElements.length - 1];
 
@@ -151,7 +179,9 @@ export function Modal({
       role="dialog"
       aria-modal="true"
       aria-labelledby={titleId}
-      aria-describedby={subtitle ? subtitleId : undefined}
+      aria-describedby={
+        subtitle && subtitle.length > 0 ? subtitleId : undefined
+      }
       tabIndex={-1}
       onKeyDown={handleKeyDown}
     >
@@ -171,22 +201,14 @@ export function Modal({
       >
         {/* Header */}
         <div
-          className={`flex items-center justify-between ${
-            headerStyle === "bordered"
-              ? "px-8 py-6 border-b border-neutral-200"
-              : "p-6 pb-0"
-          }`}
+          className={`flex items-center justify-between ${HEADER_STYLE_CLASSES[headerStyle]}`}
         >
           <div className="flex items-center gap-3">
             {icon}
             <div>
               <h2
                 id={titleId}
-                className={`font-semibold leading-7 ${
-                  headerStyle === "bordered"
-                    ? "text-xl text-neutral-900"
-                    : "text-xl text-brand-600"
-                }`}
+                className={`font-semibold leading-7 ${HEADER_TITLE_CLASSES[headerStyle]}`}
               >
                 {title}
               </h2>
@@ -215,15 +237,7 @@ export function Modal({
 
         {/* Footer */}
         {footer && (
-          <div
-            className={
-              footerStyle === "bordered"
-                ? "px-8 py-6 border-t border-neutral-200 bg-neutral-50 rounded-b flex justify-end gap-3"
-                : "px-6 pb-6 pt-2 flex justify-end gap-2"
-            }
-          >
-            {footer}
-          </div>
+          <div className={FOOTER_STYLE_CLASSES[footerStyle]}>{footer}</div>
         )}
       </div>
     </div>,

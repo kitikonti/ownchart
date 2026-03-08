@@ -3,7 +3,7 @@
  * search, and comprehensive feature documentation.
  */
 
-import { useState, useRef, useCallback } from "react";
+import { useState, useRef, useCallback, useEffect, useMemo, memo } from "react";
 import { Question, Command } from "@phosphor-icons/react";
 import { Modal } from "../common/Modal";
 import { Button } from "../common/Button";
@@ -42,7 +42,7 @@ interface HelpTabContentProps {
   modKey: string;
 }
 
-function HelpTabContent({
+const HelpTabContent = memo(function HelpTabContent({
   isSearching,
   searchResults,
   matchCount,
@@ -98,7 +98,7 @@ function HelpTabContent({
 
   // Features tab (default)
   return <HelpSectionList sections={currentTab.sections} />;
-}
+});
 
 // ---------------------------------------------------------------------------
 // HelpDialog
@@ -119,16 +119,23 @@ export function HelpDialog(): JSX.Element | null {
   const isSearching = query.trim().length > 0;
 
   const foundTab = HELP_TABS.find((t) => t.id === activeTab);
-  if (import.meta.env.DEV && !foundTab) {
-    // Warn developers when the persisted activeTab value doesn't match any
-    // known tab — this can happen if a tab is renamed or removed without
-    // updating the uiSlice default.
-    console.warn(
-      `[HelpDialog] Unknown activeTab "${activeTab}". Falling back to first tab.`
-    );
-  }
   const currentTab = foundTab ?? HELP_TABS[0];
-  const modKey = getModKey();
+
+  // Warn developers (once per distinct invalid value) when the persisted
+  // activeTab doesn't match any known tab — this can happen if a tab is
+  // renamed or removed without updating the uiSlice default.
+  // Placed in useEffect so it fires only when activeTab changes, not on
+  // every render.
+  useEffect(() => {
+    if (import.meta.env.DEV && !foundTab) {
+      console.warn(
+        `[HelpDialog] Unknown activeTab "${activeTab}". Falling back to first tab.`
+      );
+    }
+  }, [activeTab, foundTab]);
+
+  // getModKey reads navigator.platform which never changes — compute once.
+  const modKey = useMemo(() => getModKey(), []);
 
   const tablistRef = useRef<HTMLDivElement>(null);
 
