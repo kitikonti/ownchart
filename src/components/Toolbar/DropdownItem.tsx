@@ -22,7 +22,7 @@ interface DropdownItemProps {
   /** Trailing content (e.g. color swatches) */
   trailing?: ReactNode;
   /** ARIA role — when set, enables aria-selected on the button */
-  role?: string;
+  role?: React.AriaRole;
   /** aria-selected override (only emitted when role is set) */
   "aria-selected"?: boolean;
 }
@@ -45,63 +45,39 @@ export function DropdownItem({
       role={role}
       aria-selected={role ? (ariaSelected ?? isSelected) : undefined}
       onClick={onClick}
-      className={`dropdown-item${isSelected ? " dropdown-item-selected" : ""}`}
-      style={{
-        display: "flex",
-        alignItems: "center",
-        width: "100%",
-        ...(hasDescription
-          ? { minHeight: "36px", padding: "6px 12px 6px 8px" }
-          : { height: "32px", padding: "0 15px 0 9px" }),
-        color: "rgb(36, 36, 36)",
-        border: isSelected ? undefined : "none",
-        borderRadius: isSelected ? undefined : "0",
-        cursor: "pointer",
-        fontSize: "14px",
-        ...(hasDescription ? {} : { lineHeight: "32px" }),
-        textAlign: "left",
-        whiteSpace: "nowrap",
-      }}
+      className={[
+        "dropdown-item",
+        "flex items-center w-full cursor-pointer text-left text-sm text-neutral-900 whitespace-nowrap",
+        hasDescription
+          ? "min-h-[36px] py-1.5 pr-3 pl-2"
+          : "h-8 py-0 pr-[15px] pl-[9px]",
+        isSelected ? "dropdown-item-selected" : "",
+      ]
+        .filter(Boolean)
+        .join(" ")}
     >
       {/* Checkmark space */}
       {showCheckmark && (
         <span
-          style={{
-            width: "20px",
-            height: "20px",
-            marginRight: hasDescription ? "8px" : "10px",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            flexShrink: 0,
-          }}
+          className={[
+            "inline-flex items-center justify-center w-5 h-5 flex-shrink-0",
+            hasDescription ? "mr-2" : "mr-2.5",
+          ].join(" ")}
         >
           {isSelected && (
-            <Check
-              size={16}
-              weight="bold"
-              style={{ color: "rgb(73, 130, 5)" }}
-            />
+            <Check size={16} weight="bold" className="text-green-700" />
           )}
         </span>
       )}
 
       {/* Content */}
       {hasDescription ? (
-        <div style={{ flex: 1 }}>
+        <div className="flex-1">
           <div>{children}</div>
-          <div
-            style={{
-              fontSize: "12px",
-              color: "rgb(120, 120, 120)",
-              marginTop: "1px",
-            }}
-          >
-            {description}
-          </div>
+          <div className="text-xs text-neutral-500 mt-px">{description}</div>
         </div>
       ) : (
-        <span style={{ flex: 1 }}>{children}</span>
+        <span className="flex-1">{children}</span>
       )}
 
       {trailing}

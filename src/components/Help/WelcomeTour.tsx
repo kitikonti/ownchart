@@ -9,6 +9,9 @@ import { Button } from "../common/Button";
 import { Checkbox } from "../common/Checkbox";
 import { useUIStore } from "../../store/slices/uiSlice";
 
+/** Delay (ms) before opening the help panel after the welcome modal closes. */
+const HELP_PANEL_OPEN_DELAY_MS = 100;
+
 /**
  * Welcome Tour component.
  */
@@ -16,20 +19,24 @@ export function WelcomeTour(): JSX.Element | null {
   const { isWelcomeTourOpen, dismissWelcome, openHelpPanel } = useUIStore();
   const [dontShowAgain, setDontShowAgain] = useState(false);
 
-  const handleGetStarted = (): void => {
+  const dismiss = (): void => {
     dismissWelcome(dontShowAgain);
+  };
+
+  const handleGetStarted = (): void => {
+    dismiss();
   };
 
   const handleShowShortcuts = (): void => {
-    dismissWelcome(dontShowAgain);
+    dismiss();
     // Delay opening help panel to ensure welcome is closed first
     setTimeout(() => {
       openHelpPanel();
-    }, 100);
+    }, HELP_PANEL_OPEN_DELAY_MS);
   };
 
   const handleClose = (): void => {
-    dismissWelcome(dontShowAgain);
+    dismiss();
   };
 
   const footer = (
@@ -113,11 +120,7 @@ export function WelcomeTour(): JSX.Element | null {
 
         {/* Don't show again checkbox */}
         <label className="flex items-center gap-3 pt-2 cursor-pointer group">
-          <Checkbox
-            checked={dontShowAgain}
-            onChange={setDontShowAgain}
-            aria-label="Don't show this again"
-          />
+          <Checkbox checked={dontShowAgain} onChange={setDontShowAgain} />
           <span className="text-sm text-neutral-500 group-hover:text-neutral-600 transition-colors">
             Don&apos;t show this again
           </span>

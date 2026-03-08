@@ -96,7 +96,7 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
       font-semibold
       rounded
       transition-all duration-100 ease-[cubic-bezier(0.33,0,0.67,1)]
-      focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-100 focus-visible:ring-offset-2
+      focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-600 focus-visible:ring-offset-2
       disabled:cursor-not-allowed
       select-none
     `;

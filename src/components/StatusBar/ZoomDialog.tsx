@@ -30,25 +30,27 @@ const ZOOM_PRESETS = [
   { value: 0.1, label: "10%" },
 ];
 
+/**
+ * Finds the closest preset to the given zoom level.
+ * Returns the exact preset value when within 0.01, otherwise defaults to 100%.
+ */
+function findClosestPreset(zoom: number): number | "fit" {
+  const exactMatch = ZOOM_PRESETS.find(
+    (p) => typeof p.value === "number" && Math.abs(p.value - zoom) < 0.01
+  );
+  if (exactMatch && typeof exactMatch.value === "number") {
+    return exactMatch.value;
+  }
+  // Default to 100% if no exact match
+  return 1.0;
+}
+
 export function ZoomDialog({
   isOpen,
   onClose,
   currentZoom,
   onSelect,
 }: ZoomDialogProps): JSX.Element {
-  // Find the closest preset to current zoom, or null if using "fit"
-  const findClosestPreset = (zoom: number): number | "fit" => {
-    // Find exact match first
-    const exactMatch = ZOOM_PRESETS.find(
-      (p) => typeof p.value === "number" && Math.abs(p.value - zoom) < 0.01
-    );
-    if (exactMatch && typeof exactMatch.value === "number") {
-      return exactMatch.value;
-    }
-    // Default to 100% if no exact match
-    return 1.0;
-  };
-
   const [selectedValue, setSelectedValue] = useState<number | "fit">(() =>
     findClosestPreset(currentZoom)
   );

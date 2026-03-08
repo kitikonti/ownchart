@@ -14,12 +14,12 @@ import {
 
 import OwnChartLogo from "../../assets/logo.svg?react";
 import { Modal } from "../common/Modal";
+import { Button } from "../common/Button";
 import { useUIStore } from "../../store/slices/uiSlice";
 import { APP_CONFIG } from "../../config/appConfig";
 
 export function AboutDialog(): JSX.Element | null {
-  const isOpen = useUIStore((state) => state.isAboutDialogOpen);
-  const closeAboutDialog = useUIStore((state) => state.closeAboutDialog);
+  const { isAboutDialogOpen: isOpen, closeAboutDialog } = useUIStore();
 
   return (
     <Modal
@@ -32,12 +32,9 @@ export function AboutDialog(): JSX.Element | null {
       widthClass="max-w-sm"
       contentPadding="px-8 py-6"
       footer={
-        <button
-          onClick={closeAboutDialog}
-          className="px-4 py-2 text-sm font-medium text-neutral-700 bg-white border border-neutral-300 rounded hover:bg-neutral-50 transition-colors"
-        >
+        <Button variant="secondary" onClick={closeAboutDialog}>
           Close
-        </button>
+        </Button>
       }
     >
       {/* Logo + Version */}
@@ -89,7 +86,7 @@ export function AboutDialog(): JSX.Element | null {
   );
 }
 
-/** Small reusable link row */
+/** Link row used within AboutDialog to display icon + label + optional sublabel. */
 function ExternalLink({
   href,
   icon,
