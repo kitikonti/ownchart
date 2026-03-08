@@ -368,4 +368,7 @@ export const TABLE_ROW = {
 export const TOAST = {
   bg: slate[800],
   text: slate[100],
+  borderRadius: "8px",
+  fontSize: "14px",
+  padding: "12px 16px",
 } as const;

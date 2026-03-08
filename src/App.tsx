@@ -4,7 +4,7 @@
  * Gates mobile devices with a block screen before mounting the full app.
  */
 
-import { useEffect } from "react";
+import { useEffect, ReactElement } from "react";
 import { Toaster } from "react-hot-toast";
 import { GanttLayout } from "./components/Layout";
 import { StatusBar } from "./components/StatusBar";
@@ -12,6 +12,7 @@ import { Ribbon } from "./components/Ribbon";
 import { ExportDialog } from "./components/Export";
 import { AboutDialog, HelpDialog, WelcomeTour } from "./components/Help";
 import { MobileBlockScreen } from "./components/MobileBlockScreen";
+import { AppErrorBoundary } from "./components/AppErrorBoundary";
 import { useKeyboardShortcuts } from "./hooks/useKeyboardShortcuts";
 import { useUnsavedChanges } from "./hooks/useUnsavedChanges";
 import { useMultiTabPersistence } from "./hooks/useMultiTabPersistence";
@@ -22,23 +23,27 @@ import { useUIStore } from "./store/slices/uiSlice";
 import { useUserPreferencesStore } from "./store/slices/userPreferencesSlice";
 import { COLORS, TOAST } from "./styles/design-tokens";
 
-function App(): JSX.Element {
+function App(): ReactElement {
   const { shouldShowMobileBlock, dismiss } = useDeviceDetection();
 
   if (shouldShowMobileBlock) {
     return <MobileBlockScreen onDismiss={dismiss} />;
   }
 
-  return <AppContent />;
+  return (
+    <AppErrorBoundary>
+      <AppContent />
+    </AppErrorBoundary>
+  );
 }
 
-function AppContent(): JSX.Element {
+function AppContent(): ReactElement {
   const checkFirstTimeUser = useUIStore((state) => state.checkFirstTimeUser);
   const initializePreferences = useUserPreferencesStore(
     (state) => state.initializePreferences
   );
 
-  // Enable global keyboard shortcuts (Ctrl+Z, Ctrl+Shift+Z, Ctrl+Y, Ctrl+S, Ctrl+O, Ctrl+Alt+N, Ctrl+E, ?)
+  // Enable global keyboard shortcuts
   useKeyboardShortcuts();
 
   // Warn before leaving with unsaved changes
@@ -80,12 +85,12 @@ function AppContent(): JSX.Element {
           style: {
             background: TOAST.bg,
             color: TOAST.text,
-            borderRadius: "8px",
+            borderRadius: TOAST.borderRadius,
             boxShadow:
               "0 10px 15px -3px rgba(15, 23, 42, 0.15), 0 4px 6px -2px rgba(15, 23, 42, 0.08)",
             fontFamily: "var(--font-sans)",
-            fontSize: "14px",
-            padding: "12px 16px",
+            fontSize: TOAST.fontSize,
+            padding: TOAST.padding,
           },
           success: {
             iconTheme: {

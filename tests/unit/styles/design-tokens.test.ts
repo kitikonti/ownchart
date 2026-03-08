@@ -143,6 +143,9 @@ describe("design-tokens snapshots", () => {
     expect(TOAST).toMatchInlineSnapshot(`
       {
         "bg": "#1e293b",
+        "borderRadius": "8px",
+        "fontSize": "14px",
+        "padding": "12px 16px",
         "text": "#f8fafc",
       }
     `);
