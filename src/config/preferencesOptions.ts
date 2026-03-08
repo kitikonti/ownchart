@@ -78,6 +78,7 @@ export const DENSITY_OPTIONS_EXTENDED: DensityOption[] = [
 /**
  * The year used in all date-format example strings.
  * Centralised here so all examples stay consistent when it needs updating.
+ * Update this value when the examples start feeling outdated.
  */
 const EXAMPLE_YEAR_NUMBER = 2026;
 

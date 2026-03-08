@@ -87,11 +87,7 @@ class HolidayServiceClass {
       return;
     }
 
-    if (state) {
-      this.hd.init(country, state);
-    } else {
-      this.hd.init(country);
-    }
+    this.hd.init(country, state);
 
     this.currentCountry = country;
     this.currentState = state;
@@ -128,14 +124,23 @@ class HolidayServiceClass {
       return [];
     }
 
-    const rawHolidays = this.hd.getHolidays(year);
+    let rawHolidays: HolidaysTypes.Holiday[];
+    try {
+      rawHolidays = this.hd.getHolidays(year);
+    } catch (err) {
+      // date-holidays can throw for edge-case years or invalid internal state.
+      // Return an empty array so the calendar degrades gracefully.
+      console.error(
+        `[holidayService] Failed to load holidays for year ${year}:`,
+        err
+      );
+      return [];
+    }
 
     // Filter to only public and bank holidays
     const holidays: HolidayInfo[] = rawHolidays
-      .filter(
-        (h: HolidaysTypes.Holiday) => h.type === "public" || h.type === "bank"
-      )
-      .map((h: HolidaysTypes.Holiday) => ({
+      .filter((h) => h.type === "public" || h.type === "bank")
+      .map((h) => ({
         date: new Date(h.date),
         name: h.name,
         // SAFETY: The .filter() above already ensures h.type is 'public' | 'bank'.
