@@ -123,6 +123,7 @@ export const NewTaskPlaceholderRow = memo(
             items={contextMenuItems}
             position={contextMenu}
             onClose={closeContextMenu}
+            ariaLabel="New task actions"
           />
         )}
       </div>

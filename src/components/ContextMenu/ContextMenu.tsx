@@ -7,8 +7,9 @@
 import { useEffect, useRef, useCallback, memo, type ReactNode } from "react";
 import { createPortal } from "react-dom";
 import { Check } from "@phosphor-icons/react";
-import { CONTEXT_MENU, Z_INDEX } from "../../styles/design-tokens";
+import { CONTEXT_MENU } from "../../styles/design-tokens";
 
+/** CSS class applied to the menu root div; exported so callers can exclude it from outside-click detection. */
 export const CONTEXT_MENU_CONTAINER_CLASS = "context-menu-container";
 
 /** Pixel gap kept between the menu edge and the viewport boundary. */
@@ -36,19 +37,25 @@ interface ContextMenuProps {
   items: ContextMenuItem[];
   position: ContextMenuPosition;
   onClose: () => void;
-  /** Accessible label for the menu container (read by screen readers). */
-  ariaLabel?: string;
+  /** Accessible label describing the purpose of this menu (read by screen readers). */
+  ariaLabel: string;
 }
 
 export const ContextMenu = memo(function ContextMenu({
   items,
   position,
   onClose,
-  ariaLabel = "Context menu",
+  ariaLabel,
 }: ContextMenuProps): JSX.Element {
   const menuRef = useRef<HTMLDivElement>(null);
   const focusedIndexRef = useRef(0);
   const previousFocusRef = useRef<HTMLElement | null>(null);
+
+  // Keep a ref to onClose so the outside-click handler never captures a stale closure.
+  const onCloseRef = useRef(onClose);
+  useEffect(() => {
+    onCloseRef.current = onClose;
+  }, [onClose]);
 
   // Focus management
   const focusItem = useCallback((index: number): void => {
@@ -105,7 +112,7 @@ export const ContextMenu = memo(function ContextMenu({
   useEffect(() => {
     const handleClick = (e: MouseEvent): void => {
       if (menuRef.current && !menuRef.current.contains(e.target as Node)) {
-        onClose();
+        onCloseRef.current();
       }
     };
     // Use setTimeout to avoid the same click that opened the menu closing it.
@@ -117,7 +124,7 @@ export const ContextMenu = memo(function ContextMenu({
       clearTimeout(timer);
       document.removeEventListener("mousedown", handleClick, true);
     };
-  }, [onClose]);
+  }, []);
 
   // Unified click handler — keeps mouse and keyboard paths consistent.
   const handleItemClick = useCallback(
@@ -160,11 +167,19 @@ export const ContextMenu = memo(function ContextMenu({
   );
 
   // Close on Escape, handle arrow keys (WAI-ARIA menu keyboard pattern).
+  // Tab closes the menu and restores focus — standard context menu behaviour.
   const handleKeyDown = useCallback(
     (e: React.KeyboardEvent): void => {
       if (e.key === "Escape") {
         e.preventDefault();
         e.stopPropagation();
+        onClose();
+        return;
+      }
+
+      // WAI-ARIA: Tab closes the menu and returns focus to the trigger element.
+      if (e.key === "Tab") {
+        e.preventDefault();
         onClose();
         return;
       }
@@ -214,13 +229,11 @@ export const ContextMenu = memo(function ContextMenu({
   return createPortal(
     <div
       ref={menuRef}
-      className={`${CONTEXT_MENU_CONTAINER_CLASS} fixed`}
+      className={`${CONTEXT_MENU_CONTAINER_CLASS} fixed z-[1000] min-w-[180px]`}
       style={{
         left: position.x,
         top: position.y,
         visibility: "hidden",
-        zIndex: Z_INDEX.dropdown,
-        minWidth: CONTEXT_MENU.minWidth,
       }}
       role="menu"
       aria-label={ariaLabel}

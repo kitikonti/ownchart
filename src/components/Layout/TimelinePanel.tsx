@@ -83,6 +83,7 @@ export function TimelinePanel({
             items={headerContextMenuItems}
             position={headerContextMenu}
             onClose={closeHeaderContextMenu}
+            ariaLabel="Timeline header actions"
           />
         )}
       </div>

@@ -457,6 +457,7 @@ export function ChartCanvas({
           items={barContextMenuItems}
           position={barContextMenu.position}
           onClose={closeBarContextMenu}
+          ariaLabel="Task bar actions"
         />
       )}
 
@@ -466,6 +467,7 @@ export function ChartCanvas({
           items={areaContextMenuItems}
           position={areaContextMenu}
           onClose={closeAreaContextMenu}
+          ariaLabel="Timeline area actions"
         />
       )}
     </div>

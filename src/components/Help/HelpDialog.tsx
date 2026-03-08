@@ -23,10 +23,10 @@ import { HelpSectionList } from "./HelpSectionList";
 import { GettingStartedTab } from "./GettingStartedTab";
 
 /**
- * Maximum height for the help dialog content area.
+ * Tailwind class that constrains the help dialog content area height.
  * Sized to leave room for the search bar, tab strip, and footer within the modal.
  */
-const CONTENT_MAX_HEIGHT = "max-h-[55vh]";
+const CONTENT_MAX_HEIGHT_CLASS = "max-h-[55vh]";
 
 // ---------------------------------------------------------------------------
 // Tab panel content — extracted to keep HelpDialog's return lean
@@ -38,7 +38,7 @@ interface HelpTabContentProps {
   matchCount: number;
   query: string;
   activeTab: HelpTabId;
-  currentTab: HelpTab;
+  selectedTab: HelpTab;
   modKey: string;
 }
 
@@ -48,7 +48,7 @@ const HelpTabContent = memo(function HelpTabContent({
   matchCount,
   query,
   activeTab,
-  currentTab,
+  selectedTab,
   modKey,
 }: HelpTabContentProps): JSX.Element {
   if (isSearching) {
@@ -71,13 +71,13 @@ const HelpTabContent = memo(function HelpTabContent({
   }
 
   if (activeTab === "getting-started") {
-    return <GettingStartedTab sections={currentTab.sections} />;
+    return <GettingStartedTab sections={selectedTab.sections} />;
   }
 
   if (activeTab === "shortcuts") {
     return (
       <>
-        <HelpSectionList sections={currentTab.sections} compact defaultOpen />
+        <HelpSectionList sections={selectedTab.sections} compact defaultOpen />
         <div className="mt-4">
           <Alert variant="info">
             <span className="text-sm">
@@ -97,7 +97,7 @@ const HelpTabContent = memo(function HelpTabContent({
   }
 
   // Features tab (default)
-  return <HelpSectionList sections={currentTab.sections} />;
+  return <HelpSectionList sections={selectedTab.sections} />;
 });
 
 // ---------------------------------------------------------------------------
@@ -130,7 +130,7 @@ export function HelpDialog(): JSX.Element | null {
   const foundTab = HELP_TABS.find((t) => t.id === activeTab);
   // HELP_TABS is a non-empty static array — HELP_TABS[0] is always defined.
   // The non-null assertion is safe here and avoids a spurious runtime branch.
-  const currentTab = foundTab ?? HELP_TABS[0]!;
+  const selectedTab = foundTab ?? HELP_TABS[0]!;
 
   // Warn developers (once per distinct invalid value) when the persisted
   // activeTab doesn't match any known tab — this can happen if a tab is
@@ -206,7 +206,7 @@ export function HelpDialog(): JSX.Element | null {
           className="px-6 flex gap-1 border-b border-neutral-200"
           role="tablist"
           aria-label="Help navigation"
-          tabIndex={0}
+          tabIndex={-1}
           onKeyDown={handleTablistKeyDown}
         >
           {HELP_TABS.map((tab) => {
@@ -238,11 +238,10 @@ export function HelpDialog(): JSX.Element | null {
 
       {/* Content — role="tabpanel" when tabs are visible, plain div when searching */}
       <div
-        className={`px-6 py-4 overflow-y-auto ${CONTENT_MAX_HEIGHT} scrollbar-thin`}
+        className={`px-6 py-4 overflow-y-auto ${CONTENT_MAX_HEIGHT_CLASS} scrollbar-thin`}
         role={!isSearching ? "tabpanel" : undefined}
         id={!isSearching ? `help-panel-${activeTab}` : undefined}
         aria-labelledby={!isSearching ? `tab-${activeTab}` : undefined}
-        tabIndex={!isSearching ? 0 : undefined}
       >
         <HelpTabContent
           isSearching={isSearching}
@@ -250,7 +249,7 @@ export function HelpDialog(): JSX.Element | null {
           matchCount={matchCount}
           query={trimmedQuery}
           activeTab={activeTab}
-          currentTab={currentTab}
+          selectedTab={selectedTab}
           modKey={modKey}
         />
       </div>

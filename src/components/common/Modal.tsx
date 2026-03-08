@@ -11,17 +11,16 @@ import {
   useCallback,
   memo,
   type ReactNode,
-  type KeyboardEvent,
 } from "react";
 import { createPortal } from "react-dom";
 import { X } from "@phosphor-icons/react";
-import { Z_INDEX, SHADOWS } from "../../styles/design-tokens";
+import { SHADOWS } from "../../styles/design-tokens";
 
 /**
- * Maximum height for the dialog container — prevents the modal from overflowing
- * the viewport on short screens while still allowing internal scrolling.
+ * Tailwind class that constrains the dialog height — prevents the modal from
+ * overflowing the viewport on short screens while still allowing internal scrolling.
  */
-const DIALOG_MAX_HEIGHT = "max-h-[90vh]";
+const DIALOG_MAX_HEIGHT_CLASS = "max-h-[90vh]";
 
 /**
  * Tailwind class maps for header/footer style variants.
@@ -111,18 +110,17 @@ export const Modal = memo(function Modal({
   const subtitleId = `modal-subtitle-${instanceId}`;
 
   // Save the focused element before opening; restore it when the modal closes.
-  // Avoiding a cleanup function prevents the stale-closure issue where the
-  // captured `isOpen` value is always the one from the previous render.
-  // Note: the `if (!isOpen) return null` guard below executes AFTER this effect
-  // is registered. When isOpen transitions to true the portal renders first
-  // (attaching modalRef), then the effect fires — so `modalRef.current` is
-  // reliably set when we call `.focus()`.
+  // Guard the restore with a null check and reset after use to prevent
+  // double-focus or focus on a stale/unmounted element.
   useEffect(() => {
     if (isOpen) {
       previousActiveElement.current = document.activeElement as HTMLElement;
       modalRef.current?.focus();
     } else {
-      previousActiveElement.current?.focus();
+      if (previousActiveElement.current) {
+        previousActiveElement.current.focus();
+        previousActiveElement.current = null;
+      }
     }
   }, [isOpen]);
 
@@ -131,7 +129,7 @@ export const Modal = memo(function Modal({
   // this is the standard pattern for modal keyboard handling — the dialog
   // element is the focus container and needs to intercept Tab and Escape.
   const handleKeyDown = useCallback(
-    (e: KeyboardEvent<HTMLDivElement>): void => {
+    (e: React.KeyboardEvent<HTMLDivElement>): void => {
       if (e.key === "Escape") {
         e.preventDefault();
         onClose();
@@ -175,8 +173,7 @@ export const Modal = memo(function Modal({
     // eslint-disable-next-line jsx-a11y/no-noninteractive-element-interactions
     <div
       ref={modalRef}
-      className="fixed inset-0 flex items-center justify-center p-4"
-      style={{ zIndex: Z_INDEX.modal }}
+      className="fixed inset-0 flex items-center justify-center p-4 z-[1100]"
       role="dialog"
       aria-modal="true"
       aria-labelledby={titleId}
@@ -198,7 +195,7 @@ export const Modal = memo(function Modal({
       {/* Dialog container - Outlook style: 4px radius, Fluent shadow */}
       <div
         className={`
-          relative bg-white rounded overflow-hidden ${widthClass} w-full ${DIALOG_MAX_HEIGHT} flex flex-col
+          relative bg-white rounded overflow-hidden ${widthClass} w-full ${DIALOG_MAX_HEIGHT_CLASS} flex flex-col
           animate-modal-in
         `}
         style={{ boxShadow: SHADOWS.modal }}
