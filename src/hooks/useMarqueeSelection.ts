@@ -6,6 +6,12 @@
 import { useState, useCallback, useRef, useEffect } from "react";
 import type { TaskId } from "../types/branded.types";
 
+// CSS selectors for interactive elements that should not start a marquee drag.
+// Defined as constants so a class-name rename is caught by a single update here.
+const TASK_BAR_SELECTOR = ".task-bar";
+const CONNECTION_HANDLE_SELECTOR = ".connection-handle";
+const DEPENDENCY_ARROW_SELECTOR = ".dependency-arrow";
+
 export interface MarqueeRect {
   startX: number;
   startY: number;
@@ -21,7 +27,7 @@ export interface TaskGeometry {
   height: number;
 }
 
-interface UseMarqueeSelectionOptions {
+export interface UseMarqueeSelectionOptions {
   /** Reference to the SVG element */
   svgRef: React.RefObject<SVGSVGElement | null>;
   /** Task geometries for hit detection */
@@ -32,7 +38,7 @@ interface UseMarqueeSelectionOptions {
   enabled?: boolean;
 }
 
-interface UseMarqueeSelectionResult {
+export interface UseMarqueeSelectionResult {
   /** Current marquee rectangle (null if not dragging) */
   marqueeRect: MarqueeRect | null;
   /** Normalized rectangle for rendering (x, y, width, height) */
@@ -51,7 +57,7 @@ interface UseMarqueeSelectionResult {
 /**
  * Check if two rectangles intersect
  */
-function rectsIntersect(
+export function rectsIntersect(
   rect1: { x: number; y: number; width: number; height: number },
   rect2: { x: number; y: number; width: number; height: number }
 ): boolean {
@@ -66,7 +72,7 @@ function rectsIntersect(
 /**
  * Normalize a marquee rect to have positive width/height
  */
-function normalizeRect(rect: MarqueeRect): {
+export function normalizeRect(rect: MarqueeRect): {
   x: number;
   y: number;
   width: number;
@@ -79,6 +85,161 @@ function normalizeRect(rect: MarqueeRect): {
   return { x, y, width, height };
 }
 
+/**
+ * Convert a mouse event's client coordinates to SVG-local coordinates.
+ * Extracted as a module-level pure function — reads no closed-over state,
+ * so it does not need useCallback inside the hook.
+ */
+function getSvgCoordinates(
+  svg: SVGSVGElement,
+  e: MouseEvent | React.MouseEvent
+): { x: number; y: number } {
+  const rect = svg.getBoundingClientRect();
+  return { x: e.clientX - rect.left, y: e.clientY - rect.top };
+}
+
+/**
+ * Return the IDs of tasks whose bounding boxes intersect the given marquee.
+ * Extracted as a module-level pure function — reads no closed-over state,
+ * so taskGeometries can be passed from a ref without needing useCallback.
+ */
+function findIntersectingTaskIds(
+  tasks: TaskGeometry[],
+  marquee: MarqueeRect
+): TaskId[] {
+  const normalized = normalizeRect(marquee);
+  return tasks.filter((t) => rectsIntersect(normalized, t)).map((t) => t.id);
+}
+
+/**
+ * Return false if the event targets an interactive task element that should
+ * absorb pointer events rather than starting a marquee drag.
+ */
+function shouldStartMarqueeDrag(
+  e: React.MouseEvent<SVGSVGElement>,
+  enabled: boolean
+): boolean {
+  if (!enabled || e.button !== 0) return false;
+  const target = e.target as Element;
+  return (
+    !target.closest(TASK_BAR_SELECTOR) &&
+    !target.closest(CONNECTION_HANDLE_SELECTOR) &&
+    !target.closest(DEPENDENCY_ARROW_SELECTOR)
+  );
+}
+
+// ---------------------------------------------------------------------------
+
+interface MarqueeDragListenersDeps {
+  svgRef: React.RefObject<SVGSVGElement | null>;
+  enabled: boolean;
+  marqueeRectRef: React.MutableRefObject<MarqueeRect | null>;
+  onSelectionChangeRef: React.MutableRefObject<
+    (taskIds: TaskId[], addToSelection: boolean) => void
+  >;
+  taskGeometriesRef: React.MutableRefObject<TaskGeometry[]>;
+  setMarqueeRect: React.Dispatch<React.SetStateAction<MarqueeRect | null>>;
+}
+
+interface MarqueeDragListeners {
+  isSelectingRef: React.MutableRefObject<boolean>;
+  addToSelectionRef: React.MutableRefObject<boolean>;
+  handleMouseMove: (e: MouseEvent) => void;
+  handleMouseUp: (e: MouseEvent) => void;
+}
+
+/**
+ * Owns the document-level drag listeners (mousemove / mouseup), the mutable
+ * refs that track drag state, and the cleanup effect.
+ *
+ * Extracted so the main hook stays focused on state, stable-ref updates,
+ * the mousedown initiator, and the public return value.
+ */
+function useMarqueeDragListeners({
+  svgRef,
+  enabled,
+  marqueeRectRef,
+  onSelectionChangeRef,
+  taskGeometriesRef,
+  setMarqueeRect,
+}: MarqueeDragListenersDeps): MarqueeDragListeners {
+  const isSelectingRef = useRef(false);
+  const addToSelectionRef = useRef(false);
+
+  const handleMouseMove = useCallback(
+    (e: MouseEvent) => {
+      if (!isSelectingRef.current) return;
+      const svg = svgRef.current;
+      if (!svg) return;
+      const coords = getSvgCoordinates(svg, e);
+      setMarqueeRect((prev) =>
+        prev ? { ...prev, currentX: coords.x, currentY: coords.y } : null
+      );
+    },
+    [svgRef, setMarqueeRect]
+  );
+
+  const handleMouseUp = useCallback(
+    (e: MouseEvent) => {
+      if (!isSelectingRef.current) return;
+      isSelectingRef.current = false;
+
+      const currentRect = marqueeRectRef.current;
+      if (currentRect) {
+        const svg = svgRef.current;
+        if (svg) {
+          const coords = getSvgCoordinates(svg, e);
+          const finalRect = {
+            ...currentRect,
+            currentX: coords.x,
+            currentY: coords.y,
+          };
+          const ids = findIntersectingTaskIds(
+            taskGeometriesRef.current,
+            finalRect
+          );
+          // Call via ref so this callback never needs onSelectionChange in its
+          // deps — prevents the active-drag listener from being removed and
+          // re-added when the parent passes a new callback reference.
+          onSelectionChangeRef.current(ids, addToSelectionRef.current);
+        }
+      }
+
+      setMarqueeRect(null);
+      document.removeEventListener("mousemove", handleMouseMove);
+      document.removeEventListener("mouseup", handleMouseUp);
+    },
+    [
+      svgRef,
+      marqueeRectRef,
+      taskGeometriesRef,
+      onSelectionChangeRef,
+      setMarqueeRect,
+      handleMouseMove,
+    ]
+  );
+
+  // Cancel an active drag when `enabled` turns false mid-drag, and clean up
+  // listeners on unmount. Combined into one effect: the cleanup function always
+  // runs on unmount so a separate effect for that is not needed.
+  useEffect(() => {
+    if (!enabled && isSelectingRef.current) {
+      isSelectingRef.current = false;
+      setMarqueeRect(null);
+      document.removeEventListener("mousemove", handleMouseMove);
+      document.removeEventListener("mouseup", handleMouseUp);
+    }
+    return () => {
+      document.removeEventListener("mousemove", handleMouseMove);
+      document.removeEventListener("mouseup", handleMouseUp);
+    };
+  }, [enabled, handleMouseMove, handleMouseUp, setMarqueeRect]);
+
+  return { isSelectingRef, addToSelectionRef, handleMouseMove, handleMouseUp };
+}
+
+// ---------------------------------------------------------------------------
+
 export function useMarqueeSelection({
   svgRef,
   taskGeometries,
@@ -87,131 +248,34 @@ export function useMarqueeSelection({
 }: UseMarqueeSelectionOptions): UseMarqueeSelectionResult {
   const [marqueeRect, setMarqueeRect] = useState<MarqueeRect | null>(null);
   const marqueeRectRef = useRef<MarqueeRect | null>(null);
-  const isSelectingRef = useRef(false);
-  const addToSelectionRef = useRef(false);
-
-  // Keep ref in sync with state
   marqueeRectRef.current = marqueeRect;
 
-  // Get SVG coordinates from mouse event
-  const getSvgCoordinates = useCallback(
-    (e: MouseEvent | React.MouseEvent): { x: number; y: number } | null => {
-      const svg = svgRef.current;
-      if (!svg) return null;
+  // Stable refs for props that may change every render — prevents the active
+  // drag listeners from being removed and re-added on parent re-renders.
+  const onSelectionChangeRef = useRef(onSelectionChange);
+  onSelectionChangeRef.current = onSelectionChange;
 
-      const rect = svg.getBoundingClientRect();
-      return {
-        x: e.clientX - rect.left,
-        y: e.clientY - rect.top,
-      };
-    },
-    [svgRef]
-  );
+  const taskGeometriesRef = useRef(taskGeometries);
+  taskGeometriesRef.current = taskGeometries;
 
-  // Find tasks that intersect with the marquee rectangle
-  const findIntersectingTasks = useCallback(
-    (marquee: MarqueeRect): TaskId[] => {
-      const normalizedMarquee = normalizeRect(marquee);
-      const intersectingIds: TaskId[] = [];
+  const { isSelectingRef, addToSelectionRef, handleMouseMove, handleMouseUp } =
+    useMarqueeDragListeners({
+      svgRef,
+      enabled,
+      marqueeRectRef,
+      onSelectionChangeRef,
+      taskGeometriesRef,
+      setMarqueeRect,
+    });
 
-      for (const task of taskGeometries) {
-        const taskRect = {
-          x: task.x,
-          y: task.y,
-          width: task.width,
-          height: task.height,
-        };
-
-        if (rectsIntersect(normalizedMarquee, taskRect)) {
-          intersectingIds.push(task.id);
-        }
-      }
-
-      return intersectingIds;
-    },
-    [taskGeometries]
-  );
-
-  // Mouse move handler
-  const handleMouseMove = useCallback(
-    (e: MouseEvent) => {
-      if (!isSelectingRef.current) return;
-
-      const coords = getSvgCoordinates(e);
-      if (!coords) return;
-
-      setMarqueeRect((prev) => {
-        if (!prev) return null;
-        return {
-          ...prev,
-          currentX: coords.x,
-          currentY: coords.y,
-        };
-      });
-    },
-    [getSvgCoordinates]
-  );
-
-  // Mouse up handler
-  const handleMouseUp = useCallback(
-    (e: MouseEvent) => {
-      if (!isSelectingRef.current) return;
-
-      isSelectingRef.current = false;
-
-      // Find intersecting tasks and update selection
-      const currentRect = marqueeRectRef.current;
-      if (currentRect) {
-        const coords = getSvgCoordinates(e);
-        if (coords) {
-          const finalRect = {
-            ...currentRect,
-            currentX: coords.x,
-            currentY: coords.y,
-          };
-          const intersectingIds = findIntersectingTasks(finalRect);
-          onSelectionChange(intersectingIds, addToSelectionRef.current);
-        }
-      }
-
-      setMarqueeRect(null);
-
-      // Remove event listeners
-      document.removeEventListener("mousemove", handleMouseMove);
-      document.removeEventListener("mouseup", handleMouseUp);
-    },
-    [
-      getSvgCoordinates,
-      findIntersectingTasks,
-      onSelectionChange,
-      handleMouseMove,
-    ]
-  );
-
-  // Mouse down handler (to be attached to SVG)
   const onMouseDown = useCallback(
     (e: React.MouseEvent<SVGSVGElement>) => {
-      if (!enabled) return;
+      if (!shouldStartMarqueeDrag(e, enabled)) return;
+      const svg = svgRef.current;
+      if (!svg) return;
+      const coords = getSvgCoordinates(svg, e);
 
-      // Only start marquee on left click
-      if (e.button !== 0) return;
-
-      // Don't start if clicking on a task bar or other interactive element
-      const target = e.target as Element;
-      if (
-        target.closest(".task-bar") ||
-        target.closest(".connection-handle") ||
-        target.closest(".dependency-arrow")
-      ) {
-        return;
-      }
-
-      const coords = getSvgCoordinates(e);
-      if (!coords) return;
-
-      // Store whether Shift/Ctrl is held for add-to-selection
       addToSelectionRef.current = e.shiftKey || e.ctrlKey || e.metaKey;
-
       isSelectingRef.current = true;
       setMarqueeRect({
         startX: coords.x,
@@ -220,31 +284,27 @@ export function useMarqueeSelection({
         currentY: coords.y,
       });
 
-      // Add global event listeners
       document.addEventListener("mousemove", handleMouseMove);
       document.addEventListener("mouseup", handleMouseUp);
 
-      // Prevent text selection during drag
+      // Prevent text selection during drag.
       e.preventDefault();
     },
-    [enabled, getSvgCoordinates, handleMouseMove, handleMouseUp]
+    [
+      svgRef,
+      enabled,
+      addToSelectionRef,
+      isSelectingRef,
+      handleMouseMove,
+      handleMouseUp,
+    ]
   );
-
-  // Cleanup on unmount
-  useEffect(() => {
-    return () => {
-      document.removeEventListener("mousemove", handleMouseMove);
-      document.removeEventListener("mouseup", handleMouseUp);
-    };
-  }, [handleMouseMove, handleMouseUp]);
-
-  // Calculate normalized rectangle for rendering
-  const normalizedRect = marqueeRect ? normalizeRect(marqueeRect) : null;
 
   return {
     marqueeRect,
-    normalizedRect,
-    isSelecting: isSelectingRef.current,
+    normalizedRect: marqueeRect ? normalizeRect(marqueeRect) : null,
+    // Derive from state rather than a ref so the value is always reactive.
+    isSelecting: marqueeRect !== null,
     onMouseDown,
   };
 }
