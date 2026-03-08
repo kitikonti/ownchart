@@ -302,9 +302,12 @@ function useMarqueeDragListeners({
   // Stable ref to handleMouseMove for consistent add/remove identity.
   const handleMouseMoveRef = useRef<(e: MouseEvent) => void>(() => undefined);
 
-  // Stable wrapper functions whose identity never changes. They delegate to
-  // the current ref value, so the document listener is always one stable
-  // function object regardless of how many times the inner callbacks re-create.
+  // Stable wrapper functions: created once at mount by reading `.current` from
+  // a one-time useRef call, so their identity never changes across re-renders.
+  // They delegate to the *current* ref value, meaning the document listener is
+  // always the same function object even when the inner useCallback handlers
+  // re-create due to a dep change — this prevents mismatched add/removeEventListener
+  // pairs that would leave orphaned listeners during an active drag.
   const stableMouseMove = useRef<(e: MouseEvent) => void>((e) =>
     handleMouseMoveRef.current(e)
   ).current;

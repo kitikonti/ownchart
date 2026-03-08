@@ -42,9 +42,9 @@ function toErrorMsg(e: unknown): string {
   return e instanceof Error ? e.message : String(e);
 }
 
-/** Remove the first occurrence of the given extension suffix from a filename. */
+/** Remove the extension suffix from the end of a filename, if present. */
 function stripFileExtension(name: string, ext: string): string {
-  return name.replace(ext, "");
+  return name.endsWith(ext) ? name.slice(0, -ext.length) : name;
 }
 
 /**
@@ -120,6 +120,11 @@ type ChartSliceNeeded = Pick<
   | "resetView"
 >;
 
+// OperationalSliceNeeded aggregates fields from three separate stores
+// (dependencySlice, fileSlice, historySlice, uiSlice). A single Pick<> cannot
+// span multiple stores, so this is a manually-maintained interface.
+// When adding or renaming fields in any of these slices, update this type and
+// the useOperationalSliceState() selector below to stay in sync.
 type OperationalSliceNeeded = {
   dependencies: Dependency[];
   clearDependencies: () => void;
@@ -443,10 +448,12 @@ function useSaveOperation({
   setLastSaved,
   markClean,
 }: SaveOperationDeps): {
+  /** Save to the existing file handle; pass `true` to always open the file picker. */
   handleSave: (saveAs?: boolean) => Promise<void>;
   handleSaveAs: () => Promise<void>;
 } {
   const handleSave = useCallback(
+    /** @param saveAs - When true, always open the file-picker (Save As). Default: false (Save). */
     async (saveAs = false) => {
       try {
         const content = serializeToGanttFile(
