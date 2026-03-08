@@ -79,30 +79,10 @@ export interface ExportToSvgParams {
  * Creates a proper SVG that works in vector editing applications.
  */
 export async function exportToSvg(params: ExportToSvgParams): Promise<void> {
-  const {
-    tasks,
-    options,
-    svgOptions,
-    columnWidths,
-    currentAppZoom,
-    projectDateRange,
-    visibleDateRange,
-    projectName,
-    colorModeState,
-    onProgress,
-  } = params;
+  const { options, svgOptions, projectName, onProgress } = params;
 
   onProgress?.(10);
-
-  const dimensions = calculateExportDimensions({
-    tasks,
-    options,
-    columnWidths,
-    currentAppZoom,
-    projectDateRange,
-    visibleDateRange,
-  });
-
+  const dimensions = calculateExportDimensions(params);
   onProgress?.(20);
 
   const container = createOffscreenContainer(
@@ -111,52 +91,86 @@ export async function exportToSvg(params: ExportToSvgParams): Promise<void> {
     options.background
   );
 
-  // The React root is created outside the try block so the finally clause
-  // can always call root.unmount(), preventing leaks on error paths.
+  // React root lives outside the try block so the finally clause can always
+  // call root.unmount(), preventing leaks on error paths.
   const root = createRoot(container);
 
   try {
-    await renderExportComponentAndWait(root, container, {
-      tasks,
-      options,
-      columnWidths,
-      currentAppZoom,
-      projectDateRange,
-      visibleDateRange,
-    });
-
-    onProgress?.(40);
-
-    const { chartSvg, headerSvg } = extractSvgElements(container, options);
-
-    onProgress?.(60);
-
-    const finalSvg = buildCompleteSvg({
-      chartSvg,
-      headerSvg,
-      tasks,
-      options,
-      columnWidths,
-      dimensions,
-      colorModeState,
-      projectName,
-    });
-
-    onProgress?.(80);
-
-    const svgString = finalizeSvg(finalSvg, svgOptions, projectName);
-
-    onProgress?.(90);
-
+    const svgString = await renderAndSerializeSvg(
+      root,
+      container,
+      params,
+      dimensions
+    );
     await deliverSvg(svgString, svgOptions, projectName);
-
     onProgress?.(100);
   } finally {
-    // Always unmount the React root and remove the container, even on error,
-    // to prevent memory leaks on repeated export attempts that fail mid-way.
+    // Always clean up even when an error is thrown mid-export.
     root.unmount();
     removeOffscreenContainer(container);
   }
+}
+
+/**
+ * Render the ExportRenderer into the offscreen container, extract the SVG
+ * elements, build the complete SVG document, and serialize it to a string.
+ *
+ * Separated from {@link exportToSvg} so each phase can be reasoned about and
+ * tested in isolation while keeping the top-level orchestrator concise.
+ *
+ * @internal
+ */
+async function renderAndSerializeSvg(
+  root: ReturnType<typeof createRoot>,
+  container: HTMLElement,
+  params: ExportToSvgParams,
+  dimensions: { width: number; height: number }
+): Promise<string> {
+  const {
+    tasks,
+    options,
+    svgOptions,
+    columnWidths,
+    currentAppZoom,
+    projectDateRange,
+    visibleDateRange,
+    colorModeState,
+    projectName,
+    onProgress,
+  } = params;
+
+  await renderExportComponentAndWait(root, container, {
+    tasks,
+    options,
+    columnWidths,
+    currentAppZoom,
+    projectDateRange,
+    visibleDateRange,
+  });
+  onProgress?.(40);
+
+  const { chartSvg, headerSvg } = extractSvgElements(container, options);
+  onProgress?.(60);
+
+  const finalSvg = buildCompleteSvg({
+    chartSvg,
+    headerSvg,
+    tasks,
+    options,
+    columnWidths,
+    dimensions,
+    colorModeState,
+    projectName,
+  });
+  onProgress?.(80);
+
+  // finalizeSvg mutates finalSvg in-place (adds aria attrs, adjusts viewBox /
+  // dimensions) before serializing — finalSvg is a local variable owned by
+  // this call, so mutation is safe.
+  const svgString = finalizeSvg(finalSvg, svgOptions, projectName);
+  onProgress?.(90);
+
+  return svgString;
 }
 
 // ---------------------------------------------------------------------------
@@ -349,9 +363,9 @@ export function cloneSvgIntoGroup(
 ): void {
   const group = document.createElementNS("http://www.w3.org/2000/svg", "g");
   group.setAttribute("transform", transform);
-  Array.from(sourceSvg.childNodes).forEach((child) => {
+  for (const child of sourceSvg.childNodes) {
     group.appendChild(child.cloneNode(true));
-  });
+  }
   // Set font-family on all text elements (vector apps ignore CSS style blocks)
   setFontFamilyOnTextElements(group);
   svg.appendChild(group);
@@ -483,6 +497,9 @@ function buildCompleteSvg(params: BuildCompleteSvgParams): SVGSVGElement {
     columnWidths
   );
 
+  // tasks has already been pre-filtered by prepareExportTasks (single source
+  // of truth for export visibility). No hidden tasks remain at this point,
+  // so an empty hiddenTaskIds set is correct here.
   const flattenedTasks = buildFlattenedTaskList(tasks, new Set<TaskId>());
 
   const svg = createRootSvg(dimensions, options.background, projectName);

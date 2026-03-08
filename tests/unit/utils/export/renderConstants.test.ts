@@ -245,72 +245,72 @@ describe("getLabelConfig", () => {
 
   describe("before position", () => {
     it("returns negative x (left of bar) with end anchor", () => {
-      const config = getLabelConfig(taskWidth, taskHeight, "before", fontSize);
+      const config = getLabelConfig({ taskWidth, taskHeight, labelPosition: "before", fontSize });
       expect(config.x).toBe(-padding);
       expect(config.textAnchor).toBe("end");
       expect(config.clip).toBe(false);
     });
 
     it("uses external color", () => {
-      const config = getLabelConfig(taskWidth, taskHeight, "before", fontSize);
+      const config = getLabelConfig({ taskWidth, taskHeight, labelPosition: "before", fontSize });
       expect(config.fill).toBe(RENDER_COLORS.textExternal);
     });
 
     it("computes correct y", () => {
-      const config = getLabelConfig(taskWidth, taskHeight, "before", fontSize);
+      const config = getLabelConfig({ taskWidth, taskHeight, labelPosition: "before", fontSize });
       expect(config.y).toBeCloseTo(expectedY);
     });
   });
 
   describe("after position", () => {
     it("returns x past the bar width with start anchor", () => {
-      const config = getLabelConfig(taskWidth, taskHeight, "after", fontSize);
+      const config = getLabelConfig({ taskWidth, taskHeight, labelPosition: "after", fontSize });
       expect(config.x).toBe(taskWidth + padding);
       expect(config.textAnchor).toBe("start");
       expect(config.clip).toBe(false);
     });
 
     it("uses external color", () => {
-      const config = getLabelConfig(taskWidth, taskHeight, "after", fontSize);
+      const config = getLabelConfig({ taskWidth, taskHeight, labelPosition: "after", fontSize });
       expect(config.fill).toBe(RENDER_COLORS.textExternal);
     });
   });
 
   describe("inside position", () => {
     it("returns positive x with start anchor and clip=true", () => {
-      const config = getLabelConfig(taskWidth, taskHeight, "inside", fontSize);
+      const config = getLabelConfig({ taskWidth, taskHeight, labelPosition: "inside", fontSize });
       expect(config.x).toBe(padding);
       expect(config.textAnchor).toBe("start");
       expect(config.clip).toBe(true);
     });
 
     it("falls back to internalColor when no taskColor given", () => {
-      const config = getLabelConfig(taskWidth, taskHeight, "inside", fontSize);
+      const config = getLabelConfig({ taskWidth, taskHeight, labelPosition: "inside", fontSize });
       expect(config.fill).toBe(LABEL_RENDER_CONSTANTS.internalColor);
     });
 
     it("uses contrast color when taskColor is provided (light bg → dark text)", () => {
       // White background → dark text expected
-      const config = getLabelConfig(
+      const config = getLabelConfig({
         taskWidth,
         taskHeight,
-        "inside",
+        labelPosition: "inside",
         fontSize,
-        "#ffffff"
-      );
+        taskColor: "#ffffff",
+      });
       // getContrastTextColor("#ffffff") should return a dark color
       expect(config.fill).not.toBe(LABEL_RENDER_CONSTANTS.internalColor);
     });
 
     it("uses contrast color when taskColor is provided (dark bg → light text)", () => {
       // Black background → light text expected
-      const config = getLabelConfig(
+      const config = getLabelConfig({
         taskWidth,
         taskHeight,
-        "inside",
+        labelPosition: "inside",
         fontSize,
-        "#000000"
-      );
+        taskColor: "#000000",
+      });
       // For a dark background, contrast text should be light (white)
       expect(config.fill).toBe(LABEL_RENDER_CONSTANTS.internalColor);
     });
@@ -320,7 +320,7 @@ describe("getLabelConfig", () => {
     it("throws for an unknown label position", () => {
       expect(() =>
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        getLabelConfig(taskWidth, taskHeight, "unknown" as any, fontSize)
+        getLabelConfig({ taskWidth, taskHeight, labelPosition: "unknown" as any, fontSize })
       ).toThrow("Unknown labelPosition");
     });
   });

@@ -353,6 +353,14 @@ export function computeBracketGeometry(
 }
 
 /**
+ * Collapses template-literal indentation from SVG path strings.
+ * Safe to apply to path data because SVG path numbers never contain embedded spaces.
+ */
+function normalizePath(d: string): string {
+  return d.trim().replace(/\s+/g, " ");
+}
+
+/**
  * Generate SVG path for a summary bracket shape.
  * Matches the SummaryBracket component exactly.
  *
@@ -386,8 +394,7 @@ export function generateSummaryBracketPath(
   const { tipHeight, barThickness, tipWidth, cornerRadius, innerRadius } =
     computeBracketGeometry(width, height);
 
-  return (
-    `
+  return normalizePath(`
     M ${x + cornerRadius} ${y}
     L ${x + width - cornerRadius} ${y}
     Q ${x + width} ${y} ${x + width} ${y + cornerRadius}
@@ -402,11 +409,7 @@ export function generateSummaryBracketPath(
     L ${x} ${y + cornerRadius}
     Q ${x} ${y} ${x + cornerRadius} ${y}
     Z
-  `
-      .trim()
-      // Collapses template-literal indentation; safe because SVG path numbers contain no embedded spaces.
-      .replace(/\s+/g, " ")
-  );
+  `);
 }
 
 /**
@@ -428,18 +431,13 @@ export function generateMilestonePath(
 ): string {
   if (size <= 0) return "";
 
-  return (
-    `
+  return normalizePath(`
     M ${centerX} ${centerY - size}
     L ${centerX + size} ${centerY}
     L ${centerX} ${centerY + size}
     L ${centerX - size} ${centerY}
     Z
-  `
-      .trim()
-      // Collapses template-literal indentation; safe because SVG path numbers contain no embedded spaces.
-      .replace(/\s+/g, " ")
-  );
+  `);
 }
 
 /**
@@ -460,23 +458,30 @@ export interface LabelConfig {
 }
 
 /**
+ * Input parameters for {@link getLabelConfig}.
+ */
+export interface LabelConfigInput {
+  /** Width of the task bar in px */
+  taskWidth: number;
+  /** Height of the task bar in px */
+  taskHeight: number;
+  /** Position of the label ("before", "inside", or "after") */
+  labelPosition: "before" | "inside" | "after";
+  /** Font size in px used for vertical offset calculation */
+  fontSize: number;
+  /** Optional task background color for dynamic contrast calculation (inside labels only) */
+  taskColor?: string;
+}
+
+/**
  * Calculate label position and styling based on position mode.
  * Returns x offset relative to task bar start, y position, text anchor, fill color, and clip flag.
  *
- * @param taskWidth - Width of the task bar in px
- * @param taskHeight - Height of the task bar in px
- * @param labelPosition - Position of the label ("before", "inside", or "after")
- * @param fontSize - Font size in px used for vertical offset calculation
- * @param taskColor - Optional task background color for dynamic contrast calculation (inside labels only)
+ * @param input - {@link LabelConfigInput} describing the task bar geometry and label position
  * @returns {@link LabelConfig} describing where and how to render the label
  */
-export function getLabelConfig(
-  taskWidth: number,
-  taskHeight: number,
-  labelPosition: "before" | "inside" | "after",
-  fontSize: number,
-  taskColor?: string
-): LabelConfig {
+export function getLabelConfig(input: LabelConfigInput): LabelConfig {
+  const { taskWidth, taskHeight, labelPosition, fontSize, taskColor } = input;
   const padding = LABEL_RENDER_CONSTANTS.padding;
   const yOffset = fontSize * LABEL_RENDER_CONSTANTS.verticalOffsetFactor;
   const y = taskHeight / 2 + yOffset;
