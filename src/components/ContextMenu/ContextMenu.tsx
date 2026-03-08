@@ -22,6 +22,9 @@ export const CONTEXT_MENU_CONTAINER_CLASS = "context-menu-container";
 /** Pixel gap kept between the menu edge and the viewport boundary. */
 const VIEWPORT_EDGE_MARGIN_PX = 4;
 
+/** Minimum width of the context menu in pixels. */
+const CONTEXT_MENU_MIN_WIDTH_PX = 180;
+
 export interface ContextMenuItem {
   id: string;
   label: string;
@@ -180,12 +183,15 @@ export const ContextMenu = memo(function ContextMenu({
 
   // Close on Escape, handle arrow keys (WAI-ARIA menu keyboard pattern).
   // Tab closes the menu and restores focus — standard context menu behaviour.
+  // Uses onCloseRef throughout (same pattern as handleItemClick and outside-click
+  // handler) so the callback is never recreated when the parent re-renders with
+  // a new onClose identity.
   const handleKeyDown = useCallback(
     (e: React.KeyboardEvent): void => {
       if (e.key === "Escape") {
         e.preventDefault();
         e.stopPropagation();
-        onClose();
+        onCloseRef.current();
         return;
       }
 
@@ -193,7 +199,7 @@ export const ContextMenu = memo(function ContextMenu({
       // the trigger element — there is nothing to tab to inside a context menu.
       if (e.key === "Tab") {
         e.preventDefault();
-        onClose();
+        onCloseRef.current();
         return;
       }
 
@@ -231,24 +237,29 @@ export const ContextMenu = memo(function ContextMenu({
         const item = items[focusedIndexRef.current];
         if (item && !item.disabled) {
           item.onClick();
-          onClose();
+          onCloseRef.current();
         }
         return;
       }
     },
-    [items, focusItem, findNextEnabled, findPrevEnabled, onClose]
+    [items, focusItem, findNextEnabled, findPrevEnabled]
   );
 
   return createPortal(
     <div
       ref={menuRef}
-      className={`${CONTEXT_MENU_CONTAINER_CLASS} fixed min-w-[180px]`}
+      className={`${CONTEXT_MENU_CONTAINER_CLASS} fixed`}
       // left/top are set imperatively in the positioning useEffect after
       // viewport-clamping; visibility:hidden keeps the menu invisible until
       // the effect runs so there is no flash at an unclamped position.
       // zIndex uses the Z_INDEX token so the stacking order relative to Modal
       // (Z_INDEX.modal = 1100) is explicit and maintained centrally.
-      style={{ visibility: "hidden", zIndex: Z_INDEX.contextMenu }}
+      // minWidth uses the named constant rather than an inline magic number.
+      style={{
+        visibility: "hidden",
+        zIndex: Z_INDEX.contextMenu,
+        minWidth: CONTEXT_MENU_MIN_WIDTH_PX,
+      }}
       role="menu"
       aria-label={ariaLabel}
       tabIndex={-1}

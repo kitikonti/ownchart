@@ -78,6 +78,64 @@ export interface ModalProps {
   contentPadding?: string;
 }
 
+// ---------------------------------------------------------------------------
+// ModalHeader — extracted sub-component to keep Modal under the 200-line limit.
+// ---------------------------------------------------------------------------
+
+interface ModalHeaderProps {
+  title: string;
+  subtitle?: string;
+  icon?: ReactNode;
+  headerStyle: "default" | "bordered";
+  titleId: string;
+  subtitleId: string;
+  onClose: () => void;
+}
+
+const ModalHeader = memo(function ModalHeader({
+  title,
+  subtitle,
+  icon,
+  headerStyle,
+  titleId,
+  subtitleId,
+  onClose,
+}: ModalHeaderProps): JSX.Element {
+  return (
+    <div
+      className={`flex items-center justify-between ${HEADER_STYLE_CLASSES[headerStyle]}`}
+    >
+      <div className="flex items-center gap-3">
+        {icon}
+        <div>
+          <h2
+            id={titleId}
+            className={`font-semibold leading-7 ${HEADER_TITLE_CLASSES[headerStyle]}`}
+          >
+            {title}
+          </h2>
+          {subtitle && (
+            <p id={subtitleId} className="text-sm text-neutral-500 mt-0.5">
+              {subtitle}
+            </p>
+          )}
+        </div>
+      </div>
+      <button
+        onClick={onClose}
+        className="p-1.5 -m-1.5 rounded-sm text-neutral-500 hover:text-neutral-700 transition-colors duration-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500"
+        aria-label={`Close ${title}`}
+      >
+        <X size={20} weight="regular" />
+      </button>
+    </div>
+  );
+});
+
+// ---------------------------------------------------------------------------
+// Modal
+// ---------------------------------------------------------------------------
+
 /**
  * Modal component with backdrop and focus management.
  */
@@ -208,34 +266,15 @@ export const Modal = memo(function Modal({
         `}
         style={{ boxShadow: SHADOWS.modal }}
       >
-        {/* Header */}
-        <div
-          className={`flex items-center justify-between ${HEADER_STYLE_CLASSES[headerStyle]}`}
-        >
-          <div className="flex items-center gap-3">
-            {icon}
-            <div>
-              <h2
-                id={titleId}
-                className={`font-semibold leading-7 ${HEADER_TITLE_CLASSES[headerStyle]}`}
-              >
-                {title}
-              </h2>
-              {subtitle && (
-                <p id={subtitleId} className="text-sm text-neutral-500 mt-0.5">
-                  {subtitle}
-                </p>
-              )}
-            </div>
-          </div>
-          <button
-            onClick={onClose}
-            className="p-1.5 -m-1.5 rounded-sm text-neutral-500 hover:text-neutral-700 transition-colors duration-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500"
-            aria-label={`Close ${title}`}
-          >
-            <X size={20} weight="regular" />
-          </button>
-        </div>
+        <ModalHeader
+          title={title}
+          subtitle={subtitle}
+          icon={icon}
+          headerStyle={headerStyle}
+          titleId={titleId}
+          subtitleId={subtitleId}
+          onClose={onClose}
+        />
 
         {/* Content */}
         <div

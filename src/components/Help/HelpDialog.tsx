@@ -3,7 +3,15 @@
  * search, and comprehensive feature documentation.
  */
 
-import { useState, useRef, useCallback, useEffect, useMemo, memo } from "react";
+import {
+  useState,
+  useRef,
+  useCallback,
+  useEffect,
+  useId,
+  useMemo,
+  memo,
+} from "react";
 import { Question, Command } from "@phosphor-icons/react";
 import { Modal } from "../common/Modal";
 import { Button } from "../common/Button";
@@ -151,6 +159,11 @@ export const HelpDialog = memo(function HelpDialog(): JSX.Element | null {
   // getModKey reads navigator.platform which never changes — compute once.
   const modKey = useMemo(() => getModKey(), []);
 
+  // Generate a stable instance-unique prefix for tab/panel IDs so that if
+  // two HelpDialogs are ever mounted simultaneously they don't share ARIA IDs
+  // (consistent with the same pattern used in Modal).
+  const instanceId = useId();
+
   const tablistRef = useRef<HTMLDivElement>(null);
 
   // WAI-ARIA tablist pattern: Arrow keys, Home, and End move between tabs and
@@ -217,7 +230,7 @@ export const HelpDialog = memo(function HelpDialog(): JSX.Element | null {
             return (
               <button
                 key={tab.id}
-                id={`tab-${tab.id}`}
+                id={`tab-${instanceId}-${tab.id}`}
                 onClick={() => setActiveTab(tab.id)}
                 className={`px-3 py-2 text-sm font-medium transition-colors relative ${
                   isActive
@@ -226,7 +239,7 @@ export const HelpDialog = memo(function HelpDialog(): JSX.Element | null {
                 }`}
                 role="tab"
                 aria-selected={isActive}
-                aria-controls={`help-panel-${tab.id}`}
+                aria-controls={`help-panel-${instanceId}-${tab.id}`}
                 tabIndex={isActive ? 0 : -1}
               >
                 {tab.label}
@@ -245,8 +258,10 @@ export const HelpDialog = memo(function HelpDialog(): JSX.Element | null {
       <div
         className={`px-6 py-4 overflow-y-auto ${CONTENT_MAX_HEIGHT_CLASS} scrollbar-thin`}
         role={!isSearching ? "tabpanel" : "region"}
-        id={!isSearching ? `help-panel-${activeTab}` : undefined}
-        aria-labelledby={!isSearching ? `tab-${activeTab}` : undefined}
+        id={!isSearching ? `help-panel-${instanceId}-${activeTab}` : undefined}
+        aria-labelledby={
+          !isSearching ? `tab-${instanceId}-${activeTab}` : undefined
+        }
         aria-label={isSearching ? "Search results" : undefined}
       >
         <HelpTabContent
