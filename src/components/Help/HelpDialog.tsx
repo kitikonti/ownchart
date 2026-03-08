@@ -26,7 +26,7 @@ import { GettingStartedTab } from "./GettingStartedTab";
  * Maximum height for the help dialog content area.
  * Sized to leave room for the search bar, tab strip, and footer within the modal.
  */
-const CONTENT_MAX_HEIGHT = "max-h-[55vh]" as const;
+const CONTENT_MAX_HEIGHT = "max-h-[55vh]";
 
 // ---------------------------------------------------------------------------
 // Tab panel content — extracted to keep HelpDialog's return lean
@@ -57,7 +57,7 @@ const HelpTabContent = memo(function HelpTabContent({
         <>
           <p className="text-xs text-neutral-400 mb-3">
             {matchCount} result{matchCount !== 1 ? "s" : ""} for &ldquo;
-            {query.trim()}&rdquo;
+            {query}&rdquo;
           </p>
           <HelpSectionList sections={searchResults} defaultOpen />
         </>
@@ -65,7 +65,7 @@ const HelpTabContent = memo(function HelpTabContent({
     }
     return (
       <p className="text-sm text-neutral-400 text-center py-8">
-        No results for &ldquo;{query.trim()}&rdquo;
+        No results for &ldquo;{query}&rdquo;
       </p>
     );
   }
@@ -112,14 +112,25 @@ export function HelpDialog(): JSX.Element | null {
 
   const [query, setQuery] = useState("");
 
+  // Reset the search query whenever the dialog is closed so that reopening
+  // it always shows a clean state instead of the previous search.
+  useEffect(() => {
+    if (!isOpen) {
+      setQuery("");
+    }
+  }, [isOpen]);
+
+  const trimmedQuery = query.trim();
   const { sections: searchResults, matchCount } = useHelpSearch(
     HELP_TABS,
     query
   );
-  const isSearching = query.trim().length > 0;
+  const isSearching = trimmedQuery.length > 0;
 
   const foundTab = HELP_TABS.find((t) => t.id === activeTab);
-  const currentTab = foundTab ?? HELP_TABS[0];
+  // HELP_TABS is a non-empty static array — HELP_TABS[0] is always defined.
+  // The non-null assertion is safe here and avoids a spurious runtime branch.
+  const currentTab = foundTab ?? HELP_TABS[0]!;
 
   // Warn developers (once per distinct invalid value) when the persisted
   // activeTab doesn't match any known tab — this can happen if a tab is
@@ -195,7 +206,7 @@ export function HelpDialog(): JSX.Element | null {
           className="px-6 flex gap-1 border-b border-neutral-200"
           role="tablist"
           aria-label="Help navigation"
-          tabIndex={-1}
+          tabIndex={0}
           onKeyDown={handleTablistKeyDown}
         >
           {HELP_TABS.map((tab) => {
@@ -237,7 +248,7 @@ export function HelpDialog(): JSX.Element | null {
           isSearching={isSearching}
           searchResults={searchResults}
           matchCount={matchCount}
-          query={query}
+          query={trimmedQuery}
           activeTab={activeTab}
           currentTab={currentTab}
           modKey={modKey}

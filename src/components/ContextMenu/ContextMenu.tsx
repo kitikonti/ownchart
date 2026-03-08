@@ -4,7 +4,7 @@
  * Future-proof: can be extended with Cut/Copy/Paste, Delete, Indent/Outdent, etc.
  */
 
-import { useEffect, useRef, useCallback, type ReactNode } from "react";
+import { useEffect, useRef, useCallback, memo, type ReactNode } from "react";
 import { createPortal } from "react-dom";
 import { Check } from "@phosphor-icons/react";
 import { CONTEXT_MENU, Z_INDEX } from "../../styles/design-tokens";
@@ -40,7 +40,7 @@ interface ContextMenuProps {
   ariaLabel?: string;
 }
 
-export function ContextMenu({
+export const ContextMenu = memo(function ContextMenu({
   items,
   position,
   onClose,
@@ -130,7 +130,36 @@ export function ContextMenu({
     [onClose]
   );
 
-  // Close on Escape, handle arrow keys
+  /** Returns the index of the next enabled item after `from`, wrapping around. */
+  const findNextEnabled = useCallback(
+    (from: number): number => {
+      let next = from + 1;
+      while (next < items.length && items[next].disabled) next++;
+      if (next >= items.length) {
+        // Wrap around: find first enabled item from the beginning
+        next = items.findIndex((item) => !item.disabled);
+      }
+      return next;
+    },
+    [items]
+  );
+
+  /** Returns the index of the previous enabled item before `from`, wrapping around. */
+  const findPrevEnabled = useCallback(
+    (from: number): number => {
+      let prev = from - 1;
+      while (prev >= 0 && items[prev].disabled) prev--;
+      if (prev < 0) {
+        // Wrap around: find last enabled item from the end
+        prev = items.length - 1;
+        while (prev >= 0 && items[prev].disabled) prev--;
+      }
+      return prev;
+    },
+    [items]
+  );
+
+  // Close on Escape, handle arrow keys (WAI-ARIA menu keyboard pattern).
   const handleKeyDown = useCallback(
     (e: React.KeyboardEvent): void => {
       if (e.key === "Escape") {
@@ -142,27 +171,14 @@ export function ContextMenu({
 
       if (e.key === "ArrowDown") {
         e.preventDefault();
-        // WAI-ARIA menu pattern: wrap around to first enabled item at end of list.
-        let next = focusedIndexRef.current + 1;
-        while (next < items.length && items[next].disabled) next++;
-        if (next >= items.length) {
-          // Wrap around: find first enabled item from the beginning
-          next = items.findIndex((item) => !item.disabled);
-        }
+        const next = findNextEnabled(focusedIndexRef.current);
         if (next >= 0) focusItem(next);
         return;
       }
 
       if (e.key === "ArrowUp") {
         e.preventDefault();
-        // WAI-ARIA menu pattern: wrap around to last enabled item at start of list.
-        let prev = focusedIndexRef.current - 1;
-        while (prev >= 0 && items[prev].disabled) prev--;
-        if (prev < 0) {
-          // Wrap around: find last enabled item from the end
-          prev = items.length - 1;
-          while (prev >= 0 && items[prev].disabled) prev--;
-        }
+        const prev = findPrevEnabled(focusedIndexRef.current);
         if (prev >= 0) focusItem(prev);
         return;
       }
@@ -192,7 +208,7 @@ export function ContextMenu({
         return;
       }
     },
-    [items, focusItem, onClose]
+    [items, focusItem, findNextEnabled, findPrevEnabled, onClose]
   );
 
   return createPortal(
@@ -251,4 +267,4 @@ export function ContextMenu({
     </div>,
     document.body
   );
-}
+});

@@ -9,6 +9,7 @@ import {
   useRef,
   useId,
   useCallback,
+  memo,
   type ReactNode,
   type KeyboardEvent,
 } from "react";
@@ -20,7 +21,7 @@ import { Z_INDEX, SHADOWS } from "../../styles/design-tokens";
  * Maximum height for the dialog container — prevents the modal from overflowing
  * the viewport on short screens while still allowing internal scrolling.
  */
-const DIALOG_MAX_HEIGHT = "max-h-[90vh]" as const;
+const DIALOG_MAX_HEIGHT = "max-h-[90vh]";
 
 /**
  * Tailwind class maps for header/footer style variants.
@@ -47,7 +48,7 @@ const FOOTER_STYLE_CLASSES: Record<"default" | "bordered", string> = {
  * Defined at module level to avoid re-creating the string on every render.
  */
 const FOCUSABLE_SELECTOR =
-  'button:not([disabled]), [href], input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])';
+  'button:not([disabled]), [href], input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [contenteditable]:not([contenteditable="false"]), [tabindex]:not([tabindex="-1"])';
 
 export interface ModalProps {
   /** Whether the modal is open */
@@ -87,7 +88,7 @@ export interface ModalProps {
 /**
  * Modal component with backdrop and focus management.
  */
-export function Modal({
+export const Modal = memo(function Modal({
   isOpen,
   onClose,
   title,
@@ -185,10 +186,13 @@ export function Modal({
       tabIndex={-1}
       onKeyDown={handleKeyDown}
     >
-      {/* Backdrop - MS Fluent: rgba(0,0,0,0.4), no blur */}
+      {/* Backdrop - MS Fluent: rgba(0,0,0,0.4), no blur.
+          tabIndex={-1} keeps it non-focusable; aria-hidden hides it from the
+          SR tree. Click-dismiss is intentional UX (keyboard users use Escape). */}
       <div
         className="absolute inset-0 bg-black/40"
         onClick={onClose}
+        tabIndex={-1}
         aria-hidden="true"
       />
       {/* Dialog container - Outlook style: 4px radius, Fluent shadow */}
@@ -243,4 +247,4 @@ export function Modal({
     </div>,
     document.body
   );
-}
+});
