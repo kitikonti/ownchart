@@ -12,9 +12,13 @@ import { createElement } from "react";
 import type { ColorModeState } from "../../types/colorMode.types";
 import type { Task } from "../../types/chart.types";
 import type { TaskId } from "../../types/branded.types";
+import type { ExportOptions, SvgExportOptions } from "./types";
+import type {
+  TaskTableHeaderOptions,
+  TaskTableRowsOptions,
+} from "./taskTableRenderer";
 import { ExportRenderer } from "../../components/Export/ExportRenderer";
 import { buildFlattenedTaskList } from "../hierarchy";
-import type { ExportOptions, SvgExportOptions } from "./types";
 import { DEFAULT_EXPORT_COLUMNS } from "./types";
 import { calculateExportDimensions } from "./exportLayout";
 import { calculateTaskTableWidth } from "./calculations";
@@ -36,17 +40,15 @@ import {
 import {
   renderTaskTableHeader,
   renderTaskTableRows,
-  type TaskTableHeaderOptions,
-  type TaskTableRowsOptions,
 } from "./taskTableRenderer";
 
 /**
- * White background fill colour for the SVG canvas.
+ * Opaque background fill colour for the SVG canvas.
  * Intentionally hardcoded: pure white is a presentation-layer override for
  * the "opaque background" export option, not a design-system colour that
  * should track theme changes.
  */
-const SVG_BACKGROUND_WHITE = "#ffffff";
+const EXPORT_OPAQUE_BACKGROUND_COLOR = "#ffffff";
 
 /** Parameters for SVG export */
 export interface ExportToSvgParams {
@@ -143,20 +145,36 @@ export async function exportToSvg(params: ExportToSvgParams): Promise<void> {
       throw new Error("Could not find chart SVG element");
     }
 
+    if (!(chartSvg instanceof SVGSVGElement)) {
+      throw new Error(
+        "Chart SVG element has unexpected type; expected SVGSVGElement"
+      );
+    }
+
+    // headerSvg may legitimately be null when includeHeader is false.
+    // Verify the type only when the element was actually found.
+    if (headerSvg !== null && !(headerSvg instanceof SVGSVGElement)) {
+      throw new Error(
+        "Timeline header element has unexpected type; expected SVGSVGElement"
+      );
+    }
+
     if (options.includeHeader && !headerSvg) {
       // This is a non-fatal invariant violation: the chart body will be offset
       // by HEADER_HEIGHT but the header section will be blank. Log a warning
       // so it surfaces in developer consoles without crashing the export.
-      console.warn(
-        "[svgExport] includeHeader is true but the timeline header SVG element was not found. " +
-          "The export header area will be empty."
-      );
+      if (import.meta.env.DEV) {
+        console.warn(
+          "[svgExport] includeHeader is true but the timeline header SVG element was not found. " +
+            "The export header area will be empty."
+        );
+      }
     }
 
     // Build a new complete SVG with task table as SVG elements
     const finalSvg = buildCompleteSvg(
-      chartSvg as SVGSVGElement,
-      headerSvg as SVGSVGElement | null,
+      chartSvg,
+      headerSvg,
       tasks,
       options,
       columnWidths,
@@ -189,10 +207,42 @@ export async function exportToSvg(params: ExportToSvgParams): Promise<void> {
   }
 }
 
+// ---------------------------------------------------------------------------
+// Internal helpers — exported for unit testing only (@internal)
+// ---------------------------------------------------------------------------
+
+/**
+ * Resolve the effective export columns and compute the task-table panel width.
+ * Separates the "what to render" decision from the "how to compose it" logic
+ * in {@link buildCompleteSvg}.
+ *
+ * @internal
+ */
+export function resolveExportLayout(
+  options: ExportOptions,
+  columnWidths: Record<string, number>
+): {
+  selectedColumns: NonNullable<ExportOptions["selectedColumns"]>;
+  taskTableWidth: number;
+  hasTaskList: boolean;
+} {
+  const selectedColumns =
+    options.selectedColumns.length > 0
+      ? options.selectedColumns
+      : DEFAULT_EXPORT_COLUMNS;
+  const hasTaskList = selectedColumns.length > 0;
+  const taskTableWidth = hasTaskList
+    ? calculateTaskTableWidth(selectedColumns, columnWidths, options.density)
+    : 0;
+  return { selectedColumns, taskTableWidth, hasTaskList };
+}
+
 /**
  * Create the root SVG canvas with title, optional white background, and font defs.
+ *
+ * @internal
  */
-function createRootSvg(
+export function createRootSvg(
   dimensions: { width: number; height: number },
   background: "white" | "transparent",
   projectName?: string
@@ -215,7 +265,7 @@ function createRootSvg(
     const bg = document.createElementNS("http://www.w3.org/2000/svg", "rect");
     bg.setAttribute("width", "100%");
     bg.setAttribute("height", "100%");
-    bg.setAttribute("fill", SVG_BACKGROUND_WHITE);
+    bg.setAttribute("fill", EXPORT_OPAQUE_BACKGROUND_COLOR);
     svg.appendChild(bg);
   }
 
@@ -345,11 +395,10 @@ function buildCompleteSvg(
   colorModeState: ColorModeState,
   projectName?: string
 ): SVGSVGElement {
-  const selectedColumns = options.selectedColumns || DEFAULT_EXPORT_COLUMNS;
-  const hasTaskList = selectedColumns.length > 0;
-  const taskTableWidth = hasTaskList
-    ? calculateTaskTableWidth(selectedColumns, columnWidths, options.density)
-    : 0;
+  const { selectedColumns, taskTableWidth, hasTaskList } = resolveExportLayout(
+    options,
+    columnWidths
+  );
 
   const flattenedTasks = buildFlattenedTaskList(tasks, new Set<TaskId>());
 
@@ -392,8 +441,10 @@ function buildCompleteSvg(
  * @param options - SVG-specific export options
  * @param projectName - Optional project name used for the `aria-label` value
  * @returns The serialized SVG string including the `<?xml ...?>` declaration
+ *
+ * @internal
  */
-function finalizeSvg(
+export function finalizeSvg(
   svg: SVGSVGElement,
   options: SvgExportOptions,
   projectName?: string

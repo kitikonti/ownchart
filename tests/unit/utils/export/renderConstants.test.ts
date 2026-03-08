@@ -133,6 +133,23 @@ describe("generateSummaryBracketPath", () => {
   it("returns empty string for negative height", () => {
     expect(generateSummaryBracketPath(0, 0, 100, -5)).toBe("");
   });
+
+  it("produces a valid (non-empty) path for very short rows where cornerRadius > barThickness", () => {
+    // height=10 → barThickness=3, cornerRadius would be 10 without clamping
+    // → invalid arc; after clamping the path should still be a valid string
+    const path = generateSummaryBracketPath(0, 0, 200, 10);
+    expect(path.length).toBeGreaterThan(0);
+    expect(path.startsWith("M")).toBe(true);
+    expect(path.endsWith("Z")).toBe(true);
+  });
+
+  it("produces a valid path for very narrow tasks where tips would otherwise overlap", () => {
+    // width=4 → raw tipWidth could exceed width/2 without clamping
+    const path = generateSummaryBracketPath(0, 0, 4, 20);
+    expect(path.length).toBeGreaterThan(0);
+    expect(path.startsWith("M")).toBe(true);
+    expect(path.endsWith("Z")).toBe(true);
+  });
 });
 
 // ---------------------------------------------------------------------------

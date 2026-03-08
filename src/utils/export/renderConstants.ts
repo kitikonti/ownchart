@@ -294,9 +294,14 @@ export function generateSummaryBracketPath(
 
   const tipHeight = height * SUMMARY_BRACKET.tipHeightRatio;
   const barThickness = height * SUMMARY_BRACKET.barThicknessRatio;
-  const tipWidth = tipHeight * SUMMARY_BRACKET.tipWidthFactor;
-  const cornerRadius = SUMMARY_BRACKET.cornerRadius;
-  const innerRadius = SUMMARY_BRACKET.innerRadius;
+  // Clamp tipWidth so the two tips never overlap on very narrow tasks.
+  const rawTipWidth = tipHeight * SUMMARY_BRACKET.tipWidthFactor;
+  const tipWidth = Math.min(rawTipWidth, width / 2);
+  // Clamp corner radii to half the bar thickness so arcs never exceed the bar
+  // height — this prevents invalid / visually broken geometry on short rows
+  // (e.g. barThickness < cornerRadius, which occurs when height < ~34 px).
+  const cornerRadius = Math.min(SUMMARY_BRACKET.cornerRadius, barThickness / 2);
+  const innerRadius = Math.min(SUMMARY_BRACKET.innerRadius, barThickness / 2);
 
   return `
     M ${x + cornerRadius} ${y}
