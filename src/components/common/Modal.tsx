@@ -117,10 +117,11 @@ export const Modal = memo(function Modal({
       previousActiveElement.current = document.activeElement as HTMLElement;
       modalRef.current?.focus();
     } else {
-      if (previousActiveElement.current) {
-        previousActiveElement.current.focus();
-        previousActiveElement.current = null;
-      }
+      // Capture and null the ref before calling focus() so that even if
+      // .focus() throws, the ref is not left pointing at a stale element.
+      const elToRestore = previousActiveElement.current;
+      previousActiveElement.current = null;
+      elToRestore?.focus();
     }
   }, [isOpen]);
 
@@ -177,9 +178,7 @@ export const Modal = memo(function Modal({
       role="dialog"
       aria-modal="true"
       aria-labelledby={titleId}
-      aria-describedby={
-        subtitle && subtitle.length > 0 ? subtitleId : undefined
-      }
+      aria-describedby={subtitle ? subtitleId : undefined}
       tabIndex={-1}
       onKeyDown={handleKeyDown}
     >

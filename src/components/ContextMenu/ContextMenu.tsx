@@ -4,7 +4,14 @@
  * Future-proof: can be extended with Cut/Copy/Paste, Delete, Indent/Outdent, etc.
  */
 
-import { useEffect, useRef, useCallback, memo, type ReactNode } from "react";
+import {
+  useEffect,
+  useRef,
+  useCallback,
+  memo,
+  type ReactNode,
+  type ReactPortal,
+} from "react";
 import { createPortal } from "react-dom";
 import { Check } from "@phosphor-icons/react";
 import { CONTEXT_MENU } from "../../styles/design-tokens";
@@ -46,7 +53,7 @@ export const ContextMenu = memo(function ContextMenu({
   position,
   onClose,
   ariaLabel,
-}: ContextMenuProps): JSX.Element {
+}: ContextMenuProps): ReactPortal {
   const menuRef = useRef<HTMLDivElement>(null);
   const focusedIndexRef = useRef(0);
   const previousFocusRef = useRef<HTMLElement | null>(null);
@@ -127,15 +134,14 @@ export const ContextMenu = memo(function ContextMenu({
   }, []);
 
   // Unified click handler — keeps mouse and keyboard paths consistent.
-  const handleItemClick = useCallback(
-    (item: ContextMenuItem): void => {
-      if (!item.disabled) {
-        item.onClick();
-        onClose();
-      }
-    },
-    [onClose]
-  );
+  // Uses onCloseRef to avoid re-creating the callback when the parent
+  // re-renders with a new onClose identity (same pattern as outside-click handler).
+  const handleItemClick = useCallback((item: ContextMenuItem): void => {
+    if (!item.disabled) {
+      item.onClick();
+      onCloseRef.current();
+    }
+  }, []);
 
   /** Returns the index of the next enabled item after `from`, wrapping around. */
   const findNextEnabled = useCallback(
@@ -252,7 +258,7 @@ export const ContextMenu = memo(function ContextMenu({
             onClick={() => handleItemClick(item)}
           >
             {item.checked !== undefined ? (
-              <span className="context-menu-item-check">
+              <span className="context-menu-item-check" aria-hidden="true">
                 {item.checked && (
                   <Check
                     size={CONTEXT_MENU.iconSize}
@@ -262,7 +268,9 @@ export const ContextMenu = memo(function ContextMenu({
               </span>
             ) : (
               item.icon && (
-                <span className="context-menu-item-icon">{item.icon}</span>
+                <span className="context-menu-item-icon" aria-hidden="true">
+                  {item.icon}
+                </span>
               )
             )}
             <span className="context-menu-item-label">{item.label}</span>

@@ -1170,7 +1170,9 @@ const FEATURE_SECTIONS: HelpSection[] = [
 // Consumers should import HELP_TABS directly rather than calling getHelpTabs().
 // ---------------------------------------------------------------------------
 
-export const HELP_TABS: readonly HelpTab[] = [
+// Non-empty tuple type guarantees HELP_TABS[0] is always defined, enabling
+// safe index access in HelpDialog without non-null assertions.
+export const HELP_TABS: readonly [HelpTab, ...HelpTab[]] = [
   {
     id: "getting-started",
     label: "Getting Started",

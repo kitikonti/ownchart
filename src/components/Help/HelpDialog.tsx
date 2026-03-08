@@ -128,9 +128,8 @@ export function HelpDialog(): JSX.Element | null {
   const isSearching = trimmedQuery.length > 0;
 
   const foundTab = HELP_TABS.find((t) => t.id === activeTab);
-  // HELP_TABS is a non-empty static array — HELP_TABS[0] is always defined.
-  // The non-null assertion is safe here and avoids a spurious runtime branch.
-  const selectedTab = foundTab ?? HELP_TABS[0]!;
+  // HELP_TABS is typed as a non-empty tuple, so HELP_TABS[0] is always defined.
+  const selectedTab = foundTab ?? HELP_TABS[0];
 
   // Warn developers (once per distinct invalid value) when the persisted
   // activeTab doesn't match any known tab — this can happen if a tab is
