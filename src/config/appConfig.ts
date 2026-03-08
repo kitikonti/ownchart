@@ -18,8 +18,8 @@ export const APP_CONFIG = {
     "Privacy-first, offline Gantt chart for project planning. Own your data.",
   license: "MIT",
   appUrl: "https://ownchart.app",
-  githubUrl: "https://github.com/kitikonti/ownchart",
-  sponsorUrl: "https://github.com/sponsors/kitikonti",
-  websiteUrl: "https://wimmer.dev",
+  githubUrl: "https://github.com/kitikonti/ownchart", // owner-specific — update if project is transferred
+  sponsorUrl: "https://github.com/sponsors/kitikonti", // owner-specific — update if project is transferred
+  websiteUrl: "https://wimmer.dev", // owner-specific — update if project is transferred
   fileExtension: ".ownchart",
 } as const;

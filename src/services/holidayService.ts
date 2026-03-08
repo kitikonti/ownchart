@@ -56,10 +56,62 @@ export const POPULAR_COUNTRY_CODES: readonly string[] = [
 ];
 
 /**
- * Holiday Service class - singleton pattern
- * Manages holiday data for a configured region
+ * Parse a strict YYYY-MM-DD date string to a local-midnight Date object.
+ *
+ * Extracted as a module-level function (no `this` dependency) to improve
+ * testability and make it reusable outside the class if needed.
+ *
+ * Returns null when:
+ *   - the string does not match YYYY-MM-DD exactly (rejects datetime strings
+ *     like "2026-12-25T00:00:00Z" and locale formats like "12/25/2026"), or
+ *   - the date is calendar-invalid (e.g. "2026-02-30" — V8 silently rolls
+ *     these over instead of returning NaN, so we cross-check the components).
+ *
+ * new Date("YYYY-MM-DD") is parsed as local midnight per the HTML spec when
+ * the string has no time component, so isSameDay() comparisons are safe on
+ * the returned Date.
+ *
+ * @param dateString - Date string to parse.
+ * @returns A local-midnight Date for the given calendar date, or null.
  */
-class HolidayServiceClass {
+function parseDateOnlyString(dateString: string): Date | null {
+  // Enforce strict YYYY-MM-DD format before parsing.
+  // Without this guard, datetime strings like "2026-12-25T00:00:00Z" would
+  // be accepted — but new Date("…TZ") produces a UTC-midnight Date whose
+  // local year/month/day differs from the calendar date in negative-offset
+  // timezones (e.g. UTC-5: Dec 25 00:00 UTC → Dec 24 local), causing
+  // isSameDay() to return false for the intended holiday.
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(dateString)) {
+    return null;
+  }
+  const date = new Date(dateString);
+  // Guard against calendar-invalid dates like "2026-02-30".
+  // isNaN alone is insufficient on V8: new Date("2026-02-30") does not return
+  // NaN — V8 silently rolls over to 2026-03-02. We cross-check the parsed
+  // year/month/day against the original string components to detect rollover.
+  if (isNaN(date.getTime())) {
+    return null;
+  }
+  const [yearStr, monthStr, dayStr] = dateString.split("-");
+  if (
+    date.getFullYear() !== Number(yearStr) ||
+    date.getMonth() + 1 !== Number(monthStr) ||
+    date.getDate() !== Number(dayStr)
+  ) {
+    return null;
+  }
+  return date;
+}
+
+/**
+ * Holiday Service class - singleton pattern.
+ * Manages holiday data for a configured region.
+ *
+ * Named `_HolidayService` (underscore prefix) to signal that direct
+ * instantiation is not intended — consumers should use the exported
+ * `holidayService` singleton rather than constructing their own instance.
+ */
+class _HolidayService {
   private hd: Holidays;
   /**
    * Keyed by `"${country}-${state||""}-${year}"`.
@@ -122,7 +174,15 @@ class HolidayServiceClass {
   }
 
   /**
-   * Get all public/bank holidays for a year
+   * Get all public/bank holidays for a year.
+   *
+   * Results are cached per region+year key and returned from the cache on
+   * subsequent calls for the same year. The cache is cleared automatically
+   * whenever `setRegion()` changes the active region.
+   *
+   * @param year - The calendar year to fetch holidays for (e.g. 2026).
+   * @returns Array of public/bank holidays for the year. Returns an empty
+   *   array when no region has been set or when the underlying library throws.
    */
   getHolidaysForYear(year: number): HolidayInfo[] {
     const cacheKey = `${this.currentCountry}-${this.currentState || ""}-${year}`;
@@ -217,50 +277,8 @@ class HolidayServiceClass {
    *   (e.g. "12/25/2026") are rejected and return null.
    */
   getHolidayForDateString(dateString: string): HolidayInfo | null {
-    const date = this.parseDateOnlyString(dateString);
+    const date = parseDateOnlyString(dateString);
     return date ? this.isHoliday(date) : null;
-  }
-
-  /**
-   * Parse a strict YYYY-MM-DD date string to a local-midnight Date object.
-   *
-   * Returns null when:
-   *   - the string does not match YYYY-MM-DD exactly (rejects datetime strings
-   *     like "2026-12-25T00:00:00Z" and locale formats like "12/25/2026"), or
-   *   - the date is calendar-invalid (e.g. "2026-02-30" — V8 silently rolls
-   *     these over instead of returning NaN, so we cross-check the components).
-   *
-   * new Date("YYYY-MM-DD") is parsed as local midnight per the HTML spec when
-   * the string has no time component, so isSameDay() comparisons are safe on
-   * the returned Date.
-   */
-  private parseDateOnlyString(dateString: string): Date | null {
-    // Enforce strict YYYY-MM-DD format before parsing.
-    // Without this guard, datetime strings like "2026-12-25T00:00:00Z" would
-    // be accepted — but new Date("…TZ") produces a UTC-midnight Date whose
-    // local year/month/day differs from the calendar date in negative-offset
-    // timezones (e.g. UTC-5: Dec 25 00:00 UTC → Dec 24 local), causing
-    // isSameDay() to return false for the intended holiday.
-    if (!/^\d{4}-\d{2}-\d{2}$/.test(dateString)) {
-      return null;
-    }
-    const date = new Date(dateString);
-    // Guard against calendar-invalid dates like "2026-02-30".
-    // isNaN alone is insufficient on V8: new Date("2026-02-30") does not return
-    // NaN — V8 silently rolls over to 2026-03-02. We cross-check the parsed
-    // year/month/day against the original string components to detect rollover.
-    if (isNaN(date.getTime())) {
-      return null;
-    }
-    const [yearStr, monthStr, dayStr] = dateString.split("-");
-    if (
-      date.getFullYear() !== Number(yearStr) ||
-      date.getMonth() + 1 !== Number(monthStr) ||
-      date.getDate() !== Number(dayStr)
-    ) {
-      return null;
-    }
-    return date;
   }
 
   /**
@@ -343,9 +361,10 @@ class HolidayServiceClass {
 }
 
 /**
- * Singleton instance of HolidayService
+ * Singleton instance of the holiday service.
+ * All consumers should use this exported instance directly.
  */
-export const holidayService = new HolidayServiceClass();
+export const holidayService = new _HolidayService();
 
 // Re-exported here so callers of holidayService need only one import for all
 // holiday-related functionality (region detection + service instance).
