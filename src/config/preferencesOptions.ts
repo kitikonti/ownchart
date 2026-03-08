@@ -19,7 +19,7 @@ import type {
   WeekNumberingSystem,
   TaskLabelPosition,
 } from "../types/preferences.types";
-import type { DropdownOption } from "../components/Toolbar/ToolbarDropdown";
+import type { DropdownOption } from "../types/ui.types";
 import { DENSITY_CONFIG } from "./densityConfig";
 
 // ─────────────────────────────────────────────────────────────────────────────

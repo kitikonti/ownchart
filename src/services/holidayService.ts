@@ -250,25 +250,31 @@ class _HolidayService {
    * Get holidays for a date range (spans multiple years if needed).
    * Returns an empty array when startDate > endDate (inverted range is a no-op).
    *
-   * Holiday dates stored in the cache are normalised to local midnight by
-   * `getHolidaysForYear`, so boundary comparisons are safe as long as
-   * `startDate` and `endDate` are also at start-of-day (00:00:00.000).
+   * Both boundary dates are normalised to local midnight internally, so
+   * callers may pass any time-of-day without affecting the result.
    */
   getHolidaysInRange(startDate: Date, endDate: Date): HolidayInfo[] {
+    // Normalise to local midnight so boundary comparisons are consistent with
+    // the cached holiday dates (also normalised by getHolidaysForYear).
+    // This mirrors isHoliday()'s defensive normalisation and prevents subtle
+    // bugs when callers pass time-bearing dates (e.g. new Date()).
+    const start = toLocalMidnight(startDate);
+    const end = toLocalMidnight(endDate);
+
     // Explicit date-level guard: an inverted range is always a no-op.
-    if (startDate > endDate) {
+    if (start > end) {
       return [];
     }
 
-    const startYear = startDate.getFullYear();
-    const endYear = endDate.getFullYear();
+    const startYear = start.getFullYear();
+    const endYear = end.getFullYear();
 
     const allHolidays: HolidayInfo[] = [];
 
     for (let year = startYear; year <= endYear; year++) {
       const yearHolidays = this.getHolidaysForYear(year);
       allHolidays.push(
-        ...yearHolidays.filter((h) => h.date >= startDate && h.date <= endDate)
+        ...yearHolidays.filter((h) => h.date >= start && h.date <= end)
       );
     }
 
@@ -309,45 +315,66 @@ class _HolidayService {
   }
 
   /**
-   * Get list of available countries
+   * Get list of available countries.
+   * Returns an empty array if the underlying library throws or returns no data.
    */
   getAvailableCountries(): CountryInfo[] {
-    const countries = this.hd.getCountries(HOLIDAY_DISPLAY_LOCALE);
-    if (!countries) return [];
-
-    return (
-      Object.entries(countries)
-        // date-holidays returns string values for the 'en' locale.
-        // For other locales the value may be a nested object; filter those out
-        // defensively in case HOLIDAY_DISPLAY_LOCALE is ever changed.
-        .filter(([, name]) => typeof name === "string")
-        .map(([code, name]) => ({
-          code,
-          name: name as string,
-        }))
-        .sort((a, b) => a.name.localeCompare(b.name, HOLIDAY_DISPLAY_LOCALE))
-    );
+    try {
+      return this.buildSortedInfoList(
+        this.hd.getCountries(HOLIDAY_DISPLAY_LOCALE)
+      );
+    } catch (err) {
+      console.warn(
+        "[holidayService] getAvailableCountries failed — returning empty list.",
+        err
+      );
+      return [];
+    }
   }
 
   /**
-   * Get list of available states/regions for a country
+   * Get list of available states/regions for a country.
+   * Returns an empty array if the underlying library throws or returns no data.
+   *
+   * @param countryCode - ISO 3166-1 alpha-2 country code (e.g. 'DE', 'US').
    */
   getAvailableStates(countryCode: string): StateInfo[] {
-    const states = this.hd.getStates(countryCode, HOLIDAY_DISPLAY_LOCALE);
-    if (!states) return [];
+    try {
+      return this.buildSortedInfoList(
+        this.hd.getStates(countryCode, HOLIDAY_DISPLAY_LOCALE)
+      );
+    } catch (err) {
+      console.warn(
+        `[holidayService] getAvailableStates failed for country="${countryCode}" — returning empty list.`,
+        err
+      );
+      return [];
+    }
+  }
 
-    return (
-      Object.entries(states)
-        // date-holidays returns string values for the 'en' locale.
-        // For other locales the value may be a nested object; filter those out
-        // defensively in case HOLIDAY_DISPLAY_LOCALE is ever changed.
-        .filter(([, name]) => typeof name === "string")
-        .map(([code, name]) => ({
-          code,
-          name: name as string,
-        }))
-        .sort((a, b) => a.name.localeCompare(b.name, HOLIDAY_DISPLAY_LOCALE))
-    );
+  /**
+   * Transform a raw `{ code: value }` map returned by date-holidays into a
+   * sorted `{ code, name }` list, filtering out any non-string values.
+   *
+   * Shared by `getAvailableCountries` and `getAvailableStates` to avoid
+   * duplicating the same null-guard → filter → map → sort pipeline.
+   * Accepts `unknown` so callers need no cast regardless of library return type.
+   *
+   * date-holidays returns string values for the 'en' locale. For other locales
+   * the value may be a nested object; the `typeof name === "string"` filter
+   * handles this defensively in case HOLIDAY_DISPLAY_LOCALE is ever changed.
+   *
+   * @param data - Raw object from date-holidays (may be null/undefined/unknown).
+   * @returns Sorted array of `{ code, name }` pairs.
+   */
+  private buildSortedInfoList(
+    data: unknown
+  ): { code: string; name: string }[] {
+    if (!data || typeof data !== "object") return [];
+    return Object.entries(data as Record<string, unknown>)
+      .filter(([, name]) => typeof name === "string")
+      .map(([code, name]) => ({ code, name: name as string }))
+      .sort((a, b) => a.name.localeCompare(b.name, HOLIDAY_DISPLAY_LOCALE));
   }
 
   /**
