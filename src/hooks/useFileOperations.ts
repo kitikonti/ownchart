@@ -568,8 +568,8 @@ function useNewOperation({
   resetView,
   clearHistory,
   resetFileStore,
-}: NewOperationDeps): { handleNew: () => Promise<void> } {
-  const handleNew = useCallback(async () => {
+}: NewOperationDeps): { handleNew: () => void } {
+  const handleNew = useCallback(() => {
     if (isDirty && !confirmDiscardChanges(DISCARD_CHANGES_NEW_MSG)) {
       return;
     }
@@ -645,7 +645,7 @@ export function useFileOperations(): {
   handleSave: (saveAs?: boolean) => Promise<void>;
   handleSaveAs: () => Promise<void>;
   handleOpen: () => Promise<void>;
-  handleNew: () => Promise<void>;
+  handleNew: () => void;
   fileName: string | null;
   isDirty: boolean;
   lastSaved: Date | null;
