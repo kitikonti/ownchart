@@ -49,14 +49,6 @@ export const SUMMARY_BRACKET = {
 } as const;
 
 /**
- * Summary bracket constants — alias for SUMMARY_BRACKET kept for naming
- * consistency with the other RENDER_CONSTANTS exports in this file.
- *
- * @see SUMMARY_BRACKET
- */
-export const SUMMARY_RENDER_CONSTANTS = SUMMARY_BRACKET;
-
-/**
  * Milestone rendering constants - matching MilestoneDiamond component
  */
 export const MILESTONE_RENDER_CONSTANTS = {
@@ -216,9 +208,10 @@ export const DEPENDENCY_RENDER_CONSTANTS = {
   arrowheadSize: 8,
 
   /**
-   * Stroke color for dependency lines (neutral-400)
+   * Stroke color for dependency lines — references RENDER_COLORS.dependency
+   * as the single source of truth for this colour.
    */
-  strokeColor: "#94a3b8",
+  strokeColor: RENDER_COLORS.dependency,
 
   /**
    * Stroke width for dependency lines
@@ -248,13 +241,19 @@ export function calculateMilestoneSize(pixelsPerDay: number): number {
 }
 
 /**
+ * Minimum corner radius for dependency arrows at extreme zoom-out.
+ * Prevents sharp 90° corners when scaling produces very small radii.
+ */
+const MIN_CORNER_RADIUS = 4;
+
+/**
  * Calculate corner radius scaled by row height.
  * Matches elbowPath.ts scaling logic.
  */
 export function getScaledCornerRadius(rowHeight: number): number {
   const scale = rowHeight / DEPENDENCY_RENDER_CONSTANTS.baseRowHeight;
   return Math.max(
-    4,
+    MIN_CORNER_RADIUS,
     Math.round(DEPENDENCY_RENDER_CONSTANTS.baseCornerRadius * scale)
   );
 }
@@ -269,11 +268,11 @@ export function generateSummaryBracketPath(
   width: number,
   height: number
 ): string {
-  const tipHeight = height * SUMMARY_RENDER_CONSTANTS.tipHeightRatio;
-  const barThickness = height * SUMMARY_RENDER_CONSTANTS.barThicknessRatio;
-  const tipWidth = tipHeight * SUMMARY_RENDER_CONSTANTS.tipWidthFactor;
-  const cornerRadius = SUMMARY_RENDER_CONSTANTS.cornerRadius;
-  const innerRadius = SUMMARY_RENDER_CONSTANTS.innerRadius;
+  const tipHeight = height * SUMMARY_BRACKET.tipHeightRatio;
+  const barThickness = height * SUMMARY_BRACKET.barThicknessRatio;
+  const tipWidth = tipHeight * SUMMARY_BRACKET.tipWidthFactor;
+  const cornerRadius = SUMMARY_BRACKET.cornerRadius;
+  const innerRadius = SUMMARY_BRACKET.innerRadius;
 
   return `
     M ${x + cornerRadius} ${y}

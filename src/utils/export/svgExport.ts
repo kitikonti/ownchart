@@ -21,6 +21,8 @@ import {
   HEADER_HEIGHT,
   SVG_FONT_FAMILY,
   REACT_RENDER_WAIT_MS,
+  EXPORT_CHART_SVG_CLASS,
+  EXPORT_TIMELINE_HEADER_SVG_CLASS,
 } from "./constants";
 import {
   waitForFonts,
@@ -99,10 +101,11 @@ export async function exportToSvg(params: ExportToSvgParams): Promise<void> {
     options.background
   );
 
-  try {
-    // Render ExportRenderer
-    const root = createRoot(container);
+  // The React root is created outside the try block so the finally clause
+  // can always call root.unmount(), preventing leaks on error paths.
+  const root = createRoot(container);
 
+  try {
     await new Promise<void>((resolve) => {
       root.render(
         createElement(ExportRenderer, {
@@ -128,10 +131,12 @@ export async function exportToSvg(params: ExportToSvgParams): Promise<void> {
 
     onProgress?.(60);
 
-    // Extract the timeline SVG elements from the rendered DOM
-    const chartSvg = container.querySelector("svg.gantt-chart");
+    // Extract the timeline SVG elements from the rendered DOM.
+    // Use the same named CSS class constants as pdfExport.ts to avoid
+    // selector drift if class names change in ExportRenderer.
+    const chartSvg = container.querySelector(`svg.${EXPORT_CHART_SVG_CLASS}`);
     const headerSvg = container.querySelector(
-      ".export-container > div:first-child svg"
+      `svg.${EXPORT_TIMELINE_HEADER_SVG_CLASS}`
     );
 
     if (!chartSvg) {
@@ -152,10 +157,7 @@ export async function exportToSvg(params: ExportToSvgParams): Promise<void> {
 
     onProgress?.(80);
 
-    // Cleanup React
-    root.unmount();
-
-    // Apply SVG options
+    // Apply SVG options and serialize
     const svgString = finalizeSvg(finalSvg, svgOptions, projectName);
 
     onProgress?.(90);
@@ -170,8 +172,106 @@ export async function exportToSvg(params: ExportToSvgParams): Promise<void> {
 
     onProgress?.(100);
   } finally {
+    // Always unmount the React root and remove the container, even on error,
+    // to prevent memory leaks on repeated export attempts that fail mid-way.
+    root.unmount();
     removeOffscreenContainer(container);
   }
+}
+
+/**
+ * Create the root SVG canvas with title, optional white background, and font defs.
+ */
+function createRootSvg(
+  dimensions: { width: number; height: number },
+  background: "white" | "transparent",
+  projectName?: string
+): SVGSVGElement {
+  const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+  svg.setAttribute("xmlns", "http://www.w3.org/2000/svg");
+  svg.setAttribute("width", String(dimensions.width));
+  svg.setAttribute("height", String(dimensions.height));
+  svg.setAttribute("viewBox", `0 0 ${dimensions.width} ${dimensions.height}`);
+
+  // Add title for accessibility
+  const title = document.createElementNS("http://www.w3.org/2000/svg", "title");
+  title.textContent = projectName
+    ? `Gantt chart: ${projectName}`
+    : "Gantt Chart";
+  svg.appendChild(title);
+
+  // Add white background if requested
+  if (background === "white") {
+    const bg = document.createElementNS("http://www.w3.org/2000/svg", "rect");
+    bg.setAttribute("width", "100%");
+    bg.setAttribute("height", "100%");
+    bg.setAttribute("fill", SVG_BACKGROUND_WHITE);
+    svg.appendChild(bg);
+  }
+
+  // Font declaration (system font stack — no @import, doesn't work in vector apps).
+  // Vector apps will use their system font (Segoe UI on Windows, SF on Mac).
+  const defs = document.createElementNS("http://www.w3.org/2000/svg", "defs");
+  const style = document.createElementNS("http://www.w3.org/2000/svg", "style");
+  style.textContent = `
+    text { font-family: ${SVG_FONT_FAMILY}; }
+  `;
+  defs.appendChild(style);
+  svg.appendChild(defs);
+
+  return svg;
+}
+
+/**
+ * Append the timeline header SVG (cloned from the rendered DOM) into the root SVG,
+ * offset horizontally by the task table width.
+ */
+function appendTimelineHeader(
+  svg: SVGSVGElement,
+  headerSvg: SVGSVGElement,
+  taskTableWidth: number
+): void {
+  const headerGroup = document.createElementNS(
+    "http://www.w3.org/2000/svg",
+    "g"
+  );
+  headerGroup.setAttribute("transform", `translate(${taskTableWidth}, 0)`);
+
+  // Clone all children from header SVG
+  Array.from(headerSvg.childNodes).forEach((child) => {
+    headerGroup.appendChild(child.cloneNode(true));
+  });
+  // Set font-family on all text elements (vector apps ignore CSS style blocks)
+  setFontFamilyOnTextElements(headerGroup);
+  svg.appendChild(headerGroup);
+}
+
+/**
+ * Append the chart body SVG (cloned from the rendered DOM) into the root SVG,
+ * offset by the task table width and the header height.
+ */
+function appendChartBody(
+  svg: SVGSVGElement,
+  chartSvg: SVGSVGElement,
+  taskTableWidth: number,
+  yOffset: number
+): void {
+  const chartGroup = document.createElementNS(
+    "http://www.w3.org/2000/svg",
+    "g"
+  );
+  chartGroup.setAttribute(
+    "transform",
+    `translate(${taskTableWidth}, ${yOffset})`
+  );
+
+  // Clone all children from chart SVG
+  Array.from(chartSvg.childNodes).forEach((child) => {
+    chartGroup.appendChild(child.cloneNode(true));
+  });
+  // Set font-family on all text elements (vector apps ignore CSS style blocks)
+  setFontFamilyOnTextElements(chartGroup);
+  svg.appendChild(chartGroup);
 }
 
 /**
@@ -187,54 +287,19 @@ function buildCompleteSvg(
   colorModeState: ColorModeState,
   projectName?: string
 ): SVGSVGElement {
-  // Calculate task table width
   const selectedColumns = options.selectedColumns || DEFAULT_EXPORT_COLUMNS;
   const hasTaskList = selectedColumns.length > 0;
   const taskTableWidth = hasTaskList
     ? calculateTaskTableWidth(selectedColumns, columnWidths, options.density)
     : 0;
 
-  // Build flattened task list
   const flattenedTasks = buildFlattenedTaskList(tasks, new Set<TaskId>());
 
-  // Create the root SVG
-  const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
-  svg.setAttribute("xmlns", "http://www.w3.org/2000/svg");
-  svg.setAttribute("width", String(dimensions.width));
-  svg.setAttribute("height", String(dimensions.height));
-  svg.setAttribute("viewBox", `0 0 ${dimensions.width} ${dimensions.height}`);
-
-  // Add title for accessibility
-  const title = document.createElementNS("http://www.w3.org/2000/svg", "title");
-  title.textContent = projectName
-    ? `Gantt chart: ${projectName}`
-    : "Gantt Chart";
-  svg.appendChild(title);
-
-  // Add white background if requested
-  if (options.background === "white") {
-    const bg = document.createElementNS("http://www.w3.org/2000/svg", "rect");
-    bg.setAttribute("width", "100%");
-    bg.setAttribute("height", "100%");
-    bg.setAttribute("fill", SVG_BACKGROUND_WHITE);
-    svg.appendChild(bg);
-  }
-
-  // Font declaration (system font stack - no @import, doesn't work in vector apps)
-  // Vector apps will use their system font (Segoe UI on Windows, SF on Mac)
-  const defs = document.createElementNS("http://www.w3.org/2000/svg", "defs");
-  const style = document.createElementNS("http://www.w3.org/2000/svg", "style");
-  style.textContent = `
-    text { font-family: ${SVG_FONT_FAMILY}; }
-  `;
-  defs.appendChild(style);
-  svg.appendChild(defs);
+  const svg = createRootSvg(dimensions, options.background, projectName);
 
   let currentY = 0;
 
-  // Render header row
   if (options.includeHeader) {
-    // Task table header
     if (hasTaskList) {
       const headerOpts: TaskTableHeaderOptions = {
         selectedColumns,
@@ -247,27 +312,13 @@ function buildCompleteSvg(
       renderTaskTableHeader(svg, headerOpts);
     }
 
-    // Timeline header - clone and position
     if (headerSvg) {
-      const headerGroup = document.createElementNS(
-        "http://www.w3.org/2000/svg",
-        "g"
-      );
-      headerGroup.setAttribute("transform", `translate(${taskTableWidth}, 0)`);
-
-      // Clone all children from header SVG
-      Array.from(headerSvg.childNodes).forEach((child) => {
-        headerGroup.appendChild(child.cloneNode(true));
-      });
-      // Set font-family on all text elements (vector apps ignore CSS style blocks)
-      setFontFamilyOnTextElements(headerGroup);
-      svg.appendChild(headerGroup);
+      appendTimelineHeader(svg, headerSvg, taskTableWidth);
     }
 
     currentY = HEADER_HEIGHT;
   }
 
-  // Render task table rows as SVG
   if (hasTaskList) {
     const rowsOpts: TaskTableRowsOptions = {
       flattenedTasks,
@@ -282,23 +333,7 @@ function buildCompleteSvg(
     renderTaskTableRows(svg, rowsOpts);
   }
 
-  // Add the timeline chart - clone and position
-  const chartGroup = document.createElementNS(
-    "http://www.w3.org/2000/svg",
-    "g"
-  );
-  chartGroup.setAttribute(
-    "transform",
-    `translate(${taskTableWidth}, ${currentY})`
-  );
-
-  // Clone all children from chart SVG
-  Array.from(chartSvg.childNodes).forEach((child) => {
-    chartGroup.appendChild(child.cloneNode(true));
-  });
-  // Set font-family on all text elements (vector apps ignore CSS style blocks)
-  setFontFamilyOnTextElements(chartGroup);
-  svg.appendChild(chartGroup);
+  appendChartBody(svg, chartSvg, taskTableWidth, currentY);
 
   return svg;
 }
