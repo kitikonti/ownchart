@@ -60,6 +60,10 @@ export interface UseMarqueeSelectionResult {
  * @param rect1 - First rectangle with `x`, `y`, `width`, `height` in the same coordinate space.
  * @param rect2 - Second rectangle with `x`, `y`, `width`, `height` in the same coordinate space.
  * @returns `true` when the rectangles overlap or share an edge, `false` when they are fully separate.
+ *
+ * @example
+ * rectsIntersect({ x: 0, y: 0, width: 10, height: 10 }, { x: 5, y: 5, width: 10, height: 10 }); // true
+ * rectsIntersect({ x: 0, y: 0, width: 10, height: 10 }, { x: 20, y: 0, width: 10, height: 10 }); // false
  */
 export function rectsIntersect(
   rect1: { x: number; y: number; width: number; height: number },
@@ -79,6 +83,11 @@ export function rectsIntersect(
  *
  * @param rect - Raw marquee rect from drag state (start and current coordinates).
  * @returns Normalized rect with `x`/`y` set to the top-left corner and positive `width`/`height`.
+ *
+ * @example
+ * // Drag from bottom-right to top-left
+ * normalizeRect({ startX: 100, startY: 100, currentX: 10, currentY: 20 });
+ * // => { x: 10, y: 20, width: 90, height: 80 }
  */
 export function normalizeRect(rect: MarqueeRect): {
   x: number;
@@ -107,6 +116,10 @@ function getSvgCoordinates(
   e: { clientX: number; clientY: number }
 ): { x: number; y: number } {
   const rect = svg.getBoundingClientRect();
+  // clientX/Y are already viewport-relative; subtracting the SVG bounding rect
+  // gives coordinates local to the SVG element. This assumes the SVG itself is
+  // not independently scrollable — if that ever changes, scroll offsets must be
+  // added here (svg.scrollLeft / svg.scrollTop).
   return { x: e.clientX - rect.left, y: e.clientY - rect.top };
 }
 
@@ -179,7 +192,10 @@ function useMarqueeMouseMoveHandler(
         prev ? { ...prev, currentX: coords.x, currentY: coords.y } : null
       );
     },
-    [svgRef, isSelectingRef, setMarqueeRect]
+    // Refs (svgRef, isSelectingRef) are stable objects — their identity never
+    // changes, so they do not belong in the dep array. Only setMarqueeRect
+    // (stable dispatch from useState) is listed to satisfy exhaustive-deps.
+    [setMarqueeRect] // eslint-disable-line react-hooks/exhaustive-deps
   );
 }
 
@@ -248,17 +264,13 @@ function useMarqueeMouseUpHandler({
       // Deregister self via ref to avoid a self-referential dep array.
       document.removeEventListener("mouseup", selfRef.current);
     },
-    [
-      svgRef,
-      isSelectingRef,
-      addToSelectionRef,
-      marqueeRectRef,
-      onSelectionChangeRef,
-      taskGeometriesRef,
-      setMarqueeRect,
-      handleMouseMove,
-      selfRef,
-    ]
+    // Refs (svgRef, isSelectingRef, addToSelectionRef, marqueeRectRef,
+    // onSelectionChangeRef, taskGeometriesRef, selfRef) are stable objects whose
+    // identity never changes — listing them would mislead readers into thinking
+    // the callback re-creates when ref contents change. Only the non-ref values
+    // that genuinely gate re-creation are listed here.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [setMarqueeRect, handleMouseMove]
   );
 }
 

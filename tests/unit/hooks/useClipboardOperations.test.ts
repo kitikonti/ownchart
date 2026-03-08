@@ -9,10 +9,8 @@
 import { describe, it, expect, beforeEach, vi } from "vitest";
 import { renderHook, act } from "@testing-library/react";
 import toast from "react-hot-toast";
-import {
-  useClipboardOperations,
-  hasSameTaskIds,
-} from "../../../src/hooks/useClipboardOperations";
+import { useClipboardOperations } from "../../../src/hooks/useClipboardOperations";
+import { hasSameTaskIds } from "../../../src/utils/clipboard";
 import { useClipboardStore } from "../../../src/store/slices/clipboardSlice";
 import { useTaskStore } from "../../../src/store/slices/taskSlice";
 import type { Task } from "../../../src/types/chart.types";

@@ -3,6 +3,8 @@
  * Provides a single import point for all clipboard-related functions.
  */
 
+export { hasSameTaskIds } from "./compare";
+
 export { collectTasksWithChildren, deepCloneTasks } from "./collectTasks";
 
 export { collectInternalDependencies } from "./collectDependencies";

@@ -243,6 +243,8 @@ function useOperationalSliceState(): OperationalSliceNeeded {
 /**
  * Builds the ViewSettings snapshot written to the .ownchart file.
  * Extracted so its large dep array lives in its own focused function.
+ * The dep array necessarily mirrors the factory object keys — both must be
+ * kept in sync when a new ViewSettings field is added.
  */
 function useViewSettings(
   task: TaskSliceNeeded,
@@ -331,6 +333,7 @@ function useSerializeOptions(
   // Serializer flags and metadata (file identity, dependency data, export settings).
   const serializeOpts = useMemo(
     () => ({
+      // replace() removes the first (and normally only) occurrence of the extension.
       chartName:
         fileName?.replace(OWNCHART_FILE_EXTENSION, "") ?? DEFAULT_CHART_NAME,
       chartId: chartId ?? undefined,

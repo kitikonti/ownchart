@@ -17,6 +17,7 @@ import {
   readRowsFromSystemClipboard,
   readCellFromSystemClipboard,
   isClipboardApiAvailable,
+  hasSameTaskIds,
 } from "../utils/clipboard";
 
 export interface ClipboardOperations {
@@ -25,20 +26,6 @@ export interface ClipboardOperations {
   handlePaste: () => Promise<void>;
   canCopyOrCut: boolean;
   canPaste: boolean;
-}
-
-/**
- * Returns true if two task arrays represent the same ordered sequence of IDs.
- * Used to detect when the system clipboard holds data already present in the
- * internal clipboard, preventing accidental double-paste across tabs.
- *
- * Exported only for unit-testing purposes — treat as an implementation detail.
- */
-export function hasSameTaskIds(
-  a: readonly { id: TaskId }[],
-  b: readonly { id: TaskId }[]
-): boolean {
-  return a.length === b.length && a.every((item, i) => item.id === b[i].id);
 }
 
 // ---------------------------------------------------------------------------
