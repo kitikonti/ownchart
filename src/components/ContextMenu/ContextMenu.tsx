@@ -4,7 +4,7 @@
  * Future-proof: can be extended with Cut/Copy/Paste, Delete, Indent/Outdent, etc.
  */
 
-import { useEffect, useRef, useCallback } from "react";
+import { useEffect, useRef, useCallback, type ReactNode } from "react";
 import { createPortal } from "react-dom";
 import { Check } from "@phosphor-icons/react";
 import { CONTEXT_MENU, Z_INDEX } from "../../styles/design-tokens";
@@ -17,7 +17,7 @@ const VIEWPORT_EDGE_MARGIN_PX = 4;
 export interface ContextMenuItem {
   id: string;
   label: string;
-  icon?: React.ReactNode;
+  icon?: ReactNode;
   shortcut?: string;
   onClick: () => void;
   disabled?: boolean;
@@ -36,12 +36,15 @@ interface ContextMenuProps {
   items: ContextMenuItem[];
   position: ContextMenuPosition;
   onClose: () => void;
+  /** Accessible label for the menu container (read by screen readers). */
+  ariaLabel?: string;
 }
 
 export function ContextMenu({
   items,
   position,
   onClose,
+  ariaLabel = "Context menu",
 }: ContextMenuProps): JSX.Element {
   const menuRef = useRef<HTMLDivElement>(null);
   const focusedIndexRef = useRef(0);
@@ -116,6 +119,17 @@ export function ContextMenu({
     };
   }, [onClose]);
 
+  // Unified click handler — keeps mouse and keyboard paths consistent.
+  const handleItemClick = useCallback(
+    (item: ContextMenuItem): void => {
+      if (!item.disabled) {
+        item.onClick();
+        onClose();
+      }
+    },
+    [onClose]
+  );
+
   // Close on Escape, handle arrow keys
   const handleKeyDown = useCallback(
     (e: React.KeyboardEvent): void => {
@@ -182,6 +196,7 @@ export function ContextMenu({
         minWidth: CONTEXT_MENU.minWidth,
       }}
       role="menu"
+      aria-label={ariaLabel}
       tabIndex={-1}
       onKeyDown={handleKeyDown}
     >
@@ -194,10 +209,7 @@ export function ContextMenu({
             tabIndex={-1}
             disabled={item.disabled}
             className="context-menu-item text-left outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-brand-500"
-            onClick={() => {
-              item.onClick();
-              onClose();
-            }}
+            onClick={() => handleItemClick(item)}
           >
             {item.checked !== undefined ? (
               <span className="context-menu-item-check">

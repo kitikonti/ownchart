@@ -4,7 +4,14 @@
  * Design: MS 365/Fluent UI inspired with Outlook Blue brand color.
  */
 
-import { useEffect, useRef, type ReactNode, type KeyboardEvent } from "react";
+import {
+  useEffect,
+  useRef,
+  useId,
+  useCallback,
+  type ReactNode,
+  type KeyboardEvent,
+} from "react";
 import { createPortal } from "react-dom";
 import { X } from "@phosphor-icons/react";
 import { Z_INDEX, SHADOWS } from "../../styles/design-tokens";
@@ -76,9 +83,19 @@ export function Modal({
   const modalRef = useRef<HTMLDivElement>(null);
   const previousActiveElement = useRef<HTMLElement | null>(null);
 
+  // Generate stable, instance-unique IDs so that multiple modals mounted
+  // simultaneously (e.g. during animations) never share the same ARIA IDs.
+  const instanceId = useId();
+  const titleId = `modal-title-${instanceId}`;
+  const subtitleId = `modal-subtitle-${instanceId}`;
+
   // Save the focused element before opening; restore it when the modal closes.
   // Avoiding a cleanup function prevents the stale-closure issue where the
   // captured `isOpen` value is always the one from the previous render.
+  // Note: the `if (!isOpen) return null` guard below executes AFTER this effect
+  // is registered. When isOpen transitions to true the portal renders first
+  // (attaching modalRef), then the effect fires — so `modalRef.current` is
+  // reliably set when we call `.focus()`.
   useEffect(() => {
     if (isOpen) {
       previousActiveElement.current = document.activeElement as HTMLElement;
@@ -88,35 +105,44 @@ export function Modal({
     }
   }, [isOpen]);
 
-  // Handle keyboard events
-  const handleKeyDown = (e: KeyboardEvent<HTMLDivElement>): void => {
-    if (e.key === "Escape") {
-      e.preventDefault();
-      onClose();
-    }
-
-    // Focus trap: keep focus inside the modal while it is open.
-    if (e.key === "Tab" && modalRef.current) {
-      const focusableElements =
-        modalRef.current.querySelectorAll<HTMLElement>(FOCUSABLE_SELECTOR);
-      const firstElement = focusableElements[0];
-      const lastElement = focusableElements[focusableElements.length - 1];
-
-      if (e.shiftKey && document.activeElement === firstElement) {
+  // Handle keyboard events.
+  // onKeyDown is placed on the dialog root (role="dialog") intentionally:
+  // this is the standard pattern for modal keyboard handling — the dialog
+  // element is the focus container and needs to intercept Tab and Escape.
+  const handleKeyDown = useCallback(
+    (e: KeyboardEvent<HTMLDivElement>): void => {
+      if (e.key === "Escape") {
         e.preventDefault();
-        lastElement?.focus();
-      } else if (!e.shiftKey && document.activeElement === lastElement) {
-        e.preventDefault();
-        firstElement?.focus();
+        onClose();
       }
-    }
-  };
+
+      // Focus trap: keep focus inside the modal while it is open.
+      if (e.key === "Tab" && modalRef.current) {
+        const focusableElements =
+          modalRef.current.querySelectorAll<HTMLElement>(FOCUSABLE_SELECTOR);
+        const firstElement = focusableElements[0];
+        const lastElement = focusableElements[focusableElements.length - 1];
+
+        if (e.shiftKey && document.activeElement === firstElement) {
+          e.preventDefault();
+          lastElement?.focus();
+        } else if (!e.shiftKey && document.activeElement === lastElement) {
+          e.preventDefault();
+          firstElement?.focus();
+        }
+      }
+    },
+    [onClose]
+  );
 
   if (!isOpen) {
     return null;
   }
 
   return createPortal(
+    // The dialog root captures keyboard events for Escape + focus-trap (Tab).
+    // role="dialog" with tabIndex={-1} is the standard WAI-ARIA modal pattern;
+    // jsx-a11y misclassifies it as non-interactive because it isn't a widget role.
     // eslint-disable-next-line jsx-a11y/no-noninteractive-element-interactions
     <div
       ref={modalRef}
@@ -124,8 +150,8 @@ export function Modal({
       style={{ zIndex: Z_INDEX.modal }}
       role="dialog"
       aria-modal="true"
-      aria-labelledby="modal-title"
-      aria-describedby={subtitle ? "modal-subtitle" : undefined}
+      aria-labelledby={titleId}
+      aria-describedby={subtitle ? subtitleId : undefined}
       tabIndex={-1}
       onKeyDown={handleKeyDown}
     >
@@ -155,7 +181,7 @@ export function Modal({
             {icon}
             <div>
               <h2
-                id="modal-title"
+                id={titleId}
                 className={`font-semibold leading-7 ${
                   headerStyle === "bordered"
                     ? "text-xl text-neutral-900"
@@ -165,10 +191,7 @@ export function Modal({
                 {title}
               </h2>
               {subtitle && (
-                <p
-                  id="modal-subtitle"
-                  className="text-sm text-neutral-500 mt-0.5"
-                >
+                <p id={subtitleId} className="text-sm text-neutral-500 mt-0.5">
                   {subtitle}
                 </p>
               )}

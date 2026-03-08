@@ -112,11 +112,22 @@ export function HelpDialog(): JSX.Element | null {
 
   const [query, setQuery] = useState("");
 
-  const tabs = HELP_TABS;
-  const { sections: searchResults, matchCount } = useHelpSearch(tabs, query);
+  const { sections: searchResults, matchCount } = useHelpSearch(
+    HELP_TABS,
+    query
+  );
   const isSearching = query.trim().length > 0;
 
-  const currentTab = tabs.find((t) => t.id === activeTab) ?? tabs[0];
+  const foundTab = HELP_TABS.find((t) => t.id === activeTab);
+  if (import.meta.env.DEV && !foundTab) {
+    // Warn developers when the persisted activeTab value doesn't match any
+    // known tab — this can happen if a tab is renamed or removed without
+    // updating the uiSlice default.
+    console.warn(
+      `[HelpDialog] Unknown activeTab "${activeTab}". Falling back to first tab.`
+    );
+  }
+  const currentTab = foundTab ?? HELP_TABS[0];
   const modKey = getModKey();
 
   const tablistRef = useRef<HTMLDivElement>(null);
@@ -125,34 +136,28 @@ export function HelpDialog(): JSX.Element | null {
   // keep DOM focus on the active tab button (roving tabIndex).
   const handleTablistKeyDown = useCallback(
     (e: React.KeyboardEvent<HTMLDivElement>): void => {
-      const currentIndex = tabs.findIndex((t) => t.id === activeTab);
+      const currentIndex = HELP_TABS.findIndex((t) => t.id === activeTab);
       let nextIndex: number | null = null;
 
       if (e.key === "ArrowRight") {
-        nextIndex = (currentIndex + 1) % tabs.length;
+        nextIndex = (currentIndex + 1) % HELP_TABS.length;
       } else if (e.key === "ArrowLeft") {
-        nextIndex = (currentIndex - 1 + tabs.length) % tabs.length;
+        nextIndex = (currentIndex - 1 + HELP_TABS.length) % HELP_TABS.length;
       } else if (e.key === "Home") {
         nextIndex = 0;
       } else if (e.key === "End") {
-        nextIndex = tabs.length - 1;
+        nextIndex = HELP_TABS.length - 1;
       }
 
       if (nextIndex === null) return;
       e.preventDefault();
-      setActiveTab(tabs[nextIndex].id);
+      setActiveTab(HELP_TABS[nextIndex].id);
       // Move DOM focus to the newly active tab button
       const tabButtons =
         tablistRef.current?.querySelectorAll<HTMLElement>('[role="tab"]');
       tabButtons?.[nextIndex]?.focus();
     },
-    [tabs, activeTab, setActiveTab]
-  );
-
-  const footer = (
-    <Button variant="primary" onClick={closeHelp}>
-      Done
-    </Button>
+    [activeTab, setActiveTab]
   );
 
   return (
@@ -165,7 +170,11 @@ export function HelpDialog(): JSX.Element | null {
       headerStyle="bordered"
       footerStyle="bordered"
       contentPadding="p-0"
-      footer={footer}
+      footer={
+        <Button variant="primary" onClick={closeHelp}>
+          Done
+        </Button>
+      }
     >
       {/* Search bar */}
       <div className="px-6 pt-5 pb-3">
@@ -182,7 +191,7 @@ export function HelpDialog(): JSX.Element | null {
           tabIndex={-1}
           onKeyDown={handleTablistKeyDown}
         >
-          {tabs.map((tab) => {
+          {HELP_TABS.map((tab) => {
             const isActive = tab.id === activeTab;
             return (
               <button
