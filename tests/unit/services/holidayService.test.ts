@@ -12,8 +12,9 @@ import {
 
 describe("HolidayService", () => {
   beforeEach(() => {
-    // Reset service state before each test
-    holidayService.clearCache();
+    // Reset service state (region + cache) before each test to prevent
+    // state leakage between describe blocks that call setRegion().
+    holidayService.reset();
   });
 
   describe("setRegion", () => {
@@ -228,6 +229,17 @@ describe("HolidayService", () => {
 
       // Austria has no public holidays in early July
       expect(holidays.length).toBe(0);
+    });
+
+    it("should return empty array when start is after end (inverted range)", () => {
+      // The year loop condition (year <= endYear) short-circuits immediately,
+      // so an inverted range is a silent no-op returning [].
+      const start = new Date(2026, 11, 31); // Dec 31
+      const end = new Date(2026, 0, 1); // Jan 1 (before start)
+
+      const holidays = holidayService.getHolidaysInRange(start, end);
+
+      expect(holidays).toEqual([]);
     });
   });
 

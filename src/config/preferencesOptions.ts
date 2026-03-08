@@ -30,7 +30,7 @@ export interface DateFormatOption {
   example: string;
 }
 
-export interface FirstDayOption {
+export interface FirstDayOfWeekOption {
   value: FirstDayOfWeek;
   label: string;
 }
@@ -66,13 +66,29 @@ export const DENSITY_OPTIONS_EXTENDED: DensityOption[] = [
   },
 ];
 
+/**
+ * Sentinel date used to build format examples (Dec 31 of a fixed year).
+ * Day (31) ≠ month (12) makes DD/MM vs MM/DD ordering unambiguous.
+ * The year is specified once here so all examples stay consistent.
+ */
+const EXAMPLE_DATE = new Date(2026, 11, 31); // Dec 31, 2026
+
+/** Zero-pad a number to two digits. */
+function pad2(n: number): string {
+  return String(n).padStart(2, "0");
+}
+
+const _d = pad2(EXAMPLE_DATE.getDate()); // "31"
+const _m = pad2(EXAMPLE_DATE.getMonth() + 1); // "12"
+const _y = String(EXAMPLE_DATE.getFullYear()); // "2026"
+
 export const DATE_FORMAT_OPTIONS_EXTENDED: DateFormatOption[] = [
-  { value: "DD/MM/YYYY", label: "DD/MM/YYYY", example: "31/12/2026" },
-  { value: "MM/DD/YYYY", label: "MM/DD/YYYY", example: "12/31/2026" },
-  { value: "YYYY-MM-DD", label: "YYYY-MM-DD", example: "2026-12-31" },
+  { value: "DD/MM/YYYY", label: "DD/MM/YYYY", example: `${_d}/${_m}/${_y}` },
+  { value: "MM/DD/YYYY", label: "MM/DD/YYYY", example: `${_m}/${_d}/${_y}` },
+  { value: "YYYY-MM-DD", label: "YYYY-MM-DD", example: `${_y}-${_m}-${_d}` },
 ];
 
-export const FIRST_DAY_OPTIONS: FirstDayOption[] = [
+export const FIRST_DAY_OF_WEEK_OPTIONS_EXTENDED: FirstDayOfWeekOption[] = [
   { value: "sunday", label: "Sunday" },
   { value: "monday", label: "Monday" },
 ];
@@ -101,7 +117,10 @@ export const DATE_FORMAT_OPTIONS: DropdownOption<DateFormat>[] =
   DATE_FORMAT_OPTIONS_EXTENDED.map(({ value, label }) => ({ value, label }));
 
 export const FIRST_DAY_OF_WEEK_OPTIONS: DropdownOption<FirstDayOfWeek>[] =
-  FIRST_DAY_OPTIONS.map(({ value, label }) => ({ value, label }));
+  FIRST_DAY_OF_WEEK_OPTIONS_EXTENDED.map(({ value, label }) => ({
+    value,
+    label,
+  }));
 
 export const WEEK_NUMBERING_OPTIONS: DropdownOption<WeekNumberingSystem>[] =
   WEEK_NUMBERING_OPTIONS_EXTENDED.map(({ value, label }) => ({ value, label }));

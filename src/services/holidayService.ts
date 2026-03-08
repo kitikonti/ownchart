@@ -54,6 +54,13 @@ export const POPULAR_COUNTRY_CODES: readonly string[] = [
  */
 class HolidayServiceClass {
   private hd: Holidays;
+  /**
+   * Keyed by `"${country}-${state||""}-${year}"`.
+   * The cache is cleared on every region change (setRegion), so in practice
+   * entries accumulate only across distinct years for the active region.
+   * For a Gantt tool the number of distinct years queried per session is
+   * small (typically 1–3), making an unbounded Map acceptable here.
+   */
   private cache: Map<string, HolidayInfo[]> = new Map();
   private currentCountry: string = "";
   private currentState: string | undefined = undefined;
@@ -106,7 +113,10 @@ class HolidayServiceClass {
       return this.cache.get(cacheKey)!;
     }
 
-    // Return empty array if no region is set
+    // Guard: no region set → return empty array without caching.
+    // Intentionally not cached: callers that invoke this before setRegion()
+    // are in a transient state; once a region is configured the key will
+    // differ (non-empty country), so there is no repeated-work concern.
     if (!this.currentCountry) {
       return [];
     }
@@ -131,7 +141,8 @@ class HolidayServiceClass {
   }
 
   /**
-   * Get holidays for a date range (spans multiple years if needed)
+   * Get holidays for a date range (spans multiple years if needed).
+   * Returns an empty array when startDate > endDate (inverted range is a no-op).
    */
   getHolidaysInRange(startDate: Date, endDate: Date): HolidayInfo[] {
     const startYear = startDate.getFullYear();
@@ -139,6 +150,8 @@ class HolidayServiceClass {
 
     const allHolidays: HolidayInfo[] = [];
 
+    // When startDate > endDate, startYear > endYear so the loop body never
+    // executes and an empty array is returned — intentional silent no-op.
     for (let year = startYear; year <= endYear; year++) {
       const yearHolidays = this.getHolidaysForYear(year);
       allHolidays.push(
