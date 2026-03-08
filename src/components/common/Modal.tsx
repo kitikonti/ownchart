@@ -39,9 +39,11 @@ const FOOTER_STYLE_CLASSES: Record<"default" | "bordered", string> = {
 /**
  * Selector for all focusable, non-disabled elements within the modal.
  * Defined at module level to avoid re-creating the string on every render.
+ * Covers all interactive HTML elements per the HTML spec, including
+ * details > summary, audio[controls], and video[controls].
  */
 const FOCUSABLE_SELECTOR =
-  'button:not([disabled]), [href], input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [contenteditable]:not([contenteditable="false"]), [tabindex]:not([tabindex="-1"])';
+  'button:not([disabled]), [href], input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [contenteditable]:not([contenteditable="false"]), [tabindex]:not([tabindex="-1"]), details > summary, audio[controls], video[controls]';
 
 export interface ModalProps {
   /** Whether the modal is open */

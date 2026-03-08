@@ -33,6 +33,10 @@ import { GettingStartedTab } from "./GettingStartedTab";
 /**
  * Tailwind class that constrains the help dialog content area height.
  * Sized to leave room for the search bar, tab strip, and footer within the modal.
+ *
+ * Rationale: The modal is max-h-[90vh]. Subtracting the bordered header (~72px),
+ * search bar (~64px), tab strip (~40px), bordered footer (~72px), and vertical
+ * padding leaves roughly 55 vh for the scrollable content area.
  */
 const CONTENT_MAX_HEIGHT_CLASS = "max-h-[55vh]";
 
@@ -141,7 +145,9 @@ export const HelpDialog = memo(function HelpDialog(): JSX.Element | null {
 
   const foundTab = HELP_TABS.find((t) => t.id === activeTab);
   // HELP_TABS is typed as a non-empty tuple, so HELP_TABS[0] is always defined.
-  const resolvedTab = foundTab ?? HELP_TABS[0];
+  // The non-null assertion makes this TypeScript-explicit: if the array type ever
+  // changes to allow an empty tuple, the compiler will surface the error here.
+  const resolvedTab = foundTab ?? HELP_TABS[0]!;
 
   // Warn developers (once per distinct invalid value) when the persisted
   // activeTab doesn't match any known tab — this can happen if a tab is

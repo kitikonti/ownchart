@@ -110,6 +110,8 @@ export const ContextMenu = memo(function ContextMenu({
 
     // Focus first enabled item for keyboard navigation.
     // No visible focus ring — CSS uses :focus-visible (keyboard only).
+    // `items` is in the dependency array so focus is re-evaluated whenever the
+    // item list changes (e.g. async-loaded items or toggled disabled states).
     const firstEnabled = items.findIndex((item) => !item.disabled);
     if (firstEnabled >= 0) {
       focusItem(firstEnabled);
