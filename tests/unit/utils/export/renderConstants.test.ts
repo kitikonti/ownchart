@@ -17,7 +17,9 @@ import {
   getLabelConfig,
   LABEL_RENDER_CONSTANTS,
   RENDER_COLORS,
+  computeBracketGeometry,
 } from "../../../../src/utils/export/renderConstants";
+import type { BracketGeometry } from "../../../../src/utils/export/renderConstants";
 
 // ---------------------------------------------------------------------------
 // calculateMilestoneSize
@@ -80,6 +82,46 @@ describe("getScaledCornerRadius", () => {
 
   it("returns at least MIN_CORNER_RADIUS for rowHeight=0", () => {
     expect(getScaledCornerRadius(0)).toBe(MIN_CORNER_RADIUS);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// computeBracketGeometry (@internal)
+// ---------------------------------------------------------------------------
+
+describe("computeBracketGeometry", () => {
+  it("returns a BracketGeometry with the expected fields", () => {
+    const geo: BracketGeometry = computeBracketGeometry(100, 20);
+    expect(typeof geo.tipHeight).toBe("number");
+    expect(typeof geo.barThickness).toBe("number");
+    expect(typeof geo.tipWidth).toBe("number");
+    expect(typeof geo.cornerRadius).toBe("number");
+    expect(typeof geo.innerRadius).toBe("number");
+  });
+
+  it("clamps tipWidth so two tips never overlap on very narrow tasks", () => {
+    // width=4 → raw tipWidth could exceed width/2 without clamping
+    const geo = computeBracketGeometry(4, 20);
+    expect(geo.tipWidth).toBeLessThanOrEqual(4 / 2);
+  });
+
+  it("clamps cornerRadius to barThickness/2 on short rows", () => {
+    // height=10 → barThickness=3, SUMMARY_BRACKET.cornerRadius=10 → clamped to 1.5
+    const geo = computeBracketGeometry(200, 10);
+    expect(geo.cornerRadius).toBeLessThanOrEqual(geo.barThickness / 2);
+  });
+
+  it("clamps innerRadius to barThickness/2 on short rows", () => {
+    const geo = computeBracketGeometry(200, 10);
+    expect(geo.innerRadius).toBeLessThanOrEqual(geo.barThickness / 2);
+  });
+
+  it("returns proportional values for normal-size inputs", () => {
+    const geo = computeBracketGeometry(200, 40);
+    // barThicknessRatio=0.3 → barThickness=12
+    expect(geo.barThickness).toBeCloseTo(12);
+    // tipHeightRatio=0.5 → tipHeight=20
+    expect(geo.tipHeight).toBeCloseTo(20);
   });
 });
 
@@ -316,5 +358,19 @@ describe("RENDER_COLORS (canary)", () => {
 
   it("tableText is slate-900 equivalent (#1e293b)", () => {
     expect(RENDER_COLORS.tableText).toBe("#1e293b");
+  });
+
+  it("headerBackground and weekendBackground share the same slate-100 value (#f8fafc)", () => {
+    expect(RENDER_COLORS.headerBackground).toBe(RENDER_COLORS.weekendBackground);
+    expect(RENDER_COLORS.headerBackground).toBe("#f8fafc");
+  });
+
+  it("tableBorder and gridLine share the same slate-200 value (#e2e8f0)", () => {
+    expect(RENDER_COLORS.tableBorder).toBe(RENDER_COLORS.gridLine);
+    expect(RENDER_COLORS.tableBorder).toBe("#e2e8f0");
+  });
+
+  it("headerText is slate-600 (#475569)", () => {
+    expect(RENDER_COLORS.headerText).toBe("#475569");
   });
 });

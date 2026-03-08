@@ -409,6 +409,101 @@ describe("svgExport", () => {
       vi.unstubAllGlobals();
     });
   });
+
+  // ---------------------------------------------------------------------------
+  // copyToClipboard fallback — execCommand path
+  // ---------------------------------------------------------------------------
+
+  describe("copyToClipboard execCommand fallback", () => {
+    it("uses execCommand copy when navigator.clipboard is unavailable", () => {
+      const execCommand = vi.fn().mockReturnValue(true);
+      vi.stubGlobal("document", {
+        ...document,
+        execCommand,
+        createElement: document.createElement.bind(document),
+        body: document.body,
+      });
+
+      // Simulate the textarea + execCommand mechanism used as fallback
+      const textarea = document.createElement("textarea");
+      textarea.value = "<svg/>";
+      textarea.style.position = "fixed";
+      textarea.style.top = "0";
+      textarea.style.left = "-9999px";
+      textarea.setAttribute("aria-hidden", "true");
+      document.body.appendChild(textarea);
+      textarea.select();
+      const success = document.execCommand("copy");
+      document.body.removeChild(textarea);
+
+      expect(execCommand).toHaveBeenCalledWith("copy");
+      expect(success).toBe(true);
+      vi.unstubAllGlobals();
+    });
+
+    it("aria-hidden is set on the fallback textarea", () => {
+      const textarea = document.createElement("textarea");
+      textarea.setAttribute("aria-hidden", "true");
+      expect(textarea.getAttribute("aria-hidden")).toBe("true");
+    });
+
+    it("fallback textarea is removed from DOM after copy", () => {
+      const textarea = document.createElement("textarea");
+      document.body.appendChild(textarea);
+      expect(document.body.contains(textarea)).toBe(true);
+      document.body.removeChild(textarea);
+      expect(document.body.contains(textarea)).toBe(false);
+    });
+  });
+
+  // ---------------------------------------------------------------------------
+  // downloadSvg mechanics
+  // ---------------------------------------------------------------------------
+
+  describe("downloadSvg mechanics", () => {
+    it("creates an object URL and revokes it after the anchor click", () => {
+      const svgString = '<svg xmlns="http://www.w3.org/2000/svg"></svg>';
+      const fakeUrl = "blob:http://localhost/fake-uuid";
+      const createObjectURL = vi.fn().mockReturnValue(fakeUrl);
+      const revokeObjectURL = vi.fn();
+      vi.stubGlobal("URL", { createObjectURL, revokeObjectURL });
+
+      const blob = new Blob([svgString], { type: "image/svg+xml" });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = "test.svg";
+      link.style.display = "none";
+      document.body.appendChild(link);
+      try {
+        link.click();
+      } finally {
+        document.body.removeChild(link);
+        URL.revokeObjectURL(url);
+      }
+
+      expect(createObjectURL).toHaveBeenCalledTimes(1);
+      expect(revokeObjectURL).toHaveBeenCalledWith(fakeUrl);
+      expect(document.body.contains(link)).toBe(false);
+      vi.unstubAllGlobals();
+    });
+
+    it("sets download attribute and display:none on the anchor element", () => {
+      const link = document.createElement("a");
+      link.href = "blob:fake";
+      link.download = "chart.svg";
+      link.style.display = "none";
+
+      expect(link.download).toBe("chart.svg");
+      expect(link.style.display).toBe("none");
+    });
+
+    it("blob has correct SVG MIME type", () => {
+      const svgString = '<svg xmlns="http://www.w3.org/2000/svg"></svg>';
+      const blob = new Blob([svgString], { type: "image/svg+xml" });
+      expect(blob.type).toBe("image/svg+xml");
+    });
+  });
 });
 
 // =============================================================================

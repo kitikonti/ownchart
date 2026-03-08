@@ -85,6 +85,21 @@ export const MILESTONE_RENDER_CONSTANTS = {
   sizeFactor: 0.5,
 } as const;
 
+// ─── Private hex literals (Tailwind values not exported by design-tokens) ────
+//
+// These are extracted as named constants so that RENDER_COLORS entries sharing
+// the same hex value reference a single source of truth rather than repeating
+// the literal string.  The names use Tailwind's scale nomenclature for clarity.
+
+/** Tailwind slate-100 / cool-gray — weekend background and header chrome */
+const SLATE_100_COOL = "#f8fafc";
+
+/** Tailwind slate-200 — grid lines and table borders */
+const SLATE_200 = "#e2e8f0";
+
+/** Tailwind slate-600 — header text labels */
+const SLATE_600 = "#475569";
+
 /**
  * Default colors used in rendering.
  * Defined before LABEL_RENDER_CONSTANTS so label colors can reference these
@@ -129,7 +144,7 @@ export const RENDER_COLORS = {
    * Derived from neutral-100 (rgba(241,245,249,0.5)) composited over white →
    * #f8fafc. If the source opacity or color changes, re-derive this hex value.
    */
-  weekendBackground: "#f8fafc",
+  weekendBackground: SLATE_100_COOL,
 
   /**
    * Holiday background color.
@@ -142,7 +157,7 @@ export const RENDER_COLORS = {
    * Grid line color (slate-200).
    * Matches COLORS.chart area styling.
    */
-  gridLine: "#e2e8f0",
+  gridLine: SLATE_200,
 
   /**
    * Today marker color (brand-600).
@@ -160,18 +175,18 @@ export const RENDER_COLORS = {
    * Header background color (slate-100).
    * Cool-gray tint matching the chart area chrome.
    */
-  headerBackground: "#f8fafc",
+  headerBackground: SLATE_100_COOL,
 
   /**
    * Header text color.
    * Tailwind slate-600 (#475569) — not in the exported design-token scale.
    */
-  headerText: "#475569",
+  headerText: SLATE_600,
 
   /**
    * Table border color (slate-200).
    */
-  tableBorder: "#e2e8f0",
+  tableBorder: SLATE_200,
 
   /**
    * Table text color.
@@ -301,7 +316,7 @@ export function getScaledCornerRadius(rowHeight: number): number {
  * Computed geometry for a summary bracket shape.
  * All lengths are in px, derived from the bracket's overall width and height.
  */
-interface BracketGeometry {
+export interface BracketGeometry {
   tipHeight: number;
   barThickness: number;
   /** Tip width, clamped so the two tips never overlap on very narrow tasks */
@@ -317,6 +332,7 @@ interface BracketGeometry {
  * Extracted so the clamping logic is independently testable and
  * {@link generateSummaryBracketPath} can focus on path assembly only.
  *
+ * @returns {@link BracketGeometry} with all dimensions clamped to safe ranges
  * @internal
  */
 export function computeBracketGeometry(
@@ -348,6 +364,10 @@ export function computeBracketGeometry(
  *
  * Returns an empty string for degenerate inputs (width or height ≤ 0) so callers
  * can safely skip rendering zero-size shapes.
+ *
+ * Coordinates are expressed in the caller's local coordinate space; apply a
+ * `translate` transform on the enclosing `<g>` element to reposition the bracket
+ * within the SVG canvas rather than adjusting `x`/`y` directly.
  *
  * @param x - Left edge of the bracket in px
  * @param y - Top edge of the bracket in px
