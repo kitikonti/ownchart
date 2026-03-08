@@ -5,21 +5,13 @@
 
 import { useCallback, useMemo } from "react";
 import toast from "react-hot-toast";
-import type { Task } from "../types/chart.types";
-import type { TaskId } from "../types/branded.types";
-import type { Dependency } from "../types/dependency.types";
-import type { ExportOptions } from "../utils/export/types";
 import { useTaskStore } from "../store/slices/taskSlice";
 import { useChartStore } from "../store/slices/chartSlice";
+import { useDependencyStore } from "../store/slices/dependencySlice";
 import { useFileStore } from "../store/slices/fileSlice";
 import { useHistoryStore } from "../store/slices/historySlice";
-import { useDependencyStore } from "../store/slices/dependencySlice";
 import { useUIStore } from "../store/slices/uiSlice";
-import {
-  serializeToGanttFile,
-  type SerializeOptions,
-} from "../utils/fileOperations/serialize";
-import type { ViewSettings } from "../utils/fileOperations/types";
+import { sanitizeFilename } from "../utils/export/sanitizeFilename";
 import {
   saveFile,
   openFile,
@@ -31,7 +23,15 @@ import {
   loadFileIntoApp,
   showLoadNotifications,
 } from "../utils/fileOperations/loadFromFile";
-import { sanitizeFilename } from "../utils/export/sanitizeFilename";
+import {
+  serializeToGanttFile,
+  type SerializeOptions,
+} from "../utils/fileOperations/serialize";
+import type { Dependency } from "../types/dependency.types";
+import type { ExportOptions } from "../utils/export/types";
+import type { ViewSettings } from "../utils/fileOperations/types";
+import type { Task } from "../types/chart.types";
+import type { TaskId } from "../types/branded.types";
 
 const OWNCHART_FILE_EXTENSION = ".ownchart";
 const DEFAULT_CHART_NAME = "Untitled";
@@ -48,12 +48,28 @@ function stripFileExtension(name: string, ext: string): string {
 }
 
 /**
- * Confirm navigating away from unsaved changes.
- * Extracted so it can be replaced with a custom modal later
- * without touching handler logic.
+ * Module-level confirm function used by handleOpen and handleNew.
+ * Replace via `setConfirmDiscardChanges()` — e.g. to swap in a custom modal
+ * — without touching operation logic. Tests override this to avoid real dialogs.
  */
-function confirmDiscardChanges(message: string): boolean {
-  return window.confirm(message);
+let confirmDiscardChanges: (message: string) => boolean = (message) =>
+  window.confirm(message);
+
+/**
+ * Override the confirm-discard-changes implementation.
+ * Useful for swapping in a custom modal dialog or for test isolation.
+ *
+ * @example
+ * // In tests:
+ * setConfirmDiscardChanges(() => true);
+ *
+ * // To restore the default:
+ * setConfirmDiscardChanges((msg) => window.confirm(msg));
+ */
+export function setConfirmDiscardChanges(
+  fn: (message: string) => boolean
+): void {
+  confirmDiscardChanges = fn;
 }
 
 /**

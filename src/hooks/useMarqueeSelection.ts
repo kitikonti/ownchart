@@ -145,6 +145,7 @@ function shouldStartMarqueeDrag(
   enabled: boolean
 ): boolean {
   if (!enabled || e.button !== 0) return false;
+  // SVGSVGElement events always target SVG/HTML Elements — never a bare Text node.
   const target = e.target as Element;
   return (
     !target.closest(TASK_BAR_SELECTOR) &&
@@ -195,7 +196,8 @@ function useMarqueeMouseMoveHandler(
     // Refs (svgRef, isSelectingRef) are stable objects — their identity never
     // changes, so they do not belong in the dep array. Only setMarqueeRect
     // (stable dispatch from useState) is listed to satisfy exhaustive-deps.
-    [setMarqueeRect] // eslint-disable-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [setMarqueeRect]
   );
 }
 
