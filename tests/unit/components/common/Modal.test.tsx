@@ -87,7 +87,7 @@ describe("Modal", () => {
 
     it("close button has an accessible label", () => {
       render(<Modal {...defaultProps} />);
-      expect(screen.getByLabelText("Close dialog")).toBeInTheDocument();
+      expect(screen.getByLabelText("Close Test Modal")).toBeInTheDocument();
     });
 
     it("backdrop has aria-hidden", () => {
@@ -109,7 +109,7 @@ describe("Modal", () => {
     it("calls onClose when the close button is clicked", () => {
       const onClose = vi.fn();
       render(<Modal {...defaultProps} onClose={onClose} />);
-      fireEvent.click(screen.getByLabelText("Close dialog"));
+      fireEvent.click(screen.getByLabelText("Close Test Modal"));
       expect(onClose).toHaveBeenCalledTimes(1);
     });
 
@@ -132,12 +132,12 @@ describe("Modal", () => {
       const saveButton = screen.getByText("Save");
       saveButton.focus();
 
-      // Tab from last element — focus trap wraps to first (Close dialog button)
+      // Tab from last element — focus trap wraps to first (Close Test Modal button)
       fireEvent.keyDown(screen.getByRole("dialog"), {
         key: "Tab",
         shiftKey: false,
       });
-      expect(document.activeElement).toBe(screen.getByLabelText("Close dialog"));
+      expect(document.activeElement).toBe(screen.getByLabelText("Close Test Modal"));
     });
 
     it("wraps Shift+Tab focus from first element to last", () => {
@@ -146,8 +146,8 @@ describe("Modal", () => {
           <button>Inner button</button>
         </Modal>
       );
-      // Focus the first focusable element (Close dialog button)
-      const closeButton = screen.getByLabelText("Close dialog");
+      // Focus the first focusable element (Close Test Modal button)
+      const closeButton = screen.getByLabelText("Close Test Modal");
       closeButton.focus();
 
       // Shift+Tab from first element — focus trap wraps to last (Save button)

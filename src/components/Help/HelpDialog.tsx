@@ -104,7 +104,7 @@ const HelpTabContent = memo(function HelpTabContent({
 // HelpDialog
 // ---------------------------------------------------------------------------
 
-export function HelpDialog(): JSX.Element | null {
+export const HelpDialog = memo(function HelpDialog(): JSX.Element | null {
   const isOpen = useUIStore((state) => state.isHelpPanelOpen);
   const closeHelp = useUIStore((state) => state.closeHelpPanel);
   const activeTab = useUIStore((state) => state.helpDialogActiveTab);
@@ -254,4 +254,4 @@ export function HelpDialog(): JSX.Element | null {
       </div>
     </Modal>
   );
-}
+});

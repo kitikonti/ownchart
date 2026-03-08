@@ -222,7 +222,7 @@ export const Modal = memo(function Modal({
           <button
             onClick={onClose}
             className="p-1.5 -m-1.5 rounded-sm text-neutral-500 hover:text-neutral-700 transition-colors duration-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-100"
-            aria-label="Close dialog"
+            aria-label={`Close ${title}`}
           >
             <X size={20} weight="regular" />
           </button>

@@ -4,14 +4,7 @@
  * Future-proof: can be extended with Cut/Copy/Paste, Delete, Indent/Outdent, etc.
  */
 
-import {
-  useEffect,
-  useRef,
-  useCallback,
-  memo,
-  type ReactNode,
-  type ReactPortal,
-} from "react";
+import { useEffect, useRef, useCallback, memo, type ReactNode } from "react";
 import { createPortal } from "react-dom";
 import { Check } from "@phosphor-icons/react";
 import { CONTEXT_MENU } from "../../styles/design-tokens";
@@ -53,7 +46,7 @@ export const ContextMenu = memo(function ContextMenu({
   position,
   onClose,
   ariaLabel,
-}: ContextMenuProps): ReactPortal {
+}: ContextMenuProps): JSX.Element {
   const menuRef = useRef<HTMLDivElement>(null);
   const focusedIndexRef = useRef(0);
   const previousFocusRef = useRef<HTMLElement | null>(null);
@@ -237,8 +230,8 @@ export const ContextMenu = memo(function ContextMenu({
       ref={menuRef}
       className={`${CONTEXT_MENU_CONTAINER_CLASS} fixed z-[1000] min-w-[180px]`}
       style={{
-        left: position.x,
-        top: position.y,
+        left: `${position.x}px`,
+        top: `${position.y}px`,
         visibility: "hidden",
       }}
       role="menu"
