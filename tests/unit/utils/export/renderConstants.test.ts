@@ -283,3 +283,38 @@ describe("getLabelConfig", () => {
     });
   });
 });
+
+// ---------------------------------------------------------------------------
+// RENDER_COLORS canary tests
+// Guards against accidental hex value changes in the critical color constants.
+// ---------------------------------------------------------------------------
+
+describe("RENDER_COLORS (canary)", () => {
+  it("taskDefault is brand-600 (#0F6CBD)", () => {
+    expect(RENDER_COLORS.taskDefault).toBe("#0F6CBD");
+  });
+
+  it("todayMarker matches taskDefault hex (semantic duplicate — both brand-600)", () => {
+    expect(RENDER_COLORS.todayMarker).toBe(RENDER_COLORS.taskDefault);
+  });
+
+  it("dependency line color is slate-300 equivalent (#94a3b8)", () => {
+    expect(RENDER_COLORS.dependency).toBe("#94a3b8");
+  });
+
+  it("gridLine color is slate-200 (#e2e8f0)", () => {
+    expect(RENDER_COLORS.gridLine).toBe("#e2e8f0");
+  });
+
+  it("weekendBackground is composited neutral-100/50% over white (#f8fafc)", () => {
+    expect(RENDER_COLORS.weekendBackground).toBe("#f8fafc");
+  });
+
+  it("holidayBackground is composited amber-100/50% over white (#fef9e3)", () => {
+    expect(RENDER_COLORS.holidayBackground).toBe("#fef9e3");
+  });
+
+  it("tableText is slate-900 equivalent (#1e293b)", () => {
+    expect(RENDER_COLORS.tableText).toBe("#1e293b");
+  });
+});

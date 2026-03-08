@@ -36,13 +36,13 @@ import {
   renderTaskTableHeader,
   renderTaskTableRows,
 } from "./taskTableRenderer";
-import { DEFAULT_EXPORT_COLUMNS } from "./types";
 
 // Types
 import type { ColorModeState } from "../../types/colorMode.types";
 import type { Task } from "../../types/chart.types";
 import type { TaskId } from "../../types/branded.types";
 import type { ExportOptions, SvgExportOptions } from "./types";
+import { DEFAULT_EXPORT_COLUMNS } from "./types";
 import type {
   TaskTableHeaderOptions,
   TaskTableRowsOptions,
@@ -90,7 +90,6 @@ export async function exportToSvg(params: ExportToSvgParams): Promise<void> {
 
   onProgress?.(10);
 
-  // Calculate dimensions
   const dimensions = calculateExportDimensions({
     tasks,
     options,
@@ -102,7 +101,6 @@ export async function exportToSvg(params: ExportToSvgParams): Promise<void> {
 
   onProgress?.(20);
 
-  // Create offscreen container
   const container = createOffscreenContainer(
     dimensions.width,
     dimensions.height,
@@ -114,71 +112,24 @@ export async function exportToSvg(params: ExportToSvgParams): Promise<void> {
   const root = createRoot(container);
 
   try {
-    await new Promise<void>((resolve) => {
-      root.render(
-        createElement(ExportRenderer, {
-          tasks,
-          options,
-          columnWidths,
-          currentAppZoom,
-          projectDateRange,
-          visibleDateRange,
-        })
-      );
-      setTimeout(resolve, REACT_RENDER_WAIT_MS);
+    await renderExportComponentAndWait(root, container, {
+      tasks,
+      options,
+      columnWidths,
+      currentAppZoom,
+      projectDateRange,
+      visibleDateRange,
     });
 
     onProgress?.(40);
 
-    await waitForFonts();
-    await waitForPaint();
-
-    // Make visible for proper rendering
-    container.style.opacity = "1";
-    await waitForPaint();
+    const { chartSvg, headerSvg } = await extractSvgElements(
+      container,
+      options
+    );
 
     onProgress?.(60);
 
-    // Extract the timeline SVG elements from the rendered DOM.
-    // Use the same named CSS class constants as pdfExport.ts to avoid
-    // selector drift if class names change in ExportRenderer.
-    const chartSvg = container.querySelector(`svg.${EXPORT_CHART_SVG_CLASS}`);
-    const headerSvg = container.querySelector(
-      `svg.${EXPORT_TIMELINE_HEADER_SVG_CLASS}`
-    );
-
-    if (!chartSvg) {
-      throw new Error("Could not find chart SVG element");
-    }
-
-    if (!(chartSvg instanceof SVGSVGElement)) {
-      throw new Error(
-        "Chart SVG element has unexpected type; expected SVGSVGElement"
-      );
-    }
-
-    // headerSvg may legitimately be null when includeHeader is false.
-    // Verify the type only when the element was actually found.
-    if (headerSvg !== null && !(headerSvg instanceof SVGSVGElement)) {
-      throw new Error(
-        "Timeline header element has unexpected type; expected SVGSVGElement"
-      );
-    }
-
-    if (options.includeHeader && !headerSvg) {
-      // This is a non-fatal invariant violation: the chart body will be offset
-      // by HEADER_HEIGHT but the header section will be blank. Limit the
-      // warning to development builds so it does not appear in users' consoles
-      // in production — the export will still complete with a blank header area.
-      if (import.meta.env.DEV) {
-        console.warn(
-          "[svgExport] includeHeader is true but the timeline header SVG element was not found. " +
-            "The export header area will be empty."
-        );
-      }
-    }
-
-    // Build a new complete SVG with task table as SVG elements
     const finalSvg = buildCompleteSvg(
       chartSvg,
       headerSvg,
@@ -192,12 +143,10 @@ export async function exportToSvg(params: ExportToSvgParams): Promise<void> {
 
     onProgress?.(80);
 
-    // Apply SVG options and serialize
     const svgString = finalizeSvg(finalSvg, svgOptions, projectName);
 
     onProgress?.(90);
 
-    // Deliver the serialized SVG to the user (clipboard or file download)
     await deliverSvg(svgString, svgOptions, projectName);
 
     onProgress?.(100);
@@ -214,9 +163,108 @@ export async function exportToSvg(params: ExportToSvgParams): Promise<void> {
 // ---------------------------------------------------------------------------
 
 /**
+ * Render the ExportRenderer component into the offscreen container and wait
+ * for React to commit + fonts to load + paint to settle before returning.
+ *
+ * Separated from {@link exportToSvg} so the render+wait phase can be tested
+ * and reasoned about in isolation.
+ *
+ * @internal
+ */
+export async function renderExportComponentAndWait(
+  root: ReturnType<typeof createRoot>,
+  container: HTMLElement,
+  props: {
+    tasks: Task[];
+    options: ExportOptions;
+    columnWidths: Record<string, number>;
+    currentAppZoom: number;
+    projectDateRange?: { start: Date; end: Date };
+    visibleDateRange?: { start: Date; end: Date };
+  }
+): Promise<void> {
+  await new Promise<void>((resolve) => {
+    root.render(createElement(ExportRenderer, props));
+    // React schedules its commit asynchronously; give it one macro-task to
+    // flush before waitForFonts / waitForPaint take over.
+    setTimeout(resolve, REACT_RENDER_WAIT_MS);
+  });
+
+  await waitForFonts();
+  await waitForPaint();
+
+  // Make visible for proper rendering (some browsers skip paint for hidden els)
+  container.style.opacity = "1";
+  await waitForPaint();
+}
+
+/**
+ * Query and type-guard the chart body SVG and optional timeline header SVG
+ * from the rendered offscreen container.
+ *
+ * Throws on missing or wrongly-typed chart SVG. Emits a dev-only warning
+ * (and returns `null` for `headerSvg`) when `includeHeader` is true but the
+ * header element was not found — the export continues with a blank header area.
+ *
+ * @internal
+ */
+export async function extractSvgElements(
+  container: HTMLElement,
+  options: Pick<ExportOptions, "includeHeader">
+): Promise<{ chartSvg: SVGSVGElement; headerSvg: SVGSVGElement | null }> {
+  // Use the same named CSS class constants as pdfExport.ts to avoid
+  // selector drift if class names change in ExportRenderer.
+  const chartSvgEl = container.querySelector(`svg.${EXPORT_CHART_SVG_CLASS}`);
+  const headerSvgEl = container.querySelector(
+    `svg.${EXPORT_TIMELINE_HEADER_SVG_CLASS}`
+  );
+
+  if (!chartSvgEl) {
+    throw new Error("Could not find chart SVG element");
+  }
+
+  if (!(chartSvgEl instanceof SVGSVGElement)) {
+    throw new Error(
+      "Chart SVG element has unexpected type; expected SVGSVGElement"
+    );
+  }
+
+  // headerSvg may legitimately be null when includeHeader is false.
+  // Verify the type only when the element was actually found.
+  if (headerSvgEl !== null && !(headerSvgEl instanceof SVGSVGElement)) {
+    throw new Error(
+      "Timeline header element has unexpected type; expected SVGSVGElement"
+    );
+  }
+
+  if (options.includeHeader && !headerSvgEl) {
+    // This is a non-fatal invariant violation: the chart body will be offset
+    // by HEADER_HEIGHT but the header section will be blank. Limit the
+    // warning to development builds so it does not appear in users' consoles
+    // in production — the export will still complete with a blank header area.
+    if (import.meta.env.DEV) {
+      console.warn(
+        "[svgExport] includeHeader is true but the timeline header SVG element was not found. " +
+          "The export header area will be empty."
+      );
+    }
+  }
+
+  return {
+    chartSvg: chartSvgEl,
+    headerSvg: headerSvgEl,
+  };
+}
+
+/**
  * Resolve the effective export columns and compute the task-table panel width.
  * Separates the "what to render" decision from the "how to compose it" logic
  * in {@link buildCompleteSvg}.
+ *
+ * Falls back to DEFAULT_EXPORT_COLUMNS when the caller passes an empty array.
+ * A future timeline-only mode (no task table at all) should be modelled with
+ * an explicit ExportOptions flag rather than by passing an empty
+ * selectedColumns array.
  *
  * @internal
  */
@@ -226,25 +274,17 @@ export function resolveExportLayout(
 ): {
   selectedColumns: NonNullable<ExportOptions["selectedColumns"]>;
   taskTableWidth: number;
-  hasTaskList: boolean;
 } {
-  // Fall back to DEFAULT_EXPORT_COLUMNS when the caller passes an empty array.
-  // DEFAULT_EXPORT_COLUMNS is always non-empty, so `hasTaskList` will be true
-  // in the fallback path. A future timeline-only mode (no task table at all)
-  // should be modelled with an explicit ExportOptions flag rather than by
-  // passing an empty selectedColumns array.
   const selectedColumns =
     options.selectedColumns.length > 0
       ? options.selectedColumns
       : DEFAULT_EXPORT_COLUMNS;
-  // Always true after the fallback above (DEFAULT_EXPORT_COLUMNS is non-empty).
-  // A timeline-only mode with no task table should use an explicit ExportOptions
-  // flag rather than an empty selectedColumns array.
-  const hasTaskList = selectedColumns.length > 0;
-  const taskTableWidth = hasTaskList
-    ? calculateTaskTableWidth(selectedColumns, columnWidths, options.density)
-    : 0;
-  return { selectedColumns, taskTableWidth, hasTaskList };
+  const taskTableWidth = calculateTaskTableWidth(
+    selectedColumns,
+    columnWidths,
+    options.density
+  );
+  return { selectedColumns, taskTableWidth };
 }
 
 /**
@@ -428,7 +468,7 @@ function buildCompleteSvg(
   colorModeState: ColorModeState,
   projectName?: string
 ): SVGSVGElement {
-  const { selectedColumns, taskTableWidth, hasTaskList } = resolveExportLayout(
+  const { selectedColumns, taskTableWidth } = resolveExportLayout(
     options,
     columnWidths
   );
@@ -439,18 +479,19 @@ function buildCompleteSvg(
 
   const bodyYOffset = options.includeHeader ? HEADER_HEIGHT : 0;
 
-  if (hasTaskList) {
-    renderTaskTableSection(
-      svg,
-      flattenedTasks,
-      selectedColumns,
-      columnWidths,
-      taskTableWidth,
-      bodyYOffset,
-      options,
-      colorModeState
-    );
-  }
+  // selectedColumns is always non-empty after resolveExportLayout's fallback
+  // to DEFAULT_EXPORT_COLUMNS, so the task table section is always rendered.
+  // A future timeline-only mode should use an explicit ExportOptions flag.
+  renderTaskTableSection(
+    svg,
+    flattenedTasks,
+    selectedColumns,
+    columnWidths,
+    taskTableWidth,
+    bodyYOffset,
+    options,
+    colorModeState
+  );
 
   if (options.includeHeader && headerSvg) {
     appendTimelineHeader(svg, headerSvg, taskTableWidth);
@@ -545,8 +586,11 @@ async function deliverSvg(
  * Copy SVG string to clipboard.
  * Prefers the modern Clipboard API; falls back to the legacy execCommand
  * approach for environments where the Clipboard API is unavailable (e.g.
- * insecure contexts). Throws if both methods fail so the caller can surface
- * a user-facing error rather than silently doing nothing.
+ * insecure contexts).
+ *
+ * Throws if both methods fail — the thrown error is intended to be caught by
+ * the caller (`exportToSvg` → the `useExport` hook) for user-facing display.
+ * No silent failures: either the text is on the clipboard or an error is thrown.
  */
 async function copyToClipboard(svgString: string): Promise<void> {
   // Prefer modern Clipboard API (available in secure contexts)
@@ -555,16 +599,21 @@ async function copyToClipboard(svgString: string): Promise<void> {
     return;
   }
 
-  // Fallback: legacy execCommand (deprecated but still works in some environments)
+  // Fallback: legacy execCommand (deprecated but still works in some environments).
+  // The textarea is placed off-screen (left: -9999px) so it is never visible,
+  // even transiently, regardless of transition or opacity timing on the host page.
   const textarea = document.createElement("textarea");
   textarea.value = svgString;
   textarea.style.position = "fixed";
+  textarea.style.top = "0";
+  textarea.style.left = "-9999px";
   textarea.style.opacity = "0";
+  textarea.setAttribute("aria-hidden", "true");
   document.body.appendChild(textarea);
   try {
     textarea.select();
-    // execCommand is deprecated; this is only reached when the Clipboard API
-    // is unavailable (e.g. non-HTTPS context or older browser).
+    // execCommand is deprecated; this branch is only reached when the
+    // Clipboard API is unavailable (e.g. non-HTTPS context or older browser).
     const success = document.execCommand("copy");
     if (!success) {
       throw new Error("execCommand copy returned false");

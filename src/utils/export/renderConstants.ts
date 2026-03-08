@@ -52,7 +52,11 @@ export const SUMMARY_BRACKET = {
    * sufficient to update the geometry.
    */
   tipWidthFactor: 1 / Math.tan((SUMMARY_BRACKET_TIP_ANGLE_DEG * Math.PI) / 180),
-  /** Radius for top corners of the bracket bar */
+  /**
+   * Radius for top outer corners of the bracket bar (px).
+   * Matches the visual corner radius used in the SummaryBracket component.
+   * Clamped at runtime to barThickness/2 to avoid broken geometry on short rows.
+   */
   cornerRadius: 10,
   /** Radius for inner corners where tips meet the bar */
   innerRadius: 3,
@@ -280,6 +284,43 @@ export function getScaledCornerRadius(rowHeight: number): number {
 }
 
 /**
+ * Computed geometry for a summary bracket shape.
+ * All lengths are in px, derived from the bracket's overall width and height.
+ */
+interface BracketGeometry {
+  tipHeight: number;
+  barThickness: number;
+  /** Tip width, clamped so the two tips never overlap on very narrow tasks */
+  tipWidth: number;
+  /** Outer corner radius, clamped to barThickness/2 to avoid broken arcs */
+  cornerRadius: number;
+  /** Inner corner radius where tips meet the bar, clamped to barThickness/2 */
+  innerRadius: number;
+}
+
+/**
+ * Compute the clamped geometry values for a summary bracket of the given size.
+ * Extracted so the clamping logic is independently testable and
+ * {@link generateSummaryBracketPath} can focus on path assembly only.
+ */
+function computeBracketGeometry(
+  width: number,
+  height: number
+): BracketGeometry {
+  const tipHeight = height * SUMMARY_BRACKET.tipHeightRatio;
+  const barThickness = height * SUMMARY_BRACKET.barThicknessRatio;
+  // Clamp tipWidth so the two tips never overlap on very narrow tasks.
+  const rawTipWidth = tipHeight * SUMMARY_BRACKET.tipWidthFactor;
+  const tipWidth = Math.min(rawTipWidth, width / 2);
+  // Clamp corner radii to half the bar thickness so arcs never exceed the bar
+  // height — this prevents invalid / visually broken geometry on short rows
+  // (e.g. barThickness < cornerRadius, which occurs when height < ~34 px).
+  const cornerRadius = Math.min(SUMMARY_BRACKET.cornerRadius, barThickness / 2);
+  const innerRadius = Math.min(SUMMARY_BRACKET.innerRadius, barThickness / 2);
+  return { tipHeight, barThickness, tipWidth, cornerRadius, innerRadius };
+}
+
+/**
  * Generate SVG path for a summary bracket shape.
  * Matches the SummaryBracket component exactly.
  *
@@ -306,16 +347,8 @@ export function generateSummaryBracketPath(
 ): string {
   if (width <= 0 || height <= 0) return "";
 
-  const tipHeight = height * SUMMARY_BRACKET.tipHeightRatio;
-  const barThickness = height * SUMMARY_BRACKET.barThicknessRatio;
-  // Clamp tipWidth so the two tips never overlap on very narrow tasks.
-  const rawTipWidth = tipHeight * SUMMARY_BRACKET.tipWidthFactor;
-  const tipWidth = Math.min(rawTipWidth, width / 2);
-  // Clamp corner radii to half the bar thickness so arcs never exceed the bar
-  // height — this prevents invalid / visually broken geometry on short rows
-  // (e.g. barThickness < cornerRadius, which occurs when height < ~34 px).
-  const cornerRadius = Math.min(SUMMARY_BRACKET.cornerRadius, barThickness / 2);
-  const innerRadius = Math.min(SUMMARY_BRACKET.innerRadius, barThickness / 2);
+  const { tipHeight, barThickness, tipWidth, cornerRadius, innerRadius } =
+    computeBracketGeometry(width, height);
 
   return `
     M ${x + cornerRadius} ${y}

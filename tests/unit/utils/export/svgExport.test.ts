@@ -13,6 +13,7 @@ import {
   resolveExportLayout,
   appendTimelineHeader,
   appendChartBody,
+  extractSvgElements,
 } from "../../../../src/utils/export/svgExport";
 import type {
   SvgExportOptions,
@@ -556,8 +557,7 @@ describe("resolveExportLayout", () => {
 
   it("uses DEFAULT_EXPORT_COLUMNS when selectedColumns is empty", () => {
     const options: ExportOptions = { ...DEFAULT_EXPORT_OPTIONS, selectedColumns: [] };
-    const { selectedColumns, hasTaskList } = resolveExportLayout(options, columnWidths);
-    expect(hasTaskList).toBe(true);
+    const { selectedColumns } = resolveExportLayout(options, columnWidths);
     expect(selectedColumns.length).toBeGreaterThan(0);
   });
 
@@ -567,13 +567,9 @@ describe("resolveExportLayout", () => {
     expect(selectedColumns).toEqual(["name", "progress"]);
   });
 
-  it("returns hasTaskList=false and taskTableWidth=0 when effective columns would be empty (edge case with overridden defaults)", () => {
-    // Force DEFAULT_EXPORT_COLUMNS-like scenario is already covered above;
-    // test the direct "no columns" path by patching DEFAULT_EXPORT_COLUMNS is
-    // not practical without mocking the module. Instead verify the property.
+  it("returns a positive taskTableWidth when one column is selected and widths exist", () => {
     const options: ExportOptions = { ...DEFAULT_EXPORT_OPTIONS, selectedColumns: ["name"] };
-    const { hasTaskList, taskTableWidth } = resolveExportLayout(options, columnWidths);
-    expect(hasTaskList).toBe(true);
+    const { taskTableWidth } = resolveExportLayout(options, columnWidths);
     expect(taskTableWidth).toBeGreaterThan(0);
   });
 
@@ -728,5 +724,59 @@ describe("appendChartBody", () => {
     appendChartBody(root, chart, 0, 0);
     const clonedText = root.querySelector("text");
     expect(clonedText?.getAttribute("font-family")).toBeTruthy();
+  });
+});
+
+// ---------------------------------------------------------------------------
+// extractSvgElements (@internal)
+// ---------------------------------------------------------------------------
+
+describe("extractSvgElements", () => {
+  function makeContainer(): HTMLElement {
+    const div = document.createElement("div");
+    document.body.appendChild(div);
+    return div;
+  }
+
+  function addSvgWithClass(parent: HTMLElement, className: string): SVGSVGElement {
+    const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg") as SVGSVGElement;
+    svg.classList.add(className);
+    parent.appendChild(svg);
+    return svg;
+  }
+
+  afterEach(() => {
+    // Clean up any containers appended to body during tests
+    document.body.innerHTML = "";
+  });
+
+  it("throws when the chart SVG element is absent", async () => {
+    const container = makeContainer();
+    await expect(
+      extractSvgElements(container, { includeHeader: false })
+    ).rejects.toThrow("Could not find chart SVG element");
+  });
+
+  it("resolves with chartSvg and null headerSvg when header is not present", async () => {
+    const container = makeContainer();
+    addSvgWithClass(container, "gantt-chart");
+
+    const { chartSvg, headerSvg } = await extractSvgElements(container, {
+      includeHeader: false,
+    });
+    expect(chartSvg).toBeInstanceOf(SVGSVGElement);
+    expect(headerSvg).toBeNull();
+  });
+
+  it("resolves with both chartSvg and headerSvg when both are present", async () => {
+    const container = makeContainer();
+    addSvgWithClass(container, "gantt-chart");
+    addSvgWithClass(container, "export-timeline-header");
+
+    const { chartSvg, headerSvg } = await extractSvgElements(container, {
+      includeHeader: true,
+    });
+    expect(chartSvg).toBeInstanceOf(SVGSVGElement);
+    expect(headerSvg).toBeInstanceOf(SVGSVGElement);
   });
 });
