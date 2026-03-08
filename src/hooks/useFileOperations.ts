@@ -502,6 +502,41 @@ function useNewOperation({
 }
 
 // ---------------------------------------------------------------------------
+// Assembles the NewOperationDeps struct from the slice sub-hook results.
+// Extracted to keep useFileOperations under 50 lines while making the
+// "what a new-chart operation needs" contract explicit.
+// ---------------------------------------------------------------------------
+
+function useNewOperationDeps(
+  task: TaskSliceNeeded,
+  chart: ChartSliceNeeded,
+  op: OperationalSliceNeeded
+): NewOperationDeps {
+  const { setTasks } = task;
+  const { setProjectTitle, setProjectAuthor, setHiddenTaskIds, resetView } =
+    chart;
+  const {
+    isDirty,
+    clearDependencies,
+    resetExportOptions,
+    clearHistory,
+    resetFileStore,
+  } = op;
+  return {
+    isDirty,
+    setTasks,
+    clearDependencies,
+    resetExportOptions,
+    setProjectTitle,
+    setProjectAuthor,
+    setHiddenTaskIds,
+    resetView,
+    clearHistory,
+    resetFileStore,
+  };
+}
+
+// ---------------------------------------------------------------------------
 
 export function useFileOperations(): {
   handleSave: (saveAs?: boolean) => Promise<void>;
@@ -516,23 +551,9 @@ export function useFileOperations(): {
   const chartState = useChartSliceState();
   const opState = useOperationalSliceState();
 
-  // Destructure immediately so callback dep arrays reference stable individual
-  // variables, not the container objects (exhaustive-deps requires this).
-  const { tasks, setTasks } = taskState;
-  const { setProjectTitle, setProjectAuthor, setHiddenTaskIds, resetView } =
-    chartState;
-  const {
-    isDirty,
-    fileName,
-    lastSaved,
-    setFileName,
-    setLastSaved,
-    markClean,
-    clearDependencies,
-    resetExportOptions,
-    clearHistory,
-    resetFileStore,
-  } = opState;
+  const { tasks } = taskState;
+  const { isDirty, fileName, lastSaved, setFileName, setLastSaved, markClean } =
+    opState;
 
   const { viewSettings, serializeOpts, suggestedFilename } =
     useSerializeOptions(taskState, chartState, opState);
@@ -549,18 +570,9 @@ export function useFileOperations(): {
 
   const { handleOpen } = useOpenOperation(isDirty);
 
-  const { handleNew } = useNewOperation({
-    isDirty,
-    setTasks,
-    clearDependencies,
-    resetExportOptions,
-    setProjectTitle,
-    setProjectAuthor,
-    setHiddenTaskIds,
-    resetView,
-    clearHistory,
-    resetFileStore,
-  });
+  const { handleNew } = useNewOperation(
+    useNewOperationDeps(taskState, chartState, opState)
+  );
 
   return {
     handleSave,

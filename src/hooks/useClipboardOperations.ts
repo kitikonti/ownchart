@@ -31,7 +31,8 @@ export interface ClipboardOperations {
  * Returns true if two task arrays represent the same ordered sequence of IDs.
  * Used to detect when the system clipboard holds data already present in the
  * internal clipboard, preventing accidental double-paste across tabs.
- * @internal exported for testing
+ *
+ * Exported only for unit-testing purposes — treat as an implementation detail.
  */
 export function hasSameTaskIds(
   a: readonly { id: unknown }[],
