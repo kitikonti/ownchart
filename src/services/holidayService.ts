@@ -6,6 +6,12 @@
 import Holidays, { type HolidaysTypes } from "date-holidays";
 
 /**
+ * Locale used when querying country/state names from date-holidays.
+ * All UI lists are returned in English; change this constant to localise them.
+ */
+const HOLIDAY_DISPLAY_LOCALE = "en" as const;
+
+/**
  * Holiday information interface
  */
 export interface HolidayInfo {
@@ -216,7 +222,7 @@ class HolidayServiceClass {
    * Get list of available countries
    */
   getAvailableCountries(): CountryInfo[] {
-    const countries = this.hd.getCountries("en");
+    const countries = this.hd.getCountries(HOLIDAY_DISPLAY_LOCALE);
     if (!countries) return [];
 
     return Object.entries(countries)
@@ -232,7 +238,7 @@ class HolidayServiceClass {
    * Get list of available states/regions for a country
    */
   getAvailableStates(countryCode: string): StateInfo[] {
-    const states = this.hd.getStates(countryCode, "en");
+    const states = this.hd.getStates(countryCode, HOLIDAY_DISPLAY_LOCALE);
     if (!states) return [];
 
     return Object.entries(states)
@@ -280,5 +286,7 @@ class HolidayServiceClass {
  */
 export const holidayService = new HolidayServiceClass();
 
-// Re-export from localeDetection (single source of truth)
+// Re-exported here so callers of holidayService need only one import for all
+// holiday-related functionality (region detection + service instance).
+// The implementation lives in localeDetection.ts (single source of truth).
 export { detectLocaleHolidayRegion } from "../utils/localeDetection";
