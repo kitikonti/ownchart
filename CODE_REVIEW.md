@@ -233,8 +233,8 @@ cd ../app-gantt-review
 ### Priority: MEDIUM — Export Utils
 - [x] `src/utils/export/pdfExport.ts` (507 LOC)
 - [x] `src/utils/export/taskTableRenderer.ts` (421 LOC)
-- [ ] `src/utils/export/svgExport.ts` (378 LOC)
-- [ ] `src/utils/export/renderConstants.ts` (373 LOC)
+- [x] `src/utils/export/svgExport.ts` (378 LOC)
+- [x] `src/utils/export/renderConstants.ts` (373 LOC)
 - [ ] `src/utils/export/types.ts` (374 LOC)
 - [ ] `src/utils/export/pdfLayout.ts` (355 LOC)
 - [ ] `src/utils/export/calculations.ts` (294 LOC)
