@@ -105,4 +105,21 @@ describe("WelcomeTour", () => {
     // With permanent=true, the store should not re-open the tour on next load
     expect(useUIStore.getState().isWelcomeTourOpen).toBe(false);
   });
+
+  it("cancels pending help panel timer when component unmounts", () => {
+    useUIStore.setState({ isWelcomeTourOpen: true, isHelpPanelOpen: false });
+    const { unmount } = render(<WelcomeTour />);
+
+    fireEvent.click(screen.getByText("Show Shortcuts"));
+
+    // Unmount before the timer fires — the cleanup effect should cancel it
+    unmount();
+
+    act(() => {
+      vi.runAllTimers();
+    });
+
+    // Help panel must NOT have been opened after unmount
+    expect(useUIStore.getState().isHelpPanelOpen).toBe(false);
+  });
 });

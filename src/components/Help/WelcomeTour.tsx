@@ -4,7 +4,12 @@
 
 import { useState, useEffect, useRef, memo, type ReactNode } from "react";
 
-import { HandWaving, Cursor, ArrowsOutCardinal } from "@phosphor-icons/react";
+import {
+  HandWaving,
+  Cursor,
+  ArrowsOutCardinal,
+  Question,
+} from "@phosphor-icons/react";
 
 import { Modal } from "../common/Modal";
 import { Button } from "../common/Button";
@@ -43,11 +48,7 @@ const TOUR_TIPS: TourTip[] = [
     description: "Resize edges to adjust duration",
   },
   {
-    icon: (
-      <span className="text-base font-bold text-brand-600 block w-[18px] text-center">
-        ?
-      </span>
-    ),
+    icon: <Question size={18} className="text-brand-600" />,
     iconBg: "bg-brand-50",
     label: "Press ? anytime for shortcuts",
     description: "Keyboard shortcuts for power users",

@@ -59,6 +59,9 @@ const ExternalLink = memo(function ExternalLink({
   );
 });
 
+/** Website URL with the https:// prefix stripped for display purposes. */
+const WEBSITE_DISPLAY_URL = APP_CONFIG.websiteUrl.replace("https://", "");
+
 export const AboutDialog = memo(function AboutDialog(): JSX.Element | null {
   const { isAboutDialogOpen: isOpen, closeAboutDialog } = useUIStore();
 
@@ -111,7 +114,7 @@ export const AboutDialog = memo(function AboutDialog(): JSX.Element | null {
         <ExternalLink
           href={APP_CONFIG.websiteUrl}
           icon={<Globe size={18} weight="regular" />}
-          label={APP_CONFIG.websiteUrl.replace("https://", "")}
+          label={WEBSITE_DISPLAY_URL}
         />
       </div>
 
