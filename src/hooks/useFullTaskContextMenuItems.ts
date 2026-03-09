@@ -4,7 +4,7 @@
  * Bundles all store subscriptions and provides a buildItems(taskId) function.
  */
 
-import { useRef, useCallback, createElement } from "react";
+import { useCallback, createElement } from "react";
 import {
   Scissors,
   Copy,
@@ -47,6 +47,22 @@ const SVG_ICON_PROPS = {
   height: CONTEXT_MENU.iconSize,
 } as const;
 
+// Icons are module-level constants: computed once, stable across all renders and hook instances.
+const ICONS = {
+  cut: createElement(Scissors, ICON_PROPS),
+  copy: createElement(Copy, ICON_PROPS),
+  paste: createElement(ClipboardText, ICON_PROPS),
+  insertAbove: createElement(RowsPlusTop, ICON_PROPS),
+  insertBelow: createElement(RowsPlusBottom, ICON_PROPS),
+  trash: createElement(Trash, ICON_PROPS),
+  indent: createElement(TextIndent, ICON_PROPS),
+  outdent: createElement(TextOutdent, ICON_PROPS),
+  group: createElement(GroupIcon, SVG_ICON_PROPS),
+  ungroup: createElement(UngroupIcon, SVG_ICON_PROPS),
+  eyeSlash: createElement(EyeSlash, ICON_PROPS),
+  eye: createElement(Eye, ICON_PROPS),
+} as const;
+
 interface UseFullTaskContextMenuItemsResult {
   /** Build the full context menu items for a given task. */
   buildItems: (taskId: TaskId) => ContextMenuItem[];
@@ -85,30 +101,8 @@ export function useFullTaskContextMenuItems(): UseFullTaskContextMenuItemsResult
   const { hideRows, unhideSelection, getHiddenInSelectionCount } =
     useHideOperations();
 
-  // useRef: compute icons once on mount from static CONTEXT_MENU config.
-  // Stable across all renders — not subject to React's memoization cache eviction.
-  // Accessing iconsRef.current inside useCallback does not require dep-array entries.
-  const iconsRef = useRef({
-    cut: createElement(Scissors, ICON_PROPS),
-    copy: createElement(Copy, ICON_PROPS),
-    paste: createElement(ClipboardText, ICON_PROPS),
-    insertAbove: createElement(RowsPlusTop, ICON_PROPS),
-    insertBelow: createElement(RowsPlusBottom, ICON_PROPS),
-    trash: createElement(Trash, ICON_PROPS),
-    indent: createElement(TextIndent, ICON_PROPS),
-    outdent: createElement(TextOutdent, ICON_PROPS),
-    group: createElement(GroupIcon, SVG_ICON_PROPS),
-    ungroup: createElement(UngroupIcon, SVG_ICON_PROPS),
-    eyeSlash: createElement(EyeSlash, ICON_PROPS),
-    eye: createElement(Eye, ICON_PROPS),
-  });
-
   const buildItems = useCallback(
     (taskId: TaskId): ContextMenuItem[] => {
-      // Read icons from the ref inside the callback — the ref object is stable
-      // and does not need to appear in the dependency array.
-      const icons = iconsRef.current;
-
       const { effectiveSelection, count } = getEffectiveSelection(
         taskId,
         selectedTaskIds
@@ -124,9 +118,9 @@ export function useFullTaskContextMenuItems(): UseFullTaskContextMenuItemsResult
           handlePaste,
           canCopyOrCut,
           canPaste,
-          cutIcon: icons.cut,
-          copyIcon: icons.copy,
-          pasteIcon: icons.paste,
+          cutIcon: ICONS.cut,
+          copyIcon: ICONS.copy,
+          pasteIcon: ICONS.paste,
         })
       );
 
@@ -136,8 +130,8 @@ export function useFullTaskContextMenuItems(): UseFullTaskContextMenuItemsResult
           taskId,
           insertTaskAbove,
           insertTaskBelow,
-          insertAboveIcon: icons.insertAbove,
-          insertBelowIcon: icons.insertBelow,
+          insertAboveIcon: ICONS.insertAbove,
+          insertBelowIcon: ICONS.insertBelow,
         })
       );
       items.push(
@@ -146,7 +140,7 @@ export function useFullTaskContextMenuItems(): UseFullTaskContextMenuItemsResult
           taskId,
           deleteSelectedTasks,
           deleteTask,
-          icon: icons.trash,
+          icon: ICONS.trash,
           separator: true,
         })
       );
@@ -162,10 +156,10 @@ export function useFullTaskContextMenuItems(): UseFullTaskContextMenuItemsResult
           outdentSelectedTasks,
           groupSelectedTasks,
           ungroupSelectedTasks,
-          indentIcon: icons.indent,
-          outdentIcon: icons.outdent,
-          groupIcon: icons.group,
-          ungroupIcon: icons.ungroup,
+          indentIcon: ICONS.indent,
+          outdentIcon: ICONS.outdent,
+          groupIcon: ICONS.group,
+          ungroupIcon: ICONS.ungroup,
         })
       );
 
@@ -175,7 +169,7 @@ export function useFullTaskContextMenuItems(): UseFullTaskContextMenuItemsResult
           count,
           effectiveSelection,
           hideRows,
-          icon: icons.eyeSlash,
+          icon: ICONS.eyeSlash,
         })
       );
 
@@ -187,7 +181,7 @@ export function useFullTaskContextMenuItems(): UseFullTaskContextMenuItemsResult
         hiddenCount: hiddenInRangeCount,
         unhideSelection,
         selectedTaskIds,
-        icon: icons.eye,
+        icon: ICONS.eye,
       });
       if (unhideItem && selectedTaskIds.includes(taskId)) {
         items.push(unhideItem);
@@ -218,8 +212,7 @@ export function useFullTaskContextMenuItems(): UseFullTaskContextMenuItemsResult
       hideRows,
       unhideSelection,
       getHiddenInSelectionCount,
-      // iconsRef is intentionally omitted: refs are stable by definition and
-      // reading .current inside the callback is the idiomatic pattern.
+      // ICONS is intentionally omitted: it is a module-level constant and never changes.
     ]
   );
 

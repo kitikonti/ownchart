@@ -142,23 +142,23 @@ export function useZoom({
     if (!enabled) return;
 
     const handleKeyDown = (e: KeyboardEvent): void => {
-      // Check if target is an input element
-      const target = e.target as HTMLElement;
+      // When the event target is an HTMLElement, check whether it is an editable
+      // input field and suppress zoom shortcuts in that case. When the target is
+      // not an HTMLElement (e.g. the window object itself), there is no input to
+      // suppress, so zoom shortcuts are allowed to proceed.
       const isInput =
-        target.tagName === "INPUT" ||
-        target.tagName === "TEXTAREA" ||
-        target.isContentEditable;
+        e.target instanceof HTMLElement &&
+        (e.target.tagName === "INPUT" ||
+          e.target.tagName === "TEXTAREA" ||
+          e.target.isContentEditable);
 
       // Zoom shortcuts (Ctrl/Cmd + key)
       if ((e.ctrlKey || e.metaKey) && !isInput) {
-        switch (e.key) {
-          case "0": {
-            e.preventDefault();
-            const anchor = computeViewportCenterAnchor();
-            const result = resetZoom(anchor);
-            applyScrollLeft(result?.newScrollLeft ?? null);
-            break;
-          }
+        if (e.key === "0") {
+          e.preventDefault();
+          const anchor = computeViewportCenterAnchor();
+          const result = resetZoom(anchor);
+          applyScrollLeft(result?.newScrollLeft ?? null);
         }
       }
     };

@@ -20,11 +20,16 @@ export interface TaskContextMenuState {
 
 // ─── Helpers ───
 
+export interface EffectiveSelection {
+  effectiveSelection: TaskId[];
+  count: number;
+}
+
 /** Compute effective selection: use current selection if task is in it, otherwise just the task. */
 export function getEffectiveSelection(
   taskId: TaskId,
   selectedTaskIds: TaskId[]
-): { effectiveSelection: TaskId[]; count: number } {
+): EffectiveSelection {
   const effectiveSelection = selectedTaskIds.includes(taskId)
     ? selectedTaskIds
     : [taskId];
@@ -220,7 +225,11 @@ export interface UnhideItemParams {
   icon: ReactNode;
 }
 
-/** Build an unhide menu item (only visible when hidden rows exist in selection range). */
+/**
+ * Build an unhide menu item (only visible when hidden rows exist in selection range).
+ * Requires at least 2 selected tasks because a hidden row can only exist *between*
+ * two selected rows — a single selected task has no range to contain hidden rows.
+ */
 export function buildUnhideItem(
   params: UnhideItemParams
 ): ContextMenuItem | null {
