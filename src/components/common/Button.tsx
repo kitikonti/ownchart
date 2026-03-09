@@ -56,9 +56,11 @@ const sizeStyles: Record<ButtonSize, string> = {
 
 /**
  * Tracks icon-only buttons that have already triggered the missing-aria-label
- * warning in DEV mode. Keyed on the button's aria-label value (or the sentinel
- * "«no aria-label»") so each unique omission is only warned about once per
- * session rather than on every render.
+ * warning in DEV mode. Keyed on the button's `id` prop when present, so only
+ * identified buttons are deduplicated (one warning per unique id).
+ * Anonymous buttons (no `id`) always emit a warning — deduplicating them by a
+ * shared sentinel would silently suppress warnings for distinct buttons added
+ * later in the session.
  */
 const warnedIconOnlyKeys = import.meta.env.DEV ? new Set<string>() : null;
 
@@ -108,13 +110,19 @@ export const Button = memo(
       (Children.count(children) === 0 || !children) &&
       !props["aria-label"]
     ) {
-      // Use the element's id as a deduplication key so the console is not
-      // flooded during re-renders of the same button. Fall back to a static
-      // sentinel — the warning will fire once and subsequent renders are
-      // suppressed. This is a best-effort heuristic.
-      const warnKey = props.id ?? "«anonymous»";
-      if (warnedIconOnlyKeys && !warnedIconOnlyKeys.has(warnKey)) {
-        warnedIconOnlyKeys.add(warnKey);
+      // Deduplicate by `id` when available so the console is not flooded during
+      // re-renders of the same identified button.
+      // Anonymous buttons (no `id`) always emit the warning — using a shared
+      // sentinel would suppress warnings for distinct anonymous buttons added
+      // later in the session, masking real accessibility gaps.
+      const warnKey = props.id;
+      if (
+        warnedIconOnlyKeys &&
+        (warnKey === undefined || !warnedIconOnlyKeys.has(warnKey))
+      ) {
+        if (warnKey !== undefined) {
+          warnedIconOnlyKeys.add(warnKey);
+        }
         console.warn(
           "[Button] Icon-only button detected without an `aria-label`. " +
             "Screen readers will not be able to announce this button's purpose. " +

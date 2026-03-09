@@ -8,7 +8,6 @@ import {
   useCallback,
   useRef,
   memo,
-  type JSX,
   type ReactNode,
 } from "react";
 

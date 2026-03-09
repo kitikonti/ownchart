@@ -22,7 +22,6 @@ interface ZoomDialogProps {
   onSelect: (zoom: number | "fit") => void;
 }
 
-// Zoom preset options
 const ZOOM_PRESETS = [
   { value: "fit" as const, label: "Fit to View" },
   { value: 2.0, label: "200%" },
@@ -85,6 +84,21 @@ export const ZoomDialog = memo(function ZoomDialog({
     onSelect(selectedValue);
   }, [onSelect, selectedValue]);
 
+  /**
+   * Allow keyboard users to confirm the selected preset by pressing Enter while
+   * focus is inside the radio group — matching the expected behaviour of a
+   * standard dialog with an OK button.
+   */
+  const handleRadioGroupKeyDown = useCallback(
+    (e: React.KeyboardEvent<HTMLDivElement>): void => {
+      if (e.key === "Enter") {
+        e.preventDefault();
+        handleOk();
+      }
+    },
+    [handleOk]
+  );
+
   return (
     <Modal
       isOpen={isOpen}
@@ -111,7 +125,18 @@ export const ZoomDialog = memo(function ZoomDialog({
       headerStyle="bordered"
       footerStyle="bordered"
     >
-      <div className="space-y-1" role="radiogroup" aria-label="Zoom level">
+      {/* tabIndex={-1} satisfies the jsx-a11y rule that interactive roles must be
+          focusable, while not adding the container to the natural Tab order
+          (individual radio inputs inside are already Tab-reachable). The
+          onKeyDown handler intercepts Enter to confirm — radio inputs do not
+          have a native Enter behaviour that submits without a <form>. */}
+      <div
+        className="space-y-1"
+        role="radiogroup"
+        aria-label="Zoom level"
+        tabIndex={-1}
+        onKeyDown={handleRadioGroupKeyDown}
+      >
         {ZOOM_PRESETS.map((preset) => (
           <label
             key={String(preset.value)}
