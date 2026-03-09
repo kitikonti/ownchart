@@ -31,8 +31,8 @@ const defaultOptions: PdfExportOptions = {
   pageSize: "a4",
   orientation: "landscape",
   marginPreset: "normal",
-  header: { showProjectName: false, showExportDate: false },
-  footer: { showProjectName: false, showExportDate: false },
+  header: { showProjectName: false, showAuthor: false, showExportDate: false },
+  footer: { showProjectName: false, showAuthor: false, showExportDate: false },
   metadata: {},
 };
 
@@ -311,6 +311,22 @@ describe("pdfLayout", () => {
       expect(result.offsetX).toBeCloseTo(expectedCenter, 5);
     });
 
+    it("returns safe defaults for zero content width", () => {
+      const result = calculateScale(0, 500, defaultOptions);
+      expect(result.scale).toBe(1);
+      expect(result.chartWidth).toBe(0);
+      expect(result.chartHeight).toBe(0);
+      expect(Number.isNaN(result.scale)).toBe(false);
+    });
+
+    it("returns safe defaults for zero content height", () => {
+      const result = calculateScale(1000, 0, defaultOptions);
+      expect(result.scale).toBe(1);
+      expect(result.chartWidth).toBe(0);
+      expect(result.chartHeight).toBe(0);
+      expect(Number.isNaN(result.scale)).toBe(false);
+    });
+
     it("scales chart to fit on custom page size", () => {
       const customOptions: PdfExportOptions = {
         ...defaultOptions,
@@ -381,6 +397,13 @@ describe("pdfLayout", () => {
     it("handles very small maxWidth", () => {
       const result = truncateText("Hello World", 5, 12);
       expect(result.length).toBeLessThanOrEqual(5);
+    });
+
+    it("does not produce negative-index truncation when maxChars <= 3", () => {
+      // With a very narrow width, maxChars may be 0-3; should not produce "..." overflow
+      const result = truncateText("Hello", 0.1, 12);
+      // Result must be shorter than the original and must not end with "..." when shorter than 3 chars
+      expect(result.length).toBeLessThanOrEqual(3);
     });
   });
 

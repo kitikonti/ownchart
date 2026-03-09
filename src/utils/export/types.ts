@@ -7,11 +7,6 @@ import type {
   TaskLabelPosition,
 } from "../../types/preferences.types";
 import type { Task } from "../../types/chart.types";
-import {
-  PNG_EXPORT_DPI,
-  calculatePixelDimensions,
-  formatDpiDescription,
-} from "./dpi";
 
 // =============================================================================
 // Export Format Types
@@ -51,6 +46,16 @@ export interface PdfCustomPageSize {
   height: number;
 }
 
+/**
+ * Default custom page dimensions (mm) used as fallback when no custom size is provided.
+ * 500 × 300 mm is a generous landscape canvas — wider than A3 (420 mm), suitable for
+ * projects spanning many months that don't map cleanly to a standard paper size.
+ */
+export const DEFAULT_CUSTOM_PAGE_SIZE: PdfCustomPageSize = {
+  width: 500,
+  height: 300,
+};
+
 /** PDF margin preset */
 export type PdfMarginPreset = "normal" | "narrow" | "wide" | "none" | "custom";
 
@@ -69,20 +74,23 @@ export interface PdfHeaderFooter {
   showExportDate: boolean;
 }
 
+/** PDF document metadata (title, author, subject) */
+export interface PdfMetadata {
+  title?: string;
+  author?: string;
+  subject?: string;
+}
+
 /** PDF-specific export options */
 export interface PdfExportOptions {
   pageSize: PdfPageSize;
-  customPageSize?: PdfCustomPageSize; // for custom page size
+  customPageSize?: PdfCustomPageSize; // only used when pageSize === "custom"
   orientation: PdfOrientation;
   marginPreset: PdfMarginPreset;
   customMargins?: PdfMargins;
   header: PdfHeaderFooter;
   footer: PdfHeaderFooter;
-  metadata: {
-    title?: string;
-    author?: string;
-    subject?: string;
-  };
+  metadata: PdfMetadata;
 }
 
 /** PDF page dimensions in mm (landscape orientation by default) */
@@ -100,19 +108,51 @@ export const PDF_PAGE_SIZES: Record<
   tabloid: { width: 432, height: 279 },
 };
 
+// Named margin constants to avoid magic numbers in PDF_MARGIN_PRESETS.
+// "normal" is the baseline; "narrow" halves it; "wide" roughly doubles it.
+const PDF_MARGIN_NORMAL_TOPBOTTOM_MM = 10;
+const PDF_MARGIN_NORMAL_SIDE_MM = 15;
+const PDF_MARGIN_NARROW_MM = 5;
+const PDF_MARGIN_WIDE_TOPBOTTOM_MM = 20;
+const PDF_MARGIN_WIDE_SIDE_MM = 25;
+
 /** PDF margin presets in mm */
 export const PDF_MARGIN_PRESETS: Record<PdfMarginPreset, PdfMargins> = {
-  normal: { top: 10, bottom: 10, left: 15, right: 15 },
-  narrow: { top: 5, bottom: 5, left: 5, right: 5 },
-  wide: { top: 20, bottom: 20, left: 25, right: 25 },
+  normal: {
+    top: PDF_MARGIN_NORMAL_TOPBOTTOM_MM,
+    bottom: PDF_MARGIN_NORMAL_TOPBOTTOM_MM,
+    left: PDF_MARGIN_NORMAL_SIDE_MM,
+    right: PDF_MARGIN_NORMAL_SIDE_MM,
+  },
+  narrow: {
+    top: PDF_MARGIN_NARROW_MM,
+    bottom: PDF_MARGIN_NARROW_MM,
+    left: PDF_MARGIN_NARROW_MM,
+    right: PDF_MARGIN_NARROW_MM,
+  },
+  wide: {
+    top: PDF_MARGIN_WIDE_TOPBOTTOM_MM,
+    bottom: PDF_MARGIN_WIDE_TOPBOTTOM_MM,
+    left: PDF_MARGIN_WIDE_SIDE_MM,
+    right: PDF_MARGIN_WIDE_SIDE_MM,
+  },
   none: { top: 0, bottom: 0, left: 0, right: 0 },
-  custom: { top: 10, bottom: 10, left: 15, right: 15 },
+  // "custom" fallback mirrors "normal" so users see a sensible starting point
+  // when they first switch to the custom preset.
+  custom: {
+    top: PDF_MARGIN_NORMAL_TOPBOTTOM_MM,
+    bottom: PDF_MARGIN_NORMAL_TOPBOTTOM_MM,
+    left: PDF_MARGIN_NORMAL_SIDE_MM,
+    right: PDF_MARGIN_NORMAL_SIDE_MM,
+  },
 };
 
 /** Default PDF export options */
 export const DEFAULT_PDF_OPTIONS: PdfExportOptions = {
   pageSize: "a4",
-  customPageSize: { width: 500, height: 300 },
+  // Pre-seeded so the user sees a sensible canvas size when switching to "custom"
+  // even though pageSize defaults to "a4" and customPageSize is normally ignored.
+  customPageSize: DEFAULT_CUSTOM_PAGE_SIZE,
   orientation: "landscape",
   marginPreset: "normal",
   header: {
@@ -178,16 +218,20 @@ export type ExportColumnKey =
   | "duration"
   | "progress";
 
-/** Data-only columns (excludes layout columns like color/name that need special rendering) */
-export type ExportDataColumnKey =
-  | "startDate"
-  | "endDate"
-  | "duration"
-  | "progress";
+/**
+ * Data-only columns (excludes layout columns like color/name that need special rendering).
+ * Use this type when only data cells (dates, duration, progress) are relevant,
+ * e.g. for column auto-fit calculations that skip the fixed-width layout columns.
+ */
+export type ExportDataColumnKey = Exclude<ExportColumnKey, "color" | "name">;
 
 /**
  * Default columns shown when no explicit selection has been made.
  * Used as fallback in ExportRenderer and SVG export when selectedColumns is empty.
+ *
+ * This is an intentional subset of ExportColumnKey — "color" and "duration" are
+ * omitted from the default to keep the exported table compact. When new column keys
+ * are added to ExportColumnKey, consider whether they should appear here by default.
  */
 export const DEFAULT_EXPORT_COLUMNS: ExportColumnKey[] = [
   "name",
@@ -202,6 +246,9 @@ export type ExportZoomMode = "currentView" | "custom" | "fitToWidth";
 /** Date range mode for export */
 export type ExportDateRangeMode = "all" | "visible" | "custom";
 
+/** Background fill mode for export (white canvas or transparent) */
+export type ExportBackground = "white" | "transparent";
+
 /** Quick preset for common export sizes */
 export interface ExportQuickPreset {
   key: string;
@@ -211,12 +258,13 @@ export interface ExportQuickPreset {
 }
 
 /**
- * Export options for PNG generation.
+ * Common export options shared across all export formats (PNG, PDF, SVG).
+ * Format-specific options live in {@link PdfExportOptions} and {@link SvgExportOptions}.
  */
 export interface ExportOptions {
   /** How the zoom level is determined */
   zoomMode: ExportZoomMode;
-  /** Timeline zoom level (affects horizontal scale) - used when zoomMode is 'preset' or 'custom' */
+  /** Timeline zoom level (affects horizontal scale) - used when zoomMode is 'custom' */
   timelineZoom: number;
   /** Target width in pixels - used when zoomMode is 'fitToWidth' */
   fitToWidth: number;
@@ -238,24 +286,31 @@ export interface ExportOptions {
   includeGridLines: boolean;
   /** Include weekend highlighting */
   includeWeekends: boolean;
-  /** Include holiday highlighting (Sprint 1.5.9) */
+  /** Include holiday highlighting */
   includeHolidays: boolean;
-  /** Task label position on bars (Sprint 1.5.9) */
+  /** Task label position on bars */
   taskLabelPosition: TaskLabelPosition;
-  /** Background color */
-  background: "white" | "transparent";
+  /** Background fill mode */
+  background: ExportBackground;
   /** UI density for export */
   density: UiDensity;
 }
 
-/** Boolean toggle keys in ExportOptions (type-safe subset for checkbox groups) */
-export type ExportBooleanKey =
-  | "includeHeader"
-  | "includeTodayMarker"
-  | "includeDependencies"
-  | "includeGridLines"
-  | "includeWeekends"
-  | "includeHolidays";
+/**
+ * Boolean toggle keys in ExportOptions (type-safe subset for checkbox groups).
+ * Derived automatically from ExportOptions so it stays in sync when new boolean
+ * fields are added — no manual maintenance required.
+ *
+ * `Required<ExportOptions>` is applied first so that optional fields (which produce
+ * `T | undefined`) don't widen their value type and accidentally fail the `extends boolean`
+ * guard. After `Required<>`, every field is non-optional and the mapped type correctly
+ * narrows to only the keys whose resolved value type is exactly `boolean`.
+ */
+export type ExportBooleanKey = {
+  [K in keyof Required<ExportOptions>]: Required<ExportOptions>[K] extends boolean
+    ? K
+    : never;
+}[keyof Required<ExportOptions>];
 
 /**
  * Preset zoom options for export.
@@ -270,58 +325,17 @@ export const EXPORT_ZOOM_PRESETS = {
 
 export type ExportZoomPreset = keyof typeof EXPORT_ZOOM_PRESETS;
 
-/**
- * Generate a quick preset from a page size.
- * Uses PNG_EXPORT_DPI (150) for print-quality output.
- */
-function createPagePreset(
-  key: string,
-  label: string,
-  pageSize: keyof typeof PDF_PAGE_SIZES,
-  orientation: "landscape" | "portrait" = "landscape"
-): ExportQuickPreset {
-  const size = PDF_PAGE_SIZES[pageSize];
-  const widthMm = orientation === "landscape" ? size.width : size.height;
-  const heightMm = orientation === "landscape" ? size.height : size.width;
-  const dims = calculatePixelDimensions(widthMm, heightMm, PNG_EXPORT_DPI);
+/** Default fitToWidth value in pixels (HD screen width) */
+export const DEFAULT_FIT_TO_WIDTH_PX = 1920;
 
-  return {
-    key,
-    label,
-    description: formatDpiDescription(dims.width, dims.height, PNG_EXPORT_DPI),
-    targetWidth: dims.width,
-  };
-}
+/** HD (1080p) screen height in pixels */
+export const HD_SCREEN_HEIGHT_PX = 1080;
 
-/**
- * Quick presets for common export target widths.
- * Paper sizes are calculated at PNG_EXPORT_DPI (150 DPI) for print quality.
- * Screen sizes use fixed pixel values.
- */
-export const EXPORT_QUICK_PRESETS: ExportQuickPreset[] = [
-  // Paper sizes (calculated from mm at 150 DPI)
-  createPagePreset("a4-landscape", "A4 Landscape", "a4", "landscape"),
-  createPagePreset("a3-landscape", "A3 Landscape", "a3", "landscape"),
-  createPagePreset(
-    "letter-landscape",
-    "Letter Landscape",
-    "letter",
-    "landscape"
-  ),
-  // Screen sizes (fixed pixel values)
-  {
-    key: "hd-screen",
-    label: "HD Screen",
-    description: "1920 × 1080 px",
-    targetWidth: 1920,
-  },
-  {
-    key: "4k-screen",
-    label: "4K Screen",
-    description: "3840 × 2160 px",
-    targetWidth: 3840,
-  },
-];
+/** 4K (UHD) screen width in pixels */
+export const UHD_SCREEN_WIDTH_PX = 3840;
+
+/** 4K (UHD) screen height in pixels */
+export const UHD_SCREEN_HEIGHT_PX = 2160;
 
 /** Minimum zoom level for export */
 export const EXPORT_ZOOM_MIN = 0.05;
@@ -329,10 +343,10 @@ export const EXPORT_ZOOM_MIN = 0.05;
 /** Maximum zoom level for export */
 export const EXPORT_ZOOM_MAX = 3.0;
 
-/** Zoom threshold below which labels become hard to read */
+/** Zoom multiplier (1.0 = 100%) below which labels become hard to read */
 export const EXPORT_ZOOM_READABLE_THRESHOLD = 0.15;
 
-/** Zoom threshold below which labels are typically hidden */
+/** Zoom multiplier (1.0 = 100%) below which labels are typically hidden */
 export const EXPORT_ZOOM_LABELS_HIDDEN_THRESHOLD = 0.08;
 
 /** Maximum safe canvas width (WebGL limit on many GPUs) */
@@ -347,7 +361,7 @@ export const EXPORT_LARGE_WIDTH_THRESHOLD = 4000;
 export const DEFAULT_EXPORT_OPTIONS: ExportOptions = {
   zoomMode: "currentView",
   timelineZoom: EXPORT_ZOOM_PRESETS.STANDARD,
-  fitToWidth: 1920,
+  fitToWidth: DEFAULT_FIT_TO_WIDTH_PX,
   dateRangeMode: "all",
   selectedColumns: [],
   includeHeader: true,
@@ -407,8 +421,24 @@ export const INITIAL_EXPORT_STATE: ExportState = {
 export interface ExportLayoutInput {
   tasks: Task[];
   options: ExportOptions;
+  /**
+   * Per-column pixel widths for the task table. Required when selectedColumns is
+   * non-empty; omit (or pass undefined) for timeline-only exports.
+   */
   columnWidths?: Record<string, number>;
+  /**
+   * Current app timeline zoom level (unitless multiplier). Required when
+   * options.zoomMode === 'currentView' to replicate the on-screen zoom in the export.
+   */
   currentAppZoom?: number;
+  /**
+   * Date range spanning all tasks (earliest start → latest end).
+   * Required when options.dateRangeMode === 'all' or 'custom'.
+   */
   projectDateRange?: { start: Date; end: Date };
+  /**
+   * Currently visible date range on screen.
+   * Required when options.dateRangeMode === 'visible'.
+   */
   visibleDateRange?: { start: Date; end: Date };
 }

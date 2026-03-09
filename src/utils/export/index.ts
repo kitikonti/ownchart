@@ -67,12 +67,14 @@ export {
 } from "./dpi";
 export {
   DEFAULT_EXPORT_OPTIONS,
+  DEFAULT_FIT_TO_WIDTH_PX,
   DEFAULT_PDF_OPTIONS,
   DEFAULT_SVG_OPTIONS,
   EXPORT_ZOOM_PRESETS,
   INITIAL_EXPORT_STATE,
   PDF_PAGE_SIZES,
   PDF_MARGIN_PRESETS,
+  UHD_SCREEN_WIDTH_PX,
   type ExportColumnKey,
   type ExportFormat,
   type ExportLayoutInput,
@@ -82,6 +84,7 @@ export {
   type PdfExportOptions,
   type PdfCustomPageSize,
   type PdfHeaderFooter,
+  type PdfMetadata,
   type PdfMarginPreset,
   type PdfMargins,
   type PdfOrientation,
@@ -90,6 +93,7 @@ export {
   type SvgExportOptions,
   type SvgStyleMode,
   type SvgTextMode,
+  type ExportQuickPreset,
 } from "./types";
 export {
   BASE_PIXELS_PER_DAY,
@@ -111,6 +115,9 @@ export {
   getMargins,
   mmToPx,
 } from "./pdfLayout";
+
+// Page size presets (runtime data, separate from type definitions)
+export { EXPORT_QUICK_PRESETS } from "./pagePresets";
 
 import {
   captureChart,

@@ -9,11 +9,41 @@ import {
   DEFAULT_PDF_OPTIONS,
   DEFAULT_SVG_OPTIONS,
   DEFAULT_EXPORT_OPTIONS,
+  DEFAULT_CUSTOM_PAGE_SIZE,
   EXPORT_ZOOM_PRESETS,
   EXPORT_MAX_SAFE_WIDTH,
   EXPORT_ZOOM_MIN,
   EXPORT_ZOOM_MAX,
+  DEFAULT_FIT_TO_WIDTH_PX,
+  UHD_SCREEN_WIDTH_PX,
+  type ExportBooleanKey,
 } from "../../../../src/utils/export/types";
+import { EXPORT_QUICK_PRESETS } from "../../../../src/utils/export/pagePresets";
+
+// Compile-time guard: ExportBooleanKey must include exactly these keys.
+// If a boolean field is renamed or its type changes, TypeScript will fail here.
+type ExpectedBooleanKeys =
+  | "includeHeader"
+  | "includeTodayMarker"
+  | "includeDependencies"
+  | "includeGridLines"
+  | "includeWeekends"
+  | "includeHolidays";
+
+// Both directions must hold for the sets to be equal.
+type BooleanKeyCoversExpected = ExpectedBooleanKeys extends ExportBooleanKey
+  ? true
+  : false;
+type ExpectedCoversBooleanKey = ExportBooleanKey extends ExpectedBooleanKeys
+  ? true
+  : false;
+
+// These will produce a TypeScript error at compile time if the sets diverge.
+const _booleanKeyCheck1: BooleanKeyCoversExpected = true;
+const _booleanKeyCheck2: ExpectedCoversBooleanKey = true;
+// Suppress "unused variable" warnings — the value is never read at runtime.
+void _booleanKeyCheck1;
+void _booleanKeyCheck2;
 
 describe("export types", () => {
   describe("PDF_PAGE_SIZES", () => {
@@ -53,6 +83,22 @@ describe("export types", () => {
       Object.values(PDF_PAGE_SIZES).forEach((dims) => {
         expect(dims.width).toBeGreaterThan(dims.height);
       });
+    });
+  });
+
+  describe("DEFAULT_CUSTOM_PAGE_SIZE", () => {
+    it("has generous landscape canvas width of 500 mm", () => {
+      expect(DEFAULT_CUSTOM_PAGE_SIZE.width).toBe(500);
+    });
+
+    it("has canvas height of 300 mm", () => {
+      expect(DEFAULT_CUSTOM_PAGE_SIZE.height).toBe(300);
+    });
+
+    it("is larger than A4 landscape to serve as a wide canvas fallback", () => {
+      expect(DEFAULT_CUSTOM_PAGE_SIZE.width).toBeGreaterThan(
+        PDF_PAGE_SIZES.a4.width
+      );
     });
   });
 
@@ -259,6 +305,71 @@ describe("export types", () => {
 
     it("has zoom min less than zoom max", () => {
       expect(EXPORT_ZOOM_MIN).toBeLessThan(EXPORT_ZOOM_MAX);
+    });
+  });
+
+  describe("EXPORT_QUICK_PRESETS", () => {
+    it("contains exactly 5 presets", () => {
+      expect(EXPORT_QUICK_PRESETS).toHaveLength(5);
+    });
+
+    it("has unique keys across all presets", () => {
+      const keys = EXPORT_QUICK_PRESETS.map((p) => p.key);
+      expect(new Set(keys).size).toBe(keys.length);
+    });
+
+    it("all presets have positive targetWidth", () => {
+      EXPORT_QUICK_PRESETS.forEach((preset) => {
+        expect(preset.targetWidth).toBeGreaterThan(0);
+      });
+    });
+
+    it("all presets have non-empty label and description", () => {
+      EXPORT_QUICK_PRESETS.forEach((preset) => {
+        expect(preset.label.length).toBeGreaterThan(0);
+        expect(preset.description.length).toBeGreaterThan(0);
+      });
+    });
+
+    it("A4 landscape preset has wider targetWidth than A4 portrait would (landscape is wider)", () => {
+      const a4 = EXPORT_QUICK_PRESETS.find((p) => p.key === "a4-landscape");
+      expect(a4).toBeDefined();
+      // A4 landscape at 150 DPI: (297 mm / 25.4) * 150 ≈ 1754 px
+      expect(a4!.targetWidth).toBeGreaterThan(1700);
+      expect(a4!.targetWidth).toBeLessThan(1800);
+    });
+
+    it("A3 landscape preset has larger targetWidth than A4 landscape (A3 is bigger)", () => {
+      const a4 = EXPORT_QUICK_PRESETS.find((p) => p.key === "a4-landscape");
+      const a3 = EXPORT_QUICK_PRESETS.find((p) => p.key === "a3-landscape");
+      expect(a4).toBeDefined();
+      expect(a3).toBeDefined();
+      expect(a3!.targetWidth).toBeGreaterThan(a4!.targetWidth);
+    });
+
+    it("HD screen preset uses DEFAULT_FIT_TO_WIDTH_PX as targetWidth", () => {
+      const hd = EXPORT_QUICK_PRESETS.find((p) => p.key === "hd-screen");
+      expect(hd).toBeDefined();
+      expect(hd!.targetWidth).toBe(DEFAULT_FIT_TO_WIDTH_PX);
+    });
+
+    it("4K screen preset uses UHD_SCREEN_WIDTH_PX as targetWidth", () => {
+      const uhd = EXPORT_QUICK_PRESETS.find((p) => p.key === "4k-screen");
+      expect(uhd).toBeDefined();
+      expect(uhd!.targetWidth).toBe(UHD_SCREEN_WIDTH_PX);
+    });
+
+    it("screen presets have larger targetWidth than A4 landscape", () => {
+      const a4 = EXPORT_QUICK_PRESETS.find((p) => p.key === "a4-landscape");
+      const hd = EXPORT_QUICK_PRESETS.find((p) => p.key === "hd-screen");
+      const uhd = EXPORT_QUICK_PRESETS.find((p) => p.key === "4k-screen");
+      expect(a4).toBeDefined();
+      expect(hd).toBeDefined();
+      expect(uhd).toBeDefined();
+      // 4K is wider than HD
+      expect(uhd!.targetWidth).toBeGreaterThan(hd!.targetWidth);
+      // HD is wider than A4 landscape at 150 DPI
+      expect(hd!.targetWidth).toBeGreaterThan(a4!.targetWidth);
     });
   });
 });

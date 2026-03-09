@@ -45,6 +45,7 @@ import {
   type ExportOptions,
   type SvgExportOptions,
   type ExportColumnKey,
+  type ExportBackground,
   DEFAULT_EXPORT_COLUMNS,
 } from "./types";
 import type {
@@ -308,7 +309,7 @@ export function resolveExportLayout(
  */
 export function createRootSvg(
   dimensions: { width: number; height: number },
-  background: "white" | "transparent",
+  background: ExportBackground,
   projectName?: string
 ): SVGSVGElement {
   const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
