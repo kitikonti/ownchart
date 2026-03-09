@@ -2,15 +2,44 @@
  * Unit tests for useTaskRowData helper functions.
  * Tests getClipboardPosition, getSelectionPosition, and getHiddenGap
  * which compute derived row state for the task table.
+ *
+ * Also includes integration tests for the useTaskRowData hook itself,
+ * verifying the assembled taskRowData (clipboard/selection/hidden state).
  */
 
-import { describe, it, expect } from "vitest";
+import { describe, it, expect, vi, beforeEach } from "vitest";
+import { renderHook } from "@testing-library/react";
 import {
   getClipboardPosition,
   getSelectionPosition,
   getHiddenGap,
   getHiddenGapAbove,
+  useTaskRowData,
 } from "../../../src/hooks/useTaskRowData";
+import { useTaskStore } from "../../../src/store/slices/taskSlice";
+import { useChartStore } from "../../../src/store/slices/chartSlice";
+import type { Task } from "../../../src/types/chart.types";
+
+// react-hot-toast is indirectly imported through the store; suppress it in tests.
+vi.mock("react-hot-toast", () => ({
+  default: { success: vi.fn(), error: vi.fn() },
+}));
+
+function createTask(id: string, order: number, overrides: Partial<Task> = {}): Task {
+  return {
+    id,
+    name: `Task ${id}`,
+    startDate: "2025-01-01",
+    endDate: "2025-01-05",
+    duration: 5,
+    progress: 0,
+    color: "#3b82f6",
+    order,
+    metadata: {},
+    type: "task",
+    ...overrides,
+  };
+}
 
 describe("useTaskRowData helpers", () => {
   // ── getClipboardPosition ───────────────────────────────────────────────
@@ -267,5 +296,104 @@ describe("useTaskRowData helpers", () => {
         hiddenAboveCount: 3,
       });
     });
+  });
+});
+
+// ── useTaskRowData hook integration tests ─────────────────────────────────────
+
+describe("useTaskRowData hook", () => {
+  const noopUnhideRange = vi.fn();
+
+  beforeEach(() => {
+    useTaskStore.setState({
+      tasks: [
+        createTask("t1", 0),
+        createTask("t2", 1),
+        createTask("t3", 2),
+        createTask("t4", 3),
+      ],
+      selectedTaskIds: [],
+      clipboardTaskIds: [],
+    });
+    useChartStore.setState({ hiddenTaskIds: [], hiddenColumns: [] });
+    noopUnhideRange.mockClear();
+  });
+
+  it("should return one TaskRowDatum per visible task", () => {
+    const { result } = renderHook(() => useTaskRowData(noopUnhideRange));
+    expect(result.current.taskRowData).toHaveLength(4);
+    expect(result.current.flattenedTaskCount).toBe(4);
+  });
+
+  it("should expose visibleTaskIds in display order", () => {
+    const { result } = renderHook(() => useTaskRowData(noopUnhideRange));
+    expect(result.current.visibleTaskIds).toEqual(["t1", "t2", "t3", "t4"]);
+  });
+
+  it("should set selectionPosition only for selected tasks", () => {
+    useTaskStore.setState({ selectedTaskIds: ["t2", "t3"] });
+    const { result } = renderHook(() => useTaskRowData(noopUnhideRange));
+    const [row1, row2, row3, row4] = result.current.taskRowData;
+
+    expect(row1.selectionPosition).toBeUndefined();
+    expect(row2.selectionPosition).toEqual({ isFirstSelected: true, isLastSelected: false });
+    expect(row3.selectionPosition).toEqual({ isFirstSelected: false, isLastSelected: true });
+    expect(row4.selectionPosition).toBeUndefined();
+  });
+
+  it("should set clipboardPosition only for clipboard tasks", () => {
+    useTaskStore.setState({ clipboardTaskIds: ["t1"] });
+    const { result } = renderHook(() => useTaskRowData(noopUnhideRange));
+    const [row1, row2] = result.current.taskRowData;
+
+    expect(row1.clipboardPosition).toEqual({ isFirst: true, isLast: true });
+    expect(row2.clipboardPosition).toBeUndefined();
+  });
+
+  it("should set hasHiddenAbove and call unhideRange when onUnhideAbove is invoked", () => {
+    useChartStore.setState({ hiddenTaskIds: ["t1"] });
+    const { result } = renderHook(() => useTaskRowData(noopUnhideRange));
+
+    // With t1 hidden, first visible row is t2 at globalRowNumber 2 → 1 hidden above
+    const firstRow = result.current.taskRowData[0];
+    expect(firstRow.hasHiddenAbove).toBe(true);
+    expect(firstRow.hiddenAboveCount).toBe(1);
+    expect(firstRow.onUnhideAbove).toBeDefined();
+
+    firstRow.onUnhideAbove!();
+    expect(noopUnhideRange).toHaveBeenCalledOnce();
+    // fromRowNum = 0 (sentinel for "before the list"), toRowNum = globalRowNumber of t2 = 2
+    expect(noopUnhideRange).toHaveBeenCalledWith(0, 2);
+  });
+
+  it("should set hasHiddenBelow and call unhideRange when onUnhideBelow is invoked", () => {
+    useChartStore.setState({ hiddenTaskIds: ["t3"] });
+    const { result } = renderHook(() => useTaskRowData(noopUnhideRange));
+
+    // t2 at globalRowNumber 2, t3 hidden at row 3, t4 at row 4 → gap of 1 below t2
+    const rows = result.current.taskRowData;
+    const t2Row = rows.find((r) => r.task.id === "t2")!;
+    expect(t2Row.hasHiddenBelow).toBe(true);
+    expect(t2Row.hiddenBelowCount).toBe(1);
+    expect(t2Row.onUnhideBelow).toBeDefined();
+
+    t2Row.onUnhideBelow!();
+    expect(noopUnhideRange).toHaveBeenCalledOnce();
+    // fromRowNum = globalRowNumber of t2 = 2, toRowNum = globalRowNumber of t4 = 4
+    expect(noopUnhideRange).toHaveBeenCalledWith(2, 4);
+  });
+
+  it("should not set onUnhideAbove for first visible row when no tasks are hidden above", () => {
+    const { result } = renderHook(() => useTaskRowData(noopUnhideRange));
+    const firstRow = result.current.taskRowData[0];
+    expect(firstRow.hasHiddenAbove).toBe(false);
+    expect(firstRow.onUnhideAbove).toBeUndefined();
+  });
+
+  it("should not set onUnhideBelow for last visible row when no tasks are hidden below", () => {
+    const { result } = renderHook(() => useTaskRowData(noopUnhideRange));
+    const lastRow = result.current.taskRowData[result.current.taskRowData.length - 1];
+    expect(lastRow.hasHiddenBelow).toBe(false);
+    expect(lastRow.onUnhideBelow).toBeUndefined();
   });
 });

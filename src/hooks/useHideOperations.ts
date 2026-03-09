@@ -9,11 +9,11 @@ import toast from "react-hot-toast";
 import { useChartStore } from "../store/slices/chartSlice";
 import { useHistoryStore } from "../store/slices/historySlice";
 import { useFileStore } from "../store/slices/fileSlice";
-import { useFlattenedTasks } from "./useFlattenedTasks";
 import { CommandType } from "../types/command.types";
 import type { TaskId } from "../types/branded.types";
 import type { FlattenedTask } from "../utils/hierarchy";
 import { pluralize } from "../utils/stringUtils";
+import { useFlattenedTasks } from "./useFlattenedTasks";
 
 interface UseHideOperationsResult {
   /** Hide tasks by IDs (includes descendants for summary tasks). Records undo command. */

@@ -263,4 +263,51 @@ describe("useTableHeaderContextMenu", () => {
       expect(progressToggle?.label).toBe("Progress");
     });
   });
+
+  describe("contextMenuItems — onClick callbacks", () => {
+    it("should call autoFitColumn with the correct columnId when sizeToFit is clicked", () => {
+      const mockAutoFitColumn = vi.fn();
+      useTaskStore.setState({ autoFitColumn: mockAutoFitColumn });
+
+      const { result } = renderHook(() => useTableHeaderContextMenu());
+
+      act(() => {
+        result.current.handleHeaderContextMenu(fakeRightClick(), "startDate");
+      });
+
+      const sizeToFit = result.current.contextMenuItems.find(
+        (item) => item.id === "sizeToFit"
+      );
+      expect(sizeToFit).toBeDefined();
+
+      act(() => {
+        sizeToFit!.onClick();
+      });
+
+      expect(mockAutoFitColumn).toHaveBeenCalledOnce();
+      expect(mockAutoFitColumn).toHaveBeenCalledWith("startDate");
+    });
+
+    it("should call autoFitAllColumns when sizeAllToFit is clicked", () => {
+      const mockAutoFitAllColumns = vi.fn();
+      useTaskStore.setState({ autoFitAllColumns: mockAutoFitAllColumns });
+
+      const { result } = renderHook(() => useTableHeaderContextMenu());
+
+      act(() => {
+        result.current.handleHeaderContextMenu(fakeRightClick(), "name");
+      });
+
+      const sizeAll = result.current.contextMenuItems.find(
+        (item) => item.id === "sizeAllToFit"
+      );
+      expect(sizeAll).toBeDefined();
+
+      act(() => {
+        sizeAll!.onClick();
+      });
+
+      expect(mockAutoFitAllColumns).toHaveBeenCalledOnce();
+    });
+  });
 });

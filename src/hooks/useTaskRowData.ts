@@ -40,6 +40,10 @@ export interface TaskRowDatum {
 
 // ── Pure helper functions (exported for testing) ─────────────────────────────
 
+// Cached zero-gap sentinel for rows that have nothing hidden above them.
+// Avoids allocating a new object on every render for the common case.
+const NO_HIDDEN_ABOVE = { hasHiddenAbove: false, hiddenAboveCount: 0 } as const;
+
 export function getClipboardPosition(
   taskId: TaskId,
   prevTaskId: TaskId | undefined,
@@ -87,10 +91,6 @@ export function getHiddenGapAbove(firstGlobalRowNumber: number): {
     hiddenAboveCount: Math.max(0, count),
   };
 }
-
-// Invariant: globalRowNumber is 1-based and contiguous across allFlattenedTasks.
-// length+1 is therefore a safe sentinel value "one past the end" for gap detection.
-const NO_HIDDEN_ABOVE = { hasHiddenAbove: false, hiddenAboveCount: 0 } as const;
 
 // ── Hook ─────────────────────────────────────────────────────────────────────
 

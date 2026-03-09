@@ -26,6 +26,9 @@ import {
 import type { ColumnId } from "../config/tableColumns";
 import { CONTEXT_MENU } from "../styles/design-tokens";
 
+// Module-level constant: derived from static TASK_COLUMNS config and never changes.
+const HIDEABLE_COLUMNS = getHideableColumns();
+
 interface ContextMenuState {
   position: ContextMenuPosition;
   columnId: ColumnId;
@@ -48,10 +51,6 @@ export function useTableHeaderContextMenu(): UseTableHeaderContextMenuResult {
   const autoFitAllColumns = useTaskStore((state) => state.autoFitAllColumns);
 
   const [contextMenu, setContextMenu] = useState<ContextMenuState | null>(null);
-
-  // Stable list of columns that can be toggled — derived from module-level config,
-  // so this never changes after mount.
-  const hideableColumns = useMemo(() => getHideableColumns(), []);
 
   const handleHeaderContextMenu = useCallback(
     (e: React.MouseEvent, columnId: ColumnId): void => {
@@ -80,6 +79,7 @@ export function useTableHeaderContextMenu(): UseTableHeaderContextMenuResult {
     // ── Group 1: Size to Fit ──
     const canAutoFit =
       columnId !== ROW_NUMBER_COLUMN_ID && columnId !== COLOR_COLUMN_ID;
+    // columnId is a safety fallback — all current TASK_COLUMNS define label.
     const displayLabel = column.menuLabel || column.label || columnId;
 
     const sizeToFitItems: ContextMenuItem[] = [
@@ -110,12 +110,12 @@ export function useTableHeaderContextMenu(): UseTableHeaderContextMenuResult {
     ];
 
     // ── Group 2: Column visibility checkmarks ──
-    const toggleItems: ContextMenuItem[] = hideableColumns.map((col, i) => ({
+    const toggleItems: ContextMenuItem[] = HIDEABLE_COLUMNS.map((col, i) => ({
       id: `toggle_${col.id}`,
       label: col.menuLabel || col.label,
       checked: !hiddenSet.has(col.id),
       onClick: () => toggleColumnVisibility(col.id),
-      separator: i === hideableColumns.length - 1,
+      separator: i === HIDEABLE_COLUMNS.length - 1,
     }));
 
     // ── Group 3: Show All ──
@@ -133,7 +133,6 @@ export function useTableHeaderContextMenu(): UseTableHeaderContextMenuResult {
   }, [
     contextMenu,
     hiddenColumns,
-    hideableColumns,
     toggleColumnVisibility,
     setHiddenColumns,
     autoFitColumn,
