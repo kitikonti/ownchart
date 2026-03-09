@@ -22,23 +22,6 @@ import { buildFlattenedTaskList } from "../hierarchy";
 import { DENSITY_CONFIG } from "../../config/densityConfig";
 import { HEADER_HEIGHT } from "./constants";
 
-/**
- * @deprecated These re-exports exist only for backwards compatibility with callers
- * that imported from pdfLayout before the DPI helpers were extracted to ./dpi.
- * Import directly from './dpi' for new code.
- *
- * Remaining callers that still import from pdfLayout (migrate these, then remove):
- *   - src/utils/export/pdfExport.ts
- *   - src/components/Export/PdfPreview.tsx
- */
-export { INTERNAL_DPI, PNG_EXPORT_DPI, MM_PER_INCH } from "./dpi";
-/** @deprecated Import from './dpi' directly. */
-export {
-  mmToPxAtDpi,
-  calculatePixelDimensions,
-  formatDpiDescription,
-} from "./dpi";
-
 // =============================================================================
 // Derived Constants for PDF
 // =============================================================================
@@ -138,22 +121,24 @@ export function getReservedSpace(section: PdfHeaderFooter): number {
   return hasHeaderFooterContent(section) ? PDF_HEADER_FOOTER_RESERVED_MM : 0;
 }
 
+/** Display names for each PDF page size. Module-level to avoid per-call allocation. */
+const PAGE_SIZE_DISPLAY_NAMES: Record<PdfPageSize, string> = {
+  a4: "A4",
+  a3: "A3",
+  a2: "A2",
+  a1: "A1",
+  a0: "A0",
+  letter: "Letter",
+  legal: "Legal",
+  tabloid: "Tabloid",
+  custom: "Custom",
+};
+
 /**
  * Format page size display name (e.g. "a4" → "A4", "letter" → "Letter").
  */
 export function formatPageSizeName(pageSize: PdfPageSize): string {
-  const names: Record<PdfPageSize, string> = {
-    a4: "A4",
-    a3: "A3",
-    a2: "A2",
-    a1: "A1",
-    a0: "A0",
-    letter: "Letter",
-    legal: "Legal",
-    tabloid: "Tabloid",
-    custom: "Custom",
-  };
-  return names[pageSize];
+  return PAGE_SIZE_DISPLAY_NAMES[pageSize];
 }
 
 /**
@@ -340,7 +325,7 @@ export function truncateText(
   maxWidth: number,
   fontSize: number
 ): string {
-  if (!text) return text;
+  if (text.length === 0) return text;
   if (maxWidth <= 0) return "";
 
   // Approximate character width (varies by font)

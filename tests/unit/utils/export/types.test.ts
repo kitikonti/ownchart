@@ -17,7 +17,33 @@ import {
   EXPORT_QUICK_PRESETS,
   DEFAULT_FIT_TO_WIDTH_PX,
   UHD_SCREEN_WIDTH_PX,
+  type ExportBooleanKey,
 } from "../../../../src/utils/export/types";
+
+// Compile-time guard: ExportBooleanKey must include exactly these keys.
+// If a boolean field is renamed or its type changes, TypeScript will fail here.
+type ExpectedBooleanKeys =
+  | "includeHeader"
+  | "includeTodayMarker"
+  | "includeDependencies"
+  | "includeGridLines"
+  | "includeWeekends"
+  | "includeHolidays";
+
+// Both directions must hold for the sets to be equal.
+type BooleanKeyCoversExpected = ExpectedBooleanKeys extends ExportBooleanKey
+  ? true
+  : false;
+type ExpectedCoversBooleanKey = ExportBooleanKey extends ExpectedBooleanKeys
+  ? true
+  : false;
+
+// These will produce a TypeScript error at compile time if the sets diverge.
+const _booleanKeyCheck1: BooleanKeyCoversExpected = true;
+const _booleanKeyCheck2: ExpectedCoversBooleanKey = true;
+// Suppress "unused variable" warnings — the value is never read at runtime.
+void _booleanKeyCheck1;
+void _booleanKeyCheck2;
 
 describe("export types", () => {
   describe("PDF_PAGE_SIZES", () => {

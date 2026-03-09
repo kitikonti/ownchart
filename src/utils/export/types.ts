@@ -7,7 +7,7 @@ import type {
   TaskLabelPosition,
 } from "../../types/preferences.types";
 import type { Task } from "../../types/chart.types";
-// Used by createPagePreset() to initialise EXPORT_QUICK_PRESETS at module load time
+// Used by createPagePreset() to build EXPORT_QUICK_PRESETS.
 import {
   PNG_EXPORT_DPI,
   calculatePixelDimensions,
