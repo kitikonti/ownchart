@@ -68,6 +68,14 @@ interface UseFullTaskContextMenuItemsResult {
   buildItems: (taskId: TaskId) => ContextMenuItem[];
 }
 
+/**
+ * Build the full 11–12 item context menu for any task in the chart.
+ *
+ * Aggregates all store subscriptions (clipboard, hierarchy, hide/unhide) and
+ * returns a stable `buildItems(taskId)` function. Callers invoke `buildItems`
+ * at right-click time to get the concrete `ContextMenuItem[]` array for the
+ * clicked task, taking the current selection into account.
+ */
 export function useFullTaskContextMenuItems(): UseFullTaskContextMenuItemsResult {
   const selectedTaskIds = useTaskStore((state) => state.selectedTaskIds);
   const insertTaskAbove = useTaskStore((state) => state.insertTaskAbove);

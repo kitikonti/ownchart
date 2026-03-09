@@ -31,7 +31,12 @@ interface UseZoomResult {
  * Must match the class applied to the timeline scroll container in GanttChart. */
 const SCROLL_CONTAINER_CLASS = "gantt-chart-scroll-container";
 
-/** Zoom factor per mouse wheel step (exponential zoom for consistent feel) */
+/**
+ * Zoom factor per mouse wheel step (exponential zoom for consistent feel).
+ * ~15% per step gives a perceptually even zoom progression (like Figma/VS Code):
+ * each step feels the same magnitude regardless of the current zoom level,
+ * because the human visual system perceives zoom logarithmically.
+ */
 const WHEEL_ZOOM_FACTOR = 1.15;
 
 /**

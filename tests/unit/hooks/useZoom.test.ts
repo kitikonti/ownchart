@@ -11,8 +11,6 @@ import { createRef } from 'react';
 describe('useZoom', () => {
   let containerRef: React.RefObject<HTMLDivElement>;
   let setZoomSpy: ReturnType<typeof vi.fn>;
-  let zoomInSpy: ReturnType<typeof vi.fn>;
-  let zoomOutSpy: ReturnType<typeof vi.fn>;
   let resetZoomSpy: ReturnType<typeof vi.fn>;
 
   beforeEach(() => {
@@ -34,8 +32,6 @@ describe('useZoom', () => {
 
     // Create spies
     setZoomSpy = vi.fn();
-    zoomInSpy = vi.fn();
-    zoomOutSpy = vi.fn();
     resetZoomSpy = vi.fn();
 
     // Mock the store
@@ -52,8 +48,6 @@ describe('useZoom', () => {
     });
 
     vi.spyOn(useChartStore.getState(), 'setZoom').mockImplementation(setZoomSpy);
-    vi.spyOn(useChartStore.getState(), 'zoomIn').mockImplementation(zoomInSpy);
-    vi.spyOn(useChartStore.getState(), 'zoomOut').mockImplementation(zoomOutSpy);
     vi.spyOn(useChartStore.getState(), 'resetZoom').mockImplementation(resetZoomSpy);
   });
 
@@ -227,6 +221,8 @@ describe('useZoom', () => {
       document.body.removeChild(textarea);
     });
 
+    // TODO: Enable once jsdom supports isContentEditable correctly
+    // See: https://github.com/jsdom/jsdom/issues/1670
     it.skip('should not trigger in contentEditable elements', () => {
       // Note: contentEditable detection in jsdom has known issues
       renderHook(() => useZoom({ containerRef }));
