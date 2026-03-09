@@ -11,18 +11,24 @@ import type {
 } from "../components/ContextMenu/ContextMenu";
 import { useChartStore } from "../store/slices/chartSlice";
 import { useTaskStore } from "../store/slices/taskSlice";
-import { TASK_COLUMNS, getHideableColumns } from "../config/tableColumns";
+import {
+  TASK_COLUMNS,
+  getHideableColumns,
+  ROW_NUMBER_COLUMN_ID,
+  COLOR_COLUMN_ID,
+} from "../config/tableColumns";
+import type { ColumnId } from "../config/tableColumns";
 import { CONTEXT_MENU } from "../styles/design-tokens";
 
 interface ContextMenuState {
   position: ContextMenuPosition;
-  columnId: string;
+  columnId: ColumnId;
 }
 
 interface UseTableHeaderContextMenuResult {
   contextMenu: ContextMenuState | null;
   contextMenuItems: ContextMenuItem[];
-  handleHeaderContextMenu: (e: React.MouseEvent, columnId: string) => void;
+  handleHeaderContextMenu: (e: React.MouseEvent, columnId: ColumnId) => void;
   closeContextMenu: () => void;
 }
 
@@ -38,7 +44,7 @@ export function useTableHeaderContextMenu(): UseTableHeaderContextMenuResult {
   const [contextMenu, setContextMenu] = useState<ContextMenuState | null>(null);
 
   const handleHeaderContextMenu = useCallback(
-    (e: React.MouseEvent, columnId: string): void => {
+    (e: React.MouseEvent, columnId: ColumnId): void => {
       e.preventDefault();
       setContextMenu({
         position: { x: e.clientX, y: e.clientY },
@@ -64,7 +70,8 @@ export function useTableHeaderContextMenu(): UseTableHeaderContextMenuResult {
     const hiddenSet = new Set(hiddenColumns);
 
     // ── Group 1: Size to Fit ──
-    const canAutoFit = columnId !== "rowNumber" && columnId !== "color";
+    const canAutoFit =
+      columnId !== ROW_NUMBER_COLUMN_ID && columnId !== COLOR_COLUMN_ID;
     const displayLabel = column.menuLabel || column.label || columnId;
 
     items.push({
@@ -85,7 +92,7 @@ export function useTableHeaderContextMenu(): UseTableHeaderContextMenuResult {
         size: CONTEXT_MENU.iconSize,
         weight: CONTEXT_MENU.iconWeight,
       }),
-      onClick: () => autoFitAllColumns(),
+      onClick: autoFitAllColumns,
       separator: true,
     });
 

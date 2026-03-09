@@ -8,7 +8,7 @@ import { useDensityConfig } from "@/store/slices/userPreferencesSlice";
 import { useChartStore } from "@/store/slices/chartSlice";
 import { useTaskTableHeaderStore } from "@/hooks/useTaskTableHeaderStore";
 import type { DensityConfig } from "@/types/preferences.types";
-import type { ColumnDefinition } from "@/config/tableColumns";
+import type { ColumnDefinition, ColumnId } from "@/config/tableColumns";
 import {
   getVisibleColumns,
   buildGridTemplateColumns,
@@ -70,7 +70,7 @@ interface HeaderCellProps {
   columnWidths: Record<string, number>;
   /** Only consumed when column.headerVariant === 'select-all'. */
   onSelectAll?: () => void;
-  onContextMenu: (e: React.MouseEvent, columnId: string) => void;
+  onContextMenu: (e: React.MouseEvent, columnId: ColumnId) => void;
   setColumnWidth: (id: string, width: number) => void;
   autoFitColumn: (id: string) => void;
 }

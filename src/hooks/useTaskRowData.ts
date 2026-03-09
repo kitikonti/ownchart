@@ -73,7 +73,7 @@ export function getHiddenGap(
   const gap = nextGlobalRowNumber - globalRowNumber - 1;
   return {
     hasHiddenBelow: gap > 0,
-    hiddenBelowCount: gap > 0 ? gap : 0,
+    hiddenBelowCount: Math.max(0, gap),
   };
 }
 
@@ -84,7 +84,7 @@ export function getHiddenGapAbove(firstGlobalRowNumber: number): {
   const count = firstGlobalRowNumber - 1;
   return {
     hasHiddenAbove: count > 0,
-    hiddenAboveCount: count > 0 ? count : 0,
+    hiddenAboveCount: Math.max(0, count),
   };
 }
 
