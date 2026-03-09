@@ -161,6 +161,7 @@ export function useHideOperations(): UseHideOperationsResult {
     });
 
     toast.success("All tasks shown");
+    // All store access via getState(); no reactive deps needed.
   }, []);
 
   const unhideRange = useCallback(

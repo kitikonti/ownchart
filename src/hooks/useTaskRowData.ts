@@ -98,6 +98,74 @@ export function getHiddenGapAbove(firstGlobalRowNumber: number): {
 
 // ── Hook ─────────────────────────────────────────────────────────────────────
 
+interface BuildRowDatumParams {
+  item: FlattenedTask;
+  index: number;
+  flattenedTasks: FlattenedTask[];
+  sentinelRowAfterLast: number;
+  clipboardSet: Set<TaskId>;
+  selectedSet: Set<TaskId>;
+  unhideRange: (fromRowNum: number, toRowNum: number) => void;
+}
+
+/**
+ * Builds the full display datum for a single task row.
+ * Extracted from the useMemo callback to keep it under the 50-line budget.
+ */
+function buildTaskRowDatum({
+  item,
+  index,
+  flattenedTasks,
+  sentinelRowAfterLast,
+  clipboardSet,
+  selectedSet,
+  unhideRange,
+}: BuildRowDatumParams): TaskRowDatum {
+  const { task, level, hasChildren, globalRowNumber } = item;
+
+  const prevTaskId = index > 0 ? flattenedTasks[index - 1].task.id : undefined;
+  const nextTask: FlattenedTask | undefined = flattenedTasks[index + 1];
+  const nextTaskId = nextTask?.task.id;
+
+  const nextRowNum = nextTask ? nextTask.globalRowNumber : sentinelRowAfterLast;
+  const { hasHiddenBelow, hiddenBelowCount } = getHiddenGap(
+    globalRowNumber,
+    nextRowNum
+  );
+
+  const above =
+    index === 0 ? getHiddenGapAbove(globalRowNumber) : NO_HIDDEN_ABOVE;
+
+  return {
+    task,
+    level,
+    hasChildren,
+    globalRowNumber,
+    hasHiddenAbove: above.hasHiddenAbove,
+    hiddenAboveCount: above.hiddenAboveCount,
+    onUnhideAbove: above.hasHiddenAbove
+      ? (): void => unhideRange(0, globalRowNumber)
+      : undefined,
+    hasHiddenBelow,
+    hiddenBelowCount,
+    onUnhideBelow: hasHiddenBelow
+      ? (): void => unhideRange(globalRowNumber, nextRowNum)
+      : undefined,
+    clipboardPosition: getClipboardPosition(
+      task.id,
+      prevTaskId,
+      nextTaskId,
+      clipboardSet
+    ),
+    selectionPosition: getSelectionPosition(
+      task.id,
+      prevTaskId,
+      nextTaskId,
+      selectedSet
+    ),
+  };
+}
+
 /**
  * Derives per-row display state for each visible task in TaskTable.
  * Computes clipboard position, selection position, and hidden-row gap indicators.
@@ -140,56 +208,16 @@ export function useTaskRowData(
     // (globalRowNumber is 1-based; allFlattenedTasks.length + 1 is safe as sentinel.)
     const sentinelRowAfterLast = allFlattenedTasks.length + 1;
 
-    return flattenedTasks.map(
-      (
-        { task, level, hasChildren, globalRowNumber }: FlattenedTask,
-        index: number
-      ) => {
-        const prevTaskId =
-          index > 0 ? flattenedTasks[index - 1].task.id : undefined;
-        const nextTask: FlattenedTask | undefined = flattenedTasks[index + 1];
-        const nextTaskId = nextTask?.task.id;
-
-        const nextRowNum = nextTask
-          ? nextTask.globalRowNumber
-          : sentinelRowAfterLast;
-        const { hasHiddenBelow, hiddenBelowCount } = getHiddenGap(
-          globalRowNumber,
-          nextRowNum
-        );
-
-        const above =
-          index === 0 ? getHiddenGapAbove(globalRowNumber) : NO_HIDDEN_ABOVE;
-
-        return {
-          task,
-          level,
-          hasChildren,
-          globalRowNumber,
-          hasHiddenAbove: above.hasHiddenAbove,
-          hiddenAboveCount: above.hiddenAboveCount,
-          onUnhideAbove: above.hasHiddenAbove
-            ? (): void => unhideRange(0, globalRowNumber)
-            : undefined,
-          hasHiddenBelow,
-          hiddenBelowCount,
-          onUnhideBelow: hasHiddenBelow
-            ? (): void => unhideRange(globalRowNumber, nextRowNum)
-            : undefined,
-          clipboardPosition: getClipboardPosition(
-            task.id,
-            prevTaskId,
-            nextTaskId,
-            clipboardSet
-          ),
-          selectionPosition: getSelectionPosition(
-            task.id,
-            prevTaskId,
-            nextTaskId,
-            selectedSet
-          ),
-        };
-      }
+    return flattenedTasks.map((item, index) =>
+      buildTaskRowDatum({
+        item,
+        index,
+        flattenedTasks,
+        sentinelRowAfterLast,
+        clipboardSet,
+        selectedSet,
+        unhideRange,
+      })
     );
   }, [
     flattenedTasks,

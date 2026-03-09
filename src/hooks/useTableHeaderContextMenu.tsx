@@ -40,6 +40,50 @@ const EYE_ICON = (
   <Eye size={CONTEXT_MENU.iconSize} weight={CONTEXT_MENU.iconWeight} />
 );
 
+/** Builds the "Size to Fit" / "Size All Columns to Fit" group (Group 1). */
+function buildSizeToFitItems(
+  columnId: ColumnId,
+  displayLabel: string,
+  canAutoFit: boolean,
+  autoFitColumn: (id: ColumnId) => void,
+  autoFitAllColumns: () => void
+): ContextMenuItem[] {
+  return [
+    {
+      id: "sizeToFit",
+      label: `Size "${displayLabel}" to Fit`,
+      icon: ARROWS_HORIZONTAL_ICON,
+      onClick: () => autoFitColumn(columnId),
+      disabled: !canAutoFit,
+    },
+    {
+      id: "sizeAllToFit",
+      label: "Size All Columns to Fit",
+      icon: ARROWS_HORIZONTAL_ICON,
+      onClick: autoFitAllColumns,
+      separator: true,
+    },
+  ];
+}
+
+/** Builds the column-visibility checkmark group (Group 2). */
+function buildToggleItems(
+  hiddenSet: Set<string>,
+  toggleColumnVisibility: (id: ColumnId) => void
+): ContextMenuItem[] {
+  // Store action selectors (toggleColumnVisibility, setHiddenColumns,
+  // autoFitColumn, autoFitAllColumns) return stable references — Zustand
+  // guarantees action identity across renders, so no useCallback wrapping is needed.
+  return HIDEABLE_COLUMNS.map((col, i) => ({
+    id: `toggle_${col.id}`,
+    // ?? instead of || so an explicit empty-string menuLabel is not skipped.
+    label: col.menuLabel ?? col.label,
+    checked: !hiddenSet.has(col.id),
+    onClick: () => toggleColumnVisibility(col.id),
+    separator: i === HIDEABLE_COLUMNS.length - 1,
+  }));
+}
+
 interface ContextMenuState {
   position: ContextMenuPosition;
   columnId: ColumnId;
@@ -87,7 +131,7 @@ export function useTableHeaderContextMenu(): UseTableHeaderContextMenuResult {
 
     const hiddenSet = new Set(hiddenColumns);
 
-    // ── Group 1: Size to Fit ──
+    // canAutoFit: rowNumber and color are fixed-width chrome columns with no auto-fit.
     const canAutoFit =
       columnId !== ROW_NUMBER_COLUMN_ID && columnId !== COLOR_COLUMN_ID;
     // columnId is a safety fallback — all current TASK_COLUMNS define label.
@@ -95,35 +139,17 @@ export function useTableHeaderContextMenu(): UseTableHeaderContextMenuResult {
     // menuLabel would not be skipped (though that case does not currently arise).
     const displayLabel = column.menuLabel ?? column.label ?? columnId;
 
-    const sizeToFitItems: ContextMenuItem[] = [
-      {
-        id: "sizeToFit",
-        label: `Size "${displayLabel}" to Fit`,
-        icon: ARROWS_HORIZONTAL_ICON,
-        onClick: () => autoFitColumn(columnId),
-        disabled: !canAutoFit,
-      },
-      {
-        id: "sizeAllToFit",
-        label: "Size All Columns to Fit",
-        icon: ARROWS_HORIZONTAL_ICON,
-        onClick: autoFitAllColumns,
-        separator: true,
-      },
-    ];
+    // ── Group 1: Size to Fit ──
+    const sizeToFitItems = buildSizeToFitItems(
+      columnId,
+      displayLabel,
+      canAutoFit,
+      autoFitColumn,
+      autoFitAllColumns
+    );
 
     // ── Group 2: Column visibility checkmarks ──
-    // Store action selectors (toggleColumnVisibility, setHiddenColumns,
-    // autoFitColumn, autoFitAllColumns) return stable references — Zustand
-    // guarantees action identity across renders, so no useCallback wrapping is needed.
-    const toggleItems: ContextMenuItem[] = HIDEABLE_COLUMNS.map((col, i) => ({
-      id: `toggle_${col.id}`,
-      // ?? instead of || so an explicit empty-string menuLabel is not skipped.
-      label: col.menuLabel ?? col.label,
-      checked: !hiddenSet.has(col.id),
-      onClick: () => toggleColumnVisibility(col.id),
-      separator: i === HIDEABLE_COLUMNS.length - 1,
-    }));
+    const toggleItems = buildToggleItems(hiddenSet, toggleColumnVisibility);
 
     // ── Group 3: Show All ──
     const showAllItem: ContextMenuItem = {
