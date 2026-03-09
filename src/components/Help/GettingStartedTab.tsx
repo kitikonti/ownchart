@@ -55,6 +55,11 @@ export function GettingStartedTab({
     <div className="space-y-3">
       {topics.map((topic) => {
         const visual = ICONS[topic.id];
+        if (import.meta.env.DEV && !visual) {
+          console.warn(
+            `[GettingStartedTab] No icon mapping found for topic id "${topic.id}". Add it to the ICONS map.`
+          );
+        }
         return (
           <div
             key={topic.id}
@@ -68,9 +73,9 @@ export function GettingStartedTab({
               )}
             </div>
             <div className="min-w-0">
-              <p className="text-sm font-medium text-neutral-800">
+              <h3 className="text-sm font-medium text-neutral-800">
                 {topic.title}
-              </p>
+              </h3>
               <p className="text-xs text-neutral-500 mt-0.5 leading-relaxed">
                 {resolveShortcut(topic.description)}
               </p>

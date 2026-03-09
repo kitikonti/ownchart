@@ -18,6 +18,8 @@ import type { DropdownOption } from "../../types/ui.types";
 // Re-exported so existing imports from this file continue to work.
 export type { DropdownOption } from "../../types/ui.types";
 
+const DEFAULT_DROPDOWN_LABEL = "Select";
+
 interface ToolbarDropdownProps<T extends string = string> {
   /** Currently selected value */
   value: T;
@@ -53,7 +55,8 @@ export function ToolbarDropdown<T extends string = string>({
   // Otherwise show the currently selected option's label so the button always
   // reflects the active value even before the dropdown is opened.
   const selectedOption = options.find((o) => o.value === value);
-  const displayLabel = labelPrefix || selectedOption?.label || "Select";
+  const displayLabel =
+    labelPrefix || selectedOption?.label || DEFAULT_DROPDOWN_LABEL;
 
   // Stable ID prefix for ARIA option IDs — derived from aria-label or a fallback.
   const idPrefix = (ariaLabel ?? "toolbar-dropdown")

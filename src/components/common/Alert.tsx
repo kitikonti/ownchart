@@ -73,7 +73,7 @@ export function Alert({
   return (
     <div
       className={`flex items-start gap-3 px-4 py-3 rounded border ${styles.container} ${className}`}
-      role={variant === "error" || variant === "warning" ? "alert" : "status"}
+      role={variant === "error" || variant === "warning" ? "alert" : "note"}
     >
       <span
         aria-hidden="true"

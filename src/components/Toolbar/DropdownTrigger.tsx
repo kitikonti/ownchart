@@ -89,6 +89,7 @@ export function DropdownTrigger({
         size={12}
         weight="bold"
         className={showLabel ? "ml-0.5" : ""}
+        aria-hidden="true"
       />
     </button>
   );

@@ -58,27 +58,30 @@ function SectionAccordion({
       >
         <span className="text-sm font-semibold text-neutral-900">
           {section.title}
-          <span className="ml-2 text-xs font-normal text-neutral-400">
+          <span
+            className="ml-2 text-xs font-normal text-neutral-400"
+            aria-hidden="true"
+          >
             {section.topics.length}
           </span>
+          <span className="sr-only"> ({section.topics.length} topics)</span>
         </span>
         <CaretDown
           className={`size-4 text-neutral-400 transition-transform duration-200 ${
             isOpen ? "rotate-180" : ""
           }`}
           weight="bold"
+          aria-hidden="true"
         />
       </button>
 
-      {isOpen && (
-        <div id={panelId} className="pl-3 pr-1 pb-2">
-          <div className="space-y-0.5">
-            {section.topics.map((topic) => (
-              <HelpTopicCard key={topic.id} topic={topic} compact={compact} />
-            ))}
-          </div>
+      <div id={panelId} hidden={!isOpen} className="pl-3 pr-1 pb-2">
+        <div className="space-y-0.5">
+          {section.topics.map((topic) => (
+            <HelpTopicCard key={topic.id} topic={topic} compact={compact} />
+          ))}
         </div>
-      )}
+      </div>
     </section>
   );
 }

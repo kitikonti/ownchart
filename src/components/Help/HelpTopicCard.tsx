@@ -29,7 +29,11 @@ export function MenuPathLabel({ path }: { path: string }): JSX.Element {
     <span className="text-xs text-neutral-400 flex items-center gap-0.5 flex-shrink-0">
       {parts.map((part, i) => (
         <span key={part} className="flex items-center gap-0.5">
-          {i > 0 && <span className="mx-0.5">›</span>}
+          {i > 0 && (
+            <span className="mx-0.5" aria-hidden="true">
+              ›
+            </span>
+          )}
           <span>{part}</span>
         </span>
       ))}
@@ -45,7 +49,11 @@ export function ShortcutKeys({ keys }: { keys: string }): JSX.Element {
     <span className="flex items-center gap-1 flex-shrink-0">
       {parts.map((part, index) => (
         <span key={part.trim()} className="flex items-center gap-1">
-          {index > 0 && <span className="text-neutral-300 text-xs">+</span>}
+          {index > 0 && (
+            <span className="text-neutral-300 text-xs" aria-hidden="true">
+              +
+            </span>
+          )}
           <KeyBadge>{part.trim()}</KeyBadge>
         </span>
       ))}
@@ -107,6 +115,7 @@ export function HelpTopicCard({
             // resolveShortcut replaces {mod} with "Cmd" — the icon provides extra
             // visual context alongside the text label.
             <>
+              <span className="sr-only">Tip: </span>
               <Command
                 size={11}
                 className="inline-block flex-shrink-0"
