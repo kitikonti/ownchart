@@ -1,8 +1,9 @@
 /**
  * Shared context menu item builders for Zone 1 (row), Zone 3 (bar), and Zone 4 (area).
- * Pure functions — icons are passed in as ReactNode so builders stay framework-free.
+ * Pure functions — no hooks or JSX. Icons are passed in as ReactNode by the caller.
  */
 
+import type { ReactNode } from "react";
 import type {
   ContextMenuItem,
   ContextMenuPosition,
@@ -19,11 +20,16 @@ export interface TaskContextMenuState {
 
 // ─── Helpers ───
 
+export interface EffectiveSelection {
+  effectiveSelection: TaskId[];
+  count: number;
+}
+
 /** Compute effective selection: use current selection if task is in it, otherwise just the task. */
 export function getEffectiveSelection(
   taskId: TaskId,
   selectedTaskIds: TaskId[]
-): { effectiveSelection: TaskId[]; count: number } {
+): EffectiveSelection {
   const effectiveSelection = selectedTaskIds.includes(taskId)
     ? selectedTaskIds
     : [taskId];
@@ -32,16 +38,17 @@ export function getEffectiveSelection(
 
 // ─── Builders ───
 
-interface ClipboardItemsParams {
+export interface ClipboardItemsParams {
   handleCut: () => void;
   handleCopy: () => void;
   handlePaste: () => Promise<void>;
   canCopyOrCut: boolean;
   canPaste: boolean;
-  cutIcon: React.ReactNode;
-  copyIcon: React.ReactNode;
-  pasteIcon: React.ReactNode;
-  pasteSeparator?: boolean;
+  cutIcon: ReactNode;
+  copyIcon: ReactNode;
+  pasteIcon: ReactNode;
+  /** Whether to render a visual separator after the Paste item. Defaults to true. */
+  hasSeparatorAfterPaste?: boolean;
 }
 
 /** Build cut / copy / paste menu items. */
@@ -72,17 +79,18 @@ export function buildClipboardItems(
       shortcut: "Ctrl+V",
       onClick: () => void params.handlePaste(),
       disabled: !params.canPaste,
-      separator: params.pasteSeparator ?? true,
+      separator: params.hasSeparatorAfterPaste ?? true,
     },
   ];
 }
 
-interface DeleteItemParams {
+export interface DeleteItemParams {
+  /** Number of tasks in the effective selection. Must be ≥ 0; item is disabled when 0. */
   count: number;
   taskId: TaskId;
   deleteSelectedTasks: () => void;
   deleteTask: (id: TaskId, cascade?: boolean) => void;
-  icon: React.ReactNode;
+  icon: ReactNode;
   separator?: boolean;
 }
 
@@ -100,16 +108,19 @@ export function buildDeleteItem(params: DeleteItemParams): ContextMenuItem {
         params.deleteTask(params.taskId, true);
       }
     },
+    // Defensive guard: count is always ≥ 1 when called via getEffectiveSelection,
+    // but external callers may pass 0 (e.g. in tests or future call sites).
     disabled: params.count === 0,
     separator: params.separator,
   };
 }
 
-interface HideItemParams {
+export interface HideItemParams {
+  /** Number of tasks in the effective selection. Must be ≥ 0; item is disabled when 0. */
   count: number;
   effectiveSelection: TaskId[];
   hideRows: (taskIds: TaskId[]) => void;
-  icon: React.ReactNode;
+  icon: ReactNode;
 }
 
 /** Build a single hide-row menu item with singular/plural label. */
@@ -119,17 +130,17 @@ export function buildHideItem(params: HideItemParams): ContextMenuItem {
     label: params.count > 1 ? `Hide ${params.count} Rows` : "Hide Row",
     icon: params.icon,
     shortcut: "Ctrl+H",
-    onClick: () => params.hideRows(params.effectiveSelection),
+    onClick: (): void => params.hideRows(params.effectiveSelection),
     disabled: params.count === 0,
   };
 }
 
-interface InsertItemsParams {
+export interface InsertItemsParams {
   taskId: TaskId;
   insertTaskAbove: (id: TaskId) => void;
   insertTaskBelow: (id: TaskId) => void;
-  insertAboveIcon: React.ReactNode;
-  insertBelowIcon: React.ReactNode;
+  insertAboveIcon: ReactNode;
+  insertBelowIcon: ReactNode;
 }
 
 /** Build insert above / below menu items. */
@@ -140,18 +151,18 @@ export function buildInsertItems(params: InsertItemsParams): ContextMenuItem[] {
       label: "Insert Task Above",
       icon: params.insertAboveIcon,
       shortcut: "Ctrl++",
-      onClick: () => params.insertTaskAbove(params.taskId),
+      onClick: (): void => params.insertTaskAbove(params.taskId),
     },
     {
       id: "insertBelow",
       label: "Insert Task Below",
       icon: params.insertBelowIcon,
-      onClick: () => params.insertTaskBelow(params.taskId),
+      onClick: (): void => params.insertTaskBelow(params.taskId),
     },
   ];
 }
 
-interface HierarchyItemsParams {
+export interface HierarchyItemsParams {
   canIndent: boolean;
   canOutdent: boolean;
   canGroup: boolean;
@@ -160,10 +171,10 @@ interface HierarchyItemsParams {
   outdentSelectedTasks: () => void;
   groupSelectedTasks: () => void;
   ungroupSelectedTasks: () => void;
-  indentIcon: React.ReactNode;
-  outdentIcon: React.ReactNode;
-  groupIcon: React.ReactNode;
-  ungroupIcon: React.ReactNode;
+  indentIcon: ReactNode;
+  outdentIcon: ReactNode;
+  groupIcon: ReactNode;
+  ungroupIcon: ReactNode;
 }
 
 /** Build indent / outdent / group / ungroup menu items. */
@@ -207,18 +218,22 @@ export function buildHierarchyItems(
   ];
 }
 
-interface UnhideItemParams {
+export interface UnhideItemParams {
   hiddenCount: number;
   unhideSelection: (selectedTaskIds: TaskId[]) => void;
   selectedTaskIds: TaskId[];
-  icon: React.ReactNode;
+  icon: ReactNode;
 }
 
-/** Build an unhide menu item (only visible when hidden rows exist in selection range). */
+/**
+ * Build an unhide menu item (only visible when hidden rows exist in selection range).
+ * Requires at least 2 selected tasks because a hidden row can only exist *between*
+ * two selected rows — a single selected task has no range to contain hidden rows.
+ */
 export function buildUnhideItem(
   params: UnhideItemParams
 ): ContextMenuItem | null {
-  if (params.hiddenCount <= 0 || params.selectedTaskIds.length < 2) {
+  if (params.hiddenCount === 0 || params.selectedTaskIds.length < 2) {
     return null;
   }
   return {

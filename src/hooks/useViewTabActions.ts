@@ -12,7 +12,7 @@
 import { useMemo } from "react";
 import { useTaskStore } from "../store/slices/taskSlice";
 import { useChartStore } from "../store/slices/chartSlice";
-import { getViewportCenterAnchor, applyScrollLeft } from "./useZoom";
+import { computeViewportCenterAnchor, applyScrollLeft } from "./useZoom";
 import { MIN_ZOOM, MAX_ZOOM } from "../utils/timelineUtils";
 
 /** Preset zoom levels shown in the dropdown */
@@ -88,13 +88,13 @@ export function useViewTabActions(): ViewTabActions {
 
   // Handlers
   const handleZoomIn = (): void => {
-    const anchor = getViewportCenterAnchor();
+    const anchor = computeViewportCenterAnchor();
     const result = zoomIn(anchor);
     applyScrollLeft(result.newScrollLeft);
   };
 
   const handleZoomOut = (): void => {
-    const anchor = getViewportCenterAnchor();
+    const anchor = computeViewportCenterAnchor();
     const result = zoomOut(anchor);
     applyScrollLeft(result.newScrollLeft);
   };
@@ -108,7 +108,7 @@ export function useViewTabActions(): ViewTabActions {
     if (level === "fit") {
       handleFitToView();
     } else {
-      const anchor = getViewportCenterAnchor();
+      const anchor = computeViewportCenterAnchor();
       const result = setZoom(level / 100, anchor);
       applyScrollLeft(result.newScrollLeft);
     }

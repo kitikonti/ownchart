@@ -11,32 +11,48 @@
  * - Keyboard zoom: keeps the date at viewport center at the same position
  */
 
+import type { RefObject, WheelEvent as ReactWheelEvent } from "react";
 import { useCallback, useEffect } from "react";
 import { useChartStore } from "../store/slices/chartSlice";
 import { pixelToDate } from "../utils/timelineUtils";
 
 interface UseZoomOptions {
-  containerRef: React.RefObject<HTMLElement>;
+  containerRef: RefObject<HTMLElement>;
   enabled?: boolean;
 }
 
-/** CSS class of the scrollable timeline container */
+interface UseZoomResult {
+  handlers: {
+    onWheel: (e: ReactWheelEvent) => void;
+  };
+}
+
+/** CSS class of the scrollable timeline container.
+ * Must match the class applied to the timeline scroll container in GanttChart. */
 const SCROLL_CONTAINER_CLASS = "gantt-chart-scroll-container";
 
-/** Zoom factor per mouse wheel step (exponential zoom for consistent feel) */
+/**
+ * Zoom factor per mouse wheel step (exponential zoom for consistent feel).
+ * ~15% per step gives a perceptually even zoom progression (like Figma/VS Code):
+ * each step feels the same magnitude regardless of the current zoom level,
+ * because the human visual system perceives zoom logarithmically.
+ */
 const WHEEL_ZOOM_FACTOR = 1.15;
 
 /**
- * Get the scroll container element
+ * Get the scroll container element.
+ * Performs a live DOM query — called imperatively at interaction time,
+ * not on every render.
  */
 function getScrollContainer(): HTMLElement | null {
-  return document.querySelector(`.${SCROLL_CONTAINER_CLASS}`);
+  // Live DOM query — intentionally called at interaction time, not stored in a ref.
+  return document.querySelector<HTMLElement>(`.${SCROLL_CONTAINER_CLASS}`);
 }
 
 /**
- * Apply scroll position after zoom
+ * Apply scroll position after zoom (exported for toolbar use)
  */
-function applyScrollLeft(newScrollLeft: number | null): void {
+export function applyScrollLeft(newScrollLeft: number | null): void {
   if (newScrollLeft === null) return;
 
   const scrollContainer = getScrollContainer();
@@ -45,29 +61,35 @@ function applyScrollLeft(newScrollLeft: number | null): void {
   }
 }
 
-export function useZoom({ containerRef, enabled = true }: UseZoomOptions): {
-  handlers: {
-    onWheel: (e: React.WheelEvent) => void;
-  };
-} {
-  const { zoom, scale, setZoom, resetZoom } = useChartStore();
+export function useZoom({
+  containerRef,
+  enabled = true,
+}: UseZoomOptions): UseZoomResult {
+  const { scale, setZoom, resetZoom } = useChartStore();
 
   // Zoom with Ctrl/Cmd + Wheel (centered on cursor position)
   const handleWheel = useCallback(
-    (e: React.WheelEvent) => {
+    (e: ReactWheelEvent) => {
       if (!enabled) return;
 
       // Only zoom with Ctrl (Windows/Linux) or Cmd (Mac)
       if (!e.ctrlKey && !e.metaKey) return;
 
-      const container = containerRef.current;
-      if (!container) return;
+      // Guard: only handle wheel events when the chart container is mounted
+      if (!containerRef.current) return;
+
+      // Read zoom at event time to avoid stale-closure drift during rapid wheel events.
+      // useChartStore.getState() is a non-reactive static Zustand accessor — not a hook
+      // call — and is safe to use inside callbacks and event handlers.
+      const currentZoom = useChartStore.getState().zoom;
+      // Zoom in (wheel up) or out (wheel down) by a constant exponential factor
+      const factor = e.deltaY > 0 ? 1 / WHEEL_ZOOM_FACTOR : WHEEL_ZOOM_FACTOR;
+      const newZoom = currentZoom * factor;
 
       const scrollContainer = getScrollContainer();
       if (!scrollContainer || !scale) {
-        // Fallback: zoom without anchoring (exponential)
-        const factor = e.deltaY > 0 ? 1 / WHEEL_ZOOM_FACTOR : WHEEL_ZOOM_FACTOR;
-        setZoom(zoom * factor);
+        // Fallback: zoom without anchoring
+        setZoom(newZoom);
         return;
       }
 
@@ -82,10 +104,6 @@ export function useZoom({ containerRef, enabled = true }: UseZoomOptions): {
       // Convert pixel position to date (this is the anchor point)
       const anchorDate = pixelToDate(cursorPixelPos, scale);
 
-      // Calculate zoom factor (exponential for consistent feel at all levels)
-      const factor = e.deltaY > 0 ? 1 / WHEEL_ZOOM_FACTOR : WHEEL_ZOOM_FACTOR;
-      const newZoom = zoom * factor;
-
       // Set zoom with cursor-centered anchor
       const result = setZoom(newZoom, {
         anchorDate,
@@ -95,7 +113,10 @@ export function useZoom({ containerRef, enabled = true }: UseZoomOptions): {
       // Apply the calculated scroll position
       applyScrollLeft(result?.newScrollLeft ?? null);
     },
-    [enabled, zoom, scale, setZoom, containerRef]
+    // containerRef intentionally omitted: the ref *object* is a stable identity
+    // (React guarantees it never changes); .current is read imperatively inside
+    // the callback, not captured in the closure, so no stale value is possible.
+    [enabled, scale, setZoom]
   );
 
   // Global prevention of browser zoom (Ctrl+Wheel) throughout the entire app
@@ -107,7 +128,6 @@ export function useZoom({ containerRef, enabled = true }: UseZoomOptions): {
 
     const preventBrowserZoom = (e: WheelEvent): void => {
       // If Ctrl/Cmd is pressed, prevent browser zoom globally
-      // This ensures consistent Ctrl+Wheel behavior across the entire app
       if (e.ctrlKey || e.metaKey) {
         e.preventDefault();
       }
@@ -131,44 +151,23 @@ export function useZoom({ containerRef, enabled = true }: UseZoomOptions): {
     if (!enabled) return;
 
     const handleKeyDown = (e: KeyboardEvent): void => {
-      // Check if target is an input element
-      const target = e.target as HTMLElement;
+      // When the event target is an HTMLElement, check whether it is an editable
+      // input field and suppress zoom shortcuts in that case. When the target is
+      // not an HTMLElement (e.g. the window object itself), there is no input to
+      // suppress, so zoom shortcuts are allowed to proceed.
       const isInput =
-        target.tagName === "INPUT" ||
-        target.tagName === "TEXTAREA" ||
-        target.isContentEditable;
+        e.target instanceof HTMLElement &&
+        (e.target.tagName === "INPUT" ||
+          e.target.tagName === "TEXTAREA" ||
+          e.target.isContentEditable);
 
       // Zoom shortcuts (Ctrl/Cmd + key)
       if ((e.ctrlKey || e.metaKey) && !isInput) {
-        // Get viewport center anchor for keyboard zoom
-        const getViewportCenterAnchor = ():
-          | { anchorDate: string; anchorPixelOffset: number }
-          | undefined => {
-          const scrollContainer = getScrollContainer();
-          const currentScale = useChartStore.getState().scale;
-
-          if (!scrollContainer || !currentScale) {
-            return undefined;
-          }
-
-          const scrollLeft = scrollContainer.scrollLeft;
-          const viewportWidth = scrollContainer.clientWidth;
-          const centerPixelPos = scrollLeft + viewportWidth / 2;
-
-          return {
-            anchorDate: pixelToDate(centerPixelPos, currentScale),
-            anchorPixelOffset: viewportWidth / 2,
-          };
-        };
-
-        switch (e.key) {
-          case "0": {
-            e.preventDefault();
-            const anchor = getViewportCenterAnchor();
-            const result = resetZoom(anchor);
-            applyScrollLeft(result?.newScrollLeft ?? null);
-            break;
-          }
+        if (e.key === "0") {
+          e.preventDefault();
+          const anchor = computeViewportCenterAnchor();
+          const result = resetZoom(anchor);
+          applyScrollLeft(result?.newScrollLeft ?? null);
         }
       }
     };
@@ -181,7 +180,6 @@ export function useZoom({ containerRef, enabled = true }: UseZoomOptions): {
   }, [enabled, resetZoom]);
 
   return {
-    // Event handlers
     handlers: {
       onWheel: handleWheel,
     },
@@ -189,9 +187,11 @@ export function useZoom({ containerRef, enabled = true }: UseZoomOptions): {
 }
 
 /**
- * Helper to get viewport center anchor for external use (e.g., toolbar buttons)
+ * Compute the viewport center anchor for use in zoom operations.
+ * Uses getState() for non-reactive, imperative access — intentionally not a React hook.
+ * Called at interaction time (click/keydown handlers) to avoid stale closures.
  */
-export function getViewportCenterAnchor():
+export function computeViewportCenterAnchor():
   | { anchorDate: string; anchorPixelOffset: number }
   | undefined {
   const scrollContainer = getScrollContainer();
@@ -210,8 +210,3 @@ export function getViewportCenterAnchor():
     anchorPixelOffset: viewportWidth / 2,
   };
 }
-
-/**
- * Apply scroll position after zoom (exported for toolbar use)
- */
-export { applyScrollLeft };

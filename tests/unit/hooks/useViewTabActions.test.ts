@@ -15,7 +15,7 @@ import type { Task } from "../../../src/types/chart.types";
 
 // Mock useZoom helpers — tested separately
 vi.mock("../../../src/hooks/useZoom", () => ({
-  getViewportCenterAnchor: vi.fn(() => ({ scrollLeft: 0, clientX: 400 })),
+  computeViewportCenterAnchor: vi.fn(() => ({ scrollLeft: 0, clientX: 400 })),
   applyScrollLeft: vi.fn(),
 }));
 

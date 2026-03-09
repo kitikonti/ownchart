@@ -13,7 +13,7 @@ import { useChartStore } from "../../../../src/store/slices/chartSlice";
 
 // Mock useZoom helpers
 vi.mock("../../../../src/hooks/useZoom", () => ({
-  getViewportCenterAnchor: vi.fn(() => ({ scrollLeft: 0, clientX: 400 })),
+  computeViewportCenterAnchor: vi.fn(() => ({ scrollLeft: 0, clientX: 400 })),
   applyScrollLeft: vi.fn(),
 }));
 

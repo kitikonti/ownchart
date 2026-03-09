@@ -4,7 +4,7 @@
  * Bundles all store subscriptions and provides a buildItems(taskId) function.
  */
 
-import { useMemo, useCallback, createElement } from "react";
+import { useCallback, createElement } from "react";
 import {
   Scissors,
   Copy,
@@ -35,11 +35,47 @@ import {
   buildUnhideItem,
 } from "./contextMenuItemBuilders";
 
+// Icon prop objects are derived from static config — defined at module level
+// so they are stable references and don't need to be in the useCallback dep array.
+const ICON_PROPS = {
+  size: CONTEXT_MENU.iconSize,
+  weight: CONTEXT_MENU.iconWeight,
+} as const;
+
+const SVG_ICON_PROPS = {
+  width: CONTEXT_MENU.iconSize,
+  height: CONTEXT_MENU.iconSize,
+} as const;
+
+// Icons are module-level constants: computed once, stable across all renders and hook instances.
+const ICONS = {
+  cut: createElement(Scissors, ICON_PROPS),
+  copy: createElement(Copy, ICON_PROPS),
+  paste: createElement(ClipboardText, ICON_PROPS),
+  insertAbove: createElement(RowsPlusTop, ICON_PROPS),
+  insertBelow: createElement(RowsPlusBottom, ICON_PROPS),
+  trash: createElement(Trash, ICON_PROPS),
+  indent: createElement(TextIndent, ICON_PROPS),
+  outdent: createElement(TextOutdent, ICON_PROPS),
+  group: createElement(GroupIcon, SVG_ICON_PROPS),
+  ungroup: createElement(UngroupIcon, SVG_ICON_PROPS),
+  eyeSlash: createElement(EyeSlash, ICON_PROPS),
+  eye: createElement(Eye, ICON_PROPS),
+} as const;
+
 interface UseFullTaskContextMenuItemsResult {
   /** Build the full context menu items for a given task. */
   buildItems: (taskId: TaskId) => ContextMenuItem[];
 }
 
+/**
+ * Build the full 11–12 item context menu for any task in the chart.
+ *
+ * Aggregates all store subscriptions (clipboard, hierarchy, hide/unhide) and
+ * returns a stable `buildItems(taskId)` function. Callers invoke `buildItems`
+ * at right-click time to get the concrete `ContextMenuItem[]` array for the
+ * clicked task, taking the current selection into account.
+ */
 export function useFullTaskContextMenuItems(): UseFullTaskContextMenuItemsResult {
   const selectedTaskIds = useTaskStore((state) => state.selectedTaskIds);
   const insertTaskAbove = useTaskStore((state) => state.insertTaskAbove);
@@ -58,6 +94,11 @@ export function useFullTaskContextMenuItems(): UseFullTaskContextMenuItemsResult
   const ungroupSelectedTasks = useTaskStore(
     (state) => state.ungroupSelectedTasks
   );
+  // These selectors call computed methods on the state object. Each method is a
+  // pure getter that calls get() internally to read current store state, then
+  // returns a primitive boolean. Zustand's default reference-equality check on
+  // the returned boolean prevents unnecessary re-renders when the value hasn't
+  // changed. This pattern is safe because the methods have no side effects.
   const canIndent = useTaskStore((state) => state.canIndentSelection());
   const canOutdent = useTaskStore((state) => state.canOutdentSelection());
   const canGroup = useTaskStore((state) => state.canGroupSelection());
@@ -67,22 +108,6 @@ export function useFullTaskContextMenuItems(): UseFullTaskContextMenuItemsResult
     useClipboardOperations();
   const { hideRows, unhideSelection, getHiddenInSelectionCount } =
     useHideOperations();
-
-  const iconProps = useMemo(
-    () => ({
-      size: CONTEXT_MENU.iconSize,
-      weight: CONTEXT_MENU.iconWeight,
-    }),
-    []
-  );
-
-  const svgIconProps = useMemo(
-    () => ({
-      width: CONTEXT_MENU.iconSize,
-      height: CONTEXT_MENU.iconSize,
-    }),
-    []
-  );
 
   const buildItems = useCallback(
     (taskId: TaskId): ContextMenuItem[] => {
@@ -101,9 +126,9 @@ export function useFullTaskContextMenuItems(): UseFullTaskContextMenuItemsResult
           handlePaste,
           canCopyOrCut,
           canPaste,
-          cutIcon: createElement(Scissors, iconProps),
-          copyIcon: createElement(Copy, iconProps),
-          pasteIcon: createElement(ClipboardText, iconProps),
+          cutIcon: ICONS.cut,
+          copyIcon: ICONS.copy,
+          pasteIcon: ICONS.paste,
         })
       );
 
@@ -113,8 +138,8 @@ export function useFullTaskContextMenuItems(): UseFullTaskContextMenuItemsResult
           taskId,
           insertTaskAbove,
           insertTaskBelow,
-          insertAboveIcon: createElement(RowsPlusTop, iconProps),
-          insertBelowIcon: createElement(RowsPlusBottom, iconProps),
+          insertAboveIcon: ICONS.insertAbove,
+          insertBelowIcon: ICONS.insertBelow,
         })
       );
       items.push(
@@ -123,7 +148,7 @@ export function useFullTaskContextMenuItems(): UseFullTaskContextMenuItemsResult
           taskId,
           deleteSelectedTasks,
           deleteTask,
-          icon: createElement(Trash, iconProps),
+          icon: ICONS.trash,
           separator: true,
         })
       );
@@ -139,10 +164,10 @@ export function useFullTaskContextMenuItems(): UseFullTaskContextMenuItemsResult
           outdentSelectedTasks,
           groupSelectedTasks,
           ungroupSelectedTasks,
-          indentIcon: createElement(TextIndent, iconProps),
-          outdentIcon: createElement(TextOutdent, iconProps),
-          groupIcon: createElement(GroupIcon, svgIconProps),
-          ungroupIcon: createElement(UngroupIcon, svgIconProps),
+          indentIcon: ICONS.indent,
+          outdentIcon: ICONS.outdent,
+          groupIcon: ICONS.group,
+          ungroupIcon: ICONS.ungroup,
         })
       );
 
@@ -152,17 +177,19 @@ export function useFullTaskContextMenuItems(): UseFullTaskContextMenuItemsResult
           count,
           effectiveSelection,
           hideRows,
-          icon: createElement(EyeSlash, iconProps),
+          icon: ICONS.eyeSlash,
         })
       );
 
-      // Unhide — only visible when hidden rows exist in selection range
+      // Unhide — only visible when hidden rows exist in selection range.
+      // Extra guard: only show when right-clicking a task within the active
+      // multi-selection (avoids showing unhide on a single right-click outside selection).
       const hiddenInRangeCount = getHiddenInSelectionCount(selectedTaskIds);
       const unhideItem = buildUnhideItem({
         hiddenCount: hiddenInRangeCount,
         unhideSelection,
         selectedTaskIds,
-        icon: createElement(Eye, iconProps),
+        icon: ICONS.eye,
       });
       if (unhideItem && selectedTaskIds.includes(taskId)) {
         items.push(unhideItem);
@@ -181,6 +208,7 @@ export function useFullTaskContextMenuItems(): UseFullTaskContextMenuItemsResult
       handleCopy,
       handleCut,
       handlePaste,
+      // Store actions below are stable Zustand references; included for exhaustive-deps correctness
       insertTaskAbove,
       insertTaskBelow,
       deleteSelectedTasks,
@@ -192,8 +220,7 @@ export function useFullTaskContextMenuItems(): UseFullTaskContextMenuItemsResult
       hideRows,
       unhideSelection,
       getHiddenInSelectionCount,
-      iconProps,
-      svgIconProps,
+      // ICONS is intentionally omitted: it is a module-level constant and never changes.
     ]
   );
 

@@ -4,15 +4,13 @@
 
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { renderHook } from '@testing-library/react';
-import { useZoom } from '../../../src/hooks/useZoom';
+import { useZoom, computeViewportCenterAnchor } from '../../../src/hooks/useZoom';
 import { useChartStore } from '../../../src/store/slices/chartSlice';
 import { createRef } from 'react';
 
 describe('useZoom', () => {
   let containerRef: React.RefObject<HTMLDivElement>;
   let setZoomSpy: ReturnType<typeof vi.fn>;
-  let zoomInSpy: ReturnType<typeof vi.fn>;
-  let zoomOutSpy: ReturnType<typeof vi.fn>;
   let resetZoomSpy: ReturnType<typeof vi.fn>;
 
   beforeEach(() => {
@@ -34,8 +32,6 @@ describe('useZoom', () => {
 
     // Create spies
     setZoomSpy = vi.fn();
-    zoomInSpy = vi.fn();
-    zoomOutSpy = vi.fn();
     resetZoomSpy = vi.fn();
 
     // Mock the store
@@ -52,8 +48,6 @@ describe('useZoom', () => {
     });
 
     vi.spyOn(useChartStore.getState(), 'setZoom').mockImplementation(setZoomSpy);
-    vi.spyOn(useChartStore.getState(), 'zoomIn').mockImplementation(zoomInSpy);
-    vi.spyOn(useChartStore.getState(), 'zoomOut').mockImplementation(zoomOutSpy);
     vi.spyOn(useChartStore.getState(), 'resetZoom').mockImplementation(resetZoomSpy);
   });
 
@@ -227,6 +221,8 @@ describe('useZoom', () => {
       document.body.removeChild(textarea);
     });
 
+    // TODO: Enable once jsdom supports isContentEditable correctly
+    // See: https://github.com/jsdom/jsdom/issues/1670
     it.skip('should not trigger in contentEditable elements', () => {
       // Note: contentEditable detection in jsdom has known issues
       renderHook(() => useZoom({ containerRef }));
@@ -300,6 +296,23 @@ describe('useZoom', () => {
       // Should not add new event listeners
       const callsAfter = addEventListenerSpy.mock.calls.length;
       expect(callsAfter).toBe(callsBefore);
+    });
+  });
+
+  describe('computeViewportCenterAnchor', () => {
+    it('should return undefined when no scroll container exists in DOM', () => {
+      // No element with class gantt-chart-scroll-container in the test DOM
+      const result = computeViewportCenterAnchor();
+      expect(result).toBeUndefined();
+    });
+
+    it('should return undefined when scale is null', () => {
+      // Ensure scale remains null (set in beforeEach)
+      useChartStore.setState({ scale: null });
+
+      // Even if a scroll container existed, scale=null returns undefined
+      const result = computeViewportCenterAnchor();
+      expect(result).toBeUndefined();
     });
   });
 
