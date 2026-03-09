@@ -32,6 +32,12 @@ interface UseHideOperationsResult {
  * Pure helper: given visible and all flattened task lists plus current hidden state,
  * returns the IDs of hidden tasks that fall within the row range spanned by the
  * selected task IDs. Exported for unit testing.
+ *
+ * @param selectedTaskIds - IDs of the currently selected tasks (must have ≥2 to produce a range).
+ * @param flattenedTasks - Visible (non-hidden) flattened task list; used to resolve row numbers for selected tasks.
+ * @param allFlattenedTasks - Full flattened task list including hidden tasks; used to find hidden tasks in the range.
+ * @param hiddenTaskIds - Current set of hidden task IDs from chartSlice.
+ * @returns IDs of hidden tasks whose globalRowNumber falls within [firstSelectedRow, lastSelectedRow].
  */
 export function computeHiddenIdsInSelection(
   selectedTaskIds: TaskId[],
