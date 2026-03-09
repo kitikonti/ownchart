@@ -228,6 +228,10 @@ export type ExportDataColumnKey = Exclude<ExportColumnKey, "color" | "name">;
 /**
  * Default columns shown when no explicit selection has been made.
  * Used as fallback in ExportRenderer and SVG export when selectedColumns is empty.
+ *
+ * This is an intentional subset of ExportColumnKey — "color" and "duration" are
+ * omitted from the default to keep the exported table compact. When new column keys
+ * are added to ExportColumnKey, consider whether they should appear here by default.
  */
 export const DEFAULT_EXPORT_COLUMNS: ExportColumnKey[] = [
   "name",
@@ -297,8 +301,10 @@ export interface ExportOptions {
  * Derived automatically from ExportOptions so it stays in sync when new boolean
  * fields are added — no manual maintenance required.
  *
- * Uses `Required<ExportOptions>` to avoid `undefined` leaking into the union
- * from optional fields, then filters to keys whose value is strictly `boolean`.
+ * `Required<ExportOptions>` is applied first so that optional fields (which produce
+ * `T | undefined`) don't widen their value type and accidentally fail the `extends boolean`
+ * guard. After `Required<>`, every field is non-optional and the mapped type correctly
+ * narrows to only the keys whose resolved value type is exactly `boolean`.
  */
 export type ExportBooleanKey = {
   [K in keyof Required<ExportOptions>]: Required<ExportOptions>[K] extends boolean

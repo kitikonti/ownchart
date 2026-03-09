@@ -441,7 +441,11 @@ export function calculatePdfFitToWidth(
 
   const contentHeightPx = estimateContentHeightPx(tasks, options);
 
-  // Base width matches PNG preset (full page at PNG_EXPORT_DPI, not INTERNAL_DPI)
+  // Base width is intentionally the full page width (not the printable/available width).
+  // Using the full page matches the PNG page-size presets so the two export modes
+  // produce visually comparable resolutions. The PDF renderer scales the result down
+  // to fit the printable area, so the slight over-provisioning here is harmless and
+  // ensures compensateForTallContent starts from a consistent baseline.
   const baseWidthPx = mmToPxAtDpi(pageDims.width, PNG_EXPORT_DPI);
 
   return compensateForTallContent(
