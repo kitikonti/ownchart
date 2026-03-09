@@ -13,16 +13,13 @@ import { Check } from "@phosphor-icons/react";
  * ARIA roles that support the `aria-selected` attribute per the WAI-ARIA spec.
  * Only these roles should receive `aria-selected`; roles like `menuitem` do not
  * support it and would cause accessibility violations.
+ *
+ * Covers the roles realistically used by DropdownItem callers in this project.
+ * Extend this set if new callers use additional WAI-ARIA roles that support
+ * `aria-selected` (e.g. "row", "gridcell") — see the full spec list at
+ * https://www.w3.org/TR/wai-aria-1.2/#aria-selected
  */
-const ARIA_SELECTED_ROLES = new Set<AriaRole>([
-  "option",
-  "tab",
-  "treeitem",
-  "row",
-  "gridcell",
-  "columnheader",
-  "rowheader",
-]);
+const ARIA_SELECTED_ROLES = new Set<AriaRole>(["option", "tab", "treeitem"]);
 
 /**
  * ARIA roles that support the `aria-checked` attribute per the WAI-ARIA spec.
@@ -96,7 +93,7 @@ export const DropdownItem = memo(function DropdownItem({
         "flex items-center w-full cursor-pointer text-left text-sm text-neutral-900 whitespace-nowrap",
         hasDescription
           ? "min-h-[36px] py-1.5 pr-3 pl-2"
-          : "h-8 py-0 pr-[15px] pl-[9px]", // px values pixel-align with DropdownPanel left-padding — must match DropdownPanel; update both together if padding changes
+          : "h-8 py-0 pr-[15px] pl-[9px]", // pl-[9px]/pr-[15px] pixel-align with DropdownPanel's px-[9px] left-padding so the checkmark column visually aligns with the panel edge — if DropdownPanel padding changes, update this value to match
         isSelected ? "dropdown-item-selected" : "",
       ]
         .filter(Boolean)

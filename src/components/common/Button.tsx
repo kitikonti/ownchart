@@ -62,6 +62,10 @@ const sizeStyles: Record<ButtonSize, string> = {
  * Anonymous buttons (no `id`) always emit a warning — deduplicating them by a
  * shared sentinel would silently suppress warnings for distinct buttons added
  * later in the session.
+ *
+ * Lives at module scope intentionally: persists for the entire browser session
+ * so that repeated re-renders of the same identified button only warn once.
+ * Always `null` in production to avoid any memory usage outside DEV.
  */
 const warnedIconOnlyKeys = import.meta.env.DEV ? new Set<string>() : null;
 
@@ -138,9 +142,16 @@ export const Button = memo(
     // useEffect prevents this side-effecting call from running during React
     // StrictMode's double-invoke of the render body, which would otherwise
     // emit duplicate warnings for anonymous icon-only buttons in DEV mode.
+    //
+    // Dependency rationale: only the identity-relevant properties are listed.
+    // `props` (the full rest-spread object) is intentionally excluded — it is
+    // a new object reference on every render and would cause the warning check
+    // to fire continuously. We only need to re-check when `icon`, `children`,
+    // `aria-label`, or `id` change, as those are the only properties that
+    // affect whether a warning should be emitted.
     useEffect(() => {
       warnIfIconOnlyWithoutLabel(icon, children, props);
-      // eslint-disable-next-line react-hooks/exhaustive-deps -- intentional: re-check whenever the button's identity-relevant props change
+      // eslint-disable-next-line react-hooks/exhaustive-deps -- `props` intentionally excluded; only identity-relevant properties (aria-label, id) are listed individually
     }, [icon, children, props["aria-label"], props.id]);
 
     return (

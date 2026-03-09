@@ -154,20 +154,27 @@ export const ZoomDialog = memo(function ZoomDialog({
         tabIndex={-1}
         onKeyDown={handleRadioGroupKeyDown}
       >
-        {ZOOM_PRESETS.map((preset) => (
-          <label
-            key={String(preset.value)}
-            className="flex items-center gap-3 px-3 py-2.5 rounded cursor-pointer hover:bg-neutral-50 transition-colors duration-150"
-          >
-            <Radio
-              name="zoom-preset"
-              value={String(preset.value)}
-              checked={selectedValue === preset.value}
-              onChange={() => setSelectedValue(preset.value)}
-            />
-            <span className="text-sm text-neutral-800">{preset.label}</span>
-          </label>
-        ))}
+        {ZOOM_PRESETS.map((preset) => {
+          // Stable id for explicit <label htmlFor> association — more robust
+          // across assistive technologies than proximity-based label detection.
+          const inputId = `zoom-preset-${String(preset.value)}`;
+          return (
+            <label
+              key={String(preset.value)}
+              htmlFor={inputId}
+              className="flex items-center gap-3 px-3 py-2.5 rounded cursor-pointer hover:bg-neutral-50 transition-colors duration-150"
+            >
+              <Radio
+                id={inputId}
+                name="zoom-preset"
+                value={String(preset.value)}
+                checked={selectedValue === preset.value}
+                onChange={() => setSelectedValue(preset.value)}
+              />
+              <span className="text-sm text-neutral-800">{preset.label}</span>
+            </label>
+          );
+        })}
       </div>
     </Modal>
   );

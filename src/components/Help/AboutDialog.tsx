@@ -87,8 +87,9 @@ const ExternalLink = memo(function ExternalLink({
 });
 
 /** Website URL with the http(s):// prefix stripped for display purposes.
- *  Falls back to the full URL if the replace produces an empty string (defensive
- *  guard against a misconfigured APP_CONFIG.websiteUrl). */
+ *  Falls back to the full URL if the replace produces an empty string — this
+ *  can only happen when APP_CONFIG.websiteUrl is exactly "https://" or "http://",
+ *  which would leave an empty string after the regex removes the protocol. */
 const WEBSITE_DISPLAY_URL =
   APP_CONFIG.websiteUrl.replace(/^https?:\/\//, "") || APP_CONFIG.websiteUrl;
 

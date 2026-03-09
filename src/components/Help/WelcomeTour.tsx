@@ -2,14 +2,7 @@
  * Welcome Tour component for first-time users.
  */
 
-import {
-  useState,
-  useEffect,
-  useCallback,
-  useRef,
-  memo,
-  type ReactNode,
-} from "react";
+import { useState, useEffect, useCallback, useRef, memo } from "react";
 
 import {
   HandWaving,
@@ -29,8 +22,12 @@ const HELP_PANEL_OPEN_DELAY_MS = 100;
 interface TourTip {
   /** Stable identifier used as React key — must not change between renders. */
   id: string;
-  /** Icon element — static ReactNode, rendered inside an aria-hidden container. */
-  icon: ReactNode;
+  /**
+   * Icon element — always a static JSX.Element created at module level.
+   * Placed inside an `aria-hidden` wrapper in the render so it does not need
+   * to carry its own accessibility label.
+   */
+  icon: JSX.Element;
   /** Tailwind classes for the icon container background. */
   iconBg: string;
   /** Primary tip text. */
@@ -43,8 +40,9 @@ interface TourTip {
  * Tour tip metadata. Centralised here so colours and copy are co-located
  * and not scattered across JSX.
  *
- * Icons are static ReactNode values. They are placed inside an aria-hidden
- * wrapper in the render, so they do not need to carry accessibility context.
+ * Icons are static JSX.Element values created at module evaluation time.
+ * They are placed inside an aria-hidden wrapper in the render, so they do
+ * not need to carry accessibility context.
  */
 const TOUR_TIPS: TourTip[] = [
   {
