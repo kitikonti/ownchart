@@ -19,7 +19,7 @@ export interface SectionHeaderProps {
   /** Style variant */
   variant?: SectionHeaderVariant;
   /** HTML element to use — choose based on the heading hierarchy of the surrounding context */
-  as?: "h2" | "h3" | "span";
+  as?: "h1" | "h2" | "h3" | "span";
   /** Optional id so a parent <section> can reference this heading via aria-labelledby */
   id?: string;
 }
@@ -56,7 +56,11 @@ export function SectionHeader({
   // default variant with icon
   return (
     <div className="flex items-center gap-2 mb-4">
-      {icon && <span className="text-neutral-500 flex-shrink-0">{icon}</span>}
+      {icon && (
+        <span className="text-neutral-500 flex-shrink-0" aria-hidden="true">
+          {icon}
+        </span>
+      )}
       <Element id={id} className="text-sm font-semibold text-neutral-900">
         {title}
       </Element>

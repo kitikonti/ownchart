@@ -11,6 +11,8 @@
 import type { SelectHTMLAttributes, ReactNode } from "react";
 import { forwardRef } from "react";
 
+export type SelectVariant = "default" | "figma";
+
 export interface SelectProps extends Omit<
   SelectHTMLAttributes<HTMLSelectElement>,
   "className"
@@ -18,7 +20,7 @@ export interface SelectProps extends Omit<
   /** Children (option elements, optgroups) */
   children: ReactNode;
   /** Style variant */
-  variant?: "default" | "figma";
+  variant?: SelectVariant;
   /** Additional CSS classes */
   className?: string;
 }

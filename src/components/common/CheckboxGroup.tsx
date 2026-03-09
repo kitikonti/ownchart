@@ -32,8 +32,9 @@ export function CheckboxGroup({
       className="bg-white border border-neutral-200 rounded p-3"
     >
       <div className="space-y-2.5">
-        {items.map((item, idx, arr) => (
+        {items.map((item, idx) => (
           <div key={item.key}>
+            {idx > 0 && <div className="divider-h-light mb-2.5" />}
             <label className="flex items-center gap-3 cursor-pointer group min-h-[32px]">
               <Checkbox
                 checked={item.checked}
@@ -41,7 +42,6 @@ export function CheckboxGroup({
               />
               <span className="text-sm text-neutral-900">{item.label}</span>
             </label>
-            {idx < arr.length - 1 && <div className="divider-h-light mt-2.5" />}
           </div>
         ))}
       </div>

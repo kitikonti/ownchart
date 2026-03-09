@@ -9,12 +9,14 @@
 import type { InputHTMLAttributes } from "react";
 import { forwardRef } from "react";
 
+export type InputVariant = "default" | "figma";
+
 export interface InputProps extends Omit<
   InputHTMLAttributes<HTMLInputElement>,
   "className"
 > {
   /** Style variant */
-  variant?: "default" | "figma";
+  variant?: InputVariant;
   /** Use monospace font */
   mono?: boolean;
   /** Use full width (default: true) */
@@ -30,7 +32,7 @@ const variantClasses = {
   default:
     "border-neutral-300 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-brand-600 focus-visible:border-brand-600 hover:border-neutral-400",
   figma:
-    "border-neutral-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-100 focus-visible:border-brand-600",
+    "border-neutral-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-300 focus-visible:border-brand-600",
 };
 
 export const Input = forwardRef<HTMLInputElement, InputProps>(
