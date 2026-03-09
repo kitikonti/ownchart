@@ -96,7 +96,7 @@ export const DropdownItem = memo(function DropdownItem({
         "flex items-center w-full cursor-pointer text-left text-sm text-neutral-900 whitespace-nowrap",
         hasDescription
           ? "min-h-[36px] py-1.5 pr-3 pl-2"
-          : "h-8 py-0 pr-[15px] pl-[9px]", // px values pixel-align with DropdownPanel left-padding — see src/components/Toolbar/DropdownPanel.tsx; update both if padding changes
+          : "h-8 py-0 pr-[15px] pl-[9px]", // px values pixel-align with DropdownPanel left-padding — must match DropdownPanel; update both together if padding changes
         isSelected ? "dropdown-item-selected" : "",
       ]
         .filter(Boolean)

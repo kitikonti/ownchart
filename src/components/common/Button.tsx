@@ -11,6 +11,7 @@
 import {
   forwardRef,
   memo,
+  useEffect,
   Children,
   type ButtonHTMLAttributes,
   type ReactNode,
@@ -134,7 +135,13 @@ export const Button = memo(
     },
     ref
   ) {
-    warnIfIconOnlyWithoutLabel(icon, children, props);
+    // useEffect prevents this side-effecting call from running during React
+    // StrictMode's double-invoke of the render body, which would otherwise
+    // emit duplicate warnings for anonymous icon-only buttons in DEV mode.
+    useEffect(() => {
+      warnIfIconOnlyWithoutLabel(icon, children, props);
+      // eslint-disable-next-line react-hooks/exhaustive-deps -- intentional: re-check whenever the button's identity-relevant props change
+    }, [icon, children, props["aria-label"], props.id]);
 
     return (
       <button

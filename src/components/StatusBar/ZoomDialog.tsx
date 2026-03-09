@@ -43,12 +43,17 @@ const ZOOM_MATCH_EPSILON = 0.01;
 
 /**
  * Finds the closest preset to the given zoom level.
- * Returns the exact preset value when within ZOOM_MATCH_EPSILON, otherwise defaults to 100%.
+ *
+ * - If the zoom exactly matches a numeric preset (within ZOOM_MATCH_EPSILON),
+ *   that preset is returned.
+ * - Otherwise the numerically nearest preset is selected so that the dialog
+ *   always reflects the user's current zoom as closely as possible.
  *
  * Note: "fit" is not auto-detected from the zoom number — callers that want
  * the "fit" preset pre-selected must pass a sentinel value that maps to it.
- * Defaulting to 100% on no match is intentional: it avoids ambiguity when
- * the zoom level was set by a fit-to-view operation with an arbitrary value.
+ * Fit-to-view produces an arbitrary zoom float; without a sentinel there is no
+ * reliable way to distinguish it from a regular zoom, so we fall through to the
+ * nearest numeric preset in that case.
  */
 function findClosestPreset(zoom: number): number {
   const exactMatch = ZOOM_PRESETS.find(
@@ -59,8 +64,20 @@ function findClosestPreset(zoom: number): number {
   if (exactMatch && typeof exactMatch.value === "number") {
     return exactMatch.value;
   }
-  // Default to 100% if no exact match
-  return 1.0;
+
+  // No exact match — select the numerically nearest numeric preset so the
+  // dialog always opens with a selection that is closest to the current zoom.
+  let nearestValue = 1.0;
+  let nearestDistance = Infinity;
+  for (const preset of ZOOM_PRESETS) {
+    if (typeof preset.value !== "number") continue;
+    const distance = Math.abs(preset.value - zoom);
+    if (distance < nearestDistance) {
+      nearestDistance = distance;
+      nearestValue = preset.value;
+    }
+  }
+  return nearestValue;
 }
 
 export const ZoomDialog = memo(function ZoomDialog({

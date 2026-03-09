@@ -86,8 +86,11 @@ const ExternalLink = memo(function ExternalLink({
   );
 });
 
-/** Website URL with the http(s):// prefix stripped for display purposes. */
-const WEBSITE_DISPLAY_URL = APP_CONFIG.websiteUrl.replace(/^https?:\/\//, "");
+/** Website URL with the http(s):// prefix stripped for display purposes.
+ *  Falls back to the full URL if the replace produces an empty string (defensive
+ *  guard against a misconfigured APP_CONFIG.websiteUrl). */
+const WEBSITE_DISPLAY_URL =
+  APP_CONFIG.websiteUrl.replace(/^https?:\/\//, "") || APP_CONFIG.websiteUrl;
 
 export const AboutDialog = memo(function AboutDialog(): JSX.Element | null {
   const { isAboutDialogOpen: isOpen, closeAboutDialog } = useUIStore();

@@ -80,6 +80,8 @@ export const WelcomeTour = memo(function WelcomeTour(): JSX.Element | null {
   // stale openHelpPanel() call if the component unmounts before the timer fires.
   const helpPanelTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
+  // No setup needed — only registers an unmount cleanup that cancels any
+  // pending helpPanelTimerRef before the component is removed from the tree.
   useEffect(() => {
     return () => {
       if (helpPanelTimerRef.current !== null) {
