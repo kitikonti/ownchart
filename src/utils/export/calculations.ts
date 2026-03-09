@@ -19,6 +19,18 @@ import { HEADER_LABELS } from "./columns";
 export const BASE_PIXELS_PER_DAY = 25;
 
 /**
+ * Width in pixels of the expand/collapse button rendered in the name column.
+ * Corresponds to Tailwind class w-4 (4 × 4px = 16px).
+ */
+const EXPAND_BUTTON_WIDTH_PX = 16;
+
+/**
+ * Total gap pixels between the name-column UI elements (expand button, type
+ * icon, text). Two gap-1 (4px) gaps = 8px.
+ */
+const NAME_COLUMN_GAPS_PX = 8;
+
+/**
  * Get default column width based on density setting.
  */
 export function getDefaultColumnWidth(
@@ -170,6 +182,39 @@ export function calculateDurationDays(dateRange: {
 }
 
 /**
+ * Return the display cell value for a given column key and task.
+ * Milestones and summaries have special display rules for some columns.
+ */
+function getCellValueForColumn(key: ExportColumnKey, task: Task): string {
+  const isSummary = task.type === "summary";
+  const isMilestone = task.type === "milestone";
+
+  switch (key) {
+    case "name":
+      return task.name || "";
+    case "startDate":
+      return task.startDate || "";
+    case "endDate":
+      // Milestones don't show end date
+      return isMilestone ? "" : task.endDate || "";
+    case "duration":
+      // Milestones don't show duration; summaries show "X days"
+      if (isMilestone) return "";
+      if (isSummary && task.duration !== undefined && task.duration > 0) {
+        return `${task.duration} days`;
+      }
+      if (!isSummary && task.duration !== undefined) {
+        return `${task.duration}`;
+      }
+      return "";
+    case "progress":
+      return task.progress !== undefined ? `${task.progress}%` : "";
+    default:
+      return "";
+  }
+}
+
+/**
  * Calculate optimal column width based on content.
  * Uses the shared calculateColumnWidth function from textMeasurement.
  */
@@ -202,50 +247,18 @@ export function calculateOptimalColumnWidth(
   const extraWidths: number[] = [];
 
   for (const task of tasks) {
-    let cellValue = "";
-    const isSummary = task.type === "summary";
-    const isMilestone = task.type === "milestone";
-
-    switch (key) {
-      case "name":
-        cellValue = task.name || "";
-        break;
-      case "startDate":
-        cellValue = task.startDate || "";
-        break;
-      case "endDate":
-        // Milestones don't show end date
-        cellValue = isMilestone ? "" : task.endDate || "";
-        break;
-      case "duration":
-        // Milestones don't show duration, summaries show "X days"
-        if (isMilestone) {
-          cellValue = "";
-        } else if (
-          isSummary &&
-          task.duration !== undefined &&
-          task.duration > 0
-        ) {
-          cellValue = `${task.duration} days`;
-        } else if (!isSummary && task.duration !== undefined) {
-          cellValue = `${task.duration}`;
-        }
-        break;
-      case "progress":
-        cellValue = task.progress !== undefined ? `${task.progress}%` : "";
-        break;
-    }
-
-    cellValues.push(cellValue);
+    cellValues.push(getCellValueForColumn(key, task));
 
     // For name column, calculate extra width for UI elements (same as autoFitColumn)
     if (key === "name") {
       const level = getTaskLevel(tasks, task.id);
       const hierarchyIndent = level * indentSize;
-      const expandButton = 16; // w-4 expand/collapse button
-      const gaps = 8; // gap-1 (4px) × 2 between elements
-      const typeIcon = iconSize;
-      extraWidths.push(hierarchyIndent + expandButton + gaps + typeIcon);
+      extraWidths.push(
+        hierarchyIndent +
+          EXPAND_BUTTON_WIDTH_PX +
+          NAME_COLUMN_GAPS_PX +
+          iconSize
+      );
     } else {
       extraWidths.push(0);
     }

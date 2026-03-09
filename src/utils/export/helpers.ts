@@ -1,10 +1,13 @@
 /**
- * Shared helper functions for SVG/PDF export.
- * Used by both pdfExport.ts and svgExport.ts.
+ * Shared helper functions for SVG/PDF/PNG export.
+ * Used by pdfExport.ts, svgExport.ts, and captureChart.ts.
  */
 
 import { SVG_FONT_FAMILY } from "./constants";
 import { sanitizeFilename } from "./sanitizeFilename";
+
+/** DOM id for the hidden export rendering container */
+const OFFSCREEN_CONTAINER_ID = "export-offscreen-container";
 
 /**
  * Wait for all fonts to be loaded.
@@ -31,19 +34,20 @@ export function waitForPaint(): Promise<void> {
 }
 
 /**
- * Set font-family attribute on all text and tspan elements in an SVG subtree.
- * Also normalizes font-weight for svg2pdf.js compatibility.
- * This is necessary because:
- * - Vector apps like Illustrator/Inkscape often ignore CSS style blocks
- * - svg2pdf.js needs explicit font-family attributes for proper rendering
- * - svg2pdf.js needs "bold" string instead of numeric font-weight (600/700)
+ * Normalise font attributes on all elements in an SVG subtree.
+ * Sets explicit font-family and font-weight attributes needed for:
+ * - Vector apps (Illustrator/Inkscape) that ignore CSS style blocks
+ * - svg2pdf.js which needs explicit font-family attributes and "bold" string
+ *   instead of numeric font-weight values (600/700)
  *
- * @param element - The root element to process
+ * Also replaces font-family/font-weight values in inline style attributes
+ * for any element in the tree (not just text/tspan), because some SVG
+ * renderers apply computed styles from parent elements via the style attr.
+ *
+ * @param element - The root element to process recursively
  */
 export function setFontFamilyOnTextElements(element: Element): void {
-  // Handle SVG namespace - tagName can be lowercase or uppercase
-  const tagName = element.tagName?.toLowerCase() || "";
-  const localName = element.localName?.toLowerCase() || tagName;
+  const localName = element.localName.toLowerCase();
 
   // Set font-family on text and tspan elements
   if (localName === "text" || localName === "tspan") {
@@ -69,7 +73,8 @@ export function setFontFamilyOnTextElements(element: Element): void {
     }
   }
 
-  // Check for style attribute that might contain font-family or font-weight
+  // Normalise font-family/font-weight in inline style attributes on all elements
+  // (computed styles can propagate via the style attribute in some SVG renderers)
   if (element.hasAttribute("style")) {
     let style = element.getAttribute("style") || "";
     // Replace any font-family in inline styles
@@ -83,9 +88,9 @@ export function setFontFamilyOnTextElements(element: Element): void {
   }
 
   // Process all child elements recursively
-  Array.from(element.children).forEach((child) => {
+  for (const child of element.children) {
     setFontFamilyOnTextElements(child);
-  });
+  }
 }
 
 /**
@@ -114,7 +119,8 @@ export function generateExportFilename(
 
 /**
  * Create an offscreen container for rendering export content.
- * The container is hidden but allows proper layout calculation.
+ * The container is hidden (opacity: 0, pointer-events: none) but attached to
+ * the DOM so that html-to-image and SVG foreignObject layout work correctly.
  *
  * @param width - Container width in pixels
  * @param height - Container height in pixels
@@ -127,7 +133,7 @@ export function createOffscreenContainer(
   background: "white" | "transparent"
 ): HTMLDivElement {
   const container = document.createElement("div");
-  container.id = "export-offscreen-container";
+  container.id = OFFSCREEN_CONTAINER_ID;
   container.style.cssText = `
     position: fixed;
     left: 0;
@@ -167,9 +173,9 @@ export function cloneSvgChildrenIntoGroup(
   source: SVGElement,
   group: SVGElement
 ): void {
-  Array.from(source.childNodes).forEach((child) => {
+  for (const child of source.childNodes) {
     group.appendChild(child.cloneNode(true));
-  });
+  }
   setFontFamilyOnTextElements(group);
 }
 

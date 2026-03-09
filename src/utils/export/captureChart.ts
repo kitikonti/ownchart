@@ -9,28 +9,22 @@ import { toCanvas } from "html-to-image";
 import type { ExportLayoutInput } from "./types";
 import { ExportRenderer } from "../../components/Export/ExportRenderer";
 import { calculateExportDimensions } from "./exportLayout";
+import {
+  waitForFonts,
+  waitForPaint,
+  createOffscreenContainer,
+  removeOffscreenContainer,
+} from "./helpers";
+
+/** Minimum device pixel ratio used for canvas capture (ensures crisp output on low-DPI screens) */
+const MIN_PIXEL_RATIO = 2;
 
 /**
- * Wait for all fonts to be loaded.
+ * Time in milliseconds to wait after React's initial render call before
+ * proceeding. React renders asynchronously and this delay ensures the first
+ * paint has completed before we attempt font loading and capture.
  */
-async function waitForFonts(): Promise<void> {
-  if (document.fonts && document.fonts.ready) {
-    await document.fonts.ready;
-  }
-}
-
-/**
- * Wait for next animation frame (ensures DOM is painted).
- */
-function waitForPaint(): Promise<void> {
-  return new Promise((resolve) => {
-    requestAnimationFrame(() => {
-      requestAnimationFrame(() => {
-        resolve();
-      });
-    });
-  });
-}
+const REACT_RENDER_SETTLE_MS = 100;
 
 export interface CaptureChartParams extends ExportLayoutInput {
   /** Project name for export filename */
@@ -58,26 +52,16 @@ export async function captureChart(
 
   // Create container - must be on-screen for html-to-image (uses SVG foreignObject)
   // We use opacity: 0 and pointer-events: none to hide it from the user
-  const container = document.createElement("div");
-  container.id = "export-offscreen-container";
-  container.style.cssText = `
-    position: fixed;
-    left: 0;
-    top: 0;
-    width: ${dimensions.width}px;
-    height: ${dimensions.height}px;
-    overflow: hidden;
-    background: ${options.background === "white" ? "#ffffff" : "transparent"};
-    z-index: 99999;
-    opacity: 0;
-    pointer-events: none;
-  `;
-  document.body.appendChild(container);
+  const container = createOffscreenContainer(
+    dimensions.width,
+    dimensions.height,
+    options.background
+  );
+
+  // Create React root outside try so it is accessible in the finally block
+  const root = createRoot(container);
 
   try {
-    // Create React root and render the export component
-    const root = createRoot(container);
-
     await new Promise<void>((resolve) => {
       root.render(
         createElement(ExportRenderer, {
@@ -89,8 +73,8 @@ export async function captureChart(
           visibleDateRange,
         })
       );
-      // Wait for React to render
-      setTimeout(resolve, 100);
+      // Wait for React to render its first pass before proceeding
+      setTimeout(resolve, REACT_RENDER_SETTLE_MS);
     });
 
     // Wait for fonts and paint
@@ -103,7 +87,7 @@ export async function captureChart(
 
     // Capture the container using html-to-image
     const canvas = await toCanvas(container, {
-      pixelRatio: Math.max(window.devicePixelRatio, 2),
+      pixelRatio: Math.max(window.devicePixelRatio, MIN_PIXEL_RATIO),
       backgroundColor: options.background === "white" ? "#ffffff" : undefined,
       width: dimensions.width,
       height: dimensions.height,
@@ -115,15 +99,11 @@ export async function captureChart(
       },
     });
 
-    // Cleanup React root
-    root.unmount();
-
     return canvas;
   } finally {
-    // Always cleanup the container
-    if (container.parentNode) {
-      container.parentNode.removeChild(container);
-    }
+    // Always cleanup React root and DOM container
+    root.unmount();
+    removeOffscreenContainer(container);
   }
 }
 
