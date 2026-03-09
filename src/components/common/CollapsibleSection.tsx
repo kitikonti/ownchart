@@ -53,15 +53,15 @@ export const CollapsibleSection = memo(function CollapsibleSection({
       </button>
 
       {/* Keep the panel in the DOM at all times so aria-controls always
-          references a valid element. CSS display:none (via the Tailwind `hidden`
-          class) is used instead of the HTML `hidden` attribute — the HTML
-          attribute removes the element from the accessibility tree entirely,
-          making the aria-controls reference invisible to assistive technologies.
-          The Tailwind class sets display:none via CSS only, preserving the
-          DOM presence that aria-controls requires. */}
+          references a valid element. The Tailwind `hidden` class (display:none)
+          is used instead of the HTML `hidden` attribute — the HTML attribute
+          removes the element from the accessibility tree entirely, making the
+          aria-controls reference invisible to assistive technologies. CSS
+          display:none preserves DOM presence for aria-controls without needing
+          aria-hidden (which would also hide the panel from assistive technologies
+          when open, contradicting the aria-controls relationship). */}
       <div
         id={contentId}
-        aria-hidden={!isOpen}
         className={`mt-3 bg-neutral-50 rounded px-6 py-4 space-y-5${isOpen ? "" : " hidden"}`}
       >
         {children}

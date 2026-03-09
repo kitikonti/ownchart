@@ -30,14 +30,15 @@ interface CheckboxGroupRowProps {
   item: CheckboxGroupItem;
   /** Unique DOM id for the native checkbox input (scoped to this group instance). */
   inputId: string;
-  showDivider: boolean;
+  /** Whether to render a divider above this row (true for all rows except the first). */
+  hasDividerAbove: boolean;
   onChange: (key: string, checked: boolean) => void;
 }
 
 const CheckboxGroupRow = memo(function CheckboxGroupRow({
   item,
   inputId,
-  showDivider,
+  hasDividerAbove,
   onChange,
 }: CheckboxGroupRowProps): JSX.Element {
   const handleChange = useCallback(
@@ -48,7 +49,7 @@ const CheckboxGroupRow = memo(function CheckboxGroupRow({
   return (
     <li>
       {/* divider-h-light: custom utility defined in index.css */}
-      {showDivider && <div className="divider-h-light mb-2.5" />}
+      {hasDividerAbove && <div className="divider-h-light mb-2.5" />}
       {/* Label wraps both elements — the `inputId` on Checkbox provides an explicit
           native <input id> so label association remains valid even if the
           nesting structure changes in future refactors. The id is scoped to the
@@ -95,7 +96,7 @@ export const CheckboxGroup = memo(function CheckboxGroup({
             item={item}
             inputId={`${groupId}-${item.key}`}
             // Positional divider: first item has no top divider, all others do.
-            showDivider={idx > 0}
+            hasDividerAbove={idx > 0}
             onChange={onChange}
           />
         ))}
