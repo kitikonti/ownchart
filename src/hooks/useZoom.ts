@@ -105,7 +105,9 @@ export function useZoom({
       // Apply the calculated scroll position
       applyScrollLeft(result?.newScrollLeft ?? null);
     },
-    [enabled, scale, setZoom, containerRef]
+    // containerRef is intentionally omitted: refs are stable by definition and
+    // reading .current inside the callback is the idiomatic pattern.
+    [enabled, scale, setZoom]
   );
 
   // Global prevention of browser zoom (Ctrl+Wheel) throughout the entire app

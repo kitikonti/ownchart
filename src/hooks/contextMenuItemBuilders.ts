@@ -80,6 +80,7 @@ export function buildClipboardItems(
 }
 
 export interface DeleteItemParams {
+  /** Number of tasks in the effective selection. Must be ≥ 0; item is disabled when 0. */
   count: number;
   taskId: TaskId;
   deleteSelectedTasks: () => void;
@@ -110,6 +111,7 @@ export function buildDeleteItem(params: DeleteItemParams): ContextMenuItem {
 }
 
 export interface HideItemParams {
+  /** Number of tasks in the effective selection. Must be ≥ 0; item is disabled when 0. */
   count: number;
   effectiveSelection: TaskId[];
   hideRows: (taskIds: TaskId[]) => void;

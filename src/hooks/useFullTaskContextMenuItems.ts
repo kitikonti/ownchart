@@ -70,9 +70,11 @@ export function useFullTaskContextMenuItems(): UseFullTaskContextMenuItemsResult
   const ungroupSelectedTasks = useTaskStore(
     (state) => state.ungroupSelectedTasks
   );
-  // These selectors call computed methods on the state object. Each returns a
-  // primitive boolean, so Zustand's default shallow-equal check prevents
-  // unnecessary re-renders when the value hasn't changed.
+  // These selectors call computed methods on the state object. Each method is a
+  // pure getter that calls get() internally to read current store state, then
+  // returns a primitive boolean. Zustand's default reference-equality check on
+  // the returned boolean prevents unnecessary re-renders when the value hasn't
+  // changed. This pattern is safe because the methods have no side effects.
   const canIndent = useTaskStore((state) => state.canIndentSelection());
   const canOutdent = useTaskStore((state) => state.canOutdentSelection());
   const canGroup = useTaskStore((state) => state.canGroupSelection());
