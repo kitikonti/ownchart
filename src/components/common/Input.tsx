@@ -7,7 +7,7 @@
  */
 
 import { forwardRef, memo } from "react";
-import type { InputHTMLAttributes, JSX } from "react";
+import type { InputHTMLAttributes, JSX, Ref } from "react";
 import {
   type FormControlVariant,
   formControlVariantClasses,
@@ -41,31 +41,28 @@ export interface InputProps extends Omit<
 const baseClasses =
   "px-3 py-2 text-sm bg-white border rounded transition-colors duration-150 disabled:opacity-50 disabled:cursor-not-allowed disabled:bg-neutral-50";
 
-export const Input = memo(
-  forwardRef<HTMLInputElement, InputProps>(
-    (
-      {
-        variant = "default",
-        mono = false,
-        fullWidth = true,
-        className = "",
-        ...props
-      },
-      ref
-    ): JSX.Element => {
-      const classes = [
-        baseClasses,
-        formControlVariantClasses[variant],
-        fullWidth ? "w-full" : "",
-        mono ? "font-mono" : "",
-        className,
-      ]
-        .filter(Boolean)
-        .join(" ");
+function InputInner(
+  {
+    variant = "default",
+    mono = false,
+    fullWidth = true,
+    className = "",
+    ...props
+  }: InputProps,
+  ref: Ref<HTMLInputElement>
+): JSX.Element {
+  const classes = [
+    baseClasses,
+    formControlVariantClasses[variant],
+    fullWidth ? "w-full" : "",
+    mono ? "font-mono" : "",
+    className,
+  ]
+    .filter(Boolean)
+    .join(" ");
 
-      return <input ref={ref} className={classes} {...props} />;
-    }
-  )
-);
+  return <input ref={ref} className={classes} {...props} />;
+}
 
+export const Input = memo(forwardRef(InputInner));
 Input.displayName = "Input";

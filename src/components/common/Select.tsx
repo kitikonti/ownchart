@@ -9,7 +9,7 @@
  */
 
 import { forwardRef, memo } from "react";
-import type { SelectHTMLAttributes, ReactNode, JSX } from "react";
+import type { SelectHTMLAttributes, ReactNode, JSX, Ref } from "react";
 import {
   type FormControlVariant,
   formControlVariantClasses,
@@ -40,34 +40,31 @@ export interface SelectProps extends Omit<
 const baseClasses =
   "px-3 py-2 text-sm bg-white border rounded cursor-pointer transition-colors duration-150 disabled:opacity-50 disabled:cursor-not-allowed disabled:bg-neutral-50";
 
-export const Select = memo(
-  forwardRef<HTMLSelectElement, SelectProps>(
-    (
-      {
-        children,
-        variant = "default",
-        fullWidth = true,
-        className = "",
-        ...props
-      },
-      ref
-    ): JSX.Element => {
-      const classes = [
-        baseClasses,
-        formControlVariantClasses[variant],
-        fullWidth ? "w-full" : "",
-        className,
-      ]
-        .filter(Boolean)
-        .join(" ");
+function SelectInner(
+  {
+    children,
+    variant = "default",
+    fullWidth = true,
+    className = "",
+    ...props
+  }: SelectProps,
+  ref: Ref<HTMLSelectElement>
+): JSX.Element {
+  const classes = [
+    baseClasses,
+    formControlVariantClasses[variant],
+    fullWidth ? "w-full" : "",
+    className,
+  ]
+    .filter(Boolean)
+    .join(" ");
 
-      return (
-        <select ref={ref} className={classes} {...props}>
-          {children}
-        </select>
-      );
-    }
-  )
-);
+  return (
+    <select ref={ref} className={classes} {...props}>
+      {children}
+    </select>
+  );
+}
 
+export const Select = memo(forwardRef(SelectInner));
 Select.displayName = "Select";

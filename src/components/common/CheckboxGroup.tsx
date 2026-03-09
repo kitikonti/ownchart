@@ -65,7 +65,7 @@ const CheckboxGroupRow = memo(function CheckboxGroupRow({
   );
 });
 
-export function CheckboxGroup({
+export const CheckboxGroup = memo(function CheckboxGroup({
   items,
   onChange,
   ariaLabel,
@@ -84,6 +84,10 @@ export function CheckboxGroup({
       {/* sr-only <legend> names the group for assistive technologies,
           replacing the former aria-label on the div. */}
       <legend className="sr-only">{ariaLabel}</legend>
+      {/* Note: role="list" is intentionally omitted — the ESLint jsx-a11y rule
+          disallows explicit list roles on <ul>/<ol> as redundant. The <fieldset>
+          + <legend> already provide strong group semantics for assistive
+          technologies; individual items are discovered via <li> children. */}
       <ul className="space-y-2.5">
         {items.map((item, idx) => (
           <CheckboxGroupRow
@@ -91,8 +95,6 @@ export function CheckboxGroup({
             item={item}
             inputId={`${groupId}-${item.key}`}
             // Positional divider: first item has no top divider, all others do.
-            // Note: if items are reordered dynamically, derive showDivider from
-            // item identity rather than array index to avoid misplaced dividers.
             showDivider={idx > 0}
             onChange={onChange}
           />
@@ -100,4 +102,4 @@ export function CheckboxGroup({
       </ul>
     </fieldset>
   );
-}
+});
