@@ -99,6 +99,17 @@ export const EXPORT_TIMELINE_HEADER_SVG_CLASS = "export-timeline-header";
 /** SVG namespace URI — required for every createElementNS call */
 export const SVG_NS = "http://www.w3.org/2000/svg";
 
+// ─── File size estimation constants ───────────────────────────────────────────
+
+/** Bytes per kilobyte */
+export const BYTES_PER_KB = 1024;
+
+/** Bytes per megabyte */
+export const BYTES_PER_MB = 1024 * 1024;
+
+/** Placeholder shown in place of a size value when dimensions are not yet known */
+export const EMPTY_SIZE_PLACEHOLDER = "—";
+
 /**
  * White background fill colour for SVG/PDF export with opaque background.
  * Intentionally hardcoded: pure white is a presentation-layer override for

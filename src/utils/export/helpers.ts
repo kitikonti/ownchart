@@ -3,7 +3,12 @@
  * Used by pdfExport.ts, svgExport.ts, and captureChart.ts.
  */
 
-import { SVG_FONT_FAMILY } from "./constants";
+import {
+  SVG_FONT_FAMILY,
+  BYTES_PER_KB,
+  BYTES_PER_MB,
+  EMPTY_SIZE_PLACEHOLDER,
+} from "./constants";
 import { sanitizeFilename } from "./sanitizeFilename";
 
 /** data-* attribute used to identify offscreen export containers in the DOM */
@@ -181,8 +186,6 @@ export function cloneSvgChildrenIntoGroup(
 
 /** Conservative PNG compression ratio (typical range: 25–50% of raw RGBA) */
 const PNG_COMPRESSION_RATIO = 0.35;
-const BYTES_PER_KB = 1024;
-const BYTES_PER_MB = 1024 * 1024;
 
 /**
  * Estimate PNG file size based on dimensions.
@@ -193,7 +196,7 @@ const BYTES_PER_MB = 1024 * 1024;
  * @returns Human-readable size string (e.g. "~1.2 MB")
  */
 export function estimateFileSize(width: number, height: number): string {
-  if (width === 0 || height === 0) return "—";
+  if (width === 0 || height === 0) return EMPTY_SIZE_PLACEHOLDER;
   const rawBytes = width * height * 4;
   const estimatedBytes = rawBytes * PNG_COMPRESSION_RATIO;
 

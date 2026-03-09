@@ -34,26 +34,35 @@ export interface CaptureChartParams extends ExportLayoutInput {
 /**
  * Render the ExportRenderer component into `container` and wait for
  * React's initial paint to settle before proceeding.
+ *
+ * Returns the React root so the caller can unmount it after capture.
+ * Unmounting here (before toCanvas runs) would tear down the DOM tree
+ * while it is still being captured, producing a blank PNG.
+ *
+ * @param container - The DOM container to render into
+ * @param props - Props forwarded to ExportRenderer
+ * @returns The React root (caller must call root.unmount() when done)
  */
 async function renderAndSettle(
   container: HTMLDivElement,
   props: ComponentProps<typeof ExportRenderer>
-): Promise<void> {
+): Promise<ReturnType<typeof createRoot>> {
   const root = createRoot(container);
-  try {
-    await new Promise<void>((resolve) => {
-      root.render(createElement(ExportRenderer, props));
-      // Wait for React to render its first pass before proceeding
-      setTimeout(resolve, REACT_RENDER_SETTLE_MS);
-    });
-  } finally {
-    root.unmount();
-  }
+  await new Promise<void>((resolve) => {
+    root.render(createElement(ExportRenderer, props));
+    // Wait for React to render its first pass before proceeding
+    setTimeout(resolve, REACT_RENDER_SETTLE_MS);
+  });
+  return root;
 }
 
 /**
  * Capture the chart to a canvas using offscreen rendering.
- * This renders the complete chart (including non-visible areas) at the specified zoom level.
+ * Renders the complete chart (including non-visible areas) at the specified
+ * zoom level, then converts the DOM to a canvas via html-to-image.
+ *
+ * @param params - Layout inputs including tasks, options, column widths, and zoom
+ * @returns A canvas element containing the rendered chart at the target resolution
  */
 export async function captureChart(
   params: CaptureChartParams
@@ -79,10 +88,15 @@ export async function captureChart(
     options.background
   );
 
+  // root is assigned after renderAndSettle and unmounted in the finally block
+  // AFTER capture. Unmounting before toCanvas would tear down the DOM tree
+  // mid-capture and produce a blank PNG.
+  let root: ReturnType<typeof createRoot> | null = null;
+
   try {
     // Render component into container and wait for React's first paint to settle.
-    // renderAndSettle handles its own root lifecycle internally.
-    await renderAndSettle(container, {
+    // The root is returned so we can defer unmounting until after capture.
+    root = await renderAndSettle(container, {
       tasks,
       options,
       columnWidths,
@@ -115,13 +129,23 @@ export async function captureChart(
 
     return canvas;
   } finally {
-    // Always remove the DOM container regardless of success or failure
+    // Unmount the React tree only after capture (or on error), then remove
+    // the container from the DOM.
+    root?.unmount();
     removeOffscreenContainer(container);
   }
 }
 
 /**
  * Convert canvas to PNG blob.
+ *
+ * Note: PNG is lossless — the browser ignores the `quality` argument for
+ * "image/png". The parameter is kept for API symmetry in case this function
+ * is ever extended to support lossy formats (JPEG/WebP).
+ *
+ * @param canvas - The canvas element to serialise
+ * @param quality - Quality hint (0–1). Ignored for PNG; only used by JPEG/WebP.
+ * @returns A Blob containing the PNG-encoded image
  */
 export async function canvasToBlob(
   canvas: HTMLCanvasElement,

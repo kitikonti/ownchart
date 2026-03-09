@@ -33,6 +33,12 @@ const DEFAULT_RANGE_LOOKAHEAD_DAYS = 30;
 /** Fallback width in pixels for unknown column keys */
 const UNKNOWN_COLUMN_DEFAULT_WIDTH_PX = 100;
 
+/** Milliseconds in one day — used by calculateDurationDays */
+const MS_PER_DAY = 1000 * 60 * 60 * 24;
+
+/** Suffix appended to duration values for summary tasks (e.g. "5 days") */
+const DAYS_SUFFIX = " days";
+
 /**
  * Width in pixels of the expand/collapse button rendered in the name column.
  * Corresponds to Tailwind class w-4 (4 × 4px = 16px).
@@ -139,6 +145,37 @@ function calculateLabelExtraPadding(
 }
 
 /**
+ * Build the padded "all tasks" date range, extending the project boundaries
+ * by default padding plus any extra space needed to avoid clipping task labels.
+ */
+function buildPaddedDateRange(
+  options: ExportOptions,
+  projectDateRange: { start: Date; end: Date },
+  tasks: Task[] | undefined,
+  effectiveZoom: number | undefined
+): { min: string; max: string } {
+  let leftPadding = DEFAULT_LEFT_PADDING_DAYS;
+  let rightPadding = DEFAULT_RIGHT_PADDING_DAYS;
+
+  if (tasks && effectiveZoom !== undefined) {
+    const extra = calculateLabelExtraPadding(options, tasks, effectiveZoom);
+    leftPadding += extra.leftDays;
+    rightPadding += extra.rightDays;
+  }
+
+  return {
+    min: addDays(
+      projectDateRange.start.toISOString().split("T")[0],
+      -leftPadding
+    ),
+    max: addDays(
+      projectDateRange.end.toISOString().split("T")[0],
+      rightPadding
+    ),
+  };
+}
+
+/**
  * Calculate the effective date range based on date range mode.
  * When tasks and effectiveZoom are provided, label padding is calculated
  * to ensure task labels are not clipped in the export.
@@ -168,39 +205,19 @@ export function getEffectiveDateRange(
 
     case "custom":
       if (options.customDateStart && options.customDateEnd) {
-        return {
-          min: options.customDateStart,
-          max: options.customDateEnd,
-        };
+        return { min: options.customDateStart, max: options.customDateEnd };
       }
       return defaultRange;
 
     case "all":
     default:
       if (projectDateRange) {
-        let leftPadding = DEFAULT_LEFT_PADDING_DAYS;
-        let rightPadding = DEFAULT_RIGHT_PADDING_DAYS;
-
-        if (tasks && effectiveZoom !== undefined) {
-          const extra = calculateLabelExtraPadding(
-            options,
-            tasks,
-            effectiveZoom
-          );
-          leftPadding += extra.leftDays;
-          rightPadding += extra.rightDays;
-        }
-
-        return {
-          min: addDays(
-            projectDateRange.start.toISOString().split("T")[0],
-            -leftPadding
-          ),
-          max: addDays(
-            projectDateRange.end.toISOString().split("T")[0],
-            rightPadding
-          ),
-        };
+        return buildPaddedDateRange(
+          options,
+          projectDateRange,
+          tasks,
+          effectiveZoom
+        );
       }
       return defaultRange;
   }
@@ -215,7 +232,7 @@ export function calculateDurationDays(dateRange: {
 }): number {
   const durationMs =
     new Date(dateRange.max).getTime() - new Date(dateRange.min).getTime();
-  return Math.ceil(durationMs / (1000 * 60 * 60 * 24));
+  return Math.ceil(durationMs / MS_PER_DAY);
 }
 
 /**
@@ -227,6 +244,9 @@ function getCellValueForColumn(key: ExportColumnKey, task: Task): string {
   const isMilestone = task.type === "milestone";
 
   switch (key) {
+    case "color":
+      // Color column renders a swatch pill — no text content
+      return "";
     case "name":
       return task.name || "";
     case "startDate":
@@ -238,7 +258,7 @@ function getCellValueForColumn(key: ExportColumnKey, task: Task): string {
       // Milestones don't show duration; summaries show "X days"
       if (isMilestone) return "";
       if (isSummary && task.duration !== undefined && task.duration > 0) {
-        return `${task.duration} days`;
+        return `${task.duration}${DAYS_SUFFIX}`;
       }
       if (!isSummary && task.duration !== undefined) {
         return `${task.duration}`;
