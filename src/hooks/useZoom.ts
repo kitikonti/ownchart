@@ -40,6 +40,7 @@ const WHEEL_ZOOM_FACTOR = 1.15;
  * not on every render.
  */
 function getScrollContainer(): HTMLElement | null {
+  // Live DOM query — intentionally called at interaction time, not stored in a ref.
   return document.querySelector<HTMLElement>(`.${SCROLL_CONTAINER_CLASS}`);
 }
 
@@ -72,7 +73,9 @@ export function useZoom({
       // Guard: only handle wheel events when the chart container is mounted
       if (!containerRef.current) return;
 
-      // Read zoom at event time to avoid stale-closure drift during rapid wheel events
+      // Read zoom at event time to avoid stale-closure drift during rapid wheel events.
+      // useChartStore.getState() is a non-reactive static Zustand accessor — not a hook
+      // call — and is safe to use inside callbacks and event handlers.
       const currentZoom = useChartStore.getState().zoom;
       // Zoom in (wheel up) or out (wheel down) by a constant exponential factor
       const factor = e.deltaY > 0 ? 1 / WHEEL_ZOOM_FACTOR : WHEEL_ZOOM_FACTOR;
@@ -105,8 +108,9 @@ export function useZoom({
       // Apply the calculated scroll position
       applyScrollLeft(result?.newScrollLeft ?? null);
     },
-    // containerRef is intentionally omitted: refs are stable by definition and
-    // reading .current inside the callback is the idiomatic pattern.
+    // containerRef intentionally omitted: the ref *object* is a stable identity
+    // (React guarantees it never changes); .current is read imperatively inside
+    // the callback, not captured in the closure, so no stale value is possible.
     [enabled, scale, setZoom]
   );
 

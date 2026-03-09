@@ -4,7 +4,7 @@
 
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { renderHook } from '@testing-library/react';
-import { useZoom } from '../../../src/hooks/useZoom';
+import { useZoom, computeViewportCenterAnchor } from '../../../src/hooks/useZoom';
 import { useChartStore } from '../../../src/store/slices/chartSlice';
 import { createRef } from 'react';
 
@@ -300,6 +300,23 @@ describe('useZoom', () => {
       // Should not add new event listeners
       const callsAfter = addEventListenerSpy.mock.calls.length;
       expect(callsAfter).toBe(callsBefore);
+    });
+  });
+
+  describe('computeViewportCenterAnchor', () => {
+    it('should return undefined when no scroll container exists in DOM', () => {
+      // No element with class gantt-chart-scroll-container in the test DOM
+      const result = computeViewportCenterAnchor();
+      expect(result).toBeUndefined();
+    });
+
+    it('should return undefined when scale is null', () => {
+      // Ensure scale remains null (set in beforeEach)
+      useChartStore.setState({ scale: null });
+
+      // Even if a scroll container existed, scale=null returns undefined
+      const result = computeViewportCenterAnchor();
+      expect(result).toBeUndefined();
     });
   });
 
