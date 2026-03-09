@@ -28,7 +28,7 @@ export function MenuPathLabel({ path }: { path: string }): JSX.Element {
   return (
     <span className="text-xs text-neutral-400 flex items-center gap-0.5 flex-shrink-0">
       {parts.map((part, i) => (
-        <span key={i} className="flex items-center gap-0.5">
+        <span key={part} className="flex items-center gap-0.5">
           {i > 0 && <span className="mx-0.5">›</span>}
           <span>{part}</span>
         </span>
@@ -44,7 +44,7 @@ export function ShortcutKeys({ keys }: { keys: string }): JSX.Element {
   return (
     <span className="flex items-center gap-1 flex-shrink-0">
       {parts.map((part, index) => (
-        <span key={index} className="flex items-center gap-1">
+        <span key={part.trim()} className="flex items-center gap-1">
           {index > 0 && <span className="text-neutral-300 text-xs">+</span>}
           <KeyBadge>{part.trim()}</KeyBadge>
         </span>
@@ -103,8 +103,15 @@ export function HelpTopicCard({
       {topic.tip && (
         <p className="text-xs text-neutral-400 mt-1.5 flex items-center gap-1">
           {isMac() && topic.tip.includes("{mod}") ? (
+            // On macOS, show the Command icon as a visual cue before the tip text.
+            // resolveShortcut replaces {mod} with "Cmd" — the icon provides extra
+            // visual context alongside the text label.
             <>
-              <Command size={11} className="inline-block flex-shrink-0" />
+              <Command
+                size={11}
+                className="inline-block flex-shrink-0"
+                aria-hidden="true"
+              />
               {resolveShortcut(topic.tip)}
             </>
           ) : (

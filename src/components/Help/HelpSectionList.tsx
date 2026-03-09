@@ -34,22 +34,26 @@ export function HelpSectionList({
   );
 }
 
+interface SectionAccordionProps {
+  section: HelpSection;
+  compact: boolean;
+  defaultOpen: boolean;
+}
+
 function SectionAccordion({
   section,
   compact,
   defaultOpen,
-}: {
-  section: HelpSection;
-  compact: boolean;
-  defaultOpen: boolean;
-}): JSX.Element {
+}: SectionAccordionProps): JSX.Element {
   const [isOpen, setIsOpen] = useState(defaultOpen);
+  const panelId = `help-section-panel-${section.id}`;
 
   return (
     <section>
       <button
         onClick={() => setIsOpen(!isOpen)}
         aria-expanded={isOpen}
+        aria-controls={panelId}
         className="w-full flex items-center justify-between py-2.5 px-3 rounded hover:bg-neutral-50 transition-colors duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-100"
       >
         <span className="text-sm font-semibold text-neutral-900">
@@ -67,7 +71,7 @@ function SectionAccordion({
       </button>
 
       {isOpen && (
-        <div className="pl-3 pr-1 pb-2">
+        <div id={panelId} className="pl-3 pr-1 pb-2">
           <div className="space-y-0.5">
             {section.topics.map((topic) => (
               <HelpTopicCard key={topic.id} topic={topic} compact={compact} />

@@ -4,6 +4,10 @@
  * Renders an inline-flex button with icon, label, and CaretDown chevron.
  * Hover/open states handled via CSS class .dropdown-trigger
  * (no inline backgroundColor so CSS :hover works).
+ *
+ * Only dynamic values that cannot be expressed as static Tailwind classes
+ * (button height from TOOLBAR token, and the conditional active border color)
+ * use inline styles. Everything else uses Tailwind utility classes.
  */
 
 import type { ReactNode } from "react";
@@ -23,7 +27,7 @@ interface DropdownTriggerProps {
   icon?: ReactNode;
   /** Text label */
   label: string;
-  /** Accessible label */
+  /** Accessible label — defaults to label text when not provided */
   "aria-label"?: string;
   /** Tooltip */
   title?: string;
@@ -55,33 +59,28 @@ export function DropdownTrigger({
   // When label is hidden, use label text as tooltip fallback
   const effectiveTitle = !showLabel && !title ? label : title;
 
+  // Active border uses COLORS.neutral[600] (#525252); transparent when inactive or open.
+  const activeBorderColor =
+    isActive && !isOpen ? COLORS.neutral[600] : "transparent";
+
   return (
     <button
       ref={triggerRef}
       type="button"
       onClick={onClick}
-      aria-label={ariaLabel}
+      // Fall back to label text so icon-only state is still accessible
+      aria-label={ariaLabel ?? label}
       aria-haspopup={ariaHaspopup}
       aria-expanded={isOpen}
       title={effectiveTitle}
-      className={`dropdown-trigger${isActive && !isOpen ? " dropdown-trigger-active" : ""}`}
+      className={`dropdown-trigger inline-flex items-center justify-center gap-1 rounded px-1.5 py-1 text-sm font-normal leading-5 text-neutral-800 cursor-pointer select-none whitespace-nowrap${isActive && !isOpen ? " dropdown-trigger-active" : ""}`}
       style={{
-        display: "inline-flex",
-        alignItems: "center",
-        justifyContent: "center",
-        gap: "4px",
+        // Height is a design token value — cannot be expressed as a static Tailwind class
         height: `${TOOLBAR.buttonHeight}px`,
-        padding: "5px 6px",
-        color: COLORS.neutral[800],
-        border: "0.667px solid transparent",
-        borderColor: isActive && !isOpen ? "rgb(97, 97, 97)" : "transparent",
-        borderRadius: "4px",
-        cursor: "pointer",
-        fontSize: "14px",
-        lineHeight: "20px",
-        fontWeight: 400,
-        userSelect: "none",
-        whiteSpace: "nowrap",
+        // Sub-pixel border preserves the original MS-Fluent visual fidelity
+        border: "0.667px solid",
+        // Border color is conditionally driven by isActive/isOpen state
+        borderColor: activeBorderColor,
       }}
     >
       {icon}
@@ -89,7 +88,7 @@ export function DropdownTrigger({
       <CaretDown
         size={12}
         weight="bold"
-        style={{ marginLeft: showLabel ? "2px" : "0px" }}
+        className={showLabel ? "ml-0.5" : ""}
       />
     </button>
   );

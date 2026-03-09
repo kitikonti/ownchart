@@ -25,6 +25,8 @@ interface DropdownItemProps {
   role?: string;
   /** aria-selected override (only emitted when role is set) */
   "aria-selected"?: boolean;
+  /** HTML id — used for aria-activedescendant on the parent listbox */
+  id?: string;
 }
 
 export function DropdownItem({
@@ -36,11 +38,13 @@ export function DropdownItem({
   trailing,
   role,
   "aria-selected": ariaSelected,
+  id,
 }: DropdownItemProps): JSX.Element {
   const hasDescription = !!description;
 
   return (
     <button
+      id={id}
       type="button"
       role={role}
       aria-selected={role ? (ariaSelected ?? isSelected) : undefined}

@@ -49,7 +49,17 @@ export function ToolbarDropdown<T extends string = string>({
 }: ToolbarDropdownProps<T>): JSX.Element {
   const { isOpen, toggle, close, containerRef, triggerRef } = useDropdown();
 
-  const displayLabel = labelPrefix || "Select";
+  // When a labelPrefix is provided (e.g. "Zoom: "), show it as the trigger label.
+  // Otherwise show the currently selected option's label so the button always
+  // reflects the active value even before the dropdown is opened.
+  const selectedOption = options.find((o) => o.value === value);
+  const displayLabel = labelPrefix || selectedOption?.label || "Select";
+
+  // Stable ID prefix for ARIA option IDs — derived from aria-label or a fallback.
+  const idPrefix = (ariaLabel ?? "toolbar-dropdown")
+    .toLowerCase()
+    .replace(/\s+/g, "-");
+  const activeDescendantId = isOpen ? `${idPrefix}-option-${value}` : undefined;
 
   const handleSelect = (optionValue: T): void => {
     onChange(optionValue);
@@ -71,10 +81,15 @@ export function ToolbarDropdown<T extends string = string>({
       />
 
       {isOpen && (
-        <DropdownPanel role="listbox" aria-label={ariaLabel}>
+        <DropdownPanel
+          role="listbox"
+          aria-label={ariaLabel}
+          aria-activedescendant={activeDescendantId}
+        >
           {options.map((option) => (
             <DropdownItem
               key={option.value}
+              id={`${idPrefix}-option-${option.value}`}
               isSelected={option.value === value}
               onClick={() => handleSelect(option.value)}
               role="option"

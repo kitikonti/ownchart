@@ -73,9 +73,12 @@ export function Alert({
   return (
     <div
       className={`flex items-start gap-3 px-4 py-3 rounded border ${styles.container} ${className}`}
-      role={variant === "error" ? "alert" : "status"}
+      role={variant === "error" || variant === "warning" ? "alert" : "status"}
     >
-      <span className={`flex-shrink-0 mt-0.5 ${styles.icon}`}>
+      <span
+        aria-hidden="true"
+        className={`flex-shrink-0 mt-0.5 ${styles.icon}`}
+      >
         {displayIcon}
       </span>
       <div className={`text-xs ${styles.text}`}>{children}</div>

@@ -2,6 +2,7 @@
  * GettingStartedTab — 5 quick-start cards for new users.
  */
 
+import type { ReactNode } from "react";
 import {
   Cursor,
   ArrowsOutCardinal,
@@ -11,7 +12,14 @@ import {
 } from "@phosphor-icons/react";
 import { type HelpSection, resolveShortcut } from "../../config/helpContent";
 
-const ICONS: Record<string, { icon: React.ReactNode; bg: string }> = {
+/**
+ * Icon and background color mapping keyed by HelpTopic.id.
+ * NOTE: These keys must stay in sync with the topic IDs defined in
+ * helpContent.ts (getting-started sections). If a topic ID changes,
+ * the corresponding entry here must be updated too — missing IDs fall
+ * back to a default Cursor icon.
+ */
+const ICONS: Record<string, { icon: ReactNode; bg: string }> = {
   "gs-create-task": {
     icon: <Cursor size={20} className="text-brand-600" />,
     bg: "bg-brand-50",
