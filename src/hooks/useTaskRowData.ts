@@ -40,6 +40,10 @@ export interface TaskRowDatum {
 
 // ── Pure helper functions (exported for testing) ─────────────────────────────
 
+// Cached zero-gap sentinel for rows that have nothing hidden above them.
+// Avoids allocating a new object on every render for the common case.
+const NO_HIDDEN_ABOVE = { hasHiddenAbove: false, hiddenAboveCount: 0 } as const;
+
 export function getClipboardPosition(
   taskId: TaskId,
   prevTaskId: TaskId | undefined,
@@ -73,7 +77,9 @@ export function getHiddenGap(
   const gap = nextGlobalRowNumber - globalRowNumber - 1;
   return {
     hasHiddenBelow: gap > 0,
-    hiddenBelowCount: gap > 0 ? gap : 0,
+    // Math.max(0, …) is a defensive guard; gap cannot be negative given
+    // 1-based sequential globalRowNumbers from a sorted flattened list.
+    hiddenBelowCount: Math.max(0, gap),
   };
 }
 
@@ -84,21 +90,142 @@ export function getHiddenGapAbove(firstGlobalRowNumber: number): {
   const count = firstGlobalRowNumber - 1;
   return {
     hasHiddenAbove: count > 0,
-    hiddenAboveCount: count > 0 ? count : 0,
+    // Math.max(0, …) is a defensive guard; count cannot be negative since
+    // globalRowNumber is 1-based (minimum value is 1).
+    hiddenAboveCount: Math.max(0, count),
   };
 }
 
-const NO_HIDDEN_ABOVE = { hasHiddenAbove: false, hiddenAboveCount: 0 } as const;
+export interface UseTaskRowDataResult {
+  taskRowData: TaskRowDatum[];
+  visibleTaskIds: TaskId[];
+  /** Convenience shortcut for taskRowData.length — avoids re-deriving in consumers. */
+  flattenedTaskCount: number;
+}
 
 // ── Hook ─────────────────────────────────────────────────────────────────────
 
+interface BuildRowDatumParams {
+  item: FlattenedTask;
+  index: number;
+  flattenedTasks: FlattenedTask[];
+  /**
+   * One-past-the-end sentinel row number (allFlattenedTasks.length + 1).
+   * Used by getHiddenGap to detect hidden rows after the last visible task:
+   * if the last visible row's globalRowNumber < sentinelRowAfterLast - 1,
+   * there are hidden rows at the bottom of the list.
+   */
+  sentinelRowAfterLast: number;
+  clipboardSet: Set<TaskId>;
+  selectedSet: Set<TaskId>;
+  unhideRange: (fromRowNum: number, toRowNum: number) => void;
+}
+
+interface NeighborGaps {
+  prevTaskId: TaskId | undefined;
+  nextTaskId: TaskId | undefined;
+  nextRowNum: number;
+  hasHiddenBelow: boolean;
+  hiddenBelowCount: number;
+  above: { hasHiddenAbove: boolean; hiddenAboveCount: number };
+}
+
+/** Resolves prev/next task IDs and below/above gap state for a given row index. */
+function resolveNeighborsAndGaps(
+  item: FlattenedTask,
+  index: number,
+  flattenedTasks: FlattenedTask[],
+  sentinelRowAfterLast: number
+): NeighborGaps {
+  const prevTaskId = index > 0 ? flattenedTasks[index - 1].task.id : undefined;
+  const nextTask: FlattenedTask | undefined = flattenedTasks[index + 1];
+  const nextTaskId = nextTask?.task.id;
+  const nextRowNum = nextTask ? nextTask.globalRowNumber : sentinelRowAfterLast;
+  const { hasHiddenBelow, hiddenBelowCount } = getHiddenGap(
+    item.globalRowNumber,
+    nextRowNum
+  );
+  const above =
+    index === 0 ? getHiddenGapAbove(item.globalRowNumber) : NO_HIDDEN_ABOVE;
+  return {
+    prevTaskId,
+    nextTaskId,
+    nextRowNum,
+    hasHiddenBelow,
+    hiddenBelowCount,
+    above,
+  };
+}
+
+/**
+ * Builds the full display datum for a single task row.
+ * Extracted from the useMemo callback to keep it under the 50-line budget.
+ */
+function buildTaskRowDatum({
+  item,
+  index,
+  flattenedTasks,
+  sentinelRowAfterLast,
+  clipboardSet,
+  selectedSet,
+  unhideRange,
+}: BuildRowDatumParams): TaskRowDatum {
+  const { task, level, hasChildren, globalRowNumber } = item;
+  const {
+    prevTaskId,
+    nextTaskId,
+    nextRowNum,
+    hasHiddenBelow,
+    hiddenBelowCount,
+    above,
+  } = resolveNeighborsAndGaps(
+    item,
+    index,
+    flattenedTasks,
+    sentinelRowAfterLast
+  );
+
+  return {
+    task,
+    level,
+    hasChildren,
+    globalRowNumber,
+    hasHiddenAbove: above.hasHiddenAbove,
+    hiddenAboveCount: above.hiddenAboveCount,
+    onUnhideAbove: above.hasHiddenAbove
+      ? (): void => unhideRange(0, globalRowNumber)
+      : undefined,
+    hasHiddenBelow,
+    hiddenBelowCount,
+    onUnhideBelow: hasHiddenBelow
+      ? (): void => unhideRange(globalRowNumber, nextRowNum)
+      : undefined,
+    clipboardPosition: getClipboardPosition(
+      task.id,
+      prevTaskId,
+      nextTaskId,
+      clipboardSet
+    ),
+    selectionPosition: getSelectionPosition(
+      task.id,
+      prevTaskId,
+      nextTaskId,
+      selectedSet
+    ),
+  };
+}
+
+/**
+ * Derives per-row display state for each visible task in TaskTable.
+ * Computes clipboard position, selection position, and hidden-row gap indicators.
+ *
+ * @param unhideRange - Callback to unhide tasks between two row numbers (exclusive).
+ *   Must be a stable reference (useCallback) to avoid busting the taskRowData memo
+ *   on every render.
+ */
 export function useTaskRowData(
   unhideRange: (fromRowNum: number, toRowNum: number) => void
-): {
-  taskRowData: TaskRowDatum[];
-  visibleTaskIds: TaskId[];
-  flattenedTaskCount: number;
-} {
+): UseTaskRowDataResult {
   const clipboardTaskIds = useTaskStore((state) => state.clipboardTaskIds);
   const selectedTaskIds = useTaskStore((state) => state.selectedTaskIds);
   const { flattenedTasks, allFlattenedTasks } = useFlattenedTasks();
@@ -120,61 +247,32 @@ export function useTaskRowData(
   );
 
   // Prepare derived props for each task row (clipboard/selection/hidden state)
-  const taskRowData = useMemo(
-    () =>
-      flattenedTasks.map(
-        (
-          { task, level, hasChildren, globalRowNumber }: FlattenedTask,
-          index: number
-        ) => {
-          const prevTaskId =
-            index > 0 ? flattenedTasks[index - 1].task.id : undefined;
-          const nextTask: FlattenedTask | undefined = flattenedTasks[index + 1];
-          const nextTaskId = nextTask?.task.id;
+  const taskRowData = useMemo(() => {
+    // Sentinel: one past the end means no hidden tasks below the last visible row.
+    // (globalRowNumber is 1-based; allFlattenedTasks.length + 1 is safe as sentinel.)
+    const sentinelRowAfterLast = allFlattenedTasks.length + 1;
 
-          const nextRowNum = nextTask
-            ? nextTask.globalRowNumber
-            : allFlattenedTasks.length + 1;
-          const { hasHiddenBelow, hiddenBelowCount } = getHiddenGap(
-            globalRowNumber,
-            nextRowNum
-          );
-
-          const above =
-            index === 0 ? getHiddenGapAbove(globalRowNumber) : NO_HIDDEN_ABOVE;
-
-          return {
-            task,
-            level,
-            hasChildren,
-            globalRowNumber,
-            hasHiddenAbove: above.hasHiddenAbove,
-            hiddenAboveCount: above.hiddenAboveCount,
-            onUnhideAbove: above.hasHiddenAbove
-              ? (): void => unhideRange(0, globalRowNumber)
-              : undefined,
-            hasHiddenBelow,
-            hiddenBelowCount,
-            onUnhideBelow: hasHiddenBelow
-              ? (): void => unhideRange(globalRowNumber, nextRowNum)
-              : undefined,
-            clipboardPosition: getClipboardPosition(
-              task.id,
-              prevTaskId,
-              nextTaskId,
-              clipboardSet
-            ),
-            selectionPosition: getSelectionPosition(
-              task.id,
-              prevTaskId,
-              nextTaskId,
-              selectedSet
-            ),
-          };
-        }
-      ),
-    [flattenedTasks, clipboardSet, selectedSet, allFlattenedTasks, unhideRange]
-  );
+    return flattenedTasks.map((item, index) =>
+      buildTaskRowDatum({
+        item,
+        index,
+        flattenedTasks,
+        sentinelRowAfterLast,
+        clipboardSet,
+        selectedSet,
+        unhideRange,
+      })
+    );
+  }, [
+    flattenedTasks,
+    clipboardSet,
+    selectedSet,
+    allFlattenedTasks,
+    // review: intentional — unhideRange is listed as a dep so the memo recomputes
+    // if the reference changes; callers must pass a stable useCallback reference
+    // (documented in JSDoc above) to avoid unnecessary recomputation.
+    unhideRange,
+  ]);
 
   return {
     taskRowData,
