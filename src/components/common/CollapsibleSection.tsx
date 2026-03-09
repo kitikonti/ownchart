@@ -4,7 +4,7 @@
  */
 
 import { useId, useState, useCallback } from "react";
-import type { ReactNode } from "react";
+import type { JSX, ReactNode } from "react";
 import { CaretDown } from "@phosphor-icons/react";
 
 export interface CollapsibleSectionProps {

@@ -3,7 +3,7 @@
  * Used in export dialogs for column and timeline option selection.
  */
 
-import { useCallback, useId, type JSX } from "react";
+import { memo, useCallback, useId, type JSX } from "react";
 import { Checkbox } from "./Checkbox";
 
 export interface CheckboxGroupItem {
@@ -15,7 +15,12 @@ export interface CheckboxGroupItem {
 export interface CheckboxGroupProps {
   /** Items to display */
   items: CheckboxGroupItem[];
-  /** Called when an item is toggled */
+  /**
+   * Called when an item is toggled.
+   *
+   * Pass a stable reference (e.g. via `useCallback`) to avoid unnecessary
+   * re-renders of memoized `CheckboxGroupRow` children.
+   */
   onChange: (key: string, checked: boolean) => void;
   /** Accessible label for the group — announced by screen readers as the group name */
   ariaLabel: string;
@@ -29,7 +34,7 @@ interface CheckboxGroupRowProps {
   onChange: (key: string, checked: boolean) => void;
 }
 
-function CheckboxGroupRow({
+const CheckboxGroupRow = memo(function CheckboxGroupRow({
   item,
   inputId,
   showDivider,
@@ -57,7 +62,7 @@ function CheckboxGroupRow({
       </label>
     </li>
   );
-}
+});
 
 export function CheckboxGroup({
   items,
