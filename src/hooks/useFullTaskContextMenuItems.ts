@@ -83,12 +83,9 @@ export function useFullTaskContextMenuItems(): UseFullTaskContextMenuItemsResult
   const { hideRows, unhideSelection, getHiddenInSelectionCount } =
     useHideOperations();
 
-  // Pre-create icons once per mount using useRef — these are stable values derived
-  // from static CONTEXT_MENU config and never change after mount. useRef is the
-  // semantically correct primitive for "compute once, reuse forever" (unlike useMemo
-  // which React may purge in future concurrent mode scenarios). The ref object
-  // itself is stable, so accessing iconsRef.current inside useCallback does not
-  // require listing any icon values in the dependency array.
+  // useRef: compute icons once on mount from static CONTEXT_MENU config.
+  // Stable across all renders — not subject to React's memoization cache eviction.
+  // Accessing iconsRef.current inside useCallback does not require dep-array entries.
   const iconsRef = useRef({
     cut: createElement(Scissors, ICON_PROPS),
     copy: createElement(Copy, ICON_PROPS),

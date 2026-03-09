@@ -123,7 +123,7 @@ export function buildHideItem(params: HideItemParams): ContextMenuItem {
     label: params.count > 1 ? `Hide ${params.count} Rows` : "Hide Row",
     icon: params.icon,
     shortcut: "Ctrl+H",
-    onClick: () => params.hideRows(params.effectiveSelection),
+    onClick: (): void => params.hideRows(params.effectiveSelection),
     disabled: params.count === 0,
   };
 }
@@ -144,13 +144,13 @@ export function buildInsertItems(params: InsertItemsParams): ContextMenuItem[] {
       label: "Insert Task Above",
       icon: params.insertAboveIcon,
       shortcut: "Ctrl++",
-      onClick: () => params.insertTaskAbove(params.taskId),
+      onClick: (): void => params.insertTaskAbove(params.taskId),
     },
     {
       id: "insertBelow",
       label: "Insert Task Below",
       icon: params.insertBelowIcon,
-      onClick: () => params.insertTaskBelow(params.taskId),
+      onClick: (): void => params.insertTaskBelow(params.taskId),
     },
   ];
 }
@@ -222,7 +222,7 @@ export interface UnhideItemParams {
 export function buildUnhideItem(
   params: UnhideItemParams
 ): ContextMenuItem | null {
-  if (params.hiddenCount <= 0 || params.selectedTaskIds.length < 2) {
+  if (params.hiddenCount === 0 || params.selectedTaskIds.length < 2) {
     return null;
   }
   return {

@@ -27,7 +27,8 @@ interface UseZoomResult {
   };
 }
 
-/** CSS class of the scrollable timeline container */
+/** CSS class of the scrollable timeline container.
+ * Must match the class applied to the timeline scroll container in GanttChart. */
 const SCROLL_CONTAINER_CLASS = "gantt-chart-scroll-container";
 
 /** Zoom factor per mouse wheel step (exponential zoom for consistent feel) */
@@ -43,9 +44,9 @@ function getScrollContainer(): HTMLElement | null {
 }
 
 /**
- * Apply scroll position after zoom
+ * Apply scroll position after zoom (exported for toolbar use)
  */
-function applyScrollLeft(newScrollLeft: number | null): void {
+export function applyScrollLeft(newScrollLeft: number | null): void {
   if (newScrollLeft === null) return;
 
   const scrollContainer = getScrollContainer();
@@ -176,7 +177,7 @@ export function useZoom({
 
 /**
  * Compute the viewport center anchor for use in zoom operations.
- * Uses getState() for non-reactive, imperative access — intentionally not a hook.
+ * Uses getState() for non-reactive, imperative access — intentionally not a React hook.
  * Called at interaction time (click/keydown handlers) to avoid stale closures.
  */
 export function computeViewportCenterAnchor():
@@ -198,8 +199,3 @@ export function computeViewportCenterAnchor():
     anchorPixelOffset: viewportWidth / 2,
   };
 }
-
-/**
- * Apply scroll position after zoom (exported for toolbar use)
- */
-export { applyScrollLeft };
