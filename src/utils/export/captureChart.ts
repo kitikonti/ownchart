@@ -9,6 +9,7 @@ import { toCanvas } from "html-to-image";
 import type { ExportLayoutInput } from "./types";
 import { ExportRenderer } from "../../components/Export/ExportRenderer";
 import { calculateExportDimensions } from "./exportLayout";
+import { REACT_RENDER_WAIT_MS } from "./constants";
 import {
   waitForFonts,
   waitForPaint,
@@ -19,13 +20,6 @@ import {
 /** Minimum device pixel ratio used for canvas capture (ensures crisp output on low-DPI screens) */
 const MIN_PIXEL_RATIO = 2;
 
-/**
- * Time in milliseconds to wait after React's initial render call before
- * proceeding. React renders asynchronously and this delay ensures the first
- * paint has completed before we attempt font loading and capture.
- */
-const REACT_RENDER_SETTLE_MS = 100;
-
 export interface CaptureChartParams extends ExportLayoutInput {
   /** Project name for export filename */
   projectName?: string;
@@ -35,9 +29,11 @@ export interface CaptureChartParams extends ExportLayoutInput {
  * Render the ExportRenderer component into `container` and wait for
  * React's initial paint to settle before proceeding.
  *
- * Returns the React root so the caller can unmount it after capture.
- * Unmounting here (before toCanvas runs) would tear down the DOM tree
- * while it is still being captured, producing a blank PNG.
+ * The root is created synchronously so the caller can always unmount it in a
+ * finally block — even if the settle timeout is somehow interrupted.
+ * Unmounting before toCanvas runs would tear down the DOM tree while it is
+ * still being captured, producing a blank PNG; the caller must defer unmounting
+ * until after capture.
  *
  * @param container - The DOM container to render into
  * @param props - Props forwarded to ExportRenderer
@@ -47,12 +43,13 @@ async function renderAndSettle(
   container: HTMLDivElement,
   props: ComponentProps<typeof ExportRenderer>
 ): Promise<ReturnType<typeof createRoot>> {
+  // createRoot is synchronous — root is always set before any async work.
   const root = createRoot(container);
-  await new Promise<void>((resolve) => {
-    root.render(createElement(ExportRenderer, props));
-    // Wait for React to render its first pass before proceeding
-    setTimeout(resolve, REACT_RENDER_SETTLE_MS);
-  });
+  root.render(createElement(ExportRenderer, props));
+  // Wait for React to render its first pass before proceeding
+  await new Promise<void>((resolve) =>
+    setTimeout(resolve, REACT_RENDER_WAIT_MS)
+  );
   return root;
 }
 
@@ -88,23 +85,20 @@ export async function captureChart(
     options.background
   );
 
-  // root is assigned after renderAndSettle and unmounted in the finally block
-  // AFTER capture. Unmounting before toCanvas would tear down the DOM tree
-  // mid-capture and produce a blank PNG.
-  let root: ReturnType<typeof createRoot> | null = null;
+  // createRoot is synchronous inside renderAndSettle, so root is always
+  // available for cleanup in the finally block — even if capture throws.
+  // Unmounting before toCanvas would tear down the DOM tree mid-capture
+  // and produce a blank PNG, so unmounting is deferred to finally.
+  const root = await renderAndSettle(container, {
+    tasks,
+    options,
+    columnWidths,
+    currentAppZoom,
+    projectDateRange,
+    visibleDateRange,
+  });
 
   try {
-    // Render component into container and wait for React's first paint to settle.
-    // The root is returned so we can defer unmounting until after capture.
-    root = await renderAndSettle(container, {
-      tasks,
-      options,
-      columnWidths,
-      currentAppZoom,
-      projectDateRange,
-      visibleDateRange,
-    });
-
     // Wait for fonts and paint
     await waitForFonts();
     await waitForPaint();
@@ -131,7 +125,7 @@ export async function captureChart(
   } finally {
     // Unmount the React tree only after capture (or on error), then remove
     // the container from the DOM.
-    root?.unmount();
+    root.unmount();
     removeOffscreenContainer(container);
   }
 }

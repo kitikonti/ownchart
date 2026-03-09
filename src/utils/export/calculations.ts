@@ -39,6 +39,9 @@ const MS_PER_DAY = 1000 * 60 * 60 * 24;
 /** Suffix appended to duration values for summary tasks (e.g. "5 days") */
 const DAYS_SUFFIX = " days";
 
+/** Suffix appended to progress values (e.g. "75%") */
+const PERCENT_SUFFIX = "%";
+
 /**
  * Width in pixels of the expand/collapse button rendered in the name column.
  * Corresponds to Tailwind class w-4 (4 × 4px = 16px).
@@ -237,7 +240,12 @@ export function calculateDurationDays(dateRange: {
 
 /**
  * Return the display cell value for a given column key and task.
- * Milestones and summaries have special display rules for some columns.
+ *
+ * Special display rules:
+ * - `color`: always empty string (column renders a swatch pill, not text)
+ * - `endDate`: empty for milestones (no end date concept)
+ * - `duration`: empty for milestones; "X days" for summaries; plain number for tasks
+ * - `progress`: empty when undefined, otherwise "X%"
  */
 function getCellValueForColumn(key: ExportColumnKey, task: Task): string {
   const isSummary = task.type === "summary";
@@ -265,10 +273,46 @@ function getCellValueForColumn(key: ExportColumnKey, task: Task): string {
       }
       return "";
     case "progress":
-      return task.progress !== undefined ? `${task.progress}%` : "";
+      return task.progress !== undefined
+        ? `${task.progress}${PERCENT_SUFFIX}`
+        : "";
     default:
       return "";
   }
+}
+
+/**
+ * Build the per-task cell values and extra leading widths for a given column.
+ * For the name column, extra width accounts for hierarchy indent, expand button,
+ * gaps, and icon. All other columns return zero extra width.
+ */
+function buildColumnMeasurementData(
+  key: ExportColumnKey,
+  tasks: Task[],
+  indentSize: number,
+  iconSize: number
+): { cellValues: string[]; extraWidths: number[] } {
+  const cellValues: string[] = [];
+  const extraWidths: number[] = [];
+
+  for (const task of tasks) {
+    cellValues.push(getCellValueForColumn(key, task));
+
+    if (key === "name") {
+      // Extra width = hierarchy indent + expand button + gaps + type icon
+      const level = getTaskLevel(tasks, task.id);
+      extraWidths.push(
+        level * indentSize +
+          EXPAND_BUTTON_WIDTH_PX +
+          NAME_COLUMN_GAPS_PX +
+          iconSize
+      );
+    } else {
+      extraWidths.push(0);
+    }
+  }
+
+  return { cellValues, extraWidths };
 }
 
 /**
@@ -281,17 +325,11 @@ export function calculateOptimalColumnWidth(
   density: UiDensity
 ): number {
   const densityConfig = DENSITY_CONFIG[density];
-  const fontSize = densityConfig.fontSizeCell;
-  const indentSize = densityConfig.indentSize;
-  const iconSize = densityConfig.iconSize;
 
   // Color column has fixed width
   if (key === "color") {
     return densityConfig.columnWidths.color;
   }
-
-  // Get header label
-  const headerLabel = HEADER_LABELS[key];
 
   // Name column has only right padding (indent handles left), others have both
   const cellPadding =
@@ -299,33 +337,18 @@ export function calculateOptimalColumnWidth(
       ? densityConfig.cellPaddingX
       : densityConfig.cellPaddingX * 2;
 
-  // Prepare cell values and extra widths
-  const cellValues: string[] = [];
-  const extraWidths: number[] = [];
-
-  for (const task of tasks) {
-    cellValues.push(getCellValueForColumn(key, task));
-
-    // For name column, calculate extra width for UI elements (same as autoFitColumn)
-    if (key === "name") {
-      const level = getTaskLevel(tasks, task.id);
-      const hierarchyIndent = level * indentSize;
-      extraWidths.push(
-        hierarchyIndent +
-          EXPAND_BUTTON_WIDTH_PX +
-          NAME_COLUMN_GAPS_PX +
-          iconSize
-      );
-    } else {
-      extraWidths.push(0);
-    }
-  }
+  const { cellValues, extraWidths } = buildColumnMeasurementData(
+    key,
+    tasks,
+    densityConfig.indentSize,
+    densityConfig.iconSize
+  );
 
   // Use shared utility function (same as autoFitColumn)
   return calculateColumnWidth({
-    headerLabel,
+    headerLabel: HEADER_LABELS[key],
     cellValues,
-    fontSize,
+    fontSize: densityConfig.fontSizeCell,
     cellPadding,
     extraWidths,
   });

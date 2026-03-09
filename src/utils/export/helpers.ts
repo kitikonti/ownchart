@@ -57,11 +57,12 @@ export function waitForPaint(): Promise<void> {
  */
 export function setFontFamilyOnTextElements(element: Element): void {
   const localName = element.localName.toLowerCase();
+  const isTextElement = localName === "text" || localName === "tspan";
 
   // Set font-family and font-weight attributes on text and tspan elements.
   // Presentation attributes are needed for vector apps (Illustrator/Inkscape)
   // that ignore CSS style blocks.
-  if (localName === "text" || localName === "tspan") {
+  if (isTextElement) {
     // Remove any existing font-family attribute to ensure our value takes precedence
     element.removeAttribute("font-family");
     element.setAttribute("font-family", SVG_FONT_FAMILY);
@@ -86,7 +87,7 @@ export function setFontFamilyOnTextElements(element: Element): void {
     // Normalize font-weight in inline styles for svg2pdf.js
     style = style.replace(/font-weight:\s*(600|700);?/gi, "font-weight: bold;");
     element.setAttribute("style", style);
-  } else if (localName === "text" || localName === "tspan") {
+  } else if (isTextElement) {
     // No existing style attribute — add one so renderers that prefer style
     // over presentation attributes also pick up the correct font-family.
     element.setAttribute("style", `font-family: ${SVG_FONT_FAMILY};`);
@@ -161,9 +162,7 @@ export function createOffscreenContainer(
  * @param container - The container to remove
  */
 export function removeOffscreenContainer(container: HTMLDivElement): void {
-  if (container.parentNode) {
-    container.parentNode.removeChild(container);
-  }
+  container.remove();
 }
 
 /**
@@ -193,7 +192,9 @@ const PNG_COMPRESSION_RATIO = 0.35;
  *
  * @param width - Image width in pixels
  * @param height - Image height in pixels
- * @returns Human-readable size string (e.g. "~1.2 MB")
+ * @returns Human-readable size string with tilde prefix indicating an estimate
+ *   (e.g. "~1.2 MB", "~350 KB", "~140 B"), or EMPTY_SIZE_PLACEHOLDER ("—")
+ *   when either dimension is zero.
  */
 export function estimateFileSize(width: number, height: number): string {
   if (width === 0 || height === 0) return EMPTY_SIZE_PLACEHOLDER;
