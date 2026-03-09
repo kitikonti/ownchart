@@ -77,6 +77,8 @@ export function getHiddenGap(
   const gap = nextGlobalRowNumber - globalRowNumber - 1;
   return {
     hasHiddenBelow: gap > 0,
+    // Math.max(0, …) is a defensive guard; gap cannot be negative given
+    // 1-based sequential globalRowNumbers from a sorted flattened list.
     hiddenBelowCount: Math.max(0, gap),
   };
 }
@@ -88,6 +90,8 @@ export function getHiddenGapAbove(firstGlobalRowNumber: number): {
   const count = firstGlobalRowNumber - 1;
   return {
     hasHiddenAbove: count > 0,
+    // Math.max(0, …) is a defensive guard; count cannot be negative since
+    // globalRowNumber is 1-based (minimum value is 1).
     hiddenAboveCount: Math.max(0, count),
   };
 }

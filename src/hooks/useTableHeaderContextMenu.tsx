@@ -80,7 +80,9 @@ export function useTableHeaderContextMenu(): UseTableHeaderContextMenuResult {
     const canAutoFit =
       columnId !== ROW_NUMBER_COLUMN_ID && columnId !== COLOR_COLUMN_ID;
     // columnId is a safety fallback — all current TASK_COLUMNS define label.
-    const displayLabel = column.menuLabel || column.label || columnId;
+    // Using ?? (nullish coalescing) instead of || so an explicit empty-string
+    // menuLabel would not be skipped (though that case does not currently arise).
+    const displayLabel = column.menuLabel ?? column.label ?? columnId;
 
     const sizeToFitItems: ContextMenuItem[] = [
       {
@@ -110,9 +112,13 @@ export function useTableHeaderContextMenu(): UseTableHeaderContextMenuResult {
     ];
 
     // ── Group 2: Column visibility checkmarks ──
+    // Store action selectors (toggleColumnVisibility, setHiddenColumns,
+    // autoFitColumn, autoFitAllColumns) return stable references — Zustand
+    // guarantees action identity across renders, so no useCallback wrapping is needed.
     const toggleItems: ContextMenuItem[] = HIDEABLE_COLUMNS.map((col, i) => ({
       id: `toggle_${col.id}`,
-      label: col.menuLabel || col.label,
+      // ?? instead of || so an explicit empty-string menuLabel is not skipped.
+      label: col.menuLabel ?? col.label,
       checked: !hiddenSet.has(col.id),
       onClick: () => toggleColumnVisibility(col.id),
       separator: i === HIDEABLE_COLUMNS.length - 1,

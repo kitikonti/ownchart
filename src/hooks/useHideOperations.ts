@@ -79,7 +79,8 @@ export function useHideOperations(): UseHideOperationsResult {
    * Shared logic for unhiding specific task IDs: update store, record command, show toast.
    *
    * Empty dependency array is intentional: all store reads use getState() (not reactive
-   * subscriptions), so there are no captured values that can go stale.
+   * subscriptions), so there are no captured values that can go stale. `pluralize` is a
+   * pure module-level import and is not a React value, so it also does not need to be listed.
    */
   const executeUnhide = useCallback((idsToUnhide: TaskId[]): void => {
     if (idsToUnhide.length === 0) return;
