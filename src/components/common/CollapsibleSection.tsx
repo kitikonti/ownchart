@@ -14,12 +14,15 @@ export interface CollapsibleSectionProps {
   defaultOpen?: boolean;
   /** Section content */
   children: ReactNode;
+  /** Additional CSS classes for the outer <section> element */
+  className?: string;
 }
 
 export function CollapsibleSection({
   title,
   defaultOpen = false,
   children,
+  className,
 }: CollapsibleSectionProps): JSX.Element {
   const [isOpen, setIsOpen] = useState(defaultOpen);
   const contentId = useId();
@@ -31,7 +34,7 @@ export function CollapsibleSection({
     // aria-label directly on <section> avoids referencing an interactive
     // element's descendant (the title <span> lives inside the <button>),
     // which some screen readers would otherwise announce with toggle state noise.
-    <section aria-label={title}>
+    <section aria-label={title} className={className}>
       <button
         type="button"
         onClick={toggleOpen}
@@ -50,11 +53,16 @@ export function CollapsibleSection({
       </button>
 
       {/* Keep the panel in the DOM at all times so aria-controls always
-          references a valid element; visibility is toggled via `hidden`. */}
+          references a valid element. CSS display:none (via the Tailwind `hidden`
+          class) is used instead of the HTML `hidden` attribute — the HTML
+          attribute removes the element from the accessibility tree entirely,
+          making the aria-controls reference invisible to assistive technologies.
+          The Tailwind class sets display:none via CSS only, preserving the
+          DOM presence that aria-controls requires. */}
       <div
         id={contentId}
-        hidden={!isOpen}
-        className="mt-3 bg-neutral-50 rounded px-6 py-4 space-y-5"
+        aria-hidden={!isOpen}
+        className={`mt-3 bg-neutral-50 rounded px-6 py-4 space-y-5${isOpen ? "" : " hidden"}`}
       >
         {children}
       </div>

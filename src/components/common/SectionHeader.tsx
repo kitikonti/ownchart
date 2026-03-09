@@ -31,6 +31,12 @@ export interface SectionHeaderProps {
   as?: "h1" | "h2" | "h3" | "span";
   /** Optional id so a parent <section> can reference this heading via aria-labelledby */
   id?: string;
+  /**
+   * Additional CSS classes applied to the outermost element.
+   * For the `default` variant this is the wrapping `<div>`; for `simple` and
+   * `bordered` variants it is the heading element itself.
+   */
+  className?: string;
 }
 
 export function SectionHeader({
@@ -39,12 +45,18 @@ export function SectionHeader({
   variant = "default",
   as: Element = "h3",
   id,
+  className,
 }: SectionHeaderProps): JSX.Element {
   if (variant === "simple") {
     return (
       <Element
         id={id}
-        className="block text-sm font-semibold text-neutral-900 mb-3"
+        className={[
+          "block text-sm font-semibold text-neutral-900 mb-3",
+          className,
+        ]
+          .filter(Boolean)
+          .join(" ")}
       >
         {title}
       </Element>
@@ -55,7 +67,12 @@ export function SectionHeader({
     return (
       <Element
         id={id}
-        className="text-sm font-semibold text-neutral-900 mb-2.5 pb-1.5 border-b border-neutral-200"
+        className={[
+          "text-sm font-semibold text-neutral-900 mb-2.5 pb-1.5 border-b border-neutral-200",
+          className,
+        ]
+          .filter(Boolean)
+          .join(" ")}
       >
         {title}
       </Element>
@@ -64,7 +81,11 @@ export function SectionHeader({
 
   // default variant with icon
   return (
-    <div className="flex items-center gap-2 mb-4">
+    <div
+      className={["flex items-center gap-2 mb-4", className]
+        .filter(Boolean)
+        .join(" ")}
+    >
       {icon && (
         <span className="text-neutral-500 flex-shrink-0" aria-hidden="true">
           {icon}

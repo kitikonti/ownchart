@@ -76,11 +76,14 @@ export function CheckboxGroup({
   const groupId = useId();
 
   return (
-    <div
-      role="group"
-      aria-label={ariaLabel}
-      className="bg-white border border-neutral-200 rounded p-3"
-    >
+    // <fieldset> provides native group semantics — equivalent to role="group"
+    // but with broader screen reader support (especially VoiceOver on iOS).
+    // Browser-default fieldset styles (border, padding, min-inline-size) are
+    // reset via Tailwind so the visual appearance is unchanged.
+    <fieldset className="bg-white border border-neutral-200 rounded p-3 min-w-0">
+      {/* sr-only <legend> names the group for assistive technologies,
+          replacing the former aria-label on the div. */}
+      <legend className="sr-only">{ariaLabel}</legend>
       <ul className="space-y-2.5">
         {items.map((item, idx) => (
           <CheckboxGroupRow
@@ -92,6 +95,6 @@ export function CheckboxGroup({
           />
         ))}
       </ul>
-    </div>
+    </fieldset>
   );
 }

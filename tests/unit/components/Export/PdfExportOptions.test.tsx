@@ -282,8 +282,10 @@ describe("PdfExportOptions", () => {
     it("renders header and footer columns", () => {
       render(<PdfExportOptions {...createDefaultProps()} />);
 
-      expect(screen.getByText("Header")).toBeInTheDocument();
-      expect(screen.getByText("Footer")).toBeInTheDocument();
+      // "Header" and "Footer" each appear twice: once as the visible FieldLabel
+      // and once as the sr-only <legend> inside the CheckboxGroup fieldset.
+      expect(screen.getAllByText("Header").length).toBeGreaterThanOrEqual(1);
+      expect(screen.getAllByText("Footer").length).toBeGreaterThanOrEqual(1);
     });
 
     it("renders checkbox options in both columns", () => {
