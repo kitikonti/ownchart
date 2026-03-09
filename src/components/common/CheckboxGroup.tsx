@@ -31,9 +31,9 @@ export function CheckboxGroup({
       aria-label={ariaLabel}
       className="bg-white border border-neutral-200 rounded p-3"
     >
-      <div className="space-y-2.5">
+      <ul className="space-y-2.5 list-none p-0 m-0">
         {items.map((item, idx) => (
-          <div key={item.key}>
+          <li key={item.key}>
             {idx > 0 && <div className="divider-h-light mb-2.5" />}
             <label className="flex items-center gap-3 cursor-pointer group min-h-[32px]">
               <Checkbox
@@ -42,9 +42,9 @@ export function CheckboxGroup({
               />
               <span className="text-sm text-neutral-900">{item.label}</span>
             </label>
-          </div>
+          </li>
         ))}
-      </div>
+      </ul>
     </div>
   );
 }

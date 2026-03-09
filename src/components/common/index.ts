@@ -5,6 +5,7 @@
 export { Alert } from "./Alert";
 export type { AlertProps, AlertVariant } from "./Alert";
 export { Button } from "./Button";
+export type { ButtonProps, ButtonVariant, ButtonSize } from "./Button";
 export { Checkbox } from "./Checkbox";
 export type { CheckboxProps } from "./Checkbox";
 export { CheckboxGroup } from "./CheckboxGroup";

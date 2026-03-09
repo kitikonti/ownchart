@@ -3,7 +3,7 @@
  * Used in export dialogs for Layout Options and Display Options.
  */
 
-import { useId, useState } from "react";
+import { useId, useState, useCallback } from "react";
 import type { ReactNode } from "react";
 import { CaretDown } from "@phosphor-icons/react";
 
@@ -23,20 +23,23 @@ export function CollapsibleSection({
 }: CollapsibleSectionProps): JSX.Element {
   const [isOpen, setIsOpen] = useState(defaultOpen);
   const contentId = useId();
-  const titleId = useId();
+
+  // Use functional update to avoid stale-closure over `isOpen`
+  const toggleOpen = useCallback(() => setIsOpen((prev) => !prev), []);
 
   return (
-    <section aria-labelledby={titleId}>
+    // aria-label directly on <section> avoids referencing an interactive
+    // element's descendant (the title <span> lives inside the <button>),
+    // which some screen readers would otherwise announce with toggle state noise.
+    <section aria-label={title}>
       <button
         type="button"
-        onClick={() => setIsOpen(!isOpen)}
+        onClick={toggleOpen}
         aria-expanded={isOpen}
         aria-controls={contentId}
         className="w-full flex items-center justify-between p-4 rounded hover:bg-neutral-50 transition-colors duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-100 focus-visible:ring-offset-2"
       >
-        <span id={titleId} className="text-sm font-semibold text-neutral-900">
-          {title}
-        </span>
+        <span className="text-sm font-semibold text-neutral-900">{title}</span>
         <CaretDown
           className={`size-4 text-neutral-500 transition-transform duration-200 ${
             isOpen ? "rotate-180" : ""
