@@ -42,6 +42,13 @@ const UNKNOWN_COLUMN_DEFAULT_WIDTH_PX = 100;
 const MS_PER_DAY = 1000 * 60 * 60 * 24;
 
 /**
+ * Minimum timeline pixel width used in the `fitToWidth` zoom calculation.
+ * Prevents a near-zero or negative timeline width when the task table is
+ * wider than the requested fit-to-width value.
+ */
+const MIN_TIMELINE_WIDTH_PX = 100;
+
+/**
  * Width in pixels of the expand/collapse button rendered in the name column.
  * Corresponds to Tailwind class w-4 (4 × 4px = 16px).
  */
@@ -160,10 +167,16 @@ export function calculateEffectiveZoom(
     case "fitToWidth": {
       if (projectDurationDays <= 0) return 1;
       // fitToWidth is TOTAL width, so timeline = fitToWidth - taskTableWidth
-      const timelineWidth = Math.max(100, options.fitToWidth - taskTableWidth);
+      const timelineWidth = Math.max(
+        MIN_TIMELINE_WIDTH_PX,
+        options.fitToWidth - taskTableWidth
+      );
       return timelineWidth / (projectDurationDays * BASE_PIXELS_PER_DAY);
     }
     default:
+      // ExportOptions.zoomMode is a closed union; this branch is unreachable in
+      // practice. Returning timelineZoom is a safe no-op fallback — any new mode
+      // added to the union must also be handled above.
       return options.timelineZoom;
   }
 }
@@ -338,13 +351,35 @@ function calculateNameColumnLeadingWidth(
 }
 
 /**
- * Build the per-task cell values and extra leading widths for a given column.
- * For the name column, extra width accounts for hierarchy indent, expand button,
- * gaps, and icon. All other columns return zero extra width.
+ * Build per-task extra leading widths for the name column.
+ * Each entry accounts for hierarchy indent, expand/collapse button, gaps,
+ * and the task-type icon — i.e. the space consumed before the text starts.
  *
  * Pre-computes a level map in O(n) before iterating tasks so the overall cost
  * is O(n) rather than O(n²) (which would result from calling getTaskLevel —
  * which rebuilds the full level map — once per task inside the loop).
+ *
+ * @param tasks - The full task list (used for hierarchy level calculation)
+ * @param indentSize - Per-level indent size in pixels from density config
+ * @param iconSize - Task-type icon rendered size in pixels from density config
+ * @returns Array where entry i is the fixed leading pixel width for task i
+ */
+function buildNameColumnExtraWidths(
+  tasks: Task[],
+  indentSize: number,
+  iconSize: number
+): number[] {
+  const levelMap = buildTaskLevelMap(tasks);
+  return tasks.map((task) => {
+    const level = levelMap.get(task.id) ?? 0;
+    return calculateNameColumnLeadingWidth(level, indentSize, iconSize);
+  });
+}
+
+/**
+ * Build the per-task cell values and extra leading widths for a given column.
+ * For the name column, extra width accounts for hierarchy indent, expand button,
+ * gaps, and icon. All other columns return zero extra width.
  *
  * @param key - The export column key
  * @param tasks - The full task list (used for hierarchy level calculation)
@@ -360,25 +395,11 @@ function buildColumnMeasurementData(
   indentSize: number,
   iconSize: number
 ): { cellValues: string[]; extraWidths: number[] } {
-  const cellValues: string[] = [];
-  const extraWidths: number[] = [];
-
-  // Pre-compute the level map once in O(n) to avoid O(n²) cost from calling
-  // getTaskLevel (which rebuilds the map) for every task in the loop.
-  const levelMap = key === "name" ? buildTaskLevelMap(tasks) : null;
-
-  for (const task of tasks) {
-    cellValues.push(getCellValueForColumn(key, task));
-
-    if (key === "name" && levelMap !== null) {
-      const level = levelMap.get(task.id) ?? 0;
-      extraWidths.push(
-        calculateNameColumnLeadingWidth(level, indentSize, iconSize)
-      );
-    } else {
-      extraWidths.push(0);
-    }
-  }
+  const cellValues = tasks.map((task) => getCellValueForColumn(key, task));
+  const extraWidths =
+    key === "name"
+      ? buildNameColumnExtraWidths(tasks, indentSize, iconSize)
+      : new Array<number>(tasks.length).fill(0);
 
   return { cellValues, extraWidths };
 }

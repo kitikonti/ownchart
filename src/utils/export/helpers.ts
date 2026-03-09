@@ -75,11 +75,14 @@ export async function waitForPaint(): Promise<void> {
  * @param root - The root element to process iteratively
  */
 export function setFontFamilyOnTextElements(root: Element): void {
+  // Index-pointer BFS: avoids the O(n) cost of Array.shift() (which re-indexes
+  // the remaining elements on every dequeue) at the price of holding the full
+  // queue in memory. For typical SVG export trees this is a clear win.
   const queue: Element[] = [root];
+  let head = 0;
 
-  while (queue.length > 0) {
-    // Non-null assertion is safe: we only enter the loop when queue is non-empty.
-    const element = queue.shift()!;
+  while (head < queue.length) {
+    const element = queue[head++];
     // SVG element localNames are always lowercase per the SVG specification;
     // .toLowerCase() is unnecessary but was harmless — removed for clarity.
     const localName = element.localName;
@@ -197,6 +200,8 @@ export function createOffscreenContainer(
 
 /**
  * Remove an offscreen container from the DOM.
+ * Thin wrapper for symmetry with `createOffscreenContainer`; does not perform
+ * any additional cleanup beyond removing the element.
  *
  * @param container - The container to remove
  */

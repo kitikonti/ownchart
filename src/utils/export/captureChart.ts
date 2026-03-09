@@ -86,6 +86,9 @@ export async function captureChart(
     currentAppZoom,
     projectDateRange,
     visibleDateRange,
+    // projectName is part of CaptureChartParams for the caller's convenience
+    // (e.g. the PNG download step uses it for the filename) but is not consumed
+    // inside captureChart itself — the function only handles rendering & capture.
   } = params;
 
   // Calculate expected dimensions
@@ -122,7 +125,10 @@ export async function captureChart(
     await waitForFonts();
     await waitForPaint();
 
-    // Make visible for capture (html-to-image needs visible elements)
+    // Make visible for capture (html-to-image needs visible elements).
+    // The container is briefly visible here (opacity 1) but is removed by
+    // removeOffscreenContainer() in the finally block as soon as capture
+    // completes or throws, so the visible window is bounded by capture duration.
     container.style.opacity = "1";
     await waitForPaint();
 
