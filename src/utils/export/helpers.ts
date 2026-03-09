@@ -53,49 +53,62 @@ export async function waitForPaint(): Promise<void> {
  * for any element in the tree (not just text/tspan), because some SVG
  * renderers apply computed styles from parent elements via the style attr.
  *
- * @param element - The root element to process recursively
+ * Uses an iterative BFS traversal (queue-based) rather than recursion to
+ * avoid call-stack overflow on deeply nested SVG trees (e.g. SVG inside
+ * foreignObject inside SVG, which can occur in html-to-image output).
+ *
+ * @param root - The root element to process iteratively
  */
-export function setFontFamilyOnTextElements(element: Element): void {
-  const localName = element.localName.toLowerCase();
-  const isTextElement = localName === "text" || localName === "tspan";
+export function setFontFamilyOnTextElements(root: Element): void {
+  const queue: Element[] = [root];
 
-  // Set font-family and font-weight attributes on text and tspan elements.
-  // Presentation attributes are needed for vector apps (Illustrator/Inkscape)
-  // that ignore CSS style blocks.
-  if (isTextElement) {
-    // Remove any existing font-family attribute to ensure our value takes precedence
-    element.removeAttribute("font-family");
-    element.setAttribute("font-family", SVG_FONT_FAMILY);
+  while (queue.length > 0) {
+    // Non-null assertion is safe: we only enter the loop when queue is non-empty.
+    const element = queue.shift()!;
+    const localName = element.localName.toLowerCase();
+    const isTextElement = localName === "text" || localName === "tspan";
 
-    // Normalize font-weight attribute: svg2pdf.js needs "bold" instead of 600/700
-    const fontWeight = element.getAttribute("font-weight");
-    if (fontWeight === "600" || fontWeight === "700") {
-      element.setAttribute("font-weight", "bold");
+    // Set font-family and font-weight attributes on text and tspan elements.
+    // Presentation attributes are needed for vector apps (Illustrator/Inkscape)
+    // that ignore CSS style blocks.
+    if (isTextElement) {
+      // Remove any existing font-family attribute to ensure our value takes precedence
+      element.removeAttribute("font-family");
+      element.setAttribute("font-family", SVG_FONT_FAMILY);
+
+      // Normalize font-weight attribute: svg2pdf.js needs "bold" instead of 600/700
+      const fontWeight = element.getAttribute("font-weight");
+      if (fontWeight === "600" || fontWeight === "700") {
+        element.setAttribute("font-weight", "bold");
+      }
     }
-  }
 
-  // Normalise font-family/font-weight in inline style attributes on ALL elements
-  // (including text/tspan — computed styles can propagate via the style attribute
-  // in some SVG renderers, and svg2pdf.js reads both attribute and style values).
-  if (element.hasAttribute("style")) {
-    let style = element.getAttribute("style") || "";
-    // Replace any font-family in inline styles
-    style = style.replace(
-      /font-family:\s*[^;]+;?/gi,
-      `font-family: ${SVG_FONT_FAMILY};`
-    );
-    // Normalize font-weight in inline styles for svg2pdf.js
-    style = style.replace(/font-weight:\s*(600|700);?/gi, "font-weight: bold;");
-    element.setAttribute("style", style);
-  } else if (isTextElement) {
-    // No existing style attribute — add one so renderers that prefer style
-    // over presentation attributes also pick up the correct font-family.
-    element.setAttribute("style", `font-family: ${SVG_FONT_FAMILY};`);
-  }
+    // Normalise font-family/font-weight in inline style attributes on ALL elements
+    // (including text/tspan — computed styles can propagate via the style attribute
+    // in some SVG renderers, and svg2pdf.js reads both attribute and style values).
+    if (element.hasAttribute("style")) {
+      let style = element.getAttribute("style") || "";
+      // Replace any font-family in inline styles
+      style = style.replace(
+        /font-family:\s*[^;]+;?/gi,
+        `font-family: ${SVG_FONT_FAMILY};`
+      );
+      // Normalize font-weight in inline styles for svg2pdf.js
+      style = style.replace(
+        /font-weight:\s*(600|700);?/gi,
+        "font-weight: bold;"
+      );
+      element.setAttribute("style", style);
+    } else if (isTextElement) {
+      // No existing style attribute — add one so renderers that prefer style
+      // over presentation attributes also pick up the correct font-family.
+      element.setAttribute("style", `font-family: ${SVG_FONT_FAMILY};`);
+    }
 
-  // Process all child elements recursively
-  for (const child of element.children) {
-    setFontFamilyOnTextElements(child);
+    // Enqueue all children for processing
+    for (const child of element.children) {
+      queue.push(child);
+    }
   }
 }
 
@@ -112,6 +125,7 @@ export function generateExportFilename(
   extension: string
 ): string {
   const now = new Date();
+  // Uses local time so the timestamp matches what the user sees on their clock.
   const year = now.getFullYear();
   const month = String(now.getMonth() + 1).padStart(2, "0");
   const day = String(now.getDate()).padStart(2, "0");

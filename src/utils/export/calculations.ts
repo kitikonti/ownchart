@@ -3,17 +3,17 @@
  * Centralizes zoom, dimension, and date range calculations.
  */
 
-import type { ExportOptions, ExportColumnKey } from "./types";
+import type { Task } from "../../types/chart.types";
 import type { UiDensity } from "../../types/preferences.types";
 import { DENSITY_CONFIG } from "../../config/densityConfig";
 import { addDays } from "../dateUtils";
+import { getTaskLevel } from "../hierarchy";
 import {
   calculateLabelPaddingDays,
   calculateColumnWidth,
 } from "../textMeasurement";
-import type { Task } from "../../types/chart.types";
-import { getTaskLevel } from "../hierarchy";
-import { HEADER_LABELS } from "./columns";
+import type { ExportOptions, ExportColumnKey } from "./types";
+import { getColumnDisplayValue, HEADER_LABELS } from "./columns";
 
 /** Base pixels per day at 100% zoom */
 export const BASE_PIXELS_PER_DAY = 25;
@@ -35,12 +35,6 @@ const UNKNOWN_COLUMN_DEFAULT_WIDTH_PX = 100;
 
 /** Milliseconds in one day — used by calculateDurationDays */
 const MS_PER_DAY = 1000 * 60 * 60 * 24;
-
-/** Suffix appended to duration values for summary tasks (e.g. "5 days") */
-const DAYS_SUFFIX = " days";
-
-/** Suffix appended to progress values (e.g. "75%") */
-const PERCENT_SUFFIX = "%";
 
 /**
  * Width in pixels of the expand/collapse button rendered in the name column.
@@ -249,41 +243,23 @@ export function calculateDurationDays(dateRange: {
  *
  * Special display rules:
  * - `color`: always empty string (column renders a swatch pill, not text)
- * - `endDate`: empty for milestones (no end date concept)
- * - `duration`: empty for milestones; "X days" for summaries; plain number for tasks
- * - `progress`: empty when undefined, otherwise "X%"
+ * - `name`: task name, or empty string when absent
+ * - Data columns (startDate, endDate, duration, progress): delegated to
+ *   `getColumnDisplayValue` (single source of truth in columns.ts).
+ *   `null` (no value available) is mapped to `""` since measurement treats
+ *   missing and empty cells identically for width calculations.
  */
 function getCellValueForColumn(key: ExportColumnKey, task: Task): string {
-  const isSummary = task.type === "summary";
-  const isMilestone = task.type === "milestone";
-
   switch (key) {
     case "color":
       // Color column renders a swatch pill — no text content
       return "";
     case "name":
       return task.name || "";
-    case "startDate":
-      return task.startDate || "";
-    case "endDate":
-      // Milestones don't show end date
-      return isMilestone ? "" : task.endDate || "";
-    case "duration":
-      // Milestones don't show duration; summaries show "X days"
-      if (isMilestone) return "";
-      if (isSummary && task.duration !== undefined && task.duration > 0) {
-        return `${task.duration}${DAYS_SUFFIX}`;
-      }
-      if (!isSummary && task.duration !== undefined) {
-        return `${task.duration}`;
-      }
-      return "";
-    case "progress":
-      return task.progress !== undefined
-        ? `${task.progress}${PERCENT_SUFFIX}`
-        : "";
     default:
-      return "";
+      // Delegate all data columns to the shared implementation in columns.ts.
+      // null means "no value" — treat as empty string for width measurement.
+      return getColumnDisplayValue(task, key) ?? "";
   }
 }
 

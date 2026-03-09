@@ -10,7 +10,7 @@ import { toCanvas } from "html-to-image";
 import type { ExportLayoutInput } from "./types";
 import { ExportRenderer } from "../../components/Export/ExportRenderer";
 import { calculateExportDimensions } from "./exportLayout";
-import { REACT_RENDER_WAIT_MS } from "./constants";
+import { REACT_RENDER_WAIT_MS, SVG_BACKGROUND_WHITE } from "./constants";
 import {
   waitForFonts,
   waitForPaint,
@@ -25,6 +25,13 @@ import {
  * Higher values produce larger canvases with no perceptible quality gain.
  */
 const MIN_PIXEL_RATIO = 2;
+
+/**
+ * Maximum time in milliseconds to wait for `toCanvas` to complete.
+ * Guards against an indefinite hang when the browser tab is backgrounded
+ * during export (requestAnimationFrame is throttled or paused in hidden tabs).
+ */
+const CANVAS_CAPTURE_TIMEOUT_MS = 30_000;
 
 export interface CaptureChartParams extends ExportLayoutInput {
   /** Project name for export filename */
@@ -66,6 +73,7 @@ async function renderAndSettle(
  *
  * @param params - Layout inputs including tasks, options, column widths, and zoom
  * @returns A canvas element containing the rendered chart at the target resolution
+ * @throws If canvas capture times out (e.g. tab backgrounded during export)
  */
 export async function captureChart(
   params: CaptureChartParams
@@ -117,10 +125,13 @@ export async function captureChart(
     container.style.opacity = "1";
     await waitForPaint();
 
-    // Capture the container using html-to-image
-    const canvas = await toCanvas(container, {
+    // Capture the container using html-to-image.
+    // Race against a timeout to prevent an indefinite hang when the tab is
+    // backgrounded and requestAnimationFrame is throttled or paused.
+    const capturePromise = toCanvas(container, {
       pixelRatio: Math.max(window.devicePixelRatio, MIN_PIXEL_RATIO),
-      backgroundColor: options.background === "white" ? "#ffffff" : undefined,
+      backgroundColor:
+        options.background === "white" ? SVG_BACKGROUND_WHITE : undefined,
       width: dimensions.width,
       height: dimensions.height,
       style: {
@@ -130,6 +141,21 @@ export async function captureChart(
         top: "0",
       },
     });
+
+    const timeoutPromise = new Promise<never>((_, reject) =>
+      setTimeout(
+        () =>
+          reject(
+            new Error(
+              `Canvas capture timed out after ${CANVAS_CAPTURE_TIMEOUT_MS / 1000}s. ` +
+                "Try keeping the tab in the foreground during export."
+            )
+          ),
+        CANVAS_CAPTURE_TIMEOUT_MS
+      )
+    );
+
+    const canvas = await Promise.race([capturePromise, timeoutPromise]);
 
     return canvas;
   } finally {
@@ -150,12 +176,14 @@ export async function captureChart(
  *
  * @param canvas - The canvas element to serialise
  * @param quality - Quality hint (0–1). Ignored for PNG; only used by JPEG/WebP.
+ *   The value is clamped to [0, 1] for forward-compatibility with lossy formats.
  * @returns A Blob containing the PNG-encoded image
  */
 export async function canvasToBlob(
   canvas: HTMLCanvasElement,
   quality = 1.0
 ): Promise<Blob> {
+  const clampedQuality = Math.max(0, Math.min(1, quality));
   return new Promise((resolve, reject) => {
     canvas.toBlob(
       (blob) => {
@@ -166,7 +194,7 @@ export async function canvasToBlob(
         }
       },
       "image/png",
-      quality
+      clampedQuality
     );
   });
 }
