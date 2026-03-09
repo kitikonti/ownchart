@@ -174,4 +174,24 @@ describe("calculateDurationDays", () => {
     });
     expect(result).toBe(61);
   });
+
+  it("returns exactly 1 day across a DST spring-forward boundary (ISO strings are UTC)", () => {
+    // US Eastern spring-forward: 2025-03-09 02:00 → 03:00
+    // ISO date strings are parsed as UTC midnight, so the difference is
+    // exactly 86 400 000 ms regardless of local DST transitions.
+    const result = calculateDurationDays({
+      min: "2025-03-09",
+      max: "2025-03-10",
+    });
+    expect(result).toBe(1);
+  });
+
+  it("returns exactly 1 day across a DST fall-back boundary (ISO strings are UTC)", () => {
+    // US Eastern fall-back: 2025-11-02 02:00 → 01:00
+    const result = calculateDurationDays({
+      min: "2025-11-02",
+      max: "2025-11-03",
+    });
+    expect(result).toBe(1);
+  });
 });

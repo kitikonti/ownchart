@@ -32,8 +32,8 @@ export async function waitForFonts(): Promise<void> {
  * Wait for next animation frame (ensures DOM is painted).
  * Double RAF ensures the browser has completed layout and paint.
  */
-export function waitForPaint(): Promise<void> {
-  return new Promise((resolve) => {
+export async function waitForPaint(): Promise<void> {
+  await new Promise<void>((resolve) => {
     requestAnimationFrame(() => {
       requestAnimationFrame(() => {
         resolve();

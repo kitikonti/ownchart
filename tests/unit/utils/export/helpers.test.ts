@@ -1,13 +1,17 @@
 /**
  * Unit tests for export helper functions.
- * Covers: estimateFileSize, generateExportFilename, setFontFamilyOnTextElements.
+ * Covers: estimateFileSize, generateExportFilename, setFontFamilyOnTextElements,
+ *         createOffscreenContainer, removeOffscreenContainer, cloneSvgChildrenIntoGroup.
  */
 
-import { describe, it, expect, vi, beforeEach } from "vitest";
+import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import {
   estimateFileSize,
   generateExportFilename,
   setFontFamilyOnTextElements,
+  createOffscreenContainer,
+  removeOffscreenContainer,
+  cloneSvgChildrenIntoGroup,
 } from "../../../../src/utils/export/helpers";
 
 // ---------------------------------------------------------------------------
@@ -59,6 +63,10 @@ describe("generateExportFilename", () => {
     // Fix the date so the timestamp is deterministic
     vi.useFakeTimers();
     vi.setSystemTime(new Date("2025-06-15T10:30:45"));
+  });
+
+  afterEach(() => {
+    vi.useRealTimers();
   });
 
   it("uses sanitized project name as base", () => {
@@ -163,5 +171,126 @@ describe("setFontFamilyOnTextElements", () => {
     const el = makeSvgElement("rect");
     // Should not throw
     expect(() => setFontFamilyOnTextElements(el)).not.toThrow();
+  });
+});
+
+// ---------------------------------------------------------------------------
+// createOffscreenContainer / removeOffscreenContainer
+// ---------------------------------------------------------------------------
+
+describe("createOffscreenContainer", () => {
+  let container: HTMLDivElement | null = null;
+
+  afterEach(() => {
+    // Ensure cleanup even if a test fails
+    if (container && container.parentNode) {
+      container.remove();
+    }
+    container = null;
+  });
+
+  it("appends the container to document.body", () => {
+    container = createOffscreenContainer(800, 600, "white");
+    expect(document.body.contains(container)).toBe(true);
+  });
+
+  it("sets the correct width and height via inline style", () => {
+    container = createOffscreenContainer(1024, 768, "white");
+    expect(container.style.width).toBe("1024px");
+    expect(container.style.height).toBe("768px");
+  });
+
+  it("uses white background when background is 'white'", () => {
+    container = createOffscreenContainer(100, 100, "white");
+    expect(container.style.background).toBe("rgb(255, 255, 255)");
+  });
+
+  it("uses transparent background when background is 'transparent'", () => {
+    container = createOffscreenContainer(100, 100, "transparent");
+    expect(container.style.background).toBe("transparent");
+  });
+
+  it("starts hidden (opacity 0)", () => {
+    container = createOffscreenContainer(100, 100, "white");
+    expect(container.style.opacity).toBe("0");
+  });
+
+  it("has pointer-events none to avoid blocking interaction", () => {
+    container = createOffscreenContainer(100, 100, "white");
+    expect(container.style.pointerEvents).toBe("none");
+  });
+});
+
+describe("removeOffscreenContainer", () => {
+  it("removes the container from the DOM", () => {
+    const container = createOffscreenContainer(100, 100, "white");
+    expect(document.body.contains(container)).toBe(true);
+    removeOffscreenContainer(container);
+    expect(document.body.contains(container)).toBe(false);
+  });
+
+  it("does not throw when called on an already-detached container", () => {
+    const container = createOffscreenContainer(100, 100, "white");
+    removeOffscreenContainer(container);
+    // Calling remove() a second time on a detached element is a no-op
+    expect(() => removeOffscreenContainer(container)).not.toThrow();
+  });
+});
+
+// ---------------------------------------------------------------------------
+// cloneSvgChildrenIntoGroup
+// ---------------------------------------------------------------------------
+
+describe("cloneSvgChildrenIntoGroup", () => {
+  function makeSvgElement(tag: string): SVGElement {
+    return document.createElementNS(
+      "http://www.w3.org/2000/svg",
+      tag
+    ) as SVGElement;
+  }
+
+  it("clones all child nodes from source into group", () => {
+    const source = makeSvgElement("g");
+    const child1 = makeSvgElement("text");
+    const child2 = makeSvgElement("rect");
+    source.appendChild(child1);
+    source.appendChild(child2);
+
+    const group = makeSvgElement("g");
+    cloneSvgChildrenIntoGroup(source, group);
+
+    expect(group.children).toHaveLength(2);
+  });
+
+  it("normalises font-family on cloned <text> children", () => {
+    const source = makeSvgElement("g");
+    const textEl = makeSvgElement("text");
+    source.appendChild(textEl);
+
+    const group = makeSvgElement("g");
+    cloneSvgChildrenIntoGroup(source, group);
+
+    const clonedText = group.querySelector("text");
+    expect(clonedText?.getAttribute("font-family")).toBeTruthy();
+  });
+
+  it("does not mutate the original source children", () => {
+    const source = makeSvgElement("g");
+    const textEl = makeSvgElement("text");
+    source.appendChild(textEl);
+
+    const group = makeSvgElement("g");
+    cloneSvgChildrenIntoGroup(source, group);
+
+    // The original text element should not have font-family set
+    // (the normalisation runs on the clone inside `group`, not the source)
+    expect(textEl.getAttribute("font-family")).toBeNull();
+  });
+
+  it("handles an empty source without throwing", () => {
+    const source = makeSvgElement("g");
+    const group = makeSvgElement("g");
+    expect(() => cloneSvgChildrenIntoGroup(source, group)).not.toThrow();
+    expect(group.children).toHaveLength(0);
   });
 });

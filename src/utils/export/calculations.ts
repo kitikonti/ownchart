@@ -228,6 +228,12 @@ export function getEffectiveDateRange(
 
 /**
  * Calculate project duration in days from date range.
+ *
+ * Both `min` and `max` must be ISO 8601 date strings (YYYY-MM-DD).
+ * `new Date("YYYY-MM-DD")` is parsed as **UTC midnight**, so the difference
+ * is always a whole number of days regardless of local timezone or DST.
+ * `Math.ceil` handles any sub-day remainder introduced by DST transitions
+ * when non-ISO strings are passed — with ISO strings it is a no-op.
  */
 export function calculateDurationDays(dateRange: {
   min: string;

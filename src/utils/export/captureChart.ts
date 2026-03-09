@@ -4,7 +4,8 @@
  */
 
 import { createRoot } from "react-dom/client";
-import { createElement, type ComponentProps } from "react";
+import { createElement } from "react";
+import type { ComponentProps } from "react";
 import { toCanvas } from "html-to-image";
 import type { ExportLayoutInput } from "./types";
 import { ExportRenderer } from "../../components/Export/ExportRenderer";
@@ -17,7 +18,12 @@ import {
   removeOffscreenContainer,
 } from "./helpers";
 
-/** Minimum device pixel ratio used for canvas capture (ensures crisp output on low-DPI screens) */
+/**
+ * Minimum device pixel ratio used for canvas capture.
+ * Set to 2 (equivalent to standard Retina resolution) so exports remain crisp
+ * even on 1× DPI displays where `window.devicePixelRatio` would be 1.
+ * Higher values produce larger canvases with no perceptible quality gain.
+ */
 const MIN_PIXEL_RATIO = 2;
 
 export interface CaptureChartParams extends ExportLayoutInput {
@@ -78,27 +84,31 @@ export async function captureChart(
 
   // Create container - must be on-screen for html-to-image (uses SVG foreignObject)
   // We use opacity: 0 and pointer-events: none to hide it from the user.
-  // Container is created before the try block; cleanup is guaranteed in finally.
   const container = createOffscreenContainer(
     dimensions.width,
     dimensions.height,
     options.background
   );
 
-  // createRoot is synchronous inside renderAndSettle, so root is always
-  // available for cleanup in the finally block — even if capture throws.
-  // Unmounting before toCanvas would tear down the DOM tree mid-capture
-  // and produce a blank PNG, so unmounting is deferred to finally.
-  const root = await renderAndSettle(container, {
-    tasks,
-    options,
-    columnWidths,
-    currentAppZoom,
-    projectDateRange,
-    visibleDateRange,
-  });
+  // root starts undefined; renderAndSettle assigns it synchronously before any
+  // async work, so the finally block can always call root?.unmount() safely.
+  // Both renderAndSettle and the capture step are inside the try so that any
+  // error from either path still triggers container cleanup.
+  let root: ReturnType<typeof createRoot> | undefined;
 
   try {
+    // renderAndSettle creates the React root synchronously then waits for the
+    // initial paint. Unmounting before toCanvas would tear down the DOM tree
+    // mid-capture and produce a blank PNG, so unmounting is deferred to finally.
+    root = await renderAndSettle(container, {
+      tasks,
+      options,
+      columnWidths,
+      currentAppZoom,
+      projectDateRange,
+      visibleDateRange,
+    });
+
     // Wait for fonts and paint
     await waitForFonts();
     await waitForPaint();
@@ -124,8 +134,9 @@ export async function captureChart(
     return canvas;
   } finally {
     // Unmount the React tree only after capture (or on error), then remove
-    // the container from the DOM.
-    root.unmount();
+    // the container from the DOM. root may be undefined if renderAndSettle
+    // threw before completing, so the optional-chain guard is intentional.
+    root?.unmount();
     removeOffscreenContainer(container);
   }
 }
