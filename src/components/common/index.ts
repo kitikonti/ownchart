@@ -1,5 +1,10 @@
 /**
  * Common reusable components.
+ *
+ * Export style: value export immediately followed by its companion type export,
+ * grouped alphabetically by component name. This keeps the component and its
+ * types co-located for easier discovery rather than splitting them into two
+ * separate sections at the top/bottom of the file.
  */
 
 export { Alert } from "./Alert";
