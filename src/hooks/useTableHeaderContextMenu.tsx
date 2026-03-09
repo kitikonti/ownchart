@@ -11,10 +11,6 @@
 
 import { useMemo, useState, useCallback } from "react";
 import { Eye, ArrowsHorizontal } from "@phosphor-icons/react";
-import type {
-  ContextMenuItem,
-  ContextMenuPosition,
-} from "../components/ContextMenu/ContextMenu";
 import { useChartStore } from "../store/slices/chartSlice";
 import { useTaskStore } from "../store/slices/taskSlice";
 import {
@@ -23,8 +19,12 @@ import {
   ROW_NUMBER_COLUMN_ID,
   COLOR_COLUMN_ID,
 } from "../config/tableColumns";
-import type { ColumnId } from "../config/tableColumns";
 import { CONTEXT_MENU } from "../styles/design-tokens";
+import type {
+  ContextMenuItem,
+  ContextMenuPosition,
+} from "../components/ContextMenu/ContextMenu";
+import type { ColumnId } from "../config/tableColumns";
 
 // Module-level constant: derived from static TASK_COLUMNS config and never changes.
 const HIDEABLE_COLUMNS = getHideableColumns();
