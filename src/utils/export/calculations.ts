@@ -3,15 +3,20 @@
  * Centralizes zoom, dimension, and date range calculations.
  */
 
+// Types
 import type { Task } from "../../types/chart.types";
 import type { UiDensity } from "../../types/preferences.types";
+import type { ExportOptions, ExportColumnKey } from "./types";
+
+// Config & utilities
 import { DENSITY_CONFIG } from "../../config/densityConfig";
 import { addDays } from "../dateUtils";
 import {
   calculateLabelPaddingDays,
   calculateColumnWidth,
 } from "../textMeasurement";
-import type { ExportOptions, ExportColumnKey } from "./types";
+
+// Sibling module imports
 import { getColumnDisplayValue, HEADER_LABELS } from "./columns";
 
 /** Base pixels per day at 100% zoom */
@@ -173,11 +178,14 @@ export function calculateEffectiveZoom(
       );
       return timelineWidth / (projectDurationDays * BASE_PIXELS_PER_DAY);
     }
-    default:
-      // ExportOptions.zoomMode is a closed union; this branch is unreachable in
-      // practice. Returning timelineZoom is a safe no-op fallback — any new mode
-      // added to the union must also be handled above.
+    default: {
+      // ExportZoomMode is a closed union — this branch should never be reached.
+      // The cast to `never` provides compile-time exhaustiveness: TypeScript will
+      // flag this line if a new zoomMode variant is added without a matching case.
+      const _exhaustive: never = options.zoomMode;
+      void _exhaustive;
       return options.timelineZoom;
+    }
   }
 }
 
@@ -240,6 +248,28 @@ function buildPaddedDateRange(
 }
 
 /**
+ * Build the "all tasks" date range with padding, falling back to the default
+ * range when no project date range is available.
+ */
+function resolveAllTasksDateRange(
+  options: ExportOptions,
+  projectDateRange: { start: Date; end: Date } | undefined,
+  defaultRange: { min: string; max: string },
+  tasks: Task[] | undefined,
+  effectiveZoom: number | undefined
+): { min: string; max: string } {
+  if (projectDateRange) {
+    return buildPaddedDateRange(
+      options,
+      projectDateRange,
+      tasks,
+      effectiveZoom
+    );
+  }
+  return defaultRange;
+}
+
+/**
  * Calculate the effective date range based on date range mode.
  * When tasks and effectiveZoom are provided, label padding is calculated
  * to ensure task labels are not clipped in the export.
@@ -275,15 +305,13 @@ export function getEffectiveDateRange(
 
     case "all":
     default:
-      if (projectDateRange) {
-        return buildPaddedDateRange(
-          options,
-          projectDateRange,
-          tasks,
-          effectiveZoom
-        );
-      }
-      return defaultRange;
+      return resolveAllTasksDateRange(
+        options,
+        projectDateRange,
+        defaultRange,
+        tasks,
+        effectiveZoom
+      );
   }
 }
 

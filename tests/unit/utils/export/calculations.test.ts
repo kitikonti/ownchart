@@ -1,6 +1,7 @@
 /**
  * Unit tests for export calculations (calculateEffectiveZoom, getEffectiveDateRange,
- * calculateDurationDays, getDefaultColumnWidth, calculateOptimalColumnWidths).
+ * calculateDurationDays, getDefaultColumnWidth, calculateTaskTableWidth,
+ * calculateOptimalColumnWidths).
  */
 
 import { describe, it, expect } from "vitest";
@@ -10,6 +11,7 @@ import {
   calculateDurationDays,
   BASE_PIXELS_PER_DAY,
   getDefaultColumnWidth,
+  calculateTaskTableWidth,
   calculateOptimalColumnWidths,
 } from "../../../../src/utils/export/calculations";
 import type { ExportOptions } from "../../../../src/utils/export/types";
@@ -247,6 +249,72 @@ describe("getDefaultColumnWidth", () => {
     const compact = getDefaultColumnWidth("name", "compact");
     const comfortable = getDefaultColumnWidth("name", "comfortable");
     // Comfortable density should have wider name columns than compact
+    expect(comfortable).toBeGreaterThan(compact);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// calculateTaskTableWidth
+// ---------------------------------------------------------------------------
+
+describe("calculateTaskTableWidth", () => {
+  it("returns 0 for an empty column list", () => {
+    const result = calculateTaskTableWidth([], {}, "comfortable");
+    expect(result).toBe(0);
+  });
+
+  it("sums density-default widths when columnWidths map is empty", () => {
+    const colorWidth = getDefaultColumnWidth("color", "comfortable");
+    const nameWidth = getDefaultColumnWidth("name", "comfortable");
+    const result = calculateTaskTableWidth(
+      ["color", "name"],
+      {},
+      "comfortable"
+    );
+    expect(result).toBe(colorWidth + nameWidth);
+  });
+
+  it("uses the provided width when a key is present in columnWidths", () => {
+    const result = calculateTaskTableWidth(
+      ["name"],
+      { name: 300 },
+      "comfortable"
+    );
+    expect(result).toBe(300);
+  });
+
+  it("respects a stored width of 0 (undefined-guard, not falsy-guard)", () => {
+    // A stored value of 0 must be kept rather than falling back to the default.
+    const result = calculateTaskTableWidth(
+      ["progress"],
+      { progress: 0 },
+      "comfortable"
+    );
+    expect(result).toBe(0);
+  });
+
+  it("mixes explicit widths and density defaults across columns", () => {
+    const endDateDefault = getDefaultColumnWidth("endDate", "comfortable");
+    const result = calculateTaskTableWidth(
+      ["name", "endDate"],
+      { name: 200 },
+      "comfortable"
+    );
+    expect(result).toBe(200 + endDateDefault);
+  });
+
+  it("produces different totals for different density settings", () => {
+    const compact = calculateTaskTableWidth(
+      ["color", "name"],
+      {},
+      "compact"
+    );
+    const comfortable = calculateTaskTableWidth(
+      ["color", "name"],
+      {},
+      "comfortable"
+    );
+    // Comfortable density uses wider columns
     expect(comfortable).toBeGreaterThan(compact);
   });
 });

@@ -43,11 +43,8 @@ export interface CaptureChartParams extends ExportLayoutInput {
  * Render the ExportRenderer component into `container` and wait for
  * React's initial paint to settle before proceeding.
  *
- * The root is created synchronously so the caller can always unmount it in a
- * finally block — even if the settle timeout is somehow interrupted.
- * Unmounting before toCanvas runs would tear down the DOM tree while it is
- * still being captured, producing a blank PNG; the caller must defer unmounting
- * until after capture.
+ * The root is created synchronously so it is always available for the caller
+ * to unmount in a finally block, even if the settle timeout is interrupted.
  *
  * @param container - The DOM container to render into
  * @param props - Props forwarded to ExportRenderer
@@ -68,9 +65,42 @@ async function renderAndSettle(
 }
 
 /**
+ * Race a promise against a timeout, cancelling the timer on completion.
+ *
+ * Guards against indefinite hangs when the browser tab is backgrounded and
+ * `requestAnimationFrame` is throttled or paused (e.g. during html-to-image
+ * capture). The timer is cancelled as soon as `promise` settles so no live
+ * timers leak in tests or rapid export sequences.
+ *
+ * @param promise - The operation to race against the timeout
+ * @param timeoutMs - Maximum time to wait in milliseconds
+ * @param timeoutMessage - Error message thrown when the timeout fires
+ * @returns Resolves with the value from `promise`, or rejects with a timeout error
+ */
+export async function raceWithTimeout<T>(
+  promise: Promise<T>,
+  timeoutMs: number,
+  timeoutMessage: string
+): Promise<T> {
+  let timeoutId: ReturnType<typeof setTimeout> | undefined;
+  const timeoutPromise = new Promise<never>((_, reject) => {
+    timeoutId = setTimeout(() => reject(new Error(timeoutMessage)), timeoutMs);
+  });
+  try {
+    return await Promise.race([promise, timeoutPromise]);
+  } finally {
+    clearTimeout(timeoutId);
+  }
+}
+
+/**
  * Capture the chart to a canvas using offscreen rendering.
  * Renders the complete chart (including non-visible areas) at the specified
  * zoom level, then converts the DOM to a canvas via html-to-image.
+ *
+ * The React root is unmounted only after capture (or on error) to ensure the
+ * DOM tree is intact during the html-to-image capture phase; tearing it down
+ * mid-capture produces a blank PNG.
  *
  * @param params - Layout inputs including tasks, options, column widths, and zoom
  * @returns A canvas element containing the rendered chart at the target resolution
@@ -82,7 +112,7 @@ export async function captureChart(
   const {
     tasks,
     options,
-    columnWidths = {},
+    columnWidths,
     currentAppZoom,
     projectDateRange,
     visibleDateRange,
@@ -115,7 +145,7 @@ export async function captureChart(
     root = await renderAndSettle(container, {
       tasks,
       options,
-      columnWidths,
+      columnWidths: columnWidths ?? {},
       currentAppZoom,
       projectDateRange,
       visibleDateRange,
@@ -148,29 +178,12 @@ export async function captureChart(
 
     // Race the capture against a timeout to prevent an indefinite hang when
     // the tab is backgrounded and requestAnimationFrame is throttled/paused.
-    // The timeoutId is stored so the timer can be cancelled as soon as the
-    // capture resolves — without this, the 30 s timer keeps ticking even after
-    // a successful export, which leaks live timers in tests and rapid exports.
-    let timeoutId: ReturnType<typeof setTimeout> | undefined;
-    const timeoutPromise = new Promise<never>((_, reject) => {
-      timeoutId = setTimeout(
-        () =>
-          reject(
-            new Error(
-              `Canvas capture timed out after ${CANVAS_CAPTURE_TIMEOUT_MS / 1000}s. ` +
-                "Try keeping the tab in the foreground during export."
-            )
-          ),
-        CANVAS_CAPTURE_TIMEOUT_MS
-      );
-    });
-
-    let canvas: HTMLCanvasElement;
-    try {
-      canvas = await Promise.race([capturePromise, timeoutPromise]);
-    } finally {
-      clearTimeout(timeoutId);
-    }
+    const canvas = await raceWithTimeout(
+      capturePromise,
+      CANVAS_CAPTURE_TIMEOUT_MS,
+      `Canvas capture timed out after ${CANVAS_CAPTURE_TIMEOUT_MS / 1000}s. ` +
+        "Try keeping the tab in the foreground during export."
+    );
 
     return canvas;
   } finally {

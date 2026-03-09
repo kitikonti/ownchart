@@ -1,12 +1,57 @@
 /**
  * Unit tests for captureChart utilities.
- * Covers: canvasToBlob (pure promise wrapper).
+ * Covers: canvasToBlob (pure promise wrapper) and raceWithTimeout.
  * Note: captureChart itself requires a real DOM + html-to-image + React and is
  * covered by the export dialog integration tests.
  */
 
 import { describe, it, expect, vi } from "vitest";
-import { canvasToBlob } from "../../../../src/utils/export/captureChart";
+import {
+  canvasToBlob,
+  raceWithTimeout,
+} from "../../../../src/utils/export/captureChart";
+
+// ---------------------------------------------------------------------------
+// raceWithTimeout
+// ---------------------------------------------------------------------------
+
+describe("raceWithTimeout", () => {
+  it("resolves with the promise value when it settles before the timeout", async () => {
+    const result = await raceWithTimeout(
+      Promise.resolve(42),
+      5000,
+      "should not time out"
+    );
+    expect(result).toBe(42);
+  });
+
+  it("rejects with the timeout message when the promise does not settle in time", async () => {
+    vi.useFakeTimers();
+    const neverSettles = new Promise<never>(() => {/* never resolves */});
+    const racePromise = raceWithTimeout(neverSettles, 1000, "timed out");
+
+    vi.advanceTimersByTime(1000);
+    await expect(racePromise).rejects.toThrow("timed out");
+    vi.useRealTimers();
+  });
+
+  it("cancels the timer when the promise resolves early (no leaked timer)", async () => {
+    vi.useFakeTimers();
+    const fast = Promise.resolve("done");
+    const result = await raceWithTimeout(fast, 5000, "should not fire");
+    // If the timer were not cleared, advancing time would trigger an error.
+    vi.advanceTimersByTime(5000);
+    expect(result).toBe("done");
+    vi.useRealTimers();
+  });
+
+  it("propagates the original rejection when the promise rejects before the timeout", async () => {
+    const originalError = new Error("original failure");
+    await expect(
+      raceWithTimeout(Promise.reject(originalError), 5000, "timeout msg")
+    ).rejects.toThrow("original failure");
+  });
+});
 
 // ---------------------------------------------------------------------------
 // canvasToBlob

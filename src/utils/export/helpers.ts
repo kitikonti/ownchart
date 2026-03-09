@@ -96,7 +96,12 @@ export function setFontFamilyOnTextElements(root: Element): void {
       element.removeAttribute("font-family");
       element.setAttribute("font-family", SVG_FONT_FAMILY);
 
-      // Normalize font-weight attribute: svg2pdf.js needs "bold" instead of 600/700
+      // Normalize font-weight attribute: svg2pdf.js requires the keyword "bold"
+      // instead of the numeric equivalents 600 and 700.
+      // Values 400 ("normal") and 500 ("medium") are intentionally left as-is —
+      // svg2pdf.js handles the "normal" keyword natively, and 500 is unused in
+      // the current design system. If medium-weight text is ever introduced,
+      // add a mapping here.
       const fontWeight = element.getAttribute("font-weight");
       if (fontWeight === "600" || fontWeight === "700") {
         element.setAttribute("font-weight", "bold");
