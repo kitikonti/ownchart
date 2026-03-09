@@ -15,6 +15,14 @@ import { sanitizeFilename } from "./sanitizeFilename";
 const OFFSCREEN_CONTAINER_ATTR = "data-export-offscreen";
 
 /**
+ * z-index for the offscreen export container.
+ * Must be above all app UI (dialogs, tooltips, modals) to prevent any
+ * stacking-context clipping during html-to-image capture. The container
+ * is hidden via opacity:0 so this value is never visible to the user.
+ */
+const OFFSCREEN_CONTAINER_Z_INDEX = 99999;
+
+/**
  * Wait for all fonts to be loaded.
  * This ensures text measurements are accurate.
  *
@@ -31,8 +39,15 @@ export async function waitForFonts(): Promise<void> {
 /**
  * Wait for next animation frame (ensures DOM is painted).
  * Double RAF ensures the browser has completed layout and paint.
+ *
+ * The guard on `requestAnimationFrame` mirrors the `document.fonts` guard in
+ * `waitForFonts`: jsdom (used in unit tests) may not implement rAF, so we
+ * skip the wait in environments where it is unavailable.
  */
 export async function waitForPaint(): Promise<void> {
+  if (typeof requestAnimationFrame !== "function") {
+    return;
+  }
   await new Promise<void>((resolve) => {
     requestAnimationFrame(() => {
       requestAnimationFrame(() => {
@@ -162,7 +177,7 @@ export function createOffscreenContainer(
     height: ${height}px;
     overflow: hidden;
     background: ${background === "white" ? "#ffffff" : "transparent"};
-    z-index: 99999;
+    z-index: ${OFFSCREEN_CONTAINER_Z_INDEX};
     opacity: 0;
     pointer-events: none;
   `;

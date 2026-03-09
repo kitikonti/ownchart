@@ -142,8 +142,14 @@ export async function captureChart(
       },
     });
 
-    const timeoutPromise = new Promise<never>((_, reject) =>
-      setTimeout(
+    // Race the capture against a timeout to prevent an indefinite hang when
+    // the tab is backgrounded and requestAnimationFrame is throttled/paused.
+    // The timeoutId is stored so the timer can be cancelled as soon as the
+    // capture resolves — without this, the 30 s timer keeps ticking even after
+    // a successful export, which leaks live timers in tests and rapid exports.
+    let timeoutId: ReturnType<typeof setTimeout> | undefined;
+    const timeoutPromise = new Promise<never>((_, reject) => {
+      timeoutId = setTimeout(
         () =>
           reject(
             new Error(
@@ -152,10 +158,15 @@ export async function captureChart(
             )
           ),
         CANVAS_CAPTURE_TIMEOUT_MS
-      )
-    );
+      );
+    });
 
-    const canvas = await Promise.race([capturePromise, timeoutPromise]);
+    let canvas: HTMLCanvasElement;
+    try {
+      canvas = await Promise.race([capturePromise, timeoutPromise]);
+    } finally {
+      clearTimeout(timeoutId);
+    }
 
     return canvas;
   } finally {

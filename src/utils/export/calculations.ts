@@ -30,7 +30,13 @@ const DEFAULT_RANGE_LOOKBACK_DAYS = 7;
 /** Default date range look-ahead in days when no project date range is available */
 const DEFAULT_RANGE_LOOKAHEAD_DAYS = 30;
 
-/** Fallback width in pixels for unknown column keys */
+/**
+ * Fallback width in pixels for column keys not yet covered by the switch in
+ * `getDefaultColumnWidth`. This branch should never be reached in practice
+ * because `ExportColumnKey` is a closed union — if a new key is added to
+ * that union without a matching case, TypeScript will not flag it here, so
+ * keep this fallback and add the new case explicitly.
+ */
 const UNKNOWN_COLUMN_DEFAULT_WIDTH_PX = 100;
 
 /** Milliseconds in one day — used by calculateDurationDays */
@@ -267,6 +273,14 @@ function getCellValueForColumn(key: ExportColumnKey, task: Task): string {
  * Build the per-task cell values and extra leading widths for a given column.
  * For the name column, extra width accounts for hierarchy indent, expand button,
  * gaps, and icon. All other columns return zero extra width.
+ *
+ * @param key - The export column key
+ * @param tasks - The full task list (used for hierarchy level calculation)
+ * @param indentSize - Per-level indent size in pixels from density config
+ * @param iconSize - Task-type icon rendered size in pixels from density config
+ * @returns `cellValues[i]` is the display text for task i; `extraWidths[i]` is
+ *   the fixed leading width (indent + button + gaps + icon) for name cells,
+ *   or 0 for all other column types.
  */
 function buildColumnMeasurementData(
   key: ExportColumnKey,
@@ -298,6 +312,26 @@ function buildColumnMeasurementData(
 }
 
 /**
+ * Return the horizontal cell padding for a given column key.
+ *
+ * The name column uses single-sided right padding because the hierarchy indent
+ * already provides the left visual gap. All other columns use symmetric
+ * left + right padding (cellPaddingX × 2).
+ *
+ * @param key - The export column key
+ * @param cellPaddingX - The per-side horizontal padding from density config
+ * @returns Total horizontal padding to add when measuring column width
+ */
+function getColumnCellPadding(
+  key: ExportColumnKey,
+  cellPaddingX: number
+): number {
+  // Name column: indent handles left side — only right padding is added.
+  // All other columns: symmetric left + right padding.
+  return key === "name" ? cellPaddingX : cellPaddingX * 2;
+}
+
+/**
  * Calculate optimal column width based on content.
  * Uses the shared calculateColumnWidth function from textMeasurement.
  */
@@ -313,11 +347,7 @@ export function calculateOptimalColumnWidth(
     return densityConfig.columnWidths.color;
   }
 
-  // Name column has only right padding (indent handles left), others have both
-  const cellPadding =
-    key === "name"
-      ? densityConfig.cellPaddingX
-      : densityConfig.cellPaddingX * 2;
+  const cellPadding = getColumnCellPadding(key, densityConfig.cellPaddingX);
 
   const { cellValues, extraWidths } = buildColumnMeasurementData(
     key,
