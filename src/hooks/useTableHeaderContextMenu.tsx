@@ -1,6 +1,12 @@
 /**
  * Hook for building table header context menu items (Zone 2).
- * Windows Explorer-style: Size to Fit, column checkmarks, Show All.
+ *
+ * Produces a Windows Explorer-style column management menu with three groups:
+ *   1. "Size to Fit" / "Size All Columns to Fit" — auto-fit column widths
+ *   2. Column visibility checkmarks — toggle individual columns on/off
+ *   3. "Show All Columns" — reset all hidden columns at once
+ *
+ * The rowNumber and color columns cannot be auto-fitted (fixed-width chrome).
  */
 
 import { useMemo, useState, useCallback } from "react";
@@ -43,6 +49,10 @@ export function useTableHeaderContextMenu(): UseTableHeaderContextMenuResult {
 
   const [contextMenu, setContextMenu] = useState<ContextMenuState | null>(null);
 
+  // Stable list of columns that can be toggled — derived from module-level config,
+  // so this never changes after mount.
+  const hideableColumns = useMemo(() => getHideableColumns(), []);
+
   const handleHeaderContextMenu = useCallback(
     (e: React.MouseEvent, columnId: ColumnId): void => {
       e.preventDefault();
@@ -65,8 +75,6 @@ export function useTableHeaderContextMenu(): UseTableHeaderContextMenuResult {
     const column = TASK_COLUMNS.find((c) => c.id === columnId);
     if (!column) return [];
 
-    const items: ContextMenuItem[] = [];
-    const hideableColumns = getHideableColumns();
     const hiddenSet = new Set(hiddenColumns);
 
     // ── Group 1: Size to Fit ──
@@ -74,49 +82,44 @@ export function useTableHeaderContextMenu(): UseTableHeaderContextMenuResult {
       columnId !== ROW_NUMBER_COLUMN_ID && columnId !== COLOR_COLUMN_ID;
     const displayLabel = column.menuLabel || column.label || columnId;
 
-    items.push({
-      id: "sizeToFit",
-      label: `Size "${displayLabel}" to Fit`,
-      icon: (
-        <ArrowsHorizontal
-          size={CONTEXT_MENU.iconSize}
-          weight={CONTEXT_MENU.iconWeight}
-        />
-      ),
-      onClick: () => autoFitColumn(columnId),
-      disabled: !canAutoFit,
-    });
-
-    items.push({
-      id: "sizeAllToFit",
-      label: "Size All Columns to Fit",
-      icon: (
-        <ArrowsHorizontal
-          size={CONTEXT_MENU.iconSize}
-          weight={CONTEXT_MENU.iconWeight}
-        />
-      ),
-      onClick: autoFitAllColumns,
-      separator: true,
-    });
+    const sizeToFitItems: ContextMenuItem[] = [
+      {
+        id: "sizeToFit",
+        label: `Size "${displayLabel}" to Fit`,
+        icon: (
+          <ArrowsHorizontal
+            size={CONTEXT_MENU.iconSize}
+            weight={CONTEXT_MENU.iconWeight}
+          />
+        ),
+        onClick: () => autoFitColumn(columnId),
+        disabled: !canAutoFit,
+      },
+      {
+        id: "sizeAllToFit",
+        label: "Size All Columns to Fit",
+        icon: (
+          <ArrowsHorizontal
+            size={CONTEXT_MENU.iconSize}
+            weight={CONTEXT_MENU.iconWeight}
+          />
+        ),
+        onClick: autoFitAllColumns,
+        separator: true,
+      },
+    ];
 
     // ── Group 2: Column visibility checkmarks ──
-    for (let i = 0; i < hideableColumns.length; i++) {
-      const col = hideableColumns[i];
-      const isVisible = !hiddenSet.has(col.id);
-      const isLast = i === hideableColumns.length - 1;
-
-      items.push({
-        id: `toggle_${col.id}`,
-        label: col.menuLabel || col.label,
-        checked: isVisible,
-        onClick: () => toggleColumnVisibility(col.id),
-        separator: isLast,
-      });
-    }
+    const toggleItems: ContextMenuItem[] = hideableColumns.map((col, i) => ({
+      id: `toggle_${col.id}`,
+      label: col.menuLabel || col.label,
+      checked: !hiddenSet.has(col.id),
+      onClick: () => toggleColumnVisibility(col.id),
+      separator: i === hideableColumns.length - 1,
+    }));
 
     // ── Group 3: Show All ──
-    items.push({
+    const showAllItem: ContextMenuItem = {
       id: "showAllColumns",
       label: "Show All Columns",
       icon: (
@@ -124,12 +127,13 @@ export function useTableHeaderContextMenu(): UseTableHeaderContextMenuResult {
       ),
       onClick: () => setHiddenColumns([]),
       disabled: hiddenColumns.length === 0,
-    });
+    };
 
-    return items;
+    return [...sizeToFitItems, ...toggleItems, showAllItem];
   }, [
     contextMenu,
     hiddenColumns,
+    hideableColumns,
     toggleColumnVisibility,
     setHiddenColumns,
     autoFitColumn,

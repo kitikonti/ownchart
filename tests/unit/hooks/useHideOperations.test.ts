@@ -540,4 +540,41 @@ describe("computeHiddenIdsInSelection", () => {
     );
     expect(result).toEqual(["2"]);
   });
+
+  it("should return empty array when selected tasks are themselves hidden (not in flattenedTasks)", () => {
+    // Tasks 2 and 4 are hidden — they are absent from flattenedTasks.
+    // Selecting them yields fewer than 2 matches in flattenedTasks, so the function
+    // returns [] rather than computing a range from stale row numbers.
+    const hiddenIds = new Set(["2", "3", "4"]);
+    const { all, visible } = makeFlattenedTasks(
+      ["1", "2", "3", "4", "5"],
+      hiddenIds
+    );
+    // Select two hidden tasks — neither appears in visible list
+    const result = computeHiddenIdsInSelection(
+      ["2", "4"],
+      visible,
+      all,
+      ["2", "3", "4"]
+    );
+    expect(result).toEqual([]);
+  });
+
+  it("should return empty array when only one selected task is visible", () => {
+    // Task 3 is hidden. Selecting tasks 2 (visible) and 3 (hidden) gives only
+    // one match in flattenedTasks — not enough to establish a range.
+    const hiddenIds = new Set(["3"]);
+    const { all, visible } = makeFlattenedTasks(
+      ["1", "2", "3", "4"],
+      hiddenIds
+    );
+    const result = computeHiddenIdsInSelection(
+      ["2", "3"],
+      visible,
+      all,
+      ["3"]
+    );
+    // selectedRowNums has only one entry (task 2), so returns []
+    expect(result).toEqual([]);
+  });
 });

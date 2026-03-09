@@ -94,6 +94,14 @@ const NO_HIDDEN_ABOVE = { hasHiddenAbove: false, hiddenAboveCount: 0 } as const;
 
 // ── Hook ─────────────────────────────────────────────────────────────────────
 
+/**
+ * Derives per-row display state for each visible task in TaskTable.
+ * Computes clipboard position, selection position, and hidden-row gap indicators.
+ *
+ * @param unhideRange - Callback to unhide tasks between two row numbers (exclusive).
+ *   Must be a stable reference (useCallback) to avoid busting the taskRowData memo
+ *   on every render.
+ */
 export function useTaskRowData(
   unhideRange: (fromRowNum: number, toRowNum: number) => void
 ): {

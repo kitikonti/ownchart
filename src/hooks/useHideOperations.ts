@@ -63,6 +63,14 @@ export function computeHiddenIdsInSelection(
     .map((item) => item.task.id);
 }
 
+/**
+ * Hook encapsulating all hide/unhide task operations used by TaskTable, Ribbon,
+ * and useKeyboardShortcuts. Each operation:
+ * - Reads/writes chartSlice hiddenTaskIds (via getState for non-reactive reads)
+ * - Records an invertible command in historySlice for undo/redo
+ * - Marks the file dirty via fileSlice
+ * - Shows a toast confirmation
+ */
 export function useHideOperations(): UseHideOperationsResult {
   const hideTasks = useChartStore((state) => state.hideTasks);
   const { flattenedTasks, allFlattenedTasks } = useFlattenedTasks();
@@ -73,7 +81,7 @@ export function useHideOperations(): UseHideOperationsResult {
    * Empty dependency array is intentional: all store reads use getState() (not reactive
    * subscriptions), so there are no captured values that can go stale.
    */
-  const unhideTaskIds = useCallback((idsToUnhide: TaskId[]): void => {
+  const executeUnhide = useCallback((idsToUnhide: TaskId[]): void => {
     if (idsToUnhide.length === 0) return;
 
     const previousHiddenTaskIds = [...useChartStore.getState().hiddenTaskIds];
@@ -153,9 +161,9 @@ export function useHideOperations(): UseHideOperationsResult {
             item.globalRowNumber > fromRowNum && item.globalRowNumber < toRowNum
         )
         .map((item) => item.task.id);
-      unhideTaskIds(idsToUnhide);
+      executeUnhide(idsToUnhide);
     },
-    [allFlattenedTasks, unhideTaskIds]
+    [allFlattenedTasks, executeUnhide]
   );
 
   const getHiddenInSelectionCount = useCallback(
@@ -172,7 +180,7 @@ export function useHideOperations(): UseHideOperationsResult {
 
   const unhideSelection = useCallback(
     (selectedTaskIds: TaskId[]): void => {
-      unhideTaskIds(
+      executeUnhide(
         computeHiddenIdsInSelection(
           selectedTaskIds,
           flattenedTasks,
@@ -181,7 +189,7 @@ export function useHideOperations(): UseHideOperationsResult {
         )
       );
     },
-    [unhideTaskIds, flattenedTasks, allFlattenedTasks]
+    [executeUnhide, flattenedTasks, allFlattenedTasks]
   );
 
   return {
