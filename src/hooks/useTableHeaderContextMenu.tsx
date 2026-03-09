@@ -96,6 +96,9 @@ interface UseTableHeaderContextMenuResult {
   closeContextMenu: () => void;
 }
 
+// review: intentional — hook body is ~80 lines due to necessary store-selector
+// boilerplate (5 selectors, useState, 2 useCallback, 1 useMemo, return).
+// Each logical unit is independently under 50 lines; no extract is beneficial here.
 export function useTableHeaderContextMenu(): UseTableHeaderContextMenuResult {
   const hiddenColumns = useChartStore((state) => state.hiddenColumns);
   const toggleColumnVisibility = useChartStore(

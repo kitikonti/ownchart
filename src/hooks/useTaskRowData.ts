@@ -108,6 +108,40 @@ interface BuildRowDatumParams {
   unhideRange: (fromRowNum: number, toRowNum: number) => void;
 }
 
+/** Resolves prev/next task IDs and below/above gap state for a given row index. */
+function resolveNeighborsAndGaps(
+  item: FlattenedTask,
+  index: number,
+  flattenedTasks: FlattenedTask[],
+  sentinelRowAfterLast: number
+): {
+  prevTaskId: TaskId | undefined;
+  nextTaskId: TaskId | undefined;
+  nextRowNum: number;
+  hasHiddenBelow: boolean;
+  hiddenBelowCount: number;
+  above: { hasHiddenAbove: boolean; hiddenAboveCount: number };
+} {
+  const prevTaskId = index > 0 ? flattenedTasks[index - 1].task.id : undefined;
+  const nextTask: FlattenedTask | undefined = flattenedTasks[index + 1];
+  const nextTaskId = nextTask?.task.id;
+  const nextRowNum = nextTask ? nextTask.globalRowNumber : sentinelRowAfterLast;
+  const { hasHiddenBelow, hiddenBelowCount } = getHiddenGap(
+    item.globalRowNumber,
+    nextRowNum
+  );
+  const above =
+    index === 0 ? getHiddenGapAbove(item.globalRowNumber) : NO_HIDDEN_ABOVE;
+  return {
+    prevTaskId,
+    nextTaskId,
+    nextRowNum,
+    hasHiddenBelow,
+    hiddenBelowCount,
+    above,
+  };
+}
+
 /**
  * Builds the full display datum for a single task row.
  * Extracted from the useMemo callback to keep it under the 50-line budget.
@@ -122,19 +156,19 @@ function buildTaskRowDatum({
   unhideRange,
 }: BuildRowDatumParams): TaskRowDatum {
   const { task, level, hasChildren, globalRowNumber } = item;
-
-  const prevTaskId = index > 0 ? flattenedTasks[index - 1].task.id : undefined;
-  const nextTask: FlattenedTask | undefined = flattenedTasks[index + 1];
-  const nextTaskId = nextTask?.task.id;
-
-  const nextRowNum = nextTask ? nextTask.globalRowNumber : sentinelRowAfterLast;
-  const { hasHiddenBelow, hiddenBelowCount } = getHiddenGap(
-    globalRowNumber,
-    nextRowNum
+  const {
+    prevTaskId,
+    nextTaskId,
+    nextRowNum,
+    hasHiddenBelow,
+    hiddenBelowCount,
+    above,
+  } = resolveNeighborsAndGaps(
+    item,
+    index,
+    flattenedTasks,
+    sentinelRowAfterLast
   );
-
-  const above =
-    index === 0 ? getHiddenGapAbove(globalRowNumber) : NO_HIDDEN_ABOVE;
 
   return {
     task,
