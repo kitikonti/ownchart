@@ -112,14 +112,14 @@ export const WelcomeTour = memo(function WelcomeTour(): JSX.Element | null {
       title="Welcome to OwnChart!"
       icon={<HandWaving size={24} weight="light" className="text-amber-500" />}
       footer={
-        <div className="flex justify-end w-full gap-3">
+        <>
           <Button variant="secondary" onClick={handleShowShortcuts}>
             Show Shortcuts
           </Button>
           <Button variant="primary" onClick={dismiss}>
             Get Started
           </Button>
-        </div>
+        </>
       }
       widthClass="max-w-md"
       headerStyle="bordered"

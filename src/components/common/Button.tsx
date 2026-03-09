@@ -164,6 +164,7 @@ export const Button = memo(
     // `aria-label`, or `id` change, as those are the only properties that
     // affect whether a warning should be emitted.
     useEffect(() => {
+      if (!import.meta.env.DEV) return;
       warnIfIconOnlyWithoutLabel(icon, children, props);
       // eslint-disable-next-line react-hooks/exhaustive-deps -- `props` intentionally excluded; only identity-relevant properties (aria-label, id) are listed individually
     }, [icon, children, props["aria-label"], props.id]);
