@@ -1,9 +1,9 @@
 /**
  * Help components index.
  *
- * Note: HelpSearchInput is intentionally not exported here — it is a
- * private implementation detail of HelpDialog and not intended for
- * use outside of the Help module.
+ * Note: HelpSearchInput is an internal sub-component of HelpDialog and is
+ * not part of the public Help module API. Import it directly from its file
+ * only within the Help module.
  */
 
 export { AboutDialog } from "./AboutDialog";

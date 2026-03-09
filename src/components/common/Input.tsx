@@ -6,7 +6,8 @@
  * - figma: Figma-style with brand-colored focus ring
  */
 
-import { forwardRef, type InputHTMLAttributes, type JSX } from "react";
+import { forwardRef } from "react";
+import type { InputHTMLAttributes, JSX } from "react";
 import {
   type FormControlVariant,
   formControlVariantClasses,

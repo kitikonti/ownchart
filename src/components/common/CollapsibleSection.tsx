@@ -45,6 +45,7 @@ export function CollapsibleSection({
             isOpen ? "rotate-180" : ""
           }`}
           weight="bold"
+          aria-hidden="true"
         />
       </button>
 

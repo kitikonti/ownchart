@@ -2,7 +2,7 @@
  * HelpSearchInput — text input with clear button for searching help topics.
  */
 
-import { useRef, useEffect, useCallback } from "react";
+import { useRef, useEffect, useCallback, useId } from "react";
 import type { ChangeEvent, JSX } from "react";
 import { MagnifyingGlass, X } from "@phosphor-icons/react";
 import { Input } from "../common/Input";
@@ -20,6 +20,8 @@ export function HelpSearchInput({
   onChange,
 }: HelpSearchInputProps): JSX.Element {
   const inputRef = useRef<HTMLInputElement>(null);
+  // Stable id so the <label htmlFor> association is valid from the first render.
+  const inputId = useId();
 
   // Auto-focus the search input when mounted
   useEffect(() => {
@@ -42,6 +44,13 @@ export function HelpSearchInput({
 
   return (
     <div role="search" aria-label="Search help topics" className="relative">
+      {/* Visually-hidden label for the input — avoids the duplicate-announcement
+          that occurs when both the search landmark and the input carry the same
+          aria-label. The landmark provides the outer context; the label names the
+          input specifically. */}
+      <label htmlFor={inputId} className="sr-only">
+        Search help topics
+      </label>
       <MagnifyingGlass
         size={16}
         className="absolute left-3 top-1/2 -translate-y-1/2 text-neutral-400 pointer-events-none z-10"
@@ -49,13 +58,13 @@ export function HelpSearchInput({
       />
       <Input
         ref={inputRef}
+        id={inputId}
         type="text"
         value={value}
         onChange={handleChange}
         placeholder="Search help topics..."
         variant="figma"
         className="pl-9 pr-8"
-        aria-label="Search help topics"
       />
       {value.length > 0 && (
         <button

@@ -8,12 +8,8 @@
  * Accepts children for custom option rendering (including optgroups).
  */
 
-import {
-  forwardRef,
-  type SelectHTMLAttributes,
-  type ReactNode,
-  type JSX,
-} from "react";
+import { forwardRef } from "react";
+import type { SelectHTMLAttributes, ReactNode, JSX } from "react";
 import {
   type FormControlVariant,
   formControlVariantClasses,
@@ -21,6 +17,12 @@ import {
 
 export type SelectVariant = FormControlVariant;
 
+/**
+ * @remarks Callers MUST supply an accessible label via one of:
+ * - `aria-label` (e.g. standalone selects without visible label text)
+ * - `aria-labelledby` pointing to a visible label element
+ * - A wrapping `<label>` element that references the control via `htmlFor`
+ */
 export interface SelectProps extends Omit<
   SelectHTMLAttributes<HTMLSelectElement>,
   "className"
