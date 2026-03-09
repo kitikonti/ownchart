@@ -14,6 +14,12 @@ import {
 
 export type InputVariant = FormControlVariant;
 
+/**
+ * @remarks Callers MUST supply an accessible label via one of:
+ * - `aria-label` (e.g. standalone inputs without visible label text)
+ * - `aria-labelledby` pointing to a visible label element
+ * - A wrapping `<label>` element that references the control via `htmlFor`
+ */
 export interface InputProps extends Omit<
   InputHTMLAttributes<HTMLInputElement>,
   // Omit then re-declare className so it is always optional (the base

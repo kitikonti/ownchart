@@ -47,6 +47,7 @@ const CheckboxGroupRow = memo(function CheckboxGroupRow({
 
   return (
     <li>
+      {/* divider-h-light: custom utility defined in index.css */}
       {showDivider && <div className="divider-h-light mb-2.5" />}
       {/* Label wraps both elements — the `inputId` on Checkbox provides an explicit
           native <input id> so label association remains valid even if the
