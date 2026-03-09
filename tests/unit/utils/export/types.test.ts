@@ -9,6 +9,7 @@ import {
   DEFAULT_PDF_OPTIONS,
   DEFAULT_SVG_OPTIONS,
   DEFAULT_EXPORT_OPTIONS,
+  DEFAULT_CUSTOM_PAGE_SIZE,
   EXPORT_ZOOM_PRESETS,
   EXPORT_MAX_SAFE_WIDTH,
   EXPORT_ZOOM_MIN,
@@ -56,6 +57,22 @@ describe("export types", () => {
       Object.values(PDF_PAGE_SIZES).forEach((dims) => {
         expect(dims.width).toBeGreaterThan(dims.height);
       });
+    });
+  });
+
+  describe("DEFAULT_CUSTOM_PAGE_SIZE", () => {
+    it("has generous landscape canvas width of 500 mm", () => {
+      expect(DEFAULT_CUSTOM_PAGE_SIZE.width).toBe(500);
+    });
+
+    it("has canvas height of 300 mm", () => {
+      expect(DEFAULT_CUSTOM_PAGE_SIZE.height).toBe(300);
+    });
+
+    it("is larger than A4 landscape to serve as a wide canvas fallback", () => {
+      expect(DEFAULT_CUSTOM_PAGE_SIZE.width).toBeGreaterThan(
+        PDF_PAGE_SIZES.a4.width
+      );
     });
   });
 

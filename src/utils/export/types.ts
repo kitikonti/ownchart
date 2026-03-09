@@ -54,8 +54,8 @@ export interface PdfCustomPageSize {
 
 /**
  * Default custom page dimensions (mm) used as fallback when no custom size is provided.
- * 500 × 300 mm is a generous landscape canvas — wider than A2, suitable for projects
- * spanning many months that don't map cleanly to a standard paper size.
+ * 500 × 300 mm is a generous landscape canvas — wider than A3 (420 mm), suitable for
+ * projects spanning many months that don't map cleanly to a standard paper size.
  */
 export const DEFAULT_CUSTOM_PAGE_SIZE: PdfCustomPageSize = {
   width: 500,
@@ -287,9 +287,9 @@ export interface ExportOptions {
   includeGridLines: boolean;
   /** Include weekend highlighting */
   includeWeekends: boolean;
-  /** Include holiday highlighting (Sprint 1.5.9) */
+  /** Include holiday highlighting */
   includeHolidays: boolean;
-  /** Task label position on bars (Sprint 1.5.9) */
+  /** Task label position on bars */
   taskLabelPosition: TaskLabelPosition;
   /** Background fill mode */
   background: ExportBackground;

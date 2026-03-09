@@ -26,8 +26,10 @@ import { HEADER_HEIGHT } from "./constants";
  * @deprecated These re-exports exist only for backwards compatibility with callers
  * that imported from pdfLayout before the DPI helpers were extracted to ./dpi.
  * Import directly from './dpi' for new code.
- * TODO: Remove these re-exports once all callers are migrated to './dpi'.
- *       Track progress by searching for `from.*pdfLayout` imports of these names.
+ *
+ * Remaining callers that still import from pdfLayout (migrate these, then remove):
+ *   - src/utils/export/pdfExport.ts
+ *   - src/components/Export/PdfPreview.tsx
  */
 export { INTERNAL_DPI, PNG_EXPORT_DPI, MM_PER_INCH } from "./dpi";
 /** @deprecated Import from './dpi' directly. */
@@ -243,6 +245,18 @@ export function calculateScale(
   reservedTop: number = 0,
   reservedBottom: number = 0
 ): ScaleResult {
+  // Guard against zero or negative dimensions (e.g. empty task list) — dividing
+  // by zero would produce Infinity/NaN that silently corrupts PDF output.
+  if (contentWidth <= 0 || contentHeight <= 0) {
+    return {
+      scale: 1,
+      chartWidth: 0,
+      chartHeight: 0,
+      offsetX: 0,
+      offsetY: reservedTop,
+    };
+  }
+
   const printable = getPrintableArea(options);
 
   // Available space after reserving header/footer

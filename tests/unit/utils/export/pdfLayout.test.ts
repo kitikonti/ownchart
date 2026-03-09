@@ -311,6 +311,22 @@ describe("pdfLayout", () => {
       expect(result.offsetX).toBeCloseTo(expectedCenter, 5);
     });
 
+    it("returns safe defaults for zero content width", () => {
+      const result = calculateScale(0, 500, defaultOptions);
+      expect(result.scale).toBe(1);
+      expect(result.chartWidth).toBe(0);
+      expect(result.chartHeight).toBe(0);
+      expect(Number.isNaN(result.scale)).toBe(false);
+    });
+
+    it("returns safe defaults for zero content height", () => {
+      const result = calculateScale(1000, 0, defaultOptions);
+      expect(result.scale).toBe(1);
+      expect(result.chartWidth).toBe(0);
+      expect(result.chartHeight).toBe(0);
+      expect(Number.isNaN(result.scale)).toBe(false);
+    });
+
     it("scales chart to fit on custom page size", () => {
       const customOptions: PdfExportOptions = {
         ...defaultOptions,
