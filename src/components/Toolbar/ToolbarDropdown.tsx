@@ -73,11 +73,15 @@ function ToolbarDropdownInner<T extends string = string>({
     labelPrefix || options[selectedIndex]?.label || DEFAULT_DROPDOWN_LABEL;
 
   // Warn in dev when aria-label is missing — duplicate option IDs would result.
-  if (import.meta.env.DEV && !ariaLabel) {
-    console.warn(
-      "[ToolbarDropdown] aria-label is required. Without it, multiple instances generate identical option element IDs, which breaks aria-activedescendant for screen readers."
-    );
-  }
+  // Wrapped in useEffect so it fires once on mount, not on every render.
+  useEffect(() => {
+    if (import.meta.env.DEV && !ariaLabel) {
+      console.warn(
+        "[ToolbarDropdown] aria-label is required. Without it, multiple instances generate identical option element IDs, which breaks aria-activedescendant for screen readers."
+      );
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   // Stable ID prefix for ARIA option IDs — derived from aria-label.
   // ariaLabel should always be provided; without it multiple ToolbarDropdown

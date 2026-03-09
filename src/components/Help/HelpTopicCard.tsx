@@ -28,9 +28,9 @@ export function MenuPathLabel({ path }: { path: string }): ReactElement {
   const parts = path.split(" > ");
   return (
     <span className="text-xs text-neutral-400 flex items-center gap-0.5 flex-shrink-0">
-      {parts.map((part, i) => (
-        <span key={`${part}-${i}`} className="flex items-center gap-0.5">
-          {i > 0 && (
+      {parts.map((part, index) => (
+        <span key={`${part}-${index}`} className="flex items-center gap-0.5">
+          {index > 0 && (
             <span className="mx-0.5" aria-hidden="true">
               ›
             </span>
@@ -95,7 +95,7 @@ export function HelpTopicCard({
   }
 
   return (
-    <div className="py-2.5 px-3 -mx-3 rounded hover:bg-neutral-50 transition-colors">
+    <div className="py-2.5 px-3 -mx-3 rounded">
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0">
           <h4 className="text-sm font-medium text-neutral-900">
