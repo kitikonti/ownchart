@@ -260,7 +260,8 @@ export interface ExportQuickPreset {
 }
 
 /**
- * Export options for PNG generation.
+ * Common export options shared across all export formats (PNG, PDF, SVG).
+ * Format-specific options live in {@link PdfExportOptions} and {@link SvgExportOptions}.
  */
 export interface ExportOptions {
   /** How the zoom level is determined */
@@ -477,8 +478,24 @@ export const INITIAL_EXPORT_STATE: ExportState = {
 export interface ExportLayoutInput {
   tasks: Task[];
   options: ExportOptions;
+  /**
+   * Per-column pixel widths for the task table. Required when selectedColumns is
+   * non-empty; omit (or pass undefined) for timeline-only exports.
+   */
   columnWidths?: Record<string, number>;
+  /**
+   * Current app timeline zoom level (unitless multiplier). Required when
+   * options.zoomMode === 'currentView' to replicate the on-screen zoom in the export.
+   */
   currentAppZoom?: number;
+  /**
+   * Date range spanning all tasks (earliest start → latest end).
+   * Required when options.dateRangeMode === 'all' or 'custom'.
+   */
   projectDateRange?: { start: Date; end: Date };
+  /**
+   * Currently visible date range on screen.
+   * Required when options.dateRangeMode === 'visible'.
+   */
   visibleDateRange?: { start: Date; end: Date };
 }

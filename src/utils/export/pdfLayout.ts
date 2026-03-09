@@ -238,6 +238,8 @@ export function calculateScale(
       chartWidth: 0,
       chartHeight: 0,
       offsetX: 0,
+      // offsetY aligns content below the header reserved area; footer is not
+      // relevant here because there is nothing to place above it.
       offsetY: reservedTop,
     };
   }
