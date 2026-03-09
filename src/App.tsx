@@ -7,8 +7,7 @@
  *   AppContent → registers global hooks and renders the main layout
  */
 
-import { useEffect } from "react";
-import type { ReactElement } from "react";
+import { useEffect, type ReactElement } from "react";
 import { Toaster } from "react-hot-toast";
 import { GanttLayout } from "./components/Layout";
 import { StatusBar } from "./components/StatusBar";
