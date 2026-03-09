@@ -2,7 +2,7 @@
  * HelpSearchInput — text input with clear button for searching help topics.
  */
 
-import { useRef, useEffect, useCallback, useId } from "react";
+import { memo, useRef, useEffect, useCallback, useId } from "react";
 import type { ChangeEvent, JSX } from "react";
 import { MagnifyingGlass, X } from "@phosphor-icons/react";
 import { Input } from "../common/Input";
@@ -15,7 +15,7 @@ export interface HelpSearchInputProps {
   onChange: (value: string) => void;
 }
 
-export function HelpSearchInput({
+export const HelpSearchInput = memo(function HelpSearchInput({
   value,
   onChange,
 }: HelpSearchInputProps): JSX.Element {
@@ -78,4 +78,4 @@ export function HelpSearchInput({
       )}
     </div>
   );
-}
+});

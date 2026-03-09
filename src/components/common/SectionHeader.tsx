@@ -7,6 +7,7 @@
  * - bordered: Title with bottom border (for lists)
  */
 
+import { memo } from "react";
 import type { JSX, ReactNode } from "react";
 
 export type SectionHeaderVariant = "default" | "simple" | "bordered";
@@ -39,7 +40,7 @@ export interface SectionHeaderProps {
   className?: string;
 }
 
-export function SectionHeader({
+export const SectionHeader = memo(function SectionHeader({
   title,
   icon,
   variant = "default",
@@ -96,4 +97,4 @@ export function SectionHeader({
       </Element>
     </div>
   );
-}
+});

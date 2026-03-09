@@ -90,6 +90,9 @@ export function CheckboxGroup({
             key={item.key}
             item={item}
             inputId={`${groupId}-${item.key}`}
+            // Positional divider: first item has no top divider, all others do.
+            // Note: if items are reordered dynamically, derive showDivider from
+            // item identity rather than array index to avoid misplaced dividers.
             showDivider={idx > 0}
             onChange={onChange}
           />

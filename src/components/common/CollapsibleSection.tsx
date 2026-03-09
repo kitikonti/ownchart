@@ -3,7 +3,7 @@
  * Used in export dialogs for Layout Options and Display Options.
  */
 
-import { useId, useState, useCallback } from "react";
+import { memo, useId, useState, useCallback } from "react";
 import type { JSX, ReactNode } from "react";
 import { CaretDown } from "@phosphor-icons/react";
 
@@ -18,7 +18,7 @@ export interface CollapsibleSectionProps {
   className?: string;
 }
 
-export function CollapsibleSection({
+export const CollapsibleSection = memo(function CollapsibleSection({
   title,
   defaultOpen = false,
   children,
@@ -62,15 +62,10 @@ export function CollapsibleSection({
       <div
         id={contentId}
         aria-hidden={!isOpen}
-        className={[
-          "mt-3 bg-neutral-50 rounded px-6 py-4 space-y-5",
-          !isOpen && "hidden",
-        ]
-          .filter(Boolean)
-          .join(" ")}
+        className={`mt-3 bg-neutral-50 rounded px-6 py-4 space-y-5${isOpen ? "" : " hidden"}`}
       >
         {children}
       </div>
     </section>
   );
-}
+});
