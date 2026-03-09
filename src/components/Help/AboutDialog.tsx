@@ -34,8 +34,10 @@ interface ExternalLinkProps {
  *
  * In development, a console warning is emitted when the fallback is triggered
  * so that misconfigured URLs in APP_CONFIG are caught early.
+ *
+ * Exported for unit testing.
  */
-function sanitizeHref(href: string): string {
+export function sanitizeHref(href: string): string {
   if (href.startsWith("https://") || href.startsWith("http://")) {
     return href;
   }

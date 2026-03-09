@@ -64,6 +64,40 @@ const sizeStyles: Record<ButtonSize, string> = {
  */
 const warnedIconOnlyKeys = import.meta.env.DEV ? new Set<string>() : null;
 
+/**
+ * Emits a DEV-only console warning when an icon-only button lacks an
+ * `aria-label`. Deduplicates by `id` to avoid flooding the console on
+ * re-renders of the same identified button.
+ *
+ * Extracted from the render body so it can be unit-tested in isolation.
+ */
+export function warnIfIconOnlyWithoutLabel(
+  icon: ReactNode,
+  children: ReactNode,
+  props: { id?: string; "aria-label"?: string }
+): void {
+  if (!import.meta.env.DEV) return;
+  if (!icon) return;
+  // Treat both "no children passed" and "empty children" as icon-only.
+  if (Children.count(children) !== 0 && children) return;
+  if (props["aria-label"]) return;
+
+  const warnKey = props.id;
+  if (
+    warnedIconOnlyKeys &&
+    (warnKey === undefined || !warnedIconOnlyKeys.has(warnKey))
+  ) {
+    if (warnKey !== undefined) {
+      warnedIconOnlyKeys.add(warnKey);
+    }
+    console.warn(
+      "[Button] Icon-only button detected without an `aria-label`. " +
+        "Screen readers will not be able to announce this button's purpose. " +
+        "Add an `aria-label` prop describing the action."
+    );
+  }
+}
+
 // Fluent: font-weight 600, transition 0.1s cubic-bezier(0.33, 0, 0.67, 1)
 const baseStyles =
   "inline-flex items-center justify-center font-semibold rounded transition-all duration-100 ease-[cubic-bezier(0.33,0,0.67,1)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-600 focus-visible:ring-offset-2 disabled:cursor-not-allowed select-none";
@@ -100,36 +134,7 @@ export const Button = memo(
     },
     ref
   ) {
-    if (
-      import.meta.env.DEV &&
-      icon &&
-      // Treat both "no children passed" and "empty children" as icon-only.
-      // Children.count handles null/undefined/boolean; the !children guard
-      // catches empty strings and other falsy values that Children.count
-      // would return 0 for but which are also meaningless as text labels.
-      (Children.count(children) === 0 || !children) &&
-      !props["aria-label"]
-    ) {
-      // Deduplicate by `id` when available so the console is not flooded during
-      // re-renders of the same identified button.
-      // Anonymous buttons (no `id`) always emit the warning — using a shared
-      // sentinel would suppress warnings for distinct anonymous buttons added
-      // later in the session, masking real accessibility gaps.
-      const warnKey = props.id;
-      if (
-        warnedIconOnlyKeys &&
-        (warnKey === undefined || !warnedIconOnlyKeys.has(warnKey))
-      ) {
-        if (warnKey !== undefined) {
-          warnedIconOnlyKeys.add(warnKey);
-        }
-        console.warn(
-          "[Button] Icon-only button detected without an `aria-label`. " +
-            "Screen readers will not be able to announce this button's purpose. " +
-            "Add an `aria-label` prop describing the action."
-        );
-      }
-    }
+    warnIfIconOnlyWithoutLabel(icon, children, props);
 
     return (
       <button

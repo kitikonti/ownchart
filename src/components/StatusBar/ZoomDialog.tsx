@@ -50,7 +50,7 @@ const ZOOM_MATCH_EPSILON = 0.01;
  * Defaulting to 100% on no match is intentional: it avoids ambiguity when
  * the zoom level was set by a fit-to-view operation with an arbitrary value.
  */
-function findClosestPreset(zoom: number): number | "fit" {
+function findClosestPreset(zoom: number): number {
   const exactMatch = ZOOM_PRESETS.find(
     (p) =>
       typeof p.value === "number" &&

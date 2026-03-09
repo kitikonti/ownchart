@@ -157,8 +157,15 @@ export const WelcomeTour = memo(function WelcomeTour(): JSX.Element | null {
         </div>
 
         {/* Don't show again checkbox */}
-        <label className="flex items-center gap-3 pt-2 cursor-pointer group">
-          <Checkbox checked={dontShowAgain} onChange={setDontShowAgain} />
+        <label
+          htmlFor="welcome-tour-dont-show"
+          className="flex items-center gap-3 pt-2 cursor-pointer group"
+        >
+          <Checkbox
+            id="welcome-tour-dont-show"
+            checked={dontShowAgain}
+            onChange={setDontShowAgain}
+          />
           <span className="text-sm text-neutral-500 group-hover:text-neutral-600 transition-colors">
             Don&apos;t show this again
           </span>
