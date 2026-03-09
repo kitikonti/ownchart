@@ -85,17 +85,6 @@ export const ZoomDialog = memo(function ZoomDialog({
     onSelect(selectedValue);
   }, [onSelect, selectedValue]);
 
-  const footer = (
-    <>
-      <Button variant="secondary" onClick={onClose}>
-        Cancel
-      </Button>
-      <Button variant="primary" onClick={handleOk}>
-        OK
-      </Button>
-    </>
-  );
-
   return (
     <Modal
       isOpen={isOpen}
@@ -108,7 +97,16 @@ export const ZoomDialog = memo(function ZoomDialog({
           className="text-brand-600"
         />
       }
-      footer={footer}
+      footer={
+        <>
+          <Button variant="secondary" onClick={onClose}>
+            Cancel
+          </Button>
+          <Button variant="primary" onClick={handleOk}>
+            OK
+          </Button>
+        </>
+      }
       widthClass="max-w-xs"
       headerStyle="bordered"
       footerStyle="bordered"

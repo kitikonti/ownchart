@@ -5,6 +5,7 @@
 import {
   useState,
   useEffect,
+  useCallback,
   useRef,
   memo,
   type JSX,
@@ -88,11 +89,11 @@ export const WelcomeTour = memo(function WelcomeTour(): JSX.Element | null {
     };
   }, []);
 
-  const dismiss = (): void => {
+  const dismiss = useCallback((): void => {
     dismissWelcome(dontShowAgain);
-  };
+  }, [dismissWelcome, dontShowAgain]);
 
-  const handleShowShortcuts = (): void => {
+  const handleShowShortcuts = useCallback((): void => {
     dismiss();
     // Delay opening help panel to let the modal finish closing before the
     // help panel mounts. The animation duration is ~100 ms (Modal fade-out).
@@ -103,18 +104,7 @@ export const WelcomeTour = memo(function WelcomeTour(): JSX.Element | null {
       helpPanelTimerRef.current = null;
       openHelpPanel();
     }, HELP_PANEL_OPEN_DELAY_MS);
-  };
-
-  const footer = (
-    <div className="flex justify-end w-full gap-3">
-      <Button variant="secondary" onClick={handleShowShortcuts}>
-        Show Shortcuts
-      </Button>
-      <Button variant="primary" onClick={dismiss}>
-        Get Started
-      </Button>
-    </div>
-  );
+  }, [dismiss, openHelpPanel]);
 
   return (
     <Modal
@@ -122,7 +112,16 @@ export const WelcomeTour = memo(function WelcomeTour(): JSX.Element | null {
       onClose={dismiss}
       title="Welcome to OwnChart!"
       icon={<HandWaving size={24} weight="light" className="text-amber-500" />}
-      footer={footer}
+      footer={
+        <div className="flex justify-end w-full gap-3">
+          <Button variant="secondary" onClick={handleShowShortcuts}>
+            Show Shortcuts
+          </Button>
+          <Button variant="primary" onClick={dismiss}>
+            Get Started
+          </Button>
+        </div>
+      }
       widthClass="max-w-md"
       headerStyle="bordered"
       footerStyle="bordered"

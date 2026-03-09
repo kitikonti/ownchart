@@ -73,20 +73,23 @@ export const DropdownItem = memo(function DropdownItem({
 }: DropdownItemProps): JSX.Element {
   const hasDescription = !!description;
 
+  // Determine whether a semantic ARIA state attribute conveys the selection.
+  // When neither aria-selected nor aria-checked is emitted (e.g. role is
+  // "menuitem" or absent), we fall back to a visually-hidden text annotation
+  // so screen readers still announce the active selection.
+  const emitsAriaSelected = !!(role && ARIA_SELECTED_ROLES.has(role));
+  const emitsAriaChecked = !!(role && ARIA_CHECKED_ROLES.has(role));
+  const needsFallbackSelectedText =
+    isSelected && !emitsAriaSelected && !emitsAriaChecked;
+
   return (
     <button
       type="button"
       role={role}
       aria-selected={
-        role && ARIA_SELECTED_ROLES.has(role)
-          ? (ariaSelected ?? isSelected)
-          : undefined
+        emitsAriaSelected ? (ariaSelected ?? isSelected) : undefined
       }
-      aria-checked={
-        role && ARIA_CHECKED_ROLES.has(role)
-          ? (ariaChecked ?? isSelected)
-          : undefined
-      }
+      aria-checked={emitsAriaChecked ? (ariaChecked ?? isSelected) : undefined}
       onClick={onClick}
       className={[
         "dropdown-item",
@@ -117,6 +120,10 @@ export const DropdownItem = memo(function DropdownItem({
           )}
         </span>
       )}
+      {/* Visually-hidden fallback for screen readers when no ARIA state attribute
+          (aria-selected / aria-checked) is emitted for this role. Ensures that
+          the active selection is still announced even for plain menuitem roles. */}
+      {needsFallbackSelectedText && <span className="sr-only">(selected)</span>}
 
       {/* Content */}
       {hasDescription ? (

@@ -1,8 +1,8 @@
 /**
  * Button - Standard button component with design system styling
  *
- * Based on MS 365/Fluent UI design:
- * - Primary: Brand color (Outlook Blue #0F6CBD) background
+ * Based on Fluent UI design:
+ * - Primary: Brand blue (#0F6CBD) background
  * - Secondary: White background with neutral border
  * - Ghost: Transparent background
  * - Danger: Red background for destructive actions
@@ -47,7 +47,7 @@ const variantStyles: Record<ButtonVariant, string> = {
     "bg-red-600 text-white border border-transparent hover:bg-red-700 active:bg-red-800 disabled:bg-neutral-300 disabled:text-neutral-400",
 };
 
-// MS Fluent button sizing: height ~31px, min-width 96px, padding 5px 12px
+// Fluent button sizing: height ~31px, min-width 96px, padding 5px 12px
 const sizeStyles: Record<ButtonSize, string> = {
   sm: "h-7 min-w-[72px] px-2.5 py-1 text-xs gap-1.5",
   md: "h-8 min-w-[96px] px-3 py-[5px] text-sm gap-2",
@@ -62,7 +62,7 @@ const sizeStyles: Record<ButtonSize, string> = {
  */
 const warnedIconOnlyKeys = import.meta.env.DEV ? new Set<string>() : null;
 
-// MS Fluent: font-weight 600, transition 0.1s cubic-bezier(0.33, 0, 0.67, 1)
+// Fluent: font-weight 600, transition 0.1s cubic-bezier(0.33, 0, 0.67, 1)
 const baseStyles =
   "inline-flex items-center justify-center font-semibold rounded transition-all duration-100 ease-[cubic-bezier(0.33,0,0.67,1)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-600 focus-visible:ring-offset-2 disabled:cursor-not-allowed select-none";
 
@@ -101,12 +101,18 @@ export const Button = memo(
     if (
       import.meta.env.DEV &&
       icon &&
-      Children.count(children) === 0 &&
+      // Treat both "no children passed" and "empty children" as icon-only.
+      // Children.count handles null/undefined/boolean; the !children guard
+      // catches empty strings and other falsy values that Children.count
+      // would return 0 for but which are also meaningless as text labels.
+      (Children.count(children) === 0 || !children) &&
       !props["aria-label"]
     ) {
-      // Use the element's id or class name as a deduplication key so the
-      // console is not flooded during re-renders of the same button.
-      const warnKey = props.id ?? className ?? "«anonymous»";
+      // Use the element's id as a deduplication key so the console is not
+      // flooded during re-renders of the same button. Fall back to a static
+      // sentinel — the warning will fire once and subsequent renders are
+      // suppressed. This is a best-effort heuristic.
+      const warnKey = props.id ?? "«anonymous»";
       if (warnedIconOnlyKeys && !warnedIconOnlyKeys.has(warnKey)) {
         warnedIconOnlyKeys.add(warnKey);
         console.warn(
