@@ -259,14 +259,14 @@ export function useTaskRowData(
         unhideRange,
       })
     );
-    // review: intentional — unhideRange is listed as a dep so the memo recomputes
-    // if the reference changes; callers must pass a stable useCallback reference
-    // (documented in JSDoc above) to avoid unnecessary recomputation.
   }, [
     flattenedTasks,
     clipboardSet,
     selectedSet,
     allFlattenedTasks,
+    // review: intentional — unhideRange is listed as a dep so the memo recomputes
+    // if the reference changes; callers must pass a stable useCallback reference
+    // (documented in JSDoc above) to avoid unnecessary recomputation.
     unhideRange,
   ]);
 

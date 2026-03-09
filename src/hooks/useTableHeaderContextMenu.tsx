@@ -68,6 +68,9 @@ function buildSizeToFitItems(
 
 /** Builds the column-visibility checkmark group (Group 2). */
 function buildToggleItems(
+  // review: intentional — Set<string> (not Set<ColumnId>) because chartSlice.hiddenColumns
+  // is typed as string[] for forward-compatibility; narrowing to Set<ColumnId> would
+  // require a cast at every call site.
   hiddenSet: Set<string>,
   toggleColumnVisibility: (id: ColumnId) => void
 ): ContextMenuItem[] {

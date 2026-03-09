@@ -120,7 +120,9 @@ export function useHideOperations(): UseHideOperationsResult {
       hideTasks(taskIds);
       useFileStore.getState().markDirty();
 
-      // Count how many were actually hidden (including descendants)
+      // Count how many were actually hidden (including descendants).
+      // hideTasks() is a synchronous Zustand action, so getState() immediately
+      // reflects the updated hiddenTaskIds after the call above.
       const newHiddenIds = useChartStore.getState().hiddenTaskIds;
       const newlyHiddenCount =
         newHiddenIds.length - previousHiddenTaskIds.length;
