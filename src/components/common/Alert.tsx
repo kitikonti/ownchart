@@ -74,9 +74,10 @@ export function Alert({
 
   return (
     <div
-      className={`flex items-start gap-3 px-4 py-3 rounded border ${styles.container} ${className}`}
+      className={`flex items-start gap-3 px-4 py-3 rounded border ${styles.container}${className ? ` ${className}` : ""}`}
+      // role="alert" implies aria-live="assertive"; role="status" implies aria-live="polite".
+      // Explicit aria-live is redundant and removed to avoid confusion.
       role={isUrgent ? "alert" : "status"}
-      aria-live={isUrgent ? "assertive" : "polite"}
     >
       <span
         aria-hidden="true"

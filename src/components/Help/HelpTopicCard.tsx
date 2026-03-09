@@ -116,12 +116,15 @@ export function HelpTopicCard({
       </div>
       {topic.tip && (
         <p className="text-xs text-neutral-400 mt-1.5 flex items-center gap-1">
+          {/* "Tip:" is announced once by screen readers via sr-only; visible via aria-hidden.
+              On macOS with a {mod} shortcut the ⌘ Command icon is added as an extra
+              visual cue — its positioning comes after the shared "Tip:" prefix. */}
+          <span className="sr-only">Tip: </span>
+          <span aria-hidden="true">Tip: </span>
           {isMac() && topic.tip.includes("{mod}") ? (
-            // On macOS, show the Command icon as a visual cue before the tip text.
-            // resolveShortcut replaces {mod} with "Cmd" — the icon provides extra
-            // visual context alongside the text label.
+            // On macOS, show the Command icon as a visual cue alongside the tip text.
+            // resolveShortcut replaces {mod} with "Cmd".
             <>
-              <span className="sr-only">Tip: </span>
               <Command
                 size={11}
                 className="inline-block flex-shrink-0"
@@ -130,7 +133,7 @@ export function HelpTopicCard({
               {resolveShortcut(topic.tip)}
             </>
           ) : (
-            <>Tip: {resolveShortcut(topic.tip)}</>
+            resolveShortcut(topic.tip)
           )}
         </p>
       )}

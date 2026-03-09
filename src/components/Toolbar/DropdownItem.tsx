@@ -11,6 +11,12 @@ import { Check } from "@phosphor-icons/react";
 interface DropdownItemProps {
   /** Whether this item is currently selected */
   isSelected?: boolean;
+  /**
+   * Whether this item has keyboard focus (via Arrow key navigation).
+   * When true, a visual highlight is applied matching the hover style
+   * so keyboard users get the same affordance as mouse users.
+   */
+  isFocused?: boolean;
   /** Click handler */
   onClick: () => void;
   /** Primary label */
@@ -31,6 +37,7 @@ interface DropdownItemProps {
 
 export function DropdownItem({
   isSelected = false,
+  isFocused = false,
   onClick,
   children,
   description,
@@ -49,7 +56,7 @@ export function DropdownItem({
       role={role}
       aria-selected={role ? (ariaSelected ?? isSelected) : undefined}
       onClick={onClick}
-      className={`dropdown-item${isSelected ? " dropdown-item-selected" : ""}`}
+      className={`dropdown-item${isSelected ? " dropdown-item-selected" : ""}${isFocused ? " dropdown-item-focused" : ""}`}
       style={{
         display: "flex",
         alignItems: "center",

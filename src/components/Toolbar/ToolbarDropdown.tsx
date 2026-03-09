@@ -8,8 +8,8 @@
  * - Keyboard navigation support
  */
 
-import { useMemo } from "react";
-import type { ReactNode, ReactElement } from "react";
+import { useMemo, useState, useEffect, memo } from "react";
+import type { ReactNode, ReactElement, KeyboardEvent } from "react";
 import { useDropdown } from "../../hooks/useDropdown";
 import { DropdownTrigger } from "./DropdownTrigger";
 import { DropdownPanel } from "./DropdownPanel";
@@ -40,7 +40,7 @@ interface ToolbarDropdownProps<T extends string = string> {
   labelPriority?: number;
 }
 
-export function ToolbarDropdown<T extends string = string>({
+function ToolbarDropdownInner<T extends string = string>({
   value,
   options,
   onChange,
@@ -52,12 +52,25 @@ export function ToolbarDropdown<T extends string = string>({
 }: ToolbarDropdownProps<T>): ReactElement {
   const { isOpen, toggle, close, containerRef, triggerRef } = useDropdown();
 
+  // Tracks which option has keyboard focus (separate from selected value).
+  // Initialized to the index of the currently selected option when the dropdown opens.
+  const selectedIndex = options.findIndex((o) => o.value === value);
+  const [focusedIndex, setFocusedIndex] = useState<number>(
+    selectedIndex >= 0 ? selectedIndex : 0
+  );
+
+  // Reset focused index to the selected option each time the dropdown opens.
+  useEffect(() => {
+    if (isOpen) {
+      setFocusedIndex(selectedIndex >= 0 ? selectedIndex : 0);
+    }
+  }, [isOpen, selectedIndex]);
+
   // When a labelPrefix is provided (e.g. "Zoom: "), show it as the trigger label.
   // Otherwise show the currently selected option's label so the button always
   // reflects the active value even before the dropdown is opened.
-  const selectedOption = options.find((o) => o.value === value);
   const displayLabel =
-    labelPrefix || selectedOption?.label || DEFAULT_DROPDOWN_LABEL;
+    labelPrefix || options[selectedIndex]?.label || DEFAULT_DROPDOWN_LABEL;
 
   // Stable ID prefix for ARIA option IDs — derived from aria-label.
   // ariaLabel should always be provided; without it multiple ToolbarDropdown
@@ -67,15 +80,35 @@ export function ToolbarDropdown<T extends string = string>({
     () => (ariaLabel ?? "toolbar-dropdown").toLowerCase().replace(/\s+/g, "-"),
     [ariaLabel]
   );
-  const activeDescendantId = isOpen ? `${idPrefix}-option-${value}` : undefined;
+
+  // Points to the keyboard-focused option (not necessarily the selected value).
+  const activeDescendantId = isOpen
+    ? `${idPrefix}-option-${options[focusedIndex]?.value ?? value}`
+    : undefined;
 
   const handleSelect = (optionValue: T): void => {
     onChange(optionValue);
     close(true);
   };
 
+  // Arrow key navigation for the listbox (WCAG 2.1 SC 2.1.1).
+  const handleKeyDown = (e: KeyboardEvent<HTMLDivElement>): void => {
+    if (!isOpen) return;
+    if (e.key === "ArrowDown") {
+      e.preventDefault();
+      setFocusedIndex((prev) => Math.min(prev + 1, options.length - 1));
+    } else if (e.key === "ArrowUp") {
+      e.preventDefault();
+      setFocusedIndex((prev) => Math.max(prev - 1, 0));
+    } else if (e.key === "Enter" || e.key === " ") {
+      e.preventDefault();
+      const focused = options[focusedIndex];
+      if (focused) handleSelect(focused.value);
+    }
+  };
+
   return (
-    <div ref={containerRef} className="relative">
+    <div ref={containerRef} className="relative" onKeyDown={handleKeyDown}>
       <DropdownTrigger
         isOpen={isOpen}
         onClick={toggle}
@@ -94,11 +127,12 @@ export function ToolbarDropdown<T extends string = string>({
           aria-label={ariaLabel}
           aria-activedescendant={activeDescendantId}
         >
-          {options.map((option) => (
+          {options.map((option, index) => (
             <DropdownItem
               key={option.value}
               id={`${idPrefix}-option-${option.value}`}
               isSelected={option.value === value}
+              isFocused={index === focusedIndex}
               onClick={() => handleSelect(option.value)}
               role="option"
             >
@@ -110,3 +144,9 @@ export function ToolbarDropdown<T extends string = string>({
     </div>
   );
 }
+
+// Memoized export — prevents re-renders when parent re-renders with stable props.
+// The cast preserves the generic type parameter that memo() would otherwise erase.
+export const ToolbarDropdown = memo(
+  ToolbarDropdownInner
+) as typeof ToolbarDropdownInner;
