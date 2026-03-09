@@ -34,6 +34,10 @@ export function App(): ReactElement {
   );
 }
 
+/**
+ * AppInner - Gates mobile devices before mounting the full app.
+ * Shows MobileBlockScreen on narrow touch devices; renders AppContent otherwise.
+ */
 function AppInner(): ReactElement {
   const { shouldShowMobileBlock, dismiss } = useDeviceDetection();
 
@@ -44,6 +48,10 @@ function AppInner(): ReactElement {
   return <AppContent />;
 }
 
+/**
+ * AppContent - Registers all global hooks and renders the main application layout.
+ * Only mounted after AppInner confirms we are not on a blocked mobile device.
+ */
 function AppContent(): ReactElement {
   const checkFirstTimeUser = useUIStore((state) => state.checkFirstTimeUser);
   const initializePreferences = useUserPreferencesStore(
