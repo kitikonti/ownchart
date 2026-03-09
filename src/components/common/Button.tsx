@@ -2,7 +2,7 @@
  * Button - Standard button component with design system styling
  *
  * Based on Fluent UI design:
- * - Primary: Brand blue (#0F6CBD) background
+ * - Primary: Brand blue (bg-brand-600) background
  * - Secondary: White background with neutral border
  * - Ghost: Transparent background
  * - Danger: Red background for destructive actions
@@ -68,6 +68,20 @@ const sizeStyles: Record<ButtonSize, string> = {
  * Always `null` in production to avoid any memory usage outside DEV.
  */
 const warnedIconOnlyKeys = import.meta.env.DEV ? new Set<string>() : null;
+
+/**
+ * Clears the DEV-mode deduplication set so that unit tests that run within the
+ * same module instance start with a clean slate.
+ *
+ * Call this in `beforeEach` when testing `warnIfIconOnlyWithoutLabel` to
+ * prevent a button `id` warned in one test from suppressing warnings in a
+ * later test that reuses the same `id`.
+ *
+ * No-op in production (the set is `null` outside DEV).
+ */
+export function resetWarnedIconOnlyKeys(): void {
+  warnedIconOnlyKeys?.clear();
+}
 
 /**
  * Emits a DEV-only console warning when an icon-only button lacks an

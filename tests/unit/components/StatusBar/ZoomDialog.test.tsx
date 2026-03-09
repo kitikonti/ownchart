@@ -114,6 +114,13 @@ describe("ZoomDialog", () => {
     expect((checked as HTMLInputElement).value).toBe("0.5");
   });
 
+  it("pre-selects Fit to View when currentZoom is 'fit'", () => {
+    render(<ZoomDialog {...defaultProps} currentZoom="fit" />);
+
+    const fitRadio = screen.getByDisplayValue("fit");
+    expect((fitRadio as HTMLInputElement).checked).toBe(true);
+  });
+
   it("pressing Enter inside the radio group calls onSelect", () => {
     render(<ZoomDialog {...defaultProps} currentZoom={1.0} />);
 

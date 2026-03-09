@@ -13,7 +13,12 @@ import { Radio } from "../common/Radio";
 interface ZoomDialogProps {
   isOpen: boolean;
   onClose: () => void;
-  currentZoom: number;
+  /**
+   * The current zoom level to pre-select when the dialog opens.
+   * Pass `"fit"` to pre-select the "Fit to View" preset.
+   * Numeric values are matched to the nearest preset via `findClosestPreset`.
+   */
+  currentZoom: number | "fit";
   /**
    * Called with the selected zoom value when the user confirms.
    * The caller is responsible for closing the dialog (e.g. by setting
@@ -42,20 +47,23 @@ const ZOOM_PRESETS = [
 const ZOOM_MATCH_EPSILON = 0.01;
 
 /**
- * Finds the closest preset to the given zoom level.
+ * Resolves the initial dialog selection from the caller-supplied zoom value.
  *
- * - If the zoom exactly matches a numeric preset (within ZOOM_MATCH_EPSILON),
- *   that preset is returned.
- * - Otherwise the numerically nearest preset is selected so that the dialog
- *   always reflects the user's current zoom as closely as possible.
+ * - Passing `"fit"` pre-selects the "Fit to View" preset directly.
+ * - A numeric value that exactly matches a preset (within ZOOM_MATCH_EPSILON)
+ *   selects that preset.
+ * - Otherwise the numerically nearest numeric preset is selected so the dialog
+ *   always opens with a selection that reflects the user's current zoom as
+ *   closely as possible.
  *
- * Note: "fit" is not auto-detected from the zoom number — callers that want
- * the "fit" preset pre-selected must pass a sentinel value that maps to it.
- * Fit-to-view produces an arbitrary zoom float; without a sentinel there is no
- * reliable way to distinguish it from a regular zoom, so we fall through to the
- * nearest numeric preset in that case.
+ * Note: fit-to-view produces an arbitrary zoom float at the engine level.
+ * Without the explicit `"fit"` sentinel there is no reliable way to distinguish
+ * it from a regular zoom, so callers that apply fit-to-view should pass
+ * `"fit"` instead of the resulting numeric zoom ratio.
  */
-function findClosestPreset(zoom: number): number {
+function findClosestPreset(zoom: number | "fit"): number | "fit" {
+  if (zoom === "fit") return "fit";
+
   const exactMatch = ZOOM_PRESETS.find(
     (p) =>
       typeof p.value === "number" &&

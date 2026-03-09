@@ -32,8 +32,10 @@ interface ExternalLinkProps {
  * Only http and https protocols are permitted — all others are replaced with
  * a safe fallback to prevent javascript: or data: URI injection.
  *
- * In development, a console warning is emitted when the fallback is triggered
- * so that misconfigured URLs in APP_CONFIG are caught early.
+ * In development (`import.meta.env.DEV === true`), a console warning is
+ * emitted when the fallback is triggered so that misconfigured URLs in
+ * APP_CONFIG are caught early. The warning is omitted in production and in
+ * test environments unless the test runner sets `import.meta.env.DEV = true`.
  *
  * Exported for unit testing.
  */

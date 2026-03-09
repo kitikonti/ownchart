@@ -5,7 +5,7 @@
 import { createRef } from "react";
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { render, screen } from "@testing-library/react";
-import { Button, warnIfIconOnlyWithoutLabel } from "../../../../src/components/common/Button";
+import { Button, warnIfIconOnlyWithoutLabel, resetWarnedIconOnlyKeys } from "../../../../src/components/common/Button";
 
 // ---------------------------------------------------------------------------
 // Button rendering
@@ -154,6 +154,8 @@ describe("Button", () => {
 describe("warnIfIconOnlyWithoutLabel", () => {
   beforeEach(() => {
     vi.spyOn(console, "warn").mockImplementation(() => {});
+    // Reset the module-level deduplication set so each test starts clean.
+    resetWarnedIconOnlyKeys();
   });
 
   it("emits a warning when icon-only button has no aria-label", () => {
