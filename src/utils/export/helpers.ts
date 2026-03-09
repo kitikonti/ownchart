@@ -72,7 +72,7 @@ export async function waitForPaint(): Promise<void> {
  * avoid call-stack overflow on deeply nested SVG trees (e.g. SVG inside
  * foreignObject inside SVG, which can occur in html-to-image output).
  *
- * @param root - The root element to process iteratively
+ * @param root - The root element to process iteratively (mutated in place)
  */
 export function setFontFamilyOnTextElements(root: Element): void {
   // Index-pointer BFS: avoids the O(n) cost of Array.shift() (which re-indexes

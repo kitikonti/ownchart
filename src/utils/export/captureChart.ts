@@ -132,8 +132,11 @@ export async function captureChart(
     options.background
   );
 
-  // root starts undefined; renderAndSettle assigns it synchronously before any
-  // async work, so the finally block can always call root?.unmount() safely.
+  // root starts undefined; renderAndSettle creates the React root
+  // synchronously inside the function, but the assignment to `root` here
+  // only completes after the await resolves. The optional-chain guard
+  // (root?.unmount()) in the finally block handles the case where
+  // renderAndSettle throws before returning, leaving `root` as undefined.
   // Both renderAndSettle and the capture step are inside the try so that any
   // error from either path still triggers container cleanup.
   let root: Root | undefined;

@@ -126,8 +126,15 @@ export function getDefaultColumnWidth(
       return densityWidths.duration;
     case "progress":
       return densityWidths.progress;
-    default:
+    default: {
+      // ExportColumnKey is a closed union — this branch should never be
+      // reached. The cast to `never` provides compile-time exhaustiveness:
+      // TypeScript will flag this line if a new key is added without a
+      // matching case, mirroring the pattern used in calculateEffectiveZoom.
+      const _exhaustive: never = key;
+      void _exhaustive;
       return UNKNOWN_COLUMN_DEFAULT_WIDTH_PX;
+    }
   }
 }
 

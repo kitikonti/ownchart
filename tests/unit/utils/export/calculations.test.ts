@@ -153,6 +153,35 @@ describe("getEffectiveDateRange", () => {
     expect(result.min).toBeTruthy();
     expect(result.max).toBeTruthy();
   });
+
+  it("returns default range for 'custom' mode when only customDateStart is provided", () => {
+    const options = {
+      ...baseOptions,
+      dateRangeMode: "custom" as const,
+      customDateStart: "2025-01-15",
+      // customDateEnd intentionally omitted
+    };
+    const result = getEffectiveDateRange(options, undefined, undefined);
+    // Both dates must be present; missing end date falls back to default range
+    expect(result.min).toBeTruthy();
+    expect(result.max).toBeTruthy();
+    // The result must NOT be the custom start date (it fell back)
+    expect(result.min).not.toBe("2025-01-15");
+  });
+
+  it("returns default range for 'custom' mode when only customDateEnd is provided", () => {
+    const options = {
+      ...baseOptions,
+      dateRangeMode: "custom" as const,
+      // customDateStart intentionally omitted
+      customDateEnd: "2025-02-15",
+    };
+    const result = getEffectiveDateRange(options, undefined, undefined);
+    // Both dates must be present; missing start date falls back to default range
+    expect(result.min).toBeTruthy();
+    expect(result.max).toBeTruthy();
+    expect(result.max).not.toBe("2025-02-15");
+  });
 });
 
 describe("calculateDurationDays", () => {
