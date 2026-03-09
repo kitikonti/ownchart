@@ -68,4 +68,20 @@ describe("canvasToBlob", () => {
       "Failed to convert canvas to blob"
     );
   });
+
+  it("rejects when canvas.toBlob throws synchronously (e.g. SecurityError on tainted canvas)", async () => {
+    const securityError = new DOMException(
+      "The canvas has been tainted by cross-origin data.",
+      "SecurityError"
+    );
+    const mockCanvas = {
+      toBlob: vi.fn(() => {
+        throw securityError;
+      }),
+    } as unknown as HTMLCanvasElement;
+
+    await expect(canvasToBlob(mockCanvas)).rejects.toThrow(
+      "The canvas has been tainted by cross-origin data."
+    );
+  });
 });

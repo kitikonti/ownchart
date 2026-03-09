@@ -194,16 +194,22 @@ export async function canvasToBlob(
 ): Promise<Blob> {
   const clampedQuality = Math.max(0, Math.min(1, quality));
   return new Promise((resolve, reject) => {
-    canvas.toBlob(
-      (blob) => {
-        if (blob) {
-          resolve(blob);
-        } else {
-          reject(new Error("Failed to convert canvas to blob"));
-        }
-      },
-      "image/png",
-      clampedQuality
-    );
+    try {
+      canvas.toBlob(
+        (blob) => {
+          if (blob) {
+            resolve(blob);
+          } else {
+            reject(new Error("Failed to convert canvas to blob"));
+          }
+        },
+        "image/png",
+        clampedQuality
+      );
+    } catch (err) {
+      // canvas.toBlob can throw a SecurityError synchronously when the canvas
+      // has been tainted by cross-origin image data.
+      reject(err);
+    }
   });
 }

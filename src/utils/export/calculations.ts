@@ -7,7 +7,6 @@ import type { Task } from "../../types/chart.types";
 import type { UiDensity } from "../../types/preferences.types";
 import { DENSITY_CONFIG } from "../../config/densityConfig";
 import { addDays } from "../dateUtils";
-import { getTaskLevel } from "../hierarchy";
 import {
   calculateLabelPaddingDays,
   calculateColumnWidth,
@@ -55,6 +54,45 @@ const EXPAND_BUTTON_WIDTH_PX = 16;
 const NAME_COLUMN_GAPS_PX = 8;
 
 /**
+ * Build a map from task ID → nesting level (0 = root) in a single O(n) pass.
+ * Uses memoised parent-chain walking so every task's level is computed at most
+ * once. This avoids the O(n²) cost of calling `getTaskLevel` (which rebuilds
+ * the full level map each time) inside a per-task loop.
+ *
+ * Includes a cycle guard: any task involved in a circular parent reference is
+ * assigned level 0 to prevent infinite recursion.
+ */
+function buildTaskLevelMap(tasks: Task[]): Map<string, number> {
+  const taskById = new Map<string, Task>(tasks.map((t) => [t.id, t]));
+  const levelCache = new Map<string, number>();
+  const computing = new Set<string>();
+
+  function computeLevel(taskId: string): number {
+    const cached = levelCache.get(taskId);
+    if (cached !== undefined) return cached;
+    if (computing.has(taskId)) {
+      // Circular reference — treat as root
+      levelCache.set(taskId, 0);
+      return 0;
+    }
+    computing.add(taskId);
+    const task = taskById.get(taskId);
+    const level =
+      task?.parent && taskById.has(task.parent)
+        ? computeLevel(task.parent) + 1
+        : 0;
+    computing.delete(taskId);
+    levelCache.set(taskId, level);
+    return level;
+  }
+
+  for (const task of tasks) {
+    computeLevel(task.id);
+  }
+  return levelCache;
+}
+
+/**
  * Get default column width based on density setting.
  */
 export function getDefaultColumnWidth(
@@ -83,6 +121,13 @@ export function getDefaultColumnWidth(
 
 /**
  * Calculate task table width from selected columns using density-specific defaults.
+ *
+ * @param selectedColumns - Ordered list of column keys to include in the table
+ * @param columnWidths - User-customised widths keyed by column key; columns absent
+ *   from this map fall back to the density-specific default. A stored value of `0`
+ *   is respected as-is (uses `!== undefined` guard, not a falsy check).
+ * @param density - UI density used to derive per-column default widths
+ * @returns Total pixel width of the task table
  */
 export function calculateTaskTableWidth(
   selectedColumns: ExportColumnKey[],
@@ -91,7 +136,10 @@ export function calculateTaskTableWidth(
 ): number {
   return selectedColumns.reduce((total, key) => {
     const defaultWidth = getDefaultColumnWidth(key, density);
-    return total + (columnWidths[key] || defaultWidth);
+    return (
+      total +
+      (columnWidths[key] !== undefined ? columnWidths[key] : defaultWidth)
+    );
   }, 0);
 }
 
@@ -294,6 +342,10 @@ function calculateNameColumnLeadingWidth(
  * For the name column, extra width accounts for hierarchy indent, expand button,
  * gaps, and icon. All other columns return zero extra width.
  *
+ * Pre-computes a level map in O(n) before iterating tasks so the overall cost
+ * is O(n) rather than O(n²) (which would result from calling getTaskLevel —
+ * which rebuilds the full level map — once per task inside the loop).
+ *
  * @param key - The export column key
  * @param tasks - The full task list (used for hierarchy level calculation)
  * @param indentSize - Per-level indent size in pixels from density config
@@ -311,11 +363,15 @@ function buildColumnMeasurementData(
   const cellValues: string[] = [];
   const extraWidths: number[] = [];
 
+  // Pre-compute the level map once in O(n) to avoid O(n²) cost from calling
+  // getTaskLevel (which rebuilds the map) for every task in the loop.
+  const levelMap = key === "name" ? buildTaskLevelMap(tasks) : null;
+
   for (const task of tasks) {
     cellValues.push(getCellValueForColumn(key, task));
 
-    if (key === "name") {
-      const level = getTaskLevel(tasks, task.id);
+    if (key === "name" && levelMap !== null) {
+      const level = levelMap.get(task.id) ?? 0;
       extraWidths.push(
         calculateNameColumnLeadingWidth(level, indentSize, iconSize)
       );

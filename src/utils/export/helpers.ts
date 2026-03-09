@@ -80,7 +80,9 @@ export function setFontFamilyOnTextElements(root: Element): void {
   while (queue.length > 0) {
     // Non-null assertion is safe: we only enter the loop when queue is non-empty.
     const element = queue.shift()!;
-    const localName = element.localName.toLowerCase();
+    // SVG element localNames are always lowercase per the SVG specification;
+    // .toLowerCase() is unnecessary but was harmless — removed for clarity.
+    const localName = element.localName;
     const isTextElement = localName === "text" || localName === "tspan";
 
     // Set font-family and font-weight attributes on text and tspan elements.
@@ -134,13 +136,19 @@ export function setFontFamilyOnTextElements(root: Element): void {
  * Format: {projectName}-YYYYMMDD-HHMMSS.{extension}
  *
  * @param projectName - Optional project name (will be sanitized)
- * @param extension - File extension (e.g., "pdf", "svg", "png")
+ * @param extension - File extension without leading dot (e.g., "pdf", "svg", "png").
+ *   Must be a non-empty string.
  * @returns Sanitized filename with timestamp
  */
 export function generateExportFilename(
   projectName: string | undefined,
   extension: string
 ): string {
+  if (!extension) {
+    throw new Error(
+      "generateExportFilename: extension must be a non-empty string"
+    );
+  }
   const now = new Date();
   // Uses local time so the timestamp matches what the user sees on their clock.
   const year = now.getFullYear();

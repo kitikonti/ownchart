@@ -1,7 +1,8 @@
 /**
  * Unit tests for export helper functions.
  * Covers: estimateFileSize, generateExportFilename, setFontFamilyOnTextElements,
- *         createOffscreenContainer, removeOffscreenContainer, cloneSvgChildrenIntoGroup.
+ *         createOffscreenContainer, removeOffscreenContainer, cloneSvgChildrenIntoGroup,
+ *         waitForFonts, waitForPaint.
  */
 
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
@@ -12,6 +13,8 @@ import {
   createOffscreenContainer,
   removeOffscreenContainer,
   cloneSvgChildrenIntoGroup,
+  waitForFonts,
+  waitForPaint,
 } from "../../../../src/utils/export/helpers";
 
 // ---------------------------------------------------------------------------
@@ -103,6 +106,12 @@ describe("generateExportFilename", () => {
     vi.setSystemTime(new Date("2025-01-05T09:05:03"));
     const result = generateExportFilename("P", "pdf");
     expect(result).toContain("-20250105-090503.");
+  });
+
+  it("throws when extension is an empty string", () => {
+    expect(() => generateExportFilename("Test", "")).toThrow(
+      "extension must be a non-empty string"
+    );
   });
 });
 
@@ -320,5 +329,49 @@ describe("cloneSvgChildrenIntoGroup", () => {
     const group = makeSvgElement("g");
     expect(() => cloneSvgChildrenIntoGroup(source, group)).not.toThrow();
     expect(group.children).toHaveLength(0);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// waitForFonts / waitForPaint — guard paths
+// ---------------------------------------------------------------------------
+
+describe("waitForFonts", () => {
+  it("resolves without throwing when document.fonts is undefined (jsdom guard)", async () => {
+    // Simulate an environment (like older jsdom) where document.fonts is absent.
+    const originalFonts = document.fonts;
+    // @ts-expect-error intentionally deleting to simulate missing API
+    delete document.fonts;
+    try {
+      await expect(waitForFonts()).resolves.toBeUndefined();
+    } finally {
+      // Restore to avoid polluting other tests
+      Object.defineProperty(document, "fonts", {
+        value: originalFonts,
+        configurable: true,
+        writable: true,
+      });
+    }
+  });
+
+  it("resolves when document.fonts.ready resolves", async () => {
+    await expect(waitForFonts()).resolves.toBeUndefined();
+  });
+});
+
+describe("waitForPaint", () => {
+  it("resolves without throwing when requestAnimationFrame is unavailable", async () => {
+    const originalRaf = globalThis.requestAnimationFrame;
+    // @ts-expect-error intentionally removing to simulate missing API
+    delete globalThis.requestAnimationFrame;
+    try {
+      await expect(waitForPaint()).resolves.toBeUndefined();
+    } finally {
+      globalThis.requestAnimationFrame = originalRaf;
+    }
+  });
+
+  it("resolves in a normal browser-like environment", async () => {
+    await expect(waitForPaint()).resolves.toBeUndefined();
   });
 });
