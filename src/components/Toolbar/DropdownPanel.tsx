@@ -6,7 +6,7 @@
  * Styled via CSS class .dropdown-panel so there is exactly one place to edit.
  */
 
-import type { ReactNode, CSSProperties } from "react";
+import type { ReactNode, ReactElement, CSSProperties } from "react";
 
 type DropdownPanelAlign = "left" | "right";
 
@@ -47,7 +47,7 @@ export function DropdownPanel({
   "aria-activedescendant": ariaActiveDescendant,
   style,
   className = "",
-}: DropdownPanelProps): JSX.Element {
+}: DropdownPanelProps): ReactElement {
   const panelStyle: CSSProperties = {
     [align === "right" ? "right" : "left"]: 0,
     ...(width ? { width } : {}),

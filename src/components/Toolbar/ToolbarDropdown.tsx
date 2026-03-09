@@ -72,6 +72,13 @@ function ToolbarDropdownInner<T extends string = string>({
   const displayLabel =
     labelPrefix || options[selectedIndex]?.label || DEFAULT_DROPDOWN_LABEL;
 
+  // Warn in dev when aria-label is missing — duplicate option IDs would result.
+  if (import.meta.env.DEV && !ariaLabel) {
+    console.warn(
+      "[ToolbarDropdown] aria-label is required. Without it, multiple instances generate identical option element IDs, which breaks aria-activedescendant for screen readers."
+    );
+  }
+
   // Stable ID prefix for ARIA option IDs — derived from aria-label.
   // ariaLabel should always be provided; without it multiple ToolbarDropdown
   // instances would generate identical option element IDs, which is invalid HTML
@@ -95,20 +102,23 @@ function ToolbarDropdownInner<T extends string = string>({
   );
 
   // Arrow key navigation for the listbox (WCAG 2.1 SC 2.1.1).
-  const handleKeyDown = (e: KeyboardEvent<HTMLDivElement>): void => {
-    if (!isOpen) return;
-    if (e.key === "ArrowDown") {
-      e.preventDefault();
-      setFocusedIndex((prev) => Math.min(prev + 1, options.length - 1));
-    } else if (e.key === "ArrowUp") {
-      e.preventDefault();
-      setFocusedIndex((prev) => Math.max(prev - 1, 0));
-    } else if (e.key === "Enter" || e.key === " ") {
-      e.preventDefault();
-      const focused = options[focusedIndex];
-      if (focused) handleSelect(focused.value);
-    }
-  };
+  const handleKeyDown = useCallback(
+    (e: KeyboardEvent<HTMLDivElement>): void => {
+      if (!isOpen) return;
+      if (e.key === "ArrowDown") {
+        e.preventDefault();
+        setFocusedIndex((prev) => Math.min(prev + 1, options.length - 1));
+      } else if (e.key === "ArrowUp") {
+        e.preventDefault();
+        setFocusedIndex((prev) => Math.max(prev - 1, 0));
+      } else if (e.key === "Enter" || e.key === " ") {
+        e.preventDefault();
+        const focused = options[focusedIndex];
+        if (focused) handleSelect(focused.value);
+      }
+    },
+    [isOpen, focusedIndex, options, handleSelect]
+  );
 
   return (
     <div ref={containerRef} className="relative" onKeyDown={handleKeyDown}>

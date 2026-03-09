@@ -5,7 +5,7 @@
  * Hover handled via CSS class .dropdown-item (no inline backgroundColor).
  */
 
-import type { ReactNode } from "react";
+import type { ReactNode, ReactElement } from "react";
 import { Check } from "@phosphor-icons/react";
 
 interface DropdownItemProps {
@@ -46,7 +46,7 @@ export function DropdownItem({
   role,
   "aria-selected": ariaSelected,
   id,
-}: DropdownItemProps): JSX.Element {
+}: DropdownItemProps): ReactElement {
   const hasDescription = !!description;
 
   return (
