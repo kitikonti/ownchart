@@ -4,7 +4,7 @@
  * Similar to MS Word's "Zoom to" dialog with radio button options
  */
 
-import { useState, useEffect, useCallback, memo } from "react";
+import { useState, useEffect, useCallback, useMemo, memo } from "react";
 
 import { MagnifyingGlass } from "@phosphor-icons/react";
 
@@ -87,15 +87,18 @@ export const ZoomDialog = memo(function ZoomDialog({
     onSelect(selectedValue);
   }, [onSelect, selectedValue]);
 
-  const footer = (
-    <>
-      <Button variant="secondary" onClick={onClose}>
-        Cancel
-      </Button>
-      <Button variant="primary" onClick={handleOk}>
-        OK
-      </Button>
-    </>
+  const footer = useMemo(
+    () => (
+      <>
+        <Button variant="secondary" onClick={onClose}>
+          Cancel
+        </Button>
+        <Button variant="primary" onClick={handleOk}>
+          OK
+        </Button>
+      </>
+    ),
+    [onClose, handleOk]
   );
 
   return (
