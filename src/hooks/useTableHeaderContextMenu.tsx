@@ -9,8 +9,7 @@
  * The rowNumber and color columns cannot be auto-fitted (fixed-width chrome).
  */
 
-import { useMemo, useState, useCallback } from "react";
-import type { ReactNode } from "react";
+import { useMemo, useState, useCallback, type ReactNode } from "react";
 import { Eye, ArrowsHorizontal } from "@phosphor-icons/react";
 import { useChartStore } from "../store/slices/chartSlice";
 import { useTaskStore } from "../store/slices/taskSlice";
