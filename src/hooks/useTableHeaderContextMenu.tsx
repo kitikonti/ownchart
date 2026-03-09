@@ -10,6 +10,7 @@
  */
 
 import { useMemo, useState, useCallback } from "react";
+import type { ReactNode } from "react";
 import { Eye, ArrowsHorizontal } from "@phosphor-icons/react";
 import { useChartStore } from "../store/slices/chartSlice";
 import { useTaskStore } from "../store/slices/taskSlice";
@@ -29,15 +30,24 @@ import type { ColumnId } from "../config/tableColumns";
 // Module-level constant: derived from static config and never changes across renders.
 const HIDEABLE_COLUMNS = getHideableColumns();
 
+interface BuildSizeToFitItemsParams {
+  columnId: ColumnId;
+  displayLabel: string;
+  canAutoFit: boolean;
+  autoFitColumn: (id: ColumnId) => void;
+  autoFitAllColumns: () => void;
+  arrowsIcon: ReactNode;
+}
+
 /** Builds the "Size to Fit" / "Size All Columns to Fit" group (Group 1). */
-function buildSizeToFitItems(
-  columnId: ColumnId,
-  displayLabel: string,
-  canAutoFit: boolean,
-  autoFitColumn: (id: ColumnId) => void,
-  autoFitAllColumns: () => void,
-  arrowsIcon: React.ReactNode
-): ContextMenuItem[] {
+function buildSizeToFitItems({
+  columnId,
+  displayLabel,
+  canAutoFit,
+  autoFitColumn,
+  autoFitAllColumns,
+  arrowsIcon,
+}: BuildSizeToFitItemsParams): ContextMenuItem[] {
   return [
     {
       id: "sizeToFit",
@@ -149,14 +159,14 @@ export function useTableHeaderContextMenu(): UseTableHeaderContextMenuResult {
     );
 
     // ── Group 1: Size to Fit ──
-    const sizeToFitItems = buildSizeToFitItems(
+    const sizeToFitItems = buildSizeToFitItems({
       columnId,
       displayLabel,
       canAutoFit,
       autoFitColumn,
       autoFitAllColumns,
-      arrowsIcon
-    );
+      arrowsIcon,
+    });
 
     // ── Group 2: Column visibility checkmarks ──
     const toggleItems = buildToggleItems(hiddenSet, toggleColumnVisibility);

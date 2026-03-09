@@ -96,6 +96,13 @@ export function getHiddenGapAbove(firstGlobalRowNumber: number): {
   };
 }
 
+export interface UseTaskRowDataResult {
+  taskRowData: TaskRowDatum[];
+  visibleTaskIds: TaskId[];
+  /** Convenience shortcut for taskRowData.length — avoids re-deriving in consumers. */
+  flattenedTaskCount: number;
+}
+
 // ── Hook ─────────────────────────────────────────────────────────────────────
 
 interface BuildRowDatumParams {
@@ -218,12 +225,7 @@ function buildTaskRowDatum({
  */
 export function useTaskRowData(
   unhideRange: (fromRowNum: number, toRowNum: number) => void
-): {
-  taskRowData: TaskRowDatum[];
-  visibleTaskIds: TaskId[];
-  /** Convenience shortcut for taskRowData.length — avoids re-deriving in consumers. */
-  flattenedTaskCount: number;
-} {
+): UseTaskRowDataResult {
   const clipboardTaskIds = useTaskStore((state) => state.clipboardTaskIds);
   const selectedTaskIds = useTaskStore((state) => state.selectedTaskIds);
   const { flattenedTasks, allFlattenedTasks } = useFlattenedTasks();
