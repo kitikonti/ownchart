@@ -18,6 +18,8 @@ export interface RadioProps {
   checked: boolean;
   onChange: () => void;
   name: string;
+  /** Value of the radio input — used for form semantics and correct behaviour in radio groups. */
+  value?: string;
   disabled?: boolean;
   "aria-label"?: string;
   id?: string;
@@ -27,6 +29,7 @@ export function Radio({
   checked,
   onChange,
   name,
+  value,
   disabled = false,
   "aria-label": ariaLabel,
   id,
@@ -43,6 +46,7 @@ export function Radio({
         checked={checked}
         onChange={() => !disabled && onChange()}
         name={name}
+        value={value}
         disabled={disabled}
         aria-label={ariaLabel}
         id={id}

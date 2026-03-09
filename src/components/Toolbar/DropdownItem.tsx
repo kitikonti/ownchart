@@ -9,6 +9,21 @@ import type { ReactNode, AriaRole } from "react";
 
 import { Check } from "@phosphor-icons/react";
 
+/**
+ * ARIA roles that support the `aria-selected` attribute per the WAI-ARIA spec.
+ * Only these roles should receive `aria-selected`; roles like `menuitem` do not
+ * support it and would cause accessibility violations.
+ */
+const ARIA_SELECTED_ROLES = new Set<AriaRole>([
+  "option",
+  "tab",
+  "treeitem",
+  "row",
+  "gridcell",
+  "columnheader",
+  "rowheader",
+]);
+
 interface DropdownItemProps {
   /** Whether this item is currently selected */
   isSelected?: boolean;
@@ -22,9 +37,13 @@ interface DropdownItemProps {
   showCheckmark?: boolean;
   /** Trailing content (e.g. color swatches) */
   trailing?: ReactNode;
-  /** ARIA role — when set, enables aria-selected on the button */
+  /**
+   * ARIA role — when set to a role that supports `aria-selected` (e.g. "option",
+   * "tab", "treeitem"), `aria-selected` is also emitted. Roles like "menuitem"
+   * do NOT support `aria-selected` and will not emit it.
+   */
   role?: AriaRole;
-  /** aria-selected override (only emitted when role is set) */
+  /** aria-selected override (only emitted when role supports aria-selected) */
   "aria-selected"?: boolean;
 }
 
@@ -44,7 +63,11 @@ export function DropdownItem({
     <button
       type="button"
       role={role}
-      aria-selected={role ? (ariaSelected ?? isSelected) : undefined}
+      aria-selected={
+        role && ARIA_SELECTED_ROLES.has(role)
+          ? (ariaSelected ?? isSelected)
+          : undefined
+      }
       onClick={onClick}
       className={[
         "dropdown-item",

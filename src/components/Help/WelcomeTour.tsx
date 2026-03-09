@@ -84,7 +84,7 @@ export const WelcomeTour = memo(function WelcomeTour(): JSX.Element | null {
           <h3 className="text-sm font-semibold text-neutral-900">Quick tips</h3>
 
           <div className="flex items-start gap-3 p-3 bg-neutral-50 rounded border border-neutral-200">
-            <div className="p-2 bg-neutral-100 rounded">
+            <div className="p-2 bg-neutral-100 rounded" aria-hidden="true">
               <Cursor size={18} className="text-neutral-600" />
             </div>
             <div>
@@ -98,7 +98,7 @@ export const WelcomeTour = memo(function WelcomeTour(): JSX.Element | null {
           </div>
 
           <div className="flex items-start gap-3 p-3 bg-neutral-50 rounded border border-neutral-200">
-            <div className="p-2 bg-emerald-100 rounded">
+            <div className="p-2 bg-emerald-100 rounded" aria-hidden="true">
               <ArrowsOutCardinal size={18} className="text-emerald-600" />
             </div>
             <div>
@@ -112,7 +112,7 @@ export const WelcomeTour = memo(function WelcomeTour(): JSX.Element | null {
           </div>
 
           <div className="flex items-start gap-3 p-3 bg-neutral-50 rounded border border-neutral-200">
-            <div className="p-2 bg-violet-100 rounded">
+            <div className="p-2 bg-violet-100 rounded" aria-hidden="true">
               <span className="text-base font-bold text-violet-600 block w-[18px] text-center">
                 ?
               </span>

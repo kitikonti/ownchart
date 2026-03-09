@@ -121,6 +121,7 @@ export function ZoomDialog({
           >
             <Radio
               name="zoom-preset"
+              value={String(preset.value)}
               checked={selectedValue === preset.value}
               onChange={() => setSelectedValue(preset.value)}
             />

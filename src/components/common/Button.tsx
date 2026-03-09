@@ -18,7 +18,11 @@ interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
   variant?: ButtonVariant;
   /** Size of the button */
   size?: ButtonSize;
-  /** Icon to display before the label */
+  /**
+   * Icon to display before the label.
+   * When used without `children` (icon-only button), an `aria-label` prop
+   * must be supplied to ensure the button is accessible to screen readers.
+   */
   icon?: ReactNode;
   /** Icon to display after the label */
   iconAfter?: ReactNode;
@@ -34,7 +38,7 @@ const variantStyles: Record<ButtonVariant, string> = {
   ghost:
     "bg-transparent text-neutral-700 border border-transparent hover:bg-neutral-100 hover:text-neutral-800 active:bg-neutral-200 disabled:text-neutral-300",
   danger:
-    "bg-error text-white border border-transparent hover:bg-red-700 active:bg-red-800 disabled:bg-neutral-300 disabled:text-neutral-400",
+    "bg-red-600 text-white border border-transparent hover:bg-red-700 active:bg-red-800 disabled:bg-neutral-300 disabled:text-neutral-400",
 };
 
 // MS Fluent button sizing: height ~31px, min-width 96px, padding 5px 12px

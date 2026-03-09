@@ -90,6 +90,7 @@ export function AboutDialog(): JSX.Element | null {
           {APP_CONFIG.name}
         </h3>
         <span className="text-sm text-neutral-500">
+          {/* __APP_VERSION__ is injected by Vite at build time — see vite.config.ts */}
           Version {__APP_VERSION__}
         </span>
         <p className="mt-2 text-sm text-neutral-600 leading-relaxed">
