@@ -114,20 +114,22 @@ interface BuildRowDatumParams {
   unhideRange: (fromRowNum: number, toRowNum: number) => void;
 }
 
-/** Resolves prev/next task IDs and below/above gap state for a given row index. */
-function resolveNeighborsAndGaps(
-  item: FlattenedTask,
-  index: number,
-  flattenedTasks: FlattenedTask[],
-  sentinelRowAfterLast: number
-): {
+interface NeighborGaps {
   prevTaskId: TaskId | undefined;
   nextTaskId: TaskId | undefined;
   nextRowNum: number;
   hasHiddenBelow: boolean;
   hiddenBelowCount: number;
   above: { hasHiddenAbove: boolean; hiddenAboveCount: number };
-} {
+}
+
+/** Resolves prev/next task IDs and below/above gap state for a given row index. */
+function resolveNeighborsAndGaps(
+  item: FlattenedTask,
+  index: number,
+  flattenedTasks: FlattenedTask[],
+  sentinelRowAfterLast: number
+): NeighborGaps {
   const prevTaskId = index > 0 ? flattenedTasks[index - 1].task.id : undefined;
   const nextTask: FlattenedTask | undefined = flattenedTasks[index + 1];
   const nextTaskId = nextTask?.task.id;

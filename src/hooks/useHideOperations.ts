@@ -81,16 +81,7 @@ export function useHideOperations(): UseHideOperationsResult {
   const hideTasks = useChartStore((state) => state.hideTasks);
   const { flattenedTasks, allFlattenedTasks } = useFlattenedTasks();
 
-  /**
-   * Shared logic for unhiding specific task IDs: update store, record command, show toast.
-   *
-   * Empty dependency array is intentional: all store reads use getState() (not reactive
-   * subscriptions), so there are no captured values that can go stale. `pluralize` is a
-   * pure module-level import and is not a React value, so it also does not need to be listed.
-   *
-   * By contrast, `hideRows` lists `hideTasks` in its deps because that reference is obtained
-   * via a reactive `useChartStore` selector (line above the hook body), not via `getState()`.
-   */
+  /** Shared logic for unhiding specific task IDs: update store, record command, show toast. */
   const executeUnhide = useCallback((idsToUnhide: TaskId[]): void => {
     if (idsToUnhide.length === 0) return;
 
@@ -110,6 +101,10 @@ export function useHideOperations(): UseHideOperationsResult {
     });
 
     toast.success(`${pluralize(idsToUnhide.length, "task")} shown`);
+    // review: intentional — empty dep array: all store reads use getState() (non-reactive),
+    // so no captured values can go stale. `pluralize` is a pure module-level import.
+    // Contrast with `hideRows` which lists `hideTasks` because that ref comes from a
+    // reactive useChartStore selector, not getState().
   }, []);
 
   const hideRows = useCallback(

@@ -26,19 +26,8 @@ import type {
 } from "../components/ContextMenu/ContextMenu";
 import type { ColumnId } from "../config/tableColumns";
 
-// Module-level constants: derived from static config and never change across renders.
-// Icons are extracted here so they are not re-allocated on every useMemo recomputation,
-// and to preserve referential equality if passed to memoized renderers in the future.
+// Module-level constant: derived from static config and never changes across renders.
 const HIDEABLE_COLUMNS = getHideableColumns();
-const ARROWS_HORIZONTAL_ICON = (
-  <ArrowsHorizontal
-    size={CONTEXT_MENU.iconSize}
-    weight={CONTEXT_MENU.iconWeight}
-  />
-);
-const EYE_ICON = (
-  <Eye size={CONTEXT_MENU.iconSize} weight={CONTEXT_MENU.iconWeight} />
-);
 
 /** Builds the "Size to Fit" / "Size All Columns to Fit" group (Group 1). */
 function buildSizeToFitItems(
@@ -46,20 +35,21 @@ function buildSizeToFitItems(
   displayLabel: string,
   canAutoFit: boolean,
   autoFitColumn: (id: ColumnId) => void,
-  autoFitAllColumns: () => void
+  autoFitAllColumns: () => void,
+  arrowsIcon: React.ReactNode
 ): ContextMenuItem[] {
   return [
     {
       id: "sizeToFit",
       label: `Size "${displayLabel}" to Fit`,
-      icon: ARROWS_HORIZONTAL_ICON,
+      icon: arrowsIcon,
       onClick: () => autoFitColumn(columnId),
       disabled: !canAutoFit,
     },
     {
       id: "sizeAllToFit",
       label: "Size All Columns to Fit",
-      icon: ARROWS_HORIZONTAL_ICON,
+      icon: arrowsIcon,
       onClick: autoFitAllColumns,
       separator: true,
     },
@@ -77,6 +67,9 @@ function buildToggleItems(
   // Store action selectors (toggleColumnVisibility, setHiddenColumns,
   // autoFitColumn, autoFitAllColumns) return stable references — Zustand
   // guarantees action identity across renders, so no useCallback wrapping is needed.
+  // review: intentional — inline arrow functions here are rebuilt per useMemo recompute
+  // (i.e. per menu open), not per render. Stable refs are not needed since the entire
+  // items array is replaced wholesale whenever the memo recomputes.
   return HIDEABLE_COLUMNS.map((col, i) => ({
     id: `toggle_${col.id}`,
     // ?? instead of || so an explicit empty-string menuLabel is not skipped.
@@ -140,10 +133,20 @@ export function useTableHeaderContextMenu(): UseTableHeaderContextMenuResult {
     // canAutoFit: rowNumber and color are fixed-width chrome columns with no auto-fit.
     const canAutoFit =
       columnId !== ROW_NUMBER_COLUMN_ID && columnId !== COLOR_COLUMN_ID;
-    // columnId is a safety fallback — all current TASK_COLUMNS define label.
-    // Using ?? (nullish coalescing) instead of || so an explicit empty-string
-    // menuLabel would not be skipped (though that case does not currently arise).
-    const displayLabel = column.menuLabel ?? column.label ?? columnId;
+    // ?? instead of || so an explicit empty-string menuLabel is not skipped.
+    // column.label is always defined per TASK_COLUMNS schema (no fallback to columnId needed).
+    const displayLabel = column.menuLabel ?? column.label;
+
+    // Icons are created inside useMemo so they are only allocated when the menu is open.
+    const arrowsIcon = (
+      <ArrowsHorizontal
+        size={CONTEXT_MENU.iconSize}
+        weight={CONTEXT_MENU.iconWeight}
+      />
+    );
+    const eyeIcon = (
+      <Eye size={CONTEXT_MENU.iconSize} weight={CONTEXT_MENU.iconWeight} />
+    );
 
     // ── Group 1: Size to Fit ──
     const sizeToFitItems = buildSizeToFitItems(
@@ -151,7 +154,8 @@ export function useTableHeaderContextMenu(): UseTableHeaderContextMenuResult {
       displayLabel,
       canAutoFit,
       autoFitColumn,
-      autoFitAllColumns
+      autoFitAllColumns,
+      arrowsIcon
     );
 
     // ── Group 2: Column visibility checkmarks ──
@@ -161,7 +165,7 @@ export function useTableHeaderContextMenu(): UseTableHeaderContextMenuResult {
     const showAllItem: ContextMenuItem = {
       id: "showAllColumns",
       label: "Show All Columns",
-      icon: EYE_ICON,
+      icon: eyeIcon,
       onClick: () => setHiddenColumns([]),
       disabled: hiddenColumns.length === 0,
     };
