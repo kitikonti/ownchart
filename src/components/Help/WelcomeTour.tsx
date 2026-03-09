@@ -2,7 +2,14 @@
  * Welcome Tour component for first-time users.
  */
 
-import { useState, useEffect, useRef, memo, type JSX } from "react";
+import {
+  useState,
+  useEffect,
+  useRef,
+  memo,
+  type JSX,
+  type ReactNode,
+} from "react";
 
 import {
   HandWaving,
@@ -22,8 +29,8 @@ const HELP_PANEL_OPEN_DELAY_MS = 100;
 interface TourTip {
   /** Stable identifier used as React key — must not change between renders. */
   id: string;
-  /** Render function for the icon — deferred to render time to avoid stale JSX in module scope. */
-  icon: () => JSX.Element;
+  /** Icon element — static ReactNode, rendered inside an aria-hidden container. */
+  icon: ReactNode;
   /** Tailwind classes for the icon container background. */
   iconBg: string;
   /** Primary tip text. */
@@ -36,27 +43,27 @@ interface TourTip {
  * Tour tip metadata. Centralised here so colours and copy are co-located
  * and not scattered across JSX.
  *
- * Icons are expressed as render functions (not static JSX) so they are
- * created inside the component render cycle, not at module-initialisation time.
+ * Icons are static ReactNode values. They are placed inside an aria-hidden
+ * wrapper in the render, so they do not need to carry accessibility context.
  */
 const TOUR_TIPS: TourTip[] = [
   {
     id: "add-tasks",
-    icon: () => <Cursor size={18} className="text-neutral-600" />,
+    icon: <Cursor size={18} className="text-neutral-600" />,
     iconBg: "bg-neutral-100",
     label: "Click the empty row to add tasks",
     description: "Start building your project timeline",
   },
   {
     id: "drag-bars",
-    icon: () => <ArrowsOutCardinal size={18} className="text-brand-600" />,
+    icon: <ArrowsOutCardinal size={18} className="text-brand-600" />,
     iconBg: "bg-brand-100",
     label: "Drag task bars to change dates",
     description: "Resize edges to adjust duration",
   },
   {
     id: "shortcuts",
-    icon: () => <Question size={18} className="text-brand-600" />,
+    icon: <Question size={18} className="text-brand-600" />,
     iconBg: "bg-brand-50",
     label: "Press ? anytime for shortcuts",
     description: "Keyboard shortcuts for power users",
@@ -99,7 +106,7 @@ export const WelcomeTour = memo(function WelcomeTour(): JSX.Element | null {
   };
 
   const footer = (
-    <div className="flex items-center justify-end w-full gap-3">
+    <div className="flex justify-end w-full gap-3">
       <Button variant="secondary" onClick={handleShowShortcuts}>
         Show Shortcuts
       </Button>
@@ -137,7 +144,7 @@ export const WelcomeTour = memo(function WelcomeTour(): JSX.Element | null {
               className="flex items-start gap-3 p-3 bg-neutral-50 rounded border border-neutral-200"
             >
               <div className={`p-2 ${tip.iconBg} rounded`} aria-hidden="true">
-                {tip.icon()}
+                {tip.icon}
               </div>
               <div>
                 <p className="text-sm font-medium text-neutral-800">

@@ -54,6 +54,14 @@ const sizeStyles: Record<ButtonSize, string> = {
   lg: "h-10 min-w-[120px] px-4 py-2 text-base gap-2.5",
 };
 
+/**
+ * Tracks icon-only buttons that have already triggered the missing-aria-label
+ * warning in DEV mode. Keyed on the button's aria-label value (or the sentinel
+ * "«no aria-label»") so each unique omission is only warned about once per
+ * session rather than on every render.
+ */
+const warnedIconOnlyKeys = import.meta.env.DEV ? new Set<string>() : null;
+
 // MS Fluent: font-weight 600, transition 0.1s cubic-bezier(0.33, 0, 0.67, 1)
 const baseStyles =
   "inline-flex items-center justify-center font-semibold rounded transition-all duration-100 ease-[cubic-bezier(0.33,0,0.67,1)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-600 focus-visible:ring-offset-2 disabled:cursor-not-allowed select-none";
@@ -96,11 +104,17 @@ export const Button = memo(
       Children.count(children) === 0 &&
       !props["aria-label"]
     ) {
-      console.warn(
-        "[Button] Icon-only button detected without an `aria-label`. " +
-          "Screen readers will not be able to announce this button's purpose. " +
-          "Add an `aria-label` prop describing the action."
-      );
+      // Use the element's id or class name as a deduplication key so the
+      // console is not flooded during re-renders of the same button.
+      const warnKey = props.id ?? className ?? "«anonymous»";
+      if (warnedIconOnlyKeys && !warnedIconOnlyKeys.has(warnKey)) {
+        warnedIconOnlyKeys.add(warnKey);
+        console.warn(
+          "[Button] Icon-only button detected without an `aria-label`. " +
+            "Screen readers will not be able to announce this button's purpose. " +
+            "Add an `aria-label` prop describing the action."
+        );
+      }
     }
 
     return (

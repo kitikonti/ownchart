@@ -1,7 +1,5 @@
 /**
- * ZoomDialog - Modal dialog for selecting zoom presets
- *
- * Similar to MS Word's "Zoom to" dialog with radio button options
+ * ZoomDialog - Modal dialog for selecting zoom presets via a radio button list.
  */
 
 import { useState, useEffect, useCallback, memo } from "react";

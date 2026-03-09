@@ -31,9 +31,21 @@ interface ExternalLinkProps {
  * Returns a safe href for use in an anchor tag.
  * Only http and https protocols are permitted — all others are replaced with
  * a safe fallback to prevent javascript: or data: URI injection.
+ *
+ * In development, a console warning is emitted when the fallback is triggered
+ * so that misconfigured URLs in APP_CONFIG are caught early.
  */
 function sanitizeHref(href: string): string {
-  return href.startsWith("https://") || href.startsWith("http://") ? href : "#";
+  if (href.startsWith("https://") || href.startsWith("http://")) {
+    return href;
+  }
+  if (import.meta.env.DEV) {
+    console.warn(
+      `[AboutDialog] sanitizeHref: href "${href}" does not start with http(s)://. ` +
+        "Falling back to '#'. Check APP_CONFIG for misconfigured URLs."
+    );
+  }
+  return "#";
 }
 
 /** Link row used within AboutDialog to display icon + label + optional sublabel. */
@@ -72,8 +84,8 @@ const ExternalLink = memo(function ExternalLink({
   );
 });
 
-/** Website URL with the https:// prefix stripped for display purposes. */
-const WEBSITE_DISPLAY_URL = APP_CONFIG.websiteUrl.replace("https://", "");
+/** Website URL with the http(s):// prefix stripped for display purposes. */
+const WEBSITE_DISPLAY_URL = APP_CONFIG.websiteUrl.replace(/^https?:\/\//, "");
 
 export const AboutDialog = memo(function AboutDialog(): JSX.Element | null {
   const { isAboutDialogOpen: isOpen, closeAboutDialog } = useUIStore();
