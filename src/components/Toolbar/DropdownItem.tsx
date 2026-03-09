@@ -5,7 +5,7 @@
  * Hover handled via CSS class .dropdown-item (no inline backgroundColor).
  */
 
-import type { ReactNode, AriaRole } from "react";
+import { memo, type ReactNode, type AriaRole } from "react";
 
 import { Check } from "@phosphor-icons/react";
 
@@ -47,7 +47,7 @@ interface DropdownItemProps {
   "aria-selected"?: boolean;
 }
 
-export function DropdownItem({
+export const DropdownItem = memo(function DropdownItem({
   isSelected = false,
   onClick,
   children,
@@ -89,7 +89,7 @@ export function DropdownItem({
           ].join(" ")}
         >
           {isSelected && (
-            <Check size={16} weight="bold" className="text-green-700" />
+            <Check size={16} weight="bold" className="text-brand-600" />
           )}
         </span>
       )}
@@ -107,4 +107,4 @@ export function DropdownItem({
       {trailing}
     </button>
   );
-}
+});

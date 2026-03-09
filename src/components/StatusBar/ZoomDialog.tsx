@@ -4,8 +4,10 @@
  * Similar to MS Word's "Zoom to" dialog with radio button options
  */
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, memo } from "react";
+
 import { MagnifyingGlass } from "@phosphor-icons/react";
+
 import { Modal } from "../common/Modal";
 import { Button } from "../common/Button";
 import { Radio } from "../common/Radio";
@@ -64,7 +66,7 @@ function findClosestPreset(zoom: number): number | "fit" {
   return 1.0;
 }
 
-export function ZoomDialog({
+export const ZoomDialog = memo(function ZoomDialog({
   isOpen,
   onClose,
   currentZoom,
@@ -131,4 +133,4 @@ export function ZoomDialog({
       </div>
     </Modal>
   );
-}
+});
