@@ -41,11 +41,14 @@ export {
 // Derived Constants for PDF
 // =============================================================================
 
+/** Standard PDF unit: 72 points per inch (PostScript/PDF specification) */
+const PDF_POINTS_PER_INCH = 72;
+
 /** Points per millimeter (72 pt/inch ÷ 25.4 mm/inch) */
-export const PT_PER_MM = 72 / MM_PER_INCH;
+export const PT_PER_MM = PDF_POINTS_PER_INCH / MM_PER_INCH;
 
 /** Points per pixel at internal DPI */
-export const PT_PER_PX = 72 / INTERNAL_DPI;
+export const PT_PER_PX = PDF_POINTS_PER_INCH / INTERNAL_DPI;
 
 /** Millimeters per pixel at internal DPI */
 export const MM_PER_PX = MM_PER_INCH / INTERNAL_DPI;
@@ -107,6 +110,14 @@ const HELVETICA_AVG_CHAR_WIDTH_RATIO = 0.5;
 
 /** Ellipsis string appended when text is truncated. Used only by truncateText(). */
 const ELLIPSIS = "...";
+
+/**
+ * Neutral gray fallback RGB channel value (0–255) used by hexToRgb() when the
+ * input hex string is invalid or uses an unsupported shorthand form.
+ * Results in rgb(128, 128, 128) — a mid-tone gray that is visible on both
+ * light and dark backgrounds without drawing undue attention.
+ */
+const HEX_FALLBACK_GRAY_CHANNEL = 128;
 
 /**
  * Check whether a header/footer section has any content enabled.
@@ -290,7 +301,11 @@ export function hexToRgb(hex: string): PdfColor {
         hex
       );
     }
-    return { r: 128, g: 128, b: 128 };
+    return {
+      r: HEX_FALLBACK_GRAY_CHANNEL,
+      g: HEX_FALLBACK_GRAY_CHANNEL,
+      b: HEX_FALLBACK_GRAY_CHANNEL,
+    };
   }
   return {
     r: parseInt(result[1], 16),
@@ -349,6 +364,9 @@ function estimateContentHeightPx(
 ): number {
   const densityConfig = DENSITY_CONFIG[options.density];
   const contentHeaderHeight = options.includeHeader ? HEADER_HEIGHT : 0;
+  // Pass an empty hidden-task set: the export always renders all tasks
+  // regardless of the app's current visibility state, so we treat every
+  // task as visible for this height estimation.
   const flattenedTasks = buildFlattenedTaskList(tasks, new Set<TaskId>());
   return flattenedTasks.length * densityConfig.rowHeight + contentHeaderHeight;
 }

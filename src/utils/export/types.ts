@@ -297,14 +297,19 @@ export interface ExportOptions {
   density: UiDensity;
 }
 
-/** Boolean toggle keys in ExportOptions (type-safe subset for checkbox groups) */
-export type ExportBooleanKey =
-  | "includeHeader"
-  | "includeTodayMarker"
-  | "includeDependencies"
-  | "includeGridLines"
-  | "includeWeekends"
-  | "includeHolidays";
+/**
+ * Boolean toggle keys in ExportOptions (type-safe subset for checkbox groups).
+ * Derived automatically from ExportOptions so it stays in sync when new boolean
+ * fields are added — no manual maintenance required.
+ *
+ * Uses `Required<ExportOptions>` to avoid `undefined` leaking into the union
+ * from optional fields, then filters to keys whose value is strictly `boolean`.
+ */
+export type ExportBooleanKey = {
+  [K in keyof Required<ExportOptions>]: Required<ExportOptions>[K] extends boolean
+    ? K
+    : never;
+}[keyof Required<ExportOptions>];
 
 /**
  * Preset zoom options for export.
