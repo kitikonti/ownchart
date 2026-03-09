@@ -6,15 +6,19 @@
 import { SVG_FONT_FAMILY } from "./constants";
 import { sanitizeFilename } from "./sanitizeFilename";
 
-/** DOM id for the hidden export rendering container */
-const OFFSCREEN_CONTAINER_ID = "export-offscreen-container";
+/** data-* attribute used to identify offscreen export containers in the DOM */
+const OFFSCREEN_CONTAINER_ATTR = "data-export-offscreen";
 
 /**
  * Wait for all fonts to be loaded.
  * This ensures text measurements are accurate.
+ *
+ * The guard on `document.fonts` is intentional: jsdom (used in unit tests)
+ * does not implement the CSS Font Loading API, so `document.fonts` is
+ * undefined in that environment.
  */
 export async function waitForFonts(): Promise<void> {
-  if (document.fonts && document.fonts.ready) {
+  if (document.fonts?.ready) {
     await document.fonts.ready;
   }
 }
@@ -49,32 +53,24 @@ export function waitForPaint(): Promise<void> {
 export function setFontFamilyOnTextElements(element: Element): void {
   const localName = element.localName.toLowerCase();
 
-  // Set font-family on text and tspan elements
+  // Set font-family and font-weight attributes on text and tspan elements.
+  // Presentation attributes are needed for vector apps (Illustrator/Inkscape)
+  // that ignore CSS style blocks.
   if (localName === "text" || localName === "tspan") {
-    // Remove any existing font-family to ensure our value takes precedence
+    // Remove any existing font-family attribute to ensure our value takes precedence
     element.removeAttribute("font-family");
     element.setAttribute("font-family", SVG_FONT_FAMILY);
 
-    // Normalize font-weight: svg2pdf.js needs "bold" instead of 600/700
+    // Normalize font-weight attribute: svg2pdf.js needs "bold" instead of 600/700
     const fontWeight = element.getAttribute("font-weight");
     if (fontWeight === "600" || fontWeight === "700") {
       element.setAttribute("font-weight", "bold");
     }
-
-    // Also set as style to be extra sure
-    const currentStyle = element.getAttribute("style") || "";
-    if (!currentStyle.includes("font-family")) {
-      element.setAttribute(
-        "style",
-        currentStyle
-          ? `${currentStyle}; font-family: ${SVG_FONT_FAMILY};`
-          : `font-family: ${SVG_FONT_FAMILY};`
-      );
-    }
   }
 
-  // Normalise font-family/font-weight in inline style attributes on all elements
-  // (computed styles can propagate via the style attribute in some SVG renderers)
+  // Normalise font-family/font-weight in inline style attributes on ALL elements
+  // (including text/tspan — computed styles can propagate via the style attribute
+  // in some SVG renderers, and svg2pdf.js reads both attribute and style values).
   if (element.hasAttribute("style")) {
     let style = element.getAttribute("style") || "";
     // Replace any font-family in inline styles
@@ -85,6 +81,10 @@ export function setFontFamilyOnTextElements(element: Element): void {
     // Normalize font-weight in inline styles for svg2pdf.js
     style = style.replace(/font-weight:\s*(600|700);?/gi, "font-weight: bold;");
     element.setAttribute("style", style);
+  } else if (localName === "text" || localName === "tspan") {
+    // No existing style attribute — add one so renderers that prefer style
+    // over presentation attributes also pick up the correct font-family.
+    element.setAttribute("style", `font-family: ${SVG_FONT_FAMILY};`);
   }
 
   // Process all child elements recursively
@@ -133,7 +133,7 @@ export function createOffscreenContainer(
   background: "white" | "transparent"
 ): HTMLDivElement {
   const container = document.createElement("div");
-  container.id = OFFSCREEN_CONTAINER_ID;
+  container.setAttribute(OFFSCREEN_CONTAINER_ATTR, "true");
   container.style.cssText = `
     position: fixed;
     left: 0;

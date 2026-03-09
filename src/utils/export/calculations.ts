@@ -18,6 +18,21 @@ import { HEADER_LABELS } from "./columns";
 /** Base pixels per day at 100% zoom */
 export const BASE_PIXELS_PER_DAY = 25;
 
+/** Default padding in days added to the left of the project date range */
+const DEFAULT_LEFT_PADDING_DAYS = 7;
+
+/** Default padding in days added to the right of the project date range */
+const DEFAULT_RIGHT_PADDING_DAYS = 7;
+
+/** Default date range look-back in days when no project date range is available */
+const DEFAULT_RANGE_LOOKBACK_DAYS = 7;
+
+/** Default date range look-ahead in days when no project date range is available */
+const DEFAULT_RANGE_LOOKAHEAD_DAYS = 30;
+
+/** Fallback width in pixels for unknown column keys */
+const UNKNOWN_COLUMN_DEFAULT_WIDTH_PX = 100;
+
 /**
  * Width in pixels of the expand/collapse button rendered in the name column.
  * Corresponds to Tailwind class w-4 (4 × 4px = 16px).
@@ -53,7 +68,7 @@ export function getDefaultColumnWidth(
     case "progress":
       return densityWidths.progress;
     default:
-      return 100;
+      return UNKNOWN_COLUMN_DEFAULT_WIDTH_PX;
   }
 }
 
@@ -97,6 +112,33 @@ export function calculateEffectiveZoom(
 }
 
 /**
+ * Calculate extra padding days needed on each side so that task bar labels
+ * are not clipped at the edges of the exported date range.
+ *
+ * Returns `{ leftDays: 0, rightDays: 0 }` when no tasks or zoom are provided.
+ */
+function calculateLabelExtraPadding(
+  options: ExportOptions,
+  tasks: Task[],
+  effectiveZoom: number
+): { leftDays: number; rightDays: number } {
+  if (tasks.length === 0 || effectiveZoom <= 0) {
+    return { leftDays: 0, rightDays: 0 };
+  }
+
+  const densityConfig = DENSITY_CONFIG[options.density];
+  const fontSize = densityConfig.fontSizeBar;
+  const pixelsPerDay = BASE_PIXELS_PER_DAY * effectiveZoom;
+
+  return calculateLabelPaddingDays(
+    tasks,
+    options.taskLabelPosition,
+    fontSize,
+    pixelsPerDay
+  );
+}
+
+/**
  * Calculate the effective date range based on date range mode.
  * When tasks and effectiveZoom are provided, label padding is calculated
  * to ensure task labels are not clipped in the export.
@@ -109,7 +151,10 @@ export function getEffectiveDateRange(
   effectiveZoom?: number
 ): { min: string; max: string } {
   const today = new Date().toISOString().split("T")[0];
-  const defaultRange = { min: addDays(today, -7), max: addDays(today, 30) };
+  const defaultRange = {
+    min: addDays(today, -DEFAULT_RANGE_LOOKBACK_DAYS),
+    max: addDays(today, DEFAULT_RANGE_LOOKAHEAD_DAYS),
+  };
 
   switch (options.dateRangeMode) {
     case "visible":
@@ -133,25 +178,17 @@ export function getEffectiveDateRange(
     case "all":
     default:
       if (projectDateRange) {
-        // Base padding of 7 days
-        let leftPadding = 7;
-        let rightPadding = 7;
+        let leftPadding = DEFAULT_LEFT_PADDING_DAYS;
+        let rightPadding = DEFAULT_RIGHT_PADDING_DAYS;
 
-        // Calculate additional padding for task labels if tasks and zoom provided
-        if (tasks && tasks.length > 0 && effectiveZoom && effectiveZoom > 0) {
-          const densityConfig = DENSITY_CONFIG[options.density];
-          const fontSize = densityConfig.fontSizeBar;
-          const pixelsPerDay = BASE_PIXELS_PER_DAY * effectiveZoom;
-
-          const labelPadding = calculateLabelPaddingDays(
+        if (tasks && effectiveZoom !== undefined) {
+          const extra = calculateLabelExtraPadding(
+            options,
             tasks,
-            options.taskLabelPosition,
-            fontSize,
-            pixelsPerDay
+            effectiveZoom
           );
-
-          leftPadding += labelPadding.leftDays;
-          rightPadding += labelPadding.rightDays;
+          leftPadding += extra.leftDays;
+          rightPadding += extra.rightDays;
         }
 
         return {
@@ -287,8 +324,10 @@ export function calculateOptimalColumnWidths(
   const result: Record<string, number> = {};
 
   for (const key of selectedColumns) {
-    // Use existing width if set (user customization), otherwise calculate
-    if (existingWidths[key]) {
+    // Use existing width if set (user customization), otherwise calculate.
+    // Use !== undefined rather than a falsy check so that a stored value of 0
+    // is respected instead of being silently replaced by the calculated width.
+    if (existingWidths[key] !== undefined) {
       result[key] = existingWidths[key];
     } else {
       result[key] = calculateOptimalColumnWidth(key, tasks, density);

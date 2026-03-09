@@ -4,7 +4,7 @@
  */
 
 import { createRoot } from "react-dom/client";
-import { createElement } from "react";
+import { createElement, type ComponentProps } from "react";
 import { toCanvas } from "html-to-image";
 import type { ExportLayoutInput } from "./types";
 import { ExportRenderer } from "../../components/Export/ExportRenderer";
@@ -32,6 +32,26 @@ export interface CaptureChartParams extends ExportLayoutInput {
 }
 
 /**
+ * Render the ExportRenderer component into `container` and wait for
+ * React's initial paint to settle before proceeding.
+ */
+async function renderAndSettle(
+  container: HTMLDivElement,
+  props: ComponentProps<typeof ExportRenderer>
+): Promise<void> {
+  const root = createRoot(container);
+  try {
+    await new Promise<void>((resolve) => {
+      root.render(createElement(ExportRenderer, props));
+      // Wait for React to render its first pass before proceeding
+      setTimeout(resolve, REACT_RENDER_SETTLE_MS);
+    });
+  } finally {
+    root.unmount();
+  }
+}
+
+/**
  * Capture the chart to a canvas using offscreen rendering.
  * This renders the complete chart (including non-visible areas) at the specified zoom level.
  */
@@ -51,30 +71,24 @@ export async function captureChart(
   const dimensions = calculateExportDimensions(params);
 
   // Create container - must be on-screen for html-to-image (uses SVG foreignObject)
-  // We use opacity: 0 and pointer-events: none to hide it from the user
+  // We use opacity: 0 and pointer-events: none to hide it from the user.
+  // Container is created before the try block; cleanup is guaranteed in finally.
   const container = createOffscreenContainer(
     dimensions.width,
     dimensions.height,
     options.background
   );
 
-  // Create React root outside try so it is accessible in the finally block
-  const root = createRoot(container);
-
   try {
-    await new Promise<void>((resolve) => {
-      root.render(
-        createElement(ExportRenderer, {
-          tasks,
-          options,
-          columnWidths,
-          currentAppZoom,
-          projectDateRange,
-          visibleDateRange,
-        })
-      );
-      // Wait for React to render its first pass before proceeding
-      setTimeout(resolve, REACT_RENDER_SETTLE_MS);
+    // Render component into container and wait for React's first paint to settle.
+    // renderAndSettle handles its own root lifecycle internally.
+    await renderAndSettle(container, {
+      tasks,
+      options,
+      columnWidths,
+      currentAppZoom,
+      projectDateRange,
+      visibleDateRange,
     });
 
     // Wait for fonts and paint
@@ -101,8 +115,7 @@ export async function captureChart(
 
     return canvas;
   } finally {
-    // Always cleanup React root and DOM container
-    root.unmount();
+    // Always remove the DOM container regardless of success or failure
     removeOffscreenContainer(container);
   }
 }
