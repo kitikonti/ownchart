@@ -4,6 +4,8 @@
  * Opened from: Help tab "About" button, or clickable version in StatusBar.
  */
 
+import type { ReactNode } from "react";
+
 import {
   GithubLogo,
   Globe,
@@ -17,6 +19,46 @@ import { Modal } from "../common/Modal";
 import { Button } from "../common/Button";
 import { useUIStore } from "../../store/slices/uiSlice";
 import { APP_CONFIG } from "../../config/appConfig";
+
+interface ExternalLinkProps {
+  href: string;
+  icon: ReactNode;
+  label: string;
+  sublabel?: string;
+}
+
+/** Link row used within AboutDialog to display icon + label + optional sublabel. */
+function ExternalLink({
+  href,
+  icon,
+  label,
+  sublabel,
+}: ExternalLinkProps): JSX.Element {
+  return (
+    <a
+      href={href}
+      target="_blank"
+      rel="noopener noreferrer"
+      aria-label={label}
+      className="flex items-start gap-3 group py-1 rounded -mx-1 px-1 hover:bg-neutral-50 transition-colors"
+    >
+      <span className="mt-0.5 text-neutral-500 group-hover:text-neutral-700 flex-shrink-0">
+        {icon}
+      </span>
+      <div className="flex-1 min-w-0">
+        <span className="text-sm text-neutral-700 group-hover:text-neutral-900">
+          {label}
+        </span>
+        {sublabel && (
+          <span className="flex items-center gap-1 text-xs text-neutral-400 group-hover:text-brand-600">
+            {sublabel}
+            <ArrowSquareOut size={11} weight="regular" />
+          </span>
+        )}
+      </div>
+    </a>
+  );
+}
 
 export function AboutDialog(): JSX.Element | null {
   const { isAboutDialogOpen: isOpen, closeAboutDialog } = useUIStore();
@@ -83,42 +125,5 @@ export function AboutDialog(): JSX.Element | null {
         sublabel="GitHub Sponsors"
       />
     </Modal>
-  );
-}
-
-/** Link row used within AboutDialog to display icon + label + optional sublabel. */
-function ExternalLink({
-  href,
-  icon,
-  label,
-  sublabel,
-}: {
-  href: string;
-  icon: React.ReactNode;
-  label: string;
-  sublabel?: string;
-}): JSX.Element {
-  return (
-    <a
-      href={href}
-      target="_blank"
-      rel="noopener noreferrer"
-      className="flex items-start gap-3 group py-1 rounded -mx-1 px-1 hover:bg-neutral-50 transition-colors"
-    >
-      <span className="mt-0.5 text-neutral-500 group-hover:text-neutral-700 flex-shrink-0">
-        {icon}
-      </span>
-      <div className="flex-1 min-w-0">
-        <span className="text-sm text-neutral-700 group-hover:text-neutral-900">
-          {label}
-        </span>
-        {sublabel && (
-          <span className="flex items-center gap-1 text-xs text-neutral-400 group-hover:text-brand-600">
-            {sublabel}
-            <ArrowSquareOut size={11} weight="regular" />
-          </span>
-        )}
-      </div>
-    </a>
   );
 }

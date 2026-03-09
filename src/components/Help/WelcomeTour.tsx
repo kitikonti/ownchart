@@ -3,7 +3,9 @@
  */
 
 import { useState } from "react";
+
 import { HandWaving, Cursor, ArrowsOutCardinal } from "@phosphor-icons/react";
+
 import { Modal } from "../common/Modal";
 import { Button } from "../common/Button";
 import { Checkbox } from "../common/Checkbox";
@@ -23,20 +25,13 @@ export function WelcomeTour(): JSX.Element | null {
     dismissWelcome(dontShowAgain);
   };
 
-  const handleGetStarted = (): void => {
-    dismiss();
-  };
-
   const handleShowShortcuts = (): void => {
     dismiss();
-    // Delay opening help panel to ensure welcome is closed first
+    // Delay opening help panel to let the modal finish closing before the
+    // help panel mounts. The animation duration is ~100 ms (Modal fade-out).
     setTimeout(() => {
       openHelpPanel();
     }, HELP_PANEL_OPEN_DELAY_MS);
-  };
-
-  const handleClose = (): void => {
-    dismiss();
   };
 
   const footer = (
@@ -45,7 +40,7 @@ export function WelcomeTour(): JSX.Element | null {
       <Button variant="secondary" onClick={handleShowShortcuts}>
         Show Shortcuts
       </Button>
-      <Button variant="primary" onClick={handleGetStarted}>
+      <Button variant="primary" onClick={dismiss}>
         Get Started
       </Button>
     </div>
@@ -54,7 +49,7 @@ export function WelcomeTour(): JSX.Element | null {
   return (
     <Modal
       isOpen={isWelcomeTourOpen}
-      onClose={handleClose}
+      onClose={dismiss}
       title="Welcome to OwnChart!"
       icon={<HandWaving size={24} weight="light" className="text-amber-500" />}
       footer={footer}

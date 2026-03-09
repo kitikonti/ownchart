@@ -33,6 +33,11 @@ const ZOOM_PRESETS = [
 /**
  * Finds the closest preset to the given zoom level.
  * Returns the exact preset value when within 0.01, otherwise defaults to 100%.
+ *
+ * Note: "fit" is not auto-detected from the zoom number — callers that want
+ * the "fit" preset pre-selected must pass a sentinel value that maps to it.
+ * Defaulting to 100% on no match is intentional: it avoids ambiguity when
+ * the zoom level was set by a fit-to-view operation with an arbitrary value.
  */
 function findClosestPreset(zoom: number): number | "fit" {
   const exactMatch = ZOOM_PRESETS.find(
@@ -104,7 +109,6 @@ export function ZoomDialog({
               name="zoom-preset"
               checked={selectedValue === preset.value}
               onChange={() => setSelectedValue(preset.value)}
-              aria-label={preset.label}
             />
             <span className="text-sm text-neutral-800">{preset.label}</span>
           </label>

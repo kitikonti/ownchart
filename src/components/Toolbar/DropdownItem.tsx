@@ -5,7 +5,8 @@
  * Hover handled via CSS class .dropdown-item (no inline backgroundColor).
  */
 
-import type { ReactNode } from "react";
+import type { ReactNode, AriaRole } from "react";
+
 import { Check } from "@phosphor-icons/react";
 
 interface DropdownItemProps {
@@ -22,7 +23,7 @@ interface DropdownItemProps {
   /** Trailing content (e.g. color swatches) */
   trailing?: ReactNode;
   /** ARIA role — when set, enables aria-selected on the button */
-  role?: React.AriaRole;
+  role?: AriaRole;
   /** aria-selected override (only emitted when role is set) */
   "aria-selected"?: boolean;
 }
@@ -50,7 +51,7 @@ export function DropdownItem({
         "flex items-center w-full cursor-pointer text-left text-sm text-neutral-900 whitespace-nowrap",
         hasDescription
           ? "min-h-[36px] py-1.5 pr-3 pl-2"
-          : "h-8 py-0 pr-[15px] pl-[9px]",
+          : "h-8 py-0 pr-[15px] pl-[9px]", // px values pixel-align with toolbar chrome
         isSelected ? "dropdown-item-selected" : "",
       ]
         .filter(Boolean)
