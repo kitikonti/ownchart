@@ -69,7 +69,7 @@ export function ZoomDialog({
   onClose,
   currentZoom,
   onSelect,
-}: ZoomDialogProps): JSX.Element {
+}: ZoomDialogProps): JSX.Element | null {
   const [selectedValue, setSelectedValue] = useState<number | "fit">(() =>
     findClosestPreset(currentZoom)
   );
@@ -113,7 +113,7 @@ export function ZoomDialog({
       headerStyle="bordered"
       footerStyle="bordered"
     >
-      <div className="space-y-1">
+      <div className="space-y-1" role="radiogroup" aria-label="Zoom level">
         {ZOOM_PRESETS.map((preset) => (
           <label
             key={String(preset.value)}

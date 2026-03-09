@@ -4,7 +4,7 @@
  * Opened from: Help tab "About" button, or clickable version in StatusBar.
  */
 
-import type { ReactNode } from "react";
+import { memo, type ReactNode } from "react";
 
 import {
   GithubLogo,
@@ -28,7 +28,7 @@ interface ExternalLinkProps {
 }
 
 /** Link row used within AboutDialog to display icon + label + optional sublabel. */
-function ExternalLink({
+const ExternalLink = memo(function ExternalLink({
   href,
   icon,
   label,
@@ -57,9 +57,9 @@ function ExternalLink({
       </div>
     </a>
   );
-}
+});
 
-export function AboutDialog(): JSX.Element | null {
+export const AboutDialog = memo(function AboutDialog(): JSX.Element | null {
   const { isAboutDialogOpen: isOpen, closeAboutDialog } = useUIStore();
 
   return (
@@ -126,4 +126,4 @@ export function AboutDialog(): JSX.Element | null {
       />
     </Modal>
   );
-}
+});

@@ -2,7 +2,7 @@
  * Welcome Tour component for first-time users.
  */
 
-import { useState, useEffect, useRef, memo } from "react";
+import { useState, useEffect, useRef, memo, type ReactNode } from "react";
 
 import { HandWaving, Cursor, ArrowsOutCardinal } from "@phosphor-icons/react";
 
@@ -13,6 +13,46 @@ import { useUIStore } from "../../store/slices/uiSlice";
 
 /** Delay (ms) before opening the help panel after the welcome modal closes. */
 const HELP_PANEL_OPEN_DELAY_MS = 100;
+
+interface TourTip {
+  /** Icon element to render inside the tip card. */
+  icon: ReactNode;
+  /** Tailwind classes for the icon container background. */
+  iconBg: string;
+  /** Primary tip text. */
+  label: string;
+  /** Supporting description text. */
+  description: string;
+}
+
+/**
+ * Tour tip metadata. Centralised here so colours and copy are co-located
+ * and not scattered across JSX.
+ */
+const TOUR_TIPS: TourTip[] = [
+  {
+    icon: <Cursor size={18} className="text-neutral-600" />,
+    iconBg: "bg-neutral-100",
+    label: "Click the empty row to add tasks",
+    description: "Start building your project timeline",
+  },
+  {
+    icon: <ArrowsOutCardinal size={18} className="text-brand-600" />,
+    iconBg: "bg-brand-100",
+    label: "Drag task bars to change dates",
+    description: "Resize edges to adjust duration",
+  },
+  {
+    icon: (
+      <span className="text-base font-bold text-brand-600 block w-[18px] text-center">
+        ?
+      </span>
+    ),
+    iconBg: "bg-brand-50",
+    label: "Press ? anytime for shortcuts",
+    description: "Keyboard shortcuts for power users",
+  },
+];
 
 /**
  * Welcome Tour component.
@@ -50,8 +90,7 @@ export const WelcomeTour = memo(function WelcomeTour(): JSX.Element | null {
   };
 
   const footer = (
-    <div className="flex items-center w-full gap-3">
-      <div className="flex-1" />
+    <div className="flex items-center justify-end w-full gap-3">
       <Button variant="secondary" onClick={handleShowShortcuts}>
         Show Shortcuts
       </Button>
@@ -83,49 +122,24 @@ export const WelcomeTour = memo(function WelcomeTour(): JSX.Element | null {
         <div className="space-y-3">
           <h3 className="text-sm font-semibold text-neutral-900">Quick tips</h3>
 
-          <div className="flex items-start gap-3 p-3 bg-neutral-50 rounded border border-neutral-200">
-            <div className="p-2 bg-neutral-100 rounded" aria-hidden="true">
-              <Cursor size={18} className="text-neutral-600" />
+          {TOUR_TIPS.map((tip) => (
+            <div
+              key={tip.label}
+              className="flex items-start gap-3 p-3 bg-neutral-50 rounded border border-neutral-200"
+            >
+              <div className={`p-2 ${tip.iconBg} rounded`} aria-hidden="true">
+                {tip.icon}
+              </div>
+              <div>
+                <p className="text-sm font-medium text-neutral-800">
+                  {tip.label}
+                </p>
+                <p className="text-xs text-neutral-500 mt-0.5">
+                  {tip.description}
+                </p>
+              </div>
             </div>
-            <div>
-              <p className="text-sm font-medium text-neutral-800">
-                Click the empty row to add tasks
-              </p>
-              <p className="text-xs text-neutral-500 mt-0.5">
-                Start building your project timeline
-              </p>
-            </div>
-          </div>
-
-          <div className="flex items-start gap-3 p-3 bg-neutral-50 rounded border border-neutral-200">
-            <div className="p-2 bg-emerald-100 rounded" aria-hidden="true">
-              <ArrowsOutCardinal size={18} className="text-emerald-600" />
-            </div>
-            <div>
-              <p className="text-sm font-medium text-neutral-800">
-                Drag task bars to change dates
-              </p>
-              <p className="text-xs text-neutral-500 mt-0.5">
-                Resize edges to adjust duration
-              </p>
-            </div>
-          </div>
-
-          <div className="flex items-start gap-3 p-3 bg-neutral-50 rounded border border-neutral-200">
-            <div className="p-2 bg-violet-100 rounded" aria-hidden="true">
-              <span className="text-base font-bold text-violet-600 block w-[18px] text-center">
-                ?
-              </span>
-            </div>
-            <div>
-              <p className="text-sm font-medium text-neutral-800">
-                Press ? anytime for shortcuts
-              </p>
-              <p className="text-xs text-neutral-500 mt-0.5">
-                Keyboard shortcuts for power users
-              </p>
-            </div>
-          </div>
+          ))}
         </div>
 
         {/* Don't show again checkbox */}
