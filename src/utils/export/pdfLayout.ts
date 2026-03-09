@@ -373,6 +373,34 @@ function estimateContentHeightPx(
 }
 
 /**
+ * Compensate for tall content that would be scaled down to fit the page height.
+ *
+ * When content height exceeds available page height, the PDF renderer scales it
+ * down uniformly, shrinking the effective width. To ensure the content still fills
+ * the page width after scaling, we calculate a wider fitToWidth up front.
+ *
+ * Formula: optimalWidth = contentHeight × (availableWidth / availableHeight)
+ *
+ * @param baseWidthPx - Minimum width (full page at PNG_EXPORT_DPI)
+ * @param contentHeightPx - Estimated content height in pixels
+ * @param availableWidthPx - Printable width in pixels at PNG_EXPORT_DPI
+ * @param availableHeightPx - Printable height in pixels at PNG_EXPORT_DPI
+ * @returns Compensated fitToWidth in pixels (≥ baseWidthPx)
+ */
+function compensateForTallContent(
+  baseWidthPx: number,
+  contentHeightPx: number,
+  availableWidthPx: number,
+  availableHeightPx: number
+): number {
+  if (contentHeightPx <= availableHeightPx) {
+    return baseWidthPx;
+  }
+  const pageAspectRatio = availableWidthPx / availableHeightPx;
+  return Math.max(baseWidthPx, Math.round(contentHeightPx * pageAspectRatio));
+}
+
+/**
  * Calculate the optimal fitToWidth for PDF "Fit to Page" mode.
  *
  * In PDF export, the rendered content is scaled to fit the printable area.
@@ -416,17 +444,10 @@ export function calculatePdfFitToWidth(
   // Base width matches PNG preset (full page at PNG_EXPORT_DPI, not INTERNAL_DPI)
   const baseWidthPx = mmToPxAtDpi(pageDims.width, PNG_EXPORT_DPI);
 
-  // If content is taller than available space, it will be scaled down.
-  // To fill the page after scaling, we need a wider content.
-  // Formula: optimalWidth = contentHeight * (availableWidth / availableHeight)
-  let optimalFitToWidth = baseWidthPx;
-  if (contentHeightPx > availableHeightPx) {
-    const pageAspectRatio = availableWidthPx / availableHeightPx;
-    optimalFitToWidth = Math.max(
-      baseWidthPx,
-      Math.round(contentHeightPx * pageAspectRatio)
-    );
-  }
-
-  return optimalFitToWidth;
+  return compensateForTallContent(
+    baseWidthPx,
+    contentHeightPx,
+    availableWidthPx,
+    availableHeightPx
+  );
 }
