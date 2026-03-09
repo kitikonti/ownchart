@@ -176,9 +176,9 @@ cd ../app-gantt-review
 - [x] `src/hooks/useFileOperations.ts` (250 LOC)
 - [x] `src/hooks/useMarqueeSelection.ts` (249 LOC)
 - [x] `src/hooks/useClipboardOperations.ts` (235 LOC)
-- [ ] `src/hooks/contextMenuItemBuilders.ts` (230 LOC)
-- [ ] `src/hooks/useZoom.ts` (217 LOC)
-- [ ] `src/hooks/useFullTaskContextMenuItems.ts` (200 LOC)
+- [x] `src/hooks/contextMenuItemBuilders.ts` (230 LOC)
+- [x] `src/hooks/useZoom.ts` (217 LOC)
+- [x] `src/hooks/useFullTaskContextMenuItems.ts` (200 LOC)
 - [ ] `src/hooks/useHideOperations.ts` (173 LOC)
 - [ ] `src/hooks/useTaskRowData.ts` (159 LOC)
 - [ ] `src/hooks/useLocalStoragePersistence.ts` (158 LOC)
@@ -235,8 +235,8 @@ cd ../app-gantt-review
 - [x] `src/utils/export/taskTableRenderer.ts` (421 LOC)
 - [x] `src/utils/export/svgExport.ts` (378 LOC)
 - [x] `src/utils/export/renderConstants.ts` (373 LOC)
-- [ ] `src/utils/export/types.ts` (374 LOC)
-- [ ] `src/utils/export/pdfLayout.ts` (355 LOC)
+- [x] `src/utils/export/types.ts` (374 LOC)
+- [x] `src/utils/export/pdfLayout.ts` (355 LOC)
 - [ ] `src/utils/export/calculations.ts` (294 LOC)
 - [ ] `src/utils/export/captureChart.ts` (171 LOC)
 - [ ] `src/utils/export/helpers.ts` (156 LOC)
@@ -289,9 +289,9 @@ cd ../app-gantt-review
 - [x] `src/config/version.ts` (5 LOC)
 
 ### Priority: LOW — App Entry & Type Declarations
-- [ ] `src/App.tsx` (112 LOC) — 5 Hex-Werte (Toast)
-- [ ] `src/main.tsx` (10 LOC)
-- [ ] `src/vite-env.d.ts` (9 LOC)
+- [x] `src/App.tsx` (112 LOC) — 5 Hex-Werte (Toast)
+- [x] `src/main.tsx` (10 LOC)
+- [x] `src/vite-env.d.ts` (9 LOC)
 
 ---
 
