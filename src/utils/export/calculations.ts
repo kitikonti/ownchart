@@ -201,6 +201,11 @@ export function calculateEffectiveZoom(
  * are not clipped at the edges of the exported date range.
  *
  * Returns `{ leftDays: 0, rightDays: 0 }` when no tasks or zoom are provided.
+ *
+ * @param options - Export options (density and label position used)
+ * @param tasks - Tasks whose bar labels may overflow the date range boundary
+ * @param effectiveZoom - Current effective zoom level (pixels per day scale factor)
+ * @returns Extra padding days to add on the left and right of the date range
  */
 function calculateLabelExtraPadding(
   options: ExportOptions,
@@ -226,21 +231,25 @@ function calculateLabelExtraPadding(
 /**
  * Build the padded "all tasks" date range, extending the project boundaries
  * by default padding plus any extra space needed to avoid clipping task labels.
+ *
+ * @param options - Export options (density and label position used for label padding)
+ * @param projectDateRange - Unpadded project start/end dates
+ * @param tasks - Tasks list for label overflow calculation; pass `[]` to skip label padding
+ * @param effectiveZoom - Zoom level for label overflow calculation; pass `0` to skip
+ * @returns ISO date strings for the padded min/max of the date range
  */
 function buildPaddedDateRange(
   options: ExportOptions,
   projectDateRange: { start: Date; end: Date },
-  tasks: Task[] | undefined,
-  effectiveZoom: number | undefined
+  tasks: Task[],
+  effectiveZoom: number
 ): { min: string; max: string } {
   let leftPadding = DEFAULT_LEFT_PADDING_DAYS;
   let rightPadding = DEFAULT_RIGHT_PADDING_DAYS;
 
-  if (tasks && effectiveZoom !== undefined) {
-    const extra = calculateLabelExtraPadding(options, tasks, effectiveZoom);
-    leftPadding += extra.leftDays;
-    rightPadding += extra.rightDays;
-  }
+  const extra = calculateLabelExtraPadding(options, tasks, effectiveZoom);
+  leftPadding += extra.leftDays;
+  rightPadding += extra.rightDays;
 
   return {
     min: addDays(
@@ -289,16 +298,26 @@ export function getEffectiveDateRange(
       return defaultRange;
 
     case "all":
-    default:
       if (projectDateRange) {
         return buildPaddedDateRange(
           options,
           projectDateRange,
-          tasks,
-          effectiveZoom
+          tasks ?? [],
+          effectiveZoom ?? 0
         );
       }
       return defaultRange;
+
+    default: {
+      // ExportDateRangeMode is a closed union — this branch should never be
+      // reached. The cast to `never` provides compile-time exhaustiveness:
+      // TypeScript will flag this line if a new dateRangeMode variant is
+      // added without a matching case, mirroring the pattern in
+      // calculateEffectiveZoom and getDefaultColumnWidth.
+      const _exhaustive: never = options.dateRangeMode;
+      void _exhaustive;
+      return defaultRange;
+    }
   }
 }
 

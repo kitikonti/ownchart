@@ -94,6 +94,55 @@ export async function raceWithTimeout<T>(
 }
 
 /**
+ * Make the container visible, run `toCanvas`, and race it against a timeout.
+ *
+ * Separated from `captureChart` to keep each function under 50 lines.
+ * The container is made visible immediately before capture so that
+ * html-to-image can measure layout; it is hidden again by the caller's
+ * finally block via `removeOffscreenContainer`.
+ *
+ * @param container - The offscreen container holding the rendered chart
+ * @param dimensions - Expected canvas width and height in pixels
+ * @param background - Export background setting used to derive backgroundColor
+ * @returns A canvas element containing the captured chart
+ * @throws If canvas capture times out (e.g. tab backgrounded during export)
+ */
+async function captureContainerToCanvas(
+  container: HTMLDivElement,
+  dimensions: { width: number; height: number },
+  background: "white" | "transparent"
+): Promise<HTMLCanvasElement> {
+  // Make visible for capture (html-to-image needs visible elements).
+  // The container is briefly visible here (opacity 1) but is removed by
+  // removeOffscreenContainer() in the caller's finally block as soon as
+  // capture completes or throws, bounding the visible window to capture duration.
+  container.style.opacity = "1";
+  await waitForPaint();
+
+  const capturePromise = toCanvas(container, {
+    pixelRatio: Math.max(window.devicePixelRatio, MIN_PIXEL_RATIO),
+    backgroundColor: background === "white" ? SVG_BACKGROUND_WHITE : undefined,
+    width: dimensions.width,
+    height: dimensions.height,
+    style: {
+      // Ensure the element is visible for capture
+      transform: "none",
+      left: "0",
+      top: "0",
+    },
+  });
+
+  // Race the capture against a timeout to prevent an indefinite hang when
+  // the tab is backgrounded and requestAnimationFrame is throttled/paused.
+  return raceWithTimeout(
+    capturePromise,
+    CANVAS_CAPTURE_TIMEOUT_MS,
+    `Canvas capture timed out after ${CANVAS_CAPTURE_TIMEOUT_MS / 1000}s. ` +
+      "Try keeping the tab in the foreground during export."
+  );
+}
+
+/**
  * Capture the chart to a canvas using offscreen rendering.
  * Renders the complete chart (including non-visible areas) at the specified
  * zoom level, then converts the DOM to a canvas via html-to-image.
@@ -116,10 +165,8 @@ export async function captureChart(
     currentAppZoom,
     projectDateRange,
     visibleDateRange,
-    // projectName is consumed by the caller (e.g. PNG download) not by captureChart.
   } = params;
 
-  // Calculate expected dimensions
   const dimensions = calculateExportDimensions(params);
 
   // Create container - must be on-screen for html-to-image (uses SVG foreignObject)
@@ -152,41 +199,15 @@ export async function captureChart(
       visibleDateRange,
     });
 
-    // Wait for fonts and paint
+    // Wait for fonts and paint before triggering capture
     await waitForFonts();
     await waitForPaint();
 
-    // Make visible for capture (html-to-image needs visible elements).
-    // The container is briefly visible here (opacity 1) but is removed by
-    // removeOffscreenContainer() in the finally block as soon as capture
-    // completes or throws, so the visible window is bounded by capture duration.
-    container.style.opacity = "1";
-    await waitForPaint();
-
-    const capturePromise = toCanvas(container, {
-      pixelRatio: Math.max(window.devicePixelRatio, MIN_PIXEL_RATIO),
-      backgroundColor:
-        options.background === "white" ? SVG_BACKGROUND_WHITE : undefined,
-      width: dimensions.width,
-      height: dimensions.height,
-      style: {
-        // Ensure the element is visible for capture
-        transform: "none",
-        left: "0",
-        top: "0",
-      },
-    });
-
-    // Race the capture against a timeout to prevent an indefinite hang when
-    // the tab is backgrounded and requestAnimationFrame is throttled/paused.
-    const canvas = await raceWithTimeout(
-      capturePromise,
-      CANVAS_CAPTURE_TIMEOUT_MS,
-      `Canvas capture timed out after ${CANVAS_CAPTURE_TIMEOUT_MS / 1000}s. ` +
-        "Try keeping the tab in the foreground during export."
+    return await captureContainerToCanvas(
+      container,
+      dimensions,
+      options.background
     );
-
-    return canvas;
   } finally {
     // Unmount the React tree only after capture (or on error), then remove
     // the container from the DOM. root may be undefined if renderAndSettle
@@ -212,13 +233,9 @@ export async function canvasToBlob(
   canvas: HTMLCanvasElement,
   quality = 1.0
 ): Promise<Blob> {
-  if (quality < 0 || quality > 1) {
-    // Warn developers about out-of-range values — the clamp below is a silent
-    // safety net, not a substitute for passing valid values.
-    console.warn(
-      `canvasToBlob: quality ${quality} is out of range [0, 1] and will be clamped.`
-    );
-  }
+  // Clamp to [0, 1] for forward-compatibility with lossy formats (JPEG/WebP).
+  // Out-of-range values are silently clamped rather than thrown so callers
+  // receive a valid result even if they pass a stale or miscalculated value.
   const clampedQuality = Math.max(0, Math.min(1, quality));
   return new Promise((resolve, reject) => {
     try {

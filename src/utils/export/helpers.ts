@@ -58,6 +58,59 @@ export async function waitForPaint(): Promise<void> {
 }
 
 /**
+ * Normalise font-family and font-weight presentation attributes on a single
+ * SVG text or tspan element.
+ *
+ * - Sets `font-family` as a presentation attribute so vector apps
+ *   (Illustrator/Inkscape) that ignore CSS style blocks pick up the correct font.
+ * - Maps numeric font-weight values 600/700 to the keyword "bold", which
+ *   svg2pdf.js requires (it does not accept numeric weights for bold text).
+ *   Values 400 ("normal") and 500 ("medium") are intentionally left as-is.
+ *
+ * @param element - A `<text>` or `<tspan>` SVG element (mutated in place)
+ */
+function normalizeTextElementFontAttributes(element: Element): void {
+  // setAttribute replaces any existing value, so no removeAttribute needed first.
+  element.setAttribute("font-family", SVG_FONT_FAMILY);
+
+  // Normalize font-weight: svg2pdf.js requires the keyword "bold" instead of
+  // the numeric equivalents 600 and 700.
+  const fontWeight = element.getAttribute("font-weight");
+  if (fontWeight === "600" || fontWeight === "700") {
+    element.setAttribute("font-weight", "bold");
+  }
+}
+
+/**
+ * Normalise font-family and font-weight values inside an element's inline
+ * `style` attribute string.
+ *
+ * The regexes are anchored to the start-of-string or a preceding semicolon
+ * so that custom or vendor-prefixed property names ending in `font-family`
+ * (e.g. `-x-font-family`) are not accidentally replaced.
+ *
+ * - Replaces any `font-family` declaration with `SVG_FONT_FAMILY`.
+ * - Maps `font-weight` 600/700 to the keyword "bold" for svg2pdf.js.
+ *
+ * @param element - Any element with an existing `style` attribute (mutated in place)
+ */
+function normalizeElementInlineStyle(element: Element): void {
+  let style = element.getAttribute("style") || "";
+  // Anchor the match to the start of the value or a preceding semicolon so
+  // that properties like `-x-font-family` are not accidentally replaced.
+  style = style.replace(
+    /(?:^|(?<=;))\s*font-family:\s*[^;]+;?/gi,
+    ` font-family: ${SVG_FONT_FAMILY};`
+  );
+  // Normalize font-weight in inline styles for svg2pdf.js.
+  style = style.replace(
+    /(?:^|(?<=;))\s*font-weight:\s*(600|700);?/gi,
+    " font-weight: bold;"
+  );
+  element.setAttribute("style", style.trimStart());
+}
+
+/**
  * Normalise font attributes on all elements in an SVG subtree.
  * Sets explicit font-family and font-weight attributes needed for:
  * - Vector apps (Illustrator/Inkscape) that ignore CSS style blocks
@@ -83,46 +136,21 @@ export function setFontFamilyOnTextElements(root: Element): void {
 
   while (head < queue.length) {
     const element = queue[head++];
-    // SVG element localNames are always lowercase per the SVG specification;
-    // .toLowerCase() is unnecessary but was harmless — removed for clarity.
+    // SVG element localNames are always lowercase per the SVG specification.
     const localName = element.localName;
     const isTextElement = localName === "text" || localName === "tspan";
 
-    // Set font-family and font-weight attributes on text and tspan elements.
-    // Presentation attributes are needed for vector apps (Illustrator/Inkscape)
-    // that ignore CSS style blocks.
+    // Set presentation attributes on text/tspan so vector apps that ignore
+    // CSS style blocks (Illustrator, Inkscape) still apply the correct font.
     if (isTextElement) {
-      // setAttribute replaces any existing value, so no removeAttribute needed first.
-      element.setAttribute("font-family", SVG_FONT_FAMILY);
-
-      // Normalize font-weight attribute: svg2pdf.js requires the keyword "bold"
-      // instead of the numeric equivalents 600 and 700.
-      // Values 400 ("normal") and 500 ("medium") are intentionally left as-is —
-      // svg2pdf.js handles the "normal" keyword natively, and 500 is unused in
-      // the current design system. If medium-weight text is ever introduced,
-      // add a mapping here.
-      const fontWeight = element.getAttribute("font-weight");
-      if (fontWeight === "600" || fontWeight === "700") {
-        element.setAttribute("font-weight", "bold");
-      }
+      normalizeTextElementFontAttributes(element);
     }
 
     // Normalise font-family/font-weight in inline style attributes on ALL elements
     // (including text/tspan — computed styles can propagate via the style attribute
     // in some SVG renderers, and svg2pdf.js reads both attribute and style values).
     if (element.hasAttribute("style")) {
-      let style = element.getAttribute("style") || "";
-      // Replace any font-family in inline styles
-      style = style.replace(
-        /font-family:\s*[^;]+;?/gi,
-        `font-family: ${SVG_FONT_FAMILY};`
-      );
-      // Normalize font-weight in inline styles for svg2pdf.js
-      style = style.replace(
-        /font-weight:\s*(600|700);?/gi,
-        "font-weight: bold;"
-      );
-      element.setAttribute("style", style);
+      normalizeElementInlineStyle(element);
     } else if (localName === "text") {
       // No existing style attribute on a <text> element — add one so renderers
       // that prefer style over presentation attributes pick up the correct
@@ -231,7 +259,12 @@ export function cloneSvgChildrenIntoGroup(
   setFontFamilyOnTextElements(group);
 }
 
-/** Conservative PNG compression ratio (typical range: 25–50% of raw RGBA) */
+/**
+ * Conservative PNG compression ratio for file-size estimation.
+ * Empirically, Gantt-style charts (mostly flat color fills with some text)
+ * compress to roughly 25–50% of raw RGBA; 35% is a representative midpoint
+ * that errs slightly on the larger side to avoid under-estimating.
+ */
 const PNG_COMPRESSION_RATIO = 0.35;
 
 /**
