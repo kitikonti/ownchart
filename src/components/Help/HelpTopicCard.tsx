@@ -83,7 +83,7 @@ export function HelpTopicCard({
 }: HelpTopicCardProps): ReactElement {
   if (compact) {
     return (
-      <div className="flex items-center justify-between py-1.5 px-2 -mx-2 rounded hover:bg-neutral-50 transition-colors">
+      <div className="flex items-center justify-between py-1.5 px-2 -mx-2 rounded">
         <span className="text-sm text-neutral-600">{topic.description}</span>
         {topic.shortcuts && topic.shortcuts.length > 0 ? (
           <ShortcutKeys keys={topic.shortcuts[0]} />

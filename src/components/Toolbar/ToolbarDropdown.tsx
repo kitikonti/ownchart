@@ -8,7 +8,7 @@
  * - Keyboard navigation support
  */
 
-import { useMemo, useState, useEffect, memo } from "react";
+import { useMemo, useState, useEffect, useCallback, memo } from "react";
 import type { ReactNode, ReactElement, KeyboardEvent } from "react";
 import { useDropdown } from "../../hooks/useDropdown";
 import { DropdownTrigger } from "./DropdownTrigger";
@@ -86,10 +86,13 @@ function ToolbarDropdownInner<T extends string = string>({
     ? `${idPrefix}-option-${options[focusedIndex]?.value ?? value}`
     : undefined;
 
-  const handleSelect = (optionValue: T): void => {
-    onChange(optionValue);
-    close(true);
-  };
+  const handleSelect = useCallback(
+    (optionValue: T): void => {
+      onChange(optionValue);
+      close(true);
+    },
+    [onChange, close]
+  );
 
   // Arrow key navigation for the listbox (WCAG 2.1 SC 2.1.1).
   const handleKeyDown = (e: KeyboardEvent<HTMLDivElement>): void => {

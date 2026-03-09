@@ -81,8 +81,11 @@ function GettingStartedTabInner({
                 {resolveShortcut(topic.description)}
               </p>
               {topic.tip && (
-                <p className="text-xs text-neutral-400 mt-1">
-                  Tip: {resolveShortcut(topic.tip)}
+                <p className="text-xs text-neutral-400 mt-1 flex items-center gap-1">
+                  {/* "Tip:" is announced once by screen readers via sr-only; visible label via aria-hidden. */}
+                  <span className="sr-only">Tip: </span>
+                  <span aria-hidden="true">Tip: </span>
+                  {resolveShortcut(topic.tip)}
                 </p>
               )}
             </div>

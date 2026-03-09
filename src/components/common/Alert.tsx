@@ -75,9 +75,10 @@ export function Alert({
   return (
     <div
       className={`flex items-start gap-3 px-4 py-3 rounded border ${styles.container}${className ? ` ${className}` : ""}`}
-      // role="alert" implies aria-live="assertive"; role="status" implies aria-live="polite".
-      // Explicit aria-live is redundant and removed to avoid confusion.
-      role={isUrgent ? "alert" : "status"}
+      // role="alert" is a live region for dynamically injected urgent messages.
+      // role="note" is used for static informational content (info/neutral),
+      // avoiding unwanted screen-reader announcements when panels mount.
+      role={isUrgent ? "alert" : "note"}
     >
       <span
         aria-hidden="true"
