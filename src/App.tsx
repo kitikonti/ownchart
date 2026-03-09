@@ -1,10 +1,13 @@
 /**
  * App - Root application component
- * Composes the main layout from sub-components.
- * Gates mobile devices with a block screen before mounting the full app.
+ *
+ * Three-layer structure:
+ *   App        → wraps everything in an error boundary
+ *   AppInner   → gates mobile devices before mounting the full app
+ *   AppContent → registers global hooks and renders the main layout
  */
 
-import { useEffect } from "react";
+import { useEffect, type ReactElement } from "react";
 import { Toaster } from "react-hot-toast";
 import { GanttLayout } from "./components/Layout";
 import { StatusBar } from "./components/StatusBar";
@@ -12,6 +15,7 @@ import { Ribbon } from "./components/Ribbon";
 import { ExportDialog } from "./components/Export";
 import { AboutDialog, HelpDialog, WelcomeTour } from "./components/Help";
 import { MobileBlockScreen } from "./components/MobileBlockScreen";
+import { AppErrorBoundary } from "./components/AppErrorBoundary";
 import { useKeyboardShortcuts } from "./hooks/useKeyboardShortcuts";
 import { useUnsavedChanges } from "./hooks/useUnsavedChanges";
 import { useMultiTabPersistence } from "./hooks/useMultiTabPersistence";
@@ -20,9 +24,21 @@ import { useLaunchQueue } from "./hooks/useLaunchQueue";
 import { useDeviceDetection } from "./hooks/useDeviceDetection";
 import { useUIStore } from "./store/slices/uiSlice";
 import { useUserPreferencesStore } from "./store/slices/userPreferencesSlice";
-import { COLORS, TOAST } from "./styles/design-tokens";
+import { COLORS, SHADOWS, TOAST } from "./styles/design-tokens";
 
-function App(): JSX.Element {
+export function App(): ReactElement {
+  return (
+    <AppErrorBoundary>
+      <AppInner />
+    </AppErrorBoundary>
+  );
+}
+
+/**
+ * AppInner - Gates mobile devices before mounting the full app.
+ * Shows MobileBlockScreen on narrow touch devices; renders AppContent otherwise.
+ */
+function AppInner(): ReactElement {
   const { shouldShowMobileBlock, dismiss } = useDeviceDetection();
 
   if (shouldShowMobileBlock) {
@@ -32,13 +48,17 @@ function App(): JSX.Element {
   return <AppContent />;
 }
 
-function AppContent(): JSX.Element {
+/**
+ * AppContent - Registers all global hooks and renders the main application layout.
+ * Only mounted after AppInner confirms we are not on a blocked mobile device.
+ */
+function AppContent(): ReactElement {
   const checkFirstTimeUser = useUIStore((state) => state.checkFirstTimeUser);
   const initializePreferences = useUserPreferencesStore(
     (state) => state.initializePreferences
   );
 
-  // Enable global keyboard shortcuts (Ctrl+Z, Ctrl+Shift+Z, Ctrl+Y, Ctrl+S, Ctrl+O, Ctrl+Alt+N, Ctrl+E, ?)
+  // Enable global keyboard shortcuts
   useKeyboardShortcuts();
 
   // Warn before leaving with unsaved changes
@@ -61,31 +81,25 @@ function AppContent(): JSX.Element {
 
   return (
     <>
-      {/* Export Dialog */}
       <ExportDialog />
-
-      {/* Help Dialog */}
       <HelpDialog />
-
-      {/* About Dialog */}
       <AboutDialog />
-
-      {/* Welcome Tour for first-time users */}
       <WelcomeTour />
 
+      {/* react-hot-toast requires a style object for toast appearance — Tailwind classes
+          are not applicable here. Values are sourced from design tokens for consistency. */}
       <Toaster
         position="bottom-right"
         toastOptions={{
-          duration: 3000,
+          duration: TOAST.durationMs,
           style: {
             background: TOAST.bg,
             color: TOAST.text,
-            borderRadius: "8px",
-            boxShadow:
-              "0 10px 15px -3px rgba(15, 23, 42, 0.15), 0 4px 6px -2px rgba(15, 23, 42, 0.08)",
+            borderRadius: TOAST.borderRadius,
+            boxShadow: SHADOWS.toast,
             fontFamily: "var(--font-sans)",
-            fontSize: "14px",
-            padding: "12px 16px",
+            fontSize: TOAST.fontSize,
+            padding: TOAST.padding,
           },
           success: {
             iconTheme: {
@@ -109,5 +123,3 @@ function AppContent(): JSX.Element {
     </>
   );
 }
-
-export default App;
