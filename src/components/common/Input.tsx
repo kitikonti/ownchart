@@ -6,7 +6,7 @@
  * - figma: Figma-style with brand-colored focus ring
  */
 
-import { forwardRef } from "react";
+import { forwardRef, memo } from "react";
 import type { InputHTMLAttributes, JSX } from "react";
 import {
   type FormControlVariant,
@@ -41,29 +41,31 @@ export interface InputProps extends Omit<
 const baseClasses =
   "px-3 py-2 text-sm bg-white border rounded transition-colors duration-150 disabled:opacity-50 disabled:cursor-not-allowed disabled:bg-neutral-50";
 
-export const Input = forwardRef<HTMLInputElement, InputProps>(
-  (
-    {
-      variant = "default",
-      mono = false,
-      fullWidth = true,
-      className = "",
-      ...props
-    },
-    ref
-  ): JSX.Element => {
-    const classes = [
-      baseClasses,
-      formControlVariantClasses[variant],
-      fullWidth ? "w-full" : "",
-      mono ? "font-mono" : "",
-      className,
-    ]
-      .filter(Boolean)
-      .join(" ");
+export const Input = memo(
+  forwardRef<HTMLInputElement, InputProps>(
+    (
+      {
+        variant = "default",
+        mono = false,
+        fullWidth = true,
+        className = "",
+        ...props
+      },
+      ref
+    ): JSX.Element => {
+      const classes = [
+        baseClasses,
+        formControlVariantClasses[variant],
+        fullWidth ? "w-full" : "",
+        mono ? "font-mono" : "",
+        className,
+      ]
+        .filter(Boolean)
+        .join(" ");
 
-    return <input ref={ref} className={classes} {...props} />;
-  }
+      return <input ref={ref} className={classes} {...props} />;
+    }
+  )
 );
 
 Input.displayName = "Input";

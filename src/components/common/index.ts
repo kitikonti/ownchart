@@ -14,6 +14,8 @@ export { CollapsibleSection } from "./CollapsibleSection";
 export type { CollapsibleSectionProps } from "./CollapsibleSection";
 export { FieldLabel } from "./FieldLabel";
 export type { FieldLabelProps } from "./FieldLabel";
+// Shared form control variant type (value map is internal — use Input/Select components)
+export type { FormControlVariant } from "./formVariantClasses";
 export { Input } from "./Input";
 export type { InputProps, InputVariant } from "./Input";
 export { LabeledCheckbox } from "./LabeledCheckbox";
@@ -33,5 +35,3 @@ export type {
 } from "./SegmentedControl";
 export { Select } from "./Select";
 export type { SelectProps, SelectVariant } from "./Select";
-// Shared form control variant type (value map is internal — use Input/Select components)
-export type { FormControlVariant } from "./formVariantClasses";

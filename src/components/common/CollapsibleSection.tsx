@@ -62,7 +62,12 @@ export function CollapsibleSection({
       <div
         id={contentId}
         aria-hidden={!isOpen}
-        className={`mt-3 bg-neutral-50 rounded px-6 py-4 space-y-5${isOpen ? "" : " hidden"}`}
+        className={[
+          "mt-3 bg-neutral-50 rounded px-6 py-4 space-y-5",
+          !isOpen && "hidden",
+        ]
+          .filter(Boolean)
+          .join(" ")}
       >
         {children}
       </div>
