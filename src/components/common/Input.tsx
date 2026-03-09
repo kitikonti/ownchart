@@ -16,6 +16,9 @@ export type InputVariant = FormControlVariant;
 
 export interface InputProps extends Omit<
   InputHTMLAttributes<HTMLInputElement>,
+  // Omit then re-declare className so it is always optional (the base
+  // HTMLAttributes type makes it optional too, but being explicit here
+  // prevents accidental breakage if the upstream type ever changes).
   "className"
 > {
   /** Style variant */

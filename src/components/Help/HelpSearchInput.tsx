@@ -3,7 +3,7 @@
  */
 
 import { useRef, useEffect, useCallback } from "react";
-import type { ChangeEvent } from "react";
+import type { ChangeEvent, JSX } from "react";
 import { MagnifyingGlass, X } from "@phosphor-icons/react";
 import { Input } from "../common/Input";
 
@@ -41,7 +41,7 @@ export function HelpSearchInput({
   }, [onChange]);
 
   return (
-    <div role="search" className="relative">
+    <div role="search" aria-label="Help topics search" className="relative">
       <MagnifyingGlass
         size={16}
         className="absolute left-3 top-1/2 -translate-y-1/2 text-neutral-400 pointer-events-none z-10"

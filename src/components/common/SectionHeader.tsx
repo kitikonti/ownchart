@@ -7,7 +7,7 @@
  * - bordered: Title with bottom border (for lists)
  */
 
-import type { ReactNode } from "react";
+import type { JSX, ReactNode } from "react";
 
 export type SectionHeaderVariant = "default" | "simple" | "bordered";
 
@@ -20,10 +20,13 @@ export interface SectionHeaderProps {
   variant?: SectionHeaderVariant;
   /**
    * HTML element to use — choose based on the heading hierarchy of the surrounding context.
-   * @remarks Use `"span"` only when the heading must remain inline and the surrounding context
-   * already provides a proper sectioning landmark (e.g. the parent renders an `<h2>` or a
-   * `<section aria-labelledby="...">` that establishes the region). Avoid `"span"` for
-   * standalone section headers as it breaks heading-based document navigation for screen readers.
+   * - `"h2"` / `"h3"`: most common choices for nested section headers within a dialog or panel.
+   * - `"h1"`: use only for top-level page headings where no parent heading exists.
+   * - `"span"`: use only when the heading must remain inline and the surrounding context
+   *   already provides a proper sectioning landmark (e.g. the parent renders an `<h2>` or a
+   *   `<section aria-labelledby="...">` that establishes the region). Avoid `"span"` for
+   *   standalone section headers as it breaks heading-based document navigation for screen readers.
+   * @default "h3"
    */
   as?: "h1" | "h2" | "h3" | "span";
   /** Optional id so a parent <section> can reference this heading via aria-labelledby */
