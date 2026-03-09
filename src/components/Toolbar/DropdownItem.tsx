@@ -89,7 +89,12 @@ export const DropdownItem = memo(function DropdownItem({
           ].join(" ")}
         >
           {isSelected && (
-            <Check size={16} weight="bold" className="text-brand-600" />
+            <Check
+              size={16}
+              weight="bold"
+              className="text-brand-600"
+              aria-hidden="true"
+            />
           )}
         </span>
       )}

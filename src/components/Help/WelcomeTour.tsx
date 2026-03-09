@@ -123,9 +123,9 @@ export const WelcomeTour = memo(function WelcomeTour(): JSX.Element | null {
         <div className="space-y-3">
           <h3 className="text-sm font-semibold text-neutral-900">Quick tips</h3>
 
-          {TOUR_TIPS.map((tip) => (
+          {TOUR_TIPS.map((tip, index) => (
             <div
-              key={tip.label}
+              key={index}
               className="flex items-start gap-3 p-3 bg-neutral-50 rounded border border-neutral-200"
             >
               <div className={`p-2 ${tip.iconBg} rounded`} aria-hidden="true">

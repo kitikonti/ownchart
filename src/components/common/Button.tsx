@@ -8,7 +8,12 @@
  * - Danger: Red background for destructive actions
  */
 
-import { forwardRef, type ButtonHTMLAttributes, type ReactNode } from "react";
+import {
+  forwardRef,
+  memo,
+  type ButtonHTMLAttributes,
+  type ReactNode,
+} from "react";
 
 type ButtonVariant = "primary" | "secondary" | "ghost" | "danger";
 type ButtonSize = "sm" | "md" | "lg";
@@ -67,8 +72,8 @@ const baseStyles =
  * <Button variant="primary" icon={<DownloadIcon size={16} />}>Export</Button>
  * ```
  */
-export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
-  function Button(
+export const Button = memo(
+  forwardRef<HTMLButtonElement, ButtonProps>(function Button(
     {
       variant = "primary",
       size = "md",
@@ -113,7 +118,7 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
         {iconAfter && <span className="flex-shrink-0">{iconAfter}</span>}
       </button>
     );
-  }
+  })
 );
 
 Button.displayName = "Button";

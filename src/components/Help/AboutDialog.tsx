@@ -41,7 +41,10 @@ const ExternalLink = memo(function ExternalLink({
       rel="noopener noreferrer"
       className="flex items-start gap-3 group py-1 rounded -mx-1 px-1 hover:bg-neutral-50 transition-colors"
     >
-      <span className="mt-0.5 text-neutral-500 group-hover:text-neutral-700 flex-shrink-0">
+      <span
+        className="mt-0.5 text-neutral-500 group-hover:text-neutral-700 flex-shrink-0"
+        aria-hidden="true"
+      >
         {icon}
       </span>
       <div className="flex-1 min-w-0">
