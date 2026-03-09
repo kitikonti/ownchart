@@ -51,7 +51,7 @@ const ExternalLink = memo(function ExternalLink({
         {sublabel && (
           <span className="flex items-center gap-1 text-xs text-neutral-400 group-hover:text-brand-600">
             {sublabel}
-            <ArrowSquareOut size={11} weight="regular" />
+            <ArrowSquareOut size={11} weight="regular" aria-hidden="true" />
           </span>
         )}
       </div>

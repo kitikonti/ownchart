@@ -84,6 +84,14 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
     },
     ref
   ) {
+    if (import.meta.env.DEV && icon && !children && !props["aria-label"]) {
+      console.warn(
+        "[Button] Icon-only button detected without an `aria-label`. " +
+          "Screen readers will not be able to announce this button's purpose. " +
+          "Add an `aria-label` prop describing the action."
+      );
+    }
+
     return (
       <button
         ref={ref}
