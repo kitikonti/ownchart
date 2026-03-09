@@ -6,8 +6,7 @@
  * - figma: Figma-style with brand-colored focus ring
  */
 
-import type { InputHTMLAttributes } from "react";
-import { forwardRef } from "react";
+import { forwardRef, type InputHTMLAttributes } from "react";
 
 export type InputVariant = "default" | "figma";
 
@@ -23,6 +22,13 @@ export interface InputProps extends Omit<
   fullWidth?: boolean;
   /** Additional CSS classes */
   className?: string;
+  /**
+   * @remarks Callers MUST supply an accessible label via one of:
+   * - `aria-label` (e.g. standalone search inputs)
+   * - `aria-labelledby` pointing to a visible label element
+   * - A wrapping `<label>` element that references this input via `htmlFor`
+   */
+  "aria-label"?: string;
 }
 
 const baseClasses =

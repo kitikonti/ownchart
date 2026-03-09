@@ -18,7 +18,13 @@ export interface SectionHeaderProps {
   icon?: ReactNode;
   /** Style variant */
   variant?: SectionHeaderVariant;
-  /** HTML element to use — choose based on the heading hierarchy of the surrounding context */
+  /**
+   * HTML element to use — choose based on the heading hierarchy of the surrounding context.
+   * @remarks Use `"span"` only when the heading must remain inline and the surrounding context
+   * already provides a proper sectioning landmark (e.g. the parent renders an `<h2>` or a
+   * `<section aria-labelledby="...">` that establishes the region). Avoid `"span"` for
+   * standalone section headers as it breaks heading-based document navigation for screen readers.
+   */
   as?: "h1" | "h2" | "h3" | "span";
   /** Optional id so a parent <section> can reference this heading via aria-labelledby */
   id?: string;

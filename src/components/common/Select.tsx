@@ -23,6 +23,13 @@ export interface SelectProps extends Omit<
   variant?: SelectVariant;
   /** Additional CSS classes */
   className?: string;
+  /**
+   * @remarks Callers MUST supply an accessible label via one of:
+   * - `aria-label` (e.g. standalone selects without visible label text)
+   * - `aria-labelledby` pointing to a visible label element
+   * - A wrapping `<label>` element that references this select via `htmlFor`
+   */
+  "aria-label"?: string;
 }
 
 const baseClasses =
@@ -32,7 +39,7 @@ const variantClasses = {
   default:
     "border-neutral-300 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-brand-600 focus-visible:border-brand-600 hover:border-neutral-400",
   figma:
-    "border-neutral-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-100 focus-visible:border-brand-600",
+    "border-neutral-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-300 focus-visible:border-brand-600",
 };
 
 export const Select = forwardRef<HTMLSelectElement, SelectProps>(
