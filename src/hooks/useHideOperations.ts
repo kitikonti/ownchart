@@ -18,28 +18,6 @@ function pluralize(count: number, word: string): string {
   return `${count} ${word}${count !== 1 ? "s" : ""}`;
 }
 
-/** Shared logic for unhiding specific task IDs: update store, record command, show toast. */
-function performUnhide(idsToUnhide: TaskId[]): void {
-  if (idsToUnhide.length === 0) return;
-
-  const previousHiddenTaskIds = [...useChartStore.getState().hiddenTaskIds];
-  useChartStore.getState().unhideTasks(idsToUnhide);
-  useFileStore.getState().markDirty();
-
-  useHistoryStore.getState().recordCommand({
-    id: crypto.randomUUID(),
-    type: CommandType.UNHIDE_TASKS,
-    timestamp: Date.now(),
-    description: `Show ${pluralize(idsToUnhide.length, "hidden task")}`,
-    params: {
-      taskIds: idsToUnhide,
-      previousHiddenTaskIds,
-    },
-  });
-
-  toast.success(`${pluralize(idsToUnhide.length, "task")} shown`);
-}
-
 interface UseHideOperationsResult {
   /** Hide tasks by IDs (includes descendants for summary tasks). Records undo command. */
   hideRows: (taskIds: TaskId[]) => void;
@@ -56,6 +34,28 @@ interface UseHideOperationsResult {
 export function useHideOperations(): UseHideOperationsResult {
   const hideTasks = useChartStore((state) => state.hideTasks);
   const { flattenedTasks, allFlattenedTasks } = useFlattenedTasks();
+
+  /** Shared logic for unhiding specific task IDs: update store, record command, show toast. */
+  const unhideTaskIds = useCallback((idsToUnhide: TaskId[]): void => {
+    if (idsToUnhide.length === 0) return;
+
+    const previousHiddenTaskIds = [...useChartStore.getState().hiddenTaskIds];
+    useChartStore.getState().unhideTasks(idsToUnhide);
+    useFileStore.getState().markDirty();
+
+    useHistoryStore.getState().recordCommand({
+      id: crypto.randomUUID(),
+      type: CommandType.UNHIDE_TASKS,
+      timestamp: Date.now(),
+      description: `Show ${pluralize(idsToUnhide.length, "hidden task")}`,
+      params: {
+        taskIds: idsToUnhide,
+        previousHiddenTaskIds,
+      },
+    });
+
+    toast.success(`${pluralize(idsToUnhide.length, "task")} shown`);
+  }, []);
 
   const hideRows = useCallback(
     (taskIds: TaskId[]): void => {
@@ -116,9 +116,9 @@ export function useHideOperations(): UseHideOperationsResult {
             item.globalRowNumber > fromRowNum && item.globalRowNumber < toRowNum
         )
         .map((item) => item.task.id);
-      performUnhide(idsToUnhide);
+      unhideTaskIds(idsToUnhide);
     },
-    [allFlattenedTasks]
+    [allFlattenedTasks, unhideTaskIds]
   );
 
   /** Find the row range spanned by selectedTaskIds and return hidden task IDs within. */
@@ -159,9 +159,9 @@ export function useHideOperations(): UseHideOperationsResult {
 
   const unhideSelection = useCallback(
     (selectedTaskIds: TaskId[]): void => {
-      performUnhide(getHiddenIdsInSelection(selectedTaskIds));
+      unhideTaskIds(getHiddenIdsInSelection(selectedTaskIds));
     },
-    [getHiddenIdsInSelection]
+    [unhideTaskIds, getHiddenIdsInSelection]
   );
 
   return {

@@ -61,6 +61,7 @@ export function useTableHeaderContextMenu(): UseTableHeaderContextMenuResult {
 
     const items: ContextMenuItem[] = [];
     const hideableColumns = getHideableColumns();
+    const hiddenSet = new Set(hiddenColumns);
 
     // ── Group 1: Size to Fit ──
     const canAutoFit = columnId !== "rowNumber" && columnId !== "color";
@@ -91,7 +92,7 @@ export function useTableHeaderContextMenu(): UseTableHeaderContextMenuResult {
     // ── Group 2: Column visibility checkmarks ──
     for (let i = 0; i < hideableColumns.length; i++) {
       const col = hideableColumns[i];
-      const isVisible = !hiddenColumns.includes(col.id);
+      const isVisible = !hiddenSet.has(col.id);
       const isLast = i === hideableColumns.length - 1;
 
       items.push({

@@ -132,6 +132,7 @@ export function useTaskRowData(
           const nextTask: FlattenedTask | undefined = flattenedTasks[index + 1];
           const nextTaskId = nextTask?.task.id;
 
+          // Sentinel: one past the end means no hidden tasks below the last visible row.
           const nextRowNum = nextTask
             ? nextTask.globalRowNumber
             : allFlattenedTasks.length + 1;
