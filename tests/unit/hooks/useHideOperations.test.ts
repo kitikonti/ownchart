@@ -16,6 +16,7 @@ import { useTaskStore } from "../../../src/store/slices/taskSlice";
 import { useHistoryStore } from "../../../src/store/slices/historySlice";
 import { useFileStore } from "../../../src/store/slices/fileSlice";
 import { buildFlattenedTaskList } from "../../../src/utils/hierarchy";
+import { computeHiddenIdsInSelection } from "../../../src/hooks/useHideOperations";
 import { CommandType } from "../../../src/types/command.types";
 import type { Task } from "../../../src/types/chart.types";
 
@@ -462,5 +463,81 @@ describe("useHideOperations orchestration", () => {
       useHistoryStore.getState().undo();
       expect(useChartStore.getState().hiddenTaskIds).toEqual(prevHidden);
     });
+  });
+});
+
+// ── Pure function tests for computeHiddenIdsInSelection ───────────────────────
+
+describe("computeHiddenIdsInSelection", () => {
+  function makeFlattenedTasks(
+    ids: string[],
+    hiddenIds: Set<string> = new Set()
+  ) {
+    const tasks = ids.map((id, i) =>
+      createTask(id, `Task ${id}`, { order: i })
+    );
+    const all = buildFlattenedTaskList(tasks, new Set());
+    const visible = all.filter((item) => !hiddenIds.has(item.task.id));
+    return { all, visible };
+  }
+
+  it("should return empty array when fewer than 2 tasks selected", () => {
+    const { all, visible } = makeFlattenedTasks(["1", "2", "3"]);
+    expect(computeHiddenIdsInSelection([], visible, all, [])).toEqual([]);
+    expect(computeHiddenIdsInSelection(["1"], visible, all, [])).toEqual([]);
+  });
+
+  it("should return empty array when no hidden tasks in selection range", () => {
+    const { all, visible } = makeFlattenedTasks(["1", "2", "3"]);
+    expect(computeHiddenIdsInSelection(["1", "3"], visible, all, [])).toEqual(
+      []
+    );
+  });
+
+  it("should return hidden task IDs within the row range", () => {
+    const hiddenIds = new Set(["3"]);
+    const { all, visible } = makeFlattenedTasks(
+      ["1", "2", "3", "4", "5"],
+      hiddenIds
+    );
+    const result = computeHiddenIdsInSelection(
+      ["2", "4"],
+      visible,
+      all,
+      ["3"]
+    );
+    expect(result).toEqual(["3"]);
+  });
+
+  it("should return multiple hidden task IDs within range", () => {
+    const hiddenIds = new Set(["2", "3"]);
+    const { all, visible } = makeFlattenedTasks(
+      ["1", "2", "3", "4"],
+      hiddenIds
+    );
+    const result = computeHiddenIdsInSelection(
+      ["1", "4"],
+      visible,
+      all,
+      ["2", "3"]
+    );
+    expect(result).toContain("2");
+    expect(result).toContain("3");
+    expect(result).toHaveLength(2);
+  });
+
+  it("should not return hidden tasks outside the selection range", () => {
+    const hiddenIds = new Set(["2", "5"]);
+    const { all, visible } = makeFlattenedTasks(
+      ["1", "2", "3", "4", "5"],
+      hiddenIds
+    );
+    const result = computeHiddenIdsInSelection(
+      ["1", "3"],
+      visible,
+      all,
+      ["2", "5"]
+    );
+    expect(result).toEqual(["2"]);
   });
 });

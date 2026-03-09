@@ -3,7 +3,7 @@
  * Windows Explorer-style: Size to Fit, column checkmarks, Show All.
  */
 
-import { useMemo, useState, useCallback, createElement } from "react";
+import { useMemo, useState, useCallback } from "react";
 import { Eye, ArrowsHorizontal } from "@phosphor-icons/react";
 import type {
   ContextMenuItem,
@@ -77,10 +77,12 @@ export function useTableHeaderContextMenu(): UseTableHeaderContextMenuResult {
     items.push({
       id: "sizeToFit",
       label: `Size "${displayLabel}" to Fit`,
-      icon: createElement(ArrowsHorizontal, {
-        size: CONTEXT_MENU.iconSize,
-        weight: CONTEXT_MENU.iconWeight,
-      }),
+      icon: (
+        <ArrowsHorizontal
+          size={CONTEXT_MENU.iconSize}
+          weight={CONTEXT_MENU.iconWeight}
+        />
+      ),
       onClick: () => autoFitColumn(columnId),
       disabled: !canAutoFit,
     });
@@ -88,10 +90,12 @@ export function useTableHeaderContextMenu(): UseTableHeaderContextMenuResult {
     items.push({
       id: "sizeAllToFit",
       label: "Size All Columns to Fit",
-      icon: createElement(ArrowsHorizontal, {
-        size: CONTEXT_MENU.iconSize,
-        weight: CONTEXT_MENU.iconWeight,
-      }),
+      icon: (
+        <ArrowsHorizontal
+          size={CONTEXT_MENU.iconSize}
+          weight={CONTEXT_MENU.iconWeight}
+        />
+      ),
       onClick: autoFitAllColumns,
       separator: true,
     });
@@ -115,10 +119,9 @@ export function useTableHeaderContextMenu(): UseTableHeaderContextMenuResult {
     items.push({
       id: "showAllColumns",
       label: "Show All Columns",
-      icon: createElement(Eye, {
-        size: CONTEXT_MENU.iconSize,
-        weight: CONTEXT_MENU.iconWeight,
-      }),
+      icon: (
+        <Eye size={CONTEXT_MENU.iconSize} weight={CONTEXT_MENU.iconWeight} />
+      ),
       onClick: () => setHiddenColumns([]),
       disabled: hiddenColumns.length === 0,
     });

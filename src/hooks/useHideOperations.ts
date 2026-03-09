@@ -11,12 +11,9 @@ import { useFileStore } from "../store/slices/fileSlice";
 import { useFlattenedTasks } from "./useFlattenedTasks";
 import { CommandType } from "../types/command.types";
 import type { TaskId } from "../types/branded.types";
+import type { FlattenedTask } from "../utils/hierarchy";
+import { pluralize } from "../utils/stringUtils";
 import toast from "react-hot-toast";
-
-/** Simple pluralization: pluralize(3, "task") → "3 tasks" */
-function pluralize(count: number, word: string): string {
-  return `${count} ${word}${count !== 1 ? "s" : ""}`;
-}
 
 interface UseHideOperationsResult {
   /** Hide tasks by IDs (includes descendants for summary tasks). Records undo command. */
@@ -31,11 +28,51 @@ interface UseHideOperationsResult {
   getHiddenInSelectionCount: (selectedTaskIds: TaskId[]) => number;
 }
 
+/**
+ * Pure helper: given visible and all flattened task lists plus current hidden state,
+ * returns the IDs of hidden tasks that fall within the row range spanned by the
+ * selected task IDs. Exported for unit testing.
+ */
+export function computeHiddenIdsInSelection(
+  selectedTaskIds: TaskId[],
+  flattenedTasks: FlattenedTask[],
+  allFlattenedTasks: FlattenedTask[],
+  hiddenTaskIds: TaskId[]
+): TaskId[] {
+  if (selectedTaskIds.length < 2) return [];
+
+  const selectedSet = new Set(selectedTaskIds);
+  const selectedRowNums = flattenedTasks
+    .filter(({ task }) => selectedSet.has(task.id))
+    .map(({ globalRowNumber }) => globalRowNumber)
+    .sort((a, b) => a - b);
+
+  if (selectedRowNums.length < 2) return [];
+
+  const firstRow = selectedRowNums[0];
+  const lastRow = selectedRowNums[selectedRowNums.length - 1];
+  const hiddenSet = new Set(hiddenTaskIds);
+
+  return allFlattenedTasks
+    .filter(
+      (item) =>
+        item.globalRowNumber >= firstRow &&
+        item.globalRowNumber <= lastRow &&
+        hiddenSet.has(item.task.id)
+    )
+    .map((item) => item.task.id);
+}
+
 export function useHideOperations(): UseHideOperationsResult {
   const hideTasks = useChartStore((state) => state.hideTasks);
   const { flattenedTasks, allFlattenedTasks } = useFlattenedTasks();
 
-  /** Shared logic for unhiding specific task IDs: update store, record command, show toast. */
+  /**
+   * Shared logic for unhiding specific task IDs: update store, record command, show toast.
+   *
+   * Empty dependency array is intentional: all store reads use getState() (not reactive
+   * subscriptions), so there are no captured values that can go stale.
+   */
   const unhideTaskIds = useCallback((idsToUnhide: TaskId[]): void => {
     if (idsToUnhide.length === 0) return;
 
@@ -121,47 +158,30 @@ export function useHideOperations(): UseHideOperationsResult {
     [allFlattenedTasks, unhideTaskIds]
   );
 
-  /** Find the row range spanned by selectedTaskIds and return hidden task IDs within. */
-  const getHiddenIdsInSelection = useCallback(
-    (selectedTaskIds: TaskId[]): TaskId[] => {
-      if (selectedTaskIds.length < 2) return [];
-
-      const selectedSet = new Set(selectedTaskIds);
-      const selectedRowNums = flattenedTasks
-        .filter(({ task }) => selectedSet.has(task.id))
-        .map(({ globalRowNumber }) => globalRowNumber)
-        .sort((a, b) => a - b);
-
-      if (selectedRowNums.length < 2) return [];
-
-      const firstRow = selectedRowNums[0];
-      const lastRow = selectedRowNums[selectedRowNums.length - 1];
-      const hiddenSet = new Set(useChartStore.getState().hiddenTaskIds);
-
-      return allFlattenedTasks
-        .filter(
-          (item) =>
-            item.globalRowNumber >= firstRow &&
-            item.globalRowNumber <= lastRow &&
-            hiddenSet.has(item.task.id)
-        )
-        .map((item) => item.task.id);
+  const getHiddenInSelectionCount = useCallback(
+    (selectedTaskIds: TaskId[]): number => {
+      return computeHiddenIdsInSelection(
+        selectedTaskIds,
+        flattenedTasks,
+        allFlattenedTasks,
+        useChartStore.getState().hiddenTaskIds
+      ).length;
     },
     [flattenedTasks, allFlattenedTasks]
   );
 
-  const getHiddenInSelectionCount = useCallback(
-    (selectedTaskIds: TaskId[]): number => {
-      return getHiddenIdsInSelection(selectedTaskIds).length;
-    },
-    [getHiddenIdsInSelection]
-  );
-
   const unhideSelection = useCallback(
     (selectedTaskIds: TaskId[]): void => {
-      unhideTaskIds(getHiddenIdsInSelection(selectedTaskIds));
+      unhideTaskIds(
+        computeHiddenIdsInSelection(
+          selectedTaskIds,
+          flattenedTasks,
+          allFlattenedTasks,
+          useChartStore.getState().hiddenTaskIds
+        )
+      );
     },
-    [unhideTaskIds, getHiddenIdsInSelection]
+    [unhideTaskIds, flattenedTasks, allFlattenedTasks]
   );
 
   return {

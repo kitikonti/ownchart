@@ -88,6 +88,8 @@ export function getHiddenGapAbove(firstGlobalRowNumber: number): {
   };
 }
 
+// Invariant: globalRowNumber is 1-based and contiguous across allFlattenedTasks.
+// length+1 is therefore a safe sentinel value "one past the end" for gap detection.
 const NO_HIDDEN_ABOVE = { hasHiddenAbove: false, hiddenAboveCount: 0 } as const;
 
 // ── Hook ─────────────────────────────────────────────────────────────────────
@@ -97,6 +99,7 @@ export function useTaskRowData(
 ): {
   taskRowData: TaskRowDatum[];
   visibleTaskIds: TaskId[];
+  /** Convenience shortcut for taskRowData.length — avoids re-deriving in consumers. */
   flattenedTaskCount: number;
 } {
   const clipboardTaskIds = useTaskStore((state) => state.clipboardTaskIds);
@@ -133,9 +136,11 @@ export function useTaskRowData(
           const nextTaskId = nextTask?.task.id;
 
           // Sentinel: one past the end means no hidden tasks below the last visible row.
+          // (globalRowNumber is 1-based; allFlattenedTasks.length + 1 is safe as sentinel.)
+          const SENTINEL_AFTER_LAST = allFlattenedTasks.length + 1;
           const nextRowNum = nextTask
             ? nextTask.globalRowNumber
-            : allFlattenedTasks.length + 1;
+            : SENTINEL_AFTER_LAST;
           const { hasHiddenBelow, hiddenBelowCount } = getHiddenGap(
             globalRowNumber,
             nextRowNum
