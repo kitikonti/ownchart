@@ -8,7 +8,7 @@ import type { Root } from "react-dom/client";
 import { createElement } from "react";
 import type { ComponentProps } from "react";
 import { toCanvas } from "html-to-image";
-import type { ExportLayoutInput } from "./types";
+import type { ExportLayoutInput, ExportOptions } from "./types";
 import { ExportRenderer } from "../../components/Export/ExportRenderer";
 import { calculateExportDimensions } from "./exportLayout";
 import { REACT_RENDER_WAIT_MS, SVG_BACKGROUND_WHITE } from "./constants";
@@ -110,7 +110,7 @@ export async function raceWithTimeout<T>(
 async function captureContainerToCanvas(
   container: HTMLDivElement,
   dimensions: { width: number; height: number },
-  background: "white" | "transparent"
+  background: ExportOptions["background"]
 ): Promise<HTMLCanvasElement> {
   // Make visible for capture (html-to-image needs visible elements).
   // The container is briefly visible here (opacity 1) but is removed by

@@ -184,6 +184,10 @@ export function generateExportFilename(
       "generateExportFilename: extension must be a non-empty string"
     );
   }
+  // Strip a leading dot so callers can safely pass either "pdf" or ".pdf".
+  const normalizedExtension = extension.startsWith(".")
+    ? extension.slice(1)
+    : extension;
   const now = new Date();
   // Uses local time so the timestamp matches what the user sees on their clock.
   const year = now.getFullYear();
@@ -194,7 +198,7 @@ export function generateExportFilename(
   const seconds = String(now.getSeconds()).padStart(2, "0");
 
   const baseName = projectName ? sanitizeFilename(projectName) : "gantt-chart";
-  return `${baseName}-${year}${month}${day}-${hours}${minutes}${seconds}.${extension}`;
+  return `${baseName}-${year}${month}${day}-${hours}${minutes}${seconds}.${normalizedExtension}`;
 }
 
 /**

@@ -66,6 +66,42 @@ const EXPAND_BUTTON_WIDTH_PX = 16;
 const NAME_COLUMN_GAPS_PX = 8;
 
 /**
+ * Recursively compute the nesting level for a single task ID.
+ *
+ * Extracted from `buildTaskLevelMap` so it can be independently tested and so
+ * that the outer function stays under the 50-line limit.
+ *
+ * @param taskId - The task ID to compute the level for
+ * @param taskById - Full task lookup map
+ * @param levelCache - Memoisation cache (mutated in place)
+ * @param computing - In-progress task IDs for cycle detection (mutated in place)
+ * @returns Nesting depth (0 = root); 0 is also returned for tasks in a cycle
+ */
+function computeTaskLevel(
+  taskId: string,
+  taskById: Map<string, Task>,
+  levelCache: Map<string, number>,
+  computing: Set<string>
+): number {
+  const cached = levelCache.get(taskId);
+  if (cached !== undefined) return cached;
+  if (computing.has(taskId)) {
+    // Circular reference — treat as root to prevent infinite recursion
+    levelCache.set(taskId, 0);
+    return 0;
+  }
+  computing.add(taskId);
+  const task = taskById.get(taskId);
+  const level =
+    task?.parent && taskById.has(task.parent)
+      ? computeTaskLevel(task.parent, taskById, levelCache, computing) + 1
+      : 0;
+  computing.delete(taskId);
+  levelCache.set(taskId, level);
+  return level;
+}
+
+/**
  * Build a map from task ID → nesting level (0 = root) in a single O(n) pass.
  * Uses memoised parent-chain walking so every task's level is computed at most
  * once. This avoids the O(n²) cost of calling `getTaskLevel` (which rebuilds
@@ -79,27 +115,8 @@ function buildTaskLevelMap(tasks: Task[]): Map<string, number> {
   const levelCache = new Map<string, number>();
   const computing = new Set<string>();
 
-  function computeLevel(taskId: string): number {
-    const cached = levelCache.get(taskId);
-    if (cached !== undefined) return cached;
-    if (computing.has(taskId)) {
-      // Circular reference — treat as root
-      levelCache.set(taskId, 0);
-      return 0;
-    }
-    computing.add(taskId);
-    const task = taskById.get(taskId);
-    const level =
-      task?.parent && taskById.has(task.parent)
-        ? computeLevel(task.parent) + 1
-        : 0;
-    computing.delete(taskId);
-    levelCache.set(taskId, level);
-    return level;
-  }
-
   for (const task of tasks) {
-    computeLevel(task.id);
+    computeTaskLevel(task.id, taskById, levelCache, computing);
   }
   return levelCache;
 }

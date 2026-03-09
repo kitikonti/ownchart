@@ -113,6 +113,15 @@ describe("generateExportFilename", () => {
       "extension must be a non-empty string"
     );
   });
+
+  it("strips a leading dot from the extension so callers may pass '.pdf' or 'pdf'", () => {
+    const withDot = generateExportFilename("Test", ".pdf");
+    const withoutDot = generateExportFilename("Test", "pdf");
+    // Both should produce the same result — no double-dot in the filename
+    expect(withDot).toBe(withoutDot);
+    expect(withDot).toMatch(/\.pdf$/);
+    expect(withDot).not.toContain("..");
+  });
 });
 
 // ---------------------------------------------------------------------------
