@@ -6,7 +6,7 @@
  * - figma: Figma-style with brand-colored focus ring
  */
 
-import { forwardRef, type InputHTMLAttributes } from "react";
+import { forwardRef, type InputHTMLAttributes, type JSX } from "react";
 import {
   type FormControlVariant,
   formControlVariantClasses,
@@ -41,7 +41,7 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(
       ...props
     },
     ref
-  ) => {
+  ): JSX.Element => {
     const classes = [
       baseClasses,
       formControlVariantClasses[variant],

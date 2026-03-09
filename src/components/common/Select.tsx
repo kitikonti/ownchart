@@ -8,8 +8,12 @@
  * Accepts children for custom option rendering (including optgroups).
  */
 
-import type { SelectHTMLAttributes, ReactNode } from "react";
-import { forwardRef } from "react";
+import {
+  forwardRef,
+  type SelectHTMLAttributes,
+  type ReactNode,
+  type JSX,
+} from "react";
 import {
   type FormControlVariant,
   formControlVariantClasses,
@@ -33,7 +37,10 @@ const baseClasses =
   "w-full px-3 py-2 text-sm bg-white border rounded cursor-pointer transition-colors duration-150 disabled:opacity-50 disabled:cursor-not-allowed disabled:bg-neutral-50";
 
 export const Select = forwardRef<HTMLSelectElement, SelectProps>(
-  ({ children, variant = "default", className = "", ...props }, ref) => {
+  (
+    { children, variant = "default", className = "", ...props },
+    ref
+  ): JSX.Element => {
     const classes = [baseClasses, formControlVariantClasses[variant], className]
       .filter(Boolean)
       .join(" ");

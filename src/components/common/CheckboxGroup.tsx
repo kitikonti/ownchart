@@ -3,6 +3,7 @@
  * Used in export dialogs for column and timeline option selection.
  */
 
+import { useCallback, type JSX } from "react";
 import { Checkbox } from "./Checkbox";
 
 export interface CheckboxGroupItem {
@@ -20,6 +21,33 @@ export interface CheckboxGroupProps {
   ariaLabel: string;
 }
 
+interface CheckboxGroupRowProps {
+  item: CheckboxGroupItem;
+  showDivider: boolean;
+  onChange: (key: string, checked: boolean) => void;
+}
+
+function CheckboxGroupRow({
+  item,
+  showDivider,
+  onChange,
+}: CheckboxGroupRowProps): JSX.Element {
+  const handleChange = useCallback(
+    (checked: boolean): void => onChange(item.key, checked),
+    [item.key, onChange]
+  );
+
+  return (
+    <li>
+      {showDivider && <div className="divider-h-light mb-2.5" />}
+      <label className="flex items-center gap-3 cursor-pointer group min-h-[32px]">
+        <Checkbox checked={item.checked} onChange={handleChange} />
+        <span className="text-sm text-neutral-900">{item.label}</span>
+      </label>
+    </li>
+  );
+}
+
 export function CheckboxGroup({
   items,
   onChange,
@@ -33,16 +61,12 @@ export function CheckboxGroup({
     >
       <ul className="space-y-2.5 list-none p-0 m-0">
         {items.map((item, idx) => (
-          <li key={item.key}>
-            {idx > 0 && <div className="divider-h-light mb-2.5" />}
-            <label className="flex items-center gap-3 cursor-pointer group min-h-[32px]">
-              <Checkbox
-                checked={item.checked}
-                onChange={(checked) => onChange(item.key, checked)}
-              />
-              <span className="text-sm text-neutral-900">{item.label}</span>
-            </label>
-          </li>
+          <CheckboxGroupRow
+            key={item.key}
+            item={item}
+            showDivider={idx > 0}
+            onChange={onChange}
+          />
         ))}
       </ul>
     </div>

@@ -31,11 +31,11 @@ export function HelpSearchInput({
   }, []);
 
   const handleChange = useCallback(
-    (e: ChangeEvent<HTMLInputElement>) => onChange(e.target.value),
+    (e: ChangeEvent<HTMLInputElement>): void => onChange(e.target.value),
     [onChange]
   );
 
-  const handleClear = useCallback(() => {
+  const handleClear = useCallback((): void => {
     onChange("");
     inputRef.current?.focus();
   }, [onChange]);
