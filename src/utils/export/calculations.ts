@@ -255,28 +255,6 @@ function buildPaddedDateRange(
 }
 
 /**
- * Build the "all tasks" date range with padding, falling back to the default
- * range when no project date range is available.
- */
-function resolveAllTasksDateRange(
-  options: ExportOptions,
-  projectDateRange: { start: Date; end: Date } | undefined,
-  defaultRange: { min: string; max: string },
-  tasks: Task[] | undefined,
-  effectiveZoom: number | undefined
-): { min: string; max: string } {
-  if (projectDateRange) {
-    return buildPaddedDateRange(
-      options,
-      projectDateRange,
-      tasks,
-      effectiveZoom
-    );
-  }
-  return defaultRange;
-}
-
-/**
  * Calculate the effective date range based on date range mode.
  * When tasks and effectiveZoom are provided, label padding is calculated
  * to ensure task labels are not clipped in the export.
@@ -312,13 +290,15 @@ export function getEffectiveDateRange(
 
     case "all":
     default:
-      return resolveAllTasksDateRange(
-        options,
-        projectDateRange,
-        defaultRange,
-        tasks,
-        effectiveZoom
-      );
+      if (projectDateRange) {
+        return buildPaddedDateRange(
+          options,
+          projectDateRange,
+          tasks,
+          effectiveZoom
+        );
+      }
+      return defaultRange;
   }
 }
 

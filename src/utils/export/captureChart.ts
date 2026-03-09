@@ -116,9 +116,7 @@ export async function captureChart(
     currentAppZoom,
     projectDateRange,
     visibleDateRange,
-    // projectName is part of CaptureChartParams for the caller's convenience
-    // (e.g. the PNG download step uses it for the filename) but is not consumed
-    // inside captureChart itself — the function only handles rendering & capture.
+    // projectName is consumed by the caller (e.g. PNG download) not by captureChart.
   } = params;
 
   // Calculate expected dimensions
@@ -214,6 +212,13 @@ export async function canvasToBlob(
   canvas: HTMLCanvasElement,
   quality = 1.0
 ): Promise<Blob> {
+  if (quality < 0 || quality > 1) {
+    // Warn developers about out-of-range values — the clamp below is a silent
+    // safety net, not a substitute for passing valid values.
+    console.warn(
+      `canvasToBlob: quality ${quality} is out of range [0, 1] and will be clamped.`
+    );
+  }
   const clampedQuality = Math.max(0, Math.min(1, quality));
   return new Promise((resolve, reject) => {
     try {

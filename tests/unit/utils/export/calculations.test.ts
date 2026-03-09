@@ -13,9 +13,11 @@ import {
   getDefaultColumnWidth,
   calculateTaskTableWidth,
   calculateOptimalColumnWidths,
+  calculateOptimalColumnWidth,
 } from "../../../../src/utils/export/calculations";
 import type { ExportOptions } from "../../../../src/utils/export/types";
 import { DEFAULT_EXPORT_OPTIONS } from "../../../../src/utils/export/types";
+import type { Task } from "../../../../src/types/chart.types";
 
 const baseOptions: ExportOptions = {
   ...DEFAULT_EXPORT_OPTIONS,
@@ -403,5 +405,123 @@ describe("calculateOptimalColumnWidths", () => {
   it("returns empty object for empty selectedColumns", () => {
     const result = calculateOptimalColumnWidths([], [], "comfortable");
     expect(result).toEqual({});
+  });
+});
+
+// ---------------------------------------------------------------------------
+// calculateOptimalColumnWidth (singular)
+// ---------------------------------------------------------------------------
+
+const makeTask = (id: string, overrides: Partial<Task> = {}): Task => ({
+  id,
+  name: `Task ${id}`,
+  startDate: "2025-01-01",
+  endDate: "2025-01-15",
+  duration: 14,
+  progress: 0,
+  color: "#4A90E2",
+  order: 0,
+  metadata: {},
+  type: "task",
+  ...overrides,
+});
+
+describe("calculateOptimalColumnWidth", () => {
+  it("returns the fixed color column width for the 'color' key (early-return path)", () => {
+    const result = calculateOptimalColumnWidth("color", [], "comfortable");
+    const defaultWidth = getDefaultColumnWidth("color", "comfortable");
+    // The color column always returns its density default regardless of tasks
+    expect(result).toBe(defaultWidth);
+  });
+
+  it("returns a positive width for the 'name' column with flat tasks", () => {
+    const tasks = [makeTask("1"), makeTask("2")];
+    const result = calculateOptimalColumnWidth("name", tasks, "comfortable");
+    expect(result).toBeGreaterThan(0);
+  });
+
+  it("returns a wider 'name' column for deeply nested tasks (extra indent)", () => {
+    const flat = [makeTask("root")];
+    const nested = [
+      makeTask("root"),
+      makeTask("child", { parent: "root" }),
+      makeTask("grandchild", { parent: "child" }),
+    ];
+    const flatWidth = calculateOptimalColumnWidth("name", flat, "comfortable");
+    const nestedWidth = calculateOptimalColumnWidth(
+      "name",
+      nested,
+      "comfortable"
+    );
+    // Deeper nesting adds indent pixels → wider optimal width
+    expect(nestedWidth).toBeGreaterThanOrEqual(flatWidth);
+  });
+
+  it("returns a positive width for a data column like 'startDate'", () => {
+    const tasks = [makeTask("1", { startDate: "2025-03-01" })];
+    const result = calculateOptimalColumnWidth("startDate", tasks, "comfortable");
+    expect(result).toBeGreaterThan(0);
+  });
+
+  it("returns a positive width for an empty task list (header label drives minimum)", () => {
+    const result = calculateOptimalColumnWidth("endDate", [], "comfortable");
+    expect(result).toBeGreaterThan(0);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// getEffectiveDateRange — label-padding branch ('all' mode with tasks + zoom)
+// ---------------------------------------------------------------------------
+
+describe("getEffectiveDateRange — label-padding branch", () => {
+  const projectDateRange = {
+    start: new Date("2025-01-01"),
+    end: new Date("2025-03-01"),
+  };
+
+  it("produces a wider range when tasks with long names and low zoom are provided", () => {
+    const baseOptions = { ...DEFAULT_EXPORT_OPTIONS, dateRangeMode: "all" as const };
+
+    // Baseline: no tasks, no extra label padding applied
+    const baseResult = getEffectiveDateRange(
+      baseOptions,
+      projectDateRange,
+      undefined
+    );
+
+    // With tasks and a low zoom the label-padding path adds extra days on each side
+    const tasks = [
+      makeTask("1", {
+        name: "Very Long Task Name That Extends Past Bar Edge",
+        startDate: "2025-01-01",
+        endDate: "2025-03-01",
+      }),
+    ];
+    const paddedResult = getEffectiveDateRange(
+      baseOptions,
+      projectDateRange,
+      undefined,
+      tasks,
+      0.1 // very low zoom → large pixels-per-day → potential label overflow
+    );
+
+    // The padded range must be at least as wide as the base-padded range
+    const baseMinMs = new Date(baseResult.min).getTime();
+    const baseMaxMs = new Date(baseResult.max).getTime();
+    const paddedMinMs = new Date(paddedResult.min).getTime();
+    const paddedMaxMs = new Date(paddedResult.max).getTime();
+
+    expect(paddedMinMs).toBeLessThanOrEqual(baseMinMs);
+    expect(paddedMaxMs).toBeGreaterThanOrEqual(baseMaxMs);
+  });
+
+  it("uses the default range (no tasks, no zoom) when no projectDateRange is provided", () => {
+    const options = { ...DEFAULT_EXPORT_OPTIONS, dateRangeMode: "all" as const };
+    const result = getEffectiveDateRange(options, undefined, undefined, [], 1.0);
+    // Should fall back to today ± default look-back/ahead
+    expect(result.min).toBeTruthy();
+    expect(result.max).toBeTruthy();
+    // Result should not be the custom project range
+    expect(result.min).not.toBe("2024-12-25");
   });
 });

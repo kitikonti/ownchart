@@ -92,8 +92,7 @@ export function setFontFamilyOnTextElements(root: Element): void {
     // Presentation attributes are needed for vector apps (Illustrator/Inkscape)
     // that ignore CSS style blocks.
     if (isTextElement) {
-      // Remove any existing font-family attribute to ensure our value takes precedence
-      element.removeAttribute("font-family");
+      // setAttribute replaces any existing value, so no removeAttribute needed first.
       element.setAttribute("font-family", SVG_FONT_FAMILY);
 
       // Normalize font-weight attribute: svg2pdf.js requires the keyword "bold"
