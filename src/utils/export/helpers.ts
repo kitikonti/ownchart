@@ -98,11 +98,13 @@ function normalizeElementInlineStyle(element: Element): void {
   let style = element.getAttribute("style") || "";
   // Anchor the match to the start of the value or a preceding semicolon so
   // that properties like `-x-font-family` are not accidentally replaced.
+  // Lookbehind assertion requires ES2018+ / V8 ≥ 62 — all supported browsers qualify.
   style = style.replace(
     /(?:^|(?<=;))\s*font-family:\s*[^;]+;?/gi,
     ` font-family: ${SVG_FONT_FAMILY};`
   );
   // Normalize font-weight in inline styles for svg2pdf.js.
+  // Lookbehind assertion requires ES2018+ / V8 ≥ 62 — all supported browsers qualify.
   style = style.replace(
     /(?:^|(?<=;))\s*font-weight:\s*(600|700);?/gi,
     " font-weight: bold;"

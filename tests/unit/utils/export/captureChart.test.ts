@@ -131,6 +131,38 @@ describe("canvasToBlob", () => {
       "The canvas has been tainted by cross-origin data."
     );
   });
+
+  it("clamps quality above 1 to 1 and forwards the clamped value to canvas.toBlob", async () => {
+    const mockBlob = new Blob([], { type: "image/png" });
+    const mockCanvas = {
+      toBlob: vi.fn((callback: BlobCallback) => {
+        callback(mockBlob);
+      }),
+    } as unknown as HTMLCanvasElement;
+
+    await canvasToBlob(mockCanvas, 1.5);
+    expect(mockCanvas.toBlob).toHaveBeenCalledWith(
+      expect.any(Function),
+      "image/png",
+      1
+    );
+  });
+
+  it("clamps quality below 0 to 0 and forwards the clamped value to canvas.toBlob", async () => {
+    const mockBlob = new Blob([], { type: "image/png" });
+    const mockCanvas = {
+      toBlob: vi.fn((callback: BlobCallback) => {
+        callback(mockBlob);
+      }),
+    } as unknown as HTMLCanvasElement;
+
+    await canvasToBlob(mockCanvas, -0.5);
+    expect(mockCanvas.toBlob).toHaveBeenCalledWith(
+      expect.any(Function),
+      "image/png",
+      0
+    );
+  });
 });
 
 // ---------------------------------------------------------------------------

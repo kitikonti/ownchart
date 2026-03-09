@@ -16,7 +16,6 @@ import {
   calculateColumnWidth,
 } from "../textMeasurement";
 
-// Sibling module imports
 import { getColumnDisplayValue, HEADER_LABELS } from "./columns";
 
 /** Base pixels per day at 100% zoom */
@@ -37,9 +36,10 @@ const DEFAULT_RANGE_LOOKAHEAD_DAYS = 30;
 /**
  * Fallback width in pixels for column keys not yet covered by the switch in
  * `getDefaultColumnWidth`. This branch should never be reached in practice
- * because `ExportColumnKey` is a closed union — if a new key is added to
- * that union without a matching case, TypeScript will not flag it here, so
- * keep this fallback and add the new case explicitly.
+ * because `ExportColumnKey` is a closed union. The `never` cast in the switch
+ * default acts as a compile-time exhaustiveness guard: TypeScript will flag
+ * that line if a new key is added without a matching case. The fallback value
+ * here is kept as a runtime safety net in case the cast is removed.
  */
 const UNKNOWN_COLUMN_DEFAULT_WIDTH_PX = 100;
 
@@ -281,6 +281,47 @@ function buildPaddedDateRange(
 }
 
 /**
+ * Build the date range for "visible" mode.
+ * Returns the visible window as ISO date strings, or undefined when no range is available.
+ */
+function buildVisibleDateRange(
+  visibleDateRange: { start: Date; end: Date } | undefined
+): { min: string; max: string } | undefined {
+  if (!visibleDateRange) return undefined;
+  return {
+    min: visibleDateRange.start.toISOString().split("T")[0],
+    max: visibleDateRange.end.toISOString().split("T")[0],
+  };
+}
+
+/**
+ * Build the date range for "custom" mode.
+ * Returns the user-supplied date strings when both ends are present, otherwise undefined.
+ */
+function buildCustomDateRange(
+  options: ExportOptions
+): { min: string; max: string } | undefined {
+  if (options.customDateStart && options.customDateEnd) {
+    return { min: options.customDateStart, max: options.customDateEnd };
+  }
+  return undefined;
+}
+
+/**
+ * Build the date range for "all" mode.
+ * Delegates to buildPaddedDateRange when a project range is available, otherwise undefined.
+ */
+function buildAllTasksDateRange(
+  options: ExportOptions,
+  projectDateRange: { start: Date; end: Date } | undefined,
+  tasks: Task[],
+  effectiveZoom: number
+): { min: string; max: string } | undefined {
+  if (!projectDateRange) return undefined;
+  return buildPaddedDateRange(options, projectDateRange, tasks, effectiveZoom);
+}
+
+/**
  * Calculate the effective date range based on date range mode.
  * When tasks and effectiveZoom are provided, label padding is calculated
  * to ensure task labels are not clipped in the export.
@@ -300,30 +341,20 @@ export function getEffectiveDateRange(
 
   switch (options.dateRangeMode) {
     case "visible":
-      if (visibleDateRange) {
-        return {
-          min: visibleDateRange.start.toISOString().split("T")[0],
-          max: visibleDateRange.end.toISOString().split("T")[0],
-        };
-      }
-      return defaultRange;
+      return buildVisibleDateRange(visibleDateRange) ?? defaultRange;
 
     case "custom":
-      if (options.customDateStart && options.customDateEnd) {
-        return { min: options.customDateStart, max: options.customDateEnd };
-      }
-      return defaultRange;
+      return buildCustomDateRange(options) ?? defaultRange;
 
     case "all":
-      if (projectDateRange) {
-        return buildPaddedDateRange(
+      return (
+        buildAllTasksDateRange(
           options,
           projectDateRange,
           tasks ?? [],
           effectiveZoom ?? 0
-        );
-      }
-      return defaultRange;
+        ) ?? defaultRange
+      );
 
     default: {
       // ExportDateRangeMode is a closed union — this branch should never be

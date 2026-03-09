@@ -216,7 +216,7 @@ export interface ExportQuickPreset {
 export interface ExportOptions {
   /** How the zoom level is determined */
   zoomMode: ExportZoomMode;
-  /** Timeline zoom level (affects horizontal scale) - used when zoomMode is 'preset' or 'custom' */
+  /** Timeline zoom level (affects horizontal scale) - used when zoomMode is 'custom' */
   timelineZoom: number;
   /** Target width in pixels - used when zoomMode is 'fitToWidth' */
   fitToWidth: number;
