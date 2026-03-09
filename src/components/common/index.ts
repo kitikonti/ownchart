@@ -33,4 +33,5 @@ export type {
 } from "./SegmentedControl";
 export { Select } from "./Select";
 export type { SelectProps, SelectVariant } from "./Select";
+// Shared / cross-component types
 export type { FormControlVariant } from "./formVariantClasses";

@@ -41,7 +41,7 @@ export function HelpSearchInput({
   }, [onChange]);
 
   return (
-    <div role="search" aria-label="Help topics search" className="relative">
+    <div role="search" aria-label="Search help topics" className="relative">
       <MagnifyingGlass
         size={16}
         className="absolute left-3 top-1/2 -translate-y-1/2 text-neutral-400 pointer-events-none z-10"
