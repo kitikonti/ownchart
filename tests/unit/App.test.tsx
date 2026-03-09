@@ -1,6 +1,6 @@
 import { render, screen, fireEvent } from '@testing-library/react';
 import { describe, it, expect, beforeEach } from 'vitest';
-import App from '../../src/App';
+import { App } from '../../src/App';
 
 describe('App', () => {
   // Set up localStorage to skip welcome tour and avoid chart settings dialog

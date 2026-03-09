@@ -7,7 +7,8 @@
  *   AppContent → registers global hooks and renders the main layout
  */
 
-import { useEffect, type ReactElement } from "react";
+import { useEffect } from "react";
+import type { ReactElement } from "react";
 import { Toaster } from "react-hot-toast";
 import { GanttLayout } from "./components/Layout";
 import { StatusBar } from "./components/StatusBar";
@@ -26,7 +27,7 @@ import { useUIStore } from "./store/slices/uiSlice";
 import { useUserPreferencesStore } from "./store/slices/userPreferencesSlice";
 import { COLORS, SHADOWS, TOAST } from "./styles/design-tokens";
 
-function App(): ReactElement {
+export function App(): ReactElement {
   return (
     <AppErrorBoundary>
       <AppInner />
@@ -78,6 +79,8 @@ function AppContent(): ReactElement {
       <AboutDialog />
       <WelcomeTour />
 
+      {/* react-hot-toast requires a style object for toast appearance — Tailwind classes
+          are not applicable here. Values are sourced from design tokens for consistency. */}
       <Toaster
         position="bottom-right"
         toastOptions={{
@@ -113,5 +116,3 @@ function AppContent(): ReactElement {
     </>
   );
 }
-
-export default App;
