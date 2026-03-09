@@ -90,7 +90,7 @@ export interface PdfMetadata {
 /** PDF-specific export options */
 export interface PdfExportOptions {
   pageSize: PdfPageSize;
-  customPageSize?: PdfCustomPageSize; // for custom page size
+  customPageSize?: PdfCustomPageSize; // only used when pageSize === "custom"
   orientation: PdfOrientation;
   marginPreset: PdfMarginPreset;
   customMargins?: PdfMargins;
@@ -114,18 +114,50 @@ export const PDF_PAGE_SIZES: Record<
   tabloid: { width: 432, height: 279 },
 };
 
+// Named margin constants to avoid magic numbers in PDF_MARGIN_PRESETS.
+// "normal" is the baseline; "narrow" halves it; "wide" roughly doubles it.
+const PDF_MARGIN_NORMAL_TOPBOTTOM_MM = 10;
+const PDF_MARGIN_NORMAL_SIDE_MM = 15;
+const PDF_MARGIN_NARROW_MM = 5;
+const PDF_MARGIN_WIDE_TOPBOTTOM_MM = 20;
+const PDF_MARGIN_WIDE_SIDE_MM = 25;
+
 /** PDF margin presets in mm */
 export const PDF_MARGIN_PRESETS: Record<PdfMarginPreset, PdfMargins> = {
-  normal: { top: 10, bottom: 10, left: 15, right: 15 },
-  narrow: { top: 5, bottom: 5, left: 5, right: 5 },
-  wide: { top: 20, bottom: 20, left: 25, right: 25 },
+  normal: {
+    top: PDF_MARGIN_NORMAL_TOPBOTTOM_MM,
+    bottom: PDF_MARGIN_NORMAL_TOPBOTTOM_MM,
+    left: PDF_MARGIN_NORMAL_SIDE_MM,
+    right: PDF_MARGIN_NORMAL_SIDE_MM,
+  },
+  narrow: {
+    top: PDF_MARGIN_NARROW_MM,
+    bottom: PDF_MARGIN_NARROW_MM,
+    left: PDF_MARGIN_NARROW_MM,
+    right: PDF_MARGIN_NARROW_MM,
+  },
+  wide: {
+    top: PDF_MARGIN_WIDE_TOPBOTTOM_MM,
+    bottom: PDF_MARGIN_WIDE_TOPBOTTOM_MM,
+    left: PDF_MARGIN_WIDE_SIDE_MM,
+    right: PDF_MARGIN_WIDE_SIDE_MM,
+  },
   none: { top: 0, bottom: 0, left: 0, right: 0 },
-  custom: { top: 10, bottom: 10, left: 15, right: 15 },
+  // "custom" fallback mirrors "normal" so users see a sensible starting point
+  // when they first switch to the custom preset.
+  custom: {
+    top: PDF_MARGIN_NORMAL_TOPBOTTOM_MM,
+    bottom: PDF_MARGIN_NORMAL_TOPBOTTOM_MM,
+    left: PDF_MARGIN_NORMAL_SIDE_MM,
+    right: PDF_MARGIN_NORMAL_SIDE_MM,
+  },
 };
 
 /** Default PDF export options */
 export const DEFAULT_PDF_OPTIONS: PdfExportOptions = {
   pageSize: "a4",
+  // Pre-seeded so the user sees a sensible canvas size when switching to "custom"
+  // even though pageSize defaults to "a4" and customPageSize is normally ignored.
   customPageSize: DEFAULT_CUSTOM_PAGE_SIZE,
   orientation: "landscape",
   marginPreset: "normal",
@@ -216,6 +248,9 @@ export type ExportZoomMode = "currentView" | "custom" | "fitToWidth";
 /** Date range mode for export */
 export type ExportDateRangeMode = "all" | "visible" | "custom";
 
+/** Background fill mode for export (white canvas or transparent) */
+export type ExportBackground = "white" | "transparent";
+
 /** Quick preset for common export sizes */
 export interface ExportQuickPreset {
   key: string;
@@ -261,9 +296,6 @@ export interface ExportOptions {
   /** UI density for export */
   density: UiDensity;
 }
-
-/** Background fill mode for export (white canvas or transparent) */
-export type ExportBackground = "white" | "transparent";
 
 /** Boolean toggle keys in ExportOptions (type-safe subset for checkbox groups) */
 export type ExportBooleanKey =

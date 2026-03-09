@@ -26,7 +26,8 @@ import { HEADER_HEIGHT } from "./constants";
  * @deprecated These re-exports exist only for backwards compatibility with callers
  * that imported from pdfLayout before the DPI helpers were extracted to ./dpi.
  * Import directly from './dpi' for new code.
- * TODO(v1.4): remove these re-exports once all callers are migrated to './dpi'.
+ * TODO: Remove these re-exports once all callers are migrated to './dpi'.
+ *       Track progress by searching for `from.*pdfLayout` imports of these names.
  */
 export { INTERNAL_DPI, PNG_EXPORT_DPI, MM_PER_INCH } from "./dpi";
 /** @deprecated Import from './dpi' directly. */
@@ -100,11 +101,11 @@ export const PDF_HEADER_FOOTER_RESERVED_MM = 10;
 
 /**
  * Approximation of average character width as a fraction of font size (in pt).
- * Based on Helvetica metrics; used for text truncation width estimation.
+ * Based on Helvetica metrics; used exclusively by truncateText() for width estimation.
  */
 const HELVETICA_AVG_CHAR_WIDTH_RATIO = 0.5;
 
-/** Ellipsis string appended when text is truncated. */
+/** Ellipsis string appended when text is truncated. Used only by truncateText(). */
 const ELLIPSIS = "...";
 
 /**
@@ -281,7 +282,14 @@ export interface PdfColor {
 export function hexToRgb(hex: string): PdfColor {
   const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
   if (!result) {
-    // Invalid hex string — return a neutral gray as a safe fallback
+    // Invalid hex string (including unsupported 3-digit shorthand) —
+    // return a neutral gray as a safe fallback to avoid crashing PDF rendering.
+    if (import.meta.env.DEV) {
+      console.warn(
+        "[pdfLayout] hexToRgb: unsupported or invalid hex value:",
+        hex
+      );
+    }
     return { r: 128, g: 128, b: 128 };
   }
   return {
@@ -327,6 +335,25 @@ export function truncateText(
 }
 
 /**
+ * Estimate the total content height in pixels for a given task list and export options.
+ * Used internally by calculatePdfFitToWidth to determine whether content overflows the
+ * available page height, which drives the aspect-ratio compensation logic.
+ *
+ * @param tasks - All tasks to export (including hidden/collapsed — hierarchy determines rows)
+ * @param options - Export options (for density and header inclusion)
+ * @returns Estimated content height in pixels at INTERNAL_DPI
+ */
+function estimateContentHeightPx(
+  tasks: Task[],
+  options: ExportOptions
+): number {
+  const densityConfig = DENSITY_CONFIG[options.density];
+  const contentHeaderHeight = options.includeHeader ? HEADER_HEIGHT : 0;
+  const flattenedTasks = buildFlattenedTaskList(tasks, new Set<TaskId>());
+  return flattenedTasks.length * densityConfig.rowHeight + contentHeaderHeight;
+}
+
+/**
  * Calculate the optimal fitToWidth for PDF "Fit to Page" mode.
  *
  * In PDF export, the rendered content is scaled to fit the printable area.
@@ -365,12 +392,7 @@ export function calculatePdfFitToWidth(
   const availableWidthPx = mmToPxAtDpi(availableWidthMm, PNG_EXPORT_DPI);
   const availableHeightPx = mmToPxAtDpi(availableHeightMm, PNG_EXPORT_DPI);
 
-  // Calculate content height based on task count
-  const densityConfig = DENSITY_CONFIG[options.density];
-  const contentHeaderHeight = options.includeHeader ? HEADER_HEIGHT : 0;
-  const flattenedTasks = buildFlattenedTaskList(tasks, new Set<TaskId>());
-  const contentHeightPx =
-    flattenedTasks.length * densityConfig.rowHeight + contentHeaderHeight;
+  const contentHeightPx = estimateContentHeightPx(tasks, options);
 
   // Base width matches PNG preset (full page at PNG_EXPORT_DPI, not INTERNAL_DPI)
   const baseWidthPx = mmToPxAtDpi(pageDims.width, PNG_EXPORT_DPI);

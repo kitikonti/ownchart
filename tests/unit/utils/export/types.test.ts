@@ -13,6 +13,9 @@ import {
   EXPORT_MAX_SAFE_WIDTH,
   EXPORT_ZOOM_MIN,
   EXPORT_ZOOM_MAX,
+  EXPORT_QUICK_PRESETS,
+  DEFAULT_FIT_TO_WIDTH_PX,
+  UHD_SCREEN_WIDTH_PX,
 } from "../../../../src/utils/export/types";
 
 describe("export types", () => {
@@ -259,6 +262,71 @@ describe("export types", () => {
 
     it("has zoom min less than zoom max", () => {
       expect(EXPORT_ZOOM_MIN).toBeLessThan(EXPORT_ZOOM_MAX);
+    });
+  });
+
+  describe("EXPORT_QUICK_PRESETS", () => {
+    it("contains exactly 5 presets", () => {
+      expect(EXPORT_QUICK_PRESETS).toHaveLength(5);
+    });
+
+    it("has unique keys across all presets", () => {
+      const keys = EXPORT_QUICK_PRESETS.map((p) => p.key);
+      expect(new Set(keys).size).toBe(keys.length);
+    });
+
+    it("all presets have positive targetWidth", () => {
+      EXPORT_QUICK_PRESETS.forEach((preset) => {
+        expect(preset.targetWidth).toBeGreaterThan(0);
+      });
+    });
+
+    it("all presets have non-empty label and description", () => {
+      EXPORT_QUICK_PRESETS.forEach((preset) => {
+        expect(preset.label.length).toBeGreaterThan(0);
+        expect(preset.description.length).toBeGreaterThan(0);
+      });
+    });
+
+    it("A4 landscape preset has wider targetWidth than A4 portrait would (landscape is wider)", () => {
+      const a4 = EXPORT_QUICK_PRESETS.find((p) => p.key === "a4-landscape");
+      expect(a4).toBeDefined();
+      // A4 landscape at 150 DPI: (297 mm / 25.4) * 150 ≈ 1754 px
+      expect(a4!.targetWidth).toBeGreaterThan(1700);
+      expect(a4!.targetWidth).toBeLessThan(1800);
+    });
+
+    it("A3 landscape preset has larger targetWidth than A4 landscape (A3 is bigger)", () => {
+      const a4 = EXPORT_QUICK_PRESETS.find((p) => p.key === "a4-landscape");
+      const a3 = EXPORT_QUICK_PRESETS.find((p) => p.key === "a3-landscape");
+      expect(a4).toBeDefined();
+      expect(a3).toBeDefined();
+      expect(a3!.targetWidth).toBeGreaterThan(a4!.targetWidth);
+    });
+
+    it("HD screen preset uses DEFAULT_FIT_TO_WIDTH_PX as targetWidth", () => {
+      const hd = EXPORT_QUICK_PRESETS.find((p) => p.key === "hd-screen");
+      expect(hd).toBeDefined();
+      expect(hd!.targetWidth).toBe(DEFAULT_FIT_TO_WIDTH_PX);
+    });
+
+    it("4K screen preset uses UHD_SCREEN_WIDTH_PX as targetWidth", () => {
+      const uhd = EXPORT_QUICK_PRESETS.find((p) => p.key === "4k-screen");
+      expect(uhd).toBeDefined();
+      expect(uhd!.targetWidth).toBe(UHD_SCREEN_WIDTH_PX);
+    });
+
+    it("screen presets have larger targetWidth than A4 landscape", () => {
+      const a4 = EXPORT_QUICK_PRESETS.find((p) => p.key === "a4-landscape");
+      const hd = EXPORT_QUICK_PRESETS.find((p) => p.key === "hd-screen");
+      const uhd = EXPORT_QUICK_PRESETS.find((p) => p.key === "4k-screen");
+      expect(a4).toBeDefined();
+      expect(hd).toBeDefined();
+      expect(uhd).toBeDefined();
+      // 4K is wider than HD
+      expect(uhd!.targetWidth).toBeGreaterThan(hd!.targetWidth);
+      // HD is wider than A4 landscape at 150 DPI
+      expect(hd!.targetWidth).toBeGreaterThan(a4!.targetWidth);
     });
   });
 });
