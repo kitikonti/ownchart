@@ -27,6 +27,7 @@ export function CollapsibleSection({
   return (
     <section>
       <button
+        type="button"
         onClick={() => setIsOpen(!isOpen)}
         aria-expanded={isOpen}
         aria-controls={contentId}
@@ -41,14 +42,15 @@ export function CollapsibleSection({
         />
       </button>
 
-      {isOpen && (
-        <div
-          id={contentId}
-          className="mt-3 bg-neutral-50 rounded px-6 py-4 space-y-5"
-        >
-          {children}
-        </div>
-      )}
+      {/* Keep the panel in the DOM at all times so aria-controls always
+          references a valid element; visibility is toggled via `hidden`. */}
+      <div
+        id={contentId}
+        hidden={!isOpen}
+        className="mt-3 bg-neutral-50 rounded px-6 py-4 space-y-5"
+      >
+        {children}
+      </div>
     </section>
   );
 }
