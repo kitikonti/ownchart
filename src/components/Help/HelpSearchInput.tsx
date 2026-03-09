@@ -2,10 +2,14 @@
  * HelpSearchInput — text input with clear button for searching help topics.
  */
 
-import { useRef, useEffect } from "react";
+import { useRef, useEffect, useCallback } from "react";
+import type { ChangeEvent } from "react";
 import { MagnifyingGlass, X } from "@phosphor-icons/react";
 
-interface HelpSearchInputProps {
+/** Delay (ms) before auto-focusing the input — avoids focus race with modal focus trap */
+const AUTOFOCUS_DELAY_MS = 50;
+
+export interface HelpSearchInputProps {
   value: string;
   onChange: (value: string) => void;
 }
@@ -18,10 +22,22 @@ export function HelpSearchInput({
 
   // Auto-focus the search input when mounted
   useEffect(() => {
-    // Small delay to avoid focus race with modal focus
-    const timer = setTimeout(() => inputRef.current?.focus(), 50);
+    const timer = setTimeout(
+      () => inputRef.current?.focus(),
+      AUTOFOCUS_DELAY_MS
+    );
     return () => clearTimeout(timer);
   }, []);
+
+  const handleChange = useCallback(
+    (e: ChangeEvent<HTMLInputElement>) => onChange(e.target.value),
+    [onChange]
+  );
+
+  const handleClear = useCallback(() => {
+    onChange("");
+    inputRef.current?.focus();
+  }, [onChange]);
 
   return (
     <div className="relative">
@@ -33,17 +49,14 @@ export function HelpSearchInput({
         ref={inputRef}
         type="text"
         value={value}
-        onChange={(e) => onChange(e.target.value)}
+        onChange={handleChange}
         placeholder="Search help topics..."
         className="w-full pl-9 pr-8 py-2 text-sm border border-neutral-200 rounded bg-white placeholder:text-neutral-400 focus:outline-none focus:ring-2 focus:ring-brand-100 focus:border-brand-300 transition-colors"
         aria-label="Search help topics"
       />
       {value.length > 0 && (
         <button
-          onClick={() => {
-            onChange("");
-            inputRef.current?.focus();
-          }}
+          onClick={handleClear}
           className="absolute right-2 top-1/2 -translate-y-1/2 p-0.5 rounded text-neutral-400 hover:text-neutral-600 transition-colors"
           aria-label="Clear search"
         >

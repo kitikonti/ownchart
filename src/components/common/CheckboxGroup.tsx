@@ -17,7 +17,7 @@ export interface CheckboxGroupProps {
   /** Called when an item is toggled */
   onChange: (key: string, checked: boolean) => void;
   /** Accessible label for the group — announced by screen readers as the group name */
-  ariaLabel?: string;
+  ariaLabel: string;
 }
 
 export function CheckboxGroup({

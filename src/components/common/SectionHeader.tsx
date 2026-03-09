@@ -18,8 +18,8 @@ export interface SectionHeaderProps {
   icon?: ReactNode;
   /** Style variant */
   variant?: SectionHeaderVariant;
-  /** HTML element to use (h3 or span) */
-  as?: "h3" | "span";
+  /** HTML element to use — choose based on the heading hierarchy of the surrounding context */
+  as?: "h2" | "h3" | "span";
   /** Optional id so a parent <section> can reference this heading via aria-labelledby */
   id?: string;
 }
