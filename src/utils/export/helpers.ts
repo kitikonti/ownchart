@@ -114,9 +114,11 @@ export function setFontFamilyOnTextElements(root: Element): void {
         "font-weight: bold;"
       );
       element.setAttribute("style", style);
-    } else if (isTextElement) {
-      // No existing style attribute — add one so renderers that prefer style
-      // over presentation attributes also pick up the correct font-family.
+    } else if (localName === "text") {
+      // No existing style attribute on a <text> element — add one so renderers
+      // that prefer style over presentation attributes pick up the correct
+      // font-family. Skipped for <tspan>: it inherits styling from its parent
+      // <text> element and adding a redundant style attribute creates DOM noise.
       element.setAttribute("style", `font-family: ${SVG_FONT_FAMILY};`);
     }
 
@@ -226,7 +228,7 @@ const PNG_COMPRESSION_RATIO = 0.35;
  *   when either dimension is zero.
  */
 export function estimateFileSize(width: number, height: number): string {
-  if (width === 0 || height === 0) return EMPTY_SIZE_PLACEHOLDER;
+  if (width <= 0 || height <= 0) return EMPTY_SIZE_PLACEHOLDER;
   const rawBytes = width * height * 4;
   const estimatedBytes = rawBytes * PNG_COMPRESSION_RATIO;
 

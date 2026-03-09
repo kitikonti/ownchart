@@ -270,6 +270,26 @@ function getCellValueForColumn(key: ExportColumnKey, task: Task): string {
 }
 
 /**
+ * Calculate the fixed leading pixel width for a name-column cell.
+ * Accounts for: hierarchy indent, expand/collapse button, inter-element gaps,
+ * and the task-type icon. This is the space consumed before the text starts.
+ *
+ * @param level - Hierarchy depth of the task (0 = root)
+ * @param indentSize - Per-level indent in pixels from density config
+ * @param iconSize - Task-type icon rendered size in pixels from density config
+ * @returns Total leading width in pixels
+ */
+function calculateNameColumnLeadingWidth(
+  level: number,
+  indentSize: number,
+  iconSize: number
+): number {
+  return (
+    level * indentSize + EXPAND_BUTTON_WIDTH_PX + NAME_COLUMN_GAPS_PX + iconSize
+  );
+}
+
+/**
  * Build the per-task cell values and extra leading widths for a given column.
  * For the name column, extra width accounts for hierarchy indent, expand button,
  * gaps, and icon. All other columns return zero extra width.
@@ -295,13 +315,9 @@ function buildColumnMeasurementData(
     cellValues.push(getCellValueForColumn(key, task));
 
     if (key === "name") {
-      // Extra width = hierarchy indent + expand button + gaps + type icon
       const level = getTaskLevel(tasks, task.id);
       extraWidths.push(
-        level * indentSize +
-          EXPAND_BUTTON_WIDTH_PX +
-          NAME_COLUMN_GAPS_PX +
-          iconSize
+        calculateNameColumnLeadingWidth(level, indentSize, iconSize)
       );
     } else {
       extraWidths.push(0);

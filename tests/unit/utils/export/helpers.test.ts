@@ -31,6 +31,14 @@ describe("estimateFileSize", () => {
     expect(estimateFileSize(0, 0)).toBe("—");
   });
 
+  it("returns em dash for negative width", () => {
+    expect(estimateFileSize(-100, 100)).toBe("—");
+  });
+
+  it("returns em dash for negative height", () => {
+    expect(estimateFileSize(100, -100)).toBe("—");
+  });
+
   it("returns bytes unit for very small images", () => {
     // 10×10 = 100px × 4 bytes × 0.35 = 140 bytes
     const result = estimateFileSize(10, 10);
@@ -171,6 +179,26 @@ describe("setFontFamilyOnTextElements", () => {
     const el = makeSvgElement("rect");
     // Should not throw
     expect(() => setFontFamilyOnTextElements(el)).not.toThrow();
+  });
+
+  it("adds style attribute to <text> elements without an existing style", () => {
+    const el = makeSvgElement("text");
+    // No style attribute initially
+    expect(el.hasAttribute("style")).toBe(false);
+    setFontFamilyOnTextElements(el);
+    // <text> elements should have a style attribute added for renderers that
+    // prefer style over presentation attributes
+    expect(el.hasAttribute("style")).toBe(true);
+    expect(el.getAttribute("style")).toContain("font-family");
+  });
+
+  it("does NOT add style attribute to <tspan> elements without an existing style", () => {
+    const el = makeSvgElement("tspan");
+    // No style attribute initially
+    expect(el.hasAttribute("style")).toBe(false);
+    setFontFamilyOnTextElements(el);
+    // <tspan> inherits from its parent <text> — no redundant style injection
+    expect(el.hasAttribute("style")).toBe(false);
   });
 });
 

@@ -1,5 +1,6 @@
 /**
- * Unit tests for export calculations (calculateEffectiveZoom, getEffectiveDateRange, calculateDurationDays).
+ * Unit tests for export calculations (calculateEffectiveZoom, getEffectiveDateRange,
+ * calculateDurationDays, getDefaultColumnWidth, calculateOptimalColumnWidths).
  */
 
 import { describe, it, expect } from "vitest";
@@ -8,6 +9,8 @@ import {
   getEffectiveDateRange,
   calculateDurationDays,
   BASE_PIXELS_PER_DAY,
+  getDefaultColumnWidth,
+  calculateOptimalColumnWidths,
 } from "../../../../src/utils/export/calculations";
 import type { ExportOptions } from "../../../../src/utils/export/types";
 import { DEFAULT_EXPORT_OPTIONS } from "../../../../src/utils/export/types";
@@ -193,5 +196,115 @@ describe("calculateDurationDays", () => {
       max: "2025-11-03",
     });
     expect(result).toBe(1);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// getDefaultColumnWidth
+// ---------------------------------------------------------------------------
+
+describe("getDefaultColumnWidth", () => {
+  it("returns color column width for 'color' key", () => {
+    const result = getDefaultColumnWidth("color", "comfortable");
+    expect(result).toBeGreaterThan(0);
+  });
+
+  it("returns nameMin width for 'name' key", () => {
+    const result = getDefaultColumnWidth("name", "comfortable");
+    expect(result).toBeGreaterThan(0);
+  });
+
+  it("returns startDate width for 'startDate' key", () => {
+    const result = getDefaultColumnWidth("startDate", "comfortable");
+    expect(result).toBeGreaterThan(0);
+  });
+
+  it("returns endDate width for 'endDate' key", () => {
+    const result = getDefaultColumnWidth("endDate", "comfortable");
+    expect(result).toBeGreaterThan(0);
+  });
+
+  it("returns duration width for 'duration' key", () => {
+    const result = getDefaultColumnWidth("duration", "comfortable");
+    expect(result).toBeGreaterThan(0);
+  });
+
+  it("returns progress width for 'progress' key", () => {
+    const result = getDefaultColumnWidth("progress", "comfortable");
+    expect(result).toBeGreaterThan(0);
+  });
+
+  it("returns 100 for an unknown column key (fallback branch)", () => {
+    // The default branch exists as a safety net; exercise it explicitly.
+    const result = getDefaultColumnWidth(
+      "unknown" as Parameters<typeof getDefaultColumnWidth>[0],
+      "comfortable"
+    );
+    expect(result).toBe(100);
+  });
+
+  it("returns different widths for different densities", () => {
+    const compact = getDefaultColumnWidth("name", "compact");
+    const comfortable = getDefaultColumnWidth("name", "comfortable");
+    // Comfortable density should have wider name columns than compact
+    expect(comfortable).toBeGreaterThan(compact);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// calculateOptimalColumnWidths
+// ---------------------------------------------------------------------------
+
+describe("calculateOptimalColumnWidths", () => {
+  it("calculates widths for selected columns when no existing widths provided", () => {
+    const result = calculateOptimalColumnWidths(
+      ["color", "name"],
+      [],
+      "comfortable"
+    );
+    expect(result).toHaveProperty("color");
+    expect(result).toHaveProperty("name");
+    expect(result.color).toBeGreaterThan(0);
+    expect(result.name).toBeGreaterThan(0);
+  });
+
+  it("respects existing width when it is a positive number", () => {
+    const existingWidths = { name: 300 };
+    const result = calculateOptimalColumnWidths(
+      ["name", "startDate"],
+      [],
+      "comfortable",
+      existingWidths
+    );
+    expect(result.name).toBe(300);
+  });
+
+  it("respects existing width even when it is 0 (undefined-guard, not falsy-guard)", () => {
+    // A stored value of 0 must be kept rather than replaced by the calculated width
+    const existingWidths = { progress: 0 };
+    const result = calculateOptimalColumnWidths(
+      ["progress"],
+      [],
+      "comfortable",
+      existingWidths
+    );
+    expect(result.progress).toBe(0);
+  });
+
+  it("calculates width for columns absent from existingWidths", () => {
+    const existingWidths = { name: 250 };
+    const result = calculateOptimalColumnWidths(
+      ["name", "endDate"],
+      [],
+      "comfortable",
+      existingWidths
+    );
+    // endDate not in existingWidths — should be calculated
+    expect(result.endDate).toBeGreaterThan(0);
+  });
+
+  it("returns empty object for empty selectedColumns", () => {
+    const result = calculateOptimalColumnWidths([], [], "comfortable");
+    expect(result).toEqual({});
   });
 });

@@ -4,6 +4,7 @@
  */
 
 import { createRoot } from "react-dom/client";
+import type { Root } from "react-dom/client";
 import { createElement } from "react";
 import type { ComponentProps } from "react";
 import { toCanvas } from "html-to-image";
@@ -55,7 +56,7 @@ export interface CaptureChartParams extends ExportLayoutInput {
 async function renderAndSettle(
   container: HTMLDivElement,
   props: ComponentProps<typeof ExportRenderer>
-): Promise<ReturnType<typeof createRoot>> {
+): Promise<Root> {
   // createRoot is synchronous — root is always set before any async work.
   const root = createRoot(container);
   root.render(createElement(ExportRenderer, props));
@@ -102,7 +103,7 @@ export async function captureChart(
   // async work, so the finally block can always call root?.unmount() safely.
   // Both renderAndSettle and the capture step are inside the try so that any
   // error from either path still triggers container cleanup.
-  let root: ReturnType<typeof createRoot> | undefined;
+  let root: Root | undefined;
 
   try {
     // renderAndSettle creates the React root synchronously then waits for the
@@ -125,9 +126,6 @@ export async function captureChart(
     container.style.opacity = "1";
     await waitForPaint();
 
-    // Capture the container using html-to-image.
-    // Race against a timeout to prevent an indefinite hang when the tab is
-    // backgrounded and requestAnimationFrame is throttled or paused.
     const capturePromise = toCanvas(container, {
       pixelRatio: Math.max(window.devicePixelRatio, MIN_PIXEL_RATIO),
       backgroundColor:
