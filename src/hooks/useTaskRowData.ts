@@ -102,6 +102,12 @@ interface BuildRowDatumParams {
   item: FlattenedTask;
   index: number;
   flattenedTasks: FlattenedTask[];
+  /**
+   * One-past-the-end sentinel row number (allFlattenedTasks.length + 1).
+   * Used by getHiddenGap to detect hidden rows after the last visible task:
+   * if the last visible row's globalRowNumber < sentinelRowAfterLast - 1,
+   * there are hidden rows at the bottom of the list.
+   */
   sentinelRowAfterLast: number;
   clipboardSet: Set<TaskId>;
   selectedSet: Set<TaskId>;
@@ -253,6 +259,9 @@ export function useTaskRowData(
         unhideRange,
       })
     );
+    // review: intentional — unhideRange is listed as a dep so the memo recomputes
+    // if the reference changes; callers must pass a stable useCallback reference
+    // (documented in JSDoc above) to avoid unnecessary recomputation.
   }, [
     flattenedTasks,
     clipboardSet,

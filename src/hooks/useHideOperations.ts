@@ -122,21 +122,22 @@ export function useHideOperations(): UseHideOperationsResult {
 
       // Count how many were actually hidden (including descendants)
       const newHiddenIds = useChartStore.getState().hiddenTaskIds;
-      const newlyHidden = newHiddenIds.length - previousHiddenTaskIds.length;
+      const newlyHiddenCount =
+        newHiddenIds.length - previousHiddenTaskIds.length;
 
       const prevSet = new Set(previousHiddenTaskIds);
       useHistoryStore.getState().recordCommand({
         id: crypto.randomUUID(),
         type: CommandType.HIDE_TASKS,
         timestamp: Date.now(),
-        description: `Hide ${pluralize(newlyHidden, "task")}`,
+        description: `Hide ${pluralize(newlyHiddenCount, "task")}`,
         params: {
           taskIds: newHiddenIds.filter((id) => !prevSet.has(id)),
           previousHiddenTaskIds,
         },
       });
 
-      toast.success(`${pluralize(newlyHidden, "task")} hidden`);
+      toast.success(`${pluralize(newlyHiddenCount, "task")} hidden`);
     },
     [hideTasks]
   );
