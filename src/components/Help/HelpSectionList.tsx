@@ -2,7 +2,7 @@
  * HelpSectionList — renders a list of collapsible sections with topic cards.
  */
 
-import { type ReactElement, useState } from "react";
+import { type ReactElement, useState, useEffect } from "react";
 import { CaretDown } from "@phosphor-icons/react";
 import { type HelpSection } from "../../config/helpContent";
 import { HelpTopicCard } from "./HelpTopicCard";
@@ -47,6 +47,12 @@ function SectionAccordion({
 }: SectionAccordionProps): ReactElement {
   const [isOpen, setIsOpen] = useState(defaultOpen);
   const panelId = `help-section-panel-${section.id}`;
+
+  // Sync open state when defaultOpen changes (e.g. when search results force
+  // all sections open, or when search is cleared and they should close again).
+  useEffect(() => {
+    setIsOpen(defaultOpen);
+  }, [defaultOpen]);
 
   return (
     <section>

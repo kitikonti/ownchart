@@ -47,17 +47,19 @@ export function ShortcutKeys({ keys }: { keys: string }): ReactElement {
   const parts = resolved.split("+");
 
   return (
-    <span className="flex items-center gap-1 flex-shrink-0">
+    // aria-label gives screen readers a clean announcement of the full shortcut
+    // (e.g. "Ctrl+S") instead of reading each <kbd> element individually.
+    <span
+      className="flex items-center gap-1 flex-shrink-0"
+      aria-label={resolved}
+    >
       {parts.map((part, index) => (
         <span
           key={`${part.trim()}-${index}`}
           className="flex items-center gap-1"
+          aria-hidden="true"
         >
-          {index > 0 && (
-            <span className="text-neutral-300 text-xs" aria-hidden="true">
-              +
-            </span>
-          )}
+          {index > 0 && <span className="text-neutral-300 text-xs">+</span>}
           <KeyBadge>{part.trim()}</KeyBadge>
         </span>
       ))}

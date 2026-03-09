@@ -8,6 +8,7 @@
  * - Keyboard navigation support
  */
 
+import { useMemo } from "react";
 import type { ReactNode, ReactElement } from "react";
 import { useDropdown } from "../../hooks/useDropdown";
 import { DropdownTrigger } from "./DropdownTrigger";
@@ -58,10 +59,14 @@ export function ToolbarDropdown<T extends string = string>({
   const displayLabel =
     labelPrefix || selectedOption?.label || DEFAULT_DROPDOWN_LABEL;
 
-  // Stable ID prefix for ARIA option IDs — derived from aria-label or a fallback.
-  const idPrefix = (ariaLabel ?? "toolbar-dropdown")
-    .toLowerCase()
-    .replace(/\s+/g, "-");
+  // Stable ID prefix for ARIA option IDs — derived from aria-label.
+  // ariaLabel should always be provided; without it multiple ToolbarDropdown
+  // instances would generate identical option element IDs, which is invalid HTML
+  // and breaks aria-activedescendant for screen readers.
+  const idPrefix = useMemo(
+    () => (ariaLabel ?? "toolbar-dropdown").toLowerCase().replace(/\s+/g, "-"),
+    [ariaLabel]
+  );
   const activeDescendantId = isOpen ? `${idPrefix}-option-${value}` : undefined;
 
   const handleSelect = (optionValue: T): void => {

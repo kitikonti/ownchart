@@ -10,17 +10,13 @@
  * use inline styles. Everything else uses Tailwind utility classes.
  */
 
-import type { ReactNode, ReactElement } from "react";
+import type { ReactNode, ReactElement, RefCallback } from "react";
 import { CaretDown } from "@phosphor-icons/react";
 import { COLORS, TOOLBAR } from "../../styles/design-tokens";
 import {
   useCollapseLevel,
   shouldShowLabel,
 } from "../Ribbon/RibbonCollapseContext";
-
-// Sub-pixel border width that preserves MS-Fluent visual fidelity.
-// This value intentionally differs from a standard 1px border.
-const TRIGGER_BORDER_WIDTH = "0.667px";
 
 interface DropdownTriggerProps {
   /** Whether the dropdown is currently open */
@@ -42,7 +38,7 @@ interface DropdownTriggerProps {
   /** Collapse priority: lower numbers hide first. Omit to never collapse. */
   labelPriority?: number;
   /** Callback ref for focus management (from useDropdown.triggerRef) */
-  triggerRef?: (el: HTMLElement | null) => void;
+  triggerRef?: RefCallback<HTMLButtonElement>;
 }
 
 export function DropdownTrigger({
@@ -81,7 +77,7 @@ export function DropdownTrigger({
       style={{
         // Height is a design token value — cannot be expressed as a static Tailwind class
         height: `${TOOLBAR.buttonHeight}px`,
-        border: `${TRIGGER_BORDER_WIDTH} solid`,
+        border: `${TOOLBAR.triggerBorderWidth} solid`,
         // Border color is conditionally driven by isActive/isOpen state
         borderColor: activeBorderColor,
       }}

@@ -2,6 +2,7 @@
  * GettingStartedTab — 5 quick-start cards for new users.
  */
 
+import { memo } from "react";
 import type { ReactNode, ReactElement } from "react";
 import {
   Cursor,
@@ -46,7 +47,7 @@ interface GettingStartedTabProps {
   sections: HelpSection[];
 }
 
-export function GettingStartedTab({
+function GettingStartedTabInner({
   sections,
 }: GettingStartedTabProps): ReactElement {
   const topics = sections.flatMap((s) => s.topics);
@@ -91,3 +92,7 @@ export function GettingStartedTab({
     </div>
   );
 }
+
+// Sections come from a stable config object, so memoizing prevents unnecessary
+// re-renders when parent components (e.g. HelpPanel) re-render on search input.
+export const GettingStartedTab = memo(GettingStartedTabInner);

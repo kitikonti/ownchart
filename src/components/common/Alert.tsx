@@ -70,10 +70,13 @@ export function Alert({
   const styles = variantStyles[variant];
   const displayIcon = icon ?? defaultIcons[variant];
 
+  const isUrgent = variant === "error" || variant === "warning";
+
   return (
     <div
       className={`flex items-start gap-3 px-4 py-3 rounded border ${styles.container} ${className}`}
-      role={variant === "error" || variant === "warning" ? "alert" : "status"}
+      role={isUrgent ? "alert" : "status"}
+      aria-live={isUrgent ? "assertive" : "polite"}
     >
       <span
         aria-hidden="true"
