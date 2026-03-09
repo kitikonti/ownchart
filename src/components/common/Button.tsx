@@ -71,6 +71,8 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
       icon,
       iconAfter,
       fullWidth = false,
+      // Destructured explicitly so it is consumed from props before the
+      // {...props} spread, preventing it from appearing twice on the element.
       disabled,
       className = "",
       children,
@@ -87,7 +89,7 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
           baseStyles,
           variantStyles[variant],
           sizeStyles[size],
-          fullWidth ? "w-full" : "",
+          fullWidth && "w-full",
           className,
         ]
           .filter(Boolean)

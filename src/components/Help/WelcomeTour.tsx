@@ -2,7 +2,7 @@
  * Welcome Tour component for first-time users.
  */
 
-import { useState } from "react";
+import { useState, useEffect, useRef, memo } from "react";
 
 import { HandWaving, Cursor, ArrowsOutCardinal } from "@phosphor-icons/react";
 
@@ -17,9 +17,20 @@ const HELP_PANEL_OPEN_DELAY_MS = 100;
 /**
  * Welcome Tour component.
  */
-export function WelcomeTour(): JSX.Element | null {
+export const WelcomeTour = memo(function WelcomeTour(): JSX.Element | null {
   const { isWelcomeTourOpen, dismissWelcome, openHelpPanel } = useUIStore();
   const [dontShowAgain, setDontShowAgain] = useState(false);
+  // Track pending timer so it can be cancelled on unmount, preventing a
+  // stale openHelpPanel() call if the component unmounts before the timer fires.
+  const helpPanelTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  useEffect(() => {
+    return () => {
+      if (helpPanelTimerRef.current !== null) {
+        clearTimeout(helpPanelTimerRef.current);
+      }
+    };
+  }, []);
 
   const dismiss = (): void => {
     dismissWelcome(dontShowAgain);
@@ -29,7 +40,11 @@ export function WelcomeTour(): JSX.Element | null {
     dismiss();
     // Delay opening help panel to let the modal finish closing before the
     // help panel mounts. The animation duration is ~100 ms (Modal fade-out).
-    setTimeout(() => {
+    if (helpPanelTimerRef.current !== null) {
+      clearTimeout(helpPanelTimerRef.current);
+    }
+    helpPanelTimerRef.current = setTimeout(() => {
+      helpPanelTimerRef.current = null;
       openHelpPanel();
     }, HELP_PANEL_OPEN_DELAY_MS);
   };
@@ -123,4 +138,4 @@ export function WelcomeTour(): JSX.Element | null {
       </div>
     </Modal>
   );
-}
+});

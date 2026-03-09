@@ -39,7 +39,6 @@ function ExternalLink({
       href={href}
       target="_blank"
       rel="noopener noreferrer"
-      aria-label={label}
       className="flex items-start gap-3 group py-1 rounded -mx-1 px-1 hover:bg-neutral-50 transition-colors"
     >
       <span className="mt-0.5 text-neutral-500 group-hover:text-neutral-700 flex-shrink-0">

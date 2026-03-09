@@ -14,6 +14,11 @@ interface ZoomDialogProps {
   isOpen: boolean;
   onClose: () => void;
   currentZoom: number;
+  /**
+   * Called with the selected zoom value when the user confirms.
+   * The caller is responsible for closing the dialog (e.g. by setting
+   * isOpen=false) in response to this callback.
+   */
   onSelect: (zoom: number | "fit") => void;
 }
 
@@ -31,8 +36,15 @@ const ZOOM_PRESETS = [
 ];
 
 /**
+ * Tolerance for floating-point comparison when matching a zoom level to a preset.
+ * Chosen to be smaller than the smallest gap between consecutive presets (0.05),
+ * so only exact-match presets are selected, avoiding false positives.
+ */
+const ZOOM_MATCH_EPSILON = 0.01;
+
+/**
  * Finds the closest preset to the given zoom level.
- * Returns the exact preset value when within 0.01, otherwise defaults to 100%.
+ * Returns the exact preset value when within ZOOM_MATCH_EPSILON, otherwise defaults to 100%.
  *
  * Note: "fit" is not auto-detected from the zoom number — callers that want
  * the "fit" preset pre-selected must pass a sentinel value that maps to it.
@@ -41,7 +53,9 @@ const ZOOM_PRESETS = [
  */
 function findClosestPreset(zoom: number): number | "fit" {
   const exactMatch = ZOOM_PRESETS.find(
-    (p) => typeof p.value === "number" && Math.abs(p.value - zoom) < 0.01
+    (p) =>
+      typeof p.value === "number" &&
+      Math.abs(p.value - zoom) < ZOOM_MATCH_EPSILON
   );
   if (exactMatch && typeof exactMatch.value === "number") {
     return exactMatch.value;
