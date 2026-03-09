@@ -2,6 +2,61 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [1.2.3](https://github.com/kitikonti/ownchart/compare/v1.2.2...v1.2.3) (2026-03-09)
+
+
+### Bug Fixes
+
+* **review:** address review findings in types and pdfLayout ([f14e6f9](https://github.com/kitikonti/ownchart/commit/f14e6f9c4778ef5a89b6f00bdf05b794bbc25182))
+
+
+### Code Refactoring
+
+* **review:** add JSDoc to AppInner and AppContent in App.tsx ([fccb6ce](https://github.com/kitikonti/ownchart/commit/fccb6ce32e094bfd16a3be02841100ef10dc5387))
+* **review:** address review findings in App, main, and vite-env ([3d31e5c](https://github.com/kitikonti/ownchart/commit/3d31e5cf6ebd19869ab2f6eeb3307530d6c3e68c))
+* **review:** address review findings in App, main, and vite-env ([db06de1](https://github.com/kitikonti/ownchart/commit/db06de15c14cfe35f84a0d3378e1b7454d32e30b))
+* **review:** address review findings in App, main, and vite-env ([7dea3aa](https://github.com/kitikonti/ownchart/commit/7dea3aafa69adec49b7bb07b43272262bea01632))
+* **review:** address review findings in App.tsx and design-tokens ([1fcd190](https://github.com/kitikonti/ownchart/commit/1fcd190bae75c391b5a003203c2140a115470fd7))
+* **review:** address review findings in App.tsx, main.tsx, and vite-env.d.ts ([2f6b3da](https://github.com/kitikonti/ownchart/commit/2f6b3dafaabbc12972ac16b05523aac2b5b8c1ce))
+* **review:** address review findings in contextMenuItemBuilders, useZoom, and useFullTaskContextMenuItems ([61bbc99](https://github.com/kitikonti/ownchart/commit/61bbc99773e736191563828b0234eb84b60ddc8e))
+* **review:** address review findings in contextMenuItemBuilders, useZoom, useFullTaskContextMenuItems ([c66a548](https://github.com/kitikonti/ownchart/commit/c66a548fc94416bc725b2e4481fb028a922edbcb))
+* **review:** address review findings in contextMenuItemBuilders, useZoom, useFullTaskContextMenuItems ([ba334e6](https://github.com/kitikonti/ownchart/commit/ba334e601c28c4f87b452e68a4d79e625d90e9ff))
+* **review:** address review findings in contextMenuItemBuilders, useZoom, useFullTaskContextMenuItems ([727373b](https://github.com/kitikonti/ownchart/commit/727373b47de9e224bfe067f5e6350dd74cbe1416))
+* **review:** address review findings in contextMenuItemBuilders, useZoom, useFullTaskContextMenuItems ([1959383](https://github.com/kitikonti/ownchart/commit/19593831630b10d0ab2605163e6af7b8da515484))
+* **review:** address review findings in contextMenuItemBuilders, useZoom, useFullTaskContextMenuItems ([5da96f7](https://github.com/kitikonti/ownchart/commit/5da96f7396f3a6fb06a2348a7c6eaa1ce9377a45))
+* **review:** address review findings in types and pdfLayout ([1eeb5e9](https://github.com/kitikonti/ownchart/commit/1eeb5e9e1619d9866c7ad2d11ec3a60e5541d552))
+* **review:** address review findings in types and pdfLayout ([d943143](https://github.com/kitikonti/ownchart/commit/d943143535200012141b3c5d274efc301fb1a3dd))
+* **review:** address review findings in types and pdfLayout ([3c83ade](https://github.com/kitikonti/ownchart/commit/3c83ade6f5a8bad756a58318ed6610035336a534))
+* **review:** address review findings in types and pdfLayout ([242886a](https://github.com/kitikonti/ownchart/commit/242886a1b1a9e404f00e1af3f6e9ad51b8055ccc))
+* **review:** address review findings in types and pdfLayout ([c2f6976](https://github.com/kitikonti/ownchart/commit/c2f697601b6bb51dba9fd51d4fa12b2d899f5176))
+* **review:** address review findings in types and pdfLayout ([71495b1](https://github.com/kitikonti/ownchart/commit/71495b1e21648b3911271d90fe91fa79902a22ff))
+* **review:** address review findings in types and pdfLayout ([7ae2f68](https://github.com/kitikonti/ownchart/commit/7ae2f680511b1aecdbb6e5c235664e7edfe95261))
+* **review:** address review findings in types.ts and pdfLayout.ts ([f3d8209](https://github.com/kitikonti/ownchart/commit/f3d8209394adfafb5adf777d264b1df0862dacf2))
+* **review:** address review findings in ui components ([3f0c3bd](https://github.com/kitikonti/ownchart/commit/3f0c3bd2fa87bf8eac141c58fa9bfac456443c72))
+* **review:** address review findings in useZoom ([5a84a72](https://github.com/kitikonti/ownchart/commit/5a84a72d398c6614c7851c3f813710af607768d9))
+* **review:** address review findings in useZoom and useFullTaskContextMenuItems ([5c56e87](https://github.com/kitikonti/ownchart/commit/5c56e876a79e62d3165e47f3ddbcb4665097c753))
+* **review:** address review findings in WelcomeTour and AboutDialog ([6860e3e](https://github.com/kitikonti/ownchart/commit/6860e3e53b51635886cc2b78272a6c071de33bb1))
+* **review:** address review findings in WelcomeTour and Button ([dcab221](https://github.com/kitikonti/ownchart/commit/dcab221c144ade2de77a7bfe90378ff90df7f9e4))
+* **review:** address review findings in WelcomeTour and ZoomDialog ([5bf0054](https://github.com/kitikonti/ownchart/commit/5bf005420c611079eba922e495b1c9feaac18aee))
+* **review:** address review findings in WelcomeTour, AboutDialog, and ZoomDialog ([7680bcc](https://github.com/kitikonti/ownchart/commit/7680bcc6d8ab62b9c5144abe6637858a39548d26))
+* **review:** address review findings in WelcomeTour, AboutDialog, Button, ZoomDialog ([504ec29](https://github.com/kitikonti/ownchart/commit/504ec29f9f6ee2561e439fdb8dc05a6f28314b26))
+* **review:** address review findings in WelcomeTour, AboutDialog, Button, ZoomDialog, DropdownItem ([750b9e9](https://github.com/kitikonti/ownchart/commit/750b9e919a2caeec7605a64087da9ac561662224))
+* **review:** address review findings in WelcomeTour, AboutDialog, Button, ZoomDialog, DropdownItem ([ba58710](https://github.com/kitikonti/ownchart/commit/ba5871082d3e897cda15c9cb1ac7e78b94aeeb22))
+* **review:** address review findings in WelcomeTour, AboutDialog, Button, ZoomDialog, DropdownItem ([642282d](https://github.com/kitikonti/ownchart/commit/642282d4ea92ba2d7c8c31aa29526f932e2b6136))
+* **review:** address review findings in WelcomeTour, AboutDialog, Button, ZoomDialog, DropdownItem ([735160a](https://github.com/kitikonti/ownchart/commit/735160ae669154d767f40d6374eaf84477fc87fb))
+* **review:** address review findings in WelcomeTour, AboutDialog, Button, ZoomDialog, DropdownItem ([fe6b449](https://github.com/kitikonti/ownchart/commit/fe6b449ad29baaa4b1c94c8c99de2a69f830c61e))
+* **review:** address review findings in WelcomeTour, AboutDialog, Button, ZoomDialog, DropdownItem ([8459291](https://github.com/kitikonti/ownchart/commit/8459291def3d49eabae259a89f3016385b008436))
+* **review:** address review findings in WelcomeTour, AboutDialog, Button, ZoomDialog, DropdownItem ([4a6046e](https://github.com/kitikonti/ownchart/commit/4a6046e8154121f53c3e4008a69392d1f888b15f))
+* **review:** address review findings in WelcomeTour, AboutDialog, Button, ZoomDialog, DropdownItem ([2e856c1](https://github.com/kitikonti/ownchart/commit/2e856c105423b7707146dd3b0e6a156bde01da2e))
+* **review:** address review findings in WelcomeTour, AboutDialog, Button, ZoomDialog, DropdownItem ([cff0e66](https://github.com/kitikonti/ownchart/commit/cff0e660e0f0531d616dce811e08cafb9b0c4674))
+* **review:** address review findings in WelcomeTour, AboutDialog, Button, ZoomDialog, DropdownItem ([621c64a](https://github.com/kitikonti/ownchart/commit/621c64a219ea2c0cc0ad59edb8cd7a0e35433d43))
+* **review:** address review findings in WelcomeTour, AboutDialog, Button, ZoomDialog, DropdownItem ([da414c1](https://github.com/kitikonti/ownchart/commit/da414c148bdd406120289616b2c2d3249fdb4d47))
+* **review:** address review findings in WelcomeTour, AboutDialog, Button, ZoomDialog, DropdownItem ([77a564e](https://github.com/kitikonti/ownchart/commit/77a564ed4fc20323fcc49102ddb607aacc3a1702))
+* **review:** address review findings in ZoomDialog and DropdownItem ([5bcb4b8](https://github.com/kitikonti/ownchart/commit/5bcb4b88bfa82c85bf6321d94c0eb8cc38b1d842))
+* **review:** extract compensateForTallContent helper in pdfLayout ([2ab9d99](https://github.com/kitikonti/ownchart/commit/2ab9d99878ffb04c4ce59dbc6cf4ee3cb97cef56))
+* **review:** improve comments in types.ts and pdfLayout.ts ([0cddaab](https://github.com/kitikonti/ownchart/commit/0cddaab1d1173e559900fbb1958e5ae0678d18cf))
+* **review:** move runtime presets out of types.ts into pagePresets.ts ([4de0874](https://github.com/kitikonti/ownchart/commit/4de087475ea312fc4e87925cd2e56fb8c712120b))
+
 ## [1.2.2](https://github.com/kitikonti/ownchart/compare/v1.2.1...v1.2.2) (2026-03-08)
 
 
