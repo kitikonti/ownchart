@@ -11,6 +11,7 @@
 import {
   forwardRef,
   memo,
+  Children,
   type ButtonHTMLAttributes,
   type ReactNode,
 } from "react";
@@ -89,7 +90,12 @@ export const Button = memo(
     },
     ref
   ) {
-    if (import.meta.env.DEV && icon && !children && !props["aria-label"]) {
+    if (
+      import.meta.env.DEV &&
+      icon &&
+      Children.count(children) === 0 &&
+      !props["aria-label"]
+    ) {
       console.warn(
         "[Button] Icon-only button detected without an `aria-label`. " +
           "Screen readers will not be able to announce this button's purpose. " +

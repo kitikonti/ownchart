@@ -27,6 +27,15 @@ interface ExternalLinkProps {
   sublabel?: string;
 }
 
+/**
+ * Returns a safe href for use in an anchor tag.
+ * Only http and https protocols are permitted — all others are replaced with
+ * a safe fallback to prevent javascript: or data: URI injection.
+ */
+function sanitizeHref(href: string): string {
+  return href.startsWith("https://") || href.startsWith("http://") ? href : "#";
+}
+
 /** Link row used within AboutDialog to display icon + label + optional sublabel. */
 const ExternalLink = memo(function ExternalLink({
   href,
@@ -36,11 +45,12 @@ const ExternalLink = memo(function ExternalLink({
 }: ExternalLinkProps): JSX.Element {
   return (
     <a
-      href={href}
+      href={sanitizeHref(href)}
       target="_blank"
       rel="noopener noreferrer"
       className="flex items-start gap-3 group py-1 rounded -mx-1 px-1 hover:bg-neutral-50 transition-colors"
     >
+      {/* Category icon — decorative; the text label conveys the link purpose */}
       <span
         className="mt-0.5 text-neutral-500 group-hover:text-neutral-700 flex-shrink-0"
         aria-hidden="true"

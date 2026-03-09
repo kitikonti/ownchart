@@ -24,6 +24,15 @@ const ARIA_SELECTED_ROLES = new Set<AriaRole>([
   "rowheader",
 ]);
 
+/**
+ * ARIA roles that support the `aria-checked` attribute per the WAI-ARIA spec.
+ * `menuitemcheckbox` and `menuitemradio` are the primary roles that require it.
+ */
+const ARIA_CHECKED_ROLES = new Set<AriaRole>([
+  "menuitemcheckbox",
+  "menuitemradio",
+]);
+
 interface DropdownItemProps {
   /** Whether this item is currently selected */
   isSelected?: boolean;
@@ -41,10 +50,14 @@ interface DropdownItemProps {
    * ARIA role — when set to a role that supports `aria-selected` (e.g. "option",
    * "tab", "treeitem"), `aria-selected` is also emitted. Roles like "menuitem"
    * do NOT support `aria-selected` and will not emit it.
+   * When set to "menuitemcheckbox" or "menuitemradio", `aria-checked` is emitted
+   * instead, derived from `isSelected` unless overridden via `aria-checked`.
    */
   role?: AriaRole;
   /** aria-selected override (only emitted when role supports aria-selected) */
   "aria-selected"?: boolean;
+  /** aria-checked override (only emitted when role supports aria-checked, e.g. menuitemcheckbox) */
+  "aria-checked"?: boolean;
 }
 
 export const DropdownItem = memo(function DropdownItem({
@@ -56,6 +69,7 @@ export const DropdownItem = memo(function DropdownItem({
   trailing,
   role,
   "aria-selected": ariaSelected,
+  "aria-checked": ariaChecked,
 }: DropdownItemProps): JSX.Element {
   const hasDescription = !!description;
 
@@ -66,6 +80,11 @@ export const DropdownItem = memo(function DropdownItem({
       aria-selected={
         role && ARIA_SELECTED_ROLES.has(role)
           ? (ariaSelected ?? isSelected)
+          : undefined
+      }
+      aria-checked={
+        role && ARIA_CHECKED_ROLES.has(role)
+          ? (ariaChecked ?? isSelected)
           : undefined
       }
       onClick={onClick}
