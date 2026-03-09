@@ -93,6 +93,7 @@ export {
   type SvgExportOptions,
   type SvgStyleMode,
   type SvgTextMode,
+  type ExportQuickPreset,
 } from "./types";
 export {
   BASE_PIXELS_PER_DAY,
@@ -114,6 +115,9 @@ export {
   getMargins,
   mmToPx,
 } from "./pdfLayout";
+
+// Page size presets (runtime data, separate from type definitions)
+export { EXPORT_QUICK_PRESETS } from "./pagePresets";
 
 import {
   captureChart,
