@@ -11,12 +11,16 @@
  */
 
 import { describe, it, expect, beforeEach, vi } from "vitest";
+import { renderHook, act } from "@testing-library/react";
 import { useChartStore } from "../../../src/store/slices/chartSlice";
 import { useTaskStore } from "../../../src/store/slices/taskSlice";
 import { useHistoryStore } from "../../../src/store/slices/historySlice";
 import { useFileStore } from "../../../src/store/slices/fileSlice";
 import { buildFlattenedTaskList } from "../../../src/utils/hierarchy";
-import { computeHiddenIdsInSelection } from "../../../src/hooks/useHideOperations";
+import {
+  computeHiddenIdsInSelection,
+  useHideOperations,
+} from "../../../src/hooks/useHideOperations";
 import { CommandType } from "../../../src/types/command.types";
 import type { Task } from "../../../src/types/chart.types";
 
@@ -576,5 +580,134 @@ describe("computeHiddenIdsInSelection", () => {
     );
     // selectedRowNums has only one entry (task 2), so returns []
     expect(result).toEqual([]);
+  });
+});
+
+// ── useHideOperations hook interface tests ────────────────────────────────────
+// These tests render the actual hook via renderHook to verify that the
+// useCallback wiring and dependency arrays are correct. They complement the
+// orchestration tests above which simulate the store interactions directly.
+
+describe("useHideOperations hook interface", () => {
+  beforeEach(() => {
+    useChartStore.setState({ hiddenTaskIds: [] });
+    useHistoryStore.setState({ undoStack: [], redoStack: [] });
+    useFileStore.getState().markClean();
+    useTaskStore.setState({
+      tasks: [
+        createTask("1", "Task 1", { order: 0 }),
+        createTask("2", "Task 2", { order: 1 }),
+        createTask("3", "Task 3", { order: 2 }),
+        createTask("4", "Task 4", { order: 3 }),
+      ],
+    });
+    vi.clearAllMocks();
+  });
+
+  it("should expose hideRows, showAll, unhideRange, unhideSelection, getHiddenInSelectionCount", () => {
+    const { result } = renderHook(() => useHideOperations());
+    expect(typeof result.current.hideRows).toBe("function");
+    expect(typeof result.current.showAll).toBe("function");
+    expect(typeof result.current.unhideRange).toBe("function");
+    expect(typeof result.current.unhideSelection).toBe("function");
+    expect(typeof result.current.getHiddenInSelectionCount).toBe("function");
+  });
+
+  it("hideRows should hide tasks, mark dirty, and push undo command", () => {
+    const { result } = renderHook(() => useHideOperations());
+
+    act(() => {
+      result.current.hideRows(["2", "3"]);
+    });
+
+    expect(useChartStore.getState().hiddenTaskIds).toContain("2");
+    expect(useChartStore.getState().hiddenTaskIds).toContain("3");
+    expect(useFileStore.getState().isDirty).toBe(true);
+    const undoStack = useHistoryStore.getState().undoStack;
+    expect(undoStack).toHaveLength(1);
+    expect(undoStack[0].type).toBe(CommandType.HIDE_TASKS);
+  });
+
+  it("hideRows should do nothing for an empty ID list", () => {
+    const { result } = renderHook(() => useHideOperations());
+
+    act(() => {
+      result.current.hideRows([]);
+    });
+
+    expect(useChartStore.getState().hiddenTaskIds).toHaveLength(0);
+    expect(useHistoryStore.getState().undoStack).toHaveLength(0);
+  });
+
+  it("showAll should unhide all tasks and push undo command", () => {
+    useChartStore.getState().setHiddenTaskIds(["1", "2"]);
+    const { result } = renderHook(() => useHideOperations());
+
+    act(() => {
+      result.current.showAll();
+    });
+
+    expect(useChartStore.getState().hiddenTaskIds).toHaveLength(0);
+    expect(useFileStore.getState().isDirty).toBe(true);
+    const undoStack = useHistoryStore.getState().undoStack;
+    expect(undoStack).toHaveLength(1);
+    expect(undoStack[0].type).toBe(CommandType.UNHIDE_TASKS);
+  });
+
+  it("showAll should do nothing when no tasks are hidden", () => {
+    const { result } = renderHook(() => useHideOperations());
+
+    act(() => {
+      result.current.showAll();
+    });
+
+    expect(useHistoryStore.getState().undoStack).toHaveLength(0);
+  });
+
+  it("unhideRange should unhide tasks within the given row range (exclusive)", () => {
+    useChartStore.getState().hideTasks(["2", "3"]);
+    useFileStore.getState().markClean();
+    const { result } = renderHook(() => useHideOperations());
+
+    act(() => {
+      // rows 2 and 3 fall between fromRowNum=1 and toRowNum=4 (exclusive)
+      result.current.unhideRange(1, 4);
+    });
+
+    expect(useChartStore.getState().hiddenTaskIds).toHaveLength(0);
+    expect(useFileStore.getState().isDirty).toBe(true);
+  });
+
+  it("getHiddenInSelectionCount should return 0 when fewer than 2 tasks selected", () => {
+    useChartStore.getState().hideTasks(["2"]);
+    const { result } = renderHook(() => useHideOperations());
+
+    const count = result.current.getHiddenInSelectionCount(["1"]);
+    expect(count).toBe(0);
+  });
+
+  it("getHiddenInSelectionCount should count hidden tasks spanned by selection", () => {
+    useChartStore.getState().hideTasks(["3"]);
+    const { result } = renderHook(() => useHideOperations());
+
+    // Tasks 2 and 4 visible, task 3 hidden between them
+    const count = result.current.getHiddenInSelectionCount(["2", "4"]);
+    expect(count).toBe(1);
+  });
+
+  it("unhideSelection should unhide tasks spanned by the selection", () => {
+    useChartStore.getState().hideTasks(["3"]);
+    useFileStore.getState().markClean();
+    const { result } = renderHook(() => useHideOperations());
+
+    act(() => {
+      result.current.unhideSelection(["2", "4"]);
+    });
+
+    expect(useChartStore.getState().hiddenTaskIds).not.toContain("3");
+    expect(useFileStore.getState().isDirty).toBe(true);
+    const undoStack = useHistoryStore.getState().undoStack;
+    expect(undoStack).toHaveLength(1);
+    expect(undoStack[0].type).toBe(CommandType.UNHIDE_TASKS);
   });
 });

@@ -12,8 +12,8 @@ import { useFileStore } from "../store/slices/fileSlice";
 import { CommandType } from "../types/command.types";
 import { pluralize } from "../utils/stringUtils";
 import { useFlattenedTasks } from "./useFlattenedTasks";
-import type { TaskId } from "../types/branded.types";
 import type { FlattenedTask } from "../utils/hierarchy";
+import type { TaskId } from "../types/branded.types";
 
 interface UseHideOperationsResult {
   /** Hide tasks by IDs (includes descendants for summary tasks). Records undo command. */
@@ -81,6 +81,9 @@ export function useHideOperations(): UseHideOperationsResult {
    * Empty dependency array is intentional: all store reads use getState() (not reactive
    * subscriptions), so there are no captured values that can go stale. `pluralize` is a
    * pure module-level import and is not a React value, so it also does not need to be listed.
+   *
+   * By contrast, `hideRows` lists `hideTasks` in its deps because that reference is obtained
+   * via a reactive `useChartStore` selector (line above the hook body), not via `getState()`.
    */
   const executeUnhide = useCallback((idsToUnhide: TaskId[]): void => {
     if (idsToUnhide.length === 0) return;

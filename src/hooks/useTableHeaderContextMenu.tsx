@@ -26,8 +26,19 @@ import type {
 } from "../components/ContextMenu/ContextMenu";
 import type { ColumnId } from "../config/tableColumns";
 
-// Module-level constant: derived from static TASK_COLUMNS config and never changes.
+// Module-level constants: derived from static config and never change across renders.
+// Icons are extracted here so they are not re-allocated on every useMemo recomputation,
+// and to preserve referential equality if passed to memoized renderers in the future.
 const HIDEABLE_COLUMNS = getHideableColumns();
+const ARROWS_HORIZONTAL_ICON = (
+  <ArrowsHorizontal
+    size={CONTEXT_MENU.iconSize}
+    weight={CONTEXT_MENU.iconWeight}
+  />
+);
+const EYE_ICON = (
+  <Eye size={CONTEXT_MENU.iconSize} weight={CONTEXT_MENU.iconWeight} />
+);
 
 interface ContextMenuState {
   position: ContextMenuPosition;
@@ -88,24 +99,14 @@ export function useTableHeaderContextMenu(): UseTableHeaderContextMenuResult {
       {
         id: "sizeToFit",
         label: `Size "${displayLabel}" to Fit`,
-        icon: (
-          <ArrowsHorizontal
-            size={CONTEXT_MENU.iconSize}
-            weight={CONTEXT_MENU.iconWeight}
-          />
-        ),
+        icon: ARROWS_HORIZONTAL_ICON,
         onClick: () => autoFitColumn(columnId),
         disabled: !canAutoFit,
       },
       {
         id: "sizeAllToFit",
         label: "Size All Columns to Fit",
-        icon: (
-          <ArrowsHorizontal
-            size={CONTEXT_MENU.iconSize}
-            weight={CONTEXT_MENU.iconWeight}
-          />
-        ),
+        icon: ARROWS_HORIZONTAL_ICON,
         onClick: autoFitAllColumns,
         separator: true,
       },
@@ -128,9 +129,7 @@ export function useTableHeaderContextMenu(): UseTableHeaderContextMenuResult {
     const showAllItem: ContextMenuItem = {
       id: "showAllColumns",
       label: "Show All Columns",
-      icon: (
-        <Eye size={CONTEXT_MENU.iconSize} weight={CONTEXT_MENU.iconWeight} />
-      ),
+      icon: EYE_ICON,
       onClick: () => setHiddenColumns([]),
       disabled: hiddenColumns.length === 0,
     };
