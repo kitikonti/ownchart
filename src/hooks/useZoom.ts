@@ -34,10 +34,12 @@ const SCROLL_CONTAINER_CLASS = "gantt-chart-scroll-container";
 const WHEEL_ZOOM_FACTOR = 1.15;
 
 /**
- * Get the scroll container element
+ * Get the scroll container element.
+ * Performs a live DOM query — called imperatively at interaction time,
+ * not on every render.
  */
 function getScrollContainer(): HTMLElement | null {
-  return document.querySelector(`.${SCROLL_CONTAINER_CLASS}`);
+  return document.querySelector<HTMLElement>(`.${SCROLL_CONTAINER_CLASS}`);
 }
 
 /**
@@ -66,8 +68,8 @@ export function useZoom({
       // Only zoom with Ctrl (Windows/Linux) or Cmd (Mac)
       if (!e.ctrlKey && !e.metaKey) return;
 
-      const container = containerRef.current;
-      if (!container) return;
+      // Guard: only handle wheel events when the chart container is mounted
+      if (!containerRef.current) return;
 
       // Read zoom at event time to avoid stale-closure drift during rapid wheel events
       const currentZoom = useChartStore.getState().zoom;

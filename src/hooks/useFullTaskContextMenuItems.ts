@@ -4,7 +4,7 @@
  * Bundles all store subscriptions and provides a buildItems(taskId) function.
  */
 
-import { useMemo, useCallback, createElement } from "react";
+import { useRef, useCallback, createElement } from "react";
 import {
   Scissors,
   Copy,
@@ -83,30 +83,33 @@ export function useFullTaskContextMenuItems(): UseFullTaskContextMenuItemsResult
   const { hideRows, unhideSelection, getHiddenInSelectionCount } =
     useHideOperations();
 
-  // Pre-create icons once per mount using stable module-level prop objects.
-  // Empty dep array is intentional: icons are derived purely from static CONTEXT_MENU
-  // config and never need to change. Stable identity prevents buildItems from
-  // recreating its closure unnecessarily.
-  const icons = useMemo(
-    () => ({
-      cut: createElement(Scissors, ICON_PROPS),
-      copy: createElement(Copy, ICON_PROPS),
-      paste: createElement(ClipboardText, ICON_PROPS),
-      insertAbove: createElement(RowsPlusTop, ICON_PROPS),
-      insertBelow: createElement(RowsPlusBottom, ICON_PROPS),
-      trash: createElement(Trash, ICON_PROPS),
-      indent: createElement(TextIndent, ICON_PROPS),
-      outdent: createElement(TextOutdent, ICON_PROPS),
-      group: createElement(GroupIcon, SVG_ICON_PROPS),
-      ungroup: createElement(UngroupIcon, SVG_ICON_PROPS),
-      eyeSlash: createElement(EyeSlash, ICON_PROPS),
-      eye: createElement(Eye, ICON_PROPS),
-    }),
-    []
-  );
+  // Pre-create icons once per mount using useRef — these are stable values derived
+  // from static CONTEXT_MENU config and never change after mount. useRef is the
+  // semantically correct primitive for "compute once, reuse forever" (unlike useMemo
+  // which React may purge in future concurrent mode scenarios). The ref object
+  // itself is stable, so accessing iconsRef.current inside useCallback does not
+  // require listing any icon values in the dependency array.
+  const iconsRef = useRef({
+    cut: createElement(Scissors, ICON_PROPS),
+    copy: createElement(Copy, ICON_PROPS),
+    paste: createElement(ClipboardText, ICON_PROPS),
+    insertAbove: createElement(RowsPlusTop, ICON_PROPS),
+    insertBelow: createElement(RowsPlusBottom, ICON_PROPS),
+    trash: createElement(Trash, ICON_PROPS),
+    indent: createElement(TextIndent, ICON_PROPS),
+    outdent: createElement(TextOutdent, ICON_PROPS),
+    group: createElement(GroupIcon, SVG_ICON_PROPS),
+    ungroup: createElement(UngroupIcon, SVG_ICON_PROPS),
+    eyeSlash: createElement(EyeSlash, ICON_PROPS),
+    eye: createElement(Eye, ICON_PROPS),
+  });
 
   const buildItems = useCallback(
     (taskId: TaskId): ContextMenuItem[] => {
+      // Read icons from the ref inside the callback — the ref object is stable
+      // and does not need to appear in the dependency array.
+      const icons = iconsRef.current;
+
       const { effectiveSelection, count } = getEffectiveSelection(
         taskId,
         selectedTaskIds
@@ -216,7 +219,8 @@ export function useFullTaskContextMenuItems(): UseFullTaskContextMenuItemsResult
       hideRows,
       unhideSelection,
       getHiddenInSelectionCount,
-      icons,
+      // iconsRef is intentionally omitted: refs are stable by definition and
+      // reading .current inside the callback is the idiomatic pattern.
     ]
   );
 

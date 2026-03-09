@@ -33,7 +33,7 @@ export function getEffectiveSelection(
 
 // ─── Builders ───
 
-interface ClipboardItemsParams {
+export interface ClipboardItemsParams {
   handleCut: () => void;
   handleCopy: () => void;
   handlePaste: () => Promise<void>;
@@ -79,7 +79,7 @@ export function buildClipboardItems(
   ];
 }
 
-interface DeleteItemParams {
+export interface DeleteItemParams {
   count: number;
   taskId: TaskId;
   deleteSelectedTasks: () => void;
@@ -102,12 +102,14 @@ export function buildDeleteItem(params: DeleteItemParams): ContextMenuItem {
         params.deleteTask(params.taskId, true);
       }
     },
+    // Defensive guard: count is always ≥ 1 when called via getEffectiveSelection,
+    // but external callers may pass 0 (e.g. in tests or future call sites).
     disabled: params.count === 0,
     separator: params.separator,
   };
 }
 
-interface HideItemParams {
+export interface HideItemParams {
   count: number;
   effectiveSelection: TaskId[];
   hideRows: (taskIds: TaskId[]) => void;
@@ -126,7 +128,7 @@ export function buildHideItem(params: HideItemParams): ContextMenuItem {
   };
 }
 
-interface InsertItemsParams {
+export interface InsertItemsParams {
   taskId: TaskId;
   insertTaskAbove: (id: TaskId) => void;
   insertTaskBelow: (id: TaskId) => void;
@@ -153,7 +155,7 @@ export function buildInsertItems(params: InsertItemsParams): ContextMenuItem[] {
   ];
 }
 
-interface HierarchyItemsParams {
+export interface HierarchyItemsParams {
   canIndent: boolean;
   canOutdent: boolean;
   canGroup: boolean;
@@ -209,7 +211,7 @@ export function buildHierarchyItems(
   ];
 }
 
-interface UnhideItemParams {
+export interface UnhideItemParams {
   hiddenCount: number;
   unhideSelection: (selectedTaskIds: TaskId[]) => void;
   selectedTaskIds: TaskId[];
