@@ -2,7 +2,7 @@
  * GettingStartedTab — 5 quick-start cards for new users.
  */
 
-import { memo } from "react";
+import { memo, useEffect } from "react";
 import type { ReactNode, ReactElement } from "react";
 import {
   Cursor,
@@ -52,15 +52,24 @@ function GettingStartedTabInner({
 }: GettingStartedTabProps): ReactElement {
   const topics = sections.flatMap((s) => s.topics);
 
-  return (
-    <div className="space-y-3">
-      {topics.map((topic) => {
-        const visual = ICONS[topic.id];
-        if (import.meta.env.DEV && !visual) {
+  // Warn once per sections change (not on every render) about missing icon mappings.
+  useEffect(() => {
+    if (import.meta.env.DEV) {
+      topics.forEach((topic) => {
+        if (!ICONS[topic.id]) {
           console.warn(
             `[GettingStartedTab] No icon mapping found for topic id "${topic.id}". Add it to the ICONS map.`
           );
         }
+      });
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [sections]);
+
+  return (
+    <div className="space-y-3">
+      {topics.map((topic) => {
+        const visual = ICONS[topic.id];
         return (
           <div
             key={topic.id}

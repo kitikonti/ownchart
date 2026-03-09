@@ -57,6 +57,7 @@ function SectionAccordion({
   return (
     <section>
       <button
+        type="button"
         onClick={() => setIsOpen(!isOpen)}
         aria-expanded={isOpen}
         aria-controls={panelId}
