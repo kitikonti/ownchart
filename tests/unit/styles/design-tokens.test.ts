@@ -144,6 +144,7 @@ describe("design-tokens snapshots", () => {
       {
         "bg": "#1e293b",
         "borderRadius": "8px",
+        "durationMs": 3000,
         "fontSize": "14px",
         "padding": "12px 16px",
         "text": "#f8fafc",

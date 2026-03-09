@@ -374,4 +374,6 @@ export const TOAST = {
   borderRadius: "8px",
   fontSize: "14px",
   padding: "12px 16px",
+  /** Default display duration for toast notifications (ms) */
+  durationMs: 3000,
 } as const;

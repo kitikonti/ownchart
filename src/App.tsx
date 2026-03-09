@@ -1,7 +1,10 @@
 /**
  * App - Root application component
- * Composes the main layout from sub-components.
- * Gates mobile devices with a block screen before mounting the full app.
+ *
+ * Three-layer structure:
+ *   App        → wraps everything in an error boundary
+ *   AppInner   → gates mobile devices before mounting the full app
+ *   AppContent → registers global hooks and renders the main layout
  */
 
 import { useEffect, type ReactElement } from "react";
@@ -78,7 +81,7 @@ function AppContent(): ReactElement {
       <Toaster
         position="bottom-right"
         toastOptions={{
-          duration: 3000,
+          duration: TOAST.durationMs,
           style: {
             background: TOAST.bg,
             color: TOAST.text,
