@@ -8,7 +8,7 @@
  * - Keyboard navigation support
  */
 
-import type { ReactNode } from "react";
+import type { ReactNode, ReactElement } from "react";
 import { useDropdown } from "../../hooks/useDropdown";
 import { DropdownTrigger } from "./DropdownTrigger";
 import { DropdownPanel } from "./DropdownPanel";
@@ -48,7 +48,7 @@ export function ToolbarDropdown<T extends string = string>({
   "aria-label": ariaLabel,
   title,
   labelPriority,
-}: ToolbarDropdownProps<T>): JSX.Element {
+}: ToolbarDropdownProps<T>): ReactElement {
   const { isOpen, toggle, close, containerRef, triggerRef } = useDropdown();
 
   // When a labelPrefix is provided (e.g. "Zoom: "), show it as the trigger label.

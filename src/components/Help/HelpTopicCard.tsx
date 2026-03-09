@@ -3,6 +3,7 @@
  * keyboard shortcuts, and optional tip.
  */
 
+import type { ReactElement } from "react";
 import { Command } from "@phosphor-icons/react";
 import {
   type HelpTopic,
@@ -14,7 +15,7 @@ import {
 // KeyBadge / ShortcutKeys (extracted from old HelpPanel)
 // ---------------------------------------------------------------------------
 
-export function KeyBadge({ children }: { children: string }): JSX.Element {
+export function KeyBadge({ children }: { children: string }): ReactElement {
   return (
     <kbd className="px-1.5 py-0.5 text-xs font-mono bg-neutral-100 border border-neutral-200 rounded text-neutral-700 shadow-xs">
       {children}
@@ -23,12 +24,12 @@ export function KeyBadge({ children }: { children: string }): JSX.Element {
 }
 
 /** Renders a UI navigation path (e.g. "View > Columns") as a breadcrumb. */
-export function MenuPathLabel({ path }: { path: string }): JSX.Element {
+export function MenuPathLabel({ path }: { path: string }): ReactElement {
   const parts = path.split(" > ");
   return (
     <span className="text-xs text-neutral-400 flex items-center gap-0.5 flex-shrink-0">
       {parts.map((part, i) => (
-        <span key={part} className="flex items-center gap-0.5">
+        <span key={`${part}-${i}`} className="flex items-center gap-0.5">
           {i > 0 && (
             <span className="mx-0.5" aria-hidden="true">
               ›
@@ -41,14 +42,17 @@ export function MenuPathLabel({ path }: { path: string }): JSX.Element {
   );
 }
 
-export function ShortcutKeys({ keys }: { keys: string }): JSX.Element {
+export function ShortcutKeys({ keys }: { keys: string }): ReactElement {
   const resolved = resolveShortcut(keys);
   const parts = resolved.split("+");
 
   return (
     <span className="flex items-center gap-1 flex-shrink-0">
       {parts.map((part, index) => (
-        <span key={part.trim()} className="flex items-center gap-1">
+        <span
+          key={`${part.trim()}-${index}`}
+          className="flex items-center gap-1"
+        >
           {index > 0 && (
             <span className="text-neutral-300 text-xs" aria-hidden="true">
               +
@@ -74,7 +78,7 @@ interface HelpTopicCardProps {
 export function HelpTopicCard({
   topic,
   compact = false,
-}: HelpTopicCardProps): JSX.Element {
+}: HelpTopicCardProps): ReactElement {
   if (compact) {
     return (
       <div className="flex items-center justify-between py-1.5 px-2 -mx-2 rounded hover:bg-neutral-50 transition-colors">

@@ -8,7 +8,7 @@
  * - neutral: Gray background, for informational messages
  */
 
-import type { ReactNode } from "react";
+import type { ReactNode, ReactElement } from "react";
 import { Info, Warning, WarningCircle, Lightbulb } from "@phosphor-icons/react";
 
 export type AlertVariant = "info" | "warning" | "error" | "neutral";
@@ -66,14 +66,14 @@ export function Alert({
   children,
   icon,
   className = "",
-}: AlertProps): JSX.Element {
+}: AlertProps): ReactElement {
   const styles = variantStyles[variant];
   const displayIcon = icon ?? defaultIcons[variant];
 
   return (
     <div
       className={`flex items-start gap-3 px-4 py-3 rounded border ${styles.container} ${className}`}
-      role={variant === "error" || variant === "warning" ? "alert" : "note"}
+      role={variant === "error" || variant === "warning" ? "alert" : "status"}
     >
       <span
         aria-hidden="true"

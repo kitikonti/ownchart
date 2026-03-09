@@ -2,7 +2,7 @@
  * GettingStartedTab — 5 quick-start cards for new users.
  */
 
-import type { ReactNode } from "react";
+import type { ReactNode, ReactElement } from "react";
 import {
   Cursor,
   ArrowsOutCardinal,
@@ -48,7 +48,7 @@ interface GettingStartedTabProps {
 
 export function GettingStartedTab({
   sections,
-}: GettingStartedTabProps): JSX.Element {
+}: GettingStartedTabProps): ReactElement {
   const topics = sections.flatMap((s) => s.topics);
 
   return (

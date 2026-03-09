@@ -2,7 +2,7 @@
  * HelpSectionList — renders a list of collapsible sections with topic cards.
  */
 
-import { useState } from "react";
+import { type ReactElement, useState } from "react";
 import { CaretDown } from "@phosphor-icons/react";
 import { type HelpSection } from "../../config/helpContent";
 import { HelpTopicCard } from "./HelpTopicCard";
@@ -19,7 +19,7 @@ export function HelpSectionList({
   sections,
   compact = false,
   defaultOpen = false,
-}: HelpSectionListProps): JSX.Element {
+}: HelpSectionListProps): ReactElement {
   return (
     <div className="space-y-1">
       {sections.map((section) => (
@@ -44,7 +44,7 @@ function SectionAccordion({
   section,
   compact,
   defaultOpen,
-}: SectionAccordionProps): JSX.Element {
+}: SectionAccordionProps): ReactElement {
   const [isOpen, setIsOpen] = useState(defaultOpen);
   const panelId = `help-section-panel-${section.id}`;
 
