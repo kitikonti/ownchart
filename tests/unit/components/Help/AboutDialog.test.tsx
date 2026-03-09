@@ -1,6 +1,6 @@
-import { describe, it, expect, beforeEach } from "vitest";
+import { describe, it, expect, beforeEach, vi } from "vitest";
 import { render, screen, fireEvent } from "@testing-library/react";
-import { AboutDialog } from "../../../../src/components/Help/AboutDialog";
+import { AboutDialog, sanitizeHref } from "../../../../src/components/Help/AboutDialog";
 import { useUIStore } from "../../../../src/store/slices/uiSlice";
 import { APP_CONFIG } from "../../../../src/config/appConfig";
 
@@ -69,5 +69,43 @@ describe("AboutDialog", () => {
     fireEvent.click(screen.getByText("Close"));
 
     expect(useUIStore.getState().isAboutDialogOpen).toBe(false);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// sanitizeHref — security boundary for external link hrefs
+// ---------------------------------------------------------------------------
+
+describe("sanitizeHref", () => {
+  beforeEach(() => {
+    vi.spyOn(console, "warn").mockImplementation(() => {});
+  });
+
+  it("passes through https:// URLs unchanged", () => {
+    expect(sanitizeHref("https://example.com")).toBe("https://example.com");
+  });
+
+  it("passes through http:// URLs unchanged", () => {
+    expect(sanitizeHref("http://example.com")).toBe("http://example.com");
+  });
+
+  it("blocks javascript: URIs by returning '#'", () => {
+    expect(sanitizeHref("javascript:alert(1)")).toBe("#");
+  });
+
+  it("blocks data: URIs by returning '#'", () => {
+    expect(sanitizeHref("data:text/html,<h1>XSS</h1>")).toBe("#");
+  });
+
+  it("blocks empty string by returning '#'", () => {
+    expect(sanitizeHref("")).toBe("#");
+  });
+
+  it("blocks relative paths by returning '#'", () => {
+    expect(sanitizeHref("/some/path")).toBe("#");
+  });
+
+  it("blocks protocol-relative URLs by returning '#'", () => {
+    expect(sanitizeHref("//example.com")).toBe("#");
   });
 });

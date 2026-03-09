@@ -2,55 +2,125 @@
  * Welcome Tour component for first-time users.
  */
 
-import { useState } from "react";
-import { HandWaving, Cursor, ArrowsOutCardinal } from "@phosphor-icons/react";
+import { useState, useEffect, useCallback, useRef, memo } from "react";
+
+import {
+  HandWaving,
+  Cursor,
+  ArrowsOutCardinal,
+  Question,
+} from "@phosphor-icons/react";
+
 import { Modal } from "../common/Modal";
 import { Button } from "../common/Button";
 import { Checkbox } from "../common/Checkbox";
 import { useUIStore } from "../../store/slices/uiSlice";
 
+/** Delay (ms) before opening the help panel after the welcome modal closes. */
+const HELP_PANEL_OPEN_DELAY_MS = 100;
+
+interface TourTip {
+  /** Stable identifier used as React key — must not change between renders. */
+  id: string;
+  /**
+   * Icon element — always a static JSX.Element created at module level.
+   * Placed inside an `aria-hidden` wrapper in the render so it does not need
+   * to carry its own accessibility label.
+   */
+  icon: JSX.Element;
+  /** Tailwind classes for the icon container background. */
+  iconBg: string;
+  /** Primary tip text. */
+  label: string;
+  /** Supporting description text. */
+  description: string;
+}
+
+/**
+ * Tour tip metadata. Centralised here so colours and copy are co-located
+ * and not scattered across JSX.
+ *
+ * Icons are static JSX.Element values created at module evaluation time.
+ * They are placed inside an aria-hidden wrapper in the render, so they do
+ * not need to carry accessibility context.
+ */
+const TOUR_TIPS: TourTip[] = [
+  {
+    id: "add-tasks",
+    icon: <Cursor size={18} className="text-neutral-600" />,
+    iconBg: "bg-neutral-100",
+    label: "Click the empty row to add tasks",
+    description: "Start building your project timeline",
+  },
+  {
+    id: "drag-bars",
+    icon: <ArrowsOutCardinal size={18} className="text-brand-600" />,
+    iconBg: "bg-brand-100",
+    label: "Drag task bars to change dates",
+    description: "Resize edges to adjust duration",
+  },
+  {
+    id: "shortcuts",
+    icon: <Question size={18} className="text-brand-600" />,
+    iconBg: "bg-brand-50",
+    label: "Press ? anytime for shortcuts",
+    description: "Keyboard shortcuts for power users",
+  },
+];
+
 /**
  * Welcome Tour component.
  */
-export function WelcomeTour(): JSX.Element | null {
+export const WelcomeTour = memo(function WelcomeTour(): JSX.Element | null {
   const { isWelcomeTourOpen, dismissWelcome, openHelpPanel } = useUIStore();
   const [dontShowAgain, setDontShowAgain] = useState(false);
+  // Track pending timer so it can be cancelled on unmount, preventing a
+  // stale openHelpPanel() call if the component unmounts before the timer fires.
+  const helpPanelTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  const handleGetStarted = (): void => {
-    dismissWelcome(dontShowAgain);
-  };
+  // No setup needed — only registers an unmount cleanup that cancels any
+  // pending helpPanelTimerRef before the component is removed from the tree.
+  useEffect(() => {
+    return () => {
+      if (helpPanelTimerRef.current !== null) {
+        clearTimeout(helpPanelTimerRef.current);
+      }
+    };
+  }, []);
 
-  const handleShowShortcuts = (): void => {
+  const dismiss = useCallback((): void => {
     dismissWelcome(dontShowAgain);
-    // Delay opening help panel to ensure welcome is closed first
-    setTimeout(() => {
+  }, [dismissWelcome, dontShowAgain]);
+
+  const handleShowShortcuts = useCallback((): void => {
+    dismiss();
+    // Delay opening help panel to let the modal finish closing before the
+    // help panel mounts. The animation duration is ~100 ms (Modal fade-out).
+    if (helpPanelTimerRef.current !== null) {
+      clearTimeout(helpPanelTimerRef.current);
+    }
+    helpPanelTimerRef.current = setTimeout(() => {
+      helpPanelTimerRef.current = null;
       openHelpPanel();
-    }, 100);
-  };
-
-  const handleClose = (): void => {
-    dismissWelcome(dontShowAgain);
-  };
-
-  const footer = (
-    <div className="flex items-center w-full gap-3">
-      <div className="flex-1" />
-      <Button variant="secondary" onClick={handleShowShortcuts}>
-        Show Shortcuts
-      </Button>
-      <Button variant="primary" onClick={handleGetStarted}>
-        Get Started
-      </Button>
-    </div>
-  );
+    }, HELP_PANEL_OPEN_DELAY_MS);
+  }, [dismiss, openHelpPanel]);
 
   return (
     <Modal
       isOpen={isWelcomeTourOpen}
-      onClose={handleClose}
+      onClose={dismiss}
       title="Welcome to OwnChart!"
       icon={<HandWaving size={24} weight="light" className="text-amber-500" />}
-      footer={footer}
+      footer={
+        <>
+          <Button variant="secondary" onClick={handleShowShortcuts}>
+            Show Shortcuts
+          </Button>
+          <Button variant="primary" onClick={dismiss}>
+            Get Started
+          </Button>
+        </>
+      }
       widthClass="max-w-md"
       headerStyle="bordered"
       footerStyle="bordered"
@@ -66,57 +136,35 @@ export function WelcomeTour(): JSX.Element | null {
         <div className="space-y-3">
           <h3 className="text-sm font-semibold text-neutral-900">Quick tips</h3>
 
-          <div className="flex items-start gap-3 p-3 bg-neutral-50 rounded border border-neutral-200">
-            <div className="p-2 bg-neutral-100 rounded">
-              <Cursor size={18} className="text-neutral-600" />
+          {TOUR_TIPS.map((tip) => (
+            <div
+              key={tip.id}
+              className="flex items-start gap-3 p-3 bg-neutral-50 rounded border border-neutral-200"
+            >
+              <div className={`p-2 ${tip.iconBg} rounded`} aria-hidden="true">
+                {tip.icon}
+              </div>
+              <div>
+                <p className="text-sm font-medium text-neutral-800">
+                  {tip.label}
+                </p>
+                <p className="text-xs text-neutral-500 mt-0.5">
+                  {tip.description}
+                </p>
+              </div>
             </div>
-            <div>
-              <p className="text-sm font-medium text-neutral-800">
-                Click the empty row to add tasks
-              </p>
-              <p className="text-xs text-neutral-500 mt-0.5">
-                Start building your project timeline
-              </p>
-            </div>
-          </div>
-
-          <div className="flex items-start gap-3 p-3 bg-neutral-50 rounded border border-neutral-200">
-            <div className="p-2 bg-emerald-100 rounded">
-              <ArrowsOutCardinal size={18} className="text-emerald-600" />
-            </div>
-            <div>
-              <p className="text-sm font-medium text-neutral-800">
-                Drag task bars to change dates
-              </p>
-              <p className="text-xs text-neutral-500 mt-0.5">
-                Resize edges to adjust duration
-              </p>
-            </div>
-          </div>
-
-          <div className="flex items-start gap-3 p-3 bg-neutral-50 rounded border border-neutral-200">
-            <div className="p-2 bg-violet-100 rounded">
-              <span className="text-base font-bold text-violet-600 block w-[18px] text-center">
-                ?
-              </span>
-            </div>
-            <div>
-              <p className="text-sm font-medium text-neutral-800">
-                Press ? anytime for shortcuts
-              </p>
-              <p className="text-xs text-neutral-500 mt-0.5">
-                Keyboard shortcuts for power users
-              </p>
-            </div>
-          </div>
+          ))}
         </div>
 
         {/* Don't show again checkbox */}
-        <label className="flex items-center gap-3 pt-2 cursor-pointer group">
+        <label
+          htmlFor="welcome-tour-dont-show"
+          className="flex items-center gap-3 pt-2 cursor-pointer group"
+        >
           <Checkbox
+            id="welcome-tour-dont-show"
             checked={dontShowAgain}
             onChange={setDontShowAgain}
-            aria-label="Don't show this again"
           />
           <span className="text-sm text-neutral-500 group-hover:text-neutral-600 transition-colors">
             Don&apos;t show this again
@@ -125,4 +173,4 @@ export function WelcomeTour(): JSX.Element | null {
       </div>
     </Modal>
   );
-}
+});

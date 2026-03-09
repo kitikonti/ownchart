@@ -5,8 +5,30 @@
  * Hover handled via CSS class .dropdown-item (no inline backgroundColor).
  */
 
-import type { ReactNode } from "react";
+import { memo, type ReactNode, type AriaRole } from "react";
+
 import { Check } from "@phosphor-icons/react";
+
+/**
+ * ARIA roles that support the `aria-selected` attribute per the WAI-ARIA spec.
+ * Only these roles should receive `aria-selected`; roles like `menuitem` do not
+ * support it and would cause accessibility violations.
+ *
+ * Covers the roles realistically used by DropdownItem callers in this project.
+ * Extend this set if new callers use additional WAI-ARIA roles that support
+ * `aria-selected` (e.g. "row", "gridcell") — see the full spec list at
+ * https://www.w3.org/TR/wai-aria-1.2/#aria-selected
+ */
+const ARIA_SELECTED_ROLES = new Set<AriaRole>(["option", "tab", "treeitem"]);
+
+/**
+ * ARIA roles that support the `aria-checked` attribute per the WAI-ARIA spec.
+ * `menuitemcheckbox` and `menuitemradio` are the primary roles that require it.
+ */
+const ARIA_CHECKED_ROLES = new Set<AriaRole>([
+  "menuitemcheckbox",
+  "menuitemradio",
+]);
 
 interface DropdownItemProps {
   /** Whether this item is currently selected */
@@ -21,13 +43,21 @@ interface DropdownItemProps {
   showCheckmark?: boolean;
   /** Trailing content (e.g. color swatches) */
   trailing?: ReactNode;
-  /** ARIA role — when set, enables aria-selected on the button */
-  role?: string;
-  /** aria-selected override (only emitted when role is set) */
+  /**
+   * ARIA role — when set to a role that supports `aria-selected` (e.g. "option",
+   * "tab", "treeitem"), `aria-selected` is also emitted. Roles like "menuitem"
+   * do NOT support `aria-selected` and will not emit it.
+   * When set to "menuitemcheckbox" or "menuitemradio", `aria-checked` is emitted
+   * instead, derived from `isSelected` unless overridden via `aria-checked`.
+   */
+  role?: AriaRole;
+  /** aria-selected override (only emitted when role supports aria-selected) */
   "aria-selected"?: boolean;
+  /** aria-checked override (only emitted when role supports aria-checked, e.g. menuitemcheckbox) */
+  "aria-checked"?: boolean;
 }
 
-export function DropdownItem({
+export const DropdownItem = memo(function DropdownItem({
   isSelected = false,
   onClick,
   children,
@@ -36,75 +66,73 @@ export function DropdownItem({
   trailing,
   role,
   "aria-selected": ariaSelected,
+  "aria-checked": ariaChecked,
 }: DropdownItemProps): JSX.Element {
   const hasDescription = !!description;
+
+  // Determine whether a semantic ARIA state attribute conveys the selection.
+  // When neither aria-selected nor aria-checked is emitted (e.g. role is
+  // "menuitem" or absent), we fall back to a visually-hidden text annotation
+  // so screen readers still announce the active selection.
+  const emitsAriaSelected = !!(role && ARIA_SELECTED_ROLES.has(role));
+  const emitsAriaChecked = !!(role && ARIA_CHECKED_ROLES.has(role));
+  const needsFallbackSelectedText =
+    isSelected && !emitsAriaSelected && !emitsAriaChecked;
 
   return (
     <button
       type="button"
       role={role}
-      aria-selected={role ? (ariaSelected ?? isSelected) : undefined}
+      aria-selected={
+        emitsAriaSelected ? (ariaSelected ?? isSelected) : undefined
+      }
+      aria-checked={emitsAriaChecked ? (ariaChecked ?? isSelected) : undefined}
       onClick={onClick}
-      className={`dropdown-item${isSelected ? " dropdown-item-selected" : ""}`}
-      style={{
-        display: "flex",
-        alignItems: "center",
-        width: "100%",
-        ...(hasDescription
-          ? { minHeight: "36px", padding: "6px 12px 6px 8px" }
-          : { height: "32px", padding: "0 15px 0 9px" }),
-        color: "rgb(36, 36, 36)",
-        border: isSelected ? undefined : "none",
-        borderRadius: isSelected ? undefined : "0",
-        cursor: "pointer",
-        fontSize: "14px",
-        ...(hasDescription ? {} : { lineHeight: "32px" }),
-        textAlign: "left",
-        whiteSpace: "nowrap",
-      }}
+      className={[
+        "dropdown-item",
+        "flex items-center w-full cursor-pointer text-left text-sm text-neutral-900 whitespace-nowrap",
+        hasDescription
+          ? "min-h-[36px] py-1.5 pr-3 pl-2"
+          : "h-8 py-0 pr-[15px] pl-[9px]", // pl-[9px]/pr-[15px] pixel-align with DropdownPanel's px-[9px] left-padding so the checkmark column visually aligns with the panel edge — if DropdownPanel padding changes, update this value to match
+        isSelected ? "dropdown-item-selected" : "",
+      ]
+        .filter(Boolean)
+        .join(" ")}
     >
       {/* Checkmark space */}
       {showCheckmark && (
         <span
-          style={{
-            width: "20px",
-            height: "20px",
-            marginRight: hasDescription ? "8px" : "10px",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            flexShrink: 0,
-          }}
+          className={[
+            "inline-flex items-center justify-center w-5 h-5 flex-shrink-0",
+            hasDescription ? "mr-2" : "mr-2.5",
+          ].join(" ")}
         >
           {isSelected && (
             <Check
               size={16}
               weight="bold"
-              style={{ color: "rgb(73, 130, 5)" }}
+              className="text-brand-600"
+              aria-hidden="true"
             />
           )}
         </span>
       )}
+      {/* Visually-hidden fallback for screen readers when no ARIA state attribute
+          (aria-selected / aria-checked) is emitted for this role. Ensures that
+          the active selection is still announced even for plain menuitem roles. */}
+      {needsFallbackSelectedText && <span className="sr-only">(selected)</span>}
 
       {/* Content */}
       {hasDescription ? (
-        <div style={{ flex: 1 }}>
+        <div className="flex-1">
           <div>{children}</div>
-          <div
-            style={{
-              fontSize: "12px",
-              color: "rgb(120, 120, 120)",
-              marginTop: "1px",
-            }}
-          >
-            {description}
-          </div>
+          <div className="text-xs text-neutral-500 mt-px">{description}</div>
         </div>
       ) : (
-        <span style={{ flex: 1 }}>{children}</span>
+        <span className="flex-1">{children}</span>
       )}
 
       {trailing}
     </button>
   );
-}
+});

@@ -4,6 +4,8 @@
  * Opened from: Help tab "About" button, or clickable version in StatusBar.
  */
 
+import { memo, type ReactNode } from "react";
+
 import {
   GithubLogo,
   Globe,
@@ -14,12 +16,87 @@ import {
 
 import OwnChartLogo from "../../assets/logo.svg?react";
 import { Modal } from "../common/Modal";
+import { Button } from "../common/Button";
 import { useUIStore } from "../../store/slices/uiSlice";
 import { APP_CONFIG } from "../../config/appConfig";
 
-export function AboutDialog(): JSX.Element | null {
-  const isOpen = useUIStore((state) => state.isAboutDialogOpen);
-  const closeAboutDialog = useUIStore((state) => state.closeAboutDialog);
+interface ExternalLinkProps {
+  href: string;
+  icon: ReactNode;
+  label: string;
+  sublabel?: string;
+}
+
+/**
+ * Returns a safe href for use in an anchor tag.
+ * Only http and https protocols are permitted — all others are replaced with
+ * a safe fallback to prevent javascript: or data: URI injection.
+ *
+ * In development (`import.meta.env.DEV === true`), a console warning is
+ * emitted when the fallback is triggered so that misconfigured URLs in
+ * APP_CONFIG are caught early. The warning is omitted in production and in
+ * test environments unless the test runner sets `import.meta.env.DEV = true`.
+ *
+ * Exported for unit testing.
+ */
+export function sanitizeHref(href: string): string {
+  if (href.startsWith("https://") || href.startsWith("http://")) {
+    return href;
+  }
+  if (import.meta.env.DEV) {
+    console.warn(
+      `[AboutDialog] sanitizeHref: href "${href}" does not start with http(s)://. ` +
+        "Falling back to '#'. Check APP_CONFIG for misconfigured URLs."
+    );
+  }
+  return "#";
+}
+
+/** Link row used within AboutDialog to display icon + label + optional sublabel. */
+const ExternalLink = memo(function ExternalLink({
+  href,
+  icon,
+  label,
+  sublabel,
+}: ExternalLinkProps): JSX.Element {
+  return (
+    <a
+      href={sanitizeHref(href)}
+      target="_blank"
+      rel="noopener noreferrer"
+      className="flex items-start gap-3 group py-1 rounded -mx-1 px-1 hover:bg-neutral-50 transition-colors"
+    >
+      {/* Category icon — decorative; the text label conveys the link purpose */}
+      <span
+        className="mt-0.5 text-neutral-500 group-hover:text-neutral-700 flex-shrink-0"
+        aria-hidden="true"
+      >
+        {icon}
+      </span>
+      <div className="flex-1 min-w-0">
+        <span className="text-sm text-neutral-700 group-hover:text-neutral-900">
+          {label}
+        </span>
+        {sublabel && (
+          <span className="flex items-center gap-1 text-xs text-neutral-400 group-hover:text-brand-600">
+            {sublabel}
+            <ArrowSquareOut size={11} weight="regular" aria-hidden="true" />
+          </span>
+        )}
+      </div>
+    </a>
+  );
+});
+
+/** Website URL with the http(s):// prefix stripped for display purposes.
+ *  Falls back to the full URL if the replace produces an empty string — this
+ *  can only happen when APP_CONFIG.websiteUrl is exactly "https://" or "http://",
+ *  which would leave an empty string after the regex removes the protocol. */
+const WEBSITE_DISPLAY_URL =
+  APP_CONFIG.websiteUrl.replace(/^https?:\/\//, "") || APP_CONFIG.websiteUrl;
+
+export const AboutDialog = memo(function AboutDialog(): JSX.Element | null {
+  const { isAboutDialogOpen: isOpen, closeAboutDialog } = useUIStore();
 
   return (
     <Modal
@@ -32,12 +109,9 @@ export function AboutDialog(): JSX.Element | null {
       widthClass="max-w-sm"
       contentPadding="px-8 py-6"
       footer={
-        <button
-          onClick={closeAboutDialog}
-          className="px-4 py-2 text-sm font-medium text-neutral-700 bg-white border border-neutral-300 rounded hover:bg-neutral-50 transition-colors"
-        >
+        <Button variant="secondary" onClick={closeAboutDialog}>
           Close
-        </button>
+        </Button>
       }
     >
       {/* Logo + Version */}
@@ -52,6 +126,7 @@ export function AboutDialog(): JSX.Element | null {
           {APP_CONFIG.name}
         </h3>
         <span className="text-sm text-neutral-500">
+          {/* __APP_VERSION__ is injected by Vite at build time — see vite.config.ts */}
           Version {__APP_VERSION__}
         </span>
         <p className="mt-2 text-sm text-neutral-600 leading-relaxed">
@@ -72,7 +147,7 @@ export function AboutDialog(): JSX.Element | null {
         <ExternalLink
           href={APP_CONFIG.websiteUrl}
           icon={<Globe size={18} weight="regular" />}
-          label={APP_CONFIG.websiteUrl.replace("https://", "")}
+          label={WEBSITE_DISPLAY_URL}
         />
       </div>
 
@@ -87,41 +162,4 @@ export function AboutDialog(): JSX.Element | null {
       />
     </Modal>
   );
-}
-
-/** Small reusable link row */
-function ExternalLink({
-  href,
-  icon,
-  label,
-  sublabel,
-}: {
-  href: string;
-  icon: React.ReactNode;
-  label: string;
-  sublabel?: string;
-}): JSX.Element {
-  return (
-    <a
-      href={href}
-      target="_blank"
-      rel="noopener noreferrer"
-      className="flex items-start gap-3 group py-1 rounded -mx-1 px-1 hover:bg-neutral-50 transition-colors"
-    >
-      <span className="mt-0.5 text-neutral-500 group-hover:text-neutral-700 flex-shrink-0">
-        {icon}
-      </span>
-      <div className="flex-1 min-w-0">
-        <span className="text-sm text-neutral-700 group-hover:text-neutral-900">
-          {label}
-        </span>
-        {sublabel && (
-          <span className="flex items-center gap-1 text-xs text-neutral-400 group-hover:text-brand-600">
-            {sublabel}
-            <ArrowSquareOut size={11} weight="regular" />
-          </span>
-        )}
-      </div>
-    </a>
-  );
-}
+});
