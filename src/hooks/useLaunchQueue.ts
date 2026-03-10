@@ -31,7 +31,7 @@ export function useLaunchQueue(): void {
         showLoadNotifications({ ...result, fileName: file.name }, toast);
       } catch (e) {
         console.error("Failed to open file from LaunchQueue:", e);
-        toast.error("Failed to open file");
+        toast.error(`Failed to open "${handle.name}"`);
       }
     });
   }, []);

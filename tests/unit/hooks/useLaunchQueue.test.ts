@@ -151,7 +151,7 @@ describe("useLaunchQueue", () => {
       "Failed to open file from LaunchQueue:",
       readError
     );
-    expect(toast.error).toHaveBeenCalledWith("Failed to open file");
+    expect(toast.error).toHaveBeenCalledWith('Failed to open "broken.ownchart"');
 
     consoleSpy.mockRestore();
   });

@@ -36,8 +36,6 @@ export function useFlattenedTasks(): UseFlattenedTasksResult {
 
   // Stage 1: Build full flattened list with globalRowNumber
   const allFlattenedTasks = useMemo(() => {
-    // Single-pass Set construction avoids the intermediate filtered array from
-    // filter().map() — functionally identical, slightly more direct.
     const collapsedIds = new Set<TaskId>();
     for (const t of tasks) {
       if (t.open === false) collapsedIds.add(t.id);
