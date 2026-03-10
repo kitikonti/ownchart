@@ -59,7 +59,7 @@ describe("DropdownPanel", () => {
     it("aligns to the left by default (style.left is set)", () => {
       const { container } = render(<DropdownPanel>content</DropdownPanel>);
       const el = container.firstChild as HTMLElement;
-      // jsdom normalises numeric 0 to "0px" in inline styles
+      // jsdom normalises "0" to "0px" in inline styles
       expect(el.style.left).toBe("0px");
     });
 
@@ -68,7 +68,7 @@ describe("DropdownPanel", () => {
         <DropdownPanel align="right">content</DropdownPanel>
       );
       const el = container.firstChild as HTMLElement;
-      // jsdom normalises numeric 0 to "0px" in inline styles
+      // jsdom normalises "0" to "0px" in inline styles
       expect(el.style.right).toBe("0px");
     });
 

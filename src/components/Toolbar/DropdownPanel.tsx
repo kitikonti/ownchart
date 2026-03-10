@@ -73,7 +73,7 @@ export const DropdownPanel = memo(function DropdownPanel({
   className = "",
 }: DropdownPanelProps): JSX.Element {
   const panelStyle: CSSProperties = {
-    [align === "right" ? "right" : "left"]: 0,
+    [align === "right" ? "right" : "left"]: "0",
     // width is optional — omit the property entirely when not set
     ...(width ? { width } : {}),
     // minWidth defaults to "100%" but a caller may pass "" to suppress it

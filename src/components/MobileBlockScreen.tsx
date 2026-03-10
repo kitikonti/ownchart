@@ -36,16 +36,17 @@ export const MobileBlockScreen = memo(function MobileBlockScreen({
     dismissRef.current?.focus();
   }, []);
 
-  // Trap focus on the single interactive element: with only one focusable element,
-  // Tab and Shift+Tab should keep focus on the dismiss button rather than cycling
-  // into the content hidden behind the blocking screen.
+  // Handles keyboard interactions on the single interactive element:
+  //  - Tab / Shift+Tab: prevent default to keep focus trapped on this button
+  //    (there is only one focusable element, so both directions must stay here).
+  //  - Escape: WCAG 2.1 §3.2.5 / ARIA dialog pattern — dismiss the dialog.
   // Note: both Tab and Shift+Tab share e.key === "Tab" (Shift is only in e.shiftKey),
-  // so a single check on "Tab" correctly traps both directions.
-  function handleFocusTrapKeyDown(
-    e: ReactKeyboardEvent<HTMLButtonElement>
-  ): void {
+  // so a single "Tab" check correctly traps both directions.
+  function handleButtonKeyDown(e: ReactKeyboardEvent<HTMLButtonElement>): void {
     if (e.key === "Tab") {
       e.preventDefault();
+    } else if (e.key === "Escape") {
+      onDismiss();
     }
   }
 
@@ -112,7 +113,7 @@ export const MobileBlockScreen = memo(function MobileBlockScreen({
         ref={dismissRef}
         type="button"
         onClick={onDismiss}
-        onKeyDown={handleFocusTrapKeyDown}
+        onKeyDown={handleButtonKeyDown}
         className="mt-10 text-xs text-neutral-500 hover:text-neutral-600 focus-visible:ring-2 focus-visible:ring-neutral-400 focus-visible:ring-offset-1 focus-visible:rounded transition-colors"
       >
         Continue anyway

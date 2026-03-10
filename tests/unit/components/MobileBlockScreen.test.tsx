@@ -80,4 +80,20 @@ describe("MobileBlockScreen", () => {
     const heading = screen.getByText("Desktop browser required");
     expect(dialog).toHaveAttribute("aria-labelledby", heading.id);
   });
+
+  it("calls onDismiss when Escape is pressed on the dismiss button", () => {
+    const onDismiss = vi.fn();
+    render(<MobileBlockScreen onDismiss={onDismiss} />);
+    const button = screen.getByRole("button", { name: /continue anyway/i });
+    fireEvent.keyDown(button, { key: "Escape" });
+    expect(onDismiss).toHaveBeenCalledOnce();
+  });
+
+  it("does not call onDismiss for non-Escape/Tab keys on the dismiss button", () => {
+    const onDismiss = vi.fn();
+    render(<MobileBlockScreen onDismiss={onDismiss} />);
+    const button = screen.getByRole("button", { name: /continue anyway/i });
+    fireEvent.keyDown(button, { key: "Enter" });
+    expect(onDismiss).not.toHaveBeenCalled();
+  });
 });

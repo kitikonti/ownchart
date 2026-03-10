@@ -95,6 +95,10 @@ export const Checkbox = memo(function Checkbox({
         onChange={(e) => onChange(e.target.checked)}
         disabled={disabled}
         aria-label={ariaLabel}
+        // aria-checked="mixed" explicitly signals the indeterminate state to AT.
+        // The DOM `indeterminate` property (set via ref) is not always announced as
+        // "mixed" by JAWS/NVDA — the explicit aria-checked attribute is more reliable.
+        aria-checked={indeterminate ? "mixed" : checked}
         id={id}
         className="peer absolute opacity-0 w-full h-full cursor-pointer disabled:cursor-not-allowed z-10"
       />
