@@ -16,7 +16,9 @@ export interface DeviceDetection {
   shouldShowMobileBlock: boolean;
 }
 
-const NARROW_QUERY = "(max-width: 768px)";
+/** 768 px = Tailwind's md breakpoint; blocks phones and portrait tablets. */
+const MOBILE_BREAKPOINT_PX = 768;
+const NARROW_QUERY = `(max-width: ${MOBILE_BREAKPOINT_PX}px)`;
 const COARSE_QUERY = "(pointer: coarse)";
 
 export function useDeviceDetection(): DeviceDetection {

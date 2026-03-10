@@ -8,11 +8,16 @@
 import { useMemo } from "react";
 import { useTaskStore } from "../store/slices/taskSlice";
 
+/** Maximum number of project colors to surface by default (fits a 3×4 swatch grid). */
+const DEFAULT_MAX_PROJECT_COLORS = 12;
+
 /**
  * Get unique colors used in the current project
  * Returns colors sorted by frequency (most used first)
  */
-export function useProjectColors(maxColors: number = 12): string[] {
+export function useProjectColors(
+  maxColors: number = DEFAULT_MAX_PROJECT_COLORS
+): string[] {
   const tasks = useTaskStore((state) => state.tasks);
 
   return useMemo(() => {

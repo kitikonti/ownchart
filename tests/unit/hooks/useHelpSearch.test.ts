@@ -82,4 +82,15 @@ describe("useHelpSearch", () => {
       expect(section.title).toBeTruthy();
     }
   });
+
+  it("should find topics by menuPath", () => {
+    // "View > Columns" is the menuPath of the sc-columns topic.
+    // Using the full phrase ensures the match comes exclusively from menuPath.
+    const { result } = renderHook(() =>
+      useHelpSearch(tabs, "View > Columns")
+    );
+    expect(result.current.matchCount).toBeGreaterThan(0);
+    const allTopics = result.current.sections.flatMap((s) => s.topics);
+    expect(allTopics.some((t) => t.id === "sc-columns")).toBe(true);
+  });
 });
