@@ -12,6 +12,7 @@
 
 import { memo } from "react";
 import type { ReactNode, CSSProperties } from "react";
+import { buildClassNames } from "../../utils/buildClassNames";
 
 type DropdownPanelAlign = "left" | "right";
 
@@ -20,6 +21,10 @@ type DropdownPanelAlign = "left" | "right";
  * Narrower than React's `AriaRole` to catch typos at compile time.
  * Note: "listitem" is intentionally excluded — it is a role for items within
  * a list (<li>), not a container role suitable for a floating panel.
+ *
+ * "group" is valid when the panel's primary purpose is to group related form
+ * controls (e.g. a set of radio buttons or checkboxes) without the semantics
+ * of a full dialog or menu.
  */
 type DropdownPanelRole =
   | "listbox"
@@ -82,7 +87,7 @@ export const DropdownPanel = memo(function DropdownPanel({
     <div
       role={role}
       aria-label={ariaLabel}
-      className={`dropdown-panel ${className}`.trim()}
+      className={buildClassNames("dropdown-panel", className)}
       data-dropdown-panel
       style={panelStyle}
     >

@@ -53,8 +53,11 @@ export function MobileBlockScreen({
     // Note on AT compatibility: aria-modal="true" prevents most screen readers
     // from navigating behind the dialog via virtual cursor, but older NVDA +
     // Firefox and some JAWS configurations may still allow virtual-cursor escape.
-    // A more robust solution would be to apply the HTML `inert` attribute to the
-    // app's root element when this screen is shown (controlled from App.tsx).
+    // Unlike a modal overlay rendered on top of live content, this component is
+    // rendered via an early-return in AppInner — AppContent is never mounted
+    // while this screen is visible, so there is no background DOM to `inert`.
+    // This architecture already provides the strongest possible isolation:
+    // background content simply does not exist in the DOM.
     // The single-button focus trap (Tab key handler below) covers keyboard users.
     <div
       role="dialog"
