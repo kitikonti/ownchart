@@ -28,7 +28,7 @@ export function LabeledCheckbox({
   onChange,
   title,
   description,
-  disabled,
+  disabled = false,
   id: providedId,
 }: LabeledCheckboxProps): JSX.Element {
   const generatedId = useId();

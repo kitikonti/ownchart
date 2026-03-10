@@ -20,6 +20,12 @@ export interface CheckboxProps {
   checked: boolean;
   onChange: (checked: boolean) => void;
   disabled?: boolean;
+  /**
+   * Accessible label for the checkbox input.
+   * Required when the component is NOT wrapped in or associated with a `<label>` element.
+   * When used inside `LabeledCheckbox` (or a `<label htmlFor={id}>`), the label already
+   * provides the accessible name and this prop can be omitted.
+   */
   "aria-label"?: string;
   id?: string;
 }
@@ -37,17 +43,21 @@ export function Checkbox({
     checked
       ? [
           "bg-brand-600 border border-brand-600",
-          !disabled && "peer-hover:bg-brand-700 peer-hover:border-brand-700",
+          !disabled
+            ? "peer-hover:bg-brand-700 peer-hover:border-brand-700"
+            : null,
         ]
       : [
           "bg-white border border-neutral-400",
-          !disabled && "peer-hover:border-neutral-500 peer-hover:bg-neutral-50",
+          !disabled
+            ? "peer-hover:border-neutral-500 peer-hover:bg-neutral-50"
+            : null,
         ],
     "peer-focus-visible:ring-2 peer-focus-visible:ring-brand-200 peer-focus-visible:ring-offset-1",
-    !disabled && "peer-active:scale-95",
+    !disabled ? "peer-active:scale-95" : null,
   ]
     .flat()
-    .filter(Boolean)
+    .filter((c): c is string => c !== null && c !== undefined && c !== "")
     .join(" ");
 
   return (

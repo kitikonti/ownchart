@@ -5,10 +5,15 @@
  * with a "Continue anyway" escape hatch for power users.
  */
 
-import { useEffect, useRef } from "react";
+import {
+  useEffect,
+  useRef,
+  type KeyboardEvent as ReactKeyboardEvent,
+} from "react";
 import { Desktop } from "@phosphor-icons/react";
 import OwnChartLogo from "../assets/logo.svg?react";
 import { APP_CONFIG } from "../config/appConfig";
+import { Z_INDEX } from "../styles/design-tokens";
 
 interface MobileBlockScreenProps {
   onDismiss: () => void;
@@ -28,14 +33,24 @@ export function MobileBlockScreen({
     dismissRef.current?.focus();
   }, []);
 
+  // Trap focus on the single interactive element: with only one focusable element,
+  // Tab and Shift+Tab should keep focus on the dismiss button rather than cycling
+  // into the content hidden behind the blocking screen.
+  function handleButtonKeyDown(e: ReactKeyboardEvent<HTMLButtonElement>): void {
+    if (e.key === "Tab") {
+      e.preventDefault();
+    }
+  }
+
   return (
-    // z-[2000]: above all other overlays including the export dialog
     // role="dialog" + aria-modal="true" tells AT this is a blocking overlay.
+    // Z_INDEX.mobileBlock: above all other overlays including the export dialog.
     <div
       role="dialog"
       aria-modal="true"
       aria-labelledby={headingId}
-      className="fixed inset-0 z-[2000] bg-white flex flex-col items-center justify-center px-8 text-center"
+      className="fixed inset-0 bg-white flex flex-col items-center justify-center px-8 text-center"
+      style={{ zIndex: Z_INDEX.mobileBlock }}
     >
       <OwnChartLogo
         width={48}
@@ -75,6 +90,7 @@ export function MobileBlockScreen({
         ref={dismissRef}
         type="button"
         onClick={onDismiss}
+        onKeyDown={handleButtonKeyDown}
         className="mt-10 text-xs text-neutral-500 hover:text-neutral-600 focus-visible:ring-2 focus-visible:ring-neutral-400 focus-visible:rounded transition-colors"
       >
         Continue anyway

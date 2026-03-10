@@ -71,7 +71,7 @@ export function ToolbarDropdown<T extends string = string>({
       />
 
       {isOpen && (
-        <DropdownPanel role="listbox" aria-label={ariaLabel}>
+        <DropdownPanel role="listbox" aria-label={ariaLabel ?? displayLabel}>
           {options.map((option) => (
             <DropdownItem
               key={option.value}

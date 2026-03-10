@@ -46,17 +46,19 @@ export function Radio({
     checked
       ? [
           "border-[1.5px] border-brand-600",
-          !disabled && "peer-hover:border-brand-700",
+          !disabled ? "peer-hover:border-brand-700" : null,
         ]
       : [
           "border border-neutral-400",
-          !disabled && "peer-hover:border-neutral-500 peer-hover:bg-neutral-50",
+          !disabled
+            ? "peer-hover:border-neutral-500 peer-hover:bg-neutral-50"
+            : null,
         ],
     "peer-focus-visible:ring-2 peer-focus-visible:ring-brand-200 peer-focus-visible:ring-offset-1",
-    !disabled && "peer-active:scale-95",
+    !disabled ? "peer-active:scale-95" : null,
   ]
     .flat()
-    .filter(Boolean)
+    .filter((c): c is string => c !== null && c !== undefined && c !== "")
     .join(" ");
 
   return (

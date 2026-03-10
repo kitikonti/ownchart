@@ -10,7 +10,7 @@ import type { AriaRole, ReactNode, CSSProperties } from "react";
 
 type DropdownPanelAlign = "left" | "right";
 
-interface DropdownPanelProps {
+interface DropdownPanelBaseProps {
   children: ReactNode;
   /** Horizontal alignment relative to trigger */
   align?: DropdownPanelAlign;
@@ -20,19 +20,19 @@ interface DropdownPanelProps {
   minWidth?: string;
   /** Maximum height with overflow scroll */
   maxHeight?: string;
-  /** ARIA role */
-  role?: AriaRole;
-  /**
-   * ARIA label for the panel.
-   * Required when `role` is set (e.g. "listbox", "menu") to satisfy WCAG 2.1 §4.1.2.
-   * Every named widget role needs an accessible name.
-   */
-  "aria-label"?: string;
   /** Additional inline styles (only for layout overrides like padding) */
   style?: CSSProperties;
   /** CSS class name */
   className?: string;
 }
+
+/**
+ * Discriminated union: `aria-label` is required when `role` is set (WCAG 2.1 §4.1.2).
+ * Every named widget role needs an accessible name.
+ */
+type DropdownPanelProps =
+  | (DropdownPanelBaseProps & { role?: undefined; "aria-label"?: string })
+  | (DropdownPanelBaseProps & { role: AriaRole; "aria-label": string });
 
 export function DropdownPanel({
   children,
