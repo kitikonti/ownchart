@@ -19,6 +19,11 @@ export interface LabeledCheckboxProps {
   description?: string;
   /** Whether the checkbox is disabled */
   disabled?: boolean;
+  /**
+   * Tri-state indeterminate mode — shown as a dash instead of a checkmark.
+   * Useful for "select all" controls in hierarchical lists.
+   */
+  indeterminate?: boolean;
   /** Optional ID for the checkbox input (auto-generated if not provided) */
   id?: string;
 }
@@ -29,6 +34,7 @@ export const LabeledCheckbox = memo(function LabeledCheckbox({
   title,
   description,
   disabled = false,
+  indeterminate = false,
   id: providedId,
 }: LabeledCheckboxProps): JSX.Element {
   const generatedId = useId();
@@ -48,6 +54,7 @@ export const LabeledCheckbox = memo(function LabeledCheckbox({
         checked={checked}
         onChange={onChange}
         disabled={disabled}
+        indeterminate={indeterminate}
       />
       <div className="flex-1">
         <span className="text-sm font-medium text-neutral-900">{title}</span>

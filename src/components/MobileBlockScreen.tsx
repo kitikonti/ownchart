@@ -79,9 +79,10 @@ export function MobileBlockScreen({
         aria-hidden="true"
       />
 
-      <h2 id={headingId} className="mt-4 text-lg font-medium text-neutral-800">
+      {/* h1: this overlay IS the entire visible page when rendered — heading hierarchy starts here */}
+      <h1 id={headingId} className="mt-4 text-lg font-medium text-neutral-800">
         Desktop browser required
-      </h2>
+      </h1>
 
       <p className="mt-2 text-sm text-neutral-500 max-w-xs leading-relaxed">
         {APP_CONFIG.name} is a full-featured Gantt chart editor designed for

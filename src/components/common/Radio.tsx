@@ -15,6 +15,7 @@
  */
 
 import { memo } from "react";
+import { buildClassNames } from "../../utils/buildClassNames";
 
 export interface RadioProps {
   checked: boolean;
@@ -42,7 +43,7 @@ export const Radio = memo(function Radio({
   "aria-label": ariaLabel,
   id,
 }: RadioProps): JSX.Element {
-  const visualClasses = [
+  const visualClasses = buildClassNames(
     "w-4 h-4 rounded-full flex items-center justify-center",
     "transition-all duration-150",
     checked
@@ -57,11 +58,8 @@ export const Radio = memo(function Radio({
             : null,
         ],
     "peer-focus-visible:ring-2 peer-focus-visible:ring-brand-200 peer-focus-visible:ring-offset-1",
-    !disabled ? "peer-active:scale-95" : null,
-  ]
-    .flat()
-    .filter((c): c is string => c !== null && c !== undefined && c !== "")
-    .join(" ");
+    !disabled ? "peer-active:scale-95" : null
+  );
 
   return (
     <div
@@ -71,7 +69,10 @@ export const Radio = memo(function Radio({
     >
       {/* Hidden native input for accessibility - uses 'peer' for sibling styling.
           Must precede the visual div in source order — peer-* classes require a
-          preceding sibling with the 'peer' class (Tailwind peer modifier). */}
+          preceding sibling with the 'peer' class (Tailwind peer modifier).
+          Note: when used inside RadioOptionCard, both the native input's onChange
+          and the wrapping label's click handler fire — this is harmless since both
+          call the same onChange callback. */}
       <input
         type="radio"
         checked={checked}

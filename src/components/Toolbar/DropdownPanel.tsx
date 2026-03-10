@@ -11,9 +11,22 @@
  */
 
 import { memo } from "react";
-import type { AriaRole, ReactNode, CSSProperties } from "react";
+import type { ReactNode, CSSProperties } from "react";
 
 type DropdownPanelAlign = "left" | "right";
+
+/**
+ * Subset of ARIA roles that are semantically valid for a floating dropdown panel.
+ * Narrower than React's `AriaRole` to catch typos at compile time.
+ */
+type DropdownPanelRole =
+  | "listbox"
+  | "menu"
+  | "dialog"
+  | "grid"
+  | "tree"
+  | "listitem"
+  | "group";
 
 interface DropdownPanelBaseProps {
   children: ReactNode;
@@ -37,7 +50,10 @@ interface DropdownPanelBaseProps {
  */
 type DropdownPanelProps =
   | (DropdownPanelBaseProps & { role?: undefined; "aria-label"?: string })
-  | (DropdownPanelBaseProps & { role: AriaRole; "aria-label": string });
+  | (DropdownPanelBaseProps & {
+      role: DropdownPanelRole;
+      "aria-label": string;
+    });
 
 export const DropdownPanel = memo(function DropdownPanel({
   children,
