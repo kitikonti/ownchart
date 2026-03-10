@@ -51,7 +51,10 @@ export const LabeledCheckbox = memo(function LabeledCheckbox({
       className={buildClassNames(
         "flex items-center gap-3.5 p-4 rounded border border-neutral-200 transition-colors duration-150 min-h-[44px]",
         disabled
-          ? "opacity-50 cursor-not-allowed"
+          ? // pointer-events-none prevents click-to-focus on the hidden input when
+            // disabled — without it the label would still transfer focus to the input
+            // even though no change event fires (focus-without-change is confusing UX).
+            "opacity-50 cursor-not-allowed pointer-events-none"
           : "hover:bg-neutral-50 cursor-pointer"
       )}
     >

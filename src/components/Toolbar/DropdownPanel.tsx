@@ -10,7 +10,7 @@
  * (width, minWidth, maxHeight, overflowY, alignment) that vary per call site.
  */
 
-import { memo } from "react";
+import { memo, useMemo } from "react";
 import type { ReactNode, CSSProperties } from "react";
 import { buildClassNames } from "../../utils/buildClassNames";
 
@@ -53,6 +53,10 @@ interface DropdownPanelBaseProps {
 /**
  * Discriminated union: `aria-label` is required when `role` is set (WCAG 2.1 §4.1.2).
  * Every named widget role needs an accessible name.
+ *
+ * The no-role branch optionally accepts `aria-label` for forward-compatibility —
+ * e.g. a call site that intends to add a `role` later can pre-supply the label.
+ * AT generally ignores `aria-label` on a plain `<div>` with no role, so this is safe.
  */
 type DropdownPanelProps =
   | (DropdownPanelBaseProps & { role?: undefined; "aria-label"?: string })
@@ -72,16 +76,21 @@ export const DropdownPanel = memo(function DropdownPanel({
   style,
   className = "",
 }: DropdownPanelProps): JSX.Element {
-  const panelStyle: CSSProperties = {
-    [align === "right" ? "right" : "left"]: "0",
-    // width is optional — omit the property entirely when not set
-    ...(width ? { width } : {}),
-    // minWidth defaults to "100%" but a caller may pass "" to suppress it
-    ...(minWidth ? { minWidth } : {}),
-    // maxHeight enables scroll when set
-    ...(maxHeight ? { maxHeight, overflowY: "auto" } : {}),
-    ...style,
-  };
+  // useMemo prevents a new style object being allocated on every render.
+  // The component is memo-wrapped, but children can still trigger re-renders.
+  const panelStyle = useMemo<CSSProperties>(
+    () => ({
+      [align === "right" ? "right" : "left"]: "0",
+      // width is optional — omit the property entirely when not set
+      ...(width ? { width } : {}),
+      // minWidth defaults to "100%" but a caller may pass "" to suppress it
+      ...(minWidth ? { minWidth } : {}),
+      // maxHeight enables scroll when set
+      ...(maxHeight ? { maxHeight, overflowY: "auto" } : {}),
+      ...style,
+    }),
+    [align, width, minWidth, maxHeight, style]
+  );
 
   return (
     <div

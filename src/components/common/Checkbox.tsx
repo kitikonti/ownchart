@@ -21,6 +21,17 @@ import { buildClassNames } from "../../utils/buildClassNames";
 
 export interface CheckboxProps {
   checked: boolean;
+  /**
+   * Called with the new checked state when the user interacts with the checkbox.
+   *
+   * **Indeterminate transition**: When the checkbox is in the indeterminate state and
+   * the user clicks it, browsers consistently transition to `checked=true` (i.e. `onChange`
+   * is called with `true`). Callers that manage an indeterminate "select all" control
+   * should reset `indeterminate` to `false` inside this handler.
+   *
+   * **Performance note**: If the parent component re-renders frequently, wrap this
+   * callback in `useCallback` to prevent unnecessary re-renders of this memoised component.
+   */
   onChange: (checked: boolean) => void;
   disabled?: boolean;
   /**

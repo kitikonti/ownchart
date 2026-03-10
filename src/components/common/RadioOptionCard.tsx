@@ -76,6 +76,13 @@ export const RadioOptionCard = memo(function RadioOptionCard({
          * aria-label is only forwarded when explicitly overriding the visible label.
          * The wrapping <label> element already associates the radio with the card's
          * text content (title + description), so aria-label is omitted by default.
+         *
+         * aria-checked is intentionally NOT set here. For native <input type="radio">
+         * elements, the browser derives the AT-announced checked state directly from
+         * the `checked` DOM property — explicitly adding aria-checked would be
+         * redundant and could cause divergence from the native state during re-renders.
+         * (Unlike checkboxes, radio inputs have no "mixed" indeterminate state that
+         * would require an explicit aria-checked override.)
          */}
         <Radio
           checked={selected}
