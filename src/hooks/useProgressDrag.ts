@@ -63,6 +63,8 @@ export function useProgressDrag(
       if (!svgRef.current) return;
       const svgPoint = getSVGPoint(e, svgRef.current);
       const { x, width } = geometryRef.current;
+      // Guard against zero-width task bar (e.g. milestones or collapsed view)
+      if (width <= 0) return;
       const relativeX = svgPoint.x - x;
       const newProgress = Math.round(
         Math.min(100, Math.max(0, (relativeX / width) * 100))
@@ -108,8 +110,14 @@ export function useProgressDrag(
       if (!svg) return;
 
       svgRef.current = svg;
-      initialProgressRef.current = taskRef.current.progress;
-      setPreviewProgress(taskRef.current.progress);
+      // Clamp to valid range at read time — guards against malformed data in
+      // legacy .ownchart files where progress may be out of range.
+      const clampedProgress = Math.min(
+        100,
+        Math.max(0, taskRef.current.progress)
+      );
+      initialProgressRef.current = clampedProgress;
+      setPreviewProgress(clampedProgress);
 
       // Store the stable listener references before adding them
       handleMouseMoveRef.current = handleMouseMove;

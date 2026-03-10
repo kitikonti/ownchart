@@ -12,7 +12,12 @@
 import { useRef, useState, useEffect, useCallback } from "react";
 import type { CollapseLevel } from "../components/Ribbon/RibbonCollapseContext";
 
-/** Overflow thresholds in px — collapse to level N when overflow >= THRESHOLDS[N] */
+/**
+ * Overflow thresholds in px — collapse to level N when overflow >= THRESHOLDS[N-1].
+ * IMPORTANT: THRESHOLDS.length must equal the maximum value of CollapseLevel (5).
+ * If you add entries here, update the CollapseLevel union type in RibbonCollapseContext.tsx
+ * (and the Math.min clamp on line ~82 below) accordingly.
+ */
 const THRESHOLDS: readonly number[] = [10, 80, 160, 240, 320];
 
 /** Hysteresis buffer: once at a level, require overflow to drop further before uncollapsing */
@@ -22,6 +27,8 @@ export function useRibbonCollapse(activeTab: string): {
   collapseLevel: CollapseLevel;
   contentRef: React.RefObject<HTMLDivElement>;
 } {
+  // Cast required: React 19 types useRef<T>(null) as MutableRefObject<T|null>,
+  // but we never mutate this ref externally — RefObject is the correct API contract.
   const contentRef = useRef<HTMLDivElement>(
     null
   ) as React.RefObject<HTMLDivElement>;
@@ -96,16 +103,17 @@ export function useRibbonCollapse(activeTab: string): {
     if (!content || !toolbar) return;
 
     // Initial measurement after render
-    requestAnimationFrame(measure);
+    let rafHandle = requestAnimationFrame(measure);
 
     // Observe the toolbar (parent) — its width changes when the window resizes
     const observer = new ResizeObserver(() => {
-      requestAnimationFrame(measure);
+      rafHandle = requestAnimationFrame(measure);
     });
 
     observer.observe(toolbar);
 
     return () => {
+      cancelAnimationFrame(rafHandle);
       observer.disconnect();
     };
   }, [measure, activeTab]);

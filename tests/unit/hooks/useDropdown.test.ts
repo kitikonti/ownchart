@@ -337,9 +337,9 @@ describe('useDropdown', () => {
       expect(result.current.triggerProps['aria-expanded']).toBe(true);
     });
 
-    it('should have default aria-haspopup of "true"', () => {
+    it('should have default aria-haspopup of "menu" (WAI-ARIA 1.2)', () => {
       const { result } = renderHook(() => useDropdown());
-      expect(result.current.triggerProps['aria-haspopup']).toBe('true');
+      expect(result.current.triggerProps['aria-haspopup']).toBe('menu');
     });
 
     it('triggerProps onClick calls toggle', () => {

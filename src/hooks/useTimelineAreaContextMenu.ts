@@ -18,6 +18,9 @@ import { useFullTaskContextMenuItems } from "./useFullTaskContextMenuItems";
 import type { Task } from "../types/chart.types";
 import type { TaskId } from "../types/branded.types";
 
+/** Keyboard shortcut label shown in the Fit to View menu item. */
+const SHORTCUT_FIT_TO_VIEW = "F";
+
 // Icons are module-level constants: created once, stable across all renders.
 const ICON_PASTE = createElement(ClipboardText, {
   size: CONTEXT_MENU.iconSize,
@@ -73,8 +76,8 @@ export function useTimelineAreaContextMenu(
 
         if (rowIndex >= 0 && rowIndex < tasks.length) {
           const taskId = tasks[rowIndex].id;
-          const currentSelected = useTaskStore.getState().selectedTaskIds;
-          if (currentSelected.includes(taskId)) {
+          const selectedSet = new Set(useTaskStore.getState().selectedTaskIds);
+          if (selectedSet.has(taskId)) {
             setContextMenu({ position, taskId });
             return;
           }
@@ -114,7 +117,7 @@ export function useTimelineAreaContextMenu(
         id: "fitToView",
         label: "Fit to View",
         icon: ICON_FIT_TO_VIEW,
-        shortcut: "F",
+        shortcut: SHORTCUT_FIT_TO_VIEW,
         onClick: () => fitToView(useTaskStore.getState().tasks),
       },
     ];

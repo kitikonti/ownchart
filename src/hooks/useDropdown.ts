@@ -29,10 +29,11 @@ interface UseDropdownReturn<T extends HTMLElement = HTMLDivElement> {
    * Spread onto the trigger element to wire up open/close toggle and ARIA
    * state. Use `aria-haspopup` prop on `DropdownTrigger` to override the
    * value (e.g. "listbox", "menu", "dialog") when appropriate.
+   * Valid WAI-ARIA 1.2 values: "menu" | "listbox" | "tree" | "grid" | "dialog"
    */
   triggerProps: {
     onClick: () => void;
-    "aria-haspopup": "true" | "listbox" | "menu" | "dialog";
+    "aria-haspopup": "menu" | "listbox" | "tree" | "grid" | "dialog";
     "aria-expanded": boolean;
   };
 }
@@ -141,7 +142,9 @@ export function useDropdown<T extends HTMLElement = HTMLDivElement>(
 
   const triggerProps = {
     onClick: toggle,
-    "aria-haspopup": "true" as const,
+    // Default to "menu" — the most common dropdown type.
+    // WAI-ARIA 1.2: valid values are "menu" | "listbox" | "tree" | "grid" | "dialog".
+    "aria-haspopup": "menu" as const,
     "aria-expanded": isOpen,
   };
 

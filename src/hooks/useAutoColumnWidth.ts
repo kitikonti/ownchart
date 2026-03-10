@@ -24,25 +24,28 @@ export function useAutoColumnWidth(): void {
   // Track if this is the initial render to avoid double-fitting on mount
   const isInitialRender = useRef(true);
 
-  // Track if fonts are loaded for accurate text measurement
+  // Track if fonts are loaded for accurate text measurement.
+  // Also kept in a ref so that runAutoFitIfReady remains stable and does not
+  // cause the uiDensity effect to re-fire when fontsReady changes.
   const [fontsReady, setFontsReady] = useState(false);
+  const fontsReadyRef = useRef(false);
 
   // Wait for fonts to load before allowing auto-fit.
   // Gracefully handles environments where FontFaceSet is unavailable or rejects.
   useEffect(() => {
+    const markReady = (): void => {
+      fontsReadyRef.current = true;
+      setFontsReady(true);
+    };
     if (document.fonts?.ready) {
-      document.fonts.ready
-        .then(() => {
-          setFontsReady(true);
-        })
-        .catch(() => {
-          // Fallback: proceed without waiting when the promise rejects
-          // (e.g. certain browser configurations or test environments)
-          setFontsReady(true);
-        });
+      document.fonts.ready.then(markReady).catch(() => {
+        // Fallback: proceed without waiting when the promise rejects
+        // (e.g. certain browser configurations or test environments)
+        markReady();
+      });
     } else {
       // In test environment or unsupported browsers, proceed immediately
-      setFontsReady(true);
+      markReady();
     }
   }, []);
 
@@ -61,13 +64,14 @@ export function useAutoColumnWidth(): void {
 
   /**
    * Run auto-fit when fonts are ready and this is not the initial render.
-   * Extracted to avoid duplicating the guard in each effect below.
+   * Reads fontsReady via a ref so this callback stays stable — changing
+   * fontsReady must not cause the uiDensity effect to re-fire unnecessarily.
    */
   const runAutoFitIfReady = useCallback(() => {
     if (isInitialRender.current) return;
-    if (!fontsReady) return;
+    if (!fontsReadyRef.current) return;
     autoFitAllColumns();
-  }, [fontsReady, autoFitAllColumns]);
+  }, [autoFitAllColumns]);
 
   // Auto-fit on density change
   useEffect(() => {
