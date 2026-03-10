@@ -22,7 +22,9 @@ export function useRibbonCollapse(activeTab: string): {
   collapseLevel: CollapseLevel;
   contentRef: React.RefObject<HTMLDivElement>;
 } {
-  const contentRef = useRef<HTMLDivElement>(null!);
+  const contentRef = useRef<HTMLDivElement>(
+    null
+  ) as React.RefObject<HTMLDivElement>;
   const naturalWidthRef = useRef<number>(0);
   const [collapseLevel, setCollapseLevel] = useState<CollapseLevel>(0);
   const collapseLevelRef = useRef<CollapseLevel>(0);
@@ -76,7 +78,8 @@ export function useRibbonCollapse(activeTab: string): {
         threshold -= HYSTERESIS_PX;
       }
       if (overflow >= threshold) {
-        newLevel = (i + 1) as CollapseLevel;
+        // Clamp to the valid CollapseLevel range (0–5) in case THRESHOLDS grows
+        newLevel = Math.min(i + 1, 5) as CollapseLevel;
         break;
       }
     }

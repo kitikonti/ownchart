@@ -18,6 +18,16 @@ import { useFullTaskContextMenuItems } from "./useFullTaskContextMenuItems";
 import type { Task } from "../types/chart.types";
 import type { TaskId } from "../types/branded.types";
 
+// Icons are module-level constants: created once, stable across all renders.
+const ICON_PASTE = createElement(ClipboardText, {
+  size: CONTEXT_MENU.iconSize,
+  weight: CONTEXT_MENU.iconWeight,
+});
+const ICON_FIT_TO_VIEW = createElement(ArrowsOut, {
+  size: CONTEXT_MENU.iconSize,
+  weight: CONTEXT_MENU.iconWeight,
+});
+
 /** Context menu state: either targeting a specific task or just a position. */
 type AreaContextMenuState =
   | { position: ContextMenuPosition; taskId: TaskId }
@@ -94,10 +104,7 @@ export function useTimelineAreaContextMenu(
       {
         id: "paste",
         label: "Paste",
-        icon: createElement(ClipboardText, {
-          size: CONTEXT_MENU.iconSize,
-          weight: CONTEXT_MENU.iconWeight,
-        }),
+        icon: ICON_PASTE,
         shortcut: "Ctrl+V",
         onClick: () => void handlePaste(),
         disabled: !canPaste,
@@ -106,10 +113,7 @@ export function useTimelineAreaContextMenu(
       {
         id: "fitToView",
         label: "Fit to View",
-        icon: createElement(ArrowsOut, {
-          size: CONTEXT_MENU.iconSize,
-          weight: CONTEXT_MENU.iconWeight,
-        }),
+        icon: ICON_FIT_TO_VIEW,
         shortcut: "F",
         onClick: () => fitToView(useTaskStore.getState().tasks),
       },

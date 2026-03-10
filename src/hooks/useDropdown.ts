@@ -25,9 +25,14 @@ interface UseDropdownReturn<T extends HTMLElement = HTMLDivElement> {
   containerRef: React.RefObject<T>;
   /** Callback ref — attach to the trigger element for focus return on close. */
   triggerRef: (el: HTMLElement | null) => void;
+  /**
+   * Spread onto the trigger element to wire up open/close toggle and ARIA
+   * state. Use `aria-haspopup` prop on `DropdownTrigger` to override the
+   * value (e.g. "listbox", "menu", "dialog") when appropriate.
+   */
   triggerProps: {
     onClick: () => void;
-    "aria-haspopup": "true" | "listbox";
+    "aria-haspopup": "true" | "listbox" | "menu" | "dialog";
     "aria-expanded": boolean;
   };
 }
@@ -39,21 +44,23 @@ export function useDropdown<T extends HTMLElement = HTMLDivElement>(
   const containerRef = useRef<T>(null) as React.RefObject<T>;
   const triggerElRef = useRef<HTMLElement | null>(null);
 
+  // Store onClose in a ref so `close` remains stable even when the caller
+  // passes an inline options object that changes identity on every render.
+  const onCloseRef = useRef(options?.onClose);
+  onCloseRef.current = options?.onClose;
+
   // Callback ref for the trigger element — compatible with any HTML element type
   const triggerRef = useCallback((el: HTMLElement | null) => {
     triggerElRef.current = el;
   }, []);
 
-  const close = useCallback(
-    (returnFocus?: boolean) => {
-      setIsOpenState(false);
-      options?.onClose?.();
-      if (returnFocus && triggerElRef.current) {
-        requestAnimationFrame(() => triggerElRef.current?.focus());
-      }
-    },
-    [options]
-  );
+  const close = useCallback((returnFocus?: boolean) => {
+    setIsOpenState(false);
+    onCloseRef.current?.();
+    if (returnFocus && triggerElRef.current) {
+      requestAnimationFrame(() => triggerElRef.current?.focus());
+    }
+  }, []);
 
   const setIsOpen = useCallback(
     (open: boolean) => {
