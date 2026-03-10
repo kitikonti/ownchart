@@ -73,7 +73,7 @@ export const COLOR_BAR_RADIUS = 3;
  */
 export const COLUMN_HEADER_FONT_SIZE = 12;
 
-/** SVG stroke-width for table border and separator lines */
+/** SVG stroke-width for table border and separator lines (string: SVG setAttribute expects string values) */
 export const BORDER_STROKE_WIDTH = "1";
 
 /**

@@ -10,7 +10,7 @@
 /** Internal DPI for calculations (CSS/browser standard) */
 export const INTERNAL_DPI = 96;
 
-/** Minimum DPI for PNG export (good print quality) */
+/** DPI used for PNG export and PDF pixel-dimension calculations (print quality). */
 export const PNG_EXPORT_DPI = 150;
 
 /** Millimeters per inch */
