@@ -163,6 +163,22 @@ describe("canvasToBlob", () => {
       0
     );
   });
+
+  it("passes through quality = 0 unchanged (exact lower boundary)", async () => {
+    const mockBlob = new Blob([], { type: "image/png" });
+    const mockCanvas = {
+      toBlob: vi.fn((callback: BlobCallback) => {
+        callback(mockBlob);
+      }),
+    } as unknown as HTMLCanvasElement;
+
+    await canvasToBlob(mockCanvas, 0);
+    expect(mockCanvas.toBlob).toHaveBeenCalledWith(
+      expect.any(Function),
+      "image/png",
+      0
+    );
+  });
 });
 
 // ---------------------------------------------------------------------------

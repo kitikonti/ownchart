@@ -304,6 +304,19 @@ function buildCustomDateRange(
 }
 
 /**
+ * Build the fallback date range used when no project, visible, or custom range
+ * is available. Centers on today with a short look-back and a longer look-ahead
+ * so the exported chart always shows some meaningful content.
+ */
+function buildDefaultDateRange(): { min: string; max: string } {
+  const today = new Date().toISOString().split("T")[0];
+  return {
+    min: addDays(today, -DEFAULT_RANGE_LOOKBACK_DAYS),
+    max: addDays(today, DEFAULT_RANGE_LOOKAHEAD_DAYS),
+  };
+}
+
+/**
  * Build the date range for "all" mode.
  * Delegates to buildPaddedDateRange when a project range is available, otherwise undefined.
  */
@@ -338,22 +351,12 @@ export function getEffectiveDateRange(
   tasks?: Task[],
   effectiveZoom?: number
 ): { min: string; max: string } {
-  // Deferred so the Date construction and addDays calls only run when a
-  // branch actually falls back to the default range (i.e. no data available).
-  const getDefaultRange = (): { min: string; max: string } => {
-    const today = new Date().toISOString().split("T")[0];
-    return {
-      min: addDays(today, -DEFAULT_RANGE_LOOKBACK_DAYS),
-      max: addDays(today, DEFAULT_RANGE_LOOKAHEAD_DAYS),
-    };
-  };
-
   switch (options.dateRangeMode) {
     case "visible":
-      return buildVisibleDateRange(visibleDateRange) ?? getDefaultRange();
+      return buildVisibleDateRange(visibleDateRange) ?? buildDefaultDateRange();
 
     case "custom":
-      return buildCustomDateRange(options) ?? getDefaultRange();
+      return buildCustomDateRange(options) ?? buildDefaultDateRange();
 
     case "all":
       return (
@@ -362,7 +365,7 @@ export function getEffectiveDateRange(
           projectDateRange,
           tasks ?? [],
           effectiveZoom ?? 0
-        ) ?? getDefaultRange()
+        ) ?? buildDefaultDateRange()
       );
 
     default: {
@@ -373,7 +376,7 @@ export function getEffectiveDateRange(
       // calculateEffectiveZoom and getDefaultColumnWidth.
       const _exhaustive: never = options.dateRangeMode;
       void _exhaustive;
-      return getDefaultRange();
+      return buildDefaultDateRange();
     }
   }
 }

@@ -40,6 +40,9 @@ export async function waitForFonts(): Promise<void> {
 /**
  * Wait for next animation frame (ensures DOM is painted).
  * Double RAF ensures the browser has completed layout and paint.
+ * The first RAF fires after the current task's paint step; the second
+ * ensures any microtask-triggered layout recalculations queued during the
+ * first frame have also been flushed before proceeding.
  *
  * The guard on `requestAnimationFrame` mirrors the `document.fonts` guard in
  * `waitForFonts`: jsdom (used in unit tests) may not implement rAF, so we

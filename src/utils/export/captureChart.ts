@@ -32,7 +32,7 @@ const MIN_PIXEL_RATIO = 2;
  * Guards against an indefinite hang when the browser tab is backgrounded
  * during export (requestAnimationFrame is throttled or paused in hidden tabs).
  */
-const CANVAS_CAPTURE_TIMEOUT_MS = 30_000;
+export const CANVAS_CAPTURE_TIMEOUT_MS = 30_000;
 
 /**
  * Error message thrown when `toCanvas` does not complete within
@@ -185,13 +185,9 @@ export async function captureChart(
     options.background
   );
 
-  // root starts undefined; renderAndSettle creates the React root
-  // synchronously inside the function, but the assignment to `root` here
-  // only completes after the await resolves. The optional-chain guard
+  // root is undefined until renderAndSettle returns; the optional-chain guard
   // (root?.unmount()) in the finally block handles the case where
-  // renderAndSettle throws before returning, leaving `root` as undefined.
-  // Both renderAndSettle and the capture step are inside the try so that any
-  // error from either path still triggers container cleanup.
+  // renderAndSettle throws before returning.
   let root: Root | undefined;
 
   try {
