@@ -45,7 +45,7 @@ export const LabeledCheckbox = memo(function LabeledCheckbox({
       htmlFor={id}
       className={`flex items-center gap-3.5 p-4 rounded border border-neutral-200 transition-colors duration-150 min-h-[44px] ${
         disabled
-          ? "opacity-50 cursor-not-allowed"
+          ? "opacity-50 cursor-not-allowed pointer-events-none"
           : "hover:bg-neutral-50 cursor-pointer"
       }`}
     >

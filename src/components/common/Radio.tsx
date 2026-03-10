@@ -63,9 +63,10 @@ export const Radio = memo(function Radio({
 
   return (
     <div
-      className={`relative inline-flex items-center justify-center w-4 h-4 flex-shrink-0 ${
+      className={buildClassNames(
+        "relative inline-flex items-center justify-center w-4 h-4 flex-shrink-0",
         disabled ? "cursor-not-allowed opacity-50" : "cursor-pointer"
-      }`}
+      )}
     >
       {/* Hidden native input for accessibility - uses 'peer' for sibling styling.
           Must precede the visual div in source order — peer-* classes require a

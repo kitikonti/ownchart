@@ -18,6 +18,8 @@ type DropdownPanelAlign = "left" | "right";
 /**
  * Subset of ARIA roles that are semantically valid for a floating dropdown panel.
  * Narrower than React's `AriaRole` to catch typos at compile time.
+ * Note: "listitem" is intentionally excluded — it is a role for items within
+ * a list (<li>), not a container role suitable for a floating panel.
  */
 type DropdownPanelRole =
   | "listbox"
@@ -25,7 +27,6 @@ type DropdownPanelRole =
   | "dialog"
   | "grid"
   | "tree"
-  | "listitem"
   | "group";
 
 interface DropdownPanelBaseProps {

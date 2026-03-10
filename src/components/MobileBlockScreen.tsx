@@ -38,6 +38,8 @@ export function MobileBlockScreen({
   // Trap focus on the single interactive element: with only one focusable element,
   // Tab and Shift+Tab should keep focus on the dismiss button rather than cycling
   // into the content hidden behind the blocking screen.
+  // Note: both Tab and Shift+Tab share e.key === "Tab" (Shift is only in e.shiftKey),
+  // so a single check on "Tab" correctly traps both directions.
   function handleButtonKeyDown(e: ReactKeyboardEvent<HTMLButtonElement>): void {
     if (e.key === "Tab") {
       e.preventDefault();
@@ -67,8 +69,13 @@ export function MobileBlockScreen({
         aria-hidden="true"
       />
 
-      {/* App name as non-heading branding element */}
-      <p className="mt-4 text-xl font-semibold text-neutral-900">
+      {/* App name as non-heading branding element — aria-hidden because the
+          dialog's accessible name already comes from the <h1> via aria-labelledby,
+          and announcing the app name twice before the heading would be redundant for AT. */}
+      <p
+        aria-hidden="true"
+        className="mt-4 text-xl font-semibold text-neutral-900"
+      >
         {APP_CONFIG.name}
       </p>
 
