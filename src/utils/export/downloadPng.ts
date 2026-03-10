@@ -24,7 +24,10 @@ export function generateFilename(projectName?: string): string {
 
 /**
  * Download a blob as a file.
- * Creates a temporary link and triggers download.
+ * Creates a temporary anchor element and programmatically triggers a download.
+ *
+ * **Browser-only**: Requires `document` and `URL.createObjectURL` to be
+ * available. Do not call in a server-side or non-browser environment.
  */
 export function downloadBlob(blob: Blob, filename: string): void {
   const url = URL.createObjectURL(blob);

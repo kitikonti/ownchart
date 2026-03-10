@@ -135,6 +135,14 @@ describe("calculatePixelDimensions", () => {
     const { width, height } = calculatePixelDimensions(100, 200, 96);
     expect(height).toBeCloseTo(width * 2, 0);
   });
+
+  it("throws RangeError for negative widthMm", () => {
+    expect(() => calculatePixelDimensions(-1, 297, 150)).toThrow(RangeError);
+  });
+
+  it("throws RangeError for negative heightMm", () => {
+    expect(() => calculatePixelDimensions(210, -1, 150)).toThrow(RangeError);
+  });
 });
 
 // ---------------------------------------------------------------------------

@@ -44,16 +44,23 @@ export function pxToMmAtDpi(px: number, dpi: number): number {
 
 /**
  * Calculate pixel dimensions for a page size at a given DPI.
- * @param widthMm - Page width in millimeters
- * @param heightMm - Page height in millimeters
+ * @param widthMm - Page width in millimeters (must be ≥ 0)
+ * @param heightMm - Page height in millimeters (must be ≥ 0)
  * @param dpi - Target DPI (e.g., 150 for print quality)
  * @returns Pixel dimensions (rounded to integers)
+ * @throws {RangeError} If dpi is not greater than zero, or if widthMm/heightMm are negative.
  */
 export function calculatePixelDimensions(
   widthMm: number,
   heightMm: number,
   dpi: number = PNG_EXPORT_DPI
 ): { width: number; height: number } {
+  if (widthMm < 0) {
+    throw new RangeError(`widthMm must be >= 0, got ${widthMm}`);
+  }
+  if (heightMm < 0) {
+    throw new RangeError(`heightMm must be >= 0, got ${heightMm}`);
+  }
   return {
     width: Math.round(mmToPxAtDpi(widthMm, dpi)),
     height: Math.round(mmToPxAtDpi(heightMm, dpi)),

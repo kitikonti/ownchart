@@ -5,7 +5,11 @@
 /** Characters that are invalid in filenames across OS */
 const INVALID_CHARS = /[/\\:*?"<>|]/g;
 
-/** Maximum length for the project name part of the filename */
+/**
+ * Maximum length for the project name part of the filename.
+ * 50 characters keeps filenames short and readable while staying
+ * well within OS path-length limits (Windows MAX_PATH = 260).
+ */
 const MAX_NAME_LENGTH = 50;
 
 /**
