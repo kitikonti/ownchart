@@ -10,6 +10,9 @@ import { Input } from "../common/Input";
 /** Delay (ms) before auto-focusing the input — avoids focus race with modal focus trap */
 const AUTOFOCUS_DELAY_MS = 50;
 
+/** Label string shared by the search landmark and the visible <label> element. */
+const SEARCH_LABEL = "Search help topics";
+
 export interface HelpSearchInputProps {
   value: string;
   onChange: (value: string) => void;
@@ -43,13 +46,13 @@ export const HelpSearchInput = memo(function HelpSearchInput({
   }, [onChange]);
 
   return (
-    <div role="search" aria-label="Search help topics" className="relative">
+    <div role="search" aria-label={SEARCH_LABEL} className="relative">
       {/* Visually-hidden label for the input — avoids the duplicate-announcement
           that occurs when both the search landmark and the input carry the same
           aria-label. The landmark provides the outer context; the label names the
           input specifically. */}
       <label htmlFor={inputId} className="sr-only">
-        Search help topics
+        {SEARCH_LABEL}
       </label>
       <MagnifyingGlass
         size={16}

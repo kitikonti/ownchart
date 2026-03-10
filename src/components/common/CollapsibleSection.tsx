@@ -64,7 +64,7 @@ export const CollapsibleSection = memo(function CollapsibleSection({
         id={contentId}
         className={[
           "mt-3 bg-neutral-50 rounded px-6 py-4 space-y-5",
-          isOpen ? "" : "hidden",
+          isOpen ? undefined : "hidden",
         ]
           .filter(Boolean)
           .join(" ")}
