@@ -56,12 +56,12 @@ export const Checkbox = memo(function Checkbox({
     }
   }, [indeterminate]);
 
-  const isActive = checked || indeterminate;
+  const isCheckedOrIndeterminate = checked || indeterminate;
 
   const visualClasses = buildClassNames(
     "w-5 h-5 flex items-center justify-center rounded-sm",
     "transition-all duration-150",
-    isActive
+    isCheckedOrIndeterminate
       ? [
           "bg-brand-600 border border-brand-600",
           !disabled
@@ -95,10 +95,13 @@ export const Checkbox = memo(function Checkbox({
         onChange={(e) => onChange(e.target.checked)}
         disabled={disabled}
         aria-label={ariaLabel}
-        // aria-checked="mixed" explicitly signals the indeterminate state to AT.
-        // The DOM `indeterminate` property (set via ref) is not always announced as
+        // aria-checked="mixed" is required to signal the indeterminate state to AT.
+        // The DOM `indeterminate` property (set via ref) is not reliably announced as
         // "mixed" by JAWS/NVDA — the explicit aria-checked attribute is more reliable.
-        aria-checked={indeterminate ? "mixed" : checked}
+        // For true/false states the native `checked` attribute already drives
+        // screen-reader announcements; overriding with aria-checked would be redundant
+        // and risks diverging from the native state during a re-render cycle.
+        aria-checked={indeterminate ? "mixed" : undefined}
         id={id}
         className="peer absolute opacity-0 w-full h-full cursor-pointer disabled:cursor-not-allowed z-10"
       />

@@ -18,7 +18,9 @@ import { APP_CONFIG } from "../config/appConfig";
 
 // Strip protocol from URL for display (e.g. "ownchart.app" instead of "https://ownchart.app").
 // Computed once at module scope — APP_CONFIG is a static constant and this never changes.
-const DISPLAY_URL = APP_CONFIG.appUrl.replace(/^https?:\/\//, "");
+// Falls back to the original URL if the replace produces an empty string (defensive guard).
+const DISPLAY_URL =
+  APP_CONFIG.appUrl.replace(/^https?:\/\//, "") || APP_CONFIG.appUrl;
 
 interface MobileBlockScreenProps {
   onDismiss: () => void;
@@ -30,6 +32,7 @@ export const MobileBlockScreen = memo(function MobileBlockScreen({
   // useId produces a stable, unique ID — avoids collisions if multiple instances
   // are ever rendered simultaneously (e.g. in tests).
   const headingId = useId();
+  const descriptionId = useId();
   const dismissRef = useRef<HTMLButtonElement>(null);
 
   // Move focus into the overlay when it mounts so keyboard/AT users
@@ -71,6 +74,7 @@ export const MobileBlockScreen = memo(function MobileBlockScreen({
       role="dialog"
       aria-modal="true"
       aria-labelledby={headingId}
+      aria-describedby={descriptionId}
       className="fixed inset-0 z-[2000] bg-white flex flex-col items-center justify-center px-8 text-center"
     >
       <OwnChartLogo
@@ -102,7 +106,10 @@ export const MobileBlockScreen = memo(function MobileBlockScreen({
         Desktop browser required
       </h1>
 
-      <p className="mt-2 text-sm text-neutral-500 max-w-xs leading-relaxed">
+      <p
+        id={descriptionId}
+        className="mt-2 text-sm text-neutral-500 max-w-xs leading-relaxed"
+      >
         {APP_CONFIG.name} is a full-featured Gantt chart editor designed for
         desktop browsers.
       </p>

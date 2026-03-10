@@ -45,20 +45,14 @@ describe("Checkbox", () => {
       expect(screen.getByRole("checkbox")).not.toBeChecked();
     });
 
-    it("sets aria-checked=true when checked and not indeterminate", () => {
+    it("does not set aria-checked for checked=true (native checked attribute drives AT)", () => {
       render(<Checkbox {...defaultProps} checked={true} />);
-      expect(screen.getByRole("checkbox")).toHaveAttribute(
-        "aria-checked",
-        "true"
-      );
+      expect(screen.getByRole("checkbox")).not.toHaveAttribute("aria-checked");
     });
 
-    it("sets aria-checked=false when unchecked and not indeterminate", () => {
+    it("does not set aria-checked for checked=false (native checked attribute drives AT)", () => {
       render(<Checkbox {...defaultProps} checked={false} />);
-      expect(screen.getByRole("checkbox")).toHaveAttribute(
-        "aria-checked",
-        "false"
-      );
+      expect(screen.getByRole("checkbox")).not.toHaveAttribute("aria-checked");
     });
   });
 

@@ -81,6 +81,17 @@ describe("MobileBlockScreen", () => {
     expect(dialog).toHaveAttribute("aria-labelledby", heading.id);
   });
 
+  it("has aria-describedby pointing to the description paragraph", () => {
+    render(<MobileBlockScreen onDismiss={vi.fn()} />);
+    const dialog = screen.getByRole("dialog");
+    const describedById = dialog.getAttribute("aria-describedby");
+    expect(describedById).toBeTruthy();
+    // The element with that id should be the description paragraph
+    const descriptionEl = document.getElementById(describedById!);
+    expect(descriptionEl).toBeInTheDocument();
+    expect(descriptionEl?.tagName).toBe("P");
+  });
+
   it("calls onDismiss when Escape is pressed on the dismiss button", () => {
     const onDismiss = vi.fn();
     render(<MobileBlockScreen onDismiss={onDismiss} />);
