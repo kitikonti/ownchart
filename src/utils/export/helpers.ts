@@ -99,16 +99,20 @@ function normalizeElementInlineStyle(element: Element): void {
   // Anchor the match to the start of the value or a preceding semicolon so
   // that properties like `-x-font-family` are not accidentally replaced.
   // Lookbehind assertion requires ES2018+ / V8 ≥ 62 — all supported browsers qualify.
+  // The replacement always appends a trailing semicolon so subsequent properties
+  // remain properly delimited regardless of whether the original had one.
   style = style.replace(
     /(?:^|(?<=;))\s*font-family:\s*[^;]+;?/gi,
-    ` font-family: ${SVG_FONT_FAMILY};`
+    `font-family: ${SVG_FONT_FAMILY};`
   );
   // Normalize font-weight in inline styles for svg2pdf.js.
   // Lookbehind assertion requires ES2018+ / V8 ≥ 62 — all supported browsers qualify.
   style = style.replace(
     /(?:^|(?<=;))\s*font-weight:\s*(600|700);?/gi,
-    " font-weight: bold;"
+    "font-weight: bold;"
   );
+  // trimStart removes any leading whitespace that may exist in the original
+  // style attribute value (browser serialisation can produce it).
   element.setAttribute("style", style.trimStart());
 }
 

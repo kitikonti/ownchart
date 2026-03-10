@@ -34,6 +34,15 @@ const MIN_PIXEL_RATIO = 2;
  */
 const CANVAS_CAPTURE_TIMEOUT_MS = 30_000;
 
+/**
+ * Error message thrown when `toCanvas` does not complete within
+ * `CANVAS_CAPTURE_TIMEOUT_MS`. Defined as a constant so that the message
+ * and the timeout duration stay in sync and can be referenced in tests.
+ */
+export const CANVAS_CAPTURE_TIMEOUT_MESSAGE =
+  `Canvas capture timed out after ${CANVAS_CAPTURE_TIMEOUT_MS / 1000}s. ` +
+  "Try keeping the tab in the foreground during export.";
+
 export interface CaptureChartParams extends ExportLayoutInput {
   /** Project name for export filename */
   projectName?: string;
@@ -57,7 +66,9 @@ async function renderAndSettle(
   // createRoot is synchronous — root is always set before any async work.
   const root = createRoot(container);
   root.render(createElement(ExportRenderer, props));
-  // Wait for React to render its first pass before proceeding
+  // Yield one macro-task (REACT_RENDER_WAIT_MS) so React's async scheduler
+  // can flush its first commit before waitForFonts/waitForPaint take over.
+  // See REACT_RENDER_WAIT_MS in constants.ts for the rationale.
   await new Promise<void>((resolve) =>
     setTimeout(resolve, REACT_RENDER_WAIT_MS)
   );
@@ -137,8 +148,7 @@ async function captureContainerToCanvas(
   return raceWithTimeout(
     capturePromise,
     CANVAS_CAPTURE_TIMEOUT_MS,
-    `Canvas capture timed out after ${CANVAS_CAPTURE_TIMEOUT_MS / 1000}s. ` +
-      "Try keeping the tab in the foreground during export."
+    CANVAS_CAPTURE_TIMEOUT_MESSAGE
   );
 }
 

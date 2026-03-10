@@ -15,7 +15,6 @@ import {
   calculateLabelPaddingDays,
   calculateColumnWidth,
 } from "../textMeasurement";
-
 import { getColumnDisplayValue, HEADER_LABELS } from "./columns";
 
 /** Base pixels per day at 100% zoom */
@@ -325,6 +324,15 @@ function buildAllTasksDateRange(
  * Calculate the effective date range based on date range mode.
  * When tasks and effectiveZoom are provided, label padding is calculated
  * to ensure task labels are not clipped in the export.
+ *
+ * @param options - Export options (dateRangeMode, density, taskLabelPosition used)
+ * @param projectDateRange - Full project start/end dates; used in "all" mode
+ * @param visibleDateRange - Currently visible window; used in "visible" mode
+ * @param tasks - Optional task list for label overflow calculation in "all" mode.
+ *   Pass `undefined` or omit to skip label padding (uses default base padding only).
+ * @param effectiveZoom - Optional zoom level for label overflow calculation.
+ *   Pass `undefined` or omit to skip label padding (treated as zoom = 0).
+ * @returns ISO date strings for the effective min/max of the date range
  */
 export function getEffectiveDateRange(
   options: ExportOptions,
