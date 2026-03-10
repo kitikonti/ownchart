@@ -5,11 +5,11 @@
  */
 
 import { useCallback, useMemo, useState } from "react";
+import { useTaskStore } from "../store/slices/taskSlice";
+import { useFullTaskContextMenuItems } from "./useFullTaskContextMenuItems";
 import type { ContextMenuItem } from "../components/ContextMenu/ContextMenu";
 import type { TaskId } from "../types/branded.types";
-import { useTaskStore } from "../store/slices/taskSlice";
 import type { TaskContextMenuState } from "./contextMenuItemBuilders";
-import { useFullTaskContextMenuItems } from "./useFullTaskContextMenuItems";
 
 interface UseTimelineBarContextMenuResult {
   contextMenu: TaskContextMenuState | null;

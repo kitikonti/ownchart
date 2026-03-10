@@ -35,7 +35,7 @@ export function useFlattenedTasks(): UseFlattenedTasksResult {
   const hiddenTaskIds = useChartStore((state) => state.hiddenTaskIds);
 
   // Stage 1: Build full flattened list with globalRowNumber
-  const allFlattenedTasks = useMemo(() => {
+  const allFlattenedTasks = useMemo((): FlattenedTask[] => {
     const collapsedIds = tasks.reduce<Set<TaskId>>((acc, t) => {
       if (t.open === false) acc.add(t.id);
       return acc;
@@ -44,14 +44,14 @@ export function useFlattenedTasks(): UseFlattenedTasksResult {
   }, [tasks]);
 
   // Stage 2: Filter out hidden tasks (preserving globalRowNumber for gaps)
-  const flattenedTasks = useMemo(() => {
+  const flattenedTasks = useMemo((): FlattenedTask[] => {
     if (hiddenTaskIds.length === 0) return allFlattenedTasks;
     const hiddenSet = new Set(hiddenTaskIds);
     return allFlattenedTasks.filter((item) => !hiddenSet.has(item.task.id));
   }, [allFlattenedTasks, hiddenTaskIds]);
 
   const orderedTasks = useMemo(
-    () => flattenedTasks.map(({ task }) => task),
+    (): Task[] => flattenedTasks.map(({ task }) => task),
     [flattenedTasks]
   );
 

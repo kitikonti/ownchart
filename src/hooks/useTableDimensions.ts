@@ -12,7 +12,11 @@ import {
   getVisibleColumns,
 } from "../config/tableColumns";
 
-/** Fallback column width in pixels when no px value can be parsed from the CSS string. */
+/**
+ * Fallback column width in pixels when no px value can be parsed from the CSS string.
+ * This path is not reachable with current getDensityAwareWidth output (which always
+ * includes a px value), but is kept as a defensive last-resort default.
+ */
 const FALLBACK_COLUMN_WIDTH_PX = 100;
 
 /**

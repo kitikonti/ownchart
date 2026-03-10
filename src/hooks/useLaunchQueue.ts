@@ -19,6 +19,7 @@ export function useLaunchQueue(): void {
     lq.setConsumer(async (launchParams: LaunchParams) => {
       if (!launchParams.files || launchParams.files.length === 0) return;
 
+      // Only the first file is opened — OwnChart is a single-project app.
       const handle = launchParams.files[0];
       try {
         const file = await handle.getFile();

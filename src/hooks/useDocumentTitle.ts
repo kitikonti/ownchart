@@ -7,8 +7,6 @@ import { useEffect } from "react";
 import { useFileStore } from "../store/slices/fileSlice";
 import { APP_CONFIG } from "../config/appConfig";
 
-const APP_NAME = APP_CONFIG.name;
-
 /**
  * Custom hook to dynamically update the browser tab title
  * Shows "filename.ownchart - OwnChart" when a file is loaded
@@ -23,16 +21,16 @@ export function useDocumentTitle(): void {
 
     if (fileName) {
       // Show filename with asterisk if unsaved changes
-      document.title = `${fileName}${dirtyIndicator} - ${APP_NAME}`;
+      document.title = `${fileName}${dirtyIndicator} - ${APP_CONFIG.name}`;
     } else {
       // Show asterisk for new unsaved charts
-      document.title = `${APP_NAME}${dirtyIndicator}`;
+      document.title = `${APP_CONFIG.name}${dirtyIndicator}`;
     }
 
     // Reset to bare app name on unmount.
     // Safe because this hook is used as a singleton at the root level.
     return (): void => {
-      document.title = APP_NAME;
+      document.title = APP_CONFIG.name;
     };
   }, [fileName, isDirty]);
 }
