@@ -16,7 +16,7 @@ interface DropdownPanelProps {
   align?: DropdownPanelAlign;
   /** Fixed width */
   width?: string;
-  /** Minimum width (defaults to "100%") */
+  /** Minimum width (defaults to "100%"). Pass an empty string "" to suppress the property entirely. */
   minWidth?: string;
   /** Maximum height with overflow scroll */
   maxHeight?: string;

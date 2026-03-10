@@ -16,7 +16,11 @@ interface MobileBlockScreenProps {
 export function MobileBlockScreen({
   onDismiss,
 }: MobileBlockScreenProps): JSX.Element {
+  // Strip protocol from URL for display (e.g. "ownchart.app" instead of "https://ownchart.app")
+  const displayUrl = APP_CONFIG.appUrl.replace(/^https?:\/\//, "");
+
   return (
+    // z-[2000]: above all other overlays including the export dialog
     <div className="fixed inset-0 z-[2000] bg-white flex flex-col items-center justify-center px-8 text-center">
       <OwnChartLogo
         width={48}
@@ -25,9 +29,10 @@ export function MobileBlockScreen({
         aria-hidden="true"
       />
 
-      <h1 className="mt-4 text-xl font-semibold text-neutral-900">
+      {/* App name as non-heading branding element */}
+      <p className="mt-4 text-xl font-semibold text-neutral-900">
         {APP_CONFIG.name}
-      </h1>
+      </p>
 
       <Desktop
         size={48}
@@ -36,9 +41,9 @@ export function MobileBlockScreen({
         aria-hidden="true"
       />
 
-      <h2 className="mt-4 text-lg font-medium text-neutral-800">
+      <h1 className="mt-4 text-lg font-medium text-neutral-800">
         Desktop browser required
-      </h2>
+      </h1>
 
       <p className="mt-2 text-sm text-neutral-500 max-w-xs leading-relaxed">
         {APP_CONFIG.name} is a full-featured Gantt chart editor designed for
@@ -47,10 +52,8 @@ export function MobileBlockScreen({
 
       <p className="mt-4 text-sm text-neutral-500">
         Please open{" "}
-        <span className="font-medium text-neutral-700">
-          {APP_CONFIG.appUrl.replace("https://", "")}
-        </span>{" "}
-        on a desktop or laptop.
+        <span className="font-medium text-neutral-700">{displayUrl}</span> on a
+        desktop or laptop.
       </p>
 
       <button

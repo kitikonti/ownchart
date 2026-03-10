@@ -11,7 +11,7 @@
  * - Checked hover: brand-700 bg
  * - Focus-visible: blue ring (keyboard navigation)
  * - Active: slight scale down
- * - Disabled: 50% opacity
+ * - Disabled: 50% opacity, no hover/active effects
  */
 
 import { Check } from "@phosphor-icons/react";
@@ -31,6 +31,25 @@ export function Checkbox({
   "aria-label": ariaLabel,
   id,
 }: CheckboxProps): JSX.Element {
+  const visualClasses = [
+    "w-5 h-5 flex items-center justify-center rounded-sm",
+    "transition-all duration-150",
+    checked
+      ? [
+          "bg-brand-600 border border-brand-600",
+          !disabled && "peer-hover:bg-brand-700 peer-hover:border-brand-700",
+        ]
+      : [
+          "bg-white border border-neutral-400",
+          !disabled && "peer-hover:border-neutral-500 peer-hover:bg-neutral-50",
+        ],
+    "peer-focus-visible:ring-2 peer-focus-visible:ring-brand-200 peer-focus-visible:ring-offset-1",
+    !disabled && "peer-active:scale-95",
+  ]
+    .flat()
+    .filter(Boolean)
+    .join(" ");
+
   return (
     <div
       className={`relative inline-flex items-center justify-center w-5 h-5 flex-shrink-0 ${
@@ -41,27 +60,14 @@ export function Checkbox({
       <input
         type="checkbox"
         checked={checked}
-        onChange={(e) => !disabled && onChange(e.target.checked)}
+        onChange={(e) => onChange(e.target.checked)}
         disabled={disabled}
         aria-label={ariaLabel}
         id={id}
         className="peer absolute opacity-0 w-full h-full cursor-pointer disabled:cursor-not-allowed z-10"
       />
       {/* Visual checkbox - Outlook/Fluent style with all states */}
-      <div
-        aria-hidden="true"
-        className={`
-          w-5 h-5 flex items-center justify-center rounded-sm
-          transition-all duration-150
-          ${
-            checked
-              ? "bg-brand-600 border border-brand-600 peer-hover:bg-brand-700 peer-hover:border-brand-700"
-              : "bg-white border border-neutral-400 peer-hover:border-neutral-500 peer-hover:bg-neutral-50"
-          }
-          peer-focus-visible:ring-2 peer-focus-visible:ring-brand-200 peer-focus-visible:ring-offset-1
-          peer-active:scale-95
-        `}
-      >
+      <div aria-hidden="true" className={visualClasses}>
         {checked && <Check size={14} weight="bold" className="text-white" />}
       </div>
     </div>

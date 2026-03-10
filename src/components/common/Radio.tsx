@@ -11,7 +11,7 @@
  * - Checked hover: brand-700 colors
  * - Focus-visible: blue ring (keyboard navigation)
  * - Active: slight scale down
- * - Disabled: 50% opacity
+ * - Disabled: 50% opacity, no hover/active effects
  */
 
 export interface RadioProps {
@@ -34,6 +34,25 @@ export function Radio({
   "aria-label": ariaLabel,
   id,
 }: RadioProps): JSX.Element {
+  const visualClasses = [
+    "w-4 h-4 rounded-full flex items-center justify-center",
+    "transition-all duration-150",
+    checked
+      ? [
+          "border-[1.5px] border-brand-600",
+          !disabled && "peer-hover:border-brand-700",
+        ]
+      : [
+          "border border-neutral-400",
+          !disabled && "peer-hover:border-neutral-500 peer-hover:bg-neutral-50",
+        ],
+    "peer-focus-visible:ring-2 peer-focus-visible:ring-brand-200 peer-focus-visible:ring-offset-1",
+    !disabled && "peer-active:scale-95",
+  ]
+    .flat()
+    .filter(Boolean)
+    .join(" ");
+
   return (
     <div
       className={`relative inline-flex items-center justify-center w-4 h-4 flex-shrink-0 ${
@@ -44,7 +63,7 @@ export function Radio({
       <input
         type="radio"
         checked={checked}
-        onChange={() => !disabled && onChange()}
+        onChange={onChange}
         name={name}
         value={value}
         disabled={disabled}
@@ -53,20 +72,7 @@ export function Radio({
         className="peer absolute opacity-0 w-full h-full cursor-pointer disabled:cursor-not-allowed z-10"
       />
       {/* Visual radio - Outlook/Fluent style with all states */}
-      <div
-        aria-hidden="true"
-        className={`
-          w-4 h-4 rounded-full flex items-center justify-center
-          transition-all duration-150
-          ${
-            checked
-              ? "border-[1.5px] border-brand-600 peer-hover:border-brand-700"
-              : "border border-neutral-400 peer-hover:border-neutral-500 peer-hover:bg-neutral-50"
-          }
-          peer-focus-visible:ring-2 peer-focus-visible:ring-brand-200 peer-focus-visible:ring-offset-1
-          peer-active:scale-95
-        `}
-      >
+      <div aria-hidden="true" className={visualClasses}>
         {/* Inner filled circle when checked */}
         {checked && (
           <div className="w-2 h-2 rounded-full bg-brand-600 transition-colors duration-150" />
