@@ -105,6 +105,12 @@ function computeTaskLevel(
  *
  * Includes a cycle guard: any task involved in a circular parent reference is
  * assigned level 0 to prevent infinite recursion.
+ *
+ * Implementation note: `levelCache` and `computing` are single-call scratchpads
+ * allocated here and passed into `computeTaskLevel` for memoisation and cycle
+ * detection respectively. They are not thread-safe, but JavaScript's
+ * single-threaded execution model means concurrent mutation is not possible for
+ * a single invocation of this function.
  */
 function buildTaskLevelMap(tasks: Task[]): Map<string, number> {
   const taskById = new Map<string, Task>(tasks.map((t) => [t.id, t]));

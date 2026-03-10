@@ -20,10 +20,11 @@ import {
 } from "./helpers";
 
 /**
- * Minimum device pixel ratio used for canvas capture.
- * Set to 2 (equivalent to standard Retina resolution) so exports remain crisp
- * even on 1× DPI displays where `window.devicePixelRatio` would be 1.
- * Higher values produce larger canvases with no perceptible quality gain.
+ * Floor for device pixel ratio used for canvas capture.
+ * Ensures Retina-quality (2×) output on 1× DPI displays where
+ * `window.devicePixelRatio` would otherwise be 1. On higher-DPI displays
+ * (e.g. 3×) the native ratio is passed through unchanged — this constant
+ * is a floor, not a cap.
  */
 const MIN_PIXEL_RATIO = 2;
 
@@ -49,15 +50,20 @@ export interface CaptureChartParams extends ExportLayoutInput {
 }
 
 /**
- * Render the ExportRenderer component into `container` and wait for
- * React's initial paint to settle before proceeding.
+ * Create a React root inside `container`, render ExportRenderer into it, and
+ * wait for React's initial paint to settle before proceeding.
  *
  * The root is created synchronously so it is always available for the caller
  * to unmount in a finally block, even if the settle timeout is interrupted.
  *
+ * **Resource ownership**: the caller MUST call `root.unmount()` after use to
+ * prevent a React root from remaining attached to the DOM indefinitely.
+ * Failure to unmount after capture produces a memory leak and leaves the
+ * offscreen container's React tree alive after `removeOffscreenContainer`.
+ *
  * @param container - The DOM container to render into
  * @param props - Props forwarded to ExportRenderer
- * @returns The React root (caller must call root.unmount() when done)
+ * @returns The React root — caller MUST call `root.unmount()` when done
  */
 async function renderAndSettle(
   container: HTMLDivElement,
@@ -177,20 +183,28 @@ export async function captureChart(
 
   const dimensions = calculateExportDimensions({ ...params, columnWidths });
 
-  // Create container - must be on-screen for html-to-image (uses SVG foreignObject)
-  // We use opacity: 0 and pointer-events: none to hide it from the user.
-  const container = createOffscreenContainer(
-    dimensions.width,
-    dimensions.height,
-    options.background
-  );
-
   // root is undefined until renderAndSettle returns; the optional-chain guard
   // (root?.unmount()) in the finally block handles the case where
   // renderAndSettle throws before returning.
   let root: Root | undefined;
+  // container is undefined until createOffscreenContainer succeeds; the
+  // optional-chain guard (container?.remove() via removeOffscreenContainer) in
+  // the finally block handles the rare case where createOffscreenContainer
+  // itself throws (e.g. SecurityError in a sandboxed iframe) so that a
+  // partially-created element does not leak in the DOM.
+  let container: HTMLDivElement | undefined;
 
   try {
+    // Create container inside the try block so the finally cleanup always runs
+    // even if document.body.appendChild throws (e.g. SecurityError in sandboxed
+    // iframes). The container must be on-screen for html-to-image (uses SVG
+    // foreignObject); we hide it via opacity:0 and pointer-events:none.
+    container = createOffscreenContainer(
+      dimensions.width,
+      dimensions.height,
+      options.background
+    );
+
     // renderAndSettle creates the React root synchronously then waits for the
     // initial paint. Unmounting before toCanvas would tear down the DOM tree
     // mid-capture and produce a blank PNG, so unmounting is deferred to finally.
@@ -214,10 +228,11 @@ export async function captureChart(
     );
   } finally {
     // Unmount the React tree only after capture (or on error), then remove
-    // the container from the DOM. root may be undefined if renderAndSettle
-    // threw before completing, so the optional-chain guard is intentional.
+    // the container from the DOM. root/container may be undefined if an
+    // earlier step threw before completing, so the optional-chain guards are
+    // intentional.
     root?.unmount();
-    removeOffscreenContainer(container);
+    if (container) removeOffscreenContainer(container);
   }
 }
 

@@ -541,4 +541,30 @@ describe("getEffectiveDateRange — label-padding branch", () => {
     // Result should not be the custom project range
     expect(result.min).not.toBe("2024-12-25");
   });
+
+  it("does NOT add extra label padding when tasks list is empty (early-return guard)", () => {
+    const options = { ...DEFAULT_EXPORT_OPTIONS, dateRangeMode: "all" as const };
+
+    // Passing tasks=[] and effectiveZoom=0 hits the early-return guard in
+    // calculateLabelExtraPadding, which returns { leftDays: 0, rightDays: 0 }.
+    // The result must equal the plain 7-day-padded range with no extra days.
+    const withEmptyTasks = getEffectiveDateRange(
+      options,
+      projectDateRange,
+      undefined,
+      [],
+      0
+    );
+    // Base result with no tasks/zoom provided (same guard via ?? defaults)
+    const withNoArgs = getEffectiveDateRange(
+      options,
+      projectDateRange,
+      undefined
+    );
+
+    // Both paths must produce the same date range — label padding is zero in
+    // each case because either tasks is empty or effectiveZoom is 0.
+    expect(withEmptyTasks.min).toBe(withNoArgs.min);
+    expect(withEmptyTasks.max).toBe(withNoArgs.max);
+  });
 });

@@ -110,6 +110,8 @@ function normalizeElementInlineStyle(element: Element): void {
   // which — while valid in all supported environments — was unnecessarily
   // complex. The replacement always appends a trailing semicolon so subsequent
   // properties remain properly delimited regardless of whether the original had one.
+  // `[^;]+` stops at the first semicolon. Font-family values never legitimately
+  // contain semicolons (per CSS spec), so this character class is safe here.
   style = style.replace(
     /(^|;)\s*font-family:\s*[^;]+;?/gi,
     `$1font-family: ${SVG_FONT_FAMILY};`
@@ -145,6 +147,10 @@ export function setFontFamilyOnTextElements(root: Element): void {
   // Index-pointer BFS: avoids the O(n) cost of Array.shift() (which re-indexes
   // the remaining elements on every dequeue) at the price of holding the full
   // queue in memory. For typical SVG export trees this is a clear win.
+  // Trade-off: peak memory usage scales with tree breadth (all siblings of each
+  // level remain in the array until the pointer advances past them). This is
+  // acceptable for typical SVG export output; pathologically wide SVGs could
+  // revisit this if memory pressure becomes a concern.
   const queue: Element[] = [root];
   let head = 0;
 
@@ -193,7 +199,7 @@ export function generateExportFilename(
   projectName: string | undefined,
   extension: string
 ): string {
-  if (!extension) {
+  if (typeof extension !== "string" || !extension) {
     throw new Error(
       "generateExportFilename: extension must be a non-empty string"
     );
