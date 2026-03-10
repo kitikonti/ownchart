@@ -27,13 +27,19 @@ export function useTaskTableRowContextMenu(): UseTaskTableRowContextMenuResult {
     null
   );
 
+  // Set for O(1) membership checks in the right-click handler
+  const selectedTaskIdSet = useMemo(
+    () => new Set(selectedTaskIds),
+    [selectedTaskIds]
+  );
+
   const handleRowContextMenu = useCallback(
     (e: React.MouseEvent, taskId: TaskId): void => {
       e.preventDefault();
 
       // Right-click selection logic:
       // If task is not in current selection, switch selection to this task
-      if (!selectedTaskIds.includes(taskId)) {
+      if (!selectedTaskIdSet.has(taskId)) {
         setSelectedTaskIds([taskId]);
       }
 
@@ -42,17 +48,20 @@ export function useTaskTableRowContextMenu(): UseTaskTableRowContextMenuResult {
         taskId,
       });
     },
-    [selectedTaskIds, setSelectedTaskIds]
+    [selectedTaskIdSet, setSelectedTaskIds]
   );
 
   const closeContextMenu = useCallback((): void => {
     setContextMenu(null);
   }, []);
 
+  // Depend only on taskId (not the full contextMenu object) so that a future
+  // position-only update (e.g. viewport correction) does not recompute items.
+  const contextMenuTaskId = contextMenu?.taskId;
   const contextMenuItems = useMemo((): ContextMenuItem[] => {
-    if (!contextMenu) return [];
-    return buildItems(contextMenu.taskId);
-  }, [contextMenu, buildItems]);
+    if (!contextMenuTaskId) return [];
+    return buildItems(contextMenuTaskId);
+  }, [contextMenuTaskId, buildItems]);
 
   return {
     contextMenu,

@@ -6,6 +6,7 @@
  */
 
 import { useMemo } from "react";
+import { useShallow } from "zustand/react/shallow";
 import { useTaskStore } from "../store/slices/taskSlice";
 
 /** Maximum number of project colors to surface by default (fits a 3×4 swatch grid). */
@@ -18,15 +19,22 @@ const DEFAULT_MAX_PROJECT_COLORS = 12;
 export function useProjectColors(
   maxColors: number = DEFAULT_MAX_PROJECT_COLORS
 ): string[] {
-  const tasks = useTaskStore((state) => state.tasks);
+  // Select only the color strings to avoid re-renders on unrelated task mutations
+  // (e.g. task rename, date change). Shallow equality prevents unnecessary recomputes.
+  const taskColors = useTaskStore(
+    useShallow((state) => state.tasks.map((t) => t.color))
+  );
 
   return useMemo(() => {
-    // Count color frequency
+    // Count color frequency.
+    // Colors are normalized to uppercase for deduplication — returned values are
+    // always uppercase. Callers that compare against stored task colors must
+    // normalize or compare case-insensitively.
     const colorCounts = new Map<string, number>();
 
-    for (const task of tasks) {
-      if (task.color) {
-        const normalizedColor = task.color.toUpperCase();
+    for (const color of taskColors) {
+      if (color) {
+        const normalizedColor = color.toUpperCase();
         colorCounts.set(
           normalizedColor,
           (colorCounts.get(normalizedColor) || 0) + 1
@@ -37,10 +45,10 @@ export function useProjectColors(
     // Sort by frequency (descending) and return unique colors
     const sortedColors = Array.from(colorCounts.entries())
       .sort((a, b) => b[1] - a[1])
-      .map(([color]) => color);
+      .map(([c]) => c);
 
     return sortedColors.slice(0, maxColors);
-  }, [tasks, maxColors]);
+  }, [taskColors, maxColors]);
 }
 
 /**

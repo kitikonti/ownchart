@@ -19,18 +19,21 @@ export interface DeviceDetection {
 /** 768 px = Tailwind's md breakpoint; blocks phones and portrait tablets. */
 const MOBILE_BREAKPOINT_PX = 768;
 const NARROW_QUERY = `(max-width: ${MOBILE_BREAKPOINT_PX}px)`;
+/** "coarse" pointer = primary input is a touchscreen (finger), not a mouse. */
 const COARSE_QUERY = "(pointer: coarse)";
 
+/** Safe wrapper — returns false when window is unavailable (test/SSR environments). */
+function safeMatchMedia(query: string): boolean {
+  return typeof window !== "undefined" && window.matchMedia(query).matches;
+}
+
 export function useDeviceDetection(): DeviceDetection {
-  const [isNarrow, setIsNarrow] = useState(
-    () => window.matchMedia(NARROW_QUERY).matches
-  );
-  const [isCoarse, setIsCoarse] = useState(
-    () => window.matchMedia(COARSE_QUERY).matches
-  );
+  const [isNarrow, setIsNarrow] = useState(() => safeMatchMedia(NARROW_QUERY));
+  const [isCoarse, setIsCoarse] = useState(() => safeMatchMedia(COARSE_QUERY));
   const [isDismissed, setIsDismissed] = useState(false);
 
   useEffect(() => {
+    if (typeof window === "undefined") return;
     const narrowMql = window.matchMedia(NARROW_QUERY);
     const coarseMql = window.matchMedia(COARSE_QUERY);
 

@@ -55,7 +55,7 @@ export function useHelpSearch(
 /** Check if a topic matches ALL tokens (AND logic). */
 function matchesTopic(topic: HelpTopic, tokens: string[]): boolean {
   const haystack = buildHaystack(topic);
-  return tokens.every((token) => haystack.includes(token));
+  return tokens.every((token): boolean => haystack.includes(token));
 }
 
 /** Combine all searchable text into a single lowercase string. */
