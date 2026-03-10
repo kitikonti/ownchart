@@ -67,7 +67,9 @@ export const Checkbox = memo(function Checkbox({
         disabled ? "cursor-not-allowed opacity-50" : "cursor-pointer"
       }`}
     >
-      {/* Hidden native input for accessibility - uses 'peer' for sibling styling */}
+      {/* Hidden native input for accessibility - uses 'peer' for sibling styling.
+          Must precede the visual div in source order — peer-* classes require a
+          preceding sibling with the 'peer' class (Tailwind peer modifier). */}
       <input
         type="checkbox"
         checked={checked}

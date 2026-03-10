@@ -14,7 +14,6 @@ import {
 import { Desktop } from "@phosphor-icons/react";
 import OwnChartLogo from "../assets/logo.svg?react";
 import { APP_CONFIG } from "../config/appConfig";
-import { Z_INDEX } from "../styles/design-tokens";
 
 interface MobileBlockScreenProps {
   onDismiss: () => void;
@@ -47,7 +46,7 @@ export function MobileBlockScreen({
 
   return (
     // role="dialog" + aria-modal="true" tells AT this is a blocking overlay.
-    // Z_INDEX.mobileBlock: above all other overlays including the export dialog.
+    // z-[2000]: above all other overlays including the export dialog (modal = 1100).
     //
     // Note on AT compatibility: aria-modal="true" prevents most screen readers
     // from navigating behind the dialog via virtual cursor, but older NVDA +
@@ -59,8 +58,7 @@ export function MobileBlockScreen({
       role="dialog"
       aria-modal="true"
       aria-labelledby={headingId}
-      className="fixed inset-0 bg-white flex flex-col items-center justify-center px-8 text-center"
-      style={{ zIndex: Z_INDEX.mobileBlock }}
+      className="fixed inset-0 z-[2000] bg-white flex flex-col items-center justify-center px-8 text-center"
     >
       <OwnChartLogo
         width={48}
@@ -81,9 +79,9 @@ export function MobileBlockScreen({
         aria-hidden="true"
       />
 
-      <h1 id={headingId} className="mt-4 text-lg font-medium text-neutral-800">
+      <h2 id={headingId} className="mt-4 text-lg font-medium text-neutral-800">
         Desktop browser required
-      </h1>
+      </h2>
 
       <p className="mt-2 text-sm text-neutral-500 max-w-xs leading-relaxed">
         {APP_CONFIG.name} is a full-featured Gantt chart editor designed for
@@ -101,7 +99,7 @@ export function MobileBlockScreen({
         type="button"
         onClick={onDismiss}
         onKeyDown={handleButtonKeyDown}
-        className="mt-10 text-xs text-neutral-500 hover:text-neutral-600 focus-visible:ring-2 focus-visible:ring-neutral-400 focus-visible:rounded transition-colors"
+        className="mt-10 text-xs text-neutral-500 hover:text-neutral-600 focus-visible:ring-2 focus-visible:ring-neutral-400 focus-visible:ring-offset-1 focus-visible:rounded transition-colors"
       >
         Continue anyway
       </button>

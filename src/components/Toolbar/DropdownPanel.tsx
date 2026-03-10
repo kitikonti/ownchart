@@ -10,6 +10,7 @@
  * (width, minWidth, maxHeight, alignment) that vary per call site.
  */
 
+import { memo } from "react";
 import type { AriaRole, ReactNode, CSSProperties } from "react";
 
 type DropdownPanelAlign = "left" | "right";
@@ -38,7 +39,7 @@ type DropdownPanelProps =
   | (DropdownPanelBaseProps & { role?: undefined; "aria-label"?: string })
   | (DropdownPanelBaseProps & { role: AriaRole; "aria-label": string });
 
-export function DropdownPanel({
+export const DropdownPanel = memo(function DropdownPanel({
   children,
   align = "left",
   width,
@@ -71,4 +72,4 @@ export function DropdownPanel({
       {children}
     </div>
   );
-}
+});
