@@ -9,7 +9,7 @@
  * - Optional onClose callback (e.g. to clear search state)
  */
 
-import { useState, useRef, useEffect, useCallback } from "react";
+import { useState, useRef, useEffect, useCallback, useMemo } from "react";
 
 interface UseDropdownOptions {
   /** Called after the dropdown closes (useful for clearing search fields) */
@@ -68,6 +68,7 @@ export function useDropdown<T extends HTMLElement = HTMLDivElement>(
       if (!open && isOpen) {
         close();
       } else {
+        // Opening doesn't trigger onClose — call setIsOpenState directly
         setIsOpenState(open);
       }
     },
@@ -140,13 +141,18 @@ export function useDropdown<T extends HTMLElement = HTMLDivElement>(
     };
   }, [isOpen, close]);
 
-  const triggerProps = {
-    onClick: toggle,
-    // Default to "menu" — the most common dropdown type.
-    // WAI-ARIA 1.2: valid values are "menu" | "listbox" | "tree" | "grid" | "dialog".
-    "aria-haspopup": "menu" as const,
-    "aria-expanded": isOpen,
-  };
+  // Memoized so that spreading triggerProps into React.memo children does not
+  // cause unnecessary re-renders when neither toggle nor isOpen changed.
+  const triggerProps = useMemo(
+    () => ({
+      onClick: toggle,
+      // Default to "menu" — the most common dropdown type.
+      // WAI-ARIA 1.2: valid values are "menu" | "listbox" | "tree" | "grid" | "dialog".
+      "aria-haspopup": "menu" as const,
+      "aria-expanded": isOpen,
+    }),
+    [toggle, isOpen]
+  );
 
   return {
     isOpen,

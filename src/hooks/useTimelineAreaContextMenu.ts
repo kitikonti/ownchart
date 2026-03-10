@@ -18,6 +18,9 @@ import { useFullTaskContextMenuItems } from "./useFullTaskContextMenuItems";
 import type { Task } from "../types/chart.types";
 import type { TaskId } from "../types/branded.types";
 
+/** Keyboard shortcut label shown in the Paste menu item. */
+const SHORTCUT_PASTE = "Ctrl+V";
+
 /** Keyboard shortcut label shown in the Fit to View menu item. */
 const SHORTCUT_FIT_TO_VIEW = "F";
 
@@ -108,7 +111,7 @@ export function useTimelineAreaContextMenu(
         id: "paste",
         label: "Paste",
         icon: ICON_PASTE,
-        shortcut: "Ctrl+V",
+        shortcut: SHORTCUT_PASTE,
         onClick: () => void handlePaste(),
         disabled: !canPaste,
         separator: true,

@@ -13,12 +13,29 @@ import { useRef, useState, useEffect, useCallback } from "react";
 import type { CollapseLevel } from "../components/Ribbon/RibbonCollapseContext";
 
 /**
+ * Maximum value of CollapseLevel — must equal THRESHOLDS.length and the
+ * highest value in the CollapseLevel union type in RibbonCollapseContext.tsx.
+ * Update all three together when adding collapse levels.
+ */
+const MAX_COLLAPSE_LEVEL = 5 as const;
+
+/**
  * Overflow thresholds in px — collapse to level N when overflow >= THRESHOLDS[N-1].
- * IMPORTANT: THRESHOLDS.length must equal the maximum value of CollapseLevel (5).
- * If you add entries here, update the CollapseLevel union type in RibbonCollapseContext.tsx
- * (and the Math.min clamp on line ~82 below) accordingly.
+ * IMPORTANT: THRESHOLDS.length must equal MAX_COLLAPSE_LEVEL.
+ * If you add entries here, update MAX_COLLAPSE_LEVEL and the CollapseLevel union
+ * type in RibbonCollapseContext.tsx accordingly.
  */
 const THRESHOLDS: readonly number[] = [10, 80, 160, 240, 320];
+
+// Development-time guard: THRESHOLDS.length must equal MAX_COLLAPSE_LEVEL.
+// This will throw during development if someone adds a threshold without
+// updating MAX_COLLAPSE_LEVEL (and the CollapseLevel union type).
+if (import.meta.env.DEV && THRESHOLDS.length !== MAX_COLLAPSE_LEVEL) {
+  throw new Error(
+    `useRibbonCollapse: THRESHOLDS.length (${THRESHOLDS.length}) must equal MAX_COLLAPSE_LEVEL (${MAX_COLLAPSE_LEVEL}). ` +
+      "Update both together along with the CollapseLevel union in RibbonCollapseContext.tsx."
+  );
+}
 
 /** Hysteresis buffer: once at a level, require overflow to drop further before uncollapsing */
 const HYSTERESIS_PX = 20;
@@ -85,8 +102,8 @@ export function useRibbonCollapse(activeTab: string): {
         threshold -= HYSTERESIS_PX;
       }
       if (overflow >= threshold) {
-        // Clamp to the valid CollapseLevel range (0–5) in case THRESHOLDS grows
-        newLevel = Math.min(i + 1, 5) as CollapseLevel;
+        // Clamp to the valid CollapseLevel range (0–MAX_COLLAPSE_LEVEL) in case THRESHOLDS grows
+        newLevel = Math.min(i + 1, MAX_COLLAPSE_LEVEL) as CollapseLevel;
         break;
       }
     }

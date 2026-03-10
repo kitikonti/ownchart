@@ -60,6 +60,7 @@ export function useProgressDrag(
     }
 
     rafRef.current = requestAnimationFrame(() => {
+      rafRef.current = null;
       if (!svgRef.current) return;
       const svgPoint = getSVGPoint(e, svgRef.current);
       const { x, width } = geometryRef.current;
