@@ -146,6 +146,9 @@ export function useProgressDrag(
       if (handleMouseUpRef.current) {
         document.removeEventListener("mouseup", handleMouseUpRef.current);
       }
+      // Reset cursor unconditionally — if no drag was active this is a no-op
+      // (setting "" on an already-empty style is safe). Avoids a stuck cursor
+      // if the component unmounts mid-drag (e.g. task deleted during drag).
       document.body.style.cursor = "";
     };
   }, []);

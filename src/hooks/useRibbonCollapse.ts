@@ -119,18 +119,23 @@ export function useRibbonCollapse(activeTab: string): {
     const toolbar = content?.parentElement;
     if (!content || !toolbar) return;
 
+    // Use a ref so the cleanup function always cancels the latest scheduled
+    // frame — aligns with the pattern used in useProgressDrag (rafRef).
+    const rafHandleRef = { current: 0 };
+
     // Initial measurement after render
-    let rafHandle = requestAnimationFrame(measure);
+    rafHandleRef.current = requestAnimationFrame(measure);
 
     // Observe the toolbar (parent) — its width changes when the window resizes
     const observer = new ResizeObserver(() => {
-      rafHandle = requestAnimationFrame(measure);
+      cancelAnimationFrame(rafHandleRef.current);
+      rafHandleRef.current = requestAnimationFrame(measure);
     });
 
     observer.observe(toolbar);
 
     return () => {
-      cancelAnimationFrame(rafHandle);
+      cancelAnimationFrame(rafHandleRef.current);
       observer.disconnect();
     };
   }, [measure, activeTab]);

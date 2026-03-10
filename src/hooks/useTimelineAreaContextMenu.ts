@@ -24,6 +24,10 @@ const SHORTCUT_PASTE = "Ctrl+V";
 /** Keyboard shortcut label shown in the Fit to View menu item. */
 const SHORTCUT_FIT_TO_VIEW = "F";
 
+/** Menu item IDs — used as stable React keys and for test selection. */
+const MENU_ITEM_ID_PASTE = "paste";
+const MENU_ITEM_ID_FIT_TO_VIEW = "fitToView";
+
 // Icons are module-level constants: created once, stable across all renders.
 const ICON_PASTE = createElement(ClipboardText, {
   size: CONTEXT_MENU.iconSize,
@@ -79,6 +83,8 @@ export function useTimelineAreaContextMenu(
 
         if (rowIndex >= 0 && rowIndex < tasks.length) {
           const taskId = tasks[rowIndex].id;
+          // Cross-store read at event time — avoids subscribing to selectedTaskIds
+          // as a selector, which would re-render this hook on every selection change.
           const selectedSet = new Set(useTaskStore.getState().selectedTaskIds);
           if (selectedSet.has(taskId)) {
             setContextMenu({ position, taskId });
@@ -108,7 +114,7 @@ export function useTimelineAreaContextMenu(
     // Default: Paste + Fit to View
     return [
       {
-        id: "paste",
+        id: MENU_ITEM_ID_PASTE,
         label: "Paste",
         icon: ICON_PASTE,
         shortcut: SHORTCUT_PASTE,
@@ -117,7 +123,7 @@ export function useTimelineAreaContextMenu(
         separator: true,
       },
       {
-        id: "fitToView",
+        id: MENU_ITEM_ID_FIT_TO_VIEW,
         label: "Fit to View",
         icon: ICON_FIT_TO_VIEW,
         shortcut: SHORTCUT_FIT_TO_VIEW,

@@ -25,8 +25,12 @@ export function useAutoColumnWidth(): void {
   const isInitialRender = useRef(true);
 
   // Track if fonts are loaded for accurate text measurement.
-  // Also kept in a ref so that runAutoFitIfReady remains stable and does not
-  // cause the uiDensity effect to re-fire when fontsReady changes.
+  // Dual tracking (state + ref) is intentional:
+  //   - `fontsReady` state: drives the task-data effect so it re-runs once fonts
+  //     become available (ensuring a pending auto-fit fires after font load).
+  //   - `fontsReadyRef`: read by `runAutoFitIfReady` via stable closure so that
+  //     the uiDensity effect does NOT re-fire merely because fontsReady flipped.
+  // See the comment above the task-data effect for the full asymmetry rationale.
   const [fontsReady, setFontsReady] = useState(false);
   const fontsReadyRef = useRef(false);
 
@@ -49,8 +53,10 @@ export function useAutoColumnWidth(): void {
     }
   }, []);
 
-  // Create a fingerprint of task data that affects column widths
-  // Only include fields that are displayed in columns
+  // Create a fingerprint of task data that affects column widths.
+  // Only include fields that are currently displayed in table columns —
+  // this is intentional: adding future columns here keeps auto-fit accurate.
+  // If a new column is added (e.g. assignedTo), add its field to this fingerprint.
   const taskFingerprint = useMemo(
     () =>
       tasks
