@@ -5,6 +5,7 @@
  */
 
 import { useCallback, useMemo, useState } from "react";
+import type { MouseEvent } from "react";
 import { useTaskStore } from "../store/slices/taskSlice";
 import { useFullTaskContextMenuItems } from "./useFullTaskContextMenuItems";
 import type { ContextMenuItem } from "../components/ContextMenu/ContextMenu";
@@ -14,7 +15,7 @@ import type { TaskContextMenuState } from "./contextMenuItemBuilders";
 interface UseTimelineBarContextMenuResult {
   contextMenu: TaskContextMenuState | null;
   contextMenuItems: ContextMenuItem[];
-  handleBarContextMenu: (e: React.MouseEvent, taskId: TaskId) => void;
+  handleBarContextMenu: (e: MouseEvent, taskId: TaskId) => void;
   closeContextMenu: () => void;
 }
 
@@ -27,7 +28,7 @@ export function useTimelineBarContextMenu(): UseTimelineBarContextMenuResult {
   );
 
   const handleBarContextMenu = useCallback(
-    (e: React.MouseEvent, taskId: TaskId): void => {
+    (e: MouseEvent, taskId: TaskId): void => {
       e.preventDefault();
       e.stopPropagation(); // Prevent timeline area context menu
 

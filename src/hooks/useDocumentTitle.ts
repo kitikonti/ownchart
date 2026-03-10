@@ -23,10 +23,8 @@ export function useDocumentTitle(): void {
     const dirtyIndicator = isDirty ? DIRTY_INDICATOR : "";
 
     if (fileName) {
-      // Show filename with asterisk if unsaved changes
       document.title = `${fileName}${dirtyIndicator} - ${APP_CONFIG.name}`;
     } else {
-      // Show asterisk for new unsaved charts
       document.title = `${APP_CONFIG.name}${dirtyIndicator}`;
     }
 
