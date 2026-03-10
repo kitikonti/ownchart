@@ -199,6 +199,7 @@ export function generateExportFilename(
   projectName: string | undefined,
   extension: string
 ): string {
+  // typeof guard is kept for non-TypeScript callers that may pass a non-string.
   if (typeof extension !== "string" || !extension) {
     throw new Error(
       "generateExportFilename: extension must be a non-empty string"
@@ -302,7 +303,8 @@ const PNG_COMPRESSION_RATIO = 0.35;
  *   when either dimension is zero.
  */
 export function estimateFileSize(width: number, height: number): string {
-  if (width <= 0 || height <= 0) return EMPTY_SIZE_PLACEHOLDER;
+  if (width <= 0 || height <= 0 || !isFinite(width) || !isFinite(height))
+    return EMPTY_SIZE_PLACEHOLDER;
   const rawBytes = width * height * 4;
   const estimatedBytes = rawBytes * PNG_COMPRESSION_RATIO;
 

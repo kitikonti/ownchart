@@ -46,6 +46,18 @@ describe("estimateFileSize", () => {
     expect(estimateFileSize(-100, -100)).toBe("—");
   });
 
+  it("returns em dash for NaN width", () => {
+    expect(estimateFileSize(NaN, 100)).toBe("—");
+  });
+
+  it("returns em dash for NaN height", () => {
+    expect(estimateFileSize(100, NaN)).toBe("—");
+  });
+
+  it("returns em dash for Infinity width", () => {
+    expect(estimateFileSize(Infinity, 100)).toBe("—");
+  });
+
   it("returns bytes unit for very small images", () => {
     // 10×10 = 100px × 4 bytes × 0.35 = 140 bytes
     const result = estimateFileSize(10, 10);
