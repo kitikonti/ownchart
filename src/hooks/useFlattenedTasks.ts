@@ -36,10 +36,9 @@ export function useFlattenedTasks(): UseFlattenedTasksResult {
 
   // Stage 1: Build full flattened list with globalRowNumber
   const allFlattenedTasks = useMemo(() => {
-    const collapsedIds = new Set<TaskId>();
-    for (const t of tasks) {
-      if (t.open === false) collapsedIds.add(t.id);
-    }
+    const collapsedIds = new Set<TaskId>(
+      tasks.filter((t) => t.open === false).map((t) => t.id)
+    );
     return buildFlattenedTaskList(tasks, collapsedIds);
   }, [tasks]);
 

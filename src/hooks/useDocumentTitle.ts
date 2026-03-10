@@ -23,6 +23,8 @@ export function useDocumentTitle(): void {
       document.title = `${APP_NAME}${dirtyIndicator}`;
     }
 
+    // Reset to bare app name on unmount.
+    // Safe because this hook is used as a singleton at the root level.
     return (): void => {
       document.title = APP_NAME;
     };

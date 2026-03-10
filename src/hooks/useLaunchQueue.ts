@@ -29,7 +29,7 @@ export function useLaunchQueue(): void {
           size: file.size,
         });
         showLoadNotifications({ ...result, fileName: file.name }, toast);
-      } catch (e) {
+      } catch (e: unknown) {
         console.error("Failed to open file from LaunchQueue:", e);
         toast.error(`Failed to open "${handle.name}"`);
       }
