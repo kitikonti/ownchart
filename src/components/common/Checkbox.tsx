@@ -94,7 +94,9 @@ export const Checkbox = memo(function Checkbox({
     <div
       className={buildClassNames(
         "relative inline-flex items-center justify-center w-5 h-5 flex-shrink-0",
-        disabled ? "cursor-not-allowed opacity-50" : "cursor-pointer"
+        // Cursor is driven by the native input (cursor-pointer / disabled:cursor-not-allowed).
+        // The wrapper only carries opacity for the disabled state; no cursor class needed here.
+        disabled ? "opacity-50" : undefined
       )}
     >
       {/* Hidden native input for accessibility - uses 'peer' for sibling styling.

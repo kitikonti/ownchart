@@ -7,8 +7,8 @@
 
 import {
   memo,
-  useEffect,
   useId,
+  useLayoutEffect,
   useRef,
   type KeyboardEvent as ReactKeyboardEvent,
 } from "react";
@@ -36,11 +36,12 @@ export const MobileBlockScreen = memo(function MobileBlockScreen({
   const descriptionId = useId();
   const dismissRef = useRef<HTMLButtonElement>(null);
 
-  // Move focus into the overlay when it mounts so keyboard/AT users
-  // do not interact with hidden content behind the blocking screen.
-  // useEffect is preferred over `autoFocus` because it ensures the button is
-  // fully in the DOM before focusing, and avoids autoFocus quirks in JSDOM/tests.
-  useEffect(() => {
+  // Move focus into the overlay synchronously before the browser paints, so
+  // keyboard/AT users cannot interact with any content that was visible in the
+  // frame before this screen appeared. useLayoutEffect runs after DOM mutations
+  // but before paint, eliminating the brief unfocused window that useEffect
+  // would leave (useEffect fires after paint on the initial render).
+  useLayoutEffect(() => {
     dismissRef.current?.focus();
   }, []);
 
@@ -50,6 +51,10 @@ export const MobileBlockScreen = memo(function MobileBlockScreen({
   //  - Escape: WCAG 2.1 §3.2.5 / ARIA dialog pattern — dismiss the dialog.
   // Note: both Tab and Shift+Tab share e.key === "Tab" (Shift is only in e.shiftKey),
   // so a single "Tab" check correctly traps both directions.
+  //
+  // NOTE: This trap assumes a SINGLE focusable element. If additional buttons or
+  // links are ever added to this overlay, replace this handler with a proper
+  // focus-trap loop that cycles between the first and last focusable elements.
   function handleButtonKeyDown(e: ReactKeyboardEvent<HTMLButtonElement>): void {
     if (e.key === "Tab") {
       e.preventDefault();

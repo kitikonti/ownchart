@@ -59,12 +59,21 @@ interface DropdownPanelBaseProps {
  * Discriminated union: `aria-label` is required when `role` is set (WCAG 2.1 §4.1.2).
  * Every named widget role needs an accessible name.
  *
- * The no-role branch optionally accepts `aria-label` for forward-compatibility —
+ * The no-role branch accepts `aria-label` for forward-compatibility only —
  * e.g. a call site that intends to add a `role` later can pre-supply the label.
- * AT generally ignores `aria-label` on a plain `<div>` with no role, so this is safe.
+ * AT generally ignores `aria-label` on a plain `<div>` with no role, so passing
+ * `aria-label` without `role` has NO accessibility effect. Always pair them.
  */
 type DropdownPanelProps =
-  | (DropdownPanelBaseProps & { role?: undefined; "aria-label"?: string })
+  | (DropdownPanelBaseProps & {
+      role?: undefined;
+      /**
+       * Has no accessibility effect without a matching `role`.
+       * AT ignores `aria-label` on a plain `<div>` with no widget role.
+       * Always supply `role` together with `aria-label`.
+       */
+      "aria-label"?: string;
+    })
   | (DropdownPanelBaseProps & {
       role: DropdownPanelRole;
       "aria-label": string;
