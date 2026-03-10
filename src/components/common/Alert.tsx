@@ -8,7 +8,7 @@
  * - neutral: Gray background, for informational messages
  */
 
-import type { ReactNode } from "react";
+import type { ReactNode, ReactElement } from "react";
 import { Info, Warning, WarningCircle, Lightbulb } from "@phosphor-icons/react";
 
 export type AlertVariant = "info" | "warning" | "error" | "neutral";
@@ -66,16 +66,24 @@ export function Alert({
   children,
   icon,
   className = "",
-}: AlertProps): JSX.Element {
+}: AlertProps): ReactElement {
   const styles = variantStyles[variant];
   const displayIcon = icon ?? defaultIcons[variant];
 
+  const isUrgent = variant === "error" || variant === "warning";
+
   return (
     <div
-      className={`flex items-start gap-3 px-4 py-3 rounded border ${styles.container} ${className}`}
-      role={variant === "error" ? "alert" : "status"}
+      className={`flex items-start gap-3 px-4 py-3 rounded border ${styles.container}${className ? ` ${className}` : ""}`}
+      // role="alert" is a live region for dynamically injected urgent messages.
+      // role="note" is used for static informational content (info/neutral),
+      // avoiding unwanted screen-reader announcements when panels mount.
+      role={isUrgent ? "alert" : "note"}
     >
-      <span className={`flex-shrink-0 mt-0.5 ${styles.icon}`}>
+      <span
+        aria-hidden="true"
+        className={`flex-shrink-0 mt-0.5 ${styles.icon}`}
+      >
         {displayIcon}
       </span>
       <div className={`text-xs ${styles.text}`}>{children}</div>

@@ -737,6 +737,12 @@ select:focus-visible {
   background-color: var(--color-neutral-100);
 }
 
+/* Keyboard-focused item (Arrow key navigation) — matches hover style so
+   keyboard users get the same visual affordance as mouse users. */
+.dropdown-item-focused {
+  background-color: var(--color-neutral-50);
+}
+
 /* ─── Context Menu (MS 365 Style) ─── */
 .context-menu-container {
   background-color: var(--color-surface);

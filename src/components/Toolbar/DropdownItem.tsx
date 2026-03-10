@@ -33,6 +33,12 @@ const ARIA_CHECKED_ROLES = new Set<AriaRole>([
 interface DropdownItemProps {
   /** Whether this item is currently selected */
   isSelected?: boolean;
+  /**
+   * Whether this item has keyboard focus (via Arrow key navigation).
+   * When true, a visual highlight is applied matching the hover style
+   * so keyboard users get the same affordance as mouse users.
+   */
+  isFocused?: boolean;
   /** Click handler */
   onClick: () => void;
   /** Primary label */
@@ -55,10 +61,13 @@ interface DropdownItemProps {
   "aria-selected"?: boolean;
   /** aria-checked override (only emitted when role supports aria-checked, e.g. menuitemcheckbox) */
   "aria-checked"?: boolean;
+  /** HTML id — used for aria-activedescendant on the parent listbox */
+  id?: string;
 }
 
 export const DropdownItem = memo(function DropdownItem({
   isSelected = false,
+  isFocused = false,
   onClick,
   children,
   description,
@@ -67,6 +76,7 @@ export const DropdownItem = memo(function DropdownItem({
   role,
   "aria-selected": ariaSelected,
   "aria-checked": ariaChecked,
+  id,
 }: DropdownItemProps): JSX.Element {
   const hasDescription = !!description;
 
@@ -81,6 +91,7 @@ export const DropdownItem = memo(function DropdownItem({
 
   return (
     <button
+      id={id}
       type="button"
       role={role}
       aria-selected={
@@ -95,6 +106,7 @@ export const DropdownItem = memo(function DropdownItem({
           ? "min-h-[36px] py-1.5 pr-3 pl-2"
           : "h-8 py-0 pr-[15px] pl-[9px]", // pl-[9px]/pr-[15px] pixel-align with DropdownPanel's px-[9px] left-padding so the checkmark column visually aligns with the panel edge — if DropdownPanel padding changes, update this value to match
         isSelected ? "dropdown-item-selected" : "",
+        isFocused ? "dropdown-item-focused" : "",
       ]
         .filter(Boolean)
         .join(" ")}

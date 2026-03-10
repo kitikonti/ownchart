@@ -253,6 +253,10 @@ export const TOOLBAR = {
 
   // Dropdown dimensions
   fileMenuMinWidth: "14rem",
+
+  // Sub-pixel border width for trigger buttons — intentionally differs from
+  // a standard 1px border to preserve MS-Fluent visual fidelity.
+  triggerBorderWidth: "0.667px",
 } as const;
 
 // =============================================================================

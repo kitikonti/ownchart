@@ -2,6 +2,8 @@
  * GettingStartedTab — 5 quick-start cards for new users.
  */
 
+import { memo, useEffect } from "react";
+import type { ReactNode, ReactElement } from "react";
 import {
   Cursor,
   ArrowsOutCardinal,
@@ -11,7 +13,14 @@ import {
 } from "@phosphor-icons/react";
 import { type HelpSection, resolveShortcut } from "../../config/helpContent";
 
-const ICONS: Record<string, { icon: React.ReactNode; bg: string }> = {
+/**
+ * Icon and background color mapping keyed by HelpTopic.id.
+ * NOTE: These keys must stay in sync with the topic IDs defined in
+ * helpContent.ts (getting-started sections). If a topic ID changes,
+ * the corresponding entry here must be updated too — missing IDs fall
+ * back to a default Cursor icon.
+ */
+const ICONS: Record<string, { icon: ReactNode; bg: string }> = {
   "gs-create-task": {
     icon: <Cursor size={20} className="text-brand-600" />,
     bg: "bg-brand-50",
@@ -38,10 +47,24 @@ interface GettingStartedTabProps {
   sections: HelpSection[];
 }
 
-export function GettingStartedTab({
+function GettingStartedTabInner({
   sections,
-}: GettingStartedTabProps): JSX.Element {
+}: GettingStartedTabProps): ReactElement {
   const topics = sections.flatMap((s) => s.topics);
+
+  // Warn once per sections change (not on every render) about missing icon mappings.
+  useEffect(() => {
+    if (import.meta.env.DEV) {
+      topics.forEach((topic) => {
+        if (!ICONS[topic.id]) {
+          console.warn(
+            `[GettingStartedTab] No icon mapping found for topic id "${topic.id}". Add it to the ICONS map.`
+          );
+        }
+      });
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [sections]);
 
   return (
     <div className="space-y-3">
@@ -60,15 +83,18 @@ export function GettingStartedTab({
               )}
             </div>
             <div className="min-w-0">
-              <p className="text-sm font-medium text-neutral-800">
+              <h3 className="text-sm font-medium text-neutral-800">
                 {topic.title}
-              </p>
+              </h3>
               <p className="text-xs text-neutral-500 mt-0.5 leading-relaxed">
                 {resolveShortcut(topic.description)}
               </p>
               {topic.tip && (
-                <p className="text-xs text-neutral-400 mt-1">
-                  Tip: {resolveShortcut(topic.tip)}
+                <p className="text-xs text-neutral-400 mt-1 flex items-center gap-1">
+                  {/* "Tip:" is announced once by screen readers via sr-only; visible label via aria-hidden. */}
+                  <span className="sr-only">Tip: </span>
+                  <span aria-hidden="true">Tip: </span>
+                  {resolveShortcut(topic.tip)}
                 </p>
               )}
             </div>
@@ -78,3 +104,7 @@ export function GettingStartedTab({
     </div>
   );
 }
+
+// Sections come from a stable config object, so memoizing prevents unnecessary
+// re-renders when parent components (e.g. HelpPanel) re-render on search input.
+export const GettingStartedTab = memo(GettingStartedTabInner);

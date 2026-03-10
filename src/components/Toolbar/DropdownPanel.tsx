@@ -6,7 +6,7 @@
  * Styled via CSS class .dropdown-panel so there is exactly one place to edit.
  */
 
-import type { ReactNode, CSSProperties } from "react";
+import type { ReactNode, ReactElement, CSSProperties } from "react";
 
 type DropdownPanelAlign = "left" | "right";
 
@@ -24,6 +24,12 @@ interface DropdownPanelProps {
   role?: string;
   /** ARIA label */
   "aria-label"?: string;
+  /**
+   * ARIA activedescendant — points to the ID of the focused/selected option.
+   * When provided, tabIndex={-1} is automatically added so the element can
+   * receive focus programmatically (required by aria-activedescendant).
+   */
+  "aria-activedescendant"?: string;
   /** Additional inline styles (only for layout overrides like padding) */
   style?: CSSProperties;
   /** CSS class name */
@@ -38,9 +44,10 @@ export function DropdownPanel({
   maxHeight,
   role,
   "aria-label": ariaLabel,
+  "aria-activedescendant": ariaActiveDescendant,
   style,
   className = "",
-}: DropdownPanelProps): JSX.Element {
+}: DropdownPanelProps): ReactElement {
   const panelStyle: CSSProperties = {
     [align === "right" ? "right" : "left"]: 0,
     ...(width ? { width } : {}),
@@ -53,6 +60,9 @@ export function DropdownPanel({
     <div
       role={role}
       aria-label={ariaLabel}
+      aria-activedescendant={ariaActiveDescendant}
+      // aria-activedescendant requires the element to be focusable (tabIndex)
+      tabIndex={ariaActiveDescendant !== undefined ? -1 : undefined}
       className={`dropdown-panel ${className}`.trim()}
       data-dropdown-panel
       style={panelStyle}
