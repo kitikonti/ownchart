@@ -8,9 +8,21 @@
  * Accepts children for custom option rendering (including optgroups).
  */
 
-import type { SelectHTMLAttributes, ReactNode } from "react";
-import { forwardRef } from "react";
+import { forwardRef, memo } from "react";
+import type { SelectHTMLAttributes, ReactNode, JSX, Ref } from "react";
+import {
+  type FormControlVariant,
+  formControlVariantClasses,
+} from "./formVariantClasses";
 
+export type SelectVariant = FormControlVariant;
+
+/**
+ * @remarks Callers MUST supply an accessible label via one of:
+ * - `aria-label` (e.g. standalone selects without visible label text)
+ * - `aria-labelledby` pointing to a visible label element
+ * - A wrapping `<label>` element that references the control via `htmlFor`
+ */
 export interface SelectProps extends Omit<
   SelectHTMLAttributes<HTMLSelectElement>,
   "className"
@@ -18,33 +30,41 @@ export interface SelectProps extends Omit<
   /** Children (option elements, optgroups) */
   children: ReactNode;
   /** Style variant */
-  variant?: "default" | "figma";
+  variant?: SelectVariant;
+  /** Use full width (default: true) */
+  fullWidth?: boolean;
   /** Additional CSS classes */
   className?: string;
 }
 
 const baseClasses =
-  "w-full px-3 py-2 text-sm bg-white border rounded cursor-pointer transition-colors duration-150";
+  "px-3 py-2 text-sm bg-white border rounded cursor-pointer transition-colors duration-150 disabled:opacity-50 disabled:cursor-not-allowed disabled:bg-neutral-50";
 
-const variantClasses = {
-  default:
-    "border-neutral-300 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-brand-600 focus-visible:border-brand-600 hover:border-neutral-400",
-  figma:
-    "border-neutral-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-100 focus-visible:border-brand-600",
-};
+function SelectInner(
+  {
+    children,
+    variant = "default",
+    fullWidth = true,
+    className = "",
+    ...props
+  }: SelectProps,
+  ref: Ref<HTMLSelectElement>
+): JSX.Element {
+  const classes = [
+    baseClasses,
+    formControlVariantClasses[variant],
+    fullWidth ? "w-full" : "",
+    className,
+  ]
+    .filter(Boolean)
+    .join(" ");
 
-export const Select = forwardRef<HTMLSelectElement, SelectProps>(
-  ({ children, variant = "default", className = "", ...props }, ref) => {
-    const classes = [baseClasses, variantClasses[variant], className]
-      .filter(Boolean)
-      .join(" ");
+  return (
+    <select ref={ref} className={classes} {...props}>
+      {children}
+    </select>
+  );
+}
 
-    return (
-      <select ref={ref} className={classes} {...props}>
-        {children}
-      </select>
-    );
-  }
-);
-
+export const Select = memo(forwardRef(SelectInner));
 Select.displayName = "Select";

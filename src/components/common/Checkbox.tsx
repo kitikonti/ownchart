@@ -14,6 +14,7 @@
  * - Disabled: 50% opacity
  */
 
+import type { JSX } from "react";
 import { Check } from "@phosphor-icons/react";
 
 export interface CheckboxProps {

@@ -3,6 +3,7 @@
  * Used in export dialogs for column and timeline option selection.
  */
 
+import { memo, useCallback, useId, type JSX } from "react";
 import { Checkbox } from "./Checkbox";
 
 export interface CheckboxGroupItem {
@@ -14,37 +15,92 @@ export interface CheckboxGroupItem {
 export interface CheckboxGroupProps {
   /** Items to display */
   items: CheckboxGroupItem[];
-  /** Called when an item is toggled */
+  /**
+   * Called when an item is toggled.
+   *
+   * Pass a stable reference (e.g. via `useCallback`) to avoid unnecessary
+   * re-renders of memoized `CheckboxGroupRow` children.
+   */
   onChange: (key: string, checked: boolean) => void;
   /** Accessible label for the group — announced by screen readers as the group name */
-  ariaLabel?: string;
+  ariaLabel: string;
 }
 
-export function CheckboxGroup({
+interface CheckboxGroupRowProps {
+  item: CheckboxGroupItem;
+  /** Unique DOM id for the native checkbox input (scoped to this group instance). */
+  inputId: string;
+  /** Whether to render a divider above this row (true for all rows except the first). */
+  hasDividerAbove: boolean;
+  onChange: (key: string, checked: boolean) => void;
+}
+
+const CheckboxGroupRow = memo(function CheckboxGroupRow({
+  item,
+  inputId,
+  hasDividerAbove,
+  onChange,
+}: CheckboxGroupRowProps): JSX.Element {
+  const handleChange = useCallback(
+    (checked: boolean): void => onChange(item.key, checked),
+    [item.key, onChange]
+  );
+
+  return (
+    <li>
+      {/* divider-h-light: custom utility defined in index.css */}
+      {hasDividerAbove && <div className="divider-h-light mb-2.5" />}
+      {/* Label wraps both elements — the `inputId` on Checkbox provides an explicit
+          native <input id> so label association remains valid even if the
+          nesting structure changes in future refactors. The id is scoped to the
+          group instance via useId() to prevent duplicate-id collisions when
+          multiple CheckboxGroups with the same item keys exist in one page. */}
+      <label
+        htmlFor={inputId}
+        className="flex items-center gap-3 cursor-pointer group min-h-[32px]"
+      >
+        <Checkbox id={inputId} checked={item.checked} onChange={handleChange} />
+        <span className="text-sm text-neutral-900">{item.label}</span>
+      </label>
+    </li>
+  );
+});
+
+export const CheckboxGroup = memo(function CheckboxGroup({
   items,
   onChange,
   ariaLabel,
 }: CheckboxGroupProps): JSX.Element {
+  // Generate a stable unique prefix so that each group instance produces
+  // distinct input IDs — prevents collisions when multiple CheckboxGroups
+  // render items with the same keys (e.g. header vs. footer columns).
+  const groupId = useId();
+
   return (
-    <div
-      role="group"
-      aria-label={ariaLabel}
-      className="bg-white border border-neutral-200 rounded p-3"
-    >
-      <div className="space-y-2.5">
-        {items.map((item, idx, arr) => (
-          <div key={item.key}>
-            <label className="flex items-center gap-3 cursor-pointer group min-h-[32px]">
-              <Checkbox
-                checked={item.checked}
-                onChange={(checked) => onChange(item.key, checked)}
-              />
-              <span className="text-sm text-neutral-900">{item.label}</span>
-            </label>
-            {idx < arr.length - 1 && <div className="divider-h-light mt-2.5" />}
-          </div>
+    // <fieldset> provides native group semantics — equivalent to role="group"
+    // but with broader screen reader support (especially VoiceOver on iOS).
+    // Browser-default fieldset styles (border, padding, min-inline-size) are
+    // reset via Tailwind so the visual appearance is unchanged.
+    <fieldset className="bg-white border border-neutral-200 rounded p-3 min-w-0">
+      {/* sr-only <legend> names the group for assistive technologies,
+          replacing the former aria-label on the div. */}
+      <legend className="sr-only">{ariaLabel}</legend>
+      {/* Note: role="list" is intentionally omitted — the ESLint jsx-a11y rule
+          disallows explicit list roles on <ul>/<ol> as redundant. The <fieldset>
+          + <legend> already provide strong group semantics for assistive
+          technologies; individual items are discovered via <li> children. */}
+      <ul className="space-y-2.5">
+        {items.map((item, idx) => (
+          <CheckboxGroupRow
+            key={item.key}
+            item={item}
+            inputId={`${groupId}-${item.key}`}
+            // Positional divider: first item has no top divider, all others do.
+            hasDividerAbove={idx > 0}
+            onChange={onChange}
+          />
         ))}
-      </div>
-    </div>
+      </ul>
+    </fieldset>
   );
-}
+});
