@@ -1,6 +1,8 @@
 import { useEffect } from "react";
 import { useFileStore } from "../store/slices/fileSlice";
 
+const APP_NAME = "OwnChart";
+
 /**
  * Custom hook to dynamically update the browser tab title
  * Shows "filename.ownchart - OwnChart" when a file is loaded
@@ -11,19 +13,18 @@ export function useDocumentTitle(): void {
   const isDirty = useFileStore((state) => state.isDirty);
 
   useEffect(() => {
-    const baseTitle = "OwnChart";
     const dirtyIndicator = isDirty ? "*" : "";
 
     if (fileName) {
       // Show filename with asterisk if unsaved changes
-      document.title = `${fileName}${dirtyIndicator} - ${baseTitle}`;
+      document.title = `${fileName}${dirtyIndicator} - ${APP_NAME}`;
     } else {
       // Show asterisk for new unsaved charts
-      document.title = `${baseTitle}${dirtyIndicator}`;
+      document.title = `${APP_NAME}${dirtyIndicator}`;
     }
 
     return (): void => {
-      document.title = baseTitle;
+      document.title = APP_NAME;
     };
   }, [fileName, isDirty]);
 }

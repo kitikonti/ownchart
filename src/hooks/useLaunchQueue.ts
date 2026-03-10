@@ -13,9 +13,10 @@ import {
 
 export function useLaunchQueue(): void {
   useEffect(() => {
-    if (!("launchQueue" in window)) return;
+    const lq = window.launchQueue;
+    if (!lq) return;
 
-    window.launchQueue!.setConsumer(async (launchParams: LaunchParams) => {
+    lq.setConsumer(async (launchParams: LaunchParams) => {
       if (!launchParams.files || launchParams.files.length === 0) return;
 
       const handle = launchParams.files[0];

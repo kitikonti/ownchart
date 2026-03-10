@@ -13,6 +13,7 @@ import { useTaskStore } from "../store/slices/taskSlice";
 import { useChartStore } from "../store/slices/chartSlice";
 import { buildFlattenedTaskList, type FlattenedTask } from "../utils/hierarchy";
 import type { Task } from "../types/chart.types";
+import type { TaskId } from "../types/branded.types";
 
 interface UseFlattenedTasksResult {
   /** Visible flattened task list (hidden tasks filtered out) with hierarchy info */
@@ -35,9 +36,12 @@ export function useFlattenedTasks(): UseFlattenedTasksResult {
 
   // Stage 1: Build full flattened list with globalRowNumber
   const allFlattenedTasks = useMemo(() => {
-    const collapsedIds = new Set(
-      tasks.filter((t) => t.open === false).map((t) => t.id)
-    );
+    // Single-pass Set construction avoids the intermediate filtered array from
+    // filter().map() — functionally identical, slightly more direct.
+    const collapsedIds = new Set<TaskId>();
+    for (const t of tasks) {
+      if (t.open === false) collapsedIds.add(t.id);
+    }
     return buildFlattenedTaskList(tasks, collapsedIds);
   }, [tasks]);
 

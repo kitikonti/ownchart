@@ -4,7 +4,7 @@
  * Delegates item building to useFullTaskContextMenuItems.
  */
 
-import { useMemo, useState, useCallback } from "react";
+import { useState, useCallback, useMemo } from "react";
 import type { ContextMenuItem } from "../components/ContextMenu/ContextMenu";
 import type { TaskId } from "../types/branded.types";
 import { useTaskStore } from "../store/slices/taskSlice";
@@ -31,8 +31,11 @@ export function useTimelineBarContextMenu(): UseTimelineBarContextMenuResult {
       e.preventDefault();
       e.stopPropagation(); // Prevent timeline area context menu
 
-      // Right-click selection logic
-      if (!useTaskStore.getState().selectedTaskIds.includes(taskId)) {
+      // Right-click selection logic: if the clicked task is not in the current
+      // selection, replace the selection with just that task. Use a Set for O(1)
+      // membership check instead of Array.includes which is O(n).
+      const currentSelection = useTaskStore.getState().selectedTaskIds;
+      if (!new Set(currentSelection).has(taskId)) {
         setSelectedTaskIds([taskId]);
       }
 
