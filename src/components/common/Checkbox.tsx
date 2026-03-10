@@ -49,6 +49,7 @@ export function Checkbox({
       />
       {/* Visual checkbox - Outlook/Fluent style with all states */}
       <div
+        aria-hidden="true"
         className={`
           w-5 h-5 flex items-center justify-center rounded-sm
           transition-all duration-150

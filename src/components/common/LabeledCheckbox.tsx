@@ -46,7 +46,6 @@ export function LabeledCheckbox({
         checked={checked}
         onChange={onChange}
         disabled={disabled}
-        aria-label={title}
       />
       <div className="flex-1">
         <span className="text-sm font-medium text-neutral-900">{title}</span>

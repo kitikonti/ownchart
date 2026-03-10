@@ -54,6 +54,7 @@ export function Radio({
       />
       {/* Visual radio - Outlook/Fluent style with all states */}
       <div
+        aria-hidden="true"
         className={`
           w-4 h-4 rounded-full flex items-center justify-center
           transition-all duration-150

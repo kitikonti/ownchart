@@ -6,7 +6,7 @@
  * Styled via CSS class .dropdown-panel so there is exactly one place to edit.
  */
 
-import type { ReactNode, CSSProperties } from "react";
+import type { AriaRole, ReactNode, CSSProperties } from "react";
 
 type DropdownPanelAlign = "left" | "right";
 
@@ -21,7 +21,7 @@ interface DropdownPanelProps {
   /** Maximum height with overflow scroll */
   maxHeight?: string;
   /** ARIA role */
-  role?: string;
+  role?: AriaRole;
   /** ARIA label */
   "aria-label"?: string;
   /** Additional inline styles (only for layout overrides like padding) */
@@ -43,8 +43,11 @@ export function DropdownPanel({
 }: DropdownPanelProps): JSX.Element {
   const panelStyle: CSSProperties = {
     [align === "right" ? "right" : "left"]: 0,
+    // width is optional — omit the property entirely when not set
     ...(width ? { width } : {}),
+    // minWidth defaults to "100%" but a caller may pass "" to suppress it
     ...(minWidth ? { minWidth } : {}),
+    // maxHeight enables scroll when set
     ...(maxHeight ? { maxHeight, overflowY: "auto" as const } : {}),
     ...style,
   };

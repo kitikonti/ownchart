@@ -47,11 +47,14 @@ export function MobileBlockScreen({
 
       <p className="mt-4 text-sm text-neutral-500">
         Please open{" "}
-        <span className="font-medium text-neutral-700">ownchart.app</span> on a
-        desktop or laptop.
+        <span className="font-medium text-neutral-700">
+          {APP_CONFIG.appUrl.replace("https://", "")}
+        </span>{" "}
+        on a desktop or laptop.
       </p>
 
       <button
+        type="button"
         onClick={onDismiss}
         className="mt-10 text-xs text-neutral-500 hover:text-neutral-600 focus-visible:ring-2 focus-visible:ring-neutral-400 focus-visible:rounded transition-colors"
       >

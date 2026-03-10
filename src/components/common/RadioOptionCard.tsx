@@ -3,6 +3,7 @@
  * Used throughout export dialogs for selecting options.
  */
 
+import type { ReactNode } from "react";
 import { Radio } from "./Radio";
 
 export interface RadioOptionCardProps {
@@ -19,7 +20,7 @@ export interface RadioOptionCardProps {
   /** Optional badge (e.g., "100%" for current zoom) */
   badge?: string;
   /** Expandable content shown when selected */
-  children?: React.ReactNode;
+  children?: ReactNode;
   /** Align radio to top (for cards with children) */
   alignTop?: boolean;
   /** Optional aria-label override */
@@ -40,14 +41,17 @@ export function RadioOptionCard({
   const hasChildren = !!children;
   const showAlignTop = alignTop || hasChildren;
 
+  const cardClassName = [
+    "flex",
+    showAlignTop ? "items-start" : "items-center",
+    "gap-3.5 p-4 rounded border cursor-pointer transition-all duration-150 min-h-[44px] hover:bg-neutral-50",
+    selected
+      ? "border-neutral-300 border-l-[3px] border-l-brand-600"
+      : "border-neutral-200 hover:border-neutral-300",
+  ].join(" ");
+
   return (
-    <label
-      className={`flex ${showAlignTop ? "items-start" : "items-center"} gap-3.5 p-4 rounded border cursor-pointer transition-all duration-150 min-h-[44px] hover:bg-neutral-50 ${
-        selected
-          ? "border-neutral-300 border-l-[3px] border-l-brand-600"
-          : "border-neutral-200 hover:border-neutral-300"
-      }`}
-    >
+    <label className={cardClassName}>
       <div className={showAlignTop ? "mt-0.5" : ""}>
         <Radio
           checked={selected}
