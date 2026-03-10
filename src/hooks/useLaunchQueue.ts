@@ -30,6 +30,7 @@ export function useLaunchQueue(): void {
         });
         showLoadNotifications({ ...result, fileName: file.name }, toast);
       } catch (e: unknown) {
+        // Intentional: log to console for error observability in addition to the user-facing toast.
         console.error("Failed to open file from LaunchQueue:", e);
         toast.error(`Failed to open "${handle.name}"`);
       }

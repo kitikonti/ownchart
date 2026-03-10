@@ -1,7 +1,8 @@
 import { useEffect } from "react";
 import { useFileStore } from "../store/slices/fileSlice";
+import { APP_CONFIG } from "../config/appConfig";
 
-const APP_NAME = "OwnChart";
+const APP_NAME = APP_CONFIG.name;
 
 /**
  * Custom hook to dynamically update the browser tab title
