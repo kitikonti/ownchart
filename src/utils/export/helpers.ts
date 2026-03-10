@@ -86,9 +86,10 @@ function normalizeTextElementFontAttributes(element: Element): void {
  * Normalise font-family and font-weight values inside an element's inline
  * `style` attribute string.
  *
- * The regexes are anchored to the start-of-string or a preceding semicolon
- * so that custom or vendor-prefixed property names ending in `font-family`
- * (e.g. `-x-font-family`) are not accidentally replaced.
+ * The regexes capture the leading semicolon (or start-of-string) so that
+ * custom or vendor-prefixed property names ending in `font-family`
+ * (e.g. `-x-font-family`) are not accidentally replaced. The capture group
+ * is reinserted via `$1` in the replacement string.
  *
  * - Replaces any `font-family` declaration with `SVG_FONT_FAMILY`.
  * - Maps `font-weight` 600/700 to the keyword "bold" for svg2pdf.js.
@@ -101,18 +102,19 @@ function normalizeElementInlineStyle(element: Element): void {
   let style = element.getAttribute("style") || "";
   // Anchor the match to the start of the value or a preceding semicolon so
   // that properties like `-x-font-family` are not accidentally replaced.
-  // Lookbehind assertion requires ES2018+ / V8 ≥ 62 — all supported browsers qualify.
-  // The replacement always appends a trailing semicolon so subsequent properties
-  // remain properly delimited regardless of whether the original had one.
+  // The capture group preserves the leading semicolon so it is not swallowed
+  // by the replacement. This avoids the lookbehind assertion used previously,
+  // which — while valid in all supported environments — was unnecessarily
+  // complex. The replacement always appends a trailing semicolon so subsequent
+  // properties remain properly delimited regardless of whether the original had one.
   style = style.replace(
-    /(?:^|(?<=;))\s*font-family:\s*[^;]+;?/gi,
-    `font-family: ${SVG_FONT_FAMILY};`
+    /(^|;)\s*font-family:\s*[^;]+;?/gi,
+    `$1font-family: ${SVG_FONT_FAMILY};`
   );
   // Normalize font-weight in inline styles for svg2pdf.js.
-  // Lookbehind assertion requires ES2018+ / V8 ≥ 62 — all supported browsers qualify.
   style = style.replace(
-    /(?:^|(?<=;))\s*font-weight:\s*(600|700);?/gi,
-    "font-weight: bold;"
+    /(^|;)\s*font-weight:\s*(600|700);?/gi,
+    "$1font-weight: bold;"
   );
   // trimStart removes any leading whitespace that may exist in the original
   // style attribute value (browser serialisation can produce it).

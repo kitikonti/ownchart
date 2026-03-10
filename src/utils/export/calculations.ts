@@ -338,18 +338,22 @@ export function getEffectiveDateRange(
   tasks?: Task[],
   effectiveZoom?: number
 ): { min: string; max: string } {
-  const today = new Date().toISOString().split("T")[0];
-  const defaultRange = {
-    min: addDays(today, -DEFAULT_RANGE_LOOKBACK_DAYS),
-    max: addDays(today, DEFAULT_RANGE_LOOKAHEAD_DAYS),
+  // Deferred so the Date construction and addDays calls only run when a
+  // branch actually falls back to the default range (i.e. no data available).
+  const getDefaultRange = (): { min: string; max: string } => {
+    const today = new Date().toISOString().split("T")[0];
+    return {
+      min: addDays(today, -DEFAULT_RANGE_LOOKBACK_DAYS),
+      max: addDays(today, DEFAULT_RANGE_LOOKAHEAD_DAYS),
+    };
   };
 
   switch (options.dateRangeMode) {
     case "visible":
-      return buildVisibleDateRange(visibleDateRange) ?? defaultRange;
+      return buildVisibleDateRange(visibleDateRange) ?? getDefaultRange();
 
     case "custom":
-      return buildCustomDateRange(options) ?? defaultRange;
+      return buildCustomDateRange(options) ?? getDefaultRange();
 
     case "all":
       return (
@@ -358,7 +362,7 @@ export function getEffectiveDateRange(
           projectDateRange,
           tasks ?? [],
           effectiveZoom ?? 0
-        ) ?? defaultRange
+        ) ?? getDefaultRange()
       );
 
     default: {
@@ -369,7 +373,7 @@ export function getEffectiveDateRange(
       // calculateEffectiveZoom and getDefaultColumnWidth.
       const _exhaustive: never = options.dateRangeMode;
       void _exhaustive;
-      return defaultRange;
+      return getDefaultRange();
     }
   }
 }

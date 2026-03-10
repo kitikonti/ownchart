@@ -169,16 +169,13 @@ async function captureContainerToCanvas(
 export async function captureChart(
   params: CaptureChartParams
 ): Promise<HTMLCanvasElement> {
-  const {
-    tasks,
-    options,
-    columnWidths,
-    currentAppZoom,
-    projectDateRange,
-    visibleDateRange,
-  } = params;
+  const { tasks, options, currentAppZoom, projectDateRange, visibleDateRange } =
+    params;
+  // Normalise once so both calculateExportDimensions and renderAndSettle
+  // receive the same concrete value — avoids dual-path `?? {}` guards.
+  const columnWidths = params.columnWidths ?? {};
 
-  const dimensions = calculateExportDimensions(params);
+  const dimensions = calculateExportDimensions({ ...params, columnWidths });
 
   // Create container - must be on-screen for html-to-image (uses SVG foreignObject)
   // We use opacity: 0 and pointer-events: none to hide it from the user.
@@ -204,7 +201,7 @@ export async function captureChart(
     root = await renderAndSettle(container, {
       tasks,
       options,
-      columnWidths: columnWidths ?? {},
+      columnWidths,
       currentAppZoom,
       projectDateRange,
       visibleDateRange,

@@ -42,6 +42,10 @@ describe("estimateFileSize", () => {
     expect(estimateFileSize(100, -100)).toBe("—");
   });
 
+  it("returns em dash when both width and height are negative", () => {
+    expect(estimateFileSize(-100, -100)).toBe("—");
+  });
+
   it("returns bytes unit for very small images", () => {
     // 10×10 = 100px × 4 bytes × 0.35 = 140 bytes
     const result = estimateFileSize(10, 10);

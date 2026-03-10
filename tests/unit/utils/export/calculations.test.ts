@@ -467,6 +467,23 @@ describe("calculateOptimalColumnWidth", () => {
     const result = calculateOptimalColumnWidth("endDate", [], "comfortable");
     expect(result).toBeGreaterThan(0);
   });
+
+  it("assigns level 0 to a task whose parent ID does not exist in the list (orphan-parent fallback)", () => {
+    // computeTaskLevel: task.parent is set but taskById.has(task.parent) is false
+    // → falls back to level 0, same as a genuine root task with the same name.
+    // Use the same name so text-measurement width is identical.
+    const sameName = "Identical Task Name";
+    const orphan = makeTask("orphan", { name: sameName, parent: "non-existent-id" });
+    const flat = makeTask("flat", { name: sameName });
+    const orphanWidth = calculateOptimalColumnWidth(
+      "name",
+      [orphan],
+      "comfortable"
+    );
+    const flatWidth = calculateOptimalColumnWidth("name", [flat], "comfortable");
+    // Both are treated as root-level (no indent) — widths must match exactly
+    expect(orphanWidth).toBe(flatWidth);
+  });
 });
 
 // ---------------------------------------------------------------------------
