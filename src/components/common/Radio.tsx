@@ -22,7 +22,14 @@ export interface RadioProps {
   checked: boolean;
   onChange: () => void;
   name: string;
-  /** Value of the radio input — used for form semantics and correct behaviour in radio groups. */
+  /**
+   * Value of the radio input — used for form semantics and correct behaviour in radio groups.
+   *
+   * **Warning**: when omitted, browsers default to `"on"` for every radio in the group,
+   * making them indistinguishable in form submissions. Always supply a unique `value`
+   * when using multiple `<Radio>` buttons with the same `name`. `RadioOptionCard` always
+   * passes `value ?? title` to guarantee uniqueness.
+   */
   value?: string;
   disabled?: boolean;
   /**

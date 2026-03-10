@@ -74,19 +74,9 @@ describe("RadioOptionCard", () => {
       expect(screen.getByRole("radio")).not.toBeChecked();
     });
 
-    it("sets aria-current='true' on the label when selected", () => {
+    it("does not set aria-current on the label (selection is conveyed by the native radio checked state)", () => {
       const { container } = render(
         <RadioOptionCard {...defaultProps} selected={true} />
-      );
-      expect(container.querySelector("label")).toHaveAttribute(
-        "aria-current",
-        "true"
-      );
-    });
-
-    it("does not set aria-current on the label when not selected", () => {
-      const { container } = render(
-        <RadioOptionCard {...defaultProps} selected={false} />
       );
       expect(container.querySelector("label")).not.toHaveAttribute(
         "aria-current"

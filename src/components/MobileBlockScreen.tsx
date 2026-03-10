@@ -35,14 +35,28 @@ export const MobileBlockScreen = memo(function MobileBlockScreen({
   const headingId = useId();
   const descriptionId = useId();
   const dismissRef = useRef<HTMLButtonElement>(null);
+  // Capture the previously focused element at mount time so focus can be
+  // restored when the overlay is dismissed (WCAG 2.1 §2.4.3 / ARIA dialog pattern).
+  const previousFocusRef = useRef<Element | null>(null);
 
   // Move focus into the overlay synchronously before the browser paints, so
   // keyboard/AT users cannot interact with any content that was visible in the
   // frame before this screen appeared. useLayoutEffect runs after DOM mutations
   // but before paint, eliminating the brief unfocused window that useEffect
   // would leave (useEffect fires after paint on the initial render).
+  // On cleanup (unmount), restore focus to the element that had focus when the
+  // overlay appeared — without this, keyboard/AT users lose their position.
   useLayoutEffect(() => {
+    previousFocusRef.current = document.activeElement;
     dismissRef.current?.focus();
+    return () => {
+      if (
+        previousFocusRef.current instanceof HTMLElement ||
+        previousFocusRef.current instanceof SVGElement
+      ) {
+        previousFocusRef.current.focus();
+      }
+    };
   }, []);
 
   // Handles keyboard interactions on the single interactive element:

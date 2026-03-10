@@ -7,7 +7,8 @@
  *
  * The `.dropdown-panel` CSS class (position, shadow, border, z-index) is defined
  * in `src/index.css`. Inline styles here are restricted to layout overrides
- * (width, minWidth, maxHeight, overflowY, alignment) that vary per call site.
+ * (width, minWidth, maxHeight, overflowY) that vary per call site.
+ * Horizontal alignment (left-0 / right-0) is handled via Tailwind classes.
  */
 
 import { memo, useMemo } from "react";
@@ -90,12 +91,12 @@ export const DropdownPanel = memo(function DropdownPanel({
   style,
   className = "",
 }: DropdownPanelProps): JSX.Element {
+  // Alignment is handled via Tailwind so the computed style key trick is avoided.
+  // The inline style object only carries truly variable layout values.
   // useMemo prevents a new style object being allocated on every render.
   // The component is memo-wrapped, but children can still trigger re-renders.
   const panelStyle = useMemo<CSSProperties>(
     () => ({
-      // "0" is equivalent to "0px" in React inline styles; jsdom normalises to "0px" in tests.
-      [align === "right" ? "right" : "left"]: "0",
       // width is optional — omit the property entirely when not set
       ...(width ? { width } : {}),
       // minWidth defaults to "100%" but a caller may pass "" to suppress it
@@ -104,14 +105,19 @@ export const DropdownPanel = memo(function DropdownPanel({
       ...(maxHeight ? { maxHeight, overflowY: "auto" } : {}),
       ...style,
     }),
-    [align, width, minWidth, maxHeight, style]
+    [width, minWidth, maxHeight, style]
   );
 
   return (
     <div
       role={role}
       aria-label={ariaLabel}
-      className={buildClassNames("dropdown-panel", className)}
+      className={buildClassNames(
+        "dropdown-panel",
+        // left-0 / right-0: anchor panel to the corresponding edge of the trigger.
+        align === "right" ? "right-0" : "left-0",
+        className
+      )}
       data-dropdown-panel
       style={panelStyle}
     >

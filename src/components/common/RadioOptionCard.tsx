@@ -64,6 +64,7 @@ export const RadioOptionCard = memo(function RadioOptionCard({
     // Arbitrary value intentional — Tailwind's built-in border-l-4 (4px) is too thick,
     // border-l-2 (2px) too subtle; 3px is the design-calibrated accent width.
     // bg-brand-50 on selected provides a non-colour secondary visual cue (WCAG SC 1.4.1).
+    // min-h-[44px]: WCAG 2.5.5 minimum 44×44 px touch target size.
     "gap-3.5 p-4 rounded border cursor-pointer transition-all duration-150 min-h-[44px]",
     selected
       ? "border-neutral-300 border-l-[3px] border-l-brand-600 bg-brand-50"
@@ -71,12 +72,9 @@ export const RadioOptionCard = memo(function RadioOptionCard({
   );
 
   return (
-    // aria-current gives AT and test utilities a structural hook for the selected card,
-    // complementing the native radio `checked` state which only signals input-level selection.
-    <label
-      className={cardClassName}
-      aria-current={selected ? "true" : undefined}
-    >
+    // The native radio `checked` state inside this label is the authoritative
+    // signal for AT — no additional aria-* attribute is needed on the <label>.
+    <label className={cardClassName}>
       <div className={shouldAlignTop ? "mt-0.5" : ""}>
         {/*
          * aria-label is only forwarded when explicitly overriding the visible label.

@@ -55,29 +55,27 @@ describe("DropdownPanel", () => {
     });
   });
 
-  describe("alignment styles", () => {
-    it("aligns to the left by default (style.left is set)", () => {
+  describe("alignment", () => {
+    it("applies left-0 class by default", () => {
       const { container } = render(<DropdownPanel>content</DropdownPanel>);
-      const el = container.firstChild as HTMLElement;
-      // jsdom normalises "0" to "0px" in inline styles
-      expect(el.style.left).toBe("0px");
+      expect(container.firstChild).toHaveClass("left-0");
+      expect(container.firstChild).not.toHaveClass("right-0");
     });
 
-    it("aligns to the right when align='right' (style.right is set)", () => {
+    it("applies right-0 class when align='right'", () => {
       const { container } = render(
         <DropdownPanel align="right">content</DropdownPanel>
       );
-      const el = container.firstChild as HTMLElement;
-      // jsdom normalises "0" to "0px" in inline styles
-      expect(el.style.right).toBe("0px");
+      expect(container.firstChild).toHaveClass("right-0");
+      expect(container.firstChild).not.toHaveClass("left-0");
     });
 
-    it("does not set style.right when align='left'", () => {
+    it("applies left-0 class when align='left'", () => {
       const { container } = render(
         <DropdownPanel align="left">content</DropdownPanel>
       );
-      const el = container.firstChild as HTMLElement;
-      expect(el.style.right).toBe("");
+      expect(container.firstChild).toHaveClass("left-0");
+      expect(container.firstChild).not.toHaveClass("right-0");
     });
   });
 

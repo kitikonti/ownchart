@@ -107,4 +107,26 @@ describe("MobileBlockScreen", () => {
     fireEvent.keyDown(button, { key: "Enter" });
     expect(onDismiss).not.toHaveBeenCalled();
   });
+
+  it("restores focus to the previously focused element on unmount", () => {
+    // Simulate a previously focused element (e.g., a toolbar button that triggered
+    // the mobile block detection) to verify WCAG 2.1 §2.4.3 focus restoration.
+    const trigger = document.createElement("button");
+    trigger.textContent = "Trigger";
+    document.body.appendChild(trigger);
+    trigger.focus();
+    expect(document.activeElement).toBe(trigger);
+
+    const { unmount } = render(<MobileBlockScreen onDismiss={vi.fn()} />);
+    // After mount, focus should have moved to the dismiss button
+    expect(document.activeElement).toBe(
+      screen.getByRole("button", { name: /continue anyway/i })
+    );
+
+    // After unmount, focus should return to the element that was focused before
+    unmount();
+    expect(document.activeElement).toBe(trigger);
+
+    document.body.removeChild(trigger);
+  });
 });
