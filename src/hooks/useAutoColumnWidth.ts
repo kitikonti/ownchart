@@ -36,8 +36,12 @@ export function useAutoColumnWidth(): void {
 
   // Wait for fonts to load before allowing auto-fit.
   // Gracefully handles environments where FontFaceSet is unavailable or rejects.
+  // The `mounted` flag prevents calling `setFontsReady` after unmount — defensive
+  // guard for the case where the component unmounts before fonts finish loading.
   useEffect(() => {
+    let mounted = true;
     const markReady = (): void => {
+      if (!mounted) return;
       fontsReadyRef.current = true;
       setFontsReady(true);
     };
@@ -51,6 +55,9 @@ export function useAutoColumnWidth(): void {
       // In test environment or unsupported browsers, proceed immediately
       markReady();
     }
+    return () => {
+      mounted = false;
+    };
   }, []);
 
   // Create a fingerprint of task data that affects column widths.

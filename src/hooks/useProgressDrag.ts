@@ -95,9 +95,11 @@ export function useProgressDrag(
 
     if (handleMouseMoveRef.current) {
       document.removeEventListener("mousemove", handleMouseMoveRef.current);
+      handleMouseMoveRef.current = null;
     }
     if (handleMouseUpRef.current) {
       document.removeEventListener("mouseup", handleMouseUpRef.current);
+      handleMouseUpRef.current = null;
     }
     document.body.style.cursor = "";
     svgRef.current = null;

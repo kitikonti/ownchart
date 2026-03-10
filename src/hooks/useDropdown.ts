@@ -56,13 +56,10 @@ export function useDropdown<T extends HTMLElement = HTMLDivElement>(
   const onCloseRef = useRef(options?.onClose);
   onCloseRef.current = options?.onClose;
 
-  // Store ariaHasPopup in a ref for the same reason (stable reference).
-  // Also capture as a plain variable so it can be included in the useMemo
-  // dependency array below — reading a ref inside useMemo without listing it
-  // as a dep would produce a stale value if the caller ever changed it.
-  const ariaHasPopupRef = useRef(options?.ariaHasPopup ?? ("menu" as const));
-  ariaHasPopupRef.current = options?.ariaHasPopup ?? "menu";
-  const ariaHasPopup = ariaHasPopupRef.current;
+  // Read ariaHasPopup directly from options on each render — no ref needed
+  // because this value is consumed only in the `triggerProps` useMemo (which
+  // already lists it as a dep), so it will never be stale.
+  const ariaHasPopup = options?.ariaHasPopup ?? ("menu" as const);
 
   // Callback ref for the trigger element — compatible with any HTML element type
   const triggerRef = useCallback((el: HTMLElement | null) => {
@@ -163,9 +160,8 @@ export function useDropdown<T extends HTMLElement = HTMLDivElement>(
 
   // Memoized so that spreading triggerProps into React.memo children does not
   // cause unnecessary re-renders when neither toggle nor isOpen changed.
-  // `ariaHasPopup` is a local variable (derived from the ref above) so that
-  // it is a proper dep-array entry — avoids a stale value if the caller ever
-  // changes `ariaHasPopup` between renders (rare, but correct to handle).
+  // `ariaHasPopup` is a local variable derived from options on each render,
+  // so listing it as a dep correctly reflects any caller change.
   const triggerProps = useMemo(
     () => ({
       onClick: toggle,
