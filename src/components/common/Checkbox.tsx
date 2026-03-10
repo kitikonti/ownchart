@@ -14,6 +14,7 @@
  * - Disabled: 50% opacity, no hover/active effects
  */
 
+import { memo } from "react";
 import { Check } from "@phosphor-icons/react";
 
 export interface CheckboxProps {
@@ -30,7 +31,7 @@ export interface CheckboxProps {
   id?: string;
 }
 
-export function Checkbox({
+export const Checkbox = memo(function Checkbox({
   checked,
   onChange,
   disabled = false,
@@ -78,8 +79,9 @@ export function Checkbox({
       />
       {/* Visual checkbox - Outlook/Fluent style with all states */}
       <div aria-hidden="true" className={visualClasses}>
+        {/* 14px icon fits snugly inside the 20×20 checkbox with ~3px padding on each side */}
         {checked && <Check size={14} weight="bold" className="text-white" />}
       </div>
     </div>
   );
-}
+});

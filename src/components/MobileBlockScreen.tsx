@@ -7,6 +7,7 @@
 
 import {
   useEffect,
+  useId,
   useRef,
   type KeyboardEvent as ReactKeyboardEvent,
 } from "react";
@@ -24,7 +25,9 @@ export function MobileBlockScreen({
 }: MobileBlockScreenProps): JSX.Element {
   // Strip protocol from URL for display (e.g. "ownchart.app" instead of "https://ownchart.app")
   const displayUrl = APP_CONFIG.appUrl.replace(/^https?:\/\//, "");
-  const headingId = "mobile-block-heading";
+  // useId produces a stable, unique ID — avoids collisions if multiple instances
+  // are ever rendered simultaneously (e.g. in tests).
+  const headingId = useId();
   const dismissRef = useRef<HTMLButtonElement>(null);
 
   // Move focus into the overlay when it mounts so keyboard/AT users
@@ -45,6 +48,13 @@ export function MobileBlockScreen({
   return (
     // role="dialog" + aria-modal="true" tells AT this is a blocking overlay.
     // Z_INDEX.mobileBlock: above all other overlays including the export dialog.
+    //
+    // Note on AT compatibility: aria-modal="true" prevents most screen readers
+    // from navigating behind the dialog via virtual cursor, but older NVDA +
+    // Firefox and some JAWS configurations may still allow virtual-cursor escape.
+    // A more robust solution would be to apply the HTML `inert` attribute to the
+    // app's root element when this screen is shown (controlled from App.tsx).
+    // The single-button focus trap (Tab key handler below) covers keyboard users.
     <div
       role="dialog"
       aria-modal="true"

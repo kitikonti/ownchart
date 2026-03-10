@@ -4,6 +4,10 @@
  * ALL toolbar dropdowns use this component for their floating panel.
  * One consistent look: same border-radius, same shadow, same spacing.
  * Styled via CSS class .dropdown-panel so there is exactly one place to edit.
+ *
+ * The `.dropdown-panel` CSS class (position, shadow, border, z-index) is defined
+ * in `src/index.css`. Inline styles here are restricted to layout overrides
+ * (width, minWidth, maxHeight, alignment) that vary per call site.
  */
 
 import type { AriaRole, ReactNode, CSSProperties } from "react";

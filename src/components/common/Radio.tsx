@@ -14,6 +14,8 @@
  * - Disabled: 50% opacity, no hover/active effects
  */
 
+import { memo } from "react";
+
 export interface RadioProps {
   checked: boolean;
   onChange: () => void;
@@ -31,7 +33,7 @@ export interface RadioProps {
   id?: string;
 }
 
-export function Radio({
+export const Radio = memo(function Radio({
   checked,
   onChange,
   name,
@@ -88,4 +90,4 @@ export function Radio({
       </div>
     </div>
   );
-}
+});

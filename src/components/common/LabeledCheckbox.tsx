@@ -5,7 +5,7 @@
  * Style matches the export dialog's "Transparent background" checkbox pattern.
  */
 
-import { useId } from "react";
+import { memo, useId } from "react";
 import { Checkbox } from "./Checkbox";
 
 export interface LabeledCheckboxProps {
@@ -23,7 +23,7 @@ export interface LabeledCheckboxProps {
   id?: string;
 }
 
-export function LabeledCheckbox({
+export const LabeledCheckbox = memo(function LabeledCheckbox({
   checked,
   onChange,
   title,
@@ -59,4 +59,4 @@ export function LabeledCheckbox({
       </div>
     </label>
   );
-}
+});
