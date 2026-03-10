@@ -1,12 +1,62 @@
 /**
  * Export utilities for PNG, PDF, and SVG generation.
+ *
+ * Primary entry point:
+ *   exportToPng — high-level orchestration for PNG export
+ *
+ * Supporting utilities are grouped below by concern.
  */
 
+// High-level orchestration (primary public API)
+export { exportToPng } from "./exportToPng";
+
+// Types (single source of truth for export-domain types)
+export {
+  DEFAULT_EXPORT_OPTIONS,
+  DEFAULT_FIT_TO_WIDTH_PX,
+  DEFAULT_PDF_OPTIONS,
+  DEFAULT_SVG_OPTIONS,
+  EXPORT_ZOOM_PRESETS,
+  INITIAL_EXPORT_STATE,
+  PDF_PAGE_SIZES,
+  PDF_MARGIN_PRESETS,
+  UHD_SCREEN_WIDTH_PX,
+  type ExportColumnKey,
+  type ExportFormat,
+  type ExportLayoutInput,
+  type ExportOptions,
+  type ExportState,
+  type ExportZoomPreset,
+  type PdfExportOptions,
+  type PdfCustomPageSize,
+  type PdfHeaderFooter,
+  type PdfMetadata,
+  type PdfMarginPreset,
+  type PdfMargins,
+  type PdfOrientation,
+  type PdfPageSize,
+  type SvgDimensionMode,
+  type SvgExportOptions,
+  type SvgStyleMode,
+  type SvgTextMode,
+  type ExportQuickPreset,
+} from "./types";
+export type { FlattenedTask } from "./types";
+
+// Capture (canvas-level PNG generation)
 export {
   captureChart,
   canvasToBlob,
   type CaptureChartParams,
 } from "./captureChart";
+
+// Download helpers
+export {
+  downloadBlob,
+  downloadCanvasAsPng,
+  generateFilename,
+} from "./downloadPng";
+export { sanitizeFilename } from "./sanitizeFilename";
 
 // Layout computation (pure functions, no React)
 export {
@@ -14,6 +64,17 @@ export {
   computeExportLayout,
   type ExportLayout,
 } from "./exportLayout";
+
+// DPI constants and conversion utilities
+export {
+  INTERNAL_DPI,
+  PNG_EXPORT_DPI,
+  MM_PER_INCH,
+  mmToPxAtDpi,
+  pxToMmAtDpi,
+  calculatePixelDimensions,
+  formatDpiDescription,
+} from "./dpi";
 
 // Shared constants — only public-API constants are re-exported here.
 // Internal SVG-rendering constants (TEXT_BASELINE_OFFSET, ICON_RENDER_SIZE, etc.)
@@ -51,52 +112,8 @@ export {
   type TaskTableHeaderOptions,
   type TaskTableRowsOptions,
 } from "./taskTableRenderer";
-export type { FlattenedTask } from "./types";
-export {
-  downloadBlob,
-  downloadCanvasAsPng,
-  generateFilename,
-} from "./downloadPng";
-export { sanitizeFilename } from "./sanitizeFilename";
-export {
-  INTERNAL_DPI,
-  PNG_EXPORT_DPI,
-  MM_PER_INCH,
-  mmToPxAtDpi,
-  pxToMmAtDpi,
-  calculatePixelDimensions,
-  formatDpiDescription,
-} from "./dpi";
-export {
-  DEFAULT_EXPORT_OPTIONS,
-  DEFAULT_FIT_TO_WIDTH_PX,
-  DEFAULT_PDF_OPTIONS,
-  DEFAULT_SVG_OPTIONS,
-  EXPORT_ZOOM_PRESETS,
-  INITIAL_EXPORT_STATE,
-  PDF_PAGE_SIZES,
-  PDF_MARGIN_PRESETS,
-  UHD_SCREEN_WIDTH_PX,
-  type ExportColumnKey,
-  type ExportFormat,
-  type ExportLayoutInput,
-  type ExportOptions,
-  type ExportState,
-  type ExportZoomPreset,
-  type PdfExportOptions,
-  type PdfCustomPageSize,
-  type PdfHeaderFooter,
-  type PdfMetadata,
-  type PdfMarginPreset,
-  type PdfMargins,
-  type PdfOrientation,
-  type PdfPageSize,
-  type SvgDimensionMode,
-  type SvgExportOptions,
-  type SvgStyleMode,
-  type SvgTextMode,
-  type ExportQuickPreset,
-} from "./types";
+
+// Calculation utilities
 export {
   BASE_PIXELS_PER_DAY,
   getDefaultColumnWidth,
@@ -107,6 +124,8 @@ export {
   calculateOptimalColumnWidth,
   calculateOptimalColumnWidths,
 } from "./calculations";
+
+// PDF layout utilities
 export {
   calculatePdfFitToWidth,
   PDF_HEADER_FOOTER_RESERVED_MM,
@@ -120,6 +139,3 @@ export {
 
 // Page size presets (runtime data, separate from type definitions)
 export { EXPORT_QUICK_PRESETS } from "./pagePresets";
-
-// High-level orchestration
-export { exportToPng } from "./exportToPng";

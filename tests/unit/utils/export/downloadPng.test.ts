@@ -181,8 +181,7 @@ describe('downloadCanvasAsPng', () => {
 
     expect(mockCanvas.toBlob).toHaveBeenCalledWith(
       expect.any(Function),
-      'image/png',
-      1.0
+      'image/png'
     );
     expect(mockLink.download).toBe('custom-name.png');
     expect(mockLink.click).toHaveBeenCalled();

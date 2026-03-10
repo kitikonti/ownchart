@@ -2,7 +2,7 @@
  * PNG download utilities.
  */
 
-import { sanitizeFilename } from "./sanitizeFilename";
+import { generateExportFilename } from "./helpers";
 
 /**
  * Delay in ms before revoking the object URL after triggering a download.
@@ -11,23 +11,15 @@ import { sanitizeFilename } from "./sanitizeFilename";
 const BLOB_URL_REVOKE_DELAY_MS = 100;
 
 /**
- * Generate a filename for the exported chart.
+ * Generate a PNG filename for the exported chart.
  * Format: {projectName}-YYYYMMDD-HHMMSS.png
+ * Delegates to generateExportFilename for consistent date-stamp formatting.
  *
- * @param projectName - The project name (will be sanitized)
- * @returns A valid filename for the export
+ * @param projectName - The project name (will be sanitized). Defaults to "untitled".
+ * @returns A valid filename for the PNG export
  */
 export function generateFilename(projectName?: string): string {
-  const now = new Date();
-  const year = now.getFullYear();
-  const month = String(now.getMonth() + 1).padStart(2, "0");
-  const day = String(now.getDate()).padStart(2, "0");
-  const hours = String(now.getHours()).padStart(2, "0");
-  const minutes = String(now.getMinutes()).padStart(2, "0");
-  const seconds = String(now.getSeconds()).padStart(2, "0");
-
-  const safeName = sanitizeFilename(projectName || "");
-  return `${safeName}-${year}${month}${day}-${hours}${minutes}${seconds}.png`;
+  return generateExportFilename(projectName || "untitled", "png");
 }
 
 /**
@@ -63,19 +55,15 @@ export async function downloadCanvasAsPng(
   filename?: string
 ): Promise<void> {
   return new Promise((resolve, reject) => {
-    canvas.toBlob(
-      (blob) => {
-        if (!blob) {
-          reject(new Error("Failed to create PNG blob"));
-          return;
-        }
+    canvas.toBlob((blob) => {
+      if (!blob) {
+        reject(new Error("Failed to create PNG blob"));
+        return;
+      }
 
-        const finalFilename = filename || generateFilename();
-        downloadBlob(blob, finalFilename);
-        resolve();
-      },
-      "image/png",
-      1.0
-    );
+      const finalFilename = filename || generateFilename();
+      downloadBlob(blob, finalFilename);
+      resolve();
+    }, "image/png");
   });
 }

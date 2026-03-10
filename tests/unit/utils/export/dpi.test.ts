@@ -58,6 +58,14 @@ describe("mmToPxAtDpi", () => {
   it("handles fractional mm values", () => {
     expect(mmToPxAtDpi(12.7, 96)).toBeCloseTo(48);
   });
+
+  it("throws RangeError for zero dpi", () => {
+    expect(() => mmToPxAtDpi(25.4, 0)).toThrow(RangeError);
+  });
+
+  it("throws RangeError for negative dpi", () => {
+    expect(() => mmToPxAtDpi(25.4, -1)).toThrow(RangeError);
+  });
 });
 
 // ---------------------------------------------------------------------------
@@ -79,6 +87,14 @@ describe("pxToMmAtDpi", () => {
   it("converts dpi pixels to 25.4 mm (1 inch) at any DPI", () => {
     expect(pxToMmAtDpi(96, 96)).toBeCloseTo(25.4);
     expect(pxToMmAtDpi(150, 150)).toBeCloseTo(25.4);
+  });
+
+  it("throws RangeError for zero dpi", () => {
+    expect(() => pxToMmAtDpi(96, 0)).toThrow(RangeError);
+  });
+
+  it("throws RangeError for negative dpi", () => {
+    expect(() => pxToMmAtDpi(96, -1)).toThrow(RangeError);
   });
 });
 

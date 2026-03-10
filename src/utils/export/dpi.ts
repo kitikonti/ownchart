@@ -22,15 +22,23 @@ export const MM_PER_INCH = 25.4;
 
 /**
  * Convert millimeters to pixels at a specific DPI.
+ * @throws {RangeError} If dpi is not greater than zero.
  */
 export function mmToPxAtDpi(mm: number, dpi: number): number {
+  if (dpi <= 0) {
+    throw new RangeError(`dpi must be greater than 0, got ${dpi}`);
+  }
   return (mm / MM_PER_INCH) * dpi;
 }
 
 /**
  * Convert pixels to millimeters at a specific DPI.
+ * @throws {RangeError} If dpi is not greater than zero.
  */
 export function pxToMmAtDpi(px: number, dpi: number): number {
+  if (dpi <= 0) {
+    throw new RangeError(`dpi must be greater than 0, got ${dpi}`);
+  }
   return (px / dpi) * MM_PER_INCH;
 }
 
