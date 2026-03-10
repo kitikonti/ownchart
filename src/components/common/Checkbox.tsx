@@ -15,7 +15,7 @@
  * - Disabled: 50% opacity, no hover/active effects
  */
 
-import { memo, useEffect, useRef } from "react";
+import { memo, useLayoutEffect, useRef } from "react";
 import { Check, Minus } from "@phosphor-icons/react";
 import { buildClassNames } from "../../utils/buildClassNames";
 import { PEER_FOCUS_RING, PEER_ACTIVE_SCALE } from "../../styles/inputStyles";
@@ -62,7 +62,10 @@ export const Checkbox = memo(function Checkbox({
   const inputRef = useRef<HTMLInputElement>(null);
 
   // The `indeterminate` property can only be set imperatively — it has no HTML attribute.
-  useEffect(() => {
+  // useLayoutEffect (not useEffect) ensures the DOM property is set synchronously before
+  // the browser paints, eliminating any one-frame visual inconsistency on initial render
+  // when indeterminate=true is passed as the initial prop value.
+  useLayoutEffect(() => {
     if (inputRef.current) {
       inputRef.current.indeterminate = indeterminate;
     }

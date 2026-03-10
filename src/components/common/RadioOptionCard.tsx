@@ -8,8 +8,7 @@
  * but in most cases the wrapping label covers naming automatically.
  */
 
-import { memo } from "react";
-import type { ReactNode } from "react";
+import { memo, type ReactNode } from "react";
 import { Radio } from "./Radio";
 import { buildClassNames } from "../../utils/buildClassNames";
 

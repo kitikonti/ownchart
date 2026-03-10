@@ -31,6 +31,11 @@ export interface LabeledCheckboxProps {
   indeterminate?: boolean;
   /** Optional ID for the checkbox input (auto-generated if not provided) */
   id?: string;
+  /**
+   * Align the checkbox to the top of the card instead of vertically centering it.
+   * Useful when `description` is long enough to cause visual misalignment with centered layout.
+   */
+  alignTop?: boolean;
 }
 
 export const LabeledCheckbox = memo(function LabeledCheckbox({
@@ -41,6 +46,7 @@ export const LabeledCheckbox = memo(function LabeledCheckbox({
   disabled = false,
   indeterminate = false,
   id: providedId,
+  alignTop = false,
 }: LabeledCheckboxProps): JSX.Element {
   const generatedId = useId();
   const id = providedId ?? generatedId;
@@ -51,7 +57,8 @@ export const LabeledCheckbox = memo(function LabeledCheckbox({
       className={buildClassNames(
         // Focus indication is provided by the inner Checkbox's peer-focus-visible ring —
         // no separate focus style is needed on the label itself.
-        "flex items-center gap-3.5 p-4 rounded border border-neutral-200 transition-colors duration-150 min-h-[44px]",
+        "flex gap-3.5 p-4 rounded border border-neutral-200 transition-colors duration-150 min-h-[44px]",
+        alignTop ? "items-start" : "items-center",
         disabled
           ? // pointer-events-none prevents click-to-focus on the hidden input when
             // disabled — without it the label would still transfer focus to the input
