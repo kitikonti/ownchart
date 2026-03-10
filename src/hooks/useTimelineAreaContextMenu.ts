@@ -4,7 +4,7 @@
  * - Right-click elsewhere → minimal menu: Paste + Fit to View
  */
 
-import { useMemo, useState, useCallback, createElement } from "react";
+import { useCallback, createElement, useMemo, useState } from "react";
 import { ClipboardText, ArrowsOut } from "@phosphor-icons/react";
 import type {
   ContextMenuItem,

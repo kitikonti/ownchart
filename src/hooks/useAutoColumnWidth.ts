@@ -56,7 +56,7 @@ export function useAutoColumnWidth(): void {
       tasks
         .map(
           (t) =>
-            `${t.id}|${t.name}|${t.startDate}|${t.endDate}|${t.duration}|${t.progress}|${t.parent ?? ""}`
+            `${t.id}|${t.name}|${t.startDate}|${t.endDate}|${t.duration}|${t.progress}|${t.type}|${t.parent ?? ""}`
         )
         .join(","),
     [tasks]

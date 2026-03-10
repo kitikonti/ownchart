@@ -14,6 +14,12 @@ import { useState, useRef, useEffect, useCallback, useMemo } from "react";
 interface UseDropdownOptions {
   /** Called after the dropdown closes (useful for clearing search fields) */
   onClose?: () => void;
+  /**
+   * Override the WAI-ARIA 1.2 `aria-haspopup` value for the trigger element.
+   * Defaults to `"menu"`. Use `"listbox"`, `"tree"`, `"grid"`, or `"dialog"`
+   * when the dropdown content matches one of those ARIA roles.
+   */
+  ariaHasPopup?: "menu" | "listbox" | "tree" | "grid" | "dialog";
 }
 
 interface UseDropdownReturn<T extends HTMLElement = HTMLDivElement> {
@@ -27,8 +33,8 @@ interface UseDropdownReturn<T extends HTMLElement = HTMLDivElement> {
   triggerRef: (el: HTMLElement | null) => void;
   /**
    * Spread onto the trigger element to wire up open/close toggle and ARIA
-   * state. Use `aria-haspopup` prop on `DropdownTrigger` to override the
-   * value (e.g. "listbox", "menu", "dialog") when appropriate.
+   * state. The `aria-haspopup` value defaults to `"menu"` and can be overridden
+   * via the `ariaHasPopup` option passed to `useDropdown`.
    * Valid WAI-ARIA 1.2 values: "menu" | "listbox" | "tree" | "grid" | "dialog"
    */
   triggerProps: {
@@ -49,6 +55,10 @@ export function useDropdown<T extends HTMLElement = HTMLDivElement>(
   // passes an inline options object that changes identity on every render.
   const onCloseRef = useRef(options?.onClose);
   onCloseRef.current = options?.onClose;
+
+  // Store ariaHasPopup in a ref for the same reason (stable reference).
+  const ariaHasPopupRef = useRef(options?.ariaHasPopup ?? ("menu" as const));
+  ariaHasPopupRef.current = options?.ariaHasPopup ?? "menu";
 
   // Callback ref for the trigger element — compatible with any HTML element type
   const triggerRef = useCallback((el: HTMLElement | null) => {
@@ -152,9 +162,10 @@ export function useDropdown<T extends HTMLElement = HTMLDivElement>(
   const triggerProps = useMemo(
     () => ({
       onClick: toggle,
-      // Default to "menu" — the most common dropdown type.
-      // WAI-ARIA 1.2: valid values are "menu" | "listbox" | "tree" | "grid" | "dialog".
-      "aria-haspopup": "menu" as const,
+      // Defaults to "menu" — the most common dropdown type.
+      // Override via the `ariaHasPopup` option when the popup has a different
+      // WAI-ARIA 1.2 role: "listbox" | "tree" | "grid" | "dialog".
+      "aria-haspopup": ariaHasPopupRef.current,
       "aria-expanded": isOpen,
     }),
     [toggle, isOpen]

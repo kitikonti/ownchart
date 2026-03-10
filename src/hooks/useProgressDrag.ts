@@ -9,6 +9,9 @@ import type { TaskBarGeometry } from "../utils/timelineUtils";
 import { useTaskStore } from "../store/slices/taskSlice";
 import { getSVGPoint } from "../utils/svgUtils";
 
+/** Cursor applied to the entire page while a progress drag is in progress. */
+const PROGRESS_DRAG_CURSOR = "col-resize" as const;
+
 export interface UseProgressDragReturn {
   isDragging: boolean;
   previewProgress: number | null; // 0-100 during drag, null otherwise
@@ -126,7 +129,7 @@ export function useProgressDrag(
 
       document.addEventListener("mousemove", handleMouseMove);
       document.addEventListener("mouseup", handleMouseUp);
-      document.body.style.cursor = "col-resize";
+      document.body.style.cursor = PROGRESS_DRAG_CURSOR;
     },
     [showProgress, handleMouseMove, handleMouseUp]
   );

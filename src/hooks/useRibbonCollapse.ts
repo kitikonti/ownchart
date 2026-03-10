@@ -44,7 +44,7 @@ export function useRibbonCollapse(activeTab: string): {
   collapseLevel: CollapseLevel;
   contentRef: React.RefObject<HTMLDivElement>;
 } {
-  // Cast required: React 19 types useRef<T>(null) as MutableRefObject<T|null>,
+  // Cast required: React types useRef<T>(null) as MutableRefObject<T|null>,
   // but we never mutate this ref externally — RefObject is the correct API contract.
   const contentRef = useRef<HTMLDivElement>(
     null
