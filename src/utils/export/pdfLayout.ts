@@ -74,7 +74,11 @@ export function pxToMm(px: number): number {
 }
 
 /**
- * Convert millimeters to pixels (at internal DPI).
+ * Convert millimeters to pixels at the internal CSS DPI (96 dpi).
+ *
+ * This is a PDF layout helper that assumes the browser's internal coordinate
+ * system. Use {@link mmToPxAtDpi} from `dpi.ts` when a specific DPI is needed
+ * (e.g. PNG export at 150 DPI).
  */
 export function mmToPx(mm: number): number {
   return mm / MM_PER_PX;

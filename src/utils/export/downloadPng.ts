@@ -30,6 +30,10 @@ export function generateFilename(projectName?: string): string {
  * available. Do not call in a server-side or non-browser environment.
  */
 export function downloadBlob(blob: Blob, filename: string): void {
+  // Guard: this function is a no-op outside a browser context (e.g. SSR, tests
+  // that do not mock document). All real callers run in the browser.
+  if (typeof document === "undefined") return;
+
   const url = URL.createObjectURL(blob);
 
   try {

@@ -37,5 +37,10 @@ export function sanitizeFilename(name: string): string {
     .slice(0, MAX_NAME_LENGTH) // Truncate first
     .replace(/^-+|-+$/g, ""); // Remove leading/trailing hyphens AFTER truncation
 
-  return sanitized || "untitled"; // Ensure non-empty result
+  // Reject dot-only results (e.g. ".", "..") — reserved names on UNIX/Windows.
+  if (!sanitized || /^\.+$/.test(sanitized)) {
+    return "untitled";
+  }
+
+  return sanitized;
 }

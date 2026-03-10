@@ -113,6 +113,21 @@ describe('downloadBlob', () => {
     expect(createObjectURLMock).toHaveBeenCalledWith(blob);
   });
 
+  it('should be a no-op when document is undefined (non-browser environment)', () => {
+    // Temporarily hide document to simulate a non-browser environment
+    const originalDocument = globalThis.document;
+    // @ts-expect-error — intentionally removing document to test the guard
+    delete globalThis.document;
+
+    const blob = new Blob(['test'], { type: 'image/png' });
+    // Should not throw
+    expect(() => downloadBlob(blob, 'test.png')).not.toThrow();
+    expect(createObjectURLMock).not.toHaveBeenCalled();
+
+    // Restore document
+    globalThis.document = originalDocument;
+  });
+
   it('should revoke object URL after download', async () => {
     vi.useFakeTimers();
 

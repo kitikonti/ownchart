@@ -25,7 +25,9 @@ export function registerInterFont(doc: jsPDF): void {
     doc.addFileToVFS("Inter-Italic.ttf", INTER_ITALIC_FONT_BASE64);
     doc.addFont("Inter-Italic.ttf", "Inter", "italic");
 
-    // Register Inter SemiBold (weight 600)
+    // Register Inter SemiBold (weight 600).
+    // jsPDF has no font-weight axis; "bold" is the closest available style
+    // name — SemiBold is the heaviest Inter variant embedded in this build.
     doc.addFileToVFS("Inter-SemiBold.ttf", INTER_SEMIBOLD_BASE64);
     doc.addFont("Inter-SemiBold.ttf", "Inter", "bold");
   } catch (err) {

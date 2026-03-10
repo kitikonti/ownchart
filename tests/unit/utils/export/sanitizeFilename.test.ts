@@ -132,6 +132,18 @@ describe("sanitizeFilename", () => {
     it("returns untitled for string with only invalid characters", () => {
       expect(sanitizeFilename("/:*?")).toBe("untitled");
     });
+
+    it("returns untitled for a single dot (reserved UNIX name)", () => {
+      expect(sanitizeFilename(".")).toBe("untitled");
+    });
+
+    it("returns untitled for double dot (reserved UNIX parent-dir name)", () => {
+      expect(sanitizeFilename("..")).toBe("untitled");
+    });
+
+    it("returns untitled for dot-only strings of any length", () => {
+      expect(sanitizeFilename("...")).toBe("untitled");
+    });
   });
 
   describe("unicode preservation", () => {
