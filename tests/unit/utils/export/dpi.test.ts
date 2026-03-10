@@ -166,7 +166,7 @@ describe("formatDpiDescription", () => {
     expect(result).toContain("×");
   });
 
-  it("returns a non-empty string", () => {
+  it("is a display-only formatter — returns a non-empty string for any numeric inputs including zero", () => {
     expect(formatDpiDescription(0, 0, 0).length).toBeGreaterThan(0);
   });
 

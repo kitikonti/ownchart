@@ -162,7 +162,7 @@ function createBorderLine(
   line.setAttribute("x2", String(x2));
   line.setAttribute("y2", String(y2));
   line.setAttribute("stroke", color);
-  line.setAttribute("stroke-width", BORDER_STROKE_WIDTH);
+  line.setAttribute("stroke-width", String(BORDER_STROKE_WIDTH));
   return line;
 }
 

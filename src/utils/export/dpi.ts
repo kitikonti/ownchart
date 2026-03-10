@@ -69,9 +69,14 @@ export function calculatePixelDimensions(
 
 /**
  * Format DPI info string for display.
+ *
+ * This is a pure formatting helper — it does **not** validate the inputs.
+ * Use {@link mmToPxAtDpi} / {@link pxToMmAtDpi} / {@link calculatePixelDimensions}
+ * when conversion accuracy is required (those functions throw on invalid DPI).
+ *
  * @param widthPx - Width in pixels
  * @param heightPx - Height in pixels
- * @param dpi - DPI value
+ * @param dpi - DPI value (display only — no range check performed)
  */
 export function formatDpiDescription(
   widthPx: number,

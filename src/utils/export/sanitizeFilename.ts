@@ -18,7 +18,7 @@ const MAX_NAME_LENGTH = 50;
  * - Replaces whitespace with hyphens
  * - Collapses multiple hyphens into one
  * - Removes leading/trailing hyphens
- * - Truncates to 50 characters
+ * - Truncates to {@link MAX_NAME_LENGTH} characters
  * - Preserves Unicode (umlauts, etc.)
  *
  * @param name - The project name to sanitize

@@ -57,7 +57,7 @@ export async function downloadCanvasAsPng(
   canvas: HTMLCanvasElement,
   filename?: string
 ): Promise<void> {
-  return new Promise((resolve, reject) => {
+  return new Promise<void>((resolve, reject) => {
     canvas.toBlob((blob) => {
       if (!blob) {
         reject(new Error("Failed to create PNG blob"));

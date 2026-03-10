@@ -94,4 +94,28 @@ describe("registerInterFont", () => {
       expect(base64Data.length).toBeGreaterThan(0);
     }
   });
+
+  it("wraps jsPDF errors in a descriptive Error message", () => {
+    const addFileToVFS = vi.fn();
+    const addFont = vi.fn().mockImplementationOnce(() => {
+      throw new Error("jsPDF internal error");
+    });
+    const doc = { addFileToVFS, addFont } as unknown as jsPDF;
+
+    expect(() => registerInterFont(doc)).toThrowError(
+      /Failed to register Inter font for PDF export: jsPDF internal error/
+    );
+  });
+
+  it("wraps non-Error throws in a descriptive Error message", () => {
+    const addFileToVFS = vi.fn().mockImplementationOnce(() => {
+      throw "unexpected string throw"; // non-Error throw to test String(err) branch
+    });
+    const addFont = vi.fn();
+    const doc = { addFileToVFS, addFont } as unknown as jsPDF;
+
+    expect(() => registerInterFont(doc)).toThrowError(
+      /Failed to register Inter font for PDF export: unexpected string throw/
+    );
+  });
 });
