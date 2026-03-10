@@ -3,6 +3,10 @@
  * Used throughout dialogs for toggle options with explanatory text.
  *
  * Style matches the export dialog's "Transparent background" checkbox pattern.
+ *
+ * @note This component renders a `<label htmlFor={id}>` wrapping the visible text.
+ * Do NOT nest it inside another `<label>` element — HTML does not support nested
+ * labels, and browsers will silently break the click association.
  */
 
 import { memo, useId } from "react";

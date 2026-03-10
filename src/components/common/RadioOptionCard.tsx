@@ -11,6 +11,7 @@
 import { memo } from "react";
 import type { ReactNode } from "react";
 import { Radio } from "./Radio";
+import { buildClassNames } from "../../utils/buildClassNames";
 
 export interface RadioOptionCardProps {
   /** Radio group name */
@@ -56,15 +57,15 @@ export const RadioOptionCard = memo(function RadioOptionCard({
   // or when explicitly requested, to avoid vertical misalignment with multi-line text.
   const shouldAlignTop = alignTop || hasChildren;
 
-  const cardClassName = [
+  const cardClassName = buildClassNames(
     "flex",
     shouldAlignTop ? "items-start" : "items-center",
     // 3px left border accent is a brand indicator for the selected state
     "gap-3.5 p-4 rounded border cursor-pointer transition-all duration-150 min-h-[44px] hover:bg-neutral-50",
     selected
       ? "border-neutral-300 border-l-[3px] border-l-brand-600"
-      : "border-neutral-200 hover:border-neutral-300",
-  ].join(" ");
+      : "border-neutral-200 hover:border-neutral-300"
+  );
 
   return (
     <label className={cardClassName}>
