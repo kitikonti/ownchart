@@ -5,6 +5,7 @@
  * with a "Continue anyway" escape hatch for power users.
  */
 
+import { useEffect, useRef } from "react";
 import { Desktop } from "@phosphor-icons/react";
 import OwnChartLogo from "../assets/logo.svg?react";
 import { APP_CONFIG } from "../config/appConfig";
@@ -18,10 +19,24 @@ export function MobileBlockScreen({
 }: MobileBlockScreenProps): JSX.Element {
   // Strip protocol from URL for display (e.g. "ownchart.app" instead of "https://ownchart.app")
   const displayUrl = APP_CONFIG.appUrl.replace(/^https?:\/\//, "");
+  const headingId = "mobile-block-heading";
+  const dismissRef = useRef<HTMLButtonElement>(null);
+
+  // Move focus into the overlay when it mounts so keyboard/AT users
+  // do not interact with hidden content behind the blocking screen.
+  useEffect(() => {
+    dismissRef.current?.focus();
+  }, []);
 
   return (
     // z-[2000]: above all other overlays including the export dialog
-    <div className="fixed inset-0 z-[2000] bg-white flex flex-col items-center justify-center px-8 text-center">
+    // role="dialog" + aria-modal="true" tells AT this is a blocking overlay.
+    <div
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby={headingId}
+      className="fixed inset-0 z-[2000] bg-white flex flex-col items-center justify-center px-8 text-center"
+    >
       <OwnChartLogo
         width={48}
         height={48}
@@ -41,7 +56,7 @@ export function MobileBlockScreen({
         aria-hidden="true"
       />
 
-      <h1 className="mt-4 text-lg font-medium text-neutral-800">
+      <h1 id={headingId} className="mt-4 text-lg font-medium text-neutral-800">
         Desktop browser required
       </h1>
 
@@ -57,6 +72,7 @@ export function MobileBlockScreen({
       </p>
 
       <button
+        ref={dismissRef}
         type="button"
         onClick={onDismiss}
         className="mt-10 text-xs text-neutral-500 hover:text-neutral-600 focus-visible:ring-2 focus-visible:ring-neutral-400 focus-visible:rounded transition-colors"

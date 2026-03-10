@@ -22,7 +22,11 @@ interface DropdownPanelProps {
   maxHeight?: string;
   /** ARIA role */
   role?: AriaRole;
-  /** ARIA label */
+  /**
+   * ARIA label for the panel.
+   * Required when `role` is set (e.g. "listbox", "menu") to satisfy WCAG 2.1 §4.1.2.
+   * Every named widget role needs an accessible name.
+   */
   "aria-label"?: string;
   /** Additional inline styles (only for layout overrides like padding) */
   style?: CSSProperties;

@@ -21,6 +21,12 @@ export interface RadioProps {
   /** Value of the radio input — used for form semantics and correct behaviour in radio groups. */
   value?: string;
   disabled?: boolean;
+  /**
+   * Accessible label for the radio input.
+   * Only needed when the component is NOT wrapped in a `<label>` element.
+   * When used inside a `<label>` (e.g. RadioOptionCard), the wrapping label already
+   * provides the accessible name — passing aria-label here will override it.
+   */
   "aria-label"?: string;
   id?: string;
 }

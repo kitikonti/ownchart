@@ -37,8 +37,10 @@ export function LabeledCheckbox({
   return (
     <label
       htmlFor={id}
-      className={`flex items-center gap-3.5 p-4 rounded border border-neutral-200 hover:bg-neutral-50 cursor-pointer transition-colors duration-150 min-h-[44px] ${
-        disabled ? "opacity-50 cursor-not-allowed" : ""
+      className={`flex items-center gap-3.5 p-4 rounded border border-neutral-200 transition-colors duration-150 min-h-[44px] ${
+        disabled
+          ? "opacity-50 cursor-not-allowed"
+          : "hover:bg-neutral-50 cursor-pointer"
       }`}
     >
       <Checkbox

@@ -30,6 +30,12 @@ export interface RadioOptionCardProps {
   alignTop?: boolean;
   /** Optional aria-label override for the radio input */
   ariaLabel?: string;
+  /**
+   * Value of the radio input — used for form semantics and correct group behaviour.
+   * Defaults to `title` when not provided, ensuring each radio in a group has
+   * a distinct value (native radio groups with value="on" cannot be differentiated).
+   */
+  value?: string;
 }
 
 export function RadioOptionCard({
@@ -42,6 +48,7 @@ export function RadioOptionCard({
   children,
   alignTop = false,
   ariaLabel,
+  value,
 }: RadioOptionCardProps): JSX.Element {
   const hasChildren = !!children;
   // Align the radio button to the top when the card has expandable content
@@ -70,6 +77,7 @@ export function RadioOptionCard({
           checked={selected}
           onChange={onChange}
           name={name}
+          value={value ?? title}
           aria-label={ariaLabel}
         />
       </div>
