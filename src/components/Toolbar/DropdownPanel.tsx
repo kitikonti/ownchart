@@ -44,7 +44,12 @@ interface DropdownPanelBaseProps {
   minWidth?: string;
   /** Maximum height with overflow scroll */
   maxHeight?: string;
-  /** Additional inline styles (only for layout overrides like padding) */
+  /**
+   * Additional inline styles (only for layout overrides like padding).
+   * Stabilise with `useMemo` at the call site when passing an object literal —
+   * a new reference on every render defeats the `panelStyle` memoization inside
+   * this component and will cause unnecessary re-computations.
+   */
   style?: CSSProperties;
   /** CSS class name */
   className?: string;
