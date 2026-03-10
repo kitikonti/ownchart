@@ -60,7 +60,9 @@ export const RadioOptionCard = memo(function RadioOptionCard({
   const cardClassName = buildClassNames(
     "flex",
     shouldAlignTop ? "items-start" : "items-center",
-    // 3px left border accent is a brand indicator for the selected state
+    // border-l-[3px]: 3px left border accent is a brand indicator for the selected state.
+    // Arbitrary value intentional — Tailwind's built-in border-l-4 (4px) is too thick,
+    // border-l-2 (2px) too subtle; 3px is the design-calibrated accent width.
     "gap-3.5 p-4 rounded border cursor-pointer transition-all duration-150 min-h-[44px] hover:bg-neutral-50",
     selected
       ? "border-neutral-300 border-l-[3px] border-l-brand-600"

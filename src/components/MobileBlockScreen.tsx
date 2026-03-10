@@ -16,6 +16,10 @@ import { Desktop } from "@phosphor-icons/react";
 import OwnChartLogo from "../assets/logo.svg?react";
 import { APP_CONFIG } from "../config/appConfig";
 
+// Strip protocol from URL for display (e.g. "ownchart.app" instead of "https://ownchart.app").
+// Computed once at module scope — APP_CONFIG is a static constant and this never changes.
+const DISPLAY_URL = APP_CONFIG.appUrl.replace(/^https?:\/\//, "");
+
 interface MobileBlockScreenProps {
   onDismiss: () => void;
 }
@@ -23,8 +27,6 @@ interface MobileBlockScreenProps {
 export const MobileBlockScreen = memo(function MobileBlockScreen({
   onDismiss,
 }: MobileBlockScreenProps): JSX.Element {
-  // Strip protocol from URL for display (e.g. "ownchart.app" instead of "https://ownchart.app")
-  const displayUrl = APP_CONFIG.appUrl.replace(/^https?:\/\//, "");
   // useId produces a stable, unique ID — avoids collisions if multiple instances
   // are ever rendered simultaneously (e.g. in tests).
   const headingId = useId();
@@ -32,6 +34,8 @@ export const MobileBlockScreen = memo(function MobileBlockScreen({
 
   // Move focus into the overlay when it mounts so keyboard/AT users
   // do not interact with hidden content behind the blocking screen.
+  // useEffect is preferred over `autoFocus` because it ensures the button is
+  // fully in the DOM before focusing, and avoids autoFocus quirks in JSDOM/tests.
   useEffect(() => {
     dismissRef.current?.focus();
   }, []);
@@ -105,7 +109,7 @@ export const MobileBlockScreen = memo(function MobileBlockScreen({
 
       <p className="mt-4 text-sm text-neutral-500">
         Please open{" "}
-        <span className="font-medium text-neutral-700">{displayUrl}</span> on a
+        <span className="font-medium text-neutral-700">{DISPLAY_URL}</span> on a
         desktop or laptop.
       </p>
 

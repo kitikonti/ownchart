@@ -7,7 +7,7 @@
  *
  * The `.dropdown-panel` CSS class (position, shadow, border, z-index) is defined
  * in `src/index.css`. Inline styles here are restricted to layout overrides
- * (width, minWidth, maxHeight, alignment) that vary per call site.
+ * (width, minWidth, maxHeight, overflowY, alignment) that vary per call site.
  */
 
 import { memo } from "react";
