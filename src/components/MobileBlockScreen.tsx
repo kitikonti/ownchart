@@ -6,6 +6,7 @@
  */
 
 import {
+  memo,
   useEffect,
   useId,
   useRef,
@@ -19,7 +20,7 @@ interface MobileBlockScreenProps {
   onDismiss: () => void;
 }
 
-export function MobileBlockScreen({
+export const MobileBlockScreen = memo(function MobileBlockScreen({
   onDismiss,
 }: MobileBlockScreenProps): JSX.Element {
   // Strip protocol from URL for display (e.g. "ownchart.app" instead of "https://ownchart.app")
@@ -40,7 +41,9 @@ export function MobileBlockScreen({
   // into the content hidden behind the blocking screen.
   // Note: both Tab and Shift+Tab share e.key === "Tab" (Shift is only in e.shiftKey),
   // so a single check on "Tab" correctly traps both directions.
-  function handleButtonKeyDown(e: ReactKeyboardEvent<HTMLButtonElement>): void {
+  function handleFocusTrapKeyDown(
+    e: ReactKeyboardEvent<HTMLButtonElement>
+  ): void {
     if (e.key === "Tab") {
       e.preventDefault();
     }
@@ -109,11 +112,11 @@ export function MobileBlockScreen({
         ref={dismissRef}
         type="button"
         onClick={onDismiss}
-        onKeyDown={handleButtonKeyDown}
+        onKeyDown={handleFocusTrapKeyDown}
         className="mt-10 text-xs text-neutral-500 hover:text-neutral-600 focus-visible:ring-2 focus-visible:ring-neutral-400 focus-visible:ring-offset-1 focus-visible:rounded transition-colors"
       >
         Continue anyway
       </button>
     </div>
   );
-}
+});

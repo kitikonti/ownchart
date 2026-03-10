@@ -79,7 +79,7 @@ export const DropdownPanel = memo(function DropdownPanel({
     // minWidth defaults to "100%" but a caller may pass "" to suppress it
     ...(minWidth ? { minWidth } : {}),
     // maxHeight enables scroll when set
-    ...(maxHeight ? { maxHeight, overflowY: "auto" as const } : {}),
+    ...(maxHeight ? { maxHeight, overflowY: "auto" } : {}),
     ...style,
   };
 
