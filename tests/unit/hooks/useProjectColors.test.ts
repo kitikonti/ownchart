@@ -6,11 +6,11 @@
 
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { renderHook } from "@testing-library/react";
+import { useProjectColors } from "../../../src/hooks/useProjectColors";
 import {
-  useProjectColors,
   getAllSwatches,
   CURATED_SWATCHES,
-} from "../../../src/hooks/useProjectColors";
+} from "../../../src/config/colorSwatches";
 import type { Task } from "../../../src/types/chart.types";
 import { makeTask } from "../helpers/taskFactory";
 

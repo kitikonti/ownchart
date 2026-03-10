@@ -20,6 +20,9 @@ export interface UseTaskTableRowContextMenuResult {
 
 export function useTaskTableRowContextMenu(): UseTaskTableRowContextMenuResult {
   const setSelectedTaskIds = useTaskStore((state) => state.setSelectedTaskIds);
+  // selectedTaskIds subscription: we need the current selection to decide
+  // whether to extend or replace it on right-click. Re-renders on selection
+  // change are acceptable here — this hook is not in a hot render path.
   const selectedTaskIds = useTaskStore((state) => state.selectedTaskIds);
   const { buildItems } = useFullTaskContextMenuItems();
 

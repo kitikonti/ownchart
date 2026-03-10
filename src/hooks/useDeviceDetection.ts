@@ -5,6 +5,11 @@
  * - Desktop with narrow window (fine pointer → not blocked)
  * - Touch-enabled desktop/laptop (wide viewport → not blocked)
  * - Landscape tablets (wide enough → not blocked)
+ *
+ * Dismissal behaviour: once the user dismisses the mobile warning it stays
+ * dismissed for the lifetime of the component (session-scoped). If the device
+ * rotates back to portrait the block will not re-appear. This is intentional —
+ * the user has explicitly acknowledged they want to continue on a small screen.
  */
 
 import { useState, useEffect, useCallback } from "react";
@@ -53,7 +58,7 @@ export function useDeviceDetection(): DeviceDetection {
     };
   }, []);
 
-  const dismiss = useCallback(() => {
+  const dismiss = useCallback((): void => {
     setIsDismissed(true);
   }, []);
 

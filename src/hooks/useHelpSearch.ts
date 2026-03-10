@@ -1,9 +1,13 @@
 /**
  * Search/filter hook for help content.
  * Tokenizes query and AND-matches against title, description, shortcuts, keywords.
+ *
+ * The query is deferred via React 18's useDeferredValue so that rapid keystrokes
+ * do not block the input — the search computation runs at lower priority and
+ * the UI stays responsive even for large help corpora.
  */
 
-import { useMemo } from "react";
+import { useMemo, useDeferredValue } from "react";
 import {
   type HelpTab,
   type HelpSection,
@@ -21,13 +25,17 @@ export interface HelpSearchResult {
 /**
  * Filter help tabs by a search query.
  * Returns an empty sections array when query is blank (caller shows normal tabs).
+ * The query is internally deferred so typing stays snappy.
  */
 export function useHelpSearch(
   tabs: readonly HelpTab[],
   query: string
 ): HelpSearchResult {
+  // Defer the search computation so rapid keystrokes don't block the input field.
+  const deferredQuery = useDeferredValue(query);
+
   return useMemo(() => {
-    const trimmed = query.trim().toLowerCase();
+    const trimmed = deferredQuery.trim().toLowerCase();
     if (trimmed.length === 0) {
       return { sections: [], matchCount: 0 };
     }
@@ -49,7 +57,7 @@ export function useHelpSearch(
     }
 
     return { sections, matchCount };
-  }, [tabs, query]);
+  }, [tabs, deferredQuery]);
 }
 
 /** Check if a topic matches ALL tokens (AND logic). */
