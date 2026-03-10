@@ -16,6 +16,7 @@
 
 import { memo } from "react";
 import { buildClassNames } from "../../utils/buildClassNames";
+import { PEER_FOCUS_RING, PEER_ACTIVE_SCALE } from "../../styles/inputStyles";
 
 export interface RadioProps {
   checked: boolean;
@@ -57,8 +58,8 @@ export const Radio = memo(function Radio({
             ? "peer-hover:border-neutral-500 peer-hover:bg-neutral-50"
             : null,
         ],
-    "peer-focus-visible:ring-2 peer-focus-visible:ring-brand-200 peer-focus-visible:ring-offset-1",
-    !disabled ? "peer-active:scale-95" : null
+    PEER_FOCUS_RING,
+    !disabled ? PEER_ACTIVE_SCALE : null
   );
 
   return (

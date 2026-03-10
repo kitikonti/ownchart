@@ -85,6 +85,7 @@ export const DropdownPanel = memo(function DropdownPanel({
   // The component is memo-wrapped, but children can still trigger re-renders.
   const panelStyle = useMemo<CSSProperties>(
     () => ({
+      // "0" is equivalent to "0px" in React inline styles; jsdom normalises to "0px" in tests.
       [align === "right" ? "right" : "left"]: "0",
       // width is optional — omit the property entirely when not set
       ...(width ? { width } : {}),

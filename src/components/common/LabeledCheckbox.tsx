@@ -49,6 +49,8 @@ export const LabeledCheckbox = memo(function LabeledCheckbox({
     <label
       htmlFor={id}
       className={buildClassNames(
+        // Focus indication is provided by the inner Checkbox's peer-focus-visible ring —
+        // no separate focus style is needed on the label itself.
         "flex items-center gap-3.5 p-4 rounded border border-neutral-200 transition-colors duration-150 min-h-[44px]",
         disabled
           ? // pointer-events-none prevents click-to-focus on the hidden input when

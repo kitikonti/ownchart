@@ -18,7 +18,8 @@ import { APP_CONFIG } from "../config/appConfig";
 
 // Strip protocol from URL for display (e.g. "ownchart.app" instead of "https://ownchart.app").
 // Computed once at module scope — APP_CONFIG is a static constant and this never changes.
-// Falls back to the original URL if the replace produces an empty string (defensive guard).
+// Fallback for the degenerate case of a URL with no host (e.g. "https://") where the
+// replace would produce an empty string — preserves the original in that edge case.
 const DISPLAY_URL =
   APP_CONFIG.appUrl.replace(/^https?:\/\//, "") || APP_CONFIG.appUrl;
 

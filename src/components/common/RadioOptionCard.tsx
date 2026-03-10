@@ -63,14 +63,20 @@ export const RadioOptionCard = memo(function RadioOptionCard({
     // border-l-[3px]: 3px left border accent is a brand indicator for the selected state.
     // Arbitrary value intentional — Tailwind's built-in border-l-4 (4px) is too thick,
     // border-l-2 (2px) too subtle; 3px is the design-calibrated accent width.
-    "gap-3.5 p-4 rounded border cursor-pointer transition-all duration-150 min-h-[44px] hover:bg-neutral-50",
+    // bg-brand-50 on selected provides a non-colour secondary visual cue (WCAG SC 1.4.1).
+    "gap-3.5 p-4 rounded border cursor-pointer transition-all duration-150 min-h-[44px]",
     selected
-      ? "border-neutral-300 border-l-[3px] border-l-brand-600"
-      : "border-neutral-200 hover:border-neutral-300"
+      ? "border-neutral-300 border-l-[3px] border-l-brand-600 bg-brand-50"
+      : "border-neutral-200 hover:bg-neutral-50 hover:border-neutral-300"
   );
 
   return (
-    <label className={cardClassName}>
+    // aria-current gives AT and test utilities a structural hook for the selected card,
+    // complementing the native radio `checked` state which only signals input-level selection.
+    <label
+      className={cardClassName}
+      aria-current={selected ? "true" : undefined}
+    >
       <div className={shouldAlignTop ? "mt-0.5" : ""}>
         {/*
          * aria-label is only forwarded when explicitly overriding the visible label.
