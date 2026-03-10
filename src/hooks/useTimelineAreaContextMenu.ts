@@ -121,10 +121,10 @@ export function useTimelineAreaContextMenu(
         label: "Fit to View",
         icon: ICON_FIT_TO_VIEW,
         shortcut: SHORTCUT_FIT_TO_VIEW,
-        onClick: () => fitToView(useTaskStore.getState().tasks),
+        onClick: () => fitToView(tasks),
       },
     ];
-  }, [contextMenu, canPaste, handlePaste, fitToView, buildItems]);
+  }, [contextMenu, canPaste, handlePaste, fitToView, buildItems, tasks]);
 
   return {
     contextMenu: contextMenu?.position ?? null,

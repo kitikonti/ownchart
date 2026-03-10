@@ -258,6 +258,45 @@ describe('useProgressDrag', () => {
     expect(result.current.previewProgress).toBeNull();
   });
 
+  it('does not update previewProgress when geometry width is zero (zero-width guard)', async () => {
+    const task = createTask({ progress: 50 });
+    // width=0 → the RAF callback should early-exit without updating state
+    const geometry = createGeometry({ x: 100, width: 0 });
+
+    const { result } = renderHook(() => useProgressDrag(task, geometry, true));
+
+    const mockSvg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+    const mockEvent = {
+      stopPropagation: vi.fn(),
+      preventDefault: vi.fn(),
+      target: { ownerSVGElement: mockSvg },
+    } as unknown as React.MouseEvent;
+
+    act(() => {
+      result.current.onHandleMouseDown(mockEvent);
+    });
+
+    // Drag started — initial preview set to current progress (50)
+    expect(result.current.previewProgress).toBe(50);
+
+    mockGetSVGPoint.mockReturnValue({ x: 200, y: 50 });
+
+    await act(async () => {
+      document.dispatchEvent(new MouseEvent('mousemove', { clientX: 200, clientY: 50 }));
+      await new Promise((resolve) => requestAnimationFrame(resolve));
+    });
+
+    // width=0 guard fires → preview remains at initial value (50)
+    expect(result.current.previewProgress).toBe(50);
+
+    // Release without state change — updateTask should not be called
+    act(() => {
+      document.dispatchEvent(new MouseEvent('mouseup'));
+    });
+
+    expect(updateTaskSpy).not.toHaveBeenCalled();
+  });
+
   it('does not call updateTask on mouseup when progress unchanged', () => {
     const task = createTask({ progress: 50 });
     const geometry = createGeometry({ x: 100, width: 200 });

@@ -63,6 +63,12 @@ export function useDropdown<T extends HTMLElement = HTMLDivElement>(
     }
   }, []);
 
+  // `isOpen` is intentionally in the dependency array: when closing (open=false)
+  // we must call `close()` rather than `setIsOpenState(false)` directly so that
+  // the `onClose` callback fires. Knowing the current state is necessary to avoid
+  // calling `onClose` when `setIsOpen(false)` is called while already closed.
+  // The tradeoff is that `setIsOpen` is recreated when `isOpen` changes, but
+  // consumers that need a stable reference can use `close()` directly instead.
   const setIsOpen = useCallback(
     (open: boolean) => {
       if (!open && isOpen) {

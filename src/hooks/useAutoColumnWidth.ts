@@ -81,6 +81,14 @@ export function useAutoColumnWidth(): void {
   // Auto-fit on task data change.
   // Also responsible for flipping the initial-render flag so that the density
   // effect (above) correctly skips the very first render too.
+  //
+  // Note: this effect uses `fontsReady` state (not `fontsReadyRef`) deliberately.
+  // When fonts finish loading, `fontsReady` becomes true and this effect re-runs
+  // even if `taskFingerprint` did not change — ensuring a pending auto-fit is
+  // triggered once fonts are available. The density effect above avoids this
+  // re-run by reading `fontsReadyRef.current` through the stable `runAutoFitIfReady`
+  // callback, which prevents `uiDensity` changes from re-firing when only
+  // `fontsReady` flips. The asymmetry between the two effects is intentional.
   useEffect(() => {
     if (isInitialRender.current) {
       isInitialRender.current = false;
