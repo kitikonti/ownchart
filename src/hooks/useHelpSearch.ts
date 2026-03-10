@@ -8,12 +8,8 @@
  */
 
 import { useMemo, useDeferredValue } from "react";
-import {
-  type HelpTab,
-  type HelpSection,
-  type HelpTopic,
-  resolveShortcut,
-} from "../config/helpContent";
+import type { HelpTab, HelpSection, HelpTopic } from "../config/helpContent";
+import { resolveShortcut } from "../config/helpContent";
 
 export interface HelpSearchResult {
   /** Flat list of sections with matching topics (empty when query is empty). */
@@ -26,6 +22,13 @@ export interface HelpSearchResult {
  * Filter help tabs by a search query.
  * Returns an empty sections array when query is blank (caller shows normal tabs).
  * The query is internally deferred so typing stays snappy.
+ *
+ * @param tabs - **Must be a stable reference** (e.g. a module-level constant like
+ *   `HELP_TABS`). Passing an inline array literal or re-constructed array on every
+ *   render will bust the internal `useMemo` on every keystroke, defeating the
+ *   deferred-value optimisation.
+ * @param query - Raw search string from the user (trimming and lowercasing are
+ *   handled internally).
  */
 export function useHelpSearch(
   tabs: readonly HelpTab[],

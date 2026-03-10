@@ -23,9 +23,11 @@ export interface DeviceDetection {
 
 /** 768 px = Tailwind's md breakpoint; blocks phones and portrait tablets. */
 const MOBILE_BREAKPOINT_PX = 768;
-const NARROW_QUERY = `(max-width: ${MOBILE_BREAKPOINT_PX}px)`;
-/** "coarse" pointer = primary input is a touchscreen (finger), not a mouse. */
-const COARSE_QUERY = "(pointer: coarse)";
+/** Exported for use in tests so the strings aren't duplicated there. */
+export const NARROW_QUERY = `(max-width: ${MOBILE_BREAKPOINT_PX}px)`;
+/** "coarse" pointer = primary input is a touchscreen (finger), not a mouse.
+ *  Exported for use in tests so the strings aren't duplicated there. */
+export const COARSE_QUERY = "(pointer: coarse)";
 
 /** Safe wrapper — returns false when window is unavailable (test/SSR environments). */
 function safeMatchMedia(query: string): boolean {

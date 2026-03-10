@@ -19,11 +19,11 @@ const DEFAULT_MAX_PROJECT_COLORS = 12;
 export function useProjectColors(
   maxColors: number = DEFAULT_MAX_PROJECT_COLORS
 ): string[] {
-  // Select only the color strings to avoid re-renders on unrelated task mutations
-  // (e.g. task rename, date change). Shallow equality prevents unnecessary recomputes.
-  const taskColors = useTaskStore(
-    useShallow((state) => state.tasks.map((t) => t.color))
-  );
+  // Select the tasks array with shallow equality so we only re-run when the
+  // tasks array reference changes (i.e. when tasks are added/removed/mutated).
+  // The `.map()` to extract colors is intentionally inside `useMemo` below so
+  // it does not run on every Zustand selector call — only when `tasks` changes.
+  const tasks = useTaskStore(useShallow((state) => state.tasks));
 
   return useMemo(() => {
     // Count color frequency.
@@ -32,9 +32,9 @@ export function useProjectColors(
     // normalize or compare case-insensitively.
     const colorCounts = new Map<string, number>();
 
-    for (const color of taskColors) {
-      if (color) {
-        const normalizedColor = color.toUpperCase();
+    for (const task of tasks) {
+      if (task.color) {
+        const normalizedColor = task.color.toUpperCase();
         colorCounts.set(
           normalizedColor,
           (colorCounts.get(normalizedColor) || 0) + 1
@@ -48,5 +48,5 @@ export function useProjectColors(
       .map(([c]) => c);
 
     return sortedColors.slice(0, maxColors);
-  }, [taskColors, maxColors]);
+  }, [tasks, maxColors]);
 }
