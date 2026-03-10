@@ -55,8 +55,8 @@ export const ICON_RENDER_SIZE = 16;
 /** Gap between the task-type icon and the task name text (px) */
 export const ICON_TEXT_GAP = 4;
 
-/** Scale factor to render 256×256 viewBox Phosphor icons at ICON_RENDER_SIZE px (16 / 256) */
-export const ICON_SCALE = 0.0625;
+/** Scale factor to render 256×256 viewBox Phosphor icons at ICON_RENDER_SIZE px (ICON_RENDER_SIZE / 256) */
+export const ICON_SCALE = ICON_RENDER_SIZE / 256;
 
 /** Font size for the expand/collapse arrow glyph "▼" */
 export const ARROW_FONT_SIZE = 11;

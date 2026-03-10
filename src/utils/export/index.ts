@@ -27,6 +27,7 @@ export {
   type ExportOptions,
   type ExportState,
   type ExportZoomPreset,
+  type FlattenedTask,
   type PdfExportOptions,
   type PdfCustomPageSize,
   type PdfHeaderFooter,
@@ -41,7 +42,6 @@ export {
   type SvgTextMode,
   type ExportQuickPreset,
 } from "./types";
-export type { FlattenedTask } from "./types";
 
 // Capture (canvas-level PNG generation)
 export {
@@ -56,7 +56,7 @@ export {
   downloadCanvasAsPng,
   generateFilename,
 } from "./downloadPng";
-export { sanitizeFilename } from "./sanitizeFilename";
+export { sanitizeFilename, MAX_NAME_LENGTH } from "./sanitizeFilename";
 
 // Layout computation (pure functions, no React)
 export {

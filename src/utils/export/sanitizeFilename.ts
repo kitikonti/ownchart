@@ -9,8 +9,9 @@ const INVALID_CHARS = /[/\\:*?"<>|]/g;
  * Maximum length for the project name part of the filename.
  * 50 characters keeps filenames short and readable while staying
  * well within OS path-length limits (Windows MAX_PATH = 260).
+ * Exported so UI input fields can enforce the same limit.
  */
-const MAX_NAME_LENGTH = 50;
+export const MAX_NAME_LENGTH = 50;
 
 /**
  * Sanitize a project name for use in a filename.
