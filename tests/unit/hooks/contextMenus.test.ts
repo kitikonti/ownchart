@@ -38,6 +38,7 @@ vi.mock("../../../src/hooks/useFlattenedTasks", () => ({
   useFlattenedTasks: vi.fn(() => ({
     flattenedTasks: [],
     allFlattenedTasks: [],
+    orderedTasks: [],
   })),
 }));
 
@@ -94,6 +95,7 @@ beforeEach(() => {
   vi.mocked(useFlattenedTasks).mockReturnValue({
     flattenedTasks: [],
     allFlattenedTasks: [],
+    orderedTasks: [],
   });
 });
 
@@ -109,6 +111,7 @@ describe("Zone 1: Task Table Row Context Menu", () => {
     vi.mocked(useFlattenedTasks).mockReturnValue({
       flattenedTasks: flat,
       allFlattenedTasks: flat,
+      orderedTasks: flat.map(({ task }) => task),
     });
 
     const { result } = renderHook(() => useTaskTableRowContextMenu());
@@ -149,6 +152,7 @@ describe("Zone 1: Task Table Row Context Menu", () => {
     vi.mocked(useFlattenedTasks).mockReturnValue({
       flattenedTasks: visibleFlat,
       allFlattenedTasks: allFlat,
+      orderedTasks: visibleFlat.map(({ task }) => task),
     });
 
     const { result } = renderHook(() => useTaskTableRowContextMenu());
@@ -179,6 +183,7 @@ describe("Zone 1: Task Table Row Context Menu", () => {
     vi.mocked(useFlattenedTasks).mockReturnValue({
       flattenedTasks: flat,
       allFlattenedTasks: flat,
+      orderedTasks: flat.map(({ task }) => task),
     });
 
     const { result } = renderHook(() => useTaskTableRowContextMenu());
@@ -226,6 +231,7 @@ describe("Zone 1: Task Table Row Context Menu", () => {
     vi.mocked(useFlattenedTasks).mockReturnValue({
       flattenedTasks: flat,
       allFlattenedTasks: flat,
+      orderedTasks: flat.map(({ task }) => task),
     });
 
     const { result } = renderHook(() => useTaskTableRowContextMenu());
@@ -248,6 +254,7 @@ describe("Zone 1: Task Table Row Context Menu", () => {
     vi.mocked(useFlattenedTasks).mockReturnValue({
       flattenedTasks: flat,
       allFlattenedTasks: flat,
+      orderedTasks: flat.map(({ task }) => task),
     });
 
     const { result } = renderHook(() => useTaskTableRowContextMenu());
@@ -285,6 +292,7 @@ describe("Zone 1: Task Table Row Context Menu", () => {
     vi.mocked(useFlattenedTasks).mockReturnValue({
       flattenedTasks: visibleFlat,
       allFlattenedTasks: allFlat,
+      orderedTasks: visibleFlat.map(({ task }) => task),
     });
 
     const { result } = renderHook(() => useTaskTableRowContextMenu());
@@ -309,6 +317,7 @@ describe("Zone 1: Task Table Row Context Menu", () => {
     vi.mocked(useFlattenedTasks).mockReturnValue({
       flattenedTasks: visibleFlat,
       allFlattenedTasks: allFlat,
+      orderedTasks: visibleFlat.map(({ task }) => task),
     });
 
     const { result } = renderHook(() => useTaskTableRowContextMenu());
@@ -505,6 +514,7 @@ describe("Zone 3: Timeline Bar Context Menu", () => {
     vi.mocked(useFlattenedTasks).mockReturnValue({
       flattenedTasks: flat,
       allFlattenedTasks: flat,
+      orderedTasks: flat.map(({ task }) => task),
     });
 
     const { result } = renderHook(() => useTimelineBarContextMenu());
@@ -633,6 +643,7 @@ describe("Zone 4: Timeline Empty Area Context Menu", () => {
     vi.mocked(useFlattenedTasks).mockReturnValue({
       flattenedTasks: flat,
       allFlattenedTasks: flat,
+      orderedTasks: flat.map(({ task }) => task),
     });
 
     const { result } = renderHook(() =>
@@ -690,6 +701,7 @@ describe("Zone 4: Timeline Empty Area Context Menu", () => {
     vi.mocked(useFlattenedTasks).mockReturnValue({
       flattenedTasks: flat,
       allFlattenedTasks: flat,
+      orderedTasks: flat.map(({ task }) => task),
     });
 
     const { result } = renderHook(() =>
@@ -729,6 +741,7 @@ describe("Zone 4: Timeline Empty Area Context Menu", () => {
     vi.mocked(useFlattenedTasks).mockReturnValue({
       flattenedTasks: flat,
       allFlattenedTasks: flat,
+      orderedTasks: flat.map(({ task }) => task),
     });
 
     const { result } = renderHook(() =>
@@ -786,6 +799,7 @@ describe("Zone 4: Timeline Empty Area Context Menu", () => {
     vi.mocked(useFlattenedTasks).mockReturnValue({
       flattenedTasks: visibleFlat,
       allFlattenedTasks: allFlat,
+      orderedTasks: visibleFlat.map(({ task }) => task),
     });
 
     const { result } = renderHook(() =>
@@ -820,6 +834,7 @@ describe("Right-click selection logic", () => {
     vi.mocked(useFlattenedTasks).mockReturnValue({
       flattenedTasks: flat,
       allFlattenedTasks: flat,
+      orderedTasks: flat.map(({ task }) => task),
     });
 
     const { result } = renderHook(() => useTaskTableRowContextMenu());
@@ -841,6 +856,7 @@ describe("Right-click selection logic", () => {
     vi.mocked(useFlattenedTasks).mockReturnValue({
       flattenedTasks: flat,
       allFlattenedTasks: flat,
+      orderedTasks: flat.map(({ task }) => task),
     });
 
     const { result } = renderHook(() => useTaskTableRowContextMenu());

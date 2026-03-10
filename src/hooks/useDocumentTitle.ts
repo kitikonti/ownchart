@@ -12,15 +12,18 @@ export function useDocumentTitle(): void {
 
   useEffect(() => {
     const baseTitle = "OwnChart";
+    const dirtyIndicator = isDirty ? "*" : "";
 
     if (fileName) {
       // Show filename with asterisk if unsaved changes
-      const dirtyIndicator = isDirty ? "*" : "";
       document.title = `${fileName}${dirtyIndicator} - ${baseTitle}`;
     } else {
       // Show asterisk for new unsaved charts
-      const dirtyIndicator = isDirty ? "*" : "";
       document.title = `${baseTitle}${dirtyIndicator}`;
     }
+
+    return (): void => {
+      document.title = baseTitle;
+    };
   }, [fileName, isDirty]);
 }

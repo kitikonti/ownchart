@@ -9,7 +9,9 @@ interface LaunchParams {
 }
 
 interface LaunchQueue {
-  setConsumer(consumer: (launchParams: LaunchParams) => void): void;
+  setConsumer(
+    consumer: (launchParams: LaunchParams) => void | Promise<void>
+  ): void;
 }
 
 interface Window {

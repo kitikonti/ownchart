@@ -12,7 +12,7 @@ export function useUnsavedChanges(): void {
     const handleBeforeUnload = (e: BeforeUnloadEvent): void => {
       if (isDirty) {
         e.preventDefault();
-        e.returnValue = ""; // Chrome requires returnValue to be set
+        e.returnValue = ""; // Legacy compatibility: older browsers require returnValue to trigger the dialog
       }
     };
 

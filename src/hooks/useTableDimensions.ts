@@ -12,17 +12,20 @@ import {
   getVisibleColumns,
 } from "../config/tableColumns";
 
+/** Fallback column width in pixels when no px value can be parsed from the CSS string. */
+const FALLBACK_COLUMN_WIDTH_PX = 100;
+
 /**
  * Parse width from CSS grid syntax.
  * Extracts pixel value from various formats:
  * - 'minmax(200px, 1fr)' -> 200
  * - '150px' -> 150
- * - '1fr' -> 100 (fallback)
+ * - '1fr' -> FALLBACK_COLUMN_WIDTH_PX (fallback)
  */
 function parseWidth(widthStr: string): number {
   // Extract first pixel value
   const match = widthStr.match(/(\d+)px/);
-  return match ? parseInt(match[1], 10) : 100;
+  return match ? parseInt(match[1], 10) : FALLBACK_COLUMN_WIDTH_PX;
 }
 
 /**
