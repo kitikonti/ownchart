@@ -3,6 +3,7 @@
  * Provides Excel-like keyboard navigation functionality.
  */
 
+import { useCallback } from "react";
 import {
   useTaskStore,
   type EditableField,
@@ -50,13 +51,19 @@ export function useCellNavigation(): UseCellNavigationReturn {
   const startCellEdit = useTaskStore((state) => state.startCellEdit);
   const stopCellEdit = useTaskStore((state) => state.stopCellEdit);
 
-  const isCellActive = (taskId: TaskId, field: EditableField): boolean => {
-    return activeCell.taskId === taskId && activeCell.field === field;
-  };
+  const isCellActive = useCallback(
+    (taskId: TaskId, field: EditableField): boolean => {
+      return activeCell.taskId === taskId && activeCell.field === field;
+    },
+    [activeCell]
+  );
 
-  const isCellEditing = (taskId: TaskId, field: EditableField): boolean => {
-    return isCellActive(taskId, field) && isEditingCell;
-  };
+  const isCellEditing = useCallback(
+    (taskId: TaskId, field: EditableField): boolean => {
+      return isCellActive(taskId, field) && isEditingCell;
+    },
+    [isCellActive, isEditingCell]
+  );
 
   return {
     activeCell,

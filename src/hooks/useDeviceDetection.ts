@@ -9,7 +9,7 @@
 
 import { useState, useEffect, useCallback } from "react";
 
-interface DeviceDetection {
+export interface DeviceDetection {
   isMobileDevice: boolean;
   isDismissed: boolean;
   dismiss: () => void;

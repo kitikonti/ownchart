@@ -11,7 +11,7 @@ import { useTaskStore } from "../store/slices/taskSlice";
 import type { TaskContextMenuState } from "./contextMenuItemBuilders";
 import { useFullTaskContextMenuItems } from "./useFullTaskContextMenuItems";
 
-interface UseTaskTableRowContextMenuResult {
+export interface UseTaskTableRowContextMenuResult {
   contextMenu: TaskContextMenuState | null;
   contextMenuItems: ContextMenuItem[];
   handleRowContextMenu: (e: React.MouseEvent, taskId: TaskId) => void;
@@ -20,6 +20,7 @@ interface UseTaskTableRowContextMenuResult {
 
 export function useTaskTableRowContextMenu(): UseTaskTableRowContextMenuResult {
   const setSelectedTaskIds = useTaskStore((state) => state.setSelectedTaskIds);
+  const selectedTaskIds = useTaskStore((state) => state.selectedTaskIds);
   const { buildItems } = useFullTaskContextMenuItems();
 
   const [contextMenu, setContextMenu] = useState<TaskContextMenuState | null>(
@@ -32,7 +33,7 @@ export function useTaskTableRowContextMenu(): UseTaskTableRowContextMenuResult {
 
       // Right-click selection logic:
       // If task is not in current selection, switch selection to this task
-      if (!useTaskStore.getState().selectedTaskIds.includes(taskId)) {
+      if (!selectedTaskIds.includes(taskId)) {
         setSelectedTaskIds([taskId]);
       }
 
@@ -41,7 +42,7 @@ export function useTaskTableRowContextMenu(): UseTaskTableRowContextMenuResult {
         taskId,
       });
     },
-    [setSelectedTaskIds]
+    [selectedTaskIds, setSelectedTaskIds]
   );
 
   const closeContextMenu = useCallback((): void => {

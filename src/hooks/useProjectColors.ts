@@ -39,8 +39,12 @@ export function useProjectColors(maxColors: number = 12): string[] {
 }
 
 /**
- * Curated swatch palettes for manual color picking
- * Organized by color family for easy selection
+ * Curated swatch palettes for manual color picking.
+ * Organized by color family for easy selection.
+ *
+ * These values are intentionally hand-curated for aesthetic balance and are
+ * not derived from the Tailwind theme or design tokens. If the brand palette
+ * changes, review these swatches for consistency.
  */
 export const CURATED_SWATCHES = {
   blues: ["#0A2E4A", "#0F6CBD", "#2B88D8", "#62ABF5", "#B4D6FA"],
