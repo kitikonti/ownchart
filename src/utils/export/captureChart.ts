@@ -161,7 +161,8 @@ async function captureContainerToCanvas(
  * DOM tree is intact during the html-to-image capture phase; tearing it down
  * mid-capture produces a blank PNG.
  *
- * @param params - Layout inputs including tasks, options, column widths, and zoom
+ * @param params - Layout inputs including tasks, options, column widths, and zoom.
+ *   `params.columnWidths` is optional and defaults to `{}` when absent or undefined.
  * @returns A canvas element containing the rendered chart at the target resolution
  * @throws If canvas capture times out (e.g. tab backgrounded during export)
  */

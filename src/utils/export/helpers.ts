@@ -8,6 +8,7 @@ import {
   BYTES_PER_KB,
   BYTES_PER_MB,
   EMPTY_SIZE_PLACEHOLDER,
+  SVG_BACKGROUND_WHITE,
 } from "./constants";
 import { sanitizeFilename } from "./sanitizeFilename";
 
@@ -91,6 +92,8 @@ function normalizeTextElementFontAttributes(element: Element): void {
  *
  * - Replaces any `font-family` declaration with `SVG_FONT_FAMILY`.
  * - Maps `font-weight` 600/700 to the keyword "bold" for svg2pdf.js.
+ * - Trims leading whitespace from the resulting style string before writing it
+ *   back (browser serialisation can produce a leading space).
  *
  * @param element - Any element with an existing `style` attribute (mutated in place)
  */
@@ -231,7 +234,7 @@ export function createOffscreenContainer(
     width: ${width}px;
     height: ${height}px;
     overflow: hidden;
-    background: ${background === "white" ? "#ffffff" : "transparent"};
+    background: ${background === "white" ? SVG_BACKGROUND_WHITE : "transparent"};
     z-index: ${OFFSCREEN_CONTAINER_Z_INDEX};
     opacity: 0;
     pointer-events: none;

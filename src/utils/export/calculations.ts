@@ -3,12 +3,9 @@
  * Centralizes zoom, dimension, and date range calculations.
  */
 
-// Types
 import type { Task } from "../../types/chart.types";
 import type { UiDensity } from "../../types/preferences.types";
 import type { ExportOptions, ExportColumnKey } from "./types";
-
-// Config & utilities
 import { DENSITY_CONFIG } from "../../config/densityConfig";
 import { addDays } from "../dateUtils";
 import {
