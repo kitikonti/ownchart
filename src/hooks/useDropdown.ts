@@ -9,11 +9,17 @@
  * - Optional onClose callback (e.g. to clear search state)
  */
 
-import { useState, useRef, useEffect, useCallback } from "react";
+import { useState, useRef, useEffect, useCallback, useMemo } from "react";
 
 interface UseDropdownOptions {
   /** Called after the dropdown closes (useful for clearing search fields) */
   onClose?: () => void;
+  /**
+   * Override the WAI-ARIA 1.2 `aria-haspopup` value for the trigger element.
+   * Defaults to `"menu"`. Use `"listbox"`, `"tree"`, `"grid"`, or `"dialog"`
+   * when the dropdown content matches one of those ARIA roles.
+   */
+  ariaHasPopup?: "menu" | "listbox" | "tree" | "grid" | "dialog";
 }
 
 interface UseDropdownReturn<T extends HTMLElement = HTMLDivElement> {
@@ -25,9 +31,15 @@ interface UseDropdownReturn<T extends HTMLElement = HTMLDivElement> {
   containerRef: React.RefObject<T>;
   /** Callback ref — attach to the trigger element for focus return on close. */
   triggerRef: (el: HTMLElement | null) => void;
+  /**
+   * Spread onto the trigger element to wire up open/close toggle and ARIA
+   * state. The `aria-haspopup` value defaults to `"menu"` and can be overridden
+   * via the `ariaHasPopup` option passed to `useDropdown`.
+   * Valid WAI-ARIA 1.2 values: "menu" | "listbox" | "tree" | "grid" | "dialog"
+   */
   triggerProps: {
     onClick: () => void;
-    "aria-haspopup": "true" | "listbox";
+    "aria-haspopup": "menu" | "listbox" | "tree" | "grid" | "dialog";
     "aria-expanded": boolean;
   };
 }
@@ -39,27 +51,41 @@ export function useDropdown<T extends HTMLElement = HTMLDivElement>(
   const containerRef = useRef<T>(null) as React.RefObject<T>;
   const triggerElRef = useRef<HTMLElement | null>(null);
 
+  // Store onClose in a ref so `close` remains stable even when the caller
+  // passes an inline options object that changes identity on every render.
+  const onCloseRef = useRef(options?.onClose);
+  onCloseRef.current = options?.onClose;
+
+  // Read ariaHasPopup directly from options on each render — no ref needed
+  // because this value is consumed only in the `triggerProps` useMemo (which
+  // already lists it as a dep), so it will never be stale.
+  const ariaHasPopup = options?.ariaHasPopup ?? ("menu" as const);
+
   // Callback ref for the trigger element — compatible with any HTML element type
   const triggerRef = useCallback((el: HTMLElement | null) => {
     triggerElRef.current = el;
   }, []);
 
-  const close = useCallback(
-    (returnFocus?: boolean) => {
-      setIsOpenState(false);
-      options?.onClose?.();
-      if (returnFocus && triggerElRef.current) {
-        requestAnimationFrame(() => triggerElRef.current?.focus());
-      }
-    },
-    [options]
-  );
+  const close = useCallback((returnFocus?: boolean) => {
+    setIsOpenState(false);
+    onCloseRef.current?.();
+    if (returnFocus && triggerElRef.current) {
+      requestAnimationFrame(() => triggerElRef.current?.focus());
+    }
+  }, []);
 
+  // `isOpen` is intentionally in the dependency array: when closing (open=false)
+  // we must call `close()` rather than `setIsOpenState(false)` directly so that
+  // the `onClose` callback fires. Knowing the current state is necessary to avoid
+  // calling `onClose` when `setIsOpen(false)` is called while already closed.
+  // The tradeoff is that `setIsOpen` is recreated when `isOpen` changes, but
+  // consumers that need a stable reference can use `close()` directly instead.
   const setIsOpen = useCallback(
     (open: boolean) => {
       if (!open && isOpen) {
         close();
       } else {
+        // Opening doesn't trigger onClose — call setIsOpenState directly
         setIsOpenState(open);
       }
     },
@@ -132,11 +158,21 @@ export function useDropdown<T extends HTMLElement = HTMLDivElement>(
     };
   }, [isOpen, close]);
 
-  const triggerProps = {
-    onClick: toggle,
-    "aria-haspopup": "true" as const,
-    "aria-expanded": isOpen,
-  };
+  // Memoized so that spreading triggerProps into React.memo children does not
+  // cause unnecessary re-renders when neither toggle nor isOpen changed.
+  // `ariaHasPopup` is a local variable derived from options on each render,
+  // so listing it as a dep correctly reflects any caller change.
+  const triggerProps = useMemo(
+    () => ({
+      onClick: toggle,
+      // Defaults to "menu" — the most common dropdown type.
+      // Override via the `ariaHasPopup` option when the popup has a different
+      // WAI-ARIA 1.2 role: "listbox" | "tree" | "grid" | "dialog".
+      "aria-haspopup": ariaHasPopup,
+      "aria-expanded": isOpen,
+    }),
+    [toggle, isOpen, ariaHasPopup]
+  );
 
   return {
     isOpen,

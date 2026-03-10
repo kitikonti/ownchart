@@ -12,8 +12,30 @@
 import { useRef, useState, useEffect, useCallback } from "react";
 import type { CollapseLevel } from "../components/Ribbon/RibbonCollapseContext";
 
-/** Overflow thresholds in px — collapse to level N when overflow >= THRESHOLDS[N] */
+/**
+ * Maximum value of CollapseLevel — must equal THRESHOLDS.length and the
+ * highest value in the CollapseLevel union type in RibbonCollapseContext.tsx.
+ * Update all three together when adding collapse levels.
+ */
+const MAX_COLLAPSE_LEVEL = 5 as const;
+
+/**
+ * Overflow thresholds in px — collapse to level N when overflow >= THRESHOLDS[N-1].
+ * IMPORTANT: THRESHOLDS.length must equal MAX_COLLAPSE_LEVEL.
+ * If you add entries here, update MAX_COLLAPSE_LEVEL and the CollapseLevel union
+ * type in RibbonCollapseContext.tsx accordingly.
+ */
 const THRESHOLDS: readonly number[] = [10, 80, 160, 240, 320];
+
+// Development-time guard: THRESHOLDS.length must equal MAX_COLLAPSE_LEVEL.
+// This will throw during development if someone adds a threshold without
+// updating MAX_COLLAPSE_LEVEL (and the CollapseLevel union type).
+if (import.meta.env.DEV && THRESHOLDS.length !== MAX_COLLAPSE_LEVEL) {
+  throw new Error(
+    `useRibbonCollapse: THRESHOLDS.length (${THRESHOLDS.length}) must equal MAX_COLLAPSE_LEVEL (${MAX_COLLAPSE_LEVEL}). ` +
+      "Update both together along with the CollapseLevel union in RibbonCollapseContext.tsx."
+  );
+}
 
 /** Hysteresis buffer: once at a level, require overflow to drop further before uncollapsing */
 const HYSTERESIS_PX = 20;
@@ -22,7 +44,11 @@ export function useRibbonCollapse(activeTab: string): {
   collapseLevel: CollapseLevel;
   contentRef: React.RefObject<HTMLDivElement>;
 } {
-  const contentRef = useRef<HTMLDivElement>(null!);
+  // Cast required: React types useRef<T>(null) as MutableRefObject<T|null>,
+  // but we never mutate this ref externally — RefObject is the correct API contract.
+  const contentRef = useRef<HTMLDivElement>(
+    null
+  ) as React.RefObject<HTMLDivElement>;
   const naturalWidthRef = useRef<number>(0);
   const [collapseLevel, setCollapseLevel] = useState<CollapseLevel>(0);
   const collapseLevelRef = useRef<CollapseLevel>(0);
@@ -76,7 +102,8 @@ export function useRibbonCollapse(activeTab: string): {
         threshold -= HYSTERESIS_PX;
       }
       if (overflow >= threshold) {
-        newLevel = (i + 1) as CollapseLevel;
+        // Clamp to the valid CollapseLevel range (0–MAX_COLLAPSE_LEVEL) in case THRESHOLDS grows
+        newLevel = Math.min(i + 1, MAX_COLLAPSE_LEVEL) as CollapseLevel;
         break;
       }
     }
@@ -92,17 +119,23 @@ export function useRibbonCollapse(activeTab: string): {
     const toolbar = content?.parentElement;
     if (!content || !toolbar) return;
 
+    // Use a ref so the cleanup function always cancels the latest scheduled
+    // frame — aligns with the pattern used in useProgressDrag (rafRef).
+    const rafHandleRef = { current: 0 };
+
     // Initial measurement after render
-    requestAnimationFrame(measure);
+    rafHandleRef.current = requestAnimationFrame(measure);
 
     // Observe the toolbar (parent) — its width changes when the window resizes
     const observer = new ResizeObserver(() => {
-      requestAnimationFrame(measure);
+      cancelAnimationFrame(rafHandleRef.current);
+      rafHandleRef.current = requestAnimationFrame(measure);
     });
 
     observer.observe(toolbar);
 
     return () => {
+      cancelAnimationFrame(rafHandleRef.current);
       observer.disconnect();
     };
   }, [measure, activeTab]);

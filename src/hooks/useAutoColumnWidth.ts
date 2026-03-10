@@ -5,7 +5,7 @@
  * - Task cell values change
  */
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useTaskStore } from "../store/slices/taskSlice";
 import { useUserPreferencesStore } from "../store/slices/userPreferencesSlice";
 
@@ -24,59 +24,90 @@ export function useAutoColumnWidth(): void {
   // Track if this is the initial render to avoid double-fitting on mount
   const isInitialRender = useRef(true);
 
-  // Track if fonts are loaded for accurate text measurement
+  // Track if fonts are loaded for accurate text measurement.
+  // Dual tracking (state + ref) is intentional:
+  //   - `fontsReady` state: drives the task-data effect so it re-runs once fonts
+  //     become available (ensuring a pending auto-fit fires after font load).
+  //   - `fontsReadyRef`: read by `runAutoFitIfReady` via stable closure so that
+  //     the uiDensity effect does NOT re-fire merely because fontsReady flipped.
+  // See the comment above the task-data effect for the full asymmetry rationale.
   const [fontsReady, setFontsReady] = useState(false);
+  const fontsReadyRef = useRef(false);
 
-  // Wait for fonts to load before allowing auto-fit
+  // Wait for fonts to load before allowing auto-fit.
+  // Gracefully handles environments where FontFaceSet is unavailable or rejects.
+  // The `mounted` flag prevents calling `setFontsReady` after unmount — defensive
+  // guard for the case where the component unmounts before fonts finish loading.
   useEffect(() => {
-    // Check if FontFaceSet API is available (not in test environments)
+    let mounted = true;
+    const markReady = (): void => {
+      if (!mounted) return;
+      fontsReadyRef.current = true;
+      setFontsReady(true);
+    };
     if (document.fonts?.ready) {
-      document.fonts.ready.then(() => {
-        setFontsReady(true);
+      document.fonts.ready.then(markReady).catch(() => {
+        // Fallback: proceed without waiting when the promise rejects
+        // (e.g. certain browser configurations or test environments)
+        markReady();
       });
     } else {
       // In test environment or unsupported browsers, proceed immediately
-      setFontsReady(true);
+      markReady();
     }
+    return () => {
+      mounted = false;
+    };
   }, []);
 
-  // Create a fingerprint of task data that affects column widths
-  // Only include fields that are displayed in columns
+  // Create a fingerprint of task data that affects column widths.
+  // Only include fields that are currently displayed in table columns —
+  // this is intentional: adding future columns here keeps auto-fit accurate.
+  // If a new column is added (e.g. assignedTo), add its field to this fingerprint.
   const taskFingerprint = useMemo(
     () =>
       tasks
         .map(
           (t) =>
-            `${t.id}|${t.name}|${t.startDate}|${t.endDate}|${t.duration}|${t.progress}|${t.parent ?? ""}`
+            `${t.id}|${t.name}|${t.startDate}|${t.endDate}|${t.duration}|${t.progress}|${t.type}|${t.parent ?? ""}`
         )
         .join(","),
     [tasks]
   );
 
+  /**
+   * Run auto-fit when fonts are ready and this is not the initial render.
+   * Reads fontsReady via a ref so this callback stays stable — changing
+   * fontsReady must not cause the uiDensity effect to re-fire unnecessarily.
+   */
+  const runAutoFitIfReady = useCallback(() => {
+    if (isInitialRender.current) return;
+    if (!fontsReadyRef.current) return;
+    autoFitAllColumns();
+  }, [autoFitAllColumns]);
+
   // Auto-fit on density change
   useEffect(() => {
-    // Skip initial render - let the default/saved widths apply first
-    if (isInitialRender.current) {
-      return;
-    }
-    // Wait for fonts to be ready for accurate measurement
-    if (!fontsReady) {
-      return;
-    }
-    autoFitAllColumns();
-  }, [uiDensity, autoFitAllColumns, fontsReady]);
+    runAutoFitIfReady();
+  }, [uiDensity, runAutoFitIfReady]);
 
-  // Auto-fit on task data change
+  // Auto-fit on task data change.
+  // Also responsible for flipping the initial-render flag so that the density
+  // effect (above) correctly skips the very first render too.
+  //
+  // Note: this effect uses `fontsReady` state (not `fontsReadyRef`) deliberately.
+  // When fonts finish loading, `fontsReady` becomes true and this effect re-runs
+  // even if `taskFingerprint` did not change — ensuring a pending auto-fit is
+  // triggered once fonts are available. The density effect above avoids this
+  // re-run by reading `fontsReadyRef.current` through the stable `runAutoFitIfReady`
+  // callback, which prevents `uiDensity` changes from re-firing when only
+  // `fontsReady` flips. The asymmetry between the two effects is intentional.
   useEffect(() => {
-    // Skip initial render
     if (isInitialRender.current) {
       isInitialRender.current = false;
       return;
     }
-    // Wait for fonts to be ready for accurate measurement
-    if (!fontsReady) {
-      return;
-    }
+    if (!fontsReady) return;
     autoFitAllColumns();
   }, [taskFingerprint, autoFitAllColumns, fontsReady]);
 }

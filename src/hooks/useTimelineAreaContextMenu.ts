@@ -4,7 +4,7 @@
  * - Right-click elsewhere → minimal menu: Paste + Fit to View
  */
 
-import { useMemo, useState, useCallback, createElement } from "react";
+import { useCallback, createElement, useMemo, useState } from "react";
 import { ClipboardText, ArrowsOut } from "@phosphor-icons/react";
 import type {
   ContextMenuItem,
@@ -17,6 +17,26 @@ import { CONTEXT_MENU } from "../styles/design-tokens";
 import { useFullTaskContextMenuItems } from "./useFullTaskContextMenuItems";
 import type { Task } from "../types/chart.types";
 import type { TaskId } from "../types/branded.types";
+
+/** Keyboard shortcut label shown in the Paste menu item. */
+const SHORTCUT_PASTE = "Ctrl+V";
+
+/** Keyboard shortcut label shown in the Fit to View menu item. */
+const SHORTCUT_FIT_TO_VIEW = "F";
+
+/** Menu item IDs — used as stable React keys and for test selection. */
+const MENU_ITEM_ID_PASTE = "paste";
+const MENU_ITEM_ID_FIT_TO_VIEW = "fitToView";
+
+// Icons are module-level constants: created once, stable across all renders.
+const ICON_PASTE = createElement(ClipboardText, {
+  size: CONTEXT_MENU.iconSize,
+  weight: CONTEXT_MENU.iconWeight,
+});
+const ICON_FIT_TO_VIEW = createElement(ArrowsOut, {
+  size: CONTEXT_MENU.iconSize,
+  weight: CONTEXT_MENU.iconWeight,
+});
 
 /** Context menu state: either targeting a specific task or just a position. */
 type AreaContextMenuState =
@@ -63,8 +83,10 @@ export function useTimelineAreaContextMenu(
 
         if (rowIndex >= 0 && rowIndex < tasks.length) {
           const taskId = tasks[rowIndex].id;
-          const currentSelected = useTaskStore.getState().selectedTaskIds;
-          if (currentSelected.includes(taskId)) {
+          // Cross-store read at event time — avoids subscribing to selectedTaskIds
+          // as a selector, which would re-render this hook on every selection change.
+          const selectedSet = new Set(useTaskStore.getState().selectedTaskIds);
+          if (selectedSet.has(taskId)) {
             setContextMenu({ position, taskId });
             return;
           }
@@ -92,29 +114,23 @@ export function useTimelineAreaContextMenu(
     // Default: Paste + Fit to View
     return [
       {
-        id: "paste",
+        id: MENU_ITEM_ID_PASTE,
         label: "Paste",
-        icon: createElement(ClipboardText, {
-          size: CONTEXT_MENU.iconSize,
-          weight: CONTEXT_MENU.iconWeight,
-        }),
-        shortcut: "Ctrl+V",
+        icon: ICON_PASTE,
+        shortcut: SHORTCUT_PASTE,
         onClick: () => void handlePaste(),
         disabled: !canPaste,
         separator: true,
       },
       {
-        id: "fitToView",
+        id: MENU_ITEM_ID_FIT_TO_VIEW,
         label: "Fit to View",
-        icon: createElement(ArrowsOut, {
-          size: CONTEXT_MENU.iconSize,
-          weight: CONTEXT_MENU.iconWeight,
-        }),
-        shortcut: "F",
-        onClick: () => fitToView(useTaskStore.getState().tasks),
+        icon: ICON_FIT_TO_VIEW,
+        shortcut: SHORTCUT_FIT_TO_VIEW,
+        onClick: () => fitToView(tasks),
       },
     ];
-  }, [contextMenu, canPaste, handlePaste, fitToView, buildItems]);
+  }, [contextMenu, canPaste, handlePaste, fitToView, buildItems, tasks]);
 
   return {
     contextMenu: contextMenu?.position ?? null,
