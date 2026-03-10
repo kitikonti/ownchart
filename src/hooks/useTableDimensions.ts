@@ -40,20 +40,14 @@ export function useTableDimensions(): { totalColumnWidth: number } {
   const densityConfig = useDensityConfig();
   const hiddenColumns = useChartStore((state) => state.hiddenColumns);
 
-  // Get visible columns based on settings
-  const visibleColumns = useMemo(
-    () => getVisibleColumns(hiddenColumns),
-    [hiddenColumns]
-  );
-
   const totalColumnWidth = useMemo(() => {
-    return visibleColumns.reduce((sum, col) => {
+    return getVisibleColumns(hiddenColumns).reduce((sum, col) => {
       const customWidth = columnWidths[col.id];
       const width =
         customWidth ?? parseWidth(getDensityAwareWidth(col.id, densityConfig));
       return sum + width;
     }, 0);
-  }, [columnWidths, densityConfig, visibleColumns]);
+  }, [columnWidths, densityConfig, hiddenColumns]);
 
   return { totalColumnWidth };
 }

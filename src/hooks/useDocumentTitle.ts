@@ -1,3 +1,8 @@
+/**
+ * Hook to dynamically update the browser tab title.
+ * Reflects the current file name and dirty state in the document title.
+ */
+
 import { useEffect } from "react";
 import { useFileStore } from "../store/slices/fileSlice";
 import { APP_CONFIG } from "../config/appConfig";
