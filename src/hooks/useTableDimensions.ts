@@ -33,13 +33,17 @@ function parseWidth(widthStr: string): number {
   return match ? parseInt(match[1], 10) : FALLBACK_COLUMN_WIDTH_PX;
 }
 
+interface UseTableDimensionsResult {
+  totalColumnWidth: number;
+}
+
 /**
  * Hook that calculates the total width of all table columns.
  * This is used to set the maximum width for the split pane.
  * Uses density-aware widths when no custom width is set.
  * Uses visible columns for show/hide progress column (Sprint 1.5.9).
  */
-export function useTableDimensions(): { totalColumnWidth: number } {
+export function useTableDimensions(): UseTableDimensionsResult {
   const columnWidths = useTaskStore((state) => state.columnWidths);
   const densityConfig = useDensityConfig();
   const hiddenColumns = useChartStore((state) => state.hiddenColumns);

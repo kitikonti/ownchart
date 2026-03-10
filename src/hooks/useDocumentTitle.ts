@@ -7,6 +7,9 @@ import { useEffect } from "react";
 import { useFileStore } from "../store/slices/fileSlice";
 import { APP_CONFIG } from "../config/appConfig";
 
+/** Prefix prepended to the document title when there are unsaved changes. */
+const DIRTY_INDICATOR = "*";
+
 /**
  * Custom hook to dynamically update the browser tab title
  * Shows "filename.ownchart - OwnChart" when a file is loaded
@@ -17,7 +20,7 @@ export function useDocumentTitle(): void {
   const isDirty = useFileStore((state) => state.isDirty);
 
   useEffect(() => {
-    const dirtyIndicator = isDirty ? "*" : "";
+    const dirtyIndicator = isDirty ? DIRTY_INDICATOR : "";
 
     if (fileName) {
       // Show filename with asterisk if unsaved changes

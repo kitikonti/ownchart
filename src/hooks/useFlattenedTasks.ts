@@ -11,7 +11,8 @@
 import { useMemo } from "react";
 import { useTaskStore } from "../store/slices/taskSlice";
 import { useChartStore } from "../store/slices/chartSlice";
-import { buildFlattenedTaskList, type FlattenedTask } from "../utils/hierarchy";
+import { buildFlattenedTaskList } from "../utils/hierarchy";
+import type { FlattenedTask } from "../utils/hierarchy";
 import type { Task } from "../types/chart.types";
 import type { TaskId } from "../types/branded.types";
 
