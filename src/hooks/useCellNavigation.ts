@@ -41,7 +41,10 @@ export interface UseCellNavigationReturn {
 }
 
 /**
- * Cell navigation hook.
+ * Facade hook that exposes cell-navigation state and actions from the task
+ * store in a single, typed object.  Consumers never need to import from the
+ * store directly — they call this hook and get `activeCell`, `isCellActive`,
+ * `isCellEditing`, and the store actions (`navigateCell`, `setActiveCell`, …).
  */
 export function useCellNavigation(): UseCellNavigationReturn {
   const activeCell = useTaskStore((state) => state.activeCell);
