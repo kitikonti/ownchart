@@ -14,10 +14,10 @@ import {
 } from "react";
 import { createPortal } from "react-dom";
 import { ColorPickerPopover } from "./ColorPickerPopover";
-import type { ColorMode } from "@/types/colorMode.types";
-import type { HexColor } from "@/types/branded.types";
-import { toHexColor } from "@/types/branded.types";
-import { DENSITY_CONFIG } from "@/config/densityConfig";
+import type { ColorMode } from "../../../types/colorMode.types";
+import type { HexColor } from "../../../types/branded.types";
+import { toHexColor } from "../../../types/branded.types";
+import { DENSITY_CONFIG } from "../../../config/densityConfig";
 
 export interface ColorCellEditorProps {
   /** Current task.color value (hex) */

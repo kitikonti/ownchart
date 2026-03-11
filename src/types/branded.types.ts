@@ -31,8 +31,11 @@ export function toHexColor(value: string): HexColor {
  * Create a PaletteId from a plain string.
  *
  * @remarks Caller guarantees the string is a non-empty palette identifier
- * matching one of the entries in the `COLOR_PALETTES` array. Use only at
- * system boundaries (palette definitions, deserialization).
+ * matching one of the `id` fields in the `COLOR_PALETTES` array (e.g.
+ * `"tableau-10"`). Use only at system boundaries: palette constant
+ * definitions and deserialization of saved files. Do not call with
+ * arbitrary user input without first verifying the value against the
+ * known palette list.
  */
 export function toPaletteId(value: string): PaletteId {
   return value as PaletteId;

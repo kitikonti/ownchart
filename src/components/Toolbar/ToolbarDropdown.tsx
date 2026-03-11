@@ -51,7 +51,8 @@ export function ToolbarDropdown<T extends string = string>({
 
   const displayLabel = labelPrefix || "Select";
 
-  const handleSelect = (optionValue: T): void => {
+  const handleSelect = (optionValue: T, disabled?: boolean): void => {
+    if (disabled) return;
     onChange(optionValue);
     close(true);
   };
@@ -76,7 +77,8 @@ export function ToolbarDropdown<T extends string = string>({
             <DropdownItem
               key={option.value}
               isSelected={option.value === value}
-              onClick={() => handleSelect(option.value)}
+              disabled={option.disabled}
+              onClick={() => handleSelect(option.value, option.disabled)}
               role="option"
             >
               {option.label}

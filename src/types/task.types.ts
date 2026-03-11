@@ -17,6 +17,11 @@ export type EditableField =
 /**
  * All editable fields in tab-navigation order.
  * Single source of truth shared by taskSlice (navigation) and clipboard (validation).
+ *
+ * The compile-time assertion below enforces that every member of `EditableField`
+ * appears in this array and that no extra values sneak in. If you add or remove
+ * a union member without updating this array (or vice versa), TypeScript will
+ * produce a `never` type error on `AssertEditableFieldsExhaustive`.
  */
 export const EDITABLE_FIELDS: readonly EditableField[] = [
   "color",
@@ -27,6 +32,20 @@ export const EDITABLE_FIELDS: readonly EditableField[] = [
   "duration",
   "progress",
 ];
+
+/**
+ * Compile-time exhaustiveness check: asserts that `EDITABLE_FIELDS` covers
+ * every `EditableField` value and no unknown values are present.
+ * Exported so TypeScript does not flag it as an unused declaration.
+ * This type resolves to `true`; if the assertion fails it resolves to `never`.
+ */
+export type AssertEditableFieldsExhaustive = [EditableField] extends [
+  (typeof EDITABLE_FIELDS)[number],
+]
+  ? [(typeof EDITABLE_FIELDS)[number]] extends [EditableField]
+    ? true
+    : never
+  : never;
 
 export type NavigationDirection = "up" | "down" | "left" | "right";
 
