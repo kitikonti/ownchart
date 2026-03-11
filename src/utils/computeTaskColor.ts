@@ -441,6 +441,122 @@ export function getComputedTaskColor(
   return computeTaskColor(task, allTasks, colorModeState);
 }
 
+// ─── computeAllTaskColors private batch helpers ───────────────────────────────
+// Each helper fills `result` for one color mode. Kept private so callers use
+// computeAllTaskColors as the single entry point.
+
+function fillThemeColors(
+  tasks: Task[],
+  colorModeState: ColorModeState,
+  result: Map<string, HexColor>
+): void {
+  const themeCtx = buildThemeContext(tasks, colorModeState.themeOptions);
+
+  if (!themeCtx) {
+    // No palette configured — every task falls back to its own color.
+    for (const task of tasks) {
+      result.set(task.id, task.color as HexColor);
+    }
+    return;
+  }
+
+  for (const task of tasks) {
+    // colorOverride check mirrors computeTaskColor's automatic-mode guard.
+    // Kept inline here so we can skip applyThemeColor entirely for overridden tasks.
+    if (task.colorOverride) {
+      result.set(task.id, task.colorOverride);
+      continue;
+    }
+    result.set(task.id, applyThemeColor(task, themeCtx));
+  }
+}
+
+function fillSummaryColors(
+  tasks: Task[],
+  summaryOptions: ColorModeState["summaryOptions"],
+  result: Map<string, HexColor>
+): void {
+  // Hoist taskMap so it is built once (O(n)) rather than once per task (O(n²)).
+  const taskMap = buildTaskMap(tasks);
+  for (const task of tasks) {
+    if (task.colorOverride) {
+      result.set(task.id, task.colorOverride);
+      continue;
+    }
+    if (task.type === "milestone" && summaryOptions.useMilestoneAccent) {
+      result.set(task.id, summaryOptions.milestoneAccentColor);
+      continue;
+    }
+    if (task.type === "summary") {
+      result.set(task.id, task.color);
+      continue;
+    }
+    const summaryParent = getNearestSummaryParent(task, taskMap);
+    result.set(
+      task.id,
+      summaryParent
+        ? summaryParent.colorOverride || summaryParent.color
+        : task.color
+    );
+  }
+}
+
+function fillHierarchyColors(
+  tasks: Task[],
+  hierarchyOptions: ColorModeState["hierarchyOptions"],
+  result: Map<string, HexColor>
+): void {
+  // Hoist taskMap so it is built once (O(n)) rather than once per task (O(n²)).
+  const taskMap = buildTaskMap(tasks);
+  for (const task of tasks) {
+    if (task.colorOverride) {
+      result.set(task.id, task.colorOverride);
+      continue;
+    }
+    const depth = getTaskDepth(task, taskMap);
+    const lightenAmount = Math.min(
+      depth * (hierarchyOptions.lightenPercentPerLevel / 100),
+      hierarchyOptions.maxLightenPercent / 100
+    );
+    result.set(
+      task.id,
+      lightenColor(hierarchyOptions.baseColor, lightenAmount) as HexColor
+    );
+  }
+}
+
+function fillManualColors(tasks: Task[], result: Map<string, HexColor>): void {
+  for (const task of tasks) {
+    result.set(task.id, task.color);
+  }
+}
+
+function fillTaskTypeColors(
+  tasks: Task[],
+  taskTypeOptions: ColorModeState["taskTypeOptions"],
+  result: Map<string, HexColor>
+): void {
+  for (const task of tasks) {
+    if (task.colorOverride) {
+      result.set(task.id, task.colorOverride);
+      continue;
+    }
+    switch (task.type) {
+      case "summary":
+        result.set(task.id, taskTypeOptions.summaryColor);
+        break;
+      case "milestone":
+        result.set(task.id, taskTypeOptions.milestoneColor);
+        break;
+      case "task":
+      default:
+        result.set(task.id, taskTypeOptions.taskColor);
+    }
+  }
+}
+
+// ─── Public API (batch) ───────────────────────────────────────────────────────
+
 /**
  * Compute display colors for all tasks in a single pass.
  *
@@ -450,7 +566,7 @@ export function getComputedTaskColor(
  *   reducing overall complexity from O(n²) to O(n·depth).
  * - Summary/hierarchy modes: `buildTaskMap` is hoisted so the Map is constructed
  *   once (O(n)) rather than once per task (O(n²)).
- * - Manual/taskType modes: no shared state needed; delegates to computeTaskColor per task.
+ * - Manual/taskType modes: no shared state needed; iterates tasks once.
  *
  * Use this in batch rendering contexts (export) instead of calling
  * getComputedTaskColor inside a render loop.
@@ -465,113 +581,33 @@ export function computeAllTaskColors(
 
   if (tasks.length === 0) return result;
 
-  const { mode, summaryOptions, hierarchyOptions } = colorModeState;
+  const { mode, summaryOptions, hierarchyOptions, taskTypeOptions } =
+    colorModeState;
 
-  if (mode === "theme") {
-    const themeCtx = buildThemeContext(tasks, colorModeState.themeOptions);
-
-    if (!themeCtx) {
-      // No palette configured — every task falls back to its own color.
+  switch (mode) {
+    case "theme":
+      fillThemeColors(tasks, colorModeState, result);
+      break;
+    case "summary":
+      fillSummaryColors(tasks, summaryOptions, result);
+      break;
+    case "hierarchy":
+      fillHierarchyColors(tasks, hierarchyOptions, result);
+      break;
+    case "manual":
+      fillManualColors(tasks, result);
+      break;
+    case "taskType":
+      fillTaskTypeColors(tasks, taskTypeOptions, result);
+      break;
+    default:
+      // Fallback for any future modes not yet optimised: delegate to computeTaskColor per task.
+      // NOTE: Adding a new mode without an optimised case above will cause O(n²) cost
+      // for modes that internally call buildTaskMap. Add an explicit case for new modes.
       for (const task of tasks) {
-        result.set(task.id, task.color as HexColor);
+        result.set(task.id, computeTaskColor(task, tasks, colorModeState));
       }
-      return result;
-    }
-
-    for (const task of tasks) {
-      // colorOverride check mirrors computeTaskColor's automatic-mode guard.
-      // Kept inline here so we can skip applyThemeColor entirely for overridden tasks.
-      if (task.colorOverride) {
-        result.set(task.id, task.colorOverride);
-        continue;
-      }
-      result.set(task.id, applyThemeColor(task, themeCtx));
-    }
-    return result;
   }
 
-  if (mode === "summary") {
-    // Hoist taskMap so it is built once (O(n)) rather than once per task (O(n²)).
-    const taskMap = buildTaskMap(tasks);
-    for (const task of tasks) {
-      if (task.colorOverride) {
-        result.set(task.id, task.colorOverride);
-        continue;
-      }
-      if (task.type === "milestone" && summaryOptions.useMilestoneAccent) {
-        result.set(task.id, summaryOptions.milestoneAccentColor);
-        continue;
-      }
-      if (task.type === "summary") {
-        result.set(task.id, task.color);
-        continue;
-      }
-      const summaryParent = getNearestSummaryParent(task, taskMap);
-      result.set(
-        task.id,
-        summaryParent
-          ? summaryParent.colorOverride || summaryParent.color
-          : task.color
-      );
-    }
-    return result;
-  }
-
-  if (mode === "hierarchy") {
-    // Hoist taskMap so it is built once (O(n)) rather than once per task (O(n²)).
-    const taskMap = buildTaskMap(tasks);
-    for (const task of tasks) {
-      if (task.colorOverride) {
-        result.set(task.id, task.colorOverride);
-        continue;
-      }
-      const depth = getTaskDepth(task, taskMap);
-      const lightenAmount = Math.min(
-        depth * (hierarchyOptions.lightenPercentPerLevel / 100),
-        hierarchyOptions.maxLightenPercent / 100
-      );
-      result.set(
-        task.id,
-        lightenColor(hierarchyOptions.baseColor, lightenAmount) as HexColor
-      );
-    }
-    return result;
-  }
-
-  if (mode === "manual") {
-    for (const task of tasks) {
-      result.set(task.id, task.color);
-    }
-    return result;
-  }
-
-  if (mode === "taskType") {
-    const { taskTypeOptions } = colorModeState;
-    for (const task of tasks) {
-      if (task.colorOverride) {
-        result.set(task.id, task.colorOverride);
-        continue;
-      }
-      switch (task.type) {
-        case "summary":
-          result.set(task.id, taskTypeOptions.summaryColor);
-          break;
-        case "milestone":
-          result.set(task.id, taskTypeOptions.milestoneColor);
-          break;
-        case "task":
-        default:
-          result.set(task.id, taskTypeOptions.taskColor);
-      }
-    }
-    return result;
-  }
-
-  // Fallback for any future modes not yet optimised: delegate to computeTaskColor per task.
-  // NOTE: Adding a new mode here without an optimised branch above will cause O(n²) cost
-  // for modes that internally call buildTaskMap. Add an explicit branch above for new modes.
-  for (const task of tasks) {
-    result.set(task.id, computeTaskColor(task, tasks, colorModeState));
-  }
   return result;
 }

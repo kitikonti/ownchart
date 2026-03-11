@@ -121,12 +121,21 @@ export function computeEndDateForDrag(
 
 /**
  * Compute preview dates for a resize operation.
- * Returns null if the resize would create an invalid (< 1 day) duration.
+ * Returns null if the resize would create an invalid (< 1 day) duration,
+ * or if the drag state is not in a resize mode.
  */
 export function computeResizePreview(
   dragState: DragState,
   deltaDays: number
 ): { previewStart: string; previewEnd: string } | null {
+  // Guard against being called with a non-resize mode (e.g. "dragging" or "idle").
+  if (
+    dragState.mode !== "resizing-left" &&
+    dragState.mode !== "resizing-right"
+  ) {
+    return null;
+  }
+
   if (dragState.mode === "resizing-left") {
     const newStart = addDays(dragState.originalStartDate, deltaDays);
     const duration = calculateDuration(newStart, dragState.originalEndDate);

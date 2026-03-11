@@ -10,8 +10,12 @@ const CHILDLESS_CYCLE: readonly TaskType[] = ["task", "summary", "milestone"];
 /**
  * Get the next task type in the cycling order.
  *
- * - With children: toggles between task ↔ summary (milestone not allowed)
+ * - With children: toggles between task ↔ summary (milestone not allowed with children)
  * - Without children: cycles task → summary → milestone → task
+ *
+ * @param currentType - The task's current type.
+ * @param hasChildren - Whether the task currently has child tasks.
+ * @returns The next `TaskType` in the applicable cycle.
  */
 export function getNextTaskType(
   currentType: TaskType,
