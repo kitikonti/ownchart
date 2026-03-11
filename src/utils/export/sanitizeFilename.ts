@@ -8,9 +8,9 @@
  * SAFETY NOTE: This regex carries the `g` flag (required so `.replace()` removes
  * ALL occurrences in a single pass).  The `g` flag makes the RegExp stateful —
  * `lastIndex` advances after each `.test()` or `.exec()` call.  This constant
- * is ONLY used with `.replace()`, which always resets `lastIndex` before the
- * substitution and is therefore safe.  Do NOT use this constant with `.test()`
- * or `.exec()` — create a new non-`g` regex or use `.replace()` instead.
+ * is ONLY used with `.replace()`, which does not read or advance `lastIndex`
+ * and is therefore safe.  Do NOT use this constant with `.test()` or `.exec()` —
+ * create a new non-`g` regex or use `.replace()` instead.
  */
 const INVALID_CHARS = /[/\\:*?"<>|]/g;
 
@@ -22,7 +22,7 @@ const INVALID_CHARS = /[/\\:*?"<>|]/g;
  * stripping them here would suppress the hyphen conversion.
  * Using \p{Cc} with the /u flag avoids the no-control-regex ESLint rule.
  *
- * Same `g`-flag safety note as INVALID_CHARS above: use only with `.replace()`.
+ * Same `g`-flag safety note as INVALID_CHARS above: safe only with `.replace()`; do not use with `.test()` or `.exec()`.
  */
 const CONTROL_CHARS = /(?!\s)\p{Cc}/gu;
 

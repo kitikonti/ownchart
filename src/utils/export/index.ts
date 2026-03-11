@@ -128,9 +128,6 @@ export {
 } from "./calculations";
 
 // PDF layout utilities
-// mmToPx(mm) — PDF-specific helper that converts mm→px assuming the browser's
-// internal 96 DPI coordinate space (for jsPDF point calculations).  Distinct
-// from mmToPxAtDpi() above, which accepts an explicit DPI argument.
 export {
   calculatePdfFitToWidth,
   PDF_HEADER_FOOTER_RESERVED_MM,

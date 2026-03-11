@@ -34,8 +34,6 @@ export const EXPORT_COLORS = {
   textSecondary: COLORS.neutral[600],
   /** neutral-500 — summary dates/duration (lighter, italic in app) */
   textSummary: COLORS.neutral[500],
-  /** neutral-600 — header labels */
-  textHeader: COLORS.neutral[600],
   /** neutral-200 — header borders */
   border: COLORS.neutral[200],
   /** neutral-100 — row borders */

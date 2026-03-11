@@ -53,6 +53,9 @@ export function downloadBlob(blob: Blob, filename: string): void {
 
     // Clean up the object URL after a short delay to give browsers time to
     // start the download before the URL is invalidated.
+    // The timer handle is intentionally not stored — this is a fire-and-forget
+    // cleanup; the module has no teardown lifecycle and the tiny delay is
+    // harmless if the window is closed before it fires.
     setTimeout(() => {
       URL.revokeObjectURL(url);
     }, BLOB_URL_REVOKE_DELAY_MS);

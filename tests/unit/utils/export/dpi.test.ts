@@ -159,6 +159,26 @@ describe("calculatePixelDimensions", () => {
   it("throws RangeError for negative heightMm", () => {
     expect(() => calculatePixelDimensions(210, -1, 150)).toThrow(RangeError);
   });
+
+  it("throws RangeError for NaN widthMm", () => {
+    expect(() => calculatePixelDimensions(NaN, 297, 150)).toThrow(RangeError);
+  });
+
+  it("throws RangeError for Infinity widthMm", () => {
+    expect(() => calculatePixelDimensions(Infinity, 297, 150)).toThrow(
+      RangeError
+    );
+  });
+
+  it("throws RangeError for NaN heightMm", () => {
+    expect(() => calculatePixelDimensions(210, NaN, 150)).toThrow(RangeError);
+  });
+
+  it("throws RangeError for Infinity heightMm", () => {
+    expect(() => calculatePixelDimensions(210, Infinity, 150)).toThrow(
+      RangeError
+    );
+  });
 });
 
 // ---------------------------------------------------------------------------

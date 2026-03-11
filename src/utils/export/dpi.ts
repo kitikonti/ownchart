@@ -48,20 +48,25 @@ export function pxToMmAtDpi(px: number, dpi: number): number {
  * @param heightMm - Page height in millimeters (must be ≥ 0)
  * @param dpi - Target DPI (e.g., 150 for print quality)
  * @returns Pixel dimensions (rounded to integers)
- * @throws {RangeError} If widthMm is negative (checked first), then if heightMm
- *   is negative (checked second), or finally if dpi is not a finite positive
- *   number (validated inside {@link mmToPxAtDpi}).
+ * @throws {RangeError} If widthMm is not a finite non-negative number (checked
+ *   first), then if heightMm is not a finite non-negative number (checked
+ *   second), or finally if dpi is not a finite positive number (validated
+ *   inside {@link mmToPxAtDpi}).
  */
 export function calculatePixelDimensions(
   widthMm: number,
   heightMm: number,
   dpi: number = PNG_EXPORT_DPI
 ): { width: number; height: number } {
-  if (widthMm < 0) {
-    throw new RangeError(`widthMm must be >= 0, got ${widthMm}`);
+  if (!Number.isFinite(widthMm) || widthMm < 0) {
+    throw new RangeError(
+      `widthMm must be a finite number >= 0, got ${widthMm}`
+    );
   }
-  if (heightMm < 0) {
-    throw new RangeError(`heightMm must be >= 0, got ${heightMm}`);
+  if (!Number.isFinite(heightMm) || heightMm < 0) {
+    throw new RangeError(
+      `heightMm must be a finite number >= 0, got ${heightMm}`
+    );
   }
   return {
     width: Math.round(mmToPxAtDpi(widthMm, dpi)),

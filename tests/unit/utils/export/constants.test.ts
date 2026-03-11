@@ -138,10 +138,6 @@ describe("EXPORT_COLORS", () => {
     expect(EXPORT_COLORS.textSummary).toBe("#6b6b6b");
   });
 
-  it("textHeader is neutral-600 (#525252)", () => {
-    expect(EXPORT_COLORS.textHeader).toBe("#525252");
-  });
-
   it("border is neutral-200 (#d4d4d4)", () => {
     expect(EXPORT_COLORS.border).toBe("#d4d4d4");
   });
