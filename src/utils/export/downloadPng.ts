@@ -38,23 +38,19 @@ export function downloadBlob(blob: Blob, filename: string): void {
   if (typeof document === "undefined") return;
 
   const url = URL.createObjectURL(blob);
+  const link = document.createElement("a");
+  link.href = url;
+  link.download = filename;
 
-  // Two separate try/finally blocks: the inner one guarantees DOM cleanup
-  // (removeChild) even if link.click() throws; the outer one guarantees
-  // URL revocation even if the DOM operations throw.
+  // Append to body to ensure it works in all browsers.
+  document.body.appendChild(link);
   try {
-    const link = document.createElement("a");
-    link.href = url;
-    link.download = filename;
-
-    // Append to body to ensure it works in all browsers.
-    document.body.appendChild(link);
-    try {
-      link.click();
-    } finally {
-      document.body.removeChild(link);
-    }
+    link.click();
   } finally {
+    // DOM cleanup runs even if click() throws — isolated so its own errors
+    // don't mask any exception thrown by click().
+    document.body.removeChild(link);
+
     // Clean up the object URL after a short delay to give browsers time to
     // start the download before the URL is invalidated.
     setTimeout(() => {
