@@ -2,6 +2,10 @@
  * Hook to consume the PWA LaunchQueue API.
  * When the user opens a .ownchart file via OS file association,
  * the file is read and loaded into the app.
+ *
+ * NOTE: Must be mounted as a singleton (once at the root level).
+ * The LaunchQueue API does not expose an unsetConsumer, so mounting this
+ * hook in multiple places would silently overwrite the previous consumer.
  */
 
 import { useEffect } from "react";

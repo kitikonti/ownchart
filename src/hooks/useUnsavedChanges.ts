@@ -29,7 +29,7 @@ export function useUnsavedChanges(): void {
     const handleBeforeUnload = (e: BeforeUnloadEvent): void => {
       if (isDirtyRef.current) {
         e.preventDefault();
-        e.returnValue = ""; // Legacy compatibility: older browsers require returnValue to trigger the dialog
+        e.returnValue = ""; // Modern browsers: e.preventDefault() is sufficient. Legacy (pre-2023): returnValue must be set.
       }
     };
 

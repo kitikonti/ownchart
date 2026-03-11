@@ -34,8 +34,9 @@ export function useTimelineBarContextMenu(): UseTimelineBarContextMenuResult {
 
       // Right-click selection logic: if the clicked task is not in the current
       // selection, replace the selection with just that task.
-      const currentSelection = useTaskStore.getState().selectedTaskIds;
-      if (!currentSelection.includes(taskId)) {
+      // Use a Set for O(1) lookup instead of O(n) Array.includes.
+      const currentSelection = new Set(useTaskStore.getState().selectedTaskIds);
+      if (!currentSelection.has(taskId)) {
         setSelectedTaskIds([taskId]);
       }
 
