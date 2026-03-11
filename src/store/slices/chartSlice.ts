@@ -291,7 +291,7 @@ export const useChartStore = create<ChartState & ChartActions>()(
     hiddenTaskIds: [] as TaskId[],
 
     // Color mode state (Smart Color Management)
-    colorModeState: { ...DEFAULT_COLOR_MODE_STATE },
+    colorModeState: structuredClone(DEFAULT_COLOR_MODE_STATE),
 
     // Transient UI state
     isZooming: false,

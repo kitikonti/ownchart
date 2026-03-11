@@ -27,6 +27,7 @@ import {
   serializeToGanttFile,
   type SerializeOptions,
 } from "../utils/fileOperations/serialize";
+import { DEFAULT_CHART_NAME } from "../config/viewSettingsDefaults";
 import type { Dependency } from "../types/dependency.types";
 import type { ExportOptions } from "../utils/export/types";
 import type { ViewSettings } from "../utils/fileOperations/types";
@@ -34,7 +35,6 @@ import type { Task } from "../types/chart.types";
 import type { TaskId } from "../types/branded.types";
 
 const OWNCHART_FILE_EXTENSION = ".ownchart";
-const DEFAULT_CHART_NAME = "Untitled";
 const DEFAULT_UNTITLED_PREFIX = "untitled";
 
 /** Confirmation message shown when opening a file with unsaved changes. */
