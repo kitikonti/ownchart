@@ -26,6 +26,7 @@ const INTER_FONT_VARIANTS = [
  * Register Inter font with jsPDF for consistent PDF rendering.
  * Registers regular, italic, and semi-bold (bold) variants.
  *
+ * @param doc - The jsPDF document instance to register the Inter font variants on.
  * @throws {Error} If font registration fails (e.g. jsPDF internal error or
  *   calling addFont before addFileToVFS has completed).
  */

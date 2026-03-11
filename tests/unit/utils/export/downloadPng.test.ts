@@ -143,6 +143,38 @@ describe('downloadBlob', () => {
 
     vi.useRealTimers();
   });
+
+  it('should remove the link from the DOM after click (cleanup always runs)', () => {
+    const blob = new Blob(['test'], { type: 'image/png' });
+    downloadBlob(blob, 'test.png');
+
+    expect(document.body.removeChild).toHaveBeenCalledWith(mockLink);
+  });
+
+  it('should still remove the link from the DOM even if click() throws', () => {
+    mockLink.click.mockImplementation(() => {
+      throw new Error('click failed');
+    });
+
+    const blob = new Blob(['test'], { type: 'image/png' });
+    // The finally block should run removeChild even though click threw
+    expect(() => downloadBlob(blob, 'test.png')).toThrow('click failed');
+    expect(document.body.removeChild).toHaveBeenCalledWith(mockLink);
+  });
+
+  it('should normalize empty filename to "download"', () => {
+    const blob = new Blob(['test'], { type: 'image/png' });
+    downloadBlob(blob, '');
+
+    expect(mockLink.download).toBe('download');
+  });
+
+  it('should normalize whitespace-only filename to "download"', () => {
+    const blob = new Blob(['test'], { type: 'image/png' });
+    downloadBlob(blob, '   ');
+
+    expect(mockLink.download).toBe('download');
+  });
 });
 
 describe('downloadCanvasAsPng', () => {
