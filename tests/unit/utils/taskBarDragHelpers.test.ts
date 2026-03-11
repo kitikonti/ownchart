@@ -399,6 +399,23 @@ describe('buildMoveUpdates', () => {
     expect(mockCalcWorkingDays).toHaveBeenCalled();
     expect(mockAddWorkingDays).toHaveBeenCalled();
   });
+
+  it('skips working-days recalculation when task has no endDate', () => {
+    // When ctx.enabled is true but t.endDate is falsy, the working-days branch
+    // is skipped (line: `if (ctx.enabled && t.endDate)`) and finalEndDate falls
+    // back to the calendar-shifted newEndDate (which is '' for a missing endDate).
+    mockCalcWorkingDays.mockClear();
+    mockAddWorkingDays.mockClear();
+    const t = createTask({ endDate: '' });
+    const taskMap = new Map([[t.id, t]]);
+    const updates = buildMoveUpdates([t.id], taskMap, 5, enabledCtx);
+
+    // Working-days functions should NOT be called when endDate is empty
+    expect(mockCalcWorkingDays).not.toHaveBeenCalled();
+    expect(mockAddWorkingDays).not.toHaveBeenCalled();
+    // The resulting endDate should be the calendar-shifted value of '' → ''
+    expect(updates[0].updates.endDate).toBe('');
+  });
 });
 
 // ─── buildResizeUpdate ─────────────────────────────────────────────────

@@ -238,6 +238,8 @@ const THEME_SIBLING_LIGHTNESS_VARIATION = 2;
 const THEME_MAX_LIGHTNESS = 88;
 /** Half-range for per-sibling hue variation (±degrees) in theme mode. */
 const THEME_SIBLING_HUE_HALF_RANGE = 2;
+/** Modulus applied to taskHash for sibling variation — yields values 0..4 for both lightness and hue variation. */
+const THEME_SIBLING_HASH_MODULUS = 5;
 
 /** Pre-computed shared state for theme-mode color resolution. */
 interface ThemeContext {
@@ -311,11 +313,12 @@ function applyThemeColor(task: Task, ctx: ThemeContext): HexColor {
   // Lightness: always lighter than parent, small hash variation per sibling
   const lightnessShift =
     depth * THEME_LIGHTNESS_SHIFT_PER_DEPTH +
-    (taskHash % 5) * THEME_SIBLING_LIGHTNESS_VARIATION; // always positive
+    (taskHash % THEME_SIBLING_HASH_MODULUS) * THEME_SIBLING_LIGHTNESS_VARIATION; // always positive
   hsl.l = Math.min(THEME_MAX_LIGHTNESS, hsl.l + lightnessShift);
 
   // Hue: minimal shift for sibling differentiation (±THEME_SIBLING_HUE_HALF_RANGE°)
-  const hueShift = (taskHash % 5) - THEME_SIBLING_HUE_HALF_RANGE;
+  const hueShift =
+    (taskHash % THEME_SIBLING_HASH_MODULUS) - THEME_SIBLING_HUE_HALF_RANGE;
   hsl.h = (hsl.h + hueShift + 360) % 360;
 
   return hslToHex(hsl) as HexColor;
@@ -421,7 +424,11 @@ export function computeTaskColor(
  * Get computed color without hooks (for use in non-component contexts).
  * Semantic alias for `computeTaskColor` — the "get" prefix reads naturally
  * at call sites in ExportRenderer and chartSlice where a single task's color
- * is resolved in isolation. Prefer `computeAllTaskColors` inside loops.
+ * is resolved in isolation.
+ *
+ * **Performance note:** Same O(n²) caveat as `computeTaskColor` applies —
+ * calling this inside a loop over n tasks rebuilds shared state on every call.
+ * Use `computeAllTaskColors` for batch rendering instead.
  */
 export function getComputedTaskColor(
   task: Task,
@@ -438,7 +445,9 @@ export function getComputedTaskColor(
  * shared computations are performed only once:
  * - Theme mode: palette-index assignment (O(n log n)) is hoisted out of the per-task loop,
  *   reducing overall complexity from O(n²) to O(n·depth).
- * - All other modes: delegates to computeTaskColor per task (acceptable cost).
+ * - Summary/hierarchy modes: `buildTaskMap` is hoisted so the Map is constructed
+ *   once (O(n)) rather than once per task (O(n²)).
+ * - Manual/taskType modes: no shared state needed; delegates to computeTaskColor per task.
  *
  * Use this in batch rendering contexts (export) instead of calling
  * getComputedTaskColor inside a render loop.
@@ -453,7 +462,7 @@ export function computeAllTaskColors(
 
   if (tasks.length === 0) return result;
 
-  const { mode } = colorModeState;
+  const { mode, summaryOptions, hierarchyOptions } = colorModeState;
 
   if (mode === "theme") {
     const themeCtx = buildThemeContext(tasks, colorModeState.themeOptions);
@@ -478,9 +487,55 @@ export function computeAllTaskColors(
     return result;
   }
 
-  // For all other modes (manual, summary, taskType, hierarchy): delegate to
-  // the single-task function. Their per-task cost is lower than theme mode's
-  // palette-assignment overhead, so calling per task is acceptable.
+  if (mode === "summary") {
+    // Hoist taskMap so it is built once (O(n)) rather than once per task (O(n²)).
+    const taskMap = buildTaskMap(tasks);
+    for (const task of tasks) {
+      if (task.colorOverride) {
+        result.set(task.id, task.colorOverride);
+        continue;
+      }
+      if (task.type === "milestone" && summaryOptions.useMilestoneAccent) {
+        result.set(task.id, summaryOptions.milestoneAccentColor);
+        continue;
+      }
+      if (task.type === "summary") {
+        result.set(task.id, task.color);
+        continue;
+      }
+      const summaryParent = getNearestSummaryParent(task, taskMap);
+      result.set(
+        task.id,
+        summaryParent
+          ? summaryParent.colorOverride || summaryParent.color
+          : task.color
+      );
+    }
+    return result;
+  }
+
+  if (mode === "hierarchy") {
+    // Hoist taskMap so it is built once (O(n)) rather than once per task (O(n²)).
+    const taskMap = buildTaskMap(tasks);
+    for (const task of tasks) {
+      if (task.colorOverride) {
+        result.set(task.id, task.colorOverride);
+        continue;
+      }
+      const depth = getTaskDepth(task, taskMap);
+      const lightenAmount = Math.min(
+        depth * (hierarchyOptions.lightenPercentPerLevel / 100),
+        hierarchyOptions.maxLightenPercent / 100
+      );
+      result.set(
+        task.id,
+        lightenColor(hierarchyOptions.baseColor, lightenAmount) as HexColor
+      );
+    }
+    return result;
+  }
+
+  // For manual and taskType modes: no shared state needed; delegate to computeTaskColor per task.
   for (const task of tasks) {
     result.set(task.id, computeTaskColor(task, tasks, colorModeState));
   }
