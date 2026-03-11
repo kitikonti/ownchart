@@ -21,6 +21,7 @@ export type InteractionMode =
   | "resizing-left"
   | "resizing-right";
 export type InteractionZone = "left-edge" | "right-edge" | "center";
+/** CSS cursor value for task bar interactions. Consumed by useTaskBarInteraction. */
 export type CursorType =
   | "grab"
   | "grabbing"
@@ -135,6 +136,14 @@ export function computeResizePreview(
 
 /**
  * Calculate delta days between two date strings.
+ *
+ * Returns a positive value when `previewStart` is after `originalStart`,
+ * and a negative value when it is before. Used to convert a committed
+ * drag position back into a day-delta for multi-task batch updates.
+ *
+ * @param originalStart - ISO date string for the original start date
+ * @param previewStart  - ISO date string for the new (preview) start date
+ * @returns Signed integer day-delta (previewStart − originalStart)
  */
 export function calculateDeltaDaysFromDates(
   originalStart: string,
@@ -177,21 +186,17 @@ export function buildMoveUpdates(
         },
       });
     } else {
-      let finalEndDate = newEndDate;
-      if (ctx.enabled && t.endDate) {
-        const originalWorkingDays = calculateWorkingDays(
-          t.startDate,
-          t.endDate,
-          ctx.config,
-          ctx.holidayRegion
-        );
-        finalEndDate = addWorkingDays(
-          newStartDate,
-          originalWorkingDays,
-          ctx.config,
-          ctx.holidayRegion
-        );
-      }
+      // Reuse computeEndDateForDrag to avoid duplicating the working-days logic.
+      const finalEndDate = t.endDate
+        ? computeEndDateForDrag(
+            newStartDate,
+            t.startDate,
+            t.endDate,
+            deltaDays,
+            t.type,
+            ctx
+          )
+        : newEndDate;
       updates.push({
         id: taskId,
         updates: {

@@ -15,9 +15,6 @@
  * if task.colorOverride is set, it takes priority. Ignored in "manual" mode.
  */
 
-import type { Task } from "../types/chart.types";
-import type { ColorModeState } from "../types/colorMode.types";
-import type { HexColor } from "../types/branded.types";
 import { getPaletteById } from "./colorPalettes";
 import { stableHash } from "./hashUtils";
 import {
@@ -26,6 +23,9 @@ import {
   hslToHex,
   lightenColor,
 } from "./colorUtils";
+import type { Task } from "../types/chart.types";
+import type { ColorModeState } from "../types/colorMode.types";
+import type { HexColor } from "../types/branded.types";
 
 /**
  * Build a Map<id, Task> for O(1) parent lookups during tree traversal.
@@ -388,7 +388,10 @@ export function computeTaskColor(
     }
 
     case "taskType": {
-      // Return color based on task type
+      // Return color based on task type.
+      // The `default` branch handles "task" and any future TaskType additions
+      // gracefully by returning taskColor. If a new type is added, TypeScript
+      // strict mode will not catch it here — add an explicit `case` for it.
       switch (task.type) {
         case "summary":
           return taskTypeOptions.summaryColor;

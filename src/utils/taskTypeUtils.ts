@@ -23,6 +23,7 @@ export function getNextTaskType(
     return currentType === "task" ? "summary" : "task";
   }
 
+  // indexOf returns -1 for unknown types; (-1 + 1) % 3 = 0 → "task" (safe fallback).
   const index = CHILDLESS_CYCLE.indexOf(currentType);
   return CHILDLESS_CYCLE[(index + 1) % CHILDLESS_CYCLE.length];
 }
