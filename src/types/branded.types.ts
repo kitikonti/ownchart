@@ -26,8 +26,12 @@ export type TaskId = string & { readonly __brand: "TaskId" };
  * Create a HexColor from a string value (e.g. from a color input element).
  *
  * @remarks Caller is responsible for passing a valid CSS hex color string
- * (e.g. `"#FF0000"` or `"#F00"`). An invalid string will satisfy the type at
- * compile time but may produce unexpected rendering results at runtime.
+ * (e.g. `"#FF0000"` or `"#F00"`). An invalid string (e.g. `"#"` or `"#gggggg"`)
+ * will satisfy the `HexColor` type at compile time but may produce unexpected
+ * rendering results at runtime. When the source is not a trusted browser
+ * `<input type="color">` element, validate before casting:
+ * `/^#[0-9A-Fa-f]{3,8}$/.test(value)`. See the `HexColor` JSDoc for details.
+ *
  * Browser `<input type="color">` elements always produce valid 7-character hex
  * strings, so they are a safe source without further validation.
  *
