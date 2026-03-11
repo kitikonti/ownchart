@@ -8,8 +8,12 @@
  */
 
 import { useMemo, useDeferredValue } from "react";
-import type { HelpTab, HelpSection, HelpTopic } from "../config/helpContent";
-import { resolveShortcut } from "../config/helpContent";
+import {
+  type HelpTab,
+  type HelpSection,
+  type HelpTopic,
+  resolveShortcut,
+} from "../config/helpContent";
 
 export interface HelpSearchResult {
   /** Flat list of sections with matching topics (empty when query is empty). */
