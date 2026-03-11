@@ -164,6 +164,16 @@ export async function captureChart(
       },
     });
 
+    // Guard against a degenerate canvas — html-to-image can return a 0×0 canvas
+    // when the container has no painted content (e.g. when an async render error
+    // inside ExportRenderer silently unmounts the tree before capture).
+    if (canvas.width === 0 || canvas.height === 0) {
+      throw new Error(
+        "Export failed: captured canvas has zero dimensions. " +
+          "The chart may not have rendered correctly."
+      );
+    }
+
     return canvas;
   } finally {
     // Always unmount the React root and remove the container, even on error.

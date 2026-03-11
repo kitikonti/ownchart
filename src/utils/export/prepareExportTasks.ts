@@ -34,6 +34,8 @@ export function prepareExportTasks(
   tasks: ReadonlyArray<Task>,
   fullyResolvedHiddenTaskIds: ReadonlyArray<TaskId>
 ): Task[] {
+  // Fast path: no hidden tasks — return a fresh array without the overhead of
+  // building a Set. Always returns a new array per the function's contract.
   if (fullyResolvedHiddenTaskIds.length === 0) return [...tasks];
   const hiddenSet = new Set<TaskId>(fullyResolvedHiddenTaskIds);
   return tasks.filter((t) => !hiddenSet.has(t.id));

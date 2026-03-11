@@ -46,14 +46,17 @@ export function getColumnDisplayValue(
     if (isMilestone) return "";
     const isSummary = task.type === "summary";
     if (isSummary) {
+      // Summary tasks show the unit ("9 days") because their duration is derived
+      // from child tasks and may not be obvious to the reader. Zero is suppressed
+      // (no children yet → show "—" instead of "0 days").
       return task.duration !== undefined && task.duration > 0
         ? `${task.duration} days`
         : null;
     }
-    // Non-summary, non-milestone task
+    // Regular tasks omit the unit — the "Duration" column header provides context.
+    // Zero is intentionally displayed ("0") because a zero-duration task is valid.
     return task.duration !== undefined ? `${task.duration}` : null;
   }
-  // progress
   if (key === "progress") {
     return task.progress !== undefined ? `${task.progress}%` : null;
   }

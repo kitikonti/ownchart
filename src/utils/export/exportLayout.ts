@@ -86,6 +86,9 @@ function estimatePreliminaryDuration(
 
 /**
  * Compute final timeline and total dimensions from scale and options.
+ * Separated from computeTimelineLayout so that the width arithmetic (fitToWidth
+ * clamping, MIN_TIMELINE_WIDTH guard) is isolated and easy to unit-test
+ * independently of the zoom/scale computation.
  */
 function computeFinalDimensions(
   options: ExportOptions,
@@ -129,6 +132,9 @@ function resolveProjectDateRange(
 
 /**
  * Compute task table column widths and total table width.
+ * Separated from computeTimelineLayout because the task-table geometry
+ * (column auto-fit, total table width) must be known before the timeline
+ * zoom can be calculated — the table width is an input to zoom fitting.
  */
 function computeTaskTableLayout(
   selectedColumns: ExportColumnKey[],
