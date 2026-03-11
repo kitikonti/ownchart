@@ -9,10 +9,11 @@
  * Deliberately uses local time (not UTC) so the displayed date matches
  * what the user sees in the app, regardless of their timezone offset.
  *
- * @returns ISO-formatted date string, or "" if date is undefined.
+ * @returns ISO-formatted date string, or "" if date is undefined or invalid
+ *   (e.g. `new Date("not-a-date")`).
  */
 export function formatDate(date: Date | undefined): string {
-  if (!date) return "";
+  if (!date || isNaN(date.getTime())) return "";
   const y = date.getFullYear();
   const m = String(date.getMonth() + 1).padStart(2, "0");
   const d = String(date.getDate()).padStart(2, "0");

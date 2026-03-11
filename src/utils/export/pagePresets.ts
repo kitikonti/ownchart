@@ -48,6 +48,15 @@ function createPagePreset(
 }
 
 /**
+ * Format a resolution description string for screen-size presets.
+ * Produces a consistent "W × H px" format matching the typographic convention
+ * used by formatDpiDescription for paper presets.
+ */
+function formatResolutionDescription(width: number, height: number): string {
+  return `${width} × ${height} px`;
+}
+
+/**
  * Quick presets for common export target widths.
  * Paper sizes are calculated at PNG_EXPORT_DPI (150 DPI) for print quality.
  * Screen sizes use fixed pixel values.
@@ -66,13 +75,19 @@ export const EXPORT_QUICK_PRESETS: ExportQuickPreset[] = [
   {
     key: "hd-screen",
     label: "HD Screen",
-    description: `${DEFAULT_FIT_TO_WIDTH_PX} × ${HD_SCREEN_HEIGHT_PX} px`,
+    description: formatResolutionDescription(
+      DEFAULT_FIT_TO_WIDTH_PX,
+      HD_SCREEN_HEIGHT_PX
+    ),
     targetWidth: DEFAULT_FIT_TO_WIDTH_PX,
   },
   {
     key: "4k-screen",
     label: "4K Screen",
-    description: `${UHD_SCREEN_WIDTH_PX} × ${UHD_SCREEN_HEIGHT_PX} px`,
+    description: formatResolutionDescription(
+      UHD_SCREEN_WIDTH_PX,
+      UHD_SCREEN_HEIGHT_PX
+    ),
     targetWidth: UHD_SCREEN_WIDTH_PX,
   },
 ];

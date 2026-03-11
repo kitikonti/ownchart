@@ -13,6 +13,10 @@ describe("formatDate", () => {
     expect(formatDate(undefined)).toBe("");
   });
 
+  it("returns empty string for an Invalid Date", () => {
+    expect(formatDate(new Date("not-a-date"))).toBe("");
+  });
+
   it("zero-pads single-digit month and day", () => {
     expect(formatDate(new Date(2024, 0, 5))).toBe("2024-01-05"); // Jan 5
   });

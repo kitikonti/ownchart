@@ -15,6 +15,9 @@ import { REACT_RENDER_WAIT_MS } from "./constants";
 /**
  * Minimum pixel ratio for capture — ensures crisp rendering on standard displays.
  * Acts as a lower bound in both the device pixel ratio and max-capture-ratio clamps.
+ * Forced to ≥2 even on low-DPR / small-screen devices so the exported PNG is
+ * always at least 2× the logical pixel size, producing a sharp image when printed
+ * or displayed on a higher-resolution screen.
  */
 const MIN_CAPTURE_PIXEL_RATIO = 2;
 
@@ -103,6 +106,16 @@ export async function captureChart(
     // root.render() is synchronous in React 18 concurrent mode for the
     // initial render trigger, but the commit is asynchronous — we give it
     // one macro-task via REACT_RENDER_WAIT_MS before proceeding.
+    //
+    // LIMITATION: The try/catch below only catches synchronous throws from
+    // root.render(). Errors thrown inside ExportRenderer during React's
+    // asynchronous commit phase are NOT caught here — they are handled by
+    // React's error boundary mechanism. If ExportRenderer has no error
+    // boundary, React will log the error to the console and the component
+    // tree will be unmounted silently, resulting in a blank canvas without
+    // rejecting this promise. This is a known limitation of html-to-image +
+    // React 18 concurrent rendering; adding an ErrorBoundary around
+    // ExportRenderer would allow propagating async render errors here.
     await new Promise<void>((resolve, reject) => {
       try {
         root.render(
