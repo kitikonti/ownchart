@@ -317,15 +317,15 @@ Dateien die waehrend des Reviews neu erstellt wurden und noch nicht reviewt sind
 - [ ] `src/styles/inputStyles.ts` (26 LOC)
 
 ### New Config
-- [ ] `src/config/densityConfig.ts` (81 LOC)
-- [ ] `src/config/viewSettingsDefaults.ts` (45 LOC)
-- [ ] `src/config/layoutConstants.ts` (54 LOC)
-- [ ] `src/config/colorModeDefaults.ts` (38 LOC)
-- [ ] `src/config/colorSwatches.ts` (27 LOC)
-- [ ] `src/config/workingDaysConfig.ts` (11 LOC)
-- [ ] `src/config/taskDefaults.ts` (10 LOC)
-- [ ] `src/config/keyboardNavigation.ts` (15 LOC)
-- [ ] `src/config/placeholderRow.ts` (4 LOC)
+- [x] `src/config/densityConfig.ts` (81 LOC)
+- [x] `src/config/viewSettingsDefaults.ts` (45 LOC)
+- [x] `src/config/layoutConstants.ts` (54 LOC)
+- [x] `src/config/colorModeDefaults.ts` (38 LOC)
+- [x] `src/config/colorSwatches.ts` (27 LOC)
+- [x] `src/config/workingDaysConfig.ts` (11 LOC)
+- [x] `src/config/taskDefaults.ts` (10 LOC)
+- [x] `src/config/keyboardNavigation.ts` (15 LOC)
+- [x] `src/config/placeholderRow.ts` (4 LOC)
 
 ### New Utils
 - [ ] `src/utils/computeTaskColor.ts` (448 LOC)
