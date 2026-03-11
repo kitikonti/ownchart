@@ -295,6 +295,96 @@ cd ../app-gantt-review
 
 ---
 
+## New Files (Post-Review, Not Yet Reviewed)
+
+Dateien die waehrend des Reviews neu erstellt wurden und noch nicht reviewt sind.
+
+### New Types
+- [ ] `src/types/task.types.ts` (39 LOC)
+- [ ] `src/types/branded.types.ts` (30 LOC)
+- [ ] `src/types/ui.types.ts` (13 LOC)
+
+### New Styles
+- [ ] `src/styles/cellStyles.ts` (49 LOC)
+- [ ] `src/styles/inputStyles.ts` (26 LOC)
+
+### New Config
+- [ ] `src/config/densityConfig.ts` (81 LOC)
+- [ ] `src/config/viewSettingsDefaults.ts` (45 LOC)
+- [ ] `src/config/layoutConstants.ts` (54 LOC)
+- [ ] `src/config/colorModeDefaults.ts` (38 LOC)
+- [ ] `src/config/colorSwatches.ts` (27 LOC)
+- [ ] `src/config/workingDaysConfig.ts` (11 LOC)
+- [ ] `src/config/taskDefaults.ts` (10 LOC)
+- [ ] `src/config/keyboardNavigation.ts` (15 LOC)
+- [ ] `src/config/placeholderRow.ts` (4 LOC)
+
+### New Utils
+- [ ] `src/utils/computeTaskColor.ts` (448 LOC)
+- [ ] `src/utils/taskBarDragHelpers.ts` (234 LOC)
+- [ ] `src/utils/layoutCalculations.ts` (55 LOC)
+- [ ] `src/utils/selection.ts` (33 LOC)
+- [ ] `src/utils/taskDisplayUtils.ts` (35 LOC)
+- [ ] `src/utils/hashUtils.ts` (38 LOC)
+- [ ] `src/utils/taskTypeUtils.ts` (26 LOC)
+- [ ] `src/utils/svgCoords.ts` (15 LOC)
+- [ ] `src/utils/buildClassNames.ts` (27 LOC)
+- [ ] `src/utils/stringUtils.ts` (11 LOC)
+
+### New Clipboard Utils
+- [ ] `src/utils/clipboard/prepareRowPaste.ts` (190 LOC)
+- [ ] `src/utils/clipboard/compare.ts` (29 LOC)
+
+### New Export Utils
+- [ ] `src/utils/export/exportLayout.ts` (292 LOC)
+- [ ] `src/utils/export/pagePresets.ts` (75 LOC)
+- [ ] `src/utils/export/columns.ts` (72 LOC)
+- [ ] `src/utils/export/dateFormatting.ts` (28 LOC)
+- [ ] `src/utils/export/exportToPng.ts` (24 LOC)
+- [ ] `src/utils/export/prepareExportTasks.ts` (17 LOC)
+
+### New File Operations
+- [ ] `src/utils/fileOperations/constants.ts` (81 LOC)
+
+### New Graph Utils
+- [ ] `src/utils/graph/graphHelpers.ts` (70 LOC)
+
+### New Components
+- [ ] `src/components/AppErrorBoundary.tsx` (70 LOC)
+- [ ] `src/components/StatusBar/ZoomControls.tsx` (130 LOC)
+- [ ] `src/components/Export/FitToWidthSelector.tsx` (117 LOC)
+- [ ] `src/components/Export/CustomZoomControl.tsx` (114 LOC)
+- [ ] `src/components/Layout/TimelinePanel.tsx` (112 LOC)
+- [ ] `src/components/common/SegmentedControl.tsx` (112 LOC)
+- [ ] `src/components/TaskList/InsertRowButton.tsx` (97 LOC)
+- [ ] `src/components/TaskList/useRowSelectionHandler.ts` (77 LOC)
+- [ ] `src/components/TaskList/RowOverlays.tsx` (66 LOC)
+- [ ] `src/components/TaskList/rowNumberConfig.ts` (41 LOC)
+- [ ] `src/components/common/FieldLabel.tsx` (30 LOC)
+- [ ] `src/components/TaskList/InsertLine.tsx` (31 LOC)
+- [ ] `src/components/TaskList/dragSelectionState.ts` (23 LOC)
+- [ ] `src/components/common/formVariantClasses.ts` (27 LOC)
+- [ ] `src/components/Ribbon/HelpTabContent.tsx` (35 LOC)
+
+### New Hooks
+- [ ] `src/hooks/useExportDialog.ts` (392 LOC)
+- [ ] `src/hooks/useCellEdit.ts` (264 LOC)
+- [ ] `src/hooks/useHomeTabActions.ts` (190 LOC)
+- [ ] `src/hooks/usePlaceholderNameEdit.ts` (187 LOC)
+- [ ] `src/hooks/useInfiniteScroll.ts` (184 LOC)
+- [ ] `src/hooks/useViewTabActions.ts` (143 LOC)
+- [ ] `src/hooks/useContainerDimensions.ts` (84 LOC)
+- [ ] `src/hooks/usePlaceholderContextMenu.ts` (74 LOC)
+- [ ] `src/hooks/useNewTaskCreation.ts` (74 LOC)
+- [ ] `src/hooks/useTaskTableHeaderStore.ts` (37 LOC)
+- [ ] `src/hooks/useTaskStatistics.ts` (35 LOC)
+- [ ] `src/hooks/useSyncScroll.ts` (35 LOC)
+- [ ] `src/hooks/usePreventVerticalScroll.ts` (22 LOC)
+- [ ] `src/hooks/useIsCellEditing.ts` (20 LOC)
+- [ ] `src/hooks/useIsPlaceholderSelected.ts` (15 LOC)
+
+---
+
 ## Cross-Cutting Concerns
 
 Patterns die mehrere Dateien betreffen. Beim Review jeder Datei pruefen ob sie betroffen ist.
