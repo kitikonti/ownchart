@@ -94,6 +94,8 @@ cd ../app-gantt-review
 - [x] `src/types/launchQueue.d.ts` (17 LOC)
 - [x] `src/config/tableColumns.ts` (256 LOC)
 - [x] `src/styles/design-tokens.ts` (283 LOC)
+- [x] `src/styles/cellStyles.ts` (49 LOC)
+- [x] `src/styles/inputStyles.ts` (26 LOC)
 
 ### Priority: HIGH — File Operations (kritischer Pfad)
 - [x] `src/utils/fileOperations/validate.ts` (299 LOC)
