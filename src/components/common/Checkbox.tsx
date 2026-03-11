@@ -2,7 +2,7 @@
  * Checkbox - Outlook/Fluent UI style checkbox component.
  * Uses hidden native input with styled div for consistent cross-browser appearance.
  *
- * Style: 20x20px, 2px border-radius, blue fill with white checkmark when checked.
+ * Style: 20x20px, 2px border-radius (rounded-sm at 16px root), blue fill with white checkmark when checked.
  *
  * States:
  * - Unchecked: white bg, neutral border

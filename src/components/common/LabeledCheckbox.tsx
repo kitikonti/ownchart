@@ -64,7 +64,7 @@ export const LabeledCheckbox = memo(function LabeledCheckbox({
             // disabled — without it the label would still transfer focus to the input
             // even though no change event fires (focus-without-change is confusing UX).
             "opacity-50 cursor-not-allowed pointer-events-none"
-          : "hover:bg-neutral-50 cursor-pointer"
+          : "hover:bg-neutral-50 hover:border-neutral-300 cursor-pointer"
       )}
     >
       <Checkbox

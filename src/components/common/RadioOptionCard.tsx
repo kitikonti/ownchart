@@ -27,7 +27,10 @@ export interface RadioOptionCardProps {
   badge?: string;
   /** Expandable content shown when selected */
   children?: ReactNode;
-  /** Align radio to top (for cards with children) */
+  /**
+   * Align radio to top. Automatically inferred when `children` are present.
+   * Pass explicitly for cards with long multi-line descriptions but no children.
+   */
   alignTop?: boolean;
   /** Optional aria-label override for the radio input */
   ariaLabel?: string;

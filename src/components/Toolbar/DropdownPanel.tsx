@@ -95,6 +95,8 @@ export const DropdownPanel = memo(function DropdownPanel({
   // The inline style object only carries truly variable layout values.
   // useMemo prevents a new style object being allocated on every render.
   // The component is memo-wrapped, but children can still trigger re-renders.
+  // An unstabilised `style` object literal also defeats `React.memo` — both
+  // memoizations require stable references (see `style` prop JSDoc above).
   const panelStyle = useMemo<CSSProperties>(
     () => ({
       // width is optional — omit the property entirely when not set
