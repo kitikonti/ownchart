@@ -25,7 +25,7 @@ import { useHideOperations } from "./useHideOperations";
 import { findTopmostSelectedTaskId } from "../utils/selection";
 import type { Task } from "../types/chart.types";
 import type { TaskId } from "../types/branded.types";
-import type { EditableField } from "../types/task.types";
+import type { ActiveCell } from "../types/task.types";
 
 // ── OS detection ──────────────────────────────────────────────────────────────
 // Computed once at module load — environment-stable, never changes at runtime.
@@ -56,11 +56,6 @@ export function isTextInputElement(target: HTMLElement): boolean {
 // A single snapshot of all state needed by the sub-handlers.  Built fresh on
 // every render in useShortcutSubscriptions() and passed into every module-level
 // handler so they remain pure functions with no closed-over stale values.
-
-interface ActiveCell {
-  taskId: TaskId | null;
-  field: EditableField | null;
-}
 
 // Sub-interfaces grouped by concern — composed into ShortcutContext below.
 

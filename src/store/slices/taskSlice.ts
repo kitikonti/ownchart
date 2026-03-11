@@ -10,6 +10,7 @@ import type { Task } from "../../types/chart.types";
 import { type TaskId, toTaskId } from "../../types/branded.types";
 import {
   EDITABLE_FIELDS,
+  type ActiveCell,
   type EditableField,
   type NavigationDirection,
 } from "../../types/task.types";
@@ -44,6 +45,7 @@ import { createInsertionActions } from "./insertionActions";
 
 // Re-export types for backwards compatibility
 export type {
+  ActiveCell,
   EditableField,
   NavigationDirection,
 } from "../../types/task.types";
@@ -59,10 +61,7 @@ export interface TaskState {
   lastSelectedTaskId: TaskId | null;
 
   // Cell navigation state
-  activeCell: {
-    taskId: TaskId | null;
-    field: EditableField | null;
-  };
+  activeCell: ActiveCell;
   isEditingCell: boolean;
   columnWidths: Record<string, number>;
 

@@ -34,14 +34,11 @@ export type NavigationDirection = "up" | "down" | "left" | "right";
  * Active cell state — the cell currently focused for keyboard navigation or editing.
  * Shared by taskSlice (state), insertPosition, and prepareRowPaste utilities.
  *
- * @remarks Both fields are either simultaneously non-null (a cell is active) or
- * simultaneously null (no cell is selected). The mixed state
- * `{ taskId: someId, field: null }` is logically invalid and must never be
- * written. A future improvement would be to model this as a discriminated union
- * (`{ taskId: TaskId; field: EditableField } | { taskId: null; field: null }`)
- * to enforce the invariant at compile time.
+ * Modelled as a discriminated union so the compiler enforces that `taskId` and
+ * `field` are always either both non-null (a cell is active) or both null (no
+ * cell is selected). The mixed state `{ taskId: someId, field: null }` is
+ * therefore a compile-time error.
  */
-export interface ActiveCell {
-  taskId: TaskId | null;
-  field: EditableField | null;
-}
+export type ActiveCell =
+  | { taskId: TaskId; field: EditableField }
+  | { taskId: null; field: null };
