@@ -13,6 +13,12 @@ import { calculateExportDimensions } from "./exportLayout";
 import { REACT_RENDER_WAIT_MS } from "./constants";
 
 /**
+ * Minimum pixel ratio for capture — ensures crisp rendering on standard displays.
+ * Acts as a lower bound in both the device pixel ratio and max-capture-ratio clamps.
+ */
+const MIN_CAPTURE_PIXEL_RATIO = 2;
+
+/**
  * Compute the maximum pixel ratio for capture to prevent oversized canvases
  * on high-DPR displays (e.g. 4K at dpr=4 would otherwise produce a canvas
  * wider than EXPORT_MAX_SAFE_WIDTH).
@@ -127,8 +133,8 @@ export async function captureChart(
     // Cap pixel ratio to avoid producing canvases wider than EXPORT_MAX_SAFE_WIDTH.
     const maxCapturePixelRatio = computeMaxCapturePixelRatio();
     const pixelRatio = Math.min(
-      Math.max(window.devicePixelRatio, 2),
-      Math.max(maxCapturePixelRatio, 2)
+      Math.max(window.devicePixelRatio, MIN_CAPTURE_PIXEL_RATIO),
+      Math.max(maxCapturePixelRatio, MIN_CAPTURE_PIXEL_RATIO)
     );
 
     // Capture the container using html-to-image

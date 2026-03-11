@@ -33,7 +33,6 @@ export function getColumnDisplayValue(
   task: Task,
   key: ExportDataColumnKey
 ): string | null {
-  const isSummary = task.type === "summary";
   const isMilestone = task.type === "milestone";
 
   if (key === "startDate") {
@@ -45,12 +44,13 @@ export function getColumnDisplayValue(
   }
   if (key === "duration") {
     if (isMilestone) return "";
+    const isSummary = task.type === "summary";
     if (isSummary) {
       return task.duration !== undefined && task.duration > 0
         ? `${task.duration} days`
         : null;
     }
-    // Regular task ("task" type, or any future type that is not summary/milestone)
+    // Non-summary, non-milestone task
     return task.duration !== undefined ? `${task.duration}` : null;
   }
   // progress

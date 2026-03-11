@@ -210,10 +210,6 @@ function computeTimelineLayout(
   return { dateRange, effectiveZoom, scale };
 }
 
-// =============================================================================
-// Public API
-// =============================================================================
-
 /**
  * Flatten the input task list into display order and extract ordered Task objects.
  */
@@ -225,6 +221,10 @@ function flattenInputTasks(tasks: Task[]): {
   const orderedTasks = flattenedTasks.map((ft) => ft.task);
   return { flattenedTasks, orderedTasks };
 }
+
+// =============================================================================
+// Public API
+// =============================================================================
 
 /**
  * Computes the full export layout geometry from tasks and options.
