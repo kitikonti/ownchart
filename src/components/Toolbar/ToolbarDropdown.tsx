@@ -141,7 +141,7 @@ function ToolbarDropdownInner<T extends string = string>({
       {isOpen && (
         <DropdownPanel
           role="listbox"
-          aria-label={ariaLabel}
+          aria-label={ariaLabel ?? displayLabel}
           aria-activedescendant={activeDescendantId}
         >
           {options.map((option, index) => (

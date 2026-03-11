@@ -219,6 +219,8 @@ export const Z_INDEX = {
   contextMenu: 1000,
   /** Modal dialogs — must sit above context menus and dropdowns */
   modal: 1100,
+  /** Mobile block overlay — must sit above the export dialog and all other overlays */
+  mobileBlock: 2000,
   popover: 10000,
 } as const;
 

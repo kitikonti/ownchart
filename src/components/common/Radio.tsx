@@ -11,21 +11,38 @@
  * - Checked hover: brand-700 colors
  * - Focus-visible: blue ring (keyboard navigation)
  * - Active: slight scale down
- * - Disabled: 50% opacity
+ * - Disabled: 50% opacity, no hover/active effects
  */
+
+import { memo } from "react";
+import { buildClassNames } from "../../utils/buildClassNames";
+import { PEER_FOCUS_RING, PEER_ACTIVE_SCALE } from "../../styles/inputStyles";
 
 export interface RadioProps {
   checked: boolean;
   onChange: () => void;
   name: string;
-  /** Value of the radio input — used for form semantics and correct behaviour in radio groups. */
+  /**
+   * Value of the radio input — used for form semantics and correct behaviour in radio groups.
+   *
+   * **Warning**: when omitted, browsers default to `"on"` for every radio in the group,
+   * making them indistinguishable in form submissions. Always supply a unique `value`
+   * when using multiple `<Radio>` buttons with the same `name`. `RadioOptionCard` always
+   * passes `value ?? title` to guarantee uniqueness.
+   */
   value?: string;
   disabled?: boolean;
+  /**
+   * Accessible label for the radio input.
+   * Only needed when the component is NOT wrapped in a `<label>` element.
+   * When used inside a `<label>` (e.g. RadioOptionCard), the wrapping label already
+   * provides the accessible name — passing aria-label here will override it.
+   */
   "aria-label"?: string;
   id?: string;
 }
 
-export function Radio({
+export const Radio = memo(function Radio({
   checked,
   onChange,
   name,
@@ -34,17 +51,48 @@ export function Radio({
   "aria-label": ariaLabel,
   id,
 }: RadioProps): JSX.Element {
+  const visualClasses = buildClassNames(
+    "w-4 h-4 rounded-full flex items-center justify-center",
+    "transition-all duration-150",
+    checked
+      ? [
+          "border-[1.5px] border-brand-600",
+          !disabled ? "peer-hover:border-brand-700" : null,
+        ]
+      : [
+          "border border-neutral-400",
+          !disabled
+            ? "peer-hover:border-neutral-500 peer-hover:bg-neutral-50"
+            : null,
+        ],
+    PEER_FOCUS_RING,
+    !disabled ? PEER_ACTIVE_SCALE : null
+  );
+
   return (
     <div
-      className={`relative inline-flex items-center justify-center w-4 h-4 flex-shrink-0 ${
-        disabled ? "cursor-not-allowed opacity-50" : "cursor-pointer"
-      }`}
+      className={buildClassNames(
+        "relative inline-flex items-center justify-center w-4 h-4 flex-shrink-0",
+        // Cursor is driven by the native input (cursor-pointer / disabled:cursor-not-allowed).
+        // The wrapper only carries opacity for the disabled state; no cursor class needed here.
+        disabled ? "opacity-50" : undefined
+      )}
     >
-      {/* Hidden native input for accessibility - uses 'peer' for sibling styling */}
+      {/* Hidden native input for accessibility - uses 'peer' for sibling styling.
+          Must precede the visual div in source order — peer-* classes require a
+          preceding sibling with the 'peer' class (Tailwind peer modifier).
+          Note: when used inside RadioOptionCard, both the native input's onChange
+          and the wrapping label's click handler fire — this is harmless since both
+          call the same onChange callback.
+          aria-checked is intentionally NOT set: for native <input type="radio">
+          the browser derives the AT-announced checked state directly from the
+          `checked` DOM property — explicitly adding aria-checked would be redundant
+          and could diverge from the native state during re-renders. Radio inputs
+          also have no "mixed" indeterminate state that would require an override. */}
       <input
         type="radio"
         checked={checked}
-        onChange={() => !disabled && onChange()}
+        onChange={onChange}
         name={name}
         value={value}
         disabled={disabled}
@@ -53,19 +101,7 @@ export function Radio({
         className="peer absolute opacity-0 w-full h-full cursor-pointer disabled:cursor-not-allowed z-10"
       />
       {/* Visual radio - Outlook/Fluent style with all states */}
-      <div
-        className={`
-          w-4 h-4 rounded-full flex items-center justify-center
-          transition-all duration-150
-          ${
-            checked
-              ? "border-[1.5px] border-brand-600 peer-hover:border-brand-700"
-              : "border border-neutral-400 peer-hover:border-neutral-500 peer-hover:bg-neutral-50"
-          }
-          peer-focus-visible:ring-2 peer-focus-visible:ring-brand-200 peer-focus-visible:ring-offset-1
-          peer-active:scale-95
-        `}
-      >
+      <div aria-hidden="true" className={visualClasses}>
         {/* Inner filled circle when checked */}
         {checked && (
           <div className="w-2 h-2 rounded-full bg-brand-600 transition-colors duration-150" />
@@ -73,4 +109,4 @@ export function Radio({
       </div>
     </div>
   );
-}
+});

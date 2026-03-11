@@ -4,6 +4,7 @@
 
 import { describe, it, expect, vi } from "vitest";
 import { render, screen, fireEvent } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
 import { MobileBlockScreen } from "../../../src/components/MobileBlockScreen";
 import { APP_CONFIG } from "../../../src/config/appConfig";
 
@@ -36,5 +37,96 @@ describe("MobileBlockScreen", () => {
     const { container } = render(<MobileBlockScreen onDismiss={vi.fn()} />);
     const svg = container.querySelector("svg");
     expect(svg).toBeInTheDocument();
+  });
+
+  it("moves focus to the dismiss button on mount", () => {
+    render(<MobileBlockScreen onDismiss={vi.fn()} />);
+    const button = screen.getByRole("button", { name: /continue anyway/i });
+    expect(document.activeElement).toBe(button);
+  });
+
+  it("keeps focus on the dismiss button when Tab is pressed", async () => {
+    const user = userEvent.setup();
+    render(<MobileBlockScreen onDismiss={vi.fn()} />);
+    const button = screen.getByRole("button", { name: /continue anyway/i });
+
+    // Focus starts on the button (from the mount effect)
+    button.focus();
+    expect(document.activeElement).toBe(button);
+
+    // Tab should be intercepted — focus must remain on the button
+    await user.tab();
+    expect(document.activeElement).toBe(button);
+  });
+
+  it("keeps focus on the dismiss button when Shift+Tab is pressed", async () => {
+    const user = userEvent.setup();
+    render(<MobileBlockScreen onDismiss={vi.fn()} />);
+    const button = screen.getByRole("button", { name: /continue anyway/i });
+
+    button.focus();
+    expect(document.activeElement).toBe(button);
+
+    // Shift+Tab should also be intercepted
+    await user.tab({ shift: true });
+    expect(document.activeElement).toBe(button);
+  });
+
+  it("has role=dialog with aria-modal and accessible label", () => {
+    render(<MobileBlockScreen onDismiss={vi.fn()} />);
+    const dialog = screen.getByRole("dialog");
+    expect(dialog).toHaveAttribute("aria-modal", "true");
+    // The heading 'Desktop browser required' labels the dialog via aria-labelledby
+    const heading = screen.getByText("Desktop browser required");
+    expect(dialog).toHaveAttribute("aria-labelledby", heading.id);
+  });
+
+  it("has aria-describedby pointing to the description paragraph", () => {
+    render(<MobileBlockScreen onDismiss={vi.fn()} />);
+    const dialog = screen.getByRole("dialog");
+    const describedById = dialog.getAttribute("aria-describedby");
+    expect(describedById).toBeTruthy();
+    // The element with that id should be the description paragraph
+    const descriptionEl = document.getElementById(describedById!);
+    expect(descriptionEl).toBeInTheDocument();
+    expect(descriptionEl?.tagName).toBe("P");
+  });
+
+  it("calls onDismiss when Escape is pressed on the dismiss button", () => {
+    const onDismiss = vi.fn();
+    render(<MobileBlockScreen onDismiss={onDismiss} />);
+    const button = screen.getByRole("button", { name: /continue anyway/i });
+    fireEvent.keyDown(button, { key: "Escape" });
+    expect(onDismiss).toHaveBeenCalledOnce();
+  });
+
+  it("does not call onDismiss for non-Escape/Tab keys on the dismiss button", () => {
+    const onDismiss = vi.fn();
+    render(<MobileBlockScreen onDismiss={onDismiss} />);
+    const button = screen.getByRole("button", { name: /continue anyway/i });
+    fireEvent.keyDown(button, { key: "Enter" });
+    expect(onDismiss).not.toHaveBeenCalled();
+  });
+
+  it("restores focus to the previously focused element on unmount", () => {
+    // Simulate a previously focused element (e.g., a toolbar button that triggered
+    // the mobile block detection) to verify WCAG 2.1 §2.4.3 focus restoration.
+    const trigger = document.createElement("button");
+    trigger.textContent = "Trigger";
+    document.body.appendChild(trigger);
+    trigger.focus();
+    expect(document.activeElement).toBe(trigger);
+
+    const { unmount } = render(<MobileBlockScreen onDismiss={vi.fn()} />);
+    // After mount, focus should have moved to the dismiss button
+    expect(document.activeElement).toBe(
+      screen.getByRole("button", { name: /continue anyway/i })
+    );
+
+    // After unmount, focus should return to the element that was focused before
+    unmount();
+    expect(document.activeElement).toBe(trigger);
+
+    document.body.removeChild(trigger);
   });
 });
