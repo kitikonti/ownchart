@@ -28,15 +28,28 @@ import {
 } from "./colorUtils";
 
 /**
+ * Build a Map<id, Task> for O(1) parent lookups during tree traversal.
+ * All internal helpers that walk the task hierarchy accept this map instead
+ * of the raw array so repeated allTasks.find() calls are eliminated.
+ */
+function buildTaskMap(allTasks: Task[]): Map<string, Task> {
+  const map = new Map<string, Task>();
+  for (const t of allTasks) {
+    map.set(t.id, t);
+  }
+  return map;
+}
+
+/**
  * Get the hierarchy depth of a task
  */
-function getTaskDepth(task: Task, allTasks: Task[]): number {
+function getTaskDepth(task: Task, taskMap: Map<string, Task>): number {
   let depth = 0;
   let currentTask: Task | undefined = task;
 
   while (currentTask?.parent) {
     depth++;
-    currentTask = allTasks.find((t) => t.id === currentTask?.parent);
+    currentTask = taskMap.get(currentTask.parent);
   }
 
   return depth;
@@ -47,11 +60,11 @@ function getTaskDepth(task: Task, allTasks: Task[]): number {
  */
 function getNearestSummaryParent(
   task: Task,
-  allTasks: Task[]
+  taskMap: Map<string, Task>
 ): Task | undefined {
   if (!task.parent) return undefined;
 
-  const parent = allTasks.find((t) => t.id === task.parent);
+  const parent = taskMap.get(task.parent);
   if (!parent) return undefined;
 
   if (parent.type === "summary") {
@@ -59,7 +72,7 @@ function getNearestSummaryParent(
   }
 
   // Recursively check parent's parent
-  return getNearestSummaryParent(parent, allTasks);
+  return getNearestSummaryParent(parent, taskMap);
 }
 
 /**
@@ -74,9 +87,11 @@ function getRootSummaries(allTasks: Task[]): Task[] {
  * - If there's only one root summary, use its level-1 children as color-givers.
  * - Otherwise use direct summary parents.
  */
-function getThemeColorGiver(task: Task, allTasks: Task[]): Task | undefined {
-  const rootSummaries = getRootSummaries(allTasks);
-
+function getThemeColorGiver(
+  task: Task,
+  taskMap: Map<string, Task>,
+  rootSummaries: Task[]
+): Task | undefined {
   // Special case: single root summary → use its level-1 children as color-givers
   if (rootSummaries.length === 1) {
     const singleRoot = rootSummaries[0];
@@ -92,7 +107,7 @@ function getThemeColorGiver(task: Task, allTasks: Task[]): Task | undefined {
     // Walk up to find the level-1 ancestor (direct child of single root)
     let current: Task | undefined = task;
     while (current?.parent) {
-      const parent = allTasks.find((t) => t.id === current?.parent);
+      const parent = taskMap.get(current.parent);
       if (!parent) break;
       if (parent.parent === singleRoot.id) {
         return parent; // Found the level-1 color-giver
@@ -107,7 +122,7 @@ function getThemeColorGiver(task: Task, allTasks: Task[]): Task | undefined {
   // so all descendants of the same root group share one base color
   let current: Task | undefined = task;
   while (current?.parent) {
-    const parent = allTasks.find((t) => t.id === current?.parent);
+    const parent = taskMap.get(current.parent);
     if (!parent) break;
     current = parent;
   }
@@ -199,7 +214,7 @@ function assignPaletteIndices(
 function getDepthRelativeToColorGiver(
   task: Task,
   colorGiver: Task,
-  allTasks: Task[]
+  taskMap: Map<string, Task>
 ): number {
   let depth = 0;
   let current: Task | undefined = task;
@@ -207,7 +222,7 @@ function getDepthRelativeToColorGiver(
   while (current && current.id !== colorGiver.id) {
     depth++;
     if (!current.parent) break;
-    current = allTasks.find((t) => t.id === current?.parent);
+    current = taskMap.get(current.parent);
   }
 
   return depth;
@@ -228,6 +243,10 @@ const THEME_SIBLING_HUE_HALF_RANGE = 2;
 interface ThemeContext {
   paletteColors: string[];
   assignment: Map<string, number>;
+  /** Cached root summaries — used by getThemeColorGiver to avoid re-filtering. */
+  rootSummaries: Task[];
+  /** O(1) lookup map for parent traversal. */
+  taskMap: Map<string, Task>;
 }
 
 /**
@@ -253,24 +272,22 @@ function buildThemeContext(
 
   if (paletteColors.length === 0) return null;
 
+  const taskMap = buildTaskMap(allTasks);
+  const rootSummaries = getRootSummaries(allTasks);
   const assignment = assignPaletteIndices(
     getColorGiverIds(allTasks),
     paletteColors.length
   );
-  return { paletteColors, assignment };
+  return { paletteColors, assignment, rootSummaries, taskMap };
 }
 
 /**
  * Compute a single task's theme-mode color using a pre-built ThemeContext.
  * The caller is responsible for checking colorOverride before calling this.
  */
-function applyThemeColor(
-  task: Task,
-  allTasks: Task[],
-  ctx: ThemeContext
-): HexColor {
-  const { paletteColors, assignment } = ctx;
-  const colorGiver = getThemeColorGiver(task, allTasks);
+function applyThemeColor(task: Task, ctx: ThemeContext): HexColor {
+  const { paletteColors, assignment, rootSummaries, taskMap } = ctx;
+  const colorGiver = getThemeColorGiver(task, taskMap, rootSummaries);
 
   if (!colorGiver) {
     const idx =
@@ -287,7 +304,7 @@ function applyThemeColor(
     return baseColor as HexColor;
   }
 
-  const depth = getDepthRelativeToColorGiver(task, colorGiver, allTasks);
+  const depth = getDepthRelativeToColorGiver(task, colorGiver, taskMap);
   const taskHash = stableHash(task.id);
   const hsl = hexToHSL(baseColor);
 
@@ -342,7 +359,7 @@ export function computeTaskColor(
     case "theme": {
       const themeCtx = buildThemeContext(allTasks, themeOptions);
       if (!themeCtx) return task.color;
-      return applyThemeColor(task, allTasks, themeCtx);
+      return applyThemeColor(task, themeCtx);
     }
 
     case "summary": {
@@ -357,7 +374,8 @@ export function computeTaskColor(
       }
 
       // Non-summary children inherit from nearest summary parent
-      const summaryParent = getNearestSummaryParent(task, allTasks);
+      const taskMap = buildTaskMap(allTasks);
+      const summaryParent = getNearestSummaryParent(task, taskMap);
       if (summaryParent) {
         return summaryParent.colorOverride || summaryParent.color;
       }
@@ -381,7 +399,8 @@ export function computeTaskColor(
 
     case "hierarchy": {
       // Calculate depth and apply lightening
-      const depth = getTaskDepth(task, allTasks);
+      const taskMap = buildTaskMap(allTasks);
+      const depth = getTaskDepth(task, taskMap);
       const lightenAmount = Math.min(
         depth * (hierarchyOptions.lightenPercentPerLevel / 100),
         hierarchyOptions.maxLightenPercent / 100
@@ -448,11 +467,13 @@ export function computeAllTaskColors(
     }
 
     for (const task of tasks) {
+      // colorOverride check mirrors computeTaskColor's automatic-mode guard.
+      // Kept inline here so we can skip applyThemeColor entirely for overridden tasks.
       if (task.colorOverride) {
         result.set(task.id, task.colorOverride);
         continue;
       }
-      result.set(task.id, applyThemeColor(task, tasks, themeCtx));
+      result.set(task.id, applyThemeColor(task, themeCtx));
     }
     return result;
   }

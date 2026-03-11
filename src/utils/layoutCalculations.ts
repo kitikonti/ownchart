@@ -49,7 +49,7 @@ export function calculateLayoutDimensions({
       ? Math.max(scaleTotalWidth, containerWidth + MIN_OVERFLOW)
       : containerWidth + MIN_OVERFLOW;
 
-  const contentAreaHeight = viewportHeight - HEADER_HEIGHT;
+  const contentAreaHeight = Math.max(0, viewportHeight - HEADER_HEIGHT);
 
   return { totalContentHeight, timelineHeaderWidth, contentAreaHeight };
 }

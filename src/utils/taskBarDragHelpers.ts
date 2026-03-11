@@ -10,16 +10,10 @@ import type { WorkingDaysConfig } from "../types/preferences.types";
 import { addDays, calculateDuration } from "./dateUtils";
 import { calculateWorkingDays, addWorkingDays } from "./workingDaysCalculator";
 import { validateDragOperation } from "./dragValidation";
+import { MS_PER_DAY } from "./timeConstants";
 
 /** Edge detection threshold in pixels */
 export const EDGE_THRESHOLD = 8;
-
-/**
- * Milliseconds per day.
- * Note: taskSliceHelpers.ts also exports this constant. It is intentionally
- * duplicated here to avoid a utils → store layer dependency.
- */
-const MS_PER_DAY = 1000 * 60 * 60 * 24;
 
 export type InteractionMode =
   | "idle"

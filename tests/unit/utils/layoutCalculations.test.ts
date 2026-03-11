@@ -110,5 +110,14 @@ describe("calculateLayoutDimensions", () => {
 
       expect(result.contentAreaHeight).toBe(100 - HEADER_HEIGHT);
     });
+
+    it("should clamp to 0 when viewport is smaller than the header", () => {
+      const result = calculateLayoutDimensions({
+        ...defaults,
+        viewportHeight: 10,
+      });
+
+      expect(result.contentAreaHeight).toBe(0);
+    });
   });
 });
