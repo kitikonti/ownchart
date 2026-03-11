@@ -15,9 +15,6 @@ import { DropdownPanel } from "./DropdownPanel";
 import { DropdownItem } from "./DropdownItem";
 import type { DropdownOption } from "../../types/ui.types";
 
-// Re-exported so existing imports from this file continue to work.
-export type { DropdownOption } from "../../types/ui.types";
-
 interface ToolbarDropdownProps<T extends string = string> {
   /** Currently selected value */
   value: T;

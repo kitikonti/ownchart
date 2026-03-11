@@ -5,7 +5,15 @@
  * PaletteId: Branded type — requires explicit `as PaletteId` from plain strings.
  */
 
-/** Hex color code, e.g. "#FF0000" or "#F00". Template literal type — string literals auto-match. */
+/**
+ * Hex color code, e.g. "#FF0000" or "#F00".
+ *
+ * Template literal type — any string that starts with `#` satisfies this type
+ * at compile time. This is a structural hint, not a full CSS hex validator:
+ * values like `"#"` or `"#gggggg"` will compile but may produce unexpected
+ * rendering. Callers that need strict validation (e.g. deserialization) should
+ * apply a regex guard (`/^#[0-9A-Fa-f]{3,8}$/`) before casting via `toHexColor`.
+ */
 export type HexColor = `#${string}`;
 
 /** Color palette identifier. Branded type — requires explicit cast from plain string. */
@@ -36,6 +44,10 @@ export function toHexColor(value: string): HexColor {
  * definitions and deserialization of saved files. Do not call with
  * arbitrary user input without first verifying the value against the
  * known palette list.
+ *
+ * Deserialization callers MUST validate the string against the known
+ * palette list before casting (e.g. `COLOR_PALETTES.some(p => p.id === value)`)
+ * to avoid persisting an invalid palette ID into application state.
  */
 export function toPaletteId(value: string): PaletteId {
   return value as PaletteId;

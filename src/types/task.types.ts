@@ -1,6 +1,16 @@
 /**
  * Task table UI and keyboard-navigation types.
  * Extracted from taskSlice to avoid circular imports.
+ *
+ * Exports:
+ * - `EditableField` — union of all user-editable cell field names.
+ * - `EDITABLE_FIELDS` — runtime array of every `EditableField` value, in
+ *   tab-navigation order. Single source of truth for navigation and clipboard.
+ * - `AssertEditableFieldsExhaustive` — compile-time assertion that the array
+ *   and the union stay in sync. Resolves to `true` when they match; a missing
+ *   or extra entry makes the type resolve to `never`, failing compilation.
+ * - `NavigationDirection` — keyboard navigation direction union.
+ * - `ActiveCell` — discriminated union representing the currently-focused cell.
  */
 
 import type { TaskId } from "./branded.types";
