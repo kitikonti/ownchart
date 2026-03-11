@@ -4,8 +4,12 @@
  */
 
 import { describe, it, expect } from "vitest";
-import { getCellStyle, getActiveCellStyle } from "../../../src/styles/cellStyles";
-import { CELL } from "../../../src/styles/design-tokens";
+import {
+  getCellStyle,
+  getActiveCellStyle,
+  getEditingCellStyle,
+} from "../../../src/styles/cellStyles";
+import { CELL, Z_INDEX } from "../../../src/styles/design-tokens";
 
 describe("getCellStyle", () => {
   it("returns density-aware CSS custom properties", () => {
@@ -35,9 +39,44 @@ describe("getActiveCellStyle", () => {
     expect(style.boxShadow).toBe(CELL.activeBorderShadow);
   });
 
+  it("applies cellActive z-index", () => {
+    const style = getActiveCellStyle("startDate");
+    expect(style.zIndex).toBe(Z_INDEX.cellActive);
+  });
+
   it("preserves name column paddingLeft behavior", () => {
     const style = getActiveCellStyle("name");
     expect(style.paddingLeft).toBeUndefined();
     expect(style.boxShadow).toBe(CELL.activeBorderShadow);
+  });
+});
+
+describe("getEditingCellStyle", () => {
+  it("extends base cell style with active border shadow", () => {
+    const style = getEditingCellStyle("startDate");
+    expect(style.height).toBe("var(--density-row-height)");
+    expect(style.paddingTop).toBe("var(--density-cell-padding-y)");
+    expect(style.paddingBottom).toBe("var(--density-cell-padding-y)");
+    expect(style.paddingRight).toBe("var(--density-cell-padding-x)");
+    expect(style.fontSize).toBe("var(--density-font-size-cell)");
+    expect(style.boxShadow).toBe(CELL.activeBorderShadow);
+  });
+
+  it("applies cellEditing z-index — higher than cellActive", () => {
+    const editingStyle = getEditingCellStyle("startDate");
+    const activeStyle = getActiveCellStyle("startDate");
+    expect(editingStyle.zIndex).toBe(Z_INDEX.cellEditing);
+    expect(Number(editingStyle.zIndex)).toBeGreaterThan(Number(activeStyle.zIndex));
+  });
+
+  it("omits paddingLeft for name column (hierarchy handles indentation)", () => {
+    const style = getEditingCellStyle("name");
+    expect(style.paddingLeft).toBeUndefined();
+    expect(style.boxShadow).toBe(CELL.activeBorderShadow);
+  });
+
+  it("includes paddingLeft for non-name columns", () => {
+    const style = getEditingCellStyle("startDate");
+    expect(style.paddingLeft).toBe("var(--density-cell-padding-x)");
   });
 });
