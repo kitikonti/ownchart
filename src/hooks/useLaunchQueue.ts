@@ -15,10 +15,26 @@ import {
   showLoadNotifications,
 } from "../utils/fileOperations/loadFromFile";
 
+// Dev-mode singleton guard: detect accidental double-mounting.
+// The LaunchQueue API silently overwrites the previous consumer when
+// setConsumer is called more than once, so this warning surfaces the bug early.
+let _launchQueueConsumerRegistered = false;
+
 export function useLaunchQueue(): void {
   useEffect(() => {
     const lq = window.launchQueue;
     if (!lq) return;
+
+    if (import.meta.env.DEV) {
+      if (_launchQueueConsumerRegistered) {
+        console.warn(
+          "[useLaunchQueue] Hook mounted more than once. " +
+            "Only the most recent consumer will receive launch events. " +
+            "Ensure this hook is used as a singleton at the root level."
+        );
+      }
+      _launchQueueConsumerRegistered = true;
+    }
 
     lq.setConsumer(async (launchParams: LaunchParams) => {
       if (!launchParams.files || launchParams.files.length === 0) return;
