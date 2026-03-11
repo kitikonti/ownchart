@@ -17,6 +17,13 @@ import type { TaskId } from "../../types/branded.types";
  *   performs a direct membership test only — it does NOT walk the hierarchy
  *   itself. If a child task is not present in `hiddenTaskIds`, it will appear
  *   in the export even if its parent is hidden.
+ *
+ * @example
+ * // CORRECT: pass both parent and all its descendants
+ * prepareExportTasks(tasks, [parentId, child1Id, child2Id]);
+ *
+ * // INCORRECT: passing only the parent will leak child tasks into the export
+ * prepareExportTasks(tasks, [parentId]); // child1 and child2 will still appear!
  */
 export function prepareExportTasks(
   tasks: ReadonlyArray<Task>,

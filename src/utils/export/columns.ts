@@ -45,13 +45,13 @@ export function getColumnDisplayValue(
   }
   if (key === "duration") {
     if (isMilestone) return "";
-    if (isSummary && task.duration !== undefined && task.duration > 0) {
-      return `${task.duration} days`;
+    if (isSummary) {
+      return task.duration !== undefined && task.duration > 0
+        ? `${task.duration} days`
+        : null;
     }
-    if (!isSummary && task.duration !== undefined) {
-      return `${task.duration}`;
-    }
-    return null;
+    // Regular task ("task" type, or any future type that is not summary/milestone)
+    return task.duration !== undefined ? `${task.duration}` : null;
   }
   // progress
   return task.progress !== undefined ? `${task.progress}%` : null;

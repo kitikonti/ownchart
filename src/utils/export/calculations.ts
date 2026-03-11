@@ -18,6 +18,9 @@ import { HEADER_LABELS, getColumnDisplayValue } from "./columns";
 /** Base pixels per day at 100% zoom */
 export const BASE_PIXELS_PER_DAY = 25;
 
+/** Milliseconds per day — shared calculation constant */
+export const MS_PER_DAY = 1000 * 60 * 60 * 24;
+
 /**
  * Get default column width based on density setting.
  */
@@ -166,7 +169,7 @@ export function calculateDurationDays(dateRange: {
 }): number {
   const durationMs =
     new Date(dateRange.max).getTime() - new Date(dateRange.min).getTime();
-  return Math.ceil(durationMs / (1000 * 60 * 60 * 24));
+  return Math.ceil(durationMs / MS_PER_DAY);
 }
 
 /**

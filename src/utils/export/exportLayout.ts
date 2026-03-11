@@ -20,6 +20,7 @@ import {
   getEffectiveDateRange,
   calculateDurationDays,
   calculateOptimalColumnWidths,
+  MS_PER_DAY,
 } from "./calculations";
 import { getTimelineScale } from "../timelineUtils";
 import { getDateRange } from "../dateUtils";
@@ -63,9 +64,6 @@ const DATE_RANGE_PADDING_DAYS = 14;
 
 /** Minimum timeline width in pixels (prevents degenerate layouts) */
 const MIN_TIMELINE_WIDTH = 100;
-
-/** Milliseconds per day */
-const MS_PER_DAY = 1000 * 60 * 60 * 24;
 
 /** Reusable empty set passed to buildFlattenedTaskList — no hidden tasks during export */
 const EMPTY_HIDDEN_TASK_IDS = new Set<TaskId>();
@@ -175,6 +173,14 @@ function computeTimelineLayout(
   effectiveZoom: number;
   scale: TimelineScale;
 } {
+  // Two-pass zoom estimation:
+  // Pass 1 — Compute a preliminary zoom from the raw project duration (before label
+  //           padding is added). This preliminary zoom is only needed by
+  //           getEffectiveDateRange to calculate how many extra days of padding are
+  //           required so that task labels are not clipped at the edges of the chart.
+  // Pass 2 — Re-compute the final zoom from the padded duration. The padded date
+  //           range is slightly wider, so the zoom that "fits" it is marginally
+  //           smaller. Using the final duration keeps the fit-to-width mode accurate.
   const preliminaryDuration = estimatePreliminaryDuration(projectDateRange);
   const preliminaryZoom = calculateEffectiveZoom(
     options,
