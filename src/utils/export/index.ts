@@ -10,7 +10,7 @@
 // High-level orchestration (primary public API)
 export { exportToPng } from "./exportToPng";
 
-// Types (single source of truth for export-domain types)
+// Types and domain constants (single source of truth for the export domain)
 export {
   DEFAULT_EXPORT_OPTIONS,
   DEFAULT_FIT_TO_WIDTH_PX,

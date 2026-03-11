@@ -40,14 +40,15 @@ export function downloadBlob(blob: Blob, filename: string): void {
 
   const url = URL.createObjectURL(blob);
 
+  // Two separate try/finally blocks: the inner one guarantees DOM cleanup
+  // (removeChild) even if link.click() throws; the outer one guarantees
+  // URL revocation even if the DOM operations throw.
   try {
     const link = document.createElement("a");
     link.href = url;
     link.download = filename;
 
     // Append to body to ensure it works in all browsers.
-    // Separate try/finally for the DOM link so that removeChild always runs
-    // even if click() throws, without preventing the URL cleanup below.
     document.body.appendChild(link);
     try {
       link.click();
