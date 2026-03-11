@@ -5,7 +5,7 @@
 
 import { COLORS } from "../../styles/design-tokens";
 
-/** Height of the header row in pixels — re-exported from canonical source */
+/** Height of the header row in pixels */
 export { HEADER_HEIGHT } from "../../config/layoutConstants";
 
 /**
