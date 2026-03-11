@@ -86,6 +86,10 @@ export function pixelsToDeltaDays(
 /**
  * Compute end date for a drag-move operation.
  * Handles both working-days and calendar-days modes.
+ *
+ * @param deltaDays - Used only in calendar-days mode. In working-days mode the
+ *   delta is already encoded in `newStartDate`; the end date is instead derived
+ *   by preserving the original working-day duration from the original dates.
  */
 export function computeEndDateForDrag(
   newStartDate: string,
@@ -96,6 +100,9 @@ export function computeEndDateForDrag(
   ctx: WorkingDaysContext
 ): string {
   if (ctx.enabled && taskType !== "milestone") {
+    // Working-days mode: preserve the original working-day count, shifting from
+    // the new start. deltaDays is intentionally not used here — the displacement
+    // is already captured in newStartDate.
     const originalWorkingDays = calculateWorkingDays(
       originalStartDate,
       originalEndDate,
@@ -172,8 +179,18 @@ export function buildMoveUpdates(
     if (t.type === "summary") continue;
 
     const newStartDate = addDays(t.startDate, deltaDays);
-    const newEndDate = t.endDate ? addDays(t.endDate, deltaDays) : "";
-    const validation = validateDragOperation(t, newStartDate, newEndDate);
+    // Compute a calendar-shifted end date for validation purposes.
+    // For non-milestones the final committed end date may differ (working-days
+    // recalculation happens below), but validation only needs to know whether
+    // the shift stays within acceptable bounds.
+    const calendarShiftedEndDate = t.endDate
+      ? addDays(t.endDate, deltaDays)
+      : "";
+    const validation = validateDragOperation(
+      t,
+      newStartDate,
+      calendarShiftedEndDate
+    );
     if (!validation.valid) continue;
 
     if (t.type === "milestone") {
@@ -187,6 +204,7 @@ export function buildMoveUpdates(
       });
     } else {
       // Reuse computeEndDateForDrag to avoid duplicating the working-days logic.
+      // When t.endDate is empty, fall back to the calendar-shifted value ('').
       const finalEndDate = t.endDate
         ? computeEndDateForDrag(
             newStartDate,
@@ -196,7 +214,7 @@ export function buildMoveUpdates(
             t.type,
             ctx
           )
-        : newEndDate;
+        : calendarShiftedEndDate;
       updates.push({
         id: taskId,
         updates: {

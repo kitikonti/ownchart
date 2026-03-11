@@ -255,7 +255,7 @@ interface ThemeContext {
  * Pre-compute the palette color list and index assignment for theme mode.
  * Returns null when no palette is configured (callers fall back to task.color).
  * Intended to be called once per batch so assignPaletteIndices runs only O(n log n)
- * instead of O(n) per task (which makes the full render O(n²)).
+ * once rather than once per task (which would be O(n² log n) total).
  */
 function buildThemeContext(
   allTasks: Task[],
@@ -538,7 +538,38 @@ export function computeAllTaskColors(
     return result;
   }
 
-  // For manual and taskType modes: no shared state needed; delegate to computeTaskColor per task.
+  if (mode === "manual") {
+    for (const task of tasks) {
+      result.set(task.id, task.color);
+    }
+    return result;
+  }
+
+  if (mode === "taskType") {
+    const { taskTypeOptions } = colorModeState;
+    for (const task of tasks) {
+      if (task.colorOverride) {
+        result.set(task.id, task.colorOverride);
+        continue;
+      }
+      switch (task.type) {
+        case "summary":
+          result.set(task.id, taskTypeOptions.summaryColor);
+          break;
+        case "milestone":
+          result.set(task.id, taskTypeOptions.milestoneColor);
+          break;
+        case "task":
+        default:
+          result.set(task.id, taskTypeOptions.taskColor);
+      }
+    }
+    return result;
+  }
+
+  // Fallback for any future modes not yet optimised: delegate to computeTaskColor per task.
+  // NOTE: Adding a new mode here without an optimised branch above will cause O(n²) cost
+  // for modes that internally call buildTaskMap. Add an explicit branch above for new modes.
   for (const task of tasks) {
     result.set(task.id, computeTaskColor(task, tasks, colorModeState));
   }

@@ -13,15 +13,24 @@ import type { TaskId } from "../types/branded.types";
  *
  * Returns null when the selection is empty or none of the selected tasks are
  * currently visible in the flattened list.
+ *
+ * @param prebuiltCollapsedIds - Optional pre-built set of collapsed task IDs.
+ *   Pass this when the caller already has the collapsed-ID set to avoid
+ *   rebuilding it on every call (e.g. during drag operations).
+ *   When omitted, the set is derived from `tasks` automatically.
  */
 export function findTopmostSelectedTaskId(
   tasks: Task[],
-  selectedTaskIds: TaskId[]
+  selectedTaskIds: TaskId[],
+  prebuiltCollapsedIds?: Set<TaskId>
 ): TaskId | null {
   if (selectedTaskIds.length === 0) return null;
-  const collapsedIds = new Set(
-    tasks.filter((t) => t.open === false).map((t) => t.id)
-  );
+  const collapsedIds =
+    prebuiltCollapsedIds ??
+    new Set(
+      // t.open === undefined is treated as open (not collapsed)
+      tasks.filter((t) => t.open === false).map((t) => t.id)
+    );
   const flatList = buildFlattenedTaskList(tasks, collapsedIds);
   const selectedSet = new Set(selectedTaskIds);
   for (const ft of flatList) {

@@ -82,4 +82,33 @@ describe('findTopmostSelectedTaskId', () => {
   it('handles empty task list', () => {
     expect(findTopmostSelectedTaskId([], [tid('a')])).toBeNull();
   });
+
+  it('accepts a pre-built collapsedIds set and produces the same result', () => {
+    const hierarchical = [
+      makeTask('root', 0, { open: false }),
+      makeTask('child', 1, { parent: tid('root') }),
+      makeTask('other', 2),
+    ];
+    // Build the set externally and pass it in
+    const prebuilt = new Set([tid('root')]);
+    expect(
+      findTopmostSelectedTaskId(hierarchical, [tid('child'), tid('other')], prebuilt),
+    ).toBe(tid('other'));
+  });
+
+  it('pre-built collapsedIds set is passed through to buildFlattenedTaskList', () => {
+    // Verify that when a pre-built set is provided, it is used directly.
+    // Note: buildFlattenedTaskList also checks task.open === false independently,
+    // so the pre-built set supplements (not replaces) the open field.
+    const hierarchical = [
+      makeTask('root', 0), // open is undefined (not collapsed)
+      makeTask('child', 1, { parent: tid('root') }),
+      makeTask('other', 2),
+    ];
+    // Pre-built set contains 'root' — so child should be excluded
+    const prebuilt = new Set([tid('root')]);
+    expect(
+      findTopmostSelectedTaskId(hierarchical, [tid('child'), tid('other')], prebuilt),
+    ).toBe(tid('other'));
+  });
 });

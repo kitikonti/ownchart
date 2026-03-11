@@ -12,7 +12,13 @@
 
 /** Initial hash value for DJB2 — chosen empirically for low collision rates */
 const DJB2_SEED = 5381;
-/** Bit-shift amount for DJB2: hash * 33 ≡ (hash << 5) + hash */
+/**
+ * Bit-shift amount for DJB2: hash * 33 ≡ (hash << 5) + hash.
+ * JavaScript bitwise operators coerce operands to a signed 32-bit integer
+ * before the operation, so intermediate values may temporarily be negative.
+ * The `& INT31_MASK` applied after the addition strips the sign bit,
+ * guaranteeing the final result is always a non-negative integer.
+ */
 const DJB2_SHIFT = 5;
 /** 31-bit mask to ensure stableHash always returns a non-negative integer */
 const INT31_MASK = 0x7fffffff;
