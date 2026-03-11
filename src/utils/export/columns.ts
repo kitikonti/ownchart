@@ -65,6 +65,9 @@ export const EXPORT_COLUMN_MAP = new Map<ExportColumnKey, ExportColumn>(
 /**
  * Header labels derived from EXPORT_COLUMNS.
  * Keys correspond to ExportColumnKey values.
+ * The `as` cast is safe here: the map is directly over EXPORT_COLUMNS whose keys
+ * are all ExportColumnKey values. Object.fromEntries cannot infer the key type
+ * narrower than `string`, so we widen explicitly.
  */
 export const HEADER_LABELS: Record<ExportColumnKey, string> =
   Object.fromEntries(

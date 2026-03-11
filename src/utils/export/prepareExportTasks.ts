@@ -7,6 +7,17 @@
 import type { Task } from "../../types/chart.types";
 import type { TaskId } from "../../types/branded.types";
 
+/**
+ * Returns the subset of `tasks` that should appear in the export.
+ *
+ * @param tasks - The full flat task list from the store.
+ * @param hiddenTaskIds - IDs of tasks that must not appear in the export.
+ *   **Contract**: the caller (chartSlice `hideTasks`) is responsible for
+ *   including all descendants of a hidden parent in this array. This function
+ *   performs a direct membership test only — it does NOT walk the hierarchy
+ *   itself. If a child task is not present in `hiddenTaskIds`, it will appear
+ *   in the export even if its parent is hidden.
+ */
 export function prepareExportTasks(
   tasks: ReadonlyArray<Task>,
   hiddenTaskIds: ReadonlyArray<TaskId>

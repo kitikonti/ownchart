@@ -19,6 +19,7 @@ import type { ExportQuickPreset, PdfOrientation } from "./types";
 
 /**
  * Generate a quick preset from a paper page size.
+ * Intentionally not exported — internal helper for EXPORT_QUICK_PRESETS only.
  * Uses PNG_EXPORT_DPI (150) for print-quality output.
  * @param key - Unique preset identifier (e.g. "a4-landscape")
  * @param label - Human-readable label shown in the UI

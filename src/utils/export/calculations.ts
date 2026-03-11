@@ -13,7 +13,7 @@ import {
 } from "../textMeasurement";
 import type { Task } from "../../types/chart.types";
 import { getTaskLevel } from "../hierarchy";
-import { HEADER_LABELS } from "./columns";
+import { HEADER_LABELS, getColumnDisplayValue } from "./columns";
 
 /** Base pixels per day at 100% zoom */
 export const BASE_PIXELS_PER_DAY = 25;
@@ -197,43 +197,20 @@ export function calculateOptimalColumnWidth(
       ? densityConfig.cellPaddingX
       : densityConfig.cellPaddingX * 2;
 
-  // Prepare cell values and extra widths
+  // Prepare cell values and extra widths.
+  // For data columns (non-name), reuse getColumnDisplayValue from columns.ts
+  // as the single source of truth for cell display strings.
   const cellValues: string[] = [];
   const extraWidths: number[] = [];
 
   for (const task of tasks) {
-    let cellValue = "";
-    const isSummary = task.type === "summary";
-    const isMilestone = task.type === "milestone";
-
-    switch (key) {
-      case "name":
-        cellValue = task.name || "";
-        break;
-      case "startDate":
-        cellValue = task.startDate || "";
-        break;
-      case "endDate":
-        // Milestones don't show end date
-        cellValue = isMilestone ? "" : task.endDate || "";
-        break;
-      case "duration":
-        // Milestones don't show duration, summaries show "X days"
-        if (isMilestone) {
-          cellValue = "";
-        } else if (
-          isSummary &&
-          task.duration !== undefined &&
-          task.duration > 0
-        ) {
-          cellValue = `${task.duration} days`;
-        } else if (!isSummary && task.duration !== undefined) {
-          cellValue = `${task.duration}`;
-        }
-        break;
-      case "progress":
-        cellValue = task.progress !== undefined ? `${task.progress}%` : "";
-        break;
+    let cellValue: string;
+    if (key === "name") {
+      cellValue = task.name || "";
+    } else {
+      // getColumnDisplayValue returns null when no value is available (renders "—").
+      // For width measurement purposes, null → "" is equivalent (no text to measure).
+      cellValue = getColumnDisplayValue(task, key) ?? "";
     }
 
     cellValues.push(cellValue);

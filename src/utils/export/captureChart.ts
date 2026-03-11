@@ -7,8 +7,19 @@ import { createRoot } from "react-dom/client";
 import { createElement } from "react";
 import { toCanvas } from "html-to-image";
 import type { ExportLayoutInput } from "./types";
+import { EXPORT_MAX_SAFE_WIDTH } from "./types";
 import { ExportRenderer } from "../../components/Export/ExportRenderer";
 import { calculateExportDimensions } from "./exportLayout";
+import { REACT_RENDER_WAIT_MS } from "./constants";
+
+/**
+ * Maximum pixel ratio used during capture to prevent oversized canvases
+ * on high-DPR displays (e.g. 4K at dpr=4 would otherwise produce a canvas
+ * wider than EXPORT_MAX_SAFE_WIDTH).
+ */
+const MAX_CAPTURE_PIXEL_RATIO = Math.floor(
+  EXPORT_MAX_SAFE_WIDTH / Math.max(window.screen?.width ?? 1920, 1)
+);
 
 /**
  * Wait for all fonts to be loaded.
@@ -57,9 +68,9 @@ export async function captureChart(
   const dimensions = calculateExportDimensions(params);
 
   // Create container - must be on-screen for html-to-image (uses SVG foreignObject)
-  // We use opacity: 0 and pointer-events: none to hide it from the user
+  // We use opacity: 0 and pointer-events: none to hide it from the user.
+  // No fixed id — avoids duplicate-id violations if multiple captures run concurrently.
   const container = document.createElement("div");
-  container.id = "export-offscreen-container";
   container.style.cssText = `
     position: fixed;
     left: 0;
@@ -74,23 +85,31 @@ export async function captureChart(
   `;
   document.body.appendChild(container);
 
-  try {
-    // Create React root and render the export component
-    const root = createRoot(container);
+  // Create React root outside try so it's accessible in finally for cleanup.
+  const root = createRoot(container);
 
-    await new Promise<void>((resolve) => {
-      root.render(
-        createElement(ExportRenderer, {
-          tasks,
-          options,
-          columnWidths,
-          currentAppZoom,
-          projectDateRange,
-          visibleDateRange,
-        })
-      );
-      // Wait for React to render
-      setTimeout(resolve, 100);
+  try {
+    // Render the export component and wait for React to flush.
+    // root.render() is synchronous in React 18 concurrent mode for the
+    // initial render trigger, but the commit is asynchronous — we give it
+    // one macro-task via REACT_RENDER_WAIT_MS before proceeding.
+    await new Promise<void>((resolve, reject) => {
+      try {
+        root.render(
+          createElement(ExportRenderer, {
+            tasks,
+            options,
+            columnWidths,
+            currentAppZoom,
+            projectDateRange,
+            visibleDateRange,
+          })
+        );
+      } catch (err) {
+        reject(err);
+        return;
+      }
+      setTimeout(resolve, REACT_RENDER_WAIT_MS);
     });
 
     // Wait for fonts and paint
@@ -101,9 +120,15 @@ export async function captureChart(
     container.style.opacity = "1";
     await waitForPaint();
 
+    // Cap pixel ratio to avoid producing canvases wider than EXPORT_MAX_SAFE_WIDTH.
+    const pixelRatio = Math.min(
+      Math.max(window.devicePixelRatio, 2),
+      Math.max(MAX_CAPTURE_PIXEL_RATIO, 2)
+    );
+
     // Capture the container using html-to-image
     const canvas = await toCanvas(container, {
-      pixelRatio: Math.max(window.devicePixelRatio, 2),
+      pixelRatio,
       backgroundColor: options.background === "white" ? "#ffffff" : undefined,
       width: dimensions.width,
       height: dimensions.height,
@@ -115,12 +140,10 @@ export async function captureChart(
       },
     });
 
-    // Cleanup React root
-    root.unmount();
-
     return canvas;
   } finally {
-    // Always cleanup the container
+    // Always unmount the React root and remove the container, even on error.
+    root.unmount();
     if (container.parentNode) {
       container.parentNode.removeChild(container);
     }

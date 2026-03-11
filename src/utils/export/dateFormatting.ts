@@ -22,6 +22,9 @@ export function formatDate(date: Date | undefined): string {
 /**
  * Format a date range as "YYYY-MM-DD – YYYY-MM-DD".
  * Uses an en-dash (–) separator, matching standard date range typography.
+ *
+ * @precondition `range.start` must be ≤ `range.end`. No validation is performed;
+ * an inverted range will produce an inverted string without error.
  */
 export function formatDateRange(range: { start: Date; end: Date }): string {
   return `${formatDate(range.start)} – ${formatDate(range.end)}`;

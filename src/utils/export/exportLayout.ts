@@ -38,6 +38,7 @@ export interface ExportLayout {
   orderedTasks: Task[];
   selectedColumns: ExportColumnKey[];
   hasTaskList: boolean;
+  /** Keys are ExportColumnKey values; only selected columns are present. */
   effectiveColumnWidths: Record<string, number>;
   taskTableWidth: number;
   dateRange: { min: string; max: string };
@@ -65,6 +66,9 @@ const MIN_TIMELINE_WIDTH = 100;
 
 /** Milliseconds per day */
 const MS_PER_DAY = 1000 * 60 * 60 * 24;
+
+/** Reusable empty set passed to buildFlattenedTaskList — no hidden tasks during export */
+const EMPTY_HIDDEN_TASK_IDS = new Set<TaskId>();
 
 // =============================================================================
 // Helpers
@@ -135,6 +139,7 @@ function computeTaskTableLayout(
   columnWidths: Record<string, number>
 ): {
   hasTaskList: boolean;
+  /** Keys are ExportColumnKey values; only selected columns are present. */
   effectiveColumnWidths: Record<string, number>;
   taskTableWidth: number;
 } {
@@ -220,7 +225,7 @@ export function computeExportLayout(input: ExportLayoutInput): ExportLayout {
 
   const densityConfig = DENSITY_CONFIG[options.density];
 
-  const flattenedTasks = buildFlattenedTaskList(tasks, new Set<TaskId>());
+  const flattenedTasks = buildFlattenedTaskList(tasks, EMPTY_HIDDEN_TASK_IDS);
   const orderedTasks = flattenedTasks.map((ft) => ft.task);
   const selectedColumns = options.selectedColumns;
 
