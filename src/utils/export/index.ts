@@ -56,6 +56,8 @@ export {
   downloadCanvasAsPng,
   generateFilename,
 } from "./downloadPng";
+
+// Filename sanitization
 export { sanitizeFilename, MAX_NAME_LENGTH } from "./sanitizeFilename";
 
 // Layout computation (pure functions, no React)
@@ -66,6 +68,9 @@ export {
 } from "./exportLayout";
 
 // DPI constants and conversion utilities
+// mmToPxAtDpi(mm, dpi) — general-purpose, DPI-explicit conversion (use for
+// PNG/PDF pixel calculations).  Contrast with mmToPx() from pdfLayout (below),
+// which always assumes the browser's internal 96 DPI coordinate system.
 export {
   INTERNAL_DPI,
   PNG_EXPORT_DPI,
@@ -126,6 +131,9 @@ export {
 } from "./calculations";
 
 // PDF layout utilities
+// mmToPx(mm) — PDF-specific helper that converts mm→px assuming the browser's
+// internal 96 DPI coordinate space (for jsPDF point calculations).  Distinct
+// from mmToPxAtDpi() above, which accepts an explicit DPI argument.
 export {
   calculatePdfFitToWidth,
   PDF_HEADER_FOOTER_RESERVED_MM,

@@ -58,7 +58,7 @@ export const ICON_RENDER_SIZE = 16;
 /** Gap between the task-type icon and the task name text (px) */
 export const ICON_TEXT_GAP = 4;
 
-/** ViewBox dimension of Phosphor icons (all icons share a 256×256 coordinate space) */
+/** ViewBox dimension of Phosphor icons (all icons share a 256×256 coordinate space). Internal — not re-exported. */
 const PHOSPHOR_ICON_VIEWBOX_SIZE = 256;
 
 /** Scale factor to render Phosphor icons at ICON_RENDER_SIZE px (ICON_RENDER_SIZE / PHOSPHOR_ICON_VIEWBOX_SIZE) */

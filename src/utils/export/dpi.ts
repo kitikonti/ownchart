@@ -48,7 +48,9 @@ export function pxToMmAtDpi(px: number, dpi: number): number {
  * @param heightMm - Page height in millimeters (must be ≥ 0)
  * @param dpi - Target DPI (e.g., 150 for print quality)
  * @returns Pixel dimensions (rounded to integers)
- * @throws {RangeError} If dpi is not greater than zero, or if widthMm/heightMm are negative.
+ * @throws {RangeError} If widthMm is negative (checked first), then if heightMm
+ *   is negative (checked second), or finally if dpi is not greater than zero
+ *   (validated inside {@link mmToPxAtDpi}).
  */
 export function calculatePixelDimensions(
   widthMm: number,

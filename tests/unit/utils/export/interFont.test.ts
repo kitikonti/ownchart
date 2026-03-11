@@ -107,6 +107,22 @@ describe("registerInterFont", () => {
     );
   });
 
+  it("wraps an error thrown on the third addFont call (SemiBold) in a descriptive message", () => {
+    const addFileToVFS = vi.fn();
+    const addFont = vi
+      .fn()
+      .mockImplementationOnce(() => undefined) // Regular — ok
+      .mockImplementationOnce(() => undefined) // Italic — ok
+      .mockImplementationOnce(() => {
+        throw new Error("SemiBold registration failed");
+      });
+    const doc = { addFileToVFS, addFont } as unknown as jsPDF;
+
+    expect(() => registerInterFont(doc)).toThrowError(
+      /Failed to register Inter font for PDF export: SemiBold registration failed/
+    );
+  });
+
   it("wraps non-Error throws in a descriptive Error message", () => {
     const addFileToVFS = vi.fn().mockImplementationOnce(() => {
       throw "unexpected string throw"; // non-Error throw to test String(err) branch
