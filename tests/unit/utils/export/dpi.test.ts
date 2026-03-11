@@ -66,6 +66,14 @@ describe("mmToPxAtDpi", () => {
   it("throws RangeError for negative dpi", () => {
     expect(() => mmToPxAtDpi(25.4, -1)).toThrow(RangeError);
   });
+
+  it("throws RangeError for NaN dpi", () => {
+    expect(() => mmToPxAtDpi(25.4, NaN)).toThrow(RangeError);
+  });
+
+  it("throws RangeError for Infinity dpi", () => {
+    expect(() => mmToPxAtDpi(25.4, Infinity)).toThrow(RangeError);
+  });
 });
 
 // ---------------------------------------------------------------------------
@@ -95,6 +103,14 @@ describe("pxToMmAtDpi", () => {
 
   it("throws RangeError for negative dpi", () => {
     expect(() => pxToMmAtDpi(96, -1)).toThrow(RangeError);
+  });
+
+  it("throws RangeError for NaN dpi", () => {
+    expect(() => pxToMmAtDpi(96, NaN)).toThrow(RangeError);
+  });
+
+  it("throws RangeError for Infinity dpi", () => {
+    expect(() => pxToMmAtDpi(96, Infinity)).toThrow(RangeError);
   });
 });
 

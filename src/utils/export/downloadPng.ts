@@ -19,10 +19,9 @@ const BLOB_URL_REVOKE_DELAY_MS = 100;
  * @returns A valid filename for the PNG export
  */
 export function generateFilename(projectName?: string): string {
-  // Treat undefined, null, and empty string the same as "no name provided".
-  // Whitespace-only names (e.g. "   ") are passed through to
-  // generateExportFilename → sanitizeFilename, which normalises them to
-  // "untitled" as well — so the output is always a safe, non-empty name.
+  // Short-circuit undefined/null/empty to "untitled" before delegating.
+  // Whitespace-only names (e.g. "   ") are passed through and normalised to
+  // "untitled" by generateExportFilename → sanitizeFilename downstream.
   return generateExportFilename(projectName || "untitled", "png");
 }
 

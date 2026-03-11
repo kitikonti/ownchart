@@ -32,6 +32,9 @@ const CONTROL_CHARS = /(?!\s)\p{Cc}/gu;
  * or Linux but the file is later opened on Windows.
  * See: https://learn.microsoft.com/en-us/windows/win32/fileio/naming-a-file
  *
+ * COM0 and LPT0 are intentionally excluded — they are not reserved by Windows
+ * (only COM1–COM9 and LPT1–LPT9 are reserved device names).
+ *
  * No `g` flag — this regex is used exclusively with `.test()`, which is safe
  * for non-global regexes (no `lastIndex` drift).
  */

@@ -68,9 +68,6 @@ export {
 } from "./exportLayout";
 
 // DPI constants and conversion utilities
-// mmToPxAtDpi(mm, dpi) — general-purpose, DPI-explicit conversion (use for
-// PNG/PDF pixel calculations).  Contrast with mmToPx() from pdfLayout (below),
-// which always assumes the browser's internal 96 DPI coordinate system.
 export {
   INTERNAL_DPI,
   PNG_EXPORT_DPI,

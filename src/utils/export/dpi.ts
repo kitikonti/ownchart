@@ -22,22 +22,22 @@ export const MM_PER_INCH = 25.4;
 
 /**
  * Convert millimeters to pixels at a specific DPI.
- * @throws {RangeError} If dpi is not greater than zero.
+ * @throws {RangeError} If dpi is not a finite positive number.
  */
 export function mmToPxAtDpi(mm: number, dpi: number): number {
-  if (dpi <= 0) {
-    throw new RangeError(`dpi must be greater than 0, got ${dpi}`);
+  if (!Number.isFinite(dpi) || dpi <= 0) {
+    throw new RangeError(`dpi must be a finite positive number, got ${dpi}`);
   }
   return (mm / MM_PER_INCH) * dpi;
 }
 
 /**
  * Convert pixels to millimeters at a specific DPI.
- * @throws {RangeError} If dpi is not greater than zero.
+ * @throws {RangeError} If dpi is not a finite positive number.
  */
 export function pxToMmAtDpi(px: number, dpi: number): number {
-  if (dpi <= 0) {
-    throw new RangeError(`dpi must be greater than 0, got ${dpi}`);
+  if (!Number.isFinite(dpi) || dpi <= 0) {
+    throw new RangeError(`dpi must be a finite positive number, got ${dpi}`);
   }
   return (px / dpi) * MM_PER_INCH;
 }
@@ -49,8 +49,8 @@ export function pxToMmAtDpi(px: number, dpi: number): number {
  * @param dpi - Target DPI (e.g., 150 for print quality)
  * @returns Pixel dimensions (rounded to integers)
  * @throws {RangeError} If widthMm is negative (checked first), then if heightMm
- *   is negative (checked second), or finally if dpi is not greater than zero
- *   (validated inside {@link mmToPxAtDpi}).
+ *   is negative (checked second), or finally if dpi is not a finite positive
+ *   number (validated inside {@link mmToPxAtDpi}).
  */
 export function calculatePixelDimensions(
   widthMm: number,
