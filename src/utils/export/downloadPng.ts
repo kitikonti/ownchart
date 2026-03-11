@@ -31,8 +31,16 @@ export function generateFilename(projectName?: string): string {
  *
  * **Browser-only**: Requires `document` and `URL.createObjectURL` to be
  * available. Do not call in a server-side or non-browser environment.
+ *
+ * @param blob - The Blob to download
+ * @param filename - Non-empty filename for the download (e.g. "chart-export.png").
+ *   An empty or whitespace-only string is normalized to "download" as a safe fallback.
  */
 export function downloadBlob(blob: Blob, filename: string): void {
+  // Normalize empty/whitespace filename to avoid browsers substituting an
+  // unpredictable auto-generated name (behaviour varies by browser/OS).
+  const safeFilename = filename.trim() || "download";
+
   // Guard: this function is a no-op outside a browser context (e.g. SSR, tests
   // that do not mock document). All real callers run in the browser.
   if (typeof document === "undefined") return;
@@ -40,7 +48,7 @@ export function downloadBlob(blob: Blob, filename: string): void {
   const url = URL.createObjectURL(blob);
   const link = document.createElement("a");
   link.href = url;
-  link.download = filename;
+  link.download = safeFilename;
 
   // Append to body to ensure it works in all browsers.
   document.body.appendChild(link);

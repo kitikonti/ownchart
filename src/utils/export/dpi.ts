@@ -22,6 +22,9 @@ export const MM_PER_INCH = 25.4;
 
 /**
  * Convert millimeters to pixels at a specific DPI.
+ * @param mm - Millimeter value. Caller is responsible for passing a finite,
+ *   non-negative number; no range check is performed on this argument.
+ * @param dpi - Target DPI. Must be a finite positive number.
  * @throws {RangeError} If dpi is not a finite positive number.
  */
 export function mmToPxAtDpi(mm: number, dpi: number): number {
@@ -33,6 +36,9 @@ export function mmToPxAtDpi(mm: number, dpi: number): number {
 
 /**
  * Convert pixels to millimeters at a specific DPI.
+ * @param px - Pixel value. Caller is responsible for passing a finite,
+ *   non-negative number; no range check is performed on this argument.
+ * @param dpi - Target DPI. Must be a finite positive number.
  * @throws {RangeError} If dpi is not a finite positive number.
  */
 export function pxToMmAtDpi(px: number, dpi: number): number {
