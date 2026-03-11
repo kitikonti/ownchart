@@ -19,6 +19,7 @@ import {
   type ActiveCell,
   type AssertEditableFieldsExhaustive,
 } from "../../../src/types/task.types";
+import { tid } from "../../helpers/branded";
 
 // --- Compile-time assertion check -----------------------------------------
 // If AssertEditableFieldsExhaustive resolves to `never` the line below will
@@ -61,9 +62,9 @@ describe("ActiveCell discriminated union", () => {
     // This is primarily a compile-time check; the runtime assertion confirms
     // the shape is what consumers expect.
     const active: ActiveCell = {
-      taskId: "task-1" as Parameters<typeof String>[0] & { readonly __brand: "TaskId" },
+      taskId: tid("task-1"),
       field: "name",
-    } as ActiveCell;
+    };
 
     expect(active.taskId).toBe("task-1");
     expect(active.field).toBe("name");

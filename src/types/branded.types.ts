@@ -30,6 +30,11 @@ export type TaskId = string & { readonly __brand: "TaskId" };
  * compile time but may produce unexpected rendering results at runtime.
  * Browser `<input type="color">` elements always produce valid 7-character hex
  * strings, so they are a safe source without further validation.
+ *
+ * 8-character hex strings with an alpha channel (e.g. `"#FF0000FF"`) are
+ * accepted by the `HexColor` type but may not render correctly in all targets
+ * (canvas `fillStyle`, SVG `fill`, or older browsers). Verify compatibility
+ * with the intended rendering target before using alpha-channel hex values.
  */
 export function toHexColor(value: string): HexColor {
   return value as HexColor;
