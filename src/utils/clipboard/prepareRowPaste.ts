@@ -51,6 +51,68 @@ export interface PrepareRowPasteError {
 }
 
 /**
+ * Computes the maximum depth of any task within the remapped (pasted) set.
+ * Guards against circular parent references in malformed clipboard data using
+ * a visited-set cycle detector.
+ *
+ * @param remappedTasks - Tasks with new IDs (output of remapTaskIds).
+ * @returns The maximum depth (0 = all tasks are root-level, 1 = one level of
+ *   nesting, etc.).
+ */
+function computeMaxPastedDepth(remappedTasks: Task[]): number {
+  const pastedTaskMap = new Map(remappedTasks.map((t) => [t.id, t]));
+  const pastedTaskIds = new Set(remappedTasks.map((t) => t.id));
+
+  const getDepthInPasted = (task: Task): number => {
+    let depth = 0;
+    let current = task;
+    // Guard against circular parent references in malformed clipboard data.
+    const visited = new Set<TaskId>();
+    while (current.parent && pastedTaskIds.has(current.parent)) {
+      if (visited.has(current.parent)) break; // cycle detected — stop traversal
+      visited.add(current.parent);
+      depth++;
+      const parent = pastedTaskMap.get(current.parent);
+      if (!parent) break;
+      current = parent;
+    }
+    return depth;
+  };
+
+  return remappedTasks.reduce(
+    (max, t) => Math.max(max, getDepthInPasted(t)),
+    0
+  );
+}
+
+/**
+ * Assigns final `order` and `parent` values to the remapped tasks before merge.
+ * Tasks that are top-level within the clipboard set (i.e. their parent is not
+ * part of the pasted set) receive `targetParent` as their parent, anchoring
+ * them into the existing tree at the correct level.
+ *
+ * @param remappedTasks - Tasks with new IDs (output of remapTaskIds).
+ * @param insertOrder - The `order` value of the first pasted task.
+ * @param targetParent - Parent to assign to clipboard-root tasks.
+ * @returns New task array with `order` and `parent` set correctly.
+ */
+function assignOrderAndParent(
+  remappedTasks: Task[],
+  insertOrder: number,
+  targetParent: TaskId | undefined
+): Task[] {
+  const pastedTaskIds = new Set(remappedTasks.map((t) => t.id));
+  return remappedTasks.map((t, i) => {
+    const isClipboardRoot = !t.parent || !pastedTaskIds.has(t.parent);
+    return {
+      ...t,
+      order: insertOrder + i,
+      parent: isClipboardRoot ? targetParent : t.parent,
+    };
+  });
+}
+
+/**
  * Pure function that prepares all data needed for a row paste operation.
  * Returns either a successful result or an error string.
  */
@@ -81,7 +143,7 @@ export function prepareRowPaste(
     flattenedTasks
   );
 
-  // Get the actual ORDER value at the insert position
+  // Get the actual ORDER value and target parent at the insert position
   let insertOrder: number;
   let targetParent: TaskId | undefined;
 
@@ -105,63 +167,31 @@ export function prepareRowPaste(
   // Generate new UUIDs and remap IDs
   const { remappedTasks, idMapping } = remapTaskIds(clipboardTasks);
 
-  // Build a Map for O(1) depth lookup (replaces O(n²) Array.find in loop)
-  const pastedTaskMap = new Map(remappedTasks.map((t) => [t.id, t]));
-  const pastedTaskIds = new Set(remappedTasks.map((t) => t.id));
-
-  const getDepthInPasted = (task: Task): number => {
-    let depth = 0;
-    let current = task;
-    // Guard against circular parent references in malformed clipboard data.
-    const visited = new Set<TaskId>();
-    while (current.parent && pastedTaskIds.has(current.parent)) {
-      if (visited.has(current.parent)) break; // cycle detected — stop traversal
-      visited.add(current.parent);
-      depth++;
-      const parent = pastedTaskMap.get(current.parent);
-      if (!parent) break;
-      current = parent;
-    }
-    return depth;
-  };
-
-  const maxPastedDepth = remappedTasks.reduce(
-    (max, t) => Math.max(max, getDepthInPasted(t)),
-    0
-  );
-
-  // Validate depth
+  // Validate depth before committing to the paste
+  const maxPastedDepth = computeMaxPastedDepth(remappedTasks);
   if (targetParentLevel + maxPastedDepth >= MAX_HIERARCHY_DEPTH) {
     return {
       error: `Cannot paste: would exceed maximum nesting depth of ${MAX_HIERARCHY_DEPTH} levels`,
     };
   }
 
-  // Remap dependencies
+  // Remap dependencies (only those where both endpoints are in the pasted set)
   const remappedDependencies = remapDependencies(
     clipboardDependencies,
     idMapping
   );
 
   // Shift order for existing tasks at or after insert position
-  const shiftedTasks = currentTasks.map((t) => {
-    if (t.order >= insertOrder) {
-      return { ...t, order: t.order + remappedTasks.length };
-    }
-    return t;
-  });
+  const shiftedTasks = currentTasks.map((t) =>
+    t.order >= insertOrder ? { ...t, order: t.order + remappedTasks.length } : t
+  );
 
-  // Set order and parent for new tasks
-  const newTasks = remappedTasks.map((t, i) => {
-    const isRootInClipboard = !t.parent || !pastedTaskIds.has(t.parent);
-    return {
-      ...t,
-      order: insertOrder + i,
-      parent: isRootInClipboard ? targetParent : t.parent,
-    };
-  });
-
-  // Merge all tasks
+  // Set order and parent for new tasks, then merge
+  const newTasks = assignOrderAndParent(
+    remappedTasks,
+    insertOrder,
+    targetParent
+  );
   const mergedTasks = [...shiftedTasks, ...newTasks];
 
   return {
@@ -176,7 +206,14 @@ export function prepareRowPaste(
 
 /**
  * Recalculates summary dates for a target parent task if it is a summary.
- * Returns updated tasks array, or the original if no recalculation needed.
+ * Returns the updated tasks array, or the original reference if no
+ * recalculation is needed.
+ *
+ * @param tasks - The full merged task list after paste.
+ * @param targetParent - The TaskId of the summary parent to recalculate, or
+ *   `undefined` to skip (returns `tasks` unchanged).
+ * @returns Updated task array with recalculated summary dates, or the original
+ *   array reference if `targetParent` is undefined, not found, or not a summary.
  *
  * @note Only recalculates a single level (the immediate parent). If the parent
  * is itself a child of another summary, the ancestor summary is NOT updated

@@ -53,4 +53,20 @@ describe("hasSameTaskIds", () => {
     const b: readonly { id: ReturnType<typeof tid> }[] = [{ id: tid("t1") }];
     expect(hasSameTaskIds(a, b)).toBe(true);
   });
+
+  it("should correctly compare large arrays (length short-circuit and O(n) traversal)", () => {
+    // 1000-item arrays — verifies the length short-circuit and that the O(n)
+    // comparison completes without issue on realistic clipboard sizes.
+    const ids = Array.from({ length: 1000 }, (_, i) => tid(`task-${i}`));
+    const a = ids.map((id) => ({ id }));
+    const b = ids.map((id) => ({ id }));
+    expect(hasSameTaskIds(a, b)).toBe(true);
+
+    // Differs only in the last element — requires full traversal
+    const bDiff = [...b.slice(0, 999), { id: tid("different") }];
+    expect(hasSameTaskIds(a, bDiff)).toBe(false);
+
+    // Different length — short-circuits immediately
+    expect(hasSameTaskIds(a, b.slice(0, 999))).toBe(false);
+  });
 });

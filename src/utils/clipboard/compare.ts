@@ -17,12 +17,11 @@ import type { TaskId } from "../../types/branded.types";
  *   positionally, `false` otherwise.
  *
  * @example
- * // NOTE: `id` values must be branded TaskId; plain strings are used here for brevity.
- * const t1 = 't1' as TaskId;
- * const t2 = 't2' as TaskId;
- * hasSameTaskIds([{ id: t1 }], [{ id: t1 }]); // true
- * hasSameTaskIds([{ id: t1 }], [{ id: t2 }]); // false
- * hasSameTaskIds([{ id: t1 }, { id: t2 }], [{ id: t1 }]); // false
+ * // NOTE: `id` values must be branded TaskId in real usage; plain strings are
+ * // used here for illustrative brevity.
+ * hasSameTaskIds([{ id: 't1' as TaskId }], [{ id: 't1' as TaskId }]); // true
+ * hasSameTaskIds([{ id: 't1' as TaskId }], [{ id: 't2' as TaskId }]); // false
+ * hasSameTaskIds([{ id: 't1' as TaskId }, { id: 't2' as TaskId }], [{ id: 't1' as TaskId }]); // false
  */
 export function hasSameTaskIds(
   a: readonly { id: TaskId }[],

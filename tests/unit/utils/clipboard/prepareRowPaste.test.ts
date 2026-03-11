@@ -180,6 +180,32 @@ describe("prepareRowPaste", () => {
     }
   });
 
+  it("should not infinite-loop and should complete successfully when clipboard has circular parent references", () => {
+    // Malformed clipboard data: task A claims its parent is B, task B claims
+    // its parent is A — a direct cycle. The cycle-detection guard in
+    // computeMaxPastedDepth must break the traversal rather than looping forever.
+    const currentTasks = [createTask("existing", "Existing", 0)];
+    const clipboardTasks = [
+      createTask("a", "A", 0, "b"), // parent = b (not yet defined — forward ref)
+      createTask("b", "B", 1, "a"), // parent = a → creates a cycle
+    ];
+
+    // Should return without hanging and without throwing
+    const result = prepareRowPaste({
+      clipboardTasks,
+      clipboardDependencies: [],
+      currentTasks,
+      activeCell: { taskId: null },
+      selectedTaskIds: [],
+    });
+
+    // The cycle guard treats both tasks as depth-0 relative to each other,
+    // so the paste should succeed (depth 0, no limit exceeded).
+    expect("error" in result).toBe(false);
+    if ("error" in result) return;
+    expect(result.newTasks).toHaveLength(2);
+  });
+
   it("should remap dependencies correctly", () => {
     const currentTasks = [createTask("a", "A", 0)];
     const clipboardTasks = [
