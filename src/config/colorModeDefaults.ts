@@ -13,7 +13,7 @@ const HIERARCHY_LIGHTEN_STEP_PERCENT = 12;
 const HIERARCHY_MAX_LIGHTEN_PERCENT = 36;
 
 /** Default milestone accent colour (Tailwind yellow-600 / gold) */
-const MILESTONE_GOLD = "#CA8A04";
+const DEFAULT_MILESTONE_COLOR = "#CA8A04";
 
 /**
  * Default color mode state — used for store initialization and file loading fallback.
@@ -26,12 +26,12 @@ export const DEFAULT_COLOR_MODE_STATE: ColorModeState = {
   },
   summaryOptions: {
     useMilestoneAccent: true,
-    milestoneAccentColor: MILESTONE_GOLD,
+    milestoneAccentColor: DEFAULT_MILESTONE_COLOR,
   },
   taskTypeOptions: {
     summaryColor: COLORS.brand[900],
     taskColor: COLORS.brand[600],
-    milestoneColor: MILESTONE_GOLD,
+    milestoneColor: DEFAULT_MILESTONE_COLOR,
   },
   hierarchyOptions: {
     baseColor: COLORS.brand[600],
