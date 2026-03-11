@@ -162,7 +162,7 @@ function createBorderLine(
   line.setAttribute("x2", String(x2));
   line.setAttribute("y2", String(y2));
   line.setAttribute("stroke", color);
-  line.setAttribute("stroke-width", BORDER_STROKE_WIDTH);
+  line.setAttribute("stroke-width", String(BORDER_STROKE_WIDTH));
   return line;
 }
 
@@ -516,7 +516,7 @@ function renderHeaderCell(
       createTextEl({
         x: colX + cellPaddingX,
         y: y + HEADER_HEIGHT / 2 + TEXT_BASELINE_OFFSET,
-        fill: EXPORT_COLORS.textHeader,
+        fill: EXPORT_COLORS.textSecondary,
         fontSize: COLUMN_HEADER_FONT_SIZE,
         content: label.toUpperCase(),
         // "bold" for svg2pdf.js compatibility (doesn't support font-weight "600")

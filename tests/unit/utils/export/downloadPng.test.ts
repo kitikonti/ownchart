@@ -113,6 +113,21 @@ describe('downloadBlob', () => {
     expect(createObjectURLMock).toHaveBeenCalledWith(blob);
   });
 
+  it('should be a no-op when document is undefined (non-browser environment)', () => {
+    // Temporarily hide document to simulate a non-browser environment
+    const originalDocument = globalThis.document;
+    // @ts-expect-error — intentionally removing document to test the guard
+    delete globalThis.document;
+
+    const blob = new Blob(['test'], { type: 'image/png' });
+    // Should not throw
+    expect(() => downloadBlob(blob, 'test.png')).not.toThrow();
+    expect(createObjectURLMock).not.toHaveBeenCalled();
+
+    // Restore document
+    globalThis.document = originalDocument;
+  });
+
   it('should revoke object URL after download', async () => {
     vi.useFakeTimers();
 
@@ -127,6 +142,38 @@ describe('downloadBlob', () => {
     expect(revokeObjectURLMock).toHaveBeenCalledWith('blob:mock-url');
 
     vi.useRealTimers();
+  });
+
+  it('should remove the link from the DOM after click (cleanup always runs)', () => {
+    const blob = new Blob(['test'], { type: 'image/png' });
+    downloadBlob(blob, 'test.png');
+
+    expect(document.body.removeChild).toHaveBeenCalledWith(mockLink);
+  });
+
+  it('should still remove the link from the DOM even if click() throws', () => {
+    mockLink.click.mockImplementation(() => {
+      throw new Error('click failed');
+    });
+
+    const blob = new Blob(['test'], { type: 'image/png' });
+    // The finally block should run removeChild even though click threw
+    expect(() => downloadBlob(blob, 'test.png')).toThrow('click failed');
+    expect(document.body.removeChild).toHaveBeenCalledWith(mockLink);
+  });
+
+  it('should normalize empty filename to "download"', () => {
+    const blob = new Blob(['test'], { type: 'image/png' });
+    downloadBlob(blob, '');
+
+    expect(mockLink.download).toBe('download');
+  });
+
+  it('should normalize whitespace-only filename to "download"', () => {
+    const blob = new Blob(['test'], { type: 'image/png' });
+    downloadBlob(blob, '   ');
+
+    expect(mockLink.download).toBe('download');
   });
 });
 
@@ -181,8 +228,7 @@ describe('downloadCanvasAsPng', () => {
 
     expect(mockCanvas.toBlob).toHaveBeenCalledWith(
       expect.any(Function),
-      'image/png',
-      1.0
+      'image/png'
     );
     expect(mockLink.download).toBe('custom-name.png');
     expect(mockLink.click).toHaveBeenCalled();

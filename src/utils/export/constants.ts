@@ -12,6 +12,9 @@ export const HEADER_HEIGHT = 48;
  * Wait time in ms after root.render() before reading the DOM.
  * React schedules its commit asynchronously; this gives it one macro-task
  * to flush before waitForFonts() / waitForPaint() take over.
+ *
+ * Intentionally not re-exported from index.ts — this is an internal
+ * implementation detail of the export orchestration layer, not a public API.
  */
 export const REACT_RENDER_WAIT_MS = 100;
 
@@ -31,8 +34,6 @@ export const EXPORT_COLORS = {
   textSecondary: COLORS.neutral[600],
   /** neutral-500 — summary dates/duration (lighter, italic in app) */
   textSummary: COLORS.neutral[500],
-  /** neutral-600 — header labels */
-  textHeader: COLORS.neutral[600],
   /** neutral-200 — header borders */
   border: COLORS.neutral[200],
   /** neutral-100 — row borders */
@@ -55,8 +56,11 @@ export const ICON_RENDER_SIZE = 16;
 /** Gap between the task-type icon and the task name text (px) */
 export const ICON_TEXT_GAP = 4;
 
-/** Scale factor to render 256×256 viewBox Phosphor icons at ICON_RENDER_SIZE px (16 / 256) */
-export const ICON_SCALE = 0.0625;
+/** ViewBox dimension of Phosphor icons (all icons share a 256×256 coordinate space). Internal — not re-exported. */
+const PHOSPHOR_ICON_VIEWBOX_SIZE = 256;
+
+/** Scale factor to render Phosphor icons at ICON_RENDER_SIZE px (ICON_RENDER_SIZE / PHOSPHOR_ICON_VIEWBOX_SIZE) */
+export const ICON_SCALE = ICON_RENDER_SIZE / PHOSPHOR_ICON_VIEWBOX_SIZE;
 
 /** Font size for the expand/collapse arrow glyph "▼" */
 export const ARROW_FONT_SIZE = 11;
@@ -73,8 +77,8 @@ export const COLOR_BAR_RADIUS = 3;
  */
 export const COLUMN_HEADER_FONT_SIZE = 12;
 
-/** SVG stroke-width for table border and separator lines */
-export const BORDER_STROKE_WIDTH = "1";
+/** SVG stroke-width for table border and separator lines (px) */
+export const BORDER_STROKE_WIDTH = 1;
 
 /**
  * CSS letter-spacing for column header labels.

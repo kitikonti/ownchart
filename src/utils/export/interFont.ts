@@ -9,19 +9,36 @@ import { INTER_ITALIC_FONT_BASE64 } from "./fonts/interItalicFontData";
 import { INTER_SEMIBOLD_BASE64 } from "./fonts/interSemiBoldFontData";
 
 /**
+ * Font variants to register with jsPDF.
+ * Each entry keeps the VFS filename, base64 data, and jsPDF style name
+ * co-located so they cannot be accidentally misaligned.
+ *
+ * jsPDF has no font-weight axis; "bold" is the closest available style name —
+ * SemiBold (weight 600) is the heaviest Inter variant embedded in this build.
+ */
+const INTER_FONT_VARIANTS = [
+  { file: "Inter-Regular.ttf", data: INTER_REGULAR_BASE64, style: "normal" },
+  { file: "Inter-Italic.ttf", data: INTER_ITALIC_FONT_BASE64, style: "italic" },
+  { file: "Inter-SemiBold.ttf", data: INTER_SEMIBOLD_BASE64, style: "bold" },
+] as const;
+
+/**
  * Register Inter font with jsPDF for consistent PDF rendering.
- * Registers both regular and italic variants.
+ * Registers regular, italic, and semi-bold (bold) variants.
+ *
+ * @param doc - The jsPDF document instance to register the Inter font variants on.
+ * @throws {Error} If font registration fails (e.g. jsPDF internal error or
+ *   calling addFont before addFileToVFS has completed).
  */
 export function registerInterFont(doc: jsPDF): void {
-  // Register Inter Regular
-  doc.addFileToVFS("Inter-Regular.ttf", INTER_REGULAR_BASE64);
-  doc.addFont("Inter-Regular.ttf", "Inter", "normal");
-
-  // Register Inter Italic
-  doc.addFileToVFS("Inter-Italic.ttf", INTER_ITALIC_FONT_BASE64);
-  doc.addFont("Inter-Italic.ttf", "Inter", "italic");
-
-  // Register Inter SemiBold (weight 600)
-  doc.addFileToVFS("Inter-SemiBold.ttf", INTER_SEMIBOLD_BASE64);
-  doc.addFont("Inter-SemiBold.ttf", "Inter", "bold");
+  try {
+    for (const { file, data, style } of INTER_FONT_VARIANTS) {
+      doc.addFileToVFS(file, data);
+      doc.addFont(file, "Inter", style);
+    }
+  } catch (err) {
+    throw new Error(
+      `Failed to register Inter font for PDF export: ${err instanceof Error ? err.message : String(err)}`
+    );
+  }
 }

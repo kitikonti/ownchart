@@ -132,6 +132,74 @@ describe("sanitizeFilename", () => {
     it("returns untitled for string with only invalid characters", () => {
       expect(sanitizeFilename("/:*?")).toBe("untitled");
     });
+
+    it("returns untitled for a single dot (reserved UNIX name)", () => {
+      expect(sanitizeFilename(".")).toBe("untitled");
+    });
+
+    it("returns untitled for double dot (reserved UNIX parent-dir name)", () => {
+      expect(sanitizeFilename("..")).toBe("untitled");
+    });
+
+    it("returns untitled for dot-only strings of any length", () => {
+      expect(sanitizeFilename("...")).toBe("untitled");
+    });
+  });
+
+  describe("Windows reserved name handling", () => {
+    it("returns untitled for 'CON' (Windows reserved device name)", () => {
+      expect(sanitizeFilename("CON")).toBe("untitled");
+    });
+
+    it("returns untitled for 'NUL' (Windows reserved device name)", () => {
+      expect(sanitizeFilename("NUL")).toBe("untitled");
+    });
+
+    it("returns untitled for 'PRN' (Windows reserved device name)", () => {
+      expect(sanitizeFilename("PRN")).toBe("untitled");
+    });
+
+    it("returns untitled for 'AUX' (Windows reserved device name)", () => {
+      expect(sanitizeFilename("AUX")).toBe("untitled");
+    });
+
+    it("returns untitled for 'COM1' (Windows reserved device name)", () => {
+      expect(sanitizeFilename("COM1")).toBe("untitled");
+    });
+
+    it("returns untitled for 'LPT9' (Windows reserved device name)", () => {
+      expect(sanitizeFilename("LPT9")).toBe("untitled");
+    });
+
+    it("is case-insensitive for reserved names (con, nul, Com1)", () => {
+      expect(sanitizeFilename("con")).toBe("untitled");
+      expect(sanitizeFilename("nul")).toBe("untitled");
+      expect(sanitizeFilename("Com1")).toBe("untitled");
+    });
+
+    it("does NOT treat 'CONSOLE' as reserved (only exact reserved names match)", () => {
+      expect(sanitizeFilename("CONSOLE")).toBe("CONSOLE");
+    });
+
+    it("returns untitled for ' CON ' (trims to reserved name after sanitization)", () => {
+      // Leading/trailing spaces are converted to hyphens then stripped,
+      // leaving bare "CON" which is a Windows reserved device name.
+      expect(sanitizeFilename(" CON ")).toBe("untitled");
+    });
+  });
+
+  describe("control character removal", () => {
+    it("removes null bytes (U+0000)", () => {
+      expect(sanitizeFilename("My\x00Project")).toBe("MyProject");
+    });
+
+    it("removes control characters (U+0001–U+001F)", () => {
+      expect(sanitizeFilename("My\x01Project\x1f")).toBe("MyProject");
+    });
+
+    it("returns untitled when only control characters remain after stripping", () => {
+      expect(sanitizeFilename("\x00\x01\x02")).toBe("untitled");
+    });
   });
 
   describe("unicode preservation", () => {
