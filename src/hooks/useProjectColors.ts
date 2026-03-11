@@ -6,17 +6,30 @@
  */
 
 import { useMemo } from "react";
+import { useShallow } from "zustand/react/shallow";
 import { useTaskStore } from "../store/slices/taskSlice";
 
+/** Maximum number of project colors to surface by default (fits a 3×4 swatch grid). */
+const DEFAULT_MAX_PROJECT_COLORS = 12;
+
 /**
- * Get unique colors used in the current project
- * Returns colors sorted by frequency (most used first)
+ * Get unique colors used in the current project.
+ * Returns colors sorted by frequency (most used first).
  */
-export function useProjectColors(maxColors: number = 12): string[] {
-  const tasks = useTaskStore((state) => state.tasks);
+export function useProjectColors(
+  maxColors: number = DEFAULT_MAX_PROJECT_COLORS
+): string[] {
+  // Select the tasks array with shallow equality so we only re-run when the
+  // tasks array reference changes (i.e. when tasks are added/removed/mutated).
+  // The `.map()` to extract colors is intentionally inside `useMemo` below so
+  // it does not run on every Zustand selector call — only when `tasks` changes.
+  const tasks = useTaskStore(useShallow((state) => state.tasks));
 
   return useMemo(() => {
-    // Count color frequency
+    // Count color frequency.
+    // Colors are normalized to uppercase for deduplication — returned values are
+    // always uppercase. Callers that compare against stored task colors must
+    // normalize or compare case-insensitively.
     const colorCounts = new Map<string, number>();
 
     for (const task of tasks) {
@@ -32,31 +45,8 @@ export function useProjectColors(maxColors: number = 12): string[] {
     // Sort by frequency (descending) and return unique colors
     const sortedColors = Array.from(colorCounts.entries())
       .sort((a, b) => b[1] - a[1])
-      .map(([color]) => color);
+      .map(([c]) => c);
 
     return sortedColors.slice(0, maxColors);
   }, [tasks, maxColors]);
-}
-
-/**
- * Curated swatch palettes for manual color picking
- * Organized by color family for easy selection
- */
-export const CURATED_SWATCHES = {
-  blues: ["#0A2E4A", "#0F6CBD", "#2B88D8", "#62ABF5", "#B4D6FA"],
-  greens: ["#1B4332", "#2D6A4F", "#40916C", "#52B788", "#74C69D"],
-  warm: ["#7F1D1D", "#DC2626", "#F97316", "#FBBF24", "#FDE68A"],
-  neutral: ["#1E293B", "#334155", "#64748B", "#94A3B8", "#CBD5E1"],
-} as const;
-
-/**
- * Get all curated swatches as flat array
- */
-export function getAllSwatches(): string[] {
-  return [
-    ...CURATED_SWATCHES.blues,
-    ...CURATED_SWATCHES.greens,
-    ...CURATED_SWATCHES.warm,
-    ...CURATED_SWATCHES.neutral,
-  ];
 }

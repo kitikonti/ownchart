@@ -12,10 +12,8 @@
 
 import { useState, useRef, useEffect, type KeyboardEvent } from "react";
 import { X, ArrowCounterClockwise } from "@phosphor-icons/react";
-import {
-  useProjectColors,
-  CURATED_SWATCHES,
-} from "../../../hooks/useProjectColors";
+import { useProjectColors } from "../../../hooks/useProjectColors";
+import { CURATED_SWATCHES } from "../../../config/colorSwatches";
 import { getContrastTextColor } from "../../../utils/colorUtils";
 import type { ColorMode } from "../../../types/colorMode.types";
 import {

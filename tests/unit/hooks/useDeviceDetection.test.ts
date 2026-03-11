@@ -4,7 +4,11 @@
 
 import { describe, it, expect, afterEach, vi } from "vitest";
 import { renderHook, act } from "@testing-library/react";
-import { useDeviceDetection } from "../../../src/hooks/useDeviceDetection";
+import {
+  useDeviceDetection,
+  NARROW_QUERY,
+  COARSE_QUERY,
+} from "../../../src/hooks/useDeviceDetection";
 
 type ChangeListener = (e: MediaQueryListEvent) => void;
 
@@ -20,8 +24,8 @@ function setupMatchMedia(
   coarse: boolean
 ): MatchMediaMock {
   const state: Record<string, boolean> = {
-    "(max-width: 768px)": narrow,
-    "(pointer: coarse)": coarse,
+    [NARROW_QUERY]: narrow,
+    [COARSE_QUERY]: coarse,
   };
   const listeners = new Map<string, ChangeListener>();
 
@@ -48,15 +52,15 @@ function setupMatchMedia(
   return {
     listeners,
     setNarrow: (value: boolean): void => {
-      state["(max-width: 768px)"] = value;
-      const handler = listeners.get("(max-width: 768px)");
+      state[NARROW_QUERY] = value;
+      const handler = listeners.get(NARROW_QUERY);
       if (handler) {
         handler({ matches: value } as MediaQueryListEvent);
       }
     },
     setCoarse: (value: boolean): void => {
-      state["(pointer: coarse)"] = value;
-      const handler = listeners.get("(pointer: coarse)");
+      state[COARSE_QUERY] = value;
+      const handler = listeners.get(COARSE_QUERY);
       if (handler) {
         handler({ matches: value } as MediaQueryListEvent);
       }

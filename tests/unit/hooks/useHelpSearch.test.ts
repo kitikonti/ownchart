@@ -1,7 +1,7 @@
 import { describe, it, expect } from "vitest";
 import { renderHook } from "@testing-library/react";
 import { useHelpSearch } from "../../../src/hooks/useHelpSearch";
-import { HELP_TABS } from "../../../src/config/helpContent";
+import { HELP_TABS, getModKey } from "../../../src/config/helpContent";
 
 describe("useHelpSearch", () => {
   const tabs = HELP_TABS;
@@ -81,5 +81,26 @@ describe("useHelpSearch", () => {
       expect(section.id).toBeTruthy();
       expect(section.title).toBeTruthy();
     }
+  });
+
+  it("should find topics by menuPath", () => {
+    // "View > Columns" is the menuPath of the sc-columns topic.
+    // Using the full phrase ensures the match comes exclusively from menuPath.
+    const { result } = renderHook(() =>
+      useHelpSearch(tabs, "View > Columns")
+    );
+    expect(result.current.matchCount).toBeGreaterThan(0);
+    const allTopics = result.current.sections.flatMap((s) => s.topics);
+    expect(allTopics.some((t) => t.id === "sc-columns")).toBe(true);
+  });
+
+  it("should find topics by resolved shortcut key (e.g. Ctrl/Cmd)", () => {
+    // Shortcuts in helpContent use {mod} placeholders. buildHaystack calls
+    // resolveShortcut() so users can search for the actual platform modifier
+    // key ("Ctrl" on Windows/Linux, "Cmd" on macOS) rather than the raw token.
+    const modKey = getModKey(); // "Ctrl" or "Cmd" depending on platform
+    const { result } = renderHook(() => useHelpSearch(tabs, modKey));
+    // There are many shortcuts that use {mod} — at least one topic must match.
+    expect(result.current.matchCount).toBeGreaterThan(0);
   });
 });
