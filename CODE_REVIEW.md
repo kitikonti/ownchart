@@ -240,12 +240,12 @@ cd ../app-gantt-review
 - [ ] `src/utils/export/calculations.ts` (294 LOC)
 - [ ] `src/utils/export/captureChart.ts` (171 LOC)
 - [ ] `src/utils/export/helpers.ts` (156 LOC)
-- [ ] `src/utils/export/index.ts` (133 LOC)
-- [ ] `src/utils/export/downloadPng.ts` (75 LOC)
-- [ ] `src/utils/export/dpi.ts` (67 LOC)
-- [ ] `src/utils/export/constants.ts` (60 LOC)
-- [ ] `src/utils/export/sanitizeFilename.ts` (36 LOC)
-- [ ] `src/utils/export/interFont.ts` (27 LOC)
+- [x] `src/utils/export/index.ts` (133 LOC)
+- [x] `src/utils/export/downloadPng.ts` (75 LOC)
+- [x] `src/utils/export/dpi.ts` (67 LOC)
+- [x] `src/utils/export/constants.ts` (60 LOC)
+- [x] `src/utils/export/sanitizeFilename.ts` (36 LOC)
+- [x] `src/utils/export/interFont.ts` (27 LOC)
 - SKIP `src/utils/export/fonts/inter*FontData.ts` — base64 Daten, NICHT OEFFNEN
 
 ### Priority: LOW — UI Components
