@@ -18,6 +18,10 @@ import {
 // Dev-mode singleton guard: detect accidental double-mounting.
 // The LaunchQueue API silently overwrites the previous consumer when
 // setConsumer is called more than once, so this warning surfaces the bug early.
+//
+// Intentionally not reset: this is a once-per-process flag. HMR re-evaluates
+// the module, which resets it naturally. In tests, use vi.resetModules() before
+// importing this hook if a fresh guard state is required.
 let _launchQueueConsumerRegistered = false;
 
 export function useLaunchQueue(): void {
