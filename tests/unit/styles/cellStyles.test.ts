@@ -80,3 +80,13 @@ describe("getEditingCellStyle", () => {
     expect(style.paddingLeft).toBe("var(--density-cell-padding-x)");
   });
 });
+
+describe("shared border shadow invariant", () => {
+  it("getActiveCellStyle and getEditingCellStyle share the same boxShadow value", () => {
+    // Both states use the same brand-colored inset shadow — only z-index differs.
+    // If this fails, buildFocusedCellStyle's DRY contract has been broken.
+    const active = getActiveCellStyle("startDate");
+    const editing = getEditingCellStyle("startDate");
+    expect(active.boxShadow).toBe(editing.boxShadow);
+  });
+});
