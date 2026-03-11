@@ -6,8 +6,8 @@
  */
 
 import type { CSSProperties } from "react";
-import { NAME_COLUMN_ID } from "../config/tableColumns";
 import { CELL, Z_INDEX } from "./design-tokens";
+import { NAME_COLUMN_ID } from "../config/tableColumns";
 
 /**
  * Density-aware cell style using CSS custom properties.
