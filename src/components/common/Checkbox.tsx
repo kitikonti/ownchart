@@ -15,6 +15,7 @@
  */
 
 import { Check } from "@phosphor-icons/react";
+import { PEER_FOCUS_RING, PEER_ACTIVE_SCALE } from "../../styles/inputStyles";
 
 export interface CheckboxProps {
   checked: boolean;
@@ -57,8 +58,8 @@ export function Checkbox({
               ? "bg-brand-600 border border-brand-600 peer-hover:bg-brand-700 peer-hover:border-brand-700"
               : "bg-white border border-neutral-400 peer-hover:border-neutral-500 peer-hover:bg-neutral-50"
           }
-          peer-focus-visible:ring-2 peer-focus-visible:ring-brand-200 peer-focus-visible:ring-offset-1
-          peer-active:scale-95
+          ${PEER_FOCUS_RING}
+          ${PEER_ACTIVE_SCALE}
         `}
       >
         {checked && <Check size={14} weight="bold" className="text-white" />}

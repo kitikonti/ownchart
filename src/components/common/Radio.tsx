@@ -14,6 +14,8 @@
  * - Disabled: 50% opacity
  */
 
+import { PEER_FOCUS_RING, PEER_ACTIVE_SCALE } from "../../styles/inputStyles";
+
 export interface RadioProps {
   checked: boolean;
   onChange: () => void;
@@ -62,8 +64,8 @@ export function Radio({
               ? "border-[1.5px] border-brand-600 peer-hover:border-brand-700"
               : "border border-neutral-400 peer-hover:border-neutral-500 peer-hover:bg-neutral-50"
           }
-          peer-focus-visible:ring-2 peer-focus-visible:ring-brand-200 peer-focus-visible:ring-offset-1
-          peer-active:scale-95
+          ${PEER_FOCUS_RING}
+          ${PEER_ACTIVE_SCALE}
         `}
       >
         {/* Inner filled circle when checked */}

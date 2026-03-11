@@ -7,6 +7,10 @@
 
 import { useId } from "react";
 import { Checkbox } from "./Checkbox";
+import {
+  OPTION_CARD_MIN_HEIGHT,
+  OPTION_CARD_LAYOUT,
+} from "../../styles/inputStyles";
 
 export interface LabeledCheckboxProps {
   /** Whether the checkbox is checked */
@@ -37,7 +41,7 @@ export function LabeledCheckbox({
   return (
     <label
       htmlFor={id}
-      className={`flex items-center gap-3.5 p-4 rounded border border-neutral-200 hover:bg-neutral-50 cursor-pointer transition-colors duration-150 min-h-[44px] ${
+      className={`flex items-center ${OPTION_CARD_LAYOUT} border-neutral-200 hover:bg-neutral-50 cursor-pointer transition-colors duration-150 ${OPTION_CARD_MIN_HEIGHT} ${
         disabled ? "opacity-50 cursor-not-allowed" : ""
       }`}
     >

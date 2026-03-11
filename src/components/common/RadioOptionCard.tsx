@@ -4,6 +4,10 @@
  */
 
 import { Radio } from "./Radio";
+import {
+  OPTION_CARD_MIN_HEIGHT,
+  OPTION_CARD_LAYOUT,
+} from "../../styles/inputStyles";
 
 export interface RadioOptionCardProps {
   /** Radio group name */
@@ -42,7 +46,7 @@ export function RadioOptionCard({
 
   return (
     <label
-      className={`flex ${showAlignTop ? "items-start" : "items-center"} gap-3.5 p-4 rounded border cursor-pointer transition-all duration-150 min-h-[44px] hover:bg-neutral-50 ${
+      className={`flex ${showAlignTop ? "items-start" : "items-center"} ${OPTION_CARD_LAYOUT} ${OPTION_CARD_MIN_HEIGHT} cursor-pointer transition-all duration-150 hover:bg-neutral-50 ${
         selected
           ? "border-neutral-300 border-l-[3px] border-l-brand-600"
           : "border-neutral-200 hover:border-neutral-300"
