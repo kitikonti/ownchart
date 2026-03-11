@@ -79,19 +79,21 @@ export function prepareRowPaste(
   // Get the actual ORDER value at the insert position
   let insertOrder: number;
   let targetParent: TaskId | undefined = undefined;
-  let targetParentLevel = 0;
 
   if (insertIndex < flattenedTasks.length) {
     const taskAtPosition = flattenedTasks[insertIndex];
     insertOrder = taskAtPosition.task.order;
     targetParent = taskAtPosition.task.parent;
-    if (targetParent) {
-      targetParentLevel = getTaskLevel(currentTasks, targetParent) + 1;
-    }
   } else {
+    // reduce with initial -1 handles empty currentTasks (returns -1 + 1 = 0)
     insertOrder =
       currentTasks.reduce((max, t) => Math.max(max, t.order), -1) + 1;
   }
+
+  // Depth of the insertion target in the existing tree (0 = top-level)
+  const targetParentLevel = targetParent
+    ? getTaskLevel(currentTasks, targetParent) + 1
+    : 0;
 
   // Generate new UUIDs and remap IDs
   const { remappedTasks, idMapping } = remapTaskIds(clipboardTasks);
@@ -103,7 +105,11 @@ export function prepareRowPaste(
   const getDepthInPasted = (task: Task): number => {
     let depth = 0;
     let current = task;
+    // Guard against circular parent references in malformed clipboard data.
+    const visited = new Set<TaskId>();
     while (current.parent && pastedTaskIds.has(current.parent)) {
+      if (visited.has(current.parent)) break; // cycle detected — stop traversal
+      visited.add(current.parent);
       depth++;
       const parent = pastedTaskMap.get(current.parent);
       if (!parent) break;
@@ -135,7 +141,7 @@ export function prepareRowPaste(
     if (t.order >= insertOrder) {
       return { ...t, order: t.order + remappedTasks.length };
     }
-    return { ...t };
+    return t;
   });
 
   // Set order and parent for new tasks
@@ -164,6 +170,11 @@ export function prepareRowPaste(
 /**
  * Recalculates summary dates for a target parent task if it is a summary.
  * Returns updated tasks array, or the original if no recalculation needed.
+ *
+ * @note Only recalculates a single level (the immediate parent). If the parent
+ * is itself a child of another summary, the ancestor summary is NOT updated
+ * by this function. Callers that need full ancestor propagation must chain
+ * multiple calls up the ancestor tree.
  */
 export function applySummaryRecalculation(
   tasks: Task[],
