@@ -15,11 +15,10 @@ export function useUnsavedChanges(): void {
   // Keep a ref in sync so the stable handler always reads the latest value
   // without needing to be re-created or re-registered.
   //
-  // Timing note: this sync effect runs after render, so there is a brief window
-  // where the ref lags behind state. This is intentionally safe here because
-  // `beforeunload` is only ever triggered by user navigation (e.g. closing the
-  // tab), which cannot occur during a React render cycle. By the time the user
-  // can trigger navigation, the ref will always have been flushed.
+  // Timing note: the ref sync effect runs after render, so there is a brief
+  // window where the ref lags behind state. This is safe because `beforeunload`
+  // can only be triggered by user navigation, which cannot occur during a React
+  // render cycle — the ref is always flushed before navigation is possible.
   const isDirtyRef = useRef(isDirty);
   useEffect(() => {
     isDirtyRef.current = isDirty;

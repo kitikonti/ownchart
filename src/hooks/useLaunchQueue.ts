@@ -44,6 +44,8 @@ export function useLaunchQueue(): void {
       if (!launchParams.files || launchParams.files.length === 0) return;
 
       // Only the first file is opened — OwnChart is a single-project app.
+      // `handle` is bound here (outside the try) so it is always available
+      // in the catch block for the error toast message.
       const handle = launchParams.files[0];
       try {
         const file = await handle.getFile();
