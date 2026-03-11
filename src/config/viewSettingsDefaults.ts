@@ -34,7 +34,8 @@ export function applyViewSettingsDefaults(loaded: ViewSettings): ViewSettings {
     holidayRegion: loaded.holidayRegion,
     projectTitle: loaded.projectTitle ?? "",
     projectAuthor: loaded.projectAuthor ?? "",
-    colorModeState: loaded.colorModeState ?? { ...DEFAULT_COLOR_MODE_STATE },
+    colorModeState:
+      loaded.colorModeState ?? structuredClone(DEFAULT_COLOR_MODE_STATE),
     hiddenColumns: loaded.hiddenColumns ?? [],
     isTaskTableCollapsed: loaded.isTaskTableCollapsed ?? false,
     hiddenTaskIds: loaded.hiddenTaskIds ?? [],

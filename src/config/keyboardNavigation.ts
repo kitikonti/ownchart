@@ -12,4 +12,7 @@ export const ARROW_NAV: Record<string, NavigationDirection> = {
   ArrowDown: "down",
   ArrowLeft: "left",
   ArrowRight: "right",
-};
+} satisfies Record<
+  "ArrowUp" | "ArrowDown" | "ArrowLeft" | "ArrowRight",
+  NavigationDirection
+>;
