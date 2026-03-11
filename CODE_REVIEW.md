@@ -285,6 +285,14 @@ cd ../app-gantt-review
 - [x] `src/config/helpContent.ts` (1109 LOC) — Datendatei
 - [x] `src/services/holidayService.ts` (209 LOC)
 - [x] `src/config/preferencesOptions.ts` (135 LOC)
+- [x] `src/config/densityConfig.ts` (81 LOC)
+- [x] `src/config/layoutConstants.ts` (54 LOC)
+- [x] `src/config/viewSettingsDefaults.ts` (45 LOC)
+- [x] `src/config/keyboardNavigation.ts` (15 LOC)
+- [x] `src/config/workingDaysConfig.ts` (11 LOC)
+- [x] `src/config/taskDefaults.ts` (10 LOC)
+- [x] `src/config/placeholderRow.ts` (4 LOC)
+- [x] `src/config/colorModeDefaults.ts` (38 LOC)
 - [x] `src/config/appConfig.ts` (14 LOC)
 - [x] `src/config/version.ts` (5 LOC)
 
