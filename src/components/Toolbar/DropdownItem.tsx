@@ -39,6 +39,8 @@ interface DropdownItemProps {
    * so keyboard users get the same affordance as mouse users.
    */
   isFocused?: boolean;
+  /** When true the item is rendered but cannot be activated */
+  disabled?: boolean;
   /** Click handler */
   onClick: () => void;
   /** Primary label */
@@ -68,6 +70,7 @@ interface DropdownItemProps {
 export const DropdownItem = memo(function DropdownItem({
   isSelected = false,
   isFocused = false,
+  disabled = false,
   onClick,
   children,
   description,
@@ -94,6 +97,8 @@ export const DropdownItem = memo(function DropdownItem({
       id={id}
       type="button"
       role={role}
+      disabled={disabled}
+      aria-disabled={disabled || undefined}
       aria-selected={
         emitsAriaSelected ? (ariaSelected ?? isSelected) : undefined
       }
@@ -101,7 +106,10 @@ export const DropdownItem = memo(function DropdownItem({
       onClick={onClick}
       className={[
         "dropdown-item",
-        "flex items-center w-full cursor-pointer text-left text-sm text-neutral-900 whitespace-nowrap",
+        "flex items-center w-full text-left text-sm whitespace-nowrap",
+        disabled
+          ? "cursor-not-allowed text-neutral-400"
+          : "cursor-pointer text-neutral-900",
         hasDescription
           ? "min-h-[36px] py-1.5 pr-3 pl-2"
           : "h-8 py-0 pr-[15px] pl-[9px]", // pl-[9px]/pr-[15px] pixel-align with DropdownPanel's px-[9px] left-padding so the checkmark column visually aligns with the panel edge — if DropdownPanel padding changes, update this value to match

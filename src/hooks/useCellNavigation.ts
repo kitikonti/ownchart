@@ -6,6 +6,7 @@
 import { useCallback } from "react";
 import {
   useTaskStore,
+  type ActiveCell,
   type EditableField,
   type NavigationDirection,
 } from "../store/slices/taskSlice";
@@ -13,10 +14,7 @@ import type { TaskId } from "../types/branded.types";
 
 export interface UseCellNavigationReturn {
   /** Current active cell */
-  activeCell: {
-    taskId: TaskId | null;
-    field: EditableField | null;
-  };
+  activeCell: ActiveCell;
 
   /** Whether a cell is currently being edited */
   isEditingCell: boolean;

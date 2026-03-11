@@ -6,8 +6,17 @@
  *
  * Lives in `src/types/` rather than inside a component file so that config
  * modules can import it without creating a config → component layer coupling.
+ *
+ * @example
+ * // Narrow the value type for type-safe selection handling:
+ * const options: DropdownOption<TaskType>[] = [
+ *   { value: 'task', label: 'Task' },
+ *   { value: 'milestone', label: 'Milestone' },
+ * ];
  */
 export interface DropdownOption<T extends string = string> {
   value: T;
   label: string;
+  /** When true the option is shown but cannot be selected. */
+  disabled?: boolean;
 }

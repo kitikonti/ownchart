@@ -118,7 +118,7 @@ function ToolbarDropdownInner<T extends string = string>({
       } else if (e.key === "Enter" || e.key === " ") {
         e.preventDefault();
         const focused = options[focusedIndex];
-        if (focused) handleSelect(focused.value);
+        if (focused && !focused.disabled) handleSelect(focused.value);
       }
     },
     [isOpen, focusedIndex, options, handleSelect]
@@ -150,6 +150,7 @@ function ToolbarDropdownInner<T extends string = string>({
               id={`${idPrefix}-option-${option.value}`}
               isSelected={option.value === value}
               isFocused={index === focusedIndex}
+              disabled={option.disabled}
               onClick={() => handleSelect(option.value)}
               role="option"
             >

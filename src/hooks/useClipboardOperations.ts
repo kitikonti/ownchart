@@ -10,7 +10,7 @@ import toast from "react-hot-toast";
 import { useClipboardStore } from "../store/slices/clipboardSlice";
 import { useTaskStore } from "../store/slices/taskSlice";
 import type { TaskId } from "../types/branded.types";
-import type { EditableField } from "../types/task.types";
+import type { ActiveCell, EditableField } from "../types/task.types";
 import {
   writeRowsToSystemClipboard,
   writeCellToSystemClipboard,
@@ -85,7 +85,7 @@ function syncCellToSystemClipboard(): void {
 function executeCopyOrCut(
   mode: "copy" | "cut",
   selectedTaskIds: TaskId[],
-  activeCell: { taskId: TaskId | null; field: EditableField | null },
+  activeCell: ActiveCell,
   rowAction: (ids: TaskId[]) => void,
   cellAction: (id: TaskId, field: EditableField) => void
 ): void {
