@@ -59,6 +59,18 @@ describe("mmToPxAtDpi", () => {
     expect(mmToPxAtDpi(12.7, 96)).toBeCloseTo(48);
   });
 
+  it("throws RangeError for negative mm", () => {
+    expect(() => mmToPxAtDpi(-1, 96)).toThrow(RangeError);
+  });
+
+  it("throws RangeError for NaN mm", () => {
+    expect(() => mmToPxAtDpi(NaN, 96)).toThrow(RangeError);
+  });
+
+  it("throws RangeError for Infinity mm", () => {
+    expect(() => mmToPxAtDpi(Infinity, 96)).toThrow(RangeError);
+  });
+
   it("throws RangeError for zero dpi", () => {
     expect(() => mmToPxAtDpi(25.4, 0)).toThrow(RangeError);
   });
@@ -95,6 +107,18 @@ describe("pxToMmAtDpi", () => {
   it("converts dpi pixels to 25.4 mm (1 inch) at any DPI", () => {
     expect(pxToMmAtDpi(96, 96)).toBeCloseTo(25.4);
     expect(pxToMmAtDpi(150, 150)).toBeCloseTo(25.4);
+  });
+
+  it("throws RangeError for negative px", () => {
+    expect(() => pxToMmAtDpi(-1, 96)).toThrow(RangeError);
+  });
+
+  it("throws RangeError for NaN px", () => {
+    expect(() => pxToMmAtDpi(NaN, 96)).toThrow(RangeError);
+  });
+
+  it("throws RangeError for Infinity px", () => {
+    expect(() => pxToMmAtDpi(Infinity, 96)).toThrow(RangeError);
   });
 
   it("throws RangeError for zero dpi", () => {

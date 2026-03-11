@@ -22,12 +22,15 @@ export const MM_PER_INCH = 25.4;
 
 /**
  * Convert millimeters to pixels at a specific DPI.
- * @param mm - Millimeter value. Caller is responsible for passing a finite,
- *   non-negative number; no range check is performed on this argument.
+ * @param mm - Millimeter value. Must be a finite non-negative number.
  * @param dpi - Target DPI. Must be a finite positive number.
- * @throws {RangeError} If dpi is not a finite positive number.
+ * @throws {RangeError} If mm is not a finite non-negative number, or if dpi
+ *   is not a finite positive number.
  */
 export function mmToPxAtDpi(mm: number, dpi: number): number {
+  if (!Number.isFinite(mm) || mm < 0) {
+    throw new RangeError(`mm must be a finite number >= 0, got ${mm}`);
+  }
   if (!Number.isFinite(dpi) || dpi <= 0) {
     throw new RangeError(`dpi must be a finite positive number, got ${dpi}`);
   }
@@ -36,12 +39,15 @@ export function mmToPxAtDpi(mm: number, dpi: number): number {
 
 /**
  * Convert pixels to millimeters at a specific DPI.
- * @param px - Pixel value. Caller is responsible for passing a finite,
- *   non-negative number; no range check is performed on this argument.
+ * @param px - Pixel value. Must be a finite non-negative number.
  * @param dpi - Target DPI. Must be a finite positive number.
- * @throws {RangeError} If dpi is not a finite positive number.
+ * @throws {RangeError} If px is not a finite non-negative number, or if dpi
+ *   is not a finite positive number.
  */
 export function pxToMmAtDpi(px: number, dpi: number): number {
+  if (!Number.isFinite(px) || px < 0) {
+    throw new RangeError(`px must be a finite number >= 0, got ${px}`);
+  }
   if (!Number.isFinite(dpi) || dpi <= 0) {
     throw new RangeError(`dpi must be a finite positive number, got ${dpi}`);
   }
@@ -52,12 +58,13 @@ export function pxToMmAtDpi(px: number, dpi: number): number {
  * Calculate pixel dimensions for a page size at a given DPI.
  * @param widthMm - Page width in millimeters (must be ≥ 0)
  * @param heightMm - Page height in millimeters (must be ≥ 0)
- * @param dpi - Target DPI (e.g., 150 for print quality)
+ * @param dpi - Target DPI (e.g., 150 for print quality). Must be a finite positive number.
  * @returns Pixel dimensions (rounded to integers)
  * @throws {RangeError} If widthMm is not a finite non-negative number (checked
- *   first), then if heightMm is not a finite non-negative number (checked
- *   second), or finally if dpi is not a finite positive number (validated
- *   inside {@link mmToPxAtDpi}).
+ *   first), if heightMm is not a finite non-negative number (checked second),
+ *   or if dpi is not a finite positive number (checked by {@link mmToPxAtDpi}).
+ *   The explicit pre-checks for widthMm and heightMm provide a clear error
+ *   message at the call site; {@link mmToPxAtDpi} would also catch them.
  */
 export function calculatePixelDimensions(
   widthMm: number,
@@ -85,7 +92,7 @@ export function calculatePixelDimensions(
  *
  * This is a pure formatting helper — it does **not** validate the inputs.
  * Use {@link mmToPxAtDpi} / {@link pxToMmAtDpi} / {@link calculatePixelDimensions}
- * when conversion accuracy is required (those functions throw on invalid DPI).
+ * when conversion accuracy is required (those functions throw on invalid inputs).
  *
  * @param widthPx - Width in pixels (caller is responsible for passing a valid positive number)
  * @param heightPx - Height in pixels (caller is responsible for passing a valid positive number)
