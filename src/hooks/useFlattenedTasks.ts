@@ -11,8 +11,10 @@
 import { useMemo } from "react";
 import { useTaskStore } from "../store/slices/taskSlice";
 import { useChartStore } from "../store/slices/chartSlice";
-import { buildFlattenedTaskList, type FlattenedTask } from "../utils/hierarchy";
+import { buildFlattenedTaskList } from "../utils/hierarchy";
+import type { FlattenedTask } from "../utils/hierarchy";
 import type { Task } from "../types/chart.types";
+import type { TaskId } from "../types/branded.types";
 
 interface UseFlattenedTasksResult {
   /** Visible flattened task list (hidden tasks filtered out) with hierarchy info */
@@ -34,22 +36,23 @@ export function useFlattenedTasks(): UseFlattenedTasksResult {
   const hiddenTaskIds = useChartStore((state) => state.hiddenTaskIds);
 
   // Stage 1: Build full flattened list with globalRowNumber
-  const allFlattenedTasks = useMemo(() => {
-    const collapsedIds = new Set(
-      tasks.filter((t) => t.open === false).map((t) => t.id)
-    );
+  const allFlattenedTasks = useMemo((): FlattenedTask[] => {
+    const collapsedIds = tasks.reduce<Set<TaskId>>((acc, t) => {
+      if (t.open === false) acc.add(t.id);
+      return acc;
+    }, new Set());
     return buildFlattenedTaskList(tasks, collapsedIds);
   }, [tasks]);
 
   // Stage 2: Filter out hidden tasks (preserving globalRowNumber for gaps)
-  const flattenedTasks = useMemo(() => {
+  const flattenedTasks = useMemo((): FlattenedTask[] => {
     if (hiddenTaskIds.length === 0) return allFlattenedTasks;
     const hiddenSet = new Set(hiddenTaskIds);
     return allFlattenedTasks.filter((item) => !hiddenSet.has(item.task.id));
   }, [allFlattenedTasks, hiddenTaskIds]);
 
   const orderedTasks = useMemo(
-    () => flattenedTasks.map(({ task }) => task),
+    (): Task[] => flattenedTasks.map(({ task }) => task),
     [flattenedTasks]
   );
 

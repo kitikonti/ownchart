@@ -4,17 +4,18 @@
  * Delegates item building to useFullTaskContextMenuItems.
  */
 
-import { useMemo, useState, useCallback } from "react";
+import { useCallback, useMemo, useState } from "react";
+import { useTaskStore } from "../store/slices/taskSlice";
+import { useFullTaskContextMenuItems } from "./useFullTaskContextMenuItems";
+import type { MouseEvent } from "react";
 import type { ContextMenuItem } from "../components/ContextMenu/ContextMenu";
 import type { TaskId } from "../types/branded.types";
-import { useTaskStore } from "../store/slices/taskSlice";
 import type { TaskContextMenuState } from "./contextMenuItemBuilders";
-import { useFullTaskContextMenuItems } from "./useFullTaskContextMenuItems";
 
 interface UseTimelineBarContextMenuResult {
   contextMenu: TaskContextMenuState | null;
   contextMenuItems: ContextMenuItem[];
-  handleBarContextMenu: (e: React.MouseEvent, taskId: TaskId) => void;
+  handleBarContextMenu: (e: MouseEvent, taskId: TaskId) => void;
   closeContextMenu: () => void;
 }
 
@@ -27,12 +28,15 @@ export function useTimelineBarContextMenu(): UseTimelineBarContextMenuResult {
   );
 
   const handleBarContextMenu = useCallback(
-    (e: React.MouseEvent, taskId: TaskId): void => {
+    (e: MouseEvent, taskId: TaskId): void => {
       e.preventDefault();
       e.stopPropagation(); // Prevent timeline area context menu
 
-      // Right-click selection logic
-      if (!useTaskStore.getState().selectedTaskIds.includes(taskId)) {
+      // Right-click selection logic: if the clicked task is not in the current
+      // selection, replace the selection with just that task.
+      // Use a Set for O(1) lookup instead of O(n) Array.includes.
+      const currentSelection = new Set(useTaskStore.getState().selectedTaskIds);
+      if (!currentSelection.has(taskId)) {
         setSelectedTaskIds([taskId]);
       }
 
