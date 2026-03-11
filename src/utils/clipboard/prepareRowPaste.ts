@@ -45,13 +45,18 @@ export interface PrepareRowPasteResult {
   targetParent: TaskId | undefined;
 }
 
+/** Returned by {@link prepareRowPaste} when the paste cannot proceed. */
+export interface PrepareRowPasteError {
+  error: string;
+}
+
 /**
  * Pure function that prepares all data needed for a row paste operation.
  * Returns either a successful result or an error string.
  */
 export function prepareRowPaste(
   input: PrepareRowPasteInput
-): PrepareRowPasteResult | { error: string } {
+): PrepareRowPasteResult | PrepareRowPasteError {
   const {
     clipboardTasks,
     clipboardDependencies,

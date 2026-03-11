@@ -107,7 +107,7 @@ describe("prepareRowPaste", () => {
       clipboardTasks,
       clipboardDependencies: [],
       currentTasks,
-      activeCell: { taskId: "child" },
+      activeCell: { taskId: tid("child") },
       selectedTaskIds: [],
     });
 
@@ -170,7 +170,7 @@ describe("prepareRowPaste", () => {
       clipboardTasks,
       clipboardDependencies: [],
       currentTasks,
-      activeCell: { taskId: "l2" },
+      activeCell: { taskId: tid("l2") },
       selectedTaskIds: [],
     });
 
@@ -220,7 +220,7 @@ describe("prepareRowPaste", () => {
       clipboardTasks,
       clipboardDependencies: [],
       currentTasks,
-      activeCell: { taskId: "b" },
+      activeCell: { taskId: tid("b") },
       selectedTaskIds: [],
     });
 
@@ -245,7 +245,7 @@ describe("applySummaryRecalculation", () => {
       createTask("p", "Parent", 0),
       createTask("c", "Child", 1, "p"),
     ];
-    const result = applySummaryRecalculation(tasks, "p");
+    const result = applySummaryRecalculation(tasks, tid("p"));
     expect(result).toBe(tasks);
   });
 
@@ -262,9 +262,9 @@ describe("applySummaryRecalculation", () => {
       }),
     ];
 
-    const result = applySummaryRecalculation(tasks, "summary");
+    const result = applySummaryRecalculation(tasks, tid("summary"));
 
-    const summary = result.find((t) => t.id === "summary");
+    const summary = result.find((t) => t.id === tid("summary"));
     expect(summary?.startDate).toBe("2025-02-15");
     expect(summary?.endDate).toBe("2025-04-01");
   });

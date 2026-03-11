@@ -25,6 +25,7 @@ export {
   applySummaryRecalculation,
   type PrepareRowPasteInput,
   type PrepareRowPasteResult,
+  type PrepareRowPasteError,
 } from "./prepareRowPaste";
 
 export {
