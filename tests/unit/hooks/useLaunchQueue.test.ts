@@ -22,6 +22,8 @@ vi.mock("../../../src/utils/fileOperations/loadFromFile", () => ({
   showLoadNotifications: vi.fn(),
 }));
 
+// Mocked module references — must be imported after vi.mock() calls so that
+// the mock factory has already replaced the modules before we capture them here.
 import toast from "react-hot-toast";
 import {
   loadFileIntoApp,
@@ -75,6 +77,53 @@ beforeEach(() => {
 
 afterEach(() => {
   removeLaunchQueue();
+});
+
+// ─── Dev-mode singleton guard test ───
+// Uses vi.stubEnv + vi.resetModules + dynamic import to test the DEV-only guard
+// in isolation from the statically-imported hook module.
+
+describe("useLaunchQueue — dev-mode singleton guard", () => {
+  afterEach(() => {
+    // Restore env stubs and module registry after each test in this block
+    // to prevent DEV=true from leaking into subsequent describe blocks.
+    vi.unstubAllEnvs();
+    vi.resetModules();
+  });
+
+  it("should warn when the hook is mounted more than once in DEV mode", async () => {
+    vi.stubEnv("DEV", true);
+
+    // Reset module registry so the module-level flag starts at false
+    vi.resetModules();
+
+    const { renderHook: renderHookDynamic } = await import("@testing-library/react");
+    const { useLaunchQueue: useLaunchQueueDynamic } = await import(
+      "../../../src/hooks/useLaunchQueue"
+    );
+
+    const warnSpy = vi.spyOn(console, "warn").mockImplementation(() => {});
+
+    Object.defineProperty(window, "launchQueue", {
+      value: { setConsumer: vi.fn() },
+      writable: true,
+      configurable: true,
+    });
+
+    // First mount — registers the flag
+    const { unmount: unmount1 } = renderHookDynamic(() => useLaunchQueueDynamic());
+
+    // Second mount — should emit the warning
+    const { unmount: unmount2 } = renderHookDynamic(() => useLaunchQueueDynamic());
+
+    expect(warnSpy).toHaveBeenCalledWith(
+      expect.stringContaining("Hook mounted more than once")
+    );
+
+    unmount1();
+    unmount2();
+    warnSpy.mockRestore();
+  });
 });
 
 // ─── Tests ───

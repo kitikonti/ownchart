@@ -28,11 +28,7 @@ describe("useUnsavedChanges", () => {
 
     renderHook(() => useUnsavedChanges());
 
-    const addSpy = vi.spyOn(window, "addEventListener");
-    // Confirm listener was registered (spy won't capture the one already set up)
-    // Just fire the event and confirm returnValue is not set.
     const preventDefaultSpy = vi.fn();
-
     const event = new Event("beforeunload", { cancelable: true }) as BeforeUnloadEvent;
     Object.defineProperty(event, "returnValue", { writable: true, value: "" });
     Object.defineProperty(event, "preventDefault", { value: preventDefaultSpy });
@@ -40,7 +36,6 @@ describe("useUnsavedChanges", () => {
     window.dispatchEvent(event);
 
     expect(preventDefaultSpy).not.toHaveBeenCalled();
-    addSpy.mockRestore();
   });
 
   it("should prevent navigation when there are unsaved changes", () => {

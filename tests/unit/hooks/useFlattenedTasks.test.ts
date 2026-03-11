@@ -6,8 +6,7 @@
  */
 
 import { describe, it, expect, beforeEach } from "vitest";
-import { renderHook } from "@testing-library/react";
-import { act } from "@testing-library/react";
+import { renderHook, act } from "@testing-library/react";
 import { useFlattenedTasks } from "../../../src/hooks/useFlattenedTasks";
 import { useTaskStore } from "../../../src/store/slices/taskSlice";
 import { useChartStore } from "../../../src/store/slices/chartSlice";
