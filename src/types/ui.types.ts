@@ -10,4 +10,6 @@
 export interface DropdownOption<T extends string = string> {
   value: T;
   label: string;
+  /** When true the option is shown but cannot be selected. */
+  disabled?: boolean;
 }
