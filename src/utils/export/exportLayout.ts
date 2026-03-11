@@ -40,7 +40,7 @@ export interface ExportLayout {
   selectedColumns: ExportColumnKey[];
   hasTaskList: boolean;
   /** Keys are ExportColumnKey values; only selected columns are present. */
-  effectiveColumnWidths: Record<string, number>;
+  effectiveColumnWidths: Partial<Record<ExportColumnKey, number>>;
   taskTableWidth: number;
   dateRange: { min: string; max: string };
   effectiveZoom: number;
@@ -138,7 +138,7 @@ function computeTaskTableLayout(
 ): {
   hasTaskList: boolean;
   /** Keys are ExportColumnKey values; only selected columns are present. */
-  effectiveColumnWidths: Record<string, number>;
+  effectiveColumnWidths: Partial<Record<ExportColumnKey, number>>;
   taskTableWidth: number;
 } {
   const hasTaskList = selectedColumns.length > 0;
@@ -215,6 +215,18 @@ function computeTimelineLayout(
 // =============================================================================
 
 /**
+ * Flatten the input task list into display order and extract ordered Task objects.
+ */
+function flattenInputTasks(tasks: Task[]): {
+  flattenedTasks: FlattenedTask[];
+  orderedTasks: Task[];
+} {
+  const flattenedTasks = buildFlattenedTaskList(tasks, EMPTY_HIDDEN_TASK_IDS);
+  const orderedTasks = flattenedTasks.map((ft) => ft.task);
+  return { flattenedTasks, orderedTasks };
+}
+
+/**
  * Computes the full export layout geometry from tasks and options.
  * Pure function shared by both ExportRenderer (via useMemo) and
  * calculateExportDimensions to eliminate duplication.
@@ -230,11 +242,8 @@ export function computeExportLayout(input: ExportLayoutInput): ExportLayout {
   } = input;
 
   const densityConfig = DENSITY_CONFIG[options.density];
-
-  const flattenedTasks = buildFlattenedTaskList(tasks, EMPTY_HIDDEN_TASK_IDS);
-  const orderedTasks = flattenedTasks.map((ft) => ft.task);
+  const { flattenedTasks, orderedTasks } = flattenInputTasks(tasks);
   const selectedColumns = options.selectedColumns;
-
   const projectDateRange = resolveProjectDateRange(
     providedProjectDateRange,
     orderedTasks

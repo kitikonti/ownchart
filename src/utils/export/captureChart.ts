@@ -13,13 +13,17 @@ import { calculateExportDimensions } from "./exportLayout";
 import { REACT_RENDER_WAIT_MS } from "./constants";
 
 /**
- * Maximum pixel ratio used during capture to prevent oversized canvases
+ * Compute the maximum pixel ratio for capture to prevent oversized canvases
  * on high-DPR displays (e.g. 4K at dpr=4 would otherwise produce a canvas
  * wider than EXPORT_MAX_SAFE_WIDTH).
+ * Computed lazily inside captureChart() — not at module load time — so that
+ * importing this module in non-browser environments (tests, SSR) is safe.
  */
-const MAX_CAPTURE_PIXEL_RATIO = Math.floor(
-  EXPORT_MAX_SAFE_WIDTH / Math.max(window.screen?.width ?? 1920, 1)
-);
+function computeMaxCapturePixelRatio(): number {
+  const screenWidth =
+    typeof window !== "undefined" ? (window.screen?.width ?? 1920) : 1920;
+  return Math.floor(EXPORT_MAX_SAFE_WIDTH / Math.max(screenWidth, 1));
+}
 
 /**
  * Wait for all fonts to be loaded.
@@ -121,9 +125,10 @@ export async function captureChart(
     await waitForPaint();
 
     // Cap pixel ratio to avoid producing canvases wider than EXPORT_MAX_SAFE_WIDTH.
+    const maxCapturePixelRatio = computeMaxCapturePixelRatio();
     const pixelRatio = Math.min(
       Math.max(window.devicePixelRatio, 2),
-      Math.max(MAX_CAPTURE_PIXEL_RATIO, 2)
+      Math.max(maxCapturePixelRatio, 2)
     );
 
     // Capture the container using html-to-image

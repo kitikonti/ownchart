@@ -5,6 +5,12 @@
 import { sanitizeFilename } from "./sanitizeFilename";
 
 /**
+ * Delay in ms before revoking an object URL after download is triggered.
+ * Gives the browser time to initiate the download before the URL is freed.
+ */
+const BLOB_URL_REVOKE_DELAY_MS = 100;
+
+/**
  * Generate a filename for the exported chart.
  * Format: {projectName}-YYYYMMDD-HHMMSS.png
  *
@@ -41,11 +47,11 @@ export function downloadBlob(blob: Blob, filename: string): void {
     link.click();
     document.body.removeChild(link);
   } finally {
-    // Clean up the object URL
-    // Use a small delay to ensure the download has started
+    // Clean up the object URL after a brief delay to allow the browser
+    // to initiate the download before the URL is revoked.
     setTimeout(() => {
       URL.revokeObjectURL(url);
-    }, 100);
+    }, BLOB_URL_REVOKE_DELAY_MS);
   }
 }
 

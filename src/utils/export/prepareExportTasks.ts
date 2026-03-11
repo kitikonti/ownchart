@@ -18,6 +18,9 @@ import type { TaskId } from "../../types/branded.types";
  *   itself. If a child task is not present in `hiddenTaskIds`, it will appear
  *   in the export even if its parent is hidden.
  *
+ * @returns A new array containing only the tasks that are not in `hiddenTaskIds`.
+ *   Always returns a new array — never a reference to the input.
+ *
  * @example
  * // CORRECT: pass both parent and all its descendants
  * prepareExportTasks(tasks, [parentId, child1Id, child2Id]);

@@ -54,7 +54,13 @@ export function getColumnDisplayValue(
     return task.duration !== undefined ? `${task.duration}` : null;
   }
   // progress
-  return task.progress !== undefined ? `${task.progress}%` : null;
+  if (key === "progress") {
+    return task.progress !== undefined ? `${task.progress}%` : null;
+  }
+  // Exhaustive guard: if a new ExportDataColumnKey is added without a handler
+  // above, TypeScript will flag this line as unreachable (the `never` type).
+  const _exhaustiveCheck: never = key;
+  return _exhaustiveCheck;
 }
 
 /** Pre-computed column lookup for O(1) access */

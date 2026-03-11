@@ -33,6 +33,8 @@ function createPagePreset(
   orientation: PdfOrientation = "landscape"
 ): ExportQuickPreset {
   const size = PDF_PAGE_SIZES[pageSize];
+  // PDF_PAGE_SIZES stores sizes in landscape convention: `width` is always the
+  // long dimension and `height` is the short dimension. Swap them for portrait.
   const widthMm = orientation === "landscape" ? size.width : size.height;
   const heightMm = orientation === "landscape" ? size.height : size.width;
   const dims = calculatePixelDimensions(widthMm, heightMm, PNG_EXPORT_DPI);
