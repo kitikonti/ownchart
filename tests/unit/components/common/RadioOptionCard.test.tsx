@@ -6,7 +6,7 @@
 
 import { describe, it, expect, vi } from "vitest";
 import { render, screen, fireEvent } from "@testing-library/react";
-import { RadioOptionCard } from "../../../src/components/common/RadioOptionCard";
+import { RadioOptionCard } from "../../../../src/components/common/RadioOptionCard";
 
 describe("RadioOptionCard", () => {
   const defaultProps = {

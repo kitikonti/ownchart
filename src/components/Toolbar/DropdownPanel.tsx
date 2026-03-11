@@ -89,7 +89,7 @@ export const DropdownPanel = memo(function DropdownPanel({
   role,
   "aria-label": ariaLabel,
   style,
-  className = "",
+  className,
 }: DropdownPanelProps): JSX.Element {
   // Alignment is handled via Tailwind so the computed style key trick is avoided.
   // The inline style object only carries truly variable layout values.

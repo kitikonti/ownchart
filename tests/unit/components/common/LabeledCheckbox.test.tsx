@@ -6,7 +6,7 @@
 
 import { describe, it, expect, vi } from "vitest";
 import { render, screen, fireEvent } from "@testing-library/react";
-import { LabeledCheckbox } from "../../../src/components/common/LabeledCheckbox";
+import { LabeledCheckbox } from "../../../../src/components/common/LabeledCheckbox";
 
 describe("LabeledCheckbox", () => {
   describe("rendering", () => {
