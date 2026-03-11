@@ -5,7 +5,7 @@
 
 import type { DensityConfigMap } from "../types/preferences.types";
 
-export const DENSITY_CONFIG: DensityConfigMap = {
+export const DENSITY_CONFIG = {
   compact: {
     rowHeight: 28,
     taskBarHeight: 20,
@@ -78,4 +78,4 @@ export const DENSITY_CONFIG: DensityConfigMap = {
       progress: 70,
     },
   },
-};
+} satisfies DensityConfigMap;

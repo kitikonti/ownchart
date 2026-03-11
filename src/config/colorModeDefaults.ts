@@ -13,7 +13,7 @@ const HIERARCHY_LIGHTEN_STEP_PERCENT = 12;
 const HIERARCHY_MAX_LIGHTEN_PERCENT = 36;
 
 /** Default milestone accent colour (Tailwind yellow-600 / gold) */
-const MILESTONE_GOLD = "#CA8A04" as const;
+const MILESTONE_GOLD = "#CA8A04";
 
 /**
  * Default color mode state — used for store initialization and file loading fallback.

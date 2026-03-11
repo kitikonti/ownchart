@@ -1,7 +1,11 @@
 /** Minimum width for the task table panel in pixels */
 export const MIN_TABLE_WIDTH = 200;
 
-/** Reserve space for horizontal scrollbar (px) */
+/**
+ * Reserve space for horizontal scrollbar (px).
+ * 17 is the standard Windows/Chrome scrollbar height — may vary by OS/browser
+ * but matches the most common desktop target for this app.
+ */
 export const SCROLLBAR_HEIGHT = 17;
 
 /**
@@ -49,6 +53,6 @@ export const MIN_VALID_DIMENSION = 100;
 
 /** Inline style to hide scrollbar on a scrollable element */
 export const HIDDEN_SCROLLBAR_STYLE = {
-  scrollbarWidth: "none" as const,
-  msOverflowStyle: "none" as const,
-};
+  scrollbarWidth: "none",
+  msOverflowStyle: "none",
+} as const;

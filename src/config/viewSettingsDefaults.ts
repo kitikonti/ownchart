@@ -11,6 +11,8 @@ import { DEFAULT_WORKING_DAYS_CONFIG } from "./workingDaysConfig";
 /**
  * Apply defaults for optional ViewSettings fields.
  * Used when loading files that predate certain features.
+ *
+ * @param loaded - Raw ViewSettings from a .ownchart file (may be missing newer fields added after the file was saved).
  */
 export function applyViewSettingsDefaults(loaded: ViewSettings): ViewSettings {
   return {
@@ -28,9 +30,9 @@ export function applyViewSettingsDefaults(loaded: ViewSettings): ViewSettings {
     showProgress: loaded.showProgress ?? true,
     taskLabelPosition: loaded.taskLabelPosition ?? "inside",
     workingDaysMode: loaded.workingDaysMode ?? false,
-    workingDaysConfig: loaded.workingDaysConfig ?? {
-      ...DEFAULT_WORKING_DAYS_CONFIG,
-    },
+    workingDaysConfig:
+      loaded.workingDaysConfig ?? structuredClone(DEFAULT_WORKING_DAYS_CONFIG),
+    // intentionally undefined when absent — chartSlice falls back to detectLocaleHolidayRegion()
     holidayRegion: loaded.holidayRegion,
     projectTitle: loaded.projectTitle ?? "",
     projectAuthor: loaded.projectAuthor ?? "",
