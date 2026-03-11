@@ -83,7 +83,12 @@ export const Radio = memo(function Radio({
           preceding sibling with the 'peer' class (Tailwind peer modifier).
           Note: when used inside RadioOptionCard, both the native input's onChange
           and the wrapping label's click handler fire — this is harmless since both
-          call the same onChange callback. */}
+          call the same onChange callback.
+          aria-checked is intentionally NOT set: for native <input type="radio">
+          the browser derives the AT-announced checked state directly from the
+          `checked` DOM property — explicitly adding aria-checked would be redundant
+          and could diverge from the native state during re-renders. Radio inputs
+          also have no "mixed" indeterminate state that would require an override. */}
       <input
         type="radio"
         checked={checked}

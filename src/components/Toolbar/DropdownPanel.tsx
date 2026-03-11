@@ -15,7 +15,7 @@ import { memo, useMemo } from "react";
 import type { ReactNode, CSSProperties } from "react";
 import { buildClassNames } from "../../utils/buildClassNames";
 
-type DropdownPanelAlign = "left" | "right";
+export type DropdownPanelAlign = "left" | "right";
 
 /**
  * Subset of ARIA roles that are semantically valid for a floating dropdown panel.
@@ -27,7 +27,7 @@ type DropdownPanelAlign = "left" | "right";
  * controls (e.g. a set of radio buttons or checkboxes) without the semantics
  * of a full dialog or menu.
  */
-type DropdownPanelRole =
+export type DropdownPanelRole =
   | "listbox"
   | "menu"
   | "dialog"

@@ -12,6 +12,10 @@
 import { memo, useId } from "react";
 import { Checkbox } from "./Checkbox";
 import { buildClassNames } from "../../utils/buildClassNames";
+import {
+  OPTION_CARD_LAYOUT,
+  OPTION_CARD_MIN_HEIGHT,
+} from "../../styles/inputStyles";
 
 export interface LabeledCheckboxProps {
   /** Whether the checkbox is checked */
@@ -57,7 +61,11 @@ export const LabeledCheckbox = memo(function LabeledCheckbox({
       className={buildClassNames(
         // Focus indication is provided by the inner Checkbox's peer-focus-visible ring —
         // no separate focus style is needed on the label itself.
-        "flex gap-3.5 p-4 rounded border border-neutral-200 transition-colors duration-150 min-h-[44px]",
+        "flex",
+        OPTION_CARD_LAYOUT,
+        // OPTION_CARD_MIN_HEIGHT: WCAG 2.5.5 minimum 44×44 px touch target size.
+        OPTION_CARD_MIN_HEIGHT,
+        "border-neutral-200 transition-colors duration-150",
         alignTop ? "items-start" : "items-center",
         disabled
           ? // pointer-events-none prevents click-to-focus on the hidden input when

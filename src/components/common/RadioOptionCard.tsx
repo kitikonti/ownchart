@@ -11,6 +11,10 @@
 import { memo, type ReactNode } from "react";
 import { Radio } from "./Radio";
 import { buildClassNames } from "../../utils/buildClassNames";
+import {
+  OPTION_CARD_LAYOUT,
+  OPTION_CARD_MIN_HEIGHT,
+} from "../../styles/inputStyles";
 
 export interface RadioOptionCardProps {
   /** Radio group name */
@@ -66,8 +70,10 @@ export const RadioOptionCard = memo(function RadioOptionCard({
     // Arbitrary value intentional — Tailwind's built-in border-l-4 (4px) is too thick,
     // border-l-2 (2px) too subtle; 3px is the design-calibrated accent width.
     // bg-brand-50 on selected provides a non-colour secondary visual cue (WCAG SC 1.4.1).
-    // min-h-[44px]: WCAG 2.5.5 minimum 44×44 px touch target size.
-    "gap-3.5 p-4 rounded border cursor-pointer transition-all duration-150 min-h-[44px]",
+    OPTION_CARD_LAYOUT,
+    // OPTION_CARD_MIN_HEIGHT: WCAG 2.5.5 minimum 44×44 px touch target size.
+    OPTION_CARD_MIN_HEIGHT,
+    "cursor-pointer transition-all duration-150",
     selected
       ? "border-neutral-300 border-l-[3px] border-l-brand-600 bg-brand-50"
       : "border-neutral-200 hover:bg-neutral-50 hover:border-neutral-300"

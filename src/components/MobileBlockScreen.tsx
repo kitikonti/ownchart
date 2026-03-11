@@ -7,6 +7,7 @@
 
 import {
   memo,
+  useCallback,
   useId,
   useLayoutEffect,
   useRef,
@@ -69,13 +70,16 @@ export const MobileBlockScreen = memo(function MobileBlockScreen({
   // NOTE: This trap assumes a SINGLE focusable element. If additional buttons or
   // links are ever added to this overlay, replace this handler with a proper
   // focus-trap loop that cycles between the first and last focusable elements.
-  function handleButtonKeyDown(e: ReactKeyboardEvent<HTMLButtonElement>): void {
-    if (e.key === "Tab") {
-      e.preventDefault();
-    } else if (e.key === "Escape") {
-      onDismiss();
-    }
-  }
+  const handleButtonKeyDown = useCallback(
+    (e: ReactKeyboardEvent<HTMLButtonElement>): void => {
+      if (e.key === "Tab") {
+        e.preventDefault();
+      } else if (e.key === "Escape") {
+        onDismiss();
+      }
+    },
+    [onDismiss]
+  );
 
   return (
     // role="dialog" + aria-modal="true" tells AT this is a blocking overlay.
