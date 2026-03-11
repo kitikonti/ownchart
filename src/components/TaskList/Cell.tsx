@@ -171,10 +171,6 @@ export const Cell = memo(function Cell({
 
   const borderRight = column.showRightBorder !== false ? "border-r" : "";
 
-  const cellStyle = getCellStyle(column.id);
-  const activeCellStyle = getActiveCellStyle(column.id);
-  const editingCellStyle = getEditingCellStyle(column.id);
-
   // Render edit mode
   if (isEditing) {
     return (
@@ -184,7 +180,7 @@ export const Cell = memo(function Cell({
         aria-selected={true}
         tabIndex={-1}
         className={`relative flex items-center border-b ${borderRight} border-neutral-200 bg-white`}
-        style={editingCellStyle}
+        style={getEditingCellStyle(column.id)}
         onClick={(e) => e.stopPropagation()}
         onKeyDown={handleEditModeKeyDown}
       >
@@ -240,7 +236,7 @@ export const Cell = memo(function Cell({
       ]
         .filter(Boolean)
         .join(" ")}
-      style={isActive ? activeCellStyle : cellStyle}
+      style={isActive ? getActiveCellStyle(column.id) : getCellStyle(column.id)}
       onClick={handleClick}
       onKeyDown={handleNavigationKeyDown}
     >

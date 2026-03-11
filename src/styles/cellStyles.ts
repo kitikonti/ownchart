@@ -6,8 +6,8 @@
  */
 
 import type { CSSProperties } from "react";
-import { NAME_COLUMN_ID } from "../config/tableColumns";
 import { CELL, Z_INDEX } from "./design-tokens";
+import { NAME_COLUMN_ID } from "../config/tableColumns";
 
 /**
  * Density-aware cell style using CSS custom properties.
@@ -26,24 +26,32 @@ export function getCellStyle(columnId: string): CSSProperties {
 }
 
 /**
- * Active/editing cell style — extends base cell style with brand-colored inset shadow.
+ * Shared base for active/editing cell styles.
+ * Both states use the same brand-colored inset shadow; they differ only in z-index
+ * (cellEditing sits above cellActive so the editing input is never obscured).
  */
-export function getActiveCellStyle(columnId: string): CSSProperties {
+function buildFocusedCellStyle(
+  columnId: string,
+  zIndex: number
+): CSSProperties {
   return {
     ...getCellStyle(columnId),
     boxShadow: CELL.activeBorderShadow,
-    zIndex: Z_INDEX.cellActive,
+    zIndex,
   };
 }
 
 /**
- * Editing cell style — extends base cell style with brand-colored inset shadow
- * and elevated z-index to sit above active cells.
+ * Active (focused but not editing) cell style — brand-colored inset shadow.
+ */
+export function getActiveCellStyle(columnId: string): CSSProperties {
+  return buildFocusedCellStyle(columnId, Z_INDEX.cellActive);
+}
+
+/**
+ * Editing cell style — brand-colored inset shadow with elevated z-index
+ * so the editing input sits above adjacent active cells.
  */
 export function getEditingCellStyle(columnId: string): CSSProperties {
-  return {
-    ...getCellStyle(columnId),
-    boxShadow: CELL.activeBorderShadow,
-    zIndex: Z_INDEX.cellEditing,
-  };
+  return buildFocusedCellStyle(columnId, Z_INDEX.cellEditing);
 }

@@ -22,5 +22,7 @@ export const OPTION_CARD_MIN_HEIGHT = "min-h-[44px]";
 /**
  * Common layout classes shared by RadioOptionCard and LabeledCheckbox.
  * Encodes the standard card chrome: gap, padding, rounded corners, and border.
+ * Consumers must add their own `flex` display class and `items-*` alignment
+ * class — this constant only supplies gap, padding, radius, and border.
  */
-export const OPTION_CARD_LAYOUT = "gap-3.5 p-4 rounded border";
+export const OPTION_CARD_LAYOUT = "gap-3.5 p-4 rounded-md border";
