@@ -57,6 +57,15 @@ export function toHexColor(value: string): HexColor {
  * Deserialization callers MUST validate the string against the known
  * palette list before casting (e.g. `COLOR_PALETTES.some(p => p.id === value)`)
  * to avoid persisting an invalid palette ID into application state.
+ *
+ * @example
+ * // At palette constant definition (trusted source):
+ * const id = toPaletteId("tableau-10");
+ *
+ * // At deserialization (untrusted source — validate first):
+ * if (COLOR_PALETTES.some(p => p.id === raw)) {
+ *   state.paletteId = toPaletteId(raw);
+ * }
  */
 export function toPaletteId(value: string): PaletteId {
   return value as PaletteId;
@@ -68,6 +77,15 @@ export function toPaletteId(value: string): PaletteId {
  * @remarks Use only at system boundaries: UUID generation
  * (`crypto.randomUUID()`) and deserialization. Caller guarantees the string
  * is a valid, non-empty UUID. Do not call with arbitrary user input.
+ *
+ * @example
+ * // At task creation (trusted UUID source):
+ * const id = toTaskId(crypto.randomUUID());
+ *
+ * // At deserialization (untrusted source — validate format first):
+ * if (UUID_REGEX.test(raw)) {
+ *   task.id = toTaskId(raw);
+ * }
  */
 export function toTaskId(value: string): TaskId {
   return value as TaskId;

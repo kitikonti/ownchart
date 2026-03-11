@@ -8,9 +8,10 @@
  * - `ActiveCell` — discriminated union representing the currently-focused cell.
  * - `EDITABLE_FIELDS` — runtime array of every `EditableField` value, in
  *   tab-navigation order. Single source of truth for navigation and clipboard.
- * - `AssertEditableFieldsExhaustive` — compile-time assertion that the array
- *   and the union stay in sync. Resolves to `true` when they match; a missing
+ * - `AssertEditableFieldsExhaustive` — compile-time assertion that `EDITABLE_FIELDS`
+ *   and `EditableField` stay in sync. Resolves to `true` when they match; a missing
  *   or extra entry makes the type resolve to `never`, failing compilation.
+ *   Exported to prevent TypeScript from flagging it as an unused declaration.
  */
 
 import type { TaskId } from "./branded.types";
@@ -44,12 +45,13 @@ export type ActiveCell =
  * All editable fields in tab-navigation order.
  * Single source of truth shared by taskSlice (navigation) and clipboard (validation).
  *
- * The compile-time assertion below enforces that every member of `EditableField`
- * appears in this array and that no extra values sneak in. If you add or remove
- * a union member without updating this array (or vice versa), TypeScript will
- * produce a `never` type error on `AssertEditableFieldsExhaustive`.
+ * The `satisfies` constraint below enforces that every element is a valid
+ * `EditableField`. The private compile-time assertion after this declaration
+ * additionally enforces that every `EditableField` member appears in the array
+ * (exhaustiveness check). Add or remove a union member without updating this
+ * array (or vice versa) and TypeScript will report a type error.
  */
-export const EDITABLE_FIELDS: readonly EditableField[] = [
+export const EDITABLE_FIELDS = [
   "color",
   "name",
   "type",
@@ -57,13 +59,15 @@ export const EDITABLE_FIELDS: readonly EditableField[] = [
   "endDate",
   "duration",
   "progress",
-];
+] as const satisfies readonly EditableField[];
 
 /**
  * Compile-time exhaustiveness check: asserts that `EDITABLE_FIELDS` covers
- * every `EditableField` value and no unknown values are present.
- * Exported so TypeScript does not flag it as an unused declaration.
- * This type resolves to `true`; if the assertion fails it resolves to `never`.
+ * every `EditableField` value and that no unknown values are present.
+ * Must be exported to prevent TypeScript from flagging it as an unused
+ * declaration. This type resolves to `true` when in sync; it resolves to
+ * `never` (compile error) if a union member is added/removed without a
+ * matching update to `EDITABLE_FIELDS`.
  */
 export type AssertEditableFieldsExhaustive = [EditableField] extends [
   (typeof EDITABLE_FIELDS)[number],
