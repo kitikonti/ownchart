@@ -5,8 +5,8 @@
 
 import { COLORS } from "../../styles/design-tokens";
 
-/** Height of the header row in pixels */
-export const HEADER_HEIGHT = 48;
+/** Height of the header row in pixels — re-exported from canonical source */
+export { HEADER_HEIGHT } from "../../config/layoutConstants";
 
 /**
  * Wait time in ms after root.render() before reading the DOM.

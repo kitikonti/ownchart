@@ -299,10 +299,7 @@ cd ../app-gantt-review
 
 Patterns die mehrere Dateien betreffen. Beim Review jeder Datei pruefen ob sie betroffen ist.
 
-- **Hardcoded Hex-Farben** (38 Stueck in 10 .tsx-Dateien): `design-tokens.ts` existiert, wird aber von SVG-Komponenten nicht genutzt. Brand-Farbe `#0F6CBD` in 4+ Komponenten als Raw-String. Betroffene Dateien sind im Index markiert.
-- **`toISODateString()` nicht ueberall genutzt**: Utility existiert in `dateUtils.ts`. ~18 weitere `toISOString().split("T")[0]` in: insertionActions, hierarchy, calculations, Cell, HomeTabContent, NewTaskPlaceholderRow, SharedExportOptions. Bei Review dieser Dateien umstellen.
 - **Zirkulaere Imports zwischen Store-Slices**: chartSlice ↔ taskSlice und chartSlice ↔ historySlice importieren sich gegenseitig. Runtime-sicher, da alle Cross-Store-Zugriffe ueber `getState()` in Action-Handlern erfolgen (nicht bei Module-Initialisierung). Pattern ist korrekt fuer Zustand Cross-Store-Kommunikation, aber bei neuen Slices beachten: KEIN module-level Zugriff auf andere Stores.
-- **`HEADER_HEIGHT = 48` in 2 weiteren Dateien dupliziert**: Canonical Export in `src/utils/export/constants.ts`. Noch dupliziert in `GanttLayout.tsx:40`. Bei Review dieser Datei umstellen.
 - **design-tokens Cool Grays sind bewusst anders als Neutrals**: `TABLE_HEADER`, `GRID`, `TIMELINE_HEADER` etc. verwenden Cool Grays mit leichtem Blau-Tint (Bootstrap/Tailwind-Palette), waehrend `COLORS.neutral` reine Grays sind (MS Fluent). Mittelfristig koennte ein `COLORS.cool`-Scale die Chart-Grays systematisieren.
 - **ViewSettings Feld-Propagation-Kette**: Neues ViewSettings-Feld braucht Aenderungen in 3 Dateien: `types.ts` (Typ), `viewSettingsDefaults.ts` (Default), `chartSlice.ts` SettableViewFields (Pick-Type + setViewSettings Handler). `loadFromFile.ts` leitet automatisch weiter. `useFileOperations.ts` muss nur angepasst werden wenn das Feld nicht ueber einen bestehenden chartSlice-Selector zugreifbar ist.
 

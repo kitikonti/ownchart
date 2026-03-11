@@ -13,6 +13,7 @@ import { useTaskStore } from "../../../src/store/slices/taskSlice";
 import { useChartStore } from "../../../src/store/slices/chartSlice";
 import { useHistoryStore } from "../../../src/store/slices/historySlice";
 import type { Task } from "../../../src/types/chart.types";
+import { toISODateString } from "../../../src/utils/dateUtils";
 
 // Mock clipboard operations — tested separately in useClipboardOperations tests
 const mockHandleCopy = vi.fn();
@@ -160,7 +161,7 @@ describe("useHomeTabActions", () => {
       result.current.handleAddTask();
 
       const taskData = addTaskSpy.mock.calls[0][0];
-      const today = new Date().toISOString().split("T")[0];
+      const today = toISODateString(new Date());
       expect(taskData.startDate).toBe(today);
     });
 
@@ -174,7 +175,7 @@ describe("useHomeTabActions", () => {
       const taskData = addTaskSpy.mock.calls[0][0];
       const expected = new Date();
       expected.setDate(expected.getDate() + 6);
-      expect(taskData.endDate).toBe(expected.toISOString().split("T")[0]);
+      expect(taskData.endDate).toBe(toISODateString(expected));
     });
   });
 

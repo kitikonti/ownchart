@@ -12,11 +12,10 @@ import { useHistoryStore } from "../store/slices/historySlice";
 import { useClipboardOperations } from "./useClipboardOperations";
 import { useHideOperations } from "./useHideOperations";
 import { COLORS } from "../styles/design-tokens";
+import { toISODateString } from "../utils/dateUtils";
 
 const DEFAULT_NEW_TASK_DURATION_DAYS = 7;
 const DEFAULT_TASK_NAME = "New Task";
-
-const formatDate = (date: Date): string => date.toISOString().split("T")[0];
 
 interface HomeTabActions {
   // History
@@ -128,8 +127,8 @@ export function useHomeTabActions(): HomeTabActions {
 
     addTask({
       name: DEFAULT_TASK_NAME,
-      startDate: formatDate(today),
-      endDate: formatDate(endDate),
+      startDate: toISODateString(today),
+      endDate: toISODateString(endDate),
       duration: DEFAULT_NEW_TASK_DURATION_DAYS,
       progress: 0,
       color: COLORS.chart.taskDefault,

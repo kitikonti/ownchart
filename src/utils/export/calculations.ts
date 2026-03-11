@@ -7,7 +7,7 @@ import type { Task } from "../../types/chart.types";
 import type { UiDensity } from "../../types/preferences.types";
 import type { ExportOptions, ExportColumnKey } from "./types";
 import { DENSITY_CONFIG } from "../../config/densityConfig";
-import { addDays } from "../dateUtils";
+import { addDays, toISODateString } from "../dateUtils";
 import {
   calculateLabelPaddingDays,
   calculateColumnWidth,
@@ -271,14 +271,8 @@ function buildPaddedDateRange(
   rightPadding += extra.rightDays;
 
   return {
-    min: addDays(
-      projectDateRange.start.toISOString().split("T")[0],
-      -leftPadding
-    ),
-    max: addDays(
-      projectDateRange.end.toISOString().split("T")[0],
-      rightPadding
-    ),
+    min: addDays(toISODateString(projectDateRange.start), -leftPadding),
+    max: addDays(toISODateString(projectDateRange.end), rightPadding),
   };
 }
 
@@ -291,8 +285,8 @@ function buildVisibleDateRange(
 ): { min: string; max: string } | undefined {
   if (!visibleDateRange) return undefined;
   return {
-    min: visibleDateRange.start.toISOString().split("T")[0],
-    max: visibleDateRange.end.toISOString().split("T")[0],
+    min: toISODateString(visibleDateRange.start),
+    max: toISODateString(visibleDateRange.end),
   };
 }
 
@@ -315,7 +309,7 @@ function buildCustomDateRange(
  * so the exported chart always shows some meaningful content.
  */
 function buildDefaultDateRange(): { min: string; max: string } {
-  const today = new Date().toISOString().split("T")[0];
+  const today = toISODateString(new Date());
   return {
     min: addDays(today, -DEFAULT_RANGE_LOOKBACK_DAYS),
     max: addDays(today, DEFAULT_RANGE_LOOKAHEAD_DAYS),

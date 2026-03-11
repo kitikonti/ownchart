@@ -13,6 +13,7 @@ import {
   TYPOGRAPHY,
 } from "../../../../src/styles/design-tokens";
 import type { TimelineScale } from "../../../../src/utils/timelineUtils";
+import { toISODateString } from "../../../../src/utils/dateUtils";
 
 // ---------------------------------------------------------------------------
 // Mocks
@@ -144,8 +145,8 @@ describe("TimelineHeader", () => {
 
       // Need zoom >= 1.2 (effective 30+ px/day) for day-level cells
       const scale = createScale({
-        minDate: minDate.toISOString().split("T")[0],
-        maxDate: maxDate.toISOString().split("T")[0],
+        minDate: toISODateString(minDate),
+        maxDate: toISODateString(maxDate),
         pixelsPerDay: 40,
         totalWidth: 440,
         totalDays: 11,
@@ -168,8 +169,8 @@ describe("TimelineHeader", () => {
 
       // Need zoom >= 1.2 (effective 30+ px/day) for day-level cells
       const scale = createScale({
-        minDate: minDate.toISOString().split("T")[0],
-        maxDate: maxDate.toISOString().split("T")[0],
+        minDate: toISODateString(minDate),
+        maxDate: toISODateString(maxDate),
         pixelsPerDay: 40,
         totalWidth: 440,
         totalDays: 11,
