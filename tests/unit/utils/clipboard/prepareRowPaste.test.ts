@@ -231,6 +231,31 @@ describe("prepareRowPaste", () => {
     expect(result.insertOrder).toBe(1);
     expect(result.newTasks[0].order).toBe(1);
   });
+
+  it("should return empty newTasks and leave currentTasks unchanged when clipboardTasks is empty", () => {
+    const currentTasks = [
+      createTask("a", "A", 0),
+      createTask("b", "B", 1),
+    ];
+
+    const result = prepareRowPaste({
+      clipboardTasks: [],
+      clipboardDependencies: [],
+      currentTasks,
+      activeCell: { taskId: null },
+      selectedTaskIds: [],
+    });
+
+    expect("error" in result).toBe(false);
+    if ("error" in result) return;
+
+    expect(result.newTasks).toHaveLength(0);
+    expect(result.remappedDependencies).toHaveLength(0);
+    // Existing tasks should not be shifted when nothing is inserted
+    expect(result.mergedTasks).toHaveLength(2);
+    expect(result.mergedTasks[0].order).toBe(0);
+    expect(result.mergedTasks[1].order).toBe(1);
+  });
 });
 
 describe("applySummaryRecalculation", () => {
@@ -246,6 +271,13 @@ describe("applySummaryRecalculation", () => {
       createTask("c", "Child", 1, "p"),
     ];
     const result = applySummaryRecalculation(tasks, tid("p"));
+    expect(result).toBe(tasks);
+  });
+
+  it("should return tasks unchanged when targetParent is not found in tasks", () => {
+    const tasks = [createTask("a", "A", 0)];
+    // "nonexistent" does not exist in the tasks array
+    const result = applySummaryRecalculation(tasks, tid("nonexistent"));
     expect(result).toBe(tasks);
   });
 

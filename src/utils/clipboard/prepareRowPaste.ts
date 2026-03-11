@@ -10,12 +10,12 @@ import type { Dependency } from "../../types/dependency.types";
 import type { FlattenedTask } from "../hierarchy";
 import {
   buildFlattenedTaskList,
-  getTaskLevel,
   calculateSummaryDates,
+  getTaskLevel,
   MAX_HIERARCHY_DEPTH,
 } from "../hierarchy";
-import { remapTaskIds, remapDependencies } from "./remapIds";
 import { determineInsertPosition } from "./insertPosition";
+import { remapDependencies, remapTaskIds } from "./remapIds";
 
 export interface PrepareRowPasteInput {
   /** Tasks currently in the clipboard (will be remapped to new IDs). */
@@ -90,6 +90,8 @@ export function prepareRowPaste(
     insertOrder = taskAtPosition.task.order;
     targetParent = taskAtPosition.task.parent;
   } else {
+    // Use currentTasks (not flattenedTasks) to account for hidden tasks that
+    // may have higher order values than any visible task.
     // reduce with initial -1 handles empty currentTasks (returns -1 + 1 = 0)
     insertOrder =
       currentTasks.reduce((max, t) => Math.max(max, t.order), -1) + 1;
