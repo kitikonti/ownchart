@@ -44,6 +44,12 @@ export function useDeviceDetection(): DeviceDetection {
     const narrowMql = window.matchMedia(NARROW_QUERY);
     const coarseMql = window.matchMedia(COARSE_QUERY);
 
+    // Reconcile state with the live MQL values in case the lazy initialisers
+    // captured a stale snapshot (e.g. when matchMedia is stubbed after module
+    // load in test or SSR environments).
+    setIsNarrow(narrowMql.matches);
+    setIsCoarse(coarseMql.matches);
+
     const handleNarrowChange = (e: MediaQueryListEvent): void => {
       setIsNarrow(e.matches);
     };
