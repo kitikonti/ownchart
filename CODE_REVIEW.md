@@ -315,8 +315,8 @@ Dateien die waehrend des Reviews neu erstellt wurden und noch nicht reviewt sind
 - [ ] `src/types/ui.types.ts` (13 LOC)
 
 ### New Styles
-- [ ] `src/styles/cellStyles.ts` (49 LOC)
-- [ ] `src/styles/inputStyles.ts` (26 LOC)
+- [x] `src/styles/cellStyles.ts` (49 LOC)
+- [x] `src/styles/inputStyles.ts` (26 LOC)
 
 ### New Config
 - [x] `src/config/densityConfig.ts` (81 LOC)
