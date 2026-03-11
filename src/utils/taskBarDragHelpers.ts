@@ -14,7 +14,11 @@ import { validateDragOperation } from "./dragValidation";
 /** Edge detection threshold in pixels */
 export const EDGE_THRESHOLD = 8;
 
-/** Milliseconds per day */
+/**
+ * Milliseconds per day.
+ * Note: taskSliceHelpers.ts also exports this constant. It is intentionally
+ * duplicated here to avoid a utils → store layer dependency.
+ */
 const MS_PER_DAY = 1000 * 60 * 60 * 24;
 
 export type InteractionMode =

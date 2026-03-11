@@ -18,6 +18,8 @@ export function getNextTaskType(
   hasChildren: boolean
 ): TaskType {
   if (hasChildren) {
+    // Milestone with children is invalid — always map to "task" so a task
+    // with children toggles: task ↔ summary (milestone skipped).
     return currentType === "task" ? "summary" : "task";
   }
 

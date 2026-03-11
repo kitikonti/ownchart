@@ -215,6 +215,15 @@ function getDepthRelativeToColorGiver(
 
 // ─── Theme mode helpers ───────────────────────────────────────────────────────
 
+/** Lightness increase per depth level in theme-mode sibling coloring. */
+const THEME_LIGHTNESS_SHIFT_PER_DEPTH = 7;
+/** Per-sibling lightness variation added via hash to differentiate siblings (px). */
+const THEME_SIBLING_LIGHTNESS_VARIATION = 2;
+/** Maximum lightness value (%) allowed in theme-mode derived colors. */
+const THEME_MAX_LIGHTNESS = 88;
+/** Half-range for per-sibling hue variation (±degrees) in theme mode. */
+const THEME_SIBLING_HUE_HALF_RANGE = 2;
+
 /** Pre-computed shared state for theme-mode color resolution. */
 interface ThemeContext {
   paletteColors: string[];
@@ -283,11 +292,13 @@ function applyThemeColor(
   const hsl = hexToHSL(baseColor);
 
   // Lightness: always lighter than parent, small hash variation per sibling
-  const lightnessShift = depth * 7 + (taskHash % 5) * 2; // always positive
-  hsl.l = Math.min(88, hsl.l + lightnessShift);
+  const lightnessShift =
+    depth * THEME_LIGHTNESS_SHIFT_PER_DEPTH +
+    (taskHash % 5) * THEME_SIBLING_LIGHTNESS_VARIATION; // always positive
+  hsl.l = Math.min(THEME_MAX_LIGHTNESS, hsl.l + lightnessShift);
 
-  // Hue: minimal shift for sibling differentiation (±2°)
-  const hueShift = (taskHash % 5) - 2;
+  // Hue: minimal shift for sibling differentiation (±THEME_SIBLING_HUE_HALF_RANGE°)
+  const hueShift = (taskHash % 5) - THEME_SIBLING_HUE_HALF_RANGE;
   hsl.h = (hsl.h + hueShift + 360) % 360;
 
   return hslToHex(hsl) as HexColor;
@@ -298,6 +309,12 @@ function applyThemeColor(
 /**
  * Compute the display color for a task based on color mode.
  * Pure function — no React hooks or store access.
+ *
+ * **Performance note (theme mode):** This function calls `buildThemeContext`
+ * on every invocation, which runs `assignPaletteIndices` — an O(n log n)
+ * operation over all tasks. Calling this in a loop over n tasks results in
+ * O(n² log n) total cost. For batch rendering use `computeAllTaskColors`
+ * instead, which hoists the shared computation outside the loop.
  */
 export function computeTaskColor(
   task: Task,
@@ -383,7 +400,9 @@ export function computeTaskColor(
 
 /**
  * Get computed color without hooks (for use in non-component contexts).
- * Alias for computeTaskColor — kept for API compatibility.
+ * Semantic alias for `computeTaskColor` — the "get" prefix reads naturally
+ * at call sites in ExportRenderer and chartSlice where a single task's color
+ * is resolved in isolation. Prefer `computeAllTaskColors` inside loops.
  */
 export function getComputedTaskColor(
   task: Task,
