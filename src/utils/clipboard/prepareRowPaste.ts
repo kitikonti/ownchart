@@ -83,7 +83,7 @@ export function prepareRowPaste(
 
   // Get the actual ORDER value at the insert position
   let insertOrder: number;
-  let targetParent: TaskId | undefined = undefined;
+  let targetParent: TaskId | undefined;
 
   if (insertIndex < flattenedTasks.length) {
     const taskAtPosition = flattenedTasks[insertIndex];
@@ -103,7 +103,7 @@ export function prepareRowPaste(
   // Generate new UUIDs and remap IDs
   const { remappedTasks, idMapping } = remapTaskIds(clipboardTasks);
 
-  // Build a Map for depth lookup (N2 fix: Map.get instead of Array.find in loop)
+  // Build a Map for O(1) depth lookup (replaces O(n²) Array.find in loop)
   const pastedTaskMap = new Map(remappedTasks.map((t) => [t.id, t]));
   const pastedTaskIds = new Set(remappedTasks.map((t) => t.id));
 

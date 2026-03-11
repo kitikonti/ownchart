@@ -115,8 +115,8 @@ describe("prepareRowPaste", () => {
     if ("error" in result) return;
 
     // New task should get the same parent as the task at insert position
-    expect(result.targetParent).toBe("parent");
-    expect(result.newTasks[0].parent).toBe("parent");
+    expect(result.targetParent).toBe(tid("parent"));
+    expect(result.newTasks[0].parent).toBe(tid("parent"));
   });
 
   it("should preserve internal hierarchy for non-root clipboard tasks", () => {
@@ -267,5 +267,39 @@ describe("applySummaryRecalculation", () => {
     const summary = result.find((t) => t.id === tid("summary"));
     expect(summary?.startDate).toBe("2025-02-15");
     expect(summary?.endDate).toBe("2025-04-01");
+  });
+
+  it("should only update the direct parent, leaving ancestor summaries unchanged (single-level boundary)", () => {
+    // Verifies the documented limitation: ancestor propagation is NOT performed.
+    // Callers that need full ancestor propagation must chain multiple calls.
+    const tasks = [
+      createTask("grandparent", "Grandparent", 0, undefined, {
+        type: "summary",
+        startDate: "2025-01-01",
+        endDate: "2025-01-31",
+      }),
+      createTask("parent", "Parent", 1, "grandparent", {
+        type: "summary",
+        startDate: "2025-01-01",
+        endDate: "2025-01-31",
+      }),
+      createTask("child", "Child", 2, "parent", {
+        startDate: "2025-03-01",
+        endDate: "2025-03-15",
+      }),
+    ];
+
+    // Only pass "parent" — the direct parent of the newly pasted child
+    const result = applySummaryRecalculation(tasks, tid("parent"));
+
+    // Direct parent should be updated to span the child
+    const parent = result.find((t) => t.id === tid("parent"));
+    expect(parent?.startDate).toBe("2025-03-01");
+    expect(parent?.endDate).toBe("2025-03-15");
+
+    // Grandparent is NOT updated by a single call — unchanged
+    const grandparent = result.find((t) => t.id === tid("grandparent"));
+    expect(grandparent?.startDate).toBe("2025-01-01");
+    expect(grandparent?.endDate).toBe("2025-01-31");
   });
 });
