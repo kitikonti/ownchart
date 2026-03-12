@@ -2,7 +2,7 @@
  * Unit tests for dateFormatting.ts
  */
 
-import { describe, it, expect } from "vitest";
+import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import {
   formatDate,
   formatDateRange,
@@ -11,6 +11,10 @@ import {
 describe("formatDate", () => {
   it("returns empty string for undefined", () => {
     expect(formatDate(undefined)).toBe("");
+  });
+
+  it("returns empty string for an Invalid Date", () => {
+    expect(formatDate(new Date("not-a-date"))).toBe("");
   });
 
   it("zero-pads single-digit month and day", () => {
@@ -64,5 +68,32 @@ describe("formatDateRange", () => {
     const start = new Date(2023, 0, 1);
     const end = new Date(2025, 11, 31);
     expect(formatDateRange({ start, end })).toBe("2023-01-01 – 2025-12-31");
+  });
+
+  describe("inverted range (precondition violation)", () => {
+    beforeEach(() => {
+      vi.stubEnv("DEV", true);
+      vi.spyOn(console, "warn").mockImplementation(() => undefined);
+    });
+
+    afterEach(() => {
+      vi.unstubAllEnvs();
+      vi.restoreAllMocks();
+    });
+
+    it("still returns a formatted string for an inverted range", () => {
+      const start = new Date(2024, 11, 31); // Dec 31 — after end
+      const end = new Date(2024, 0, 1); // Jan 1
+      const result = formatDateRange({ start, end });
+      // The output is a valid string; callers are responsible for correct ordering.
+      expect(result).toBe("2024-12-31 – 2024-01-01");
+    });
+
+    it("emits a console.warn in DEV mode for an inverted range", () => {
+      const start = new Date(2024, 11, 31);
+      const end = new Date(2024, 0, 1);
+      formatDateRange({ start, end });
+      expect(console.warn).toHaveBeenCalledOnce();
+    });
   });
 });

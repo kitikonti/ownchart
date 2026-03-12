@@ -7,11 +7,38 @@
 import type { Task } from "../../types/chart.types";
 import type { TaskId } from "../../types/branded.types";
 
+/**
+ * Returns the subset of `tasks` that should appear in the export.
+ *
+ * @param tasks - The full flat task list from the store.
+ * @param fullyResolvedHiddenTaskIds - IDs of tasks that must not appear in the
+ *   export. **Contract**: the caller (chartSlice `hideTasks`) is responsible
+ *   for including ALL descendants of a hidden parent in this array — not just
+ *   the parent itself. This function performs a direct membership test only —
+ *   it does NOT walk the hierarchy itself. If a child task is not present in
+ *   `fullyResolvedHiddenTaskIds`, it will appear in the export even if its
+ *   parent is hidden.
+ *
+ * @returns A mutable `Task[]` containing only the tasks that are not in
+ *   `fullyResolvedHiddenTaskIds`. Always a new array — never a reference to
+ *   the input (callers may sort/mutate the result). The new-array guarantee
+ *   exists so that callers (e.g. React state comparisons) can rely on
+ *   reference inequality to detect changes, even when no tasks are hidden.
+ *
+ * @example
+ * // CORRECT: pass both parent and all its descendants
+ * prepareExportTasks(tasks, [toTaskId(parentId), toTaskId(child1Id), toTaskId(child2Id)]);
+ *
+ * // INCORRECT: passing only the parent will leak child tasks into the export
+ * prepareExportTasks(tasks, [toTaskId(parentId)]); // child1 and child2 will still appear!
+ */
 export function prepareExportTasks(
   tasks: ReadonlyArray<Task>,
-  hiddenTaskIds: ReadonlyArray<TaskId>
+  fullyResolvedHiddenTaskIds: ReadonlyArray<TaskId>
 ): Task[] {
-  if (hiddenTaskIds.length === 0) return [...tasks];
-  const hiddenSet = new Set<TaskId>(hiddenTaskIds);
+  // Fast path: no hidden tasks — shallow-copy avoids Set construction overhead
+  // while honouring the "always returns a new array" contract.
+  if (fullyResolvedHiddenTaskIds.length === 0) return [...tasks];
+  const hiddenSet = new Set<TaskId>(fullyResolvedHiddenTaskIds);
   return tasks.filter((t) => !hiddenSet.has(t.id));
 }

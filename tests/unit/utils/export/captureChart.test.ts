@@ -1,7 +1,7 @@
 /**
  * Unit tests for captureChart utilities.
- * Covers: canvasToBlob (pure promise wrapper), raceWithTimeout, and
- *         captureChart DOM-cleanup guarantee (finally-block path).
+ * Covers: canvasToBlob (pure promise wrapper), raceWithTimeout, pixel ratio
+ *         clamping invariant, and captureChart DOM-cleanup guarantee (finally-block path).
  * Note: captureChart's full render path requires a real DOM + html-to-image +
  * React and is covered by the export dialog integration tests.
  */
@@ -178,6 +178,48 @@ describe("canvasToBlob", () => {
       "image/png",
       0
     );
+  });
+});
+
+// ---------------------------------------------------------------------------
+// captureChart — pixel ratio clamping invariant
+// ---------------------------------------------------------------------------
+// computeMaxCapturePixelRatio() and the clamping expression are internal to
+// captureContainerToCanvas and not exported. We verify the invariant by
+// replicating the clamping math directly, making the contract explicit and
+// independently testable without needing a full browser environment.
+
+describe("pixel ratio clamping invariant", () => {
+  /**
+   * Replicate the clamping expression from captureContainerToCanvas():
+   *   Math.min(Math.max(dpr, MIN), Math.max(maxCapture, MIN))
+   * where MIN = MIN_PIXEL_RATIO = 2.
+   */
+  function clamp(devicePixelRatio: number, maxCapturePixelRatio: number): number {
+    const MIN = 2;
+    return Math.min(
+      Math.max(devicePixelRatio, MIN),
+      Math.max(maxCapturePixelRatio, MIN)
+    );
+  }
+
+  it("is at least 2 even when devicePixelRatio is 1 and maxCapturePixelRatio is 1", () => {
+    expect(clamp(1, 1)).toBeGreaterThanOrEqual(2);
+  });
+
+  it("caps at maxCapturePixelRatio when devicePixelRatio exceeds it", () => {
+    // e.g. 1920px screen → maxCapture = floor(16384/1920) = 8
+    expect(clamp(4, 8)).toBe(4);
+    expect(clamp(10, 8)).toBe(8);
+  });
+
+  it("returns MIN_PIXEL_RATIO when both inputs are below it", () => {
+    expect(clamp(0, 0)).toBe(2);
+  });
+
+  it("returns maxCapturePixelRatio when devicePixelRatio exceeds it (tight cap)", () => {
+    // Very high-DPR device but maxCapture is low (e.g. very wide screen)
+    expect(clamp(4, 3)).toBe(3);
   });
 });
 

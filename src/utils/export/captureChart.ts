@@ -9,6 +9,7 @@ import { createElement } from "react";
 import type { ComponentProps } from "react";
 import { toCanvas } from "html-to-image";
 import type { ExportLayoutInput, ExportOptions } from "./types";
+import { EXPORT_MAX_SAFE_WIDTH } from "./types";
 import { ExportRenderer } from "../../components/Export/ExportRenderer";
 import { calculateExportDimensions } from "./exportLayout";
 import { REACT_RENDER_WAIT_MS, SVG_BACKGROUND_WHITE } from "./constants";
@@ -22,11 +23,28 @@ import {
 /**
  * Floor for device pixel ratio used for canvas capture.
  * Ensures Retina-quality (2×) output on 1× DPI displays where
- * `window.devicePixelRatio` would otherwise be 1. On higher-DPI displays
- * (e.g. 3×) the native ratio is passed through unchanged — this constant
- * is a floor, not a cap.
+ * `window.devicePixelRatio` would otherwise be 1. Also used as the lower
+ * bound in the upper-cap clamp (see `computeMaxCapturePixelRatio`) so that
+ * the capped ratio never falls below 2× even when EXPORT_MAX_SAFE_WIDTH and
+ * screen width would otherwise produce a max ratio less than 2.
  */
 const MIN_PIXEL_RATIO = 2;
+
+/**
+ * Compute the maximum safe pixel ratio for canvas capture.
+ * Prevents oversized canvases on high-DPR displays — e.g. a 4K display with
+ * dpr=4 would otherwise produce a canvas 4× wider than the layout width,
+ * potentially exceeding the browser's canvas size limit (EXPORT_MAX_SAFE_WIDTH).
+ *
+ * Computed inside `captureContainerToCanvas` rather than at module load time so
+ * that importing this module in non-browser environments (tests, SSR) is safe —
+ * `window.screen` is only accessed when an actual capture is taking place.
+ */
+function computeMaxCapturePixelRatio(): number {
+  const screenWidth =
+    typeof window !== "undefined" ? (window.screen?.width ?? 1920) : 1920;
+  return Math.floor(EXPORT_MAX_SAFE_WIDTH / Math.max(screenWidth, 1));
+}
 
 /**
  * Maximum time in milliseconds to wait for `toCanvas` to complete.
@@ -75,6 +93,14 @@ async function renderAndSettle(
   // Yield one macro-task (REACT_RENDER_WAIT_MS) so React's async scheduler
   // can flush its first commit before waitForFonts/waitForPaint take over.
   // See REACT_RENDER_WAIT_MS in constants.ts for the rationale.
+  //
+  // LIMITATION: root.render() only propagates synchronous throws. Errors
+  // thrown inside ExportRenderer during React's asynchronous commit phase are
+  // handled by React's error boundary mechanism. If ExportRenderer has no
+  // error boundary, React logs the error and silently unmounts the tree,
+  // resulting in an empty canvas without rejecting this promise. The
+  // zero-dimension canvas guard in captureContainerToCanvas() catches this
+  // case by throwing when html-to-image captures a 0×0 canvas.
   await new Promise<void>((resolve) =>
     setTimeout(resolve, REACT_RENDER_WAIT_MS)
   );
@@ -123,6 +149,7 @@ export async function raceWithTimeout<T>(
  * @param background - Export background setting used to derive backgroundColor
  * @returns A canvas element containing the captured chart
  * @throws If canvas capture times out (e.g. tab backgrounded during export)
+ * @throws If the captured canvas has zero dimensions (silent render failure)
  */
 async function captureContainerToCanvas(
   container: HTMLDivElement,
@@ -136,8 +163,18 @@ async function captureContainerToCanvas(
   container.style.opacity = "1";
   await waitForPaint();
 
+  // Cap pixel ratio to prevent canvases wider than EXPORT_MAX_SAFE_WIDTH on
+  // high-DPR displays (e.g. 4K at dpr=4 would produce a canvas 4× the layout
+  // width, potentially hitting the browser's canvas size limit). MIN_PIXEL_RATIO
+  // is applied as a lower bound in both clamps so the ratio never drops below 2×.
+  const maxCapturePixelRatio = computeMaxCapturePixelRatio();
+  const pixelRatio = Math.min(
+    Math.max(window.devicePixelRatio, MIN_PIXEL_RATIO),
+    Math.max(maxCapturePixelRatio, MIN_PIXEL_RATIO)
+  );
+
   const capturePromise = toCanvas(container, {
-    pixelRatio: Math.max(window.devicePixelRatio, MIN_PIXEL_RATIO),
+    pixelRatio,
     backgroundColor: background === "white" ? SVG_BACKGROUND_WHITE : undefined,
     width: dimensions.width,
     height: dimensions.height,
@@ -151,11 +188,24 @@ async function captureContainerToCanvas(
 
   // Race the capture against a timeout to prevent an indefinite hang when
   // the tab is backgrounded and requestAnimationFrame is throttled/paused.
-  return raceWithTimeout(
+  const canvas = await raceWithTimeout(
     capturePromise,
     CANVAS_CAPTURE_TIMEOUT_MS,
     CANVAS_CAPTURE_TIMEOUT_MESSAGE
   );
+
+  // Guard against a degenerate canvas — html-to-image returns a 0×0 canvas
+  // when the container has no painted content. This happens when ExportRenderer
+  // threw during React's asynchronous commit phase (no error boundary) and the
+  // component tree was silently unmounted before capture began.
+  if (canvas.width === 0 || canvas.height === 0) {
+    throw new Error(
+      "Export failed: captured canvas has zero dimensions. " +
+        "The chart may not have rendered correctly."
+    );
+  }
+
+  return canvas;
 }
 
 /**

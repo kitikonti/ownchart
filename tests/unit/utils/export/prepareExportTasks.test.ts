@@ -49,4 +49,16 @@ describe("prepareExportTasks", () => {
     const result = prepareExportTasks(tasks, []);
     expect(result).not.toBe(tasks);
   });
+
+  it("handles duplicate IDs in hiddenTaskIds gracefully", () => {
+    const tasks = [makeTask("a"), makeTask("b"), makeTask("c")];
+    // "b" appears three times — Set deduplication means it is still filtered once
+    const result = prepareExportTasks(tasks, [
+      toTaskId("b"),
+      toTaskId("b"),
+      toTaskId("b"),
+    ]);
+    expect(result).toHaveLength(2);
+    expect(result.map((t) => t.id)).toEqual([toTaskId("a"), toTaskId("c")]);
+  });
 });
