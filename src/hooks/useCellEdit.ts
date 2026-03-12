@@ -10,6 +10,7 @@ import {
   useState,
   useMemo,
   type KeyboardEvent,
+  type MutableRefObject,
   type RefObject,
 } from "react";
 
@@ -144,7 +145,7 @@ export interface UseCellEditReturn {
    * Protocol: set this ref to `true`, then trigger edit mode. The hook
    * resets it back to `false` after consuming it in the initialisation effect.
    */
-  shouldOverwriteRef: React.MutableRefObject<boolean>;
+  shouldOverwriteRef: MutableRefObject<boolean>;
   saveValue: () => boolean;
   cancelEdit: () => void;
   handleEditKeyDown: (e: KeyboardEvent<HTMLInputElement>) => void;
