@@ -22,7 +22,7 @@ export {
 
 export {
   prepareRowPaste,
-  applySummaryRecalculation,
+  applySingleLevelSummaryRecalculation,
   type PrepareRowPasteInput,
   type PrepareRowPasteResult,
   type PrepareRowPasteError,

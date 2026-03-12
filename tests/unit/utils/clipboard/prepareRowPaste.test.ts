@@ -1,7 +1,7 @@
 import { describe, it, expect } from "vitest";
 import {
   prepareRowPaste,
-  applySummaryRecalculation,
+  applySingleLevelSummaryRecalculation,
 } from "../../../../src/utils/clipboard/prepareRowPaste";
 import type { Task } from "../../../../src/types/chart.types";
 import type { Dependency } from "../../../../src/types/dependency.types";
@@ -282,12 +282,36 @@ describe("prepareRowPaste", () => {
     expect(result.mergedTasks[0].order).toBe(0);
     expect(result.mergedTasks[1].order).toBe(1);
   });
+
+  it("should place pasted tasks at order 0 when currentTasks is empty", () => {
+    // Edge case: empty store — reduce returns initial value (-1), so insertOrder = 0
+    const clipboardTasks = [
+      createTask("x", "X", 0),
+      createTask("y", "Y", 1),
+    ];
+
+    const result = prepareRowPaste({
+      clipboardTasks,
+      clipboardDependencies: [],
+      currentTasks: [],
+      activeCell: { taskId: null },
+      selectedTaskIds: [],
+    });
+
+    expect("error" in result).toBe(false);
+    if ("error" in result) return;
+
+    expect(result.insertOrder).toBe(0);
+    expect(result.newTasks[0].order).toBe(0);
+    expect(result.newTasks[1].order).toBe(1);
+    expect(result.mergedTasks).toHaveLength(2);
+  });
 });
 
-describe("applySummaryRecalculation", () => {
+describe("applySingleLevelSummaryRecalculation", () => {
   it("should return tasks unchanged when no targetParent", () => {
     const tasks = [createTask("a", "A", 0)];
-    const result = applySummaryRecalculation(tasks, undefined);
+    const result = applySingleLevelSummaryRecalculation(tasks, undefined);
     expect(result).toBe(tasks); // Same reference
   });
 
@@ -296,14 +320,14 @@ describe("applySummaryRecalculation", () => {
       createTask("p", "Parent", 0),
       createTask("c", "Child", 1, "p"),
     ];
-    const result = applySummaryRecalculation(tasks, tid("p"));
+    const result = applySingleLevelSummaryRecalculation(tasks, tid("p"));
     expect(result).toBe(tasks);
   });
 
   it("should return tasks unchanged when targetParent is not found in tasks", () => {
     const tasks = [createTask("a", "A", 0)];
     // "nonexistent" does not exist in the tasks array
-    const result = applySummaryRecalculation(tasks, tid("nonexistent"));
+    const result = applySingleLevelSummaryRecalculation(tasks, tid("nonexistent"));
     expect(result).toBe(tasks);
   });
 
@@ -320,7 +344,7 @@ describe("applySummaryRecalculation", () => {
       }),
     ];
 
-    const result = applySummaryRecalculation(tasks, tid("summary"));
+    const result = applySingleLevelSummaryRecalculation(tasks, tid("summary"));
 
     const summary = result.find((t) => t.id === tid("summary"));
     expect(summary?.startDate).toBe("2025-02-15");
@@ -348,7 +372,7 @@ describe("applySummaryRecalculation", () => {
     ];
 
     // Only pass "parent" — the direct parent of the newly pasted child
-    const result = applySummaryRecalculation(tasks, tid("parent"));
+    const result = applySingleLevelSummaryRecalculation(tasks, tid("parent"));
 
     // Direct parent should be updated to span the child
     const parent = result.find((t) => t.id === tid("parent"));
