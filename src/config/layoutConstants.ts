@@ -47,6 +47,14 @@ export const EXTEND_DAYS = 30;
 /** Minimum dimension in px to accept a measurement (below = DOM not ready) */
 export const MIN_VALID_DIMENSION = 100;
 
+/**
+ * Delay (ms) before the initial dimension measurement in useContainerDimensions.
+ * A value of 0 defers to the next macrotask so the browser has committed layout
+ * before offsetHeight / offsetWidth are read. Must not be changed without
+ * verifying that layout is stable at that point.
+ */
+export const INITIAL_MEASURE_DELAY_MS = 0;
+
 /** Initial fallback viewport height (px) before the first ResizeObserver measurement */
 export const INITIAL_VIEWPORT_HEIGHT = 600;
 

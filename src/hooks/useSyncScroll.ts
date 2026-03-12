@@ -11,6 +11,11 @@ export function useSyncScroll(
   refA: RefObject<HTMLDivElement | null>,
   refB: RefObject<HTMLDivElement | null>
 ): void {
+  // The effect depends on the ref objects (not their .current values), so it
+  // only runs once on mount. This is intentional: the DOM elements attached to
+  // these refs are expected to remain stable for the component lifetime. If the
+  // underlying element is ever replaced (e.g. conditional rendering swaps the
+  // node), a new hook instance is required to re-attach the listeners.
   useEffect(() => {
     const elA = refA.current;
     const elB = refB.current;

@@ -12,6 +12,7 @@
 import { useEffect, useState, type RefObject } from "react";
 import {
   INITIAL_CHART_CONTAINER_WIDTH,
+  INITIAL_MEASURE_DELAY_MS,
   INITIAL_VIEWPORT_HEIGHT,
   MIN_VALID_DIMENSION,
 } from "../config/layoutConstants";
@@ -57,9 +58,9 @@ export function useContainerDimensions({
       if (width > MIN_VALID_DIMENSION) setChartContainerWidth(width);
     };
 
-    // Initial measurement: defer one macrotask (0 ms) so the browser has
-    // committed layout before we read offsetHeight / offsetWidth.
-    const INITIAL_MEASURE_DELAY_MS = 0;
+    // Initial measurement: defer one macrotask so the browser has committed
+    // layout before we read offsetHeight / offsetWidth. Delay value is 0 ms —
+    // see INITIAL_MEASURE_DELAY_MS in layoutConstants for the rationale.
     const timer = setTimeout(measure, INITIAL_MEASURE_DELAY_MS);
 
     const ro = new ResizeObserver(measure);
