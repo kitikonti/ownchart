@@ -80,6 +80,8 @@ export function usePlaceholderNameEdit(
 
   // Focus cell when it becomes active (not editing).
   // preventScroll: true prevents desyncing TaskTable from Timeline (GitHub #16).
+  // cellRef is a stable ref object (React guarantees identity); it is listed
+  // in deps to satisfy exhaustive-deps — its value never actually changes.
   useEffect(() => {
     if (isNameActive && !isEditing && cellRef.current) {
       cellRef.current.focus({ preventScroll: true });

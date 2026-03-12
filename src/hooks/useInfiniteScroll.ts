@@ -155,6 +155,9 @@ export function useInfiniteScroll({
         }
 
         pendingPastExtensionRef.current = window.setTimeout(() => {
+          // Defensive: if the effect was cleaned up and the ref cleared
+          // before this timeout fired, do nothing.
+          if (pendingPastExtensionRef.current === null) return;
           pendingPastExtensionRef.current = null;
 
           const currentScrollLeft = chartContainer.scrollLeft;

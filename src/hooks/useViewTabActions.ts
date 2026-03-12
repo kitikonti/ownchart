@@ -61,8 +61,8 @@ export function useViewTabActions(): ViewTabActions {
   const isTaskTableCollapsed = useChartStore(
     (state) => state.isTaskTableCollapsed
   );
-  const setTaskTableCollapsed = useChartStore(
-    (state) => state.setTaskTableCollapsed
+  const toggleTaskTableCollapsedAction = useChartStore(
+    (state) => state.toggleTaskTableCollapsed
   );
 
   // Derived zoom state
@@ -114,9 +114,12 @@ export function useViewTabActions(): ViewTabActions {
     [handleFitToView, setZoom]
   );
 
+  // Use the store's atomic toggle action (reads current state inside the action)
+  // rather than capturing isTaskTableCollapsed at render time — avoids stale
+  // state if two rapid calls fire before a re-render.
   const toggleTaskTableCollapsed = useCallback((): void => {
-    setTaskTableCollapsed(!isTaskTableCollapsed);
-  }, [setTaskTableCollapsed, isTaskTableCollapsed]);
+    toggleTaskTableCollapsedAction();
+  }, [toggleTaskTableCollapsedAction]);
 
   return {
     showTodayMarker,

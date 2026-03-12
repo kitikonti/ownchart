@@ -18,7 +18,8 @@ import {
   DEFAULT_TASK_NAME,
 } from "../store/slices/taskSliceHelpers";
 
-interface NewTaskPayload {
+/** Builds the default payload for a newly added task anchored to today. */
+function buildDefaultTaskPayload(taskCount: number): {
   name: string;
   startDate: string;
   endDate: string;
@@ -29,10 +30,7 @@ interface NewTaskPayload {
   type: "task";
   parent: undefined;
   metadata: Record<string, unknown>;
-}
-
-/** Builds the default payload for a newly added task anchored to today. */
-function buildDefaultTaskPayload(taskCount: number): NewTaskPayload {
+} {
   const today = new Date();
   const endDate = new Date(today);
   endDate.setDate(today.getDate() + DEFAULT_TASK_DURATION - 1);

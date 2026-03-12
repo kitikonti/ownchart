@@ -206,6 +206,7 @@ interface ChartActions {
 
   // Task table collapse actions
   setTaskTableCollapsed: (collapsed: boolean) => void;
+  toggleTaskTableCollapsed: () => void;
 
   // Hidden tasks actions (Hide/Show Rows)
   hideTasks: (taskIds: TaskId[]) => void;
@@ -776,6 +777,12 @@ export const useChartStore = create<ChartState & ChartActions>()(
     setTaskTableCollapsed: (collapsed: boolean): void => {
       set((state) => {
         state.isTaskTableCollapsed = collapsed;
+      });
+    },
+
+    toggleTaskTableCollapsed: (): void => {
+      set((state) => {
+        state.isTaskTableCollapsed = !state.isTaskTableCollapsed;
       });
     },
 
