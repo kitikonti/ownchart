@@ -7,12 +7,14 @@
 
 import type { Task } from "../../types/chart.types";
 import type { TaskId } from "../../types/branded.types";
+import type { DensityConfig } from "../../types/preferences.types";
 import type {
   ExportColumnKey,
   ExportLayoutInput,
   ExportOptions,
 } from "./types";
-import type { DensityConfig } from "../../types/preferences.types";
+import type { TimelineScale } from "../timelineUtils";
+import type { FlattenedTask } from "../hierarchy";
 import {
   calculateTaskTableWidth,
   calculateEffectiveZoom,
@@ -21,11 +23,10 @@ import {
   calculateOptimalColumnWidths,
   MS_PER_DAY,
 } from "./calculations";
-import { getTimelineScale, type TimelineScale } from "../timelineUtils";
+import { getTimelineScale } from "../timelineUtils";
 import { getDateRange } from "../dateUtils";
 import { DENSITY_CONFIG } from "../../config/densityConfig";
 import { HEADER_HEIGHT } from "./constants";
-import type { FlattenedTask } from "../hierarchy";
 import { buildFlattenedTaskList } from "../hierarchy";
 
 // =============================================================================
@@ -112,9 +113,10 @@ function computeFinalDimensions(
   contentHeight: number;
   totalHeight: number;
 } {
+  const availableTimelineWidth = options.fitToWidth - taskTableWidth;
   const timelineWidth =
     options.zoomMode === "fitToWidth"
-      ? Math.max(MIN_TIMELINE_WIDTH, options.fitToWidth - taskTableWidth)
+      ? Math.max(MIN_TIMELINE_WIDTH, availableTimelineWidth)
       : scale.totalWidth;
   const totalWidth =
     options.zoomMode === "fitToWidth"

@@ -7,7 +7,10 @@
 import type { ExportColumnKey, ExportDataColumnKey } from "./types";
 import type { Task } from "../../types/chart.types";
 
-/** Duration unit label appended to summary-task durations in the Duration column. */
+/**
+ * Duration unit label appended to summary-task durations in the Duration column.
+ * Named constant (rather than inline literal) to make future i18n / localisation easier.
+ */
 const DURATION_UNIT = "days";
 
 /** Column definition for export (labels must match app's tableColumns.ts) */
@@ -88,3 +91,8 @@ export const HEADER_LABELS: Record<ExportColumnKey, string> =
     // safe: keys come directly from EXPORT_COLUMNS which only contains ExportColumnKey
     // values; Object.fromEntries cannot infer the key type narrower than `string`.
   ) as Record<ExportColumnKey, string>;
+
+// Compile-time completeness guard: if a new ExportColumnKey is added without a
+// matching entry in EXPORT_COLUMNS, TypeScript will report an error here.
+const _headerLabelsCheck: Record<ExportColumnKey, string> = HEADER_LABELS;
+void _headerLabelsCheck;

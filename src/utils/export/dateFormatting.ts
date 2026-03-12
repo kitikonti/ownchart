@@ -34,7 +34,7 @@ export function formatDateRange(range: { start: Date; end: Date }): string {
     console.warn(
       "formatDateRange: range.start is after range.end — inverted range:",
       formatDate(range.start),
-      "–",
+      " – ",
       formatDate(range.end)
     );
   }

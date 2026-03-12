@@ -24,7 +24,7 @@ import type { ExportQuickPreset, PdfOrientation } from "./types";
  * @param key - Unique preset identifier (e.g. "a4-landscape")
  * @param label - Human-readable label shown in the UI
  * @param pageSize - Paper size key from PDF_PAGE_SIZES
- * @param orientation - Page orientation; defaults to "landscape"
+ * @param orientation - Page orientation. Defaults to `"landscape"` when omitted.
  */
 function createPagePreset(
   key: string,
