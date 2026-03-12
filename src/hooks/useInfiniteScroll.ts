@@ -184,6 +184,10 @@ export function useInfiniteScroll({
               // flushSync throws if called inside an active React render cycle.
               // This should not happen here (scroll handler runs outside React),
               // but as a defensive fallback we schedule the update asynchronously.
+              console.error(
+                "[useInfiniteScroll] flushSync threw unexpectedly — falling back to async",
+                _e
+              );
               extendDateRange("past", EXTEND_DAYS);
             }
 

@@ -55,8 +55,7 @@ export function usePlaceholderNameEdit(
 
   // Scroll the outerScrollRef (vertical scroll driver) so the placeholder is visible.
   // Must NOT use el.scrollIntoView() — desyncs TaskTable from Timeline (GitHub #16).
-  // Stable callback (empty deps) — reads cellRef.current at call time.
-  // cellRef intentionally omitted: the ref object is a stable identity
+  // cellRef intentionally omitted from deps: the ref object is a stable identity
   // (React guarantees it never changes); .current is read imperatively inside
   // the callback, not captured in the closure.
   const scrollIntoView = useCallback(() => {
@@ -89,7 +88,8 @@ export function usePlaceholderNameEdit(
     }
   }, [isEditing, inputRef, scrollIntoView]);
 
-  const commitNewTask = useCallback((): void => {
+  // Commits the new task if a name was entered; otherwise discards the edit.
+  const commitOrCancel = useCallback((): void => {
     const trimmed = inputValue.trim();
     if (trimmed) createTask(trimmed);
     setIsEditing(false);
@@ -100,12 +100,6 @@ export function usePlaceholderNameEdit(
     setIsEditing(false);
     setInputValue("");
   }, []);
-
-  // Commit the task if there is a name; otherwise discard the edit.
-  // Delegates to commitNewTask which already handles the empty-name guard.
-  const commitOrCancel = useCallback((): void => {
-    commitNewTask();
-  }, [commitNewTask]);
 
   const handleClick = useCallback(
     (e: MouseEvent): void => {

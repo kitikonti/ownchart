@@ -15,8 +15,6 @@ import { useChartStore } from "../store/slices/chartSlice";
 import { computeViewportCenterAnchor, applyScrollLeft } from "./useZoom";
 import { MIN_ZOOM, MAX_ZOOM, PRESET_ZOOM_LEVELS } from "../utils/timelineUtils";
 
-export { PRESET_ZOOM_LEVELS };
-
 interface ViewTabActions {
   // Show/Hide toggles
   showTodayMarker: boolean;

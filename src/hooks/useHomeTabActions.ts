@@ -106,6 +106,11 @@ export function useHomeTabActions(): HomeTabActions {
   const outdentSelectedTasks = useTaskStore(
     (state) => state.outdentSelectedTasks
   );
+  // canIndent/canOutdent/canGroup/canUngroup are derived booleans computed from
+  // selectedTaskIds + task hierarchy. Calling methods inside the selector is
+  // intentional: Zustand re-runs the selector on every store update, but the
+  // boolean result is compared by value so re-renders only occur when the
+  // value actually changes.
   const canIndent = useTaskStore((state) => state.canIndentSelection());
   const canOutdent = useTaskStore((state) => state.canOutdentSelection());
   const groupSelectedTasks = useTaskStore((state) => state.groupSelectedTasks);
@@ -118,6 +123,10 @@ export function useHomeTabActions(): HomeTabActions {
   // History store
   const undo = useHistoryStore((state) => state.undo);
   const redo = useHistoryStore((state) => state.redo);
+  // canUndo/canRedo/descriptions are computed from stack lengths and only
+  // change when an undo/redo operation occurs; calling methods inside the
+  // selector is intentional — Zustand re-runs the selector on store changes
+  // but only re-renders when the returned value differs by reference/value.
   const canUndo = useHistoryStore((state) => state.canUndo());
   const canRedo = useHistoryStore((state) => state.canRedo());
   const undoDescription = useHistoryStore((state) =>
