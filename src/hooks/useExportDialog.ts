@@ -275,7 +275,8 @@ export function useExportDialog(): UseExportDialogResult {
     [effectiveZoom]
   );
 
-  // Display flags
+  // Display flags — intentionally not memoized: these are O(1) boolean
+  // derivations from already-memoized values, so the cost is negligible.
   const showDimensions =
     selectedExportFormat === "png" || selectedExportFormat === "svg";
   const hasWarning =
@@ -290,7 +291,7 @@ export function useExportDialog(): UseExportDialogResult {
   const handleExport = useCallback(async (): Promise<void> => {
     setIsExporting(true);
     setExportError(null);
-    setExportProgress(0);
+    setExportProgress(0); // Reset to 0 at start so the progress bar begins fresh.
 
     try {
       if (selectedExportFormat === "png") {
@@ -342,6 +343,9 @@ export function useExportDialog(): UseExportDialogResult {
       setExportError(message);
     } finally {
       setIsExporting(false);
+      // Always reset progress to 0 so the next export starts from a clean state,
+      // regardless of whether this attempt succeeded or failed partway through.
+      setExportProgress(0);
     }
   }, [
     selectedExportFormat,

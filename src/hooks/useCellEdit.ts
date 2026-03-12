@@ -12,6 +12,7 @@ import {
   type KeyboardEvent,
   type RefObject,
 } from "react";
+
 import { useTaskStore, type EditableField } from "../store/slices/taskSlice";
 import { useChartStore } from "../store/slices/chartSlice";
 import { useUserPreferencesStore } from "../store/slices/userPreferencesSlice";
@@ -19,6 +20,7 @@ import type { Task } from "../types/chart.types";
 import type { TaskId } from "../types/branded.types";
 import type { NavigationDirection } from "../types/task.types";
 import type { ColumnDefinition } from "../config/tableColumns";
+import type { WorkingDaysConfig } from "../types/preferences.types";
 import {
   calculateDuration,
   formatDateByPreference,
@@ -28,6 +30,73 @@ import {
   calculateWorkingDays,
   addWorkingDays,
 } from "../utils/workingDaysCalculator";
+
+// Error message constant to keep validation logic DRY and testable.
+export const DATE_RANGE_ERROR = "End date must be after start date";
+
+// =============================================================================
+// Pure save-field helpers
+// Extracted from saveValue to keep each function under 50 lines and to allow
+// unit testing of the date/duration logic in isolation.
+// =============================================================================
+
+/**
+ * Validates a date field update and returns the update payload or an error
+ * string.
+ *
+ * @returns `{ updates }` on success or `{ error }` on validation failure.
+ */
+export function buildDateFieldUpdate(
+  task: Task,
+  field: "startDate" | "endDate",
+  localValue: string
+):
+  | { updates: Partial<Task>; error?: never }
+  | { error: string; updates?: never } {
+  const newTask = { ...task, [field]: localValue };
+  const start = new Date(newTask.startDate);
+  const end = new Date(newTask.endDate);
+
+  if (end < start) {
+    return { error: DATE_RANGE_ERROR };
+  }
+
+  const duration = calculateDuration(newTask.startDate, newTask.endDate);
+  return { updates: { [field]: localValue, duration } };
+}
+
+/**
+ * Computes the new endDate and actual duration when the user edits the
+ * duration field directly.
+ *
+ * @returns The task update payload `{ duration, endDate }`.
+ */
+export function buildDurationFieldUpdate(
+  task: Task,
+  durationDays: number,
+  workingDaysMode: boolean,
+  workingDaysConfig: WorkingDaysConfig,
+  effectiveHolidayRegion: string | undefined
+): Partial<Task> {
+  let endDateStr: string;
+
+  if (workingDaysMode) {
+    endDateStr = addWorkingDays(
+      task.startDate,
+      durationDays,
+      workingDaysConfig,
+      effectiveHolidayRegion
+    );
+  } else {
+    const startDate = new Date(task.startDate);
+    const newEndDate = new Date(startDate);
+    newEndDate.setDate(newEndDate.getDate() + durationDays - 1);
+    endDateStr = toISODateString(newEndDate);
+  }
+
+  const actualDuration = calculateDuration(task.startDate, endDateStr);
+  return { duration: actualDuration, endDate: endDateStr };
+}
 
 interface UseCellEditParams {
   taskId: TaskId;
@@ -46,6 +115,16 @@ export interface UseCellEditReturn {
   setLocalValue: (value: string) => void;
   error: string | null;
   inputRef: RefObject<HTMLInputElement>;
+  /**
+   * Ref flag set by the caller (e.g. TaskTableCell) to `true` immediately
+   * before programmatically entering edit mode via a printable keystroke.
+   * When `true`, the hook initialises `localValue` to the typed character
+   * instead of the current field value, and skips the `select()` call so
+   * the cursor lands at the end of the new character.
+   *
+   * Protocol: set this ref to `true`, then trigger edit mode. The hook
+   * resets it back to `false` after consuming it in the initialisation effect.
+   */
   shouldOverwriteRef: React.MutableRefObject<boolean>;
   saveValue: () => boolean;
   cancelEdit: () => void;
@@ -176,37 +255,22 @@ export function useCellEdit({
     }
 
     if (field === "startDate" || field === "endDate") {
-      const newTask = { ...task, [field]: localValue };
-      const start = new Date(newTask.startDate);
-      const end = new Date(newTask.endDate);
-
-      if (end < start) {
-        setError("End date must be after start date");
+      const result = buildDateFieldUpdate(task, field, localValue);
+      if (result.error) {
+        setError(result.error);
         return false;
       }
-
-      const duration = calculateDuration(newTask.startDate, newTask.endDate);
-      updateTask(taskId, { [field]: localValue, duration });
+      // result.updates is defined: the error branch returns early above.
+      updateTask(taskId, result.updates!);
     } else if (field === "duration") {
-      const durationDays = Number(localValue);
-      let endDateStr: string;
-
-      if (workingDaysMode) {
-        endDateStr = addWorkingDays(
-          task.startDate,
-          durationDays,
-          workingDaysConfig,
-          effectiveHolidayRegion
-        );
-      } else {
-        const startDate = new Date(task.startDate);
-        const newEndDate = new Date(startDate);
-        newEndDate.setDate(newEndDate.getDate() + durationDays - 1);
-        endDateStr = toISODateString(newEndDate);
-      }
-
-      const actualDuration = calculateDuration(task.startDate, endDateStr);
-      updateTask(taskId, { duration: actualDuration, endDate: endDateStr });
+      const updates = buildDurationFieldUpdate(
+        task,
+        Number(localValue),
+        workingDaysMode,
+        workingDaysConfig,
+        effectiveHolidayRegion
+      );
+      updateTask(taskId, updates);
     } else {
       updateCellValue(localValue);
     }
