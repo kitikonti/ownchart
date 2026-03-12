@@ -28,7 +28,7 @@ export const EXPORT_COLUMNS: readonly ExportColumn[] = [
   { key: "endDate", label: "End Date", defaultWidth: 110 },
   { key: "duration", label: "Duration", defaultWidth: 70 },
   { key: "progress", label: "%", defaultWidth: 60 },
-] as const;
+];
 
 /**
  * Returns the display string for a data column cell.

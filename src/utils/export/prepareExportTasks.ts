@@ -19,11 +19,11 @@ import type { TaskId } from "../../types/branded.types";
  *   `fullyResolvedHiddenTaskIds`, it will appear in the export even if its
  *   parent is hidden.
  *
- * @returns A new array containing only the tasks that are not in
- *   `fullyResolvedHiddenTaskIds`. Always returns a new array — never a
- *   reference to the input. The new-array guarantee exists so that callers
- *   (e.g. React state comparisons) can rely on reference inequality to detect
- *   changes, even when no tasks are hidden.
+ * @returns A mutable `Task[]` containing only the tasks that are not in
+ *   `fullyResolvedHiddenTaskIds`. Always a new array — never a reference to
+ *   the input (callers may sort/mutate the result). The new-array guarantee
+ *   exists so that callers (e.g. React state comparisons) can rely on
+ *   reference inequality to detect changes, even when no tasks are hidden.
  *
  * @example
  * // CORRECT: pass both parent and all its descendants
@@ -35,7 +35,6 @@ import type { TaskId } from "../../types/branded.types";
 export function prepareExportTasks(
   tasks: ReadonlyArray<Task>,
   fullyResolvedHiddenTaskIds: ReadonlyArray<TaskId>
-  // Returns mutable Task[] (not ReadonlyArray) — callers may sort/mutate the result.
 ): Task[] {
   // Fast path: no hidden tasks — shallow-copy avoids Set construction overhead
   // while honouring the "always returns a new array" contract.

@@ -58,6 +58,12 @@ type ExportLayoutParts = Omit<
   "flattenedTasks" | "orderedTasks" | "densityConfig"
 >;
 
+/** Task count and row height needed to compute content height. */
+interface TaskSizeInput {
+  count: number;
+  rowHeight: number;
+}
+
 // =============================================================================
 // Constants
 // =============================================================================
@@ -88,12 +94,6 @@ function estimatePreliminaryDuration(
   if (!projectDateRange) return DEFAULT_DURATION_DAYS;
   const ms = projectDateRange.end.getTime() - projectDateRange.start.getTime();
   return Math.ceil(ms / MS_PER_DAY) + DATE_RANGE_PADDING_DAYS;
-}
-
-/** Task count and row height needed to compute content height. */
-interface TaskSizeInput {
-  count: number;
-  rowHeight: number;
 }
 
 /**
@@ -188,6 +188,17 @@ interface TimelineLayoutInput {
 
 /**
  * Compute zoom, date range, and timeline scale from task data and options.
+ *
+ * Uses a two-pass zoom algorithm:
+ * - **Pass 1** — Estimate a preliminary zoom from the raw project duration
+ *   (before label-padding days are added). This zoom is only needed by
+ *   `getEffectiveDateRange` to calculate how many extra days of edge padding
+ *   are required so that task labels are not clipped.
+ * - **Pass 2** — Re-compute the final zoom from the padded duration. The
+ *   padded range is slightly wider, so the "fit" zoom is marginally smaller.
+ *   Using the padded duration keeps fit-to-width mode accurate.
+ *
+ * See also: {@link computeExportLayout} for the full algorithm rationale.
  */
 function computeTimelineLayout(input: TimelineLayoutInput): {
   dateRange: { min: string; max: string };
