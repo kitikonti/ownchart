@@ -85,14 +85,18 @@ export function useInfiniteScroll({
       if (fitScrollLeft < FIT_TO_VIEW_EDGE_THRESHOLD) {
         fitToViewScrollLockRef.current = true;
       }
-      // Double rAF to ensure DOM is fully updated
+      // Double rAF to ensure DOM is fully updated.
+      // cancelled guard prevents writing to a detached node after unmount.
+      let cancelled = false;
       requestAnimationFrame(() => {
         requestAnimationFrame(() => {
-          chartContainer.scrollLeft = fitScrollLeft;
+          if (!cancelled) chartContainer.scrollLeft = fitScrollLeft;
         });
       });
       prevDateRangeRef.current = dateRangeKey;
-      return;
+      return (): void => {
+        cancelled = true;
+      };
     }
 
     // Scroll to show first task on initial load or when a new file is opened
@@ -100,11 +104,16 @@ export function useInfiniteScroll({
 
     if (isNewDateRange || fileJustLoaded) {
       const initialScrollLeft = SCROLL_OFFSET_DAYS * scale.pixelsPerDay;
+      let cancelled = false;
       requestAnimationFrame(() => {
         requestAnimationFrame(() => {
-          chartContainer.scrollLeft = initialScrollLeft;
+          if (!cancelled) chartContainer.scrollLeft = initialScrollLeft;
         });
       });
+      prevDateRangeRef.current = dateRangeKey;
+      return (): void => {
+        cancelled = true;
+      };
     }
 
     prevDateRangeRef.current = dateRangeKey;

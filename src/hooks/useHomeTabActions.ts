@@ -12,11 +12,11 @@ import { useHistoryStore } from "../store/slices/historySlice";
 import { useClipboardOperations } from "./useClipboardOperations";
 import { useHideOperations } from "./useHideOperations";
 import { COLORS } from "../styles/design-tokens";
-
-const DEFAULT_NEW_TASK_DURATION_DAYS = 7;
-const DEFAULT_TASK_NAME = "New Task";
-
-const formatDate = (date: Date): string => date.toISOString().split("T")[0];
+import { toISODateString } from "../utils/dateUtils";
+import {
+  DEFAULT_TASK_DURATION,
+  DEFAULT_TASK_NAME,
+} from "../store/slices/taskSliceHelpers";
 
 interface NewTaskPayload {
   name: string;
@@ -35,12 +35,12 @@ interface NewTaskPayload {
 function buildDefaultTaskPayload(taskCount: number): NewTaskPayload {
   const today = new Date();
   const endDate = new Date(today);
-  endDate.setDate(today.getDate() + DEFAULT_NEW_TASK_DURATION_DAYS - 1);
+  endDate.setDate(today.getDate() + DEFAULT_TASK_DURATION - 1);
   return {
     name: DEFAULT_TASK_NAME,
-    startDate: formatDate(today),
-    endDate: formatDate(endDate),
-    duration: DEFAULT_NEW_TASK_DURATION_DAYS,
+    startDate: toISODateString(today),
+    endDate: toISODateString(endDate),
+    duration: DEFAULT_TASK_DURATION,
     progress: 0,
     color: COLORS.chart.taskDefault,
     order: taskCount,
