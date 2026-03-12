@@ -25,6 +25,27 @@ export function getOrCreateList<K, V>(map: Map<K, V[]>, key: K): V[] {
 }
 
 /**
+ * Shared implementation for building a directed adjacency list.
+ * Iterates `deps` once and maps each edge using caller-supplied key/value selectors.
+ *
+ * @param deps - The dependency edges to index.
+ * @param keyFn - Extracts the map key (i.e. the "from" node) from each edge.
+ * @param valueFn - Extracts the map value (i.e. the "to" node) from each edge.
+ * @returns A directed adjacency-list map.
+ */
+function buildDirectedAdjacencyList(
+  deps: Dependency[],
+  keyFn: (dep: Dependency) => TaskId,
+  valueFn: (dep: Dependency) => TaskId
+): Map<TaskId, TaskId[]> {
+  const graph = new Map<TaskId, TaskId[]>();
+  for (const dep of deps) {
+    getOrCreateList(graph, keyFn(dep)).push(valueFn(dep));
+  }
+  return graph;
+}
+
+/**
  * Build a forward adjacency list (fromTaskId → [toTaskId, ...]) from a dependency array.
  *
  * @param deps - The dependency edges to index.
@@ -34,11 +55,11 @@ export function getOrCreateList<K, V>(map: Map<K, V[]>, key: K): V[] {
  * is responsible for ensuring uniqueness before calling this function.
  */
 export function buildAdjacencyList(deps: Dependency[]): Map<TaskId, TaskId[]> {
-  const graph = new Map<TaskId, TaskId[]>();
-  for (const dep of deps) {
-    getOrCreateList(graph, dep.fromTaskId).push(dep.toTaskId);
-  }
-  return graph;
+  return buildDirectedAdjacencyList(
+    deps,
+    (dep) => dep.fromTaskId,
+    (dep) => dep.toTaskId
+  );
 }
 
 /**
@@ -53,11 +74,11 @@ export function buildAdjacencyList(deps: Dependency[]): Map<TaskId, TaskId[]> {
 export function buildReverseAdjacencyList(
   deps: Dependency[]
 ): Map<TaskId, TaskId[]> {
-  const graph = new Map<TaskId, TaskId[]>();
-  for (const dep of deps) {
-    getOrCreateList(graph, dep.toTaskId).push(dep.fromTaskId);
-  }
-  return graph;
+  return buildDirectedAdjacencyList(
+    deps,
+    (dep) => dep.toTaskId,
+    (dep) => dep.fromTaskId
+  );
 }
 
 /**
