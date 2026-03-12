@@ -348,8 +348,8 @@ Dateien die waehrend des Reviews neu erstellt wurden und noch nicht reviewt sind
 - [ ] `src/utils/stringUtils.ts` (11 LOC)
 
 ### New Clipboard Utils
-- [ ] `src/utils/clipboard/prepareRowPaste.ts` (190 LOC)
-- [ ] `src/utils/clipboard/compare.ts` (29 LOC)
+- [x] `src/utils/clipboard/prepareRowPaste.ts` (190 LOC)
+- [x] `src/utils/clipboard/compare.ts` (29 LOC)
 
 ### New Export Utils
 - [ ] `src/utils/export/exportLayout.ts` (292 LOC)
