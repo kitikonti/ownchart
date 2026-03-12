@@ -30,6 +30,7 @@ import {
   calculateTaskTableWidth,
 } from "../utils/export";
 import { calculatePdfFitToWidth } from "../utils/export/pdfLayout";
+import { APP_CONFIG } from "../config/appConfig";
 
 // =============================================================================
 // Pure computation helpers (extracted for testability)
@@ -38,7 +39,16 @@ import { calculatePdfFitToWidth } from "../utils/export/pdfLayout";
 /** Shared date range type used by project and visible date range computations. */
 export type DateRange = { start: Date; end: Date };
 
-/** Calculate project date range from tasks */
+/**
+ * Calculate the overall project date range from a list of tasks.
+ *
+ * Iterates all tasks and returns the earliest `startDate` and latest `endDate`
+ * found. Tasks with missing or invalid dates are skipped.
+ *
+ * @param tasks - The full array of tasks to analyse.
+ * @returns The `{ start, end }` bounding date range, or `undefined` if no
+ *   valid dates are found (e.g. empty array or all-invalid tasks).
+ */
 export function computeProjectDateRange(tasks: Task[]): DateRange | undefined {
   if (tasks.length === 0) return undefined;
 
@@ -59,7 +69,20 @@ export function computeProjectDateRange(tasks: Task[]): DateRange | undefined {
   return { start: minDate, end: maxDate };
 }
 
-/** Calculate visible date range from viewport scroll position */
+/**
+ * Calculate the currently visible date range from the viewport scroll position.
+ *
+ * Converts pixel coordinates to dates using the timeline scale's `pixelsPerDay`
+ * value. The start date is floored and the end date is ceiled to ensure the full
+ * visible window is captured even when fractional-day offsets are involved.
+ *
+ * @param scale - The active timeline scale, or `null` when the chart is not yet
+ *   initialised.
+ * @param viewportScrollLeft - Current horizontal scroll offset in pixels.
+ * @param viewportWidth - Width of the visible viewport in pixels.
+ * @returns The `{ start, end }` visible date range, or `undefined` when the
+ *   scale is absent or the viewport has zero width.
+ */
 export function computeVisibleDateRange(
   scale: TimelineScale | null,
   viewportScrollLeft: number,
@@ -83,7 +106,18 @@ export function computeVisibleDateRange(
   return { start: visibleStartDate, end: visibleEndDate };
 }
 
-/** Calculate readability status based on effective zoom */
+/**
+ * Determine the label readability status for a given effective export zoom level.
+ *
+ * Uses the project-wide thresholds `EXPORT_ZOOM_READABLE_THRESHOLD` and
+ * `EXPORT_ZOOM_LABELS_HIDDEN_THRESHOLD` to classify zoom into three levels:
+ * - `"good"` — labels are clearly readable
+ * - `"warning"` — labels may be hard to read
+ * - `"critical"` — labels will be hidden at this zoom
+ *
+ * @param effectiveZoom - The computed zoom ratio for the export (e.g. `0.15`).
+ * @returns A `ReadabilityStatus` object with `level` and `message`.
+ */
 export function computeReadabilityStatus(
   effectiveZoom: number
 ): ReadabilityStatus {
@@ -189,7 +223,10 @@ export function useExportDialog(): UseExportDialogResult {
 
   // --- Derived values ---
   const projectName = useMemo(
-    () => projectTitle || fileName?.replace(".ownchart", "") || undefined,
+    () =>
+      projectTitle ||
+      fileName?.replace(APP_CONFIG.fileExtension, "") ||
+      undefined,
     [projectTitle, fileName]
   );
 

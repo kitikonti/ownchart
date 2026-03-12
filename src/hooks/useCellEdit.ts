@@ -99,14 +99,33 @@ export function buildDurationFieldUpdate(
 }
 
 interface UseCellEditParams {
+  /** The stable branded ID of the task being edited. */
   taskId: TaskId;
+  /** Full task object — used for date/duration cross-field validation and display. */
   task: Task;
+  /** Which field of the task this cell represents. */
   field: EditableField;
+  /** Column definition providing optional `validator` and `formatter` callbacks. */
   column: ColumnDefinition;
+  /**
+   * Whether this cell is the currently focused (active) cell in the table.
+   * When `true` and `isEditing` is `false`, the hook focuses the cell element
+   * so keyboard shortcuts are delivered to it.
+   */
   isActive: boolean;
+  /**
+   * Whether this cell is currently in edit mode (input visible).
+   * Drives local value initialisation and input focus effects.
+   */
   isEditing: boolean;
+  /** Ref to the outer cell `<div>` — focused when the cell becomes active. */
   cellRef: RefObject<HTMLDivElement>;
+  /** Callback to exit edit mode without persisting a value (called by the store). */
   stopCellEdit: () => void;
+  /**
+   * Callback to move focus to an adjacent cell.
+   * Called after a successful save triggered by Enter or Tab.
+   */
   navigateCell: (direction: NavigationDirection) => void;
 }
 
@@ -260,8 +279,11 @@ export function useCellEdit({
         setError(result.error);
         return false;
       }
-      // result.updates is defined: the error branch returns early above.
-      updateTask(taskId, result.updates!);
+      // TS cannot narrow result.updates via the error-branch check above, so we
+      // re-check the discriminant inline. At this point result.error is undefined,
+      // so result.updates is always defined — but an explicit check avoids the `!`.
+      if (!result.updates) return false; // unreachable, satisfies TS
+      updateTask(taskId, result.updates);
     } else if (field === "duration") {
       const updates = buildDurationFieldUpdate(
         task,

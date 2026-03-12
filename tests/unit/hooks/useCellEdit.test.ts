@@ -587,6 +587,55 @@ describe("useCellEdit hook", () => {
     });
   });
 
+  // ── shouldOverwriteRef: overwrite-mode protocol ───────────────────────────
+
+  describe("shouldOverwriteRef overwrite mode", () => {
+    it("preserves caller-supplied localValue when shouldOverwriteRef is true on edit entry", () => {
+      const params = buildHookParams({
+        field: "name",
+        task: makeTask({ name: "Original" }),
+        column: makeColumn({ id: "name" }),
+        isEditing: false,
+      });
+
+      const { result, rerender } = renderHook(
+        (p: typeof params) => useCellEdit(p),
+        { initialProps: params }
+      );
+
+      // Simulate the caller protocol: set the ref and set localValue to the
+      // typed character BEFORE isEditing becomes true.
+      act(() => {
+        result.current.shouldOverwriteRef.current = true;
+        result.current.setLocalValue("X");
+      });
+
+      // Now enter edit mode
+      rerender({ ...params, isEditing: true });
+
+      // The hook should NOT overwrite localValue with the field value because
+      // shouldOverwriteRef was true — "X" must be preserved.
+      expect(result.current.localValue).toBe("X");
+
+      // The ref should have been reset to false after consumption.
+      expect(result.current.shouldOverwriteRef.current).toBe(false);
+    });
+
+    it("initialises localValue from field value when shouldOverwriteRef is false", () => {
+      const params = buildHookParams({
+        field: "name",
+        task: makeTask({ name: "Original" }),
+        column: makeColumn({ id: "name" }),
+        isEditing: true, // enters edit mode immediately
+      });
+
+      const { result } = renderHook(() => useCellEdit(params));
+
+      // shouldOverwriteRef is false by default — localValue should be the field value.
+      expect(result.current.localValue).toBe("Original");
+    });
+  });
+
   // ── displayValue: date formatting ─────────────────────────────────────────
 
   describe("displayValue", () => {
