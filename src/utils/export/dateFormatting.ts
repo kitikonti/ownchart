@@ -32,10 +32,7 @@ export function formatDate(date: Date | undefined): string {
 export function formatDateRange(range: { start: Date; end: Date }): string {
   if (import.meta.env.DEV && range.start > range.end) {
     console.warn(
-      "formatDateRange: range.start is after range.end — inverted range:",
-      formatDate(range.start),
-      " – ",
-      formatDate(range.end)
+      `formatDateRange: range.start is after range.end — inverted range: ${formatDate(range.start)} – ${formatDate(range.end)}`
     );
   }
   return `${formatDate(range.start)} – ${formatDate(range.end)}`;

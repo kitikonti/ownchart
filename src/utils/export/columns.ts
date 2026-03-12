@@ -35,9 +35,9 @@ export const EXPORT_COLUMNS: readonly ExportColumn[] = [
  *
  * @param task - The task whose column value should be rendered.
  * @param key - The data column key to look up.
- * @returns The display string, or `null` when no value is available (renders
- *   "—"), or `""` when the cell should be intentionally blank (e.g. milestone
- *   end date and duration).
+ * @returns The display string for the cell, or `null` when no value is
+ *   available (renders "—"), or `""` when the cell should be intentionally
+ *   blank (e.g. milestone end date and duration).
  */
 export function getColumnDisplayValue(
   task: Task,
@@ -98,4 +98,4 @@ export const HEADER_LABELS: Record<ExportColumnKey, string> =
 // Compile-time completeness guard: if a new ExportColumnKey is added without a
 // matching entry in EXPORT_COLUMNS, TypeScript will report an error here.
 const _headerLabelsCheck: Record<ExportColumnKey, string> = HEADER_LABELS;
-void _headerLabelsCheck;
+void _headerLabelsCheck; // compile-time completeness check — suppress unused-variable warning

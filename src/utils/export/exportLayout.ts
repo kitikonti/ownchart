@@ -307,12 +307,11 @@ function buildLayoutParts(input: LayoutPartsInput): ExportLayoutParts {
     projectDateRange,
     visibleDateRange,
   });
-  const taskSize: TaskSizeInput = {
-    count: orderedTasks.length,
-    rowHeight: densityConfig.rowHeight,
-  };
   const { timelineWidth, totalWidth, contentHeight, totalHeight } =
-    computeFinalDimensions(options, scale, taskTableWidth, taskSize);
+    computeFinalDimensions(options, scale, taskTableWidth, {
+      count: orderedTasks.length,
+      rowHeight: densityConfig.rowHeight,
+    });
   return {
     selectedColumns,
     hasTaskList,
