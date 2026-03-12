@@ -19,7 +19,7 @@ import {
   deepCloneTasks,
   collectInternalDependencies,
   prepareRowPaste,
-  applySummaryRecalculation,
+  applySingleLevelSummaryRecalculation,
   canPasteCellValue,
   canCutCellValue,
   getClearValueForField,
@@ -311,7 +311,7 @@ function executeRowPaste(params: RowPasteParams): PasteResult {
     sourceTaskIds,
     taskStore.tasks
   );
-  const finalTasks = applySummaryRecalculation(
+  const finalTasks = applySingleLevelSummaryRecalculation(
     result.mergedTasks,
     result.targetParent
   );

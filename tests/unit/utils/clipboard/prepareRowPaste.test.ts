@@ -1,7 +1,7 @@
 import { describe, it, expect } from "vitest";
 import {
   prepareRowPaste,
-  applySummaryRecalculation,
+  applySingleLevelSummaryRecalculation,
 } from "../../../../src/utils/clipboard/prepareRowPaste";
 import type { Task } from "../../../../src/types/chart.types";
 import type { Dependency } from "../../../../src/types/dependency.types";
@@ -107,7 +107,7 @@ describe("prepareRowPaste", () => {
       clipboardTasks,
       clipboardDependencies: [],
       currentTasks,
-      activeCell: { taskId: "child" },
+      activeCell: { taskId: tid("child") },
       selectedTaskIds: [],
     });
 
@@ -115,8 +115,8 @@ describe("prepareRowPaste", () => {
     if ("error" in result) return;
 
     // New task should get the same parent as the task at insert position
-    expect(result.targetParent).toBe("parent");
-    expect(result.newTasks[0].parent).toBe("parent");
+    expect(result.targetParent).toBe(tid("parent"));
+    expect(result.newTasks[0].parent).toBe(tid("parent"));
   });
 
   it("should preserve internal hierarchy for non-root clipboard tasks", () => {
@@ -170,7 +170,7 @@ describe("prepareRowPaste", () => {
       clipboardTasks,
       clipboardDependencies: [],
       currentTasks,
-      activeCell: { taskId: "l2" },
+      activeCell: { taskId: tid("l2") },
       selectedTaskIds: [],
     });
 
@@ -178,6 +178,33 @@ describe("prepareRowPaste", () => {
     if ("error" in result) {
       expect(result.error).toContain("nesting depth");
     }
+  });
+
+  it("should not infinite-loop and should complete successfully when clipboard has circular parent references", () => {
+    // Malformed clipboard data: task A claims its parent is B, task B claims
+    // its parent is A — a direct cycle. The cycle-detection guard in
+    // computeMaxPastedDepth must break the traversal rather than looping forever.
+    const currentTasks = [createTask("existing", "Existing", 0)];
+    const clipboardTasks = [
+      createTask("a", "A", 0, "b"), // parent = b (not yet defined — forward ref)
+      createTask("b", "B", 1, "a"), // parent = a → creates a cycle
+    ];
+
+    // Should return without hanging and without throwing
+    const result = prepareRowPaste({
+      clipboardTasks,
+      clipboardDependencies: [],
+      currentTasks,
+      activeCell: { taskId: null },
+      selectedTaskIds: [],
+    });
+
+    // The cycle guard traverses A→B→A before detecting the cycle, so
+    // maxPastedDepth=2. targetDepth(0)+2=2 < MAX_HIERARCHY_DEPTH(3), so the
+    // paste succeeds.
+    expect("error" in result).toBe(false);
+    if ("error" in result) return;
+    expect(result.newTasks).toHaveLength(2);
   });
 
   it("should remap dependencies correctly", () => {
@@ -220,7 +247,7 @@ describe("prepareRowPaste", () => {
       clipboardTasks,
       clipboardDependencies: [],
       currentTasks,
-      activeCell: { taskId: "b" },
+      activeCell: { taskId: tid("b") },
       selectedTaskIds: [],
     });
 
@@ -231,12 +258,61 @@ describe("prepareRowPaste", () => {
     expect(result.insertOrder).toBe(1);
     expect(result.newTasks[0].order).toBe(1);
   });
+
+  it("should return empty newTasks and leave currentTasks unchanged when clipboardTasks is empty", () => {
+    const currentTasks = [
+      createTask("a", "A", 0),
+      createTask("b", "B", 1),
+    ];
+
+    const result = prepareRowPaste({
+      clipboardTasks: [],
+      clipboardDependencies: [],
+      currentTasks,
+      activeCell: { taskId: null },
+      selectedTaskIds: [],
+    });
+
+    expect("error" in result).toBe(false);
+    if ("error" in result) return;
+
+    expect(result.newTasks).toHaveLength(0);
+    expect(result.remappedDependencies).toHaveLength(0);
+    // Existing tasks should not be shifted when nothing is inserted
+    expect(result.mergedTasks).toHaveLength(2);
+    expect(result.mergedTasks[0].order).toBe(0);
+    expect(result.mergedTasks[1].order).toBe(1);
+  });
+
+  it("should place pasted tasks at order 0 when currentTasks is empty", () => {
+    // Edge case: empty store — reduce returns initial value (-1), so insertOrder = 0
+    const clipboardTasks = [
+      createTask("x", "X", 0),
+      createTask("y", "Y", 1),
+    ];
+
+    const result = prepareRowPaste({
+      clipboardTasks,
+      clipboardDependencies: [],
+      currentTasks: [],
+      activeCell: { taskId: null },
+      selectedTaskIds: [],
+    });
+
+    expect("error" in result).toBe(false);
+    if ("error" in result) return;
+
+    expect(result.insertOrder).toBe(0);
+    expect(result.newTasks[0].order).toBe(0);
+    expect(result.newTasks[1].order).toBe(1);
+    expect(result.mergedTasks).toHaveLength(2);
+  });
 });
 
-describe("applySummaryRecalculation", () => {
+describe("applySingleLevelSummaryRecalculation", () => {
   it("should return tasks unchanged when no targetParent", () => {
     const tasks = [createTask("a", "A", 0)];
-    const result = applySummaryRecalculation(tasks, undefined);
+    const result = applySingleLevelSummaryRecalculation(tasks, undefined);
     expect(result).toBe(tasks); // Same reference
   });
 
@@ -245,8 +321,31 @@ describe("applySummaryRecalculation", () => {
       createTask("p", "Parent", 0),
       createTask("c", "Child", 1, "p"),
     ];
-    const result = applySummaryRecalculation(tasks, "p");
+    const result = applySingleLevelSummaryRecalculation(tasks, tid("p"));
     expect(result).toBe(tasks);
+  });
+
+  it("should return tasks unchanged when targetParent is not found in tasks", () => {
+    const tasks = [createTask("a", "A", 0)];
+    // "nonexistent" does not exist in the tasks array
+    const result = applySingleLevelSummaryRecalculation(tasks, tid("nonexistent"));
+    expect(result).toBe(tasks);
+  });
+
+  it("should return tasks unchanged when summary has no children (calculateSummaryDates returns null)", () => {
+    // A summary task with no children causes calculateSummaryDates to return
+    // null/undefined — the function must guard this branch and return the
+    // original tasks reference unchanged.
+    const tasks = [
+      createTask("lonely-summary", "Lonely Summary", 0, undefined, {
+        type: "summary",
+      }),
+    ];
+    const result = applySingleLevelSummaryRecalculation(
+      tasks,
+      tid("lonely-summary")
+    );
+    expect(result).toBe(tasks); // Same reference — no mutation when no dates to derive
   });
 
   it("should recalculate summary dates for summary parent", () => {
@@ -262,10 +361,44 @@ describe("applySummaryRecalculation", () => {
       }),
     ];
 
-    const result = applySummaryRecalculation(tasks, "summary");
+    const result = applySingleLevelSummaryRecalculation(tasks, tid("summary"));
 
-    const summary = result.find((t) => t.id === "summary");
+    const summary = result.find((t) => t.id === tid("summary"));
     expect(summary?.startDate).toBe("2025-02-15");
     expect(summary?.endDate).toBe("2025-04-01");
+  });
+
+  it("should only update the direct parent, leaving ancestor summaries unchanged (single-level boundary)", () => {
+    // Verifies the documented limitation: ancestor propagation is NOT performed.
+    // Callers that need full ancestor propagation must chain multiple calls.
+    const tasks = [
+      createTask("grandparent", "Grandparent", 0, undefined, {
+        type: "summary",
+        startDate: "2025-01-01",
+        endDate: "2025-01-31",
+      }),
+      createTask("parent", "Parent", 1, "grandparent", {
+        type: "summary",
+        startDate: "2025-01-01",
+        endDate: "2025-01-31",
+      }),
+      createTask("child", "Child", 2, "parent", {
+        startDate: "2025-03-01",
+        endDate: "2025-03-15",
+      }),
+    ];
+
+    // Only pass "parent" — the direct parent of the newly pasted child
+    const result = applySingleLevelSummaryRecalculation(tasks, tid("parent"));
+
+    // Direct parent should be updated to span the child
+    const parent = result.find((t) => t.id === tid("parent"));
+    expect(parent?.startDate).toBe("2025-03-01");
+    expect(parent?.endDate).toBe("2025-03-15");
+
+    // Grandparent is NOT updated by a single call — unchanged
+    const grandparent = result.find((t) => t.id === tid("grandparent"));
+    expect(grandparent?.startDate).toBe("2025-01-01");
+    expect(grandparent?.endDate).toBe("2025-01-31");
   });
 });

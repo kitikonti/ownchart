@@ -17,9 +17,12 @@ import type { TaskId } from "../../types/branded.types";
  *   positionally, `false` otherwise.
  *
  * @example
- * hasSameTaskIds([{ id: 't1' }], [{ id: 't1' }]); // true
- * hasSameTaskIds([{ id: 't1' }], [{ id: 't2' }]); // false
- * hasSameTaskIds([{ id: 't1' }, { id: 't2' }], [{ id: 't1' }]); // false
+ * // TaskId is a branded string — import from '../../types/branded.types' and
+ * // use toTaskId() to create values. Plain `as TaskId` casts are used below
+ * // only for illustrative brevity; they are not safe in production code.
+ * hasSameTaskIds([{ id: 't1' as TaskId }], [{ id: 't1' as TaskId }]); // true
+ * hasSameTaskIds([{ id: 't1' as TaskId }], [{ id: 't2' as TaskId }]); // false
+ * hasSameTaskIds([{ id: 't1' as TaskId }, { id: 't2' as TaskId }], [{ id: 't1' as TaskId }]); // false
  */
 export function hasSameTaskIds(
   a: readonly { id: TaskId }[],

@@ -22,9 +22,11 @@ export {
 
 export {
   prepareRowPaste,
-  applySummaryRecalculation,
+  applySingleLevelSummaryRecalculation,
   type PrepareRowPasteInput,
   type PrepareRowPasteResult,
+  type PrepareRowPasteError,
+  type InsertContext,
 } from "./prepareRowPaste";
 
 export {
