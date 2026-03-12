@@ -27,6 +27,7 @@ import { DENSITY_CONFIG } from "../../config/densityConfig";
 import { HEADER_HEIGHT } from "./constants";
 import type { FlattenedTask } from "../hierarchy";
 import { buildFlattenedTaskList } from "../hierarchy";
+import { MS_PER_DAY } from "../timeConstants";
 
 // =============================================================================
 // Types
@@ -62,9 +63,6 @@ const DATE_RANGE_PADDING_DAYS = 14;
 
 /** Minimum timeline width in pixels (prevents degenerate layouts) */
 const MIN_TIMELINE_WIDTH = 100;
-
-/** Milliseconds per day */
-const MS_PER_DAY = 1000 * 60 * 60 * 24;
 
 // =============================================================================
 // Helpers

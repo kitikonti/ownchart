@@ -15,9 +15,6 @@
  * if task.colorOverride is set, it takes priority. Ignored in "manual" mode.
  */
 
-import type { Task } from "../types/chart.types";
-import type { ColorModeState } from "../types/colorMode.types";
-import type { HexColor } from "../types/branded.types";
 import { getPaletteById } from "./colorPalettes";
 import { stableHash } from "./hashUtils";
 import {
@@ -26,17 +23,33 @@ import {
   hslToHex,
   lightenColor,
 } from "./colorUtils";
+import type { Task } from "../types/chart.types";
+import type { ColorModeState } from "../types/colorMode.types";
+import type { HexColor } from "../types/branded.types";
+
+/**
+ * Build a Map<id, Task> for O(1) parent lookups during tree traversal.
+ * All internal helpers that walk the task hierarchy accept this map instead
+ * of the raw array so repeated allTasks.find() calls are eliminated.
+ */
+function buildTaskMap(allTasks: Task[]): Map<string, Task> {
+  const map = new Map<string, Task>();
+  for (const t of allTasks) {
+    map.set(t.id, t);
+  }
+  return map;
+}
 
 /**
  * Get the hierarchy depth of a task
  */
-function getTaskDepth(task: Task, allTasks: Task[]): number {
+function getTaskDepth(task: Task, taskMap: Map<string, Task>): number {
   let depth = 0;
   let currentTask: Task | undefined = task;
 
   while (currentTask?.parent) {
     depth++;
-    currentTask = allTasks.find((t) => t.id === currentTask?.parent);
+    currentTask = taskMap.get(currentTask.parent);
   }
 
   return depth;
@@ -47,11 +60,11 @@ function getTaskDepth(task: Task, allTasks: Task[]): number {
  */
 function getNearestSummaryParent(
   task: Task,
-  allTasks: Task[]
+  taskMap: Map<string, Task>
 ): Task | undefined {
   if (!task.parent) return undefined;
 
-  const parent = allTasks.find((t) => t.id === task.parent);
+  const parent = taskMap.get(task.parent);
   if (!parent) return undefined;
 
   if (parent.type === "summary") {
@@ -59,7 +72,7 @@ function getNearestSummaryParent(
   }
 
   // Recursively check parent's parent
-  return getNearestSummaryParent(parent, allTasks);
+  return getNearestSummaryParent(parent, taskMap);
 }
 
 /**
@@ -70,50 +83,73 @@ function getRootSummaries(allTasks: Task[]): Task[] {
 }
 
 /**
+ * Walk up the task tree from `task` to find its level-1 ancestor —
+ * the direct child of `singleRoot`. Returns that ancestor task, or
+ * `undefined` if `task` is not a descendant of `singleRoot`.
+ */
+function findLevel1Ancestor(
+  task: Task,
+  singleRoot: Task,
+  taskMap: Map<string, Task>
+): Task | undefined {
+  // task is already a direct child of singleRoot
+  if (task.parent === singleRoot.id) return task;
+
+  let current: Task | undefined = task;
+  while (current?.parent) {
+    const parent = taskMap.get(current.parent);
+    if (!parent) break;
+    if (parent.parent === singleRoot.id) {
+      return parent; // Found the level-1 color-giver
+    }
+    current = parent;
+  }
+  return undefined;
+}
+
+/**
+ * Walk ALL THE WAY UP to the root ancestor of `task`.
+ * Returns the root Task, or `undefined` if `task` is already at the root
+ * (i.e. no ancestor exists — `task` itself would be the root).
+ *
+ * Note: deliberately type-agnostic — the root may be any TaskType, not only
+ * "summary". All descendants of the same root group share one base color.
+ */
+function findRootAncestor(
+  task: Task,
+  taskMap: Map<string, Task>
+): Task | undefined {
+  let current: Task | undefined = task;
+  while (current?.parent) {
+    const parent = taskMap.get(current.parent);
+    if (!parent) break;
+    current = parent;
+  }
+  // If current is still task, it has no ancestor → return undefined
+  if (!current || task.id === current.id) return undefined;
+  return current;
+}
+
+/**
  * For theme mode: find the "color-giver" summary for a task.
  * - If there's only one root summary, use its level-1 children as color-givers.
  * - Otherwise use direct summary parents.
  */
-function getThemeColorGiver(task: Task, allTasks: Task[]): Task | undefined {
-  const rootSummaries = getRootSummaries(allTasks);
-
+function getThemeColorGiver(
+  task: Task,
+  taskMap: Map<string, Task>,
+  rootSummaries: Task[]
+): Task | undefined {
   // Special case: single root summary → use its level-1 children as color-givers
   if (rootSummaries.length === 1) {
     const singleRoot = rootSummaries[0];
-
     // If this IS the single root, no color-giver
     if (task.id === singleRoot.id) return undefined;
-
-    // Check if this task is a direct child of the single root
-    if (task.parent === singleRoot.id) {
-      return task; // This task IS the color-giver for its subtree
-    }
-
-    // Walk up to find the level-1 ancestor (direct child of single root)
-    let current: Task | undefined = task;
-    while (current?.parent) {
-      const parent = allTasks.find((t) => t.id === current?.parent);
-      if (!parent) break;
-      if (parent.parent === singleRoot.id) {
-        return parent; // Found the level-1 color-giver
-      }
-      current = parent;
-    }
-
-    return undefined;
+    return findLevel1Ancestor(task, singleRoot, taskMap);
   }
 
-  // Multiple roots → walk ALL THE WAY UP to the root ancestor
-  // so all descendants of the same root group share one base color
-  let current: Task | undefined = task;
-  while (current?.parent) {
-    const parent = allTasks.find((t) => t.id === current?.parent);
-    if (!parent) break;
-    current = parent;
-  }
-  // current = root ancestor (or task itself if already root)
-  if (!current || task.id === current.id) return undefined;
-  return current;
+  // Multiple roots → walk all the way up; descendants share root's base color
+  return findRootAncestor(task, taskMap);
 }
 
 /**
@@ -134,6 +170,15 @@ function getColorGiverIds(allTasks: Task[]): string[] {
   return allTasks.filter((t) => !t.parent).map((t) => t.id);
 }
 
+/** Intermediate record used inside assignPaletteIndices. */
+interface PaletteCandidate {
+  id: string;
+  /** Raw DJB2 hash — used for deterministic sort order. */
+  hash: number;
+  /** Preferred palette index (hash % paletteSize). */
+  pref: number;
+}
+
 /**
  * Assign palette indices to color-givers using hash + collision avoidance.
  * Maximizes color diversity while keeping assignments stable across reorders.
@@ -149,7 +194,7 @@ function assignPaletteIndices(
   colorGiverIds: string[],
   paletteSize: number
 ): Map<string, number> {
-  const withHash = colorGiverIds.map((id) => ({
+  const withHash: PaletteCandidate[] = colorGiverIds.map((id) => ({
     id,
     hash: stableHash(id),
     pref: stableHash(id) % paletteSize,
@@ -199,7 +244,7 @@ function assignPaletteIndices(
 function getDepthRelativeToColorGiver(
   task: Task,
   colorGiver: Task,
-  allTasks: Task[]
+  taskMap: Map<string, Task>
 ): number {
   let depth = 0;
   let current: Task | undefined = task;
@@ -207,7 +252,7 @@ function getDepthRelativeToColorGiver(
   while (current && current.id !== colorGiver.id) {
     depth++;
     if (!current.parent) break;
-    current = allTasks.find((t) => t.id === current?.parent);
+    current = taskMap.get(current.parent);
   }
 
   return depth;
@@ -215,17 +260,32 @@ function getDepthRelativeToColorGiver(
 
 // ─── Theme mode helpers ───────────────────────────────────────────────────────
 
+/** Lightness increase per depth level in theme-mode sibling coloring. */
+const THEME_LIGHTNESS_SHIFT_PER_DEPTH = 7;
+/** Per-sibling lightness variation added via hash to differentiate siblings (%). */
+const THEME_SIBLING_LIGHTNESS_VARIATION = 2;
+/** Maximum lightness value (%) allowed in theme-mode derived colors. */
+const THEME_MAX_LIGHTNESS = 88;
+/** Half-range for per-sibling hue variation (±degrees) in theme mode. */
+const THEME_SIBLING_HUE_HALF_RANGE = 2;
+/** Modulus applied to taskHash for sibling variation — yields values 0..4 for both lightness and hue variation. */
+const THEME_SIBLING_HASH_MODULUS = 5;
+
 /** Pre-computed shared state for theme-mode color resolution. */
 interface ThemeContext {
   paletteColors: string[];
   assignment: Map<string, number>;
+  /** Cached root summaries — used by getThemeColorGiver to avoid re-filtering. */
+  rootSummaries: Task[];
+  /** O(1) lookup map for parent traversal. */
+  taskMap: Map<string, Task>;
 }
 
 /**
  * Pre-compute the palette color list and index assignment for theme mode.
  * Returns null when no palette is configured (callers fall back to task.color).
  * Intended to be called once per batch so assignPaletteIndices runs only O(n log n)
- * instead of O(n) per task (which makes the full render O(n²)).
+ * once rather than once per task (which would be O(n² log n) total).
  */
 function buildThemeContext(
   allTasks: Task[],
@@ -244,24 +304,22 @@ function buildThemeContext(
 
   if (paletteColors.length === 0) return null;
 
+  const taskMap = buildTaskMap(allTasks);
+  const rootSummaries = getRootSummaries(allTasks);
   const assignment = assignPaletteIndices(
     getColorGiverIds(allTasks),
     paletteColors.length
   );
-  return { paletteColors, assignment };
+  return { paletteColors, assignment, rootSummaries, taskMap };
 }
 
 /**
  * Compute a single task's theme-mode color using a pre-built ThemeContext.
  * The caller is responsible for checking colorOverride before calling this.
  */
-function applyThemeColor(
-  task: Task,
-  allTasks: Task[],
-  ctx: ThemeContext
-): HexColor {
-  const { paletteColors, assignment } = ctx;
-  const colorGiver = getThemeColorGiver(task, allTasks);
+function applyThemeColor(task: Task, ctx: ThemeContext): HexColor {
+  const { paletteColors, assignment, rootSummaries, taskMap } = ctx;
+  const colorGiver = getThemeColorGiver(task, taskMap, rootSummaries);
 
   if (!colorGiver) {
     const idx =
@@ -278,19 +336,89 @@ function applyThemeColor(
     return baseColor as HexColor;
   }
 
-  const depth = getDepthRelativeToColorGiver(task, colorGiver, allTasks);
+  const depth = getDepthRelativeToColorGiver(task, colorGiver, taskMap);
   const taskHash = stableHash(task.id);
   const hsl = hexToHSL(baseColor);
 
   // Lightness: always lighter than parent, small hash variation per sibling
-  const lightnessShift = depth * 7 + (taskHash % 5) * 2; // always positive
-  hsl.l = Math.min(88, hsl.l + lightnessShift);
+  const lightnessShift =
+    depth * THEME_LIGHTNESS_SHIFT_PER_DEPTH +
+    (taskHash % THEME_SIBLING_HASH_MODULUS) * THEME_SIBLING_LIGHTNESS_VARIATION; // always positive
+  hsl.l = Math.min(THEME_MAX_LIGHTNESS, hsl.l + lightnessShift);
 
-  // Hue: minimal shift for sibling differentiation (±2°)
-  const hueShift = (taskHash % 5) - 2;
+  // Hue: minimal shift for sibling differentiation (±THEME_SIBLING_HUE_HALF_RANGE°)
+  const hueShift =
+    (taskHash % THEME_SIBLING_HASH_MODULUS) - THEME_SIBLING_HUE_HALF_RANGE;
   hsl.h = (hsl.h + hueShift + 360) % 360;
 
   return hslToHex(hsl) as HexColor;
+}
+
+// ─── Per-task mode helpers (single-task variants) ─────────────────────────────
+
+/**
+ * Compute a single task's summary-mode color.
+ * Mirrors fillSummaryColors for the single-task path in computeTaskColor.
+ */
+function applySummaryColor(
+  task: Task,
+  allTasks: Task[],
+  summaryOptions: ColorModeState["summaryOptions"]
+): HexColor {
+  if (task.type === "milestone" && summaryOptions.useMilestoneAccent) {
+    return summaryOptions.milestoneAccentColor;
+  }
+  // Summaries show their own color (they DEFINE the group color)
+  if (task.type === "summary") {
+    return task.color;
+  }
+  // Non-summary children inherit from nearest summary parent
+  const taskMap = buildTaskMap(allTasks);
+  const summaryParent = getNearestSummaryParent(task, taskMap);
+  if (summaryParent) {
+    return summaryParent.colorOverride || summaryParent.color;
+  }
+  // Root level tasks keep their own color
+  return task.color;
+}
+
+/**
+ * Compute a single task's hierarchy-mode color.
+ * Mirrors fillHierarchyColors for the single-task path in computeTaskColor.
+ */
+function applyHierarchyColor(
+  task: Task,
+  allTasks: Task[],
+  hierarchyOptions: ColorModeState["hierarchyOptions"]
+): HexColor {
+  const taskMap = buildTaskMap(allTasks);
+  const depth = getTaskDepth(task, taskMap);
+  const lightenAmount = Math.min(
+    depth * (hierarchyOptions.lightenPercentPerLevel / 100),
+    hierarchyOptions.maxLightenPercent / 100
+  );
+  return lightenColor(hierarchyOptions.baseColor, lightenAmount) as HexColor;
+}
+
+/**
+ * Compute a single task's taskType-mode color.
+ */
+function applyTaskTypeColor(
+  task: Task,
+  taskTypeOptions: ColorModeState["taskTypeOptions"]
+): HexColor {
+  // The `default` branch handles "task" and any future TaskType additions
+  // gracefully by returning taskColor. If a new type is added, TypeScript
+  // strict mode will not catch it here — add an explicit `case` for it.
+  switch (task.type) {
+    case "summary":
+      return taskTypeOptions.summaryColor;
+    case "milestone":
+      return taskTypeOptions.milestoneColor;
+    case "task":
+    default:
+      return taskTypeOptions.taskColor;
+  }
 }
 
 // ─── Public API ───────────────────────────────────────────────────────────────
@@ -298,6 +426,17 @@ function applyThemeColor(
 /**
  * Compute the display color for a task based on color mode.
  * Pure function — no React hooks or store access.
+ *
+ * @param task           - The task whose display color is being resolved.
+ * @param allTasks       - Full task list (needed for hierarchy/summary traversal).
+ * @param colorModeState - Active color mode configuration.
+ * @returns The resolved `HexColor` for the task.
+ *
+ * **Performance note (theme mode):** This function calls `buildThemeContext`
+ * on every invocation, which runs `assignPaletteIndices` — an O(n log n)
+ * operation over all tasks. Calling this in a loop over n tasks results in
+ * O(n² log n) total cost. For batch rendering use `computeAllTaskColors`
+ * instead, which hoists the shared computation outside the loop.
  */
 export function computeTaskColor(
   task: Task,
@@ -325,56 +464,17 @@ export function computeTaskColor(
     case "theme": {
       const themeCtx = buildThemeContext(allTasks, themeOptions);
       if (!themeCtx) return task.color;
-      return applyThemeColor(task, allTasks, themeCtx);
+      return applyThemeColor(task, themeCtx);
     }
 
-    case "summary": {
-      // Check if this is a milestone and should use accent color
-      if (task.type === "milestone" && summaryOptions.useMilestoneAccent) {
-        return summaryOptions.milestoneAccentColor;
-      }
+    case "summary":
+      return applySummaryColor(task, allTasks, summaryOptions);
 
-      // Summaries show their own color (they DEFINE the group color)
-      if (task.type === "summary") {
-        return task.color;
-      }
+    case "taskType":
+      return applyTaskTypeColor(task, taskTypeOptions);
 
-      // Non-summary children inherit from nearest summary parent
-      const summaryParent = getNearestSummaryParent(task, allTasks);
-      if (summaryParent) {
-        return summaryParent.colorOverride || summaryParent.color;
-      }
-
-      // Root level tasks keep their own color
-      return task.color;
-    }
-
-    case "taskType": {
-      // Return color based on task type
-      switch (task.type) {
-        case "summary":
-          return taskTypeOptions.summaryColor;
-        case "milestone":
-          return taskTypeOptions.milestoneColor;
-        case "task":
-        default:
-          return taskTypeOptions.taskColor;
-      }
-    }
-
-    case "hierarchy": {
-      // Calculate depth and apply lightening
-      const depth = getTaskDepth(task, allTasks);
-      const lightenAmount = Math.min(
-        depth * (hierarchyOptions.lightenPercentPerLevel / 100),
-        hierarchyOptions.maxLightenPercent / 100
-      );
-
-      return lightenColor(
-        hierarchyOptions.baseColor,
-        lightenAmount
-      ) as HexColor;
-    }
+    case "hierarchy":
+      return applyHierarchyColor(task, allTasks, hierarchyOptions);
 
     default:
       return task.color;
@@ -383,7 +483,13 @@ export function computeTaskColor(
 
 /**
  * Get computed color without hooks (for use in non-component contexts).
- * Alias for computeTaskColor — kept for API compatibility.
+ * Semantic alias for `computeTaskColor` — the "get" prefix reads naturally
+ * at call sites in ExportRenderer and chartSlice where a single task's color
+ * is resolved in isolation.
+ *
+ * **Performance note:** Same O(n²) caveat as `computeTaskColor` applies —
+ * calling this inside a loop over n tasks rebuilds shared state on every call.
+ * Use `computeAllTaskColors` for batch rendering instead.
  */
 export function getComputedTaskColor(
   task: Task,
@@ -393,6 +499,127 @@ export function getComputedTaskColor(
   return computeTaskColor(task, allTasks, colorModeState);
 }
 
+// ─── computeAllTaskColors private batch helpers ───────────────────────────────
+// Each helper fills `result` for one color mode. Kept private so callers use
+// computeAllTaskColors as the single entry point.
+
+function fillThemeColors(
+  tasks: Task[],
+  colorModeState: ColorModeState,
+  result: Map<string, HexColor>
+): void {
+  const themeCtx = buildThemeContext(tasks, colorModeState.themeOptions);
+
+  if (!themeCtx) {
+    // No palette configured — every task falls back to its own color.
+    for (const task of tasks) {
+      result.set(task.id, task.color as HexColor);
+    }
+    return;
+  }
+
+  for (const task of tasks) {
+    // colorOverride check mirrors computeTaskColor's automatic-mode guard.
+    // Kept inline here so we can skip applyThemeColor entirely for overridden tasks.
+    if (task.colorOverride) {
+      result.set(task.id, task.colorOverride);
+      continue;
+    }
+    result.set(task.id, applyThemeColor(task, themeCtx));
+  }
+}
+
+function fillSummaryColors(
+  tasks: Task[],
+  summaryOptions: ColorModeState["summaryOptions"],
+  result: Map<string, HexColor>
+): void {
+  // Hoist taskMap so it is built once (O(n)) rather than once per task (O(n²)).
+  const taskMap = buildTaskMap(tasks);
+  for (const task of tasks) {
+    if (task.colorOverride) {
+      result.set(task.id, task.colorOverride);
+      continue;
+    }
+    if (task.type === "milestone" && summaryOptions.useMilestoneAccent) {
+      result.set(task.id, summaryOptions.milestoneAccentColor);
+      continue;
+    }
+    if (task.type === "summary") {
+      result.set(task.id, task.color);
+      continue;
+    }
+    const summaryParent = getNearestSummaryParent(task, taskMap);
+    result.set(
+      task.id,
+      summaryParent
+        ? summaryParent.colorOverride || summaryParent.color
+        : task.color
+    );
+  }
+}
+
+function fillHierarchyColors(
+  tasks: Task[],
+  hierarchyOptions: ColorModeState["hierarchyOptions"],
+  result: Map<string, HexColor>
+): void {
+  // Hoist taskMap so it is built once (O(n)) rather than once per task (O(n²)).
+  const taskMap = buildTaskMap(tasks);
+  for (const task of tasks) {
+    if (task.colorOverride) {
+      result.set(task.id, task.colorOverride);
+      continue;
+    }
+    const depth = getTaskDepth(task, taskMap);
+    const lightenAmount = Math.min(
+      depth * (hierarchyOptions.lightenPercentPerLevel / 100),
+      hierarchyOptions.maxLightenPercent / 100
+    );
+    result.set(
+      task.id,
+      lightenColor(hierarchyOptions.baseColor, lightenAmount) as HexColor
+    );
+  }
+}
+
+function fillManualColors(tasks: Task[], result: Map<string, HexColor>): void {
+  for (const task of tasks) {
+    result.set(task.id, task.color);
+  }
+}
+
+function fillTaskTypeColors(
+  tasks: Task[],
+  taskTypeOptions: ColorModeState["taskTypeOptions"],
+  result: Map<string, HexColor>
+): void {
+  for (const task of tasks) {
+    if (task.colorOverride) {
+      result.set(task.id, task.colorOverride);
+      continue;
+    }
+    switch (task.type) {
+      case "summary":
+        result.set(task.id, taskTypeOptions.summaryColor);
+        break;
+      case "milestone":
+        result.set(task.id, taskTypeOptions.milestoneColor);
+        break;
+      case "task":
+      default:
+        result.set(task.id, taskTypeOptions.taskColor);
+    }
+  }
+}
+
+/** Exhaustiveness helper — causes a TypeScript error when `x` is not `never`. */
+function assertNever(x: never): never {
+  throw new Error(`Unhandled ColorMode: ${String(x)}`);
+}
+
+// ─── Public API (batch) ───────────────────────────────────────────────────────
+
 /**
  * Compute display colors for all tasks in a single pass.
  *
@@ -400,7 +627,9 @@ export function getComputedTaskColor(
  * shared computations are performed only once:
  * - Theme mode: palette-index assignment (O(n log n)) is hoisted out of the per-task loop,
  *   reducing overall complexity from O(n²) to O(n·depth).
- * - All other modes: delegates to computeTaskColor per task (acceptable cost).
+ * - Summary/hierarchy modes: `buildTaskMap` is hoisted so the Map is constructed
+ *   once (O(n)) rather than once per task (O(n²)).
+ * - Manual/taskType modes: no shared state needed; iterates tasks once.
  *
  * Use this in batch rendering contexts (export) instead of calling
  * getComputedTaskColor inside a render loop.
@@ -415,34 +644,31 @@ export function computeAllTaskColors(
 
   if (tasks.length === 0) return result;
 
-  const { mode } = colorModeState;
+  const { mode, summaryOptions, hierarchyOptions, taskTypeOptions } =
+    colorModeState;
 
-  if (mode === "theme") {
-    const themeCtx = buildThemeContext(tasks, colorModeState.themeOptions);
-
-    if (!themeCtx) {
-      // No palette configured — every task falls back to its own color.
-      for (const task of tasks) {
-        result.set(task.id, task.color as HexColor);
-      }
-      return result;
-    }
-
-    for (const task of tasks) {
-      if (task.colorOverride) {
-        result.set(task.id, task.colorOverride);
-        continue;
-      }
-      result.set(task.id, applyThemeColor(task, tasks, themeCtx));
-    }
-    return result;
+  switch (mode) {
+    case "theme":
+      fillThemeColors(tasks, colorModeState, result);
+      break;
+    case "summary":
+      fillSummaryColors(tasks, summaryOptions, result);
+      break;
+    case "hierarchy":
+      fillHierarchyColors(tasks, hierarchyOptions, result);
+      break;
+    case "manual":
+      fillManualColors(tasks, result);
+      break;
+    case "taskType":
+      fillTaskTypeColors(tasks, taskTypeOptions, result);
+      break;
+    default:
+      // Exhaustive guard: TypeScript will raise an error here when a new ColorMode
+      // variant is added without a corresponding fill* case above. This prevents
+      // silent O(n²) regressions caused by falling through to per-task computeTaskColor.
+      assertNever(mode);
   }
 
-  // For all other modes (manual, summary, taskType, hierarchy): delegate to
-  // the single-task function. Their per-task cost is lower than theme mode's
-  // palette-assignment overhead, so calling per task is acceptable.
-  for (const task of tasks) {
-    result.set(task.id, computeTaskColor(task, tasks, colorModeState));
-  }
   return result;
 }

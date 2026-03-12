@@ -32,6 +32,22 @@ export interface LayoutDimensions {
   contentAreaHeight: number;
 }
 
+/**
+ * Compute the three layout dimensions required by GanttLayout.
+ *
+ * - `totalContentHeight`: sum of all task rows (including placeholder rows),
+ *   the sticky header, and the horizontal scrollbar. Determines the scrollable
+ *   height of the layout container.
+ * - `timelineHeaderWidth`: at least `containerWidth + MIN_OVERFLOW` so the SVG
+ *   header always extends beyond the visible viewport; uses `scaleTotalWidth`
+ *   when the D3 scale has been initialised and is wider than that minimum.
+ * - `contentAreaHeight`: viewport height minus the sticky header; the usable
+ *   vertical space for task rows. Clamped to ≥ 0 to handle tiny viewports.
+ *
+ * All pixel values are expected in CSS pixels. Constants (`HEADER_HEIGHT`,
+ * `SCROLLBAR_HEIGHT`, `MIN_OVERFLOW`, `PLACEHOLDER_ROW_COUNT`) are imported
+ * from `src/config/layoutConstants`.
+ */
 export function calculateLayoutDimensions({
   taskCount,
   rowHeight,
@@ -49,7 +65,7 @@ export function calculateLayoutDimensions({
       ? Math.max(scaleTotalWidth, containerWidth + MIN_OVERFLOW)
       : containerWidth + MIN_OVERFLOW;
 
-  const contentAreaHeight = viewportHeight - HEADER_HEIGHT;
+  const contentAreaHeight = Math.max(0, viewportHeight - HEADER_HEIGHT);
 
   return { totalContentHeight, timelineHeaderWidth, contentAreaHeight };
 }

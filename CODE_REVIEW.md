@@ -219,6 +219,16 @@ cd ../app-gantt-review
 - [x] `src/utils/dateUtils.ts` (123 LOC)
 - [x] `src/utils/dragValidation.ts` (67 LOC)
 - [x] `src/utils/svgUtils.ts` (21 LOC)
+- [x] `src/utils/computeTaskColor.ts` (448 LOC)
+- [x] `src/utils/taskBarDragHelpers.ts` (234 LOC)
+- [x] `src/utils/layoutCalculations.ts` (55 LOC)
+- [x] `src/utils/selection.ts` (33 LOC)
+- [x] `src/utils/taskDisplayUtils.ts` (35 LOC)
+- [x] `src/utils/hashUtils.ts` (38 LOC)
+- [x] `src/utils/taskTypeUtils.ts` (26 LOC)
+- [x] `src/utils/svgCoords.ts` (15 LOC)
+- [x] `src/utils/buildClassNames.ts` (27 LOC)
+- [x] `src/utils/stringUtils.ts` (11 LOC)
 
 ### Priority: MEDIUM — Clipboard Utils
 - [x] `src/utils/clipboard/systemClipboard.ts` (165 LOC)

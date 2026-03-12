@@ -7,15 +7,14 @@ import type { Task, TaskType } from "../types/chart.types";
 import type { TaskId } from "../types/branded.types";
 import type { TaskBarGeometry } from "./timelineUtils";
 import type { WorkingDaysConfig } from "../types/preferences.types";
+
 import { addDays, calculateDuration } from "./dateUtils";
 import { calculateWorkingDays, addWorkingDays } from "./workingDaysCalculator";
 import { validateDragOperation } from "./dragValidation";
+import { MS_PER_DAY } from "./timeConstants";
 
 /** Edge detection threshold in pixels */
 export const EDGE_THRESHOLD = 8;
-
-/** Milliseconds per day */
-const MS_PER_DAY = 1000 * 60 * 60 * 24;
 
 export type InteractionMode =
   | "idle"
@@ -23,6 +22,7 @@ export type InteractionMode =
   | "resizing-left"
   | "resizing-right";
 export type InteractionZone = "left-edge" | "right-edge" | "center";
+/** CSS cursor value for task bar interactions. Consumed by useTaskBarInteraction. */
 export type CursorType =
   | "grab"
   | "grabbing"
@@ -87,6 +87,10 @@ export function pixelsToDeltaDays(
 /**
  * Compute end date for a drag-move operation.
  * Handles both working-days and calendar-days modes.
+ *
+ * @param deltaDays - Used only in calendar-days mode. In working-days mode the
+ *   delta is already encoded in `newStartDate`; the end date is instead derived
+ *   by preserving the original working-day duration from the original dates.
  */
 export function computeEndDateForDrag(
   newStartDate: string,
@@ -97,6 +101,9 @@ export function computeEndDateForDrag(
   ctx: WorkingDaysContext
 ): string {
   if (ctx.enabled && taskType !== "milestone") {
+    // Working-days mode: preserve the original working-day count, shifting from
+    // the new start. deltaDays is intentionally not used here — the displacement
+    // is already captured in newStartDate.
     const originalWorkingDays = calculateWorkingDays(
       originalStartDate,
       originalEndDate,
@@ -115,12 +122,21 @@ export function computeEndDateForDrag(
 
 /**
  * Compute preview dates for a resize operation.
- * Returns null if the resize would create an invalid (< 1 day) duration.
+ * Returns null if the resize would create an invalid (< 1 day) duration,
+ * or if the drag state is not in a resize mode.
  */
 export function computeResizePreview(
   dragState: DragState,
   deltaDays: number
 ): { previewStart: string; previewEnd: string } | null {
+  // Guard against being called with a non-resize mode (e.g. "dragging" or "idle").
+  if (
+    dragState.mode !== "resizing-left" &&
+    dragState.mode !== "resizing-right"
+  ) {
+    return null;
+  }
+
   if (dragState.mode === "resizing-left") {
     const newStart = addDays(dragState.originalStartDate, deltaDays);
     const duration = calculateDuration(newStart, dragState.originalEndDate);
@@ -137,6 +153,14 @@ export function computeResizePreview(
 
 /**
  * Calculate delta days between two date strings.
+ *
+ * Returns a positive value when `previewStart` is after `originalStart`,
+ * and a negative value when it is before. Used to convert a committed
+ * drag position back into a day-delta for multi-task batch updates.
+ *
+ * @param originalStart - ISO date string for the original start date
+ * @param previewStart  - ISO date string for the new (preview) start date
+ * @returns Signed integer day-delta (previewStart − originalStart)
  */
 export function calculateDeltaDaysFromDates(
   originalStart: string,
@@ -145,6 +169,70 @@ export function calculateDeltaDaysFromDates(
   const origMs = new Date(originalStart).getTime();
   const previewMs = new Date(previewStart).getTime();
   return Math.round((previewMs - origMs) / MS_PER_DAY);
+}
+
+/**
+ * Derive the final end date for a non-milestone task move.
+ * Reuses computeEndDateForDrag to avoid duplicating working-days logic.
+ * Falls back to the calendar-shifted value when the original end date is empty.
+ */
+function resolveFinalEndDate(
+  t: Task,
+  newStartDate: string,
+  deltaDays: number,
+  calendarShiftedEndDate: string,
+  ctx: WorkingDaysContext
+): string {
+  return t.endDate
+    ? computeEndDateForDrag(
+        newStartDate,
+        t.startDate,
+        t.endDate,
+        deltaDays,
+        t.type,
+        ctx
+      )
+    : calendarShiftedEndDate;
+}
+
+/**
+ * Compute the field updates for a single non-summary task during a drag-move commit.
+ * Returns null if validation fails.
+ */
+function buildSingleTaskMoveUpdate(
+  t: Task,
+  deltaDays: number,
+  ctx: WorkingDaysContext
+): Partial<Task> | null {
+  const newStartDate = addDays(t.startDate, deltaDays);
+  // Compute a calendar-shifted end date for validation purposes.
+  // For non-milestones the final committed end date may differ (working-days
+  // recalculation happens below), but validation only needs to know whether
+  // the shift stays within acceptable bounds.
+  const calendarShiftedEndDate = t.endDate ? addDays(t.endDate, deltaDays) : "";
+  const validation = validateDragOperation(
+    t,
+    newStartDate,
+    calendarShiftedEndDate
+  );
+  if (!validation.valid) return null;
+
+  if (t.type === "milestone") {
+    return { startDate: newStartDate, endDate: newStartDate, duration: 0 };
+  }
+
+  const finalEndDate = resolveFinalEndDate(
+    t,
+    newStartDate,
+    deltaDays,
+    calendarShiftedEndDate,
+    ctx
+  );
+  return {
+    startDate: newStartDate,
+    endDate: finalEndDate,
+    duration: calculateDuration(newStartDate, finalEndDate),
+  };
 }
 
 /**
@@ -164,45 +252,9 @@ export function buildMoveUpdates(
     if (!t) continue;
     if (t.type === "summary") continue;
 
-    const newStartDate = addDays(t.startDate, deltaDays);
-    const newEndDate = t.endDate ? addDays(t.endDate, deltaDays) : "";
-    const validation = validateDragOperation(t, newStartDate, newEndDate);
-    if (!validation.valid) continue;
-
-    if (t.type === "milestone") {
-      updates.push({
-        id: taskId,
-        updates: {
-          startDate: newStartDate,
-          endDate: newStartDate,
-          duration: 0,
-        },
-      });
-    } else {
-      let finalEndDate = newEndDate;
-      if (ctx.enabled && t.endDate) {
-        const originalWorkingDays = calculateWorkingDays(
-          t.startDate,
-          t.endDate,
-          ctx.config,
-          ctx.holidayRegion
-        );
-        finalEndDate = addWorkingDays(
-          newStartDate,
-          originalWorkingDays,
-          ctx.config,
-          ctx.holidayRegion
-        );
-      }
-      updates.push({
-        id: taskId,
-        updates: {
-          startDate: newStartDate,
-          endDate: finalEndDate,
-          duration: calculateDuration(newStartDate, finalEndDate),
-        },
-      });
-    }
+    const taskUpdates = buildSingleTaskMoveUpdate(t, deltaDays, ctx);
+    if (!taskUpdates) continue;
+    updates.push({ id: taskId, updates: taskUpdates });
   }
 
   return updates;
