@@ -313,9 +313,9 @@ cd ../app-gantt-review
 Dateien die waehrend des Reviews neu erstellt wurden und noch nicht reviewt sind.
 
 ### New Types
-- [ ] `src/types/task.types.ts` (39 LOC)
-- [ ] `src/types/branded.types.ts` (30 LOC)
-- [ ] `src/types/ui.types.ts` (13 LOC)
+- [x] `src/types/task.types.ts` (39 LOC)
+- [x] `src/types/branded.types.ts` (30 LOC)
+- [x] `src/types/ui.types.ts` (13 LOC)
 
 ### New Styles
 - [x] `src/styles/cellStyles.ts` (49 LOC)
