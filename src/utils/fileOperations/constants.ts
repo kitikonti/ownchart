@@ -34,6 +34,7 @@ export const INTERNAL_KEYS = new Set(["__unknownFields"]);
  * Known task field names — used to identify/filter unknownFields during round-trip.
  * Must stay in sync with SerializedTask fields in types.ts.
  * @see SKIP_SANITIZE_KEYS in sanitize.ts for the related sanitization skip-set.
+ * @see serializeTask in serialize.ts where unknown fields are written back under this guard.
  */
 export const KNOWN_TASK_KEYS = new Set([
   "id",
@@ -70,6 +71,11 @@ export const KNOWN_DEPENDENCY_KEYS = new Set([
  * Valid column IDs for export selectedColumns filtering.
  * Must stay in sync with hideable column IDs from src/config/tableColumns.ts (TASK_COLUMNS).
  * @see sanitize.test.ts for the sync test that prevents drift.
+ *
+ * Note: "rowNumber" is intentionally omitted — it is not a data column and cannot be
+ * selected/deselected for export. "color" and "name" are included here even though they
+ * are not `hideable` in TASK_COLUMNS, because they are always shown in the table but the
+ * export dialog lets users opt them out of the exported column list independently.
  */
 export const VALID_EXPORT_COLUMNS = new Set([
   "color",
