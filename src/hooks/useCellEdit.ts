@@ -4,6 +4,7 @@
  */
 
 import {
+  useCallback,
   useEffect,
   useRef,
   useState,
@@ -67,6 +68,9 @@ export function useCellEdit({
   const [localValue, setLocalValue] = useState<string>("");
   const [error, setError] = useState<string | null>(null);
   const shouldOverwriteRef = useRef<boolean>(false);
+  // Snapshot of the value when edit mode is entered — used by cancelEdit to
+  // restore correctly even if the store is updated by another source mid-edit.
+  const editEntryValueRef = useRef<string>("");
 
   const updateTask = useTaskStore((state) => state.updateTask);
 
@@ -133,12 +137,12 @@ export function useCellEdit({
   // Initialize local value when entering edit mode
   useEffect(() => {
     if (isEditing) {
+      const initialValue =
+        workingDays !== null ? String(workingDays) : String(currentValue);
+      // Capture a snapshot for use by cancelEdit regardless of overwrite mode.
+      editEntryValueRef.current = initialValue;
       if (!shouldOverwriteRef.current) {
-        if (workingDays !== null) {
-          setLocalValue(String(workingDays));
-        } else {
-          setLocalValue(String(currentValue));
-        }
+        setLocalValue(initialValue);
       }
       shouldOverwriteRef.current = false;
       setError(null);
@@ -146,16 +150,19 @@ export function useCellEdit({
   }, [isEditing, currentValue, workingDays]);
 
   /** Update cell value in store with type conversion. */
-  const updateCellValue = (value: string): void => {
-    let typedValue: string | number = value;
-    if (field === "duration" || field === "progress") {
-      typedValue = Number(value);
-    }
-    updateTask(taskId, { [field]: typedValue });
-  };
+  const updateCellValue = useCallback(
+    (value: string): void => {
+      let typedValue: string | number = value;
+      if (field === "duration" || field === "progress") {
+        typedValue = Number(value);
+      }
+      updateTask(taskId, { [field]: typedValue });
+    },
+    [field, taskId, updateTask]
+  );
 
   /** Validate and save the cell value. Returns true on success, false on validation failure. */
-  const saveValue = (): boolean => {
+  const saveValue = useCallback((): boolean => {
     if (!column.validator) {
       updateCellValue(localValue);
       stopCellEdit();
@@ -207,32 +214,49 @@ export function useCellEdit({
     setError(null);
     stopCellEdit();
     return true;
-  };
+  }, [
+    column,
+    field,
+    localValue,
+    task,
+    taskId,
+    updateTask,
+    updateCellValue,
+    stopCellEdit,
+    workingDaysMode,
+    workingDaysConfig,
+    effectiveHolidayRegion,
+  ]);
 
   /** Cancel edit mode without saving. */
-  const cancelEdit = (): void => {
+  const cancelEdit = useCallback((): void => {
     setError(null);
-    setLocalValue(String(currentValue));
+    // Restore to the value that was current when edit mode was entered,
+    // rather than re-reading currentValue, to handle concurrent store updates.
+    setLocalValue(editEntryValueRef.current);
     stopCellEdit();
-  };
+  }, [stopCellEdit]);
 
   /** Handle keyboard events in edit mode. */
-  const handleEditKeyDown = (e: KeyboardEvent<HTMLInputElement>): void => {
-    if (e.key === "Enter") {
-      e.preventDefault();
-      if (saveValue()) {
-        navigateCell(e.shiftKey ? "up" : "down");
+  const handleEditKeyDown = useCallback(
+    (e: KeyboardEvent<HTMLInputElement>): void => {
+      if (e.key === "Enter") {
+        e.preventDefault();
+        if (saveValue()) {
+          navigateCell(e.shiftKey ? "up" : "down");
+        }
+      } else if (e.key === "Tab") {
+        e.preventDefault();
+        if (saveValue()) {
+          navigateCell(e.shiftKey ? "left" : "right");
+        }
+      } else if (e.key === "Escape") {
+        e.preventDefault();
+        cancelEdit();
       }
-    } else if (e.key === "Tab") {
-      e.preventDefault();
-      if (saveValue()) {
-        navigateCell(e.shiftKey ? "left" : "right");
-      }
-    } else if (e.key === "Escape") {
-      e.preventDefault();
-      cancelEdit();
-    }
-  };
+    },
+    [saveValue, cancelEdit, navigateCell]
+  );
 
   /** Format display value for view mode. */
   const displayValue = useMemo((): string => {

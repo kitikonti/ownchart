@@ -35,10 +35,11 @@ import { calculatePdfFitToWidth } from "../utils/export/pdfLayout";
 // Pure computation helpers (extracted for testability)
 // =============================================================================
 
+/** Shared date range type used by project and visible date range computations. */
+export type DateRange = { start: Date; end: Date };
+
 /** Calculate project date range from tasks */
-export function computeProjectDateRange(
-  tasks: Task[]
-): { start: Date; end: Date } | undefined {
+export function computeProjectDateRange(tasks: Task[]): DateRange | undefined {
   if (tasks.length === 0) return undefined;
 
   let minDate: Date | null = null;
@@ -63,7 +64,7 @@ export function computeVisibleDateRange(
   scale: TimelineScale | null,
   viewportScrollLeft: number,
   viewportWidth: number
-): { start: Date; end: Date } | undefined {
+): DateRange | undefined {
   if (!scale || viewportWidth === 0) return undefined;
 
   const { pixelsPerDay } = scale;
@@ -133,8 +134,8 @@ export interface UseExportDialogResult {
   taskTableWidth: number;
   effectiveZoom: number;
   readabilityStatus: ReadabilityStatus;
-  projectDateRange: { start: Date; end: Date } | undefined;
-  visibleDateRange: { start: Date; end: Date } | undefined;
+  projectDateRange: DateRange | undefined;
+  visibleDateRange: DateRange | undefined;
 
   // Display flags
   showDimensions: boolean;
@@ -187,14 +188,19 @@ export function useExportDialog(): UseExportDialogResult {
   );
 
   // --- Derived values ---
-  const projectName =
-    projectTitle || fileName?.replace(".ownchart", "") || undefined;
+  const projectName = useMemo(
+    () => projectTitle || fileName?.replace(".ownchart", "") || undefined,
+    [projectTitle, fileName]
+  );
 
   const exportTasks = useMemo(
     () => prepareExportTasks(tasks, hiddenTaskIds),
     [tasks, hiddenTaskIds]
   );
-  const hiddenTaskCount = tasks.length - exportTasks.length;
+  const hiddenTaskCount = useMemo(
+    () => tasks.length - exportTasks.length,
+    [tasks.length, exportTasks.length]
+  );
 
   const projectDateRange = useMemo(
     () => computeProjectDateRange(exportTasks),
@@ -290,7 +296,7 @@ export function useExportDialog(): UseExportDialogResult {
       if (selectedExportFormat === "png") {
         await exportToPng({
           tasks: exportTasks,
-          options: exportOptions,
+          options: effectiveExportOptions,
           columnWidths,
           currentAppZoom,
           projectDateRange,
@@ -301,7 +307,7 @@ export function useExportDialog(): UseExportDialogResult {
         const { exportToPdf } = await import("../utils/export/pdfExport");
         await exportToPdf({
           tasks: exportTasks,
-          options: exportOptions,
+          options: effectiveExportOptions,
           pdfOptions: pdfExportOptions,
           columnWidths,
           currentAppZoom,
@@ -318,7 +324,7 @@ export function useExportDialog(): UseExportDialogResult {
         const { exportToSvg } = await import("../utils/export/svgExport");
         await exportToSvg({
           tasks: exportTasks,
-          options: exportOptions,
+          options: effectiveExportOptions,
           svgOptions: svgExportOptions,
           columnWidths,
           currentAppZoom,
@@ -340,7 +346,7 @@ export function useExportDialog(): UseExportDialogResult {
   }, [
     selectedExportFormat,
     exportTasks,
-    exportOptions,
+    effectiveExportOptions,
     pdfExportOptions,
     svgExportOptions,
     columnWidths,
