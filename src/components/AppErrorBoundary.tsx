@@ -4,7 +4,7 @@
  * a user-friendly fallback instead of a blank screen.
  */
 
-import { Component, ReactNode, ReactElement } from "react";
+import { Component, ErrorInfo, ReactNode } from "react";
 
 interface Props {
   children: ReactNode;
@@ -27,10 +27,10 @@ export class AppErrorBoundary extends Component<Props, State> {
     return { hasError: true, message };
   }
 
-  override componentDidCatch(
-    error: unknown,
-    info: { componentStack: string }
-  ): void {
+  override componentDidCatch(error: unknown, info: ErrorInfo): void {
+    // Intentional console.error: this is the appropriate place to log
+    // render errors for debugging. Replace with an error-reporting service
+    // (e.g. Sentry) if one is added in the future.
     console.error(
       "[AppErrorBoundary] Caught render error:",
       error,
@@ -65,6 +65,6 @@ export class AppErrorBoundary extends Component<Props, State> {
       );
     }
 
-    return this.props.children as ReactElement;
+    return this.props.children;
   }
 }

@@ -8,6 +8,9 @@ import {
   EXPORT_ZOOM_PRESETS,
 } from "../../utils/export/types";
 
+// PNG/SVG exports support finer zoom levels (0.1×, 0.25×) not available for
+// PDF, because raster/vector outputs can represent very small scales without
+// readability constraints imposed by fixed PDF page dimensions.
 const CUSTOM_ZOOM_PRESETS_ARRAY = [0.1, 0.25, 0.5, 1.0, 1.5, 2.0];
 
 export interface CustomZoomControlProps {
@@ -99,6 +102,7 @@ export function CustomZoomControl({
               e.stopPropagation();
               onTimelineZoomChange(value);
             }}
+            aria-pressed={timelineZoom === value}
             className={`px-3 py-1.5 text-xs font-mono font-medium rounded transition-colors duration-150 ${
               timelineZoom === value
                 ? "bg-brand-600 text-white"

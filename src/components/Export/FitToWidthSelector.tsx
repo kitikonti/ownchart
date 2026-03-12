@@ -3,7 +3,8 @@
  * Offers common screen/print sizes and a free-form custom pixel input.
  */
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { DEFAULT_FIT_TO_WIDTH_PX } from "../../utils/export/types";
 import { Input } from "../common/Input";
 import { Select } from "../common/Select";
 
@@ -51,6 +52,15 @@ export function FitToWidthSelector({
     !ALL_PRESET_VALUES.includes(fitToWidth)
   );
 
+  // Sync local "custom" flag when the parent resets fitToWidth to a known
+  // preset (e.g. on format change). Without this, the dropdown would still
+  // show "Custom width..." even though a preset is now active.
+  useEffect(() => {
+    if (ALL_PRESET_VALUES.includes(fitToWidth)) {
+      setIsCustomWidth(false);
+    }
+  }, [fitToWidth]);
+
   const handleSelectChange = (value: string): void => {
     if (value === "custom") {
       setIsCustomWidth(true);
@@ -96,7 +106,7 @@ export function FitToWidthSelector({
                   MIN_FIT_WIDTH_PX,
                   Math.min(
                     MAX_FIT_WIDTH_PX,
-                    parseInt(e.target.value, 10) || 1920
+                    parseInt(e.target.value, 10) || DEFAULT_FIT_TO_WIDTH_PX
                   )
                 )
               )
@@ -107,7 +117,7 @@ export function FitToWidthSelector({
             mono
             min={MIN_FIT_WIDTH_PX}
             max={MAX_FIT_WIDTH_PX}
-            placeholder="1920"
+            placeholder={String(DEFAULT_FIT_TO_WIDTH_PX)}
           />
           <span className="text-sm text-neutral-500">px</span>
         </div>

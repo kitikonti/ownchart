@@ -8,7 +8,7 @@
  * reactively, so this component does not re-render on task changes.
  */
 
-import { useState } from "react";
+import { useState, useCallback } from "react";
 import { Minus, Plus, ArrowsOutLineHorizontal } from "@phosphor-icons/react";
 import { useTaskStore } from "../../store/slices/taskSlice";
 import { useChartStore } from "../../store/slices/chartSlice";
@@ -55,16 +55,27 @@ export function ZoomControls(): JSX.Element {
     fitToView(useTaskStore.getState().tasks);
   };
 
-  const handleZoomSelect = (newZoom: number | "fit"): void => {
-    if (newZoom === "fit") {
-      fitToView(useTaskStore.getState().tasks);
-    } else {
-      const anchor = computeViewportCenterAnchor();
-      const result = setZoom(newZoom, anchor);
-      applyScrollLeft(result.newScrollLeft);
-    }
+  const handleOpenZoomDialog = useCallback((): void => {
+    setIsZoomDialogOpen(true);
+  }, []);
+
+  const handleCloseZoomDialog = useCallback((): void => {
     setIsZoomDialogOpen(false);
-  };
+  }, []);
+
+  const handleZoomSelect = useCallback(
+    (newZoom: number | "fit"): void => {
+      if (newZoom === "fit") {
+        fitToView(useTaskStore.getState().tasks);
+      } else {
+        const anchor = computeViewportCenterAnchor();
+        const result = setZoom(newZoom, anchor);
+        applyScrollLeft(result.newScrollLeft);
+      }
+      setIsZoomDialogOpen(false);
+    },
+    [fitToView, setZoom]
+  );
 
   return (
     <>
@@ -101,7 +112,7 @@ export function ZoomControls(): JSX.Element {
 
         <button
           type="button"
-          onClick={() => setIsZoomDialogOpen(true)}
+          onClick={handleOpenZoomDialog}
           className="min-w-[44px] text-right text-neutral-600 hover:text-neutral-800 hover:underline cursor-pointer transition-colors"
           aria-label="Open zoom dialog"
         >
@@ -121,7 +132,7 @@ export function ZoomControls(): JSX.Element {
 
       <ZoomDialog
         isOpen={isZoomDialogOpen}
-        onClose={() => setIsZoomDialogOpen(false)}
+        onClose={handleCloseZoomDialog}
         currentZoom={zoom}
         onSelect={handleZoomSelect}
       />
