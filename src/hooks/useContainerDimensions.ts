@@ -10,7 +10,11 @@
  */
 
 import { useEffect, useState, type RefObject } from "react";
-import { MIN_VALID_DIMENSION } from "../config/layoutConstants";
+import {
+  INITIAL_CHART_CONTAINER_WIDTH,
+  INITIAL_VIEWPORT_HEIGHT,
+  MIN_VALID_DIMENSION,
+} from "../config/layoutConstants";
 
 interface UseContainerDimensionsOptions {
   outerScrollRef: RefObject<HTMLDivElement | null>;
@@ -28,8 +32,10 @@ export function useContainerDimensions({
   chartContainerRef,
   setViewport,
 }: UseContainerDimensionsOptions): ContainerDimensions {
-  const [viewportHeight, setViewportHeight] = useState(600);
-  const [chartContainerWidth, setChartContainerWidth] = useState(800);
+  const [viewportHeight, setViewportHeight] = useState(INITIAL_VIEWPORT_HEIGHT);
+  const [chartContainerWidth, setChartContainerWidth] = useState(
+    INITIAL_CHART_CONTAINER_WIDTH
+  );
 
   // Initial measurement + ResizeObserver for ongoing dimension tracking
   useEffect(() => {

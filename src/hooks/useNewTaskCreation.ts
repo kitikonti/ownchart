@@ -25,13 +25,17 @@ export function useNewTaskCreation(): UseNewTaskCreationReturn {
     (name: string): void => {
       // Access tasks at call time (event handler), not during render
       const { tasks } = useTaskStore.getState();
-      const lastTask = tasks.length > 0 ? tasks[tasks.length - 1] : null;
+
+      // Compute lastTask and maxOrder in a single pass to avoid iterating twice
+      let lastTask: { endDate?: string } | null = null;
+      let highestOrder = -1;
+      for (const t of tasks) {
+        lastTask = t;
+        if (t.order > highestOrder) highestOrder = t.order;
+      }
+      const maxOrder = tasks.length > 0 ? highestOrder + 1 : 0;
 
       const { startDate, endDate } = computeAppendDates(lastTask);
-      const maxOrder =
-        tasks.length > 0
-          ? tasks.reduce((max, t) => Math.max(max, t.order), -1) + 1
-          : 0;
 
       addTask({
         name,

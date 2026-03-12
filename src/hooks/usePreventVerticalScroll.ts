@@ -17,6 +17,8 @@ export function usePreventVerticalScroll(
       if (el.scrollTop !== 0) el.scrollTop = 0;
     };
     el.addEventListener("scroll", resetScroll);
-    return () => el.removeEventListener("scroll", resetScroll);
+    return (): void => {
+      el.removeEventListener("scroll", resetScroll);
+    };
   }, [ref]);
 }

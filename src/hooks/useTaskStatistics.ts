@@ -15,6 +15,9 @@ export function useTaskStatistics(): TaskStatistics {
   const tasks = useTaskStore((state) => state.tasks);
 
   return useMemo((): TaskStatistics => {
+    // "today" is captured at memo-invalidation time (i.e. when tasks change).
+    // Statistics will drift after midnight until the next task mutation — this
+    // is acceptable for a status-bar display and avoids a live-clock subscription.
     const today = new Date();
     today.setHours(0, 0, 0, 0);
 

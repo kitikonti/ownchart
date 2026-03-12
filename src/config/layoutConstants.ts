@@ -47,6 +47,12 @@ export const EXTEND_DAYS = 30;
 /** Minimum dimension in px to accept a measurement (below = DOM not ready) */
 export const MIN_VALID_DIMENSION = 100;
 
+/** Initial fallback viewport height (px) before the first ResizeObserver measurement */
+export const INITIAL_VIEWPORT_HEIGHT = 600;
+
+/** Initial fallback chart container width (px) before the first ResizeObserver measurement */
+export const INITIAL_CHART_CONTAINER_WIDTH = 800;
+
 /** Inline style to hide scrollbar on a scrollable element */
 export const HIDDEN_SCROLLBAR_STYLE = {
   scrollbarWidth: "none" as const,
