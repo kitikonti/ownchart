@@ -355,6 +355,12 @@ export const EXPORT_MAX_SAFE_WIDTH = 16384;
 /** Width threshold above which a "large export" info message is shown (PNG only) */
 export const EXPORT_LARGE_WIDTH_THRESHOLD = 4000;
 
+/** Minimum allowed fitToWidth value in pixels */
+export const MIN_FIT_WIDTH_PX = 100;
+
+/** Maximum allowed fitToWidth value in pixels */
+export const MAX_FIT_WIDTH_PX = 20000;
+
 /**
  * Default export options.
  */

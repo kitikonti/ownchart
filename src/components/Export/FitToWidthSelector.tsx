@@ -7,12 +7,13 @@ import { useCallback, useEffect, useState } from "react";
 import {
   DEFAULT_FIT_TO_WIDTH_PX,
   UHD_SCREEN_WIDTH_PX,
+  MIN_FIT_WIDTH_PX,
+  MAX_FIT_WIDTH_PX,
 } from "../../utils/export/types";
 import { Input } from "../common/Input";
 import { Select } from "../common/Select";
 
-export const MIN_FIT_WIDTH_PX = 100;
-export const MAX_FIT_WIDTH_PX = 20000;
+export { MIN_FIT_WIDTH_PX, MAX_FIT_WIDTH_PX };
 
 /** HD (1080p) screen width in pixels — matches DEFAULT_FIT_TO_WIDTH_PX. */
 const HD_SCREEN_WIDTH_PX = DEFAULT_FIT_TO_WIDTH_PX; // 1920
@@ -95,6 +96,9 @@ export function FitToWidthSelector({
   // Sync local "custom" flag when the parent resets fitToWidth to a known
   // preset (e.g. on format change). Without this, the dropdown would still
   // show "Custom width..." even though a preset is now active.
+  // Note: this effect only resets to false; switching programmatically to a
+  // non-preset value from the parent is not currently supported and would
+  // leave isCustomWidth as false, showing the wrong preset label.
   useEffect(() => {
     if (ALL_PRESET_VALUES.includes(fitToWidth)) {
       setIsCustomWidth(false);
@@ -102,7 +106,8 @@ export function FitToWidthSelector({
   }, [fitToWidth]);
 
   const handleSelectChange = useCallback(
-    (value: string): void => {
+    (e: React.ChangeEvent<HTMLSelectElement>): void => {
+      const value = e.target.value;
       if (value === "custom") {
         setIsCustomWidth(true);
       } else {
@@ -121,7 +126,7 @@ export function FitToWidthSelector({
     <div className="space-y-3">
       <Select
         value={isCustomWidth ? "custom" : fitToWidth.toString()}
-        onChange={(e) => handleSelectChange(e.target.value)}
+        onChange={handleSelectChange}
         onClick={(e) => e.stopPropagation()}
       >
         <optgroup label={FIT_TO_WIDTH_GROUPS.screenSizes.label}>

@@ -13,9 +13,16 @@ import {
 // readability constraints imposed by fixed PDF page dimensions.
 // The four shared presets from EXPORT_ZOOM_PRESETS are extended with the two
 // finer levels; composing from the shared constant prevents value drift.
+
+/** 10% zoom — fine-grained preset available only for PNG/SVG exports. */
+const EXPORT_ZOOM_TENTH = 0.1;
+
+/** 25% zoom — fine-grained preset available only for PNG/SVG exports. */
+const EXPORT_ZOOM_QUARTER = 0.25;
+
 const CUSTOM_ZOOM_PRESETS_ARRAY = [
-  0.1,
-  0.25,
+  EXPORT_ZOOM_TENTH,
+  EXPORT_ZOOM_QUARTER,
   ...Object.values(EXPORT_ZOOM_PRESETS),
 ];
 
@@ -36,6 +43,12 @@ export interface CustomZoomControlProps {
   isPngOrSvg: boolean;
 }
 
+interface ZoomPercentInputProps {
+  value: number;
+  onChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
+  onClick: (e: React.MouseEvent<HTMLInputElement>) => void;
+}
+
 /**
  * Bordered container combining a number input and "%" unit label.
  * Uses a compound border design (input + label share one border) which
@@ -45,11 +58,7 @@ function ZoomPercentInput({
   value,
   onChange,
   onClick,
-}: {
-  value: number;
-  onChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
-  onClick: (e: React.MouseEvent<HTMLInputElement>) => void;
-}): JSX.Element {
+}: ZoomPercentInputProps): JSX.Element {
   return (
     <div className="flex items-center gap-1 bg-white border border-neutral-300 rounded px-3 py-1.5">
       <input

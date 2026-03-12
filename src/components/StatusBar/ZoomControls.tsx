@@ -8,18 +8,19 @@
  * reactively, so this component does not re-render on task changes.
  */
 
-import { useState, useCallback } from "react";
+import { useState, useCallback, memo } from "react";
 import { Minus, Plus, ArrowsOutLineHorizontal } from "@phosphor-icons/react";
 import { useTaskStore } from "../../store/slices/taskSlice";
 import { useChartStore } from "../../store/slices/chartSlice";
 import { MIN_ZOOM, MAX_ZOOM } from "../../utils/timelineUtils";
+// Non-reactive utilities exported from useZoom — not hook calls.
 import {
   computeViewportCenterAnchor,
   applyScrollLeft,
 } from "../../hooks/useZoom";
 import { ZoomDialog } from "./ZoomDialog";
 
-export function ZoomControls(): JSX.Element {
+export const ZoomControls = memo(function ZoomControls(): JSX.Element {
   const [isZoomDialogOpen, setIsZoomDialogOpen] = useState(false);
 
   const zoom = useChartStore((state) => state.zoom);
@@ -147,4 +148,4 @@ export function ZoomControls(): JSX.Element {
       />
     </>
   );
-}
+});

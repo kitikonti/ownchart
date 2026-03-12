@@ -6,6 +6,10 @@
  * - Chart canvas with task bars, dependencies, and selection overlay
  *
  * Extracted from GanttLayout to keep each component under 200 LOC.
+ *
+ * Store subscriptions:
+ * - chartSlice: `scale` (for header date selection hook)
+ * - taskSlice: `selectedTaskIds` (forwarded to ChartCanvas for bar highlighting)
  */
 
 import { useRef, type RefObject } from "react";
