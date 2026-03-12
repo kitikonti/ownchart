@@ -4,8 +4,8 @@
  * and calculations (optimal column widths).
  */
 
-import type { ExportColumnKey, ExportDataColumnKey } from "./types";
 import type { Task } from "../../types/chart.types";
+import type { ExportColumnKey, ExportDataColumnKey } from "./types";
 
 /**
  * Duration unit label appended to summary-task durations in the Duration column.
@@ -90,11 +90,8 @@ export const EXPORT_COLUMN_MAP = new Map<ExportColumnKey, ExportColumn>(
 export const HEADER_LABELS: Record<ExportColumnKey, string> =
   Object.fromEntries(
     EXPORT_COLUMNS.map((col) => [col.key, col.label])
-    // Safe cast: keys come directly from EXPORT_COLUMNS which only contains
-    // ExportColumnKey values. Object.fromEntries cannot infer a key type narrower
-    // than `string`, so the cast is required. The `_headerLabelsCheck` assignment
-    // below enforces completeness at compile time — TypeScript will error there if
-    // EXPORT_COLUMNS is missing a key, making this cast safe.
+    // Safe cast: Object.fromEntries cannot infer a key type narrower than `string`.
+    // The _headerLabelsCheck assignment below enforces completeness at compile time.
   ) as Record<ExportColumnKey, string>;
 
 // Compile-time completeness guard: if a new ExportColumnKey is added without a

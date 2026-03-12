@@ -27,10 +27,10 @@ import type { TaskId } from "../../types/branded.types";
  *
  * @example
  * // CORRECT: pass both parent and all its descendants
- * prepareExportTasks(tasks, [parentId, child1Id, child2Id]);
+ * prepareExportTasks(tasks, [toTaskId(parentId), toTaskId(child1Id), toTaskId(child2Id)]);
  *
  * // INCORRECT: passing only the parent will leak child tasks into the export
- * prepareExportTasks(tasks, [parentId]); // child1 and child2 will still appear!
+ * prepareExportTasks(tasks, [toTaskId(parentId)]); // child1 and child2 will still appear!
  */
 export function prepareExportTasks(
   tasks: ReadonlyArray<Task>,
