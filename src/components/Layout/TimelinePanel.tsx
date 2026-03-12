@@ -56,6 +56,8 @@ export const TimelinePanel = memo(function TimelinePanel({
     closeContextMenu: closeHeaderContextMenu,
     onMouseDown: handleHeaderMouseDown,
     onContextMenu: handleHeaderContextMenu,
+    // isDragging is intentionally omitted — TimelinePanel does not use it;
+    // other consumers of useHeaderDateSelection may rely on it.
   } = useHeaderDateSelection({ headerSvgRef, scale });
 
   return (

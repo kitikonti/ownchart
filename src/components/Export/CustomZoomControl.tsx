@@ -2,7 +2,7 @@
  * CustomZoomControl - Zoom slider, percentage input, and preset buttons for export.
  */
 
-import { useCallback, type ChangeEvent, type MouseEvent } from "react";
+import { memo, useCallback, type ChangeEvent, type MouseEvent } from "react";
 import {
   EXPORT_ZOOM_MIN,
   EXPORT_ZOOM_MAX,
@@ -124,7 +124,7 @@ function PresetButton({
   );
 }
 
-export function CustomZoomControl({
+export const CustomZoomControl = memo(function CustomZoomControl({
   timelineZoom,
   onTimelineZoomChange,
   isPngOrSvg,
@@ -191,4 +191,4 @@ export function CustomZoomControl({
       </div>
     </div>
   );
-}
+});

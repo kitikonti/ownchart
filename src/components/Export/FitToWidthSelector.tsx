@@ -98,16 +98,10 @@ export function FitToWidthSelector({
   );
 
   // Sync local "custom" flag when the parent changes fitToWidth externally
-  // (e.g. on format change). Without this, the dropdown could show the wrong
-  // label after a programmatic update.
+  // (e.g. on format change or restored saved state). Without this, the
+  // dropdown could show the wrong label after a programmatic update.
   useEffect(() => {
-    if (ALL_PRESET_VALUES.includes(fitToWidth)) {
-      setIsCustomWidth(false);
-    } else {
-      // Parent set a value that is not a known preset (e.g. a restored
-      // custom width from saved state) — reflect that in the dropdown.
-      setIsCustomWidth(true);
-    }
+    setIsCustomWidth(!ALL_PRESET_VALUES.includes(fitToWidth));
   }, [fitToWidth]);
 
   const handleSelectChange = useCallback(
