@@ -11,7 +11,7 @@ import type {
   Dependency,
   CycleDetectionResult,
 } from "../../types/dependency.types";
-import { buildAdjacencyList, ensureList } from "./graphHelpers";
+import { buildAdjacencyList, getOrCreateList } from "./graphHelpers";
 
 /**
  * Sentinel ID used for the temporary probe dependency in `wouldCreateCycle`.
@@ -109,7 +109,9 @@ export function detectCycle(
   const graph = buildAdjacencyList(dependencies);
 
   if (newDependency) {
-    ensureList(graph, newDependency.fromTaskId).push(newDependency.toTaskId);
+    getOrCreateList(graph, newDependency.fromTaskId).push(
+      newDependency.toTaskId
+    );
     // The sink node needs no pre-inserted entry: the DFS resolves missing nodes via
     // `graph.get(node) ?? []`, and a sink-only node has no outgoing edges so it cannot
     // originate an undiscovered cycle — any cycle through it is reached from its

@@ -10,7 +10,7 @@ import type { Dependency } from "../../types/dependency.types";
  * Returns the array stored under `key`, inserting an empty one first if absent.
  * Avoids non-null assertions at call sites where the key may not yet exist.
  */
-export function ensureList<K, V>(map: Map<K, V[]>, key: K): V[] {
+export function getOrCreateList<K, V>(map: Map<K, V[]>, key: K): V[] {
   let list = map.get(key);
   if (list === undefined) {
     list = [];
@@ -23,7 +23,7 @@ export function ensureList<K, V>(map: Map<K, V[]>, key: K): V[] {
 export function buildAdjacencyList(deps: Dependency[]): Map<TaskId, TaskId[]> {
   const graph = new Map<TaskId, TaskId[]>();
   for (const dep of deps) {
-    ensureList(graph, dep.fromTaskId).push(dep.toTaskId);
+    getOrCreateList(graph, dep.fromTaskId).push(dep.toTaskId);
   }
   return graph;
 }
@@ -34,7 +34,7 @@ export function buildReverseAdjacencyList(
 ): Map<TaskId, TaskId[]> {
   const graph = new Map<TaskId, TaskId[]>();
   for (const dep of deps) {
-    ensureList(graph, dep.toTaskId).push(dep.fromTaskId);
+    getOrCreateList(graph, dep.toTaskId).push(dep.fromTaskId);
   }
   return graph;
 }

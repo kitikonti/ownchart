@@ -5,9 +5,10 @@
 
 import { describe, it, expect } from "vitest";
 import {
-  ensureList,
+  getOrCreateList,
   buildAdjacencyList,
   buildReverseAdjacencyList,
+  bfsReachable,
 } from "../../../../src/utils/graph/graphHelpers";
 import type { Dependency } from "../../../../src/types/dependency.types";
 import { tid } from "../../../helpers/branded";
@@ -23,10 +24,10 @@ function dep(from: string, to: string): Dependency {
   };
 }
 
-describe("ensureList", () => {
+describe("getOrCreateList", () => {
   it("should insert an empty list and return it when key is absent", () => {
     const map = new Map<string, number[]>();
-    const list = ensureList(map, "a");
+    const list = getOrCreateList(map, "a");
     expect(list).toEqual([]);
     expect(map.get("a")).toBe(list);
   });
@@ -35,21 +36,21 @@ describe("ensureList", () => {
     const map = new Map<string, number[]>();
     const original = [1, 2];
     map.set("a", original);
-    const list = ensureList(map, "a");
+    const list = getOrCreateList(map, "a");
     expect(list).toBe(original);
   });
 
   it("should allow mutations of the returned list to be reflected in the map", () => {
     const map = new Map<string, number[]>();
-    const list = ensureList(map, "a");
+    const list = getOrCreateList(map, "a");
     list.push(42);
     expect(map.get("a")).toEqual([42]);
   });
 
   it("should handle multiple independent keys without cross-contamination", () => {
     const map = new Map<string, number[]>();
-    ensureList(map, "a").push(1);
-    ensureList(map, "b").push(2);
+    getOrCreateList(map, "a").push(1);
+    getOrCreateList(map, "b").push(2);
     expect(map.get("a")).toEqual([1]);
     expect(map.get("b")).toEqual([2]);
   });
@@ -117,5 +118,67 @@ describe("buildReverseAdjacencyList", () => {
     // B → C in forward becomes C → B in reverse
     expect(forward.get(tid("B"))).toEqual([tid("C")]);
     expect(reverse.get(tid("C"))).toEqual([tid("B")]);
+  });
+});
+
+describe("bfsReachable", () => {
+  it("should return an empty set when the start node has no outgoing edges", () => {
+    const graph = new Map<ReturnType<typeof tid>, ReturnType<typeof tid>[]>();
+    const result = bfsReachable(tid("A"), graph);
+    expect(result.size).toBe(0);
+  });
+
+  it("should return the direct neighbor for a single-edge graph", () => {
+    const graph = buildAdjacencyList([dep("A", "B")]);
+    const result = bfsReachable(tid("A"), graph);
+    expect(result).toEqual(new Set([tid("B")]));
+  });
+
+  it("should return all transitively reachable nodes in a linear chain", () => {
+    const graph = buildAdjacencyList([dep("A", "B"), dep("B", "C"), dep("C", "D")]);
+    const result = bfsReachable(tid("A"), graph);
+    expect(result).toEqual(new Set([tid("B"), tid("C"), tid("D")]));
+  });
+
+  it("should not include the start node in the result even in a direct self-loop", () => {
+    const graph = new Map([
+      [tid("A"), [tid("A"), tid("B")]],
+    ]);
+    const result = bfsReachable(tid("A"), graph);
+    expect(result.has(tid("A"))).toBe(false);
+    expect(result.has(tid("B"))).toBe(true);
+  });
+
+  it("should not include the start node when a cycle leads back to it", () => {
+    // A → B → C → A (cycle)
+    const graph = new Map([
+      [tid("A"), [tid("B")]],
+      [tid("B"), [tid("C")]],
+      [tid("C"), [tid("A")]],
+    ]);
+    const result = bfsReachable(tid("A"), graph);
+    expect(result.has(tid("A"))).toBe(false);
+    expect(result).toEqual(new Set([tid("B"), tid("C")]));
+  });
+
+  it("should not visit already-seen nodes in a diamond-shaped graph", () => {
+    // A → B, A → C, B → D, C → D — D should appear only once
+    const graph = buildAdjacencyList([
+      dep("A", "B"),
+      dep("A", "C"),
+      dep("B", "D"),
+      dep("C", "D"),
+    ]);
+    const result = bfsReachable(tid("A"), graph);
+    expect(result).toEqual(new Set([tid("B"), tid("C"), tid("D")]));
+  });
+
+  it("should only return nodes reachable from the start, not disconnected nodes", () => {
+    // A → B (connected), C → D (disconnected component)
+    const graph = buildAdjacencyList([dep("A", "B"), dep("C", "D")]);
+    const result = bfsReachable(tid("A"), graph);
+    expect(result).toEqual(new Set([tid("B")]));
+    expect(result.has(tid("C"))).toBe(false);
+    expect(result.has(tid("D"))).toBe(false);
   });
 });
