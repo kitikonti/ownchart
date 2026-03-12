@@ -374,7 +374,7 @@ Dateien die waehrend des Reviews neu erstellt wurden und noch nicht reviewt sind
 - [x] `src/utils/fileOperations/constants.ts` (81 LOC)
 
 ### New Graph Utils
-- [ ] `src/utils/graph/graphHelpers.ts` (70 LOC)
+- [x] `src/utils/graph/graphHelpers.ts` (70 LOC)
 
 ### New Components
 - [ ] `src/components/AppErrorBoundary.tsx` (70 LOC)
