@@ -1,3 +1,10 @@
+/**
+ * useTaskStatistics - Computes aggregate task statistics for the status bar.
+ *
+ * Derives totalTasks, completedTasks, and overdueTasks in a single memoized
+ * pass over the tasks array. Re-computes only when the tasks array changes.
+ */
+
 import { useMemo } from "react";
 import { useTaskStore } from "../store/slices/taskSlice";
 

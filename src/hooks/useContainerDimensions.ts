@@ -70,6 +70,9 @@ export function useContainerDimensions({
   // layout dimensions for rendering, this one tracks scroll position + width for
   // the export viewport range. Keeping them separate avoids coupling two distinct
   // side-effects into a single observer callback.
+  //
+  // NOTE: `setViewport` must be a stable reference (wrapped with useCallback at
+  // the call site) to prevent this effect from re-running on every render.
   useEffect(() => {
     const chartContainer = chartContainerRef.current;
     if (!chartContainer) return;
