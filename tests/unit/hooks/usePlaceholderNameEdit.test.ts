@@ -59,7 +59,7 @@ function makeInputRef(el: Partial<HTMLInputElement> = {}): RefObject<HTMLInputEl
 
 /** Fire a synthetic keyboard event on a div (for handleKeyDown). */
 function kbDiv(key: string, extra: Partial<KeyboardEvent<HTMLDivElement>> = {}): KeyboardEvent<HTMLDivElement> {
-  return { key, preventDefault: vi.fn(), ctrlKey: false, metaKey: false, altKey: false, shiftKey: false, ...extra } as unknown as KeyboardEvent<HTMLDivElement>;
+  return { key, preventDefault: vi.fn(), ctrlKey: false, metaKey: false, altKey: false, shiftKey: false, nativeEvent: { isComposing: false }, ...extra } as unknown as KeyboardEvent<HTMLDivElement>;
 }
 
 /** Fire a synthetic keyboard event on an input (for handleInputKeyDown). */

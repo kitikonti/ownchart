@@ -28,7 +28,7 @@ interface NewTaskPayload {
   order: number;
   type: "task";
   parent: undefined;
-  metadata: Record<string, never>;
+  metadata: Record<string, unknown>;
 }
 
 /** Builds the default payload for a newly added task anchored to today. */

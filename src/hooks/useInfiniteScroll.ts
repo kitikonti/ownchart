@@ -172,9 +172,17 @@ export function useInfiniteScroll({
             // edge so the visible area stays anchored to the same location.
             const scrollRightAnchor = currentScrollWidth - currentScrollLeft;
 
-            flushSync(() => {
+            // flushSync forces a synchronous React render so the DOM is
+            // updated before we read the new scrollWidth below.
+            // Guarded with try/catch: flushSync throws if called during an
+            // existing React render (should not happen here, but defensive).
+            try {
+              flushSync(() => {
+                extendDateRange("past", EXTEND_DAYS);
+              });
+            } catch {
               extendDateRange("past", EXTEND_DAYS);
-            });
+            }
 
             const newScrollWidth = chartContainer.scrollWidth;
             chartContainer.scrollLeft = newScrollWidth - scrollRightAnchor;

@@ -141,7 +141,13 @@ export function usePlaceholderNameEdit(
       } else if (e.key === "Tab") {
         e.preventDefault();
         navigateCell(e.shiftKey ? "left" : "right");
-      } else if (e.key.length === 1 && !e.ctrlKey && !e.metaKey && !e.altKey) {
+      } else if (
+        e.key.length === 1 &&
+        !e.ctrlKey &&
+        !e.metaKey &&
+        !e.altKey &&
+        !e.nativeEvent.isComposing
+      ) {
         e.preventDefault();
         setInputValue(e.key);
         setIsEditing(true);
