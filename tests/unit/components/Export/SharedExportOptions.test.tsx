@@ -391,19 +391,19 @@ describe("SharedExportOptions", () => {
       expect(heading.tagName).toBe("H3");
     });
 
-    it("has role=group on density control", () => {
+    it("has role=radiogroup on density control", () => {
       render(<SharedExportOptions {...createDefaultProps()} />);
       fireEvent.click(screen.getByText("Layout Options"));
       expect(
-        screen.getByRole("group", { name: "Row density" })
+        screen.getByRole("radiogroup", { name: "Row density" })
       ).toBeInTheDocument();
     });
 
-    it("has role=group on label position control", () => {
+    it("has role=radiogroup on label position control", () => {
       render(<SharedExportOptions {...createDefaultProps()} />);
       fireEvent.click(screen.getByText("Display Options"));
       expect(
-        screen.getByRole("group", { name: "Task label position" })
+        screen.getByRole("radiogroup", { name: "Task label position" })
       ).toBeInTheDocument();
     });
 

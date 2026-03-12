@@ -3,16 +3,17 @@
  * Used in RowNumberCell for inserting rows above/below.
  */
 
-import { type MouseEvent } from "react";
+import { memo, type MouseEvent } from "react";
 import { Plus } from "@phosphor-icons/react";
-import { ROW_NUMBER } from "../../styles/design-tokens";
+import { ROW_NUMBER, Z_INDEX } from "../../styles/design-tokens";
+import { INSERT_BUTTON_HIT_AREA } from "./rowNumberConfig";
 
 // Insert button layout
-const BUTTON_HIT_AREA = 18;
-const BUTTON_OFFSET_LEFT = 1;
-const CIRCLE_SIZE_HOVER = 14;
-const CIRCLE_SIZE_DEFAULT = 7;
-const Z_INSERT_BUTTON = 45;
+const BUTTON_OFFSET_LEFT = 1; // 1px inset so the button circle doesn't clip the cell border
+const BUTTON_POSITION_OFFSET = INSERT_BUTTON_HIT_AREA / 2; // centers button on row edge
+const CIRCLE_SIZE_HOVER = 14; // expanded circle diameter on hover
+const CIRCLE_SIZE_DEFAULT = CIRCLE_SIZE_HOVER / 2; // dot diameter at rest
+const PLUS_ICON_SIZE = 10; // icon is smaller than the hover circle to leave padding
 
 interface InsertRowButtonProps {
   /** Position relative to the row */
@@ -31,7 +32,7 @@ interface InsertRowButtonProps {
   controlsColor: string;
 }
 
-export function InsertRowButton({
+export const InsertRowButton = memo(function InsertRowButton({
   position,
   rowNumber,
   isActive,
@@ -47,46 +48,44 @@ export function InsertRowButton({
 
   const positionStyle =
     position === "above"
-      ? { top: `${-(BUTTON_HIT_AREA / 2)}px` }
-      : { bottom: `${-(BUTTON_HIT_AREA / 2)}px` };
+      ? { top: `${-BUTTON_POSITION_OFFSET}px` }
+      : { bottom: `${-BUTTON_POSITION_OFFSET}px` };
 
   return (
     <button
-      className="flex items-center justify-center"
+      type="button"
+      className="flex items-center justify-center focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 rounded-full"
       style={{
-        width: `${BUTTON_HIT_AREA}px`,
-        height: `${BUTTON_HIT_AREA}px`,
+        width: `${INSERT_BUTTON_HIT_AREA}px`,
+        height: `${INSERT_BUTTON_HIT_AREA}px`,
         position: "absolute",
         ...positionStyle,
         left: `${BUTTON_OFFSET_LEFT}px`,
-        zIndex: Z_INSERT_BUTTON,
+        zIndex: Z_INDEX.rowControls,
       }}
       onMouseEnter={onHoverStart}
       onMouseLeave={onHoverEnd}
       onClick={handleClick}
-      aria-label={`Insert row ${position} row ${rowNumber}`}
+      aria-label={`Insert ${position} row ${rowNumber}`}
     >
       {isActive ? (
         <div
+          className="rounded-full flex items-center justify-center"
           style={{
             width: `${CIRCLE_SIZE_HOVER}px`,
             height: `${CIRCLE_SIZE_HOVER}px`,
-            borderRadius: "50%",
             backgroundColor: ROW_NUMBER.controlBg,
             border: `1px solid ${controlsColor}`,
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
           }}
         >
-          <Plus size={10} weight="bold" color={controlsColor} />
+          <Plus size={PLUS_ICON_SIZE} weight="bold" color={controlsColor} />
         </div>
       ) : (
         <div
+          className="rounded-full"
           style={{
             width: `${CIRCLE_SIZE_DEFAULT}px`,
             height: `${CIRCLE_SIZE_DEFAULT}px`,
-            borderRadius: "50%",
             backgroundColor: ROW_NUMBER.controlBg,
             border: `1px solid ${controlsColor}`,
           }}
@@ -94,4 +93,4 @@ export function InsertRowButton({
       )}
     </button>
   );
-}
+});

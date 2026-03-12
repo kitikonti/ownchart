@@ -74,7 +74,7 @@ describe("SegmentedControl", () => {
       expect(unselectedButton?.className).toContain("text-neutral-700");
     });
 
-    it("renders with role=group and aria-label", () => {
+    it("renders with role=radiogroup and aria-label", () => {
       render(
         <SegmentedControl
           options={basicOptions}
@@ -85,7 +85,7 @@ describe("SegmentedControl", () => {
       );
 
       expect(
-        screen.getByRole("group", { name: "My group" })
+        screen.getByRole("radiogroup", { name: "My group" })
       ).toBeInTheDocument();
     });
 
@@ -99,9 +99,9 @@ describe("SegmentedControl", () => {
         />
       );
 
-      const buttons = screen.getAllByRole("button");
-      buttons.forEach((button) => {
-        expect(button).toHaveAttribute("type", "button");
+      const radios = screen.getAllByRole("radio");
+      radios.forEach((radio) => {
+        expect(radio).toHaveAttribute("type", "button");
       });
     });
 
@@ -116,9 +116,9 @@ describe("SegmentedControl", () => {
         />
       );
 
-      const buttons = screen.getAllByRole("button");
-      buttons.forEach((button) => {
-        expect(button.className).toContain("flex-1");
+      const radios = screen.getAllByRole("radio");
+      radios.forEach((radio) => {
+        expect(radio.className).toContain("flex-1");
       });
     });
 
@@ -158,7 +158,7 @@ describe("SegmentedControl", () => {
         />
       );
 
-      const group = screen.getByRole("group", { name: "Grid test" });
+      const group = screen.getByRole("radiogroup", { name: "Grid test" });
       expect(group.className).toContain("grid-cols-3");
     });
 
@@ -173,7 +173,7 @@ describe("SegmentedControl", () => {
         />
       );
 
-      const group = screen.getByRole("group", { name: "Grid test" });
+      const group = screen.getByRole("radiogroup", { name: "Grid test" });
       expect(group.className).toContain("grid-cols-2");
     });
 
@@ -222,10 +222,70 @@ describe("SegmentedControl", () => {
         />
       );
 
-      const buttons = screen.getAllByRole("button");
-      buttons.forEach((button) => {
-        expect(button).toHaveAttribute("type", "button");
+      const radios = screen.getAllByRole("radio");
+      radios.forEach((radio) => {
+        expect(radio).toHaveAttribute("type", "button");
       });
+    });
+  });
+
+  describe("aria-checked state", () => {
+    it("sets aria-checked=true on selected option in inline layout", () => {
+      render(
+        <SegmentedControl
+          options={basicOptions}
+          value="b"
+          onChange={vi.fn()}
+          ariaLabel="Test"
+        />
+      );
+
+      const selectedButton = screen.getByText("Option B").closest("button");
+      expect(selectedButton).toHaveAttribute("aria-checked", "true");
+    });
+
+    it("sets aria-checked=false on unselected options in inline layout", () => {
+      render(
+        <SegmentedControl
+          options={basicOptions}
+          value="b"
+          onChange={vi.fn()}
+          ariaLabel="Test"
+        />
+      );
+
+      const unselectedButton = screen.getByText("Option A").closest("button");
+      expect(unselectedButton).toHaveAttribute("aria-checked", "false");
+    });
+
+    it("sets aria-checked=true on selected option in grid layout", () => {
+      render(
+        <SegmentedControl
+          options={basicOptions}
+          value="c"
+          onChange={vi.fn()}
+          ariaLabel="Grid test"
+          layout="grid"
+        />
+      );
+
+      const selectedButton = screen.getByText("Option C").closest("button");
+      expect(selectedButton).toHaveAttribute("aria-checked", "true");
+    });
+
+    it("sets aria-checked=false on unselected options in grid layout", () => {
+      render(
+        <SegmentedControl
+          options={basicOptions}
+          value="c"
+          onChange={vi.fn()}
+          ariaLabel="Grid test"
+          layout="grid"
+        />
+      );
+
+      const unselectedButton = screen.getByText("Option A").closest("button");
+      expect(unselectedButton).toHaveAttribute("aria-checked", "false");
     });
   });
 

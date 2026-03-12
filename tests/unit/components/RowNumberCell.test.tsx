@@ -168,10 +168,10 @@ describe("RowNumberCell", () => {
       fireEvent.mouseEnter(cell);
 
       expect(
-        screen.getByRole("button", { name: "Insert row above row 1" })
+        screen.getByRole("button", { name: "Insert above row 1" })
       ).toBeInTheDocument();
       expect(
-        screen.getByRole("button", { name: "Insert row below row 1" })
+        screen.getByRole("button", { name: "Insert below row 1" })
       ).toBeInTheDocument();
     });
 
@@ -181,12 +181,12 @@ describe("RowNumberCell", () => {
 
       fireEvent.mouseEnter(cell);
       expect(
-        screen.getByRole("button", { name: "Insert row above row 1" })
+        screen.getByRole("button", { name: "Insert above row 1" })
       ).toBeInTheDocument();
 
       fireEvent.mouseLeave(cell);
       expect(
-        screen.queryByRole("button", { name: "Insert row above row 1" })
+        screen.queryByRole("button", { name: "Insert above row 1" })
       ).not.toBeInTheDocument();
     });
 
@@ -197,10 +197,10 @@ describe("RowNumberCell", () => {
       fireEvent.focus(cell);
 
       expect(
-        screen.getByRole("button", { name: "Insert row above row 1" })
+        screen.getByRole("button", { name: "Insert above row 1" })
       ).toBeInTheDocument();
       expect(
-        screen.getByRole("button", { name: "Insert row below row 1" })
+        screen.getByRole("button", { name: "Insert below row 1" })
       ).toBeInTheDocument();
     });
 
@@ -210,14 +210,14 @@ describe("RowNumberCell", () => {
 
       fireEvent.focus(cell);
       expect(
-        screen.getByRole("button", { name: "Insert row above row 1" })
+        screen.getByRole("button", { name: "Insert above row 1" })
       ).toBeInTheDocument();
 
       // Focus leaves to an element outside the cell
       fireEvent.blur(cell, { relatedTarget: document.body });
 
       expect(
-        screen.queryByRole("button", { name: "Insert row above row 1" })
+        screen.queryByRole("button", { name: "Insert above row 1" })
       ).not.toBeInTheDocument();
     });
 
@@ -227,14 +227,14 @@ describe("RowNumberCell", () => {
 
       fireEvent.focus(cell);
       const insertBtn = screen.getByRole("button", {
-        name: "Insert row above row 1",
+        name: "Insert above row 1",
       });
 
       // Focus moves to a child button inside the cell
       fireEvent.blur(cell, { relatedTarget: insertBtn });
 
       expect(
-        screen.getByRole("button", { name: "Insert row above row 1" })
+        screen.getByRole("button", { name: "Insert above row 1" })
       ).toBeInTheDocument();
     });
 

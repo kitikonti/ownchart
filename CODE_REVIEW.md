@@ -138,6 +138,12 @@ cd ../app-gantt-review
 - [x] `src/components/TaskList/ColumnResizer.tsx` (133 LOC)
 - [x] `src/components/TaskList/CellEditors/ColorCellEditor.tsx` (130 LOC)
 - [x] `src/components/TaskList/TaskTypeIcon.tsx` (62 LOC)
+- [x] `src/components/TaskList/InsertRowButton.tsx` (97 LOC)
+- [x] `src/components/TaskList/useRowSelectionHandler.ts` (77 LOC)
+- [x] `src/components/TaskList/RowOverlays.tsx` (66 LOC)
+- [x] `src/components/TaskList/rowNumberConfig.ts` (41 LOC)
+- [x] `src/components/TaskList/InsertLine.tsx` (31 LOC)
+- [x] `src/components/TaskList/dragSelectionState.ts` (23 LOC)
 
 ### Priority: MEDIUM — Layout & Export
 - [x] `src/components/Export/ExportRenderer.tsx`
@@ -170,6 +176,7 @@ cd ../app-gantt-review
 - [x] `src/components/Ribbon/FileMenu.tsx` (88 LOC)
 - [x] `src/components/Ribbon/RibbonCollapseContext.tsx` (34 LOC)
 - [x] `src/components/Ribbon/index.ts` (1 LOC)
+- [x] `src/components/Ribbon/HelpTabContent.tsx` (35 LOC)
 
 ### Priority: MEDIUM — Hooks
 - [x] `src/hooks/useTaskBarInteraction.ts` (478 LOC)
@@ -279,6 +286,7 @@ cd ../app-gantt-review
 - [x] `src/components/Help/AboutDialog.tsx` (127 LOC)
 - [x] `src/components/common/Button.tsx` (124 LOC)
 - [x] `src/components/StatusBar/ZoomDialog.tsx` (113 LOC)
+- [x] `src/components/common/SegmentedControl.tsx` (112 LOC)
 - [x] `src/components/Toolbar/DropdownItem.tsx` (110 LOC)
 - [x] `src/components/Help/HelpTopicCard.tsx` (99 LOC)
 - [x] `src/components/Toolbar/DropdownTrigger.tsx` (92 LOC)
@@ -298,6 +306,8 @@ cd ../app-gantt-review
 - [x] `src/components/common/Select.tsx` (50 LOC)
 - [x] `src/components/common/CollapsibleSection.tsx` (48 LOC)
 - [x] `src/components/common/CheckboxGroup.tsx` (43 LOC)
+- [x] `src/components/common/FieldLabel.tsx` (30 LOC)
+- [x] `src/components/common/formVariantClasses.ts` (27 LOC)
 - [x] `src/components/Help/index.ts` (7 LOC)
 - [x] `src/components/common/index.ts` (5 LOC)
 - [x] `src/components/StatusBar/index.ts` (2 LOC)
@@ -384,16 +394,6 @@ Dateien die waehrend des Reviews neu erstellt wurden und noch nicht reviewt sind
 - [ ] `src/components/Export/FitToWidthSelector.tsx` (117 LOC)
 - [ ] `src/components/Export/CustomZoomControl.tsx` (114 LOC)
 - [ ] `src/components/Layout/TimelinePanel.tsx` (112 LOC)
-- [ ] `src/components/common/SegmentedControl.tsx` (112 LOC)
-- [ ] `src/components/TaskList/InsertRowButton.tsx` (97 LOC)
-- [ ] `src/components/TaskList/useRowSelectionHandler.ts` (77 LOC)
-- [ ] `src/components/TaskList/RowOverlays.tsx` (66 LOC)
-- [ ] `src/components/TaskList/rowNumberConfig.ts` (41 LOC)
-- [ ] `src/components/common/FieldLabel.tsx` (30 LOC)
-- [ ] `src/components/TaskList/InsertLine.tsx` (31 LOC)
-- [ ] `src/components/TaskList/dragSelectionState.ts` (23 LOC)
-- [ ] `src/components/common/formVariantClasses.ts` (27 LOC)
-- [ ] `src/components/Ribbon/HelpTabContent.tsx` (35 LOC)
 
 ### New Hooks
 - [x] `src/hooks/useExportDialog.ts` (392 LOC)

@@ -14,6 +14,7 @@ import { SELECTION_RADIUS } from "./rowNumberConfig";
 // ── Constants ────────────────────────────────────────────────────────────────
 
 const SELECTION_BORDER = `2px solid ${COLORS.brand[600]}`;
+const CLIPBOARD_BORDER = `2px dotted ${COLORS.neutral[500]}`;
 
 // ── Props ────────────────────────────────────────────────────────────────────
 
@@ -33,12 +34,15 @@ export const RowOverlays = memo(function RowOverlays({
 
   if (!isSelected && !isInClipboard) return null;
 
-  const showTopBorder = selectionPosition?.isFirstSelected ?? true;
-  const showBottomBorder = selectionPosition?.isLastSelected ?? true;
+  const showTopBorder = selectionPosition?.isFirstSelected ?? false;
+  const showBottomBorder = selectionPosition?.isLastSelected ?? false;
 
   return (
     <>
-      {/* Selection overlay - renders above cell borders */}
+      {/* Selection overlay - renders above cell borders.
+          Left border is always shown; top/bottom only on first/last selected row.
+          Right border is intentionally omitted — the overlay spans full row width
+          via inset-0, so a right border would appear mid-content between columns. */}
       {isSelected && (
         <div
           className="absolute inset-0 pointer-events-none"
@@ -51,13 +55,19 @@ export const RowOverlays = memo(function RowOverlays({
           }}
         />
       )}
-      {/* Clipboard overlay with dotted border */}
-      {isInClipboard && clipboardPosition && (
+      {/* Clipboard overlay with dotted border.
+          Uses inline styles exclusively to avoid Tailwind/inline-style conflicts:
+          left border is always shown; top/bottom only on first/last row of the
+          clipboard range; right border is intentionally omitted (overlay spans
+          full row width via inset-0, so a right border would appear mid-content). */}
+      {isInClipboard && (
         <div
-          className="absolute inset-0 pointer-events-none z-20 border-2 border-dotted border-neutral-500"
+          className="absolute inset-0 pointer-events-none"
           style={{
-            borderTopStyle: clipboardPosition.isFirst ? "dotted" : "none",
-            borderBottomStyle: clipboardPosition.isLast ? "dotted" : "none",
+            borderLeft: CLIPBOARD_BORDER,
+            borderTop: clipboardPosition.isFirst ? CLIPBOARD_BORDER : "none",
+            borderBottom: clipboardPosition.isLast ? CLIPBOARD_BORDER : "none",
+            zIndex: Z_INDEX.rowIndicator,
           }}
         />
       )}

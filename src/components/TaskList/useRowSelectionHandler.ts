@@ -18,12 +18,22 @@ import { dragState } from "./dragSelectionState";
 // ── Types ─────────────────────────────────────────────────────────────────────
 
 interface UseRowSelectionHandlerOptions {
-  /** Ordered list of currently visible (non-hidden) task IDs — used for range calculation. */
+  /**
+   * Ordered list of currently visible (non-hidden) task IDs — used for range calculation.
+   *
+   * @important Callers should pass a stable (memoized) reference. A new array on every
+   * render will cause `handleSelectRow` to be recreated via `useCallback`, even when
+   * the task IDs themselves have not changed.
+   */
   visibleTaskIds: TaskId[];
 }
 
 // ── Hook ──────────────────────────────────────────────────────────────────────
 
+/**
+ * @returns `handleSelectRow` — stable callback (memoized via `useCallback`) that
+ * applies the appropriate selection mutation based on modifier keys.
+ */
 export function useRowSelectionHandler({
   visibleTaskIds,
 }: UseRowSelectionHandlerOptions): {
@@ -59,6 +69,10 @@ export function useRowSelectionHandler({
             const minIdx = Math.min(startIdx, endIdx);
             const maxIdx = Math.max(startIdx, endIdx);
             setSelectedTaskIds(visibleTaskIds.slice(minIdx, maxIdx + 1), false);
+          } else {
+            // Anchor or target is no longer visible — fall back to single selection
+            // to avoid a confusing no-op when the anchor was from a now-hidden task.
+            setSelectedTaskIds([taskId], false);
           }
         } else {
           // No anchor yet — treat as plain single selection

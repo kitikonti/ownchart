@@ -3,6 +3,7 @@
  * Renders <label> when `htmlFor` is provided, <span> otherwise.
  */
 
+import { memo } from "react";
 import type { ReactNode } from "react";
 
 export interface FieldLabelProps {
@@ -12,7 +13,7 @@ export interface FieldLabelProps {
   htmlFor?: string;
 }
 
-export function FieldLabel({
+export const FieldLabel = memo(function FieldLabel({
   children,
   htmlFor,
 }: FieldLabelProps): JSX.Element {
@@ -27,4 +28,4 @@ export function FieldLabel({
   }
 
   return <span className={className}>{children}</span>;
-}
+});

@@ -2,6 +2,7 @@
  * HelpTabContent - Toolbar content for the Help ribbon tab.
  */
 
+import { memo } from "react";
 import { Info, Question } from "@phosphor-icons/react";
 
 import { ToolbarButton, ToolbarGroup } from "../Toolbar/ToolbarPrimitives";
@@ -10,7 +11,7 @@ import { useUIStore } from "../../store/slices/uiSlice";
 
 const ICON_SIZE = TOOLBAR.iconSize;
 
-export function HelpTabContent(): JSX.Element {
+export const HelpTabContent = memo(function HelpTabContent(): JSX.Element {
   const openHelpPanel = useUIStore((state) => state.openHelpPanel);
   const openAboutDialog = useUIStore((state) => state.openAboutDialog);
 
@@ -32,4 +33,4 @@ export function HelpTabContent(): JSX.Element {
       />
     </ToolbarGroup>
   );
-}
+});

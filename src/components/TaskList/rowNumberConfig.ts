@@ -8,7 +8,10 @@ import { COLORS, ROW_NUMBER, TYPOGRAPHY } from "../../styles/design-tokens";
 // ── Layout constants ────────────────────────────────────────────────────────
 export const CONTROLS_WIDTH = 20;
 export const DRAG_HANDLE_ICON_SIZE = 16;
+// Subtle corner radius applied to the left edge of the selected-row highlight
 export const SELECTION_RADIUS = "3px";
+// Hit-area size for the insert-row button circle; InsertLine starts at this offset.
+export const INSERT_BUTTON_HIT_AREA = 18;
 
 // Row number font sits between TYPOGRAPHY sm (12px) and base (14px)
 export const ROW_NUMBER_FONT_SIZE = "13px";
