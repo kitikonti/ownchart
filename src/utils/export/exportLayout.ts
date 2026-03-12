@@ -52,6 +52,12 @@ export interface ExportLayout {
   densityConfig: DensityConfig;
 }
 
+/** Intermediate layout parts returned by buildLayoutParts (excludes task list and density). */
+type ExportLayoutParts = Omit<
+  ExportLayout,
+  "flattenedTasks" | "orderedTasks" | "densityConfig"
+>;
+
 // =============================================================================
 // Constants
 // =============================================================================
@@ -84,6 +90,12 @@ function estimatePreliminaryDuration(
   return Math.ceil(ms / MS_PER_DAY) + DATE_RANGE_PADDING_DAYS;
 }
 
+/** Task count and row height needed to compute content height. */
+interface TaskSizeInput {
+  count: number;
+  rowHeight: number;
+}
+
 /**
  * Compute final timeline and total dimensions from scale and options.
  * Separated from computeTimelineLayout so that the width arithmetic (fitToWidth
@@ -94,8 +106,7 @@ function computeFinalDimensions(
   options: ExportOptions,
   scale: TimelineScale,
   taskTableWidth: number,
-  orderedTaskCount: number,
-  rowHeight: number
+  taskSize: TaskSizeInput
 ): {
   timelineWidth: number;
   totalWidth: number;
@@ -110,7 +121,7 @@ function computeFinalDimensions(
     options.zoomMode === "fitToWidth"
       ? options.fitToWidth
       : taskTableWidth + timelineWidth;
-  const contentHeight = orderedTaskCount * rowHeight;
+  const contentHeight = taskSize.count * taskSize.rowHeight;
   const totalHeight =
     (options.includeHeader ? HEADER_HEIGHT : 0) + contentHeight;
 
@@ -164,21 +175,32 @@ function computeTaskTableLayout(
   return { hasTaskList, effectiveColumnWidths, taskTableWidth };
 }
 
+/** Input parameters for timeline zoom, date range, and scale computation. */
+interface TimelineLayoutInput {
+  options: ExportOptions;
+  currentAppZoom: number;
+  orderedTasks: Task[];
+  taskTableWidth: number;
+  projectDateRange: { start: Date; end: Date } | undefined;
+  visibleDateRange: { start: Date; end: Date } | undefined;
+}
+
 /**
  * Compute zoom, date range, and timeline scale from task data and options.
  */
-function computeTimelineLayout(
-  options: ExportOptions,
-  currentAppZoom: number,
-  orderedTasks: Task[],
-  taskTableWidth: number,
-  projectDateRange: { start: Date; end: Date } | undefined,
-  visibleDateRange: { start: Date; end: Date } | undefined
-): {
+function computeTimelineLayout(input: TimelineLayoutInput): {
   dateRange: { min: string; max: string };
   effectiveZoom: number;
   scale: TimelineScale;
 } {
+  const {
+    options,
+    currentAppZoom,
+    orderedTasks,
+    taskTableWidth,
+    projectDateRange,
+    visibleDateRange,
+  } = input;
   // Two-pass zoom estimation:
   // Pass 1 — Compute a preliminary zoom from the raw project duration (before label
   //           padding is added). This preliminary zoom is only needed by
@@ -232,20 +254,32 @@ function flattenInputTasks(tasks: Task[]): {
 // Public API
 // =============================================================================
 
+/** Input parameters for buildLayoutParts. */
+interface LayoutPartsInput {
+  orderedTasks: Task[];
+  options: ExportLayoutInput["options"];
+  columnWidths: Record<string, number>;
+  currentAppZoom: number;
+  providedProjectDateRange: { start: Date; end: Date } | undefined;
+  visibleDateRange: { start: Date; end: Date } | undefined;
+  densityConfig: DensityConfig;
+}
+
 /**
  * Orchestrate the table → timeline → dimension sub-computations from an
  * already-flattened task list. Extracted to keep computeExportLayout under
  * 50 lines while preserving the well-defined call sequence.
  */
-function buildLayoutParts(
-  orderedTasks: Task[],
-  options: ExportLayoutInput["options"],
-  columnWidths: Record<string, number>,
-  currentAppZoom: number,
-  providedProjectDateRange: { start: Date; end: Date } | undefined,
-  visibleDateRange: { start: Date; end: Date } | undefined,
-  densityConfig: DensityConfig
-): Omit<ExportLayout, "flattenedTasks" | "orderedTasks" | "densityConfig"> {
+function buildLayoutParts(input: LayoutPartsInput): ExportLayoutParts {
+  const {
+    orderedTasks,
+    options,
+    columnWidths,
+    currentAppZoom,
+    providedProjectDateRange,
+    visibleDateRange,
+    densityConfig,
+  } = input;
   const selectedColumns = options.selectedColumns;
   const projectDateRange = resolveProjectDateRange(
     providedProjectDateRange,
@@ -258,22 +292,19 @@ function buildLayoutParts(
       options,
       columnWidths
     );
-  const { dateRange, effectiveZoom, scale } = computeTimelineLayout(
+  const { dateRange, effectiveZoom, scale } = computeTimelineLayout({
     options,
     currentAppZoom,
     orderedTasks,
     taskTableWidth,
     projectDateRange,
-    visibleDateRange
-  );
+    visibleDateRange,
+  });
   const { timelineWidth, totalWidth, contentHeight, totalHeight } =
-    computeFinalDimensions(
-      options,
-      scale,
-      taskTableWidth,
-      orderedTasks.length,
-      densityConfig.rowHeight
-    );
+    computeFinalDimensions(options, scale, taskTableWidth, {
+      count: orderedTasks.length,
+      rowHeight: densityConfig.rowHeight,
+    });
   return {
     selectedColumns,
     hasTaskList,
@@ -311,15 +342,15 @@ export function computeExportLayout(input: ExportLayoutInput): ExportLayout {
 
   const densityConfig = DENSITY_CONFIG[options.density];
   const { flattenedTasks, orderedTasks } = flattenInputTasks(tasks);
-  const parts = buildLayoutParts(
+  const parts = buildLayoutParts({
     orderedTasks,
     options,
     columnWidths,
     currentAppZoom,
     providedProjectDateRange,
     visibleDateRange,
-    densityConfig
-  );
+    densityConfig,
+  });
 
   return { flattenedTasks, orderedTasks, densityConfig, ...parts };
 }

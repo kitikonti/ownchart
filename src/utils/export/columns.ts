@@ -7,6 +7,9 @@
 import type { ExportColumnKey, ExportDataColumnKey } from "./types";
 import type { Task } from "../../types/chart.types";
 
+/** Duration unit label appended to summary-task durations in the Duration column. */
+const DURATION_UNIT = "days";
+
 /** Column definition for export (labels must match app's tableColumns.ts) */
 export interface ExportColumn {
   key: ExportColumnKey;
@@ -50,7 +53,7 @@ export function getColumnDisplayValue(
       // from child tasks and may not be obvious to the reader. Zero is suppressed
       // (no children yet → show "—" instead of "0 days").
       return task.duration !== undefined && task.duration > 0
-        ? `${task.duration} days`
+        ? `${task.duration} ${DURATION_UNIT}`
         : null;
     }
     // Regular tasks omit the unit — the "Duration" column header provides context.
