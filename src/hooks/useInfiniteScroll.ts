@@ -187,6 +187,10 @@ export function useInfiniteScroll({
               // flushSync throws if called inside an active React render cycle.
               // This should not happen here (scroll handler runs outside React),
               // but as a defensive fallback we schedule the update asynchronously.
+              // NOTE: In this catch path the DOM has not updated yet, so the
+              // scroll-anchor restoration below will use a stale scrollWidth —
+              // the visible area may jump slightly. This is an accepted
+              // degradation for an already-exceptional case.
               extendDateRange("past", EXTEND_DAYS);
             }
 

@@ -70,18 +70,23 @@ export function useViewTabActions(): ViewTabActions {
   const canZoomIn = zoom < MAX_ZOOM;
   const canZoomOut = zoom > MIN_ZOOM;
 
+  // Compute sorted zoom options with the current zoom level inserted when it
+  // doesn't match a preset. Depends directly on `zoom` (not the derived
+  // `zoomPercentage`) so the dependency chain is explicit and the intermediate
+  // variable is kept local to the memoized function.
   const zoomOptions = useMemo(() => {
+    const currentPct = Math.round(zoom * 100);
     const options = [...PRESET_ZOOM_LEVELS];
-    if (!PRESET_ZOOM_LEVELS.includes(zoomPercentage)) {
-      const insertIndex = options.findIndex((level) => level > zoomPercentage);
+    if (!PRESET_ZOOM_LEVELS.includes(currentPct)) {
+      const insertIndex = options.findIndex((level) => level > currentPct);
       if (insertIndex === -1) {
-        options.push(zoomPercentage);
+        options.push(currentPct);
       } else {
-        options.splice(insertIndex, 0, zoomPercentage);
+        options.splice(insertIndex, 0, currentPct);
       }
     }
     return options;
-  }, [zoomPercentage]);
+  }, [zoom]);
 
   // Handlers
   const handleZoomIn = useCallback((): void => {
@@ -114,13 +119,6 @@ export function useViewTabActions(): ViewTabActions {
     [handleFitToView, setZoom]
   );
 
-  // Use the store's atomic toggle action (reads current state inside the action)
-  // rather than capturing isTaskTableCollapsed at render time — avoids stale
-  // state if two rapid calls fire before a re-render.
-  const toggleTaskTableCollapsed = useCallback((): void => {
-    toggleTaskTableCollapsedAction();
-  }, [toggleTaskTableCollapsedAction]);
-
   return {
     showTodayMarker,
     toggleTodayMarker,
@@ -141,6 +139,8 @@ export function useViewTabActions(): ViewTabActions {
     handleZoomLevelSelect,
     handleFitToView,
     isTaskTableCollapsed,
-    toggleTaskTableCollapsed,
+    // The store action reads its own current state atomically, so the
+    // function reference is stable and can be returned directly.
+    toggleTaskTableCollapsed: toggleTaskTableCollapsedAction,
   };
 }
