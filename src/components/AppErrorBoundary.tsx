@@ -21,10 +21,15 @@ export class AppErrorBoundary extends Component<Props, State> {
     this.state = { hasError: false, message: "" };
   }
 
-  static getDerivedStateFromError(error: unknown): State {
-    const message =
-      error instanceof Error ? error.message : "An unexpected error occurred.";
-    return { hasError: true, message };
+  static getDerivedStateFromError(): State {
+    // Use a generic user-safe message in the UI — raw Error.message may contain
+    // technical internals that are meaningless (or alarming) to end users.
+    // The full error is logged with context in componentDidCatch below.
+    return {
+      hasError: true,
+      message:
+        "The application encountered an unexpected error. Please try reloading.",
+    };
   }
 
   override componentDidCatch(error: unknown, info: ErrorInfo): void {
@@ -37,6 +42,12 @@ export class AppErrorBoundary extends Component<Props, State> {
       info.componentStack
     );
   }
+
+  private handleReset = (): void => {
+    // Soft reset: clears the error state so the component tree re-mounts.
+    // Preserves any in-memory app state — prefer this over a full reload.
+    this.setState({ hasError: false, message: "" });
+  };
 
   private handleReload = (): void => {
     window.location.reload();
@@ -55,12 +66,22 @@ export class AppErrorBoundary extends Component<Props, State> {
           <p className="text-neutral-600 text-sm max-w-md text-center">
             {this.state.message}
           </p>
-          <button
-            onClick={this.handleReload}
-            className="px-4 py-2 bg-brand-600 text-white rounded-md text-sm hover:bg-brand-500 transition-colors"
-          >
-            Reload application
-          </button>
+          <div className="flex gap-3">
+            <button
+              type="button"
+              onClick={this.handleReset}
+              className="px-4 py-2 bg-neutral-200 text-neutral-800 rounded-md text-sm hover:bg-neutral-300 transition-colors"
+            >
+              Try again
+            </button>
+            <button
+              type="button"
+              onClick={this.handleReload}
+              className="px-4 py-2 bg-brand-600 text-white rounded-md text-sm hover:bg-brand-500 transition-colors"
+            >
+              Reload application
+            </button>
+          </div>
         </div>
       );
     }

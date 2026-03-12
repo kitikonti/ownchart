@@ -3,13 +3,19 @@
  * Offers common screen/print sizes and a free-form custom pixel input.
  */
 
-import { useEffect, useState } from "react";
-import { DEFAULT_FIT_TO_WIDTH_PX } from "../../utils/export/types";
+import { useCallback, useEffect, useState } from "react";
+import {
+  DEFAULT_FIT_TO_WIDTH_PX,
+  UHD_SCREEN_WIDTH_PX,
+} from "../../utils/export/types";
 import { Input } from "../common/Input";
 import { Select } from "../common/Select";
 
 export const MIN_FIT_WIDTH_PX = 100;
 export const MAX_FIT_WIDTH_PX = 20000;
+
+/** HD (1080p) screen width in pixels — matches DEFAULT_FIT_TO_WIDTH_PX. */
+const HD_SCREEN_WIDTH_PX = DEFAULT_FIT_TO_WIDTH_PX; // 1920
 
 interface FitToWidthPreset {
   label: string;
@@ -20,8 +26,14 @@ const FIT_TO_WIDTH_GROUPS = {
   screenSizes: {
     label: "Screen Sizes",
     presets: [
-      { label: "HD Screen (1920px)", value: 1920 },
-      { label: "4K Screen (3840px)", value: 3840 },
+      {
+        label: `HD Screen (${HD_SCREEN_WIDTH_PX}px)`,
+        value: HD_SCREEN_WIDTH_PX,
+      },
+      {
+        label: `4K Screen (${UHD_SCREEN_WIDTH_PX}px)`,
+        value: UHD_SCREEN_WIDTH_PX,
+      },
     ] as FitToWidthPreset[],
   },
   print150dpi: {
@@ -61,15 +73,18 @@ export function FitToWidthSelector({
     }
   }, [fitToWidth]);
 
-  const handleSelectChange = (value: string): void => {
-    if (value === "custom") {
-      setIsCustomWidth(true);
-    } else {
-      const numValue = parseInt(value, 10);
-      setIsCustomWidth(false);
-      onFitToWidthChange?.(numValue);
-    }
-  };
+  const handleSelectChange = useCallback(
+    (value: string): void => {
+      if (value === "custom") {
+        setIsCustomWidth(true);
+      } else {
+        const numValue = parseInt(value, 10);
+        setIsCustomWidth(false);
+        onFitToWidthChange?.(numValue);
+      }
+    },
+    [onFitToWidthChange]
+  );
 
   return (
     <div className="space-y-3">
@@ -112,6 +127,7 @@ export function FitToWidthSelector({
               )
             }
             onClick={(e) => e.stopPropagation()}
+            aria-label="Custom width in pixels"
             fullWidth={false}
             className="flex-1"
             mono

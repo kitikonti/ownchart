@@ -87,10 +87,7 @@ export function TimelinePanel({
           />
         )}
       </div>
-      <div
-        className="flex-1 h-full relative"
-        style={{ height: contentAreaHeight }}
-      >
+      <div className="flex-1 relative" style={{ height: contentAreaHeight }}>
         <div
           ref={chartContainerRef}
           className="gantt-chart-scroll-container absolute inset-0 bg-white overflow-x-auto scrollbar-thin"

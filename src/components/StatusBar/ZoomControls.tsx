@@ -32,29 +32,34 @@ export function ZoomControls(): JSX.Element {
   const isAtMinZoom = zoom <= MIN_ZOOM;
   const isAtMaxZoom = zoom >= MAX_ZOOM;
 
-  const handleSliderChange = (e: React.ChangeEvent<HTMLInputElement>): void => {
-    const newZoom = parseInt(e.target.value, 10) / 100;
-    const anchor = computeViewportCenterAnchor();
-    const result = setZoom(newZoom, anchor);
-    applyScrollLeft(result.newScrollLeft);
-  };
+  const handleSliderChange = useCallback(
+    (e: React.ChangeEvent<HTMLInputElement>): void => {
+      const newZoom = parseInt(e.target.value, 10) / 100;
+      const anchor = computeViewportCenterAnchor();
+      const result = setZoom(newZoom, anchor);
+      applyScrollLeft(result.newScrollLeft);
+    },
+    [setZoom]
+  );
 
-  const handleZoomIn = (): void => {
+  const handleZoomIn = useCallback((): void => {
     const anchor = computeViewportCenterAnchor();
     const result = zoomIn(anchor);
     applyScrollLeft(result.newScrollLeft);
-  };
+  }, [zoomIn]);
 
-  const handleZoomOut = (): void => {
+  const handleZoomOut = useCallback((): void => {
     const anchor = computeViewportCenterAnchor();
     const result = zoomOut(anchor);
     applyScrollLeft(result.newScrollLeft);
-  };
+  }, [zoomOut]);
 
-  const handleFitToView = (): void => {
+  const handleFitToView = useCallback((): void => {
     fitToView(useTaskStore.getState().tasks);
-  };
+  }, [fitToView]);
 
+  // These two handlers capture only stable setters — useCallback is kept for
+  // symmetry with the other handlers and in case ZoomDialog is passed new props.
   const handleOpenZoomDialog = useCallback((): void => {
     setIsZoomDialogOpen(true);
   }, []);

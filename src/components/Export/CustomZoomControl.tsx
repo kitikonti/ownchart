@@ -11,7 +11,13 @@ import {
 // PNG/SVG exports support finer zoom levels (0.1×, 0.25×) not available for
 // PDF, because raster/vector outputs can represent very small scales without
 // readability constraints imposed by fixed PDF page dimensions.
-const CUSTOM_ZOOM_PRESETS_ARRAY = [0.1, 0.25, 0.5, 1.0, 1.5, 2.0];
+// The four shared presets from EXPORT_ZOOM_PRESETS are extended with the two
+// finer levels; composing from the shared constant prevents value drift.
+const CUSTOM_ZOOM_PRESETS_ARRAY = [
+  0.1,
+  0.25,
+  ...Object.values(EXPORT_ZOOM_PRESETS),
+];
 
 export interface CustomZoomControlProps {
   timelineZoom: number;
