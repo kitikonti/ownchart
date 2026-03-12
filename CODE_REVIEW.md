@@ -367,7 +367,7 @@ Dateien die waehrend des Reviews neu erstellt wurden und noch nicht reviewt sind
 - [x] `src/utils/export/pagePresets.ts` (75 LOC)
 - [x] `src/utils/export/columns.ts` (72 LOC)
 - [x] `src/utils/export/dateFormatting.ts` (28 LOC)
-- [ ] `src/utils/export/exportToPng.ts` (24 LOC)
+- [x] `src/utils/export/exportToPng.ts` (24 LOC)
 - [x] `src/utils/export/prepareExportTasks.ts` (17 LOC)
 
 ### New File Operations
