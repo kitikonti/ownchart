@@ -24,6 +24,10 @@ export function formatDate(date: Date | undefined): string {
  * Format a date range as "YYYY-MM-DD – YYYY-MM-DD".
  * Uses an en-dash (–) separator, matching standard date range typography.
  *
+ * @param range - The date range to format. `range.start` must be ≤ `range.end`
+ *   (see @remarks for precondition details).
+ * @returns Formatted date range string, e.g. `"2025-01-01 – 2025-12-31"`.
+ *
  * @remarks **Precondition**: `range.start` must be ≤ `range.end`. No validation
  * is performed; an inverted range will produce an inverted string without error.
  * A `console.warn` is emitted in development builds (`import.meta.env.DEV`) when

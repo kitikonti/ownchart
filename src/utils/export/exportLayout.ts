@@ -8,13 +8,12 @@
 import type { Task } from "../../types/chart.types";
 import type { TaskId } from "../../types/branded.types";
 import type { DensityConfig } from "../../types/preferences.types";
-import type {
-  ExportColumnKey,
-  ExportLayoutInput,
-  ExportOptions,
-} from "./types";
-import type { TimelineScale } from "../timelineUtils";
+import { DENSITY_CONFIG } from "../../config/densityConfig";
+import { getDateRange } from "../dateUtils";
 import type { FlattenedTask } from "../hierarchy";
+import { buildFlattenedTaskList } from "../hierarchy";
+import type { TimelineScale } from "../timelineUtils";
+import { getTimelineScale } from "../timelineUtils";
 import {
   calculateTaskTableWidth,
   calculateEffectiveZoom,
@@ -23,11 +22,12 @@ import {
   calculateOptimalColumnWidths,
   MS_PER_DAY,
 } from "./calculations";
-import { getTimelineScale } from "../timelineUtils";
-import { getDateRange } from "../dateUtils";
-import { DENSITY_CONFIG } from "../../config/densityConfig";
 import { HEADER_HEIGHT } from "./constants";
-import { buildFlattenedTaskList } from "../hierarchy";
+import type {
+  ExportColumnKey,
+  ExportLayoutInput,
+  ExportOptions,
+} from "./types";
 
 // =============================================================================
 // Types
@@ -369,6 +369,10 @@ export function computeExportLayout(input: ExportLayoutInput): ExportLayout {
 /**
  * Calculate the export dimensions based on options.
  * Delegates to computeExportLayout for all geometry calculations.
+ *
+ * @param input - See {@link ExportLayoutInput} for the full input contract.
+ * @returns Width and height in pixels (both rounded to integers) and the
+ *   effective zoom level used for the layout.
  */
 export function calculateExportDimensions(input: ExportLayoutInput): {
   width: number;
