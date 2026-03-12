@@ -396,8 +396,8 @@ Dateien die waehrend des Reviews neu erstellt wurden und noch nicht reviewt sind
 - [ ] `src/components/Ribbon/HelpTabContent.tsx` (35 LOC)
 
 ### New Hooks
-- [ ] `src/hooks/useExportDialog.ts` (392 LOC)
-- [ ] `src/hooks/useCellEdit.ts` (264 LOC)
+- [x] `src/hooks/useExportDialog.ts` (392 LOC)
+- [x] `src/hooks/useCellEdit.ts` (264 LOC)
 - [ ] `src/hooks/useHomeTabActions.ts` (190 LOC)
 - [ ] `src/hooks/usePlaceholderNameEdit.ts` (187 LOC)
 - [ ] `src/hooks/useInfiniteScroll.ts` (184 LOC)
