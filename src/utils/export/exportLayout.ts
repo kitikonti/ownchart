@@ -52,7 +52,10 @@ export interface ExportLayout {
   densityConfig: DensityConfig;
 }
 
-/** Intermediate layout parts returned by buildLayoutParts (excludes task list and density). */
+/**
+ * Intermediate layout parts returned by buildLayoutParts (excludes task list and density).
+ * @internal Not part of the public API — used only within this module.
+ */
 type ExportLayoutParts = Omit<
   ExportLayout,
   "flattenedTasks" | "orderedTasks" | "densityConfig"
@@ -259,7 +262,10 @@ function flattenInputTasks(tasks: Task[]): {
 // Public API
 // =============================================================================
 
-/** Input parameters for buildLayoutParts. */
+/**
+ * Input parameters for buildLayoutParts.
+ * @internal Not part of the public API — used only within this module.
+ */
 interface LayoutPartsInput {
   orderedTasks: Task[];
   options: ExportLayoutInput["options"];

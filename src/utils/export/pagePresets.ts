@@ -24,7 +24,8 @@ import type { ExportQuickPreset, PdfOrientation } from "./types";
  * @param key - Unique preset identifier (e.g. "a4-landscape")
  * @param label - Human-readable label shown in the UI
  * @param pageSize - Paper size key from PDF_PAGE_SIZES
- * @param orientation - Page orientation. Defaults to `"landscape"` when omitted.
+ * @param orientation - Page orientation. Landscape is the default because Gantt
+ *   charts are inherently wide and landscape makes better use of available space.
  */
 function createPagePreset(
   key: string,

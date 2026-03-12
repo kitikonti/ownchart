@@ -71,9 +71,9 @@ export function getColumnDisplayValue(
     return task.progress !== undefined ? `${task.progress}%` : null;
   }
   // Exhaustive guard: if a new ExportDataColumnKey is added without a handler
-  // above, TypeScript will flag this line as unreachable (the `never` type).
-  // This guard is compile-time only — at runtime, TypeScript narrows `key` to
-  // `never` when all branches are handled, so this line is never executed.
+  // above, TypeScript narrows `key` to `never` here and flags the assignment as
+  // a type error — the signal to add a missing branch. If TypeScript no longer
+  // reports an error on this line, a branch is missing above.
   const _exhaustiveCheck: never = key;
   return _exhaustiveCheck;
 }
