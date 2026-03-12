@@ -56,6 +56,9 @@ export function usePlaceholderNameEdit(
   // Scroll the outerScrollRef (vertical scroll driver) so the placeholder is visible.
   // Must NOT use el.scrollIntoView() — desyncs TaskTable from Timeline (GitHub #16).
   // Stable callback (empty deps) — reads cellRef.current at call time.
+  // cellRef intentionally omitted: the ref object is a stable identity
+  // (React guarantees it never changes); .current is read imperatively inside
+  // the callback, not captured in the closure.
   const scrollIntoView = useCallback(() => {
     const el = cellRef.current;
     if (!el) return;
@@ -66,7 +69,8 @@ export function usePlaceholderNameEdit(
     if (elRect.bottom > outerRect.bottom) {
       outerScroll.scrollTop += elRect.bottom - outerRect.bottom;
     }
-  }, [cellRef]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   // Focus cell when it becomes active (not editing).
   // preventScroll: true prevents desyncing TaskTable from Timeline (GitHub #16).
@@ -96,6 +100,15 @@ export function usePlaceholderNameEdit(
     setIsEditing(false);
     setInputValue("");
   }, []);
+
+  // Commit the task if there is a name; otherwise discard the edit.
+  const commitOrCancel = useCallback((): void => {
+    if (inputValue.trim()) {
+      commitNewTask();
+    } else {
+      cancelEdit();
+    }
+  }, [inputValue, commitNewTask, cancelEdit]);
 
   const handleClick = useCallback(
     (e: MouseEvent): void => {
@@ -140,24 +153,11 @@ export function usePlaceholderNameEdit(
   );
 
   const handleInputBlur = useCallback((): void => {
-    if (inputValue.trim()) {
-      commitNewTask();
-    } else {
-      cancelEdit();
-    }
-  }, [inputValue, commitNewTask, cancelEdit]);
+    commitOrCancel();
+  }, [commitOrCancel]);
 
   const handleInputKeyDown = useCallback(
     (e: KeyboardEvent<HTMLInputElement>): void => {
-      /** Commit the task if there is a name; otherwise discard the edit. */
-      const commitOrCancel = (): void => {
-        if (inputValue.trim()) {
-          commitNewTask();
-        } else {
-          cancelEdit();
-        }
-      };
-
       if (e.key === "Enter") {
         e.preventDefault();
         commitOrCancel();
@@ -170,7 +170,7 @@ export function usePlaceholderNameEdit(
         cancelEdit();
       }
     },
-    [inputValue, commitNewTask, cancelEdit, navigateCell]
+    [commitOrCancel, cancelEdit, navigateCell]
   );
 
   return {

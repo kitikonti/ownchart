@@ -158,16 +158,17 @@ export function useInfiniteScroll({
           ) {
             lastExtendPastRef.current = currentNow;
 
-            // Capture distance from right edge (preserved during extension)
-            const distanceFromRightEdge =
-              currentScrollWidth - currentScrollLeft;
+            // Capture the amount of content to the right of the current
+            // viewport position; this is preserved after extending the left
+            // edge so the visible area stays anchored to the same location.
+            const scrollRightAnchor = currentScrollWidth - currentScrollLeft;
 
             flushSync(() => {
               extendDateRange("past", EXTEND_DAYS);
             });
 
             const newScrollWidth = chartContainer.scrollWidth;
-            chartContainer.scrollLeft = newScrollWidth - distanceFromRightEdge;
+            chartContainer.scrollLeft = newScrollWidth - scrollRightAnchor;
           }
         }, SCROLL_IDLE_MS);
       }

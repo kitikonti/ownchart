@@ -5,7 +5,7 @@
  * so the component stays purely presentational (<200 LOC).
  */
 
-import { useMemo } from "react";
+import { useMemo, useCallback } from "react";
 import { useTaskStore } from "../store/slices/taskSlice";
 import { useChartStore } from "../store/slices/chartSlice";
 import { useHistoryStore } from "../store/slices/historySlice";
@@ -18,8 +18,7 @@ const DEFAULT_TASK_NAME = "New Task";
 
 const formatDate = (date: Date): string => date.toISOString().split("T")[0];
 
-/** Builds the default payload for a newly added task anchored to today. */
-function buildDefaultTaskPayload(taskCount: number): {
+interface NewTaskPayload {
   name: string;
   startDate: string;
   endDate: string;
@@ -30,7 +29,10 @@ function buildDefaultTaskPayload(taskCount: number): {
   type: "task";
   parent: undefined;
   metadata: Record<string, never>;
-} {
+}
+
+/** Builds the default payload for a newly added task anchored to today. */
+function buildDefaultTaskPayload(taskCount: number): NewTaskPayload {
   const today = new Date();
   const endDate = new Date(today);
   endDate.setDate(today.getDate() + DEFAULT_NEW_TASK_DURATION_DAYS - 1);
@@ -151,25 +153,25 @@ export function useHomeTabActions(): HomeTabActions {
   const canHide = selectedTaskIds.length > 0;
 
   // Handlers
-  const handleAddTask = (): void => {
+  const handleAddTask = useCallback((): void => {
     addTask(buildDefaultTaskPayload(taskCount));
-  };
+  }, [addTask, taskCount]);
 
-  const handleInsertAbove = (): void => {
+  const handleInsertAbove = useCallback((): void => {
     if (singleSelectedTaskId) insertTaskAbove(singleSelectedTaskId);
-  };
+  }, [insertTaskAbove, singleSelectedTaskId]);
 
-  const handleInsertBelow = (): void => {
+  const handleInsertBelow = useCallback((): void => {
     if (singleSelectedTaskId) insertTaskBelow(singleSelectedTaskId);
-  };
+  }, [insertTaskBelow, singleSelectedTaskId]);
 
-  const handleHideRows = (): void => {
+  const handleHideRows = useCallback((): void => {
     hideRows(selectedTaskIds);
-  };
+  }, [hideRows, selectedTaskIds]);
 
-  const handleUnhideSelection = (): void => {
+  const handleUnhideSelection = useCallback((): void => {
     unhideSelection(selectedTaskIds);
-  };
+  }, [unhideSelection, selectedTaskIds]);
 
   return {
     undo,
