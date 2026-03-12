@@ -229,6 +229,66 @@ describe("SegmentedControl", () => {
     });
   });
 
+  describe("aria-pressed state", () => {
+    it("sets aria-pressed=true on selected option in inline layout", () => {
+      render(
+        <SegmentedControl
+          options={basicOptions}
+          value="b"
+          onChange={vi.fn()}
+          ariaLabel="Test"
+        />
+      );
+
+      const selectedButton = screen.getByText("Option B").closest("button");
+      expect(selectedButton).toHaveAttribute("aria-pressed", "true");
+    });
+
+    it("sets aria-pressed=false on unselected options in inline layout", () => {
+      render(
+        <SegmentedControl
+          options={basicOptions}
+          value="b"
+          onChange={vi.fn()}
+          ariaLabel="Test"
+        />
+      );
+
+      const unselectedButton = screen.getByText("Option A").closest("button");
+      expect(unselectedButton).toHaveAttribute("aria-pressed", "false");
+    });
+
+    it("sets aria-pressed=true on selected option in grid layout", () => {
+      render(
+        <SegmentedControl
+          options={basicOptions}
+          value="c"
+          onChange={vi.fn()}
+          ariaLabel="Grid test"
+          layout="grid"
+        />
+      );
+
+      const selectedButton = screen.getByText("Option C").closest("button");
+      expect(selectedButton).toHaveAttribute("aria-pressed", "true");
+    });
+
+    it("sets aria-pressed=false on unselected options in grid layout", () => {
+      render(
+        <SegmentedControl
+          options={basicOptions}
+          value="c"
+          onChange={vi.fn()}
+          ariaLabel="Grid test"
+          layout="grid"
+        />
+      );
+
+      const unselectedButton = screen.getByText("Option A").closest("button");
+      expect(unselectedButton).toHaveAttribute("aria-pressed", "false");
+    });
+  });
+
   describe("focus-visible styles", () => {
     it("includes focus-visible classes on inline buttons", () => {
       render(
