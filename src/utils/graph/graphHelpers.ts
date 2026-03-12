@@ -9,6 +9,10 @@ import type { Dependency } from "../../types/dependency.types";
 /**
  * Returns the array stored under `key`, inserting an empty one first if absent.
  * Avoids non-null assertions at call sites where the key may not yet exist.
+ *
+ * @param map - The map to read from / write to.
+ * @param key - The key whose list should be retrieved or created.
+ * @returns The existing or newly-created array for `key`.
  */
 export function getOrCreateList<K, V>(map: Map<K, V[]>, key: K): V[] {
   let list = map.get(key);
@@ -19,7 +23,12 @@ export function getOrCreateList<K, V>(map: Map<K, V[]>, key: K): V[] {
   return list;
 }
 
-/** Build a forward adjacency list (fromTaskId → [toTaskId, ...]) from a dependency array. */
+/**
+ * Build a forward adjacency list (fromTaskId → [toTaskId, ...]) from a dependency array.
+ *
+ * @param deps - The dependency edges to index.
+ * @returns A map from each source task to its direct successors.
+ */
 export function buildAdjacencyList(deps: Dependency[]): Map<TaskId, TaskId[]> {
   const graph = new Map<TaskId, TaskId[]>();
   for (const dep of deps) {
@@ -28,7 +37,12 @@ export function buildAdjacencyList(deps: Dependency[]): Map<TaskId, TaskId[]> {
   return graph;
 }
 
-/** Build a reverse adjacency list (toTaskId → [fromTaskId, ...]) for predecessor traversal. */
+/**
+ * Build a reverse adjacency list (toTaskId → [fromTaskId, ...]) for predecessor traversal.
+ *
+ * @param deps - The dependency edges to index.
+ * @returns A map from each target task to its direct predecessors.
+ */
 export function buildReverseAdjacencyList(
   deps: Dependency[]
 ): Map<TaskId, TaskId[]> {
@@ -45,6 +59,10 @@ export function buildReverseAdjacencyList(
  *
  * `startId` is pre-marked as visited so it is never added to the result set,
  * even in graphs that contain cycles leading back to it.
+ *
+ * @param startId - The node to start traversal from (excluded from results).
+ * @param graph - Forward adjacency list (node → neighbors).
+ * @returns The set of all nodes reachable from `startId`, not including `startId` itself.
  */
 export function bfsReachable(
   startId: TaskId,
