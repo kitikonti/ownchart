@@ -245,6 +245,7 @@ cd ../app-gantt-review
 - [x] `src/utils/arrowPath/elbowPath.ts` (343 LOC)
 - [x] `src/utils/graph/topologicalSort.ts` (154 LOC)
 - [x] `src/utils/graph/cycleDetection.ts` (115 LOC)
+- [x] `src/utils/graph/graphHelpers.ts` (70 LOC)
 - [x] `src/utils/arrowPath/index.ts` (10 LOC)
 - [x] `src/utils/graph/index.ts` (12 LOC)
 
