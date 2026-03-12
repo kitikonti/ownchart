@@ -69,6 +69,9 @@ export function bfsReachable(
   graph: Map<TaskId, TaskId[]>
 ): Set<TaskId> {
   const reachable = new Set<TaskId>();
+  // Pointer-based queue: `head` advances instead of shifting, giving O(1) dequeue.
+  // Processed entries remain in the array (O(V) transient memory) — an intentional
+  // trade-off to avoid the O(n) cost of Array.prototype.shift on each iteration.
   const queue: TaskId[] = [startId];
   let head = 0;
   const visited = new Set<TaskId>([startId]);
