@@ -324,11 +324,62 @@ function applyThemeColor(task: Task, ctx: ThemeContext): HexColor {
   return hslToHex(hsl) as HexColor;
 }
 
+// ─── Per-task mode helpers (single-task variants) ─────────────────────────────
+
+/**
+ * Compute a single task's summary-mode color.
+ * Mirrors fillSummaryColors for the single-task path in computeTaskColor.
+ */
+function applySummaryColor(
+  task: Task,
+  allTasks: Task[],
+  summaryOptions: ColorModeState["summaryOptions"]
+): HexColor {
+  if (task.type === "milestone" && summaryOptions.useMilestoneAccent) {
+    return summaryOptions.milestoneAccentColor;
+  }
+  // Summaries show their own color (they DEFINE the group color)
+  if (task.type === "summary") {
+    return task.color;
+  }
+  // Non-summary children inherit from nearest summary parent
+  const taskMap = buildTaskMap(allTasks);
+  const summaryParent = getNearestSummaryParent(task, taskMap);
+  if (summaryParent) {
+    return summaryParent.colorOverride || summaryParent.color;
+  }
+  // Root level tasks keep their own color
+  return task.color;
+}
+
+/**
+ * Compute a single task's hierarchy-mode color.
+ * Mirrors fillHierarchyColors for the single-task path in computeTaskColor.
+ */
+function applyHierarchyColor(
+  task: Task,
+  allTasks: Task[],
+  hierarchyOptions: ColorModeState["hierarchyOptions"]
+): HexColor {
+  const taskMap = buildTaskMap(allTasks);
+  const depth = getTaskDepth(task, taskMap);
+  const lightenAmount = Math.min(
+    depth * (hierarchyOptions.lightenPercentPerLevel / 100),
+    hierarchyOptions.maxLightenPercent / 100
+  );
+  return lightenColor(hierarchyOptions.baseColor, lightenAmount) as HexColor;
+}
+
 // ─── Public API ───────────────────────────────────────────────────────────────
 
 /**
  * Compute the display color for a task based on color mode.
  * Pure function — no React hooks or store access.
+ *
+ * @param task           - The task whose display color is being resolved.
+ * @param allTasks       - Full task list (needed for hierarchy/summary traversal).
+ * @param colorModeState - Active color mode configuration.
+ * @returns The resolved `HexColor` for the task.
  *
  * **Performance note (theme mode):** This function calls `buildThemeContext`
  * on every invocation, which runs `assignPaletteIndices` — an O(n log n)
@@ -365,30 +416,10 @@ export function computeTaskColor(
       return applyThemeColor(task, themeCtx);
     }
 
-    case "summary": {
-      // Check if this is a milestone and should use accent color
-      if (task.type === "milestone" && summaryOptions.useMilestoneAccent) {
-        return summaryOptions.milestoneAccentColor;
-      }
+    case "summary":
+      return applySummaryColor(task, allTasks, summaryOptions);
 
-      // Summaries show their own color (they DEFINE the group color)
-      if (task.type === "summary") {
-        return task.color;
-      }
-
-      // Non-summary children inherit from nearest summary parent
-      const taskMap = buildTaskMap(allTasks);
-      const summaryParent = getNearestSummaryParent(task, taskMap);
-      if (summaryParent) {
-        return summaryParent.colorOverride || summaryParent.color;
-      }
-
-      // Root level tasks keep their own color
-      return task.color;
-    }
-
-    case "taskType": {
-      // Return color based on task type.
+    case "taskType":
       // The `default` branch handles "task" and any future TaskType additions
       // gracefully by returning taskColor. If a new type is added, TypeScript
       // strict mode will not catch it here — add an explicit `case` for it.
@@ -401,22 +432,9 @@ export function computeTaskColor(
         default:
           return taskTypeOptions.taskColor;
       }
-    }
 
-    case "hierarchy": {
-      // Calculate depth and apply lightening
-      const taskMap = buildTaskMap(allTasks);
-      const depth = getTaskDepth(task, taskMap);
-      const lightenAmount = Math.min(
-        depth * (hierarchyOptions.lightenPercentPerLevel / 100),
-        hierarchyOptions.maxLightenPercent / 100
-      );
-
-      return lightenColor(
-        hierarchyOptions.baseColor,
-        lightenAmount
-      ) as HexColor;
-    }
+    case "hierarchy":
+      return applyHierarchyColor(task, allTasks, hierarchyOptions);
 
     default:
       return task.color;

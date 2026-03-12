@@ -171,6 +171,51 @@ export function calculateDeltaDaysFromDates(
 }
 
 /**
+ * Compute the field updates for a single non-summary task during a drag-move commit.
+ * Returns null if validation fails.
+ */
+function buildSingleTaskMoveUpdate(
+  t: Task,
+  deltaDays: number,
+  ctx: WorkingDaysContext
+): Partial<Task> | null {
+  const newStartDate = addDays(t.startDate, deltaDays);
+  // Compute a calendar-shifted end date for validation purposes.
+  // For non-milestones the final committed end date may differ (working-days
+  // recalculation happens below), but validation only needs to know whether
+  // the shift stays within acceptable bounds.
+  const calendarShiftedEndDate = t.endDate ? addDays(t.endDate, deltaDays) : "";
+  const validation = validateDragOperation(
+    t,
+    newStartDate,
+    calendarShiftedEndDate
+  );
+  if (!validation.valid) return null;
+
+  if (t.type === "milestone") {
+    return { startDate: newStartDate, endDate: newStartDate, duration: 0 };
+  }
+
+  // Reuse computeEndDateForDrag to avoid duplicating the working-days logic.
+  // When t.endDate is empty, fall back to the calendar-shifted value ('').
+  const finalEndDate = t.endDate
+    ? computeEndDateForDrag(
+        newStartDate,
+        t.startDate,
+        t.endDate,
+        deltaDays,
+        t.type,
+        ctx
+      )
+    : calendarShiftedEndDate;
+  return {
+    startDate: newStartDate,
+    endDate: finalEndDate,
+    duration: calculateDuration(newStartDate, finalEndDate),
+  };
+}
+
+/**
  * Build batch updates for a drag-move commit.
  * Uses a Map for O(1) task lookup. Skips summary tasks (they auto-recalculate).
  */
@@ -187,52 +232,9 @@ export function buildMoveUpdates(
     if (!t) continue;
     if (t.type === "summary") continue;
 
-    const newStartDate = addDays(t.startDate, deltaDays);
-    // Compute a calendar-shifted end date for validation purposes.
-    // For non-milestones the final committed end date may differ (working-days
-    // recalculation happens below), but validation only needs to know whether
-    // the shift stays within acceptable bounds.
-    const calendarShiftedEndDate = t.endDate
-      ? addDays(t.endDate, deltaDays)
-      : "";
-    const validation = validateDragOperation(
-      t,
-      newStartDate,
-      calendarShiftedEndDate
-    );
-    if (!validation.valid) continue;
-
-    if (t.type === "milestone") {
-      updates.push({
-        id: taskId,
-        updates: {
-          startDate: newStartDate,
-          endDate: newStartDate,
-          duration: 0,
-        },
-      });
-    } else {
-      // Reuse computeEndDateForDrag to avoid duplicating the working-days logic.
-      // When t.endDate is empty, fall back to the calendar-shifted value ('').
-      const finalEndDate = t.endDate
-        ? computeEndDateForDrag(
-            newStartDate,
-            t.startDate,
-            t.endDate,
-            deltaDays,
-            t.type,
-            ctx
-          )
-        : calendarShiftedEndDate;
-      updates.push({
-        id: taskId,
-        updates: {
-          startDate: newStartDate,
-          endDate: finalEndDate,
-          duration: calculateDuration(newStartDate, finalEndDate),
-        },
-      });
-    }
+    const taskUpdates = buildSingleTaskMoveUpdate(t, deltaDays, ctx);
+    if (!taskUpdates) continue;
+    updates.push({ id: taskId, updates: taskUpdates });
   }
 
   return updates;

@@ -16,6 +16,9 @@ const CHILDLESS_CYCLE: readonly TaskType[] = ["task", "summary", "milestone"];
  * @param currentType - The task's current type.
  * @param hasChildren - Whether the task currently has child tasks.
  * @returns The next `TaskType` in the applicable cycle.
+ * @example
+ * getNextTaskType("task", false)    // → "summary"
+ * getNextTaskType("summary", true)  // → "task"
  */
 export function getNextTaskType(
   currentType: TaskType,

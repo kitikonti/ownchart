@@ -4,6 +4,7 @@
  * Accepts a nested array of class name tokens (strings, null, undefined, or false)
  * and returns a single space-joined string with all falsy values removed.
  *
+ * @returns A single space-joined string of all truthy class names.
  * @example
  * buildClassNames(
  *   "base-class",
