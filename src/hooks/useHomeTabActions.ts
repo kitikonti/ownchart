@@ -114,6 +114,9 @@ export function useHomeTabActions(): HomeTabActions {
   const canIndent = useTaskStore((state) => state.canIndentSelection());
   const canOutdent = useTaskStore((state) => state.canOutdentSelection());
   const groupSelectedTasks = useTaskStore((state) => state.groupSelectedTasks);
+  // canGroup/canUngroup: same selector-method pattern as canIndent/canOutdent above —
+  // Zustand re-runs the selector on every store update but only re-renders when
+  // the returned boolean value actually changes.
   const canGroup = useTaskStore((state) => state.canGroupSelection());
   const ungroupSelectedTasks = useTaskStore(
     (state) => state.ungroupSelectedTasks
@@ -150,12 +153,15 @@ export function useHomeTabActions(): HomeTabActions {
   );
 
   // Derived state
-  const singleSelectedTaskId =
-    selectedTaskIds.length === 1
-      ? selectedTaskIds[0]
-      : selectedTaskIds.length === 0 && activeCell.taskId
-        ? activeCell.taskId
-        : null;
+  const singleSelectedTaskId = useMemo(
+    () =>
+      selectedTaskIds.length === 1
+        ? selectedTaskIds[0]
+        : selectedTaskIds.length === 0 && activeCell.taskId
+          ? activeCell.taskId
+          : null,
+    [selectedTaskIds, activeCell.taskId]
+  );
 
   const canInsert = singleSelectedTaskId !== null;
   const canDelete = selectedTaskIds.length > 0;

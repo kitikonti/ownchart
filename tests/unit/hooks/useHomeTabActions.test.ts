@@ -281,6 +281,19 @@ describe("useHomeTabActions", () => {
   });
 
   // -------------------------------------------------------------------------
+  // hiddenInSelectionCount
+  // -------------------------------------------------------------------------
+  describe("hiddenInSelectionCount", () => {
+    it("should be 0 when selectedTaskIds is empty", () => {
+      useTaskStore.setState({ selectedTaskIds: [] });
+      mockGetHiddenInSelectionCount.mockReturnValue(0);
+
+      const { result } = renderHook(() => useHomeTabActions());
+      expect(result.current.hiddenInSelectionCount).toBe(0);
+    });
+  });
+
+  // -------------------------------------------------------------------------
   // History state passthrough
   // -------------------------------------------------------------------------
   describe("history state", () => {

@@ -411,4 +411,58 @@ describe("usePlaceholderNameEdit", () => {
       expect(result.current.showActiveBorder).toBe(true);
     });
   });
+
+  // -------------------------------------------------------------------------
+  // IME composition handling
+  // -------------------------------------------------------------------------
+  describe("IME composition guard (handleInputBlur)", () => {
+    it("should not commit on blur while composition is active", () => {
+      const { result } = renderHook(() => usePlaceholderNameEdit(cellRef, inputRef));
+
+      act(() => {
+        result.current.handleKeyDown(kbDiv("Enter"));
+        result.current.setInputValue("テスト");
+      });
+
+      // Start composition (e.g. CJK input in progress)
+      act(() => {
+        result.current.handleCompositionStart();
+      });
+
+      // Blur fires during active composition — should NOT commit
+      act(() => {
+        result.current.handleInputBlur();
+      });
+
+      expect(mockCreateTask).not.toHaveBeenCalled();
+      // Still editing (composition not finished)
+      expect(result.current.isEditing).toBe(true);
+    });
+
+    it("should commit on blur after composition ends", () => {
+      const { result } = renderHook(() => usePlaceholderNameEdit(cellRef, inputRef));
+
+      act(() => {
+        result.current.handleKeyDown(kbDiv("Enter"));
+        result.current.setInputValue("テスト");
+      });
+
+      act(() => {
+        result.current.handleCompositionStart();
+      });
+
+      // Composition ends (user confirmed character)
+      act(() => {
+        result.current.handleCompositionEnd();
+      });
+
+      // Now blur fires — should commit
+      act(() => {
+        result.current.handleInputBlur();
+      });
+
+      expect(mockCreateTask).toHaveBeenCalledWith("テスト");
+      expect(result.current.isEditing).toBe(false);
+    });
+  });
 });

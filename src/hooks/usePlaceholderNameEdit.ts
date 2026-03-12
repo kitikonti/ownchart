@@ -9,6 +9,7 @@
 import {
   useState,
   useEffect,
+  useRef,
   useCallback,
   type RefObject,
   type KeyboardEvent,
@@ -32,14 +33,20 @@ interface UsePlaceholderNameEditReturn {
   handleKeyDown: (e: KeyboardEvent<HTMLDivElement>) => void;
   handleInputBlur: () => void;
   handleInputKeyDown: (e: KeyboardEvent<HTMLInputElement>) => void;
+  handleCompositionStart: () => void;
+  handleCompositionEnd: () => void;
 }
 
 export function usePlaceholderNameEdit(
-  cellRef: RefObject<HTMLDivElement | null>,
-  inputRef: RefObject<HTMLInputElement | null>
+  cellRef: RefObject<HTMLDivElement>,
+  inputRef: RefObject<HTMLInputElement>
 ): UsePlaceholderNameEditReturn {
   const [isEditing, setIsEditing] = useState(false);
   const [inputValue, setInputValue] = useState("");
+  // Track IME composition state so blur during active composition does not
+  // commit the raw/partial input string (e.g., romaji mid-conversion on CJK
+  // keyboards). Set via onCompositionStart / onCompositionEnd events.
+  const isComposingRef = useRef(false);
 
   const setActiveCell = useTaskStore((s) => s.setActiveCell);
   const clearSelection = useTaskStore((s) => s.clearSelection);
@@ -149,7 +156,21 @@ export function usePlaceholderNameEdit(
     [isEditing, navigateCell, setActiveCell]
   );
 
-  const handleInputBlur = commitOrCancel;
+  // Guard: skip commit on blur if IME composition is still active.
+  // Without this, blurring during CJK input commits the raw romaji/pinyin
+  // rather than the composed character (GitHub #16 pattern).
+  const handleInputBlur = useCallback((): void => {
+    if (isComposingRef.current) return;
+    commitOrCancel();
+  }, [commitOrCancel]);
+
+  const handleCompositionStart = useCallback((): void => {
+    isComposingRef.current = true;
+  }, []);
+
+  const handleCompositionEnd = useCallback((): void => {
+    isComposingRef.current = false;
+  }, []);
 
   const handleInputKeyDown = useCallback(
     (e: KeyboardEvent<HTMLInputElement>): void => {
@@ -174,10 +195,13 @@ export function usePlaceholderNameEdit(
     setInputValue,
     isNameActive,
     isSelected,
+    // Active border when either editing or cell is keyboard-focused (name-active).
     showActiveBorder: isEditing || isNameActive,
     handleClick,
     handleKeyDown,
     handleInputBlur,
     handleInputKeyDown,
+    handleCompositionStart,
+    handleCompositionEnd,
   };
 }

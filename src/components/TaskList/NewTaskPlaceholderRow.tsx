@@ -214,6 +214,8 @@ const PlaceholderNameCell = memo(function PlaceholderNameCell({
     handleKeyDown,
     handleInputBlur,
     handleInputKeyDown,
+    handleCompositionStart,
+    handleCompositionEnd,
   } = usePlaceholderNameEdit(cellRef, inputRef);
 
   return (
@@ -245,6 +247,8 @@ const PlaceholderNameCell = memo(function PlaceholderNameCell({
           onChange={(e) => setInputValue(e.target.value)}
           onBlur={handleInputBlur}
           onKeyDown={handleInputKeyDown}
+          onCompositionStart={handleCompositionStart}
+          onCompositionEnd={handleCompositionEnd}
           className="w-full px-0 py-0 border-0 focus:outline-none bg-transparent"
           style={{ fontSize: "inherit" }}
           aria-label="New task name"
