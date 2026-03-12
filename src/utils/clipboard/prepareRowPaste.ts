@@ -5,8 +5,8 @@
 
 import type { Task } from "../../types/chart.types";
 import type { TaskId } from "../../types/branded.types";
-import type { ActiveCell } from "../../types/task.types";
 import type { Dependency } from "../../types/dependency.types";
+import type { ActiveCell } from "../../types/task.types";
 import type { FlattenedTask } from "../hierarchy";
 import {
   buildFlattenedTaskList,
@@ -51,6 +51,36 @@ export interface PrepareRowPasteError {
 }
 
 /**
+ * Computes the ancestor depth of a single task within the pasted set.
+ * Traverses parent links upward, stopping at the first parent that is not
+ * part of the pasted set or when a cycle is detected.
+ *
+ * @param task - The task to measure depth for.
+ * @param pastedTaskMap - Map of all tasks in the pasted set (id → task).
+ * @param pastedTaskIds - Set of all IDs in the pasted set (for O(1) lookup).
+ * @returns The number of ancestor hops within the pasted set (0 = root-level).
+ */
+function getDepthInPasted(
+  task: Task,
+  pastedTaskMap: Map<TaskId, Task>,
+  pastedTaskIds: Set<TaskId>
+): number {
+  let depth = 0;
+  let current = task;
+  // Guard against circular parent references in malformed clipboard data.
+  const visited = new Set<TaskId>();
+  while (current.parent && pastedTaskIds.has(current.parent)) {
+    if (visited.has(current.parent)) break; // cycle detected — stop traversal
+    visited.add(current.parent);
+    depth++;
+    const parent = pastedTaskMap.get(current.parent);
+    if (!parent) break;
+    current = parent;
+  }
+  return depth;
+}
+
+/**
  * Computes the maximum depth of any task within the remapped (pasted) set.
  * Guards against circular parent references in malformed clipboard data using
  * a visited-set cycle detector.
@@ -63,24 +93,9 @@ function computeMaxPastedDepth(remappedTasks: Task[]): number {
   const pastedTaskMap = new Map(remappedTasks.map((t) => [t.id, t]));
   const pastedTaskIds = new Set(remappedTasks.map((t) => t.id));
 
-  const getDepthInPasted = (task: Task): number => {
-    let depth = 0;
-    let current = task;
-    // Guard against circular parent references in malformed clipboard data.
-    const visited = new Set<TaskId>();
-    while (current.parent && pastedTaskIds.has(current.parent)) {
-      if (visited.has(current.parent)) break; // cycle detected — stop traversal
-      visited.add(current.parent);
-      depth++;
-      const parent = pastedTaskMap.get(current.parent);
-      if (!parent) break;
-      current = parent;
-    }
-    return depth;
-  };
-
   return remappedTasks.reduce(
-    (max, t) => Math.max(max, getDepthInPasted(t)),
+    (max, t) =>
+      Math.max(max, getDepthInPasted(t, pastedTaskMap, pastedTaskIds)),
     0
   );
 }
@@ -163,6 +178,7 @@ function resolveInsertContext(
     // reduce with initial -1 handles empty currentTasks (returns -1 + 1 = 0)
     insertOrder =
       currentTasks.reduce((max, t) => Math.max(max, t.order), -1) + 1;
+    // targetParent stays undefined — inserting at the end means root level.
   }
 
   // Depth of the insertion target in the existing tree (0 = top-level)

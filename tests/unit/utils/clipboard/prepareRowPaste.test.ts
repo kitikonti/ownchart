@@ -332,6 +332,22 @@ describe("applySingleLevelSummaryRecalculation", () => {
     expect(result).toBe(tasks);
   });
 
+  it("should return tasks unchanged when summary has no children (calculateSummaryDates returns null)", () => {
+    // A summary task with no children causes calculateSummaryDates to return
+    // null/undefined — the function must guard this branch and return the
+    // original tasks reference unchanged.
+    const tasks = [
+      createTask("lonely-summary", "Lonely Summary", 0, undefined, {
+        type: "summary",
+      }),
+    ];
+    const result = applySingleLevelSummaryRecalculation(
+      tasks,
+      tid("lonely-summary")
+    );
+    expect(result).toBe(tasks); // Same reference — no mutation when no dates to derive
+  });
+
   it("should recalculate summary dates for summary parent", () => {
     const tasks = [
       createTask("summary", "Summary", 0, undefined, { type: "summary" }),
