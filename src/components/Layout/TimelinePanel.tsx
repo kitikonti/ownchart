@@ -65,6 +65,8 @@ export function TimelinePanel({
         className="flex-shrink-0 bg-white/90 backdrop-blur-sm overflow-x-auto overflow-y-hidden border-b border-neutral-200/80"
         style={HIDDEN_SCROLLBAR_STYLE}
         aria-busy={!scale}
+        aria-live="polite"
+        aria-label={scale ? "Timeline header" : "Timeline header loading"}
       >
         {scale && (
           <svg
@@ -72,8 +74,8 @@ export function TimelinePanel({
             width={timelineHeaderWidth}
             height={HEADER_HEIGHT}
             className="block select-none"
-            role="img"
-            aria-label="Timeline header"
+            role="application"
+            aria-label="Timeline header — drag to select a date range, right-click for options"
             onMouseDown={handleHeaderMouseDown}
             onContextMenu={handleHeaderContextMenu}
           >

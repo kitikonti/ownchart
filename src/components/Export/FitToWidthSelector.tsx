@@ -97,15 +97,16 @@ export function FitToWidthSelector({
     !ALL_PRESET_VALUES.includes(fitToWidth)
   );
 
-  // Sync local "custom" flag when the parent resets fitToWidth to a known
-  // preset (e.g. on format change). Without this, the dropdown would still
-  // show "Custom width..." even though a preset is now active.
-  // Note: this effect only resets to false; switching programmatically to a
-  // non-preset value from the parent is not currently supported and would
-  // leave isCustomWidth as false, showing the wrong preset label.
+  // Sync local "custom" flag when the parent changes fitToWidth externally
+  // (e.g. on format change). Without this, the dropdown could show the wrong
+  // label after a programmatic update.
   useEffect(() => {
     if (ALL_PRESET_VALUES.includes(fitToWidth)) {
       setIsCustomWidth(false);
+    } else {
+      // Parent set a value that is not a known preset (e.g. a restored
+      // custom width from saved state) — reflect that in the dropdown.
+      setIsCustomWidth(true);
     }
   }, [fitToWidth]);
 
@@ -119,6 +120,7 @@ export function FitToWidthSelector({
         // [MIN_FIT_WIDTH_PX, MAX_FIT_WIDTH_PX], so clamping is not needed here.
         // Free-form custom input goes through clampFitToWidth instead.
         const numValue = parseInt(value, 10);
+        if (Number.isNaN(numValue)) return;
         setIsCustomWidth(false);
         onFitToWidthChange?.(numValue);
       }

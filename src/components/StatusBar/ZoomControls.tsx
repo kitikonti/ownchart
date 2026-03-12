@@ -56,6 +56,7 @@ export const ZoomControls = memo(function ZoomControls(): JSX.Element {
   }, [zoomOut]);
 
   const handleFitToView = useCallback((): void => {
+    // Non-reactive: read tasks at call time to avoid re-renders on task changes.
     fitToView(useTaskStore.getState().tasks);
   }, [fitToView]);
 

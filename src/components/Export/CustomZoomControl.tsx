@@ -27,6 +27,10 @@ const CUSTOM_ZOOM_PRESETS_ARRAY: ReadonlyArray<number> = [
   ...Object.values(EXPORT_ZOOM_PRESETS),
 ];
 
+/** Zoom presets for PDF exports (subset of EXPORT_ZOOM_PRESETS — no fine-grained levels). */
+const PDF_ZOOM_PRESETS_ARRAY: ReadonlyArray<number> =
+  Object.values(EXPORT_ZOOM_PRESETS);
+
 /**
  * Parse a raw string input into a clamped export zoom multiplier.
  * The input is expected to be a percentage value (e.g. "100" → 1.0).
@@ -84,7 +88,7 @@ export function CustomZoomControl({
 }: CustomZoomControlProps): JSX.Element {
   const presets = isPngOrSvg
     ? CUSTOM_ZOOM_PRESETS_ARRAY
-    : Object.values(EXPORT_ZOOM_PRESETS);
+    : PDF_ZOOM_PRESETS_ARRAY;
 
   const handleSliderChange = useCallback(
     (e: React.ChangeEvent<HTMLInputElement>): void => {
