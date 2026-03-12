@@ -59,6 +59,10 @@ export function useRowSelectionHandler({
             const minIdx = Math.min(startIdx, endIdx);
             const maxIdx = Math.max(startIdx, endIdx);
             setSelectedTaskIds(visibleTaskIds.slice(minIdx, maxIdx + 1), false);
+          } else {
+            // Anchor or target is no longer visible — fall back to single selection
+            // to avoid a confusing no-op when the anchor was from a now-hidden task.
+            setSelectedTaskIds([taskId], false);
           }
         } else {
           // No anchor yet — treat as plain single selection

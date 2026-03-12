@@ -39,7 +39,7 @@ const GRID_COLS: Record<2 | 3 | 4, string> = {
 };
 
 const FOCUS_CLASSES =
-  "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-100";
+  "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500";
 
 export function SegmentedControl<T extends string = string>({
   options,

@@ -5,14 +5,13 @@
 
 import { type MouseEvent } from "react";
 import { Plus } from "@phosphor-icons/react";
-import { ROW_NUMBER } from "../../styles/design-tokens";
+import { ROW_NUMBER, Z_INDEX } from "../../styles/design-tokens";
 
 // Insert button layout
 const BUTTON_HIT_AREA = 18;
 const BUTTON_OFFSET_LEFT = 1;
 const CIRCLE_SIZE_HOVER = 14;
 const CIRCLE_SIZE_DEFAULT = 7;
-const Z_INSERT_BUTTON = 45;
 
 interface InsertRowButtonProps {
   /** Position relative to the row */
@@ -53,14 +52,14 @@ export function InsertRowButton({
   return (
     <button
       type="button"
-      className="flex items-center justify-center"
+      className="flex items-center justify-center focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 rounded-full"
       style={{
         width: `${BUTTON_HIT_AREA}px`,
         height: `${BUTTON_HIT_AREA}px`,
         position: "absolute",
         ...positionStyle,
         left: `${BUTTON_OFFSET_LEFT}px`,
-        zIndex: Z_INSERT_BUTTON,
+        zIndex: Z_INDEX.rowControls,
       }}
       onMouseEnter={onHoverStart}
       onMouseLeave={onHoverEnd}
