@@ -4,13 +4,16 @@
  */
 
 import {
+  useCallback,
   useEffect,
   useRef,
   useState,
   useMemo,
   type KeyboardEvent,
+  type MutableRefObject,
   type RefObject,
 } from "react";
+
 import { useTaskStore, type EditableField } from "../store/slices/taskSlice";
 import { useChartStore } from "../store/slices/chartSlice";
 import { useUserPreferencesStore } from "../store/slices/userPreferencesSlice";
@@ -18,6 +21,7 @@ import type { Task } from "../types/chart.types";
 import type { TaskId } from "../types/branded.types";
 import type { NavigationDirection } from "../types/task.types";
 import type { ColumnDefinition } from "../config/tableColumns";
+import type { WorkingDaysConfig } from "../types/preferences.types";
 import {
   calculateDuration,
   formatDateByPreference,
@@ -28,15 +32,101 @@ import {
   addWorkingDays,
 } from "../utils/workingDaysCalculator";
 
+// Error message constant to keep validation logic DRY and testable.
+export const DATE_RANGE_ERROR = "End date must be after start date";
+
+// =============================================================================
+// Pure save-field helpers
+// Extracted from saveValue to keep each function under 50 lines and to allow
+// unit testing of the date/duration logic in isolation.
+// =============================================================================
+
+/**
+ * Validates a date field update and returns the update payload or an error
+ * string.
+ *
+ * @returns `{ updates }` on success or `{ error }` on validation failure.
+ */
+export function buildDateFieldUpdate(
+  task: Task,
+  field: "startDate" | "endDate",
+  localValue: string
+):
+  | { updates: Partial<Task>; error?: never }
+  | { error: string; updates?: never } {
+  const newTask = { ...task, [field]: localValue };
+  const start = new Date(newTask.startDate);
+  const end = new Date(newTask.endDate);
+
+  if (end < start) {
+    return { error: DATE_RANGE_ERROR };
+  }
+
+  const duration = calculateDuration(newTask.startDate, newTask.endDate);
+  return { updates: { [field]: localValue, duration } };
+}
+
+/**
+ * Computes the new endDate and actual duration when the user edits the
+ * duration field directly.
+ *
+ * @returns The task update payload `{ duration, endDate }`.
+ */
+export function buildDurationFieldUpdate(
+  task: Task,
+  durationDays: number,
+  workingDaysMode: boolean,
+  workingDaysConfig: WorkingDaysConfig,
+  effectiveHolidayRegion: string | undefined
+): Partial<Task> {
+  let endDateStr: string;
+
+  if (workingDaysMode) {
+    endDateStr = addWorkingDays(
+      task.startDate,
+      durationDays,
+      workingDaysConfig,
+      effectiveHolidayRegion
+    );
+  } else {
+    const startDate = new Date(task.startDate);
+    const newEndDate = new Date(startDate);
+    newEndDate.setDate(newEndDate.getDate() + durationDays - 1);
+    endDateStr = toISODateString(newEndDate);
+  }
+
+  const actualDuration = calculateDuration(task.startDate, endDateStr);
+  return { duration: actualDuration, endDate: endDateStr };
+}
+
 interface UseCellEditParams {
+  /** The stable branded ID of the task being edited. */
   taskId: TaskId;
+  /** Full task object — used for date/duration cross-field validation and display. */
   task: Task;
+  /** Which field of the task this cell represents. */
   field: EditableField;
+  /** Column definition providing optional `validator` and `formatter` callbacks. */
   column: ColumnDefinition;
+  /**
+   * Whether this cell is the currently focused (active) cell in the table.
+   * When `true` and `isEditing` is `false`, the hook focuses the cell element
+   * so keyboard shortcuts are delivered to it.
+   */
   isActive: boolean;
+  /**
+   * Whether this cell is currently in edit mode (input visible).
+   * Drives local value initialisation and input focus effects.
+   */
   isEditing: boolean;
+  /** Ref to the outer cell `<div>` — focused when the cell becomes active. */
   cellRef: RefObject<HTMLDivElement>;
+  /** Callback to exit edit mode without persisting a value (called by the store). */
   stopCellEdit: () => void;
+  /**
+   * Callback to move focus to an adjacent cell.
+   * Called after a successful save triggered by Enter or Tab.
+   */
   navigateCell: (direction: NavigationDirection) => void;
 }
 
@@ -45,7 +135,17 @@ export interface UseCellEditReturn {
   setLocalValue: (value: string) => void;
   error: string | null;
   inputRef: RefObject<HTMLInputElement>;
-  shouldOverwriteRef: React.MutableRefObject<boolean>;
+  /**
+   * Ref flag set by the caller (e.g. TaskTableCell) to `true` immediately
+   * before programmatically entering edit mode via a printable keystroke.
+   * When `true`, the hook initialises `localValue` to the typed character
+   * instead of the current field value, and skips the `select()` call so
+   * the cursor lands at the end of the new character.
+   *
+   * Protocol: set this ref to `true`, then trigger edit mode. The hook
+   * resets it back to `false` after consuming it in the initialisation effect.
+   */
+  shouldOverwriteRef: MutableRefObject<boolean>;
   saveValue: () => boolean;
   cancelEdit: () => void;
   handleEditKeyDown: (e: KeyboardEvent<HTMLInputElement>) => void;
@@ -67,6 +167,9 @@ export function useCellEdit({
   const [localValue, setLocalValue] = useState<string>("");
   const [error, setError] = useState<string | null>(null);
   const shouldOverwriteRef = useRef<boolean>(false);
+  // Snapshot of the value when edit mode is entered — used by cancelEdit to
+  // restore correctly even if the store is updated by another source mid-edit.
+  const editEntryValueRef = useRef<string>("");
 
   const updateTask = useTaskStore((state) => state.updateTask);
 
@@ -133,12 +236,12 @@ export function useCellEdit({
   // Initialize local value when entering edit mode
   useEffect(() => {
     if (isEditing) {
+      const initialValue =
+        workingDays !== null ? String(workingDays) : String(currentValue);
+      // Capture a snapshot for use by cancelEdit regardless of overwrite mode.
+      editEntryValueRef.current = initialValue;
       if (!shouldOverwriteRef.current) {
-        if (workingDays !== null) {
-          setLocalValue(String(workingDays));
-        } else {
-          setLocalValue(String(currentValue));
-        }
+        setLocalValue(initialValue);
       }
       shouldOverwriteRef.current = false;
       setError(null);
@@ -146,16 +249,19 @@ export function useCellEdit({
   }, [isEditing, currentValue, workingDays]);
 
   /** Update cell value in store with type conversion. */
-  const updateCellValue = (value: string): void => {
-    let typedValue: string | number = value;
-    if (field === "duration" || field === "progress") {
-      typedValue = Number(value);
-    }
-    updateTask(taskId, { [field]: typedValue });
-  };
+  const updateCellValue = useCallback(
+    (value: string): void => {
+      let typedValue: string | number = value;
+      if (field === "duration" || field === "progress") {
+        typedValue = Number(value);
+      }
+      updateTask(taskId, { [field]: typedValue });
+    },
+    [field, taskId, updateTask]
+  );
 
   /** Validate and save the cell value. Returns true on success, false on validation failure. */
-  const saveValue = (): boolean => {
+  const saveValue = useCallback((): boolean => {
     if (!column.validator) {
       updateCellValue(localValue);
       stopCellEdit();
@@ -169,37 +275,25 @@ export function useCellEdit({
     }
 
     if (field === "startDate" || field === "endDate") {
-      const newTask = { ...task, [field]: localValue };
-      const start = new Date(newTask.startDate);
-      const end = new Date(newTask.endDate);
-
-      if (end < start) {
-        setError("End date must be after start date");
+      const result = buildDateFieldUpdate(task, field, localValue);
+      if (result.error) {
+        setError(result.error);
         return false;
       }
-
-      const duration = calculateDuration(newTask.startDate, newTask.endDate);
-      updateTask(taskId, { [field]: localValue, duration });
+      // TS cannot narrow result.updates via the error-branch check above, so we
+      // re-check the discriminant inline. At this point result.error is undefined,
+      // so result.updates is always defined — but an explicit check avoids the `!`.
+      if (!result.updates) return false; // unreachable, satisfies TS
+      updateTask(taskId, result.updates);
     } else if (field === "duration") {
-      const durationDays = Number(localValue);
-      let endDateStr: string;
-
-      if (workingDaysMode) {
-        endDateStr = addWorkingDays(
-          task.startDate,
-          durationDays,
-          workingDaysConfig,
-          effectiveHolidayRegion
-        );
-      } else {
-        const startDate = new Date(task.startDate);
-        const newEndDate = new Date(startDate);
-        newEndDate.setDate(newEndDate.getDate() + durationDays - 1);
-        endDateStr = toISODateString(newEndDate);
-      }
-
-      const actualDuration = calculateDuration(task.startDate, endDateStr);
-      updateTask(taskId, { duration: actualDuration, endDate: endDateStr });
+      const updates = buildDurationFieldUpdate(
+        task,
+        Number(localValue),
+        workingDaysMode,
+        workingDaysConfig,
+        effectiveHolidayRegion
+      );
+      updateTask(taskId, updates);
     } else {
       updateCellValue(localValue);
     }
@@ -207,32 +301,49 @@ export function useCellEdit({
     setError(null);
     stopCellEdit();
     return true;
-  };
+  }, [
+    column,
+    field,
+    localValue,
+    task,
+    taskId,
+    updateTask,
+    updateCellValue,
+    stopCellEdit,
+    workingDaysMode,
+    workingDaysConfig,
+    effectiveHolidayRegion,
+  ]);
 
   /** Cancel edit mode without saving. */
-  const cancelEdit = (): void => {
+  const cancelEdit = useCallback((): void => {
     setError(null);
-    setLocalValue(String(currentValue));
+    // Restore to the value that was current when edit mode was entered,
+    // rather than re-reading currentValue, to handle concurrent store updates.
+    setLocalValue(editEntryValueRef.current);
     stopCellEdit();
-  };
+  }, [stopCellEdit]);
 
   /** Handle keyboard events in edit mode. */
-  const handleEditKeyDown = (e: KeyboardEvent<HTMLInputElement>): void => {
-    if (e.key === "Enter") {
-      e.preventDefault();
-      if (saveValue()) {
-        navigateCell(e.shiftKey ? "up" : "down");
+  const handleEditKeyDown = useCallback(
+    (e: KeyboardEvent<HTMLInputElement>): void => {
+      if (e.key === "Enter") {
+        e.preventDefault();
+        if (saveValue()) {
+          navigateCell(e.shiftKey ? "up" : "down");
+        }
+      } else if (e.key === "Tab") {
+        e.preventDefault();
+        if (saveValue()) {
+          navigateCell(e.shiftKey ? "left" : "right");
+        }
+      } else if (e.key === "Escape") {
+        e.preventDefault();
+        cancelEdit();
       }
-    } else if (e.key === "Tab") {
-      e.preventDefault();
-      if (saveValue()) {
-        navigateCell(e.shiftKey ? "left" : "right");
-      }
-    } else if (e.key === "Escape") {
-      e.preventDefault();
-      cancelEdit();
-    }
-  };
+    },
+    [saveValue, cancelEdit, navigateCell]
+  );
 
   /** Format display value for view mode. */
   const displayValue = useMemo((): string => {
