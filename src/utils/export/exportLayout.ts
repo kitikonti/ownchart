@@ -213,14 +213,7 @@ function computeTimelineLayout(input: TimelineLayoutInput): {
     projectDateRange,
     visibleDateRange,
   } = input;
-  // Two-pass zoom estimation:
-  // Pass 1 — Compute a preliminary zoom from the raw project duration (before label
-  //           padding is added). This preliminary zoom is only needed by
-  //           getEffectiveDateRange to calculate how many extra days of padding are
-  //           required so that task labels are not clipped at the edges of the chart.
-  // Pass 2 — Re-compute the final zoom from the padded duration. The padded date
-  //           range is slightly wider, so the zoom that "fits" it is marginally
-  //           smaller. Using the final duration keeps the fit-to-width mode accurate.
+  // Two-pass zoom — see JSDoc above for rationale.
   const preliminaryDuration = estimatePreliminaryDuration(projectDateRange);
   const preliminaryZoom = calculateEffectiveZoom(
     options,
@@ -290,6 +283,8 @@ function buildLayoutParts(input: LayoutPartsInput): ExportLayoutParts {
     currentAppZoom,
     providedProjectDateRange,
     visibleDateRange,
+    // Full DensityConfig is passed (not just rowHeight) so that sub-computations
+    // can access other density properties (e.g. padding) without a signature change.
     densityConfig,
   } = input;
   const selectedColumns = options.selectedColumns;

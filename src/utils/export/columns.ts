@@ -72,6 +72,8 @@ export function getColumnDisplayValue(
   }
   // Exhaustive guard: if a new ExportDataColumnKey is added without a handler
   // above, TypeScript will flag this line as unreachable (the `never` type).
+  // This guard is compile-time only — at runtime, TypeScript narrows `key` to
+  // `never` when all branches are handled, so this line is never executed.
   const _exhaustiveCheck: never = key;
   return _exhaustiveCheck;
 }
@@ -88,8 +90,9 @@ export const EXPORT_COLUMN_MAP = new Map<ExportColumnKey, ExportColumn>(
 export const HEADER_LABELS: Record<ExportColumnKey, string> =
   Object.fromEntries(
     EXPORT_COLUMNS.map((col) => [col.key, col.label])
-    // safe: keys come directly from EXPORT_COLUMNS which only contains ExportColumnKey
-    // values; Object.fromEntries cannot infer the key type narrower than `string`.
+    // Safety: keys come directly from EXPORT_COLUMNS which only contains ExportColumnKey
+    // values. Object.fromEntries cannot infer the key type narrower than `string`, so the
+    // cast is required. Completeness is guaranteed by _headerLabelsCheck below.
   ) as Record<ExportColumnKey, string>;
 
 // Compile-time completeness guard: if a new ExportColumnKey is added without a
