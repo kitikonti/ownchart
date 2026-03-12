@@ -9,7 +9,13 @@ import type { ReactNode } from "react";
 export interface FieldLabelProps {
   /** Label text or content */
   children: ReactNode;
-  /** Links to input via htmlFor — also switches to <label> element */
+  /**
+   * Links to input via htmlFor — also switches to <label> element.
+   *
+   * @remarks When omitted, the component renders a <span> with no programmatic
+   * association to any control. Callers must then ensure the associated control
+   * is labelled by other means (`aria-label` or `aria-labelledby`).
+   */
   htmlFor?: string;
 }
 

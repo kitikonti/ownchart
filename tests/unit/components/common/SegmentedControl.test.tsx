@@ -289,6 +289,179 @@ describe("SegmentedControl", () => {
     });
   });
 
+  describe("keyboard navigation — inline layout", () => {
+    it("ArrowRight moves selection to the next option", () => {
+      const onChange = vi.fn();
+      render(
+        <SegmentedControl
+          options={basicOptions}
+          value="a"
+          onChange={onChange}
+          ariaLabel="Test"
+        />
+      );
+      const selected = screen.getByText("Option A").closest("button")!;
+      fireEvent.keyDown(selected, { key: "ArrowRight" });
+      expect(onChange).toHaveBeenCalledWith("b");
+    });
+
+    it("ArrowLeft moves selection to the previous option", () => {
+      const onChange = vi.fn();
+      render(
+        <SegmentedControl
+          options={basicOptions}
+          value="b"
+          onChange={onChange}
+          ariaLabel="Test"
+        />
+      );
+      const selected = screen.getByText("Option B").closest("button")!;
+      fireEvent.keyDown(selected, { key: "ArrowLeft" });
+      expect(onChange).toHaveBeenCalledWith("a");
+    });
+
+    it("ArrowRight wraps from last to first option", () => {
+      const onChange = vi.fn();
+      render(
+        <SegmentedControl
+          options={basicOptions}
+          value="c"
+          onChange={onChange}
+          ariaLabel="Test"
+        />
+      );
+      const selected = screen.getByText("Option C").closest("button")!;
+      fireEvent.keyDown(selected, { key: "ArrowRight" });
+      expect(onChange).toHaveBeenCalledWith("a");
+    });
+
+    it("ArrowLeft wraps from first to last option", () => {
+      const onChange = vi.fn();
+      render(
+        <SegmentedControl
+          options={basicOptions}
+          value="a"
+          onChange={onChange}
+          ariaLabel="Test"
+        />
+      );
+      const selected = screen.getByText("Option A").closest("button")!;
+      fireEvent.keyDown(selected, { key: "ArrowLeft" });
+      expect(onChange).toHaveBeenCalledWith("c");
+    });
+
+    it("selected option has tabIndex=0, others have tabIndex=-1", () => {
+      render(
+        <SegmentedControl
+          options={basicOptions}
+          value="b"
+          onChange={vi.fn()}
+          ariaLabel="Test"
+        />
+      );
+      const radios = screen.getAllByRole("radio");
+      expect(radios[0]).toHaveAttribute("tabindex", "-1");
+      expect(radios[1]).toHaveAttribute("tabindex", "0");
+      expect(radios[2]).toHaveAttribute("tabindex", "-1");
+    });
+  });
+
+  describe("keyboard navigation — grid layout", () => {
+    const gridOptions = [
+      { value: "a", label: "A" },
+      { value: "b", label: "B" },
+      { value: "c", label: "C" },
+      { value: "d", label: "D" },
+    ];
+
+    it("ArrowRight moves to next option in the row", () => {
+      const onChange = vi.fn();
+      render(
+        <SegmentedControl
+          options={gridOptions}
+          value="a"
+          onChange={onChange}
+          ariaLabel="Grid"
+          layout="grid"
+          columns={2}
+        />
+      );
+      const selected = screen.getByText("A").closest("button")!;
+      fireEvent.keyDown(selected, { key: "ArrowRight" });
+      expect(onChange).toHaveBeenCalledWith("b");
+    });
+
+    it("ArrowDown moves to the option in the next row", () => {
+      const onChange = vi.fn();
+      render(
+        <SegmentedControl
+          options={gridOptions}
+          value="a"
+          onChange={onChange}
+          ariaLabel="Grid"
+          layout="grid"
+          columns={2}
+        />
+      );
+      const selected = screen.getByText("A").closest("button")!;
+      fireEvent.keyDown(selected, { key: "ArrowDown" });
+      expect(onChange).toHaveBeenCalledWith("c"); // index 0 + 2 columns = index 2
+    });
+
+    it("ArrowUp moves to the option in the previous row", () => {
+      const onChange = vi.fn();
+      render(
+        <SegmentedControl
+          options={gridOptions}
+          value="c"
+          onChange={onChange}
+          ariaLabel="Grid"
+          layout="grid"
+          columns={2}
+        />
+      );
+      const selected = screen.getByText("C").closest("button")!;
+      fireEvent.keyDown(selected, { key: "ArrowUp" });
+      expect(onChange).toHaveBeenCalledWith("a"); // index 2 - 2 columns = index 0
+    });
+
+    it("ArrowDown wraps from last row to first row", () => {
+      const onChange = vi.fn();
+      render(
+        <SegmentedControl
+          options={gridOptions}
+          value="c"
+          onChange={onChange}
+          ariaLabel="Grid"
+          layout="grid"
+          columns={2}
+        />
+      );
+      const selected = screen.getByText("C").closest("button")!;
+      fireEvent.keyDown(selected, { key: "ArrowDown" });
+      // index 2 + 2 = 4 % 4 = 0 → wraps to "a"
+      expect(onChange).toHaveBeenCalledWith("a");
+    });
+
+    it("ArrowUp wraps from first row to last row", () => {
+      const onChange = vi.fn();
+      render(
+        <SegmentedControl
+          options={gridOptions}
+          value="a"
+          onChange={onChange}
+          ariaLabel="Grid"
+          layout="grid"
+          columns={2}
+        />
+      );
+      const selected = screen.getByText("A").closest("button")!;
+      fireEvent.keyDown(selected, { key: "ArrowUp" });
+      // index 0 - 2 + 4 = 2 % 4 = 2 → wraps to "c"
+      expect(onChange).toHaveBeenCalledWith("c");
+    });
+  });
+
   describe("focus-visible styles", () => {
     it("includes focus-visible classes on inline buttons", () => {
       render(

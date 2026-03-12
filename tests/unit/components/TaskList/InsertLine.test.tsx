@@ -58,4 +58,13 @@ describe("InsertLine", () => {
     const el = container.querySelector("div") as HTMLElement;
     expect(el.style.backgroundColor).toBeTruthy();
   });
+
+  it("extends beyond the viewport via large negative right value", () => {
+    // INSERT_LINE_RIGHT_EXTEND_PX = -9999 — the mechanism that makes the line
+    // span both the task-list and timeline panels without requiring overflow:visible
+    // on every ancestor.
+    const { container } = render(<InsertLine position="above" />);
+    const el = container.querySelector("div") as HTMLElement;
+    expect(el.style.right).toBe("-9999px");
+  });
 });

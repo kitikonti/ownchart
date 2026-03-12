@@ -128,10 +128,10 @@ function SegmentedControlInner<T extends string = string>({
           focusAndSelect((currentIndex - 1 + total) % total);
         } else if (e.key === "ArrowDown") {
           e.preventDefault();
-          focusAndSelect(Math.min(currentIndex + columns, total - 1));
+          focusAndSelect((currentIndex + columns) % total);
         } else if (e.key === "ArrowUp") {
           e.preventDefault();
-          focusAndSelect(Math.max(currentIndex - columns, 0));
+          focusAndSelect((currentIndex - columns + total) % total);
         }
       } else {
         // Inline: left/right only.
