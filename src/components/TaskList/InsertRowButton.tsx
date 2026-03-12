@@ -6,13 +6,14 @@
 import { type MouseEvent } from "react";
 import { Plus } from "@phosphor-icons/react";
 import { ROW_NUMBER, Z_INDEX } from "../../styles/design-tokens";
+import { INSERT_BUTTON_HIT_AREA } from "./rowNumberConfig";
 
 // Insert button layout
-const BUTTON_HIT_AREA = 18;
 const BUTTON_OFFSET_LEFT = 1;
-const BUTTON_POSITION_OFFSET = BUTTON_HIT_AREA / 2; // centers button on row edge
+const BUTTON_POSITION_OFFSET = INSERT_BUTTON_HIT_AREA / 2; // centers button on row edge
 const CIRCLE_SIZE_HOVER = 14;
 const CIRCLE_SIZE_DEFAULT = 7;
+const PLUS_ICON_SIZE = 10;
 
 interface InsertRowButtonProps {
   /** Position relative to the row */
@@ -55,8 +56,8 @@ export function InsertRowButton({
       type="button"
       className="flex items-center justify-center focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 rounded-full"
       style={{
-        width: `${BUTTON_HIT_AREA}px`,
-        height: `${BUTTON_HIT_AREA}px`,
+        width: `${INSERT_BUTTON_HIT_AREA}px`,
+        height: `${INSERT_BUTTON_HIT_AREA}px`,
         position: "absolute",
         ...positionStyle,
         left: `${BUTTON_OFFSET_LEFT}px`,
@@ -77,7 +78,7 @@ export function InsertRowButton({
             border: `1px solid ${controlsColor}`,
           }}
         >
-          <Plus size={10} weight="bold" color={controlsColor} />
+          <Plus size={PLUS_ICON_SIZE} weight="bold" color={controlsColor} />
         </div>
       ) : (
         <div

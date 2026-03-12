@@ -4,10 +4,10 @@
  */
 
 import { Z_INDEX } from "../../styles/design-tokens";
-import { ROW_COLORS } from "./rowNumberConfig";
+import { INSERT_BUTTON_HIT_AREA, ROW_COLORS } from "./rowNumberConfig";
 
 const INSERT_LINE_THICKNESS = 2;
-const INSERT_LINE_START = 18; // px from left, after the insert-button circle
+const INSERT_LINE_START = INSERT_BUTTON_HIT_AREA; // px from left, after the insert-button circle
 // Intentionally large negative `right` value so the line visually extends across
 // both the task-list panel and the timeline/chart panel, regardless of viewport width.
 // A CSS-only solution (e.g. width: 100vw) would require overflow:visible on every

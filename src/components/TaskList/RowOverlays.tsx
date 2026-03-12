@@ -62,7 +62,6 @@ export const RowOverlays = memo(function RowOverlays({
           className="absolute inset-0 pointer-events-none"
           style={{
             borderLeft: CLIPBOARD_BORDER,
-            borderRight: "none",
             borderTop: clipboardPosition.isFirst ? CLIPBOARD_BORDER : "none",
             borderBottom: clipboardPosition.isLast ? CLIPBOARD_BORDER : "none",
             zIndex: Z_INDEX.rowIndicator,
