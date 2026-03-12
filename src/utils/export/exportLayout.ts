@@ -233,6 +233,63 @@ function flattenInputTasks(tasks: Task[]): {
 // =============================================================================
 
 /**
+ * Orchestrate the table → timeline → dimension sub-computations from an
+ * already-flattened task list. Extracted to keep computeExportLayout under
+ * 50 lines while preserving the well-defined call sequence.
+ */
+function buildLayoutParts(
+  orderedTasks: Task[],
+  options: ExportLayoutInput["options"],
+  columnWidths: Record<string, number>,
+  currentAppZoom: number,
+  providedProjectDateRange: { start: Date; end: Date } | undefined,
+  visibleDateRange: { start: Date; end: Date } | undefined,
+  densityConfig: DensityConfig
+): Omit<ExportLayout, "flattenedTasks" | "orderedTasks" | "densityConfig"> {
+  const selectedColumns = options.selectedColumns;
+  const projectDateRange = resolveProjectDateRange(
+    providedProjectDateRange,
+    orderedTasks
+  );
+  const { hasTaskList, effectiveColumnWidths, taskTableWidth } =
+    computeTaskTableLayout(
+      selectedColumns,
+      orderedTasks,
+      options,
+      columnWidths
+    );
+  const { dateRange, effectiveZoom, scale } = computeTimelineLayout(
+    options,
+    currentAppZoom,
+    orderedTasks,
+    taskTableWidth,
+    projectDateRange,
+    visibleDateRange
+  );
+  const { timelineWidth, totalWidth, contentHeight, totalHeight } =
+    computeFinalDimensions(
+      options,
+      scale,
+      taskTableWidth,
+      orderedTasks.length,
+      densityConfig.rowHeight
+    );
+  return {
+    selectedColumns,
+    hasTaskList,
+    effectiveColumnWidths,
+    taskTableWidth,
+    dateRange,
+    effectiveZoom,
+    scale,
+    timelineWidth,
+    totalWidth,
+    contentHeight,
+    totalHeight,
+  };
+}
+
+/**
  * Computes the full export layout geometry from tasks and options.
  * Pure function shared by both ExportRenderer (via useMemo) and
  * calculateExportDimensions to eliminate duplication.
@@ -254,54 +311,17 @@ export function computeExportLayout(input: ExportLayoutInput): ExportLayout {
 
   const densityConfig = DENSITY_CONFIG[options.density];
   const { flattenedTasks, orderedTasks } = flattenInputTasks(tasks);
-  const selectedColumns = options.selectedColumns;
-  const projectDateRange = resolveProjectDateRange(
-    providedProjectDateRange,
-    orderedTasks
-  );
-
-  const { hasTaskList, effectiveColumnWidths, taskTableWidth } =
-    computeTaskTableLayout(
-      selectedColumns,
-      orderedTasks,
-      options,
-      columnWidths
-    );
-
-  const { dateRange, effectiveZoom, scale } = computeTimelineLayout(
+  const parts = buildLayoutParts(
+    orderedTasks,
     options,
+    columnWidths,
     currentAppZoom,
-    orderedTasks,
-    taskTableWidth,
-    projectDateRange,
-    visibleDateRange
+    providedProjectDateRange,
+    visibleDateRange,
+    densityConfig
   );
 
-  const { timelineWidth, totalWidth, contentHeight, totalHeight } =
-    computeFinalDimensions(
-      options,
-      scale,
-      taskTableWidth,
-      orderedTasks.length,
-      densityConfig.rowHeight
-    );
-
-  return {
-    flattenedTasks,
-    orderedTasks,
-    selectedColumns,
-    hasTaskList,
-    effectiveColumnWidths,
-    taskTableWidth,
-    dateRange,
-    effectiveZoom,
-    scale,
-    timelineWidth,
-    totalWidth,
-    contentHeight,
-    totalHeight,
-    densityConfig,
-  };
+  return { flattenedTasks, orderedTasks, densityConfig, ...parts };
 }
 
 /**
