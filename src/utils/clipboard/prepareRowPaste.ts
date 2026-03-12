@@ -107,6 +107,8 @@ function computeMaxPastedDepth(remappedTasks: Task[]): number {
  * them into the existing tree at the correct level.
  *
  * @param remappedTasks - Tasks with new IDs (output of remapTaskIds).
+ *   **Must be in intended visual insertion order**: order values are assigned
+ *   as `insertOrder + i`, so the array index determines the final order.
  * @param insertOrder - The `order` value of the first pasted task.
  * @param targetParent - Parent to assign to clipboard-root tasks.
  * @returns New task array with `order` and `parent` set correctly.
@@ -127,7 +129,7 @@ function assignOrderAndParent(
   });
 }
 
-interface InsertContext {
+export interface InsertContext {
   insertOrder: number;
   targetParent: TaskId | undefined;
   targetDepth: number;
@@ -190,6 +192,28 @@ function resolveInsertContext(
 }
 
 /**
+ * Shifts existing tasks at or after `insertOrder` to make room for the new
+ * tasks, then appends the new tasks to produce the merged list.
+ *
+ * @param currentTasks - Tasks currently in the store.
+ * @param newTasks - New tasks (already has final order + parent assigned).
+ * @param insertOrder - The order value at the insertion point.
+ * @param count - Number of new tasks being inserted (used for the shift amount).
+ * @returns Merged task array: shifted existing tasks followed by new tasks.
+ */
+function buildMergedTaskList(
+  currentTasks: Task[],
+  newTasks: Task[],
+  insertOrder: number,
+  count: number
+): Task[] {
+  const shiftedTasks = currentTasks.map((t) =>
+    t.order >= insertOrder ? { ...t, order: t.order + count } : t
+  );
+  return [...shiftedTasks, ...newTasks];
+}
+
+/**
  * Pure function that prepares all data needed for a row paste operation.
  * Returns either a successful result or an error string.
  */
@@ -203,6 +227,18 @@ export function prepareRowPaste(
     activeCell,
     selectedTaskIds,
   } = input;
+
+  // Nothing to paste — return immediately without shifting or remapping.
+  if (clipboardTasks.length === 0) {
+    return {
+      mergedTasks: currentTasks,
+      newTasks: [],
+      remappedDependencies: [],
+      idMapping: {} as Record<TaskId, TaskId>,
+      insertOrder: 0,
+      targetParent: undefined,
+    };
+  }
 
   const { insertOrder, targetParent, targetDepth } = resolveInsertContext(
     currentTasks,
@@ -227,18 +263,18 @@ export function prepareRowPaste(
     idMapping
   );
 
-  // Shift order for existing tasks at or after insert position
-  const shiftedTasks = currentTasks.map((t) =>
-    t.order >= insertOrder ? { ...t, order: t.order + remappedTasks.length } : t
-  );
-
-  // Set order and parent for new tasks, then merge
+  // Set order and parent for new tasks, then merge with shifted existing tasks
   const newTasks = assignOrderAndParent(
     remappedTasks,
     insertOrder,
     targetParent
   );
-  const mergedTasks = [...shiftedTasks, ...newTasks];
+  const mergedTasks = buildMergedTaskList(
+    currentTasks,
+    newTasks,
+    insertOrder,
+    remappedTasks.length
+  );
 
   return {
     mergedTasks,

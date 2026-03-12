@@ -26,6 +26,7 @@ export {
   type PrepareRowPasteInput,
   type PrepareRowPasteResult,
   type PrepareRowPasteError,
+  type InsertContext,
 } from "./prepareRowPaste";
 
 export {
