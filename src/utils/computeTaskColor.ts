@@ -400,6 +400,27 @@ function applyHierarchyColor(
   return lightenColor(hierarchyOptions.baseColor, lightenAmount) as HexColor;
 }
 
+/**
+ * Compute a single task's taskType-mode color.
+ */
+function applyTaskTypeColor(
+  task: Task,
+  taskTypeOptions: ColorModeState["taskTypeOptions"]
+): HexColor {
+  // The `default` branch handles "task" and any future TaskType additions
+  // gracefully by returning taskColor. If a new type is added, TypeScript
+  // strict mode will not catch it here — add an explicit `case` for it.
+  switch (task.type) {
+    case "summary":
+      return taskTypeOptions.summaryColor;
+    case "milestone":
+      return taskTypeOptions.milestoneColor;
+    case "task":
+    default:
+      return taskTypeOptions.taskColor;
+  }
+}
+
 // ─── Public API ───────────────────────────────────────────────────────────────
 
 /**
@@ -450,18 +471,7 @@ export function computeTaskColor(
       return applySummaryColor(task, allTasks, summaryOptions);
 
     case "taskType":
-      // The `default` branch handles "task" and any future TaskType additions
-      // gracefully by returning taskColor. If a new type is added, TypeScript
-      // strict mode will not catch it here — add an explicit `case` for it.
-      switch (task.type) {
-        case "summary":
-          return taskTypeOptions.summaryColor;
-        case "milestone":
-          return taskTypeOptions.milestoneColor;
-        case "task":
-        default:
-          return taskTypeOptions.taskColor;
-      }
+      return applyTaskTypeColor(task, taskTypeOptions);
 
     case "hierarchy":
       return applyHierarchyColor(task, allTasks, hierarchyOptions);
