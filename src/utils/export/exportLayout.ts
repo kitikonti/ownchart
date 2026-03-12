@@ -236,6 +236,11 @@ function flattenInputTasks(tasks: Task[]): {
  * Computes the full export layout geometry from tasks and options.
  * Pure function shared by both ExportRenderer (via useMemo) and
  * calculateExportDimensions to eliminate duplication.
+ *
+ * Uses a two-pass zoom algorithm: a preliminary zoom is first computed from
+ * the raw project duration to determine label-padding days, then the final
+ * zoom is computed from the padded duration. This ensures fit-to-width mode
+ * is accurate and task labels are never clipped at the chart edges.
  */
 export function computeExportLayout(input: ExportLayoutInput): ExportLayout {
   const {

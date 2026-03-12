@@ -3,7 +3,11 @@
  * Centralizes zoom, dimension, and date range calculations.
  */
 
-import type { ExportOptions, ExportColumnKey } from "./types";
+import type {
+  ExportOptions,
+  ExportColumnKey,
+  ExportDataColumnKey,
+} from "./types";
 import type { UiDensity } from "../../types/preferences.types";
 import { DENSITY_CONFIG } from "../../config/densityConfig";
 import { addDays } from "../dateUtils";
@@ -173,36 +177,15 @@ export function calculateDurationDays(dateRange: {
 }
 
 /**
- * Calculate optimal column width based on content.
- * Uses the shared calculateColumnWidth function from textMeasurement.
+ * Build per-task cell values and extra widths for column width measurement.
+ * Extracted from calculateOptimalColumnWidth to keep that function under 50 lines.
  */
-export function calculateOptimalColumnWidth(
-  key: ExportColumnKey,
+function buildColumnMeasurementInputs(
+  key: Exclude<ExportColumnKey, "color">,
   tasks: Task[],
-  density: UiDensity
-): number {
-  const densityConfig = DENSITY_CONFIG[density];
-  const fontSize = densityConfig.fontSizeCell;
-  const indentSize = densityConfig.indentSize;
-  const iconSize = densityConfig.iconSize;
-
-  // Color column has fixed width
-  if (key === "color") {
-    return densityConfig.columnWidths.color;
-  }
-
-  // Get header label
-  const headerLabel = HEADER_LABELS[key];
-
-  // Name column has only right padding (indent handles left), others have both
-  const cellPadding =
-    key === "name"
-      ? densityConfig.cellPaddingX
-      : densityConfig.cellPaddingX * 2;
-
-  // Prepare cell values and extra widths.
-  // For data columns (non-name), reuse getColumnDisplayValue from columns.ts
-  // as the single source of truth for cell display strings.
+  indentSize: number,
+  iconSize: number
+): { cellValues: string[]; extraWidths: number[] } {
   const cellValues: string[] = [];
   const extraWidths: number[] = [];
 
@@ -213,7 +196,9 @@ export function calculateOptimalColumnWidth(
     } else {
       // getColumnDisplayValue returns null when no value is available (renders "—").
       // For width measurement purposes, null → "" is equivalent (no text to measure).
-      cellValue = getColumnDisplayValue(task, key) ?? "";
+      // At this point key cannot be "color" (handled as early return in caller) or
+      // "name" (handled above), so the cast to ExportDataColumnKey is safe.
+      cellValue = getColumnDisplayValue(task, key as ExportDataColumnKey) ?? "";
     }
 
     cellValues.push(cellValue);
@@ -230,6 +215,40 @@ export function calculateOptimalColumnWidth(
       extraWidths.push(0);
     }
   }
+
+  return { cellValues, extraWidths };
+}
+
+/**
+ * Calculate optimal column width based on content.
+ * Uses the shared calculateColumnWidth function from textMeasurement.
+ */
+export function calculateOptimalColumnWidth(
+  key: ExportColumnKey,
+  tasks: Task[],
+  density: UiDensity
+): number {
+  const densityConfig = DENSITY_CONFIG[density];
+
+  // Color column has fixed width
+  if (key === "color") {
+    return densityConfig.columnWidths.color;
+  }
+
+  const fontSize = densityConfig.fontSizeCell;
+  const headerLabel = HEADER_LABELS[key];
+  // Name column has only right padding (indent handles left), others have both
+  const cellPadding =
+    key === "name"
+      ? densityConfig.cellPaddingX
+      : densityConfig.cellPaddingX * 2;
+
+  const { cellValues, extraWidths } = buildColumnMeasurementInputs(
+    key,
+    tasks,
+    densityConfig.indentSize,
+    densityConfig.iconSize
+  );
 
   // Use shared utility function (same as autoFitColumn)
   return calculateColumnWidth({
@@ -250,8 +269,8 @@ export function calculateOptimalColumnWidths(
   tasks: Task[],
   density: UiDensity,
   existingWidths: Record<string, number> = {}
-): Record<string, number> {
-  const result: Record<string, number> = {};
+): Partial<Record<ExportColumnKey, number>> {
+  const result: Partial<Record<ExportColumnKey, number>> = {};
 
   for (const key of selectedColumns) {
     // Use existing width if set (user customization), otherwise calculate

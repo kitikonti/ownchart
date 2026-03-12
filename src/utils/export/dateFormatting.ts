@@ -26,6 +26,8 @@ export function formatDate(date: Date | undefined): string {
  *
  * @precondition `range.start` must be ≤ `range.end`. No validation is performed;
  * an inverted range will produce an inverted string without error.
+ * A `console.warn` is emitted in development builds (`import.meta.env.DEV`) when
+ * the precondition is violated, but no warning is issued in production.
  */
 export function formatDateRange(range: { start: Date; end: Date }): string {
   if (import.meta.env.DEV && range.start > range.end) {
