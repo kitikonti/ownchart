@@ -34,8 +34,8 @@ export const RowOverlays = memo(function RowOverlays({
 
   if (!isSelected && !isInClipboard) return null;
 
-  const showTopBorder = selectionPosition?.isFirstSelected ?? true;
-  const showBottomBorder = selectionPosition?.isLastSelected ?? true;
+  const showTopBorder = selectionPosition?.isFirstSelected ?? false;
+  const showBottomBorder = selectionPosition?.isLastSelected ?? false;
 
   return (
     <>

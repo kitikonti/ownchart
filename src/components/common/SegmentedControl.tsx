@@ -1,7 +1,8 @@
 /**
  * SegmentedControl - Reusable segmented button group for selecting one option.
  * Supports two layouts: inline (horizontal bar) and grid (2D grid of buttons).
- * Includes proper a11y: role="group", aria-label, type="button", aria-pressed, focus-visible.
+ * Includes proper a11y: role="radiogroup", aria-label, type="button", role="radio",
+ * aria-checked, focus-visible.
  */
 
 import { memo } from "react";
@@ -56,7 +57,7 @@ function SegmentedControlInner<T extends string = string>({
     const gridCols = GRID_COLS[columns];
     return (
       <div
-        role="group"
+        role="radiogroup"
         aria-label={ariaLabel}
         className={`grid ${gridCols} gap-2`}
       >
@@ -66,7 +67,8 @@ function SegmentedControlInner<T extends string = string>({
             <button
               key={opt.value}
               type="button"
-              aria-pressed={isSelected}
+              role="radio"
+              aria-checked={isSelected}
               onClick={() => onChange(opt.value)}
               className={`flex items-center justify-center gap-2 px-4 py-2 text-sm font-medium rounded border transition-colors duration-150 ${FOCUS_CLASSES} focus-visible:ring-offset-2 ${
                 isSelected
@@ -86,7 +88,7 @@ function SegmentedControlInner<T extends string = string>({
   // Inline layout
   return (
     <div
-      role="group"
+      role="radiogroup"
       aria-label={ariaLabel}
       className={`${fullWidth ? "flex" : "inline-flex"} rounded border border-neutral-300 overflow-hidden`}
     >
@@ -96,7 +98,8 @@ function SegmentedControlInner<T extends string = string>({
           <button
             key={opt.value}
             type="button"
-            aria-pressed={isSelected}
+            role="radio"
+            aria-checked={isSelected}
             onClick={() => onChange(opt.value)}
             className={`${fullWidth ? "flex-1" : ""} flex items-center justify-center gap-2 px-4 py-2 text-sm font-medium transition-colors duration-150 ${FOCUS_CLASSES} ${
               index > 0 ? "border-l border-neutral-300" : ""

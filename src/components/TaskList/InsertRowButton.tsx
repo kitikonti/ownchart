@@ -12,7 +12,7 @@ import { INSERT_BUTTON_HIT_AREA } from "./rowNumberConfig";
 const BUTTON_OFFSET_LEFT = 1; // 1px inset so the button circle doesn't clip the cell border
 const BUTTON_POSITION_OFFSET = INSERT_BUTTON_HIT_AREA / 2; // centers button on row edge
 const CIRCLE_SIZE_HOVER = 14; // expanded circle diameter on hover
-const CIRCLE_SIZE_DEFAULT = 7; // dot diameter at rest (half of hover size)
+const CIRCLE_SIZE_DEFAULT = CIRCLE_SIZE_HOVER / 2; // dot diameter at rest
 const PLUS_ICON_SIZE = 10; // icon is smaller than the hover circle to leave padding
 
 interface InsertRowButtonProps {

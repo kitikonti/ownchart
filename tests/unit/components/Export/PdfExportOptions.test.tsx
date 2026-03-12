@@ -387,17 +387,17 @@ describe("PdfExportOptions", () => {
   });
 
   describe("accessibility", () => {
-    it("has role=group on orientation control", () => {
+    it("has role=radiogroup on orientation control", () => {
       render(<PdfExportOptions {...createDefaultProps()} />);
       expect(
-        screen.getByRole("group", { name: "Page orientation" })
+        screen.getByRole("radiogroup", { name: "Page orientation" })
       ).toBeInTheDocument();
     });
 
-    it("has role=group on margin control", () => {
+    it("has role=radiogroup on margin control", () => {
       render(<PdfExportOptions {...createDefaultProps()} />);
       expect(
-        screen.getByRole("group", { name: "Margin preset" })
+        screen.getByRole("radiogroup", { name: "Margin preset" })
       ).toBeInTheDocument();
     });
 
