@@ -8,6 +8,7 @@
 
 import type { InputHTMLAttributes } from "react";
 import { forwardRef } from "react";
+import { formVariantClasses } from "./formVariantClasses";
 
 export interface InputProps extends Omit<
   InputHTMLAttributes<HTMLInputElement>,
@@ -26,13 +27,6 @@ export interface InputProps extends Omit<
 const baseClasses =
   "px-3 py-2 text-sm bg-white border rounded transition-colors duration-150";
 
-const variantClasses = {
-  default:
-    "border-neutral-300 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-brand-600 focus-visible:border-brand-600 hover:border-neutral-400",
-  figma:
-    "border-neutral-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-100 focus-visible:border-brand-600",
-};
-
 export const Input = forwardRef<HTMLInputElement, InputProps>(
   (
     {
@@ -46,7 +40,7 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(
   ) => {
     const classes = [
       baseClasses,
-      variantClasses[variant],
+      formVariantClasses[variant],
       fullWidth ? "w-full" : "",
       mono ? "font-mono" : "",
       className,

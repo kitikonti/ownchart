@@ -57,7 +57,7 @@ export const RowOverlays = memo(function RowOverlays({
           left border is always shown; top/bottom only on first/last row of the
           clipboard range; right border is intentionally omitted (overlay spans
           full row width via inset-0, so a right border would appear mid-content). */}
-      {isInClipboard && clipboardPosition && (
+      {isInClipboard && (
         <div
           className="absolute inset-0 pointer-events-none"
           style={{

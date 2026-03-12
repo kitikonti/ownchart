@@ -10,6 +10,7 @@
 
 import type { SelectHTMLAttributes, ReactNode } from "react";
 import { forwardRef } from "react";
+import { formVariantClasses } from "./formVariantClasses";
 
 export interface SelectProps extends Omit<
   SelectHTMLAttributes<HTMLSelectElement>,
@@ -26,16 +27,9 @@ export interface SelectProps extends Omit<
 const baseClasses =
   "w-full px-3 py-2 text-sm bg-white border rounded cursor-pointer transition-colors duration-150";
 
-const variantClasses = {
-  default:
-    "border-neutral-300 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-brand-600 focus-visible:border-brand-600 hover:border-neutral-400",
-  figma:
-    "border-neutral-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-100 focus-visible:border-brand-600",
-};
-
 export const Select = forwardRef<HTMLSelectElement, SelectProps>(
   ({ children, variant = "default", className = "", ...props }, ref) => {
-    const classes = [baseClasses, variantClasses[variant], className]
+    const classes = [baseClasses, formVariantClasses[variant], className]
       .filter(Boolean)
       .join(" ");
 
