@@ -54,6 +54,10 @@ function createPagePreset(
  *
  * Exported for unit testing to guard against accidental format changes
  * (e.g. swapping the × multiplication sign for a plain ASCII 'x').
+ *
+ * @param width - Screen width in pixels
+ * @param height - Screen height in pixels
+ * @returns Formatted string such as "1920 × 1080 px"
  */
 export function formatResolutionDescription(
   width: number,

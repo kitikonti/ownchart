@@ -29,8 +29,12 @@ export const EXPORT_COLUMNS: readonly ExportColumn[] = [
 
 /**
  * Returns the display string for a data column cell.
- * Returns null when no value is available (renders "—"),
- * empty string when the cell should be blank (e.g. milestone end date).
+ *
+ * @param task - The task whose column value should be rendered.
+ * @param key - The data column key to look up.
+ * @returns The display string, or `null` when no value is available (renders
+ *   "—"), or `""` when the cell should be intentionally blank (e.g. milestone
+ *   end date and duration).
  */
 export function getColumnDisplayValue(
   task: Task,
@@ -77,11 +81,10 @@ export const EXPORT_COLUMN_MAP = new Map<ExportColumnKey, ExportColumn>(
 /**
  * Header labels derived from EXPORT_COLUMNS.
  * Keys correspond to ExportColumnKey values.
- * The `as` cast is safe here: the map is directly over EXPORT_COLUMNS whose keys
- * are all ExportColumnKey values. Object.fromEntries cannot infer the key type
- * narrower than `string`, so we widen explicitly.
  */
 export const HEADER_LABELS: Record<ExportColumnKey, string> =
   Object.fromEntries(
     EXPORT_COLUMNS.map((col) => [col.key, col.label])
+    // safe: keys come directly from EXPORT_COLUMNS which only contains ExportColumnKey
+    // values; Object.fromEntries cannot infer the key type narrower than `string`.
   ) as Record<ExportColumnKey, string>;

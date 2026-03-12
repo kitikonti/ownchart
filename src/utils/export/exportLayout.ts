@@ -13,7 +13,6 @@ import type {
   ExportOptions,
 } from "./types";
 import type { DensityConfig } from "../../types/preferences.types";
-import type { TimelineScale } from "../timelineUtils";
 import {
   calculateTaskTableWidth,
   calculateEffectiveZoom,
@@ -22,7 +21,7 @@ import {
   calculateOptimalColumnWidths,
   MS_PER_DAY,
 } from "./calculations";
-import { getTimelineScale } from "../timelineUtils";
+import { getTimelineScale, type TimelineScale } from "../timelineUtils";
 import { getDateRange } from "../dateUtils";
 import { DENSITY_CONFIG } from "../../config/densityConfig";
 import { HEADER_HEIGHT } from "./constants";
@@ -300,11 +299,12 @@ function buildLayoutParts(input: LayoutPartsInput): ExportLayoutParts {
     projectDateRange,
     visibleDateRange,
   });
+  const taskSize: TaskSizeInput = {
+    count: orderedTasks.length,
+    rowHeight: densityConfig.rowHeight,
+  };
   const { timelineWidth, totalWidth, contentHeight, totalHeight } =
-    computeFinalDimensions(options, scale, taskTableWidth, {
-      count: orderedTasks.length,
-      rowHeight: densityConfig.rowHeight,
-    });
+    computeFinalDimensions(options, scale, taskTableWidth, taskSize);
   return {
     selectedColumns,
     hasTaskList,
@@ -330,6 +330,7 @@ function buildLayoutParts(input: LayoutPartsInput): ExportLayoutParts {
  * zoom is computed from the padded duration. This ensures fit-to-width mode
  * is accurate and task labels are never clipped at the chart edges.
  *
+ * @param input - See {@link ExportLayoutInput} for the full input contract.
  * @param input.tasks - Task list to render. Must be pre-filtered through
  *   `prepareExportTasks` to exclude hidden tasks before being passed here.
  *   This function does not apply visibility filtering — it flattens the

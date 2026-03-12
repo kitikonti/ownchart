@@ -35,6 +35,7 @@ import type { TaskId } from "../../types/branded.types";
 export function prepareExportTasks(
   tasks: ReadonlyArray<Task>,
   fullyResolvedHiddenTaskIds: ReadonlyArray<TaskId>
+  // Returns mutable Task[] (not ReadonlyArray) — callers may sort/mutate the result.
 ): Task[] {
   // Fast path: no hidden tasks — shallow-copy avoids Set construction overhead
   // while honouring the "always returns a new array" contract.
