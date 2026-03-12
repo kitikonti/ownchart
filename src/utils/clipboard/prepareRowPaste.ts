@@ -51,6 +51,18 @@ export interface PrepareRowPasteError {
 }
 
 /**
+ * Resolved insertion context: order value, parent, and depth at which new
+ * tasks will be anchored into the existing tree.
+ * Returned by the internal `resolveInsertContext` helper and re-exported
+ * for consumers that need to inspect the insertion point independently.
+ */
+export interface InsertContext {
+  insertOrder: number;
+  targetParent: TaskId | undefined;
+  targetDepth: number;
+}
+
+/**
  * Computes the ancestor depth of a single task within the pasted set.
  * Traverses parent links upward, stopping at the first parent that is not
  * part of the pasted set or when a cycle is detected.
@@ -111,7 +123,8 @@ function computeMaxPastedDepth(remappedTasks: Task[]): number {
  *   as `insertOrder + i`, so the array index determines the final order.
  * @param insertOrder - The `order` value of the first pasted task.
  * @param targetParent - Parent to assign to clipboard-root tasks.
- * @returns New task array with `order` and `parent` set correctly.
+ * @returns A new array of tasks with `order` and `parent` updated; the array
+ *   length and relative positions are unchanged.
  */
 function assignOrderAndParent(
   remappedTasks: Task[],
@@ -127,12 +140,6 @@ function assignOrderAndParent(
       parent: isClipboardRoot ? targetParent : t.parent,
     };
   });
-}
-
-export interface InsertContext {
-  insertOrder: number;
-  targetParent: TaskId | undefined;
-  targetDepth: number;
 }
 
 /**
@@ -234,6 +241,7 @@ export function prepareRowPaste(
       mergedTasks: currentTasks,
       newTasks: [],
       remappedDependencies: [],
+      // Safe: no clipboard tasks means no ID remapping needed; empty Record is correct.
       idMapping: {} as Record<TaskId, TaskId>,
       insertOrder: 0,
       targetParent: undefined,
