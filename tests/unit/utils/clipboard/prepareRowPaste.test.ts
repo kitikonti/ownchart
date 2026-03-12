@@ -199,8 +199,9 @@ describe("prepareRowPaste", () => {
       selectedTaskIds: [],
     });
 
-    // The cycle guard treats both tasks as depth-0 relative to each other,
-    // so the paste should succeed (depth 0, no limit exceeded).
+    // The cycle guard traverses A→B→A before detecting the cycle, so
+    // maxPastedDepth=2. targetDepth(0)+2=2 < MAX_HIERARCHY_DEPTH(3), so the
+    // paste succeeds.
     expect("error" in result).toBe(false);
     if ("error" in result) return;
     expect(result.newTasks).toHaveLength(2);

@@ -112,22 +112,29 @@ function assignOrderAndParent(
   });
 }
 
-/**
- * Pure function that prepares all data needed for a row paste operation.
- * Returns either a successful result or an error string.
- */
-export function prepareRowPaste(
-  input: PrepareRowPasteInput
-): PrepareRowPasteResult | PrepareRowPasteError {
-  const {
-    clipboardTasks,
-    clipboardDependencies,
-    currentTasks,
-    activeCell,
-    selectedTaskIds,
-  } = input;
+interface InsertContext {
+  insertOrder: number;
+  targetParent: TaskId | undefined;
+  targetDepth: number;
+}
 
-  // Build flattened list to determine visual insert position
+/**
+ * Resolves the `order` value, parent, and depth at which new tasks should be
+ * inserted by translating the active cell / selection into a visual index and
+ * then mapping that back to the underlying task data.
+ *
+ * @param currentTasks - Current tasks in the store.
+ * @param activeCell - Active cell state for insert-position priority.
+ * @param selectedTaskIds - Currently selected task IDs.
+ * @returns Insert order value, target parent TaskId (undefined = root), and
+ *   the depth of the insertion point in the existing tree.
+ */
+function resolveInsertContext(
+  currentTasks: Task[],
+  activeCell: Pick<ActiveCell, "taskId">,
+  selectedTaskIds: TaskId[]
+): InsertContext {
+  // Build flattened list to determine visual insert position.
   // open === false (not !t.open) because undefined means open (not collapsed)
   const collapsedIds = new Set(
     currentTasks.filter((t) => t.open === false).map((t) => t.id)
@@ -137,14 +144,12 @@ export function prepareRowPaste(
     collapsedIds
   );
 
-  // Determine insert position in the flattened (visual) list
   const insertIndex = determineInsertPosition(
     activeCell,
     selectedTaskIds,
     flattenedTasks
   );
 
-  // Get the actual ORDER value and target parent at the insert position
   let insertOrder: number;
   let targetParent: TaskId | undefined;
 
@@ -164,6 +169,30 @@ export function prepareRowPaste(
   const targetDepth = targetParent
     ? getTaskLevel(currentTasks, targetParent) + 1
     : 0;
+
+  return { insertOrder, targetParent, targetDepth };
+}
+
+/**
+ * Pure function that prepares all data needed for a row paste operation.
+ * Returns either a successful result or an error string.
+ */
+export function prepareRowPaste(
+  input: PrepareRowPasteInput
+): PrepareRowPasteResult | PrepareRowPasteError {
+  const {
+    clipboardTasks,
+    clipboardDependencies,
+    currentTasks,
+    activeCell,
+    selectedTaskIds,
+  } = input;
+
+  const { insertOrder, targetParent, targetDepth } = resolveInsertContext(
+    currentTasks,
+    activeCell,
+    selectedTaskIds
+  );
 
   // Generate new UUIDs and remap IDs
   const { remappedTasks, idMapping } = remapTaskIds(clipboardTasks);
