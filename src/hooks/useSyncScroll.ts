@@ -17,11 +17,22 @@ export function useSyncScroll(
 
     if (!elA || !elB) return;
 
+    // Guard flag prevents a scroll feedback loop: when we programmatically set
+    // scrollLeft on one element, some browsers fire a scroll event on it, which
+    // would then update the other element again in an infinite cycle.
+    let isSyncing = false;
+
     const syncAtoB = (): void => {
+      if (isSyncing) return;
+      isSyncing = true;
       elB.scrollLeft = elA.scrollLeft;
+      isSyncing = false;
     };
     const syncBtoA = (): void => {
+      if (isSyncing) return;
+      isSyncing = true;
       elA.scrollLeft = elB.scrollLeft;
+      isSyncing = false;
     };
 
     elA.addEventListener("scroll", syncAtoB);

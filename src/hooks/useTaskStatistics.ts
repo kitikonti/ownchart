@@ -9,27 +9,30 @@ export interface TaskStatistics {
 
 /**
  * Computes task statistics for the status bar.
- * All three values are memoized against the tasks array reference.
+ * All three values are derived in a single memoized pass over the tasks array.
  */
 export function useTaskStatistics(): TaskStatistics {
   const tasks = useTaskStore((state) => state.tasks);
 
-  const totalTasks = tasks.length;
-
-  const completedTasks = useMemo(
-    () => tasks.filter((t) => t.progress === 100).length,
-    [tasks]
-  );
-
-  const overdueTasks = useMemo(() => {
+  return useMemo((): TaskStatistics => {
     const today = new Date();
     today.setHours(0, 0, 0, 0);
-    return tasks.filter((t) => {
-      const endDate = new Date(t.endDate);
-      endDate.setHours(0, 0, 0, 0);
-      return endDate < today && t.progress < 100;
-    }).length;
-  }, [tasks]);
 
-  return { totalTasks, completedTasks, overdueTasks };
+    let completedTasks = 0;
+    let overdueTasks = 0;
+
+    for (const t of tasks) {
+      if (t.progress === 100) {
+        completedTasks++;
+      } else {
+        const endDate = new Date(t.endDate);
+        endDate.setHours(0, 0, 0, 0);
+        if (endDate < today) {
+          overdueTasks++;
+        }
+      }
+    }
+
+    return { totalTasks: tasks.length, completedTasks, overdueTasks };
+  }, [tasks]);
 }

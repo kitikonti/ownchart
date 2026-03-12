@@ -3,8 +3,8 @@
  * Keeps the component body free of repeated useTaskStore() boilerplate.
  */
 
-import { useTaskStore } from "@/store/slices/taskSlice";
-import type { TaskStore } from "@/store/slices/taskSlice";
+import { useTaskStore } from "../store/slices/taskSlice";
+import type { TaskStore } from "../store/slices/taskSlice";
 
 export interface TaskTableHeaderStoreSlice {
   tasks: TaskStore["tasks"];
