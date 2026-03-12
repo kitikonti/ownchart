@@ -102,13 +102,10 @@ export function usePlaceholderNameEdit(
   }, []);
 
   // Commit the task if there is a name; otherwise discard the edit.
+  // Delegates to commitNewTask which already handles the empty-name guard.
   const commitOrCancel = useCallback((): void => {
-    if (inputValue.trim()) {
-      commitNewTask();
-    } else {
-      cancelEdit();
-    }
-  }, [inputValue, commitNewTask, cancelEdit]);
+    commitNewTask();
+  }, [commitNewTask]);
 
   const handleClick = useCallback(
     (e: MouseEvent): void => {
@@ -158,9 +155,7 @@ export function usePlaceholderNameEdit(
     [isEditing, navigateCell, setActiveCell]
   );
 
-  const handleInputBlur = useCallback((): void => {
-    commitOrCancel();
-  }, [commitOrCancel]);
+  const handleInputBlur = commitOrCancel;
 
   const handleInputKeyDown = useCallback(
     (e: KeyboardEvent<HTMLInputElement>): void => {

@@ -180,7 +180,10 @@ export function useInfiniteScroll({
               flushSync(() => {
                 extendDateRange("past", EXTEND_DAYS);
               });
-            } catch {
+            } catch (_e) {
+              // flushSync throws if called inside an active React render cycle.
+              // This should not happen here (scroll handler runs outside React),
+              // but as a defensive fallback we schedule the update asynchronously.
               extendDateRange("past", EXTEND_DAYS);
             }
 

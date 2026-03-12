@@ -13,10 +13,9 @@ import { useCallback, useMemo } from "react";
 import { useTaskStore } from "../store/slices/taskSlice";
 import { useChartStore } from "../store/slices/chartSlice";
 import { computeViewportCenterAnchor, applyScrollLeft } from "./useZoom";
-import { MIN_ZOOM, MAX_ZOOM } from "../utils/timelineUtils";
+import { MIN_ZOOM, MAX_ZOOM, PRESET_ZOOM_LEVELS } from "../utils/timelineUtils";
 
-/** Preset zoom levels shown in the dropdown */
-export const PRESET_ZOOM_LEVELS = [5, 10, 25, 50, 75, 100, 150, 200, 300];
+export { PRESET_ZOOM_LEVELS };
 
 interface ViewTabActions {
   // Show/Hide toggles
