@@ -6,6 +6,7 @@
  */
 
 import { useMemo } from "react";
+import { parseISO } from "date-fns";
 import { useTaskStore } from "../store/slices/taskSlice";
 
 export interface TaskStatistics {
@@ -35,7 +36,11 @@ export function useTaskStatistics(): TaskStatistics {
       if (t.progress === 100) {
         completedTasks++;
       } else {
-        const endDate = new Date(t.endDate);
+        // Use parseISO (date-fns) to parse "YYYY-MM-DD" in local time, matching
+        // the way toISODateString formats dates. new Date("YYYY-MM-DD") parses as
+        // UTC midnight, which would cause "today" to appear overdue for users in
+        // negative UTC-offset timezones.
+        const endDate = parseISO(t.endDate);
         endDate.setHours(0, 0, 0, 0);
         // Invalid dates (e.g. empty/malformed endDate) are treated as not overdue
         if (!isNaN(endDate.getTime()) && endDate < today) {

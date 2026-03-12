@@ -4,6 +4,8 @@
  * Selects the placeholder row so paste targets end of list.
  */
 
+// .ts file — JSX is not available, so createElement is used directly
+// instead of JSX syntax to build React elements for icon props.
 import { useMemo, useState, useCallback, createElement } from "react";
 import { ClipboardText } from "@phosphor-icons/react";
 import type {
@@ -33,7 +35,8 @@ export function usePlaceholderContextMenu(): UsePlaceholderContextMenuResult {
     (e: React.MouseEvent): void => {
       e.preventDefault();
 
-      // Select placeholder row and clear active cell so paste targets end of list
+      // Use getState() to access store imperatively at event time (not during
+      // render), so this callback does not need store values in its dep array.
       const store = useTaskStore.getState();
       store.setSelectedTaskIds([PLACEHOLDER_TASK_ID], false);
       store.setActiveCell(null, null);

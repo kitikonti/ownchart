@@ -19,6 +19,12 @@ import {
 interface UseContainerDimensionsOptions {
   outerScrollRef: RefObject<HTMLDivElement | null>;
   chartContainerRef: RefObject<HTMLDivElement | null>;
+  /**
+   * Callback to update the viewport's scroll position and width.
+   * Must be wrapped in `useCallback` at the call site — an unstable reference
+   * causes the viewport-tracking effect to re-run on every render, which can
+   * trigger an infinite update loop via the scroll event.
+   */
   setViewport: (scrollLeft: number, width: number) => void;
 }
 
@@ -51,8 +57,10 @@ export function useContainerDimensions({
       if (width > MIN_VALID_DIMENSION) setChartContainerWidth(width);
     };
 
-    // Initial measurement (delayed to ensure DOM is ready)
-    const timer = setTimeout(measure, 0);
+    // Initial measurement: defer one macrotask (0 ms) so the browser has
+    // committed layout before we read offsetHeight / offsetWidth.
+    const INITIAL_MEASURE_DELAY_MS = 0;
+    const timer = setTimeout(measure, INITIAL_MEASURE_DELAY_MS);
 
     const ro = new ResizeObserver(measure);
     ro.observe(outerScroll);
@@ -65,14 +73,9 @@ export function useContainerDimensions({
   }, [outerScrollRef, chartContainerRef]);
 
   // Track viewport state for export visible range calculation.
-  // This effect creates its own ResizeObserver on chartContainer (separate from
-  // the one above) because the two concerns are independent: the first measures
-  // layout dimensions for rendering, this one tracks scroll position + width for
-  // the export viewport range. Keeping them separate avoids coupling two distinct
-  // side-effects into a single observer callback.
-  //
-  // NOTE: `setViewport` must be a stable reference (wrapped with useCallback at
-  // the call site) to prevent this effect from re-running on every render.
+  // Separate from the dimension-measurement effect above because the two
+  // concerns are independent: that one measures layout for rendering, this one
+  // tracks scroll position + width for the export viewport range.
   useEffect(() => {
     const chartContainer = chartContainerRef.current;
     if (!chartContainer) return;

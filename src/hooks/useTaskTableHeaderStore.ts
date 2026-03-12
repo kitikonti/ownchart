@@ -8,8 +8,7 @@
  */
 
 import { useShallow } from "zustand/react/shallow";
-import { useTaskStore } from "../store/slices/taskSlice";
-import type { TaskStore } from "../store/slices/taskSlice";
+import { useTaskStore, type TaskStore } from "../store/slices/taskSlice";
 
 export interface TaskTableHeaderStoreSlice {
   tasks: TaskStore["tasks"];
