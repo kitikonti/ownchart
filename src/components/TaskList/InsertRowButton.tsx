@@ -3,7 +3,7 @@
  * Used in RowNumberCell for inserting rows above/below.
  */
 
-import { type MouseEvent } from "react";
+import { memo, type MouseEvent } from "react";
 import { Plus } from "@phosphor-icons/react";
 import { ROW_NUMBER, Z_INDEX } from "../../styles/design-tokens";
 import { INSERT_BUTTON_HIT_AREA } from "./rowNumberConfig";
@@ -32,7 +32,7 @@ interface InsertRowButtonProps {
   controlsColor: string;
 }
 
-export function InsertRowButton({
+export const InsertRowButton = memo(function InsertRowButton({
   position,
   rowNumber,
   isActive,
@@ -93,4 +93,4 @@ export function InsertRowButton({
       )}
     </button>
   );
-}
+});

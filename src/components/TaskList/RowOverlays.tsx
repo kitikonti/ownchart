@@ -39,7 +39,10 @@ export const RowOverlays = memo(function RowOverlays({
 
   return (
     <>
-      {/* Selection overlay - renders above cell borders */}
+      {/* Selection overlay - renders above cell borders.
+          Left border is always shown; top/bottom only on first/last selected row.
+          Right border is intentionally omitted — the overlay spans full row width
+          via inset-0, so a right border would appear mid-content between columns. */}
       {isSelected && (
         <div
           className="absolute inset-0 pointer-events-none"

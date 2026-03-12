@@ -129,6 +129,9 @@ function SegmentedControlInner<T extends string = string>({
               tabIndex={isSelected ? 0 : -1}
               onClick={() => onChange(opt.value)}
               onKeyDown={(e) => handleKeyDown(e, index)}
+              // ring-offset-2 is needed for grid buttons because each has its own border;
+              // the offset separates the focus ring from the button's own border visually.
+              // Inline buttons share a single surrounding border so no offset is needed.
               className={`flex items-center justify-center gap-2 px-4 py-2 text-sm font-medium rounded border transition-colors duration-150 ${FOCUS_CLASSES} focus-visible:ring-offset-2 ${
                 isSelected
                   ? "border-brand-600 bg-brand-600 text-white"
