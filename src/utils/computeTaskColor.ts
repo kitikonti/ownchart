@@ -232,7 +232,7 @@ function getDepthRelativeToColorGiver(
 
 /** Lightness increase per depth level in theme-mode sibling coloring. */
 const THEME_LIGHTNESS_SHIFT_PER_DEPTH = 7;
-/** Per-sibling lightness variation added via hash to differentiate siblings (px). */
+/** Per-sibling lightness variation added via hash to differentiate siblings (%). */
 const THEME_SIBLING_LIGHTNESS_VARIATION = 2;
 /** Maximum lightness value (%) allowed in theme-mode derived colors. */
 const THEME_MAX_LIGHTNESS = 88;
@@ -555,6 +555,11 @@ function fillTaskTypeColors(
   }
 }
 
+/** Exhaustiveness helper — causes a TypeScript error when `x` is not `never`. */
+function assertNever(x: never): never {
+  throw new Error(`Unhandled ColorMode: ${String(x)}`);
+}
+
 // ─── Public API (batch) ───────────────────────────────────────────────────────
 
 /**
@@ -601,12 +606,10 @@ export function computeAllTaskColors(
       fillTaskTypeColors(tasks, taskTypeOptions, result);
       break;
     default:
-      // Fallback for any future modes not yet optimised: delegate to computeTaskColor per task.
-      // NOTE: Adding a new mode without an optimised case above will cause O(n²) cost
-      // for modes that internally call buildTaskMap. Add an explicit case for new modes.
-      for (const task of tasks) {
-        result.set(task.id, computeTaskColor(task, tasks, colorModeState));
-      }
+      // Exhaustive guard: TypeScript will raise an error here when a new ColorMode
+      // variant is added without a corresponding fill* case above. This prevents
+      // silent O(n²) regressions caused by falling through to per-task computeTaskColor.
+      assertNever(mode);
   }
 
   return result;
