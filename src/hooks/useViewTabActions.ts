@@ -71,22 +71,19 @@ export function useViewTabActions(): ViewTabActions {
   const canZoomOut = zoom > MIN_ZOOM;
 
   // Compute sorted zoom options with the current zoom level inserted when it
-  // doesn't match a preset. Depends directly on `zoom` (not the derived
-  // `zoomPercentage`) so the dependency chain is explicit and the intermediate
-  // variable is kept local to the memoized function.
+  // doesn't match a preset.
   const zoomOptions = useMemo(() => {
-    const currentPct = Math.round(zoom * 100);
     const options = [...PRESET_ZOOM_LEVELS];
-    if (!PRESET_ZOOM_LEVELS.includes(currentPct)) {
-      const insertIndex = options.findIndex((level) => level > currentPct);
+    if (!PRESET_ZOOM_LEVELS.includes(zoomPercentage)) {
+      const insertIndex = options.findIndex((level) => level > zoomPercentage);
       if (insertIndex === -1) {
-        options.push(currentPct);
+        options.push(zoomPercentage);
       } else {
-        options.splice(insertIndex, 0, currentPct);
+        options.splice(insertIndex, 0, zoomPercentage);
       }
     }
     return options;
-  }, [zoom]);
+  }, [zoomPercentage]);
 
   // Handlers
   const handleZoomIn = useCallback((): void => {

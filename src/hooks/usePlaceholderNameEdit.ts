@@ -80,12 +80,16 @@ export function usePlaceholderNameEdit(
 
   // Focus cell when it becomes active (not editing).
   // preventScroll: true prevents desyncing TaskTable from Timeline (GitHub #16).
+  // cellRef and inputRef intentionally omitted from deps: the ref objects are
+  // stable identities (React guarantees they never change); .current is read
+  // imperatively inside the callbacks, not captured in the closures.
   useEffect(() => {
     if (isNameActive && !isEditing && cellRef.current) {
       cellRef.current.focus({ preventScroll: true });
       scrollIntoView();
     }
-  }, [isNameActive, isEditing, cellRef, scrollIntoView]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isNameActive, isEditing, scrollIntoView]);
 
   // Focus input when editing starts
   useEffect(() => {
@@ -93,7 +97,8 @@ export function usePlaceholderNameEdit(
       inputRef.current.focus({ preventScroll: true });
       scrollIntoView();
     }
-  }, [isEditing, inputRef, scrollIntoView]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isEditing, scrollIntoView]);
 
   // Commits the new task if a name was entered; otherwise discards the edit.
   const commitOrCancel = useCallback((): void => {

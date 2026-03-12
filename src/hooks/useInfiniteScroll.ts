@@ -183,19 +183,19 @@ export function useInfiniteScroll({
               flushSync(() => {
                 extendDateRange("past", EXTEND_DAYS);
               });
+              // Anchor restoration is inside the try block so it only runs
+              // after the DOM has been synchronously updated by flushSync.
+              const newScrollWidth = chartContainer.scrollWidth;
+              chartContainer.scrollLeft = newScrollWidth - scrollRightAnchor;
             } catch (_e) {
               // flushSync throws if called inside an active React render cycle.
               // This should not happen here (scroll handler runs outside React),
               // but as a defensive fallback we schedule the update asynchronously.
-              // NOTE: In this catch path the DOM has not updated yet, so the
-              // scroll-anchor restoration below will use a stale scrollWidth —
-              // the visible area may jump slightly. This is an accepted
-              // degradation for an already-exceptional case.
+              // Scroll-anchor restoration is intentionally skipped here because
+              // the DOM has not updated yet; a slight visible jump is acceptable
+              // for this already-exceptional case.
               extendDateRange("past", EXTEND_DAYS);
             }
-
-            const newScrollWidth = chartContainer.scrollWidth;
-            chartContainer.scrollLeft = newScrollWidth - scrollRightAnchor;
           }
         }, SCROLL_IDLE_MS);
       }

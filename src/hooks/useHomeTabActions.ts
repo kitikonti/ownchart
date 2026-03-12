@@ -18,8 +18,8 @@ import {
   DEFAULT_TASK_NAME,
 } from "../store/slices/taskSliceHelpers";
 
-/** Builds the default payload for a newly added task anchored to today. */
-function buildDefaultTaskPayload(taskCount: number): {
+/** Payload shape for a newly added task. */
+interface DefaultTaskPayload {
   name: string;
   startDate: string;
   endDate: string;
@@ -30,7 +30,10 @@ function buildDefaultTaskPayload(taskCount: number): {
   type: "task";
   parent: undefined;
   metadata: Record<string, unknown>;
-} {
+}
+
+/** Builds the default payload for a newly added task anchored to today. */
+function buildDefaultTaskPayload(taskCount: number): DefaultTaskPayload {
   const today = new Date();
   const endDate = new Date(today);
   endDate.setDate(today.getDate() + DEFAULT_TASK_DURATION - 1);
