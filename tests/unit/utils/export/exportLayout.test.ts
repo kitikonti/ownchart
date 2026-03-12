@@ -149,6 +149,24 @@ describe("computeExportLayout", () => {
     });
     expect(layout.totalWidth).toBe(fitToWidth);
   });
+
+  it("clamps timelineWidth to MIN_TIMELINE_WIDTH when fitToWidth is smaller than taskTableWidth", () => {
+    // fitToWidth = 50px is less than a realistic taskTableWidth — availableTimelineWidth
+    // becomes negative, so MIN_TIMELINE_WIDTH (100px) must be used instead.
+    const tasks = [makeTask("a", "2025-01-01", "2025-06-30")];
+    const layout = computeExportLayout({
+      ...baseInput,
+      tasks,
+      options: {
+        ...DEFAULT_EXPORT_OPTIONS,
+        zoomMode: "fitToWidth",
+        fitToWidth: 50,
+        selectedColumns: ["name"],
+      },
+    });
+    // timelineWidth must never fall below MIN_TIMELINE_WIDTH regardless of fitToWidth
+    expect(layout.timelineWidth).toBeGreaterThanOrEqual(100);
+  });
 });
 
 describe("calculateExportDimensions", () => {

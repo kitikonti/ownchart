@@ -86,4 +86,28 @@ describe("EXPORT_QUICK_PRESETS", () => {
     expect(uhd!.description).toContain("2160");
     expect(uhd!.description).toContain("px");
   });
+
+  it("landscape paper presets produce a wider targetWidth than portrait would at the same paper size", () => {
+    // Verify that the landscape orientation convention (width = long dimension) is
+    // applied: for every paper preset the targetWidth must equal the landscape pixel
+    // width (long side at PNG_EXPORT_DPI), not the portrait pixel width (short side).
+    const a4Preset = EXPORT_QUICK_PRESETS.find((p) => p.key === "a4-landscape");
+    const a4Size = PDF_PAGE_SIZES["a4"];
+    // landscape → long dimension first; portrait would swap them
+    const landscapeDims = calculatePixelDimensions(
+      a4Size.width,
+      a4Size.height,
+      PNG_EXPORT_DPI
+    );
+    const portraitDims = calculatePixelDimensions(
+      a4Size.height,
+      a4Size.width,
+      PNG_EXPORT_DPI
+    );
+    // Landscape width > portrait width for a non-square page
+    expect(landscapeDims.width).toBeGreaterThan(portraitDims.width);
+    // The preset must use the landscape (wider) value, not the portrait (narrower) value
+    expect(a4Preset!.targetWidth).toBe(landscapeDims.width);
+    expect(a4Preset!.targetWidth).not.toBe(portraitDims.width);
+  });
 });
