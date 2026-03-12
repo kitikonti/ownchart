@@ -1,6 +1,7 @@
 /**
  * Internal graph construction utilities.
- * Not exported from the public graph index — consumed only within this package.
+ * Exported for intra-package use by sibling modules (cycleDetection, topologicalSort)
+ * and unit tests, but not re-exported from the public `index.ts`.
  */
 
 import type { TaskId } from "../../types/branded.types";
@@ -28,6 +29,9 @@ export function getOrCreateList<K, V>(map: Map<K, V[]>, key: K): V[] {
  *
  * @param deps - The dependency edges to index.
  * @returns A map from each source task to its direct successors.
+ * @remarks Duplicate edges in `deps` (same fromTaskId/toTaskId pair appearing more than
+ * once) will produce duplicate entries in the returned adjacency lists. The store layer
+ * is responsible for ensuring uniqueness before calling this function.
  */
 export function buildAdjacencyList(deps: Dependency[]): Map<TaskId, TaskId[]> {
   const graph = new Map<TaskId, TaskId[]>();
@@ -42,6 +46,9 @@ export function buildAdjacencyList(deps: Dependency[]): Map<TaskId, TaskId[]> {
  *
  * @param deps - The dependency edges to index.
  * @returns A map from each target task to its direct predecessors.
+ * @remarks Duplicate edges in `deps` (same fromTaskId/toTaskId pair appearing more than
+ * once) will produce duplicate entries in the returned adjacency lists. The store layer
+ * is responsible for ensuring uniqueness before calling this function.
  */
 export function buildReverseAdjacencyList(
   deps: Dependency[]
@@ -55,7 +62,7 @@ export function buildReverseAdjacencyList(
 
 /**
  * BFS from `startId` returning all reachable nodes (excluding `startId` itself).
- * Uses a pointer-based queue for O(1) dequeue — overall O(V + E).
+ * Overall complexity: O(V + E).
  *
  * `startId` is pre-marked as visited so it is never added to the result set,
  * even in graphs that contain cycles leading back to it.
@@ -63,15 +70,16 @@ export function buildReverseAdjacencyList(
  * @param startId - The node to start traversal from (excluded from results).
  * @param graph - Forward adjacency list (node → neighbors).
  * @returns The set of all nodes reachable from `startId`, not including `startId` itself.
+ * @remarks Uses a pointer-based queue (`head` index advances instead of `Array.shift`)
+ * to achieve O(1) dequeue. Processed entries remain in the array — O(V) transient
+ * memory — which is an intentional trade-off to avoid the O(n) cost of
+ * `Array.prototype.shift` on each iteration.
  */
 export function bfsReachable(
   startId: TaskId,
   graph: Map<TaskId, TaskId[]>
 ): Set<TaskId> {
   const reachable = new Set<TaskId>();
-  // Pointer-based queue: `head` advances instead of shifting, giving O(1) dequeue.
-  // Processed entries remain in the array (O(V) transient memory) — an intentional
-  // trade-off to avoid the O(n) cost of Array.prototype.shift on each iteration.
   const queue: TaskId[] = [startId];
   let head = 0;
   const visited = new Set<TaskId>([startId]);
