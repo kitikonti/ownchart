@@ -3,7 +3,7 @@
  * Offers common screen/print sizes and a free-form custom pixel input.
  */
 
-import { useCallback, useEffect, useState, type MouseEvent } from "react";
+import { useCallback, useEffect, useState } from "react";
 import {
   DEFAULT_FIT_TO_WIDTH_PX,
   UHD_SCREEN_WIDTH_PX,
@@ -128,8 +128,15 @@ export function FitToWidthSelector({
     [onFitToWidthChange]
   );
 
+  const handleCustomWidthChange = useCallback(
+    (e: React.ChangeEvent<HTMLInputElement>): void => {
+      onFitToWidthChange?.(clampFitToWidth(e.target.value));
+    },
+    [onFitToWidthChange]
+  );
+
   // Prevent click events from bubbling out of the export dialog overlay.
-  const handleStopPropagation = useCallback((e: MouseEvent): void => {
+  const handleStopPropagation = useCallback((e: React.MouseEvent): void => {
     e.stopPropagation();
   }, []);
 
@@ -162,9 +169,7 @@ export function FitToWidthSelector({
           <Input
             type="number"
             value={fitToWidth}
-            onChange={(e) =>
-              onFitToWidthChange?.(clampFitToWidth(e.target.value))
-            }
+            onChange={handleCustomWidthChange}
             onClick={handleStopPropagation}
             aria-label="Custom width in pixels"
             fullWidth={false}

@@ -128,4 +128,46 @@ describe("AppErrorBoundary", () => {
 
     expect(reloadSpy).toHaveBeenCalledOnce();
   });
+
+  it("hides the Try again button after MAX_RETRY_ATTEMPTS consecutive errors", () => {
+    // Each render of a new boundary fires getDerivedStateFromError + componentDidCatch once.
+    // Simulating multiple errors inside a single boundary instance requires mounting,
+    // triggering an error (errorCount→1), resetting via "Try again", then re-triggering
+    // the error. We repeat this until errorCount reaches MAX_RETRY_ATTEMPTS (3).
+    //
+    // ControllableWrapper lets us stop the child from throwing so "Try again" can remount it,
+    // then we re-enable throwing to produce the next error.
+    function MultiErrorWrapper(): JSX.Element {
+      const [shouldThrow, setShouldThrow] = React.useState(true);
+      return (
+        <>
+          <button onClick={() => setShouldThrow(true)}>Throw again</button>
+          <button onClick={() => setShouldThrow(false)}>Fix child</button>
+          <AppErrorBoundary>
+            <ThrowingChild shouldThrow={shouldThrow} />
+          </AppErrorBoundary>
+        </>
+      );
+    }
+
+    render(<MultiErrorWrapper />);
+
+    // Error 1: boundary catches, errorCount becomes 1 (canRetry: 1 < 3 = true)
+    expect(screen.getByRole("button", { name: "Try again" })).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "Fix child" }));
+    fireEvent.click(screen.getByRole("button", { name: "Try again" }));
+
+    // Error 2: trigger another throw
+    fireEvent.click(screen.getByRole("button", { name: "Throw again" }));
+    expect(screen.getByRole("button", { name: "Try again" })).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "Fix child" }));
+    fireEvent.click(screen.getByRole("button", { name: "Try again" }));
+
+    // Error 3: trigger another throw — errorCount will reach MAX_RETRY_ATTEMPTS (3)
+    fireEvent.click(screen.getByRole("button", { name: "Throw again" }));
+    // After the third error, canRetry = 3 < 3 = false → button hidden
+    expect(screen.queryByRole("button", { name: "Try again" })).not.toBeInTheDocument();
+    // "Reload application" remains available regardless
+    expect(screen.getByRole("button", { name: "Reload application" })).toBeInTheDocument();
+  });
 });

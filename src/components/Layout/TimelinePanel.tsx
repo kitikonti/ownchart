@@ -12,7 +12,7 @@
  * - taskSlice: `selectedTaskIds` (forwarded to ChartCanvas for bar highlighting)
  */
 
-import { useRef, type RefObject } from "react";
+import { memo, useRef, type RefObject } from "react";
 import { ChartCanvas, TimelineHeader, SelectionHighlight } from "../GanttChart";
 import { ContextMenu } from "../ContextMenu/ContextMenu";
 import { useTaskStore } from "../../store/slices/taskSlice";
@@ -35,7 +35,7 @@ interface TimelinePanelProps {
   orderedTasks: Task[];
 }
 
-export function TimelinePanel({
+export const TimelinePanel = memo(function TimelinePanel({
   timelineHeaderScrollRef,
   chartContainerRef,
   chartTranslateRef,
@@ -64,10 +64,14 @@ export function TimelinePanel({
         ref={timelineHeaderScrollRef}
         className="flex-shrink-0 bg-white/90 backdrop-blur-sm overflow-x-auto overflow-y-hidden border-b border-neutral-200/80"
         style={HIDDEN_SCROLLBAR_STYLE}
-        aria-busy={!scale}
-        aria-live="polite"
-        aria-label={scale ? "Timeline header" : "Timeline header loading"}
+        aria-label="Timeline header"
       >
+        {/* Polite announcement for screen readers while the scale is computing. */}
+        {!scale && (
+          <span className="sr-only" aria-live="polite">
+            Loading timeline…
+          </span>
+        )}
         {scale && (
           <svg
             ref={headerSvgRef}
@@ -114,4 +118,4 @@ export function TimelinePanel({
       </div>
     </div>
   );
-}
+});

@@ -2,7 +2,7 @@
  * CustomZoomControl - Zoom slider, percentage input, and preset buttons for export.
  */
 
-import { useCallback } from "react";
+import { useCallback, type ChangeEvent, type MouseEvent } from "react";
 import {
   EXPORT_ZOOM_MIN,
   EXPORT_ZOOM_MAX,
@@ -32,6 +32,14 @@ const PDF_ZOOM_PRESETS_ARRAY: ReadonlyArray<number> =
   Object.values(EXPORT_ZOOM_PRESETS);
 
 /**
+ * Tolerance for floating-point equality when matching the current zoom to a
+ * preset. All defined presets are exactly representable IEEE-754 doubles
+ * (0.1, 0.25, 0.5, 1.0, 1.5, 2.0), but using an epsilon guards against
+ * precision drift if new fractional presets are added in the future.
+ */
+const PRESET_ACTIVE_EPSILON = 0.001;
+
+/**
  * Parse a raw string input into a clamped export zoom multiplier.
  * The input is expected to be a percentage value (e.g. "100" → 1.0).
  * Falls back to 1.0 (100%) when the input is not a valid integer.
@@ -50,8 +58,8 @@ export interface CustomZoomControlProps {
 
 interface ZoomPercentInputProps {
   value: number;
-  onChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
-  onClick: (e: React.MouseEvent<HTMLInputElement>) => void;
+  onChange: (e: ChangeEvent<HTMLInputElement>) => void;
+  onClick: (e: MouseEvent<HTMLInputElement>) => void;
 }
 
 /**
@@ -81,6 +89,41 @@ function ZoomPercentInput({
   );
 }
 
+interface PresetButtonProps {
+  value: number;
+  isActive: boolean;
+  onTimelineZoomChange: (zoom: number) => void;
+}
+
+function PresetButton({
+  value,
+  isActive,
+  onTimelineZoomChange,
+}: PresetButtonProps): JSX.Element {
+  const handleClick = useCallback(
+    (e: MouseEvent<HTMLButtonElement>): void => {
+      e.stopPropagation();
+      onTimelineZoomChange(value);
+    },
+    [onTimelineZoomChange, value]
+  );
+
+  return (
+    <button
+      type="button"
+      onClick={handleClick}
+      aria-pressed={isActive}
+      className={`px-3 py-1.5 text-xs font-mono font-medium rounded transition-colors duration-150 ${
+        isActive
+          ? "bg-brand-600 text-white"
+          : "bg-white border border-neutral-300 text-neutral-700 hover:border-neutral-400 hover:bg-neutral-50"
+      }`}
+    >
+      {Math.round(value * 100)}%
+    </button>
+  );
+}
+
 export function CustomZoomControl({
   timelineZoom,
   onTimelineZoomChange,
@@ -91,7 +134,7 @@ export function CustomZoomControl({
     : PDF_ZOOM_PRESETS_ARRAY;
 
   const handleSliderChange = useCallback(
-    (e: React.ChangeEvent<HTMLInputElement>): void => {
+    (e: ChangeEvent<HTMLInputElement>): void => {
       onTimelineZoomChange(parseInt(e.target.value, 10) / 100);
     },
     [onTimelineZoomChange]
@@ -99,12 +142,12 @@ export function CustomZoomControl({
 
   // Shared click handler — prevents click events from bubbling out of the
   // export dialog overlay. Used for both the slider and the percent input.
-  const handleStopPropagation = useCallback((e: React.MouseEvent): void => {
+  const handleStopPropagation = useCallback((e: MouseEvent): void => {
     e.stopPropagation();
   }, []);
 
   const handlePercentInputChange = useCallback(
-    (e: React.ChangeEvent<HTMLInputElement>): void => {
+    (e: ChangeEvent<HTMLInputElement>): void => {
       onTimelineZoomChange(clampExportZoom(e.target.value));
     },
     [onTimelineZoomChange]
@@ -141,46 +184,11 @@ export function CustomZoomControl({
           <PresetButton
             key={value}
             value={value}
-            isActive={timelineZoom === value}
+            isActive={Math.abs(timelineZoom - value) < PRESET_ACTIVE_EPSILON}
             onTimelineZoomChange={onTimelineZoomChange}
           />
         ))}
       </div>
     </div>
-  );
-}
-
-interface PresetButtonProps {
-  value: number;
-  isActive: boolean;
-  onTimelineZoomChange: (zoom: number) => void;
-}
-
-function PresetButton({
-  value,
-  isActive,
-  onTimelineZoomChange,
-}: PresetButtonProps): JSX.Element {
-  const handleClick = useCallback(
-    (e: React.MouseEvent<HTMLButtonElement>): void => {
-      e.stopPropagation();
-      onTimelineZoomChange(value);
-    },
-    [onTimelineZoomChange, value]
-  );
-
-  return (
-    <button
-      type="button"
-      onClick={handleClick}
-      aria-pressed={isActive}
-      className={`px-3 py-1.5 text-xs font-mono font-medium rounded transition-colors duration-150 ${
-        isActive
-          ? "bg-brand-600 text-white"
-          : "bg-white border border-neutral-300 text-neutral-700 hover:border-neutral-400 hover:bg-neutral-50"
-      }`}
-    >
-      {Math.round(value * 100)}%
-    </button>
   );
 }
