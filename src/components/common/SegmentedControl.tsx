@@ -4,6 +4,7 @@
  * Includes proper a11y: role="group", aria-label, type="button", aria-pressed, focus-visible.
  */
 
+import { memo } from "react";
 import type { ReactNode } from "react";
 
 export interface SegmentedControlOption<T extends string = string> {
@@ -41,7 +42,7 @@ const GRID_COLS: Record<2 | 3 | 4, string> = {
 const FOCUS_CLASSES =
   "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500";
 
-export function SegmentedControl<T extends string = string>({
+function SegmentedControlInner<T extends string = string>({
   options,
   value,
   onChange,
@@ -51,7 +52,8 @@ export function SegmentedControl<T extends string = string>({
   fullWidth = false,
 }: SegmentedControlProps<T>): JSX.Element {
   if (layout === "grid") {
-    const gridCols = GRID_COLS[columns] ?? "grid-cols-2";
+    // columns is typed as 2|3|4 and defaults to 2 — GRID_COLS always has a match
+    const gridCols = GRID_COLS[columns];
     return (
       <div
         role="group"
@@ -112,3 +114,12 @@ export function SegmentedControl<T extends string = string>({
     </div>
   );
 }
+
+/**
+ * Memoized export. Cast is required because React.memo loses generic type params;
+ * the underlying implementation is unchanged — this only prevents unnecessary
+ * re-renders when parent renders with stable props.
+ */
+export const SegmentedControl = memo(
+  SegmentedControlInner
+) as typeof SegmentedControlInner;

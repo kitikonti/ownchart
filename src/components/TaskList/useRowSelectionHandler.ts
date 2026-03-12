@@ -18,7 +18,13 @@ import { dragState } from "./dragSelectionState";
 // ── Types ─────────────────────────────────────────────────────────────────────
 
 interface UseRowSelectionHandlerOptions {
-  /** Ordered list of currently visible (non-hidden) task IDs — used for range calculation. */
+  /**
+   * Ordered list of currently visible (non-hidden) task IDs — used for range calculation.
+   *
+   * @important Callers should pass a stable (memoized) reference. A new array on every
+   * render will cause `handleSelectRow` to be recreated via `useCallback`, even when
+   * the task IDs themselves have not changed.
+   */
   visibleTaskIds: TaskId[];
 }
 

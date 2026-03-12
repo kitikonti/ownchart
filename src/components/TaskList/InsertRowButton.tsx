@@ -10,6 +10,7 @@ import { ROW_NUMBER, Z_INDEX } from "../../styles/design-tokens";
 // Insert button layout
 const BUTTON_HIT_AREA = 18;
 const BUTTON_OFFSET_LEFT = 1;
+const BUTTON_POSITION_OFFSET = BUTTON_HIT_AREA / 2; // centers button on row edge
 const CIRCLE_SIZE_HOVER = 14;
 const CIRCLE_SIZE_DEFAULT = 7;
 
@@ -46,8 +47,8 @@ export function InsertRowButton({
 
   const positionStyle =
     position === "above"
-      ? { top: `${-(BUTTON_HIT_AREA / 2)}px` }
-      : { bottom: `${-(BUTTON_HIT_AREA / 2)}px` };
+      ? { top: `${-BUTTON_POSITION_OFFSET}px` }
+      : { bottom: `${-BUTTON_POSITION_OFFSET}px` };
 
   return (
     <button
@@ -64,7 +65,7 @@ export function InsertRowButton({
       onMouseEnter={onHoverStart}
       onMouseLeave={onHoverEnd}
       onClick={handleClick}
-      aria-label={`Insert row ${position} row ${rowNumber}`}
+      aria-label={`Insert ${position} row ${rowNumber}`}
     >
       {isActive ? (
         <div

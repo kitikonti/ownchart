@@ -13,10 +13,20 @@
 
 import type { TaskId } from "../../types/branded.types";
 
-export const dragState = {
+/** Callback invoked when the pointer moves over a new row during drag-select. */
+type DragSelectHandler = (taskId: TaskId) => void;
+
+/** Mutable singleton tracking in-progress drag-selection state. */
+interface DragSelectionState {
+  isDragging: boolean;
+  startTaskId: TaskId | null;
+  onDragSelect: DragSelectHandler | null;
+}
+
+export const dragState: DragSelectionState = {
   isDragging: false,
-  startTaskId: null as TaskId | null,
-  onDragSelect: null as ((taskId: TaskId) => void) | null,
+  startTaskId: null,
+  onDragSelect: null,
 };
 
 /** Reset drag state — called on global mouseup from TaskTable. */
