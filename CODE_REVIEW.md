@@ -104,6 +104,7 @@ cd ../app-gantt-review
 - [x] `src/utils/fileOperations/loadFromFile.ts` (115 LOC)
 - [x] `src/utils/fileOperations/migrate.ts` (102 LOC)
 - [x] `src/utils/fileOperations/sanitize.ts` (79 LOC)
+- [x] `src/utils/fileOperations/constants.ts` (81 LOC)
 - [x] `src/utils/fileOperations/index.ts` (12 LOC)
 
 ### Priority: MEDIUM — GanttChart Komponenten
