@@ -222,6 +222,8 @@ cd ../app-gantt-review
 - [x] `src/utils/clipboard/remapIds.ts` (66 LOC)
 - [x] `src/utils/clipboard/collectDependencies.ts` (26 LOC)
 - [x] `src/utils/clipboard/index.ts` (26 LOC)
+- [x] `src/utils/clipboard/prepareRowPaste.ts` (190 LOC)
+- [x] `src/utils/clipboard/compare.ts` (29 LOC)
 
 ### Priority: MEDIUM — Graph Utils
 - [x] `src/utils/arrowPath/elbowPath.ts` (343 LOC)
