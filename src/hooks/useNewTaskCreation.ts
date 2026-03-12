@@ -29,7 +29,9 @@ export function useNewTaskCreation(): UseNewTaskCreationReturn {
 
       const { startDate, endDate } = computeAppendDates(lastTask);
       const maxOrder =
-        tasks.length > 0 ? Math.max(...tasks.map((t) => t.order)) + 1 : 0;
+        tasks.length > 0
+          ? tasks.reduce((max, t) => Math.max(max, t.order), -1) + 1
+          : 0;
 
       addTask({
         name,

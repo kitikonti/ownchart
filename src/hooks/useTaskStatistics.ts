@@ -27,7 +27,8 @@ export function useTaskStatistics(): TaskStatistics {
       } else {
         const endDate = new Date(t.endDate);
         endDate.setHours(0, 0, 0, 0);
-        if (endDate < today) {
+        // Invalid dates (e.g. empty/malformed endDate) are treated as not overdue
+        if (!isNaN(endDate.getTime()) && endDate < today) {
           overdueTasks++;
         }
       }

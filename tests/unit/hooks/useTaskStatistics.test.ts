@@ -148,4 +148,15 @@ describe("useTaskStatistics", () => {
 
     expect(result.current.totalTasks).toBe(10);
   });
+
+  it("does not count a task with an invalid endDate as overdue", () => {
+    mockTasks = [
+      makeTask({ id: "t1", progress: 0, endDate: "" }),
+      makeTask({ id: "t2", progress: 0, endDate: "not-a-date" }),
+    ];
+
+    const { result } = renderHook(() => useTaskStatistics());
+
+    expect(result.current.overdueTasks).toBe(0);
+  });
 });

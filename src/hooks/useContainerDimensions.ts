@@ -58,7 +58,12 @@ export function useContainerDimensions({
     };
   }, [outerScrollRef, chartContainerRef]);
 
-  // Track viewport state for export visible range calculation
+  // Track viewport state for export visible range calculation.
+  // This effect creates its own ResizeObserver on chartContainer (separate from
+  // the one above) because the two concerns are independent: the first measures
+  // layout dimensions for rendering, this one tracks scroll position + width for
+  // the export viewport range. Keeping them separate avoids coupling two distinct
+  // side-effects into a single observer callback.
   useEffect(() => {
     const chartContainer = chartContainerRef.current;
     if (!chartContainer) return;
