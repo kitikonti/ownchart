@@ -83,6 +83,54 @@ function getRootSummaries(allTasks: Task[]): Task[] {
 }
 
 /**
+ * Walk up the task tree from `task` to find its level-1 ancestor —
+ * the direct child of `singleRoot`. Returns that ancestor task, or
+ * `undefined` if `task` is not a descendant of `singleRoot`.
+ */
+function findLevel1Ancestor(
+  task: Task,
+  singleRoot: Task,
+  taskMap: Map<string, Task>
+): Task | undefined {
+  // task is already a direct child of singleRoot
+  if (task.parent === singleRoot.id) return task;
+
+  let current: Task | undefined = task;
+  while (current?.parent) {
+    const parent = taskMap.get(current.parent);
+    if (!parent) break;
+    if (parent.parent === singleRoot.id) {
+      return parent; // Found the level-1 color-giver
+    }
+    current = parent;
+  }
+  return undefined;
+}
+
+/**
+ * Walk ALL THE WAY UP to the root ancestor of `task`.
+ * Returns the root Task, or `undefined` if `task` is already at the root
+ * (i.e. no ancestor exists — `task` itself would be the root).
+ *
+ * Note: deliberately type-agnostic — the root may be any TaskType, not only
+ * "summary". All descendants of the same root group share one base color.
+ */
+function findRootAncestor(
+  task: Task,
+  taskMap: Map<string, Task>
+): Task | undefined {
+  let current: Task | undefined = task;
+  while (current?.parent) {
+    const parent = taskMap.get(current.parent);
+    if (!parent) break;
+    current = parent;
+  }
+  // If current is still task, it has no ancestor → return undefined
+  if (!current || task.id === current.id) return undefined;
+  return current;
+}
+
+/**
  * For theme mode: find the "color-giver" summary for a task.
  * - If there's only one root summary, use its level-1 children as color-givers.
  * - Otherwise use direct summary parents.
@@ -95,40 +143,13 @@ function getThemeColorGiver(
   // Special case: single root summary → use its level-1 children as color-givers
   if (rootSummaries.length === 1) {
     const singleRoot = rootSummaries[0];
-
     // If this IS the single root, no color-giver
     if (task.id === singleRoot.id) return undefined;
-
-    // Check if this task is a direct child of the single root
-    if (task.parent === singleRoot.id) {
-      return task; // This task IS the color-giver for its subtree
-    }
-
-    // Walk up to find the level-1 ancestor (direct child of single root)
-    let current: Task | undefined = task;
-    while (current?.parent) {
-      const parent = taskMap.get(current.parent);
-      if (!parent) break;
-      if (parent.parent === singleRoot.id) {
-        return parent; // Found the level-1 color-giver
-      }
-      current = parent;
-    }
-
-    return undefined;
+    return findLevel1Ancestor(task, singleRoot, taskMap);
   }
 
-  // Multiple roots → walk ALL THE WAY UP to the root ancestor
-  // so all descendants of the same root group share one base color
-  let current: Task | undefined = task;
-  while (current?.parent) {
-    const parent = taskMap.get(current.parent);
-    if (!parent) break;
-    current = parent;
-  }
-  // current = root ancestor (or task itself if already root)
-  if (!current || task.id === current.id) return undefined;
-  return current;
+  // Multiple roots → walk all the way up; descendants share root's base color
+  return findRootAncestor(task, taskMap);
 }
 
 /**
@@ -149,6 +170,15 @@ function getColorGiverIds(allTasks: Task[]): string[] {
   return allTasks.filter((t) => !t.parent).map((t) => t.id);
 }
 
+/** Intermediate record used inside assignPaletteIndices. */
+interface PaletteCandidate {
+  id: string;
+  /** Raw DJB2 hash — used for deterministic sort order. */
+  hash: number;
+  /** Preferred palette index (hash % paletteSize). */
+  pref: number;
+}
+
 /**
  * Assign palette indices to color-givers using hash + collision avoidance.
  * Maximizes color diversity while keeping assignments stable across reorders.
@@ -164,7 +194,7 @@ function assignPaletteIndices(
   colorGiverIds: string[],
   paletteSize: number
 ): Map<string, number> {
-  const withHash = colorGiverIds.map((id) => ({
+  const withHash: PaletteCandidate[] = colorGiverIds.map((id) => ({
     id,
     hash: stableHash(id),
     pref: stableHash(id) % paletteSize,

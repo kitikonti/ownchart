@@ -7,6 +7,7 @@ import type { Task, TaskType } from "../types/chart.types";
 import type { TaskId } from "../types/branded.types";
 import type { TaskBarGeometry } from "./timelineUtils";
 import type { WorkingDaysConfig } from "../types/preferences.types";
+
 import { addDays, calculateDuration } from "./dateUtils";
 import { calculateWorkingDays, addWorkingDays } from "./workingDaysCalculator";
 import { validateDragOperation } from "./dragValidation";
@@ -171,6 +172,30 @@ export function calculateDeltaDaysFromDates(
 }
 
 /**
+ * Derive the final end date for a non-milestone task move.
+ * Reuses computeEndDateForDrag to avoid duplicating working-days logic.
+ * Falls back to the calendar-shifted value when the original end date is empty.
+ */
+function resolveFinalEndDate(
+  t: Task,
+  newStartDate: string,
+  deltaDays: number,
+  calendarShiftedEndDate: string,
+  ctx: WorkingDaysContext
+): string {
+  return t.endDate
+    ? computeEndDateForDrag(
+        newStartDate,
+        t.startDate,
+        t.endDate,
+        deltaDays,
+        t.type,
+        ctx
+      )
+    : calendarShiftedEndDate;
+}
+
+/**
  * Compute the field updates for a single non-summary task during a drag-move commit.
  * Returns null if validation fails.
  */
@@ -196,18 +221,13 @@ function buildSingleTaskMoveUpdate(
     return { startDate: newStartDate, endDate: newStartDate, duration: 0 };
   }
 
-  // Reuse computeEndDateForDrag to avoid duplicating the working-days logic.
-  // When t.endDate is empty, fall back to the calendar-shifted value ('').
-  const finalEndDate = t.endDate
-    ? computeEndDateForDrag(
-        newStartDate,
-        t.startDate,
-        t.endDate,
-        deltaDays,
-        t.type,
-        ctx
-      )
-    : calendarShiftedEndDate;
+  const finalEndDate = resolveFinalEndDate(
+    t,
+    newStartDate,
+    deltaDays,
+    calendarShiftedEndDate,
+    ctx
+  );
   return {
     startDate: newStartDate,
     endDate: finalEndDate,
