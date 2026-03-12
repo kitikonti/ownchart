@@ -17,6 +17,7 @@ import { useHeaderDateSelection } from "../../hooks/useHeaderDateSelection";
 import {
   HEADER_HEIGHT,
   HIDDEN_SCROLLBAR_STYLE,
+  OVERFLOW_Y_CLIP_STYLE,
 } from "../../config/layoutConstants";
 import type { Task } from "../../types/chart.types";
 
@@ -91,7 +92,7 @@ export function TimelinePanel({
         <div
           ref={chartContainerRef}
           className="gantt-chart-scroll-container absolute inset-0 bg-white overflow-x-auto scrollbar-thin"
-          style={{ overflowY: "clip" }}
+          style={OVERFLOW_Y_CLIP_STYLE}
         >
           <div ref={chartTranslateRef}>
             <ChartCanvas

@@ -106,6 +106,9 @@ export function FitToWidthSelector({
       if (value === "custom") {
         setIsCustomWidth(true);
       } else {
+        // Preset values are module-level constants guaranteed to be within
+        // [MIN_FIT_WIDTH_PX, MAX_FIT_WIDTH_PX], so clamping is not needed here.
+        // Free-form custom input goes through clampFitToWidth instead.
         const numValue = parseInt(value, 10);
         setIsCustomWidth(false);
         onFitToWidthChange?.(numValue);

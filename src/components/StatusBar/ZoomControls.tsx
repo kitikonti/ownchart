@@ -103,6 +103,9 @@ export function ZoomControls(): JSX.Element {
           onChange={handleSliderChange}
           className="status-bar-slider w-24 h-1 bg-neutral-300 rounded-full appearance-none cursor-pointer"
           aria-label="Zoom level"
+          aria-valuemin={MIN_ZOOM * 100}
+          aria-valuemax={MAX_ZOOM * 100}
+          aria-valuenow={zoomPercentage}
           aria-valuetext={`${zoomPercentage}%`}
         />
 

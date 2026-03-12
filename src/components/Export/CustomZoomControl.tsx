@@ -30,8 +30,6 @@ function clampExportZoom(rawInput: string): number {
   return Math.max(EXPORT_ZOOM_MIN, Math.min(EXPORT_ZOOM_MAX, value / 100));
 }
 
-ZoomPercentInput.displayName = "ZoomPercentInput";
-
 export interface CustomZoomControlProps {
   timelineZoom: number;
   onTimelineZoomChange: (zoom: number) => void;
@@ -92,6 +90,10 @@ export function CustomZoomControl({
           }
           onClick={(e) => e.stopPropagation()}
           aria-label="Zoom level"
+          aria-valuemin={EXPORT_ZOOM_MIN * 100}
+          aria-valuemax={EXPORT_ZOOM_MAX * 100}
+          aria-valuenow={Math.round(timelineZoom * 100)}
+          aria-valuetext={`${Math.round(timelineZoom * 100)}%`}
           className="flex-1 h-1.5 bg-neutral-200 rounded-full appearance-none cursor-pointer accent-brand-600"
         />
         <ZoomPercentInput
