@@ -12,6 +12,8 @@ interface Props {
 
 interface State {
   hasError: boolean;
+  /** Tracks how many times the error boundary has fired in this session. */
+  errorCount: number;
 }
 
 // Use a generic user-safe message in the UI — raw Error.message may contain
@@ -20,13 +22,24 @@ interface State {
 const ERROR_FALLBACK_MESSAGE =
   "The application encountered an unexpected error. Please try reloading.";
 
+/**
+ * After this many consecutive errors, the "Try again" button is hidden to
+ * prevent users from being stuck in an endless error-retry loop. The
+ * "Reload application" button remains available at all times.
+ */
+const MAX_RETRY_ATTEMPTS = 3;
+
 export class AppErrorBoundary extends Component<Props, State> {
   constructor(props: Props) {
     super(props);
-    this.state = { hasError: false };
+    this.state = { hasError: false, errorCount: 0 };
   }
 
-  static getDerivedStateFromError(): State {
+  // The `error` argument is intentionally omitted from this static method's
+  // parameter list — it is handled with full context (including componentStack)
+  // in componentDidCatch. getDerivedStateFromError only needs to flip hasError
+  // so the fallback UI renders synchronously.
+  static getDerivedStateFromError(): Partial<State> {
     return { hasError: true };
   }
 
@@ -39,6 +52,9 @@ export class AppErrorBoundary extends Component<Props, State> {
       error,
       info.componentStack
     );
+    // Increment the error count so the UI can adapt after repeated failures
+    // (e.g. hide "Try again" to avoid an endless error loop).
+    this.setState((prev) => ({ errorCount: prev.errorCount + 1 }));
   }
 
   private handleReset = (): void => {
@@ -47,6 +63,9 @@ export class AppErrorBoundary extends Component<Props, State> {
     // If the root cause is still present the error will re-appear; in that
     // case the user should use "Reload application" instead.
     this.setState({ hasError: false });
+    // Note: errorCount is intentionally NOT reset here. It persists across
+    // "Try again" attempts so we can detect persistent error loops and guide
+    // the user toward the "Reload application" action instead.
   };
 
   private handleReload = (): void => {
@@ -55,6 +74,10 @@ export class AppErrorBoundary extends Component<Props, State> {
 
   override render(): ReactNode {
     if (this.state.hasError) {
+      // After MAX_RETRY_ATTEMPTS the "Try again" option is hidden — repeated
+      // errors indicate a persistent root cause that a soft reset won't fix.
+      const canRetry = this.state.errorCount < MAX_RETRY_ATTEMPTS;
+
       return (
         <div
           role="alert"
@@ -67,13 +90,15 @@ export class AppErrorBoundary extends Component<Props, State> {
             {ERROR_FALLBACK_MESSAGE}
           </p>
           <div className="flex gap-3">
-            <button
-              type="button"
-              onClick={this.handleReset}
-              className="px-4 py-2 bg-neutral-200 text-neutral-800 rounded-md text-sm hover:bg-neutral-300 transition-colors"
-            >
-              Try again
-            </button>
+            {canRetry && (
+              <button
+                type="button"
+                onClick={this.handleReset}
+                className="px-4 py-2 bg-neutral-200 text-neutral-800 rounded-md text-sm hover:bg-neutral-300 transition-colors"
+              >
+                Try again
+              </button>
+            )}
             <button
               type="button"
               onClick={this.handleReload}

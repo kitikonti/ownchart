@@ -64,6 +64,7 @@ export function TimelinePanel({
         ref={timelineHeaderScrollRef}
         className="flex-shrink-0 bg-white/90 backdrop-blur-sm overflow-x-auto overflow-y-hidden border-b border-neutral-200/80"
         style={HIDDEN_SCROLLBAR_STYLE}
+        aria-busy={!scale}
       >
         {scale && (
           <svg

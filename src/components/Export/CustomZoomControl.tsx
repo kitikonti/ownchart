@@ -21,7 +21,7 @@ const EXPORT_ZOOM_TENTH = 0.1;
 /** 25% zoom — fine-grained preset available only for PNG/SVG exports. */
 const EXPORT_ZOOM_QUARTER = 0.25;
 
-const CUSTOM_ZOOM_PRESETS_ARRAY = [
+const CUSTOM_ZOOM_PRESETS_ARRAY: ReadonlyArray<number> = [
   EXPORT_ZOOM_TENTH,
   EXPORT_ZOOM_QUARTER,
   ...Object.values(EXPORT_ZOOM_PRESETS),
@@ -77,8 +77,6 @@ function ZoomPercentInput({
   );
 }
 
-ZoomPercentInput.displayName = "ZoomPercentInput";
-
 export function CustomZoomControl({
   timelineZoom,
   onTimelineZoomChange,
@@ -95,25 +93,17 @@ export function CustomZoomControl({
     [onTimelineZoomChange]
   );
 
-  const handleSliderClick = useCallback(
-    (e: React.MouseEvent<HTMLInputElement>): void => {
-      e.stopPropagation();
-    },
-    []
-  );
+  // Shared click handler — prevents click events from bubbling out of the
+  // export dialog overlay. Used for both the slider and the percent input.
+  const handleStopPropagation = useCallback((e: React.MouseEvent): void => {
+    e.stopPropagation();
+  }, []);
 
   const handlePercentInputChange = useCallback(
     (e: React.ChangeEvent<HTMLInputElement>): void => {
       onTimelineZoomChange(clampExportZoom(e.target.value));
     },
     [onTimelineZoomChange]
-  );
-
-  const handlePercentInputClick = useCallback(
-    (e: React.MouseEvent<HTMLInputElement>): void => {
-      e.stopPropagation();
-    },
-    []
   );
 
   return (
@@ -126,7 +116,7 @@ export function CustomZoomControl({
           step={1}
           value={timelineZoom * 100}
           onChange={handleSliderChange}
-          onClick={handleSliderClick}
+          onClick={handleStopPropagation}
           aria-label="Zoom level"
           aria-valuemin={EXPORT_ZOOM_MIN * 100}
           aria-valuemax={EXPORT_ZOOM_MAX * 100}
@@ -137,7 +127,7 @@ export function CustomZoomControl({
         <ZoomPercentInput
           value={Math.round(timelineZoom * 100)}
           onChange={handlePercentInputChange}
-          onClick={handlePercentInputClick}
+          onClick={handleStopPropagation}
         />
       </div>
 
@@ -190,5 +180,3 @@ function PresetButton({
     </button>
   );
 }
-
-PresetButton.displayName = "PresetButton";
