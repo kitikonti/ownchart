@@ -283,8 +283,6 @@ function buildLayoutParts(input: LayoutPartsInput): ExportLayoutParts {
     currentAppZoom,
     providedProjectDateRange,
     visibleDateRange,
-    // Full DensityConfig is passed (not just rowHeight) so that sub-computations
-    // can access other density properties (e.g. padding) without a signature change.
     densityConfig,
   } = input;
   const selectedColumns = options.selectedColumns;
