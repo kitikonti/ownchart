@@ -5,6 +5,7 @@
  */
 
 import { useCallback } from "react";
+import { parseISO, addDays } from "date-fns";
 import { useTaskStore } from "../store/slices/taskSlice";
 import { toISODateString } from "../utils/dateUtils";
 import { COLORS } from "../styles/design-tokens";
@@ -63,22 +64,23 @@ export function useNewTaskCreation(): UseNewTaskCreationReturn {
 /**
  * Compute start/end dates for a task appended after the last task.
  * Starts one day after the last task's end date, or today if no tasks exist.
+ *
+ * Uses date-fns parseISO + addDays throughout to avoid the UTC/local-time
+ * mismatch that arises when mixing `new Date("YYYY-MM-DD")` (UTC midnight)
+ * with `.getDate()` / `.setDate()` (local time). date-fns always operates
+ * in local time, which matches the toISODateString (format) output.
  */
 function computeAppendDates(lastTask: { endDate?: string } | null): {
   startDate: string;
   endDate: string;
 } {
   if (lastTask?.endDate) {
-    const lastEnd = new Date(lastTask.endDate);
-    const start = new Date(lastEnd);
-    start.setDate(lastEnd.getDate() + 1);
-    const end = new Date(start);
-    end.setDate(start.getDate() + DEFAULT_TASK_DURATION - 1);
+    const start = addDays(parseISO(lastTask.endDate), 1);
+    const end = addDays(start, DEFAULT_TASK_DURATION - 1);
     return { startDate: toISODateString(start), endDate: toISODateString(end) };
   }
 
   const today = new Date();
-  const end = new Date(today);
-  end.setDate(today.getDate() + DEFAULT_TASK_DURATION - 1);
+  const end = addDays(today, DEFAULT_TASK_DURATION - 1);
   return { startDate: toISODateString(today), endDate: toISODateString(end) };
 }

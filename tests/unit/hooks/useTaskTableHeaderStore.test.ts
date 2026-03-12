@@ -118,10 +118,10 @@ describe("useTaskTableHeaderStore", () => {
     expect(mockAutoFitColumn).toHaveBeenCalledWith("name");
   });
 
-  it("calls useTaskStore once per slice member", () => {
+  it("calls useTaskStore exactly once (single useShallow subscription)", () => {
     renderHook(() => useTaskTableHeaderStore());
 
-    // 7 slice members = 7 separate useTaskStore calls
-    expect(vi.mocked(useTaskStore)).toHaveBeenCalledTimes(7);
+    // Single useShallow subscription replaces 7 separate useTaskStore calls
+    expect(vi.mocked(useTaskStore)).toHaveBeenCalledTimes(1);
   });
 });
