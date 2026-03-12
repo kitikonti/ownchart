@@ -6,14 +6,12 @@
 
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { render, screen, fireEvent } from "@testing-library/react";
-import {
-  FitToWidthSelector,
-  MIN_FIT_WIDTH_PX,
-  MAX_FIT_WIDTH_PX,
-} from "../../../../src/components/Export/FitToWidthSelector";
+import { FitToWidthSelector } from "../../../../src/components/Export/FitToWidthSelector";
 import {
   DEFAULT_FIT_TO_WIDTH_PX,
   UHD_SCREEN_WIDTH_PX,
+  MIN_FIT_WIDTH_PX,
+  MAX_FIT_WIDTH_PX,
 } from "../../../../src/utils/export/types";
 
 function renderComponent(

@@ -2,6 +2,7 @@
  * CustomZoomControl - Zoom slider, percentage input, and preset buttons for export.
  */
 
+import { useCallback } from "react";
 import {
   EXPORT_ZOOM_MIN,
   EXPORT_ZOOM_MAX,
@@ -76,6 +77,8 @@ function ZoomPercentInput({
   );
 }
 
+ZoomPercentInput.displayName = "ZoomPercentInput";
+
 export function CustomZoomControl({
   timelineZoom,
   onTimelineZoomChange,
@@ -84,6 +87,34 @@ export function CustomZoomControl({
   const presets = isPngOrSvg
     ? CUSTOM_ZOOM_PRESETS_ARRAY
     : Object.values(EXPORT_ZOOM_PRESETS);
+
+  const handleSliderChange = useCallback(
+    (e: React.ChangeEvent<HTMLInputElement>): void => {
+      onTimelineZoomChange(parseInt(e.target.value, 10) / 100);
+    },
+    [onTimelineZoomChange]
+  );
+
+  const handleSliderClick = useCallback(
+    (e: React.MouseEvent<HTMLInputElement>): void => {
+      e.stopPropagation();
+    },
+    []
+  );
+
+  const handlePercentInputChange = useCallback(
+    (e: React.ChangeEvent<HTMLInputElement>): void => {
+      onTimelineZoomChange(clampExportZoom(e.target.value));
+    },
+    [onTimelineZoomChange]
+  );
+
+  const handlePercentInputClick = useCallback(
+    (e: React.MouseEvent<HTMLInputElement>): void => {
+      e.stopPropagation();
+    },
+    []
+  );
 
   return (
     <div className="space-y-4">
@@ -94,10 +125,8 @@ export function CustomZoomControl({
           max={EXPORT_ZOOM_MAX * 100}
           step={1}
           value={timelineZoom * 100}
-          onChange={(e) =>
-            onTimelineZoomChange(parseInt(e.target.value, 10) / 100)
-          }
-          onClick={(e) => e.stopPropagation()}
+          onChange={handleSliderChange}
+          onClick={handleSliderClick}
           aria-label="Zoom level"
           aria-valuemin={EXPORT_ZOOM_MIN * 100}
           aria-valuemax={EXPORT_ZOOM_MAX * 100}
@@ -107,34 +136,59 @@ export function CustomZoomControl({
         />
         <ZoomPercentInput
           value={Math.round(timelineZoom * 100)}
-          onChange={(e) =>
-            onTimelineZoomChange(clampExportZoom(e.target.value))
-          }
-          onClick={(e) => e.stopPropagation()}
+          onChange={handlePercentInputChange}
+          onClick={handlePercentInputClick}
         />
       </div>
 
       {/* Zoom presets */}
       <div className="flex flex-wrap gap-1.5">
         {presets.map((value) => (
-          <button
+          <PresetButton
             key={value}
-            type="button"
-            onClick={(e) => {
-              e.stopPropagation();
-              onTimelineZoomChange(value);
-            }}
-            aria-pressed={timelineZoom === value}
-            className={`px-3 py-1.5 text-xs font-mono font-medium rounded transition-colors duration-150 ${
-              timelineZoom === value
-                ? "bg-brand-600 text-white"
-                : "bg-white border border-neutral-300 text-neutral-700 hover:border-neutral-400 hover:bg-neutral-50"
-            }`}
-          >
-            {Math.round(value * 100)}%
-          </button>
+            value={value}
+            isActive={timelineZoom === value}
+            onTimelineZoomChange={onTimelineZoomChange}
+          />
         ))}
       </div>
     </div>
   );
 }
+
+interface PresetButtonProps {
+  value: number;
+  isActive: boolean;
+  onTimelineZoomChange: (zoom: number) => void;
+}
+
+function PresetButton({
+  value,
+  isActive,
+  onTimelineZoomChange,
+}: PresetButtonProps): JSX.Element {
+  const handleClick = useCallback(
+    (e: React.MouseEvent<HTMLButtonElement>): void => {
+      e.stopPropagation();
+      onTimelineZoomChange(value);
+    },
+    [onTimelineZoomChange, value]
+  );
+
+  return (
+    <button
+      type="button"
+      onClick={handleClick}
+      aria-pressed={isActive}
+      className={`px-3 py-1.5 text-xs font-mono font-medium rounded transition-colors duration-150 ${
+        isActive
+          ? "bg-brand-600 text-white"
+          : "bg-white border border-neutral-300 text-neutral-700 hover:border-neutral-400 hover:bg-neutral-50"
+      }`}
+    >
+      {Math.round(value * 100)}%
+    </button>
+  );
+}
+
+PresetButton.displayName = "PresetButton";

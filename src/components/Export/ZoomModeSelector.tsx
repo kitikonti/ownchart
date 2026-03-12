@@ -6,10 +6,9 @@
 
 import { RadioOptionCard } from "../common/RadioOptionCard";
 import type { ExportZoomMode, ExportFormat } from "../../utils/export/types";
+import { DEFAULT_FIT_TO_WIDTH_PX } from "../../utils/export/types";
 import { FitToWidthSelector } from "./FitToWidthSelector";
 import { CustomZoomControl } from "./CustomZoomControl";
-
-const DEFAULT_FIT_TO_WIDTH_PX = 1920;
 
 export interface ZoomModeSelectorProps {
   /** Current zoom mode */

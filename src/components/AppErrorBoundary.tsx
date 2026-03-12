@@ -44,6 +44,8 @@ export class AppErrorBoundary extends Component<Props, State> {
   private handleReset = (): void => {
     // Soft reset: clears the error state so the component tree re-mounts.
     // Preserves any in-memory app state — prefer this over a full reload.
+    // If the root cause is still present the error will re-appear; in that
+    // case the user should use "Reload application" instead.
     this.setState({ hasError: false });
   };
 

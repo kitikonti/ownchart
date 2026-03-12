@@ -59,8 +59,8 @@ export const ZoomControls = memo(function ZoomControls(): JSX.Element {
     fitToView(useTaskStore.getState().tasks);
   }, [fitToView]);
 
-  // These two handlers capture only stable setters — useCallback is kept for
-  // symmetry with the other handlers and in case ZoomDialog is passed new props.
+  // Passed to memoized ZoomDialog — stable references prevent unnecessary
+  // re-renders of the dialog when ZoomControls re-renders on zoom changes.
   const handleOpenZoomDialog = useCallback((): void => {
     setIsZoomDialogOpen(true);
   }, []);

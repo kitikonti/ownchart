@@ -13,8 +13,6 @@ import {
 import { Input } from "../common/Input";
 import { Select } from "../common/Select";
 
-export { MIN_FIT_WIDTH_PX, MAX_FIT_WIDTH_PX };
-
 /** HD (1080p) screen width in pixels — matches DEFAULT_FIT_TO_WIDTH_PX. */
 const HD_SCREEN_WIDTH_PX = DEFAULT_FIT_TO_WIDTH_PX; // 1920
 
@@ -82,6 +80,12 @@ function clampFitToWidth(rawInput: string): number {
 
 export interface FitToWidthSelectorProps {
   fitToWidth: number;
+  /**
+   * Called when the user changes the width. Optional because this component
+   * can be rendered inside a parent where the format does not support
+   * fit-to-width (e.g. PDF) and no callback is wired up. Width changes are
+   * silently ignored when this prop is absent.
+   */
   onFitToWidthChange?: (width: number) => void;
 }
 
