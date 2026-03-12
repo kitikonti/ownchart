@@ -3,7 +3,10 @@
  */
 
 import { describe, it, expect } from "vitest";
-import { EXPORT_QUICK_PRESETS } from "../../../../src/utils/export/pagePresets";
+import {
+  EXPORT_QUICK_PRESETS,
+  formatResolutionDescription,
+} from "../../../../src/utils/export/pagePresets";
 import {
   PNG_EXPORT_DPI,
   calculatePixelDimensions,
@@ -66,5 +69,32 @@ describe("EXPORT_QUICK_PRESETS", () => {
     const uhd = EXPORT_QUICK_PRESETS.find((p) => p.key === "4k-screen");
     expect(uhd).toBeDefined();
     expect(uhd!.targetWidth).toBeGreaterThan(hd!.targetWidth);
+  });
+
+  it("screen preset descriptions use the × multiplication sign (not ASCII x)", () => {
+    const hd = EXPORT_QUICK_PRESETS.find((p) => p.key === "hd-screen");
+    const uhd = EXPORT_QUICK_PRESETS.find((p) => p.key === "4k-screen");
+    expect(hd!.description).toContain("×");
+    expect(uhd!.description).toContain("×");
+    expect(hd!.description).not.toMatch(/\d x \d/);
+  });
+});
+
+describe("formatResolutionDescription", () => {
+  it("formats dimensions as W × H px", () => {
+    expect(formatResolutionDescription(1920, 1080)).toBe("1920 × 1080 px");
+  });
+
+  it("uses the Unicode multiplication sign ×, not ASCII x", () => {
+    const result = formatResolutionDescription(3840, 2160);
+    expect(result).toContain("×");
+    expect(result).not.toMatch(/\d x \d/);
+  });
+
+  it("includes both width and height values in the output", () => {
+    const result = formatResolutionDescription(800, 600);
+    expect(result).toContain("800");
+    expect(result).toContain("600");
+    expect(result).toContain("px");
   });
 });

@@ -51,8 +51,14 @@ function createPagePreset(
  * Format a resolution description string for screen-size presets.
  * Produces a consistent "W × H px" format matching the typographic convention
  * used by formatDpiDescription for paper presets.
+ *
+ * Exported for unit testing to guard against accidental format changes
+ * (e.g. swapping the × multiplication sign for a plain ASCII 'x').
  */
-function formatResolutionDescription(width: number, height: number): string {
+export function formatResolutionDescription(
+  width: number,
+  height: number
+): string {
   return `${width} × ${height} px`;
 }
 

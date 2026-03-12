@@ -329,6 +329,11 @@ function buildLayoutParts(input: LayoutPartsInput): ExportLayoutParts {
  * the raw project duration to determine label-padding days, then the final
  * zoom is computed from the padded duration. This ensures fit-to-width mode
  * is accurate and task labels are never clipped at the chart edges.
+ *
+ * @param input.tasks - Task list to render. Must be pre-filtered through
+ *   `prepareExportTasks` to exclude hidden tasks before being passed here.
+ *   This function does not apply visibility filtering — it flattens the
+ *   provided task list as-is.
  */
 export function computeExportLayout(input: ExportLayoutInput): ExportLayout {
   const {

@@ -21,7 +21,9 @@ import type { TaskId } from "../../types/branded.types";
  *
  * @returns A new array containing only the tasks that are not in
  *   `fullyResolvedHiddenTaskIds`. Always returns a new array — never a
- *   reference to the input.
+ *   reference to the input. The new-array guarantee exists so that callers
+ *   (e.g. React state comparisons) can rely on reference inequality to detect
+ *   changes, even when no tasks are hidden.
  *
  * @example
  * // CORRECT: pass both parent and all its descendants
