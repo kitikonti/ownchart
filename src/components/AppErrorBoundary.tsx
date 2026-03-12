@@ -12,24 +12,22 @@ interface Props {
 
 interface State {
   hasError: boolean;
-  message: string;
 }
+
+// Use a generic user-safe message in the UI — raw Error.message may contain
+// technical internals that are meaningless (or alarming) to end users.
+// The full error is logged with context in componentDidCatch.
+const ERROR_FALLBACK_MESSAGE =
+  "The application encountered an unexpected error. Please try reloading.";
 
 export class AppErrorBoundary extends Component<Props, State> {
   constructor(props: Props) {
     super(props);
-    this.state = { hasError: false, message: "" };
+    this.state = { hasError: false };
   }
 
   static getDerivedStateFromError(): State {
-    // Use a generic user-safe message in the UI — raw Error.message may contain
-    // technical internals that are meaningless (or alarming) to end users.
-    // The full error is logged with context in componentDidCatch below.
-    return {
-      hasError: true,
-      message:
-        "The application encountered an unexpected error. Please try reloading.",
-    };
+    return { hasError: true };
   }
 
   override componentDidCatch(error: unknown, info: ErrorInfo): void {
@@ -46,7 +44,7 @@ export class AppErrorBoundary extends Component<Props, State> {
   private handleReset = (): void => {
     // Soft reset: clears the error state so the component tree re-mounts.
     // Preserves any in-memory app state — prefer this over a full reload.
-    this.setState({ hasError: false, message: "" });
+    this.setState({ hasError: false });
   };
 
   private handleReload = (): void => {
@@ -64,7 +62,7 @@ export class AppErrorBoundary extends Component<Props, State> {
             Something went wrong
           </h1>
           <p className="text-neutral-600 text-sm max-w-md text-center">
-            {this.state.message}
+            {ERROR_FALLBACK_MESSAGE}
           </p>
           <div className="flex gap-3">
             <button

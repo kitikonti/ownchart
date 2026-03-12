@@ -103,6 +103,7 @@ export function ZoomControls(): JSX.Element {
           onChange={handleSliderChange}
           className="status-bar-slider w-24 h-1 bg-neutral-300 rounded-full appearance-none cursor-pointer"
           aria-label="Zoom level"
+          aria-valuetext={`${zoomPercentage}%`}
         />
 
         <button
@@ -119,7 +120,7 @@ export function ZoomControls(): JSX.Element {
           type="button"
           onClick={handleOpenZoomDialog}
           className="min-w-[44px] text-right text-neutral-600 hover:text-neutral-800 hover:underline cursor-pointer transition-colors"
-          aria-label="Open zoom dialog"
+          aria-label={`Zoom: ${zoomPercentage}%. Open zoom dialog`}
         >
           {zoomPercentage}%
         </button>

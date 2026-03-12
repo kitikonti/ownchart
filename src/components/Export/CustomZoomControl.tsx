@@ -19,6 +19,19 @@ const CUSTOM_ZOOM_PRESETS_ARRAY = [
   ...Object.values(EXPORT_ZOOM_PRESETS),
 ];
 
+/**
+ * Parse a raw string input into a clamped export zoom multiplier.
+ * The input is expected to be a percentage value (e.g. "100" → 1.0).
+ * Falls back to 1.0 (100%) when the input is not a valid integer.
+ */
+function clampExportZoom(rawInput: string): number {
+  const parsed = parseInt(rawInput, 10);
+  const value = Number.isNaN(parsed) ? 100 : parsed;
+  return Math.max(EXPORT_ZOOM_MIN, Math.min(EXPORT_ZOOM_MAX, value / 100));
+}
+
+ZoomPercentInput.displayName = "ZoomPercentInput";
+
 export interface CustomZoomControlProps {
   timelineZoom: number;
   onTimelineZoomChange: (zoom: number) => void;
@@ -84,15 +97,7 @@ export function CustomZoomControl({
         <ZoomPercentInput
           value={Math.round(timelineZoom * 100)}
           onChange={(e) =>
-            onTimelineZoomChange(
-              Math.max(
-                EXPORT_ZOOM_MIN,
-                Math.min(
-                  EXPORT_ZOOM_MAX,
-                  parseInt(e.target.value, 10) / 100 || 1
-                )
-              )
-            )
+            onTimelineZoomChange(clampExportZoom(e.target.value))
           }
           onClick={(e) => e.stopPropagation()}
         />

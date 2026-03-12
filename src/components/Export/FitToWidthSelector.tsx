@@ -17,6 +17,15 @@ export const MAX_FIT_WIDTH_PX = 20000;
 /** HD (1080p) screen width in pixels — matches DEFAULT_FIT_TO_WIDTH_PX. */
 const HD_SCREEN_WIDTH_PX = DEFAULT_FIT_TO_WIDTH_PX; // 1920
 
+// Print pixel widths at 150 DPI for common paper sizes in landscape orientation.
+// Formula: paper width in inches × 150 DPI.
+// A4 landscape: 11.69 in × 150 = 1754 px
+// A3 landscape: 16.54 in × 150 = 2480 px (rounded)
+// Letter landscape: 11.00 in × 150 = 1650 px
+const A4_LANDSCAPE_150DPI_PX = 1754;
+const A3_LANDSCAPE_150DPI_PX = 2480;
+const LETTER_LANDSCAPE_150DPI_PX = 1650;
+
 interface FitToWidthPreset {
   label: string;
   value: number;
@@ -39,9 +48,18 @@ const FIT_TO_WIDTH_GROUPS = {
   print150dpi: {
     label: "Print @ 150 DPI",
     presets: [
-      { label: "A4 Landscape (1754px)", value: 1754 },
-      { label: "A3 Landscape (2480px)", value: 2480 },
-      { label: "Letter Landscape (1650px)", value: 1650 },
+      {
+        label: `A4 Landscape (${A4_LANDSCAPE_150DPI_PX}px)`,
+        value: A4_LANDSCAPE_150DPI_PX,
+      },
+      {
+        label: `A3 Landscape (${A3_LANDSCAPE_150DPI_PX}px)`,
+        value: A3_LANDSCAPE_150DPI_PX,
+      },
+      {
+        label: `Letter Landscape (${LETTER_LANDSCAPE_150DPI_PX}px)`,
+        value: LETTER_LANDSCAPE_150DPI_PX,
+      },
     ] as FitToWidthPreset[],
   },
 };
@@ -50,6 +68,16 @@ const ALL_PRESET_VALUES = [
   ...FIT_TO_WIDTH_GROUPS.screenSizes.presets,
   ...FIT_TO_WIDTH_GROUPS.print150dpi.presets,
 ].map((p) => p.value);
+
+/**
+ * Parse a raw string input into a clamped pixel width.
+ * Falls back to DEFAULT_FIT_TO_WIDTH_PX when the input is not a valid integer.
+ */
+function clampFitToWidth(rawInput: string): number {
+  const parsed = parseInt(rawInput, 10);
+  const value = Number.isNaN(parsed) ? DEFAULT_FIT_TO_WIDTH_PX : parsed;
+  return Math.max(MIN_FIT_WIDTH_PX, Math.min(MAX_FIT_WIDTH_PX, value));
+}
 
 export interface FitToWidthSelectorProps {
   fitToWidth: number;
@@ -116,15 +144,7 @@ export function FitToWidthSelector({
             type="number"
             value={fitToWidth}
             onChange={(e) =>
-              onFitToWidthChange?.(
-                Math.max(
-                  MIN_FIT_WIDTH_PX,
-                  Math.min(
-                    MAX_FIT_WIDTH_PX,
-                    parseInt(e.target.value, 10) || DEFAULT_FIT_TO_WIDTH_PX
-                  )
-                )
-              )
+              onFitToWidthChange?.(clampFitToWidth(e.target.value))
             }
             onClick={(e) => e.stopPropagation()}
             aria-label="Custom width in pixels"
