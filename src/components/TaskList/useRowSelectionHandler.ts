@@ -30,6 +30,10 @@ interface UseRowSelectionHandlerOptions {
 
 // ── Hook ──────────────────────────────────────────────────────────────────────
 
+/**
+ * @returns `handleSelectRow` — stable callback (memoized via `useCallback`) that
+ * applies the appropriate selection mutation based on modifier keys.
+ */
 export function useRowSelectionHandler({
   visibleTaskIds,
 }: UseRowSelectionHandlerOptions): {

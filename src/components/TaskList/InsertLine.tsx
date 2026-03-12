@@ -8,6 +8,9 @@ import { INSERT_BUTTON_HIT_AREA, ROW_COLORS } from "./rowNumberConfig";
 
 const INSERT_LINE_THICKNESS = 2;
 const INSERT_LINE_START = INSERT_BUTTON_HIT_AREA; // px from left, after the insert-button circle
+// Centres the 2px line on the row edge: offset by half its own thickness so the
+// line straddles the boundary rather than sitting entirely inside one row.
+const INSERT_LINE_EDGE_OFFSET_PX = -1;
 // Intentionally large negative `right` value so the line visually extends across
 // both the task-list panel and the timeline/chart panel, regardless of viewport width.
 // A CSS-only solution (e.g. width: 100vw) would require overflow:visible on every
@@ -23,7 +26,8 @@ export function InsertLine({ position }: InsertLineProps): JSX.Element {
     <div
       className="absolute pointer-events-none"
       style={{
-        [position === "above" ? "top" : "bottom"]: "-1px",
+        [position === "above" ? "top" : "bottom"]:
+          `${INSERT_LINE_EDGE_OFFSET_PX}px`,
         left: `${INSERT_LINE_START}px`,
         right: `${INSERT_LINE_RIGHT_EXTEND_PX}px`,
         height: `${INSERT_LINE_THICKNESS}px`,
