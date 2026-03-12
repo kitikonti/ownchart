@@ -54,10 +54,11 @@ export const RowOverlays = memo(function RowOverlays({
       {/* Clipboard overlay with dotted border */}
       {isInClipboard && clipboardPosition && (
         <div
-          className="absolute inset-0 pointer-events-none z-20 border-2 border-dotted border-neutral-500"
+          className="absolute inset-0 pointer-events-none border-2 border-dotted border-neutral-500"
           style={{
             borderTopStyle: clipboardPosition.isFirst ? "dotted" : "none",
             borderBottomStyle: clipboardPosition.isLast ? "dotted" : "none",
+            zIndex: Z_INDEX.rowIndicator,
           }}
         />
       )}

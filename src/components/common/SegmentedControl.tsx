@@ -1,7 +1,7 @@
 /**
  * SegmentedControl - Reusable segmented button group for selecting one option.
  * Supports two layouts: inline (horizontal bar) and grid (2D grid of buttons).
- * Includes proper a11y: role="group", aria-label, type="button", focus-visible.
+ * Includes proper a11y: role="group", aria-label, type="button", aria-pressed, focus-visible.
  */
 
 import type { ReactNode } from "react";
@@ -25,14 +25,14 @@ export interface SegmentedControlProps<T extends string = string> {
   /** Layout mode: "inline" for horizontal bar, "grid" for 2D grid */
   layout?: "inline" | "grid";
   /** Number of columns for grid layout (default: 2) */
-  columns?: number;
+  columns?: 2 | 3 | 4;
   /** Accessible label for the group */
   ariaLabel: string;
   /** Whether inline layout should fill container width */
   fullWidth?: boolean;
 }
 
-const GRID_COLS: Record<number, string> = {
+const GRID_COLS: Record<2 | 3 | 4, string> = {
   2: "grid-cols-2",
   3: "grid-cols-3",
   4: "grid-cols-4",
@@ -51,7 +51,7 @@ export function SegmentedControl<T extends string = string>({
   fullWidth = false,
 }: SegmentedControlProps<T>): JSX.Element {
   if (layout === "grid") {
-    const gridCols = GRID_COLS[columns] || "grid-cols-2";
+    const gridCols = GRID_COLS[columns] ?? "grid-cols-2";
     return (
       <div
         role="group"
@@ -64,6 +64,7 @@ export function SegmentedControl<T extends string = string>({
             <button
               key={opt.value}
               type="button"
+              aria-pressed={isSelected}
               onClick={() => onChange(opt.value)}
               className={`flex items-center justify-center gap-2 px-4 py-2 text-sm font-medium rounded border transition-colors duration-150 ${FOCUS_CLASSES} focus-visible:ring-offset-2 ${
                 isSelected
@@ -93,6 +94,7 @@ export function SegmentedControl<T extends string = string>({
           <button
             key={opt.value}
             type="button"
+            aria-pressed={isSelected}
             onClick={() => onChange(opt.value)}
             className={`${fullWidth ? "flex-1" : ""} flex items-center justify-center gap-2 px-4 py-2 text-sm font-medium transition-colors duration-150 ${FOCUS_CLASSES} ${
               index > 0 ? "border-l border-neutral-300" : ""

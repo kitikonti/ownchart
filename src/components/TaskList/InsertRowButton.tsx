@@ -52,6 +52,7 @@ export function InsertRowButton({
 
   return (
     <button
+      type="button"
       className="flex items-center justify-center"
       style={{
         width: `${BUTTON_HIT_AREA}px`,
@@ -68,25 +69,22 @@ export function InsertRowButton({
     >
       {isActive ? (
         <div
+          className="rounded-full flex items-center justify-center"
           style={{
             width: `${CIRCLE_SIZE_HOVER}px`,
             height: `${CIRCLE_SIZE_HOVER}px`,
-            borderRadius: "50%",
             backgroundColor: ROW_NUMBER.controlBg,
             border: `1px solid ${controlsColor}`,
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
           }}
         >
           <Plus size={10} weight="bold" color={controlsColor} />
         </div>
       ) : (
         <div
+          className="rounded-full"
           style={{
             width: `${CIRCLE_SIZE_DEFAULT}px`,
             height: `${CIRCLE_SIZE_DEFAULT}px`,
-            borderRadius: "50%",
             backgroundColor: ROW_NUMBER.controlBg,
             border: `1px solid ${controlsColor}`,
           }}
