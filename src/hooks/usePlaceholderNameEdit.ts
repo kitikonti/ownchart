@@ -149,20 +149,21 @@ export function usePlaceholderNameEdit(
 
   const handleInputKeyDown = useCallback(
     (e: KeyboardEvent<HTMLInputElement>): void => {
+      /** Commit the task if there is a name; otherwise discard the edit. */
+      const commitOrCancel = (): void => {
+        if (inputValue.trim()) {
+          commitNewTask();
+        } else {
+          cancelEdit();
+        }
+      };
+
       if (e.key === "Enter") {
         e.preventDefault();
-        if (inputValue.trim()) {
-          commitNewTask();
-        } else {
-          cancelEdit();
-        }
+        commitOrCancel();
       } else if (e.key === "Tab") {
         e.preventDefault();
-        if (inputValue.trim()) {
-          commitNewTask();
-        } else {
-          cancelEdit();
-        }
+        commitOrCancel();
         navigateCell(e.shiftKey ? "left" : "right");
       } else if (e.key === "Escape") {
         // cancelEdit sets isEditing=false → the useEffect above re-focuses the cell

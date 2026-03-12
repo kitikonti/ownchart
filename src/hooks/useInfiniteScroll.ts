@@ -30,6 +30,13 @@ interface UseInfiniteScrollOptions {
   dateRange: { min: string; max: string } | null;
   lastFitToViewTime: number;
   fileLoadCounter: number;
+  /**
+   * Callback to extend the visible date range.
+   * **Must be a stable reference** (e.g. from a Zustand store selector or
+   * wrapped in `useCallback`) — it is listed as a dependency of the scroll
+   * effect, so an unstable reference will re-register the listener on every
+   * render and discard any pending debounced extension.
+   */
   extendDateRange: (direction: "past" | "future", days?: number) => void;
 }
 
@@ -101,7 +108,10 @@ export function useInfiniteScroll({
     }
 
     prevDateRangeRef.current = dateRangeKey;
-  }, [dateRange, scale, lastFitToViewTime, fileLoadCounter, chartContainerRef]);
+    // chartContainerRef intentionally omitted: the ref object is a stable
+    // identity (React guarantees it never changes); .current is read
+    // imperatively inside the effect, not captured in the closure.
+  }, [dateRange, scale, lastFitToViewTime, fileLoadCounter]);
 
   // Infinite scroll detection - extend timeline when near edges
   useEffect(() => {
@@ -180,5 +190,8 @@ export function useInfiniteScroll({
         pendingPastExtensionRef.current = null;
       }
     };
-  }, [scale, extendDateRange, chartContainerRef]);
+    // chartContainerRef intentionally omitted: the ref object is a stable
+    // identity (React guarantees it never changes); .current is read
+    // imperatively inside the effect, not captured in the closure.
+  }, [scale, extendDateRange]);
 }

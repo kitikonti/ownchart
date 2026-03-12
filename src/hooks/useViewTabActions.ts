@@ -9,7 +9,7 @@
  * avoiding unnecessary re-renders on every task mutation.
  */
 
-import { useMemo } from "react";
+import { useCallback, useMemo } from "react";
 import { useTaskStore } from "../store/slices/taskSlice";
 import { useChartStore } from "../store/slices/chartSlice";
 import { computeViewportCenterAnchor, applyScrollLeft } from "./useZoom";
@@ -87,36 +87,39 @@ export function useViewTabActions(): ViewTabActions {
   }, [zoomPercentage]);
 
   // Handlers
-  const handleZoomIn = (): void => {
+  const handleZoomIn = useCallback((): void => {
     const anchor = computeViewportCenterAnchor();
     const result = zoomIn(anchor);
     applyScrollLeft(result.newScrollLeft);
-  };
+  }, [zoomIn]);
 
-  const handleZoomOut = (): void => {
+  const handleZoomOut = useCallback((): void => {
     const anchor = computeViewportCenterAnchor();
     const result = zoomOut(anchor);
     applyScrollLeft(result.newScrollLeft);
-  };
+  }, [zoomOut]);
 
-  const handleFitToView = (): void => {
+  const handleFitToView = useCallback((): void => {
     // Read tasks lazily — no subscription needed
     fitToView(useTaskStore.getState().tasks);
-  };
+  }, [fitToView]);
 
-  const handleZoomLevelSelect = (level: number | "fit"): void => {
-    if (level === "fit") {
-      handleFitToView();
-    } else {
-      const anchor = computeViewportCenterAnchor();
-      const result = setZoom(level / 100, anchor);
-      applyScrollLeft(result.newScrollLeft);
-    }
-  };
+  const handleZoomLevelSelect = useCallback(
+    (level: number | "fit"): void => {
+      if (level === "fit") {
+        handleFitToView();
+      } else {
+        const anchor = computeViewportCenterAnchor();
+        const result = setZoom(level / 100, anchor);
+        applyScrollLeft(result.newScrollLeft);
+      }
+    },
+    [handleFitToView, setZoom]
+  );
 
-  const toggleTaskTableCollapsed = (): void => {
+  const toggleTaskTableCollapsed = useCallback((): void => {
     setTaskTableCollapsed(!isTaskTableCollapsed);
-  };
+  }, [setTaskTableCollapsed, isTaskTableCollapsed]);
 
   return {
     showTodayMarker,

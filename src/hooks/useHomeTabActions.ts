@@ -18,6 +18,36 @@ const DEFAULT_TASK_NAME = "New Task";
 
 const formatDate = (date: Date): string => date.toISOString().split("T")[0];
 
+/** Builds the default payload for a newly added task anchored to today. */
+function buildDefaultTaskPayload(taskCount: number): {
+  name: string;
+  startDate: string;
+  endDate: string;
+  duration: number;
+  progress: number;
+  color: `#${string}`;
+  order: number;
+  type: "task";
+  parent: undefined;
+  metadata: Record<string, never>;
+} {
+  const today = new Date();
+  const endDate = new Date(today);
+  endDate.setDate(today.getDate() + DEFAULT_NEW_TASK_DURATION_DAYS - 1);
+  return {
+    name: DEFAULT_TASK_NAME,
+    startDate: formatDate(today),
+    endDate: formatDate(endDate),
+    duration: DEFAULT_NEW_TASK_DURATION_DAYS,
+    progress: 0,
+    color: COLORS.chart.taskDefault,
+    order: taskCount,
+    type: "task",
+    parent: undefined,
+    metadata: {},
+  };
+}
+
 interface HomeTabActions {
   // History
   undo: () => void;
@@ -122,22 +152,7 @@ export function useHomeTabActions(): HomeTabActions {
 
   // Handlers
   const handleAddTask = (): void => {
-    const today = new Date();
-    const endDate = new Date(today);
-    endDate.setDate(today.getDate() + DEFAULT_NEW_TASK_DURATION_DAYS - 1);
-
-    addTask({
-      name: DEFAULT_TASK_NAME,
-      startDate: formatDate(today),
-      endDate: formatDate(endDate),
-      duration: DEFAULT_NEW_TASK_DURATION_DAYS,
-      progress: 0,
-      color: COLORS.chart.taskDefault,
-      order: taskCount,
-      type: "task",
-      parent: undefined,
-      metadata: {},
-    });
+    addTask(buildDefaultTaskPayload(taskCount));
   };
 
   const handleInsertAbove = (): void => {
