@@ -50,6 +50,47 @@ const GRID_COLS: Record<2 | 3 | 4, string> = {
 const FOCUS_CLASSES =
   "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500";
 
+// ── Shared button sub-component ───────────────────────────────────────────────
+
+interface SegmentedButtonProps<T extends string> {
+  opt: SegmentedControlOption<T>;
+  index: number;
+  isSelected: boolean;
+  buttonRef: (el: HTMLButtonElement | null) => void;
+  className: string;
+  onClickValue: (value: T) => void;
+  onKeyDown: (e: KeyboardEvent<HTMLButtonElement>, index: number) => void;
+}
+
+/** Renders a single radio button — shared between inline and grid layouts. */
+function SegmentedButton<T extends string>({
+  opt,
+  index,
+  isSelected,
+  buttonRef,
+  className,
+  onClickValue,
+  onKeyDown,
+}: SegmentedButtonProps<T>): JSX.Element {
+  return (
+    <button
+      ref={buttonRef}
+      type="button"
+      role="radio"
+      aria-checked={isSelected}
+      tabIndex={isSelected ? 0 : -1}
+      onClick={() => onClickValue(opt.value)}
+      onKeyDown={(e) => onKeyDown(e, index)}
+      className={className}
+    >
+      {opt.icon}
+      {opt.label}
+    </button>
+  );
+}
+
+// ── Main component ─────────────────────────────────────────────────────────────
+
 function SegmentedControlInner<T extends string = string>({
   options,
   value,
@@ -117,30 +158,27 @@ function SegmentedControlInner<T extends string = string>({
       >
         {options.map((opt, index) => {
           const isSelected = value === opt.value;
+          // ring-offset-2 is needed for grid buttons because each has its own border;
+          // the offset separates the focus ring from the button's own border visually.
+          // Inline buttons share a single surrounding border so no offset is needed.
+          const className = `flex items-center justify-center gap-2 px-4 py-2 text-sm font-medium rounded border transition-colors duration-150 ${FOCUS_CLASSES} focus-visible:ring-offset-2 ${
+            isSelected
+              ? "border-brand-600 bg-brand-600 text-white"
+              : "border-neutral-300 bg-white text-neutral-700 hover:border-neutral-400 hover:bg-neutral-50"
+          }`;
           return (
-            <button
+            <SegmentedButton
               key={opt.value}
-              ref={(el) => {
+              opt={opt}
+              index={index}
+              isSelected={isSelected}
+              buttonRef={(el) => {
                 buttonRefs.current[index] = el;
               }}
-              type="button"
-              role="radio"
-              aria-checked={isSelected}
-              tabIndex={isSelected ? 0 : -1}
-              onClick={() => onChange(opt.value)}
-              onKeyDown={(e) => handleKeyDown(e, index)}
-              // ring-offset-2 is needed for grid buttons because each has its own border;
-              // the offset separates the focus ring from the button's own border visually.
-              // Inline buttons share a single surrounding border so no offset is needed.
-              className={`flex items-center justify-center gap-2 px-4 py-2 text-sm font-medium rounded border transition-colors duration-150 ${FOCUS_CLASSES} focus-visible:ring-offset-2 ${
-                isSelected
-                  ? "border-brand-600 bg-brand-600 text-white"
-                  : "border-neutral-300 bg-white text-neutral-700 hover:border-neutral-400 hover:bg-neutral-50"
-              }`}
-            >
-              {opt.icon}
-              {opt.label}
-            </button>
+              className={className}
+              onClickValue={onChange}
+              onKeyDown={handleKeyDown}
+            />
           );
         })}
       </div>
@@ -156,29 +194,26 @@ function SegmentedControlInner<T extends string = string>({
     >
       {options.map((opt, index) => {
         const isSelected = value === opt.value;
+        const className = `${fullWidth ? "flex-1" : ""} flex items-center justify-center gap-2 px-4 py-2 text-sm font-medium transition-colors duration-150 ${FOCUS_CLASSES} ${
+          index > 0 ? "border-l border-neutral-300" : ""
+        } ${
+          isSelected
+            ? "bg-brand-600 text-white"
+            : "bg-white text-neutral-700 hover:bg-neutral-50"
+        }`;
         return (
-          <button
+          <SegmentedButton
             key={opt.value}
-            ref={(el) => {
+            opt={opt}
+            index={index}
+            isSelected={isSelected}
+            buttonRef={(el) => {
               buttonRefs.current[index] = el;
             }}
-            type="button"
-            role="radio"
-            aria-checked={isSelected}
-            tabIndex={isSelected ? 0 : -1}
-            onClick={() => onChange(opt.value)}
-            onKeyDown={(e) => handleKeyDown(e, index)}
-            className={`${fullWidth ? "flex-1" : ""} flex items-center justify-center gap-2 px-4 py-2 text-sm font-medium transition-colors duration-150 ${FOCUS_CLASSES} ${
-              index > 0 ? "border-l border-neutral-300" : ""
-            } ${
-              isSelected
-                ? "bg-brand-600 text-white"
-                : "bg-white text-neutral-700 hover:bg-neutral-50"
-            }`}
-          >
-            {opt.icon}
-            {opt.label}
-          </button>
+            className={className}
+            onClickValue={onChange}
+            onKeyDown={handleKeyDown}
+          />
         );
       })}
     </div>

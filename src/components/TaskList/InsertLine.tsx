@@ -3,6 +3,7 @@
  * Extracted from RowNumberCell to DRY up the above/below variants.
  */
 
+import { memo } from "react";
 import { Z_INDEX } from "../../styles/design-tokens";
 import { INSERT_BUTTON_HIT_AREA, ROW_COLORS } from "./rowNumberConfig";
 
@@ -21,7 +22,9 @@ interface InsertLineProps {
   position: "above" | "below";
 }
 
-export function InsertLine({ position }: InsertLineProps): JSX.Element {
+export const InsertLine = memo(function InsertLine({
+  position,
+}: InsertLineProps): JSX.Element {
   return (
     <div
       className="absolute pointer-events-none"
@@ -36,4 +39,4 @@ export function InsertLine({ position }: InsertLineProps): JSX.Element {
       }}
     />
   );
-}
+});
