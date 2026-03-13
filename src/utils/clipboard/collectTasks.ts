@@ -119,7 +119,8 @@ export function deepCloneTasks(tasks: Task[]): Task[] {
     throw new Error(
       `deepCloneTasks: task.metadata contains a non-cloneable value. ` +
         `Ensure all metadata values are strings, numbers, booleans, plain objects, ` +
-        `or arrays. Cause: ${error instanceof Error ? error.message : String(error)}`
+        `or arrays. Cause: ${error instanceof Error ? error.message : String(error)}`,
+      { cause: error }
     );
   }
 }

@@ -38,7 +38,8 @@ export function registerInterFont(doc: jsPDF): void {
     }
   } catch (err) {
     throw new Error(
-      `Failed to register Inter font for PDF export: ${err instanceof Error ? err.message : String(err)}`
+      `Failed to register Inter font for PDF export: ${err instanceof Error ? err.message : String(err)}`,
+      { cause: err }
     );
   }
 }

@@ -525,7 +525,7 @@ async function embedSvgInDocument(
       height: placement.finalHeightMm,
     });
   } catch (err) {
-    throw new Error(`PDF rendering failed: ${String(err)}`);
+    throw new Error(`PDF rendering failed: ${String(err)}`, { cause: err });
   }
 }
 
