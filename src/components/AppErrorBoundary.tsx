@@ -40,10 +40,11 @@ export class AppErrorBoundary extends Component<Props, State> {
   // in componentDidCatch. getDerivedStateFromError only needs to flip hasError
   // so the fallback UI renders synchronously.
   //
-  // Note: errorCount is NOT incremented here — it is incremented in
-  // componentDidCatch, which always fires after getDerivedStateFromError in
-  // React's error-handling sequence. Separating the two keeps this static
-  // method side-effect-free (it cannot access `this`).
+  // Note: errorCount is NOT incremented here because getDerivedStateFromError
+  // is static and cannot access `this` or previous state. It is incremented in
+  // componentDidCatch, which React always calls immediately after in the same
+  // error-handling pass. React batches both state updates into a single commit,
+  // so the rendered fallback always sees the correct (incremented) errorCount.
   static getDerivedStateFromError(): Partial<State> {
     return { hasError: true };
   }
@@ -58,7 +59,8 @@ export class AppErrorBoundary extends Component<Props, State> {
       info.componentStack
     );
     // Increment the error count so the UI can adapt after repeated failures
-    // (e.g. hide "Try again" to avoid an endless error loop).
+    // (e.g. hide "Try again" to avoid an endless error loop). React batches
+    // this setState with the hasError flip from getDerivedStateFromError above.
     this.setState((prev) => ({ errorCount: prev.errorCount + 1 }));
   }
 

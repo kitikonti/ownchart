@@ -117,34 +117,61 @@ describe("CustomZoomControl", () => {
     expect(input).toHaveValue(100);
   });
 
-  it("clamps zoom input to EXPORT_ZOOM_MAX when the entered value exceeds it", () => {
+  it("does not call onTimelineZoomChange while typing (deferred commit)", () => {
+    const onTimelineZoomChange = vi.fn();
+    renderComponent({ onTimelineZoomChange });
+
+    const input = screen.getByRole("spinbutton", { name: "Zoom percentage" });
+    fireEvent.change(input, { target: { value: "15" } });
+
+    // No callback until the user confirms (blur or Enter)
+    expect(onTimelineZoomChange).not.toHaveBeenCalled();
+  });
+
+  it("clamps zoom input to EXPORT_ZOOM_MAX when the entered value exceeds it (committed on blur)", () => {
     const onTimelineZoomChange = vi.fn();
     renderComponent({ onTimelineZoomChange });
 
     const input = screen.getByRole("spinbutton", { name: "Zoom percentage" });
     fireEvent.change(input, { target: { value: "99999" } });
+    fireEvent.blur(input);
 
     expect(onTimelineZoomChange).toHaveBeenCalledWith(EXPORT_ZOOM_MAX);
   });
 
-  it("clamps zoom input to EXPORT_ZOOM_MIN when the entered value is below it", () => {
+  it("clamps zoom input to EXPORT_ZOOM_MIN when the entered value is below it (committed on blur)", () => {
     const onTimelineZoomChange = vi.fn();
     renderComponent({ onTimelineZoomChange });
 
     const input = screen.getByRole("spinbutton", { name: "Zoom percentage" });
     // Enter a value below the minimum (EXPORT_ZOOM_MIN * 100 = 5%)
     fireEvent.change(input, { target: { value: "0" } });
+    fireEvent.blur(input);
 
     expect(onTimelineZoomChange).toHaveBeenCalledWith(EXPORT_ZOOM_MIN);
   });
 
-  it("falls back to 100% (1.0) when the percentage input receives an empty/non-numeric value", () => {
+  it("falls back to 100% (1.0) when the percentage input receives an empty/non-numeric value (committed on blur)", () => {
     const onTimelineZoomChange = vi.fn();
     renderComponent({ onTimelineZoomChange });
 
     const input = screen.getByRole("spinbutton", { name: "Zoom percentage" });
     fireEvent.change(input, { target: { value: "" } });
+    fireEvent.blur(input);
 
     expect(onTimelineZoomChange).toHaveBeenCalledWith(1.0);
+  });
+
+  it("commits the zoom value on Enter key press", () => {
+    const onTimelineZoomChange = vi.fn();
+    renderComponent({ onTimelineZoomChange });
+
+    const input = screen.getByRole("spinbutton", { name: "Zoom percentage" });
+    fireEvent.change(input, { target: { value: "150" } });
+    fireEvent.keyDown(input, { key: "Enter" });
+    // Pressing Enter triggers blur which commits the value
+    fireEvent.blur(input);
+
+    expect(onTimelineZoomChange).toHaveBeenCalledWith(1.5);
   });
 });

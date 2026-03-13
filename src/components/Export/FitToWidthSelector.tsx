@@ -108,12 +108,12 @@ export function FitToWidthSelector({
   useEffect(() => {
     const isPreset = ALL_PRESET_VALUES.includes(fitToWidth);
     setIsCustomWidth(!isPreset);
-    // Also sync the draft so the input reflects the new value when the parent
-    // changes it programmatically (e.g. switching export format resets width).
-    if (isPreset || !isCustomWidth) {
+    // Sync the draft when the parent resets to a preset value. When the value
+    // is a non-preset (custom) we leave the draft alone so the user's in-progress
+    // typing is not overwritten by a prop that equals what they already have.
+    if (isPreset) {
       setCustomDraft(String(fitToWidth));
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [fitToWidth]);
 
   const handleSelectChange = useCallback(
@@ -129,14 +129,11 @@ export function FitToWidthSelector({
         // Free-form custom input goes through clampFitToWidth instead.
         const numValue = parseInt(value, 10);
         if (Number.isNaN(numValue)) return;
-        // Only flip local state and notify parent when the callback is wired up.
-        // Updating local state without a parent callback would cause a visual
-        // desync — the dropdown shows a preset label but the parent still holds
-        // the old value (or no value), making the two diverge silently.
-        if (onFitToWidthChange) {
-          setIsCustomWidth(false);
-          onFitToWidthChange(numValue);
-        }
+        // Always flip local state so the dropdown label stays in sync, even
+        // when onFitToWidthChange is not wired up. Only the parent callback is
+        // conditional — keeping local UI state consistent is always correct.
+        setIsCustomWidth(false);
+        onFitToWidthChange?.(numValue);
       }
     },
     [fitToWidth, onFitToWidthChange]

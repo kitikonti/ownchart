@@ -2,7 +2,15 @@
  * CustomZoomControl - Zoom slider, percentage input, and preset buttons for export.
  */
 
-import { memo, useCallback, type ChangeEvent, type MouseEvent } from "react";
+import {
+  memo,
+  useCallback,
+  useEffect,
+  useState,
+  type ChangeEvent,
+  type KeyboardEvent,
+  type MouseEvent,
+} from "react";
 import {
   EXPORT_ZOOM_MIN,
   EXPORT_ZOOM_MAX,
@@ -60,8 +68,9 @@ export interface CustomZoomControlProps {
 }
 
 interface ZoomPercentInputProps {
+  /** Committed zoom multiplier from the parent (e.g. 1.0 for 100%). */
   value: number;
-  onChange: (e: ChangeEvent<HTMLInputElement>) => void;
+  onCommit: (zoom: number) => void;
   onClick: (e: MouseEvent<HTMLInputElement>) => void;
 }
 
@@ -69,18 +78,54 @@ interface ZoomPercentInputProps {
  * Bordered container combining a number input and "%" unit label.
  * Uses a compound border design (input + label share one border) which
  * prevents the standard Input component's own border from being used here.
+ *
+ * Maintains a local draft string so intermediate keystrokes (e.g. "15" while
+ * typing "150") do not fire upstream re-renders. The clamped value is
+ * committed to the parent on blur or Enter key.
  */
 function ZoomPercentInput({
   value,
-  onChange,
+  onCommit,
   onClick,
 }: ZoomPercentInputProps): JSX.Element {
+  // Local draft keeps the raw string so users can type freely.
+  const [draft, setDraft] = useState(String(Math.round(value * 100)));
+
+  // Sync draft when the parent changes the committed zoom externally
+  // (e.g. preset button click or slider move).
+  useEffect(() => {
+    setDraft(String(Math.round(value * 100)));
+  }, [value]);
+
+  const handleChange = useCallback((e: ChangeEvent<HTMLInputElement>): void => {
+    setDraft(e.target.value);
+  }, []);
+
+  const handleCommit = useCallback((): void => {
+    const clamped = clampExportZoom(draft);
+    // Normalise draft to the clamped percentage so the field reflects the
+    // actual committed value after blur (e.g. "99999" → "200").
+    setDraft(String(Math.round(clamped * 100)));
+    onCommit(clamped);
+  }, [draft, onCommit]);
+
+  const handleKeyDown = useCallback(
+    (e: KeyboardEvent<HTMLInputElement>): void => {
+      if (e.key === "Enter") {
+        e.currentTarget.blur();
+      }
+    },
+    []
+  );
+
   return (
     <div className="flex items-center gap-1 bg-white border border-neutral-300 rounded px-3 py-1.5">
       <input
         type="number"
-        value={value}
-        onChange={onChange}
+        value={draft}
+        onChange={handleChange}
+        onBlur={handleCommit}
+        onKeyDown={handleKeyDown}
         onClick={onClick}
         aria-label="Zoom percentage"
         className="w-10 text-sm text-center font-mono bg-transparent border-none focus:outline-none text-neutral-900"
@@ -98,7 +143,7 @@ interface PresetButtonProps {
   onTimelineZoomChange: (zoom: number) => void;
 }
 
-function PresetButton({
+const PresetButton = memo(function PresetButton({
   value,
   isActive,
   onTimelineZoomChange,
@@ -125,7 +170,7 @@ function PresetButton({
       {Math.round(value * 100)}%
     </button>
   );
-}
+});
 
 export const CustomZoomControl = memo(function CustomZoomControl({
   timelineZoom,
@@ -149,13 +194,6 @@ export const CustomZoomControl = memo(function CustomZoomControl({
     e.stopPropagation();
   }, []);
 
-  const handlePercentInputChange = useCallback(
-    (e: ChangeEvent<HTMLInputElement>): void => {
-      onTimelineZoomChange(clampExportZoom(e.target.value));
-    },
-    [onTimelineZoomChange]
-  );
-
   return (
     <div className="space-y-4">
       <div className="flex items-center gap-3">
@@ -175,8 +213,8 @@ export const CustomZoomControl = memo(function CustomZoomControl({
           className="flex-1 h-1.5 bg-neutral-200 rounded-full appearance-none cursor-pointer accent-brand-600"
         />
         <ZoomPercentInput
-          value={Math.round(timelineZoom * 100)}
-          onChange={handlePercentInputChange}
+          value={timelineZoom}
+          onCommit={onTimelineZoomChange}
           onClick={handleStopPropagation}
         />
       </div>
