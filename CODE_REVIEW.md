@@ -407,11 +407,11 @@ Dateien die waehrend des Reviews neu erstellt wurden und noch nicht reviewt sind
 - [x] `src/utils/graph/graphHelpers.ts` (70 LOC)
 
 ### New Components
-- [ ] `src/components/AppErrorBoundary.tsx` (70 LOC)
-- [ ] `src/components/StatusBar/ZoomControls.tsx` (130 LOC)
-- [ ] `src/components/Export/FitToWidthSelector.tsx` (117 LOC)
-- [ ] `src/components/Export/CustomZoomControl.tsx` (114 LOC)
-- [ ] `src/components/Layout/TimelinePanel.tsx` (112 LOC)
+- [x] `src/components/AppErrorBoundary.tsx` (70 LOC)
+- [x] `src/components/StatusBar/ZoomControls.tsx` (130 LOC)
+- [x] `src/components/Export/FitToWidthSelector.tsx` (117 LOC)
+- [x] `src/components/Export/CustomZoomControl.tsx` (114 LOC)
+- [x] `src/components/Layout/TimelinePanel.tsx` (112 LOC)
 
 ### New Hooks
 - [x] `src/hooks/useExportDialog.ts` (392 LOC)
@@ -420,15 +420,15 @@ Dateien die waehrend des Reviews neu erstellt wurden und noch nicht reviewt sind
 - [x] `src/hooks/usePlaceholderNameEdit.ts` (187 LOC)
 - [x] `src/hooks/useInfiniteScroll.ts` (184 LOC)
 - [x] `src/hooks/useViewTabActions.ts` (143 LOC)
-- [ ] `src/hooks/useContainerDimensions.ts` (84 LOC)
-- [ ] `src/hooks/usePlaceholderContextMenu.ts` (74 LOC)
-- [ ] `src/hooks/useNewTaskCreation.ts` (74 LOC)
-- [ ] `src/hooks/useTaskTableHeaderStore.ts` (37 LOC)
-- [ ] `src/hooks/useTaskStatistics.ts` (35 LOC)
-- [ ] `src/hooks/useSyncScroll.ts` (35 LOC)
-- [ ] `src/hooks/usePreventVerticalScroll.ts` (22 LOC)
-- [ ] `src/hooks/useIsCellEditing.ts` (20 LOC)
-- [ ] `src/hooks/useIsPlaceholderSelected.ts` (15 LOC)
+- [x] `src/hooks/useContainerDimensions.ts` (84 LOC)
+- [x] `src/hooks/usePlaceholderContextMenu.ts` (74 LOC)
+- [x] `src/hooks/useNewTaskCreation.ts` (74 LOC)
+- [x] `src/hooks/useTaskTableHeaderStore.ts` (37 LOC)
+- [x] `src/hooks/useTaskStatistics.ts` (35 LOC)
+- [x] `src/hooks/useSyncScroll.ts` (35 LOC)
+- [x] `src/hooks/usePreventVerticalScroll.ts` (22 LOC)
+- [x] `src/hooks/useIsCellEditing.ts` (20 LOC)
+- [x] `src/hooks/useIsPlaceholderSelected.ts` (15 LOC)
 
 ---
 
