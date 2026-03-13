@@ -24,6 +24,10 @@ import {
  * with the two finer levels (0.1×, 0.25×) available only for raster/vector
  * outputs that have no fixed-page readability constraints.
  * Composing from the shared constant prevents value drift.
+ *
+ * Object.values() returns values in insertion order for non-integer string keys
+ * (ES2015+ spec). EXPORT_ZOOM_PRESETS is declared in ascending order
+ * (COMPACT → STANDARD → DETAILED → EXPANDED), so the display order is stable.
  */
 const CUSTOM_ZOOM_PRESETS_ARRAY: ReadonlyArray<number> = [
   EXPORT_ZOOM_TENTH,
@@ -130,11 +134,14 @@ const ZoomPercentInput = memo(function ZoomPercentInput({
         onKeyDown={handleKeyDown}
         onClick={onClick}
         aria-label="Zoom percentage"
+        aria-describedby="zoom-percent-unit"
         className="w-10 text-sm text-center font-mono bg-transparent border-none focus:outline-none text-neutral-900"
         min={EXPORT_ZOOM_MIN * 100}
         max={EXPORT_ZOOM_MAX * 100}
       />
-      <span className="text-xs text-neutral-500">%</span>
+      <span id="zoom-percent-unit" className="text-xs text-neutral-500">
+        %
+      </span>
     </div>
   );
 });

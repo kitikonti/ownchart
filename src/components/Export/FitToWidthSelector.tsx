@@ -184,6 +184,7 @@ export const FitToWidthSelector = memo(function FitToWidthSelector({
         value={isCustomWidth ? "custom" : fitToWidth.toString()}
         onChange={handleSelectChange}
         onClick={handleStopPropagation}
+        aria-label="Export width"
       >
         <optgroup label={FIT_TO_WIDTH_GROUPS.screenSizes.label}>
           {FIT_TO_WIDTH_GROUPS.screenSizes.presets.map((preset) => (
