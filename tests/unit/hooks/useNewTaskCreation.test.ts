@@ -7,6 +7,7 @@ import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { renderHook, act } from "@testing-library/react";
 import { useNewTaskCreation } from "../../../src/hooks/useNewTaskCreation";
 import type { Task } from "../../../src/types/chart.types";
+import { COLORS } from "../../../src/styles/design-tokens";
 
 // ---------------------------------------------------------------------------
 // Mocks
@@ -146,8 +147,8 @@ describe("useNewTaskCreation", () => {
     });
 
     const call = mockAddTask.mock.calls[0][0];
-    // Should use design token, not a hardcoded value
-    expect(call.color).toBe("#0F6CBD"); // COLORS.chart.taskDefault = brand[600]
+    // Should use design token, not a hardcoded value — import and compare against the token
+    expect(call.color).toBe(COLORS.chart.taskDefault);
   });
 
   it("computes correct order from multiple tasks", () => {

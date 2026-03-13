@@ -31,6 +31,12 @@ export function useSyncScroll(
     // event (which fires before the next animation frame in Chromium) is still
     // seen as a sync operation and discarded. Resetting synchronously would allow
     // the echoed event to slip through before the flag is cleared.
+    //
+    // The flag is intentionally shared between both directions: if both syncAtoB
+    // and syncBtoA are triggered near-simultaneously (e.g. two programmatic
+    // scrolls in the same frame), the second call is blocked by the flag raised
+    // by the first. This is the desired behaviour — the second call would be an
+    // echo-back that must be suppressed to avoid a feedback loop.
     let isSyncing = false;
     let syncAtoBRafId: number | null = null;
     let syncBtoARafId: number | null = null;

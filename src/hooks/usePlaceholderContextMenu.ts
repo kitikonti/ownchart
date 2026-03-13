@@ -6,6 +6,9 @@
 
 // .ts file — JSX is not available, so createElement is used directly
 // instead of JSX syntax to build React elements for icon props.
+// Enabling JSX in .ts files would require adding "jsx": "react-jsx" to
+// tsconfig.json for this file (or changing the extension to .tsx), which
+// is not done here to keep the hooks directory consistent (.ts only).
 import { createElement, useCallback, useMemo, useState } from "react";
 import type { MouseEvent } from "react";
 import { ClipboardText } from "@phosphor-icons/react";
