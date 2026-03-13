@@ -8,7 +8,7 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { renderHook } from "@testing-library/react";
 import { useInfiniteScroll } from "../../../src/hooks/useInfiniteScroll";
-import type { TimelineScale } from "../../../src/utils/timelineUtils";
+import { type TimelineScale, SCROLL_OFFSET_DAYS } from "../../../src/utils/timelineUtils";
 import {
   INITIAL_BLOCK_MS,
   INFINITE_SCROLL_THRESHOLD,
@@ -100,8 +100,8 @@ describe("useInfiniteScroll", () => {
 
     flushRAF();
 
-    // SCROLL_OFFSET_DAYS = 83, pixelsPerDay = 10 → 830px
-    expect(chartEl.scrollLeft).toBe(830);
+    // pixelsPerDay = 10
+    expect(chartEl.scrollLeft).toBe(SCROLL_OFFSET_DAYS * 10);
   });
 
   it("should reset scroll position on fitToView", () => {
@@ -125,7 +125,7 @@ describe("useInfiniteScroll", () => {
     rerender({ lastFitToViewTime: Date.now() });
     flushRAF();
 
-    expect(chartEl.scrollLeft).toBe(830);
+    expect(chartEl.scrollLeft).toBe(SCROLL_OFFSET_DAYS * 10);
   });
 
   it("should reset scroll position when fileLoadCounter increases", () => {
@@ -148,7 +148,7 @@ describe("useInfiniteScroll", () => {
     rerender({ fileLoadCounter: 1 });
     flushRAF();
 
-    expect(chartEl.scrollLeft).toBe(830);
+    expect(chartEl.scrollLeft).toBe(SCROLL_OFFSET_DAYS * 10);
   });
 
   it("should block infinite scroll during initial mount period", () => {
@@ -378,6 +378,49 @@ describe("useInfiniteScroll", () => {
     flushRAF();
 
     expect(chartEl.scrollLeft).toBe(0);
+  });
+
+  it("should block left-edge extension while fitToView scroll lock is active and release when user scrolls away", () => {
+    // Use a scale where SCROLL_OFFSET_DAYS * pixelsPerDay < FIT_TO_VIEW_EDGE_THRESHOLD (400px)
+    // With pixelsPerDay = 4: 83 * 4 = 332px < 400px → scroll lock engages
+    const { rerender } = renderHook(
+      ({ lastFitToViewTime }) =>
+        useInfiniteScroll({
+          chartContainerRef,
+          scale: createMockScale(4),
+          dateRange: { min: "2025-01-01", max: "2025-12-31" },
+          lastFitToViewTime,
+          fileLoadCounter: 0,
+          extendDateRange,
+        }),
+      { initialProps: { lastFitToViewTime: 0 } }
+    );
+
+    vi.advanceTimersByTime(INITIAL_BLOCK_MS + 1);
+    const handler = chartEl._listeners.get("scroll");
+
+    // Trigger fitToView — fitScrollLeft = 83 * 4 = 332 < FIT_TO_VIEW_EDGE_THRESHOLD (400)
+    rerender({ lastFitToViewTime: Date.now() });
+    flushRAF();
+
+    // Advance well past the time-based fitToView block so only scroll lock matters
+    vi.advanceTimersByTime(600);
+
+    // Near left edge — should be blocked by scroll lock
+    chartEl.scrollLeft = 100;
+    handler?.(new Event("scroll"));
+    vi.advanceTimersByTime(SCROLL_IDLE_MS + 100);
+    expect(extendDateRange).not.toHaveBeenCalled();
+
+    // Scroll above FIT_TO_VIEW_EDGE_THRESHOLD to release lock
+    chartEl.scrollLeft = 500;
+    handler?.(new Event("scroll"));
+
+    // Now scroll near left edge — lock released, extension should fire
+    chartEl.scrollLeft = 100;
+    handler?.(new Event("scroll"));
+    vi.advanceTimersByTime(SCROLL_IDLE_MS + 100);
+    expect(extendDateRange).toHaveBeenCalledWith("past", 30);
   });
 
   it("should block infinite scroll shortly after fitToView", () => {

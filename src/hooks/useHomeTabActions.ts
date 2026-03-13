@@ -5,17 +5,14 @@
  * so the component stays purely presentational (<200 LOC).
  */
 
-import { useMemo } from "react";
+import { useMemo, useCallback } from "react";
 import { useTaskStore } from "../store/slices/taskSlice";
 import { useChartStore } from "../store/slices/chartSlice";
 import { useHistoryStore } from "../store/slices/historySlice";
 import { useClipboardOperations } from "./useClipboardOperations";
 import { useHideOperations } from "./useHideOperations";
-import { COLORS } from "../styles/design-tokens";
-import { toISODateString } from "../utils/dateUtils";
-
-const DEFAULT_NEW_TASK_DURATION_DAYS = 7;
-const DEFAULT_TASK_NAME = "New Task";
+import { useNewTaskCreation } from "./useNewTaskCreation";
+import { DEFAULT_TASK_NAME } from "../store/slices/taskSliceHelpers";
 
 interface HomeTabActions {
   // History
@@ -56,10 +53,7 @@ interface HomeTabActions {
 }
 
 export function useHomeTabActions(): HomeTabActions {
-  // Task store — use taskCount instead of full tasks array to avoid
-  // re-renders on every task edit (only re-renders when count changes)
-  const taskCount = useTaskStore((state) => state.tasks.length);
-  const addTask = useTaskStore((state) => state.addTask);
+  // Task store
   const selectedTaskIds = useTaskStore((state) => state.selectedTaskIds);
   const activeCell = useTaskStore((state) => state.activeCell);
   const insertTaskAbove = useTaskStore((state) => state.insertTaskAbove);
@@ -73,9 +67,17 @@ export function useHomeTabActions(): HomeTabActions {
   const outdentSelectedTasks = useTaskStore(
     (state) => state.outdentSelectedTasks
   );
+  // canIndent/canOutdent/canGroup/canUngroup are derived booleans computed from
+  // selectedTaskIds + task hierarchy. Calling methods inside the selector is
+  // intentional: Zustand re-runs the selector on every store update, but the
+  // boolean result is compared by value so re-renders only occur when the
+  // value actually changes.
   const canIndent = useTaskStore((state) => state.canIndentSelection());
   const canOutdent = useTaskStore((state) => state.canOutdentSelection());
   const groupSelectedTasks = useTaskStore((state) => state.groupSelectedTasks);
+  // canGroup/canUngroup: same selector-method pattern as canIndent/canOutdent above —
+  // Zustand re-runs the selector on every store update but only re-renders when
+  // the returned boolean value actually changes.
   const canGroup = useTaskStore((state) => state.canGroupSelection());
   const ungroupSelectedTasks = useTaskStore(
     (state) => state.ungroupSelectedTasks
@@ -85,6 +87,10 @@ export function useHomeTabActions(): HomeTabActions {
   // History store
   const undo = useHistoryStore((state) => state.undo);
   const redo = useHistoryStore((state) => state.redo);
+  // canUndo/canRedo/descriptions are computed from stack lengths and only
+  // change when an undo/redo operation occurs; calling methods inside the
+  // selector is intentional — Zustand re-runs the selector on store changes
+  // but only re-renders when the returned value differs by reference/value.
   const canUndo = useHistoryStore((state) => state.canUndo());
   const canRedo = useHistoryStore((state) => state.canRedo());
   const undoDescription = useHistoryStore((state) =>
@@ -93,6 +99,11 @@ export function useHomeTabActions(): HomeTabActions {
   const redoDescription = useHistoryStore((state) =>
     state.getRedoDescription()
   );
+
+  // New task creation — delegates to useNewTaskCreation so ordering logic
+  // (maxOrder + 1, date anchoring) stays in one place, consistent with the
+  // placeholder row's "Add Task" flow.
+  const { createTask } = useNewTaskCreation();
 
   // Clipboard
   const { handleCopy, handleCut, handlePaste, canCopyOrCut, canPaste } =
@@ -108,52 +119,40 @@ export function useHomeTabActions(): HomeTabActions {
   );
 
   // Derived state
-  const singleSelectedTaskId =
-    selectedTaskIds.length === 1
-      ? selectedTaskIds[0]
-      : selectedTaskIds.length === 0 && activeCell.taskId
-        ? activeCell.taskId
-        : null;
+  const singleSelectedTaskId = useMemo(
+    () =>
+      selectedTaskIds.length === 1
+        ? selectedTaskIds[0]
+        : selectedTaskIds.length === 0 && activeCell.taskId
+          ? activeCell.taskId
+          : null,
+    [selectedTaskIds, activeCell.taskId]
+  );
 
   const canInsert = singleSelectedTaskId !== null;
   const canDelete = selectedTaskIds.length > 0;
   const canHide = selectedTaskIds.length > 0;
 
   // Handlers
-  const handleAddTask = (): void => {
-    const today = new Date();
-    const endDate = new Date(today);
-    endDate.setDate(today.getDate() + DEFAULT_NEW_TASK_DURATION_DAYS - 1);
+  const handleAddTask = useCallback((): void => {
+    createTask(DEFAULT_TASK_NAME);
+  }, [createTask]);
 
-    addTask({
-      name: DEFAULT_TASK_NAME,
-      startDate: toISODateString(today),
-      endDate: toISODateString(endDate),
-      duration: DEFAULT_NEW_TASK_DURATION_DAYS,
-      progress: 0,
-      color: COLORS.chart.taskDefault,
-      order: taskCount,
-      type: "task",
-      parent: undefined,
-      metadata: {},
-    });
-  };
-
-  const handleInsertAbove = (): void => {
+  const handleInsertAbove = useCallback((): void => {
     if (singleSelectedTaskId) insertTaskAbove(singleSelectedTaskId);
-  };
+  }, [insertTaskAbove, singleSelectedTaskId]);
 
-  const handleInsertBelow = (): void => {
+  const handleInsertBelow = useCallback((): void => {
     if (singleSelectedTaskId) insertTaskBelow(singleSelectedTaskId);
-  };
+  }, [insertTaskBelow, singleSelectedTaskId]);
 
-  const handleHideRows = (): void => {
+  const handleHideRows = useCallback((): void => {
     hideRows(selectedTaskIds);
-  };
+  }, [hideRows, selectedTaskIds]);
 
-  const handleUnhideSelection = (): void => {
+  const handleUnhideSelection = useCallback((): void => {
     unhideSelection(selectedTaskIds);
-  };
+  }, [unhideSelection, selectedTaskIds]);
 
   return {
     undo,

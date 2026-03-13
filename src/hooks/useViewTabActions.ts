@@ -9,14 +9,13 @@
  * avoiding unnecessary re-renders on every task mutation.
  */
 
-import { useMemo } from "react";
+import { useCallback, useMemo } from "react";
 import { useTaskStore } from "../store/slices/taskSlice";
 import { useChartStore } from "../store/slices/chartSlice";
+// Shared scroll-anchor helpers — live in useZoom to avoid duplicating the
+// viewport-center computation and DOM scroll-apply logic.
 import { computeViewportCenterAnchor, applyScrollLeft } from "./useZoom";
-import { MIN_ZOOM, MAX_ZOOM } from "../utils/timelineUtils";
-
-/** Preset zoom levels shown in the dropdown */
-const PRESET_ZOOM_LEVELS = [5, 10, 25, 50, 75, 100, 150, 200, 300];
+import { MIN_ZOOM, MAX_ZOOM, PRESET_ZOOM_LEVELS } from "../utils/timelineUtils";
 
 interface ViewTabActions {
   // Show/Hide toggles
@@ -64,8 +63,8 @@ export function useViewTabActions(): ViewTabActions {
   const isTaskTableCollapsed = useChartStore(
     (state) => state.isTaskTableCollapsed
   );
-  const setTaskTableCollapsed = useChartStore(
-    (state) => state.setTaskTableCollapsed
+  const toggleTaskTableCollapsedAction = useChartStore(
+    (state) => state.toggleTaskTableCollapsed
   );
 
   // Derived zoom state
@@ -73,6 +72,8 @@ export function useViewTabActions(): ViewTabActions {
   const canZoomIn = zoom < MAX_ZOOM;
   const canZoomOut = zoom > MIN_ZOOM;
 
+  // Compute sorted zoom options with the current zoom level inserted when it
+  // doesn't match a preset.
   const zoomOptions = useMemo(() => {
     const options = [...PRESET_ZOOM_LEVELS];
     if (!PRESET_ZOOM_LEVELS.includes(zoomPercentage)) {
@@ -87,36 +88,35 @@ export function useViewTabActions(): ViewTabActions {
   }, [zoomPercentage]);
 
   // Handlers
-  const handleZoomIn = (): void => {
+  const handleZoomIn = useCallback((): void => {
     const anchor = computeViewportCenterAnchor();
     const result = zoomIn(anchor);
     applyScrollLeft(result.newScrollLeft);
-  };
+  }, [zoomIn]);
 
-  const handleZoomOut = (): void => {
+  const handleZoomOut = useCallback((): void => {
     const anchor = computeViewportCenterAnchor();
     const result = zoomOut(anchor);
     applyScrollLeft(result.newScrollLeft);
-  };
+  }, [zoomOut]);
 
-  const handleFitToView = (): void => {
+  const handleFitToView = useCallback((): void => {
     // Read tasks lazily — no subscription needed
     fitToView(useTaskStore.getState().tasks);
-  };
+  }, [fitToView]);
 
-  const handleZoomLevelSelect = (level: number | "fit"): void => {
-    if (level === "fit") {
-      handleFitToView();
-    } else {
-      const anchor = computeViewportCenterAnchor();
-      const result = setZoom(level / 100, anchor);
-      applyScrollLeft(result.newScrollLeft);
-    }
-  };
-
-  const toggleTaskTableCollapsed = (): void => {
-    setTaskTableCollapsed(!isTaskTableCollapsed);
-  };
+  const handleZoomLevelSelect = useCallback(
+    (level: number | "fit"): void => {
+      if (level === "fit") {
+        handleFitToView();
+      } else {
+        const anchor = computeViewportCenterAnchor();
+        const result = setZoom(level / 100, anchor);
+        applyScrollLeft(result.newScrollLeft);
+      }
+    },
+    [handleFitToView, setZoom]
+  );
 
   return {
     showTodayMarker,
@@ -138,6 +138,8 @@ export function useViewTabActions(): ViewTabActions {
     handleZoomLevelSelect,
     handleFitToView,
     isTaskTableCollapsed,
-    toggleTaskTableCollapsed,
+    // The store action reads its own current state atomically, so the
+    // function reference is stable and can be returned directly.
+    toggleTaskTableCollapsed: toggleTaskTableCollapsedAction,
   };
 }

@@ -9,6 +9,7 @@
 import {
   useState,
   useEffect,
+  useRef,
   useCallback,
   type RefObject,
   type KeyboardEvent,
@@ -32,14 +33,20 @@ interface UsePlaceholderNameEditReturn {
   handleKeyDown: (e: KeyboardEvent<HTMLDivElement>) => void;
   handleInputBlur: () => void;
   handleInputKeyDown: (e: KeyboardEvent<HTMLInputElement>) => void;
+  handleCompositionStart: () => void;
+  handleCompositionEnd: () => void;
 }
 
 export function usePlaceholderNameEdit(
-  cellRef: RefObject<HTMLDivElement | null>,
-  inputRef: RefObject<HTMLInputElement | null>
+  cellRef: RefObject<HTMLDivElement>,
+  inputRef: RefObject<HTMLInputElement>
 ): UsePlaceholderNameEditReturn {
   const [isEditing, setIsEditing] = useState(false);
   const [inputValue, setInputValue] = useState("");
+  // Track IME composition state so blur during active composition does not
+  // commit the raw/partial input string (e.g., romaji mid-conversion on CJK
+  // keyboards). Set via onCompositionStart / onCompositionEnd events.
+  const isComposingRef = useRef(false);
 
   const setActiveCell = useTaskStore((s) => s.setActiveCell);
   const clearSelection = useTaskStore((s) => s.clearSelection);
@@ -55,7 +62,9 @@ export function usePlaceholderNameEdit(
 
   // Scroll the outerScrollRef (vertical scroll driver) so the placeholder is visible.
   // Must NOT use el.scrollIntoView() — desyncs TaskTable from Timeline (GitHub #16).
-  // Stable callback (empty deps) — reads cellRef.current at call time.
+  // cellRef intentionally omitted from deps: the ref object is a stable identity
+  // (React guarantees it never changes); .current is read imperatively inside
+  // the callback, not captured in the closure.
   const scrollIntoView = useCallback(() => {
     const el = cellRef.current;
     if (!el) return;
@@ -66,16 +75,21 @@ export function usePlaceholderNameEdit(
     if (elRect.bottom > outerRect.bottom) {
       outerScroll.scrollTop += elRect.bottom - outerRect.bottom;
     }
-  }, [cellRef]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   // Focus cell when it becomes active (not editing).
   // preventScroll: true prevents desyncing TaskTable from Timeline (GitHub #16).
+  // cellRef and inputRef intentionally omitted from deps: the ref objects are
+  // stable identities (React guarantees they never change); .current is read
+  // imperatively inside the callbacks, not captured in the closures.
   useEffect(() => {
     if (isNameActive && !isEditing && cellRef.current) {
       cellRef.current.focus({ preventScroll: true });
       scrollIntoView();
     }
-  }, [isNameActive, isEditing, cellRef, scrollIntoView]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isNameActive, isEditing, scrollIntoView]);
 
   // Focus input when editing starts
   useEffect(() => {
@@ -83,9 +97,11 @@ export function usePlaceholderNameEdit(
       inputRef.current.focus({ preventScroll: true });
       scrollIntoView();
     }
-  }, [isEditing, inputRef, scrollIntoView]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isEditing, scrollIntoView]);
 
-  const commitNewTask = useCallback((): void => {
+  // Commits the new task if a name was entered; otherwise discards the edit.
+  const commitOrCancel = useCallback((): void => {
     const trimmed = inputValue.trim();
     if (trimmed) createTask(trimmed);
     setIsEditing(false);
@@ -128,7 +144,13 @@ export function usePlaceholderNameEdit(
       } else if (e.key === "Tab") {
         e.preventDefault();
         navigateCell(e.shiftKey ? "left" : "right");
-      } else if (e.key.length === 1 && !e.ctrlKey && !e.metaKey && !e.altKey) {
+      } else if (
+        e.key.length === 1 &&
+        !e.ctrlKey &&
+        !e.metaKey &&
+        !e.altKey &&
+        !e.nativeEvent.isComposing
+      ) {
         e.preventDefault();
         setInputValue(e.key);
         setIsEditing(true);
@@ -139,37 +161,37 @@ export function usePlaceholderNameEdit(
     [isEditing, navigateCell, setActiveCell]
   );
 
+  // Guard: skip commit on blur if IME composition is still active.
+  // Without this, blurring during CJK input commits the raw romaji/pinyin
+  // rather than the composed character (GitHub #16 pattern).
   const handleInputBlur = useCallback((): void => {
-    if (inputValue.trim()) {
-      commitNewTask();
-    } else {
-      cancelEdit();
-    }
-  }, [inputValue, commitNewTask, cancelEdit]);
+    if (isComposingRef.current) return;
+    commitOrCancel();
+  }, [commitOrCancel]);
+
+  const handleCompositionStart = useCallback((): void => {
+    isComposingRef.current = true;
+  }, []);
+
+  const handleCompositionEnd = useCallback((): void => {
+    isComposingRef.current = false;
+  }, []);
 
   const handleInputKeyDown = useCallback(
     (e: KeyboardEvent<HTMLInputElement>): void => {
       if (e.key === "Enter") {
         e.preventDefault();
-        if (inputValue.trim()) {
-          commitNewTask();
-        } else {
-          cancelEdit();
-        }
+        commitOrCancel();
       } else if (e.key === "Tab") {
         e.preventDefault();
-        if (inputValue.trim()) {
-          commitNewTask();
-        } else {
-          cancelEdit();
-        }
+        commitOrCancel();
         navigateCell(e.shiftKey ? "left" : "right");
       } else if (e.key === "Escape") {
         // cancelEdit sets isEditing=false → the useEffect above re-focuses the cell
         cancelEdit();
       }
     },
-    [inputValue, commitNewTask, cancelEdit, navigateCell]
+    [commitOrCancel, cancelEdit, navigateCell]
   );
 
   return {
@@ -178,10 +200,13 @@ export function usePlaceholderNameEdit(
     setInputValue,
     isNameActive,
     isSelected,
+    // Active border when either editing or cell is keyboard-focused (name-active).
     showActiveBorder: isEditing || isNameActive,
     handleClick,
     handleKeyDown,
     handleInputBlur,
     handleInputKeyDown,
+    handleCompositionStart,
+    handleCompositionEnd,
   };
 }

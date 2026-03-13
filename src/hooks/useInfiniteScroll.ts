@@ -30,6 +30,13 @@ interface UseInfiniteScrollOptions {
   dateRange: { min: string; max: string } | null;
   lastFitToViewTime: number;
   fileLoadCounter: number;
+  /**
+   * Callback to extend the visible date range.
+   * **Must be a stable reference** (e.g. from a Zustand store selector or
+   * wrapped in `useCallback`) — it is listed as a dependency of the scroll
+   * effect, so an unstable reference will re-register the listener on every
+   * render and discard any pending debounced extension.
+   */
   extendDateRange: (direction: "past" | "future", days?: number) => void;
 }
 
@@ -78,14 +85,18 @@ export function useInfiniteScroll({
       if (fitScrollLeft < FIT_TO_VIEW_EDGE_THRESHOLD) {
         fitToViewScrollLockRef.current = true;
       }
-      // Double rAF to ensure DOM is fully updated
+      // Double rAF to ensure DOM is fully updated.
+      // cancelled guard prevents writing to a detached node after unmount.
+      let cancelled = false;
       requestAnimationFrame(() => {
         requestAnimationFrame(() => {
-          chartContainer.scrollLeft = fitScrollLeft;
+          if (!cancelled) chartContainer.scrollLeft = fitScrollLeft;
         });
       });
       prevDateRangeRef.current = dateRangeKey;
-      return;
+      return (): void => {
+        cancelled = true;
+      };
     }
 
     // Scroll to show first task on initial load or when a new file is opened
@@ -93,15 +104,23 @@ export function useInfiniteScroll({
 
     if (isNewDateRange || fileJustLoaded) {
       const initialScrollLeft = SCROLL_OFFSET_DAYS * scale.pixelsPerDay;
+      let cancelled = false;
       requestAnimationFrame(() => {
         requestAnimationFrame(() => {
-          chartContainer.scrollLeft = initialScrollLeft;
+          if (!cancelled) chartContainer.scrollLeft = initialScrollLeft;
         });
       });
+      prevDateRangeRef.current = dateRangeKey;
+      return (): void => {
+        cancelled = true;
+      };
     }
 
     prevDateRangeRef.current = dateRangeKey;
-  }, [dateRange, scale, lastFitToViewTime, fileLoadCounter, chartContainerRef]);
+    // chartContainerRef intentionally omitted: the ref object is a stable
+    // identity (React guarantees it never changes); .current is read
+    // imperatively inside the effect, not captured in the closure.
+  }, [dateRange, scale, lastFitToViewTime, fileLoadCounter]);
 
   // Infinite scroll detection - extend timeline when near edges
   useEffect(() => {
@@ -136,6 +155,9 @@ export function useInfiniteScroll({
         }
 
         pendingPastExtensionRef.current = window.setTimeout(() => {
+          // Defensive: if the effect was cleaned up and the ref cleared
+          // before this timeout fired, do nothing.
+          if (pendingPastExtensionRef.current === null) return;
           pendingPastExtensionRef.current = null;
 
           const currentScrollLeft = chartContainer.scrollLeft;
@@ -148,16 +170,32 @@ export function useInfiniteScroll({
           ) {
             lastExtendPastRef.current = currentNow;
 
-            // Capture distance from right edge (preserved during extension)
-            const distanceFromRightEdge =
-              currentScrollWidth - currentScrollLeft;
+            // Capture the amount of content to the right of the current
+            // viewport position; this is preserved after extending the left
+            // edge so the visible area stays anchored to the same location.
+            const scrollRightAnchor = currentScrollWidth - currentScrollLeft;
 
-            flushSync(() => {
+            // flushSync forces a synchronous React render so the DOM is
+            // updated before we read the new scrollWidth below.
+            // Guarded with try/catch: flushSync throws if called during an
+            // existing React render (should not happen here, but defensive).
+            try {
+              flushSync(() => {
+                extendDateRange("past", EXTEND_DAYS);
+              });
+              // Anchor restoration is inside the try block so it only runs
+              // after the DOM has been synchronously updated by flushSync.
+              const newScrollWidth = chartContainer.scrollWidth;
+              chartContainer.scrollLeft = newScrollWidth - scrollRightAnchor;
+            } catch (_e) {
+              // flushSync throws if called inside an active React render cycle.
+              // This should not happen here (scroll handler runs outside React),
+              // but as a defensive fallback we schedule the update asynchronously.
+              // Scroll-anchor restoration is intentionally skipped here because
+              // the DOM has not updated yet; a slight visible jump is acceptable
+              // for this already-exceptional case.
               extendDateRange("past", EXTEND_DAYS);
-            });
-
-            const newScrollWidth = chartContainer.scrollWidth;
-            chartContainer.scrollLeft = newScrollWidth - distanceFromRightEdge;
+            }
           }
         }, SCROLL_IDLE_MS);
       }
@@ -180,5 +218,8 @@ export function useInfiniteScroll({
         pendingPastExtensionRef.current = null;
       }
     };
-  }, [scale, extendDateRange, chartContainerRef]);
+    // chartContainerRef intentionally omitted: the ref object is a stable
+    // identity (React guarantees it never changes); .current is read
+    // imperatively inside the effect, not captured in the closure.
+  }, [scale, extendDateRange]);
 }

@@ -31,6 +31,8 @@ import type { Task } from "@/types/chart.types";
 export const FIXED_BASE_PIXELS_PER_DAY = 25; // Comfortable standard view
 export const MIN_ZOOM = 0.05; // 5% - fit ~3 years on desktop
 export const MAX_ZOOM = 3.0; // 300% - show at least 1 week
+/** Preset zoom levels (as percentages) shown in the zoom dropdown. */
+export const PRESET_ZOOM_LEVELS = [5, 10, 25, 50, 75, 100, 150, 200, 300];
 
 // Scroll/date-range padding constants (shared between GanttLayout and chartSlice)
 /** Days of padding added before/after task range for infinite scroll room */
