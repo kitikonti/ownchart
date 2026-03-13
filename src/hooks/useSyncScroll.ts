@@ -17,6 +17,8 @@ export function useSyncScroll(
   // these refs are expected to remain stable for the component lifetime. If the
   // underlying element is ever replaced (e.g. conditional rendering swaps the
   // node), a new hook instance is required to re-attach the listeners.
+  // REVIEW-OK: refA/refB in deps array — intentional. Stable ref objects act as
+  // mount sentinels; .current is captured inside the effect body.
   useEffect(() => {
     const elA = refA.current;
     const elB = refB.current;
@@ -37,6 +39,11 @@ export function useSyncScroll(
     // scrolls in the same frame), the second call is blocked by the flag raised
     // by the first. This is the desired behaviour — the second call would be an
     // echo-back that must be suppressed to avoid a feedback loop.
+    // REVIEW-OK: isSyncing guard + dual rAF IDs are intentional — the flag
+    // prevents scroll feedback loops; the two separate rAF IDs allow
+    // independent cancellation per direction. Both are reset inside rAF so
+    // echoed scroll events (fired before the next frame in Chromium) are still
+    // blocked. See the comment block above for the full rationale.
     let isSyncing = false;
     let syncAtoBRafId: number | null = null;
     let syncBtoARafId: number | null = null;

@@ -58,6 +58,9 @@ export function useContainerDimensions({
   );
 
   // Initial measurement + ResizeObserver for ongoing dimension tracking
+  // REVIEW-OK: INITIAL_MEASURE_DELAY_MS is 0 ms — defers one macrotask so the
+  // browser commits layout before we read offsetHeight/offsetWidth. Named
+  // constant lives in layoutConstants.ts with a rationale comment.
   useEffect(() => {
     const outerScroll = outerScrollRef.current;
     const chartContainer = chartContainerRef.current;
@@ -80,6 +83,8 @@ export function useContainerDimensions({
     // expected to remain the same DOM nodes for the component lifetime. If the
     // underlying element is ever replaced (e.g. conditional rendering swaps
     // the node), a new hook instance is required to re-attach the observer.
+    // REVIEW-OK: refs in deps array — intentional. The effect runs once on
+    // mount; stable ref objects are used as dep-array sentinels, not .current.
     const ro = new ResizeObserver(measureDimensions);
     ro.observe(outerScroll);
     ro.observe(chartContainer);
@@ -94,6 +99,11 @@ export function useContainerDimensions({
   // Separate from the dimension-measurement effect above because the two
   // concerns are independent: that one measures layout for rendering, this one
   // tracks scroll position + width for the export viewport range.
+  // REVIEW-OK: dual ResizeObserver (one per effect) is intentional — two
+  // independent concerns (dimension state for rendering vs. scroll position for
+  // export range) are deliberately kept in separate effects for clarity and
+  // independent cleanup. chartContainerRef in deps is a stable ref object used
+  // as a mount sentinel; .current is read inside the effect body.
   useEffect(() => {
     const chartContainer = chartContainerRef.current;
     if (!chartContainer) return;

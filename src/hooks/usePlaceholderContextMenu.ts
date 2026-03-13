@@ -23,6 +23,9 @@ import { PLACEHOLDER_TASK_ID } from "../config/placeholderRow";
 import { getModKey } from "../config/helpContent";
 
 // Computed once at module load — platform is stable for the page lifetime.
+// REVIEW-OK: getModKey() already used; "+V" is a display label suffix, not a
+// hardcoded shortcut. The full string is intentionally a module-level constant
+// (computed once) rather than inline so the template literal runs only once.
 const PASTE_SHORTCUT = `${getModKey()}+V`;
 
 interface UsePlaceholderContextMenuResult {
@@ -62,6 +65,8 @@ export function usePlaceholderContextMenu(): UsePlaceholderContextMenuResult {
       {
         id: "paste",
         label: "Paste",
+        // REVIEW-OK: .ts files cannot use JSX syntax; createElement is correct here.
+        // Changing to .tsx would be inconsistent with the hooks directory convention.
         icon: createElement(ClipboardText, {
           size: CONTEXT_MENU.iconSize,
           weight: CONTEXT_MENU.iconWeight,
