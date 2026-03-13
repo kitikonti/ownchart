@@ -155,7 +155,10 @@ cd ../app-gantt-review
 - [x] `src/components/Export/ZoomModeSelector.tsx` (255 LOC)
 - [x] `src/components/Export/ChartPreview.tsx` (212 LOC) — 1 Hex-Wert
 - [x] `src/components/Layout/SplitPane.tsx` (186 LOC)
+- [x] `src/components/Export/FitToWidthSelector.tsx` (117 LOC)
+- [x] `src/components/Export/CustomZoomControl.tsx` (114 LOC)
 - [x] `src/components/Export/ExportFormatSelector.tsx` (105 LOC)
+- [x] `src/components/Layout/TimelinePanel.tsx` (112 LOC)
 - [x] `src/components/Layout/SplitPaneDivider.tsx` (85 LOC)
 - [x] `src/components/Export/ExportPreview.tsx` (71 LOC)
 - [x] `src/components/Export/ScaleOptions.tsx` (46 LOC)
@@ -298,6 +301,7 @@ cd ../app-gantt-review
 - [x] `src/components/Help/WelcomeTour.tsx` (128 LOC)
 - [x] `src/components/Help/AboutDialog.tsx` (127 LOC)
 - [x] `src/components/common/Button.tsx` (124 LOC)
+- [x] `src/components/StatusBar/ZoomControls.tsx` (130 LOC)
 - [x] `src/components/StatusBar/ZoomDialog.tsx` (113 LOC)
 - [x] `src/components/common/SegmentedControl.tsx` (112 LOC)
 - [x] `src/components/Toolbar/DropdownItem.tsx` (110 LOC)
@@ -341,6 +345,7 @@ cd ../app-gantt-review
 - [x] `src/config/version.ts` (5 LOC)
 
 ### Priority: LOW — App Entry & Type Declarations
+- [x] `src/components/AppErrorBoundary.tsx` (70 LOC)
 - [x] `src/App.tsx` (112 LOC) — 5 Hex-Werte (Toast)
 - [x] `src/main.tsx` (10 LOC)
 - [x] `src/vite-env.d.ts` (9 LOC)

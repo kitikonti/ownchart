@@ -70,3 +70,11 @@ export const HIDDEN_SCROLLBAR_STYLE = {
   scrollbarWidth: "none",
   msOverflowStyle: "none",
 } as const;
+
+/**
+ * Inline style to clip overflow on the Y axis.
+ * `overflow-y: clip` is not yet available as a Tailwind utility class and
+ * is intentionally distinct from `overflow-y: hidden` (clip does not
+ * establish a new block-formatting context, preserving sticky positioning).
+ */
+export const OVERFLOW_Y_CLIP_STYLE = { overflowY: "clip" as const };

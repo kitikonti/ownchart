@@ -6,9 +6,13 @@
  * - Chart canvas with task bars, dependencies, and selection overlay
  *
  * Extracted from GanttLayout to keep each component under 200 LOC.
+ *
+ * Store subscriptions:
+ * - chartSlice: `scale` (for header date selection hook)
+ * - taskSlice: `selectedTaskIds` (forwarded to ChartCanvas for bar highlighting)
  */
 
-import { useRef, type RefObject } from "react";
+import { memo, useRef, type RefObject } from "react";
 import { ChartCanvas, TimelineHeader, SelectionHighlight } from "../GanttChart";
 import { ContextMenu } from "../ContextMenu/ContextMenu";
 import { useTaskStore } from "../../store/slices/taskSlice";
@@ -17,6 +21,7 @@ import { useHeaderDateSelection } from "../../hooks/useHeaderDateSelection";
 import {
   HEADER_HEIGHT,
   HIDDEN_SCROLLBAR_STYLE,
+  OVERFLOW_Y_CLIP_STYLE,
 } from "../../config/layoutConstants";
 import type { Task } from "../../types/chart.types";
 
@@ -30,7 +35,7 @@ interface TimelinePanelProps {
   orderedTasks: Task[];
 }
 
-export function TimelinePanel({
+export const TimelinePanel = memo(function TimelinePanel({
   timelineHeaderScrollRef,
   chartContainerRef,
   chartTranslateRef,
@@ -41,7 +46,15 @@ export function TimelinePanel({
 }: TimelinePanelProps): JSX.Element {
   const headerSvgRef = useRef<SVGSVGElement>(null);
 
+  // scale is consumed by useHeaderDateSelection to map pixel positions to dates,
+  // and gates the SVG header render. TimelinePanel re-renders on every scale
+  // change (i.e. every zoom interaction); this is intentional because the
+  // header SVG must reflect the latest scale. Moving the subscription into
+  // useHeaderDateSelection would change its public API (removing the `scale`
+  // parameter) and is deferred to a future refactor.
   const scale = useChartStore((state) => state.scale);
+  // Immer produces a new array reference only when selection actually changes,
+  // so a plain selector is safe here — no spurious re-renders from unrelated updates.
   const selectedTaskIds = useTaskStore((state) => state.selectedTaskIds);
 
   const {
@@ -51,6 +64,8 @@ export function TimelinePanel({
     closeContextMenu: closeHeaderContextMenu,
     onMouseDown: handleHeaderMouseDown,
     onContextMenu: handleHeaderContextMenu,
+    // isDragging is intentionally omitted — TimelinePanel does not use it;
+    // other consumers of useHeaderDateSelection may rely on it.
   } = useHeaderDateSelection({ headerSvgRef, scale });
 
   return (
@@ -60,6 +75,12 @@ export function TimelinePanel({
         className="flex-shrink-0 bg-white/90 backdrop-blur-sm overflow-x-auto overflow-y-hidden border-b border-neutral-200/80"
         style={HIDDEN_SCROLLBAR_STYLE}
       >
+        {/* Polite announcement for screen readers while the scale is computing. */}
+        {!scale && (
+          <span className="sr-only" aria-live="polite">
+            Loading timeline…
+          </span>
+        )}
         {scale && (
           <svg
             ref={headerSvgRef}
@@ -67,7 +88,7 @@ export function TimelinePanel({
             height={HEADER_HEIGHT}
             className="block select-none"
             role="img"
-            aria-label="Timeline header"
+            aria-label="Timeline header — drag to select a date range"
             onMouseDown={handleHeaderMouseDown}
             onContextMenu={handleHeaderContextMenu}
           >
@@ -87,14 +108,17 @@ export function TimelinePanel({
           />
         )}
       </div>
-      <div
-        className="flex-1 h-full relative"
-        style={{ height: contentAreaHeight }}
-      >
+      {/* `contentAreaHeight` is passed both as an explicit CSS height on the
+          container div (to constrain the layout box) and as `containerHeight`
+          to ChartCanvas (so it can size its SVG/canvas elements internally).
+          The outer style is needed because `flex-1` alone does not prevent
+          the container from growing past the available space in all browsers;
+          the inner prop is the authoritative pixel value for rendering logic. */}
+      <div className="flex-1 relative" style={{ height: contentAreaHeight }}>
         <div
           ref={chartContainerRef}
           className="gantt-chart-scroll-container absolute inset-0 bg-white overflow-x-auto scrollbar-thin"
-          style={{ overflowY: "clip" }}
+          style={OVERFLOW_Y_CLIP_STYLE}
         >
           <div ref={chartTranslateRef}>
             <ChartCanvas
@@ -109,4 +133,4 @@ export function TimelinePanel({
       </div>
     </div>
   );
-}
+});
