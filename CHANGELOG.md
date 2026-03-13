@@ -2,6 +2,14 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [1.2.6](https://github.com/kitikonti/ownchart/compare/v1.2.5...v1.2.6) (2026-03-13)
+
+
+### Code Refactoring
+
+* convert vi.mock() paths to @/ alias for consistency ([88610ce](https://github.com/kitikonti/ownchart/commit/88610ce2706a5dc44d927d3f206c42a55021d2a6)), closes [#63](https://github.com/kitikonti/ownchart/issues/63)
+* replace relative imports with @/ path alias ([#63](https://github.com/kitikonti/ownchart/issues/63)) ([deebde6](https://github.com/kitikonti/ownchart/commit/deebde64ed45592867721fcb2e4cac7345419cc8))
+
 ## [1.2.5](https://github.com/kitikonti/ownchart/compare/v1.2.4...v1.2.5) (2026-03-13)
 
 
