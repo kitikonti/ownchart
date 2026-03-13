@@ -16,7 +16,7 @@ import { usePlaceholderContextMenu } from "@/hooks/usePlaceholderContextMenu";
 const mockHandlePaste = vi.fn();
 let mockCanPaste = false;
 
-vi.mock("../../../src/hooks/useClipboardOperations", () => ({
+vi.mock("@/hooks/useClipboardOperations", () => ({
   useClipboardOperations: () => ({
     handlePaste: mockHandlePaste,
     canPaste: mockCanPaste,
@@ -26,7 +26,7 @@ vi.mock("../../../src/hooks/useClipboardOperations", () => ({
 const mockSetSelectedTaskIds = vi.fn();
 const mockSetActiveCell = vi.fn();
 
-vi.mock("../../../src/store/slices/taskSlice", () => ({
+vi.mock("@/store/slices/taskSlice", () => ({
   useTaskStore: Object.assign(
     vi.fn(() => undefined),
     {
@@ -38,7 +38,7 @@ vi.mock("../../../src/store/slices/taskSlice", () => ({
   ),
 }));
 
-vi.mock("../../../src/config/placeholderRow", () => ({
+vi.mock("@/config/placeholderRow", () => ({
   PLACEHOLDER_TASK_ID: "__new_task_placeholder__",
 }));
 

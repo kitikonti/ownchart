@@ -26,7 +26,7 @@ vi.mock("react-hot-toast", () => ({
   },
 }));
 
-vi.mock("../../../src/utils/clipboard", () => ({
+vi.mock("@/utils/clipboard", () => ({
   writeRowsToSystemClipboard: vi.fn().mockResolvedValue(undefined),
   writeCellToSystemClipboard: vi.fn().mockResolvedValue(undefined),
   readRowsFromSystemClipboard: vi.fn().mockResolvedValue(null),
@@ -34,7 +34,7 @@ vi.mock("../../../src/utils/clipboard", () => ({
   isClipboardApiAvailable: vi.fn().mockReturnValue(false),
 }));
 
-vi.mock("../../../src/hooks/useFlattenedTasks", () => ({
+vi.mock("@/hooks/useFlattenedTasks", () => ({
   useFlattenedTasks: vi.fn(() => ({
     flattenedTasks: [],
     allFlattenedTasks: [],

@@ -32,14 +32,14 @@ const mockStoreState = {
   removeDependency: vi.fn(),
 };
 
-vi.mock("../../../../src/store/slices/dependencySlice", () => ({
+vi.mock("@/store/slices/dependencySlice", () => ({
   useDependencyStore: vi.fn((selector: (state: typeof mockStoreState) => unknown) =>
     selector(mockStoreState),
   ),
 }));
 
 // Mock DependencyArrow to avoid deep rendering
-vi.mock("../../../../src/components/GanttChart/DependencyArrow", () => ({
+vi.mock("@/components/GanttChart/DependencyArrow", () => ({
   DependencyArrow: vi.fn(({ dependency }: { dependency: { id: string } }) => (
     <g className="dependency-arrow" data-testid={`arrow-${dependency.id}`} />
   )),
@@ -47,7 +47,7 @@ vi.mock("../../../../src/components/GanttChart/DependencyArrow", () => ({
 
 // Mock DependencyDragPreview
 vi.mock(
-  "../../../../src/components/GanttChart/DependencyDragPreview",
+  "@/components/GanttChart/DependencyDragPreview",
   () => ({
     DependencyDragPreview: vi.fn(() => (
       <g className="dependency-drag-preview" data-testid="drag-preview" />

@@ -26,7 +26,7 @@ import type { ColumnDefinition } from "@/config/tableColumns";
 
 const mockUpdateTask = vi.fn();
 
-vi.mock("../../../src/store/slices/taskSlice", () => ({
+vi.mock("@/store/slices/taskSlice", () => ({
   useTaskStore: vi.fn((selector: (s: Record<string, unknown>) => unknown) =>
     selector({ updateTask: mockUpdateTask })
   ),
@@ -42,13 +42,13 @@ const defaultChartState = {
   holidayRegion: "none",
 };
 
-vi.mock("../../../src/store/slices/chartSlice", () => ({
+vi.mock("@/store/slices/chartSlice", () => ({
   useChartStore: vi.fn((selector: (s: Record<string, unknown>) => unknown) =>
     selector(defaultChartState)
   ),
 }));
 
-vi.mock("../../../src/store/slices/userPreferencesSlice", () => ({
+vi.mock("@/store/slices/userPreferencesSlice", () => ({
   useUserPreferencesStore: vi.fn(
     (selector: (s: Record<string, unknown>) => unknown) =>
       selector({ preferences: { dateFormat: "YYYY-MM-DD" } })

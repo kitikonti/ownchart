@@ -12,13 +12,13 @@ import { useIsPlaceholderSelected } from "@/hooks/useIsPlaceholderSelected";
 // Mock
 // ---------------------------------------------------------------------------
 
-vi.mock("../../../src/store/slices/taskSlice", () => ({
+vi.mock("@/store/slices/taskSlice", () => ({
   useTaskStore: vi.fn((selector: (s: Record<string, unknown>) => unknown) =>
     selector({ selectedTaskIds: [] })
   ),
 }));
 
-vi.mock("../../../src/config/placeholderRow", () => ({
+vi.mock("@/config/placeholderRow", () => ({
   PLACEHOLDER_TASK_ID: "__new_task_placeholder__",
 }));
 

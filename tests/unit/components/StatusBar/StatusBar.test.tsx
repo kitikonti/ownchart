@@ -11,11 +11,11 @@ import { useUIStore } from "@/store/slices/uiSlice";
 import { useTaskStatistics } from "@/hooks/useTaskStatistics";
 
 // Avoid rendering ZoomControls' deep dependency tree in these unit tests
-vi.mock("../../../../src/components/StatusBar/ZoomControls", () => ({
+vi.mock("@/components/StatusBar/ZoomControls", () => ({
   ZoomControls: () => <div data-testid="zoom-controls" />,
 }));
 
-vi.mock("../../../../src/hooks/useTaskStatistics");
+vi.mock("@/hooks/useTaskStatistics");
 
 const mockTaskStats = useTaskStatistics as Mock;
 

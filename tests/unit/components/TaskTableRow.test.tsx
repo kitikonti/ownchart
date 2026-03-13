@@ -25,7 +25,7 @@ const mockInsertTaskAbove = vi.fn();
 const mockInsertTaskBelow = vi.fn();
 const mockLastSelectedTaskId: TaskId | null = null;
 
-vi.mock("../../../src/store/slices/taskSlice", () => {
+vi.mock("@/store/slices/taskSlice", () => {
   const useTaskStore = vi.fn(
     (selector: (s: Record<string, unknown>) => unknown) =>
       selector({
@@ -45,11 +45,11 @@ vi.mock("../../../src/store/slices/taskSlice", () => {
   return { useTaskStore };
 });
 
-vi.mock("../../../src/hooks/useComputedTaskColor", () => ({
+vi.mock("@/hooks/useComputedTaskColor", () => ({
   useComputedTaskColor: () => "#4A90D9",
 }));
 
-vi.mock("../../../src/utils/taskDisplayUtils", () => ({
+vi.mock("@/utils/taskDisplayUtils", () => ({
   computeDisplayTask: (task: Task) => task,
 }));
 
@@ -70,17 +70,17 @@ vi.mock("@dnd-kit/utilities", () => ({
 }));
 
 // Mock child components to keep tests focused
-vi.mock("../../../src/components/TaskList/RowNumberCell", () => ({
+vi.mock("@/components/TaskList/RowNumberCell", () => ({
   RowNumberCell: (props: Record<string, unknown>) => (
     <div data-testid="row-number-cell" data-row={props.rowNumber} />
   ),
 }));
 
-vi.mock("../../../src/components/TaskList/TaskDataCells", () => ({
+vi.mock("@/components/TaskList/TaskDataCells", () => ({
   TaskDataCells: () => <div data-testid="task-data-cells" />,
 }));
 
-vi.mock("../../../src/components/TaskList/RowOverlays", () => ({
+vi.mock("@/components/TaskList/RowOverlays", () => ({
   RowOverlays: () => <div data-testid="row-overlays" />,
 }));
 

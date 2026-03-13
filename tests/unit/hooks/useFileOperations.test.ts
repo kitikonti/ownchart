@@ -37,7 +37,7 @@ const mockSaveFile = vi.fn();
 const mockOpenFile = vi.fn();
 const mockClearFileHandle = vi.fn();
 
-vi.mock("../../../src/utils/fileOperations/fileDialog", () => ({
+vi.mock("@/utils/fileOperations/fileDialog", () => ({
   saveFile: (...args: unknown[]) => mockSaveFile(...args),
   openFile: (...args: unknown[]) => mockOpenFile(...args),
   clearFileHandle: (...args: unknown[]) => mockClearFileHandle(...args),
@@ -46,20 +46,20 @@ vi.mock("../../../src/utils/fileOperations/fileDialog", () => ({
 }));
 
 const mockSerialize = vi.fn().mockReturnValue('{"mock":"content"}');
-vi.mock("../../../src/utils/fileOperations/serialize", () => ({
+vi.mock("@/utils/fileOperations/serialize", () => ({
   serializeToGanttFile: (...args: unknown[]) => mockSerialize(...args),
 }));
 
 const mockLoadFileIntoApp = vi.fn();
 const mockShowLoadNotifications = vi.fn();
-vi.mock("../../../src/utils/fileOperations/loadFromFile", () => ({
+vi.mock("@/utils/fileOperations/loadFromFile", () => ({
   loadFileIntoApp: (...args: unknown[]) => mockLoadFileIntoApp(...args),
   showLoadNotifications: (...args: unknown[]) =>
     mockShowLoadNotifications(...args),
 }));
 
 // Predictable sanitisation for filename tests
-vi.mock("../../../src/utils/export/sanitizeFilename", () => ({
+vi.mock("@/utils/export/sanitizeFilename", () => ({
   sanitizeFilename: (name: string) => name.replace(/\s+/g, "_"),
 }));
 

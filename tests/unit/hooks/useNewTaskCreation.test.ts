@@ -15,7 +15,7 @@ import { COLORS } from "@/styles/design-tokens";
 
 const mockAddTask = vi.fn();
 
-vi.mock("../../../src/store/slices/taskSlice", () => ({
+vi.mock("@/store/slices/taskSlice", () => ({
   useTaskStore: Object.assign(
     vi.fn((selector: (s: Record<string, unknown>) => unknown) =>
       selector({

@@ -23,7 +23,7 @@ const mockClearSelection = vi.fn();
 const mockNavigateCell = vi.fn();
 const mockCreateTask = vi.fn();
 
-vi.mock("../../../src/store/slices/taskSlice", () => ({
+vi.mock("@/store/slices/taskSlice", () => ({
   useTaskStore: vi.fn((selector: (s: Record<string, unknown>) => unknown) =>
     selector({
       setActiveCell: mockSetActiveCell,
@@ -35,11 +35,11 @@ vi.mock("../../../src/store/slices/taskSlice", () => ({
   ),
 }));
 
-vi.mock("../../../src/hooks/useIsPlaceholderSelected", () => ({
+vi.mock("@/hooks/useIsPlaceholderSelected", () => ({
   useIsPlaceholderSelected: vi.fn(() => false),
 }));
 
-vi.mock("../../../src/hooks/useNewTaskCreation", () => ({
+vi.mock("@/hooks/useNewTaskCreation", () => ({
   useNewTaskCreation: vi.fn(() => ({ createTask: mockCreateTask })),
 }));
 

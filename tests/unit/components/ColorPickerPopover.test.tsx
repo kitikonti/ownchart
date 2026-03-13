@@ -12,7 +12,7 @@ import { ColorPickerPopover } from '@/components/TaskList/CellEditors/ColorPicke
 import { useTaskStore } from '@/store/slices/taskSlice';
 
 // Mock Zustand store used by useProjectColors
-vi.mock('../../../src/store/slices/taskSlice', () => ({
+vi.mock('@/store/slices/taskSlice', () => ({
   useTaskStore: vi.fn((selector: (state: { tasks: unknown[] }) => unknown) =>
     selector({ tasks: [] })
   ),

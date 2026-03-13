@@ -12,20 +12,20 @@ import { ViewTabContent } from "@/components/Ribbon/ViewTabContent";
 import { useChartStore } from "@/store/slices/chartSlice";
 
 // Mock useZoom helpers
-vi.mock("../../../../src/hooks/useZoom", () => ({
+vi.mock("@/hooks/useZoom", () => ({
   computeViewportCenterAnchor: vi.fn(() => ({ scrollLeft: 0, clientX: 400 })),
   applyScrollLeft: vi.fn(),
 }));
 
 // Mock HolidayRegionPopover — renders a placeholder to avoid deep dependency tree
-vi.mock("../../../../src/components/Ribbon/HolidayRegionPopover", () => ({
+vi.mock("@/components/Ribbon/HolidayRegionPopover", () => ({
   HolidayRegionPopover: () => (
     <button data-testid="holiday-region-popover">Region</button>
   ),
 }));
 
 // Mock ZoomDropdown — renders a placeholder
-vi.mock("../../../../src/components/Ribbon/ZoomDropdown", () => ({
+vi.mock("@/components/Ribbon/ZoomDropdown", () => ({
   ZoomDropdown: ({
     zoomPercentage,
   }: {

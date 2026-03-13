@@ -3,7 +3,7 @@ import { render, screen, fireEvent } from "@testing-library/react";
 import { WorkingDaysDropdown } from "@/components/Ribbon/WorkingDaysDropdown";
 import { useChartStore } from "@/store/slices/chartSlice";
 
-vi.mock("../../../../src/services/holidayService", () => ({
+vi.mock("@/services/holidayService", () => ({
   holidayService: {
     getAvailableCountries: (): { code: string; name: string }[] => [
       { code: "AT", name: "Austria" },

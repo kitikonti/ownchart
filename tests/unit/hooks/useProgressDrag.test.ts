@@ -10,7 +10,7 @@ import type { Task } from '@/types/chart.types';
 import type { TaskBarGeometry } from '@/utils/timelineUtils';
 
 // Mock getSVGPoint
-vi.mock('../../../src/utils/svgUtils', () => ({
+vi.mock('@/utils/svgUtils', () => ({
   getSVGPoint: vi.fn(() => ({ x: 0, y: 0 })),
 }));
 

@@ -12,7 +12,7 @@ import { useTaskStore } from "@/store/slices/taskSlice";
 import { MIN_ZOOM, MAX_ZOOM } from "@/utils/timelineUtils";
 
 // Stub DOM-dependent helpers that rely on layout measurements unavailable in jsdom.
-vi.mock("../../../../src/hooks/useZoom", () => ({
+vi.mock("@/hooks/useZoom", () => ({
   computeViewportCenterAnchor: vi.fn(() => ({
     date: new Date("2024-01-15"),
     offsetPx: 0,
@@ -21,7 +21,7 @@ vi.mock("../../../../src/hooks/useZoom", () => ({
 }));
 
 // Avoid rendering ZoomDialog's portal/focus-trap in these unit tests.
-vi.mock("../../../../src/components/StatusBar/ZoomDialog", () => ({
+vi.mock("@/components/StatusBar/ZoomDialog", () => ({
   ZoomDialog: ({
     isOpen,
     onClose,

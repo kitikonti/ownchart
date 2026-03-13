@@ -18,7 +18,7 @@ const mockNavigateCell = vi.fn();
 const mockSetSelectedTaskIds = vi.fn();
 const mockCreateTask = vi.fn();
 
-vi.mock("../../../src/store/slices/taskSlice", () => ({
+vi.mock("@/store/slices/taskSlice", () => ({
   useTaskStore: Object.assign(
     vi.fn((selector: (s: Record<string, unknown>) => unknown) =>
       selector({
@@ -39,7 +39,7 @@ vi.mock("../../../src/store/slices/taskSlice", () => ({
   ),
 }));
 
-vi.mock("../../../src/store/slices/chartSlice", () => ({
+vi.mock("@/store/slices/chartSlice", () => ({
   useChartStore: vi.fn((selector: (s: Record<string, unknown>) => unknown) =>
     selector({
       hiddenColumns: [],
@@ -47,13 +47,13 @@ vi.mock("../../../src/store/slices/chartSlice", () => ({
   ),
 }));
 
-vi.mock("../../../src/hooks/useNewTaskCreation", () => ({
+vi.mock("@/hooks/useNewTaskCreation", () => ({
   useNewTaskCreation: vi.fn(() => ({
     createTask: mockCreateTask,
   })),
 }));
 
-vi.mock("../../../src/hooks/usePlaceholderContextMenu", () => ({
+vi.mock("@/hooks/usePlaceholderContextMenu", () => ({
   usePlaceholderContextMenu: vi.fn(() => ({
     contextMenu: null,
     contextMenuItems: [],

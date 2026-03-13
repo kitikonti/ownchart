@@ -14,7 +14,7 @@ import { useChartStore } from "@/store/slices/chartSlice";
 import { useHistoryStore } from "@/store/slices/historySlice";
 
 // Mock clipboard operations
-vi.mock("../../../../src/hooks/useClipboardOperations", () => ({
+vi.mock("@/hooks/useClipboardOperations", () => ({
   useClipboardOperations: () => ({
     handleCopy: vi.fn(),
     handleCut: vi.fn(),
@@ -25,7 +25,7 @@ vi.mock("../../../../src/hooks/useClipboardOperations", () => ({
 }));
 
 // Mock hide operations
-vi.mock("../../../../src/hooks/useHideOperations", () => ({
+vi.mock("@/hooks/useHideOperations", () => ({
   useHideOperations: () => ({
     hideRows: vi.fn(),
     unhideSelection: vi.fn(),
@@ -34,7 +34,7 @@ vi.mock("../../../../src/hooks/useHideOperations", () => ({
 }));
 
 // Mock ColorDropdown — renders a placeholder to avoid deep dependency tree
-vi.mock("../../../../src/components/Ribbon/ColorDropdown", () => ({
+vi.mock("@/components/Ribbon/ColorDropdown", () => ({
   ColorDropdown: () => <button data-testid="color-dropdown">Colors</button>,
 }));
 

@@ -15,7 +15,7 @@ import { useTaskTableRowContextMenu } from "@/hooks/useTaskTableRowContextMenu";
 const mockSetSelectedTaskIds = vi.fn();
 let mockSelectedTaskIds: string[] = [];
 
-vi.mock("../../../src/store/slices/taskSlice", () => ({
+vi.mock("@/store/slices/taskSlice", () => ({
   useTaskStore: vi.fn((selector: (s: Record<string, unknown>) => unknown) =>
     selector({
       setSelectedTaskIds: mockSetSelectedTaskIds,
@@ -30,7 +30,7 @@ vi.mock("../../../src/store/slices/taskSlice", () => ({
 
 const mockBuildItems = vi.fn().mockReturnValue([]);
 
-vi.mock("../../../src/hooks/useFullTaskContextMenuItems", () => ({
+vi.mock("@/hooks/useFullTaskContextMenuItems", () => ({
   useFullTaskContextMenuItems: vi.fn(() => ({ buildItems: mockBuildItems })),
 }));
 

@@ -74,7 +74,7 @@ vi.mock("jspdf", () => ({
 
 // Keep real pdfLayout implementations except calculatePdfFitToWidth, which
 // performs DOM/DPI calculations incompatible with the test environment.
-vi.mock("../../../../src/utils/export/pdfLayout", async (importOriginal) => {
+vi.mock("@/utils/export/pdfLayout", async (importOriginal) => {
   const actual =
     await importOriginal<typeof import("@/utils/export/pdfLayout")>();
   return {

@@ -14,7 +14,7 @@ import type { TimelineScale } from "@/utils/timelineUtils";
 // Mocks
 // ---------------------------------------------------------------------------
 
-vi.mock("../../../../src/store/slices/chartSlice", () => ({
+vi.mock("@/store/slices/chartSlice", () => ({
   useChartStore: vi.fn((selector: (s: Record<string, unknown>) => unknown) =>
     selector({
       dragState: null,
@@ -23,7 +23,7 @@ vi.mock("../../../../src/store/slices/chartSlice", () => ({
   ),
 }));
 
-vi.mock("../../../../src/store/slices/taskSlice", () => ({
+vi.mock("@/store/slices/taskSlice", () => ({
   useTaskStore: vi.fn((selector: (s: Record<string, unknown>) => unknown) =>
     selector({
       selectedTaskIds: [],
@@ -31,7 +31,7 @@ vi.mock("../../../../src/store/slices/taskSlice", () => ({
   ),
 }));
 
-vi.mock("../../../../src/store/slices/userPreferencesSlice", () => ({
+vi.mock("@/store/slices/userPreferencesSlice", () => ({
   useDensityConfig: vi.fn(() => ({
     rowHeight: 36,
     taskBarHeight: 26,
@@ -40,11 +40,11 @@ vi.mock("../../../../src/store/slices/userPreferencesSlice", () => ({
   })),
 }));
 
-vi.mock("../../../../src/hooks/useComputedTaskColor", () => ({
+vi.mock("@/hooks/useComputedTaskColor", () => ({
   useComputedTaskColor: vi.fn(() => "#4A90D9"),
 }));
 
-vi.mock("../../../../src/hooks/useTaskBarInteraction", () => ({
+vi.mock("@/hooks/useTaskBarInteraction", () => ({
   useTaskBarInteraction: vi.fn(() => ({
     mode: "idle",
     previewGeometry: null,
@@ -55,7 +55,7 @@ vi.mock("../../../../src/hooks/useTaskBarInteraction", () => ({
   })),
 }));
 
-vi.mock("../../../../src/hooks/useProgressDrag", () => ({
+vi.mock("@/hooks/useProgressDrag", () => ({
   useProgressDrag: vi.fn(() => ({
     isDragging: false,
     previewProgress: null,

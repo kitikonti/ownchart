@@ -27,7 +27,7 @@ const mockClose = vi.fn();
 let mockColorModeState: ColorModeState = { ...DEFAULT_COLOR_MODE_STATE };
 let mockIsOpen = false;
 
-vi.mock("../../../../src/store/slices/chartSlice", () => ({
+vi.mock("@/store/slices/chartSlice", () => ({
   useChartStore: vi.fn((selector: (s: Record<string, unknown>) => unknown) =>
     selector({
       colorModeState: mockColorModeState,
@@ -41,7 +41,7 @@ vi.mock("../../../../src/store/slices/chartSlice", () => ({
   ),
 }));
 
-vi.mock("../../../../src/hooks/useDropdown", () => ({
+vi.mock("@/hooks/useDropdown", () => ({
   useDropdown: vi.fn(() => ({
     isOpen: mockIsOpen,
     setIsOpen: vi.fn(),

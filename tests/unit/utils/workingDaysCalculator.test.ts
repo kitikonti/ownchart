@@ -9,7 +9,7 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 import { parseISO } from "date-fns";
 
 // vi.mock is hoisted by Vitest, so this mock is in effect for all imports below
-vi.mock("../../../src/services/holidayService", () => ({
+vi.mock("@/services/holidayService", () => ({
   holidayService: {
     setRegion: vi.fn(),
     getHolidayForDateString: vi.fn().mockReturnValue(null), // no holidays by default

@@ -17,7 +17,7 @@ import type { ColumnDefinition } from "@/config/tableColumns";
 const mockUpdateTask = vi.fn();
 const mockStopCellEdit = vi.fn();
 
-vi.mock("../../../src/store/slices/taskSlice", () => ({
+vi.mock("@/store/slices/taskSlice", () => ({
   useTaskStore: vi.fn((selector: (s: Record<string, unknown>) => unknown) =>
     selector({
       updateTask: mockUpdateTask,
@@ -34,7 +34,7 @@ vi.mock("../../../src/store/slices/taskSlice", () => ({
   ),
 }));
 
-vi.mock("../../../src/store/slices/chartSlice", () => ({
+vi.mock("@/store/slices/chartSlice", () => ({
   useChartStore: vi.fn((selector: (s: Record<string, unknown>) => unknown) =>
     selector({
       colorModeState: { mode: "manual" },
@@ -42,7 +42,7 @@ vi.mock("../../../src/store/slices/chartSlice", () => ({
   ),
 }));
 
-vi.mock("../../../src/store/slices/userPreferencesSlice", () => ({
+vi.mock("@/store/slices/userPreferencesSlice", () => ({
   useDensityConfig: vi.fn(() => ({
     rowHeight: 36,
     indentSize: 20,
@@ -62,7 +62,7 @@ vi.mock("../../../src/store/slices/userPreferencesSlice", () => ({
   })),
 }));
 
-vi.mock("../../../src/hooks/useCellEdit", () => ({
+vi.mock("@/hooks/useCellEdit", () => ({
   useCellEdit: vi.fn(() => ({
     localValue: "",
     setLocalValue: vi.fn(),
@@ -77,7 +77,7 @@ vi.mock("../../../src/hooks/useCellEdit", () => ({
 }));
 
 vi.mock(
-  "../../../src/components/TaskList/CellEditors/ColorCellEditor",
+  "@/components/TaskList/CellEditors/ColorCellEditor",
   () => ({
     ColorCellEditor: (props: {
       onChange: (hex: string) => void;

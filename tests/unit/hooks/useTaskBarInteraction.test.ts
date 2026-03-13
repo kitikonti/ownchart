@@ -14,11 +14,11 @@ import { toTaskId, toHexColor } from '@/types/branded.types';
 
 // ─── Mocks ─────────────────────────────────────────────────────────────
 
-vi.mock('../../../src/utils/svgUtils', () => ({
+vi.mock('@/utils/svgUtils', () => ({
   getSVGPoint: vi.fn(() => ({ x: 200, y: 50 })),
 }));
 
-vi.mock('../../../src/utils/hierarchy', () => ({
+vi.mock('@/utils/hierarchy', () => ({
   getEffectiveTasksToMove: vi.fn(
     (_tasks: Task[], ids: string[]) => ids,
   ),
@@ -27,11 +27,11 @@ vi.mock('../../../src/utils/hierarchy', () => ({
 // dragValidation is not imported by the hook directly, but is used inside
 // taskBarDragHelpers (buildMoveUpdates / buildResizeUpdate). The mock is
 // required so those helpers don't reject tasks during drag/resize tests.
-vi.mock('../../../src/utils/dragValidation', () => ({
+vi.mock('@/utils/dragValidation', () => ({
   validateDragOperation: vi.fn(() => ({ valid: true })),
 }));
 
-vi.mock('../../../src/utils/workingDaysCalculator', () => ({
+vi.mock('@/utils/workingDaysCalculator', () => ({
   calculateWorkingDays: vi.fn(() => 5),
   addWorkingDays: vi.fn((start: string) => start),
 }));

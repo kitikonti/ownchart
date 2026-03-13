@@ -16,20 +16,20 @@ import type { Task } from '@/types/chart.types';
 
 // ─── Mock heavy dependencies ───────────────────────────────────────────────
 
-vi.mock('../../../src/hooks/useClipboardOperations', () => ({
+vi.mock('@/hooks/useClipboardOperations', () => ({
   useClipboardOperations: () => ({
     handlePaste: vi.fn().mockResolvedValue(undefined),
     canPaste: true,
   }),
 }));
 
-vi.mock('../../../src/hooks/useFullTaskContextMenuItems', () => ({
+vi.mock('@/hooks/useFullTaskContextMenuItems', () => ({
   useFullTaskContextMenuItems: () => ({
     buildItems: vi.fn().mockReturnValue([{ id: 'full-menu-item', label: 'Cut' }]),
   }),
 }));
 
-vi.mock('../../../src/store/slices/chartSlice', () => ({
+vi.mock('@/store/slices/chartSlice', () => ({
   useChartStore: (selector: (s: { fitToView: () => void }) => unknown) =>
     selector({ fitToView: vi.fn() }),
 }));

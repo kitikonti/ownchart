@@ -22,11 +22,11 @@ import { makeTask } from "../helpers/taskFactory";
 // Store mocks
 // ---------------------------------------------------------------------------
 
-vi.mock("../../../src/store/slices/chartSlice", () => ({
+vi.mock("@/store/slices/chartSlice", () => ({
   useChartStore: vi.fn(),
 }));
 
-vi.mock("../../../src/store/slices/taskSlice", () => ({
+vi.mock("@/store/slices/taskSlice", () => ({
   useTaskStore: vi.fn(),
 }));
 

@@ -21,7 +21,7 @@ const mockSetSelectedTaskIds = vi.fn();
 const mockToggleTaskSelection = vi.fn();
 let mockLastSelectedTaskId: TaskId | null = null;
 
-vi.mock("../../../src/store/slices/taskSlice", () => {
+vi.mock("@/store/slices/taskSlice", () => {
   const useTaskStore = vi.fn(
     (selector: (s: Record<string, unknown>) => unknown) =>
       selector({

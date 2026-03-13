@@ -15,7 +15,7 @@ import type { Task } from "@/types/chart.types";
 
 let mockTasks: Task[] = [];
 
-vi.mock("../../../src/store/slices/taskSlice", () => ({
+vi.mock("@/store/slices/taskSlice", () => ({
   useTaskStore: vi.fn(
     (selector: (s: { tasks: Task[] }) => unknown) =>
       selector({ tasks: mockTasks })

@@ -9,7 +9,7 @@ import { ScaleOptions } from "@/components/Export/ScaleOptions";
 import { DEFAULT_EXPORT_OPTIONS } from "@/utils/export/types";
 
 // Mock ZoomModeSelector to isolate ScaleOptions prop-wiring
-vi.mock("../../../../src/components/Export/ZoomModeSelector", () => ({
+vi.mock("@/components/Export/ZoomModeSelector", () => ({
   ZoomModeSelector: (props: Record<string, unknown>) => (
     <div
       data-testid="zoom-mode-selector"

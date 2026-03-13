@@ -60,11 +60,11 @@ function createMockDialogResult(
 
 let mockDialogResult = createMockDialogResult();
 
-vi.mock("../../../../src/hooks/useExportDialog", () => ({
+vi.mock("@/hooks/useExportDialog", () => ({
   useExportDialog: (): UseExportDialogResult => mockDialogResult,
 }));
 
-vi.mock("../../../../src/hooks/useExportPreview", () => ({
+vi.mock("@/hooks/useExportPreview", () => ({
   useExportPreview: (): {
     previewDataUrl: string | null;
     previewDimensions: { width: number; height: number };

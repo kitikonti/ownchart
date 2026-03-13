@@ -28,7 +28,7 @@ const defaultState = {
   autoFitColumn: mockAutoFitColumn,
 };
 
-vi.mock("../../../src/store/slices/taskSlice", () => ({
+vi.mock("@/store/slices/taskSlice", () => ({
   useTaskStore: vi.fn(
     (selector: (s: typeof defaultState) => unknown) => selector(defaultState)
   ),

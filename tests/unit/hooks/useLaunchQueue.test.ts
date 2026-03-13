@@ -17,7 +17,7 @@ vi.mock("react-hot-toast", () => ({
   },
 }));
 
-vi.mock("../../../src/utils/fileOperations/loadFromFile", () => ({
+vi.mock("@/utils/fileOperations/loadFromFile", () => ({
   loadFileIntoApp: vi.fn(),
   showLoadNotifications: vi.fn(),
 }));

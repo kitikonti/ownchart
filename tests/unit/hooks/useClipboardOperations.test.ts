@@ -30,7 +30,7 @@ vi.mock("react-hot-toast", () => ({
 // System clipboard disabled for all tests — exercise internal clipboard path.
 // Use importOriginal so clipboardSlice's imports (collectTasksWithChildren etc.)
 // still resolve to the real implementations.
-vi.mock("../../../src/utils/clipboard", async (importOriginal) => {
+vi.mock("@/utils/clipboard", async (importOriginal) => {
   const actual =
     await importOriginal<typeof import("@/utils/clipboard")>();
   return {

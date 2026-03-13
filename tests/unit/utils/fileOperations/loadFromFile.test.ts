@@ -37,7 +37,7 @@ const mockResetExportOptions = vi.fn();
 // ---------------------------------------------------------------------------
 // Wire the mocks into store modules
 // ---------------------------------------------------------------------------
-vi.mock('../../../../src/store/slices/taskSlice', () => ({
+vi.mock('@/store/slices/taskSlice', () => ({
   useTaskStore: {
     getState: () => ({
       setTasks: mockSetTasks,
@@ -48,7 +48,7 @@ vi.mock('../../../../src/store/slices/taskSlice', () => ({
   },
 }));
 
-vi.mock('../../../../src/store/slices/chartSlice', () => ({
+vi.mock('@/store/slices/chartSlice', () => ({
   useChartStore: {
     getState: () => ({
       setViewSettings: mockSetViewSettings,
@@ -58,7 +58,7 @@ vi.mock('../../../../src/store/slices/chartSlice', () => ({
   },
 }));
 
-vi.mock('../../../../src/store/slices/fileSlice', () => ({
+vi.mock('@/store/slices/fileSlice', () => ({
   useFileStore: {
     getState: () => ({
       setFileName: mockSetFileName,
@@ -70,7 +70,7 @@ vi.mock('../../../../src/store/slices/fileSlice', () => ({
   },
 }));
 
-vi.mock('../../../../src/store/slices/historySlice', () => ({
+vi.mock('@/store/slices/historySlice', () => ({
   useHistoryStore: {
     getState: () => ({
       clearHistory: mockClearHistory,
@@ -78,7 +78,7 @@ vi.mock('../../../../src/store/slices/historySlice', () => ({
   },
 }));
 
-vi.mock('../../../../src/store/slices/dependencySlice', () => ({
+vi.mock('@/store/slices/dependencySlice', () => ({
   useDependencyStore: {
     getState: () => ({
       setDependencies: mockSetDependencies,
@@ -86,7 +86,7 @@ vi.mock('../../../../src/store/slices/dependencySlice', () => ({
   },
 }));
 
-vi.mock('../../../../src/store/slices/uiSlice', () => ({
+vi.mock('@/store/slices/uiSlice', () => ({
   useUIStore: {
     getState: () => ({
       resetExportOptions: mockResetExportOptions,

@@ -14,7 +14,7 @@ import { MIN_ZOOM, MAX_ZOOM } from "@/utils/timelineUtils";
 import type { Task } from "@/types/chart.types";
 
 // Mock useZoom helpers — tested separately
-vi.mock("../../../src/hooks/useZoom", () => ({
+vi.mock("@/hooks/useZoom", () => ({
   computeViewportCenterAnchor: vi.fn(() => ({ scrollLeft: 0, clientX: 400 })),
   applyScrollLeft: vi.fn(),
 }));

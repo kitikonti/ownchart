@@ -13,7 +13,7 @@ import { COLORS } from "@/styles/design-tokens";
 // Mock dateToPixel to avoid scale internals
 // ---------------------------------------------------------------------------
 
-vi.mock("../../../../src/utils/timelineUtils", async () => {
+vi.mock("@/utils/timelineUtils", async () => {
   const actual = await vi.importActual<typeof import("@/utils/timelineUtils")>(
     "../../../../src/utils/timelineUtils",
   );

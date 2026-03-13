@@ -16,7 +16,7 @@ const mockClearSelection = vi.fn();
 let mockTasks: { id: string }[] = [{ id: "t1" }, { id: "t2" }];
 let mockSelectedTaskIds: string[] = [];
 
-vi.mock("../../../src/store/slices/taskSlice", () => ({
+vi.mock("@/store/slices/taskSlice", () => ({
   useTaskStore: vi.fn(
     (selector: (s: Record<string, unknown>) => unknown) =>
       selector({
@@ -31,7 +31,7 @@ vi.mock("../../../src/store/slices/taskSlice", () => ({
   ),
 }));
 
-vi.mock("../../../src/store/slices/userPreferencesSlice", () => ({
+vi.mock("@/store/slices/userPreferencesSlice", () => ({
   useDensityConfig: vi.fn(() => ({
     rowHeight: 36,
     taskBarHeight: 26,
@@ -58,7 +58,7 @@ vi.mock("../../../src/store/slices/userPreferencesSlice", () => ({
   })),
 }));
 
-vi.mock("../../../src/store/slices/chartSlice", () => ({
+vi.mock("@/store/slices/chartSlice", () => ({
   useChartStore: vi.fn(
     (selector: (s: Record<string, unknown>) => unknown) =>
       selector({
@@ -67,11 +67,11 @@ vi.mock("../../../src/store/slices/chartSlice", () => ({
   ),
 }));
 
-vi.mock("../../../src/hooks/useTableDimensions", () => ({
+vi.mock("@/hooks/useTableDimensions", () => ({
   useTableDimensions: () => ({ totalColumnWidth: 800 }),
 }));
 
-vi.mock("../../../src/hooks/useTableHeaderContextMenu", () => ({
+vi.mock("@/hooks/useTableHeaderContextMenu", () => ({
   useTableHeaderContextMenu: () => ({
     contextMenu: null,
     contextMenuItems: [],
@@ -80,11 +80,11 @@ vi.mock("../../../src/hooks/useTableHeaderContextMenu", () => ({
   }),
 }));
 
-vi.mock("../../../src/components/TaskList/ColumnResizer", () => ({
+vi.mock("@/components/TaskList/ColumnResizer", () => ({
   ColumnResizer: () => <div data-testid="column-resizer" />,
 }));
 
-vi.mock("../../../src/components/ContextMenu/ContextMenu", () => ({
+vi.mock("@/components/ContextMenu/ContextMenu", () => ({
   ContextMenu: () => <div data-testid="context-menu" />,
 }));
 

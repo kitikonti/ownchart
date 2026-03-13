@@ -22,7 +22,7 @@ const mockNavigateCell = vi.fn();
 const mockStartCellEdit = vi.fn();
 const mockStopCellEdit = vi.fn();
 
-vi.mock("../../../src/store/slices/taskSlice", () => ({
+vi.mock("@/store/slices/taskSlice", () => ({
   useTaskStore: vi.fn((selector: (s: Record<string, unknown>) => unknown) =>
     selector({
       activeCell: mockActiveCell,

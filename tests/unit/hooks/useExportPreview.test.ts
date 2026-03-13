@@ -45,11 +45,11 @@ vi.mock("html-to-image", () => ({
   toCanvas: mocks.mockToCanvas,
 }));
 
-vi.mock("../../../src/utils/export/exportLayout", () => ({
+vi.mock("@/utils/export/exportLayout", () => ({
   calculateExportDimensions: mocks.mockCalculateDimensions,
 }));
 
-vi.mock("../../../src/components/Export/ExportRenderer", () => ({
+vi.mock("@/components/Export/ExportRenderer", () => ({
   ExportRenderer: vi.fn(() => null),
 }));
 

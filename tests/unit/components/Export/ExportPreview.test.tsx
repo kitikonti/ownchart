@@ -9,13 +9,13 @@ import { ExportPreview } from "@/components/Export/ExportPreview";
 import { DEFAULT_PDF_OPTIONS } from "@/utils/export/types";
 
 // Mock child components to isolate routing logic
-vi.mock("../../../../src/components/Export/PdfPreview", () => ({
+vi.mock("@/components/Export/PdfPreview", () => ({
   PdfPreview: ({ isRendering }: { isRendering: boolean }) => (
     <div data-testid="pdf-preview">{isRendering ? "rendering" : "ready"}</div>
   ),
 }));
 
-vi.mock("../../../../src/components/Export/ChartPreview", () => ({
+vi.mock("@/components/Export/ChartPreview", () => ({
   ChartPreview: ({ formatType }: { formatType: string }) => (
     <div data-testid="chart-preview" data-format={formatType} />
   ),

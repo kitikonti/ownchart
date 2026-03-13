@@ -7,7 +7,7 @@ import { describe, it, expect, beforeEach, vi } from "vitest";
 import { render, screen, fireEvent } from "@testing-library/react";
 import { HiddenRowIndicator } from "@/components/TaskList/HiddenRowIndicator";
 
-vi.mock("../../../src/store/slices/userPreferencesSlice", () => ({
+vi.mock("@/store/slices/userPreferencesSlice", () => ({
   useDensityConfig: vi.fn(() => ({ rowHeight: 36 })),
 }));
 

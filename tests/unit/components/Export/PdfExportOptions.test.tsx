@@ -12,7 +12,7 @@ import {
 } from "@/utils/export/types";
 
 // Mock ZoomModeSelector to isolate PdfExportOptions tests
-vi.mock("../../../../src/components/Export/ZoomModeSelector", () => ({
+vi.mock("@/components/Export/ZoomModeSelector", () => ({
   ZoomModeSelector: (): JSX.Element => <div data-testid="zoom-mode-selector" />,
 }));
 

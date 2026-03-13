@@ -13,7 +13,7 @@ import { toTaskId } from "@/types/branded.types";
 // Mock
 // ---------------------------------------------------------------------------
 
-vi.mock("../../../src/store/slices/taskSlice", () => ({
+vi.mock("@/store/slices/taskSlice", () => ({
   useTaskStore: vi.fn((selector: (s: Record<string, unknown>) => unknown) =>
     selector({
       activeCell: { taskId: null, field: null },

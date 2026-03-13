@@ -18,7 +18,7 @@ import { makeTask } from "../helpers/taskFactory";
 // Store mock
 // ---------------------------------------------------------------------------
 
-vi.mock("../../../src/store/slices/taskSlice", () => ({
+vi.mock("@/store/slices/taskSlice", () => ({
   useTaskStore: vi.fn(),
 }));
 

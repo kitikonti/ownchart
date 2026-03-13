@@ -24,12 +24,12 @@ import {
 } from '@/utils/taskBarDragHelpers';
 
 // Mock dragValidation
-vi.mock('../../../src/utils/dragValidation', () => ({
+vi.mock('@/utils/dragValidation', () => ({
   validateDragOperation: vi.fn(() => ({ valid: true })),
 }));
 
 // Mock workingDaysCalculator
-vi.mock('../../../src/utils/workingDaysCalculator', () => ({
+vi.mock('@/utils/workingDaysCalculator', () => ({
   calculateWorkingDays: vi.fn(() => 5),
   addWorkingDays: vi.fn(
     (start: string) =>

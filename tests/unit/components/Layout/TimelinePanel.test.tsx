@@ -13,14 +13,14 @@ import { useTaskStore } from "@/store/slices/taskSlice";
 import { useHeaderDateSelection } from "@/hooks/useHeaderDateSelection";
 
 // Mock heavy GanttChart sub-components — rendering them requires full D3 setup.
-vi.mock("../../../../src/components/GanttChart", () => ({
+vi.mock("@/components/GanttChart", () => ({
   ChartCanvas: () => <div data-testid="chart-canvas" />,
   TimelineHeader: () => <g data-testid="timeline-header" />,
   SelectionHighlight: () => <g data-testid="selection-highlight" />,
 }));
 
 // Mock ContextMenu to avoid portal issues.
-vi.mock("../../../../src/components/ContextMenu/ContextMenu", () => ({
+vi.mock("@/components/ContextMenu/ContextMenu", () => ({
   ContextMenu: ({
     onClose,
     ariaLabel,
@@ -35,7 +35,7 @@ vi.mock("../../../../src/components/ContextMenu/ContextMenu", () => ({
 }));
 
 // Mock useHeaderDateSelection so tests control its return value.
-vi.mock("../../../../src/hooks/useHeaderDateSelection");
+vi.mock("@/hooks/useHeaderDateSelection");
 const mockUseHeaderDateSelection = useHeaderDateSelection as Mock;
 
 const defaultSelectionResult = {

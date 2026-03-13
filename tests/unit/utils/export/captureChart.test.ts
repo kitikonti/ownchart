@@ -231,7 +231,7 @@ describe("pixel ratio clamping invariant", () => {
 // the only part of captureChart that can be unit-tested without a full
 // html-to-image + React runtime.
 
-vi.mock("../../../../src/utils/export/helpers", async (importOriginal) => {
+vi.mock("@/utils/export/helpers", async (importOriginal) => {
   const original =
     await importOriginal<typeof import("@/utils/export/helpers")>();
   return {
@@ -243,12 +243,12 @@ vi.mock("../../../../src/utils/export/helpers", async (importOriginal) => {
   };
 });
 
-vi.mock("../../../../src/utils/export/exportLayout", () => ({
+vi.mock("@/utils/export/exportLayout", () => ({
   calculateExportDimensions: vi.fn().mockReturnValue({ width: 100, height: 50 }),
 }));
 
 // Mock ExportRenderer so React does not need a real component to render
-vi.mock("../../../../src/components/Export/ExportRenderer", () => ({
+vi.mock("@/components/Export/ExportRenderer", () => ({
   ExportRenderer: vi.fn(() => null),
 }));
 

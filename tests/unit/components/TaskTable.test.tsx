@@ -12,7 +12,7 @@ import type { Task } from "@/types/chart.types";
 // Mocks
 // ---------------------------------------------------------------------------
 
-vi.mock("../../../src/store/slices/taskSlice", () => ({
+vi.mock("@/store/slices/taskSlice", () => ({
   useTaskStore: vi.fn((selector: (s: Record<string, unknown>) => unknown) =>
     selector({
       reorderTasks: vi.fn(),
@@ -21,7 +21,7 @@ vi.mock("../../../src/store/slices/taskSlice", () => ({
   ),
 }));
 
-vi.mock("../../../src/store/slices/chartSlice", () => ({
+vi.mock("@/store/slices/chartSlice", () => ({
   useChartStore: vi.fn((selector: (s: Record<string, unknown>) => unknown) =>
     selector({
       hiddenColumns: [],
@@ -30,7 +30,7 @@ vi.mock("../../../src/store/slices/chartSlice", () => ({
   ),
 }));
 
-vi.mock("../../../src/store/slices/userPreferencesSlice", () => ({
+vi.mock("@/store/slices/userPreferencesSlice", () => ({
   useDensityConfig: vi.fn(() => ({
     rowHeight: 36,
     taskBarHeight: 26,
@@ -57,15 +57,15 @@ vi.mock("../../../src/store/slices/userPreferencesSlice", () => ({
   })),
 }));
 
-vi.mock("../../../src/hooks/useTableDimensions", () => ({
+vi.mock("@/hooks/useTableDimensions", () => ({
   useTableDimensions: vi.fn(() => ({ totalColumnWidth: 800 })),
 }));
 
-vi.mock("../../../src/hooks/useAutoColumnWidth", () => ({
+vi.mock("@/hooks/useAutoColumnWidth", () => ({
   useAutoColumnWidth: vi.fn(),
 }));
 
-vi.mock("../../../src/hooks/useTaskTableRowContextMenu", () => ({
+vi.mock("@/hooks/useTaskTableRowContextMenu", () => ({
   useTaskTableRowContextMenu: vi.fn(() => ({
     contextMenu: null,
     contextMenuItems: [],
@@ -74,7 +74,7 @@ vi.mock("../../../src/hooks/useTaskTableRowContextMenu", () => ({
   })),
 }));
 
-vi.mock("../../../src/hooks/useHideOperations", () => ({
+vi.mock("@/hooks/useHideOperations", () => ({
   useHideOperations: vi.fn(() => ({
     hideRows: vi.fn(),
     showAll: vi.fn(),
@@ -84,7 +84,7 @@ vi.mock("../../../src/hooks/useHideOperations", () => ({
   })),
 }));
 
-vi.mock("../../../src/hooks/useTaskRowData", () => ({
+vi.mock("@/hooks/useTaskRowData", () => ({
   useTaskRowData: vi.fn(() => ({
     taskRowData: [],
     visibleTaskIds: [],
@@ -93,23 +93,23 @@ vi.mock("../../../src/hooks/useTaskRowData", () => ({
 }));
 
 // Mock child components to isolate container logic
-vi.mock("../../../src/components/TaskList/TaskTableRow", () => ({
+vi.mock("@/components/TaskList/TaskTableRow", () => ({
   TaskTableRow: vi.fn(({ task }: { task: Task }) => (
     <div data-testid={`task-row-${task.id}`}>{task.name}</div>
   )),
 }));
 
-vi.mock("../../../src/components/TaskList/NewTaskPlaceholderRow", () => ({
+vi.mock("@/components/TaskList/NewTaskPlaceholderRow", () => ({
   NewTaskPlaceholderRow: vi.fn(() => (
     <div data-testid="placeholder-row">+ New Task</div>
   )),
 }));
 
-vi.mock("../../../src/components/ContextMenu/ContextMenu", () => ({
+vi.mock("@/components/ContextMenu/ContextMenu", () => ({
   ContextMenu: vi.fn(() => <div data-testid="context-menu" />),
 }));
 
-vi.mock("../../../src/components/TaskList/dragSelectionState", () => ({
+vi.mock("@/components/TaskList/dragSelectionState", () => ({
   resetDragState: vi.fn(),
 }));
 

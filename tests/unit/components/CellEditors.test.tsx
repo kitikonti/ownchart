@@ -8,7 +8,7 @@ import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { ColorCellEditor } from '@/components/TaskList/CellEditors/ColorCellEditor';
 
 // Mock the Zustand stores used by ColorPickerPopover
-vi.mock('../../../src/store/slices/taskSlice', () => ({
+vi.mock('@/store/slices/taskSlice', () => ({
   useTaskStore: vi.fn(() => []),
 }));
 

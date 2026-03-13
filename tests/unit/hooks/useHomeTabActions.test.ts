@@ -16,7 +16,7 @@ import type { Task } from "@/types/chart.types";
 
 // Mock new task creation — tested separately in useNewTaskCreation tests
 const mockCreateTask = vi.fn();
-vi.mock("../../../src/hooks/useNewTaskCreation", () => ({
+vi.mock("@/hooks/useNewTaskCreation", () => ({
   useNewTaskCreation: () => ({ createTask: mockCreateTask }),
 }));
 
@@ -24,7 +24,7 @@ vi.mock("../../../src/hooks/useNewTaskCreation", () => ({
 const mockHandleCopy = vi.fn();
 const mockHandleCut = vi.fn();
 const mockHandlePaste = vi.fn();
-vi.mock("../../../src/hooks/useClipboardOperations", () => ({
+vi.mock("@/hooks/useClipboardOperations", () => ({
   useClipboardOperations: () => ({
     handleCopy: mockHandleCopy,
     handleCut: mockHandleCut,
@@ -38,7 +38,7 @@ vi.mock("../../../src/hooks/useClipboardOperations", () => ({
 const mockHideRows = vi.fn();
 const mockUnhideSelection = vi.fn();
 const mockGetHiddenInSelectionCount = vi.fn().mockReturnValue(0);
-vi.mock("../../../src/hooks/useHideOperations", () => ({
+vi.mock("@/hooks/useHideOperations", () => ({
   useHideOperations: () => ({
     hideRows: mockHideRows,
     unhideSelection: mockUnhideSelection,

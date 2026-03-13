@@ -19,7 +19,7 @@ import { toISODateString } from "@/utils/dateUtils";
 // Mocks
 // ---------------------------------------------------------------------------
 
-vi.mock("../../../../src/store/slices/userPreferencesSlice", () => ({
+vi.mock("@/store/slices/userPreferencesSlice", () => ({
   useFirstDayOfWeek: vi.fn(() => "monday"),
   useWeekNumberingSystem: vi.fn(() => "iso"),
 }));

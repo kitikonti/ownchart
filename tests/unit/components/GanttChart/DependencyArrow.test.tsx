@@ -16,7 +16,7 @@ import { COLORS } from "@/styles/design-tokens";
 // Mock arrowPath utils to avoid complex SVG path calculations
 // ---------------------------------------------------------------------------
 
-vi.mock("../../../../src/utils/arrowPath", () => ({
+vi.mock("@/utils/arrowPath", () => ({
   ARROWHEAD_SIZE: 8,
   calculateArrowPath: vi.fn(() => ({
     path: "M 0 0 L 100 100",

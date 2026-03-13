@@ -69,13 +69,13 @@ const mockTaskStoreState = (): Record<string, unknown> => ({
   cutCell: null,
 });
 
-vi.mock("../../../src/store/slices/taskSlice", () => ({
+vi.mock("@/store/slices/taskSlice", () => ({
   useTaskStore: vi.fn((selector: (s: Record<string, unknown>) => unknown) =>
     selector(mockTaskStoreState())
   ),
 }));
 
-vi.mock("../../../src/store/slices/chartSlice", () => ({
+vi.mock("@/store/slices/chartSlice", () => ({
   useChartStore: vi.fn((selector: (s: Record<string, unknown>) => unknown) =>
     selector({
       workingDaysMode: false,
@@ -89,7 +89,7 @@ vi.mock("../../../src/store/slices/chartSlice", () => ({
   ),
 }));
 
-vi.mock("../../../src/store/slices/userPreferencesSlice", () => ({
+vi.mock("@/store/slices/userPreferencesSlice", () => ({
   useUserPreferencesStore: vi.fn(
     (selector: (s: Record<string, unknown>) => unknown) =>
       selector({

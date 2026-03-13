@@ -18,11 +18,11 @@ import type { TimelineScale } from "@/utils/timelineUtils";
 // Mocks
 // ---------------------------------------------------------------------------
 
-vi.mock("../../../../src/store/slices/userPreferencesSlice", () => ({
+vi.mock("@/store/slices/userPreferencesSlice", () => ({
   useFirstDayOfWeek: vi.fn(() => "monday"),
 }));
 
-vi.mock("../../../../src/services/holidayService", () => ({
+vi.mock("@/services/holidayService", () => ({
   holidayService: {
     setRegion: vi.fn(),
     getHolidayForDateString: vi.fn((date: string) => {
