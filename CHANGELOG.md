@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [1.2.5](https://github.com/kitikonti/ownchart/compare/v1.2.4...v1.2.5) (2026-03-13)
+
+
+### Bug Fixes
+
+* allow milestone date editing by syncing both dates ([#68](https://github.com/kitikonti/ownchart/issues/68)) ([678de2b](https://github.com/kitikonti/ownchart/commit/678de2bebca7b19769f6e0b3047b6a5050bff34e))
+
 ## [1.2.4](https://github.com/kitikonti/ownchart/compare/v1.2.3...v1.2.4) (2026-03-13)
 
 
