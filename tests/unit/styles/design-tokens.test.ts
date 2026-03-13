@@ -75,7 +75,7 @@ describe("design-tokens scale consistency", () => {
     expect(COLORS.neutral[0]).toBe("#ffffff");
   });
 
-  it("brand[600] should be Outlook Blue (#0F6CBD)", () => {
+  it("brand[600] should be brand blue (#0F6CBD)", () => {
     expect(COLORS.brand[600]).toBe("#0F6CBD");
   });
 

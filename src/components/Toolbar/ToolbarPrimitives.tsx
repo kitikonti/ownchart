@@ -1,9 +1,9 @@
 /**
  * Toolbar Primitives - Base building blocks for consistent toolbar design
  *
- * Design Philosophy: MS 365/Fluent UI Inspired
+ * Design Philosophy:
  * - Neutral gray palette (pure grays, no blue tint)
- * - Outlook Blue (#0F6CBD) as the brand color for interactive elements
+ * - Brand blue (#0F6CBD) as the brand color for interactive elements
  * - Smooth micro-interactions that feel polished
  * - Consistent spacing and proportions
  *

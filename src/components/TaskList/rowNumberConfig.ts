@@ -30,7 +30,7 @@ export const ROW_SELECT_CURSOR = buildRowSelectCursor(
   COLORS.neutral[0]
 );
 
-// ── Color map (Outlook Blue theme) ──────────────────────────────────────────
+// ── Color map ──────────────────────────────────────────────────────────────
 export const ROW_COLORS = {
   bgInactive: ROW_NUMBER.bgInactive,
   bgHover: ROW_NUMBER.bgHover,

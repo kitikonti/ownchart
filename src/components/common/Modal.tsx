@@ -1,7 +1,7 @@
 /**
  * Reusable Modal component with backdrop, focus trap, and keyboard support.
  *
- * Design: MS 365/Fluent UI inspired with Outlook Blue brand color.
+ * Design: OwnChart design system with brand blue accent color.
  */
 
 import {
@@ -259,7 +259,7 @@ export const Modal = memo(function Modal({
       tabIndex={-1}
       onKeyDown={handleKeyDown}
     >
-      {/* Backdrop - MS Fluent: rgba(0,0,0,0.4), no blur.
+      {/* Backdrop - rgba(0,0,0,0.4), no blur.
           tabIndex={-1} keeps it non-focusable; aria-hidden hides it from the
           SR tree. Click-dismiss is intentional UX (keyboard users use Escape). */}
       <div

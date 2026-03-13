@@ -1,5 +1,5 @@
 /**
- * StatusBar - MS Fluent UI inspired status bar at the bottom of the app
+ * StatusBar - Status bar at the bottom of the app
  *
  * Left side: App version (clickable → About dialog) + task statistics
  * Right side: Zoom controls (see ZoomControls)

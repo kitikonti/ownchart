@@ -1,16 +1,15 @@
 /**
  * Design Tokens - Single Source of Truth for OwnChart Design System
  *
- * Based on MS 365/Fluent UI design principles:
- * - Outlook Blue (#0F6CBD) as the single brand color
+ * - Brand blue (#0F6CBD) as the single brand color
  * - WCAG AA compliant contrast ratios
  *
  * Color systems:
  * - COLORS.neutral: Pure grays (no blue tint) — used for Ribbon, toolbars, UI chrome
- * - COLORS.brand: Outlook Blue scale — mapped from Fluent theme slots (see note below)
+ * - COLORS.brand: Brand blue scale — primary interactive color
  * - Section tokens (GRID, TIMELINE_HEADER, etc.): Cool grays with slight blue tint —
- *   used for chart/grid areas for visual softness, sourced from Bootstrap/Tailwind palettes
- * - TABLE_HEADER / ROW_NUMBER: MS Fluent-derived grays (#F3F3F3 etc.) — neither
+ *   used for chart/grid areas for visual softness
+ * - TABLE_HEADER / ROW_NUMBER: Header chrome grays (#F3F3F3 etc.) — neither
  *   cool-tinted nor matching the neutral scale; shared via TABLE_HEADER references
  */
 
@@ -18,38 +17,9 @@
 // COLORS
 // =============================================================================
 
-// Standalone scales — referenced by COLORS.chart to avoid duplicated hex values.
-
-const neutral = {
-  0: "#ffffff",
-  50: "#f5f5f5", // Tab bar, subtle bg
-  100: "#ebebeb", // Hover states
-  200: "#d4d4d4", // Borders, separators
-  300: "#b3b3b3", // Disabled text
-  400: "#8a8a8a", // Placeholder
-  500: "#6b6b6b", // Secondary text
-  600: "#525252", // Icons default
-  700: "#404040", // Primary text
-  800: "#303030", // Headings
-  900: "#1a1a1a", // Emphasis
-} as const;
-
-// Brand (Outlook Blue - derived from MS Fluent themePrimary #0F6CBD)
-// ⚠️  NOTE: Scale follows Fluent theme slot mapping, NOT linear lightness.
-// brand[500] (themeDarkAlt) is DARKER than brand[600] (themePrimary).
-// Primary brand color = brand[600].
-const brand = {
-  50: "#EBF3FC", // themeLighterAlt - light backgrounds
-  100: "#CFE4FA", // themeLighter - focus rings
-  200: "#B4D6FA", // themeLight - disabled states
-  300: "#62ABF5", // themeTertiary - light accents
-  400: "#2B88D8", // themeSecondary - icons, highlights
-  500: "#115EA3", // themeDarkAlt - hover states
-  600: "#0F6CBD", // themePrimary - primary buttons
-  700: "#0F548C", // themeDark - links/text
-  800: "#0C3B5E", // themeDarker - pressed states
-  900: "#0A2E4A", // darker - dark emphasis
-} as const;
+// Canonical color scales imported from the single source of truth.
+// See colors.js for the full palette definitions.
+import { neutral, brand, semantic } from "./colors.js";
 
 // Cool gray (Bootstrap/Tailwind cool-gray family — slight blue tint)
 // Used for chart/grid areas for visual softness vs. pure neutral UI chrome.
@@ -91,12 +61,7 @@ export const COLORS = {
   brand,
 
   // Semantic (NOT for UI, only for status indicators)
-  semantic: {
-    success: "#059669", // Green for success messages
-    warning: "#d97706", // Orange for warnings
-    error: "#dc2626", // Red for errors
-    info: "#0284c7", // Blue for info (rarely used)
-  },
+  semantic,
 
   // Chart-specific colors (referencing brand scale where applicable)
   chart: {
@@ -167,12 +132,12 @@ export const TYPOGRAPHY = {
 } as const;
 
 // =============================================================================
-// BORDER RADIUS (MS style - flatter)
+// BORDER RADIUS
 // =============================================================================
 
 export const RADIUS = {
   none: "0px",
-  sm: "2px", // MS style - very flat
+  sm: "2px", // flat style
   md: "4px", // Buttons, inputs
   lg: "8px", // Cards, dialogs
   xl: "12px", // Modals
@@ -180,10 +145,10 @@ export const RADIUS = {
 } as const;
 
 // =============================================================================
-// SHADOWS (Fluent UI style)
+// SHADOWS
 // =============================================================================
 
-// MS Fluent UI shadow system
+// Elevation shadow system
 export const SHADOWS = {
   none: "none",
   rest: "0 0 2px rgba(0,0,0,0.12), 0 2px 4px rgba(0,0,0,0.14)",
@@ -191,7 +156,7 @@ export const SHADOWS = {
   pressed: "0 0 2px rgba(0,0,0,0.12), 0 1px 2px rgba(0,0,0,0.14)",
   dropdown: "0 0 8px rgba(0,0,0,0.12), 0 16px 32px rgba(0,0,0,0.14)",
   contextMenu: "0 0 2px rgba(0,0,0,0.12), 0 8px 16px rgba(0,0,0,0.14)",
-  // MS Dialog shadow: extracted from computed styles
+  // Dialog shadow
   modal: "0 0 8px rgba(0,0,0,0.12), 0 32px 64px rgba(0,0,0,0.14)",
   // Focus ring (for accessibility)
   focus: `0 0 0 2px ${brand[100]}`,
@@ -236,7 +201,7 @@ export const TRANSITIONS = {
 } as const;
 
 // =============================================================================
-// TOOLBAR TOKENS (MS Ribbon-inspired)
+// TOOLBAR TOKENS
 // =============================================================================
 
 export const TOOLBAR = {
@@ -257,7 +222,7 @@ export const TOOLBAR = {
   fileMenuMinWidth: "14rem",
 
   // Sub-pixel border width for trigger buttons — intentionally differs from
-  // a standard 1px border to preserve MS-Fluent visual fidelity.
+  // a standard 1px border for visual fidelity.
   triggerBorderWidth: "0.667px",
 } as const;
 
