@@ -119,7 +119,7 @@ function buildStoragePayload(tabId: string): string {
     charts: {
       [tabId]: {
         tabId,
-        lastActive: Date.now(),
+        lastActive: 1736150400000, // 2025-01-06T10:00:00Z — fixed for determinism
         tasks: SAMPLE_TASKS,
         dependencies: [],
         chartState: SAMPLE_CHART_STATE,
@@ -178,15 +178,14 @@ async function setupEmpty(
 // Tests — Empty State
 // ---------------------------------------------------------------------------
 
+// Visual regression tests only run on Chromium — cross-browser pixel comparison is unreliable.
+test.skip(({ browserName }) => browserName !== "chromium", "VRT: Chromium only");
+
 test.describe("Empty State", () => {
   test("app shell with empty project", async ({ page }) => {
     await setupEmpty(page);
     // Wait for ribbon to be interactive
     await expect(page.getByRole("tab", { name: "Home" })).toBeVisible();
-    await page.screenshot({
-      path: "test-results/debug-empty-state.png",
-      fullPage: false,
-    });
     await expect(page).toHaveScreenshot("empty-app-shell.png", SCREENSHOT_OPTS);
   });
 });

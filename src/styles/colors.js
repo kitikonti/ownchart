@@ -11,7 +11,7 @@
  */
 
 /** Neutral grays — pure grays, no blue tint. Used for UI chrome. */
-export const neutral = {
+export const neutral = Object.freeze({
   0: '#ffffff',
   50: '#f5f5f5',
   100: '#ebebeb',
@@ -23,7 +23,7 @@ export const neutral = {
   700: '#404040',
   800: '#303030',
   900: '#1a1a1a',
-};
+});
 
 /**
  * Brand blue scale (#0F6CBD).
@@ -32,7 +32,7 @@ export const neutral = {
  * brand[500] is DARKER than brand[600].
  * Primary brand color = brand[600].
  */
-export const brand = {
+export const brand = Object.freeze({
   50: '#EBF3FC',
   100: '#CFE4FA',
   200: '#B4D6FA',
@@ -43,19 +43,19 @@ export const brand = {
   700: '#0F548C',
   800: '#0C3B5E',
   900: '#0A2E4A',
-};
+});
 
 /** Semantic colors — status indicators only, not for UI chrome. */
-export const semantic = {
+export const semantic = Object.freeze({
   success: '#059669',
   warning: '#d97706',
   error: '#dc2626',
   info: '#0284c7',
-};
+});
 
 /** Surface colors — background layers. */
-export const surface = {
+export const surface = Object.freeze({
   DEFAULT: '#ffffff',
   raised: '#f5f5f5',
   sunken: '#ebebeb',
-};
+});

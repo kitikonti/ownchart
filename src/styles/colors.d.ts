@@ -1,4 +1,7 @@
-/** Type declarations for colors.js — the canonical color scale definitions. */
+/**
+ * Type declarations for colors.js — the canonical color scale definitions.
+ * IMPORTANT: Keep literal types in sync with colors.js when changing values.
+ */
 
 export declare const neutral: {
   readonly 0: "#ffffff";
