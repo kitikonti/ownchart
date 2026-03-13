@@ -15,8 +15,12 @@ import { useChartStore } from "../store/slices/chartSlice";
 import { useTaskStore } from "../store/slices/taskSlice";
 import { CONTEXT_MENU } from "../styles/design-tokens";
 import { useFullTaskContextMenuItems } from "./useFullTaskContextMenuItems";
+import { getModKey } from "../config/helpContent";
 import type { Task } from "../types/chart.types";
 import type { TaskId } from "../types/branded.types";
+
+// Computed once at module load — platform is stable for the page lifetime.
+const PASTE_SHORTCUT = `${getModKey()}+V`;
 
 /** Context menu state: either targeting a specific task or just a position. */
 type AreaContextMenuState =
@@ -98,7 +102,7 @@ export function useTimelineAreaContextMenu(
           size: CONTEXT_MENU.iconSize,
           weight: CONTEXT_MENU.iconWeight,
         }),
-        shortcut: "Ctrl+V",
+        shortcut: PASTE_SHORTCUT,
         onClick: () => void handlePaste(),
         disabled: !canPaste,
         separator: true,

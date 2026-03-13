@@ -34,6 +34,20 @@ interface ContainerDimensions {
   chartContainerWidth: number;
 }
 
+/**
+ * Measures and tracks viewport and chart container dimensions.
+ *
+ * Sets up an initial deferred measurement (via setTimeout 0) and a
+ * ResizeObserver for ongoing updates. Also tracks the chart viewport's scroll
+ * position and width for export visible-range calculation.
+ *
+ * @param outerScrollRef - Ref to the outer scroll container (drives viewportHeight).
+ * @param chartContainerRef - Ref to the chart container (drives chartContainerWidth).
+ * @param setViewport - Callback to update scroll position + width for export.
+ *   **Must be wrapped in `useCallback`** at the call site — an unstable reference
+ *   causes the viewport-tracking effect to re-run on every render, which can
+ *   trigger an infinite update loop via the scroll event.
+ */
 export function useContainerDimensions({
   outerScrollRef,
   chartContainerRef,

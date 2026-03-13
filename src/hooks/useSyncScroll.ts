@@ -38,6 +38,7 @@ export function useSyncScroll(
       if (isSyncing) return;
       isSyncing = true;
       elB.scrollLeft = elA.scrollLeft;
+      cancelAnimationFrame(rafIdA);
       rafIdA = requestAnimationFrame(() => {
         isSyncing = false;
       });
@@ -46,6 +47,7 @@ export function useSyncScroll(
       if (isSyncing) return;
       isSyncing = true;
       elA.scrollLeft = elB.scrollLeft;
+      cancelAnimationFrame(rafIdB);
       rafIdB = requestAnimationFrame(() => {
         isSyncing = false;
       });

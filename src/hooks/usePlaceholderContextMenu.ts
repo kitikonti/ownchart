@@ -16,8 +16,10 @@ import { useClipboardOperations } from "./useClipboardOperations";
 import { useTaskStore } from "../store/slices/taskSlice";
 import { CONTEXT_MENU } from "../styles/design-tokens";
 import { PLACEHOLDER_TASK_ID } from "../config/placeholderRow";
+import { getModKey } from "../config/helpContent";
 
-const PASTE_SHORTCUT = "Ctrl+V";
+// Computed once at module load — platform is stable for the page lifetime.
+const PASTE_SHORTCUT = `${getModKey()}+V`;
 
 interface UsePlaceholderContextMenuResult {
   contextMenu: ContextMenuPosition | null;
