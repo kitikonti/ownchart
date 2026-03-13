@@ -14,6 +14,7 @@ import {
   INFINITE_SCROLL_THRESHOLD,
   SCROLL_IDLE_MS,
   EXTEND_COOLDOWN_MS,
+  EXTEND_DAYS,
 } from "../../../src/config/layoutConstants";
 
 /** Creates a minimal mock chart container element */
@@ -191,7 +192,7 @@ describe("useInfiniteScroll", () => {
     const handler = chartEl._listeners.get("scroll");
     handler?.(new Event("scroll"));
 
-    expect(extendDateRange).toHaveBeenCalledWith("future", 30);
+    expect(extendDateRange).toHaveBeenCalledWith("future", EXTEND_DAYS);
   });
 
   it("should schedule past extension when near left edge after idle time", () => {
@@ -220,7 +221,7 @@ describe("useInfiniteScroll", () => {
     // After idle delay, should trigger
     vi.advanceTimersByTime(SCROLL_IDLE_MS + 1);
 
-    expect(extendDateRange).toHaveBeenCalledWith("past", 30);
+    expect(extendDateRange).toHaveBeenCalledWith("past", EXTEND_DAYS);
   });
 
   it("should respect cooldown between future extensions", () => {
@@ -420,7 +421,7 @@ describe("useInfiniteScroll", () => {
     chartEl.scrollLeft = 100;
     handler?.(new Event("scroll"));
     vi.advanceTimersByTime(SCROLL_IDLE_MS + 100);
-    expect(extendDateRange).toHaveBeenCalledWith("past", 30);
+    expect(extendDateRange).toHaveBeenCalledWith("past", EXTEND_DAYS);
   });
 
   it("should block infinite scroll shortly after fitToView", () => {

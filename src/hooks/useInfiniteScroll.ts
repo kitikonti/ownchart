@@ -10,7 +10,7 @@
  * - Initial scroll positioning on file load / fitToView
  */
 
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, type MutableRefObject } from "react";
 import { flushSync } from "react-dom";
 import type { TimelineScale } from "../utils/timelineUtils";
 import { SCROLL_OFFSET_DAYS } from "../utils/timelineUtils";
@@ -23,6 +23,88 @@ import {
   FIT_TO_VIEW_EDGE_THRESHOLD,
   EXTEND_DAYS,
 } from "../config/layoutConstants";
+
+/**
+ * Schedules a past-extension after scroll idle time, with scroll-anchor
+ * restoration using flushSync. Cancels any pending timeout on each call
+ * (debounce) so the extension fires only after the scroll has stopped.
+ */
+function schedulePastExtension(
+  chartContainer: HTMLDivElement,
+  pendingPastExtensionRef: MutableRefObject<number | null>,
+  lastExtendPastRef: MutableRefObject<number>,
+  extendDateRange: (direction: "past" | "future", days?: number) => void
+): void {
+  if (pendingPastExtensionRef.current) {
+    clearTimeout(pendingPastExtensionRef.current);
+  }
+
+  pendingPastExtensionRef.current = window.setTimeout(() => {
+    // Defensive: if the effect was cleaned up and the ref cleared
+    // before this timeout fired, do nothing.
+    if (pendingPastExtensionRef.current === null) return;
+    pendingPastExtensionRef.current = null;
+
+    const currentScrollLeft = chartContainer.scrollLeft;
+    const currentScrollWidth = chartContainer.scrollWidth;
+    const currentNow = Date.now();
+
+    if (
+      currentScrollLeft < INFINITE_SCROLL_THRESHOLD &&
+      currentNow - lastExtendPastRef.current > EXTEND_COOLDOWN_MS
+    ) {
+      lastExtendPastRef.current = currentNow;
+
+      // Capture the amount of content to the right of the current
+      // viewport position; this is preserved after extending the left
+      // edge so the visible area stays anchored to the same location.
+      const scrollRightAnchor = currentScrollWidth - currentScrollLeft;
+
+      // flushSync forces a synchronous React render so the DOM is
+      // updated before we read the new scrollWidth below.
+      // Guarded with try/catch: flushSync throws if called during an
+      // existing React render (should not happen here, but defensive).
+      try {
+        flushSync(() => {
+          extendDateRange("past", EXTEND_DAYS);
+        });
+        // Anchor restoration is inside the try block so it only runs
+        // after the DOM has been synchronously updated by flushSync.
+        const newScrollWidth = chartContainer.scrollWidth;
+        chartContainer.scrollLeft = newScrollWidth - scrollRightAnchor;
+      } catch (_e) {
+        // flushSync throws if called inside an active React render cycle.
+        // This should not happen here (scroll handler runs outside React),
+        // but as a defensive fallback we schedule the update asynchronously.
+        // Scroll-anchor restoration is intentionally skipped here because
+        // the DOM has not updated yet; a slight visible jump is acceptable
+        // for this already-exceptional case.
+        extendDateRange("past", EXTEND_DAYS);
+      }
+    }
+  }, SCROLL_IDLE_MS);
+}
+
+/**
+ * Extends the timeline into the future when the scroll position is near the
+ * right edge, respecting the cooldown between extensions.
+ */
+function extendFutureIfNearEdge(
+  scrollLeft: number,
+  scrollWidth: number,
+  clientWidth: number,
+  now: number,
+  lastExtendFutureRef: MutableRefObject<number>,
+  extendDateRange: (direction: "past" | "future", days?: number) => void
+): void {
+  if (
+    scrollLeft + clientWidth > scrollWidth - INFINITE_SCROLL_THRESHOLD &&
+    now - lastExtendFutureRef.current > EXTEND_COOLDOWN_MS
+  ) {
+    lastExtendFutureRef.current = now;
+    extendDateRange("future", EXTEND_DAYS);
+  }
+}
 
 interface UseInfiniteScrollOptions {
   chartContainerRef: React.RefObject<HTMLDivElement | null>;
@@ -150,64 +232,23 @@ export function useInfiniteScroll({
       // We must wait for scroll to stop because during active scrollbar drag,
       // the browser overrides any programmatic scrollLeft changes.
       if (scrollLeft < INFINITE_SCROLL_THRESHOLD) {
-        if (pendingPastExtensionRef.current) {
-          clearTimeout(pendingPastExtensionRef.current);
-        }
-
-        pendingPastExtensionRef.current = window.setTimeout(() => {
-          // Defensive: if the effect was cleaned up and the ref cleared
-          // before this timeout fired, do nothing.
-          if (pendingPastExtensionRef.current === null) return;
-          pendingPastExtensionRef.current = null;
-
-          const currentScrollLeft = chartContainer.scrollLeft;
-          const currentScrollWidth = chartContainer.scrollWidth;
-          const currentNow = Date.now();
-
-          if (
-            currentScrollLeft < INFINITE_SCROLL_THRESHOLD &&
-            currentNow - lastExtendPastRef.current > EXTEND_COOLDOWN_MS
-          ) {
-            lastExtendPastRef.current = currentNow;
-
-            // Capture the amount of content to the right of the current
-            // viewport position; this is preserved after extending the left
-            // edge so the visible area stays anchored to the same location.
-            const scrollRightAnchor = currentScrollWidth - currentScrollLeft;
-
-            // flushSync forces a synchronous React render so the DOM is
-            // updated before we read the new scrollWidth below.
-            // Guarded with try/catch: flushSync throws if called during an
-            // existing React render (should not happen here, but defensive).
-            try {
-              flushSync(() => {
-                extendDateRange("past", EXTEND_DAYS);
-              });
-              // Anchor restoration is inside the try block so it only runs
-              // after the DOM has been synchronously updated by flushSync.
-              const newScrollWidth = chartContainer.scrollWidth;
-              chartContainer.scrollLeft = newScrollWidth - scrollRightAnchor;
-            } catch (_e) {
-              // flushSync throws if called inside an active React render cycle.
-              // This should not happen here (scroll handler runs outside React),
-              // but as a defensive fallback we schedule the update asynchronously.
-              // Scroll-anchor restoration is intentionally skipped here because
-              // the DOM has not updated yet; a slight visible jump is acceptable
-              // for this already-exceptional case.
-              extendDateRange("past", EXTEND_DAYS);
-            }
-          }
-        }, SCROLL_IDLE_MS);
+        schedulePastExtension(
+          chartContainer,
+          pendingPastExtensionRef,
+          lastExtendPastRef,
+          extendDateRange
+        );
       }
 
       // Near right edge? Extend into future
-      if (
-        scrollLeft + clientWidth > scrollWidth - INFINITE_SCROLL_THRESHOLD &&
-        now - lastExtendFutureRef.current > EXTEND_COOLDOWN_MS
-      ) {
-        lastExtendFutureRef.current = now;
-        extendDateRange("future", EXTEND_DAYS);
-      }
+      extendFutureIfNearEdge(
+        scrollLeft,
+        scrollWidth,
+        clientWidth,
+        now,
+        lastExtendFutureRef,
+        extendDateRange
+      );
     };
 
     chartContainer.addEventListener("scroll", handleScroll);
