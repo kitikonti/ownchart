@@ -100,6 +100,12 @@ export const TimelinePanel = memo(function TimelinePanel({
           />
         )}
       </div>
+      {/* `contentAreaHeight` is passed both as an explicit CSS height on the
+          container div (to constrain the layout box) and as `containerHeight`
+          to ChartCanvas (so it can size its SVG/canvas elements internally).
+          The outer style is needed because `flex-1` alone does not prevent
+          the container from growing past the available space in all browsers;
+          the inner prop is the authoritative pixel value for rendering logic. */}
       <div className="flex-1 relative" style={{ height: contentAreaHeight }}>
         <div
           ref={chartContainerRef}

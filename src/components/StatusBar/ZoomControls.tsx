@@ -10,6 +10,7 @@
 
 import { useState, useCallback, memo } from "react";
 import { Minus, Plus, ArrowsOutLineHorizontal } from "@phosphor-icons/react";
+import { useShallow } from "zustand/react/shallow";
 import { useTaskStore } from "../../store/slices/taskSlice";
 import { useChartStore } from "../../store/slices/chartSlice";
 import { MIN_ZOOM, MAX_ZOOM } from "../../utils/timelineUtils";
@@ -23,11 +24,18 @@ import { ZoomDialog } from "./ZoomDialog";
 export const ZoomControls = memo(function ZoomControls(): JSX.Element {
   const [isZoomDialogOpen, setIsZoomDialogOpen] = useState(false);
 
-  const zoom = useChartStore((state) => state.zoom);
-  const setZoom = useChartStore((state) => state.setZoom);
-  const zoomIn = useChartStore((state) => state.zoomIn);
-  const zoomOut = useChartStore((state) => state.zoomOut);
-  const fitToView = useChartStore((state) => state.fitToView);
+  // useShallow merges the five subscriptions into one — Zustand actions are
+  // stable references and `zoom` is a primitive, so shallow equality prevents
+  // spurious re-renders when unrelated chart state changes.
+  const { zoom, setZoom, zoomIn, zoomOut, fitToView } = useChartStore(
+    useShallow((state) => ({
+      zoom: state.zoom,
+      setZoom: state.setZoom,
+      zoomIn: state.zoomIn,
+      zoomOut: state.zoomOut,
+      fitToView: state.fitToView,
+    }))
+  );
 
   const zoomPercentage = Math.round(zoom * 100);
   const isAtMinZoom = zoom <= MIN_ZOOM;
@@ -44,16 +52,22 @@ export const ZoomControls = memo(function ZoomControls(): JSX.Element {
   );
 
   const handleZoomIn = useCallback((): void => {
+    // Guard for aria-disabled: the button stays in the tab order but must
+    // not perform any action when at the maximum zoom level.
+    if (isAtMaxZoom) return;
     const anchor = computeViewportCenterAnchor();
     const result = zoomIn(anchor);
     applyScrollLeft(result.newScrollLeft);
-  }, [zoomIn]);
+  }, [isAtMaxZoom, zoomIn]);
 
   const handleZoomOut = useCallback((): void => {
+    // Guard for aria-disabled: the button stays in the tab order but must
+    // not perform any action when at the minimum zoom level.
+    if (isAtMinZoom) return;
     const anchor = computeViewportCenterAnchor();
     const result = zoomOut(anchor);
     applyScrollLeft(result.newScrollLeft);
-  }, [zoomOut]);
+  }, [isAtMinZoom, zoomOut]);
 
   const handleFitToView = useCallback((): void => {
     // Non-reactive: read tasks at call time to avoid re-renders on task changes.
@@ -89,11 +103,15 @@ export const ZoomControls = memo(function ZoomControls(): JSX.Element {
   return (
     <>
       <div className="flex items-center gap-2">
+        {/* aria-disabled keeps the button in the tab order so keyboard users
+            can discover it and hear its state announced, unlike native disabled
+            which removes the element from the tab order entirely. */}
         <button
           type="button"
           onClick={handleZoomOut}
-          disabled={isAtMinZoom}
-          className="p-0.5 text-neutral-500 hover:text-neutral-700 disabled:text-neutral-300 disabled:cursor-not-allowed transition-colors"
+          aria-disabled={isAtMinZoom}
+          tabIndex={0}
+          className={`p-0.5 transition-colors ${isAtMinZoom ? "text-neutral-300 cursor-not-allowed" : "text-neutral-500 hover:text-neutral-700"}`}
           aria-label="Zoom out"
         >
           <Minus size={16} weight="bold" />
@@ -116,8 +134,9 @@ export const ZoomControls = memo(function ZoomControls(): JSX.Element {
         <button
           type="button"
           onClick={handleZoomIn}
-          disabled={isAtMaxZoom}
-          className="p-0.5 text-neutral-500 hover:text-neutral-700 disabled:text-neutral-300 disabled:cursor-not-allowed transition-colors"
+          aria-disabled={isAtMaxZoom}
+          tabIndex={0}
+          className={`p-0.5 transition-colors ${isAtMaxZoom ? "text-neutral-300 cursor-not-allowed" : "text-neutral-500 hover:text-neutral-700"}`}
           aria-label="Zoom in"
         >
           <Plus size={16} weight="bold" />

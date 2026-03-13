@@ -79,24 +79,53 @@ describe("ZoomControls", () => {
   // -------------------------------------------------------------------------
   // Disabled states at zoom bounds
   // -------------------------------------------------------------------------
+  // Buttons use aria-disabled (not native disabled) to keep them in the tab
+  // order for keyboard users. Tests check aria-disabled and verify clicks are
+  // suppressed rather than using toBeDisabled() which only matches native disabled.
 
-  it("disables zoom out button at MIN_ZOOM", () => {
+  it("marks zoom out button as aria-disabled at MIN_ZOOM", () => {
     setup(MIN_ZOOM);
     render(<ZoomControls />);
-    expect(screen.getByRole("button", { name: "Zoom out" })).toBeDisabled();
+    expect(screen.getByRole("button", { name: "Zoom out" })).toHaveAttribute(
+      "aria-disabled",
+      "true"
+    );
   });
 
-  it("disables zoom in button at MAX_ZOOM", () => {
+  it("marks zoom in button as aria-disabled at MAX_ZOOM", () => {
     setup(MAX_ZOOM);
     render(<ZoomControls />);
-    expect(screen.getByRole("button", { name: "Zoom in" })).toBeDisabled();
+    expect(screen.getByRole("button", { name: "Zoom in" })).toHaveAttribute(
+      "aria-disabled",
+      "true"
+    );
   });
 
-  it("enables both zoom buttons at mid-range zoom", () => {
+  it("does not mark zoom buttons as aria-disabled at mid-range zoom", () => {
     setup(1.0);
     render(<ZoomControls />);
-    expect(screen.getByRole("button", { name: "Zoom out" })).not.toBeDisabled();
-    expect(screen.getByRole("button", { name: "Zoom in" })).not.toBeDisabled();
+    expect(screen.getByRole("button", { name: "Zoom out" })).toHaveAttribute(
+      "aria-disabled",
+      "false"
+    );
+    expect(screen.getByRole("button", { name: "Zoom in" })).toHaveAttribute(
+      "aria-disabled",
+      "false"
+    );
+  });
+
+  it("does not call zoomOut when zoom out button is clicked at MIN_ZOOM", () => {
+    setup(MIN_ZOOM);
+    render(<ZoomControls />);
+    fireEvent.click(screen.getByRole("button", { name: "Zoom out" }));
+    expect(useChartStore.getState().zoomOut).not.toHaveBeenCalled();
+  });
+
+  it("does not call zoomIn when zoom in button is clicked at MAX_ZOOM", () => {
+    setup(MAX_ZOOM);
+    render(<ZoomControls />);
+    fireEvent.click(screen.getByRole("button", { name: "Zoom in" }));
+    expect(useChartStore.getState().zoomIn).not.toHaveBeenCalled();
   });
 
   // -------------------------------------------------------------------------

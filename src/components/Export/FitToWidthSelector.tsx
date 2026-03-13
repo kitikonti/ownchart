@@ -25,7 +25,7 @@ const A4_LANDSCAPE_150DPI_PX = 1754;
 const A3_LANDSCAPE_150DPI_PX = 2480;
 const LETTER_LANDSCAPE_150DPI_PX = 1650;
 
-export interface FitToWidthPreset {
+interface FitToWidthPreset {
   label: string;
   value: number;
 }
@@ -170,7 +170,9 @@ export function FitToWidthSelector({
     []
   );
 
-  // Prevent click events from bubbling out of the export dialog overlay.
+  // Prevent click events from bubbling to the export dialog's backdrop overlay,
+  // which closes the dialog on click. Native <select> and <input> elements fire
+  // click events that would otherwise reach the backdrop and dismiss the dialog.
   const handleStopPropagation = useCallback((e: React.MouseEvent): void => {
     e.stopPropagation();
   }, []);

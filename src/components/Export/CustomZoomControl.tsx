@@ -67,7 +67,9 @@ interface ZoomPercentInputProps {
   /** Committed zoom multiplier from the parent (e.g. 1.0 for 100%). */
   value: number;
   onCommit: (zoom: number) => void;
-  onClick: (e: MouseEvent<HTMLInputElement>) => void;
+  /** Propagation-stop handler typed broadly so the parent's shared handler
+   *  (typed as `MouseEvent<Element>`) satisfies this prop without widening. */
+  onClick: (e: MouseEvent<Element>) => void;
 }
 
 /**
@@ -78,8 +80,12 @@ interface ZoomPercentInputProps {
  * Maintains a local draft string so intermediate keystrokes (e.g. "15" while
  * typing "150") do not fire upstream re-renders. The clamped value is
  * committed to the parent on blur or Enter key.
+ *
+ * Memoized to avoid re-renders when the slider moves — the parent
+ * (CustomZoomControl) re-renders on every `timelineZoom` change, but
+ * ZoomPercentInput only needs to re-render when its `value` prop changes.
  */
-function ZoomPercentInput({
+const ZoomPercentInput = memo(function ZoomPercentInput({
   value,
   onCommit,
   onClick,
@@ -131,7 +137,7 @@ function ZoomPercentInput({
       <span className="text-xs text-neutral-500">%</span>
     </div>
   );
-}
+});
 
 interface PresetButtonProps {
   value: number;
@@ -185,9 +191,11 @@ export const CustomZoomControl = memo(function CustomZoomControl({
     [onTimelineZoomChange]
   );
 
-  // Shared click handler — prevents click events from bubbling out of the
-  // export dialog overlay. Used for both the slider and the percent input.
-  const handleStopPropagation = useCallback((e: MouseEvent): void => {
+  // Shared click handler — prevents click events from bubbling to the export
+  // dialog's backdrop overlay, which closes the dialog on click. Native
+  // <input type="range"> and <input type="number"> elements fire click events
+  // that would otherwise reach the backdrop and dismiss the dialog unexpectedly.
+  const handleStopPropagation = useCallback((e: MouseEvent<Element>): void => {
     e.stopPropagation();
   }, []);
 
