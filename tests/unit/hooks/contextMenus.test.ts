@@ -102,7 +102,7 @@ beforeEach(() => {
 // ─── Zone 1: Task Table Row Context Menu ───
 
 describe("Zone 1: Task Table Row Context Menu", () => {
-    function openRowMenu(taskId: string) {
+  function openRowMenu(taskId: string) {
     useTaskStore.getState().setTasks([task1, task2, task3]);
     useTaskStore.getState().setSelectedTaskIds([taskId]);
 
@@ -346,7 +346,7 @@ describe("Zone 1: Task Table Row Context Menu", () => {
 // ─── Zone 2: Task Table Header Context Menu (Explorer-style) ───
 
 describe("Zone 2: Task Table Header Context Menu", () => {
-    function openHeaderMenu(columnId: string) {
+  function openHeaderMenu(columnId: string) {
     const { result } = renderHook(() => useTableHeaderContextMenu());
 
     act(() => {
@@ -501,7 +501,7 @@ describe("Zone 2: Task Table Header Context Menu", () => {
 // ─── Zone 3: Timeline Bar Context Menu ───
 
 describe("Zone 3: Timeline Bar Context Menu", () => {
-    function openBarMenu(taskId: string, selectedIds?: string[]) {
+  function openBarMenu(taskId: string, selectedIds?: string[]) {
     useTaskStore.getState().setTasks([task1, task2, task3]);
     useTaskStore
       .getState()
@@ -632,7 +632,7 @@ const ROW_HEIGHT = 36;
 describe("Zone 4: Timeline Empty Area Context Menu", () => {
   const svgRef = createMockSvgRef(0);
 
-    function openAreaMenu(x = 500, y = 300) {
+  function openAreaMenu(x = 500, y = 300) {
     useTaskStore.getState().setTasks([task1]);
 
     const flat = [toFlattened(task1, 1)];
@@ -870,7 +870,7 @@ describe("Right-click selection logic", () => {
 // ─── Zone 5: Placeholder Row Context Menu ───
 
 describe("Zone 5: Placeholder Row Context Menu", () => {
-    function openPlaceholderMenu(x = 200, y = 400) {
+  function openPlaceholderMenu(x = 200, y = 400) {
     const { result } = renderHook(() => usePlaceholderContextMenu());
 
     act(() => {
