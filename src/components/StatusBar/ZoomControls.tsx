@@ -43,7 +43,7 @@ export const ZoomControls = memo(function ZoomControls(): JSX.Element {
 
   const handleSliderChange = useCallback(
     (e: React.ChangeEvent<HTMLInputElement>): void => {
-      const newZoom = parseInt(e.target.value, 10) / 100;
+      const newZoom = parseFloat(e.target.value) / 100;
       const anchor = computeViewportCenterAnchor();
       const result = setZoom(newZoom, anchor);
       applyScrollLeft(result.newScrollLeft);
@@ -116,6 +116,7 @@ export const ZoomControls = memo(function ZoomControls(): JSX.Element {
           aria-disabled={isAtMinZoom}
           className={`p-0.5 transition-colors ${isAtMinZoom ? "text-neutral-300 cursor-not-allowed" : "text-neutral-500 hover:text-neutral-700"}`}
           aria-label="Zoom out"
+          title="Zoom out"
         >
           <Minus size={16} weight="bold" />
         </button>
@@ -140,6 +141,7 @@ export const ZoomControls = memo(function ZoomControls(): JSX.Element {
           aria-disabled={isAtMaxZoom}
           className={`p-0.5 transition-colors ${isAtMaxZoom ? "text-neutral-300 cursor-not-allowed" : "text-neutral-500 hover:text-neutral-700"}`}
           aria-label="Zoom in"
+          title="Zoom in"
         >
           <Plus size={16} weight="bold" />
         </button>

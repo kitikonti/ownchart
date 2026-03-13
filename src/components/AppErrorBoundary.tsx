@@ -23,9 +23,18 @@ const ERROR_FALLBACK_MESSAGE =
   "The application encountered an unexpected error. Please try reloading.";
 
 /**
- * After this many consecutive errors, the "Try again" button is hidden to
- * prevent users from being stuck in an endless error-retry loop. The
- * "Reload application" button remains available at all times.
+ * After this many errors in the same boundary instance, the "Try again" button
+ * is hidden to prevent users from being stuck in an endless error-retry loop.
+ * The "Reload application" button remains available at all times.
+ *
+ * Note: errorCount is session-persistent within a single boundary instance —
+ * it is NOT reset after a successful "Try again" recovery (see handleReset).
+ * This is intentional: the counter's purpose is to detect persistent error
+ * loops, and resetting after recovery would allow a looping error to reset its
+ * own counter by briefly succeeding. The trade-off is that a user who hits
+ * three unrelated errors across a long session will see the Reload-only UI
+ * sooner than expected. This is considered acceptable — persistent reload
+ * guidance is never harmful, and the user can still close and reopen the app.
  */
 const MAX_RETRY_ATTEMPTS = 3;
 

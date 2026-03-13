@@ -46,7 +46,12 @@ export const TimelinePanel = memo(function TimelinePanel({
 }: TimelinePanelProps): JSX.Element {
   const headerSvgRef = useRef<SVGSVGElement>(null);
 
-  // scale is consumed by useHeaderDateSelection to map pixel positions to dates.
+  // scale is consumed by useHeaderDateSelection to map pixel positions to dates,
+  // and gates the SVG header render. TimelinePanel re-renders on every scale
+  // change (i.e. every zoom interaction); this is intentional because the
+  // header SVG must reflect the latest scale. Moving the subscription into
+  // useHeaderDateSelection would change its public API (removing the `scale`
+  // parameter) and is deferred to a future refactor.
   const scale = useChartStore((state) => state.scale);
   // Immer produces a new array reference only when selection actually changes,
   // so a plain selector is safe here — no spurious re-renders from unrelated updates.

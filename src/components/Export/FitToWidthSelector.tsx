@@ -84,6 +84,15 @@ function clampFitToWidth(rawInput: string): number {
   return Math.max(MIN_FIT_WIDTH_PX, Math.min(MAX_FIT_WIDTH_PX, value));
 }
 
+/**
+ * Stops a mouse event from bubbling to ancestor elements.
+ * Defined at module level (stable reference) to avoid per-render `useCallback`
+ * overhead for a handler that never closes over component state.
+ */
+function stopPropagation(e: React.MouseEvent): void {
+  e.stopPropagation();
+}
+
 export interface FitToWidthSelectorProps {
   fitToWidth: number;
   /**
@@ -180,19 +189,16 @@ export const FitToWidthSelector = memo(function FitToWidthSelector({
     []
   );
 
-  // Prevent click events from bubbling to the export dialog's backdrop overlay,
-  // which closes the dialog on click. Native <select> and <input> elements fire
-  // click events that would otherwise reach the backdrop and dismiss the dialog.
-  const handleStopPropagation = useCallback((e: React.MouseEvent): void => {
-    e.stopPropagation();
-  }, []);
-
   return (
     <div className="space-y-3">
+      {/* stopPropagation prevents click events from bubbling to the export
+          dialog's backdrop overlay, which closes the dialog on click. Native
+          <select> and <input> elements fire click events that would otherwise
+          reach the backdrop and dismiss the dialog. */}
       <Select
         value={isCustomWidth ? "custom" : fitToWidth.toString()}
         onChange={handleSelectChange}
-        onClick={handleStopPropagation}
+        onClick={stopPropagation}
         aria-label="Export width"
       >
         <optgroup label={FIT_TO_WIDTH_GROUPS.screenSizes.label}>
@@ -220,7 +226,7 @@ export const FitToWidthSelector = memo(function FitToWidthSelector({
             onChange={handleCustomWidthChange}
             onBlur={handleCustomWidthBlur}
             onKeyDown={handleCustomWidthKeyDown}
-            onClick={handleStopPropagation}
+            onClick={stopPropagation}
             aria-label="Custom width in pixels"
             aria-describedby={pxUnitId}
             fullWidth={false}

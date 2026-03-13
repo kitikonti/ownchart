@@ -62,6 +62,15 @@ function clampExportZoom(rawInput: string): number {
   return Math.max(EXPORT_ZOOM_MIN, Math.min(EXPORT_ZOOM_MAX, value / 100));
 }
 
+/**
+ * Stops a mouse event from bubbling to ancestor elements.
+ * Defined at module level (stable reference) to avoid per-render `useCallback`
+ * overhead for a handler that never closes over component state.
+ */
+function stopPropagation(e: MouseEvent<HTMLElement>): void {
+  e.stopPropagation();
+}
+
 export interface CustomZoomControlProps {
   timelineZoom: number;
   onTimelineZoomChange: (zoom: number) => void;
@@ -72,9 +81,9 @@ interface ZoomPercentInputProps {
   /** Committed zoom multiplier from the parent (e.g. 1.0 for 100%). */
   value: number;
   onCommit: (zoom: number) => void;
-  /** Click propagation-stop handler. Accepts any Element so the parent's
-   *  shared handler (typed as `MouseEvent<Element>`) satisfies this prop. */
-  onClick: (e: MouseEvent<Element>) => void;
+  /** Click propagation-stop handler. Accepts any HTMLElement so the parent's
+   *  shared handler (typed as `MouseEvent<HTMLElement>`) satisfies this prop. */
+  onClick: (e: MouseEvent<HTMLElement>) => void;
 }
 
 /**
@@ -205,16 +214,13 @@ export const CustomZoomControl = memo(function CustomZoomControl({
     [onTimelineZoomChange]
   );
 
-  // Shared click handler — prevents click events from bubbling to the export
-  // dialog's backdrop overlay, which closes the dialog on click. Native
-  // <input type="range"> and <input type="number"> elements fire click events
-  // that would otherwise reach the backdrop and dismiss the dialog unexpectedly.
-  const handleStopPropagation = useCallback((e: MouseEvent<Element>): void => {
-    e.stopPropagation();
-  }, []);
-
   return (
     <div className="space-y-4">
+      {/* stopPropagation prevents click events from bubbling to the export
+          dialog's backdrop overlay, which closes the dialog on click. Native
+          <input type="range"> and <input type="number"> elements fire click
+          events that would otherwise reach the backdrop and dismiss the dialog
+          unexpectedly. */}
       <div className="flex items-center gap-3">
         <input
           type="range"
@@ -223,7 +229,7 @@ export const CustomZoomControl = memo(function CustomZoomControl({
           step={1}
           value={timelineZoom * 100}
           onChange={handleSliderChange}
-          onClick={handleStopPropagation}
+          onClick={stopPropagation}
           aria-label="Zoom level"
           aria-valuemin={EXPORT_ZOOM_MIN * 100}
           aria-valuemax={EXPORT_ZOOM_MAX * 100}
@@ -234,7 +240,7 @@ export const CustomZoomControl = memo(function CustomZoomControl({
         <ZoomPercentInput
           value={timelineZoom}
           onCommit={onTimelineZoomChange}
-          onClick={handleStopPropagation}
+          onClick={stopPropagation}
         />
       </div>
 
