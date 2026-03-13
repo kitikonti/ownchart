@@ -9,6 +9,10 @@ import type {
   ContextMenuPosition,
 } from "../components/ContextMenu/ContextMenu";
 import type { TaskId } from "../types/branded.types";
+import { getModKey } from "../config/helpContent";
+
+// Computed once at module load — platform is stable for the page lifetime.
+const MOD = getModKey();
 
 // ─── Shared types ───
 
@@ -60,7 +64,7 @@ export function buildClipboardItems(
       id: "cut",
       label: "Cut",
       icon: params.cutIcon,
-      shortcut: "Ctrl+X",
+      shortcut: `${MOD}+X`,
       onClick: params.handleCut,
       disabled: !params.canCopyOrCut,
     },
@@ -68,7 +72,7 @@ export function buildClipboardItems(
       id: "copy",
       label: "Copy",
       icon: params.copyIcon,
-      shortcut: "Ctrl+C",
+      shortcut: `${MOD}+C`,
       onClick: params.handleCopy,
       disabled: !params.canCopyOrCut,
     },
@@ -76,7 +80,7 @@ export function buildClipboardItems(
       id: "paste",
       label: "Paste",
       icon: params.pasteIcon,
-      shortcut: "Ctrl+V",
+      shortcut: `${MOD}+V`,
       onClick: () => void params.handlePaste(),
       disabled: !params.canPaste,
       separator: params.hasSeparatorAfterPaste ?? true,

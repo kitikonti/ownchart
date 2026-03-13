@@ -13,6 +13,7 @@ import {
   buildHierarchyItems,
   buildUnhideItem,
 } from "../../../src/hooks/contextMenuItemBuilders";
+import { getModKey } from "../../../src/config/helpContent";
 
 describe("getEffectiveSelection", () => {
   it("should return full selection when task is in selection", () => {
@@ -86,11 +87,12 @@ describe("buildClipboardItems", () => {
     expect(items[2].separator).toBe(false);
   });
 
-  it("should have correct shortcuts", () => {
+  it("should have correct platform-aware shortcuts", () => {
+    const mod = getModKey();
     const items = buildClipboardItems(defaultParams);
-    expect(items[0].shortcut).toBe("Ctrl+X");
-    expect(items[1].shortcut).toBe("Ctrl+C");
-    expect(items[2].shortcut).toBe("Ctrl+V");
+    expect(items[0].shortcut).toBe(`${mod}+X`);
+    expect(items[1].shortcut).toBe(`${mod}+C`);
+    expect(items[2].shortcut).toBe(`${mod}+V`);
   });
 
   it("should call handleCut on cut click", () => {

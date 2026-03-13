@@ -7,6 +7,7 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { renderHook } from "@testing-library/react";
 import { useIsCellEditing } from "../../../src/hooks/useIsCellEditing";
+import { toTaskId } from "../../../src/types/branded.types";
 
 // ---------------------------------------------------------------------------
 // Mock
@@ -48,37 +49,49 @@ describe("useIsCellEditing", () => {
   });
 
   it("returns false when no cell is active", () => {
-    const { result } = renderHook(() => useIsCellEditing("task-1", "name"));
+    const { result } = renderHook(() =>
+      useIsCellEditing(toTaskId("task-1"), "name")
+    );
     expect(result.current).toBe(false);
   });
 
   it("returns false when a different cell is active and editing", () => {
     mockStoreState("task-2", "name", true);
-    const { result } = renderHook(() => useIsCellEditing("task-1", "name"));
+    const { result } = renderHook(() =>
+      useIsCellEditing(toTaskId("task-1"), "name")
+    );
     expect(result.current).toBe(false);
   });
 
   it("returns false when the correct cell is active but not editing", () => {
     mockStoreState("task-1", "name", false);
-    const { result } = renderHook(() => useIsCellEditing("task-1", "name"));
+    const { result } = renderHook(() =>
+      useIsCellEditing(toTaskId("task-1"), "name")
+    );
     expect(result.current).toBe(false);
   });
 
   it("returns false when the correct task is editing a different field", () => {
     mockStoreState("task-1", "color", true);
-    const { result } = renderHook(() => useIsCellEditing("task-1", "name"));
+    const { result } = renderHook(() =>
+      useIsCellEditing(toTaskId("task-1"), "name")
+    );
     expect(result.current).toBe(false);
   });
 
   it("returns true when the exact cell is active and editing", () => {
     mockStoreState("task-1", "name", true);
-    const { result } = renderHook(() => useIsCellEditing("task-1", "name"));
+    const { result } = renderHook(() =>
+      useIsCellEditing(toTaskId("task-1"), "name")
+    );
     expect(result.current).toBe(true);
   });
 
   it("works with different field types", () => {
     mockStoreState("task-1", "color", true);
-    const { result } = renderHook(() => useIsCellEditing("task-1", "color"));
+    const { result } = renderHook(() =>
+      useIsCellEditing(toTaskId("task-1"), "color")
+    );
     expect(result.current).toBe(true);
   });
 });

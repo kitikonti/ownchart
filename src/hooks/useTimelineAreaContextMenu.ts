@@ -15,11 +15,13 @@ import { useChartStore } from "../store/slices/chartSlice";
 import { useTaskStore } from "../store/slices/taskSlice";
 import { CONTEXT_MENU } from "../styles/design-tokens";
 import { useFullTaskContextMenuItems } from "./useFullTaskContextMenuItems";
+import { getModKey } from "../config/helpContent";
 import type { Task } from "../types/chart.types";
 import type { TaskId } from "../types/branded.types";
 
 /** Keyboard shortcut label shown in the Paste menu item. */
-const SHORTCUT_PASTE = "Ctrl+V";
+// Computed once at module load — platform is stable for the page lifetime.
+const SHORTCUT_PASTE = `${getModKey()}+V`;
 
 /** Keyboard shortcut label shown in the Fit to View menu item. */
 const SHORTCUT_FIT_TO_VIEW = "F";

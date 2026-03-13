@@ -41,11 +41,13 @@ describe("useSyncScroll", () => {
 
     expect(elA.addEventListener).toHaveBeenCalledWith(
       "scroll",
-      expect.any(Function)
+      expect.any(Function),
+      { passive: true }
     );
     expect(elB.addEventListener).toHaveBeenCalledWith(
       "scroll",
-      expect.any(Function)
+      expect.any(Function),
+      { passive: true }
     );
   });
 
@@ -98,5 +100,33 @@ describe("useSyncScroll", () => {
     renderHook(() => useSyncScroll(refA, nullRef));
 
     expect(elA.addEventListener).not.toHaveBeenCalled();
+  });
+
+  it("should block echoed scroll events using the isSyncing guard", () => {
+    // When syncAtoB sets elB.scrollLeft, some browsers fire a scroll event on B.
+    // The isSyncing guard must prevent that echoed event from triggering syncBtoA,
+    // which would create an infinite feedback loop.
+    //
+    // Test strategy: trigger syncAtoB, then immediately change elB.scrollLeft to a
+    // DIFFERENT sentinel value and fire B's scroll handler. If the guard is working,
+    // A must NOT be updated to the sentinel value (it stays at the original A value).
+    renderHook(() => useSyncScroll(refA, refB));
+
+    const scrollHandlerA = elA._listeners.get("scroll");
+    const scrollHandlerB = elB._listeners.get("scroll");
+
+    // Step 1: A scrolls to 300; syncAtoB sets B to 300 and raises isSyncing flag
+    elA.scrollLeft = 300;
+    scrollHandlerA?.(new Event("scroll"));
+    expect(elB.scrollLeft).toBe(300);
+
+    // Step 2: While isSyncing is still true (rAF hasn't fired), simulate an echoed
+    // scroll on B by mutating B's scrollLeft to a different value and firing the
+    // handler. The guard must prevent A from being updated.
+    elB.scrollLeft = 999; // sentinel value distinct from 300
+    scrollHandlerB?.(new Event("scroll"));
+
+    // A must NOT have been updated to 999 — guard blocked the echo
+    expect(elA.scrollLeft).toBe(300);
   });
 });

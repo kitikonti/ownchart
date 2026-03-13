@@ -3,10 +3,11 @@
  * Verifies date calculation, order computation, and addTask calls.
  */
 
-import { describe, it, expect, vi, beforeEach } from "vitest";
+import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { renderHook, act } from "@testing-library/react";
 import { useNewTaskCreation } from "../../../src/hooks/useNewTaskCreation";
 import type { Task } from "../../../src/types/chart.types";
+import { COLORS } from "../../../src/styles/design-tokens";
 
 // ---------------------------------------------------------------------------
 // Mocks
@@ -65,7 +66,14 @@ describe("useNewTaskCreation", () => {
     } as unknown as ReturnType<typeof useTaskStore.getState>);
   });
 
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
   it("creates a task with today's date when no tasks exist", () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date("2025-06-15T12:00:00Z"));
+
     const { result } = renderHook(() => useNewTaskCreation());
 
     act(() => {
@@ -79,9 +87,9 @@ describe("useNewTaskCreation", () => {
     expect(call.progress).toBe(0);
     expect(call.type).toBe("task");
     expect(call.order).toBe(0);
-    // Dates should be ISO format
-    expect(call.startDate).toMatch(/^\d{4}-\d{2}-\d{2}$/);
-    expect(call.endDate).toMatch(/^\d{4}-\d{2}-\d{2}$/);
+    // Dates should be the pinned "today" and today + 6 days (7-day duration inclusive)
+    expect(call.startDate).toBe("2025-06-15");
+    expect(call.endDate).toBe("2025-06-21");
   });
 
   it("creates a task starting one day after the last task ends", () => {
@@ -109,6 +117,9 @@ describe("useNewTaskCreation", () => {
   });
 
   it("handles last task without endDate by using today", () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date("2025-06-15T12:00:00Z"));
+
     const taskNoEnd = makeTask({ id: "t1", endDate: undefined as unknown as string, order: 3 });
     vi.mocked(useTaskStore.getState).mockReturnValue({
       tasks: [taskNoEnd],
@@ -123,7 +134,8 @@ describe("useNewTaskCreation", () => {
     expect(mockAddTask).toHaveBeenCalledOnce();
     const call = mockAddTask.mock.calls[0][0];
     expect(call.name).toBe("Fallback Task");
-    expect(call.startDate).toMatch(/^\d{4}-\d{2}-\d{2}$/);
+    expect(call.startDate).toBe("2025-06-15");
+    expect(call.endDate).toBe("2025-06-21");
     expect(call.order).toBe(4);
   });
 
@@ -135,8 +147,8 @@ describe("useNewTaskCreation", () => {
     });
 
     const call = mockAddTask.mock.calls[0][0];
-    // Should use design token, not a hardcoded value
-    expect(call.color).toBe("#0F6CBD"); // COLORS.chart.taskDefault = brand[600]
+    // Should use design token, not a hardcoded value — import and compare against the token
+    expect(call.color).toBe(COLORS.chart.taskDefault);
   });
 
   it("computes correct order from multiple tasks", () => {

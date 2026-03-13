@@ -1,4 +1,12 @@
+/**
+ * useTaskStatistics - Computes aggregate task statistics for the status bar.
+ *
+ * Derives totalTasks, completedTasks, and overdueTasks in a single memoized
+ * pass over the tasks array. Re-computes only when the tasks array changes.
+ */
+
 import { useMemo } from "react";
+import { parseISO, startOfDay, isValid } from "date-fns";
 import { useTaskStore } from "../store/slices/taskSlice";
 
 export interface TaskStatistics {
@@ -9,27 +17,41 @@ export interface TaskStatistics {
 
 /**
  * Computes task statistics for the status bar.
- * All three values are memoized against the tasks array reference.
+ * All three values are derived in a single memoized pass over the tasks array.
  */
 export function useTaskStatistics(): TaskStatistics {
   const tasks = useTaskStore((state) => state.tasks);
 
-  const totalTasks = tasks.length;
+  return useMemo((): TaskStatistics => {
+    // KNOWN LIMITATION: "today" is captured at memo-invalidation time (i.e.
+    // when tasks change). If the browser tab stays open across midnight without
+    // a task mutation, the overdue count will be stale until the next mutation.
+    // This is acceptable for a status-bar display and avoids the complexity of
+    // a live-clock subscription (e.g. a midnight-triggered useEffect or a
+    // dedicated date-tick store slice).
+    const today = startOfDay(new Date());
 
-  const completedTasks = useMemo(
-    () => tasks.filter((t) => t.progress === 100).length,
-    [tasks]
-  );
+    let completedTasks = 0;
+    let overdueTasks = 0;
 
-  const overdueTasks = useMemo(() => {
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-    return tasks.filter((t) => {
-      const endDate = new Date(t.endDate);
-      endDate.setHours(0, 0, 0, 0);
-      return endDate < today && t.progress < 100;
-    }).length;
+    for (const t of tasks) {
+      if (t.progress === 100) {
+        completedTasks++;
+      } else {
+        // Use parseISO (date-fns) to parse "YYYY-MM-DD" in local time, matching
+        // the way toISODateString formats dates. new Date("YYYY-MM-DD") parses as
+        // UTC midnight, which would cause "today" to appear overdue for users in
+        // negative UTC-offset timezones. startOfDay normalises to midnight in
+        // local time, consistent with the startOfDay call on today above.
+        const parsed = parseISO(t.endDate);
+        // Invalid dates (e.g. empty/malformed endDate) are treated as not overdue.
+        // isValid (date-fns) is the idiomatic check, consistent with using date-fns throughout.
+        if (isValid(parsed) && startOfDay(parsed) < today) {
+          overdueTasks++;
+        }
+      }
+    }
+
+    return { totalTasks: tasks.length, completedTasks, overdueTasks };
   }, [tasks]);
-
-  return { totalTasks, completedTasks, overdueTasks };
 }

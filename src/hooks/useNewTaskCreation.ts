@@ -5,13 +5,40 @@
  */
 
 import { useCallback } from "react";
+import { parseISO, addDays } from "date-fns";
 import { useTaskStore } from "../store/slices/taskSlice";
 import { toISODateString } from "../utils/dateUtils";
 import { COLORS } from "../styles/design-tokens";
 import { DEFAULT_TASK_DURATION } from "../store/slices/taskSliceHelpers";
+import { DEFAULT_TASK_TYPE } from "../config/taskDefaults";
+import type { Task } from "../types/chart.types";
 
 interface UseNewTaskCreationReturn {
   createTask: (name: string) => void;
+}
+
+/**
+ * Compute start/end dates for a task appended after the last task.
+ * Starts one day after the last task's end date, or today if no tasks exist.
+ *
+ * Uses date-fns parseISO + addDays throughout to avoid the UTC/local-time
+ * mismatch that arises when mixing `new Date("YYYY-MM-DD")` (UTC midnight)
+ * with `.getDate()` / `.setDate()` (local time). date-fns always operates
+ * in local time, which matches the toISODateString (format) output.
+ */
+function computeAppendDates(lastTask: { endDate?: string } | null): {
+  startDate: string;
+  endDate: string;
+} {
+  if (lastTask?.endDate) {
+    const start = addDays(parseISO(lastTask.endDate), 1);
+    const end = addDays(start, DEFAULT_TASK_DURATION - 1);
+    return { startDate: toISODateString(start), endDate: toISODateString(end) };
+  }
+
+  const today = new Date();
+  const end = addDays(today, DEFAULT_TASK_DURATION - 1);
+  return { startDate: toISODateString(today), endDate: toISODateString(end) };
 }
 
 /**
@@ -25,11 +52,21 @@ export function useNewTaskCreation(): UseNewTaskCreationReturn {
     (name: string): void => {
       // Access tasks at call time (event handler), not during render
       const { tasks } = useTaskStore.getState();
-      const lastTask = tasks.length > 0 ? tasks[tasks.length - 1] : null;
 
-      const { startDate, endDate } = computeAppendDates(lastTask);
-      const maxOrder =
-        tasks.length > 0 ? Math.max(...tasks.map((t) => t.order)) + 1 : 0;
+      // Compute lastTaskByPosition and nextOrder in a single pass to avoid iterating twice.
+      // lastTaskByPosition is the last element by array index (visual bottom of list),
+      // which determines the start date for the new task. highestOrder tracks
+      // the maximum order value (tasks may not be sorted by order) so the new
+      // task is appended after all existing tasks regardless of their order values.
+      let lastTaskByPosition: Task | null = null;
+      let highestOrder = -1;
+      for (const t of tasks) {
+        lastTaskByPosition = t;
+        if (t.order > highestOrder) highestOrder = t.order;
+      }
+      const nextOrder = tasks.length > 0 ? highestOrder + 1 : 0;
+
+      const { startDate, endDate } = computeAppendDates(lastTaskByPosition);
 
       addTask({
         name,
@@ -38,9 +75,8 @@ export function useNewTaskCreation(): UseNewTaskCreationReturn {
         duration: DEFAULT_TASK_DURATION,
         progress: 0,
         color: COLORS.chart.taskDefault,
-        order: maxOrder,
-        type: "task",
-        parent: undefined,
+        order: nextOrder,
+        type: DEFAULT_TASK_TYPE,
         metadata: {},
       });
     },
@@ -48,27 +84,4 @@ export function useNewTaskCreation(): UseNewTaskCreationReturn {
   );
 
   return { createTask };
-}
-
-/**
- * Compute start/end dates for a task appended after the last task.
- * Starts one day after the last task's end date, or today if no tasks exist.
- */
-function computeAppendDates(lastTask: { endDate?: string } | null): {
-  startDate: string;
-  endDate: string;
-} {
-  if (lastTask?.endDate) {
-    const lastEnd = new Date(lastTask.endDate);
-    const start = new Date(lastEnd);
-    start.setDate(lastEnd.getDate() + 1);
-    const end = new Date(start);
-    end.setDate(start.getDate() + DEFAULT_TASK_DURATION - 1);
-    return { startDate: toISODateString(start), endDate: toISODateString(end) };
-  }
-
-  const today = new Date();
-  const end = new Date(today);
-  end.setDate(today.getDate() + DEFAULT_TASK_DURATION - 1);
-  return { startDate: toISODateString(today), endDate: toISODateString(end) };
 }

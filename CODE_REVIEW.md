@@ -218,6 +218,15 @@ cd ../app-gantt-review
 - [x] `src/hooks/useLaunchQueue.ts` (31 LOC)
 - [x] `src/hooks/useDocumentTitle.ts` (26 LOC)
 - [x] `src/hooks/useUnsavedChanges.ts` (25 LOC)
+- [x] `src/hooks/useContainerDimensions.ts` (84 LOC)
+- [x] `src/hooks/usePlaceholderContextMenu.ts` (74 LOC)
+- [x] `src/hooks/useNewTaskCreation.ts` (74 LOC)
+- [x] `src/hooks/useTaskTableHeaderStore.ts` (37 LOC)
+- [x] `src/hooks/useTaskStatistics.ts` (35 LOC)
+- [x] `src/hooks/useSyncScroll.ts` (35 LOC)
+- [x] `src/hooks/usePreventVerticalScroll.ts` (22 LOC)
+- [x] `src/hooks/useIsCellEditing.ts` (20 LOC)
+- [x] `src/hooks/useIsPlaceholderSelected.ts` (15 LOC)
 
 ### Priority: MEDIUM — Utils
 - [x] `src/utils/colorPalettes.ts` (540 LOC) — Datendatei

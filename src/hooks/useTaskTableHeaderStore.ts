@@ -1,10 +1,14 @@
 /**
  * Aggregates the Zustand task-store slices needed by TaskTableHeader.
  * Keeps the component body free of repeated useTaskStore() boilerplate.
+ *
+ * Uses a single useShallow subscription instead of seven separate
+ * useTaskStore() calls so that only one Zustand subscription is created,
+ * and re-renders are skipped when unrelated state changes.
  */
 
-import { useTaskStore } from "@/store/slices/taskSlice";
-import type { TaskStore } from "@/store/slices/taskSlice";
+import { useShallow } from "zustand/react/shallow";
+import { useTaskStore, type TaskStore } from "../store/slices/taskSlice";
 
 export interface TaskTableHeaderStoreSlice {
   tasks: TaskStore["tasks"];
@@ -17,21 +21,15 @@ export interface TaskTableHeaderStoreSlice {
 }
 
 export function useTaskTableHeaderStore(): TaskTableHeaderStoreSlice {
-  const tasks = useTaskStore((state) => state.tasks);
-  const selectedTaskIds = useTaskStore((state) => state.selectedTaskIds);
-  const selectAllTasks = useTaskStore((state) => state.selectAllTasks);
-  const clearSelection = useTaskStore((state) => state.clearSelection);
-  const columnWidths = useTaskStore((state) => state.columnWidths);
-  const setColumnWidth = useTaskStore((state) => state.setColumnWidth);
-  const autoFitColumn = useTaskStore((state) => state.autoFitColumn);
-
-  return {
-    tasks,
-    selectedTaskIds,
-    selectAllTasks,
-    clearSelection,
-    columnWidths,
-    setColumnWidth,
-    autoFitColumn,
-  };
+  return useTaskStore(
+    useShallow((state) => ({
+      tasks: state.tasks,
+      selectedTaskIds: state.selectedTaskIds,
+      selectAllTasks: state.selectAllTasks,
+      clearSelection: state.clearSelection,
+      columnWidths: state.columnWidths,
+      setColumnWidth: state.setColumnWidth,
+      autoFitColumn: state.autoFitColumn,
+    }))
+  );
 }
