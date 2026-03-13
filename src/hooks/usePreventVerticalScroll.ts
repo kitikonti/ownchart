@@ -5,7 +5,8 @@
  * even with overflow-y: clip. See GitHub #16.
  */
 
-import { useEffect, type RefObject } from "react";
+import { useEffect } from "react";
+import type { RefObject } from "react";
 
 /**
  * Attaches a scroll listener that resets scrollTop to 0 whenever the element

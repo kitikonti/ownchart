@@ -5,7 +5,8 @@
  * is updated to match. Used for keeping headers in sync with their content areas.
  */
 
-import { useEffect, type RefObject } from "react";
+import { useEffect } from "react";
+import type { RefObject } from "react";
 
 export function useSyncScroll(
   refA: RefObject<HTMLDivElement | null>,
@@ -31,14 +32,14 @@ export function useSyncScroll(
     // seen as a sync operation and discarded. Resetting synchronously would allow
     // the echoed event to slip through before the flag is cleared.
     let isSyncing = false;
-    let syncAtoBRafId = 0;
-    let syncBtoARafId = 0;
+    let syncAtoBRafId: number | null = null;
+    let syncBtoARafId: number | null = null;
 
     const syncAtoB = (): void => {
       if (isSyncing) return;
       isSyncing = true;
       elB.scrollLeft = elA.scrollLeft;
-      cancelAnimationFrame(syncAtoBRafId);
+      if (syncAtoBRafId !== null) cancelAnimationFrame(syncAtoBRafId);
       syncAtoBRafId = requestAnimationFrame(() => {
         isSyncing = false;
       });
@@ -47,7 +48,7 @@ export function useSyncScroll(
       if (isSyncing) return;
       isSyncing = true;
       elA.scrollLeft = elB.scrollLeft;
-      cancelAnimationFrame(syncBtoARafId);
+      if (syncBtoARafId !== null) cancelAnimationFrame(syncBtoARafId);
       syncBtoARafId = requestAnimationFrame(() => {
         isSyncing = false;
       });
@@ -63,8 +64,8 @@ export function useSyncScroll(
     return (): void => {
       elA.removeEventListener("scroll", syncAtoB);
       elB.removeEventListener("scroll", syncBtoA);
-      cancelAnimationFrame(syncAtoBRafId);
-      cancelAnimationFrame(syncBtoARafId);
+      if (syncAtoBRafId !== null) cancelAnimationFrame(syncAtoBRafId);
+      if (syncBtoARafId !== null) cancelAnimationFrame(syncBtoARafId);
     };
   }, [refA, refB]);
 }

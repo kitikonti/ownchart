@@ -29,6 +29,7 @@ export function useTaskStatistics(): TaskStatistics {
     // status-bar display and avoids the complexity of a live-clock subscription
     // (e.g. a midnight-triggered useEffect). If this ever becomes a product
     // concern, a `useDateTick` hook that fires at midnight can invalidate the memo.
+    // TODO(future): implement useDateTick to auto-refresh overdue count at midnight.
     const today = startOfDay(new Date());
 
     let completedTasks = 0;

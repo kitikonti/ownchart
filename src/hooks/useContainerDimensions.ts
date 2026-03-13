@@ -9,7 +9,8 @@
  * Returns viewportHeight and chartContainerWidth as state.
  */
 
-import { useEffect, useState, type RefObject } from "react";
+import { useEffect, useState } from "react";
+import type { RefObject } from "react";
 import {
   INITIAL_CHART_CONTAINER_WIDTH,
   INITIAL_MEASURE_DELAY_MS,
