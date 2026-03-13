@@ -24,8 +24,11 @@ export function useTaskStatistics(): TaskStatistics {
 
   return useMemo((): TaskStatistics => {
     // "today" is captured at memo-invalidation time (i.e. when tasks change).
-    // Statistics will drift after midnight until the next task mutation — this
-    // is acceptable for a status-bar display and avoids a live-clock subscription.
+    // Known tradeoff: if the browser tab stays open across midnight, the overdue
+    // count will be stale until the next task mutation. This is acceptable for a
+    // status-bar display and avoids the complexity of a live-clock subscription
+    // (e.g. a midnight-triggered useEffect). If this ever becomes a product
+    // concern, a `useDateTick` hook that fires at midnight can invalidate the memo.
     const today = new Date();
     today.setHours(0, 0, 0, 0);
 

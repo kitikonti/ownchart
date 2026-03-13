@@ -7,6 +7,11 @@
 
 import { useEffect, type RefObject } from "react";
 
+/**
+ * Attaches a scroll listener that resets scrollTop to 0 whenever the element
+ * scrolls vertically. Workaround for Chromium bug (GitHub #16) where
+ * `focus()` can trigger vertical scrolling on overflow-clipped containers.
+ */
 export function usePreventVerticalScroll(
   ref: RefObject<HTMLElement | null>
 ): void {
