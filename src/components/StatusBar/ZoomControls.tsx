@@ -52,22 +52,24 @@ export const ZoomControls = memo(function ZoomControls(): JSX.Element {
   );
 
   const handleZoomIn = useCallback((): void => {
-    // Guard for aria-disabled: the button stays in the tab order but must
-    // not perform any action when at the maximum zoom level.
-    if (isAtMaxZoom) return;
+    // Guard for aria-disabled: read zoom from the store at call time to avoid
+    // stale closure on the derived `isAtMaxZoom` boolean. The button stays in
+    // the tab order but must not perform any action at the maximum zoom level.
+    if (useChartStore.getState().zoom >= MAX_ZOOM) return;
     const anchor = computeViewportCenterAnchor();
     const result = zoomIn(anchor);
     applyScrollLeft(result.newScrollLeft);
-  }, [isAtMaxZoom, zoomIn]);
+  }, [zoomIn]);
 
   const handleZoomOut = useCallback((): void => {
-    // Guard for aria-disabled: the button stays in the tab order but must
-    // not perform any action when at the minimum zoom level.
-    if (isAtMinZoom) return;
+    // Guard for aria-disabled: read zoom from the store at call time to avoid
+    // stale closure on the derived `isAtMinZoom` boolean. The button stays in
+    // the tab order but must not perform any action at the minimum zoom level.
+    if (useChartStore.getState().zoom <= MIN_ZOOM) return;
     const anchor = computeViewportCenterAnchor();
     const result = zoomOut(anchor);
     applyScrollLeft(result.newScrollLeft);
-  }, [isAtMinZoom, zoomOut]);
+  }, [zoomOut]);
 
   const handleFitToView = useCallback((): void => {
     // Non-reactive: read tasks at call time to avoid re-renders on task changes.
@@ -110,7 +112,6 @@ export const ZoomControls = memo(function ZoomControls(): JSX.Element {
           type="button"
           onClick={handleZoomOut}
           aria-disabled={isAtMinZoom}
-          tabIndex={0}
           className={`p-0.5 transition-colors ${isAtMinZoom ? "text-neutral-300 cursor-not-allowed" : "text-neutral-500 hover:text-neutral-700"}`}
           aria-label="Zoom out"
         >
@@ -135,7 +136,6 @@ export const ZoomControls = memo(function ZoomControls(): JSX.Element {
           type="button"
           onClick={handleZoomIn}
           aria-disabled={isAtMaxZoom}
-          tabIndex={0}
           className={`p-0.5 transition-colors ${isAtMaxZoom ? "text-neutral-300 cursor-not-allowed" : "text-neutral-500 hover:text-neutral-700"}`}
           aria-label="Zoom in"
         >

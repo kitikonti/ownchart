@@ -3,7 +3,13 @@
  * Offers common screen/print sizes and a free-form custom pixel input.
  */
 
-import { useCallback, useEffect, useState, type KeyboardEvent } from "react";
+import {
+  memo,
+  useCallback,
+  useEffect,
+  useState,
+  type KeyboardEvent,
+} from "react";
 import {
   DEFAULT_FIT_TO_WIDTH_PX,
   UHD_SCREEN_WIDTH_PX,
@@ -25,11 +31,6 @@ const A4_LANDSCAPE_150DPI_PX = 1754;
 const A3_LANDSCAPE_150DPI_PX = 2480;
 const LETTER_LANDSCAPE_150DPI_PX = 1650;
 
-interface FitToWidthPreset {
-  label: string;
-  value: number;
-}
-
 const FIT_TO_WIDTH_GROUPS = {
   screenSizes: {
     label: "Screen Sizes",
@@ -42,7 +43,7 @@ const FIT_TO_WIDTH_GROUPS = {
         label: `4K Screen (${UHD_SCREEN_WIDTH_PX}px)`,
         value: UHD_SCREEN_WIDTH_PX,
       },
-    ] as FitToWidthPreset[],
+    ],
   },
   print150dpi: {
     label: "Print @ 150 DPI",
@@ -59,7 +60,7 @@ const FIT_TO_WIDTH_GROUPS = {
         label: `Letter Landscape (${LETTER_LANDSCAPE_150DPI_PX}px)`,
         value: LETTER_LANDSCAPE_150DPI_PX,
       },
-    ] as FitToWidthPreset[],
+    ],
   },
 };
 
@@ -89,7 +90,7 @@ export interface FitToWidthSelectorProps {
   onFitToWidthChange?: (width: number) => void;
 }
 
-export function FitToWidthSelector({
+export const FitToWidthSelector = memo(function FitToWidthSelector({
   fitToWidth,
   onFitToWidthChange,
 }: FitToWidthSelectorProps): JSX.Element {
@@ -223,4 +224,4 @@ export function FitToWidthSelector({
       )}
     </div>
   );
-}
+});

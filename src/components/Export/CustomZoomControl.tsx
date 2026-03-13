@@ -186,7 +186,9 @@ export const CustomZoomControl = memo(function CustomZoomControl({
 
   const handleSliderChange = useCallback(
     (e: ChangeEvent<HTMLInputElement>): void => {
-      onTimelineZoomChange(parseInt(e.target.value, 10) / 100);
+      // parseFloat matches clampExportZoom's parsing strategy; consistent with
+      // the text input and safe for potential non-integer step values in future.
+      onTimelineZoomChange(parseFloat(e.target.value) / 100);
     },
     [onTimelineZoomChange]
   );
