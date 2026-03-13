@@ -27,9 +27,8 @@ export function useTaskStatistics(): TaskStatistics {
     // Known tradeoff: if the browser tab stays open across midnight, the overdue
     // count will be stale until the next task mutation. This is acceptable for a
     // status-bar display and avoids the complexity of a live-clock subscription
-    // (e.g. a midnight-triggered useEffect). If this ever becomes a product
-    // concern, a `useDateTick` hook that fires at midnight can invalidate the memo.
-    // TODO(future): implement useDateTick to auto-refresh overdue count at midnight.
+    // (e.g. a midnight-triggered useEffect that fires once at midnight to trigger
+    // a dummy task mutation or a dedicated date-tick store slice).
     const today = startOfDay(new Date());
 
     let completedTasks = 0;

@@ -39,11 +39,11 @@ export function usePlaceholderContextMenu(): UsePlaceholderContextMenuResult {
   const handlePlaceholderContextMenu = useCallback((e: MouseEvent): void => {
     e.preventDefault();
 
-    // Use getState() to access store imperatively at event time (not during
+    // Use getState() to access the store imperatively at event time (not during
     // render), so this callback does not need store values in its dep array.
-    const taskState = useTaskStore.getState();
-    taskState.setSelectedTaskIds([PLACEHOLDER_TASK_ID], false);
-    taskState.setActiveCell(null, null);
+    const store = useTaskStore.getState();
+    store.setSelectedTaskIds([PLACEHOLDER_TASK_ID], false);
+    store.setActiveCell(null, null);
 
     setContextMenu({ x: e.clientX, y: e.clientY });
   }, []);
