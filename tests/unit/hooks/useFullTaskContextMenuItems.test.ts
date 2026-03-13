@@ -6,12 +6,12 @@
 
 import { describe, it, expect, beforeEach, vi } from "vitest";
 import { renderHook } from "@testing-library/react";
-import { useFullTaskContextMenuItems } from "../../../src/hooks/useFullTaskContextMenuItems";
-import { useTaskStore } from "../../../src/store/slices/taskSlice";
-import { useChartStore } from "../../../src/store/slices/chartSlice";
-import { useClipboardStore } from "../../../src/store/slices/clipboardSlice";
-import type { Task } from "../../../src/types/chart.types";
-import type { FlattenedTask } from "../../../src/utils/hierarchy";
+import { useFullTaskContextMenuItems } from "@/hooks/useFullTaskContextMenuItems";
+import { useTaskStore } from "@/store/slices/taskSlice";
+import { useChartStore } from "@/store/slices/chartSlice";
+import { useClipboardStore } from "@/store/slices/clipboardSlice";
+import type { Task } from "@/types/chart.types";
+import type { FlattenedTask } from "@/utils/hierarchy";
 
 // Mock external dependencies that have side effects or browser APIs
 vi.mock("react-hot-toast", () => ({
@@ -36,7 +36,7 @@ vi.mock("../../../src/hooks/useFlattenedTasks", () => ({
   })),
 }));
 
-import { useFlattenedTasks } from "../../../src/hooks/useFlattenedTasks";
+import { useFlattenedTasks } from "@/hooks/useFlattenedTasks";
 
 // ─── Helpers ───
 

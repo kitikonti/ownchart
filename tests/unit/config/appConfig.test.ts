@@ -4,7 +4,7 @@
  */
 
 import { describe, it, expect } from "vitest";
-import { APP_CONFIG } from "../../../src/config/appConfig";
+import { APP_CONFIG } from "@/config/appConfig";
 
 describe("APP_CONFIG", () => {
   it("should have a non-empty app name", () => {

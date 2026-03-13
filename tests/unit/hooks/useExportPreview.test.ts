@@ -7,7 +7,7 @@
 
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { renderHook, act } from "@testing-library/react";
-import { DEFAULT_EXPORT_OPTIONS } from "../../../src/utils/export/types";
+import { DEFAULT_EXPORT_OPTIONS } from "@/utils/export/types";
 
 // ---------------------------------------------------------------------------
 // Hoisted mock state (vi.mock factories are hoisted above variable declarations)
@@ -53,7 +53,7 @@ vi.mock("../../../src/components/Export/ExportRenderer", () => ({
   ExportRenderer: vi.fn(() => null),
 }));
 
-import { useExportPreview } from "../../../src/hooks/useExportPreview";
+import { useExportPreview } from "@/hooks/useExportPreview";
 import { makeTask } from "../helpers/taskFactory";
 
 const defaultParams = {

@@ -6,10 +6,10 @@
  */
 
 import { useMemo } from "react";
-import type { TaskId } from "../types/branded.types";
-import { useTaskStore } from "../store/slices/taskSlice";
+import type { TaskId } from "@/types/branded.types";
+import { useTaskStore } from "@/store/slices/taskSlice";
 import { useFlattenedTasks } from "./useFlattenedTasks";
-import type { FlattenedTask } from "../utils/hierarchy";
+import type { FlattenedTask } from "@/utils/hierarchy";
 
 // ── Types ────────────────────────────────────────────────────────────────────
 

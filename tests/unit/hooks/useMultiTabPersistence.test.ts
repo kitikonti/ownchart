@@ -1,13 +1,13 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
 import { renderHook, act } from "@testing-library/react";
-import { useMultiTabPersistence } from "../../../src/hooks/useMultiTabPersistence";
-import { useChartStore } from "../../../src/store/slices/chartSlice";
-import { useTaskStore } from "../../../src/store/slices/taskSlice";
-import { useDependencyStore } from "../../../src/store/slices/dependencySlice";
-import { useUIStore } from "../../../src/store/slices/uiSlice";
-import { useFileStore } from "../../../src/store/slices/fileSlice";
-import type { Task } from "../../../src/types/chart.types";
-import { toTaskId } from "../../../src/types/branded.types";
+import { useMultiTabPersistence } from "@/hooks/useMultiTabPersistence";
+import { useChartStore } from "@/store/slices/chartSlice";
+import { useTaskStore } from "@/store/slices/taskSlice";
+import { useDependencyStore } from "@/store/slices/dependencySlice";
+import { useUIStore } from "@/store/slices/uiSlice";
+import { useFileStore } from "@/store/slices/fileSlice";
+import type { Task } from "@/types/chart.types";
+import { toTaskId } from "@/types/branded.types";
 
 function makeTask(id: string, overrides: Partial<Task> = {}): Task {
   return {
@@ -30,9 +30,9 @@ import {
   type ChartState,
   type FileState,
   type TableState,
-} from "../../../src/utils/multiTabStorage";
-import { DEFAULT_COLOR_MODE_STATE } from "../../../src/config/colorModeDefaults";
-import type { ColorModeState } from "../../../src/types/colorMode.types";
+} from "@/utils/multiTabStorage";
+import { DEFAULT_COLOR_MODE_STATE } from "@/config/colorModeDefaults";
+import type { ColorModeState } from "@/types/colorMode.types";
 
 function createChartState(overrides?: Partial<ChartState>): ChartState {
   return {
@@ -456,7 +456,7 @@ describe("useMultiTabPersistence", () => {
       sessionStorage.setItem(TAB_ID_KEY, tabId);
 
       const saveTabChartSpy = vi.spyOn(
-        await import("../../../src/utils/multiTabStorage"),
+        await import("@/utils/multiTabStorage"),
         "saveTabChart"
       );
 

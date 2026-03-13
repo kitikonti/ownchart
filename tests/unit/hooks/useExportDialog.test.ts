@@ -7,13 +7,13 @@ import {
   computeProjectDateRange,
   computeVisibleDateRange,
   computeReadabilityStatus,
-} from "../../../src/hooks/useExportDialog";
-import type { Task } from "../../../src/types/chart.types";
-import type { TimelineScale } from "../../../src/utils/timelineUtils";
+} from "@/hooks/useExportDialog";
+import type { Task } from "@/types/chart.types";
+import type { TimelineScale } from "@/utils/timelineUtils";
 import {
   EXPORT_ZOOM_READABLE_THRESHOLD,
   EXPORT_ZOOM_LABELS_HIDDEN_THRESHOLD,
-} from "../../../src/utils/export/types";
+} from "@/utils/export/types";
 
 // ── Helpers ──────────────────────────────────────────────────────────────────
 

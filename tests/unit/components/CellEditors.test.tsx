@@ -5,7 +5,7 @@
 
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
-import { ColorCellEditor } from '../../../src/components/TaskList/CellEditors/ColorCellEditor';
+import { ColorCellEditor } from '@/components/TaskList/CellEditors/ColorCellEditor';
 
 // Mock the Zustand stores used by ColorPickerPopover
 vi.mock('../../../src/store/slices/taskSlice', () => ({

@@ -9,7 +9,7 @@ import type {
   PdfExportOptions,
   PdfHeaderFooter,
   ReadabilityStatus,
-} from "../../utils/export/types";
+} from "@/utils/export/types";
 import {
   getPageDimensions,
   getMargins,
@@ -17,7 +17,7 @@ import {
   hasHeaderFooterContent,
   mmToPx,
   formatPageSizeName,
-} from "../../utils/export/pdfLayout";
+} from "@/utils/export/pdfLayout";
 
 // =============================================================================
 // Types

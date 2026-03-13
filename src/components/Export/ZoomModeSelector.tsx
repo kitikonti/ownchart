@@ -4,9 +4,9 @@
  * Supports current view, fit to width/page, and custom zoom modes.
  */
 
-import { RadioOptionCard } from "../common/RadioOptionCard";
-import type { ExportZoomMode, ExportFormat } from "../../utils/export/types";
-import { DEFAULT_FIT_TO_WIDTH_PX } from "../../utils/export/types";
+import { RadioOptionCard } from "@/components/common/RadioOptionCard";
+import type { ExportZoomMode, ExportFormat } from "@/utils/export/types";
+import { DEFAULT_FIT_TO_WIDTH_PX } from "@/utils/export/types";
 import { FitToWidthSelector } from "./FitToWidthSelector";
 import { CustomZoomControl } from "./CustomZoomControl";
 

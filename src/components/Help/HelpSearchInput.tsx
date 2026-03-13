@@ -5,7 +5,7 @@
 import { memo, useRef, useEffect, useCallback, useId } from "react";
 import type { ChangeEvent, JSX } from "react";
 import { MagnifyingGlass, X } from "@phosphor-icons/react";
-import { Input } from "../common/Input";
+import { Input } from "@/components/common/Input";
 
 /** Delay (ms) before auto-focusing the input — avoids focus race with modal focus trap */
 const AUTOFOCUS_DELAY_MS = 50;

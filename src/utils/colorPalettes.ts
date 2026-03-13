@@ -17,7 +17,7 @@ import {
   toPaletteId,
   type HexColor,
   type PaletteId,
-} from "../types/branded.types";
+} from "@/types/branded.types";
 
 /**
  * Palette category for organization in UI

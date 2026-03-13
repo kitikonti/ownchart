@@ -5,7 +5,7 @@
 
 import { describe, it, expect, vi } from "vitest";
 import { render, screen, fireEvent } from "@testing-library/react";
-import { TaskTypeIcon } from "../../../src/components/TaskList/TaskTypeIcon";
+import { TaskTypeIcon } from "@/components/TaskList/TaskTypeIcon";
 
 describe("TaskTypeIcon", () => {
   it("renders without crashing for each type", () => {

@@ -3,7 +3,7 @@
  * Aligned with FEATURE_SPECIFICATIONS.md Section 2.2
  */
 
-import type { Task } from "../types/chart.types";
+import type { Task } from "@/types/chart.types";
 
 /** Maximum allowed length for a task name. */
 export const MAX_TASK_NAME_LENGTH = 200;

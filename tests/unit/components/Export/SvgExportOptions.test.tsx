@@ -4,7 +4,7 @@
 
 import { describe, it, expect } from "vitest";
 import { render } from "@testing-library/react";
-import { SvgExportOptions } from "../../../../src/components/Export/SvgExportOptions";
+import { SvgExportOptions } from "@/components/Export/SvgExportOptions";
 
 describe("SvgExportOptions", () => {
   describe("rendering", () => {

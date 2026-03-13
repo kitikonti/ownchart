@@ -4,11 +4,11 @@
  */
 
 import { describe, it, expect, beforeEach } from "vitest";
-import { useTaskStore } from "../../src/store/slices/taskSlice";
-import { useHistoryStore } from "../../src/store/slices/historySlice";
-import { useClipboardStore } from "../../src/store/slices/clipboardSlice";
-import { useDependencyStore } from "../../src/store/slices/dependencySlice";
-import type { Task } from "../../src/types/chart.types";
+import { useTaskStore } from "@/store/slices/taskSlice";
+import { useHistoryStore } from "@/store/slices/historySlice";
+import { useClipboardStore } from "@/store/slices/clipboardSlice";
+import { useDependencyStore } from "@/store/slices/dependencySlice";
+import type { Task } from "@/types/chart.types";
 import { tid, hex } from "../helpers/branded";
 
 // Helper to create test tasks

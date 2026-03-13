@@ -8,9 +8,9 @@ import {
   EXPORT_COLUMNS,
   EXPORT_COLUMN_MAP,
   HEADER_LABELS,
-} from "../../../../src/utils/export/columns";
-import type { Task } from "../../../../src/types/chart.types";
-import { toTaskId } from "../../../../src/types/branded.types";
+} from "@/utils/export/columns";
+import type { Task } from "@/types/chart.types";
+import { toTaskId } from "@/types/branded.types";
 
 function makeTask(overrides: Partial<Task> = {}): Task {
   return {

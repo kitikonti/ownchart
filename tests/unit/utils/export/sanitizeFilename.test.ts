@@ -3,7 +3,7 @@
  */
 
 import { describe, it, expect } from "vitest";
-import { sanitizeFilename } from "../../../../src/utils/export/sanitizeFilename";
+import { sanitizeFilename } from "@/utils/export/sanitizeFilename";
 
 describe("sanitizeFilename", () => {
   describe("basic functionality", () => {

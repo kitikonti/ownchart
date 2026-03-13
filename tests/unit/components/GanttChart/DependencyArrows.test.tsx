@@ -6,9 +6,9 @@
 
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { render } from "@testing-library/react";
-import { DependencyArrows } from "../../../../src/components/GanttChart/DependencyArrows";
-import type { Task } from "../../../../src/types/chart.types";
-import type { TimelineScale } from "../../../../src/utils/timelineUtils";
+import { DependencyArrows } from "@/components/GanttChart/DependencyArrows";
+import type { Task } from "@/types/chart.types";
+import type { TimelineScale } from "@/utils/timelineUtils";
 import { tid, hex } from "../../../helpers/branded";
 
 // ---------------------------------------------------------------------------

@@ -10,11 +10,11 @@
  * return null or false.
  */
 
-import type { Task } from "../../types/chart.types";
-import { TASK_TYPES } from "../../types/chart.types";
-import type { Dependency } from "../../types/dependency.types";
-import { DEPENDENCY_TYPES } from "../../types/dependency.types";
-import { EDITABLE_FIELDS, type EditableField } from "../../types/task.types";
+import type { Task } from "@/types/chart.types";
+import { TASK_TYPES } from "@/types/chart.types";
+import type { Dependency } from "@/types/dependency.types";
+import { DEPENDENCY_TYPES } from "@/types/dependency.types";
+import { EDITABLE_FIELDS, type EditableField } from "@/types/task.types";
 
 /**
  * Data structure for row clipboard in system clipboard.

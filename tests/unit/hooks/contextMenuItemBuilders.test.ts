@@ -12,8 +12,8 @@ import {
   buildInsertItems,
   buildHierarchyItems,
   buildUnhideItem,
-} from "../../../src/hooks/contextMenuItemBuilders";
-import { getModKey } from "../../../src/config/helpContent";
+} from "@/hooks/contextMenuItemBuilders";
+import { getModKey } from "@/config/helpContent";
 
 describe("getEffectiveSelection", () => {
   it("should return full selection when task is in selection", () => {

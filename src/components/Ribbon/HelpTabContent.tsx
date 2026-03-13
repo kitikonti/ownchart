@@ -5,9 +5,12 @@
 import { memo } from "react";
 import { Info, Question } from "@phosphor-icons/react";
 
-import { ToolbarButton, ToolbarGroup } from "../Toolbar/ToolbarPrimitives";
-import { TOOLBAR } from "../../styles/design-tokens";
-import { useUIStore } from "../../store/slices/uiSlice";
+import {
+  ToolbarButton,
+  ToolbarGroup,
+} from "@/components/Toolbar/ToolbarPrimitives";
+import { TOOLBAR } from "@/styles/design-tokens";
+import { useUIStore } from "@/store/slices/uiSlice";
 
 const ICON_SIZE = TOOLBAR.iconSize;
 

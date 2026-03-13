@@ -15,19 +15,19 @@ import {
   appendChartBody,
   extractSvgElements,
   cloneSvgIntoGroup,
-} from "../../../../src/utils/export/svgExport";
+} from "@/utils/export/svgExport";
 import type {
   SvgExportOptions,
   ExportOptions,
-} from "../../../../src/utils/export/types";
+} from "@/utils/export/types";
 import {
   DEFAULT_SVG_OPTIONS,
   DEFAULT_EXPORT_OPTIONS,
-} from "../../../../src/utils/export/types";
+} from "@/utils/export/types";
 import {
   EXPORT_CHART_SVG_CLASS,
   EXPORT_TIMELINE_HEADER_SVG_CLASS,
-} from "../../../../src/utils/export/constants";
+} from "@/utils/export/constants";
 
 // ---------------------------------------------------------------------------
 // Shared test helpers

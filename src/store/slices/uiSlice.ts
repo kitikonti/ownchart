@@ -13,8 +13,8 @@ import {
   type ExportOptions,
   type PdfExportOptions,
   type SvgExportOptions,
-} from "../../utils/export/types";
-import type { HelpTabId } from "../../config/helpContent";
+} from "@/utils/export/types";
+import type { HelpTabId } from "@/config/helpContent";
 
 // LocalStorage keys
 const WELCOME_DISMISSED_KEY = "ownchart-welcome-dismissed";

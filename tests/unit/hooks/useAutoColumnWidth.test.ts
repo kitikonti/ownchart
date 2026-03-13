@@ -11,10 +11,10 @@
 
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { act, renderHook } from '@testing-library/react';
-import { useAutoColumnWidth } from '../../../src/hooks/useAutoColumnWidth';
-import { useTaskStore } from '../../../src/store/slices/taskSlice';
-import { useUserPreferencesStore } from '../../../src/store/slices/userPreferencesSlice';
-import type { Task } from '../../../src/types/chart.types';
+import { useAutoColumnWidth } from '@/hooks/useAutoColumnWidth';
+import { useTaskStore } from '@/store/slices/taskSlice';
+import { useUserPreferencesStore } from '@/store/slices/userPreferencesSlice';
+import type { Task } from '@/types/chart.types';
 
 function createTask(id: string, overrides: Partial<Task> = {}): Task {
   return {

@@ -4,7 +4,7 @@
 
 import { describe, it, expect, vi } from "vitest";
 import { renderHook } from "@testing-library/react";
-import { usePreventVerticalScroll } from "../../../src/hooks/usePreventVerticalScroll";
+import { usePreventVerticalScroll } from "@/hooks/usePreventVerticalScroll";
 
 /** Creates a minimal mock element with scrollTop and event listener tracking */
 function createMockElement(): HTMLElement & {

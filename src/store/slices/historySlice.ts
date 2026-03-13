@@ -25,11 +25,11 @@ import {
   type UngroupTasksParams,
   type HideTasksParams,
   type UnhideTasksParams,
-} from "../../types/command.types";
-import type { Task } from "../../types/chart.types";
-import type { TaskId } from "../../types/branded.types";
-import type { Dependency } from "../../types/dependency.types";
-import { calculateDuration } from "../../utils/dateUtils";
+} from "@/types/command.types";
+import type { Task } from "@/types/chart.types";
+import type { TaskId } from "@/types/branded.types";
+import type { Dependency } from "@/types/dependency.types";
+import { calculateDuration } from "@/utils/dateUtils";
 import { useTaskStore } from "./taskSlice";
 import { useDependencyStore } from "./dependencySlice";
 import { useChartStore } from "./chartSlice";
@@ -37,7 +37,7 @@ import { useFileStore } from "./fileSlice";
 import {
   recalculateSummaryAncestors,
   normalizeTaskOrder,
-} from "../../utils/hierarchy";
+} from "@/utils/hierarchy";
 
 interface HistoryState {
   undoStack: Command[];

@@ -1,6 +1,6 @@
 import { describe, it, expect, vi } from "vitest";
 import { render, screen, fireEvent } from "@testing-library/react";
-import { FileMenu } from "../../../../src/components/Ribbon/FileMenu";
+import { FileMenu } from "@/components/Ribbon/FileMenu";
 
 function createHandlers(): Record<string, ReturnType<typeof vi.fn>> {
   return {

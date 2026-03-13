@@ -6,12 +6,12 @@
 
 import { useCallback } from "react";
 import { parseISO, addDays } from "date-fns";
-import { useTaskStore } from "../store/slices/taskSlice";
-import { toISODateString } from "../utils/dateUtils";
-import { COLORS } from "../styles/design-tokens";
-import { DEFAULT_TASK_DURATION } from "../store/slices/taskSliceHelpers";
-import { DEFAULT_TASK_TYPE } from "../config/taskDefaults";
-import type { Task } from "../types/chart.types";
+import { useTaskStore } from "@/store/slices/taskSlice";
+import { toISODateString } from "@/utils/dateUtils";
+import { COLORS } from "@/styles/design-tokens";
+import { DEFAULT_TASK_DURATION } from "@/store/slices/taskSliceHelpers";
+import { DEFAULT_TASK_TYPE } from "@/config/taskDefaults";
+import type { Task } from "@/types/chart.types";
 
 interface UseNewTaskCreationReturn {
   createTask: (name: string) => void;

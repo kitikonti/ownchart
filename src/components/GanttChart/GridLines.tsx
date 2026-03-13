@@ -14,12 +14,12 @@ import {
   addWeeks,
   addMonths,
 } from "date-fns";
-import type { TimelineScale } from "../../utils/timelineUtils";
-import { dateToPixel } from "../../utils/timelineUtils";
-import { addDays, isWeekend } from "../../utils/dateUtils";
-import { holidayService } from "../../services/holidayService";
-import { useFirstDayOfWeek } from "../../store/slices/userPreferencesSlice";
-import { GRID } from "../../styles/design-tokens";
+import type { TimelineScale } from "@/utils/timelineUtils";
+import { dateToPixel } from "@/utils/timelineUtils";
+import { addDays, isWeekend } from "@/utils/dateUtils";
+import { holidayService } from "@/services/holidayService";
+import { useFirstDayOfWeek } from "@/store/slices/userPreferencesSlice";
+import { GRID } from "@/styles/design-tokens";
 
 // Grid density thresholds (pixels per day)
 const MONTHLY_THRESHOLD_PX = 3; // Below: monthly grid lines only

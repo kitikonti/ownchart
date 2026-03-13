@@ -9,8 +9,8 @@ import {
   calculateArrowPath,
   calculateDragPath,
   getArrowheadPoints,
-} from "../../../../src/utils/arrowPath/elbowPath";
-import type { TaskPosition } from "../../../../src/types/dependency.types";
+} from "@/utils/arrowPath/elbowPath";
+import type { TaskPosition } from "@/types/dependency.types";
 
 // Helper to create task position
 function pos(x: number, y: number, width: number, height: number): TaskPosition {

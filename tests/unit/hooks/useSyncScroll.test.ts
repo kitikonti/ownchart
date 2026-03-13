@@ -4,7 +4,7 @@
 
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { renderHook } from "@testing-library/react";
-import { useSyncScroll } from "../../../src/hooks/useSyncScroll";
+import { useSyncScroll } from "@/hooks/useSyncScroll";
 
 /** Creates a minimal mock element with scrollLeft and event listener tracking */
 function createMockElement(): HTMLDivElement & {

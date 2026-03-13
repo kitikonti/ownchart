@@ -3,8 +3,8 @@
  * Used by fitToView and export to ensure labels aren't clipped.
  */
 
-import type { Task } from "../types/chart.types";
-import type { TaskLabelPosition } from "../types/preferences.types";
+import type { Task } from "@/types/chart.types";
+import type { TaskLabelPosition } from "@/types/preferences.types";
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 

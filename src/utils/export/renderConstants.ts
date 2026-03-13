@@ -5,8 +5,8 @@
  * pdfExport, taskTableRenderer) to guarantee visual consistency.
  */
 
-import { getContrastTextColor } from "../colorUtils";
-import { COLORS, SLATE_800 } from "../../styles/design-tokens";
+import { getContrastTextColor } from "@/utils/colorUtils";
+import { COLORS, SLATE_800 } from "@/styles/design-tokens";
 
 /**
  * Task rendering constants - matching TaskBar.tsx exactly

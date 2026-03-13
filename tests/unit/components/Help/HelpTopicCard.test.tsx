@@ -9,8 +9,8 @@ import {
   KeyBadge,
   MenuPathLabel,
   ShortcutKeys,
-} from "../../../../src/components/Help/HelpTopicCard";
-import type { HelpTopic } from "../../../../src/config/helpContent";
+} from "@/components/Help/HelpTopicCard";
+import type { HelpTopic } from "@/config/helpContent";
 
 // ---------------------------------------------------------------------------
 // Test fixtures

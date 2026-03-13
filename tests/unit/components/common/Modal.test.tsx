@@ -4,7 +4,7 @@
 
 import { describe, it, expect, vi } from "vitest";
 import { render, screen, fireEvent } from "@testing-library/react";
-import { Modal } from "../../../../src/components/common/Modal";
+import { Modal } from "@/components/common/Modal";
 
 const defaultProps = {
   isOpen: true,

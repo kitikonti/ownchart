@@ -3,7 +3,7 @@
  */
 
 import { describe, it, expect, vi } from 'vitest';
-import { getSVGPoint } from '../../../src/utils/svgUtils';
+import { getSVGPoint } from '@/utils/svgUtils';
 
 describe('getSVGPoint', () => {
   function createMockSVG(ctm: DOMMatrix | null): SVGSVGElement {

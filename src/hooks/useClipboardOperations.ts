@@ -7,10 +7,10 @@
 
 import { useCallback } from "react";
 import toast from "react-hot-toast";
-import { useClipboardStore } from "../store/slices/clipboardSlice";
-import { useTaskStore } from "../store/slices/taskSlice";
-import type { TaskId } from "../types/branded.types";
-import type { ActiveCell, EditableField } from "../types/task.types";
+import { useClipboardStore } from "@/store/slices/clipboardSlice";
+import { useTaskStore } from "@/store/slices/taskSlice";
+import type { TaskId } from "@/types/branded.types";
+import type { ActiveCell, EditableField } from "@/types/task.types";
 import {
   writeRowsToSystemClipboard,
   writeCellToSystemClipboard,
@@ -18,7 +18,7 @@ import {
   readCellFromSystemClipboard,
   isClipboardApiAvailable,
   hasSameTaskIds,
-} from "../utils/clipboard";
+} from "@/utils/clipboard";
 
 export interface ClipboardOperations {
   handleCopy: () => void;

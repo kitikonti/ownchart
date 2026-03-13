@@ -6,7 +6,7 @@
 
 import { create } from "zustand";
 import { immer } from "zustand/middleware/immer";
-import type { TimelineScale } from "../../utils/timelineUtils";
+import type { TimelineScale } from "@/utils/timelineUtils";
 import {
   getTimelineScale,
   MIN_ZOOM,
@@ -17,17 +17,13 @@ import {
   ZOOM_VISUAL_PADDING_DAYS,
   FIT_TO_VIEW_PADDING_DAYS,
   dateToPixel,
-} from "../../utils/timelineUtils";
-import {
-  getDateRange,
-  calculateDuration,
-  addDays,
-} from "../../utils/dateUtils";
-import type { Task } from "../../types/chart.types";
+} from "@/utils/timelineUtils";
+import { getDateRange, calculateDuration, addDays } from "@/utils/dateUtils";
+import type { Task } from "@/types/chart.types";
 import type {
   TaskLabelPosition,
   WorkingDaysConfig,
-} from "../../types/preferences.types";
+} from "@/types/preferences.types";
 import type {
   ColorModeState,
   ColorMode,
@@ -35,21 +31,21 @@ import type {
   SummaryModeOptions,
   TaskTypeModeOptions,
   HierarchyModeOptions,
-} from "../../types/colorMode.types";
-import { DEFAULT_COLOR_MODE_STATE } from "../../config/colorModeDefaults";
-import { DEFAULT_WORKING_DAYS_CONFIG } from "../../config/workingDaysConfig";
-import { detectLocaleHolidayRegion } from "../../utils/localeDetection";
-import { holidayService } from "../../services/holidayService";
-import { calculateLabelPaddingDays } from "../../utils/textMeasurement";
-import { getTaskDescendants } from "../../utils/hierarchy";
+} from "@/types/colorMode.types";
+import { DEFAULT_COLOR_MODE_STATE } from "@/config/colorModeDefaults";
+import { DEFAULT_WORKING_DAYS_CONFIG } from "@/config/workingDaysConfig";
+import { detectLocaleHolidayRegion } from "@/utils/localeDetection";
+import { holidayService } from "@/services/holidayService";
+import { calculateLabelPaddingDays } from "@/utils/textMeasurement";
+import { getTaskDescendants } from "@/utils/hierarchy";
 import { getCurrentDensityConfig } from "./userPreferencesSlice";
-import { TASK_COLUMNS, getColumnPixelWidth } from "../../config/tableColumns";
-import { getComputedTaskColor } from "../../utils/computeTaskColor";
-import { MIN_TABLE_WIDTH } from "../../config/layoutConstants";
-import { DEFAULT_PALETTE_ID } from "../../utils/colorPalettes";
-import type { HexColor, TaskId } from "../../types/branded.types";
-import { CommandType } from "../../types/command.types";
-import type { ApplyColorsToManualParams } from "../../types/command.types";
+import { TASK_COLUMNS, getColumnPixelWidth } from "@/config/tableColumns";
+import { getComputedTaskColor } from "@/utils/computeTaskColor";
+import { MIN_TABLE_WIDTH } from "@/config/layoutConstants";
+import { DEFAULT_PALETTE_ID } from "@/utils/colorPalettes";
+import type { HexColor, TaskId } from "@/types/branded.types";
+import { CommandType } from "@/types/command.types";
+import type { ApplyColorsToManualParams } from "@/types/command.types";
 import { useTaskStore } from "./taskSlice";
 import { useHistoryStore } from "./historySlice";
 import { useFileStore } from "./fileSlice";

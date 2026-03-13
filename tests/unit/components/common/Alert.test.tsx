@@ -4,7 +4,7 @@
 
 import { describe, it, expect } from "vitest";
 import { render, screen } from "@testing-library/react";
-import { Alert } from "../../../../src/components/common/Alert";
+import { Alert } from "@/components/common/Alert";
 
 // ---------------------------------------------------------------------------
 // Helpers

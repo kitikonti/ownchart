@@ -5,7 +5,7 @@
 
 import { memo, type MouseEvent } from "react";
 import { Plus } from "@phosphor-icons/react";
-import { ROW_NUMBER, Z_INDEX } from "../../styles/design-tokens";
+import { ROW_NUMBER, Z_INDEX } from "@/styles/design-tokens";
 import { INSERT_BUTTON_HIT_AREA } from "./rowNumberConfig";
 
 // Insert button layout

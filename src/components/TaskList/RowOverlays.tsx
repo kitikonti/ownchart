@@ -7,8 +7,8 @@ import { memo } from "react";
 import type {
   ClipboardPosition,
   SelectionPosition,
-} from "../../hooks/useTaskRowData";
-import { COLORS, Z_INDEX } from "../../styles/design-tokens";
+} from "@/hooks/useTaskRowData";
+import { COLORS, Z_INDEX } from "@/styles/design-tokens";
 import { SELECTION_RADIUS } from "./rowNumberConfig";
 
 // ── Constants ────────────────────────────────────────────────────────────────

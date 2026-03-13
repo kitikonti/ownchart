@@ -6,8 +6,8 @@
  */
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { useTaskStore } from "../store/slices/taskSlice";
-import { useUserPreferencesStore } from "../store/slices/userPreferencesSlice";
+import { useTaskStore } from "@/store/slices/taskSlice";
+import { useUserPreferencesStore } from "@/store/slices/userPreferencesSlice";
 
 /**
  * Hook that automatically adjusts column widths when relevant changes occur.

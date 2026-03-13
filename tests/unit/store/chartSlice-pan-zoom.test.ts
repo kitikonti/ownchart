@@ -4,8 +4,8 @@
  */
 
 import { describe, it, expect, beforeEach } from 'vitest';
-import { useChartStore } from '../../../src/store/slices/chartSlice';
-import type { Task } from '../../../src/types/chart.types';
+import { useChartStore } from '@/store/slices/chartSlice';
+import type { Task } from '@/types/chart.types';
 
 describe('Chart Store - Pan/Zoom Navigation', () => {
   beforeEach(() => {

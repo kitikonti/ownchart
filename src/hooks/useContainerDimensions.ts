@@ -16,7 +16,7 @@ import {
   INITIAL_MEASURE_DELAY_MS,
   INITIAL_VIEWPORT_HEIGHT,
   MIN_VALID_DIMENSION,
-} from "../config/layoutConstants";
+} from "@/config/layoutConstants";
 
 interface UseContainerDimensionsOptions {
   outerScrollRef: RefObject<HTMLDivElement | null>;

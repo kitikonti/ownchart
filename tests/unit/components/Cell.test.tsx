@@ -7,11 +7,11 @@
 import { describe, it, expect, beforeEach, vi } from "vitest";
 import { render, screen, fireEvent } from "@testing-library/react";
 import { renderHook, act } from "@testing-library/react";
-import { Cell } from "../../../src/components/TaskList/Cell";
-import { useCellEdit } from "../../../src/hooks/useCellEdit";
-import type { Task } from "../../../src/types/chart.types";
-import type { ColumnDefinition } from "../../../src/config/tableColumns";
-import type { EditableField } from "../../../src/store/slices/taskSlice";
+import { Cell } from "@/components/TaskList/Cell";
+import { useCellEdit } from "@/hooks/useCellEdit";
+import type { Task } from "@/types/chart.types";
+import type { ColumnDefinition } from "@/config/tableColumns";
+import type { EditableField } from "@/store/slices/taskSlice";
 import { createRef } from "react";
 
 // ---------------------------------------------------------------------------

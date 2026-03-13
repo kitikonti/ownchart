@@ -6,9 +6,9 @@
  */
 
 import { memo } from "react";
-import { useChartStore } from "../../store/slices/chartSlice";
-import { useUIStore } from "../../store/slices/uiSlice";
-import { useTaskStatistics } from "../../hooks/useTaskStatistics";
+import { useChartStore } from "@/store/slices/chartSlice";
+import { useUIStore } from "@/store/slices/uiSlice";
+import { useTaskStatistics } from "@/hooks/useTaskStatistics";
 import { ZoomControls } from "./ZoomControls";
 
 /** Decorative bullet separator between statistics. Hidden from screen readers. */

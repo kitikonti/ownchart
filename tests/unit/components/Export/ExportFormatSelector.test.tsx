@@ -5,7 +5,7 @@
 
 import { describe, it, expect, vi } from "vitest";
 import { render, screen, fireEvent } from "@testing-library/react";
-import { ExportFormatSelector } from "../../../../src/components/Export/ExportFormatSelector";
+import { ExportFormatSelector } from "@/components/Export/ExportFormatSelector";
 
 describe("ExportFormatSelector", () => {
   const defaultProps = {

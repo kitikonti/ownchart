@@ -23,8 +23,8 @@ import {
   PT_PER_MM,
   PT_PER_PX,
   MM_PER_PX,
-} from "../../../../src/utils/export/pdfLayout";
-import type { PdfExportOptions } from "../../../../src/utils/export/types";
+} from "@/utils/export/pdfLayout";
+import type { PdfExportOptions } from "@/utils/export/types";
 
 // Default options for testing
 const defaultOptions: PdfExportOptions = {

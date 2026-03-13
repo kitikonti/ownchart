@@ -5,14 +5,14 @@
 
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { render, screen, fireEvent } from "@testing-library/react";
-import { TaskTableRow } from "../../../src/components/TaskList/TaskTableRow";
-import type { Task } from "../../../src/types/chart.types";
-import type { TaskId } from "../../../src/types/branded.types";
+import { TaskTableRow } from "@/components/TaskList/TaskTableRow";
+import type { Task } from "@/types/chart.types";
+import type { TaskId } from "@/types/branded.types";
 import {
   dragState,
   resetDragState,
-} from "../../../src/components/TaskList/dragSelectionState";
-import { TABLE_ROW } from "../../../src/styles/design-tokens";
+} from "@/components/TaskList/dragSelectionState";
+import { TABLE_ROW } from "@/styles/design-tokens";
 
 // ---------------------------------------------------------------------------
 // Mocks

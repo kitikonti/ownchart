@@ -16,10 +16,10 @@ import {
   DEFAULT_CUSTOM_PAGE_SIZE,
 } from "./types";
 import { INTERNAL_DPI, MM_PER_INCH, PNG_EXPORT_DPI, mmToPxAtDpi } from "./dpi";
-import type { Task } from "../../types/chart.types";
-import type { TaskId } from "../../types/branded.types";
-import { buildFlattenedTaskList } from "../hierarchy";
-import { DENSITY_CONFIG } from "../../config/densityConfig";
+import type { Task } from "@/types/chart.types";
+import type { TaskId } from "@/types/branded.types";
+import { buildFlattenedTaskList } from "@/utils/hierarchy";
+import { DENSITY_CONFIG } from "@/config/densityConfig";
 import { HEADER_HEIGHT } from "./constants";
 
 // =============================================================================

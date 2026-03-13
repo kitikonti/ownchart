@@ -4,8 +4,8 @@
  * and unit tests, but not re-exported from the public `index.ts`.
  */
 
-import type { TaskId } from "../../types/branded.types";
-import type { Dependency } from "../../types/dependency.types";
+import type { TaskId } from "@/types/branded.types";
+import type { Dependency } from "@/types/dependency.types";
 
 /**
  * Returns the array stored under `key`, inserting an empty one first if absent.

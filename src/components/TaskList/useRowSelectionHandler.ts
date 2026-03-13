@@ -11,8 +11,8 @@
  */
 
 import { useCallback } from "react";
-import type { TaskId } from "../../types/branded.types";
-import { useTaskStore } from "../../store/slices/taskSlice";
+import type { TaskId } from "@/types/branded.types";
+import { useTaskStore } from "@/store/slices/taskSlice";
 import { dragState } from "./dragSelectionState";
 
 // ── Types ─────────────────────────────────────────────────────────────────────

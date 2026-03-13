@@ -4,7 +4,7 @@
  */
 
 import { describe, it, expect } from 'vitest';
-import { deserializeGanttFile } from '../../../../src/utils/fileOperations/deserialize';
+import { deserializeGanttFile } from '@/utils/fileOperations/deserialize';
 
 describe('File Operations - Deserialization', () => {
   const createValidFileContent = (): Record<string, unknown> => ({

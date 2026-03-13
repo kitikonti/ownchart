@@ -8,7 +8,7 @@ import {
   resolveHelpTopic,
   type HelpTab,
   type HelpTopic,
-} from "../../../src/config/helpContent";
+} from "@/config/helpContent";
 
 // ---------------------------------------------------------------------------
 // isMac

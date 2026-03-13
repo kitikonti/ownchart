@@ -14,7 +14,7 @@ import {
 } from "react";
 import { createPortal } from "react-dom";
 import { X } from "@phosphor-icons/react";
-import { SHADOWS, Z_INDEX } from "../../styles/design-tokens";
+import { SHADOWS, Z_INDEX } from "@/styles/design-tokens";
 
 /** Union of supported header/footer style variants. */
 export type ModalStyleVariant = "default" | "bordered";

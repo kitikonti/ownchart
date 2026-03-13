@@ -14,11 +14,11 @@ import {
   ArrowSquareOut,
 } from "@phosphor-icons/react";
 
-import OwnChartLogo from "../../assets/logo.svg?react";
-import { Modal } from "../common/Modal";
-import { Button } from "../common/Button";
-import { useUIStore } from "../../store/slices/uiSlice";
-import { APP_CONFIG } from "../../config/appConfig";
+import OwnChartLogo from "@/assets/logo.svg?react";
+import { Modal } from "@/components/common/Modal";
+import { Button } from "@/components/common/Button";
+import { useUIStore } from "@/store/slices/uiSlice";
+import { APP_CONFIG } from "@/config/appConfig";
 
 interface ExternalLinkProps {
   href: string;

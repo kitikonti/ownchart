@@ -2,7 +2,7 @@
  * Validation utilities for drag-to-edit operations.
  */
 
-import type { Task } from "../types/chart.types";
+import type { Task } from "@/types/chart.types";
 import { validateTask } from "./validation";
 
 export interface DragValidationResult {

@@ -14,9 +14,9 @@ import {
   PencilSimple,
   Export,
 } from "@phosphor-icons/react";
-import { useDropdown } from "../../hooks/useDropdown";
-import { DropdownPanel } from "../Toolbar/DropdownPanel";
-import { TOOLBAR } from "../../styles/design-tokens";
+import { useDropdown } from "@/hooks/useDropdown";
+import { DropdownPanel } from "@/components/Toolbar/DropdownPanel";
+import { TOOLBAR } from "@/styles/design-tokens";
 
 const ICON_SIZE = TOOLBAR.iconSizeMenu;
 

@@ -4,8 +4,8 @@
 
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { renderHook } from '@testing-library/react';
-import { useZoom, computeViewportCenterAnchor } from '../../../src/hooks/useZoom';
-import { useChartStore } from '../../../src/store/slices/chartSlice';
+import { useZoom, computeViewportCenterAnchor } from '@/hooks/useZoom';
+import { useChartStore } from '@/store/slices/chartSlice';
 import { createRef } from 'react';
 
 describe('useZoom', () => {

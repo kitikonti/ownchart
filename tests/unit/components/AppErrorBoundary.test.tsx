@@ -5,7 +5,7 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { render, screen, fireEvent } from "@testing-library/react";
 import * as React from "react";
-import { AppErrorBoundary } from "../../../src/components/AppErrorBoundary";
+import { AppErrorBoundary } from "@/components/AppErrorBoundary";
 
 // A child component that throws when the `shouldThrow` prop is true.
 function ThrowingChild({ shouldThrow }: { shouldThrow: boolean }): JSX.Element {

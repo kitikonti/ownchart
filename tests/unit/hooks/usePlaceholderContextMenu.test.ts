@@ -7,7 +7,7 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { renderHook, act } from "@testing-library/react";
 import type { MouseEvent } from "react";
-import { usePlaceholderContextMenu } from "../../../src/hooks/usePlaceholderContextMenu";
+import { usePlaceholderContextMenu } from "@/hooks/usePlaceholderContextMenu";
 
 // ---------------------------------------------------------------------------
 // Mocks

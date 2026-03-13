@@ -6,12 +6,12 @@
 
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { render, screen, fireEvent } from "@testing-library/react";
-import { CustomZoomControl } from "../../../../src/components/Export/CustomZoomControl";
+import { CustomZoomControl } from "@/components/Export/CustomZoomControl";
 import {
   EXPORT_ZOOM_MIN,
   EXPORT_ZOOM_MAX,
   EXPORT_ZOOM_PRESETS,
-} from "../../../../src/utils/export/types";
+} from "@/utils/export/types";
 
 const DEFAULT_ZOOM = 1.0;
 

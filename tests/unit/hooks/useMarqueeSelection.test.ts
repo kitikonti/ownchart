@@ -14,8 +14,8 @@ import {
   rectsIntersect,
   normalizeRect,
   type TaskGeometry,
-} from "../../../src/hooks/useMarqueeSelection";
-import type { TaskId } from "../../../src/types/branded.types";
+} from "@/hooks/useMarqueeSelection";
+import type { TaskId } from "@/types/branded.types";
 
 // ---------------------------------------------------------------------------
 // Pure function: rectsIntersect

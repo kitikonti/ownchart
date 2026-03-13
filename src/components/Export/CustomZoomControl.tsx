@@ -18,7 +18,7 @@ import {
   EXPORT_ZOOM_PRESETS,
   EXPORT_ZOOM_TENTH,
   EXPORT_ZOOM_QUARTER,
-} from "../../utils/export/types";
+} from "@/utils/export/types";
 import { stopPropagation } from "./exportEventUtils";
 
 /**

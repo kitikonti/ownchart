@@ -5,7 +5,7 @@
  * remaining correct if the project ever includes tests/ in tsconfig.
  */
 
-import type { TaskId, HexColor } from "../../src/types/branded.types";
+import type { TaskId, HexColor } from "@/types/branded.types";
 
 /** Shorthand cast: string → TaskId (for test data). */
 export function tid(value: string): TaskId {

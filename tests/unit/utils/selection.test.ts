@@ -3,8 +3,8 @@
  */
 
 import { describe, it, expect } from 'vitest';
-import { findTopmostSelectedTaskId } from '../../../src/utils/selection';
-import type { Task } from '../../../src/types/chart.types';
+import { findTopmostSelectedTaskId } from '@/utils/selection';
+import type { Task } from '@/types/chart.types';
 import { tid } from '../../helpers/branded';
 
 function makeTask(id: string, order: number, extra: Partial<Task> = {}): Task {

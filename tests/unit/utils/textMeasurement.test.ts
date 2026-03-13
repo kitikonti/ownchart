@@ -10,8 +10,8 @@ import {
   calculateColumnWidth,
   calculateLabelPaddingDays,
   resetMeasureContextForTesting,
-} from "../../../src/utils/textMeasurement";
-import type { Task } from "../../../src/types/chart.types";
+} from "@/utils/textMeasurement";
+import type { Task } from "@/types/chart.types";
 
 // Helper to create test tasks
 function createTask(name: string, overrides: Partial<Task> = {}): Task {

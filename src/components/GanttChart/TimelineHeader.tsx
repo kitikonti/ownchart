@@ -6,24 +6,20 @@
 
 import { useMemo } from "react";
 import { parseISO, format, getWeek, isSameDay, startOfDay } from "date-fns";
-import type { TimelineScale, ScaleConfig } from "../../utils/timelineUtils";
+import type { TimelineScale, ScaleConfig } from "@/utils/timelineUtils";
 import {
   dateToPixel,
   addUnit,
   getUnitStart,
   getScaleConfig,
   FIXED_BASE_PIXELS_PER_DAY,
-} from "../../utils/timelineUtils";
-import { SVG_FONT_FAMILY } from "../../utils/export/constants";
+} from "@/utils/timelineUtils";
+import { SVG_FONT_FAMILY } from "@/utils/export/constants";
 import {
   useFirstDayOfWeek,
   useWeekNumberingSystem,
-} from "../../store/slices/userPreferencesSlice";
-import {
-  COLORS,
-  TIMELINE_HEADER,
-  TYPOGRAPHY,
-} from "../../styles/design-tokens";
+} from "@/store/slices/userPreferencesSlice";
+import { COLORS, TIMELINE_HEADER, TYPOGRAPHY } from "@/styles/design-tokens";
 
 interface TimelineHeaderProps {
   scale: TimelineScale;

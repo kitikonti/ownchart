@@ -2,7 +2,7 @@
  * Utility functions for task type operations.
  */
 
-import type { TaskType } from "../types/chart.types";
+import type { TaskType } from "@/types/chart.types";
 
 /** Cycle order for tasks without children: task → summary → milestone → task */
 const CHILDLESS_CYCLE: readonly TaskType[] = ["task", "summary", "milestone"];

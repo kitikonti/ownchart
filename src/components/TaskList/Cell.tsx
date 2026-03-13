@@ -6,17 +6,17 @@
  */
 
 import { memo, useRef, type KeyboardEvent, type MouseEvent } from "react";
-import { useTaskStore, type EditableField } from "../../store/slices/taskSlice";
-import { useCellEdit } from "../../hooks/useCellEdit";
-import type { Task } from "../../types/chart.types";
-import type { TaskId } from "../../types/branded.types";
-import { type ColumnDefinition } from "../../config/tableColumns";
-import { ARROW_NAV } from "../../config/keyboardNavigation";
+import { useTaskStore, type EditableField } from "@/store/slices/taskSlice";
+import { useCellEdit } from "@/hooks/useCellEdit";
+import type { Task } from "@/types/chart.types";
+import type { TaskId } from "@/types/branded.types";
+import { type ColumnDefinition } from "@/config/tableColumns";
+import { ARROW_NAV } from "@/config/keyboardNavigation";
 import {
   getCellStyle,
   getActiveCellStyle,
   getEditingCellStyle,
-} from "../../styles/cellStyles";
+} from "@/styles/cellStyles";
 
 export interface CellProps {
   /** Task ID */

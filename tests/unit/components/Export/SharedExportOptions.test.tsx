@@ -5,9 +5,9 @@
 
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { render, screen, fireEvent } from "@testing-library/react";
-import { SharedExportOptions } from "../../../../src/components/Export/SharedExportOptions";
-import type { SharedExportOptionsProps } from "../../../../src/components/Export/SharedExportOptions";
-import { DEFAULT_EXPORT_OPTIONS } from "../../../../src/utils/export/types";
+import { SharedExportOptions } from "@/components/Export/SharedExportOptions";
+import type { SharedExportOptionsProps } from "@/components/Export/SharedExportOptions";
+import { DEFAULT_EXPORT_OPTIONS } from "@/utils/export/types";
 
 function createDefaultProps(
   overrides: Partial<SharedExportOptionsProps> = {}

@@ -13,10 +13,10 @@ import {
 } from "react";
 import { createRoot, type Root } from "react-dom/client";
 import { toCanvas } from "html-to-image";
-import type { Task } from "../types/chart.types";
-import type { ExportOptions } from "../utils/export/types";
-import { ExportRenderer } from "../components/Export/ExportRenderer";
-import { calculateExportDimensions } from "../utils/export/exportLayout";
+import type { Task } from "@/types/chart.types";
+import type { ExportOptions } from "@/utils/export/types";
+import { ExportRenderer } from "@/components/Export/ExportRenderer";
+import { calculateExportDimensions } from "@/utils/export/exportLayout";
 
 /** Debounce delay before triggering a new preview render */
 const DEBOUNCE_MS = 300;

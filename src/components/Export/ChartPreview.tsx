@@ -12,9 +12,9 @@ import {
   WarningOctagon,
   Image,
 } from "@phosphor-icons/react";
-import type { ReadabilityStatus } from "../../utils/export/types";
-import { COLORS } from "../../styles/design-tokens";
-import { estimateFileSize } from "../../utils/export";
+import type { ReadabilityStatus } from "@/utils/export/types";
+import { COLORS } from "@/styles/design-tokens";
+import { estimateFileSize } from "@/utils/export";
 
 /** Checkerboard tile color for transparent background visualization */
 const CHECKERBOARD_TILE_COLOR = COLORS.neutral[100];

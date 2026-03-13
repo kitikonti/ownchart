@@ -5,7 +5,7 @@
  */
 
 import { memo } from "react";
-import { COLORS } from "../../styles/design-tokens";
+import { COLORS } from "@/styles/design-tokens";
 
 // ---------------------------------------------------------------------------
 // Geometry constants

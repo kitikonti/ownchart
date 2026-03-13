@@ -2,9 +2,9 @@ import { describe, it, expect } from "vitest";
 import {
   prepareRowPaste,
   applySingleLevelSummaryRecalculation,
-} from "../../../../src/utils/clipboard/prepareRowPaste";
-import type { Task } from "../../../../src/types/chart.types";
-import type { Dependency } from "../../../../src/types/dependency.types";
+} from "@/utils/clipboard/prepareRowPaste";
+import type { Task } from "@/types/chart.types";
+import type { Dependency } from "@/types/dependency.types";
 import { tid, hex } from "../../../helpers/branded";
 
 const createTask = (

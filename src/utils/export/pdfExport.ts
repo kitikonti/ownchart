@@ -11,8 +11,8 @@ import "svg2pdf.js";
 import { createRoot } from "react-dom/client";
 import type { Root } from "react-dom/client";
 import { createElement } from "react";
-import type { Task } from "../../types/chart.types";
-import type { TaskId } from "../../types/branded.types";
+import type { Task } from "@/types/chart.types";
+import type { TaskId } from "@/types/branded.types";
 import type {
   ExportOptions,
   PdfExportOptions,
@@ -31,12 +31,12 @@ import {
   type PageDimensions,
   type PdfColor,
 } from "./pdfLayout";
-import { ExportRenderer } from "../../components/Export/ExportRenderer";
+import { ExportRenderer } from "@/components/Export/ExportRenderer";
 import { calculateExportDimensions } from "./exportLayout";
 import { calculateTaskTableWidth } from "./calculations";
-import { buildFlattenedTaskList } from "../hierarchy";
-import { type DateFormat } from "../../types/preferences.types";
-import { formatDateByPreference } from "../dateUtils";
+import { buildFlattenedTaskList } from "@/utils/hierarchy";
+import { type DateFormat } from "@/types/preferences.types";
+import { formatDateByPreference } from "@/utils/dateUtils";
 import {
   HEADER_HEIGHT,
   SVG_FONT_FAMILY,
@@ -46,7 +46,7 @@ import {
   SVG_NS,
   REACT_RENDER_WAIT_MS,
 } from "./constants";
-import { APP_CONFIG } from "../../config/appConfig";
+import { APP_CONFIG } from "@/config/appConfig";
 import { registerInterFont } from "./interFont";
 import {
   waitForFonts,
@@ -62,7 +62,7 @@ import {
   type TaskTableHeaderOptions,
   type TaskTableRowsOptions,
 } from "./taskTableRenderer";
-import type { ColorModeState } from "../../types/colorMode.types";
+import type { ColorModeState } from "@/types/colorMode.types";
 
 // =============================================================================
 // PDF Rendering Constants

@@ -13,17 +13,21 @@
  */
 
 import { memo, useRef, type RefObject } from "react";
-import { ChartCanvas, TimelineHeader, SelectionHighlight } from "../GanttChart";
-import { ContextMenu } from "../ContextMenu/ContextMenu";
-import { useTaskStore } from "../../store/slices/taskSlice";
-import { useChartStore } from "../../store/slices/chartSlice";
-import { useHeaderDateSelection } from "../../hooks/useHeaderDateSelection";
+import {
+  ChartCanvas,
+  TimelineHeader,
+  SelectionHighlight,
+} from "@/components/GanttChart";
+import { ContextMenu } from "@/components/ContextMenu/ContextMenu";
+import { useTaskStore } from "@/store/slices/taskSlice";
+import { useChartStore } from "@/store/slices/chartSlice";
+import { useHeaderDateSelection } from "@/hooks/useHeaderDateSelection";
 import {
   HEADER_HEIGHT,
   HIDDEN_SCROLLBAR_STYLE,
   OVERFLOW_Y_CLIP_STYLE,
-} from "../../config/layoutConstants";
-import type { Task } from "../../types/chart.types";
+} from "@/config/layoutConstants";
+import type { Task } from "@/types/chart.types";
 
 interface TimelinePanelProps {
   timelineHeaderScrollRef: RefObject<HTMLDivElement>;

@@ -3,8 +3,8 @@
  * Used for copy/paste operations to preserve internal dependencies.
  */
 
-import type { Task } from "../../types/chart.types";
-import type { Dependency } from "../../types/dependency.types";
+import type { Task } from "@/types/chart.types";
+import type { Dependency } from "@/types/dependency.types";
 
 /**
  * Collect dependencies where BOTH tasks are in the set (internal dependencies).

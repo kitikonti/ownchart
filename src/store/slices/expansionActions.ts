@@ -3,7 +3,7 @@
  * Handles collapse/expand of summary tasks.
  */
 
-import type { TaskId } from "../../types/branded.types";
+import type { TaskId } from "@/types/branded.types";
 import { useFileStore } from "./fileSlice";
 import type { TaskSliceSet, TaskActions, TaskState } from "./taskSlice";
 

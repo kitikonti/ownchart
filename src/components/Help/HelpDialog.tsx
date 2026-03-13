@@ -13,10 +13,10 @@ import {
   memo,
 } from "react";
 import { Question, Command } from "@phosphor-icons/react";
-import { Modal } from "../common/Modal";
-import { Button } from "../common/Button";
-import { Alert } from "../common/Alert";
-import { useUIStore } from "../../store/slices/uiSlice";
+import { Modal } from "@/components/common/Modal";
+import { Button } from "@/components/common/Button";
+import { Alert } from "@/components/common/Alert";
+import { useUIStore } from "@/store/slices/uiSlice";
 import {
   HELP_TABS,
   isMac,
@@ -24,8 +24,8 @@ import {
   type HelpTab,
   type HelpSection,
   type HelpTabId,
-} from "../../config/helpContent";
-import { useHelpSearch } from "../../hooks/useHelpSearch";
+} from "@/config/helpContent";
+import { useHelpSearch } from "@/hooks/useHelpSearch";
 import { HelpSearchInput } from "./HelpSearchInput";
 import { HelpSectionList } from "./HelpSectionList";
 import { GettingStartedTab } from "./GettingStartedTab";

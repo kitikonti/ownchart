@@ -4,10 +4,10 @@
 
 import { describe, it, expect } from "vitest";
 import { render, screen } from "@testing-library/react";
-import { PdfPreview } from "../../../../src/components/Export/PdfPreview";
-import type { PdfPreviewProps } from "../../../../src/components/Export/PdfPreview";
-import { DEFAULT_PDF_OPTIONS } from "../../../../src/utils/export/types";
-import type { ReadabilityStatus } from "../../../../src/utils/export/types";
+import { PdfPreview } from "@/components/Export/PdfPreview";
+import type { PdfPreviewProps } from "@/components/Export/PdfPreview";
+import { DEFAULT_PDF_OPTIONS } from "@/utils/export/types";
+import type { ReadabilityStatus } from "@/utils/export/types";
 
 const baseProps: PdfPreviewProps = {
   previewDataUrl: null,

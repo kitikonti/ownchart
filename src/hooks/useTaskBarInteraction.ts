@@ -7,11 +7,11 @@
  */
 
 import { useState, useCallback, useRef, useEffect } from "react";
-import { addDays } from "../utils/dateUtils";
-import { getEffectiveTasksToMove } from "../utils/hierarchy";
-import { useTaskStore } from "../store/slices/taskSlice";
-import { useChartStore } from "../store/slices/chartSlice";
-import { getSVGPoint } from "../utils/svgUtils";
+import { addDays } from "@/utils/dateUtils";
+import { getEffectiveTasksToMove } from "@/utils/hierarchy";
+import { useTaskStore } from "@/store/slices/taskSlice";
+import { useChartStore } from "@/store/slices/chartSlice";
+import { getSVGPoint } from "@/utils/svgUtils";
 import {
   detectInteractionZone,
   determineInteractionMode,
@@ -21,16 +21,16 @@ import {
   calculateDeltaDaysFromDates,
   buildMoveUpdates,
   buildResizeUpdate,
-} from "../utils/taskBarDragHelpers";
-import type { Task } from "../types/chart.types";
-import type { TaskId } from "../types/branded.types";
-import type { TimelineScale, TaskBarGeometry } from "../utils/timelineUtils";
+} from "@/utils/taskBarDragHelpers";
+import type { Task } from "@/types/chart.types";
+import type { TaskId } from "@/types/branded.types";
+import type { TimelineScale, TaskBarGeometry } from "@/utils/timelineUtils";
 import type {
   DragState,
   CursorType,
   InteractionMode,
   WorkingDaysContext,
-} from "../utils/taskBarDragHelpers";
+} from "@/utils/taskBarDragHelpers";
 
 export interface UseTaskBarInteractionReturn {
   mode: InteractionMode;

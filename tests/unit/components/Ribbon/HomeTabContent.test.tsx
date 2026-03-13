@@ -8,10 +8,10 @@
 
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { render, screen } from "@testing-library/react";
-import { HomeTabContent } from "../../../../src/components/Ribbon/HomeTabContent";
-import { useTaskStore } from "../../../../src/store/slices/taskSlice";
-import { useChartStore } from "../../../../src/store/slices/chartSlice";
-import { useHistoryStore } from "../../../../src/store/slices/historySlice";
+import { HomeTabContent } from "@/components/Ribbon/HomeTabContent";
+import { useTaskStore } from "@/store/slices/taskSlice";
+import { useChartStore } from "@/store/slices/chartSlice";
+import { useHistoryStore } from "@/store/slices/historySlice";
 
 // Mock clipboard operations
 vi.mock("../../../../src/hooks/useClipboardOperations", () => ({

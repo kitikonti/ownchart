@@ -14,23 +14,23 @@ import {
   type RefObject,
 } from "react";
 
-import { useTaskStore, type EditableField } from "../store/slices/taskSlice";
-import { useChartStore } from "../store/slices/chartSlice";
-import { useUserPreferencesStore } from "../store/slices/userPreferencesSlice";
-import type { Task } from "../types/chart.types";
-import type { TaskId } from "../types/branded.types";
-import type { NavigationDirection } from "../types/task.types";
-import type { ColumnDefinition } from "../config/tableColumns";
-import type { WorkingDaysConfig } from "../types/preferences.types";
+import { useTaskStore, type EditableField } from "@/store/slices/taskSlice";
+import { useChartStore } from "@/store/slices/chartSlice";
+import { useUserPreferencesStore } from "@/store/slices/userPreferencesSlice";
+import type { Task } from "@/types/chart.types";
+import type { TaskId } from "@/types/branded.types";
+import type { NavigationDirection } from "@/types/task.types";
+import type { ColumnDefinition } from "@/config/tableColumns";
+import type { WorkingDaysConfig } from "@/types/preferences.types";
 import {
   calculateDuration,
   formatDateByPreference,
   toISODateString,
-} from "../utils/dateUtils";
+} from "@/utils/dateUtils";
 import {
   calculateWorkingDays,
   addWorkingDays,
-} from "../utils/workingDaysCalculator";
+} from "@/utils/workingDaysCalculator";
 
 // Error message constant to keep validation logic DRY and testable.
 export const DATE_RANGE_ERROR = "End date must be after start date";

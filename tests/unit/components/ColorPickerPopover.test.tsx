@@ -8,8 +8,8 @@
 
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { render, screen, fireEvent } from '@testing-library/react';
-import { ColorPickerPopover } from '../../../src/components/TaskList/CellEditors/ColorPickerPopover';
-import { useTaskStore } from '../../../src/store/slices/taskSlice';
+import { ColorPickerPopover } from '@/components/TaskList/CellEditors/ColorPickerPopover';
+import { useTaskStore } from '@/store/slices/taskSlice';
 
 // Mock Zustand store used by useProjectColors
 vi.mock('../../../src/store/slices/taskSlice', () => ({

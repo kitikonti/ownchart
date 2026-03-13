@@ -6,14 +6,14 @@
 
 import { useCallback } from "react";
 import toast from "react-hot-toast";
-import { useChartStore } from "../store/slices/chartSlice";
-import { useHistoryStore } from "../store/slices/historySlice";
-import { useFileStore } from "../store/slices/fileSlice";
-import { CommandType } from "../types/command.types";
-import { pluralize } from "../utils/stringUtils";
+import { useChartStore } from "@/store/slices/chartSlice";
+import { useHistoryStore } from "@/store/slices/historySlice";
+import { useFileStore } from "@/store/slices/fileSlice";
+import { CommandType } from "@/types/command.types";
+import { pluralize } from "@/utils/stringUtils";
 import { useFlattenedTasks } from "./useFlattenedTasks";
-import type { FlattenedTask } from "../utils/hierarchy";
-import type { TaskId } from "../types/branded.types";
+import type { FlattenedTask } from "@/utils/hierarchy";
+import type { TaskId } from "@/types/branded.types";
 
 interface UseHideOperationsResult {
   /** Hide tasks by IDs (includes descendants for summary tasks). Records undo command. */

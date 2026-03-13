@@ -6,8 +6,8 @@
 
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { renderHook } from "@testing-library/react";
-import { useTaskTableHeaderStore } from "../../../src/hooks/useTaskTableHeaderStore";
-import type { Task } from "../../../src/types/chart.types";
+import { useTaskTableHeaderStore } from "@/hooks/useTaskTableHeaderStore";
+import type { Task } from "@/types/chart.types";
 
 // ---------------------------------------------------------------------------
 // Mock
@@ -34,7 +34,7 @@ vi.mock("../../../src/store/slices/taskSlice", () => ({
   ),
 }));
 
-import { useTaskStore } from "../../../src/store/slices/taskSlice";
+import { useTaskStore } from "@/store/slices/taskSlice";
 
 // ---------------------------------------------------------------------------
 // Tests

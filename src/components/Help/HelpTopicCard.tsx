@@ -5,11 +5,7 @@
 
 import type { ReactElement } from "react";
 import { Command } from "@phosphor-icons/react";
-import {
-  type HelpTopic,
-  resolveShortcut,
-  isMac,
-} from "../../config/helpContent";
+import { type HelpTopic, resolveShortcut, isMac } from "@/config/helpContent";
 
 // ---------------------------------------------------------------------------
 // KeyBadge / ShortcutKeys (extracted from old HelpPanel)

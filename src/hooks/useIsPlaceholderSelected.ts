@@ -6,8 +6,8 @@
  * when the selection set changes without affecting the placeholder row.
  */
 
-import { useTaskStore } from "../store/slices/taskSlice";
-import { PLACEHOLDER_TASK_ID } from "../config/placeholderRow";
+import { useTaskStore } from "@/store/slices/taskSlice";
+import { PLACEHOLDER_TASK_ID } from "@/config/placeholderRow";
 
 /** Focused selector — only re-renders when the placeholder's selection state changes. */
 export function useIsPlaceholderSelected(): boolean {

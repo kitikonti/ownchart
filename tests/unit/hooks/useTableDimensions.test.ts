@@ -6,11 +6,11 @@
 
 import { describe, it, expect, beforeEach } from "vitest";
 import { renderHook, act } from "@testing-library/react";
-import { useTableDimensions } from "../../../src/hooks/useTableDimensions";
-import { useTaskStore } from "../../../src/store/slices/taskSlice";
-import { useChartStore } from "../../../src/store/slices/chartSlice";
-import { useUserPreferencesStore } from "../../../src/store/slices/userPreferencesSlice";
-import { DENSITY_CONFIG } from "../../../src/config/densityConfig";
+import { useTableDimensions } from "@/hooks/useTableDimensions";
+import { useTaskStore } from "@/store/slices/taskSlice";
+import { useChartStore } from "@/store/slices/chartSlice";
+import { useUserPreferencesStore } from "@/store/slices/userPreferencesSlice";
+import { DENSITY_CONFIG } from "@/config/densityConfig";
 
 // ─── Setup ───
 

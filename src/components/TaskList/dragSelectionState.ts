@@ -11,7 +11,7 @@
  * to prevent state leaking between test cases.
  */
 
-import type { TaskId } from "../../types/branded.types";
+import type { TaskId } from "@/types/branded.types";
 
 /** Callback invoked when the pointer moves over a new row during drag-select. */
 type DragSelectHandler = (taskId: TaskId) => void;

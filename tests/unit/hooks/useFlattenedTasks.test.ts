@@ -7,10 +7,10 @@
 
 import { describe, it, expect, beforeEach } from "vitest";
 import { renderHook, act } from "@testing-library/react";
-import { useFlattenedTasks } from "../../../src/hooks/useFlattenedTasks";
-import { useTaskStore } from "../../../src/store/slices/taskSlice";
-import { useChartStore } from "../../../src/store/slices/chartSlice";
-import type { Task } from "../../../src/types/chart.types";
+import { useFlattenedTasks } from "@/hooks/useFlattenedTasks";
+import { useTaskStore } from "@/store/slices/taskSlice";
+import { useChartStore } from "@/store/slices/chartSlice";
+import type { Task } from "@/types/chart.types";
 
 // ─── Helpers ───
 

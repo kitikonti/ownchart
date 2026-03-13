@@ -6,13 +6,13 @@ import { describe, it, expect } from "vitest";
 import {
   calculateLayoutDimensions,
   type LayoutDimensionsInput,
-} from "../../../src/utils/layoutCalculations";
+} from "@/utils/layoutCalculations";
 import {
   HEADER_HEIGHT,
   SCROLLBAR_HEIGHT,
   MIN_OVERFLOW,
   PLACEHOLDER_ROW_COUNT,
-} from "../../../src/config/layoutConstants";
+} from "@/config/layoutConstants";
 
 describe("calculateLayoutDimensions", () => {
   const defaults: LayoutDimensionsInput = {

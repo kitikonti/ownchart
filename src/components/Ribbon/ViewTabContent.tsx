@@ -22,11 +22,11 @@ import {
   ToolbarButton,
   ToolbarGroup,
   ToolbarSeparator,
-} from "../Toolbar/ToolbarPrimitives";
-import { TOOLBAR } from "../../styles/design-tokens";
+} from "@/components/Toolbar/ToolbarPrimitives";
+import { TOOLBAR } from "@/styles/design-tokens";
 import { HolidayRegionPopover } from "./HolidayRegionPopover";
 import { ZoomDropdown } from "./ZoomDropdown";
-import { useViewTabActions } from "../../hooks/useViewTabActions";
+import { useViewTabActions } from "@/hooks/useViewTabActions";
 
 const ICON_SIZE = TOOLBAR.iconSize;
 

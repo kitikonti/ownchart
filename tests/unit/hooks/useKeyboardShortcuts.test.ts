@@ -7,13 +7,13 @@ import { renderHook } from '@testing-library/react';
 import {
   useKeyboardShortcuts,
   isTextInputElement,
-} from '../../../src/hooks/useKeyboardShortcuts';
-import { useHistoryStore } from '../../../src/store/slices/historySlice';
-import { useChartStore } from '../../../src/store/slices/chartSlice';
-import { useTaskStore } from '../../../src/store/slices/taskSlice';
-import { useUIStore } from '../../../src/store/slices/uiSlice';
-import { useClipboardStore } from '../../../src/store/slices/clipboardSlice';
-import type { Task } from '../../../src/types/chart.types';
+} from '@/hooks/useKeyboardShortcuts';
+import { useHistoryStore } from '@/store/slices/historySlice';
+import { useChartStore } from '@/store/slices/chartSlice';
+import { useTaskStore } from '@/store/slices/taskSlice';
+import { useUIStore } from '@/store/slices/uiSlice';
+import { useClipboardStore } from '@/store/slices/clipboardSlice';
+import type { Task } from '@/types/chart.types';
 
 // ── Module mocks ────────────────────────────────────────────────────────────
 

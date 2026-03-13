@@ -1,6 +1,6 @@
 import { describe, it, expect } from "vitest";
-import { shouldShowLabel } from "../../src/components/Ribbon/RibbonCollapseContext";
-import type { CollapseLevel } from "../../src/components/Ribbon/RibbonCollapseContext";
+import { shouldShowLabel } from "@/components/Ribbon/RibbonCollapseContext";
+import type { CollapseLevel } from "@/components/Ribbon/RibbonCollapseContext";
 
 describe("shouldShowLabel", () => {
   it("level 0 → all labels visible", () => {

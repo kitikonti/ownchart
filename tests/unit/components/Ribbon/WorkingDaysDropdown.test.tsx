@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeEach, vi } from "vitest";
 import { render, screen, fireEvent } from "@testing-library/react";
-import { WorkingDaysDropdown } from "../../../../src/components/Ribbon/WorkingDaysDropdown";
-import { useChartStore } from "../../../../src/store/slices/chartSlice";
+import { WorkingDaysDropdown } from "@/components/Ribbon/WorkingDaysDropdown";
+import { useChartStore } from "@/store/slices/chartSlice";
 
 vi.mock("../../../../src/services/holidayService", () => ({
   holidayService: {

@@ -4,7 +4,7 @@
  */
 
 import { describe, it, expect } from "vitest";
-import { FILE_VERSION, SCHEMA_VERSION } from "../../../src/config/version";
+import { FILE_VERSION, SCHEMA_VERSION } from "@/config/version";
 
 describe("FILE_VERSION", () => {
   it("should be a valid semver string (MAJOR.MINOR.PATCH)", () => {

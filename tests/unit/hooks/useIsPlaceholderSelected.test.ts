@@ -6,7 +6,7 @@
 
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { renderHook } from "@testing-library/react";
-import { useIsPlaceholderSelected } from "../../../src/hooks/useIsPlaceholderSelected";
+import { useIsPlaceholderSelected } from "@/hooks/useIsPlaceholderSelected";
 
 // ---------------------------------------------------------------------------
 // Mock
@@ -22,7 +22,7 @@ vi.mock("../../../src/config/placeholderRow", () => ({
   PLACEHOLDER_TASK_ID: "__new_task_placeholder__",
 }));
 
-import { useTaskStore } from "../../../src/store/slices/taskSlice";
+import { useTaskStore } from "@/store/slices/taskSlice";
 
 function mockSelection(selectedTaskIds: string[]): void {
   vi.mocked(useTaskStore).mockImplementation(

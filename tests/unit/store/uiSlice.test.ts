@@ -1,10 +1,10 @@
 import { describe, it, expect, beforeEach } from 'vitest';
-import { useUIStore } from '../../../src/store/slices/uiSlice';
+import { useUIStore } from '@/store/slices/uiSlice';
 import {
   DEFAULT_EXPORT_OPTIONS,
   DEFAULT_PDF_OPTIONS,
   DEFAULT_SVG_OPTIONS,
-} from '../../../src/utils/export/types';
+} from '@/utils/export/types';
 
 describe('uiSlice', () => {
   beforeEach(() => {

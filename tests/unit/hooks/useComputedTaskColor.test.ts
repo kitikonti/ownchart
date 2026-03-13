@@ -12,10 +12,10 @@ import { renderHook } from "@testing-library/react";
 import {
   useComputedTaskColor,
   useComputedTaskColors,
-} from "../../../src/hooks/useComputedTaskColor";
-import type { Task } from "../../../src/types/chart.types";
-import type { ColorModeState } from "../../../src/types/colorMode.types";
-import { DEFAULT_COLOR_MODE_STATE } from "../../../src/config/colorModeDefaults";
+} from "@/hooks/useComputedTaskColor";
+import type { Task } from "@/types/chart.types";
+import type { ColorModeState } from "@/types/colorMode.types";
+import { DEFAULT_COLOR_MODE_STATE } from "@/config/colorModeDefaults";
 import { makeTask } from "../helpers/taskFactory";
 
 // ---------------------------------------------------------------------------
@@ -30,8 +30,8 @@ vi.mock("../../../src/store/slices/taskSlice", () => ({
   useTaskStore: vi.fn(),
 }));
 
-import { useChartStore } from "../../../src/store/slices/chartSlice";
-import { useTaskStore } from "../../../src/store/slices/taskSlice";
+import { useChartStore } from "@/store/slices/chartSlice";
+import { useTaskStore } from "@/store/slices/taskSlice";
 
 // ---------------------------------------------------------------------------
 // Helpers

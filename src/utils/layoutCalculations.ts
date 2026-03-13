@@ -8,7 +8,7 @@ import {
   SCROLLBAR_HEIGHT,
   MIN_OVERFLOW,
   PLACEHOLDER_ROW_COUNT,
-} from "../config/layoutConstants";
+} from "@/config/layoutConstants";
 
 export interface LayoutDimensionsInput {
   /** Number of visible (flattened) tasks */

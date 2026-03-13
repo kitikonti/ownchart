@@ -12,17 +12,17 @@
 
 import { describe, it, expect, beforeEach, vi } from "vitest";
 import { renderHook, act } from "@testing-library/react";
-import { useChartStore } from "../../../src/store/slices/chartSlice";
-import { useTaskStore } from "../../../src/store/slices/taskSlice";
-import { useHistoryStore } from "../../../src/store/slices/historySlice";
-import { useFileStore } from "../../../src/store/slices/fileSlice";
-import { buildFlattenedTaskList } from "../../../src/utils/hierarchy";
+import { useChartStore } from "@/store/slices/chartSlice";
+import { useTaskStore } from "@/store/slices/taskSlice";
+import { useHistoryStore } from "@/store/slices/historySlice";
+import { useFileStore } from "@/store/slices/fileSlice";
+import { buildFlattenedTaskList } from "@/utils/hierarchy";
 import {
   computeHiddenIdsInSelection,
   useHideOperations,
-} from "../../../src/hooks/useHideOperations";
-import { CommandType } from "../../../src/types/command.types";
-import type { Task } from "../../../src/types/chart.types";
+} from "@/hooks/useHideOperations";
+import { CommandType } from "@/types/command.types";
+import type { Task } from "@/types/chart.types";
 
 // Mock react-hot-toast
 vi.mock("react-hot-toast", () => ({

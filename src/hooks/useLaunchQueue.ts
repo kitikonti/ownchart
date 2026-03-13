@@ -13,7 +13,7 @@ import toast from "react-hot-toast";
 import {
   loadFileIntoApp,
   showLoadNotifications,
-} from "../utils/fileOperations/loadFromFile";
+} from "@/utils/fileOperations/loadFromFile";
 
 // Dev-mode singleton guard: detect accidental double-mounting.
 // The LaunchQueue API silently overwrites the previous consumer when

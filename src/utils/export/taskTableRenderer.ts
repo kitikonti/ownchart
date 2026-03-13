@@ -3,11 +3,11 @@
  * Renders the task list portion of exports as native SVG elements.
  */
 
-import type { Task } from "../../types/chart.types";
-import type { HexColor } from "../../types/branded.types";
-import type { UiDensity, DensityConfig } from "../../types/preferences.types";
-import type { ColorModeState } from "../../types/colorMode.types";
-import { DENSITY_CONFIG } from "../../config/densityConfig";
+import type { Task } from "@/types/chart.types";
+import type { HexColor } from "@/types/branded.types";
+import type { UiDensity, DensityConfig } from "@/types/preferences.types";
+import type { ColorModeState } from "@/types/colorMode.types";
+import { DENSITY_CONFIG } from "@/config/densityConfig";
 import type {
   ExportColumnKey,
   ExportDataColumnKey,
@@ -32,7 +32,7 @@ import {
   BORDER_STROKE_WIDTH,
   LETTER_SPACING_WIDER,
 } from "./constants";
-import { computeAllTaskColors } from "../computeTaskColor";
+import { computeAllTaskColors } from "@/utils/computeTaskColor";
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 

@@ -23,9 +23,9 @@ import {
   hslToHex,
   lightenColor,
 } from "./colorUtils";
-import type { Task } from "../types/chart.types";
-import type { ColorModeState } from "../types/colorMode.types";
-import type { HexColor } from "../types/branded.types";
+import type { Task } from "@/types/chart.types";
+import type { ColorModeState } from "@/types/colorMode.types";
+import type { HexColor } from "@/types/branded.types";
 
 /**
  * Build a Map<id, Task> for O(1) parent lookups during tree traversal.

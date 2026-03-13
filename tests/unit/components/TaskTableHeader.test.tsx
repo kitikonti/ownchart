@@ -5,7 +5,7 @@
 
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { render, screen, fireEvent } from "@testing-library/react";
-import { TaskTableHeader } from "../../../src/components/TaskList/TaskTableHeader";
+import { TaskTableHeader } from "@/components/TaskList/TaskTableHeader";
 
 // ---------------------------------------------------------------------------
 // Mocks

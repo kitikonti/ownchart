@@ -7,9 +7,9 @@ import {
   getSystemClipboardType,
   clearSystemClipboard,
   isClipboardApiAvailable,
-} from "../../../../src/utils/clipboard/systemClipboard";
-import type { Task } from "../../../../src/types/chart.types";
-import type { Dependency } from "../../../../src/types/dependency.types";
+} from "@/utils/clipboard/systemClipboard";
+import type { Task } from "@/types/chart.types";
+import type { Dependency } from "@/types/dependency.types";
 import { tid, hex } from "../../../helpers/branded";
 
 // Mock clipboard storage

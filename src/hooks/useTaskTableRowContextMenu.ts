@@ -5,9 +5,9 @@
  */
 
 import { useMemo, useState, useCallback } from "react";
-import type { ContextMenuItem } from "../components/ContextMenu/ContextMenu";
-import type { TaskId } from "../types/branded.types";
-import { useTaskStore } from "../store/slices/taskSlice";
+import type { ContextMenuItem } from "@/components/ContextMenu/ContextMenu";
+import type { TaskId } from "@/types/branded.types";
+import { useTaskStore } from "@/store/slices/taskSlice";
 import type { TaskContextMenuState } from "./contextMenuItemBuilders";
 import { useFullTaskContextMenuItems } from "./useFullTaskContextMenuItems";
 

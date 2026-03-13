@@ -4,8 +4,8 @@
  */
 
 import { useEffect } from "react";
-import { useFileStore } from "../store/slices/fileSlice";
-import { APP_CONFIG } from "../config/appConfig";
+import { useFileStore } from "@/store/slices/fileSlice";
+import { APP_CONFIG } from "@/config/appConfig";
 
 /** Prefix prepended to the document title when there are unsaved changes. */
 const DIRTY_INDICATOR = "*";

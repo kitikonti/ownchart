@@ -15,8 +15,8 @@
  */
 
 import { memo } from "react";
-import { buildClassNames } from "../../utils/buildClassNames";
-import { PEER_FOCUS_RING, PEER_ACTIVE_SCALE } from "../../styles/inputStyles";
+import { buildClassNames } from "@/utils/buildClassNames";
+import { PEER_FOCUS_RING, PEER_ACTIVE_SCALE } from "@/styles/inputStyles";
 
 export interface RadioProps {
   checked: boolean;

@@ -5,7 +5,7 @@
 import { createRef } from "react";
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { render, screen } from "@testing-library/react";
-import { Button, warnIfIconOnlyWithoutLabel, resetWarnedIconOnlyKeys } from "../../../../src/components/common/Button";
+import { Button, warnIfIconOnlyWithoutLabel, resetWarnedIconOnlyKeys } from "@/components/common/Button";
 
 // ---------------------------------------------------------------------------
 // Button rendering

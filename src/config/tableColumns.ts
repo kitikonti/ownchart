@@ -3,16 +3,16 @@
  * Defines column properties, widths, and editing behavior.
  */
 
-import type { EditableField } from "../types/task.types";
-import type { ValidationResult } from "../utils/validation";
-import type { DensityConfig } from "../types/preferences.types";
+import type { EditableField } from "@/types/task.types";
+import type { ValidationResult } from "@/utils/validation";
+import type { DensityConfig } from "@/types/preferences.types";
 import {
   validateTaskName,
   validateDateString,
   validateDuration,
   validateProgress,
   validateColor,
-} from "../utils/validation";
+} from "@/utils/validation";
 
 /**
  * Known column identifiers.

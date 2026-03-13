@@ -10,9 +10,9 @@ import { render } from "@testing-library/react";
 import {
   GridLines,
   getVerticalLineStroke,
-} from "../../../../src/components/GanttChart/GridLines";
-import { GRID } from "../../../../src/styles/design-tokens";
-import type { TimelineScale } from "../../../../src/utils/timelineUtils";
+} from "@/components/GanttChart/GridLines";
+import { GRID } from "@/styles/design-tokens";
+import type { TimelineScale } from "@/utils/timelineUtils";
 
 // ---------------------------------------------------------------------------
 // Mocks
@@ -33,7 +33,7 @@ vi.mock("../../../../src/services/holidayService", () => ({
   },
 }));
 
-import { holidayService } from "../../../../src/services/holidayService";
+import { holidayService } from "@/services/holidayService";
 
 // ---------------------------------------------------------------------------
 // Helpers

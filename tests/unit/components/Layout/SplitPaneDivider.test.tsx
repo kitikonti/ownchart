@@ -5,7 +5,7 @@
 
 import { describe, it, expect, vi } from "vitest";
 import { render, screen, fireEvent } from "@testing-library/react";
-import { SplitPaneDivider } from "../../../../src/components/Layout/SplitPaneDivider";
+import { SplitPaneDivider } from "@/components/Layout/SplitPaneDivider";
 
 const defaultProps = {
   onMouseDown: vi.fn(),

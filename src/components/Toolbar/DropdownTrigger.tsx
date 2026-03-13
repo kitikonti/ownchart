@@ -12,11 +12,11 @@
 
 import type { ReactNode, ReactElement, RefCallback } from "react";
 import { CaretDown } from "@phosphor-icons/react";
-import { COLORS, TOOLBAR } from "../../styles/design-tokens";
+import { COLORS, TOOLBAR } from "@/styles/design-tokens";
 import {
   useCollapseLevel,
   shouldShowLabel,
-} from "../Ribbon/RibbonCollapseContext";
+} from "@/components/Ribbon/RibbonCollapseContext";
 
 interface DropdownTriggerProps {
   /** Whether the dropdown is currently open */

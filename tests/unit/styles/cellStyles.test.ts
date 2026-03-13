@@ -8,8 +8,8 @@ import {
   getCellStyle,
   getActiveCellStyle,
   getEditingCellStyle,
-} from "../../../src/styles/cellStyles";
-import { CELL, Z_INDEX } from "../../../src/styles/design-tokens";
+} from "@/styles/cellStyles";
+import { CELL, Z_INDEX } from "@/styles/design-tokens";
 
 describe("getCellStyle", () => {
   it("returns density-aware CSS custom properties", () => {

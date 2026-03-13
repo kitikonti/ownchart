@@ -4,8 +4,8 @@
 
 import { describe, it, expect } from "vitest";
 import { render, screen } from "@testing-library/react";
-import { GettingStartedTab } from "../../../../src/components/Help/GettingStartedTab";
-import type { HelpSection } from "../../../../src/config/helpContent";
+import { GettingStartedTab } from "@/components/Help/GettingStartedTab";
+import type { HelpSection } from "@/config/helpContent";
 
 // ---------------------------------------------------------------------------
 // Test fixtures

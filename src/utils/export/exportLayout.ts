@@ -5,16 +5,16 @@
  * ExportRenderer (via useMemo) and calculateExportDimensions (public API).
  */
 
-import type { Task } from "../../types/chart.types";
-import type { TaskId } from "../../types/branded.types";
-import type { DensityConfig } from "../../types/preferences.types";
-import { DENSITY_CONFIG } from "../../config/densityConfig";
-import { getDateRange } from "../dateUtils";
-import type { FlattenedTask } from "../hierarchy";
-import { buildFlattenedTaskList } from "../hierarchy";
-import type { TimelineScale } from "../timelineUtils";
-import { getTimelineScale } from "../timelineUtils";
-import { MS_PER_DAY } from "../timeConstants";
+import type { Task } from "@/types/chart.types";
+import type { TaskId } from "@/types/branded.types";
+import type { DensityConfig } from "@/types/preferences.types";
+import { DENSITY_CONFIG } from "@/config/densityConfig";
+import { getDateRange } from "@/utils/dateUtils";
+import type { FlattenedTask } from "@/utils/hierarchy";
+import { buildFlattenedTaskList } from "@/utils/hierarchy";
+import type { TimelineScale } from "@/utils/timelineUtils";
+import { getTimelineScale } from "@/utils/timelineUtils";
+import { MS_PER_DAY } from "@/utils/timeConstants";
 import {
   calculateTaskTableWidth,
   calculateEffectiveZoom,

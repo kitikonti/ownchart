@@ -4,9 +4,9 @@
  */
 
 import { describe, it, expect } from 'vitest';
-import { serializeToGanttFile } from '../../../../src/utils/fileOperations/serialize';
-import type { Task } from '../../../../src/types/chart.types';
-import type { ViewSettings } from '../../../../src/utils/fileOperations/types';
+import { serializeToGanttFile } from '@/utils/fileOperations/serialize';
+import type { Task } from '@/types/chart.types';
+import type { ViewSettings } from '@/utils/fileOperations/types';
 
 describe('File Operations - Serialization', () => {
   const createSampleTasks = (): Task[] => [

@@ -1,15 +1,15 @@
 import { describe, it, expect, beforeEach, vi } from "vitest";
-import { useTaskStore } from "../../../src/store/slices/taskSlice";
-import { useHistoryStore } from "../../../src/store/slices/historySlice";
-import { useDependencyStore } from "../../../src/store/slices/dependencySlice";
-import { useChartStore } from "../../../src/store/slices/chartSlice";
-import { useFileStore } from "../../../src/store/slices/fileSlice";
-import { CommandType } from "../../../src/types/command.types";
-import type { Command } from "../../../src/types/command.types";
-import type { Task } from "../../../src/types/chart.types";
-import type { Dependency } from "../../../src/types/dependency.types";
-import type { ColorModeState } from "../../../src/types/colorMode.types";
-import { DEFAULT_COLOR_MODE_STATE } from "../../../src/config/colorModeDefaults";
+import { useTaskStore } from "@/store/slices/taskSlice";
+import { useHistoryStore } from "@/store/slices/historySlice";
+import { useDependencyStore } from "@/store/slices/dependencySlice";
+import { useChartStore } from "@/store/slices/chartSlice";
+import { useFileStore } from "@/store/slices/fileSlice";
+import { CommandType } from "@/types/command.types";
+import type { Command } from "@/types/command.types";
+import type { Task } from "@/types/chart.types";
+import type { Dependency } from "@/types/dependency.types";
+import type { ColorModeState } from "@/types/colorMode.types";
+import { DEFAULT_COLOR_MODE_STATE } from "@/config/colorModeDefaults";
 import { tid, hex } from "../../helpers/branded";
 
 // Mock react-hot-toast as a callable function with .success/.error

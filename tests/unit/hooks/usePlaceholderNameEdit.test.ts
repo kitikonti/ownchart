@@ -8,9 +8,9 @@
 
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { renderHook, act } from "@testing-library/react";
-import { usePlaceholderNameEdit } from "../../../src/hooks/usePlaceholderNameEdit";
-import { useTaskStore } from "../../../src/store/slices/taskSlice";
-import { PLACEHOLDER_TASK_ID } from "../../../src/config/placeholderRow";
+import { usePlaceholderNameEdit } from "@/hooks/usePlaceholderNameEdit";
+import { useTaskStore } from "@/store/slices/taskSlice";
+import { PLACEHOLDER_TASK_ID } from "@/config/placeholderRow";
 import type { KeyboardEvent, MouseEvent } from "react";
 import type { RefObject } from "react";
 

@@ -5,7 +5,7 @@
 
 import { describe, it, expect, beforeEach } from "vitest";
 import { act } from "@testing-library/react";
-import { useChartStore } from "../../../src/store/slices/chartSlice";
+import { useChartStore } from "@/store/slices/chartSlice";
 
 describe("Chart Store - View Settings", () => {
   beforeEach(() => {

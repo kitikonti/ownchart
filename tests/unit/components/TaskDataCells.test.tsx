@@ -6,9 +6,9 @@
 
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { render, screen, fireEvent } from "@testing-library/react";
-import { TaskDataCells } from "../../../src/components/TaskList/TaskDataCells";
-import type { Task } from "../../../src/types/chart.types";
-import type { ColumnDefinition } from "../../../src/config/tableColumns";
+import { TaskDataCells } from "@/components/TaskList/TaskDataCells";
+import type { Task } from "@/types/chart.types";
+import type { ColumnDefinition } from "@/config/tableColumns";
 
 // ---------------------------------------------------------------------------
 // Mocks
@@ -102,8 +102,8 @@ vi.mock(
   })
 );
 
-import { useTaskStore } from "../../../src/store/slices/taskSlice";
-import { useChartStore } from "../../../src/store/slices/chartSlice";
+import { useTaskStore } from "@/store/slices/taskSlice";
+import { useChartStore } from "@/store/slices/chartSlice";
 
 // ---------------------------------------------------------------------------
 // Helpers

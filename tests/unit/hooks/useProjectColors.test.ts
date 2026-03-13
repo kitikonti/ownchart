@@ -6,12 +6,12 @@
 
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { renderHook } from "@testing-library/react";
-import { useProjectColors } from "../../../src/hooks/useProjectColors";
+import { useProjectColors } from "@/hooks/useProjectColors";
 import {
   getAllSwatches,
   CURATED_SWATCHES,
-} from "../../../src/config/colorSwatches";
-import type { Task } from "../../../src/types/chart.types";
+} from "@/config/colorSwatches";
+import type { Task } from "@/types/chart.types";
 import { makeTask } from "../helpers/taskFactory";
 
 // ---------------------------------------------------------------------------
@@ -22,7 +22,7 @@ vi.mock("../../../src/store/slices/taskSlice", () => ({
   useTaskStore: vi.fn(),
 }));
 
-import { useTaskStore } from "../../../src/store/slices/taskSlice";
+import { useTaskStore } from "@/store/slices/taskSlice";
 
 function setupTasks(tasks: Task[]): void {
   vi.mocked(useTaskStore).mockImplementation(

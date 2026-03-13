@@ -10,7 +10,7 @@
  */
 
 import { useRef, useState, useEffect, useCallback } from "react";
-import type { CollapseLevel } from "../components/Ribbon/RibbonCollapseContext";
+import type { CollapseLevel } from "@/components/Ribbon/RibbonCollapseContext";
 
 /**
  * Maximum value of CollapseLevel — must equal THRESHOLDS.length and the

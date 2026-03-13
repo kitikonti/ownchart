@@ -15,10 +15,10 @@ import {
   getHiddenGap,
   getHiddenGapAbove,
   useTaskRowData,
-} from "../../../src/hooks/useTaskRowData";
-import { useTaskStore } from "../../../src/store/slices/taskSlice";
-import { useChartStore } from "../../../src/store/slices/chartSlice";
-import type { Task } from "../../../src/types/chart.types";
+} from "@/hooks/useTaskRowData";
+import { useTaskStore } from "@/store/slices/taskSlice";
+import { useChartStore } from "@/store/slices/chartSlice";
+import type { Task } from "@/types/chart.types";
 
 // react-hot-toast is indirectly imported through the store; suppress it in tests.
 vi.mock("react-hot-toast", () => ({

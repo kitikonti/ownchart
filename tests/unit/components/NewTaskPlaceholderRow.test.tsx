@@ -6,7 +6,7 @@
 
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { render, screen, fireEvent } from "@testing-library/react";
-import { NewTaskPlaceholderRow } from "../../../src/components/TaskList/NewTaskPlaceholderRow";
+import { NewTaskPlaceholderRow } from "@/components/TaskList/NewTaskPlaceholderRow";
 
 // ---------------------------------------------------------------------------
 // Mocks
@@ -62,8 +62,8 @@ vi.mock("../../../src/hooks/usePlaceholderContextMenu", () => ({
   })),
 }));
 
-import { useTaskStore } from "../../../src/store/slices/taskSlice";
-import { usePlaceholderContextMenu } from "../../../src/hooks/usePlaceholderContextMenu";
+import { useTaskStore } from "@/store/slices/taskSlice";
+import { usePlaceholderContextMenu } from "@/hooks/usePlaceholderContextMenu";
 
 // ---------------------------------------------------------------------------
 // Helpers

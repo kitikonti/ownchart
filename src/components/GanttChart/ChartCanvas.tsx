@@ -9,17 +9,17 @@
  */
 
 import { useRef, useEffect, useMemo, useState, useCallback, memo } from "react";
-import type { Task } from "../../types/chart.types";
-import type { TaskId } from "../../types/branded.types";
-import { useChartStore } from "../../store/slices/chartSlice";
-import { useTaskStore } from "../../store/slices/taskSlice";
-import { useDensityConfig } from "../../store/slices/userPreferencesSlice";
-import { useZoom } from "../../hooks/useZoom";
-import { useDependencyDrag } from "../../hooks/useDependencyDrag";
+import type { Task } from "@/types/chart.types";
+import type { TaskId } from "@/types/branded.types";
+import { useChartStore } from "@/store/slices/chartSlice";
+import { useTaskStore } from "@/store/slices/taskSlice";
+import { useDensityConfig } from "@/store/slices/userPreferencesSlice";
+import { useZoom } from "@/hooks/useZoom";
+import { useDependencyDrag } from "@/hooks/useDependencyDrag";
 import {
   useMarqueeSelection,
   type TaskGeometry,
-} from "../../hooks/useMarqueeSelection";
+} from "@/hooks/useMarqueeSelection";
 import { GridLines } from "./GridLines";
 import { TaskBar } from "./TaskBar";
 import { TodayMarker } from "./TodayMarker";
@@ -28,12 +28,12 @@ import { ConnectionHandles } from "./ConnectionHandles";
 import {
   getTaskBarGeometry,
   type DensityGeometryConfig,
-} from "../../utils/timelineUtils";
-import { COLORS } from "../../styles/design-tokens";
-import { SCROLLBAR_HEIGHT, MIN_OVERFLOW } from "../../config/layoutConstants";
-import { useTimelineBarContextMenu } from "../../hooks/useTimelineBarContextMenu";
-import { useTimelineAreaContextMenu } from "../../hooks/useTimelineAreaContextMenu";
-import { ContextMenu } from "../ContextMenu/ContextMenu";
+} from "@/utils/timelineUtils";
+import { COLORS } from "@/styles/design-tokens";
+import { SCROLLBAR_HEIGHT, MIN_OVERFLOW } from "@/config/layoutConstants";
+import { useTimelineBarContextMenu } from "@/hooks/useTimelineBarContextMenu";
+import { useTimelineAreaContextMenu } from "@/hooks/useTimelineAreaContextMenu";
+import { ContextMenu } from "@/components/ContextMenu/ContextMenu";
 import { SelectionHighlight } from "./SelectionHighlight";
 
 // ---------------------------------------------------------------------------

@@ -6,17 +6,17 @@
 
 import { describe, it, expect, beforeEach, vi } from "vitest";
 import { renderHook, act } from "@testing-library/react";
-import { useTaskTableRowContextMenu } from "../../../src/hooks/useTaskTableRowContextMenu";
-import { useTimelineBarContextMenu } from "../../../src/hooks/useTimelineBarContextMenu";
-import { useTableHeaderContextMenu } from "../../../src/hooks/useTableHeaderContextMenu";
-import { useTimelineAreaContextMenu } from "../../../src/hooks/useTimelineAreaContextMenu";
-import { usePlaceholderContextMenu } from "../../../src/hooks/usePlaceholderContextMenu";
-import { useTaskStore } from "../../../src/store/slices/taskSlice";
-import { useChartStore } from "../../../src/store/slices/chartSlice";
-import { useClipboardStore } from "../../../src/store/slices/clipboardSlice";
-import type { Task } from "../../../src/types/chart.types";
-import type { FlattenedTask } from "../../../src/utils/hierarchy";
-import { PLACEHOLDER_TASK_ID } from "../../../src/config/placeholderRow";
+import { useTaskTableRowContextMenu } from "@/hooks/useTaskTableRowContextMenu";
+import { useTimelineBarContextMenu } from "@/hooks/useTimelineBarContextMenu";
+import { useTableHeaderContextMenu } from "@/hooks/useTableHeaderContextMenu";
+import { useTimelineAreaContextMenu } from "@/hooks/useTimelineAreaContextMenu";
+import { usePlaceholderContextMenu } from "@/hooks/usePlaceholderContextMenu";
+import { useTaskStore } from "@/store/slices/taskSlice";
+import { useChartStore } from "@/store/slices/chartSlice";
+import { useClipboardStore } from "@/store/slices/clipboardSlice";
+import type { Task } from "@/types/chart.types";
+import type { FlattenedTask } from "@/utils/hierarchy";
+import { PLACEHOLDER_TASK_ID } from "@/config/placeholderRow";
 
 // Mock external dependencies
 vi.mock("react-hot-toast", () => ({
@@ -42,7 +42,7 @@ vi.mock("../../../src/hooks/useFlattenedTasks", () => ({
   })),
 }));
 
-import { useFlattenedTasks } from "../../../src/hooks/useFlattenedTasks";
+import { useFlattenedTasks } from "@/hooks/useFlattenedTasks";
 
 // ─── Helpers ───
 

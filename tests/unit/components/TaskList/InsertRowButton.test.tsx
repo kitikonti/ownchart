@@ -5,7 +5,7 @@
 
 import { describe, it, expect, vi } from "vitest";
 import { render, screen, fireEvent } from "@testing-library/react";
-import { InsertRowButton } from "../../../../src/components/TaskList/InsertRowButton";
+import { InsertRowButton } from "@/components/TaskList/InsertRowButton";
 
 const defaultProps = {
   position: "above" as const,

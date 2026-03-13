@@ -1,6 +1,6 @@
 import { describe, it, expect } from "vitest";
-import { validateDragOperation } from "../../../src/utils/dragValidation";
-import type { Task } from "../../../src/types/chart.types";
+import { validateDragOperation } from "@/utils/dragValidation";
+import type { Task } from "@/types/chart.types";
 
 // Helper to create a minimal task
 function createTask(

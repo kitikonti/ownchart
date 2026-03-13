@@ -1,8 +1,8 @@
 import { describe, it, expect, beforeEach } from "vitest";
 import { render, screen, fireEvent } from "@testing-library/react";
-import { FormatTabContent } from "../../../../src/components/Ribbon/FormatTabContent";
-import { useChartStore } from "../../../../src/store/slices/chartSlice";
-import { useUserPreferencesStore } from "../../../../src/store/slices/userPreferencesSlice";
+import { FormatTabContent } from "@/components/Ribbon/FormatTabContent";
+import { useChartStore } from "@/store/slices/chartSlice";
+import { useUserPreferencesStore } from "@/store/slices/userPreferencesSlice";
 
 describe("FormatTabContent", () => {
   beforeEach(() => {

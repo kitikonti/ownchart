@@ -18,8 +18,8 @@ import type {
   FirstDayOfWeek,
   WeekNumberingSystem,
   TaskLabelPosition,
-} from "../types/preferences.types";
-import type { DropdownOption } from "../types/ui.types";
+} from "@/types/preferences.types";
+import type { DropdownOption } from "@/types/ui.types";
 import { DENSITY_CONFIG } from "./densityConfig";
 
 // ─────────────────────────────────────────────────────────────────────────────

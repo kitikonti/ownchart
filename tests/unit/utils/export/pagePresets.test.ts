@@ -3,12 +3,12 @@
  */
 
 import { describe, it, expect } from "vitest";
-import { EXPORT_QUICK_PRESETS } from "../../../../src/utils/export/pagePresets";
+import { EXPORT_QUICK_PRESETS } from "@/utils/export/pagePresets";
 import {
   PNG_EXPORT_DPI,
   calculatePixelDimensions,
-} from "../../../../src/utils/export/dpi";
-import { PDF_PAGE_SIZES } from "../../../../src/utils/export/types";
+} from "@/utils/export/dpi";
+import { PDF_PAGE_SIZES } from "@/utils/export/types";
 
 describe("EXPORT_QUICK_PRESETS", () => {
   it("contains at least one preset", () => {

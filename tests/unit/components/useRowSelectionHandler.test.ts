@@ -5,12 +5,12 @@
 
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { renderHook, act } from "@testing-library/react";
-import { useRowSelectionHandler } from "../../../src/components/TaskList/useRowSelectionHandler";
-import type { TaskId } from "../../../src/types/branded.types";
+import { useRowSelectionHandler } from "@/components/TaskList/useRowSelectionHandler";
+import type { TaskId } from "@/types/branded.types";
 import {
   dragState,
   resetDragState,
-} from "../../../src/components/TaskList/dragSelectionState";
+} from "@/components/TaskList/dragSelectionState";
 
 // ---------------------------------------------------------------------------
 // Mocks

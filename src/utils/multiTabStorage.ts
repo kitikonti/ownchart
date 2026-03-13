@@ -20,10 +20,10 @@
  * }
  */
 
-import type { Task } from "../types/chart.types";
-import type { TaskId } from "../types/branded.types";
-import type { ColorModeState } from "../types/colorMode.types";
-import type { Dependency } from "../types/dependency.types";
+import type { Task } from "@/types/chart.types";
+import type { TaskId } from "@/types/branded.types";
+import type { ColorModeState } from "@/types/colorMode.types";
+import type { Dependency } from "@/types/dependency.types";
 
 export const STORAGE_KEY = "ownchart-multi-tab-state";
 export const LEGACY_V1_STORAGE_KEY = "gantt-app-state";

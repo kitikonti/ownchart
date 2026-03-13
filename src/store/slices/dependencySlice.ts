@@ -12,14 +12,14 @@ import type {
   DependencyUpdatableFields,
   AddDependencyResult,
   CycleDetectionResult,
-} from "../../types/dependency.types";
-import type { Task } from "../../types/chart.types";
-import type { TaskId } from "../../types/branded.types";
-import { CommandType } from "../../types/command.types";
+} from "@/types/dependency.types";
+import type { Task } from "@/types/chart.types";
+import type { TaskId } from "@/types/branded.types";
+import { CommandType } from "@/types/command.types";
 import { useTaskStore } from "./taskSlice";
 import { useHistoryStore } from "./historySlice";
 import { useFileStore } from "./fileSlice";
-import { wouldCreateCycle } from "../../utils/graph/cycleDetection";
+import { wouldCreateCycle } from "@/utils/graph/cycleDetection";
 
 /**
  * Validates whether a new dependency can be created.

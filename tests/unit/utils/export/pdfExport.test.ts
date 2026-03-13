@@ -3,22 +3,22 @@
  */
 
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
-import type { Task } from "../../../../src/types/chart.types";
+import type { Task } from "@/types/chart.types";
 import type {
   ExportOptions,
   PdfExportOptions,
   PdfMargins,
-} from "../../../../src/utils/export/types";
-import { DEFAULT_PDF_OPTIONS, DEFAULT_EXPORT_OPTIONS } from "../../../../src/utils/export/types";
-import { DEFAULT_COLOR_MODE_STATE } from "../../../../src/config/colorModeDefaults";
+} from "@/utils/export/types";
+import { DEFAULT_PDF_OPTIONS, DEFAULT_EXPORT_OPTIONS } from "@/utils/export/types";
+import { DEFAULT_COLOR_MODE_STATE } from "@/config/colorModeDefaults";
 import { tid } from "../../../helpers/branded";
 import {
   resolvePdfMetadata,
   resolveEffectiveOptions,
   computeChartPlacement,
   type ReservedSpace,
-} from "../../../../src/utils/export/pdfExport";
-import { pxToMm } from "../../../../src/utils/export/pdfLayout";
+} from "@/utils/export/pdfExport";
+import { pxToMm } from "@/utils/export/pdfLayout";
 
 // Mock functions for jsPDF
 const mockSave = vi.fn();
@@ -76,7 +76,7 @@ vi.mock("jspdf", () => ({
 // performs DOM/DPI calculations incompatible with the test environment.
 vi.mock("../../../../src/utils/export/pdfLayout", async (importOriginal) => {
   const actual =
-    await importOriginal<typeof import("../../../../src/utils/export/pdfLayout")>();
+    await importOriginal<typeof import("@/utils/export/pdfLayout")>();
   return {
     ...actual,
     calculatePdfFitToWidth: vi.fn(() => 1234),
@@ -119,12 +119,12 @@ describe("pdfExport", () => {
 
   describe("exportToPdf", () => {
     it("should be importable", async () => {
-      const { exportToPdf } = await import("../../../../src/utils/export/pdfExport");
+      const { exportToPdf } = await import("@/utils/export/pdfExport");
       expect(typeof exportToPdf).toBe("function");
     }, 15000); // Longer timeout due to large font base64 data loading
 
     it("should create PDF with correct orientation", async () => {
-      const { exportToPdf } = await import("../../../../src/utils/export/pdfExport");
+      const { exportToPdf } = await import("@/utils/export/pdfExport");
 
       await exportToPdf({
         tasks: [createTestTask()],
@@ -143,7 +143,7 @@ describe("pdfExport", () => {
     });
 
     it("should create PDF with portrait orientation", async () => {
-      const { exportToPdf } = await import("../../../../src/utils/export/pdfExport");
+      const { exportToPdf } = await import("@/utils/export/pdfExport");
 
       await exportToPdf({
         tasks: [createTestTask()],
@@ -161,7 +161,7 @@ describe("pdfExport", () => {
     });
 
     it("should save PDF with generated filename", async () => {
-      const { exportToPdf } = await import("../../../../src/utils/export/pdfExport");
+      const { exportToPdf } = await import("@/utils/export/pdfExport");
 
       await exportToPdf({
         tasks: [createTestTask()],
@@ -180,7 +180,7 @@ describe("pdfExport", () => {
     });
 
     it("should use default filename when no project name", async () => {
-      const { exportToPdf } = await import("../../../../src/utils/export/pdfExport");
+      const { exportToPdf } = await import("@/utils/export/pdfExport");
 
       await exportToPdf({
         tasks: [createTestTask()],
@@ -198,7 +198,7 @@ describe("pdfExport", () => {
     });
 
     it("should set PDF metadata from projectTitle and projectAuthor", async () => {
-      const { exportToPdf } = await import("../../../../src/utils/export/pdfExport");
+      const { exportToPdf } = await import("@/utils/export/pdfExport");
 
       await exportToPdf({
         tasks: [createTestTask()],
@@ -229,7 +229,7 @@ describe("pdfExport", () => {
     });
 
     it("should call progress callback at various stages", async () => {
-      const { exportToPdf } = await import("../../../../src/utils/export/pdfExport");
+      const { exportToPdf } = await import("@/utils/export/pdfExport");
       const progressValues: number[] = [];
 
       await exportToPdf({
@@ -250,7 +250,7 @@ describe("pdfExport", () => {
     });
 
     it("should render header project name when showProjectName is enabled", async () => {
-      const { exportToPdf } = await import("../../../../src/utils/export/pdfExport");
+      const { exportToPdf } = await import("@/utils/export/pdfExport");
 
       await exportToPdf({
         tasks: [createTestTask()],
@@ -283,7 +283,7 @@ describe("pdfExport", () => {
     });
 
     it("should render footer project name when showProjectName is enabled", async () => {
-      const { exportToPdf } = await import("../../../../src/utils/export/pdfExport");
+      const { exportToPdf } = await import("@/utils/export/pdfExport");
 
       await exportToPdf({
         tasks: [createTestTask()],
@@ -316,7 +316,7 @@ describe("pdfExport", () => {
     });
 
     it("should handle empty task list", async () => {
-      const { exportToPdf } = await import("../../../../src/utils/export/pdfExport");
+      const { exportToPdf } = await import("@/utils/export/pdfExport");
 
       await exportToPdf({
         tasks: [],
@@ -332,7 +332,7 @@ describe("pdfExport", () => {
     });
 
     it("should handle custom date range mode", async () => {
-      const { exportToPdf } = await import("../../../../src/utils/export/pdfExport");
+      const { exportToPdf } = await import("@/utils/export/pdfExport");
 
       await exportToPdf({
         tasks: [createTestTask()],
@@ -353,7 +353,7 @@ describe("pdfExport", () => {
     });
 
     it("should handle visible date range mode", async () => {
-      const { exportToPdf } = await import("../../../../src/utils/export/pdfExport");
+      const { exportToPdf } = await import("@/utils/export/pdfExport");
 
       await exportToPdf({
         tasks: [createTestTask()],
@@ -376,7 +376,7 @@ describe("pdfExport", () => {
     });
 
     it("should handle custom zoom mode", async () => {
-      const { exportToPdf } = await import("../../../../src/utils/export/pdfExport");
+      const { exportToPdf } = await import("@/utils/export/pdfExport");
 
       await exportToPdf({
         tasks: [createTestTask()],
@@ -396,7 +396,7 @@ describe("pdfExport", () => {
     });
 
     it("should use A4 page size correctly", async () => {
-      const { exportToPdf } = await import("../../../../src/utils/export/pdfExport");
+      const { exportToPdf } = await import("@/utils/export/pdfExport");
 
       await exportToPdf({
         tasks: [createTestTask()],
@@ -414,7 +414,7 @@ describe("pdfExport", () => {
     });
 
     it("should use A3 page size correctly", async () => {
-      const { exportToPdf } = await import("../../../../src/utils/export/pdfExport");
+      const { exportToPdf } = await import("@/utils/export/pdfExport");
 
       await exportToPdf({
         tasks: [createTestTask()],
@@ -432,7 +432,7 @@ describe("pdfExport", () => {
     });
 
     it("should include task table when columns selected", async () => {
-      const { exportToPdf } = await import("../../../../src/utils/export/pdfExport");
+      const { exportToPdf } = await import("@/utils/export/pdfExport");
 
       await exportToPdf({
         tasks: [createTestTask()],
@@ -453,7 +453,7 @@ describe("pdfExport", () => {
 
   describe("filename generation", () => {
     it("generates filename with sanitized project name", async () => {
-      const { exportToPdf } = await import("../../../../src/utils/export/pdfExport");
+      const { exportToPdf } = await import("@/utils/export/pdfExport");
 
       await exportToPdf({
         tasks: [createTestTask()],
@@ -473,7 +473,7 @@ describe("pdfExport", () => {
     });
 
     it("handles special characters in project name", async () => {
-      const { exportToPdf } = await import("../../../../src/utils/export/pdfExport");
+      const { exportToPdf } = await import("@/utils/export/pdfExport");
 
       await exportToPdf({
         tasks: [createTestTask()],
@@ -493,7 +493,7 @@ describe("pdfExport", () => {
 
   describe("dependencies handling", () => {
     it("exports with includeDependencies flag enabled without errors", async () => {
-      const { exportToPdf } = await import("../../../../src/utils/export/pdfExport");
+      const { exportToPdf } = await import("@/utils/export/pdfExport");
 
       await exportToPdf({
         tasks: [createTestTask(), createTestTask({ id: "task-2", name: "Task 2" })],
@@ -514,7 +514,7 @@ describe("pdfExport", () => {
     });
 
     it("throws descriptive error when SVG embedding fails", async () => {
-      const { exportToPdf } = await import("../../../../src/utils/export/pdfExport");
+      const { exportToPdf } = await import("@/utils/export/pdfExport");
       mockSvg.mockRejectedValueOnce(new Error("svg2pdf internal failure"));
 
       await expect(

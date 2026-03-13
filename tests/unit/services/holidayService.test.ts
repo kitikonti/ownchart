@@ -8,7 +8,7 @@ import {
   holidayService,
   detectLocaleHolidayRegion,
   POPULAR_COUNTRY_CODES,
-} from "../../../src/services/holidayService";
+} from "@/services/holidayService";
 
 describe("HolidayService", () => {
   beforeEach(() => {

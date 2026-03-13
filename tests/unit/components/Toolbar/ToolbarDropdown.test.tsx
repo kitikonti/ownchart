@@ -5,9 +5,9 @@
 
 import { describe, it, expect, vi } from "vitest";
 import { render, screen, fireEvent } from "@testing-library/react";
-import { RibbonCollapseProvider } from "../../../../src/components/Ribbon/RibbonCollapseContext";
-import { ToolbarDropdown } from "../../../../src/components/Toolbar/ToolbarDropdown";
-import type { DropdownOption } from "../../../../src/types/ui.types";
+import { RibbonCollapseProvider } from "@/components/Ribbon/RibbonCollapseContext";
+import { ToolbarDropdown } from "@/components/Toolbar/ToolbarDropdown";
+import type { DropdownOption } from "@/types/ui.types";
 
 const OPTIONS: DropdownOption[] = [
   { value: "a", label: "Option A" },

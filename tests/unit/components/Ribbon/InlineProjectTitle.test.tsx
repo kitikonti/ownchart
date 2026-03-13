@@ -1,8 +1,8 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { render, screen, fireEvent } from "@testing-library/react";
-import { InlineProjectTitle } from "../../../../src/components/Ribbon/InlineProjectTitle";
-import { useChartStore } from "../../../../src/store/slices/chartSlice";
-import { useFileStore } from "../../../../src/store/slices/fileSlice";
+import { InlineProjectTitle } from "@/components/Ribbon/InlineProjectTitle";
+import { useChartStore } from "@/store/slices/chartSlice";
+import { useFileStore } from "@/store/slices/fileSlice";
 
 describe("InlineProjectTitle", () => {
   beforeEach(() => {

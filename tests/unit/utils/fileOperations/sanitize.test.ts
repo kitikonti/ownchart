@@ -7,20 +7,20 @@ import { describe, it, expect } from 'vitest';
 import {
   sanitizeGanttFile,
   SKIP_SANITIZE_KEYS,
-} from '../../../../src/utils/fileOperations/sanitize';
+} from '@/utils/fileOperations/sanitize';
 import {
   KNOWN_TASK_KEYS,
   KNOWN_DEPENDENCY_KEYS,
   DANGEROUS_KEYS,
   INTERNAL_KEYS,
   VALID_EXPORT_COLUMNS,
-} from '../../../../src/utils/fileOperations/constants';
-import type { SerializedDependency } from '../../../../src/utils/fileOperations/types';
-import { TASK_COLUMNS } from '../../../../src/config/tableColumns';
+} from '@/utils/fileOperations/constants';
+import type { SerializedDependency } from '@/utils/fileOperations/types';
+import { TASK_COLUMNS } from '@/config/tableColumns';
 import type {
   GanttFile,
   SerializedTask,
-} from '../../../../src/utils/fileOperations/types';
+} from '@/utils/fileOperations/types';
 
 describe('File Operations - Sanitization (XSS Prevention)', () => {
   const createBaseFile = (): GanttFile => ({

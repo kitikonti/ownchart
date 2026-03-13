@@ -10,8 +10,8 @@
  *  4. Move & order utilities – drag-selection filtering and order normalisation
  */
 
-import type { TaskId } from "../types/branded.types";
-import type { Task } from "../types/chart.types";
+import type { TaskId } from "@/types/branded.types";
+import type { Task } from "@/types/chart.types";
 import { calculateDuration, toISODateString } from "./dateUtils";
 
 // ─── Constants ────────────────────────────────────────────────────────────────

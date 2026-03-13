@@ -7,15 +7,15 @@
 
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { renderHook } from "@testing-library/react";
-import { useInfiniteScroll } from "../../../src/hooks/useInfiniteScroll";
-import { type TimelineScale, SCROLL_OFFSET_DAYS } from "../../../src/utils/timelineUtils";
+import { useInfiniteScroll } from "@/hooks/useInfiniteScroll";
+import { type TimelineScale, SCROLL_OFFSET_DAYS } from "@/utils/timelineUtils";
 import {
   INITIAL_BLOCK_MS,
   INFINITE_SCROLL_THRESHOLD,
   SCROLL_IDLE_MS,
   EXTEND_COOLDOWN_MS,
   EXTEND_DAYS,
-} from "../../../src/config/layoutConstants";
+} from "@/config/layoutConstants";
 
 /** Creates a minimal mock chart container element */
 function createMockChartContainer(): HTMLDivElement & {

@@ -4,17 +4,17 @@
  */
 
 import { describe, it, expect } from "vitest";
-import { calculatePdfFitToWidth } from "../../../../src/utils/export/pdfLayout";
+import { calculatePdfFitToWidth } from "@/utils/export/pdfLayout";
 import {
   calculateEffectiveZoom,
   calculateDurationDays,
   calculateTaskTableWidth,
   getEffectiveDateRange,
-} from "../../../../src/utils/export/calculations";
-import type { PdfExportOptions } from "../../../../src/utils/export/types";
-import { DEFAULT_EXPORT_OPTIONS } from "../../../../src/utils/export/types";
-import type { ExportOptions } from "../../../../src/utils/export/types";
-import type { Task } from "../../../../src/types/chart.types";
+} from "@/utils/export/calculations";
+import type { PdfExportOptions } from "@/utils/export/types";
+import { DEFAULT_EXPORT_OPTIONS } from "@/utils/export/types";
+import type { ExportOptions } from "@/utils/export/types";
+import type { Task } from "@/types/chart.types";
 
 const defaultPdfOptions: PdfExportOptions = {
   pageSize: "a4",

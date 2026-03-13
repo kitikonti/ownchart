@@ -5,8 +5,8 @@
 
 import { describe, it, expect, vi } from "vitest";
 import { render } from "@testing-library/react";
-import { DependencyDragPreview } from "../../../../src/components/GanttChart/DependencyDragPreview";
-import { COLORS } from "../../../../src/styles/design-tokens";
+import { DependencyDragPreview } from "@/components/GanttChart/DependencyDragPreview";
+import { COLORS } from "@/styles/design-tokens";
 
 // ---------------------------------------------------------------------------
 // Mock arrowPath utils

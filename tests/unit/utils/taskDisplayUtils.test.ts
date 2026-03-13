@@ -3,8 +3,8 @@
  */
 
 import { describe, it, expect } from "vitest";
-import { computeDisplayTask } from "../../../src/utils/taskDisplayUtils";
-import type { Task } from "../../../src/types/chart.types";
+import { computeDisplayTask } from "@/utils/taskDisplayUtils";
+import type { Task } from "@/types/chart.types";
 import { tid } from "../../helpers/branded";
 import { hex } from "../../helpers/branded";
 

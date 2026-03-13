@@ -14,18 +14,18 @@
  */
 
 import { useEffect, useRef } from "react";
-import { useHistoryStore } from "../store/slices/historySlice";
-import { useTaskStore } from "../store/slices/taskSlice";
-import { useChartStore } from "../store/slices/chartSlice";
-import { useUIStore } from "../store/slices/uiSlice";
-import { useClipboardStore } from "../store/slices/clipboardSlice";
+import { useHistoryStore } from "@/store/slices/historySlice";
+import { useTaskStore } from "@/store/slices/taskSlice";
+import { useChartStore } from "@/store/slices/chartSlice";
+import { useUIStore } from "@/store/slices/uiSlice";
+import { useClipboardStore } from "@/store/slices/clipboardSlice";
 import { useFileOperations } from "./useFileOperations";
 import { useClipboardOperations } from "./useClipboardOperations";
 import { useHideOperations } from "./useHideOperations";
-import { findTopmostSelectedTaskId } from "../utils/selection";
-import type { Task } from "../types/chart.types";
-import type { TaskId } from "../types/branded.types";
-import type { ActiveCell } from "../types/task.types";
+import { findTopmostSelectedTaskId } from "@/utils/selection";
+import type { Task } from "@/types/chart.types";
+import type { TaskId } from "@/types/branded.types";
+import type { ActiveCell } from "@/types/task.types";
 
 // ── OS detection ──────────────────────────────────────────────────────────────
 // Computed once at module load — environment-stable, never changes at runtime.

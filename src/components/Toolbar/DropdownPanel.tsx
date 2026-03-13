@@ -13,7 +13,7 @@
 
 import { memo, useMemo } from "react";
 import type { ReactNode, CSSProperties } from "react";
-import { buildClassNames } from "../../utils/buildClassNames";
+import { buildClassNames } from "@/utils/buildClassNames";
 
 export type DropdownPanelAlign = "left" | "right";
 

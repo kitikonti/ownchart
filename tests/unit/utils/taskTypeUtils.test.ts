@@ -4,7 +4,7 @@
  */
 
 import { describe, it, expect } from "vitest";
-import { getNextTaskType } from "../../../src/utils/taskTypeUtils";
+import { getNextTaskType } from "@/utils/taskTypeUtils";
 
 describe("getNextTaskType", () => {
   describe("without children", () => {

@@ -4,7 +4,7 @@
  */
 
 import type { GanttFile } from "./types";
-import { FILE_VERSION } from "../../config/version";
+import { FILE_VERSION } from "@/config/version";
 
 export interface Migration {
   fromVersion: string;

@@ -8,7 +8,7 @@ import {
   useDeviceDetection,
   NARROW_QUERY,
   COARSE_QUERY,
-} from "../../../src/hooks/useDeviceDetection";
+} from "@/hooks/useDeviceDetection";
 
 type ChangeListener = (e: MediaQueryListEvent) => void;
 

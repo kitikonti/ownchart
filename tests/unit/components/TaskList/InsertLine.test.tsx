@@ -5,8 +5,8 @@
 
 import { describe, it, expect } from "vitest";
 import { render } from "@testing-library/react";
-import { InsertLine } from "../../../../src/components/TaskList/InsertLine";
-import { INSERT_BUTTON_HIT_AREA } from "../../../../src/components/TaskList/rowNumberConfig";
+import { InsertLine } from "@/components/TaskList/InsertLine";
+import { INSERT_BUTTON_HIT_AREA } from "@/components/TaskList/rowNumberConfig";
 
 describe("InsertLine", () => {
   it("renders a div element", () => {

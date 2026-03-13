@@ -11,10 +11,10 @@ import {
   Question,
 } from "@phosphor-icons/react";
 
-import { Modal } from "../common/Modal";
-import { Button } from "../common/Button";
-import { Checkbox } from "../common/Checkbox";
-import { useUIStore } from "../../store/slices/uiSlice";
+import { Modal } from "@/components/common/Modal";
+import { Button } from "@/components/common/Button";
+import { Checkbox } from "@/components/common/Checkbox";
+import { useUIStore } from "@/store/slices/uiSlice";
 
 /** Delay (ms) before opening the help panel after the welcome modal closes. */
 const HELP_PANEL_OPEN_DELAY_MS = 100;

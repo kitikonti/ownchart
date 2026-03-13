@@ -6,7 +6,7 @@ import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import {
   formatDate,
   formatDateRange,
-} from "../../../../src/utils/export/dateFormatting";
+} from "@/utils/export/dateFormatting";
 
 describe("formatDate", () => {
   it("returns empty string for undefined", () => {

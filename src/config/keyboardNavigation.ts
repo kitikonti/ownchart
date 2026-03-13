@@ -4,7 +4,7 @@
  * Used by Cell.tsx and NewTaskPlaceholderRow.tsx for arrow-key → direction mapping.
  */
 
-import type { NavigationDirection } from "../types/task.types";
+import type { NavigationDirection } from "@/types/task.types";
 
 /**
  * Arrow keys mapped to navigation directions for grid cell navigation.

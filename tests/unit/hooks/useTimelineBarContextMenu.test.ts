@@ -5,9 +5,9 @@
 
 import { describe, it, expect, beforeEach, vi } from "vitest";
 import { renderHook, act } from "@testing-library/react";
-import { useTimelineBarContextMenu } from "../../../src/hooks/useTimelineBarContextMenu";
-import { useTaskStore } from "../../../src/store/slices/taskSlice";
-import type { Task } from "../../../src/types/chart.types";
+import { useTimelineBarContextMenu } from "@/hooks/useTimelineBarContextMenu";
+import { useTaskStore } from "@/store/slices/taskSlice";
+import type { Task } from "@/types/chart.types";
 
 // ─── Mocks ───
 

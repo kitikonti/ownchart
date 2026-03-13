@@ -8,10 +8,10 @@ import { renderHook, act } from "@testing-library/react";
 import {
   useHeaderDateSelection,
   normalizeSelection,
-} from "../../../src/hooks/useHeaderDateSelection";
-import { useChartStore } from "../../../src/store/slices/chartSlice";
-import type { TimelineScale } from "../../../src/utils/timelineUtils";
-import type { Task } from "../../../src/types/chart.types";
+} from "@/hooks/useHeaderDateSelection";
+import { useChartStore } from "@/store/slices/chartSlice";
+import type { TimelineScale } from "@/utils/timelineUtils";
+import type { Task } from "@/types/chart.types";
 
 // Create a realistic scale for testing
 function setupScale(): TimelineScale {

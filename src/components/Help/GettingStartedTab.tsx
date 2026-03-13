@@ -11,7 +11,7 @@ import {
   FloppyDisk,
   Keyboard,
 } from "@phosphor-icons/react";
-import { type HelpSection, resolveShortcut } from "../../config/helpContent";
+import { type HelpSection, resolveShortcut } from "@/config/helpContent";
 
 /**
  * Icon and background color mapping keyed by HelpTopic.id.

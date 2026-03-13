@@ -10,11 +10,11 @@
 
 import { memo, type ReactNode } from "react";
 import { Radio } from "./Radio";
-import { buildClassNames } from "../../utils/buildClassNames";
+import { buildClassNames } from "@/utils/buildClassNames";
 import {
   OPTION_CARD_LAYOUT,
   OPTION_CARD_MIN_HEIGHT,
-} from "../../styles/inputStyles";
+} from "@/styles/inputStyles";
 
 export interface RadioOptionCardProps {
   /** Radio group name */

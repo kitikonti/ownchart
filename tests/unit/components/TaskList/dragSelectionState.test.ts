@@ -10,8 +10,8 @@ import { describe, it, expect, afterEach } from "vitest";
 import {
   dragState,
   resetDragState,
-} from "../../../../src/components/TaskList/dragSelectionState";
-import type { TaskId } from "../../../../src/types/branded.types";
+} from "@/components/TaskList/dragSelectionState";
+import type { TaskId } from "@/types/branded.types";
 
 afterEach(() => {
   resetDragState();

@@ -6,9 +6,9 @@
  * when other cells' editing state changes.
  */
 
-import type { TaskId } from "../types/branded.types";
-import type { EditableField } from "../types/task.types";
-import { useTaskStore } from "../store/slices/taskSlice";
+import type { TaskId } from "@/types/branded.types";
+import type { EditableField } from "@/types/task.types";
+import { useTaskStore } from "@/store/slices/taskSlice";
 
 /** Focused selector — only re-renders when THIS cell's editing state changes. */
 export function useIsCellEditing(

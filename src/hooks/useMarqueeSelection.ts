@@ -4,7 +4,7 @@
  */
 
 import { useState, useCallback, useRef, useEffect } from "react";
-import type { TaskId } from "../types/branded.types";
+import type { TaskId } from "@/types/branded.types";
 
 // CSS selectors for interactive elements that should not start a marquee drag.
 // Defined as constants so a class-name rename is caught by a single update here.

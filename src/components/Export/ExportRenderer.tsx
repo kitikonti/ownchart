@@ -4,44 +4,41 @@
  */
 
 import { useMemo } from "react";
-import type { Task } from "../../types/chart.types";
-import type { TaskId } from "../../types/branded.types";
+import type { Task } from "@/types/chart.types";
+import type { TaskId } from "@/types/branded.types";
 import type {
   ExportOptions,
   ExportColumnKey,
   ExportDataColumnKey,
-} from "../../utils/export/types";
-import { DEFAULT_EXPORT_COLUMNS } from "../../utils/export/types";
+} from "@/utils/export/types";
+import { DEFAULT_EXPORT_COLUMNS } from "@/utils/export/types";
 import {
   calculateTaskTableWidth,
   calculateEffectiveZoom,
   getEffectiveDateRange,
   calculateDurationDays,
   calculateOptimalColumnWidths,
-} from "../../utils/export";
-import { getTimelineScale } from "../../utils/timelineUtils";
-import { getDateRange } from "../../utils/dateUtils";
-import { GridLines } from "../GanttChart/GridLines";
-import { TaskBar } from "../GanttChart/TaskBar";
-import { TodayMarker } from "../GanttChart/TodayMarker";
-import { DependencyArrows } from "../GanttChart/DependencyArrows";
-import { TimelineHeader } from "../GanttChart/TimelineHeader";
-import { TaskTypeIcon } from "../TaskList/TaskTypeIcon";
-import {
-  buildFlattenedTaskList,
-  type FlattenedTask,
-} from "../../utils/hierarchy";
-import type { DensityConfig } from "../../types/preferences.types";
-import { DENSITY_CONFIG } from "../../config/densityConfig";
-import { useChartStore } from "../../store/slices/chartSlice";
+} from "@/utils/export";
+import { getTimelineScale } from "@/utils/timelineUtils";
+import { getDateRange } from "@/utils/dateUtils";
+import { GridLines } from "@/components/GanttChart/GridLines";
+import { TaskBar } from "@/components/GanttChart/TaskBar";
+import { TodayMarker } from "@/components/GanttChart/TodayMarker";
+import { DependencyArrows } from "@/components/GanttChart/DependencyArrows";
+import { TimelineHeader } from "@/components/GanttChart/TimelineHeader";
+import { TaskTypeIcon } from "@/components/TaskList/TaskTypeIcon";
+import { buildFlattenedTaskList, type FlattenedTask } from "@/utils/hierarchy";
+import type { DensityConfig } from "@/types/preferences.types";
+import { DENSITY_CONFIG } from "@/config/densityConfig";
+import { useChartStore } from "@/store/slices/chartSlice";
 import {
   SVG_FONT_FAMILY,
   EXPORT_CHART_SVG_CLASS,
   EXPORT_TIMELINE_HEADER_SVG_CLASS,
-} from "../../utils/export/constants";
-import { getColumnDisplayValue } from "../../utils/export/columns";
-import { getComputedTaskColor } from "../../utils/computeTaskColor";
-import { HEADER_HEIGHT } from "../../config/layoutConstants";
+} from "@/utils/export/constants";
+import { getColumnDisplayValue } from "@/utils/export/columns";
+import { getComputedTaskColor } from "@/utils/computeTaskColor";
+import { HEADER_HEIGHT } from "@/config/layoutConstants";
 
 interface ExportRendererProps {
   tasks: Task[];

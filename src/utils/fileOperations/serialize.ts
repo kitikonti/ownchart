@@ -2,9 +2,9 @@
  * Serialization utilities for converting app state to GanttFile JSON
  */
 
-import type { Task } from "../../types/chart.types";
-import type { Dependency } from "../../types/dependency.types";
-import type { ExportOptions } from "../export/types";
+import type { Task } from "@/types/chart.types";
+import type { Dependency } from "@/types/dependency.types";
+import type { ExportOptions } from "@/utils/export/types";
 import type {
   GanttFile,
   SerializedTask,
@@ -12,8 +12,8 @@ import type {
   TaskWithExtras,
   ViewSettings,
 } from "./types";
-import { FILE_VERSION, SCHEMA_VERSION } from "../../config/version";
-import { DEFAULT_CHART_NAME } from "../../config/viewSettingsDefaults";
+import { FILE_VERSION, SCHEMA_VERSION } from "@/config/version";
+import { DEFAULT_CHART_NAME } from "@/config/viewSettingsDefaults";
 import {
   KNOWN_TASK_KEYS,
   KNOWN_DEPENDENCY_KEYS,

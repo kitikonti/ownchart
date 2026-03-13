@@ -3,7 +3,7 @@ import {
   generateFilename,
   downloadBlob,
   downloadCanvasAsPng,
-} from '../../../../src/utils/export/downloadPng';
+} from '@/utils/export/downloadPng';
 
 describe('generateFilename', () => {
   beforeEach(() => {

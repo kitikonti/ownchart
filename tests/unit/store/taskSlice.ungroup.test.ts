@@ -1,9 +1,9 @@
 import { describe, it, expect, beforeEach } from "vitest";
-import { useTaskStore } from "../../../src/store/slices/taskSlice";
-import { useHistoryStore } from "../../../src/store/slices/historySlice";
-import { useDependencyStore } from "../../../src/store/slices/dependencySlice";
-import type { Task } from "../../../src/types/chart.types";
-import type { Dependency } from "../../../src/types/dependency.types";
+import { useTaskStore } from "@/store/slices/taskSlice";
+import { useHistoryStore } from "@/store/slices/historySlice";
+import { useDependencyStore } from "@/store/slices/dependencySlice";
+import type { Task } from "@/types/chart.types";
+import type { Dependency } from "@/types/dependency.types";
 import { tid, hex } from "../../helpers/branded";
 
 function makeTask(

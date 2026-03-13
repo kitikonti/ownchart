@@ -10,14 +10,14 @@
 
 import { useMemo, useState, useEffect, useCallback, memo } from "react";
 import type { ReactNode, ReactElement, KeyboardEvent } from "react";
-import { useDropdown } from "../../hooks/useDropdown";
+import { useDropdown } from "@/hooks/useDropdown";
 import { DropdownTrigger } from "./DropdownTrigger";
 import { DropdownPanel } from "./DropdownPanel";
 import { DropdownItem } from "./DropdownItem";
-import type { DropdownOption } from "../../types/ui.types";
+import type { DropdownOption } from "@/types/ui.types";
 
 // Re-exported so existing imports from this file continue to work.
-export type { DropdownOption } from "../../types/ui.types";
+export type { DropdownOption } from "@/types/ui.types";
 
 const DEFAULT_DROPDOWN_LABEL = "Select";
 

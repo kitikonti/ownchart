@@ -10,8 +10,8 @@ import {
   format,
   getDay,
 } from "date-fns";
-import type { Task } from "../types/chart.types";
-import type { DateFormat } from "../types/preferences.types";
+import type { Task } from "@/types/chart.types";
+import type { DateFormat } from "@/types/preferences.types";
 
 /** Maps DateFormat preference values to date-fns format strings. */
 const DATE_FORMAT_PATTERNS: Record<DateFormat, string> = {

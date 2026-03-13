@@ -3,10 +3,10 @@
  * Used by both pdfExport.ts and svgExport.ts.
  */
 
-import { COLORS } from "../../styles/design-tokens";
+import { COLORS } from "@/styles/design-tokens";
 
 /** Height of the header row in pixels */
-export { HEADER_HEIGHT } from "../../config/layoutConstants";
+export { HEADER_HEIGHT } from "@/config/layoutConstants";
 
 /**
  * Wait time in ms after root.render() before reading the DOM.

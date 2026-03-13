@@ -6,7 +6,7 @@
 
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { renderHook, act } from "@testing-library/react";
-import { useTaskTableRowContextMenu } from "../../../src/hooks/useTaskTableRowContextMenu";
+import { useTaskTableRowContextMenu } from "@/hooks/useTaskTableRowContextMenu";
 
 // ---------------------------------------------------------------------------
 // Store mock

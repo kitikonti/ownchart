@@ -1,7 +1,7 @@
 import { describe, it, expect } from "vitest";
-import { prepareExportTasks } from "../../../../src/utils/export/prepareExportTasks";
-import { toTaskId } from "../../../../src/types/branded.types";
-import type { Task } from "../../../../src/types/chart.types";
+import { prepareExportTasks } from "@/utils/export/prepareExportTasks";
+import { toTaskId } from "@/types/branded.types";
+import type { Task } from "@/types/chart.types";
 
 function makeTask(id: string): Task {
   return {

@@ -18,24 +18,24 @@
  */
 
 import { useRef, useEffect } from "react";
-import { TaskTable } from "../TaskList/TaskTable";
-import { TaskTableHeader } from "../TaskList/TaskTableHeader";
-import { useTaskStore } from "../../store/slices/taskSlice";
-import { useChartStore } from "../../store/slices/chartSlice";
+import { TaskTable } from "@/components/TaskList/TaskTable";
+import { TaskTableHeader } from "@/components/TaskList/TaskTableHeader";
+import { useTaskStore } from "@/store/slices/taskSlice";
+import { useChartStore } from "@/store/slices/chartSlice";
 import { SplitPane } from "./SplitPane";
 import { TimelinePanel } from "./TimelinePanel";
-import { useTableDimensions } from "../../hooks/useTableDimensions";
-import { useFlattenedTasks } from "../../hooks/useFlattenedTasks";
-import { useSyncScroll } from "../../hooks/useSyncScroll";
-import { useInfiniteScroll } from "../../hooks/useInfiniteScroll";
-import { useContainerDimensions } from "../../hooks/useContainerDimensions";
-import { usePreventVerticalScroll } from "../../hooks/usePreventVerticalScroll";
-import { useDensityConfig } from "../../store/slices/userPreferencesSlice";
-import { calculateLayoutDimensions } from "../../utils/layoutCalculations";
+import { useTableDimensions } from "@/hooks/useTableDimensions";
+import { useFlattenedTasks } from "@/hooks/useFlattenedTasks";
+import { useSyncScroll } from "@/hooks/useSyncScroll";
+import { useInfiniteScroll } from "@/hooks/useInfiniteScroll";
+import { useContainerDimensions } from "@/hooks/useContainerDimensions";
+import { usePreventVerticalScroll } from "@/hooks/usePreventVerticalScroll";
+import { useDensityConfig } from "@/store/slices/userPreferencesSlice";
+import { calculateLayoutDimensions } from "@/utils/layoutCalculations";
 import {
   MIN_TABLE_WIDTH,
   HIDDEN_SCROLLBAR_STYLE,
-} from "../../config/layoutConstants";
+} from "@/config/layoutConstants";
 
 export function GanttLayout(): JSX.Element {
   // Refs for scroll synchronization and measurements

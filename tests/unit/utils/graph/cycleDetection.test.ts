@@ -7,8 +7,8 @@ import { describe, it, expect } from "vitest";
 import {
   detectCycle,
   wouldCreateCycle,
-} from "../../../../src/utils/graph/cycleDetection";
-import type { Dependency } from "../../../../src/types/dependency.types";
+} from "@/utils/graph/cycleDetection";
+import type { Dependency } from "@/types/dependency.types";
 import { tid } from "../../../helpers/branded";
 
 // Helper to create dependency

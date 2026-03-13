@@ -6,7 +6,7 @@
 
 import { describe, it, expect } from "vitest";
 import { render, screen } from "@testing-library/react";
-import { DropdownPanel } from "../../../../src/components/Toolbar/DropdownPanel";
+import { DropdownPanel } from "@/components/Toolbar/DropdownPanel";
 
 describe("DropdownPanel", () => {
   describe("rendering", () => {

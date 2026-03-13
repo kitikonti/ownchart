@@ -5,12 +5,12 @@
 
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { render, screen } from "@testing-library/react";
-import { ExportDialog } from "../../../../src/components/Export/ExportDialog";
-import type { UseExportDialogResult } from "../../../../src/hooks/useExportDialog";
+import { ExportDialog } from "@/components/Export/ExportDialog";
+import type { UseExportDialogResult } from "@/hooks/useExportDialog";
 import {
   DEFAULT_EXPORT_OPTIONS,
   DEFAULT_PDF_OPTIONS,
-} from "../../../../src/utils/export/types";
+} from "@/utils/export/types";
 
 // ── Mocks ────────────────────────────────────────────────────────────────────
 

@@ -3,16 +3,16 @@
  * Handles inserting tasks above/below a reference task.
  */
 
-import type { Task } from "../../types/chart.types";
-import { type TaskId, toTaskId } from "../../types/branded.types";
+import type { Task } from "@/types/chart.types";
+import { type TaskId, toTaskId } from "@/types/branded.types";
 import {
   recalculateSummaryAncestors,
   normalizeTaskOrder,
-} from "../../utils/hierarchy";
-import { toISODateString } from "../../utils/dateUtils";
+} from "@/utils/hierarchy";
+import { toISODateString } from "@/utils/dateUtils";
 import { useFileStore } from "./fileSlice";
-import { CommandType } from "../../types/command.types";
-import { COLORS } from "../../styles/design-tokens";
+import { CommandType } from "@/types/command.types";
+import { COLORS } from "@/styles/design-tokens";
 import {
   DEFAULT_TASK_DURATION,
   DEFAULT_TASK_NAME,

@@ -9,7 +9,7 @@
  * Layer 6: Migration (version compatibility - in migrate.ts)
  */
 
-import { TASK_TYPES } from "../../types/chart.types";
+import { TASK_TYPES } from "@/types/chart.types";
 import type { GanttFile, SerializedTask, SerializedDependency } from "./types";
 
 const MAX_FILE_SIZE = 50 * 1024 * 1024; // 50MB

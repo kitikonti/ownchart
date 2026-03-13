@@ -7,9 +7,9 @@ import type { ReactNode } from "react";
 import type {
   ContextMenuItem,
   ContextMenuPosition,
-} from "../components/ContextMenu/ContextMenu";
-import type { TaskId } from "../types/branded.types";
-import { getModKey } from "../config/helpContent";
+} from "@/components/ContextMenu/ContextMenu";
+import type { TaskId } from "@/types/branded.types";
+import { getModKey } from "@/config/helpContent";
 
 // Computed once at module load — platform is stable for the page lifetime.
 const MOD = getModKey();

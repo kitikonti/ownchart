@@ -7,8 +7,8 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
 import { renderHook } from "@testing-library/react";
 import { act } from "@testing-library/react";
-import { useUnsavedChanges } from "../../../src/hooks/useUnsavedChanges";
-import { useFileStore } from "../../../src/store/slices/fileSlice";
+import { useUnsavedChanges } from "@/hooks/useUnsavedChanges";
+import { useFileStore } from "@/store/slices/fileSlice";
 
 // ─── Setup ───
 

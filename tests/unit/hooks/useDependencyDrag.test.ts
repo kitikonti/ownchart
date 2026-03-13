@@ -6,12 +6,12 @@
 
 import { describe, it, expect, beforeEach, vi } from "vitest";
 import { renderHook, act } from "@testing-library/react";
-import { useDependencyDrag } from "../../../src/hooks/useDependencyDrag";
-import { useDependencyStore } from "../../../src/store/slices/dependencySlice";
-import { useTaskStore } from "../../../src/store/slices/taskSlice";
-import type { Task } from "../../../src/types/chart.types";
-import type { TaskId } from "../../../src/types/branded.types";
-import { toTaskId } from "../../../src/types/branded.types";
+import { useDependencyDrag } from "@/hooks/useDependencyDrag";
+import { useDependencyStore } from "@/store/slices/dependencySlice";
+import { useTaskStore } from "@/store/slices/taskSlice";
+import type { Task } from "@/types/chart.types";
+import type { TaskId } from "@/types/branded.types";
+import { toTaskId } from "@/types/branded.types";
 
 // ---------------------------------------------------------------------------
 // Helpers

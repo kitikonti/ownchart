@@ -12,7 +12,7 @@ import type {
   FirstDayOfWeek,
   WeekNumberingSystem,
   UserPreferences,
-} from "../types/preferences.types";
+} from "@/types/preferences.types";
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 

@@ -5,8 +5,8 @@
 
 import { describe, it, expect, beforeEach } from "vitest";
 import { act } from "@testing-library/react";
-import { useChartStore } from "../../../src/store/slices/chartSlice";
-import { useTaskStore } from "../../../src/store/slices/taskSlice";
+import { useChartStore } from "@/store/slices/chartSlice";
+import { useTaskStore } from "@/store/slices/taskSlice";
 
 describe("Chart Store - Column Visibility", () => {
   beforeEach(() => {

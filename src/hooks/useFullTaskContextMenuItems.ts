@@ -17,14 +17,14 @@ import {
   EyeSlash,
   Eye,
 } from "@phosphor-icons/react";
-import GroupIcon from "../assets/icons/group-light.svg?react";
-import UngroupIcon from "../assets/icons/ungroup-light.svg?react";
-import type { ContextMenuItem } from "../components/ContextMenu/ContextMenu";
-import type { TaskId } from "../types/branded.types";
+import GroupIcon from "@/assets/icons/group-light.svg?react";
+import UngroupIcon from "@/assets/icons/ungroup-light.svg?react";
+import type { ContextMenuItem } from "@/components/ContextMenu/ContextMenu";
+import type { TaskId } from "@/types/branded.types";
 import { useClipboardOperations } from "./useClipboardOperations";
 import { useHideOperations } from "./useHideOperations";
-import { useTaskStore } from "../store/slices/taskSlice";
-import { CONTEXT_MENU } from "../styles/design-tokens";
+import { useTaskStore } from "@/store/slices/taskSlice";
+import { CONTEXT_MENU } from "@/styles/design-tokens";
 import {
   getEffectiveSelection,
   buildClipboardItems,

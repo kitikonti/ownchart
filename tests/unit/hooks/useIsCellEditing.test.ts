@@ -6,8 +6,8 @@
 
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { renderHook } from "@testing-library/react";
-import { useIsCellEditing } from "../../../src/hooks/useIsCellEditing";
-import { toTaskId } from "../../../src/types/branded.types";
+import { useIsCellEditing } from "@/hooks/useIsCellEditing";
+import { toTaskId } from "@/types/branded.types";
 
 // ---------------------------------------------------------------------------
 // Mock
@@ -22,7 +22,7 @@ vi.mock("../../../src/store/slices/taskSlice", () => ({
   ),
 }));
 
-import { useTaskStore } from "../../../src/store/slices/taskSlice";
+import { useTaskStore } from "@/store/slices/taskSlice";
 
 function mockStoreState(
   taskId: string | null,

@@ -4,11 +4,7 @@
  * Sprint 1.4 - Dependencies (Finish-to-Start Only)
  */
 
-import type {
-  ArrowPath,
-  Point,
-  TaskPosition,
-} from "../../types/dependency.types";
+import type { ArrowPath, Point, TaskPosition } from "@/types/dependency.types";
 
 // ---------------------------------------------------------------------------
 // Public constants

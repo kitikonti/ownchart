@@ -6,9 +6,9 @@
  */
 
 import { parseISO, getDay, format } from "date-fns";
-import { holidayService, type HolidayInfo } from "../services/holidayService";
+import { holidayService, type HolidayInfo } from "@/services/holidayService";
 import { addDays, calculateDuration } from "./dateUtils";
-import type { WorkingDaysConfig } from "../types/preferences.types";
+import type { WorkingDaysConfig } from "@/types/preferences.types";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 

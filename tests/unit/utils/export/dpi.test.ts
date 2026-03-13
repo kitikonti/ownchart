@@ -14,7 +14,7 @@ import {
   pxToMmAtDpi,
   calculatePixelDimensions,
   formatDpiDescription,
-} from "../../../../src/utils/export/dpi";
+} from "@/utils/export/dpi";
 
 // ---------------------------------------------------------------------------
 // Constants sanity

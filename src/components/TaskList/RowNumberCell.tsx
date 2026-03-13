@@ -18,8 +18,8 @@ import {
 import { DotsSixVertical } from "@phosphor-icons/react";
 import type { DraggableAttributes } from "@dnd-kit/core";
 import type { SyntheticListenerMap } from "@dnd-kit/core/dist/hooks/utilities";
-import type { TaskId } from "../../types/branded.types";
-import { TRANSITIONS } from "../../styles/design-tokens";
+import type { TaskId } from "@/types/branded.types";
+import { TRANSITIONS } from "@/styles/design-tokens";
 import { HiddenRowIndicator } from "./HiddenRowIndicator";
 import { InsertRowButton } from "./InsertRowButton";
 import { InsertLine } from "./InsertLine";

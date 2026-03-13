@@ -13,7 +13,7 @@ import {
   type HelpSection,
   type HelpTopic,
   resolveShortcut,
-} from "../config/helpContent";
+} from "@/config/helpContent";
 
 export interface HelpSearchResult {
   /** Flat list of sections with matching topics (empty when query is empty). */

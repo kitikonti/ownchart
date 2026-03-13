@@ -4,7 +4,7 @@
  * when loading .ownchart files that may lack newer fields.
  */
 
-import type { ViewSettings } from "../utils/fileOperations/types";
+import type { ViewSettings } from "@/utils/fileOperations/types";
 import { DEFAULT_COLOR_MODE_STATE } from "./colorModeDefaults";
 import { DEFAULT_WORKING_DAYS_CONFIG } from "./workingDaysConfig";
 

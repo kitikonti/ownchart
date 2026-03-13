@@ -27,7 +27,7 @@ import {
   SVG_NS,
   SVG_BACKGROUND_WHITE,
   TASK_TYPE_ICON_PATHS,
-} from "../../../../src/utils/export/constants";
+} from "@/utils/export/constants";
 
 // ---------------------------------------------------------------------------
 // Layout constants

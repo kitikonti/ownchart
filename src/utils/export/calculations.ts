@@ -3,15 +3,15 @@
  * Centralizes zoom, dimension, and date range calculations.
  */
 
-import type { Task } from "../../types/chart.types";
-import type { UiDensity } from "../../types/preferences.types";
+import type { Task } from "@/types/chart.types";
+import type { UiDensity } from "@/types/preferences.types";
 import type { ExportOptions, ExportColumnKey } from "./types";
-import { DENSITY_CONFIG } from "../../config/densityConfig";
-import { addDays, toISODateString } from "../dateUtils";
+import { DENSITY_CONFIG } from "@/config/densityConfig";
+import { addDays, toISODateString } from "@/utils/dateUtils";
 import {
   calculateLabelPaddingDays,
   calculateColumnWidth,
-} from "../textMeasurement";
+} from "@/utils/textMeasurement";
 import { getColumnDisplayValue, HEADER_LABELS } from "./columns";
 
 /** Base pixels per day at 100% zoom */

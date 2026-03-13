@@ -6,14 +6,14 @@
 import { create } from "zustand";
 import { immer } from "zustand/middleware/immer";
 import { current } from "immer";
-import type { Task } from "../../types/chart.types";
-import { type TaskId, toTaskId } from "../../types/branded.types";
+import type { Task } from "@/types/chart.types";
+import { type TaskId, toTaskId } from "@/types/branded.types";
 import {
   EDITABLE_FIELDS,
   type ActiveCell,
   type EditableField,
   type NavigationDirection,
-} from "../../types/task.types";
+} from "@/types/task.types";
 import {
   wouldCreateCircularHierarchy,
   getTaskLevel,
@@ -25,10 +25,10 @@ import {
   normalizeTaskOrder,
   getMaxDescendantLevel,
   collectDescendantIds,
-} from "../../utils/hierarchy";
+} from "@/utils/hierarchy";
 import { useFileStore } from "./fileSlice";
 import { useDependencyStore } from "./dependencySlice";
-import { CommandType } from "../../types/command.types";
+import { CommandType } from "@/types/command.types";
 import { useChartStore } from "./chartSlice";
 import {
   UNKNOWN_TASK_NAME,
@@ -48,7 +48,7 @@ export type {
   ActiveCell,
   EditableField,
   NavigationDirection,
-} from "../../types/task.types";
+} from "@/types/task.types";
 
 /**
  * Task state interface.
@@ -400,7 +400,7 @@ export const useTaskStore = create<TaskStore>()(
       });
 
       // Remove dependencies referencing deleted tasks and capture them for undo
-      let deletedDependencies: import("../../types/dependency.types").Dependency[] =
+      let deletedDependencies: import("@/types/dependency.types").Dependency[] =
         [];
       if (deletedTasks.length > 0) {
         const depStore = useDependencyStore.getState();
@@ -509,7 +509,7 @@ export const useTaskStore = create<TaskStore>()(
       });
 
       // Remove dependencies referencing deleted tasks and capture them for undo
-      let deletedDependencies: import("../../types/dependency.types").Dependency[] =
+      let deletedDependencies: import("@/types/dependency.types").Dependency[] =
         [];
       if (deletedTasks.length > 0) {
         const depStore = useDependencyStore.getState();

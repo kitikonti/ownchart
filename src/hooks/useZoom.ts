@@ -13,8 +13,8 @@
 
 import type { RefObject, WheelEvent as ReactWheelEvent } from "react";
 import { useCallback, useEffect } from "react";
-import { useChartStore } from "../store/slices/chartSlice";
-import { pixelToDate } from "../utils/timelineUtils";
+import { useChartStore } from "@/store/slices/chartSlice";
+import { pixelToDate } from "@/utils/timelineUtils";
 
 interface UseZoomOptions {
   containerRef: RefObject<HTMLElement>;

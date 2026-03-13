@@ -11,10 +11,10 @@ import { createRoot } from "react-dom/client";
 import { createElement } from "react";
 
 // Local components
-import { ExportRenderer } from "../../components/Export/ExportRenderer";
+import { ExportRenderer } from "@/components/Export/ExportRenderer";
 
 // Local utilities
-import { buildFlattenedTaskList } from "../hierarchy";
+import { buildFlattenedTaskList } from "@/utils/hierarchy";
 import { calculateExportDimensions } from "./exportLayout";
 import { calculateTaskTableWidth } from "./calculations";
 import {
@@ -38,9 +38,9 @@ import {
 } from "./taskTableRenderer";
 
 // Types
-import type { ColorModeState } from "../../types/colorMode.types";
-import type { Task } from "../../types/chart.types";
-import type { TaskId } from "../../types/branded.types";
+import type { ColorModeState } from "@/types/colorMode.types";
+import type { Task } from "@/types/chart.types";
+import type { TaskId } from "@/types/branded.types";
 import {
   type ExportOptions,
   type SvgExportOptions,

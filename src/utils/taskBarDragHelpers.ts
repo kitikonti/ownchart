@@ -3,10 +3,10 @@
  * Extracted from useTaskBarInteraction for testability.
  */
 
-import type { Task, TaskType } from "../types/chart.types";
-import type { TaskId } from "../types/branded.types";
+import type { Task, TaskType } from "@/types/chart.types";
+import type { TaskId } from "@/types/branded.types";
 import type { TaskBarGeometry } from "./timelineUtils";
-import type { WorkingDaysConfig } from "../types/preferences.types";
+import type { WorkingDaysConfig } from "@/types/preferences.types";
 
 import { addDays, calculateDuration } from "./dateUtils";
 import { calculateWorkingDays, addWorkingDays } from "./workingDaysCalculator";

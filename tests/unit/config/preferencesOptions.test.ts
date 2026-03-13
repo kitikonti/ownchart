@@ -15,8 +15,8 @@ import {
   WEEK_NUMBERING_OPTIONS,
   WEEK_NUMBERING_OPTIONS_EXTENDED,
   LABEL_OPTIONS,
-} from "../../../src/config/preferencesOptions";
-import type { TaskLabelPosition } from "../../../src/types/preferences.types";
+} from "@/config/preferencesOptions";
+import type { TaskLabelPosition } from "@/types/preferences.types";
 
 describe("DENSITY_OPTIONS", () => {
   it("should contain the same number of entries as DENSITY_OPTIONS_EXTENDED", () => {

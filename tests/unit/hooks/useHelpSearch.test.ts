@@ -1,7 +1,7 @@
 import { describe, it, expect } from "vitest";
 import { renderHook } from "@testing-library/react";
-import { useHelpSearch } from "../../../src/hooks/useHelpSearch";
-import { HELP_TABS, getModKey } from "../../../src/config/helpContent";
+import { useHelpSearch } from "@/hooks/useHelpSearch";
+import { HELP_TABS, getModKey } from "@/config/helpContent";
 
 describe("useHelpSearch", () => {
   const tabs = HELP_TABS;

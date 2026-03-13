@@ -5,10 +5,10 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import type { Mock } from "vitest";
 import { render, screen, fireEvent } from "@testing-library/react";
-import { StatusBar } from "../../../../src/components/StatusBar/StatusBar";
-import { useChartStore } from "../../../../src/store/slices/chartSlice";
-import { useUIStore } from "../../../../src/store/slices/uiSlice";
-import { useTaskStatistics } from "../../../../src/hooks/useTaskStatistics";
+import { StatusBar } from "@/components/StatusBar/StatusBar";
+import { useChartStore } from "@/store/slices/chartSlice";
+import { useUIStore } from "@/store/slices/uiSlice";
+import { useTaskStatistics } from "@/hooks/useTaskStatistics";
 
 // Avoid rendering ZoomControls' deep dependency tree in these unit tests
 vi.mock("../../../../src/components/StatusBar/ZoomControls", () => ({

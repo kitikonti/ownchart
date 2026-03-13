@@ -4,13 +4,10 @@
  */
 
 import { useMemo } from "react";
-import { useTaskStore } from "../store/slices/taskSlice";
-import { useChartStore } from "../store/slices/chartSlice";
-import { useDensityConfig } from "../store/slices/userPreferencesSlice";
-import {
-  getDensityAwareWidth,
-  getVisibleColumns,
-} from "../config/tableColumns";
+import { useTaskStore } from "@/store/slices/taskSlice";
+import { useChartStore } from "@/store/slices/chartSlice";
+import { useDensityConfig } from "@/store/slices/userPreferencesSlice";
+import { getDensityAwareWidth, getVisibleColumns } from "@/config/tableColumns";
 
 /**
  * Fallback column width in pixels when no px value can be parsed from the CSS string.

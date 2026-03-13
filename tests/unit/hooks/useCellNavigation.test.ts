@@ -5,8 +5,8 @@
 
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { renderHook } from "@testing-library/react";
-import { useCellNavigation } from "../../../src/hooks/useCellNavigation";
-import type { EditableField } from "../../../src/store/slices/taskSlice";
+import { useCellNavigation } from "@/hooks/useCellNavigation";
+import type { EditableField } from "@/store/slices/taskSlice";
 
 // ---------------------------------------------------------------------------
 // Mock state

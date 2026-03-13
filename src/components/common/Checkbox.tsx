@@ -17,8 +17,8 @@
 
 import { memo, useLayoutEffect, useRef } from "react";
 import { Check, Minus } from "@phosphor-icons/react";
-import { buildClassNames } from "../../utils/buildClassNames";
-import { PEER_FOCUS_RING, PEER_ACTIVE_SCALE } from "../../styles/inputStyles";
+import { buildClassNames } from "@/utils/buildClassNames";
+import { PEER_FOCUS_RING, PEER_ACTIVE_SCALE } from "@/styles/inputStyles";
 
 export interface CheckboxProps {
   checked: boolean;

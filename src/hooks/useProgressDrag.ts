@@ -4,10 +4,10 @@
  */
 
 import { useState, useCallback, useRef, useEffect } from "react";
-import type { Task } from "../types/chart.types";
-import type { TaskBarGeometry } from "../utils/timelineUtils";
-import { useTaskStore } from "../store/slices/taskSlice";
-import { getSVGPoint } from "../utils/svgUtils";
+import type { Task } from "@/types/chart.types";
+import type { TaskBarGeometry } from "@/utils/timelineUtils";
+import { useTaskStore } from "@/store/slices/taskSlice";
+import { getSVGPoint } from "@/utils/svgUtils";
 
 /** Cursor applied to the entire page while a progress drag is in progress. */
 const PROGRESS_DRAG_CURSOR = "col-resize" as const;

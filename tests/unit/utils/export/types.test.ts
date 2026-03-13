@@ -17,8 +17,8 @@ import {
   DEFAULT_FIT_TO_WIDTH_PX,
   UHD_SCREEN_WIDTH_PX,
   type ExportBooleanKey,
-} from "../../../../src/utils/export/types";
-import { EXPORT_QUICK_PRESETS } from "../../../../src/utils/export/pagePresets";
+} from "@/utils/export/types";
+import { EXPORT_QUICK_PRESETS } from "@/utils/export/pagePresets";
 
 // Compile-time guard: ExportBooleanKey must include exactly these keys.
 // If a boolean field is renamed or its type changes, TypeScript will fail here.

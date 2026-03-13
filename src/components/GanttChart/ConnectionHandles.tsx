@@ -5,8 +5,8 @@
  */
 
 import React, { memo, useState, useCallback } from "react";
-import type { TaskId } from "../../types/branded.types";
-import { CONNECTION_HANDLE } from "../../styles/design-tokens";
+import type { TaskId } from "@/types/branded.types";
+import { CONNECTION_HANDLE } from "@/styles/design-tokens";
 
 /** Distance from task edge to handle center */
 const HANDLE_OFFSET = 10;

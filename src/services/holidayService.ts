@@ -422,4 +422,4 @@ export const holidayService = new _HolidayService();
 // Re-exported here so callers of holidayService need only one import for all
 // holiday-related functionality (region detection + service instance).
 // The implementation lives in localeDetection.ts (single source of truth).
-export { detectLocaleHolidayRegion } from "../utils/localeDetection";
+export { detectLocaleHolidayRegion } from "@/utils/localeDetection";

@@ -1,7 +1,7 @@
 import { describe, it, expect } from "vitest";
-import { collectInternalDependencies } from "../../../../src/utils/clipboard/collectDependencies";
-import type { Task } from "../../../../src/types/chart.types";
-import type { Dependency } from "../../../../src/types/dependency.types";
+import { collectInternalDependencies } from "@/utils/clipboard/collectDependencies";
+import type { Task } from "@/types/chart.types";
+import type { Dependency } from "@/types/dependency.types";
 import { tid, hex } from "../../../helpers/branded";
 
 // Helper to create test tasks

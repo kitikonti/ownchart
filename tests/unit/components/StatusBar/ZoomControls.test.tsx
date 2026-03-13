@@ -6,10 +6,10 @@
 
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { render, screen, fireEvent } from "@testing-library/react";
-import { ZoomControls } from "../../../../src/components/StatusBar/ZoomControls";
-import { useChartStore } from "../../../../src/store/slices/chartSlice";
-import { useTaskStore } from "../../../../src/store/slices/taskSlice";
-import { MIN_ZOOM, MAX_ZOOM } from "../../../../src/utils/timelineUtils";
+import { ZoomControls } from "@/components/StatusBar/ZoomControls";
+import { useChartStore } from "@/store/slices/chartSlice";
+import { useTaskStore } from "@/store/slices/taskSlice";
+import { MIN_ZOOM, MAX_ZOOM } from "@/utils/timelineUtils";
 
 // Stub DOM-dependent helpers that rely on layout measurements unavailable in jsdom.
 vi.mock("../../../../src/hooks/useZoom", () => ({

@@ -4,15 +4,15 @@
  * Works outside React (uses getState()).
  */
 
-import { useTaskStore } from "../../store/slices/taskSlice";
-import { useChartStore } from "../../store/slices/chartSlice";
-import { useFileStore } from "../../store/slices/fileSlice";
-import { useHistoryStore } from "../../store/slices/historySlice";
-import { useDependencyStore } from "../../store/slices/dependencySlice";
-import { useUIStore } from "../../store/slices/uiSlice";
+import { useTaskStore } from "@/store/slices/taskSlice";
+import { useChartStore } from "@/store/slices/chartSlice";
+import { useFileStore } from "@/store/slices/fileSlice";
+import { useHistoryStore } from "@/store/slices/historySlice";
+import { useDependencyStore } from "@/store/slices/dependencySlice";
+import { useUIStore } from "@/store/slices/uiSlice";
 import { deserializeGanttFile } from "./deserialize";
 import type { ViewSettings } from "./types";
-import { applyViewSettingsDefaults } from "../../config/viewSettingsDefaults";
+import { applyViewSettingsDefaults } from "@/config/viewSettingsDefaults";
 
 export interface LoadFileResult {
   success: boolean;

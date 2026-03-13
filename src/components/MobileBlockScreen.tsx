@@ -14,8 +14,8 @@ import {
   type KeyboardEvent as ReactKeyboardEvent,
 } from "react";
 import { Desktop } from "@phosphor-icons/react";
-import OwnChartLogo from "../assets/logo.svg?react";
-import { APP_CONFIG } from "../config/appConfig";
+import OwnChartLogo from "@/assets/logo.svg?react";
+import { APP_CONFIG } from "@/config/appConfig";
 
 // Strip protocol from URL for display (e.g. "ownchart.app" instead of "https://ownchart.app").
 // Computed once at module scope — APP_CONFIG is a static constant and this never changes.

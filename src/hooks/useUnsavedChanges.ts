@@ -7,7 +7,7 @@
  */
 
 import { useEffect, useRef } from "react";
-import { useFileStore } from "../store/slices/fileSlice";
+import { useFileStore } from "@/store/slices/fileSlice";
 
 export function useUnsavedChanges(): void {
   const isDirty = useFileStore((state) => state.isDirty);

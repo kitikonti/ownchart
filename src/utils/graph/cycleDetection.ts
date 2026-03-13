@@ -6,11 +6,11 @@
  * Space Complexity: O(V) for the traversal stack and path tracking
  */
 
-import type { TaskId } from "../../types/branded.types";
+import type { TaskId } from "@/types/branded.types";
 import type {
   Dependency,
   CycleDetectionResult,
-} from "../../types/dependency.types";
+} from "@/types/dependency.types";
 import { buildAdjacencyList, getOrCreateList } from "./graphHelpers";
 
 /**

@@ -15,12 +15,12 @@ import { ClipboardText } from "@phosphor-icons/react";
 import type {
   ContextMenuItem,
   ContextMenuPosition,
-} from "../components/ContextMenu/ContextMenu";
+} from "@/components/ContextMenu/ContextMenu";
 import { useClipboardOperations } from "./useClipboardOperations";
-import { useTaskStore } from "../store/slices/taskSlice";
-import { CONTEXT_MENU } from "../styles/design-tokens";
-import { PLACEHOLDER_TASK_ID } from "../config/placeholderRow";
-import { getModKey } from "../config/helpContent";
+import { useTaskStore } from "@/store/slices/taskSlice";
+import { CONTEXT_MENU } from "@/styles/design-tokens";
+import { PLACEHOLDER_TASK_ID } from "@/config/placeholderRow";
+import { getModKey } from "@/config/helpContent";
 
 // Computed once at module load — platform is stable for the page lifetime.
 // REVIEW-OK: getModKey() already used; "+V" is a display label suffix, not a

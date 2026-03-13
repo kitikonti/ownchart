@@ -18,8 +18,8 @@ import {
   LABEL_RENDER_CONSTANTS,
   RENDER_COLORS,
   computeBracketGeometry,
-} from "../../../../src/utils/export/renderConstants";
-import type { BracketGeometry } from "../../../../src/utils/export/renderConstants";
+} from "@/utils/export/renderConstants";
+import type { BracketGeometry } from "@/utils/export/renderConstants";
 
 // ---------------------------------------------------------------------------
 // calculateMilestoneSize

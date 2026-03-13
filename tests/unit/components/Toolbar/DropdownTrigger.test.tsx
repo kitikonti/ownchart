@@ -6,9 +6,9 @@
 import { describe, it, expect, vi } from "vitest";
 import { render, screen, fireEvent } from "@testing-library/react";
 import type { RenderResult } from "@testing-library/react";
-import { RibbonCollapseProvider } from "../../../../src/components/Ribbon/RibbonCollapseContext";
-import { DropdownTrigger } from "../../../../src/components/Toolbar/DropdownTrigger";
-import type { CollapseLevel } from "../../../../src/components/Ribbon/RibbonCollapseContext";
+import { RibbonCollapseProvider } from "@/components/Ribbon/RibbonCollapseContext";
+import { DropdownTrigger } from "@/components/Toolbar/DropdownTrigger";
+import type { CollapseLevel } from "@/components/Ribbon/RibbonCollapseContext";
 
 function renderTrigger(
   props: Partial<React.ComponentProps<typeof DropdownTrigger>> & {

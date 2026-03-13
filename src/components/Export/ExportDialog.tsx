@@ -4,18 +4,18 @@
  */
 
 import { Spinner, FilePdf, FileCode, Image } from "@phosphor-icons/react";
-import { Alert } from "../common/Alert";
-import { Button } from "../common/Button";
-import { EXPORT_MAX_SAFE_WIDTH } from "../../utils/export/types";
-import type { ExportFormat } from "../../utils/export/types";
-import { Modal } from "../common/Modal";
+import { Alert } from "@/components/common/Alert";
+import { Button } from "@/components/common/Button";
+import { EXPORT_MAX_SAFE_WIDTH } from "@/utils/export/types";
+import type { ExportFormat } from "@/utils/export/types";
+import { Modal } from "@/components/common/Modal";
 import { ExportFormatSelector } from "./ExportFormatSelector";
 import { SharedExportOptions } from "./SharedExportOptions";
 import { ScaleOptions } from "./ScaleOptions";
 import { PdfExportOptions } from "./PdfExportOptions";
 import { ExportPreview } from "./ExportPreview";
-import { useExportPreview } from "../../hooks/useExportPreview";
-import { useExportDialog } from "../../hooks/useExportDialog";
+import { useExportPreview } from "@/hooks/useExportPreview";
+import { useExportDialog } from "@/hooks/useExportDialog";
 
 /** Layout constants for the export dialog */
 const CONTENT_HEIGHT = "h-[65vh]";

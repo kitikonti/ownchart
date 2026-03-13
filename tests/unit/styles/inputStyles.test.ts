@@ -11,7 +11,7 @@ import {
   PEER_ACTIVE_SCALE,
   OPTION_CARD_MIN_HEIGHT,
   OPTION_CARD_LAYOUT,
-} from "../../../src/styles/inputStyles";
+} from "@/styles/inputStyles";
 
 describe("PEER_FOCUS_RING", () => {
   it("applies a 2px ring using the brand-200 color", () => {

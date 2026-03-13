@@ -6,11 +6,11 @@ import { describe, it, expect } from "vitest";
 import {
   computeExportLayout,
   calculateExportDimensions,
-} from "../../../../src/utils/export/exportLayout";
-import { DEFAULT_EXPORT_OPTIONS } from "../../../../src/utils/export/types";
-import type { ExportLayoutInput } from "../../../../src/utils/export/types";
-import type { Task } from "../../../../src/types/chart.types";
-import { toTaskId } from "../../../../src/types/branded.types";
+} from "@/utils/export/exportLayout";
+import { DEFAULT_EXPORT_OPTIONS } from "@/utils/export/types";
+import type { ExportLayoutInput } from "@/utils/export/types";
+import type { Task } from "@/types/chart.types";
+import { toTaskId } from "@/types/branded.types";
 
 function makeTask(
   id: string,

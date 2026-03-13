@@ -14,7 +14,7 @@ import {
   toHexColor,
   toPaletteId,
   toTaskId,
-} from "../../../src/types/branded.types";
+} from "@/types/branded.types";
 
 describe("toHexColor", () => {
   it("should return the input string unchanged", () => {

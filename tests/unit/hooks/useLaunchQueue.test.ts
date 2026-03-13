@@ -6,7 +6,7 @@
 
 import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
 import { renderHook } from "@testing-library/react";
-import { useLaunchQueue } from "../../../src/hooks/useLaunchQueue";
+import { useLaunchQueue } from "@/hooks/useLaunchQueue";
 
 // ─── Mocks ───
 
@@ -28,7 +28,7 @@ import toast from "react-hot-toast";
 import {
   loadFileIntoApp,
   showLoadNotifications,
-} from "../../../src/utils/fileOperations/loadFromFile";
+} from "@/utils/fileOperations/loadFromFile";
 
 // ─── Helpers ───
 

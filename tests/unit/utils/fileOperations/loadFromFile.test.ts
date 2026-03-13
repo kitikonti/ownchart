@@ -8,7 +8,7 @@
  */
 
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import type { LoadFileResult } from '../../../../src/utils/fileOperations/loadFromFile';
+import type { LoadFileResult } from '@/utils/fileOperations/loadFromFile';
 
 // ---------------------------------------------------------------------------
 // Mock store functions
@@ -98,7 +98,7 @@ vi.mock('../../../../src/store/slices/uiSlice', () => ({
 import {
   loadFileIntoApp,
   showLoadNotifications,
-} from '../../../../src/utils/fileOperations/loadFromFile';
+} from '@/utils/fileOperations/loadFromFile';
 
 // ---------------------------------------------------------------------------
 // Test helpers

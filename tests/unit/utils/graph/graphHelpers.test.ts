@@ -9,8 +9,8 @@ import {
   buildAdjacencyList,
   buildReverseAdjacencyList,
   bfsReachable,
-} from "../../../../src/utils/graph/graphHelpers";
-import type { Dependency } from "../../../../src/types/dependency.types";
+} from "@/utils/graph/graphHelpers";
+import type { Dependency } from "@/types/dependency.types";
 import { tid } from "../../../helpers/branded";
 
 // Helper to create a minimal dependency

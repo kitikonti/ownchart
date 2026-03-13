@@ -4,7 +4,7 @@
  * and calculations (optimal column widths).
  */
 
-import type { Task } from "../../types/chart.types";
+import type { Task } from "@/types/chart.types";
 import type { ExportColumnKey, ExportDataColumnKey } from "./types";
 
 /**

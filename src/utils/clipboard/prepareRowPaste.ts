@@ -3,17 +3,17 @@
  * Extracts the common logic between pasteRows and pasteExternalRows.
  */
 
-import type { Task } from "../../types/chart.types";
-import type { TaskId } from "../../types/branded.types";
-import type { Dependency } from "../../types/dependency.types";
-import type { ActiveCell } from "../../types/task.types";
-import type { FlattenedTask } from "../hierarchy";
+import type { Task } from "@/types/chart.types";
+import type { TaskId } from "@/types/branded.types";
+import type { Dependency } from "@/types/dependency.types";
+import type { ActiveCell } from "@/types/task.types";
+import type { FlattenedTask } from "@/utils/hierarchy";
 import {
   buildFlattenedTaskList,
   calculateSummaryDates,
   getTaskLevel,
   MAX_HIERARCHY_DEPTH,
-} from "../hierarchy";
+} from "@/utils/hierarchy";
 import { determineInsertPosition } from "./insertPosition";
 import { remapDependencies, remapTaskIds } from "./remapIds";
 

@@ -6,8 +6,8 @@
 
 import { describe, it, expect, vi } from "vitest";
 import { render, fireEvent } from "@testing-library/react";
-import { ConnectionHandles } from "../../../../src/components/GanttChart/ConnectionHandles";
-import { CONNECTION_HANDLE } from "../../../../src/styles/design-tokens";
+import { ConnectionHandles } from "@/components/GanttChart/ConnectionHandles";
+import { CONNECTION_HANDLE } from "@/styles/design-tokens";
 
 // ---------------------------------------------------------------------------
 // Helpers

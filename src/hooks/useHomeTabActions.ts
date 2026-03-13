@@ -6,13 +6,13 @@
  */
 
 import { useMemo, useCallback } from "react";
-import { useTaskStore } from "../store/slices/taskSlice";
-import { useChartStore } from "../store/slices/chartSlice";
-import { useHistoryStore } from "../store/slices/historySlice";
+import { useTaskStore } from "@/store/slices/taskSlice";
+import { useChartStore } from "@/store/slices/chartSlice";
+import { useHistoryStore } from "@/store/slices/historySlice";
 import { useClipboardOperations } from "./useClipboardOperations";
 import { useHideOperations } from "./useHideOperations";
 import { useNewTaskCreation } from "./useNewTaskCreation";
-import { DEFAULT_TASK_NAME } from "../store/slices/taskSliceHelpers";
+import { DEFAULT_TASK_NAME } from "@/store/slices/taskSliceHelpers";
 
 interface HomeTabActions {
   // History

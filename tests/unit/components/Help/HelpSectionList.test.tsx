@@ -5,8 +5,8 @@
 import { describe, it, expect } from "vitest";
 import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { HelpSectionList } from "../../../../src/components/Help/HelpSectionList";
-import type { HelpSection } from "../../../../src/config/helpContent";
+import { HelpSectionList } from "@/components/Help/HelpSectionList";
+import type { HelpSection } from "@/config/helpContent";
 
 // ---------------------------------------------------------------------------
 // Test fixtures

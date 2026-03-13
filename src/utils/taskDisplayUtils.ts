@@ -3,7 +3,7 @@
  * Extracted from TaskTableRow so it can be tested without React.
  */
 
-import type { Task } from "../types/chart.types";
+import type { Task } from "@/types/chart.types";
 import { calculateSummaryDates } from "./hierarchy";
 import { calculateDuration } from "./dateUtils";
 

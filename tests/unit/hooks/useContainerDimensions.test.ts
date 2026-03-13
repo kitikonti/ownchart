@@ -4,7 +4,7 @@
 
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { renderHook, act } from "@testing-library/react";
-import { useContainerDimensions } from "../../../src/hooks/useContainerDimensions";
+import { useContainerDimensions } from "@/hooks/useContainerDimensions";
 
 /** Minimal mock element for dimension measurement.
  * Uses mutable backing fields accessible via configurable getters

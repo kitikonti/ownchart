@@ -13,22 +13,22 @@
 
 import { useState, useEffect, useCallback } from "react";
 
-import OwnChartLogo from "../../assets/logo.svg?react";
+import OwnChartLogo from "@/assets/logo.svg?react";
 
-import { ToolbarSpacer } from "../Toolbar/ToolbarPrimitives";
+import { ToolbarSpacer } from "@/components/Toolbar/ToolbarPrimitives";
 import { FileMenu } from "./FileMenu";
 import { InlineProjectTitle } from "./InlineProjectTitle";
 import { RibbonCollapseProvider } from "./RibbonCollapseContext";
-import { useRibbonCollapse } from "../../hooks/useRibbonCollapse";
+import { useRibbonCollapse } from "@/hooks/useRibbonCollapse";
 import { HomeTabContent } from "./HomeTabContent";
 import { ViewTabContent } from "./ViewTabContent";
 import { FormatTabContent } from "./FormatTabContent";
 import { HelpTabContent } from "./HelpTabContent";
 
-import { useTaskStore } from "../../store/slices/taskSlice";
-import { useUIStore } from "../../store/slices/uiSlice";
-import { useFileOperations } from "../../hooks/useFileOperations";
-import { COLORS, SHADOWS, RADIUS, SPACING } from "../../styles/design-tokens";
+import { useTaskStore } from "@/store/slices/taskSlice";
+import { useUIStore } from "@/store/slices/uiSlice";
+import { useFileOperations } from "@/hooks/useFileOperations";
+import { COLORS, SHADOWS, RADIUS, SPACING } from "@/styles/design-tokens";
 
 /** Height of the tab bar row (px) */
 const TAB_BAR_HEIGHT = 36;

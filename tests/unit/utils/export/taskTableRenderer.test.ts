@@ -6,10 +6,10 @@
  */
 
 import { describe, it, expect } from "vitest";
-import type { Task } from "../../../../src/types/chart.types";
-import type { TaskId } from "../../../../src/types/branded.types";
-import type { ColorModeState } from "../../../../src/types/colorMode.types";
-import type { FlattenedTask } from "../../../../src/utils/export/types";
+import type { Task } from "@/types/chart.types";
+import type { TaskId } from "@/types/branded.types";
+import type { ColorModeState } from "@/types/colorMode.types";
+import type { FlattenedTask } from "@/utils/export/types";
 import {
   renderTaskTableHeader,
   renderTaskTableRows,
@@ -17,8 +17,8 @@ import {
   TASK_TABLE_ROWS_CLASS,
   type TaskTableHeaderOptions,
   type TaskTableRowsOptions,
-} from "../../../../src/utils/export/taskTableRenderer";
-import { HEADER_HEIGHT } from "../../../../src/utils/export/constants";
+} from "@/utils/export/taskTableRenderer";
+import { HEADER_HEIGHT } from "@/utils/export/constants";
 
 // ─── Test helpers ─────────────────────────────────────────────────────────────
 

@@ -1,9 +1,9 @@
 import { describe, it, expect, beforeEach } from 'vitest';
-import { useTaskStore } from '../../../src/store/slices/taskSlice';
-import { useHistoryStore } from '../../../src/store/slices/historySlice';
-import type { Task, TaskType } from '../../../src/types/chart.types';
-import { toTaskId } from '../../../src/types/branded.types';
-import { COLORS } from '../../../src/styles/design-tokens';
+import { useTaskStore } from '@/store/slices/taskSlice';
+import { useHistoryStore } from '@/store/slices/historySlice';
+import type { Task, TaskType } from '@/types/chart.types';
+import { toTaskId } from '@/types/branded.types';
+import { COLORS } from '@/styles/design-tokens';
 
 /**
  * Test helper: creates a Task with default values for fields irrelevant to

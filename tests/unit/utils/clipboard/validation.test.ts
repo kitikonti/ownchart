@@ -3,9 +3,9 @@ import {
   canPasteCellValue,
   canCutCellValue,
   getClearValueForField,
-} from "../../../../src/utils/clipboard/validation";
-import { DEFAULT_TASK_COLOR } from "../../../../src/config/taskDefaults";
-import type { Task } from "../../../../src/types/chart.types";
+} from "@/utils/clipboard/validation";
+import { DEFAULT_TASK_COLOR } from "@/config/taskDefaults";
+import type { Task } from "@/types/chart.types";
 
 // Helper to create test tasks
 const createTask = (type: Task["type"] = "task"): Task => ({

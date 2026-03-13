@@ -13,20 +13,23 @@ import {
   Hash,
 } from "@phosphor-icons/react";
 
-import { ToolbarGroup, ToolbarSeparator } from "../Toolbar/ToolbarPrimitives";
-import { TOOLBAR } from "../../styles/design-tokens";
-import { ToolbarDropdown } from "../Toolbar/ToolbarDropdown";
+import {
+  ToolbarGroup,
+  ToolbarSeparator,
+} from "@/components/Toolbar/ToolbarPrimitives";
+import { TOOLBAR } from "@/styles/design-tokens";
+import { ToolbarDropdown } from "@/components/Toolbar/ToolbarDropdown";
 import { WorkingDaysDropdown } from "./WorkingDaysDropdown";
 
-import { useChartStore } from "../../store/slices/chartSlice";
-import { useUserPreferencesStore } from "../../store/slices/userPreferencesSlice";
+import { useChartStore } from "@/store/slices/chartSlice";
+import { useUserPreferencesStore } from "@/store/slices/userPreferencesSlice";
 import {
   LABEL_OPTIONS,
   DENSITY_OPTIONS,
   DATE_FORMAT_OPTIONS,
   FIRST_DAY_OF_WEEK_OPTIONS,
   WEEK_NUMBERING_OPTIONS,
-} from "../../config/preferencesOptions";
+} from "@/config/preferencesOptions";
 
 const ICON_SIZE = TOOLBAR.iconSize;
 

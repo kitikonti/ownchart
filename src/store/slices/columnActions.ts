@@ -3,11 +3,11 @@
  * Handles column width management and auto-fit.
  */
 
-import type { Task } from "../../types/chart.types";
-import { getTaskLevel } from "../../utils/hierarchy";
-import { TASK_COLUMNS, NAME_COLUMN_ID } from "../../config/tableColumns";
-import { calculateColumnWidth } from "../../utils/textMeasurement";
-import type { DensityConfig } from "../../types/preferences.types";
+import type { Task } from "@/types/chart.types";
+import { getTaskLevel } from "@/utils/hierarchy";
+import { TASK_COLUMNS, NAME_COLUMN_ID } from "@/config/tableColumns";
+import { calculateColumnWidth } from "@/utils/textMeasurement";
+import type { DensityConfig } from "@/types/preferences.types";
 import { getCurrentDensityConfig } from "./userPreferencesSlice";
 import {
   PLACEHOLDER_TEXT,

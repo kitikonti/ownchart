@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
 import { render, screen, fireEvent, act } from "@testing-library/react";
-import { WelcomeTour } from "../../../../src/components/Help/WelcomeTour";
-import { useUIStore } from "../../../../src/store/slices/uiSlice";
+import { WelcomeTour } from "@/components/Help/WelcomeTour";
+import { useUIStore } from "@/store/slices/uiSlice";
 
 describe("WelcomeTour", () => {
   beforeEach(() => {

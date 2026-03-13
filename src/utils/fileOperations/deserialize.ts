@@ -2,9 +2,9 @@
  * Deserialization utilities for converting GanttFile JSON to app state
  */
 
-import type { TaskType } from "../../types/chart.types";
-import { type HexColor, toTaskId } from "../../types/branded.types";
-import type { Dependency, DependencyType } from "../../types/dependency.types";
+import type { TaskType } from "@/types/chart.types";
+import { type HexColor, toTaskId } from "@/types/branded.types";
+import type { Dependency, DependencyType } from "@/types/dependency.types";
 import type {
   GanttFile,
   SerializedTask,
@@ -13,12 +13,12 @@ import type {
   ViewSettings,
   TaskWithExtras,
 } from "./types";
-import type { ExportOptions } from "../export/types";
+import type { ExportOptions } from "@/utils/export/types";
 import type {
   TaskLabelPosition,
   WorkingDaysConfig,
-} from "../../types/preferences.types";
-import type { ColorModeState } from "../../types/colorMode.types";
+} from "@/types/preferences.types";
+import type { ColorModeState } from "@/types/colorMode.types";
 import {
   validatePreParse,
   safeJsonParse,
@@ -28,9 +28,9 @@ import {
 } from "./validate";
 import { sanitizeGanttFile } from "./sanitize";
 import { migrateGanttFile, needsMigration, isFromFuture } from "./migrate";
-import { FILE_VERSION } from "../../config/version";
-import { normalizeTaskOrder } from "../../utils/hierarchy";
-import { MIN_ZOOM, MAX_ZOOM } from "../../utils/timelineUtils";
+import { FILE_VERSION } from "@/config/version";
+import { normalizeTaskOrder } from "@/utils/hierarchy";
+import { MIN_ZOOM, MAX_ZOOM } from "@/utils/timelineUtils";
 import {
   KNOWN_TASK_KEYS,
   KNOWN_DEPENDENCY_KEYS,

@@ -10,9 +10,9 @@ import {
   ToolbarGroup,
   ToolbarButton,
   ToolbarSpacer,
-} from "../../../../src/components/Toolbar/ToolbarPrimitives";
-import { RibbonCollapseProvider } from "../../../../src/components/Ribbon/RibbonCollapseContext";
-import type { CollapseLevel } from "../../../../src/components/Ribbon/RibbonCollapseContext";
+} from "@/components/Toolbar/ToolbarPrimitives";
+import { RibbonCollapseProvider } from "@/components/Ribbon/RibbonCollapseContext";
+import type { CollapseLevel } from "@/components/Ribbon/RibbonCollapseContext";
 
 /** Renders ui inside a RibbonCollapseProvider at the given collapse level. */
 function renderWithCollapse(ui: JSX.Element, level: CollapseLevel = 0) {

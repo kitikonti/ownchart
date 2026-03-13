@@ -3,7 +3,7 @@
  */
 
 import { describe, it, expect } from "vitest";
-import { stableHash } from "../../../src/utils/hashUtils";
+import { stableHash } from "@/utils/hashUtils";
 
 describe("stableHash", () => {
   it("returns a non-negative integer", () => {

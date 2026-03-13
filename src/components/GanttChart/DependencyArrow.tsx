@@ -5,14 +5,14 @@
  */
 
 import React, { memo, useMemo, useState } from "react";
-import type { TaskId } from "../../types/branded.types";
-import type { Dependency, TaskPosition } from "../../types/dependency.types";
+import type { TaskId } from "@/types/branded.types";
+import type { Dependency, TaskPosition } from "@/types/dependency.types";
 import {
   ARROWHEAD_SIZE,
   calculateArrowPath,
   getArrowheadPoints,
-} from "../../utils/arrowPath";
-import { COLORS } from "../../styles/design-tokens";
+} from "@/utils/arrowPath";
+import { COLORS } from "@/styles/design-tokens";
 
 // ---------------------------------------------------------------------------
 // Geometry constants

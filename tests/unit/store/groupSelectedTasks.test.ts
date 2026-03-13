@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeEach } from "vitest";
-import { useTaskStore } from "../../../src/store/slices/taskSlice";
-import { useHistoryStore } from "../../../src/store/slices/historySlice";
-import type { Task } from "../../../src/types/chart.types";
+import { useTaskStore } from "@/store/slices/taskSlice";
+import { useHistoryStore } from "@/store/slices/historySlice";
+import type { Task } from "@/types/chart.types";
 import { tid, hex } from "../../helpers/branded";
 
 /**

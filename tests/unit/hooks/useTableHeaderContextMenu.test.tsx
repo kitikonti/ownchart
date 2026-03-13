@@ -10,9 +10,9 @@
 
 import { describe, it, expect, beforeEach, vi } from "vitest";
 import { renderHook, act } from "@testing-library/react";
-import { useTableHeaderContextMenu } from "../../../src/hooks/useTableHeaderContextMenu";
-import { useChartStore } from "../../../src/store/slices/chartSlice";
-import { useTaskStore } from "../../../src/store/slices/taskSlice";
+import { useTableHeaderContextMenu } from "@/hooks/useTableHeaderContextMenu";
+import { useChartStore } from "@/store/slices/chartSlice";
+import { useTaskStore } from "@/store/slices/taskSlice";
 
 // Suppress React act() warnings from renderHook in test output
 vi.mock("react-hot-toast", () => ({

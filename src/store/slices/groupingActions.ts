@@ -3,10 +3,10 @@
  * Handles group/ungroup of tasks into summary parents.
  */
 
-import type { Task } from "../../types/chart.types";
-import { type TaskId, toTaskId } from "../../types/branded.types";
-import type { Dependency } from "../../types/dependency.types";
-import type { UngroupTasksParams } from "../../types/command.types";
+import type { Task } from "@/types/chart.types";
+import { type TaskId, toTaskId } from "@/types/branded.types";
+import type { Dependency } from "@/types/dependency.types";
+import type { UngroupTasksParams } from "@/types/command.types";
 import {
   getTaskLevel,
   getTaskDescendants,
@@ -16,12 +16,12 @@ import {
   recalculateSummaryAncestors,
   normalizeTaskOrder,
   getMaxDescendantLevel,
-} from "../../utils/hierarchy";
+} from "@/utils/hierarchy";
 import toast from "react-hot-toast";
 import { useDependencyStore } from "./dependencySlice";
 import { useFileStore } from "./fileSlice";
-import { CommandType } from "../../types/command.types";
-import { COLORS } from "../../styles/design-tokens";
+import { CommandType } from "@/types/command.types";
+import { COLORS } from "@/styles/design-tokens";
 import {
   MS_PER_DAY,
   DEFAULT_GROUP_NAME,

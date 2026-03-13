@@ -3,7 +3,7 @@
  * Based on SPRINT_1.5.9.1_UI_DENSITY_CONCEPT.md Section 3.1
  */
 
-import type { DensityConfigMap } from "../types/preferences.types";
+import type { DensityConfigMap } from "@/types/preferences.types";
 
 export const DENSITY_CONFIG = {
   compact: {

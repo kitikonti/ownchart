@@ -14,7 +14,7 @@ import {
   CONNECTION_HANDLE,
   ROW_NUMBER,
   TOAST,
-} from "../../../src/styles/design-tokens";
+} from "@/styles/design-tokens";
 
 const HEX_RE = /^#([A-Fa-f0-9]{3}|[A-Fa-f0-9]{6})$/;
 

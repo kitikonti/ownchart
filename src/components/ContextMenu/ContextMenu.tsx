@@ -14,7 +14,7 @@ import {
 } from "react";
 import { createPortal } from "react-dom";
 import { Check } from "@phosphor-icons/react";
-import { CONTEXT_MENU, Z_INDEX } from "../../styles/design-tokens";
+import { CONTEXT_MENU, Z_INDEX } from "@/styles/design-tokens";
 
 /** CSS class applied to the menu root div; exported so callers can exclude it from outside-click detection. */
 export const CONTEXT_MENU_CONTAINER_CLASS = "context-menu-container";

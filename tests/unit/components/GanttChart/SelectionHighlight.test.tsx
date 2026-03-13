@@ -5,8 +5,8 @@
 
 import { describe, it, expect } from "vitest";
 import { render } from "@testing-library/react";
-import { SelectionHighlight } from "../../../../src/components/GanttChart/SelectionHighlight";
-import { COLORS } from "../../../../src/styles/design-tokens";
+import { SelectionHighlight } from "@/components/GanttChart/SelectionHighlight";
+import { COLORS } from "@/styles/design-tokens";
 
 // ---------------------------------------------------------------------------
 // Helpers

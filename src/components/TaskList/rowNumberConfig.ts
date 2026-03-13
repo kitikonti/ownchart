@@ -3,7 +3,7 @@
  * Extracted from RowNumberCell to keep the component under 200 LOC.
  */
 
-import { COLORS, ROW_NUMBER, TYPOGRAPHY } from "../../styles/design-tokens";
+import { COLORS, ROW_NUMBER, TYPOGRAPHY } from "@/styles/design-tokens";
 
 // ── Layout constants ────────────────────────────────────────────────────────
 export const CONTROLS_WIDTH = 20;

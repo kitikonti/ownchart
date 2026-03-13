@@ -12,21 +12,21 @@ import type {
   PdfHeaderFooter,
   PdfCustomPageSize,
   ExportOptions,
-} from "../../utils/export/types";
+} from "@/utils/export/types";
 import {
   PDF_PAGE_SIZES,
   PDF_MARGIN_PRESETS,
   DEFAULT_PDF_OPTIONS,
-} from "../../utils/export/types";
-import { CheckboxGroup } from "../common/CheckboxGroup";
-import { FieldLabel } from "../common/FieldLabel";
-import { Input } from "../common/Input";
-import { Select } from "../common/Select";
-import { SectionHeader } from "../common/SectionHeader";
+} from "@/utils/export/types";
+import { CheckboxGroup } from "@/components/common/CheckboxGroup";
+import { FieldLabel } from "@/components/common/FieldLabel";
+import { Input } from "@/components/common/Input";
+import { Select } from "@/components/common/Select";
+import { SectionHeader } from "@/components/common/SectionHeader";
 import {
   SegmentedControl,
   type SegmentedControlOption,
-} from "../common/SegmentedControl";
+} from "@/components/common/SegmentedControl";
 import { ZoomModeSelector } from "./ZoomModeSelector";
 
 // =============================================================================

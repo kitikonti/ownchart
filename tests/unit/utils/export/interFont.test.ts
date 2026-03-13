@@ -6,7 +6,7 @@
  */
 
 import { describe, it, expect, vi } from "vitest";
-import { registerInterFont } from "../../../../src/utils/export/interFont";
+import { registerInterFont } from "@/utils/export/interFont";
 import type { jsPDF } from "jspdf";
 
 // ---------------------------------------------------------------------------

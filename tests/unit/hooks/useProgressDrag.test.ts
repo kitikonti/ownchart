@@ -4,17 +4,17 @@
 
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { renderHook, act } from '@testing-library/react';
-import { useProgressDrag } from '../../../src/hooks/useProgressDrag';
-import { useTaskStore } from '../../../src/store/slices/taskSlice';
-import type { Task } from '../../../src/types/chart.types';
-import type { TaskBarGeometry } from '../../../src/utils/timelineUtils';
+import { useProgressDrag } from '@/hooks/useProgressDrag';
+import { useTaskStore } from '@/store/slices/taskSlice';
+import type { Task } from '@/types/chart.types';
+import type { TaskBarGeometry } from '@/utils/timelineUtils';
 
 // Mock getSVGPoint
 vi.mock('../../../src/utils/svgUtils', () => ({
   getSVGPoint: vi.fn(() => ({ x: 0, y: 0 })),
 }));
 
-import { getSVGPoint } from '../../../src/utils/svgUtils';
+import { getSVGPoint } from '@/utils/svgUtils';
 const mockGetSVGPoint = vi.mocked(getSVGPoint);
 
 function createTask(overrides: Partial<Task> = {}): Task {

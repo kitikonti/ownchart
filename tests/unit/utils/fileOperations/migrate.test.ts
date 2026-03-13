@@ -11,8 +11,8 @@ import {
   parseVersion,
   compareVersions,
   registerMigration,
-} from '../../../../src/utils/fileOperations/migrate';
-import type { GanttFile } from '../../../../src/utils/fileOperations/types';
+} from '@/utils/fileOperations/migrate';
+import type { GanttFile } from '@/utils/fileOperations/types';
 
 /**
  * Helper to create a minimal valid GanttFile for testing.

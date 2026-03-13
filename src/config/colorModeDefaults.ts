@@ -3,8 +3,8 @@
  * Runtime constants extracted from colorMode.types.ts.
  */
 
-import { COLORS } from "../styles/design-tokens";
-import type { ColorModeState } from "../types/colorMode.types";
+import { COLORS } from "@/styles/design-tokens";
+import type { ColorModeState } from "@/types/colorMode.types";
 
 /** Percentage of lightening applied per hierarchy level */
 const HIERARCHY_LIGHTEN_STEP_PERCENT = 12;

@@ -5,9 +5,9 @@
 
 import { memo } from "react";
 import { format } from "date-fns";
-import type { TimelineScale } from "../../utils/timelineUtils";
-import { dateToPixel } from "../../utils/timelineUtils";
-import { COLORS } from "../../styles/design-tokens";
+import type { TimelineScale } from "@/utils/timelineUtils";
+import { dateToPixel } from "@/utils/timelineUtils";
+import { COLORS } from "@/styles/design-tokens";
 
 // ---------------------------------------------------------------------------
 // Geometry constants

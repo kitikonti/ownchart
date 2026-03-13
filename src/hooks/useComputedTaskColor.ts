@@ -6,11 +6,11 @@
  */
 
 import { useMemo } from "react";
-import { useChartStore } from "../store/slices/chartSlice";
-import { useTaskStore } from "../store/slices/taskSlice";
-import type { Task } from "../types/chart.types";
-import type { HexColor, TaskId } from "../types/branded.types";
-import { computeTaskColor } from "../utils/computeTaskColor";
+import { useChartStore } from "@/store/slices/chartSlice";
+import { useTaskStore } from "@/store/slices/taskSlice";
+import type { Task } from "@/types/chart.types";
+import type { HexColor, TaskId } from "@/types/branded.types";
+import { computeTaskColor } from "@/utils/computeTaskColor";
 
 /**
  * Hook to get computed color for a single task.

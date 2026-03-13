@@ -14,10 +14,10 @@ import {
   calculateTaskTableWidth,
   calculateOptimalColumnWidths,
   calculateOptimalColumnWidth,
-} from "../../../../src/utils/export/calculations";
-import type { ExportOptions } from "../../../../src/utils/export/types";
-import { DEFAULT_EXPORT_OPTIONS } from "../../../../src/utils/export/types";
-import type { Task } from "../../../../src/types/chart.types";
+} from "@/utils/export/calculations";
+import type { ExportOptions } from "@/utils/export/types";
+import { DEFAULT_EXPORT_OPTIONS } from "@/utils/export/types";
+import type { Task } from "@/types/chart.types";
 
 const baseOptions: ExportOptions = {
   ...DEFAULT_EXPORT_OPTIONS,

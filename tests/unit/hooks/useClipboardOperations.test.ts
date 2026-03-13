@@ -9,12 +9,12 @@
 import { describe, it, expect, beforeEach, vi } from "vitest";
 import { renderHook, act } from "@testing-library/react";
 import toast from "react-hot-toast";
-import { useClipboardOperations } from "../../../src/hooks/useClipboardOperations";
-import { hasSameTaskIds } from "../../../src/utils/clipboard";
-import { useClipboardStore } from "../../../src/store/slices/clipboardSlice";
-import { useTaskStore } from "../../../src/store/slices/taskSlice";
-import type { Task } from "../../../src/types/chart.types";
-import type { TaskId } from "../../../src/types/branded.types";
+import { useClipboardOperations } from "@/hooks/useClipboardOperations";
+import { hasSameTaskIds } from "@/utils/clipboard";
+import { useClipboardStore } from "@/store/slices/clipboardSlice";
+import { useTaskStore } from "@/store/slices/taskSlice";
+import type { Task } from "@/types/chart.types";
+import type { TaskId } from "@/types/branded.types";
 
 // ---------------------------------------------------------------------------
 // Mocks
@@ -32,7 +32,7 @@ vi.mock("react-hot-toast", () => ({
 // still resolve to the real implementations.
 vi.mock("../../../src/utils/clipboard", async (importOriginal) => {
   const actual =
-    await importOriginal<typeof import("../../../src/utils/clipboard")>();
+    await importOriginal<typeof import("@/utils/clipboard")>();
   return {
     ...actual,
     isClipboardApiAvailable: () => false,

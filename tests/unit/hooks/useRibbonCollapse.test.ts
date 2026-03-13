@@ -18,8 +18,8 @@ import {
 } from 'vitest';
 import { renderHook, render, act } from '@testing-library/react';
 import React from 'react';
-import { useRibbonCollapse } from '../../../src/hooks/useRibbonCollapse';
-import type { CollapseLevel } from '../../../src/components/Ribbon/RibbonCollapseContext';
+import { useRibbonCollapse } from '@/hooks/useRibbonCollapse';
+import type { CollapseLevel } from '@/components/Ribbon/RibbonCollapseContext';
 
 // ─── ResizeObserver mock ───
 

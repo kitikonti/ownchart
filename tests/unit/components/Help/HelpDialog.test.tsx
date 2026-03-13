@@ -1,8 +1,8 @@
 import { describe, it, expect, beforeEach } from "vitest";
 import { render, screen, fireEvent } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { HelpDialog } from "../../../../src/components/Help/HelpDialog";
-import { useUIStore } from "../../../../src/store/slices/uiSlice";
+import { HelpDialog } from "@/components/Help/HelpDialog";
+import { useUIStore } from "@/store/slices/uiSlice";
 
 describe("HelpDialog", () => {
   beforeEach(() => {

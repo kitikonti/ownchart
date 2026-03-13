@@ -5,15 +5,15 @@
 
 import { useCallback, useMemo, useRef, useState } from "react";
 import { Globe, MagnifyingGlass, Gear } from "@phosphor-icons/react";
-import { Input } from "../common/Input";
-import { useChartStore } from "../../store/slices/chartSlice";
+import { Input } from "@/components/common/Input";
+import { useChartStore } from "@/store/slices/chartSlice";
 import {
   holidayService,
   POPULAR_COUNTRY_CODES,
-} from "../../services/holidayService";
-import { useDropdown } from "../../hooks/useDropdown";
-import { DropdownPanel } from "../Toolbar/DropdownPanel";
-import { TOOLBAR } from "../../styles/design-tokens";
+} from "@/services/holidayService";
+import { useDropdown } from "@/hooks/useDropdown";
+import { DropdownPanel } from "@/components/Toolbar/DropdownPanel";
+import { TOOLBAR } from "@/styles/design-tokens";
 
 const ICON_SIZE = TOOLBAR.iconSize;
 

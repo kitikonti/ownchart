@@ -9,8 +9,8 @@ import {
   type ActiveCell,
   type EditableField,
   type NavigationDirection,
-} from "../store/slices/taskSlice";
-import type { TaskId } from "../types/branded.types";
+} from "@/store/slices/taskSlice";
+import type { TaskId } from "@/types/branded.types";
 
 export interface UseCellNavigationReturn {
   /** Current active cell */

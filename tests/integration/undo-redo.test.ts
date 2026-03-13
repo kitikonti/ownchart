@@ -4,8 +4,8 @@
  */
 
 import { describe, it, expect, beforeEach } from 'vitest';
-import { useTaskStore } from '../../src/store/slices/taskSlice';
-import { useHistoryStore } from '../../src/store/slices/historySlice';
+import { useTaskStore } from '@/store/slices/taskSlice';
+import { useHistoryStore } from '@/store/slices/historySlice';
 
 describe('Undo/Redo Integration Tests', () => {
   beforeEach(() => {

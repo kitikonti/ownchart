@@ -9,8 +9,8 @@ import {
   ARROWHEAD_SIZE,
   calculateDragPath,
   getArrowheadPoints,
-} from "../../utils/arrowPath";
-import { COLORS } from "../../styles/design-tokens";
+} from "@/utils/arrowPath";
+import { COLORS } from "@/styles/design-tokens";
 
 // ---------------------------------------------------------------------------
 // Geometry constants

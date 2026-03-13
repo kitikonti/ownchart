@@ -5,12 +5,12 @@
 
 import { describe, it, expect } from "vitest";
 import { render } from "@testing-library/react";
-import { RowOverlays } from "../../../../src/components/TaskList/RowOverlays";
-import { SELECTION_RADIUS } from "../../../../src/components/TaskList/rowNumberConfig";
+import { RowOverlays } from "@/components/TaskList/RowOverlays";
+import { SELECTION_RADIUS } from "@/components/TaskList/rowNumberConfig";
 import type {
   SelectionPosition,
   ClipboardPosition,
-} from "../../../../src/hooks/useTaskRowData";
+} from "@/hooks/useTaskRowData";
 
 // jsdom normalises `border-top: none` to an empty string — helper to distinguish
 // "has a real border" from "border is none/unset".

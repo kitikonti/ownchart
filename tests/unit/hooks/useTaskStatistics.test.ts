@@ -6,8 +6,8 @@
 
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { renderHook } from "@testing-library/react";
-import { useTaskStatistics } from "../../../src/hooks/useTaskStatistics";
-import type { Task } from "../../../src/types/chart.types";
+import { useTaskStatistics } from "@/hooks/useTaskStatistics";
+import type { Task } from "@/types/chart.types";
 
 // ---------------------------------------------------------------------------
 // Mock

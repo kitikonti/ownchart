@@ -3,7 +3,7 @@
  */
 
 import { describe, it, expect } from "vitest";
-import { pluralize } from "../../../src/utils/stringUtils";
+import { pluralize } from "@/utils/stringUtils";
 
 describe("pluralize", () => {
   it("should return singular form when count is 1", () => {

@@ -1,13 +1,13 @@
 import { describe, it, expect } from "vitest";
-import { calculateExportDimensions } from "../../../../src/utils/export/exportLayout";
+import { calculateExportDimensions } from "@/utils/export/exportLayout";
 import {
   EXPORT_COLUMNS,
   getColumnDisplayValue,
-} from "../../../../src/utils/export/columns";
-import { calculateTaskTableWidth } from "../../../../src/utils/export";
-import { DENSITY_CONFIG } from "../../../../src/config/densityConfig";
-import { DEFAULT_EXPORT_OPTIONS } from "../../../../src/utils/export/types";
-import type { Task } from "../../../../src/types/chart.types";
+} from "@/utils/export/columns";
+import { calculateTaskTableWidth } from "@/utils/export";
+import { DENSITY_CONFIG } from "@/config/densityConfig";
+import { DEFAULT_EXPORT_OPTIONS } from "@/utils/export/types";
+import type { Task } from "@/types/chart.types";
 
 describe("EXPORT_COLUMNS", () => {
   it("should have all required columns", () => {

@@ -5,8 +5,8 @@
 import { describe, it, expect, vi } from "vitest";
 import { render, screen, fireEvent } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { MobileBlockScreen } from "../../../src/components/MobileBlockScreen";
-import { APP_CONFIG } from "../../../src/config/appConfig";
+import { MobileBlockScreen } from "@/components/MobileBlockScreen";
+import { APP_CONFIG } from "@/config/appConfig";
 
 describe("MobileBlockScreen", () => {
   it("renders app name from APP_CONFIG", () => {

@@ -22,17 +22,17 @@ import {
   EyeSlash,
   Eye,
 } from "@phosphor-icons/react";
-import GroupIcon from "../../assets/icons/group-light.svg?react";
-import UngroupIcon from "../../assets/icons/ungroup-light.svg?react";
+import GroupIcon from "@/assets/icons/group-light.svg?react";
+import UngroupIcon from "@/assets/icons/ungroup-light.svg?react";
 
 import {
   ToolbarButton,
   ToolbarGroup,
   ToolbarSeparator,
-} from "../Toolbar/ToolbarPrimitives";
+} from "@/components/Toolbar/ToolbarPrimitives";
 import { ColorDropdown } from "./ColorDropdown";
-import { useHomeTabActions } from "../../hooks/useHomeTabActions";
-import { COLORS, TOOLBAR } from "../../styles/design-tokens";
+import { useHomeTabActions } from "@/hooks/useHomeTabActions";
+import { COLORS, TOOLBAR } from "@/styles/design-tokens";
 
 const ICON_SIZE = TOOLBAR.iconSize;
 

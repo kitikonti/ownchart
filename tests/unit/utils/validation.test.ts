@@ -8,7 +8,7 @@ import {
   validateTask,
   validateDateRange,
   MAX_DURATION_DAYS,
-} from '../../../src/utils/validation';
+} from '@/utils/validation';
 
 describe('validateTaskName', () => {
   it('should accept valid task names', () => {

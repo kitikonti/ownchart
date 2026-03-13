@@ -3,8 +3,8 @@
  */
 
 import { buildFlattenedTaskList } from "./hierarchy";
-import type { Task } from "../types/chart.types";
-import type { TaskId } from "../types/branded.types";
+import type { Task } from "@/types/chart.types";
+import type { TaskId } from "@/types/branded.types";
 
 /**
  * Returns the id of the first task (in visual/flattened order) that appears

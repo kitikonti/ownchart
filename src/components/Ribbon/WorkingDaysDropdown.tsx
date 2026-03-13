@@ -5,14 +5,14 @@
 
 import { useCallback, useMemo } from "react";
 import { Briefcase } from "@phosphor-icons/react";
-import { Checkbox } from "../common/Checkbox";
-import { useChartStore } from "../../store/slices/chartSlice";
-import { holidayService } from "../../services/holidayService";
-import { useDropdown } from "../../hooks/useDropdown";
-import { DropdownTrigger } from "../Toolbar/DropdownTrigger";
-import { DropdownPanel } from "../Toolbar/DropdownPanel";
-import { TOOLBAR } from "../../styles/design-tokens";
-import type { WorkingDaysConfig } from "../../types/preferences.types";
+import { Checkbox } from "@/components/common/Checkbox";
+import { useChartStore } from "@/store/slices/chartSlice";
+import { holidayService } from "@/services/holidayService";
+import { useDropdown } from "@/hooks/useDropdown";
+import { DropdownTrigger } from "@/components/Toolbar/DropdownTrigger";
+import { DropdownPanel } from "@/components/Toolbar/DropdownPanel";
+import { TOOLBAR } from "@/styles/design-tokens";
+import type { WorkingDaysConfig } from "@/types/preferences.types";
 
 const ICON_SIZE = TOOLBAR.iconSize;
 const PANEL_WIDTH = "280px";

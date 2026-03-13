@@ -4,7 +4,7 @@
  */
 
 import { describe, it, expect } from "vitest";
-import type { Task } from "../../../src/types/chart.types";
+import type { Task } from "@/types/chart.types";
 import {
   getScaleConfig,
   getTimelineScale,
@@ -18,7 +18,7 @@ import {
   FIXED_BASE_PIXELS_PER_DAY,
   DEFAULT_DENSITY_GEOMETRY,
   TIMELINE_HEADER_HEIGHT_PX,
-} from "../../../src/utils/timelineUtils";
+} from "@/utils/timelineUtils";
 
 const makeTask = (startDate: string, endDate: string): Task => ({
   id: "test-id",

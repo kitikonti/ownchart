@@ -21,7 +21,7 @@ import {
 import {
   useCollapseLevel,
   shouldShowLabel,
-} from "../Ribbon/RibbonCollapseContext";
+} from "@/components/Ribbon/RibbonCollapseContext";
 
 // ============================================================================
 // Types

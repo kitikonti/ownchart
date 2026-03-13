@@ -3,7 +3,7 @@
  */
 
 import { describe, it, expect } from "vitest";
-import { buildClassNames } from "../../../src/utils/buildClassNames";
+import { buildClassNames } from "@/utils/buildClassNames";
 
 describe("buildClassNames", () => {
   it("should return a single class name unchanged", () => {

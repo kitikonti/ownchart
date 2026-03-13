@@ -11,20 +11,20 @@
 
 import { useMemo, useState, useCallback, type ReactNode } from "react";
 import { Eye, ArrowsHorizontal } from "@phosphor-icons/react";
-import { useChartStore } from "../store/slices/chartSlice";
-import { useTaskStore } from "../store/slices/taskSlice";
+import { useChartStore } from "@/store/slices/chartSlice";
+import { useTaskStore } from "@/store/slices/taskSlice";
 import {
   TASK_COLUMNS,
   getHideableColumns,
   ROW_NUMBER_COLUMN_ID,
   COLOR_COLUMN_ID,
-} from "../config/tableColumns";
-import { CONTEXT_MENU } from "../styles/design-tokens";
+} from "@/config/tableColumns";
+import { CONTEXT_MENU } from "@/styles/design-tokens";
 import type {
   ContextMenuItem,
   ContextMenuPosition,
-} from "../components/ContextMenu/ContextMenu";
-import type { ColumnId } from "../config/tableColumns";
+} from "@/components/ContextMenu/ContextMenu";
+import type { ColumnId } from "@/config/tableColumns";
 
 // Module-level constant: derived from static config and never changes across renders.
 const HIDEABLE_COLUMNS = getHideableColumns();

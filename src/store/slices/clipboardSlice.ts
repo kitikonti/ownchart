@@ -5,15 +5,15 @@
 
 import { create } from "zustand";
 import { immer } from "zustand/middleware/immer";
-import type { Task } from "../../types/chart.types";
-import type { TaskId } from "../../types/branded.types";
-import type { Dependency } from "../../types/dependency.types";
-import type { EditableField } from "../../types/task.types";
+import type { Task } from "@/types/chart.types";
+import type { TaskId } from "@/types/branded.types";
+import type { Dependency } from "@/types/dependency.types";
+import type { EditableField } from "@/types/task.types";
 import { useTaskStore } from "./taskSlice";
 import { useDependencyStore } from "./dependencySlice";
 import { useHistoryStore } from "./historySlice";
 import { useFileStore } from "./fileSlice";
-import { CommandType, type CopyCellParams } from "../../types/command.types";
+import { CommandType, type CopyCellParams } from "@/types/command.types";
 import {
   collectTasksWithChildren,
   deepCloneTasks,
@@ -26,8 +26,8 @@ import {
   type PrepareRowPasteResult,
   type SystemRowClipboardData,
   type SystemCellClipboardData,
-} from "../../utils/clipboard";
-import { buildFlattenedTaskList } from "../../utils/hierarchy";
+} from "@/utils/clipboard";
+import { buildFlattenedTaskList } from "@/utils/hierarchy";
 
 interface ClipboardState {
   // Row clipboard (for whole tasks)

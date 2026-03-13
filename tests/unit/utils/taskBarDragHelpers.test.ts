@@ -4,11 +4,11 @@
  */
 
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import type { Task } from '../../../src/types/chart.types';
-import type { TaskBarGeometry } from '../../../src/utils/timelineUtils';
-import type { WorkingDaysConfig } from '../../../src/types/preferences.types';
-import { toTaskId } from '../../../src/types/branded.types';
-import { toHexColor } from '../../../src/types/branded.types';
+import type { Task } from '@/types/chart.types';
+import type { TaskBarGeometry } from '@/utils/timelineUtils';
+import type { WorkingDaysConfig } from '@/types/preferences.types';
+import { toTaskId } from '@/types/branded.types';
+import { toHexColor } from '@/types/branded.types';
 import {
   EDGE_THRESHOLD,
   detectInteractionZone,
@@ -21,7 +21,7 @@ import {
   buildResizeUpdate,
   type DragState,
   type WorkingDaysContext,
-} from '../../../src/utils/taskBarDragHelpers';
+} from '@/utils/taskBarDragHelpers';
 
 // Mock dragValidation
 vi.mock('../../../src/utils/dragValidation', () => ({
@@ -40,11 +40,11 @@ vi.mock('../../../src/utils/workingDaysCalculator', () => ({
   ),
 }));
 
-import { validateDragOperation } from '../../../src/utils/dragValidation';
+import { validateDragOperation } from '@/utils/dragValidation';
 import {
   calculateWorkingDays,
   addWorkingDays,
-} from '../../../src/utils/workingDaysCalculator';
+} from '@/utils/workingDaysCalculator';
 
 const mockValidate = vi.mocked(validateDragOperation);
 const mockCalcWorkingDays = vi.mocked(calculateWorkingDays);

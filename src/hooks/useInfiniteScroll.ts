@@ -12,8 +12,8 @@
 
 import { useEffect, useRef, type MutableRefObject } from "react";
 import { flushSync } from "react-dom";
-import type { TimelineScale } from "../utils/timelineUtils";
-import { SCROLL_OFFSET_DAYS } from "../utils/timelineUtils";
+import type { TimelineScale } from "@/utils/timelineUtils";
+import { SCROLL_OFFSET_DAYS } from "@/utils/timelineUtils";
 import {
   EXTEND_COOLDOWN_MS,
   FIT_TO_VIEW_BLOCK_MS,
@@ -22,7 +22,7 @@ import {
   INFINITE_SCROLL_THRESHOLD,
   FIT_TO_VIEW_EDGE_THRESHOLD,
   EXTEND_DAYS,
-} from "../config/layoutConstants";
+} from "@/config/layoutConstants";
 
 /**
  * Schedules a past-extension after scroll idle time, with scroll-anchor

@@ -5,15 +5,10 @@
 
 import { useCallback, type CSSProperties, type MouseEvent } from "react";
 import { CaretDown } from "@phosphor-icons/react";
-import {
-  COLORS,
-  TYPOGRAPHY,
-  RADIUS,
-  SPACING,
-} from "../../styles/design-tokens";
-import { useDropdown } from "../../hooks/useDropdown";
-import { DropdownPanel } from "../Toolbar/DropdownPanel";
-import { DropdownItem } from "../Toolbar/DropdownItem";
+import { COLORS, TYPOGRAPHY, RADIUS, SPACING } from "@/styles/design-tokens";
+import { useDropdown } from "@/hooks/useDropdown";
+import { DropdownPanel } from "@/components/Toolbar/DropdownPanel";
+import { DropdownItem } from "@/components/Toolbar/DropdownItem";
 
 /** Combobox layout constants (px) — pixel-precise Fluent UI fidelity */
 const COMBOBOX_WIDTH = 70;

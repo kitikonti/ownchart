@@ -6,10 +6,10 @@
 
 import { describe, it, expect, beforeEach, vi } from "vitest";
 import { render, fireEvent } from "@testing-library/react";
-import { ColorDropdown } from "../../../../src/components/Ribbon/ColorDropdown";
-import { DEFAULT_COLOR_MODE_STATE } from "../../../../src/config/colorModeDefaults";
-import { RibbonCollapseProvider } from "../../../../src/components/Ribbon/RibbonCollapseContext";
-import type { ColorModeState } from "../../../../src/types/colorMode.types";
+import { ColorDropdown } from "@/components/Ribbon/ColorDropdown";
+import { DEFAULT_COLOR_MODE_STATE } from "@/config/colorModeDefaults";
+import { RibbonCollapseProvider } from "@/components/Ribbon/RibbonCollapseContext";
+import type { ColorModeState } from "@/types/colorMode.types";
 
 // ---------------------------------------------------------------------------
 // Mocks

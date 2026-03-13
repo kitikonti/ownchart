@@ -8,16 +8,16 @@
 
 import { useState, useCallback, useRef, useEffect, useMemo } from "react";
 import { MagnifyingGlassPlus } from "@phosphor-icons/react";
-import type { TimelineScale } from "../utils/timelineUtils";
-import { dateToPixel, pixelToDate } from "../utils/timelineUtils";
-import { useChartStore } from "../store/slices/chartSlice";
+import type { TimelineScale } from "@/utils/timelineUtils";
+import { dateToPixel, pixelToDate } from "@/utils/timelineUtils";
+import { useChartStore } from "@/store/slices/chartSlice";
 import type {
   ContextMenuPosition,
   ContextMenuItem,
-} from "../components/ContextMenu/ContextMenu";
-import { CONTEXT_MENU_CONTAINER_CLASS } from "../components/ContextMenu/ContextMenu";
-import { CONTEXT_MENU } from "../styles/design-tokens";
-import { clientToSvgCoords } from "../utils/svgCoords";
+} from "@/components/ContextMenu/ContextMenu";
+import { CONTEXT_MENU_CONTAINER_CLASS } from "@/components/ContextMenu/ContextMenu";
+import { CONTEXT_MENU } from "@/styles/design-tokens";
+import { clientToSvgCoords } from "@/utils/svgCoords";
 
 /** Minimum pixel width for a selection to be rendered (ignores single-click without drag) */
 const MIN_SELECTION_WIDTH_PX = 2;

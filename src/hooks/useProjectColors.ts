@@ -7,7 +7,7 @@
 
 import { useMemo } from "react";
 import { useShallow } from "zustand/react/shallow";
-import { useTaskStore } from "../store/slices/taskSlice";
+import { useTaskStore } from "@/store/slices/taskSlice";
 
 /** Maximum number of project colors to surface by default (fits a 3×4 swatch grid). */
 const DEFAULT_MAX_PROJECT_COLORS = 12;

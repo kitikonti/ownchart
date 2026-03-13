@@ -4,12 +4,12 @@
 
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { render, screen, fireEvent } from "@testing-library/react";
-import { PdfExportOptions } from "../../../../src/components/Export/PdfExportOptions";
-import type { PdfExportOptionsProps } from "../../../../src/components/Export/PdfExportOptions";
+import { PdfExportOptions } from "@/components/Export/PdfExportOptions";
+import type { PdfExportOptionsProps } from "@/components/Export/PdfExportOptions";
 import {
   DEFAULT_PDF_OPTIONS,
   DEFAULT_EXPORT_OPTIONS,
-} from "../../../../src/utils/export/types";
+} from "@/utils/export/types";
 
 // Mock ZoomModeSelector to isolate PdfExportOptions tests
 vi.mock("../../../../src/components/Export/ZoomModeSelector", () => ({

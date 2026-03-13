@@ -16,9 +16,9 @@ import {
   UHD_SCREEN_WIDTH_PX,
   MIN_FIT_WIDTH_PX,
   MAX_FIT_WIDTH_PX,
-} from "../../utils/export/types";
-import { Input } from "../common/Input";
-import { Select } from "../common/Select";
+} from "@/utils/export/types";
+import { Input } from "@/components/common/Input";
+import { Select } from "@/components/common/Select";
 import { stopPropagation } from "./exportEventUtils";
 
 /** HD (1080p) screen width in pixels — matches DEFAULT_FIT_TO_WIDTH_PX. */

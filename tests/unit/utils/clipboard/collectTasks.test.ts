@@ -2,8 +2,8 @@ import { describe, it, expect } from "vitest";
 import {
   collectTasksWithChildren,
   deepCloneTasks,
-} from "../../../../src/utils/clipboard/collectTasks";
-import type { Task } from "../../../../src/types/chart.types";
+} from "@/utils/clipboard/collectTasks";
+import type { Task } from "@/types/chart.types";
 import { tid, hex } from "../../../helpers/branded";
 
 // Helper to create test tasks

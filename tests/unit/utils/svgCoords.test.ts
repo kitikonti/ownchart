@@ -3,7 +3,7 @@
  */
 
 import { describe, it, expect, vi } from "vitest";
-import { clientToSvgCoords } from "../../../src/utils/svgCoords";
+import { clientToSvgCoords } from "@/utils/svgCoords";
 
 function makeSvgEl(left: number, top: number): SVGSVGElement {
   const el = {

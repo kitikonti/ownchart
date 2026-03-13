@@ -10,9 +10,9 @@
 
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { renderHook, act } from '@testing-library/react';
-import { useTimelineAreaContextMenu } from '../../../src/hooks/useTimelineAreaContextMenu';
-import { useTaskStore } from '../../../src/store/slices/taskSlice';
-import type { Task } from '../../../src/types/chart.types';
+import { useTimelineAreaContextMenu } from '@/hooks/useTimelineAreaContextMenu';
+import { useTaskStore } from '@/store/slices/taskSlice';
+import type { Task } from '@/types/chart.types';
 
 // ─── Mock heavy dependencies ───────────────────────────────────────────────
 

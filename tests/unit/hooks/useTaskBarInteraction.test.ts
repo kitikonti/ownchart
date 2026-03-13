@@ -5,12 +5,12 @@
 
 import { describe, it, expect, beforeEach, vi, afterEach } from 'vitest';
 import { renderHook, act } from '@testing-library/react';
-import { useTaskBarInteraction } from '../../../src/hooks/useTaskBarInteraction';
-import { useTaskStore } from '../../../src/store/slices/taskSlice';
-import { useChartStore } from '../../../src/store/slices/chartSlice';
-import type { Task } from '../../../src/types/chart.types';
-import type { TimelineScale, TaskBarGeometry } from '../../../src/utils/timelineUtils';
-import { toTaskId, toHexColor } from '../../../src/types/branded.types';
+import { useTaskBarInteraction } from '@/hooks/useTaskBarInteraction';
+import { useTaskStore } from '@/store/slices/taskSlice';
+import { useChartStore } from '@/store/slices/chartSlice';
+import type { Task } from '@/types/chart.types';
+import type { TimelineScale, TaskBarGeometry } from '@/utils/timelineUtils';
+import { toTaskId, toHexColor } from '@/types/branded.types';
 
 // ─── Mocks ─────────────────────────────────────────────────────────────
 
@@ -36,9 +36,9 @@ vi.mock('../../../src/utils/workingDaysCalculator', () => ({
   addWorkingDays: vi.fn((start: string) => start),
 }));
 
-import { getSVGPoint } from '../../../src/utils/svgUtils';
-import { getEffectiveTasksToMove } from '../../../src/utils/hierarchy';
-import { calculateWorkingDays, addWorkingDays } from '../../../src/utils/workingDaysCalculator';
+import { getSVGPoint } from '@/utils/svgUtils';
+import { getEffectiveTasksToMove } from '@/utils/hierarchy';
+import { calculateWorkingDays, addWorkingDays } from '@/utils/workingDaysCalculator';
 
 const mockGetSVGPoint = vi.mocked(getSVGPoint);
 const mockGetEffective = vi.mocked(getEffectiveTasksToMove);

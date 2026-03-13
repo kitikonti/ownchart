@@ -8,8 +8,8 @@ import {
   getDateRange,
   isWeekend,
   getBusinessDays,
-} from "../../../src/utils/dateUtils";
-import type { Task } from "../../../src/types/chart.types";
+} from "@/utils/dateUtils";
+import type { Task } from "@/types/chart.types";
 
 function makeTask(startDate: string, endDate: string): Task {
   return { startDate, endDate } as Task;

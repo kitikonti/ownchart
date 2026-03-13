@@ -14,7 +14,7 @@ import {
   ROW_NUMBER_FONT_WEIGHT,
   ROW_SELECT_CURSOR,
   ROW_COLORS,
-} from "../../../../src/components/TaskList/rowNumberConfig";
+} from "@/components/TaskList/rowNumberConfig";
 
 describe("rowNumberConfig layout constants", () => {
   it("CONTROLS_WIDTH is a positive number", () => {

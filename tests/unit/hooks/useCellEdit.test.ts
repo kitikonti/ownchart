@@ -14,11 +14,11 @@ import {
   buildDateFieldUpdate,
   buildDurationFieldUpdate,
   DATE_RANGE_ERROR,
-} from "../../../src/hooks/useCellEdit";
-import type { Task } from "../../../src/types/chart.types";
-import type { TaskId } from "../../../src/types/branded.types";
-import type { WorkingDaysConfig } from "../../../src/types/preferences.types";
-import type { ColumnDefinition } from "../../../src/config/tableColumns";
+} from "@/hooks/useCellEdit";
+import type { Task } from "@/types/chart.types";
+import type { TaskId } from "@/types/branded.types";
+import type { WorkingDaysConfig } from "@/types/preferences.types";
+import type { ColumnDefinition } from "@/config/tableColumns";
 
 // ---------------------------------------------------------------------------
 // Mocks
@@ -55,7 +55,7 @@ vi.mock("../../../src/store/slices/userPreferencesSlice", () => ({
   ),
 }));
 
-import { useChartStore } from "../../../src/store/slices/chartSlice";
+import { useChartStore } from "@/store/slices/chartSlice";
 
 function setChartState(overrides: Partial<typeof defaultChartState>): void {
   vi.mocked(useChartStore).mockImplementation(
@@ -263,7 +263,7 @@ describe("buildDurationFieldUpdate", () => {
 function buildHookParams(
   overrides: Partial<{
     task: Task;
-    field: (typeof import("../../../src/types/task.types"))["EDITABLE_FIELDS"][number];
+    field: (typeof import("@/types/task.types"))["EDITABLE_FIELDS"][number];
     column: ColumnDefinition;
     isActive: boolean;
     isEditing: boolean;

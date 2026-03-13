@@ -8,11 +8,11 @@
 
 import { describe, it, expect, beforeEach, vi } from "vitest";
 import { renderHook } from "@testing-library/react";
-import { useHomeTabActions } from "../../../src/hooks/useHomeTabActions";
-import { useTaskStore } from "../../../src/store/slices/taskSlice";
-import { useChartStore } from "../../../src/store/slices/chartSlice";
-import { useHistoryStore } from "../../../src/store/slices/historySlice";
-import type { Task } from "../../../src/types/chart.types";
+import { useHomeTabActions } from "@/hooks/useHomeTabActions";
+import { useTaskStore } from "@/store/slices/taskSlice";
+import { useChartStore } from "@/store/slices/chartSlice";
+import { useHistoryStore } from "@/store/slices/historySlice";
+import type { Task } from "@/types/chart.types";
 
 // Mock new task creation — tested separately in useNewTaskCreation tests
 const mockCreateTask = vi.fn();

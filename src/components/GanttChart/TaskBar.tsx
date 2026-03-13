@@ -4,28 +4,24 @@
  */
 
 import React, { useMemo } from "react";
-import type { Task } from "../../types/chart.types";
+import type { Task } from "@/types/chart.types";
 import type {
   TimelineScale,
   DensityGeometryConfig,
-} from "../../utils/timelineUtils";
-import type { TaskLabelPosition } from "../../types/preferences.types";
-import { getTaskBarGeometry, dateToPixel } from "../../utils/timelineUtils";
-import { calculateDuration, addDays } from "../../utils/dateUtils";
-import { useTaskBarInteraction } from "../../hooks/useTaskBarInteraction";
-import { useProgressDrag } from "../../hooks/useProgressDrag";
-import { useChartStore } from "../../store/slices/chartSlice";
-import { useTaskStore } from "../../store/slices/taskSlice";
-import { useDensityConfig } from "../../store/slices/userPreferencesSlice";
-import { SVG_FONT_FAMILY } from "../../utils/export/constants";
-import { SUMMARY_BRACKET } from "../../utils/export/renderConstants";
-import { getContrastTextColor } from "../../utils/colorUtils";
-import { useComputedTaskColor } from "../../hooks/useComputedTaskColor";
-import {
-  COLORS,
-  CONNECTION_HANDLE,
-  TYPOGRAPHY,
-} from "../../styles/design-tokens";
+} from "@/utils/timelineUtils";
+import type { TaskLabelPosition } from "@/types/preferences.types";
+import { getTaskBarGeometry, dateToPixel } from "@/utils/timelineUtils";
+import { calculateDuration, addDays } from "@/utils/dateUtils";
+import { useTaskBarInteraction } from "@/hooks/useTaskBarInteraction";
+import { useProgressDrag } from "@/hooks/useProgressDrag";
+import { useChartStore } from "@/store/slices/chartSlice";
+import { useTaskStore } from "@/store/slices/taskSlice";
+import { useDensityConfig } from "@/store/slices/userPreferencesSlice";
+import { SVG_FONT_FAMILY } from "@/utils/export/constants";
+import { SUMMARY_BRACKET } from "@/utils/export/renderConstants";
+import { getContrastTextColor } from "@/utils/colorUtils";
+import { useComputedTaskColor } from "@/hooks/useComputedTaskColor";
+import { COLORS, CONNECTION_HANDLE, TYPOGRAPHY } from "@/styles/design-tokens";
 
 // =============================================================================
 // CONSTANTS

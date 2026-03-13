@@ -11,14 +11,11 @@
 import { useState, useCallback, memo } from "react";
 import { Minus, Plus, ArrowsOutLineHorizontal } from "@phosphor-icons/react";
 import { useShallow } from "zustand/react/shallow";
-import { useTaskStore } from "../../store/slices/taskSlice";
-import { useChartStore } from "../../store/slices/chartSlice";
-import { MIN_ZOOM, MAX_ZOOM } from "../../utils/timelineUtils";
+import { useTaskStore } from "@/store/slices/taskSlice";
+import { useChartStore } from "@/store/slices/chartSlice";
+import { MIN_ZOOM, MAX_ZOOM } from "@/utils/timelineUtils";
 // Non-reactive utilities exported from useZoom — not hook calls.
-import {
-  computeViewportCenterAnchor,
-  applyScrollLeft,
-} from "../../hooks/useZoom";
+import { computeViewportCenterAnchor, applyScrollLeft } from "@/hooks/useZoom";
 import { ZoomDialog } from "./ZoomDialog";
 
 export const ZoomControls = memo(function ZoomControls(): JSX.Element {

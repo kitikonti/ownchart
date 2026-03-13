@@ -2,11 +2,8 @@
  * Types for export functionality (PNG, PDF, SVG).
  */
 
-import type {
-  UiDensity,
-  TaskLabelPosition,
-} from "../../types/preferences.types";
-import type { Task } from "../../types/chart.types";
+import type { UiDensity, TaskLabelPosition } from "@/types/preferences.types";
+import type { Task } from "@/types/chart.types";
 
 // =============================================================================
 // Export Format Types

@@ -4,8 +4,8 @@
  * When adding a new visibility feature (e.g. archived tasks), update THIS function.
  */
 
-import type { Task } from "../../types/chart.types";
-import type { TaskId } from "../../types/branded.types";
+import type { Task } from "@/types/chart.types";
+import type { TaskId } from "@/types/branded.types";
 
 /**
  * Returns the subset of `tasks` that should appear in the export.

@@ -12,15 +12,15 @@
  */
 
 import { memo, useCallback, useMemo } from "react";
-import type { Task } from "../../types/chart.types";
-import type { ColumnDefinition } from "../../config/tableColumns";
-import type { EditableField } from "../../types/task.types";
-import type { HexColor } from "../../types/branded.types";
-import { useTaskStore } from "../../store/slices/taskSlice";
-import { useChartStore } from "../../store/slices/chartSlice";
-import { useDensityConfig } from "../../store/slices/userPreferencesSlice";
-import { useIsCellEditing } from "../../hooks/useIsCellEditing";
-import { getNextTaskType } from "../../utils/taskTypeUtils";
+import type { Task } from "@/types/chart.types";
+import type { ColumnDefinition } from "@/config/tableColumns";
+import type { EditableField } from "@/types/task.types";
+import type { HexColor } from "@/types/branded.types";
+import { useTaskStore } from "@/store/slices/taskSlice";
+import { useChartStore } from "@/store/slices/chartSlice";
+import { useDensityConfig } from "@/store/slices/userPreferencesSlice";
+import { useIsCellEditing } from "@/hooks/useIsCellEditing";
+import { getNextTaskType } from "@/utils/taskTypeUtils";
 import { Cell } from "./Cell";
 import { ColorCellEditor } from "./CellEditors/ColorCellEditor";
 import { TaskTypeIcon } from "./TaskTypeIcon";

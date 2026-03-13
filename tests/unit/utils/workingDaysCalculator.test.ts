@@ -23,9 +23,9 @@ import {
   addWorkingDays,
   getHolidaysInRange,
   getWorkingDaysSummary,
-} from "../../../src/utils/workingDaysCalculator";
-import { holidayService, type HolidayInfo } from "../../../src/services/holidayService";
-import type { WorkingDaysConfig } from "../../../src/types/preferences.types";
+} from "@/utils/workingDaysCalculator";
+import { holidayService, type HolidayInfo } from "@/services/holidayService";
+import type { WorkingDaysConfig } from "@/types/preferences.types";
 
 // ─── Test fixtures ────────────────────────────────────────────────────────────
 

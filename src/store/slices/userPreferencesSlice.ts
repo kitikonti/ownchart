@@ -14,18 +14,18 @@ import type {
   DateFormat,
   FirstDayOfWeek,
   WeekNumberingSystem,
-} from "../../types/preferences.types";
-import { DENSITY_CONFIG } from "../../config/densityConfig";
+} from "@/types/preferences.types";
+import { DENSITY_CONFIG } from "@/config/densityConfig";
 import {
   DEFAULT_PREFERENCES,
   detectLocaleDateFormat,
   detectLocaleFirstDayOfWeek,
   detectLocaleWeekNumberingSystem,
-} from "../../utils/localeDetection";
+} from "@/utils/localeDetection";
 import {
   registerFirstDayOfWeekGetter,
   registerWeekNumberingSystemGetter,
-} from "../../utils/timelineUtils";
+} from "@/utils/timelineUtils";
 
 // LocalStorage key
 const PREFERENCES_KEY = "ownchart-preferences";

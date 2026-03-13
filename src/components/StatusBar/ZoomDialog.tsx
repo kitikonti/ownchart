@@ -6,9 +6,9 @@ import { useState, useEffect, useCallback, memo } from "react";
 
 import { MagnifyingGlass } from "@phosphor-icons/react";
 
-import { Modal } from "../common/Modal";
-import { Button } from "../common/Button";
-import { Radio } from "../common/Radio";
+import { Modal } from "@/components/common/Modal";
+import { Button } from "@/components/common/Button";
+import { Radio } from "@/components/common/Radio";
 
 interface ZoomDialogProps {
   isOpen: boolean;

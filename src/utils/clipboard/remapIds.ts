@@ -3,9 +3,9 @@
  * Used during paste operations to generate new unique IDs.
  */
 
-import type { Task } from "../../types/chart.types";
-import { type TaskId, toTaskId } from "../../types/branded.types";
-import type { Dependency } from "../../types/dependency.types";
+import type { Task } from "@/types/chart.types";
+import { type TaskId, toTaskId } from "@/types/branded.types";
+import type { Dependency } from "@/types/dependency.types";
 
 /**
  * Generate new UUIDs for tasks and create ID mapping.

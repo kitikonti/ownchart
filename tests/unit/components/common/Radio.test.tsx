@@ -6,7 +6,7 @@
 
 import { describe, it, expect, vi } from "vitest";
 import { render, screen, fireEvent } from "@testing-library/react";
-import { Radio } from "../../../../src/components/common/Radio";
+import { Radio } from "@/components/common/Radio";
 
 describe("Radio", () => {
   const defaultProps = {

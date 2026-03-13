@@ -8,7 +8,7 @@ import {
   saveFile,
   openFile,
   clearFileHandle,
-} from '../../../../src/utils/fileOperations/fileDialog';
+} from '@/utils/fileOperations/fileDialog';
 
 // Flush all pending microtasks so async chains settle
 function flushMicrotasks(): Promise<void> {

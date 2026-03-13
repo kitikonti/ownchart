@@ -6,14 +6,14 @@
 
 import { describe, it, expect, vi } from "vitest";
 import { render } from "@testing-library/react";
-import { TimelineHeader } from "../../../../src/components/GanttChart/TimelineHeader";
+import { TimelineHeader } from "@/components/GanttChart/TimelineHeader";
 import {
   COLORS,
   TIMELINE_HEADER,
   TYPOGRAPHY,
-} from "../../../../src/styles/design-tokens";
-import type { TimelineScale } from "../../../../src/utils/timelineUtils";
-import { toISODateString } from "../../../../src/utils/dateUtils";
+} from "@/styles/design-tokens";
+import type { TimelineScale } from "@/utils/timelineUtils";
+import { toISODateString } from "@/utils/dateUtils";
 
 // ---------------------------------------------------------------------------
 // Mocks

@@ -15,12 +15,12 @@ import {
   generateSuggestedFilename,
   resolveSuggestedFilename,
   setConfirmDiscardChanges,
-} from "../../../src/hooks/useFileOperations";
-import { useTaskStore } from "../../../src/store/slices/taskSlice";
-import { useChartStore } from "../../../src/store/slices/chartSlice";
-import { useFileStore } from "../../../src/store/slices/fileSlice";
-import { useHistoryStore } from "../../../src/store/slices/historySlice";
-import type { Task } from "../../../src/types/chart.types";
+} from "@/hooks/useFileOperations";
+import { useTaskStore } from "@/store/slices/taskSlice";
+import { useChartStore } from "@/store/slices/chartSlice";
+import { useFileStore } from "@/store/slices/fileSlice";
+import { useHistoryStore } from "@/store/slices/historySlice";
+import type { Task } from "@/types/chart.types";
 
 // ---------------------------------------------------------------------------
 // Mocks

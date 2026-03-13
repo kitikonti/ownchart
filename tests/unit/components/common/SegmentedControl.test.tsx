@@ -4,7 +4,7 @@
 
 import { describe, it, expect, vi } from "vitest";
 import { render, screen, fireEvent } from "@testing-library/react";
-import { SegmentedControl } from "../../../../src/components/common/SegmentedControl";
+import { SegmentedControl } from "@/components/common/SegmentedControl";
 
 const basicOptions = [
   { value: "a", label: "Option A" },

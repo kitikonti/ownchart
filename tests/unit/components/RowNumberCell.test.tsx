@@ -5,11 +5,11 @@
 
 import { describe, it, expect, beforeEach, vi } from "vitest";
 import { render, screen, fireEvent } from "@testing-library/react";
-import { RowNumberCell } from "../../../src/components/TaskList/RowNumberCell";
+import { RowNumberCell } from "@/components/TaskList/RowNumberCell";
 import {
   dragState,
   resetDragState,
-} from "../../../src/components/TaskList/dragSelectionState";
+} from "@/components/TaskList/dragSelectionState";
 
 describe("RowNumberCell", () => {
   const defaultProps = {

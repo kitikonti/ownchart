@@ -5,7 +5,7 @@
  */
 
 import { describe, it, expect } from "vitest";
-import { formControlVariantClasses } from "../../../../src/components/common/formVariantClasses";
+import { formControlVariantClasses } from "@/components/common/formVariantClasses";
 
 describe("formControlVariantClasses", () => {
   it("exports an object with 'default' and 'figma' keys", () => {

@@ -11,9 +11,9 @@ import {
   useLayoutEffect,
   useCallback,
 } from "react";
-import { useChartStore } from "../../store/slices/chartSlice";
-import { useFileStore } from "../../store/slices/fileSlice";
-import { APP_CONFIG } from "../../config/appConfig";
+import { useChartStore } from "@/store/slices/chartSlice";
+import { useFileStore } from "@/store/slices/fileSlice";
+import { APP_CONFIG } from "@/config/appConfig";
 
 const MIN_INPUT_WIDTH = 80;
 const MAX_INPUT_WIDTH = 300;

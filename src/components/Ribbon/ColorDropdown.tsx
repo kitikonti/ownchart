@@ -20,29 +20,29 @@
 
 import { useEffect } from "react";
 import { Palette, PaintBucket } from "@phosphor-icons/react";
-import { useChartStore } from "../../store/slices/chartSlice";
-import { useDropdown } from "../../hooks/useDropdown";
-import { DropdownTrigger } from "../Toolbar/DropdownTrigger";
-import { DropdownPanel } from "../Toolbar/DropdownPanel";
-import { DropdownItem } from "../Toolbar/DropdownItem";
-import { TOOLBAR } from "../../styles/design-tokens";
-import { Button } from "../common/Button";
-import type { ColorMode } from "../../types/colorMode.types";
+import { useChartStore } from "@/store/slices/chartSlice";
+import { useDropdown } from "@/hooks/useDropdown";
+import { DropdownTrigger } from "@/components/Toolbar/DropdownTrigger";
+import { DropdownPanel } from "@/components/Toolbar/DropdownPanel";
+import { DropdownItem } from "@/components/Toolbar/DropdownItem";
+import { TOOLBAR } from "@/styles/design-tokens";
+import { Button } from "@/components/common/Button";
+import type { ColorMode } from "@/types/colorMode.types";
 import type {
   SummaryModeOptions,
   TaskTypeModeOptions,
   HierarchyModeOptions,
-} from "../../types/colorMode.types";
+} from "@/types/colorMode.types";
 import {
   toHexColor,
   type HexColor,
   type PaletteId,
-} from "../../types/branded.types";
+} from "@/types/branded.types";
 import {
   CATEGORY_LABELS,
   PALETTE_CATEGORIES,
   PALETTES_BY_CATEGORY,
-} from "../../utils/colorPalettes";
+} from "@/utils/colorPalettes";
 
 // ── Constants ───────────────────────────────────────────────────────────────
 

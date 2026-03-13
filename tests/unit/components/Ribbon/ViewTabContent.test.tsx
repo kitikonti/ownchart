@@ -8,8 +8,8 @@
 
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { render, screen } from "@testing-library/react";
-import { ViewTabContent } from "../../../../src/components/Ribbon/ViewTabContent";
-import { useChartStore } from "../../../../src/store/slices/chartSlice";
+import { ViewTabContent } from "@/components/Ribbon/ViewTabContent";
+import { useChartStore } from "@/store/slices/chartSlice";
 
 // Mock useZoom helpers
 vi.mock("../../../../src/hooks/useZoom", () => ({

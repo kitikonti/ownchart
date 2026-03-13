@@ -4,7 +4,7 @@
  */
 
 import { memo } from "react";
-import { Z_INDEX } from "../../styles/design-tokens";
+import { Z_INDEX } from "@/styles/design-tokens";
 import { INSERT_BUTTON_HIT_AREA, ROW_COLORS } from "./rowNumberConfig";
 
 const INSERT_LINE_THICKNESS = 2;

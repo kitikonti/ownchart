@@ -5,18 +5,18 @@
  */
 
 import { useMemo, useCallback } from "react";
-import type { Task } from "../../types/chart.types";
-import type { TaskId } from "../../types/branded.types";
-import type { TaskPosition } from "../../types/dependency.types";
+import type { Task } from "@/types/chart.types";
+import type { TaskId } from "@/types/branded.types";
+import type { TaskPosition } from "@/types/dependency.types";
 import type {
   TimelineScale,
   DensityGeometryConfig,
-} from "../../utils/timelineUtils";
+} from "@/utils/timelineUtils";
 import {
   getTaskBarGeometry,
   DEFAULT_DENSITY_GEOMETRY,
-} from "../../utils/timelineUtils";
-import { useDependencyStore } from "../../store/slices/dependencySlice";
+} from "@/utils/timelineUtils";
+import { useDependencyStore } from "@/store/slices/dependencySlice";
 import { DependencyArrow } from "./DependencyArrow";
 import { DependencyDragPreview } from "./DependencyDragPreview";
 

@@ -1,8 +1,8 @@
 import { describe, it, expect, beforeEach, vi } from "vitest";
 import { render, screen, fireEvent } from "@testing-library/react";
-import { AboutDialog, sanitizeHref } from "../../../../src/components/Help/AboutDialog";
-import { useUIStore } from "../../../../src/store/slices/uiSlice";
-import { APP_CONFIG } from "../../../../src/config/appConfig";
+import { AboutDialog, sanitizeHref } from "@/components/Help/AboutDialog";
+import { useUIStore } from "@/store/slices/uiSlice";
+import { APP_CONFIG } from "@/config/appConfig";
 
 describe("AboutDialog", () => {
   beforeEach(() => {

@@ -4,8 +4,8 @@
 
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { render, screen, fireEvent } from "@testing-library/react";
-import { ContextMenu } from "../../../../src/components/ContextMenu/ContextMenu";
-import type { ContextMenuItem } from "../../../../src/components/ContextMenu/ContextMenu";
+import { ContextMenu } from "@/components/ContextMenu/ContextMenu";
+import type { ContextMenuItem } from "@/components/ContextMenu/ContextMenu";
 
 const defaultPosition = { x: 100, y: 100 };
 const defaultAriaLabel = "Test context menu";

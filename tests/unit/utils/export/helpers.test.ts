@@ -15,7 +15,7 @@ import {
   cloneSvgChildrenIntoGroup,
   waitForFonts,
   waitForPaint,
-} from "../../../../src/utils/export/helpers";
+} from "@/utils/export/helpers";
 
 // ---------------------------------------------------------------------------
 // estimateFileSize

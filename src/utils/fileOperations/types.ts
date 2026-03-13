@@ -3,15 +3,15 @@
  * Forward-compatible file structure for .ownchart files
  */
 
-import type { Task, TaskType } from "../../types/chart.types";
-import type { TaskId } from "../../types/branded.types";
-import type { Dependency as AppDependency } from "../../types/dependency.types";
-import type { ExportOptions } from "../export/types";
+import type { Task, TaskType } from "@/types/chart.types";
+import type { TaskId } from "@/types/branded.types";
+import type { Dependency as AppDependency } from "@/types/dependency.types";
+import type { ExportOptions } from "@/utils/export/types";
 import type {
   TaskLabelPosition,
   WorkingDaysConfig,
-} from "../../types/preferences.types";
-import type { ColorModeState } from "../../types/colorMode.types";
+} from "@/types/preferences.types";
+import type { ColorModeState } from "@/types/colorMode.types";
 
 export interface GanttFile {
   // Format identification

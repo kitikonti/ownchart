@@ -6,9 +6,9 @@ import {
   getColumnPixelWidth,
   getDensityAwareWidth,
   buildGridTemplateColumns,
-} from "../../../src/config/tableColumns";
-import { DENSITY_CONFIG } from "../../../src/config/densityConfig";
-import type { DensityConfig } from "../../../src/types/preferences.types";
+} from "@/config/tableColumns";
+import { DENSITY_CONFIG } from "@/config/densityConfig";
+import type { DensityConfig } from "@/types/preferences.types";
 
 const normalDensity: DensityConfig = DENSITY_CONFIG.normal;
 

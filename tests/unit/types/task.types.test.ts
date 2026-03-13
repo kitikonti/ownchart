@@ -18,7 +18,7 @@ import {
   type EditableField,
   type ActiveCell,
   type AssertEditableFieldsExhaustive,
-} from "../../../src/types/task.types";
+} from "@/types/task.types";
 import { tid } from "../../helpers/branded";
 
 // --- Compile-time assertion check -----------------------------------------

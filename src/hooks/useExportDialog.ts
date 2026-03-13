@@ -4,33 +4,33 @@
  */
 
 import { useCallback, useMemo, useEffect } from "react";
-import type { Task } from "../types/chart.types";
-import type { TimelineScale } from "../utils/timelineUtils";
-import { prepareExportTasks } from "../utils/export/prepareExportTasks";
+import type { Task } from "@/types/chart.types";
+import type { TimelineScale } from "@/utils/timelineUtils";
+import { prepareExportTasks } from "@/utils/export/prepareExportTasks";
 import type {
   ExportFormat,
   ExportOptions,
   PdfExportOptions,
   ReadabilityStatus,
-} from "../utils/export/types";
+} from "@/utils/export/types";
 import {
   EXPORT_ZOOM_READABLE_THRESHOLD,
   EXPORT_ZOOM_LABELS_HIDDEN_THRESHOLD,
   EXPORT_MAX_SAFE_WIDTH,
   EXPORT_LARGE_WIDTH_THRESHOLD,
-} from "../utils/export/types";
-import { useUIStore } from "../store/slices/uiSlice";
-import { useTaskStore } from "../store/slices/taskSlice";
-import { useChartStore } from "../store/slices/chartSlice";
-import { useFileStore } from "../store/slices/fileSlice";
-import { useUserPreferencesStore } from "../store/slices/userPreferencesSlice";
+} from "@/utils/export/types";
+import { useUIStore } from "@/store/slices/uiSlice";
+import { useTaskStore } from "@/store/slices/taskSlice";
+import { useChartStore } from "@/store/slices/chartSlice";
+import { useFileStore } from "@/store/slices/fileSlice";
+import { useUserPreferencesStore } from "@/store/slices/userPreferencesSlice";
 import {
   exportToPng,
   calculateExportDimensions,
   calculateTaskTableWidth,
-} from "../utils/export";
-import { calculatePdfFitToWidth } from "../utils/export/pdfLayout";
-import { APP_CONFIG } from "../config/appConfig";
+} from "@/utils/export";
+import { calculatePdfFitToWidth } from "@/utils/export/pdfLayout";
+import { APP_CONFIG } from "@/config/appConfig";
 
 // =============================================================================
 // Pure computation helpers (extracted for testability)
@@ -342,7 +342,7 @@ export function useExportDialog(): UseExportDialogResult {
           projectName,
         });
       } else if (selectedExportFormat === "pdf") {
-        const { exportToPdf } = await import("../utils/export/pdfExport");
+        const { exportToPdf } = await import("@/utils/export/pdfExport");
         await exportToPdf({
           tasks: exportTasks,
           options: effectiveExportOptions,
@@ -359,7 +359,7 @@ export function useExportDialog(): UseExportDialogResult {
           onProgress: setExportProgress,
         });
       } else if (selectedExportFormat === "svg") {
-        const { exportToSvg } = await import("../utils/export/svgExport");
+        const { exportToSvg } = await import("@/utils/export/svgExport");
         await exportToSvg({
           tasks: exportTasks,
           options: effectiveExportOptions,

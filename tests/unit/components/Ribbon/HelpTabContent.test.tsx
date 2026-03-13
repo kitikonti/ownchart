@@ -6,8 +6,8 @@
 
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { render, screen, fireEvent } from "@testing-library/react";
-import { HelpTabContent } from "../../../../src/components/Ribbon/HelpTabContent";
-import { useUIStore } from "../../../../src/store/slices/uiSlice";
+import { HelpTabContent } from "@/components/Ribbon/HelpTabContent";
+import { useUIStore } from "@/store/slices/uiSlice";
 
 describe("HelpTabContent", () => {
   const mockOpenHelpPanel = vi.fn();

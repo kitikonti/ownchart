@@ -11,11 +11,11 @@
 
 import { memo, useId } from "react";
 import { Checkbox } from "./Checkbox";
-import { buildClassNames } from "../../utils/buildClassNames";
+import { buildClassNames } from "@/utils/buildClassNames";
 import {
   OPTION_CARD_LAYOUT,
   OPTION_CARD_MIN_HEIGHT,
-} from "../../styles/inputStyles";
+} from "@/styles/inputStyles";
 
 export interface LabeledCheckboxProps {
   /** Whether the checkbox is checked */

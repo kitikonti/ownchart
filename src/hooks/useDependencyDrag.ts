@@ -5,11 +5,11 @@
  */
 
 import { useState, useCallback, useEffect, useRef } from "react";
-import type { Task } from "../types/chart.types";
-import type { TaskId } from "../types/branded.types";
-import type { DependencyDragState } from "../types/dependency.types";
-import { useDependencyStore } from "../store/slices/dependencySlice";
-import { clientToSvgCoords } from "../utils/svgCoords";
+import type { Task } from "@/types/chart.types";
+import type { TaskId } from "@/types/branded.types";
+import type { DependencyDragState } from "@/types/dependency.types";
+import { useDependencyStore } from "@/store/slices/dependencySlice";
+import { clientToSvgCoords } from "@/utils/svgCoords";
 import toast from "react-hot-toast";
 
 /** Adds a finish-to-start dependency; returns success/failure with an optional message. */

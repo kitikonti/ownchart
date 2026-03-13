@@ -10,7 +10,7 @@ import type { ComponentProps } from "react";
 import { toCanvas } from "html-to-image";
 import type { ExportLayoutInput, ExportOptions } from "./types";
 import { EXPORT_MAX_SAFE_WIDTH } from "./types";
-import { ExportRenderer } from "../../components/Export/ExportRenderer";
+import { ExportRenderer } from "@/components/Export/ExportRenderer";
 import { calculateExportDimensions } from "./exportLayout";
 import { REACT_RENDER_WAIT_MS, SVG_BACKGROUND_WHITE } from "./constants";
 import {

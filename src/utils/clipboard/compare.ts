@@ -4,7 +4,7 @@
  * determine whether system and internal clipboards hold the same data.
  */
 
-import type { TaskId } from "../../types/branded.types";
+import type { TaskId } from "@/types/branded.types";
 
 /**
  * Returns true if two task arrays represent the same ordered sequence of IDs.

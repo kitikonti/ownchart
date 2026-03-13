@@ -5,8 +5,8 @@
 
 import { describe, it, expect, beforeEach, vi } from "vitest";
 import { render, screen, fireEvent } from "@testing-library/react";
-import { TaskTable } from "../../../src/components/TaskList/TaskTable";
-import type { Task } from "../../../src/types/chart.types";
+import { TaskTable } from "@/components/TaskList/TaskTable";
+import type { Task } from "@/types/chart.types";
 
 // ---------------------------------------------------------------------------
 // Mocks
@@ -139,10 +139,10 @@ vi.mock("@dnd-kit/sortable", () => ({
 
 // Re-import for per-test overrides
 import { DndContext } from "@dnd-kit/core";
-import { useTaskStore } from "../../../src/store/slices/taskSlice";
-import { useChartStore } from "../../../src/store/slices/chartSlice";
-import { useTaskRowData } from "../../../src/hooks/useTaskRowData";
-import { useHideOperations } from "../../../src/hooks/useHideOperations";
+import { useTaskStore } from "@/store/slices/taskSlice";
+import { useChartStore } from "@/store/slices/chartSlice";
+import { useTaskRowData } from "@/hooks/useTaskRowData";
+import { useHideOperations } from "@/hooks/useHideOperations";
 
 // ---------------------------------------------------------------------------
 // Helpers

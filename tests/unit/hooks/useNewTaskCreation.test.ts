@@ -5,9 +5,9 @@
 
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { renderHook, act } from "@testing-library/react";
-import { useNewTaskCreation } from "../../../src/hooks/useNewTaskCreation";
-import type { Task } from "../../../src/types/chart.types";
-import { COLORS } from "../../../src/styles/design-tokens";
+import { useNewTaskCreation } from "@/hooks/useNewTaskCreation";
+import type { Task } from "@/types/chart.types";
+import { COLORS } from "@/styles/design-tokens";
 
 // ---------------------------------------------------------------------------
 // Mocks
@@ -30,7 +30,7 @@ vi.mock("../../../src/store/slices/taskSlice", () => ({
   ),
 }));
 
-import { useTaskStore } from "../../../src/store/slices/taskSlice";
+import { useTaskStore } from "@/store/slices/taskSlice";
 
 // ---------------------------------------------------------------------------
 // Helpers

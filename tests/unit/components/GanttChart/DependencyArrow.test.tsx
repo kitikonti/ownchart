@@ -6,11 +6,11 @@
 
 import { describe, it, expect, vi } from "vitest";
 import { render, fireEvent } from "@testing-library/react";
-import { DependencyArrow } from "../../../../src/components/GanttChart/DependencyArrow";
-import type { Dependency, TaskPosition } from "../../../../src/types/dependency.types";
-import type { TaskId } from "../../../../src/types/branded.types";
+import { DependencyArrow } from "@/components/GanttChart/DependencyArrow";
+import type { Dependency, TaskPosition } from "@/types/dependency.types";
+import type { TaskId } from "@/types/branded.types";
 import { tid } from "../../../helpers/branded";
-import { COLORS } from "../../../../src/styles/design-tokens";
+import { COLORS } from "@/styles/design-tokens";
 
 // ---------------------------------------------------------------------------
 // Mock arrowPath utils to avoid complex SVG path calculations

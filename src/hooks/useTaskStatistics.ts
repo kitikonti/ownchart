@@ -7,7 +7,7 @@
 
 import { useMemo } from "react";
 import { parseISO, startOfDay, isValid } from "date-fns";
-import { useTaskStore } from "../store/slices/taskSlice";
+import { useTaskStore } from "@/store/slices/taskSlice";
 
 export interface TaskStatistics {
   totalTasks: number;

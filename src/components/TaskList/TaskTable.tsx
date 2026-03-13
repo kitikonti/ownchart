@@ -20,23 +20,23 @@ import {
   verticalListSortingStrategy,
 } from "@dnd-kit/sortable";
 
-import { toTaskId } from "../../types/branded.types";
-import { useTaskStore } from "../../store/slices/taskSlice";
-import { useChartStore } from "../../store/slices/chartSlice";
-import { useDensityConfig } from "../../store/slices/userPreferencesSlice";
+import { toTaskId } from "@/types/branded.types";
+import { useTaskStore } from "@/store/slices/taskSlice";
+import { useChartStore } from "@/store/slices/chartSlice";
+import { useDensityConfig } from "@/store/slices/userPreferencesSlice";
 import { TaskTableRow } from "./TaskTableRow";
 import { NewTaskPlaceholderRow } from "./NewTaskPlaceholderRow";
 import {
   buildGridTemplateColumns,
   getVisibleColumns,
-} from "../../config/tableColumns";
-import { useTableDimensions } from "../../hooks/useTableDimensions";
-import { useAutoColumnWidth } from "../../hooks/useAutoColumnWidth";
-import { useTaskTableRowContextMenu } from "../../hooks/useTaskTableRowContextMenu";
-import { useHideOperations } from "../../hooks/useHideOperations";
-import { useTaskRowData } from "../../hooks/useTaskRowData";
+} from "@/config/tableColumns";
+import { useTableDimensions } from "@/hooks/useTableDimensions";
+import { useAutoColumnWidth } from "@/hooks/useAutoColumnWidth";
+import { useTaskTableRowContextMenu } from "@/hooks/useTaskTableRowContextMenu";
+import { useHideOperations } from "@/hooks/useHideOperations";
+import { useTaskRowData } from "@/hooks/useTaskRowData";
 import { resetDragState } from "./dragSelectionState";
-import { ContextMenu } from "../ContextMenu/ContextMenu";
+import { ContextMenu } from "@/components/ContextMenu/ContextMenu";
 
 // ── Sub-components ──────────────────────────────────────────────────────────
 

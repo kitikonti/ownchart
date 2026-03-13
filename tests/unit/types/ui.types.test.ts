@@ -12,7 +12,7 @@
  */
 
 import { describe, it, expect } from "vitest";
-import type { DropdownOption } from "../../../src/types/ui.types";
+import type { DropdownOption } from "@/types/ui.types";
 
 describe("DropdownOption interface", () => {
   it("should accept a minimal option with value and label only", () => {

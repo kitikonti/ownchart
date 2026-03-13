@@ -5,34 +5,34 @@
 
 import { useCallback, useMemo } from "react";
 import toast from "react-hot-toast";
-import { useTaskStore } from "../store/slices/taskSlice";
-import { useChartStore } from "../store/slices/chartSlice";
-import { useDependencyStore } from "../store/slices/dependencySlice";
-import { useFileStore } from "../store/slices/fileSlice";
-import { useHistoryStore } from "../store/slices/historySlice";
-import { useUIStore } from "../store/slices/uiSlice";
-import { sanitizeFilename } from "../utils/export/sanitizeFilename";
+import { useTaskStore } from "@/store/slices/taskSlice";
+import { useChartStore } from "@/store/slices/chartSlice";
+import { useDependencyStore } from "@/store/slices/dependencySlice";
+import { useFileStore } from "@/store/slices/fileSlice";
+import { useHistoryStore } from "@/store/slices/historySlice";
+import { useUIStore } from "@/store/slices/uiSlice";
+import { sanitizeFilename } from "@/utils/export/sanitizeFilename";
 import {
   saveFile,
   openFile,
   clearFileHandle,
   SAVE_CANCELLED,
   OPEN_CANCELLED,
-} from "../utils/fileOperations/fileDialog";
+} from "@/utils/fileOperations/fileDialog";
 import {
   loadFileIntoApp,
   showLoadNotifications,
-} from "../utils/fileOperations/loadFromFile";
+} from "@/utils/fileOperations/loadFromFile";
 import {
   serializeToGanttFile,
   type SerializeOptions,
-} from "../utils/fileOperations/serialize";
-import { DEFAULT_CHART_NAME } from "../config/viewSettingsDefaults";
-import type { Dependency } from "../types/dependency.types";
-import type { ExportOptions } from "../utils/export/types";
-import type { ViewSettings } from "../utils/fileOperations/types";
-import type { Task } from "../types/chart.types";
-import type { TaskId } from "../types/branded.types";
+} from "@/utils/fileOperations/serialize";
+import { DEFAULT_CHART_NAME } from "@/config/viewSettingsDefaults";
+import type { Dependency } from "@/types/dependency.types";
+import type { ExportOptions } from "@/utils/export/types";
+import type { ViewSettings } from "@/utils/fileOperations/types";
+import type { Task } from "@/types/chart.types";
+import type { TaskId } from "@/types/branded.types";
 
 const OWNCHART_FILE_EXTENSION = ".ownchart";
 const DEFAULT_UNTITLED_PREFIX = "untitled";

@@ -14,7 +14,7 @@ import {
   darkenColor,
   generateMonochromePalette,
   expandPalette,
-} from "../../../src/utils/colorUtils";
+} from "@/utils/colorUtils";
 
 describe("colorUtils", () => {
   describe("hexToRgb", () => {

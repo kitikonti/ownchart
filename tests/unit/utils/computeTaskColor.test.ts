@@ -15,11 +15,11 @@ import { describe, it, expect } from "vitest";
 import {
   getComputedTaskColor,
   computeAllTaskColors,
-} from "../../../src/utils/computeTaskColor";
-import { hexToHSL } from "../../../src/utils/colorUtils";
-import { stableHash } from "../../../src/utils/hashUtils";
-import type { ColorModeState } from "../../../src/types/colorMode.types";
-import { DEFAULT_COLOR_MODE_STATE } from "../../../src/config/colorModeDefaults";
+} from "@/utils/computeTaskColor";
+import { hexToHSL } from "@/utils/colorUtils";
+import { stableHash } from "@/utils/hashUtils";
+import type { ColorModeState } from "@/types/colorMode.types";
+import { DEFAULT_COLOR_MODE_STATE } from "@/config/colorModeDefaults";
 import { makeTask } from "../helpers/taskFactory";
 
 // ── Helpers ────────────────────────────────────────────────────────────────

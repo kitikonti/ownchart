@@ -4,7 +4,7 @@
 
 import { type ReactElement, useState, useEffect } from "react";
 import { CaretDown } from "@phosphor-icons/react";
-import { type HelpSection } from "../../config/helpContent";
+import { type HelpSection } from "@/config/helpContent";
 import { HelpTopicCard } from "./HelpTopicCard";
 
 interface HelpSectionListProps {

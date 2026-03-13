@@ -6,9 +6,9 @@
 
 import { describe, it, expect, beforeEach, vi } from "vitest";
 import { render } from "@testing-library/react";
-import { TaskBar } from "../../../../src/components/GanttChart/TaskBar";
-import type { Task } from "../../../../src/types/chart.types";
-import type { TimelineScale } from "../../../../src/utils/timelineUtils";
+import { TaskBar } from "@/components/GanttChart/TaskBar";
+import type { Task } from "@/types/chart.types";
+import type { TimelineScale } from "@/utils/timelineUtils";
 
 // ---------------------------------------------------------------------------
 // Mocks
@@ -64,10 +64,10 @@ vi.mock("../../../../src/hooks/useProgressDrag", () => ({
 }));
 
 // Re-import mocked modules for per-test overrides
-import { useChartStore } from "../../../../src/store/slices/chartSlice";
-import { useTaskStore } from "../../../../src/store/slices/taskSlice";
-import { useTaskBarInteraction } from "../../../../src/hooks/useTaskBarInteraction";
-import { useProgressDrag } from "../../../../src/hooks/useProgressDrag";
+import { useChartStore } from "@/store/slices/chartSlice";
+import { useTaskStore } from "@/store/slices/taskSlice";
+import { useTaskBarInteraction } from "@/hooks/useTaskBarInteraction";
+import { useProgressDrag } from "@/hooks/useProgressDrag";
 
 // ---------------------------------------------------------------------------
 // Helpers

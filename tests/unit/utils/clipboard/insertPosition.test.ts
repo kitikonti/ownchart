@@ -1,8 +1,8 @@
 import { describe, it, expect } from "vitest";
-import { determineInsertPosition } from "../../../../src/utils/clipboard/insertPosition";
-import type { Task } from "../../../../src/types/chart.types";
-import type { FlattenedTask } from "../../../../src/utils/hierarchy";
-import { PLACEHOLDER_TASK_ID } from "../../../../src/config/placeholderRow";
+import { determineInsertPosition } from "@/utils/clipboard/insertPosition";
+import type { Task } from "@/types/chart.types";
+import type { FlattenedTask } from "@/utils/hierarchy";
+import { PLACEHOLDER_TASK_ID } from "@/config/placeholderRow";
 import { tid, hex } from "../../../helpers/branded";
 
 // Helper to create test tasks

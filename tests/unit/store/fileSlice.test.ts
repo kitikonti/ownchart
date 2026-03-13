@@ -3,7 +3,7 @@
  */
 
 import { describe, it, expect, beforeEach } from 'vitest';
-import { useFileStore } from '../../../src/store/slices/fileSlice';
+import { useFileStore } from '@/store/slices/fileSlice';
 
 describe('File Store', () => {
   beforeEach(() => {

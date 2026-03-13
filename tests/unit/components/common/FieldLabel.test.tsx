@@ -4,7 +4,7 @@
 
 import { describe, it, expect } from "vitest";
 import { render, screen } from "@testing-library/react";
-import { FieldLabel } from "../../../../src/components/common/FieldLabel";
+import { FieldLabel } from "@/components/common/FieldLabel";
 
 describe("FieldLabel", () => {
   it("renders children text", () => {

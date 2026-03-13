@@ -5,8 +5,8 @@
 
 import { describe, it, expect, vi } from "vitest";
 import { render, screen } from "@testing-library/react";
-import { ScaleOptions } from "../../../../src/components/Export/ScaleOptions";
-import { DEFAULT_EXPORT_OPTIONS } from "../../../../src/utils/export/types";
+import { ScaleOptions } from "@/components/Export/ScaleOptions";
+import { DEFAULT_EXPORT_OPTIONS } from "@/utils/export/types";
 
 // Mock ZoomModeSelector to isolate ScaleOptions prop-wiring
 vi.mock("../../../../src/components/Export/ZoomModeSelector", () => ({

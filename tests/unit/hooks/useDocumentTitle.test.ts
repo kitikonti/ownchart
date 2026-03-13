@@ -5,8 +5,8 @@
 
 import { describe, it, expect, beforeEach, afterEach } from "vitest";
 import { renderHook, act } from "@testing-library/react";
-import { useDocumentTitle } from "../../../src/hooks/useDocumentTitle";
-import { useFileStore } from "../../../src/store/slices/fileSlice";
+import { useDocumentTitle } from "@/hooks/useDocumentTitle";
+import { useFileStore } from "@/store/slices/fileSlice";
 
 // ─── Setup ───
 

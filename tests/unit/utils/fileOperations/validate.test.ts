@@ -10,8 +10,8 @@ import {
   validateStructure,
   validateSemantics,
   ValidationError,
-} from '../../../../src/utils/fileOperations/validate';
-import type { GanttFile } from '../../../../src/utils/fileOperations/types';
+} from '@/utils/fileOperations/validate';
+import type { GanttFile } from '@/utils/fileOperations/types';
 
 describe('File Operations - Validation', () => {
   describe('Layer 1: Pre-Parse Validation', () => {

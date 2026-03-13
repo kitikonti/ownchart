@@ -6,9 +6,9 @@
  * Space Complexity: O(V + E)
  */
 
-import type { TaskId } from "../../types/branded.types";
-import type { Task } from "../../types/chart.types";
-import type { Dependency } from "../../types/dependency.types";
+import type { TaskId } from "@/types/branded.types";
+import type { Task } from "@/types/chart.types";
+import type { Dependency } from "@/types/dependency.types";
 import {
   buildAdjacencyList,
   buildReverseAdjacencyList,

@@ -5,8 +5,8 @@
 
 import { describe, it, expect, vi } from "vitest";
 import { render, screen } from "@testing-library/react";
-import { ExportPreview } from "../../../../src/components/Export/ExportPreview";
-import { DEFAULT_PDF_OPTIONS } from "../../../../src/utils/export/types";
+import { ExportPreview } from "@/components/Export/ExportPreview";
+import { DEFAULT_PDF_OPTIONS } from "@/utils/export/types";
 
 // Mock child components to isolate routing logic
 vi.mock("../../../../src/components/Export/PdfPreview", () => ({

@@ -14,8 +14,8 @@ import {
   normalizeTaskOrder,
   collectDescendantIds,
   canHaveChildren,
-} from "../../../src/utils/hierarchy";
-import type { Task } from "../../../src/types/chart.types";
+} from "@/utils/hierarchy";
+import type { Task } from "@/types/chart.types";
 import { tid, hex } from "../../helpers/branded";
 
 // Helper to create a minimal task

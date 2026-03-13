@@ -8,11 +8,11 @@
 
 import { useEffect, useRef } from "react";
 import toast from "react-hot-toast";
-import { useTaskStore } from "../store/slices/taskSlice";
-import { useChartStore } from "../store/slices/chartSlice";
-import { useFileStore } from "../store/slices/fileSlice";
-import { useDependencyStore } from "../store/slices/dependencySlice";
-import { useUIStore } from "../store/slices/uiSlice";
+import { useTaskStore } from "@/store/slices/taskSlice";
+import { useChartStore } from "@/store/slices/chartSlice";
+import { useFileStore } from "@/store/slices/fileSlice";
+import { useDependencyStore } from "@/store/slices/dependencySlice";
+import { useUIStore } from "@/store/slices/uiSlice";
 import {
   getTabId,
   loadTabChart,
@@ -21,7 +21,7 @@ import {
   cleanupInactiveTabs,
   type ChartState,
   type TabChartData,
-} from "../utils/multiTabStorage";
+} from "@/utils/multiTabStorage";
 
 const SAVE_DEBOUNCE_MS = 200;
 const ACTIVITY_UPDATE_INTERVAL_MS = 60_000;

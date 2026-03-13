@@ -4,7 +4,7 @@ import {
   detectLocaleFirstDayOfWeek,
   detectLocaleWeekNumberingSystem,
   detectLocaleHolidayRegion,
-} from "../../../src/utils/localeDetection";
+} from "@/utils/localeDetection";
 
 function setLanguage(lang: string): void {
   Object.defineProperty(navigator, "language", {

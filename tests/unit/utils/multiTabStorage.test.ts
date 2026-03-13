@@ -18,8 +18,8 @@ import {
   type ChartState,
   type TabChartData,
   type MultiTabStorage,
-} from "../../../src/utils/multiTabStorage";
-import type { ColorModeState } from "../../../src/types/colorMode.types";
+} from "@/utils/multiTabStorage";
+import type { ColorModeState } from "@/types/colorMode.types";
 
 function createChartState(overrides?: Partial<ChartState>): ChartState {
   return {

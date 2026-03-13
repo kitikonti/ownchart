@@ -5,16 +5,16 @@
 
 import { describe, it, expect, vi, afterEach } from "vitest";
 import { render } from "@testing-library/react";
-import { TodayMarker } from "../../../../src/components/GanttChart/TodayMarker";
-import type { TimelineScale } from "../../../../src/utils/timelineUtils";
-import { COLORS } from "../../../../src/styles/design-tokens";
+import { TodayMarker } from "@/components/GanttChart/TodayMarker";
+import type { TimelineScale } from "@/utils/timelineUtils";
+import { COLORS } from "@/styles/design-tokens";
 
 // ---------------------------------------------------------------------------
 // Mock dateToPixel to avoid scale internals
 // ---------------------------------------------------------------------------
 
 vi.mock("../../../../src/utils/timelineUtils", async () => {
-  const actual = await vi.importActual<typeof import("../../../../src/utils/timelineUtils")>(
+  const actual = await vi.importActual<typeof import("@/utils/timelineUtils")>(
     "../../../../src/utils/timelineUtils",
   );
   return {

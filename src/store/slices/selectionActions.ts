@@ -3,7 +3,7 @@
  * Handles multi-select, range selection, and selection management.
  */
 
-import { buildFlattenedTaskList } from "../../utils/hierarchy";
+import { buildFlattenedTaskList } from "@/utils/hierarchy";
 import type { TaskSliceSet, TaskActions } from "./taskSlice";
 
 type SelectionActions = Pick<

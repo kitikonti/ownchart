@@ -15,12 +15,12 @@ import {
   type KeyboardEvent,
   type MouseEvent,
 } from "react";
-import { useTaskStore } from "../store/slices/taskSlice";
+import { useTaskStore } from "@/store/slices/taskSlice";
 import { useIsPlaceholderSelected } from "./useIsPlaceholderSelected";
 import { useNewTaskCreation } from "./useNewTaskCreation";
-import { PLACEHOLDER_TASK_ID } from "../config/placeholderRow";
-import { ARROW_NAV } from "../config/keyboardNavigation";
-import { SCROLL_DRIVER_SELECTOR } from "../config/layoutConstants";
+import { PLACEHOLDER_TASK_ID } from "@/config/placeholderRow";
+import { ARROW_NAV } from "@/config/keyboardNavigation";
+import { SCROLL_DRIVER_SELECTOR } from "@/config/layoutConstants";
 
 interface UsePlaceholderNameEditReturn {
   isEditing: boolean;

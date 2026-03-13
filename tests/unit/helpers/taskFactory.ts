@@ -3,7 +3,7 @@
  * Use the `overrides` parameter to set only the fields relevant to each test.
  */
 
-import type { Task } from "../../../src/types/chart.types";
+import type { Task } from "@/types/chart.types";
 
 export function makeTask(overrides: Partial<Task> & { id: string }): Task {
   return {

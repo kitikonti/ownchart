@@ -5,7 +5,7 @@
 
 import { describe, it, expect, afterEach, vi } from 'vitest';
 import { renderHook, act } from '@testing-library/react';
-import { useDropdown } from '../../../src/hooks/useDropdown';
+import { useDropdown } from '@/hooks/useDropdown';
 
 function fireKeydown(key: string): void {
   document.dispatchEvent(new KeyboardEvent('keydown', { key, bubbles: true }));

@@ -11,7 +11,7 @@ import {
   canvasToBlob,
   raceWithTimeout,
   captureChart,
-} from "../../../../src/utils/export/captureChart";
+} from "@/utils/export/captureChart";
 
 // ---------------------------------------------------------------------------
 // raceWithTimeout
@@ -233,7 +233,7 @@ describe("pixel ratio clamping invariant", () => {
 
 vi.mock("../../../../src/utils/export/helpers", async (importOriginal) => {
   const original =
-    await importOriginal<typeof import("../../../../src/utils/export/helpers")>();
+    await importOriginal<typeof import("@/utils/export/helpers")>();
   return {
     ...original,
     // createOffscreenContainer is left as-is (it only touches document.body)

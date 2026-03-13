@@ -3,8 +3,8 @@
  * Handles task hierarchy level changes.
  */
 
-import type { Task } from "../../types/chart.types";
-import type { TaskId } from "../../types/branded.types";
+import type { Task } from "@/types/chart.types";
+import type { TaskId } from "@/types/branded.types";
 import {
   wouldCreateCircularHierarchy,
   getTaskLevel,
@@ -14,10 +14,10 @@ import {
   normalizeTaskOrder,
   getMaxDescendantLevel,
   canHaveChildren,
-} from "../../utils/hierarchy";
-import type { FlattenedTask } from "../../utils/hierarchy";
+} from "@/utils/hierarchy";
+import type { FlattenedTask } from "@/utils/hierarchy";
 import { useFileStore } from "./fileSlice";
-import { CommandType } from "../../types/command.types";
+import { CommandType } from "@/types/command.types";
 import {
   captureHierarchySnapshot,
   recordCommand,

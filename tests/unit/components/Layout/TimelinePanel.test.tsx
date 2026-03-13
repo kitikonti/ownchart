@@ -7,10 +7,10 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import type { Mock } from "vitest";
 import { render, screen, fireEvent } from "@testing-library/react";
-import { TimelinePanel } from "../../../../src/components/Layout/TimelinePanel";
-import { useChartStore } from "../../../../src/store/slices/chartSlice";
-import { useTaskStore } from "../../../../src/store/slices/taskSlice";
-import { useHeaderDateSelection } from "../../../../src/hooks/useHeaderDateSelection";
+import { TimelinePanel } from "@/components/Layout/TimelinePanel";
+import { useChartStore } from "@/store/slices/chartSlice";
+import { useTaskStore } from "@/store/slices/taskSlice";
+import { useHeaderDateSelection } from "@/hooks/useHeaderDateSelection";
 
 // Mock heavy GanttChart sub-components — rendering them requires full D3 setup.
 vi.mock("../../../../src/components/GanttChart", () => ({

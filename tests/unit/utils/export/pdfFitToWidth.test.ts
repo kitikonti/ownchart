@@ -6,13 +6,13 @@ import { describe, it, expect } from "vitest";
 import {
   calculatePdfFitToWidth,
   getPageDimensions,
-} from "../../../../src/utils/export/pdfLayout";
-import { PNG_EXPORT_DPI, MM_PER_INCH } from "../../../../src/utils/export/dpi";
-import type { PdfExportOptions } from "../../../../src/utils/export/types";
-import { DEFAULT_EXPORT_OPTIONS } from "../../../../src/utils/export/types";
-import type { ExportOptions } from "../../../../src/utils/export/types";
-import type { Task } from "../../../../src/types/chart.types";
-import { DENSITY_CONFIG } from "../../../../src/config/densityConfig";
+} from "@/utils/export/pdfLayout";
+import { PNG_EXPORT_DPI, MM_PER_INCH } from "@/utils/export/dpi";
+import type { PdfExportOptions } from "@/utils/export/types";
+import { DEFAULT_EXPORT_OPTIONS } from "@/utils/export/types";
+import type { ExportOptions } from "@/utils/export/types";
+import type { Task } from "@/types/chart.types";
+import { DENSITY_CONFIG } from "@/config/densityConfig";
 
 const defaultPdfOptions: PdfExportOptions = {
   pageSize: "a4",

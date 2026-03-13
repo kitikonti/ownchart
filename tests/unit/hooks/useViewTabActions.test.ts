@@ -7,11 +7,11 @@
 
 import { describe, it, expect, beforeEach, vi } from "vitest";
 import { renderHook, act } from "@testing-library/react";
-import { useViewTabActions } from "../../../src/hooks/useViewTabActions";
-import { useTaskStore } from "../../../src/store/slices/taskSlice";
-import { useChartStore } from "../../../src/store/slices/chartSlice";
-import { MIN_ZOOM, MAX_ZOOM } from "../../../src/utils/timelineUtils";
-import type { Task } from "../../../src/types/chart.types";
+import { useViewTabActions } from "@/hooks/useViewTabActions";
+import { useTaskStore } from "@/store/slices/taskSlice";
+import { useChartStore } from "@/store/slices/chartSlice";
+import { MIN_ZOOM, MAX_ZOOM } from "@/utils/timelineUtils";
+import type { Task } from "@/types/chart.types";
 
 // Mock useZoom helpers — tested separately
 vi.mock("../../../src/hooks/useZoom", () => ({

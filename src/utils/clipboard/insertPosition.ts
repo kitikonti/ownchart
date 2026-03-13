@@ -3,10 +3,10 @@
  * Implements Excel-like paste behavior.
  */
 
-import type { TaskId } from "../../types/branded.types";
-import type { ActiveCell } from "../../types/task.types";
-import type { FlattenedTask } from "../hierarchy";
-import { PLACEHOLDER_TASK_ID } from "../../config/placeholderRow";
+import type { TaskId } from "@/types/branded.types";
+import type { ActiveCell } from "@/types/task.types";
+import type { FlattenedTask } from "@/utils/hierarchy";
+import { PLACEHOLDER_TASK_ID } from "@/config/placeholderRow";
 
 /**
  * Determine where to insert pasted rows based on the flattened (visual) list.

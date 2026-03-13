@@ -3,15 +3,15 @@
  */
 
 import { describe, it, expect, beforeEach } from 'vitest';
-import { useChartStore } from '../../../src/store/slices/chartSlice';
+import { useChartStore } from '@/store/slices/chartSlice';
 import {
   FIXED_BASE_PIXELS_PER_DAY,
   DATE_RANGE_PADDING_DAYS,
   SCROLL_OFFSET_DAYS,
   ZOOM_VISUAL_PADDING_DAYS,
-} from '../../../src/utils/timelineUtils';
-import { calculateDuration, addDays } from '../../../src/utils/dateUtils';
-import type { Task } from '../../../src/types/chart.types';
+} from '@/utils/timelineUtils';
+import { calculateDuration, addDays } from '@/utils/dateUtils';
+import type { Task } from '@/types/chart.types';
 
 describe('chartSlice - zoomToDateRange', () => {
   beforeEach(() => {

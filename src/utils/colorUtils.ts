@@ -9,7 +9,7 @@
  * indices), see {@link ../utils/hashUtils}.
  */
 
-import { COLORS, SLATE_800 } from "../styles/design-tokens";
+import { COLORS, SLATE_800 } from "@/styles/design-tokens";
 
 /**
  * Default fallback color (brand primary — matches COLORS.brand[600] in design-tokens.ts)

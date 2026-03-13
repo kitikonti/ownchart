@@ -1,6 +1,6 @@
 import { describe, it, expect, vi } from "vitest";
 import { render, screen, fireEvent } from "@testing-library/react";
-import { DropdownItem } from "../../../../src/components/Toolbar/DropdownItem";
+import { DropdownItem } from "@/components/Toolbar/DropdownItem";
 
 describe("DropdownItem", () => {
   it("renders children as the label", () => {

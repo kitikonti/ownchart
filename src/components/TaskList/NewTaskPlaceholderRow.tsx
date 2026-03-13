@@ -6,26 +6,22 @@
 
 import { useRef, useEffect, useMemo, useCallback, memo } from "react";
 import type { KeyboardEvent } from "react";
-import { useTaskStore, type EditableField } from "../../store/slices/taskSlice";
-import { useChartStore } from "../../store/slices/chartSlice";
+import { useTaskStore, type EditableField } from "@/store/slices/taskSlice";
+import { useChartStore } from "@/store/slices/chartSlice";
 import {
   getVisibleColumns,
   ROW_NUMBER_COLUMN_ID,
   NAME_COLUMN_ID,
   type ColumnDefinition,
-} from "../../config/tableColumns";
-import { usePlaceholderContextMenu } from "../../hooks/usePlaceholderContextMenu";
-import { useIsPlaceholderSelected } from "../../hooks/useIsPlaceholderSelected";
-import { usePlaceholderNameEdit } from "../../hooks/usePlaceholderNameEdit";
-import { ContextMenu } from "../ContextMenu/ContextMenu";
-import { PLACEHOLDER_TASK_ID } from "../../config/placeholderRow";
-import { ARROW_NAV } from "../../config/keyboardNavigation";
-import {
-  ROW_NUMBER,
-  PLACEHOLDER_CELL,
-  Z_INDEX,
-} from "../../styles/design-tokens";
-import { getCellStyle, getActiveCellStyle } from "../../styles/cellStyles";
+} from "@/config/tableColumns";
+import { usePlaceholderContextMenu } from "@/hooks/usePlaceholderContextMenu";
+import { useIsPlaceholderSelected } from "@/hooks/useIsPlaceholderSelected";
+import { usePlaceholderNameEdit } from "@/hooks/usePlaceholderNameEdit";
+import { ContextMenu } from "@/components/ContextMenu/ContextMenu";
+import { PLACEHOLDER_TASK_ID } from "@/config/placeholderRow";
+import { ARROW_NAV } from "@/config/keyboardNavigation";
+import { ROW_NUMBER, PLACEHOLDER_CELL, Z_INDEX } from "@/styles/design-tokens";
+import { getCellStyle, getActiveCellStyle } from "@/styles/cellStyles";
 
 // ─────────────────────────────────────────────────────────────────────────
 // Helpers

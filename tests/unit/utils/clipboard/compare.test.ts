@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { hasSameTaskIds } from "../../../../src/utils/clipboard/compare";
+import { hasSameTaskIds } from "@/utils/clipboard/compare";
 import { tid } from "../../../helpers/branded";
 
 describe("hasSameTaskIds", () => {

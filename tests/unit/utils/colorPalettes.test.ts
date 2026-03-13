@@ -11,8 +11,8 @@ import {
   DEFAULT_PALETTE_ID,
   getPaletteById,
   type PaletteCategory,
-} from "../../../src/utils/colorPalettes";
-import { toPaletteId } from "../../../src/types/branded.types";
+} from "@/utils/colorPalettes";
+import { toPaletteId } from "@/types/branded.types";
 
 describe("colorPalettes", () => {
   // ── Data Integrity ──────────────────────────────────────────────────────

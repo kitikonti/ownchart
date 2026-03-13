@@ -3,8 +3,8 @@
  * Respects user selection and collapsed state.
  */
 
-import type { Task } from "../../types/chart.types";
-import type { TaskId } from "../../types/branded.types";
+import type { Task } from "@/types/chart.types";
+import type { TaskId } from "@/types/branded.types";
 
 /**
  * Collect all hidden descendants of a collapsed task using an iterative DFS.
