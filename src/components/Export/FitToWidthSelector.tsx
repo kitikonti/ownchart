@@ -3,7 +3,7 @@
  * Offers common screen/print sizes and a free-form custom pixel input.
  */
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useState, type KeyboardEvent } from "react";
 import {
   DEFAULT_FIT_TO_WIDTH_PX,
   UHD_SCREEN_WIDTH_PX,
@@ -25,7 +25,7 @@ const A4_LANDSCAPE_150DPI_PX = 1754;
 const A3_LANDSCAPE_150DPI_PX = 2480;
 const LETTER_LANDSCAPE_150DPI_PX = 1650;
 
-interface FitToWidthPreset {
+export interface FitToWidthPreset {
   label: string;
   value: number;
 }
@@ -159,6 +159,17 @@ export function FitToWidthSelector({
     onFitToWidthChange?.(clamped);
   }, [customDraft, onFitToWidthChange]);
 
+  // Commit on Enter, mirroring ZoomPercentInput behaviour so both number
+  // inputs in the export dialog have consistent keyboard UX.
+  const handleCustomWidthKeyDown = useCallback(
+    (e: KeyboardEvent<HTMLInputElement>): void => {
+      if (e.key === "Enter") {
+        e.currentTarget.blur();
+      }
+    },
+    []
+  );
+
   // Prevent click events from bubbling out of the export dialog overlay.
   const handleStopPropagation = useCallback((e: React.MouseEvent): void => {
     e.stopPropagation();
@@ -195,6 +206,7 @@ export function FitToWidthSelector({
             value={customDraft}
             onChange={handleCustomWidthChange}
             onBlur={handleCustomWidthBlur}
+            onKeyDown={handleCustomWidthKeyDown}
             onClick={handleStopPropagation}
             aria-label="Custom width in pixels"
             fullWidth={false}

@@ -15,20 +15,16 @@ import {
   EXPORT_ZOOM_MIN,
   EXPORT_ZOOM_MAX,
   EXPORT_ZOOM_PRESETS,
+  EXPORT_ZOOM_TENTH,
+  EXPORT_ZOOM_QUARTER,
 } from "../../utils/export/types";
 
-// PNG/SVG exports support finer zoom levels (0.1×, 0.25×) not available for
-// PDF, because raster/vector outputs can represent very small scales without
-// readability constraints imposed by fixed PDF page dimensions.
-// The four shared presets from EXPORT_ZOOM_PRESETS are extended with the two
-// finer levels; composing from the shared constant prevents value drift.
-
-/** 10% zoom — fine-grained preset available only for PNG/SVG exports. */
-const EXPORT_ZOOM_TENTH = 0.1;
-
-/** 25% zoom — fine-grained preset available only for PNG/SVG exports. */
-const EXPORT_ZOOM_QUARTER = 0.25;
-
+/**
+ * Zoom presets for PNG/SVG exports: extends the shared EXPORT_ZOOM_PRESETS
+ * with the two finer levels (0.1×, 0.25×) available only for raster/vector
+ * outputs that have no fixed-page readability constraints.
+ * Composing from the shared constant prevents value drift.
+ */
 const CUSTOM_ZOOM_PRESETS_ARRAY: ReadonlyArray<number> = [
   EXPORT_ZOOM_TENTH,
   EXPORT_ZOOM_QUARTER,
@@ -161,6 +157,7 @@ const PresetButton = memo(function PresetButton({
       type="button"
       onClick={handleClick}
       aria-pressed={isActive}
+      aria-label={`Set zoom to ${Math.round(value * 100)}%`}
       className={`px-3 py-1.5 text-xs font-mono font-medium rounded transition-colors duration-150 ${
         isActive
           ? "bg-brand-600 text-white"

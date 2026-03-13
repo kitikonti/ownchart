@@ -343,6 +343,19 @@ export const EXPORT_ZOOM_MIN = 0.05;
 /** Maximum zoom level for export */
 export const EXPORT_ZOOM_MAX = 3.0;
 
+/**
+ * 10% zoom — fine-grained preset available only for PNG/SVG exports.
+ * PDF exports omit this level because fixed page dimensions impose readability
+ * constraints that make very small scales impractical.
+ */
+export const EXPORT_ZOOM_TENTH = 0.1;
+
+/**
+ * 25% zoom — fine-grained preset available only for PNG/SVG exports.
+ * See EXPORT_ZOOM_TENTH for rationale.
+ */
+export const EXPORT_ZOOM_QUARTER = 0.25;
+
 /** Zoom multiplier (1.0 = 100%) below which labels become hard to read */
 export const EXPORT_ZOOM_READABLE_THRESHOLD = 0.15;
 

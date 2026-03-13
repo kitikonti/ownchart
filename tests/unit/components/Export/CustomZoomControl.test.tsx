@@ -46,15 +46,21 @@ describe("CustomZoomControl", () => {
     const presetValues = Object.values(EXPORT_ZOOM_PRESETS);
     presetValues.forEach((value) => {
       expect(
-        screen.getByRole("button", { name: `${Math.round(value * 100)}%` })
+        screen.getByRole("button", {
+          name: `Set zoom to ${Math.round(value * 100)}%`,
+        })
       ).toBeInTheDocument();
     });
   });
 
   it("includes the 10% and 25% fine-grain presets when isPngOrSvg is true", () => {
     renderComponent({ isPngOrSvg: true });
-    expect(screen.getByRole("button", { name: "10%" })).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "25%" })).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: "Set zoom to 10%" })
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: "Set zoom to 25%" })
+    ).toBeInTheDocument();
   });
 
   it("calls onTimelineZoomChange with the preset value when a preset button is clicked", () => {
@@ -64,7 +70,7 @@ describe("CustomZoomControl", () => {
     const targetPreset = EXPORT_ZOOM_PRESETS.COMPACT; // 0.5
     fireEvent.click(
       screen.getByRole("button", {
-        name: `${Math.round(targetPreset * 100)}%`,
+        name: `Set zoom to ${Math.round(targetPreset * 100)}%`,
       })
     );
 
@@ -73,13 +79,13 @@ describe("CustomZoomControl", () => {
 
   it("marks the currently active preset button as aria-pressed=true", () => {
     renderComponent({ timelineZoom: EXPORT_ZOOM_PRESETS.STANDARD, isPngOrSvg: false });
-    const activeButton = screen.getByRole("button", { name: "100%" });
+    const activeButton = screen.getByRole("button", { name: "Set zoom to 100%" });
     expect(activeButton).toHaveAttribute("aria-pressed", "true");
   });
 
   it("marks non-active preset buttons as aria-pressed=false", () => {
     renderComponent({ timelineZoom: EXPORT_ZOOM_PRESETS.STANDARD, isPngOrSvg: false });
-    const inactiveButton = screen.getByRole("button", { name: "50%" });
+    const inactiveButton = screen.getByRole("button", { name: "Set zoom to 50%" });
     expect(inactiveButton).toHaveAttribute("aria-pressed", "false");
   });
 
