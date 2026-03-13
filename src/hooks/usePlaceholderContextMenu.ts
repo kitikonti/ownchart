@@ -17,6 +17,8 @@ import { useTaskStore } from "../store/slices/taskSlice";
 import { CONTEXT_MENU } from "../styles/design-tokens";
 import { PLACEHOLDER_TASK_ID } from "../config/placeholderRow";
 
+const PASTE_SHORTCUT = "Ctrl+V";
+
 interface UsePlaceholderContextMenuResult {
   contextMenu: ContextMenuPosition | null;
   contextMenuItems: ContextMenuItem[];
@@ -61,7 +63,7 @@ export function usePlaceholderContextMenu(): UsePlaceholderContextMenuResult {
           size: CONTEXT_MENU.iconSize,
           weight: CONTEXT_MENU.iconWeight,
         }),
-        shortcut: "Ctrl+V",
+        shortcut: PASTE_SHORTCUT,
         onClick: () => void handlePaste(),
         disabled: !canPaste,
       },

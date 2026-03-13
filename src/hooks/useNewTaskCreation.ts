@@ -51,7 +51,6 @@ export function useNewTaskCreation(): UseNewTaskCreationReturn {
         color: COLORS.chart.taskDefault,
         order: maxOrder,
         type: "task",
-        parent: undefined,
         metadata: {},
       });
     },
