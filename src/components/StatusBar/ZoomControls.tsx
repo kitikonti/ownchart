@@ -113,7 +113,7 @@ export const ZoomControls = memo(function ZoomControls(): JSX.Element {
         <button
           type="button"
           onClick={handleZoomOut}
-          aria-disabled={isAtMinZoom}
+          aria-disabled={isAtMinZoom ? "true" : "false"}
           className={`p-0.5 transition-colors ${isAtMinZoom ? "text-neutral-300 cursor-not-allowed" : "text-neutral-500 hover:text-neutral-700"}`}
           aria-label="Zoom out"
           title="Zoom out"
@@ -138,7 +138,7 @@ export const ZoomControls = memo(function ZoomControls(): JSX.Element {
         <button
           type="button"
           onClick={handleZoomIn}
-          aria-disabled={isAtMaxZoom}
+          aria-disabled={isAtMaxZoom ? "true" : "false"}
           className={`p-0.5 transition-colors ${isAtMaxZoom ? "text-neutral-300 cursor-not-allowed" : "text-neutral-500 hover:text-neutral-700"}`}
           aria-label="Zoom in"
           title="Zoom in"

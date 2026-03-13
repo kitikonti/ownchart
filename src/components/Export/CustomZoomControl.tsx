@@ -19,6 +19,7 @@ import {
   EXPORT_ZOOM_TENTH,
   EXPORT_ZOOM_QUARTER,
 } from "../../utils/export/types";
+import { stopPropagation } from "./exportEventUtils";
 
 /**
  * Zoom presets for PNG/SVG exports: extends the shared EXPORT_ZOOM_PRESETS
@@ -60,15 +61,6 @@ function clampExportZoom(rawInput: string): number {
   const parsed = parseFloat(rawInput);
   const value = Number.isNaN(parsed) ? 100 : parsed;
   return Math.max(EXPORT_ZOOM_MIN, Math.min(EXPORT_ZOOM_MAX, value / 100));
-}
-
-/**
- * Stops a mouse event from bubbling to ancestor elements.
- * Defined at module level (stable reference) to avoid per-render `useCallback`
- * overhead for a handler that never closes over component state.
- */
-function stopPropagation(e: MouseEvent<HTMLElement>): void {
-  e.stopPropagation();
 }
 
 export interface CustomZoomControlProps {

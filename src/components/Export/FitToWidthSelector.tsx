@@ -19,6 +19,7 @@ import {
 } from "../../utils/export/types";
 import { Input } from "../common/Input";
 import { Select } from "../common/Select";
+import { stopPropagation } from "./exportEventUtils";
 
 /** HD (1080p) screen width in pixels — matches DEFAULT_FIT_TO_WIDTH_PX. */
 const HD_SCREEN_WIDTH_PX = DEFAULT_FIT_TO_WIDTH_PX; // 1920
@@ -82,15 +83,6 @@ function clampFitToWidth(rawInput: string): number {
   const parsed = parseInt(rawInput, 10);
   const value = Number.isNaN(parsed) ? DEFAULT_FIT_TO_WIDTH_PX : parsed;
   return Math.max(MIN_FIT_WIDTH_PX, Math.min(MAX_FIT_WIDTH_PX, value));
-}
-
-/**
- * Stops a mouse event from bubbling to ancestor elements.
- * Defined at module level (stable reference) to avoid per-render `useCallback`
- * overhead for a handler that never closes over component state.
- */
-function stopPropagation(e: React.MouseEvent): void {
-  e.stopPropagation();
 }
 
 export interface FitToWidthSelectorProps {
