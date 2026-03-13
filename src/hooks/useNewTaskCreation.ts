@@ -10,6 +10,7 @@ import { useTaskStore } from "../store/slices/taskSlice";
 import { toISODateString } from "../utils/dateUtils";
 import { COLORS } from "../styles/design-tokens";
 import { DEFAULT_TASK_DURATION } from "../store/slices/taskSliceHelpers";
+import type { Task } from "../types/chart.types";
 
 interface UseNewTaskCreationReturn {
   createTask: (name: string) => void;
@@ -27,18 +28,18 @@ export function useNewTaskCreation(): UseNewTaskCreationReturn {
       // Access tasks at call time (event handler), not during render
       const { tasks } = useTaskStore.getState();
 
-      // Compute lastTaskByPosition and maxOrder in a single pass to avoid iterating twice.
+      // Compute lastTaskByPosition and nextOrder in a single pass to avoid iterating twice.
       // lastTaskByPosition is the last element by array index (visual bottom of list),
       // which determines the start date for the new task. highestOrder tracks
       // the maximum order value (tasks may not be sorted by order) so the new
       // task is appended after all existing tasks regardless of their order values.
-      let lastTaskByPosition: { endDate?: string } | null = null;
+      let lastTaskByPosition: Task | null = null;
       let highestOrder = -1;
       for (const t of tasks) {
         lastTaskByPosition = t;
         if (t.order > highestOrder) highestOrder = t.order;
       }
-      const maxOrder = tasks.length > 0 ? highestOrder + 1 : 0;
+      const nextOrder = tasks.length > 0 ? highestOrder + 1 : 0;
 
       const { startDate, endDate } = computeAppendDates(lastTaskByPosition);
 
@@ -49,7 +50,7 @@ export function useNewTaskCreation(): UseNewTaskCreationReturn {
         duration: DEFAULT_TASK_DURATION,
         progress: 0,
         color: COLORS.chart.taskDefault,
-        order: maxOrder,
+        order: nextOrder,
         type: "task",
         metadata: {},
       });

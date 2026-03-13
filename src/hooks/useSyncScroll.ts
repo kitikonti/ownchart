@@ -53,8 +53,12 @@ export function useSyncScroll(
       });
     };
 
-    elA.addEventListener("scroll", syncAtoB);
-    elB.addEventListener("scroll", syncBtoA);
+    // { passive: true } — handlers only read scrollLeft, never call
+    // preventDefault(). Passive listeners let the browser composite scroll
+    // frames without waiting for JS, which reduces jank on high-frequency
+    // trackpad / touch scroll events.
+    elA.addEventListener("scroll", syncAtoB, { passive: true });
+    elB.addEventListener("scroll", syncBtoA, { passive: true });
 
     return (): void => {
       elA.removeEventListener("scroll", syncAtoB);

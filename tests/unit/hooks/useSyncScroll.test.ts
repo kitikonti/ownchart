@@ -41,11 +41,13 @@ describe("useSyncScroll", () => {
 
     expect(elA.addEventListener).toHaveBeenCalledWith(
       "scroll",
-      expect.any(Function)
+      expect.any(Function),
+      { passive: true }
     );
     expect(elB.addEventListener).toHaveBeenCalledWith(
       "scroll",
-      expect.any(Function)
+      expect.any(Function),
+      { passive: true }
     );
   });
 

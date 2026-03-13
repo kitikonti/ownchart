@@ -21,6 +21,8 @@ export function usePreventVerticalScroll(
     const resetScroll = (): void => {
       if (el.scrollTop !== 0) el.scrollTop = 0;
     };
+    // Cannot use { passive: true } — handler writes scrollTop to reset
+    // vertical scroll, which is incompatible with passive event listeners.
     el.addEventListener("scroll", resetScroll);
     return (): void => {
       el.removeEventListener("scroll", resetScroll);

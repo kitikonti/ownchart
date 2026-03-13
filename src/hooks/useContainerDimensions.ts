@@ -99,7 +99,12 @@ export function useContainerDimensions({
 
     updateViewport();
 
-    chartContainer.addEventListener("scroll", updateViewport);
+    // { passive: true } — handler only reads scrollLeft/clientWidth, never
+    // calls preventDefault(). Passive listener avoids blocking compositing
+    // on every scroll frame.
+    chartContainer.addEventListener("scroll", updateViewport, {
+      passive: true,
+    });
 
     const ro = new ResizeObserver(updateViewport);
     ro.observe(chartContainer);

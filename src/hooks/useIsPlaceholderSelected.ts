@@ -11,7 +11,7 @@ import { PLACEHOLDER_TASK_ID } from "../config/placeholderRow";
 
 /** Focused selector — only re-renders when the placeholder's selection state changes. */
 export function useIsPlaceholderSelected(): boolean {
-  // selectedTaskIds is a small array (bounded by the number of visible tasks),
+  // selectedTaskIds is typically small (bounded by the number of selected tasks),
   // so Array.includes is fast enough here. The store intentionally uses an array
   // (not a Set) to maintain insertion order for multi-select operations.
   return useTaskStore((s) => s.selectedTaskIds.includes(PLACEHOLDER_TASK_ID));
