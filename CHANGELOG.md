@@ -2,6 +2,18 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [1.2.8](https://github.com/kitikonti/ownchart/compare/v1.2.7...v1.2.8) (2026-03-13)
+
+
+### Bug Fixes
+
+* address review findings F001-F005 for design system commit ([58470c6](https://github.com/kitikonti/ownchart/commit/58470c613814dff82d94bfc116f4c4e0ff8a4428))
+
+
+### Code Refactoring
+
+* consolidate design system and add visual regression tests ([#66](https://github.com/kitikonti/ownchart/issues/66)) ([e37e94e](https://github.com/kitikonti/ownchart/commit/e37e94ec8bc0bedd9ecc17a820c30dd1b6bf53b6))
+
 ## [1.2.7](https://github.com/kitikonti/ownchart/compare/v1.2.6...v1.2.7) (2026-03-13)
 
 
