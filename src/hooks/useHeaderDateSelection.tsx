@@ -216,7 +216,8 @@ function useClearSelectionOnEscape(
     };
     document.addEventListener("keydown", handleKeyDown);
     return () => document.removeEventListener("keydown", handleKeyDown);
-  }, [clearSelection]); // selectionRef is always current — no selection dep needed
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- selectionRef is a stable ref; .current read imperatively
+  }, [clearSelection]);
 }
 
 /** Clears selection when the user clicks outside the header SVG or context menu.
@@ -246,7 +247,8 @@ function useClearSelectionOnClickOutside(
       clearTimeout(timer);
       document.removeEventListener("mousedown", handleMouseDown);
     };
-  }, [headerSvgRef, clearSelection]); // selectionRef is always current — no selection dep needed
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- selectionRef is a stable ref; .current read imperatively
+  }, [headerSvgRef, clearSelection]);
 }
 
 /** Stable mousemove/mouseup handlers + cleanup for a header drag session. */
@@ -271,6 +273,7 @@ function useMouseDragListeners(
       if (!startDate) return;
       setSelection(normalizeSelection(startDate, currentDate));
     },
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- dragStartDateRef and isDraggingRef are stable refs; .current read imperatively
     [headerSvgRef, scaleRef, setSelection]
   );
 
@@ -281,6 +284,7 @@ function useMouseDragListeners(
     isDraggingRef.current = false;
     setIsDragging(false);
     document.removeEventListener("mousemove", handleMouseMove);
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- isDraggingRef is a stable ref; .current read imperatively
   }, [handleMouseMove, setIsDragging]);
 
   // Cleanup on unmount — both handlers are stable so this runs exactly once.

@@ -2,6 +2,7 @@ import { describe, it, expect, beforeEach } from 'vitest';
 import { useTaskStore } from '../../../src/store/slices/taskSlice';
 import { useHistoryStore } from '../../../src/store/slices/historySlice';
 import type { Task, TaskType } from '../../../src/types/chart.types';
+import { toTaskId } from '../../../src/types/branded.types';
 import { COLORS } from '../../../src/styles/design-tokens';
 
 /**
@@ -2652,11 +2653,11 @@ describe('Task Store - CRUD Operations', () => {
       // Parent with 3 children: C1(order=1), C2(order=2), C3(order=3)
       // but C1 is at end of state.tasks array (simulating real-world divergence)
       const tasks: Task[] = [
-        makeTask({ id: 'parent' as any, name: 'Parent', startDate: '2025-01-01', endDate: '2025-01-31', duration: 31, order: 0, type: 'summary' as TaskType, parent: undefined }),
-        makeTask({ id: 'c2' as any, name: 'Child 2', startDate: '2025-01-11', endDate: '2025-01-20', duration: 10, order: 2, type: 'task' as TaskType, parent: 'parent' as any }),
-        makeTask({ id: 'c3' as any, name: 'Child 3', startDate: '2025-01-21', endDate: '2025-01-31', duration: 11, order: 3, type: 'task' as TaskType, parent: 'parent' as any }),
+        makeTask({ id: toTaskId('parent'), name: 'Parent', startDate: '2025-01-01', endDate: '2025-01-31', duration: 31, order: 0, type: 'summary' as TaskType, parent: undefined }),
+        makeTask({ id: toTaskId('c2'), name: 'Child 2', startDate: '2025-01-11', endDate: '2025-01-20', duration: 10, order: 2, type: 'task' as TaskType, parent: toTaskId('parent') }),
+        makeTask({ id: toTaskId('c3'), name: 'Child 3', startDate: '2025-01-21', endDate: '2025-01-31', duration: 11, order: 3, type: 'task' as TaskType, parent: toTaskId('parent') }),
         // C1 at END of array but has lowest order among siblings
-        makeTask({ id: 'c1' as any, name: 'Child 1', startDate: '2025-01-01', endDate: '2025-01-10', duration: 10, order: 1, type: 'task' as TaskType, parent: 'parent' as any }),
+        makeTask({ id: toTaskId('c1'), name: 'Child 1', startDate: '2025-01-01', endDate: '2025-01-10', duration: 10, order: 1, type: 'task' as TaskType, parent: toTaskId('parent') }),
       ];
 
       useTaskStore.setState({ tasks });
@@ -2666,7 +2667,7 @@ describe('Task Store - CRUD Operations', () => {
 
       const state = useTaskStore.getState();
       const siblings = state.tasks
-        .filter((t) => t.parent === ('parent' as any))
+        .filter((t) => t.parent === toTaskId('parent'))
         .sort((a, b) => a.order - b.order);
 
       // New task should be between C1 and C2
@@ -2679,10 +2680,10 @@ describe('Task Store - CRUD Operations', () => {
 
     it('should insert above child with mispositioned array', () => {
       const tasks: Task[] = [
-        makeTask({ id: 'parent' as any, name: 'Parent', startDate: '2025-01-01', endDate: '2025-01-31', duration: 31, order: 0, type: 'summary' as TaskType, parent: undefined }),
-        makeTask({ id: 'c2' as any, name: 'Child 2', startDate: '2025-01-11', endDate: '2025-01-20', duration: 10, order: 2, type: 'task' as TaskType, parent: 'parent' as any }),
-        makeTask({ id: 'c3' as any, name: 'Child 3', startDate: '2025-01-21', endDate: '2025-01-31', duration: 11, order: 3, type: 'task' as TaskType, parent: 'parent' as any }),
-        makeTask({ id: 'c1' as any, name: 'Child 1', startDate: '2025-01-01', endDate: '2025-01-10', duration: 10, order: 1, type: 'task' as TaskType, parent: 'parent' as any }),
+        makeTask({ id: toTaskId('parent'), name: 'Parent', startDate: '2025-01-01', endDate: '2025-01-31', duration: 31, order: 0, type: 'summary' as TaskType, parent: undefined }),
+        makeTask({ id: toTaskId('c2'), name: 'Child 2', startDate: '2025-01-11', endDate: '2025-01-20', duration: 10, order: 2, type: 'task' as TaskType, parent: toTaskId('parent') }),
+        makeTask({ id: toTaskId('c3'), name: 'Child 3', startDate: '2025-01-21', endDate: '2025-01-31', duration: 11, order: 3, type: 'task' as TaskType, parent: toTaskId('parent') }),
+        makeTask({ id: toTaskId('c1'), name: 'Child 1', startDate: '2025-01-01', endDate: '2025-01-10', duration: 10, order: 1, type: 'task' as TaskType, parent: toTaskId('parent') }),
       ];
 
       useTaskStore.setState({ tasks });
@@ -2692,7 +2693,7 @@ describe('Task Store - CRUD Operations', () => {
 
       const state = useTaskStore.getState();
       const siblings = state.tasks
-        .filter((t) => t.parent === ('parent' as any))
+        .filter((t) => t.parent === toTaskId('parent'))
         .sort((a, b) => a.order - b.order);
 
       // New task should be before C1
@@ -2706,8 +2707,8 @@ describe('Task Store - CRUD Operations', () => {
     it('should insert below at root level with mispositioned array', () => {
       // R1(order=0), R2(order=1) where R1 is at end of array
       const tasks: Task[] = [
-        makeTask({ id: 'r2' as any, name: 'Root 2', startDate: '2025-01-11', endDate: '2025-01-20', duration: 10, order: 1, type: 'task' as TaskType, parent: undefined }),
-        makeTask({ id: 'r1' as any, name: 'Root 1', startDate: '2025-01-01', endDate: '2025-01-10', duration: 10, order: 0, type: 'task' as TaskType, parent: undefined }),
+        makeTask({ id: toTaskId('r2'), name: 'Root 2', startDate: '2025-01-11', endDate: '2025-01-20', duration: 10, order: 1, type: 'task' as TaskType, parent: undefined }),
+        makeTask({ id: toTaskId('r1'), name: 'Root 1', startDate: '2025-01-01', endDate: '2025-01-10', duration: 10, order: 0, type: 'task' as TaskType, parent: undefined }),
       ];
 
       useTaskStore.setState({ tasks });
@@ -2729,10 +2730,10 @@ describe('Task Store - CRUD Operations', () => {
 
     it('should insert below last child correctly', () => {
       const tasks: Task[] = [
-        makeTask({ id: 'parent' as any, name: 'Parent', startDate: '2025-01-01', endDate: '2025-01-31', duration: 31, order: 0, type: 'summary' as TaskType, parent: undefined }),
-        makeTask({ id: 'c3' as any, name: 'Child 3', startDate: '2025-01-21', endDate: '2025-01-31', duration: 11, order: 3, type: 'task' as TaskType, parent: 'parent' as any }),
-        makeTask({ id: 'c1' as any, name: 'Child 1', startDate: '2025-01-01', endDate: '2025-01-10', duration: 10, order: 1, type: 'task' as TaskType, parent: 'parent' as any }),
-        makeTask({ id: 'c2' as any, name: 'Child 2', startDate: '2025-01-11', endDate: '2025-01-20', duration: 10, order: 2, type: 'task' as TaskType, parent: 'parent' as any }),
+        makeTask({ id: toTaskId('parent'), name: 'Parent', startDate: '2025-01-01', endDate: '2025-01-31', duration: 31, order: 0, type: 'summary' as TaskType, parent: undefined }),
+        makeTask({ id: toTaskId('c3'), name: 'Child 3', startDate: '2025-01-21', endDate: '2025-01-31', duration: 11, order: 3, type: 'task' as TaskType, parent: toTaskId('parent') }),
+        makeTask({ id: toTaskId('c1'), name: 'Child 1', startDate: '2025-01-01', endDate: '2025-01-10', duration: 10, order: 1, type: 'task' as TaskType, parent: toTaskId('parent') }),
+        makeTask({ id: toTaskId('c2'), name: 'Child 2', startDate: '2025-01-11', endDate: '2025-01-20', duration: 10, order: 2, type: 'task' as TaskType, parent: toTaskId('parent') }),
       ];
 
       useTaskStore.setState({ tasks });
@@ -2742,7 +2743,7 @@ describe('Task Store - CRUD Operations', () => {
 
       const state = useTaskStore.getState();
       const siblings = state.tasks
-        .filter((t) => t.parent === ('parent' as any))
+        .filter((t) => t.parent === toTaskId('parent'))
         .sort((a, b) => a.order - b.order);
 
       // New task after C3, still within parent's children
@@ -2757,12 +2758,12 @@ describe('Task Store - CRUD Operations', () => {
     it('should preserve all sibling order after insertion', () => {
       // 5 siblings with array order completely different from display order
       const tasks: Task[] = [
-        makeTask({ id: 'parent' as any, name: 'Parent', startDate: '2025-01-01', endDate: '2025-02-28', duration: 59, order: 0, type: 'summary' as TaskType, parent: undefined }),
-        makeTask({ id: 's4' as any, name: 'Sibling 4', startDate: '2025-01-25', endDate: '2025-01-31', duration: 7, order: 4, type: 'task' as TaskType, parent: 'parent' as any }),
-        makeTask({ id: 's2' as any, name: 'Sibling 2', startDate: '2025-01-11', endDate: '2025-01-17', duration: 7, order: 2, type: 'task' as TaskType, parent: 'parent' as any }),
-        makeTask({ id: 's5' as any, name: 'Sibling 5', startDate: '2025-02-01', endDate: '2025-02-07', duration: 7, order: 5, type: 'task' as TaskType, parent: 'parent' as any }),
-        makeTask({ id: 's1' as any, name: 'Sibling 1', startDate: '2025-01-04', endDate: '2025-01-10', duration: 7, order: 1, type: 'task' as TaskType, parent: 'parent' as any }),
-        makeTask({ id: 's3' as any, name: 'Sibling 3', startDate: '2025-01-18', endDate: '2025-01-24', duration: 7, order: 3, type: 'task' as TaskType, parent: 'parent' as any }),
+        makeTask({ id: toTaskId('parent'), name: 'Parent', startDate: '2025-01-01', endDate: '2025-02-28', duration: 59, order: 0, type: 'summary' as TaskType, parent: undefined }),
+        makeTask({ id: toTaskId('s4'), name: 'Sibling 4', startDate: '2025-01-25', endDate: '2025-01-31', duration: 7, order: 4, type: 'task' as TaskType, parent: toTaskId('parent') }),
+        makeTask({ id: toTaskId('s2'), name: 'Sibling 2', startDate: '2025-01-11', endDate: '2025-01-17', duration: 7, order: 2, type: 'task' as TaskType, parent: toTaskId('parent') }),
+        makeTask({ id: toTaskId('s5'), name: 'Sibling 5', startDate: '2025-02-01', endDate: '2025-02-07', duration: 7, order: 5, type: 'task' as TaskType, parent: toTaskId('parent') }),
+        makeTask({ id: toTaskId('s1'), name: 'Sibling 1', startDate: '2025-01-04', endDate: '2025-01-10', duration: 7, order: 1, type: 'task' as TaskType, parent: toTaskId('parent') }),
+        makeTask({ id: toTaskId('s3'), name: 'Sibling 3', startDate: '2025-01-18', endDate: '2025-01-24', duration: 7, order: 3, type: 'task' as TaskType, parent: toTaskId('parent') }),
       ];
 
       useTaskStore.setState({ tasks });
@@ -2772,7 +2773,7 @@ describe('Task Store - CRUD Operations', () => {
 
       const state = useTaskStore.getState();
       const siblings = state.tasks
-        .filter((t) => t.parent === ('parent' as any))
+        .filter((t) => t.parent === toTaskId('parent'))
         .sort((a, b) => a.order - b.order);
 
       // All original siblings maintain relative order, new task after S3

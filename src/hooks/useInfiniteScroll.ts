@@ -202,6 +202,7 @@ export function useInfiniteScroll({
     // chartContainerRef intentionally omitted: the ref object is a stable
     // identity (React guarantees it never changes); .current is read
     // imperatively inside the effect, not captured in the closure.
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- chartContainerRef and prevDateRangeRef are stable refs
   }, [dateRange, scale, lastFitToViewTime, fileLoadCounter]);
 
   // Infinite scroll detection - extend timeline when near edges
@@ -262,5 +263,6 @@ export function useInfiniteScroll({
     // chartContainerRef intentionally omitted: the ref object is a stable
     // identity (React guarantees it never changes); .current is read
     // imperatively inside the effect, not captured in the closure.
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- chartContainerRef and pendingPastExtensionRef are stable refs
   }, [scale, extendDateRange]);
 }

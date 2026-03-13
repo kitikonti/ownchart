@@ -125,6 +125,7 @@ function ToolbarDropdownInner<T extends string = string>({
   );
 
   return (
+    // eslint-disable-next-line jsx-a11y/no-static-element-interactions -- composite widget container; DropdownTrigger inside is the interactive element
     <div ref={containerRef} className="relative" onKeyDown={handleKeyDown}>
       <DropdownTrigger
         isOpen={isOpen}

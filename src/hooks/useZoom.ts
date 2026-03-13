@@ -116,6 +116,7 @@ export function useZoom({
     // containerRef intentionally omitted: the ref *object* is a stable identity
     // (React guarantees it never changes); .current is read imperatively inside
     // the callback, not captured in the closure, so no stale value is possible.
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- containerRef is a stable ref
     [enabled, scale, setZoom]
   );
 

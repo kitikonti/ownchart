@@ -67,6 +67,7 @@ describe("InsertRowButton", () => {
   it("stops event propagation on click", () => {
     const parentClickHandler = vi.fn();
     render(
+      // eslint-disable-next-line jsx-a11y/no-static-element-interactions, jsx-a11y/click-events-have-key-events -- test wrapper only
       <div onClick={parentClickHandler}>
         <InsertRowButton {...defaultProps} />
       </div>

@@ -222,7 +222,8 @@ function useTabRestore(
       // Mark as hydrated after restoration attempt (success or partial failure)
       useUIStore.getState().setHydrated();
     }
-  }, []); // tabIdRef and isRestoringRef are stable refs
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- tabIdRef and isRestoringRef are stable refs
+  }, []);
 }
 
 function useTabAutoSave(
@@ -268,7 +269,8 @@ function useTabAutoSave(
       clearTimeout(initialSaveTimer);
       unsubscribeAll();
     };
-  }, []); // tabIdRef, isRestoringRef, saveTimerRef are stable refs
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- tabIdRef, isRestoringRef, saveTimerRef are stable refs
+  }, []);
 }
 
 function useTabHeartbeat(tabIdRef: { current: string }): void {
@@ -280,7 +282,8 @@ function useTabHeartbeat(tabIdRef: { current: string }): void {
     }, ACTIVITY_UPDATE_INTERVAL_MS);
 
     return () => clearInterval(interval);
-  }, []); // tabIdRef is a stable ref
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- tabIdRef is a stable ref
+  }, []);
 }
 
 // ---------------------------------------------------------------------------

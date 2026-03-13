@@ -296,7 +296,8 @@ function useDragInitiators(
         invalidTargets,
       });
     },
-    [enabled, checkWouldCreateCycle, svgRef, setDragState] // tasksRef is always current — no tasks dep
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- tasksRef is a stable ref; .current read imperatively
+    [enabled, checkWouldCreateCycle, svgRef, setDragState]
   );
 
   const cancelDrag = useCallback((): void => {
