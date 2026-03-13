@@ -87,8 +87,8 @@ export const TimelinePanel = memo(function TimelinePanel({
             width={timelineHeaderWidth}
             height={HEADER_HEIGHT}
             className="block select-none"
-            role="application"
-            aria-label="Timeline header"
+            role="img"
+            aria-label="Timeline header — drag to select a date range"
             onMouseDown={handleHeaderMouseDown}
             onContextMenu={handleHeaderContextMenu}
           >

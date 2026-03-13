@@ -113,9 +113,9 @@ export const FitToWidthSelector = memo(function FitToWidthSelector({
   // The clamped value is committed to the parent on blur only.
   const [customDraft, setCustomDraft] = useState(String(fitToWidth));
 
-  // Sync local "custom" flag when the parent changes fitToWidth externally
-  // (e.g. on format change or restored saved state). Without this, the
-  // dropdown could show the wrong label after a programmatic update.
+  // Sync local "custom" flag and draft when the parent changes fitToWidth
+  // externally (e.g. on format change or restored saved state). Without this,
+  // the dropdown could show the wrong label after a programmatic update.
   useEffect(() => {
     const isPreset = ALL_PRESET_VALUES.includes(fitToWidth);
     setIsCustomWidth(!isPreset);

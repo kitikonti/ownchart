@@ -141,7 +141,7 @@ const ZoomPercentInput = memo(function ZoomPercentInput({
         onClick={onClick}
         aria-label="Zoom percentage"
         aria-describedby={unitId}
-        className="w-10 text-sm text-center font-mono bg-transparent border-none focus:outline-none text-neutral-900"
+        className="w-10 text-sm text-center font-mono bg-transparent border-none focus:outline-none focus-visible:ring-1 focus-visible:ring-brand-600 text-neutral-900"
         min={EXPORT_ZOOM_MIN * 100}
         max={EXPORT_ZOOM_MAX * 100}
       />
