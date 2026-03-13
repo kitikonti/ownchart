@@ -52,24 +52,26 @@ export const ZoomControls = memo(function ZoomControls(): JSX.Element {
   );
 
   const handleZoomIn = useCallback((): void => {
-    // Guard for aria-disabled: read zoom from the store at call time to avoid
-    // stale closure on the derived `isAtMaxZoom` boolean. The button stays in
-    // the tab order but must not perform any action at the maximum zoom level.
-    if (useChartStore.getState().zoom >= MAX_ZOOM) return;
+    // Guard for aria-disabled: the button stays in the tab order but must not
+    // perform any action at the maximum zoom level. Using the already-derived
+    // `isAtMaxZoom` boolean keeps the guard and the aria-disabled attribute
+    // in perfect sync.
+    if (isAtMaxZoom) return;
     const anchor = computeViewportCenterAnchor();
     const result = zoomIn(anchor);
     applyScrollLeft(result.newScrollLeft);
-  }, [zoomIn]);
+  }, [isAtMaxZoom, zoomIn]);
 
   const handleZoomOut = useCallback((): void => {
-    // Guard for aria-disabled: read zoom from the store at call time to avoid
-    // stale closure on the derived `isAtMinZoom` boolean. The button stays in
-    // the tab order but must not perform any action at the minimum zoom level.
-    if (useChartStore.getState().zoom <= MIN_ZOOM) return;
+    // Guard for aria-disabled: the button stays in the tab order but must not
+    // perform any action at the minimum zoom level. Using the already-derived
+    // `isAtMinZoom` boolean keeps the guard and the aria-disabled attribute
+    // in perfect sync.
+    if (isAtMinZoom) return;
     const anchor = computeViewportCenterAnchor();
     const result = zoomOut(anchor);
     applyScrollLeft(result.newScrollLeft);
-  }, [zoomOut]);
+  }, [isAtMinZoom, zoomOut]);
 
   const handleFitToView = useCallback((): void => {
     // Non-reactive: read tasks at call time to avoid re-renders on task changes.

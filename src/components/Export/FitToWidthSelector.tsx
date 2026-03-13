@@ -7,6 +7,7 @@ import {
   memo,
   useCallback,
   useEffect,
+  useId,
   useState,
   type KeyboardEvent,
 } from "react";
@@ -94,6 +95,10 @@ export const FitToWidthSelector = memo(function FitToWidthSelector({
   fitToWidth,
   onFitToWidthChange,
 }: FitToWidthSelectorProps): JSX.Element {
+  // Unique id per instance — prevents duplicate ids if this component is
+  // rendered more than once in the same DOM (e.g. tests, multiple dialogs).
+  const pxUnitId = `${useId()}-px-unit`;
+
   const [isCustomWidth, setIsCustomWidth] = useState(
     !ALL_PRESET_VALUES.includes(fitToWidth)
   );
@@ -213,6 +218,7 @@ export const FitToWidthSelector = memo(function FitToWidthSelector({
             onKeyDown={handleCustomWidthKeyDown}
             onClick={handleStopPropagation}
             aria-label="Custom width in pixels"
+            aria-describedby={pxUnitId}
             fullWidth={false}
             className="flex-1"
             mono
@@ -220,7 +226,9 @@ export const FitToWidthSelector = memo(function FitToWidthSelector({
             max={MAX_FIT_WIDTH_PX}
             placeholder={String(DEFAULT_FIT_TO_WIDTH_PX)}
           />
-          <span className="text-sm text-neutral-500">px</span>
+          <span id={pxUnitId} className="text-sm text-neutral-500">
+            px
+          </span>
         </div>
       )}
     </div>

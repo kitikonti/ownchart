@@ -6,6 +6,7 @@ import {
   memo,
   useCallback,
   useEffect,
+  useId,
   useState,
   type ChangeEvent,
   type KeyboardEvent,
@@ -71,8 +72,8 @@ interface ZoomPercentInputProps {
   /** Committed zoom multiplier from the parent (e.g. 1.0 for 100%). */
   value: number;
   onCommit: (zoom: number) => void;
-  /** Propagation-stop handler typed broadly so the parent's shared handler
-   *  (typed as `MouseEvent<Element>`) satisfies this prop without widening. */
+  /** Click propagation-stop handler. Accepts any Element so the parent's
+   *  shared handler (typed as `MouseEvent<Element>`) satisfies this prop. */
   onClick: (e: MouseEvent<Element>) => void;
 }
 
@@ -94,6 +95,10 @@ const ZoomPercentInput = memo(function ZoomPercentInput({
   onCommit,
   onClick,
 }: ZoomPercentInputProps): JSX.Element {
+  // Unique id per instance — prevents duplicate ids when multiple
+  // ZoomPercentInput components appear in the same DOM (e.g. tests).
+  const unitId = `${useId()}-zoom-unit`;
+
   // Local draft keeps the raw string so users can type freely.
   const [draft, setDraft] = useState(String(Math.round(value * 100)));
 
@@ -134,12 +139,12 @@ const ZoomPercentInput = memo(function ZoomPercentInput({
         onKeyDown={handleKeyDown}
         onClick={onClick}
         aria-label="Zoom percentage"
-        aria-describedby="zoom-percent-unit"
+        aria-describedby={unitId}
         className="w-10 text-sm text-center font-mono bg-transparent border-none focus:outline-none text-neutral-900"
         min={EXPORT_ZOOM_MIN * 100}
         max={EXPORT_ZOOM_MAX * 100}
       />
-      <span id="zoom-percent-unit" className="text-xs text-neutral-500">
+      <span id={unitId} className="text-xs text-neutral-500">
         %
       </span>
     </div>
