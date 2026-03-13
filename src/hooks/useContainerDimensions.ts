@@ -44,9 +44,7 @@ interface ContainerDimensions {
  * @param outerScrollRef - Ref to the outer scroll container (drives viewportHeight).
  * @param chartContainerRef - Ref to the chart container (drives chartContainerWidth).
  * @param setViewport - Callback to update scroll position + width for export.
- *   **Must be wrapped in `useCallback`** at the call site — an unstable reference
- *   causes the viewport-tracking effect to re-run on every render, which can
- *   trigger an infinite update loop via the scroll event.
+ *   See `UseContainerDimensionsOptions.setViewport` for the `useCallback` requirement.
  */
 export function useContainerDimensions({
   outerScrollRef,

@@ -6,6 +6,7 @@
 
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { renderHook, act } from "@testing-library/react";
+import type { MouseEvent } from "react";
 import { usePlaceholderContextMenu } from "../../../src/hooks/usePlaceholderContextMenu";
 
 // ---------------------------------------------------------------------------
@@ -45,12 +46,12 @@ vi.mock("../../../src/config/placeholderRow", () => ({
 // Helpers
 // ---------------------------------------------------------------------------
 
-function makeMouseEvent(x = 100, y = 200): React.MouseEvent {
+function makeMouseEvent(x = 100, y = 200): MouseEvent {
   return {
     preventDefault: vi.fn(),
     clientX: x,
     clientY: y,
-  } as unknown as React.MouseEvent;
+  } as unknown as MouseEvent;
 }
 
 // ---------------------------------------------------------------------------

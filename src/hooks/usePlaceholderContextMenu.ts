@@ -7,6 +7,7 @@
 // .ts file — JSX is not available, so createElement is used directly
 // instead of JSX syntax to build React elements for icon props.
 import { useMemo, useState, useCallback, createElement } from "react";
+import type { MouseEvent } from "react";
 import { ClipboardText } from "@phosphor-icons/react";
 import type {
   ContextMenuItem,
@@ -24,7 +25,7 @@ const PASTE_SHORTCUT = `${getModKey()}+V`;
 interface UsePlaceholderContextMenuResult {
   contextMenu: ContextMenuPosition | null;
   contextMenuItems: ContextMenuItem[];
-  handlePlaceholderContextMenu: (e: React.MouseEvent) => void;
+  handlePlaceholderContextMenu: (e: MouseEvent) => void;
   closeContextMenu: () => void;
 }
 
@@ -35,20 +36,17 @@ export function usePlaceholderContextMenu(): UsePlaceholderContextMenuResult {
     null
   );
 
-  const handlePlaceholderContextMenu = useCallback(
-    (e: React.MouseEvent): void => {
-      e.preventDefault();
+  const handlePlaceholderContextMenu = useCallback((e: MouseEvent): void => {
+    e.preventDefault();
 
-      // Use getState() to access store imperatively at event time (not during
-      // render), so this callback does not need store values in its dep array.
-      const taskState = useTaskStore.getState();
-      taskState.setSelectedTaskIds([PLACEHOLDER_TASK_ID], false);
-      taskState.setActiveCell(null, null);
+    // Use getState() to access store imperatively at event time (not during
+    // render), so this callback does not need store values in its dep array.
+    const taskState = useTaskStore.getState();
+    taskState.setSelectedTaskIds([PLACEHOLDER_TASK_ID], false);
+    taskState.setActiveCell(null, null);
 
-      setContextMenu({ x: e.clientX, y: e.clientY });
-    },
-    []
-  );
+    setContextMenu({ x: e.clientX, y: e.clientY });
+  }, []);
 
   const closeContextMenu = useCallback((): void => {
     setContextMenu(null);

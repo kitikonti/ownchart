@@ -6,7 +6,7 @@
  */
 
 import { useMemo } from "react";
-import { parseISO, startOfDay } from "date-fns";
+import { parseISO, startOfDay, isValid } from "date-fns";
 import { useTaskStore } from "../store/slices/taskSlice";
 
 export interface TaskStatistics {
@@ -44,8 +44,9 @@ export function useTaskStatistics(): TaskStatistics {
         // negative UTC-offset timezones. startOfDay normalises to midnight in
         // local time, consistent with the startOfDay call on today above.
         const parsed = parseISO(t.endDate);
-        // Invalid dates (e.g. empty/malformed endDate) are treated as not overdue
-        if (!isNaN(parsed.getTime()) && startOfDay(parsed) < today) {
+        // Invalid dates (e.g. empty/malformed endDate) are treated as not overdue.
+        // isValid (date-fns) is the idiomatic check, consistent with using date-fns throughout.
+        if (isValid(parsed) && startOfDay(parsed) < today) {
           overdueTasks++;
         }
       }
