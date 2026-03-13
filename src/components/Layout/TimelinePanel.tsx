@@ -46,7 +46,10 @@ export const TimelinePanel = memo(function TimelinePanel({
 }: TimelinePanelProps): JSX.Element {
   const headerSvgRef = useRef<SVGSVGElement>(null);
 
+  // scale is consumed by useHeaderDateSelection to map pixel positions to dates.
   const scale = useChartStore((state) => state.scale);
+  // Immer produces a new array reference only when selection actually changes,
+  // so a plain selector is safe here — no spurious re-renders from unrelated updates.
   const selectedTaskIds = useTaskStore((state) => state.selectedTaskIds);
 
   const {

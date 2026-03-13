@@ -109,14 +109,11 @@ export const ZoomControls = memo(function ZoomControls(): JSX.Element {
       <div className="flex items-center gap-2">
         {/* aria-disabled keeps the button in the tab order so keyboard users
             can discover it and hear its state announced, unlike native disabled
-            which removes the element from the tab order entirely.
-            tabIndex={0} is explicit so screen readers consistently place this
-            button in the tab sequence regardless of aria-disabled state. */}
+            which removes the element from the tab order entirely. */}
         <button
           type="button"
           onClick={handleZoomOut}
           aria-disabled={isAtMinZoom}
-          tabIndex={0}
           className={`p-0.5 transition-colors ${isAtMinZoom ? "text-neutral-300 cursor-not-allowed" : "text-neutral-500 hover:text-neutral-700"}`}
           aria-label="Zoom out"
         >
@@ -141,13 +138,13 @@ export const ZoomControls = memo(function ZoomControls(): JSX.Element {
           type="button"
           onClick={handleZoomIn}
           aria-disabled={isAtMaxZoom}
-          tabIndex={0}
           className={`p-0.5 transition-colors ${isAtMaxZoom ? "text-neutral-300 cursor-not-allowed" : "text-neutral-500 hover:text-neutral-700"}`}
           aria-label="Zoom in"
         >
           <Plus size={16} weight="bold" />
         </button>
 
+        {/* min-w-[44px] = WCAG 2.5.5 minimum touch-target width */}
         <button
           type="button"
           onClick={handleOpenZoomDialog}

@@ -73,6 +73,10 @@ const ALL_PRESET_VALUES = [
 /**
  * Parse a raw string input into a clamped pixel width.
  * Falls back to DEFAULT_FIT_TO_WIDTH_PX when the input is not a valid integer.
+ *
+ * parseInt is intentional here — pixel dimensions must be whole numbers.
+ * Fractional parts (e.g. "1000.5" → 1000) are silently truncated, which is
+ * the correct behaviour for a pixel-width field.
  */
 function clampFitToWidth(rawInput: string): number {
   const parsed = parseInt(rawInput, 10);
@@ -224,6 +228,7 @@ export const FitToWidthSelector = memo(function FitToWidthSelector({
             mono
             min={MIN_FIT_WIDTH_PX}
             max={MAX_FIT_WIDTH_PX}
+            step={1}
             placeholder={String(DEFAULT_FIT_TO_WIDTH_PX)}
           />
           <span id={pxUnitId} className="text-sm text-neutral-500">
