@@ -6,7 +6,7 @@
 
 // .ts file — JSX is not available, so createElement is used directly
 // instead of JSX syntax to build React elements for icon props.
-import { useMemo, useState, useCallback, createElement } from "react";
+import { createElement, useCallback, useMemo, useState } from "react";
 import type { MouseEvent } from "react";
 import { ClipboardText } from "@phosphor-icons/react";
 import type {
@@ -41,9 +41,9 @@ export function usePlaceholderContextMenu(): UsePlaceholderContextMenuResult {
 
     // Use getState() to access the store imperatively at event time (not during
     // render), so this callback does not need store values in its dep array.
-    const store = useTaskStore.getState();
-    store.setSelectedTaskIds([PLACEHOLDER_TASK_ID], false);
-    store.setActiveCell(null, null);
+    const { setSelectedTaskIds, setActiveCell } = useTaskStore.getState();
+    setSelectedTaskIds([PLACEHOLDER_TASK_ID], false);
+    setActiveCell(null, null);
 
     setContextMenu({ x: e.clientX, y: e.clientY });
   }, []);

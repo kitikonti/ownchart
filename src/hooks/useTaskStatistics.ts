@@ -23,12 +23,12 @@ export function useTaskStatistics(): TaskStatistics {
   const tasks = useTaskStore((state) => state.tasks);
 
   return useMemo((): TaskStatistics => {
-    // "today" is captured at memo-invalidation time (i.e. when tasks change).
-    // Known tradeoff: if the browser tab stays open across midnight, the overdue
-    // count will be stale until the next task mutation. This is acceptable for a
-    // status-bar display and avoids the complexity of a live-clock subscription
-    // (e.g. a midnight-triggered useEffect that fires once at midnight to trigger
-    // a dummy task mutation or a dedicated date-tick store slice).
+    // KNOWN LIMITATION: "today" is captured at memo-invalidation time (i.e.
+    // when tasks change). If the browser tab stays open across midnight without
+    // a task mutation, the overdue count will be stale until the next mutation.
+    // This is acceptable for a status-bar display and avoids the complexity of
+    // a live-clock subscription (e.g. a midnight-triggered useEffect or a
+    // dedicated date-tick store slice).
     const today = startOfDay(new Date());
 
     let completedTasks = 0;

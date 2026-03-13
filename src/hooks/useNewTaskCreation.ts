@@ -18,6 +18,30 @@ interface UseNewTaskCreationReturn {
 }
 
 /**
+ * Compute start/end dates for a task appended after the last task.
+ * Starts one day after the last task's end date, or today if no tasks exist.
+ *
+ * Uses date-fns parseISO + addDays throughout to avoid the UTC/local-time
+ * mismatch that arises when mixing `new Date("YYYY-MM-DD")` (UTC midnight)
+ * with `.getDate()` / `.setDate()` (local time). date-fns always operates
+ * in local time, which matches the toISODateString (format) output.
+ */
+function computeAppendDates(lastTask: { endDate?: string } | null): {
+  startDate: string;
+  endDate: string;
+} {
+  if (lastTask?.endDate) {
+    const start = addDays(parseISO(lastTask.endDate), 1);
+    const end = addDays(start, DEFAULT_TASK_DURATION - 1);
+    return { startDate: toISODateString(start), endDate: toISODateString(end) };
+  }
+
+  const today = new Date();
+  const end = addDays(today, DEFAULT_TASK_DURATION - 1);
+  return { startDate: toISODateString(today), endDate: toISODateString(end) };
+}
+
+/**
  * Provides a `createTask(name)` function that appends a new task
  * after the last existing task, using shared constants and utilities.
  */
@@ -60,28 +84,4 @@ export function useNewTaskCreation(): UseNewTaskCreationReturn {
   );
 
   return { createTask };
-}
-
-/**
- * Compute start/end dates for a task appended after the last task.
- * Starts one day after the last task's end date, or today if no tasks exist.
- *
- * Uses date-fns parseISO + addDays throughout to avoid the UTC/local-time
- * mismatch that arises when mixing `new Date("YYYY-MM-DD")` (UTC midnight)
- * with `.getDate()` / `.setDate()` (local time). date-fns always operates
- * in local time, which matches the toISODateString (format) output.
- */
-function computeAppendDates(lastTask: { endDate?: string } | null): {
-  startDate: string;
-  endDate: string;
-} {
-  if (lastTask?.endDate) {
-    const start = addDays(parseISO(lastTask.endDate), 1);
-    const end = addDays(start, DEFAULT_TASK_DURATION - 1);
-    return { startDate: toISODateString(start), endDate: toISODateString(end) };
-  }
-
-  const today = new Date();
-  const end = addDays(today, DEFAULT_TASK_DURATION - 1);
-  return { startDate: toISODateString(today), endDate: toISODateString(end) };
 }

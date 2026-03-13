@@ -64,7 +64,7 @@ export function useContainerDimensions({
 
     if (!outerScroll || !chartContainer) return;
 
-    const measure = (): void => {
+    const measureDimensions = (): void => {
       const height = outerScroll.offsetHeight;
       const width = chartContainer.offsetWidth;
       if (height > MIN_VALID_DIMENSION) setViewportHeight(height);
@@ -74,9 +74,13 @@ export function useContainerDimensions({
     // Initial measurement: defer one macrotask so the browser has committed
     // layout before we read offsetHeight / offsetWidth. Delay value is 0 ms —
     // see INITIAL_MEASURE_DELAY_MS in layoutConstants for the rationale.
-    const timer = setTimeout(measure, INITIAL_MEASURE_DELAY_MS);
+    const timer = setTimeout(measureDimensions, INITIAL_MEASURE_DELAY_MS);
 
-    const ro = new ResizeObserver(measure);
+    // INVARIANT: outerScrollRef.current and chartContainerRef.current are
+    // expected to remain the same DOM nodes for the component lifetime. If the
+    // underlying element is ever replaced (e.g. conditional rendering swaps
+    // the node), a new hook instance is required to re-attach the observer.
+    const ro = new ResizeObserver(measureDimensions);
     ro.observe(outerScroll);
     ro.observe(chartContainer);
 
