@@ -39,6 +39,11 @@ export class AppErrorBoundary extends Component<Props, State> {
   // parameter list — it is handled with full context (including componentStack)
   // in componentDidCatch. getDerivedStateFromError only needs to flip hasError
   // so the fallback UI renders synchronously.
+  //
+  // Note: errorCount is NOT incremented here — it is incremented in
+  // componentDidCatch, which always fires after getDerivedStateFromError in
+  // React's error-handling sequence. Separating the two keeps this static
+  // method side-effect-free (it cannot access `this`).
   static getDerivedStateFromError(): Partial<State> {
     return { hasError: true };
   }

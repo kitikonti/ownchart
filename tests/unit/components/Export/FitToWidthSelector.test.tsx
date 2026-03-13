@@ -116,42 +116,48 @@ describe("FitToWidthSelector", () => {
     ).toBeInTheDocument();
   });
 
-  it("calls onFitToWidthChange with clamped value when custom input changes", () => {
+  it("calls onFitToWidthChange with clamped value when custom input is committed (on blur)", () => {
     const onFitToWidthChange = vi.fn();
     renderComponent({ fitToWidth: 999, onFitToWidthChange });
 
     const input = screen.getByRole("spinbutton", { name: "Custom width in pixels" });
+    // The component uses a local draft state: change updates the draft (no
+    // parent callback yet), blur commits the clamped value to the parent.
     fireEvent.change(input, { target: { value: "500" } });
-
+    expect(onFitToWidthChange).not.toHaveBeenCalled();
+    fireEvent.blur(input);
     expect(onFitToWidthChange).toHaveBeenCalledWith(500);
   });
 
-  it("clamps custom input above MAX_FIT_WIDTH_PX to MAX_FIT_WIDTH_PX", () => {
+  it("clamps custom input above MAX_FIT_WIDTH_PX to MAX_FIT_WIDTH_PX on blur", () => {
     const onFitToWidthChange = vi.fn();
     renderComponent({ fitToWidth: 999, onFitToWidthChange });
 
     const input = screen.getByRole("spinbutton", { name: "Custom width in pixels" });
     fireEvent.change(input, { target: { value: "99999" } });
+    fireEvent.blur(input);
 
     expect(onFitToWidthChange).toHaveBeenCalledWith(MAX_FIT_WIDTH_PX);
   });
 
-  it("clamps custom input below MIN_FIT_WIDTH_PX to MIN_FIT_WIDTH_PX", () => {
+  it("clamps custom input below MIN_FIT_WIDTH_PX to MIN_FIT_WIDTH_PX on blur", () => {
     const onFitToWidthChange = vi.fn();
     renderComponent({ fitToWidth: 999, onFitToWidthChange });
 
     const input = screen.getByRole("spinbutton", { name: "Custom width in pixels" });
     fireEvent.change(input, { target: { value: "1" } });
+    fireEvent.blur(input);
 
     expect(onFitToWidthChange).toHaveBeenCalledWith(MIN_FIT_WIDTH_PX);
   });
 
-  it("falls back to DEFAULT_FIT_TO_WIDTH_PX when custom input is non-numeric", () => {
+  it("falls back to DEFAULT_FIT_TO_WIDTH_PX when custom input is non-numeric (committed on blur)", () => {
     const onFitToWidthChange = vi.fn();
     renderComponent({ fitToWidth: 999, onFitToWidthChange });
 
     const input = screen.getByRole("spinbutton", { name: "Custom width in pixels" });
     fireEvent.change(input, { target: { value: "abc" } });
+    fireEvent.blur(input);
 
     expect(onFitToWidthChange).toHaveBeenCalledWith(DEFAULT_FIT_TO_WIDTH_PX);
   });

@@ -42,10 +42,13 @@ const PRESET_ACTIVE_EPSILON = 0.001;
 /**
  * Parse a raw string input into a clamped export zoom multiplier.
  * The input is expected to be a percentage value (e.g. "100" → 1.0).
- * Falls back to 1.0 (100%) when the input is not a valid integer.
+ * Falls back to 1.0 (100%) when the input is not a valid number.
+ *
+ * Uses parseFloat (not parseInt) so decimal entries like "1.5" (1.5%)
+ * are handled correctly instead of being silently truncated to "1".
  */
 function clampExportZoom(rawInput: string): number {
-  const parsed = parseInt(rawInput, 10);
+  const parsed = parseFloat(rawInput);
   const value = Number.isNaN(parsed) ? 100 : parsed;
   return Math.max(EXPORT_ZOOM_MIN, Math.min(EXPORT_ZOOM_MAX, value / 100));
 }

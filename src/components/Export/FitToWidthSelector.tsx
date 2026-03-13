@@ -97,11 +97,23 @@ export function FitToWidthSelector({
     !ALL_PRESET_VALUES.includes(fitToWidth)
   );
 
+  // Local draft string for the custom width input. Kept as a string so the
+  // user can type freely without intermediate clamping on every keystroke.
+  // The clamped value is committed to the parent on blur only.
+  const [customDraft, setCustomDraft] = useState(String(fitToWidth));
+
   // Sync local "custom" flag when the parent changes fitToWidth externally
   // (e.g. on format change or restored saved state). Without this, the
   // dropdown could show the wrong label after a programmatic update.
   useEffect(() => {
-    setIsCustomWidth(!ALL_PRESET_VALUES.includes(fitToWidth));
+    const isPreset = ALL_PRESET_VALUES.includes(fitToWidth);
+    setIsCustomWidth(!isPreset);
+    // Also sync the draft so the input reflects the new value when the parent
+    // changes it programmatically (e.g. switching export format resets width).
+    if (isPreset || !isCustomWidth) {
+      setCustomDraft(String(fitToWidth));
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [fitToWidth]);
 
   const handleSelectChange = useCallback(
@@ -109,25 +121,46 @@ export function FitToWidthSelector({
       const value = e.target.value;
       if (value === "custom") {
         setIsCustomWidth(true);
+        // Seed the draft with the current committed value so the input is not blank.
+        setCustomDraft(String(fitToWidth));
       } else {
         // Preset values are module-level constants guaranteed to be within
         // [MIN_FIT_WIDTH_PX, MAX_FIT_WIDTH_PX], so clamping is not needed here.
         // Free-form custom input goes through clampFitToWidth instead.
         const numValue = parseInt(value, 10);
         if (Number.isNaN(numValue)) return;
-        setIsCustomWidth(false);
-        onFitToWidthChange?.(numValue);
+        // Only flip local state and notify parent when the callback is wired up.
+        // Updating local state without a parent callback would cause a visual
+        // desync — the dropdown shows a preset label but the parent still holds
+        // the old value (or no value), making the two diverge silently.
+        if (onFitToWidthChange) {
+          setIsCustomWidth(false);
+          onFitToWidthChange(numValue);
+        }
       }
     },
-    [onFitToWidthChange]
+    [fitToWidth, onFitToWidthChange]
   );
 
+  // Update local draft on every keystroke so the input feels responsive, but
+  // do NOT propagate to the parent yet — intermediate values (e.g. "20" while
+  // typing "2000") would trigger unnecessary upstream re-renders.
   const handleCustomWidthChange = useCallback(
     (e: React.ChangeEvent<HTMLInputElement>): void => {
-      onFitToWidthChange?.(clampFitToWidth(e.target.value));
+      setCustomDraft(e.target.value);
     },
-    [onFitToWidthChange]
+    []
   );
+
+  // Commit the clamped value to the parent when the user leaves the field.
+  // This is when the value is truly "done", avoiding per-keystroke churn.
+  const handleCustomWidthBlur = useCallback((): void => {
+    const clamped = clampFitToWidth(customDraft);
+    // Normalise the draft to the clamped value so the field shows the real
+    // committed number after blur (e.g. "99999" → "20000").
+    setCustomDraft(String(clamped));
+    onFitToWidthChange?.(clamped);
+  }, [customDraft, onFitToWidthChange]);
 
   // Prevent click events from bubbling out of the export dialog overlay.
   const handleStopPropagation = useCallback((e: React.MouseEvent): void => {
@@ -162,8 +195,9 @@ export function FitToWidthSelector({
         <div className="flex items-center gap-2">
           <Input
             type="number"
-            value={fitToWidth}
+            value={customDraft}
             onChange={handleCustomWidthChange}
+            onBlur={handleCustomWidthBlur}
             onClick={handleStopPropagation}
             aria-label="Custom width in pixels"
             fullWidth={false}

@@ -57,6 +57,8 @@ export const ZoomControls = memo(function ZoomControls(): JSX.Element {
 
   const handleFitToView = useCallback((): void => {
     // Non-reactive: read tasks at call time to avoid re-renders on task changes.
+    // fitToView handles its own scroll positioning internally, unlike zoomIn /
+    // zoomOut / setZoom which return `newScrollLeft` for the caller to apply.
     fitToView(useTaskStore.getState().tasks);
   }, [fitToView]);
 
