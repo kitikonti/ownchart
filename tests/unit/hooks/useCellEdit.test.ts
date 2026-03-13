@@ -144,6 +144,38 @@ describe("buildDateFieldUpdate", () => {
     expect(result.error).toBeUndefined();
     expect(result.updates!.duration).toBe(1);
   });
+
+  it("milestone startDate change syncs both dates with duration 0", () => {
+    const milestone = makeTask({
+      startDate: "2025-01-01",
+      endDate: "2025-01-01",
+      duration: 0,
+      type: "milestone",
+    });
+    const result = buildDateFieldUpdate(milestone, "startDate", "2025-02-15");
+    expect(result.error).toBeUndefined();
+    expect(result.updates).toEqual({
+      startDate: "2025-02-15",
+      endDate: "2025-02-15",
+      duration: 0,
+    });
+  });
+
+  it("milestone endDate change also syncs both dates", () => {
+    const milestone = makeTask({
+      startDate: "2025-01-01",
+      endDate: "2025-01-01",
+      duration: 0,
+      type: "milestone",
+    });
+    const result = buildDateFieldUpdate(milestone, "endDate", "2025-03-20");
+    expect(result.error).toBeUndefined();
+    expect(result.updates).toEqual({
+      startDate: "2025-03-20",
+      endDate: "2025-03-20",
+      duration: 0,
+    });
+  });
 });
 
 // ---------------------------------------------------------------------------

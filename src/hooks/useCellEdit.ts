@@ -54,6 +54,13 @@ export function buildDateFieldUpdate(
 ):
   | { updates: Partial<Task>; error?: never }
   | { error: string; updates?: never } {
+  // Milestones are a single point in time — both dates must stay in sync.
+  if (task.type === "milestone") {
+    return {
+      updates: { startDate: localValue, endDate: localValue, duration: 0 },
+    };
+  }
+
   const newTask = { ...task, [field]: localValue };
   const start = new Date(newTask.startDate);
   const end = new Date(newTask.endDate);
