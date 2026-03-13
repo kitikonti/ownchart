@@ -6,7 +6,7 @@
  */
 
 import { useMemo } from "react";
-import { parseISO } from "date-fns";
+import { parseISO, startOfDay } from "date-fns";
 import { useTaskStore } from "../store/slices/taskSlice";
 
 export interface TaskStatistics {
@@ -29,8 +29,7 @@ export function useTaskStatistics(): TaskStatistics {
     // status-bar display and avoids the complexity of a live-clock subscription
     // (e.g. a midnight-triggered useEffect). If this ever becomes a product
     // concern, a `useDateTick` hook that fires at midnight can invalidate the memo.
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
+    const today = startOfDay(new Date());
 
     let completedTasks = 0;
     let overdueTasks = 0;
@@ -42,11 +41,11 @@ export function useTaskStatistics(): TaskStatistics {
         // Use parseISO (date-fns) to parse "YYYY-MM-DD" in local time, matching
         // the way toISODateString formats dates. new Date("YYYY-MM-DD") parses as
         // UTC midnight, which would cause "today" to appear overdue for users in
-        // negative UTC-offset timezones.
-        const endDate = parseISO(t.endDate);
-        endDate.setHours(0, 0, 0, 0);
+        // negative UTC-offset timezones. startOfDay normalises to midnight in
+        // local time, consistent with the startOfDay call on today above.
+        const parsed = parseISO(t.endDate);
         // Invalid dates (e.g. empty/malformed endDate) are treated as not overdue
-        if (!isNaN(endDate.getTime()) && endDate < today) {
+        if (!isNaN(parsed.getTime()) && startOfDay(parsed) < today) {
           overdueTasks++;
         }
       }

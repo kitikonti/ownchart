@@ -31,15 +31,15 @@ export function useSyncScroll(
     // seen as a sync operation and discarded. Resetting synchronously would allow
     // the echoed event to slip through before the flag is cleared.
     let isSyncing = false;
-    let rafIdA = 0;
-    let rafIdB = 0;
+    let syncAtoBRafId = 0;
+    let syncBtoARafId = 0;
 
     const syncAtoB = (): void => {
       if (isSyncing) return;
       isSyncing = true;
       elB.scrollLeft = elA.scrollLeft;
-      cancelAnimationFrame(rafIdA);
-      rafIdA = requestAnimationFrame(() => {
+      cancelAnimationFrame(syncAtoBRafId);
+      syncAtoBRafId = requestAnimationFrame(() => {
         isSyncing = false;
       });
     };
@@ -47,8 +47,8 @@ export function useSyncScroll(
       if (isSyncing) return;
       isSyncing = true;
       elA.scrollLeft = elB.scrollLeft;
-      cancelAnimationFrame(rafIdB);
-      rafIdB = requestAnimationFrame(() => {
+      cancelAnimationFrame(syncBtoARafId);
+      syncBtoARafId = requestAnimationFrame(() => {
         isSyncing = false;
       });
     };
@@ -59,8 +59,8 @@ export function useSyncScroll(
     return (): void => {
       elA.removeEventListener("scroll", syncAtoB);
       elB.removeEventListener("scroll", syncBtoA);
-      cancelAnimationFrame(rafIdA);
-      cancelAnimationFrame(rafIdB);
+      cancelAnimationFrame(syncAtoBRafId);
+      cancelAnimationFrame(syncBtoARafId);
     };
   }, [refA, refB]);
 }
