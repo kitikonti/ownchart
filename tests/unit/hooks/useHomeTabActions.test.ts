@@ -1,9 +1,9 @@
 /**
  * Unit tests for useHomeTabActions hook.
  *
- * Tests derived state (canInsert, canDelete, canHide), handleAddTask defaults,
- * and delegation to store actions. Clipboard and hide operations are mocked
- * since they have their own dedicated test suites.
+ * Tests derived state (canInsert, canDelete, canHide), handleAddTask delegation,
+ * and delegation to store actions. Clipboard, hide, and new-task-creation
+ * operations are mocked since they have their own dedicated test suites.
  */
 
 import { describe, it, expect, beforeEach, vi } from "vitest";
@@ -13,6 +13,12 @@ import { useTaskStore } from "../../../src/store/slices/taskSlice";
 import { useChartStore } from "../../../src/store/slices/chartSlice";
 import { useHistoryStore } from "../../../src/store/slices/historySlice";
 import type { Task } from "../../../src/types/chart.types";
+
+// Mock new task creation — tested separately in useNewTaskCreation tests
+const mockCreateTask = vi.fn();
+vi.mock("../../../src/hooks/useNewTaskCreation", () => ({
+  useNewTaskCreation: () => ({ createTask: mockCreateTask }),
+}));
 
 // Mock clipboard operations — tested separately in useClipboardOperations tests
 const mockHandleCopy = vi.fn();
@@ -134,47 +140,12 @@ describe("useHomeTabActions", () => {
   // handleAddTask
   // -------------------------------------------------------------------------
   describe("handleAddTask", () => {
-    it("should add a task with correct defaults", () => {
-      const addTaskSpy = vi.fn();
-      useTaskStore.setState({ addTask: addTaskSpy } as never);
-
+    it("should delegate to createTask with DEFAULT_TASK_NAME", () => {
       const { result } = renderHook(() => useHomeTabActions());
       result.current.handleAddTask();
 
-      expect(addTaskSpy).toHaveBeenCalledOnce();
-      const taskData = addTaskSpy.mock.calls[0][0];
-
-      expect(taskData.name).toBe("New Task");
-      expect(taskData.duration).toBe(7);
-      expect(taskData.progress).toBe(0);
-      expect(taskData.type).toBe("task");
-      expect(taskData.parent).toBeUndefined();
-      expect(taskData.order).toBe(3); // 3 existing tasks
-    });
-
-    it("should set startDate to today in YYYY-MM-DD format", () => {
-      const addTaskSpy = vi.fn();
-      useTaskStore.setState({ addTask: addTaskSpy } as never);
-
-      const { result } = renderHook(() => useHomeTabActions());
-      result.current.handleAddTask();
-
-      const taskData = addTaskSpy.mock.calls[0][0];
-      const today = new Date().toISOString().split("T")[0];
-      expect(taskData.startDate).toBe(today);
-    });
-
-    it("should set endDate to 6 days after today", () => {
-      const addTaskSpy = vi.fn();
-      useTaskStore.setState({ addTask: addTaskSpy } as never);
-
-      const { result } = renderHook(() => useHomeTabActions());
-      result.current.handleAddTask();
-
-      const taskData = addTaskSpy.mock.calls[0][0];
-      const expected = new Date();
-      expected.setDate(expected.getDate() + 6);
-      expect(taskData.endDate).toBe(expected.toISOString().split("T")[0]);
+      expect(mockCreateTask).toHaveBeenCalledOnce();
+      expect(mockCreateTask).toHaveBeenCalledWith("New Task");
     });
   });
 

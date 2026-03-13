@@ -8,7 +8,7 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { renderHook } from "@testing-library/react";
 import { useInfiniteScroll } from "../../../src/hooks/useInfiniteScroll";
-import type { TimelineScale } from "../../../src/utils/timelineUtils";
+import { type TimelineScale, SCROLL_OFFSET_DAYS } from "../../../src/utils/timelineUtils";
 import {
   INITIAL_BLOCK_MS,
   INFINITE_SCROLL_THRESHOLD,
@@ -100,8 +100,8 @@ describe("useInfiniteScroll", () => {
 
     flushRAF();
 
-    // SCROLL_OFFSET_DAYS = 83, pixelsPerDay = 10 → 830px
-    expect(chartEl.scrollLeft).toBe(830);
+    // pixelsPerDay = 10
+    expect(chartEl.scrollLeft).toBe(SCROLL_OFFSET_DAYS * 10);
   });
 
   it("should reset scroll position on fitToView", () => {
@@ -125,7 +125,7 @@ describe("useInfiniteScroll", () => {
     rerender({ lastFitToViewTime: Date.now() });
     flushRAF();
 
-    expect(chartEl.scrollLeft).toBe(830);
+    expect(chartEl.scrollLeft).toBe(SCROLL_OFFSET_DAYS * 10);
   });
 
   it("should reset scroll position when fileLoadCounter increases", () => {
@@ -148,7 +148,7 @@ describe("useInfiniteScroll", () => {
     rerender({ fileLoadCounter: 1 });
     flushRAF();
 
-    expect(chartEl.scrollLeft).toBe(830);
+    expect(chartEl.scrollLeft).toBe(SCROLL_OFFSET_DAYS * 10);
   });
 
   it("should block infinite scroll during initial mount period", () => {

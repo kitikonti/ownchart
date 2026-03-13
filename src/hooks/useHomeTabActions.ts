@@ -11,45 +11,8 @@ import { useChartStore } from "../store/slices/chartSlice";
 import { useHistoryStore } from "../store/slices/historySlice";
 import { useClipboardOperations } from "./useClipboardOperations";
 import { useHideOperations } from "./useHideOperations";
-import { COLORS } from "../styles/design-tokens";
-import { toISODateString } from "../utils/dateUtils";
-import {
-  DEFAULT_TASK_DURATION,
-  DEFAULT_TASK_NAME,
-} from "../store/slices/taskSliceHelpers";
-
-/** Payload shape for a newly added task. */
-interface DefaultTaskPayload {
-  name: string;
-  startDate: string;
-  endDate: string;
-  duration: number;
-  progress: number;
-  color: `#${string}`;
-  order: number;
-  type: "task";
-  parent: undefined;
-  metadata: Record<string, unknown>;
-}
-
-/** Builds the default payload for a newly added task anchored to today. */
-function buildDefaultTaskPayload(taskCount: number): DefaultTaskPayload {
-  const today = new Date();
-  const endDate = new Date(today);
-  endDate.setDate(today.getDate() + DEFAULT_TASK_DURATION - 1);
-  return {
-    name: DEFAULT_TASK_NAME,
-    startDate: toISODateString(today),
-    endDate: toISODateString(endDate),
-    duration: DEFAULT_TASK_DURATION,
-    progress: 0,
-    color: COLORS.chart.taskDefault,
-    order: taskCount,
-    type: "task",
-    parent: undefined,
-    metadata: {},
-  };
-}
+import { useNewTaskCreation } from "./useNewTaskCreation";
+import { DEFAULT_TASK_NAME } from "../store/slices/taskSliceHelpers";
 
 interface HomeTabActions {
   // History
@@ -90,10 +53,7 @@ interface HomeTabActions {
 }
 
 export function useHomeTabActions(): HomeTabActions {
-  // Task store — use taskCount instead of full tasks array to avoid
-  // re-renders on every task edit (only re-renders when count changes)
-  const taskCount = useTaskStore((state) => state.tasks.length);
-  const addTask = useTaskStore((state) => state.addTask);
+  // Task store
   const selectedTaskIds = useTaskStore((state) => state.selectedTaskIds);
   const activeCell = useTaskStore((state) => state.activeCell);
   const insertTaskAbove = useTaskStore((state) => state.insertTaskAbove);
@@ -140,6 +100,11 @@ export function useHomeTabActions(): HomeTabActions {
     state.getRedoDescription()
   );
 
+  // New task creation — delegates to useNewTaskCreation so ordering logic
+  // (maxOrder + 1, date anchoring) stays in one place, consistent with the
+  // placeholder row's "Add Task" flow.
+  const { createTask } = useNewTaskCreation();
+
   // Clipboard
   const { handleCopy, handleCut, handlePaste, canCopyOrCut, canPaste } =
     useClipboardOperations();
@@ -170,8 +135,8 @@ export function useHomeTabActions(): HomeTabActions {
 
   // Handlers
   const handleAddTask = useCallback((): void => {
-    addTask(buildDefaultTaskPayload(taskCount));
-  }, [addTask, taskCount]);
+    createTask(DEFAULT_TASK_NAME);
+  }, [createTask]);
 
   const handleInsertAbove = useCallback((): void => {
     if (singleSelectedTaskId) insertTaskAbove(singleSelectedTaskId);

@@ -12,6 +12,8 @@
 import { useCallback, useMemo } from "react";
 import { useTaskStore } from "../store/slices/taskSlice";
 import { useChartStore } from "../store/slices/chartSlice";
+// Shared scroll-anchor helpers — live in useZoom to avoid duplicating the
+// viewport-center computation and DOM scroll-apply logic.
 import { computeViewportCenterAnchor, applyScrollLeft } from "./useZoom";
 import { MIN_ZOOM, MAX_ZOOM, PRESET_ZOOM_LEVELS } from "../utils/timelineUtils";
 
