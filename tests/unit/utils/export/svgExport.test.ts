@@ -76,6 +76,22 @@ describe("svgExport", () => {
   // -------------------------------------------------------------------------
 
   describe("copyToClipboard", () => {
+    let savedExecCommand: typeof document.execCommand | undefined;
+
+    beforeEach(() => {
+      // jsdom doesn't implement execCommand — save whatever exists so we can restore it
+      savedExecCommand = document.execCommand;
+    });
+
+    afterEach(() => {
+      // Restore execCommand to avoid leaking between tests
+      if (savedExecCommand) {
+        document.execCommand = savedExecCommand;
+      } else {
+        delete (document as Record<string, unknown>)["execCommand"];
+      }
+    });
+
     it("uses navigator.clipboard.writeText when available", async () => {
       const svgString = '<svg xmlns="http://www.w3.org/2000/svg"></svg>';
       const writeText = vi.fn().mockResolvedValue(undefined);
@@ -89,7 +105,6 @@ describe("svgExport", () => {
 
     it("falls back to execCommand when clipboard API is unavailable", async () => {
       vi.stubGlobal("navigator", { clipboard: undefined });
-      // jsdom doesn't implement execCommand — define it so we can spy on it
       document.execCommand = vi.fn().mockReturnValue(true);
 
       await copyToClipboard("<svg/>");
@@ -146,29 +161,39 @@ describe("svgExport", () => {
   // -------------------------------------------------------------------------
 
   describe("downloadSvg", () => {
+    /**
+     * Mock anchor click to prevent jsdom "Not implemented: navigation" error.
+     * Optionally make the click throw to test cleanup paths.
+     */
+    function mockAnchorClick(
+      clickImpl: () => void = () => {}
+    ): { capturedLink: { value: HTMLAnchorElement | null } } {
+      const captured = { value: null as HTMLAnchorElement | null };
+      const origCreateElement = document.createElement.bind(document);
+      vi.spyOn(document, "createElement").mockImplementation((tag, options) => {
+        const el = origCreateElement(tag, options);
+        if (tag === "a") {
+          captured.value = el as HTMLAnchorElement;
+          vi.spyOn(el as HTMLAnchorElement, "click").mockImplementation(
+            clickImpl
+          );
+        }
+        return el;
+      });
+      return { capturedLink: captured };
+    }
+
     it("creates blob URL, clicks anchor, then cleans up", () => {
       const fakeUrl = "blob:http://localhost/fake-uuid";
       const createObjectURL = vi.fn().mockReturnValue(fakeUrl);
       const revokeObjectURL = vi.fn();
       vi.stubGlobal("URL", { createObjectURL, revokeObjectURL });
-
-      // Mock click to prevent jsdom navigation error
-      const origCreateElement = document.createElement.bind(document);
-      vi.spyOn(document, "createElement").mockImplementation((tag, options) => {
-        const el = origCreateElement(tag, options);
-        if (tag === "a") {
-          vi.spyOn(el as HTMLAnchorElement, "click").mockImplementation(
-            () => {}
-          );
-        }
-        return el;
-      });
+      mockAnchorClick();
 
       downloadSvg("<svg/>", "chart.svg");
 
       expect(createObjectURL).toHaveBeenCalledTimes(1);
       expect(revokeObjectURL).toHaveBeenCalledWith(fakeUrl);
-      // Anchor should be removed from DOM
       expect(document.body.querySelectorAll("a[download]")).toHaveLength(0);
       vi.unstubAllGlobals();
     });
@@ -178,20 +203,11 @@ describe("svgExport", () => {
       const createObjectURL = vi.fn().mockReturnValue(fakeUrl);
       const revokeObjectURL = vi.fn();
       vi.stubGlobal("URL", { createObjectURL, revokeObjectURL });
-
-      const origCreateElement = document.createElement.bind(document);
-      vi.spyOn(document, "createElement").mockImplementation((tag, options) => {
-        const el = origCreateElement(tag, options);
-        if (tag === "a") {
-          vi.spyOn(el as HTMLAnchorElement, "click").mockImplementation(() => {
-            throw new Error("click failed");
-          });
-        }
-        return el;
+      mockAnchorClick(() => {
+        throw new Error("click failed");
       });
 
       expect(() => downloadSvg("<svg/>", "chart.svg")).toThrow("click failed");
-      // URL should still be revoked in the finally block
       expect(revokeObjectURL).toHaveBeenCalledWith(fakeUrl);
       vi.unstubAllGlobals();
     });
@@ -200,22 +216,12 @@ describe("svgExport", () => {
       const createObjectURL = vi.fn().mockReturnValue("blob:fake");
       const revokeObjectURL = vi.fn();
       vi.stubGlobal("URL", { createObjectURL, revokeObjectURL });
-
-      let capturedLink: HTMLAnchorElement | null = null;
-      const origCreateElement = document.createElement.bind(document);
-      vi.spyOn(document, "createElement").mockImplementation((tag, options) => {
-        const el = origCreateElement(tag, options);
-        if (tag === "a") {
-          capturedLink = el as HTMLAnchorElement;
-          vi.spyOn(capturedLink, "click").mockImplementation(() => {});
-        }
-        return el;
-      });
+      const { capturedLink } = mockAnchorClick();
 
       downloadSvg("<svg/>", "my-chart.svg");
 
-      expect(capturedLink).not.toBeNull();
-      expect(capturedLink!.download).toBe("my-chart.svg");
+      expect(capturedLink.value).not.toBeNull();
+      expect(capturedLink.value!.download).toBe("my-chart.svg");
       vi.unstubAllGlobals();
     });
   });

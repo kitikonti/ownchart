@@ -7,7 +7,6 @@
 
 import { describe, it, expect, beforeEach, vi } from "vitest";
 import { useTaskStore } from "@/store/slices/taskSlice";
-import { useHistoryStore } from "@/store/slices/historySlice";
 import type { Task } from "@/types/chart.types";
 import { COLORS } from "@/styles/design-tokens";
 
@@ -99,12 +98,6 @@ describe("columnActions", () => {
       isEditingCell: false,
       columnWidths: {},
       taskTableWidth: null,
-    });
-    useHistoryStore.setState({
-      undoStack: [],
-      redoStack: [],
-      isUndoing: false,
-      isRedoing: false,
     });
   });
 

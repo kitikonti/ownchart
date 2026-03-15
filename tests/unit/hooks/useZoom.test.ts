@@ -336,12 +336,14 @@ describe('useZoom', () => {
       };
       useChartStore.setState({ scale: mockScale as never });
 
-      const result = computeViewportCenterAnchor();
-      expect(result).toBeDefined();
-      expect(result!.anchorDate).toBeDefined();
-      expect(result!.anchorPixelOffset).toBe(400); // clientWidth / 2
-
-      document.body.removeChild(scrollContainer);
+      try {
+        const result = computeViewportCenterAnchor();
+        expect(result).toBeDefined();
+        expect(result!.anchorDate).toBeDefined();
+        expect(result!.anchorPixelOffset).toBe(400); // clientWidth / 2
+      } finally {
+        document.body.removeChild(scrollContainer);
+      }
     });
   });
 

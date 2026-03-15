@@ -415,6 +415,8 @@ interface RenderTaskTableSectionOptions {
 /**
  * Render the task table section (header row + data rows) into the root SVG.
  * Only called when at least one column is selected for the task list panel.
+ *
+ * @internal Exported for testing only.
  */
 export function renderTaskTableSection(
   svg: SVGSVGElement,
@@ -480,6 +482,8 @@ export interface BuildCompleteSvgParams {
  *    height when applicable).
  *
  * @returns The composed root SVGSVGElement ready for serialization
+ *
+ * @internal Exported for testing only.
  */
 export function buildCompleteSvg(
   params: BuildCompleteSvgParams
@@ -597,6 +601,8 @@ export function finalizeSvg(
 /**
  * Deliver the serialized SVG to the user — either copies it to the clipboard
  * or triggers a file download, depending on `options.copyToClipboard`.
+ *
+ * @internal Exported for testing only.
  */
 export async function deliverSvg(
   svgString: string,
@@ -620,6 +626,8 @@ export async function deliverSvg(
  * Throws if both methods fail — the thrown error is intended to be caught by
  * the caller (`exportToSvg` → the `useExport` hook) for user-facing display.
  * No silent failures: either the text is on the clipboard or an error is thrown.
+ *
+ * @internal Exported for testing only.
  */
 export async function copyToClipboard(svgString: string): Promise<void> {
   // Prefer modern Clipboard API (available in secure contexts)
@@ -659,6 +667,8 @@ export async function copyToClipboard(svgString: string): Promise<void> {
  * element to be in the DOM). Revokes the object URL after triggering the
  * download even if `.click()` throws, and rethrows any error so the caller
  * can surface it to the user.
+ *
+ * @internal Exported for testing only.
  */
 export function downloadSvg(svgString: string, filename: string): void {
   const blob = new Blob([svgString], { type: "image/svg+xml" });
