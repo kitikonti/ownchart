@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [1.2.13](https://github.com/kitikonti/ownchart/compare/v1.2.12...v1.2.13) (2026-03-15)
+
+
+### Bug Fixes
+
+* update VRT status bar baseline snapshot ([75fab1a](https://github.com/kitikonti/ownchart/commit/75fab1a2d3738a1542276e1b8446f7ce5f6c85d0))
+
 ## [1.2.12](https://github.com/kitikonti/ownchart/compare/v1.2.11...v1.2.12) (2026-03-15)
 
 
