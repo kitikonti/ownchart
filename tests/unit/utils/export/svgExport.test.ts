@@ -15,7 +15,15 @@ import {
   appendChartBody,
   extractSvgElements,
   cloneSvgIntoGroup,
+  copyToClipboard,
+  downloadSvg,
+  buildCompleteSvg,
+  deliverSvg,
+  renderTaskTableSection,
 } from "@/utils/export/svgExport";
+import type { BuildCompleteSvgParams } from "@/utils/export/svgExport";
+import { DEFAULT_COLOR_MODE_STATE } from "@/config/colorModeDefaults";
+import type { Task } from "@/types/chart.types";
 import type {
   SvgExportOptions,
   ExportOptions,
@@ -67,118 +75,148 @@ describe("svgExport", () => {
   // copyToClipboard — modern Clipboard API path
   // -------------------------------------------------------------------------
 
-  describe("copyToClipboard via Clipboard API", () => {
-    it("calls navigator.clipboard.writeText with the SVG string", async () => {
+  describe("copyToClipboard", () => {
+    it("uses navigator.clipboard.writeText when available", async () => {
       const svgString = '<svg xmlns="http://www.w3.org/2000/svg"></svg>';
       const writeText = vi.fn().mockResolvedValue(undefined);
-      vi.stubGlobal("navigator", {
-        clipboard: { writeText },
-      });
+      vi.stubGlobal("navigator", { clipboard: { writeText } });
 
-      // Import and call the internal copy path indirectly by simulating the
-      // Clipboard API call that copyToClipboard makes.
-      await navigator.clipboard.writeText(svgString);
+      await copyToClipboard(svgString);
 
       expect(writeText).toHaveBeenCalledWith(svgString);
       vi.unstubAllGlobals();
     });
-  });
 
-  // -------------------------------------------------------------------------
-  // copyToClipboard — execCommand fallback path
-  // -------------------------------------------------------------------------
+    it("falls back to execCommand when clipboard API is unavailable", async () => {
+      vi.stubGlobal("navigator", { clipboard: undefined });
+      // jsdom doesn't implement execCommand — define it so we can spy on it
+      document.execCommand = vi.fn().mockReturnValue(true);
 
-  describe("copyToClipboard execCommand fallback", () => {
-    it("uses execCommand copy when navigator.clipboard is unavailable", () => {
-      const execCommand = vi.fn().mockReturnValue(true);
-      vi.stubGlobal("document", {
-        ...document,
-        execCommand,
-        createElement: document.createElement.bind(document),
-        body: document.body,
-      });
+      await copyToClipboard("<svg/>");
 
-      // Simulate the textarea + execCommand mechanism used as fallback
-      const textarea = document.createElement("textarea");
-      textarea.value = "<svg/>";
-      textarea.style.position = "fixed";
-      textarea.style.top = "0";
-      textarea.style.left = "-9999px";
-      textarea.setAttribute("aria-hidden", "true");
-      document.body.appendChild(textarea);
-      textarea.select();
-      const success = document.execCommand("copy");
-      document.body.removeChild(textarea);
-
-      expect(execCommand).toHaveBeenCalledWith("copy");
-      expect(success).toBe(true);
+      expect(document.execCommand).toHaveBeenCalledWith("copy");
       vi.unstubAllGlobals();
     });
 
-    it("aria-hidden is set on the fallback textarea", () => {
-      const textarea = document.createElement("textarea");
-      textarea.setAttribute("aria-hidden", "true");
-      expect(textarea.getAttribute("aria-hidden")).toBe("true");
+    it("throws when execCommand returns false", async () => {
+      vi.stubGlobal("navigator", { clipboard: undefined });
+      document.execCommand = vi.fn().mockReturnValue(false);
+
+      await expect(copyToClipboard("<svg/>")).rejects.toThrow(
+        "execCommand copy returned false"
+      );
+      vi.unstubAllGlobals();
     });
 
-    it("fallback textarea is removed from DOM after copy", () => {
-      const textarea = document.createElement("textarea");
-      document.body.appendChild(textarea);
-      expect(document.body.contains(textarea)).toBe(true);
-      document.body.removeChild(textarea);
-      expect(document.body.contains(textarea)).toBe(false);
+    it("removes textarea from DOM even when execCommand throws", async () => {
+      vi.stubGlobal("navigator", { clipboard: undefined });
+      document.execCommand = vi.fn().mockImplementation(() => {
+        throw new Error("fail");
+      });
+
+      await expect(copyToClipboard("<svg/>")).rejects.toThrow("fail");
+      // The finally block should have removed the textarea
+      expect(document.querySelectorAll("textarea")).toHaveLength(0);
+      vi.unstubAllGlobals();
+    });
+
+    it("sets aria-hidden on the fallback textarea", async () => {
+      vi.stubGlobal("navigator", { clipboard: undefined });
+      // Capture the textarea before it's removed in finally
+      const origAppendChild = document.body.appendChild.bind(document.body);
+      let capturedTextarea: HTMLTextAreaElement | null = null;
+      vi.spyOn(document.body, "appendChild").mockImplementation((node) => {
+        if (node instanceof HTMLTextAreaElement) {
+          capturedTextarea = node;
+        }
+        return origAppendChild(node);
+      });
+      document.execCommand = vi.fn().mockReturnValue(true);
+
+      await copyToClipboard("<svg/>");
+
+      expect(capturedTextarea).not.toBeNull();
+      expect(capturedTextarea!.getAttribute("aria-hidden")).toBe("true");
+      vi.unstubAllGlobals();
     });
   });
 
   // -------------------------------------------------------------------------
-  // downloadSvg mechanics
+  // downloadSvg
   // -------------------------------------------------------------------------
 
-  describe("downloadSvg mechanics", () => {
-    it("creates an object URL and revokes it after the anchor click", () => {
-      const svgString = '<svg xmlns="http://www.w3.org/2000/svg"></svg>';
+  describe("downloadSvg", () => {
+    it("creates blob URL, clicks anchor, then cleans up", () => {
       const fakeUrl = "blob:http://localhost/fake-uuid";
       const createObjectURL = vi.fn().mockReturnValue(fakeUrl);
       const revokeObjectURL = vi.fn();
       vi.stubGlobal("URL", { createObjectURL, revokeObjectURL });
 
-      const blob = new Blob([svgString], { type: "image/svg+xml" });
-      const url = URL.createObjectURL(blob);
-      const link = document.createElement("a");
-      link.href = url;
-      link.download = "test.svg";
-      link.style.display = "none";
-      document.body.appendChild(link);
-      // Mock click to prevent jsdom "Not implemented: navigation" error.
-      // This test verifies URL lifecycle (create/revoke), not the click itself.
-      vi.spyOn(link, "click").mockImplementation(() => {});
-      try {
-        link.click();
-      } finally {
-        document.body.removeChild(link);
-        URL.revokeObjectURL(url);
-      }
+      // Mock click to prevent jsdom navigation error
+      const origCreateElement = document.createElement.bind(document);
+      vi.spyOn(document, "createElement").mockImplementation((tag, options) => {
+        const el = origCreateElement(tag, options);
+        if (tag === "a") {
+          vi.spyOn(el as HTMLAnchorElement, "click").mockImplementation(
+            () => {}
+          );
+        }
+        return el;
+      });
+
+      downloadSvg("<svg/>", "chart.svg");
 
       expect(createObjectURL).toHaveBeenCalledTimes(1);
       expect(revokeObjectURL).toHaveBeenCalledWith(fakeUrl);
-      expect(document.body.contains(link)).toBe(false);
+      // Anchor should be removed from DOM
+      expect(document.body.querySelectorAll("a[download]")).toHaveLength(0);
       vi.unstubAllGlobals();
     });
 
-    it("sets download attribute and display:none on the anchor element", () => {
-      const link = document.createElement("a");
-      link.href = "blob:fake";
-      link.download = "chart.svg";
-      link.style.display = "none";
+    it("revokes URL even when click throws", () => {
+      const fakeUrl = "blob:http://localhost/fake-uuid";
+      const createObjectURL = vi.fn().mockReturnValue(fakeUrl);
+      const revokeObjectURL = vi.fn();
+      vi.stubGlobal("URL", { createObjectURL, revokeObjectURL });
 
-      expect(link.download).toBe("chart.svg");
-      expect(link.style.display).toBe("none");
+      const origCreateElement = document.createElement.bind(document);
+      vi.spyOn(document, "createElement").mockImplementation((tag, options) => {
+        const el = origCreateElement(tag, options);
+        if (tag === "a") {
+          vi.spyOn(el as HTMLAnchorElement, "click").mockImplementation(() => {
+            throw new Error("click failed");
+          });
+        }
+        return el;
+      });
+
+      expect(() => downloadSvg("<svg/>", "chart.svg")).toThrow("click failed");
+      // URL should still be revoked in the finally block
+      expect(revokeObjectURL).toHaveBeenCalledWith(fakeUrl);
+      vi.unstubAllGlobals();
     });
 
-    it("blob has correct SVG MIME type", () => {
-      const svgString = '<svg xmlns="http://www.w3.org/2000/svg"></svg>';
-      const blob = new Blob([svgString], { type: "image/svg+xml" });
-      expect(blob.type).toBe("image/svg+xml");
+    it("sets correct download filename on anchor", () => {
+      const createObjectURL = vi.fn().mockReturnValue("blob:fake");
+      const revokeObjectURL = vi.fn();
+      vi.stubGlobal("URL", { createObjectURL, revokeObjectURL });
+
+      let capturedLink: HTMLAnchorElement | null = null;
+      const origCreateElement = document.createElement.bind(document);
+      vi.spyOn(document, "createElement").mockImplementation((tag, options) => {
+        const el = origCreateElement(tag, options);
+        if (tag === "a") {
+          capturedLink = el as HTMLAnchorElement;
+          vi.spyOn(capturedLink, "click").mockImplementation(() => {});
+        }
+        return el;
+      });
+
+      downloadSvg("<svg/>", "my-chart.svg");
+
+      expect(capturedLink).not.toBeNull();
+      expect(capturedLink!.download).toBe("my-chart.svg");
+      vi.unstubAllGlobals();
     });
   });
 });
@@ -599,5 +637,206 @@ describe("cloneSvgIntoGroup", () => {
     cloneSvgIntoGroup(root, source, "translate(0, 0)");
     const clonedText = root.querySelector("text");
     expect(clonedText?.getAttribute("font-family")).toBeTruthy();
+  });
+});
+
+// ---------------------------------------------------------------------------
+// buildCompleteSvg (@internal)
+// ---------------------------------------------------------------------------
+
+describe("buildCompleteSvg", () => {
+  function makeTask(id: string, name: string): Task {
+    return {
+      id,
+      name,
+      startDate: "2025-01-01",
+      endDate: "2025-01-07",
+      duration: 7,
+      progress: 0,
+      color: "#3b82f6",
+      order: 0,
+      metadata: {},
+      type: "task",
+    };
+  }
+
+  function makeParams(
+    overrides: Partial<BuildCompleteSvgParams> = {}
+  ): BuildCompleteSvgParams {
+    return {
+      chartSvg: makeSvgEl(),
+      headerSvg: makeSvgEl(),
+      tasks: [makeTask("t1", "Task 1")],
+      options: {
+        ...DEFAULT_EXPORT_OPTIONS,
+        selectedColumns: ["name", "startDate"],
+        includeHeader: true,
+      },
+      columnWidths: { name: 200, startDate: 130 },
+      dimensions: { width: 1000, height: 600 },
+      colorModeState: DEFAULT_COLOR_MODE_STATE,
+      projectName: "Test Project",
+      ...overrides,
+    };
+  }
+
+  it("returns an SVGSVGElement with correct dimensions", () => {
+    const svg = buildCompleteSvg(makeParams());
+    expect(svg).toBeInstanceOf(SVGSVGElement);
+    expect(svg.getAttribute("width")).toBe("1000");
+    expect(svg.getAttribute("height")).toBe("600");
+  });
+
+  it("includes project name in title", () => {
+    const svg = buildCompleteSvg(makeParams({ projectName: "My Chart" }));
+    const title = svg.querySelector("title");
+    expect(title?.textContent).toContain("My Chart");
+  });
+
+  it("appends chart body group", () => {
+    const chartSvg = makeSvgEl();
+    const rect = document.createElementNS("http://www.w3.org/2000/svg", "rect");
+    rect.setAttribute("data-test", "chart-content");
+    chartSvg.appendChild(rect);
+
+    const svg = buildCompleteSvg(makeParams({ chartSvg }));
+    // Chart body should be cloned into a <g> group
+    const groups = svg.querySelectorAll("g");
+    expect(groups.length).toBeGreaterThan(0);
+  });
+
+  it("appends timeline header when includeHeader is true", () => {
+    const headerSvg = makeSvgEl();
+    const text = document.createElementNS("http://www.w3.org/2000/svg", "text");
+    text.textContent = "Jan 2025";
+    headerSvg.appendChild(text);
+
+    const svg = buildCompleteSvg(
+      makeParams({
+        headerSvg,
+        options: { ...DEFAULT_EXPORT_OPTIONS, includeHeader: true, selectedColumns: ["name"] },
+      })
+    );
+    // Header text should be cloned
+    const clonedText = svg.querySelector("text");
+    expect(clonedText).not.toBeNull();
+  });
+
+  it("skips timeline header when includeHeader is false", () => {
+    const headerSvg = makeSvgEl();
+    const text = document.createElementNS("http://www.w3.org/2000/svg", "text");
+    text.textContent = "HeaderOnly";
+    headerSvg.appendChild(text);
+
+    const svg = buildCompleteSvg(
+      makeParams({
+        headerSvg,
+        options: { ...DEFAULT_EXPORT_OPTIONS, includeHeader: false, selectedColumns: ["name"] },
+      })
+    );
+    // No text from header should be cloned (though task table may add its own)
+    const texts = Array.from(svg.querySelectorAll("text"));
+    const headerTexts = texts.filter((t) => t.textContent === "HeaderOnly");
+    expect(headerTexts).toHaveLength(0);
+  });
+
+  it("handles null headerSvg gracefully", () => {
+    const svg = buildCompleteSvg(
+      makeParams({
+        headerSvg: null,
+        options: { ...DEFAULT_EXPORT_OPTIONS, includeHeader: true, selectedColumns: ["name"] },
+      })
+    );
+    expect(svg).toBeInstanceOf(SVGSVGElement);
+  });
+
+  it("works with empty task list", () => {
+    const svg = buildCompleteSvg(makeParams({ tasks: [] }));
+    expect(svg).toBeInstanceOf(SVGSVGElement);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// renderTaskTableSection (@internal)
+// ---------------------------------------------------------------------------
+
+describe("renderTaskTableSection", () => {
+  it("renders rows into the SVG", () => {
+    const svg = makeSvgEl();
+    svg.setAttribute("width", "800");
+    svg.setAttribute("height", "600");
+
+    const task: Task = {
+      id: "t1",
+      name: "Task 1",
+      startDate: "2025-01-01",
+      endDate: "2025-01-07",
+      duration: 7,
+      progress: 50,
+      color: "#3b82f6",
+      order: 0,
+      metadata: {},
+      type: "task",
+    };
+
+    renderTaskTableSection(svg, {
+      flattenedTasks: [
+        {
+          task,
+          level: 0,
+          isExpanded: false,
+          hasChildren: false,
+          globalRowNumber: 1,
+        },
+      ],
+      selectedColumns: ["name"],
+      columnWidths: { name: 200 },
+      taskTableWidth: 200,
+      bodyYOffset: 48,
+      options: { ...DEFAULT_EXPORT_OPTIONS, includeHeader: true, selectedColumns: ["name"] },
+      colorModeState: DEFAULT_COLOR_MODE_STATE,
+    });
+
+    // Should have at least one child element (header or rows)
+    expect(svg.childElementCount).toBeGreaterThan(0);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// deliverSvg (@internal)
+// ---------------------------------------------------------------------------
+
+describe("deliverSvg", () => {
+  afterEach(() => {
+    vi.unstubAllGlobals();
+  });
+
+  it("copies to clipboard when copyToClipboard option is true", async () => {
+    const writeText = vi.fn().mockResolvedValue(undefined);
+    vi.stubGlobal("navigator", { clipboard: { writeText } });
+
+    await deliverSvg("<svg/>", { ...DEFAULT_SVG_OPTIONS, copyToClipboard: true });
+
+    expect(writeText).toHaveBeenCalledWith("<svg/>");
+  });
+
+  it("triggers download when copyToClipboard option is false", () => {
+    const createObjectURL = vi.fn().mockReturnValue("blob:fake");
+    const revokeObjectURL = vi.fn();
+    vi.stubGlobal("URL", { createObjectURL, revokeObjectURL });
+
+    const origCreateElement = document.createElement.bind(document);
+    vi.spyOn(document, "createElement").mockImplementation((tag, options) => {
+      const el = origCreateElement(tag, options);
+      if (tag === "a") {
+        vi.spyOn(el as HTMLAnchorElement, "click").mockImplementation(() => {});
+      }
+      return el;
+    });
+
+    deliverSvg("<svg/>", { ...DEFAULT_SVG_OPTIONS, copyToClipboard: false }, "MyProject");
+
+    expect(createObjectURL).toHaveBeenCalled();
+    expect(revokeObjectURL).toHaveBeenCalled();
   });
 });

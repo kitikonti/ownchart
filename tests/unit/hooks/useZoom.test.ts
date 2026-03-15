@@ -221,14 +221,13 @@ describe('useZoom', () => {
       document.body.removeChild(textarea);
     });
 
-    // TODO: Enable once jsdom supports isContentEditable correctly
-    // See: https://github.com/jsdom/jsdom/issues/1670
-    it.skip('should not trigger in contentEditable elements', () => {
-      // Note: contentEditable detection in jsdom has known issues
+    it('should not trigger in contentEditable elements', () => {
       renderHook(() => useZoom({ containerRef }));
 
       const div = document.createElement('div');
       div.contentEditable = 'true';
+      // jsdom does not set isContentEditable reliably, so define it explicitly
+      Object.defineProperty(div, 'isContentEditable', { value: true });
       document.body.appendChild(div);
       div.focus();
 
@@ -313,6 +312,36 @@ describe('useZoom', () => {
       // Even if a scroll container existed, scale=null returns undefined
       const result = computeViewportCenterAnchor();
       expect(result).toBeUndefined();
+    });
+
+    it('should return anchor when scroll container and scale exist', () => {
+      // Create a scroll container with the expected class
+      const scrollContainer = document.createElement('div');
+      scrollContainer.classList.add('gantt-chart-scroll-container');
+      document.body.appendChild(scrollContainer);
+
+      // Mock scroll/size properties
+      Object.defineProperty(scrollContainer, 'scrollLeft', { value: 100, configurable: true });
+      Object.defineProperty(scrollContainer, 'clientWidth', { value: 800, configurable: true });
+
+      // TimelineScale uses pixelsPerDay + minDate for pixel-to-date conversion
+      const mockScale = {
+        minDate: '2025-01-01',
+        maxDate: '2025-12-31',
+        pixelsPerDay: 20,
+        totalWidth: 7300,
+        totalDays: 365,
+        zoom: 1.0,
+        scales: [],
+      };
+      useChartStore.setState({ scale: mockScale as never });
+
+      const result = computeViewportCenterAnchor();
+      expect(result).toBeDefined();
+      expect(result!.anchorDate).toBeDefined();
+      expect(result!.anchorPixelOffset).toBe(400); // clientWidth / 2
+
+      document.body.removeChild(scrollContainer);
     });
   });
 

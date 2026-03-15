@@ -416,7 +416,7 @@ interface RenderTaskTableSectionOptions {
  * Render the task table section (header row + data rows) into the root SVG.
  * Only called when at least one column is selected for the task list panel.
  */
-function renderTaskTableSection(
+export function renderTaskTableSection(
   svg: SVGSVGElement,
   sectionOpts: RenderTaskTableSectionOptions
 ): void {
@@ -456,7 +456,7 @@ function renderTaskTableSection(
 }
 
 /** Parameters for {@link buildCompleteSvg}. */
-interface BuildCompleteSvgParams {
+export interface BuildCompleteSvgParams {
   chartSvg: SVGSVGElement;
   headerSvg: SVGSVGElement | null;
   tasks: Task[];
@@ -481,7 +481,9 @@ interface BuildCompleteSvgParams {
  *
  * @returns The composed root SVGSVGElement ready for serialization
  */
-function buildCompleteSvg(params: BuildCompleteSvgParams): SVGSVGElement {
+export function buildCompleteSvg(
+  params: BuildCompleteSvgParams
+): SVGSVGElement {
   const {
     chartSvg,
     headerSvg,
@@ -596,7 +598,7 @@ export function finalizeSvg(
  * Deliver the serialized SVG to the user — either copies it to the clipboard
  * or triggers a file download, depending on `options.copyToClipboard`.
  */
-async function deliverSvg(
+export async function deliverSvg(
   svgString: string,
   options: SvgExportOptions,
   projectName?: string
@@ -619,7 +621,7 @@ async function deliverSvg(
  * the caller (`exportToSvg` → the `useExport` hook) for user-facing display.
  * No silent failures: either the text is on the clipboard or an error is thrown.
  */
-async function copyToClipboard(svgString: string): Promise<void> {
+export async function copyToClipboard(svgString: string): Promise<void> {
   // Prefer modern Clipboard API (available in secure contexts)
   if (navigator.clipboard?.writeText) {
     await navigator.clipboard.writeText(svgString);
@@ -658,7 +660,7 @@ async function copyToClipboard(svgString: string): Promise<void> {
  * download even if `.click()` throws, and rethrows any error so the caller
  * can surface it to the user.
  */
-function downloadSvg(svgString: string, filename: string): void {
+export function downloadSvg(svgString: string, filename: string): void {
   const blob = new Blob([svgString], { type: "image/svg+xml" });
   const url = URL.createObjectURL(blob);
   const link = document.createElement("a");

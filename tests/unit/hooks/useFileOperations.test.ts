@@ -350,4 +350,76 @@ describe("useFileOperations — handleSave", () => {
       expect.stringContaining("string error")
     );
   });
+
+  it("should pass taskLabelPosition from chart store to serialize", async () => {
+    useChartStore.setState({ taskLabelPosition: "right" });
+    mockSaveFile.mockResolvedValue({
+      success: true,
+      fileName: "test.ownchart",
+    });
+
+    const { result } = renderHook(() => useFileOperations());
+
+    await act(async () => {
+      await result.current.handleSave();
+    });
+
+    const viewSettings = mockSerialize.mock.calls[0][1];
+    expect(viewSettings.taskLabelPosition).toBe("right");
+  });
+
+  it("should pass projectTitle and projectAuthor from chart store to serialize", async () => {
+    useChartStore.setState({
+      projectTitle: "My Chart",
+      projectAuthor: "Martin",
+    });
+    mockSaveFile.mockResolvedValue({
+      success: true,
+      fileName: "test.ownchart",
+    });
+
+    const { result } = renderHook(() => useFileOperations());
+
+    await act(async () => {
+      await result.current.handleSave();
+    });
+
+    const viewSettings = mockSerialize.mock.calls[0][1];
+    expect(viewSettings.projectTitle).toBe("My Chart");
+    expect(viewSettings.projectAuthor).toBe("Martin");
+  });
+
+  it("should pass hiddenTaskIds from chart store to serialize", async () => {
+    useChartStore.setState({ hiddenTaskIds: ["t1", "t2"] });
+    mockSaveFile.mockResolvedValue({
+      success: true,
+      fileName: "test.ownchart",
+    });
+
+    const { result } = renderHook(() => useFileOperations());
+
+    await act(async () => {
+      await result.current.handleSave();
+    });
+
+    const viewSettings = mockSerialize.mock.calls[0][1];
+    expect(viewSettings.hiddenTaskIds).toEqual(["t1", "t2"]);
+  });
+
+  it("should pass workingDaysMode from chart store to serialize", async () => {
+    useChartStore.setState({ workingDaysMode: "custom" });
+    mockSaveFile.mockResolvedValue({
+      success: true,
+      fileName: "test.ownchart",
+    });
+
+    const { result } = renderHook(() => useFileOperations());
+
+    await act(async () => {
+      await result.current.handleSave();
+    });
+
+    const viewSettings = mockSerialize.mock.calls[0][1];
+    expect(viewSettings.workingDaysMode).toBe("custom");
+  });
 });
