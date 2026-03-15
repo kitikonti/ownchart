@@ -6,6 +6,11 @@
 
 import { test, expect, createTask, getCell } from './fixtures/helpers';
 
+// SVG drag simulation via page.mouse relies on pixel-accurate boundingBox()
+// coordinates. Firefox and WebKit compute different SVG bounding boxes than
+// Chromium, causing the drag delta to be zero. Skip on non-Chromium engines.
+test.skip(({ browserName }) => browserName !== 'chromium', 'Chromium only — SVG drag coordinates');
+
 test.describe('Timeline Drag & Drop', () => {
   test.beforeEach(async ({ appPage: page }) => {
     await createTask(page, 'Drag Task');
