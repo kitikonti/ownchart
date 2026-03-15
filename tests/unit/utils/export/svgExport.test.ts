@@ -6,7 +6,7 @@
  * not require a full React render cycle.
  */
 
-import { describe, it, expect, vi, afterEach } from "vitest";
+import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import {
   finalizeSvg,
   createRootSvg,
@@ -46,6 +46,10 @@ function makeSvgEl(): SVGSVGElement {
 // ---------------------------------------------------------------------------
 
 describe("svgExport", () => {
+  beforeEach(() => {
+    vi.spyOn(console, "error").mockImplementation(() => {});
+  });
+
   afterEach(() => {
     vi.restoreAllMocks();
   });
@@ -146,7 +150,10 @@ describe("svgExport", () => {
       link.style.display = "none";
       document.body.appendChild(link);
       try {
+        // Use a spy to avoid jsdom "Not implemented: navigation" async error
+        const clickSpy = vi.spyOn(link, "click").mockImplementation(() => {});
         link.click();
+        clickSpy.mockRestore();
       } finally {
         document.body.removeChild(link);
         URL.revokeObjectURL(url);

@@ -2,7 +2,7 @@
  * Unit tests for GettingStartedTab.
  */
 
-import { describe, it, expect } from "vitest";
+import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { render, screen } from "@testing-library/react";
 import { GettingStartedTab } from "@/components/Help/GettingStartedTab";
 import type { HelpSection } from "@/config/helpContent";
@@ -83,6 +83,14 @@ const MULTI_SECTION: HelpSection[] = [
 // ---------------------------------------------------------------------------
 
 describe("GettingStartedTab", () => {
+  beforeEach(() => {
+    vi.spyOn(console, "warn").mockImplementation(() => {});
+  });
+
+  afterEach(() => {
+    vi.restoreAllMocks();
+  });
+
   it("renders topic title", () => {
     render(<GettingStartedTab sections={[SECTION_WITH_KNOWN_ID]} />);
     expect(screen.getByText("Creating Your First Task")).toBeInTheDocument();

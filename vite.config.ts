@@ -22,6 +22,7 @@ export default defineConfig({
   },
   base: '/',
   build: {
+    chunkSizeWarningLimit: 1700,
     target: 'es2022',
     outDir: 'dist',
     sourcemap: true,

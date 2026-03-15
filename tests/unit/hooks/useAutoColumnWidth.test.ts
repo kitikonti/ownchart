@@ -262,7 +262,9 @@ describe('useAutoColumnWidth', () => {
 
       expect(autoFitSpy).toHaveBeenCalled();
 
-      useUserPreferencesStore.getState().setUiDensity('comfortable');
+      act(() => {
+        useUserPreferencesStore.getState().setUiDensity('comfortable');
+      });
       unmount();
     });
 

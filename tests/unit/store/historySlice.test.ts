@@ -873,7 +873,14 @@ describe("History Store - NON_DATA_COMMANDS", () => {
 });
 
 describe("History Store - Error handling", () => {
-  beforeEach(resetStores);
+  beforeEach(() => {
+    resetStores();
+    vi.spyOn(console, "error").mockImplementation(() => {});
+  });
+
+  afterEach(() => {
+    vi.restoreAllMocks();
+  });
 
   it("shows toast.error when undo executor throws", () => {
     // Create an invalid command that will cause the executor to throw

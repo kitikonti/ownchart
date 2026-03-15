@@ -3,7 +3,7 @@
  */
 
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
-import { renderHook } from '@testing-library/react';
+import { renderHook, act } from '@testing-library/react';
 import {
   useKeyboardShortcuts,
   isTextInputElement,
@@ -73,7 +73,9 @@ const simulateKeyPress = (
     cancelable: true,
     ...options,
   });
-  window.dispatchEvent(event);
+  act(() => {
+    window.dispatchEvent(event);
+  });
   return event;
 };
 
@@ -467,9 +469,13 @@ describe('useKeyboardShortcuts', () => {
       // Multiple re-renders must not add extra listeners.
       rerender();
       rerender();
-      useChartStore.setState({ showDependencies: false });
+      act(() => {
+        useChartStore.setState({ showDependencies: false });
+      });
       rerender();
-      useTaskStore.setState({ selectedTaskIds: ['task-1'] });
+      act(() => {
+        useTaskStore.setState({ selectedTaskIds: ['task-1'] });
+      });
       rerender();
 
       const countAfterRerenders = addListenerSpy.mock.calls.filter(

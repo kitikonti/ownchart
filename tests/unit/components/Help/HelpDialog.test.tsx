@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach } from "vitest";
-import { render, screen, fireEvent } from "@testing-library/react";
+import { render, screen, fireEvent, act } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { HelpDialog } from "@/components/Help/HelpDialog";
 import { useUIStore } from "@/store/slices/uiSlice";
@@ -57,7 +57,9 @@ describe("HelpDialog", () => {
     useUIStore.setState({ isHelpPanelOpen: true });
     render(<HelpDialog />);
 
-    await user.click(screen.getByText("Shortcuts"));
+    await act(async () => {
+      await user.click(screen.getByText("Shortcuts"));
+    });
     expect(useUIStore.getState().helpDialogActiveTab).toBe("shortcuts");
   });
 
@@ -66,7 +68,9 @@ describe("HelpDialog", () => {
     useUIStore.setState({ isHelpPanelOpen: true });
     render(<HelpDialog />);
 
-    await user.click(screen.getByText("Features"));
+    await act(async () => {
+      await user.click(screen.getByText("Features"));
+    });
     expect(useUIStore.getState().helpDialogActiveTab).toBe("features");
   });
 
@@ -81,7 +85,9 @@ describe("HelpDialog", () => {
     useUIStore.setState({ isHelpPanelOpen: true });
     render(<HelpDialog />);
 
-    await user.click(screen.getByText("Done"));
+    await act(async () => {
+      await user.click(screen.getByText("Done"));
+    });
     expect(useUIStore.getState().isHelpPanelOpen).toBe(false);
   });
 
@@ -113,7 +119,9 @@ describe("HelpDialog", () => {
       render(<HelpDialog />);
 
       const tablist = screen.getByRole("tablist");
-      fireEvent.keyDown(tablist, { key: "ArrowRight" });
+      act(() => {
+        fireEvent.keyDown(tablist, { key: "ArrowRight" });
+      });
 
       expect(useUIStore.getState().helpDialogActiveTab).toBe("shortcuts");
     });
@@ -126,7 +134,9 @@ describe("HelpDialog", () => {
       render(<HelpDialog />);
 
       const tablist = screen.getByRole("tablist");
-      fireEvent.keyDown(tablist, { key: "ArrowLeft" });
+      act(() => {
+        fireEvent.keyDown(tablist, { key: "ArrowLeft" });
+      });
 
       expect(useUIStore.getState().helpDialogActiveTab).toBe("getting-started");
     });
@@ -139,7 +149,9 @@ describe("HelpDialog", () => {
       render(<HelpDialog />);
 
       const tablist = screen.getByRole("tablist");
-      fireEvent.keyDown(tablist, { key: "ArrowRight" });
+      act(() => {
+        fireEvent.keyDown(tablist, { key: "ArrowRight" });
+      });
 
       expect(useUIStore.getState().helpDialogActiveTab).toBe("getting-started");
     });
@@ -152,7 +164,9 @@ describe("HelpDialog", () => {
       render(<HelpDialog />);
 
       const tablist = screen.getByRole("tablist");
-      fireEvent.keyDown(tablist, { key: "ArrowLeft" });
+      act(() => {
+        fireEvent.keyDown(tablist, { key: "ArrowLeft" });
+      });
 
       expect(useUIStore.getState().helpDialogActiveTab).toBe("features");
     });
@@ -165,7 +179,9 @@ describe("HelpDialog", () => {
       render(<HelpDialog />);
 
       const tablist = screen.getByRole("tablist");
-      fireEvent.keyDown(tablist, { key: "Home" });
+      act(() => {
+        fireEvent.keyDown(tablist, { key: "Home" });
+      });
 
       expect(useUIStore.getState().helpDialogActiveTab).toBe("getting-started");
     });
@@ -178,7 +194,9 @@ describe("HelpDialog", () => {
       render(<HelpDialog />);
 
       const tablist = screen.getByRole("tablist");
-      fireEvent.keyDown(tablist, { key: "End" });
+      act(() => {
+        fireEvent.keyDown(tablist, { key: "End" });
+      });
 
       expect(useUIStore.getState().helpDialogActiveTab).toBe("features");
     });
@@ -191,7 +209,9 @@ describe("HelpDialog", () => {
       render(<HelpDialog />);
 
       const tablist = screen.getByRole("tablist");
-      fireEvent.keyDown(tablist, { key: "Enter" });
+      act(() => {
+        fireEvent.keyDown(tablist, { key: "Enter" });
+      });
 
       // Tab should not change
       expect(useUIStore.getState().helpDialogActiveTab).toBe("getting-started");
@@ -205,7 +225,9 @@ describe("HelpDialog", () => {
       render(<HelpDialog />);
 
       const input = screen.getByPlaceholderText("Search help topics...");
-      await user.type(input, "undo");
+      await act(async () => {
+        await user.type(input, "undo");
+      });
 
       // Tab bar should be hidden (tab buttons no longer in role=tab)
       const tabButtons = screen.queryAllByRole("tab");
@@ -221,7 +243,9 @@ describe("HelpDialog", () => {
       render(<HelpDialog />);
 
       const input = screen.getByPlaceholderText("Search help topics...");
-      await user.type(input, "xyzzyfoobarbaz123");
+      await act(async () => {
+        await user.type(input, "xyzzyfoobarbaz123");
+      });
 
       expect(screen.getByText(/No results/)).toBeInTheDocument();
     });

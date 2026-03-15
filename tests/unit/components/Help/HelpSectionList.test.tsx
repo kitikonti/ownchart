@@ -3,7 +3,7 @@
  */
 
 import { describe, it, expect } from "vitest";
-import { render, screen } from "@testing-library/react";
+import { render, screen, act } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { HelpSectionList } from "@/components/Help/HelpSectionList";
 import type { HelpSection } from "@/config/helpContent";
@@ -88,7 +88,9 @@ describe("HelpSectionList", () => {
     render(<HelpSectionList sections={[SECTION_A]} />);
 
     const button = screen.getByRole("button", { name: /Section Alpha/ });
-    await user.click(button);
+    await act(async () => {
+      await user.click(button);
+    });
 
     expect(button).toHaveAttribute("aria-expanded", "true");
   });
@@ -97,7 +99,9 @@ describe("HelpSectionList", () => {
     const user = userEvent.setup();
     render(<HelpSectionList sections={[SECTION_A]} />);
 
-    await user.click(screen.getByRole("button", { name: /Section Alpha/ }));
+    await act(async () => {
+      await user.click(screen.getByRole("button", { name: /Section Alpha/ }));
+    });
 
     const panel = document.getElementById(`help-section-panel-${SECTION_A.id}`);
     expect(panel!.hidden).toBe(false);
@@ -108,8 +112,12 @@ describe("HelpSectionList", () => {
     render(<HelpSectionList sections={[SECTION_A]} />);
 
     const button = screen.getByRole("button", { name: /Section Alpha/ });
-    await user.click(button); // open
-    await user.click(button); // close
+    await act(async () => {
+      await user.click(button); // open
+    });
+    await act(async () => {
+      await user.click(button); // close
+    });
 
     expect(button).toHaveAttribute("aria-expanded", "false");
   });
@@ -156,7 +164,9 @@ describe("HelpSectionList — defaultOpen sync", () => {
     const button = screen.getByRole("button", { name: /Section Alpha/ });
     expect(button).toHaveAttribute("aria-expanded", "false");
 
-    rerender(<HelpSectionList sections={[SECTION_A]} defaultOpen={true} />);
+    act(() => {
+      rerender(<HelpSectionList sections={[SECTION_A]} defaultOpen={true} />);
+    });
 
     expect(button).toHaveAttribute("aria-expanded", "true");
   });
@@ -169,7 +179,9 @@ describe("HelpSectionList — defaultOpen sync", () => {
     const button = screen.getByRole("button", { name: /Section Alpha/ });
     expect(button).toHaveAttribute("aria-expanded", "true");
 
-    rerender(<HelpSectionList sections={[SECTION_A]} defaultOpen={false} />);
+    act(() => {
+      rerender(<HelpSectionList sections={[SECTION_A]} defaultOpen={false} />);
+    });
 
     expect(button).toHaveAttribute("aria-expanded", "false");
   });

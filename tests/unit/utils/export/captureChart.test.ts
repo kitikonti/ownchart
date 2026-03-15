@@ -7,6 +7,7 @@
  */
 
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
+import { act } from "@testing-library/react";
 import {
   canvasToBlob,
   raceWithTimeout,
@@ -255,6 +256,7 @@ vi.mock("@/components/Export/ExportRenderer", () => ({
 describe("captureChart — DOM cleanup", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    vi.spyOn(console, "error").mockImplementation(() => {});
   });
 
   afterEach(() => {
@@ -297,7 +299,9 @@ describe("captureChart — DOM cleanup", () => {
     };
 
     // captureChart is expected to fail (no real html-to-image in jsdom)
-    await expect(captureChart(params)).rejects.toThrow();
+    await act(async () => {
+      await expect(captureChart(params)).rejects.toThrow();
+    });
 
     // Despite the failure, the cleanup function must have been called
     expect(removeOffscreenContainer).toHaveBeenCalledTimes(1);

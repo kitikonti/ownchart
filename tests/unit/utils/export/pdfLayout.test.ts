@@ -2,7 +2,7 @@
  * Unit tests for pdfLayout.ts
  */
 
-import { describe, it, expect } from "vitest";
+import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import {
   mmToPt,
   ptToMm,
@@ -37,6 +37,14 @@ const defaultOptions: PdfExportOptions = {
 };
 
 describe("pdfLayout", () => {
+  beforeEach(() => {
+    vi.spyOn(console, "warn").mockImplementation(() => {});
+  });
+
+  afterEach(() => {
+    vi.restoreAllMocks();
+  });
+
   describe("unit conversion functions", () => {
     describe("mmToPt", () => {
       it("converts 0 mm to 0 pt", () => {

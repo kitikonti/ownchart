@@ -160,7 +160,9 @@ describe("useMarqueeSelection", () => {
 
   afterEach(() => {
     // Ensure any lingering document listeners are removed
-    document.dispatchEvent(new MouseEvent("mouseup", { bubbles: true }));
+    act(() => {
+      document.dispatchEvent(new MouseEvent("mouseup", { bubbles: true }));
+    });
   });
 
   it("should start with isSelecting=false and null rects", () => {

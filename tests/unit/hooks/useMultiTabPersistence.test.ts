@@ -75,6 +75,8 @@ function seedTabStorage(
 
 describe("useMultiTabPersistence", () => {
   beforeEach(() => {
+    vi.spyOn(console, "error").mockImplementation(() => {});
+    vi.spyOn(console, "warn").mockImplementation(() => {});
     localStorage.clear();
     sessionStorage.clear();
 

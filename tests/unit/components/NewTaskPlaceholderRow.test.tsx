@@ -582,7 +582,7 @@ describe("NewTaskPlaceholderRow", () => {
       vi.mocked(usePlaceholderContextMenu).mockReturnValue({
         contextMenu: { x: 100, y: 200 },
         contextMenuItems: [
-          { label: "Paste", action: vi.fn() },
+          { id: "paste", label: "Paste", onClick: vi.fn() },
         ],
         handlePlaceholderContextMenu: vi.fn(),
         closeContextMenu: vi.fn(),

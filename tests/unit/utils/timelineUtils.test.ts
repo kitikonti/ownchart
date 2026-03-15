@@ -3,7 +3,7 @@
  * Sprint 1.5.9: Tests for getScaleConfig at various zoom levels
  */
 
-import { describe, it, expect } from "vitest";
+import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import type { Task } from "@/types/chart.types";
 import {
   getScaleConfig,
@@ -33,6 +33,14 @@ const makeTask = (startDate: string, endDate: string): Task => ({
 });
 
 describe("timelineUtils", () => {
+  beforeEach(() => {
+    vi.spyOn(console, "warn").mockImplementation(() => {});
+  });
+
+  afterEach(() => {
+    vi.restoreAllMocks();
+  });
+
   describe("getScaleConfig", () => {
     const basePixelsPerDay = FIXED_BASE_PIXELS_PER_DAY; // 25
 

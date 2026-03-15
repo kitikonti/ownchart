@@ -4,7 +4,7 @@
  * font constants, width override prop
  */
 
-import { describe, it, expect, vi } from "vitest";
+import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { render } from "@testing-library/react";
 import { TimelineHeader } from "@/components/GanttChart/TimelineHeader";
 import {
@@ -59,6 +59,14 @@ function renderHeader(
 // ---------------------------------------------------------------------------
 
 describe("TimelineHeader", () => {
+  beforeEach(() => {
+    vi.spyOn(console, "warn").mockImplementation(() => {});
+  });
+
+  afterEach(() => {
+    vi.restoreAllMocks();
+  });
+
   // -------------------------------------------------------------------------
   // Basic rendering
   // -------------------------------------------------------------------------

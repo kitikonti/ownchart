@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach, vi } from "vitest";
+import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
 import {
   writeRowsToSystemClipboard,
   writeCellToSystemClipboard,
@@ -24,9 +24,16 @@ const mockClipboard = {
 };
 
 describe("systemClipboard", () => {
+  let consoleErrorSpy: ReturnType<typeof vi.spyOn>;
+  let consoleWarnSpy: ReturnType<typeof vi.spyOn>;
+
   beforeEach(() => {
     clipboardContent = "";
     vi.clearAllMocks();
+
+    // Suppress expected console.error/warn from error-path tests
+    consoleErrorSpy = vi.spyOn(console, "error").mockImplementation(() => {});
+    consoleWarnSpy = vi.spyOn(console, "warn").mockImplementation(() => {});
 
     // Setup mock
     Object.defineProperty(navigator, "clipboard", {
@@ -34,6 +41,11 @@ describe("systemClipboard", () => {
       writable: true,
       configurable: true,
     });
+  });
+
+  afterEach(() => {
+    consoleErrorSpy.mockRestore();
+    consoleWarnSpy.mockRestore();
   });
 
   describe("isClipboardApiAvailable", () => {
