@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [1.2.15](https://github.com/kitikonti/ownchart/compare/v1.2.14...v1.2.15) (2026-03-15)
+
+
+### Code Refactoring
+
+* address review findings in E2E tests ([eff3525](https://github.com/kitikonti/ownchart/commit/eff3525e58a5a0e67fbea4e2c3c942d50fb68aaa))
+
 ## [1.2.14](https://github.com/kitikonti/ownchart/compare/v1.2.13...v1.2.14) (2026-03-15)
 
 
