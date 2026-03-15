@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [1.2.12](https://github.com/kitikonti/ownchart/compare/v1.2.11...v1.2.12) (2026-03-15)
+
+
+### Bug Fixes
+
+* harden test isolation and add [@internal](https://github.com/internal) JSDoc tags ([97e143b](https://github.com/kitikonti/ownchart/commit/97e143bc5ad5c0886fd7c5e956cae0a62e52970c))
+
 ## [1.2.11](https://github.com/kitikonti/ownchart/compare/v1.2.10...v1.2.11) (2026-03-15)
 
 
