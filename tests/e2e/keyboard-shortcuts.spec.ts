@@ -6,12 +6,40 @@
  * shortcuts when the user is typing inside a contentEditable element.
  */
 
-import { test, expect } from "@playwright/test";
+import { test, expect, type Page } from "@playwright/test";
 
 // Pre-dismiss the welcome tour so it never interferes with the tests.
 test.use({
   storageState: undefined,
 });
+
+const CE_STYLE = "position:fixed;top:0;left:0;width:1px;height:1px;opacity:0;";
+
+/** Inject a hidden contentEditable element, focus it, and assert focus. */
+async function injectContentEditable(page: Page, id: string): Promise<void> {
+  await page.evaluate(
+    ({ id, style }) => {
+      const div = document.createElement("div");
+      div.setAttribute("contenteditable", "true");
+      div.id = id;
+      div.style.cssText = style;
+      document.body.appendChild(div);
+      div.focus();
+    },
+    { id, style: CE_STYLE },
+  );
+
+  const isFocused = await page.evaluate(
+    (elId) => document.activeElement?.id === elId,
+    id,
+  );
+  expect(isFocused).toBe(true);
+}
+
+/** Remove a previously injected contentEditable element. */
+async function removeContentEditable(page: Page, id: string): Promise<void> {
+  await page.evaluate((elId) => document.getElementById(elId)?.remove(), id);
+}
 
 test.beforeEach(async ({ page }) => {
   // Suppress the welcome tour by setting the localStorage flag before the app
@@ -30,22 +58,7 @@ test.describe("contentEditable shortcut filtering", () => {
   test("? shortcut does not open help panel when a contentEditable element is focused", async ({
     page,
   }) => {
-    // Inject a transparent contentEditable div and move keyboard focus into it.
-    await page.evaluate(() => {
-      const div = document.createElement("div");
-      div.setAttribute("contenteditable", "true");
-      div.setAttribute("id", "e2e-ce-test");
-      div.style.cssText =
-        "position:fixed;top:0;left:0;width:1px;height:1px;opacity:0;";
-      document.body.appendChild(div);
-      div.focus();
-    });
-
-    // Confirm our element has focus before sending keys.
-    const isFocused = await page.evaluate(
-      () => document.activeElement?.id === "e2e-ce-test",
-    );
-    expect(isFocused).toBe(true);
+    await injectContentEditable(page, "e2e-ce-test");
 
     // Press '?' — on US keyboards this is Shift+/.  The shortcut hook opens
     // the help dialog when no contentEditable is focused.
@@ -55,69 +68,52 @@ test.describe("contentEditable shortcut filtering", () => {
     // have suppressed the event before any shortcut handler ran.
     await expect(page.getByRole("dialog")).not.toBeVisible();
 
-    // Cleanup.
-    await page.evaluate(() => {
-      document.getElementById("e2e-ce-test")?.remove();
-    });
+    await removeContentEditable(page, "e2e-ce-test");
   });
 
   test("single-key shortcut (D) does not fire when a contentEditable element is focused", async ({
     page,
   }) => {
-    // Inject contentEditable and focus it.
-    await page.evaluate(() => {
-      const div = document.createElement("div");
-      div.setAttribute("contenteditable", "true");
-      div.setAttribute("id", "e2e-ce-test-d");
-      div.style.cssText =
-        "position:fixed;top:0;left:0;width:1px;height:1px;opacity:0;";
-      document.body.appendChild(div);
-      div.focus();
-    });
-
-    const isFocused = await page.evaluate(
-      () => document.activeElement?.id === "e2e-ce-test-d",
-    );
-    expect(isFocused).toBe(true);
+    await injectContentEditable(page, "e2e-ce-test-d");
 
     // Press 'd' with the element focused.  This should be a no-op — the
     // shortcut handler must not intercept the event.
     //
-    // Register the keydown listener first, signal readiness, then press the key.
-    // We use window.__e2eListenerReady as a synchronization flag so the key
-    // press only fires after the listener is guaranteed to be in place.
-    await page.evaluate(() => {
-      (window as unknown as Record<string, unknown>).__e2eListenerReady = false;
+    // Awaiting page.evaluate() guarantees the keydown listener is registered
+    // before the subsequent keyboard.press() fires the event.
+    const E2E_KEY = "__e2eDefaultPrevented";
+    await page.evaluate((key) => {
+      const w = window as unknown as Record<string, unknown>;
       window.addEventListener(
         "keydown",
         (e) => {
+          // Defer so the app's bubble-phase handler has already run.
           setTimeout(() => {
-            (window as unknown as Record<string, unknown>).__e2eDefaultPrevented =
-              e.defaultPrevented;
+            w[key] = e.defaultPrevented;
           }, 0);
         },
         { once: true, capture: true },
       );
-      (window as unknown as Record<string, unknown>).__e2eListenerReady = true;
-    });
+    }, E2E_KEY);
 
     await page.keyboard.press("d");
-    // Small delay so the setTimeout(0) in the listener fires.
+
+    // Wait for the deferred setTimeout(0) in the listener to write the result.
     await page.waitForFunction(
-      () => "__e2eDefaultPrevented" in (window as unknown as Record<string, unknown>),
+      (key) => key in (window as unknown as Record<string, unknown>),
+      E2E_KEY,
     );
     const defaultPrevented = await page.evaluate(
-      () => (window as unknown as Record<string, unknown>).__e2eDefaultPrevented,
+      (key) => (window as unknown as Record<string, unknown>)[key],
+      E2E_KEY,
     );
     // defaultPrevented will be false because the isTextInput guard returns
     // early without calling preventDefault().
     expect(defaultPrevented).toBe(false);
 
-    await page.evaluate(() => {
-      document.getElementById("e2e-ce-test-d")?.remove();
-      const w = window as unknown as Record<string, unknown>;
-      delete w.__e2eListenerReady;
-      delete w.__e2eDefaultPrevented;
-    });
+    await page.evaluate((key) => {
+      delete (window as unknown as Record<string, unknown>)[key];
+    }, E2E_KEY);
+    await removeContentEditable(page, "e2e-ce-test-d");
   });
 });
