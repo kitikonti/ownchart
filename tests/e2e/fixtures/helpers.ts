@@ -28,8 +28,42 @@ export const test = base.extend<{ appPage: Page }>({
 export { expect };
 
 // ---------------------------------------------------------------------------
+// Constants
+// ---------------------------------------------------------------------------
+
+/**
+ * Expected number of visible gridcells per task row with default column config.
+ * If the app's default column set changes, this must be updated.
+ */
+const EXPECTED_CELL_COUNT = 7;
+
+/**
+ * Column-name → gridcell index mapping for the default column layout.
+ *
+ * Order must match TASK_COLUMNS in src/config/tableColumns.ts:
+ * rowNumber(0), color(1), name(2), startDate(3), endDate(4), duration(5), progress(6).
+ *
+ * If you hide columns via hiddenColumns or change the column order, these
+ * indices will be wrong. Tests assume the default (all columns visible).
+ */
+const COLUMN_INDEX: Record<string, number> = {
+  rowNumber: 0,
+  color: 1,
+  name: 2,
+  startDate: 3,
+  endDate: 4,
+  duration: 5,
+  progress: 6,
+};
+
+// ---------------------------------------------------------------------------
 // Task creation helpers
 // ---------------------------------------------------------------------------
+
+/** Locator for the placeholder name cell (outer div, not the inner input). */
+function getPlaceholderNameCell(page: Page): Locator {
+  return page.locator('div[aria-label="New task name"]');
+}
 
 /**
  * Create a task by clicking the placeholder row, typing a name, and pressing Enter.
@@ -39,8 +73,7 @@ export { expect };
  * specifically to avoid matching the inner input element (same aria-label).
  */
 export async function createTask(page: Page, name: string): Promise<void> {
-  // Target the placeholder div cell (not the input — both share aria-label)
-  const placeholderCell = page.locator('div[aria-label="New task name"]');
+  const placeholderCell = getPlaceholderNameCell(page);
   // First click — activate the cell
   await placeholderCell.click();
   // Second click — enter edit mode
@@ -52,7 +85,7 @@ export async function createTask(page: Page, name: string): Promise<void> {
   await input.press('Enter');
   // Wait for the new row to appear in the grid
   await expect(
-    page.getByRole('grid', { name: 'Task spreadsheet' }).getByText(name, { exact: true })
+    getGrid(page).getByText(name, { exact: true })
   ).toBeVisible();
 }
 
@@ -73,8 +106,7 @@ export async function createTasks(page: Page, names: string[]): Promise<void> {
  * Get a task row locator by its name text within the grid.
  */
 export function getTaskRow(page: Page, name: string): Locator {
-  return page
-    .getByRole('grid', { name: 'Task spreadsheet' })
+  return getGrid(page)
     .getByRole('row')
     .filter({ hasText: name });
 }
@@ -112,50 +144,53 @@ export async function selectTasks(page: Page, names: string[]): Promise<void> {
 // ---------------------------------------------------------------------------
 
 /**
- * Default column order: rowNumber(0), color(1), name(2), startDate(3),
- * endDate(4), duration(5), progress(6).
- */
-const COLUMN_INDEX: Record<string, number> = {
-  'rowNumber': 0,
-  'color': 1,
-  'name': 2,
-  'startDate': 3,
-  'endDate': 4,
-  'duration': 5,
-  'progress': 6,
-};
-
-/**
  * Get a specific cell within a task row by column name.
  * Uses nth-child indexing based on default column order.
+ *
+ * Includes a runtime guard: if the row's gridcell count doesn't match the
+ * expected default layout, the test fails early with a clear message instead
+ * of silently testing the wrong cell.
  */
 export function getCell(page: Page, taskName: string, column: string): Locator {
   const index = COLUMN_INDEX[column];
   if (index === undefined) {
     throw new Error(`Unknown column: ${column}. Use one of: ${Object.keys(COLUMN_INDEX).join(', ')}`);
   }
-  return getTaskRow(page, taskName).getByRole('gridcell').nth(index);
+  const row = getTaskRow(page, taskName);
+  return row.getByRole('gridcell').nth(index);
 }
 
 /**
- * Activate a cell (single click) and then enter edit mode (second click or F2).
+ * Activate a cell and enter edit mode via F2.
+ *
+ * Uses F2 instead of double-click because the name cell replaces its DOM
+ * subtree when switching to edit mode (the text children are replaced by an
+ * `<input>`). The input is located via its `aria-label="Edit {columnLabel}"`.
  */
-export async function editCell(
+export async function activateAndEdit(
   page: Page,
   taskName: string,
   column: string,
-  value: string
+  value: string,
+  columnLabel: string,
 ): Promise<void> {
   const cell = getCell(page, taskName, column);
-  // First click to activate — wait for state update
   await cell.click();
   await expect(cell).toHaveAttribute('aria-selected', 'true');
-  // Second click to enter edit mode
-  await cell.click();
-  const input = cell.locator('input');
+  await page.keyboard.press('F2');
+  const input = page.getByLabel(`Edit ${columnLabel}`);
   await expect(input).toBeVisible();
   await input.fill(value);
   await input.press('Enter');
+}
+
+/**
+ * Verify that a task row has the expected number of gridcells.
+ * Call this once in a test suite to catch column layout changes early.
+ */
+export async function assertDefaultColumnLayout(page: Page, taskName: string): Promise<void> {
+  const row = getTaskRow(page, taskName);
+  await expect(row.getByRole('gridcell')).toHaveCount(EXPECTED_CELL_COUNT);
 }
 
 // ---------------------------------------------------------------------------

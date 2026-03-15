@@ -9,7 +9,7 @@ import {
   expect,
   createTask,
   getGrid,
-  getCell,
+  activateAndEdit,
   selectTask,
 } from './fixtures/helpers';
 
@@ -41,15 +41,8 @@ test.describe('Undo / Redo', () => {
     await createTask(page, 'Before Edit');
     const grid = getGrid(page);
 
-    // Edit the name
-    const nameCell = getCell(page, 'Before Edit', 'name');
-    await nameCell.click();
-    await expect(nameCell).toHaveAttribute('aria-selected', 'true');
-    await page.keyboard.press('F2');
-    const input = page.getByLabel('Edit Name');
-    await expect(input).toBeVisible();
-    await input.fill('After Edit');
-    await input.press('Enter');
+    // Edit the name using shared helper
+    await activateAndEdit(page, 'Before Edit', 'name', 'After Edit', 'Name');
 
     // Verify edit applied
     await expect(grid.getByText('After Edit', { exact: true })).toBeVisible();

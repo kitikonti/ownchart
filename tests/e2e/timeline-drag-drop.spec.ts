@@ -23,22 +23,23 @@ test.describe('Timeline Drag & Drop', () => {
     // Get the task bar's bounding box
     const taskBar = page.locator('.task-bar').first();
     const box = await taskBar.boundingBox();
+    // boundingBox returns null if the element is not visible — the beforeEach
+    // already asserted visibility, so this should never be null
     expect(box).not.toBeNull();
+    const { x, y, width, height } = box!;
 
-    if (box) {
-      const centerX = box.x + box.width / 2;
-      const centerY = box.y + box.height / 2;
+    const centerX = x + width / 2;
+    const centerY = y + height / 2;
 
-      // Drag the task bar 150 pixels to the right
-      await page.mouse.move(centerX, centerY);
-      await page.mouse.down();
-      await page.mouse.move(centerX + 150, centerY, { steps: 10 });
-      await page.mouse.up();
+    // Drag the task bar 150 pixels to the right
+    await page.mouse.move(centerX, centerY);
+    await page.mouse.down();
+    await page.mouse.move(centerX + 150, centerY, { steps: 10 });
+    await page.mouse.up();
 
-      // The start date should have changed
-      const newStartDate = await startCell.textContent();
-      expect(newStartDate).not.toBe(originalStartDate);
-    }
+    // The start date should have changed
+    const newStartDate = await startCell.textContent();
+    expect(newStartDate).not.toBe(originalStartDate);
   });
 
   test('resizes a task bar from the right edge', async ({ appPage: page }) => {
@@ -50,21 +51,20 @@ test.describe('Timeline Drag & Drop', () => {
     const taskBar = page.locator('.task-bar').first();
     const box = await taskBar.boundingBox();
     expect(box).not.toBeNull();
+    const { x, y, width, height } = box!;
 
-    if (box) {
-      // Position at the right edge of the bar for resize
-      const rightEdgeX = box.x + box.width - 2;
-      const centerY = box.y + box.height / 2;
+    // Position at the right edge of the bar for resize
+    const rightEdgeX = x + width - 2;
+    const centerY = y + height / 2;
 
-      // Drag the right edge further right
-      await page.mouse.move(rightEdgeX, centerY);
-      await page.mouse.down();
-      await page.mouse.move(rightEdgeX + 120, centerY, { steps: 10 });
-      await page.mouse.up();
+    // Drag the right edge further right
+    await page.mouse.move(rightEdgeX, centerY);
+    await page.mouse.down();
+    await page.mouse.move(rightEdgeX + 120, centerY, { steps: 10 });
+    await page.mouse.up();
 
-      // The end date should have changed (extended)
-      const newEndDate = await endCell.textContent();
-      expect(newEndDate).not.toBe(originalEndDate);
-    }
+    // The end date should have changed (extended)
+    const newEndDate = await endCell.textContent();
+    expect(newEndDate).not.toBe(originalEndDate);
   });
 });

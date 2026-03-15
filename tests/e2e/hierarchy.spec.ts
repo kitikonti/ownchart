@@ -9,6 +9,7 @@ import {
   expect,
   createTasks,
   getGrid,
+  getCell,
   selectTask,
   selectTasks,
 } from './fixtures/helpers';
@@ -24,14 +25,17 @@ test.describe('Hierarchy', () => {
     // Indent via keyboard shortcut
     await page.keyboard.press('Alt+Shift+ArrowRight');
 
-    // The parent task should become a summary/group type
-    // Verify by checking the row structure — the child should be indented
-    // The parent row should still exist
+    // Both tasks should still be visible
     await expect(grid.getByText('Parent Task', { exact: true })).toBeVisible();
     await expect(grid.getByText('Child Task', { exact: true })).toBeVisible();
 
-    // Verify both tasks still exist — hierarchy was established
-    // (The child task is now indented under the parent in the DOM)
+    // Verify the child is now indented: its name cell should have paddingLeft > 0
+    const childNameCell = getCell(page, 'Child Task', 'name');
+    const paddingLeft = await childNameCell.evaluate((el) => {
+      const innerDiv = el.querySelector('[style*="padding-left"]');
+      return innerDiv ? parseInt(getComputedStyle(innerDiv).paddingLeft, 10) : 0;
+    });
+    expect(paddingLeft).toBeGreaterThan(0);
   });
 
   test('outdents a child task back to root level', async ({ appPage: page }) => {
@@ -42,12 +46,26 @@ test.describe('Hierarchy', () => {
     await selectTask(page, 'Child Task');
     await page.keyboard.press('Alt+Shift+ArrowRight');
 
+    // Verify indentation was applied
+    const childNameCell = getCell(page, 'Child Task', 'name');
+    const paddingAfterIndent = await childNameCell.evaluate((el) => {
+      const innerDiv = el.querySelector('[style*="padding-left"]');
+      return innerDiv ? parseInt(getComputedStyle(innerDiv).paddingLeft, 10) : 0;
+    });
+    expect(paddingAfterIndent).toBeGreaterThan(0);
+
     // Now outdent
     await page.keyboard.press('Alt+Shift+ArrowLeft');
 
-    // Both tasks should be at root level (no summary/group parent)
+    // Both tasks should be at root level — padding should be back to 0
     await expect(grid.getByText('Parent Task', { exact: true })).toBeVisible();
     await expect(grid.getByText('Child Task', { exact: true })).toBeVisible();
+
+    const paddingAfterOutdent = await childNameCell.evaluate((el) => {
+      const innerDiv = el.querySelector('[style*="padding-left"]');
+      return innerDiv ? parseInt(getComputedStyle(innerDiv).paddingLeft, 10) : 0;
+    });
+    expect(paddingAfterOutdent).toBe(0);
   });
 
   test('groups selected tasks under a new summary', async ({ appPage: page }) => {

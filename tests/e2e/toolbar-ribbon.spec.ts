@@ -8,20 +8,20 @@ import { test, expect } from './fixtures/helpers';
 
 test.describe('Toolbar & Ribbon', () => {
   test('switches ribbon tabs', async ({ appPage: page }) => {
-    // Home tab is active by default
-    const homeTab = page.locator('#ribbon-tab-home');
-    const viewTab = page.locator('#ribbon-tab-view');
-    const formatTab = page.locator('#ribbon-tab-format');
-    const helpTab = page.locator('#ribbon-tab-help');
+    // Use role-based selectors instead of hardcoded IDs
+    const homeTab = page.getByRole('tab', { name: 'Home' });
+    const viewTab = page.getByRole('tab', { name: 'View' });
+    const formatTab = page.getByRole('tab', { name: 'Format' });
+    const helpTab = page.getByRole('tab', { name: 'Help' });
+    const panel = page.locator('#ribbon-tabpanel');
 
+    // Home tab is active by default
     await expect(homeTab).toHaveAttribute('aria-selected', 'true');
 
     // Switch to View tab
     await viewTab.click();
     await expect(viewTab).toHaveAttribute('aria-selected', 'true');
     await expect(homeTab).toHaveAttribute('aria-selected', 'false');
-    // Panel should show View content (e.g., zoom controls)
-    const panel = page.locator('#ribbon-tabpanel');
     await expect(panel.getByLabel('Zoom in')).toBeVisible();
 
     // Switch to Format tab
@@ -41,7 +41,7 @@ test.describe('Toolbar & Ribbon', () => {
 
   test('toggle buttons reflect state changes', async ({ appPage: page }) => {
     // Switch to View tab to access toggle buttons
-    await page.locator('#ribbon-tab-view').click();
+    await page.getByRole('tab', { name: 'View' }).click();
 
     // Find the "Show Today Marker" toggle
     const todayToggle = page.getByRole('button', { name: /Today Marker/i });
@@ -63,7 +63,7 @@ test.describe('Toolbar & Ribbon', () => {
 
   test('keyboard shortcuts toggle view settings', async ({ appPage: page }) => {
     // Switch to View tab to observe toggle states
-    await page.locator('#ribbon-tab-view').click();
+    await page.getByRole('tab', { name: 'View' }).click();
 
     // Press "D" to toggle dependencies
     const depsToggle = page.getByRole('button', { name: /Dependencies/i });

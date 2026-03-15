@@ -16,17 +16,17 @@ test.describe('Task Creation', () => {
     await expect(grid.getByText('My First Task', { exact: true })).toBeVisible();
 
     // Verify a new empty placeholder row still exists
-    await expect(page.getByLabel('New task name')).toBeVisible();
+    await expect(page.locator('div[aria-label="New task name"]')).toBeVisible();
   });
 
   test('creates a task via the Add Task ribbon button', async ({ appPage: page }) => {
     // Ensure Home tab is active (default)
-    await expect(page.locator('#ribbon-tab-home')).toHaveAttribute('aria-selected', 'true');
+    await expect(page.getByRole('tab', { name: 'Home' })).toHaveAttribute('aria-selected', 'true');
 
     // Click the "Add new task" button in the ribbon
     await page.getByLabel('Add new task').click();
 
-    // A new task row should appear in the grid (with default name or empty)
+    // A new task row should appear in the grid
     const grid = getGrid(page);
     const rows = grid.locator('.task-table-row');
     await expect(rows).toHaveCount(1);
@@ -50,6 +50,6 @@ test.describe('Task Creation', () => {
     await expect(taskRows).toHaveCount(0);
 
     // Placeholder should still show
-    await expect(page.getByLabel('New task name')).toBeVisible();
+    await expect(placeholderCell).toBeVisible();
   });
 });

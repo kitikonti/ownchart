@@ -24,31 +24,31 @@ test.describe('File Save & Load', () => {
       () => {
         const state = localStorage.getItem('ownchart-multi-tab-state');
         if (!state) return false;
-        // Verify our tasks are in the persisted state
         return state.includes('Persist Task A');
       },
       { timeout: 5000 }
     );
 
-    // Read the multi-tab state from localStorage
-    const multiTabState = await page.evaluate(() => {
-      return localStorage.getItem('ownchart-multi-tab-state');
-    });
-    expect(multiTabState).toBeTruthy();
+    // Read the persisted state
+    const multiTabState = await page.evaluate(
+      () => localStorage.getItem('ownchart-multi-tab-state')
+    );
+    const tabId = await page.evaluate(
+      () => sessionStorage.getItem('ownchart-tab-id')
+    );
 
-    // Read the tab ID from session storage
-    const tabId = await page.evaluate(() => {
-      return sessionStorage.getItem('ownchart-tab-id');
-    });
-    expect(tabId).toBeTruthy();
+    // Both must be present — fail the test explicitly if not
+    if (!multiTabState || !tabId) {
+      throw new Error('Multi-tab state or tab ID was not persisted to storage');
+    }
 
     // Reload the page with the same persisted state
     await page.addInitScript(
       ({ state, id }) => {
         localStorage.setItem('ownchart-welcome-dismissed', 'true');
         localStorage.setItem('ownchart-tour-completed', 'true');
-        localStorage.setItem('ownchart-multi-tab-state', state!);
-        sessionStorage.setItem('ownchart-tab-id', id!);
+        localStorage.setItem('ownchart-multi-tab-state', state);
+        sessionStorage.setItem('ownchart-tab-id', id);
       },
       { state: multiTabState, id: tabId }
     );
@@ -77,12 +77,11 @@ test.describe('File Save & Load', () => {
     const menu = page.getByRole('menu', { name: 'File menu' });
     await expect(menu).toBeVisible();
 
-    // Menu items include shortcut text, so use getByText to match the label span
-    await expect(menu.getByText('New', { exact: true })).toBeVisible();
-    await expect(menu.getByText('Open', { exact: true })).toBeVisible();
-    await expect(menu.getByText('Save', { exact: true })).toBeVisible();
-    await expect(menu.getByText('Save As...', { exact: true })).toBeVisible();
-    await expect(menu.getByText('Export', { exact: true })).toBeVisible();
+    // Verify all expected items (matched by their label <span>, not shortcut text)
+    const expectedItems = ['New', 'Open', 'Save', 'Save As...', 'Rename', 'Export'];
+    for (const label of expectedItems) {
+      await expect(menu.getByText(label, { exact: true })).toBeVisible();
+    }
 
     // Close the menu
     await page.keyboard.press('Escape');

@@ -10,6 +10,7 @@ import {
   createTask,
   getGrid,
   getTaskRow,
+  selectTask,
 } from './fixtures/helpers';
 
 test.describe('Context Menu', () => {
@@ -21,7 +22,6 @@ test.describe('Context Menu', () => {
     const row = getTaskRow(page, 'Context Task');
     await row.click({ button: 'right' });
 
-    // Context menu should appear
     const menu = page.getByRole('menu');
     await expect(menu).toBeVisible();
   });
@@ -33,8 +33,9 @@ test.describe('Context Menu', () => {
     const menu = page.getByRole('menu');
     await expect(menu).toBeVisible();
 
-    // Click outside the menu — use the chart area (right side of the app)
-    await page.mouse.click(800, 400);
+    // Click the grid background — a reliable non-menu target
+    const grid = getGrid(page);
+    await grid.click({ position: { x: 5, y: 5 }, force: true });
     await expect(menu).not.toBeVisible();
   });
 
@@ -56,30 +57,23 @@ test.describe('Context Menu', () => {
     await expect(menu).not.toBeVisible();
   });
 
-  test('executes a menu action', async ({ appPage: page }) => {
-    const grid = getGrid(page);
-
-    // First select the task (required for delete action)
-    const row = getTaskRow(page, 'Context Task');
-    const rowNumberCell = row.getByRole('gridcell').first();
-    await rowNumberCell.click();
+  test('hides a task via context menu action', async ({ appPage: page }) => {
+    // Select the task first (hide requires selection)
+    await selectTask(page, 'Context Task');
 
     // Right-click to open context menu
+    const row = getTaskRow(page, 'Context Task');
     await row.click({ button: 'right' });
     const menu = page.getByRole('menu');
     await expect(menu).toBeVisible();
 
-    // Find and click the Delete action
-    const deleteItem = menu.getByRole('menuitem', { name: /delete/i });
-    if (await deleteItem.isVisible()) {
-      await deleteItem.click();
-      // Task should be deleted
-      await expect(grid.getByText('Context Task', { exact: true })).not.toBeVisible();
-    } else {
-      // If delete isn't in the menu, try "Hide Row" which should be available
-      const hideItem = menu.getByRole('menuitem', { name: /hide/i });
-      await hideItem.click();
-      await expect(menu).not.toBeVisible();
-    }
+    // Click "Hide Row" — deterministic action that's always available for selected rows
+    const hideItem = menu.getByRole('menuitem', { name: /hide/i });
+    await hideItem.click();
+
+    // Menu should close and the task should no longer be visible
+    await expect(menu).not.toBeVisible();
+    const grid = getGrid(page);
+    await expect(grid.getByText('Context Task', { exact: true })).not.toBeVisible();
   });
 });
