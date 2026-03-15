@@ -2,6 +2,15 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [1.2.9](https://github.com/kitikonti/ownchart/compare/v1.2.8...v1.2.9) (2026-03-15)
+
+
+### Bug Fixes
+
+* harden VRT Docker script with prerequisite checks and arg validation ([45b58c4](https://github.com/kitikonti/ownchart/commit/45b58c47a9158ba5afb18ae49a8b76137c99b420))
+* harden VRT tests with dynamic masks and auto-chown Docker wrapper ([7c6f37a](https://github.com/kitikonti/ownchart/commit/7c6f37aa437d86383b5e55ad143504b87e69f3ed))
+* repair VRT tests and add baseline snapshots for CI ([c4b26cd](https://github.com/kitikonti/ownchart/commit/c4b26cd36de10c00f138adce9c5ca201bc6706f1))
+
 ## [1.2.8](https://github.com/kitikonti/ownchart/compare/v1.2.7...v1.2.8) (2026-03-13)
 
 
