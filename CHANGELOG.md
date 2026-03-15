@@ -2,6 +2,14 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [1.2.11](https://github.com/kitikonti/ownchart/compare/v1.2.10...v1.2.11) (2026-03-15)
+
+
+### Bug Fixes
+
+* eliminate all ci:local warnings and noisy test output ([#70](https://github.com/kitikonti/ownchart/issues/70)) ([90f56f7](https://github.com/kitikonti/ownchart/commit/90f56f769e2c84512face326b4a055d68649202e))
+* harden test mock cleanup and improve review findings ([646610d](https://github.com/kitikonti/ownchart/commit/646610d4dee1ad007f32cabd0fcdf341f2bcb008))
+
 ## [1.2.10](https://github.com/kitikonti/ownchart/compare/v1.2.9...v1.2.10) (2026-03-15)
 
 ## [1.2.9](https://github.com/kitikonti/ownchart/compare/v1.2.8...v1.2.9) (2026-03-15)
