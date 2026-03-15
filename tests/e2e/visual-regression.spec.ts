@@ -3,11 +3,18 @@
  *
  * Screenshot-based tests that catch unintended visual changes to the UI.
  * Uses Playwright's built-in toHaveScreenshot() for pixel comparison.
- *
- * Run:     npx playwright test visual-regression --project=chromium
- * Update:  npx playwright test visual-regression --project=chromium --update-snapshots
- *
  * Only runs on Chromium to avoid cross-browser rendering differences.
+ *
+ * Run locally:  npx playwright test visual-regression --project=chromium
+ *
+ * Generate / update baseline snapshots (MUST use Docker — CI runs Linux):
+ *
+ *   docker run --rm -v $(pwd):/app -w /app mcr.microsoft.com/playwright:v<VERSION>-noble \
+ *     bash -c "npm ci && npx playwright test visual-regression --project=chromium --update-snapshots"
+ *
+ * Replace <VERSION> with the @playwright/test version from package-lock.json.
+ * Fix file ownership after: sudo chown -R $(whoami):$(whoami) node_modules tests/e2e
+ * Commit the generated PNGs in the -snapshots/ directory.
  */
 
 import { test, expect } from "@playwright/test";
@@ -119,7 +126,7 @@ function buildStoragePayload(tabId: string): string {
     charts: {
       [tabId]: {
         tabId,
-        lastActive: 1736150400000, // 2025-01-06T10:00:00Z — fixed for determinism
+        lastActive: Date.now(), // Must be recent — cleanupInactiveTabs() deletes tabs older than 24h
         tasks: SAMPLE_TASKS,
         dependencies: [],
         chartState: SAMPLE_CHART_STATE,
@@ -155,10 +162,12 @@ async function setupWithData(
 
   await page.goto("/");
   await expect(page.locator("#root")).toBeVisible();
-  // Wait for tasks to render — the first task name should be in the table
-  await expect(page.getByText("Project Kickoff")).toBeVisible({
-    timeout: 5000,
-  });
+  // Wait for tasks to render — the first task name should be in the table.
+  // Use getByLabel to scope to the table (avoids strict-mode violation from
+  // the duplicate SVG <text> label on the timeline).
+  await expect(
+    page.getByLabel("Task spreadsheet").getByText("Project Kickoff")
+  ).toBeVisible({ timeout: 5000 });
 }
 
 /** Dismiss welcome tour, load empty app. */
@@ -248,7 +257,7 @@ test.describe("Ribbon Tabs", () => {
 test.describe("File Menu", () => {
   test("file menu dropdown open", async ({ page }) => {
     await setupWithData(page);
-    await page.getByRole("tab", { name: "File" }).click();
+    await page.getByRole("button", { name: "File" }).click();
     // Wait for the menu to animate in
     const menu = page.locator('[role="menu"]');
     await expect(menu).toBeVisible();
@@ -292,8 +301,11 @@ test.describe("Status Bar", () => {
 test.describe("Full App Layout", () => {
   test("app with sample project loaded", async ({ page }) => {
     await setupWithData(page);
-    // Small pause for any animations to settle
-    await page.waitForTimeout(500);
+    // Press "F" to trigger fitToView — centres the timeline on the task range.
+    // Without this the timeline stays at the left edge (90 days before tasks).
+    await page.keyboard.press("f");
+    // Allow the double-rAF scroll to settle
+    await page.waitForTimeout(200);
     await expect(page).toHaveScreenshot(
       "full-app-with-data.png",
       SCREENSHOT_OPTS

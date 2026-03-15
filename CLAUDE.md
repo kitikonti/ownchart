@@ -303,6 +303,17 @@ npm run test:integration    # Integration tests
 npm run test:e2e            # E2E tests (Playwright)
 ```
 
+**Visual Regression Tests** (`tests/e2e/visual-regression.spec.ts`):
+- Baseline PNGs live in `tests/e2e/visual-regression.spec.ts-snapshots/` and are committed to git
+- **Must be generated inside Docker** (CI runs Linux; local screenshots won't match):
+  ```bash
+  docker run --rm -v $(pwd):/app -w /app mcr.microsoft.com/playwright:v<VERSION>-noble \
+    bash -c "npm ci && npx playwright test visual-regression --project=chromium --update-snapshots"
+  ```
+  Replace `<VERSION>` with the `@playwright/test` version from `package-lock.json`.
+- Fix file ownership after Docker: `sudo chown -R $(whoami):$(whoami) node_modules tests/e2e`
+- Verify snapshots are deterministic by running a second time without `--update-snapshots`
+
 **What to test**:
 - ✅ Utility functions (pure functions)
 - ✅ Custom hooks
