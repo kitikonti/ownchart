@@ -2,6 +2,18 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [1.2.14](https://github.com/kitikonti/ownchart/compare/v1.2.13...v1.2.14) (2026-03-15)
+
+
+### Bug Fixes
+
+* update VRT baseline and fix flaky keyboard shortcut E2E test ([86c2d37](https://github.com/kitikonti/ownchart/commit/86c2d37e41aa3e5c03aa502ed68c8bf0fd04767c))
+
+
+### Code Refactoring
+
+* clean up keyboard shortcut E2E test after review ([c0250e6](https://github.com/kitikonti/ownchart/commit/c0250e6256ab8cfb005f872f4c1c60db2396af00))
+
 ## [1.2.13](https://github.com/kitikonti/ownchart/compare/v1.2.12...v1.2.13) (2026-03-15)
 
 
