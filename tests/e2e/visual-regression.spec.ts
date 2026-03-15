@@ -9,11 +9,9 @@
  *
  * Generate / update baseline snapshots (MUST use Docker — CI runs Linux):
  *
- *   docker run --rm -v $(pwd):/app -w /app mcr.microsoft.com/playwright:v<VERSION>-noble \
- *     bash -c "npm ci && npx playwright test visual-regression --project=chromium --update-snapshots"
+ *   npm run test:vrt:update   # generate/update baselines (auto-fixes file ownership)
+ *   npm run test:vrt           # verify snapshots match
  *
- * Replace <VERSION> with the @playwright/test version from package-lock.json.
- * Fix file ownership after: sudo chown -R $(whoami):$(whoami) node_modules tests/e2e
  * Commit the generated PNGs in the -snapshots/ directory.
  */
 
@@ -31,6 +29,19 @@ test.use({
 
 // Pixel tolerance — accounts for sub-pixel font rendering differences
 const SCREENSHOT_OPTS = { maxDiffPixelRatio: 0.01 } as const;
+
+/**
+ * Mask elements whose content changes between runs (version string) so they
+ * don't break screenshot comparisons on every release.
+ */
+function dynamicMasks(
+  page: import("@playwright/test").Page,
+  ...extra: import("@playwright/test").Locator[]
+): { mask: import("@playwright/test").Locator[] } {
+  return {
+    mask: [page.getByLabel("About OwnChart"), ...extra],
+  };
+}
 
 // ---------------------------------------------------------------------------
 // Sample data — injected via localStorage to get a consistent populated state
@@ -195,7 +206,12 @@ test.describe("Empty State", () => {
     await setupEmpty(page);
     // Wait for ribbon to be interactive
     await expect(page.getByRole("tab", { name: "Home" })).toBeVisible();
-    await expect(page).toHaveScreenshot("empty-app-shell.png", SCREENSHOT_OPTS);
+    // Mask the timeline region — without tasks the timeline shows the current
+    // month/week labels and a today marker, both of which change over time.
+    await expect(page).toHaveScreenshot("empty-app-shell.png", {
+      ...SCREENSHOT_OPTS,
+      ...dynamicMasks(page, page.getByLabel("Timeline", { exact: true })),
+    });
   });
 });
 
@@ -290,7 +306,10 @@ test.describe("Status Bar", () => {
     await setupWithData(page);
     const statusBar = page.locator(".status-bar");
     await expect(statusBar).toBeVisible();
-    await expect(statusBar).toHaveScreenshot("status-bar.png", SCREENSHOT_OPTS);
+    await expect(statusBar).toHaveScreenshot("status-bar.png", {
+      ...SCREENSHOT_OPTS,
+      ...dynamicMasks(page),
+    });
   });
 });
 
@@ -304,11 +323,17 @@ test.describe("Full App Layout", () => {
     // Press "F" to trigger fitToView — centres the timeline on the task range.
     // Without this the timeline stays at the left edge (90 days before tasks).
     await page.keyboard.press("f");
-    // Allow the double-rAF scroll to settle
-    await page.waitForTimeout(200);
-    await expect(page).toHaveScreenshot(
-      "full-app-with-data.png",
-      SCREENSHOT_OPTS
+    // Wait for the double-rAF scroll to complete (scrollLeft becomes > 0)
+    await page.waitForFunction(
+      () => {
+        const el = document.querySelector(".gantt-chart-scroll-container");
+        return el && el.scrollLeft > 0;
+      },
+      { timeout: 5000 }
     );
+    await expect(page).toHaveScreenshot("full-app-with-data.png", {
+      ...SCREENSHOT_OPTS,
+      ...dynamicMasks(page),
+    });
   });
 });
