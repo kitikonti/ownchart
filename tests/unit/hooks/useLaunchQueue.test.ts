@@ -79,6 +79,7 @@ beforeEach(() => {
 
 afterEach(() => {
   removeLaunchQueue();
+  vi.restoreAllMocks();
 });
 
 // ─── Dev-mode singleton guard test ───

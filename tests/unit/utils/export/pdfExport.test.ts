@@ -108,28 +108,17 @@ describe("pdfExport", () => {
     ...DEFAULT_PDF_OPTIONS,
   };
 
-  // Suppress React "not wrapped in act(...)" warnings from exportToPdf's
-  // internal createRoot().render() calls. These renders happen inside the
-  // export pipeline (not test code) and cannot be wrapped in act() without
-  // breaking the mock-based test strategy.
-  const originalConsoleError = console.error;
-
   beforeEach(() => {
     vi.clearAllMocks();
     jsPDFConstructorCalls.length = 0;
-    console.error = (...args: unknown[]) => {
-      if (
-        typeof args[0] === "string" &&
-        args[0].includes("not wrapped in act")
-      ) {
-        return;
-      }
-      originalConsoleError(...args);
-    };
+    // Suppress React "not wrapped in act(...)" warnings from exportToPdf's
+    // internal createRoot().render() calls. These renders happen inside the
+    // export pipeline (not test code) and cannot be wrapped in act() without
+    // breaking the mock-based test strategy.
+    vi.spyOn(console, "error").mockImplementation(() => {});
   });
 
   afterEach(() => {
-    console.error = originalConsoleError;
     vi.restoreAllMocks();
   });
 

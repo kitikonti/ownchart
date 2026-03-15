@@ -22,6 +22,8 @@ export default defineConfig({
   },
   base: '/',
   build: {
+    // Largest chunk is pdfExport (~1651 kB due to jsPDF + base64 fonts).
+    // These are already code-split via dynamic import; suppress the warning.
     chunkSizeWarningLimit: 1700,
     target: 'es2022',
     outDir: 'dist',

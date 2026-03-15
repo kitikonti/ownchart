@@ -149,11 +149,11 @@ describe("svgExport", () => {
       link.download = "test.svg";
       link.style.display = "none";
       document.body.appendChild(link);
+      // Mock click to prevent jsdom "Not implemented: navigation" error.
+      // This test verifies URL lifecycle (create/revoke), not the click itself.
+      vi.spyOn(link, "click").mockImplementation(() => {});
       try {
-        // Use a spy to avoid jsdom "Not implemented: navigation" async error
-        const clickSpy = vi.spyOn(link, "click").mockImplementation(() => {});
         link.click();
-        clickSpy.mockRestore();
       } finally {
         document.body.removeChild(link);
         URL.revokeObjectURL(url);

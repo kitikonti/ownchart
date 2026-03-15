@@ -264,6 +264,7 @@ describe("captureChart — DOM cleanup", () => {
     document
       .querySelectorAll("[data-export-offscreen]")
       .forEach((el) => el.remove());
+    vi.restoreAllMocks();
   });
 
   it("removes the offscreen container from the DOM even when rendering fails", async () => {
