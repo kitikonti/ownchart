@@ -83,32 +83,41 @@ test.describe("contentEditable shortcut filtering", () => {
     // Press 'd' with the element focused.  This should be a no-op — the
     // shortcut handler must not intercept the event.
     //
-    // Do NOT await the evaluate — we need to queue the listener registration
-    // first, then fire the key press.  Awaiting would deadlock because the
-    // in-page Promise only resolves after the keydown event fires.
-    const defaultPreventedPromise = page.evaluate(
-      () =>
-        new Promise<boolean>((resolve) => {
-          // Listen in the capture phase so we run first; we resolve after the
-          // bubble phase has completed (setTimeout 0) to include the app's
-          // bubble-phase handler result.
-          window.addEventListener(
-            "keydown",
-            (e) => {
-              setTimeout(() => resolve(e.defaultPrevented), 0);
-            },
-            { once: true, capture: true },
-          );
-        }),
-    );
+    // Register the keydown listener first, signal readiness, then press the key.
+    // We use window.__e2eListenerReady as a synchronization flag so the key
+    // press only fires after the listener is guaranteed to be in place.
+    await page.evaluate(() => {
+      (window as unknown as Record<string, unknown>).__e2eListenerReady = false;
+      window.addEventListener(
+        "keydown",
+        (e) => {
+          setTimeout(() => {
+            (window as unknown as Record<string, unknown>).__e2eDefaultPrevented =
+              e.defaultPrevented;
+          }, 0);
+        },
+        { once: true, capture: true },
+      );
+      (window as unknown as Record<string, unknown>).__e2eListenerReady = true;
+    });
 
     await page.keyboard.press("d");
+    // Small delay so the setTimeout(0) in the listener fires.
+    await page.waitForFunction(
+      () => "__e2eDefaultPrevented" in (window as unknown as Record<string, unknown>),
+    );
+    const defaultPrevented = await page.evaluate(
+      () => (window as unknown as Record<string, unknown>).__e2eDefaultPrevented,
+    );
     // defaultPrevented will be false because the isTextInput guard returns
     // early without calling preventDefault().
-    expect(await defaultPreventedPromise).toBe(false);
+    expect(defaultPrevented).toBe(false);
 
     await page.evaluate(() => {
       document.getElementById("e2e-ce-test-d")?.remove();
+      const w = window as unknown as Record<string, unknown>;
+      delete w.__e2eListenerReady;
+      delete w.__e2eDefaultPrevented;
     });
   });
 });
