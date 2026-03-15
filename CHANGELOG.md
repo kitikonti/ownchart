@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [1.2.16](https://github.com/kitikonti/ownchart/compare/v1.2.15...v1.2.16) (2026-03-15)
+
+
+### Bug Fixes
+
+* skip timeline drag E2E tests on Firefox/WebKit ([1ab2a05](https://github.com/kitikonti/ownchart/commit/1ab2a05954e5f783b2e0a0fbf0960728bc7131c6))
+
 ## [1.2.15](https://github.com/kitikonti/ownchart/compare/v1.2.14...v1.2.15) (2026-03-15)
 
 
