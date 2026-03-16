@@ -2,6 +2,18 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [1.2.18](https://github.com/kitikonti/ownchart/compare/v1.2.17...v1.2.18) (2026-03-16)
+
+
+### Bug Fixes
+
+* sharpen timeline grid lines on HiDPI/4K screens ([#64](https://github.com/kitikonti/ownchart/issues/64)) ([03b1950](https://github.com/kitikonti/ownchart/commit/03b19503f40b2dac6b5f8a13505aa439810f38a1))
+
+
+### Code Refactoring
+
+* address review findings from HiDPI grid line fix ([5d99bb6](https://github.com/kitikonti/ownchart/commit/5d99bb6981f104c37d2fb278f855340224747a96))
+
 ## [1.2.17](https://github.com/kitikonti/ownchart/compare/v1.2.16...v1.2.17) (2026-03-16)
 
 
